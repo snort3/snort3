@@ -74,7 +74,7 @@ HttpFlowData::~HttpFlowData()
         delete infractions[k];
         delete events[k];
         delete[] section_buffer[k];
-        HttpTransaction::delete_transaction(transaction[k]);
+        HttpTransaction::delete_transaction(transaction[k], nullptr);
         delete cutter[k];
         if (compress_stream[k] != nullptr)
         {
@@ -91,6 +91,13 @@ HttpFlowData::~HttpFlowData()
     if (fd_state != nullptr)
         File_Decomp_StopFree(fd_state);
     delete_pipeline();
+
+    while (discard_list != nullptr)
+    {
+        HttpTransaction* tmp = discard_list;
+        discard_list = discard_list->next;
+        delete tmp;
+    }
 }
 
 void HttpFlowData::half_reset(SourceId source_id)
@@ -161,6 +168,22 @@ void HttpFlowData::trailer_prep(SourceId source_id)
     detection_status[source_id] = DET_REACTIVATING;
 }
 
+void HttpFlowData::garbage_collect()
+{
+    HttpTransaction** current = &discard_list;
+    while (*current != nullptr)
+    {
+        if ((*current)->is_clear())
+        {
+            HttpTransaction* tmp = *current;
+            *current = (*current)->next;
+            delete tmp;
+        }
+        else
+            current = &(*current)->next;
+    }
+}
+
 bool HttpFlowData::add_to_pipeline(HttpTransaction* latest)
 {
     if (pipeline == nullptr)
@@ -195,7 +218,7 @@ void HttpFlowData::delete_pipeline()
 {
     for (int k=pipeline_front; k != pipeline_back; k = (k+1) % MAX_PIPELINE)
     {
-        HttpTransaction::delete_transaction(pipeline[k]);
+        delete pipeline[k];
     }
     delete[] pipeline;
 }

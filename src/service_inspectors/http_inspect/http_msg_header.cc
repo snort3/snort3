@@ -41,6 +41,7 @@ HttpMsgHeader::HttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size,
     HttpMsgHeadShared(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_)
 {
     transaction->set_header(this, source_id);
+    get_related_sections();
 }
 
 void HttpMsgHeader::publish()
@@ -172,8 +173,8 @@ void HttpMsgHeader::update_flow()
         return;
     }
 
-    if ((source_id == SRC_SERVER) && (transaction->get_request() != nullptr) &&
-        (transaction->get_request()->get_method_id() == METH_HEAD))
+    if ((source_id == SRC_SERVER) && (request != nullptr) &&
+        (request->get_method_id() == METH_HEAD))
     {
         // No body allowed by RFC for response to HEAD method
         session_data->half_reset(SRC_SERVER);

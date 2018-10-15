@@ -40,6 +40,7 @@ HttpMsgBody::HttpMsgBody(const uint8_t* buffer, const uint16_t buf_size,
     detection_section((body_octets == 0) && (session_data->detect_depth_remaining[source_id] > 0))
 {
     transaction->set_body(this);
+    get_related_sections();
 }
 
 void HttpMsgBody::analyze()
@@ -222,8 +223,6 @@ void HttpMsgBody::do_file_processing(Field& file_data)
     {
         snort::FileFlows* file_flows = snort::FileFlows::get_file_flows(flow);
         const bool download = (source_id == SRC_SERVER);
-
-        HttpMsgRequest* request = transaction->get_request();
 
         size_t file_index = 0;
 

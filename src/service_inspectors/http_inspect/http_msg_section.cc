@@ -23,6 +23,7 @@
 
 #include "http_msg_section.h"
 
+#include "http_context_data.h"
 #include "http_msg_body.h"
 #include "http_msg_head_shared.h"
 #include "http_msg_header.h"
@@ -50,6 +51,15 @@ HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
     tcp_close(session_data->tcp_close[source_id])
 {
     assert((source_id == SRC_CLIENT) || (source_id == SRC_SERVER));
+    HttpContextData::save_snapshot(this);
+}
+
+HttpMsgSection::~HttpMsgSection()
+{
+    // FIXIT-L This clear call is to handle premature deletion (before offload completes)
+    // of message sections due to session deletion
+    if ( ips_context )
+        HttpContextData::clear_snapshot(ips_context);
 }
 
 bool HttpMsgSection::detection_required() const
@@ -141,81 +151,71 @@ const Field& HttpMsgSection::get_classic_buffer(unsigned id, uint64_t sub_id, ui
       {
         if (source_id != SRC_CLIENT)
             return Field::FIELD_NULL;
-        HttpMsgBody* body = transaction->get_body();
-        return (body != nullptr) ? body->get_classic_client_body() : Field::FIELD_NULL;
+        return (get_body() != nullptr) ? get_body()->get_classic_client_body() : Field::FIELD_NULL;
       }
     case HTTP_BUFFER_COOKIE:
     case HTTP_BUFFER_RAW_COOKIE:
       {
-        HttpMsgHeader* header = transaction->get_header(buffer_side);
-        if (header == nullptr)
+        if (header[buffer_side] == nullptr)
             return Field::FIELD_NULL;
-        return (id == HTTP_BUFFER_COOKIE) ? header->get_classic_norm_cookie() :
-            header->get_classic_raw_cookie();
+        return (id == HTTP_BUFFER_COOKIE) ? header[buffer_side]->get_classic_norm_cookie() :
+            header[buffer_side]->get_classic_raw_cookie();
       }
     case HTTP_BUFFER_HEADER:
     case HTTP_BUFFER_TRAILER:
       {
         // FIXIT-L Someday want to be able to return field name or raw field value
-        HttpMsgHeadShared* const header = (id == HTTP_BUFFER_HEADER) ?
-            (HttpMsgHeadShared*)transaction->get_header(buffer_side) :
-            (HttpMsgHeadShared*)transaction->get_trailer(buffer_side);
-        if (header == nullptr)
+        HttpMsgHeadShared* const head = (id == HTTP_BUFFER_HEADER) ?
+            (HttpMsgHeadShared*)header[buffer_side] : (HttpMsgHeadShared*)trailer[buffer_side];
+        if (head == nullptr)
             return Field::FIELD_NULL;
         if (sub_id == 0)
-            return header->get_classic_norm_header();
-        return header->get_header_value_norm((HeaderId)sub_id);
+            return head->get_classic_norm_header();
+        return head->get_header_value_norm((HeaderId)sub_id);
       }
     case HTTP_BUFFER_METHOD:
       {
-        HttpMsgRequest* request = transaction->get_request();
         return (request != nullptr) ? request->get_method() : Field::FIELD_NULL;
       }
     case HTTP_BUFFER_RAW_BODY:
       {
-        HttpMsgBody* body = transaction->get_body();
-        return (body != nullptr) ? body->msg_text : Field::FIELD_NULL;
+        return (get_body() != nullptr) ? get_body()->msg_text : Field::FIELD_NULL;
       }
     case HTTP_BUFFER_RAW_HEADER:
       {
-        HttpMsgHeader* header = transaction->get_header(buffer_side);
-        return (header != nullptr) ? header->get_classic_raw_header() : Field::FIELD_NULL;
+        return (header[buffer_side] != nullptr) ? header[buffer_side]->get_classic_raw_header() :
+            Field::FIELD_NULL;
       }
     case HTTP_BUFFER_RAW_REQUEST:
       {
-        HttpMsgRequest* request = transaction->get_request();
         return (request != nullptr) ? request->msg_text : Field::FIELD_NULL;
       }
     case HTTP_BUFFER_RAW_STATUS:
       {
-        HttpMsgStatus* status = transaction->get_status();
         return (status != nullptr) ? status->msg_text : Field::FIELD_NULL;
       }
     case HTTP_BUFFER_RAW_TRAILER:
       {
-        HttpMsgTrailer* trailer = transaction->get_trailer(buffer_side);
-        return (trailer != nullptr) ? trailer->get_classic_raw_header() : Field::FIELD_NULL;
+        return (trailer[buffer_side] != nullptr) ? trailer[buffer_side]->get_classic_raw_header() :
+            Field::FIELD_NULL;
       }
     case HTTP_BUFFER_STAT_CODE:
       {
-        HttpMsgStatus* status = transaction->get_status();
         return (status != nullptr) ? status->get_status_code() : Field::FIELD_NULL;
       }
     case HTTP_BUFFER_STAT_MSG:
       {
-        HttpMsgStatus* status = transaction->get_status();
         return (status != nullptr) ? status->get_reason_phrase() : Field::FIELD_NULL;
       }
     case HTTP_BUFFER_TRUE_IP:
       {
-        HttpMsgHeader* header = transaction->get_header(SRC_CLIENT);
-        return (header != nullptr) ? header->get_true_ip() : Field::FIELD_NULL;
+        return (header[SRC_CLIENT] != nullptr) ? header[SRC_CLIENT]->get_true_ip() :
+            Field::FIELD_NULL;
       }
     case HTTP_BUFFER_URI:
     case HTTP_BUFFER_RAW_URI:
       {
         const bool raw = (id == HTTP_BUFFER_RAW_URI);
-        HttpMsgRequest* request = transaction->get_request();
         if (request == nullptr)
             return Field::FIELD_NULL;
         if (sub_id == 0)
@@ -244,13 +244,32 @@ const Field& HttpMsgSection::get_classic_buffer(unsigned id, uint64_t sub_id, ui
     case HTTP_BUFFER_VERSION:
       {
         HttpMsgStart* start = (buffer_side == SRC_CLIENT) ?
-            (HttpMsgStart*)transaction->get_request() : (HttpMsgStart*)transaction->get_status();
+            (HttpMsgStart*)request : (HttpMsgStart*)status;
         return (start != nullptr) ? start->get_version() : Field::FIELD_NULL;
       }
     default:
         assert(false);
         return Field::FIELD_NULL;
     }
+}
+
+void HttpMsgSection::get_related_sections()
+{
+    // When a message section is created these relationships become fixed so we make copies for
+    // future reference.
+    request = transaction->get_request();
+    status = transaction->get_status();
+    header[SRC_CLIENT] = transaction->get_header(SRC_CLIENT);
+    header[SRC_SERVER] = transaction->get_header(SRC_SERVER);
+    trailer[SRC_CLIENT] = transaction->get_trailer(SRC_CLIENT);
+    trailer[SRC_SERVER] = transaction->get_trailer(SRC_SERVER);
+}
+
+void HttpMsgSection::clear()
+{
+    transaction->clear_section();
+    cleared = true;
+    ips_context = nullptr;
 }
 
 #ifdef REG_TEST

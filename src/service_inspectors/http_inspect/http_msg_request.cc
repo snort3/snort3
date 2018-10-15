@@ -33,6 +33,7 @@ HttpMsgRequest::HttpMsgRequest(const uint8_t* buffer, const uint16_t buf_size,
     HttpMsgStart(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_)
 {
     transaction->set_request(this);
+    get_related_sections();
 }
 
 void HttpMsgRequest::parse_start_line()

@@ -46,6 +46,8 @@ set (FILE_LIST
     http_test_input.h
     http_flow_data.cc
     http_flow_data.h
+    http_context_data.cc
+    http_context_data.h
     http_transaction.cc
     http_transaction.h
     http_test_manager.cc

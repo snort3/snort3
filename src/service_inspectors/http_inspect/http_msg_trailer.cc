@@ -33,6 +33,7 @@ HttpMsgTrailer::HttpMsgTrailer(const uint8_t* buffer, const uint16_t buf_size,
     HttpMsgHeadShared(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_)
 {
     transaction->set_trailer(this, source_id);
+    get_related_sections();
 }
 
 void HttpMsgTrailer::gen_events()

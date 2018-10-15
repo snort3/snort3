@@ -208,7 +208,12 @@ IpsContextData* DetectionEngine::get_data(unsigned id, IpsContext* context)
     if ( context )
         return context->get_context_data(id);
 
-    return DetectionEngine::get_data(id);
+    ContextSwitcher* sw = Snort::get_switcher();
+
+    if ( !sw )
+        return nullptr;
+
+    return sw->get_context()->get_context_data(id);
 }
 
 void DetectionEngine::add_replacement(const std::string& s, unsigned off)

@@ -33,6 +33,16 @@
 
 using namespace HttpEnums;
 
+static void delete_section_list(HttpMsgSection* section_list)
+{
+    while (section_list != nullptr)
+    {
+        HttpMsgSection* tmp = section_list;
+        section_list = section_list->next;
+        delete tmp;
+    }
+}
+
 HttpTransaction::~HttpTransaction()
 {
     delete request;
@@ -44,7 +54,8 @@ HttpTransaction::~HttpTransaction()
         delete infractions[k];
         delete events[k];
     }
-    delete latest_body;
+    delete_section_list(body_list);
+    delete_section_list(discard_list);
 }
 
 HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_data, SourceId
@@ -76,20 +87,20 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
                 // needed it. Instead the two sides have been sharing the transaction. This is a
                 // soft delete that eliminates our interest in this transaction without disturbing
                 // the possibly ongoing response processing.
-                delete_transaction(session_data->transaction[SRC_CLIENT]);
+                delete_transaction(session_data->transaction[SRC_CLIENT], session_data);
             }
             else if ((session_data->pipeline_overflow) || (session_data->pipeline_underflow))
             {
                 // Pipelining previously broke down and both sides are processed separately from
                 // now on. We just throw things away when we are done with them.
-                delete_transaction(session_data->transaction[SRC_CLIENT]);
+                delete_transaction(session_data->transaction[SRC_CLIENT], session_data);
             }
             else if (!session_data->add_to_pipeline(session_data->transaction[SRC_CLIENT]))
             {
                 // The pipeline is full and just overflowed.
                 *session_data->infractions[source_id] += INF_PIPELINE_OVERFLOW;
                 session_data->events[source_id]->create_event(EVENT_PIPELINE_MAX);
-                delete_transaction(session_data->transaction[SRC_CLIENT]);
+                delete_transaction(session_data->transaction[SRC_CLIENT], session_data);
             }
         }
         session_data->transaction[SRC_CLIENT] = new HttpTransaction;
@@ -111,12 +122,12 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
               session_data->transaction[SRC_SERVER]->second_response_expected)
     {
         session_data->transaction[SRC_SERVER]->second_response_expected = false;
-        delete session_data->transaction[SRC_SERVER]->status;
+        session_data->transaction[SRC_SERVER]->discard_section(
+            session_data->transaction[SRC_SERVER]->status);
         session_data->transaction[SRC_SERVER]->status = nullptr;
-        delete session_data->transaction[SRC_SERVER]->header[SRC_SERVER];
+        session_data->transaction[SRC_SERVER]->discard_section(
+            session_data->transaction[SRC_SERVER]->header[SRC_SERVER]);
         session_data->transaction[SRC_SERVER]->header[SRC_SERVER] = nullptr;
-        delete session_data->transaction[SRC_SERVER]->trailer[SRC_SERVER];
-        session_data->transaction[SRC_SERVER]->trailer[SRC_SERVER] = nullptr;
     }
     // Status section: delete the current transaction and get a new one from the pipeline. If the
     // pipeline is empty check for a request transaction and take it. If there is no transaction
@@ -124,7 +135,7 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
     // response side.
     else if (session_data->section_type[source_id] == SEC_STATUS)
     {
-        delete_transaction(session_data->transaction[SRC_SERVER]);
+        delete_transaction(session_data->transaction[SRC_SERVER], session_data);
         if (session_data->pipeline_underflow)
         {
             // A previous underflow separated the two sides forever
@@ -170,24 +181,64 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
     }
 
     assert(session_data->transaction[source_id] != nullptr);
+    session_data->transaction[source_id]->active_sections++;
     return session_data->transaction[source_id];
 }
 
-void HttpTransaction::delete_transaction(HttpTransaction* transaction)
+void HttpTransaction::discard_section(HttpMsgSection* section)
+{
+    if (section != nullptr)
+    {
+        section->next = discard_list;
+        discard_list = section;
+    }
+}
+
+void HttpTransaction::clear_section()
+{
+    assert(active_sections > 0);
+    active_sections--;
+}
+
+void HttpTransaction::garbage_collect()
+{
+    HttpMsgSection** current = (HttpMsgSection**)&body_list;
+    while (*current != nullptr)
+    {
+        if ((*current)->is_clear())
+        {
+            HttpMsgSection* tmp = *current;
+            *current = (*current)->next;
+            delete tmp;
+        }
+        else
+            current = &(*current)->next;
+    }
+}
+
+void HttpTransaction::delete_transaction(HttpTransaction* transaction, HttpFlowData* session_data)
 {
     if (transaction != nullptr)
     {
         if (!transaction->shared_ownership)
-            delete transaction;
+        {
+            if ((transaction->active_sections > 0) && (session_data != nullptr))
+            {
+                transaction->next = session_data->discard_list;
+                session_data->discard_list = transaction;
+            }
+            else
+                delete transaction;
+        }
         else
             transaction->shared_ownership = false;
     }
 }
 
-void HttpTransaction::set_body(HttpMsgBody* latest_body_)
+void HttpTransaction::set_body(HttpMsgBody* latest_body)
 {
-    delete latest_body;
-    latest_body = latest_body_;
+    latest_body->next = body_list;
+    body_list = latest_body;
 }
 
 HttpInfractions* HttpTransaction::get_infractions(HttpEnums::SourceId source_id)

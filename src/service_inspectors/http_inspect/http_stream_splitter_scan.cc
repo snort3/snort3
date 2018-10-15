@@ -155,8 +155,10 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
         type = SEC_BODY_OLD;
         prepare_flush(session_data, nullptr, SEC_STATUS, 14, 0, 0, false, 0, 14, true);
         my_inspector->process((const uint8_t*)"HTTP/0.9 200 .", 14, flow, SRC_SERVER, false);
+        session_data->transaction[SRC_SERVER]->clear_section();
         prepare_flush(session_data, nullptr, SEC_HEADER, 0, 0, 0, false, 0, 0, true);
         my_inspector->process((const uint8_t*)"", 0, flow, SRC_SERVER, false);
+        session_data->transaction[SRC_SERVER]->clear_section();
     }
 
     HttpCutter*& cutter = session_data->cutter[source_id];

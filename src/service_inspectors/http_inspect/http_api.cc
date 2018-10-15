@@ -23,6 +23,7 @@
 
 #include "http_api.h"
 
+#include "http_context_data.h"
 #include "http_inspect.h"
 
 using namespace snort;
@@ -34,6 +35,12 @@ Inspector* HttpApi::http_ctor(Module* mod)
 {
     HttpModule* const http_mod = (HttpModule*)mod;
     return new HttpInspect(http_mod->get_once_params());
+}
+
+void HttpApi::http_init()
+{
+    HttpFlowData::init();
+    HttpContextData::init();
 }
 
 const char* HttpApi::classic_buffer_names[] =

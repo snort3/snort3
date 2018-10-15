@@ -34,13 +34,22 @@
 class HttpMsgSection
 {
 public:
-    virtual ~HttpMsgSection() = default;
+    virtual ~HttpMsgSection();
     virtual HttpEnums::InspectSection get_inspection_section() const
         { return HttpEnums::IS_NONE; }
     virtual bool detection_required() const;
     HttpEnums::SourceId get_source_id() const { return source_id; }
     HttpTransaction* get_transaction() const { return transaction; }
     const HttpParaList* get_params() const { return params; }
+
+    HttpMsgRequest* get_request() const { return request; }
+    HttpMsgStatus* get_status() const { return status; }
+    HttpMsgHeader* get_header(HttpEnums::SourceId source_id) const { return header[source_id]; }
+    HttpMsgTrailer* get_trailer(HttpEnums::SourceId source_id) const
+        { return trailer[source_id]; }
+    virtual HttpMsgBody* get_body() { return nullptr; }
+
+    void add_ips_context(snort::IpsContext* context) { ips_context = context; }
 
     // Minimum necessary processing for every message
     virtual void analyze() = 0;
@@ -63,6 +72,11 @@ public:
     // Publish an inspection event for other modules to consume.
     virtual void publish() { }
 
+    void clear();
+    bool is_clear() { return cleared; }
+
+    HttpMsgSection* next = nullptr;
+
 #ifdef REG_TEST
     // Test tool prints all derived message parts
     virtual void print_section(FILE* output) = 0;
@@ -72,6 +86,8 @@ protected:
     HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
         HttpEnums::SourceId source_id_, bool buf_owner, snort::Flow* flow_, const HttpParaList*
         params_);
+
+    void get_related_sections();
 
     const Field msg_text;
     HttpFlowData* const session_data;
@@ -84,6 +100,15 @@ protected:
     HttpEnums::VersionId version_id;
     HttpEnums::MethodId method_id;
     const bool tcp_close;
+
+    snort::IpsContext* ips_context = nullptr;
+    // Pointers to related message sections in the same transaction
+    HttpMsgRequest* request;
+    HttpMsgStatus* status;
+    HttpMsgHeader* header[2];
+    HttpMsgTrailer* trailer[2];
+
+    bool cleared = false;
 
     // Convenience methods shared by multiple subclasses
     void add_infraction(int infraction);

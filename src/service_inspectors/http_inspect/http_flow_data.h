@@ -67,6 +67,7 @@ private:
     // Convenience routines
     void half_reset(HttpEnums::SourceId source_id);
     void trailer_prep(HttpEnums::SourceId source_id);
+    void garbage_collect();
 
     // 0 element refers to client request, 1 element refers to server response
 
@@ -133,10 +134,10 @@ private:
     int64_t detect_depth_remaining[2] = { HttpEnums::STAT_NOT_PRESENT,
         HttpEnums::STAT_NOT_PRESENT };
     uint64_t expected_trans_num[2] = { 1, 1 };
+
     // number of user data octets seen so far (regular body or chunks)
     int64_t body_octets[2] = { HttpEnums::STAT_NOT_PRESENT, HttpEnums::STAT_NOT_PRESENT };
     int32_t status_code_num = HttpEnums::STAT_NOT_PRESENT;
-    HttpMsgSection* latest_section = nullptr;
     HttpEnums::VersionId version_id[2] = { HttpEnums::VERS__NOT_PRESENT,
                                             HttpEnums::VERS__NOT_PRESENT };
     HttpEnums::MethodId method_id = HttpEnums::METH__NOT_PRESENT;
@@ -153,6 +154,9 @@ private:
     bool add_to_pipeline(HttpTransaction* latest);
     HttpTransaction* take_from_pipeline();
     void delete_pipeline();
+
+    // Transactions with uncleared sections awaiting deletion
+    HttpTransaction* discard_list = nullptr;
 
 #ifdef REG_TEST
     static uint64_t instance_count;

@@ -36,9 +36,10 @@ class HttpEventGen;
 class HttpTransaction
 {
 public:
+    ~HttpTransaction();
     static HttpTransaction* attach_my_transaction(HttpFlowData* session_data,
         HttpEnums::SourceId source_id);
-    static void delete_transaction(HttpTransaction* transaction);
+    static void delete_transaction(HttpTransaction* transaction, HttpFlowData* session_data);
 
     HttpMsgRequest* get_request() const { return request; }
     void set_request(HttpMsgRequest* request_) { request = request_; }
@@ -54,9 +55,7 @@ public:
         { return trailer[source_id]; }
     void set_trailer(HttpMsgTrailer* trailer_, HttpEnums::SourceId source_id)
         { trailer[source_id] = trailer_; }
-
-    HttpMsgBody* get_body() const { return latest_body; }
-    void set_body(HttpMsgBody* latest_body_);
+    void set_body(HttpMsgBody* latest_body);
 
     HttpInfractions* get_infractions(HttpEnums::SourceId source_id);
     HttpEventGen* get_events(HttpEnums::SourceId source_id);
@@ -64,15 +63,24 @@ public:
     void set_one_hundred_response();
     bool final_response() const { return !second_response_expected; }
 
+    void clear_section();
+    bool is_clear() const { return active_sections == 0; }
+    void garbage_collect();
+
+    HttpTransaction* next = nullptr;
+
 private:
     HttpTransaction() = default;
-    ~HttpTransaction();
+    void discard_section(HttpMsgSection* section);
+
+    uint64_t active_sections = 0;
 
     HttpMsgRequest* request = nullptr;
     HttpMsgStatus* status = nullptr;
     HttpMsgHeader* header[2] = { nullptr, nullptr };
     HttpMsgTrailer* trailer[2] = { nullptr, nullptr };
-    HttpMsgBody* latest_body = nullptr;
+    HttpMsgBody* body_list = nullptr;
+    HttpMsgSection* discard_list = nullptr;
     HttpInfractions* infractions[2] = { nullptr, nullptr };
     HttpEventGen* events[2] = { nullptr, nullptr };
 

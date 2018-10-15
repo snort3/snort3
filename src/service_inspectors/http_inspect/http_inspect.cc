@@ -29,6 +29,7 @@
 #include "protocols/packet.h"
 #include "stream/stream.h"
 
+#include "http_context_data.h"
 #include "http_js_norm.h"
 #include "http_msg_body.h"
 #include "http_msg_body_chunk.h"
@@ -81,24 +82,22 @@ bool HttpInspect::configure(SnortConfig* )
 
 InspectSection HttpInspect::get_latest_is(const Packet* p)
 {
-    const HttpFlowData* const session_data =
-        (HttpFlowData*)p->flow->get_flow_data(HttpFlowData::inspector_id);
+    HttpMsgSection* current_section = HttpContextData::get_snapshot(p);
 
-    if ((session_data == nullptr) || (session_data->latest_section == nullptr))
+    if (current_section == nullptr)
         return HttpEnums::IS_NONE;
 
-    return session_data->latest_section->get_inspection_section();
+    return current_section->get_inspection_section();
 }
 
 SourceId HttpInspect::get_latest_src(const Packet* p)
 {
-    const HttpFlowData* const session_data =
-        (HttpFlowData*)p->flow->get_flow_data(HttpFlowData::inspector_id);
+    HttpMsgSection* current_section = HttpContextData::get_snapshot(p);
 
-    if ((session_data == nullptr) || (session_data->latest_section == nullptr))
+    if (current_section == nullptr)
         return HttpEnums::SRC__NOT_COMPUTE;
 
-    return session_data->latest_section->get_source_id();
+    return current_section->get_source_id();
 }
 
 bool HttpInspect::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
@@ -127,13 +126,12 @@ bool HttpInspect::get_buf(unsigned id, Packet* p, InspectionBuffer& b)
 bool HttpInspect::http_get_buf(unsigned id, uint64_t sub_id, uint64_t form, Packet* p,
     InspectionBuffer& b)
 {
-    const HttpFlowData* const session_data =
-        (HttpFlowData*)p->flow->get_flow_data(HttpFlowData::inspector_id);
+    HttpMsgSection* current_section = HttpContextData::get_snapshot(p);
 
-    if ((session_data == nullptr) || (session_data->latest_section == nullptr))
+    if (current_section == nullptr)
         return false;
 
-    const Field& buffer = session_data->latest_section->get_classic_buffer(id, sub_id, form);
+    const Field& buffer = current_section->get_classic_buffer(id, sub_id, form);
 
     if (buffer.length() <= 0)
         return false;
@@ -166,16 +164,14 @@ bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBu
     return get_buf(ibt, p, b);
 }
 
-int HttpInspect::get_xtra_trueip(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
+int HttpInspect::get_xtra_trueip(Flow*, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
-    const HttpFlowData* const session_data =
-        (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
+    HttpMsgSection* current_section = HttpContextData::get_snapshot(nullptr);
 
-    if ((session_data == nullptr) || (session_data->latest_section == nullptr))
+    if (current_section == nullptr)
         return 0;
 
-    const HttpTransaction* const transaction = session_data->latest_section->get_transaction();
-    HttpMsgHeader* const req_header = transaction->get_header(SRC_CLIENT);
+    HttpMsgHeader* const req_header = current_section->get_header(SRC_CLIENT);
     if (req_header == nullptr)
         return 0;
     const Field& true_ip = req_header->get_true_ip_addr();
@@ -188,16 +184,14 @@ int HttpInspect::get_xtra_trueip(Flow* flow, uint8_t** buf, uint32_t* len, uint3
     return 1;
 }
 
-int HttpInspect::get_xtra_uri(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
+int HttpInspect::get_xtra_uri(Flow*, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
-    const HttpFlowData* const session_data =
-        (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
+    HttpMsgSection* current_section = HttpContextData::get_snapshot(nullptr);
 
-    if ((session_data == nullptr) || (session_data->latest_section == nullptr))
+    if (current_section == nullptr)
         return 0;
 
-    const HttpTransaction* const transaction = session_data->latest_section->get_transaction();
-    HttpMsgRequest* const request = transaction->get_request();
+    HttpMsgRequest* const request = current_section->get_request();
     if (request == nullptr)
         return 0;
     const Field& uri = request->get_uri();
@@ -211,16 +205,14 @@ int HttpInspect::get_xtra_uri(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t
     return 1;
 }
 
-int HttpInspect::get_xtra_host(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
+int HttpInspect::get_xtra_host(Flow*, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
-    const HttpFlowData* const session_data =
-        (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
+    HttpMsgSection* current_section = HttpContextData::get_snapshot(nullptr);
 
-    if ((session_data == nullptr) || (session_data->latest_section == nullptr))
+    if (current_section == nullptr)
         return 0;
 
-    const HttpTransaction* const transaction = session_data->latest_section->get_transaction();
-    HttpMsgHeader* const req_header = transaction->get_header(SRC_CLIENT);
+    HttpMsgHeader* const req_header = current_section->get_header(SRC_CLIENT);
     if (req_header == nullptr)
         return 0;
     const Field& host = req_header->get_header_value_norm(HEAD_HOST);
@@ -237,21 +229,19 @@ int HttpInspect::get_xtra_host(Flow* flow, uint8_t** buf, uint32_t* len, uint32_
 // The name of this method reflects its legacy purpose. We actually return the normalized data
 // from a response message body which may include other forms of normalization in addition to
 // JavaScript normalization. But if you don't turn JavaScript normalization on you get nothing.
-int HttpInspect::get_xtra_jsnorm(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
+int HttpInspect::get_xtra_jsnorm(Flow*, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
-    const HttpFlowData* const session_data =
-        (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
+    HttpMsgSection* current_section = HttpContextData::get_snapshot(nullptr);
 
-    if ((session_data == nullptr) || (session_data->latest_section == nullptr) ||
-        (session_data->latest_section->get_source_id() != SRC_SERVER) ||
-        !session_data->latest_section->get_params()->js_norm_param.normalize_javascript)
+    if ((current_section == nullptr) ||
+        (current_section->get_source_id() != SRC_SERVER) ||
+        !current_section->get_params()->js_norm_param.normalize_javascript)
         return 0;
 
-    const HttpTransaction* const transaction = session_data->latest_section->get_transaction();
-    HttpMsgBody* const body = transaction->get_body();
+    HttpMsgBody* const body = current_section->get_body();
     if (body == nullptr)
         return 0;
-    assert((void*)body == (void*)session_data->latest_section);
+    assert((void*)body == (void*)current_section);
     const Field& detect_data = body->get_detect_data();
     if (detect_data.length() <= 0)
         return 0;
@@ -288,6 +278,7 @@ void HttpInspect::eval(Packet* p)
     {
         DetectionEngine::disable_content(p);
     }
+
 #ifdef REG_TEST
     else
     {
@@ -300,6 +291,15 @@ void HttpInspect::eval(Packet* p)
     }
 #endif
 
+    // If current transaction is complete then we are done with it. This is strictly a memory
+    // optimization not necessary for correct operation.
+    if ((source_id == SRC_SERVER) && (session_data->type_expected[SRC_SERVER] == SEC_STATUS) &&
+         session_data->transaction[SRC_SERVER]->final_response())
+    {
+        HttpTransaction::delete_transaction(session_data->transaction[SRC_SERVER], session_data);
+        session_data->transaction[SRC_SERVER] = nullptr;
+    }
+
     // Whenever we process a packet we set these flags. If someone asks for an extra data
     // buffer the JIT code will figure out if we actually have it.
     SetExtraData(p, xtra_trueip_id);
@@ -311,6 +311,7 @@ void HttpInspect::eval(Packet* p)
 bool HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
     SourceId source_id, bool buf_owner) const
 {
+    HttpMsgSection* current_section;
     HttpFlowData* session_data = (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
     assert(session_data != nullptr);
 
@@ -319,31 +320,31 @@ bool HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
     switch (session_data->section_type[source_id])
     {
     case SEC_REQUEST:
-        session_data->latest_section = new HttpMsgRequest(
+        current_section = new HttpMsgRequest(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     case SEC_STATUS:
-        session_data->latest_section = new HttpMsgStatus(
+        current_section = new HttpMsgStatus(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     case SEC_HEADER:
-        session_data->latest_section = new HttpMsgHeader(
+        current_section = new HttpMsgHeader(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     case SEC_BODY_CL:
-        session_data->latest_section = new HttpMsgBodyCl(
+        current_section = new HttpMsgBodyCl(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     case SEC_BODY_OLD:
-        session_data->latest_section = new HttpMsgBodyOld(
+        current_section = new HttpMsgBodyOld(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     case SEC_BODY_CHUNK:
-        session_data->latest_section = new HttpMsgBodyChunk(
+        current_section = new HttpMsgBodyChunk(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     case SEC_TRAILER:
-        session_data->latest_section = new HttpMsgTrailer(
+        current_section = new HttpMsgTrailer(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     default:
@@ -355,14 +356,14 @@ bool HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
         return false;
     }
 
-    session_data->latest_section->analyze();
-    session_data->latest_section->gen_events();
-    session_data->latest_section->update_flow();
+    current_section->analyze();
+    current_section->gen_events();
+    current_section->update_flow();
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output())
     {
-        session_data->latest_section->print_section(HttpTestManager::get_output_file());
+        current_section->print_section(HttpTestManager::get_output_file());
         fflush(HttpTestManager::get_output_file());
         if (HttpTestManager::use_test_input())
         {
@@ -373,8 +374,8 @@ bool HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
     }
 #endif
 
-    session_data->latest_section->publish();
-    return session_data->latest_section->detection_required();
+    current_section->publish();
+    return current_section->detection_required();
 }
 
 void HttpInspect::clear(Packet* p)
@@ -384,12 +385,23 @@ void HttpInspect::clear(Packet* p)
     HttpFlowData* const session_data =
         (HttpFlowData*)p->flow->get_flow_data(HttpFlowData::inspector_id);
 
-    if (session_data == nullptr)
+    if ( session_data == nullptr )
         return;
-    session_data->latest_section = nullptr;
 
-    const SourceId source_id = (p->is_from_client()) ? SRC_CLIENT : SRC_SERVER;
+    HttpMsgSection* current_section = HttpContextData::clear_snapshot(p->context);
 
+    // FIXIT-M This test is necessary because sometimes we get extra clears
+    // Convert to assert when that gets fixed.
+    if ( current_section == nullptr )
+        return;
+
+    current_section->clear();
+    HttpTransaction* current_transaction = current_section->get_transaction();
+
+    const SourceId source_id = current_section->get_source_id();
+
+    //FIXIT-M This check may not apply to the transaction attached to the packet
+    //in case of offload. 
     if (session_data->detection_status[source_id] == DET_DEACTIVATING)
     {
         if (source_id == SRC_CLIENT)
@@ -403,20 +415,7 @@ void HttpInspect::clear(Packet* p)
         session_data->detection_status[source_id] = DET_OFF;
     }
 
-    if (session_data->transaction[source_id] == nullptr)
-        return;
-
-    // If current transaction is complete then we are done with it and should reclaim the space
-    if ((source_id == SRC_SERVER) && (session_data->type_expected[SRC_SERVER] == SEC_STATUS) &&
-         session_data->transaction[SRC_SERVER]->final_response())
-    {
-        HttpTransaction::delete_transaction(session_data->transaction[SRC_SERVER]);
-        session_data->transaction[SRC_SERVER] = nullptr;
-    }
-    else
-    {
-        // Get rid of most recent body section if present
-        session_data->transaction[source_id]->set_body(nullptr);
-    }
+    current_transaction->garbage_collect();
+    session_data->garbage_collect();
 }
 
