@@ -254,11 +254,6 @@ Action plugins specify a builtin action in the API which is used to
 determine verdict.  (Conversely, builtin actions don't have an associated
 plugin function.)
 
-=== Developers Guide
-
-Run doc/dev_guide.sh to generate /tmp/dev_guide.html, an annotated guide to
-the source tree.
-
 === Piglet Test Harness
 
 In order to assist with plugin development, an experimental mode called "piglet" mode
@@ -578,3 +573,35 @@ Note: calling ++RawBuffer.new()++ with no arguments returns a RawBuffer of size 
 
 Note: StreamSplitter does not have a ++new()++ method, it must be created by an inspector via
 ++Inspector.get_splitter()++
+
+=== Developers Guide
+
+Run doc/dev_guide.sh to generate /tmp/dev_guide.html, an annotated guide to
+the source tree.
+
+=== Performance Considerations for Developers
+
+* Since C compilers evaluate compound conditional expression from left to
+  right, put the costly condition last. Put the often-false condition first
+  in && expression. Put the often-true condition first in || expression.
+
+* Use emplace_back/emplace instead of push_back/insert on STL containers.
+
+* In general, unordered_map is faster than map for frequent lookups using
+  integer key on relatively static collection of unsorted elements. Whereas,
+  map is faster for frequent insertions/deletions/iterations and for
+  non-integer key such as string or custom objects. Consider the same factors
+  when deciding ordered vs. unordered multimap and set.
+
+* Iterate using range-based for loop with reference (i.e., auto&).
+
+* Be mindful of construction and destruction of temporary objects which can
+  be wasteful. Consider using std::move, std::swap, lvalue reference (&),
+  and rvalue reference (&&).
+
+* Avoid thread-local storage. When unavoidable, minimize frequent TLS access
+  by caching it to a local variable.
+
+* When writing inter-library APIs, consider interfaces depending on use cases
+  to minimize context switching. For example, if two APIs foo() and bar() are
+  needed to call, combine these into a single API to minimize jumps.
