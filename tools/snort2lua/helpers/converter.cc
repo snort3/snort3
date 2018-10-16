@@ -43,6 +43,7 @@ TableDelegation table_delegation =
     { "ips", true },
     { "network", true },
     { "normalizer", true},
+    { "stream_tcp", true},
 };
 
 std::string Converter::ips_pattern;
