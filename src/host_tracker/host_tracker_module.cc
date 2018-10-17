@@ -56,7 +56,7 @@ const Parameter HostTrackerModule::service_params[] =
 
 const Parameter HostTrackerModule::host_tracker_params[] =
 {
-    { "IP", Parameter::PT_ADDR, nullptr, "0.0.0.0/32",
+    { "ip", Parameter::PT_ADDR, nullptr, "0.0.0.0/32",
       "hosts address / cidr" },
 
     { "frag_policy", Parameter::PT_ENUM, IP_POLICIES, nullptr,
