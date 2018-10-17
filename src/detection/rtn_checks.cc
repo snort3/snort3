@@ -49,12 +49,10 @@ using namespace snort;
 static int CheckAddrPort(sfip_var_t* rule_addr, PortObject* po, Packet* p,
     uint32_t flags, int mode)
 {
-    const SfIp* pkt_addr;            /* packet IP address */
-    unsigned short pkt_port;         /* packet port */
-    int global_except_addr_flag = 0; /* global exception flag is set */
-    int any_port_flag = 0;           /* any port flag set */
-    int except_port_flag = 0;        /* port exception flag set */
-    int ip_match = 0;                /* flag to indicate addr match made */
+    const SfIp* pkt_addr;
+    unsigned short pkt_port;
+    int any_port_flag = 0;
+    int ip_match = 0;
 
     /* set up the packet particulars */
     if (mode & CHECK_SRC_IP)
@@ -63,17 +61,9 @@ static int CheckAddrPort(sfip_var_t* rule_addr, PortObject* po, Packet* p,
         pkt_port = p->ptrs.sp;
 
         if (mode & INVERSE)
-        {
-            global_except_addr_flag = flags & EXCEPT_DST_IP;
             any_port_flag = flags & ANY_DST_PORT;
-            except_port_flag = flags & EXCEPT_DST_PORT;
-        }
         else
-        {
-            global_except_addr_flag = flags & EXCEPT_SRC_IP;
             any_port_flag = flags & ANY_SRC_PORT;
-            except_port_flag = flags & EXCEPT_SRC_PORT;
-        }
     }
     else
     {
@@ -81,73 +71,32 @@ static int CheckAddrPort(sfip_var_t* rule_addr, PortObject* po, Packet* p,
         pkt_port = p->ptrs.dp;
 
         if (mode & INVERSE)
-        {
-            global_except_addr_flag = flags & EXCEPT_SRC_IP;
             any_port_flag = flags & ANY_SRC_PORT;
-            except_port_flag = flags & EXCEPT_SRC_PORT;
-        }
         else
-        {
-            global_except_addr_flag = flags & EXCEPT_DST_IP;
             any_port_flag = flags & ANY_DST_PORT;
-            except_port_flag = flags & EXCEPT_DST_PORT;
-        }
     }
 
     if (!rule_addr)
         goto bail;
 
-    if (!(global_except_addr_flag)) /*modeled after Check{Src,Dst}IP function*/
-    {
-        if (sfvar_ip_in(rule_addr, pkt_addr))
-            ip_match = 1;
-    }
-    else
-    {
-        /* global exception flag is up, we can't match on *any*
-         * of the source addresses
-         */
-
-        if (sfvar_ip_in(rule_addr, pkt_addr))
-            return 0;
-
-        ip_match=1;
-    }
+    if (sfvar_ip_in(rule_addr, pkt_addr))
+        ip_match = 1;
 
 bail:
     if (!ip_match)
-    {
         return 0;
-    }
 
     /* if the any port flag is up, we're all done (success) */
     if (any_port_flag)
-    {
         return 1;
-    }
 
     if (!(mode & (CHECK_SRC_PORT | CHECK_DST_PORT)))
-    {
         return 1;
-    }
 
     /* check the packet port against the rule port */
-    if ( !PortObjectHasPort(po,pkt_port) )
-    {
-        /* if the exception flag isn't up, fail */
-        if (!except_port_flag)
-        {
-            return 0;
-        }
-    }
-    else
-    {
-        /* if the exception flag is up, fail */
-        if (except_port_flag)
-        {
-            return 0;
-        }
-    }
+    /* if the exception flag isn't up, fail */
+    if ( !PortObjectHasPort(po, pkt_port) )
+        return 0;
 
     /* ports and address match */
     return 1;
@@ -168,8 +117,8 @@ int CheckBidirectional(Packet* p, RuleTreeNode* rtn_idx,
             if (CheckAddrPort(rtn_idx->dip, CHECK_ADDR_DST_ARGS(rtn_idx), p,
                 rtn_idx->flags, (CHECK_SRC_IP | INVERSE | (check_ports ? CHECK_SRC_PORT : 0))))
             {
-                if (!CheckAddrPort(rtn_idx->sip, CHECK_ADDR_SRC_ARGS(rtn_idx), p,
-                    rtn_idx->flags, (CHECK_DST_IP | INVERSE | (check_ports ? CHECK_DST_PORT : 0))))
+                if (!CheckAddrPort(rtn_idx->sip, CHECK_ADDR_SRC_ARGS(rtn_idx), p, rtn_idx->flags,
+                    (CHECK_DST_IP | INVERSE | (check_ports ? CHECK_DST_PORT : 0))))
                 {
                     return 0;
                 }
@@ -200,37 +149,13 @@ int CheckBidirectional(Packet* p, RuleTreeNode* rtn_idx,
     return 1;
 }
 
-/****************************************************************************
- *
- * Function: CheckSrcIp(Packet *, RuleTreeNode *, RuleFpList *)
- *
- * Purpose: Test the source IP and see if it equals the SIP of the packet
- *
- * Arguments: p => ptr to the decoded packet data structure
- *            rtn_idx => ptr to the current rule data struct
- *            fp_list => ptr to the current function pointer node
- *
- * Returns: 0 on failure (no match), 1 on success (match)
- *
- ***************************************************************************/
+// Purpose: Test the source IP and see if it equals the SIP of the packet
+// Returns: 0 on failure (no match), 1 on success (match)
 int CheckSrcIP(Packet* p, RuleTreeNode* rtn_idx, RuleFpList* fp_list, int check_ports)
 {
-    if (!(rtn_idx->flags & EXCEPT_SRC_IP))
+    if ( sfvar_ip_in(rtn_idx->sip, p->ptrs.ip_api.get_src()) )
     {
-        if ( sfvar_ip_in(rtn_idx->sip, p->ptrs.ip_api.get_src()) )
-        {
-            /* the packet matches this test, proceed to the next test */
-            return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
-        }
-    }
-    else
-    {
-        /* global exception flag is up, we can't match on *any*
-         * of the source addresses
-         */
-        if ( sfvar_ip_in(rtn_idx->sip, p->ptrs.ip_api.get_src()) )
-            return 0;
-
+        /* the packet matches this test, proceed to the next test */
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
     }
 
@@ -238,39 +163,15 @@ int CheckSrcIP(Packet* p, RuleTreeNode* rtn_idx, RuleFpList* fp_list, int check_
     return 0;
 }
 
-/****************************************************************************
- *
- * Function: CheckDstIp(Packet *, RuleTreeNode *, RuleFpList *)
- *
- * Purpose: Test the dest IP and see if it equals the DIP of the packet
- *
- * Arguments: p => ptr to the decoded packet data structure
- *            rtn_idx => ptr to the current rule data struct
- *            fp_list => ptr to the current function pointer node
- *
- * Returns: 0 on failure (no match), 1 on success (match)
- *
- ***************************************************************************/
+// Purpose: Test the dest IP and see if it equals the DIP of the packet
+// Returns: 0 on failure (no match), 1 on success (match)
 int CheckDstIP(Packet* p, RuleTreeNode* rtn_idx, RuleFpList* fp_list, int check_ports)
 {
-    if (!(rtn_idx->flags & EXCEPT_DST_IP))
+    if ( sfvar_ip_in(rtn_idx->dip, p->ptrs.ip_api.get_dst()) )
     {
-        if ( sfvar_ip_in(rtn_idx->dip, p->ptrs.ip_api.get_dst()) )
-        {
-            /* the packet matches this test, proceed to the next test */
-            return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
-        }
-    }
-    else
-    {
-        /* global exception flag is up, we can't match on *any*
-         * of the source addresses */
-        if ( sfvar_ip_in(rtn_idx->dip, p->ptrs.ip_api.get_dst()) )
-            return 0;
-
+        /* the packet matches this test, proceed to the next test */
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
     }
-
     return 0;
 }
 

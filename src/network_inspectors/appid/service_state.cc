@@ -329,7 +329,7 @@ void AppIdServiceState::check_reset(AppIdSession& asd, const SfIp* ip, uint16_t 
         else if ( ( packet_time() - sds->get_reset_time() ) >= 60 )
         {
             AppIdServiceState::remove(ip, IpProtocol::TCP, port, asd.is_decrypted());
-            // FIXIT-L - Remove if this flag not used anywhere
+            // FIXIT-RC - Remove if this flag not used anywhere
             asd.set_session_flags(APPID_SESSION_SERVICE_DELETED);
         }
     }
@@ -337,7 +337,7 @@ void AppIdServiceState::check_reset(AppIdSession& asd, const SfIp* ip, uint16_t 
 
 void AppIdServiceState::dump_stats()
 {
-    // FIXIT-L - do we need to keep ipv4 and ipv6 separate?
+    // FIXIT-L - do we need to keep ipv4 and ipv6 separate?  CRC: No.
 #if 0
     LogMessage("Service State:\n");
     if (serviceStateCache4)

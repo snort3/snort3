@@ -426,7 +426,7 @@ static const Parameter profiler_rule_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter profiler_params[] =  // FIXIT-L add help
+static const Parameter profiler_params[] =
 {
     { "modules", Parameter::PT_TABLE, profiler_time_params, nullptr,
       "module time profiling" },

@@ -274,7 +274,7 @@ public:
     FastPatternConfig* fast_pattern_config = nullptr;
     EventQueueConfig* event_queue_config = nullptr;
 
-    /* XXX XXX policy specific? */
+    /* policy specific? */
     ThresholdConfig* threshold_config = nullptr;
     RateFilterConfig* rate_filter_config = nullptr;
     DetectionFilterConfig* detection_filter_config = nullptr;

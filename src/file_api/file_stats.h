@@ -22,8 +22,6 @@
 #ifndef FILE_STATS_H
 #define FILE_STATS_H
 
-// FIXIT-M This will be refactored soon
-
 #include "framework/counts.h"
 #include "main/thread.h"
 

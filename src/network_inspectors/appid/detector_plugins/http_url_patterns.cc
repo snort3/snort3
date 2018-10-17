@@ -788,7 +788,7 @@ static int http_field_pattern_match(void* id, void*, int match_end_pos, void* da
     return 1;
 }
 
-//  FIXIT-M: Is this still necessary now that we use inspection events?
+// FIXIT-RC: Is this still necessary now that we use inspection events?
 void HttpPatternMatchers::get_http_offsets(snort::Packet* pkt, AppIdHttpSession* hsession)
 {
     constexpr auto MIN_HTTP_REQ_HEADER_SIZE = (sizeof("GET /\r\n\r\n") - 1);

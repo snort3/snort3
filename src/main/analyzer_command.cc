@@ -67,16 +67,18 @@ void ACRotate::execute(Analyzer&)
 
 void ACGetStats::execute(Analyzer&)
 {
-    // FIXIT-P This incurs locking on all threads to retrieve stats.  It could be reimplemented to
-    //  optimize for large thread counts by retrieving stats in the command and accumulating in the
-    //  main thread.
+
+    // FIXIT-P This incurs locking on all threads to retrieve stats.  It
+    // could be reimplemented to optimize for large thread counts by
+    // retrieving stats in the command and accumulating in the main thread.
     ModuleManager::accumulate(snort::SnortConfig::get_conf());
 }
 
 ACGetStats::~ACGetStats()
 {
-    // FIXIT-L This should track the owner so it can dump stats to the shell instead of the logs
-    //  when initiated by a shell command
+
+    // FIXIT-L This should track the owner so it can dump stats to the
+    // shell instead of the logs when initiated by a shell command
     DropStats();
 }
 

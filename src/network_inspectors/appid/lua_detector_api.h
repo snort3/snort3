@@ -104,8 +104,7 @@ public:
 };
 
 
-//FIXIT-M: RELOAD - Don't use this class, 
-//required now to store LSD objects
+// FIXIT-M: RELOAD - Don't use this class, required now to store LSD objects
 class LuaObject {
    
 public:

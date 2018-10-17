@@ -86,7 +86,7 @@ private:
     static const HeaderNormalizer* const header_norms[];
 
     // All of these are indexed by the relative position of the header field in the message
-    static const int MAX_HEADERS = 200;  // I'm an arbitrary number. FIXIT-L
+    static const int MAX_HEADERS = 200;  // I'm an arbitrary number. FIXIT-RC
     static const int MAX_HEADER_LENGTH = 4096; // Based on max cookie size of some browsers
 
     void parse_header_block();

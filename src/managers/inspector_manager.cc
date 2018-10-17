@@ -695,8 +695,10 @@ void InspectorManager::thread_stop(SnortConfig*)
     set_default_policy();
     InspectionPolicy* pi = snort::get_inspection_policy();
 
-    // FIXIT-H Any inspectors that were once configured/instantiated but no longer exist in the conf
-    //  cannot have their instance tterm() called and will leak!
+    // FIXIT-RC Any inspectors that were once configured/instantiated but
+    // no longer exist in the conf cannot have their instance tterm()
+    // called and will leak!
+
     if ( pi && pi->framework_policy )
     {
         for ( auto* p : pi->framework_policy->ilist )

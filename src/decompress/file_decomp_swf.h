@@ -29,7 +29,7 @@
 
 #include "file_decomp.h"
 
-/* FIXIT-L Other than the API prototypes, the other parts of this header should
+/* FIXIT-RC Other than the API prototypes, the other parts of this header should
    be private to file_decomp_swf. */
 
 /* Both ZLIB & LZMA files have an uncompressed eight byte header.  The signature is

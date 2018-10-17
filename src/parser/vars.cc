@@ -594,7 +594,7 @@ VarEntry* VarDefine(
     else
         p->id = var_id;
 
-#ifdef XXXXXXX
+#if 0
     vlen = strlen(value);
     LogMessage("Var '%s' defined, value len = %d chars", p->name, vlen);
 
@@ -654,7 +654,6 @@ const char* VarSearch(SnortConfig* sc, const char* name)
     if ((ipvar = sfvt_lookup_var(ip_vartable, name)) != nullptr)
         return ExpandVars(sc, ipvar->value);
 
-    /* XXX Return a string value */
     if (PortVarTableFind(portVarTable, name))
         return name;
 
@@ -673,24 +672,8 @@ const char* VarSearch(SnortConfig* sc, const char* name)
     return nullptr;
 }
 
-/****************************************************************************
- *
- * Function: ExpandVars()
- *
- * Purpose: expand all variables in a string
- *
- * Arguments:
- *  SnortConfig *
- *      The snort config that has the vartables.
- *  char *
- *      The name of the variable.
- *
- * Returns:
- *  char *
- *      The expanded string.  Note that the string is returned in a
- *      static variable and most likely needs to be string dup'ed.
- *
- ***************************************************************************/
+ // The expanded string.  Note that the string is returned in a
+ // static variable and most likely needs to be string dup'ed.
 const char* ExpandVars(SnortConfig* sc, const char* string)
 {
     static char estring[ 65536 ];  // FIXIT-L convert this foo to a std::string

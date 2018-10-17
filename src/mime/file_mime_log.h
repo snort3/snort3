@@ -25,6 +25,7 @@
 // Email headers and emails are also stored in the log buffer
 
 #include <cstdint>
+#include "main/snort_types.h"
 
 enum EmailUserType
 {
@@ -46,7 +47,7 @@ namespace snort
 class Flow;
 }
 
-class MailLogState
+class SO_PUBLIC MailLogState
 {
 public:
     MailLogState(MailLogConfig* conf);

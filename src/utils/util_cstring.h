@@ -109,7 +109,7 @@ inline int SnortStrToU32(const char* buffer, char** endptr,
         buffer++;
 
     // If all spaces or a negative sign is found, return error.
-    // XXX May also want to exclude '+' as well.
+    // May want to exclude '+' as well.
     if ((*buffer == '\0') || (*buffer == '-'))
         return -1;
 

@@ -94,6 +94,8 @@ static inline int check_ssl_appid_for_reinspect(AppId app_id)
 //
 // Or, register observers with THirdPartyAppIDAttributeData and modify the
 // set functions to copy the tp buffers directly into the appropriate observer.
+//
+// Or, replace ThirdParty with 1st Party http_inspect.
 static inline void process_http_session(AppIdSession& asd,
     ThirdPartyAppIDAttributeData& attribute_data, AppidChangeBits& change_bits)
 {

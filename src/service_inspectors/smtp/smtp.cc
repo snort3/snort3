@@ -1316,7 +1316,7 @@ int SmtpMime::handle_header_line(
 
     }
 
-    /* XXX Does VRT want data headers normalized?
+    /* Does VRT want data headers normalized?
      * currently the code does not normalize headers */
     if (smtp_normalizing)
     {
@@ -1574,8 +1574,6 @@ const InspectApi smtp_api =
     nullptr,                // ssn
     nullptr                 // reset
 };
-
-#undef BUILDING_SO  // FIXIT-L can't be linked dynamically yet
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =

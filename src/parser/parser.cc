@@ -269,14 +269,7 @@ static void DefineIfaceVar(SnortConfig* sc, char* iname, const uint8_t* network,
     VarDefine(sc, varbuf, valbuf);
 }
 
-/****************************************************************************
- *
- * Function  : DefineAllIfaceVars()
- * Purpose   : Find all up interfaces and define iface_ADDRESS vars for them
- * Arguments : none
- * Returns   : void function
- *
- ****************************************************************************/
+// Find all up interfaces and define iface_ADDRESS vars for them
 static void DefineAllIfaceVars(SnortConfig* sc)
 {
 

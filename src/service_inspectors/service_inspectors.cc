@@ -27,10 +27,6 @@
 
 using namespace snort;
 
-extern const BaseApi* sin_imap;
-extern const BaseApi* sin_pop;
-extern const BaseApi* sin_smtp;
-
 extern const BaseApi* sin_file[];
 extern const BaseApi* sin_http[];
 extern const BaseApi* sin_http2[];
@@ -43,11 +39,15 @@ extern const BaseApi* sin_dns;
 extern const BaseApi* sin_ftp_client;
 extern const BaseApi* sin_ftp_server;
 extern const BaseApi* sin_ftp_data;
+extern const BaseApi* sin_imap;
+extern const BaseApi* sin_pop;
 extern const BaseApi* sin_rpc_decode;
+extern const BaseApi* sin_smtp;
 extern const BaseApi* sin_ssh;
 extern const BaseApi* sin_telnet;
 extern const BaseApi* sin_wizard;
 
+// these define multiple plugins
 extern const BaseApi* sin_dce[];
 extern const BaseApi* sin_dnp3[];
 extern const BaseApi* sin_gtp[];
@@ -56,17 +56,16 @@ extern const BaseApi* sin_modbus[];
 
 const BaseApi* service_inspectors[] =
 {
-    sin_imap,
-    sin_pop,
-    sin_smtp,
-
 #ifdef STATIC_INSPECTORS
     sin_bo,
     sin_dns,
     sin_ftp_client,
     sin_ftp_server,
     sin_ftp_data,
+    sin_imap,
+    sin_pop,
     sin_rpc_decode,
+    sin_smtp,
     sin_ssh,
     sin_telnet,
     sin_wizard,

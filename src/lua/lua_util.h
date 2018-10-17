@@ -24,7 +24,7 @@
 
 #include <lua.hpp>
 
-#define LUA_DIR_SEP '/'  // FIXIT-L do we really want to hardcode this?
+#define LUA_DIR_SEP '/'
 #define SCRIPT_DIR_VARNAME "SCRIPT_DIR"
 
 namespace Lua

@@ -272,7 +272,8 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
     case RSHELL_STATE_STDERR_CONNECT_SYN_ACK:
         if (rd->parent && rd->parent->state == RSHELL_STATE_SERVER_CONNECT)
             rd->parent->state = RSHELL_STATE_USERNAME;
-        args.asd.set_service_detected();    // FIXIT-M why is this set here and not when add_service is called?
+        // FIXIT-M why is this set here and not when add_service is called?
+        args.asd.set_service_detected();
         return APPID_SUCCESS;
     default:
         goto bail;

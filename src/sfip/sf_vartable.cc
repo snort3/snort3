@@ -181,7 +181,7 @@ sfvt_expand_value_error:
     return nullptr;
 }
 
-// XXX this implementation is just used to support
+// this implementation is just used to support
 // Snort's underlying implementation better
 SfIpRet sfvt_define(vartable_t* table, const char* name, const char* value)
 {
@@ -321,12 +321,10 @@ sfip_var_t* sfvt_lookup_var(vartable_t* table, const char* name)
     if (*name == '$')
         name++;
 
-    /* XXX should I assume there will be trailing garbage or
+    /* should I assume there will be trailing garbage or
      * should I automatically find where the variable ends? */
-    for (end=name;
-        *end && !isspace((int)*end) && *end != '\\' && *end != ']';
-        end++)
-        ;
+    for (end=name; *end && !isspace((int)*end) && *end != '\\' && *end != ']'; end++);
+
     len = end - name;
 
     for (p=table->head; len && p; p=p->next)

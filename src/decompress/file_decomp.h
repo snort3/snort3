@@ -118,7 +118,7 @@ struct fd_session_t
     uint32_t Total_Out;  // total number of bytes output so far
 
     // Configuration settings
-    // FIXIT-L Compr_Depth and Decompr_Depth only support OHI and eventually should be removed
+    // FIXIT-RC Compr_Depth and Decompr_Depth only support OHI and eventually should be removed
     uint32_t Compr_Depth;
     uint32_t Decompr_Depth;
     uint32_t Modes;      // Bit mapped set of potential file/algo modes

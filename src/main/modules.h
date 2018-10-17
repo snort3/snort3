@@ -22,7 +22,7 @@
 #define MODULES_H
 
 // this is for builtin module initialization.
-// ideally, modules.cc would be refactored and several files.
+// ideally, modules.cc would be refactored into several files.
 
 #include "framework/counts.h"
 #include "main/snort_debug.h"

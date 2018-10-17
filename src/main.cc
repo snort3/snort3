@@ -709,8 +709,6 @@ static bool set_mode()
 #ifdef PIGLET
     if ( Piglet::piglet_mode() )
     {
-        // FIXIT-L the early return means that piglet and catch tests cannot
-        // be run in the same process
         main_exit_code = Piglet::main();
         return false;
     }

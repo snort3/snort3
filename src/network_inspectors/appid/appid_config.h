@@ -142,8 +142,8 @@ private:
     void process_config_directive(char* toklist[], int /* reload */);
     int load_analysis_config(const char* config_file, int reload, int instance_id);
     void display_port_config();
-    //FIXIT-M: RELOAD - Remove static, once app_info_mgr cleanup is
-    //removed from AppIdConfig::pterm
+    // FIXIT-M: RELOAD - Remove static, once app_info_mgr cleanup is
+    // removed from AppIdConfig::pterm
     static AppInfoManager& app_info_mgr;
 };
 

@@ -224,6 +224,8 @@ static DCE2_Ret DCE2_CoSetIface(DCE2_SsnData* sd, DCE2_CoTracker* cot, uint16_t 
     /* This should be set if we've gotten a Bind */
     if (cot->ctx_ids == nullptr)
         return DCE2_RET__ERROR;
+
+    // FIXIT-M these Profile aren't actually helping ...
     if (sd->trans == DCE2_TRANS_TYPE__TCP)
     {
         Profile profile(dce2_tcp_pstat_co_ctx);
@@ -232,8 +234,7 @@ static DCE2_Ret DCE2_CoSetIface(DCE2_SsnData* sd, DCE2_CoTracker* cot, uint16_t 
     {
         Profile profile(dce2_smb_pstat_co_ctx);
     }
-    // FIXIT-M add HTTP, UDP cases when these are ported
-    // same for all other instances of profiling
+    // FIXIT-M add missing cases (HTTP, UDP, ...)
 
     DCE2_CoCtxIdNode* ctx_id_node =
         (DCE2_CoCtxIdNode*)DCE2_ListFind(cot->ctx_ids, (void*)(uintptr_t)ctx_id);

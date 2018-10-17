@@ -215,7 +215,7 @@ const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_CHARSET
 
 #if defined(__clang__)
 // Designated initializers are not supported in C++11. However we're going to play compilation
-// roulette and hopes this works.
+// roulette and hope this works.
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wc99-extensions"
 #endif

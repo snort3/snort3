@@ -30,7 +30,7 @@
 #define FILTER_SPEC_BUF_LEN (40)
 #define PARSE_STACK_LEN     (12)
 
-/* FIXIT-L Other than the API prototypes, the other parts of this header should
+/* FIXIT-RC Other than the API prototypes, the other parts of this header should
    be private to file_decomp_pdf. */
 
 enum fd_PDF_States
@@ -79,7 +79,7 @@ struct fd_PDF_t
     uint8_t State;
 };
 
-// FIXIT-L don't obfuscate pointers
+// FIXIT-RC don't obfuscate pointers
 typedef fd_PDF_Parse_Stack_t* fd_PDF_Parse_Stack_p_t;
 typedef fd_PDF_Parse_t* fd_PDF_Parse_p_t;
 typedef fd_PDF_t* fd_PDF_p_t;

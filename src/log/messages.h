@@ -61,7 +61,7 @@ SO_PUBLIC void LogMessage(FILE* fh, const char*, ...) __attribute__((format (pri
 SO_PUBLIC void WarningMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
 SO_PUBLIC void ErrorMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
 
-// FIXIT-M do not call FatalError() during runtime
+// FIXIT-RC do not call FatalError() during runtime
 [[noreturn]] SO_PUBLIC void FatalError(const char*, ...) __attribute__((format (printf, 1, 2)));
 
 NORETURN_ASSERT void log_safec_error(const char*, void*, int);

@@ -47,14 +47,15 @@
  * If command doesn't need normalizing it will do nothing, except in
  * the case where we are already normalizing in which case the line
  * will get copied to the alt buffer.
+ *
  * If the command needs normalizing the normalized data will be copied
  * to the alt buffer.  If we are not already normalizing, all of the
  * data up to this point will be copied into the alt buffer first.
  *
- * XXX This may copy unwanted data if we are ignoring the data in the
- *     message and there was data that came before the command in the
- *     packet, for example if there are multiple transactions on the
- *     session or if we're normalizing QUIT.
+ * This may copy unwanted data if we are ignoring the data in the
+ * message and there was data that came before the command in the
+ * packet, for example if there are multiple transactions on the
+ * session or if we're normalizing QUIT.
  *
  * @param   p      pointer to packet structure
  * @param   ptr    pointer to beginning of command line

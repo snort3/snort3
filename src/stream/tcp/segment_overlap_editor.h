@@ -28,7 +28,7 @@
 class TcpSession;
 class TcpStreamTracker;
 
-#define STREAM_INSERT_OK  0  // FIXIT-L replace with bool
+#define STREAM_INSERT_OK  0  // FIXIT-RC replace with bool CRC: if useful else just delete
 
 struct SegmentOverlapState
 {

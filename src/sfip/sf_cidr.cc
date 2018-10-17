@@ -31,10 +31,10 @@ SfIpRet SfCidr::set(const char* src)
     return addr.set(src, &bits);
 }
 
-/* Check if ip is contained within the network specified by this addr */
-/* Returns SFIP_EQUAL if so.
- * XXX assumes that "ip" is not less specific than "addr" XXX
-*/
+// Check if ip is contained within the network specified by this addr
+// Returns SFIP_EQUAL if so.
+// assumes that "ip" is not less specific than "addr"
+
 SfIpRet SfCidr::contains(const SfIp* ip) const
 {
     uint16_t i;

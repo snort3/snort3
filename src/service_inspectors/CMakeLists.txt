@@ -25,8 +25,11 @@ if (STATIC_INSPECTORS)
         $<TARGET_OBJECTS:dns>
         $<TARGET_OBJECTS:ftp_telnet>
         $<TARGET_OBJECTS:gtp_inspect>
+        $<TARGET_OBJECTS:imap>
         $<TARGET_OBJECTS:modbus>
+        $<TARGET_OBJECTS:pop>
         $<TARGET_OBJECTS:rpc_decode>
+        $<TARGET_OBJECTS:smtp>
         $<TARGET_OBJECTS:ssh>
         $<TARGET_OBJECTS:wizard>
     )
@@ -35,10 +38,7 @@ endif()
 set(STATIC_SERVICE_INSPECTOR_PLUGINS
     $<TARGET_OBJECTS:http_inspect>
     $<TARGET_OBJECTS:http2_inspect>
-    $<TARGET_OBJECTS:imap>
-    $<TARGET_OBJECTS:pop>
     $<TARGET_OBJECTS:sip>
-    $<TARGET_OBJECTS:smtp>
     $<TARGET_OBJECTS:ssl>
     ${STATIC_INSPECTOR_OBJS}
     CACHE INTERNAL "STATIC_SERVICE_INSPECTOR_PLUGINS"

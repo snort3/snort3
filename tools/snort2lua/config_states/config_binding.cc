@@ -185,8 +185,8 @@ bool Binding::convert(std::istringstream& data_stream)
         {
             Converter bind_cv;
 
-            // This will ensure that the final ouput file contains
-            // lua syntax - even if their are only rules in the file
+            // This will ensure that the final output file contains
+            // lua syntax - even if there are only rules in the file
             bind_cv.get_table_api().open_top_level_table("ips");
             bind_cv.get_table_api().close_table();
 

@@ -180,15 +180,6 @@ static const Command appid_cmds[] =
     { nullptr, nullptr, nullptr, nullptr }
 };
 
-//  FIXIT-M Add appid_rules back in once we start using it.
-#ifdef REMOVED_WHILE_NOT_IN_USE
-static const RuleMap appid_rules[] =
-{
-    { 0 /* rule id */, "description" },
-    { 0, nullptr }
-};
-#endif
-
 static const PegInfo appid_pegs[] =
 {
     { CountType::SUM, "packets", "count of packets received" },

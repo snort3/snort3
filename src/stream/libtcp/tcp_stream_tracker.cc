@@ -240,12 +240,6 @@ void TcpStreamTracker::set_splitter(const Flow* flow)
         set_splitter(new AtomSplitter(!client_tracker) );
 }
 
-void TcpStreamTracker::reset_splitter( )
-{
-    if ( splitter )
-        splitter->reset();
-}
-
 void TcpStreamTracker::init_on_syn_sent(TcpSegmentDescriptor& tsd)
 {
     DeepProfile profile(s5TcpNewSessPerfStats);

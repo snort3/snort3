@@ -190,7 +190,7 @@ RpcServiceDetector::RpcServiceDetector(ServiceDiscovery* sd)
         {
             if (rpc->r_name)
             {
-                // FIXIT-M - the memory allocate here may not be freed...
+                // FIXIT-RC - the memory allocated here may not be freed...
                 prog = (RPCProgram*)snort_calloc(sizeof(RPCProgram));
                 prog->program = rpc->r_number;
                 prog->next = rpc_programs;
@@ -283,7 +283,7 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
     uint32_t val = 0;
     const uint8_t* end = nullptr;
     const RPCProgram* rprog = nullptr;
-    //FIXIT-M - Avoid thread locals
+    // FIXIT-M - Avoid thread locals
     static THREAD_LOCAL SnortProtocolId sunrpc_snort_protocol_id = UNKNOWN_PROTOCOL_ID;
 
     if (!size)

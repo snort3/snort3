@@ -80,9 +80,6 @@ public:
     virtual bool is_paf() { return false; }
     virtual unsigned max(Flow*);
 
-    // FIXIT-L reset is not currently used and may not be needed at all.
-    //         determine if this is so and remove if possible
-    virtual void reset() { }
     virtual void update() { }
 
     unsigned get_max_pdu() { return max_pdu; }
@@ -107,8 +104,10 @@ public:
     AtomSplitter(bool, uint16_t size = 0);
 
     Status scan(Flow*, const uint8_t*, uint32_t, uint32_t, uint32_t*) override;
-    void reset() override;
     void update() override;
+
+private:
+    void reset();
 
 private:
     uint16_t base;
@@ -138,10 +137,11 @@ public:
 
     Status scan(Flow*, const uint8_t*, uint32_t, uint32_t, uint32_t*) override;
 
+private:
     bool saw_data()
     { return byte_count > 0; }
 
-    void reset() override
+    void reset()
     { byte_count = 0; }
 
 private:

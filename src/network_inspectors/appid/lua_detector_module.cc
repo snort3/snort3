@@ -174,8 +174,8 @@ LuaDetectorManager::~LuaDetectorManager()
             lua_getfield(L, -1, lsd->package_info.cleanFunctionName.c_str());
             if ( lua_isfunction(L, -1) )
             {
-                //FIXIT-M: RELOAD - use lua references to get user data object from stack
-                //first parameter is DetectorUserData
+                // FIXIT-M: RELOAD - use lua references to get user data object from stack
+                // first parameter is DetectorUserData
                 std::string name = lsd->package_info.name + "_";
                 lua_getglobal(L, name.c_str());
 
@@ -201,8 +201,10 @@ void LuaDetectorManager::initialize(AppIdConfig& config, int is_control)
         return;
 
     lua_detector_mgr = new LuaDetectorManager(config, is_control);
+
     if (!lua_detector_mgr->L)
-        FatalError("Error - appid: can not create new luaState, instance=%u\n", get_instance_id());
+        FatalError("Error - appid: can not create new luaState, instance=%u\n",
+            get_instance_id());
 
     lua_detector_mgr->initialize_lua_detectors();
     lua_detector_mgr->activate_lua_detectors();

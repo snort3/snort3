@@ -73,7 +73,7 @@ public:
     virtual void clear_session(
         bool free_flow_data, bool flush_segments, bool restart, snort::Packet* p = nullptr) = 0;
 
-    // FIXIT-L these 2 function names convey no meaning afaict... figure out
+    // FIXIT-RC these 2 function names convey no meaning afaict... figure out
     // why are they called and name appropriately...
     virtual void retransmit_process(snort::Packet* p)
     {

@@ -188,7 +188,7 @@ static void register_profiles()
 static void pass_pkts(Packet*) { }
 static MainHook_f main_hook = pass_pkts;
 
-static void set_policy(Packet* p)  // FIXIT-M delete this?
+static void set_policy(Packet* p)
 {
     set_default_policy();
     p->user_inspection_policy_id = get_inspection_policy()->user_policy_id;

@@ -121,8 +121,8 @@ IpsOption::EvalStatus SipMethodOption::eval(Cursor&, Packet* p)
         if ( !ropts->method_data )
             return NO_MATCH;
 
-        //FIXIT-P This should really be evaluated once per request instead of once
-        //per rule option evaluation.
+        // FIXIT-P This should really be evaluated once per request instead of once
+        // per rule option evaluation.
         std::string method(ropts->method_data, ropts->method_len);
         std::transform(method.begin(), method.end(), method.begin(), ::toupper);
 

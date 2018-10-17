@@ -651,7 +651,7 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
     bind["http_proxy"] = &bind_http_proxy;
     bind["http_server"] = &bind_http_server;
 
-    // FIXIT-N add when there is a way to make this play with http_inspect bindings
+    // FIXIT-M add when there is a way to make this play with http_inspect bindings
     // port 80 should not be added by default. If explicitly configured and conflicting
     // with other bindings, punt to wizard
     bind["http_proxy"]->print_binding(false);

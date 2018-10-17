@@ -66,19 +66,11 @@ public:
     const Api* get_api()
     { return api; }
 
-    std::string get_error()
-    { return error; }
-
 protected:
     lua_State* L;
     std::string target;
     snort::Module* module;
     snort::SnortConfig* snort_conf;
-
-    std::string error;  // FIXIT-L unused
-
-    void set_error(const std::string& s)  // FIXIT-L unused
-    { error = s; }
 
 private:
     const Api* api;

@@ -183,14 +183,6 @@ void MpseManager::print_qinfo()
     sfksearch_print_qinfo();
     acsmx2_print_qinfo();
 }
-
-// this is commented out of snort.cc
-// combine with above?
-void MpseManager::print_search_engine_stats()
-{
-    IntelPmPrintBufferStats();
-}
-
 #endif
 
 #ifdef PIGLET

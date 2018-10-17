@@ -1113,9 +1113,11 @@ bool setSSLSquelch(Packet* p, int type, AppId appId, AppIdInspector& inspector)
     const SfIp* dip = p->ptrs.ip_api.get_dst();
     const SfIp* sip = p->ptrs.ip_api.get_src();
 
-    // FIXIT-H: Passing appId to create_future_session() is incorrect. We need to pass the snort_protocol_id associated with appId.
-    AppIdSession* asd = AppIdSession::create_future_session(p, sip, 0, dip, p->ptrs.dp, IpProtocol::TCP,
-        appId, 0, inspector);
+    // FIXIT-H: Passing appId to create_future_session() is incorrect. We
+    // need to pass the snort_protocol_id associated with appId.
+    AppIdSession* asd = AppIdSession::create_future_session(
+        p, sip, 0, dip, p->ptrs.dp, IpProtocol::TCP, appId, 0, inspector);
+
     if ( asd )
     {
         switch (type)

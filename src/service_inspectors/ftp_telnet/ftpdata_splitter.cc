@@ -51,9 +51,8 @@ StreamSplitter::Status FtpDataSplitter::scan(Flow* flow, const uint8_t*, uint32_
         if(expected_seg_size == 0)
         {
             // FIXIT-M: Can we do better than this guess if no MSS is specified?
-            //          Malware detection won't work if expected_seg_size
-            //          doesn't match the payload lengths on packets before
-            //          the last packet.
+            // Malware detection won't work if expected_seg_size doesn't match
+            // the payload lengths on packets before the last packet.
             expected_seg_size = 1448;
 
             if(flow->session and flow->pkt_type == PktType::TCP)

@@ -147,7 +147,7 @@ inline uint16_t cksum_add(const uint16_t* buf, std::size_t len, uint32_t cksum)
         }
         sp += sn;
 
-        /* XXX - unroll loop using Duff's device. */
+        /* unroll loop using Duff's device. */
         while (--n > 0)
         {
             cksum += sp[0];

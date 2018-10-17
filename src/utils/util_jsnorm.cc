@@ -637,7 +637,6 @@ static int PNormDecode(char* src, uint16_t srclen, char* dst, uint16_t dstlen, u
         ptr++;
     }
 
-    //dst = s.output.data;  FIXIT-L dead store; should be?
     *bytes_copied = s.output.len;
 
     return iRet;
@@ -1277,7 +1276,6 @@ int JSNormalizeDecode(const char* src, uint16_t srclen, char* dst, uint16_t dest
         (*ptr)++;
     }
 
-    //dst = s.dest.data; FIXIT-L dead store; should be?
     *bytes_copied = s.dest.len;
 
     return RET_OK;

@@ -32,8 +32,8 @@ int32_t str_to_code(const uint8_t* text, const int32_t text_len, const StrCode t
 {
     for (int32_t k=0; table[k].name != nullptr; k++)
     {
-        if ((text_len == (int)strlen(table[k].name)) && (memcmp(text, table[k].name, text_len) ==
-            0))
+        if ((text_len == (int)strlen(table[k].name)) &&
+            (memcmp(text, table[k].name, text_len) == 0))
         {
             return table[k].code;
         }

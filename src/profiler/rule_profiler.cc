@@ -24,11 +24,11 @@
 
 #include "rule_profiler.h"
 
-//#include <algorithm>
-//#include <functional>
-//#include <iostream>
-//#include <sstream>
-//#include <vector>
+#include <algorithm>
+#include <functional>
+#include <iostream>
+#include <sstream>
+#include <vector>
 
 // this include eventually leads to possible issues with std::chrono:
 // 1.  Undefined or garbage value returned to caller (rep count())

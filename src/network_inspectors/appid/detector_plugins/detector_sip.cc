@@ -330,31 +330,45 @@ static int get_sip_client_app(void* patternMatcher, const char* pattern, uint32_
 void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, const SfIp* cliIp,
     uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol proto, int16_t app_id)
 {
-    //  FIXIT-H: Passing app_id instead of SnortProtocolId to create_future_session is incorrect. We need to look up snort_protocol_id.
-    AppIdSession* fp = AppIdSession::create_future_session(pkt, cliIp, cliPort, srvIp, srvPort,
-        proto, app_id, APPID_EARLY_SESSION_FLAG_FW_RULE, handler->get_inspector());
+    //  FIXIT-RC: Passing app_id instead of SnortProtocolId to
+    //  create_future_session is incorrect. We need to look up
+    //  snort_protocol_id.
+
+    AppIdSession* fp = AppIdSession::create_future_session(
+        pkt, cliIp, cliPort, srvIp, srvPort, proto, app_id,
+        APPID_EARLY_SESSION_FLAG_FW_RULE, handler->get_inspector());
+
     if ( fp )
     {
         fp->client.set_id(asd.client.get_id());
         fp->payload.set_id(asd.payload.get_id());
         fp->service.set_id(APP_ID_RTP);
+
         // FIXIT-H : snort 2.9.x updated the flag to APPID_SESSION_EXPECTED_EVALUATE.
         // Check if it is needed here as well.
         //initialize_expected_session(asd, fp, APPID_SESSION_EXPECTED_EVALUATE);
-        initialize_expected_session(asd, *fp, APPID_SESSION_IGNORE_ID_FLAGS, APP_ID_APPID_SESSION_DIRECTION_MAX);
+
+        initialize_expected_session(
+            asd, *fp, APPID_SESSION_IGNORE_ID_FLAGS, APP_ID_APPID_SESSION_DIRECTION_MAX);
     }
 
     // create an RTCP flow as well
-    AppIdSession* fp2 = AppIdSession::create_future_session(pkt, cliIp, cliPort + 1, srvIp,
-        srvPort + 1, proto, app_id, APPID_EARLY_SESSION_FLAG_FW_RULE, handler->get_inspector());
+
+    AppIdSession* fp2 = AppIdSession::create_future_session(
+        pkt, cliIp, cliPort + 1, srvIp, srvPort + 1, proto, app_id,
+        APPID_EARLY_SESSION_FLAG_FW_RULE, handler->get_inspector());
+
     if ( fp2 )
     {
         fp2->client.set_id(asd.client.get_id());
         fp2->payload.set_id(asd.payload.get_id());
         fp2->service.set_id(APP_ID_RTCP);
+
         // FIXIT-H : same comment as above
         //initialize_expected_session(asd, fp2, APPID_SESSION_EXPECTED_EVALUATE);
-        initialize_expected_session(asd, *fp2, APPID_SESSION_IGNORE_ID_FLAGS, APP_ID_APPID_SESSION_DIRECTION_MAX);
+
+        initialize_expected_session(
+            asd, *fp2, APPID_SESSION_IGNORE_ID_FLAGS, APP_ID_APPID_SESSION_DIRECTION_MAX);
     }
 }
 
@@ -419,8 +433,11 @@ SipServiceDetector::SipServiceDetector(ServiceDiscovery* sd)
         { SIP_PORT, IpProtocol::TCP, false }
     };
 
-    // FIXIT - detector instance in each packet thread is calling this single sip event handler,
-    // last guy end wins, works now because it is all the same but this is not right...
+    // FIXIT-RC - detector instance in each packet thread is calling this
+    // single sip event handler, last guy end wins, works now because it is
+    // all the same but this is not right...
+    // Does this still apply?
+
     handler->get_inspector().get_sip_event_handler().set_service(this);
     handler->register_detector(name, this, proto);
 }

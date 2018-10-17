@@ -811,9 +811,8 @@ static int fpGetFinalPattern(
 
             if (bytes < (int)pmd->pattern_size)
             {
-                /* The pattern is all '\0' - use the whole pattern
-                 * XXX This potentially hurts the performance boost
-                 * gained by stripping leading zeros */
+                // The pattern is all '\0' - use the whole pattern. This potentially
+                // hurts the performance boost gained by stripping leading zeros.
                 if (bytes == 0)
                 {
                     bytes = pmd->pattern_size;

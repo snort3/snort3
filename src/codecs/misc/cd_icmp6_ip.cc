@@ -80,10 +80,10 @@ bool Icmp6IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         return false;
     }
 
-//    orig_frag_offset = ntohs(GET_ORIG_IPH_OFF(p));
-//    orig_frag_offset &= 0x1FFF;
+    // orig_frag_offset = ntohs(GET_ORIG_IPH_OFF(p));
+    // orig_frag_offset &= 0x1FFF;
 
-    // XXX NOT YET IMPLEMENTED - fragments inside ICMP payload
+    // FIXIT-L NOT YET IMPLEMENTED - fragments inside ICMP payload
 
     // since we know the protocol ID in this layer (and NOT the
     // next layer), set the correct protocol here.  Normally,

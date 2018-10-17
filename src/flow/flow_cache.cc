@@ -172,7 +172,7 @@ unsigned FlowCache::prune_stale(uint32_t thetime, const Flow* save_me)
     while ( flow and pruned <= cleanup_flows )
     {
 #if 0
-        // FIXIT-H this loops forever if 1 flow in cache
+        // FIXIT-RC this loops forever if 1 flow in cache
         if (flow == save_me)
         {
             break;

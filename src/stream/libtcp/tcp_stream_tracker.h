@@ -255,7 +255,6 @@ public:
     virtual void init_flush_policy();
     virtual void set_splitter(snort::StreamSplitter* ss);
     virtual void set_splitter(const snort::Flow* flow);
-    virtual void reset_splitter( );
 
     virtual void init_on_syn_sent(TcpSegmentDescriptor&);
     virtual void init_on_syn_recv(TcpSegmentDescriptor&);

@@ -152,7 +152,7 @@ void FlowControl::timeout_flows(time_t cur_time)
 
 void FlowControl::preemptive_cleanup()
 {
-    // FIXIT-H is there a possibility of this looping forever?
+    // FIXIT-RC is there a possibility of this looping forever?
     while ( memory::MemoryCap::over_threshold() )
     {
         if ( !prune_one(PruneReason::PREEMPTIVE, true) )

@@ -54,11 +54,6 @@ public:
 
     void show_dynamic_stats() override;
 
-    // FIXIT-L delete file_id gid when bogus rules are eliminated
-    // (this ensures those rules don't fire on every packet)
-    unsigned get_gid() const override
-    { return 146; }
-
 private:
     FileMagicRule rule;
     FileMagicData magic;

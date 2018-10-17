@@ -47,7 +47,6 @@ struct ReferenceSystemNode
 
 ReferenceSystemNode* ReferenceSystemAdd(snort::SnortConfig*, const char*, const char* = nullptr);
 
-/* XXX: update to point to the ReferenceURLNode in the referenceURL list */
 struct ReferenceNode
 {
     char* id;

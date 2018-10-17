@@ -53,9 +53,6 @@ using namespace snort;
 // and then clone to thread specific after all rules are loaded.  s_scratch is
 // a prototype that is large enough for all uses.
 
-// FIXIT-L Determine if it's worthwhile to use a single scratch space for both
-// "regex" and "sd_pattern" keywords.
-// FIXIT-L See ips_regex.cc for more information.
 static hs_scratch_t* s_scratch = nullptr;
 static unsigned scratch_index;
 

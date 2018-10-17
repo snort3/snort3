@@ -551,7 +551,7 @@ void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 {
     const ip::IP4Hdr* const ip4h = reinterpret_cast<const ip::IP4Hdr*>(raw_pkt);
 
-    // FIXIT-H this does NOT obfuscate correctly
+    // FIXIT-RC this does NOT obfuscate correctly
     if (snort::SnortConfig::obfuscate())
     {
         TextLog_Print(text_log, "xxx.xxx.xxx.xxx -> xxx.xxx.xxx.xxx");

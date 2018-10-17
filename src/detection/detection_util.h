@@ -40,7 +40,7 @@ struct DataBuffer
     unsigned len;
 };
 
-// FIXIT-L event trace should be placed in its own files
+// FIXIT-RC event trace should be placed in its own files
 void EventTrace_Init();
 void EventTrace_Term();
 

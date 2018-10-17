@@ -113,7 +113,7 @@ RegexOption::RegexOption(const RegexConfig& c) :
 
     if ( /*hs_error_t err =*/ hs_alloc_scratch(config.db, &s_scratch) )
     {
-        // FIXIT-L why is this failing but everything is working?
+        // FIXIT-RC why is this failing but everything is working?
         //ParseError("can't initialize regex for '%s' (%d) %p",
         //    config.re.c_str(), err, s_scratch);
     }

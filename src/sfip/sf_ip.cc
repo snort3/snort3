@@ -159,10 +159,8 @@ static inline int _netmask_str_to_bit_count(char* mask, int family)
     int bits, i, nBits, nBytes;
     uint8_t* bytes = (uint8_t*)buf;
 
-    /* XXX
-     * Mask not validated.
-     * Only sfip_pton should be using this function, and using it safely.
-     * XXX */
+    // Mask not validated.
+    // Only sfip_pton should be using this function, and using it safely.
 
     if (inet_pton(family, mask, buf) < 1)
         return -1;

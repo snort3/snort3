@@ -35,7 +35,7 @@ public:
     static void register_module(const char*, const char*, snort::Module*);
     static void register_module(const char*, const char*, snort::get_profile_stats_fn);
 
-    // FIXIT-L do we need to call on main thread?
+    // FIXIT-RC do we need to call on main thread?  we should know the answer by now.
     // call from packet threads, just before thread termination
     static void consolidate_stats();
     static void reset_stats();

@@ -289,11 +289,13 @@ static inline int ssh_client_validate_keyx(uint16_t offset, const uint8_t* data,
             if (fd->pos >= fd->plen)
             {
                 offset++;
-                // FIXIT-L if offset > size then there is probably a D-H Key Exchange Init packet
-                // in this payload
-                // For now parsing the Key Exchange Init is good enough to declare valid key
-                // exchange but for
-                // future enhance parsing to validate the D-H Key Exchange Init.
+
+                // FIXIT-L if offset > size then there is probably a D-H
+                // Key Exchange Init packet in this payload. For now parsing
+                // the Key Exchange Init is good enough to declare valid
+                // key exchange but for future enhance parsing to validate
+                // the D-H Key Exchange Init.
+
                 if (offset == size)
                     return APPID_SUCCESS;
                 else

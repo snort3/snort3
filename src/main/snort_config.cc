@@ -253,7 +253,7 @@ SnortConfig::~SnortConfig()
             if ( scratch_handlers[i - 1].second )
                 scratch_handlers[i - 1].second(this);
         }
-        // FIXIT-T: Do we need to shrink_to_fit() state->scratch at this point?
+        // FIXIT-L: Do we need to shrink_to_fit() state->scratch at this point?
     }
 
     FreeRuleLists(this);

@@ -359,8 +359,7 @@ GENERIC sfrt_search(const SfIp* ip, unsigned char len, table_t* table)
     else
         return nullptr;
 
-    /* FIXIT-M - Is is true that we don't support v6 yet? */
-    /* IPv6 not yet supported */
+    // FIXIT-RC IPv6 not yet supported by sfrt?
     if (table->ip_type == IPv6)
         return nullptr;
 

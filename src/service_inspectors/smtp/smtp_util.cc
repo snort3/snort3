@@ -38,15 +38,11 @@ using namespace snort;
 void SMTP_GetEOL(const uint8_t* ptr, const uint8_t* end,
     const uint8_t** eol, const uint8_t** eolm)
 {
-    const uint8_t* tmp_eol;
+    assert(ptr and end and eol and eolm);
+
     const uint8_t* tmp_eolm;
+    const uint8_t* tmp_eol = (uint8_t*)memchr(ptr, '\n', end - ptr);
 
-    /* XXX maybe should fatal error here since none of these
-     * pointers should be NULL */
-    if (ptr == nullptr || end == nullptr || eol == nullptr || eolm == nullptr)
-        return;
-
-    tmp_eol = (uint8_t*)memchr(ptr, '\n', end - ptr);
     if (tmp_eol == nullptr)
     {
         tmp_eol = end;

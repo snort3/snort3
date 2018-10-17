@@ -811,8 +811,6 @@ const InspectApi imap_api =
     nullptr  // reset
 };
 
-#undef BUILDING_SO  // FIXIT-L can't be linked dynamically yet
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {

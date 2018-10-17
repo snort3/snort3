@@ -159,7 +159,6 @@ struct DefaultRuleInterface
             for ( int i = 0; i < root.num_children; ++i )
             {
                 auto& child_state = root.children[i]->state[get_instance_id()];
-                // FIXIT-L rename to something like latency_timeout_count
                 ++child_state.latency_timeouts;
                 ++child_state.latency_suspends;
             }
@@ -171,7 +170,6 @@ struct DefaultRuleInterface
         {
             for ( int i = 0; i < root.num_children; ++i )
             {
-                // FIXIT-L rename to something like latency_timeout_count
                 ++root.children[i]->state[get_instance_id()].latency_timeouts;
             }
         }

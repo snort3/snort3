@@ -2114,7 +2114,7 @@ static int add_port_pattern_client(lua_State* L)
     int index = 1;
 
     IpProtocol protocol = (IpProtocol)lua_tonumber(L, ++index);
-    uint16_t port = 0;      //port      = lua_tonumber(L, ++index);  FIXIT-L - why commented out?
+    uint16_t port = 0;      // port = lua_tonumber(L, ++index);  FIXIT-RC - why commented out?
     const char* pattern = lua_tolstring(L, ++index, &patternSize);
     unsigned position = lua_tonumber(L, ++index);
     AppId appId = lua_tointeger(L, ++index);

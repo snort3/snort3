@@ -115,7 +115,7 @@ LogLuaApi::LogLuaApi(string& s, string& c, unsigned v) : LuaApi(s, c)
 // lua foo
 //-------------------------------------------------------------------------
 
-// FIXIT-L could be a template
+// could be a template
 static bool get_field(lua_State* L, const char* key, int& value)
 {
     lua_pushstring(L, key);

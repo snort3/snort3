@@ -98,8 +98,7 @@ AppIdModuleConfig::~AppIdModuleConfig()
     snort_free((void*)app_detector_dir);
 }
 
-//FIXIT-M: RELOAD - move initialization back to AppIdConfig
-//class constructor
+// FIXIT-M: RELOAD - move initialization back to AppIdConfig class constructor
 AppInfoManager& AppIdConfig::app_info_mgr = AppInfoManager::get_instance();
 
 AppIdConfig::AppIdConfig(AppIdModuleConfig* config)
@@ -133,8 +132,7 @@ AppIdConfig::~AppIdConfig()
     cleanup();
 }
 
-//FIXIT-M: RELOAD - Move app info table cleanup back 
-//to AppId config destructor - cleanup()
+// FIXIT-M: RELOAD - Move app info table cleanup back to AppId config destructor - cleanup()
 void AppIdConfig::pterm()
 {
     AppIdConfig::app_info_mgr.cleanup_appid_info_table();
@@ -752,8 +750,8 @@ void AppIdConfig::set_safe_search_enforcement(bool enabled)
 
 bool AppIdConfig::init_appid(SnortConfig* sc, AppIdInspector *ins)
 {
-    //FIXIT -M: RELOAD - Get rid of "once" flag
-    //Handle the if condition in AppIdConfig::init_appid
+    // FIXIT-M: RELOAD - Get rid of "once" flag
+    // Handle the if condition in AppIdConfig::init_appid
     static bool once = false;
     if (!once)
     {      

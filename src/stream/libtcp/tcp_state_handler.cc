@@ -106,7 +106,7 @@ bool TcpStateHandler::eval(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
     return false;
 }
 
-// FIXIT-H get the unit test working again
+// FIXIT-RC get the unit test working again
 #ifdef UNIT_TEST_FOO
 
 SCENARIO("TCP State Handler Base Class", "[state_handlers][stream_tcp]")

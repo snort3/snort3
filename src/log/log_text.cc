@@ -660,7 +660,7 @@ static void LogEmbeddedICMPHeader(TextLog* log, const ICMPHdr* icmph)
         break;
 
     case ICMP_REDIRECT:
-// XXX-IPv6 "NOT YET IMPLEMENTED - ICMP printing"
+        // FIXIT-L IPv6 not yet implemented - ICMP printing
         break;
 
     case ICMP_ECHO:
@@ -917,13 +917,7 @@ void LogICMPHeader(TextLog* log, Packet* p)
             break;
         }
 
-/* written this way since inet_ntoa was typedef'ed to use sfip_ntoa
- * which requires SfIp instead of inaddr's.  This call to inet_ntoa
- * is a rare case that doesn't use SfIp's. */
-
-// XXX-IPv6 NOT YET IMPLEMENTED - IPV6 addresses technically not supported - need to change ICMP
-
-        /* no inet_ntop in Windows */
+        // FIXIT-L IPv6 NOT YET IMPLEMENTED - need to change ICMP
         snort_inet_ntop(AF_INET, (const void*)(&p->ptrs.icmph->s_icmp_gwaddr.s_addr),
             buf, sizeof(buf));
         TextLog_Print(log, " NEW GW: %s", buf);

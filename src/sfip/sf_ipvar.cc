@@ -74,7 +74,7 @@ void sfvar_free(sfip_var_t* var)
     }
     else if (var->mode == SFIP_TABLE)
     {
-        // XXX
+        // FIXIT-L SFIP_TABLE free unimplemented
     }
 
     snort_free(var);
@@ -348,9 +348,9 @@ static SfIpRet sfvar_add(sfip_var_t* dst, sfip_var_t* src)
     return SFIP_SUCCESS;
 }
 
-/* Adds the nodes in 'src' to the variable 'dst' */
-/* The mismatch of types is for ease-of-supporting Snort4 and
- * Snort6 simultaneously */
+// Adds the nodes in 'src' to the variable 'dst'
+// The mismatch of types is for ease-of-supporting Snort4 and
+// Snort6 simultaneously
 static SfIpRet sfvar_add_node(sfip_var_t* var, sfip_node_t* node, int negated)
 {
     sfip_node_t* p;
@@ -361,9 +361,8 @@ static SfIpRet sfvar_add_node(sfip_var_t* var, sfip_node_t* node, int negated)
     if (!var || !node)
         return SFIP_ARG_ERR;
 
-    /* XXX */
-    /* As of this writing, 11/20/06, nodes are always added to
-     * the list, regardless of the mode (list or table). */
+    // As of this writing, 11/20/06, nodes are always added to
+    // the list, regardless of the mode (list or table).
 
     if (negated)
     {
@@ -466,8 +465,8 @@ static SfIpRet sfvar_add_node(sfip_var_t* var, sfip_node_t* node, int negated)
 
     return SFIP_SUCCESS;
 
-    /* XXX Insert new node into routing table */
-//    sfrt_add(node->ip,
+    // FIXIT-L Insert new node into routing table
+    // sfrt_add(node->ip,
 }
 
 sfip_var_t* sfvar_create_alias(const sfip_var_t* alias_from, const char* alias_to)

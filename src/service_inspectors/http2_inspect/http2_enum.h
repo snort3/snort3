@@ -28,7 +28,7 @@ static const int MAX_OCTETS = 63780;
 static const int DATA_SECTION_SIZE = 16384;
 static const int FRAME_HEADER_LENGTH = 9;
 
-// FIXIT-M need to replace with a real number
+// FIXIT-RC need to replace with a real number. CRC: use 120.
 static const uint32_t HTTP2_GID = 219;
 
 // Message originator--client or server

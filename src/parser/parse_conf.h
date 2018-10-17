@@ -34,6 +34,7 @@ struct SnortConfig;
 void ParseConfigFile(snort::SnortConfig*, const char* fname);
 void ParseConfigString(snort::SnortConfig*, const char* str);
 
+void ParseIpVar(snort::SnortConfig*, const char* name, const char* s);
 void parse_include(snort::SnortConfig*, const char*);
 
 void AddRuleState(snort::SnortConfig*, const RuleState&);

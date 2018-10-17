@@ -233,7 +233,7 @@ public:
     AppId misc_app_id = APP_ID_NONE;
 
 
-    // FIXIT-M netbios_name is never set to a valid value
+    // FIXIT-RC netbios_name is never set to a valid value; set when netbios_domain is set?
     char* netbios_name = nullptr;
     char* netbios_domain = nullptr;
 

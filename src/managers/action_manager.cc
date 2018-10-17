@@ -87,7 +87,7 @@ static void store(const ActionApi* api, IpsAction* act)
     for ( auto& p : s_actors )
         if ( p.api == api )
         {
-            //assert(!p.act);  FIXIT-H memory leak on reload; move to SnortConfig?
+            //assert(!p.act);  FIXIT-RC memory leak on reload; move to SnortConfig?
             p.act = act;
             break;
         }

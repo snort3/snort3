@@ -148,7 +148,7 @@ AppIdSession::~AppIdSession()
     snort_free(firewall_early_data);
 }
 
-// FIXIT-L X Move this to somewhere more generally available/appropriate.
+// FIXIT-RC X Move this to somewhere more generally available/appropriate (decode_data.h).
 static inline PktType get_pkt_type_from_ip_proto(IpProtocol proto)
 {
     switch (proto)
@@ -177,8 +177,8 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
 
     assert(type != PktType::NONE);
 
-    // FIXIT-M - port parameter passed in as 0 since we may not know client port, verify this is
-    // correct
+    // FIXIT-RC - port parameter passed in as 0 since we may not know client port, verify
+
     AppIdSession* asd = new AppIdSession(proto, cliIp, 0, inspector);
     asd->common.policyId = asd->config->appIdPolicyId;
 

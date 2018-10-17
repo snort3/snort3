@@ -104,7 +104,7 @@ void CallAlertFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
     pc.total_alert_pkts++;
 
 #if 0
-    // FIXIT-M this should be a generic feature of otn
+    // FIXIT-RC DELETE THIS this should be a generic feature of otn
     if ( otn->sigInfo.gid != GID_REPUTATION )
     {
         /* Don't include IP Reputation events in count */

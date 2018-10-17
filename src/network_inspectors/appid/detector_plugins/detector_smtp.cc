@@ -181,9 +181,10 @@ SmtpClientDetector::SmtpClientDetector(ClientDiscovery* cdm)
  *              including the NUL terminating character.
  */
 // FIXIT-M - refactor this to reduce the number of function parameters
-int SmtpClientDetector::extract_version_and_add_client_app(AppId clientId, const int prefix_len,
-    const uint8_t* product, const uint8_t* product_end, ClientSMTPData* const client_data,
-    AppIdSession& asd, AppId appId, AppidChangeBits& change_bits)
+int SmtpClientDetector::extract_version_and_add_client_app(
+    AppId clientId, const int prefix_len, const uint8_t* product, const uint8_t* product_end,
+    ClientSMTPData* const client_data, AppIdSession& asd, AppId appId,
+    AppidChangeBits& change_bits)
 {
     uint8_t* v_end = client_data->version + MAX_VERSION_SIZE - 1;
 
@@ -831,11 +832,13 @@ int SmtpServiceDetector::validate(AppIdDiscoveryArgs& args)
             if (fd->code == 220)
             {
                 dd->client.flags |= CLIENT_FLAG_STARTTLS_SUCCESS;
-                //FIXIT-M: FIXIT-M: Revisit SSL decryption countdown after isSSLPolicyEnabled() is ported.
-                //Can we use Flow::is_proxied() here?
+
+                // FIXIT-M: Revisit SSL decryption countdown after isSSLPolicyEnabled()
+                // is ported.  Can we use Flow::is_proxied() here?
 #if 0
                 if (_dpd.isSSLPolicyEnabled(NULL))
 #endif
+
                     dd->client.decryption_countdown = SSL_WAIT_PACKETS; // start a countdown
 #if 0
                 else

@@ -172,7 +172,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     const udp::UDPHdr* const udph =
         reinterpret_cast<const udp::UDPHdr*>(raw.data);
 
-    // FIXIT-M since we no longer let UDP fragments through, erase extra code
+    // FIXIT-RC since we no longer let UDP fragments through, erase extra code
     if ((snort.decode_flags & DECODE_FRAG) == 0)
     {
         uhlen = ntohs(udph->uh_len);

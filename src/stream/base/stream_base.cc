@@ -25,6 +25,7 @@
 #include "flow/flow_control.h"
 #include "flow/prune_stats.h"
 #include "main/snort_config.h"
+#include "main/snort_types.h"
 #include "managers/inspector_manager.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
@@ -120,15 +121,12 @@ void base_reset()
 
 static inline bool is_eligible(Packet* p)
 {
-    // FIXIT-M extra check?  bad checksums should be removed in detect.c snort_inspect()
-    if ( p->ptrs.decode_flags & DECODE_ERR_CKSUM_IP )
-        return false;
-
-    if ( p->packet_flags & PKT_REBUILT_STREAM )
-        return false;
-
-    if ( !p->ptrs.ip_api.is_valid() )
-        return false;
+#ifdef NDEBUG
+    UNUSED(p);
+#endif
+    assert(!(p->ptrs.decode_flags & DECODE_ERR_CKSUM_IP));
+    assert(!(p->packet_flags & PKT_REBUILT_STREAM));
+    assert(p->ptrs.ip_api.is_valid());
 
     return true;
 }

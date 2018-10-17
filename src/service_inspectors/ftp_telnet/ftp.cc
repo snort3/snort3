@@ -151,7 +151,7 @@ static int snort_ftp(Packet* p)
             }
             else
             {
-                /* XXX - Not FTP or Telnet */
+                /* Not FTP or Telnet */
                 assert(false);
                 p->flow->free_flow_data(FtpFlowData::inspector_id);
                 return 0;

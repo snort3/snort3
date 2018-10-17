@@ -145,6 +145,7 @@ void HttpJsNorm::normalize(const Field& input, Field& output, HttpInfractions* i
             JSNormalizeDecode(js_start, (uint16_t)(end-js_start), (char*)buffer+index,
                 (uint16_t)(input.length() - index), &ptr, &bytes_copied, &js,
                 uri_param.iis_unicode ? uri_param.unicode_map : nullptr);
+
             index += bytes_copied;
         }
         else

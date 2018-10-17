@@ -23,8 +23,12 @@
 // Email attachment decoder, supports Base64, QP, UU, and Bit7/8
 
 #include "framework/counts.h"
+#include "main/snort_types.h"
 #include "mime/decode_base.h"
 #include "mime/file_mime_config.h"
+
+namespace snort
+{
 
 enum DecodeType
 {
@@ -48,7 +52,7 @@ struct MimeStats
     PegCount bitenc_bytes;
 };
 
-class MimeDecode
+class SO_PUBLIC MimeDecode
 {
 public:
     MimeDecode(snort::DecodeConfig* conf);
@@ -76,6 +80,8 @@ private:
     snort::DecodeConfig* config;
     DataDecode* decoder = nullptr;
 };
+
+} // namespace snort
 
 #endif
 

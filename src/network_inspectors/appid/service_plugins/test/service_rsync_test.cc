@@ -19,7 +19,7 @@
 // service_rsync_test.cc author Steve Chew <stechew@cisco.com>
 // unit test for service_rsync
 
-// FIXIT-M - unit tests disabled until mocking support can be figured out
+// FIXIT-RC - unit tests disabled until mocking support can be figured out
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

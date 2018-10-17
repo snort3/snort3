@@ -372,7 +372,7 @@ static inline int FragCheckFirstLast(
                      * offset of the new last frag to immediately
                      * after the existing last frag.
                      */
-                    /* XXX: how to handle that case? punt?  */
+                    /* how to handle that case? punt?  */
                     retVal = FRAG_LAST_OFFSET_ADJUST;
                 }
                 break;
@@ -456,10 +456,9 @@ static int FragHandleIPOptions(
     {
         /* check that options match those from other non-offset 0 packets */
 
-        /* XXX: could check each individual option here, but that
-         * would be performance ugly.  So, we'll just check that the
-         * option sizes match.  Alert if invalid, but still include in
-         * reassembly.
+        /* could check each individual option here, but that would be
+         * performance ugly.  So, we'll just check that the option sizes
+         * match.  Alert if invalid, but still include in reassembly.
          */
         if (ft->copied_ip_options_len)
         {
@@ -635,8 +634,8 @@ static void FragRebuild(FragTracker* ft, Packet* p)
         }
         else if (ft->copied_ip_options_len)
         {
-            /* XXX: should we log a warning here?  there were IP options
-             * copied across all fragments, EXCEPT the offset 0 fragment.
+            /* should we log a warning here?  there were IP options copied
+             * across all fragments, EXCEPT the offset 0 fragment.
              */
         }
 
@@ -703,7 +702,7 @@ static void FragRebuild(FragTracker* ft, Packet* p)
     {
         if ( !p->is_ip6() )
         {
-            /*XXX: Log message, failed to copy */
+            /* Log message, failed to copy */
             ft->frag_flags = ft->frag_flags | FRAG_REBUILT;
             return;
         }
@@ -1899,7 +1898,7 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
     /* insert the fragment into the frag list */
     ft->fraglist = f;
     ft->fraglist_tail = f;
-    ft->fraglist_count = 1;  /* XXX: Are these duplicates? */
+    ft->fraglist_count = 1;  /* Are these duplicates? */
     ft->frag_pkts = 1;
 
     /*

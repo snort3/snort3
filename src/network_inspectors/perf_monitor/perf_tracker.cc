@@ -108,12 +108,12 @@ bool PerfTracker::open(bool append)
         const char* file_name = fname.c_str();
         bool existed = false;
 
-        /*Check file before change permission*/
+        // Check file before change permission
         if (stat(file_name, &pt) == 0)
         {
             existed = true;
 
-            /*Only change permission for file owned by root*/
+            // Only change permission for file owned by root
             if ((0 == pt.st_uid) || (0 == pt.st_gid))
             {
                 if (chmod(file_name, mode) != 0)

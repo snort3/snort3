@@ -196,7 +196,7 @@ TEST_GROUP(tcp_connector)
 {
     void setup() override
     {
-        // FIXIT-L workaround for CppUTest mem leak detector issue
+        // FIXIT-RC workaround for CppUTest mem leak detector issue
         //MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         tcpc_api = (ConnectorApi*)tcp_connector;
         connector_config.direction = Connector::CONN_DUPLEX;
@@ -236,7 +236,7 @@ TEST_GROUP(tcp_connector_call_error)
 {
     void setup() override
     {
-        // FIXIT-L workaround for CppUTest mem leak detector issue
+        // FIXIT-RC workaround for CppUTest mem leak detector issue
         //MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         tcpc_api = (ConnectorApi*)tcp_connector;
         set_normal_status();
@@ -267,7 +267,7 @@ TEST_GROUP(tcp_connector_call_other)
 {
     void setup() override
     {
-        // FIXIT-L workaround for CppUTest mem leak detector issue
+        // FIXIT-RC workaround for CppUTest mem leak detector issue
         //MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     }
 
@@ -281,7 +281,7 @@ TEST_GROUP(tcp_connector_answer_error)
 {
     void setup() override
     {
-        // FIXIT-L workaround for CppUTest mem leak detector issue
+        // FIXIT-RC workaround for CppUTest mem leak detector issue
         //MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         tcpc_api = (ConnectorApi*)tcp_connector;
         set_normal_status();
@@ -369,7 +369,7 @@ TEST_GROUP(tcp_connector_tinit_tterm_thread_call)
 {
     void setup() override
     {
-        // FIXIT-L workaround for CppUTest mem leak detector issue
+        // FIXIT-RC workaround for CppUTest mem leak detector issue
         //MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         tcpc_api = (ConnectorApi*)tcp_connector;
         s_instance = 0;
@@ -403,7 +403,7 @@ TEST_GROUP(tcp_connector_tinit_tterm_call)
 {
     void setup() override
     {
-        // FIXIT-L workaround for CppUTest mem leak detector issue
+        // FIXIT-RC workaround for CppUTest mem leak detector issue
         //MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         tcpc_api = (ConnectorApi*)tcp_connector;
         s_instance = 0;
@@ -437,7 +437,7 @@ TEST_GROUP(tcp_connector_no_tinit_tterm_call)
 {
     void setup() override
     {
-        // FIXIT-L workaround for CppUTest mem leak detector issue
+        // FIXIT-RC workaround for CppUTest mem leak detector issue
         //MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         tcpc_api = (ConnectorApi*)tcp_connector;
         s_instance = 0;
@@ -514,7 +514,7 @@ TEST_GROUP(tcp_connector_tinit_tterm_answer)
 {
     void setup() override
     {
-        // FIXIT-L workaround for CppUTest mem leak detector issue
+        // FIXIT-RC workaround for CppUTest mem leak detector issue
         //MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         s_instance = 0;
         set_normal_status();

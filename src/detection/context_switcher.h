@@ -78,7 +78,7 @@ public:
     unsigned hold_count() const;
 
     bool can_hold() const
-    { return idle_count() > 5; }  // FIXIT-H define appropriate const
+    { return idle_count() > 5; }  // FIXIT-RC define appropriate const
 
     bool on_hold(snort::Flow*);
 

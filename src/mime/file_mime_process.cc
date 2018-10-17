@@ -514,7 +514,7 @@ const uint8_t* MimeSession::process_mime_data_paf(
         if (data_state == STATE_DATA_INIT)
             data_state = STATE_DATA_HEADER;
 
-        /* XXX A line starting with a '.' that isn't followed by a '.' is
+        /* A line starting with a '.' that isn't followed by a '.' is
          * deleted (RFC 821 - 4.5.2.  TRANSPARENCY).  If data starts with
          * '. text', i.e a dot followed by white space then text, some
          * servers consider it data header and some data body.
@@ -540,8 +540,9 @@ const uint8_t* MimeSession::process_mime_data_paf(
 
     if (normalize_data(start, end) < 0)
         return nullptr;
-    /* now we shouldn't have to worry about copying any data to the alt buffer
-     *      * only mime headers if we find them and only if we're ignoring data */
+
+    // now we shouldn't have to worry about copying any data to the alt buffer
+    // only mime headers if we find them and only if we're ignoring data
 
     while ((start != nullptr) && (start < end))
     {
@@ -708,7 +709,6 @@ void MimeSession::init()
     mime_hdr_search_mpse->prep();
 }
 
-// Free anything that needs it before shutting down preprocessor
 void MimeSession::exit()
 {
     if (mime_hdr_search_mpse != nullptr)

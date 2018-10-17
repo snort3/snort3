@@ -15,12 +15,11 @@ set( FILE_LIST
     smtp_normalize.h
 )
 
-# can't be be linked dynamically yet
-#if (STATIC_INSPECTORS)
+if (STATIC_INSPECTORS)
     add_library( smtp OBJECT ${FILE_LIST})
 
-#else (STATIC_INSPECTORS)
-    #add_dynamic_module(smtp inspectors ${FILE_LIST})
+else (STATIC_INSPECTORS)
+    add_dynamic_module(smtp inspectors ${FILE_LIST})
 
-#endif (STATIC_INSPECTORS)
+endif (STATIC_INSPECTORS)
 

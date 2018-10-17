@@ -87,7 +87,7 @@ TEST_GROUP(file_connector)
 {
     void setup() override
     {
-        // FIXIT-L workaround for CppUTest mem leak detector issue
+        // FIXIT-RC workaround for CppUTest mem leak detector issue
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         fc_api = (ConnectorApi*)file_connector;
         connector_tx_text_config.direction = Connector::CONN_TRANSMIT;
@@ -137,7 +137,7 @@ TEST_GROUP(file_connector_tinit_tterm)
 {
     void setup() override
     {
-        // FIXIT-L workaround for CppUTest mem leak detector issue
+        // FIXIT-RC workaround for CppUTest mem leak detector issue
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         fc_api = (ConnectorApi*)file_connector;
         connector_tx_text_config.direction = Connector::CONN_TRANSMIT;
@@ -199,7 +199,7 @@ TEST_GROUP(file_connector_text)
 {
     void setup() override
     {
-        // FIXIT-L workaround for CppUTest mem leak detector issue
+        // FIXIT-RC workaround for CppUTest mem leak detector issue
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         fc_api = (ConnectorApi*)file_connector;
         connector_tx_text_config.direction = Connector::CONN_TRANSMIT;
@@ -265,7 +265,7 @@ TEST_GROUP(file_connector_binary)
 {
     void setup() override
     {
-        // FIXIT-L workaround for CppUTest mem leak detector issue
+        // FIXIT-RC workaround for CppUTest mem leak detector issue
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         fc_api = (ConnectorApi*)file_connector;
         connector_tx_binary_config.direction = Connector::CONN_TRANSMIT;

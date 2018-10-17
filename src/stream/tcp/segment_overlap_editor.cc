@@ -142,8 +142,8 @@ int SegmentOverlapEditor::eval_right(TcpReassemblerState& trs)
         assert(SEQ_LEQ(trs.sos.seq, trs.sos.right->i_seq));
         trs.sos.overlap = ( int )( trs.sos.seq_end - trs.sos.right->i_seq );
 
-        // Treat sequence number overlap as a retransmission, only check right side since
-        //  left side happens rarely
+        // Treat sequence number overlap as a retransmission,
+        // only check right side since left side happens rarely
         trs.sos.session->retransmit_handle(trs.sos.tsd->get_pkt());
 
         if ( trs.sos.overlap < trs.sos.right->i_len )

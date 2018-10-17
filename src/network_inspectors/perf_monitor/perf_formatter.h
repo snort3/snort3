@@ -40,7 +40,7 @@
 // 5. Call write to output the current values in each field.
 //
 // init_output should be implemented where metadata needs to be written on
-// ouput open.
+// output open.
 //
 
 #include <ctime>

@@ -96,7 +96,6 @@ void EventTrace_Log(const Packet* p, const OptTreeNode* otn, int action)
         "Pkt Cnts: Dsz=%u, Alt=%u\n",
         (unsigned)p->dsize, (unsigned)p->alt_dsize);
 
-    // FIXIT-L delete alt_dsize (only set by OHI)
     uint16_t n = p->alt_dsize > 0 ? p->alt_dsize : p->dsize;
     LogBuffer("Packet", p->data, n);
 

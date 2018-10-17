@@ -32,7 +32,6 @@
 #include "appid_config.h"
 #include "appid_inspector.h"
 #include "appid_peg_counts.h"
-#include "log/messages.h"
 #include "log/unified2.h"
 #include "main/snort_config.h"
 #include "target_based/snort_protocols.h"
@@ -556,7 +555,7 @@ void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config,
             /* snort service key, if it exists */
             token = strtok_r(nullptr, CONF_SEPARATORS, &context);
 
-            // FIXIT-H: Sometimes the token is "~". Should we ignore those?
+            // FIXIT-RC: Sometimes the token is "~". Should we ignore those?
             if (token)
                 entry->snort_protocol_id = add_appid_protocol_reference(token, sc);
 

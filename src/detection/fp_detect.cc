@@ -796,7 +796,7 @@ bool MpseStash::push(void* user, void* tree, int index, void* list)
 bool MpseStash::process(MpseMatch match, void* context)
 {
     if ( !enable )
-        return true;  // maxed out - quit, FIXIT-H count this condition
+        return true;  // maxed out - quit, FIXIT-RC count this condition
 
     if ( count > pmqs.max_inq )
         pmqs.max_inq = count;
@@ -887,7 +887,7 @@ static inline int search_buffer(
     {
         if ( Mpse* so = omd->pg->mpse[pmt] )
         {
-            // FIXIT-H get the context packet number
+            // FIXIT-H DELETE ME done - get the context packet number
             trace_logf(detection, TRACE_FP_SEARCH, "%" PRIu64 " fp %s.%s[%d]\n",
                 omd->p->context->packet_number, gadget->get_name(), pm_type_strings[pmt], buf.len);
 
