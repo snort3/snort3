@@ -137,6 +137,7 @@ class ThreadConfig;
 struct ReferenceSystemNode;
 struct VarNode;
 struct _IntelPmHandles;
+struct FlowBitState;
 
 namespace snort
 {
@@ -278,6 +279,7 @@ public:
     ThresholdConfig* threshold_config = nullptr;
     RateFilterConfig* rate_filter_config = nullptr;
     DetectionFilterConfig* detection_filter_config = nullptr;
+    FlowBitState* flowbit_state = nullptr; 
 
     //------------------------------------------------------
     // FIXIT-L command line only stuff, add to conf / module

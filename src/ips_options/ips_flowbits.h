@@ -20,7 +20,14 @@
 #ifndef IPS_FLOWBITS_H
 #define IPS_FLOWBITS_H
 
-void FlowbitResetCounts();
+#include "main/snort_config.h"
+namespace snort
+{
+struct SnortConfig;
+}
+
+void flowbits_ginit(snort::SnortConfig*);
+void flowbits_gterm(snort::SnortConfig*);
 int FlowBits_SetOperation(void*);
 
 #endif

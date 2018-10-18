@@ -583,8 +583,6 @@ SnortConfig* Snort::get_reload_config(const char* fname)
         return nullptr;
     }
 
-    FlowbitResetCounts();  // FIXIT-L updates global hash, put in sc
-
     if ((sc->file_mask != 0) && (sc->file_mask != SnortConfig::get_conf()->file_mask))
         umask(sc->file_mask);
 
