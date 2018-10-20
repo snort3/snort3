@@ -135,7 +135,7 @@ ssize_t recv (int, void *buf, size_t n, int)
         return 0;
 }
 
-#if defined __GLIBC__ && !defined __FreeBSD__
+#ifdef __GLIBC__
 int socket (int, int, int) __THROW { return s_socket_return; }
 int bind (int, const struct sockaddr*, socklen_t) __THROW { return s_bind_return; }
 int listen (int, int) __THROW { return s_listen_return; }
