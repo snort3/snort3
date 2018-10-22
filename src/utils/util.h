@@ -54,7 +54,7 @@
 void StoreSnortInfoStrings();
 int DisplayBanner();
 int gmt2local(time_t);
-void ts_print(register const struct timeval*, char*);
+void ts_print(const struct timeval*, char*);
 std::string read_infile(const char* key, const char* fname);
 void CleanupProtoNames();
 void CreatePidFile(pid_t);
