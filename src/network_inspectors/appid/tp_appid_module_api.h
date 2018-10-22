@@ -39,6 +39,8 @@ public:
     std::string tp_appid_config;
     std::vector<std::string> xff_fields;
     std::vector<std::string> old_xff_fields;
+    bool tp_appid_stats_enable = false;
+    bool tp_appid_config_dump = false;
 
     ThirdPartyConfig()
     {
@@ -94,4 +96,3 @@ private:
 typedef ThirdPartyAppIDModule* (* CreateThirdPartyAppIDModule_t)();
 
 #endif
-

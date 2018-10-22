@@ -117,7 +117,9 @@ void TPLibHandler::pinit(const AppIdModuleConfig* config)
     if (self->tp_so_handle or config->tp_appid_path.empty())
         return;
 
-    self->tp_config.tp_appid_config=config->tp_appid_config;
+    self->tp_config.tp_appid_config = config->tp_appid_config;
+    self->tp_config.tp_appid_stats_enable = config->tp_appid_stats_enable;
+    self->tp_config.tp_appid_config_dump = config->tp_appid_config_dump;
 
     self->LoadCallback(config->tp_appid_path.c_str(),1);
 

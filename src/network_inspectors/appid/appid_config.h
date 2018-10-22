@@ -78,6 +78,8 @@ public:
     const char* app_detector_dir = nullptr;
     std::string tp_appid_path = "";
     std::string tp_appid_config = "";
+    bool tp_appid_stats_enable = false;
+    bool tp_appid_config_dump = false;
     uint32_t instance_id = 0;
     uint32_t memcap = 0;
     bool debug = false;
@@ -148,4 +150,3 @@ private:
 };
 
 #endif
-

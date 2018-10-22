@@ -82,6 +82,10 @@ static const Parameter s_params[] =
       "path to third party appid dynamic library" },
     { "tp_appid_config", Parameter::PT_STRING, nullptr, nullptr,
       "path to third party appid configuration file" },
+    { "tp_appid_stats_enable", Parameter::PT_BOOL, nullptr, nullptr,
+      "enable collection of stats and print stats on exit in third party module" },
+    { "tp_appid_config_dump", Parameter::PT_BOOL, nullptr, nullptr,
+      "print third party configuration on startup" },
     { "log_all_sessions", Parameter::PT_BOOL, nullptr, "false",
       "enable logging of all appid sessions" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -242,6 +246,10 @@ bool AppIdModule::set(const char* fqn, Value& v, SnortConfig* c)
         config->tp_appid_path = std::string(v.get_string());
     else if ( v.is("tp_appid_config") )
         config->tp_appid_config = std::string(v.get_string());
+    else if ( v.is("tp_appid_stats_enable") )
+        config->tp_appid_stats_enable = v.get_bool();
+    else if ( v.is("tp_appid_config_dump") )
+        config->tp_appid_config_dump = v.get_bool();
     else if ( v.is("instance_id") )
         config->instance_id = v.get_long();
     else if ( v.is("debug") )
