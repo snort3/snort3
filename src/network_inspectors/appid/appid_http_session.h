@@ -232,5 +232,7 @@ protected:
 #endif
 };
 
+void appid_http_profiler_init();
+
 #endif
 

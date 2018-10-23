@@ -56,7 +56,7 @@ using namespace snort;
 #define SP_SERVICE 2
 #define NUM_ID_TYPES 4
 
-static THREAD_LOCAL ProfileStats appidRuleOptionPerfStats;
+static THREAD_LOCAL ProfileStats ips_appid_perf_stats;
 
 class AppIdIpsOption : public IpsOption
 {
@@ -119,16 +119,18 @@ bool AppIdIpsOption::match_id_against_rule(int32_t id)
 // first match wins...
 IpsOption::EvalStatus AppIdIpsOption::eval(Cursor&, Packet* p)
 {
-    AppId app_ids[NUM_ID_TYPES];
-
     if ( !p->flow )
         return NO_MATCH;
 
-    Profile profile(appidRuleOptionPerfStats);
+#ifdef APPID_DEEP_PERF_PROFILING
+    Profile profile(ips_appid_perf_stats);
+#endif
 
     AppIdSession* session = appid_api.get_appid_session(*(p->flow));
     if ( !session )
         return NO_MATCH;
+
+    AppId app_ids[NUM_ID_TYPES];
 
     // id order on stream api call is: service, client, payload, misc
     if ( (p->packet_flags & PKT_FROM_CLIENT) )
@@ -165,7 +167,7 @@ public:
     bool end(const char*, int, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &appidRuleOptionPerfStats; }
+    { return &ips_appid_perf_stats; }
 
     Usage get_usage() const override
     { return DETECT; }

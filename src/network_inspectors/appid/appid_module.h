@@ -28,7 +28,7 @@
 #include "appid_config.h"
 #include "framework/module.h"
 
-extern THREAD_LOCAL snort::ProfileStats appidPerfStats;
+extern THREAD_LOCAL snort::ProfileStats appid_perf_stats;
 
 extern Trace TRACE_NAME(appid_module);
 

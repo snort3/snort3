@@ -46,7 +46,7 @@ Trace TRACE_NAME(appid_module);
 // appid module
 //-------------------------------------------------------------------------
 
-THREAD_LOCAL ProfileStats appidPerfStats;
+THREAD_LOCAL ProfileStats appid_perf_stats;
 THREAD_LOCAL AppIdStats appid_stats;
 
 static const Parameter s_params[] =
@@ -207,7 +207,7 @@ AppIdModule::~AppIdModule()
 
 ProfileStats* AppIdModule::get_profile() const
 {
-    return &appidPerfStats;
+    return &appid_perf_stats;
 }
 
 const AppIdModuleConfig* AppIdModule::get_data()

@@ -26,6 +26,7 @@
 
 class AppIdSession;
 
+void tp_appid_profiler_init();
 bool do_tp_discovery(AppIdSession&, IpProtocol, snort::Packet*, AppidSessionDirection&,
     AppidChangeBits&);
 

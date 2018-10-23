@@ -53,8 +53,32 @@ using namespace snort;
 
 typedef AppIdHttpSession::pair_t pair_t;
 
-THREAD_LOCAL ProfileStats tpLibPerfStats;
-THREAD_LOCAL ProfileStats tpPerfStats;
+static THREAD_LOCAL ProfileStats tp_lib_perf_stats;
+#ifdef APPID_DEEP_PERF_PROFILING
+static THREAD_LOCAL ProfileStats tp_disco_perf_stats;
+static ProfileStats* get_profile(const char* key)
+{
+    if ( !strcmp(key, "tp_discovery") )
+        return &tp_disco_perf_stats;
+    if ( !strcmp(key, "tp_library") )
+        return &tp_lib_perf_stats;
+    return nullptr;
+}
+void tp_appid_profiler_init()
+{
+    Profiler::register_module("tp_discovery", "appid", get_profile);
+    Profiler::register_module("tp_library", "tp_discovery", get_profile);
+}
+#else
+static ProfileStats* get_profile(const char*)
+{
+    return &tp_lib_perf_stats;
+}
+void tp_appid_profiler_init()
+{
+    Profiler::register_module("tp_library", "appid", get_profile);
+}
+#endif
 
 // std::vector does not have a convenient find() function.
 // There is a generic std::find() in <algorithm>, but this might be faster.
@@ -625,8 +649,9 @@ static inline void check_terminate_tp_module(AppIdSession& asd, uint16_t tpPktCo
 bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
     Packet* p, AppidSessionDirection& direction, AppidChangeBits& change_bits)
 {
-    if ( !TPLibHandler::have_tp() )
-        return true;
+#ifdef APPID_DEEP_PERF_PROFILING
+    Profile tp_disco_profile(tp_disco_perf_stats);
+#endif
 
     AppId tp_app_id = asd.get_tp_app_id();
 
@@ -647,8 +672,6 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
 
     if (p->dsize || asd.config->mod_config->tp_allow_probes)
     {
-        Profile tpPerfStats_profile_context(tpPerfStats);
-
         //restart inspection by 3rd party
         if (!asd.tp_reinspect_by_initiator && (direction == APP_ID_FROM_INITIATOR) &&
             check_reinspect(p, asd))
@@ -666,7 +689,7 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
             if (protocol != IpProtocol::TCP || (p->packet_flags & PKT_STREAM_ORDER_OK)
                 || asd.config->mod_config->tp_allow_probes)
             {
-                Profile tpLibPerfStats_profile_context(tpLibPerfStats);
+                Profile tp_lib_profile(tp_lib_perf_stats);
                 int tp_confidence;
                 ThirdPartyAppIDAttributeData tp_attribute_data;
                 vector<AppId> tp_proto_list;

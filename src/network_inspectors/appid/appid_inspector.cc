@@ -181,7 +181,7 @@ void AppIdInspector::tterm()
 
 void AppIdInspector::eval(Packet* p)
 {
-    Profile profile(appidPerfStats);
+    Profile profile(appid_perf_stats);
     appid_stats.packets++;
     
     if (p->flow)

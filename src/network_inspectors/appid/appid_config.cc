@@ -31,6 +31,7 @@
 #include "app_forecast.h"
 #include "app_info_table.h"
 #include "appid_discovery.h"
+#include "appid_http_session.h"
 #include "appid_session.h"
 #ifdef USE_RNA_CONFIG
 #include "appid_utils/network_set.h"
@@ -46,6 +47,7 @@
 #include "detector_plugins/detector_dns.h"
 #include "target_based/snort_protocols.h"
 #ifdef ENABLE_APPID_THIRD_PARTY
+#include "tp_appid_utils.h"
 #include "tp_lib_handler.h"
 #endif
 
@@ -765,10 +767,14 @@ bool AppIdConfig::init_appid(SnortConfig* sc, AppIdInspector *ins)
         PatternClientDetector::finalize_client_port_patterns();
         AppIdDiscovery::finalize_plugins();
         http_matchers->finalize_patterns();
-	    ssl_detector_process_patterns();
+        ssl_detector_process_patterns();
         dns_host_detector_process_patterns();
         read_port_detectors(ODP_PORT_DETECTORS);
         read_port_detectors(CUSTOM_PORT_DETECTORS);
+        appid_http_profiler_init();
+#ifdef ENABLE_APPID_THIRD_PARTY
+        tp_appid_profiler_init();
+#endif
         once = true;
     }
 #ifdef USE_RNA_CONFIG
