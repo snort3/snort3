@@ -37,6 +37,8 @@
 #include "helpers/util_binder.h"
 #include "init_state.h"
 
+#define GID_REPUTATION "136"
+
 TableDelegation table_delegation = 
 {
     { "binder", true },
@@ -44,6 +46,7 @@ TableDelegation table_delegation =
     { "network", true },
     { "normalizer", true},
     { "stream_tcp", true},
+    { "suppress", true},
 };
 
 std::string Converter::ips_pattern;
@@ -265,6 +268,21 @@ int Converter::parse_file(
                         break;
                     }
                 }
+
+                std::string gid = rule_api.get_option("gid");
+                if (0 == gid.compare(GID_REPUTATION) && 0 == rule_api.get_rule_old_action().compare("sdrop"))
+                {
+                    std::string sid = rule_api.get_option("sid");
+                    table_api.open_table("suppress");
+                    table_api.add_diff_option_comment("gen_id", "gid");
+                    table_api.add_diff_option_comment("sid_id", "sid");
+                    table_api.open_table();
+                    table_api.add_option("gid", std::stoi(gid));
+                    table_api.add_option("sid", std::stoi(sid));
+                    table_api.close_table();
+                    table_api.close_table();
+                }
+
                 if (commented_rule)
                     rule_api.make_rule_a_comment();
 

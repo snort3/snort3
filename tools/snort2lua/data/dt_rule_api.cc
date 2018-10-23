@@ -127,12 +127,29 @@ void RuleApi::include_rule_file(const std::string& file_name)
     }
 }
 
+void RuleApi::set_rule_old_action(const std::string &action)
+{
+    if (!curr_rule)
+        begin_rule();
+
+    curr_rule->set_rule_old_action(action);
+}
+
 void RuleApi::add_hdr_data(const std::string& data)
 {
     if (!curr_rule)
         begin_rule();
 
     curr_rule->add_hdr_data(data);
+}
+
+std::string& RuleApi::get_rule_old_action()
+{
+    std::string res = "";
+    if (!curr_rule)
+        return res;
+
+    return (curr_rule->get_rule_old_action());
 }
 
 void RuleApi::update_rule_action(const std::string& new_type)

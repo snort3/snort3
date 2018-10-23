@@ -42,6 +42,8 @@ public:
     void add_suboption(const std::string& keyword, const std::string& val);
     void set_curr_options_buffer(const std::string& buffer, bool add_option);
     void update_rule_action(const std::string&);
+    void set_rule_old_action(const std::string&);
+    std::string& get_rule_old_action();
 
     void add_comment(const std::string& comment);
     void bad_rule();
@@ -53,6 +55,7 @@ public:
 
 private:
     std::vector<std::string> comments;
+    std::string old_action;
     std::array<std::string, 7> hdr_data;
     std::vector<RuleOption*> options;
     std::string sticky_buffer;

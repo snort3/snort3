@@ -49,6 +49,16 @@ bool Rule::add_hdr_data(const std::string& data)
     }
 }
 
+void Rule::set_rule_old_action(const std::string &action)
+{
+    old_action = action;
+}
+
+std::string& Rule::get_rule_old_action()
+{
+    return old_action;
+}
+
 void Rule::update_rule_action(const std::string& new_type)
 { hdr_data[0] = new_type; }
 

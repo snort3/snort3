@@ -69,6 +69,8 @@ public:
     void add_suboption(const std::string& keyword);
     void add_suboption(const std::string& keyword, const std::string& val);
     void set_curr_options_buffer(const std::string& buffer, bool add_option=false);
+    void set_rule_old_action(const std::string&);
+    std::string& get_rule_old_action();
 
     void add_comment(const std::string& comment);
     void make_rule_a_comment();

@@ -60,7 +60,7 @@ bool Gid::convert(std::istringstream& data_stream)
 {
     std::string gid = util::get_rule_option_args(data_stream);
 
-    const std::string old_http_gid("120");  
+    const std::string old_http_gid("120");
     if (gid.compare(old_http_gid) == 0)
     {
         const std::string nhi_gid("119");
@@ -75,6 +75,7 @@ bool Gid::convert(std::istringstream& data_stream)
             rule_api.update_option("sid", sid);
         }
     }
+
     rule_api.add_option("gid", gid);
     return set_next_rule_state(data_stream);
 }

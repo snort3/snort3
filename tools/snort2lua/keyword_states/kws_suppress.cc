@@ -116,6 +116,8 @@ bool Suppress::convert(std::istringstream& data_stream)
             retval = false;
         }
     }
+    table_api.close_table();
+    table_api.close_table();
 
     return retval;
 }

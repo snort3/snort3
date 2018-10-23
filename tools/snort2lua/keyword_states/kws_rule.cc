@@ -83,6 +83,10 @@ template<const std::string* name, const std::string* old>
 static ConversionState* conv_rule_ctor(Converter& c)
 {
     c.get_rule_api().add_hdr_data(*name);
+
+    if (*old == "sdrop")
+        c.get_rule_api().set_rule_old_action(*old);
+
     c.get_rule_api().add_comment(
         "The '" + *old + "' ruletype is no longer supported, using " + *name);
     return new RuleHeader(c);
