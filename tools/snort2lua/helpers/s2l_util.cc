@@ -248,12 +248,18 @@ std::string get_rule_option_args(std::istringstream& stream)
     do
     {
         std::getline(stream, tmp, ';');
+
+        if (tmp.empty())
+            break;
+
         args += tmp + ";";
     }
     while (tmp.back() == '\\');
 
     // semicolon will be added when printing
-    args.pop_back();
+    if (!args.empty())
+        args.pop_back();
+
     trim(args);
     return args;
 }

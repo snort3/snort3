@@ -20,15 +20,18 @@
 #ifndef DATA_DT_RULE_API_H
 #define DATA_DT_RULE_API_H
 
-#include <string>
 #include <iostream>
-#include <vector>
+#include <set>
 #include <stack>
+#include <string>
+#include <vector>
 
 class Rule;
 class RuleOption;
 class Comments;
 class RuleApi;
+
+using GidSid = std::pair<std::string, std::string>;
 
 // FIXIT-L simplify this API. Several options functions are no longer necessary
 
@@ -74,6 +77,7 @@ public:
 
     void add_comment(const std::string& comment);
     void make_rule_a_comment();
+    bool enable_addr_anomaly_detection();
     void bad_rule(std::istringstream& stream, const std::string& bad_option);
     void old_http_rule();
     bool is_old_http_rule();
@@ -86,6 +90,7 @@ private:
     Comments* bad_rules;
     Rule* curr_rule;
     bool curr_data_bad;
+    static std::set<GidSid> address_anomaly_rules;
 
     // Create a new rule object.
     void begin_rule();

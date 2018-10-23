@@ -42,9 +42,10 @@
 TableDelegation table_delegation = 
 {
     { "binder", true },
+    { "detection", true },
     { "ips", true },
     { "network", true },
-    { "normalizer", true},
+    { "normalizer", true },
     { "stream_tcp", true},
     { "suppress", true},
 };
@@ -280,6 +281,13 @@ int Converter::parse_file(
                     table_api.add_option("gid", std::stoi(gid));
                     table_api.add_option("sid", std::stoi(sid));
                     table_api.close_table();
+                    table_api.close_table();
+                }
+
+                if (rule_api.enable_addr_anomaly_detection())
+                {
+                    table_api.open_table("detection");
+                    table_api.add_option("enable_address_anomaly_checks", true);
                     table_api.close_table();
                 }
 

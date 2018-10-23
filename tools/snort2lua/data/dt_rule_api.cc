@@ -32,6 +32,14 @@
 std::size_t RuleApi::error_count = 0;
 std::string RuleApi::remark;
 
+std::set<GidSid> RuleApi::address_anomaly_rules = {
+                                            {"116", "403"},
+                                            {"116", "411"},
+                                            {"116", "412"},
+                                            {"129", "9"},
+                                            {"129", "10"},
+                                        };
+
 RuleApi::RuleApi()
     :   curr_rule(nullptr),
     curr_data_bad(false)
@@ -93,6 +101,15 @@ void RuleApi::make_rule_a_comment()
         begin_rule();
 
     curr_rule->make_comment();
+}
+
+bool RuleApi::enable_addr_anomaly_detection()
+{
+    if (curr_rule != nullptr)
+        return address_anomaly_rules.count({curr_rule->get_option("gid"),
+                                          curr_rule->get_option("sid")}) != 0;
+
+    return false;
 }
 
 void RuleApi::bad_rule(std::istringstream& stream, const std::string& bad_option)

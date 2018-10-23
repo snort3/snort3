@@ -89,7 +89,7 @@ bool Variable::add_value(std::string elem)
         }
     }
 
-    if (s.front() == '$')
+    if (!s.empty() and s.front() == '$')
     {
         // add a space between strings
         if (!vars.empty())
