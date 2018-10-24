@@ -162,9 +162,8 @@ void RuleApi::add_hdr_data(const std::string& data)
 
 std::string& RuleApi::get_rule_old_action()
 {
-    std::string res = "";
     if (!curr_rule)
-        return res;
+        begin_rule();
 
     return (curr_rule->get_rule_old_action());
 }
