@@ -37,9 +37,7 @@ using namespace snort;
 // context data
 //--------------------------------------------------------------------------
 
-// ips_id is not a member of context data so that
-// tests (and only tests) can reset the id
-static unsigned ips_id = 0;
+unsigned IpsContextData::ips_id = 0;
 static unsigned max_id = IpsContext::max_ips_id;
 
 unsigned IpsContextData::get_ips_id()
@@ -47,6 +45,11 @@ unsigned IpsContextData::get_ips_id()
     ++ips_id;
     assert( ips_id < max_id );
     return ips_id; 
+}
+
+void IpsContextData::clear_ips_id()
+{
+    ips_id = 0;
 }
 
 //--------------------------------------------------------------------------
@@ -57,7 +60,7 @@ unsigned IpsContextData::get_ips_id()
 
 TEST_CASE("IpsContextData id", "[IpsContextData]")
 {
-    ips_id = 0;
+    IpsContextData::clear_ips_id();
 
     auto id1 = IpsContextData::get_ips_id();
     auto id2 = IpsContextData::get_ips_id();

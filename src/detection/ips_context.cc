@@ -134,11 +134,10 @@ public:
 };
 
 int TestData::count = 0;
-static unsigned ips_id = 0;
 
 TEST_CASE("IpsContext basic", "[IpsContext]")
 {
-    ips_id = 0;
+    IpsContextData::clear_ips_id();
     IpsContext ctx(4);
     int num_data = 0;
 
