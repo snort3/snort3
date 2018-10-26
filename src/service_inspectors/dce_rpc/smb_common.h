@@ -455,5 +455,7 @@ inline bool SmbFmtAscii(const uint8_t fmt)
     return fmt == SMB_FMT__ASCII ? true : false;
 }
 
+#pragma pack()
+
 #endif
 
