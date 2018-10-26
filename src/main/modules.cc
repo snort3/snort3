@@ -1701,7 +1701,7 @@ static const Parameter rule_state_params[] =
 class RuleStateModule : public Module
 {
 public:
-    RuleStateModule() : Module("rule_state", rule_state_help, rule_state_params) { }
+    RuleStateModule() : Module("rule_state", rule_state_help, rule_state_params, true) { }
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
