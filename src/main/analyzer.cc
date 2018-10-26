@@ -66,6 +66,7 @@ const char* Analyzer::get_state_string()
     case State::RUNNING:     return "RUNNING";
     case State::PAUSED:      return "PAUSED";
     case State::STOPPED:     return "STOPPED";
+    default: assert(false);
     }
 
     return "UNKNOWN";

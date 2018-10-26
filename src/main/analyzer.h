@@ -46,7 +46,8 @@ public:
         STARTED,
         RUNNING,
         PAUSED,
-        STOPPED
+        STOPPED,
+        NUM_STATES
     };
     Analyzer(unsigned id, const char* source);
 

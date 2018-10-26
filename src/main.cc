@@ -887,7 +887,10 @@ static void snort_main()
     max_pigs = ThreadConfig::get_instance_max();
     assert(max_pigs > 0);
 
-    pig_poke = new Ring<unsigned>(max_pigs+2);
+    // maximum number of state change notifications per pig
+    constexpr unsigned max_grunts = static_cast<unsigned>(Analyzer::State::NUM_STATES);
+
+    pig_poke = new Ring<unsigned>((max_pigs*max_grunts)+1);
     pigs = new Pig[max_pigs];
 
     for (unsigned idx = 0; idx < max_pigs; idx++)
