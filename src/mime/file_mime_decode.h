@@ -15,7 +15,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// sf_email_attach_decode.h author Bhagyashree Bantwal <bbantwal@cisco.com>
+// file_mime_decode.h author Bhagya Bantwal <bbantwal@cisco.com>
 
 #ifndef FILE_MIME_DECODE_H
 #define FILE_MIME_DECODE_H
@@ -74,6 +74,8 @@ public:
     void reset_decoded_bytes();
 
     DecodeType get_decode_type();
+
+    static void init();
 
 private:
     DecodeType decode_type = DECODE_NONE;

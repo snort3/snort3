@@ -31,7 +31,7 @@ public:
     ~QPDecode() override;
 
     // Main function to decode file data
-    DecodeResult decode_data(const uint8_t* start, const uint8_t* end) override;
+    DecodeResult decode_data(const uint8_t* start, const uint8_t* end, uint8_t* decode_buf) override;
 
     void reset_decode_state() override;
 

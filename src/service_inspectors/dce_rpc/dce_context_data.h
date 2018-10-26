@@ -20,7 +20,7 @@
 #ifndef DCE_CONTEXT_DATA_H
 #define DCE_CONTEXT_DATA_H
 
-#include "detection/ips_context.h"
+#include "detection/ips_context_data.h"
 #include "dce_utils.h"
 
 struct DCE2_Roptions;

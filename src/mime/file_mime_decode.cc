@@ -16,7 +16,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// file_mime_decode.cc author Bhagyashree Bantwal <bbantwal@sourcefire.com>
+// file_mime_decode.cc author Bhagya Tholpady <bbantwal@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -30,8 +30,12 @@
 #include "decode_bit.h"
 #include "decode_qp.h"
 #include "decode_uu.h"
+#include "file_mime_context_data.h"
 
 using namespace snort;
+
+void MimeDecode::init()
+{ MimeDecodeContextData::init(); }
 
 void MimeDecode::reset_decoded_bytes()
 {
@@ -66,7 +70,7 @@ void MimeDecode::process_decode_type(const char* start, int length, bool cnt_xf,
                 if (mime_stats)
                     mime_stats->b64_attachments++;
                 decoder = new B64Decode(config->get_max_depth(config->get_b64_depth()),
-                    config->get_b64_depth());
+                        config->get_b64_depth());
                 return;
             }
         }
@@ -81,7 +85,7 @@ void MimeDecode::process_decode_type(const char* start, int length, bool cnt_xf,
                 if (mime_stats)
                     mime_stats->qp_attachments++;
                 decoder = new QPDecode(config->get_max_depth(config->get_qp_depth()),
-                    config->get_qp_depth());
+                        config->get_qp_depth());
                 return;
             }
         }
@@ -96,7 +100,7 @@ void MimeDecode::process_decode_type(const char* start, int length, bool cnt_xf,
                 if (mime_stats)
                     mime_stats->uu_attachments++;
                 decoder = new UUDecode(config->get_max_depth(config->get_uu_depth()),
-                    config->get_uu_depth());
+                        config->get_uu_depth());
                 return;
             }
         }
@@ -115,7 +119,8 @@ void MimeDecode::process_decode_type(const char* start, int length, bool cnt_xf,
 
 DecodeResult MimeDecode::decode_data(const uint8_t* start, const uint8_t* end)
 {
-    return (decoder ? decoder->decode_data(start,end) : DECODE_SUCCESS);
+    uint8_t* decode_buf = MimeDecodeContextData::get_decode_buf();
+    return (decoder ? decoder->decode_data(start,end, decode_buf) : DECODE_SUCCESS);
 }
 
 int MimeDecode::get_detection_depth()

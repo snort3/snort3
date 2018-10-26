@@ -25,6 +25,8 @@
 #include "ips_context.h"
 
 #include <cassert>
+#include "detection/detection_engine.h"
+#include "detection/ips_context_data.h"
 #include "events/event_queue.h"
 #include "events/sfeventq.h"
 #include "main/snort_config.h"
@@ -36,25 +38,6 @@
 #endif
 
 using namespace snort;
-
-//--------------------------------------------------------------------------
-// context data
-//--------------------------------------------------------------------------
-
-// ips_id is not a member of context data so that
-// tests (and only tests) can reset the id
-static unsigned ips_id = 0;
-
-// Only 5 inspectors currently use the ips context data.
-// FIXIT-L This limit should to be updated if any more inspectors/modules use it.
-constexpr unsigned max_ips_id = 32;
-
-unsigned IpsContextData::get_ips_id()
-{ 
-    ++ips_id;
-    assert( ips_id < max_ips_id );
-    return ips_id; 
-}
 
 //--------------------------------------------------------------------------
 // context methods
@@ -151,17 +134,7 @@ public:
 };
 
 int TestData::count = 0;
-
-TEST_CASE("IpsContextData id", "[IpsContextData]")
-{
-    ips_id = 0;
-
-    auto id1 = IpsContextData::get_ips_id();
-    auto id2 = IpsContextData::get_ips_id();
-    CHECK(id1 != id2);
-
-    CHECK(max_ips_id > id2 );
-}
+static unsigned ips_id = 0;
 
 TEST_CASE("IpsContext basic", "[IpsContext]")
 {

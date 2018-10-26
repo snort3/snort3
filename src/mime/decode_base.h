@@ -38,7 +38,7 @@ public:
     virtual ~DataDecode() = default;
 
     // Main function to decode file data
-    virtual DecodeResult decode_data(const uint8_t* start, const uint8_t* end) = 0;
+    virtual DecodeResult decode_data(const uint8_t* start, const uint8_t* end, uint8_t* decode_buf) = 0;
 
     // Retrieve the decoded data the previous decode_data() call
     int get_decoded_data(const uint8_t** buf,  uint32_t* size);

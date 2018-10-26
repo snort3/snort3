@@ -20,7 +20,7 @@
 #ifndef HTTP_CONTEXT_DATA_H
 #define HTTP_CONTEXT_DATA_H
 
-#include "detection/ips_context.h"
+#include "detection/ips_context_data.h"
 
 class HttpMsgSection;
 

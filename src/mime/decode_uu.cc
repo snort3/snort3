@@ -43,11 +43,11 @@ void UUDecode::reset_decode_state()
     begin_found = end_found = false;
 }
 
-DecodeResult UUDecode::decode_data(const uint8_t* start, const uint8_t* end)
+DecodeResult UUDecode::decode_data(const uint8_t* start, const uint8_t* end, uint8_t* decode_buf)
 {
     uint32_t act_encode_size = 0, act_decode_size = 0, bytes_read = 0;
 
-    if (!buffer->check_restore_buffer())
+    if (!buffer->check_restore_buffer() || !decode_buf)
     {
         reset_decode_state();
         return DECODE_EXCEEDED;
@@ -74,7 +74,7 @@ DecodeResult UUDecode::decode_data(const uint8_t* start, const uint8_t* end)
 
     act_encode_size = act_encode_size + buffer->get_prev_encoded_bytes();
 
-    if (sf_uudecode(buffer->get_encode_buff(), act_encode_size, buffer->get_decode_buff(),
+    if (sf_uudecode(buffer->get_encode_buff(), act_encode_size, decode_buf,
             buffer->get_decode_avail(), &bytes_read, &act_decode_size,
             &(begin_found), &(end_found)) != 0)
     {
@@ -105,7 +105,7 @@ DecodeResult UUDecode::decode_data(const uint8_t* start, const uint8_t* end)
         buffer->reset_saved();
 
     decoded_bytes = act_decode_size;
-    decodePtr = buffer->get_decode_buff();
+    decodePtr = decode_buf;
     buffer->update_buffer(act_encode_size, act_decode_size);
     decode_bytes_read = buffer->get_decode_bytes_read();
     return DECODE_SUCCESS;

@@ -26,7 +26,7 @@
 #include "gtp_inspect.h"
 
 #include "detection/detection_engine.h"
-#include "detection/ips_context.h"
+#include "detection/ips_context_data.h"
 #include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
@@ -87,13 +87,8 @@ public:
 
 GTP_IEData* get_infos()
 {
-    GtpContextData* gcd = (GtpContextData*)DetectionEngine::get_data(ips_id);
+    GtpContextData* gcd = IpsContextData::get<GtpContextData>(ips_id);
 
-    if ( !gcd )
-    {
-        gcd = new GtpContextData;
-        DetectionEngine::set_data(ips_id, gcd);
-    }
     return gcd->gtp_ies;
 }
 

@@ -32,6 +32,7 @@
 
 #include "detect_trace.h"
 #include "ips_context.h"
+#include "ips_context_data.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"

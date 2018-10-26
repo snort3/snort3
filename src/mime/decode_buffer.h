@@ -40,7 +40,6 @@ public:
     void update_buffer(uint32_t act_encode_size, uint32_t act_decode_size);
 
     void reset_saved();
-    uint8_t* get_decode_buff() { return decodeBuf; }
     uint8_t* get_encode_buff() { return encodeBuf; }
     uint32_t get_decode_bytes_read() { return decode_bytes_read; }
     uint32_t get_decode_avail();
@@ -52,7 +51,6 @@ private:
     uint32_t prev_encoded_bytes;
     uint8_t* prev_encoded_buf;
     uint8_t* encodeBuf = nullptr;
-    uint8_t* decodeBuf = nullptr;
     uint32_t encode_bytes_read;
     uint32_t decode_bytes_read;
     int code_depth;

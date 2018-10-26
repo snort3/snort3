@@ -50,6 +50,7 @@
 #include "fp_config.h"
 #include "fp_detect.h"
 #include "ips_context.h"
+#include "ips_context_data.h"
 #include "regex_offload.h"
 
 static THREAD_LOCAL RegexOffload* offloader = nullptr;

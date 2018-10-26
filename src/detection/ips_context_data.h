@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2018 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2018-2018 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,39 +15,40 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// Hui Cao <huica@cisco.com>
 
-#ifndef DECODE_B64_H
-#define DECODE_B64_H
+// ips_context_data.h author Russ Combs <rucombs@cisco.com>
 
-// Email attachment decoder
+#ifndef IPS_CONTEXT_DATA_H
+#define IPS_CONTEXT_DATA_H
 
 #include "main/snort_types.h"
-#include "mime/decode_base.h"
 
-class B64Decode : public DataDecode
-{
-public:
-    B64Decode(int max_depth, int detect_depth);
-    ~B64Decode() override;
-
-    // Main function to decode file data
-    DecodeResult decode_data(const uint8_t* start, const uint8_t* end, uint8_t* decode_buf) override;
-
-    void reset_decode_state() override;
-
-private:
-    class DecodeBuffer* buffer = nullptr;
-};
+#include "detection/detection_engine.h"
 
 namespace snort
 {
-// FIXIT-L inbuf should probably be const uint8_t*
-SO_PUBLIC int sf_base64decode(
-    uint8_t* inbuf, uint32_t inbuf_size,
-    uint8_t* outbuf, uint32_t outbuf_size,
-    uint32_t* bytes_written
-    );
+class SO_PUBLIC IpsContextData
+{
+public:
+    virtual ~IpsContextData() = default;
+
+    static unsigned get_ips_id();
+    template<typename T>
+    static T* get(unsigned ips_id)
+    {
+        T* data = (T*)DetectionEngine::get_data(ips_id);
+        if ( ! data )
+        {
+            data = new T;
+            DetectionEngine::set_data(ips_id, data);
+        }
+        return data;
+    }
+    virtual void clear() {}
+
+protected:
+    IpsContextData() = default;
+};
 }
 #endif
 

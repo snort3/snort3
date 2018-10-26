@@ -39,6 +39,7 @@ struct SF_EVENTQ;
 
 namespace snort
 {
+class IpsContextData;
 struct SnortConfig;
 struct Replacement
 {
@@ -50,18 +51,6 @@ struct FlowSnapshot
 {
     uint32_t session_flags;
     SnortProtocolId proto_id;
-};
-
-class SO_PUBLIC IpsContextData
-{
-public:
-    virtual ~IpsContextData() = default;
-
-    static unsigned get_ips_id();
-    virtual void clear() {}
-
-protected:
-    IpsContextData() = default;
 };
 
 class SO_PUBLIC IpsContext
@@ -126,6 +115,9 @@ public:
     std::vector<Replacement> rpl;
 
     static const unsigned buf_size = Codec::PKT_MAX;
+    // Only 5 inspectors currently use the ips context data.
+    // FIXIT-L This limit should to be updated if any more inspectors/modules use it.
+    static constexpr unsigned max_ips_id = 32;
 
 private:
     FlowSnapshot flow;

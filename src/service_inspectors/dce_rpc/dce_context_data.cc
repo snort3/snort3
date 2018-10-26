@@ -117,13 +117,7 @@ void DceContextData::set_current_ropts(DCE2_SsnData* sd)
     if ( !ips_id )
         return;
 
-    DceContextData* dcd = (DceContextData*)DetectionEngine::get_data(ips_id);
-
-    if ( !dcd )
-    {
-        dcd = new DceContextData;
-        DetectionEngine::set_data(ips_id, dcd);
-    }
+    DceContextData* dcd = IpsContextData::get<DceContextData>(ips_id);
 
     if ( !dcd->current_ropts )
     {

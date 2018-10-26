@@ -44,13 +44,7 @@ HttpMsgSection* HttpContextData::get_snapshot(const Packet* p)
 
 void HttpContextData::save_snapshot(HttpMsgSection* section)
 {
-    HttpContextData* hcd = (HttpContextData*)DetectionEngine::get_data(HttpContextData::ips_id);
-
-    if ( !hcd )
-    {
-        hcd = new HttpContextData;
-        DetectionEngine::set_data(HttpContextData::ips_id, hcd);
-    }
+    HttpContextData* hcd = IpsContextData::get<HttpContextData>(HttpContextData::ips_id);
 
     hcd->current_section = section;
     section->add_ips_context(DetectionEngine::get_context());

@@ -689,6 +689,8 @@ void MimeSession::init()
 {
     const MimeToken* tmp;
 
+    MimeDecode::init();
+
     /* Header search */
     mime_hdr_search_mpse = new SearchTool;
     if (mime_hdr_search_mpse == nullptr)
