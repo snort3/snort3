@@ -152,6 +152,7 @@ void Analyzer::analyze()
         {
             pause();
             Snort::clear_pause();
+            snort::LogMessage("== paused\n");
         }
         if (handle_command())
             continue;

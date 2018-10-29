@@ -740,7 +740,10 @@ void Snort::thread_idle()
 {
     // FIXIT-L this whole thing could be pub-sub
     DataBus::publish(THREAD_IDLE_EVENT, nullptr);
-    Stream::timeout_flows(time(nullptr));
+    if (SnortConfig::read_mode())
+        Stream::timeout_flows(packet_time());
+    else
+        Stream::timeout_flows(time(nullptr));
     aux_counts.idle++;
     HighAvailabilityManager::process_receive();
 }
