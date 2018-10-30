@@ -90,7 +90,7 @@ static const luaL_Reg methods[] =
             std::vector<uint16_t> tmp;
             tmp.reserve(ret.size());
             for(auto a: ret)
-                tmp.push_back(to_utype(a));
+                tmp.emplace_back(to_utype(a));
 
             lua_newtable(L);
             Lua::fill_table_from_vector(L, lua_gettop(L), tmp);

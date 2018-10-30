@@ -33,7 +33,6 @@
 #include "packet_io/active.h"
 #include "profiler/profiler.h"
 
-#include "reputation_module.h"
 #include "reputation_parse.h"
 
 #define VERDICT_REASON_REPUTATION 19
@@ -73,8 +72,6 @@ const char* WhiteActionOption[] =
  * Function prototype(s)
  */
 static void snort_reputation(ReputationConfig* GlobalConf, Packet* p);
-
-unsigned ReputationFlowData::inspector_id = 0;
 
 static void print_iplist_stats(ReputationConfig* config)
 {
@@ -313,20 +310,6 @@ static unsigned create_reputation_id()
 // class stuff
 //-------------------------------------------------------------------------
 
-class Reputation : public Inspector
-{
-public:
-    Reputation(ReputationConfig*);
-
-    void show(SnortConfig*) override;
-    void eval(Packet*) override;
-
-private:
-    ReputationConfig config;
-    unsigned reputation_id;
-    bool is_reputation_disabled(Flow* flow);
-};
-
 Reputation::Reputation(ReputationConfig* pc)
 {
     reputation_id = create_reputation_id();
@@ -348,26 +331,6 @@ Reputation::Reputation(ReputationConfig* pc)
     reputationstats.memory_allocated = sfrt_flat_usage(conf->ip_list);
 }
 
-bool Reputation::is_reputation_disabled(Flow* flow)
-{
-    if (!flow)
-        return false;
-
-    ReputationFlowData* fd = (ReputationFlowData*)flow->get_flow_data(
-        ReputationFlowData::inspector_id);
-
-    if (!fd)
-    {
-        fd = new ReputationFlowData;
-        flow->set_flow_data(fd);
-    }
-    else if (fd->checked_reputation_id == reputation_id) // reputation previously checked
-        return true;
-
-    fd->checked_reputation_id = reputation_id; // disable future reputation checking
-    return false;
-}
-
 void Reputation::show(SnortConfig*)
 {
     print_reputation_conf(&config);
@@ -380,11 +343,19 @@ void Reputation::eval(Packet* p)
     // precondition - what we registered for
     assert(p->has_ip());
 
-    if (!p->is_rebuilt() && !is_reputation_disabled(p->flow))
+    if (p->is_rebuilt())
+        return;
+
+    if (p->flow)
     {
-        snort_reputation(&config, p);
-        ++reputationstats.packets;
+        if (p->flow->reputation_id == reputation_id) // reputation previously checked
+            return;
+        else
+            p->flow->reputation_id = reputation_id; // disable future reputation checking
     }
+
+    snort_reputation(&config, p);
+    ++reputationstats.packets;
 }
 
 //-------------------------------------------------------------------------
@@ -399,7 +370,6 @@ static void mod_dtor(Module* m)
 
 static void reputation_init()
 {
-    ReputationFlowData::init();
     PacketTracer::register_verdict_reason(VERDICT_REASON_REPUTATION, PacketTracer::PRIORITY_LOW);
 }
 

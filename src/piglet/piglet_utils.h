@@ -95,7 +95,7 @@ struct Test
     inline void set_error(const std::string& s)
     {
         result = ERROR;
-        messages.push_back(s);
+        messages.emplace_back(s);
     }
 
     Test(const Chunk& ch) : chunk { &ch } { }

@@ -676,7 +676,7 @@ bool JsonModule::set(const char*, Value& v, SnortConfig*)
         fields.clear();
 
         while ( v.get_next_token(tok) )
-            fields.push_back(json_func[Parameter::index(json_range, tok.c_str())]);
+            fields.emplace_back(json_func[Parameter::index(json_range, tok.c_str())]);
     }
 
     else if ( v.is("limit") )
@@ -704,7 +704,7 @@ bool JsonModule::begin(const char*, int, SnortConfig*)
         v.set_first_token();
 
         while ( v.get_next_token(tok) )
-            fields.push_back(json_func[Parameter::index(json_range, tok.c_str())]);
+            fields.emplace_back(json_func[Parameter::index(json_range, tok.c_str())]);
     }
     return true;
 }

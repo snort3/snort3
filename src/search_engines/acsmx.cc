@@ -184,7 +184,7 @@ static void Build_NFA(ACSM_STRUCT* acsm)
 
         if (s)
         {
-            queue.push_back(s);
+            queue.emplace_back(s);
             acsm->acsmStateTable[s].FailState = 0;
         }
     }
@@ -199,7 +199,7 @@ static void Build_NFA(ACSM_STRUCT* acsm)
 
             if ( s != ACSM_FAIL_STATE )
             {
-                queue.push_back(s);
+                queue.emplace_back(s);
                 int fs = acsm->acsmStateTable[r].FailState;
                 int next;
 
@@ -247,7 +247,7 @@ static void Convert_NFA_To_DFA(ACSM_STRUCT* acsm)
     for (int i = 0; i < ALPHABET_SIZE; i++)
     {
         if ( int s = acsm->acsmStateTable[0].NextState[i] )
-            queue.push_back(s);
+            queue.emplace_back(s);
     }
 
     /* Start building the next layer of transitions */
@@ -260,7 +260,7 @@ static void Convert_NFA_To_DFA(ACSM_STRUCT* acsm)
 
             if ( s != ACSM_FAIL_STATE )
             {
-                queue.push_back(s);
+                queue.emplace_back(s);
             }
             else
             {

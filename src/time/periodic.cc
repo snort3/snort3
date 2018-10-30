@@ -82,7 +82,7 @@ void Periodic::unregister_all()
 static std::vector<int> s_test_args;
 
 static void s_test_handler(void* pv)
-{ s_test_args.push_back(*(int*)(pv)); }
+{ s_test_args.emplace_back(*(int*)(pv)); }
 
 TEST_CASE("periodic", "[periodic]")
 {

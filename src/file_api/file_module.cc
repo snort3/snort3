@@ -310,7 +310,7 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
         std::string tmpstr;
         while(std::getline(stream, tmpstr, ','))
         {
-            rule.groups.push_back(tmpstr);
+            rule.groups.emplace_back(tmpstr);
         }
     }
 
@@ -392,7 +392,7 @@ bool FileIdModule::end(const char* fqn, int idx, SnortConfig*)
     else if ( !strcmp(fqn, "file_id.file_rules.magic") )
     {
         fc->process_file_magic(magic);
-        rule.file_magics.push_back(magic);
+        rule.file_magics.emplace_back(magic);
     }
     else if ( !strcmp(fqn, "file_id.file_policy") )
     {

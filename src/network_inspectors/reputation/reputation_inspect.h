@@ -21,16 +21,19 @@
 
 #include "flow/flow.h"
 
-class ReputationFlowData : public snort::FlowData
+#include "reputation_module.h"
+
+class Reputation : public snort::Inspector
 {
 public:
-    ReputationFlowData() : snort::FlowData(inspector_id){}
+    Reputation(ReputationConfig*);
 
-    static void init()
-    { inspector_id = snort::FlowData::create_flow_data_id(); }
+    void show(snort::SnortConfig*) override;
+    void eval(snort::Packet*) override;
 
-    static unsigned inspector_id;
-    unsigned checked_reputation_id = 0;
+private:
+    ReputationConfig config;
+    unsigned reputation_id;
 };
 
 #endif

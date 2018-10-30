@@ -151,7 +151,7 @@ bool PgmCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
 void PgmCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(ProtocolId::PGM);
+    v.emplace_back(ProtocolId::PGM);
 }
 
 //-------------------------------------------------------------------------

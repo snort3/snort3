@@ -82,7 +82,7 @@ constexpr uint32_t ESP_TRAILER_LEN = 2;
 } // anonymous namespace
 
 void EspCodec::get_protocol_ids(std::vector<ProtocolId>& v)
-{ v.push_back(ProtocolId::ESP); }
+{ v.emplace_back(ProtocolId::ESP); }
 
 /*
  * Attempt to decode Encapsulated Security Payload.

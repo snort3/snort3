@@ -48,9 +48,9 @@ bool SpellBook::translate(const char* in, HexVector& out)
         if ( wild )
         {
             if ( in[i] != '*' )
-                out.push_back(WILD);
+                out.emplace_back(WILD);
 
-            out.push_back(in[i]);
+            out.emplace_back(in[i]);
             wild = false;
         }
         else
@@ -58,7 +58,7 @@ bool SpellBook::translate(const char* in, HexVector& out)
             if ( in[i] == '*' )
                 wild = true;
             else
-                out.push_back(in[i]);
+                out.emplace_back(in[i]);
         }
         ++i;
     }

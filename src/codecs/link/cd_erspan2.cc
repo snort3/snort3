@@ -69,7 +69,7 @@ struct ERSpanType2Hdr
 } // namespace
 
 void Erspan2Codec::get_protocol_ids(std::vector<ProtocolId>& v)
-{ v.push_back(ProtocolId::ETHERTYPE_ERSPAN_TYPE2); }
+{ v.emplace_back(ProtocolId::ETHERTYPE_ERSPAN_TYPE2); }
 
 bool Erspan2Codec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {

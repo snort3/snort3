@@ -181,7 +181,7 @@ bool FtpClientModule::end(const char* fqn, int idx, SnortConfig*)
             ParseError("bad ftp_client.bounce_to [%d]", idx);
             return false;
         }
-        bounce_to.push_back(new BounceTo(address, port, last_port));
+        bounce_to.emplace_back(new BounceTo(address, port, last_port));
     }
     return true;
 }
@@ -375,7 +375,7 @@ void FtpServerModule::add_commands(
     v.set_first_token();
 
     while ( v.get_next_token(tok) )
-        cmds.push_back(new FtpCmd(tok, flags, num));
+        cmds.emplace_back(new FtpCmd(tok, flags, num));
 }
 
 const FtpCmd* FtpServerModule::get_cmd(unsigned idx)
@@ -489,7 +489,7 @@ bool FtpServerModule::end(const char* fqn, int idx, SnortConfig*)
         return true;
 
     if ( !strcmp(fqn, "ftp_server.cmd_validity") )
-        cmds.push_back(new FtpCmd(names, format, number));
+        cmds.emplace_back(new FtpCmd(names, format, number));
 
     else if ( !strcmp(fqn, "ftp_server.directory_cmds") )
     {

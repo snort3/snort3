@@ -92,7 +92,7 @@ bool Ipv6HopOptsCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
 void Ipv6HopOptsCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(ProtocolId::HOPOPTS);
+    v.emplace_back(ProtocolId::HOPOPTS);
 }
 
 //-------------------------------------------------------------------------

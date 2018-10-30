@@ -58,6 +58,6 @@ AppId find_length_app_cache(const LengthKey& key)
 
 bool add_length_app_cache(const LengthKey& key, AppId val)
 {
-    return (length_cache->insert(std::make_pair(key, val))).second == true;
+    return (length_cache->emplace(key, val)).second == true;
 }
 

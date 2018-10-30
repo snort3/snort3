@@ -58,7 +58,7 @@ void AppIdPegCounts::add_app_peg_info(std::string app_name, AppId app_id)
     std::replace(app_name.begin(), app_name.end(), ' ', '_');
 
     appid_detector_pegs_idx[app_id] = appid_detectors_info.size();
-    appid_detectors_info.push_back({ app_name });
+    appid_detectors_info.emplace_back(app_name);
 }
 
 void AppIdPegCounts::sum_stats()

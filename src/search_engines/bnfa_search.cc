@@ -722,7 +722,7 @@ static int _bnfa_build_nfa(bnfa_struct_t* bnfa)
         int s = _bnfa_list_get_next_state(bnfa,0,i);
         if ( s )   /* don't bother adding state zero */
         {
-            queue.push_back(s);
+            queue.emplace_back(s);
             FailState[s] = 0;
         }
     }
@@ -740,7 +740,7 @@ static int _bnfa_build_nfa(bnfa_struct_t* bnfa)
             if ( s == (int)BNFA_FAIL_STATE )
                 continue;
 
-            queue.push_back(s);
+            queue.emplace_back(s);
 
             fs = FailState[r];
 

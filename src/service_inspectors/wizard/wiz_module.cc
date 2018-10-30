@@ -140,10 +140,10 @@ bool WizardModule::set(const char*, Value& v, SnortConfig*)
         return true;
 
     else if ( v.is("hex") )
-        spells.push_back(v.get_string());
+        spells.emplace_back(v.get_string());
 
     else if ( v.is("spell") )
-        spells.push_back(v.get_string());
+        spells.emplace_back(v.get_string());
 
     else if ( v.is("curses") )
         curses->add_curse(v.get_string());

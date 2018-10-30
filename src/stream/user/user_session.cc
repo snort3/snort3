@@ -292,7 +292,7 @@ void UserTracker::add_data(Packet* p)
     if ( avail < p->dsize )
     {
         UserSegment* us = UserSegment::init(p->data+avail, p->dsize-avail);
-        seg_list.push_back(us);
+        seg_list.emplace_back(us);
     }
     total += p->dsize;
     process(p);

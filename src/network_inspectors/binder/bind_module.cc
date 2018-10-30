@@ -344,7 +344,7 @@ bool BinderModule::end(const char* fqn, int idx, SnortConfig* sc)
         if ( work->use.name.empty() )
             work->use.name = work->use.type;
 
-        bindings.push_back(work);
+        bindings.emplace_back(work);
         work = nullptr;
     }
     return true;
@@ -356,7 +356,7 @@ void BinderModule::add(const char* svc, const char* type)
     b->when.svc = svc;
     b->use.type = type;
     b->use.name = type;
-    bindings.push_back(b);
+    bindings.emplace_back(b);
 }
 
 void BinderModule::add(unsigned proto, const char* type)
@@ -365,7 +365,7 @@ void BinderModule::add(unsigned proto, const char* type)
     b->when.protos = proto;
     b->use.type = type;
     b->use.name = type;
-    bindings.push_back(b);
+    bindings.emplace_back(b);
 }
 
 vector<Binding*>& BinderModule::get_data()

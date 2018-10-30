@@ -220,10 +220,10 @@ static void load_script(const char* f)
     }
 
     if ( type == IpsLuaApi::type )
-        lua_api.push_back(new IpsLuaApi(name, chunk, ver));
+        lua_api.emplace_back(new IpsLuaApi(name, chunk, ver));
 
     else if ( type == LogLuaApi::type )
-        lua_api.push_back(new LogLuaApi(name, chunk, ver));
+        lua_api.emplace_back(new LogLuaApi(name, chunk, ver));
 
 #ifdef PIGLET
     else if ( type == "piglet" )
@@ -286,9 +286,9 @@ const BaseApi** ScriptManager::get_plugins()
     base_api.clear();
 
     for ( auto p : lua_api )
-        base_api.push_back(p->get_base());
+        base_api.emplace_back(p->get_base());
 
-    base_api.push_back(nullptr);
+    base_api.emplace_back(nullptr);
 
     return (const BaseApi**)&base_api[0];
 }

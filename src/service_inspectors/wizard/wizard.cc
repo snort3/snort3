@@ -227,9 +227,9 @@ void Wizard::reset(Wand& w, bool tcp, bool c2s)
         for ( const CurseDetails* curse : pages )
         {
             if (tcp)
-                w.curse_tracker.push_back({ curse, new CurseTracker });
+                w.curse_tracker.emplace_back( CurseServiceTracker{ curse, new CurseTracker } );
             else
-                w.curse_tracker.push_back({ curse, nullptr });
+                w.curse_tracker.emplace_back( CurseServiceTracker{ curse, nullptr } );
         }
     }
 }

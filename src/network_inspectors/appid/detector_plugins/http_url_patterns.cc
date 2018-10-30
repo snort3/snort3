@@ -404,15 +404,15 @@ void HttpPatternMatchers::insert_http_pattern(enum httpPatternType pType,
     switch (pType)
     {
     case HTTP_PAYLOAD:
-        host_payload_patterns.push_back(pattern);
+        host_payload_patterns.emplace_back(pattern);
         break;
 
     case HTTP_URL:
-        url_patterns.push_back(pattern);
+        url_patterns.emplace_back(pattern);
         break;
 
     case HTTP_USER_AGENT:
-        client_agent_patterns.push_back(pattern);
+        client_agent_patterns.emplace_back(pattern);
         break;
     }
 }
@@ -464,17 +464,17 @@ void HttpPatternMatchers::remove_http_patterns_for_id(AppId id)
 
 void HttpPatternMatchers::insert_content_type_pattern(DetectorHTTPPattern& pattern)
 {
-    content_type_patterns.push_back(pattern);
+    content_type_patterns.emplace_back(pattern);
 }
 
 void HttpPatternMatchers::insert_url_pattern(DetectorAppUrlPattern* pattern)
 {
-    app_url_patterns.push_back(pattern);
+    app_url_patterns.emplace_back(pattern);
 }
 
 void HttpPatternMatchers::insert_rtmp_url_pattern(DetectorAppUrlPattern* pattern)
 {
-    rtmp_url_patterns.push_back(pattern);
+    rtmp_url_patterns.emplace_back(pattern);
 }
 
 void HttpPatternMatchers::insert_app_url_pattern(DetectorAppUrlPattern* pattern)
@@ -488,7 +488,7 @@ int HttpPatternMatchers::add_mlmp_pattern(tMlmpTree* matcher, DetectorHTTPPatter
 
     HostUrlDetectorPattern* detector = new HostUrlDetectorPattern(pattern.pattern,
         pattern.pattern_size);
-    host_url_patterns.push_back(detector);
+    host_url_patterns.emplace_back(detector);
 
     detector->payload_id = pattern.payload_id;
     detector->service_id = pattern.service_id;
@@ -516,7 +516,7 @@ int HttpPatternMatchers::add_mlmp_pattern(tMlmpTree* matcher, DetectorAppUrlPatt
 
     HostUrlDetectorPattern* detector = new HostUrlDetectorPattern(pattern.patterns.host.pattern,
         pattern.patterns.host.patternSize);
-    host_url_patterns.push_back(detector);
+    host_url_patterns.emplace_back(detector);
 
     if (pattern.patterns.path.pattern)
     {
@@ -589,7 +589,8 @@ static int chp_pattern_match(void* id, void*, int match_end_pos, void* data, voi
     ChpMatchDescriptor* cmd = (ChpMatchDescriptor*)data;
     CHPAction* target = (CHPAction*)id;
 
-    cmd->chp_matches[cmd->cur_ptype].push_back({ target, match_end_pos - target->psize });
+    cmd->chp_matches[cmd->cur_ptype].emplace_back( MatchedCHPAction{ target,
+        match_end_pos - target->psize } );
     return 0;
 }
 
@@ -602,8 +603,8 @@ static inline void chp_add_candidate_to_tally(CHPMatchTally& match_tally, CHPApp
             return;
         }
 
-    match_tally.push_back({ chpapp, chpapp->key_pattern_length_sum,
-                            chpapp->key_pattern_count - 1 });
+    match_tally.emplace_back( CHPMatchCandidate{ chpapp, chpapp->key_pattern_length_sum,
+        chpapp->key_pattern_count - 1 } );
 }
 
 // In addition to creating the linked list of matching actions this function will

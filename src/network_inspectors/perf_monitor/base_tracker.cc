@@ -120,7 +120,7 @@ TEST_CASE("module stats", "[BaseTracker]")
     ModuleConfig mod_cfg;
     mod_cfg.ptr = &mod;
     mod_cfg.pegs = {0, 2, 4};
-    config.modules.push_back(mod_cfg);
+    config.modules.emplace_back(mod_cfg);
 
     MockBaseTracker tracker(&config);
     MockFormatter *formatter = (MockFormatter*)tracker.output;

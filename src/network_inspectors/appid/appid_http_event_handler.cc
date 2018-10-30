@@ -128,6 +128,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     }
 
     hsession->process_http_packet(direction, change_bits);
+
     if (asd->service.get_id() == APP_ID_HTTP)
     {
         asd->set_application_ids(asd->pick_service_app_id(), asd->pick_client_app_id(),

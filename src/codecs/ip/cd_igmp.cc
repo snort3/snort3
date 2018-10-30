@@ -85,7 +85,7 @@ bool IgmpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
 void IgmpCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(ProtocolId::IGMP);
+    v.emplace_back(ProtocolId::IGMP);
 }
 
 //-------------------------------------------------------------------------

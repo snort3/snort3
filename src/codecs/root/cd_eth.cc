@@ -73,13 +73,13 @@ public:
 
 void EthCodec::get_data_link_type(std::vector<int>& v)
 {
-    v.push_back(DLT_PPP_ETHER);
-    v.push_back(DLT_EN10MB);
+    v.emplace_back(DLT_PPP_ETHER);
+    v.emplace_back(DLT_EN10MB);
 }
 
 void EthCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(ProtocolId::ETHERNET_802_3);
+    v.emplace_back(ProtocolId::ETHERNET_802_3);
 }
 
 bool EthCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)

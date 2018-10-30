@@ -55,8 +55,7 @@ class AFActKey
         {
             const snort::SfIp* src = dir ? p->ptrs.ip_api.get_dst() : p->ptrs.ip_api.get_src();
 
-            for (int i = 0; i < 4; i++)
-                master_key.ip[i] = src->get_ip6_ptr()[i];
+            memcpy(master_key.ip, src->get_ip6_ptr(), sizeof(master_key.ip));
             master_key.forecast = forecast;
         }
 

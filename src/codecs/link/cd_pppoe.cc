@@ -150,7 +150,7 @@ public:
     PPPoEDiscCodec() : PPPoECodec(CD_PPPOEPKT_DISC_NAME, PppoepktType::DISCOVERY) { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override
-    { v.push_back(ProtocolId::ETHERTYPE_PPPOE_DISC); }
+    { v.emplace_back(ProtocolId::ETHERTYPE_PPPOE_DISC); }
 };
 
 class PPPoESessCodec : public PPPoECodec
@@ -159,7 +159,7 @@ public:
     PPPoESessCodec() : PPPoECodec(CD_PPPOEPKT_SESS_NAME, PppoepktType::SESSION) { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override
-    { v.push_back(ProtocolId::ETHERTYPE_PPPOE_SESS); }
+    { v.emplace_back(ProtocolId::ETHERTYPE_PPPOE_SESS); }
 };
 } // namespace
 

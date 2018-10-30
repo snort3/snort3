@@ -143,9 +143,9 @@ constexpr int MPLS_PAYLOADTYPE_ERROR = -1;
 
 void MplsCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(ProtocolId::ETHERTYPE_MPLS_UNICAST);
-    v.push_back(ProtocolId::ETHERTYPE_MPLS_MULTICAST);
-    v.push_back(ProtocolId::MPLS_IP);
+    v.emplace_back(ProtocolId::ETHERTYPE_MPLS_UNICAST);
+    v.emplace_back(ProtocolId::ETHERTYPE_MPLS_MULTICAST);
+    v.emplace_back(ProtocolId::MPLS_IP);
 }
 
 bool MplsCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)

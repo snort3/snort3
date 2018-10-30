@@ -120,7 +120,7 @@ private:
 } // namespace
 
 void Icmp4Codec::get_protocol_ids(std::vector<ProtocolId>& v)
-{ v.push_back(ProtocolId::ICMPV4); }
+{ v.emplace_back(ProtocolId::ICMPV4); }
 
 bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
 {

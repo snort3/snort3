@@ -141,7 +141,7 @@ static sfip_var_t* SynToMulticastDstIp = nullptr;
 
 void TcpCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(ProtocolId::TCP);
+    v.emplace_back(ProtocolId::TCP);
 }
 
 bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)

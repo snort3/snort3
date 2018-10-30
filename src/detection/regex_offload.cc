@@ -63,7 +63,7 @@ RegexOffload::RegexOffload(unsigned max)
     {
         RegexRequest* req = new RegexRequest;
         req->thread = new std::thread(worker, req);
-        idle.push_back(req);
+        idle.emplace_back(req);
     }
 }
 
@@ -132,7 +132,7 @@ void RegexOffload::put(unsigned id, snort::Packet* p)
     RegexRequest* req = idle.front();
 
     idle.pop_front();  // FIXIT-H use splice to move instead
-    busy.push_back(req);
+    busy.emplace_back(req);
 
     std::unique_lock<std::mutex> lock(req->mutex);
 
@@ -157,7 +157,7 @@ bool RegexOffload::get(unsigned& id)
     req->packet = nullptr;
 
     busy.pop_front();  // FIXIT-H use splice to move instead
-    idle.push_back(req);
+    idle.emplace_back(req);
 
     return true;
 }

@@ -295,7 +295,7 @@ std::vector<std::pair<Key, Data> > LruCacheShared<Key, Data, Hash>::get_all_data
 
     for (auto& entry : list )
     {
-        vec.push_back(entry);
+        vec.emplace_back(entry);
     }
 
     return vec;

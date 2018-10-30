@@ -115,13 +115,13 @@ private:
 
 void Ipv6Codec::get_data_link_type(std::vector<int>& v)
 {
-    v.push_back(DLT_IPV6);
+    v.emplace_back(DLT_IPV6);
 }
 
 void Ipv6Codec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(ProtocolId::ETHERTYPE_IPV6);
-    v.push_back(ProtocolId::IPV6);
+    v.emplace_back(ProtocolId::ETHERTYPE_IPV6);
+    v.emplace_back(ProtocolId::IPV6);
 }
 
 bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)

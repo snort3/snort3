@@ -99,7 +99,7 @@ int Trough::get_pcaps(std::vector<struct PcapReadObject> &pol)
                                 return -1;
                             }
                             while ((pcap_filename = pcap_dir.next()))
-                                tmp_queue.push_back(pcap_filename);
+                                tmp_queue.emplace_back(pcap_filename);
                             std::sort(tmp_queue.begin(), tmp_queue.end());
                             pcap_queue.reserve(pcap_queue.size() + tmp_queue.size());
                             pcap_queue.insert(pcap_queue.end(), tmp_queue.begin(), tmp_queue.end());
@@ -108,7 +108,7 @@ int Trough::get_pcaps(std::vector<struct PcapReadObject> &pol)
                         {
                             if (filter.empty() ||
                                 (fnmatch(filter.c_str(), pcap_name.c_str(), 0) == 0))
-                                pcap_queue.push_back(pcap_name);
+                                pcap_queue.emplace_back(pcap_name);
                         }
                         else
                         {
@@ -165,7 +165,7 @@ int Trough::get_pcaps(std::vector<struct PcapReadObject> &pol)
                             }
                         }
 
-                        pcap_queue.push_back(pcap_name);
+                        pcap_queue.emplace_back(pcap_name);
                     } while (pos != std::string::npos);
                 }
 
@@ -185,7 +185,7 @@ int Trough::get_pcaps(std::vector<struct PcapReadObject> &pol)
                         return -1;
                     }
                     while ((pcap_filename = pcap_dir.next()))
-                        tmp_queue.push_back(pcap_filename);
+                        tmp_queue.emplace_back(pcap_filename);
                     std::sort(tmp_queue.begin(), tmp_queue.end());
                     pcap_queue.reserve(pcap_queue.size() + tmp_queue.size());
                     pcap_queue.insert(pcap_queue.end(), tmp_queue.begin(), tmp_queue.end());
@@ -206,7 +206,7 @@ void Trough::add_source(SourceType type, const char* list)
     pro.arg = list;
     pro.filter = pcap_filter;
 
-    pcap_object_list.push_back(pro);
+    pcap_object_list.emplace_back(pro);
 }
 
 void Trough::set_filter(const char *f)

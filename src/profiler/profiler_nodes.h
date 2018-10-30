@@ -59,7 +59,7 @@ public:
     { stats.reset(); }
 
     void add_child(ProfilerNode* node)
-    { children.push_back(node); }
+    { children.emplace_back(node); }
 
     const std::vector<ProfilerNode*> get_children() const
     { return children; }

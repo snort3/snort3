@@ -196,7 +196,7 @@ bool PerfMonModule::begin(const char* fqn, int idx, SnortConfig*)
         config = new PerfConfig;
     }
     if ( idx != 0 && strcmp(fqn, "perf_monitor.modules") == 0 )
-        config->modules.push_back(ModuleConfig());
+        config->modules.emplace_back(ModuleConfig());
 
     return true;
 }
@@ -258,7 +258,7 @@ bool ModuleConfig::resolve()
     if ( peg_names.empty() )
     {
         for ( unsigned i = 0; peg_info[i].name != nullptr; i++ )
-            pegs.push_back(i);
+            pegs.emplace_back(i);
     }
     else
     {
@@ -269,7 +269,7 @@ bool ModuleConfig::resolve()
             if ( peg_ittr != peg_names.end() )
             {
                 peg_ittr->second = true;
-                pegs.push_back(i);
+                pegs.emplace_back(i);
             }
         }
 
@@ -296,7 +296,7 @@ bool PerfConfig::resolve()
         {
             ModuleConfig cfg;
             cfg.set_name(mod->get_name());
-            modules.push_back(cfg);
+            modules.emplace_back(cfg);
         }
     }
 
@@ -306,7 +306,7 @@ bool PerfConfig::resolve()
             return false;
 
         if ( mod.ptr->counts_need_prep() )
-            mods_to_prep.push_back(mod.ptr);
+            mods_to_prep.emplace_back(mod.ptr);
     }
 
     return true;

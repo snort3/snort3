@@ -237,19 +237,19 @@ void PerfMonitor::tinit()
     trackers = new std::vector<PerfTracker*>();
 
     if (config->perf_flags & PERF_BASE)
-        trackers->push_back(new BaseTracker(config));
+        trackers->emplace_back(new BaseTracker(config));
 
     if (config->perf_flags & PERF_FLOW)
-        trackers->push_back(new FlowTracker(config));
+        trackers->emplace_back(new FlowTracker(config));
 
     if (config->perf_flags & PERF_FLOWIP)
     {
         flow_ip_tracker = new FlowIPTracker(config);
-        trackers->push_back(flow_ip_tracker);
+        trackers->emplace_back(flow_ip_tracker);
     }
 
     if (config->perf_flags & PERF_CPU )
-        trackers->push_back(new CPUTracker(config));
+        trackers->emplace_back(new CPUTracker(config));
 
     for (unsigned i = 0; i < trackers->size(); i++)
     {

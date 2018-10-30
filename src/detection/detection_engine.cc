@@ -223,7 +223,7 @@ void DetectionEngine::add_replacement(const std::string& s, unsigned off)
 
     r.data = s;
     r.offset = off;
-    Snort::get_switcher()->get_context()->rpl.push_back(r); 
+    Snort::get_switcher()->get_context()->rpl.emplace_back(r); 
 }
 
 bool DetectionEngine::get_replacement(std::string& s, unsigned& off)

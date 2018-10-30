@@ -128,7 +128,7 @@ bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, DecodeData& sno
 }
 
 void Ipv6FragCodec::get_protocol_ids(std::vector<ProtocolId>& v)
-{ v.push_back(ProtocolId::FRAGMENT); }
+{ v.emplace_back(ProtocolId::FRAGMENT); }
 
 void Ipv6FragCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const uint16_t /*lyr_len*/)

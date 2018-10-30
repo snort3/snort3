@@ -95,7 +95,7 @@ struct EthLlcOther
 } // namespace
 
 void LlcCodec::get_protocol_ids(std::vector<ProtocolId>& v)
-{ v.push_back(ProtocolId::ETHERNET_LLC); }
+{ v.emplace_back(ProtocolId::ETHERNET_LLC); }
 
 bool LlcCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {

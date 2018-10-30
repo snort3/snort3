@@ -54,7 +54,7 @@ struct MobileIPV6Header  // RFC 6275
 
 void MobilityCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(ProtocolId::MOBILITY_IPV6);
+    v.emplace_back(ProtocolId::MOBILITY_IPV6);
 }
 
 bool MobilityCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)

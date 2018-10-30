@@ -63,7 +63,7 @@ void SFDAQInstanceConfig::set_input_spec(const char* input_spec_str)
 
 void SFDAQInstanceConfig::set_variable(const char* varkvp)
 {
-    variables.push_back(parse_variable(varkvp));
+    variables.emplace_back(parse_variable(varkvp));
 }
 
 /*
@@ -85,7 +85,7 @@ SFDAQConfig::~SFDAQConfig()
 void SFDAQConfig::add_module_dir(const char* module_dir)
 {
     if (module_dir)
-        module_dirs.push_back(module_dir);
+        module_dirs.emplace_back(module_dir);
 }
 
 void SFDAQConfig::set_input_spec(const char* input_spec_str, int instance_id)
@@ -143,7 +143,7 @@ void SFDAQConfig::set_variable(const char* varkvp, int instance_id)
         ic->set_variable(varkvp);
     }
     else
-        variables.push_back(parse_variable(varkvp));
+        variables.emplace_back(parse_variable(varkvp));
 }
 
 void SFDAQConfig::overlay(const SFDAQConfig* other)

@@ -49,7 +49,7 @@ public:
 } // namespace
 
 void Icmp6IpCodec::get_protocol_ids(std::vector<ProtocolId>& v)
-{ v.push_back(ProtocolId::IP_EMBEDDED_IN_ICMP6); }
+{ v.emplace_back(ProtocolId::IP_EMBEDDED_IN_ICMP6); }
 
 bool Icmp6IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {

@@ -142,7 +142,7 @@ static void load_buf_ids(
     {
         unsigned id = ins->get_buf_id(key);
         assert(id);
-        ids.push_back(id);
+        ids.emplace_back(id);
     }
 }
 

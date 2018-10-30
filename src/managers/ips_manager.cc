@@ -59,7 +59,7 @@ static const Parameter* current_params = nullptr;
 
 void IpsManager::add_plugin(const IpsApi* api)
 {
-    s_options.push_back(new Option(api));
+    s_options.emplace_back(new Option(api));
 }
 
 void IpsManager::release_plugins()

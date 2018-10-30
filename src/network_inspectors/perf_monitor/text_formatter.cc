@@ -130,9 +130,9 @@ TEST_CASE("text output", "[TextFormatter]")
     f.finalize_fields();
     f.init_output(fh);
 
-    kvp.push_back(50);
-    kvp.push_back(0);
-    kvp.push_back(70);
+    kvp.emplace_back(50);
+    kvp.emplace_back(0);
+    kvp.emplace_back(70);
 
     f.write(fh, (time_t)1234567890);
 

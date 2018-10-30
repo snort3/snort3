@@ -753,7 +753,7 @@ void add_black_white_List(ReputationConfig* config)
         listItem->file_name = config->blacklist_path;
         listItem->file_type = BLACK_LIST;
         listItem->list_id = 0;
-        config->list_files.push_back(listItem);
+        config->list_files.emplace_back(listItem);
     }
     if (config->whitelist_path.size())
     {
@@ -762,7 +762,7 @@ void add_black_white_List(ReputationConfig* config)
         listItem->file_name = config->whitelist_path;
         listItem->file_type = WHITE_LIST;
         listItem->list_id = 0;
-        config->list_files.push_back(listItem);
+        config->list_files.emplace_back(listItem);
     }
 }
 
@@ -896,7 +896,7 @@ static bool process_line_in_manifest(ListFile* list_item, const char* manifest, 
                 return false;
             }
 
-            list_item->zones.insert(zone_id);
+            list_item->zones.emplace(zone_id);
             has_zone = true;
         }
 
@@ -917,7 +917,7 @@ static bool process_line_in_manifest(ListFile* list_item, const char* manifest, 
         list_item->all_zones_enabled = true;
     }
 
-    config->list_files.push_back(list_item);
+    config->list_files.emplace_back(list_item);
     return true;
 }
 

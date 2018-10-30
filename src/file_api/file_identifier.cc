@@ -91,7 +91,7 @@ void* FileIdentifier::calloc_mem(size_t size)
     void* ret = snort_calloc(size);
     memory_used += size;
     /*For memory management*/
-    id_memory_blocks.push_back(ret);
+    id_memory_blocks.emplace_back(ret);
     return ret;
 }
 
@@ -412,7 +412,7 @@ TEST_CASE ("FileIdRulePDF", "[FileMagic]")
     FileMagicRule rule;
 
     rule.type = "pdf";
-    rule.file_magics.push_back(magic);
+    rule.file_magics.emplace_back(magic);
     rule.id = 1;
 
     FileIdentifier rc;
@@ -436,7 +436,7 @@ TEST_CASE ("FileIdRuleUnknow", "[FileMagic]")
     FileMagicRule rule;
 
     rule.type = "pdf";
-    rule.file_magics.push_back(magic);
+    rule.file_magics.emplace_back(magic);
     rule.id = 1;
 
     FileIdentifier rc;
@@ -461,7 +461,7 @@ TEST_CASE ("FileIdRuleEXE", "[FileMagic]")
     FileMagicRule rule;
 
     rule.type = "exe";
-    rule.file_magics.push_back(magic);
+    rule.file_magics.emplace_back(magic);
     rule.id = 1;
 
     FileIdentifier rc;
@@ -473,7 +473,7 @@ TEST_CASE ("FileIdRuleEXE", "[FileMagic]")
 
     rule.clear();
     rule.type = "exe";
-    rule.file_magics.push_back(magic);
+    rule.file_magics.emplace_back(magic);
     rule.id = 3;
 
     rc.insert_file_rule(rule);
@@ -494,7 +494,7 @@ TEST_CASE ("FileIdRulePDFEXE", "[FileMagic]")
     FileMagicRule rule;
 
     rule.type = "exe";
-    rule.file_magics.push_back(magic);
+    rule.file_magics.emplace_back(magic);
     rule.id = 1;
 
     FileIdentifier rc;
@@ -506,7 +506,7 @@ TEST_CASE ("FileIdRulePDFEXE", "[FileMagic]")
 
     rule.clear();
     rule.type = "exe";
-    rule.file_magics.push_back(magic);
+    rule.file_magics.emplace_back(magic);
     rule.id = 3;
 
     rc.insert_file_rule(rule);
@@ -528,7 +528,7 @@ TEST_CASE ("FileIdRuleFirst", "[FileMagic]")
     FileMagicRule rule;
 
     rule.type = "exe";
-    rule.file_magics.push_back(magic);
+    rule.file_magics.emplace_back(magic);
     rule.id = 1;
 
     FileIdentifier rc;
@@ -540,7 +540,7 @@ TEST_CASE ("FileIdRuleFirst", "[FileMagic]")
 
     rule.clear();
     rule.type = "exe";
-    rule.file_magics.push_back(magic);
+    rule.file_magics.emplace_back(magic);
     rule.id = 3;
 
     rc.insert_file_rule(rule);

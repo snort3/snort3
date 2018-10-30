@@ -81,7 +81,7 @@ static const uint32_t GTP_V1_HEADER_LEN = 12;
 
 void GtpCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(ProtocolId::GTP);
+    v.emplace_back(ProtocolId::GTP);
 }
 
 bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& dd)

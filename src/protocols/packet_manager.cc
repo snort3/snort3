@@ -860,10 +860,10 @@ void PacketManager::dump_stats()
     g_stats[CodecManager::s_proto_map[to_utype(ProtocolId::FINISHED_DECODE)] + stat_offset] = 0;
 
     for (unsigned int i = 0; i < stat_names.size(); i++)
-        pkt_names.push_back(stat_names[i]);
+        pkt_names.emplace_back(stat_names[i]);
 
     for (int i = 0; CodecManager::s_protocols[i] != nullptr; i++)
-        pkt_names.push_back(CodecManager::s_protocols[i]->get_name());
+        pkt_names.emplace_back(CodecManager::s_protocols[i]->get_name());
 
     show_percent_stats((PegCount*)&g_stats, &pkt_names[0],
         (unsigned int)pkt_names.size(), "codec");

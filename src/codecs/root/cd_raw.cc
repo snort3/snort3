@@ -59,7 +59,7 @@ bool RawCodec::decode(const RawData& raw, CodecData& data, DecodeData&)
 
 void RawCodec::get_data_link_type(std::vector<int>& v)
 {
-    v.push_back(DLT_RAW);
+    v.emplace_back(DLT_RAW);
 }
 
 //-------------------------------------------------------------------------

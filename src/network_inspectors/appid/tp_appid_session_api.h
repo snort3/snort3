@@ -43,7 +43,7 @@ public:
     virtual ~ThirdPartyAppIDSession() { }
 
     virtual bool reset() = 0;            // just reset state
-    virtual bool process(const snort::Packet&,
+    virtual TPState process(const snort::Packet&,
         AppidSessionDirection direction,
         std::vector<AppId>& proto_list,
         ThirdPartyAppIDAttributeData& attribute_data) = 0;

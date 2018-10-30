@@ -578,7 +578,7 @@ public:
     void eval(Packet*) override { }
 
     void add(Binding* b)
-    { bindings.push_back(b); }
+    { bindings.emplace_back(b); }
 
     void handle_flow_setup(Packet*);
     void handle_flow_service_change(Flow*);

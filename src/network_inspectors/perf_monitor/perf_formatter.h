@@ -115,9 +115,7 @@ public:
     {
         for( unsigned i = 0; i < values.size(); i++ )
             for( unsigned j = 0; j < values[i].size(); j++ )
-                public_values.insert(std::pair<std::string, FormatterValue>(
-                    section_names[i] + "." + field_names[i][j],
-                    values[i][j]));
+                public_values.emplace(section_names[i] + "." + field_names[i][j], values[i][j]);
    }
 };
 #endif

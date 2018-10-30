@@ -50,8 +50,8 @@ public:
     void getXffFields()
     {
         xff_fields.clear();
-        xff_fields.push_back(HTTP_XFF_FIELD_X_FORWARDED_FOR);
-        xff_fields.push_back(HTTP_XFF_FIELD_TRUE_CLIENT_IP);
+        xff_fields.emplace_back(HTTP_XFF_FIELD_X_FORWARDED_FOR);
+        xff_fields.emplace_back(HTTP_XFF_FIELD_TRUE_CLIENT_IP);
     }
 };
 

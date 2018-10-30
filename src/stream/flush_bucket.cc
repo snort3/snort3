@@ -68,7 +68,7 @@ uint16_t FlushBucket::get_size()
 
 void VarFlushBucket::set_next(uint16_t pt)
 {
-    flush_points.push_back(pt);
+    flush_points.emplace_back(pt);
 }
 
 uint16_t VarFlushBucket::get_next()

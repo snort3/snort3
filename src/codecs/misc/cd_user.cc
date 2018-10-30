@@ -44,7 +44,7 @@ public:
 
 void UserCodec::get_data_link_type(std::vector<int>& v)
 {
-    v.push_back(DLT_USER);
+    v.emplace_back(DLT_USER);
 }
 
 static void set_ip(const DAQ_UsrHdr_t* pci, CodecData& codec, DecodeData& snort)

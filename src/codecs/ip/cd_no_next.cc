@@ -68,7 +68,7 @@ bool Ipv6NoNextCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 }
 
 void Ipv6NoNextCodec::get_protocol_ids(std::vector<ProtocolId>& v)
-{ v.push_back(ProtocolId::NONEXT); }
+{ v.emplace_back(ProtocolId::NONEXT); }
 
 //-------------------------------------------------------------------------
 // api

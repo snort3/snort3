@@ -43,7 +43,7 @@ public:
 } // anonymous namespace
 
 void TransbridgeCodec::get_protocol_ids(std::vector<ProtocolId>& v)
-{ v.push_back(ProtocolId::ETHERTYPE_TRANS_ETHER_BRIDGING); }
+{ v.emplace_back(ProtocolId::ETHERTYPE_TRANS_ETHER_BRIDGING); }
 
 bool TransbridgeCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {

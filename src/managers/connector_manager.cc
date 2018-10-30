@@ -124,8 +124,7 @@ void ConnectorManager::thread_init()
                 assert(conn.second->thread_connectors.count(tid) == 0);
 
                 Connector* connector = sc.api->tinit(conn.second->config);
-                std::pair<pid_t, Connector*> element (tid, std::move(connector));
-                conn.second->thread_connectors.insert(element);
+                conn.second->thread_connectors.emplace(tid, std::move(connector));
             }
         }
     }
@@ -168,10 +167,9 @@ void ConnectorManager::instantiate(const ConnectorApi* api, Module* mod, SnortCo
     {
         ConnectorElem* connector_elem = new ConnectorElem;
         connector_elem->config = &*cfg;
-        std::pair<std::string, ConnectorElem*> element (cfg->connector_name, std::move(connector_elem));
-        c.connectors.insert(element);
+        c.connectors.emplace(cfg->connector_name, std::move(connector_elem));
     }
 
-    s_connector_commons.push_back(c);
+    s_connector_commons.emplace_back(c);
 }
 

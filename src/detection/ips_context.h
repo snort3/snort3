@@ -86,7 +86,7 @@ public:
     { NONE, NON_CONTENT, CONTENT };
 
     void register_post_callback(Callback callback)
-    { post_callbacks.push_back(callback); }
+    { post_callbacks.emplace_back(callback); }
 
     void clear_callbacks()
     { post_callbacks.clear(); }

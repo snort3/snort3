@@ -60,8 +60,8 @@ public:
 
 void ArpCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(ProtocolId::ETHERTYPE_ARP);
-    v.push_back(ProtocolId::ETHERTYPE_REVARP);
+    v.emplace_back(ProtocolId::ETHERTYPE_ARP);
+    v.emplace_back(ProtocolId::ETHERTYPE_REVARP);
 }
 
 bool ArpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)

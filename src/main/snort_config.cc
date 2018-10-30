@@ -961,7 +961,7 @@ void SnortConfig::set_tweaks(const char* t)
 void SnortConfig::add_script_path(const char* path)
 {
     if (path)
-        script_paths.push_back(path);
+        script_paths.emplace_back(path);
 }
 
 void SnortConfig::set_alert_mode(const char* val)
@@ -1035,7 +1035,7 @@ bool SnortConfig::tunnel_bypass_enabled(uint8_t proto)
 
 SO_PUBLIC int SnortConfig::request_scratch(ScScratchFunc setup, ScScratchFunc cleanup)
 {
-    scratch_handlers.push_back(std::make_pair(setup, cleanup));
+    scratch_handlers.emplace_back(std::make_pair(setup, cleanup));
 
     // We return an index that the caller uses to reference their per thread
     // scratch space

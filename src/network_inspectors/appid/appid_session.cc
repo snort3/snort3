@@ -660,8 +660,8 @@ void AppIdSession::stop_rna_service_inspection(Packet* p, AppidSessionDirection 
 
     service_disco_state = APPID_DISCO_STATE_FINISHED;
 
-    if ( (is_tp_appid_available() or get_session_flags(APPID_SESSION_NO_TPI) )
-        and payload.get_id() == APP_ID_NONE )
+    if ( payload.get_id() == APP_ID_NONE and
+        ( is_tp_appid_available() or get_session_flags(APPID_SESSION_NO_TPI) ) )
         payload.set_id(APP_ID_UNKNOWN);
 
     set_session_flags(APPID_SESSION_SERVICE_DETECTED);
@@ -719,7 +719,7 @@ AppId AppIdSession::pick_only_service_app_id()
     if (service.get_id() > APP_ID_NONE && !deferred)
         return service.get_id();
 
-    if (is_tp_appid_available() && tp_app_id > APP_ID_NONE)
+    if (tp_app_id > APP_ID_NONE and is_tp_appid_available())
         return tp_app_id;
     else if (deferred)
         return service.get_id();
@@ -912,8 +912,7 @@ bool AppIdSession::is_tp_appid_done() const
 bool AppIdSession::is_tp_processing_done() const
 {
 #ifdef ENABLE_APPID_THIRD_PARTY
-    if ( TPLibHandler::have_tp() &&
-        !get_session_flags(APPID_SESSION_NO_TPI) &&
+    if (!get_session_flags(APPID_SESSION_NO_TPI) &&
         (!is_tp_appid_done() ||
         get_session_flags(APPID_SESSION_APP_REINSPECT | APPID_SESSION_APP_REINSPECT_SSL)))
         return false;
@@ -927,12 +926,10 @@ bool AppIdSession::is_tp_appid_available() const
 #ifdef ENABLE_APPID_THIRD_PARTY
     if ( TPLibHandler::have_tp() )
     {
-        unsigned state;
+        if (!tpsession)
+            return false;
 
-        if (tpsession)
-            state = tpsession->get_state();
-        else
-            state = TP_STATE_INIT;
+        unsigned state = tpsession->get_state();
 
         return (state == TP_STATE_CLASSIFIED || state == TP_STATE_TERMINATED
                || state == TP_STATE_MONITORING);

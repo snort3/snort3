@@ -129,7 +129,7 @@ public:
         const PatternDescriptor& desc, void* user) override
     {
         Pattern p(pat, len, desc, user);
-        pvector.push_back(p);
+        pvector.emplace_back(p);
         ++patterns;
         return 0;
     }
@@ -228,9 +228,9 @@ int HyperscanMpse::prep_patterns(SnortConfig* sc)
 
     for ( auto& p : pvector )
     {
-        pats.push_back(p.pat.c_str());
-        flags.push_back(p.flags);
-        ids.push_back(id++);
+        pats.emplace_back(p.pat.c_str());
+        flags.emplace_back(p.flags);
+        ids.emplace_back(id++);
     }
 
     if ( hs_compile_multi(&pats[0], &flags[0], &ids[0], pvector.size(), HS_MODE_BLOCK,

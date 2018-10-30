@@ -86,7 +86,7 @@ bool ServiceModule::set(const char*, Value& v, SnortConfig*)
             return true;
         }
     }
-    services.push_back(svc);
+    services.emplace_back(svc);
 
     return true;
 }

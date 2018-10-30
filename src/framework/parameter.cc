@@ -228,7 +228,7 @@ static unsigned split(const string& txt, vector<string>& strs)
     while ( pos != string::npos )
     {
         if ( last != pos )
-            strs.push_back(txt.substr(last, pos - last));
+            strs.emplace_back(txt.substr(last, pos - last));
 
         last = txt.find_first_not_of(delim, pos + 1);
         pos = txt.find_first_of(delim, last);
@@ -236,7 +236,7 @@ static unsigned split(const string& txt, vector<string>& strs)
 
     // add the last one
     if ( last != string::npos )
-        strs.push_back(txt.substr(last, min(pos, txt.size()) - last));
+        strs.emplace_back(txt.substr(last, min(pos, txt.size()) - last));
 
     return strs.size();
 }

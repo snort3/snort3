@@ -110,7 +110,7 @@ int NetworkSetManager::add_network_range_ex(NetworkSet* network_set, uint32_t ra
     }
 
     sflist_add_tail(&network_set->networks, (void*)network);
-    if (network_set->ids.insert(network->info.id).second == false)
+    if (network_set->ids.emplace(network->info.id).second == false)
     {
         ErrorMessage("NetworkSet: Failed to add id %u\n", network->info.id);
         return -1;
@@ -168,7 +168,7 @@ int NetworkSetManager::add_network_range6(NetworkSet* network_set, NSIPv6Addr* r
     }
 
     sflist_add_tail(&network_set->networks6, (void*)network);
-    if (network_set->ids6.insert(network->info.id).second == false)
+    if (network_set->ids6.emplace(network->info.id).second == false)
     {
         ErrorMessage("NetworkSet: Failed to add IPv6 id %u\n", network->info.id);
         return -1;

@@ -72,7 +72,7 @@ struct ERSpanType3Hdr
 } // anonymous namespace
 
 void Erspan3Codec::get_protocol_ids(std::vector<ProtocolId>& v)
-{ v.push_back(ProtocolId::ETHERTYPE_ERSPAN_TYPE3); }
+{ v.emplace_back(ProtocolId::ETHERTYPE_ERSPAN_TYPE3); }
 
 bool Erspan3Codec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {

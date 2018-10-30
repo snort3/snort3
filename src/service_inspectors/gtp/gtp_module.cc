@@ -171,19 +171,19 @@ bool GtpInspectModule::end(const char* fqn, int idx, SnortConfig*)
         for ( unsigned i = 0; i < temp.size(); ++i )
         {
             temp[i].version = stuff.version;
-            config.push_back(temp[i]);
+            config.emplace_back(temp[i]);
         }
         temp.clear();
     }
     else if ( !strcmp(fqn, "gtp_inspect.messages") and idx )
     {
         assert(stuff.length < 0);
-        temp.push_back(stuff);
+        temp.emplace_back(stuff);
     }
     else if ( !strcmp(fqn, "gtp_inspect.infos") and idx )
     {
         assert(stuff.length >= 0);
-        temp.push_back(stuff);
+        temp.emplace_back(stuff);
     }
     return true;
 }

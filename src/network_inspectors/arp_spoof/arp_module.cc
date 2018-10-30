@@ -127,7 +127,7 @@ bool ArpSpoofModule::begin(const char*, int, SnortConfig*)
 bool ArpSpoofModule::end(const char*, int idx, SnortConfig*)
 {
     if ( idx )
-        config->ipmel.push_back(host);
+        config->ipmel.emplace_back(host);
     else
         config->check_overwrite = !config->ipmel.empty();
 

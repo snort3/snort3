@@ -329,9 +329,9 @@ PatternMatchVector get_fp_content(
             // Add alternate pattern
             PatternMatchData* alt_pmd = ofl->ips_opt->get_alternate_pattern();
             if (alt_pmd)
-                pmds.push_back(alt_pmd);
+                pmds.emplace_back(alt_pmd);
             // Add main pattern last
-            pmds.push_back(best.pmd);
+            pmds.emplace_back(best.pmd);
         }
     }
 

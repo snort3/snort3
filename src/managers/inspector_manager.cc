@@ -289,7 +289,7 @@ void FrameworkPolicy::vectorize(SnortConfig* sc)
 void InspectorManager::add_plugin(const InspectApi* api)
 {
     PHGlobal* g = new PHGlobal(*api);
-    s_handlers.push_back(g);
+    s_handlers.emplace_back(g);
 }
 
 static const InspectApi* get_plugin(const char* keyword)
@@ -440,7 +440,7 @@ static PHInstance* get_new(
         else
             p->set_reloaded(RELOAD_TYPE_NEW);
     }
-    fp->ilist.push_back(p);
+    fp->ilist.emplace_back(p);
     return p;
 }
 
@@ -468,9 +468,9 @@ void InspectorManager::delete_policy(InspectionPolicy* pi, bool cloned)
                 continue;
 
         if ( p->handler->get_api()->type == IT_PASSIVE )
-            s_trash2.push_back(p->handler);
+            s_trash2.emplace_back(p->handler);
         else
-            s_trash.push_back(p->handler);
+            s_trash.emplace_back(p->handler);
 
         delete p;
     }
@@ -606,7 +606,7 @@ static PHClass* get_class(const char* keyword, FrameworkConfig* fc)
                 p->initialized = true;
             }
             PHClass* ppc = new PHClass(p->api);
-            fc->clist.push_back(ppc);
+            fc->clist.emplace_back(ppc);
             return ppc;
         }
     return nullptr;

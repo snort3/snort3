@@ -307,7 +307,7 @@ public:
 protected:
     void write_packet(Packet* p) override
     {
-        pcap.push_back(p);
+        pcap.emplace_back(p);
         write_packet_called = true;
     }
 

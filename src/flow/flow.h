@@ -341,6 +341,7 @@ public:  // FIXIT-M privatize if possible
     unsigned inspection_policy_id;
     unsigned ips_policy_id;
     unsigned network_policy_id;
+    unsigned reputation_id;
 
     uint16_t client_port;
     uint16_t server_port;

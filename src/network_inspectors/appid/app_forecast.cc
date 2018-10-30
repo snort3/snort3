@@ -66,7 +66,7 @@ void add_af_indicator(AppId indicator, AppId forecast, AppId target)
     AFElement val;
     val.forecast = forecast;
     val.target = target;
-    if (false == AF_indicators.insert({indicator, val}).second)
+    if (false == AF_indicators.emplace(indicator, val).second)
         ErrorMessage("LuaDetectorApi:Failed to add AFElement for appId %d", indicator);
 }
 

@@ -85,6 +85,7 @@ namespace snort
 #define APPID_SESSION_NO_TPI                (1ULL << 38)
 #define APPID_SESSION_IGNORE_FLOW           (1ULL << 39)
 #define APPID_SESSION_IGNORE_FLOW_IDED      (1ULL << 40)
+#define APPID_SESSION_OOO_CHECK_TP          (1ULL << 41)
 #define APPID_SESSION_IGNORE_ID_FLAGS \
     (APPID_SESSION_IGNORE_FLOW | \
     APPID_SESSION_NOT_A_SERVICE | \

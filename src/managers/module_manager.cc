@@ -889,7 +889,7 @@ void ModuleManager::term()
 void ModuleManager::add_module(Module* m, const BaseApi* b)
 {
     ModHook* mh = new ModHook(m, b);
-    s_modules.push_back(mh);
+    s_modules.emplace_back(mh);
 
     Profiler::register_module(m);
 
@@ -926,7 +926,7 @@ list<Module*> ModuleManager::get_all_modules()
     list<Module*> ret;
 
     for ( auto& m : s_modules )
-       ret.push_back(m->mod);
+       ret.emplace_back(m->mod);
 
     return ret;
 }

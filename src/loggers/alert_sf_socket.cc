@@ -132,7 +132,7 @@ bool SfSocketModule::begin(const char*, int, SnortConfig*)
 bool SfSocketModule::end(const char* fqn, int, SnortConfig*)
 {
     if ( !strcmp(fqn, "alert_sfsocket.rules") )
-        rulez.push_back(rule);
+        rulez.emplace_back(rule);
 
     return true;
 }

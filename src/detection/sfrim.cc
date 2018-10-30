@@ -65,7 +65,7 @@ int RuleIndexMapAdd(rule_index_map_t* rim, unsigned gid, unsigned sid)
 
     rule_number_t rn(gid, sid);
     int index = rim->map.size();
-    rim->map.push_back(rn);
+    rim->map.emplace_back(rn);
 
     //printf("RuleIndexMapping: index=%d gid=%u sid=%u\n",index,gid,sid);
     return index;

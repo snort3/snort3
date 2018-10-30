@@ -37,7 +37,7 @@
 static std::vector<IdleHook> s_idle_handlers;
 
 void IdleProcessing::register_handler(IdleHook f)
-{ s_idle_handlers.push_back(f); }
+{ s_idle_handlers.emplace_back(f); }
 
 void IdleProcessing::execute()
 {

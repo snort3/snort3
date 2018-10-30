@@ -434,7 +434,7 @@ int ExpectCache::add_flow(const Packet *ctrlPkt,
     if (new_expect_flow)
     {
         // chain all expected flows created by this packet
-        packet_expect_flows->push_back(last);
+        packet_expect_flows->emplace_back(last);
 
         ExpectEvent event(ctrlPkt, last, fd);
         DataBus::publish(EXPECT_EVENT_TYPE_EARLY_SESSION_CREATE_KEY, event, ctrlPkt->flow);

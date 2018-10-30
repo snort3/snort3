@@ -115,7 +115,7 @@ void AppIdDiscovery::add_pattern_data(AppIdDetector* detector, SearchTool* st, i
     uint8_t* const pattern, unsigned size, unsigned nocase)
 {
     AppIdPatternMatchNode* pd = new AppIdPatternMatchNode(detector, position, size);
-    pattern_data.push_back(pd);
+    pattern_data.emplace_back(pd);
     st->add((const char*)pattern, size, pd, nocase);
 }
 
@@ -629,7 +629,7 @@ static void lookup_appid_by_host_port(AppIdSession& asd, Packet* p, IpProtocol p
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
             asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
             asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
-#ifdef ENABLE_THIRD_PARTY_APPID
+#ifdef ENABLE_APPID_THIRD_PARTY
             if (asd.tpsession)
                 asd.tpsession->reset();
 #endif
@@ -783,7 +783,7 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
         if ((p->packet_flags & PKT_STREAM_ORDER_BAD) ||
             (p->dsize && !(p->packet_flags & (PKT_STREAM_ORDER_OK | PKT_REBUILT_STREAM))))
         {
-            asd->set_session_flags(APPID_SESSION_OOO);
+            asd->set_session_flags(APPID_SESSION_OOO | APPID_SESSION_OOO_CHECK_TP);
             if (appidDebug->is_active())
                 LogMessage("AppIdDbg %s Packet out-of-order, %s%sflow\n",
                     appidDebug->get_debug_session(),
@@ -984,9 +984,6 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
 #endif
     }
 
-    asd.set_application_ids(service_id, asd.pick_client_app_id(), payload_id,
-        asd.pick_misc_app_id(), change_bits);
-
     // Set the field that the Firewall queries to see if we have a search engine
     if (asd.search_support_type == UNKNOWN_SEARCH_ENGINE && payload_id > APP_ID_NONE)
     {
@@ -1015,22 +1012,39 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
 
     if ( service_id !=  APP_ID_NONE )
     {
-        if ( payload_id != APP_ID_NONE && payload_id != asd.past_indicator)
+        if ( payload_id != asd.past_indicator and payload_id != APP_ID_NONE)
         {
             asd.past_indicator = payload_id;
             check_session_for_AF_indicator(p, direction, (AppId)payload_id);
         }
 
-        if (asd.payload.get_id() == APP_ID_NONE && asd.past_forecast != service_id &&
-            asd.past_forecast != APP_ID_UNKNOWN)
+        if ( asd.past_forecast != service_id and asd.past_forecast != APP_ID_UNKNOWN and
+             asd.payload.get_id() == APP_ID_NONE )
         {
             asd.past_forecast = check_session_for_AF_forecast(asd, p, direction,
                 (AppId)service_id);
-            asd.set_application_ids(service_id, asd.pick_client_app_id(),
-                asd.pick_payload_app_id(), asd.pick_misc_app_id(), change_bits);
+            if (asd.past_forecast != APP_ID_UNKNOWN)
+                payload_id = asd.pick_payload_app_id();
         }
     }
 
+#ifdef ENABLE_APPID_THIRD_PARTY
+    if (asd.get_session_flags(APPID_SESSION_OOO_CHECK_TP) and asd.tpsession and
+        (asd.scan_flags & SCAN_HOST_PORT_FLAG) and (service_id or payload_id))
+    {
+        asd.clear_session_flags(APPID_SESSION_OOO_CHECK_TP); // don't repeat this block
+        if (!asd.is_tp_appid_done())
+        {
+            asd.tpsession->set_state(TP_STATE_TERMINATED);
+            if (appidDebug->is_active())
+                LogMessage("AppIdDbg %s Stopped 3rd party detection\n",
+                    appidDebug->get_debug_session());
+        }
+    }
+#endif
+
+    asd.set_application_ids(service_id, asd.pick_client_app_id(), payload_id,
+        asd.pick_misc_app_id(), change_bits);
     publish_appid_event(change_bits, p->flow);
 }
 

@@ -650,7 +650,7 @@ static void Build_NFA(ACSM_STRUCT2* acsm)
         {
             if ( !queue_array[s] )
             {
-                queue.push_back(s);
+                queue.emplace_back(s);
                 queue_array[s] = true;
             }
             FailState[s] = 0;
@@ -671,7 +671,7 @@ static void Build_NFA(ACSM_STRUCT2* acsm)
             {
                 if ( !queue_array[s] )
                 {
-                    queue.push_back(s);
+                    queue.emplace_back(s);
                     queue_array[s] = true;
                 }
                 int fs = FailState[r];
@@ -743,7 +743,7 @@ static void Convert_NFA_To_DFA(ACSM_STRUCT2* acsm)
         {
             if ( !queue_array[s] )
             {
-                queue.push_back(s);
+                queue.emplace_back(s);
                 queue_array[s] = true;
             }
         }
@@ -763,7 +763,7 @@ static void Convert_NFA_To_DFA(ACSM_STRUCT2* acsm)
             {
                 if ( !queue_array[s] )
                 {
-                    queue.push_back(s);
+                    queue.emplace_back(s);
                     queue_array[s] = true;
                 }
             }

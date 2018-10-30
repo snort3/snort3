@@ -98,7 +98,7 @@ bool SideChannelModule::set(const char*, Value& v, SnortConfig*)
     assert(config);
 
     if ( v.is("connector") )
-        config->connectors.push_back(std::move(v.get_string()));
+        config->connectors.emplace_back(std::move(v.get_string()));
 
     else if ( v.is("ports") )
     {

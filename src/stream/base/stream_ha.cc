@@ -255,7 +255,7 @@ ProtocolHA::ProtocolHA(PktType protocol)
     if ( proto_map == nullptr )
         proto_map = new ProtocolMap;
 
-    proto_map->insert(std::make_pair((int)protocol, this));
+    proto_map->emplace((int)protocol, this);
 }
 
 ProtocolHA::~ProtocolHA()

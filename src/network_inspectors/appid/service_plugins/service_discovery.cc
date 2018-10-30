@@ -174,12 +174,12 @@ void ServiceDiscovery::initialize()
     for ( auto kv : tcp_detectors )
     {
         kv.second->initialize();
-        service_detector_list.push_back(kv.second);
+        service_detector_list.emplace_back(kv.second);
     }
     for ( auto kv : udp_detectors )
     {
         kv.second->initialize();
-        service_detector_list.push_back(kv.second);	
+        service_detector_list.emplace_back(kv.second);
     }
 
 #ifdef APPID_DEEP_PERF_PROFILING
@@ -204,14 +204,14 @@ int ServiceDiscovery::add_service_port(AppIdDetector* detector, const ServiceDet
         if (pp.port == 21 && !ftp_service)
             ftp_service = service;
 
-        tcp_services[ pp.port ].push_back(service);
+        tcp_services[ pp.port ].emplace_back(service);
     }
     else if (pp.proto == IpProtocol::UDP)
     {
         if (!pp.reversed_validation)
-            udp_services[ pp.port ].push_back(service);
+            udp_services[ pp.port ].emplace_back(service);
         else
-            udp_reversed_services[ pp.port ].push_back(service);
+            udp_reversed_services[ pp.port ].emplace_back(service);
     }
     else
     {
@@ -289,7 +289,7 @@ void ServiceDiscovery::match_by_pattern(AppIdSession& asd, const Packet* pkt, Ip
 
         std::vector<ServiceMatch*> smOrderedList;
         for (ServiceMatch* sm = match_list; sm; sm = sm->next)
-            smOrderedList.push_back(sm);
+            smOrderedList.emplace_back(sm);
 
         if (!smOrderedList.empty() )
         {
@@ -299,7 +299,7 @@ void ServiceDiscovery::match_by_pattern(AppIdSession& asd, const Packet* pkt, Ip
                 if ( std::find(asd.service_candidates.begin(), asd.service_candidates.end(),
                     sm->service) == asd.service_candidates.end() )
                 {
-                    asd.service_candidates.push_back(sm->service);
+                    asd.service_candidates.emplace_back(sm->service);
                 }
                 snort_free(sm);
             }
@@ -396,7 +396,7 @@ void ServiceDiscovery::get_next_service(const Packet* p, const AppidSessionDirec
                     proto, p->ptrs.sp, asd.is_decrypted());
                 std::unordered_map<uint16_t, std::vector<ServiceDetector*>>::iterator urs_iterator;
                 if ( rsds && rsds->get_service() )
-                    asd.service_candidates.push_back(rsds->get_service());
+                    asd.service_candidates.emplace_back(rsds->get_service());
                 else if ( ( urs_iterator = udp_reversed_services.find(p->ptrs.sp) )
                           != udp_reversed_services.end() and !urs_iterator->second.empty() )
                 {
@@ -623,46 +623,40 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
                 asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
                 asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
 
-                if ( (asd.is_tp_appid_available() ||
-                      asd.get_session_flags(APPID_SESSION_NO_TPI))
-                     && asd.payload.get_id() == APP_ID_NONE )
+                if (asd.payload.get_id() == APP_ID_NONE and
+                    (asd.is_tp_appid_available() or asd.get_session_flags(APPID_SESSION_NO_TPI)))
                     asd.payload.set_id(APP_ID_UNKNOWN);
             }
         }
-        else if (asd.is_tp_appid_available())
+        else if (tp_app_id > APP_ID_NONE and asd.is_tp_appid_available())
         {
-            if (tp_app_id > APP_ID_NONE)
+            // Third party has positively identified appId; Dig deeper only if our
+            // detector identifies additional information or flow is UDP reversed.
+            AppInfoTableEntry* entry = asd.app_info_mgr->get_app_info_entry(tp_app_id);
+            if ( entry && entry->service_detector &&
+                ( ( entry->flags & APPINFO_FLAG_SERVICE_ADDITIONAL ) ||
+                ( ( entry->flags & APPINFO_FLAG_SERVICE_UDP_REVERSED ) &&
+                asd.protocol == IpProtocol::UDP &&
+                asd.get_session_flags(APPID_SESSION_INITIATOR_MONITORED |
+                APPID_SESSION_RESPONDER_MONITORED) ) ) )
             {
-                //tp has positively identified appId, Dig deeper only if sourcefire
-                // detector identifies additional information or flow is UDP reversed.
-                AppInfoTableEntry* entry = asd.app_info_mgr->get_app_info_entry(tp_app_id);
-                if ( entry && entry->service_detector &&
-                    ( ( entry->flags & APPINFO_FLAG_SERVICE_ADDITIONAL ) ||
-                    ( ( entry->flags & APPINFO_FLAG_SERVICE_UDP_REVERSED ) &&
-                    asd.protocol == IpProtocol::UDP &&
-                    asd.get_session_flags(APPID_SESSION_INITIATOR_MONITORED |
-                    APPID_SESSION_RESPONDER_MONITORED) ) ) )
-                {
-                    asd.free_flow_data_by_mask(APPID_SESSION_DATA_SERVICE_MODSTATE_BIT);
-                    asd.service_detector = entry->service_detector;
-                    asd.service_disco_state = APPID_DISCO_STATE_STATEFUL;
-                }
-                else
-                    asd.stop_rna_service_inspection(p, direction);
+                asd.free_flow_data_by_mask(APPID_SESSION_DATA_SERVICE_MODSTATE_BIT);
+                asd.service_detector = entry->service_detector;
+                asd.service_disco_state = APPID_DISCO_STATE_STATEFUL;
             }
             else
-                asd.service_disco_state = APPID_DISCO_STATE_STATEFUL;
+                asd.stop_rna_service_inspection(p, direction);
         }
         else
             asd.service_disco_state = APPID_DISCO_STATE_STATEFUL;
     }
 
     //stop rna inspection as soon as tp has classified a valid AppId later in the session
-    if ( asd.service_disco_state == APPID_DISCO_STATE_STATEFUL &&
-         prevRnaServiceState == APPID_DISCO_STATE_STATEFUL &&
-         !asd.get_session_flags(APPID_SESSION_NO_TPI) &&
-         asd.is_tp_appid_available() &&
-         tp_app_id > APP_ID_NONE && tp_app_id < SF_APPID_MAX)
+    if ( tp_app_id > APP_ID_NONE and
+         asd.service_disco_state == APPID_DISCO_STATE_STATEFUL and
+         prevRnaServiceState == APPID_DISCO_STATE_STATEFUL and
+         !asd.get_session_flags(APPID_SESSION_NO_TPI) and
+         asd.is_tp_appid_available() )
     {
         AppInfoTableEntry* entry = asd.app_info_mgr->get_app_info_entry(tp_app_id);
         if ( entry && entry->service_detector &&
@@ -714,9 +708,9 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
             APPID_SESSION_CONTINUE) == APPID_SESSION_SERVICE_DETECTED)
         {
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
-            if ( (asd.is_tp_appid_available() ||
-                  asd.get_session_flags(APPID_SESSION_NO_TPI)) &&
-                 asd.payload.get_id() == APP_ID_NONE )
+            if ( asd.payload.get_id() == APP_ID_NONE and
+                 ( asd.is_tp_appid_available() or
+                   asd.get_session_flags(APPID_SESSION_NO_TPI) ) )
             {
                 asd.payload.set_id(APP_ID_UNKNOWN);
             }

@@ -52,8 +52,8 @@ static string lowercase(string s)
 
 void FbsFormatter::register_field(const std::string& name, PegCount* value)
 {
-    non_offset_names.push_back(name);
-    non_offset_values.push_back(value);
+    non_offset_names.emplace_back(name);
+    non_offset_values.emplace_back(value);
 }
 
 void FbsFormatter::register_field(const std::string& name, const char* value)
@@ -61,9 +61,9 @@ void FbsFormatter::register_field(const std::string& name, const char* value)
     FormatterValue fv;
     fv.s = value;
 
-    offset_names.push_back(name);
-    offset_types.push_back(FT_STRING);
-    offset_values.push_back(fv);
+    offset_names.emplace_back(name);
+    offset_types.emplace_back(FT_STRING);
+    offset_values.emplace_back(fv);
 }
 
 void FbsFormatter::register_field(const std::string& name, std::vector<PegCount>* value)
@@ -71,9 +71,9 @@ void FbsFormatter::register_field(const std::string& name, std::vector<PegCount>
     FormatterValue fv;
     fv.ipc = value;
 
-    offset_names.push_back(name);
-    offset_types.push_back(FT_IDX_PEG_COUNT);
-    offset_values.push_back(fv);
+    offset_names.emplace_back(name);
+    offset_types.emplace_back(FT_IDX_PEG_COUNT);
+    offset_values.emplace_back(fv);
 }
 
 //Apply order to fields so that leaf nodes are created first in one pass
@@ -159,26 +159,26 @@ void FbsFormatter::finalize_fields()
 
     auto reflection_schema = reflection::GetSchema(schema_builder.GetBufferPointer());
     auto root_fields = reflection_schema->root_table()->fields();
-    vtable_offsets.push_back(vector<flatbuffers::uoffset_t>());
+    vtable_offsets.emplace_back(vector<flatbuffers::uoffset_t>());
 
     for( unsigned i = 0; i < section_names.size(); i++ )
     {
-        vtable_offsets.push_back(vector<flatbuffers::uoffset_t>());
+        vtable_offsets.emplace_back(vector<flatbuffers::uoffset_t>());
 
         auto module_field = root_fields->LookupByKey(lowercase(section_names[i]).c_str());
-        vtable_offsets[0].push_back(module_field->offset());
+        vtable_offsets[0].emplace_back(module_field->offset());
 
         auto module_table = reflection_schema->objects()->Get(module_field->type()->index());
         for( unsigned j = 0; j < field_names[i].size(); j++ )
         {
             auto field = module_table->fields()->LookupByKey(lowercase(field_names[i][j]).c_str());
-            vtable_offsets[i + 1].push_back(field->offset());
+            vtable_offsets[i + 1].emplace_back(field->offset());
 
             if( types[i][j] == FT_IDX_PEG_COUNT )
             {
                 auto field_name = lowercase(field_names[i][j]) + "_map";
                 field = module_table->fields()->LookupByKey(field_name.c_str());
-                vtable_offsets[i + 1].push_back(field->offset());
+                vtable_offsets[i + 1].emplace_back(field->offset());
             }
         }
     }
@@ -241,8 +241,8 @@ void FbsFormatter::write(FILE* fh, time_t timestamp)
                         if( ipc[k] )
                         {
                             nz_found = true;
-                            map.push_back(k);
-                            mapped_ipc.push_back(ipc[k]);
+                            map.emplace_back(k);
+                            mapped_ipc.emplace_back(ipc[k]);
 
                             if( map.size() > nz_break_even )
                                 break;

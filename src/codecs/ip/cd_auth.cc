@@ -77,7 +77,7 @@ constexpr uint8_t MIN_AUTH_LEN = 16; // this is in minimum number of bytes ...
 } // anonymous namespace
 
 void AuthCodec::get_protocol_ids(std::vector<ProtocolId>& v)
-{ v.push_back(ProtocolId::AUTH); }
+{ v.emplace_back(ProtocolId::AUTH); }
 
 bool AuthCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {

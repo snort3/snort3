@@ -198,7 +198,7 @@ PacketTracer::TracerMute PacketTracer::get_mute()
     if ( s_pkt_trace == nullptr )
         return global_mutes.val - 1;
 
-    s_pkt_trace->mutes.push_back(false);
+    s_pkt_trace->mutes.emplace_back(false);
     return s_pkt_trace->mutes.size() - 1;
 }
 

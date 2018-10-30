@@ -331,7 +331,7 @@ void FlowControl::init_proto(
         con.cache->push(con.mem + i);
 
     con.get_ssn = get_ssn;
-    types.push_back(type);
+    types.emplace_back(type);
 }
 
 // FIXIT-P apply more filtering logic here, eg require_3whs

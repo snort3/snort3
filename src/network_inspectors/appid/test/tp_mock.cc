@@ -78,8 +78,8 @@ class ThirdPartyAppIDSessionImpl : public ThirdPartyAppIDSession
 public:
 
     bool reset() { return 1; }
-    bool process(const snort::Packet&, AppidSessionDirection, vector<AppId>&,
-        ThirdPartyAppIDAttributeData&) { return 1; }
+    TPState process(const snort::Packet&, AppidSessionDirection, vector<AppId>&,
+        ThirdPartyAppIDAttributeData&) { return TP_STATE_INIT; }
 
     int disable_flags(uint32_t) { return 0; }
     TPState get_state() { return state; }

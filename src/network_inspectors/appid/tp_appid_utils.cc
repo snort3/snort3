@@ -80,22 +80,18 @@ void tp_appid_profiler_init()
 }
 #endif
 
-// std::vector does not have a convenient find() function.
-// There is a generic std::find() in <algorithm>, but this might be faster.
-template<class Type_t, class ValType_t>
-static bool contains(const vector<Type_t>& vec, const ValType_t& val)
+static inline bool contains(const vector<AppId>& vec, const AppId val)
 {
-    const Type_t* v=&vec[0], * vend=v+vec.size();
-    while (v<vend)
-        if ( *(v++)==(Type_t)val )
+    for (const auto& elem : vec)
+        if (elem == val)
             return true;
     return false;
 }
 
 static inline bool check_reinspect(const Packet* p, const AppIdSession& asd)
 {
-    return p->dsize && !asd.get_session_flags(APPID_SESSION_NO_TPI) &&
-           asd.get_session_flags(APPID_SESSION_HTTP_SESSION) && asd.is_tp_appid_done();
+    return asd.get_session_flags(APPID_SESSION_HTTP_SESSION) and
+           !asd.get_session_flags(APPID_SESSION_NO_TPI) and asd.is_tp_appid_done() and p->dsize;
 }
 
 static inline int check_ssl_appid_for_reinspect(AppId app_id)
@@ -701,7 +697,7 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                         FatalError("Could not allocate asd.tpsession data");
                 }      // debug output of packet content
 
-                asd.tpsession->process(*p, direction,
+                TPState current_tp_state = asd.tpsession->process(*p, direction,
                     tp_proto_list, tp_attribute_data);
                 tp_app_id = asd.tpsession->get_appid(tp_confidence);
 
@@ -713,8 +709,13 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                 if (asd.get_session_flags(APPID_SESSION_APP_REINSPECT_SSL))
                     asd.clear_session_flags(APPID_SESSION_APP_REINSPECT_SSL);
 
-                if (asd.tpsession->get_state() == TP_STATE_CLASSIFIED)
+                if (current_tp_state == TP_STATE_CLASSIFIED)
                     asd.clear_session_flags(APPID_SESSION_APP_REINSPECT);
+                else if (current_tp_state == TP_STATE_MONITORING)
+                {
+                    asd.tpsession->disable_flags(TP_SESSION_FLAG_ATTRIBUTE |
+                        TP_SESSION_FLAG_TUNNELING | TP_SESSION_FLAG_FUTUREFLOW);
+                }
 
                 if (appidDebug->is_active())
                 {
@@ -738,7 +739,7 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                 }
                 // if the third-party appId must be treated as a client, do it now
                 unsigned app_info_flags = asd.app_info_mgr->get_app_info_flags(tp_app_id,
-                    APPINFO_FLAG_TP_CLIENT | APPINFO_FLAG_IGNORE);
+                    APPINFO_FLAG_TP_CLIENT | APPINFO_FLAG_IGNORE | APPINFO_FLAG_SSL_SQUELCH);
 
                 if ( app_info_flags & APPINFO_FLAG_TP_CLIENT )
                     asd.client.set_id(tp_app_id);
@@ -746,7 +747,8 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                 process_third_party_results(asd, tp_confidence, tp_proto_list, tp_attribute_data,
                     change_bits);
 
-                if (asd.get_session_flags(APPID_SESSION_SSL_SESSION) &&
+                if ((app_info_flags & APPINFO_FLAG_SSL_SQUELCH) and
+                    asd.get_session_flags(APPID_SESSION_SSL_SESSION) and
                     !(asd.scan_flags & SCAN_SSL_HOST_FLAG))
                 {
                     setSSLSquelch(p, 1, tp_app_id, asd.get_inspector());
@@ -765,23 +767,16 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                     else
                         tp_app_id = APP_ID_NONE;
                 }
+                if (tp_app_id == APP_ID_SSL &&
+                    (Stream::get_snort_protocol_id(p->flow) == snortId_for_ftp_data))
+                {
+                    //  If we see SSL on an FTP data channel set tpAppId back
+                    //  to APP_ID_NONE so the FTP preprocessor picks up the flow.
+                    tp_app_id = APP_ID_NONE;
+                }
             }
             else
             {
-                tp_app_id = APP_ID_NONE;
-            }
-
-            if (asd.tpsession and asd.tpsession->get_state() == TP_STATE_MONITORING)
-            {
-                asd.tpsession->disable_flags(TP_SESSION_FLAG_ATTRIBUTE |
-                    TP_SESSION_FLAG_TUNNELING | TP_SESSION_FLAG_FUTUREFLOW);
-            }
-
-            if (tp_app_id == APP_ID_SSL &&
-                (Stream::get_snort_protocol_id(p->flow) == snortId_for_ftp_data))
-            {
-                //  If we see SSL on an FTP data channel set tpAppId back
-                //  to APP_ID_NONE so the FTP preprocessor picks up the flow.
                 tp_app_id = APP_ID_NONE;
             }
 
@@ -815,14 +810,14 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                     if (asd.payload.get_id() == APP_ID_HTTP_SSL_TUNNEL)
                         snort_app_id = APP_ID_SSL;
 
-                    if (asd.is_tp_appid_available() && asd.get_tp_app_id() ==
-                        APP_ID_HTTP
-                        && !asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
+                    if (asd.get_tp_app_id() == APP_ID_HTTP and
+                        !asd.get_session_flags(APPID_SESSION_APP_REINSPECT) and
+                        asd.is_tp_appid_available())
                     {
                         asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
+                        asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
                         asd.set_session_flags(APPID_SESSION_CLIENT_DETECTED |
                             APPID_SESSION_SERVICE_DETECTED);
-                        asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
                         asd.clear_session_flags(APPID_SESSION_CONTINUE);
                         if (direction == APP_ID_FROM_INITIATOR)
                         {

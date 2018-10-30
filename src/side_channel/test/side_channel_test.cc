@@ -154,8 +154,8 @@ TEST_GROUP(side_channel)
         SCConnectors test_connectors;
         PortBitSet test_ports;
 
-        test_connectors.push_back("R");
-        test_connectors.push_back("T");
+        test_connectors.emplace_back("R");
+        test_connectors.emplace_back("T");
         test_ports.set(1);
 
         SideChannelManager::instantiate(&test_connectors, &test_ports);
@@ -163,7 +163,7 @@ TEST_GROUP(side_channel)
         test_connectors.clear();
         test_ports.reset(1);
 
-        test_connectors.push_back("R");
+        test_connectors.emplace_back("R");
         test_ports.set(2);
 
         SideChannelManager::instantiate(&test_connectors, &test_ports);
@@ -171,7 +171,7 @@ TEST_GROUP(side_channel)
         test_connectors.clear();
         test_ports.reset(2);
 
-        test_connectors.push_back("T");
+        test_connectors.emplace_back("T");
         test_ports.set(3);
 
         SideChannelManager::instantiate(&test_connectors, &test_ports);
@@ -186,7 +186,7 @@ TEST_GROUP(side_channel)
         test_connectors.clear();
         test_ports.reset(4);
 
-        test_connectors.push_back("D");
+        test_connectors.emplace_back("D");
         test_ports.set(5);
 
         SideChannelManager::instantiate(&test_connectors, &test_ports);

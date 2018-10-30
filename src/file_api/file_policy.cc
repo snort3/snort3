@@ -66,7 +66,7 @@ void FilePolicy::set_file_capture(bool enabled)
 
 void FilePolicy::insert_file_rule(FileRule& rule)
 {
-    file_rules.push_back(rule);
+    file_rules.emplace_back(rule);
 
     if (!rule.when.sha256.empty())
     {

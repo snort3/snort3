@@ -70,7 +70,7 @@ constexpr uint8_t FABRICPATH_HEADER_LEN = 16;
 } // anonymous namespace
 
 void FabricPathCodec::get_protocol_ids(std::vector<ProtocolId>& v)
-{ v.push_back(ProtocolId::ETHERTYPE_FPATH); }
+{ v.emplace_back(ProtocolId::ETHERTYPE_FPATH); }
 
 bool FabricPathCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {

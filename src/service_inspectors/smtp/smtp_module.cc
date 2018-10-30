@@ -205,7 +205,7 @@ void SmtpModule::add_commands(
     v.set_first_token();
 
     while ( v.get_next_token(tok) )
-        cmds.push_back(new SmtpCmd(tok, flags, 0));
+        cmds.emplace_back(new SmtpCmd(tok, flags, 0));
 }
 
 const SmtpCmd* SmtpModule::get_cmd(unsigned idx)
@@ -349,7 +349,7 @@ bool SmtpModule::end(const char* fqn, int idx, SnortConfig*)
         return true;
 
     if ( !strcmp(fqn, "smtp.alt_max_command_line_len") )
-        cmds.push_back(new SmtpCmd(names, number));
+        cmds.emplace_back(new SmtpCmd(names, number));
 
     return true;
 }

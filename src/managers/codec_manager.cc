@@ -100,7 +100,7 @@ void CodecManager::add_plugin(const CodecApi* api)
     wrap.api = api;
     wrap.init = false;
 
-    s_codecs.push_back(wrap);
+    s_codecs.emplace_back(wrap);
 }
 
 void CodecManager::release_plugins()

@@ -47,7 +47,7 @@ static std::vector<ControlConn*> controls;
 
 void ControlMgmt::add_control(int fd, bool local)
 {
-    controls.push_back(new ControlConn(fd, local));
+    controls.emplace_back(new ControlConn(fd, local));
 }
 
 bool ControlMgmt::find_control(int fd, std::vector<ControlConn*>::iterator& control)

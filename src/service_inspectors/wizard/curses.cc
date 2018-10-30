@@ -266,9 +266,9 @@ bool CurseBook::add_curse(const char* key)
         if (curse.name == key)
         {
             if (curse.is_tcp)
-                tcp_curses.push_back(&curse);
+                tcp_curses.emplace_back(&curse);
             else
-                non_tcp_curses.push_back(&curse);
+                non_tcp_curses.emplace_back(&curse);
             return true;
         }
     }

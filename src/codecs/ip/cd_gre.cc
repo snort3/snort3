@@ -89,7 +89,7 @@ static const uint32_t GRE_V1_ACK_LEN = 4;
 } // anonymous namespace
 
 void GreCodec::get_protocol_ids(std::vector<ProtocolId>& v)
-{ v.push_back(ProtocolId::GRE); }
+{ v.emplace_back(ProtocolId::GRE); }
 
 /*
  * see RFCs 1701, 2784 and 2637

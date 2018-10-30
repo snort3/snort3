@@ -366,10 +366,9 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p,
     {
         if ( p->flow->get_session_flags() & SSNFLAG_MIDSTREAM )
             asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
-        else if ( asd.is_tp_appid_available()
-            && ( tp_app_id > APP_ID_NONE && tp_app_id < SF_APPID_MAX ) )
+        else if ( tp_app_id > APP_ID_NONE and asd.is_tp_appid_available() )
         {
-            //tp has positively identified appId, Dig deeper only if sourcefire
+            // Third party has positively identified appId; Dig deeper only if our
             // detector identifies additional information
             entry = asd.app_info_mgr->get_app_info_entry(tp_app_id);
             if ( entry && entry->client_detector
@@ -393,12 +392,12 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p,
     }
 
     //stop rna inspection as soon as tp has classified a valid AppId
-    if ( ( asd.client_disco_state == APPID_DISCO_STATE_STATEFUL ||
-           asd.client_disco_state == APPID_DISCO_STATE_DIRECT) &&
-         asd.client_disco_state == prevRnaClientState &&
-         !asd.get_session_flags(APPID_SESSION_NO_TPI)  &&
-         asd.is_tp_appid_available() &&
-         tp_app_id > APP_ID_NONE && tp_app_id < SF_APPID_MAX)
+    if ( tp_app_id > APP_ID_NONE and
+         ( asd.client_disco_state == APPID_DISCO_STATE_STATEFUL or
+           asd.client_disco_state == APPID_DISCO_STATE_DIRECT ) and
+         asd.client_disco_state == prevRnaClientState and
+         !asd.get_session_flags(APPID_SESSION_NO_TPI)  and
+         asd.is_tp_appid_available() )
     {
         entry = asd.app_info_mgr->get_app_info_entry(tp_app_id);
         if ( !( entry && entry->client_detector

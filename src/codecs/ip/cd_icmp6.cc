@@ -107,7 +107,7 @@ public:
 } // anonymous namespace
 
 void Icmp6Codec::get_protocol_ids(std::vector<ProtocolId>& v)
-{ v.push_back(ProtocolId::ICMPV6); }
+{ v.emplace_back(ProtocolId::ICMPV6); }
 
 bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {

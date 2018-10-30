@@ -63,7 +63,7 @@ const char* ProtocolReference::get_name_sorted(SnortProtocolId id)
     if ( ind_map.size() < id_map.size() )
     {
         while ( ind_map.size() < id_map.size() )
-            ind_map.push_back((SnortProtocolId)ind_map.size());
+            ind_map.emplace_back((SnortProtocolId)ind_map.size());
 
         Compare c { id_map };
         sort(ind_map.begin(), ind_map.end(), c);
@@ -86,7 +86,7 @@ SnortProtocolId ProtocolReference::add(const char* protocol)
     }
 
     SnortProtocolId snort_protocol_id = protocol_number++;
-    id_map.push_back(protocol);
+    id_map.emplace_back(protocol);
     ref_table[protocol] = snort_protocol_id;
 
     return snort_protocol_id;

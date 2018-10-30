@@ -127,13 +127,13 @@ private:
 
 void Ipv4Codec::get_data_link_type(std::vector<int>& v)
 {
-    v.push_back(DLT_IPV4);
+    v.emplace_back(DLT_IPV4);
 }
 
 void Ipv4Codec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(ProtocolId::ETHERTYPE_IPV4);
-    v.push_back(ProtocolId::IPIP);
+    v.emplace_back(ProtocolId::ETHERTYPE_IPV4);
+    v.emplace_back(ProtocolId::IPIP);
 }
 
 bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)

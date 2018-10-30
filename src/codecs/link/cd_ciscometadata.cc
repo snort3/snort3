@@ -76,7 +76,7 @@ constexpr uint16_t CISCO_META_OPT_TYPE_MASK = 0x1FFF; //mask opt_len_type to get
 } // namespace
 
 void CiscoMetaDataCodec::get_protocol_ids(std::vector<ProtocolId>& v)
-{ v.push_back(ProtocolId::ETHERTYPE_CISCO_META); }
+{ v.emplace_back(ProtocolId::ETHERTYPE_CISCO_META); }
 
 bool CiscoMetaDataCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {

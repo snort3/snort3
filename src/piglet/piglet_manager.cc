@@ -170,7 +170,7 @@ void Manager::destroy(BasePlugin* p)
 }
 
 void Manager::add_chunk(const string& filename, const string& target, const string& chunk)
-{ chunks.push_back(Chunk(filename, target, chunk)); }
+{ chunks.emplace_back(Chunk(filename, target, chunk)); }
 
 const vector<Chunk>& Manager::get_chunks()
 { return chunks; }

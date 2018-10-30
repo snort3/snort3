@@ -97,7 +97,7 @@ void SideChannelManager::instantiate(const SCConnectors* connectors, const PortB
     scm->connectors = *connectors;
     scm->ports = *ports;
 
-    s_maps.push_back(scm);
+    s_maps.emplace_back(scm);
 }
 
 // Initialize state to be ready to accept configuration
@@ -149,7 +149,7 @@ void SideChannelManager::thread_init()
         }
 
         /* Save the thread specific map */
-        map_list->push_back(map);
+        map_list->emplace_back(map);
     }
 
     /* Finally, save the thread-specific list */

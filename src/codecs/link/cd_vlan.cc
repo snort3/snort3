@@ -63,10 +63,10 @@ constexpr unsigned int ETHERNET_MAX_LEN_ENCAP = 1518;    /* 802.3 (+LLC) or ethe
 
 void VlanCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(ProtocolId::ETHERTYPE_8021Q);
-    v.push_back(ProtocolId::ETHERTYPE_8021AD);
-    v.push_back(ProtocolId::ETHERTYPE_QINQ_NS1);
-    v.push_back(ProtocolId::ETHERTYPE_QINQ_NS2);
+    v.emplace_back(ProtocolId::ETHERTYPE_8021Q);
+    v.emplace_back(ProtocolId::ETHERTYPE_8021AD);
+    v.emplace_back(ProtocolId::ETHERTYPE_QINQ_NS1);
+    v.emplace_back(ProtocolId::ETHERTYPE_QINQ_NS2);
 }
 
 bool VlanCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)

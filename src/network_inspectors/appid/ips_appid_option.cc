@@ -200,7 +200,7 @@ bool AppIdOptionModule::set(const char*, Value& v, SnortConfig*)
 
         char *lcase_tok = AppInfoManager::strdup_to_lower(tok.c_str());
         string app_name(lcase_tok);
-        appid_table.insert(app_name);
+        appid_table.emplace(app_name);
         snort_free(lcase_tok);
     }
 

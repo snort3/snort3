@@ -59,7 +59,7 @@ void ActionManager::add_plugin(const ActionApi* api)
     if ( api->pinit )
         api->pinit();
 
-    s_actors.push_back(a);
+    s_actors.emplace_back(a);
 }
 
 void ActionManager::release_plugins()

@@ -136,7 +136,7 @@ void DataBus::publish(const char* key, void* user, int type, const uint8_t* data
 void DataBus::_subscribe(const char* key, DataHandler* h)
 {
     DataList& v = map[key];
-    v.push_back(h);
+    v.emplace_back(h);
 }
 
 void DataBus::_unsubscribe(const char* key, DataHandler* h)

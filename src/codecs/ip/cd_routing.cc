@@ -68,7 +68,7 @@ struct IP6Route0
 } // namespace
 
 void Ipv6RoutingCodec::get_protocol_ids(std::vector<ProtocolId>& v)
-{ v.push_back(ProtocolId::ROUTING); }
+{ v.emplace_back(ProtocolId::ROUTING); }
 
 bool Ipv6RoutingCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {

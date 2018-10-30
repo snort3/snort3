@@ -437,13 +437,13 @@ static int service_get_service_name(lua_State* L)
 }
 
 /**Is this a customer defined detector. Lua detectors can call this function to verify if the detector
- * was created by Sourcefire or not.
+ * was created by odp or not.
  * Callback could be used either at init or during packet processing
  *
  * @param Lua_State* - Lua state variable.
  * @param detector/stack - detector object
  * @return int - Number of elements on stack, which is always 1.
- * @return integer/stack - -1 if failed, 0 if sourcefire created, 1 otherwise.
+ * @return integer/stack - -1 if failed, 0 if odp created, 1 otherwise.
  */
 static int service_is_custom_detector(lua_State* L)
 {
@@ -1208,7 +1208,7 @@ static int create_chp_application(AppId appIdInstance, unsigned app_type_flags, 
     new_app->app_type_flags = app_type_flags;
     new_app->num_matches = num_matches;
 
-    if (CHP_glossary->insert(std::make_pair(appIdInstance, new_app)).second == false)
+    if (CHP_glossary->emplace(appIdInstance, new_app).second == false)
     {
         ErrorMessage("LuaDetectorApi:Failed to add CHP for appId %d, instance %d",
             CHP_APPIDINSTANCE_TO_ID(appIdInstance), CHP_APPIDINSTANCE_TO_INSTANCE(appIdInstance));

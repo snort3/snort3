@@ -130,7 +130,7 @@ bool TcpConnectorModule::end(const char*, int idx, SnortConfig*)
 {
     if (idx != 0)
     {
-        config_set->push_back(config);
+        config_set->emplace_back(config);
         config = nullptr;
     }
 

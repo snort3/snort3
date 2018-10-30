@@ -45,7 +45,7 @@ static EngineList s_engines;
 
 void MpseManager::add_plugin(const MpseApi* api)
 {
-    s_engines.push_back(api);
+    s_engines.emplace_back(api);
 }
 
 void MpseManager::release_plugins()

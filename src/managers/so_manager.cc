@@ -45,7 +45,7 @@ static list<const SoApi*> s_rules;
 
 void SoManager::add_plugin(const SoApi* api)
 {
-    s_rules.push_back(api);
+    s_rules.emplace_back(api);
 }
 
 void SoManager::release_plugins()

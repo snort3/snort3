@@ -187,10 +187,10 @@ void PolicyMap::clone(PolicyMap *other_map)
     {
         if ( i == 0 )
         {
-            inspection_policy.push_back(new InspectionPolicy(other_map->inspection_policy[i]));
+            inspection_policy.emplace_back(new InspectionPolicy(other_map->inspection_policy[i]));
         }
         else
-            inspection_policy.push_back(other_map->inspection_policy[i]);
+            inspection_policy.emplace_back(other_map->inspection_policy[i]);
     }
 
     shell_map = other_map->shell_map;
@@ -218,8 +218,8 @@ void PolicyMap::clone(PolicyMap *other_map)
 unsigned PolicyMap::add_inspection_shell(Shell* sh)
 {
     unsigned idx = inspection_policy.size();
-    shells.push_back(sh);
-    inspection_policy.push_back(new InspectionPolicy(idx));
+    shells.emplace_back(sh);
+    inspection_policy.emplace_back(new InspectionPolicy(idx));
 
     shell_map[sh] = std::make_shared<PolicyTuple>(inspection_policy.back(), nullptr, nullptr);
     return idx;
@@ -228,8 +228,8 @@ unsigned PolicyMap::add_inspection_shell(Shell* sh)
 unsigned PolicyMap::add_ips_shell(Shell* sh)
 {
     unsigned idx = ips_policy.size();
-    shells.push_back(sh);
-    ips_policy.push_back(new IpsPolicy(idx));
+    shells.emplace_back(sh);
+    ips_policy.emplace_back(new IpsPolicy(idx));
     shell_map[sh] = std::make_shared<PolicyTuple>(nullptr, ips_policy.back(), nullptr);
     return idx;
 }
@@ -237,18 +237,18 @@ unsigned PolicyMap::add_ips_shell(Shell* sh)
 unsigned PolicyMap::add_network_shell(Shell* sh)
 {
     unsigned idx = network_policy.size();
-    shells.push_back(sh);
-    network_policy.push_back(new NetworkPolicy(idx));
+    shells.emplace_back(sh);
+    network_policy.emplace_back(new NetworkPolicy(idx));
     shell_map[sh] = std::make_shared<PolicyTuple>(nullptr, nullptr, network_policy.back());
     return idx;
 }
 
 std::shared_ptr<PolicyTuple> PolicyMap::add_shell(Shell* sh)
 {
-    shells.push_back(sh);
-    inspection_policy.push_back(new InspectionPolicy(inspection_policy.size()));
-    ips_policy.push_back(new IpsPolicy(ips_policy.size()));
-    network_policy.push_back(new NetworkPolicy(network_policy.size()));
+    shells.emplace_back(sh);
+    inspection_policy.emplace_back(new InspectionPolicy(inspection_policy.size()));
+    ips_policy.emplace_back(new IpsPolicy(ips_policy.size()));
+    network_policy.emplace_back(new NetworkPolicy(network_policy.size()));
 
     return shell_map[sh] = std::make_shared<PolicyTuple>(inspection_policy.back(),
         ips_policy.back(), network_policy.back());
