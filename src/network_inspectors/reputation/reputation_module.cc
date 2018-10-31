@@ -145,6 +145,8 @@ ReputationConfig* ReputationModule::get_data()
 
 bool ReputationModule::begin(const char*, int, SnortConfig*)
 {
+    if ( conf )
+        delete conf;
     conf = new ReputationConfig;
     return true;
 }
@@ -160,4 +162,3 @@ bool ReputationModule::end(const char*, int, SnortConfig*)
 
     return true;
 }
-

@@ -618,6 +618,7 @@ SnortConfig* Snort::get_reload_config(const char* fname)
         MpseManager::activate_search_engine(sc->fast_pattern_config->get_search_api(), sc);
     }
 
+    InspectorManager::update_policy(sc);
     reloading = false;
     parser_term(sc);
 
