@@ -2542,6 +2542,7 @@ int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
         ErrorMessage("lua detector %s: error validating %s\n",
             package_info.name.c_str(), lua_tostring(my_lua_state, -1));
         ldp.pkt = nullptr;
+        LuaDetectorManager::free_detector_flows();
         return APPID_ENULL;
     }
 
