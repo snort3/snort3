@@ -606,7 +606,6 @@ void TcpSession::update_session_on_rst(TcpSegmentDescriptor& tsd, bool flush)
         DetectionEngine::onload(flow);  // FIXIT-H don't allow offload above
         set_splitter(true, nullptr);
         set_splitter(false, nullptr);
-        flow->free_flow_data();
     }
 
     talker->update_on_rst_sent( );
