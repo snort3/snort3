@@ -430,9 +430,6 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
     if ( p->proto_bits & PROTO_BIT__MPLS )
         flow->set_mpls_layer_per_dir(p);
 
-    if ( p->type() == PktType::PDU )  // FIXIT-H cooked or PDU?
-        DetectionEngine::onload(flow);
-
     switch ( flow->flow_state )
     {
     case Flow::FlowState::SETUP:

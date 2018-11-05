@@ -149,8 +149,6 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
     tcp_init = false;
     tcpStats.released++;
 
-    DetectionEngine::onload(flow);
-
     if ( flush_segments )
     {
         client.reassembler.flush_queued_segments(flow, true, p);
@@ -600,10 +598,8 @@ void TcpSession::update_session_on_rst(TcpSegmentDescriptor& tsd, bool flush)
 {
     if ( flush )
     {
-        DetectionEngine::onload(flow);
         flush_listener(tsd.get_pkt(), true);
         flush_talker(tsd.get_pkt(), true);
-        DetectionEngine::onload(flow);  // FIXIT-H don't allow offload above
         set_splitter(true, nullptr);
         set_splitter(false, nullptr);
     }

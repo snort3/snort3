@@ -358,9 +358,8 @@ bool DetectionEngine::offload(Packet* p)
         return false;
     }
     assert(p == p->context->packet);
-    onload(p->flow);  // FIXIT-L just assert !offloaded?
-
     assert(p->context == sw->get_context());
+
     unsigned id = sw->suspend();
 
     trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " de::offload %u (r=%d)\n",

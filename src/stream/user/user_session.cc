@@ -168,7 +168,6 @@ int UserTracker::scan(Packet* p, uint32_t& flags)
     if ( seg_list.empty() )
         return -1;
 
-    DetectionEngine::onload(p->flow);
     std::list<UserSegment*>::iterator it;
 
     for ( it = seg_list.begin(); it != seg_list.end(); ++it)
@@ -252,8 +251,6 @@ void UserTracker::flush(Packet* p, unsigned flush_amt, uint32_t flags)
 
 void UserTracker::process(Packet* p)
 {
-    DetectionEngine::onload(p->flow);
-
     uint32_t flags = 0;
     int flush_amt = scan(p, flags);
 

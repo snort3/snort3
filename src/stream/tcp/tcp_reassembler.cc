@@ -526,7 +526,6 @@ void TcpReassembler::prep_pdu(
 Packet* TcpReassembler::initialize_pdu(
     TcpReassemblerState& trs, Packet* p, uint32_t pkt_flags, struct timeval tv)
 {
-    DetectionEngine::onload(trs.sos.session->flow);
     Packet* pdu = DetectionEngine::set_next_packet(p);
 
     EncodeFlags enc_flags = 0;
@@ -544,7 +543,6 @@ int TcpReassembler::_flush_to_seq(
     TcpReassemblerState& trs, uint32_t bytes, Packet* p, uint32_t pkt_flags)
 {
     DeepProfile profile(s5TcpFlushPerfStats);
-    DetectionEngine::onload(trs.sos.session->flow);
 
     if ( !p )
     {
@@ -882,7 +880,6 @@ uint32_t TcpReassembler::get_forward_packet_dir(TcpReassemblerState&, const Pack
 int32_t TcpReassembler::flush_pdu_ips(TcpReassemblerState& trs, uint32_t* flags)
 {
     DeepProfile profile(s5TcpPAFPerfStats);
-    DetectionEngine::onload(trs.sos.session->flow);
 
     uint32_t total = 0, avail;
     TcpSegmentNode* tsn;
@@ -956,7 +953,6 @@ void TcpReassembler::fallback(TcpReassemblerState& trs)
 int32_t TcpReassembler::flush_pdu_ackd(TcpReassemblerState& trs, uint32_t* flags)
 {
     DeepProfile profile(s5TcpPAFPerfStats);
-    DetectionEngine::onload(trs.sos.session->flow);
 
     uint32_t total = 0;
     TcpSegmentNode* tsn =
