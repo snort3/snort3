@@ -35,6 +35,7 @@
 #include "filters/sfthreshold.h"
 #include "hash/hashfcn.h"
 #include "hash/xhash.h"
+#include "helpers/directory.h"
 #include "log/messages.h"
 #include "main/shell.h"
 #include "main/snort_config.h"
@@ -63,33 +64,9 @@ static struct rule_index_map_t* ruleIndexMap = nullptr;
 
 static std::string s_aux_rules;
 
-void parser_append_rules(const char* s)
-{
-    s_aux_rules += s;
-    s_aux_rules += "\n";
-}
-
 //-------------------------------------------------------------------------
 // private / implementation methods
 //-------------------------------------------------------------------------
-
-void parser_init()
-{
-    parse_rule_init();
-
-    ruleIndexMap = RuleIndexMapCreate();
-
-    if ( !ruleIndexMap )
-        ParseAbort("failed to create rule index map.");
-}
-
-void parser_term(SnortConfig* sc)
-{
-    parse_rule_term();
-    RuleIndexMapFree(ruleIndexMap);
-    ruleIndexMap = nullptr;
-    sc->free_rule_state_list();
-}
 
 static void CreateDefaultRules(SnortConfig* sc)
 {
@@ -387,22 +364,24 @@ static void parse_file(SnortConfig* sc, Shell* sh)
 // public methods
 //-------------------------------------------------------------------------
 
-/****************************************************************************
- * Function: ParseSnortConf()
- *
- * Read the rules file a line at a time and send each rule to the rule parser
- * This is the first pass of the configuration file.  It parses everything
- * except the rules.
- *
- * Arguments: None
- *
- * Returns:
- *  SnortConfig *
- *      An initialized and configured snort configuration struct.
- *      This struct should be passed on the second pass of the
- *      configuration file to parse the rules.
- *
- ***************************************************************************/
+void parser_init()
+{
+    parse_rule_init();
+
+    ruleIndexMap = RuleIndexMapCreate();
+
+    if ( !ruleIndexMap )
+        ParseAbort("failed to create rule index map.");
+}
+
+void parser_term(SnortConfig* sc)
+{
+    parse_rule_term();
+    RuleIndexMapFree(ruleIndexMap);
+    ruleIndexMap = nullptr;
+    sc->free_rule_state_list();
+}
+
 SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname)
 {
     SnortConfig* sc = new SnortConfig(SnortConfig::get_conf()->proto_ref);
@@ -897,5 +876,24 @@ int parser_get_rule_index(unsigned gid, unsigned sid)
 {
     assert(ruleIndexMap);
     return RuleIndexMapAdd(ruleIndexMap, gid, sid);
+}
+
+void parser_append_rules(const char* s)
+{
+    s_aux_rules += s;
+    s_aux_rules += "\n";
+}
+
+void parser_append_includes(const char* d)
+{
+    Directory dir(d);
+    const char* f;
+
+    while ( (f = dir.next()) )
+    {
+        std::string s = "include ";
+        s += f;
+        parser_append_rules(s.c_str());
+    }
 }
 

@@ -434,6 +434,9 @@ static const Parameter s_params[] =
     { "--rule", Parameter::PT_STRING, nullptr, nullptr,
       "<rules> to be added to configuration; may be repeated" },
 
+    { "--rule-path", Parameter::PT_STRING, nullptr, nullptr,
+      "<path> where to find rules files" },
+
     { "--rule-to-hex", Parameter::PT_IMPLIED, nullptr, nullptr,
       "output so rule header to stdout for text rule on stdin" },
 
@@ -889,6 +892,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--rule") )
         parser_append_rules(v.get_string());
+
+    else if ( v.is("--rule-path") )
+        parser_append_includes(v.get_string());
 
     else if ( v.is("--rule-to-hex") )
         dump_rule_hex(sc, v.get_string());
