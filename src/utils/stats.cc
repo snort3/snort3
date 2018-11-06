@@ -169,7 +169,7 @@ static void timing_stats()
 
 const PegInfo pc_names[] =
 {
-    { CountType::SUM, "analyzed", "packets sent to detection" },
+    { CountType::NOW, "analyzed", "packets sent to detection" },
     { CountType::SUM, "hard_evals", "non-fast pattern rule evaluations" },
     { CountType::SUM, "raw_searches", "fast pattern searches in raw packet data" },
     { CountType::SUM, "cooked_searches", "fast pattern searches in cooked packet data" },
