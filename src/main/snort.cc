@@ -291,7 +291,8 @@ void Snort::init(int argc, char** argv)
     if ( !Piglet::piglet_mode() )
 #endif
     if ( !SnortConfig::get_conf()->output.empty() )
-        EventManager::instantiate(SnortConfig::get_conf()->output.c_str(), SnortConfig::get_conf());
+        EventManager::instantiate(SnortConfig::get_conf()->output.c_str(),
+            SnortConfig::get_conf());
 
     if (SnortConfig::alert_before_pass())
     {
@@ -332,8 +333,10 @@ void Snort::init(int argc, char** argv)
     Trough::setup();
 
     // FIXIT-L refactor stuff done here and in snort_config.cc::VerifyReload()
-    if ( SnortConfig::get_conf()->bpf_filter.empty() && !SnortConfig::get_conf()->bpf_file.empty() )
-        SnortConfig::get_conf()->bpf_filter = read_infile("bpf_file", SnortConfig::get_conf()->bpf_file.c_str());
+    if ( SnortConfig::get_conf()->bpf_filter.empty() &&
+        !SnortConfig::get_conf()->bpf_file.empty() )
+        SnortConfig::get_conf()->bpf_filter = read_infile("bpf_file",
+            SnortConfig::get_conf()->bpf_file.c_str());
 
     if ( !SnortConfig::get_conf()->bpf_filter.empty() )
         LogMessage("Snort BPF option: %s\n", SnortConfig::get_conf()->bpf_filter.c_str());
@@ -558,10 +561,10 @@ SnortConfig* Snort::get_reload_config(const char* fname)
     trim_heap();
 
     parser_init();
-    SnortConfig* sc = ParseSnortConf(snort_cmd_line_conf, fname);
+    SnortConfig* sc = ParseSnortConf(snort_cmd_line_conf, fname, false);
     sc->merge(snort_cmd_line_conf);
 
-    if ( ModuleManager::get_errors() || !sc->verify() )
+    if ( get_parse_errors() || ModuleManager::get_errors() || !sc->verify() )
     {
         parser_term(sc);
         delete sc;

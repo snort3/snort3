@@ -72,13 +72,19 @@ static int get_line_number(lua_State* L)
 
 #endif
 
-static void load_config(lua_State* L, const char* file, const char* tweaks)
+static bool load_config(lua_State* L, const char* file, const char* tweaks, bool is_fatal)
 {
     Lua::ManageStack ms(L);
-
     if ( luaL_loadfile(L, file) )
-        FatalError("can't load %s: %s\n", file, lua_tostring(L, -1));
-
+    {
+        if (is_fatal)
+            FatalError("can't load %s: %s\n", file, lua_tostring(L, -1));
+        else
+        {
+            ParseError("can't load %s: %s\n", file, lua_tostring(L, -1));
+            return false;
+        }
+    }
     if ( tweaks and *tweaks )
     {
         lua_pushstring(L, tweaks);
@@ -87,6 +93,8 @@ static void load_config(lua_State* L, const char* file, const char* tweaks)
 
     if ( lua_pcall(L, 0, 0, 0) )
         FatalError("can't init %s: %s\n", file, lua_tostring(L, -1));
+
+    return true;
 }
 
 static void load_overrides(lua_State* L, string& s)
@@ -122,16 +130,19 @@ static void run_config(lua_State* L, const char* t)
     }
 }
 
-static void config_lua(
-    lua_State* L, const char* file, string& s, const char* tweaks)
+static bool config_lua(
+    lua_State* L, const char* file, string& s, const char* tweaks, bool is_fatal)
 {
     if ( file && *file )
-        load_config(L, file, tweaks);
+        if (!load_config(L, file, tweaks, is_fatal))
+            return false;
 
     if ( !s.empty() )
         load_overrides(L, s);
 
     run_config(L, "_G");
+
+    return true;
 }
 
 //-------------------------------------------------------------------------
@@ -189,7 +200,7 @@ void Shell::set_overrides(Shell* sh)
     overrides += sh->overrides;
 }
 
-void Shell::configure(SnortConfig* sc)
+bool Shell::configure(SnortConfig* sc, bool is_fatal)
 {
     assert(file.size());
     ModuleManager::set_config(sc);
@@ -207,13 +218,15 @@ void Shell::configure(SnortConfig* sc)
     }
 
     const char* base_name = push_relative_path(file.c_str());
-    config_lua(lua, base_name, overrides, sc->tweaks.c_str());
+    if(! config_lua(lua, base_name, overrides, sc->tweaks.c_str(), is_fatal))
+        return false;
 
     set_default_policy(sc);
     ModuleManager::set_config(nullptr);
     loaded = true;
 
     pop_relative_path();
+    return true;
 }
 
 void Shell::install(const char* name, const luaL_Reg* reg)

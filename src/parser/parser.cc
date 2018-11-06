@@ -249,10 +249,9 @@ static void DefineIfaceVar(SnortConfig* sc, char* iname, const uint8_t* network,
 // Find all up interfaces and define iface_ADDRESS vars for them
 static void DefineAllIfaceVars(SnortConfig* sc)
 {
-
     // FIXIT-L don't come back here on reload unless we are going to find
     // new ifaces.  Cache retrieved devs so if user is running with dropped
-    // privs and does a reload, we can use previous values 
+    // privs and does a reload, we can use previous values
     static int num_vars = 0;
 
     // should be more than enough to cover the number of interfaces on a machine
@@ -348,16 +347,17 @@ static void printRuleListOrder(RuleListNode* node)
     LogMessage("%s\n", buf);
 }
 
-static void parse_file(SnortConfig* sc, Shell* sh)
+static bool parse_file(SnortConfig* sc, Shell* sh, bool is_fatal)
 {
     const char* fname = sh->get_file();
 
     if ( !fname || !*fname )
-        return;
+        return false;
 
     push_parse_location(fname, 0);
-    sh->configure(sc);
+    bool success = sh->configure(sc, is_fatal);
     pop_parse_location();
+    return success;
 }
 
 //-------------------------------------------------------------------------
@@ -382,7 +382,7 @@ void parser_term(SnortConfig* sc)
     sc->free_rule_state_list();
 }
 
-SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname)
+SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname, bool is_fatal)
 {
     SnortConfig* sc = new SnortConfig(SnortConfig::get_conf()->proto_ref);
 
@@ -440,8 +440,11 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname)
             break;
 
         set_policies(sc, sh);
-        parse_file(sc, sh);
+
+        if (!parse_file(sc, sh, is_fatal))
+            return sc;
     }
+
     set_default_policy(sc);
     return sc;
 }
@@ -737,7 +740,7 @@ RuleTreeNode* deleteRtnFromOtn(OptTreeNode* otn, PolicyId policyId, SnortConfig*
 
         if ( remove && rtn )
         {
-            RuleTreeNodeKey key{ rtn, policyId };
+            RuleTreeNodeKey key { rtn, policyId };
             if ( sc && sc->rtn_hash_table )
                 xhash_remove(sc->rtn_hash_table, &key);
         }
@@ -753,7 +756,7 @@ RuleTreeNode* deleteRtnFromOtn(OptTreeNode* otn, SnortConfig* sc)
     return deleteRtnFromOtn(otn, get_ips_policy()->policy_id, sc);
 }
 
-static uint32_t rtn_hash_func(HashFnc*, const unsigned char *k, int)
+static uint32_t rtn_hash_func(HashFnc*, const unsigned char* k, int)
 {
     uint32_t a,b,c;
     const RuleTreeNodeKey* rtnk = (const RuleTreeNodeKey*)k;
@@ -774,7 +777,7 @@ static uint32_t rtn_hash_func(HashFnc*, const unsigned char *k, int)
     return c;
 }
 
-static int rtn_compare_func(const void *k1, const void *k2, size_t)
+static int rtn_compare_func(const void* k1, const void* k2, size_t)
 {
     const RuleTreeNodeKey* rtnk1 = (const RuleTreeNodeKey*)k1;
     const RuleTreeNodeKey* rtnk2 = (const RuleTreeNodeKey*)k2;
@@ -787,7 +790,7 @@ static int rtn_compare_func(const void *k1, const void *k2, size_t)
 
     if (same_headers(rtnk1->rtn, rtnk2->rtn))
         return 0;
-    
+
     return 1;
 }
 
@@ -854,7 +857,7 @@ int addRtnToOtn(SnortConfig* sc, OptTreeNode* otn, RuleTreeNode* rtn, PolicyId p
     return 0; //success
 }
 
-int addRtnToOtn(SnortConfig*sc, OptTreeNode* otn, RuleTreeNode* rtn)
+int addRtnToOtn(SnortConfig* sc, OptTreeNode* otn, RuleTreeNode* rtn)
 {
     return addRtnToOtn(sc, otn, rtn, get_ips_policy()->policy_id);
 }
