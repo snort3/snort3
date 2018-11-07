@@ -1,3 +1,65 @@
+18/11/07 - build 249
+
+-- appid: Fixing profiler data race and registration issues
+-- appid: make third party appid stats configurable
+-- appid: Remove detector flows from the list for faulty lua detectors
+-- build: remove dead code
+-- build: support dynamic imap, pop, and smtp
+-- comments: additional cleanup
+-- comments: delete obsolete comments
+-- comments: fixup format, spelling, priority, etc.
+-- comments: remove XXX and convert to FIXIT where appropriate
+-- connectors: Fix TCP connector unit test compilation on Alpine Linux (musl)
+-- cppcheck: cleanup some warnings
+-- dcerpc: fixed build warning with struct packing
+-- dcerpc: fixed setting endianness on one packet and checking on another
+-- detection : add function to clear ips_id from unit tests
+-- detectionengine: Only clear inspector data after offloads have completed
+-- detection/http_inspect: Save a snapshot HTTP buffers in the IPS context to support offload of HTTP flows
+-- doc: Adding performance consideration for developers
+-- file_api: revert deleting gid 146 so existing 146 rulesets dont attempt empty rule eval
+-- fixits: prioritize for RC
+-- flow: fixed build warning
+-- flow: track multiple offloads
+-- fp_detect: onload before running local to ensure event ordering
+-- framework: replace the newly introduced loop to reset the reload_type flags with the existing Inspector::update_policy function
+-- framework: set the reload_type flags to RELOAD_TYPE_NONE at the end of reload, in anticipation of future reloads.
+-- host_tracker: fixed uppcase IP param issue
+-- http2_inspect: Change http2 GID from 219 to 121
+-- ips_flowbits: move static structures to snort config
+-- main: initialize shell_map and other maps in PolicyMap::clone()
+-- main: size analyzer notification ring appropriately
+-- manual: fix some typos
+-- mime: made the mime hdr info and current search thread local
+-- mime: move the decode buffer used by mime attachments to mime context data
+-- packet_tracer: can't emplace vector<bool> until c++14
+-- parser: bad filename during reload is not a fatal error
+-- perfmon: fix issue for report correct stats after passing -n pkts
+-- perf_monitor: trackers keep copy of the relevant config items from the inspector
+-- reload: fixed smtp seg fault when reload failed
+-- reputation: delete old conf before allocating a new one in ReputationModule::begin() if conf not null
+-- rule_state: indicate list format
+-- search_tool: include bytes searched in pattern match stats
+-- search_tool: validate ac_full and ac_bnfa wrt search and search_all
+-- snort2lua: Add support for enable/disable iprep logging using suppress mechanism
+-- snort2lua: Avoid returning reference of local variable
+-- snort2lua: comment out deleted gid 146 rules
+-- snort2lua: Enable address_anomaly_detection during snort2lua and fixed missing string sanity checks
+-- snort2lua: fixed paf_max to stream_tcp.max_pdu convertion
+-- snort2lua: tweak for style consistency
+-- snort: add --rule-path to load rules from all files under given dir
+-- snort: Code refactoring - replacing push_back/insert by emplace_back/emplace, keeping reputation_id in flow instead of flow_data, and appid code improvements
+-- source: fix some typos
+-- source: minor refactoring
+-- spell: fix typo
+-- stream, detection, flow: don't force onloads between pdus unless absolutey necessary
+-- stream: fixed build warning
+-- stream: only delete flows after all onloads
+-- stream tcp: don't delete flow data on rst, let session close handle it
+-- textlog: removed unused TextLog_Tell function
+-- thread_idle: call timeout flows with packet time for pcap replay
+-- utils: fixed deprecation build warning on register keyword
+
 18/09/26 - build 248
 
 -- appid: adding detector builder and fixing stats to recognize custom appid

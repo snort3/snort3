@@ -779,7 +779,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0 (Build 246) from 2.9.11
+o"  )~   Version 3.0.0 (Build 248) from 2.9.11
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2018 Cisco and/or its affiliates. All rights reserved.
@@ -3177,7 +3177,7 @@ resetting it.</p></div>
 <div class="paragraph"><p>The page to be sent can be read from a file:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><code>react = { page = "custmized_block_page.html", }</code></pre>
+<pre><code>react = { page = "customized_block_page.html", }</code></pre>
 </div></div>
 <div class="paragraph"><p>or else the default is used:</p></div>
 <div class="literalblock">
@@ -7407,7 +7407,7 @@ int <strong>detection.trace</strong>: mask for enabling debug traces in module
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>detection.analyzed</strong>: packets sent to detection (sum)
+<strong>detection.analyzed</strong>: packets sent to detection (now)
 </p>
 </li>
 <li>
@@ -7683,7 +7683,7 @@ int <strong>host_cache[].size</strong>: size of host cache
 <div class="ulist"><ul>
 <li>
 <p>
-addr <strong>host_tracker[].IP</strong> = 0.0.0.0/32: hosts address / cidr
+addr <strong>host_tracker[].ip</strong> = 0.0.0.0/32: hosts address / cidr
 </p>
 </li>
 <li>
@@ -8346,17 +8346,17 @@ string <strong>references[].url</strong>: where this reference is defined
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>rule_state.gid</strong> = 0: rule generator ID { 0: }
+int <strong>rule_state[].gid</strong> = 0: rule generator ID { 0: }
 </p>
 </li>
 <li>
 <p>
-int <strong>rule_state.sid</strong> = 0: rule signature ID { 0: }
+int <strong>rule_state[].sid</strong> = 0: rule signature ID { 0: }
 </p>
 </li>
 <li>
 <p>
-bool <strong>rule_state.enable</strong> = true: enable or disable rule in all policies
+bool <strong>rule_state[].enable</strong> = true: enable or disable rule in all policies
 </p>
 </li>
 </ul></div>
@@ -8919,6 +8919,11 @@ implied <strong>snort.--pause</strong>: wait for resume/quit command before proc
 </li>
 <li>
 <p>
+int <strong>snort.--pause-after-n</strong>: &lt;count&gt; pause after count packets, to be used with single packet thread only { 1: }
+</p>
+</li>
+<li>
+<p>
 implied <strong>snort.--parsing-follows-files</strong>: parse relative paths from the perspective of the current configuration file
 </p>
 </li>
@@ -8980,6 +8985,11 @@ implied <strong>snort.--process-all-events</strong>: process all action groups
 <li>
 <p>
 string <strong>snort.--rule</strong>: &lt;rules&gt; to be added to configuration; may be repeated
+</p>
+</li>
+<li>
+<p>
+string <strong>snort.--rule-path</strong>: &lt;path&gt; where to find rules files
 </p>
 </li>
 <li>
@@ -10558,6 +10568,16 @@ string <strong>appid.tp_appid_config</strong>: path to third party appid configu
 </li>
 <li>
 <p>
+bool <strong>appid.tp_appid_stats_enable</strong>: enable collection of stats and print stats on exit in third party module
+</p>
+</li>
+<li>
+<p>
+bool <strong>appid.tp_appid_config_dump</strong>: print third party configuration on startup
+</p>
+</li>
+<li>
+<p>
 bool <strong>appid.log_all_sessions</strong> = false: enable logging of all appid sessions
 </p>
 </li>
@@ -11030,6 +11050,11 @@ int <strong>dce_smb.trace</strong>: mask for enabling debug traces in module
 </li>
 <li>
 <p>
+<strong>133:11</strong> (dce_smb) SMB - remaining NetBIOS data length less than command length
+</p>
+</li>
+<li>
+<p>
 <strong>133:12</strong> (dce_smb) SMB - remaining NetBIOS data length less than command byte count
 </p>
 </li>
@@ -11451,6 +11476,11 @@ enum <strong>dce_tcp.policy</strong> = WinXP:  Target based policy to use { Win2
 <li>
 <p>
 <strong>133:30</strong> (dce_tcp) connection-oriented DCE/RPC - fragment length less than header size
+</p>
+</li>
+<li>
+<p>
+<strong>133:31</strong> (dce_tcp) connection-oriented DCE/RPC - remaining fragment length less than size needed
 </p>
 </li>
 <li>
@@ -12929,7 +12959,7 @@ bool <strong>http_inspect.show_scan</strong> = false: display scanned segments
 </li>
 <li>
 <p>
-<strong>119:101</strong> (http_inspect) anomalous http server on undefined HTTP port
+<strong>119:101</strong> (http_inspect) obsolete event&#8212;deleted
 </p>
 </li>
 <li>
@@ -21523,11 +21553,6 @@ determine verdict.  (Conversely, builtin actions don&#8217;t have an associated
 plugin function.)</p></div>
 </div>
 <div class="sect2">
-<h3 id="_developers_guide">Developers Guide</h3>
-<div class="paragraph"><p>Run doc/dev_guide.sh to generate /tmp/dev_guide.html, an annotated guide to
-the source tree.</p></div>
-</div>
-<div class="sect2">
 <h3 id="_piglet_test_harness">Piglet Test Harness</h3>
 <div class="paragraph"><p>In order to assist with plugin development, an experimental mode called "piglet" mode
 is provided. With piglet mode, you can call individual methods for a specific plugin.
@@ -22416,6 +22441,62 @@ types described above in any order</p></div>
 <code>Inspector.get_splitter()</code></p></div>
 </div>
 </div>
+</div>
+<div class="sect2">
+<h3 id="_developers_guide">Developers Guide</h3>
+<div class="paragraph"><p>Run doc/dev_guide.sh to generate /tmp/dev_guide.html, an annotated guide to
+the source tree.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_performance_considerations_for_developers">Performance Considerations for Developers</h3>
+<div class="ulist"><ul>
+<li>
+<p>
+Since C compilers evaluate compound conditional expression from left to
+  right, put the costly condition last. Put the often-false condition first
+  in &amp;&amp; expression. Put the often-true condition first in || expression.
+</p>
+</li>
+<li>
+<p>
+Use emplace_back/emplace instead of push_back/insert on STL containers.
+</p>
+</li>
+<li>
+<p>
+In general, unordered_map is faster than map for frequent lookups using
+  integer key on relatively static collection of unsorted elements. Whereas,
+  map is faster for frequent insertions/deletions/iterations and for
+  non-integer key such as string or custom objects. Consider the same factors
+  when deciding ordered vs. unordered multimap and set.
+</p>
+</li>
+<li>
+<p>
+Iterate using range-based for loop with reference (i.e., auto&amp;).
+</p>
+</li>
+<li>
+<p>
+Be mindful of construction and destruction of temporary objects which can
+  be wasteful. Consider using std::move, std::swap, lvalue reference (&amp;),
+  and rvalue reference (&amp;&amp;).
+</p>
+</li>
+<li>
+<p>
+Avoid thread-local storage. When unavoidable, minimize frequent TLS access
+  by caching it to a local variable.
+</p>
+</li>
+<li>
+<p>
+When writing inter-library APIs, consider interfaces depending on use cases
+  to minimize context switching. For example, if two APIs foo() and bar() are
+  needed to call, combine these into a single API to minimize jumps.
+</p>
+</li>
+</ul></div>
 </div>
 </div>
 </div>
@@ -23590,6 +23671,11 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
+<strong>--pause-after-n</strong> &lt;count&gt; pause after count packets, to be used with single packet thread only (1:)
+</p>
+</li>
+<li>
+<p>
 <strong>--parsing-follows-files</strong> parse relative paths from the perspective of the current configuration file
 </p>
 </li>
@@ -23651,6 +23737,11 @@ these libraries see the Getting Started section of the manual.</p></div>
 <li>
 <p>
 <strong>--rule</strong> &lt;rules&gt; to be added to configuration; may be repeated
+</p>
+</li>
+<li>
+<p>
+<strong>--rule-path</strong> &lt;path&gt; where to find rules files
 </p>
 </li>
 <li>
@@ -24045,12 +24136,22 @@ string <strong>appids.~</strong>: comma separated list of application names
 </li>
 <li>
 <p>
+bool <strong>appid.tp_appid_config_dump</strong>: print third party configuration on startup
+</p>
+</li>
+<li>
+<p>
 string <strong>appid.tp_appid_config</strong>: path to third party appid configuration file
 </p>
 </li>
 <li>
 <p>
 string <strong>appid.tp_appid_path</strong>: path to third party appid dynamic library
+</p>
+</li>
+<li>
+<p>
+bool <strong>appid.tp_appid_stats_enable</strong>: enable collection of stats and print stats on exit in third party module
 </p>
 </li>
 <li>
@@ -25475,7 +25576,7 @@ enum <strong>host_tracker[].frag_policy</strong>: defragmentation policy { first
 </li>
 <li>
 <p>
-addr <strong>host_tracker[].IP</strong> = 0.0.0.0/32: hosts address / cidr
+addr <strong>host_tracker[].ip</strong> = 0.0.0.0/32: hosts address / cidr
 </p>
 </li>
 <li>
@@ -27150,17 +27251,17 @@ string <strong>rpc.~ver</strong>: version number or * for any
 </li>
 <li>
 <p>
-bool <strong>rule_state.enable</strong> = true: enable or disable rule in all policies
+bool <strong>rule_state[].enable</strong> = true: enable or disable rule in all policies
 </p>
 </li>
 <li>
 <p>
-int <strong>rule_state.gid</strong> = 0: rule generator ID { 0: }
+int <strong>rule_state[].gid</strong> = 0: rule generator ID { 0: }
 </p>
 </li>
 <li>
 <p>
-int <strong>rule_state.sid</strong> = 0: rule signature ID { 0: }
+int <strong>rule_state[].sid</strong> = 0: rule signature ID { 0: }
 </p>
 </li>
 <li>
@@ -27830,6 +27931,11 @@ implied <strong>snort.--parsing-follows-files</strong>: parse relative paths fro
 </li>
 <li>
 <p>
+int <strong>snort.--pause-after-n</strong>: &lt;count&gt; pause after count packets, to be used with single packet thread only { 1: }
+</p>
+</li>
+<li>
+<p>
 implied <strong>snort.--pause</strong>: wait for resume/quit command before processing packets/terminating
 </p>
 </li>
@@ -27911,6 +28017,11 @@ string <strong>snort.-r</strong>: &lt;pcap&gt;&#8230; (same as --pcap-list)
 <li>
 <p>
 string <strong>snort.-R</strong>: &lt;rules&gt; include this rules file in the default policy
+</p>
+</li>
+<li>
+<p>
+string <strong>snort.--rule-path</strong>: &lt;path&gt; where to find rules files
 </p>
 </li>
 <li>
@@ -29410,7 +29521,7 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>detection.analyzed</strong>: packets sent to detection (sum)
+<strong>detection.analyzed</strong>: packets sent to detection (now)
 </p>
 </li>
 <li>
@@ -31685,6 +31796,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>121</strong>: http2_inspect
+</p>
+</li>
+<li>
+<p>
 <strong>122</strong>: port_scan
 </p>
 </li>
@@ -31806,11 +31922,6 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>175</strong>: domain_filter
-</p>
-</li>
-<li>
-<p>
-<strong>219</strong>: http2_inspect
 </p>
 </li>
 <li>
@@ -32865,7 +32976,7 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>119:101</strong> (http_inspect) anomalous http server on undefined HTTP port
+<strong>119:101</strong> (http_inspect) obsolete event&#8212;deleted
 </p>
 </li>
 <li>
@@ -33695,6 +33806,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>133:11</strong> (dce_smb) SMB - remaining NetBIOS data length less than command length
+</p>
+</li>
+<li>
+<p>
 <strong>133:12</strong> (dce_smb) SMB - remaining NetBIOS data length less than command byte count
 </p>
 </li>
@@ -33786,6 +33902,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>133:30</strong> (dce_tcp) connection-oriented DCE/RPC - fragment length less than header size
+</p>
+</li>
+<li>
+<p>
+<strong>133:31</strong> (dce_tcp) connection-oriented DCE/RPC - remaining fragment length less than size needed
 </p>
 </li>
 <li>
@@ -37578,7 +37699,7 @@ Note that on OpenBSD, divert sockets don&#8217;t work with bridges!
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-08-19 02:32:12 EDT
+Last updated 2018-11-07 02:34:08 EST
 </div>
 </div>
 </body>

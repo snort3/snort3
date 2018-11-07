@@ -346,9 +346,10 @@ Table of Contents
     18.3. Inspectors
     18.4. Codecs
     18.5. IPS Actions
-    18.6. Developers Guide
-    18.7. Piglet Test Harness
-    18.8. Piglet Lua API
+    18.6. Piglet Test Harness
+    18.7. Piglet Lua API
+    18.8. Developers Guide
+    18.9. Performance Considerations for Developers
 
 19. Coding Style
 
@@ -383,7 +384,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0 (Build 246) from 2.9.11
+o"  )~   Version 3.0.0 (Build 248) from 2.9.11
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2018 Cisco and/or its affiliates. All rights reserved.
@@ -2020,7 +2021,7 @@ resetting it.
 
 The page to be sent can be read from a file:
 
-react = { page = "custmized_block_page.html", }
+react = { page = "customized_block_page.html", }
 
 or else the default is used:
 
@@ -5571,7 +5572,7 @@ Configuration:
 
 Peg counts:
 
-  * detection.analyzed: packets sent to detection (sum)
+  * detection.analyzed: packets sent to detection (now)
   * detection.hard_evals: non-fast pattern rule evaluations (sum)
   * detection.raw_searches: fast pattern searches in raw packet data
     (sum)
@@ -5716,7 +5717,7 @@ Usage: global
 
 Configuration:
 
-  * addr host_tracker[].IP = 0.0.0.0/32: hosts address / cidr
+  * addr host_tracker[].ip = 0.0.0.0/32: hosts address / cidr
   * enum host_tracker[].frag_policy: defragmentation policy { first |
     linux | bsd | bsd_right | last | windows | solaris }
   * enum host_tracker[].tcp_policy: TCP reassembly policy { first |
@@ -6099,9 +6100,9 @@ Usage: detect
 
 Configuration:
 
-  * int rule_state.gid = 0: rule generator ID { 0: }
-  * int rule_state.sid = 0: rule signature ID { 0: }
-  * bool rule_state.enable = true: enable or disable rule in all
+  * int rule_state[].gid = 0: rule generator ID { 0: }
+  * int rule_state[].sid = 0: rule signature ID { 0: }
+  * bool rule_state[].enable = true: enable or disable rule in all
     policies
 
 
@@ -6324,6 +6325,8 @@ Configuration:
   * implied snort.--nolock-pidfile: do not try to lock Snort PID file
   * implied snort.--pause: wait for resume/quit command before
     processing packets/terminating
+  * int snort.--pause-after-n: <count> pause after count packets, to
+    be used with single packet thread only { 1: }
   * implied snort.--parsing-follows-files: parse relative paths from
     the perspective of the current configuration file
   * string snort.--pcap-file: <file> file that contains a list of
@@ -6347,6 +6350,7 @@ Configuration:
   * implied snort.--process-all-events: process all action groups
   * string snort.--rule: <rules> to be added to configuration; may be
     repeated
+  * string snort.--rule-path: <path> where to find rules files
   * implied snort.--rule-to-hex: output so rule header to stdout for
     text rule on stdin
   * string snort.--rule-to-text = [SnortFoo]: output plain so rule
@@ -7150,6 +7154,10 @@ Configuration:
     library
   * string appid.tp_appid_config: path to third party appid
     configuration file
+  * bool appid.tp_appid_stats_enable: enable collection of stats and
+    print stats on exit in third party module
+  * bool appid.tp_appid_config_dump: print third party configuration
+    on startup
   * bool appid.log_all_sessions = false: enable logging of all appid
     sessions
   * int appid.trace: mask for enabling debug traces in module
@@ -7378,6 +7386,8 @@ Rules:
   * 133:9 (dce_smb) SMB - zero total data count
   * 133:10 (dce_smb) SMB - NetBIOS data length less than SMB header
     length
+  * 133:11 (dce_smb) SMB - remaining NetBIOS data length less than
+    command length
   * 133:12 (dce_smb) SMB - remaining NetBIOS data length less than
     command byte count
   * 133:13 (dce_smb) SMB - remaining NetBIOS data length less than
@@ -7528,6 +7538,8 @@ Rules:
   * 133:29 (dce_tcp) connection-oriented DCE/RPC - invalid PDU type
   * 133:30 (dce_tcp) connection-oriented DCE/RPC - fragment length
     less than header size
+  * 133:31 (dce_tcp) connection-oriented DCE/RPC - remaining fragment
+    length less than size needed
   * 133:32 (dce_tcp) connection-oriented DCE/RPC - no context items
     specified
   * 133:33 (dce_tcp) connection-oriented DCE/RPC -no transfer
@@ -8157,8 +8169,7 @@ Rules:
   * 119:32 (http_inspect) simple request
   * 119:33 (http_inspect) unescaped space in HTTP URI
   * 119:34 (http_inspect) too many pipelined requests
-  * 119:101 (http_inspect) anomalous http server on undefined HTTP
-    port
+  * 119:101 (http_inspect) obsolete event—deleted
   * 119:102 (http_inspect) invalid status code in HTTP response
   * 119:103 (http_inspect) unused event number—should not appear
   * 119:104 (http_inspect) HTTP response has UTF charset that failed
@@ -12983,15 +12994,7 @@ determine verdict. (Conversely, builtin actions don’t have an
 associated plugin function.)
 
 
-18.6. Developers Guide
-
---------------
-
-Run doc/dev_guide.sh to generate /tmp/dev_guide.html, an annotated
-guide to the source tree.
-
-
-18.7. Piglet Test Harness
+18.6. Piglet Test Harness
 
 --------------
 
@@ -13037,7 +13040,7 @@ The test runner will generate a check-like output, indicating the the
 results of each test script.
 
 
-18.8. Piglet Lua API
+18.7. Piglet Lua API
 
 --------------
 
@@ -13050,7 +13053,7 @@ the underlying C\++ member functions. Every effort has been made to
 keep the mappings consist, but there are still some differences. They
 are documented below.
 
-18.8.1. Plugin Instances
+18.7.1. Plugin Instances
 
 For each test, piglet instantiates plugin specified in the name field
 of the plugin table. The virtual methods of the instance are exposed
@@ -13124,7 +13127,7 @@ SoRule
 
 Currently, SoRule does not expose any methods.
 
-18.8.1.1. Interface Objects
+18.7.1.1. Interface Objects
 
 Many of the plugins take C++ classes and structs as arguments. These
 objects are exposed to the Lua API as Lua userdata. Exposed objects
@@ -13329,6 +13332,42 @@ StreamSplitter
 
 Note: StreamSplitter does not have a new() method, it must be created
 by an inspector via Inspector.get_splitter()
+
+
+18.8. Developers Guide
+
+--------------
+
+Run doc/dev_guide.sh to generate /tmp/dev_guide.html, an annotated
+guide to the source tree.
+
+
+18.9. Performance Considerations for Developers
+
+--------------
+
+  * Since C compilers evaluate compound conditional expression from
+    left to right, put the costly condition last. Put the often-false
+    condition first in && expression. Put the often-true condition
+    first in || expression.
+  * Use emplace_back/emplace instead of push_back/insert on STL
+    containers.
+  * In general, unordered_map is faster than map for frequent lookups
+    using integer key on relatively static collection of unsorted
+    elements. Whereas, map is faster for frequent insertions/
+    deletions/iterations and for non-integer key such as string or
+    custom objects. Consider the same factors when deciding ordered
+    vs. unordered multimap and set.
+  * Iterate using range-based for loop with reference (i.e., auto&).
+  * Be mindful of construction and destruction of temporary objects
+    which can be wasteful. Consider using std::move, std::swap,
+    lvalue reference (&), and rvalue reference (&&).
+  * Avoid thread-local storage. When unavoidable, minimize frequent
+    TLS access by caching it to a local variable.
+  * When writing inter-library APIs, consider interfaces depending on
+    use cases to minimize context switching. For example, if two APIs
+    foo() and bar() are needed to call, combine these into a single
+    API to minimize jumps.
 
 
 ---------------------------------------------------------------------
@@ -13875,6 +13914,8 @@ these libraries see the Getting Started section of the manual.
   * --nolock-pidfile do not try to lock Snort PID file
   * --pause wait for resume/quit command before processing packets/
     terminating
+  * --pause-after-n <count> pause after count packets, to be used
+    with single packet thread only (1:)
   * --parsing-follows-files parse relative paths from the perspective
     of the current configuration file
   * --pcap-file <file> file that contains a list of pcaps to read -
@@ -13896,6 +13937,7 @@ these libraries see the Getting Started section of the manual.
   * --plugin-path <path> where to find plugins
   * --process-all-events process all action groups
   * --rule <rules> to be added to configuration; may be repeated
+  * --rule-path <path> where to find rules files
   * --rule-to-hex output so rule header to stdout for text rule on
     stdin
   * --rule-to-text output plain so rule header to stdout for text
@@ -14044,10 +14086,14 @@ these libraries see the Getting Started section of the manual.
   * bool appid.log_stats = false: enable logging of appid statistics
   * int appid.memcap = 0: disregard - not implemented { 0: }
   * string appids.~: comma separated list of application names
+  * bool appid.tp_appid_config_dump: print third party configuration
+    on startup
   * string appid.tp_appid_config: path to third party appid
     configuration file
   * string appid.tp_appid_path: path to third party appid dynamic
     library
+  * bool appid.tp_appid_stats_enable: enable collection of stats and
+    print stats on exit in third party module
   * int appid.trace: mask for enabling debug traces in module
   * ip4 arp_spoof.hosts[].ip: host ip address
   * mac arp_spoof.hosts[].mac: host mac address
@@ -14490,7 +14536,7 @@ these libraries see the Getting Started section of the manual.
     hpux10 | windows | win_2003 | vista | proxy }
   * enum host_tracker[].frag_policy: defragmentation policy { first |
     linux | bsd | bsd_right | last | windows | solaris }
-  * addr host_tracker[].IP = 0.0.0.0/32: hosts address / cidr
+  * addr host_tracker[].ip = 0.0.0.0/32: hosts address / cidr
   * string host_tracker[].services[].name: service identifier
   * port host_tracker[].services[].port: port number
   * enum host_tracker[].services[].proto = tcp: IP protocol { tcp |
@@ -15083,10 +15129,10 @@ these libraries see the Getting Started section of the manual.
   * int rpc.~app: application number
   * string rpc.~proc: procedure number or * for any
   * string rpc.~ver: version number or * for any
-  * bool rule_state.enable = true: enable or disable rule in all
+  * bool rule_state[].enable = true: enable or disable rule in all
     policies
-  * int rule_state.gid = 0: rule generator ID { 0: }
-  * int rule_state.sid = 0: rule signature ID { 0: }
+  * int rule_state[].gid = 0: rule generator ID { 0: }
+  * int rule_state[].sid = 0: rule signature ID { 0: }
   * string sd_pattern.~pattern: The pattern to search for
   * int sd_pattern.threshold: number of matches before alerting { 1 }
   * int search_engine.bleedover_port_limit = 1024: maximum ports in
@@ -15311,6 +15357,8 @@ these libraries see the Getting Started section of the manual.
     option quick help (same as --help-options) { (optional) }
   * implied snort.--parsing-follows-files: parse relative paths from
     the perspective of the current configuration file
+  * int snort.--pause-after-n: <count> pause after count packets, to
+    be used with single packet thread only { 1: }
   * implied snort.--pause: wait for resume/quit command before
     processing packets/terminating
   * string snort.--pcap-dir: <dir> a directory to recurse to look for
@@ -15339,6 +15387,7 @@ these libraries see the Getting Started section of the manual.
   * string snort.-r: <pcap>… (same as --pcap-list)
   * string snort.-R: <rules> include this rules file in the default
     policy
+  * string snort.--rule-path: <path> where to find rules files
   * string snort.--rule: <rules> to be added to configuration; may be
     repeated
   * implied snort.--rule-to-hex: output so rule header to stdout for
@@ -15809,7 +15858,7 @@ these libraries see the Getting Started section of the manual.
   * detection.alerts: alerts not including IP reputation (sum)
   * detection.alt_searches: alt fast pattern searches in packet data
     (sum)
-  * detection.analyzed: packets sent to detection (sum)
+  * detection.analyzed: packets sent to detection (now)
   * detection.body_searches: fast pattern searches in body buffer
     (sum)
   * detection.cooked_searches: fast pattern searches in cooked packet
@@ -16379,6 +16428,7 @@ these libraries see the Getting Started section of the manual.
   * 116: vlan
   * 116: wlan
   * 119: http_inspect
+  * 121: http2_inspect
   * 122: port_scan
   * 123: stream_ip
   * 124: smtp
@@ -16404,7 +16454,6 @@ these libraries see the Getting Started section of the manual.
   * 145: dnp3
   * 146: file_id
   * 175: domain_filter
-  * 219: http2_inspect
   * 256: dpx
 
 
@@ -16647,8 +16696,7 @@ these libraries see the Getting Started section of the manual.
   * 119:32 (http_inspect) simple request
   * 119:33 (http_inspect) unescaped space in HTTP URI
   * 119:34 (http_inspect) too many pipelined requests
-  * 119:101 (http_inspect) anomalous http server on undefined HTTP
-    port
+  * 119:101 (http_inspect) obsolete event—deleted
   * 119:102 (http_inspect) invalid status code in HTTP response
   * 119:103 (http_inspect) unused event number—should not appear
   * 119:104 (http_inspect) HTTP response has UTF charset that failed
@@ -16846,6 +16894,8 @@ these libraries see the Getting Started section of the manual.
   * 133:9 (dce_smb) SMB - zero total data count
   * 133:10 (dce_smb) SMB - NetBIOS data length less than SMB header
     length
+  * 133:11 (dce_smb) SMB - remaining NetBIOS data length less than
+    command length
   * 133:12 (dce_smb) SMB - remaining NetBIOS data length less than
     command byte count
   * 133:13 (dce_smb) SMB - remaining NetBIOS data length less than
@@ -16878,6 +16928,8 @@ these libraries see the Getting Started section of the manual.
   * 133:29 (dce_tcp) connection-oriented DCE/RPC - invalid PDU type
   * 133:30 (dce_tcp) connection-oriented DCE/RPC - fragment length
     less than header size
+  * 133:31 (dce_tcp) connection-oriented DCE/RPC - remaining fragment
+    length less than size needed
   * 133:32 (dce_tcp) connection-oriented DCE/RPC - no context items
     specified
   * 133:33 (dce_tcp) connection-oriented DCE/RPC -no transfer
