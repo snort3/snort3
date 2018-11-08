@@ -439,7 +439,7 @@ cd $builddir
 
 [ "$CMakeGenerator" ] && gen="-G $CMakeGenerator"
 
-cmake $gen \
+cmake "$gen" \
     -DCMAKE_CXX_FLAGS:STRING="$CXXFLAGS $CPPFLAGS" \
     -DCMAKE_C_FLAGS:STRING="$CFLAGS $CPPFLAGS" \
     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
