@@ -27,6 +27,8 @@
 #include "framework/data_bus.h"
 #include "pub_sub/sip_events.h"
 
+#include "appid_module.h"
+
 namespace snort
 {
 class Flow;
@@ -105,7 +107,7 @@ public:
     void handle(snort::DataEvent&, snort::Flow*) override;
 
 private:
-    SipEventHandler() = default;
+    SipEventHandler() : DataHandler(MOD_NAME) { }
     void client_handler(SipEvent&, AppIdSession&, AppidChangeBits&);
     void service_handler(SipEvent&, AppIdSession&, AppidChangeBits&);
 

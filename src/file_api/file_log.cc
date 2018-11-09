@@ -83,7 +83,7 @@ static void dl_tterm()
 class LogHandler : public DataHandler
 {
 public:
-    LogHandler(FileLogConfig& conf)
+    LogHandler(FileLogConfig& conf) : DataHandler(s_name)
     { config = conf; }
 
     void handle(DataEvent&, Flow*) override;

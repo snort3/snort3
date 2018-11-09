@@ -69,7 +69,33 @@ DataBus::~DataBus()
 {
     for ( auto& p : map )
         for ( auto* h : p.second )
-            delete h;
+        {
+            // If the object is cloned, pass the ownership to the next config.
+            // When the object is no further cloned (e.g., the last config), delete it.
+            if ( h->cloned )
+                h->cloned = false;
+            else
+                delete h;
+        }
+
+    mapped_module.clear();
+}
+
+void DataBus::add_mapped_module(const char* name)
+{
+    if ( name )
+        mapped_module.emplace(name);
+}
+
+void DataBus::clone(DataBus& from)
+{
+    for ( auto& p : from.map )
+        for ( auto* h : p.second )
+            if ( mapped_module.count(h->module_name) == 0 )
+            {
+                h->cloned = true;
+                _subscribe(p.first.c_str(), h);
+            }
 }
 
 // add handler to list of handlers to be notified upon
@@ -137,6 +163,10 @@ void DataBus::_subscribe(const char* key, DataHandler* h)
 {
     DataList& v = map[key];
     v.emplace_back(h);
+
+    // Track fresh subscriptions to distinguish during cloning
+    if ( !h->cloned )
+        add_mapped_module(h->module_name);
 }
 
 void DataBus::_unsubscribe(const char* key, DataHandler* h)

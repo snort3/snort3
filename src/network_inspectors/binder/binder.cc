@@ -599,7 +599,7 @@ private:
 class FlowStateSetupHandler : public DataHandler
 {
 public:
-    FlowStateSetupHandler() = default;
+    FlowStateSetupHandler() : DataHandler(BIND_NAME) { }
 
     void handle(DataEvent& event, Flow* flow) override
     {
@@ -613,7 +613,7 @@ public:
 class FlowServiceChangeHandler : public DataHandler
 {
 public:
-    FlowServiceChangeHandler() = default;
+    FlowServiceChangeHandler() : DataHandler(BIND_NAME) { }
 
     void handle(DataEvent&, Flow* flow) override
     {
@@ -626,7 +626,7 @@ public:
 class StreamHANewFlowHandler : public DataHandler
 {
 public:
-    StreamHANewFlowHandler() = default;
+    StreamHANewFlowHandler() : DataHandler(BIND_NAME) { }
 
     void handle(DataEvent&, Flow* flow) override
     {

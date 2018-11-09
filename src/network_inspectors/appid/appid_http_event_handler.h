@@ -26,6 +26,8 @@
 
 #include "pub_sub/http_events.h"
 
+#include "appid_module.h"
+
 namespace snort
 {
 class Flow;
@@ -40,7 +42,7 @@ public:
         RESPONSE_EVENT,
     };
 
-    HttpEventHandler(HttpEventType type)
+    HttpEventHandler(HttpEventType type) : DataHandler(MOD_NAME)
     {
         event_type = type;
     }

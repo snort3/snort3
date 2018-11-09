@@ -29,6 +29,7 @@
 
 #include <map>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "main/snort_types.h"
@@ -72,20 +73,27 @@ public:
     virtual ~DataHandler() = default;
 
     virtual void handle(DataEvent&, Flow*) { }
+    const char* module_name;
+    bool cloned;
 
 protected:
-    DataHandler() = default;
+    DataHandler(std::nullptr_t) = delete;
+    DataHandler(const char* mod_name) : module_name(mod_name), cloned(false) { }
 };
 
 // FIXIT-P evaluate perf; focus is on correctness
 typedef std::vector<DataHandler*> DataList;
 typedef std::map<std::string, DataList> DataMap;
+typedef std::unordered_set<const char*> DataModule;
 
 class SO_PUBLIC DataBus
 {
 public:
     DataBus();
     ~DataBus();
+
+    void clone(DataBus& from);
+    void add_mapped_module(const char*);
 
     static void subscribe(const char* key, DataHandler*);
     static void subscribe_default(const char* key, DataHandler*);
@@ -105,6 +113,7 @@ private:
 
 private:
     DataMap map;
+    DataModule mapped_module;
 };
 
 class SO_PUBLIC DaqMetaEvent : public DataEvent

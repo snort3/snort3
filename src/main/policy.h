@@ -40,6 +40,7 @@ typedef unsigned char uuid_t[16];
 namespace snort
 {
 struct GHash;
+struct SnortConfig;
 }
 
 struct PortTable;
@@ -111,6 +112,7 @@ public:
     ~InspectionPolicy();
 
     void configure();
+    void clone_dbus(snort::SnortConfig*, const char*);
 
 public:
     PolicyId policy_id;
@@ -249,8 +251,6 @@ private:
 // FIXIT-L SO_PUBLIC required because SnortConfig::inline_mode(), etc. uses the function
 namespace snort
 {
-struct SnortConfig;
-
 SO_PUBLIC NetworkPolicy* get_network_policy();
 SO_PUBLIC InspectionPolicy* get_inspection_policy();
 SO_PUBLIC IpsPolicy* get_ips_policy();

@@ -43,7 +43,7 @@ static THREAD_LOCAL unsigned s_pkt_num = 0;
 class DaqMetaEventHandler : public DataHandler
 {
 public:
-    DaqMetaEventHandler() = default;
+    DaqMetaEventHandler() : DataHandler(S_NAME) { }
     void handle(DataEvent&, Flow*) override;
 };
 

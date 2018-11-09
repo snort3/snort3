@@ -86,7 +86,7 @@ private:
 class PerfIdleHandler : public DataHandler
 {
 public:
-    PerfIdleHandler(PerfMonitor& p) : perf_monitor(p)
+    PerfIdleHandler(PerfMonitor& p) : DataHandler(PERF_NAME), perf_monitor(p)
     { DataBus::subscribe_default(THREAD_IDLE_EVENT, this); }
 
     void handle(DataEvent&, Flow*) override
@@ -99,7 +99,7 @@ private:
 class PerfRotateHandler : public DataHandler
 {
 public:
-    PerfRotateHandler(PerfMonitor& p) : perf_monitor(p)
+    PerfRotateHandler(PerfMonitor& p) : DataHandler(PERF_NAME), perf_monitor(p)
     { DataBus::subscribe_default(THREAD_ROTATE_EVENT, this); }
 
     void handle(DataEvent&, Flow*) override
@@ -112,7 +112,7 @@ private:
 class FlowIPDataHandler : public DataHandler
 {
 public:
-    FlowIPDataHandler(PerfMonitor& p) : perf_monitor(p)
+    FlowIPDataHandler(PerfMonitor& p) : DataHandler(PERF_NAME), perf_monitor(p)
     { DataBus::subscribe_default(FLOW_STATE_EVENT, this); }
 
     void handle(DataEvent&, Flow* flow) override

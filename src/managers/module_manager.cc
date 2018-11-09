@@ -1079,6 +1079,7 @@ void ModuleManager::reload_module(const char* name, snort::SnortConfig* sc)
     {
         cout << "Module " << name <<" doesn't exist";
         cout << endl;
+        ++s_errors;
     }
 }
 
