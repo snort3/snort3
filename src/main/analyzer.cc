@@ -148,10 +148,12 @@ void Analyzer::analyze()
     // The main analyzer loop is terminated by a command returning false or an error during acquire
     while (!exit_requested)
     {
-        if ( Snort::get_pause())
+        TestPause& s_pause = Snort::get_test_pause();
+        if (s_pause.get_pause())
         {
             pause();
-            Snort::clear_pause();
+            s_pause.clear_pause();
+            s_pause.set_pause_cnt(0);
             snort::LogMessage("== paused\n");
         }
         if (handle_command())
@@ -212,10 +214,14 @@ void Analyzer::pause()
             get_state_string());
 }
 
-void Analyzer::resume()
+void Analyzer::resume(int pkt_cnt)
 {
     if (state == State::PAUSED)
+    {
+        TestPause& s_pause = Snort::get_test_pause();
+        s_pause.set_pause_cnt(pkt_cnt);
         set_state(State::RUNNING);
+    }
     else
         ErrorMessage("Analyzer: Received RESUME command while in state %s\n",
             get_state_string());

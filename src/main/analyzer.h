@@ -66,7 +66,7 @@ public:
     void run(bool paused = false);
     void stop();
     void pause();
-    void resume();
+    void resume(int pkt_cnt);
     void reload_daq();
 
 private:

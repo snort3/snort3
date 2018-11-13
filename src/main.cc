@@ -194,7 +194,7 @@ bool Pig::queue_command(AnalyzerCommand* ac, bool orphan)
 #ifdef DEBUG_MSGS
     unsigned ac_ref_count = ac->get();
     trace_logf(snort, "[%u] Queuing command %s for execution (refcount %u)\n",
-            idx, ac->stringify(), ac_ref_count);
+        idx, ac->stringify(), ac_ref_count);
 #else
     ac->get();
 #endif
@@ -208,13 +208,13 @@ void Pig::reap_command(AnalyzerCommand* ac)
     if (ac_ref_count == 0)
     {
         trace_logf(snort, "[%u] Destroying completed command %s\n",
-                idx, ac->stringify());
+            idx, ac->stringify());
         delete ac;
     }
 #ifdef DEBUG_MSGS
     else
         trace_logf(snort, "[%u] Reaped ongoing command %s (refcount %u)\n",
-                idx, ac->stringify(), ac_ref_count);
+            idx, ac->stringify(), ac_ref_count);
 #endif
 }
 
@@ -271,7 +271,7 @@ static AnalyzerCommand* get_command(AnalyzerCommand* ac, bool from_shell)
 void snort::main_broadcast_command(AnalyzerCommand* ac, bool from_shell)
 {
     unsigned dispatched = 0;
-    
+
     ac = get_command(ac, from_shell);
     trace_logf(snort, "Broadcasting %s command\n", ac->stringify());
 
@@ -538,9 +538,24 @@ int main_pause(lua_State* L)
 
 int main_resume(lua_State* L)
 {
-    bool from_shell = ( L != nullptr );
+    const bool from_shell = ( L != nullptr );
+
+    int pkt_num = 0;
+    if (from_shell)
+    {
+        const int num_of_args = lua_gettop(L);
+        if (num_of_args)
+        {
+            pkt_num = lua_tonumber(L, 1);
+            if (pkt_num < 1)
+            {
+                current_request->respond("Invalid usage of resume(n), n should be a number > 0\n");
+                return 0;
+            }
+        }
+    }
     current_request->respond("== resuming\n", from_shell);
-    main_broadcast_command(new ACResume(), from_shell);
+    main_broadcast_command(new ACResume(pkt_num), from_shell);
     paused = false;
     return 0;
 }
@@ -558,6 +573,7 @@ int main_dump_plugins(lua_State*)
     PluginManager::dump_plugins();
     return 0;
 }
+
 #endif
 
 int main_quit(lua_State* L)

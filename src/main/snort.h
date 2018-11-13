@@ -36,6 +36,19 @@ struct SnortConfig;
 
 typedef void (* MainHook_f)(Packet*);
 
+class TestPause
+{
+public:
+    bool get_pause() { return pause; }
+    void clear_pause() { pause = false; }
+    void set_pause_cnt(int cnt);
+
+public:
+    bool pause = false;
+    bool was_paused = false;
+    uint64_t pause_cnt = 0;
+};
+
 class Snort
 {
 public:
@@ -71,9 +84,7 @@ public:
     static ContextSwitcher* get_switcher();
 
     SO_PUBLIC static Packet* get_packet();
-
-    static bool get_pause() { return pause; }
-    static void clear_pause() { pause = false; }
+    static TestPause& get_test_pause();
 
 private:
     static void init(int, char**);
@@ -84,9 +95,8 @@ private:
     static bool initializing;
     static bool reloading;
     static bool privileges_dropped;
-    static bool pause;
-    static bool was_paused;
 };
+
 }
 
 #endif

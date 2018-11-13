@@ -120,6 +120,15 @@ static THREAD_LOCAL ContextSwitcher* s_switcher = nullptr;
 ContextSwitcher* Snort::get_switcher()
 { return s_switcher; }
 
+// Test util - used for pause-after-n and resume(n)
+static THREAD_LOCAL TestPause s_pause;
+
+TestPause& Snort::get_test_pause()
+{ return s_pause; }
+ 
+void TestPause::set_pause_cnt(int cnt)
+{ pause_cnt = cnt ? (cnt + pc.total_from_daq) : 0; }
+
 //-------------------------------------------------------------------------
 // perf stats
 // FIXIT-M move these to appropriate modules
@@ -213,6 +222,7 @@ static void show_source(const char* pcap)
     fprintf(stdout, "Reading network traffic from \"%s\" with snaplen = %u\n",
         pcap, SFDAQ::get_snap_len());
 }
+
 
 //-------------------------------------------------------------------------
 // initialization
@@ -489,8 +499,6 @@ void Snort::clean_exit(int)
 bool Snort::initializing = true;
 bool Snort::reloading = false;
 bool Snort::privileges_dropped = false;
-bool Snort::pause = false;
-bool Snort::was_paused = false;
 
 bool Snort::is_starting()
 { return initializing; }
@@ -1028,14 +1036,18 @@ DAQ_Verdict Snort::packet_callback(
 
     if ( SnortConfig::get_conf()->pkt_cnt && pc.total_from_daq >= SnortConfig::get_conf()->pkt_cnt )
         SFDAQ::break_loop(-1);
-#ifdef REG_TEST
-    else if ( SnortConfig::get_conf()->pkt_pause_cnt && !was_paused && 
-             pc.total_from_daq >= SnortConfig::get_conf()->pkt_pause_cnt )
+
+    // Check for resume(n) 
+    else if ((s_pause.pause_cnt && pc.total_from_daq >= s_pause.pause_cnt) 
+#ifdef REG_TEST   // pause-after-n
+        || ( SnortConfig::get_conf()->pkt_pause_cnt && !s_pause.was_paused && 
+	pc.total_from_daq >= SnortConfig::get_conf()->pkt_pause_cnt )
+#endif
+	)
     {
         SFDAQ::break_loop(0);
-        was_paused = pause = true;
-    }
-#endif
+        s_pause.was_paused = s_pause.pause = true;
+    }  
     else if ( break_time() )
         SFDAQ::break_loop(0);
 

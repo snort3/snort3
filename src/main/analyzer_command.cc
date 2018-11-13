@@ -57,7 +57,7 @@ void ACPause::execute(Analyzer& analyzer)
 
 void ACResume::execute(Analyzer& analyzer)
 {
-    analyzer.resume();
+    analyzer.resume(pkt_count);
 }
 
 void ACRotate::execute(Analyzer&)

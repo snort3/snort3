@@ -77,6 +77,14 @@ static const Parameter s_module[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const Parameter s_pktnum[] =
+{
+    { "pkt_num", Parameter::PT_INT, "1:", nullptr,
+      "resume and pause after pkt_num packets" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 static const Command snort_cmds[] =
 {
     { "show_plugins", main_dump_plugins, nullptr, "show available plugins" },
@@ -93,7 +101,8 @@ static const Command snort_cmds[] =
     //{ "process", main_process, nullptr, "process given pcap" },
 
     { "pause", main_pause, nullptr, "suspend packet processing" },
-    { "resume", main_resume, nullptr, "continue packet processing" },
+    { "resume", main_resume, s_pktnum, "continue packet processing. "
+      "If number of packet is specified, will resume for n packets and pause" },
     { "detach", main_detach, nullptr, "exit shell w/o shutdown" },
     { "quit", main_quit, nullptr, "shutdown and dump-stats" },
     { "help", main_help, nullptr, "this output" },
@@ -392,7 +401,7 @@ static const Parameter s_params[] =
 
 #ifdef REG_TEST
     { "--pause-after-n", Parameter::PT_INT, "1:", nullptr,
-      "<count> pause after count packets, to be used with single packet thread only", },
+      "<count> pause after count packets", },
 #endif
 
     { "--parsing-follows-files", Parameter::PT_IMPLIED, nullptr, nullptr,
