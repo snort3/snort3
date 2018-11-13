@@ -100,6 +100,7 @@ void base_sum()
 
     sum_stats((PegCount*)&g_stats, (PegCount*)&stream_base_stats,
         array_size(base_pegs)-1);
+    base_reset();
 }
 
 void base_stats()
