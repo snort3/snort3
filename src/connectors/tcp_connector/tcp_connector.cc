@@ -166,7 +166,14 @@ void TcpConnector::process_receive()
     if (rval == -1)
     {
         if (errno != EINTR)
-            ErrorMessage("TcpC Input Thread: Error polling on socket %d: %s (%d)\n", pfds[0].fd, strerror(errno), errno);
+        {
+            
+            char error_msg[1024] = {0};
+            if (strerror_r(errno, error_msg, sizeof(error_msg)) == 0)
+                ErrorMessage("TcpC Input Thread: Error polling on socket %d: %s\n", pfds[0].fd, error_msg);
+            else
+                ErrorMessage("TcpC Input Thread: Error polling on socket %d: (%d)\n", pfds[0].fd, errno);
+        }
         return;
     }
     else if ((pfds[0].revents & (POLLHUP|POLLERR|POLLNVAL)) != 0)
@@ -390,13 +397,21 @@ static TcpConnector* tcp_connector_tinit_answer(TcpConnectorConfig* cfg, const c
 
     if ( listen(sfd, 10) < 0 )
     {
-        ErrorMessage("listen() failure: %s\n", strerror(errno));
+        char error_msg[1024] = {0};
+        if (strerror_r(errno, error_msg, sizeof(error_msg)) == 0)
+            ErrorMessage("listen() failure: %s\n", error_msg);
+        else
+            ErrorMessage("listen() failure: %d\n", errno);
         return nullptr;
     }
 
     if ( (peer_sfd = accept(sfd, nullptr, nullptr )) < 0 )
     {
-        ErrorMessage("accept() failure: %s\n", strerror(errno));
+        char error_msg[1024] = {0};
+        if (strerror_r(errno, error_msg, sizeof(error_msg)) == 0)
+            ErrorMessage("accept() failure: %s\n", error_msg);
+        else
+            ErrorMessage("accept() failure: %d\n", errno); 
         return nullptr;
     }
 

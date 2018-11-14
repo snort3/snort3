@@ -71,8 +71,11 @@ static int file_setup(FileImpl* impl)
     }
     else if ( (impl->fid = open(impl->name, O_RDONLY|O_NONBLOCK)) < 0 )
     {
-        DPE(impl->error, "%s: can't open file (%s)\n",
-            DAQ_NAME, strerror(errno));
+        char error_msg[1024] = {0};
+        if (strerror_r(errno, error_msg, sizeof(error_msg)) == 0)
+            DPE(impl->error, "%s: can't open file (%s)\n", DAQ_NAME, error_msg);
+        else
+            DPE(impl->error, "%s: can't open file: %d\n", DAQ_NAME, errno);
         return -1;
     }
     impl->start = 1;
@@ -106,8 +109,13 @@ static int file_read(FileImpl* impl)
     {
         if (errno != EINTR)
         {
-            DPE(impl->error, "%s: can't read from file (%s)\n",
-                DAQ_NAME, strerror(errno));
+            char error_msg[1024] = {0};
+            if (strerror_r(errno, error_msg, sizeof(error_msg)) == 0)
+                DPE(impl->error, "%s: can't read from file (%s)\n",
+                    DAQ_NAME, error_msg);
+            else
+                DPE(impl->error, "%s: can't read from file: %d\n",
+                    DAQ_NAME, errno);
         }
         return DAQ_ERROR;
     }

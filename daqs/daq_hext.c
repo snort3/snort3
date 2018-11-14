@@ -471,8 +471,13 @@ static int hext_setup(HextImpl* impl)
     }
     else if ( !(impl->fyle = fopen(impl->name, "r")) )
     {
-        DPE(impl->error, "%s: can't open file (%s)\n",
-            DAQ_NAME, strerror(errno));
+        char error_msg[1024] = {0};
+        if (strerror_r(errno, error_msg, sizeof(error_msg)) == 0)
+            DPE(impl->error, "%s: can't open file (%s)\n",
+                DAQ_NAME, error_msg);
+        else
+            DPE(impl->error, "%s: can't open file: %d\n",
+                DAQ_NAME, errno);
         return -1;
     }
     parse_host("192.168.1.2 12345", &impl->cfg.src_addr, &impl->cfg.src_port);
@@ -523,8 +528,13 @@ static int hext_read(HextImpl* impl)
     {
         if (errno != EINTR)
         {
-            DPE(impl->error, "%s: can't read from file (%s)\n",
-                DAQ_NAME, strerror(errno));
+            char error_msg[1024] = {0};
+            if (strerror_r(errno, error_msg, sizeof(error_msg)) == 0)
+                DPE(impl->error, "%s: can't read from file (%s)\n",
+                    DAQ_NAME, error_msg);
+            else
+                DPE(impl->error, "%s: can't read from file: %d\n",
+                    DAQ_NAME, errno);
         }
         return DAQ_ERROR;
     }
