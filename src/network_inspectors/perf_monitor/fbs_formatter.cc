@@ -152,9 +152,13 @@ void FbsFormatter::finalize_fields()
     schema += get_tracker_name() + ";";
 
     flatbuffers::Parser parser;
-    assert(parser.Parse(schema.c_str())); // Above code is broken or bad peg names if this hits
-    parser.Serialize();
+#ifndef NDEBUG
+    bool parsed =
+#endif
+    parser.Parse(schema.c_str());
+    assert(parsed); // Above code is broken or bad peg names if this hits
 
+    parser.Serialize();
     auto& schema_builder = parser.builder_;
 
     auto reflection_schema = reflection::GetSchema(schema_builder.GetBufferPointer());
