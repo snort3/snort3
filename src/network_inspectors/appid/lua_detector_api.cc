@@ -65,8 +65,10 @@ enum LuaLogLevels
 };
 
 #ifdef APPID_DEEP_PERF_PROFILING
-// FIXIT-L: Bring snort2's luaCiscoPerfStats and luaCustomPerfStats if more granularity is desired
+// FIXIT-L: Add separate perf stats for ODP detectors and custom
+// detectors if more granularity is desired
 static THREAD_LOCAL ProfileStats lua_validate_perf_stats;
+
 static ProfileStats* get_profile(const char*)
 {
     return &lua_validate_perf_stats;
