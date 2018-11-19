@@ -179,6 +179,7 @@ namespace preprocessors
         // Auto enable for firewall
         table_api.open_top_level_table("reject");
         table_api.add_option("reset", "both");
+        table_api.add_option("control", "forward");
         table_api.close_table();
 
         return retval;
@@ -201,4 +202,3 @@ namespace preprocessors
 
     const ConvertMap* firewall_map = &firewall_api;
 } // namespace preprocessors
-

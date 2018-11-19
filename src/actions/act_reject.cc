@@ -60,9 +60,10 @@ using namespace snort;
 #define REJ_UNR_NET  0x04
 #define REJ_UNR_HOST 0x08
 #define REJ_UNR_PORT 0x10
+#define REJ_UNR_FWD  0x20
 
 #define REJ_RST_BOTH (REJ_RST_SRC|REJ_RST_DST)
-#define REJ_UNR_ALL  (REJ_UNR_NET|REJ_UNR_HOST|REJ_UNR_PORT)
+#define REJ_UNR_ALL  (REJ_UNR_NET|REJ_UNR_HOST|REJ_UNR_PORT|REJ_UNR_FWD)
 
 #define s_name "reject"
 
@@ -134,6 +135,9 @@ void RejectAction::send(Packet* p)
     if ( flags & REJ_RST_DST )
         Active::send_reset(p, ENC_FLAG_FWD);
 
+    if ( flags & REJ_UNR_FWD )
+        Active::send_unreach(p, snort::UnreachResponse::FWD);
+
     if ( flags & REJ_UNR_NET )
         Active::send_unreach(p, snort::UnreachResponse::NET);
 
@@ -153,7 +157,7 @@ static const Parameter s_params[] =
     { "reset", Parameter::PT_ENUM, "source|dest|both", nullptr,
       "send TCP reset to one or both ends" },
 
-    { "control", Parameter::PT_ENUM, "network|host|port|all", nullptr,
+    { "control", Parameter::PT_ENUM, "network|host|port|forward|all", nullptr,
       "send ICMP unreachable(s)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -192,9 +196,10 @@ static const int rst[] =
 
 static const int unr[] =
 {
-    REJ_UNR_PORT,
-    REJ_UNR_HOST,
     REJ_UNR_NET,
+    REJ_UNR_HOST,
+    REJ_UNR_PORT,
+    REJ_UNR_FWD,
     REJ_UNR_ALL
 };
 
