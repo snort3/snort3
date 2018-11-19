@@ -109,7 +109,7 @@ private:
     static void clear_events(Packet*);
     static void finish_inspect_with_latency(Packet*);
     static void finish_inspect(Packet*, bool inspected);
-    static void finish_packet(Packet*);
+    static void finish_packet(Packet*, bool flow_deletion = false);
 
 private:
     IpsContext* context;

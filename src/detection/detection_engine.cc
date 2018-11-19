@@ -80,7 +80,7 @@ DetectionEngine::~DetectionEngine()
     if ( context == Snort::get_switcher()->get_context() )
     {
         // finish_packet is called here so that we clear wire packets at the right time
-        finish_packet(context->packet);
+        finish_packet(context->packet, true);
     }
 }
 
@@ -161,7 +161,7 @@ void DetectionEngine::finish_inspect(Packet* p, bool inspected)
     clear_events(p);
 }
 
-void DetectionEngine::finish_packet(Packet* p)
+void DetectionEngine::finish_packet(Packet* p, bool flow_deletion)
 {
     log_events(p);
     clear_events(p);
@@ -171,7 +171,10 @@ void DetectionEngine::finish_packet(Packet* p)
     const IpsContext* c = Snort::get_switcher()->get_next();
     c->packet->release_helpers();
 
-    Snort::get_switcher()->complete();
+    ContextSwitcher* sw = Snort::get_switcher();
+
+    if ( flow_deletion or sw->busy_count() > 1 )
+        sw->complete();
 }
 
 uint8_t* DetectionEngine::get_buffer(unsigned& max)
@@ -349,8 +352,7 @@ bool DetectionEngine::offload(Packet* p)
 {
     ContextSwitcher* sw = Snort::get_switcher();
 
-    if ( p->type() != PktType::PDU or
-         p->dsize < SnortConfig::get_conf()->offload_limit or
+    if ( p->dsize < SnortConfig::get_conf()->offload_limit or
          !sw->can_hold() or
          !offloader->available() )
     {
@@ -398,15 +400,14 @@ bool DetectionEngine::detect(Packet* p, bool offload_ok)
     switch ( p->type() )
     {
     case PktType::PDU:
-        if ( offload_ok )
-            return offload(p);
-        // fall thru
-
     case PktType::IP:
     case PktType::TCP:
     case PktType::UDP:
     case PktType::ICMP:
     case PktType::FILE:
+        if ( offload_ok and p->flow )
+            return offload(p);
+
         fp_local(p);
         break;
 

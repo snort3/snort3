@@ -88,7 +88,10 @@ void ContextSwitcher::stop()
     assert(busy.size() == 1);
     trace_logf(detection, TRACE_DETECTION_ENGINE, "(wire) %" PRIu64 " cs::stop %u (i=%zu, b=%zu)\n",
         get_packet_number(), busy.back()->get_slot(), idle.size(), busy.size());
-    idle.emplace_back(busy.back());
+
+    IpsContext* c = busy.back();
+    c->clear_context_data();
+    idle.emplace_back(c);
     busy.pop_back();
 }
 
