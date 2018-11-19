@@ -146,6 +146,8 @@ struct SO_PUBLIC Packet
     uint32_t user_ips_policy_id;
     uint32_t user_network_policy_id;
 
+    uint8_t vlan_idx;
+
     // IP_MAXPACKET is the minimum allowable max_dsize
     // there is no requirement that all data fit into an IP datagram
     // but we do require that an IP datagram fit into Packet space
@@ -352,4 +354,3 @@ inline uint64_t alignedNtohq(const uint64_t* ptr)
 }
 }
 #endif
-

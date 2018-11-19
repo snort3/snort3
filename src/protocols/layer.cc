@@ -144,11 +144,13 @@ const Layer* get_mpls_layer(const Packet* const p)
 
 const vlan::VlanTagHdr* get_vlan_layer(const Packet* const p)
 {
-    uint8_t num_layers = p->num_layers;
-    const Layer* lyr = p->layers;
-
-    return reinterpret_cast<const vlan::VlanTagHdr*>(
-        find_inner_layer(lyr, num_layers, ProtocolId::ETHERTYPE_8021Q));
+    if ( p->proto_bits & PROTO_BIT__VLAN )
+    {
+        assert( p->vlan_idx < p->num_layers );
+        const Layer* lyr = p->layers + p->vlan_idx;
+        return reinterpret_cast<const vlan::VlanTagHdr*>(lyr->start);
+    }
+    return nullptr;
 }
 
 const eth::EtherHdr* get_eth_layer(const Packet* const p)
@@ -445,4 +447,3 @@ const icmp::ICMPHdr* get_icmp_embed_icmp(const ip::IpApi& api)
 { return reinterpret_cast<const icmp::ICMPHdr*>(api.ip_data()); }
 } // namespace layer
 } // namespace snort
-

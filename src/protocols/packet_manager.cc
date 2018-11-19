@@ -174,7 +174,7 @@ void PacketManager::decode(
             }
             codec_data.codec_flags &= ~CODEC_ETHER_NEXT;
         }
-                
+
         /*
          * We only want the layer immediately following SAVE_LAYER to have the
          * UNSURE_ENCAP flag set.  So, if this is a SAVE_LAYER, zero out the
@@ -219,7 +219,13 @@ void PacketManager::decode(
         if ( p->num_layers == CodecManager::max_layers )
             DetectionEngine::queue_event(GID_DECODE, DECODE_TOO_MANY_LAYERS);
         else
+        {
             push_layer(p, prev_prot_id, raw.data, codec_data.lyr_len);
+
+            // Cache the index of the vlan layer for quick access.
+            if ( codec_data.proto_bits == PROTO_BIT__VLAN )
+                p->vlan_idx = p->num_layers-1;
+        }
 
         // internal statistics and record keeping
         s_stats[mapped_prot + stat_offset]++; // add correct decode for previous layer
@@ -918,4 +924,3 @@ void PacketManager::log_protocols(TextLog* const text_log,
         }
     }
 }
-
