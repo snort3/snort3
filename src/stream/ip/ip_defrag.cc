@@ -974,7 +974,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
     if ( ft->frag_flags & FRAG_DROP_FRAGMENTS )
     {
         DetectionEngine::disable_content(p);
-        Active::daq_drop_packet(p);
+        p->active->daq_drop_packet(p);
         ip_stats.drops++;
     }
 
@@ -1050,7 +1050,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
         if (!(ft->frag_flags & FRAG_BAD))
             FragRebuild(ft, p);
 
-        if (Active::packet_was_dropped())
+        if ( p->active->packet_was_dropped() )
         {
             ft->frag_flags |= FRAG_DROP_FRAGMENTS;
             delete_tracker(ft);

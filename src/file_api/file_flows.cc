@@ -63,7 +63,7 @@ namespace snort
     }
 }
 
-void FileFlows::handle_retransmit (Packet*)
+void FileFlows::handle_retransmit(Packet* p)
 {
     if (file_policy == nullptr)
         return;
@@ -72,10 +72,10 @@ void FileFlows::handle_retransmit (Packet*)
     if ((file == nullptr) or (file->verdict != FILE_VERDICT_PENDING))
         return;
 
-    FileVerdict verdict = file_policy->signature_lookup(flow, file);
+    FileVerdict verdict = file_policy->signature_lookup(p, file);
     FileCache* file_cache = FileService::get_file_cache();
     if (file_cache)
-        file_cache->apply_verdict(flow, file, verdict, false, file_policy);
+        file_cache->apply_verdict(p, file, verdict, false, file_policy);
     file->log_file_event(flow, file_policy);
 }
 
@@ -183,7 +183,7 @@ FileContext* FileFlows::get_file_context(uint64_t file_id, bool to_create)
  *    true: continue processing/log/block this file
  *    false: ignore this file
  */
-bool FileFlows::file_process(uint64_t file_id, const uint8_t* file_data,
+bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_data,
     int data_size, uint64_t offset, FileDirection dir)
 {
     int64_t file_depth = FileService::get_max_file_depth();
@@ -214,11 +214,11 @@ bool FileFlows::file_process(uint64_t file_id, const uint8_t* file_data,
         {
             /* Just check file type and signature */
             FilePosition position = SNORT_FILE_FULL;
-            return context->process(flow, file_data, data_size, position, file_policy);
+            return context->process(p, file_data, data_size, position, file_policy);
         }
     }
 
-    return context->process(flow, file_data, data_size, offset, file_policy);
+    return context->process(p, file_data, data_size, offset, file_policy);
 }
 
 /*
@@ -226,7 +226,7 @@ bool FileFlows::file_process(uint64_t file_id, const uint8_t* file_data,
  *    true: continue processing/log/block this file
  *    false: ignore this file
  */
-bool FileFlows::file_process(const uint8_t* file_data, int data_size,
+bool FileFlows::file_process(Packet* p, const uint8_t* file_data, int data_size,
     FilePosition position, bool upload, size_t file_index)
 {
     FileContext* context;
@@ -243,7 +243,7 @@ bool FileFlows::file_process(const uint8_t* file_data, int data_size,
     set_current_file_context(context);
 
     context->set_signature_state(gen_signature);
-    return context->process(flow, file_data, data_size, position, file_policy);
+    return context->process(p, file_data, data_size, position, file_policy);
 }
 
 void FileFlows::set_file_name(const uint8_t* fname, uint32_t name_size)

@@ -294,7 +294,7 @@ bool FlowCache::prune_one(PruneReason reason, bool do_cleanup)
 
 unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
 {
-    // FIXIT-H should Active be suspended here too?
+    ActiveSuspendContext act_susp;
     unsigned retired = 0;
 
     auto flow = static_cast<Flow*>(hash_table->current());

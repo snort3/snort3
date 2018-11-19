@@ -352,6 +352,8 @@ void Snort::init(int argc, char** argv)
         LogMessage("Snort BPF option: %s\n", SnortConfig::get_conf()->bpf_filter.c_str());
 
     parser_term(SnortConfig::get_conf());
+
+    Active::init(sc);
 }
 
 // this function should only include initialization that must be done as a
@@ -809,7 +811,7 @@ void Snort::thread_init_unprivileged()
 
     // this depends on instantiated daq capabilities
     // so it is done here instead of init()
-    Active::init(SnortConfig::get_conf());
+    Active::thread_init(SnortConfig::get_conf());
 
     InitTag();
     EventTrace_Init();
@@ -870,7 +872,7 @@ void Snort::thread_term()
     PacketTracer::thread_term();
     PacketManager::thread_term();
 
-    Active::term();
+    Active::thread_term();
     delete s_switcher;
     delete[] s_data;
 }
@@ -913,23 +915,24 @@ DAQ_Verdict Snort::process_packet(
             DetectionEngine::onload(p->flow);
     }
 
+    Active* act = p->active;
     // process flow verdicts here
-    if ( Active::packet_retry_requested() )
+    if ( act->packet_retry_requested() )
     {
         return DAQ_VERDICT_RETRY;
     }
-    else if ( Active::session_was_blocked() )
+    else if ( act->session_was_blocked() )
     {
-        if ( !Active::can_block() )
+        if ( !act->can_block() )
             return DAQ_VERDICT_PASS;
 
-        if ( Active::get_tunnel_bypass() )
+        if ( act->get_tunnel_bypass() )
         {
             aux_counts.internal_blacklist++;
             return DAQ_VERDICT_PASS;
         }
 
-        if ( SnortConfig::inline_mode() || Active::packet_force_dropped() )
+        if ( SnortConfig::inline_mode() or act->packet_force_dropped() )
             return DAQ_VERDICT_BLACKLIST;
         else
             return DAQ_VERDICT_IGNORE;
@@ -941,7 +944,7 @@ DAQ_Verdict Snort::process_packet(
 // process (wire-only) packet verdicts here
 static DAQ_Verdict update_verdict(Packet* p, DAQ_Verdict verdict, int& inject)
 {
-    if ( Active::packet_was_dropped() and Active::can_block() )
+    if ( p->active->packet_was_dropped() and p->active->can_block() )
     {
         if ( verdict == DAQ_VERDICT_PASS )
             verdict = DAQ_VERDICT_BLOCK;
@@ -966,7 +969,7 @@ static DAQ_Verdict update_verdict(Packet* p, DAQ_Verdict verdict, int& inject)
     else if ( (p->packet_flags & PKT_IGNORE) ||
         (p->flow && p->flow->get_ignore_direction( ) == SSN_DIR_BOTH) )
     {
-        if ( !Active::get_tunnel_bypass() )
+        if ( !p->active->get_tunnel_bypass() )
         {
             verdict = DAQ_VERDICT_WHITELIST;
         }
@@ -1028,7 +1031,6 @@ DAQ_Verdict Snort::packet_callback(
 
     HighAvailabilityManager::process_update(s_packet->flow, pkthdr);
 
-    Active::reset();
     Stream::timeout_flows(pkthdr->ts.tv_sec);
     HighAvailabilityManager::process_receive();
 

@@ -769,7 +769,8 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
     {
         if (ssd->block_pdus && (DCE2_SmbType() == SMB_TYPE__REQUEST))
         {
-            Active::drop_packet(DetectionEngine::get_current_packet());
+            Packet* p = DetectionEngine::get_current_packet();
+            p->active->drop_packet(p);
             status = DCE2_RET__IGNORE;
             break;
         }

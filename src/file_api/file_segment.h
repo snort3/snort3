@@ -54,7 +54,7 @@ public:
 
     // Process file segments with current_offset specified. If file segment is out of order,
     // it will be put into the file segments queue.
-    int process(snort::Flow*, const uint8_t* file_data, uint64_t data_size, uint64_t offset,
+    int process(snort::Packet*, const uint8_t* file_data, uint64_t data_size, uint64_t offset,
         snort::FilePolicyBase*);
 
 private:
@@ -64,8 +64,8 @@ private:
 
     void add(const uint8_t* file_data, uint64_t data_size, uint64_t offset);
     FilePosition get_file_position(uint64_t data_size, uint64_t file_size);
-    int process_one(snort::Flow*, const uint8_t* file_data, int data_size, snort::FilePolicyBase*);
-    int process_all(snort::Flow*, snort::FilePolicyBase*);
+    int process_one(snort::Packet*, const uint8_t* file_data, int data_size, snort::FilePolicyBase*);
+    int process_all(snort::Packet*, snort::FilePolicyBase*);
 };
 
 #endif

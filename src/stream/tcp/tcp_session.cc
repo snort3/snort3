@@ -911,7 +911,7 @@ bool TcpSession::is_flow_handling_packets(Packet* p)
         flow_ready = false;
     }
     else
-        flow_ready = !Stream::blocked_flow(flow, p);
+        flow_ready = !Stream::blocked_flow(p);
 
     // FIXIT-L expected flow should be checked by Stream before we get here
     // harmonize this with that and the checks above

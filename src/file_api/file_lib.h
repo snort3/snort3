@@ -110,15 +110,15 @@ public:
     // Return:
     //    true: continue processing/log/block this file
     //    false: ignore this file
-    bool process(Flow*, const uint8_t* file_data, int data_size, FilePosition, FilePolicyBase*);
-    bool process(Flow*, const uint8_t* file_data, int data_size, uint64_t offset, FilePolicyBase*);
+    bool process(Packet*, const uint8_t* file_data, int data_size, FilePosition, FilePolicyBase*);
+    bool process(Packet*, const uint8_t* file_data, int data_size, uint64_t offset, FilePolicyBase*);
     void process_file_type(const uint8_t* file_data, int data_size, FilePosition);
     void process_file_signature_sha256(const uint8_t* file_data, int data_size, FilePosition);
     void update_file_size(int data_size, FilePosition position);
     void stop_file_capture();
     FileCaptureState process_file_capture(const uint8_t* file_data, int data_size, FilePosition);
     void log_file_event(Flow*, FilePolicyBase*);
-    FileVerdict file_signature_lookup(Flow*);
+    FileVerdict file_signature_lookup(Packet*);
 
     void set_signature_state(bool gen_sig);
 
@@ -140,7 +140,7 @@ private:
     FileConfig*  config;
 
     inline void finalize_file_type();
-    inline void finish_signature_lookup(Flow*, bool, FilePolicyBase*);
+    inline void finish_signature_lookup(Packet*, bool, FilePolicyBase*);
 };
 }
 #endif

@@ -432,7 +432,7 @@ static void POP_ProcessServerPacket(Packet* p, POPData* pop_ssn)
             //ptr = POP_HandleData(p, ptr, end);
             FilePosition position = get_file_position(p);
             int len = end - ptr;
-            ptr = pop_ssn->mime_ssn->process_mime_data(p->flow, ptr, len, false, position);
+            ptr = pop_ssn->mime_ssn->process_mime_data(p, ptr, len, false, position);
             continue;
         }
         POP_GetEOL(ptr, end, &eol, &eolm);

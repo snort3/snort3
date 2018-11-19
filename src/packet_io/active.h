@@ -35,111 +35,137 @@ struct SnortConfig;
 class SO_PUBLIC Active
 {
 public:
-    enum ActiveStatus
+
+    struct Counts
+    {
+        PegCount injects;
+    };
+
+    enum ActiveStatus : uint8_t
     { AST_ALLOW, AST_CANT, AST_WOULD, AST_FORCE, AST_MAX };
 
-    enum ActiveAction
+    enum ActiveAction : uint8_t
     { ACT_PASS, ACT_DROP, ACT_BLOCK, ACT_RESET, ACT_RETRY, ACT_MAX };
 
 public:
-    static bool init(SnortConfig*);
-    static void term();
+    static void init(SnortConfig*);
+    static bool thread_init(SnortConfig*);
+    static void thread_term();
 
-    static void reset()
-    {
-        active_status = AST_ALLOW;
-        active_action = ACT_PASS;
-        active_tunnel_bypass = 0;
-        delayed_active_action = ACT_PASS;
-    }
+    static void set_enabled(bool on_off = true)
+    { enabled = on_off; }
 
-    static void kill_session(Packet*, EncodeFlags = ENC_FLAG_FWD);
+    static void suspend()
+    { s_suspend = true; }
 
-    static void send_reset(Packet*, EncodeFlags);
-    static void send_unreach(Packet*, snort::UnreachResponse);
-    static bool send_data(Packet*, EncodeFlags, const uint8_t* buf, uint32_t len);
-    static void inject_data(Packet*, EncodeFlags, const uint8_t* buf, uint32_t len);
+    static void resume()
+    { s_suspend = false; }
 
-    static bool is_reset_candidate(const Packet*);
-    static bool is_unreachable_candidate(const Packet*);
+    void send_reset(Packet*, EncodeFlags);
+    void send_unreach(Packet*, snort::UnreachResponse);
+    bool send_data(Packet*, EncodeFlags, const uint8_t* buf, uint32_t len);
+    void inject_data(Packet*, EncodeFlags, const uint8_t* buf, uint32_t len);
 
-    static bool is_enabled();
-    static void set_enabled(bool = true);
+    bool is_reset_candidate(const Packet*);
+    bool is_unreachable_candidate(const Packet*);
 
-    static void suspend();
-    static void resume();
-    static bool suspended();
+    ActiveAction get_action()
+    { return active_action; }
 
-    static ActiveAction get_action();
-    static ActiveStatus get_status();
+    ActiveStatus get_status()
+    { return active_status; }
 
-    static bool can_block();
+    void kill_session(Packet*, EncodeFlags = ENC_FLAG_FWD);
 
-    static const char* get_action_string();
+    bool can_block()
+    { return active_status == AST_ALLOW or active_status == AST_FORCE; }
 
-    static void drop_packet(const Packet*, bool force = false);
-    static void daq_drop_packet(const Packet*);
-    static bool daq_retry_packet(const Packet*);
+    const char* get_action_string()
+    { return act_str[active_action][active_status]; }
 
-    static void allow_session(Packet*);
+    void drop_packet(const Packet*, bool force = false);
+    void daq_drop_packet(const Packet*);
+    bool daq_retry_packet(const Packet*);
 
-    static void block_session(Packet*, bool force = false);
-    static void reset_session(Packet*, bool force = false);
+    void allow_session(Packet*);
+    void block_session(Packet*, bool force = false);
+    void reset_session(Packet*, bool force = false);
 
-    static void block_again();
-    static void reset_again();
+    void block_again()
+    { active_action = ACT_BLOCK; }
 
-    static bool packet_was_dropped();
-    static bool packet_retry_requested();
-    static bool session_was_blocked();
-    static bool packet_would_be_dropped();
-    static bool packet_force_dropped();
+    void reset_again()
+    { active_action = ACT_RESET; }
 
-    static void set_tunnel_bypass();
-    static void clear_tunnel_bypass();
-    static bool get_tunnel_bypass();
+    bool packet_was_dropped()
+    { return active_action >= ACT_DROP; }
 
-    static uint64_t get_injects();
+    bool packet_would_be_dropped()
+    { return active_status == AST_WOULD; }
 
-    static void set_delayed_action(ActiveAction, bool force = false);
-    static void apply_delayed_action(Packet*);
+    bool packet_retry_requested()
+    { return active_action == ACT_RETRY; }
+
+    bool session_was_blocked()
+    { return active_action >= ACT_BLOCK; }
+
+    bool packet_force_dropped()
+    { return active_status == AST_FORCE; }
+
+    void set_tunnel_bypass()
+    { active_tunnel_bypass++; }
+
+    void clear_tunnel_bypass()
+    { active_tunnel_bypass--; }
+
+    bool get_tunnel_bypass()
+    { return active_tunnel_bypass > 0; }
+
+    void set_delayed_action(ActiveAction, bool force = false);
+    void apply_delayed_action(Packet*);
+
+    void reset();
 
 private:
     static bool open(const char*);
     static void close();
+    static int send_eth(const DAQ_PktHdr_t*, int, const uint8_t* buf, uint32_t len);
+    static int send_ip(const DAQ_PktHdr_t*, int, const uint8_t* buf, uint32_t len);
 
-    static int send_eth(
-        const DAQ_PktHdr_t*, int, const uint8_t* buf, uint32_t len);
+    void update_status(const Packet*, bool force = false);
+    void daq_update_status(const Packet*);
 
-    static int send_ip(
-        const DAQ_PktHdr_t*, int, const uint8_t* buf, uint32_t len);
+    void block_session(const Packet*, ActiveAction, bool force = false);
 
-    static void update_status(const Packet*, bool force = false);
-    static void daq_update_status(const Packet*);
+    void cant_drop();
 
-    static void block_session(const Packet*, ActiveAction, bool force = false);
-
-    static void cant_drop();
 
 private:
-    static THREAD_LOCAL ActiveStatus active_status;
-    static THREAD_LOCAL ActiveAction active_action;
-    static THREAD_LOCAL ActiveAction delayed_active_action;
-
-    static THREAD_LOCAL int active_tunnel_bypass;
-    static THREAD_LOCAL bool active_suspend;
-
+    static const char* act_str[ACT_MAX][AST_MAX];
+    static bool enabled;
     static THREAD_LOCAL uint8_t s_attempts;
-    static THREAD_LOCAL uint64_t s_injects;
+    static THREAD_LOCAL bool s_suspend;
 
-    static bool s_enabled;
+    int active_tunnel_bypass;
+
+    // these can't be pkt flags because we do the handling
+    // of these flags following all processing and the drop
+    // or response may have been produced by a pseudopacket.
+    ActiveStatus active_status;
+    ActiveAction active_action;
+    ActiveAction delayed_active_action;
 };
 
 struct ActiveSuspendContext
 {
-    ActiveSuspendContext() { Active::suspend(); }
-    ~ActiveSuspendContext() { Active::resume(); }
+    ActiveSuspendContext()
+    { Active::suspend(); }
+
+    ~ActiveSuspendContext()
+    { Active::resume(); }
 };
+
+extern THREAD_LOCAL Active::Counts active_counts;
 }
 #endif
 

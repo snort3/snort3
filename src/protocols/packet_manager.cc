@@ -100,7 +100,7 @@ void PacketManager::pop_teredo(Packet* p, RawData& raw)
 {
     p->proto_bits &= ~PROTO_BIT__TEREDO;
     if ( SnortConfig::tunnel_bypass_enabled(TUNNEL_TEREDO) )
-        Active::clear_tunnel_bypass();
+        p->active->clear_tunnel_bypass();
 
     const ProtocolIndex mapped_prot = CodecManager::s_proto_map[to_utype(ProtocolId::TEREDO)];
     s_stats[mapped_prot + stat_offset]--;
@@ -164,6 +164,12 @@ void PacketManager::decode(
             "ip header starts at: %p, length is %d\n",
             CodecManager::s_protocols[mapped_prot]->get_name(),
             static_cast<uint16_t>(codec_data.next_prot_id), pkt, codec_data.lyr_len);
+
+        if ( codec_data.tunnel_bypass )
+        {
+            p->active->set_tunnel_bypass();
+            codec_data.tunnel_bypass = false;
+        }
 
         if ( codec_data.codec_flags & CODEC_ETHER_NEXT )
         {

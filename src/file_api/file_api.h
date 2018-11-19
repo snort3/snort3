@@ -135,11 +135,11 @@ public:
     virtual void policy_check(Flow*, FileInfo* ) { }
 
     // This is called after file type is known
-    virtual FileVerdict type_lookup(Flow*, FileInfo*)
+    virtual FileVerdict type_lookup(Packet*, FileInfo*)
     { return FILE_VERDICT_UNKNOWN; }
 
     // This is called after file signature is complete
-    virtual FileVerdict signature_lookup(Flow*, FileInfo*)
+    virtual FileVerdict signature_lookup(Packet*, FileInfo*)
     { return FILE_VERDICT_UNKNOWN; }
 
     virtual void log_file_action(Flow*, FileInfo*, FileAction) { }

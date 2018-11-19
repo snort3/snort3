@@ -25,7 +25,6 @@
 #include "codecs/codec_module.h"
 #include "framework/codec.h"
 #include "main/snort_config.h"
-#include "packet_io/active.h"
 
 using namespace snort;
 
@@ -176,7 +175,7 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& dd)
     }
 
     if ( SnortConfig::tunnel_bypass_enabled(TUNNEL_GTP) )
-        Active::set_tunnel_bypass();
+        codec.tunnel_bypass = true;
 
     codec.lyr_len = len;
     codec.proto_bits |= PROTO_BIT__GTP;

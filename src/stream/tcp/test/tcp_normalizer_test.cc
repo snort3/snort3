@@ -84,11 +84,8 @@ public:
 class Active
 {
 public:
-    static void drop_packet(const Packet*, bool force = false);
-
+    void drop_packet(const Packet*, bool force = false) { }
 };
-
-void Active::drop_packet(const Packet* , bool ) { }
 
 bool Normalize_IsEnabled(NormFlags )
 {

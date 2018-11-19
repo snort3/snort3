@@ -265,6 +265,7 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
         return;
 
     decision = reputation_decision(config, p);
+    Active* act = p->active;
 
     if (DECISION_NULL == decision)
         return;
@@ -272,10 +273,10 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
     else if (BLACKLISTED == decision)
     {
         DetectionEngine::queue_event(GID_REPUTATION, REPUTATION_EVENT_BLACKLIST);
-        Active::drop_packet(p, true);
+        act->drop_packet(p, true);
         // disable all preproc analysis and detection for this packet
         DetectionEngine::disable_all(p);
-        Active::block_session(p, true);
+        act->block_session(p, true);
         reputationstats.blacklisted++;
         if (PacketTracer::is_active())
         {
@@ -293,7 +294,7 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
         DetectionEngine::queue_event(GID_REPUTATION, REPUTATION_EVENT_WHITELIST);
         p->packet_flags |= PKT_IGNORE;
         DetectionEngine::disable_all(p);
-        Active::allow_session(p);
+        act->allow_session(p);
         reputationstats.whitelisted++;
     }
 }

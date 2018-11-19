@@ -64,10 +64,10 @@ public:
     void policy_check(snort::Flow*, snort::FileInfo*) override;
 
     // This is called after file type is known
-    FileVerdict type_lookup(snort::Flow*, snort::FileInfo*) override;
+    FileVerdict type_lookup(snort::Packet*, snort::FileInfo*) override;
 
     // This is called after file signature is complete
-    FileVerdict signature_lookup(snort::Flow*, snort::FileInfo*) override;
+    FileVerdict signature_lookup(snort::Packet*, snort::FileInfo*) override;
 
     void insert_file_rule(FileRule&);
     void set_file_type(bool enabled);

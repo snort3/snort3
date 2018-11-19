@@ -214,8 +214,8 @@ void FastLogger::alert(Packet* p, const char* msg, const Event& event)
 {
     LogTimeStamp(fast_log, p);
 
-    if ( Active::get_action() > Active::ACT_PASS )
-        TextLog_Print(fast_log, " [%s]", Active::get_action_string());
+    if ( p->active->packet_was_dropped() )
+        TextLog_Print(fast_log, " [%s]", p->active->get_action_string());
 
     TextLog_Puts(fast_log, " [**] ");
 

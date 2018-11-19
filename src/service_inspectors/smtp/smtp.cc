@@ -1003,7 +1003,7 @@ static void SMTP_ProcessClientPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPDat
         case STATE_DATA:
         case STATE_BDATA:
             position = get_file_position(p);
-            ptr = smtp_ssn->mime_ssn->process_mime_data(p->flow, ptr, len, true, position);
+            ptr = smtp_ssn->mime_ssn->process_mime_data(p, ptr, len, true, position);
             //ptr = SMTP_HandleData(p, ptr, end, &(smtp_ssn->mime_ssn));
             break;
         case STATE_XEXCH50:

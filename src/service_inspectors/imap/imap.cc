@@ -460,7 +460,7 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
                 FilePosition position = get_file_position(p);
 
                 int data_len = end - ptr;
-                ptr = imap_ssn->mime_ssn->process_mime_data(p->flow, ptr, data_len, false,
+                ptr = imap_ssn->mime_ssn->process_mime_data(p, ptr, data_len, false,
                     position);
                 if ( ptr < data_end)
                     len = len - (data_end - ptr);

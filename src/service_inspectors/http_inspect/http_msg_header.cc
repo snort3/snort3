@@ -339,10 +339,11 @@ void HttpMsgHeader::setup_file_processing()
                     // FIXIT-L develop a proper interface for passing the boundary string.
                     // This interface is a leftover from when OHI pushed whole messages through
                     // this interface.
-                    session_data->mime_state[source_id]->process_mime_data(flow,
+                    Packet* p = DetectionEngine::get_current_packet();
+                    session_data->mime_state[source_id]->process_mime_data(p,
                         content_type.start(), content_type.length(), true,
                         SNORT_FILE_POSITION_UNKNOWN);
-                    session_data->mime_state[source_id]->process_mime_data(flow,
+                    session_data->mime_state[source_id]->process_mime_data(p,
                         (const uint8_t*)"\r\n", 2, true, SNORT_FILE_POSITION_UNKNOWN);
                 }
             }

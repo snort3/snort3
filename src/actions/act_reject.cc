@@ -98,17 +98,19 @@ void RejectAction::exec(Packet* p)
     if ( !p->ptrs.ip_api.is_ip() )
         return;
 
+    Active* act = p->active;
+
     switch ( p->type() )
     {
     case PktType::TCP:
-        if ( !Active::is_reset_candidate(p) )
+        if ( !act->is_reset_candidate(p) )
             return;
         break;
 
     case PktType::UDP:
     case PktType::ICMP:
     case PktType::IP:
-        if ( !Active::is_unreachable_candidate(p) )
+        if ( !act->is_unreachable_candidate(p) )
             return;
         break;
 
@@ -121,31 +123,32 @@ void RejectAction::exec(Packet* p)
 
 void RejectAction::send(Packet* p)
 {
+    Active* act = p->active;
     uint32_t flags = 0;
 
-    if ( Active::is_reset_candidate(p) )
+    if ( act->is_reset_candidate(p) )
         flags |= (mask & REJ_RST_BOTH);
 
-    if ( Active::is_unreachable_candidate(p) )
+    if ( act->is_unreachable_candidate(p) )
         flags |= (mask & REJ_UNR_ALL);
 
     if ( flags & REJ_RST_SRC )
-        Active::send_reset(p, 0);
+        act->send_reset(p, 0);
 
     if ( flags & REJ_RST_DST )
-        Active::send_reset(p, ENC_FLAG_FWD);
+        act->send_reset(p, ENC_FLAG_FWD);
 
     if ( flags & REJ_UNR_FWD )
         Active::send_unreach(p, snort::UnreachResponse::FWD);
 
     if ( flags & REJ_UNR_NET )
-        Active::send_unreach(p, snort::UnreachResponse::NET);
+        act->send_unreach(p, snort::UnreachResponse::NET);
 
     if ( flags & REJ_UNR_HOST )
-        Active::send_unreach(p, snort::UnreachResponse::HOST);
+        act->send_unreach(p, snort::UnreachResponse::HOST);
 
     if ( flags & REJ_UNR_PORT )
-        Active::send_unreach(p, snort::UnreachResponse::PORT);
+        act->send_unreach(p, snort::UnreachResponse::PORT);
 }
 
 //-------------------------------------------------------------------------

@@ -64,7 +64,7 @@ public:
     static void init();
     static void exit();
 
-    const uint8_t* process_mime_data(Flow*, const uint8_t *data, int data_size,
+    const uint8_t* process_mime_data(Packet*, const uint8_t *data, int data_size,
         bool upload, FilePosition);
 
     int get_data_state();
@@ -95,7 +95,7 @@ private:
     void setup_decode(const char* data, int size, bool cnt_xf);
     const uint8_t* process_mime_header(const uint8_t* ptr, const uint8_t* data_end_marker);
     const uint8_t* process_mime_body(const uint8_t* ptr, const uint8_t* data_end,bool is_data_end);
-    const uint8_t* process_mime_data_paf(Flow*, const uint8_t* start, const uint8_t* end,
+    const uint8_t* process_mime_data_paf(Packet*, const uint8_t* start, const uint8_t* end,
         bool upload, FilePosition);
 };
 }

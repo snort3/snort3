@@ -177,7 +177,7 @@ void Stream::check_flow_closed(Packet* p)
         flow->set_state(Flow::FlowState::BLOCK);
 
         if ( !(p->packet_flags & PKT_STATELESS) )
-            drop_traffic(flow, SSN_DIR_BOTH);
+            drop_traffic(p, SSN_DIR_BOTH);
         flow->session_state &= ~STREAM_STATE_BLOCK_PENDING;
     }
 }
@@ -288,22 +288,24 @@ uint32_t Stream::get_packet_direction(Packet* p)
     return (p->packet_flags & (PKT_FROM_SERVER|PKT_FROM_CLIENT));
 }
 
-void Stream::drop_traffic(Flow* flow, char dir)
+void Stream::drop_traffic(const Packet* p, char dir)
 {
-    if (!flow)
+    Flow* flow = p->flow;
+
+    if ( !flow )
         return;
 
     if ((dir & SSN_DIR_FROM_CLIENT) && !(flow->ssn_state.session_flags & SSNFLAG_DROP_CLIENT))
     {
         flow->ssn_state.session_flags |= SSNFLAG_DROP_CLIENT;
-        if ( Active::packet_force_dropped() )
+        if ( p->active->packet_force_dropped() )
             flow->ssn_state.session_flags |= SSNFLAG_FORCE_BLOCK;
     }
 
     if ((dir & SSN_DIR_FROM_SERVER) && !(flow->ssn_state.session_flags & SSNFLAG_DROP_SERVER))
     {
         flow->ssn_state.session_flags |= SSNFLAG_DROP_SERVER;
-        if ( Active::packet_force_dropped() )
+        if ( p->active->packet_force_dropped() )
             flow->ssn_state.session_flags |= SSNFLAG_FORCE_BLOCK;
     }
 }
@@ -332,7 +334,7 @@ void Stream::drop_flow(const Packet* p)
     flow->set_state(Flow::FlowState::BLOCK);
 
     if ( !(p->packet_flags & PKT_STATELESS) )
-        drop_traffic(flow, SSN_DIR_BOTH);
+        drop_traffic(p, SSN_DIR_BOTH);
 }
 
 //-------------------------------------------------------------------------
@@ -600,7 +602,7 @@ static void active_response(Packet* p, Flow* lwssn)
             (lwssn->session_state & STREAM_STATE_DROP_SERVER) ) ?
             ENC_FLAG_FWD : 0;  // reverse dir is always true
 
-        Active::kill_session(p, flags);
+        p->active->kill_session(p, flags);
         ++lwssn->response_count;
         lwssn->set_expire(p, delay);
 
@@ -608,8 +610,10 @@ static void active_response(Packet* p, Flow* lwssn)
     }
 }
 
-bool Stream::blocked_flow(Flow* flow, Packet* p)
+bool Stream::blocked_flow(Packet* p)
 {
+    Flow* flow = p->flow;
+
     if ( !(flow->ssn_state.session_flags & (SSNFLAG_DROP_CLIENT|SSNFLAG_DROP_SERVER)) )
         return false;
 
@@ -621,7 +625,7 @@ bool Stream::blocked_flow(Flow* flow, Packet* p)
         (flow->ssn_state.session_flags & SSNFLAG_DROP_CLIENT)) )
     {
         DetectionEngine::disable_content(p);
-        Active::drop_packet(p);
+        p->active->drop_packet(p);
         active_response(p, flow);
         return true;
     }

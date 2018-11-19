@@ -24,7 +24,6 @@
 
 #include "framework/codec.h"
 #include "main/snort_config.h"
-#include "packet_io/active.h"
 #include "protocols/teredo.h"
 
 using namespace snort;
@@ -89,7 +88,7 @@ bool TeredoCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort
         codec.codec_flags |= CODEC_TEREDO_SEEN;  // for ipv6 codec
 
         if ( SnortConfig::tunnel_bypass_enabled(TUNNEL_TEREDO) )
-            Active::set_tunnel_bypass();
+            codec.tunnel_bypass = true;
 
         if ( (!teredo::is_teredo_port(snort.sp)) && (!teredo::is_teredo_port(snort.dp)) )
             codec.codec_flags |= CODEC_ENCAP_LAYER;

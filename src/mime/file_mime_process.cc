@@ -481,8 +481,9 @@ void MimeSession::reset_mime_state()
 }
 
 const uint8_t* MimeSession::process_mime_data_paf(
-    Flow* flow, const uint8_t* start, const uint8_t* end, bool upload, FilePosition position)
+    Packet* p, const uint8_t* start, const uint8_t* end, bool upload, FilePosition position)
 {
+    Flow* flow = p->flow;
     bool done_data = is_end_of_data(flow);
 
     /* if we've just entered the data state, check for a dot + end of line
@@ -575,7 +576,7 @@ const uint8_t* MimeSession::process_mime_data_paf(
 
         /*Process file type/file signature*/
         FileFlows* file_flows = FileFlows::get_file_flows(flow);
-        if (file_flows && file_flows->file_process(buffer, buf_size, position, upload)
+        if (file_flows && file_flows->file_process(p, buffer, buf_size, position, upload)
             && (isFileStart(position)) && log_state)
         {
             log_state->set_file_name_from_log(flow);
@@ -617,9 +618,10 @@ const uint8_t* MimeSession::process_mime_data_paf(
 
 // Main function for mime processing
 // This should be called when mime data is available
-const uint8_t* MimeSession::process_mime_data(Flow* flow, const uint8_t* start,
+const uint8_t* MimeSession::process_mime_data(Packet* p, const uint8_t* start,
     int data_size, bool upload, FilePosition position)
 {
+    Flow* flow = p->flow;
     const uint8_t* attach_start = start;
     const uint8_t* attach_end;
 
@@ -627,7 +629,7 @@ const uint8_t* MimeSession::process_mime_data(Flow* flow, const uint8_t* start,
 
     if (position != SNORT_FILE_POSITION_UNKNOWN)
     {
-        process_mime_data_paf(flow, attach_start, data_end_marker,
+        process_mime_data_paf(p, attach_start, data_end_marker,
             upload, position);
         return data_end_marker;
     }
@@ -641,7 +643,7 @@ const uint8_t* MimeSession::process_mime_data(Flow* flow, const uint8_t* start,
         {
             attach_end = start;
             finalFilePosition(&position);
-            process_mime_data_paf(flow, attach_start, attach_end,
+            process_mime_data_paf(p, attach_start, attach_end,
                 upload, position);
             data_state = STATE_MIME_HEADER;
             position = SNORT_FILE_START;
@@ -654,7 +656,7 @@ const uint8_t* MimeSession::process_mime_data(Flow* flow, const uint8_t* start,
     if ((start == data_end_marker) && (attach_start < data_end_marker))
     {
         updateFilePosition(&position, get_file_processed_size(flow));
-        process_mime_data_paf(flow, attach_start, data_end_marker,
+        process_mime_data_paf(p, attach_start, data_end_marker,
             upload, position);
     }
 

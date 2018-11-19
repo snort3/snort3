@@ -33,6 +33,7 @@ using namespace HttpEnums;
 bool HttpStreamSplitter::finish(snort::Flow* flow)
 {
     snort::Profile profile(HttpModule::get_profile_stats());
+    snort::Packet* p = snort::DetectionEngine::get_current_packet();
 
     HttpFlowData* session_data = (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
     // FIXIT-M - this assert has been changed to check for null session data and return false if so
@@ -136,11 +137,11 @@ bool HttpStreamSplitter::finish(snort::Flow* flow)
                 }
             }
 
-            file_flows->file_process(nullptr, 0, SNORT_FILE_END, !download, file_index);
+            file_flows->file_process(p, nullptr, 0, SNORT_FILE_END, !download, file_index);
         }
         else
         {
-            session_data->mime_state[source_id]->process_mime_data(flow, nullptr, 0, true,
+            session_data->mime_state[source_id]->process_mime_data(p, nullptr, 0, true,
                 SNORT_FILE_POSITION_UNKNOWN);
             delete session_data->mime_state[source_id];
             session_data->mime_state[source_id] = nullptr;

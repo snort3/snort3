@@ -138,7 +138,7 @@ void FlowControl::timeout_flows(time_t cur_time)
     if ( types.empty() )
         return;
 
-    Active::suspend();
+    ActiveSuspendContext act_susp;
     FlowCache* fc = get_cache(types[next]);
 
     if ( ++next >= types.size() )
@@ -146,8 +146,6 @@ void FlowControl::timeout_flows(time_t cur_time)
 
     if ( fc )
         fc->timeout(1, cur_time);
-
-    Active::resume();
 }
 
 void FlowControl::preemptive_cleanup()
@@ -452,20 +450,20 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
 
     case Flow::FlowState::BLOCK:
         if ( news )
-            Stream::drop_traffic(flow, SSN_DIR_BOTH);
+            Stream::drop_traffic(p, SSN_DIR_BOTH);
         else
-            Active::block_again();
+            p->active->block_again();
 
         DetectionEngine::disable_all(p);
         break;
 
     case Flow::FlowState::RESET:
         if ( news )
-            Stream::drop_traffic(flow, SSN_DIR_BOTH);
+            Stream::drop_traffic(p, SSN_DIR_BOTH);
         else
-            Active::reset_again();
+            p->active->reset_again();
 
-        Stream::blocked_flow(flow, p);
+        Stream::blocked_flow(p);
         DetectionEngine::disable_all(p);
         break;
     }

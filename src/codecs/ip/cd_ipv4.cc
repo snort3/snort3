@@ -27,10 +27,10 @@
 #include <random>
 
 #include "codecs/codec_module.h"
+#include "framework/codec.h"
 #include "log/log_text.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
-#include "packet_io/active.h"
 #include "parser/parse_ip.h"
 #include "protocols/ip.h"
 #include "protocols/ipv4.h"
@@ -206,7 +206,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         if ( codec.codec_flags & CODEC_NON_IP_TUNNEL )
             codec.codec_flags &= ~CODEC_NON_IP_TUNNEL;
         else if ( snort::SnortConfig::tunnel_bypass_enabled(TUNNEL_4IN6) )
-            Active::set_tunnel_bypass();
+            codec.tunnel_bypass = true;
     }
     else if (snort.ip_api.is_ip4())
     {
@@ -214,7 +214,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         if ( codec.codec_flags & CODEC_NON_IP_TUNNEL )
             codec.codec_flags &= ~CODEC_NON_IP_TUNNEL;
         else if (snort::SnortConfig::tunnel_bypass_enabled(TUNNEL_4IN4))
-            Active::set_tunnel_bypass();
+            codec.tunnel_bypass = true;
     }
 
     // set the api now since this layer has been verified as valid

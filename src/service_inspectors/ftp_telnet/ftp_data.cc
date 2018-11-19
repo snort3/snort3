@@ -59,7 +59,7 @@ static void FTPDataProcess(
 
     if (data_ssn->packet_flags & FTPDATA_FLG_REST)
     {
-        Active::block_again();
+        p->active->block_again();
         return;
     }
 
@@ -75,10 +75,10 @@ static void FTPDataProcess(
     else
         file_flows->set_sig_gen_state( false );
 
-    status = file_flows->file_process(file_data, data_length,
+    status = file_flows->file_process(p, file_data, data_length,
         data_ssn->position, data_ssn->direction);
 
-    if (Active::packet_force_dropped())
+    if ( p->active->packet_force_dropped() )
     {
         FtpFlowData* fd = (FtpFlowData*)Stream::get_flow_data(
                             &data_ssn->ftp_key, FtpFlowData::inspector_id);

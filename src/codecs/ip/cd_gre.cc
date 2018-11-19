@@ -26,7 +26,6 @@
 #include "framework/codec.h"
 #include "log/text_log.h"
 #include "main/snort_config.h"
-#include "packet_io/active.h"
 #include "protocols/gre.h"
 
 using namespace snort;
@@ -206,7 +205,7 @@ bool GreCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     }
 
     if (SnortConfig::tunnel_bypass_enabled(TUNNEL_GRE))
-        Active::set_tunnel_bypass();
+        codec.tunnel_bypass = true;
 
     codec.lyr_len = len;
     codec.next_prot_id = greh->proto();

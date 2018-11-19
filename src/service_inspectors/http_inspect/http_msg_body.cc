@@ -201,6 +201,7 @@ void HttpMsgBody::do_js_normalization(const Field& input, Field& output)
 void HttpMsgBody::do_file_processing(Field& file_data)
 {
     // Using the trick that cutter is deleted when regular or chunked body is complete
+    Packet* p = DetectionEngine::get_current_packet();
     const bool front = (body_octets == 0);
     const bool back = (session_data->cutter[source_id] == nullptr) || tcp_close;
 
@@ -231,7 +232,7 @@ void HttpMsgBody::do_file_processing(Field& file_data)
             file_index = request->get_http_uri()->get_file_proc_hash();
         }
 
-        if (file_flows->file_process(file_data.start(), fp_length,
+        if (file_flows->file_process(p, file_data.start(), fp_length,
             file_position, !download, file_index))
         {
             session_data->file_depth_remaining[source_id] -= fp_length;
@@ -258,7 +259,7 @@ void HttpMsgBody::do_file_processing(Field& file_data)
     }
     else
     {
-        session_data->mime_state[source_id]->process_mime_data(flow, file_data.start(),
+        session_data->mime_state[source_id]->process_mime_data(p, file_data.start(),
             fp_length, true, SNORT_FILE_POSITION_UNKNOWN);
 
         session_data->file_depth_remaining[source_id] -= fp_length;

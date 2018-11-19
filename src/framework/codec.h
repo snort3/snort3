@@ -56,7 +56,6 @@ struct ICMPHdr;
 
 class Flow;
 struct Layer;
-struct Packet;
 
 // Used by root codecs to add their DLT to their HELP string
 #define ADD_DLT(help, x) help " (DLT " STRINGIFY_MX(x) ")"
@@ -135,9 +134,10 @@ struct CodecData
     uint8_t ip6_extension_count; /* initialized in cd_ipv6.cc */
     uint8_t curr_ip6_extension;  /* initialized in cd_ipv6.cc */
     IpProtocol ip6_csum_proto;      /* initialized in cd_ipv6.cc.  Used for IPv6 checksums */
+    bool tunnel_bypass;
 
     CodecData(ProtocolId init_prot) : next_prot_id(init_prot), lyr_len(0),
-        invalid_bytes(0), proto_bits(0), codec_flags(0), ip_layer_cnt(0)
+        invalid_bytes(0), proto_bits(0), codec_flags(0), ip_layer_cnt(0), tunnel_bypass(false)
     { }
 
     bool inline is_cooked() const
@@ -368,7 +368,7 @@ private:
 //-------------------------------------------------------------------------
 
 // this is the current version of the api
-#define CDAPI_VERSION ((BASE_API_VERSION << 16) | 0)
+#define CDAPI_VERSION ((BASE_API_VERSION << 16) | 1)
 
 typedef Codec* (* CdNewFunc)(Module*);
 typedef void (* CdDelFunc)(Codec*);

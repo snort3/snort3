@@ -61,7 +61,7 @@ static int ProcessUdp(
 {
     assert(lwssn->pkt_type == PktType::UDP);
 
-    if ( Stream::blocked_flow(lwssn, p) )
+    if ( Stream::blocked_flow(p) )
         return 0;
 
     if ( Stream::ignored_flow(lwssn, p) )

@@ -99,7 +99,8 @@ bool TcpNormalizer::packet_dropper(
 
     if (mode == NORM_MODE_ON)
     {
-        Active::drop_packet(tsd.get_pkt());
+        Packet* p = tsd.get_pkt();
+        p->active->drop_packet(p);
         return true;
     }
 

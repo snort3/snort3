@@ -62,16 +62,16 @@ PADDING_GUARD_END
     void set_max_files(int64_t);
 
     snort::FileContext* get_file(snort::Flow*, uint64_t file_id, bool to_create);
-    FileVerdict cached_verdict_lookup(snort::Flow*, snort::FileInfo*,
+    FileVerdict cached_verdict_lookup(snort::Packet*, snort::FileInfo*,
         snort::FilePolicyBase*);
-    bool apply_verdict(snort::Flow*, snort::FileInfo*, FileVerdict, bool resume,
+    bool apply_verdict(snort::Packet*, snort::FileInfo*, FileVerdict, bool resume,
         snort::FilePolicyBase*);
 
 private:
     snort::FileContext* add(const FileHashKey&, int64_t timeout);
     snort::FileContext* find(const FileHashKey&, int64_t);
     snort::FileContext* get_file(snort::Flow*, uint64_t file_id, bool to_create, int64_t timeout);
-    FileVerdict check_verdict(snort::Flow*, snort::FileInfo*, snort::FilePolicyBase*);
+    FileVerdict check_verdict(snort::Packet*, snort::FileInfo*, snort::FilePolicyBase*);
     int store_verdict(snort::Flow*, snort::FileInfo*, int64_t timeout);
 
     /* The hash table of expected files */

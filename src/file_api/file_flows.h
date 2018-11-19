@@ -80,11 +80,11 @@ public:
     void add_pending_file(uint64_t file_id);
 
     // This is used when there is only one file per session
-    bool file_process(const uint8_t* file_data, int data_size, FilePosition,
+    bool file_process(Packet* p, const uint8_t* file_data, int data_size, FilePosition,
         bool upload, size_t file_index = 0);
 
     // This is used for each file context. Support multiple files per session
-    bool file_process(uint64_t file_id, const uint8_t* file_data,
+    bool file_process(Packet* p, uint64_t file_id, const uint8_t* file_data,
         int data_size, uint64_t offset, FileDirection);
 
     static unsigned file_flow_data_id;

@@ -1,4 +1,4 @@
-#ifndef LOG_MESSGE_MOCK
+#ifndef LOG_MESSAGE_MOCK
 #define LOG_MESSAGE_MOCK
 
 #ifdef HAVE_CONFIG_H
@@ -21,7 +21,7 @@ SO_PUBLIC void ErrorMessage(const char* format,...)
     va_end(ap);
 }
 
-SO_PUBLIC [[noreturn]] void FatalError(const char* format,...)
+[[noreturn]] SO_PUBLIC void FatalError(const char* format,...)
 {
     ErrorMessage(format);
     exit(1);

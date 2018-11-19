@@ -82,7 +82,7 @@ static void print_label(Args& a, const char* label)
 static bool ff_action(Args& a)
 {
     print_label(a, "action");
-    TextLog_Quote(json_log, Active::get_action_string());
+    TextLog_Quote(json_log, a.pkt->active->get_action_string());
     return true;
 }
 

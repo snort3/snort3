@@ -69,9 +69,9 @@ struct Args
     const Event& event;
 };
 
-static void ff_action(Args&)
+static void ff_action(Args& a)
 {
-    TextLog_Puts(csv_log, Active::get_action_string());
+    TextLog_Puts(csv_log, a.pkt->active->get_action_string());
 }
 
 static void ff_class(Args& a)

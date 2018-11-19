@@ -221,10 +221,10 @@ static void alert_event(Packet* p, const char*, Unified2Config* config, const Ev
         if ( app_name )
             memcpy_s(u2_event.app_name, sizeof(u2_event.app_name),
                 app_name, strlen(app_name) + 1);
-    }
 
-    u2_event.snort_status = Active::get_status();
-    u2_event.snort_action = Active::get_action();
+        u2_event.snort_status = p->active->get_status();
+        u2_event.snort_action = p->active->get_action();
+    }
 
     Serial_Unified2_Header hdr;
     uint32_t write_len = sizeof(hdr) + sizeof(u2_event);
@@ -599,9 +599,9 @@ static int s_blocked_flag[] =
     U2_BLOCKED_FLAG_BLOCK,
 };
 
-static int GetU2Flags(const Packet*, uint8_t* pimpact)
+static int GetU2Flags(const Packet* p, uint8_t* pimpact)
 {
-    Active::ActiveStatus dispos = Active::get_status();
+    Active::ActiveStatus dispos = p->active->get_status();
 
     if ( dispos > Active::AST_ALLOW )
         *pimpact = U2_FLAG_BLOCKED;

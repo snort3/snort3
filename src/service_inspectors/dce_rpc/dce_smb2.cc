@@ -235,11 +235,12 @@ static inline void DCE2_Smb2ProcessFileData(DCE2_SmbSsnData* ssd, const uint8_t*
         DCE2_FileDetect();
     }
 
-    FileFlows* file_flows = FileFlows::get_file_flows(DetectionEngine::get_current_packet()->flow);
+    Packet* p = DetectionEngine::get_current_packet();
+    FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
     if ( !file_flows )
         return;
 
-    file_flows->file_process(ssd->ftracker.fid_v2, file_data, data_size,
+    file_flows->file_process(p, ssd->ftracker.fid_v2, file_data, data_size,
         ssd->ftracker.tracker.file.file_offset, dir);
 }
 

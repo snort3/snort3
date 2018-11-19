@@ -119,19 +119,19 @@ void Actions::execute(Actions::Type action, Packet* p, const OptTreeNode* otn,
         break;
 
     case Actions::DROP:
-        Active::drop_packet(p);
+        p->active->drop_packet(p);
         alert(p, otn);
         SetTags(p, otn, event_id);
         break;
 
     case Actions::BLOCK:
-        Active::block_session(p);
+        p->active->block_session(p);
         alert(p, otn);
         SetTags(p, otn, event_id);
         break;
 
     case Actions::RESET:
-        Active::reset_session(p);
+        p->active->reset_session(p);
         alert(p, otn);
         SetTags(p, otn, event_id);
         break;
@@ -146,15 +146,15 @@ void Actions::apply(Actions::Type action, Packet* p)
     switch ( action )
     {
     case Actions::DROP:
-        Active::drop_packet(p);
+        p->active->drop_packet(p);
         break;
 
     case Actions::BLOCK:
-        Active::block_session(p);
+        p->active->block_session(p);
         break;
 
     case Actions::RESET:
-        Active::reset_session(p);
+        p->active->reset_session(p);
         break;
 
     default:

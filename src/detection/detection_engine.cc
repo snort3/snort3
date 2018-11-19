@@ -111,6 +111,8 @@ Packet* DetectionEngine::get_encode_packet()
 // however, rebuild is always in the next context, not current.
 Packet* DetectionEngine::set_next_packet(Packet* parent)
 {
+    static THREAD_LOCAL Active shutdown_active;
+
     IpsContext* c = Snort::get_switcher()->get_next();
     if ( parent )
     {
@@ -125,6 +127,21 @@ Packet* DetectionEngine::set_next_packet(Packet* parent)
     p->pkth = c->pkth;
     p->data = c->buf;
     p->pkt = c->buf;
+
+    // normal rebuild
+    if ( parent )
+        p->active = parent->active;
+    
+    // processing but parent is already gone (flow cache flush etc..)
+    else if ( Snort::get_switcher()->get_context() )
+        p->active = get_current_packet()->active;
+    
+    // shutdown, so use a dummy so nullchecking is needed everywhere
+    else
+    {
+        p->active = &shutdown_active;
+        shutdown_active.reset();
+    }
 
     p->reset();
     return p;
@@ -147,7 +164,9 @@ void DetectionEngine::finish_inspect(Packet* p, bool inspected)
 {
     log_events(p);
 
-    Active::apply_delayed_action(p);
+    if ( p->active )
+        p->active->apply_delayed_action(p);
+
     p->context->post_detection();
 
     // clear closed sessions here after inspection since non-stream
@@ -428,7 +447,7 @@ void DetectionEngine::inspect(Packet* p)
             if ( SnortConfig::inline_mode() and
                 SnortConfig::checksum_drop(p->ptrs.decode_flags & DECODE_ERR_CKSUM_ALL) )
             {
-                Active::drop_packet(p);
+                p->active->drop_packet(p);
             }
         }
         else

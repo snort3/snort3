@@ -193,18 +193,19 @@ FileContext* FileCache::get_file(Flow* flow, uint64_t file_id, bool to_create)
     return get_file(flow, file_id, to_create, lookup_timeout);
 }
 
-FileVerdict FileCache::check_verdict(Flow* flow, FileInfo* file,
+FileVerdict FileCache::check_verdict(Packet* p, FileInfo* file,
     FilePolicyBase* policy)
 {
     assert(file);
+    Flow* flow = p->flow;
 
-    FileVerdict verdict = policy->type_lookup(flow, file);
+    FileVerdict verdict = policy->type_lookup(p, file);
 
     if ( file->get_file_sig_sha256() and
         ((verdict == FILE_VERDICT_UNKNOWN) ||
         (verdict == FILE_VERDICT_STOP_CAPTURE)))
     {
-        verdict = policy->signature_lookup(flow, file);
+        verdict = policy->signature_lookup(p, file);
     }
 
     if ((verdict == FILE_VERDICT_UNKNOWN) ||
@@ -232,11 +233,13 @@ int FileCache::store_verdict(Flow* flow, FileInfo* file, int64_t timeout)
     return 0;
 }
 
-bool FileCache::apply_verdict(Flow* flow, FileInfo* file, FileVerdict verdict,
+bool FileCache::apply_verdict(Packet* p, FileInfo* file, FileVerdict verdict,
     bool resume, FilePolicyBase* policy)
 {
-    file->verdict = verdict;
+    Flow* flow = p->flow;
+    Active* act = p->active;
 
+    file->verdict = verdict;
     switch (verdict)
     {
 
@@ -248,15 +251,15 @@ bool FileCache::apply_verdict(Flow* flow, FileInfo* file, FileVerdict verdict,
         return false;
     case FILE_VERDICT_BLOCK:
          // can't block session inside a session
-         Active::set_delayed_action(Active::ACT_BLOCK, true);
+         act->set_delayed_action(Active::ACT_BLOCK, true);
          break;
 
     case FILE_VERDICT_REJECT:
         // can't reset session inside a session
-        Active::set_delayed_action(Active::ACT_RESET, true);
+        act->set_delayed_action(Active::ACT_RESET, true);
         break;
     case FILE_VERDICT_PENDING:
-        Active::set_delayed_action(Active::ACT_DROP, true);
+        act->set_delayed_action(Active::ACT_DROP, true);
         if (resume)
             policy->log_file_action(flow, file, FILE_RESUME_BLOCK);
         else
@@ -279,9 +282,10 @@ bool FileCache::apply_verdict(Flow* flow, FileInfo* file, FileVerdict verdict,
 
 }
 
-FileVerdict FileCache::cached_verdict_lookup(Flow* flow, FileInfo* file,
+FileVerdict FileCache::cached_verdict_lookup(Packet* p, FileInfo* file,
     FilePolicyBase* policy)
 {
+    Flow* flow = p->flow;
     FileVerdict verdict = FILE_VERDICT_UNKNOWN;
 
     assert(file);
@@ -294,8 +298,8 @@ FileVerdict FileCache::cached_verdict_lookup(Flow* flow, FileInfo* file,
     if (file_found)
     {
         /*Query the file policy in case verdict has been changed*/
-        verdict = check_verdict(flow, file_found, policy);
-        apply_verdict(flow, file_found, verdict, true, policy);
+        verdict = check_verdict(p, file_found, policy);
+        apply_verdict(p, file_found, verdict, true, policy);
     }
 
     return verdict;

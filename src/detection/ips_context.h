@@ -94,6 +94,8 @@ public:
     void post_detection();
 
 public:
+    std::vector<Replacement> rpl;
+
     Packet* packet;
     Packet* encode_packet;
     DAQ_PktHdr_t* pkth;
@@ -111,8 +113,6 @@ public:
     uint64_t packet_number;
     ActiveRules active_rules;
     bool check_tags;
-
-    std::vector<Replacement> rpl;
 
     static const unsigned buf_size = Codec::PKT_MAX;
     // Only 5 inspectors currently use the ips context data.

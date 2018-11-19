@@ -38,6 +38,7 @@
 #include "framework/data_bus.h"
 #include "main/snort_config.h"
 #include "managers/inspector_manager.h"
+#include "protocols/packet.h"
 #include "utils/util.h"
 #include "utils/util_utf.h"
 
@@ -314,29 +315,33 @@ void FileContext::log_file_event(Flow* flow, FilePolicyBase* policy)
     }
 }
 
-FileVerdict FileContext::file_signature_lookup(Flow* flow)
+FileVerdict FileContext::file_signature_lookup(Packet* p)
 {
+    Flow* flow = p->flow;
+
     if (get_file_sig_sha256())
     {
         FilePolicyBase* policy = FileFlows::get_file_policy(flow);
 
         if (policy)
-            return policy->signature_lookup(flow, this);
+            return policy->signature_lookup(p, this);
     }
 
     return FILE_VERDICT_UNKNOWN;
 }
 
-void FileContext::finish_signature_lookup(Flow* flow, bool final_lookup, FilePolicyBase* policy)
+void FileContext::finish_signature_lookup(Packet* p, bool final_lookup, FilePolicyBase* policy)
 {
+    Flow* flow = p->flow;
+
     if (get_file_sig_sha256())
     {
-        verdict = policy->signature_lookup(flow, this);
+        verdict = policy->signature_lookup(p, this);
         if ( verdict != FILE_VERDICT_UNKNOWN || final_lookup )
         {
             FileCache* file_cache = FileService::get_file_cache();
             if (file_cache)
-                file_cache->apply_verdict(flow, this, verdict, false, policy);
+                file_cache->apply_verdict(p, this, verdict, false, policy);
             log_file_event(flow, policy);
             config_file_signature(false);
             file_stats->signatures_processed[get_file_type()][get_file_direction()]++;
@@ -379,9 +384,10 @@ void FileContext::check_policy(Flow* flow, FileDirection dir, FilePolicyBase* po
  *    true: continue processing/log/block this file
  *    false: ignore this file
  */
-bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
+bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
     FilePosition position, FilePolicyBase* policy)
 {
+    Flow* flow = p->flow;
 
     if ( config->trace_stream )
     {
@@ -397,7 +403,7 @@ bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
         return false;
     }
 
-    if ((FileService::get_file_cache()->cached_verdict_lookup(flow, this,
+    if ((FileService::get_file_cache()->cached_verdict_lookup(p, this,
         policy) != FILE_VERDICT_UNKNOWN))
         return true;
 
@@ -421,12 +427,12 @@ bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
             config_file_type(false);
             file_stats->files_processed[get_file_type()][get_file_direction()]++;
             //Check file type based on file policy
-            FileVerdict v = policy->type_lookup(flow, this);
+            FileVerdict v = policy->type_lookup(p, this);
             if ( v != FILE_VERDICT_UNKNOWN )
             {
                 FileCache* file_cache = FileService::get_file_cache();
                 if (file_cache)
-                    file_cache->apply_verdict(flow, this, v, false, policy);
+                    file_cache->apply_verdict(p, this, v, false, policy);
             }
 
             log_file_event(flow, policy);
@@ -453,7 +459,7 @@ bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
             process_file_capture(file_data, data_size, position);
         }
 
-        finish_signature_lookup(flow, ( file_state.sig_state != FILE_SIG_FLUSH ), policy);
+        finish_signature_lookup(p, ( file_state.sig_state != FILE_SIG_FLUSH ), policy);
     }
     else
     {
@@ -463,12 +469,12 @@ bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
     return true;
 }
 
-bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
+bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
     uint64_t offset, FilePolicyBase* policy)
 {
     if (!file_segments)
         file_segments = new FileSegments(this);
-    return file_segments->process(flow, file_data, data_size, offset, policy);
+    return file_segments->process(p, file_data, data_size, offset, policy);
 }
 
 /*

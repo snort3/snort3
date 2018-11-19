@@ -28,7 +28,6 @@
 #include "framework/codec.h"
 #include "log/text_log.h"
 #include "main/snort_config.h"
-#include "packet_io/active.h"
 
 using namespace snort;
 
@@ -188,7 +187,7 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         if ( codec.codec_flags & CODEC_NON_IP_TUNNEL )
             codec.codec_flags &= ~CODEC_NON_IP_TUNNEL;
         else if ( SnortConfig::tunnel_bypass_enabled(TUNNEL_6IN4) )
-            Active::set_tunnel_bypass();
+            codec.tunnel_bypass = true;
     }
     else if (snort.ip_api.is_ip6())
     {
@@ -196,7 +195,7 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         if ( codec.codec_flags & CODEC_NON_IP_TUNNEL )
             codec.codec_flags &= ~CODEC_NON_IP_TUNNEL;
         else if (SnortConfig::tunnel_bypass_enabled(TUNNEL_6IN6))
-            Active::set_tunnel_bypass();
+            codec.tunnel_bypass = true;
     }
 
     IPV6CheckIsatap(ip6h, snort, codec); // check for isatap before overwriting the ip_api.

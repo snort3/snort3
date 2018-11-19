@@ -28,6 +28,7 @@
 
 #include "main/modules.h"
 #include "main/snort_debug.h"
+#include "packet_io/active.h"
 #include "utils/stats.h"
 
 #include "detect_trace.h"
@@ -81,6 +82,9 @@ void ContextSwitcher::start()
         get_packet_number(), idle.back()->get_slot(), idle.size(), busy.size());
     busy.emplace_back(idle.back());
     idle.pop_back();
+
+    busy.back()->packet->active = busy.back()->packet->active_inst;
+    busy.back()->packet->active->reset();
 }
 
 void ContextSwitcher::stop()
@@ -92,6 +96,7 @@ void ContextSwitcher::stop()
     IpsContext* c = busy.back();
     c->clear_context_data();
     idle.emplace_back(c);
+    busy.back()->packet->active = nullptr;
     busy.pop_back();
 }
 
@@ -125,6 +130,7 @@ IpsContext* ContextSwitcher::interrupt()
     assert(!idle.empty());
     trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::interrupt %u (i=%zu, b=%zu)\n",
         idle.back()->packet_number, idle.back()->get_slot(), idle.size(), busy.size());
+
     busy.emplace_back(idle.back());
     idle.pop_back();
     return busy.back();
@@ -139,6 +145,7 @@ IpsContext* ContextSwitcher::complete()
         c->packet_number, busy.back()->get_slot(), idle.size(), busy.size());
 
     c->clear_context_data();
+
     idle.emplace_back(c);
     busy.pop_back();
     return busy.empty() ? nullptr : busy.back();
@@ -170,7 +177,9 @@ void ContextSwitcher::resume(unsigned slot)
 
 IpsContext* ContextSwitcher::get_context() const
 {
-    assert(!busy.empty());
+    if ( busy.empty() )
+        return nullptr;
+
     return busy.back();
 }
 

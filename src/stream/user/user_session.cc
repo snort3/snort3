@@ -482,7 +482,7 @@ int UserSession::process(Packet* p)
 
     flow->set_direction(p);
 
-    if ( Stream::blocked_flow(flow, p) || Stream::ignored_flow(flow, p) )
+    if ( Stream::blocked_flow(p) || Stream::ignored_flow(flow, p) )
         return 0;
 
     update(p, flow);

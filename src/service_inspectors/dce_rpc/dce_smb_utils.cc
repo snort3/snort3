@@ -1460,7 +1460,7 @@ static void DCE2_SmbInjectDeletePdu(DCE2_SmbFileTracker* ftracker)
     del_req->smb_bcc = 1 + file_name_len;
     memcpy(del_filename, ftracker->file_name + UTF_16_LE_BOM_LEN, file_name_len);
 
-    Active::inject_data(inject_pkt, 0, (uint8_t*)nb_hdr, len);
+    p->active->inject_data(inject_pkt, 0, (uint8_t*)nb_hdr, len);
 }
 
 static FileVerdict DCE2_SmbLookupFileVerdict()
@@ -1475,7 +1475,7 @@ static FileVerdict DCE2_SmbLookupFileVerdict()
     FileVerdict verdict = file->verdict;
 
     if (verdict == FILE_VERDICT_PENDING)
-        verdict = file->file_signature_lookup(DetectionEngine::get_current_packet()->flow);
+        verdict = file->file_signature_lookup(DetectionEngine::get_current_packet());
 
     return verdict;
 }
@@ -1514,7 +1514,7 @@ static void DCE2_SmbFinishFileAPI(DCE2_SmbSsnData* ssd)
             && (ftracker->ff_bytes_processed != 0))
         {
             Profile profile(dce2_smb_pstat_smb_file_api);
-            if (file_flows->file_process(nullptr, 0, SNORT_FILE_END, upload))
+            if (file_flows->file_process(p, nullptr, 0, SNORT_FILE_END, upload))
             {
                 if (upload)
                 {
@@ -1576,8 +1576,10 @@ static DCE2_Ret DCE2_SmbFileAPIProcess(DCE2_SmbSsnData* ssd,
     }
 
     Profile profile(dce2_smb_pstat_smb_file_api);
-    FileFlows* file_flows = FileFlows::get_file_flows(DetectionEngine::get_current_packet()->flow);
-    if (!file_flows->file_process(data_ptr, (int)data_len, position, upload,
+    Packet* p = DetectionEngine::get_current_packet();
+    DetectionEngine::get_current_packet();
+    FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
+    if (!file_flows->file_process(p, data_ptr, (int)data_len, position, upload,
         DCE2_SmbIsVerdictSuspend(upload, position)))
     {
         trace_logf(dce_smb, "File API returned FAILURE "

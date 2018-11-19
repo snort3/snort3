@@ -168,7 +168,7 @@ int IpSession::process(Packet* p)
         IpHAManager::process_deletion(flow);
     }
 
-    if ( Stream::blocked_flow(flow, p) || Stream::ignored_flow(flow, p) )
+    if ( Stream::blocked_flow(p) || Stream::ignored_flow(flow, p) )
         return 0;
 
     if ( p->ptrs.decode_flags & DECODE_FRAG )

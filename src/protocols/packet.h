@@ -30,6 +30,7 @@
 
 namespace snort
 {
+class Active;
 class Endianness;
 class Flow;
 class IpsContext;
@@ -129,6 +130,8 @@ struct SO_PUBLIC Packet
 
     // Everything beyond this point is set by PacketManager::decode()
     IpsContext* context;   // set by control
+    Active* active;
+    Active* active_inst;
     const DAQ_PktHdr_t* pkth;    // packet meta data
     const uint8_t* pkt;          // raw packet data
 

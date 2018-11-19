@@ -23,6 +23,7 @@
 
 #include "ftpdata_splitter.h"
 
+#include "detection/detection_engine.h"
 #include "file_api/file_flows.h"
 #include "flow/session.h"
 #include "stream/stream.h"
@@ -109,7 +110,10 @@ bool FtpDataSplitter::finish(Flow* flow)
 
             FileFlows* file_flows = FileFlows::get_file_flows(flow);
             if ( file_flows )
-                file_flows->file_process(nullptr, 0, SNORT_FILE_END, to_server(), 0);
+            {
+                file_flows->file_process(DetectionEngine::get_current_packet(), 
+                    nullptr, 0, SNORT_FILE_END, to_server(), 0);
+            }
         }
     }
 

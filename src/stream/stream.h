@@ -119,7 +119,7 @@ public:
 
     // Set Active status to force drop the current packet and set flow state to drop
     // subsequent packets arriving from the direction specified.
-    static void drop_traffic(Flow*, char dir);
+    static void drop_traffic(const Packet*, char dir);
 
     // Mark a flow as dropped, release allocated resources, and set flow state such that any
     // subsequent packets received on this flow are dropped.
@@ -218,7 +218,7 @@ public:
 
     static bool expired_flow(Flow*, Packet*);
     static bool ignored_flow(Flow*, Packet*);
-    static bool blocked_flow(Flow*, Packet*);
+    static bool blocked_flow(Packet*);
 
     // extra data methods
     static void set_extra_data(Flow*, Packet*, uint32_t);

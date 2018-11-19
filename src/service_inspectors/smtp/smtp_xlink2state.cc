@@ -243,7 +243,7 @@ int ParseXLink2State(SMTP_PROTO_CONF* config, snort::Packet* p, SMTPData* smtp_s
         /* Need to drop the packet if we're told to
          * (outside of whether its thresholded). */
         if (config->xlink2state == DROP_XLINK2STATE)
-            snort::Active::reset_session(p);
+            p->active->reset_session(p);
 
         snort::DetectionEngine::queue_event(GID_SMTP, SMTP_XLINK2STATE_OVERFLOW);
         smtp_ssn->session_flags |= SMTP_FLAG_XLINK2STATE_ALERTED;

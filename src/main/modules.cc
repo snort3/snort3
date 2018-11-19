@@ -40,6 +40,7 @@
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
 #include "memory/memory_module.h"
+#include "packet_io/active.h"
 #include "packet_io/sfdaq_module.h"
 #include "packet_tracer/packet_tracer_module.h"
 #include "parser/config_file.h"
@@ -869,11 +870,23 @@ static const Parameter active_params[] =
 #define active_help \
     "configure responses"
 
+static PegInfo active_pegs[]
+{
+    { CountType::SUM, "injects", "total crafted packets injected" },
+    { CountType::END, nullptr, nullptr }
+};
+
 class ActiveModule : public Module
 {
 public:
     ActiveModule() : Module("active", active_help, active_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
+
+    const PegInfo* get_pegs() const override
+    { return active_pegs; }
+
+    PegCount* get_counts() const override
+    { return (PegCount*) &active_counts; }
 
     Usage get_usage() const override
     { return GLOBAL; }

@@ -27,6 +27,7 @@
 #include "flow/expect_cache.h"
 #include "framework/endianness.h"
 #include "log/obfuscator.h"
+#include "packet_io/active.h"
 #include "managers/codec_manager.h"
 
 #include "packet_manager.h"
@@ -51,7 +52,7 @@ Packet::Packet(bool packet_data)
 
     obfuscator = nullptr;
     endianness = nullptr;
-
+    active_inst = new Active;
     reset();
 }
 
@@ -64,7 +65,7 @@ Packet::~Packet()
         delete pkth;
         delete[] pkt;
     }
-
+    delete active_inst;
     delete[] layers;
 }
 
