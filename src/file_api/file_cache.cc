@@ -197,7 +197,6 @@ FileVerdict FileCache::check_verdict(Packet* p, FileInfo* file,
     FilePolicyBase* policy)
 {
     assert(file);
-    Flow* flow = p->flow;
 
     FileVerdict verdict = policy->type_lookup(p, file);
 
