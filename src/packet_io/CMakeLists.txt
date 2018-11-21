@@ -13,8 +13,6 @@ endif (ENABLE_UNIT_TESTS)
 add_library (packet_io OBJECT
     active.cc
     active.h
-    intf.cc
-    intf.h
     sfdaq.cc
     sfdaq.h
     sfdaq_config.cc

@@ -30,7 +30,6 @@
 #include "framework/module.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
-#include "packet_io/intf.h"
 #include "packet_io/sfdaq.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
@@ -227,7 +226,7 @@ static void AlertSyslog(
         if (SnortConfig::alert_interface())
         {
             SnortSnprintfAppend(event_string, sizeof(event_string),
-                "<%s> ", PRINT_INTERFACE(SFDAQ::get_interface_spec()));
+                "<%s> ", SFDAQ::get_interface_spec());
         }
     }
     if ((p != nullptr) && p->ptrs.ip_api.is_ip())

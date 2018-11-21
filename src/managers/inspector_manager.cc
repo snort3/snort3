@@ -715,6 +715,13 @@ void InspectorManager::thread_stop(SnortConfig*)
 
 void InspectorManager::thread_term(SnortConfig*)
 {
+    // FIXIT-L this check required if startup failed in
+    // Analyzer::analyze before thread_init is called eg
+    // Can't start DAQ (-1) - socket: Operation not permitted
+    // ideally thread_term not called w/o calling thread_init
+    if ( !s_tl_handlers )
+        return;
+
     // Call tterm for every inspector plugin ever configured during the lifetime of this thread
     for ( PHGlobal& phg : *s_tl_handlers )
     {

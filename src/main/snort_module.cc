@@ -149,6 +149,15 @@ static const Command snort_cmds[] =
 // users aren't used to seeing the standard help format for command line
 // args so the few cases where there is a default, we include it in the
 // help as well.
+//
+// command line options can be specified in Lua instead by doing e.g.
+//
+//     snort = { }; snort["-z"] = 2
+//
+// so a default value can't be provided for args that kick off optional
+// run modes such as --rule-to-text because the program will do strange
+// things like waiting on stdin for input that won't be coming.  in these
+// cases the default must only be indicated in the help.
 //-------------------------------------------------------------------------
 
 static const Parameter s_params[] =
@@ -255,9 +264,6 @@ static const Parameter s_params[] =
 
     { "-v", Parameter::PT_IMPLIED, nullptr, nullptr,
       "be verbose" },
-
-    { "-W", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "lists available interfaces" },
 
     { "-X", Parameter::PT_IMPLIED, nullptr, nullptr,
       "dump the raw packet data starting at the link layer" },
@@ -449,8 +455,9 @@ static const Parameter s_params[] =
     { "--rule-to-hex", Parameter::PT_IMPLIED, nullptr, nullptr,
       "output so rule header to stdout for text rule on stdin" },
 
-    { "--rule-to-text", Parameter::PT_STRING, "16", "[SnortFoo]",
-      "output plain so rule header to stdout for text rule on stdin" },
+    { "--rule-to-text", Parameter::PT_STRING, "16", nullptr,
+      "output plain so rule header to stdout for text rule on stdin "
+      "(specify delimiter or [Snort_SO_Rule] will be used)" },
 
     { "--run-prefix", Parameter::PT_STRING, nullptr, nullptr,
       "<pfx> prepend this to each output file" },
@@ -713,9 +720,6 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("-v") )
         sc->set_verbose(true);
-
-    else if ( v.is("-W") )
-        list_interfaces(sc);
 
     else if ( v.is("-X") )
         sc->set_dump_payload_verbose(true);

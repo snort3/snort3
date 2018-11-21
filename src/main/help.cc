@@ -34,7 +34,6 @@
 #include "managers/plugin_manager.h"
 #include "managers/script_manager.h"
 #include "managers/so_manager.h"
-#include "packet_io/intf.h"
 #include "packet_io/sfdaq.h"
 #include "utils/util.h"
 
@@ -273,12 +272,6 @@ void config_markup(SnortConfig*, const char*)
     SFDAQ::load(sc);
     SFDAQ::print_types(cout);
     SFDAQ::unload();
-    exit(0);
-}
-
-[[noreturn]] void list_interfaces(SnortConfig*)
-{
-    PrintAllInterfaces();
     exit(0);
 }
 

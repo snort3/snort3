@@ -48,7 +48,6 @@ void help_args(const char* pfx);
 
 [[noreturn]] void list_modules(snort::SnortConfig* sc, const char*);
 [[noreturn]] void list_plugins(snort::SnortConfig* sc, const char*);
-[[noreturn]] void list_interfaces(snort::SnortConfig*);
 [[noreturn]] void list_daqs(snort::SnortConfig* sc);
 
 [[noreturn]] void dump_defaults(snort::SnortConfig* sc, const char*);

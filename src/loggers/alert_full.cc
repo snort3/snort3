@@ -44,7 +44,6 @@
 #include "log/log_text.h"
 #include "log/text_log.h"
 #include "main/snort_config.h"
-#include "packet_io/intf.h"
 #include "packet_io/sfdaq.h"
 #include "protocols/packet.h"
 
@@ -158,7 +157,7 @@ void FullLogger::alert(Packet* p, const char* msg, const Event& event)
 
     if (SnortConfig::alert_interface())
     {
-        const char* iface = PRINT_INTERFACE(SFDAQ::get_interface_spec());
+        const char* iface = SFDAQ::get_interface_spec();
         TextLog_Print(full_log, " <%s> ", iface);
     }
 

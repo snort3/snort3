@@ -30,6 +30,7 @@ extern "C" {
 #include <sfbpf_dlt.h>
 }
 
+#include <cassert>
 #include <mutex>
 
 #include "log/messages.h"
@@ -224,6 +225,7 @@ SFDAQInstance* SFDAQ::get_local_instance()
 
 const char* SFDAQ::get_interface_spec()
 {
+    assert(local_instance->get_interface_spec());
     return local_instance->get_interface_spec();
 }
 

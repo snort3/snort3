@@ -50,7 +50,6 @@
 #include "main/snort_config.h"
 #include "managers/inspector_manager.h"
 #include "packet_io/active.h"
-#include "packet_io/intf.h"
 #include "packet_io/sfdaq.h"
 #include "service_inspectors/http_inspect/http_enum.h"
 
@@ -223,7 +222,7 @@ void FastLogger::alert(Packet* p, const char* msg, const Event& event)
         event.sig_info->gid, event.sig_info->sid, event.sig_info->rev);
 
     if (SnortConfig::alert_interface())
-        TextLog_Print(fast_log, " <%s> ", PRINT_INTERFACE(SFDAQ::get_interface_spec()));
+        TextLog_Print(fast_log, " <%s> ", SFDAQ::get_interface_spec());
 
     if ( msg )
         TextLog_Puts(fast_log, msg);
