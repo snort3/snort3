@@ -34,6 +34,7 @@
 #include <sstream>
 
 #include "log/messages.h"
+#include "parser/parse_so_rule.h"
 
 using namespace std;
 
@@ -200,21 +201,19 @@ const char* SoManager::get_so_options(const char* soid)
     if ( !api )
         return nullptr;
 
-    if ( !api->length )
-        return ")";  // plain stub is full rule
-
     const char* rule = revert(api->rule, api->length);
 
     if ( !rule )
         return nullptr;
 
-    // FIXIT-L this approach won't tolerate spaces and might get
-    // fooled by matching content (should it precede this)
-    char opt[32];
-    snprintf(opt, sizeof(opt), "soid:%s;", soid);
-    const char* s = strstr(rule, opt);
+    static std::string opts;
+    opts.clear();
 
-    return s ? s + strlen(opt) : nullptr;
+    if ( !::get_so_options(rule, !api->length, opts) )
+        return nullptr;
+
+    opts += " )";
+    return opts.c_str();
 }
 
 SoEvalFunc SoManager::get_so_eval(const char* soid, const char* so, void** data)
@@ -243,34 +242,18 @@ void SoManager::dump_rule_stubs(const char*)
 
     for ( auto* p : s_rules )
     {
-        const char* s;
         const char* rule = revert(p->rule, p->length);
 
         if ( !rule )
             continue;
 
-        // FIXIT-L need to properly parse rule to avoid
-        // confusing other text for soid option
-        if ( !(s = strstr(rule, "soid:")) )
+        static std::string stub;
+        stub.clear();
+
+        if ( !get_so_stub(rule, !p->length, stub) )
             continue;
 
-        if ( !(s = strchr(s, ';')) )
-            continue;
-
-        if ( *rule == '\n' )
-            ++rule;
-
-        unsigned n = p->length ? s-rule+1 : strlen(rule);
-
-        if ( n and rule[n-1] == '\n' )
-            --n;
-
-        cout.write(rule, n);
-
-        if ( p->length )
-            cout << " )";
-
-        cout << endl;
+        cout << stub << endl;
 
         ++c;
     }
