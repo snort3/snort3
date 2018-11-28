@@ -160,6 +160,9 @@ public:
     void alert(Packet*, const char* msg, const Event&) override;
 
 private:
+    void log_data(Packet*, const Event&);
+
+private:
     string file;
     unsigned long limit;
     bool packet;
@@ -235,70 +238,75 @@ void FastLogger::alert(Packet* p, const char* msg, const Event& event)
     TextLog_Print(fast_log, "{%s} ", p->get_type());
     LogIpAddrs(fast_log, p);
 
-    // log packet (p) if this is not an http request with one or more buffers
-    // because in that case packet data is also in http_headers or http_client_body
-    // only http provides buffers at present; http_raw_status is always
-    // available if a response was processed by http_inspect
-    bool log_pkt = true;
-
     if ( packet || SnortConfig::output_app_data() )
     {
-        TextLog_NewLine(fast_log);
-        Inspector* gadget = p->flow ? p->flow->gadget : nullptr;
-        const char** buffers = gadget ? gadget->get_api()->buffers : nullptr;
-
-        if ( buffers )
-        {
-            InspectionBuffer buf;
-            const std::vector<unsigned>& idv = gadget->get_buf(HttpEnums::HTTP_BUFFER_RAW_STATUS,
-                p, buf) ? rsp_ids : req_ids;
-            bool rsp = (idv == rsp_ids);
-
-            for ( auto id : idv )
-            {
-
-                if ( gadget->get_buf(id, p, buf) )
-                    LogNetData(fast_log, buf.data, buf.len, p, buffers[id-1]);
-
-                log_pkt = rsp;
-            }
-        }
-        else if ( gadget )
-        {
-            InspectionBuffer buf;
-
-            if ( gadget->get_buf(InspectionBuffer::IBT_KEY, p, buf) )
-                LogNetData(fast_log, buf.data, buf.len, p);
-
-            if ( gadget->get_buf(InspectionBuffer::IBT_HEADER, p, buf) )
-                LogNetData(fast_log, buf.data, buf.len, p);
-
-            if ( gadget->get_buf(InspectionBuffer::IBT_BODY, p, buf) )
-                LogNetData(fast_log, buf.data, buf.len, p);
-        }
-        if (p->has_ip())
-            LogIPPkt(fast_log, p);
-
-        else if ( log_pkt and p->obfuscator )
-        {
-            // FIXIT-P avoid string copy
-            std::string buf((const char*)p->data, p->dsize);
-
-            for ( const auto& b : *p->obfuscator )
-                buf.replace(b.offset, b.length, b.length, p->obfuscator->get_mask_char());
-
-            LogNetData(fast_log, (const uint8_t*)buf.c_str(), p->dsize, p);
-        }
-        else if ( log_pkt )
-            LogNetData(fast_log, p->data, p->dsize, p);
-
-        DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
-
-        if ( buf.len and event.sig_info->gid != 116 )
-            LogNetData(fast_log, buf.data, buf.len, p, "alt");
+        log_data(p, event);
     }
     TextLog_NewLine(fast_log);
     TextLog_Flush(fast_log);
+}
+
+// log packet (p) if this is not an http request with one or more buffers
+// because in that case packet data is also in http_headers or http_client_body
+// only http provides buffers at present; http_raw_status is always
+// available if a response was processed by http_inspect
+void FastLogger::log_data(Packet* p, const Event& event)
+{
+    bool log_pkt = true;
+
+    TextLog_NewLine(fast_log);
+    Inspector* gadget = p->flow ? p->flow->gadget : nullptr;
+    const char** buffers = gadget ? gadget->get_api()->buffers : nullptr;
+
+    if ( buffers )
+    {
+        InspectionBuffer buf;
+        const std::vector<unsigned>& idv = gadget->get_buf(HttpEnums::HTTP_BUFFER_RAW_STATUS,
+            p, buf) ? rsp_ids : req_ids;
+        bool rsp = (idv == rsp_ids);
+
+        for ( auto id : idv )
+        {
+
+            if ( gadget->get_buf(id, p, buf) )
+                LogNetData(fast_log, buf.data, buf.len, p, buffers[id-1]);
+
+            log_pkt = rsp;
+        }
+    }
+    else if ( gadget )
+    {
+        InspectionBuffer buf;
+
+        if ( gadget->get_buf(InspectionBuffer::IBT_KEY, p, buf) )
+            LogNetData(fast_log, buf.data, buf.len, p);
+
+        if ( gadget->get_buf(InspectionBuffer::IBT_HEADER, p, buf) )
+            LogNetData(fast_log, buf.data, buf.len, p);
+
+        if ( gadget->get_buf(InspectionBuffer::IBT_BODY, p, buf) )
+            LogNetData(fast_log, buf.data, buf.len, p);
+    }
+    if (p->has_ip())
+        LogIPPkt(fast_log, p);
+
+    else if ( log_pkt and p->obfuscator )
+    {
+        // FIXIT-P avoid string copy
+        std::string buf((const char*)p->data, p->dsize);
+
+        for ( const auto& b : *p->obfuscator )
+            buf.replace(b.offset, b.length, b.length, p->obfuscator->get_mask_char());
+
+        LogNetData(fast_log, (const uint8_t*)buf.c_str(), p->dsize, p);
+    }
+    else if ( log_pkt )
+        LogNetData(fast_log, p->data, p->dsize, p);
+
+    DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+
+    if ( buf.len and event.sig_info->gid != 116 )
+        LogNetData(fast_log, buf.data, buf.len, p, "alt");
 }
 
 //-------------------------------------------------------------------------

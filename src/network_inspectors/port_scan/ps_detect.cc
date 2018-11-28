@@ -557,7 +557,6 @@ void PortScan::ps_tracker_update_tcp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
     PS_TRACKER* scanned)
 {
     Packet* p = (Packet*)ps_pkt->pkt;
-    uint32_t session_flags = 0x0;
     unsigned win = config->tcp_window;
 
     SfIp cleared;
@@ -584,7 +583,7 @@ void PortScan::ps_tracker_update_tcp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
     // this should be completely redone and port_scan should require stream_tcp
     if ( p->flow and (p->flow->ssn_state.session_flags & SSNFLAG_COUNTED_INITIALIZE) )
     {
-        session_flags = p->flow->get_session_flags();
+        uint32_t session_flags = p->flow->get_session_flags();
 
         if ((session_flags & SSNFLAG_SEEN_CLIENT) &&
             !(session_flags & SSNFLAG_SEEN_SERVER) &&

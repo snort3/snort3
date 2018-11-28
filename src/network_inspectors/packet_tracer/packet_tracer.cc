@@ -576,26 +576,26 @@ TEST_CASE("pause", "[PacketTracer]")
     TestPacketTracer::pause();
 
     TestPacketTracer::log("%s", test_str);
-    CHECK( TestPacketTracer::get_buff()[0] == '\0' );
-    CHECK( TestPacketTracer::get_buff_len() == 0 );
+    CHECK((TestPacketTracer::get_buff()[0] == '\0'));
+    CHECK((TestPacketTracer::get_buff_len() == 0));
 
     TestPacketTracer::unpause();
 
     TestPacketTracer::log("%s", test_str);
-    CHECK( TestPacketTracer::get_buff()[0] == '\0' );
-    CHECK( TestPacketTracer::get_buff_len() == 0 );
+    CHECK((TestPacketTracer::get_buff()[0] == '\0'));
+    CHECK((TestPacketTracer::get_buff_len() == 0));
 
     TestPacketTracer::unpause();
 
     TestPacketTracer::log("%s", test_str);
-    CHECK( TestPacketTracer::get_buff()[0] == '\0' );
-    CHECK( TestPacketTracer::get_buff_len() == 0 );
+    CHECK((TestPacketTracer::get_buff()[0] == '\0'));
+    CHECK((TestPacketTracer::get_buff_len() == 0));
 
     TestPacketTracer::unpause();
 
     TestPacketTracer::log("%s", test_str);
     CHECK( !strcmp(TestPacketTracer::get_buff(), test_str) );
-    CHECK( TestPacketTracer::get_buff_len() == 10 );
+    CHECK((TestPacketTracer::get_buff_len() == 10));
 
     TestPacketTracer::thread_term();
 }
@@ -610,28 +610,28 @@ TEST_CASE("reasons", "[PacketTracer]")
     TestPacketTracer::register_verdict_reason(high, PacketTracer::PRIORITY_HIGH);
     
     // Init
-    CHECK( TestPacketTracer::get_reason() == VERDICT_REASON_NO_BLOCK );
+    CHECK((TestPacketTracer::get_reason() == VERDICT_REASON_NO_BLOCK));
     
     // Update
     TestPacketTracer::set_reason(low1);
-    CHECK( TestPacketTracer::get_reason() == low1 );
+    CHECK((TestPacketTracer::get_reason() == low1));
     
     // Don't update if already set
     TestPacketTracer::set_reason(VERDICT_REASON_NO_BLOCK);
-    CHECK( TestPacketTracer::get_reason() == low1 );
+    CHECK((TestPacketTracer::get_reason() == low1));
     TestPacketTracer::set_reason(low2);
-    CHECK( TestPacketTracer::get_reason() == low1 );
+    CHECK((TestPacketTracer::get_reason() == low1));
 
     // Always update for high priority
     TestPacketTracer::set_reason(high);
-    CHECK( TestPacketTracer::get_reason() == high );
+    CHECK((TestPacketTracer::get_reason() == high));
 
     // Dump resets reason
     TestPacketTracer::dump(nullptr);
-    CHECK( TestPacketTracer::get_reason() == VERDICT_REASON_NO_BLOCK );
+    CHECK((TestPacketTracer::get_reason() == VERDICT_REASON_NO_BLOCK));
 
     // Dump delivers reason to daq
-    CHECK( TestPacketTracer::get_dump_reason() == high );
+    CHECK((TestPacketTracer::get_dump_reason() == high));
 
     TestPacketTracer::thread_term();
 }
@@ -652,14 +652,14 @@ TEST_CASE("verbosity", "[PacketTracer]")
 
     std::string val = TestPacketTracer::get_buff();
     std::string expected = "this should log\nthis should also log\n";
-    CHECK( val == expected );
+    CHECK((val == expected));
 
     // reset mutes
     TestPacketTracer::dump(nullptr, 0);
     TestPacketTracer::log(mute_1, "this should log\n");
     TestPacketTracer::log(mute_2, "this should also log\n");
     val = TestPacketTracer::get_buff();
-    CHECK( val == expected );
+    CHECK((val == expected));
        
     TestPacketTracer::thread_term();
 }
@@ -668,16 +668,16 @@ TEST_CASE("mute on inactive", "[PacketTracer]")
 {
     global_mutes.val = 0;
 
-    CHECK( TestPacketTracer::get_mute() == 0 );
-    CHECK( TestPacketTracer::get_mute() == 1 );
-    CHECK( TestPacketTracer::get_mute() == 2 );
+    CHECK((TestPacketTracer::get_mute() == 0));
+    CHECK((TestPacketTracer::get_mute() == 1));
+    CHECK((TestPacketTracer::get_mute() == 2));
 
     // activation mid-run
     TestPacketTracer::thread_init();
 
-    CHECK( TestPacketTracer::get_mute() == 3 );
-    CHECK( TestPacketTracer::get_mute() == 4 );
-    CHECK( TestPacketTracer::get_mute() == 5 );
+    CHECK((TestPacketTracer::get_mute() == 3));
+    CHECK((TestPacketTracer::get_mute() == 4));
+    CHECK((TestPacketTracer::get_mute() == 5));
 
     std::vector<bool> expected = {false, false, false, false, false, false};
     CHECK( TestPacketTracer::get_mutes() == expected );
