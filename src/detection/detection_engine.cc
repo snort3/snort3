@@ -436,7 +436,7 @@ bool DetectionEngine::detect(Packet* p, bool offload_ok)
     return false;
 }
 
-void DetectionEngine::inspect(Packet* p)
+bool DetectionEngine::inspect(Packet* p)
 {
     bool inspected = false;
     {
@@ -461,12 +461,13 @@ void DetectionEngine::inspect(Packet* p)
             if ( !all_disabled(p) )
             {
                 if ( detect(p, true) )
-                    return; // don't finish out offloaded packets
+                    return false; // don't finish out offloaded packets
             }
         }
         finish_inspect_with_latency(p);
     }
     finish_inspect(p, inspected);
+    return true;
 }
 
 //--------------------------------------------------------------------------

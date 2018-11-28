@@ -194,7 +194,7 @@ static void register_profiles()
 // helpers
 //-------------------------------------------------------------------------
 
-static void pass_pkts(Packet*) { }
+static bool pass_pkts(Packet*) { return true; }
 static MainHook_f main_hook = pass_pkts;
 
 static void set_policy(Packet* p)
@@ -877,14 +877,14 @@ void Snort::thread_term()
     delete[] s_data;
 }
 
-void Snort::inspect(Packet* p)
+bool Snort::inspect(Packet* p)
 {
     // Need to include this b/c call is outside the detect tree
     Profile detect_profile(detectPerfStats);
     Profile rebuilt_profile(rebuiltPacketPerfStats);
 
     DetectionEngine de;
-    main_hook(p);
+    return main_hook(p);
 }
 
 DAQ_Verdict Snort::process_packet(

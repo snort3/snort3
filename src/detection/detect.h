@@ -39,8 +39,8 @@ extern THREAD_LOCAL snort::ProfileStats detectPerfStats;
 extern THREAD_LOCAL snort::ProfileStats rebuiltPacketPerfStats;
 
 // main loop hooks
-void snort_ignore(snort::Packet*);
-void snort_log(snort::Packet*);
+bool snort_ignore(snort::Packet*);
+bool snort_log(snort::Packet*);
 
 // alerts
 void CallLogFuncs(snort::Packet*, ListHead*, Event*, const char*);

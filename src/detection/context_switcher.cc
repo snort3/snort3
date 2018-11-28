@@ -70,6 +70,7 @@ IpsContext* ContextSwitcher::pop()
         return nullptr;
 
     IpsContext* c = idle.back();
+    assert(!c->has_callbacks());
     idle.pop_back();
     return c;
 }
@@ -80,6 +81,7 @@ void ContextSwitcher::start()
     assert(!idle.empty());
     trace_logf(detection, TRACE_DETECTION_ENGINE, "(wire) %" PRIu64 " cs::start %u (i=%zu, b=%zu)\n",
         get_packet_number(), idle.back()->get_slot(), idle.size(), busy.size());
+    assert(!idle.back()->has_callbacks());
     busy.emplace_back(idle.back());
     idle.pop_back();
 
@@ -94,6 +96,7 @@ void ContextSwitcher::stop()
         get_packet_number(), busy.back()->get_slot(), idle.size(), busy.size());
 
     IpsContext* c = busy.back();
+    assert(!c->has_callbacks());
     c->clear_context_data();
     idle.emplace_back(c);
     busy.back()->packet->active = nullptr;
@@ -113,6 +116,8 @@ void ContextSwitcher::abort()
 
             idle.emplace_back(hold[i]);
             hold[i] = nullptr;
+            idle.back()->clear_callbacks();
+            idle.back()->clear_context_data();
         }
     }
     while ( !busy.empty() )
@@ -122,6 +127,8 @@ void ContextSwitcher::abort()
 
         idle.emplace_back(busy.back());
         busy.pop_back();
+        idle.back()->clear_callbacks();
+        idle.back()->clear_context_data();
     }
 }
 
@@ -131,6 +138,7 @@ IpsContext* ContextSwitcher::interrupt()
     trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::interrupt %u (i=%zu, b=%zu)\n",
         idle.back()->packet_number, idle.back()->get_slot(), idle.size(), busy.size());
 
+    assert(!idle.back()->has_callbacks());
     busy.emplace_back(idle.back());
     idle.pop_back();
     return busy.back();
@@ -144,6 +152,7 @@ IpsContext* ContextSwitcher::complete()
     trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::complete %u (i=%zu, b=%zu)\n",
         c->packet_number, busy.back()->get_slot(), idle.size(), busy.size());
 
+    assert(!c->has_callbacks());
     c->clear_context_data();
 
     idle.emplace_back(c);

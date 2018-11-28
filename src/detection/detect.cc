@@ -54,12 +54,14 @@ THREAD_LOCAL ProfileStats detectPerfStats;
 THREAD_LOCAL ProfileStats eventqPerfStats;
 THREAD_LOCAL ProfileStats rebuiltPacketPerfStats;
 
-void snort_ignore(Packet*) { }
+bool snort_ignore(Packet*) { return true; }
 
-void snort_log(Packet* p)
+bool snort_log(Packet* p)
 {
     pc.log_pkts++;
     EventManager::call_loggers(nullptr, p, nullptr, nullptr);
+
+    return true;
 }
 
 void CallLogFuncs(Packet* p, ListHead* head, Event* event, const char* msg)

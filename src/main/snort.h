@@ -34,7 +34,7 @@ class Flow;
 struct Packet;
 struct SnortConfig;
 
-typedef void (* MainHook_f)(Packet*);
+typedef bool (* MainHook_f)(Packet*);
 
 class TestPause
 {
@@ -78,7 +78,7 @@ public:
 
     static DAQ_Verdict packet_callback(void*, const DAQ_PktHdr_t*, const uint8_t*);
 
-    static void inspect(Packet*);
+    static bool inspect(Packet*);
 
     static void set_main_hook(MainHook_f);
     static ContextSwitcher* get_switcher();

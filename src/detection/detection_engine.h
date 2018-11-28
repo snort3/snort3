@@ -82,7 +82,7 @@ public:
     static void clear_replacement();
 
     static bool detect(Packet*, bool offload_ok = false);
-    static void inspect(Packet*);
+    static bool inspect(Packet*);
 
     static int queue_event(const struct OptTreeNode*);
     static int queue_event(unsigned gid, unsigned sid, Actions::Type = Actions::NONE);

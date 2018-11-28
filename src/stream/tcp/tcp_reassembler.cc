@@ -256,7 +256,6 @@ void TcpReassembler::purge_alerts(TcpReassemblerState& trs)
         Stream::log_extra_data(flow, trs.xtradata_mask, ai->event_id, ai->event_second);
     }
     trs.tracker->alert_count = 0;
-    last_pdu = nullptr;
 }
 
 int TcpReassembler::purge_to_seq(TcpReassemblerState& trs, uint32_t flush_seq)
@@ -591,14 +590,16 @@ int TcpReassembler::_flush_to_seq(
             tcpStats.rebuilt_bytes += flushed_bytes;
 
             NoProfile exclude(s5TcpFlushPerfStats);
-            Snort::inspect(pdu);
 
-            if ( pdu->flow->is_offloaded() )
+            if ( !Snort::inspect(pdu) )
                 last_pdu = pdu;
+            else
+                last_pdu = nullptr;
         }
         else
         {
             tcpStats.rebuilt_buffers++; // FIXIT-L this is not accurate
+            last_pdu = nullptr;
         }
 
         // FIXIT-L must check because above may clear trs.sos.session
@@ -1014,6 +1015,7 @@ int32_t TcpReassembler::flush_pdu_ackd(TcpReassemblerState& trs, uint32_t* flags
 int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
 {
     uint32_t flushed = 0;
+    last_pdu = nullptr;
 
     switch ( trs.tracker->flush_policy )
     {
@@ -1056,7 +1058,8 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
 
 int TcpReassembler::flush_on_ack_policy(TcpReassemblerState& trs, Packet* p)
 {
-	uint32_t flushed = 0;
+    uint32_t flushed = 0;
+    last_pdu = nullptr;
 
     switch (trs.tracker->flush_policy)
     {
@@ -1127,6 +1130,14 @@ void TcpReassembler::insert_segment_in_empty_seglist(
     if ( SEQ_GT(trs.tracker->r_win_base, seq) )
     {
         overlap = trs.tracker->r_win_base - tsd.get_seg_seq();
+
+        if ( overlap >= tsd.get_seg_len() )
+            return;
+    }
+
+    if ( SEQ_GT(trs.sos.seglist_base_seq, seq + overlap) )
+    {
+        overlap = trs.sos.seglist_base_seq- seq - overlap;
 
         if ( overlap >= tsd.get_seg_len() )
             return;

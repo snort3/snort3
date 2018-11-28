@@ -91,6 +91,9 @@ public:
     void clear_callbacks()
     { post_callbacks.clear(); }
 
+    bool has_callbacks() const
+    { return !post_callbacks.empty(); }
+
     void post_detection();
 
 public:

@@ -104,10 +104,10 @@ void RegexOffload::worker(RegexRequest* req)
 
             if ( !req->offload )
                 continue;
+            
         }
 
         assert(req->packet);
-        assert(req->packet->flow->is_offloaded());
 
         snort::SnortConfig::set_conf(req->packet->context->conf);  // FIXIT-H reload issue
         fp_offload(req->packet);
