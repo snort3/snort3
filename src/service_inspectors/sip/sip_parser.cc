@@ -1184,14 +1184,17 @@ bool sip_parse(SIPMsg* msg, const char* buff, const char* end, SIP_PROTO_CONF* c
     start = nextIndex;
     uint16_t bodyLen = end - start;
 
-    /*Disable this check for TCP. Revisit this again when PAF enabled for SIP*/
     if ((!msg->isTcp)&&(msg->content_len > bodyLen))
         DetectionEngine::queue_event(GID_SIP, SIP_EVENT_MISMATCH_CONTENT_LEN);
 
-    bool status = sip_body_parse(msg, start, start + msg->content_len, &nextIndex);
+    bool status;
+
+    if(msg->content_len <= bodyLen)
+        status = sip_body_parse(msg, start, start + msg->content_len, &nextIndex);
+    else
+        status = sip_body_parse(msg, start, end, &nextIndex);
 
     // Find out whether multiple SIP messages in this packet
-    /*Disable this check for TCP. Revisit this again when PAF enabled for SIP*/
     if ((!msg->isTcp) && (msg->content_len < bodyLen))
     {
         if ( sip_startline_parse(msg, start + msg->content_len, end, &nextIndex, config) )
