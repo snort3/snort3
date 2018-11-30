@@ -81,6 +81,7 @@ public:
     void bad_rule(std::istringstream& stream, const std::string& bad_option);
     void old_http_rule();
     bool is_old_http_rule();
+    void resolve_pcre_buffer_options();
 
 private:
     static std::size_t error_count;

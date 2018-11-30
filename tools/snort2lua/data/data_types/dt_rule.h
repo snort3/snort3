@@ -50,6 +50,7 @@ public:
     void make_comment();
     void set_old_http_rule();
     bool is_old_http_rule() { return old_http_rule; }
+    void resolve_pcre_buffer_options();
 
     friend std::ostream& operator<<(std::ostream&, const Rule&);
 

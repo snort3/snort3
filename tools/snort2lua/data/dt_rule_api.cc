@@ -264,6 +264,12 @@ bool RuleApi::is_old_http_rule()
     return curr_rule->is_old_http_rule();
 }
 
+void RuleApi::resolve_pcre_buffer_options()
+{
+    if (curr_rule)
+        curr_rule->resolve_pcre_buffer_options();
+}
+
 std::ostream& operator<<(std::ostream& out, const RuleApi& data)
 {
     if (DataApi::is_default_mode())

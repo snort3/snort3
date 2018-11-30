@@ -49,7 +49,7 @@ bool Rule::add_hdr_data(const std::string& data)
     }
 }
 
-void Rule::set_rule_old_action(const std::string &action)
+void Rule::set_rule_old_action(const std::string& action)
 {
     old_action = action;
 }
@@ -175,5 +175,94 @@ std::ostream& operator<<(std::ostream& out, const Rule& rule)
     }
 
     return out;
+}
+
+void Rule::resolve_pcre_buffer_options()
+{
+    std::vector<RuleOption*>::iterator iter;
+    std::string curr_sticky_buffer = "";
+    bool is_sip = false;
+    std::string name;
+    const std::string service = get_option("service");
+    std::string new_buffer;
+
+    if (service == "sip")
+        is_sip = true;
+
+    iter = options.begin();
+
+    while (iter != options.end())
+    {
+        name = (*iter)->get_name();
+
+        if (name == "pcre_P_option_body" || name == "pcre_H_option_header")
+        {
+            delete(*iter);
+            iter = options.erase(iter);
+
+            if (is_sip)
+            {
+                if (name == "pcre_P_option_body")
+                {
+                    new_buffer = "sip_body";
+                }
+                else
+                {
+                    new_buffer = "sip_header";
+                }
+            }
+            else
+            {
+                if (name == "pcre_P_option_body")
+                {
+                    new_buffer = "http_client_body";
+                }
+                else
+                {
+                    new_buffer = "http_header";
+                }
+            }
+
+            if (curr_sticky_buffer != new_buffer)
+            {
+                curr_sticky_buffer = new_buffer;
+                RuleOption* new_opt = new RuleOption(new_buffer);
+                options.insert(iter, new_opt);
+                ++iter;
+            }
+        }
+        else if (name == "pkt_data")
+        {
+            curr_sticky_buffer = name;
+            ++iter;
+        }
+        else if (name == "http_uri" ||
+            name == "http_raw_uri" ||
+            name == "http_cookie" ||
+            name == "http_raw_cookie" ||
+            name == "http_method" ||
+            name == "http_stat_code" ||
+            name == "http_stat_msg" ||
+            name == "http_header" ||
+            name == "http_client_body" ||
+            name == "sip_header" ||
+            name == "sip_body")
+        {
+            if (curr_sticky_buffer == name)
+            {
+                delete(*iter);
+                iter = options.erase(iter);
+            }
+            else
+            {
+                curr_sticky_buffer = name;
+                ++iter;
+            }
+        }
+        else
+        {
+            ++iter;
+        }
+    }
 }
 

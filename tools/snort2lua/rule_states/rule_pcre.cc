@@ -93,8 +93,8 @@ bool Pcre::convert(std::istringstream& data_stream)
         {
         case 'B': sticky_buffer = "pkt_data"; break;
         case 'U': sticky_buffer = "http_uri"; break;
-        case 'P': sticky_buffer = "http_client_body"; break;
-        case 'H': sticky_buffer = "http_header"; break;
+        case 'P': sticky_buffer = "pcre_P_option_body"; break;
+        case 'H': sticky_buffer = "pcre_H_option_header"; break;
         case 'M': sticky_buffer = "http_method"; break;
         case 'C': sticky_buffer = "http_cookie"; break;
         case 'I': sticky_buffer = "http_raw_uri"; break;

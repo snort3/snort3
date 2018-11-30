@@ -291,6 +291,8 @@ int Converter::parse_file(
                     table_api.close_table();
                 }
 
+                rule_api.resolve_pcre_buffer_options();
+		
                 if (commented_rule)
                     rule_api.make_rule_a_comment();
 
