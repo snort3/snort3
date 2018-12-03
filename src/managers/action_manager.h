@@ -62,15 +62,18 @@ public:
     static void release_plugins();
     static void dump_plugins();
 
+    static void new_config(snort::SnortConfig*);
     static snort::Actions::Type get_action_type(const char*);
+    static void delete_config(snort::SnortConfig*);
 
     static void instantiate(const snort::ActionApi*, snort::Module*, snort::SnortConfig*);
 
     static void thread_init(snort::SnortConfig*);
+    static void thread_reinit(snort::SnortConfig*);
     static void thread_term(snort::SnortConfig*);
 
     static void reset_queue();
-    static void queue_reject();
+    static void queue_reject(snort::SnortConfig*);
     static void queue(snort::IpsAction*);
     static void execute(snort::Packet*);
 

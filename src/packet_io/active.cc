@@ -470,7 +470,7 @@ void Active::reset_session(Packet* p, bool force)
 
     if ( enabled )
     {
-        ActionManager::queue_reject();
+        ActionManager::queue_reject(SnortConfig::get_conf());
 
         if ( p->flow )
         {

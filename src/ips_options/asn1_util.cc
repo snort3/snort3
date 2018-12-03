@@ -109,26 +109,15 @@ static ASN1_TYPE* asn1_node_alloc()
 **  an ASN.1 decode.  Pass in the max number of nodes for an ASN.1 decode and
 **  we will track that many.
 **
-**  @return integer
+**  @return none
 **
-**  @retval ASN1_OK function successful
-**  @retval ASN1_ERR_MEM_ALLOC memory allocation failed
-**  @retval ASN1_ERR_INVALID_ARG invalid argument
 */
 void asn1_init_mem(snort::SnortConfig* sc)
 {
-    int num_nodes;
+    asn1_config.num_nodes = sc->asn1_mem;
 
-    if (sc->asn1_mem != 0)
-        num_nodes = sc->asn1_mem;
-    else
-        num_nodes = 256;
-
-    if (num_nodes <= 0)
-        return;
-
-    asn1_config.mem = (ASN1_TYPE*)snort_calloc(num_nodes, sizeof(ASN1_TYPE));
-    asn1_config.num_nodes = num_nodes;
+    if (asn1_config.num_nodes > 0)
+        asn1_config.mem = (ASN1_TYPE*)snort_calloc(asn1_config.num_nodes, sizeof(ASN1_TYPE));
     node_index = 0;
 }
 

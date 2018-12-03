@@ -40,6 +40,7 @@
 #include "ips_options/ips_flowbits.h"
 #include "latency/latency_config.h"
 #include "log/messages.h"
+#include "managers/action_manager.h"
 #include "managers/event_manager.h"
 #include "managers/inspector_manager.h"
 #include "managers/ips_manager.h"
@@ -189,6 +190,7 @@ void SnortConfig::init(const SnortConfig* const other_conf, ProtocolReference* p
         mpls_stack_depth = DEFAULT_LABELCHAIN_LENGTH;
 
         daq_config = new SFDAQConfig();
+        ActionManager::new_config(this);
         InspectorManager::new_config(this);
 
         num_slots = ThreadConfig::get_instance_max();
@@ -293,6 +295,7 @@ SnortConfig::~SnortConfig()
 
     delete policy_map;
     InspectorManager::delete_config(this);
+    ActionManager::delete_config(this);
 
     delete[] state;
     delete thread_config;

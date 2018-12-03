@@ -66,6 +66,7 @@ public:
 
     static bool thread_init_privileged(const char* intf);
     static void thread_init_unprivileged();
+    static void thread_reinit(SnortConfig*);
     static void thread_term();
 
     static void thread_idle();

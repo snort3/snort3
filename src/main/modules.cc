@@ -69,7 +69,7 @@ using namespace std;
 /* *INDENT-OFF* */   //  Uncrustify handles this section incorrectly.
 static const Parameter detection_params[] =
 {
-    { "asn1", Parameter::PT_INT, "1:", "256",
+    { "asn1", Parameter::PT_INT, "0:256", "0",
       "maximum decode nodes" },
 
     { "offload_limit", Parameter::PT_INT, "0:", "99999",

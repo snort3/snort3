@@ -51,6 +51,8 @@ struct RuleTreeNode;
 int fpLogEvent(const RuleTreeNode*, const OptTreeNode*, snort::Packet*);
 int fpEvalRTN(RuleTreeNode*, snort::Packet*, int check_ports);
 
+#define MAX_NUM_RULE_TYPES 10   // max number of known rule types
+
 /*
 **  This define is for the number of unique events
 **  to match before choosing which event to log.

@@ -128,6 +128,7 @@ struct RulePortTables;
 struct RuleState;
 struct DetectionFilterConfig;
 struct EventQueueConfig;
+struct IpsActionsConfig;
 class FastPatternConfig;
 struct FrameworkConfig;
 struct ThresholdConfig;
@@ -314,6 +315,7 @@ public:
     RuleListNode* rule_lists = nullptr;
     int evalOrder[Actions::MAX + 1];
 
+    IpsActionsConfig* ips_actions_config = nullptr;
     FrameworkConfig* framework_config = nullptr;
 
     /* master port list table */
@@ -355,7 +357,6 @@ public:
     ProfilerConfig* profiler = nullptr;
 
     LatencyConfig* latency = nullptr;
-    _IntelPmHandles* ipm_handles = nullptr;
 
     unsigned remote_control_port = 0;
     std::string remote_control_socket;

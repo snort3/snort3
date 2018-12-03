@@ -832,6 +832,12 @@ void Snort::thread_init_unprivileged()
     PacketManager::thread_init();
 }
 
+void Snort::thread_reinit(SnortConfig* sc)
+{
+    InspectorManager::thread_reinit(sc);
+    ActionManager::thread_reinit(sc);
+}
+
 void Snort::thread_term()
 {
     HighAvailabilityManager::thread_term_beginning();

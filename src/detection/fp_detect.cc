@@ -226,7 +226,7 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
 
 /*
 **  DESCRIPTION
-**    Add and Event to the appropriate Match Queue: Alert, Pass, or Log.
+**    Add an Event to the appropriate Match Queue: Alert, Pass, or Log.
 **    This allows us to find multiple events per packet and pick the 'best'
 **    one.  This function also allows us to change the order of alert,
 **    pass, and log signatures by caching them for decision later.
@@ -832,10 +832,11 @@ void fp_set_context(IpsContext& c)
     c.stash = new MpseStash;
 
     c.otnx = (OtnxMatchData*)snort_calloc(sizeof(OtnxMatchData));
-    c.otnx->iMatchInfoArraySize = SnortConfig::get_conf()->num_rule_types;
+    // FIXIT-L use dynamic array size from configure, resize it when reload
+    c.otnx->iMatchInfoArraySize = (MAX_NUM_RULE_TYPES * 2);
 
     c.otnx->matchInfo = (MatchInfo*)snort_calloc(
-        SnortConfig::get_conf()->num_rule_types, sizeof(MatchInfo));
+        c.otnx->iMatchInfoArraySize, sizeof(MatchInfo));
 
     c.context_num = 0;
 }

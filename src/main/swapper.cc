@@ -23,9 +23,9 @@
 
 #include "swapper.h"
 
-#include "managers/inspector_manager.h"
 #include "target_based/sftarget_reader.h"
 
+#include "snort.h"
 #include "snort_config.h"
 
 using namespace snort;
@@ -83,8 +83,9 @@ void Swapper::apply()
     {
         const bool reload = (snort::SnortConfig::get_conf() != nullptr);
         snort::SnortConfig::set_conf(new_conf);
+        // FIXIT-M Determine whether we really want to do this before or after the set_conf
         if (reload)
-            snort::InspectorManager::thread_reinit(new_conf);
+            snort::Snort::thread_reinit(new_conf);
     }
 
     if ( new_attribs )
