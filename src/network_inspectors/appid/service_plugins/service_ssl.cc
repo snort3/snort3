@@ -443,8 +443,12 @@ static void parse_client_initiation(const uint8_t* data, uint16_t size, ServiceS
             return;
         }
 
-        data   += ntohs(ext->length) + offsetof(ServiceSSLV3ExtensionServerName, list_length);
-        length -= ntohs(ext->length) + offsetof(ServiceSSLV3ExtensionServerName, list_length);
+        unsigned len = ntohs(ext->length) + offsetof(ServiceSSLV3ExtensionServerName, list_length);
+        if (len > length)
+            return;
+
+        data += len;
+        length -= len;
     }
 }
 
