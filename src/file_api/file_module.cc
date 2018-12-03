@@ -29,8 +29,11 @@
 
 #include "file_module.h"
 
+#include "log/messages.h"
+#include "main/snort.h"
 #include "main/snort_config.h"
 
+#include "file_service.h"
 #include "file_stats.h"
 
 using namespace snort;
@@ -265,6 +268,11 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
     {
         if ( v.get_bool() )
         {
+            if (Snort::is_reloading() && !FileService::is_file_capture_enabled())
+            {
+                ParseError("Enabling file capture requires a restart\n");
+                return false;
+            }
             fp.set_file_capture(true);
         }
     }
@@ -308,7 +316,7 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
     {
         std::istringstream stream(v.get_string());
         std::string tmpstr;
-        while(std::getline(stream, tmpstr, ','))
+        while (std::getline(stream, tmpstr, ','))
         {
             rule.groups.emplace_back(tmpstr);
         }
@@ -351,8 +359,15 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
         file_rule.use.signature_enabled = v.get_bool();
 
     else if ( v.is("enable_file_capture") )
+    {
         file_rule.use.capture_enabled = v.get_bool();
-
+        if (file_rule.use.capture_enabled && Snort::is_reloading()
+            && !FileService::is_file_capture_enabled())
+        {
+            ParseError("Enabling file capture requires a restart\n");
+            return false;
+        }
+    }
     else
         return false;
 
