@@ -90,11 +90,10 @@ IpsOption::EvalStatus FileTypeOption::eval(Cursor&, Packet* pkt)
 static const Parameter s_params[] =
 {
     { "~", Parameter::PT_STRING, nullptr, nullptr,
-        "list of file type IDs to match" },
+      "list of file type IDs to match" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
-
 
 #define s_help \
     "rule option to check file type"
@@ -117,7 +116,7 @@ public:
     FileTypeBitSet types;
 
 private:
-    bool parse_type_and_version(std::string& token);
+    bool parse_type_and_version(std::string& token, SnortConfig*);
 };
 
 bool FileTypeModule::begin(const char*, int, SnortConfig*)
@@ -127,7 +126,7 @@ bool FileTypeModule::begin(const char*, int, SnortConfig*)
     return true;
 }
 
-bool FileTypeModule::set(const char*, Value& v, SnortConfig*)
+bool FileTypeModule::set(const char*, Value& v, SnortConfig* sc)
 {
     if ( !v.is("~") )
         return false;
@@ -143,7 +142,7 @@ bool FileTypeModule::set(const char*, Value& v, SnortConfig*)
         if ( tok[tok.length()-1] == '"' )
             tok.erase(tok.length()-1, 1);
 
-        if (! parse_type_and_version(tok) )
+        if (!parse_type_and_version(tok, sc) )
             return false;
     }
     return true;
@@ -162,21 +161,21 @@ bool FileTypeModule::set(const char*, Value& v, SnortConfig*)
 //    Multiple types are separated by spaces:
 // TYPE1,VER1 TYPE2 TYPE3,VER1,VER2 -- Match any of these types
 //
-bool FileTypeModule::parse_type_and_version(std::string& token)
+bool FileTypeModule::parse_type_and_version(std::string& token, SnortConfig* sc)
 {
     std::istringstream stream(token);
     std::string type_name;
     std::string version;
     FileTypeBitSet ids_set;
 
-    if(!std::getline(stream, type_name, ','))
+    if (!std::getline(stream, type_name, ','))
         return false;
 
-    if(!std::getline(stream, version, ','))
+    if (!std::getline(stream, version, ','))
     {
         // Match all versions of this type.
-        get_magic_rule_ids_from_type(type_name, "", ids_set);
-        if(ids_set.none())
+        get_magic_rule_ids_from_type(type_name, "", ids_set, sc);
+        if (ids_set.none())
         {
             ParseError("Invalid file_type type '%s'. Not found in file_rules.", type_name.c_str());
             return false;
@@ -186,21 +185,23 @@ bool FileTypeModule::parse_type_and_version(std::string& token)
         return true;
     }
 
-    get_magic_rule_ids_from_type(type_name, version, ids_set);
-    if(ids_set.none())
+    get_magic_rule_ids_from_type(type_name, version, ids_set, sc);
+    if (ids_set.none())
     {
-        ParseError("Invalid file_type type '%s' or version '%s'. Not found in file_rules.", type_name.c_str(), version.c_str());
+        ParseError("Invalid file_type type '%s' or version '%s'. Not found in file_rules.",
+            type_name.c_str(), version.c_str());
         return false;
     }
 
     types |= ids_set;
 
-    while(std::getline(stream, version, ','))
+    while (std::getline(stream, version, ','))
     {
-        get_magic_rule_ids_from_type(type_name, version, ids_set);
-        if(ids_set.none())
+        get_magic_rule_ids_from_type(type_name, version, ids_set, sc);
+        if (ids_set.none())
         {
-            ParseError("Invalid file_type type '%s' or version '%s'. Not found in file_rules.", type_name.c_str(), version.c_str());
+            ParseError("Invalid file_type type '%s' or version '%s'. Not found in file_rules.",
+                type_name.c_str(), version.c_str());
             return false;
         }
 

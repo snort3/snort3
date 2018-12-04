@@ -64,9 +64,10 @@ struct PHGlobal
 {
     const InspectApi& api;
     bool initialized = false;   // In the context of the main thread, this means that api.pinit()
-                                // has been called.  In the packet thread, it means that api.tinit()
-                                // has been called.
-    bool instance_initialized = false;  // In the packet thread, at least one instance has had tinit() called.
+                                // has been called.  In the packet thread, it means that
+                                // api.tinit() has been called.
+    bool instance_initialized = false;  // In the packet thread, at least one instance has had
+                                        // tinit() called.
 
     PHGlobal(const InspectApi& p) : api(p) { }
 
@@ -89,7 +90,8 @@ struct PHClass
     { return ( a->api.type < b->api.type ); }
 };
 
-enum ReloadType {
+enum ReloadType
+{
     RELOAD_TYPE_NONE = 0,
     RELOAD_TYPE_DELETED,
     RELOAD_TYPE_REENABLED,
@@ -117,9 +119,11 @@ struct PHInstance
     { reload_type = val; }
 
     bool is_reloaded()
-    { return ((reload_type == RELOAD_TYPE_REENABLED) or
-            (reload_type == RELOAD_TYPE_DELETED) or
-            (reload_type == RELOAD_TYPE_NEW)); }
+    {
+        return ((reload_type == RELOAD_TYPE_REENABLED)or
+                   (reload_type == RELOAD_TYPE_DELETED) or
+                   (reload_type == RELOAD_TYPE_NEW));
+    }
 
     ReloadType get_reload_type()
     { return reload_type; }
@@ -236,7 +240,7 @@ void FrameworkPolicy::vectorize(SnortConfig* sc)
     {
         switch ( p->pp_class.api.type )
         {
-        case IT_PASSIVE :
+        case IT_PASSIVE:
             passive.add(p);
             // FIXIT-L Ugly special case for noticing a binder
             if ( !strcmp(p->pp_class.api.base.name, bind_id) )
@@ -382,7 +386,8 @@ void InspectorManager::empty_trash()
 // FIXIT-L allowing lookup by name or type or key is kinda hinky
 // would be helpful to have specific lookups
 static bool get_instance(
-        FrameworkPolicy* fp, const char* keyword, bool dflt_only, std::vector<PHInstance*>::iterator& it)
+    FrameworkPolicy* fp, const char* keyword, bool dflt_only,
+    std::vector<PHInstance*>::iterator& it)
 {
     for ( it = fp->ilist.begin(); it != fp->ilist.end(); ++it )
     {
@@ -400,7 +405,7 @@ static bool get_instance(
 }
 
 static PHInstance* get_instance(
-        FrameworkPolicy* fp, const char* keyword, bool dflt_only = false)
+    FrameworkPolicy* fp, const char* keyword, bool dflt_only = false)
 {
     std::vector<PHInstance*>::iterator it;
     return get_instance(fp, keyword, dflt_only, it) ? *it : nullptr;
@@ -465,7 +470,7 @@ void InspectorManager::delete_policy(InspectionPolicy* pi, bool cloned)
     for ( auto* p : pi->framework_policy->ilist )
     {
         if ( cloned and !(p->is_reloaded()) )
-                continue;
+            continue;
 
         if ( p->handler->get_api()->type == IT_PASSIVE )
             s_trash2.emplace_back(p->handler);
@@ -499,15 +504,17 @@ Binder* InspectorManager::get_binder()
     if ( !pi || !pi->framework_policy )
         return nullptr;
 
-    return (Binder*) pi->framework_policy->binder;
+    return (Binder*)pi->framework_policy->binder;
 }
 
 // FIXIT-P cache get_inspector() returns or provide indexed lookup
-Inspector* InspectorManager::get_inspector(const char* key, bool dflt_only)
+Inspector* InspectorManager::get_inspector(const char* key, bool dflt_only, SnortConfig* sc)
 {
     InspectionPolicy* pi;
-    
-    if (dflt_only)
+
+    if (dflt_only && (sc != nullptr))
+        pi = snort::get_default_inspection_policy(sc);
+    else if (dflt_only)
         pi = snort::get_default_inspection_policy(SnortConfig::get_conf());
     else
         pi = snort::get_inspection_policy();
@@ -790,6 +797,7 @@ Inspector* InspectorManager::instantiate(
     // FIXIT-L can't we just unify PHInstance and InspectorWrapper?
     return ppi->handler;
 }
+
 #endif
 
 // create default binding for wizard and configured services
@@ -1020,13 +1028,13 @@ void InspectorManager::execute(Packet* p)
     }
     // must check between each ::execute()
     if ( p->disable_inspect )
-       return;
+        return;
 
     if ( !p->is_cooked() )
         ::execute(p, fp->packet.vec, fp->packet.num);
 
     if ( p->disable_inspect )
-       return;
+        return;
 
     SnortConfig* sc = SnortConfig::get_conf();
     FrameworkPolicy* fp_dft = snort::get_default_inspection_policy(sc)->framework_policy;
@@ -1038,7 +1046,7 @@ void InspectorManager::execute(Packet* p)
         ::execute(p, fp->network.vec, fp->network.num);
 
         if ( p->disable_inspect )
-           return;
+            return;
 
         ::execute(p, fp_dft->control.vec, fp_dft->control.num);
     }
@@ -1055,7 +1063,7 @@ void InspectorManager::execute(Packet* p)
         }
 
         if ( p->disable_inspect )
-           return;
+            return;
 
         if ( p->flow->full_inspection() )
             full_inspection(p);

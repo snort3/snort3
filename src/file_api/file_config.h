@@ -23,7 +23,7 @@
 #define FILE_CONFIG_H
 
 // This provides the basic configuration for file processing
-
+#include "main/snort_config.h"
 #include "file_api/file_identifier.h"
 #include "file_api/file_policy.h"
 
@@ -78,6 +78,6 @@ private:
 };
 
 std::string file_type_name(uint32_t id);
-FileConfig* get_file_config();
+FileConfig* get_file_config(snort::SnortConfig* sc = nullptr);
 #endif
 

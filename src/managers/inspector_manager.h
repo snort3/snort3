@@ -59,7 +59,8 @@ public:
     static InspectSsnFunc get_session(uint16_t proto);
 
     static InspectorType get_type(const char* key);
-    SO_PUBLIC static Inspector* get_inspector(const char* key, bool dflt_only = false);
+    SO_PUBLIC static Inspector* get_inspector(const char* key, bool dflt_only = false,
+        SnortConfig* sc = nullptr);
 
     SO_PUBLIC static Binder* get_binder();
 

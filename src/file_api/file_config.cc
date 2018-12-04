@@ -102,9 +102,9 @@ std::string file_type_name(uint32_t id)
         return "NA";
 }
 
-FileConfig* get_file_config ()
+FileConfig* get_file_config(snort::SnortConfig* sc)
 {
-    snort::FileInspect* fi = (snort::FileInspect*)snort::InspectorManager::get_inspector(FILE_ID_NAME, true);
+    snort::FileInspect* fi = (snort::FileInspect*)snort::InspectorManager::get_inspector(FILE_ID_NAME, true, sc);
 
     if (fi)
         return (fi->config);
@@ -114,13 +114,14 @@ FileConfig* get_file_config ()
 
 namespace snort
 {
-    void get_magic_rule_ids_from_type(const std::string& type, const std::string& version, snort::FileTypeBitSet& ids_set)
-    {
-        FileConfig* conf = get_file_config();
-        if(conf)
-            conf->get_magic_rule_ids_from_type(type, version, ids_set);
-        else
-            ids_set.reset();
-    }
+void get_magic_rule_ids_from_type(const std::string& type, const std::string& version,
+    snort::FileTypeBitSet& ids_set, snort::SnortConfig* sc)
+{
+    FileConfig* conf = get_file_config(sc);
+    if (conf)
+        conf->get_magic_rule_ids_from_type(type, version, ids_set);
+    else
+        ids_set.reset();
+}
 }
 

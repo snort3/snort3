@@ -30,6 +30,7 @@
 #include <cstring>
 #include <string>
 
+#include "main/snort_config.h"
 #include "main/snort_types.h"
 
 #define     ENABLE_FILE_TYPE_IDENTIFICATION      0x1
@@ -132,7 +133,7 @@ public:
 
     // This is called when a new flow is queried for the first time
     // Check & update what file policy is enabled on this flow/file
-    virtual void policy_check(Flow*, FileInfo* ) { }
+    virtual void policy_check(Flow*, FileInfo*) { }
 
     // This is called after file type is known
     virtual FileVerdict type_lookup(Packet*, FileInfo*)
@@ -143,7 +144,6 @@ public:
     { return FILE_VERDICT_UNKNOWN; }
 
     virtual void log_file_action(Flow*, FileInfo*, FileAction) { }
-
 };
 
 inline void initFilePosition(FilePosition* position, uint64_t processed_size)
@@ -194,7 +194,7 @@ inline FileCharEncoding get_character_encoding(const char* file_name, size_t len
 SO_PUBLIC uint64_t get_file_processed_size(Flow* flow);
 SO_PUBLIC FilePosition get_file_position(Packet* pkt);
 SO_PUBLIC void get_magic_rule_ids_from_type(const std::string& type,
-    const std::string& version, FileTypeBitSet& ids_set);
+    const std::string& version, FileTypeBitSet& ids_set, SnortConfig*);
 }
 #endif
 
