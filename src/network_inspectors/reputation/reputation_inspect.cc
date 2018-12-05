@@ -221,40 +221,52 @@ static IPdecision reputation_decision(ReputationConfig* config, Packet* p)
             egress_zone = p->pkth->egress_group;
     }
 
+    if (config->nested_ip == INNER)
+    {
+        decision_per_layer(config, p, ingress_zone, egress_zone, p->ptrs.ip_api, &decision_final);
+        return decision_final;
+    }
+
+    // For OUTER or ALL, save current layers, iterate, then restore layers as needed
     ip::IpApi tmp_api = p->ptrs.ip_api;
     int8_t num_layer = 0;
     IpProtocol tmp_next = p->get_ip_proto_next();
-    bool outer_layer_only = (config->nested_ip == OUTER) ? true : false;
-    bool outer_layer = false;
 
-    while (layer::set_outer_ip_api(p, p->ptrs.ip_api, p->ip_proto_next, num_layer) &&
-        tmp_api != p->ptrs.ip_api)
+    if (config->nested_ip == OUTER)
     {
-        outer_layer = true;
-
-        if (decision_per_layer(config, p, ingress_zone, egress_zone,p->ptrs.ip_api,
-                &decision_final))
-            return decision_final;
-
-        if (outer_layer_only)
-        {
-            p->ip_proto_next = tmp_next;
+        layer::set_outer_ip_api(p, p->ptrs.ip_api, p->ip_proto_next, num_layer);
+        decision_per_layer(config, p, ingress_zone, egress_zone, p->ptrs.ip_api, &decision_final);
+        if (decision_final != BLACKLISTED)
             p->ptrs.ip_api = tmp_api;
-            return decision_final;
-        }
     }
+    else if (config->nested_ip == ALL)
+    {
+        bool done = false;
+        ip::IpApi blocked_api;
+        IPdecision decision_current = DECISION_NULL;
+
+        while (!done and layer::set_outer_ip_api(p, p->ptrs.ip_api, p->ip_proto_next, num_layer))
+        {
+            done = decision_per_layer(config, p, ingress_zone, egress_zone, p->ptrs.ip_api,
+                &decision_current);
+            if (decision_current != DECISION_NULL)
+            {
+                if (decision_current == BLACKLISTED)
+                    blocked_api = p->ptrs.ip_api;
+                decision_final = decision_current;
+                decision_current = DECISION_NULL;
+            }
+        }
+        if (decision_final != BLACKLISTED)
+            p->ptrs.ip_api = tmp_api;
+        else if (p->ptrs.ip_api != blocked_api)
+            p->ptrs.ip_api = blocked_api;
+    }
+    else
+        assert(false); // Should never hit this
 
     p->ip_proto_next = tmp_next;
-    p->ptrs.ip_api = tmp_api;
-
-    /*Check INNER IP, when configured or only one layer*/
-    if (!outer_layer || (config->nested_ip == INNER) || (config->nested_ip == ALL))
-    {
-        decision_per_layer(config, p, ingress_zone, egress_zone, p->ptrs.ip_api,
-            &decision_final);
-    }
-
-    return (decision_final);
+    return decision_final;
 }
 
 static void snort_reputation(ReputationConfig* config, Packet* p)
