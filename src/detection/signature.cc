@@ -102,7 +102,7 @@ void AddReference(
 /************************ Class/Priority Implementation ***********************/
 
 void AddClassification(
-    SnortConfig* sc, const char* type, const char* name, int priority)
+    SnortConfig* sc, const char* type, const char* name, unsigned priority)
 {
     int max_id = 0;
     ClassType* current = sc->classifications;

@@ -375,10 +375,10 @@ bool ExtractModule::end(const char*, int, SnortConfig*)
 bool ExtractModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("~count") )
-        data.bytes_to_grab = v.get_long();
+        data.bytes_to_grab = v.get_uint8();
 
     else if ( v.is("~offset") )
-        data.offset = v.get_long();
+        data.offset = v.get_int32();
 
     else if ( v.is("~name") )
         data.name = snort_strdup(v.get_string());
@@ -387,10 +387,10 @@ bool ExtractModule::set(const char*, Value& v, SnortConfig*)
         data.relative_flag = 1;
 
     else if ( v.is("align") )
-        data.align = v.get_long();
+        data.align = v.get_uint8();
 
     else if ( v.is("multiplier") )
-        data.multiplier = v.get_long();
+        data.multiplier = v.get_uint16();
 
     else if ( v.is("big") )
         set_byte_order(data.endianness, ENDIAN_BIG, "byte_extract");
@@ -416,7 +416,7 @@ bool ExtractModule::set(const char*, Value& v, SnortConfig*)
         data.base = 8;
 
     else if ( v.is("bitmask") )
-        data.bitmask_val = v.get_long();
+        data.bitmask_val = v.get_uint32();
 
     else
         return false;

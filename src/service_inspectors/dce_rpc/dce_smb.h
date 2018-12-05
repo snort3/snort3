@@ -481,9 +481,9 @@ public:
 
 // Used for reassembled packets
 #define DCE2_MOCK_HDR_LEN__SMB_CLI \
-    (sizeof(NbssHdr) + sizeof(SmbNtHdr) + sizeof(SmbWriteAndXReq))
+    ((unsigned)(sizeof(NbssHdr) + sizeof(SmbNtHdr) + sizeof(SmbWriteAndXReq)))
 #define DCE2_MOCK_HDR_LEN__SMB_SRV \
-    (sizeof(NbssHdr) + sizeof(SmbNtHdr) + sizeof(SmbReadAndXResp))
+    ((unsigned)(sizeof(NbssHdr) + sizeof(SmbNtHdr) + sizeof(SmbReadAndXResp)))
 
 DCE2_SmbSsnData* get_dce2_smb_session_data(snort::Flow*);
 

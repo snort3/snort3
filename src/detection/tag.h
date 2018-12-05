@@ -54,11 +54,12 @@ struct Event;
 struct TagData
 {
     int tag_type;       /* tag type (session/host) */
-    int tag_seconds;    /* number of "seconds" units to tag for */
-    int tag_packets;    /* number of "packets" units to tag for */
-    int tag_bytes;      /* number of "type" units to tag for */
     int tag_metric;     /* (packets | seconds | bytes) units */
     int tag_direction;  /* source or dest, used for host tagging */
+
+    uint32_t tag_seconds;    /* number of "seconds" units to tag for */
+    uint32_t tag_packets;    /* number of "packets" units to tag for */
+    uint32_t tag_bytes;      /* number of "type" units to tag for */
 };
 
 void InitTag();

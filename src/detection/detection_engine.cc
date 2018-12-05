@@ -136,7 +136,7 @@ Packet* DetectionEngine::set_next_packet(Packet* parent)
     else if ( Snort::get_switcher()->get_context() )
         p->active = get_current_packet()->active;
     
-    // shutdown, so use a dummy so nullchecking is needed everywhere
+    // shutdown, so use a dummy so null checking is not needed everywhere
     else
     {
         p->active = &shutdown_active;

@@ -216,10 +216,10 @@ bool ReassembleModule::begin(const char*, int, SnortConfig*)
 bool ReassembleModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("action") )
-        srod.enable = v.get_long();
+        srod.enable = v.get_uint8();
 
     else if ( v.is("direction") )
-        srod.direction = v.get_long() + 1;
+        srod.direction = v.get_uint8() + 1;
 
     else if ( v.is("noalert") )
         srod.alert = 0;

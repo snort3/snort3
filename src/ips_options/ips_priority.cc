@@ -36,7 +36,7 @@ using namespace snort;
 
 static const Parameter s_params[] =
 {
-    { "~", Parameter::PT_INT, "1:", nullptr,
+    { "~", Parameter::PT_INT, "1:max31", nullptr,
       "relative severity level; 1 is highest priority" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -63,7 +63,7 @@ bool PriorityModule::set(const char*, Value& v, SnortConfig*)
     if ( !v.is("~") )
         return false;
 
-    priority = v.get_long();
+    priority = v.get_int32();
     return true;
 }
 

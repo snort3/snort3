@@ -94,7 +94,7 @@ static const Parameter string_list_param[] =
 
 static const Parameter instance_params[] =
 {
-    { "id", Parameter::PT_INT, "0:", nullptr, "instance ID (required)" },
+    { "id", Parameter::PT_INT, "0:max32", nullptr, "instance ID (required)" },
     { "input_spec", Parameter::PT_STRING, nullptr, nullptr, "input specification" },
     { "variables", Parameter::PT_LIST, string_list_param, nullptr, "DAQ variables" },
 
@@ -159,7 +159,7 @@ bool SFDAQModule::set(const char* fqn, Value& v, SnortConfig* sc)
     }
     else if (!strcmp(fqn, "daq.snaplen"))
     {
-        config->set_mru_size(v.get_long());
+        config->set_mru_size(v.get_uint16());
     }
     else if (!strcmp(fqn, "daq.no_promisc"))
     {
@@ -167,7 +167,7 @@ bool SFDAQModule::set(const char* fqn, Value& v, SnortConfig* sc)
     }
     else if (!strcmp(fqn, "daq.instances.id"))
     {
-        instance_id = v.get_long();
+        instance_id = v.get_uint32();
     }
     else if (!strcmp(fqn, "daq.instances.input_spec"))
     {

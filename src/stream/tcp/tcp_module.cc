@@ -143,10 +143,10 @@ static const Parameter stream_tcp_small_params[] =
 
 static const Parameter stream_queue_limit_params[] =
 {
-    { "max_bytes", Parameter::PT_INT, "0:", "1048576",
+    { "max_bytes", Parameter::PT_INT, "0:max32", "1048576",
       "don't queue more than given bytes per session and direction" },
 
-    { "max_segments", Parameter::PT_INT, "0:", "2621",
+    { "max_segments", Parameter::PT_INT, "0:max32", "2621",
       "don't queue more than given segments per session and direction" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -154,13 +154,13 @@ static const Parameter stream_queue_limit_params[] =
 
 static const Parameter s_params[] =
 {
-    { "flush_factor", Parameter::PT_INT, "0:", "0",
+    { "flush_factor", Parameter::PT_INT, "0:65535", "0",
       "flush upon seeing a drop in segment size after given number of non-decreasing segments" },
 
     { "max_window", Parameter::PT_INT, "0:1073725440", "0",
       "maximum allowed TCP window" },
 
-    { "overlap_limit", Parameter::PT_INT, "0:255", "0",
+    { "overlap_limit", Parameter::PT_INT, "0:max32", "0",
       "maximum number of allowed overlapping segments per session" },
 
     { "max_pdu", Parameter::PT_INT, "1460:32768", "16384",
@@ -172,7 +172,7 @@ static const Parameter s_params[] =
     { "reassemble_async", Parameter::PT_BOOL, nullptr, "true",
       "queue data for reassembly before traffic is seen in both directions" },
 
-    { "require_3whs", Parameter::PT_INT, "-1:86400", "-1",
+    { "require_3whs", Parameter::PT_INT, "-1:max31", "-1",
       "don't track midstream sessions after given seconds from start up; -1 tracks all" },
 
     { "show_rebuilt_packets", Parameter::PT_BOOL, nullptr, "false",
@@ -184,7 +184,7 @@ static const Parameter s_params[] =
     { "small_segments", Parameter::PT_TABLE, stream_tcp_small_params, nullptr,
       "limit number of small segments queued" },
 
-    { "session_timeout", Parameter::PT_INT, "1:86400", "30",
+    { "session_timeout", Parameter::PT_INT, "1:max31", "30",
       "session tracking timeout" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -284,34 +284,34 @@ TcpStreamConfig* StreamTcpModule::get_data()
 bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("count") )
-        config->max_consec_small_segs = v.get_long();
+        config->max_consec_small_segs = v.get_uint16();
 
     else if ( v.is("maximum_size") )
-        config->max_consec_small_seg_size = v.get_long();
+        config->max_consec_small_seg_size = v.get_uint16();
 
     else if ( v.is("flush_factor") )
-        config->flush_factor = v.get_long();
+        config->flush_factor = v.get_uint16();
 
     else if ( v.is("max_bytes") )
-        config->max_queued_bytes = v.get_long();
+        config->max_queued_bytes = v.get_uint32();
 
     else if ( v.is("max_segments") )
-        config->max_queued_segs = v.get_long();
+        config->max_queued_segs = v.get_uint32();
 
     else if ( v.is("max_window") )
-        config->max_window = v.get_long();
+        config->max_window = v.get_uint32();
 
     else if ( v.is("max_pdu") )
-        config->paf_max = v.get_long();
+        config->paf_max = v.get_uint16();
 
     else if ( v.is("policy") )
-        config->policy = static_cast< StreamPolicy >( v.get_long() + 1 );
+        config->policy = static_cast< StreamPolicy >( v.get_uint8() + 1 );
 
     else if ( v.is("overlap_limit") )
-        config->overlap_limit = v.get_long();
+        config->overlap_limit = v.get_uint32();
 
     else if ( v.is("session_timeout") )
-        config->session_timeout = v.get_long();
+        config->session_timeout = v.get_uint32();
 
     else if ( v.is("reassemble_async") )
     {
@@ -322,7 +322,7 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
     }
     else if ( v.is("require_3whs") )
     {
-        config->hs_timeout = v.get_long();
+        config->hs_timeout = v.get_int32();
     }
     else if ( v.is("show_rebuilt_packets") )
     {

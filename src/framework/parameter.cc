@@ -33,8 +33,98 @@
 
 #include "value.h"
 
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+#endif
+
 using namespace snort;
 using namespace std;
+
+//--------------------------------------------------------------------------
+// helpers
+//--------------------------------------------------------------------------
+
+static bool is_sep(char c)
+{ return !c || c == '|' || isspace(c); }
+
+static const char* find(const char* r, const char* s)
+{
+    size_t n = strlen(s);
+
+    if ( !n )
+        return nullptr;
+
+    const char* t = strstr(r, s);
+
+    while ( t )
+    {
+        if ( (t == r || is_sep(t[-1])) && is_sep(t[n]) )
+            return t;
+
+        t = strstr(t+n, s);
+    }
+    return nullptr;
+}
+
+static unsigned get_index(const char* r, const char* t)
+{
+    unsigned idx = 0;
+    const char* p = strchr(r, '|');
+
+    while ( p && p < t )
+    {
+        ++idx;
+        p = strchr(p+1, '|');
+    }
+    return idx;
+}
+
+#define delim " \t\n"
+
+static size_t split(const string& txt, vector<string>& strs)
+{
+    size_t last = txt.find_first_not_of(delim);
+    size_t pos = txt.find_first_of(delim, last);
+    strs.clear();
+
+    while ( pos != string::npos )
+    {
+        if ( last != pos )
+            strs.emplace_back(txt.substr(last, pos - last));
+
+        last = txt.find_first_not_of(delim, pos + 1);
+        pos = txt.find_first_of(delim, last);
+    }
+
+    // add the last one
+    if ( last != string::npos )
+        strs.emplace_back(txt.substr(last, min(pos, txt.size()) - last));
+
+    return strs.size();
+}
+
+static int64_t get_int(const char* r)
+{
+    if ( *r == 'm' )
+    {
+        if ( !strncmp(r, "maxSZ", 5) )
+            r = (sizeof(size_t) == 4) ? "max32" : "max53";
+
+        if ( !strncmp(r, "max31", 5) )
+            return 2147483647;
+
+        if ( !strncmp(r, "max32", 5) )
+            return 4294967295;
+
+        if ( !strncmp(r, "max53", 5) )
+            return 9007199254740992;
+    }
+    return (int64_t)strtod(r, nullptr);
+}
+
+//--------------------------------------------------------------------------
+// validation methods
+//--------------------------------------------------------------------------
 
 static bool valid_bool(Value& v, const char*)
 {
@@ -47,31 +137,34 @@ static bool valid_int(Value& v, const char* r)
     if ( v.get_type() != Value::VT_NUM )
         return false;
 
-    if ( v.get_real() != v.get_long() )
+    if ( v.get_real() != v.get_int64() )
         return false;
 
     if ( !r )
         return true;
 
-    long d = v.get_long();
+    int64_t d = v.get_int64();
 
     // require no leading or trailing whitespace
     // and either # | #: | :# | #:#
     // where # is a valid pos or neg dec, hex, or octal number
 
+    const char* t = strchr(r, ':');
+
     if ( *r != ':' )
     {
-        long low = strtol(r, nullptr, 0);
+        int64_t low = get_int(r);
 
         if ( d < low )
             return false;
+
+        if ( !t )
+            return d == low;
     }
 
-    const char* t = strchr(r, ':');
-
-    if ( t && *++t )
+    if ( t and *++t )
     {
-        long hi = strtol(t, nullptr, 0);
+        int64_t hi = get_int(t);
 
         if ( d > hi )
             return false;
@@ -108,15 +201,18 @@ static bool valid_real(Value& v, const char* r)
     // and either # | #: | :# | #:#
     // where # is a valid pos or neg dec, hex, or octal number
 
+    const char* t = strchr(r, ':');
+
     if ( *r != ':' )
     {
         double low = strtod(r, nullptr);
 
         if ( d < low )
             return false;
-    }
 
-    const char* t = strchr(r, ':');
+        if ( !t )
+            return d == low;
+    }
 
     if ( t && *++t )
     {
@@ -136,35 +232,13 @@ static bool valid_string(Value& v, const char* r)
     if ( r && !strcmp(r, "(optional)") )
         return true;
 
-    unsigned len = strlen(v.get_string());
+    size_t len = strlen(v.get_string());
 
     if ( !r )
         return len > 0;
 
-    unsigned max = strtol(r, nullptr, 0);
+    size_t max = strtoul(r, nullptr, 0);
     return len <= max;
-}
-
-static bool is_sep(char c)
-{ return !c || c == '|' || isspace(c); }
-
-static const char* find(const char* r, const char* s)
-{
-    unsigned n = strlen(s);
-
-    if ( !n )
-        return nullptr;
-
-    const char* t = strstr(r, s);
-
-    while ( t )
-    {
-        if ( (t == r || is_sep(t[-1])) && is_sep(t[n]) )
-            return t;
-
-        t = strstr(t+n, s);
-    }
-    return nullptr;
 }
 
 static bool valid_select(Value& v, const char* r)
@@ -182,19 +256,6 @@ static bool valid_select(Value& v, const char* r)
         return false;
 
     return true;
-}
-
-static unsigned get_index(const char* r, const char* t)
-{
-    unsigned idx = 0;
-    const char* p = strchr(r, '|');
-
-    while ( p && p < t )
-    {
-        ++idx;
-        p = strchr(p+1, '|');
-    }
-    return idx;
 }
 
 static bool valid_enum(Value& v, const char* r)
@@ -217,30 +278,6 @@ static bool valid_enum(Value& v, const char* r)
     return true;
 }
 
-#define delim " \t\n"
-
-static unsigned split(const string& txt, vector<string>& strs)
-{
-    size_t last = txt.find_first_not_of(delim);
-    size_t pos = txt.find_first_of(delim, last);
-    strs.clear();
-
-    while ( pos != string::npos )
-    {
-        if ( last != pos )
-            strs.emplace_back(txt.substr(last, pos - last));
-
-        last = txt.find_first_not_of(delim, pos + 1);
-        pos = txt.find_first_of(delim, last);
-    }
-
-    // add the last one
-    if ( last != string::npos )
-        strs.emplace_back(txt.substr(last, min(pos, txt.size()) - last));
-
-    return strs.size();
-}
-
 static bool valid_multi(Value& v, const char* r)
 {
     if ( v.get_type() != Value::VT_STR )
@@ -253,7 +290,7 @@ static bool valid_multi(Value& v, const char* r)
     vector<string> list;
     split(s, list);
 
-    unsigned long long mask = 0;
+    uint64_t mask = 0;
 
     for ( const auto& p : list )
     {
@@ -261,7 +298,7 @@ static bool valid_multi(Value& v, const char* r)
         if ( !t )
             return false;
 
-        unsigned idx = get_index(r, t);
+        uint64_t idx = get_index(r, t);
 
         if ( idx < Value::mask_bits )
             mask |= (1ULL << idx);
@@ -333,7 +370,7 @@ static bool valid_bit_list(Value& v, const char* r)
     string pl = v.get_string();
     string bs;
 
-    int max = r ? strtol(r, nullptr, 0) : 0;
+    size_t max = r ? strtoul(r, nullptr, 0) : 0;
     assert(max > 0);
 
     if ( pl == "any" )
@@ -350,7 +387,7 @@ static bool valid_bit_list(Value& v, const char* r)
 
     while ( ss >> bit )
     {
-        if ( bit < 0 || bit > max )
+        if ( bit < 0 || (size_t)bit > max )
             return false;
 
         bs[bit] = '1';
@@ -361,6 +398,10 @@ static bool valid_bit_list(Value& v, const char* r)
     v.set(bs.c_str());
     return true;
 }
+
+//--------------------------------------------------------------------------
+// Parameter methods
+//--------------------------------------------------------------------------
 
 bool Parameter::validate(Value& v) const
 {
@@ -503,4 +544,167 @@ int Parameter::index(const char* r, const char* s)
     unsigned idx = get_index(r, t);
     return (int)idx;
 }
+
+//--------------------------------------------------------------------------
+// valid_* tests
+// we only test validation here
+// side effects applied to value are tested elsewhere
+//--------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+TEST_CASE("bool", "[Parameter]")
+{
+    Value v(true);
+    CHECK(valid_bool(v, nullptr));
+}
+
+struct
+{
+    bool expected;
+    bool (*validate)(Value&, const char*);
+    double value;
+    const char* range;
+}
+num_tests[] =
+{
+// __STRDUMP_DISABLE__
+    { true, valid_int, 0, nullptr },
+    { true, valid_int, 0, "" },
+    { true, valid_int, 0, "0" },
+    { true, valid_int, 0, "0:" },
+    { true, valid_int, 0, ":0" },
+    { true, valid_int, 0, ":1" },
+    { true, valid_int, 0, "-1:1" },
+    { true, valid_int, 0, "-1:" },
+
+    { false, valid_int, 1, "0" },
+    { true, valid_int, 1, "0:" },
+    { false, valid_int, 1, ":0" },
+
+    { true, valid_int, -10, "-11:-9" },
+    { true, valid_int, 10, "9:11" },
+    { true, valid_int, 10, "0xA:11" },
+
+    { true, valid_interval, 0, nullptr },
+
+    { true, valid_real, 0, nullptr },
+    { true, valid_real, 0, "" },
+    { true, valid_real, 0, "0.0" },
+    { true, valid_real, 0, "0:" },
+    { true, valid_real, 0, ":0" },
+    { true, valid_real, 0, ":0.9" },
+    { true, valid_real, 0, "-0.9:0.9" },
+    { true, valid_real, 0, "-0.9:" },
+
+    { false, valid_real, 1, "0.9" },
+    { true, valid_real, 1, "0.9:" },
+    { false, valid_real, 1, ":0.9" },
+
+    { true, valid_real, -10, "-11.1:-9.9" },
+    { true, valid_real, 10, "9.9:11.1" },
+    { false, valid_real, 10, "011:11" },
+    { true, valid_real, 10, "0xA:11" },
+
+    { false, nullptr, 0, nullptr }
+// __STRDUMP_ENABLE__
+};
+
+TEST_CASE("num", "[Parameter]")
+{
+    auto test = num_tests;
+
+    while ( test->validate )
+    {
+        Value v(test->value);
+        bool result = test->validate(v, test->range);
+        CHECK(result == test->expected);
+        ++test;
+    }
+}
+
+struct
+{
+    bool expected;
+    bool (*validate)(Value&, const char*);
+    const char* value;
+    const char* range;
+}
+string_tests[] =
+{
+// __STRDUMP_DISABLE__
+    { true, valid_string, "green", "(optional)" },
+    { true, valid_string, "green", nullptr },
+    { true, valid_string, "green", "5" },
+    { true, valid_string, "green", "6" },
+    { false, valid_string, "green", "4" },
+
+    { true, valid_select, "green", "red | green | yellow" },
+    { false, valid_select, "blue", "red | green | yellow" },
+    { false, valid_select, "green", nullptr },
+
+    { true, valid_enum, "green", "red | green | yellow" },
+    { false, valid_enum, "blue", "red | green | yellow" },
+    { false, valid_enum, "green", nullptr },
+
+    { true, valid_multi, "green", "red | green | yellow" },
+    { true, valid_multi, "red yellow", "red | green | yellow" },
+    { false, valid_multi, "redgreen", "red | green | yellow" },
+    { false, valid_multi, "blue", nullptr },
+
+    { true, valid_mac, "98:01:a7:9d:d8:41", nullptr },
+    { false, valid_mac, ":01:a7:9d:d8:41", nullptr },
+    { false, valid_mac, "01:a7:9d:d8:41", nullptr },
+    { false, valid_mac, "98:01:a7:9d:d8:419", nullptr },
+    { false, valid_mac, "98:01:a7:9d:d8:41x", nullptr },
+
+    { true, valid_ip4, "1.2.3.4", nullptr },
+    { true, valid_ip4, "1.2.3", nullptr },
+    { false, valid_ip4, "1.2.3.", nullptr },
+    { false, valid_ip4, "1.2.x", nullptr },
+
+    { true, valid_addr, "1.2.3.4", nullptr },
+    { true, valid_addr, "1.2.3.4/32", nullptr },
+    { true, valid_addr, "1.2.3.4/0", nullptr },
+    { false, valid_addr, "1.2.3.4/33", nullptr },
+    { false, valid_addr, "1.2.0x.4/33", nullptr },
+
+    { true, valid_addr, "2001:420:c0c4:1004::157", nullptr },
+    { true, valid_addr, "2001:420:c0c4:1004::157/128", nullptr },
+    { true, valid_addr, "2001:420:c0c4:1004::157/0", nullptr },
+    { false, valid_addr, "2001:420:c0c4:1004:0x:157/256", nullptr },
+
+    { true, valid_bit_list, "1 2", "3" },
+    { true, valid_bit_list, "1 2 3", "3" },
+    { false, valid_bit_list, "1 2 3 4", "3" },
+    { false, valid_bit_list, "128", "3" },
+
+    { false, nullptr, 0, nullptr }
+// __STRDUMP_ENABLE__
+};
+
+TEST_CASE("string", "[Parameter]")
+{
+    auto test = string_tests;
+
+    while ( test->validate )
+    {
+        Value v(test->value);
+        bool result = test->validate(v, test->range);
+        CHECK(result == test->expected);
+        ++test;
+    }
+}
+
+TEST_CASE("max", "[Parameter]")
+{
+    CHECK(get_int("max31") == 2147483647);
+    CHECK(get_int("max32") == 4294967295);
+    CHECK(get_int("max53") == 9007199254740992);
+
+    if ( sizeof(size_t) == 4 )
+        CHECK(get_int("maxSZ") == 4294967295);
+    else
+        CHECK(get_int("maxSZ") == 9007199254740992);
+}
+#endif
 

@@ -43,37 +43,38 @@
 using namespace snort;
 using namespace std;
 
-#define snort_help \
-    "\n" \
-    "Snort has several options to get more help:\n" \
-    "\n" \
-    "-? list command line options (same as --help)\n" \
-    "--help this overview of help\n" \
-    "--help-commands [<module prefix>] output matching commands\n" \
-    "--help-config [<module prefix>] output matching config options\n" \
-    "--help-counts [<module prefix>] output matching peg counts\n" \
-    "--help-module <module> output description of given module\n" \
-    "--help-modules list all available modules with brief help\n" \
-    "--help-plugins list all available plugins with brief help\n" \
-    "--help-options [<option prefix>] output matching command line options\n" \
-    "--help-signals dump available control signals\n" \
-    "--list-buffers output available inspection buffers\n" \
-    "--list-builtin [<module prefix>] output matching builtin rules\n" \
-    "--list-gids [<module prefix>] output matching generators\n" \
-    "--list-modules [<module type>] list all known modules\n" \
-    "--list-plugins list all known modules\n" \
-    "--show-plugins list module and plugin versions\n" \
-    "\n" \
-    "--help* and --list* options preempt other processing so should be last on the\n" \
-    "command line since any following options are ignored.  To ensure options like\n" \
-    "--markup and --plugin-path take effect, place them ahead of the help or list\n" \
-    "options.\n" \
-    "\n" \
-    "Options that filter output based on a matching prefix, such as --help-config\n" \
-    "won't output anything if there is no match.  If no prefix is given, everything\n" \
-    "matches.\n" \
-    "\n" \
-    "Report bugs to bugs@snort.org.\n"
+static constexpr const char* snort_help =
+    "\n"
+    "Snort has several options to get more help:\n"
+    "\n"
+    "-? list command line options (same as --help)\n"
+    "--help this overview of help\n"
+    "--help-commands [<module prefix>] output matching commands\n"
+    "--help-config [<module prefix>] output matching config options\n"
+    "--help-counts [<module prefix>] output matching peg counts\n"
+    "--help-limits print the int upper bounds denoted by max*\n"
+    "--help-module <module> output description of given module\n"
+    "--help-modules list all available modules with brief help\n"
+    "--help-plugins list all available plugins with brief help\n"
+    "--help-options [<option prefix>] output matching command line options\n"
+    "--help-signals dump available control signals\n"
+    "--list-buffers output available inspection buffers\n"
+    "--list-builtin [<module prefix>] output matching builtin rules\n"
+    "--list-gids [<module prefix>] output matching generators\n"
+    "--list-modules [<module type>] list all known modules\n"
+    "--list-plugins list all known modules\n"
+    "--show-plugins list module and plugin versions\n"
+    "\n"
+    "--help* and --list* options preempt other processing so should be last on the\n"
+    "command line since any following options are ignored.  To ensure options like\n"
+    "--markup and --plugin-path take effect, place them ahead of the help or list\n"
+    "options.\n"
+    "\n"
+    "Options that filter output based on a matching prefix, such as --help-config\n"
+    "won't output anything if there is no match.  If no prefix is given, everything\n"
+    "matches.\n"
+    "\n"
+    "Report bugs to bugs@snort.org.\n";
 
 //-------------------------------------------------------------------------
 
@@ -81,7 +82,7 @@ void help_args(const char* pfx)
 {
     Module* m = get_snort_module();
     const Parameter* p = m->get_parameters();
-    unsigned n = pfx ? strlen(pfx) : 0;
+    size_t n = pfx ? strlen(pfx) : 0;
 
     while ( p->name )
     {
@@ -244,6 +245,16 @@ void config_markup(SnortConfig*, const char*)
 [[noreturn]] void help_counts(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_PEG);
+}
+
+[[noreturn]] void help_limits(SnortConfig*, const char*)
+{
+    fprintf(stdout, "limits:\n");
+    fprintf(stdout, "max31 = 2147483647\n");
+    fprintf(stdout, "max32 = 4294967295\n");
+    fprintf(stdout, "max53 = 9007199254740992\n");
+    fprintf(stdout, "maxSZ = %zu\n", (sizeof(size_t) == 4) ? 4294967295 : 9007199254740992);
+    exit(0);
 }
 
 [[noreturn]] void help_module(SnortConfig* sc, const char* val)

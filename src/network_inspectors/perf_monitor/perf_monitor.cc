@@ -167,7 +167,7 @@ void PerfMonitor::show(SnortConfig*)
         (config->perf_flags & PERF_FLOWIP) ? "ACTIVE" : "INACTIVE");
     if (config->perf_flags & PERF_FLOWIP)
     {
-        LogMessage("    Flow IP Memcap:   %u\n", config->flowip_memcap);
+        LogMessage("    Flow IP Memcap:   %zu\n", config->flowip_memcap);
     }
     LogMessage("  CPU Stats:    %s\n",
         (config->perf_flags & PERF_CPU) ? "ACTIVE" : "INACTIVE");

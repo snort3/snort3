@@ -60,15 +60,15 @@ void AddReference(snort::SnortConfig*, ReferenceNode**, const char*, const char*
 struct ClassType
 {
     // FIXIT-L type and name are backwards (name -> text, type -> name)
-    char* type;      /* classification type */
-    int id;          /* classification id */
-    char* name;      /* "pretty" classification name */
-    int priority;    /* priority */
+    char* type;
+    int id;
+    char* name;  // "pretty" name
+    unsigned priority;
     ClassType* next;
 };
 
 /* NOTE:  These methods can only be used during parse time */
-void AddClassification(snort::SnortConfig*, const char* type, const char* name, int priority);
+void AddClassification(snort::SnortConfig*, const char* type, const char* name, unsigned priority);
 
 ClassType* ClassTypeLookupByType(snort::SnortConfig*, const char*);
 

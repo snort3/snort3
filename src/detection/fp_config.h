@@ -116,10 +116,10 @@ public:
     void set_debug_print_rule_groups_uncompiled()
     { portlists_flags |= PL_DEBUG_PRINT_RULEGROUPS_UNCOMPILED; }
 
-    void set_search_opt(int flag)
+    void set_search_opt(bool flag)
     { search_opt = flag; }
 
-    int get_search_opt()
+    bool get_search_opt()
     { return search_opt; }
 
     bool set_search_method(const char*);
@@ -142,10 +142,7 @@ public:
     int get_num_patterns_truncated()
     { return num_patterns_truncated; }
 
-    int set_max(int bytes);
-
-    int get_max_pattern_len()
-    { return max_pattern_len; }
+    unsigned set_max(unsigned bytes);
 
 private:
     const snort::MpseApi* search_api;
@@ -155,13 +152,13 @@ private:
     bool split_any_any = false;
     bool debug_print_fast_pattern = false;
     bool debug = false;
+    bool search_opt = false;
 
     unsigned max_queue_events = 5;
     unsigned bleedover_port_limit = 1024;
+    unsigned max_pattern_len = 0;
 
-    int search_opt = 0;
     int portlists_flags = 0;
-    int max_pattern_len = 0;
     int num_patterns_truncated = 0;  // due to max_pattern_len
     int num_patterns_trimmed = 0;    // due to zero byte prefix
 };

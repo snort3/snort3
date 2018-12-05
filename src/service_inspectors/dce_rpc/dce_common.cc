@@ -88,9 +88,11 @@ bool dce2_set_common_config(Value& v, dce2CommonProtoConf& common)
         common.disable_defrag = v.get_bool();
 
     else if ( v.is("max_frag_len") )
-        common.max_frag_len = v.get_long();
+        common.max_frag_len = v.get_uint16();
+
     else
         return false;
+
     return true;
 }
 
@@ -98,12 +100,16 @@ bool dce2_set_co_config(Value& v, dce2CoProtoConf& co)
 {
     if (dce2_set_common_config(v, co.common))
         return true;
+
     else if ( v.is("policy") )
-        co.policy = (DCE2_Policy)v.get_long();
+        co.policy = (DCE2_Policy)v.get_uint8();
+
     else if ( v.is("reassemble_threshold") )
-        co.co_reassemble_threshold = v.get_long();
+        co.co_reassemble_threshold = v.get_uint16();
+
     else
         return false;
+
     return true;
 }
 

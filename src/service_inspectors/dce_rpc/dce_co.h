@@ -69,8 +69,8 @@ from opnum established for fragmented request"
 from context id established for fragmented request"
 
 #define DCE2_MAX_XMIT_SIZE_FUZZ    500
-#define DCE2_MOCK_HDR_LEN__CO_CLI   (sizeof(DceRpcCoHdr) + sizeof(DceRpcCoRequest))
-#define DCE2_MOCK_HDR_LEN__CO_SRV   (sizeof(DceRpcCoHdr) + sizeof(DceRpcCoResponse))
+#define DCE2_MOCK_HDR_LEN__CO_CLI   ((unsigned)(sizeof(DceRpcCoHdr) + sizeof(DceRpcCoRequest)))
+#define DCE2_MOCK_HDR_LEN__CO_SRV   ((unsigned)(sizeof(DceRpcCoHdr) + sizeof(DceRpcCoResponse)))
 #define DCE2_CO__MIN_ALLOC_SIZE     50
 #define DCE2_LITTLE_ENDIAN 0x10
 

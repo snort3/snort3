@@ -145,10 +145,10 @@ bool is_fast_pattern_only(OptFpList* ofl)
   *   length - of trimmed pattern
   *   buff - ptr to new beginning of trimmed buffer
   */
-int flp_trim(const char* p, int plen, const char** buff)
+unsigned flp_trim(const char* p, unsigned plen, const char** buff)
 {
-    int i;
-    int size = 0;
+    unsigned i;
+    unsigned size = 0;
 
     if ( !p )
         return 0;
@@ -222,7 +222,7 @@ struct FpSelector
 {
     CursorActionType cat;
     PatternMatchData* pmd;
-    int size;
+    unsigned size;
 
     FpSelector(CursorActionType, PatternMatchData*);
 

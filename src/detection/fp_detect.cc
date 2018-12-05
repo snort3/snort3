@@ -624,7 +624,7 @@ static inline int fpFinalSelectEvent(OtnxMatchData* o, Packet* p)
     int j;
     int k;
     const OptTreeNode* otn;
-    int tcnt = 0;
+    unsigned tcnt = 0;
     EventQueueConfig* eq = SnortConfig::get_conf()->event_queue_config;
     RuleTreeNode* rtn;
 

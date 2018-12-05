@@ -43,7 +43,7 @@ static unsigned max_id = IpsContext::max_ips_id;
 unsigned IpsContextData::get_ips_id()
 { 
     ++ips_id;
-    assert( ips_id < max_id );
+    assert(ips_id < max_id);
     return ips_id; 
 }
 
@@ -64,9 +64,9 @@ TEST_CASE("IpsContextData id", "[IpsContextData]")
 
     auto id1 = IpsContextData::get_ips_id();
     auto id2 = IpsContextData::get_ips_id();
-    CHECK(id1 != id2);
 
-    CHECK(max_id > id2 );
+    CHECK(id1 != id2);
+    CHECK(max_id > id2);
 }
 
 #endif

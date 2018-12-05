@@ -209,10 +209,10 @@ static const int unr[] =
 bool RejectModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("reset") )
-        flags |= rst[v.get_long()];
+        flags |= rst[v.get_uint8()];
 
     else if ( v.is("control") )
-        flags |= unr[v.get_long()];
+        flags |= unr[v.get_uint8()];
 
     else
         return false;

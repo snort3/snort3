@@ -57,22 +57,22 @@ static const Parameter s_params[] =
 #endif
     // FIXIT-L: DECRYPT_DEBUG - Move this to ssl-module
 #ifdef REG_TEST
-    { "first_decrypted_packet_debug", Parameter::PT_INT, "0:", "0",
+    { "first_decrypted_packet_debug", Parameter::PT_INT, "0:max32", "0",
       "the first packet of an already decrypted SSL flow (debug single session only)" },
 #endif
-    { "memcap", Parameter::PT_INT, "0:", "0",
+    { "memcap", Parameter::PT_INT, "0:maxSZ", "0",
       "disregard - not implemented" },  // FIXIT-M implement or delete appid.memcap
     { "log_stats", Parameter::PT_BOOL, nullptr, "false",
       "enable logging of appid statistics" },
-    { "app_stats_period", Parameter::PT_INT, "0:", "300",
+    { "app_stats_period", Parameter::PT_INT, "0:max32", "300",
       "time period for collecting and logging appid statistics" },
-    { "app_stats_rollover_size", Parameter::PT_INT, "0:", "20971520",
+    { "app_stats_rollover_size", Parameter::PT_INT, "0:max32", "20971520",
       "max file size for appid stats before rolling over the log file" },
-    { "app_stats_rollover_time", Parameter::PT_INT, "0:", "86400",
+    { "app_stats_rollover_time", Parameter::PT_INT, "0:max31", "86400",
       "max time period for collection appid stats before rolling over the log file" },
     { "app_detector_dir", Parameter::PT_STRING, nullptr, nullptr,
       "directory to load appid detectors from" },
-    { "instance_id", Parameter::PT_INT, "0:", "0",
+    { "instance_id", Parameter::PT_INT, "0:max32", "0",
       "instance id - ignored" },
     { "debug", Parameter::PT_BOOL, nullptr, "false",
       "enable appid debug logging" },
@@ -227,19 +227,19 @@ bool AppIdModule::set(const char* fqn, Value& v, SnortConfig* c)
     // FIXIT-L: DECRYPT_DEBUG - Move this to ssl-module
 #ifdef REG_TEST
     if ( v.is("first_decrypted_packet_debug") )
-        config->first_decrypted_packet_debug = v.get_long();
+        config->first_decrypted_packet_debug = v.get_uint32();
     else
 #endif
     if ( v.is("memcap") )
-        config->memcap = v.get_long();
+        config->memcap = v.get_size();
     else if ( v.is("log_stats") )
         config->stats_logging_enabled = v.get_bool();
     else if ( v.is("app_stats_period") )
-        config->app_stats_period = v.get_long();
+        config->app_stats_period = v.get_uint32();
     else if ( v.is("app_stats_rollover_size") )
-        config->app_stats_rollover_size = v.get_long();
+        config->app_stats_rollover_size = v.get_uint32();
     else if ( v.is("app_stats_rollover_time") )
-        config->app_stats_rollover_time = v.get_long();
+        config->app_stats_rollover_time = v.get_uint32();
     else if ( v.is("app_detector_dir") )
         config->app_detector_dir = snort_strdup(v.get_string());
     else if ( v.is("tp_appid_path") )
@@ -251,7 +251,7 @@ bool AppIdModule::set(const char* fqn, Value& v, SnortConfig* c)
     else if ( v.is("tp_appid_config_dump") )
         config->tp_appid_config_dump = v.get_bool();
     else if ( v.is("instance_id") )
-        config->instance_id = v.get_long();
+        config->instance_id = v.get_uint32();
     else if ( v.is("debug") )
         config->debug = v.get_bool();
     else if ( v.is("dump_ports") )

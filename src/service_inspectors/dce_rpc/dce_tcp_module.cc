@@ -34,15 +34,19 @@ using namespace std;
 static const Parameter s_params[] =
 {
     { "disable_defrag", Parameter::PT_BOOL, nullptr, "false",
-      " Disable DCE/RPC defragmentation" },
+      "disable DCE/RPC defragmentation" },
+
     { "max_frag_len", Parameter::PT_INT, "1514:65535", "65535",
-      " Maximum fragment size for defragmentation" },
+      "maximum fragment size for defragmentation" },
+
     { "reassemble_threshold", Parameter::PT_INT, "0:65535", "0",
-      " Minimum bytes received before performing reassembly" },
+      "minimum bytes received before performing reassembly" },
+
     { "policy", Parameter::PT_ENUM,
       "Win2000 |  WinXP | WinVista | Win2003 | Win2008 | Win7 | "
       "Samba | Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20", "WinXP",
-      " Target based policy to use" },
+      "target based policy to use" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 

@@ -119,7 +119,7 @@ static bool set_arg(
         if ( p->is_wild_card() )
             val = opt;
 
-        long n = strtol(val, &end, 0);
+        long n = (long)strtod(val, &end);
 
         if ( !*end )
             v.set(n);

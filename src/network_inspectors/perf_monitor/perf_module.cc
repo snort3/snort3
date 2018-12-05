@@ -52,10 +52,10 @@ static const Parameter module_params[] =
 
 static const Parameter s_params[] =
 {
-    { "base", Parameter::PT_BOOL, "nullptr", "true",
+    { "base", Parameter::PT_BOOL, nullptr, "true",
       "enable base statistics" },
 
-    { "cpu", Parameter::PT_BOOL, "nullptr", "false",
+    { "cpu", Parameter::PT_BOOL, nullptr, "false",
       "enable cpu statistics" },
 
     { "flow", Parameter::PT_BOOL, nullptr, "false",
@@ -64,16 +64,16 @@ static const Parameter s_params[] =
     { "flow_ip", Parameter::PT_BOOL, nullptr, "false",
       "enable statistics on host pairs" },
 
-    { "packets", Parameter::PT_INT, "0:", "10000",
+    { "packets", Parameter::PT_INT, "0:max32", "10000",
       "minimum packets to report" },
 
-    { "seconds", Parameter::PT_INT, "1:", "60",
+    { "seconds", Parameter::PT_INT, "1:max32", "60",
       "report interval" },
 
-    { "flow_ip_memcap", Parameter::PT_INT, "8200:", "52428800",
+    { "flow_ip_memcap", Parameter::PT_INT, "8200:maxSZ", "52428800",
       "maximum memory in bytes for flow tracking" },
 
-    { "max_file_size", Parameter::PT_INT, "4096:", "1073741824",
+    { "max_file_size", Parameter::PT_INT, "4096:max53", "1073741824",
       "files will be rolled over if they exceed this size" },
 
     { "flow_ports", Parameter::PT_INT, "0:65535", "1023",
@@ -138,32 +138,32 @@ bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
     }
     else if ( v.is("packets") )
     {
-        config->pkt_cnt = v.get_long();
+        config->pkt_cnt = v.get_uint32();
     }
     else if ( v.is("seconds") )
     {
-        config->sample_interval = v.get_long();
+        config->sample_interval = v.get_uint32();
         if ( config->sample_interval == 0 )
             config->perf_flags |= PERF_SUMMARY;
     }
     else if ( v.is("flow_ip_memcap") )
     {
-        config->flowip_memcap = v.get_long();
+        config->flowip_memcap = v.get_size();
     }
     else if ( v.is("max_file_size") )
-        config->max_file_size = v.get_long() - ROLLOVER_THRESH;
+        config->max_file_size = v.get_uint64() - ROLLOVER_THRESH;
 
     else if ( v.is("flow_ports") )
     {
-        config->flow_max_port_to_track = v.get_long();
+        config->flow_max_port_to_track = v.get_uint16();
     }
     else if ( v.is("output") )
     {
-        config->output = (PerfOutput)v.get_long();
+        config->output = (PerfOutput)v.get_uint8();
     }
     else if ( v.is("format") )
     {
-        config->format = (PerfFormat)v.get_long();
+        config->format = (PerfFormat)v.get_uint8();
     }
     else if ( v.is("name") )
     {

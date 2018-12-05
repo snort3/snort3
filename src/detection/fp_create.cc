@@ -64,11 +64,11 @@ static const char* s_group = "";
 static void fpDeletePMX(void* data);
 
 static int fpGetFinalPattern(
-    FastPatternConfig*, PatternMatchData*, const char*& ret_pattern, int& ret_bytes);
+    FastPatternConfig*, PatternMatchData*, const char*& ret_pattern, unsigned& ret_bytes);
 
 static void print_nfp_info(const char*, OptTreeNode*);
 static void print_fp_info(const char*, const OptTreeNode*, const PatternMatchData*,
-    const char* pattern, int pattern_length);
+    const char* pattern, unsigned pattern_length);
 
 static int finalize_detection_option_tree(SnortConfig* sc, detection_option_tree_root_t* root)
 {
@@ -404,7 +404,7 @@ static int fpFinishPortGroupRule(
         pg->add_rule();
 
     const char* pattern;
-    int pattern_length;
+    unsigned pattern_length;
 
     if (fpGetFinalPattern(fp, pmd, pattern, pattern_length) == -1)
         return -1;
@@ -755,7 +755,7 @@ static void fpFreeRuleMaps(SnortConfig* sc)
 
 static int fpGetFinalPattern(
     FastPatternConfig* fp, PatternMatchData* pmd,
-    const char*& ret_pattern, int& ret_bytes)
+    const char*& ret_pattern, unsigned& ret_bytes)
 {
     if ( !fp or !pmd )
     {
@@ -763,7 +763,7 @@ static int fpGetFinalPattern(
     }
 
     const char* pattern = pmd->pattern_buf;
-    int bytes = pmd->pattern_size;
+    unsigned bytes = pmd->pattern_size;
 
     // Don't mess with:
     //
@@ -806,10 +806,9 @@ static int fpGetFinalPattern(
          * beyond state 0 as long as the next input char is 0x00 */
         if ( fp->get_trim() )
         {
-            bytes =
-                flp_trim(pmd->pattern_buf, pmd->pattern_size, &pattern);
+            bytes = flp_trim(pmd->pattern_buf, pmd->pattern_size, &pattern);
 
-            if (bytes < (int)pmd->pattern_size)
+            if (bytes < pmd->pattern_size)
             {
                 // The pattern is all '\0' - use the whole pattern. This potentially
                 // hurts the performance boost gained by stripping leading zeros.
@@ -1637,8 +1636,9 @@ void get_pattern_info(const PatternMatchData* pmd,
     opts += " )";
 }
 
-static void print_fp_info(const char* group, const OptTreeNode* otn, const PatternMatchData* pmd,
-    const char* pattern, int pattern_length)
+static void print_fp_info(
+    const char* group, const OptTreeNode* otn, const PatternMatchData* pmd,
+    const char* pattern, unsigned pattern_length)
 {
     std::string hex, txt, opts;
 

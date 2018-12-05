@@ -27,7 +27,7 @@ using namespace snort;
 
 static const Parameter defaults[] =
 {
-    { "trace", Parameter::PT_INT, nullptr, nullptr,
+    { "trace", Parameter::PT_INT, "0:max53", nullptr,
       "mask for enabling debug traces in module" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -79,7 +79,7 @@ bool Module::set(const char*, Value& v, SnortConfig*)
     if ( v.is("trace") )
     {
         if ( trace )
-            *trace = v.get_long();
+            *trace = v.get_uint64();
     }
     else
         return false;

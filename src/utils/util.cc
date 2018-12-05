@@ -169,7 +169,7 @@ void ts_print(const struct timeval* tvp, char* timebuf)
     if (SnortConfig::output_use_utc())
         localzone = 0;
 
-    int s = (tvp->tv_sec + localzone) % 86400;
+    int s = (tvp->tv_sec + localzone) % SECONDS_PER_DAY;
     time_t Time = (tvp->tv_sec + localzone) - s;
 
     struct tm ttm;

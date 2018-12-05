@@ -62,7 +62,7 @@ using namespace std;
 
 struct Unified2Config
 {
-    unsigned int limit;
+    size_t limit;
     int nostamp;
     bool legacy_events;
 };
@@ -788,7 +788,7 @@ static const Parameter s_params[] =
     { "legacy_events", Parameter::PT_BOOL, nullptr, "false",
       "generate Snort 2.X style events for barnyard2 compatibility" },
 
-    { "limit", Parameter::PT_INT, "0:", "0",
+    { "limit", Parameter::PT_INT, "0:maxSZ", "0",
       "set maximum size in MB before rollover (0 is unlimited)" },
 
     { "nostamp", Parameter::PT_BOOL, nullptr, "true",
@@ -812,7 +812,7 @@ public:
     { return CONTEXT; }
 
 public:
-    unsigned limit;
+    size_t limit;
     bool nostamp;
     bool legacy_events;
 };
@@ -820,7 +820,7 @@ public:
 bool U2Module::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("limit") )
-        limit = v.get_long() * 1024 * 1024;
+        limit = v.get_size() * 1024 * 1024;
 
     else if ( v.is("nostamp") )
         nostamp = v.get_bool();

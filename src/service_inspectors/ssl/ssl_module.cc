@@ -88,7 +88,7 @@ bool SslModule::set(const char*, Value& v, SnortConfig*)
         conf->trustservers = v.get_bool();
 
     else if ( v.is("max_heartbeat_length") )
-        conf->max_heartbeat_len = v.get_long();
+        conf->max_heartbeat_len = v.get_uint16();
 
     else
         return false;

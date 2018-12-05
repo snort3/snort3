@@ -465,7 +465,7 @@ bool ByteJumpModule::end(const char*, int, SnortConfig*)
 bool ByteJumpModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("~count") )
-        data.bytes_to_grab = v.get_long();
+        data.bytes_to_grab = v.get_uint8();
 
     else if ( v.is("~offset") )
     {
@@ -485,7 +485,7 @@ bool ByteJumpModule::set(const char*, Value& v, SnortConfig*)
         data.align_flag = 1;
 
     else if ( v.is("multiplier") )
-        data.multiplier = v.get_long();
+        data.multiplier = v.get_uint16();
 
     else if ( v.is("post_offset") )
     {
@@ -522,7 +522,7 @@ bool ByteJumpModule::set(const char*, Value& v, SnortConfig*)
         data.from_end_flag = 1;
 
     else if ( v.is("bitmask") )
-        data.bitmask_val = v.get_long();
+        data.bitmask_val = v.get_uint32();
     
     else
         return false;

@@ -43,7 +43,7 @@ static const Parameter file_magic_params[] =
     { "content", Parameter::PT_STRING, nullptr, nullptr,
       "file magic content" },
 
-    { "offset", Parameter::PT_INT, "0:", "0",
+    { "offset", Parameter::PT_INT, "0:max32", "0",
       "file magic offset" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -51,7 +51,7 @@ static const Parameter file_magic_params[] =
 
 static const Parameter file_rule_params[] =
 {
-    { "rev", Parameter::PT_INT, "0:", "0",
+    { "rev", Parameter::PT_INT, "0:max32", "0",
       "rule revision" },
 
     { "msg", Parameter::PT_STRING, nullptr, nullptr,
@@ -60,7 +60,7 @@ static const Parameter file_rule_params[] =
     { "type", Parameter::PT_STRING, nullptr, nullptr,
       "file type name" },
 
-    { "id", Parameter::PT_INT, "0:", "0",
+    { "id", Parameter::PT_INT, "0:max32", "0",
       "file type id" },
 
     { "category", Parameter::PT_STRING, nullptr, nullptr,
@@ -83,7 +83,7 @@ static const Parameter file_when_params[] =
 {
     // FIXIT-M when.policy_id should be an arbitrary string auto converted
     // into index for binder matching and lookups
-    { "file_type_id", Parameter::PT_INT, "0:", "0",
+    { "file_type_id", Parameter::PT_INT, "0:max32", "0",
       "unique ID for file type in file magic rule" },
 
     { "sha256", Parameter::PT_STRING, nullptr, nullptr,
@@ -122,34 +122,34 @@ static const Parameter file_policy_rule_params[] =
 
 static const Parameter file_id_params[] =
 {
-    { "type_depth", Parameter::PT_INT, "0:", "1460",
+    { "type_depth", Parameter::PT_INT, "0:max53", "1460",
       "stop type ID at this point" },
 
-    { "signature_depth", Parameter::PT_INT, "0:", "10485760",
+    { "signature_depth", Parameter::PT_INT, "0:max53", "10485760",
       "stop signature at this point" },
 
-    { "block_timeout", Parameter::PT_INT, "0:", "86400",
+    { "block_timeout", Parameter::PT_INT, "0:max31", "86400",
       "stop blocking after this many seconds" },
 
-    { "lookup_timeout", Parameter::PT_INT, "0:", "2",
+    { "lookup_timeout", Parameter::PT_INT, "0:max31", "2",
       "give up on lookup after this many seconds" },
 
     { "block_timeout_lookup", Parameter::PT_BOOL, nullptr, "false",
       "block if lookup times out" },
 
-    { "capture_memcap", Parameter::PT_INT, "0:", "100",
+    { "capture_memcap", Parameter::PT_INT, "0:max53", "100",
       "memcap for file capture in megabytes" },
 
-    { "capture_max_size", Parameter::PT_INT, "0:", "1048576",
+    { "capture_max_size", Parameter::PT_INT, "0:max53", "1048576",
       "stop file capture beyond this point" },
 
-    { "capture_min_size", Parameter::PT_INT, "0:", "0",
+    { "capture_min_size", Parameter::PT_INT, "0:max53", "0",
       "stop file capture if file size less than this" },
 
-    { "capture_block_size", Parameter::PT_INT, "8:", "32768",
+    { "capture_block_size", Parameter::PT_INT, "8:max53", "32768",
       "file capture block size in bytes" },
 
-    { "max_files_cached", Parameter::PT_INT, "8:", "65536",
+    { "max_files_cached", Parameter::PT_INT, "8:max53", "65536",
       "maximal number of files cached in memory" },
 
     { "enable_type", Parameter::PT_BOOL, nullptr, "true",
@@ -161,7 +161,7 @@ static const Parameter file_id_params[] =
     { "enable_capture", Parameter::PT_BOOL, nullptr, "false",
       "enable file capture" },
 
-    { "show_data_depth", Parameter::PT_INT, "0:", "100",
+    { "show_data_depth", Parameter::PT_INT, "0:max53", "100",
       "print this many octets" },
 
     { "file_rules", Parameter::PT_LIST, file_rule_params, nullptr,
@@ -179,7 +179,7 @@ static const Parameter file_id_params[] =
     { "trace_stream", Parameter::PT_BOOL, nullptr, "false",
       "enable runtime dump of file data" },
 
-    { "verdict_delay", Parameter::PT_INT, "0:", "0",
+    { "verdict_delay", Parameter::PT_INT, "0:max53", "0",
       "number of queries to return final verdict" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -221,34 +221,34 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
     FilePolicy& fp = fc->get_file_policy();
 
     if ( v.is("type_depth") )
-        fc->file_type_depth = v.get_long();
+        fc->file_type_depth = v.get_int64();
 
     else if ( v.is("signature_depth") )
-        fc->file_signature_depth = v.get_long();
+        fc->file_signature_depth = v.get_int64();
 
     else if ( v.is("block_timeout") )
-        fc->file_block_timeout = v.get_long();
+        fc->file_block_timeout = v.get_int64();
 
     else if ( v.is("lookup_timeout") )
-        fc->file_lookup_timeout = v.get_long();
+        fc->file_lookup_timeout = v.get_int64();
 
     else if ( v.is("block_timeout_lookup") )
         fc->block_timeout_lookup = v.get_bool();
 
     else if ( v.is("capture_memcap") )
-        fc->capture_memcap = v.get_long();
+        fc->capture_memcap = v.get_int64();
 
     else if ( v.is("capture_max_size") )
-        fc->capture_max_size = v.get_long();
+        fc->capture_max_size = v.get_int64();
 
     else if ( v.is("capture_min_size") )
-        fc->capture_min_size = v.get_long();
+        fc->capture_min_size = v.get_int64();
 
     else if ( v.is("capture_block_size") )
-        fc->capture_block_size = v.get_long();
+        fc->capture_block_size = v.get_int64();
 
     else if ( v.is("max_files_cached") )
-        fc->max_files_cached = v.get_long();
+        fc->max_files_cached = v.get_int64();
 
     else if ( v.is("enable_type") )
     {
@@ -277,7 +277,7 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
         }
     }
     else if ( v.is("show_data_depth") )
-        fc->show_data_depth = v.get_long();
+        fc->show_data_depth = v.get_int64();
 
     else if ( v.is("trace_type") )
         fc->trace_type = v.get_bool();
@@ -290,7 +290,7 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("verdict_delay") )
     {
-        fc->verdict_delay = v.get_long();
+        fc->verdict_delay = v.get_int64();
         fp.set_verdict_delay(fc->verdict_delay);
     }
 
@@ -298,7 +298,7 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
         return true;
 
     else if ( v.is("rev") )
-        rule.rev = v.get_long();
+        rule.rev = v.get_uint32();
 
     else if ( v.is("msg") )
         rule.message = v.get_string();
@@ -307,7 +307,7 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
         rule.type = v.get_string();
 
     else if ( v.is("id") )
-        rule.id = v.get_long();
+        rule.id = v.get_uint32();
 
     else if ( v.is("category") )
         rule.category = v.get_string();
@@ -332,7 +332,7 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
         magic.content_str = v.get_string();
 
     else if ( v.is("offset") )
-        magic.offset = v.get_long();
+        magic.offset = v.get_uint32();
 
     else if ( v.is("file_policy") )
         return true;
@@ -341,7 +341,7 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
         return true;
 
     else if ( v.is("file_type_id") )
-        file_rule.when.type_id = v.get_long();
+        file_rule.when.type_id = v.get_uint32();
 
     else if ( v.is("sha256") )
         file_rule.when.sha256 = v.get_string();
@@ -350,7 +350,7 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
         return true;
 
     else if ( v.is("verdict") )
-        file_rule.use.verdict = (FileVerdict)v.get_long();
+        file_rule.use.verdict = (FileVerdict)v.get_uint8();
 
     else if ( v.is("enable_file_type") )
         file_rule.use.type_enabled = v.get_bool();

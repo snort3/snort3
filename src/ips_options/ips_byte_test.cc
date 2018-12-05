@@ -532,7 +532,7 @@ bool ByteTestModule::end(const char*, int, SnortConfig*)
 bool ByteTestModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("~count") )
-        data.bytes_to_compare = v.get_long();
+        data.bytes_to_compare = v.get_uint8();
 
     else if ( v.is("~operator") )
         parse_operator(v.get_string(), data);
@@ -580,7 +580,7 @@ bool ByteTestModule::set(const char*, Value& v, SnortConfig*)
         data.base = 8;
 
     else if ( v.is("bitmask") )
-        data.bitmask_val = v.get_long();
+        data.bitmask_val = v.get_uint32();
 
     else
         return false;

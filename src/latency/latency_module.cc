@@ -44,7 +44,7 @@ using namespace snort;
 
 static const Parameter s_packet_params[] =
 {
-    { "max_time", Parameter::PT_INT, "0:", "500",
+    { "max_time", Parameter::PT_INT, "0:max53", "500",
         "set timeout for packet latency thresholding (usec)" },
 
     { "fastpath", Parameter::PT_BOOL, nullptr, "false",
@@ -58,7 +58,7 @@ static const Parameter s_packet_params[] =
 
 static const Parameter s_rule_params[] =
 {
-    { "max_time", Parameter::PT_INT, "0:", "500",
+    { "max_time", Parameter::PT_INT, "0:max53", "500",
         "set timeout for rule evaluation (usec)" },
 
     // We could just treat suspend_threshold == 0 as suspend == false
@@ -66,10 +66,10 @@ static const Parameter s_rule_params[] =
     { "suspend", Parameter::PT_BOOL, nullptr, "false",
         "temporarily suspend expensive rules" },
 
-    { "suspend_threshold", Parameter::PT_INT, "1:", "5",
+    { "suspend_threshold", Parameter::PT_INT, "1:max32", "5",
         "set threshold for number of timeouts before suspending a rule" },
 
-    { "max_suspend_time", Parameter::PT_INT, "0:", "30000",
+    { "max_suspend_time", Parameter::PT_INT, "0:max32", "30000",
         "set max time for suspending a rule (ms, 0 means permanently disable rule)" },
 
     { "action", Parameter::PT_ENUM, "none | alert | log | alert_and_log", "none",
@@ -120,7 +120,7 @@ static inline bool latency_set(Value& v, PacketLatencyConfig& config)
 {
     if ( v.is("max_time") )
     {
-        long t = clock_ticks(v.get_long());
+        long t = clock_ticks(v.get_int64());
         config.max_time = TO_DURATION(config.max_time, t);
     }
     else if ( v.is("fastpath") )
@@ -128,7 +128,7 @@ static inline bool latency_set(Value& v, PacketLatencyConfig& config)
 
     else if ( v.is("action") )
         config.action =
-            static_cast<decltype(config.action)>(v.get_long());
+            static_cast<decltype(config.action)>(v.get_uint8());
     else
         return false;
 
@@ -139,23 +139,23 @@ static inline bool latency_set(Value& v, RuleLatencyConfig& config)
 {
     if ( v.is("max_time") )
     {
-        long t = clock_ticks(v.get_long());
+        long t = clock_ticks(v.get_uint64());
         config.max_time = TO_DURATION(config.max_time, t);
     }
     else if ( v.is("suspend") )
         config.suspend = v.get_bool();
 
     else if ( v.is("suspend_threshold") )
-        config.suspend_threshold = v.get_long();
+        config.suspend_threshold = v.get_uint32();
 
     else if ( v.is("max_suspend_time") )
     {
-        long t = clock_ticks(v.get_long());
+        long t = clock_ticks(v.get_uint32());
         config.max_suspend_time = TO_DURATION(config.max_time, t);
     }
     else if ( v.is("action") )
         config.action =
-            static_cast<decltype(config.action)>(v.get_long());
+            static_cast<decltype(config.action)>(v.get_uint8());
     else
         return false;
 

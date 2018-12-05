@@ -66,7 +66,7 @@ static const Parameter s_params[] =
     { "file", Parameter::PT_BOOL, nullptr, "false",
       "output to " F_NAME " instead of stdout" },
 
-    { "limit", Parameter::PT_INT, "0:", "0",
+    { "limit", Parameter::PT_INT, "0:maxSZ", "0",
       "set maximum size in MB before rollover (0 is unlimited)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -88,7 +88,7 @@ public:
 
 public:
     bool file;
-    unsigned long limit;
+    size_t limit;
 };
 
 bool FullModule::set(const char*, Value& v, SnortConfig*)
@@ -97,7 +97,7 @@ bool FullModule::set(const char*, Value& v, SnortConfig*)
         file = v.get_bool();
 
     else if ( v.is("limit") )
-        limit = v.get_long() * 1024 * 1024;
+        limit = v.get_size() * 1024 * 1024;
 
     else
         return false;

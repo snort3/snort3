@@ -290,7 +290,7 @@ static const Parameter s_params[] =
     { "~pattern", Parameter::PT_STRING, nullptr, nullptr,
       "The pattern to search for" },
 
-    { "threshold", Parameter::PT_INT, "1", nullptr,
+    { "threshold", Parameter::PT_INT, "1:max32", "1",
       "number of matches before alerting" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -347,7 +347,7 @@ bool SdPatternModule::set(const char*, Value& v, SnortConfig* sc)
         config.pii.erase(config.pii.length()-1, 1);
     }
     else if ( v.is("threshold") )
-        config.threshold = v.get_long();
+        config.threshold = v.get_uint32();
     else
         return false;
 

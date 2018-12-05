@@ -32,7 +32,7 @@ struct PatternMatchData* get_pmd(OptFpList*, SnortProtocolId, snort::RuleDirecti
 bool is_fast_pattern_only(OptFpList*);
 void validate_fast_pattern(OptTreeNode*);
 
-int flp_trim(const char* p, int plen, const char** buff);
+unsigned flp_trim(const char* p, unsigned plen, const char** buff);
 bool set_fp_content(OptTreeNode*);
 
 std::vector <PatternMatchData*> get_fp_content(

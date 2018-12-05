@@ -214,7 +214,7 @@ void MemoryCap::print()
     if ( snort::SnortConfig::log_verbose() )
     {
         LogMessage("    global cap: %zu\n", config.cap);
-        LogMessage("    global preemptive threshold percent: %zu\n", config.threshold);
+        LogMessage("    global preemptive threshold percent: %u\n", config.threshold);
         LogMessage("    cap type: %s\n", config.soft? "soft" : "hard");
     }
 

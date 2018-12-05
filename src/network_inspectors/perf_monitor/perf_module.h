@@ -77,10 +77,10 @@ struct PerfConfig
 {
     int perf_flags = 0;
     uint32_t pkt_cnt = 0;
-    int sample_interval = 0;
+    unsigned sample_interval = 0;
     uint64_t max_file_size = 0;
     int flow_max_port_to_track = 0;
-    uint32_t flowip_memcap = 0;
+    size_t flowip_memcap = 0;
     PerfFormat format = PerfFormat::CSV;
     PerfOutput output = PerfOutput::TO_FILE;
     std::vector<ModuleConfig> modules;

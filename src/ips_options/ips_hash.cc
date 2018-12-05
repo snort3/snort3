@@ -336,7 +336,7 @@ bool HashModule::set(const char*, Value& v, SnortConfig*)
         hmd->relative = true;
 
     else if ( v.is("length") )
-        hmd->length = v.get_long();
+        hmd->length = v.get_uint16();
 
     else
         return false;

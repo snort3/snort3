@@ -36,9 +36,11 @@ Trace TRACE_NAME(dce_udp);
 static const Parameter s_params[] =
 {
     { "disable_defrag", Parameter::PT_BOOL, nullptr, "false",
-      " Disable DCE/RPC defragmentation" },
+      "disable DCE/RPC defragmentation" },
+
     { "max_frag_len", Parameter::PT_INT, "1514:65535", "65535",
-      " Maximum fragment size for defragmentation" },
+      "maximum fragment size for defragmentation" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 

@@ -257,18 +257,5 @@ static const ConvertMap set_uid_api =
 };
 
 const ConvertMap* set_uid_map = &set_uid_api;
-
-/**************************************************
- ********************* umask  *********************
- **************************************************/
-
-static const std::string umask = "umask";
-static const ConvertMap umask_api =
-{
-    umask,
-    config_string_ctor<& umask, & process>,
-};
-
-const ConvertMap* umask_map = &umask_api;
 } // namespace config
 

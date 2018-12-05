@@ -42,13 +42,13 @@ static const Parameter s_params[] =
     { "~", Parameter::PT_ENUM, "session|host_src|host_dst", nullptr,
       "log all packets in session or all packets to or from host" },
 
-    { "packets", Parameter::PT_INT, "1:", nullptr,
+    { "packets", Parameter::PT_INT, "1:max32", nullptr,
       "tag this many packets" },
 
-    { "seconds", Parameter::PT_INT, "1:", nullptr,
+    { "seconds", Parameter::PT_INT, "1:max32", nullptr,
       "tag for this many seconds" },
 
-    { "bytes", Parameter::PT_INT, "1:", nullptr,
+    { "bytes", Parameter::PT_INT, "1:max32", nullptr,
       "tag for this many bytes" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -105,7 +105,7 @@ bool TagModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("~") )
     {
-        switch (v.get_long())
+        switch (v.get_uint8())
         {
         case 0:
             tag->tag_type = TAG_SESSION;
@@ -125,17 +125,17 @@ bool TagModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("packets") )
     {
         tag->tag_metric |= TAG_METRIC_PACKETS;
-        tag->tag_packets = v.get_long();
+        tag->tag_packets = v.get_uint32();
     }
     else if ( v.is("seconds") )
     {
         tag->tag_metric |= TAG_METRIC_SECONDS;
-        tag->tag_seconds = v.get_long();
+        tag->tag_seconds = v.get_uint32();
     }
     else if ( v.is("bytes") )
     {
         tag->tag_metric |= TAG_METRIC_BYTES;
-        tag->tag_bytes = v.get_long();
+        tag->tag_bytes = v.get_uint32();
     }
     else
         return false;

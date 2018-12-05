@@ -38,13 +38,13 @@ Trace TRACE_NAME(stream);
 #define CACHE_PARAMS(name, max, prune, idle, cleanup) \
 static const Parameter name[] = \
 { \
-    { "max_sessions", Parameter::PT_INT, "2:", max, \
+    { "max_sessions", Parameter::PT_INT, "2:max32", max, \
       "maximum simultaneous sessions tracked before pruning" }, \
  \
-    { "pruning_timeout", Parameter::PT_INT, "1:", prune, \
+    { "pruning_timeout", Parameter::PT_INT, "1:max32", prune, \
       "minimum inactive time before being eligible for pruning" }, \
  \
-    { "idle_timeout", Parameter::PT_INT, "1:", idle, \
+    { "idle_timeout", Parameter::PT_INT, "1:max32", idle, \
       "maximum inactive time before retiring session tracker" }, \
  \
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr } \
@@ -63,7 +63,7 @@ CACHE_PARAMS(file_params,    "128",  "30",  "180", "5");
 
 static const Parameter s_params[] =
 {
-    { "footprint", Parameter::PT_INT, "0:", "0",
+    { "footprint", Parameter::PT_INT, "0:max32", "0",
       "use zero for production, non-zero for testing at given size (for TCP and user)" },
 
     { "ip_frags_only", Parameter::PT_BOOL, nullptr, "false",
@@ -127,7 +127,7 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
 
     if ( v.is("footprint") )
     {
-        config.footprint = v.get_long();
+        config.footprint = v.get_uint32();
         return true;
     }
     else if ( v.is("ip_frags_only") )
@@ -157,13 +157,13 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
         return Module::set(fqn, v, c);
 
     if ( v.is("max_sessions") )
-        fc->max_sessions = v.get_long();
+        fc->max_sessions = v.get_uint32();
 
     else if ( v.is("pruning_timeout") )
-        fc->pruning_timeout = v.get_long();
+        fc->pruning_timeout = v.get_uint32();
 
     else if ( v.is("idle_timeout") )
-        fc->nominal_timeout = v.get_long();
+        fc->nominal_timeout = v.get_uint32();
 
     else
         return false;

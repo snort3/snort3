@@ -168,10 +168,10 @@ static const Parameter s_params[] =
     { "raw", Parameter::PT_BOOL, nullptr, "false",
       "output all full packets if true, else just TCP payload" },
 
-    { "limit", Parameter::PT_INT, "0:", "0",
+    { "limit", Parameter::PT_INT, "0:maxSZ", "0",
       "set maximum size in MB before rollover (0 is unlimited)" },
 
-    { "width", Parameter::PT_INT, "0:", "20",
+    { "width", Parameter::PT_INT, "0:max32", "20",
       "set line width (0 is unlimited)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -191,7 +191,7 @@ public:
 public:
     bool file;
     bool raw;
-    unsigned long limit;
+    size_t limit;
     unsigned width;
 };
 
@@ -204,10 +204,10 @@ bool HextModule::set(const char*, Value& v, SnortConfig*)
         raw = v.get_bool();
 
     else if ( v.is("limit") )
-        limit = v.get_long() * 1024 * 1024;
+        limit = v.get_size() * 1024 * 1024;
 
     else if ( v.is("width") )
-        width = v.get_long();
+        width = v.get_uint32();
 
     else
         return false;

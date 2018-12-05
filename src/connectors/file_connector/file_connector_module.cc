@@ -83,10 +83,10 @@ bool FileConnectorModule::set(const char*, Value& v, SnortConfig*)
         config->name = v.get_string();
 
     else if ( v.is("format") )
-        config->text_format = ( v.get_long() == 1 );
+        config->text_format = ( v.get_uint8() == 1 );
 
     else if ( v.is("direction") )
-        switch ( v.get_long() )
+        switch ( v.get_uint8() )
         {
         case 0:
         {

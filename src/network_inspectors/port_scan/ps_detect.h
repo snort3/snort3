@@ -76,7 +76,7 @@ struct PS_ALERT_CONF
 
 struct PortscanConfig
 {
-    unsigned long memcap;
+    size_t memcap;
 
     int detect_scans;
     int detect_scan_type;

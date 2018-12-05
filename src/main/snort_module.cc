@@ -79,7 +79,7 @@ static const Parameter s_module[] =
 
 static const Parameter s_pktnum[] =
 {
-    { "pkt_num", Parameter::PT_INT, "1:", nullptr,
+    { "pkt_num", Parameter::PT_INT, "1:max53", nullptr,
       "resume and pause after pkt_num packets" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -88,7 +88,10 @@ static const Parameter s_pktnum[] =
 static const Command snort_cmds[] =
 {
     { "show_plugins", main_dump_plugins, nullptr, "show available plugins" },
-    { "delete_inspector", main_delete_inspector, s_delete, "delete an inspector from the default policy" },
+
+    { "delete_inspector", main_delete_inspector, s_delete,
+      "delete an inspector from the default policy" },
+
     { "dump_stats", main_dump_stats, nullptr, "show summary statistics" },
     { "rotate_stats", main_rotate_stats, nullptr, "roll perfmonitor log files" },
     { "reload_config", main_reload_config, s_reload, "load new configuration" },
@@ -101,8 +104,10 @@ static const Command snort_cmds[] =
     //{ "process", main_process, nullptr, "process given pcap" },
 
     { "pause", main_pause, nullptr, "suspend packet processing" },
+
     { "resume", main_resume, s_pktnum, "continue packet processing. "
       "If number of packet is specified, will resume for n packets and pause" },
+
     { "detach", main_detach, nullptr, "exit shell w/o shutdown" },
     { "quit", main_quit, nullptr, "shutdown and dump-stats" },
     { "help", main_help, nullptr, "this output" },
@@ -121,7 +126,7 @@ static const Command snort_cmds[] =
     exit(0);
 }
 
-[[noreturn]] static void x2c(unsigned x)
+[[noreturn]] static void x2c(uint8_t x)
 {
     printf("0x%2.2X (%u) = '%c'\n", x, x, static_cast<char>(x));
     exit(0);
@@ -220,10 +225,10 @@ static const Parameter s_params[] =
     { "-M", Parameter::PT_IMPLIED, nullptr, nullptr,
       "log messages to syslog (not alerts)" },
 
-    { "-m", Parameter::PT_INT, "0:", nullptr,
-      "<umask> set umask = <umask>" },
+    { "-m", Parameter::PT_INT, "0x000:0x1FF", nullptr,
+      "<umask> set the process file mode creation mask" },
 
-    { "-n", Parameter::PT_INT, "0:", nullptr,
+    { "-n", Parameter::PT_INT, "0:max53", nullptr,
       "<count> stop after count packets" },
 
     { "-O", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -274,7 +279,7 @@ static const Parameter s_params[] =
     { "-y", Parameter::PT_IMPLIED, nullptr, nullptr,
       "include year in timestamp in the alert and log files" },
 
-    { "-z", Parameter::PT_INT, "0:", "1",
+    { "-z", Parameter::PT_INT, "0:max32", "1",
       "<count> maximum number of packet threads (same as --max-packet-threads); "
       "0 gets the number of CPU cores reported by the system; default is 1" },
 
@@ -342,6 +347,9 @@ static const Parameter s_params[] =
     { "--help-counts", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output matching peg counts" },
 
+    { "--help-limits", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "print the int upper bounds denoted by max*" },
+
     { "--help-module", Parameter::PT_STRING, nullptr, nullptr,
       "<module> output description of given module" },
 
@@ -390,7 +398,7 @@ static const Parameter s_params[] =
     { "--markup", Parameter::PT_IMPLIED, nullptr, nullptr,
       "output help in asciidoc compatible format" },
 
-    { "--max-packet-threads", Parameter::PT_INT, "0:", "1",
+    { "--max-packet-threads", Parameter::PT_INT, "0:max32", "1",
       "<count> configure maximum number of packet threads (same as -z)" },
 
     { "--mem-check", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -406,7 +414,7 @@ static const Parameter s_params[] =
       "wait for resume/quit command before processing packets/terminating", },
 
 #ifdef REG_TEST
-    { "--pause-after-n", Parameter::PT_INT, "1:", nullptr,
+    { "--pause-after-n", Parameter::PT_INT, "1:max53", nullptr,
       "<count> pause after count packets", },
 #endif
 
@@ -425,7 +433,7 @@ static const Parameter s_params[] =
     { "--pcap-filter", Parameter::PT_STRING, nullptr, nullptr,
       "<filter> filter to apply when getting pcaps from file or directory" },
 
-    { "--pcap-loop", Parameter::PT_INT, "-1:", nullptr,
+    { "--pcap-loop", Parameter::PT_INT, "0:max32", nullptr,
       "<count> read all pcaps <count> times;  0 will read until Snort is terminated" },
 
     { "--pcap-no-filter", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -478,7 +486,7 @@ static const Parameter s_params[] =
     { "--show-plugins", Parameter::PT_IMPLIED, nullptr, nullptr,
       "list module and plugin versions", },
 
-    { "--skip", Parameter::PT_INT, "0:", nullptr,
+    { "--skip", Parameter::PT_INT, "0:max53", nullptr,
       "<n> skip 1st n packets", },
 
     { "--snaplen", Parameter::PT_INT, "68:65535", "1518",
@@ -536,7 +544,7 @@ static const Parameter s_params[] =
     { "--warn-vars", Parameter::PT_IMPLIED, nullptr, nullptr,
       "warn about variable definition and usage issues" },
 
-    { "--x2c", Parameter::PT_INT, nullptr, nullptr,
+    { "--x2c", Parameter::PT_INT, "0x00:0xFF", nullptr,
       "output ASCII char for given hex (see also --c2x)" },
 
     { "--x2s", Parameter::PT_STRING, nullptr, nullptr,
@@ -634,7 +642,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->output_flags |= OUTPUT_FLAG__LINE_BUFFER;
 
     else if ( v.is("-G") || v.is("--logid") )
-        sc->event_log_id = v.get_long() << 16;
+        sc->event_log_id = v.get_uint16() << 16;
 
     else if ( v.is("-g") )
         sc->set_gid(v.get_string());
@@ -654,7 +662,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 #ifdef SHELL
     else if ( v.is("-j") )
     {
-        sc->remote_control_port = v.get_long();
+        sc->remote_control_port = v.get_uint16();
         sc->remote_control_socket.clear();
     }
 #endif
@@ -672,10 +680,10 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->enable_syslog();
 
     else if ( v.is("-m") )
-        sc->set_umask(v.get_string());
+        sc->set_umask(v.get_uint32());
 
     else if ( v.is("-n") )
-        sc->pkt_cnt = v.get_long();
+        sc->pkt_cnt = v.get_uint64();
 
     else if ( v.is("-O") )
         sc->set_obfuscate(true);
@@ -700,8 +708,8 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("-S") )
         config_set_var(sc, v.get_string());
 
-    else if ( v.is("-s") )
-        sc->daq_config->set_mru_size(v.get_long());
+    else if ( v.is("-s") or v.is("--snaplen") )
+        sc->daq_config->set_mru_size(v.get_uint16());
 
     else if ( v.is("-T") )
         sc->run_flags |= RUN_FLAG__TEST;
@@ -731,7 +739,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->set_show_year(true);
 
     else if ( v.is("-z") || v.is("--max-packet-threads") )
-        ThreadConfig::set_instance_max(v.get_long());
+        ThreadConfig::set_instance_max(v.get_uint32());
 
     else if ( v.is("--alert-before-pass") )
         sc->set_alert_before_pass(true);
@@ -807,6 +815,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("--help-counts") )
         help_counts(sc, v.get_string());
 
+    else if ( v.is("--help-limits") )
+        help_limits(sc, v.get_string());
+
     else if ( v.is("--help-module") )
         help_module(sc, v.get_string());
 
@@ -823,7 +834,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         help_signals(sc, v.get_string());
 
     else if ( v.is("--id-offset") )
-        sc->id_offset = v.get_long();
+        sc->id_offset = v.get_uint16();
 
     else if ( v.is("--id-subdir") )
         sc->id_subdir = true;
@@ -866,7 +877,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
 #ifdef REG_TEST
     else if ( v.is("--pause-after-n") )
-        sc->pkt_pause_cnt = v.get_long();
+        sc->pkt_pause_cnt = v.get_uint64();
 #endif
 
     else if ( v.is("--parsing-follows-files") )
@@ -886,7 +897,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         Trough::set_filter(v.get_string());
 
     else if ( v.is("--pcap-loop") )
-        Trough::set_loop_count(v.get_long());
+        Trough::set_loop_count(v.get_uint32());
 
     else if ( v.is("--pcap-no-filter") )
         Trough::set_filter(nullptr);
@@ -935,10 +946,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->logging_flags |= LOGGING_FLAG__SHOW_PLUGINS;
 
     else if ( v.is("--skip") )
-        sc->pkt_skip = v.get_long();
-
-    else if ( v.is("--snaplen") )
-        sc->daq_config->set_mru_size(v.get_long());
+        sc->pkt_skip = v.get_uint64();
 
     else if ( v.is("--stdin-rules") )
         sc->stdin_rules = true;
@@ -996,7 +1004,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->warning_flags |= (1 << WARN_VARS);
 
     else if ( v.is("--x2c") )
-        x2c(v.get_long());
+        x2c(v.get_uint8());
 
     else if ( v.is("--x2s") )
         x2s(v.get_string());

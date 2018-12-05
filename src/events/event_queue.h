@@ -28,8 +28,8 @@
 
 struct EventQueueConfig
 {
-    int max_events;
-    int log_events;
+    unsigned max_events;
+    unsigned log_events;
     int order;
     int process_all_events;
 };

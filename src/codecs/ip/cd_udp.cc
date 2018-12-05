@@ -101,7 +101,7 @@ public:
     {
         if ( v.is("deep_teredo_inspection") )
         {
-            sc->enable_teredo = v.get_long();  // FIXIT-L move to existing bitfield
+            sc->enable_teredo = v.get_bool();
         }
         else if ( v.is("gtp_ports") )
         {

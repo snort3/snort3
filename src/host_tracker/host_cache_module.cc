@@ -30,7 +30,7 @@ using namespace snort;
 
 const Parameter HostCacheModule::host_cache_params[] =
 {
-    { "size", Parameter::PT_INT, nullptr, nullptr,
+    { "size", Parameter::PT_INT, "1:max32", nullptr,
       "size of host cache" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -39,7 +39,7 @@ const Parameter HostCacheModule::host_cache_params[] =
 bool HostCacheModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("size") )
-        host_cache_size = v.get_long();
+        host_cache_size = v.get_uint32();
     else
         return false;
 

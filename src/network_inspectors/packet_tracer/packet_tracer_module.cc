@@ -52,11 +52,11 @@ static const Parameter s_params[] =
 
 static const Parameter enable_packet_tracer_params[] =
 {
-    {"proto", Parameter::PT_INT, nullptr, nullptr, "numerical IP protocol ID filter"},
+    {"proto", Parameter::PT_INT, "0:255", nullptr, "numerical IP protocol ID filter"},
     {"src_ip", Parameter::PT_STRING, nullptr, nullptr, "source IP address filter"},
-    {"src_port", Parameter::PT_INT, nullptr, nullptr, "source port filter"},
+    {"src_port", Parameter::PT_INT, "0:65535", nullptr, "source port filter"},
     {"dst_ip", Parameter::PT_STRING, nullptr, nullptr, "destination IP address filter"},
-    {"dst_port", Parameter::PT_INT, nullptr, nullptr, "destination port filter"},
+    {"dst_port", Parameter::PT_INT, "0:65535", nullptr, "destination port filter"},
     {nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr}
 };
 
@@ -158,7 +158,7 @@ bool PacketTracerModule::set(const char *, Value &v, SnortConfig*)
 
     else if ( v.is("output") )
     {
-        switch ( v.get_long() )
+        switch ( v.get_uint8() )
         {
             case PACKET_TRACE_CONSOLE:
                 config->file = "-";

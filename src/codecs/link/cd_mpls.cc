@@ -43,7 +43,7 @@ static const Parameter mpls_params[] =
     { "enable_mpls_overlapping_ip", Parameter::PT_BOOL, nullptr, "false",
       "enable if private network addresses overlap and must be differentiated by MPLS label(s)" },
 
-    { "max_mpls_stack_depth", Parameter::PT_INT, "-1:", "-1",
+    { "max_mpls_stack_depth", Parameter::PT_INT, "-1:255", "-1",
       "set MPLS stack depth" },
 
     { "mpls_payload_type", Parameter::PT_ENUM, "eth | ip4 | ip6", "ip4",
@@ -101,11 +101,11 @@ public:
         }
         else if ( v.is("max_mpls_stack_depth") )
         {
-            sc->mpls_stack_depth = v.get_long();
+            sc->mpls_stack_depth = v.get_int16();
         }
         else if ( v.is("mpls_payload_type") )
         {
-            sc->mpls_payload_type = v.get_long() + 1;
+            sc->mpls_payload_type = v.get_uint8() + 1;
         }
         else
             return false;

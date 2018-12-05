@@ -83,10 +83,10 @@ bool TcpConnectorModule::set(const char*, Value& v, SnortConfig*)
         config->address = v.get_string();
 
     else if ( v.is("base_port") )
-        config->base_port = v.get_long();
+        config->base_port = v.get_uint16();
 
     else if ( v.is("setup") )
-        switch ( v.get_long() )
+        switch ( v.get_uint8() )
         {
         case 0:
         {

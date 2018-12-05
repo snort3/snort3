@@ -54,13 +54,12 @@ static const PegInfo bind_pegs[] =
 // binder module
 //-------------------------------------------------------------------------
 
-#define INT32_MAX_STR "2147483647"
 static const Parameter binder_when_params[] =
 {
     // FIXIT-L when.policy_id should be an arbitrary string auto converted
     // into index for binder matching and lookups
 
-    { "ips_policy_id", Parameter::PT_INT, "0:", "0",
+    { "ips_policy_id", Parameter::PT_INT, "0:max32", "0",
       "unique ID for selection of this config by external logic" },
 
     { "ifaces", Parameter::PT_BIT_LIST, "255", nullptr,
@@ -90,10 +89,10 @@ static const Parameter binder_when_params[] =
     { "dst_ports", Parameter::PT_BIT_LIST, "65535", nullptr,
       "list of destination ports" },
 
-    { "src_zone", Parameter::PT_INT, "0:" INT32_MAX_STR, nullptr,
+    { "src_zone", Parameter::PT_INT, "0:max31", nullptr,
       "source zone" },
 
-    { "dst_zone", Parameter::PT_INT, "0:" INT32_MAX_STR, nullptr,
+    { "dst_zone", Parameter::PT_INT, "0:max31", nullptr,
       "destination zone" },
 
     { "role", Parameter::PT_ENUM, "client | server | any", "any",
@@ -204,7 +203,7 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
         work->when.split_nets = true;
     }
     else if ( v.is("ips_policy_id") )
-        work->when.ips_id = v.get_long();
+        work->when.ips_id = v.get_uint32();
 
     else if ( v.is("proto") )
     {
@@ -213,7 +212,7 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
             PROTO_BIT__ANY_TYPE, PROTO_BIT__IP, PROTO_BIT__ICMP,
             PROTO_BIT__TCP, PROTO_BIT__UDP, PROTO_BIT__PDU, PROTO_BIT__FILE
         };
-        work->when.protos = mask[v.get_long()];
+        work->when.protos = mask[v.get_uint8()];
     }
     else if ( v.is("ports") )
     {
@@ -232,20 +231,20 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
     }
 
     else if ( v.is("src_zone") )
-        work->when.src_zone = v.get_long();
+        work->when.src_zone = v.get_int32();
 
     else if ( v.is("dst_zone") )
-        work->when.dst_zone = v.get_long();
+        work->when.dst_zone = v.get_int32();
 
     else if ( v.is("role") )
-        work->when.role = (BindWhen::Role)v.get_long();
+        work->when.role = (BindWhen::Role)v.get_uint8();
 
     else if ( v.is("vlans") )
         v.get_bits(work->when.vlans);
 
     // use
     else if ( v.is("action") )
-        work->use.action = (BindUse::Action)(v.get_long());
+        work->use.action = (BindUse::Action)(v.get_uint8());
 
     else if ( v.is("file") )
         add_file(v.get_string(), FILE_KEY);

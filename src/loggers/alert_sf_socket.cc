@@ -67,10 +67,10 @@ typedef vector<RuleId> RuleVector;
 
 static const Parameter rule_params[] =
 {
-    { "gid", Parameter::PT_INT, "1:", "1",
+    { "gid", Parameter::PT_INT, "1:max32", "1",
       "rule generator ID" },
 
-    { "sid", Parameter::PT_INT, "1:", "1",
+    { "sid", Parameter::PT_INT, "1:max32", "1",
       "rule signature ID" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -114,10 +114,10 @@ bool SfSocketModule::set(const char*, Value& v, SnortConfig*)
         file = v.get_string();
 
     else if ( v.is("gid") )
-        rule.gid = v.get_long();
+        rule.gid = v.get_uint32();
 
     else if ( v.is("sid") )
-        rule.sid = v.get_long();
+        rule.sid = v.get_uint32();
 
     return true;
 }

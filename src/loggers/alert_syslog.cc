@@ -159,10 +159,10 @@ public:
 bool SyslogModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("facility") )
-        facility = get_facility(v.get_long());
+        facility = get_facility(v.get_uint8());
 
     else if ( v.is("level") )
-        level = get_level(v.get_long());
+        level = get_level(v.get_uint8());
 
     else if ( v.is("options") )
         options = get_options(v.get_string());

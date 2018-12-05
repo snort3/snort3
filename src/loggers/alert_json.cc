@@ -634,7 +634,7 @@ static const Parameter s_params[] =
     { "fields", Parameter::PT_MULTI, json_range, json_deflt,
       "selected fields will be output in given order left to right" },
 
-    { "limit", Parameter::PT_INT, "0:", "0",
+    { "limit", Parameter::PT_INT, "0:maxSZ", "0",
       "set maximum size in MB before rollover (0 is unlimited)" },
 
     { "separator", Parameter::PT_STRING, nullptr, ", ",
@@ -659,8 +659,8 @@ public:
 
 public:
     bool file;
+    size_t limit;
     string sep;
-    unsigned long limit;
     vector<JsonFunc> fields;
 };
 
@@ -680,7 +680,7 @@ bool JsonModule::set(const char*, Value& v, SnortConfig*)
     }
 
     else if ( v.is("limit") )
-        limit = v.get_long() * 1024 * 1024;
+        limit = v.get_size() * 1024 * 1024;
 
     else if ( v.is("separator") )
         sep = v.get_string();

@@ -174,7 +174,7 @@ static void trace(const char* s, const char* fqn, Value& v)
     if ( v.get_type() == Value::VT_STR )
         printf("%s: %s = '%s'\n", s, fqn, v.get_string());
     else
-        printf("%s: %s = %ld\n", s, fqn, v.get_long());
+        printf("%s: %s = " STDi64 "\n", s, fqn, v.get_int64());
 }
 
 static ModHook* get_hook(const char* s)
@@ -507,8 +507,8 @@ static bool set_value(const char* fqn, Value& v)
 
     if ( v.get_type() == Value::VT_STR )
         ParseError("invalid %s = '%s'", fqn, v.get_string());
-    else if ( v.get_real() == v.get_long() )
-        ParseError("invalid %s = %ld", fqn, v.get_long());
+    else if ( v.get_real() == v.get_int64() )
+        ParseError("invalid %s = " STDi64, fqn, v.get_int64());
     else
         ParseError("invalid %s = %g", fqn, v.get_real());
 

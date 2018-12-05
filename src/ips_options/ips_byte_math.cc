@@ -363,10 +363,10 @@ bool ByteMathModule::begin(const char*, int, SnortConfig*)
 bool ByteMathModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("bytes") )
-        data.bytes_to_extract = v.get_long();
+        data.bytes_to_extract = v.get_uint8();
 
     else if ( v.is("oper") )
-        data.oper = (BM_Oper)v.get_long();
+        data.oper = (BM_Oper)v.get_uint8();
 
     else if ( v.is("rvalue") )
     {
@@ -397,13 +397,13 @@ bool ByteMathModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("string") )
     {
         data.string_convert_flag = true;
-        parse_base(v.get_long(), data);
+        parse_base(v.get_uint8(), data);
     }
     else if ( v.is("endian") )
-        parse_endian(v.get_long(), data);
+        parse_endian(v.get_uint8(), data);
 
     else if ( v.is("bitmask") )
-        data.bitmask_val = v.get_long();
+        data.bitmask_val = v.get_uint32();
 
     else if ( v.is("result") )
         data.result_name = snort_strdup(v.get_string());

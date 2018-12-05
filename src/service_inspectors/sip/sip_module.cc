@@ -72,7 +72,7 @@ static const Parameter s_params[] =
     { "max_content_len", Parameter::PT_INT, "0:65535", "1024",
       "maximum content length of the message body" },
 
-    { "max_dialogs", Parameter::PT_INT, "1:4194303", "4",
+    { "max_dialogs", Parameter::PT_INT, "1:max32", "4",
       "maximum number of dialogs within one stream session" },
 
     { "max_from_len", Parameter::PT_INT, "0:65535", "256",
@@ -201,31 +201,31 @@ bool SipModule::set(const char*, Value& v, SnortConfig*)
         conf->ignoreChannel = v.get_bool();
 
     else if ( v.is("max_call_id_len") )
-        conf->maxCallIdLen = v.get_long();
+        conf->maxCallIdLen = v.get_uint16();
 
     else if ( v.is("max_contact_len") )
-        conf->maxContactLen = v.get_long();
+        conf->maxContactLen = v.get_uint16();
 
     else if ( v.is("max_content_len") )
-        conf->maxContentLen = v.get_long();
+        conf->maxContentLen = v.get_uint16();
 
     else if ( v.is("max_dialogs") )
-        conf->maxNumDialogsInSession = v.get_long();
+        conf->maxNumDialogsInSession = v.get_uint32();
 
     else if ( v.is("max_from_len") )
-        conf->maxFromLen = v.get_long();
+        conf->maxFromLen = v.get_uint16();
 
     else if ( v.is("max_requestName_len") )
-        conf->maxRequestNameLen = v.get_long();
+        conf->maxRequestNameLen = v.get_uint16();
 
     else if ( v.is("max_to_len") )
-        conf->maxToLen = v.get_long();
+        conf->maxToLen = v.get_uint16();
 
     else if ( v.is("max_uri_len") )
-        conf->maxUriLen = v.get_long();
+        conf->maxUriLen = v.get_uint16();
 
     else if ( v.is("max_via_len") )
-        conf->maxViaLen = v.get_long();
+        conf->maxViaLen = v.get_uint16();
 
     else if ( v.is("methods") )
         sip_methods = v.get_string();

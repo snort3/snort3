@@ -63,8 +63,8 @@ bool TargetModule::set(const char*, Value& v, SnortConfig*)
     if ( !v.is("~") )
         return false;
 
-    assert(v.get_long() >= 0 and v.get_long() <= TARGET_MAX);
-    target = static_cast<Target>(v.get_long() + 1);
+    assert(v.get_uint8() <= TARGET_MAX);
+    target = static_cast<Target>(v.get_uint8() + 1);
 
     return true;
 }

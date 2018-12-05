@@ -34,8 +34,9 @@
 struct HttpParaList
 {
 public:
-    long request_depth;
-    long response_depth;
+    int64_t request_depth;
+    int64_t response_depth;
+
     bool unzip;
     bool normalize_utf = true;
     bool decompress_pdf = false;
@@ -76,9 +77,10 @@ public:
     UriParam uri_param;
 
 #ifdef REG_TEST
+    int64_t print_amount;
+
     bool test_input;
     bool test_output;
-    long print_amount;
     bool print_hex;
     bool show_pegs;
     bool show_scan;

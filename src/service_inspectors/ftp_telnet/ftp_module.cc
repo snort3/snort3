@@ -48,10 +48,10 @@ static const Parameter client_bounce_params[] =
       "allowed IP address in CIDR format" },
 
     // FIXIT-L port and last_port should be replaced with a port list
-    { "port", Parameter::PT_PORT, "1:", "20",
+    { "port", Parameter::PT_PORT, nullptr, "20",
       "allowed port" },
 
-    { "last_port", Parameter::PT_PORT, "0:", nullptr,
+    { "last_port", Parameter::PT_PORT, nullptr, nullptr,
       "optional allowed range from port to last_port inclusive" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -68,7 +68,7 @@ static const Parameter ftp_client_params[] =
     { "ignore_telnet_erase_cmds", Parameter::PT_BOOL, nullptr, "false",
       "ignore erase character and erase line commands when normalizing" },
 
-    { "max_resp_len", Parameter::PT_INT, "-1:", "-1",
+    { "max_resp_len", Parameter::PT_INT, "0:max32", "4294967295",
       "maximum FTP response accepted by client" },
 
     { "telnet_cmds", Parameter::PT_BOOL, nullptr, "false",
@@ -107,13 +107,13 @@ bool FtpClientModule::set(const char*, Value& v, SnortConfig*)
         conf->ignore_telnet_erase_cmds = v.get_bool();
 
     else if ( v.is("last_port") )
-        last_port = v.get_long();
+        last_port = v.get_uint16();
 
     else if ( v.is("max_resp_len") )
-        conf->max_resp_len = v.get_long();
+        conf->max_resp_len = v.get_uint32();
 
     else if ( v.is("port") )
-        port = v.get_long();
+        port = v.get_uint16();
 
     else if ( v.is("telnet_cmds") )
         conf->telnet_cmds = v.get_bool();
@@ -243,7 +243,7 @@ static const Parameter ftp_server_validity_params[] =
     { "format", Parameter::PT_STRING, nullptr, nullptr,
       "format specification" },
 
-    { "length", Parameter::PT_INT, "0:", "0",
+    { "length", Parameter::PT_INT, "0:max32", "0",
       "specify non-default maximum for command" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -254,7 +254,7 @@ static const Parameter ftp_directory_params[] =
     { "dir_cmd", Parameter::PT_STRING, nullptr, nullptr,
       "directory command" },
 
-    { "rsp_code", Parameter::PT_INT, "200:", "200",
+    { "rsp_code", Parameter::PT_INT, "200:max32", "200",
       "expected successful response code for command" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -295,7 +295,7 @@ static const Parameter ftp_server_params[] =
     { "cmd_validity", Parameter::PT_LIST, ftp_server_validity_params, nullptr,
       "specify command formats" },
 
-    { "def_max_param_len", Parameter::PT_INT, "1:", "100",
+    { "def_max_param_len", Parameter::PT_INT, "1:max32", "100",
       "default maximum length of commands handled by server; 0 is unlimited" },
 
     { "encrypted_traffic", Parameter::PT_BOOL, nullptr, "false",
@@ -419,7 +419,7 @@ bool FtpServerModule::set(const char*, Value& v, SnortConfig*)
         add_commands(v, CMD_XFER);
 
     else if ( v.is("def_max_param_len") )
-        conf->def_max_param_len = v.get_long();
+        conf->def_max_param_len = v.get_uint32();
 
     else if ( v.is("dir_cmd") )
         names = v.get_string();
@@ -449,7 +449,7 @@ bool FtpServerModule::set(const char*, Value& v, SnortConfig*)
         conf->ignore_telnet_erase_cmds = v.get_bool();
 
     else if ( v.is("length") )
-        number = v.get_long();
+        number = v.get_uint32();
 
     else if ( v.is("login_cmds") )
         add_commands(v, CMD_LOGIN);
@@ -458,7 +458,7 @@ bool FtpServerModule::set(const char*, Value& v, SnortConfig*)
         conf->print_commands = v.get_bool();
 
     else if ( v.is("rsp_code") )
-        number = v.get_long();
+        number = v.get_uint32();
 
     else if ( v.is("telnet_cmds") )
         conf->telnet_cmds = v.get_bool();

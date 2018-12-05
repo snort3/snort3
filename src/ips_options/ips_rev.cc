@@ -36,7 +36,7 @@ using namespace snort;
 
 static const Parameter s_params[] =
 {
-    { "~", Parameter::PT_INT, "1:", nullptr,
+    { "~", Parameter::PT_INT, "1:max32", nullptr,
       "revision" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -55,7 +55,7 @@ public:
     { return DETECT; }
 
 public:
-    int rev;
+    uint32_t rev;
 };
 
 bool RevModule::set(const char*, Value& v, SnortConfig*)
@@ -63,7 +63,7 @@ bool RevModule::set(const char*, Value& v, SnortConfig*)
     if ( !v.is("~") )
         return false;
 
-    rev = v.get_long();
+    rev = v.get_uint32();
     return true;
 }
 

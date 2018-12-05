@@ -869,16 +869,8 @@ void SnortConfig::set_process_all_events(bool enabled)
 # endif
 #endif
 
-void SnortConfig::set_umask(const char* args)
+void SnortConfig::set_umask(uint32_t mask)
 {
-    char* endptr;
-    long mask = SnortStrtol(args, &endptr, 0);
-
-    if ((errno == ERANGE) || (*endptr != '\0') ||
-        (mask < 0) || (mask & ~FILE_ACCESS_BITS))
-    {
-        ParseError("bad umask: %s", args);
-    }
     file_mask = (mode_t)mask;
 }
 

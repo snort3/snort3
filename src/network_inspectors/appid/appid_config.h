@@ -81,7 +81,7 @@ public:
     bool tp_appid_stats_enable = false;
     bool tp_appid_config_dump = false;
     uint32_t instance_id = 0;
-    uint32_t memcap = 0;
+    size_t memcap = 0;
     bool debug = false;
     bool dump_ports = false;
     bool log_all_sessions = false;

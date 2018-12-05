@@ -182,13 +182,13 @@ static const Parameter s_params[] =
     { PRINT_OPT, Parameter::PT_IMPLIED, nullptr, nullptr,
       "dump decode data to console; always true" },
 
-    { LENGTH_OPT, Parameter::PT_INT, "0:", nullptr,
+    { LENGTH_OPT, Parameter::PT_INT, "0:max32", nullptr,
       "compares ASN.1 type lengths with the supplied argument" },
 
-    { ABS_OFFSET_OPT, Parameter::PT_INT, "0:", nullptr,
+    { ABS_OFFSET_OPT, Parameter::PT_INT, "0:65535", nullptr,
       "absolute offset from the beginning of the packet" },
 
-    { REL_OFFSET_OPT, Parameter::PT_INT, nullptr, nullptr,
+    { REL_OFFSET_OPT, Parameter::PT_INT, "-65535:65535", nullptr,
       "relative offset from the cursor" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -232,17 +232,17 @@ bool Asn1Module::set(const char*, Value& v, SnortConfig*)
     else if ( v.is(LENGTH_OPT) )
     {
         data.length = 1;
-        data.max_length = v.get_long();
+        data.max_length = v.get_uint32();
     }
     else if ( v.is(ABS_OFFSET_OPT) )
     {
         data.offset_type = ABS_OFFSET;
-        data.offset = v.get_long();
+        data.offset = v.get_uint16();
     }
     else if ( v.is(REL_OFFSET_OPT) )
     {
         data.offset_type = REL_OFFSET;
-        data.offset = v.get_long();
+        data.offset = v.get_int32();
     }
     else
         return false;

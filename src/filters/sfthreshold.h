@@ -30,9 +30,9 @@ struct ThresholdObjects;
 
 struct ThresholdConfig
 {
-    int memcap;
-    int enabled;
     ThresholdObjects* thd_objs;
+    unsigned memcap;
+    int enabled;
 };
 
 ThresholdConfig* ThresholdConfigNew();

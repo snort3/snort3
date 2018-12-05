@@ -363,8 +363,8 @@ static void PrintPortscanConf(PortscanConfig* config)
         sfsnprintfappend(buf, sizeof(buf)-1, "distributed_portscan");
 
     LogMessage("%s\n", buf);
-    LogMessage("    Memcap (in bytes): %lu\n", config->memcap);
-    LogMessage("    Number of Nodes:   %ld\n", config->memcap / ps_node_size());
+    LogMessage("    Memcap (in bytes): %zu\n", config->memcap);
+    LogMessage("    Number of Nodes:   %zu\n", config->memcap / ps_node_size());
 
     if ( config->logfile )
         LogMessage("    Logfile:           %s\n", "yes");

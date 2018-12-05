@@ -162,11 +162,13 @@ struct THDX_STRUCT
 {
     unsigned gen_id;
     unsigned sig_id;
+    unsigned seconds;
+
     int type;
+    int count;
     int tracking;
     int priority;
-    int count;
-    unsigned int seconds;
+
     sfip_var_t* ip_address;
 };
 

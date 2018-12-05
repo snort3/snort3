@@ -72,7 +72,7 @@ struct StreamModuleConfig
     FlowConfig user_cfg;
     FlowConfig file_cfg;
 
-    int footprint;
+    unsigned footprint;
     bool ip_frags_only;
     bool track_on_syn;
 };

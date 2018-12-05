@@ -75,7 +75,7 @@ void FastPatternConfig::set_max_pattern_len(unsigned int max_len)
     max_pattern_len = max_len;
 }
 
-int FastPatternConfig::set_max(int bytes)
+unsigned FastPatternConfig::set_max(unsigned bytes)
 {
     if ( max_pattern_len and (bytes > max_pattern_len) )
     {

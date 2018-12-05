@@ -115,19 +115,19 @@ bool ReputationModule::set(const char*, Value& v, SnortConfig*)
         conf->list_dir = v.get_string();
 
     else if ( v.is("memcap") )
-        conf->memcap = v.get_long();
+        conf->memcap = v.get_uint32();
 
     else if ( v.is("nested_ip") )
-        conf->nested_ip = (NestedIP)v.get_long();
+        conf->nested_ip = (NestedIP)v.get_uint8();
 
     else if ( v.is("priority") )
-        conf->priority = (IPdecision)(v.get_long() + 1);
+        conf->priority = (IPdecision)(v.get_uint8() + 1);
 
     else if ( v.is("scan_local") )
         conf->scanlocal = v.get_bool();
 
     else if ( v.is("white") )
-        conf->white_action = (WhiteAction)v.get_long();
+        conf->white_action = (WhiteAction)v.get_uint8();
 
     else if ( v.is("whitelist") )
         conf->whitelist_path = v.get_string();

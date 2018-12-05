@@ -36,8 +36,8 @@ struct SfIp;
 
 struct DetectionFilterConfig
 {
+    unsigned memcap;
     int count;
-    int memcap;
     int enabled;
 };
 

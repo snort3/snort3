@@ -80,10 +80,10 @@ bool HostTrackerModule::set(const char*, Value& v, SnortConfig* sc)
         host->set_ip_addr(addr);
     }
     else if ( host and v.is("frag_policy") )
-        host->set_frag_policy(v.get_long() + 1);
+        host->set_frag_policy(v.get_uint8() + 1);
 
     else if ( host and v.is("tcp_policy") )
-        host->set_stream_policy(v.get_long() + 1);
+        host->set_stream_policy(v.get_uint8() + 1);
 
     else if ( v.is("name") )
         app.snort_protocol_id = sc->proto_ref->add(v.get_string());
@@ -92,7 +92,7 @@ bool HostTrackerModule::set(const char*, Value& v, SnortConfig* sc)
         app.ipproto = sc->proto_ref->add(v.get_string());
 
     else if ( v.is("port") )
-        app.port = v.get_long();
+        app.port = v.get_uint16();
 
     else
         return false;

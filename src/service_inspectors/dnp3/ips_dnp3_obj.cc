@@ -156,8 +156,10 @@ static const Parameter s_params[] =
 {
     { "group", Parameter::PT_INT, "0:255", "0",
       "match given DNP3 object header group" },
+
     { "var", Parameter::PT_INT, "0:255", "0",
       "match given DNP3 object header var" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -188,9 +190,10 @@ bool Dnp3ObjModule::begin(const char*, int, SnortConfig*)
 bool Dnp3ObjModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("group") )
-        group = v.get_long();
+        group = v.get_uint8();
+
     else if ( v.is("var") )
-        var = v.get_long();
+        var = v.get_uint8();
 
     return true;
 }

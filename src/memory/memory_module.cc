@@ -40,13 +40,13 @@ using namespace snort;
 
 static const Parameter s_params[] =
 {
-    { "cap", Parameter::PT_INT, "0:", "0",
+    { "cap", Parameter::PT_INT, "0:maxSZ", "0",
         "set the per-packet-thread cap on memory (bytes, 0 to disable)" },
 
     { "soft", Parameter::PT_BOOL, nullptr, "false",
         "always succeed in allocating memory, even if above the cap" },
 
-    { "threshold", Parameter::PT_INT, "0:", "0",
+    { "threshold", Parameter::PT_INT, "0:100", "0",
         "set the per-packet-thread threshold for preemptive cleanup actions "
         "(percent, 0 to disable)" },
 
@@ -66,13 +66,13 @@ MemoryModule::MemoryModule() :
 bool MemoryModule::set(const char*, Value& v, SnortConfig* sc)
 {
     if ( v.is("cap") )
-        sc->memory->cap = v.get_long();
+        sc->memory->cap = v.get_size();
 
     else if ( v.is("soft") )
         sc->memory->soft = v.get_bool();
 
     else if ( v.is("threshold") )
-        sc->memory->threshold = v.get_long();
+        sc->memory->threshold = v.get_uint8();
 
     else
         return false;

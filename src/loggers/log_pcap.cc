@@ -74,7 +74,7 @@ static void TcpdumpRollLogFile(LtdConfig*);
 
 static const Parameter s_params[] =
 {
-    { "limit", Parameter::PT_INT, "0:", "0",
+    { "limit", Parameter::PT_INT, "0:maxSZ", "0",
       "set maximum size in MB before rollover (0 is unlimited)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -95,13 +95,13 @@ public:
     { return CONTEXT; }
 
 public:
-    unsigned long limit;
+    size_t limit;
 };
 
 bool TcpdumpModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("limit") )
-        limit = v.get_long() * 1024 * 1024;
+        limit = v.get_size() * 1024 * 1024;
 
     else
         return false;
@@ -159,7 +159,7 @@ static void TcpdumpInitLogFile(LtdConfig*, bool no_timestamp)
     if(!no_timestamp)
     {
         char timestamp[16];
-        snprintf(timestamp, sizeof(timestamp), ".%lu", context.lastTime);
+        snprintf(timestamp, sizeof(timestamp), ".%lu", (unsigned long)context.lastTime);
         filename += timestamp;
     }
 

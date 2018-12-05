@@ -166,7 +166,8 @@ void AppIdStatistics::dump_statistics()
                     app_name = tmpBuff;
                 }
 
-                TextLog_Print(log, "%lu,%s,%lu,%lu\n",
+                // FIXIT-M %lu won't do time_t on 32-bit systems
+                TextLog_Print(log, "%lu,%s," STDu64 "," STDu64 "\n",
                     packet_time(), app_name, record->initiatorBytes, record->responderBytes);
             }
         }

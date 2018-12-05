@@ -168,10 +168,10 @@ IpsOption::EvalStatus Base64DecodeOption::eval(Cursor& c, Packet*)
 
 static const Parameter s_params[] =
 {
-    { "bytes", Parameter::PT_INT, "1:", nullptr,
+    { "bytes", Parameter::PT_INT, "1:max32", nullptr,
       "number of base64 encoded bytes to decode" },
 
-    { "offset", Parameter::PT_INT, "0:", "0",
+    { "offset", Parameter::PT_INT, "0:max32", "0",
       "bytes past start of buffer to start decoding" },
 
     { "relative", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -207,10 +207,10 @@ bool B64DecodeModule::begin(const char*, int, SnortConfig*)
 bool B64DecodeModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("bytes") )
-        data.bytes_to_decode = v.get_long();
+        data.bytes_to_decode = v.get_uint32();
 
     else if ( v.is("offset") )
-        data.offset = v.get_long();
+        data.offset = v.get_uint32();
 
     else if ( v.is("relative") )
         data.flags |= BASE64DECODE_RELATIVE_FLAG;

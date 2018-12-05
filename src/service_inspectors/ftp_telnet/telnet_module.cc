@@ -44,7 +44,7 @@ using namespace std;
 
 static const Parameter s_params[] =
 {
-    { "ayt_attack_thresh", Parameter::PT_INT, "-1:", "-1",
+    { "ayt_attack_thresh", Parameter::PT_INT, "-1:max31", "-1",
       "alert on this number of consecutive Telnet AYT commands" },
 
     { "check_encrypted", Parameter::PT_BOOL, nullptr, "false",
@@ -98,7 +98,7 @@ ProfileStats* TelnetModule::get_profile() const
 bool TelnetModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("ayt_attack_thresh") )
-        conf->ayt_threshold = v.get_long();
+        conf->ayt_threshold = v.get_int32();
 
     else if ( v.is("check_encrypted") )
         conf->detect_encrypted = v.get_bool();

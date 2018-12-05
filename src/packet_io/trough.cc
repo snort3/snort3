@@ -41,7 +41,8 @@ std::vector<struct Trough::PcapReadObject> Trough::pcap_object_list;
 std::vector<std::string> Trough::pcap_queue;
 std::string Trough::pcap_filter;
 std::vector<std::string>::const_iterator Trough::pcap_queue_iter;
-long Trough::pcap_loop_count = 0;
+
+unsigned Trough::pcap_loop_count = 0;
 unsigned Trough::file_count = 0;
 
 int Trough::get_pcaps(std::vector<struct PcapReadObject> &pol)
@@ -129,7 +130,7 @@ int Trough::get_pcaps(std::vector<struct PcapReadObject> &pol)
                 {
                     struct stat sb;
                     std::string pcap_name;
-                    auto i = 0;
+                    size_t i = 0;
                     size_t pos = 0;
 
                     if (arg.empty())

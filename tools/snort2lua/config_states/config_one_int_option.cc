@@ -283,5 +283,18 @@ static const ConvertMap tagged_packet_limit_api =
 };
 
 const ConvertMap* tagged_packet_limit_map = &tagged_packet_limit_api;
+
+/**************************************************
+ ********************* umask  *********************
+ **************************************************/
+
+static const std::string umask = "umask";
+static const ConvertMap umask_api =
+{
+    umask,
+    config_int_ctor<& umask, & process>,
+};
+
+const ConvertMap* umask_map = &umask_api;
 } // namespace config
 

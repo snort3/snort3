@@ -33,57 +33,90 @@ using namespace HttpEnums;
 
 const Parameter HttpModule::http_params[] =
 {
-    { "request_depth", Parameter::PT_INT, "-1:", "-1",
-          "maximum request message body bytes to examine (-1 no limit)" },
-    { "response_depth", Parameter::PT_INT, "-1:", "-1",
-          "maximum response message body bytes to examine (-1 no limit)" },
-    { "unzip", Parameter::PT_BOOL, nullptr, "true", "decompress gzip and deflate message bodies" },
+    { "request_depth", Parameter::PT_INT, "-1:max53", "-1",
+      "maximum request message body bytes to examine (-1 no limit)" },
+
+    { "response_depth", Parameter::PT_INT, "-1:max53", "-1",
+      "maximum response message body bytes to examine (-1 no limit)" },
+
+    { "unzip", Parameter::PT_BOOL, nullptr, "true",
+      "decompress gzip and deflate message bodies" },
+
     { "normalize_utf", Parameter::PT_BOOL, nullptr, "true",
-          "normalize charset utf encodings in response bodies" },
+      "normalize charset utf encodings in response bodies" },
+
     { "decompress_pdf", Parameter::PT_BOOL, nullptr, "false",
-          "decompress pdf files in response bodies" },
+      "decompress pdf files in response bodies" },
+
     { "decompress_swf", Parameter::PT_BOOL, nullptr, "false",
-          "decompress swf files in response bodies" },
+      "decompress swf files in response bodies" },
+
     { "normalize_javascript", Parameter::PT_BOOL, nullptr, "false",
-          "normalize javascript in response bodies" },
+      "normalize javascript in response bodies" },
+
     { "max_javascript_whitespaces", Parameter::PT_INT, "1:65535", "200",
-          "maximum consecutive whitespaces allowed within the Javascript obfuscated data" },
+      "maximum consecutive whitespaces allowed within the Javascript obfuscated data" },
+
     { "bad_characters", Parameter::PT_BIT_LIST, "255", nullptr,
-          "alert when any of specified bytes are present in URI after percent decoding" },
+      "alert when any of specified bytes are present in URI after percent decoding" },
+
     { "ignore_unreserved", Parameter::PT_STRING, "(optional)", nullptr,
-          "do not alert when the specified unreserved characters are percent-encoded in a URI."
-          "Unreserved characters are 0-9, a-z, A-Z, period, underscore, tilde, and minus." },
-    { "percent_u", Parameter::PT_BOOL, nullptr, "false", "normalize %uNNNN and %UNNNN encodings" },
+      "do not alert when the specified unreserved characters are percent-encoded in a URI."
+      "Unreserved characters are 0-9, a-z, A-Z, period, underscore, tilde, and minus." },
+
+    { "percent_u", Parameter::PT_BOOL, nullptr, "false",
+      "normalize %uNNNN and %UNNNN encodings" },
+
     { "utf8", Parameter::PT_BOOL, nullptr, "true",
-          "normalize 2-byte and 3-byte UTF-8 characters to a single byte" },
+      "normalize 2-byte and 3-byte UTF-8 characters to a single byte" },
+
     { "utf8_bare_byte", Parameter::PT_BOOL, nullptr, "false",
-          "when doing UTF-8 character normalization include bytes that were not percent encoded" },
+      "when doing UTF-8 character normalization include bytes that were not percent encoded" },
+
     { "iis_unicode", Parameter::PT_BOOL, nullptr, "false",
-          "use IIS unicode code point mapping to normalize characters" },
+      "use IIS unicode code point mapping to normalize characters" },
+
     { "iis_unicode_map_file", Parameter::PT_STRING, "(optional)", nullptr,
-          "file containing code points for IIS unicode." },
+      "file containing code points for IIS unicode." },
+
     { "iis_unicode_code_page", Parameter::PT_INT, "0:65535", "1252",
-          "code page to use from the IIS unicode map file" },
+      "code page to use from the IIS unicode map file" },
+
     { "iis_double_decode", Parameter::PT_BOOL, nullptr, "false",
-          "perform double decoding of percent encodings to normalize characters" },
+      "perform double decoding of percent encodings to normalize characters" },
+
     { "oversize_dir_length", Parameter::PT_INT, "1:65535", "300",
-          "maximum length for URL directory" },
+      "maximum length for URL directory" },
+
     { "backslash_to_slash", Parameter::PT_BOOL, nullptr, "false",
-          "replace \\ with / when normalizing URIs" },
+      "replace \\ with / when normalizing URIs" },
+
     { "plus_to_space", Parameter::PT_BOOL, nullptr, "true",
-          "replace + with <sp> when normalizing URIs" },
+      "replace + with <sp> when normalizing URIs" },
+
     { "simplify_path", Parameter::PT_BOOL, nullptr, "true",
-          "reduce URI directory path to simplest form" },
+      "reduce URI directory path to simplest form" },
+
 #ifdef REG_TEST
-    { "test_input", Parameter::PT_BOOL, nullptr, "false", "read HTTP messages from text file" },
-    { "test_output", Parameter::PT_BOOL, nullptr, "false", "print out HTTP section data" },
-    { "print_amount", Parameter::PT_INT, "1:1000000", "1200",
-          "number of characters to print from a Field" },
+    { "test_input", Parameter::PT_BOOL, nullptr, "false",
+      "read HTTP messages from text file" },
+
+    { "test_output", Parameter::PT_BOOL, nullptr, "false",
+      "print out HTTP section data" },
+
+    { "print_amount", Parameter::PT_INT, "1:max53", "1200",
+      "number of characters to print from a Field" },
+
     { "print_hex", Parameter::PT_BOOL, nullptr, "false",
       "nonprinting characters printed in [HH] format instead of using an asterisk" },
-    { "show_pegs", Parameter::PT_BOOL, nullptr, "true", "display peg counts with test output" },
-    { "show_scan", Parameter::PT_BOOL, nullptr, "false", "display scanned segments" },
+
+    { "show_pegs", Parameter::PT_BOOL, nullptr, "true",
+      "display peg counts with test output" },
+
+    { "show_scan", Parameter::PT_BOOL, nullptr, "false",
+      "display scanned segments" },
 #endif
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -105,11 +138,11 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
 {
     if (val.is("request_depth"))
     {
-        params->request_depth = val.get_long();
+        params->request_depth = val.get_int64();
     }
     else if (val.is("response_depth"))
     {
-        params->response_depth = val.get_long();
+        params->response_depth = val.get_int64();
     }
     else if (val.is("unzip"))
     {
@@ -133,7 +166,7 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     }
     else if (val.is("max_javascript_whitespaces"))
     {
-        params->js_norm_param.max_javascript_whitespaces = val.get_long();
+        params->js_norm_param.max_javascript_whitespaces = val.get_uint16();
     }
     else if (val.is("bad_characters"))
     {
@@ -169,7 +202,7 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     }
     else if (val.is("iis_unicode_code_page"))
     {
-        params->uri_param.iis_unicode_code_page = val.get_long();
+        params->uri_param.iis_unicode_code_page = val.get_uint16();
     }
     else if (val.is("iis_double_decode"))
     {
@@ -177,7 +210,7 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     }
     else if (val.is("oversize_dir_length"))
     {
-        params->uri_param.oversize_dir_length = val.get_long();
+        params->uri_param.oversize_dir_length = val.get_uint16();
     }
     else if (val.is("backslash_to_slash"))
     {
@@ -206,7 +239,7 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     }
     else if (val.is("print_amount"))
     {
-        params->print_amount = val.get_long();
+        params->print_amount = val.get_int64();
     }
     else if (val.is("print_hex"))
     {
@@ -264,6 +297,8 @@ HttpParaList::UriParam::UriParam() :
   // 0-9, a-z, A-Z, tilde, period, underscore, and minus
   // Initializer string for std::bitset is in reverse order. The first character is element 255
   // and the last is element 0.
+
+// __STRDUMP_DISABLE__
   unreserved_char { std::string(
       "00000000" "00000000" "00000000" "00000000"
       "00000000" "00000000" "00000000" "00000000"
@@ -273,6 +308,7 @@ HttpParaList::UriParam::UriParam() :
       "10000111" "11111111" "11111111" "11111110"
       "00000011" "11111111" "01100000" "00000000"
       "00000000" "00000000" "00000000" "00000000" ) },
+// __STRDUMP_ENABLE__
 
   uri_char {
     CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,

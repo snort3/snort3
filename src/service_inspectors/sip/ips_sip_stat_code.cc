@@ -128,7 +128,7 @@ IpsOption::EvalStatus SipStatCodeOption::eval(Cursor&, Packet* p)
 static const Parameter s_params[] =
 {
     { "*code", Parameter::PT_INT, "1:999", nullptr,
-      "stat code" },
+      "status code" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -166,15 +166,14 @@ bool SipStatCodeModule::set(const char*, Value& v, SnortConfig*)
     {
         if ( v.is("*code") )
         {
-            unsigned long statCode = v.get_long();
+            uint16_t statCode = v.get_uint16();
 
-            if ((statCode > MAX_STAT_CODE) || ((statCode > NUM_OF_RESPONSE_TYPES - 1) &&
-                (statCode < MIN_STAT_CODE)))
+            if ( (statCode >= NUM_OF_RESPONSE_TYPES) && (statCode < MIN_STAT_CODE) )
             {
-                ParseError("Status code specified is not a 3 digit number or 1");
+                ParseError("Status code specified is not a single digit or a 3 digit number");
                 return false;
             }
-            ssod.stat_codes[num_tokens] = (uint16_t)statCode;
+            ssod.stat_codes[num_tokens] = statCode;
             num_tokens++;
         }
         else

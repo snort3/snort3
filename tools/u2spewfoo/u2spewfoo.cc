@@ -121,7 +121,7 @@ static bool get_record(u2iterator* it, u2record* record)
     if (bytes_read != sizeof(uint32_t)*2)
     {
         puts("ERROR: Failed to read record metadata.");
-        printf("\tRead %u of %lu bytes\n", bytes_read, (unsigned long)sizeof(uint32_t)*2);
+        printf("\tRead %u of %zu bytes\n", bytes_read, sizeof(uint32_t)*2);
         return false;
     }
 

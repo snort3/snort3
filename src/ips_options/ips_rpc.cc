@@ -225,7 +225,7 @@ bool RpcOption::check_procedure(uint32_t procedure)
 
 static const Parameter s_params[] =
 {
-    { "~app", Parameter::PT_INT, nullptr, nullptr,
+    { "~app", Parameter::PT_INT, "0:max32", nullptr,
       "application number" },
 
     { "~ver", Parameter::PT_STRING, nullptr, nullptr,
@@ -269,7 +269,7 @@ bool RpcModule::begin(const char*, int, SnortConfig*)
 bool RpcModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("~app") )
-        data.program = (uint32_t)v.get_long();
+        data.program = v.get_uint32();
 
     else if ( v.is("~ver") )
         return set(v, data.version, RPC_CHECK_VERSION);

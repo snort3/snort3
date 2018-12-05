@@ -35,7 +35,7 @@ using namespace std;
 
 static const Parameter s_params[] =
 {
-    { "session_timeout", Parameter::PT_INT, "1:86400", "30",
+    { "session_timeout", Parameter::PT_INT, "1:max31", "30",
       "session tracking timeout" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -62,7 +62,7 @@ StreamUdpConfig* StreamUdpModule::get_data()
 bool StreamUdpModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("session_timeout") )
-        config->session_timeout = v.get_long();
+        config->session_timeout = v.get_uint32();
 
     else
         return false;

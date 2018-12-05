@@ -101,34 +101,43 @@ static const char* dce2SmbFingerprintPolicyStrings[] =
 static const Parameter s_params[] =
 {
     { "disable_defrag", Parameter::PT_BOOL, nullptr, "false",
-      " Disable DCE/RPC defragmentation" },
+      "disable DCE/RPC defragmentation" },
+
     { "max_frag_len", Parameter::PT_INT, "1514:65535", "65535",
-      " Maximum fragment size for defragmentation" },
+      "maximum fragment size for defragmentation" },
+
     { "reassemble_threshold", Parameter::PT_INT, "0:65535", "0",
-      " Minimum bytes received before performing reassembly" },
-    { "smb_fingerprint_policy", Parameter::PT_ENUM,
-      "none | client |  server | both ", "none",
-      " Target based SMB policy to use" },
+      "minimum bytes received before performing reassembly" },
+
+    { "smb_fingerprint_policy", Parameter::PT_ENUM, "none | client |  server | both ", "none",
+      "target based SMB policy to use" },
+
     { "policy", Parameter::PT_ENUM,
-      "Win2000 |  WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba | Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20",
-      "WinXP",
-      " Target based policy to use" },
+      "Win2000 |  WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba | Samba-3.0.37 | "
+      "Samba-3.0.22 | Samba-3.0.20", "WinXP",
+      "target based policy to use" },
+
     { "smb_max_chain", Parameter::PT_INT, "0:255", "3",
-      " SMB max chain size" },
+      "SMB max chain size" },
+
     { "smb_max_compound", Parameter::PT_INT, "0:255", "3",
-      " SMB max compound size" },
-    { "valid_smb_versions", Parameter::PT_MULTI,
-      "v1 | v2 | all", "all",
-      " Valid SMB versions" },
-    { "smb_file_inspection", Parameter::PT_ENUM,
-      "off | on | only", "off",
-      " SMB file inspection" },
-    { "smb_file_depth", Parameter::PT_INT, "-1:", "16384",
-      " SMB file depth for file data" },
+      "SMB max compound size" },
+
+    { "valid_smb_versions", Parameter::PT_MULTI, "v1 | v2 | all", "all",
+      "valid SMB versions" },
+
+    { "smb_file_inspection", Parameter::PT_ENUM, "off | on | only", "off",
+      "SMB file inspection" },
+
+    { "smb_file_depth", Parameter::PT_INT, "-1:32767", "16384",
+      "SMB file depth for file data" },
+
     { "smb_invalid_shares", Parameter::PT_STRING, nullptr, nullptr,
       "SMB shares to alert on " },
+
     { "smb_legacy_mode", Parameter::PT_BOOL, nullptr, "false",
       "inspect only SMBv1" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -431,24 +440,34 @@ bool Dce2SmbModule::set(const char* fqn, snort::Value& v, snort::SnortConfig* c)
 {
     if (dce2_set_co_config(v,config.common))
         return true;
+
     else if ( v.is("smb_fingerprint_policy") )
-        config.smb_fingerprint_policy = (dce2SmbFingerprintPolicy)v.get_long();
+        config.smb_fingerprint_policy = (dce2SmbFingerprintPolicy)v.get_uint8();
+
     else if ( v.is("smb_max_chain") )
-        config.smb_max_chain = v.get_long();
+        config.smb_max_chain = v.get_uint8();
+
     else if ( v.is("smb_max_compound") )
-        config.smb_max_compound = v.get_long();
+        config.smb_max_compound = v.get_uint8();
+
     else if ( v.is("valid_smb_versions") )
         set_smb_versions_mask(config,v.get_string());
+
     else if ( v.is("smb_file_inspection") )
-        config.smb_file_inspection = (dce2SmbFileInspection)v.get_long();
+        config.smb_file_inspection = (dce2SmbFileInspection)v.get_uint8();
+
     else if ( v.is("smb_file_depth") )
-        config.smb_file_depth = v.get_long();
+        config.smb_file_depth = v.get_int16();
+
     else if ( v.is("smb_invalid_shares") )
         return(set_smb_invalid_shares(config,v));
+
     else if ( v.is("smb_legacy_mode"))
         config.legacy_mode = v.get_bool();
+
     else
         return Module::set(fqn, v, c);
+
     return true;
 }
 

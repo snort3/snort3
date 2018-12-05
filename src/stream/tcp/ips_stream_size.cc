@@ -206,7 +206,7 @@ bool SizeModule::set(const char*, Value& v, SnortConfig*)
         return ssod.validate(v.get_string(), RANGE);
 
     else if ( v.is("~direction") )
-        direction = v.get_long();
+        direction = v.get_uint8();
 
     else
         return false;

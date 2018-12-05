@@ -36,7 +36,7 @@ using namespace snort;
 
 static const Parameter s_params[] =
 {
-    { "~", Parameter::PT_INT, "1:", nullptr,
+    { "~", Parameter::PT_INT, "1:max32", nullptr,
       "generator id" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -55,7 +55,7 @@ public:
     { return DETECT; }
 
 public:
-    int gid;
+    uint32_t gid;
 };
 
 bool GidModule::set(const char*, Value& v, SnortConfig*)
@@ -63,7 +63,7 @@ bool GidModule::set(const char*, Value& v, SnortConfig*)
     if ( !v.is("~") )
         return false;
 
-    gid = v.get_long();
+    gid = v.get_uint32();
     return true;
 }
 

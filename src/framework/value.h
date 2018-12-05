@@ -75,8 +75,8 @@ public:
     void set_enum(unsigned u)
     { type = VT_NUM; num = u;  }
 
-    void set_aux(unsigned u)
-    { num = u; }
+    void set_aux(uint64_t u)
+    { num = (double)u; }
 
     const char* get_name() const
     { return param ? param->name : nullptr; }
@@ -87,14 +87,38 @@ public:
     bool get_bool() const
     { return num != 0; }
 
-    long get_long() const
+    long get_long() const  // FIXIT-L to be removed
     { return (long)num; }
+
+    size_t get_size() const
+    { return (size_t)num; }
+
+    uint8_t get_uint8() const
+    { return (uint8_t)num; }
+
+    int16_t get_int16() const
+    { return (int16_t)num; }
+
+    uint16_t get_uint16() const
+    { return (uint16_t)num; }
+
+    int32_t get_int32() const
+    { return (int32_t)num; }
+
+    uint32_t get_uint32() const
+    { return (uint32_t)num; }
+
+    int64_t get_int64() const
+    { return (int64_t)num; }
+
+    uint64_t get_uint64() const
+    { return (uint64_t)num; }
 
     double get_real() const
     { return num; }
 
     const uint8_t* get_buffer(unsigned& n) const
-    { n = str.size(); return (const uint8_t*)str.data(); }
+    { n = (unsigned)str.size(); return (const uint8_t*)str.data(); }
 
     const char* get_string() const
     { return str.c_str(); }

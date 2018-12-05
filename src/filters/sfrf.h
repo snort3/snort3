@@ -139,14 +139,9 @@ struct RateFilterConfig
      */
     struct snort::GHash* genHash [SFRF_MAX_GENID];
 
-    // Number of DOS thresholds added.
-    int count;
-
-    // count of no revert DOS thresholds
+    unsigned memcap;
     unsigned noRevertCount;
-
-    int memcap;
-
+    int count;
     int internal_event_mask;
 };
 

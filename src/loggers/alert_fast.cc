@@ -80,7 +80,7 @@ static const Parameter s_params[] =
     { "packet", Parameter::PT_BOOL, nullptr, "false",
       "output packet dump with alert" },
 
-    { "limit", Parameter::PT_INT, "0:", "0",
+    { "limit", Parameter::PT_INT, "0:maxSZ", "0",
       "set maximum size in MB before rollover (0 is unlimited)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -101,8 +101,8 @@ public:
     { return CONTEXT; }
 
 public:
+    size_t limit;
     bool file;
-    unsigned long limit;
     bool packet;
 };
 
@@ -115,7 +115,7 @@ bool FastModule::set(const char*, Value& v, SnortConfig*)
         packet = v.get_bool();
 
     else if ( v.is("limit") )
-        limit = v.get_long() * 1024 * 1024;
+        limit = v.get_size() * 1024 * 1024;
 
     else
         return false;

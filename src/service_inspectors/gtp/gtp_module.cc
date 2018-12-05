@@ -128,13 +128,13 @@ GtpInspectModule::GtpInspectModule() :
 bool GtpInspectModule::set(const char* fqn, Value& v, SnortConfig* c)
 {
     if ( v.is("version") )
-        stuff.version = v.get_long();
+        stuff.version = v.get_uint8();
 
     else if ( v.is("type") )
-        stuff.type = v.get_long();
+        stuff.type = v.get_uint8();
 
     else if ( v.is("length") )
-        stuff.length = v.get_long();
+        stuff.length = v.get_uint8();
 
     else if ( v.is("name") )
         stuff.name = v.get_string();

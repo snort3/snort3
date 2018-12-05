@@ -56,7 +56,7 @@ static const Parameter smtp_command_params[] =
     { "command", Parameter::PT_STRING, nullptr, nullptr,
       "command string" },
 
-    { "length", Parameter::PT_INT, "0:", "0",
+    { "length", Parameter::PT_INT, "0:max32", "0",
       "specify non-default maximum for command" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -226,15 +226,15 @@ bool SmtpModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("b64_decode_depth") )
     {
-        const long value = v.get_long();
-        const long mime_value = (value > 0) ? value : -(value+1);
+        const int32_t value = v.get_int32();
+        const int32_t mime_value = (value > 0) ? value : -(value+1);
         config->decode_conf.set_b64_depth(mime_value);
     }
 
     else if ( v.is("bitenc_decode_depth") )
     {
-        const long value = v.get_long();
-        const long mime_value = (value > 0) ? value : -(value+1);
+        const int32_t value = v.get_int32();
+        const int32_t mime_value = (value > 0) ? value : -(value+1);
         config->decode_conf.set_bitenc_depth(mime_value);
     }
 
@@ -248,7 +248,7 @@ bool SmtpModule::set(const char*, Value& v, SnortConfig*)
         add_commands(v, PCMD_DATA);
 
     else if ( v.is("email_hdrs_log_depth") )
-        config->log_config.email_hdrs_log_depth = v.get_long();
+        config->log_config.email_hdrs_log_depth = v.get_uint16();
 
     else if ( v.is("ignore_data") )
         config->decode_conf.set_ignore_data(v.get_bool());
@@ -260,7 +260,7 @@ bool SmtpModule::set(const char*, Value& v, SnortConfig*)
         add_commands(v, PCMD_INVALID);
 
     else if ( v.is("length") )
-        number = v.get_long();
+        number = v.get_uint32();
 
     else if ( v.is("log_filename") )
         config->log_config.log_filename =v.get_bool();
@@ -275,27 +275,27 @@ bool SmtpModule::set(const char*, Value& v, SnortConfig*)
         config->log_config.log_email_hdrs = v.get_bool();
 
     else if ( v.is("max_auth_command_line_len") )
-        config->max_auth_command_line_len = v.get_long();
+        config->max_auth_command_line_len = v.get_uint16();
 
     else if ( v.is("max_command_line_len") )
-        config->max_command_line_len = v.get_long();
+        config->max_command_line_len = v.get_uint16();
 
     else if ( v.is("max_header_line_len") )
-        config->max_header_line_len = v.get_long();
+        config->max_header_line_len = v.get_uint16();
 
     else if ( v.is("max_response_line_len") )
-        config->max_response_line_len = v.get_long();
+        config->max_response_line_len = v.get_uint16();
 
     else if ( v.is("normalize") )
-        config->normalize = (NORM_TYPES)v.get_long();
+        config->normalize = (NORM_TYPES)v.get_uint8();
 
     else if ( v.is("normalize_cmds"))
         add_commands(v, PCMD_NORM);
 
     else if ( v.is("qp_decode_depth") )
     {
-        const long value = v.get_long();
-        const long mime_value = (value > 0) ? value : -(value+1);
+        const int32_t value = v.get_int32();
+        const int32_t mime_value = (value > 0) ? value : -(value+1);
         config->decode_conf.set_qp_depth(mime_value);
     }
 
@@ -304,13 +304,13 @@ bool SmtpModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("uu_decode_depth") )
     {
-        const long value = v.get_long();
-        const long mime_value = (value > 0) ? value : -(value+1);
+        const int32_t value = v.get_int32();
+        const int32_t mime_value = (value > 0) ? value : -(value+1);
         config->decode_conf.set_uu_depth(mime_value);
     }
 
     else if ( v.is("xlink2state") )
-        config->xlink2state = (XLINK2STATE)v.get_long();
+        config->xlink2state = (XLINK2STATE)v.get_uint8();
 
     else
         return false;

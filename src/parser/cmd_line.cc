@@ -80,16 +80,6 @@ static bool set_arg(
 
     case Parameter::PT_INT:
     case Parameter::PT_PORT:
-    {
-        char* end = nullptr;
-        long n = strtol(val, &end, 0);
-
-        if ( !*end )
-            v.set(n);
-        else
-            ok = false;
-        break;
-    }
     case Parameter::PT_REAL:
     {
         char* end = nullptr;

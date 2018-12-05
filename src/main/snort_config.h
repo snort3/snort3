@@ -191,8 +191,8 @@ public:
 #endif
     uint32_t logging_flags = 0;
 
+    uint32_t tagged_packet_limit = 256;
     uint16_t event_trace_max = 0;
-    long int tagged_packet_limit = 256;
 
     std::string log_dir;
 
@@ -232,16 +232,17 @@ public:
 
     //------------------------------------------------------
     // decode module stuff
-    uint8_t mpls_payload_type = 0;
-    long int mpls_stack_depth = 0;
-
-    uint8_t enable_teredo = 0;
-    uint8_t enable_esp = 0;
     PortBitSet* gtp_ports = nullptr;
 
+    int mpls_stack_depth = 0;
+
+    uint8_t mpls_payload_type = 0;
     uint8_t num_layers = 0;
     uint8_t max_ip6_extensions = 0;
     uint8_t max_ip_layers = 0;
+
+    bool enable_teredo = false;
+    bool enable_esp = false;
     bool address_anomaly_check_enabled = false;
 
     //------------------------------------------------------
@@ -262,8 +263,8 @@ public:
 
     //------------------------------------------------------
     // packet module stuff
-    uint8_t vlan_agnostic = 0;
-    uint8_t addressspace_agnostic = 0;
+    bool vlan_agnostic = false;
+    bool addressspace_agnostic = false;
 
     uint64_t pkt_cnt = 0;           /* -n */
     uint64_t pkt_skip = 0;
@@ -418,7 +419,7 @@ public:
     void set_treat_drop_as_ignore(bool);
     void set_tweaks(const char*);
     void set_uid(const char*);
-    void set_umask(const char*);
+    void set_umask(uint32_t);
     void set_utc(bool);
     void set_verbose(bool);
     void free_rule_state_list();

@@ -128,7 +128,7 @@ bool GtpVersionModule::set(const char*, Value& v, SnortConfig*)
     if ( !v.is("~") )
         return false;
 
-    version = v.get_long();
+    version = v.get_uint8();
     return true;
 }
 

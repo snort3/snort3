@@ -339,7 +339,7 @@ bool SsnModule::begin(const char*, int, SnortConfig*)
 bool SsnModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("~mode") )
-        data.session_flag = v.get_long() + 1;
+        data.session_flag = v.get_uint8() + 1;
 
     else
         return false;

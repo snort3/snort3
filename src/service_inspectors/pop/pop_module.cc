@@ -87,16 +87,21 @@ ProfileStats* PopModule::get_profile() const
 
 bool PopModule::set(const char*, Value& v, SnortConfig*)
 {
-    const long value = v.get_long();
-    const long mime_value = (value > 0) ? value : -(value+1); // flip 0 and -1 for MIME processing
+    const int32_t value = v.get_int32();
+    const int32_t mime_value = (value > 0) ? value : -(value+1); // flip 0 and -1 for MIME use
+
     if ( v.is("b64_decode_depth") )
         config->decode_conf.set_b64_depth(mime_value);
+
     else if ( v.is("bitenc_decode_depth") )
         config->decode_conf.set_bitenc_depth(mime_value);
+
     else if ( v.is("qp_decode_depth") )
         config->decode_conf.set_qp_depth(mime_value);
+
     else if ( v.is("uu_decode_depth") )
         config->decode_conf.set_uu_depth(mime_value);
+
     else
         return false;
 

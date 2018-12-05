@@ -35,7 +35,7 @@ public:
         SOURCE_DIR         // a directory of sources; often used with filter
     };
 
-    static void set_loop_count(long int c)
+    static void set_loop_count(unsigned c)
     {
         pcap_loop_count = c;
     }
@@ -52,7 +52,7 @@ public:
     {
         return pcap_queue.size();
     }
-    static long get_loop_count()
+    static unsigned get_loop_count()
     {
         return pcap_loop_count;
     }
@@ -70,7 +70,8 @@ private:
     static std::vector<std::string> pcap_queue;
     static std::vector<std::string>::const_iterator pcap_queue_iter;
     static std::string pcap_filter;
-    static long pcap_loop_count;
+
+    static unsigned pcap_loop_count;
     static unsigned file_count;
 };
 
