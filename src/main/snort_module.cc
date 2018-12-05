@@ -244,8 +244,8 @@ static const Parameter s_params[] =
     { "-S", Parameter::PT_STRING, nullptr, nullptr,
       "<x=v> set config variable x equal to value v" },
 
-    { "-s", Parameter::PT_INT, "68:65535", "1514",
-      "<snap> (same as --snaplen); default is 1514" },
+    { "-s", Parameter::PT_INT, "68:65535", "1518",
+      "<snap> (same as --snaplen); default is 1518" },
 
     { "-T", Parameter::PT_IMPLIED, nullptr, nullptr,
       "test and report on the current Snort configuration" },
@@ -481,7 +481,7 @@ static const Parameter s_params[] =
     { "--skip", Parameter::PT_INT, "0:", nullptr,
       "<n> skip 1st n packets", },
 
-    { "--snaplen", Parameter::PT_INT, "68:65535", "1514",
+    { "--snaplen", Parameter::PT_INT, "68:65535", "1518",
       "<snap> set snaplen of packet (same as -s)", },
 
     { "--stdin-rules", Parameter::PT_IMPLIED, nullptr, nullptr,

@@ -51,7 +51,7 @@ using namespace std;
 #define DAQ_DEFAULT "pcap"
 #endif
 
-static const int DEFAULT_PKT_SNAPLEN = 1514;
+static const int DEFAULT_PKT_SNAPLEN = 1518;
 
 // common for all daq threads / instances
 static const DAQ_Module_t* daq_mod = nullptr;

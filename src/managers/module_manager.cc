@@ -535,36 +535,41 @@ static bool top_level(const char* s)
 
 static bool begin(Module* m, const Parameter* p, const char* s, int idx, int depth)
 {
-    if ( !p )
+    // Module::(verified_)begin() will be called for top-level tables, lists, and list items only
+    if ( top_level(s) )
     {
-        p = m->get_parameters();
-        assert(p);
-    }
-
-    // Module::begin() top-level, lists, and list items only
-    if ( top_level(s) or
-         (!idx and p->type == Parameter::PT_LIST) or
-         (idx and p->type != Parameter::PT_LIST) )
-    {
-        //printf("begin %s %d\n", s, idx);
         if ( !m->verified_begin(s, idx, s_config) )
             return false;
-    }
-    // don't set list defaults
-    if ( m->is_list() or p->type == Parameter::PT_LIST )
-    {
-        if ( !idx )
+        // don't set list defaults
+        if ( m->is_list() and !idx )
             return true;
+        if ( !p )
+        {
+            p = m->get_parameters();
+            assert(p);
+        }
     }
-
-    // set list item defaults only if explicitly configured
-    // (this is why it is done here and not in the loop below)
-    if ( p->type == Parameter::PT_LIST )
+    else
     {
-        const Parameter* t =
-            reinterpret_cast<const Parameter*>(p->range);
+        assert(p);
+        if ((!idx and p->type == Parameter::PT_LIST) or
+             (idx and p->type != Parameter::PT_LIST) )
+        {
+            if ( !m->verified_begin(s, idx, s_config) )
+                return false;
+        }
+        if ( p->type == Parameter::PT_LIST )
+        {
+            // don't set list defaults (list items have idx > 0)
+            if ( !idx )
+                return true;
 
-        return begin(m, t, s, idx, depth+1);
+            // set list item defaults only if explicitly configured
+            // (this is why it is done here and not in the loop below)
+            const Parameter* list_item_params = reinterpret_cast<const Parameter*>(p->range);
+
+            return begin(m, list_item_params, s, idx, depth+1);
+        }
     }
 
     // don't begin subtables again
@@ -582,10 +587,9 @@ static bool begin(Module* m, const Parameter* p, const char* s, int idx, int dep
         // traverse subtables only to set defaults
         case Parameter::PT_TABLE:
             {
-                const Parameter* t =
-                    reinterpret_cast<const Parameter*>(p->range);
+                const Parameter* table_item_params = reinterpret_cast<const Parameter*>(p->range);
 
-                if ( !begin(m, t, fqn.c_str(), idx, depth+1) )
+                if ( !begin(m, table_item_params, fqn.c_str(), idx, depth+1) )
                     return false;
             }
             break;
@@ -599,7 +603,6 @@ static bool begin(Module* m, const Parameter* p, const char* s, int idx, int dep
             if ( p->deflt )
             {
                 bool b = p->get_bool();
-                //printf("set default %s = %s\n", fqn.c_str(), p->deflt);
                 set_bool(fqn.c_str(), b);
             }
             break;
@@ -610,7 +613,6 @@ static bool begin(Module* m, const Parameter* p, const char* s, int idx, int dep
             if ( p->deflt )
             {
                 double d = p->get_number();
-                //printf("set default %s = %f\n", fqn.c_str(), d);
                 set_number(fqn.c_str(), d);
             }
             break;
@@ -618,10 +620,7 @@ static bool begin(Module* m, const Parameter* p, const char* s, int idx, int dep
         // everything else is a string of some sort
         default:
             if ( p->deflt )
-            {
-                //printf("set default %s = %s\n", fqn.c_str(), p->deflt);
                 set_string(fqn.c_str(), p->deflt);
-            }
             break;
         }
         ++p;
@@ -647,7 +646,6 @@ static bool end(Module* m, const Parameter* p, const char* s, int idx)
          (!idx and p->type == Parameter::PT_LIST) or
          (idx and p->type != Parameter::PT_LIST) )
     {
-        //printf("end %s %d\n", s, idx);
         return m->verified_end(s, idx, s_config);
     }
     return true;
@@ -666,8 +664,6 @@ SO_PUBLIC bool set_alias(const char* from, const char* to)
 
 SO_PUBLIC bool open_table(const char* s, int idx)
 {
-    //printf("open %s %d\n", s, idx);
-
     const char* orig = s;
     string fqn = s;
     set_type(fqn);
@@ -744,8 +740,6 @@ SO_PUBLIC bool open_table(const char* s, int idx)
 
 SO_PUBLIC void close_table(const char* s, int idx)
 {
-    //printf("close %s %d\n", s, idx);
-
     string fqn = s;
     set_type(fqn);
     s = fqn.c_str();
@@ -783,21 +777,18 @@ SO_PUBLIC void close_table(const char* s, int idx)
 
 SO_PUBLIC bool set_bool(const char* fqn, bool b)
 {
-    //printf("bool %s %d\n", fqn, b);
     Value v(b);
     return set_value(fqn, v);
 }
 
 SO_PUBLIC bool set_number(const char* fqn, double d)
 {
-    //printf("real %s %f\n", fqn, d);
     Value v(d);
     return set_value(fqn, v);
 }
 
 SO_PUBLIC bool set_string(const char* fqn, const char* s)
 {
-    //printf("string %s %s\n", fqn, s);
     Value v(s);
     return set_value(fqn, v);
 }

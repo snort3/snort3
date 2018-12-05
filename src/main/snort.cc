@@ -1056,8 +1056,6 @@ DAQ_Verdict Snort::packet_callback(
         SFDAQ::break_loop(0);
         s_pause.was_paused = s_pause.pause = true;
     }  
-    else if ( break_time() )
-        SFDAQ::break_loop(0);
 
     s_switcher->stop();
 

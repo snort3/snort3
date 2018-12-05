@@ -50,25 +50,6 @@ void set_instance_id(unsigned id)
 void set_thread_type(SThreadType type)
 { thread_type = type; }
 
-//-------------------------------------------------------------------------
-// union rules - breaks are mandatory and must be taken in daq thread
-//-------------------------------------------------------------------------
-
-static unsigned g_breaks = 0;
-static THREAD_LOCAL unsigned t_breaks = 0;
-
-void take_break()
-{ g_breaks++; }
-
-bool break_time()
-{
-    if ( t_breaks == g_breaks )
-        return false;
-
-    t_breaks = g_breaks;
-    return true;
-}
-
 namespace snort
 {
 unsigned get_instance_id()

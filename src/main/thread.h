@@ -64,7 +64,4 @@ SO_PUBLIC inline bool is_packet_thread()
 SO_PUBLIC const char* get_instance_file(std::string&, const char* name);
 }
 
-void take_break();
-bool break_time();
-
 #endif

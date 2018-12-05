@@ -111,13 +111,13 @@ bool IgnorePorts::convert(std::istringstream& data_stream)
                     bind.add_when_port(std::to_string(i));
             }
         }
-        catch (std::invalid_argument)
+        catch (std::invalid_argument&)
         {
             data_api.failed_conversion(data_stream, "can't convert " + port);
             retval = false;
             bind.print_binding(false); // don't print the binding if an error occurred
         }
-        catch (std::out_of_range)
+        catch (std::out_of_range&)
         {
             data_api.failed_conversion(data_stream, "Port" + port + " must be <= 65535");
             retval = false;
