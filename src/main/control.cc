@@ -56,7 +56,7 @@ ControlConn::~ControlConn()
 
 void ControlConn::configure() const
 {
-    ModuleManager::load_commands(sh);
+    snort::ModuleManager::load_commands(sh);
 }
 
 int ControlConn::shell_execute(int& current_fd, Request*& current_request)

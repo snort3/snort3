@@ -51,10 +51,9 @@
 
 struct lua_State;
 
-class ModuleManager;
-
 namespace snort
 {
+class ModuleManager;
 struct ProfileStats;
 struct SnortConfig;
 
