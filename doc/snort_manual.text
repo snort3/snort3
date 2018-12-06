@@ -384,7 +384,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0 (Build 248) from 2.9.11
+o"  )~   Version 3.0.0 (Build 250) from 2.9.11
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2018 Cisco and/or its affiliates. All rights reserved.
@@ -1455,6 +1455,7 @@ Snort has several options to get more help:
 --help-commands [<module prefix>] output matching commands
 --help-config [<module prefix>] output matching config options
 --help-counts [<module prefix>] output matching peg counts
+--help-limits print the int upper bounds denoted by max*
 --help-module <module> output description of given module
 --help-modules list all available modules with brief help
 --help-plugins list all available plugins with brief help
@@ -5390,13 +5391,18 @@ Usage: global
 Configuration:
 
   * int active.attempts = 0: number of TCP packets sent per response
-    (with varying sequence numbers) { 0:20 }
+    (with varying sequence numbers) { 0:255 }
   * string active.device: use ip for network layer responses or eth0
     etc for link layer
   * string active.dst_mac: use format 01:23:45:67:89:ab
-  * int active.max_responses = 0: maximum number of responses { 0: }
+  * int active.max_responses = 0: maximum number of responses { 0:255
+    }
   * int active.min_interval = 255: minimum number of seconds between
     responses { 1:255 }
+
+Peg counts:
+
+  * active.injects: total crafted packets injected (sum)
 
 
 6.2. alerts
@@ -5415,16 +5421,16 @@ Configuration:
     in alert info (fast, full, or syslog only)
   * bool alerts.default_rule_state = true: enable or disable ips
     rules
-  * int alerts.detection_filter_memcap = 1048576: set available bytes
-    of memory for detection_filters { 0: }
-  * int alerts.event_filter_memcap = 1048576: set available bytes of
-    memory for event_filters { 0: }
+  * int alerts.detection_filter_memcap = 1048576: set available MB of
+    memory for detection_filters { 0:max32 }
+  * int alerts.event_filter_memcap = 1048576: set available MB of
+    memory for event_filters { 0:max32 }
   * bool alerts.log_references = false: include rule references in
     alert info (full only)
   * string alerts.order = pass drop alert log: change the order of
     rule action application
-  * int alerts.rate_filter_memcap = 1048576: set available bytes of
-    memory for rate_filters { 0: }
+  * int alerts.rate_filter_memcap = 1048576: set available MB of
+    memory for rate_filters { 0:max32 }
   * string alerts.reference_net: set the CIDR for homenet (for use
     with -l or -B, does NOT change $HOME_NET in IDS mode)
   * bool alerts.stateful = false: don’t alert w/o established session
@@ -5446,11 +5452,11 @@ Usage: global
 Configuration:
 
   * int attribute_table.max_hosts = 1024: maximum number of hosts in
-    attribute table { 32:207551 }
+    attribute table { 32:max53 }
   * int attribute_table.max_services_per_host = 8: maximum number of
     services per host entry in attribute table { 1:65535 }
   * int attribute_table.max_metadata_services = 8: maximum number of
-    services in rule metadata { 1:256 }
+    services in rule { 1:255 }
 
 
 6.4. classifications
@@ -5468,7 +5474,7 @@ Configuration:
   * string classifications[].name: name used with classtype rule
     option
   * int classifications[].priority = 1: default priority for class {
-    0: }
+    0:max32 }
   * string classifications[].text: description of class
 
 
@@ -5488,7 +5494,7 @@ Configuration:
   * string daq.input_spec: input specification
   * string daq.module: DAQ module to use
   * string daq.variables[].str: string parameter
-  * int daq.instances[].id: instance ID (required) { 0: }
+  * int daq.instances[].id: instance ID (required) { 0:max32 }
   * string daq.instances[].input_spec: input specification
   * string daq.instances[].variables[].str: string parameter
   * int daq.snaplen: set snap length (same as -s) { 0:65535 }
@@ -5556,19 +5562,20 @@ Usage: global
 
 Configuration:
 
-  * int detection.asn1 = 256: maximum decode nodes { 1: }
+  * int detection.asn1 = 0: maximum decode nodes { 0:65535 }
   * int detection.offload_limit = 99999: minimum sizeof PDU to
-    offload fast pattern search (defaults to disabled) { 0: }
+    offload fast pattern search (defaults to disabled) { 0:max32 }
   * int detection.offload_threads = 0: maximum number of simultaneous
-    offloads (defaults to disabled) { 0: }
+    offloads (defaults to disabled) { 0:max32 }
   * bool detection.pcre_enable = true: disable pcre pattern matching
-  * int detection.pcre_match_limit = 1500: limit pcre backtracking,
-    -1 = max, 0 = off { -1:1000000 }
+  * int detection.pcre_match_limit = 1500: limit pcre backtracking, 0
+    = off { 0:max32 }
   * int detection.pcre_match_limit_recursion = 1500: limit pcre stack
-    consumption, -1 = max, 0 = off { -1:10000 }
+    consumption, 0 = off { 0:max32 }
   * bool detection.enable_address_anomaly_checks = false: enable
     check and alerting of address anomalies
-  * int detection.trace: mask for enabling debug traces in module
+  * int detection.trace: mask for enabling debug traces in module {
+    0:max53 }
 
 Peg counts:
 
@@ -5615,15 +5622,15 @@ Usage: context
 
 Configuration:
 
-  * int event_filter[].gid = 1: rule generator ID { 0: }
-  * int event_filter[].sid = 1: rule signature ID { 0: }
+  * int event_filter[].gid = 1: rule generator ID { 0:max32 }
+  * int event_filter[].sid = 1: rule signature ID { 0:max32 }
   * enum event_filter[].type: 1st count events | every count events |
     once after count events { limit | threshold | both }
   * enum event_filter[].track: filter only matching source or
     destination addresses { by_src | by_dst }
   * int event_filter[].count = 0: number of events in interval before
-    tripping; -1 to disable { -1: }
-  * int event_filter[].seconds = 0: count interval { 0: }
+    tripping; -1 to disable { -1:max31 }
+  * int event_filter[].seconds = 0: count interval { 0:max32 }
   * string event_filter[].ip: restrict filter to these addresses
     according to track
 
@@ -5640,8 +5647,9 @@ Usage: context
 
 Configuration:
 
-  * int event_queue.max_queue = 8: maximum events to queue { 1: }
-  * int event_queue.log = 3: maximum events to log { 1: }
+  * int event_queue.max_queue = 8: maximum events to queue { 1:max32
+    }
+  * int event_queue.log = 3: maximum events to log { 1:max32 }
   * enum event_queue.order_events = content_length: criteria for
     ordering incoming events { priority|content_length }
   * bool event_queue.process_all_events = false: process just first
@@ -5687,7 +5695,7 @@ Usage: global
 
 Configuration:
 
-  * int host_cache[].size: size of host cache
+  * int host_cache[].size: size of host cache { 1:max32 }
 
 Peg counts:
 
@@ -5813,19 +5821,20 @@ Usage: context
 Configuration:
 
   * int latency.packet.max_time = 500: set timeout for packet latency
-    thresholding (usec) { 0: }
+    thresholding (usec) { 0:max53 }
   * bool latency.packet.fastpath = false: fastpath expensive packets
     (max_time exceeded)
   * enum latency.packet.action = none: event action if packet times
     out and is fastpathed { none | alert | log | alert_and_log }
   * int latency.rule.max_time = 500: set timeout for rule evaluation
-    (usec) { 0: }
+    (usec) { 0:max53 }
   * bool latency.rule.suspend = false: temporarily suspend expensive
     rules
   * int latency.rule.suspend_threshold = 5: set threshold for number
-    of timeouts before suspending a rule { 1: }
+    of timeouts before suspending a rule { 1:max32 }
   * int latency.rule.max_suspend_time = 30000: set max time for
-    suspending a rule (ms, 0 means permanently disable rule) { 0: }
+    suspending a rule (ms, 0 means permanently disable rule) {
+    0:max32 }
   * enum latency.rule.action = none: event action for rule latency
     enable and suspend events { none | alert | log | alert_and_log }
 
@@ -5859,11 +5868,11 @@ Usage: global
 Configuration:
 
   * int memory.cap = 0: set the per-packet-thread cap on memory
-    (bytes, 0 to disable) { 0: }
+    (bytes, 0 to disable) { 0:maxSZ }
   * bool memory.soft = false: always succeed in allocating memory,
     even if above the cap
   * int memory.threshold = 0: set the per-packet-thread threshold for
-    preemptive cleanup actions (percent, 0 to disable) { 0: }
+    preemptive cleanup actions (percent, 0 to disable) { 0:100 }
 
 
 6.18. network
@@ -5931,9 +5940,9 @@ Configuration:
   * bool output.show_year = false: include year in timestamp in the
     alert and log files (same as -y)
   * int output.tagged_packet_limit = 256: maximum number of packets
-    tagged for non-packet metrics { 0: }
+    tagged for non-packet metrics { 0:max32 }
   * bool output.verbose = false: be verbose (same as -v)
-  * bool output.wide_hex_dump = true: output 20 bytes per lines
+  * bool output.wide_hex_dump = false: output 20 bytes per lines
     instead of 16 when dumping buffers
 
 
@@ -5978,9 +5987,9 @@ Configuration:
   * string packets.bpf_file: file with BPF to select traffic for
     Snort
   * int packets.limit = 0: maximum number of packets to process
-    before stopping (0 is unlimited) { 0: }
+    before stopping (0 is unlimited) { 0:max53 }
   * int packets.skip = 0: number of packets to skip before before
-    processing { 0: }
+    processing { 0:max53 }
   * bool packets.vlan_agnostic = false: determines whether VLAN info
     is used to track fragments and connections
 
@@ -6001,12 +6010,12 @@ Configuration:
   * string process.threads[].cpuset: pin the associated thread to
     this cpuset
   * int process.threads[].thread = 0: set cpu affinity for the
-    <cur_thread_num> thread that runs { 0: }
+    <cur_thread_num> thread that runs { 0:65535 }
   * bool process.daemon = false: fork as a daemon (same as -D)
   * bool process.dirty_pig = false: shutdown without internal cleanup
   * string process.set_gid: set group ID (same as -g)
   * string process.set_uid: set user ID (same as -u)
-  * string process.umask: set process umask (same as -m)
+  * int process.umask: set process umask (same as -m) { 0x000:0x1FF }
   * bool process.utc = false: use UTC instead of local time for
     timestamps
 
@@ -6025,22 +6034,22 @@ Configuration:
 
   * bool profiler.modules.show = true: show module time profile stats
   * int profiler.modules.count = 0: limit results to count items per
-    level (0 = no limit) { 0: }
+    level (0 = no limit) { 0:max32 }
   * enum profiler.modules.sort = total_time: sort by given field {
     none | checks | avg_check | total_time }
   * int profiler.modules.max_depth = -1: limit depth to max_depth (-1
-    = no limit) { -1: }
+    = no limit) { -1:255 }
   * bool profiler.memory.show = true: show module memory profile
     stats
   * int profiler.memory.count = 0: limit results to count items per
-    level (0 = no limit) { 0: }
+    level (0 = no limit) { 0:max32 }
   * enum profiler.memory.sort = total_used: sort by given field {
     none | allocations | total_used | avg_allocation }
   * int profiler.memory.max_depth = -1: limit depth to max_depth (-1
-    = no limit) { -1: }
+    = no limit) { -1:255 }
   * bool profiler.rules.show = true: show rule time profile stats
   * int profiler.rules.count = 0: print results to given level (0 =
-    all) { 0: }
+    all) { 0:max32 }
   * enum profiler.rules.sort = total_time: sort by given field { none
     | checks | avg_check | total_time | matches | no_matches |
     avg_match | avg_no_match }
@@ -6058,16 +6067,16 @@ Usage: detect
 
 Configuration:
 
-  * int rate_filter[].gid = 1: rule generator ID { 0: }
-  * int rate_filter[].sid = 1: rule signature ID { 0: }
+  * int rate_filter[].gid = 1: rule generator ID { 0:max32 }
+  * int rate_filter[].sid = 1: rule signature ID { 0:max32 }
   * enum rate_filter[].track = by_src: filter only matching source or
     destination addresses { by_src | by_dst | by_rule }
   * int rate_filter[].count = 1: number of events in interval before
-    tripping { 0: }
-  * int rate_filter[].seconds = 1: count interval { 0: }
+    tripping { 0:max32 }
+  * int rate_filter[].seconds = 1: count interval { 0:max32 }
   * enum rate_filter[].new_action = alert: take this action on future
     hits until timeout { log | pass | alert | drop | block | reset }
-  * int rate_filter[].timeout = 1: count interval { 0: }
+  * int rate_filter[].timeout = 1: count interval { 0:max32 }
   * string rate_filter[].apply_to: restrict filter to these addresses
     according to track
 
@@ -6100,8 +6109,8 @@ Usage: detect
 
 Configuration:
 
-  * int rule_state[].gid = 0: rule generator ID { 0: }
-  * int rule_state[].sid = 0: rule signature ID { 0: }
+  * int rule_state[].gid = 0: rule generator ID { 0:max32 }
+  * int rule_state[].sid = 0: rule signature ID { 0:max32 }
   * bool rule_state[].enable = true: enable or disable rule in all
     policies
 
@@ -6119,7 +6128,7 @@ Usage: global
 Configuration:
 
   * int search_engine.bleedover_port_limit = 1024: maximum ports in
-    rule before demotion to any-any port group { 1: }
+    rule before demotion to any-any port group { 1:max32 }
   * bool search_engine.bleedover_warnings_enabled = false: print
     warning if a rule is demoted to any-any port group
   * bool search_engine.enable_single_rule_group = false: put all
@@ -6134,7 +6143,7 @@ Configuration:
   * bool search_engine.debug_print_rule_groups_compiled = false:
     prints compiled rule group information
   * int search_engine.max_pattern_len = 0: truncate patterns when
-    compiling into state machine (0 means no maximum) { 0: }
+    compiling into state machine (0 means no maximum) { 0:max32 }
   * int search_engine.max_queue_events = 5: maximum number of
     matching fast pattern states to queue per packet { 2:100 }
   * bool search_engine.detect_raw_tcp = false: detect on TCP payload
@@ -6222,8 +6231,9 @@ Configuration:
   * string snort.-l: <logdir> log to this directory instead of
     current directory
   * implied snort.-M: log messages to syslog (not alerts)
-  * int snort.-m: <umask> set umask = <umask> { 0: }
-  * int snort.-n: <count> stop after count packets { 0: }
+  * int snort.-m: <umask> set the process file mode creation mask {
+    0x000:0x1FF }
+  * int snort.-n: <count> stop after count packets { 0:max53 }
   * implied snort.-O: obfuscate the logged IP addresses
   * implied snort.-Q: enable inline mode operation
   * implied snort.-q: quiet mode - Don’t show banner and status
@@ -6232,7 +6242,7 @@ Configuration:
     policy
   * string snort.-r: <pcap>… (same as --pcap-list)
   * string snort.-S: <x=v> set config variable x equal to value v
-  * int snort.-s = 1514: <snap> (same as --snaplen); default is 1514
+  * int snort.-s = 1518: <snap> (same as --snaplen); default is 1518
     { 68:65535 }
   * implied snort.-T: test and report on the current Snort
     configuration
@@ -6243,7 +6253,6 @@ Configuration:
     initialization
   * implied snort.-V: (same as --version)
   * implied snort.-v: be verbose
-  * implied snort.-W: lists available interfaces
   * implied snort.-X: dump the raw packet data starting at the link
     layer
   * implied snort.-x: same as --pedantic
@@ -6251,7 +6260,7 @@ Configuration:
     files
   * int snort.-z = 1: <count> maximum number of packet threads (same
     as --max-packet-threads); 0 gets the number of CPU cores reported
-    by the system; default is 1 { 0: }
+    by the system; default is 1 { 0:max32 }
   * implied snort.--alert-before-pass: process alert, drop, sdrop, or
     reject before pass; default is pass before alert, drop,…
   * string snort.--bpf: <filter options> are standard BPF options, as
@@ -6288,6 +6297,8 @@ Configuration:
     config options { (optional) }
   * string snort.--help-counts: [<module prefix>] output matching peg
     counts { (optional) }
+  * implied snort.--help-limits: print the int upper bounds denoted
+    by max*
   * string snort.--help-module: <module> output description of given
     module
   * implied snort.--help-modules: list all available modules with
@@ -6317,7 +6328,7 @@ Configuration:
     for multiple snorts (same as -G) { 0:65535 }
   * implied snort.--markup: output help in asciidoc compatible format
   * int snort.--max-packet-threads = 1: <count> configure maximum
-    number of packet threads (same as -z) { 0: }
+    number of packet threads (same as -z) { 0:max32 }
   * implied snort.--mem-check: like -T but also compile search
     engines
   * implied snort.--nostamps: don’t include timestamps in log file
@@ -6325,8 +6336,6 @@ Configuration:
   * implied snort.--nolock-pidfile: do not try to lock Snort PID file
   * implied snort.--pause: wait for resume/quit command before
     processing packets/terminating
-  * int snort.--pause-after-n: <count> pause after count packets, to
-    be used with single packet thread only { 1: }
   * implied snort.--parsing-follows-files: parse relative paths from
     the perspective of the current configuration file
   * string snort.--pcap-file: <file> file that contains a list of
@@ -6338,7 +6347,7 @@ Configuration:
   * string snort.--pcap-filter: <filter> filter to apply when getting
     pcaps from file or directory
   * int snort.--pcap-loop: <count> read all pcaps <count> times; 0
-    will read until Snort is terminated { -1: }
+    will read until Snort is terminated { 0:max32 }
   * implied snort.--pcap-no-filter: reset to use no filter when
     getting pcaps from file or directory
   * implied snort.--pcap-reload: if reading multiple pcaps, reload
@@ -6353,16 +6362,16 @@ Configuration:
   * string snort.--rule-path: <path> where to find rules files
   * implied snort.--rule-to-hex: output so rule header to stdout for
     text rule on stdin
-  * string snort.--rule-to-text = [SnortFoo]: output plain so rule
-    header to stdout for text rule on stdin { 16 }
+  * string snort.--rule-to-text: output plain so rule header to
+    stdout for text rule on stdin (specify delimiter or
+    [Snort_SO_Rule] will be used) { 16 }
   * string snort.--run-prefix: <pfx> prepend this to each output file
   * string snort.--script-path: <path> to a luajit script or
     directory containing luajit scripts
   * implied snort.--shell: enable the interactive command line
-  * implied snort.--piglet: enable piglet test harness mode
   * implied snort.--show-plugins: list module and plugin versions
-  * int snort.--skip: <n> skip 1st n packets { 0: }
-  * int snort.--snaplen = 1514: <snap> set snaplen of packet (same as
+  * int snort.--skip: <n> skip 1st n packets { 0:max53 }
+  * int snort.--snaplen = 1518: <snap> set snaplen of packet (same as
     -s) { 68:65535 }
   * implied snort.--stdin-rules: read rules from stdin until EOF or a
     line starting with END is read
@@ -6373,8 +6382,6 @@ Configuration:
   * implied snort.--treat-drop-as-ignore: use drop, sdrop, and reject
     rules to ignore session traffic when not inline
   * string snort.--tweaks: tune configuration
-  * string snort.--catch-test: comma separated list of cat unit test
-    tags or all
   * implied snort.--version: show version number (same as -V)
   * implied snort.--warn-all: enable all warnings
   * implied snort.--warn-conf: warn about configuration issues
@@ -6394,10 +6401,12 @@ Configuration:
   * implied snort.--warn-vars: warn about variable definition and
     usage issues
   * int snort.--x2c: output ASCII char for given hex (see also --c2x)
+    { 0x00:0xFF }
   * string snort.--x2s: output ASCII string for given byte code (see
     also --x2c)
   * implied snort.--trace: turn on main loop debug trace
-  * int snort.trace: mask for enabling debug traces in module
+  * int snort.trace: mask for enabling debug traces in module {
+    0:max53 }
 
 Commands:
 
@@ -6413,7 +6422,8 @@ Commands:
   * snort.reload_daq(): reload daq module
   * snort.reload_hosts(filename): load a new hosts table
   * snort.pause(): suspend packet processing
-  * snort.resume(): continue packet processing
+  * snort.resume(pkt_num): continue packet processing. If number of
+    packet is specified, will resume for n packets and pause
   * snort.detach(): exit shell w/o shutdown
   * snort.quit(): shutdown and dump-stats
   * snort.help(): this output
@@ -6448,8 +6458,8 @@ Usage: detect
 
 Configuration:
 
-  * int suppress[].gid = 0: rule generator ID { 0: }
-  * int suppress[].sid = 0: rule signature ID { 0: }
+  * int suppress[].gid = 0: rule generator ID { 0:max32 }
+  * int suppress[].sid = 0: rule signature ID { 0:max32 }
   * enum suppress[].track: suppress only matching source or
     destination addresses { by_src | by_dst }
   * string suppress[].ip: restrict suppression to these addresses
@@ -6871,7 +6881,8 @@ Configuration:
   * bool mpls.enable_mpls_overlapping_ip = false: enable if private
     network addresses overlap and must be differentiated by MPLS
     label(s)
-  * int mpls.max_mpls_stack_depth = -1: set MPLS stack depth { -1: }
+  * int mpls.max_mpls_stack_depth = -1: set MPLS stack depth { -1:255
+    }
   * enum mpls.mpls_payload_type = ip4: set encapsulated payload type
     { eth | ip4 | ip6 }
 
@@ -7134,19 +7145,18 @@ Usage: context
 
 Configuration:
 
-  * int appid.first_decrypted_packet_debug = 0: the first packet of
-    an already decrypted SSL flow (debug single session only) { 0: }
-  * int appid.memcap = 0: disregard - not implemented { 0: }
+  * int appid.memcap = 0: disregard - not implemented { 0:maxSZ }
   * bool appid.log_stats = false: enable logging of appid statistics
   * int appid.app_stats_period = 300: time period for collecting and
-    logging appid statistics { 0: }
+    logging appid statistics { 0:max32 }
   * int appid.app_stats_rollover_size = 20971520: max file size for
-    appid stats before rolling over the log file { 0: }
+    appid stats before rolling over the log file { 0:max32 }
   * int appid.app_stats_rollover_time = 86400: max time period for
-    collection appid stats before rolling over the log file { 0: }
+    collection appid stats before rolling over the log file { 0:max31
+    }
   * string appid.app_detector_dir: directory to load appid detectors
     from
-  * int appid.instance_id = 0: instance id - ignored { 0: }
+  * int appid.instance_id = 0: instance id - ignored { 0:max32 }
   * bool appid.debug = false: enable appid debug logging
   * bool appid.dump_ports = false: enable dump of appid port
     information
@@ -7160,7 +7170,8 @@ Configuration:
     on startup
   * bool appid.log_all_sessions = false: enable logging of all appid
     sessions
-  * int appid.trace: mask for enabling debug traces in module
+  * int appid.trace: mask for enabling debug traces in module {
+    0:max53 }
 
 Commands:
 
@@ -7240,7 +7251,7 @@ Usage: inspect
 Configuration:
 
   * int binder[].when.ips_policy_id = 0: unique ID for selection of
-    this config by external logic { 0: }
+    this config by external logic { 0:max32 }
   * bit_list binder[].when.ifaces: list of interface indices { 255 }
   * bit_list binder[].when.vlans: list of VLAN IDs { 4095 }
   * addr_list binder[].when.nets: list of networks
@@ -7252,8 +7263,8 @@ Configuration:
   * bit_list binder[].when.src_ports: list of source ports { 65535 }
   * bit_list binder[].when.dst_ports: list of destination ports {
     65535 }
-  * int binder[].when.src_zone: source zone { 0:2147483647 }
-  * int binder[].when.dst_zone: destination zone { 0:2147483647 }
+  * int binder[].when.src_zone: source zone { 0:max31 }
+  * int binder[].when.dst_zone: destination zone { 0:max31 }
   * enum binder[].when.role = any: use the given configuration on one
     or any end of a session { client | server | any }
   * string binder[].when.service: override default configuration
@@ -7295,7 +7306,7 @@ Configuration:
     event to log { http_request_header_event |
     http_response_header_event }
   * int data_log.limit = 0: set maximum size in MB before rollover (0
-    is unlimited) { 0: }
+    is unlimited) { 0:max32 }
 
 Peg counts:
 
@@ -7350,28 +7361,29 @@ Usage: inspect
 
 Configuration:
 
-  * bool dce_smb.disable_defrag = false: Disable DCE/RPC
+  * bool dce_smb.disable_defrag = false: disable DCE/RPC
     defragmentation
-  * int dce_smb.max_frag_len = 65535: Maximum fragment size for
+  * int dce_smb.max_frag_len = 65535: maximum fragment size for
     defragmentation { 1514:65535 }
-  * int dce_smb.reassemble_threshold = 0: Minimum bytes received
+  * int dce_smb.reassemble_threshold = 0: minimum bytes received
     before performing reassembly { 0:65535 }
-  * enum dce_smb.smb_fingerprint_policy = none: Target based SMB
+  * enum dce_smb.smb_fingerprint_policy = none: target based SMB
     policy to use { none | client | server | both }
-  * enum dce_smb.policy = WinXP: Target based policy to use { Win2000
+  * enum dce_smb.policy = WinXP: target based policy to use { Win2000
     | WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba |
     Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
   * int dce_smb.smb_max_chain = 3: SMB max chain size { 0:255 }
   * int dce_smb.smb_max_compound = 3: SMB max compound size { 0:255 }
-  * multi dce_smb.valid_smb_versions = all: Valid SMB versions { v1 |
+  * multi dce_smb.valid_smb_versions = all: valid SMB versions { v1 |
     v2 | all }
   * enum dce_smb.smb_file_inspection = off: SMB file inspection { off
     | on | only }
   * int dce_smb.smb_file_depth = 16384: SMB file depth for file data
-    { -1: }
+    { -1:32767 }
   * string dce_smb.smb_invalid_shares: SMB shares to alert on
   * bool dce_smb.smb_legacy_mode = false: inspect only SMBv1
-  * int dce_smb.trace: mask for enabling debug traces in module
+  * int dce_smb.trace: mask for enabling debug traces in module {
+    0:max53 }
 
 Rules:
 
@@ -7519,13 +7531,13 @@ Usage: inspect
 
 Configuration:
 
-  * bool dce_tcp.disable_defrag = false: Disable DCE/RPC
+  * bool dce_tcp.disable_defrag = false: disable DCE/RPC
     defragmentation
-  * int dce_tcp.max_frag_len = 65535: Maximum fragment size for
+  * int dce_tcp.max_frag_len = 65535: maximum fragment size for
     defragmentation { 1514:65535 }
-  * int dce_tcp.reassemble_threshold = 0: Minimum bytes received
+  * int dce_tcp.reassemble_threshold = 0: minimum bytes received
     before performing reassembly { 0:65535 }
-  * enum dce_tcp.policy = WinXP: Target based policy to use { Win2000
+  * enum dce_tcp.policy = WinXP: target based policy to use { Win2000
     | WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba |
     Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
 
@@ -7625,11 +7637,12 @@ Usage: inspect
 
 Configuration:
 
-  * bool dce_udp.disable_defrag = false: Disable DCE/RPC
+  * bool dce_udp.disable_defrag = false: disable DCE/RPC
     defragmentation
-  * int dce_udp.max_frag_len = 65535: Maximum fragment size for
+  * int dce_udp.max_frag_len = 65535: maximum fragment size for
     defragmentation { 1514:65535 }
-  * int dce_udp.trace: mask for enabling debug traces in module
+  * int dce_udp.trace: mask for enabling debug traces in module {
+    0:max53 }
 
 Rules:
 
@@ -7799,43 +7812,45 @@ Usage: global
 
 Configuration:
 
-  * int file_id.type_depth = 1460: stop type ID at this point { 0: }
+  * int file_id.type_depth = 1460: stop type ID at this point {
+    0:max53 }
   * int file_id.signature_depth = 10485760: stop signature at this
-    point { 0: }
+    point { 0:max53 }
   * int file_id.block_timeout = 86400: stop blocking after this many
-    seconds { 0: }
+    seconds { 0:max31 }
   * int file_id.lookup_timeout = 2: give up on lookup after this many
-    seconds { 0: }
+    seconds { 0:max31 }
   * bool file_id.block_timeout_lookup = false: block if lookup times
     out
   * int file_id.capture_memcap = 100: memcap for file capture in
-    megabytes { 0: }
+    megabytes { 0:max53 }
   * int file_id.capture_max_size = 1048576: stop file capture beyond
-    this point { 0: }
+    this point { 0:max53 }
   * int file_id.capture_min_size = 0: stop file capture if file size
-    less than this { 0: }
+    less than this { 0:max53 }
   * int file_id.capture_block_size = 32768: file capture block size
-    in bytes { 8: }
+    in bytes { 8:max53 }
   * int file_id.max_files_cached = 65536: maximal number of files
-    cached in memory { 8: }
+    cached in memory { 8:max53 }
   * bool file_id.enable_type = true: enable type ID
   * bool file_id.enable_signature = true: enable signature
     calculation
   * bool file_id.enable_capture = false: enable file capture
-  * int file_id.show_data_depth = 100: print this many octets { 0: }
-  * int file_id.file_rules[].rev = 0: rule revision { 0: }
+  * int file_id.show_data_depth = 100: print this many octets {
+    0:max53 }
+  * int file_id.file_rules[].rev = 0: rule revision { 0:max32 }
   * string file_id.file_rules[].msg: information about the file type
   * string file_id.file_rules[].type: file type name
-  * int file_id.file_rules[].id = 0: file type id { 0: }
+  * int file_id.file_rules[].id = 0: file type id { 0:max32 }
   * string file_id.file_rules[].category: file type category
   * string file_id.file_rules[].group: comma separated list of groups
     associated with file type
   * string file_id.file_rules[].version: file type version
   * string file_id.file_rules[].magic[].content: file magic content
   * int file_id.file_rules[].magic[].offset = 0: file magic offset {
-    0: }
+    0:max32 }
   * int file_id.file_policy[].when.file_type_id = 0: unique ID for
-    file type in file magic rule { 0: }
+    file type in file magic rule { 0:max32 }
   * string file_id.file_policy[].when.sha256: SHA 256
   * enum file_id.file_policy[].use.verdict = unknown: what to do with
     matching traffic { unknown | log | stop | block | reset }
@@ -7851,7 +7866,7 @@ Configuration:
   * bool file_id.trace_stream = false: enable runtime dump of file
     data
   * int file_id.verdict_delay = 0: number of queries to return final
-    verdict { 0: }
+    verdict { 0:max53 }
 
 Peg counts:
 
@@ -7898,13 +7913,13 @@ Configuration:
   * bool ftp_client.bounce = false: check for bounces
   * addr ftp_client.bounce_to[].address = 1.0.0.0/32: allowed IP
     address in CIDR format
-  * port ftp_client.bounce_to[].port = 20: allowed port { 1: }
+  * port ftp_client.bounce_to[].port = 20: allowed port
   * port ftp_client.bounce_to[].last_port: optional allowed range
-    from port to last_port inclusive { 0: }
+    from port to last_port inclusive
   * bool ftp_client.ignore_telnet_erase_cmds = false: ignore erase
     character and erase line commands when normalizing
-  * int ftp_client.max_resp_len = -1: maximum FTP response accepted
-    by client { -1: }
+  * int ftp_client.max_resp_len = 4294967295: maximum FTP response
+    accepted by client { 0:max32 }
   * bool ftp_client.telnet_cmds = false: detect Telnet escape
     sequences on FTP control channel
 
@@ -7946,7 +7961,7 @@ Configuration:
     given commands
   * string ftp_server.directory_cmds[].dir_cmd: directory command
   * int ftp_server.directory_cmds[].rsp_code = 200: expected
-    successful response code for command { 200: }
+    successful response code for command { 200:max32 }
   * string ftp_server.file_put_cmds: check the formatting of the
     given commands
   * string ftp_server.file_get_cmds: check the formatting of the
@@ -7960,9 +7975,9 @@ Configuration:
   * string ftp_server.cmd_validity[].command: command string
   * string ftp_server.cmd_validity[].format: format specification
   * int ftp_server.cmd_validity[].length = 0: specify non-default
-    maximum for command { 0: }
+    maximum for command { 0:max32 }
   * int ftp_server.def_max_param_len = 100: default maximum length of
-    commands handled by server; 0 is unlimited { 1: }
+    commands handled by server; 0 is unlimited { 1:max32 }
   * bool ftp_server.encrypted_traffic = false: check for encrypted
     Telnet and FTP
   * string ftp_server.ftp_cmds: specify additional commands supported
@@ -8020,7 +8035,8 @@ Configuration:
   * string gtp_inspect[].infos[].name: information element name
   * int gtp_inspect[].infos[].length = 0: information element type
     code { 0:255 }
-  * int gtp_inspect.trace: mask for enabling debug traces in module
+  * int gtp_inspect.trace: mask for enabling debug traces in module {
+    0:max53 }
 
 Rules:
 
@@ -8074,9 +8090,9 @@ Usage: inspect
 Configuration:
 
   * int http_inspect.request_depth = -1: maximum request message body
-    bytes to examine (-1 no limit) { -1: }
+    bytes to examine (-1 no limit) { -1:max53 }
   * int http_inspect.response_depth = -1: maximum response message
-    body bytes to examine (-1 no limit) { -1: }
+    body bytes to examine (-1 no limit) { -1:max53 }
   * bool http_inspect.unzip = true: decompress gzip and deflate
     message bodies
   * bool http_inspect.normalize_utf = true: normalize charset utf
@@ -8119,17 +8135,6 @@ Configuration:
     normalizing URIs
   * bool http_inspect.simplify_path = true: reduce URI directory path
     to simplest form
-  * bool http_inspect.test_input = false: read HTTP messages from
-    text file
-  * bool http_inspect.test_output = false: print out HTTP section
-    data
-  * int http_inspect.print_amount = 1200: number of characters to
-    print from a Field { 1:1000000 }
-  * bool http_inspect.print_hex = false: nonprinting characters
-    printed in [HH] format instead of using an asterisk
-  * bool http_inspect.show_pegs = true: display peg counts with test
-    output
-  * bool http_inspect.show_scan = false: display scanned segments
 
 Rules:
 
@@ -8540,18 +8545,18 @@ Usage: global
 
 Configuration:
 
-  * bool perf_monitor.base = true: enable base statistics { nullptr }
-  * bool perf_monitor.cpu = false: enable cpu statistics { nullptr }
+  * bool perf_monitor.base = true: enable base statistics
+  * bool perf_monitor.cpu = false: enable cpu statistics
   * bool perf_monitor.flow = false: enable traffic statistics
   * bool perf_monitor.flow_ip = false: enable statistics on host
     pairs
-  * int perf_monitor.packets = 10000: minimum packets to report { 0:
-    }
-  * int perf_monitor.seconds = 60: report interval { 1: }
+  * int perf_monitor.packets = 10000: minimum packets to report {
+    0:max32 }
+  * int perf_monitor.seconds = 60: report interval { 1:max32 }
   * int perf_monitor.flow_ip_memcap = 52428800: maximum memory in
-    bytes for flow tracking { 8200: }
+    bytes for flow tracking { 8200:maxSZ }
   * int perf_monitor.max_file_size = 1073741824: files will be rolled
-    over if they exceed this size { 4096: }
+    over if they exceed this size { 4096:max53 }
   * int perf_monitor.flow_ports = 1023: maximum ports to track {
     0:65535 }
   * enum perf_monitor.output = file: output location for stats { file
@@ -8629,7 +8634,7 @@ Usage: global
 Configuration:
 
   * int port_scan.memcap = 1048576: maximum tracker memory in bytes {
-    1: }
+    1:maxSZ }
   * multi port_scan.protos = all: choose the protocols to monitor {
     tcp | udp | icmp | ip | all }
   * multi port_scan.scan_types = all: choose type of scans to look
@@ -8645,105 +8650,105 @@ Configuration:
     threshold within window if true; else alert on first only
   * bool port_scan.include_midstream = false: list of CIDRs with
     optional ports
-  * int port_scan.tcp_ports.scans = 100: scan attempts { 0: }
+  * int port_scan.tcp_ports.scans = 100: scan attempts { 0:65535 }
   * int port_scan.tcp_ports.rejects = 15: scan attempts with negative
-    response { 0: }
+    response { 0:65535 }
   * int port_scan.tcp_ports.nets = 25: number of times address
-    changed from prior attempt { 0: }
+    changed from prior attempt { 0:65535 }
   * int port_scan.tcp_ports.ports = 25: number of times port (or
-    proto) changed from prior attempt { 0: }
-  * int port_scan.tcp_decoy.scans = 100: scan attempts { 0: }
+    proto) changed from prior attempt { 0:65535 }
+  * int port_scan.tcp_decoy.scans = 100: scan attempts { 0:65535 }
   * int port_scan.tcp_decoy.rejects = 15: scan attempts with negative
-    response { 0: }
+    response { 0:65535 }
   * int port_scan.tcp_decoy.nets = 25: number of times address
-    changed from prior attempt { 0: }
+    changed from prior attempt { 0:65535 }
   * int port_scan.tcp_decoy.ports = 25: number of times port (or
-    proto) changed from prior attempt { 0: }
-  * int port_scan.tcp_sweep.scans = 100: scan attempts { 0: }
+    proto) changed from prior attempt { 0:65535 }
+  * int port_scan.tcp_sweep.scans = 100: scan attempts { 0:65535 }
   * int port_scan.tcp_sweep.rejects = 15: scan attempts with negative
-    response { 0: }
+    response { 0:65535 }
   * int port_scan.tcp_sweep.nets = 25: number of times address
-    changed from prior attempt { 0: }
+    changed from prior attempt { 0:65535 }
   * int port_scan.tcp_sweep.ports = 25: number of times port (or
-    proto) changed from prior attempt { 0: }
-  * int port_scan.tcp_dist.scans = 100: scan attempts { 0: }
+    proto) changed from prior attempt { 0:65535 }
+  * int port_scan.tcp_dist.scans = 100: scan attempts { 0:65535 }
   * int port_scan.tcp_dist.rejects = 15: scan attempts with negative
-    response { 0: }
+    response { 0:65535 }
   * int port_scan.tcp_dist.nets = 25: number of times address changed
-    from prior attempt { 0: }
+    from prior attempt { 0:65535 }
   * int port_scan.tcp_dist.ports = 25: number of times port (or
-    proto) changed from prior attempt { 0: }
-  * int port_scan.udp_ports.scans = 100: scan attempts { 0: }
+    proto) changed from prior attempt { 0:65535 }
+  * int port_scan.udp_ports.scans = 100: scan attempts { 0:65535 }
   * int port_scan.udp_ports.rejects = 15: scan attempts with negative
-    response { 0: }
+    response { 0:65535 }
   * int port_scan.udp_ports.nets = 25: number of times address
-    changed from prior attempt { 0: }
+    changed from prior attempt { 0:65535 }
   * int port_scan.udp_ports.ports = 25: number of times port (or
-    proto) changed from prior attempt { 0: }
-  * int port_scan.udp_decoy.scans = 100: scan attempts { 0: }
+    proto) changed from prior attempt { 0:65535 }
+  * int port_scan.udp_decoy.scans = 100: scan attempts { 0:65535 }
   * int port_scan.udp_decoy.rejects = 15: scan attempts with negative
-    response { 0: }
+    response { 0:65535 }
   * int port_scan.udp_decoy.nets = 25: number of times address
-    changed from prior attempt { 0: }
+    changed from prior attempt { 0:65535 }
   * int port_scan.udp_decoy.ports = 25: number of times port (or
-    proto) changed from prior attempt { 0: }
-  * int port_scan.udp_sweep.scans = 100: scan attempts { 0: }
+    proto) changed from prior attempt { 0:65535 }
+  * int port_scan.udp_sweep.scans = 100: scan attempts { 0:65535 }
   * int port_scan.udp_sweep.rejects = 15: scan attempts with negative
-    response { 0: }
+    response { 0:65535 }
   * int port_scan.udp_sweep.nets = 25: number of times address
-    changed from prior attempt { 0: }
+    changed from prior attempt { 0:65535 }
   * int port_scan.udp_sweep.ports = 25: number of times port (or
-    proto) changed from prior attempt { 0: }
-  * int port_scan.udp_dist.scans = 100: scan attempts { 0: }
+    proto) changed from prior attempt { 0:65535 }
+  * int port_scan.udp_dist.scans = 100: scan attempts { 0:65535 }
   * int port_scan.udp_dist.rejects = 15: scan attempts with negative
-    response { 0: }
+    response { 0:65535 }
   * int port_scan.udp_dist.nets = 25: number of times address changed
-    from prior attempt { 0: }
+    from prior attempt { 0:65535 }
   * int port_scan.udp_dist.ports = 25: number of times port (or
-    proto) changed from prior attempt { 0: }
-  * int port_scan.ip_proto.scans = 100: scan attempts { 0: }
+    proto) changed from prior attempt { 0:65535 }
+  * int port_scan.ip_proto.scans = 100: scan attempts { 0:65535 }
   * int port_scan.ip_proto.rejects = 15: scan attempts with negative
-    response { 0: }
+    response { 0:65535 }
   * int port_scan.ip_proto.nets = 25: number of times address changed
-    from prior attempt { 0: }
+    from prior attempt { 0:65535 }
   * int port_scan.ip_proto.ports = 25: number of times port (or
-    proto) changed from prior attempt { 0: }
-  * int port_scan.ip_decoy.scans = 100: scan attempts { 0: }
+    proto) changed from prior attempt { 0:65535 }
+  * int port_scan.ip_decoy.scans = 100: scan attempts { 0:65535 }
   * int port_scan.ip_decoy.rejects = 15: scan attempts with negative
-    response { 0: }
+    response { 0:65535 }
   * int port_scan.ip_decoy.nets = 25: number of times address changed
-    from prior attempt { 0: }
+    from prior attempt { 0:65535 }
   * int port_scan.ip_decoy.ports = 25: number of times port (or
-    proto) changed from prior attempt { 0: }
-  * int port_scan.ip_sweep.scans = 100: scan attempts { 0: }
+    proto) changed from prior attempt { 0:65535 }
+  * int port_scan.ip_sweep.scans = 100: scan attempts { 0:65535 }
   * int port_scan.ip_sweep.rejects = 15: scan attempts with negative
-    response { 0: }
+    response { 0:65535 }
   * int port_scan.ip_sweep.nets = 25: number of times address changed
-    from prior attempt { 0: }
+    from prior attempt { 0:65535 }
   * int port_scan.ip_sweep.ports = 25: number of times port (or
-    proto) changed from prior attempt { 0: }
-  * int port_scan.ip_dist.scans = 100: scan attempts { 0: }
+    proto) changed from prior attempt { 0:65535 }
+  * int port_scan.ip_dist.scans = 100: scan attempts { 0:65535 }
   * int port_scan.ip_dist.rejects = 15: scan attempts with negative
-    response { 0: }
+    response { 0:65535 }
   * int port_scan.ip_dist.nets = 25: number of times address changed
-    from prior attempt { 0: }
+    from prior attempt { 0:65535 }
   * int port_scan.ip_dist.ports = 25: number of times port (or proto)
-    changed from prior attempt { 0: }
-  * int port_scan.icmp_sweep.scans = 100: scan attempts { 0: }
+    changed from prior attempt { 0:65535 }
+  * int port_scan.icmp_sweep.scans = 100: scan attempts { 0:65535 }
   * int port_scan.icmp_sweep.rejects = 15: scan attempts with
-    negative response { 0: }
+    negative response { 0:65535 }
   * int port_scan.icmp_sweep.nets = 25: number of times address
-    changed from prior attempt { 0: }
+    changed from prior attempt { 0:65535 }
   * int port_scan.icmp_sweep.ports = 25: number of times port (or
-    proto) changed from prior attempt { 0: }
+    proto) changed from prior attempt { 0:65535 }
   * int port_scan.tcp_window = 0: detection interval for all TCP
-    scans { 0: }
+    scans { 0:max32 }
   * int port_scan.udp_window = 0: detection interval for all UDP
-    scans { 0: }
+    scans { 0:max32 }
   * int port_scan.ip_window = 0: detection interval for all IP scans
-    { 0: }
+    { 0:max32 }
   * int port_scan.icmp_window = 0: detection interval for all ICMP
-    scans { 0: }
+    scans { 0:max32 }
 
 Rules:
 
@@ -8893,7 +8898,7 @@ Configuration:
   * int sip.max_content_len = 1024: maximum content length of the
     message body { 0:65535 }
   * int sip.max_dialogs = 4: maximum number of dialogs within one
-    stream session { 1:4194303 }
+    stream session { 1:max32 }
   * int sip.max_from_len = 256: maximum from field size { 0:65535 }
   * int sip.max_requestName_len = 20: maximum request name field size
     { 0:65535 }
@@ -8985,7 +8990,7 @@ Configuration:
 
   * string smtp.alt_max_command_line_len[].command: command string
   * int smtp.alt_max_command_line_len[].length = 0: specify
-    non-default maximum for command { 0: }
+    non-default maximum for command { 0:max32 }
   * string smtp.auth_cmds: commands that initiate an authentication
     exchange
   * int smtp.b64_decode_depth = 1460: depth used to decode the base64
@@ -9165,45 +9170,46 @@ Usage: global
 Configuration:
 
   * int stream.footprint = 0: use zero for production, non-zero for
-    testing at given size (for TCP and user) { 0: }
+    testing at given size (for TCP and user) { 0:max32 }
   * bool stream.ip_frags_only = false: don’t process non-frag flows
   * int stream.ip_cache.max_sessions = 16384: maximum simultaneous
-    sessions tracked before pruning { 2: }
+    sessions tracked before pruning { 2:max32 }
   * int stream.ip_cache.pruning_timeout = 30: minimum inactive time
-    before being eligible for pruning { 1: }
+    before being eligible for pruning { 1:max32 }
   * int stream.ip_cache.idle_timeout = 180: maximum inactive time
-    before retiring session tracker { 1: }
+    before retiring session tracker { 1:max32 }
   * int stream.icmp_cache.max_sessions = 65536: maximum simultaneous
-    sessions tracked before pruning { 2: }
+    sessions tracked before pruning { 2:max32 }
   * int stream.icmp_cache.pruning_timeout = 30: minimum inactive time
-    before being eligible for pruning { 1: }
+    before being eligible for pruning { 1:max32 }
   * int stream.icmp_cache.idle_timeout = 180: maximum inactive time
-    before retiring session tracker { 1: }
+    before retiring session tracker { 1:max32 }
   * int stream.tcp_cache.max_sessions = 262144: maximum simultaneous
-    sessions tracked before pruning { 2: }
+    sessions tracked before pruning { 2:max32 }
   * int stream.tcp_cache.pruning_timeout = 30: minimum inactive time
-    before being eligible for pruning { 1: }
+    before being eligible for pruning { 1:max32 }
   * int stream.tcp_cache.idle_timeout = 3600: maximum inactive time
-    before retiring session tracker { 1: }
+    before retiring session tracker { 1:max32 }
   * int stream.udp_cache.max_sessions = 131072: maximum simultaneous
-    sessions tracked before pruning { 2: }
+    sessions tracked before pruning { 2:max32 }
   * int stream.udp_cache.pruning_timeout = 30: minimum inactive time
-    before being eligible for pruning { 1: }
+    before being eligible for pruning { 1:max32 }
   * int stream.udp_cache.idle_timeout = 180: maximum inactive time
-    before retiring session tracker { 1: }
+    before retiring session tracker { 1:max32 }
   * int stream.user_cache.max_sessions = 1024: maximum simultaneous
-    sessions tracked before pruning { 2: }
+    sessions tracked before pruning { 2:max32 }
   * int stream.user_cache.pruning_timeout = 30: minimum inactive time
-    before being eligible for pruning { 1: }
+    before being eligible for pruning { 1:max32 }
   * int stream.user_cache.idle_timeout = 180: maximum inactive time
-    before retiring session tracker { 1: }
+    before retiring session tracker { 1:max32 }
   * int stream.file_cache.max_sessions = 128: maximum simultaneous
-    sessions tracked before pruning { 2: }
+    sessions tracked before pruning { 2:max32 }
   * int stream.file_cache.pruning_timeout = 30: minimum inactive time
-    before being eligible for pruning { 1: }
+    before being eligible for pruning { 1:max32 }
   * int stream.file_cache.idle_timeout = 180: maximum inactive time
-    before retiring session tracker { 1: }
-  * int stream.trace: mask for enabling debug traces in module
+    before retiring session tracker { 1:max32 }
+  * int stream.trace: mask for enabling debug traces in module {
+    0:max53 }
 
 Rules:
 
@@ -9312,7 +9318,7 @@ Usage: inspect
 Configuration:
 
   * int stream_icmp.session_timeout = 30: session tracking timeout {
-    1:86400 }
+    1:max31 }
 
 Peg counts:
 
@@ -9337,18 +9343,19 @@ Usage: inspect
 Configuration:
 
   * int stream_ip.max_frags = 8192: maximum number of simultaneous
-    fragments being tracked { 1: }
+    fragments being tracked { 1:max32 }
   * int stream_ip.max_overlaps = 0: maximum allowed overlaps per
-    datagram; 0 is unlimited { 0: }
+    datagram; 0 is unlimited { 0:max32 }
   * int stream_ip.min_frag_length = 0: alert if fragment length is
-    below this limit before or after trimming { 0: }
+    below this limit before or after trimming { 0:65535 }
   * int stream_ip.min_ttl = 1: discard fragments with TTL below the
     minimum { 1:255 }
   * enum stream_ip.policy = linux: fragment reassembly policy { first
     | linux | bsd | bsd_right | last | windows | solaris }
   * int stream_ip.session_timeout = 30: session tracking timeout {
-    1:86400 }
-  * int stream_ip.trace: mask for enabling debug traces in module
+    1:max31 }
+  * int stream_ip.trace: mask for enabling debug traces in module {
+    0:max53 }
 
 Rules:
 
@@ -9408,11 +9415,12 @@ Usage: inspect
 Configuration:
 
   * int stream_tcp.flush_factor = 0: flush upon seeing a drop in
-    segment size after given number of non-decreasing segments { 0: }
+    segment size after given number of non-decreasing segments {
+    0:65535 }
   * int stream_tcp.max_window = 0: maximum allowed TCP window {
     0:1073725440 }
   * int stream_tcp.overlap_limit = 0: maximum number of allowed
-    overlapping segments per session { 0:255 }
+    overlapping segments per session { 0:max32 }
   * int stream_tcp.max_pdu = 16384: maximum reassembled PDU size {
     1460:32768 }
   * enum stream_tcp.policy = bsd: determines operating system
@@ -9422,19 +9430,19 @@ Configuration:
   * bool stream_tcp.reassemble_async = true: queue data for
     reassembly before traffic is seen in both directions
   * int stream_tcp.require_3whs = -1: don’t track midstream sessions
-    after given seconds from start up; -1 tracks all { -1:86400 }
+    after given seconds from start up; -1 tracks all { -1:max31 }
   * bool stream_tcp.show_rebuilt_packets = false: enable cmg like
     output of reassembled packets
   * int stream_tcp.queue_limit.max_bytes = 1048576: don’t queue more
-    than given bytes per session and direction { 0: }
+    than given bytes per session and direction { 0:max32 }
   * int stream_tcp.queue_limit.max_segments = 2621: don’t queue more
-    than given segments per session and direction { 0: }
+    than given segments per session and direction { 0:max32 }
   * int stream_tcp.small_segments.count = 0: limit number of small
     segments queued { 0:2048 }
   * int stream_tcp.small_segments.maximum_size = 0: limit number of
     small segments queued { 0:2048 }
   * int stream_tcp.session_timeout = 30: session tracking timeout {
-    1:86400 }
+    1:max31 }
 
 Rules:
 
@@ -9533,7 +9541,7 @@ Usage: inspect
 Configuration:
 
   * int stream_udp.session_timeout = 30: session tracking timeout {
-    1:86400 }
+    1:max31 }
 
 Peg counts:
 
@@ -9559,8 +9567,9 @@ Usage: inspect
 Configuration:
 
   * int stream_user.session_timeout = 30: session tracking timeout {
-    1:86400 }
-  * int stream_user.trace: mask for enabling debug traces in module
+    1:max31 }
+  * int stream_user.trace: mask for enabling debug traces in module {
+    0:max53 }
 
 
 9.44. telnet
@@ -9576,7 +9585,7 @@ Usage: inspect
 Configuration:
 
   * int telnet.ayt_attack_thresh = -1: alert on this number of
-    consecutive Telnet AYT commands { -1: }
+    consecutive Telnet AYT commands { -1:max31 }
   * bool telnet.check_encrypted = false: check for end of encryption
   * bool telnet.encrypted_traffic = false: check for encrypted Telnet
     and FTP
@@ -9689,7 +9698,7 @@ Configuration:
   * enum reject.reset: send TCP reset to one or both ends { source|
     dest|both }
   * enum reject.control: send ICMP unreachable(s) { network|host|port
-    |all }
+    |forward|all }
 
 
 10.3. rewrite
@@ -9766,10 +9775,11 @@ Configuration:
     that is larger than a standard buffer
   * implied asn1.print: dump decode data to console; always true
   * int asn1.oversize_length: compares ASN.1 type lengths with the
-    supplied argument { 0: }
+    supplied argument { 0:max32 }
   * int asn1.absolute_offset: absolute offset from the beginning of
-    the packet { 0: }
-  * int asn1.relative_offset: relative offset from the cursor
+    the packet { 0:65535 }
+  * int asn1.relative_offset: relative offset from the cursor {
+    -65535:65535 }
 
 
 11.4. base64_decode
@@ -9786,9 +9796,9 @@ Usage: detect
 Configuration:
 
   * int base64_decode.bytes: number of base64 encoded bytes to decode
-    { 1: }
+    { 1:max32 }
   * int base64_decode.offset = 0: bytes past start of buffer to start
-    decoding { 0: }
+    decoding { 0:max32 }
   * implied base64_decode.relative: apply offset to cursor instead of
     start of buffer
 
@@ -9980,9 +9990,10 @@ Configuration:
   * implied content.fast_pattern: use this content in the fast
     pattern matcher instead of the content selected by default
   * int content.fast_pattern_offset = 0: number of leading characters
-    of this content the fast pattern matcher should exclude { 0: }
+    of this content the fast pattern matcher should exclude { 0:65535
+    }
   * int content.fast_pattern_length: maximum number of characters
-    from this content the fast pattern matcher should use { 1: }
+    from this content the fast pattern matcher should use { 1:65535 }
   * string content.offset: var or number of bytes from start of
     buffer to start search
   * string content.depth: var or maximum number of bytes to search
@@ -10068,9 +10079,9 @@ Configuration:
   * enum detection_filter.track: track hits by source or destination
     IP address { by_src | by_dst }
   * int detection_filter.count: hits in interval before allowing the
-    rule to fire { 1: }
+    rule to fire { 1:max32 }
   * int detection_filter.seconds: length of interval to count hits {
-    1: }
+    1:max32 }
 
 
 11.17. dnp3_data
@@ -10276,7 +10287,7 @@ Usage: detect
 
 Configuration:
 
-  * int gid.~: generator id { 1: }
+  * int gid.~: generator id { 1:max32 }
 
 
 11.30. gtp_info
@@ -10976,7 +10987,7 @@ Usage: detect
 Configuration:
 
   * int priority.~: relative severity level; 1 is highest priority {
-    1: }
+    1:max31 }
 
 
 11.71. raw_data
@@ -11071,7 +11082,7 @@ Usage: detect
 
 Configuration:
 
-  * int rev.~: revision { 1: }
+  * int rev.~: revision { 1:max32 }
 
 
 11.77. rpc
@@ -11086,7 +11097,7 @@ Usage: detect
 
 Configuration:
 
-  * int rpc.~app: application number
+  * int rpc.~app: application number { 0:max32 }
   * string rpc.~ver: version number or * for any
   * string rpc.~proc: procedure number or * for any
 
@@ -11104,7 +11115,8 @@ Usage: detect
 Configuration:
 
   * string sd_pattern.~pattern: The pattern to search for
-  * int sd_pattern.threshold: number of matches before alerting { 1 }
+  * int sd_pattern.threshold = 1: number of matches before alerting {
+    1:max32 }
 
 Peg counts:
 
@@ -11212,7 +11224,7 @@ Usage: detect
 
 Configuration:
 
-  * int sid.~: signature id { 1: }
+  * int sid.~: signature id { 1:max32 }
 
 
 11.85. sip_body
@@ -11265,7 +11277,7 @@ Usage: detect
 
 Configuration:
 
-  * int sip_stat_code.*code: stat code { 1:999 }
+  * int sip_stat_code.*code: status code { 1:999 }
 
 
 11.89. so
@@ -11408,9 +11420,9 @@ Configuration:
 
   * enum tag.~: log all packets in session or all packets to or from
     host { session|host_src|host_dst }
-  * int tag.packets: tag this many packets { 1: }
-  * int tag.seconds: tag for this many seconds { 1: }
-  * int tag.bytes: tag for this many bytes { 1: }
+  * int tag.packets: tag this many packets { 1:max32 }
+  * int tag.seconds: tag for this many seconds { 1:max32 }
+  * int tag.bytes: tag for this many bytes { 1:max32 }
 
 
 11.96. target
@@ -11565,7 +11577,7 @@ Configuration:
     tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len |
     vlan }
   * int alert_csv.limit = 0: set maximum size in MB before rollover
-    (0 is unlimited) { 0: }
+    (0 is unlimited) { 0:maxSZ }
   * string alert_csv.separator = , : separate fields with this
     character sequence
 
@@ -11602,7 +11614,7 @@ Configuration:
     stdout
   * bool alert_fast.packet = false: output packet dump with alert
   * int alert_fast.limit = 0: set maximum size in MB before rollover
-    (0 is unlimited) { 0: }
+    (0 is unlimited) { 0:maxSZ }
 
 
 14.4. alert_full
@@ -11620,7 +11632,7 @@ Configuration:
   * bool alert_full.file = false: output to alert_full.txt instead of
     stdout
   * int alert_full.limit = 0: set maximum size in MB before rollover
-    (0 is unlimited) { 0: }
+    (0 is unlimited) { 0:maxSZ }
 
 
 14.5. alert_json
@@ -11648,7 +11660,7 @@ Configuration:
     tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len |
     vlan }
   * int alert_json.limit = 0: set maximum size in MB before rollover
-    (0 is unlimited) { 0: }
+    (0 is unlimited) { 0:maxSZ }
   * string alert_json.separator = , : separate fields with this
     character sequence
 
@@ -11666,8 +11678,8 @@ Usage: context
 Configuration:
 
   * string alert_sfsocket.file: name of unix socket file
-  * int alert_sfsocket.rules[].gid = 1: rule generator ID { 1: }
-  * int alert_sfsocket.rules[].sid = 1: rule signature ID { 1: }
+  * int alert_sfsocket.rules[].gid = 1: rule generator ID { 1:max32 }
+  * int alert_sfsocket.rules[].sid = 1: rule signature ID { 1:max32 }
 
 
 14.7. alert_syslog
@@ -11737,8 +11749,9 @@ Configuration:
   * bool log_hext.raw = false: output all full packets if true, else
     just TCP payload
   * int log_hext.limit = 0: set maximum size in MB before rollover (0
-    is unlimited) { 0: }
-  * int log_hext.width = 20: set line width (0 is unlimited) { 0: }
+    is unlimited) { 0:maxSZ }
+  * int log_hext.width = 20: set line width (0 is unlimited) {
+    0:max32 }
 
 
 14.11. log_pcap
@@ -11754,7 +11767,7 @@ Usage: context
 Configuration:
 
   * int log_pcap.limit = 0: set maximum size in MB before rollover (0
-    is unlimited) { 0: }
+    is unlimited) { 0:maxSZ }
 
 
 14.12. unified2
@@ -11772,7 +11785,7 @@ Configuration:
   * bool unified2.legacy_events = false: generate Snort 2.X style
     events for barnyard2 compatibility
   * int unified2.limit = 0: set maximum size in MB before rollover (0
-    is unlimited) { 0: }
+    is unlimited) { 0:maxSZ }
   * bool unified2.nostamp = true: append file creation time to name
     (in Unix Epoch format)
 
@@ -12574,8 +12587,6 @@ Converts the Snort configuration file specified by the -c or
   * --output-file=<out_file> Same as -o. output the new Snort++ lua
     configuration to <out_file>
   * --print-all Same as -a. default option. print all data
-  * --print-binding-order Print sorting priority used when generating
-    binder table
   * --print-differences Same as -d. output the differences, and only
     the differences, between the Snort and Snort++ configurations to
     the <out_file>
@@ -13830,28 +13841,27 @@ these libraries see the Getting Started section of the manual.
   * -L <mode> logging mode (none, dump, pcap, or log_*)
   * -l <logdir> log to this directory instead of current directory
   * -M log messages to syslog (not alerts)
-  * -m <umask> set umask = <umask> (0:)
-  * -n <count> stop after count packets (0:)
+  * -m <umask> set the process file mode creation mask (0x000:0x1FF)
+  * -n <count> stop after count packets (0:max53)
   * -O obfuscate the logged IP addresses
   * -Q enable inline mode operation
   * -q quiet mode - Don’t show banner and status report
   * -R <rules> include this rules file in the default policy
   * -r <pcap>… (same as --pcap-list)
   * -S <x=v> set config variable x equal to value v
-  * -s <snap> (same as --snaplen); default is 1514 (68:65535)
+  * -s <snap> (same as --snaplen); default is 1518 (68:65535)
   * -T test and report on the current Snort configuration
   * -t <dir> chroots process to <dir> after initialization
   * -U use UTC for timestamps
   * -u <uname> run snort as <uname> or <uid> after initialization
   * -V (same as --version)
   * -v be verbose
-  * -W lists available interfaces
   * -X dump the raw packet data starting at the link layer
   * -x same as --pedantic
   * -y include year in timestamp in the alert and log files
   * -z <count> maximum number of packet threads (same as
     --max-packet-threads); 0 gets the number of CPU cores reported by
-    the system; default is 1 (0:)
+    the system; default is 1 (0:max32)
   * --alert-before-pass process alert, drop, sdrop, or reject before
     pass; default is pass before alert, drop,…
   * --bpf <filter options> are standard BPF options, as seen in
@@ -13883,6 +13893,7 @@ these libraries see the Getting Started section of the manual.
     (optional)
   * --help-counts [<module prefix>] output matching peg counts
     (optional)
+  * --help-limits print the int upper bounds denoted by max*
   * --help-module <module> output description of given module
   * --help-modules list all available modules with brief help
   * --help-options [<option prefix>] output matching command line
@@ -13908,14 +13919,12 @@ these libraries see the Getting Started section of the manual.
     snorts (same as -G) (0:65535)
   * --markup output help in asciidoc compatible format
   * --max-packet-threads <count> configure maximum number of packet
-    threads (same as -z) (0:)
+    threads (same as -z) (0:max32)
   * --mem-check like -T but also compile search engines
   * --nostamps don’t include timestamps in log file names
   * --nolock-pidfile do not try to lock Snort PID file
   * --pause wait for resume/quit command before processing packets/
     terminating
-  * --pause-after-n <count> pause after count packets, to be used
-    with single packet thread only (1:)
   * --parsing-follows-files parse relative paths from the perspective
     of the current configuration file
   * --pcap-file <file> file that contains a list of pcaps to read -
@@ -13927,7 +13936,7 @@ these libraries see the Getting Started section of the manual.
   * --pcap-filter <filter> filter to apply when getting pcaps from
     file or directory
   * --pcap-loop <count> read all pcaps <count> times; 0 will read
-    until Snort is terminated (-1:)
+    until Snort is terminated (0:max32)
   * --pcap-no-filter reset to use no filter when getting pcaps from
     file or directory
   * --pcap-reload if reading multiple pcaps, reload snort config
@@ -13941,14 +13950,14 @@ these libraries see the Getting Started section of the manual.
   * --rule-to-hex output so rule header to stdout for text rule on
     stdin
   * --rule-to-text output plain so rule header to stdout for text
-    rule on stdin (16)
+    rule on stdin (specify delimiter or [Snort_SO_Rule] will be used)
+    (16)
   * --run-prefix <pfx> prepend this to each output file
   * --script-path <path> to a luajit script or directory containing
     luajit scripts
   * --shell enable the interactive command line
-  * --piglet enable piglet test harness mode
   * --show-plugins list module and plugin versions
-  * --skip <n> skip 1st n packets (0:)
+  * --skip <n> skip 1st n packets (0:max53)
   * --snaplen <snap> set snaplen of packet (same as -s) (68:65535)
   * --stdin-rules read rules from stdin until EOF or a line starting
     with END is read
@@ -13959,7 +13968,6 @@ these libraries see the Getting Started section of the manual.
   * --treat-drop-as-ignore use drop, sdrop, and reject rules to
     ignore session traffic when not inline
   * --tweaks tune configuration
-  * --catch-test comma separated list of cat unit test tags or all
   * --version show version number (same as -V)
   * --warn-all enable all warnings
   * --warn-conf warn about configuration issues
@@ -13975,6 +13983,7 @@ these libraries see the Getting Started section of the manual.
   * --warn-symbols warn about unknown symbols in your Lua config
   * --warn-vars warn about variable definition and usage issues
   * --x2c output ASCII char for given hex (see also --c2x)
+    (0x00:0xFF)
   * --x2s output ASCII string for given byte code (see also --x2c)
   * --trace turn on main loop debug trace
 
@@ -13986,11 +13995,12 @@ these libraries see the Getting Started section of the manual.
   * interval ack.~range: check if TCP ack value is value | min<>max |
     <max | >min { 0: }
   * int active.attempts = 0: number of TCP packets sent per response
-    (with varying sequence numbers) { 0:20 }
+    (with varying sequence numbers) { 0:255 }
   * string active.device: use ip for network layer responses or eth0
     etc for link layer
   * string active.dst_mac: use format 01:23:45:67:89:ab
-  * int active.max_responses = 0: maximum number of responses { 0: }
+  * int active.max_responses = 0: maximum number of responses { 0:255
+    }
   * int active.min_interval = 255: minimum number of seconds between
     responses { 1:255 }
   * multi alert_csv.fields = timestamp pkt_num proto pkt_gen pkt_len
@@ -14006,7 +14016,7 @@ these libraries see the Getting Started section of the manual.
   * bool alert_csv.file = false: output to alert_csv.txt instead of
     stdout
   * int alert_csv.limit = 0: set maximum size in MB before rollover
-    (0 is unlimited) { 0: }
+    (0 is unlimited) { 0:maxSZ }
   * string alert_csv.separator = , : separate fields with this
     character sequence
   * bool alert_ex.upper = false: true/false → convert to upper/lower
@@ -14014,12 +14024,12 @@ these libraries see the Getting Started section of the manual.
   * bool alert_fast.file = false: output to alert_fast.txt instead of
     stdout
   * int alert_fast.limit = 0: set maximum size in MB before rollover
-    (0 is unlimited) { 0: }
+    (0 is unlimited) { 0:maxSZ }
   * bool alert_fast.packet = false: output packet dump with alert
   * bool alert_full.file = false: output to alert_full.txt instead of
     stdout
   * int alert_full.limit = 0: set maximum size in MB before rollover
-    (0 is unlimited) { 0: }
+    (0 is unlimited) { 0:maxSZ }
   * multi alert_json.fields = timestamp pkt_num proto pkt_gen pkt_len
     dir src_ap dst_ap rule action: selected fields will be output in
     given order left to right { action | class | b64_data | dir |
@@ -14033,26 +14043,26 @@ these libraries see the Getting Started section of the manual.
   * bool alert_json.file = false: output to alert_json.txt instead of
     stdout
   * int alert_json.limit = 0: set maximum size in MB before rollover
-    (0 is unlimited) { 0: }
+    (0 is unlimited) { 0:maxSZ }
   * string alert_json.separator = , : separate fields with this
     character sequence
   * bool alerts.alert_with_interface_name = false: include interface
     in alert info (fast, full, or syslog only)
   * bool alerts.default_rule_state = true: enable or disable ips
     rules
-  * int alerts.detection_filter_memcap = 1048576: set available bytes
-    of memory for detection_filters { 0: }
-  * int alerts.event_filter_memcap = 1048576: set available bytes of
-    memory for event_filters { 0: }
+  * int alerts.detection_filter_memcap = 1048576: set available MB of
+    memory for detection_filters { 0:max32 }
+  * int alerts.event_filter_memcap = 1048576: set available MB of
+    memory for event_filters { 0:max32 }
   * string alert_sfsocket.file: name of unix socket file
-  * int alert_sfsocket.rules[].gid = 1: rule generator ID { 1: }
-  * int alert_sfsocket.rules[].sid = 1: rule signature ID { 1: }
+  * int alert_sfsocket.rules[].gid = 1: rule generator ID { 1:max32 }
+  * int alert_sfsocket.rules[].sid = 1: rule signature ID { 1:max32 }
   * bool alerts.log_references = false: include rule references in
     alert info (full only)
   * string alerts.order = pass drop alert log: change the order of
     rule action application
-  * int alerts.rate_filter_memcap = 1048576: set available bytes of
-    memory for rate_filters { 0: }
+  * int alerts.rate_filter_memcap = 1048576: set available MB of
+    memory for rate_filters { 0:max32 }
   * string alerts.reference_net: set the CIDR for homenet (for use
     with -l or -B, does NOT change $HOME_NET in IDS mode)
   * bool alerts.stateful = false: don’t alert w/o established session
@@ -14070,21 +14080,20 @@ these libraries see the Getting Started section of the manual.
   * string appid.app_detector_dir: directory to load appid detectors
     from
   * int appid.app_stats_period = 300: time period for collecting and
-    logging appid statistics { 0: }
+    logging appid statistics { 0:max32 }
   * int appid.app_stats_rollover_size = 20971520: max file size for
-    appid stats before rolling over the log file { 0: }
+    appid stats before rolling over the log file { 0:max32 }
   * int appid.app_stats_rollover_time = 86400: max time period for
-    collection appid stats before rolling over the log file { 0: }
+    collection appid stats before rolling over the log file { 0:max31
+    }
   * bool appid.debug = false: enable appid debug logging
   * bool appid.dump_ports = false: enable dump of appid port
     information
-  * int appid.first_decrypted_packet_debug = 0: the first packet of
-    an already decrypted SSL flow (debug single session only) { 0: }
-  * int appid.instance_id = 0: instance id - ignored { 0: }
+  * int appid.instance_id = 0: instance id - ignored { 0:max32 }
   * bool appid.log_all_sessions = false: enable logging of all appid
     sessions
   * bool appid.log_stats = false: enable logging of appid statistics
-  * int appid.memcap = 0: disregard - not implemented { 0: }
+  * int appid.memcap = 0: disregard - not implemented { 0:maxSZ }
   * string appids.~: comma separated list of application names
   * bool appid.tp_appid_config_dump: print third party configuration
     on startup
@@ -14094,29 +14103,31 @@ these libraries see the Getting Started section of the manual.
     library
   * bool appid.tp_appid_stats_enable: enable collection of stats and
     print stats on exit in third party module
-  * int appid.trace: mask for enabling debug traces in module
+  * int appid.trace: mask for enabling debug traces in module {
+    0:max53 }
   * ip4 arp_spoof.hosts[].ip: host ip address
   * mac arp_spoof.hosts[].mac: host mac address
   * int asn1.absolute_offset: absolute offset from the beginning of
-    the packet { 0: }
+    the packet { 0:65535 }
   * implied asn1.bitstring_overflow: detects invalid bitstring
     encodings that are known to be remotely exploitable
   * implied asn1.double_overflow: detects a double ASCII encoding
     that is larger than a standard buffer
   * int asn1.oversize_length: compares ASN.1 type lengths with the
-    supplied argument { 0: }
+    supplied argument { 0:max32 }
   * implied asn1.print: dump decode data to console; always true
-  * int asn1.relative_offset: relative offset from the cursor
+  * int asn1.relative_offset: relative offset from the cursor {
+    -65535:65535 }
   * int attribute_table.max_hosts = 1024: maximum number of hosts in
-    attribute table { 32:207551 }
+    attribute table { 32:max53 }
   * int attribute_table.max_metadata_services = 8: maximum number of
-    services in rule metadata { 1:256 }
+    services in rule { 1:255 }
   * int attribute_table.max_services_per_host = 8: maximum number of
     services per host entry in attribute table { 1:65535 }
   * int base64_decode.bytes: number of base64 encoded bytes to decode
-    { 1: }
+    { 1:max32 }
   * int base64_decode.offset = 0: bytes past start of buffer to start
-    decoding { 0: }
+    decoding { 0:max32 }
   * implied base64_decode.relative: apply offset to cursor instead of
     start of buffer
   * enum binder[].use.action = inspect: what to do with matching
@@ -14134,10 +14145,10 @@ these libraries see the Getting Started section of the manual.
   * addr_list binder[].when.dst_nets: list of destination networks
   * bit_list binder[].when.dst_ports: list of destination ports {
     65535 }
-  * int binder[].when.dst_zone: destination zone { 0:2147483647 }
+  * int binder[].when.dst_zone: destination zone { 0:max31 }
   * bit_list binder[].when.ifaces: list of interface indices { 255 }
   * int binder[].when.ips_policy_id = 0: unique ID for selection of
-    this config by external logic { 0: }
+    this config by external logic { 0:max32 }
   * addr_list binder[].when.nets: list of networks
   * bit_list binder[].when.ports: list of ports { 65535 }
   * enum binder[].when.proto: protocol { any | ip | icmp | tcp | udp
@@ -14147,7 +14158,7 @@ these libraries see the Getting Started section of the manual.
   * string binder[].when.service: override default configuration
   * addr_list binder[].when.src_nets: list of source networks
   * bit_list binder[].when.src_ports: list of source ports { 65535 }
-  * int binder[].when.src_zone: source zone { 0:2147483647 }
+  * int binder[].when.src_zone: source zone { 0:max31 }
   * bit_list binder[].when.vlans: list of VLAN IDs { 4095 }
   * interval bufferlen.~range: check that length of current buffer is
     in given range { 0:65535 }
@@ -14236,7 +14247,7 @@ these libraries see the Getting Started section of the manual.
   * string classifications[].name: name used with classtype rule
     option
   * int classifications[].priority = 1: default priority for class {
-    0: }
+    0:max32 }
   * string classifications[].text: description of class
   * string classtype.~: classification for this rule
   * string content.~data: data to match
@@ -14245,9 +14256,10 @@ these libraries see the Getting Started section of the manual.
   * string content.distance: var or number of bytes from cursor to
     start search
   * int content.fast_pattern_length: maximum number of characters
-    from this content the fast pattern matcher should use { 1: }
+    from this content the fast pattern matcher should use { 1:65535 }
   * int content.fast_pattern_offset = 0: number of leading characters
-    of this content the fast pattern matcher should exclude { 0: }
+    of this content the fast pattern matcher should exclude { 0:65535
+    }
   * implied content.fast_pattern: use this content in the fast
     pattern matcher instead of the content selected by default
   * implied content.nocase: case insensitive match
@@ -14257,7 +14269,7 @@ these libraries see the Getting Started section of the manual.
     from cursor
   * implied cvs.invalid-entry: looks for an invalid Entry string
   * string daq.input_spec: input specification
-  * int daq.instances[].id: instance ID (required) { 0: }
+  * int daq.instances[].id: instance ID (required) { 0:max32 }
   * string daq.instances[].input_spec: input specification
   * string daq.instances[].variables[].str: string parameter
   * string daq.module: DAQ module to use
@@ -14270,68 +14282,72 @@ these libraries see the Getting Started section of the manual.
     event to log { http_request_header_event |
     http_response_header_event }
   * int data_log.limit = 0: set maximum size in MB before rollover (0
-    is unlimited) { 0: }
+    is unlimited) { 0:max32 }
   * implied dce_iface.any_frag: match on any fragment
   * string dce_iface.uuid: match given dcerpc uuid
   * interval dce_iface.version: interface version { 0: }
   * string dce_opnum.~: match given dcerpc operation number, range or
     list
-  * bool dce_smb.disable_defrag = false: Disable DCE/RPC
+  * bool dce_smb.disable_defrag = false: disable DCE/RPC
     defragmentation
-  * int dce_smb.max_frag_len = 65535: Maximum fragment size for
+  * int dce_smb.max_frag_len = 65535: maximum fragment size for
     defragmentation { 1514:65535 }
-  * enum dce_smb.policy = WinXP: Target based policy to use { Win2000
+  * enum dce_smb.policy = WinXP: target based policy to use { Win2000
     | WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba |
     Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
-  * int dce_smb.reassemble_threshold = 0: Minimum bytes received
+  * int dce_smb.reassemble_threshold = 0: minimum bytes received
     before performing reassembly { 0:65535 }
   * int dce_smb.smb_file_depth = 16384: SMB file depth for file data
-    { -1: }
+    { -1:32767 }
   * enum dce_smb.smb_file_inspection = off: SMB file inspection { off
     | on | only }
-  * enum dce_smb.smb_fingerprint_policy = none: Target based SMB
+  * enum dce_smb.smb_fingerprint_policy = none: target based SMB
     policy to use { none | client | server | both }
   * string dce_smb.smb_invalid_shares: SMB shares to alert on
   * bool dce_smb.smb_legacy_mode = false: inspect only SMBv1
   * int dce_smb.smb_max_chain = 3: SMB max chain size { 0:255 }
   * int dce_smb.smb_max_compound = 3: SMB max compound size { 0:255 }
-  * int dce_smb.trace: mask for enabling debug traces in module
-  * multi dce_smb.valid_smb_versions = all: Valid SMB versions { v1 |
+  * int dce_smb.trace: mask for enabling debug traces in module {
+    0:max53 }
+  * multi dce_smb.valid_smb_versions = all: valid SMB versions { v1 |
     v2 | all }
-  * bool dce_tcp.disable_defrag = false: Disable DCE/RPC
+  * bool dce_tcp.disable_defrag = false: disable DCE/RPC
     defragmentation
-  * int dce_tcp.max_frag_len = 65535: Maximum fragment size for
+  * int dce_tcp.max_frag_len = 65535: maximum fragment size for
     defragmentation { 1514:65535 }
-  * enum dce_tcp.policy = WinXP: Target based policy to use { Win2000
+  * enum dce_tcp.policy = WinXP: target based policy to use { Win2000
     | WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba |
     Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
-  * int dce_tcp.reassemble_threshold = 0: Minimum bytes received
+  * int dce_tcp.reassemble_threshold = 0: minimum bytes received
     before performing reassembly { 0:65535 }
-  * bool dce_udp.disable_defrag = false: Disable DCE/RPC
+  * bool dce_udp.disable_defrag = false: disable DCE/RPC
     defragmentation
-  * int dce_udp.max_frag_len = 65535: Maximum fragment size for
+  * int dce_udp.max_frag_len = 65535: maximum fragment size for
     defragmentation { 1514:65535 }
-  * int dce_udp.trace: mask for enabling debug traces in module
-  * int decode.trace: mask for enabling debug traces in module
-  * int detection.asn1 = 256: maximum decode nodes { 1: }
+  * int dce_udp.trace: mask for enabling debug traces in module {
+    0:max53 }
+  * int decode.trace: mask for enabling debug traces in module {
+    0:max53 }
+  * int detection.asn1 = 0: maximum decode nodes { 0:65535 }
   * bool detection.enable_address_anomaly_checks = false: enable
     check and alerting of address anomalies
   * int detection_filter.count: hits in interval before allowing the
-    rule to fire { 1: }
+    rule to fire { 1:max32 }
   * int detection_filter.seconds: length of interval to count hits {
-    1: }
+    1:max32 }
   * enum detection_filter.track: track hits by source or destination
     IP address { by_src | by_dst }
   * int detection.offload_limit = 99999: minimum sizeof PDU to
-    offload fast pattern search (defaults to disabled) { 0: }
+    offload fast pattern search (defaults to disabled) { 0:max32 }
   * int detection.offload_threads = 0: maximum number of simultaneous
-    offloads (defaults to disabled) { 0: }
+    offloads (defaults to disabled) { 0:max32 }
   * bool detection.pcre_enable = true: disable pcre pattern matching
-  * int detection.pcre_match_limit = 1500: limit pcre backtracking,
-    -1 = max, 0 = off { -1:1000000 }
+  * int detection.pcre_match_limit = 1500: limit pcre backtracking, 0
+    = off { 0:max32 }
   * int detection.pcre_match_limit_recursion = 1500: limit pcre stack
-    consumption, -1 = max, 0 = off { -1:10000 }
-  * int detection.trace: mask for enabling debug traces in module
+    consumption, 0 = off { 0:max32 }
+  * int detection.trace: mask for enabling debug traces in module {
+    0:max53 }
   * bool dnp3.check_crc = false: validate checksums in DNP3 link
     layer frames
   * string dnp3_func.~: match DNP3 function code or name
@@ -14351,18 +14367,19 @@ these libraries see the Getting Started section of the manual.
   * bool esp.decode_esp = false: enable for inspection of esp traffic
     that has authentication but not encryption
   * int event_filter[].count = 0: number of events in interval before
-    tripping; -1 to disable { -1: }
-  * int event_filter[].gid = 1: rule generator ID { 0: }
+    tripping; -1 to disable { -1:max31 }
+  * int event_filter[].gid = 1: rule generator ID { 0:max32 }
   * string event_filter[].ip: restrict filter to these addresses
     according to track
-  * int event_filter[].seconds = 0: count interval { 0: }
-  * int event_filter[].sid = 1: rule signature ID { 0: }
+  * int event_filter[].seconds = 0: count interval { 0:max32 }
+  * int event_filter[].sid = 1: rule signature ID { 0:max32 }
   * enum event_filter[].track: filter only matching source or
     destination addresses { by_src | by_dst }
   * enum event_filter[].type: 1st count events | every count events |
     once after count events { limit | threshold | both }
-  * int event_queue.log = 3: maximum events to log { 1: }
-  * int event_queue.max_queue = 8: maximum events to queue { 1: }
+  * int event_queue.log = 3: maximum events to log { 1:max32 }
+  * int event_queue.max_queue = 8: maximum events to queue { 1:max32
+    }
   * enum event_queue.order_events = content_length: criteria for
     ordering incoming events { priority|content_length }
   * bool event_queue.process_all_events = false: process just first
@@ -14373,17 +14390,17 @@ these libraries see the Getting Started section of the manual.
   * enum file_connector.format: file format { binary | text }
   * string file_connector.name: channel name
   * int file_id.block_timeout = 86400: stop blocking after this many
-    seconds { 0: }
+    seconds { 0:max31 }
   * bool file_id.block_timeout_lookup = false: block if lookup times
     out
   * int file_id.capture_block_size = 32768: file capture block size
-    in bytes { 8: }
+    in bytes { 8:max53 }
   * int file_id.capture_max_size = 1048576: stop file capture beyond
-    this point { 0: }
+    this point { 0:max53 }
   * int file_id.capture_memcap = 100: memcap for file capture in
-    megabytes { 0: }
+    megabytes { 0:max53 }
   * int file_id.capture_min_size = 0: stop file capture if file size
-    less than this { 0: }
+    less than this { 0:max53 }
   * bool file_id.enable_capture = false: enable file capture
   * bool file_id.enable_signature = true: enable signature
     calculation
@@ -14397,34 +14414,36 @@ these libraries see the Getting Started section of the manual.
   * enum file_id.file_policy[].use.verdict = unknown: what to do with
     matching traffic { unknown | log | stop | block | reset }
   * int file_id.file_policy[].when.file_type_id = 0: unique ID for
-    file type in file magic rule { 0: }
+    file type in file magic rule { 0:max32 }
   * string file_id.file_policy[].when.sha256: SHA 256
   * string file_id.file_rules[].category: file type category
   * string file_id.file_rules[].group: comma separated list of groups
     associated with file type
-  * int file_id.file_rules[].id = 0: file type id { 0: }
+  * int file_id.file_rules[].id = 0: file type id { 0:max32 }
   * string file_id.file_rules[].magic[].content: file magic content
   * int file_id.file_rules[].magic[].offset = 0: file magic offset {
-    0: }
+    0:max32 }
   * string file_id.file_rules[].msg: information about the file type
-  * int file_id.file_rules[].rev = 0: rule revision { 0: }
+  * int file_id.file_rules[].rev = 0: rule revision { 0:max32 }
   * string file_id.file_rules[].type: file type name
   * string file_id.file_rules[].version: file type version
   * int file_id.lookup_timeout = 2: give up on lookup after this many
-    seconds { 0: }
+    seconds { 0:max31 }
   * int file_id.max_files_cached = 65536: maximal number of files
-    cached in memory { 8: }
-  * int file_id.show_data_depth = 100: print this many octets { 0: }
+    cached in memory { 8:max53 }
+  * int file_id.show_data_depth = 100: print this many octets {
+    0:max53 }
   * int file_id.signature_depth = 10485760: stop signature at this
-    point { 0: }
+    point { 0:max53 }
   * bool file_id.trace_signature = false: enable runtime dump of
     signature info
   * bool file_id.trace_stream = false: enable runtime dump of file
     data
   * bool file_id.trace_type = false: enable runtime dump of type info
-  * int file_id.type_depth = 1460: stop type ID at this point { 0: }
+  * int file_id.type_depth = 1460: stop type ID at this point {
+    0:max53 }
   * int file_id.verdict_delay = 0: number of queries to return final
-    verdict { 0: }
+    verdict { 0:max53 }
   * bool file_log.log_pkt_time = true: log the packet time when event
     generated
   * bool file_log.log_sys_time = false: log the system time when
@@ -14454,12 +14473,12 @@ these libraries see the Getting Started section of the manual.
   * addr ftp_client.bounce_to[].address = 1.0.0.0/32: allowed IP
     address in CIDR format
   * port ftp_client.bounce_to[].last_port: optional allowed range
-    from port to last_port inclusive { 0: }
-  * port ftp_client.bounce_to[].port = 20: allowed port { 1: }
+    from port to last_port inclusive
+  * port ftp_client.bounce_to[].port = 20: allowed port
   * bool ftp_client.ignore_telnet_erase_cmds = false: ignore erase
     character and erase line commands when normalizing
-  * int ftp_client.max_resp_len = -1: maximum FTP response accepted
-    by client { -1: }
+  * int ftp_client.max_resp_len = 4294967295: maximum FTP response
+    accepted by client { 0:max32 }
   * bool ftp_client.telnet_cmds = false: detect Telnet escape
     sequences on FTP control channel
   * bool ftp_server.check_encrypted = false: check for end of
@@ -14469,7 +14488,7 @@ these libraries see the Getting Started section of the manual.
   * string ftp_server.cmd_validity[].command: command string
   * string ftp_server.cmd_validity[].format: format specification
   * int ftp_server.cmd_validity[].length = 0: specify non-default
-    maximum for command { 0: }
+    maximum for command { 0:max32 }
   * string ftp_server.data_chan_cmds: check the formatting of the
     given commands
   * string ftp_server.data_rest_cmds: check the formatting of the
@@ -14477,10 +14496,10 @@ these libraries see the Getting Started section of the manual.
   * string ftp_server.data_xfer_cmds: check the formatting of the
     given commands
   * int ftp_server.def_max_param_len = 100: default maximum length of
-    commands handled by server; 0 is unlimited { 1: }
+    commands handled by server; 0 is unlimited { 1:max32 }
   * string ftp_server.directory_cmds[].dir_cmd: directory command
   * int ftp_server.directory_cmds[].rsp_code = 200: expected
-    successful response code for command { 200: }
+    successful response code for command { 200:max32 }
   * string ftp_server.encr_cmds: check the formatting of the given
     commands
   * bool ftp_server.encrypted_traffic = false: check for encrypted
@@ -14501,7 +14520,7 @@ these libraries see the Getting Started section of the manual.
     on start up
   * bool ftp_server.telnet_cmds = false: detect Telnet escape
     sequences of FTP control channel
-  * int gid.~: generator id { 1: }
+  * int gid.~: generator id { 1:max32 }
   * string gtp_info.~: info element to match
   * int gtp_inspect[].infos[].length = 0: information element type
     code { 0:255 }
@@ -14511,7 +14530,8 @@ these libraries see the Getting Started section of the manual.
   * string gtp_inspect[].messages[].name: message name
   * int gtp_inspect[].messages[].type = 0: message type code { 0:255
     }
-  * int gtp_inspect.trace: mask for enabling debug traces in module
+  * int gtp_inspect.trace: mask for enabling debug traces in module {
+    0:max53 }
   * int gtp_inspect[].version = 2: GTP version { 0:2 }
   * string gtp_type.~: list of types to match
   * int gtp_version.~: version to match { 0:2 }
@@ -14524,7 +14544,7 @@ these libraries see the Getting Started section of the manual.
     HA updates { 0.0:100.0 }
   * bit_list high_availability.ports: side channel message port list
     { 65535 }
-  * int host_cache[].size: size of host cache
+  * int host_cache[].size: size of host cache { 1:max32 }
   * enum hosts[].frag_policy: defragmentation policy { first | linux
     | bsd | bsd_right | last | windows | solaris }
   * addr hosts[].ip = 0.0.0.0/32: hosts address / CIDR
@@ -14591,23 +14611,12 @@ these libraries see the Getting Started section of the manual.
     encodings
   * bool http_inspect.plus_to_space = true: replace + with <sp> when
     normalizing URIs
-  * int http_inspect.print_amount = 1200: number of characters to
-    print from a Field { 1:1000000 }
-  * bool http_inspect.print_hex = false: nonprinting characters
-    printed in [HH] format instead of using an asterisk
   * int http_inspect.request_depth = -1: maximum request message body
-    bytes to examine (-1 no limit) { -1: }
+    bytes to examine (-1 no limit) { -1:max53 }
   * int http_inspect.response_depth = -1: maximum response message
-    body bytes to examine (-1 no limit) { -1: }
-  * bool http_inspect.show_pegs = true: display peg counts with test
-    output
-  * bool http_inspect.show_scan = false: display scanned segments
+    body bytes to examine (-1 no limit) { -1:max53 }
   * bool http_inspect.simplify_path = true: reduce URI directory path
     to simplest form
-  * bool http_inspect.test_input = false: read HTTP messages from
-    text file
-  * bool http_inspect.test_output = false: print out HTTP section
-    data
   * bool http_inspect.unzip = true: decompress gzip and deflate
     message bodies
   * bool http_inspect.utf8_bare_byte = false: when doing UTF-8
@@ -14737,29 +14746,31 @@ these libraries see the Getting Started section of the manual.
   * bool latency.packet.fastpath = false: fastpath expensive packets
     (max_time exceeded)
   * int latency.packet.max_time = 500: set timeout for packet latency
-    thresholding (usec) { 0: }
+    thresholding (usec) { 0:max53 }
   * enum latency.rule.action = none: event action for rule latency
     enable and suspend events { none | alert | log | alert_and_log }
   * int latency.rule.max_suspend_time = 30000: set max time for
-    suspending a rule (ms, 0 means permanently disable rule) { 0: }
+    suspending a rule (ms, 0 means permanently disable rule) {
+    0:max32 }
   * int latency.rule.max_time = 500: set timeout for rule evaluation
-    (usec) { 0: }
+    (usec) { 0:max53 }
   * bool latency.rule.suspend = false: temporarily suspend expensive
     rules
   * int latency.rule.suspend_threshold = 5: set threshold for number
-    of timeouts before suspending a rule { 1: }
+    of timeouts before suspending a rule { 1:max32 }
   * bool log_codecs.file = false: output to log_codecs.txt instead of
     stdout
   * bool log_codecs.msg = false: include alert msg
   * bool log_hext.file = false: output to log_hext.txt instead of
     stdout
   * int log_hext.limit = 0: set maximum size in MB before rollover (0
-    is unlimited) { 0: }
+    is unlimited) { 0:maxSZ }
   * bool log_hext.raw = false: output all full packets if true, else
     just TCP payload
-  * int log_hext.width = 20: set line width (0 is unlimited) { 0: }
+  * int log_hext.width = 20: set line width (0 is unlimited) {
+    0:max32 }
   * int log_pcap.limit = 0: set maximum size in MB before rollover (0
-    is unlimited) { 0: }
+    is unlimited) { 0:maxSZ }
   * string md5.~hash: data to match
   * int md5.length: number of octets in plain text { 1:65535 }
   * string md5.offset: var or number of bytes from start of buffer to
@@ -14767,11 +14778,11 @@ these libraries see the Getting Started section of the manual.
   * implied md5.relative = false: offset from cursor instead of start
     of buffer
   * int memory.cap = 0: set the per-packet-thread cap on memory
-    (bytes, 0 to disable) { 0: }
+    (bytes, 0 to disable) { 0:maxSZ }
   * bool memory.soft = false: always succeed in allocating memory,
     even if above the cap
   * int memory.threshold = 0: set the per-packet-thread threshold for
-    preemptive cleanup actions (percent, 0 to disable) { 0: }
+    preemptive cleanup actions (percent, 0 to disable) { 0:100 }
   * string metadata.*: comma-separated list of arbitrary name value
     pairs
   * string modbus_func.~: function code to match
@@ -14781,7 +14792,8 @@ these libraries see the Getting Started section of the manual.
   * bool mpls.enable_mpls_overlapping_ip = false: enable if private
     network addresses overlap and must be differentiated by MPLS
     label(s)
-  * int mpls.max_mpls_stack_depth = -1: set MPLS stack depth { -1: }
+  * int mpls.max_mpls_stack_depth = -1: set MPLS stack depth { -1:255
+    }
   * enum mpls.mpls_payload_type = ip4: set encapsulated payload type
     { eth | ip4 | ip6 }
   * string msg.~: message describing rule
@@ -14867,9 +14879,9 @@ these libraries see the Getting Started section of the manual.
   * bool output.show_year = false: include year in timestamp in the
     alert and log files (same as -y)
   * int output.tagged_packet_limit = 256: maximum number of packets
-    tagged for non-packet metrics { 0: }
+    tagged for non-packet metrics { 0:max32 }
   * bool output.verbose = false: be verbose (same as -v)
-  * bool output.wide_hex_dump = true: output 20 bytes per lines
+  * bool output.wide_hex_dump = false: output 20 bytes per lines
     instead of 16 when dumping buffers
   * bool packet_capture.enable = false: initially enable packet
     dumping
@@ -14879,9 +14891,9 @@ these libraries see the Getting Started section of the manual.
   * string packets.bpf_file: file with BPF to select traffic for
     Snort
   * int packets.limit = 0: maximum number of packets to process
-    before stopping (0 is unlimited) { 0: }
+    before stopping (0 is unlimited) { 0:max53 }
   * int packets.skip = 0: number of packets to skip before before
-    processing { 0: }
+    processing { 0:max53 }
   * bool packets.vlan_agnostic = false: determines whether VLAN info
     is used to track fragments and connections
   * bool packet_tracer.enable = false: enable summary output of state
@@ -14889,27 +14901,27 @@ these libraries see the Getting Started section of the manual.
   * enum packet_tracer.output = console: select where to send packet
     trace { console | file }
   * string pcre.~re: Snort regular expression
-  * bool perf_monitor.base = true: enable base statistics { nullptr }
-  * bool perf_monitor.cpu = false: enable cpu statistics { nullptr }
+  * bool perf_monitor.base = true: enable base statistics
+  * bool perf_monitor.cpu = false: enable cpu statistics
   * bool perf_monitor.flow = false: enable traffic statistics
   * bool perf_monitor.flow_ip = false: enable statistics on host
     pairs
   * int perf_monitor.flow_ip_memcap = 52428800: maximum memory in
-    bytes for flow tracking { 8200: }
+    bytes for flow tracking { 8200:maxSZ }
   * int perf_monitor.flow_ports = 1023: maximum ports to track {
     0:65535 }
   * enum perf_monitor.format = csv: output format for stats { csv |
     text | json | flatbuffers }
   * int perf_monitor.max_file_size = 1073741824: files will be rolled
-    over if they exceed this size { 4096: }
+    over if they exceed this size { 4096:max53 }
   * string perf_monitor.modules[].name: name of the module
   * string perf_monitor.modules[].pegs: list of statistics to track
     or empty for all counters
   * enum perf_monitor.output = file: output location for stats { file
     | console }
-  * int perf_monitor.packets = 10000: minimum packets to report { 0:
-    }
-  * int perf_monitor.seconds = 60: report interval { 1: }
+  * int perf_monitor.packets = 10000: minimum packets to report {
+    0:max32 }
+  * int perf_monitor.seconds = 60: report interval { 1:max32 }
   * bool perf_monitor.summary = false: output summary at shutdown
   * interval pkt_num.~range: check if packet number is in given range
     { 1: }
@@ -14924,14 +14936,14 @@ these libraries see the Getting Started section of the manual.
   * bool port_scan.alert_all = false: alert on all events over
     threshold within window if true; else alert on first only
   * int port_scan.icmp_sweep.nets = 25: number of times address
-    changed from prior attempt { 0: }
+    changed from prior attempt { 0:65535 }
   * int port_scan.icmp_sweep.ports = 25: number of times port (or
-    proto) changed from prior attempt { 0: }
+    proto) changed from prior attempt { 0:65535 }
   * int port_scan.icmp_sweep.rejects = 15: scan attempts with
-    negative response { 0: }
-  * int port_scan.icmp_sweep.scans = 100: scan attempts { 0: }
+    negative response { 0:65535 }
+  * int port_scan.icmp_sweep.scans = 100: scan attempts { 0:65535 }
   * int port_scan.icmp_window = 0: detection interval for all ICMP
-    scans { 0: }
+    scans { 0:max32 }
   * string port_scan.ignore_scanned: list of CIDRs with optional
     ports to ignore if the destination of scan alerts
   * string port_scan.ignore_scanners: list of CIDRs with optional
@@ -14939,106 +14951,106 @@ these libraries see the Getting Started section of the manual.
   * bool port_scan.include_midstream = false: list of CIDRs with
     optional ports
   * int port_scan.ip_decoy.nets = 25: number of times address changed
-    from prior attempt { 0: }
+    from prior attempt { 0:65535 }
   * int port_scan.ip_decoy.ports = 25: number of times port (or
-    proto) changed from prior attempt { 0: }
+    proto) changed from prior attempt { 0:65535 }
   * int port_scan.ip_decoy.rejects = 15: scan attempts with negative
-    response { 0: }
-  * int port_scan.ip_decoy.scans = 100: scan attempts { 0: }
+    response { 0:65535 }
+  * int port_scan.ip_decoy.scans = 100: scan attempts { 0:65535 }
   * int port_scan.ip_dist.nets = 25: number of times address changed
-    from prior attempt { 0: }
+    from prior attempt { 0:65535 }
   * int port_scan.ip_dist.ports = 25: number of times port (or proto)
-    changed from prior attempt { 0: }
+    changed from prior attempt { 0:65535 }
   * int port_scan.ip_dist.rejects = 15: scan attempts with negative
-    response { 0: }
-  * int port_scan.ip_dist.scans = 100: scan attempts { 0: }
+    response { 0:65535 }
+  * int port_scan.ip_dist.scans = 100: scan attempts { 0:65535 }
   * int port_scan.ip_proto.nets = 25: number of times address changed
-    from prior attempt { 0: }
+    from prior attempt { 0:65535 }
   * int port_scan.ip_proto.ports = 25: number of times port (or
-    proto) changed from prior attempt { 0: }
+    proto) changed from prior attempt { 0:65535 }
   * int port_scan.ip_proto.rejects = 15: scan attempts with negative
-    response { 0: }
-  * int port_scan.ip_proto.scans = 100: scan attempts { 0: }
+    response { 0:65535 }
+  * int port_scan.ip_proto.scans = 100: scan attempts { 0:65535 }
   * int port_scan.ip_sweep.nets = 25: number of times address changed
-    from prior attempt { 0: }
+    from prior attempt { 0:65535 }
   * int port_scan.ip_sweep.ports = 25: number of times port (or
-    proto) changed from prior attempt { 0: }
+    proto) changed from prior attempt { 0:65535 }
   * int port_scan.ip_sweep.rejects = 15: scan attempts with negative
-    response { 0: }
-  * int port_scan.ip_sweep.scans = 100: scan attempts { 0: }
+    response { 0:65535 }
+  * int port_scan.ip_sweep.scans = 100: scan attempts { 0:65535 }
   * int port_scan.ip_window = 0: detection interval for all IP scans
-    { 0: }
+    { 0:max32 }
   * int port_scan.memcap = 1048576: maximum tracker memory in bytes {
-    1: }
+    1:maxSZ }
   * multi port_scan.protos = all: choose the protocols to monitor {
     tcp | udp | icmp | ip | all }
   * multi port_scan.scan_types = all: choose type of scans to look
     for { portscan | portsweep | decoy_portscan |
     distributed_portscan | all }
   * int port_scan.tcp_decoy.nets = 25: number of times address
-    changed from prior attempt { 0: }
+    changed from prior attempt { 0:65535 }
   * int port_scan.tcp_decoy.ports = 25: number of times port (or
-    proto) changed from prior attempt { 0: }
+    proto) changed from prior attempt { 0:65535 }
   * int port_scan.tcp_decoy.rejects = 15: scan attempts with negative
-    response { 0: }
-  * int port_scan.tcp_decoy.scans = 100: scan attempts { 0: }
+    response { 0:65535 }
+  * int port_scan.tcp_decoy.scans = 100: scan attempts { 0:65535 }
   * int port_scan.tcp_dist.nets = 25: number of times address changed
-    from prior attempt { 0: }
+    from prior attempt { 0:65535 }
   * int port_scan.tcp_dist.ports = 25: number of times port (or
-    proto) changed from prior attempt { 0: }
+    proto) changed from prior attempt { 0:65535 }
   * int port_scan.tcp_dist.rejects = 15: scan attempts with negative
-    response { 0: }
-  * int port_scan.tcp_dist.scans = 100: scan attempts { 0: }
+    response { 0:65535 }
+  * int port_scan.tcp_dist.scans = 100: scan attempts { 0:65535 }
   * int port_scan.tcp_ports.nets = 25: number of times address
-    changed from prior attempt { 0: }
+    changed from prior attempt { 0:65535 }
   * int port_scan.tcp_ports.ports = 25: number of times port (or
-    proto) changed from prior attempt { 0: }
+    proto) changed from prior attempt { 0:65535 }
   * int port_scan.tcp_ports.rejects = 15: scan attempts with negative
-    response { 0: }
-  * int port_scan.tcp_ports.scans = 100: scan attempts { 0: }
+    response { 0:65535 }
+  * int port_scan.tcp_ports.scans = 100: scan attempts { 0:65535 }
   * int port_scan.tcp_sweep.nets = 25: number of times address
-    changed from prior attempt { 0: }
+    changed from prior attempt { 0:65535 }
   * int port_scan.tcp_sweep.ports = 25: number of times port (or
-    proto) changed from prior attempt { 0: }
+    proto) changed from prior attempt { 0:65535 }
   * int port_scan.tcp_sweep.rejects = 15: scan attempts with negative
-    response { 0: }
-  * int port_scan.tcp_sweep.scans = 100: scan attempts { 0: }
+    response { 0:65535 }
+  * int port_scan.tcp_sweep.scans = 100: scan attempts { 0:65535 }
   * int port_scan.tcp_window = 0: detection interval for all TCP
-    scans { 0: }
+    scans { 0:max32 }
   * int port_scan.udp_decoy.nets = 25: number of times address
-    changed from prior attempt { 0: }
+    changed from prior attempt { 0:65535 }
   * int port_scan.udp_decoy.ports = 25: number of times port (or
-    proto) changed from prior attempt { 0: }
+    proto) changed from prior attempt { 0:65535 }
   * int port_scan.udp_decoy.rejects = 15: scan attempts with negative
-    response { 0: }
-  * int port_scan.udp_decoy.scans = 100: scan attempts { 0: }
+    response { 0:65535 }
+  * int port_scan.udp_decoy.scans = 100: scan attempts { 0:65535 }
   * int port_scan.udp_dist.nets = 25: number of times address changed
-    from prior attempt { 0: }
+    from prior attempt { 0:65535 }
   * int port_scan.udp_dist.ports = 25: number of times port (or
-    proto) changed from prior attempt { 0: }
+    proto) changed from prior attempt { 0:65535 }
   * int port_scan.udp_dist.rejects = 15: scan attempts with negative
-    response { 0: }
-  * int port_scan.udp_dist.scans = 100: scan attempts { 0: }
+    response { 0:65535 }
+  * int port_scan.udp_dist.scans = 100: scan attempts { 0:65535 }
   * int port_scan.udp_ports.nets = 25: number of times address
-    changed from prior attempt { 0: }
+    changed from prior attempt { 0:65535 }
   * int port_scan.udp_ports.ports = 25: number of times port (or
-    proto) changed from prior attempt { 0: }
+    proto) changed from prior attempt { 0:65535 }
   * int port_scan.udp_ports.rejects = 15: scan attempts with negative
-    response { 0: }
-  * int port_scan.udp_ports.scans = 100: scan attempts { 0: }
+    response { 0:65535 }
+  * int port_scan.udp_ports.scans = 100: scan attempts { 0:65535 }
   * int port_scan.udp_sweep.nets = 25: number of times address
-    changed from prior attempt { 0: }
+    changed from prior attempt { 0:65535 }
   * int port_scan.udp_sweep.ports = 25: number of times port (or
-    proto) changed from prior attempt { 0: }
+    proto) changed from prior attempt { 0:65535 }
   * int port_scan.udp_sweep.rejects = 15: scan attempts with negative
-    response { 0: }
-  * int port_scan.udp_sweep.scans = 100: scan attempts { 0: }
+    response { 0:65535 }
+  * int port_scan.udp_sweep.scans = 100: scan attempts { 0:65535 }
   * int port_scan.udp_window = 0: detection interval for all UDP
-    scans { 0: }
+    scans { 0:max32 }
   * string port_scan.watch_ip: list of CIDRs with optional ports to
     watch
   * int priority.~: relative severity level; 1 is highest priority {
-    1: }
+    1:max31 }
   * string process.chroot: set chroot directory (same as -t)
   * bool process.daemon = false: fork as a daemon (same as -D)
   * bool process.dirty_pig = false: shutdown without internal cleanup
@@ -15047,27 +15059,27 @@ these libraries see the Getting Started section of the manual.
   * string process.threads[].cpuset: pin the associated thread to
     this cpuset
   * int process.threads[].thread = 0: set cpu affinity for the
-    <cur_thread_num> thread that runs { 0: }
-  * string process.umask: set process umask (same as -m)
+    <cur_thread_num> thread that runs { 0:65535 }
+  * int process.umask: set process umask (same as -m) { 0x000:0x1FF }
   * bool process.utc = false: use UTC instead of local time for
     timestamps
   * int profiler.memory.count = 0: limit results to count items per
-    level (0 = no limit) { 0: }
+    level (0 = no limit) { 0:max32 }
   * int profiler.memory.max_depth = -1: limit depth to max_depth (-1
-    = no limit) { -1: }
+    = no limit) { -1:255 }
   * bool profiler.memory.show = true: show module memory profile
     stats
   * enum profiler.memory.sort = total_used: sort by given field {
     none | allocations | total_used | avg_allocation }
   * int profiler.modules.count = 0: limit results to count items per
-    level (0 = no limit) { 0: }
+    level (0 = no limit) { 0:max32 }
   * int profiler.modules.max_depth = -1: limit depth to max_depth (-1
-    = no limit) { -1: }
+    = no limit) { -1:255 }
   * bool profiler.modules.show = true: show module time profile stats
   * enum profiler.modules.sort = total_time: sort by given field {
     none | checks | avg_check | total_time }
   * int profiler.rules.count = 0: print results to given level (0 =
-    all) { 0: }
+    all) { 0:max32 }
   * bool profiler.rules.show = true: show rule time profile stats
   * enum profiler.rules.sort = total_time: sort by given field { none
     | checks | avg_check | total_time | matches | no_matches |
@@ -15075,13 +15087,13 @@ these libraries see the Getting Started section of the manual.
   * string rate_filter[].apply_to: restrict filter to these addresses
     according to track
   * int rate_filter[].count = 1: number of events in interval before
-    tripping { 0: }
-  * int rate_filter[].gid = 1: rule generator ID { 0: }
+    tripping { 0:max32 }
+  * int rate_filter[].gid = 1: rule generator ID { 0:max32 }
   * enum rate_filter[].new_action = alert: take this action on future
     hits until timeout { log | pass | alert | drop | block | reset }
-  * int rate_filter[].seconds = 1: count interval { 0: }
-  * int rate_filter[].sid = 1: rule signature ID { 0: }
-  * int rate_filter[].timeout = 1: count interval { 0: }
+  * int rate_filter[].seconds = 1: count interval { 0:max32 }
+  * int rate_filter[].sid = 1: rule signature ID { 0:max32 }
+  * int rate_filter[].timeout = 1: count interval { 0:max32 }
   * enum rate_filter[].track = by_src: filter only matching source or
     destination addresses { by_src | by_dst | by_rule }
   * bool react.msg = false: use rule msg in response page instead of
@@ -15104,7 +15116,7 @@ these libraries see the Getting Started section of the manual.
   * bool reg_test.test_daq_retry = true: test daq packet retry
     feature
   * enum reject.control: send ICMP unreachable(s) { network|host|port
-    |all }
+    |forward|all }
   * enum reject.reset: send TCP reset to one or both ends { source|
     dest|both }
   * string rem.~: comment
@@ -15123,20 +15135,21 @@ these libraries see the Getting Started section of the manual.
   * string reputation.whitelist: whitelist file name with IP lists
   * enum reputation.white = unblack: specify the meaning of whitelist
     { unblack|trust }
-  * int rev.~: revision { 1: }
+  * int rev.~: revision { 1:max32 }
   * bool rewrite.disable_replace = false: disable replace of packet
     contents with rewrite rules
-  * int rpc.~app: application number
+  * int rpc.~app: application number { 0:max32 }
   * string rpc.~proc: procedure number or * for any
   * string rpc.~ver: version number or * for any
   * bool rule_state[].enable = true: enable or disable rule in all
     policies
-  * int rule_state[].gid = 0: rule generator ID { 0: }
-  * int rule_state[].sid = 0: rule signature ID { 0: }
+  * int rule_state[].gid = 0: rule generator ID { 0:max32 }
+  * int rule_state[].sid = 0: rule signature ID { 0:max32 }
   * string sd_pattern.~pattern: The pattern to search for
-  * int sd_pattern.threshold: number of matches before alerting { 1 }
+  * int sd_pattern.threshold = 1: number of matches before alerting {
+    1:max32 }
   * int search_engine.bleedover_port_limit = 1024: maximum ports in
-    rule before demotion to any-any port group { 1: }
+    rule before demotion to any-any port group { 1:max32 }
   * bool search_engine.bleedover_warnings_enabled = false: print
     warning if a rule is demoted to any-any port group
   * bool search_engine.debug = false: print verbose fast pattern info
@@ -15153,7 +15166,7 @@ these libraries see the Getting Started section of the manual.
   * bool search_engine.enable_single_rule_group = false: put all
     rules into one group
   * int search_engine.max_pattern_len = 0: truncate patterns when
-    compiling into state machine (0 means no maximum) { 0: }
+    compiling into state machine (0 means no maximum) { 0:max32 }
   * int search_engine.max_queue_events = 5: maximum number of
     matching fast pattern states to queue per packet { 2:100 }
   * dynamic search_engine.search_method = ac_bnfa: set fast pattern
@@ -15186,7 +15199,7 @@ these libraries see the Getting Started section of the manual.
   * string side_channel.connectors[].connector: connector handle
   * bit_list side_channel.ports: side channel message port list {
     65535 }
-  * int sid.~: signature id { 1: }
+  * int sid.~: signature id { 1:max32 }
   * bool sip.ignore_call_channel = false: enables the support for
     ignoring audio/video data channel
   * int sip.max_call_id_len = 256: maximum call id field size {
@@ -15196,7 +15209,7 @@ these libraries see the Getting Started section of the manual.
   * int sip.max_content_len = 1024: maximum content length of the
     message body { 0:65535 }
   * int sip.max_dialogs = 4: maximum number of dialogs within one
-    stream session { 1:4194303 }
+    stream session { 1:max32 }
   * int sip.max_from_len = 256: maximum from field size { 0:65535 }
   * int sip.max_requestName_len = 20: maximum request name field size
     { 0:65535 }
@@ -15207,10 +15220,10 @@ these libraries see the Getting Started section of the manual.
   * string sip_method.*method: sip method
   * string sip.methods = invite cancel ack bye register options: list
     of methods to check in SIP messages
-  * int sip_stat_code.*code: stat code { 1:999 }
+  * int sip_stat_code.*code: status code { 1:999 }
   * string smtp.alt_max_command_line_len[].command: command string
   * int smtp.alt_max_command_line_len[].length = 0: specify
-    non-default maximum for command { 0: }
+    non-default maximum for command { 0:max32 }
   * string smtp.auth_cmds: commands that initiate an authentication
     exchange
   * int smtp.b64_decode_depth = 1460: depth used to decode the base64
@@ -15263,8 +15276,6 @@ these libraries see the Getting Started section of the manual.
   * string snort.--bpf: <filter options> are standard BPF options, as
     seen in TCPDump
   * string snort.--c2x: output hex for given char (see also --x2c)
-  * string snort.--catch-test: comma separated list of cat unit test
-    tags or all
   * string snort.-c: <conf> use this configuration
   * string snort.--control-socket: <file> to create unix socket
   * implied snort.-C: print out payloads with character data only (no
@@ -15305,6 +15316,8 @@ these libraries see the Getting Started section of the manual.
     config options { (optional) }
   * string snort.--help-counts: [<module prefix>] output matching peg
     counts { (optional) }
+  * implied snort.--help-limits: print the int upper bounds denoted
+    by max*
   * implied snort.--help: list command line options
   * string snort.--help-module: <module> output description of given
     module
@@ -15343,12 +15356,13 @@ these libraries see the Getting Started section of the manual.
     be repeated
   * implied snort.--markup: output help in asciidoc compatible format
   * int snort.--max-packet-threads = 1: <count> configure maximum
-    number of packet threads (same as -z) { 0: }
+    number of packet threads (same as -z) { 0:max32 }
   * implied snort.--mem-check: like -T but also compile search
     engines
   * implied snort.-M: log messages to syslog (not alerts)
-  * int snort.-m: <umask> set umask = <umask> { 0: }
-  * int snort.-n: <count> stop after count packets { 0: }
+  * int snort.-m: <umask> set the process file mode creation mask {
+    0x000:0x1FF }
+  * int snort.-n: <count> stop after count packets { 0:max53 }
   * implied snort.--nolock-pidfile: do not try to lock Snort PID file
   * implied snort.--nostamps: don’t include timestamps in log file
     names
@@ -15357,8 +15371,6 @@ these libraries see the Getting Started section of the manual.
     option quick help (same as --help-options) { (optional) }
   * implied snort.--parsing-follows-files: parse relative paths from
     the perspective of the current configuration file
-  * int snort.--pause-after-n: <count> pause after count packets, to
-    be used with single packet thread only { 1: }
   * implied snort.--pause: wait for resume/quit command before
     processing packets/terminating
   * string snort.--pcap-dir: <dir> a directory to recurse to look for
@@ -15370,7 +15382,7 @@ these libraries see the Getting Started section of the manual.
   * string snort.--pcap-list: <list> a space separated list of pcaps
     to read - read mode is implied
   * int snort.--pcap-loop: <count> read all pcaps <count> times; 0
-    will read until Snort is terminated { -1: }
+    will read until Snort is terminated { 0:max32 }
   * implied snort.--pcap-no-filter: reset to use no filter when
     getting pcaps from file or directory
   * implied snort.--pcap-reload: if reading multiple pcaps, reload
@@ -15378,7 +15390,6 @@ these libraries see the Getting Started section of the manual.
   * implied snort.--pcap-show: print a line saying what pcap is
     currently being read
   * implied snort.--pedantic: warnings are fatal
-  * implied snort.--piglet: enable piglet test harness mode
   * string snort.--plugin-path: <path> where to find plugins
   * implied snort.--process-all-events: process all action groups
   * implied snort.-Q: enable inline mode operation
@@ -15392,17 +15403,18 @@ these libraries see the Getting Started section of the manual.
     repeated
   * implied snort.--rule-to-hex: output so rule header to stdout for
     text rule on stdin
-  * string snort.--rule-to-text = [SnortFoo]: output plain so rule
-    header to stdout for text rule on stdin { 16 }
+  * string snort.--rule-to-text: output plain so rule header to
+    stdout for text rule on stdin (specify delimiter or
+    [Snort_SO_Rule] will be used) { 16 }
   * string snort.--run-prefix: <pfx> prepend this to each output file
-  * int snort.-s = 1514: <snap> (same as --snaplen); default is 1514
+  * int snort.-s = 1518: <snap> (same as --snaplen); default is 1518
     { 68:65535 }
   * string snort.--script-path: <path> to a luajit script or
     directory containing luajit scripts
   * implied snort.--shell: enable the interactive command line
   * implied snort.--show-plugins: list module and plugin versions
-  * int snort.--skip: <n> skip 1st n packets { 0: }
-  * int snort.--snaplen = 1514: <snap> set snaplen of packet (same as
+  * int snort.--skip: <n> skip 1st n packets { 0:max53 }
+  * int snort.--snaplen = 1518: <snap> set snaplen of packet (same as
     -s) { 68:65535 }
   * implied snort.--stdin-rules: read rules from stdin until EOF or a
     line starting with END is read
@@ -15411,7 +15423,8 @@ these libraries see the Getting Started section of the manual.
     as --tweaks talos -Q -q)
   * string snort.-t: <dir> chroots process to <dir> after
     initialization
-  * int snort.trace: mask for enabling debug traces in module
+  * int snort.trace: mask for enabling debug traces in module {
+    0:max53 }
   * implied snort.--trace: turn on main loop debug trace
   * implied snort.--treat-drop-as-alert: converts drop, sdrop, and
     reject rules into alert rules during startup
@@ -15443,8 +15456,8 @@ these libraries see the Getting Started section of the manual.
     Lua config
   * implied snort.--warn-vars: warn about variable definition and
     usage issues
-  * implied snort.-W: lists available interfaces
   * int snort.--x2c: output ASCII char for given hex (see also --c2x)
+    { 0x00:0xFF }
   * string snort.--x2s: output ASCII string for given byte code (see
     also --x2c)
   * implied snort.-X: dump the raw packet data starting at the link
@@ -15454,7 +15467,7 @@ these libraries see the Getting Started section of the manual.
     files
   * int snort.-z = 1: <count> maximum number of packet threads (same
     as --max-packet-threads); 0 gets the number of CPU cores reported
-    by the system; default is 1 { 0: }
+    by the system; default is 1 { 0:max32 }
   * string so.~func: name of eval function
   * string soid.~: SO rule ID is unique key, eg <gid>_<sid>_<rev>
     like 3_45678_9
@@ -15498,42 +15511,43 @@ these libraries see the Getting Started section of the manual.
     tls1.2
   * implied ssl_version.tls1.2: check for tls1.2
   * int stream.file_cache.idle_timeout = 180: maximum inactive time
-    before retiring session tracker { 1: }
+    before retiring session tracker { 1:max32 }
   * int stream.file_cache.max_sessions = 128: maximum simultaneous
-    sessions tracked before pruning { 2: }
+    sessions tracked before pruning { 2:max32 }
   * int stream.file_cache.pruning_timeout = 30: minimum inactive time
-    before being eligible for pruning { 1: }
+    before being eligible for pruning { 1:max32 }
   * bool stream_file.upload = false: indicate file transfer direction
   * int stream.footprint = 0: use zero for production, non-zero for
-    testing at given size (for TCP and user) { 0: }
+    testing at given size (for TCP and user) { 0:max32 }
   * int stream.icmp_cache.idle_timeout = 180: maximum inactive time
-    before retiring session tracker { 1: }
+    before retiring session tracker { 1:max32 }
   * int stream.icmp_cache.max_sessions = 65536: maximum simultaneous
-    sessions tracked before pruning { 2: }
+    sessions tracked before pruning { 2:max32 }
   * int stream.icmp_cache.pruning_timeout = 30: minimum inactive time
-    before being eligible for pruning { 1: }
+    before being eligible for pruning { 1:max32 }
   * int stream_icmp.session_timeout = 30: session tracking timeout {
-    1:86400 }
+    1:max31 }
   * int stream.ip_cache.idle_timeout = 180: maximum inactive time
-    before retiring session tracker { 1: }
+    before retiring session tracker { 1:max32 }
   * int stream.ip_cache.max_sessions = 16384: maximum simultaneous
-    sessions tracked before pruning { 2: }
+    sessions tracked before pruning { 2:max32 }
   * int stream.ip_cache.pruning_timeout = 30: minimum inactive time
-    before being eligible for pruning { 1: }
+    before being eligible for pruning { 1:max32 }
   * bool stream.ip_frags_only = false: don’t process non-frag flows
   * int stream_ip.max_frags = 8192: maximum number of simultaneous
-    fragments being tracked { 1: }
+    fragments being tracked { 1:max32 }
   * int stream_ip.max_overlaps = 0: maximum allowed overlaps per
-    datagram; 0 is unlimited { 0: }
+    datagram; 0 is unlimited { 0:max32 }
   * int stream_ip.min_frag_length = 0: alert if fragment length is
-    below this limit before or after trimming { 0: }
+    below this limit before or after trimming { 0:65535 }
   * int stream_ip.min_ttl = 1: discard fragments with TTL below the
     minimum { 1:255 }
   * enum stream_ip.policy = linux: fragment reassembly policy { first
     | linux | bsd | bsd_right | last | windows | solaris }
   * int stream_ip.session_timeout = 30: session tracking timeout {
-    1:86400 }
-  * int stream_ip.trace: mask for enabling debug traces in module
+    1:max31 }
+  * int stream_ip.trace: mask for enabling debug traces in module {
+    0:max53 }
   * enum stream_reassemble.action: stop or start stream reassembly {
     disable|enable }
   * enum stream_reassemble.direction: action applies to the given
@@ -15546,68 +15560,71 @@ these libraries see the Getting Started section of the manual.
   * interval stream_size.~range: check if the stream size is in the
     given range { 0: }
   * int stream.tcp_cache.idle_timeout = 3600: maximum inactive time
-    before retiring session tracker { 1: }
+    before retiring session tracker { 1:max32 }
   * int stream.tcp_cache.max_sessions = 262144: maximum simultaneous
-    sessions tracked before pruning { 2: }
+    sessions tracked before pruning { 2:max32 }
   * int stream.tcp_cache.pruning_timeout = 30: minimum inactive time
-    before being eligible for pruning { 1: }
+    before being eligible for pruning { 1:max32 }
   * int stream_tcp.flush_factor = 0: flush upon seeing a drop in
-    segment size after given number of non-decreasing segments { 0: }
+    segment size after given number of non-decreasing segments {
+    0:65535 }
   * int stream_tcp.max_pdu = 16384: maximum reassembled PDU size {
     1460:32768 }
   * int stream_tcp.max_window = 0: maximum allowed TCP window {
     0:1073725440 }
   * int stream_tcp.overlap_limit = 0: maximum number of allowed
-    overlapping segments per session { 0:255 }
+    overlapping segments per session { 0:max32 }
   * enum stream_tcp.policy = bsd: determines operating system
     characteristics like reassembly { first | last | linux |
     old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 |
     windows | win_2003 | vista | proxy }
   * int stream_tcp.queue_limit.max_bytes = 1048576: don’t queue more
-    than given bytes per session and direction { 0: }
+    than given bytes per session and direction { 0:max32 }
   * int stream_tcp.queue_limit.max_segments = 2621: don’t queue more
-    than given segments per session and direction { 0: }
+    than given segments per session and direction { 0:max32 }
   * bool stream_tcp.reassemble_async = true: queue data for
     reassembly before traffic is seen in both directions
   * int stream_tcp.require_3whs = -1: don’t track midstream sessions
-    after given seconds from start up; -1 tracks all { -1:86400 }
+    after given seconds from start up; -1 tracks all { -1:max31 }
   * int stream_tcp.session_timeout = 30: session tracking timeout {
-    1:86400 }
+    1:max31 }
   * bool stream_tcp.show_rebuilt_packets = false: enable cmg like
     output of reassembled packets
   * int stream_tcp.small_segments.count = 0: limit number of small
     segments queued { 0:2048 }
   * int stream_tcp.small_segments.maximum_size = 0: limit number of
     small segments queued { 0:2048 }
-  * int stream.trace: mask for enabling debug traces in module
+  * int stream.trace: mask for enabling debug traces in module {
+    0:max53 }
   * int stream.udp_cache.idle_timeout = 180: maximum inactive time
-    before retiring session tracker { 1: }
+    before retiring session tracker { 1:max32 }
   * int stream.udp_cache.max_sessions = 131072: maximum simultaneous
-    sessions tracked before pruning { 2: }
+    sessions tracked before pruning { 2:max32 }
   * int stream.udp_cache.pruning_timeout = 30: minimum inactive time
-    before being eligible for pruning { 1: }
+    before being eligible for pruning { 1:max32 }
   * int stream_udp.session_timeout = 30: session tracking timeout {
-    1:86400 }
+    1:max31 }
   * int stream.user_cache.idle_timeout = 180: maximum inactive time
-    before retiring session tracker { 1: }
+    before retiring session tracker { 1:max32 }
   * int stream.user_cache.max_sessions = 1024: maximum simultaneous
-    sessions tracked before pruning { 2: }
+    sessions tracked before pruning { 2:max32 }
   * int stream.user_cache.pruning_timeout = 30: minimum inactive time
-    before being eligible for pruning { 1: }
+    before being eligible for pruning { 1:max32 }
   * int stream_user.session_timeout = 30: session tracking timeout {
-    1:86400 }
-  * int stream_user.trace: mask for enabling debug traces in module
-  * int suppress[].gid = 0: rule generator ID { 0: }
+    1:max31 }
+  * int stream_user.trace: mask for enabling debug traces in module {
+    0:max53 }
+  * int suppress[].gid = 0: rule generator ID { 0:max32 }
   * string suppress[].ip: restrict suppression to these addresses
     according to track
-  * int suppress[].sid = 0: rule signature ID { 0: }
+  * int suppress[].sid = 0: rule signature ID { 0:max32 }
   * enum suppress[].track: suppress only matching source or
     destination addresses { by_src | by_dst }
-  * int tag.bytes: tag for this many bytes { 1: }
+  * int tag.bytes: tag for this many bytes { 1:max32 }
   * enum tag.~: log all packets in session or all packets to or from
     host { session|host_src|host_dst }
-  * int tag.packets: tag this many packets { 1: }
-  * int tag.seconds: tag for this many seconds { 1: }
+  * int tag.packets: tag this many packets { 1:max32 }
+  * int tag.seconds: tag for this many seconds { 1:max32 }
   * enum target.~: indicate the target of the attack { src_ip |
     dst_ip }
   * string tcp_connector.address: address
@@ -15615,7 +15632,7 @@ these libraries see the Getting Started section of the manual.
   * string tcp_connector.connector: connector name
   * enum tcp_connector.setup: stream establishment { call | answer }
   * int telnet.ayt_attack_thresh = -1: alert on this number of
-    consecutive Telnet AYT commands { -1: }
+    consecutive Telnet AYT commands { -1:max31 }
   * bool telnet.check_encrypted = false: check for end of encryption
   * bool telnet.encrypted_traffic = false: check for encrypted Telnet
     and FTP
@@ -15630,7 +15647,7 @@ these libraries see the Getting Started section of the manual.
   * bool unified2.legacy_events = false: generate Snort 2.X style
     events for barnyard2 compatibility
   * int unified2.limit = 0: set maximum size in MB before rollover (0
-    is unlimited) { 0: }
+    is unlimited) { 0:maxSZ }
   * bool unified2.nostamp = true: append file creation time to name
     (in Unix Epoch format)
   * interval urg.~range: check if tcp urgent offset is in given range
@@ -15664,6 +15681,7 @@ these libraries see the Getting Started section of the manual.
 
 --------------
 
+  * active.injects: total crafted packets injected (sum)
   * appid.appid_unknown: count of sessions where appid could not be
     determined (sum)
   * appid.ignored_packets: count of packets ignored (sum)
@@ -17068,7 +17086,8 @@ these libraries see the Getting Started section of the manual.
   * snort.reload_daq(): reload daq module
   * snort.reload_hosts(filename): load a new hosts table
   * snort.pause(): suspend packet processing
-  * snort.resume(): continue packet processing
+  * snort.resume(pkt_num): continue packet processing. If number of
+    packet is specified, will resume for n packets and pause
   * snort.detach(): exit shell w/o shutdown
   * snort.quit(): shutdown and dump-stats
   * snort.help(): this output
@@ -17989,14 +18008,6 @@ deleted -> unified2: 'filename'
   * logger::log_null: disable logging of packets
   * logger::log_pcap: log packet in pcap format
   * logger::unified2: output event and packet in unified2 format file
-  * piglet::pp_codec: Codec piglet
-  * piglet::pp_inspector: Inspector piglet
-  * piglet::pp_ips_action: Ips action piglet
-  * piglet::pp_ips_option: Ips option piglet
-  * piglet::pp_logger: Logger piglet
-  * piglet::pp_search_engine: Search engine piglet
-  * piglet::pp_so_rule: SO rule piglet
-  * piglet::pp_test: Test piglet
   * search_engine::ac_banded: Aho-Corasick Banded (high memory,
     moderate performance)
   * search_engine::ac_bnfa: Aho-Corasick Binary NFA (low memory, high

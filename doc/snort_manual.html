@@ -779,7 +779,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0 (Build 248) from 2.9.11
+o"  )~   Version 3.0.0 (Build 250) from 2.9.11
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2018 Cisco and/or its affiliates. All rights reserved.
@@ -2499,6 +2499,7 @@ all text mode outputs default to stdout
 --help-commands [&lt;module prefix&gt;] output matching commands
 --help-config [&lt;module prefix&gt;] output matching config options
 --help-counts [&lt;module prefix&gt;] output matching peg counts
+--help-limits print the int upper bounds denoted by max*
 --help-module &lt;module&gt; output description of given module
 --help-modules list all available modules with brief help
 --help-plugins list all available plugins with brief help
@@ -7022,7 +7023,7 @@ configuration for core processing.</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>active.attempts</strong> = 0: number of TCP packets sent per response (with varying sequence numbers) { 0:20 }
+int <strong>active.attempts</strong> = 0: number of TCP packets sent per response (with varying sequence numbers) { 0:255 }
 </p>
 </li>
 <li>
@@ -7037,12 +7038,20 @@ string <strong>active.dst_mac</strong>: use format <em>01:23:45:67:89:ab</em>
 </li>
 <li>
 <p>
-int <strong>active.max_responses</strong> = 0: maximum number of responses { 0: }
+int <strong>active.max_responses</strong> = 0: maximum number of responses { 0:255 }
 </p>
 </li>
 <li>
 <p>
 int <strong>active.min_interval</strong> = 255: minimum number of seconds between responses { 1:255 }
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>active.injects</strong>: total crafted packets injected (sum)
 </p>
 </li>
 </ul></div>
@@ -7066,12 +7075,12 @@ bool <strong>alerts.default_rule_state</strong> = true: enable or disable ips ru
 </li>
 <li>
 <p>
-int <strong>alerts.detection_filter_memcap</strong> = 1048576: set available bytes of memory for detection_filters { 0: }
+int <strong>alerts.detection_filter_memcap</strong> = 1048576: set available MB of memory for detection_filters { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>alerts.event_filter_memcap</strong> = 1048576: set available bytes of memory for event_filters { 0: }
+int <strong>alerts.event_filter_memcap</strong> = 1048576: set available MB of memory for event_filters { 0:max32 }
 </p>
 </li>
 <li>
@@ -7086,7 +7095,7 @@ string <strong>alerts.order</strong> = pass drop alert log: change the order of 
 </li>
 <li>
 <p>
-int <strong>alerts.rate_filter_memcap</strong> = 1048576: set available bytes of memory for rate_filters { 0: }
+int <strong>alerts.rate_filter_memcap</strong> = 1048576: set available MB of memory for rate_filters { 0:max32 }
 </p>
 </li>
 <li>
@@ -7115,7 +7124,7 @@ string <strong>alerts.tunnel_verdicts</strong>: let DAQ handle non-allow verdict
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>attribute_table.max_hosts</strong> = 1024: maximum number of hosts in attribute table { 32:207551 }
+int <strong>attribute_table.max_hosts</strong> = 1024: maximum number of hosts in attribute table { 32:max53 }
 </p>
 </li>
 <li>
@@ -7125,7 +7134,7 @@ int <strong>attribute_table.max_services_per_host</strong> = 8: maximum number o
 </li>
 <li>
 <p>
-int <strong>attribute_table.max_metadata_services</strong> = 8: maximum number of services in rule metadata { 1:256 }
+int <strong>attribute_table.max_metadata_services</strong> = 8: maximum number of services in rule { 1:255 }
 </p>
 </li>
 </ul></div>
@@ -7144,7 +7153,7 @@ string <strong>classifications[].name</strong>: name used with classtype rule op
 </li>
 <li>
 <p>
-int <strong>classifications[].priority</strong> = 1: default priority for class { 0: }
+int <strong>classifications[].priority</strong> = 1: default priority for class { 0:max32 }
 </p>
 </li>
 <li>
@@ -7183,7 +7192,7 @@ string <strong>daq.variables[].str</strong>: string parameter
 </li>
 <li>
 <p>
-int <strong>daq.instances[].id</strong>: instance ID (required) { 0: }
+int <strong>daq.instances[].id</strong>: instance ID (required) { 0:max32 }
 </p>
 </li>
 <li>
@@ -7364,17 +7373,17 @@ bool <strong>daq.no_promisc</strong> = false: whether to put DAQ device into pro
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>detection.asn1</strong> = 256: maximum decode nodes { 1: }
+int <strong>detection.asn1</strong> = 0: maximum decode nodes { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection.offload_limit</strong> = 99999: minimum sizeof PDU to offload fast pattern search (defaults to disabled) { 0: }
+int <strong>detection.offload_limit</strong> = 99999: minimum sizeof PDU to offload fast pattern search (defaults to disabled) { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection.offload_threads</strong> = 0: maximum number of simultaneous offloads (defaults to disabled) { 0: }
+int <strong>detection.offload_threads</strong> = 0: maximum number of simultaneous offloads (defaults to disabled) { 0:max32 }
 </p>
 </li>
 <li>
@@ -7384,12 +7393,12 @@ bool <strong>detection.pcre_enable</strong> = true: disable pcre pattern matchin
 </li>
 <li>
 <p>
-int <strong>detection.pcre_match_limit</strong> = 1500: limit pcre backtracking, -1 = max, 0 = off { -1:1000000 }
+int <strong>detection.pcre_match_limit</strong> = 1500: limit pcre backtracking, 0 = off { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection.pcre_match_limit_recursion</strong> = 1500: limit pcre stack consumption, -1 = max, 0 = off { -1:10000 }
+int <strong>detection.pcre_match_limit_recursion</strong> = 1500: limit pcre stack consumption, 0 = off { 0:max32 }
 </p>
 </li>
 <li>
@@ -7399,7 +7408,7 @@ bool <strong>detection.enable_address_anomaly_checks</strong> = false: enable ch
 </li>
 <li>
 <p>
-int <strong>detection.trace</strong>: mask for enabling debug traces in module
+int <strong>detection.trace</strong>: mask for enabling debug traces in module { 0:max53 }
 </p>
 </li>
 </ul></div>
@@ -7516,12 +7525,12 @@ int <strong>detection.trace</strong>: mask for enabling debug traces in module
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>event_filter[].gid</strong> = 1: rule generator ID { 0: }
+int <strong>event_filter[].gid</strong> = 1: rule generator ID { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>event_filter[].sid</strong> = 1: rule signature ID { 0: }
+int <strong>event_filter[].sid</strong> = 1: rule signature ID { 0:max32 }
 </p>
 </li>
 <li>
@@ -7536,12 +7545,12 @@ enum <strong>event_filter[].track</strong>: filter only matching source or desti
 </li>
 <li>
 <p>
-int <strong>event_filter[].count</strong> = 0: number of events in interval before tripping; -1 to disable { -1: }
+int <strong>event_filter[].count</strong> = 0: number of events in interval before tripping; -1 to disable { -1:max31 }
 </p>
 </li>
 <li>
 <p>
-int <strong>event_filter[].seconds</strong> = 0: count interval { 0: }
+int <strong>event_filter[].seconds</strong> = 0: count interval { 0:max32 }
 </p>
 </li>
 <li>
@@ -7560,12 +7569,12 @@ string <strong>event_filter[].ip</strong>: restrict filter to these addresses ac
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>event_queue.max_queue</strong> = 8: maximum events to queue { 1: }
+int <strong>event_queue.max_queue</strong> = 8: maximum events to queue { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>event_queue.log</strong> = 3: maximum events to log { 1: }
+int <strong>event_queue.log</strong> = 3: maximum events to log { 1:max32 }
 </p>
 </li>
 <li>
@@ -7631,7 +7640,7 @@ real <strong>high_availability.min_sync</strong> = 1.0: minimum interval between
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>host_cache[].size</strong>: size of host cache
+int <strong>host_cache[].size</strong>: size of host cache { 1:max32 }
 </p>
 </li>
 </ul></div>
@@ -7842,7 +7851,7 @@ string <strong>ips.uuid</strong> = 00000000-0000-0000-0000-000000000000: IPS pol
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>latency.packet.max_time</strong> = 500: set timeout for packet latency thresholding (usec) { 0: }
+int <strong>latency.packet.max_time</strong> = 500: set timeout for packet latency thresholding (usec) { 0:max53 }
 </p>
 </li>
 <li>
@@ -7857,7 +7866,7 @@ enum <strong>latency.packet.action</strong> = none: event action if packet times
 </li>
 <li>
 <p>
-int <strong>latency.rule.max_time</strong> = 500: set timeout for rule evaluation (usec) { 0: }
+int <strong>latency.rule.max_time</strong> = 500: set timeout for rule evaluation (usec) { 0:max53 }
 </p>
 </li>
 <li>
@@ -7867,12 +7876,12 @@ bool <strong>latency.rule.suspend</strong> = false: temporarily suspend expensiv
 </li>
 <li>
 <p>
-int <strong>latency.rule.suspend_threshold</strong> = 5: set threshold for number of timeouts before suspending a rule { 1: }
+int <strong>latency.rule.suspend_threshold</strong> = 5: set threshold for number of timeouts before suspending a rule { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>latency.rule.max_suspend_time</strong> = 30000: set max time for suspending a rule (ms, 0 means permanently disable rule) { 0: }
+int <strong>latency.rule.max_suspend_time</strong> = 30000: set max time for suspending a rule (ms, 0 means permanently disable rule) { 0:max32 }
 </p>
 </li>
 <li>
@@ -7947,7 +7956,7 @@ enum <strong>latency.rule.action</strong> = none: event action for rule latency 
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>memory.cap</strong> = 0: set the per-packet-thread cap on memory (bytes, 0 to disable) { 0: }
+int <strong>memory.cap</strong> = 0: set the per-packet-thread cap on memory (bytes, 0 to disable) { 0:maxSZ }
 </p>
 </li>
 <li>
@@ -7957,7 +7966,7 @@ bool <strong>memory.soft</strong> = false: always succeed in allocating memory, 
 </li>
 <li>
 <p>
-int <strong>memory.threshold</strong> = 0: set the per-packet-thread threshold for preemptive cleanup actions (percent, 0 to disable) { 0: }
+int <strong>memory.threshold</strong> = 0: set the per-packet-thread threshold for preemptive cleanup actions (percent, 0 to disable) { 0:100 }
 </p>
 </li>
 </ul></div>
@@ -8070,7 +8079,7 @@ bool <strong>output.show_year</strong> = false: include year in timestamp in the
 </li>
 <li>
 <p>
-int <strong>output.tagged_packet_limit</strong> = 256: maximum number of packets tagged for non-packet metrics { 0: }
+int <strong>output.tagged_packet_limit</strong> = 256: maximum number of packets tagged for non-packet metrics { 0:max32 }
 </p>
 </li>
 <li>
@@ -8080,7 +8089,7 @@ bool <strong>output.verbose</strong> = false: be verbose (same as -v)
 </li>
 <li>
 <p>
-bool <strong>output.wide_hex_dump</strong> = true: output 20 bytes per lines instead of 16 when dumping buffers
+bool <strong>output.wide_hex_dump</strong> = false: output 20 bytes per lines instead of 16 when dumping buffers
 </p>
 </li>
 </ul></div>
@@ -8136,12 +8145,12 @@ string <strong>packets.bpf_file</strong>: file with BPF to select traffic for Sn
 </li>
 <li>
 <p>
-int <strong>packets.limit</strong> = 0: maximum number of packets to process before stopping (0 is unlimited) { 0: }
+int <strong>packets.limit</strong> = 0: maximum number of packets to process before stopping (0 is unlimited) { 0:max53 }
 </p>
 </li>
 <li>
 <p>
-int <strong>packets.skip</strong> = 0: number of packets to skip before before processing { 0: }
+int <strong>packets.skip</strong> = 0: number of packets to skip before before processing { 0:max53 }
 </p>
 </li>
 <li>
@@ -8170,7 +8179,7 @@ string <strong>process.threads[].cpuset</strong>: pin the associated thread to t
 </li>
 <li>
 <p>
-int <strong>process.threads[].thread</strong> = 0: set cpu affinity for the &lt;cur_thread_num&gt; thread that runs { 0: }
+int <strong>process.threads[].thread</strong> = 0: set cpu affinity for the &lt;cur_thread_num&gt; thread that runs { 0:65535 }
 </p>
 </li>
 <li>
@@ -8195,7 +8204,7 @@ string <strong>process.set_uid</strong>: set user ID (same as -u)
 </li>
 <li>
 <p>
-string <strong>process.umask</strong>: set process umask (same as -m)
+int <strong>process.umask</strong>: set process umask (same as -m) { 0x000:0x1FF }
 </p>
 </li>
 <li>
@@ -8219,7 +8228,7 @@ bool <strong>profiler.modules.show</strong> = true: show module time profile sta
 </li>
 <li>
 <p>
-int <strong>profiler.modules.count</strong> = 0: limit results to count items per level (0 = no limit) { 0: }
+int <strong>profiler.modules.count</strong> = 0: limit results to count items per level (0 = no limit) { 0:max32 }
 </p>
 </li>
 <li>
@@ -8229,7 +8238,7 @@ enum <strong>profiler.modules.sort</strong> = total_time: sort by given field { 
 </li>
 <li>
 <p>
-int <strong>profiler.modules.max_depth</strong> = -1: limit depth to max_depth (-1 = no limit) { -1: }
+int <strong>profiler.modules.max_depth</strong> = -1: limit depth to max_depth (-1 = no limit) { -1:255 }
 </p>
 </li>
 <li>
@@ -8239,7 +8248,7 @@ bool <strong>profiler.memory.show</strong> = true: show module memory profile st
 </li>
 <li>
 <p>
-int <strong>profiler.memory.count</strong> = 0: limit results to count items per level (0 = no limit) { 0: }
+int <strong>profiler.memory.count</strong> = 0: limit results to count items per level (0 = no limit) { 0:max32 }
 </p>
 </li>
 <li>
@@ -8249,7 +8258,7 @@ enum <strong>profiler.memory.sort</strong> = total_used: sort by given field { n
 </li>
 <li>
 <p>
-int <strong>profiler.memory.max_depth</strong> = -1: limit depth to max_depth (-1 = no limit) { -1: }
+int <strong>profiler.memory.max_depth</strong> = -1: limit depth to max_depth (-1 = no limit) { -1:255 }
 </p>
 </li>
 <li>
@@ -8259,7 +8268,7 @@ bool <strong>profiler.rules.show</strong> = true: show rule time profile stats
 </li>
 <li>
 <p>
-int <strong>profiler.rules.count</strong> = 0: print results to given level (0 = all) { 0: }
+int <strong>profiler.rules.count</strong> = 0: print results to given level (0 = all) { 0:max32 }
 </p>
 </li>
 <li>
@@ -8278,12 +8287,12 @@ enum <strong>profiler.rules.sort</strong> = total_time: sort by given field { no
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>rate_filter[].gid</strong> = 1: rule generator ID { 0: }
+int <strong>rate_filter[].gid</strong> = 1: rule generator ID { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>rate_filter[].sid</strong> = 1: rule signature ID { 0: }
+int <strong>rate_filter[].sid</strong> = 1: rule signature ID { 0:max32 }
 </p>
 </li>
 <li>
@@ -8293,12 +8302,12 @@ enum <strong>rate_filter[].track</strong> = by_src: filter only matching source 
 </li>
 <li>
 <p>
-int <strong>rate_filter[].count</strong> = 1: number of events in interval before tripping { 0: }
+int <strong>rate_filter[].count</strong> = 1: number of events in interval before tripping { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>rate_filter[].seconds</strong> = 1: count interval { 0: }
+int <strong>rate_filter[].seconds</strong> = 1: count interval { 0:max32 }
 </p>
 </li>
 <li>
@@ -8308,7 +8317,7 @@ enum <strong>rate_filter[].new_action</strong> = alert: take this action on futu
 </li>
 <li>
 <p>
-int <strong>rate_filter[].timeout</strong> = 1: count interval { 0: }
+int <strong>rate_filter[].timeout</strong> = 1: count interval { 0:max32 }
 </p>
 </li>
 <li>
@@ -8346,12 +8355,12 @@ string <strong>references[].url</strong>: where this reference is defined
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>rule_state[].gid</strong> = 0: rule generator ID { 0: }
+int <strong>rule_state[].gid</strong> = 0: rule generator ID { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>rule_state[].sid</strong> = 0: rule signature ID { 0: }
+int <strong>rule_state[].sid</strong> = 0: rule signature ID { 0:max32 }
 </p>
 </li>
 <li>
@@ -8370,7 +8379,7 @@ bool <strong>rule_state[].enable</strong> = true: enable or disable rule in all 
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>search_engine.bleedover_port_limit</strong> = 1024: maximum ports in rule before demotion to any-any port group { 1: }
+int <strong>search_engine.bleedover_port_limit</strong> = 1024: maximum ports in rule before demotion to any-any port group { 1:max32 }
 </p>
 </li>
 <li>
@@ -8410,7 +8419,7 @@ bool <strong>search_engine.debug_print_rule_groups_compiled</strong> = false: pr
 </li>
 <li>
 <p>
-int <strong>search_engine.max_pattern_len</strong> = 0: truncate patterns when compiling into state machine (0 means no maximum) { 0: }
+int <strong>search_engine.max_pattern_len</strong> = 0: truncate patterns when compiling into state machine (0 means no maximum) { 0:max32 }
 </p>
 </li>
 <li>
@@ -8614,12 +8623,12 @@ implied <strong>snort.-M</strong>: log messages to syslog (not alerts)
 </li>
 <li>
 <p>
-int <strong>snort.-m</strong>: &lt;umask&gt; set umask = &lt;umask&gt; { 0: }
+int <strong>snort.-m</strong>: &lt;umask&gt; set the process file mode creation mask { 0x000:0x1FF }
 </p>
 </li>
 <li>
 <p>
-int <strong>snort.-n</strong>: &lt;count&gt; stop after count packets { 0: }
+int <strong>snort.-n</strong>: &lt;count&gt; stop after count packets { 0:max53 }
 </p>
 </li>
 <li>
@@ -8654,7 +8663,7 @@ string <strong>snort.-S</strong>: &lt;x=v&gt; set config variable x equal to val
 </li>
 <li>
 <p>
-int <strong>snort.-s</strong> = 1514: &lt;snap&gt; (same as --snaplen); default is 1514 { 68:65535 }
+int <strong>snort.-s</strong> = 1518: &lt;snap&gt; (same as --snaplen); default is 1518 { 68:65535 }
 </p>
 </li>
 <li>
@@ -8689,11 +8698,6 @@ implied <strong>snort.-v</strong>: be verbose
 </li>
 <li>
 <p>
-implied <strong>snort.-W</strong>: lists available interfaces
-</p>
-</li>
-<li>
-<p>
 implied <strong>snort.-X</strong>: dump the raw packet data starting at the link layer
 </p>
 </li>
@@ -8709,7 +8713,7 @@ implied <strong>snort.-y</strong>: include year in timestamp in the alert and lo
 </li>
 <li>
 <p>
-int <strong>snort.-z</strong> = 1: &lt;count&gt; maximum number of packet threads (same as --max-packet-threads); 0 gets the number of CPU cores reported by the system; default is 1 { 0: }
+int <strong>snort.-z</strong> = 1: &lt;count&gt; maximum number of packet threads (same as --max-packet-threads); 0 gets the number of CPU cores reported by the system; default is 1 { 0:max32 }
 </p>
 </li>
 <li>
@@ -8814,6 +8818,11 @@ string <strong>snort.--help-counts</strong>: [&lt;module prefix&gt;] output matc
 </li>
 <li>
 <p>
+implied <strong>snort.--help-limits</strong>: print the int upper bounds denoted by max*
+</p>
+</li>
+<li>
+<p>
 string <strong>snort.--help-module</strong>: &lt;module&gt; output description of given module
 </p>
 </li>
@@ -8894,7 +8903,7 @@ implied <strong>snort.--markup</strong>: output help in asciidoc compatible form
 </li>
 <li>
 <p>
-int <strong>snort.--max-packet-threads</strong> = 1: &lt;count&gt; configure maximum number of packet threads (same as -z) { 0: }
+int <strong>snort.--max-packet-threads</strong> = 1: &lt;count&gt; configure maximum number of packet threads (same as -z) { 0:max32 }
 </p>
 </li>
 <li>
@@ -8915,11 +8924,6 @@ implied <strong>snort.--nolock-pidfile</strong>: do not try to lock Snort PID fi
 <li>
 <p>
 implied <strong>snort.--pause</strong>: wait for resume/quit command before processing packets/terminating
-</p>
-</li>
-<li>
-<p>
-int <strong>snort.--pause-after-n</strong>: &lt;count&gt; pause after count packets, to be used with single packet thread only { 1: }
 </p>
 </li>
 <li>
@@ -8949,7 +8953,7 @@ string <strong>snort.--pcap-filter</strong>: &lt;filter&gt; filter to apply when
 </li>
 <li>
 <p>
-int <strong>snort.--pcap-loop</strong>: &lt;count&gt; read all pcaps &lt;count&gt; times;  0 will read until Snort is terminated { -1: }
+int <strong>snort.--pcap-loop</strong>: &lt;count&gt; read all pcaps &lt;count&gt; times;  0 will read until Snort is terminated { 0:max32 }
 </p>
 </li>
 <li>
@@ -8999,7 +9003,7 @@ implied <strong>snort.--rule-to-hex</strong>: output so rule header to stdout fo
 </li>
 <li>
 <p>
-string <strong>snort.--rule-to-text</strong> = [SnortFoo]: output plain so rule header to stdout for text rule on stdin { 16 }
+string <strong>snort.--rule-to-text</strong>: output plain so rule header to stdout for text rule on stdin (specify delimiter or [Snort_SO_Rule] will be used) { 16 }
 </p>
 </li>
 <li>
@@ -9019,22 +9023,17 @@ implied <strong>snort.--shell</strong>: enable the interactive command line
 </li>
 <li>
 <p>
-implied <strong>snort.--piglet</strong>: enable piglet test harness mode
-</p>
-</li>
-<li>
-<p>
 implied <strong>snort.--show-plugins</strong>: list module and plugin versions
 </p>
 </li>
 <li>
 <p>
-int <strong>snort.--skip</strong>: &lt;n&gt; skip 1st n packets { 0: }
+int <strong>snort.--skip</strong>: &lt;n&gt; skip 1st n packets { 0:max53 }
 </p>
 </li>
 <li>
 <p>
-int <strong>snort.--snaplen</strong> = 1514: &lt;snap&gt; set snaplen of packet (same as -s) { 68:65535 }
+int <strong>snort.--snaplen</strong> = 1518: &lt;snap&gt; set snaplen of packet (same as -s) { 68:65535 }
 </p>
 </li>
 <li>
@@ -9060,11 +9059,6 @@ implied <strong>snort.--treat-drop-as-ignore</strong>: use drop, sdrop, and reje
 <li>
 <p>
 string <strong>snort.--tweaks</strong>: tune configuration
-</p>
-</li>
-<li>
-<p>
-string <strong>snort.--catch-test</strong>: comma separated list of cat unit test tags or <em>all</em>
 </p>
 </li>
 <li>
@@ -9124,7 +9118,7 @@ implied <strong>snort.--warn-vars</strong>: warn about variable definition and u
 </li>
 <li>
 <p>
-int <strong>snort.--x2c</strong>: output ASCII char for given hex (see also --c2x)
+int <strong>snort.--x2c</strong>: output ASCII char for given hex (see also --c2x) { 0x00:0xFF }
 </p>
 </li>
 <li>
@@ -9139,7 +9133,7 @@ implied <strong>snort.--trace</strong>: turn on main loop debug trace
 </li>
 <li>
 <p>
-int <strong>snort.trace</strong>: mask for enabling debug traces in module
+int <strong>snort.trace</strong>: mask for enabling debug traces in module { 0:max53 }
 </p>
 </li>
 </ul></div>
@@ -9197,7 +9191,7 @@ int <strong>snort.trace</strong>: mask for enabling debug traces in module
 </li>
 <li>
 <p>
-<strong>snort.resume</strong>(): continue packet processing
+<strong>snort.resume</strong>(pkt_num): continue packet processing. If number of packet is specified, will resume for n packets and pause
 </p>
 </li>
 <li>
@@ -9274,12 +9268,12 @@ int <strong>snort.trace</strong>: mask for enabling debug traces in module
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>suppress[].gid</strong> = 0: rule generator ID { 0: }
+int <strong>suppress[].gid</strong> = 0: rule generator ID { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>suppress[].sid</strong> = 0: rule signature ID { 0: }
+int <strong>suppress[].sid</strong> = 0: rule signature ID { 0:max32 }
 </p>
 </li>
 <li>
@@ -10050,7 +10044,7 @@ bool <strong>mpls.enable_mpls_overlapping_ip</strong> = false: enable if private
 </li>
 <li>
 <p>
-int <strong>mpls.max_mpls_stack_depth</strong> = -1: set MPLS stack depth { -1: }
+int <strong>mpls.max_mpls_stack_depth</strong> = -1: set MPLS stack depth { -1:255 }
 </p>
 </li>
 <li>
@@ -10508,12 +10502,7 @@ protocols beyond basic decoding.</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>appid.first_decrypted_packet_debug</strong> = 0: the first packet of an already decrypted SSL flow (debug single session only) { 0: }
-</p>
-</li>
-<li>
-<p>
-int <strong>appid.memcap</strong> = 0: disregard - not implemented { 0: }
+int <strong>appid.memcap</strong> = 0: disregard - not implemented { 0:maxSZ }
 </p>
 </li>
 <li>
@@ -10523,17 +10512,17 @@ bool <strong>appid.log_stats</strong> = false: enable logging of appid statistic
 </li>
 <li>
 <p>
-int <strong>appid.app_stats_period</strong> = 300: time period for collecting and logging appid statistics { 0: }
+int <strong>appid.app_stats_period</strong> = 300: time period for collecting and logging appid statistics { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>appid.app_stats_rollover_size</strong> = 20971520: max file size for appid stats before rolling over the log file { 0: }
+int <strong>appid.app_stats_rollover_size</strong> = 20971520: max file size for appid stats before rolling over the log file { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>appid.app_stats_rollover_time</strong> = 86400: max time period for collection appid stats before rolling over the log file { 0: }
+int <strong>appid.app_stats_rollover_time</strong> = 86400: max time period for collection appid stats before rolling over the log file { 0:max31 }
 </p>
 </li>
 <li>
@@ -10543,7 +10532,7 @@ string <strong>appid.app_detector_dir</strong>: directory to load appid detector
 </li>
 <li>
 <p>
-int <strong>appid.instance_id</strong> = 0: instance id - ignored { 0: }
+int <strong>appid.instance_id</strong> = 0: instance id - ignored { 0:max32 }
 </p>
 </li>
 <li>
@@ -10583,7 +10572,7 @@ bool <strong>appid.log_all_sessions</strong> = false: enable logging of all appi
 </li>
 <li>
 <p>
-int <strong>appid.trace</strong>: mask for enabling debug traces in module
+int <strong>appid.trace</strong>: mask for enabling debug traces in module { 0:max53 }
 </p>
 </li>
 </ul></div>
@@ -10725,7 +10714,7 @@ mac <strong>arp_spoof.hosts[].mac</strong>: host mac address
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>binder[].when.ips_policy_id</strong> = 0: unique ID for selection of this config by external logic { 0: }
+int <strong>binder[].when.ips_policy_id</strong> = 0: unique ID for selection of this config by external logic { 0:max32 }
 </p>
 </li>
 <li>
@@ -10775,12 +10764,12 @@ bit_list <strong>binder[].when.dst_ports</strong>: list of destination ports { 6
 </li>
 <li>
 <p>
-int <strong>binder[].when.src_zone</strong>: source zone { 0:2147483647 }
+int <strong>binder[].when.src_zone</strong>: source zone { 0:max31 }
 </p>
 </li>
 <li>
 <p>
-int <strong>binder[].when.dst_zone</strong>: destination zone { 0:2147483647 }
+int <strong>binder[].when.dst_zone</strong>: destination zone { 0:max31 }
 </p>
 </li>
 <li>
@@ -10877,7 +10866,7 @@ select <strong>data_log.key</strong> = http_request_header_event : name of the e
 </li>
 <li>
 <p>
-int <strong>data_log.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0: }
+int <strong>data_log.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0:max32 }
 </p>
 </li>
 </ul></div>
@@ -10937,52 +10926,52 @@ int <strong>data_log.limit</strong> = 0: set maximum size in MB before rollover 
 <div class="ulist"><ul>
 <li>
 <p>
-bool <strong>dce_smb.disable_defrag</strong> = false:  Disable DCE/RPC defragmentation
+bool <strong>dce_smb.disable_defrag</strong> = false: disable DCE/RPC defragmentation
 </p>
 </li>
 <li>
 <p>
-int <strong>dce_smb.max_frag_len</strong> = 65535:  Maximum fragment size for defragmentation { 1514:65535 }
+int <strong>dce_smb.max_frag_len</strong> = 65535: maximum fragment size for defragmentation { 1514:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>dce_smb.reassemble_threshold</strong> = 0:  Minimum bytes received before performing reassembly { 0:65535 }
+int <strong>dce_smb.reassemble_threshold</strong> = 0: minimum bytes received before performing reassembly { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-enum <strong>dce_smb.smb_fingerprint_policy</strong> = none:  Target based SMB policy to use { none | client |  server | both  }
+enum <strong>dce_smb.smb_fingerprint_policy</strong> = none: target based SMB policy to use { none | client |  server | both  }
 </p>
 </li>
 <li>
 <p>
-enum <strong>dce_smb.policy</strong> = WinXP:  Target based policy to use { Win2000 |  WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba | Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
+enum <strong>dce_smb.policy</strong> = WinXP: target based policy to use { Win2000 |  WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba | Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
 </p>
 </li>
 <li>
 <p>
-int <strong>dce_smb.smb_max_chain</strong> = 3:  SMB max chain size { 0:255 }
+int <strong>dce_smb.smb_max_chain</strong> = 3: SMB max chain size { 0:255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>dce_smb.smb_max_compound</strong> = 3:  SMB max compound size { 0:255 }
+int <strong>dce_smb.smb_max_compound</strong> = 3: SMB max compound size { 0:255 }
 </p>
 </li>
 <li>
 <p>
-multi <strong>dce_smb.valid_smb_versions</strong> = all:  Valid SMB versions { v1 | v2 | all }
+multi <strong>dce_smb.valid_smb_versions</strong> = all: valid SMB versions { v1 | v2 | all }
 </p>
 </li>
 <li>
 <p>
-enum <strong>dce_smb.smb_file_inspection</strong> = off:  SMB file inspection { off | on | only }
+enum <strong>dce_smb.smb_file_inspection</strong> = off: SMB file inspection { off | on | only }
 </p>
 </li>
 <li>
 <p>
-int <strong>dce_smb.smb_file_depth</strong> = 16384:  SMB file depth for file data { -1: }
+int <strong>dce_smb.smb_file_depth</strong> = 16384: SMB file depth for file data { -1:32767 }
 </p>
 </li>
 <li>
@@ -10997,7 +10986,7 @@ bool <strong>dce_smb.smb_legacy_mode</strong> = false: inspect only SMBv1
 </li>
 <li>
 <p>
-int <strong>dce_smb.trace</strong>: mask for enabling debug traces in module
+int <strong>dce_smb.trace</strong>: mask for enabling debug traces in module { 0:max53 }
 </p>
 </li>
 </ul></div>
@@ -11437,22 +11426,22 @@ int <strong>dce_smb.trace</strong>: mask for enabling debug traces in module
 <div class="ulist"><ul>
 <li>
 <p>
-bool <strong>dce_tcp.disable_defrag</strong> = false:  Disable DCE/RPC defragmentation
+bool <strong>dce_tcp.disable_defrag</strong> = false: disable DCE/RPC defragmentation
 </p>
 </li>
 <li>
 <p>
-int <strong>dce_tcp.max_frag_len</strong> = 65535:  Maximum fragment size for defragmentation { 1514:65535 }
+int <strong>dce_tcp.max_frag_len</strong> = 65535: maximum fragment size for defragmentation { 1514:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>dce_tcp.reassemble_threshold</strong> = 0:  Minimum bytes received before performing reassembly { 0:65535 }
+int <strong>dce_tcp.reassemble_threshold</strong> = 0: minimum bytes received before performing reassembly { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-enum <strong>dce_tcp.policy</strong> = WinXP:  Target based policy to use { Win2000 |  WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba | Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
+enum <strong>dce_tcp.policy</strong> = WinXP: target based policy to use { Win2000 |  WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba | Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
 </p>
 </li>
 </ul></div>
@@ -11697,17 +11686,17 @@ enum <strong>dce_tcp.policy</strong> = WinXP:  Target based policy to use { Win2
 <div class="ulist"><ul>
 <li>
 <p>
-bool <strong>dce_udp.disable_defrag</strong> = false:  Disable DCE/RPC defragmentation
+bool <strong>dce_udp.disable_defrag</strong> = false: disable DCE/RPC defragmentation
 </p>
 </li>
 <li>
 <p>
-int <strong>dce_udp.max_frag_len</strong> = 65535:  Maximum fragment size for defragmentation { 1514:65535 }
+int <strong>dce_udp.max_frag_len</strong> = 65535: maximum fragment size for defragmentation { 1514:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>dce_udp.trace</strong>: mask for enabling debug traces in module
+int <strong>dce_udp.trace</strong>: mask for enabling debug traces in module { 0:max53 }
 </p>
 </li>
 </ul></div>
@@ -12074,22 +12063,22 @@ int <strong>dpx.max</strong> = 0: maximum payload before alert { 0:65535 }
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>file_id.type_depth</strong> = 1460: stop type ID at this point { 0: }
+int <strong>file_id.type_depth</strong> = 1460: stop type ID at this point { 0:max53 }
 </p>
 </li>
 <li>
 <p>
-int <strong>file_id.signature_depth</strong> = 10485760: stop signature at this point { 0: }
+int <strong>file_id.signature_depth</strong> = 10485760: stop signature at this point { 0:max53 }
 </p>
 </li>
 <li>
 <p>
-int <strong>file_id.block_timeout</strong> = 86400: stop blocking after this many seconds { 0: }
+int <strong>file_id.block_timeout</strong> = 86400: stop blocking after this many seconds { 0:max31 }
 </p>
 </li>
 <li>
 <p>
-int <strong>file_id.lookup_timeout</strong> = 2: give up on lookup after this many seconds { 0: }
+int <strong>file_id.lookup_timeout</strong> = 2: give up on lookup after this many seconds { 0:max31 }
 </p>
 </li>
 <li>
@@ -12099,27 +12088,27 @@ bool <strong>file_id.block_timeout_lookup</strong> = false: block if lookup time
 </li>
 <li>
 <p>
-int <strong>file_id.capture_memcap</strong> = 100: memcap for file capture in megabytes { 0: }
+int <strong>file_id.capture_memcap</strong> = 100: memcap for file capture in megabytes { 0:max53 }
 </p>
 </li>
 <li>
 <p>
-int <strong>file_id.capture_max_size</strong> = 1048576: stop file capture beyond this point { 0: }
+int <strong>file_id.capture_max_size</strong> = 1048576: stop file capture beyond this point { 0:max53 }
 </p>
 </li>
 <li>
 <p>
-int <strong>file_id.capture_min_size</strong> = 0: stop file capture if file size less than this { 0: }
+int <strong>file_id.capture_min_size</strong> = 0: stop file capture if file size less than this { 0:max53 }
 </p>
 </li>
 <li>
 <p>
-int <strong>file_id.capture_block_size</strong> = 32768: file capture block size in bytes { 8: }
+int <strong>file_id.capture_block_size</strong> = 32768: file capture block size in bytes { 8:max53 }
 </p>
 </li>
 <li>
 <p>
-int <strong>file_id.max_files_cached</strong> = 65536: maximal number of files cached in memory { 8: }
+int <strong>file_id.max_files_cached</strong> = 65536: maximal number of files cached in memory { 8:max53 }
 </p>
 </li>
 <li>
@@ -12139,12 +12128,12 @@ bool <strong>file_id.enable_capture</strong> = false: enable file capture
 </li>
 <li>
 <p>
-int <strong>file_id.show_data_depth</strong> = 100: print this many octets { 0: }
+int <strong>file_id.show_data_depth</strong> = 100: print this many octets { 0:max53 }
 </p>
 </li>
 <li>
 <p>
-int <strong>file_id.file_rules[].rev</strong> = 0: rule revision { 0: }
+int <strong>file_id.file_rules[].rev</strong> = 0: rule revision { 0:max32 }
 </p>
 </li>
 <li>
@@ -12159,7 +12148,7 @@ string <strong>file_id.file_rules[].type</strong>: file type name
 </li>
 <li>
 <p>
-int <strong>file_id.file_rules[].id</strong> = 0: file type id { 0: }
+int <strong>file_id.file_rules[].id</strong> = 0: file type id { 0:max32 }
 </p>
 </li>
 <li>
@@ -12184,12 +12173,12 @@ string <strong>file_id.file_rules[].magic[].content</strong>: file magic content
 </li>
 <li>
 <p>
-int <strong>file_id.file_rules[].magic[].offset</strong> = 0: file magic offset { 0: }
+int <strong>file_id.file_rules[].magic[].offset</strong> = 0: file magic offset { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>file_id.file_policy[].when.file_type_id</strong> = 0: unique ID for file type in file magic rule { 0: }
+int <strong>file_id.file_policy[].when.file_type_id</strong> = 0: unique ID for file type in file magic rule { 0:max32 }
 </p>
 </li>
 <li>
@@ -12234,7 +12223,7 @@ bool <strong>file_id.trace_stream</strong> = false: enable runtime dump of file 
 </li>
 <li>
 <p>
-int <strong>file_id.verdict_delay</strong> = 0: number of queries to return final verdict { 0: }
+int <strong>file_id.verdict_delay</strong> = 0: number of queries to return final verdict { 0:max53 }
 </p>
 </li>
 </ul></div>
@@ -12303,12 +12292,12 @@ addr <strong>ftp_client.bounce_to[].address</strong> = 1.0.0.0/32: allowed IP ad
 </li>
 <li>
 <p>
-port <strong>ftp_client.bounce_to[].port</strong> = 20: allowed port { 1: }
+port <strong>ftp_client.bounce_to[].port</strong> = 20: allowed port
 </p>
 </li>
 <li>
 <p>
-port <strong>ftp_client.bounce_to[].last_port</strong>: optional allowed range from port to last_port inclusive { 0: }
+port <strong>ftp_client.bounce_to[].last_port</strong>: optional allowed range from port to last_port inclusive
 </p>
 </li>
 <li>
@@ -12318,7 +12307,7 @@ bool <strong>ftp_client.ignore_telnet_erase_cmds</strong> = false: ignore erase 
 </li>
 <li>
 <p>
-int <strong>ftp_client.max_resp_len</strong> = -1: maximum FTP response accepted by client { -1: }
+int <strong>ftp_client.max_resp_len</strong> = 4294967295: maximum FTP response accepted by client { 0:max32 }
 </p>
 </li>
 <li>
@@ -12376,7 +12365,7 @@ string <strong>ftp_server.directory_cmds[].dir_cmd</strong>: directory command
 </li>
 <li>
 <p>
-int <strong>ftp_server.directory_cmds[].rsp_code</strong> = 200: expected successful response code for command { 200: }
+int <strong>ftp_server.directory_cmds[].rsp_code</strong> = 200: expected successful response code for command { 200:max32 }
 </p>
 </li>
 <li>
@@ -12416,12 +12405,12 @@ string <strong>ftp_server.cmd_validity[].format</strong>: format specification
 </li>
 <li>
 <p>
-int <strong>ftp_server.cmd_validity[].length</strong> = 0: specify non-default maximum for command { 0: }
+int <strong>ftp_server.cmd_validity[].length</strong> = 0: specify non-default maximum for command { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>ftp_server.def_max_param_len</strong> = 100: default maximum length of commands handled by server; 0 is unlimited { 1: }
+int <strong>ftp_server.def_max_param_len</strong> = 100: default maximum length of commands handled by server; 0 is unlimited { 1:max32 }
 </p>
 </li>
 <li>
@@ -12561,7 +12550,7 @@ int <strong>gtp_inspect[].infos[].length</strong> = 0: information element type 
 </li>
 <li>
 <p>
-int <strong>gtp_inspect.trace</strong>: mask for enabling debug traces in module
+int <strong>gtp_inspect.trace</strong>: mask for enabling debug traces in module { 0:max53 }
 </p>
 </li>
 </ul></div>
@@ -12651,12 +12640,12 @@ int <strong>gtp_inspect.trace</strong>: mask for enabling debug traces in module
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>http_inspect.request_depth</strong> = -1: maximum request message body bytes to examine (-1 no limit) { -1: }
+int <strong>http_inspect.request_depth</strong> = -1: maximum request message body bytes to examine (-1 no limit) { -1:max53 }
 </p>
 </li>
 <li>
 <p>
-int <strong>http_inspect.response_depth</strong> = -1: maximum response message body bytes to examine (-1 no limit) { -1: }
+int <strong>http_inspect.response_depth</strong> = -1: maximum response message body bytes to examine (-1 no limit) { -1:max53 }
 </p>
 </li>
 <li>
@@ -12752,36 +12741,6 @@ bool <strong>http_inspect.plus_to_space</strong> = true: replace + with &lt;sp&g
 <li>
 <p>
 bool <strong>http_inspect.simplify_path</strong> = true: reduce URI directory path to simplest form
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.test_input</strong> = false: read HTTP messages from text file
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.test_output</strong> = false: print out HTTP section data
-</p>
-</li>
-<li>
-<p>
-int <strong>http_inspect.print_amount</strong> = 1200: number of characters to print from a Field { 1:1000000 }
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.print_hex</strong> = false: nonprinting characters printed in [HH] format instead of using an asterisk
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.show_pegs</strong> = true: display peg counts with test output
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.show_scan</strong> = false: display scanned segments
 </p>
 </li>
 </ul></div>
@@ -14050,12 +14009,12 @@ string <strong>packet_capture.filter</strong>: bpf filter to use for packet dump
 <div class="ulist"><ul>
 <li>
 <p>
-bool <strong>perf_monitor.base</strong> = true: enable base statistics { nullptr }
+bool <strong>perf_monitor.base</strong> = true: enable base statistics
 </p>
 </li>
 <li>
 <p>
-bool <strong>perf_monitor.cpu</strong> = false: enable cpu statistics { nullptr }
+bool <strong>perf_monitor.cpu</strong> = false: enable cpu statistics
 </p>
 </li>
 <li>
@@ -14070,22 +14029,22 @@ bool <strong>perf_monitor.flow_ip</strong> = false: enable statistics on host pa
 </li>
 <li>
 <p>
-int <strong>perf_monitor.packets</strong> = 10000: minimum packets to report { 0: }
+int <strong>perf_monitor.packets</strong> = 10000: minimum packets to report { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>perf_monitor.seconds</strong> = 60: report interval { 1: }
+int <strong>perf_monitor.seconds</strong> = 60: report interval { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>perf_monitor.flow_ip_memcap</strong> = 52428800: maximum memory in bytes for flow tracking { 8200: }
+int <strong>perf_monitor.flow_ip_memcap</strong> = 52428800: maximum memory in bytes for flow tracking { 8200:maxSZ }
 </p>
 </li>
 <li>
 <p>
-int <strong>perf_monitor.max_file_size</strong> = 1073741824: files will be rolled over if they exceed this size { 4096: }
+int <strong>perf_monitor.max_file_size</strong> = 1073741824: files will be rolled over if they exceed this size { 4096:max53 }
 </p>
 </li>
 <li>
@@ -14257,7 +14216,7 @@ int <strong>pop.uu_decode_depth</strong> = 1460: Unix-to-Unix decoding depth (-1
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>port_scan.memcap</strong> = 1048576: maximum tracker memory in bytes { 1: }
+int <strong>port_scan.memcap</strong> = 1048576: maximum tracker memory in bytes { 1:maxSZ }
 </p>
 </li>
 <li>
@@ -14297,282 +14256,282 @@ bool <strong>port_scan.include_midstream</strong> = false: list of CIDRs with op
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_ports.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.tcp_ports.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_ports.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.tcp_ports.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_ports.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.tcp_ports.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_ports.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.tcp_ports.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_decoy.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.tcp_decoy.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_decoy.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.tcp_decoy.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_decoy.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.tcp_decoy.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_decoy.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.tcp_decoy.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_sweep.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.tcp_sweep.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_sweep.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.tcp_sweep.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_sweep.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.tcp_sweep.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_sweep.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.tcp_sweep.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_dist.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.tcp_dist.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_dist.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.tcp_dist.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_dist.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.tcp_dist.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_dist.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.tcp_dist.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_ports.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.udp_ports.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_ports.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.udp_ports.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_ports.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.udp_ports.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_ports.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.udp_ports.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_decoy.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.udp_decoy.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_decoy.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.udp_decoy.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_decoy.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.udp_decoy.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_decoy.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.udp_decoy.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_sweep.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.udp_sweep.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_sweep.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.udp_sweep.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_sweep.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.udp_sweep.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_sweep.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.udp_sweep.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_dist.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.udp_dist.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_dist.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.udp_dist.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_dist.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.udp_dist.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_dist.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.udp_dist.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_proto.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.ip_proto.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_proto.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.ip_proto.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_proto.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.ip_proto.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_proto.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.ip_proto.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_decoy.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.ip_decoy.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_decoy.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.ip_decoy.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_decoy.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.ip_decoy.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_decoy.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.ip_decoy.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_sweep.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.ip_sweep.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_sweep.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.ip_sweep.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_sweep.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.ip_sweep.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_sweep.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.ip_sweep.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_dist.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.ip_dist.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_dist.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.ip_dist.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_dist.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.ip_dist.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_dist.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.ip_dist.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.icmp_sweep.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.icmp_sweep.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.icmp_sweep.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.icmp_sweep.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.icmp_sweep.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.icmp_sweep.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.icmp_sweep.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.icmp_sweep.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_window</strong> = 0: detection interval for all TCP scans { 0: }
+int <strong>port_scan.tcp_window</strong> = 0: detection interval for all TCP scans { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_window</strong> = 0: detection interval for all UDP scans { 0: }
+int <strong>port_scan.udp_window</strong> = 0: detection interval for all UDP scans { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_window</strong> = 0: detection interval for all IP scans { 0: }
+int <strong>port_scan.ip_window</strong> = 0: detection interval for all IP scans { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.icmp_window</strong> = 0: detection interval for all ICMP scans { 0: }
+int <strong>port_scan.icmp_window</strong> = 0: detection interval for all ICMP scans { 0:max32 }
 </p>
 </li>
 </ul></div>
@@ -14931,7 +14890,7 @@ int <strong>sip.max_content_len</strong> = 1024: maximum content length of the m
 </li>
 <li>
 <p>
-int <strong>sip.max_dialogs</strong> = 4: maximum number of dialogs within one stream session { 1:4194303 }
+int <strong>sip.max_dialogs</strong> = 4: maximum number of dialogs within one stream session { 1:max32 }
 </p>
 </li>
 <li>
@@ -15281,7 +15240,7 @@ string <strong>smtp.alt_max_command_line_len[].command</strong>: command string
 </li>
 <li>
 <p>
-int <strong>smtp.alt_max_command_line_len[].length</strong> = 0: specify non-default maximum for command { 0: }
+int <strong>smtp.alt_max_command_line_len[].length</strong> = 0: specify non-default maximum for command { 0:max32 }
 </p>
 </li>
 <li>
@@ -15761,7 +15720,7 @@ int <strong>ssl.max_heartbeat_length</strong> = 0: maximum length of heartbeat r
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>stream.footprint</strong> = 0: use zero for production, non-zero for testing at given size (for TCP and user) { 0: }
+int <strong>stream.footprint</strong> = 0: use zero for production, non-zero for testing at given size (for TCP and user) { 0:max32 }
 </p>
 </li>
 <li>
@@ -15771,97 +15730,97 @@ bool <strong>stream.ip_frags_only</strong> = false: don&#8217;t process non-frag
 </li>
 <li>
 <p>
-int <strong>stream.ip_cache.max_sessions</strong> = 16384: maximum simultaneous sessions tracked before pruning { 2: }
+int <strong>stream.ip_cache.max_sessions</strong> = 16384: maximum simultaneous sessions tracked before pruning { 2:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.ip_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1: }
+int <strong>stream.ip_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.ip_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
+int <strong>stream.ip_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.icmp_cache.max_sessions</strong> = 65536: maximum simultaneous sessions tracked before pruning { 2: }
+int <strong>stream.icmp_cache.max_sessions</strong> = 65536: maximum simultaneous sessions tracked before pruning { 2:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.icmp_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1: }
+int <strong>stream.icmp_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.icmp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
+int <strong>stream.icmp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.tcp_cache.max_sessions</strong> = 262144: maximum simultaneous sessions tracked before pruning { 2: }
+int <strong>stream.tcp_cache.max_sessions</strong> = 262144: maximum simultaneous sessions tracked before pruning { 2:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.tcp_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1: }
+int <strong>stream.tcp_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.tcp_cache.idle_timeout</strong> = 3600: maximum inactive time before retiring session tracker { 1: }
+int <strong>stream.tcp_cache.idle_timeout</strong> = 3600: maximum inactive time before retiring session tracker { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.udp_cache.max_sessions</strong> = 131072: maximum simultaneous sessions tracked before pruning { 2: }
+int <strong>stream.udp_cache.max_sessions</strong> = 131072: maximum simultaneous sessions tracked before pruning { 2:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.udp_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1: }
+int <strong>stream.udp_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.udp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
+int <strong>stream.udp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.user_cache.max_sessions</strong> = 1024: maximum simultaneous sessions tracked before pruning { 2: }
+int <strong>stream.user_cache.max_sessions</strong> = 1024: maximum simultaneous sessions tracked before pruning { 2:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.user_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1: }
+int <strong>stream.user_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.user_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
+int <strong>stream.user_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.file_cache.max_sessions</strong> = 128: maximum simultaneous sessions tracked before pruning { 2: }
+int <strong>stream.file_cache.max_sessions</strong> = 128: maximum simultaneous sessions tracked before pruning { 2:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.file_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1: }
+int <strong>stream.file_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.file_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
+int <strong>stream.file_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.trace</strong>: mask for enabling debug traces in module
+int <strong>stream.trace</strong>: mask for enabling debug traces in module { 0:max53 }
 </p>
 </li>
 </ul></div>
@@ -16150,7 +16109,7 @@ bool <strong>stream_file.upload</strong> = false: indicate file transfer directi
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>stream_icmp.session_timeout</strong> = 30: session tracking timeout { 1:86400 }
+int <strong>stream_icmp.session_timeout</strong> = 30: session tracking timeout { 1:max31 }
 </p>
 </li>
 </ul></div>
@@ -16197,17 +16156,17 @@ int <strong>stream_icmp.session_timeout</strong> = 30: session tracking timeout 
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>stream_ip.max_frags</strong> = 8192: maximum number of simultaneous fragments being tracked { 1: }
+int <strong>stream_ip.max_frags</strong> = 8192: maximum number of simultaneous fragments being tracked { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream_ip.max_overlaps</strong> = 0: maximum allowed overlaps per datagram; 0 is unlimited { 0: }
+int <strong>stream_ip.max_overlaps</strong> = 0: maximum allowed overlaps per datagram; 0 is unlimited { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream_ip.min_frag_length</strong> = 0: alert if fragment length is below this limit before or after trimming { 0: }
+int <strong>stream_ip.min_frag_length</strong> = 0: alert if fragment length is below this limit before or after trimming { 0:65535 }
 </p>
 </li>
 <li>
@@ -16222,12 +16181,12 @@ enum <strong>stream_ip.policy</strong> = linux: fragment reassembly policy { fir
 </li>
 <li>
 <p>
-int <strong>stream_ip.session_timeout</strong> = 30: session tracking timeout { 1:86400 }
+int <strong>stream_ip.session_timeout</strong> = 30: session tracking timeout { 1:max31 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream_ip.trace</strong>: mask for enabling debug traces in module
+int <strong>stream_ip.trace</strong>: mask for enabling debug traces in module { 0:max53 }
 </p>
 </li>
 </ul></div>
@@ -16422,7 +16381,7 @@ int <strong>stream_ip.trace</strong>: mask for enabling debug traces in module
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>stream_tcp.flush_factor</strong> = 0: flush upon seeing a drop in segment size after given number of non-decreasing segments { 0: }
+int <strong>stream_tcp.flush_factor</strong> = 0: flush upon seeing a drop in segment size after given number of non-decreasing segments { 0:65535 }
 </p>
 </li>
 <li>
@@ -16432,7 +16391,7 @@ int <strong>stream_tcp.max_window</strong> = 0: maximum allowed TCP window { 0:1
 </li>
 <li>
 <p>
-int <strong>stream_tcp.overlap_limit</strong> = 0: maximum number of allowed overlapping segments per session { 0:255 }
+int <strong>stream_tcp.overlap_limit</strong> = 0: maximum number of allowed overlapping segments per session { 0:max32 }
 </p>
 </li>
 <li>
@@ -16452,7 +16411,7 @@ bool <strong>stream_tcp.reassemble_async</strong> = true: queue data for reassem
 </li>
 <li>
 <p>
-int <strong>stream_tcp.require_3whs</strong> = -1: don&#8217;t track midstream sessions after given seconds from start up; -1 tracks all { -1:86400 }
+int <strong>stream_tcp.require_3whs</strong> = -1: don&#8217;t track midstream sessions after given seconds from start up; -1 tracks all { -1:max31 }
 </p>
 </li>
 <li>
@@ -16462,12 +16421,12 @@ bool <strong>stream_tcp.show_rebuilt_packets</strong> = false: enable cmg like o
 </li>
 <li>
 <p>
-int <strong>stream_tcp.queue_limit.max_bytes</strong> = 1048576: don&#8217;t queue more than given bytes per session and direction { 0: }
+int <strong>stream_tcp.queue_limit.max_bytes</strong> = 1048576: don&#8217;t queue more than given bytes per session and direction { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream_tcp.queue_limit.max_segments</strong> = 2621: don&#8217;t queue more than given segments per session and direction { 0: }
+int <strong>stream_tcp.queue_limit.max_segments</strong> = 2621: don&#8217;t queue more than given segments per session and direction { 0:max32 }
 </p>
 </li>
 <li>
@@ -16482,7 +16441,7 @@ int <strong>stream_tcp.small_segments.maximum_size</strong> = 0: limit number of
 </li>
 <li>
 <p>
-int <strong>stream_tcp.session_timeout</strong> = 30: session tracking timeout { 1:86400 }
+int <strong>stream_tcp.session_timeout</strong> = 30: session tracking timeout { 1:max31 }
 </p>
 </li>
 </ul></div>
@@ -16802,7 +16761,7 @@ int <strong>stream_tcp.session_timeout</strong> = 30: session tracking timeout {
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>stream_udp.session_timeout</strong> = 30: session tracking timeout { 1:86400 }
+int <strong>stream_udp.session_timeout</strong> = 30: session tracking timeout { 1:max31 }
 </p>
 </li>
 </ul></div>
@@ -16854,12 +16813,12 @@ int <strong>stream_udp.session_timeout</strong> = 30: session tracking timeout {
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>stream_user.session_timeout</strong> = 30: session tracking timeout { 1:86400 }
+int <strong>stream_user.session_timeout</strong> = 30: session tracking timeout { 1:max31 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream_user.trace</strong>: mask for enabling debug traces in module
+int <strong>stream_user.trace</strong>: mask for enabling debug traces in module { 0:max53 }
 </p>
 </li>
 </ul></div>
@@ -16873,7 +16832,7 @@ int <strong>stream_user.trace</strong>: mask for enabling debug traces in module
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>telnet.ayt_attack_thresh</strong> = -1: alert on this number of consecutive Telnet AYT commands { -1: }
+int <strong>telnet.ayt_attack_thresh</strong> = -1: alert on this number of consecutive Telnet AYT commands { -1:max31 }
 </p>
 </li>
 <li>
@@ -17070,7 +17029,7 @@ enum <strong>reject.reset</strong>: send TCP reset to one or both ends { source|
 </li>
 <li>
 <p>
-enum <strong>reject.control</strong>: send ICMP unreachable(s) { network|host|port|all }
+enum <strong>reject.control</strong>: send ICMP unreachable(s) { network|host|port|forward|all }
 </p>
 </li>
 </ul></div>
@@ -17147,17 +17106,17 @@ implied <strong>asn1.print</strong>: dump decode data to console; always true
 </li>
 <li>
 <p>
-int <strong>asn1.oversize_length</strong>: compares ASN.1 type lengths with the supplied argument { 0: }
+int <strong>asn1.oversize_length</strong>: compares ASN.1 type lengths with the supplied argument { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>asn1.absolute_offset</strong>: absolute offset from the beginning of the packet { 0: }
+int <strong>asn1.absolute_offset</strong>: absolute offset from the beginning of the packet { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>asn1.relative_offset</strong>: relative offset from the cursor
+int <strong>asn1.relative_offset</strong>: relative offset from the cursor { -65535:65535 }
 </p>
 </li>
 </ul></div>
@@ -17171,12 +17130,12 @@ int <strong>asn1.relative_offset</strong>: relative offset from the cursor
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>base64_decode.bytes</strong>: number of base64 encoded bytes to decode { 1: }
+int <strong>base64_decode.bytes</strong>: number of base64 encoded bytes to decode { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>base64_decode.offset</strong> = 0: bytes past start of buffer to start decoding { 0: }
+int <strong>base64_decode.offset</strong> = 0: bytes past start of buffer to start decoding { 0:max32 }
 </p>
 </li>
 <li>
@@ -17539,12 +17498,12 @@ implied <strong>content.fast_pattern</strong>: use this content in the fast patt
 </li>
 <li>
 <p>
-int <strong>content.fast_pattern_offset</strong> = 0: number of leading characters of this content the fast pattern matcher should exclude { 0: }
+int <strong>content.fast_pattern_offset</strong> = 0: number of leading characters of this content the fast pattern matcher should exclude { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>content.fast_pattern_length</strong>: maximum number of characters from this content the fast pattern matcher should use { 1: }
+int <strong>content.fast_pattern_length</strong>: maximum number of characters from this content the fast pattern matcher should use { 1:65535 }
 </p>
 </li>
 <li>
@@ -17641,12 +17600,12 @@ enum <strong>detection_filter.track</strong>: track hits by source or destinatio
 </li>
 <li>
 <p>
-int <strong>detection_filter.count</strong>: hits in interval before allowing the rule to fire { 1: }
+int <strong>detection_filter.count</strong>: hits in interval before allowing the rule to fire { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection_filter.seconds</strong>: length of interval to count hits { 1: }
+int <strong>detection_filter.seconds</strong>: length of interval to count hits { 1:max32 }
 </p>
 </li>
 </ul></div>
@@ -17882,7 +17841,7 @@ interval <strong>fragoffset.~range</strong>: check if ip fragment offset is in g
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>gid.~</strong>: generator id { 1: }
+int <strong>gid.~</strong>: generator id { 1:max32 }
 </p>
 </li>
 </ul></div>
@@ -18608,7 +18567,7 @@ interval <strong>pkt_num.~range</strong>: check if packet number is in given ran
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>priority.~</strong>: relative severity level; 1 is highest priority { 1: }
+int <strong>priority.~</strong>: relative severity level; 1 is highest priority { 1:max31 }
 </p>
 </li>
 </ul></div>
@@ -18714,7 +18673,7 @@ string <strong>replace.~</strong>: byte code to replace with
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>rev.~</strong>: revision { 1: }
+int <strong>rev.~</strong>: revision { 1:max32 }
 </p>
 </li>
 </ul></div>
@@ -18728,7 +18687,7 @@ int <strong>rev.~</strong>: revision { 1: }
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>rpc.~app</strong>: application number
+int <strong>rpc.~app</strong>: application number { 0:max32 }
 </p>
 </li>
 <li>
@@ -18757,7 +18716,7 @@ string <strong>sd_pattern.~pattern</strong>: The pattern to search for
 </li>
 <li>
 <p>
-int <strong>sd_pattern.threshold</strong>: number of matches before alerting { 1 }
+int <strong>sd_pattern.threshold</strong> = 1: number of matches before alerting { 1:max32 }
 </p>
 </li>
 </ul></div>
@@ -18889,7 +18848,7 @@ implied <strong>sha512.relative</strong> = false: offset from cursor instead of 
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>sid.~</strong>: signature id { 1: }
+int <strong>sid.~</strong>: signature id { 1:max32 }
 </p>
 </li>
 </ul></div>
@@ -18929,7 +18888,7 @@ string <strong>sip_method.*method</strong>: sip method
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>sip_stat_code.*code</strong>: stat code { 1:999 }
+int <strong>sip_stat_code.*code</strong>: status code { 1:999 }
 </p>
 </li>
 </ul></div>
@@ -19142,17 +19101,17 @@ enum <strong>tag.~</strong>: log all packets in session or all packets to or fro
 </li>
 <li>
 <p>
-int <strong>tag.packets</strong>: tag this many packets { 1: }
+int <strong>tag.packets</strong>: tag this many packets { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>tag.seconds</strong>: tag for this many seconds { 1: }
+int <strong>tag.seconds</strong>: tag for this many seconds { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>tag.bytes</strong>: tag for this many bytes { 1: }
+int <strong>tag.bytes</strong>: tag for this many bytes { 1:max32 }
 </p>
 </li>
 </ul></div>
@@ -19283,7 +19242,7 @@ multi <strong>alert_csv.fields</strong> = timestamp pkt_num proto pkt_gen pkt_le
 </li>
 <li>
 <p>
-int <strong>alert_csv.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0: }
+int <strong>alert_csv.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0:maxSZ }
 </p>
 </li>
 <li>
@@ -19326,7 +19285,7 @@ bool <strong>alert_fast.packet</strong> = false: output packet dump with alert
 </li>
 <li>
 <p>
-int <strong>alert_fast.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0: }
+int <strong>alert_fast.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0:maxSZ }
 </p>
 </li>
 </ul></div>
@@ -19345,7 +19304,7 @@ bool <strong>alert_full.file</strong> = false: output to alert_full.txt instead 
 </li>
 <li>
 <p>
-int <strong>alert_full.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0: }
+int <strong>alert_full.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0:maxSZ }
 </p>
 </li>
 </ul></div>
@@ -19369,7 +19328,7 @@ multi <strong>alert_json.fields</strong> = timestamp pkt_num proto pkt_gen pkt_l
 </li>
 <li>
 <p>
-int <strong>alert_json.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0: }
+int <strong>alert_json.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0:maxSZ }
 </p>
 </li>
 <li>
@@ -19393,12 +19352,12 @@ string <strong>alert_sfsocket.file</strong>: name of unix socket file
 </li>
 <li>
 <p>
-int <strong>alert_sfsocket.rules[].gid</strong> = 1: rule generator ID { 1: }
+int <strong>alert_sfsocket.rules[].gid</strong> = 1: rule generator ID { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>alert_sfsocket.rules[].sid</strong> = 1: rule signature ID { 1: }
+int <strong>alert_sfsocket.rules[].sid</strong> = 1: rule signature ID { 1:max32 }
 </p>
 </li>
 </ul></div>
@@ -19471,12 +19430,12 @@ bool <strong>log_hext.raw</strong> = false: output all full packets if true, els
 </li>
 <li>
 <p>
-int <strong>log_hext.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0: }
+int <strong>log_hext.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0:maxSZ }
 </p>
 </li>
 <li>
 <p>
-int <strong>log_hext.width</strong> = 20: set line width (0 is unlimited) { 0: }
+int <strong>log_hext.width</strong> = 20: set line width (0 is unlimited) { 0:max32 }
 </p>
 </li>
 </ul></div>
@@ -19490,7 +19449,7 @@ int <strong>log_hext.width</strong> = 20: set line width (0 is unlimited) { 0: }
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>log_pcap.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0: }
+int <strong>log_pcap.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0:maxSZ }
 </p>
 </li>
 </ul></div>
@@ -19509,7 +19468,7 @@ bool <strong>unified2.legacy_events</strong> = false: generate Snort 2.X style e
 </li>
 <li>
 <p>
-int <strong>unified2.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0: }
+int <strong>unified2.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0:maxSZ }
 </p>
 </li>
 <li>
@@ -21023,12 +20982,6 @@ options into a Snort++ configuration file</p></div>
 <li>
 <p>
 <strong>--print-all</strong>       Same as <em>-a</em>. default option.  print all data
-</p>
-</li>
-<li>
-<p>
-<strong>--print-binding-order</strong>
-                    Print sorting priority used when generating binder table
 </p>
 </li>
 <li>
@@ -23366,12 +23319,12 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>-m</strong> &lt;umask&gt; set umask = &lt;umask&gt; (0:)
+<strong>-m</strong> &lt;umask&gt; set the process file mode creation mask (0x000:0x1FF)
 </p>
 </li>
 <li>
 <p>
-<strong>-n</strong> &lt;count&gt; stop after count packets (0:)
+<strong>-n</strong> &lt;count&gt; stop after count packets (0:max53)
 </p>
 </li>
 <li>
@@ -23406,7 +23359,7 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>-s</strong> &lt;snap&gt; (same as --snaplen); default is 1514 (68:65535)
+<strong>-s</strong> &lt;snap&gt; (same as --snaplen); default is 1518 (68:65535)
 </p>
 </li>
 <li>
@@ -23441,11 +23394,6 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>-W</strong> lists available interfaces
-</p>
-</li>
-<li>
-<p>
 <strong>-X</strong> dump the raw packet data starting at the link layer
 </p>
 </li>
@@ -23461,7 +23409,7 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>-z</strong> &lt;count&gt; maximum number of packet threads (same as --max-packet-threads); 0 gets the number of CPU cores reported by the system; default is 1 (0:)
+<strong>-z</strong> &lt;count&gt; maximum number of packet threads (same as --max-packet-threads); 0 gets the number of CPU cores reported by the system; default is 1 (0:max32)
 </p>
 </li>
 <li>
@@ -23566,6 +23514,11 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
+<strong>--help-limits</strong> print the int upper bounds denoted by max*
+</p>
+</li>
+<li>
+<p>
 <strong>--help-module</strong> &lt;module&gt; output description of given module
 </p>
 </li>
@@ -23646,7 +23599,7 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>--max-packet-threads</strong> &lt;count&gt; configure maximum number of packet threads (same as -z) (0:)
+<strong>--max-packet-threads</strong> &lt;count&gt; configure maximum number of packet threads (same as -z) (0:max32)
 </p>
 </li>
 <li>
@@ -23667,11 +23620,6 @@ these libraries see the Getting Started section of the manual.</p></div>
 <li>
 <p>
 <strong>--pause</strong> wait for resume/quit command before processing packets/terminating
-</p>
-</li>
-<li>
-<p>
-<strong>--pause-after-n</strong> &lt;count&gt; pause after count packets, to be used with single packet thread only (1:)
 </p>
 </li>
 <li>
@@ -23701,7 +23649,7 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>--pcap-loop</strong> &lt;count&gt; read all pcaps &lt;count&gt; times;  0 will read until Snort is terminated (-1:)
+<strong>--pcap-loop</strong> &lt;count&gt; read all pcaps &lt;count&gt; times;  0 will read until Snort is terminated (0:max32)
 </p>
 </li>
 <li>
@@ -23751,7 +23699,7 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>--rule-to-text</strong> output plain so rule header to stdout for text rule on stdin (16)
+<strong>--rule-to-text</strong> output plain so rule header to stdout for text rule on stdin (specify delimiter or [Snort_SO_Rule] will be used) (16)
 </p>
 </li>
 <li>
@@ -23771,17 +23719,12 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>--piglet</strong> enable piglet test harness mode
-</p>
-</li>
-<li>
-<p>
 <strong>--show-plugins</strong> list module and plugin versions
 </p>
 </li>
 <li>
 <p>
-<strong>--skip</strong> &lt;n&gt; skip 1st n packets (0:)
+<strong>--skip</strong> &lt;n&gt; skip 1st n packets (0:max53)
 </p>
 </li>
 <li>
@@ -23812,11 +23755,6 @@ these libraries see the Getting Started section of the manual.</p></div>
 <li>
 <p>
 <strong>--tweaks</strong> tune configuration
-</p>
-</li>
-<li>
-<p>
-<strong>--catch-test</strong> comma separated list of cat unit test tags or <em>all</em>
 </p>
 </li>
 <li>
@@ -23876,7 +23814,7 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>--x2c</strong> output ASCII char for given hex (see also --c2x)
+<strong>--x2c</strong> output ASCII char for given hex (see also --c2x) (0x00:0xFF)
 </p>
 </li>
 <li>
@@ -23901,7 +23839,7 @@ interval <strong>ack.~range</strong>: check if TCP ack value is <em>value | min&
 </li>
 <li>
 <p>
-int <strong>active.attempts</strong> = 0: number of TCP packets sent per response (with varying sequence numbers) { 0:20 }
+int <strong>active.attempts</strong> = 0: number of TCP packets sent per response (with varying sequence numbers) { 0:255 }
 </p>
 </li>
 <li>
@@ -23916,7 +23854,7 @@ string <strong>active.dst_mac</strong>: use format <em>01:23:45:67:89:ab</em>
 </li>
 <li>
 <p>
-int <strong>active.max_responses</strong> = 0: maximum number of responses { 0: }
+int <strong>active.max_responses</strong> = 0: maximum number of responses { 0:255 }
 </p>
 </li>
 <li>
@@ -23936,7 +23874,7 @@ bool <strong>alert_csv.file</strong> = false: output to alert_csv.txt instead of
 </li>
 <li>
 <p>
-int <strong>alert_csv.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0: }
+int <strong>alert_csv.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0:maxSZ }
 </p>
 </li>
 <li>
@@ -23956,7 +23894,7 @@ bool <strong>alert_fast.file</strong> = false: output to alert_fast.txt instead 
 </li>
 <li>
 <p>
-int <strong>alert_fast.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0: }
+int <strong>alert_fast.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0:maxSZ }
 </p>
 </li>
 <li>
@@ -23971,7 +23909,7 @@ bool <strong>alert_full.file</strong> = false: output to alert_full.txt instead 
 </li>
 <li>
 <p>
-int <strong>alert_full.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0: }
+int <strong>alert_full.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0:maxSZ }
 </p>
 </li>
 <li>
@@ -23986,7 +23924,7 @@ bool <strong>alert_json.file</strong> = false: output to alert_json.txt instead 
 </li>
 <li>
 <p>
-int <strong>alert_json.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0: }
+int <strong>alert_json.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0:maxSZ }
 </p>
 </li>
 <li>
@@ -24006,12 +23944,12 @@ bool <strong>alerts.default_rule_state</strong> = true: enable or disable ips ru
 </li>
 <li>
 <p>
-int <strong>alerts.detection_filter_memcap</strong> = 1048576: set available bytes of memory for detection_filters { 0: }
+int <strong>alerts.detection_filter_memcap</strong> = 1048576: set available MB of memory for detection_filters { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>alerts.event_filter_memcap</strong> = 1048576: set available bytes of memory for event_filters { 0: }
+int <strong>alerts.event_filter_memcap</strong> = 1048576: set available MB of memory for event_filters { 0:max32 }
 </p>
 </li>
 <li>
@@ -24021,12 +23959,12 @@ string <strong>alert_sfsocket.file</strong>: name of unix socket file
 </li>
 <li>
 <p>
-int <strong>alert_sfsocket.rules[].gid</strong> = 1: rule generator ID { 1: }
+int <strong>alert_sfsocket.rules[].gid</strong> = 1: rule generator ID { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>alert_sfsocket.rules[].sid</strong> = 1: rule signature ID { 1: }
+int <strong>alert_sfsocket.rules[].sid</strong> = 1: rule signature ID { 1:max32 }
 </p>
 </li>
 <li>
@@ -24041,7 +23979,7 @@ string <strong>alerts.order</strong> = pass drop alert log: change the order of 
 </li>
 <li>
 <p>
-int <strong>alerts.rate_filter_memcap</strong> = 1048576: set available bytes of memory for rate_filters { 0: }
+int <strong>alerts.rate_filter_memcap</strong> = 1048576: set available MB of memory for rate_filters { 0:max32 }
 </p>
 </li>
 <li>
@@ -24081,17 +24019,17 @@ string <strong>appid.app_detector_dir</strong>: directory to load appid detector
 </li>
 <li>
 <p>
-int <strong>appid.app_stats_period</strong> = 300: time period for collecting and logging appid statistics { 0: }
+int <strong>appid.app_stats_period</strong> = 300: time period for collecting and logging appid statistics { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>appid.app_stats_rollover_size</strong> = 20971520: max file size for appid stats before rolling over the log file { 0: }
+int <strong>appid.app_stats_rollover_size</strong> = 20971520: max file size for appid stats before rolling over the log file { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>appid.app_stats_rollover_time</strong> = 86400: max time period for collection appid stats before rolling over the log file { 0: }
+int <strong>appid.app_stats_rollover_time</strong> = 86400: max time period for collection appid stats before rolling over the log file { 0:max31 }
 </p>
 </li>
 <li>
@@ -24106,12 +24044,7 @@ bool <strong>appid.dump_ports</strong> = false: enable dump of appid port inform
 </li>
 <li>
 <p>
-int <strong>appid.first_decrypted_packet_debug</strong> = 0: the first packet of an already decrypted SSL flow (debug single session only) { 0: }
-</p>
-</li>
-<li>
-<p>
-int <strong>appid.instance_id</strong> = 0: instance id - ignored { 0: }
+int <strong>appid.instance_id</strong> = 0: instance id - ignored { 0:max32 }
 </p>
 </li>
 <li>
@@ -24126,7 +24059,7 @@ bool <strong>appid.log_stats</strong> = false: enable logging of appid statistic
 </li>
 <li>
 <p>
-int <strong>appid.memcap</strong> = 0: disregard - not implemented { 0: }
+int <strong>appid.memcap</strong> = 0: disregard - not implemented { 0:maxSZ }
 </p>
 </li>
 <li>
@@ -24156,7 +24089,7 @@ bool <strong>appid.tp_appid_stats_enable</strong>: enable collection of stats an
 </li>
 <li>
 <p>
-int <strong>appid.trace</strong>: mask for enabling debug traces in module
+int <strong>appid.trace</strong>: mask for enabling debug traces in module { 0:max53 }
 </p>
 </li>
 <li>
@@ -24171,7 +24104,7 @@ mac <strong>arp_spoof.hosts[].mac</strong>: host mac address
 </li>
 <li>
 <p>
-int <strong>asn1.absolute_offset</strong>: absolute offset from the beginning of the packet { 0: }
+int <strong>asn1.absolute_offset</strong>: absolute offset from the beginning of the packet { 0:65535 }
 </p>
 </li>
 <li>
@@ -24186,7 +24119,7 @@ implied <strong>asn1.double_overflow</strong>: detects a double ASCII encoding t
 </li>
 <li>
 <p>
-int <strong>asn1.oversize_length</strong>: compares ASN.1 type lengths with the supplied argument { 0: }
+int <strong>asn1.oversize_length</strong>: compares ASN.1 type lengths with the supplied argument { 0:max32 }
 </p>
 </li>
 <li>
@@ -24196,17 +24129,17 @@ implied <strong>asn1.print</strong>: dump decode data to console; always true
 </li>
 <li>
 <p>
-int <strong>asn1.relative_offset</strong>: relative offset from the cursor
+int <strong>asn1.relative_offset</strong>: relative offset from the cursor { -65535:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>attribute_table.max_hosts</strong> = 1024: maximum number of hosts in attribute table { 32:207551 }
+int <strong>attribute_table.max_hosts</strong> = 1024: maximum number of hosts in attribute table { 32:max53 }
 </p>
 </li>
 <li>
 <p>
-int <strong>attribute_table.max_metadata_services</strong> = 8: maximum number of services in rule metadata { 1:256 }
+int <strong>attribute_table.max_metadata_services</strong> = 8: maximum number of services in rule { 1:255 }
 </p>
 </li>
 <li>
@@ -24216,12 +24149,12 @@ int <strong>attribute_table.max_services_per_host</strong> = 8: maximum number o
 </li>
 <li>
 <p>
-int <strong>base64_decode.bytes</strong>: number of base64 encoded bytes to decode { 1: }
+int <strong>base64_decode.bytes</strong>: number of base64 encoded bytes to decode { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>base64_decode.offset</strong> = 0: bytes past start of buffer to start decoding { 0: }
+int <strong>base64_decode.offset</strong> = 0: bytes past start of buffer to start decoding { 0:max32 }
 </p>
 </li>
 <li>
@@ -24281,7 +24214,7 @@ bit_list <strong>binder[].when.dst_ports</strong>: list of destination ports { 6
 </li>
 <li>
 <p>
-int <strong>binder[].when.dst_zone</strong>: destination zone { 0:2147483647 }
+int <strong>binder[].when.dst_zone</strong>: destination zone { 0:max31 }
 </p>
 </li>
 <li>
@@ -24291,7 +24224,7 @@ bit_list <strong>binder[].when.ifaces</strong>: list of interface indices { 255 
 </li>
 <li>
 <p>
-int <strong>binder[].when.ips_policy_id</strong> = 0: unique ID for selection of this config by external logic { 0: }
+int <strong>binder[].when.ips_policy_id</strong> = 0: unique ID for selection of this config by external logic { 0:max32 }
 </p>
 </li>
 <li>
@@ -24331,7 +24264,7 @@ bit_list <strong>binder[].when.src_ports</strong>: list of source ports { 65535 
 </li>
 <li>
 <p>
-int <strong>binder[].when.src_zone</strong>: source zone { 0:2147483647 }
+int <strong>binder[].when.src_zone</strong>: source zone { 0:max31 }
 </p>
 </li>
 <li>
@@ -24616,7 +24549,7 @@ string <strong>classifications[].name</strong>: name used with classtype rule op
 </li>
 <li>
 <p>
-int <strong>classifications[].priority</strong> = 1: default priority for class { 0: }
+int <strong>classifications[].priority</strong> = 1: default priority for class { 0:max32 }
 </p>
 </li>
 <li>
@@ -24646,12 +24579,12 @@ string <strong>content.distance</strong>: var or number of bytes from cursor to 
 </li>
 <li>
 <p>
-int <strong>content.fast_pattern_length</strong>: maximum number of characters from this content the fast pattern matcher should use { 1: }
+int <strong>content.fast_pattern_length</strong>: maximum number of characters from this content the fast pattern matcher should use { 1:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>content.fast_pattern_offset</strong> = 0: number of leading characters of this content the fast pattern matcher should exclude { 0: }
+int <strong>content.fast_pattern_offset</strong> = 0: number of leading characters of this content the fast pattern matcher should exclude { 0:65535 }
 </p>
 </li>
 <li>
@@ -24686,7 +24619,7 @@ string <strong>daq.input_spec</strong>: input specification
 </li>
 <li>
 <p>
-int <strong>daq.instances[].id</strong>: instance ID (required) { 0: }
+int <strong>daq.instances[].id</strong>: instance ID (required) { 0:max32 }
 </p>
 </li>
 <li>
@@ -24731,7 +24664,7 @@ select <strong>data_log.key</strong> = http_request_header_event : name of the e
 </li>
 <li>
 <p>
-int <strong>data_log.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0: }
+int <strong>data_log.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0:max32 }
 </p>
 </li>
 <li>
@@ -24756,37 +24689,37 @@ string <strong>dce_opnum.~</strong>: match given dcerpc operation number, range 
 </li>
 <li>
 <p>
-bool <strong>dce_smb.disable_defrag</strong> = false:  Disable DCE/RPC defragmentation
+bool <strong>dce_smb.disable_defrag</strong> = false: disable DCE/RPC defragmentation
 </p>
 </li>
 <li>
 <p>
-int <strong>dce_smb.max_frag_len</strong> = 65535:  Maximum fragment size for defragmentation { 1514:65535 }
+int <strong>dce_smb.max_frag_len</strong> = 65535: maximum fragment size for defragmentation { 1514:65535 }
 </p>
 </li>
 <li>
 <p>
-enum <strong>dce_smb.policy</strong> = WinXP:  Target based policy to use { Win2000 |  WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba | Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
+enum <strong>dce_smb.policy</strong> = WinXP: target based policy to use { Win2000 |  WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba | Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
 </p>
 </li>
 <li>
 <p>
-int <strong>dce_smb.reassemble_threshold</strong> = 0:  Minimum bytes received before performing reassembly { 0:65535 }
+int <strong>dce_smb.reassemble_threshold</strong> = 0: minimum bytes received before performing reassembly { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>dce_smb.smb_file_depth</strong> = 16384:  SMB file depth for file data { -1: }
+int <strong>dce_smb.smb_file_depth</strong> = 16384: SMB file depth for file data { -1:32767 }
 </p>
 </li>
 <li>
 <p>
-enum <strong>dce_smb.smb_file_inspection</strong> = off:  SMB file inspection { off | on | only }
+enum <strong>dce_smb.smb_file_inspection</strong> = off: SMB file inspection { off | on | only }
 </p>
 </li>
 <li>
 <p>
-enum <strong>dce_smb.smb_fingerprint_policy</strong> = none:  Target based SMB policy to use { none | client |  server | both  }
+enum <strong>dce_smb.smb_fingerprint_policy</strong> = none: target based SMB policy to use { none | client |  server | both  }
 </p>
 </li>
 <li>
@@ -24801,67 +24734,67 @@ bool <strong>dce_smb.smb_legacy_mode</strong> = false: inspect only SMBv1
 </li>
 <li>
 <p>
-int <strong>dce_smb.smb_max_chain</strong> = 3:  SMB max chain size { 0:255 }
+int <strong>dce_smb.smb_max_chain</strong> = 3: SMB max chain size { 0:255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>dce_smb.smb_max_compound</strong> = 3:  SMB max compound size { 0:255 }
+int <strong>dce_smb.smb_max_compound</strong> = 3: SMB max compound size { 0:255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>dce_smb.trace</strong>: mask for enabling debug traces in module
+int <strong>dce_smb.trace</strong>: mask for enabling debug traces in module { 0:max53 }
 </p>
 </li>
 <li>
 <p>
-multi <strong>dce_smb.valid_smb_versions</strong> = all:  Valid SMB versions { v1 | v2 | all }
+multi <strong>dce_smb.valid_smb_versions</strong> = all: valid SMB versions { v1 | v2 | all }
 </p>
 </li>
 <li>
 <p>
-bool <strong>dce_tcp.disable_defrag</strong> = false:  Disable DCE/RPC defragmentation
+bool <strong>dce_tcp.disable_defrag</strong> = false: disable DCE/RPC defragmentation
 </p>
 </li>
 <li>
 <p>
-int <strong>dce_tcp.max_frag_len</strong> = 65535:  Maximum fragment size for defragmentation { 1514:65535 }
+int <strong>dce_tcp.max_frag_len</strong> = 65535: maximum fragment size for defragmentation { 1514:65535 }
 </p>
 </li>
 <li>
 <p>
-enum <strong>dce_tcp.policy</strong> = WinXP:  Target based policy to use { Win2000 |  WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba | Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
+enum <strong>dce_tcp.policy</strong> = WinXP: target based policy to use { Win2000 |  WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba | Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
 </p>
 </li>
 <li>
 <p>
-int <strong>dce_tcp.reassemble_threshold</strong> = 0:  Minimum bytes received before performing reassembly { 0:65535 }
+int <strong>dce_tcp.reassemble_threshold</strong> = 0: minimum bytes received before performing reassembly { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-bool <strong>dce_udp.disable_defrag</strong> = false:  Disable DCE/RPC defragmentation
+bool <strong>dce_udp.disable_defrag</strong> = false: disable DCE/RPC defragmentation
 </p>
 </li>
 <li>
 <p>
-int <strong>dce_udp.max_frag_len</strong> = 65535:  Maximum fragment size for defragmentation { 1514:65535 }
+int <strong>dce_udp.max_frag_len</strong> = 65535: maximum fragment size for defragmentation { 1514:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>dce_udp.trace</strong>: mask for enabling debug traces in module
+int <strong>dce_udp.trace</strong>: mask for enabling debug traces in module { 0:max53 }
 </p>
 </li>
 <li>
 <p>
-int <strong>decode.trace</strong>: mask for enabling debug traces in module
+int <strong>decode.trace</strong>: mask for enabling debug traces in module { 0:max53 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection.asn1</strong> = 256: maximum decode nodes { 1: }
+int <strong>detection.asn1</strong> = 0: maximum decode nodes { 0:65535 }
 </p>
 </li>
 <li>
@@ -24871,12 +24804,12 @@ bool <strong>detection.enable_address_anomaly_checks</strong> = false: enable ch
 </li>
 <li>
 <p>
-int <strong>detection_filter.count</strong>: hits in interval before allowing the rule to fire { 1: }
+int <strong>detection_filter.count</strong>: hits in interval before allowing the rule to fire { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection_filter.seconds</strong>: length of interval to count hits { 1: }
+int <strong>detection_filter.seconds</strong>: length of interval to count hits { 1:max32 }
 </p>
 </li>
 <li>
@@ -24886,12 +24819,12 @@ enum <strong>detection_filter.track</strong>: track hits by source or destinatio
 </li>
 <li>
 <p>
-int <strong>detection.offload_limit</strong> = 99999: minimum sizeof PDU to offload fast pattern search (defaults to disabled) { 0: }
+int <strong>detection.offload_limit</strong> = 99999: minimum sizeof PDU to offload fast pattern search (defaults to disabled) { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection.offload_threads</strong> = 0: maximum number of simultaneous offloads (defaults to disabled) { 0: }
+int <strong>detection.offload_threads</strong> = 0: maximum number of simultaneous offloads (defaults to disabled) { 0:max32 }
 </p>
 </li>
 <li>
@@ -24901,17 +24834,17 @@ bool <strong>detection.pcre_enable</strong> = true: disable pcre pattern matchin
 </li>
 <li>
 <p>
-int <strong>detection.pcre_match_limit</strong> = 1500: limit pcre backtracking, -1 = max, 0 = off { -1:1000000 }
+int <strong>detection.pcre_match_limit</strong> = 1500: limit pcre backtracking, 0 = off { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection.pcre_match_limit_recursion</strong> = 1500: limit pcre stack consumption, -1 = max, 0 = off { -1:10000 }
+int <strong>detection.pcre_match_limit_recursion</strong> = 1500: limit pcre stack consumption, 0 = off { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection.trace</strong>: mask for enabling debug traces in module
+int <strong>detection.trace</strong>: mask for enabling debug traces in module { 0:max53 }
 </p>
 </li>
 <li>
@@ -24971,12 +24904,12 @@ bool <strong>esp.decode_esp</strong> = false: enable for inspection of esp traff
 </li>
 <li>
 <p>
-int <strong>event_filter[].count</strong> = 0: number of events in interval before tripping; -1 to disable { -1: }
+int <strong>event_filter[].count</strong> = 0: number of events in interval before tripping; -1 to disable { -1:max31 }
 </p>
 </li>
 <li>
 <p>
-int <strong>event_filter[].gid</strong> = 1: rule generator ID { 0: }
+int <strong>event_filter[].gid</strong> = 1: rule generator ID { 0:max32 }
 </p>
 </li>
 <li>
@@ -24986,12 +24919,12 @@ string <strong>event_filter[].ip</strong>: restrict filter to these addresses ac
 </li>
 <li>
 <p>
-int <strong>event_filter[].seconds</strong> = 0: count interval { 0: }
+int <strong>event_filter[].seconds</strong> = 0: count interval { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>event_filter[].sid</strong> = 1: rule signature ID { 0: }
+int <strong>event_filter[].sid</strong> = 1: rule signature ID { 0:max32 }
 </p>
 </li>
 <li>
@@ -25006,12 +24939,12 @@ enum <strong>event_filter[].type</strong>: 1st count events | every count events
 </li>
 <li>
 <p>
-int <strong>event_queue.log</strong> = 3: maximum events to log { 1: }
+int <strong>event_queue.log</strong> = 3: maximum events to log { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>event_queue.max_queue</strong> = 8: maximum events to queue { 1: }
+int <strong>event_queue.max_queue</strong> = 8: maximum events to queue { 1:max32 }
 </p>
 </li>
 <li>
@@ -25046,7 +24979,7 @@ string <strong>file_connector.name</strong>: channel name
 </li>
 <li>
 <p>
-int <strong>file_id.block_timeout</strong> = 86400: stop blocking after this many seconds { 0: }
+int <strong>file_id.block_timeout</strong> = 86400: stop blocking after this many seconds { 0:max31 }
 </p>
 </li>
 <li>
@@ -25056,22 +24989,22 @@ bool <strong>file_id.block_timeout_lookup</strong> = false: block if lookup time
 </li>
 <li>
 <p>
-int <strong>file_id.capture_block_size</strong> = 32768: file capture block size in bytes { 8: }
+int <strong>file_id.capture_block_size</strong> = 32768: file capture block size in bytes { 8:max53 }
 </p>
 </li>
 <li>
 <p>
-int <strong>file_id.capture_max_size</strong> = 1048576: stop file capture beyond this point { 0: }
+int <strong>file_id.capture_max_size</strong> = 1048576: stop file capture beyond this point { 0:max53 }
 </p>
 </li>
 <li>
 <p>
-int <strong>file_id.capture_memcap</strong> = 100: memcap for file capture in megabytes { 0: }
+int <strong>file_id.capture_memcap</strong> = 100: memcap for file capture in megabytes { 0:max53 }
 </p>
 </li>
 <li>
 <p>
-int <strong>file_id.capture_min_size</strong> = 0: stop file capture if file size less than this { 0: }
+int <strong>file_id.capture_min_size</strong> = 0: stop file capture if file size less than this { 0:max53 }
 </p>
 </li>
 <li>
@@ -25111,7 +25044,7 @@ enum <strong>file_id.file_policy[].use.verdict</strong> = unknown: what to do wi
 </li>
 <li>
 <p>
-int <strong>file_id.file_policy[].when.file_type_id</strong> = 0: unique ID for file type in file magic rule { 0: }
+int <strong>file_id.file_policy[].when.file_type_id</strong> = 0: unique ID for file type in file magic rule { 0:max32 }
 </p>
 </li>
 <li>
@@ -25131,7 +25064,7 @@ string <strong>file_id.file_rules[].group</strong>: comma separated list of grou
 </li>
 <li>
 <p>
-int <strong>file_id.file_rules[].id</strong> = 0: file type id { 0: }
+int <strong>file_id.file_rules[].id</strong> = 0: file type id { 0:max32 }
 </p>
 </li>
 <li>
@@ -25141,7 +25074,7 @@ string <strong>file_id.file_rules[].magic[].content</strong>: file magic content
 </li>
 <li>
 <p>
-int <strong>file_id.file_rules[].magic[].offset</strong> = 0: file magic offset { 0: }
+int <strong>file_id.file_rules[].magic[].offset</strong> = 0: file magic offset { 0:max32 }
 </p>
 </li>
 <li>
@@ -25151,7 +25084,7 @@ string <strong>file_id.file_rules[].msg</strong>: information about the file typ
 </li>
 <li>
 <p>
-int <strong>file_id.file_rules[].rev</strong> = 0: rule revision { 0: }
+int <strong>file_id.file_rules[].rev</strong> = 0: rule revision { 0:max32 }
 </p>
 </li>
 <li>
@@ -25166,22 +25099,22 @@ string <strong>file_id.file_rules[].version</strong>: file type version
 </li>
 <li>
 <p>
-int <strong>file_id.lookup_timeout</strong> = 2: give up on lookup after this many seconds { 0: }
+int <strong>file_id.lookup_timeout</strong> = 2: give up on lookup after this many seconds { 0:max31 }
 </p>
 </li>
 <li>
 <p>
-int <strong>file_id.max_files_cached</strong> = 65536: maximal number of files cached in memory { 8: }
+int <strong>file_id.max_files_cached</strong> = 65536: maximal number of files cached in memory { 8:max53 }
 </p>
 </li>
 <li>
 <p>
-int <strong>file_id.show_data_depth</strong> = 100: print this many octets { 0: }
+int <strong>file_id.show_data_depth</strong> = 100: print this many octets { 0:max53 }
 </p>
 </li>
 <li>
 <p>
-int <strong>file_id.signature_depth</strong> = 10485760: stop signature at this point { 0: }
+int <strong>file_id.signature_depth</strong> = 10485760: stop signature at this point { 0:max53 }
 </p>
 </li>
 <li>
@@ -25201,12 +25134,12 @@ bool <strong>file_id.trace_type</strong> = false: enable runtime dump of type in
 </li>
 <li>
 <p>
-int <strong>file_id.type_depth</strong> = 1460: stop type ID at this point { 0: }
+int <strong>file_id.type_depth</strong> = 1460: stop type ID at this point { 0:max53 }
 </p>
 </li>
 <li>
 <p>
-int <strong>file_id.verdict_delay</strong> = 0: number of queries to return final verdict { 0: }
+int <strong>file_id.verdict_delay</strong> = 0: number of queries to return final verdict { 0:max53 }
 </p>
 </li>
 <li>
@@ -25326,12 +25259,12 @@ addr <strong>ftp_client.bounce_to[].address</strong> = 1.0.0.0/32: allowed IP ad
 </li>
 <li>
 <p>
-port <strong>ftp_client.bounce_to[].last_port</strong>: optional allowed range from port to last_port inclusive { 0: }
+port <strong>ftp_client.bounce_to[].last_port</strong>: optional allowed range from port to last_port inclusive
 </p>
 </li>
 <li>
 <p>
-port <strong>ftp_client.bounce_to[].port</strong> = 20: allowed port { 1: }
+port <strong>ftp_client.bounce_to[].port</strong> = 20: allowed port
 </p>
 </li>
 <li>
@@ -25341,7 +25274,7 @@ bool <strong>ftp_client.ignore_telnet_erase_cmds</strong> = false: ignore erase 
 </li>
 <li>
 <p>
-int <strong>ftp_client.max_resp_len</strong> = -1: maximum FTP response accepted by client { -1: }
+int <strong>ftp_client.max_resp_len</strong> = 4294967295: maximum FTP response accepted by client { 0:max32 }
 </p>
 </li>
 <li>
@@ -25371,7 +25304,7 @@ string <strong>ftp_server.cmd_validity[].format</strong>: format specification
 </li>
 <li>
 <p>
-int <strong>ftp_server.cmd_validity[].length</strong> = 0: specify non-default maximum for command { 0: }
+int <strong>ftp_server.cmd_validity[].length</strong> = 0: specify non-default maximum for command { 0:max32 }
 </p>
 </li>
 <li>
@@ -25391,7 +25324,7 @@ string <strong>ftp_server.data_xfer_cmds</strong>: check the formatting of the g
 </li>
 <li>
 <p>
-int <strong>ftp_server.def_max_param_len</strong> = 100: default maximum length of commands handled by server; 0 is unlimited { 1: }
+int <strong>ftp_server.def_max_param_len</strong> = 100: default maximum length of commands handled by server; 0 is unlimited { 1:max32 }
 </p>
 </li>
 <li>
@@ -25401,7 +25334,7 @@ string <strong>ftp_server.directory_cmds[].dir_cmd</strong>: directory command
 </li>
 <li>
 <p>
-int <strong>ftp_server.directory_cmds[].rsp_code</strong> = 200: expected successful response code for command { 200: }
+int <strong>ftp_server.directory_cmds[].rsp_code</strong> = 200: expected successful response code for command { 200:max32 }
 </p>
 </li>
 <li>
@@ -25456,7 +25389,7 @@ bool <strong>ftp_server.telnet_cmds</strong> = false: detect Telnet escape seque
 </li>
 <li>
 <p>
-int <strong>gid.~</strong>: generator id { 1: }
+int <strong>gid.~</strong>: generator id { 1:max32 }
 </p>
 </li>
 <li>
@@ -25491,7 +25424,7 @@ int <strong>gtp_inspect[].messages[].type</strong> = 0: message type code { 0:25
 </li>
 <li>
 <p>
-int <strong>gtp_inspect.trace</strong>: mask for enabling debug traces in module
+int <strong>gtp_inspect.trace</strong>: mask for enabling debug traces in module { 0:max53 }
 </p>
 </li>
 <li>
@@ -25536,7 +25469,7 @@ bit_list <strong>high_availability.ports</strong>: side channel message port lis
 </li>
 <li>
 <p>
-int <strong>host_cache[].size</strong>: size of host cache
+int <strong>host_cache[].size</strong>: size of host cache { 1:max32 }
 </p>
 </li>
 <li>
@@ -25711,47 +25644,17 @@ bool <strong>http_inspect.plus_to_space</strong> = true: replace + with &lt;sp&g
 </li>
 <li>
 <p>
-int <strong>http_inspect.print_amount</strong> = 1200: number of characters to print from a Field { 1:1000000 }
+int <strong>http_inspect.request_depth</strong> = -1: maximum request message body bytes to examine (-1 no limit) { -1:max53 }
 </p>
 </li>
 <li>
 <p>
-bool <strong>http_inspect.print_hex</strong> = false: nonprinting characters printed in [HH] format instead of using an asterisk
-</p>
-</li>
-<li>
-<p>
-int <strong>http_inspect.request_depth</strong> = -1: maximum request message body bytes to examine (-1 no limit) { -1: }
-</p>
-</li>
-<li>
-<p>
-int <strong>http_inspect.response_depth</strong> = -1: maximum response message body bytes to examine (-1 no limit) { -1: }
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.show_pegs</strong> = true: display peg counts with test output
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.show_scan</strong> = false: display scanned segments
+int <strong>http_inspect.response_depth</strong> = -1: maximum response message body bytes to examine (-1 no limit) { -1:max53 }
 </p>
 </li>
 <li>
 <p>
 bool <strong>http_inspect.simplify_path</strong> = true: reduce URI directory path to simplest form
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.test_input</strong> = false: read HTTP messages from text file
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.test_output</strong> = false: print out HTTP section data
 </p>
 </li>
 <li>
@@ -26111,7 +26014,7 @@ bool <strong>latency.packet.fastpath</strong> = false: fastpath expensive packet
 </li>
 <li>
 <p>
-int <strong>latency.packet.max_time</strong> = 500: set timeout for packet latency thresholding (usec) { 0: }
+int <strong>latency.packet.max_time</strong> = 500: set timeout for packet latency thresholding (usec) { 0:max53 }
 </p>
 </li>
 <li>
@@ -26121,12 +26024,12 @@ enum <strong>latency.rule.action</strong> = none: event action for rule latency 
 </li>
 <li>
 <p>
-int <strong>latency.rule.max_suspend_time</strong> = 30000: set max time for suspending a rule (ms, 0 means permanently disable rule) { 0: }
+int <strong>latency.rule.max_suspend_time</strong> = 30000: set max time for suspending a rule (ms, 0 means permanently disable rule) { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>latency.rule.max_time</strong> = 500: set timeout for rule evaluation (usec) { 0: }
+int <strong>latency.rule.max_time</strong> = 500: set timeout for rule evaluation (usec) { 0:max53 }
 </p>
 </li>
 <li>
@@ -26136,7 +26039,7 @@ bool <strong>latency.rule.suspend</strong> = false: temporarily suspend expensiv
 </li>
 <li>
 <p>
-int <strong>latency.rule.suspend_threshold</strong> = 5: set threshold for number of timeouts before suspending a rule { 1: }
+int <strong>latency.rule.suspend_threshold</strong> = 5: set threshold for number of timeouts before suspending a rule { 1:max32 }
 </p>
 </li>
 <li>
@@ -26156,7 +26059,7 @@ bool <strong>log_hext.file</strong> = false: output to log_hext.txt instead of s
 </li>
 <li>
 <p>
-int <strong>log_hext.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0: }
+int <strong>log_hext.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0:maxSZ }
 </p>
 </li>
 <li>
@@ -26166,12 +26069,12 @@ bool <strong>log_hext.raw</strong> = false: output all full packets if true, els
 </li>
 <li>
 <p>
-int <strong>log_hext.width</strong> = 20: set line width (0 is unlimited) { 0: }
+int <strong>log_hext.width</strong> = 20: set line width (0 is unlimited) { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>log_pcap.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0: }
+int <strong>log_pcap.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0:maxSZ }
 </p>
 </li>
 <li>
@@ -26196,7 +26099,7 @@ implied <strong>md5.relative</strong> = false: offset from cursor instead of sta
 </li>
 <li>
 <p>
-int <strong>memory.cap</strong> = 0: set the per-packet-thread cap on memory (bytes, 0 to disable) { 0: }
+int <strong>memory.cap</strong> = 0: set the per-packet-thread cap on memory (bytes, 0 to disable) { 0:maxSZ }
 </p>
 </li>
 <li>
@@ -26206,7 +26109,7 @@ bool <strong>memory.soft</strong> = false: always succeed in allocating memory, 
 </li>
 <li>
 <p>
-int <strong>memory.threshold</strong> = 0: set the per-packet-thread threshold for preemptive cleanup actions (percent, 0 to disable) { 0: }
+int <strong>memory.threshold</strong> = 0: set the per-packet-thread threshold for preemptive cleanup actions (percent, 0 to disable) { 0:100 }
 </p>
 </li>
 <li>
@@ -26236,7 +26139,7 @@ bool <strong>mpls.enable_mpls_overlapping_ip</strong> = false: enable if private
 </li>
 <li>
 <p>
-int <strong>mpls.max_mpls_stack_depth</strong> = -1: set MPLS stack depth { -1: }
+int <strong>mpls.max_mpls_stack_depth</strong> = -1: set MPLS stack depth { -1:255 }
 </p>
 </li>
 <li>
@@ -26476,7 +26379,7 @@ bool <strong>output.show_year</strong> = false: include year in timestamp in the
 </li>
 <li>
 <p>
-int <strong>output.tagged_packet_limit</strong> = 256: maximum number of packets tagged for non-packet metrics { 0: }
+int <strong>output.tagged_packet_limit</strong> = 256: maximum number of packets tagged for non-packet metrics { 0:max32 }
 </p>
 </li>
 <li>
@@ -26486,7 +26389,7 @@ bool <strong>output.verbose</strong> = false: be verbose (same as -v)
 </li>
 <li>
 <p>
-bool <strong>output.wide_hex_dump</strong> = true: output 20 bytes per lines instead of 16 when dumping buffers
+bool <strong>output.wide_hex_dump</strong> = false: output 20 bytes per lines instead of 16 when dumping buffers
 </p>
 </li>
 <li>
@@ -26511,12 +26414,12 @@ string <strong>packets.bpf_file</strong>: file with BPF to select traffic for Sn
 </li>
 <li>
 <p>
-int <strong>packets.limit</strong> = 0: maximum number of packets to process before stopping (0 is unlimited) { 0: }
+int <strong>packets.limit</strong> = 0: maximum number of packets to process before stopping (0 is unlimited) { 0:max53 }
 </p>
 </li>
 <li>
 <p>
-int <strong>packets.skip</strong> = 0: number of packets to skip before before processing { 0: }
+int <strong>packets.skip</strong> = 0: number of packets to skip before before processing { 0:max53 }
 </p>
 </li>
 <li>
@@ -26541,12 +26444,12 @@ string <strong>pcre.~re</strong>: Snort regular expression
 </li>
 <li>
 <p>
-bool <strong>perf_monitor.base</strong> = true: enable base statistics { nullptr }
+bool <strong>perf_monitor.base</strong> = true: enable base statistics
 </p>
 </li>
 <li>
 <p>
-bool <strong>perf_monitor.cpu</strong> = false: enable cpu statistics { nullptr }
+bool <strong>perf_monitor.cpu</strong> = false: enable cpu statistics
 </p>
 </li>
 <li>
@@ -26561,7 +26464,7 @@ bool <strong>perf_monitor.flow_ip</strong> = false: enable statistics on host pa
 </li>
 <li>
 <p>
-int <strong>perf_monitor.flow_ip_memcap</strong> = 52428800: maximum memory in bytes for flow tracking { 8200: }
+int <strong>perf_monitor.flow_ip_memcap</strong> = 52428800: maximum memory in bytes for flow tracking { 8200:maxSZ }
 </p>
 </li>
 <li>
@@ -26576,7 +26479,7 @@ enum <strong>perf_monitor.format</strong> = csv: output format for stats { csv |
 </li>
 <li>
 <p>
-int <strong>perf_monitor.max_file_size</strong> = 1073741824: files will be rolled over if they exceed this size { 4096: }
+int <strong>perf_monitor.max_file_size</strong> = 1073741824: files will be rolled over if they exceed this size { 4096:max53 }
 </p>
 </li>
 <li>
@@ -26596,12 +26499,12 @@ enum <strong>perf_monitor.output</strong> = file: output location for stats { fi
 </li>
 <li>
 <p>
-int <strong>perf_monitor.packets</strong> = 10000: minimum packets to report { 0: }
+int <strong>perf_monitor.packets</strong> = 10000: minimum packets to report { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>perf_monitor.seconds</strong> = 60: report interval { 1: }
+int <strong>perf_monitor.seconds</strong> = 60: report interval { 1:max32 }
 </p>
 </li>
 <li>
@@ -26641,27 +26544,27 @@ bool <strong>port_scan.alert_all</strong> = false: alert on all events over thre
 </li>
 <li>
 <p>
-int <strong>port_scan.icmp_sweep.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.icmp_sweep.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.icmp_sweep.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.icmp_sweep.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.icmp_sweep.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.icmp_sweep.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.icmp_sweep.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.icmp_sweep.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.icmp_window</strong> = 0: detection interval for all ICMP scans { 0: }
+int <strong>port_scan.icmp_window</strong> = 0: detection interval for all ICMP scans { 0:max32 }
 </p>
 </li>
 <li>
@@ -26681,92 +26584,92 @@ bool <strong>port_scan.include_midstream</strong> = false: list of CIDRs with op
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_decoy.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.ip_decoy.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_decoy.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.ip_decoy.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_decoy.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.ip_decoy.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_decoy.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.ip_decoy.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_dist.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.ip_dist.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_dist.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.ip_dist.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_dist.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.ip_dist.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_dist.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.ip_dist.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_proto.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.ip_proto.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_proto.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.ip_proto.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_proto.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.ip_proto.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_proto.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.ip_proto.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_sweep.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.ip_sweep.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_sweep.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.ip_sweep.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_sweep.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.ip_sweep.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_sweep.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.ip_sweep.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_window</strong> = 0: detection interval for all IP scans { 0: }
+int <strong>port_scan.ip_window</strong> = 0: detection interval for all IP scans { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.memcap</strong> = 1048576: maximum tracker memory in bytes { 1: }
+int <strong>port_scan.memcap</strong> = 1048576: maximum tracker memory in bytes { 1:maxSZ }
 </p>
 </li>
 <li>
@@ -26781,172 +26684,172 @@ multi <strong>port_scan.scan_types</strong> = all: choose type of scans to look 
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_decoy.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.tcp_decoy.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_decoy.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.tcp_decoy.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_decoy.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.tcp_decoy.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_decoy.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.tcp_decoy.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_dist.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.tcp_dist.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_dist.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.tcp_dist.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_dist.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.tcp_dist.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_dist.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.tcp_dist.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_ports.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.tcp_ports.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_ports.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.tcp_ports.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_ports.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.tcp_ports.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_ports.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.tcp_ports.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_sweep.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.tcp_sweep.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_sweep.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.tcp_sweep.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_sweep.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.tcp_sweep.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_sweep.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.tcp_sweep.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_window</strong> = 0: detection interval for all TCP scans { 0: }
+int <strong>port_scan.tcp_window</strong> = 0: detection interval for all TCP scans { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_decoy.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.udp_decoy.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_decoy.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.udp_decoy.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_decoy.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.udp_decoy.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_decoy.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.udp_decoy.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_dist.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.udp_dist.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_dist.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.udp_dist.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_dist.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.udp_dist.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_dist.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.udp_dist.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_ports.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.udp_ports.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_ports.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.udp_ports.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_ports.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.udp_ports.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_ports.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.udp_ports.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_sweep.nets</strong> = 25: number of times address changed from prior attempt { 0: }
+int <strong>port_scan.udp_sweep.nets</strong> = 25: number of times address changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_sweep.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0: }
+int <strong>port_scan.udp_sweep.ports</strong> = 25: number of times port (or proto) changed from prior attempt { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_sweep.rejects</strong> = 15: scan attempts with negative response { 0: }
+int <strong>port_scan.udp_sweep.rejects</strong> = 15: scan attempts with negative response { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_sweep.scans</strong> = 100: scan attempts { 0: }
+int <strong>port_scan.udp_sweep.scans</strong> = 100: scan attempts { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_window</strong> = 0: detection interval for all UDP scans { 0: }
+int <strong>port_scan.udp_window</strong> = 0: detection interval for all UDP scans { 0:max32 }
 </p>
 </li>
 <li>
@@ -26956,7 +26859,7 @@ string <strong>port_scan.watch_ip</strong>: list of CIDRs with optional ports to
 </li>
 <li>
 <p>
-int <strong>priority.~</strong>: relative severity level; 1 is highest priority { 1: }
+int <strong>priority.~</strong>: relative severity level; 1 is highest priority { 1:max31 }
 </p>
 </li>
 <li>
@@ -26991,12 +26894,12 @@ string <strong>process.threads[].cpuset</strong>: pin the associated thread to t
 </li>
 <li>
 <p>
-int <strong>process.threads[].thread</strong> = 0: set cpu affinity for the &lt;cur_thread_num&gt; thread that runs { 0: }
+int <strong>process.threads[].thread</strong> = 0: set cpu affinity for the &lt;cur_thread_num&gt; thread that runs { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-string <strong>process.umask</strong>: set process umask (same as -m)
+int <strong>process.umask</strong>: set process umask (same as -m) { 0x000:0x1FF }
 </p>
 </li>
 <li>
@@ -27006,12 +26909,12 @@ bool <strong>process.utc</strong> = false: use UTC instead of local time for tim
 </li>
 <li>
 <p>
-int <strong>profiler.memory.count</strong> = 0: limit results to count items per level (0 = no limit) { 0: }
+int <strong>profiler.memory.count</strong> = 0: limit results to count items per level (0 = no limit) { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>profiler.memory.max_depth</strong> = -1: limit depth to max_depth (-1 = no limit) { -1: }
+int <strong>profiler.memory.max_depth</strong> = -1: limit depth to max_depth (-1 = no limit) { -1:255 }
 </p>
 </li>
 <li>
@@ -27026,12 +26929,12 @@ enum <strong>profiler.memory.sort</strong> = total_used: sort by given field { n
 </li>
 <li>
 <p>
-int <strong>profiler.modules.count</strong> = 0: limit results to count items per level (0 = no limit) { 0: }
+int <strong>profiler.modules.count</strong> = 0: limit results to count items per level (0 = no limit) { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>profiler.modules.max_depth</strong> = -1: limit depth to max_depth (-1 = no limit) { -1: }
+int <strong>profiler.modules.max_depth</strong> = -1: limit depth to max_depth (-1 = no limit) { -1:255 }
 </p>
 </li>
 <li>
@@ -27046,7 +26949,7 @@ enum <strong>profiler.modules.sort</strong> = total_time: sort by given field { 
 </li>
 <li>
 <p>
-int <strong>profiler.rules.count</strong> = 0: print results to given level (0 = all) { 0: }
+int <strong>profiler.rules.count</strong> = 0: print results to given level (0 = all) { 0:max32 }
 </p>
 </li>
 <li>
@@ -27066,12 +26969,12 @@ string <strong>rate_filter[].apply_to</strong>: restrict filter to these address
 </li>
 <li>
 <p>
-int <strong>rate_filter[].count</strong> = 1: number of events in interval before tripping { 0: }
+int <strong>rate_filter[].count</strong> = 1: number of events in interval before tripping { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>rate_filter[].gid</strong> = 1: rule generator ID { 0: }
+int <strong>rate_filter[].gid</strong> = 1: rule generator ID { 0:max32 }
 </p>
 </li>
 <li>
@@ -27081,17 +26984,17 @@ enum <strong>rate_filter[].new_action</strong> = alert: take this action on futu
 </li>
 <li>
 <p>
-int <strong>rate_filter[].seconds</strong> = 1: count interval { 0: }
+int <strong>rate_filter[].seconds</strong> = 1: count interval { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>rate_filter[].sid</strong> = 1: rule signature ID { 0: }
+int <strong>rate_filter[].sid</strong> = 1: rule signature ID { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>rate_filter[].timeout</strong> = 1: count interval { 0: }
+int <strong>rate_filter[].timeout</strong> = 1: count interval { 0:max32 }
 </p>
 </li>
 <li>
@@ -27166,7 +27069,7 @@ bool <strong>reg_test.test_daq_retry</strong> = true: test daq packet retry feat
 </li>
 <li>
 <p>
-enum <strong>reject.control</strong>: send ICMP unreachable(s) { network|host|port|all }
+enum <strong>reject.control</strong>: send ICMP unreachable(s) { network|host|port|forward|all }
 </p>
 </li>
 <li>
@@ -27226,7 +27129,7 @@ enum <strong>reputation.white</strong> = unblack: specify the meaning of whiteli
 </li>
 <li>
 <p>
-int <strong>rev.~</strong>: revision { 1: }
+int <strong>rev.~</strong>: revision { 1:max32 }
 </p>
 </li>
 <li>
@@ -27236,7 +27139,7 @@ bool <strong>rewrite.disable_replace</strong> = false: disable replace of packet
 </li>
 <li>
 <p>
-int <strong>rpc.~app</strong>: application number
+int <strong>rpc.~app</strong>: application number { 0:max32 }
 </p>
 </li>
 <li>
@@ -27256,12 +27159,12 @@ bool <strong>rule_state[].enable</strong> = true: enable or disable rule in all 
 </li>
 <li>
 <p>
-int <strong>rule_state[].gid</strong> = 0: rule generator ID { 0: }
+int <strong>rule_state[].gid</strong> = 0: rule generator ID { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>rule_state[].sid</strong> = 0: rule signature ID { 0: }
+int <strong>rule_state[].sid</strong> = 0: rule signature ID { 0:max32 }
 </p>
 </li>
 <li>
@@ -27271,12 +27174,12 @@ string <strong>sd_pattern.~pattern</strong>: The pattern to search for
 </li>
 <li>
 <p>
-int <strong>sd_pattern.threshold</strong>: number of matches before alerting { 1 }
+int <strong>sd_pattern.threshold</strong> = 1: number of matches before alerting { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>search_engine.bleedover_port_limit</strong> = 1024: maximum ports in rule before demotion to any-any port group { 1: }
+int <strong>search_engine.bleedover_port_limit</strong> = 1024: maximum ports in rule before demotion to any-any port group { 1:max32 }
 </p>
 </li>
 <li>
@@ -27321,7 +27224,7 @@ bool <strong>search_engine.enable_single_rule_group</strong> = false: put all ru
 </li>
 <li>
 <p>
-int <strong>search_engine.max_pattern_len</strong> = 0: truncate patterns when compiling into state machine (0 means no maximum) { 0: }
+int <strong>search_engine.max_pattern_len</strong> = 0: truncate patterns when compiling into state machine (0 means no maximum) { 0:max32 }
 </p>
 </li>
 <li>
@@ -27421,7 +27324,7 @@ bit_list <strong>side_channel.ports</strong>: side channel message port list { 6
 </li>
 <li>
 <p>
-int <strong>sid.~</strong>: signature id { 1: }
+int <strong>sid.~</strong>: signature id { 1:max32 }
 </p>
 </li>
 <li>
@@ -27446,7 +27349,7 @@ int <strong>sip.max_content_len</strong> = 1024: maximum content length of the m
 </li>
 <li>
 <p>
-int <strong>sip.max_dialogs</strong> = 4: maximum number of dialogs within one stream session { 1:4194303 }
+int <strong>sip.max_dialogs</strong> = 4: maximum number of dialogs within one stream session { 1:max32 }
 </p>
 </li>
 <li>
@@ -27486,7 +27389,7 @@ string <strong>sip.methods</strong> = invite cancel ack  bye register options: l
 </li>
 <li>
 <p>
-int <strong>sip_stat_code.*code</strong>: stat code { 1:999 }
+int <strong>sip_stat_code.*code</strong>: status code { 1:999 }
 </p>
 </li>
 <li>
@@ -27496,7 +27399,7 @@ string <strong>smtp.alt_max_command_line_len[].command</strong>: command string
 </li>
 <li>
 <p>
-int <strong>smtp.alt_max_command_line_len[].length</strong> = 0: specify non-default maximum for command { 0: }
+int <strong>smtp.alt_max_command_line_len[].length</strong> = 0: specify non-default maximum for command { 0:max32 }
 </p>
 </li>
 <li>
@@ -27641,11 +27544,6 @@ string <strong>snort.--c2x</strong>: output hex for given char (see also --x2c)
 </li>
 <li>
 <p>
-string <strong>snort.--catch-test</strong>: comma separated list of cat unit test tags or <em>all</em>
-</p>
-</li>
-<li>
-<p>
 string <strong>snort.-c</strong>: &lt;conf&gt; use this configuration
 </p>
 </li>
@@ -27766,6 +27664,11 @@ string <strong>snort.--help-counts</strong>: [&lt;module prefix&gt;] output matc
 </li>
 <li>
 <p>
+implied <strong>snort.--help-limits</strong>: print the int upper bounds denoted by max*
+</p>
+</li>
+<li>
+<p>
 implied <strong>snort.--help</strong>: list command line options
 </p>
 </li>
@@ -27881,7 +27784,7 @@ implied <strong>snort.--markup</strong>: output help in asciidoc compatible form
 </li>
 <li>
 <p>
-int <strong>snort.--max-packet-threads</strong> = 1: &lt;count&gt; configure maximum number of packet threads (same as -z) { 0: }
+int <strong>snort.--max-packet-threads</strong> = 1: &lt;count&gt; configure maximum number of packet threads (same as -z) { 0:max32 }
 </p>
 </li>
 <li>
@@ -27896,12 +27799,12 @@ implied <strong>snort.-M</strong>: log messages to syslog (not alerts)
 </li>
 <li>
 <p>
-int <strong>snort.-m</strong>: &lt;umask&gt; set umask = &lt;umask&gt; { 0: }
+int <strong>snort.-m</strong>: &lt;umask&gt; set the process file mode creation mask { 0x000:0x1FF }
 </p>
 </li>
 <li>
 <p>
-int <strong>snort.-n</strong>: &lt;count&gt; stop after count packets { 0: }
+int <strong>snort.-n</strong>: &lt;count&gt; stop after count packets { 0:max53 }
 </p>
 </li>
 <li>
@@ -27931,11 +27834,6 @@ implied <strong>snort.--parsing-follows-files</strong>: parse relative paths fro
 </li>
 <li>
 <p>
-int <strong>snort.--pause-after-n</strong>: &lt;count&gt; pause after count packets, to be used with single packet thread only { 1: }
-</p>
-</li>
-<li>
-<p>
 implied <strong>snort.--pause</strong>: wait for resume/quit command before processing packets/terminating
 </p>
 </li>
@@ -27961,7 +27859,7 @@ string <strong>snort.--pcap-list</strong>: &lt;list&gt; a space separated list o
 </li>
 <li>
 <p>
-int <strong>snort.--pcap-loop</strong>: &lt;count&gt; read all pcaps &lt;count&gt; times;  0 will read until Snort is terminated { -1: }
+int <strong>snort.--pcap-loop</strong>: &lt;count&gt; read all pcaps &lt;count&gt; times;  0 will read until Snort is terminated { 0:max32 }
 </p>
 </li>
 <li>
@@ -27982,11 +27880,6 @@ implied <strong>snort.--pcap-show</strong>: print a line saying what pcap is cur
 <li>
 <p>
 implied <strong>snort.--pedantic</strong>: warnings are fatal
-</p>
-</li>
-<li>
-<p>
-implied <strong>snort.--piglet</strong>: enable piglet test harness mode
 </p>
 </li>
 <li>
@@ -28036,7 +27929,7 @@ implied <strong>snort.--rule-to-hex</strong>: output so rule header to stdout fo
 </li>
 <li>
 <p>
-string <strong>snort.--rule-to-text</strong> = [SnortFoo]: output plain so rule header to stdout for text rule on stdin { 16 }
+string <strong>snort.--rule-to-text</strong>: output plain so rule header to stdout for text rule on stdin (specify delimiter or [Snort_SO_Rule] will be used) { 16 }
 </p>
 </li>
 <li>
@@ -28046,7 +27939,7 @@ string <strong>snort.--run-prefix</strong>: &lt;pfx&gt; prepend this to each out
 </li>
 <li>
 <p>
-int <strong>snort.-s</strong> = 1514: &lt;snap&gt; (same as --snaplen); default is 1514 { 68:65535 }
+int <strong>snort.-s</strong> = 1518: &lt;snap&gt; (same as --snaplen); default is 1518 { 68:65535 }
 </p>
 </li>
 <li>
@@ -28066,12 +27959,12 @@ implied <strong>snort.--show-plugins</strong>: list module and plugin versions
 </li>
 <li>
 <p>
-int <strong>snort.--skip</strong>: &lt;n&gt; skip 1st n packets { 0: }
+int <strong>snort.--skip</strong>: &lt;n&gt; skip 1st n packets { 0:max53 }
 </p>
 </li>
 <li>
 <p>
-int <strong>snort.--snaplen</strong> = 1514: &lt;snap&gt; set snaplen of packet (same as -s) { 68:65535 }
+int <strong>snort.--snaplen</strong> = 1518: &lt;snap&gt; set snaplen of packet (same as -s) { 68:65535 }
 </p>
 </li>
 <li>
@@ -28096,7 +27989,7 @@ string <strong>snort.-t</strong>: &lt;dir&gt; chroots process to &lt;dir&gt; aft
 </li>
 <li>
 <p>
-int <strong>snort.trace</strong>: mask for enabling debug traces in module
+int <strong>snort.trace</strong>: mask for enabling debug traces in module { 0:max53 }
 </p>
 </li>
 <li>
@@ -28201,12 +28094,7 @@ implied <strong>snort.--warn-vars</strong>: warn about variable definition and u
 </li>
 <li>
 <p>
-implied <strong>snort.-W</strong>: lists available interfaces
-</p>
-</li>
-<li>
-<p>
-int <strong>snort.--x2c</strong>: output ASCII char for given hex (see also --c2x)
+int <strong>snort.--x2c</strong>: output ASCII char for given hex (see also --c2x) { 0x00:0xFF }
 </p>
 </li>
 <li>
@@ -28231,7 +28119,7 @@ implied <strong>snort.-y</strong>: include year in timestamp in the alert and lo
 </li>
 <li>
 <p>
-int <strong>snort.-z</strong> = 1: &lt;count&gt; maximum number of packet threads (same as --max-packet-threads); 0 gets the number of CPU cores reported by the system; default is 1 { 0: }
+int <strong>snort.-z</strong> = 1: &lt;count&gt; maximum number of packet threads (same as --max-packet-threads); 0 gets the number of CPU cores reported by the system; default is 1 { 0:max32 }
 </p>
 </li>
 <li>
@@ -28371,17 +28259,17 @@ implied <strong>ssl_version.tls1.2</strong>: check for tls1.2
 </li>
 <li>
 <p>
-int <strong>stream.file_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
+int <strong>stream.file_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.file_cache.max_sessions</strong> = 128: maximum simultaneous sessions tracked before pruning { 2: }
+int <strong>stream.file_cache.max_sessions</strong> = 128: maximum simultaneous sessions tracked before pruning { 2:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.file_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1: }
+int <strong>stream.file_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
 </p>
 </li>
 <li>
@@ -28391,42 +28279,42 @@ bool <strong>stream_file.upload</strong> = false: indicate file transfer directi
 </li>
 <li>
 <p>
-int <strong>stream.footprint</strong> = 0: use zero for production, non-zero for testing at given size (for TCP and user) { 0: }
+int <strong>stream.footprint</strong> = 0: use zero for production, non-zero for testing at given size (for TCP and user) { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.icmp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
+int <strong>stream.icmp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.icmp_cache.max_sessions</strong> = 65536: maximum simultaneous sessions tracked before pruning { 2: }
+int <strong>stream.icmp_cache.max_sessions</strong> = 65536: maximum simultaneous sessions tracked before pruning { 2:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.icmp_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1: }
+int <strong>stream.icmp_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream_icmp.session_timeout</strong> = 30: session tracking timeout { 1:86400 }
+int <strong>stream_icmp.session_timeout</strong> = 30: session tracking timeout { 1:max31 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.ip_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
+int <strong>stream.ip_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.ip_cache.max_sessions</strong> = 16384: maximum simultaneous sessions tracked before pruning { 2: }
+int <strong>stream.ip_cache.max_sessions</strong> = 16384: maximum simultaneous sessions tracked before pruning { 2:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.ip_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1: }
+int <strong>stream.ip_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
 </p>
 </li>
 <li>
@@ -28436,17 +28324,17 @@ bool <strong>stream.ip_frags_only</strong> = false: don&#8217;t process non-frag
 </li>
 <li>
 <p>
-int <strong>stream_ip.max_frags</strong> = 8192: maximum number of simultaneous fragments being tracked { 1: }
+int <strong>stream_ip.max_frags</strong> = 8192: maximum number of simultaneous fragments being tracked { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream_ip.max_overlaps</strong> = 0: maximum allowed overlaps per datagram; 0 is unlimited { 0: }
+int <strong>stream_ip.max_overlaps</strong> = 0: maximum allowed overlaps per datagram; 0 is unlimited { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream_ip.min_frag_length</strong> = 0: alert if fragment length is below this limit before or after trimming { 0: }
+int <strong>stream_ip.min_frag_length</strong> = 0: alert if fragment length is below this limit before or after trimming { 0:65535 }
 </p>
 </li>
 <li>
@@ -28461,12 +28349,12 @@ enum <strong>stream_ip.policy</strong> = linux: fragment reassembly policy { fir
 </li>
 <li>
 <p>
-int <strong>stream_ip.session_timeout</strong> = 30: session tracking timeout { 1:86400 }
+int <strong>stream_ip.session_timeout</strong> = 30: session tracking timeout { 1:max31 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream_ip.trace</strong>: mask for enabling debug traces in module
+int <strong>stream_ip.trace</strong>: mask for enabling debug traces in module { 0:max53 }
 </p>
 </li>
 <li>
@@ -28501,22 +28389,22 @@ interval <strong>stream_size.~range</strong>: check if the stream size is in the
 </li>
 <li>
 <p>
-int <strong>stream.tcp_cache.idle_timeout</strong> = 3600: maximum inactive time before retiring session tracker { 1: }
+int <strong>stream.tcp_cache.idle_timeout</strong> = 3600: maximum inactive time before retiring session tracker { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.tcp_cache.max_sessions</strong> = 262144: maximum simultaneous sessions tracked before pruning { 2: }
+int <strong>stream.tcp_cache.max_sessions</strong> = 262144: maximum simultaneous sessions tracked before pruning { 2:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.tcp_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1: }
+int <strong>stream.tcp_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream_tcp.flush_factor</strong> = 0: flush upon seeing a drop in segment size after given number of non-decreasing segments { 0: }
+int <strong>stream_tcp.flush_factor</strong> = 0: flush upon seeing a drop in segment size after given number of non-decreasing segments { 0:65535 }
 </p>
 </li>
 <li>
@@ -28531,7 +28419,7 @@ int <strong>stream_tcp.max_window</strong> = 0: maximum allowed TCP window { 0:1
 </li>
 <li>
 <p>
-int <strong>stream_tcp.overlap_limit</strong> = 0: maximum number of allowed overlapping segments per session { 0:255 }
+int <strong>stream_tcp.overlap_limit</strong> = 0: maximum number of allowed overlapping segments per session { 0:max32 }
 </p>
 </li>
 <li>
@@ -28541,12 +28429,12 @@ enum <strong>stream_tcp.policy</strong> = bsd: determines operating system chara
 </li>
 <li>
 <p>
-int <strong>stream_tcp.queue_limit.max_bytes</strong> = 1048576: don&#8217;t queue more than given bytes per session and direction { 0: }
+int <strong>stream_tcp.queue_limit.max_bytes</strong> = 1048576: don&#8217;t queue more than given bytes per session and direction { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream_tcp.queue_limit.max_segments</strong> = 2621: don&#8217;t queue more than given segments per session and direction { 0: }
+int <strong>stream_tcp.queue_limit.max_segments</strong> = 2621: don&#8217;t queue more than given segments per session and direction { 0:max32 }
 </p>
 </li>
 <li>
@@ -28556,12 +28444,12 @@ bool <strong>stream_tcp.reassemble_async</strong> = true: queue data for reassem
 </li>
 <li>
 <p>
-int <strong>stream_tcp.require_3whs</strong> = -1: don&#8217;t track midstream sessions after given seconds from start up; -1 tracks all { -1:86400 }
+int <strong>stream_tcp.require_3whs</strong> = -1: don&#8217;t track midstream sessions after given seconds from start up; -1 tracks all { -1:max31 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream_tcp.session_timeout</strong> = 30: session tracking timeout { 1:86400 }
+int <strong>stream_tcp.session_timeout</strong> = 30: session tracking timeout { 1:max31 }
 </p>
 </li>
 <li>
@@ -28581,57 +28469,57 @@ int <strong>stream_tcp.small_segments.maximum_size</strong> = 0: limit number of
 </li>
 <li>
 <p>
-int <strong>stream.trace</strong>: mask for enabling debug traces in module
+int <strong>stream.trace</strong>: mask for enabling debug traces in module { 0:max53 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.udp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
+int <strong>stream.udp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.udp_cache.max_sessions</strong> = 131072: maximum simultaneous sessions tracked before pruning { 2: }
+int <strong>stream.udp_cache.max_sessions</strong> = 131072: maximum simultaneous sessions tracked before pruning { 2:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.udp_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1: }
+int <strong>stream.udp_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream_udp.session_timeout</strong> = 30: session tracking timeout { 1:86400 }
+int <strong>stream_udp.session_timeout</strong> = 30: session tracking timeout { 1:max31 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.user_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
+int <strong>stream.user_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.user_cache.max_sessions</strong> = 1024: maximum simultaneous sessions tracked before pruning { 2: }
+int <strong>stream.user_cache.max_sessions</strong> = 1024: maximum simultaneous sessions tracked before pruning { 2:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.user_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1: }
+int <strong>stream.user_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream_user.session_timeout</strong> = 30: session tracking timeout { 1:86400 }
+int <strong>stream_user.session_timeout</strong> = 30: session tracking timeout { 1:max31 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream_user.trace</strong>: mask for enabling debug traces in module
+int <strong>stream_user.trace</strong>: mask for enabling debug traces in module { 0:max53 }
 </p>
 </li>
 <li>
 <p>
-int <strong>suppress[].gid</strong> = 0: rule generator ID { 0: }
+int <strong>suppress[].gid</strong> = 0: rule generator ID { 0:max32 }
 </p>
 </li>
 <li>
@@ -28641,7 +28529,7 @@ string <strong>suppress[].ip</strong>: restrict suppression to these addresses a
 </li>
 <li>
 <p>
-int <strong>suppress[].sid</strong> = 0: rule signature ID { 0: }
+int <strong>suppress[].sid</strong> = 0: rule signature ID { 0:max32 }
 </p>
 </li>
 <li>
@@ -28651,7 +28539,7 @@ enum <strong>suppress[].track</strong>: suppress only matching source or destina
 </li>
 <li>
 <p>
-int <strong>tag.bytes</strong>: tag for this many bytes { 1: }
+int <strong>tag.bytes</strong>: tag for this many bytes { 1:max32 }
 </p>
 </li>
 <li>
@@ -28661,12 +28549,12 @@ enum <strong>tag.~</strong>: log all packets in session or all packets to or fro
 </li>
 <li>
 <p>
-int <strong>tag.packets</strong>: tag this many packets { 1: }
+int <strong>tag.packets</strong>: tag this many packets { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>tag.seconds</strong>: tag for this many seconds { 1: }
+int <strong>tag.seconds</strong>: tag for this many seconds { 1:max32 }
 </p>
 </li>
 <li>
@@ -28696,7 +28584,7 @@ enum <strong>tcp_connector.setup</strong>: stream establishment { call | answer 
 </li>
 <li>
 <p>
-int <strong>telnet.ayt_attack_thresh</strong> = -1: alert on this number of consecutive Telnet AYT commands { -1: }
+int <strong>telnet.ayt_attack_thresh</strong> = -1: alert on this number of consecutive Telnet AYT commands { -1:max31 }
 </p>
 </li>
 <li>
@@ -28746,7 +28634,7 @@ bool <strong>unified2.legacy_events</strong> = false: generate Snort 2.X style e
 </li>
 <li>
 <p>
-int <strong>unified2.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0: }
+int <strong>unified2.limit</strong> = 0: set maximum size in MB before rollover (0 is unlimited) { 0:maxSZ }
 </p>
 </li>
 <li>
@@ -28829,6 +28717,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <div class="sect2">
 <h3 id="_counts">Counts</h3>
 <div class="ulist"><ul>
+<li>
+<p>
+<strong>active.injects</strong>: total crafted packets injected (sum)
+</p>
+</li>
 <li>
 <p>
 <strong>appid.appid_unknown</strong>: count of sessions where appid could not be determined (sum)
@@ -34446,7 +34339,7 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>snort.resume</strong>(): continue packet processing
+<strong>snort.resume</strong>(pkt_num): continue packet processing. If number of packet is specified, will resume for n packets and pause
 </p>
 </li>
 <li>
@@ -36982,46 +36875,6 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
-<strong>piglet::pp_codec</strong>: Codec piglet
-</p>
-</li>
-<li>
-<p>
-<strong>piglet::pp_inspector</strong>: Inspector piglet
-</p>
-</li>
-<li>
-<p>
-<strong>piglet::pp_ips_action</strong>: Ips action piglet
-</p>
-</li>
-<li>
-<p>
-<strong>piglet::pp_ips_option</strong>: Ips option piglet
-</p>
-</li>
-<li>
-<p>
-<strong>piglet::pp_logger</strong>: Logger piglet
-</p>
-</li>
-<li>
-<p>
-<strong>piglet::pp_search_engine</strong>: Search engine piglet
-</p>
-</li>
-<li>
-<p>
-<strong>piglet::pp_so_rule</strong>: SO rule piglet
-</p>
-</li>
-<li>
-<p>
-<strong>piglet::pp_test</strong>: Test piglet
-</p>
-</li>
-<li>
-<p>
 <strong>search_engine::ac_banded</strong>: Aho-Corasick Banded (high memory, moderate performance)
 </p>
 </li>
@@ -37699,7 +37552,7 @@ Note that on OpenBSD, divert sockets don&#8217;t work with bridges!
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-11-07 02:34:08 EST
+Last updated 2018-12-06 14:30:46 EST
 </div>
 </div>
 </body>

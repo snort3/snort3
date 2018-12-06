@@ -1,3 +1,58 @@
+18/12/06 - build 250
+
+-- actions: Fix incorrect order of IPS reject unreachable codes and adding forward option
+-- active: added peg count for injects
+-- active, detection: active state is tied to specific packet, not thread
+-- appid: Don't build unit test components without ENABLE_UNIT_TESTS
+-- appid: Fix heap overflow issue for a fuzzed pcap
+-- build: accept generator names with spaces in configure_cmake.sh
+-- build: clean up additional warnings
+-- build: fix come cppcheck warnings
+-- build: fix some int format specifiers
+-- build: fix some int type conversion warnings
+-- build: reduce variable scope to address warnings
+-- detection: enable offloading non-pdu packets
+-- detection, stream: fixed assuming packets were offloaded when previous packets on flow have been offloaded
+-- file_api: choose whether to get file config from current config or staged one
+-- file: fail the reload if capture is enabled for the first time
+-- framework: Clone databus to new config during module reload
+-- loggers: Use thread safe strerror_r() instead of strerror()
+-- main: support resume(n) command
+-- managers: update action manager to support reload
+-- module_manager: Fix configuring module parameter defaults when modules have list parameters
+-- parameter: add max31, max32, and max53 for int upper bounds
+-- parameter: add maxSZ upper bound for int sizes
+-- parameter: build out validation unit tests
+-- parameter: clean up some signed/unsigned mismatches
+-- parameter: clean up upper bounds
+-- parameter: remove arbitrary one day limit on timers
+-- parameter: remove ineffective -1 from pcre_match_limit*
+-- parameter: reorgranize for unit tests
+-- parameter: use bool instead of int for bools
+-- parameter: use consistent default port ranges
+-- perf_monitor: Actually allow building perf_monitor as a dynamic plugin
+-- perf_monitor: fix benign parameter errors
+-- perf_monitor: fixed fbs schema generation when not building with DEBUG
+-- protocols: add vlan_idx field to Packet struct and handle multiple vlan type ids; thanks to ymansour for reporting the issue
+-- regex worker: removed assert that didn't handle locks cleanly
+-- reputation: Fix iterations of layers for different nested_ip configs and show the blacklisted IP in events
+-- sip: Added sanity check for buffer boundary while parsing a sip message
+-- snort2lua: add code to output control = forward under the reject module
+-- snort2lua: Fix compiler warning for catching exceptions by value
+-- snort2lua: Fix pcre H and P option conversions for sip
+-- snort: add --help-limits to output max* values
+-- snort: Default to a snaplen of 1518
+-- snort: fix command line parameters to support setting in Lua; thanks to Meridoff <oagvozd@gmail.com> for reporting the issue
+-- snort: remove obsolete and inadequate -W option; thanks to Jaime González <jaimeglz1952@gmail.com> for reporting the issue
+-- snort: terminate gracefully upon DAQ start failure; thanks to Jaime González <jaimeglz1952@gmail.com> for reporting the issue
+-- so rules: add robust stub parsing
+-- stream: fixed stream_base flow peg count sum_stats bug
+-- stream tcp: fixed applying post-inspection operations to wrong rebuilt packet
+-- stream tcp: fixed sequence overlap handling when working with empty seglist
+-- style: clean up comment to reduce spelling exceptions
+-- thread: No more breaks for pigs (union busting)
+-- tools: Install appid-detector-builder.sh with the other tools; thanks to Jonathan McDowell <noodles-github@earth.li> for reporting the issue
+
 18/11/07 - build 249
 
 -- appid: Fixing profiler data race and registration issues
