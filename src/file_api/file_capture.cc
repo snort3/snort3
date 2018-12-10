@@ -41,6 +41,10 @@
 #include "file_mempool.h"
 #include "file_stats.h"
 
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+#endif
+
 using namespace snort;
 
 FileMemPool* FileCapture::file_mempool = nullptr;
@@ -187,10 +191,10 @@ void FileCapture::init_mempool(int64_t max_file_mem, int64_t block_len)
 
 inline FileCaptureBlock* FileCapture::create_file_buffer()
 {
-    FileCaptureBlock* fileBlock;
-    uint64_t num_files_queued;
+    if (!file_mempool)
+        return nullptr;
 
-    fileBlock = (FileCaptureBlock*)file_mempool->m_alloc();
+    FileCaptureBlock* fileBlock = (FileCaptureBlock*)file_mempool->m_alloc();
 
     if (fileBlock == nullptr)
     {
@@ -203,7 +207,7 @@ inline FileCaptureBlock* FileCapture::create_file_buffer()
     fileBlock->length = 0;
     fileBlock->next = nullptr;     /*Only one block initially*/
 
-    num_files_queued = file_mempool->allocated();
+    uint64_t num_files_queued = file_mempool->allocated();
     if (file_counts.file_buffers_used_max < num_files_queued)
         file_counts.file_buffers_used_max = num_files_queued;
 
@@ -552,3 +556,15 @@ void FileCapture::print_mem_usage()
     }
 }
 
+//--------------------------------------------------------------------------
+// unit tests
+//--------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+TEST_CASE ("Should not segfault when file mempool is not configured", "[file_capture]")
+{
+    FileCapture fc(0, 0);
+
+    CHECK(fc.process_buffer((const uint8_t*)"dummy", 5, SNORT_FILE_START) == FILE_CAPTURE_MEMCAP);
+}
+#endif
