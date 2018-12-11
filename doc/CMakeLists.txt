@@ -62,6 +62,7 @@ if ( MAKE_DOC )
 	perf_monitor.txt
 	pop_imap.txt
 	reference.txt
+	reload_limitations.txt
 	sensitive_data.txt
 	port_scan.txt
 	side_channel.txt

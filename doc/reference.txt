@@ -55,3 +55,6 @@ include::plugins.txt[]
 
 include::daq_readme.txt[]
 
+=== Limitations
+
+include::reload_limitations.txt[]

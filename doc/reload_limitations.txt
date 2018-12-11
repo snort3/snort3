@@ -1,0 +1,29 @@
+==== Reload limitations
+
+The following parameters can't be changed during reload, and require a restart:
+
+* active.attempts
+* active.device
+* alerts.detection_filter_memcap
+* alerts.event_filter_memcap
+* alerts.rate_filter_memcap
+* attribute_table.max_hosts
+* attribute_table.max_services_per_host
+* daq.snaplen
+* daq.no_promisc
+* detection.asn1
+* file_id.max_files_cached
+* process.chroot
+* process.daemon
+* process.set_gid
+* process.set_uid
+
+In addition, the following scenarios require a restart:
+
+* Enabling file capture for the first time
+* Changing file_id.capture_memcap if file capture was previously or currently
+ enabled
+* Changing file_id.capture_block_size if file capture was previously or
+ currently enabled
+
+In all of these cases reload will fail, and the original config will remain in use.
