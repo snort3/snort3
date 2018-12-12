@@ -588,6 +588,8 @@ SnortConfig* Snort::get_reload_config(const char* fname)
     ControlMgmt::reconfigure_controls();
 #endif
 
+    FileService::verify_reload(sc);
+
     if ( get_parse_errors() or !InspectorManager::configure(sc) )
     {
         parser_term(sc);

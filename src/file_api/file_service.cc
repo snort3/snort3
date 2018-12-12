@@ -29,6 +29,7 @@
 
 #include "file_service.h"
 
+#include "log/messages.h"
 #include "main/snort_config.h"
 #include "mime/file_mime_process.h"
 
@@ -46,6 +47,11 @@ bool FileService::file_processing_initiated = false;
 
 FileCache* FileService::file_cache = nullptr;
 
+// FIXIT-L make these params reloadable
+static int64_t max_files_cached = 0;
+static int64_t capture_memcap = 0;
+static int64_t capture_block_size = 0;
+
 void FileService::init()
 {
     FileFlows::init();
@@ -54,16 +60,42 @@ void FileService::init()
 void FileService::post_init()
 {
     MimeSession::init();
-    FileConfig* conf = get_file_config();
+    const FileConfig* const conf = get_file_config();
 
     if (!conf)
         return;
 
     if (!file_cache)
+    {
         file_cache = new FileCache(conf->max_files_cached);
+        max_files_cached = conf->max_files_cached;
+    }
 
     if (file_capture_enabled)
+    {
         FileCapture::init(conf->capture_memcap, conf->capture_block_size);
+        capture_memcap = conf->capture_memcap;
+        capture_block_size = conf->capture_block_size;
+    }
+}
+
+void FileService::verify_reload(SnortConfig* sc)
+{
+    const FileConfig* const conf = get_file_config(sc);
+
+    if (!conf)
+        return;
+
+    if (max_files_cached != conf->max_files_cached)
+        ParseError("Changing max_files_cached requires a restart\n");
+
+    if (file_capture_enabled)
+    {
+        if (capture_memcap != conf->capture_memcap)
+            ParseError("Changing capture_memcap requires a restart\n");
+        if (capture_block_size != conf->capture_block_size)
+            ParseError("Changing capture_block_size requires a restart\n");
+    }
 }
 
 void FileService::close()

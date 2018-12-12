@@ -25,6 +25,7 @@
 // This provides a wrapper to start/stop file service
 
 #include "file_api/file_policy.h"
+#include "main/snort_config.h"
 #include "main/snort_types.h"
 
 class FileEnforcer;
@@ -40,6 +41,9 @@ public:
 
     // Called after permission is dropped
     static void post_init();
+
+    // Called during reload
+    static void verify_reload(SnortConfig*);
 
     // This must be called when snort exits
     static void close();
