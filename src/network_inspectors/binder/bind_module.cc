@@ -203,7 +203,7 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
         work->when.split_nets = true;
     }
     else if ( v.is("ips_policy_id") )
-        work->when.ips_id = v.get_uint32();
+        work->when.ips_id_user = v.get_uint32();
 
     else if ( v.is("proto") )
     {

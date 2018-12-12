@@ -23,6 +23,7 @@
 #include <string>
 
 #include "framework/bits.h"
+#include "main/policy.h"
 #include "sfip/sf_ipvar.h"
 
 namespace snort
@@ -36,7 +37,8 @@ struct BindWhen
     enum Role
     { BR_CLIENT, BR_SERVER, BR_EITHER, BR_MAX };
 
-    unsigned ips_id;
+    PolicyId ips_id;
+    unsigned ips_id_user;
     unsigned protos;
     Role role;
     std::string svc;

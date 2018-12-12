@@ -74,6 +74,7 @@ Binding::Binding()
     when.dst_zone = DAQ_PKTHDR_UNKNOWN;
 
     when.ips_id = 0;
+    when.ips_id_user = 0;
     when.role = BindWhen::BR_EITHER;
 
     use.inspection_index = 0;
@@ -656,9 +657,9 @@ bool Binder::configure(SnortConfig* sc)
         Binding* pb = bindings[i];
 
         // Update with actual policy indices instead of user provided names
-        if ( pb->when.ips_id )
+        if ( pb->when.ips_id_user )
         {
-            IpsPolicy* p = sc->policy_map->get_user_ips(pb->when.ips_id);
+            IpsPolicy* p = sc->policy_map->get_user_ips(pb->when.ips_id_user);
             if ( p )
                 pb->when.ips_id = p->policy_id;
             else
