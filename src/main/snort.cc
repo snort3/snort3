@@ -1019,7 +1019,7 @@ DAQ_Verdict Snort::packet_callback(
     DetectionEngine::reset();
 
     sfthreshold_reset();
-    ActionManager::reset_queue();
+    ActionManager::reset_queue(s_packet);
 
     DAQ_Verdict verdict = process_packet(s_packet, pkthdr, pkt);
     ActionManager::execute(s_packet);

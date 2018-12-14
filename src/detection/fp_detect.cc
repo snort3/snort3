@@ -118,7 +118,7 @@ static inline void fpLogOther(
 
     // rule actions are queued here (eg reject)
     if ( rtn->listhead->action )
-        ActionManager::queue(rtn->listhead->action);
+        ActionManager::queue(rtn->listhead->action, p);
 }
 
 /*

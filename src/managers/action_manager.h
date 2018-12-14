@@ -72,9 +72,9 @@ public:
     static void thread_reinit(snort::SnortConfig*);
     static void thread_term(snort::SnortConfig*);
 
-    static void reset_queue();
-    static void queue_reject(snort::SnortConfig*);
-    static void queue(snort::IpsAction*);
+    static void reset_queue(snort::Packet*);
+    static void queue_reject(snort::SnortConfig*, snort::Packet*);
+    static void queue(snort::IpsAction*, snort::Packet*);
     static void execute(snort::Packet*);
 
 #ifdef PIGLET

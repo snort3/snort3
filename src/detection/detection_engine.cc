@@ -112,6 +112,7 @@ Packet* DetectionEngine::get_encode_packet()
 Packet* DetectionEngine::set_next_packet(Packet* parent)
 {
     static THREAD_LOCAL Active shutdown_active;
+    static THREAD_LOCAL IpsAction* shutdown_action = nullptr;
 
     IpsContext* c = Snort::get_switcher()->get_next();
     if ( parent )
@@ -130,15 +131,22 @@ Packet* DetectionEngine::set_next_packet(Packet* parent)
 
     // normal rebuild
     if ( parent )
+    {
         p->active = parent->active;
+        p->action = parent->action;
+    }
     
     // processing but parent is already gone (flow cache flush etc..)
     else if ( Snort::get_switcher()->get_context() )
+    {
         p->active = get_current_packet()->active;
+        p->action = get_current_packet()->action;
+    }
     
     // shutdown, so use a dummy so null checking is not needed everywhere
     else
     {
+        p->action = &shutdown_action;
         p->active = &shutdown_active;
         shutdown_active.reset();
     }

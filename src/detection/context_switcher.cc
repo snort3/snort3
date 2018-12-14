@@ -85,8 +85,10 @@ void ContextSwitcher::start()
     busy.emplace_back(idle.back());
     idle.pop_back();
 
-    busy.back()->packet->active = busy.back()->packet->active_inst;
-    busy.back()->packet->active->reset();
+    IpsContext* c = busy.back();
+    c->packet->active = c->packet->active_inst;
+    c->packet->active->reset();
+    c->packet->action = &c->packet->action_inst; 
 }
 
 void ContextSwitcher::stop()
@@ -100,6 +102,7 @@ void ContextSwitcher::stop()
     c->clear_context_data();
     idle.emplace_back(c);
     busy.back()->packet->active = nullptr;
+    busy.back()->packet->action = nullptr;
     busy.pop_back();
 }
 

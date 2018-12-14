@@ -58,12 +58,11 @@ struct IpsActionsConfig
     IpsAction* reject = nullptr;
 };
 
-typedef vector<ActionClass> ACList;
+using ACList = vector<ActionClass>;
 
 static ACList s_actors;
 
 static THREAD_LOCAL ACList* s_tl_actors = nullptr;
-static THREAD_LOCAL IpsAction* s_tl_action = nullptr;
 
 //-------------------------------------------------------------------------
 // Main thread operations
@@ -227,28 +226,28 @@ void ActionManager::thread_term(SnortConfig*)
 
 void ActionManager::execute(Packet* p)
 {
-    if ( s_tl_action )
+    if ( *p->action )
     {
-        s_tl_action->exec(p);
-        s_tl_action = nullptr;
+        (*p->action)->exec(p);
+        *p->action = nullptr;
     }
 }
 
-void ActionManager::queue(IpsAction* a)
+void ActionManager::queue(IpsAction* a, Packet* p)
 {
-    if ( !s_tl_action || a->get_action() > s_tl_action->get_action() )
-        s_tl_action = a;
+    if ( !(*p->action) || a->get_action() > (*p->action)->get_action() )
+        *p->action = a;
 }
 
-void ActionManager::queue_reject(SnortConfig* sc)
+void ActionManager::queue_reject(SnortConfig* sc, Packet* p)
 {
     if ( sc->ips_actions_config->reject )
-        queue(sc->ips_actions_config->reject);
+        queue(sc->ips_actions_config->reject, p);
 }
 
-void ActionManager::reset_queue()
+void ActionManager::reset_queue(Packet* p)
 {
-    s_tl_action = nullptr;
+    *p->action = nullptr;
     Replace_ResetQueue();
 }
 
