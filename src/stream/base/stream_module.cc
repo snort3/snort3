@@ -25,6 +25,8 @@
 #include "stream_module.h"
 
 #include "detection/rules.h"
+#include "log/messages.h"
+#include "main/snort.h"
 #include "main/snort_debug.h"
 
 using namespace snort;
@@ -168,6 +170,52 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
     else
         return false;
 
+    return true;
+}
+
+static int check_cache_change(const char* fqn, const char* name, const FlowConfig& new_cfg,
+    const FlowConfig& saved_cfg)
+{
+    int ret = 0;
+    if ( saved_cfg.max_sessions and strstr(fqn, name) )
+    {
+        if ( saved_cfg.max_sessions != new_cfg.max_sessions
+            or saved_cfg.pruning_timeout != new_cfg.pruning_timeout
+            or saved_cfg.nominal_timeout != new_cfg.nominal_timeout )
+        {
+            ParseError("Changing of %s requires a restart\n", name);
+            ret = 1;
+        }
+    }
+    return ret;
+}
+
+// FIXIT-L the detection of stream.xxx_cache changes below is a temporary workaround
+// remove this check when stream.xxx_cache params become reloadable
+bool StreamModule::end(const char* fqn, int, SnortConfig*)
+{
+    static StreamModuleConfig saved_config = {};
+    static int issue_found = 0;
+
+    issue_found += check_cache_change(fqn, "ip_cache", config.ip_cfg, saved_config.ip_cfg);
+    issue_found += check_cache_change(fqn, "icmp_cache", config.icmp_cfg, saved_config.icmp_cfg);
+    issue_found += check_cache_change(fqn, "tcp_cache", config.tcp_cfg, saved_config.tcp_cfg);
+    issue_found += check_cache_change(fqn, "udp_cache", config.udp_cfg, saved_config.udp_cfg);
+    issue_found += check_cache_change(fqn, "user_cache", config.ip_cfg, saved_config.user_cfg);
+    issue_found += check_cache_change(fqn, "file_cache", config.ip_cfg, saved_config.file_cfg);
+
+    if ( !strcmp(fqn, "stream") )
+    {
+        if ( saved_config.ip_cfg.max_sessions   // saved config is valid
+            and config.footprint != saved_config.footprint )
+        {
+            ParseError("Changing of stream.footprint requires a restart\n");
+            issue_found++;
+        }
+        if ( issue_found == 0 )
+            saved_config = config;
+        issue_found = 0;
+    }
     return true;
 }
 
