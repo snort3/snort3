@@ -179,28 +179,23 @@ std::ostream& operator<<(std::ostream& out, const Rule& rule)
 
 void Rule::resolve_pcre_buffer_options()
 {
-    std::vector<RuleOption*>::iterator iter;
     std::string curr_sticky_buffer = "";
-    bool is_sip = false;
-    std::string name;
     const std::string service = get_option("service");
+    bool service_sip = (service.find("sip") != std::string::npos);
+    bool no_service_http = (service.find("http") == std::string::npos);
     std::string new_buffer;
-
-    if (service == "sip")
-        is_sip = true;
-
-    iter = options.begin();
+    std::vector<RuleOption*>::iterator iter = options.begin();
 
     while (iter != options.end())
     {
-        name = (*iter)->get_name();
+        std::string name = (*iter)->get_name();
 
         if (name == "pcre_P_option_body" || name == "pcre_H_option_header")
         {
             delete(*iter);
             iter = options.erase(iter);
 
-            if (is_sip)
+            if (service_sip)
             {
                 if (name == "pcre_P_option_body")
                 {
@@ -215,10 +210,18 @@ void Rule::resolve_pcre_buffer_options()
             {
                 if (name == "pcre_P_option_body")
                 {
+                    if (no_service_http)
+                    {
+                        add_comment("pcre P option converted to http_client_body by default");
+                    }
                     new_buffer = "http_client_body";
                 }
                 else
                 {
+                    if (no_service_http)
+                    {
+                        add_comment("pcre H option converted to http_header by default");
+                    }
                     new_buffer = "http_header";
                 }
             }
@@ -231,19 +234,24 @@ void Rule::resolve_pcre_buffer_options()
                 ++iter;
             }
         }
-        else if (name == "pkt_data")
+        else if (name == "pkt_data" ||
+            name == "file_data" ||
+            name == "dce_stub_data" ||
+            name == "dnp3_data" ||
+            name == "modbus_data" ||
+            name == "http_cookie" ||
+            name == "http_method" ||
+            name == "http_raw_cookie" ||
+            name == "http_raw_header" ||
+            name == "http_raw_uri" ||
+            name == "http_stat_code" ||
+            name == "http_stat_msg" ||
+            name == "http_uri")
         {
             curr_sticky_buffer = name;
             ++iter;
         }
-        else if (name == "http_uri" ||
-            name == "http_raw_uri" ||
-            name == "http_cookie" ||
-            name == "http_raw_cookie" ||
-            name == "http_method" ||
-            name == "http_stat_code" ||
-            name == "http_stat_msg" ||
-            name == "http_header" ||
+        else if (name == "http_header" ||
             name == "http_client_body" ||
             name == "sip_header" ||
             name == "sip_body")
