@@ -254,9 +254,7 @@ void FileFlows::set_file_name(const uint8_t* fname, uint32_t name_size)
 
     if ( !context->is_file_name_set() )
     {
-        if (fname and name_size)
-            context->set_file_name((const char*)fname, name_size);
-
+        context->set_file_name((const char*)fname, name_size);
         context->log_file_event(flow, file_policy);
     }
 }
@@ -348,4 +346,3 @@ static const InspectApi file_inspect_api =
 };
 
 const BaseApi* sin_file_flow = &file_inspect_api.base;
-
