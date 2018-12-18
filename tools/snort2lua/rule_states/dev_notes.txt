@@ -1,0 +1,43 @@
+This directory contains rule conversion classes to convert snort2 rules
+to snort3 rules.
+
+Sticky buffer rule option conversion
+------------------------------------
+Some rule options are used to set the cursor used to walk the packet
+payload in rule processing to the beginning of certain buffers containing
+packet data. A rule option that sets the cursor to the beginning of a
+buffer is considered "sticky" if the cursor remains set to an absolute
+or relative position in the buffer for subsequent rule option processing
+until explicitly reset by other rule options.
+
+Snort2 implemented the following list of "sticky" buffer rule options:
+
+* pkt_data
+* file_data
+* dce_stub_fdata
+* dnp3_data
+* modbus_data
+* sip_header
+* sip_body
+
+The following list of formerly "non-sticky" buffer rule options in Snort2
+are implemented in Snort3 as "sticky" buffer rule options:
+
+* http_client_body
+* http_cookie
+* http_method
+* http_raw_cookie
+* http_raw_header
+* http_raw_uri
+* http_stat_code
+* http_stat_msg
+* http_uri
+
+Snort2lua must convert these formerly "non-sticky" buffer rule options to
+"sticky" buffer rule options. This is accomplished by parsing the rule
+options in the Snort2 file looking for buffer rule options that need to
+be converted. When a buffer rule option needing conversion is found, it
+is moved to precede the rule option that formerly preceded it, or deleted
+to remove it as a duplicate if the "sticky" buffer value has already been
+set to the same value.
+
