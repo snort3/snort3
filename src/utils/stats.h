@@ -54,6 +54,7 @@ struct PacketCount
     PegCount log_limit;
     PegCount event_limit;
     PegCount alert_limit;
+    PegCount context_stalls;
 };
 
 struct ProcessCount

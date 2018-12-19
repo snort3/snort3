@@ -27,6 +27,7 @@
 // state.  Inspector state is stored in FlowData, and Flow manages a list
 // of FlowData items.
 
+#include "detection/ips_context_chain.h"
 #include "framework/data_bus.h"
 #include "framework/decode_data.h"
 #include "framework/inspector.h"
@@ -98,6 +99,7 @@ class Session;
 namespace snort
 {
 struct FlowKey;
+class IpsContext;
 struct Packet;
 
 typedef void (* StreamAppDataFree)(void*);
@@ -285,22 +287,8 @@ public:
     bool is_inspection_disabled() const
     { return disable_inspect; }
 
-    bool is_offloaded() const
-    { return offloads_pending; }
-
-    void set_offloaded()
-    {
-        assert(offloads_pending < 0xFF);
-
-        offloads_pending++;
-    }
-
-    void clear_offloaded()
-    {
-        assert(offloads_pending);
-
-        offloads_pending--;
-    }
+    bool is_suspended() const
+    { return context_chain.front(); }
 
 public:  // FIXIT-M privatize if possible
     // fields are organized by initialization and size to minimize
@@ -324,6 +312,7 @@ public:  // FIXIT-M privatize if possible
     Layer mpls_client, mpls_server;
 
     // everything from here down is zeroed
+    IpsContextChain context_chain;
     FlowData* flow_data;
     Inspector* clouseau;  // service identifier
     Inspector* gadget;    // service handler
@@ -354,7 +343,6 @@ public:  // FIXIT-M privatize if possible
 
     uint8_t response_count;
 
-    uint8_t offloads_pending;
     bool disable_inspect;
 
 private:

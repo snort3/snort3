@@ -73,6 +73,7 @@ void Packet::reset()
 {
     flow = nullptr;
     packet_flags = 0;
+    ts_packet_flags = 0;
     xtradata_mask = 0;
     proto_bits = 0;
     alt_dsize = 0;

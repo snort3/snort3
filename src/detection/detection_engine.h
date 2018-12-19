@@ -38,6 +38,7 @@ namespace snort
 struct Packet;
 class Flow;
 class IpsContext;
+class IpsContextChain;
 class IpsContextData;
 
 class SO_PUBLIC DetectionEngine
@@ -58,10 +59,10 @@ public:
     static Packet* set_next_packet(Packet* parent = nullptr);
     static uint8_t* get_next_buffer(unsigned& max);
 
-    static bool offloaded(Packet*);
     static bool offload(Packet*);
 
     static void onload(Flow*);
+    static void onload();
     static void idle();
 
     static void set_encode_packet(Packet*);
@@ -102,14 +103,17 @@ public:
 
 private:
     static struct SF_EVENTQ* get_event_queue();
+    static void do_offload(snort::Packet*);
     static void offload_thread(IpsContext*);
-    static void onload();
+    static void resume(snort::Packet*);
+    static void resume_ready_suspends(IpsContextChain&);
 
     static int log_events(Packet*);
     static void clear_events(Packet*);
     static void finish_inspect_with_latency(Packet*);
     static void finish_inspect(Packet*, bool inspected);
     static void finish_packet(Packet*, bool flow_deletion = false);
+    static void wait_for_context();
 
 private:
     IpsContext* context;

@@ -730,6 +730,9 @@ public:
     // need n >= 4 for src+dst+gen+svc
     static const unsigned max = 32;
 
+    MpseStash()
+    { enable = false; }
+
     void init()
     {
         if ( enable )
@@ -1277,23 +1280,18 @@ static int fpEvalPacket(Packet* p)
     return 0;
 }
 
-void fp_local(Packet* p)
+void fp_full(Packet* p)
 {
     IpsContext* c = p->context;
     MpseStash* stash = c->stash;
     stash->enable_process();
     stash->init();
     init_match_info(c->otnx);
-
-    // FIXIT-L set up a dependency chain between contexts and "pause" here
-    if ( p->flow )
-        DetectionEngine::onload(p->flow);
-
     fpEvalPacket(p);
     fpFinalSelectEvent(c->otnx, p);
 }
 
-void fp_offload(Packet* p)
+void fp_partial(Packet* p)
 {
     IpsContext* c = p->context;
     MpseStash* stash = c->stash;
@@ -1304,7 +1302,7 @@ void fp_offload(Packet* p)
     fpEvalPacket(p);
 }
 
-void fp_onload(Packet* p)
+void fp_complete(Packet* p)
 {
     IpsContext* c = p->context;
     MpseStash* stash = c->stash;

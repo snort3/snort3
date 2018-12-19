@@ -76,7 +76,9 @@ class Obfuscator;
 
 #define PKT_FILE_EVENT_SET   0x00400000
 #define PKT_IGNORE           0x00800000  /* this packet should be ignored, based on port */
-#define PKT_UNUSED_FLAGS     0xfe000000
+#define PKT_UNUSED_FLAGS     0xff000000
+
+#define PKT_TS_OFFLOADED        0x01
 
 // 0x40000000 are available
 #define PKT_PDU_FULL (PKT_PDU_HEAD | PKT_PDU_TAIL)
@@ -153,6 +155,7 @@ struct SO_PUBLIC Packet
     uint32_t user_network_policy_id;
 
     uint8_t vlan_idx;
+    uint8_t ts_packet_flags; // FIXIT-M packet flags should always be thread safe
 
     // IP_MAXPACKET is the minimum allowable max_dsize
     // there is no requirement that all data fit into an IP datagram
@@ -267,6 +270,15 @@ struct SO_PUBLIC Packet
 
     bool is_rebuilt() const
     { return (packet_flags & (PKT_REBUILT_STREAM|PKT_REBUILT_FRAG)) != 0; }
+
+    bool is_offloaded() const
+    { return (ts_packet_flags & PKT_TS_OFFLOADED) != 0; }
+
+    void set_offloaded()
+    { ts_packet_flags |= PKT_TS_OFFLOADED; }
+
+    void clear_offloaded()
+    { ts_packet_flags &= (~PKT_TS_OFFLOADED); }
 
     bool is_detection_enabled(bool to_server);
 

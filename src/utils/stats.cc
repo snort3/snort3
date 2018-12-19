@@ -189,6 +189,7 @@ const PegInfo pc_names[] =
     { CountType::SUM, "log_limit", "events queued but not logged" },
     { CountType::SUM, "event_limit", "events filtered" },
     { CountType::SUM, "alert_limit", "events previously triggered on same PDU" },
+    { CountType::SUM, "context_stalls", "times processing stalled to wait for an available context" },
     { CountType::END, nullptr, nullptr }
 };
 

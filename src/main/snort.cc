@@ -804,7 +804,7 @@ void Snort::thread_init_unprivileged()
     // using dummy values until further integration
     const unsigned max_contexts = 20;
 
-    s_switcher = new ContextSwitcher(max_contexts);
+    s_switcher = new ContextSwitcher;
 
     for ( unsigned i = 0; i < max_contexts; ++i )
         s_switcher->push(new IpsContext);

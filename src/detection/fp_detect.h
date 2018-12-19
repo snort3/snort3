@@ -102,9 +102,9 @@ int fpAddMatch(OtnxMatchData*, int pLen, const OptTreeNode*);
 void fp_set_context(snort::IpsContext&);
 void fp_clear_context(snort::IpsContext&);
 
-void fp_local(snort::Packet*);
-void fp_offload(snort::Packet*);
-void fp_onload(snort::Packet*);
+void fp_full(snort::Packet*);
+void fp_partial(snort::Packet*);
+void fp_complete(snort::Packet*);
 
 #endif
 

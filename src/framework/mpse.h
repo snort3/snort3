@@ -71,7 +71,7 @@ public:
 
     virtual void set_opt(int) { }
     virtual int print_info() { return 0; }
-    virtual int get_pattern_count() { return 0; }
+    virtual int get_pattern_count() const { return 0; }
 
     const char* get_method() { return method.c_str(); }
     void set_verbose(bool b = true) { verbose = b; }

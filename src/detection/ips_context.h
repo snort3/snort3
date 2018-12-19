@@ -57,6 +57,7 @@ class SO_PUBLIC IpsContext
 {
 public:
     using Callback = void(*)(IpsContext*);
+    enum State { IDLE, BUSY, SUSPENDED };
 
     IpsContext(unsigned size = 0);  // defaults to max id
     ~IpsContext();
@@ -67,12 +68,6 @@ public:
     void set_context_data(unsigned id, IpsContextData*);
     IpsContextData* get_context_data(unsigned id) const;
     void clear_context_data();
-
-    void set_slot(unsigned s)
-    { slot = s; }
-
-    unsigned get_slot()
-    { return slot; }
 
     void snapshot_flow(Flow*);
 
@@ -96,6 +91,44 @@ public:
 
     void post_detection();
 
+    void link(IpsContext* next)
+    {
+        assert(!next->depends_on);
+        assert(!next->next_to_process);
+        assert(!next_to_process);
+
+        next->depends_on = this;
+        next_to_process = next;
+    }
+
+    void unlink()
+    {
+        assert(!depends_on);
+        if ( next_to_process )
+        {
+            assert(next_to_process->depends_on == this);
+            next_to_process->depends_on = nullptr;
+        }
+        next_to_process = nullptr;
+    }
+
+    IpsContext* dependencies() const
+    { return depends_on; }
+
+    IpsContext* next() const
+    { return next_to_process; }
+
+    void abort()
+    {
+        if ( next_to_process )
+            next_to_process->depends_on = depends_on;
+
+        if ( depends_on )
+            depends_on->next_to_process = next_to_process; 
+
+        depends_on = next_to_process = nullptr;
+    }
+
 public:
     std::vector<Replacement> rpl;
 
@@ -115,6 +148,7 @@ public:
     uint64_t context_num;
     uint64_t packet_number;
     ActiveRules active_rules;
+    State state; 
     bool check_tags;
 
     static const unsigned buf_size = Codec::PKT_MAX;
@@ -126,8 +160,8 @@ private:
     FlowSnapshot flow;
     std::vector<IpsContextData*> data;
     std::vector<Callback> post_callbacks;
-
-    unsigned slot;
+    IpsContext* depends_on;
+    IpsContext* next_to_process;
 };
 }
 #endif

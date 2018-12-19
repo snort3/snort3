@@ -166,7 +166,7 @@ void Stream::check_flow_closed(Packet* p)
         
         // this will get called on each onload
         // eventually all onloads will occur and delete will be called
-        if ( not flow->is_offloaded() )
+        if ( not flow->is_suspended() )
             flow_con->delete_flow(flow, PruneReason::NONE);
 
         p->flow = nullptr;

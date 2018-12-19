@@ -190,7 +190,7 @@ unsigned FlowCache::prune_stale(uint32_t thetime, const Flow* save_me)
             break;
         }
 #endif
-        if ( flow->is_offloaded() )
+        if ( flow->is_suspended() )
             break;
 
         if ( flow->last_data_seen + config.pruning_timeout >= thetime )
@@ -252,7 +252,7 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
         assert(flow); // holds true because hash_table->get_count() > 0
 
         if ( (save_me and flow == save_me) or flow->was_blocked() or
-            (flow->is_offloaded() and ignore_offloads) )
+            (flow->is_suspended() and ignore_offloads) )
         {
             // check for non-null save_me above to silence analyzer
             // "called C++ object pointer is null" here
@@ -308,7 +308,7 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
             break;
 
         if ( HighAvailabilityManager::in_standby(flow) or
-            flow->is_offloaded() )
+            flow->is_suspended() )
         {
             flow = static_cast<Flow*>(hash_table->next());
             continue;

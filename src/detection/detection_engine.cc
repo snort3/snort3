@@ -54,7 +54,6 @@
 #include "regex_offload.h"
 
 static THREAD_LOCAL RegexOffload* offloader = nullptr;
-static THREAD_LOCAL uint64_t context_num = 0;
 
 using namespace snort;
 
@@ -87,7 +86,6 @@ DetectionEngine::~DetectionEngine()
 void DetectionEngine::reset()
 {
     IpsContext* c = Snort::get_switcher()->get_context();
-    c->context_num = ++context_num;
     c->alt_data.len = 0;  // FIXIT-H need context::reset()
 }
 
@@ -114,8 +112,9 @@ Packet* DetectionEngine::set_next_packet(Packet* parent)
     static THREAD_LOCAL Active shutdown_active;
     static THREAD_LOCAL IpsAction* shutdown_action = nullptr;
 
+    wait_for_context();
     IpsContext* c = Snort::get_switcher()->get_next();
-    if ( parent )
+    if ( parent ) // FIXIT-L parent can probably be determined by busy queue
     {
         c->snapshot_flow(parent->flow);
         c->packet_number = parent->context->packet_number;
@@ -182,7 +181,7 @@ void DetectionEngine::finish_inspect(Packet* p, bool inspected)
     // this also handles block pending state
     Stream::check_flow_closed(p);
 
-    if ( inspected and (!p->flow or !p->flow->is_offloaded()) )
+    if ( inspected and !p->context->next() ) 
         InspectorManager::clear(p);
 
     clear_events(p);
@@ -190,18 +189,30 @@ void DetectionEngine::finish_inspect(Packet* p, bool inspected)
 
 void DetectionEngine::finish_packet(Packet* p, bool flow_deletion)
 {
+    ContextSwitcher* sw = Snort::get_switcher();
+
     log_events(p);
     clear_events(p);
     p->release_helpers();
 
     // clean up any failed rebuilds
-    const IpsContext* c = Snort::get_switcher()->get_next();
-    c->packet->release_helpers();
+    if ( sw->idle_count() )
+    {
+        const IpsContext* c = sw->get_next();
+        c->packet->release_helpers();
+    }
 
-    ContextSwitcher* sw = Snort::get_switcher();
-
-    if ( flow_deletion or sw->busy_count() > 1 )
+    if ( flow_deletion or p->is_rebuilt() )
         sw->complete();
+
+    // FIXIT-H enable for daqng
+#if 0
+    if ( !p->is_rebuilt() )
+    {
+        sw->stop();
+        queue for daq msg finalize
+    }
+#endif
 }
 
 uint8_t* DetectionEngine::get_buffer(unsigned& max)
@@ -302,9 +313,6 @@ IpsContext::ActiveRules DetectionEngine::get_detects(Packet* p)
 void DetectionEngine::set_detects(Packet* p, IpsContext::ActiveRules ar)
 { p->context->active_rules = ar; }
 
-bool DetectionEngine::offloaded(Packet* p)
-{ return p->flow and p->flow->is_offloaded(); }
-
 void DetectionEngine::set_check_tags(bool enable)
 { Snort::get_switcher()->get_context()->check_tags = enable; }
 
@@ -314,6 +322,51 @@ bool DetectionEngine::get_check_tags()
 //--------------------------------------------------------------------------
 // offload / onload
 //--------------------------------------------------------------------------
+
+void DetectionEngine::do_offload(Packet* p)
+{
+    ContextSwitcher* sw = Snort::get_switcher();
+
+    assert(p == p->context->packet);
+    assert(p->context == sw->get_context());
+
+    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " de::offload %" PRIu64 " (r=%d)\n",
+        p->context->packet_number, p->context->context_num, offloader->count());
+
+    sw->suspend();
+
+    p->context->conf = SnortConfig::get_conf();
+    p->set_offloaded();
+
+    offloader->put(p);
+    pc.offloads++;
+}
+
+bool DetectionEngine::offload(Packet* p)
+{
+    ContextSwitcher* sw = Snort::get_switcher();
+
+    bool depends_on_suspended = p->flow ? p->flow->context_chain.front() : sw->non_flow_chain.front();
+    bool can_offload = offloader->available();
+    bool should_offload = p->dsize >= SnortConfig::get_conf()->offload_limit;
+
+    if ( can_offload and should_offload )
+    {
+        do_offload(p);
+        return true;
+    }
+
+    if ( depends_on_suspended )
+    {
+        fp_partial(p);
+        sw->suspend();
+        return true;
+    }
+
+    assert(p->flow ? !p->flow->is_suspended() : true);
+    fp_full(p);
+    return false;
+}
 
 void DetectionEngine::idle()
 {
@@ -337,70 +390,63 @@ void DetectionEngine::idle()
 
 void DetectionEngine::onload(Flow* flow)
 {
-    while ( flow->is_offloaded() )
+    while ( flow->is_suspended() )
     {
-        const struct timespec blip = { 0, 1 };
         trace_logf(detection,
             TRACE_DETECTION_ENGINE, "(wire) %" PRIu64 " de::sleep\n", get_packet_number());
 
-        nanosleep(&blip, nullptr);
+        resume_ready_suspends(flow->context_chain); // FIXIT-M makes onload reentrant-safe
         onload();
     }
-    assert(!Snort::get_switcher()->on_hold(flow));
     assert(!offloader->on_hold(flow));
 }
 
 void DetectionEngine::onload()
 {
-    unsigned id;
+    for( Packet* p; offloader->count() and offloader->get(p); )
+    {
+        trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " de::onload %" PRIu64 " (r=%d)\n",
+            p->context->packet_number, p->context->context_num, offloader->count());
+        
+        p->clear_offloaded();
+        
+        IpsContextChain& chain = p->flow ? p->flow->context_chain : Snort::get_switcher()->non_flow_chain;
+        
+        resume_ready_suspends(chain);
+    }
+}
 
-    if ( !offloader->get(id) )
-        return;
+void DetectionEngine::resume_ready_suspends(IpsContextChain& chain)
+{
+    while ( chain.front() and !chain.front()->packet->is_offloaded() )
+        resume(chain.front()->packet);
+}
 
-    ContextSwitcher* sw = Snort::get_switcher();
-    IpsContext* c = sw->get_context(id);
-    assert(c);
+void DetectionEngine::resume(Packet* p)
+{
+    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " de::resume %" PRIu64 " (r=%d)\n",
+        p->context->packet_number, p->context->context_num, offloader->count());
 
-    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " de::onload %u (r=%d)\n",
-        c->packet_number, id, offloader->count());
-
-    Packet* p = c->packet;
-    p->flow->clear_offloaded();
-
-    sw->resume(id);
-
-    fp_onload(p);
+    Snort::get_switcher()->resume(p->context);
+    
+    fp_complete(p);
     finish_inspect_with_latency(p); // FIXIT-L should latency be evaluated here?
     finish_inspect(p, true);
     finish_packet(p);
 }
 
-bool DetectionEngine::offload(Packet* p)
+void DetectionEngine::wait_for_context()
 {
     ContextSwitcher* sw = Snort::get_switcher();
 
-    if ( p->dsize < SnortConfig::get_conf()->offload_limit or
-         !sw->can_hold() or
-         !offloader->available() )
+    if ( !sw->idle_count() )
     {
-        fp_local(p);
-        return false;
+        pc.context_stalls++;
+        do
+        {
+            onload();
+        } while ( !sw->idle_count() );
     }
-    assert(p == p->context->packet);
-    assert(p->context == sw->get_context());
-
-    unsigned id = sw->suspend();
-
-    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " de::offload %u (r=%d)\n",
-        p->context->packet_number, id, offloader->count());
-
-    p->flow->set_offloaded();
-    p->context->conf = SnortConfig::get_conf();
-
-    offloader->put(id, p);
-    pc.offloads++;
-
-    return true;
 }
 
 //--------------------------------------------------------------------------
@@ -435,7 +481,7 @@ bool DetectionEngine::detect(Packet* p, bool offload_ok)
         if ( offload_ok and p->flow )
             return offload(p);
 
-        fp_local(p);
+        fp_full(p);
         break;
 
     default:
@@ -574,4 +620,3 @@ void DetectionEngine::clear_events(Packet* p)
     SF_EVENTQ* pq = p->context->equeue;
     pc.log_limit += sfeventq_reset(pq);
 }
-

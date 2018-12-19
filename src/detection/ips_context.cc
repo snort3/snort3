@@ -25,13 +25,13 @@
 #include "ips_context.h"
 
 #include <cassert>
+
 #include "detection/detection_engine.h"
+#include "detection/fp_detect.h"
 #include "detection/ips_context_data.h"
 #include "events/event_queue.h"
 #include "events/sfeventq.h"
 #include "main/snort_config.h"
-
-#include "fp_detect.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -46,6 +46,11 @@ using namespace snort;
 IpsContext::IpsContext(unsigned size) :
     data(size ? size : max_ips_id, nullptr)
 {
+    depends_on = nullptr;
+    next_to_process = nullptr;
+
+    state = IDLE;
+
     packet = new Packet(false);
     encode_packet = nullptr;
 
@@ -190,6 +195,101 @@ TEST_CASE("IpsContext post detection", "[IpsContext]")
     post_val = nullptr;
     c.post_detection();
     CHECK( post_val == nullptr );
+}
+
+TEST_CASE("IpsContext Link", "[IpsContext]")
+{
+    IpsContext c0, c1, c2;
+    
+    CHECK(c0.dependencies() == nullptr);
+    CHECK(c0.next() == nullptr);
+
+    c0.link(&c1);
+    CHECK(c0.dependencies() == nullptr);
+    CHECK(c0.next() == &c1);
+    CHECK(c1.dependencies() == &c0);
+    CHECK(c1.next() == nullptr);
+
+    c1.link(&c2);
+    CHECK(c0.dependencies() == nullptr);
+    CHECK(c0.next() == &c1);
+    CHECK(c1.dependencies() == &c0);
+    CHECK(c1.next() == &c2);
+    CHECK(c2.dependencies() == &c1);
+    CHECK(c2.next() == nullptr);
+}
+
+TEST_CASE("IpsContext Unlink", "[IpsContext]")
+{
+    IpsContext c0, c1, c2;
+    c0.link(&c1);
+    c1.link(&c2);
+
+    c0.unlink();
+    CHECK(c0.dependencies() == nullptr);
+    CHECK(c0.next() == nullptr);
+    CHECK(c1.dependencies() == nullptr);
+    CHECK(c1.next() == &c2);
+    CHECK(c2.dependencies() == &c1);
+    CHECK(c2.next() == nullptr);
+
+    c1.unlink();
+    CHECK(c1.dependencies() == nullptr);
+    CHECK(c1.next() == nullptr);
+    CHECK(c2.dependencies() == nullptr);
+    CHECK(c2.next() == nullptr);
+
+    c2.unlink();
+    CHECK(c2.dependencies() == nullptr);
+    CHECK(c2.next() == nullptr);
+}
+
+TEST_CASE("IpsContext Abort, [IpsContext]")
+{
+    IpsContext c0, c1, c2, c3;
+    Flow flow;
+
+    c0.link(&c1);
+    c1.link(&c2);
+    c2.link(&c3);
+    
+    // mid list
+    // c0 <- c1 <- c2 <- c3
+    // c0 <- c2 <- c3
+    c1.abort();
+    CHECK(c0.dependencies() == nullptr);
+    CHECK(c0.next() == &c2);
+    CHECK(c1.dependencies() == nullptr);
+    CHECK(c1.next() == nullptr);
+    CHECK(c2.dependencies() == &c0);
+    CHECK(c2.next() == &c3);
+    CHECK(c3.dependencies() == &c2);
+    CHECK(c3.next() == nullptr);
+
+    // front of list
+    // c0 <- c2 <- c3
+    // c2 <- c3
+    c0.abort();
+    CHECK(c0.dependencies() == nullptr);
+    CHECK(c0.next() == nullptr);
+    CHECK(c2.dependencies() == nullptr);
+    CHECK(c2.next() == &c3);
+    CHECK(c3.dependencies() == &c2);
+    CHECK(c3.next() == nullptr);
+
+    // back of list
+    // c2 <- c3
+    // c2
+    c3.abort();
+    CHECK(c2.dependencies() == nullptr);
+    CHECK(c2.next() == nullptr);
+    CHECK(c3.dependencies() == nullptr);
+    CHECK(c3.next() == nullptr);
+    
+    // only
+    c2.abort();
+    CHECK(c2.dependencies() == nullptr);
+    CHECK(c2.next() == nullptr);
 }
 #endif
 

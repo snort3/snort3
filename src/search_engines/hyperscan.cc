@@ -138,7 +138,7 @@ public:
 
     int _search(const uint8_t*, int, MpseMatch, void*, int*) override;
 
-    int get_pattern_count() override
+    int get_pattern_count() const override
     { return pvector.size(); }
 
     int match(unsigned id, unsigned long long to);

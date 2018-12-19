@@ -94,7 +94,7 @@ public:
         return 0;
     }
 
-    int get_pattern_count() override
+    int get_pattern_count() const override
     {
         return bnfaPatternCount(obj);
     }

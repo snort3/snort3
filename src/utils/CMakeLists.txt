@@ -4,6 +4,7 @@ set( UTIL_INCLUDES
     cpp_macros.h
     endian.h
     kmap.h
+    primed_allocator.h
     safec.h
     segment_mem.h
     sflsq.h

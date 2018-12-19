@@ -49,7 +49,6 @@ struct RegexRequest
 
     std::atomic<bool> offload { false };
 
-    unsigned id = 0;
     bool go = true;
 };
 
@@ -108,9 +107,10 @@ void RegexOffload::worker(RegexRequest* req)
         }
 
         assert(req->packet);
+        assert(req->packet->is_offloaded());
 
         snort::SnortConfig::set_conf(req->packet->context->conf);  // FIXIT-H reload issue
-        fp_offload(req->packet);
+        fp_partial(req->packet);
 
         req->offload = false;
     }
@@ -124,7 +124,7 @@ void RegexOffload::tterm()
     RuleLatency::tterm();
 }
 
-void RegexOffload::put(unsigned id, snort::Packet* p)
+void RegexOffload::put(snort::Packet* p)
 {
     assert(p);
     assert(!idle.empty());
@@ -136,30 +136,34 @@ void RegexOffload::put(unsigned id, snort::Packet* p)
 
     std::unique_lock<std::mutex> lock(req->mutex);
 
-    req->id = id;
     req->packet = p;
     req->offload = true;
 
     req->cond.notify_one();
 }
 
-bool RegexOffload::get(unsigned& id)
+bool RegexOffload::get(snort::Packet*& p)
 {
     assert(!busy.empty());
 
-    // FIXIT-H onload flows in any order
-    RegexRequest* req = busy.front();
+    for ( auto i = busy.begin(); i != busy.end(); i++ )
+    {
+        RegexRequest* req = *i;
 
-    if ( req->offload )
-        return false;
+        if ( req->offload )
+            continue;
 
-    id = req->id;
-    req->packet = nullptr;
+        p = req->packet;
+        req->packet = nullptr;
 
-    busy.pop_front();  // FIXIT-H use splice to move instead
-    idle.emplace_back(req);
+        busy.erase(i);
+        idle.emplace_back(req);
 
-    return true;
+        return true;
+    }
+    
+    p = nullptr;
+    return false;
 }
 
 bool RegexOffload::on_hold(snort::Flow* f)

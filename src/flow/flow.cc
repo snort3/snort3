@@ -72,7 +72,6 @@ void Flow::init(PktType type)
     }
     mpls_client.length = 0;
     mpls_server.length = 0;
-    offloads_pending = 0;
 }
 
 void Flow::term()
@@ -478,4 +477,3 @@ void Flow::set_service(Packet* pkt, const char* new_service)
     service = new_service;
     DataBus::publish(FLOW_SERVICE_CHANGE_EVENT, pkt);
 }   
-

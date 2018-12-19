@@ -55,8 +55,8 @@ public:
     unsigned count()
     { return busy.size(); }
 
-    void put(unsigned id, snort::Packet*);
-    bool get(unsigned& id);
+    void put(snort::Packet*);
+    bool get(snort::Packet*&);
 
     bool on_hold(snort::Flow*);
 

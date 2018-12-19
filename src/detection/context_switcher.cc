@@ -41,150 +41,184 @@
 
 using namespace snort;
 
+static THREAD_LOCAL uint64_t global_context_num = 0;
+
 //--------------------------------------------------------------------------
 // context switcher methods
 //--------------------------------------------------------------------------
-
-ContextSwitcher::ContextSwitcher(unsigned max) :
-    hold(max+1, nullptr)  // use 1-based index / skip hold[0]
-{
-}
 
 ContextSwitcher::~ContextSwitcher()
 {
     abort();
 
-    for ( auto* p : idle )
+    for ( auto* p : contexts )
         delete p;
 }
 
 void ContextSwitcher::push(IpsContext* c)
 {
-    c->set_slot(idle.size() + 1);
+    assert(c->state == IpsContext::IDLE);
     idle.emplace_back(c);
-}
-
-IpsContext* ContextSwitcher::pop()
-{
-    if ( idle.empty() )
-        return nullptr;
-
-    IpsContext* c = idle.back();
-    assert(!c->has_callbacks());
-    idle.pop_back();
-    return c;
+    contexts.emplace_back(c);
 }
 
 void ContextSwitcher::start()
 {
     assert(busy.empty());
     assert(!idle.empty());
-    trace_logf(detection, TRACE_DETECTION_ENGINE, "(wire) %" PRIu64 " cs::start %u (i=%zu, b=%zu)\n",
-        get_packet_number(), idle.back()->get_slot(), idle.size(), busy.size());
-    assert(!idle.back()->has_callbacks());
-    busy.emplace_back(idle.back());
+
+    IpsContext* c = idle.back();
+    assert(c->state == IpsContext::IDLE);
+    assert(!c->has_callbacks());
+    
+    c->context_num = ++global_context_num;
+    trace_logf(detection, TRACE_DETECTION_ENGINE, "(wire) %" PRIu64 " cs::start %" PRIu64 " (i=%zu, b=%zu)\n",
+        get_packet_number(), c->context_num, idle.size(), busy.size());
+
     idle.pop_back();
 
-    IpsContext* c = busy.back();
     c->packet->active = c->packet->active_inst;
     c->packet->active->reset();
     c->packet->action = &c->packet->action_inst; 
+    c->state = IpsContext::BUSY;
+
+    busy.emplace_back(c);
 }
 
 void ContextSwitcher::stop()
 {
     assert(busy.size() == 1);
-    trace_logf(detection, TRACE_DETECTION_ENGINE, "(wire) %" PRIu64 " cs::stop %u (i=%zu, b=%zu)\n",
-        get_packet_number(), busy.back()->get_slot(), idle.size(), busy.size());
 
     IpsContext* c = busy.back();
+    assert(c->state == IpsContext::BUSY);
+
     assert(!c->has_callbacks());
-    c->clear_context_data();
-    idle.emplace_back(c);
-    busy.back()->packet->active = nullptr;
-    busy.back()->packet->action = nullptr;
+    assert(!c->dependencies());
+
+    trace_logf(detection, TRACE_DETECTION_ENGINE, "(wire) %" PRIu64 " cs::stop %" PRIu64 " (i=%zu, b=%zu)\n",
+        get_packet_number(), c->context_num, idle.size(), busy.size());
+
     busy.pop_back();
+
+    c->clear_context_data();
+    c->packet->active = nullptr;
+    c->packet->action = nullptr;
+    c->state = IpsContext::IDLE;
+
+    idle.emplace_back(c);
 }
 
 void ContextSwitcher::abort()
 {
     trace_logf(detection, TRACE_DETECTION_ENGINE, "(wire) %" PRIu64 " cs::abort (i=%zu, b=%zu)\n",
         get_packet_number(), idle.size(), busy.size());
-    for ( unsigned i = 0; i < hold.capacity(); ++i )
+
+    busy.clear();
+
+    for ( IpsContext* c : contexts )
     {
-        if ( hold[i] )
+        switch ( c->state )
         {
-            trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::abort hold",
-                hold[i]->packet_number);
-
-            idle.emplace_back(hold[i]);
-            hold[i] = nullptr;
-            idle.back()->clear_callbacks();
-            idle.back()->clear_context_data();
+            case IpsContext::IDLE:
+                continue;
+            case IpsContext::BUSY:
+                trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::abort busy",
+                    c->packet_number);
+                break;
+            case IpsContext::SUSPENDED:
+                trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::abort suspended",
+                    c->packet_number);
+                break;
         }
-    }
-    while ( !busy.empty() )
-    {
-        trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::abort busy",
-            busy[0]->packet_number);
 
-        idle.emplace_back(busy.back());
-        busy.pop_back();
-        idle.back()->clear_callbacks();
-        idle.back()->clear_context_data();
+        if ( c->packet->flow )
+            c->packet->flow->context_chain.abort();
+        
+        c->abort();
+        c->state = IpsContext::IDLE;
+        c->clear_callbacks();
+        c->clear_context_data();
+        idle.emplace_back(c);
     }
+    non_flow_chain.abort();
 }
 
 IpsContext* ContextSwitcher::interrupt()
 {
     assert(!idle.empty());
-    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::interrupt %u (i=%zu, b=%zu)\n",
-        idle.back()->packet_number, idle.back()->get_slot(), idle.size(), busy.size());
-
     assert(!idle.back()->has_callbacks());
-    busy.emplace_back(idle.back());
+
+    IpsContext* c = idle.back();
+    assert(c->state == IpsContext::IDLE);
+
+    c->context_num = ++global_context_num;
+    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::interrupt %" PRIu64 " (i=%zu, b=%zu)\n",
+        busy.empty() ? get_packet_number() : busy.back()->packet_number,
+        busy.empty() ? 0 : busy.back()->context_num, idle.size(), busy.size());
+
     idle.pop_back();
-    return busy.back();
+
+    c->state = IpsContext::BUSY;
+    busy.emplace_back(c);
+    return c;
 }
 
 IpsContext* ContextSwitcher::complete()
 {
     assert(!busy.empty());
+
     IpsContext* c = busy.back();
-
-    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::complete %u (i=%zu, b=%zu)\n",
-        c->packet_number, busy.back()->get_slot(), idle.size(), busy.size());
-
+    assert(c->state == IpsContext::BUSY);
+    assert(!c->dependencies());
     assert(!c->has_callbacks());
-    c->clear_context_data();
 
-    idle.emplace_back(c);
+    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::complete %" PRIu64 " (i=%zu, b=%zu)\n",
+        c->packet_number, c->context_num, idle.size(), busy.size());
+
     busy.pop_back();
-    return busy.empty() ? nullptr : busy.back();
+    c->clear_context_data();
+    c->state = IpsContext::IDLE;
+    idle.emplace_back(c);
+    
+    if ( busy.empty() )
+        return nullptr;
+
+    return busy.back();
 }
 
-unsigned ContextSwitcher::suspend()
+void ContextSwitcher::suspend()
 {
     assert(!busy.empty());
+
     IpsContext* c = busy.back();
+    assert(c->state == IpsContext::BUSY);
+    
+    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::suspend %" PRIu64 " (i=%zu, b=%zu, wh=%zu)\n",
+        c->packet_number, c->context_num, idle.size(), busy.size(), contexts.size() - idle.size() - busy.size());
 
-    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::suspend %u (i=%zu, b=%zu)\n",
-        c->packet_number, busy.back()->get_slot(), idle.size(), busy.size());
-
+    c->state = IpsContext::SUSPENDED;
     busy.pop_back();
-    unsigned slot = c->get_slot();
-    assert(!hold[slot]);
-    hold[slot] = c;
-    return slot;
+
+    if ( c->packet->flow )
+        c->packet->flow->context_chain.push_back(c);
+    else
+        non_flow_chain.push_back(c);
 }
 
-void ContextSwitcher::resume(unsigned slot)
+void ContextSwitcher::resume(IpsContext* c)
 {
-    assert(slot <= hold.capacity());
-    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::resume %u (i=%zu, b=%zu)\n",
-        hold[slot]->packet_number, slot, idle.size(), busy.size());
-    busy.emplace_back(hold[slot]);
-    hold[slot] = nullptr;
+    assert(c->state == IpsContext::SUSPENDED);
+
+    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::resume %" PRIu64 " (i=%zu)\n",
+        c->packet_number, c->context_num, idle.size());
+
+    IpsContextChain& chain = c->packet->flow ? c->packet->flow->context_chain : non_flow_chain;
+    assert(c == chain.front());
+    assert(!c->dependencies());
+    chain.pop();
+
+    c->state = IpsContext::BUSY;
+    busy.emplace_back(c);
 }
 
 IpsContext* ContextSwitcher::get_context() const
@@ -195,14 +229,6 @@ IpsContext* ContextSwitcher::get_context() const
     return busy.back();
 }
 
-IpsContext* ContextSwitcher::get_context(unsigned slot) const
-{
-    assert(slot <= hold.capacity());
-    IpsContext* c = hold[slot];
-    assert(c);
-    return c;
-}
-
 IpsContext* ContextSwitcher::get_next() const
 {
     assert(!idle.empty());
@@ -210,41 +236,16 @@ IpsContext* ContextSwitcher::get_next() const
 }
 
 IpsContextData* ContextSwitcher::get_context_data(unsigned id) const
-{
-    return get_context()->get_context_data(id);
-}
+{ return get_context()->get_context_data(id); }
 
 void ContextSwitcher::set_context_data(unsigned id, IpsContextData* cd) const
-{
-    get_context()->set_context_data(id, cd);
-}
+{ get_context()->set_context_data(id, cd); }
 
 unsigned ContextSwitcher::idle_count() const
 { return idle.size(); }
 
 unsigned ContextSwitcher::busy_count() const
 { return busy.size(); }
-
-unsigned ContextSwitcher::hold_count() const
-{
-    unsigned c = 0;
-
-    for ( auto* p : hold )
-        if ( p ) c++;
-
-    return c;
-}
-
-bool ContextSwitcher::on_hold(Flow* f)
-{
-    for ( unsigned i = 0; i < hold.capacity(); ++i )
-    {
-        IpsContext* c = hold[i];
-        if ( c and c->packet and c->packet->flow == f )
-            return true;
-    }
-    return false;
-}
 
 //--------------------------------------------------------------------------
 // unit tests
@@ -257,85 +258,187 @@ public:
     ContextData(int) { }
 };
 
-TEST_CASE("ContextSwitcher normal", "[ContextSwitcher]")
+TEST_CASE("ContextSwitcher single wire", "[ContextSwitcher]")
+{
+    const unsigned max = 10;
+    ContextSwitcher mgr;
+
+    for ( unsigned i = 0; i < max; ++i )
+        mgr.push(new IpsContext);
+
+    IpsContext *c1, *c2, *c3, *c4, *c5, *c6, *c7, *c8, *c9;
+
+    /*
+          __1__
+         /     \
+        _2_   _3_
+       / | \ / | \
+      *4*5 6 7 8 9
+      
+       6 2 7 8 9 3 1
+    */
+
+    mgr.start();
+
+    c1 = mgr.get_context();
+    CHECK(c1->state == IpsContext::BUSY);
+    c2 = mgr.interrupt();
+    CHECK(c2->state == IpsContext::BUSY);
+    c4 = mgr.interrupt();
+    CHECK(c4->state == IpsContext::BUSY);
+
+    mgr.complete();
+    CHECK(c4->state == IpsContext::IDLE);
+
+    c5 = mgr.interrupt();
+    CHECK(c5->state == IpsContext::BUSY);
+    mgr.complete();
+    CHECK(c5->state == IpsContext::IDLE);
+    
+    c6 = mgr.interrupt();
+    CHECK(c6->state == IpsContext::BUSY);
+    c6->packet->set_offloaded();
+    mgr.suspend();
+    CHECK(c6->state == IpsContext::SUSPENDED);
+    CHECK(mgr.non_flow_chain.front() == c6);
+
+    mgr.suspend();
+    CHECK(c6->next() == c2);
+    CHECK(c2->state == IpsContext::SUSPENDED);
+    CHECK(mgr.non_flow_chain.front() == c6);
+
+    c3 = mgr.interrupt();
+    CHECK(c3->state == IpsContext::BUSY);
+    c7 = mgr.interrupt();
+    CHECK(c7->state == IpsContext::BUSY);
+    mgr.suspend();
+    CHECK(c2->next() == c7);
+    CHECK(c7->state == IpsContext::SUSPENDED);
+
+    c8 = mgr.interrupt();
+    CHECK(c8->state == IpsContext::BUSY);
+    mgr.suspend();
+    CHECK(c7->next() == c8);
+    CHECK(c8->state == IpsContext::SUSPENDED);
+
+    c9 = mgr.interrupt();
+    CHECK(c9->state == IpsContext::BUSY);
+    mgr.suspend();
+    CHECK(c8->next() == c9);
+    CHECK(c9->state == IpsContext::SUSPENDED);
+
+    mgr.suspend();
+    CHECK(c9->next() == c3);
+    CHECK(c3->state == IpsContext::SUSPENDED);
+
+    mgr.suspend();
+    CHECK(c3->next() == c1);
+    CHECK(c1->state == IpsContext::SUSPENDED);
+
+    std::vector<IpsContext*> expected = { c6, c2, c7, c8, c9, c3, c1 };
+    
+    for ( auto& e : expected )
+    {
+        mgr.resume(e);
+        CHECK(mgr.get_context() == e);
+        CHECK(e->state == IpsContext::BUSY);
+
+        if ( e == c1 )
+            mgr.stop();
+        else
+            mgr.complete();
+
+        CHECK(e->state == IpsContext::IDLE);
+    }
+}
+
+TEST_CASE("ContextSwitcher multi wire", "[ContextSwitcher]")
 {
     const unsigned max = 3;
-    auto mgr = ContextSwitcher(max);
-    auto id = IpsContextData::get_ips_id();
-    CHECK(!mgr.pop());
+    ContextSwitcher mgr;
 
-    for ( unsigned i = 0; i < max; ++i )
-        mgr.push(new IpsContext(id+1));
-
-    SECTION("workflow")
-    {
-        CHECK(mgr.idle_count() == max);
-
-        mgr.start();
-        CHECK(mgr.idle_count() == max-1);
-        CHECK(mgr.busy_count() == 1);
-
-        IpsContextData* a = new ContextData(id);
-        mgr.set_context_data(1, a);
-        mgr.interrupt();
-        CHECK(mgr.idle_count() == max-2);
-        CHECK((mgr.busy_count() == 2));
-
-        unsigned u = mgr.suspend();
-        CHECK(mgr.idle_count() == max-2);
-        CHECK(mgr.busy_count() == 1);
-        CHECK(mgr.hold_count() == 1);
-
-        mgr.resume(u);
-        CHECK(mgr.idle_count() == max-2);
-        CHECK((mgr.busy_count() == 2));
-        CHECK(mgr.hold_count() == 0);
-
-        mgr.complete();
-        CHECK(mgr.idle_count() == max-1);
-        CHECK(mgr.busy_count() == 1);
-
-        IpsContextData* b = mgr.get_context_data(1);
-        CHECK(a == b);
-
-        mgr.stop();
-        CHECK(mgr.idle_count() == max);
-    }
+    IpsContext *c1, *c2, *c3;
     for ( unsigned i = 0; i < max; ++i )
     {
-        IpsContext* p = mgr.pop();
-        CHECK(p);
-        delete p;
+        IpsContext* c = new IpsContext;
+        c->packet->flow = new Flow;
+        mgr.push(c);
     }
-    CHECK(!mgr.pop());
+    
+    mgr.start();
+    c1 = mgr.get_context();
+    mgr.suspend();
+    CHECK(mgr.busy_count() == 0);
+
+    mgr.start();
+    c2 = mgr.get_context();
+    mgr.suspend();
+    CHECK(mgr.busy_count() == 0);
+
+    mgr.start();
+    c3 = mgr.get_context();
+    mgr.suspend();
+    CHECK(mgr.busy_count() == 0);
+
+    // middle
+    CHECK(c2->state == IpsContext::SUSPENDED);
+    mgr.resume(c2);
+    CHECK(c2->state == IpsContext::BUSY);
+    CHECK(mgr.get_context() == c2);
+    CHECK(mgr.busy_count() == 1);
+
+    mgr.stop();
+    CHECK(c2->state == IpsContext::IDLE);
+    CHECK(mgr.busy_count() == 0);
+
+    // end
+    CHECK(c3->state == IpsContext::SUSPENDED);
+    mgr.resume(c3);
+    CHECK(c3->state == IpsContext::BUSY);
+    CHECK(mgr.get_context() == c3);
+    CHECK(mgr.busy_count() == 1);
+
+    mgr.stop();
+    CHECK(c3->state == IpsContext::IDLE);
+    CHECK(mgr.busy_count() == 0);
+
+    // only
+    CHECK(c1->state == IpsContext::SUSPENDED);
+    mgr.resume(c1);
+    CHECK(c1->state == IpsContext::BUSY);
+    CHECK(mgr.busy_count() == 1);
+
+    mgr.stop();
+    CHECK(c1->state == IpsContext::IDLE);
+    CHECK(mgr.busy_count() == 0);
+
+    delete c1->packet->flow;
+    delete c2->packet->flow;
+    delete c3->packet->flow;
 }
 
 TEST_CASE("ContextSwitcher abort", "[ContextSwitcher]")
 {
     const unsigned max = 3;
-    auto mgr = ContextSwitcher(max);
+    ContextSwitcher mgr;
     auto id = IpsContextData::get_ips_id();
-    CHECK(!mgr.pop());
 
     for ( unsigned i = 0; i < max; ++i )
         mgr.push(new IpsContext(id+1));
 
-    SECTION("cleanup")
-    {
-        mgr.start();
-        IpsContextData* a = new ContextData(id);
-        mgr.set_context_data(1, a);
-        mgr.interrupt();
-        mgr.interrupt();
-        CHECK(mgr.idle_count() == max-3);
+    mgr.start();
+    IpsContextData* a = new ContextData(id);
+    mgr.set_context_data(1, a);
+    mgr.interrupt();
+    mgr.interrupt();
+    CHECK(mgr.idle_count() == max-3);
 
-        mgr.suspend();
-        CHECK((mgr.busy_count() == 2));
-        CHECK(mgr.hold_count() == 1);
+    mgr.suspend();
+    CHECK((mgr.busy_count() == 2));
 
-        mgr.abort();
-        CHECK(mgr.idle_count() == max);
-    }
+    mgr.abort();
+    CHECK(mgr.idle_count() == max);
+    CHECK(!mgr.busy_count());
 }
 #endif
 

@@ -64,7 +64,7 @@ public:
     int print_info() override
     { return acsmPrintDetailInfo(obj); }
 
-    int get_pattern_count() override
+    int get_pattern_count() const override
     { return acsmPatternCount(obj); }
 };
 

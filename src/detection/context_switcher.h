@@ -22,23 +22,27 @@
 #define CONTEXT_SWITCHER_H
 
 // ContextSwitcher maintains a set of contexts, only one of which can be
-// active at any time.  the normal workflow is:
+// active at any time. the normal workflow is:
 //
-// 1.  start and stop are called at the beginning and end of each packet
-// callback which activates and releases one context from among those
+// 1.  start and stop are called at the beginning and end of each wire
+// packet which activates and releases one context from among those
 // available.
 //
 // 2.  during processing interrupt and complete should be called to start
-// and finish processing of a generated pseudo packet.  it is possible to
-// interrupt pseudo packets.
+// and finish processing of a generated pseudo packet. it is possible to
+// interrupt pseudo packets. complete may return without doing anything if
+// dependent contexts were suspended.
 //
-// 3.  suspend may be called to place the current context on hold and
-// activate the prior.  multiple contexts may be placed on hold.
+// 3.  suspend may be called to pause the current context and activate the
+// prior. multiple contexts may be suspended.
 //
-// 4.  there is no ordering of idle contexts.  busy contexts are in strict
-// LIFO order.  contexts on hold can be resumed in any order.
+// 4.  there is no ordering of idle contexts. busy contexts are in strict LIFO
+// order. context dependency chains are maintained in depth-first order by Flow.
 
 #include <vector>
+
+#include "detection/ips_context_chain.h"
+#include "utils/primed_allocator.h"
 
 namespace snort
 {
@@ -47,14 +51,13 @@ class IpsContext;
 class IpsContextData;
 }
 
+// FIXIT-H add the hold to catch offloads that don't return
 class ContextSwitcher
 {
 public:
-    ContextSwitcher(unsigned max);
     ~ContextSwitcher();
 
     void push(snort::IpsContext*);
-    snort::IpsContext* pop();
 
     void start();
     void stop();
@@ -63,11 +66,10 @@ public:
     snort::IpsContext* interrupt();
     snort::IpsContext* complete();
 
-    unsigned suspend();
-    void resume(unsigned suspended);
+    void suspend();
+    void resume(snort::IpsContext*);
 
     snort::IpsContext* get_context() const;
-    snort::IpsContext* get_context(unsigned) const;
     snort::IpsContext* get_next() const;
 
     snort::IpsContextData* get_context_data(unsigned id) const;
@@ -75,17 +77,14 @@ public:
 
     unsigned idle_count() const;
     unsigned busy_count() const;
-    unsigned hold_count() const;
 
-    bool can_hold() const
-    { return idle_count() > 5; }  // FIXIT-RC define appropriate const
-
-    bool on_hold(snort::Flow*);
+public:
+    snort::IpsContextChain non_flow_chain;
 
 private:
     std::vector<snort::IpsContext*> idle;
     std::vector<snort::IpsContext*> busy;
-    std::vector<snort::IpsContext*> hold;
+    std::vector<snort::IpsContext*> contexts;
 };
 
 #endif
