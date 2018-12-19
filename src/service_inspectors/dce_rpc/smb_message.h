@@ -904,7 +904,7 @@ inline uint64_t SmbNtCreateAndXReqAllocSize(const SmbNtCreateAndXReq* req)
 
 inline bool SmbNtCreateAndXReqSequentialOnly(const SmbNtCreateAndXReq* req)
 {
-    return (snort::alignedNtohl(&req->smb_create_opts) & SMB_CREATE_OPTIONS__FILE_SEQUENTIAL_ONLY);
+    return ((snort::alignedNtohl(&req->smb_create_opts) & SMB_CREATE_OPTIONS__FILE_SEQUENTIAL_ONLY) != 0);
 }
 
 inline uint32_t SmbNtCreateAndXReqFileAttrs(const SmbNtCreateAndXReq* req)
@@ -1736,7 +1736,7 @@ inline uint32_t SmbNtTransactCreateReqFileAttrs(const SmbNtTransactCreateReqPara
 
 inline bool SmbNtTransactCreateReqSequentialOnly(const SmbNtTransactCreateReqParams* req)
 {
-    return (snort::alignedNtohl(&req->create_options) & SMB_CREATE_OPTIONS__FILE_SEQUENTIAL_ONLY);
+    return ((snort::alignedNtohl(&req->create_options) & SMB_CREATE_OPTIONS__FILE_SEQUENTIAL_ONLY) != 0);
 }
 
 struct SmbNtTransactCreateReq

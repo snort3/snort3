@@ -165,7 +165,7 @@ struct SO_PUBLIC Packet
 
     /*  Boolean functions - general information about this packet */
     inline bool is_eth() const
-    { return proto_bits & PROTO_BIT__ETH; }
+    { return ((proto_bits & PROTO_BIT__ETH) != 0); }
 
     inline bool has_ip() const
     { return ptrs.ip_api.is_ip(); }
@@ -192,7 +192,7 @@ struct SO_PUBLIC Packet
     { return (ptrs.get_pkt_type() == PktType::PDU) or (ptrs.get_pkt_type() == PktType::FILE); }
 
     inline bool is_cooked() const
-    { return packet_flags & PKT_PSEUDO; }
+    { return ((packet_flags & PKT_PSEUDO) != 0); }
 
     inline bool is_fragment() const
     { return ptrs.decode_flags & DECODE_FRAG; }
