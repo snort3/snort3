@@ -105,6 +105,10 @@ Optional Packages:
                             flatbuffers include directory
     --with-flatbuffers-libraries=DIR
                             flatbuffers library directory
+    --with-iconv-includes=DIR
+                            libiconv include directory
+    --with-iconv-libraries=DIR
+                            libiconv library directory
     --with-uuid-includes=DIR
                             libuuid include directory
     --with-uuid-libraries=DIR
@@ -394,6 +398,12 @@ while [ $# -ne 0 ]; do
             ;;
         --with-flatbuffers-libraries=*)
             append_cache_entry FLATBUFFERS_LIBRARIES_DIR_HINT PATH $optarg
+            ;;
+        --with-iconv-includes=*)
+            append_cache_entry ICONV_INCLUDE_DIR_HINT PATH $optarg
+            ;;
+        --with-iconv-libraries=*)
+            append_cache_entry ICONV_LIBRARIES_DIR_HINT PATH $optarg
             ;;
         --with-uuid-includes=*)
             append_cache_entry UUID_INCLUDE_DIR_HINT PATH $optarg

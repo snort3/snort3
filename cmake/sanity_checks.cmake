@@ -4,6 +4,7 @@ include(CheckFunctionExists)
 include(CheckLibraryExists)
 include(CheckSymbolExists)
 include(CheckTypeSize)
+include(CMakePushCheckState)
 
 include (TestBigEndian)
 test_big_endian(WORDS_BIGENDIAN)
