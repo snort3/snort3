@@ -355,7 +355,7 @@ bool StreamTcpModule::begin(const char* fqn, int, SnortConfig*)
 bool StreamTcpModule::end(const char*, int, SnortConfig* sc)
 {
     if ( config->hs_timeout >= 0 )
-        sc->run_flags |= RUN_FLAG__TRACK_ON_SYN;
+        sc->set_run_flags(RUN_FLAG__TRACK_ON_SYN);
     return true;
 }
 

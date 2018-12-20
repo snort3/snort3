@@ -647,6 +647,9 @@ public:
     bool track_on_syn() const
     { return (run_flags & RUN_FLAG__TRACK_ON_SYN) != 0; }
 
+    void set_run_flags(RunFlag flag)
+    { run_flags |= flag; }
+
     // This requests an entry in the scratch space vector and calls setup /
     // cleanup as appropriate
     SO_PUBLIC static int request_scratch(ScScratchFunc setup, ScScratchFunc cleanup);
