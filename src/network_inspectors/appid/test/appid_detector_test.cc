@@ -36,9 +36,6 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
-Flow* flow = nullptr;
-AppIdSession* mock_session = nullptr;
-
 void AppIdHttpSession::set_http_change_bits(AppidChangeBits&, HttpFieldIds) {}
 
 class TestDetector : public AppIdDetector
@@ -54,9 +51,14 @@ public:
 
 TEST_GROUP(appid_detector_tests)
 {
+    Flow* flow = nullptr;
+    AppIdSession* mock_session = nullptr;
+
     void setup() override
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
+        mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
+        mock_session->get_http_session();
         flow = new Flow;
         flow->set_flow_data(mock_session);
     }
@@ -64,6 +66,7 @@ TEST_GROUP(appid_detector_tests)
     void teardown() override
     {
         delete flow;
+        delete mock_session;
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
@@ -115,8 +118,6 @@ TEST(appid_detector_tests, get_code_string)
 int main(int argc, char** argv)
 {
     mock_init_appid_pegs();
-    mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
-    mock_session->get_http_session();
     int rc = CommandLineTestRunner::RunAllTests(argc, argv);
     mock_cleanup_appid_pegs();
     return rc;
