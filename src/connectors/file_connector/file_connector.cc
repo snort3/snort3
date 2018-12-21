@@ -238,28 +238,28 @@ static void mod_dtor(Module* m)
 static Connector* file_connector_tinit_transmit(std::string filename,
     FileConnectorConfig* cfg)
 {
-    FileConnector* file_connector = new FileConnector(cfg);
+    FileConnector* file_conn = new FileConnector(cfg);
     std::string pathname;
 
     filename += "_transmit";
     (void)get_instance_file(pathname, filename.c_str());
-    file_connector->file.open(pathname,
+    file_conn->file.open(pathname,
         (std::ios::out | (cfg->text_format ? (std::ios::openmode)0 : std::ios::binary)) );
 
-    return file_connector;
+    return file_conn;
 }
 
 static Connector* file_connector_tinit_receive(std::string filename,
     FileConnectorConfig* cfg)
 {
-    FileConnector* file_connector = new FileConnector(cfg);
+    FileConnector* file_conn = new FileConnector(cfg);
     std::string pathname;
 
     filename += "_receive";
     (void)get_instance_file(pathname, filename.c_str());
-    file_connector->file.open(pathname, (std::ios::in | std::ios::binary) );
+    file_conn->file.open(pathname, (std::ios::in | std::ios::binary) );
 
-    return file_connector;
+    return file_conn;
 }
 
 // Create a per-thread object
@@ -282,10 +282,10 @@ static Connector* file_connector_tinit(ConnectorConfig* config)
 
 static void file_connector_tterm(Connector* connector)
 {
-    FileConnector* file_connector = (FileConnector*)connector;
+    FileConnector* file_conn = (FileConnector*)connector;
 
-    file_connector->file.close();
-    delete file_connector;
+    file_conn->file.close();
+    delete file_conn;
 }
 
 static ConnectorCommon* file_connector_ctor(Module* m)

@@ -210,7 +210,7 @@ public:
         Flow*, const HostAttributeEntry*, int direction);
 
     static bool is_midstream(Flow* flow)
-    { return flow->ssn_state.session_flags & SSNFLAG_MIDSTREAM; }
+    { return ((flow->ssn_state.session_flags & SSNFLAG_MIDSTREAM) != 0); }
 
     // Get the TTL value used at session setup
     // Set outer=false to get inner ip ttl for ip in ip; else outer=true

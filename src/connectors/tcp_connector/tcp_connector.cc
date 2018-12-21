@@ -345,8 +345,8 @@ static TcpConnector* tcp_connector_tinit_call(TcpConnectorConfig* cfg, const cha
         return nullptr;
     }
 
-    TcpConnector* tcp_connector = new TcpConnector(cfg, sfd);
-    return tcp_connector;
+    TcpConnector* tcp_conn = new TcpConnector(cfg, sfd);
+    return tcp_conn;
 }
 
 static TcpConnector* tcp_connector_tinit_answer(TcpConnectorConfig* cfg, const char* port)
@@ -415,8 +415,8 @@ static TcpConnector* tcp_connector_tinit_answer(TcpConnectorConfig* cfg, const c
         return nullptr;
     }
 
-    TcpConnector* tcp_connector  = new TcpConnector(cfg, peer_sfd);
-    return tcp_connector;
+    TcpConnector* tcp_conn = new TcpConnector(cfg, peer_sfd);
+    return tcp_conn;
 }
 
 // Create a per-thread object
@@ -435,23 +435,23 @@ static Connector* tcp_connector_tinit(ConnectorConfig* config)
 
     snprintf(port_string, sizeof(port_string), "%5hu", static_cast<uint16_t>(cfg->base_port + instance));
 
-    TcpConnector* tcp_connector;
+    TcpConnector* tcp_conn;
 
     if ( cfg->setup == TcpConnectorConfig::Setup::CALL )
-        tcp_connector = tcp_connector_tinit_call(cfg, port_string);
+        tcp_conn = tcp_connector_tinit_call(cfg, port_string);
     else if ( cfg->setup == TcpConnectorConfig::Setup::ANSWER )
-        tcp_connector = tcp_connector_tinit_answer(cfg, port_string);
+        tcp_conn = tcp_connector_tinit_answer(cfg, port_string);
     else
-        tcp_connector = nullptr;
+        tcp_conn = nullptr;
 
-    return tcp_connector;
+    return tcp_conn;
 }
 
 static void tcp_connector_tterm(Connector* connector)
 {
-    TcpConnector* tcp_connector = (TcpConnector*)connector;
+    TcpConnector* tcp_conn = (TcpConnector*)connector;
 
-    delete tcp_connector;
+    delete tcp_conn;
 }
 
 static ConnectorCommon* tcp_connector_ctor(Module* m)

@@ -33,11 +33,11 @@
 
 static int init_from_string(lua_State* L)
 {
-    Lua::Args args(L);
+    Lua::Args l_args(L);
 
     size_t len = 0;
-    const char* s = args[1].check_string(len);
-    size_t size = args[2].opt_size(len);
+    const char* s = l_args[1].check_string(len);
+    size_t size = l_args[2].opt_size(len);
 
     // instantiate and adjust size if necessary
     RawBufferIface.create(L, s, len).resize(size, '\0');
@@ -47,9 +47,9 @@ static int init_from_string(lua_State* L)
 
 static int init_from_size(lua_State* L)
 {
-    Lua::Args args(L);
+    Lua::Args l_args(L);
 
-    size_t size = args[1].opt_size();
+    size_t size = l_args[1].opt_size();
 
     RawBufferIface.create(L, size, '\0');
 
@@ -62,9 +62,9 @@ static const luaL_Reg methods[] =
         "new",
         [](lua_State* L)
         {
-            Lua::Args args(L);
+            Lua::Args lua_args(L);
 
-            if ( args[1].is_string() )
+            if ( lua_args[1].is_string() )
                 return init_from_string(L);
 
             return init_from_size(L);
@@ -83,10 +83,10 @@ static const luaL_Reg methods[] =
         "resize",
         [](lua_State* L)
         {
-            Lua::Args args(L);
+            Lua::Args lua_args(L);
 
             auto& self = RawBufferIface.get(L, 1);
-            size_t new_size = args[2].check_size();
+            size_t new_size = lua_args[2].check_size();
 
             self.resize(new_size, '\0');
 
@@ -97,13 +97,13 @@ static const luaL_Reg methods[] =
         "write",
         [](lua_State* L)
         {
-            Lua::Args args(L);
+            Lua::Args lua_args(L);
 
             auto& self = RawBufferIface.get(L, 1);
 
             size_t len = 0;
-            const char* s = args[2].check_string(len);
-            size_t offset = args[3].opt_size();
+            const char* s = lua_args[2].check_string(len);
+            size_t offset = lua_args[3].opt_size();
 
             size_t required = offset + len;
             if ( self.size() < required )
@@ -118,19 +118,19 @@ static const luaL_Reg methods[] =
         "read",
         [](lua_State* L)
         {
-            Lua::Args args(L);
+            Lua::Args lua_args(L);
 
             auto& self = RawBufferIface.get(L, 1);
 
-            if ( args.count > 2 )
+            if ( lua_args.count > 2 )
             {
-                size_t start = args[2].check_size(self.size());
-                size_t end = args[3].check_size(start, self.size());
+                size_t start = lua_args[2].check_size(self.size());
+                size_t end = lua_args[3].check_size(start, self.size());
                 lua_pushlstring(L, self.data() + start, end - start);
             }
             else
             {
-                size_t end = args[2].opt_size(self.size(), self.size());
+                size_t end = lua_args[2].opt_size(self.size(), self.size());
                 lua_pushlstring(L, self.data(), end);
             }
 

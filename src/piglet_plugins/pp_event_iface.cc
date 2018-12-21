@@ -97,7 +97,7 @@ static const luaL_Reg methods[] =
 
             if ( si )
             {
-                Lua::ManageStack ms(L);
+                Lua::ManageStack lua_ms(L);
                 lua_newtable(L);
                 Lua::Table si_table(L, lua_gettop(L));
 
@@ -123,14 +123,14 @@ static const luaL_Reg methods[] =
             auto& self = EventIface.get(L);
             luaL_checktype(L, 2, LUA_TTABLE);
 
-            Lua::Table table(L, 2);
-            table.get_field_to_stack("sig_info");
+            Lua::Table new_table(L, 2);
+            new_table.get_field_to_stack("sig_info");
 
             auto* si = const_cast<SigInfo*>(self.sig_info);
 
             if ( si && lua_istable(L, lua_gettop(L)) )
             {
-                Lua::ManageStack ms(L);
+                Lua::ManageStack lua_ms(L);
                 Lua::Table si_table(L, lua_gettop(L));
 
                 si_table.get_field("generator", si->gid);

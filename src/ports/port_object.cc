@@ -572,10 +572,10 @@ void PortObjectPrintEx(PortObject* po, po_print_f print_index_map)
     unsigned i;
 
     /* static for printing so we don't put so many bytes on the stack */
-    static char po_print_buf[snort::MAX_PORTS];  // FIXIT-L delete this; replace with local stringstream
+    static char print_buf[snort::MAX_PORTS];  // FIXIT-L delete this; replace with local stringstream
 
-    int bufsize = sizeof(po_print_buf);
-    po_print_buf[0] = '\0';
+    int bufsize = sizeof(print_buf);
+    print_buf[0] = '\0';
 
     if ( !po )
         return;
@@ -586,22 +586,22 @@ void PortObjectPrintEx(PortObject* po, po_print_f print_index_map)
     if ( !po->rule_list->count )
         return;
 
-    SnortSnprintfAppend(po_print_buf, bufsize, " PortObject ");
+    SnortSnprintfAppend(print_buf, bufsize, " PortObject ");
 
     if ( po->name )
     {
-        SnortSnprintfAppend(po_print_buf, bufsize, "%s ", po->name);
+        SnortSnprintfAppend(print_buf, bufsize, "%s ", po->name);
     }
 
-    SnortSnprintfAppend(po_print_buf, bufsize,
+    SnortSnprintfAppend(print_buf, bufsize,
         " Id:%d  Ports:%u Rules:%u\n {\n",
         po->id, po->item_list->count,po->rule_list->count);
 
-    SnortSnprintfAppend(po_print_buf, bufsize, "  Ports [\n  ");
+    SnortSnprintfAppend(print_buf, bufsize, "  Ports [\n  ");
 
     if ( PortObjectHasAny(po) )
     {
-        SnortSnprintfAppend(po_print_buf, bufsize, "any");
+        SnortSnprintfAppend(print_buf, bufsize, "any");
     }
     else
     {
@@ -609,10 +609,10 @@ void PortObjectPrintEx(PortObject* po, po_print_f print_index_map)
             poi != nullptr;
             poi=(PortObjectItem*)sflist_next(&pos) )
         {
-            PortObjectItemPrint(poi, po_print_buf, bufsize);
+            PortObjectItemPrint(poi, print_buf, bufsize);
         }
     }
-    SnortSnprintfAppend(po_print_buf, bufsize, "  ]\n");
+    SnortSnprintfAppend(print_buf, bufsize, "  ]\n");
 
     rlist = RuleListToSortedArray(po->rule_list);
     if (!rlist )
@@ -620,27 +620,27 @@ void PortObjectPrintEx(PortObject* po, po_print_f print_index_map)
         return;
     }
 
-    SnortSnprintfAppend(po_print_buf, bufsize, "  Rules [ \n ");
+    SnortSnprintfAppend(print_buf, bufsize, "  Rules [ \n ");
     for (i=0; i<po->rule_list->count; i++)
     {
         if ( print_index_map )
         {
-            print_index_map(rlist[i], po_print_buf, bufsize);
+            print_index_map(rlist[i], print_buf, bufsize);
         }
         else
         {
-            SnortSnprintfAppend(po_print_buf, bufsize, " %d",rlist[i]);
+            SnortSnprintfAppend(print_buf, bufsize, " %d",rlist[i]);
         }
         k++;
         if ( k == 25 )
         {
             k=0;
-            SnortSnprintfAppend(po_print_buf, bufsize, " \n ");
+            SnortSnprintfAppend(print_buf, bufsize, " \n ");
         }
     }
-    SnortSnprintfAppend(po_print_buf, bufsize, "  ]\n }\n");
+    SnortSnprintfAppend(print_buf, bufsize, "  ]\n }\n");
 
-    snort::LogMessage("%s", po_print_buf);
+    snort::LogMessage("%s", print_buf);
     snort_free(rlist);
 }
 

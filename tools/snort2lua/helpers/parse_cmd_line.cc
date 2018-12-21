@@ -489,22 +489,22 @@ static void help_args(const char* /*pfx*/, const char* /*val*/)
             if (name.size() > name_field_len)
                 std::cout << "\n" << std::left << std::setw(name_field_len) << " ";
 
-            std::string help = p->help;
+            std::string help_str = p->help;
             bool first_line = true;
 
-            while (!help.empty())
+            while (!help_str.empty())
             {
-                std::size_t len = util::get_substr_length(help, data_field_len);
+                std::size_t len = util::get_substr_length(help_str, data_field_len);
 
                 if (first_line)
                     first_line = false;
                 else
                     std::cout << "\n" << std::setw(name_field_len) << " ";
 
-                std::cout << std::left << Markup::escape(help.substr(0, len));
+                std::cout << std::left << Markup::escape(help_str.substr(0, len));
 
-                if (len < help.size())
-                    help = help.substr(len + 1);
+                if (len < help_str.size())
+                    help_str = help_str.substr(len + 1);
                 else
                     break;
             }
