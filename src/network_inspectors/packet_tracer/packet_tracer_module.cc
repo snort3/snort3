@@ -124,13 +124,13 @@ static int enable(lua_State* L)
 
     if (sip.is_set())
     {
-        memcpy(&constraints.sip, sip.get_ip6_ptr(), sizeof(constraints.sip));
+        constraints.sip.set(sip);
         constraints.sip_flag = true;
     }
 
     if (dip.is_set())
     {
-        memcpy(&constraints.dip, dip.get_ip6_ptr(), sizeof(constraints.dip));
+        constraints.dip.set(dip);
         constraints.dip_flag = true;
     }
 

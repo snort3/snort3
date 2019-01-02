@@ -174,8 +174,8 @@ TEST_CASE("DceHttpServerSplitter-scan - extra_server", "[http_server_splitter]")
     char* string = new char[strlen(HTTP_SERVER_MARKER)+strlen(extra)+1];
     Flow* flow = new Flow();
     uint32_t fp;
-    strncpy(string,(const char*)HTTP_SERVER_MARKER,strlen(HTTP_SERVER_MARKER));
-    strncpy(string+strlen(HTTP_SERVER_MARKER),extra,strlen(extra));
+    strncpy(string,(const char*)HTTP_SERVER_MARKER,strlen(HTTP_SERVER_MARKER)+1);
+    strncpy(string+strlen(HTTP_SERVER_MARKER),extra,strlen(extra)+1);
 
     REQUIRE(splitter->scan(flow, (const uint8_t*)string,
         (strlen(HTTP_SERVER_MARKER)+strlen(extra)), PKT_FROM_SERVER, &fp) ==

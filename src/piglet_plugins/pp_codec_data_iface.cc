@@ -67,7 +67,6 @@ static const luaL_Reg methods[] =
             Lua::Args args(L);
 
             auto& self = CodecDataIface.create(L, ProtocolId::ETHERTYPE_NOT_SET);
-            memset(&self, 0, sizeof(self));
 
             if ( args[1].is_table() )
                 args[1].check_table(set_fields, self);

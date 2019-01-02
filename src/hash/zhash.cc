@@ -52,7 +52,7 @@ static inline ZHashNode* s_node_alloc(int keysize)
     auto node = static_cast<ZHashNode*>(
         ::operator new(sizeof(ZHashNode) + keysize));
 
-    memset(node, 0, sizeof(ZHashNode));
+    *node = {};
     return node;
 }
 

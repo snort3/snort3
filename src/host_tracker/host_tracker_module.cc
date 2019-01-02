@@ -113,7 +113,7 @@ bool HostTrackerModule::end(const char* fqn, int idx, SnortConfig*)
     if ( idx && !strcmp(fqn, "host_tracker.services") )
     {
         host->add_service(app);
-        memset(&app, 0, sizeof(app));
+        app = {};
     }
     else if ( idx && !strcmp(fqn, "host_tracker") )
     {

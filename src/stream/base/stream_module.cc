@@ -118,7 +118,7 @@ const StreamModuleConfig* StreamModule::get_data()
 bool StreamModule::begin(const char* fqn, int, SnortConfig*)
 {
     if ( !strcmp(fqn, MOD_NAME) )
-        memset(&config, 0, sizeof(config));
+        config = {};
 
     return true;
 }

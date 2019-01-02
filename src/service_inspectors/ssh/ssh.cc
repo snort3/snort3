@@ -55,7 +55,7 @@ unsigned SshFlowData::inspector_id = 0;
 
 SshFlowData::SshFlowData() : FlowData(inspector_id)
 {
-    memset(&session, 0, sizeof(session));
+    session = {};
     sshstats.concurrent_sessions++;
     if(sshstats.max_concurrent_sessions < sshstats.concurrent_sessions)
         sshstats.max_concurrent_sessions = sshstats.concurrent_sessions;

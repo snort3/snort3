@@ -259,8 +259,8 @@ TEST_CASE("DceHttpProxySplitter-scan - extra_proxy_request", "[http_proxy_splitt
     char* string = new char[strlen(HTTP_PROXY_REQUEST)+strlen(extra)+1];
     Flow* flow = new Flow();
     uint32_t fp = 0;
-    strncpy(string,(const char*)HTTP_PROXY_REQUEST,strlen(HTTP_PROXY_REQUEST));
-    strncpy(string+strlen(HTTP_PROXY_REQUEST),extra,strlen(extra));
+    strncpy(string,(const char*)HTTP_PROXY_REQUEST,strlen(HTTP_PROXY_REQUEST)+1);
+    strncpy(string+strlen(HTTP_PROXY_REQUEST),extra,strlen(extra)+1);
 
     REQUIRE(splitter->scan(flow, (const uint8_t*)string,
         (strlen(HTTP_PROXY_REQUEST)+strlen(extra)), PKT_FROM_CLIENT, &fp) ==

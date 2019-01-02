@@ -259,7 +259,7 @@ bool ReactModule::getpage(const char* file)
     page[n] = '\0';
     msg = strstr(page, MSG_KEY);
     if ( msg )
-        strncpy(msg, "%s", 2);
+        strncpy(msg, "%s", 3);
 
     // search for %
     percent_s = strstr(page, MSG_PERCENT);
