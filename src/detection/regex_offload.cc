@@ -61,7 +61,7 @@ RegexOffload::RegexOffload(unsigned max)
     for ( unsigned i = 0; i < max; ++i )
     {
         RegexRequest* req = new RegexRequest;
-        req->thread = new std::thread(worker, req);
+        req->thread = new std::thread(worker, req, snort::SnortConfig::get_conf());
         idle.emplace_back(req);
     }
 }
@@ -90,26 +90,30 @@ void RegexOffload::stop()
     }
 }
 
-void RegexOffload::worker(RegexRequest* req)
+void RegexOffload::worker(RegexRequest* req, snort::SnortConfig* initial_config)
 {
+    snort::SnortConfig::set_conf(initial_config);
+
     while ( true )
     {
         {
             std::unique_lock<std::mutex> lock(req->mutex);
             req->cond.wait_for(lock, std::chrono::seconds(1));
 
+            // setting conf is somewhat expensive, checking the conf is not
+            // this occurs here to take advantage if idling
+            if ( req->packet and req->packet->context->conf != snort::SnortConfig::get_conf() )
+                snort::SnortConfig::set_conf(req->packet->context->conf);
+
             if ( !req->go )
                 break;
 
             if ( !req->offload )
                 continue;
-            
         }
 
         assert(req->packet);
         assert(req->packet->is_offloaded());
-
-        snort::SnortConfig::set_conf(req->packet->context->conf);  // FIXIT-H reload issue
         fp_partial(req->packet);
 
         req->offload = false;

@@ -38,6 +38,7 @@ namespace snort
 {
 class Flow;
 struct Packet;
+struct SnortConfig;
 }
 struct RegexRequest;
 
@@ -61,7 +62,7 @@ public:
     bool on_hold(snort::Flow*);
 
 private:
-    static void worker(RegexRequest*);
+    static void worker(RegexRequest*, snort::SnortConfig*);
     static void tterm();
 
 private:

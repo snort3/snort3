@@ -81,6 +81,13 @@
 
 using namespace snort;
 
+enum FPTask : uint8_t
+{
+    FP = 1,
+    NON_FP = 2,
+    BOTH = FP | NON_FP
+};
+
 THREAD_LOCAL ProfileStats rulePerfStats;
 THREAD_LOCAL ProfileStats ruleRTNEvalPerfStats;
 THREAD_LOCAL ProfileStats ruleOTNEvalPerfStats;
@@ -976,7 +983,7 @@ static int fp_search(
 //  for performance purposes.
 
 static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
-    int check_ports, char ip_rule, int type, OtnxMatchData* omd)
+    int check_ports, char ip_rule, int type, OtnxMatchData* omd, FPTask task)
 {
     if ( !p->is_detection_enabled(p->packet_flags & PKT_FROM_CLIENT) )
         return 0;
@@ -989,91 +996,97 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
 
     print_pkt_info(p);
 
-    if (ip_rule)
+    if ( task & FPTask::FP )
     {
-        tmp_payload = p->data;
-        tmp_dsize = p->dsize;
-
-        if (layer::set_outer_ip_api(p, p->ptrs.ip_api, curr_ip_layer))
-        {
-            p->data = p->ptrs.ip_api.ip_data();
-            p->dsize = p->ptrs.ip_api.pay_len();
-            p->packet_flags |= PKT_IP_RULE;
-            repeat = true;
-        }
-    }
-    else
-    {
-        p->packet_flags &= ~PKT_IP_RULE;
-    }
-
-    if ( DetectionEngine::content_enabled(p) )
-    {
-        if ( fp->get_stream_insert() || !(p->packet_flags & PKT_STREAM_INSERT) )
-            if ( fp_search(port_group, p, check_ports, type, omd) )
-                return 0;
-    }
-
-    do
-    {
-        if (port_group->nfp_rule_count)
-        {
-            // walk and test the nfp OTNs
-            if ( fp->get_debug_print_nc_rules() )
-                LogMessage("NC-testing %u rules\n", port_group->nfp_rule_count);
-
-            detection_option_eval_data_t eval_data;
-
-            eval_data.pomd = omd;
-            eval_data.p = p;
-            eval_data.pmd = nullptr;
-            eval_data.flowbit_failed = 0;
-            eval_data.flowbit_noalert = 0;
-
-            int rval = 0;
-            {
-                Profile rule_profile(rulePerfStats);
-                Profile rule_nfp_eval_profile(ruleNFPEvalPerfStats);
-                trace_log(detection, TRACE_RULE_EVAL, "Testing non-content rules\n");
-                rval = detection_option_tree_evaluate(
-                    (detection_option_tree_root_t*)port_group->nfp_tree, &eval_data);
-            }
-
-            if (rval)
-                pmqs.qualified_events++;
-            else
-                pmqs.non_qualified_events++;
-
-            pc.hard_evals++;
-        }
-
-        // FIXIT-L need to eval all IP layers, etc.
-        // FIXIT-L why run only nfp rules?
         if (ip_rule)
         {
-            /* Evaluate again with the next IP layer */
+            tmp_payload = p->data;
+            tmp_dsize = p->dsize;
+
             if (layer::set_outer_ip_api(p, p->ptrs.ip_api, curr_ip_layer))
             {
                 p->data = p->ptrs.ip_api.ip_data();
                 p->dsize = p->ptrs.ip_api.pay_len();
-                p->packet_flags |= PKT_IP_RULE_2ND | PKT_IP_RULE;
-            }
-            else
-            {
-                /* Set the data & dsize back to original values. */
-                p->data = tmp_payload;
-                p->dsize = tmp_dsize;
-                p->packet_flags &= ~(PKT_IP_RULE| PKT_IP_RULE_2ND);
-                repeat = false;
+                p->packet_flags |= PKT_IP_RULE;
+                repeat = true;
             }
         }
+        else
+        {
+            p->packet_flags &= ~PKT_IP_RULE;
+        }
+
+        if ( DetectionEngine::content_enabled(p) )
+        {
+            if ( fp->get_stream_insert() || !(p->packet_flags & PKT_STREAM_INSERT) )
+                if ( fp_search(port_group, p, check_ports, type, omd) )
+                    return 0;
+        }
     }
-    while (repeat);
+
+    if ( task & FPTask::NON_FP )
+    {
+        do
+        {
+            if (port_group->nfp_rule_count)
+            {
+                // walk and test the nfp OTNs
+                if ( fp->get_debug_print_nc_rules() )
+                    LogMessage("NC-testing %u rules\n", port_group->nfp_rule_count);
+
+                detection_option_eval_data_t eval_data;
+
+                eval_data.pomd = omd;
+                eval_data.p = p;
+                eval_data.pmd = nullptr;
+                eval_data.flowbit_failed = 0;
+                eval_data.flowbit_noalert = 0;
+
+                int rval = 0;
+                {
+                    Profile rule_profile(rulePerfStats);
+                    Profile rule_nfp_eval_profile(ruleNFPEvalPerfStats);
+                    trace_log(detection, TRACE_RULE_EVAL, "Testing non-content rules\n");
+                    rval = detection_option_tree_evaluate(
+                        (detection_option_tree_root_t*)port_group->nfp_tree, &eval_data);
+                }
+
+                if (rval)
+                    pmqs.qualified_events++;
+                else
+                    pmqs.non_qualified_events++;
+
+                pc.hard_evals++;
+            }
+
+            // FIXIT-L need to eval all IP layers, etc.
+            // FIXIT-L why run only nfp rules?
+            if (ip_rule)
+            {
+                /* Evaluate again with the next IP layer */
+                if (layer::set_outer_ip_api(p, p->ptrs.ip_api, curr_ip_layer))
+                {
+                    p->data = p->ptrs.ip_api.ip_data();
+                    p->dsize = p->ptrs.ip_api.pay_len();
+                    p->packet_flags |= PKT_IP_RULE_2ND | PKT_IP_RULE;
+                }
+                else
+                {
+                    /* Set the data & dsize back to original values. */
+                    p->data = tmp_payload;
+                    p->dsize = tmp_dsize;
+                    p->packet_flags &= ~(PKT_IP_RULE| PKT_IP_RULE_2ND);
+                    repeat = false;
+                }
+            }
+        }
+        while (repeat);
+    }
 
     return 0;
 }
 
-static inline void fpEvalHeaderIp(Packet* p, OtnxMatchData* omd)
+static inline void fpEvalHeaderIp(Packet* p, OtnxMatchData* omd, FPTask task)
 {
     PortGroup* any = nullptr, * ip_group = nullptr;
 
@@ -1084,13 +1097,13 @@ static inline void fpEvalHeaderIp(Packet* p, OtnxMatchData* omd)
         LogMessage("fpEvalHeaderIp: ip_group=%p, any=%p\n", (void*)ip_group, (void*)any);
 
     if ( ip_group )
-        fpEvalHeaderSW(ip_group, p, 0, 1, 0, omd);
+        fpEvalHeaderSW(ip_group, p, 0, 1, 0, omd, task);
 
-    if (any )
-        fpEvalHeaderSW(any, p, 0, 1, 0, omd);
+    if ( any )
+        fpEvalHeaderSW(any, p, 0, 1, 0, omd, task);
 }
 
-static inline void fpEvalHeaderIcmp(Packet* p, OtnxMatchData* omd)
+static inline void fpEvalHeaderIcmp(Packet* p, OtnxMatchData* omd, FPTask task)
 {
     PortGroup* any = nullptr, * type = nullptr;
 
@@ -1098,13 +1111,13 @@ static inline void fpEvalHeaderIcmp(Packet* p, OtnxMatchData* omd)
         return;
 
     if ( type )
-        fpEvalHeaderSW(type, p, 0, 0, 0, omd);
+        fpEvalHeaderSW(type, p, 0, 0, 0, omd, task);
 
     if ( any )
-        fpEvalHeaderSW(any, p, 0, 0, 0, omd);
+        fpEvalHeaderSW(any, p, 0, 0, 0, omd, task);
 }
 
-static inline void fpEvalHeaderTcp(Packet* p, OtnxMatchData* omd)
+static inline void fpEvalHeaderTcp(Packet* p, OtnxMatchData* omd, FPTask task)
 {
     PortGroup* src = nullptr, * dst = nullptr, * any = nullptr;
 
@@ -1112,16 +1125,16 @@ static inline void fpEvalHeaderTcp(Packet* p, OtnxMatchData* omd)
         return;
 
     if ( dst )
-        fpEvalHeaderSW(dst, p, 1, 0, 0, omd);
+        fpEvalHeaderSW(dst, p, 1, 0, 0, omd, task);
 
     if ( src )
-        fpEvalHeaderSW(src, p, 1, 0, 0, omd);
+        fpEvalHeaderSW(src, p, 1, 0, 0, omd, task);
 
     if ( any )
-        fpEvalHeaderSW(any, p, 1, 0, 0, omd);
+        fpEvalHeaderSW(any, p, 1, 0, 0, omd, task);
 }
 
-static inline void fpEvalHeaderUdp(Packet* p, OtnxMatchData* omd)
+static inline void fpEvalHeaderUdp(Packet* p, OtnxMatchData* omd, FPTask task)
 {
     PortGroup* src = nullptr, * dst = nullptr, * any = nullptr;
 
@@ -1129,16 +1142,16 @@ static inline void fpEvalHeaderUdp(Packet* p, OtnxMatchData* omd)
         return;
 
     if ( dst )
-        fpEvalHeaderSW(dst, p, 1, 0, 0, omd);
+        fpEvalHeaderSW(dst, p, 1, 0, 0, omd, task);
 
     if ( src )
-        fpEvalHeaderSW(src, p, 1, 0, 0, omd);
+        fpEvalHeaderSW(src, p, 1, 0, 0, omd, task);
 
     if ( any )
-        fpEvalHeaderSW(any, p, 1, 0, 0, omd);
+        fpEvalHeaderSW(any, p, 1, 0, 0, omd, task);
 }
 
-static inline bool fpEvalHeaderSvc(Packet* p, OtnxMatchData* omd, SnortProtocolId proto_id)
+static inline bool fpEvalHeaderSvc(Packet* p, OtnxMatchData* omd, SnortProtocolId proto_id, FPTask task)
 {
     PortGroup* svc = nullptr, * file = nullptr;
 
@@ -1163,15 +1176,15 @@ static inline bool fpEvalHeaderSvc(Packet* p, OtnxMatchData* omd, SnortProtocolI
     int check_ports = (proto_id == SNORT_PROTO_USER) ? 2 : 1;
 
     if ( file )
-        fpEvalHeaderSW(file, p, check_ports, 0, 2, omd);
+        fpEvalHeaderSW(file, p, check_ports, 0, 2, omd, task);
 
     if ( svc )
-        fpEvalHeaderSW(svc, p, check_ports, 0, 1, omd);
+        fpEvalHeaderSW(svc, p, check_ports, 0, 1, omd, task);
 
     return svc != nullptr;
 }
 
-static void fpEvalPacketUdp(Packet* p, OtnxMatchData* omd)
+static void fpEvalPacketUdp(Packet* p, OtnxMatchData* omd, FPTask task)
 {
     uint16_t tmp_sp = p->ptrs.sp;
     uint16_t tmp_dp = p->ptrs.dp;
@@ -1198,7 +1211,7 @@ static void fpEvalPacketUdp(Packet* p, OtnxMatchData* omd)
     if ( p->dsize )
         DetectionEngine::enable_content(p);
 
-    fpEvalHeaderUdp(p, omd);
+    fpEvalHeaderUdp(p, omd, task);
 
     p->ptrs.sp = tmp_sp;
     p->ptrs.dp = tmp_dp;
@@ -1221,63 +1234,61 @@ static void fpEvalPacketUdp(Packet* p, OtnxMatchData* omd)
 **    it is the best for performance, which is what we are working
 **    on currently.
 */
-static int fpEvalPacket(Packet* p)
+static void fpEvalPacket(Packet* p, FPTask task)
 {
     OtnxMatchData* omd = p->context->otnx;
 
     /* Run UDP rules against the UDP header of Teredo packets */
     // FIXIT-L udph is always inner; need to check for outer
     if ( p->ptrs.udph && (p->proto_bits & (PROTO_BIT__TEREDO | PROTO_BIT__GTP)) )
-        fpEvalPacketUdp(p, omd);
+        fpEvalPacketUdp(p, omd, task);
 
     switch (p->type())
     {
     case PktType::IP:
-        fpEvalHeaderIp(p, omd);
-        fpEvalHeaderSvc(p, omd, SNORT_PROTO_IP);
+        fpEvalHeaderIp(p, omd, task);
+        fpEvalHeaderSvc(p, omd, SNORT_PROTO_IP, task);
         break;
 
     case PktType::ICMP:
-        fpEvalHeaderIcmp(p, omd);
-        fpEvalHeaderSvc(p, omd, SNORT_PROTO_ICMP);
+        fpEvalHeaderIcmp(p, omd, task);
+        fpEvalHeaderSvc(p, omd, SNORT_PROTO_ICMP, task);
         break;
 
     case PktType::TCP:
-        fpEvalHeaderTcp(p, omd);
-        fpEvalHeaderSvc(p, omd, SNORT_PROTO_TCP);
+        fpEvalHeaderTcp(p, omd, task);
+        fpEvalHeaderSvc(p, omd, SNORT_PROTO_TCP, task);
         break;
 
     case PktType::UDP:
-        fpEvalHeaderUdp(p, omd);
-        fpEvalHeaderSvc(p, omd, SNORT_PROTO_UDP);
+        fpEvalHeaderUdp(p, omd, task);
+        fpEvalHeaderSvc(p, omd, SNORT_PROTO_UDP, task);
         break;
 
     case PktType::PDU:
         if ( SnortConfig::get_conf()->sopgTable->user_mode )
-            fpEvalHeaderSvc(p, omd, SNORT_PROTO_USER);
+            fpEvalHeaderSvc(p, omd, SNORT_PROTO_USER, task);
 
         // use ports if we don't know service or don't have rules
         else if ( p->proto_bits & PROTO_BIT__TCP )
         {
-            if ( p->get_snort_protocol_id() == UNKNOWN_PROTOCOL_ID or !fpEvalHeaderSvc(p, omd, SNORT_PROTO_TCP) )
-                fpEvalHeaderTcp(p, omd);
+            if ( p->get_snort_protocol_id() == UNKNOWN_PROTOCOL_ID or !fpEvalHeaderSvc(p, omd, SNORT_PROTO_TCP, task) )
+                fpEvalHeaderTcp(p, omd, task);
         }
         else if ( p->proto_bits & PROTO_BIT__UDP )
         {
-            if ( p->get_snort_protocol_id() == UNKNOWN_PROTOCOL_ID or !fpEvalHeaderSvc(p, omd, SNORT_PROTO_UDP) )
-                fpEvalHeaderUdp(p, omd);
+            if ( p->get_snort_protocol_id() == UNKNOWN_PROTOCOL_ID or !fpEvalHeaderSvc(p, omd, SNORT_PROTO_UDP, task) )
+                fpEvalHeaderUdp(p, omd, task);
         }
         break;
 
     case PktType::FILE:
-        fpEvalHeaderSvc(p, omd, SNORT_PROTO_USER);
+        fpEvalHeaderSvc(p, omd, SNORT_PROTO_USER, task);
         break;
 
     default:
         break;
     }
-
-    return 0;
 }
 
 void fp_full(Packet* p)
@@ -1287,7 +1298,7 @@ void fp_full(Packet* p)
     stash->enable_process();
     stash->init();
     init_match_info(c->otnx);
-    fpEvalPacket(p);
+    fpEvalPacket(p, FPTask::BOTH);
     fpFinalSelectEvent(c->otnx, p);
 }
 
@@ -1299,7 +1310,7 @@ void fp_partial(Packet* p)
     stash->init();
     stash->disable_process();
     init_match_info(c->otnx);
-    fpEvalPacket(p);
+    fpEvalPacket(p, FPTask::FP);
 }
 
 void fp_complete(Packet* p)
@@ -1308,6 +1319,7 @@ void fp_complete(Packet* p)
     MpseStash* stash = c->stash;
     stash->enable_process();
     stash->process(rule_tree_match, c->otnx);
+    fpEvalPacket(p, FPTask::NON_FP);
     fpFinalSelectEvent(c->otnx, p);
 }
 
