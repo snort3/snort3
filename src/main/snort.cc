@@ -456,8 +456,6 @@ void Snort::term()
 
     //MpseManager::print_search_engine_stats();
 
-    FileService::close();
-
     sfthreshold_free();  // FIXDAQ etc.
     RateFilter_Cleanup();
 
@@ -552,6 +550,7 @@ void Snort::cleanup()
     TimeStop();
 
     SFDAQ::term();
+    FileService::close();
 
     if ( !SnortConfig::test_mode() )  // FIXIT-M ideally the check is in one place
         PrintStatistics();
