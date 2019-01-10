@@ -41,7 +41,7 @@ public:
 
     void block();
     void unblock();
-    bool send_queued_response();
+    void send_queued_response();
     bool is_blocked() const { return blocked; }
 
     void configure() const;

@@ -288,13 +288,7 @@ void ACShellCmd::execute(Analyzer& analyzer)
     ControlConn* control = (control_fd >= 0)? (ControlMgmt::find_control(control_fd) ) : nullptr;
 
     if( control )
-    {
-        if ( !control->send_queued_response() )
-        {
-            control_fd = -1;
-            return;
-        }
-    }
+        control->send_queued_response();
 
     ac->execute(analyzer);
 }

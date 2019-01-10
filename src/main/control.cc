@@ -91,14 +91,11 @@ void ControlConn::unblock()
         ControlMgmt::delete_control(fd);
 }
 
-bool ControlConn::send_queued_response()
+void ControlConn::send_queued_response()
 {
-    if ( !request->send_queued_response() )
-    {
-        ControlMgmt::delete_control(fd);
-        return false;
-    }
-    return true;
+#ifdef SHELL
+    request->send_queued_response();
+#endif
 }
 
 // FIXIT-L would like to flush prompt w/o \n

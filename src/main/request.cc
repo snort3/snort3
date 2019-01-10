@@ -101,15 +101,12 @@ void Request::respond(const char* s, bool queue_response)
 }
 
 #ifdef SHELL
-bool Request::send_queued_response()
+void Request::send_queued_response()
 {
-    bool ret = true;
     if ( queued_response )
     {
-        ret = write_response(queued_response);
+        write_response(queued_response);
         queued_response = nullptr;
     }
-
-    return ret;
 }
 #endif

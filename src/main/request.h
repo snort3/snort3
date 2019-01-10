@@ -34,7 +34,7 @@ public:
     bool write_response(const char* s) const;
     void respond(const char* s, bool queue_response = false);
 #ifdef SHELL
-    bool send_queued_response();
+    void send_queued_response();
 #endif
 
 private:
