@@ -44,5 +44,6 @@ In addition, the following scenarios require a restart:
  enabled
 * Changing file_id.capture_block_size if file capture was previously or
  currently enabled
+* Adding/removing stream_* inspectors if stream was already configured
 
 In all of these cases reload will fail, and the original config will remain in use.
