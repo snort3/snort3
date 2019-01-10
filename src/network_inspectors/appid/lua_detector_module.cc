@@ -369,8 +369,14 @@ void LuaDetectorManager::load_detector(char* detector_filename, bool isCustom)
     // Alternatively, conflicts between reload may be avoided if a new lua state is
     // created separately, then swapped and free old state.
     char detectorName[MAX_LUA_DETECTOR_FILENAME_LEN];
+#ifdef HAVE_BASENAME_R
+    char detector_res[MAX_LUA_DETECTOR_FILENAME_LEN];
+    snprintf(detectorName, MAX_LUA_DETECTOR_FILENAME_LEN, "%s_%s",
+        (isCustom ? "custom" : "odp"), basename_r(detector_filename, detector_res));
+#else
     snprintf(detectorName, MAX_LUA_DETECTOR_FILENAME_LEN, "%s_%s",
         (isCustom ? "custom" : "odp"), basename(detector_filename));
+#endif
 
     // create a new function environment and store it in the registry
     lua_newtable(L); // create _ENV tables

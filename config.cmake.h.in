@@ -155,6 +155,8 @@
 /* Define to 1 if you have the GNU form of the `strerror_r' function. */
 #cmakedefine HAVE_GNU_STRERROR_R 1
 
+/* Define 1 if you have basename_r function for freebsd < 12.0.0 */
+#cmakedefine HAVE_BASENAME_R 1
 
 /*  Available compiler options */
 

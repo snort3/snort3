@@ -17,6 +17,7 @@ check_function_exists(mallinfo HAVE_MALLINFO)
 check_function_exists(malloc_trim HAVE_MALLOC_TRIM)
 check_function_exists(memrchr HAVE_MEMRCHR)
 check_function_exists(sigaction HAVE_SIGACTION)
+check_function_exists(basename_r HAVE_BASENAME_R)
 
 check_cxx_source_compiles(
     "
