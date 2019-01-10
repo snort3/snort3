@@ -194,7 +194,7 @@ void SnortConfig::init(const SnortConfig* const other_conf, ProtocolReference* p
         InspectorManager::new_config(this);
 
         num_slots = ThreadConfig::get_instance_max();
-        state = new std::vector<void *>[num_slots];
+        state = new std::vector<void*>[num_slots];
 
         profiler = new ProfilerConfig;
         latency = new LatencyConfig();
@@ -290,7 +290,7 @@ SnortConfig::~SnortConfig()
         MpseManager::stop_search_engine(fast_pattern_config->get_search_api());
     }
     delete fast_pattern_config;
- 
+
     flowbits_gterm(this);
 
     delete policy_map;
@@ -398,7 +398,7 @@ void SnortConfig::merge(SnortConfig* cmd_line)
 
     int cl_chk = cmd_line->policy_map->get_network_policy()->checksum_eval;
     int cl_drop = cmd_line->policy_map->get_network_policy()->checksum_drop;
-    
+
     NetworkPolicy* nw_policy = nullptr;
 
     for ( unsigned idx = 0; idx < policy_map->network_policy_count(); ++idx )
@@ -493,7 +493,50 @@ void SnortConfig::merge(SnortConfig* cmd_line)
 
     delete[] state;
     num_slots = ThreadConfig::get_instance_max();
-    state = new std::vector<void *>[num_slots];
+    state = new std::vector<void*>[num_slots];
+}
+
+// FIXIT-L this is a work around till snort supports adding/removing 
+// stream cache during reload
+bool SnortConfig::verify_stream_inspectors()
+{
+    const std::vector<const char*> inspector_names
+        { "stream_file", "stream_icmp", "stream_ip", "stream_tcp", "stream_udp", "stream_user" };
+    static std::map <const char*, bool> orig_inspectors;
+
+    // If wasn't initialized before try to initialize from current config
+    if (orig_inspectors.empty())
+    {
+        const Inspector* const ptr = InspectorManager::get_inspector("stream", true);
+        if (ptr != nullptr)
+        {
+            for (auto name: inspector_names)
+            {
+                const bool in_orig = InspectorManager::inspector_exists_in_any_policy(name, get_conf());
+                orig_inspectors[name] = in_orig;
+            }
+        }
+    }
+
+    // If now available - compare
+    if (!orig_inspectors.empty())
+    {
+        const Inspector* const ptr = InspectorManager::get_inspector("stream", true, this);
+        if (ptr != nullptr)
+        {
+            for (auto name: inspector_names)
+            {
+                const bool in_new = InspectorManager::inspector_exists_in_any_policy(name, this);
+                if (orig_inspectors[name] != in_new)
+                {
+                    ErrorMessage("Snort Reload: Adding/removing %s requires a restart.\n", name);
+                    return false;
+                }
+            }
+        }
+    }
+
+    return true;
 }
 
 bool SnortConfig::verify()
@@ -609,7 +652,7 @@ bool SnortConfig::verify()
         return false;
     }
 
-    return true;
+    return verify_stream_inspectors();
 }
 
 void SnortConfig::set_alert_before_pass(bool enabled)
@@ -741,7 +784,7 @@ void SnortConfig::set_no_logging_timestamps(bool enabled)
 
 void SnortConfig::set_obfuscation_mask(const char* mask)
 {
-   if (!mask)
+    if (!mask)
         return;
 
     output_flags |= OUTPUT_FLAG__OBFUSCATE;
@@ -775,7 +818,7 @@ void SnortConfig::set_gid(const char* args)
         return;
     }
     else
-        gr = getgrgid((gid_t) target_gid); // main thread only
+        gr = getgrgid((gid_t)target_gid);  // main thread only
 
     if (!gr)
     {
@@ -785,7 +828,7 @@ void SnortConfig::set_gid(const char* args)
 
     /* If we're already running as the desired group ID, don't bother to try changing it later. */
     if (gr->gr_gid != getgid())
-        group_id = (int) gr->gr_gid;
+        group_id = (int)gr->gr_gid;
 }
 
 void SnortConfig::set_uid(const char* args)
@@ -806,7 +849,7 @@ void SnortConfig::set_uid(const char* args)
         return;
     }
     else
-        pw = getpwuid((uid_t) target_uid); // main thread only
+        pw = getpwuid((uid_t)target_uid);  // main thread only
 
     if (!pw)
     {
@@ -818,11 +861,10 @@ void SnortConfig::set_uid(const char* args)
        If we're already running as the desired user and/or group ID,
        don't bother to try changing it later. */
     if (pw->pw_uid != getuid())
-        user_id = (int) pw->pw_uid;
+        user_id = (int)pw->pw_uid;
 
     if (group_id == -1 && pw->pw_gid != getgid())
-        group_id = (int) pw->pw_gid;
-
+        group_id = (int)pw->pw_gid;
 }
 
 void SnortConfig::set_show_year(bool enabled)
@@ -999,7 +1041,7 @@ void SnortConfig::set_log_mode(const char* val)
 
 void SnortConfig::enable_syslog()
 {
-   static bool syslog_configured = false;
+    static bool syslog_configured = false;
 
     if (syslog_configured)
         return;

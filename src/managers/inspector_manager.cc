@@ -507,6 +507,29 @@ Binder* InspectorManager::get_binder()
     return (Binder*)pi->framework_policy->binder;
 }
 
+bool InspectorManager::inspector_exists_in_any_policy(const char* key, SnortConfig* sc)
+{
+    PolicyMap* pm = sc->policy_map;
+
+    if (pm == nullptr)
+        return false;
+
+    for (unsigned i=0; i<pm->inspection_policy_count(); i++)
+    {
+        const InspectionPolicy* const pi = pm->get_inspection_policy(i);
+
+        if ( !pi || !pi->framework_policy )
+            continue; 
+
+        const PHInstance* const p = get_instance(pi->framework_policy, key);
+
+        if ( p )
+            return true;
+    }
+
+    return false;
+}
+
 // FIXIT-P cache get_inspector() returns or provide indexed lookup
 Inspector* InspectorManager::get_inspector(const char* key, bool dflt_only, SnortConfig* sc)
 {

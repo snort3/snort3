@@ -83,6 +83,7 @@ public:
 
     static void clear(Packet*);
     static void empty_trash();
+    static bool inspector_exists_in_any_policy(const char* key, SnortConfig* sc);
 
 #ifdef PIGLET
     static Inspector* instantiate(const char*, Module*, SnortConfig*);

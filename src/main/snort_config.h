@@ -154,6 +154,7 @@ struct SnortConfig
 {
 private:
     void init(const SnortConfig* const, ProtocolReference*);
+    bool verify_stream_inspectors();
 
 public:
     SnortConfig(const SnortConfig* const other_conf = nullptr);
