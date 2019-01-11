@@ -186,10 +186,9 @@ int Stream::ignore_flow(
     const Packet* ctrlPkt, PktType type, IpProtocol ip_proto,
     const SfIp* srcIP, uint16_t srcPort,
     const SfIp* dstIP, uint16_t dstPort,
-    char direction, uint32_t flowdata_id)
+    char direction, FlowData* fd)
 {
     assert(flow_con);
-    FlowData* fd = new FlowData(flowdata_id);
 
     return flow_con->add_expected(
         ctrlPkt, type, ip_proto, srcIP, srcPort, dstIP, dstPort, direction, fd);

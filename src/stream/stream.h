@@ -111,7 +111,7 @@ public:
     // when it arrives.
     static int ignore_flow(
         const Packet* ctrlPkt, PktType, IpProtocol, const snort::SfIp* srcIP, uint16_t srcPort,
-        const snort::SfIp* dstIP, uint16_t dstPort, char direction, uint32_t flowdata_id);
+        const snort::SfIp* dstIP, uint16_t dstPort, char direction, FlowData* fd);
 
     // Resume inspection for flow.
     // FIXIT-L does resume work only for a flow that has been stopped by call to stop_inspection?

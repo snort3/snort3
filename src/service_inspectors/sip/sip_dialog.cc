@@ -400,7 +400,7 @@ static int SIP_ignoreChannels(SIP_DialogData* dialog, Packet* p, SIP_PROTO_CONF*
         else
         {
             Stream::ignore_flow(p, p->flow->pkt_type, p->get_ip_proto_next(), &mdataA->maddress,
-                mdataA->mport, &mdataB->maddress, mdataB->mport, SSN_DIR_BOTH, SipFlowData::inspector_id);
+                mdataA->mport, &mdataB->maddress, mdataB->mport, SSN_DIR_BOTH, (new SipFlowData));
         }
         sip_stats.ignoreChannels++;
         mdataA = mdataA->nextM;

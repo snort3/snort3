@@ -1097,7 +1097,7 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                                     p, PktType::TCP, IpProtocol::TCP,
                                     &session->clientIP, session->clientPort,
                                     &session->serverIP, session->serverPort,
-                                    SSN_DIR_BOTH, FtpDataFlowData::inspector_id);
+                                    SSN_DIR_BOTH, (new FtpDataFlowData(p)));
                             }
                         }
                     }
@@ -1175,7 +1175,7 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                                 p, PktType::TCP, IpProtocol::TCP,
                                 &session->clientIP, session->clientPort,
                                 &session->serverIP, session->serverPort,
-                                SSN_DIR_BOTH, FtpDataFlowData::inspector_id);
+                                SSN_DIR_BOTH, (new FtpDataFlowData(p)));
                         }
                     }
                 }
