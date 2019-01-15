@@ -222,7 +222,7 @@ int SFRF_ConfigAdd(snort::SnortConfig*, RateFilterConfig* rf_config, tSFRFConfig
     tSFRFConfigNode* pNewConfigNode;
     tSFRFGenHashKey key = { 0,0 };
 
-    PolicyId policy_id = snort::get_network_policy()->policy_id;
+    PolicyId policy_id = snort::get_ips_policy()->policy_id;
 
     // Auto init - memcap must be set 1st, which is not really a problem
     if ( rf_hash == nullptr )
@@ -456,7 +456,7 @@ int SFRF_TestThreshold(
     int status = -1;
     tSFRFGenHashKey key;
 
-    PolicyId policy_id = snort::get_network_policy()->policy_id;
+    PolicyId policy_id = snort::get_ips_policy()->policy_id;
 
 #ifdef SFRF_DEBUG
     printf("--%d-%u-%u: %s() entering\n", 0, gid, sid, __func__);
@@ -781,7 +781,7 @@ static tSFRFTrackingNode* _getSFRFTrackingNode(const snort::SfIp* ip, unsigned t
     /* Setup key */
     key.ip = *(ip);
     key.tid = tid;
-    key.policyId = snort::get_network_policy()->policy_id;
+    key.policyId = snort::get_ips_policy()->policy_id;
     key.padding = 0;
 
     /*
@@ -804,4 +804,3 @@ static tSFRFTrackingNode* _getSFRFTrackingNode(const snort::SfIp* ip, unsigned t
     }
     return dynNode;
 }
-
