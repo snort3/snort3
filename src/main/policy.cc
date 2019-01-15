@@ -119,6 +119,7 @@ IpsPolicy::IpsPolicy(PolicyId id)
     nonamePortVarTable = PortTableNew();
 
     enable_builtin_rules = false;
+    obfuscate_pii = false;
 }
 
 IpsPolicy::~IpsPolicy()
@@ -265,7 +266,7 @@ std::shared_ptr<PolicyTuple> PolicyMap::add_shell(Shell* sh)
 std::shared_ptr<PolicyTuple> PolicyMap::get_policies(Shell* sh)
 {
     const auto& pt = shell_map.find(sh);
-    
+
     return pt == shell_map.end() ? nullptr:pt->second;
 }
 
@@ -363,7 +364,7 @@ bool default_inspection_policy()
 {
     if ( !get_inspection_policy() )
         return false;
-    
+
     if ( get_inspection_policy()->policy_id != 0 )
         return false;
 
@@ -378,4 +379,3 @@ bool only_ips_policy()
 
 bool only_network_policy()
 { return get_network_policy() && !get_ips_policy() && !get_inspection_policy(); }
-

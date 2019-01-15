@@ -282,7 +282,7 @@ public:
     ThresholdConfig* threshold_config = nullptr;
     RateFilterConfig* rate_filter_config = nullptr;
     DetectionFilterConfig* detection_filter_config = nullptr;
-    FlowBitState* flowbit_state = nullptr; 
+    FlowBitState* flowbit_state = nullptr;
 
     //------------------------------------------------------
     // FIXIT-L command line only stuff, add to conf / module
@@ -299,7 +299,6 @@ public:
     bool id_zero = false;
 
     bool stdin_rules = false;
-    bool obfuscate_pii = false;
 
     std::string pid_filename;
     std::string orig_log_dir;      /* set in case of chroot */
@@ -663,4 +662,3 @@ public:
 }
 
 #endif
-

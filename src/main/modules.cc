@@ -761,12 +761,6 @@ static const Parameter output_params[] =
     { "logdir", Parameter::PT_STRING, nullptr, ".",
       "where to put log files (same as -l)" },
 
-    { "obfuscate", Parameter::PT_BOOL, nullptr, "false",
-      "obfuscate the logged IP addresses (same as -O)" },
-
-    { "obfuscate_pii", Parameter::PT_BOOL, nullptr, "false",
-      "mask all but the last 4 characters of credit card and social security numbers" },
-
     { "show_year", Parameter::PT_BOOL, nullptr, "false",
       "include year in timestamp in the alert and log files (same as -y)" },
 
@@ -775,6 +769,9 @@ static const Parameter output_params[] =
 
     { "verbose", Parameter::PT_BOOL, nullptr, "false",
       "be verbose (same as -v)" },
+
+    { "obfuscate", Parameter::PT_BOOL, nullptr, "false",
+      "obfuscate the logged IP addresses (same as -O)" },
 
 #ifdef REG_TEST
     { "wide_hex_dump", Parameter::PT_BOOL, nullptr, "true",
@@ -819,12 +816,6 @@ bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("max_data") )
         sc->event_trace_max = v.get_uint16();
 
-    else if ( v.is("obfuscate") )
-        v.update_mask(sc->output_flags, OUTPUT_FLAG__OBFUSCATE);
-
-    else if ( v.is("obfuscate_pii") )
-        sc->obfuscate_pii = v.get_bool();
-
     else if ( v.is("show_year") )
         v.update_mask(sc->output_flags, OUTPUT_FLAG__INCLUDE_YEAR);
 
@@ -836,6 +827,9 @@ bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("wide_hex_dump") )
         v.update_mask(sc->output_flags, OUTPUT_FLAG__WIDE_HEX);
+
+    else if ( v.is("obfuscate") )
+        v.update_mask(sc->output_flags, OUTPUT_FLAG__OBFUSCATE);
 
     else
         return false;
@@ -1215,6 +1209,9 @@ static const Parameter ips_params[] =
     { "rules", Parameter::PT_STRING, nullptr, nullptr,
       "snort rules and includes" },
 
+    { "obfuscate_pii", Parameter::PT_BOOL, nullptr, "false",
+      "mask all but the last 4 characters of credit card and social security numbers" },
+
 #ifdef HAVE_UUID
     { "uuid", Parameter::PT_STRING, nullptr, "00000000-0000-0000-0000-000000000000",
       "IPS policy uuid" },
@@ -1257,6 +1254,9 @@ bool IpsModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("rules") )
         p->rules = v.get_string();
+
+    else if ( v.is("obfuscate_pii") )
+        p->obfuscate_pii = v.get_bool();
 
 #ifdef HAVE_UUID
     else if ( v.is("uuid") )
@@ -1922,4 +1922,3 @@ void module_init()
     ModuleManager::add_module(new HostTrackerModule);
     ModuleManager::add_module(new HostCacheModule);
 }
-

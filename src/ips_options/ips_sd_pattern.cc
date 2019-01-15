@@ -352,23 +352,24 @@ bool SdPatternModule::set(const char*, Value& v, SnortConfig* sc)
         return false;
 
     // Check if built-in pattern should be used.
+    IpsPolicy* p = snort::get_ips_policy();
     if (config.pii == "credit_card")
     {
         config.pii = SD_CREDIT_PATTERN_ALL;
         config.validate = SdLuhnAlgorithm;
-        config.obfuscate_pii = sc->obfuscate_pii;
+        config.obfuscate_pii = p->obfuscate_pii;
         config.forced_boundary = true;
     }
     else if (config.pii == "us_social")
     {
         config.pii = SD_SOCIAL_PATTERN;
-        config.obfuscate_pii = sc->obfuscate_pii;
+        config.obfuscate_pii = p->obfuscate_pii;
         config.forced_boundary = true;
     }
     else if (config.pii == "us_social_nodashes")
     {
         config.pii = SD_SOCIAL_NODASHES_PATTERN;
-        config.obfuscate_pii = sc->obfuscate_pii;
+        config.obfuscate_pii = p->obfuscate_pii;
         config.forced_boundary = true;
     }
 
@@ -488,4 +489,3 @@ const BaseApi* ips_sd_pattern[] =
     &sd_pattern_api.base,
     nullptr
 };
-

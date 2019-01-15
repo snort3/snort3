@@ -158,6 +158,8 @@ public:
     /* The portobjects in these are attached to rtns and used during runtime */
     PortVarTable* portVarTable;     /* named entries, uses a hash table */
     PortTable* nonamePortVarTable;  /* un-named entries */
+
+    bool obfuscate_pii;
 };
 
 //-------------------------------------------------------------------------
@@ -278,4 +280,3 @@ bool only_ips_policy();
 bool only_network_policy();
 
 #endif
-
