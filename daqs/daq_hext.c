@@ -471,7 +471,7 @@ static int hext_setup(HextImpl* impl)
     }
     else if ( !(impl->fyle = fopen(impl->name, "r")) )
     {
-        char error_msg[1024] = {0};
+        char error_msg[200] = {0};
         if (strerror_r(errno, error_msg, sizeof(error_msg)) == 0)
             DPE(impl->error, "%s: can't open file (%s)\n",
                 DAQ_NAME, error_msg);
@@ -528,7 +528,7 @@ static int hext_read(HextImpl* impl)
     {
         if (errno != EINTR)
         {
-            char error_msg[1024] = {0};
+            char error_msg[200] = {0};
             if (strerror_r(errno, error_msg, sizeof(error_msg)) == 0)
                 DPE(impl->error, "%s: can't read from file (%s)\n",
                     DAQ_NAME, error_msg);
