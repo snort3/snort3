@@ -153,7 +153,6 @@ void ReactAction::send(Packet* p)
 
     EncodeFlags rf = ENC_FLAG_SEQ | (ENC_FLAG_VAL & sent);
     act->send_reset(p, rf);
-    act->send_reset(p, ENC_FLAG_FWD);
 }
 
 //-------------------------------------------------------------------------
