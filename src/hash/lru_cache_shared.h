@@ -155,9 +155,9 @@ bool LruCacheShared<Key, Data, Hash>::set_max_size(size_t newsize)
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
 
     //  Remove the oldest entries if we have to reduce cache size.
-    list_iter=list.end();
     while (current_size > newsize)
     {
+        list_iter = list.end();
         --list_iter;
         current_size--;
         map.erase(list_iter->first);

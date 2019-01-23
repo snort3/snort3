@@ -3,13 +3,13 @@ set (HASH_INCLUDES
     hashes.h
     ghash.h 
     xhash.h 
-    hashfcn.h 
+    hashfcn.h
+    lru_cache_shared.h
 )
 
 add_library( hash OBJECT
     ${HASH_INCLUDES}
     hashes.cc
-    lru_cache_shared.h
     lru_cache_shared.cc
     ghash.cc 
     hashfcn.cc 
