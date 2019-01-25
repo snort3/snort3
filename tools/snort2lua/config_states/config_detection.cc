@@ -71,7 +71,6 @@ bool Detection::convert(std::istringstream& data_stream)
         else if (keyword == "split-any-any")
         {
             table_api.add_diff_option_comment("split-any-any", "split_any_any");
-            tmpval = table_api.add_option("split_any_any", true);
             split_set = true;
         }
         else if (keyword == "bleedover-warnings-enabled")
@@ -231,13 +230,8 @@ bool Detection::convert(std::istringstream& data_stream)
             {
                 table_api.add_diff_option_comment("ac-split", "split_any_any");
                 table_api.add_diff_option_comment("ac-split", "ac_full");
-                bool tmpval2 = table_api.add_option("split_any_any", true);
-                bool tmpval1 = table_api.add_option("search_method", "ac_full");
+                tmpval = table_api.add_option("search_method", "ac_full");
                 split_set = true;
-                tmpval = tmpval1 && tmpval2;
-
-                if (!table_api.add_option("split_any_any", true))
-                    tmpval = false;
             }
             else
             {
@@ -250,10 +244,25 @@ bool Detection::convert(std::istringstream& data_stream)
         if (retval && !tmpval)
             retval = false;
     }
-    if ( !split_set )
+
+    if ( table_api.option_exists("split_any_any") )
     {
-        table_api.add_diff_option_comment("split-any-any", "split_any_any = true by default");
-        table_api.add_option("split_any_any", false);
+        std::string val;
+        table_api.get_option_value("split_any_any", val);
+
+        if ( val == "false" )
+        {
+            if ( !split_set )
+                table_api.add_diff_option_comment("split-any-any", "split_any_any = true by default");
+            table_api.append_option("split_any_any", split_set);
+        }
+    }
+    else
+    {
+        if ( !split_set )
+            table_api.add_diff_option_comment("split-any-any", "split_any_any = true by default");
+
+        retval &= table_api.add_option("split_any_any", split_set);
     }
 
     return retval;
