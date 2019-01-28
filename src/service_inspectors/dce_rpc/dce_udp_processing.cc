@@ -112,7 +112,7 @@ void DCE2_ClProcess(DCE2_SsnData* sd, DCE2_ClTracker* clt)
 
     if (data_len < sizeof(DceRpcClHdr))
     {
-        dce_alert(GID_DCE2,  DCE2_CL_DATA_LT_HDR, (dce2CommonStats*)&dce2_udp_stats);
+        dce_alert(GID_DCE2,  DCE2_CL_DATA_LT_HDR, (dce2CommonStats*)&dce2_udp_stats, *sd);
         return;
     }
 
@@ -219,17 +219,17 @@ void DCE2_ClProcess(DCE2_SsnData* sd, DCE2_ClTracker* clt)
 // alert on the header anomaly.  If we've autodetected the session,
 // however, don't alert, but set a header anomaly flag, so we can
 // re-autodetect on the next go around.
-static DCE2_Ret DCE2_ClHdrChecks(DCE2_SsnData*, const DceRpcClHdr* cl_hdr)
+static DCE2_Ret DCE2_ClHdrChecks(DCE2_SsnData* sd, const DceRpcClHdr* cl_hdr)
 {
     if (DceRpcClRpcVers(cl_hdr) != DCERPC_PROTO_MAJOR_VERS__4)
     {
-        dce_alert(GID_DCE2, DCE2_CL_BAD_MAJOR_VERSION, (dce2CommonStats*)&dce2_udp_stats);
+        dce_alert(GID_DCE2, DCE2_CL_BAD_MAJOR_VERSION, (dce2CommonStats*)&dce2_udp_stats, *sd);
         return DCE2_RET__ERROR;
     }
 
     if (DceRpcClPduType(cl_hdr) >= DCERPC_PDU_TYPE__MAX)
     {
-        dce_alert(GID_DCE2, DCE2_CL_BAD_PDU_TYPE, (dce2CommonStats*)&dce2_udp_stats);
+        dce_alert(GID_DCE2, DCE2_CL_BAD_PDU_TYPE, (dce2CommonStats*)&dce2_udp_stats, *sd);
         return DCE2_RET__ERROR;
     }
 

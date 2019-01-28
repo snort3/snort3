@@ -369,7 +369,7 @@ static DCE2_Ret DCE2_CoHdrChecks(DCE2_SsnData* sd, DCE2_CoTracker* cot, const Dc
         if (sd->trans != DCE2_TRANS_TYPE__SMB)
         {
             // FIXIT-L PORT_IF_NEEDED segment check, same for all cases below
-            dce_alert(GID_DCE2, DCE2_CO_FRAG_LEN_LT_HDR,dce_common_stats);
+            dce_alert(GID_DCE2, DCE2_CO_FRAG_LEN_LT_HDR, dce_common_stats, *sd);
         }
 
         return DCE2_RET__ERROR;
@@ -379,7 +379,7 @@ static DCE2_Ret DCE2_CoHdrChecks(DCE2_SsnData* sd, DCE2_CoTracker* cot, const Dc
     {
         if (sd->trans != DCE2_TRANS_TYPE__SMB)
         {
-            dce_alert(GID_DCE2, DCE2_CO_BAD_MAJOR_VERSION,dce_common_stats);
+            dce_alert(GID_DCE2, DCE2_CO_BAD_MAJOR_VERSION,dce_common_stats, *sd);
         }
 
         return DCE2_RET__ERROR;
@@ -389,7 +389,7 @@ static DCE2_Ret DCE2_CoHdrChecks(DCE2_SsnData* sd, DCE2_CoTracker* cot, const Dc
     {
         if (sd->trans != DCE2_TRANS_TYPE__SMB)
         {
-            dce_alert(GID_DCE2, DCE2_CO_BAD_MINOR_VERSION,dce_common_stats);
+            dce_alert(GID_DCE2, DCE2_CO_BAD_MINOR_VERSION,dce_common_stats, *sd);
         }
 
         return DCE2_RET__ERROR;
@@ -398,7 +398,7 @@ static DCE2_Ret DCE2_CoHdrChecks(DCE2_SsnData* sd, DCE2_CoTracker* cot, const Dc
     {
         if (sd->trans != DCE2_TRANS_TYPE__SMB)
         {
-            dce_alert(GID_DCE2, DCE2_CO_BAD_PDU_TYPE,dce_common_stats);
+            dce_alert(GID_DCE2, DCE2_CO_BAD_PDU_TYPE,dce_common_stats, *sd);
         }
 
         return DCE2_RET__ERROR;
@@ -408,7 +408,7 @@ static DCE2_Ret DCE2_CoHdrChecks(DCE2_SsnData* sd, DCE2_CoTracker* cot, const Dc
     {
         if (frag_len > cot->max_xmit_frag)
         {
-            dce_alert(GID_DCE2, DCE2_CO_FRAG_GT_MAX_XMIT_FRAG,dce_common_stats);
+            dce_alert(GID_DCE2, DCE2_CO_FRAG_GT_MAX_XMIT_FRAG,dce_common_stats, *sd);
         }
         else if (!DceRpcCoLastFrag(co_hdr) && (pdu_type == DCERPC_PDU_TYPE__REQUEST)
             && ((((int)cot->max_xmit_frag - DCE2_MAX_XMIT_SIZE_FUZZ) < 0)
@@ -419,7 +419,7 @@ static DCE2_Ret DCE2_CoHdrChecks(DCE2_SsnData* sd, DCE2_CoTracker* cot, const Dc
              * only if it is considerably less - have seen legitimate fragments that are just
              * slightly less the negotiated fragment size. */
 
-            dce_alert(GID_DCE2, DCE2_CO_FRAG_LT_MAX_XMIT_FRAG,dce_common_stats);
+            dce_alert(GID_DCE2, DCE2_CO_FRAG_LT_MAX_XMIT_FRAG,dce_common_stats, *sd);
         }
 
         /* Continue processing */
@@ -537,7 +537,7 @@ static DCE2_CoCtxIdNode* dce_co_process_ctx_id(DCE2_SsnData* sd,DCE2_CoTracker* 
 
     if (frag_len < sizeof(DceRpcCoContElem))
     {
-        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE, dce_common_stats);
+        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE, dce_common_stats, *sd);
         return nullptr;
     }
 
@@ -550,7 +550,7 @@ static DCE2_CoCtxIdNode* dce_co_process_ctx_id(DCE2_SsnData* sd,DCE2_CoTracker* 
     /* No transfer syntaxes */
     if (num_tsyns == 0)
     {
-        dce_alert(GID_DCE2, DCE2_CO_NO_TFER_SYNTAX_SPECFD,dce_common_stats);
+        dce_alert(GID_DCE2, DCE2_CO_NO_TFER_SYNTAX_SPECFD, dce_common_stats, *sd);
         return nullptr;
     }
 
@@ -561,7 +561,7 @@ static DCE2_CoCtxIdNode* dce_co_process_ctx_id(DCE2_SsnData* sd,DCE2_CoTracker* 
     {
         if (frag_len < sizeof(DceRpcCoSynId))
         {
-            dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE, dce_common_stats);
+            dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE, dce_common_stats, *sd);
             return nullptr;
         }
 
@@ -627,7 +627,7 @@ static void DCE2_CoCtxReq(DCE2_SsnData* sd, DCE2_CoTracker* cot, const DceRpcCoH
 
     if (num_ctx_items == 0)
     {
-        dce_alert(GID_DCE2, DCE2_CO_NO_CTX_ITEMS_SPECFD, dce_common_stats);
+        dce_alert(GID_DCE2, DCE2_CO_NO_CTX_ITEMS_SPECFD, dce_common_stats, *sd);
         return;
     }
 
@@ -781,7 +781,7 @@ static void DCE2_CoBindAck(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 
     if (frag_len < sizeof(DceRpcCoBindAck))
     {
-        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE,dce_common_stats);
+        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE, dce_common_stats, *sd);
         return;
     }
 
@@ -800,7 +800,7 @@ static void DCE2_CoBindAck(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     /* First move past secondary address */
     if (ctx_len < sec_addr_len)
     {
-        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE,dce_common_stats);
+        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE, dce_common_stats, *sd);
         return;
     }
 
@@ -812,7 +812,7 @@ static void DCE2_CoBindAck(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 
     if (ctx_len < pad)
     {
-        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE,dce_common_stats);
+        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE, dce_common_stats, *sd);
         return;
     }
 
@@ -821,7 +821,7 @@ static void DCE2_CoBindAck(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     /* Now we're at the start of the context item results */
     if (ctx_len < sizeof(DceRpcCoContResultList))
     {
-        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE,dce_common_stats);
+        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE, dce_common_stats, *sd);
         return;
     }
 
@@ -837,7 +837,7 @@ static void DCE2_CoBindAck(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 
         if (ctx_len < sizeof(DceRpcCoContResult))
         {
-            dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE,dce_common_stats);
+            dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE, dce_common_stats, *sd);
             return;
         }
         ctx_result = (const DceRpcCoContResult*)ctx_data;
@@ -870,7 +870,7 @@ static void DCE2_CoBind(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 
     if (frag_len < sizeof(DceRpcCoBind))
     {
-        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE,dce_common_stats);
+        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE, dce_common_stats, *sd);
         return;
     }
 
@@ -936,7 +936,7 @@ static void DCE2_CoAlterCtx(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 
     if (frag_len < sizeof(DceRpcCoAltCtx))
     {
-        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE,dce_common_stats);
+        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE, dce_common_stats, *sd);
         return;
     }
 
@@ -959,7 +959,8 @@ static void DCE2_CoAlterCtx(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         {
             /* This is anomalous behavior.  Alert, but continue processing */
             if (cot->data_byte_order != DCE2_SENTINEL)
-                dce_alert(GID_DCE2, DCE2_CO_ALTER_CHANGE_BYTE_ORDER,dce_common_stats);
+                dce_alert(GID_DCE2, DCE2_CO_ALTER_CHANGE_BYTE_ORDER, dce_common_stats,
+                    *sd);
         }
 
         break;
@@ -996,7 +997,7 @@ static int DCE2_CoGetAuthLen(DCE2_SsnData* sd, const DceRpcCoHdr* co_hdr,
     /* This means the auth len was bogus */
     if (auth_len > frag_len)
     {
-        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE,dce_common_stats);
+        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE, dce_common_stats, *sd);
         return -1;
     }
 
@@ -1012,7 +1013,7 @@ static int DCE2_CoGetAuthLen(DCE2_SsnData* sd, const DceRpcCoHdr* co_hdr,
     /* This means the auth pad len was bogus */
     if (auth_len > frag_len)
     {
-        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE,dce_common_stats);
+        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE, dce_common_stats, *sd);
         return -1;
     }
 
@@ -1477,7 +1478,7 @@ static void DCE2_CoRequest(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 
     if (frag_len < req_size)
     {
-        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE,dce_common_stats);
+        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE, dce_common_stats, *sd);
         return;
     }
 
@@ -1546,19 +1547,19 @@ static void DCE2_CoRequest(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             if ((ft->expected_opnum != DCE2_SENTINEL) &&
                 (ft->expected_opnum != cot->opnum))
             {
-                dce_alert(GID_DCE2, DCE2_CO_FRAG_DIFF_OPNUM,dce_common_stats);
+                dce_alert(GID_DCE2, DCE2_CO_FRAG_DIFF_OPNUM, dce_common_stats, *sd);
             }
 
             if ((ft->expected_ctx_id != DCE2_SENTINEL) &&
                 (ft->expected_ctx_id != cot->ctx_id))
             {
-                dce_alert(GID_DCE2, DCE2_CO_FRAG_DIFF_CTX_ID,dce_common_stats);
+                dce_alert(GID_DCE2, DCE2_CO_FRAG_DIFF_CTX_ID, dce_common_stats, *sd);
             }
 
             if ((ft->expected_call_id != DCE2_SENTINEL) &&
                 (ft->expected_call_id != cot->call_id))
             {
-                dce_alert(GID_DCE2, DCE2_CO_FRAG_DIFF_CALL_ID,dce_common_stats);
+                dce_alert(GID_DCE2, DCE2_CO_FRAG_DIFF_CALL_ID, dce_common_stats, *sd);
             }
         }
 
@@ -1659,7 +1660,7 @@ static void DCE2_CoResponse(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 
     if (frag_len < sizeof(DceRpcCoResponse))
     {
-        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE,dce_common_stats);
+        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE, dce_common_stats, *sd);
 
         return;
     }

@@ -84,7 +84,10 @@ static const char* dce2_get_policy_name(DCE2_Policy policy)
 
 bool dce2_set_common_config(Value& v, dce2CommonProtoConf& common)
 {
-    if ( v.is("disable_defrag") )
+    if ( v.is("limit_alerts") )
+            common.limit_alerts = v.get_bool();
+
+    else if ( v.is("disable_defrag") )
         common.disable_defrag = v.get_bool();
 
     else if ( v.is("max_frag_len") )
@@ -115,6 +118,9 @@ bool dce2_set_co_config(Value& v, dce2CoProtoConf& co)
 
 void print_dce2_common_config(dce2CommonProtoConf& common)
 {
+    LogMessage("    One alert per flow: %s\n",
+        common.limit_alerts ?
+        "ENABLED" : "DISABLED");
     LogMessage("    Defragmentation: %s\n",
         common.disable_defrag ?
         "DISABLED" : "ENABLED");

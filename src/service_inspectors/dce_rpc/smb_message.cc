@@ -82,6 +82,7 @@ static inline bool DCE2_SmbIsRawData(DCE2_SmbSsnData* ssd)
  *  data we have to work with.
  *
  * Arguments:
+ *  DCE2_SmbSsnData * - pointer to SMB flow data
  *  uint8_t * - pointer to where the offset would take us.
  *  uint8_t * - pointer to bound offset
  *  uint8_t * - length of data where offset should be within
@@ -91,15 +92,15 @@ static inline bool DCE2_SmbIsRawData(DCE2_SmbSsnData* ssd)
  *  DCE2_RET__ERROR   - Offset is bad.
  *
  ********************************************************************/
-static inline DCE2_Ret DCE2_SmbCheckAndXOffset(const uint8_t* off_ptr, const uint8_t* start_bound,
-    const uint32_t length)
+static inline DCE2_Ret DCE2_SmbCheckAndXOffset(DCE2_SmbSsnData* ssd, const uint8_t* off_ptr,
+    const uint8_t* start_bound, const uint32_t length)
 {
     /* Offset should not point within data we just looked at or be equal to
      * or beyond the length of the NBSS length left */
     if ((off_ptr < start_bound) ||
         (off_ptr > (start_bound + length)))
     {
-        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
 
         return DCE2_RET__ERROR;
     }
@@ -395,7 +396,8 @@ static DCE2_Ret DCE2_SmbHdrChecks(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr)
         if (is_seg_buf)
             DCE2_SmbSegAlert(ssd, DCE2_SMB_BAD_TYPE);
         else
-            dce_alert(GID_DCE2, DCE2_SMB_BAD_TYPE, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_BAD_TYPE, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
 
         // Continue looking at traffic.  Neither Windows nor Samba seem
         // to care, or even look at this flag
@@ -407,7 +409,8 @@ static DCE2_Ret DCE2_SmbHdrChecks(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr)
         if (is_seg_buf)
             DCE2_SmbSegAlert(ssd, DCE2_SMB_BAD_ID);
         else
-            dce_alert(GID_DCE2, DCE2_SMB_BAD_ID, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_BAD_ID, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
 
         return DCE2_RET__IGNORE;
     }
@@ -593,7 +596,8 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
         // Verify there is enough data to do checks
         if (nb_len < sizeof(SmbEmptyCom))
         {
-            dce_alert(GID_DCE2, DCE2_SMB_NB_LT_COM, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_NB_LT_COM, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
             com_info.cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
             return;
         }
@@ -627,7 +631,8 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
     // Verify there is enough data to do checks
     if (nb_len < (uint32_t)chk_com_size)
     {
-        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_COM, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_COM, (dce2CommonStats*)&dce2_smb_stats,
+            ssd->sd);
         com_info.cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
         return;
     }
@@ -640,7 +645,7 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
     // won't lie on data correctly and out of bounds data accesses are possible.
     if (!DCE2_SmbIsValidWordCount(smb_com, (uint8_t)com_info.smb_type, com_info.word_count))
     {
-        dce_alert(GID_DCE2, DCE2_SMB_BAD_WCT, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_BAD_WCT, (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
         com_info.cmd_error |= DCE2_SMB_COM_ERROR__INVALID_WORD_COUNT;
         return;
     }
@@ -650,7 +655,8 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
     com_info.cmd_size = (uint16_t)SMB_COM_SIZE(com_info.word_count);
     if (nb_len < com_info.cmd_size)
     {
-        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_COM, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_COM, (dce2CommonStats*)&dce2_smb_stats,
+            ssd->sd);
         com_info.cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
         return;
     }
@@ -677,7 +683,8 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
         {
             if (smb_bcc != 0)
             {
-                dce_alert(GID_DCE2, DCE2_SMB_BAD_BCC, (dce2CommonStats*)&dce2_smb_stats);
+                dce_alert(GID_DCE2, DCE2_SMB_BAD_BCC, (dce2CommonStats*)&dce2_smb_stats,
+                    ssd->sd);
                 com_info.cmd_error |= DCE2_SMB_COM_ERROR__INVALID_BYTE_COUNT;
             }
             break;
@@ -686,7 +693,8 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
     default:
         if (!DCE2_SmbIsValidByteCount(smb_com, (uint8_t)com_info.smb_type, smb_bcc))
         {
-            dce_alert(GID_DCE2, DCE2_SMB_BAD_BCC, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_BAD_BCC, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
             com_info.cmd_error |= DCE2_SMB_COM_ERROR__INVALID_BYTE_COUNT;
         }
         break;
@@ -698,7 +706,8 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
     // Validate that there is enough data to be able to process the command
     if (nb_len < DCE2_SmbGetMinByteCount(smb_com, (uint8_t)com_info.smb_type))
     {
-        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_BCC, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_BCC, (dce2CommonStats*)&dce2_smb_stats,
+            ssd->sd);
         com_info.cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
     }
 
@@ -708,7 +717,8 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
     // !!!WARNING!!! the byte count should probably never be used.
     if (smb_bcc > nb_len)
     {
-        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_BCC, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_BCC, (dce2CommonStats*)&dce2_smb_stats,
+            ssd->sd);
         // Large byte count doesn't seem to matter for early Samba
         switch (DCE2_SsnGetPolicy(&ssd->sd))
         {
@@ -780,12 +790,14 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
 
         if (smb_deprecated_coms[smb_com])
         {
-            dce_alert(GID_DCE2, DCE2_SMB_DEPR_COMMAND_USED, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_DEPR_COMMAND_USED, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
         }
 
         if (smb_unusual_coms[smb_com])
         {
-            dce_alert(GID_DCE2, DCE2_SMB_UNUSUAL_COMMAND_USED, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_UNUSUAL_COMMAND_USED, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
         }
 
         DCE2_SmbComInfo com_info;
@@ -828,7 +840,8 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
         if (DCE2_ScSmbMaxChain((dce2SmbProtoConf*)ssd->sd.config) &&
             (num_chained >= DCE2_ScSmbMaxChain((dce2SmbProtoConf*)ssd->sd.config)))
         {
-            dce_alert(GID_DCE2, DCE2_SMB_EXCESSIVE_CHAINING, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_EXCESSIVE_CHAINING, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
         }
 
         // Multiple SessionSetupAndX, TreeConnectAndX, OpenAndX and NtCreateAndX
@@ -840,7 +853,8 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
         if ((smb_com2 == SMB_COM_SESSION_SETUP_ANDX) && sess_chain)
         {
             // There is only one place to return a uid.
-            dce_alert(GID_DCE2, DCE2_SMB_MULT_CHAIN_SS, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_MULT_CHAIN_SS, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
             // FIXIT-L Should we continue processing?
             break;
         }
@@ -850,7 +864,8 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
         {
             // This essentially deletes the uid created by the login
             // and doesn't make any sense.
-            dce_alert(GID_DCE2, DCE2_SMB_CHAIN_SS_LOGOFF, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_CHAIN_SS_LOGOFF, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
         }
 
         if (smb_com == SMB_COM_TREE_CONNECT_ANDX)
@@ -861,7 +876,8 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
             || (smb_com2 == SMB_COM_TREE_CONNECT)) && tree_chain)
         {
             // There is only one place to return a tid.
-            dce_alert(GID_DCE2, DCE2_SMB_MULT_CHAIN_TC, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_MULT_CHAIN_TC, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
             // FIXIT-L Should we continue processing?
             break;
         }
@@ -871,7 +887,8 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
         {
             // This essentially deletes the tid created by the tree connect
             // and doesn't make any sense.
-            dce_alert(GID_DCE2, DCE2_SMB_CHAIN_TC_TDIS, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_CHAIN_TC_TDIS, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
         }
 
         if ((smb_com == SMB_COM_OPEN_ANDX) || (smb_com == SMB_COM_NT_CREATE_ANDX))
@@ -882,7 +899,8 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
         {
             // This essentially deletes the fid created by the open command
             // and doesn't make any sense.
-            dce_alert(GID_DCE2, DCE2_SMB_CHAIN_OPEN_CLOSE, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_CHAIN_OPEN_CLOSE, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
         }
 
         // Check that policy allows for such chaining
@@ -894,7 +912,7 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
 
         // FIXIT-L Need to test out of order chaining
         const uint8_t* off2_ptr = (const uint8_t*)smb_hdr + SmbAndXOff2(andx_ptr);
-        if (DCE2_SmbCheckAndXOffset(off2_ptr, nb_ptr, nb_len) != DCE2_RET__SUCCESS)
+        if (DCE2_SmbCheckAndXOffset(ssd, off2_ptr, nb_ptr, nb_len) != DCE2_RET__SUCCESS)
             break;
 
         DCE2_MOVE(nb_ptr, nb_len, (off2_ptr - nb_ptr));
@@ -1036,7 +1054,7 @@ static DCE2_SmbRequestTracker* DCE2_SmbInspect(DCE2_SmbSsnData* ssd, const SmbNt
             if (ssd->ssn_state_flags & DCE2_SMB_SSN_STATE__NEGOTIATED)
             {
                 dce_alert(GID_DCE2, DCE2_SMB_MULTIPLE_NEGOTIATIONS,
-                    (dce2CommonStats*)&dce2_smb_stats);
+                    (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
                 return nullptr;
             }
             break;
@@ -1179,7 +1197,8 @@ static void DCE2_SmbProcessRawData(DCE2_SmbSsnData* ssd, const uint8_t* nb_ptr, 
     {
         if (nb_len > ssd->cur_rtracker->writeraw_remaining)
         {
-            dce_alert(GID_DCE2, DCE2_SMB_TDCNT_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_TDCNT_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
 
             // If this happens, Windows never responds regardless of
             // WriteThrough flag, so get rid of request tracker
@@ -1390,7 +1409,8 @@ static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
                 if (is_seg_buf)
                     DCE2_SmbSegAlert(ssd, DCE2_SMB_NB_LT_SMBHDR);
                 else
-                    dce_alert(GID_DCE2, DCE2_SMB_NB_LT_SMBHDR, (dce2CommonStats*)&dce2_smb_stats);
+                    dce_alert(GID_DCE2, DCE2_SMB_NB_LT_SMBHDR, (dce2CommonStats*)&dce2_smb_stats,
+                        ssd->sd);
 
                 return DCE2_RET__IGNORE;
             }
@@ -1404,7 +1424,8 @@ static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
             if (is_seg_buf)
                 DCE2_SmbSegAlert(ssd, DCE2_SMB_BAD_NBSS_TYPE);
             else
-                dce_alert(GID_DCE2, DCE2_SMB_BAD_NBSS_TYPE, (dce2CommonStats*)&dce2_smb_stats);
+                dce_alert(GID_DCE2, DCE2_SMB_BAD_NBSS_TYPE, (dce2CommonStats*)&dce2_smb_stats,
+                    ssd->sd);
         }
 
         break;
@@ -1417,7 +1438,8 @@ static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
             if (is_seg_buf)
                 DCE2_SmbSegAlert(ssd, DCE2_SMB_BAD_NBSS_TYPE);
             else
-                dce_alert(GID_DCE2, DCE2_SMB_BAD_NBSS_TYPE, (dce2CommonStats*)&dce2_smb_stats);
+                dce_alert(GID_DCE2, DCE2_SMB_BAD_NBSS_TYPE, (dce2CommonStats*)&dce2_smb_stats,
+                    ssd->sd);
         }
 
         break;
@@ -1429,7 +1451,8 @@ static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
         if (is_seg_buf)
             DCE2_SmbSegAlert(ssd, DCE2_SMB_BAD_NBSS_TYPE);
         else
-            dce_alert(GID_DCE2, DCE2_SMB_BAD_NBSS_TYPE, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_BAD_NBSS_TYPE, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
 
         return DCE2_RET__ERROR;
     }

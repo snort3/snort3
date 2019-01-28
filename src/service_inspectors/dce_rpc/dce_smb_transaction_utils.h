@@ -28,14 +28,14 @@ DCE2_Ret DCE2_SmbTransactionGetName(const uint8_t* nb_ptr,
     uint32_t nb_len, uint16_t bcc, bool unicode);
 
 DCE2_Ret DCE2_SmbValidateTransactionFields(
-    const uint8_t* smb_hdr_ptr,
+    DCE2_SmbSsnData* ssd, const uint8_t* smb_hdr_ptr,
     const uint8_t* nb_ptr, const uint32_t nb_len, const uint16_t bcc,
     const uint32_t tdcnt, const uint32_t tpcnt,
     const uint32_t dcnt, const uint32_t doff, const uint32_t ddisp,
     const uint32_t pcnt, const uint32_t poff, const uint32_t pdisp);
 
 DCE2_Ret DCE2_SmbValidateTransactionSent(
-    uint32_t dsent, uint32_t dcnt, uint32_t tdcnt,
+    DCE2_SmbSsnData* ssd, uint32_t dsent, uint32_t dcnt, uint32_t tdcnt,
     uint32_t psent, uint32_t pcnt, uint32_t tpcnt);
 
 DCE2_Ret DCE2_SmbBufferTransactionData(DCE2_SmbTransactionTracker* ttracker,
@@ -44,8 +44,8 @@ DCE2_Ret DCE2_SmbBufferTransactionData(DCE2_SmbTransactionTracker* ttracker,
 DCE2_Ret DCE2_SmbBufferTransactionParameters(DCE2_SmbTransactionTracker* ttracker,
     const uint8_t* param_ptr, uint16_t pcnt, uint16_t pdisp);
 
-DCE2_Ret DCE2_SmbCheckTotalCount(const uint32_t tcnt, const uint32_t cnt, const uint32_t
-    disp);
+DCE2_Ret DCE2_SmbCheckTotalCount(DCE2_SmbSsnData* ssd, const uint32_t tcnt, const uint32_t cnt,
+    const uint32_t disp);
 
 inline bool DCE2_SmbFileUpload(DCE2_SmbFileDirection dir)
 {

@@ -55,7 +55,7 @@ struct dce2SmbShare
 
 struct dce2SmbProtoConf
 {
-    dce2CoProtoConf common;
+    dce2CoProtoConf common; // This member must be first
     dce2SmbFingerprintPolicy smb_fingerprint_policy;
     uint8_t smb_max_chain;
     uint8_t smb_max_compound;

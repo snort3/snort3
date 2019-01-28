@@ -101,13 +101,14 @@ struct dce2CommonStats
 
 struct dce2CommonProtoConf
 {
+    bool limit_alerts;
     bool disable_defrag;
     int max_frag_len;
 };
 
 struct dce2CoProtoConf
 {
-    dce2CommonProtoConf common;
+    dce2CommonProtoConf common; // This member must be first
     DCE2_Policy policy;
     uint16_t co_reassemble_threshold;
 };
@@ -381,8 +382,15 @@ inline bool DCE2_SsnIsServerSambaPolicy(DCE2_SsnData* sd)
     return false;
 }
 
-inline void dce_alert(uint32_t gid, uint32_t sid, dce2CommonStats* stats)
+inline void dce_alert(uint32_t gid, uint32_t sid, dce2CommonStats* stats, DCE2_SsnData& sd)
 {
+    if ( ((dce2CommonProtoConf*)sd.config)->limit_alerts )
+    {
+        // Assuming the maximum sid for dce is less than 64
+        if ( sd.alert_mask & ((uint64_t)1 << sid) )
+            return;
+        sd.alert_mask |= ((uint64_t)1 << sid);
+    }
     snort::DetectionEngine::queue_event(gid,sid);
     stats->events++;
 }

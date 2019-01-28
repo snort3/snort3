@@ -195,18 +195,22 @@ static DCE2_Ret DCE2_SmbWriteAndXRawRequest(DCE2_SmbSsnData*, const SmbNtHdr*,
  * Returns: None
  *
  ********************************************************************/
-static inline void DCE2_SmbCheckFmtData(DCE2_SmbSsnData*,
+static inline void DCE2_SmbCheckFmtData(DCE2_SmbSsnData* ssd,
     const uint32_t nb_len, const uint16_t bcc, const uint8_t fmt,
     const uint16_t com_dcnt, const uint16_t fmt_dcnt)
 {
     if (fmt != SMB_FMT__DATA_BLOCK)
-        dce_alert(GID_DCE2, DCE2_SMB_BAD_FORM, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_BAD_FORM, (dce2CommonStats*)&dce2_smb_stats,
+            ssd->sd);
     if (com_dcnt != fmt_dcnt)
-        dce_alert(GID_DCE2, DCE2_SMB_DCNT_MISMATCH, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_DCNT_MISMATCH, (dce2CommonStats*)&dce2_smb_stats,
+            ssd->sd);
     if (com_dcnt != (bcc - 3))
-        dce_alert(GID_DCE2, DCE2_SMB_INVALID_DSIZE, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_INVALID_DSIZE, (dce2CommonStats*)&dce2_smb_stats,
+            ssd->sd);
     if (nb_len < com_dcnt)
-        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats,
+            ssd->sd);
 }
 
 /********************************************************************
@@ -231,7 +235,7 @@ static inline void DCE2_SmbCheckFmtData(DCE2_SmbSsnData*,
  *              DCE2_RET__SUCCESS if data can be processed
  *
  ********************************************************************/
-static DCE2_Ret DCE2_SmbCheckData(DCE2_SmbSsnData*,
+static DCE2_Ret DCE2_SmbCheckData(DCE2_SmbSsnData* ssd,
     const uint8_t* smb_hdr_ptr, const uint8_t* nb_ptr,
     const uint32_t nb_len, const uint16_t bcc,
     const uint32_t dcnt, uint16_t doff)
@@ -244,11 +248,12 @@ static DCE2_Ret DCE2_SmbCheckData(DCE2_SmbSsnData*,
     // byte count can handle.  This can happen if CAP_LARGE_READX or
     // CAP_LARGE_WRITEX were negotiated.
     if ((dcnt <= UINT16_MAX) && (bcc < dcnt))
-        dce_alert(GID_DCE2, DCE2_SMB_BCC_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_BCC_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats,
+            ssd->sd);
 
     if (offset > nb_end)
     {
-        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
         // Error if offset is beyond data left
         return DCE2_RET__ERROR;
     }
@@ -258,7 +263,7 @@ static DCE2_Ret DCE2_SmbCheckData(DCE2_SmbSsnData*,
     {
         // Not necessarily and error if the offset puts the data
         // before or in the command structure.
-        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
     }
 
     // Not necessarily an error if the addition of the data count goes
@@ -266,7 +271,8 @@ static DCE2_Ret DCE2_SmbCheckData(DCE2_SmbSsnData*,
 
     if (dcnt > (nb_end - offset))           // beyond data left
     {
-        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats,
+            ssd->sd);
     }
 
     return DCE2_RET__SUCCESS;
@@ -553,7 +559,8 @@ DCE2_Ret DCE2_SmbOpen(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
         if (!SmbFmtAscii(*nb_ptr))
         {
-            dce_alert(GID_DCE2, DCE2_SMB_BAD_FORM, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_BAD_FORM, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
             return DCE2_RET__ERROR;
         }
 
@@ -601,7 +608,7 @@ DCE2_Ret DCE2_SmbCreate(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
             if (SmbEvasiveFileAttrs(file_attrs))
                 dce_alert(GID_DCE2, DCE2_SMB_EVASIVE_FILE_ATTRS,
-                    (dce2CommonStats*)&dce2_smb_stats);
+                    (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
         }
 
         // Have at least 2 bytes of data based on byte count check done earlier
@@ -610,7 +617,8 @@ DCE2_Ret DCE2_SmbCreate(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
         if (!SmbFmtAscii(*nb_ptr))
         {
-            dce_alert(GID_DCE2, DCE2_SMB_BAD_FORM, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_BAD_FORM, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
             return DCE2_RET__ERROR;
         }
 
@@ -655,7 +663,7 @@ DCE2_Ret DCE2_SmbClose(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
 }
 
 // SMB_COM_RENAME
-DCE2_Ret DCE2_SmbRename(DCE2_SmbSsnData*, const SmbNtHdr* smb_hdr,
+DCE2_Ret DCE2_SmbRename(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
     const DCE2_SmbComInfo* com_info, const uint8_t* nb_ptr, uint32_t nb_len)
 {
     // NOTE: This command is only processed for CVE-2006-4696 where the buffer
@@ -674,7 +682,8 @@ DCE2_Ret DCE2_SmbRename(DCE2_SmbSsnData*, const SmbNtHdr* smb_hdr,
 
         if (!SmbFmtAscii(*nb_ptr))
         {
-            dce_alert(GID_DCE2, DCE2_SMB_BAD_FORM, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_BAD_FORM, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
             return DCE2_RET__ERROR;
         }
 
@@ -708,7 +717,8 @@ DCE2_Ret DCE2_SmbRename(DCE2_SmbSsnData*, const SmbNtHdr* smb_hdr,
 
         if ((nb_len > 0) && !SmbFmtAscii(*nb_ptr))
         {
-            dce_alert(GID_DCE2, DCE2_SMB_BAD_FORM, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_BAD_FORM, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
             return DCE2_RET__ERROR;
         }
     }
@@ -782,7 +792,8 @@ DCE2_Ret DCE2_SmbWrite(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
 
         if (com_dcnt == 0)
         {
-            dce_alert(GID_DCE2, DCE2_SMB_DCNT_ZERO, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_DCNT_ZERO, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
             return DCE2_RET__ERROR;
         }
 
@@ -828,7 +839,7 @@ DCE2_Ret DCE2_SmbCreateNew(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
             if (SmbEvasiveFileAttrs(file_attrs))
                 dce_alert(GID_DCE2, DCE2_SMB_EVASIVE_FILE_ATTRS,
-                    (dce2CommonStats*)&dce2_smb_stats);
+                    (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
         }
 
         // Have at least 2 bytes of data based on byte count check done earlier
@@ -837,7 +848,8 @@ DCE2_Ret DCE2_SmbCreateNew(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
         if (!SmbFmtAscii(*nb_ptr))
         {
-            dce_alert(GID_DCE2, DCE2_SMB_BAD_FORM, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_BAD_FORM, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
             return DCE2_RET__ERROR;
         }
 
@@ -889,7 +901,8 @@ DCE2_Ret DCE2_SmbLockAndRead(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
 
         if (com_dcnt == 0)
         {
-            dce_alert(GID_DCE2, DCE2_SMB_DCNT_ZERO, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_DCNT_ZERO, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
             return DCE2_RET__ERROR;
         }
 
@@ -945,7 +958,8 @@ DCE2_Ret DCE2_SmbWriteAndUnlock(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
         if (com_dcnt == 0)
         {
-            dce_alert(GID_DCE2, DCE2_SMB_DCNT_ZERO, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_DCNT_ZERO, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
             return DCE2_RET__ERROR;
         }
 
@@ -1035,7 +1049,7 @@ DCE2_Ret DCE2_SmbOpenAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
             if (SmbEvasiveFileAttrs(file_attrs))
                 dce_alert(GID_DCE2, DCE2_SMB_EVASIVE_FILE_ATTRS,
-                    (dce2CommonStats*)&dce2_smb_stats);
+                    (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
             ssd->cur_rtracker->file_size = SmbOpenAndXReqAllocSize((const SmbOpenAndXReq*)nb_ptr);
         }
 
@@ -1564,7 +1578,8 @@ DCE2_Ret DCE2_SmbNegotiate(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
         {
             if (!SmbFmtDialect(*nb_ptr))
             {
-                dce_alert(GID_DCE2, DCE2_SMB_BAD_FORM, (dce2CommonStats*)&dce2_smb_stats);
+                dce_alert(GID_DCE2, DCE2_SMB_BAD_FORM, (dce2CommonStats*)&dce2_smb_stats,
+                    ssd->sd);
 
                 // Windows errors if bad format
                 if (DCE2_SsnIsWindowsPolicy(&ssd->sd))
@@ -1601,7 +1616,7 @@ DCE2_Ret DCE2_SmbNegotiate(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
         {
             ssd->dialect_index = DCE2_SENTINEL;
             dce_alert(GID_DCE2, DCE2_SMB_DEPR_DIALECT_NEGOTIATED,
-                (dce2CommonStats*)&dce2_smb_stats);
+                (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
         }
     }
     else
@@ -1611,7 +1626,7 @@ DCE2_Ret DCE2_SmbNegotiate(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
 
         if ((ssd->dialect_index != DCE2_SENTINEL) && (dialect_index != ssd->dialect_index))
             dce_alert(GID_DCE2, DCE2_SMB_DEPR_DIALECT_NEGOTIATED,
-                (dce2CommonStats*)&dce2_smb_stats);
+                (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
 
         ssd->ssn_state_flags |= DCE2_SMB_SSN_STATE__NEGOTIATED;
 
@@ -1731,7 +1746,8 @@ DCE2_Ret DCE2_SmbTreeConnect(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         // This byte will realign things.
         if (*nb_ptr != SMB_FMT__ASCII)
         {
-            dce_alert(GID_DCE2, DCE2_SMB_BAD_FORM, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_BAD_FORM, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
             return DCE2_RET__ERROR;
         }
 
@@ -1886,7 +1902,7 @@ DCE2_Ret DCE2_SmbNtCreateAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
             if (SmbEvasiveFileAttrs(ext_file_attrs))
                 dce_alert(GID_DCE2, DCE2_SMB_EVASIVE_FILE_ATTRS,
-                    (dce2CommonStats*)&dce2_smb_stats);
+                    (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
             // If the file is going to be accessed sequentially, track it.
             if (SmbNtCreateAndXReqSequentialOnly((const SmbNtCreateAndXReq*)nb_ptr))
                 ssd->cur_rtracker->sequential_only = true;
@@ -2035,7 +2051,7 @@ DCE2_Ret DCE2_SmbWriteRaw(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
         DCE2_MOVE(nb_ptr, nb_len, com_size);
 
-        if (DCE2_SmbCheckTotalCount(tdcnt, dcnt, 0) != DCE2_RET__SUCCESS)
+        if (DCE2_SmbCheckTotalCount(ssd, tdcnt, dcnt, 0) != DCE2_RET__SUCCESS)
             return DCE2_RET__ERROR;
 
         if (DCE2_SmbCheckData(ssd, (const uint8_t*)smb_hdr, nb_ptr, nb_len,
@@ -2047,7 +2063,8 @@ DCE2_Ret DCE2_SmbWriteRaw(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
         if (dcnt > nb_len)
         {
-            dce_alert(GID_DCE2, DCE2_SMB_NB_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_NB_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
             return DCE2_RET__ERROR;
         }
 
@@ -2129,13 +2146,15 @@ DCE2_Ret DCE2_SmbWriteAndClose(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
         if (dcnt == 0)
         {
-            dce_alert(GID_DCE2, DCE2_SMB_DCNT_ZERO, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_DCNT_ZERO, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
             return DCE2_RET__ERROR;
         }
 
         // WriteAndClose has a 1 byte pad after the byte count
         if ((uint32_t)(dcnt + 1) != (uint32_t)byte_count)
-            dce_alert(GID_DCE2, DCE2_SMB_INVALID_DSIZE, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_INVALID_DSIZE, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
 
         if (dcnt > nb_len)
             dcnt = (uint16_t)nb_len;

@@ -33,6 +33,9 @@ using namespace std;
 
 static const Parameter s_params[] =
 {
+    { "limit_alerts", Parameter::PT_BOOL, nullptr, "true",
+      "limit DCE alert to at most one per signature per flow" },
+
     { "disable_defrag", Parameter::PT_BOOL, nullptr, "false",
       "disable DCE/RPC defragmentation" },
 

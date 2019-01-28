@@ -105,6 +105,7 @@ static const DCE2_SmbFsm dce2_samba_pipe_fsm[] =
  *  though it's currently not checked.
  *
  * Arguments:
+ *  DCE2_SmbSsnData * - pointer to SMB flow data
  *  const uint8_t *   - pointer to start of SMB header where offset is
  *                      taken from.
  *  const uint8_t *   - current pointer - should be right after command
@@ -122,7 +123,7 @@ static const DCE2_SmbFsm dce2_samba_pipe_fsm[] =
  *
  ********************************************************************/
 static DCE2_Ret DCE2_SmbCheckTransDataParams(
-    const uint8_t* smb_hdr_ptr, const uint8_t* nb_ptr, const uint32_t nb_len,
+    DCE2_SmbSsnData* ssd, const uint8_t* smb_hdr_ptr, const uint8_t* nb_ptr, const uint32_t nb_len,
     const uint16_t bcc, const uint32_t dcnt, const uint32_t doff,
     const uint32_t pcnt, const uint32_t poff)
 {
@@ -131,13 +132,14 @@ static DCE2_Ret DCE2_SmbCheckTransDataParams(
     const uint8_t* nb_end = nb_ptr + nb_len;
 
     if (bcc < ((uint64_t)dcnt + pcnt))
-        dce_alert(GID_DCE2, DCE2_SMB_BCC_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_BCC_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats,
+            ssd->sd);
 
     // Check data offset out of bounds
     if ((doffset > nb_end) || (doffset < smb_hdr_ptr))
     {
         // Beyond data left or wrap
-        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
         return DCE2_RET__ERROR;
     }
 
@@ -147,12 +149,13 @@ static DCE2_Ret DCE2_SmbCheckTransDataParams(
     {
         // Not necessarily and error if the offset puts the data
         // before or in the command structure.
-        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
     }
 
     if (dcnt > (nb_end - doffset))            // beyond data left
     {
-        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats,
+            ssd->sd);
         return DCE2_RET__ERROR;
     }
 
@@ -160,7 +163,7 @@ static DCE2_Ret DCE2_SmbCheckTransDataParams(
     if ((poffset > nb_end) || (poffset < smb_hdr_ptr))
     {
         // Beyond data left or wrap
-        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
         return DCE2_RET__ERROR;
     }
 
@@ -170,12 +173,13 @@ static DCE2_Ret DCE2_SmbCheckTransDataParams(
     {
         // Not necessarily and error if the offset puts the data
         // before or in the command structure.
-        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
     }
 
     if (pcnt > (nb_end - poffset))            // beyond data left
     {
-        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats,
+            ssd->sd);
         return DCE2_RET__ERROR;
     }
 
@@ -193,6 +197,7 @@ static DCE2_Ret DCE2_SmbCheckTransDataParams(
  *  Transaction and Transaction Secondary commands.
  *
  * Arguments:
+ *  DCE2_SmbSsnData * - pointer to SMB flow data
  *  const uint32_t    - total data count
  *  const uint32_t    - data count/size
  *  const uint32_t    - data displacement
@@ -202,20 +207,22 @@ static DCE2_Ret DCE2_SmbCheckTransDataParams(
  *             DCE2_RET__ERROR if any of the checks fail.
  *
  ********************************************************************/
-DCE2_Ret DCE2_SmbCheckTotalCount(const uint32_t tcnt, const uint32_t cnt, const uint32_t
-    disp)
+DCE2_Ret DCE2_SmbCheckTotalCount(DCE2_SmbSsnData* ssd, const uint32_t tcnt, const uint32_t cnt,
+    const uint32_t disp)
 {
     DCE2_Ret ret = DCE2_RET__SUCCESS;
 
     if (cnt > tcnt)
     {
-        dce_alert(GID_DCE2, DCE2_SMB_TDCNT_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_TDCNT_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats,
+            ssd->sd);
         ret = DCE2_RET__ERROR;
     }
 
     if (((uint64_t)disp + cnt) > tcnt)
     {
-        dce_alert(GID_DCE2, DCE2_SMB_DSENT_GT_TDCNT, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_DSENT_GT_TDCNT, (dce2CommonStats*)&dce2_smb_stats,
+            ssd->sd);
         ret = DCE2_RET__ERROR;
     }
 
@@ -272,6 +279,7 @@ DCE2_Ret DCE2_SmbTransactionGetName(const uint8_t* nb_ptr,
  *  the total count expected.
  *
  * Arguments:
+ *  DCE2_SmbSsnData * - pointer to SMB flow data
  *  const uint32_t    - amount of data sent so far
  *  const uint32_t    - reported total data count
  *  const uint32_t    - reported data count
@@ -285,19 +293,21 @@ DCE2_Ret DCE2_SmbTransactionGetName(const uint8_t* nb_ptr,
  *
  ********************************************************************/
 DCE2_Ret DCE2_SmbValidateTransactionSent(
-    uint32_t dsent, uint32_t dcnt, uint32_t tdcnt,
+    DCE2_SmbSsnData* ssd, uint32_t dsent, uint32_t dcnt, uint32_t tdcnt,
     uint32_t psent, uint32_t pcnt, uint32_t tpcnt)
 {
     if (((dsent + dcnt) > tdcnt) || ((psent + pcnt) > tpcnt))
     {
         if ((dsent + dcnt) > tdcnt)
         {
-            dce_alert(GID_DCE2, DCE2_SMB_DSENT_GT_TDCNT, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_DSENT_GT_TDCNT, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
         }
 
         if ((psent + pcnt) > tpcnt)
         {
-            dce_alert(GID_DCE2, DCE2_SMB_DSENT_GT_TDCNT, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_DSENT_GT_TDCNT, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
         }
 
         // Samba throws out entire transaction and Windows seems to hang in
@@ -316,6 +326,7 @@ DCE2_Ret DCE2_SmbValidateTransactionSent(
  *  count and total data count and DCE2_SmbCheckTransDataParams()
  *
  * Arguments:
+ *  DCE2_SmbSsnData * - pointer to SMB flow data
  *  const uint8_t *   - pointer to start of SMB header where offset is
  *                      taken from.
  *  const uint8_t *   - current pointer - should be right after command
@@ -337,19 +348,19 @@ DCE2_Ret DCE2_SmbValidateTransactionSent(
  *
  ********************************************************************/
 DCE2_Ret DCE2_SmbValidateTransactionFields(
-    const uint8_t* smb_hdr_ptr,
+    DCE2_SmbSsnData* ssd, const uint8_t* smb_hdr_ptr,
     const uint8_t* nb_ptr, const uint32_t nb_len, const uint16_t bcc,
     const uint32_t tdcnt, const uint32_t tpcnt,
     const uint32_t dcnt, const uint32_t doff, const uint32_t ddisp,
     const uint32_t pcnt, const uint32_t poff, const uint32_t pdisp)
 {
-    if (DCE2_SmbCheckTotalCount(tdcnt, dcnt, ddisp) != DCE2_RET__SUCCESS)
+    if (DCE2_SmbCheckTotalCount(ssd, tdcnt, dcnt, ddisp) != DCE2_RET__SUCCESS)
         return DCE2_RET__ERROR;
 
-    if (DCE2_SmbCheckTotalCount(tpcnt, pcnt, pdisp) != DCE2_RET__SUCCESS)
+    if (DCE2_SmbCheckTotalCount(ssd, tpcnt, pcnt, pdisp) != DCE2_RET__SUCCESS)
         return DCE2_RET__ERROR;
 
-    if (DCE2_SmbCheckTransDataParams(smb_hdr_ptr,
+    if (DCE2_SmbCheckTransDataParams(ssd, smb_hdr_ptr,
         nb_ptr, nb_len, bcc, dcnt, doff, pcnt, poff) != DCE2_RET__SUCCESS)
         return DCE2_RET__ERROR;
 

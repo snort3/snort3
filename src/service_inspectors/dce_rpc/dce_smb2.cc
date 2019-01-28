@@ -128,7 +128,8 @@ static inline void DCE2_Smb2StoreRequest(DCE2_SmbSsnData* ssd,
 
     if (ssd->outstanding_requests >= ssd->max_outstanding_requests)
     {
-        dce_alert(GID_DCE2, DCE2_SMB_MAX_REQS_EXCEEDED, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_MAX_REQS_EXCEEDED, (dce2CommonStats*)&dce2_smb_stats,
+            ssd->sd);
         snort_free((void*)request);
         return;
     }
@@ -491,7 +492,8 @@ static void DCE2_Smb2ReadRequest(DCE2_SmbSsnData* ssd, const Smb2Hdr* smb_hdr,
     }
     if (ssd->ftracker.tracker.file.file_size && (offset > ssd->ftracker.tracker.file.file_size))
     {
-        dce_alert(GID_DCE2, DCE2_SMB_INVALID_FILE_OFFSET, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_INVALID_FILE_OFFSET, (dce2CommonStats*)&dce2_smb_stats,
+            ssd->sd);
     }
 }
 
@@ -519,7 +521,7 @@ static void DCE2_Smb2ReadResponse(DCE2_SmbSsnData* ssd, const Smb2Hdr* smb_hdr,
     data_offset = alignedNtohs((const uint16_t*)(&(smb_read_hdr->data_offset)));
     if (data_offset + (const uint8_t*)smb_hdr > end)
     {
-        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
     }
 
     ssd->ftracker.tracker.file.file_offset = request->offset;
@@ -597,13 +599,14 @@ static void DCE2_Smb2WriteRequest(DCE2_SmbSsnData* ssd, const Smb2Hdr* smb_hdr,
     data_offset = alignedNtohs((const uint16_t*)(&(smb_write_hdr->data_offset)));
     if (data_offset + (const uint8_t*)smb_hdr > end)
     {
-        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
     }
 
     offset = alignedNtohq((const uint64_t*)(&(smb_write_hdr->offset)));
     if (ssd->ftracker.tracker.file.file_size && (offset > ssd->ftracker.tracker.file.file_size))
     {
-        dce_alert(GID_DCE2, DCE2_SMB_INVALID_FILE_OFFSET, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_INVALID_FILE_OFFSET, (dce2CommonStats*)&dce2_smb_stats,
+            ssd->sd);
     }
     ssd->ftracker.tracker.file.file_direction = DCE2_SMB_FILE_DIRECTION__UPLOAD;
     ssd->ftracker.tracker.file.file_offset = offset;
@@ -723,7 +726,7 @@ void DCE2_Smb2Process(DCE2_SmbSsnData* ssd)
         if (next_command_offset + sizeof(NbssHdr) > p->dsize)
         {
             dce_alert(GID_DCE2, DCE2_SMB_BAD_NEXT_COMMAND_OFFSET,
-                (dce2CommonStats*)&dce2_smb_stats);
+                (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
         }
         DCE2_Smb2Inspect(ssd, smb_hdr, data_ptr +  data_len);
     }

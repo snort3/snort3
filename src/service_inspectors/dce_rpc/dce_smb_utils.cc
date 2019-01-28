@@ -270,7 +270,8 @@ DCE2_SmbRequestTracker* DCE2_SmbNewRequestTracker(DCE2_SmbSsnData* ssd,
 
     if (ssd->outstanding_requests >= ssd->max_outstanding_requests)
     {
-        dce_alert(GID_DCE2, DCE2_SMB_MAX_REQS_EXCEEDED, (dce2CommonStats*)&dce2_smb_stats);
+        dce_alert(GID_DCE2, DCE2_SMB_MAX_REQS_EXCEEDED, (dce2CommonStats*)&dce2_smb_stats,
+            ssd->sd);
     }
 
     // Check for outstanding requests with the same MID
@@ -281,7 +282,8 @@ DCE2_SmbRequestTracker* DCE2_SmbNewRequestTracker(DCE2_SmbSsnData* ssd,
         {
             // Have yet to see an MID repeatedly used so shouldn't
             // be any outstanding requests with the same MID.
-            dce_alert(GID_DCE2, DCE2_SMB_REQS_SAME_MID, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_REQS_SAME_MID, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
             break;
         }
 
@@ -967,7 +969,8 @@ void DCE2_SmbInvalidShareCheck(DCE2_SmbSsnData* ssd,
         if (i == share_str_len)
         {
             /* Should only match one share since no duplicate shares in list */
-            dce_alert(GID_DCE2, DCE2_SMB_INVALID_SHARE, (dce2CommonStats*)&dce2_smb_stats);
+            dce_alert(GID_DCE2, DCE2_SMB_INVALID_SHARE, (dce2CommonStats*)&dce2_smb_stats,
+                ssd->sd);
             break;
         }
     }
@@ -1362,7 +1365,7 @@ void DCE2_SmbSegAlert(DCE2_SmbSsnData* ssd, uint32_t rule_id)
     if (rpkt == nullptr)
         return;
 
-    dce_alert(GID_DCE2, rule_id, (dce2CommonStats*)&dce2_smb_stats);
+    dce_alert(GID_DCE2, rule_id, (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
 }
 
 static void DCE2_SmbResetFileChunks(DCE2_SmbFileTracker* ftracker)
