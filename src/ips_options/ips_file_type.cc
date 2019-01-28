@@ -29,6 +29,7 @@
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
+#include "hash/hashfcn.h"
 
 using namespace snort;
 
@@ -40,6 +41,9 @@ class FileTypeOption : public IpsOption
 {
 public:
     FileTypeOption(FileTypeBitSet&);
+
+    uint32_t hash() const override;
+    bool operator==(const IpsOption& ips) const override;
 
     CursorActionType get_cursor_type() const override
     { return CAT_NONE; }
@@ -56,6 +60,23 @@ public:
 FileTypeOption::FileTypeOption(FileTypeBitSet& t) : IpsOption(s_name)
 {
     types = t;
+}
+
+uint32_t FileTypeOption::hash() const
+{
+    uint32_t a = 0, b = 0, c = 0;
+    mix_str(a, b, c, get_name());
+    mix_str(a, b, c, types.to_string().c_str());
+    finalize(a, b, c);
+    return c;
+}
+
+bool FileTypeOption::operator==(const IpsOption& ips) const
+{
+    if ( strcmp(get_name(), ips.get_name()) )
+        return false;
+
+    return types == ((const FileTypeOption&) ips).types;
 }
 
 IpsOption::EvalStatus FileTypeOption::eval(Cursor&, Packet* pkt)
@@ -270,4 +291,3 @@ const BaseApi* ips_file_type[] =
     &file_type_api.base,
     nullptr
 };
-
