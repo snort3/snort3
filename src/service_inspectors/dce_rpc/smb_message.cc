@@ -908,14 +908,14 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
         if (smb_chain_funcs[policy][andx_com][smb_com2] == nullptr)
             break;
 
-        DCE2_MOVE(nb_ptr, nb_len, DCE2_ComInfoCommandSize(&com_info));
+        dce2_move(nb_ptr, nb_len, DCE2_ComInfoCommandSize(&com_info));
 
         // FIXIT-L Need to test out of order chaining
         const uint8_t* off2_ptr = (const uint8_t*)smb_hdr + SmbAndXOff2(andx_ptr);
         if (DCE2_SmbCheckAndXOffset(ssd, off2_ptr, nb_ptr, nb_len) != DCE2_RET__SUCCESS)
             break;
 
-        DCE2_MOVE(nb_ptr, nb_len, (off2_ptr - nb_ptr));
+        dce2_move(nb_ptr, nb_len, (off2_ptr - nb_ptr));
 
         // FIXIT-L Need to test more.
         switch (smb_com)
@@ -1488,7 +1488,7 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
             else
             {
                 /* ignore bytes is less than UINT16_MAX */
-                DCE2_MOVE(data_ptr, data_len, (uint16_t)*ignore_bytes);
+                dce2_move(data_ptr, data_len, (uint16_t)*ignore_bytes);
                 *ignore_bytes = 0;
             }
         }
@@ -1558,7 +1558,7 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
             }
 
             if (!DCE2_BufferIsEmpty(*seg_buf))
-                DCE2_MOVE(data_ptr, data_len, (uint16_t)data_need);
+                dce2_move(data_ptr, data_len, (uint16_t)data_need);
 
             switch (ssd->pdu_state)
             {
@@ -1672,7 +1672,7 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
             }
 
             if (!DCE2_BufferIsEmpty(*seg_buf))
-                DCE2_MOVE(data_ptr, data_len, (uint16_t)data_need);
+                dce2_move(data_ptr, data_len, (uint16_t)data_need);
 
             *data_state = DCE2_SMB_DATA_STATE__NETBIOS_PDU;
         }
@@ -1720,7 +1720,7 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
             {
                 nb_ptr = data_ptr;
                 nb_len = data_need;
-                DCE2_MOVE(data_ptr, data_len, (uint16_t)data_need);
+                dce2_move(data_ptr, data_len, (uint16_t)data_need);
             }
             else
             {
@@ -1728,11 +1728,11 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
                     sizeof(NbssHdr) + nb_len) != DCE2_RET__SUCCESS)
                 {
                     DCE2_BufferEmpty(*seg_buf);
-                    DCE2_MOVE(data_ptr, data_len, (uint16_t)data_need);
+                    dce2_move(data_ptr, data_len, (uint16_t)data_need);
                     continue;
                 }
 
-                DCE2_MOVE(data_ptr, data_len, (uint16_t)data_need);
+                dce2_move(data_ptr, data_len, (uint16_t)data_need);
 
                 nb_ptr = DCE2_BufferData(*seg_buf);
                 nb_len = DCE2_BufferLength(*seg_buf);
@@ -1760,7 +1760,7 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
             case DCE2_SMB_PDU_STATE__COMMAND:
             {
                 const SmbNtHdr* smb_hdr = (const SmbNtHdr*)(nb_ptr + sizeof(NbssHdr));
-                DCE2_MOVE(nb_ptr, nb_len, (sizeof(NbssHdr) + sizeof(SmbNtHdr)));
+                dce2_move(nb_ptr, nb_len, (sizeof(NbssHdr) + sizeof(SmbNtHdr)));
                 ssd->cur_rtracker = (rtracker != nullptr)
                     ? rtracker : DCE2_SmbFindRequestTracker(ssd, smb_hdr);
                 if (ssd->cur_rtracker != nullptr)
@@ -1769,7 +1769,7 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
             }
 
             case DCE2_SMB_PDU_STATE__RAW_DATA:
-                DCE2_MOVE(nb_ptr, nb_len, sizeof(NbssHdr));
+                dce2_move(nb_ptr, nb_len, sizeof(NbssHdr));
                 if (ssd->cur_rtracker != nullptr)
                     DCE2_SmbProcessRawData(ssd, nb_ptr, nb_len);
                 // Only one raw read or write

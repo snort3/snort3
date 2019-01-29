@@ -136,7 +136,7 @@ void DCE2_BufferDestroy(DCE2_Buffer* buf);
 
 #define DCE2_UUID_BUF_SIZE 50
 const char* DCE2_UuidToStr(
-    const Uuid*, DceRpcBoFlag, char (& buf)[DCE2_UUID_BUF_SIZE]);
+    const Uuid*, DceRpcBoFlag, char (&buf)[DCE2_UUID_BUF_SIZE]);
 
 /********************************************************************
  * Function: DCE2_IsSpaceChar()
@@ -391,8 +391,23 @@ inline void DCE2_BufferEmpty(DCE2_Buffer* buf)
     buf->len = 0;
 }
 
-#define DCE2_MOVE(data_ptr, data_len, amount) \
-    { (data_len) -= (amount); (data_ptr) = (const uint8_t*)(data_ptr) + (amount); }
+inline void dce2_move(const uint8_t*& data_ptr, uint16_t& data_len, int amount)
+{
+    data_len -= amount;
+    data_ptr += amount;
+}
+
+inline void dce2_move(const uint8_t*& data_ptr, uint32_t& data_len, int amount)
+{
+    data_len -= amount;
+    data_ptr += amount;
+}
+
+inline void dce2_move(const uint8_t*& data_ptr, int64_t& data_len, int amount)
+{
+    data_len -= amount;
+    data_ptr += amount;
+}
 
 #endif
 

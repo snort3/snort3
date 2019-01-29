@@ -334,14 +334,14 @@ static DCE2_Ret DCE2_SmbWriteAndXRawRequest(DCE2_SmbSsnData* ssd, const SmbNtHdr
     uint32_t dcnt = SmbWriteAndXReqDataCnt((const SmbWriteAndXReq*)nb_ptr);
     uint16_t remaining = SmbWriteAndXReqRemaining((const SmbWriteAndXReq*)nb_ptr);
 
-    DCE2_MOVE(nb_ptr, nb_len, com_size);
+    dce2_move(nb_ptr, nb_len, com_size);
 
     if (DCE2_SmbCheckData(ssd, (const uint8_t*)smb_hdr, nb_ptr, nb_len,
         byte_count, dcnt, doff) != DCE2_RET__SUCCESS)
         return DCE2_RET__ERROR;
 
     // This may move backwards
-    DCE2_MOVE(nb_ptr, nb_len, ((const uint8_t*)smb_hdr + doff) - nb_ptr);
+    dce2_move(nb_ptr, nb_len, ((const uint8_t*)smb_hdr + doff) - nb_ptr);
 
     // If a "raw" write is requested there will be two bytes after the
     // header/pad and before the data which is supposed to represent a
@@ -355,7 +355,7 @@ static DCE2_Ret DCE2_SmbWriteAndXRawRequest(DCE2_SmbSsnData* ssd, const SmbNtHdr
 
         // From data size check above, nb_len >= dsize
         dcnt -= 2;
-        DCE2_MOVE(nb_ptr, nb_len, 2);
+        dce2_move(nb_ptr, nb_len, 2);
     }
 
     if (dcnt > nb_len)
@@ -555,7 +555,7 @@ DCE2_Ret DCE2_SmbOpen(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
     {
         // Have at least 2 bytes of data based on byte count check done earlier
 
-        DCE2_MOVE(nb_ptr, nb_len, DCE2_ComInfoCommandSize(com_info));
+        dce2_move(nb_ptr, nb_len, DCE2_ComInfoCommandSize(com_info));
 
         if (!SmbFmtAscii(*nb_ptr))
         {
@@ -564,7 +564,7 @@ DCE2_Ret DCE2_SmbOpen(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             return DCE2_RET__ERROR;
         }
 
-        DCE2_MOVE(nb_ptr, nb_len, 1);
+        dce2_move(nb_ptr, nb_len, 1);
 
         ssd->cur_rtracker->file_name =
             DCE2_SmbGetFileName(nb_ptr, nb_len, SmbUnicode(smb_hdr),
@@ -613,8 +613,8 @@ DCE2_Ret DCE2_SmbCreate(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
         // Have at least 2 bytes of data based on byte count check done earlier
 
-        DCE2_MOVE(nb_ptr, nb_len, DCE2_ComInfoCommandSize(com_info));
-
+        dce2_move(nb_ptr, nb_len, DCE2_ComInfoCommandSize(com_info));
+        assert(nb_ptr != nullptr);
         if (!SmbFmtAscii(*nb_ptr))
         {
             dce_alert(GID_DCE2, DCE2_SMB_BAD_FORM, (dce2CommonStats*)&dce2_smb_stats,
@@ -622,7 +622,7 @@ DCE2_Ret DCE2_SmbCreate(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             return DCE2_RET__ERROR;
         }
 
-        DCE2_MOVE(nb_ptr, nb_len, 1);
+        dce2_move(nb_ptr, nb_len, 1);
 
         ssd->cur_rtracker->file_name =
             DCE2_SmbGetFileName(nb_ptr, nb_len, SmbUnicode(smb_hdr),
@@ -678,7 +678,7 @@ DCE2_Ret DCE2_SmbRename(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
         uint32_t i;
 
-        DCE2_MOVE(nb_ptr, nb_len, DCE2_ComInfoCommandSize(com_info));
+        dce2_move(nb_ptr, nb_len, DCE2_ComInfoCommandSize(com_info));
 
         if (!SmbFmtAscii(*nb_ptr))
         {
@@ -687,7 +687,7 @@ DCE2_Ret DCE2_SmbRename(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             return DCE2_RET__ERROR;
         }
 
-        DCE2_MOVE(nb_ptr, nb_len, 1);
+        dce2_move(nb_ptr, nb_len, 1);
 
         if (SmbUnicode(smb_hdr))
         {
@@ -713,7 +713,7 @@ DCE2_Ret DCE2_SmbRename(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         }
 
         // i <= nb_len
-        DCE2_MOVE(nb_ptr, nb_len, i);
+        dce2_move(nb_ptr, nb_len, i);
 
         if ((nb_len > 0) && !SmbFmtAscii(*nb_ptr))
         {
@@ -754,7 +754,7 @@ DCE2_Ret DCE2_SmbRead(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
         uint8_t fmt = *(nb_ptr + com_size);
         uint16_t fmt_dcnt = snort::alignedNtohs((const uint16_t*)(nb_ptr + com_size + 1));
 
-        DCE2_MOVE(nb_ptr, nb_len, (com_size + 3));
+        dce2_move(nb_ptr, nb_len, (com_size + 3));
 
         DCE2_SmbCheckFmtData(ssd, nb_len, byte_count, fmt, com_dcnt, fmt_dcnt);
 
@@ -786,7 +786,7 @@ DCE2_Ret DCE2_SmbWrite(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
         uint16_t fid = SmbWriteReqFid((const SmbWriteReq*)nb_ptr);
         uint32_t offset = SmbWriteReqOffset((const SmbWriteReq*)nb_ptr);
 
-        DCE2_MOVE(nb_ptr, nb_len, (com_size + 3));
+        dce2_move(nb_ptr, nb_len, (com_size + 3));
 
         DCE2_SmbCheckFmtData(ssd, nb_len, byte_count, fmt, com_dcnt, fmt_dcnt);
 
@@ -844,8 +844,8 @@ DCE2_Ret DCE2_SmbCreateNew(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
         // Have at least 2 bytes of data based on byte count check done earlier
 
-        DCE2_MOVE(nb_ptr, nb_len, DCE2_ComInfoCommandSize(com_info));
-
+        dce2_move(nb_ptr, nb_len, DCE2_ComInfoCommandSize(com_info));
+        assert(nb_ptr != nullptr);
         if (!SmbFmtAscii(*nb_ptr))
         {
             dce_alert(GID_DCE2, DCE2_SMB_BAD_FORM, (dce2CommonStats*)&dce2_smb_stats,
@@ -853,7 +853,7 @@ DCE2_Ret DCE2_SmbCreateNew(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             return DCE2_RET__ERROR;
         }
 
-        DCE2_MOVE(nb_ptr, nb_len, 1);
+        dce2_move(nb_ptr, nb_len, 1);
 
         ssd->cur_rtracker->file_name =
             DCE2_SmbGetFileName(nb_ptr, nb_len, SmbUnicode(smb_hdr),
@@ -881,7 +881,8 @@ DCE2_Ret DCE2_SmbLockAndRead(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
             return DCE2_RET__ERROR;
 
         if (!ftracker->is_ipc)
-            ssd->cur_rtracker->file_offset = SmbLockAndReadReqOffset((const SmbLockAndReadReq*)nb_ptr);
+            ssd->cur_rtracker->file_offset = SmbLockAndReadReqOffset((const
+                SmbLockAndReadReq*)nb_ptr);
 
         // Set this for response
         ssd->cur_rtracker->ftracker = ftracker;
@@ -895,7 +896,7 @@ DCE2_Ret DCE2_SmbLockAndRead(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
         uint16_t com_dcnt = SmbLockAndReadRespCount((const SmbLockAndReadResp*)nb_ptr);
         uint16_t fmt_dcnt = snort::alignedNtohs((const uint16_t*)(nb_ptr + com_size + 1));
 
-        DCE2_MOVE(nb_ptr, nb_len, (com_size + 3));
+        dce2_move(nb_ptr, nb_len, (com_size + 3));
 
         DCE2_SmbCheckFmtData(ssd, nb_len, byte_count, fmt, com_dcnt, fmt_dcnt);
 
@@ -952,7 +953,7 @@ DCE2_Ret DCE2_SmbWriteAndUnlock(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         uint16_t fid = SmbWriteAndUnlockReqFid((const SmbWriteAndUnlockReq*)nb_ptr);
         uint32_t offset = SmbWriteAndUnlockReqOffset((const SmbWriteAndUnlockReq*)nb_ptr);
 
-        DCE2_MOVE(nb_ptr, nb_len, (com_size + 3));
+        dce2_move(nb_ptr, nb_len, (com_size + 3));
 
         DCE2_SmbCheckFmtData(ssd, nb_len, byte_count, fmt, com_dcnt, fmt_dcnt);
 
@@ -1053,7 +1054,7 @@ DCE2_Ret DCE2_SmbOpenAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             ssd->cur_rtracker->file_size = SmbOpenAndXReqAllocSize((const SmbOpenAndXReq*)nb_ptr);
         }
 
-        DCE2_MOVE(nb_ptr, nb_len, DCE2_ComInfoCommandSize(com_info));
+        dce2_move(nb_ptr, nb_len, DCE2_ComInfoCommandSize(com_info));
 
         if (unicode)
             pad = (nb_ptr - (const uint8_t*)smb_hdr) & 1;
@@ -1061,7 +1062,7 @@ DCE2_Ret DCE2_SmbOpenAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         if (nb_len < (pad + null_bytes))
             return DCE2_RET__ERROR;
 
-        DCE2_MOVE(nb_ptr, nb_len, pad);
+        dce2_move(nb_ptr, nb_len, pad);
 
         // Samba allows chaining OpenAndX/NtCreateAndX so might have
         // already been set.
@@ -1104,14 +1105,14 @@ DCE2_Ret DCE2_SmbReadAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         uint16_t doff = SmbReadAndXRespDataOff((const SmbReadAndXResp*)nb_ptr);
         uint32_t dcnt = SmbReadAndXRespDataCnt((const SmbReadAndXResp*)nb_ptr);
 
-        DCE2_MOVE(nb_ptr, nb_len, com_size);
+        dce2_move(nb_ptr, nb_len, com_size);
 
         if (DCE2_SmbCheckData(ssd, (const uint8_t*)smb_hdr, nb_ptr, nb_len,
             byte_count, dcnt, doff) != DCE2_RET__SUCCESS)
             return DCE2_RET__ERROR;
 
         // This may move backwards
-        DCE2_MOVE(nb_ptr, nb_len, ((const uint8_t*)smb_hdr + doff) - nb_ptr);
+        dce2_move(nb_ptr, nb_len, ((const uint8_t*)smb_hdr + doff) - nb_ptr);
 
         if (dcnt > nb_len)
             dcnt = nb_len;
@@ -1161,14 +1162,14 @@ DCE2_Ret DCE2_SmbWriteAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         uint32_t dcnt = SmbWriteAndXReqDataCnt((const SmbWriteAndXReq*)nb_ptr);
         uint64_t offset = SmbWriteAndXReqOffset((const SmbWriteAndXExtReq*)nb_ptr);
 
-        DCE2_MOVE(nb_ptr, nb_len, com_size);
+        dce2_move(nb_ptr, nb_len, com_size);
 
         if (DCE2_SmbCheckData(ssd, (const uint8_t*)smb_hdr, nb_ptr, nb_len,
             byte_count, dcnt, doff) != DCE2_RET__SUCCESS)
             return DCE2_RET__ERROR;
 
         // This may move backwards
-        DCE2_MOVE(nb_ptr, nb_len, ((const uint8_t*)smb_hdr + doff) - nb_ptr);
+        dce2_move(nb_ptr, nb_len, ((const uint8_t*)smb_hdr + doff) - nb_ptr);
 
         if (dcnt > nb_len)
         {
@@ -1224,38 +1225,38 @@ DCE2_Ret DCE2_SmbSessionSetupAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
                 uint16_t uni_pass_len =
                     SmbNt10SessionSetupAndXReqUnicodePassLen((const SmbNt10_SessionSetupAndXReq*)nb_ptr);
 
-                DCE2_MOVE(nb_ptr, nb_len, com_size);
+                dce2_move(nb_ptr, nb_len, com_size);
 
                 if (((uint32_t)oem_pass_len + uni_pass_len) > nb_len)
                 {
                     return DCE2_RET__ERROR;
                 }
 
-                DCE2_MOVE(nb_ptr, nb_len, (oem_pass_len + uni_pass_len));
+                dce2_move(nb_ptr, nb_len, (oem_pass_len + uni_pass_len));
 
                 // If unicode there should be a padding byte if the password
                 // lengths are even since the command length is odd
                 if ((increment == 2) && (nb_len != 0) && !((oem_pass_len + uni_pass_len) & 1))
-                    DCE2_MOVE(nb_ptr, nb_len, 1);
+                    dce2_move(nb_ptr, nb_len, 1);
             }
             else  // Extended security blob version, word count of 12
             {
                 uint16_t blob_len =
                     SmbSessionSetupAndXReqBlobLen((const SmbNt10_SessionSetupAndXExtReq*)nb_ptr);
 
-                DCE2_MOVE(nb_ptr, nb_len, com_size);
+                dce2_move(nb_ptr, nb_len, com_size);
 
                 if (blob_len > nb_len)
                 {
                     return DCE2_RET__ERROR;
                 }
 
-                DCE2_MOVE(nb_ptr, nb_len, blob_len);
+                dce2_move(nb_ptr, nb_len, blob_len);
 
                 // If unicode there should be a padding byte if the blob
                 // length is even since the command length is odd
                 if ((increment == 2) && (nb_len != 0) && !(blob_len & 1))
-                    DCE2_MOVE(nb_ptr, nb_len, 1);
+                    dce2_move(nb_ptr, nb_len, 1);
             }
 
             // Attempting to fingerprint Client Windows/Samba version.
@@ -1267,8 +1268,9 @@ DCE2_Ret DCE2_SmbSessionSetupAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
                 for (j = 0; j < 2; j++)
                 {
+                    assert(nb_ptr != nullptr);
                     while ((nb_len >= increment) && (*nb_ptr != '\0'))
-                        DCE2_MOVE(nb_ptr, nb_len, increment);
+                        dce2_move(nb_ptr, nb_len, increment);
 
                     // Just return success if we run out of data
                     if (nb_len < increment)
@@ -1277,7 +1279,7 @@ DCE2_Ret DCE2_SmbSessionSetupAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
                     }
 
                     // Move past NULL string terminator
-                    DCE2_MOVE(nb_ptr, nb_len, increment);
+                    dce2_move(nb_ptr, nb_len, increment);
                 }
             }
 
@@ -1291,6 +1293,7 @@ DCE2_Ret DCE2_SmbSessionSetupAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             // sending data to it.
 
             // Windows Vista and above don't put anything here
+            assert(nb_ptr != nullptr);
             if (*nb_ptr == '\0')
             {
                 DCE2_SsnSetPolicy(&ssd->sd, DCE2_POLICY__WINVISTA);
@@ -1308,7 +1311,7 @@ DCE2_Ret DCE2_SmbSessionSetupAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
                     if (dce2_smb_os_fsm[state].input == (char)*nb_ptr)
                     {
                         state = dce2_smb_os_fsm[state].next_state;
-                        DCE2_MOVE(nb_ptr, rlen, increment);
+                        dce2_move(nb_ptr, rlen, increment);
                     }
                     else
                     {
@@ -1350,7 +1353,7 @@ DCE2_Ret DCE2_SmbSessionSetupAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             }
 
             // Move to LanMan string
-            DCE2_MOVE(nb_ptr, nb_len, i + increment);
+            dce2_move(nb_ptr, nb_len, i + increment);
 
             // Samba
             if (*nb_ptr == 'S')
@@ -1387,34 +1390,35 @@ DCE2_Ret DCE2_SmbSessionSetupAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
             if (DCE2_ComInfoWordCount(com_info) == 3)
             {
-                DCE2_MOVE(nb_ptr, nb_len, DCE2_ComInfoCommandSize(com_info));
+                dce2_move(nb_ptr, nb_len, DCE2_ComInfoCommandSize(com_info));
 
                 // Word count 3 and Unicode has a one byte pad
                 if ((increment == 2) && (nb_len != 0))
-                    DCE2_MOVE(nb_ptr, nb_len, 1);
+                    dce2_move(nb_ptr, nb_len, 1);
             }
             else  // Only valid word counts are 3 and 4
             {
                 uint16_t blob_len = SmbSessionSetupAndXRespBlobLen(
                     (const SmbNt10_SessionSetupAndXExtResp*)nb_ptr);
 
-                DCE2_MOVE(nb_ptr, nb_len, DCE2_ComInfoCommandSize(com_info));
+                dce2_move(nb_ptr, nb_len, DCE2_ComInfoCommandSize(com_info));
 
                 if (blob_len > nb_len)
                 {
                     return DCE2_RET__ERROR;
                 }
 
-                DCE2_MOVE(nb_ptr, nb_len, blob_len);
+                dce2_move(nb_ptr, nb_len, blob_len);
 
                 if ((increment == 2) && (nb_len != 0) && !(blob_len & 1))
-                    DCE2_MOVE(nb_ptr, nb_len, 1);
+                    dce2_move(nb_ptr, nb_len, 1);
             }
 
             // Attempting to fingerprint Server Windows/Samba version.
             // Note the below is quick and dirty.  We're assuming the server
             // is kosher.  It's policy will be used when the client is
             // sending data to it.
+            assert(nb_ptr != nullptr);
             if ((nb_len < increment) || (*nb_ptr == '\0'))
             {
                 return DCE2_RET__SUCCESS;
@@ -1431,7 +1435,7 @@ DCE2_Ret DCE2_SmbSessionSetupAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
                     if (dce2_smb_os_fsm[state].input == (char)*nb_ptr)
                     {
                         state = dce2_smb_os_fsm[state].next_state;
-                        DCE2_MOVE(nb_ptr, rlen, increment);
+                        dce2_move(nb_ptr, rlen, increment);
                     }
                     else
                     {
@@ -1482,7 +1486,7 @@ DCE2_Ret DCE2_SmbSessionSetupAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             }
 
             // Move to LanMan string
-            DCE2_MOVE(nb_ptr, nb_len, i + increment);
+            dce2_move(nb_ptr, nb_len, i + increment);
 
             // Samba
             if (*nb_ptr == 'S')
@@ -1572,7 +1576,7 @@ DCE2_Ret DCE2_SmbNegotiate(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
         int ntlm_index = 0;
         uint16_t com_size = DCE2_ComInfoCommandSize(com_info);
 
-        DCE2_MOVE(nb_ptr, nb_len, com_size);
+        dce2_move(nb_ptr, nb_len, com_size);
 
         while ((term_ptr = (uint8_t*)memchr(nb_ptr, '\0', nb_len)) != nullptr)
         {
@@ -1589,7 +1593,7 @@ DCE2_Ret DCE2_SmbNegotiate(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
             }
 
             // Move past format
-            DCE2_MOVE(nb_ptr, nb_len, 1);
+            dce2_move(nb_ptr, nb_len, 1);
 
             if (nb_len == 0)
                 break;
@@ -1603,7 +1607,7 @@ DCE2_Ret DCE2_SmbNegotiate(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
                 break;
 
             // Move past string and NULL byte
-            DCE2_MOVE(nb_ptr, nb_len, (term_ptr - nb_ptr) + 1);
+            dce2_move(nb_ptr, nb_len, (term_ptr - nb_ptr) + 1);
 
             ntlm_index++;
         }
@@ -1663,21 +1667,22 @@ DCE2_Ret DCE2_SmbTreeConnectAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         if (DCE2_ScSmbInvalidShares((dce2SmbProtoConf*)ssd->sd.config) != nullptr)
         {
             uint16_t pass_len = SmbTreeConnectAndXReqPassLen((const SmbTreeConnectAndXReq*)nb_ptr);
-            DCE2_MOVE(nb_ptr, nb_len, com_size);
+            dce2_move(nb_ptr, nb_len, com_size);
             if (pass_len >= nb_len)
                 return DCE2_RET__ERROR;
 
             // Move past password length
-            DCE2_MOVE(nb_ptr, nb_len, pass_len);
+            dce2_move(nb_ptr, nb_len, pass_len);
 
             const uint8_t* bs = nullptr;
             // Move past path components
+            assert(nb_ptr != nullptr);
             while ((bs = (const uint8_t*)memchr(nb_ptr, '\\', nb_len)) != nullptr)
-                DCE2_MOVE(nb_ptr, nb_len, (bs - nb_ptr) + 1);
+                dce2_move(nb_ptr, nb_len, (bs - nb_ptr) + 1);
 
             // Move past NULL byte if unicode
             if (SmbUnicode(smb_hdr) && (nb_len != 0))
-                DCE2_MOVE(nb_ptr, nb_len, 1);
+                dce2_move(nb_ptr, nb_len, 1);
 
             if (nb_len != 0)
                 DCE2_SmbInvalidShareCheck(ssd, smb_hdr, nb_ptr, nb_len);
@@ -1685,7 +1690,7 @@ DCE2_Ret DCE2_SmbTreeConnectAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
     }
     else
     {
-        DCE2_MOVE(nb_ptr, nb_len, com_size);
+        dce2_move(nb_ptr, nb_len, com_size);
 
         int state = SERVICE_0;
         while ((nb_len > 0) && (state < SERVICE_FS))
@@ -1693,7 +1698,7 @@ DCE2_Ret DCE2_SmbTreeConnectAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             if (dce2_smb_service_fsm[state].input == (char)*nb_ptr)
             {
                 state = dce2_smb_service_fsm[state].next_state;
-                DCE2_MOVE(nb_ptr, nb_len, 1);
+                dce2_move(nb_ptr, nb_len, 1);
             }
             else
             {
@@ -1735,7 +1740,7 @@ DCE2_Ret DCE2_SmbTreeConnect(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
         // Have at least 4 bytes of data based on byte count check done earlier
 
-        DCE2_MOVE(nb_ptr, nb_len, com_size);
+        dce2_move(nb_ptr, nb_len, com_size);
 
         // If unicode flag is set, strings, except possibly the service string
         // are going to be unicode.  The NT spec specifies that unicode strings
@@ -1751,17 +1756,17 @@ DCE2_Ret DCE2_SmbTreeConnect(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             return DCE2_RET__ERROR;
         }
 
-        DCE2_MOVE(nb_ptr, nb_len, 1);
+        dce2_move(nb_ptr, nb_len, 1);
 
         // IPC$ does not need to be case sensitive.  And the case sensitivity flag in
         // the SMB header doesn't seem to have any effect on this.
         const uint8_t* bs = nullptr;
         while ((bs = (const uint8_t*)memchr(nb_ptr, '\\', nb_len)) != nullptr)
-            DCE2_MOVE(nb_ptr, nb_len, (bs - nb_ptr) + 1);
+            dce2_move(nb_ptr, nb_len, (bs - nb_ptr) + 1);
 
         bool unicode = SmbUnicode(smb_hdr);
         if (unicode && (nb_len > 0))
-            DCE2_MOVE(nb_ptr, nb_len, 1);
+            dce2_move(nb_ptr, nb_len, 1);
 
         // Check for invalid shares first
         if ((DCE2_ScSmbInvalidShares((dce2SmbProtoConf*)ssd->sd.config) != nullptr) && (nb_len >
@@ -1777,7 +1782,7 @@ DCE2_Ret DCE2_SmbTreeConnect(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
                 if (unicode && (nb_ptr[1] != 0))
                     break;
                 state = dce2_ipc_share_fsm[state].next_state;
-                DCE2_MOVE(nb_ptr, nb_len, increment);
+                dce2_move(nb_ptr, nb_len, increment);
             }
             else
             {
@@ -1911,7 +1916,7 @@ DCE2_Ret DCE2_SmbNtCreateAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
                 (const SmbNtCreateAndXReq*)nb_ptr);
         }
 
-        DCE2_MOVE(nb_ptr, nb_len, DCE2_ComInfoCommandSize(com_info));
+        dce2_move(nb_ptr, nb_len, DCE2_ComInfoCommandSize(com_info));
 
         if (file_name_length > DCE2_SMB_MAX_PATH_LEN)
             return DCE2_RET__ERROR;
@@ -1924,7 +1929,7 @@ DCE2_Ret DCE2_SmbNtCreateAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         if (nb_len < (pad + file_name_length))
             return DCE2_RET__ERROR;
 
-        DCE2_MOVE(nb_ptr, nb_len, pad);
+        dce2_move(nb_ptr, nb_len, pad);
 
         // Samba allows chaining OpenAndX/NtCreateAndX so might have
         // already been set.
@@ -2049,7 +2054,7 @@ DCE2_Ret DCE2_SmbWriteRaw(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         uint16_t dcnt = SmbWriteRawReqDataCnt((const SmbWriteRawReq*)nb_ptr);
         uint64_t offset = SmbWriteRawReqOffset((const SmbWriteRawExtReq*)nb_ptr);
 
-        DCE2_MOVE(nb_ptr, nb_len, com_size);
+        dce2_move(nb_ptr, nb_len, com_size);
 
         if (DCE2_SmbCheckTotalCount(ssd, tdcnt, dcnt, 0) != DCE2_RET__SUCCESS)
             return DCE2_RET__ERROR;
@@ -2059,7 +2064,7 @@ DCE2_Ret DCE2_SmbWriteRaw(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             return DCE2_RET__ERROR;
 
         // This may move backwards
-        DCE2_MOVE(nb_ptr, nb_len, ((const uint8_t*)smb_hdr + doff) - nb_ptr);
+        dce2_move(nb_ptr, nb_len, ((const uint8_t*)smb_hdr + doff) - nb_ptr);
 
         if (dcnt > nb_len)
         {
@@ -2137,7 +2142,7 @@ DCE2_Ret DCE2_SmbWriteAndClose(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         uint16_t fid = SmbWriteAndCloseReqFid((const SmbWriteAndCloseReq*)nb_ptr);
         uint32_t offset = SmbWriteAndCloseReqOffset((const SmbWriteAndCloseReq*)nb_ptr);
 
-        DCE2_MOVE(nb_ptr, nb_len, (com_size + 1));
+        dce2_move(nb_ptr, nb_len, (com_size + 1));
 
         if (DCE2_SmbCheckData(ssd, (const uint8_t*)smb_hdr, nb_ptr, nb_len,
             byte_count, dcnt,

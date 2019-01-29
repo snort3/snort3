@@ -1234,7 +1234,7 @@ Packet* DCE2_SmbGetRpkt(DCE2_SmbSsnData* ssd,
             header_len = DCE2_MOCK_HDR_LEN__SMB_SRV;
         DCE2_SmbSetRdata(ssd, const_cast<uint8_t*>(rpkt->data),
             (uint16_t)(rpkt->dsize - header_len));
-        DCE2_MOVE(*data, *data_len, header_len);
+        dce2_move(*data, *data_len, header_len);
         break;
     case DCE2_RPKT_TYPE__SMB_SEG:
     default:
@@ -1516,7 +1516,7 @@ static void DCE2_SmbFinishFileAPI(DCE2_SmbSsnData* ssd)
         if ((ftracker->ff_file_size == 0)
             && (ftracker->ff_bytes_processed != 0))
         {
-            Profile profile(dce2_smb_pstat_smb_file_api);
+            Profile sub_profile(dce2_smb_pstat_smb_file_api);
             if (file_flows->file_process(p, nullptr, 0, SNORT_FILE_END, upload))
             {
                 if (upload)

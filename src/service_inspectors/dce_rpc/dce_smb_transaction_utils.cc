@@ -240,7 +240,7 @@ DCE2_Ret DCE2_SmbTransactionGetName(const uint8_t* nb_ptr,
         nb_len = bcc;
 
     if (unicode)
-        DCE2_MOVE(nb_ptr, nb_len, 1);  // One byte pad for unicode
+        dce2_move(nb_ptr, nb_len, 1);  // One byte pad for unicode
 
     uint8_t increment = unicode ? 2 : 1;
     int state = TRANS_NM_PIPE_0;
@@ -251,7 +251,7 @@ DCE2_Ret DCE2_SmbTransactionGetName(const uint8_t* nb_ptr,
             if (unicode && (nb_ptr[1] != 0))
                 break;
             state = dce2_samba_pipe_fsm[state].next_state;
-            DCE2_MOVE(nb_ptr, nb_len, increment);
+            dce2_move(nb_ptr, nb_len, increment);
         }
         else
         {

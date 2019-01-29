@@ -118,7 +118,7 @@ void DCE2_ClProcess(DCE2_SsnData* sd, DCE2_ClTracker* clt)
 
     cl_hdr = (const DceRpcClHdr*)data_ptr;
 
-    DCE2_MOVE(data_ptr, data_len, sizeof(DceRpcClHdr));
+    dce2_move(data_ptr, data_len, sizeof(DceRpcClHdr));
 
     if (DCE2_ClHdrChecks(sd, cl_hdr) != DCE2_RET__SUCCESS)
         return;
@@ -558,7 +558,7 @@ static void DCE2_ClFragReassemble(
             break;
 
         memcpy(const_cast<uint8_t*>(rdata), fnode->frag_data, fnode->frag_len);
-        DCE2_MOVE(rdata, rlen, fnode->frag_len);
+        dce2_move(rdata, rlen, fnode->frag_len);
         stub_len += fnode->frag_len;
     }
 

@@ -554,7 +554,7 @@ static DCE2_CoCtxIdNode* dce_co_process_ctx_id(DCE2_SsnData* sd,DCE2_CoTracker* 
         return nullptr;
     }
 
-    DCE2_MOVE(frag_ptr, frag_len, sizeof(DceRpcCoContElem));
+    dce2_move(frag_ptr, frag_len, sizeof(DceRpcCoContElem));
 
     /* Don't really care about the transfer syntaxes */
     for (j = 0; j < num_tsyns; j++)
@@ -565,7 +565,7 @@ static DCE2_CoCtxIdNode* dce_co_process_ctx_id(DCE2_SsnData* sd,DCE2_CoTracker* 
             return nullptr;
         }
 
-        DCE2_MOVE(frag_ptr, frag_len, sizeof(DceRpcCoSynId));
+        dce2_move(frag_ptr, frag_len, sizeof(DceRpcCoSynId));
     }
     if (sd->trans == DCE2_TRANS_TYPE__TCP)
     {
@@ -785,7 +785,7 @@ static void DCE2_CoBindAck(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         return;
     }
 
-    DCE2_MOVE(frag_ptr, frag_len, sizeof(DceRpcCoBindAck));
+    dce2_move(frag_ptr, frag_len, sizeof(DceRpcCoBindAck));
 
     /* Set what should be the maximum amount of data a client can send in a fragment */
     max_recv_frag = DceRpcCoBindAckMaxRecvFrag(co_hdr, bind_ack);
@@ -804,7 +804,7 @@ static void DCE2_CoBindAck(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         return;
     }
 
-    DCE2_MOVE(ctx_data, ctx_len, sec_addr_len);
+    dce2_move(ctx_data, ctx_len, sec_addr_len);
 
     /* padded to 4 octet */
     if ((sizeof(DceRpcCoBindAck) + sec_addr_len) & 3)
@@ -816,7 +816,7 @@ static void DCE2_CoBindAck(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         return;
     }
 
-    DCE2_MOVE(ctx_data, ctx_len, pad);
+    dce2_move(ctx_data, ctx_len, pad);
 
     /* Now we're at the start of the context item results */
     if (ctx_len < sizeof(DceRpcCoContResultList))
@@ -828,7 +828,7 @@ static void DCE2_CoBindAck(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     ctx_list = (const DceRpcCoContResultList*)ctx_data;
     num_ctx_results = DceRpcCoContNumResults(ctx_list);
 
-    DCE2_MOVE(ctx_data, ctx_len, sizeof(DceRpcCoContResultList));
+    dce2_move(ctx_data, ctx_len, sizeof(DceRpcCoContResultList));
 
     for (i = 0; i < num_ctx_results; i++)
     {
@@ -843,7 +843,7 @@ static void DCE2_CoBindAck(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         ctx_result = (const DceRpcCoContResult*)ctx_data;
         result = DceRpcCoContRes(co_hdr, ctx_result);
 
-        DCE2_MOVE(ctx_data, ctx_len, sizeof(DceRpcCoContResult));
+        dce2_move(ctx_data, ctx_len, sizeof(DceRpcCoContResult));
 
         if (DCE2_QueueIsEmpty(cot->pending_ctx_ids))
             return;
@@ -874,7 +874,7 @@ static void DCE2_CoBind(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         return;
     }
 
-    DCE2_MOVE(frag_ptr, frag_len, sizeof(DceRpcCoBind));
+    dce2_move(frag_ptr, frag_len, sizeof(DceRpcCoBind));
 
     switch (policy)
     {
@@ -940,7 +940,7 @@ static void DCE2_CoAlterCtx(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         return;
     }
 
-    DCE2_MOVE(frag_ptr, frag_len, sizeof(DceRpcCoAltCtx));
+    dce2_move(frag_ptr, frag_len, sizeof(DceRpcCoAltCtx));
 
     switch (policy)
     {
@@ -1163,7 +1163,7 @@ static Packet* DCE2_CoGetRpkt(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         }
         else
         {
-            DCE2_MOVE(seg_data, seg_len, hdr_size);
+            dce2_move(seg_data, seg_len, hdr_size);
         }
     }
 
@@ -1501,7 +1501,7 @@ static void DCE2_CoRequest(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     }
 
     /* Move past header */
-    DCE2_MOVE(frag_ptr, frag_len, req_size);
+    dce2_move(frag_ptr, frag_len, req_size);
 
     /* If for some reason we had some fragments queued */
     if (DceRpcCoFirstFrag(co_hdr) && !DceRpcCoLastFrag(co_hdr)
@@ -1710,7 +1710,7 @@ static void DCE2_CoResponse(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     }
 
     /* Move past header */
-    DCE2_MOVE(frag_ptr, frag_len, sizeof(DceRpcCoResponse));
+    dce2_move(frag_ptr, frag_len, sizeof(DceRpcCoResponse));
 
     /* If for some reason we had some fragments queued */
     if (DceRpcCoFirstFrag(co_hdr) && !DCE2_BufferIsEmpty(cot->frag_tracker.srv_stub_buf))
@@ -1774,7 +1774,7 @@ static void DCE2_CoDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 
     /* We've got the main header.  Move past it to the
      * start of the pdu */
-    DCE2_MOVE(frag_ptr, frag_len, sizeof(DceRpcCoHdr));
+    dce2_move(frag_ptr, frag_len, sizeof(DceRpcCoHdr));
 
     /* Client specific pdu types - some overlap with server */
     if ( DetectionEngine::get_current_packet()->is_from_client() )
@@ -1944,7 +1944,7 @@ static DCE2_Ret DCE2_CoSegEarlyRequest(DCE2_CoTracker* cot,
         return DCE2_RET__ERROR;
 
     const DceRpcCoHdr* co_hdr = (const DceRpcCoHdr*)seg_ptr;
-    DCE2_MOVE(seg_ptr, seg_len, sizeof(DceRpcCoHdr));
+    dce2_move(seg_ptr, seg_len, sizeof(DceRpcCoHdr));
 
     if (DceRpcCoPduType(co_hdr) != DCERPC_PDU_TYPE__REQUEST)
         return DCE2_RET__ERROR;
@@ -2299,7 +2299,7 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
                 goto dce2_coprocess_exit;
             }
 
-            DCE2_MOVE(data_ptr, data_len, frag_len);
+            dce2_move(data_ptr, data_len, frag_len);
 
             /* Got a full DCE/RPC pdu */
             DCE2_CoDecode(sd, cot, frag_ptr, frag_len);
@@ -2329,7 +2329,7 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
                     break;
 
                 /* Move the length of the amount of data we used to get header */
-                DCE2_MOVE(data_ptr, data_len, data_used);
+                dce2_move(data_ptr, data_len, data_used);
 
                 if (DCE2_CoHdrChecks(sd, cot, (DceRpcCoHdr*)DCE2_BufferData(seg->buf)) !=
                     DCE2_RET__SUCCESS)
@@ -2338,7 +2338,7 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
                     DCE2_BufferEmpty(seg->buf);
                     /* Move back to original packet header */
                     data_back = -data_used;
-                    DCE2_MOVE(data_ptr, data_len, data_back);
+                    dce2_move(data_ptr, data_len, data_back);
                     /*Check the original packet*/
                     if (DCE2_CoHdrChecks(sd, cot, (const DceRpcCoHdr*)data_ptr) !=
                         DCE2_RET__SUCCESS)
@@ -2364,7 +2364,7 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
                 if (status != DCE2_RET__SUCCESS)
                     break;
 
-                DCE2_MOVE(data_ptr, data_len, data_used);
+                dce2_move(data_ptr, data_len, data_used);
             }
 
             /* Do this before calling DCE2_CoSegDecode since it will empty
