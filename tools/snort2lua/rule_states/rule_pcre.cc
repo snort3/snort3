@@ -141,8 +141,15 @@ bool Pcre::convert(std::istringstream& data_stream)
 
     rule_api.add_option("pcre", pattern + new_opts);
 
-    if ( !relative )
-        rule_api.set_curr_options_buffer(buffer);
+    if ( relative )
+    {
+        if (buffer == "pcre_P_option_body")
+            buffer = "pcre_P_option_body_rel";
+        else if (buffer == "pcre_H_option_header")
+            buffer = "pcre_H_option_header_rel";
+    }
+
+    rule_api.set_curr_options_buffer(buffer);
 
     return set_next_rule_state(data_stream);
 }

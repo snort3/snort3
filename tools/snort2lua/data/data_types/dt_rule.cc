@@ -116,20 +116,27 @@ void Rule::add_suboption(const std::string& keyword, const std::string& val)
 
 void Rule::set_curr_options_buffer(const std::string& new_buffer, bool add_option)
 {
-    /* set the buffer if
-     * 1) No buffer has been set and this is not the default "pkt_data" buffer
-     * 2) The sticky buffer is set and is not equal to the new buffer
-     */
-    if ( (sticky_buffer.empty() && new_buffer != "pkt_data") ||
-        (!sticky_buffer.empty() && sticky_buffer != new_buffer) )
+    if (new_buffer == "pkt_data")
     {
-        RuleOption* new_opt = new RuleOption(new_buffer);
-        if ( add_option )
-            options.push_back(new_opt);
-        else
-            options.insert(options.end() - 1, new_opt);
-        sticky_buffer = new_buffer;
+        if (sticky_buffer.empty())
+        {
+            sticky_buffer = "pkt_data";
+            return;
+        }
+
+        if (sticky_buffer == "pkt_data")
+        {
+            return;
+        }
     }
+
+    RuleOption* new_opt = new RuleOption(new_buffer);
+    if ( add_option )
+        options.push_back(new_opt);
+    else
+        options.insert(options.end() - 1, new_opt);
+
+    sticky_buffer = new_buffer;
 }
 
 std::ostream& operator<<(std::ostream& out, const Rule& rule)
@@ -181,23 +188,28 @@ void Rule::resolve_pcre_buffer_options()
 {
     std::string curr_sticky_buffer = "";
     const std::string service = get_option("service");
-    bool service_sip = (service.find("sip") != std::string::npos);
-    bool no_service_http = (service.find("http") == std::string::npos);
+    const bool service_sip = (service.find("sip") != std::string::npos);
+    const bool no_service_http = (service.find("http") == std::string::npos);
     std::string new_buffer;
     std::vector<RuleOption*>::iterator iter = options.begin();
+    std::vector<RuleOption*>::iterator next_opt_iter;
 
     while (iter != options.end())
     {
         std::string name = (*iter)->get_name();
 
-        if (name == "pcre_P_option_body" || name == "pcre_H_option_header")
+        if (name == "pcre_P_option_body" ||
+            name == "pcre_P_option_body_rel" ||
+            name == "pcre_H_option_header" ||
+            name == "pcre_H_option_header_rel")
         {
             delete(*iter);
             iter = options.erase(iter);
 
             if (service_sip)
             {
-                if (name == "pcre_P_option_body")
+                if (name == "pcre_P_option_body" ||
+                    name == "pcre_P_option_body_rel")
                 {
                     new_buffer = "sip_body";
                 }
@@ -208,7 +220,8 @@ void Rule::resolve_pcre_buffer_options()
             }
             else
             {
-                if (name == "pcre_P_option_body")
+                if (name == "pcre_P_option_body" ||
+                    name == "pcre_P_option_body_rel")
                 {
                     if (no_service_http)
                     {
@@ -226,7 +239,11 @@ void Rule::resolve_pcre_buffer_options()
                 }
             }
 
-            if (curr_sticky_buffer != new_buffer)
+            /* Add sticky buffer option if not equal to current,
+             * or if the pcre option is not relative */
+            if (curr_sticky_buffer != new_buffer ||
+                (name != "pcre_P_option_body_rel" &&
+                name != "pcre_H_option_header_rel"))
             {
                 curr_sticky_buffer = new_buffer;
                 RuleOption* new_opt = new RuleOption(new_buffer);
@@ -239,6 +256,14 @@ void Rule::resolve_pcre_buffer_options()
             name == "dce_stub_data" ||
             name == "dnp3_data" ||
             name == "modbus_data" ||
+            name == "sip_header" ||
+            name == "sip_body")
+        {
+            curr_sticky_buffer = name;
+            ++iter;
+        }
+        else if (name == "http_header" ||
+            name == "http_client_body" ||
             name == "http_cookie" ||
             name == "http_method" ||
             name == "http_raw_cookie" ||
@@ -248,18 +273,25 @@ void Rule::resolve_pcre_buffer_options()
             name == "http_stat_msg" ||
             name == "http_uri")
         {
-            curr_sticky_buffer = name;
-            ++iter;
-        }
-        else if (name == "http_header" ||
-            name == "http_client_body" ||
-            name == "sip_header" ||
-            name == "sip_body")
-        {
             if (curr_sticky_buffer == name)
             {
-                delete(*iter);
-                iter = options.erase(iter);
+                next_opt_iter = std::next(iter, 1);
+                if (next_opt_iter != options.end())
+                {
+                    if ((*next_opt_iter)->is_relative_content())
+                    {
+                        delete(*iter);
+                        iter = options.erase(iter);
+                    }
+                    else
+                    {
+                        ++iter;
+                    }
+                }
+                else
+                {
+                    ++iter;
+                }
             }
             else
             {
