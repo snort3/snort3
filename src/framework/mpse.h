@@ -22,9 +22,12 @@
 
 // MPSE = Multi-Pattern Search Engine - ie fast pattern matching. The key
 // methods of an MPSE are the ability to add patterns, compile a state
-// machine from the patterns, and search a buffer for patterns.
+// machine from the patterns, and search either a single buffer or a set
+// of (related) buffers for patterns.
 
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "framework/base_api.h"
 #include "main/snort_types.h"
@@ -37,8 +40,49 @@ namespace snort
 #define SEAPI_VERSION ((BASE_API_VERSION << 16) | 0)
 
 struct SnortConfig;
+class Mpse;
 struct MpseApi;
+struct MpseBatch;
 struct ProfileStats;
+
+template<typename BUF = const uint8_t*, typename LEN = unsigned>
+struct MpseBatchKey
+{
+    BUF buf;
+    LEN len;
+    MpseBatchKey(BUF b, LEN n)
+    {
+        this->buf = b;
+        this->len = n;
+    }
+
+    bool operator==(const MpseBatchKey &k) const
+    {
+        return buf == k.buf && len == k.len;
+    }
+};
+
+struct MpseBatchKeyHash
+{
+    template <class BUF, class LEN>
+    std::size_t operator()(const MpseBatchKey<BUF, LEN> &k) const
+    {
+        std::size_t h1 = std::hash<BUF>()(k.buf);
+        std::size_t h2 = std::hash<LEN>()(k.len);
+
+        return h1 ^ h2;
+    }
+};
+
+class MpseBatchItem
+{
+public:
+    std::vector<Mpse*> so;
+    bool done;
+
+    MpseBatchItem(Mpse* s = nullptr)
+    { if (s) so.push_back(s); done = false; }
+};
 
 class SO_PUBLIC Mpse
 {
@@ -69,6 +113,10 @@ public:
     virtual int search_all(
         const uint8_t* T, int n, MpseMatch, void* context, int* current_state);
 
+    virtual void search(MpseBatch& batch);
+
+    virtual bool receive_responses(MpseBatch&) { return true; }
+
     virtual void set_opt(int) { }
     virtual int print_info() { return 0; }
     virtual int get_pattern_count() const { return 0; }
@@ -89,6 +137,19 @@ private:
     std::string method;
     int verbose;
     const MpseApi* api;
+};
+
+struct MpseBatch
+{
+    MpseMatch mf;
+    void* context;
+    std::unordered_map<MpseBatchKey<>, MpseBatchItem, MpseBatchKeyHash> items;
+
+    void search(MpseBatch& batch)
+    { items.begin()->second.so[0]->search(batch); }
+
+    bool receive_responses(MpseBatch& batch)
+    { return items.begin()->second.so[0]->receive_responses(batch); }
 };
 
 extern THREAD_LOCAL ProfileStats mpsePerfStats;

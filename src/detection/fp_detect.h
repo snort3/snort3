@@ -86,9 +86,6 @@ struct OtnxMatchData
     PortGroup* pg;
     snort::Packet* p;
 
-    const uint8_t* data;
-    unsigned size;
-
     int check_ports;
     bool have_match;
     bool do_fp;

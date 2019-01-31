@@ -55,6 +55,22 @@ int Mpse::search_all(
     return _search(T, n, match, context, current_state);
 }
 
+void Mpse::search(MpseBatch& batch)
+{
+    int start_state;
+
+    for ( auto& item : batch.items )
+    {
+        for ( auto& so : item.second.so )
+        {
+            start_state = 0;
+            so->search(item.first.buf, item.first.len, batch.mf, batch.context, &start_state);
+        }
+        item.second.done = true;
+    }
+    batch.items.clear();
+}
+
 SnortConfig s_conf;
 THREAD_LOCAL SnortConfig* snort_conf = &s_conf;
 

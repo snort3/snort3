@@ -27,6 +27,7 @@
 
 #include "main/snort_types.h"
 #include "framework/codec.h"
+#include "framework/mpse.h"
 
 // required to get a decent decl of pkth
 #include "protocols/packet.h"
@@ -138,6 +139,7 @@ public:
     uint8_t* buf;
 
     SnortConfig* conf;
+    MpseBatch searches;
     MpseStash* stash;
     OtnxMatchData* otnx;
     SF_EVENTQ* equeue;

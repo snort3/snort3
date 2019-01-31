@@ -873,18 +873,30 @@ static int rule_tree_queue(
     return 0;
 }
 
-static inline int search_data(
+static inline int batch_search(
     Mpse* so, OtnxMatchData* omd, const uint8_t* buf, unsigned len, PegCount& cnt)
 {
     assert(so->get_pattern_count() > 0);
-    int start_state = 0;
     cnt++;
-    omd->data = buf; omd->size = len;
-    MpseStash* stash = omd->p->context->stash;
-    stash->init();
+
+    //FIXIT-P Batch outer UDP payload searches for teredo set and the outer header
+    //during any signature evaluation
+    if ( omd->p->ptrs.udph && (omd->p->proto_bits & (PROTO_BIT__TEREDO | PROTO_BIT__GTP)) )
+    {
+        int start_state = 0;
+        MpseStash* stash = omd->p->context->stash;
+        stash->init();
+        so->search(buf, len, rule_tree_queue, omd, &start_state);
+        stash->process(rule_tree_match, omd);
+    }
+    else
+    {
+        MpseBatchKey<> key = MpseBatchKey<>(buf, len);
+        omd->p->context->searches.items[key].so.push_back(so);
+    }
+
     dump_buffer(buf, len, omd->p);
-    so->search(buf, len, rule_tree_queue, omd, &start_state);
-    stash->process(rule_tree_match, omd);
+
     if ( PacketLatency::fastpath() )
         return 1;
     return 0;
@@ -902,7 +914,7 @@ static inline int search_buffer(
             trace_logf(detection, TRACE_FP_SEARCH, "%" PRIu64 " fp %s.%s[%d]\n",
                 omd->p->context->packet_number, gadget->get_name(), pm_type_strings[pmt], buf.len);
 
-            search_data(so, omd, buf.data, buf.len, cnt);
+            batch_search(so, omd, buf.data, buf.len, cnt);
         }
     }
     return 0;
@@ -932,7 +944,7 @@ static int fp_search(
                 trace_logf(detection, TRACE_FP_SEARCH, "%" PRIu64 " fp %s[%u]\n",
                     p->context->packet_number, pm_type_strings[PM_TYPE_PKT], pattern_match_size);
 
-                search_data(so, omd, p->data, pattern_match_size, pc.pkt_searches);
+                batch_search(so, omd, p->data, pattern_match_size, pc.pkt_searches);
                 p->is_cooked() ?  pc.cooked_searches++ : pc.raw_searches++;
             }
         }
@@ -971,7 +983,7 @@ static int fp_search(
                 trace_logf(detection, TRACE_FP_SEARCH, "%" PRIu64 " fp search %s[%d]\n",
                     p->context->packet_number, pm_type_strings[PM_TYPE_FILE], file_data.len);
 
-                search_data(so, omd, file_data.data, file_data.len, pc.file_searches);
+                batch_search(so, omd, file_data.data, file_data.len, pc.file_searches);
             }
         }
     }
@@ -1298,7 +1310,18 @@ void fp_full(Packet* p)
     stash->enable_process();
     stash->init();
     init_match_info(c->otnx);
+
+    c->searches.mf = rule_tree_queue;
+    c->searches.context = c->otnx;
     fpEvalPacket(p, FPTask::BOTH);
+
+    if (c->searches.items.size() > 0) {
+        c->searches.search(c->searches);
+        while (c->searches.items.size() > 0)
+            c->searches.receive_responses(c->searches);
+        stash->process(rule_tree_match, c->otnx);
+    }
+
     fpFinalSelectEvent(c->otnx, p);
 }
 
@@ -1310,7 +1333,14 @@ void fp_partial(Packet* p)
     stash->init();
     stash->disable_process();
     init_match_info(c->otnx);
+    c->searches.mf = rule_tree_queue;
+    c->searches.context = c->otnx;
     fpEvalPacket(p, FPTask::FP);
+
+    if (c->searches.items.size() > 0) {
+        Mpse* so = c->searches.items.begin()->second.so[0];
+        so->search(c->searches);
+    }
 }
 
 void fp_complete(Packet* p)
@@ -1318,6 +1348,8 @@ void fp_complete(Packet* p)
     IpsContext* c = p->context;
     MpseStash* stash = c->stash;
     stash->enable_process();
+    while (c->searches.items.size() > 0)
+        c->searches.items.begin()->second.so[0]->receive_responses(c->searches);
     stash->process(rule_tree_match, c->otnx);
     fpEvalPacket(p, FPTask::NON_FP);
     fpFinalSelectEvent(c->otnx, p);

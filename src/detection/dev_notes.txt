@@ -46,6 +46,13 @@ patterns precisely based on all of these parameters can quickly become
 complicated by both algorithmic implications and implementation details.
 The procedure described herein is quick and simple.
 
+Some implementations of MPSE have the capability to perform searches for
+multiple pattern groups over the same piece of data efficiently, rather than
+requiring a separate search for each group. A batch of searches can be built
+up from a single piece of data and passed to the search_batch() MPSE method,
+allowing MPSE specific optimisation of how to carry out the searches to be
+performed.
+
 The methodology presented here to solve this problem is based on the
 premise that we can use the source and destination ports to isolate pattern
 groups for pattern matching, and rely on an event validation procedure to
