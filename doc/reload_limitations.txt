@@ -46,4 +46,6 @@ In addition, the following scenarios require a restart:
  currently enabled
 * Adding/removing stream_* inspectors if stream was already configured
 
-In all of these cases reload will fail, and the original config will remain in use.
+In all of these cases reload will fail with the following message: "reload
+ failed - restart required". The original config will remain in use.
+

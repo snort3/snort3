@@ -560,6 +560,13 @@ void Snort::cleanup()
     clean_exit(0);
 }
 
+void Snort::reload_failure_cleanup(SnortConfig* sc)
+{
+    parser_term(sc);
+    delete sc;
+    reloading = false;
+}
+
 // FIXIT-M refactor this so startup and reload call the same core function to
 // instantiate things that can be reloaded
 SnortConfig* Snort::get_reload_config(const char* fname)
@@ -575,9 +582,7 @@ SnortConfig* Snort::get_reload_config(const char* fname)
 
     if ( get_parse_errors() || ModuleManager::get_errors() || !sc->verify() )
     {
-        parser_term(sc);
-        delete sc;
-        reloading = false;
+        reload_failure_cleanup(sc);
         return nullptr;
     }
 
@@ -587,13 +592,16 @@ SnortConfig* Snort::get_reload_config(const char* fname)
     ControlMgmt::reconfigure_controls();
 #endif
 
-    FileService::verify_reload(sc);
-
     if ( get_parse_errors() or !InspectorManager::configure(sc) )
     {
-        parser_term(sc);
-        delete sc;
-        reloading = false;
+        reload_failure_cleanup(sc);
+        return nullptr;
+    }
+
+    FileService::verify_reload(sc);
+    if ( get_reload_errors() )
+    {
+        reload_failure_cleanup(sc);
         return nullptr;
     }
 

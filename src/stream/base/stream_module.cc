@@ -183,7 +183,7 @@ static int check_cache_change(const char* fqn, const char* name, const FlowConfi
             or saved_cfg.pruning_timeout != new_cfg.pruning_timeout
             or saved_cfg.nominal_timeout != new_cfg.nominal_timeout )
         {
-            ParseError("Changing of %s requires a restart\n", name);
+            ReloadError("Changing of %s requires a restart\n", name);
             ret = 1;
         }
     }
@@ -209,7 +209,7 @@ bool StreamModule::end(const char* fqn, int, SnortConfig*)
         if ( saved_config.ip_cfg.max_sessions   // saved config is valid
             and config.footprint != saved_config.footprint )
         {
-            ParseError("Changing of stream.footprint requires a restart\n");
+            ReloadError("Changing of stream.footprint requires a restart\n");
             issue_found++;
         }
         if ( issue_found == 0 )

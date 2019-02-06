@@ -91,6 +91,7 @@ private:
     static void init(int, char**);
     static void term();
     static void clean_exit(int);
+    static void reload_failure_cleanup(SnortConfig*);
 
 private:
     static bool initializing;

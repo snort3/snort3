@@ -270,7 +270,7 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
         {
             if (Snort::is_reloading() && !FileService::is_file_capture_enabled())
             {
-                ParseError("Enabling file capture requires a restart\n");
+                ReloadError("Enabling file capture requires a restart\n");
                 return false;
             }
             fp.set_file_capture(true);
@@ -364,7 +364,7 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
         if (file_rule.use.capture_enabled && Snort::is_reloading()
             && !FileService::is_file_capture_enabled())
         {
-            ParseError("Enabling file capture requires a restart\n");
+            ReloadError("Enabling file capture requires a restart\n");
             return false;
         }
     }

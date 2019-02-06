@@ -39,10 +39,12 @@ static int already_fatal = 0;
 
 static unsigned parse_errors = 0;
 static unsigned parse_warnings = 0;
+static unsigned reload_errors = 0;
 
 void reset_parse_errors()
 {
     parse_errors = 0;
+    reload_errors = 0;
 }
 
 unsigned get_parse_errors()
@@ -57,6 +59,11 @@ unsigned get_parse_warnings()
     unsigned tmp = parse_warnings;
     parse_warnings = 0;
     return tmp;
+}
+
+unsigned get_reload_errors()
+{
+    return reload_errors;
 }
 
 static void log_message(FILE* file, const char* type, const char* msg)
@@ -117,6 +124,21 @@ void ParseError(const char* format, ...)
     log_message(stderr, "ERROR", buf);
 
     parse_errors++;
+}
+
+void ReloadError(const char* format, ...)
+{
+    char buf[STD_BUF+1];
+    va_list ap;
+
+    va_start(ap, format);
+    vsnprintf(buf, STD_BUF, format, ap);
+    va_end(ap);
+
+    buf[STD_BUF] = '\0';
+    log_message(stderr, "ERROR", buf);
+
+    reload_errors++;
 }
 
 [[noreturn]] void ParseAbort(const char* format, ...)
