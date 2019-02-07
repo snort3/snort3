@@ -23,6 +23,7 @@
 #endif
 
 #include "ps_module.h"
+#include "log/messages.h"
 
 #include <cassert>
 
@@ -320,6 +321,28 @@ bool PortScanModule::set(const char* fqn, Value& v, SnortConfig*)
 
     else
         return false;
+
+    return true;
+}
+
+bool PortScanModule::end(const char* fqn, int, SnortConfig*)
+{
+    static size_t saved_memcap = 0;
+
+    if (strcmp(fqn, "port_scan") == 0)
+    {
+        if (saved_memcap != 0  )
+        {
+            if (config->memcap != saved_memcap)
+            {
+                ReloadError("Changing port_scan.memcap requires a restart\n");
+            }
+        }
+        else
+        {
+            saved_memcap = config->memcap;
+        }
+    }
 
     return true;
 }

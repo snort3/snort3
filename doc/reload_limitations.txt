@@ -13,6 +13,7 @@ The following parameters can't be changed during reload, and require a restart:
 * daq.no_promisc
 * detection.asn1
 * file_id.max_files_cached
+* port_scan.memcap
 * process.chroot
 * process.daemon
 * process.set_gid

@@ -143,6 +143,7 @@ public:
 
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
     bool begin(const char*, int, snort::SnortConfig*) override;
+    bool end(const char*, int, snort::SnortConfig*) override;
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
