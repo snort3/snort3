@@ -44,9 +44,12 @@ static void set_ftp_flush_flag(Flow* flow)
         fdfd->session.packet_flags |= FTPDATA_FLG_FLUSH;
 }
 
-StreamSplitter::Status FtpDataSplitter::scan(Flow* flow, const uint8_t*, uint32_t len,
+StreamSplitter::Status FtpDataSplitter::scan(Packet* pkt, const uint8_t*, uint32_t len,
     uint32_t, uint32_t* fp)
 {
+    Flow* flow = pkt->flow;
+    assert(flow);
+
     if ( len )
     {
         if(expected_seg_size == 0)

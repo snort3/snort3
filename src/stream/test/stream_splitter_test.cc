@@ -44,6 +44,8 @@ SnortConfig* SnortConfig::get_conf()
 static StreamSplitter* next_splitter = nullptr;
 
 Flow::Flow() = default;
+Packet::Packet(bool) { }
+Packet::~Packet() { }
 
 struct Packet* DetectionEngine::get_current_packet()
 { return nullptr; }
@@ -139,7 +141,7 @@ TEST(other_splitter, log)
 
 TEST(other_splitter, stop_and_wait)
 {
-    Flow flow;
+    Packet pkt(false);
 
     StopAndWaitSplitter cs(false);
     StopAndWaitSplitter ss(true);
@@ -147,19 +149,19 @@ TEST(other_splitter, stop_and_wait)
     uint32_t fp = 0;
     next_splitter = &ss;
 
-    CHECK(cs.scan(nullptr, nullptr, 123, 0, &fp) == StreamSplitter::SEARCH);
+    CHECK(cs.scan(&pkt, nullptr, 123, 0, &fp) == StreamSplitter::SEARCH);
     CHECK(fp == 0);
     CHECK(flushed == 0);
 
     next_splitter = &cs;
 
-    CHECK(ss.scan(nullptr, nullptr, 456, 0, &fp) == StreamSplitter::SEARCH);
+    CHECK(ss.scan(&pkt, nullptr, 456, 0, &fp) == StreamSplitter::SEARCH);
     CHECK(fp == 0);
     CHECK(flushed == 1);
 
     next_splitter = &ss;
 
-    CHECK(cs.scan(nullptr, nullptr, 123, 0, &fp) == StreamSplitter::SEARCH);
+    CHECK(cs.scan(&pkt, nullptr, 123, 0, &fp) == StreamSplitter::SEARCH);
     CHECK(fp == 0);
     CHECK(flushed == 2);
 }

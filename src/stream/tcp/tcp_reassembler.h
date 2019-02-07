@@ -80,9 +80,9 @@ protected:
     void final_flush(TcpReassemblerState&, snort::Packet*, uint32_t dir);
     uint32_t get_reverse_packet_dir(TcpReassemblerState&, const snort::Packet*);
     uint32_t get_forward_packet_dir(TcpReassemblerState&, const snort::Packet*);
-    int32_t flush_pdu_ips(TcpReassemblerState&, uint32_t*);
+    int32_t flush_pdu_ips(TcpReassemblerState&, uint32_t*, snort::Packet*);
     void fallback(TcpReassemblerState&);
-    int32_t flush_pdu_ackd(TcpReassemblerState&, uint32_t* flags);
+    int32_t flush_pdu_ackd(TcpReassemblerState&, uint32_t* flags, snort::Packet*);
     int purge_to_seq(TcpReassemblerState&, uint32_t flush_seq);
 
     bool next_no_gap(TcpSegmentNode&);

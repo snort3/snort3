@@ -52,7 +52,7 @@ const StreamBuffer DceHttpProxySplitter::reassemble(
 }
 
 StreamSplitter::Status DceHttpProxySplitter::scan(
-    Flow*, const uint8_t* data, uint32_t len,
+    Packet*, const uint8_t* data, uint32_t len,
     uint32_t flags, uint32_t* fp)
 {
     StreamSplitter::Status status;
@@ -168,87 +168,75 @@ DceHttpProxySplitter::DceHttpProxySplitter(bool c2s) : StreamSplitter(c2s)
 TEST_CASE("DceHttpProxySplitter-scan - first_proxy_request", "[http_proxy_splitter]")
 {
     DceHttpProxySplitter* splitter = new DceHttpProxySplitter(true);
-    Flow* flow = new Flow();
     uint32_t fp;
 
     REQUIRE(splitter->cutover_inspector() == false);
-    REQUIRE(splitter->scan(flow, (const uint8_t*)"RPC", 3, PKT_FROM_CLIENT, &fp) ==
+    REQUIRE(splitter->scan(nullptr, (const uint8_t*)"RPC", 3, PKT_FROM_CLIENT, &fp) ==
         StreamSplitter::SEARCH);
     REQUIRE(splitter->cutover_inspector() == false);
-    delete flow;
     delete splitter;
 }
 
 TEST_CASE("DceHttpProxySplitter-scan - first_proxy_request_no_direction", "[http_proxy_splitter]")
 {
     DceHttpProxySplitter* splitter = new DceHttpProxySplitter(true);
-    Flow* flow = new Flow();
     uint32_t fp;
 
     REQUIRE(splitter->cutover_inspector() == false);
-    REQUIRE(splitter->scan(flow, (const uint8_t*)"RPC", 3, 0, &fp) == StreamSplitter::ABORT);
+    REQUIRE(splitter->scan(nullptr, (const uint8_t*)"RPC", 3, 0, &fp) == StreamSplitter::ABORT);
     REQUIRE(splitter->cutover_inspector() == false);
-    delete flow;
     delete splitter;
 }
 
 TEST_CASE("DceHttpProxySplitter-scan - bad_first_proxy_request", "[http_proxy_splitter]")
 {
     DceHttpProxySplitter* splitter = new DceHttpProxySplitter(true);
-    Flow* flow = new Flow();
     uint32_t fp;
 
-    REQUIRE(splitter->scan(flow, (const uint8_t*)"xxx", 1, PKT_FROM_CLIENT, &fp) ==
+    REQUIRE(splitter->scan(nullptr, (const uint8_t*)"xxx", 1, PKT_FROM_CLIENT, &fp) ==
         StreamSplitter::ABORT);
     REQUIRE(splitter->cutover_inspector() == false);
-    delete flow;
     delete splitter;
 }
 
 TEST_CASE("DceHttpProxySplitter-scan - first_bad_second_proxy_request", "[http_proxy_splitter]")
 {
     DceHttpProxySplitter* splitter = new DceHttpProxySplitter(true);
-    Flow* flow = new Flow();
     uint32_t fp;
 
-    REQUIRE(splitter->scan(flow, (const uint8_t*)"RPC", 3, PKT_FROM_CLIENT, &fp) ==
+    REQUIRE(splitter->scan(nullptr, (const uint8_t*)"RPC", 3, PKT_FROM_CLIENT, &fp) ==
         StreamSplitter::SEARCH);
     REQUIRE(splitter->cutover_inspector() == false);
-    REQUIRE(splitter->scan(flow, (const uint8_t*)"R", 1, PKT_FROM_CLIENT, &fp) ==
+    REQUIRE(splitter->scan(nullptr, (const uint8_t*)"R", 1, PKT_FROM_CLIENT, &fp) ==
         StreamSplitter::ABORT);
     REQUIRE(splitter->cutover_inspector() == false);
-    delete flow;
     delete splitter;
 }
 
 TEST_CASE("DceHttpProxySplitter-scan - first_good_second_proxy_request", "[http_proxy_splitter]")
 {
     DceHttpProxySplitter* splitter = new DceHttpProxySplitter(true);
-    Flow* flow = new Flow();
     uint32_t fp;
 
-    REQUIRE(splitter->scan(flow, (const uint8_t*)"RPC", 3, PKT_FROM_CLIENT, &fp) ==
+    REQUIRE(splitter->scan(nullptr, (const uint8_t*)"RPC", 3, PKT_FROM_CLIENT, &fp) ==
         StreamSplitter::SEARCH);
-    REQUIRE(splitter->scan(flow, (const uint8_t*)"_CON", 4, PKT_FROM_CLIENT, &fp) ==
+    REQUIRE(splitter->scan(nullptr, (const uint8_t*)"_CON", 4, PKT_FROM_CLIENT, &fp) ==
         StreamSplitter::SEARCH);
     REQUIRE(splitter->cutover_inspector() == false);
-    delete flow;
     delete splitter;
 }
 
 TEST_CASE("DceHttpProxySplitter-scan - full_proxy_request", "[http_proxy_splitter]")
 {
     DceHttpProxySplitter* splitter = new DceHttpProxySplitter(true);
-    Flow* flow = new Flow();
     uint32_t fp = 0;
 
-    REQUIRE(splitter->scan(flow, (const uint8_t*)HTTP_PROXY_REQUEST,
+    REQUIRE(splitter->scan(nullptr, (const uint8_t*)HTTP_PROXY_REQUEST,
         strlen(HTTP_PROXY_REQUEST), PKT_FROM_CLIENT, &fp) == StreamSplitter::FLUSH);
     REQUIRE(fp == strlen(HTTP_PROXY_REQUEST));
-    REQUIRE(splitter->scan(flow, (const uint8_t*)"0", 1, PKT_FROM_CLIENT, &fp) ==
+    REQUIRE(splitter->scan(nullptr, (const uint8_t*)"0", 1, PKT_FROM_CLIENT, &fp) ==
         StreamSplitter::FLUSH);
     REQUIRE(splitter->cutover_inspector() == true);
-    delete flow;
     delete splitter;
 }
 
@@ -257,19 +245,17 @@ TEST_CASE("DceHttpProxySplitter-scan - extra_proxy_request", "[http_proxy_splitt
     DceHttpProxySplitter* splitter = new DceHttpProxySplitter(true);
     const char* extra = "ignore";
     char* string = new char[strlen(HTTP_PROXY_REQUEST)+strlen(extra)+1];
-    Flow* flow = new Flow();
     uint32_t fp = 0;
     strncpy(string,(const char*)HTTP_PROXY_REQUEST,strlen(HTTP_PROXY_REQUEST)+1);
     strncpy(string+strlen(HTTP_PROXY_REQUEST),extra,strlen(extra)+1);
 
-    REQUIRE(splitter->scan(flow, (const uint8_t*)string,
+    REQUIRE(splitter->scan(nullptr, (const uint8_t*)string,
         (strlen(HTTP_PROXY_REQUEST)+strlen(extra)), PKT_FROM_CLIENT, &fp) ==
         StreamSplitter::FLUSH);
     REQUIRE(fp == strlen(HTTP_PROXY_REQUEST));
-    REQUIRE(splitter->scan(flow, (const uint8_t*)"0", 1, PKT_FROM_CLIENT, &fp) ==
+    REQUIRE(splitter->scan(nullptr, (const uint8_t*)"0", 1, PKT_FROM_CLIENT, &fp) ==
         StreamSplitter::FLUSH);
     REQUIRE(splitter->cutover_inspector() == true);
-    delete flow;
     delete splitter;
     delete[] string;
 }
@@ -277,100 +263,86 @@ TEST_CASE("DceHttpProxySplitter-scan - extra_proxy_request", "[http_proxy_splitt
 TEST_CASE("DceHttpProxySplitter-scan - first_proxy_response", "[http_proxy_splitter]")
 {
     DceHttpProxySplitter* splitter = new DceHttpProxySplitter(false);
-    Flow* flow = new Flow();
     uint32_t fp;
 
     REQUIRE(splitter->cutover_inspector() == false);
-    REQUIRE(splitter->scan(flow, (const uint8_t*)"xxx", 3, PKT_FROM_SERVER, &fp) ==
+    REQUIRE(splitter->scan(nullptr, (const uint8_t*)"xxx", 3, PKT_FROM_SERVER, &fp) ==
         StreamSplitter::ABORT);
     REQUIRE(splitter->cutover_inspector() == false);
-    delete flow;
     delete splitter;
 }
 
 TEST_CASE("DceHttpProxySplitter-scan - good_1_proxy_response", "[http_proxy_splitter]")
 {
     DceHttpProxySplitter* splitter = new DceHttpProxySplitter(false);
-    Flow* flow = new Flow();
     uint32_t fp = 0;
 
     REQUIRE(splitter->cutover_inspector() == false);
-    REQUIRE(splitter->scan(flow, (const uint8_t*)"HTTP/1.xxx\n\n", 12,
+    REQUIRE(splitter->scan(nullptr, (const uint8_t*)"HTTP/1.xxx\n\n", 12,
         PKT_FROM_SERVER, &fp) == StreamSplitter::FLUSH);
     REQUIRE((fp == 12));
     REQUIRE(splitter->cutover_inspector() == true);
-    delete flow;
     delete splitter;
 }
 
 TEST_CASE("DceHttpProxySplitter-scan - good_2_proxy_response", "[http_proxy_splitter]")
 {
     DceHttpProxySplitter* splitter = new DceHttpProxySplitter(false);
-    Flow* flow = new Flow();
     uint32_t fp = 0;
 
     REQUIRE(splitter->cutover_inspector() == false);
-    REQUIRE(splitter->scan(flow, (const uint8_t*)"HTTP/1.xxx\nxx\n\n", 15,
+    REQUIRE(splitter->scan(nullptr, (const uint8_t*)"HTTP/1.xxx\nxx\n\n", 15,
         PKT_FROM_SERVER, &fp) == StreamSplitter::FLUSH);
     REQUIRE((fp == 15));
     REQUIRE(splitter->cutover_inspector() == true);
-    delete flow;
     delete splitter;
 }
 TEST_CASE("DceHttpProxySplitter-scan - good_3_proxy_response", "[http_proxy_splitter]")
 {
     DceHttpProxySplitter* splitter = new DceHttpProxySplitter(false);
-    Flow* flow = new Flow();
     uint32_t fp = 0;
 
     REQUIRE(splitter->cutover_inspector() == false);
-    REQUIRE(splitter->scan(flow, (const uint8_t*)"HTTP/1.xxx\nxx\n\nyyy", 18,
+    REQUIRE(splitter->scan(nullptr, (const uint8_t*)"HTTP/1.xxx\nxx\n\nyyy", 18,
         PKT_FROM_SERVER, &fp) == StreamSplitter::FLUSH);
     REQUIRE((fp == 18));
     REQUIRE(splitter->cutover_inspector() == true);
-    delete flow;
     delete splitter;
 }
 
 TEST_CASE("DceHttpProxySplitter-scan - bad_1_proxy_response", "[http_proxy_splitter]")
 {
     DceHttpProxySplitter* splitter = new DceHttpProxySplitter(false);
-    Flow* flow = new Flow();
     uint32_t fp;
 
     REQUIRE(splitter->cutover_inspector() == false);
-    REQUIRE(splitter->scan(flow, (const uint8_t*)"HTTP/1.xxx\nx\n", 13, PKT_FROM_SERVER, &fp) ==
+    REQUIRE(splitter->scan(nullptr, (const uint8_t*)"HTTP/1.xxx\nx\n", 13, PKT_FROM_SERVER, &fp) ==
         StreamSplitter::SEARCH);
     REQUIRE(splitter->cutover_inspector() == false);
-    delete flow;
     delete splitter;
 }
 
 TEST_CASE("DceHttpProxySplitter-scan - bad_2_proxy_response", "[http_proxy_splitter]")
 {
     DceHttpProxySplitter* splitter = new DceHttpProxySplitter(false);
-    Flow* flow = new Flow();
     uint32_t fp;
 
     REQUIRE(splitter->cutover_inspector() == false);
-    REQUIRE(splitter->scan(flow, (const uint8_t*)"HTTP/1.xxx\nx", 12, PKT_FROM_SERVER, &fp) ==
+    REQUIRE(splitter->scan(nullptr, (const uint8_t*)"HTTP/1.xxx\nx", 12, PKT_FROM_SERVER, &fp) ==
         StreamSplitter::SEARCH);
     REQUIRE(splitter->cutover_inspector() == false);
-    delete flow;
     delete splitter;
 }
 
 TEST_CASE("DceHttpProxySplitter-scan - bad_3_proxy_response", "[http_proxy_splitter]")
 {
     DceHttpProxySplitter* splitter = new DceHttpProxySplitter(false);
-    Flow* flow = new Flow();
     uint32_t fp;
 
     REQUIRE(splitter->cutover_inspector() == false);
-    REQUIRE(splitter->scan(flow, (const uint8_t*)"HTTP/1.", 7, PKT_FROM_SERVER, &fp) ==
+    REQUIRE(splitter->scan(nullptr, (const uint8_t*)"HTTP/1.", 7, PKT_FROM_SERVER, &fp) ==
         StreamSplitter::SEARCH);
     REQUIRE(splitter->cutover_inspector() == false);
-    delete flow;
     delete splitter;
 }
 

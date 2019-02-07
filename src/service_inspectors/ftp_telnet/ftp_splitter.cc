@@ -32,7 +32,7 @@ FtpSplitter::FtpSplitter(bool c2s) : StreamSplitter(c2s) { }
 // flush at last line feed in data
 // preproc will deal with any pipelined commands
 StreamSplitter::Status FtpSplitter::scan(
-    Flow*, const uint8_t* data, uint32_t len,
+    Packet*, const uint8_t* data, uint32_t len,
     uint32_t, uint32_t* fp)
 {
 #ifdef HAVE_MEMRCHR

@@ -30,7 +30,7 @@ class DceHttpServerSplitter : public snort::StreamSplitter
 public:
     DceHttpServerSplitter(bool c2s);
 
-    Status scan(snort::Flow*, const uint8_t* data, uint32_t len,
+    Status scan(snort::Packet*, const uint8_t* data, uint32_t len,
         uint32_t flags, uint32_t* fp) override;
 //  FIXIT-M - Should be able to implement but framework does not permit
 /*    const StreamBuffer* reassemble(Flow*, unsigned, unsigned,

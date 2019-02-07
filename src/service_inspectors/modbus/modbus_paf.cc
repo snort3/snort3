@@ -48,7 +48,7 @@ ModbusSplitter::ModbusSplitter(bool b) : StreamSplitter(b)
 // Reads up until the length octet is found, then sets a flush point.
 
 StreamSplitter::Status ModbusSplitter::scan(
-    Flow*, const uint8_t* data, uint32_t len, uint32_t /*flags*/, uint32_t* fp)
+    Packet*, const uint8_t* data, uint32_t len, uint32_t /*flags*/, uint32_t* fp)
 {
     uint32_t bytes_processed = 0;
 

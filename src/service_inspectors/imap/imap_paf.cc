@@ -497,7 +497,7 @@ ImapSplitter::ImapSplitter(bool c2s) : StreamSplitter(c2s)
 */
 
 StreamSplitter::Status ImapSplitter::scan(
-    Flow* , const uint8_t* data, uint32_t len,
+    Packet*, const uint8_t* data, uint32_t len,
     uint32_t flags, uint32_t* fp)
 {
     ImapPafData* pfdata = &state;

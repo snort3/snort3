@@ -111,7 +111,7 @@ Dnp3Splitter::Dnp3Splitter(bool c2s) : StreamSplitter(c2s)
 }
 
 StreamSplitter::Status Dnp3Splitter::scan(
-    Flow*, const uint8_t* data, uint32_t len,
+    Packet*, const uint8_t* data, uint32_t len,
     uint32_t, uint32_t* fp)
 {
     dnp3_paf_data* pfdata = &state;

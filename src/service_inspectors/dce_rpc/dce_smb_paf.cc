@@ -156,10 +156,10 @@ Dce2SmbSplitter::Dce2SmbSplitter(bool c2s) : StreamSplitter(c2s)
 }
 
 StreamSplitter::Status Dce2SmbSplitter::scan(
-    Flow* flow, const uint8_t* data, uint32_t len,
+    Packet* pkt, const uint8_t* data, uint32_t len,
     uint32_t flags, uint32_t* fp)
 {
     DCE2_PafSmbData* pfdata = &state;
-    return dce2_smb_paf(pfdata, flow, data, len, flags, fp);
+    return dce2_smb_paf(pfdata, pkt->flow, data, len, flags, fp);
 }
 

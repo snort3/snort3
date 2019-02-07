@@ -182,7 +182,7 @@ int UserTracker::scan(Packet* p, uint32_t& flags)
         trace_logf(stream_user, "scan[%d]\n", len);
 
         int32_t flush_amt = paf_check(
-            splitter, &paf_state, p->flow, us->get_unused_data(), len,
+            splitter, &paf_state, p, us->get_unused_data(), len,
             total, paf_state.seq, &flags);
 
         if ( flush_amt >= 0 )

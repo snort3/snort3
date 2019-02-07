@@ -35,7 +35,7 @@ SslSplitter::SslSplitter(bool c2s) : StreamSplitter(c2s)
 }
 
 StreamSplitter::Status SslSplitter::scan(
-    Flow*, const uint8_t* data, uint32_t len,
+    Packet*, const uint8_t* data, uint32_t len,
     uint32_t, uint32_t* fp)
 {
     uint32_t n = 0;

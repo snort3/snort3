@@ -36,7 +36,7 @@ public:
         snort::StreamSplitter(is_client_to_server),
         my_inspector(my_inspector_),
         source_id(is_client_to_server ? HttpEnums::SRC_CLIENT : HttpEnums::SRC_SERVER) {}
-    Status scan(snort::Flow* flow, const uint8_t* data, uint32_t length, uint32_t not_used,
+    Status scan(snort::Packet* pkt, const uint8_t* data, uint32_t length, uint32_t not_used,
         uint32_t* flush_offset) override;
     const snort::StreamBuffer reassemble(snort::Flow* flow, unsigned total, unsigned, const
         uint8_t* data, unsigned len, uint32_t flags, unsigned& copied) override;

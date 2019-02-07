@@ -25,6 +25,7 @@
 namespace snort
 {
 class Flow;
+struct Packet;
 
 struct StreamBuffer
 {
@@ -54,7 +55,7 @@ public:
     // (scan (reassemble)*)* finish (reassemble)*
 
     virtual Status scan(
-        Flow*,
+        Packet*,
         const uint8_t* data,   // in order segment data as it arrives
         uint32_t len,          // length of data
         uint32_t flags,        // packet flags indicating direction of data
@@ -103,7 +104,7 @@ class AtomSplitter : public StreamSplitter
 public:
     AtomSplitter(bool, uint16_t size = 0);
 
-    Status scan(Flow*, const uint8_t*, uint32_t, uint32_t, uint32_t*) override;
+    Status scan(Packet*, const uint8_t*, uint32_t, uint32_t, uint32_t*) override;
     void update() override;
 
 private:
@@ -124,7 +125,7 @@ class LogSplitter : public StreamSplitter
 public:
     LogSplitter(bool);
 
-    Status scan(Flow*, const uint8_t*, uint32_t, uint32_t, uint32_t*) override;
+    Status scan(Packet*, const uint8_t*, uint32_t, uint32_t, uint32_t*) override;
 };
 
 //-------------------------------------------------------------------------
@@ -135,7 +136,7 @@ class StopAndWaitSplitter : public StreamSplitter
 public:
     StopAndWaitSplitter(bool b) : StreamSplitter(b) { }
 
-    Status scan(Flow*, const uint8_t*, uint32_t, uint32_t, uint32_t*) override;
+    Status scan(Packet*, const uint8_t*, uint32_t, uint32_t, uint32_t*) override;
 
 private:
     bool saw_data()

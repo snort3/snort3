@@ -79,12 +79,14 @@ HttpCutter* HttpStreamSplitter::get_cutter(SectionType type,
     }
 }
 
-StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data, uint32_t length,
+StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data, uint32_t length,
     uint32_t, uint32_t* flush_offset)
 {
     snort::Profile profile(HttpModule::get_profile_stats());
 
     assert(length <= MAX_OCTETS);
+
+    Flow* flow = pkt->flow;
 
     // This is the session state information we share with HttpInspect and store with stream. A
     // session is defined by a TCP connection. Since scan() is the first to see a new TCP

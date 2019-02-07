@@ -23,6 +23,8 @@
 
 #include <cassert>
 
+#include "protocols/packet.h"
+
 #include "http2_stream_splitter.h"
 #include "http2_module.h"
 
@@ -30,17 +32,17 @@ using namespace snort;
 using namespace Http2Enums;
 
 // Mindless scan() that just flushes whatever it is given
-StreamSplitter::Status Http2StreamSplitter::scan(Flow* flow, const uint8_t* data, uint32_t length,
+StreamSplitter::Status Http2StreamSplitter::scan(Packet* pkt, const uint8_t* data, uint32_t length,
     uint32_t, uint32_t* flush_offset)
 {
     // This is the session state information we share with Http2Inspect and store with stream. A
     // session is defined by a TCP connection. Since scan() is the first to see a new TCP
     // connection the new flow data object is created here.
-    Http2FlowData* session_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    Http2FlowData* session_data = (Http2FlowData*)pkt->flow->get_flow_data(Http2FlowData::inspector_id);
 
     if (session_data == nullptr)
     {
-        flow->set_flow_data(session_data = new Http2FlowData);
+        pkt->flow->set_flow_data(session_data = new Http2FlowData);
         Http2Module::increment_peg_counts(PEG_FLOW);
     }
 

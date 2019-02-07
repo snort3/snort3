@@ -23,11 +23,6 @@
 #include "stream/flush_bucket.h"
 #include "stream/stream_splitter.h"
 
-namespace snort
-{
-class Flow;
-}
-
 //---------------------------------------------------------------------------------
 // FtpDataSplitter - flush when current seg size is different from previous segment
 //---------------------------------------------------------------------------------
@@ -42,7 +37,7 @@ public:
     }
 
 
-    Status scan(snort::Flow*, const uint8_t*, uint32_t len, uint32_t flags, uint32_t* fp ) override;
+    Status scan(snort::Packet*, const uint8_t*, uint32_t len, uint32_t flags, uint32_t* fp ) override;
     bool finish(snort::Flow*) override;
 
 private:

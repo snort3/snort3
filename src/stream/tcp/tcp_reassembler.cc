@@ -878,7 +878,7 @@ uint32_t TcpReassembler::get_forward_packet_dir(TcpReassemblerState&, const Pack
 // see flush_pdu_ackd() for details
 // the key difference is that we operate on forward moving data
 // because we don't wait until it is acknowledged
-int32_t TcpReassembler::flush_pdu_ips(TcpReassemblerState& trs, uint32_t* flags)
+int32_t TcpReassembler::flush_pdu_ips(TcpReassemblerState& trs, uint32_t* flags, Packet* p)
 {
     DeepProfile profile(s5TcpPAFPerfStats);
 
@@ -904,9 +904,11 @@ int32_t TcpReassembler::flush_pdu_ips(TcpReassemblerState& trs, uint32_t* flags)
             continue;
         }
 
+        assert(trs.sos.session->flow == p->flow);
+
         flush_pt = paf_check(
-            trs.tracker->splitter, &trs.tracker->paf_state, trs.sos.session->flow,
-            tsn->payload(), size, total, tsn->c_seq, flags);
+            trs.tracker->splitter, &trs.tracker->paf_state, p, tsn->payload(),
+            size, total, tsn->c_seq, flags);
 
         if (flush_pt >= 0)
         {
@@ -951,7 +953,7 @@ void TcpReassembler::fallback(TcpReassemblerState& trs)
 // - if we partially scan a segment we must save state so we
 //   know where we left off and can resume scanning the remainder
 
-int32_t TcpReassembler::flush_pdu_ackd(TcpReassemblerState& trs, uint32_t* flags)
+int32_t TcpReassembler::flush_pdu_ackd(TcpReassemblerState& trs, uint32_t* flags, Packet* p)
 {
     DeepProfile profile(s5TcpPAFPerfStats);
 
@@ -979,10 +981,12 @@ int32_t TcpReassembler::flush_pdu_ackd(TcpReassemblerState& trs, uint32_t* flags
         if ( SEQ_GT(end, trs.tracker->r_win_base))
             size = trs.tracker->r_win_base - tsn->c_seq;
 
+        assert(trs.sos.session->flow == p->flow);
+
         total += size;
         flush_pt = paf_check(
-            trs.tracker->splitter, &trs.tracker->paf_state, trs.sos.session->flow,
-            tsn->payload(), size, total, tsn->c_seq, flags);
+            trs.tracker->splitter, &trs.tracker->paf_state, p, tsn->payload(),
+            size, total, tsn->c_seq, flags);
 
         if ( flush_pt >= 0 )
         {
@@ -1028,7 +1032,7 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
     case STREAM_FLPOLICY_ON_DATA:
     {
         uint32_t flags = get_forward_packet_dir(trs, p);
-        int32_t flush_amt = flush_pdu_ips(trs, &flags);
+        int32_t flush_amt = flush_pdu_ips(trs, &flags, p);
 
         while ( flush_amt >= 0 )
         {
@@ -1041,7 +1045,7 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
 
             flushed += this_flush;
             flags = get_forward_packet_dir(trs, p);
-            flush_amt = flush_pdu_ips(trs, &flags);
+            flush_amt = flush_pdu_ips(trs, &flags, p);
         }
 
         if ( !flags && trs.tracker->splitter->is_paf() )
@@ -1069,7 +1073,7 @@ int TcpReassembler::flush_on_ack_policy(TcpReassemblerState& trs, Packet* p)
     case STREAM_FLPOLICY_ON_ACK:
     {
         uint32_t flags = get_reverse_packet_dir(trs, p);
-        int32_t flush_amt = flush_pdu_ackd(trs, &flags);
+        int32_t flush_amt = flush_pdu_ackd(trs, &flags, p);
 
         while (flush_amt >= 0)
         {
@@ -1085,7 +1089,7 @@ int TcpReassembler::flush_on_ack_policy(TcpReassemblerState& trs, Packet* p)
             {
                 purge_to_seq(trs, trs.sos.seglist_base_seq);
                 flags = get_reverse_packet_dir(trs, p);
-                flush_amt = flush_pdu_ackd(trs, &flags);
+                flush_amt = flush_pdu_ackd(trs, &flags, p);
             }
             else
                 break;  // bail if nothing flushed

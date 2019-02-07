@@ -370,7 +370,7 @@ SmtpSplitter::SmtpSplitter(bool c2s, int len) : StreamSplitter(c2s)
 */
 
 StreamSplitter::Status SmtpSplitter::scan(
-    Flow* , const uint8_t* data, uint32_t len,
+    Packet*, const uint8_t* data, uint32_t len,
     uint32_t flags, uint32_t* fp)
 {
     SmtpPafData* pfdata = &state;

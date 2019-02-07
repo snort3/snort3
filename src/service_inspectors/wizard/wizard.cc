@@ -85,7 +85,7 @@ public:
     MagicSplitter(bool, class Wizard*);
     ~MagicSplitter() override;
 
-    Status scan(Flow*, const uint8_t* data, uint32_t len,
+    Status scan(Packet*, const uint8_t* data, uint32_t len,
         uint32_t flags, uint32_t* fp) override;
 
     bool is_paf() override { return true; }
@@ -166,14 +166,14 @@ MagicSplitter::~MagicSplitter()
 
 // FIXIT-M stop search on hit and failure (no possible match)
 StreamSplitter::Status MagicSplitter::scan(
-    Flow* f, const uint8_t* data, uint32_t len,
+    Packet* pkt, const uint8_t* data, uint32_t len,
     uint32_t, uint32_t*)
 {
     Profile profile(wizPerfStats);
-    count_scan(f);
+    count_scan(pkt->flow);
 
-    if ( wizard->cast_spell(wand, f, data, len) )
-        count_hit(f);
+    if ( wizard->cast_spell(wand, pkt->flow, data, len) )
+        count_hit(pkt->flow);
 
     else if ( wizard->finished(wand) )
         return ABORT;

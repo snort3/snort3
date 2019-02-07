@@ -784,7 +784,7 @@ class RpcSplitter : public StreamSplitter
 public:
     RpcSplitter(bool c2s) : StreamSplitter(c2s) { }
 
-    Status scan(Flow*, const uint8_t*, uint32_t,
+    Status scan(Packet*, const uint8_t*, uint32_t,
         uint32_t, uint32_t*) override
     { return SEARCH; }
 

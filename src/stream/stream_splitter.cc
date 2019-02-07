@@ -70,7 +70,7 @@ AtomSplitter::AtomSplitter(bool b, uint16_t sz) : StreamSplitter(b)
 }
 
 StreamSplitter::Status AtomSplitter::scan(
-    Flow*, const uint8_t*, uint32_t len, uint32_t, uint32_t* fp)
+    Packet*, const uint8_t*, uint32_t len, uint32_t, uint32_t* fp)
 {
     bytes += len;
     segs++;
@@ -100,7 +100,7 @@ void AtomSplitter::update()
 
 LogSplitter::LogSplitter(bool b) : StreamSplitter(b) { }
 
-StreamSplitter::Status LogSplitter::scan(Flow*, const uint8_t*, uint32_t len, uint32_t,
+StreamSplitter::Status LogSplitter::scan(Packet*, const uint8_t*, uint32_t len, uint32_t,
     uint32_t* fp)
 {
     *fp = len;
@@ -111,10 +111,11 @@ StreamSplitter::Status LogSplitter::scan(Flow*, const uint8_t*, uint32_t len, ui
 // stop-and-wait splitter
 //--------------------------------------------------------------------------
 
-StreamSplitter::Status StopAndWaitSplitter::scan(Flow* flow, const uint8_t*, uint32_t len,
+StreamSplitter::Status StopAndWaitSplitter::scan(Packet* pkt, const uint8_t*, uint32_t len,
     uint32_t, uint32_t*)
 {
-    StopAndWaitSplitter* peer = (StopAndWaitSplitter*)Stream::get_splitter(flow, !to_server());
+    assert(pkt);
+    StopAndWaitSplitter* peer = (StopAndWaitSplitter*)Stream::get_splitter(pkt->flow, !to_server());
 
     if ( peer and peer->saw_data() )
     {

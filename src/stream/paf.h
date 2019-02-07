@@ -29,7 +29,7 @@
 
 namespace snort
 {
-class Flow;
+struct Packet;
 }
 
 void* paf_new(unsigned max);     // create new paf config (per policy)
@@ -72,7 +72,7 @@ inline void paf_jump(PAF_State* ps, uint32_t n)
 }
 
 // called on each in order segment
-int32_t paf_check(snort::StreamSplitter* paf_config, PAF_State*, snort::Flow* ssn,
+int32_t paf_check(snort::StreamSplitter* paf_config, PAF_State*, snort::Packet* p,
     const uint8_t* data, uint32_t len, uint32_t total, uint32_t seq, uint32_t* flags);
 
 #endif

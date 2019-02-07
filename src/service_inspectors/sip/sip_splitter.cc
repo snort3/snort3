@@ -167,7 +167,7 @@ void SipSplitter::process_command(const uint8_t ch)
 }
 
 StreamSplitter::Status SipSplitter::scan(
-    Flow *, const uint8_t* data, uint32_t len,
+    Packet*, const uint8_t* data, uint32_t len,
     uint32_t, uint32_t* fp)
 {
     for (uint32_t i = 0; i < len; i++)

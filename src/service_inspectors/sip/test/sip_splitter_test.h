@@ -119,10 +119,10 @@ public:
         ss.process_command(ch);
     }
 
-    snort::StreamSplitter::Status splitter_scan(snort::Flow *flow, const uint8_t* data,
+    snort::StreamSplitter::Status splitter_scan(snort::Packet* pkt, const uint8_t* data,
                                 uint32_t len, uint32_t flags, uint32_t* fp)
     {
-        return ss.scan(flow, data, len, flags, fp);
+        return ss.scan(pkt, data, len, flags, fp);
     }
 
     bool is_init()
