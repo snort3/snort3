@@ -955,7 +955,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     {
         sc->set_tweaks("talos");
         sc->run_flags |= RUN_FLAG__INLINE;
-        sc->set_quiet(true);
+        sc->set_alert_mode("talos");
     }
     else if ( v.is("--treat-drop-as-alert") )
         sc->set_treat_drop_as_alert(true);

@@ -12,7 +12,6 @@ normalizer = { tcp = { ips = true } }
 
 ips.include = 'local.rules'
 
-alert_fast = { packet = true }
 alerts = { alert_with_interface_name = true }
 
 profiler =
