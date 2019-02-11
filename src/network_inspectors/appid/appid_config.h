@@ -72,7 +72,7 @@ public:
     uint32_t first_decrypted_packet_debug = 0;
 #endif
     bool stats_logging_enabled = false;
-    unsigned long app_stats_period = 0;
+    unsigned long app_stats_period = 300;
     unsigned long app_stats_rollover_size = 0;
     unsigned long app_stats_rollover_time = 0;
     const char* app_detector_dir = nullptr;

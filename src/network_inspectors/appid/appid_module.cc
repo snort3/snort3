@@ -64,7 +64,7 @@ static const Parameter s_params[] =
       "disregard - not implemented" },  // FIXIT-M implement or delete appid.memcap
     { "log_stats", Parameter::PT_BOOL, nullptr, "false",
       "enable logging of appid statistics" },
-    { "app_stats_period", Parameter::PT_INT, "0:max32", "300",
+    { "app_stats_period", Parameter::PT_INT, "1:max32", "300",
       "time period for collecting and logging appid statistics" },
     { "app_stats_rollover_size", Parameter::PT_INT, "0:max32", "20971520",
       "max file size for appid stats before rolling over the log file" },
