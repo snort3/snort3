@@ -51,19 +51,28 @@ bool File::convert(std::istringstream& data_stream)
         if (!(arg_stream >> keyword))
             tmpval = false;
 
-        // vvvvvvvv -- UNSUPPORTED OPTIONS.  these options were added after 2.9.6
         else if (keyword == "file_capture_memcap")
-            table_api.add_unsupported_comment("file_capture_memcap");
-
+        {
+            table_api.add_diff_option_comment("config file: file_capture_memcap", "capture_memcap");
+            tmpval = parse_int_option("capture_memcap", arg_stream, false);
+        }
         else if (keyword == "file_capture_max")
-            table_api.add_unsupported_comment("file_capture_max");
+        {
+            table_api.add_diff_option_comment("config file: file_capture_max", "capture_max_size");
+            tmpval = parse_int_option("capture_max_size", arg_stream, false);
+        }
 
         else if (keyword == "file_capture_min")
-            table_api.add_unsupported_comment("file_capture_min");
+        {
+            table_api.add_diff_option_comment("config file: file_capture_min", "capture_min_size");
+            tmpval = parse_int_option("capture_min_size", arg_stream, false);
+        }
 
         else if (keyword == "file_capture_block_size")
-            table_api.add_unsupported_comment("file_capture_block_size");
-        // ^^^^^^^^^ -- UNSUPPORTED OPTIONS.  these options were added after 2.9.6
+        {
+            table_api.add_diff_option_comment("config file: file_capture_block_size", "capture_block_size");
+            tmpval = parse_int_option("capture_block_size", arg_stream, false);
+        }
 
         else if (keyword == "show_data_depth")
             tmpval = parse_int_option("show_data_depth", arg_stream, false);
