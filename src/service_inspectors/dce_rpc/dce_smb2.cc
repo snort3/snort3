@@ -707,6 +707,7 @@ void DCE2_Smb2Process(DCE2_SmbSsnData* ssd)
     Packet* p = DetectionEngine::get_current_packet();
     const uint8_t* data_ptr = p->data;
     uint16_t data_len = p->dsize;
+    uint32_t next_command_offset = 0;
 
     /*Check header length*/
     if (data_len < sizeof(NbssHdr) + SMB2_HEADER_LENGTH)
@@ -720,15 +721,32 @@ void DCE2_Smb2Process(DCE2_SmbSsnData* ssd)
     /* Process the header */
     if (p->is_pdu_start())
     {
-        uint32_t next_command_offset;
         const Smb2Hdr* smb_hdr = (const Smb2Hdr*)(data_ptr + sizeof(NbssHdr));
-        next_command_offset = alignedNtohl(&(smb_hdr->next_command));
-        if (next_command_offset + sizeof(NbssHdr) > p->dsize)
+        /* SMB protocol allows multiple smb commands to be grouped in a single packet.
+           So loop through to parse all the smb commands.
+		   Reference: https://msdn.microsoft.com/en-us/library/cc246614.aspx
+           "A nonzero value for the NextCommand field in the SMB2 header indicates a compound
+           request. NextCommand in the SMB2 header of a request specifies an offset, in bytes,
+           from the beginning of the SMB2 header under consideration to the start of the 8-byte
+           aligned SMB2 header of the subsequent request. Such compounding can be used to append
+           multiple requests up to the maximum size<88> that is supported by the transport." */
+        do
         {
-            dce_alert(GID_DCE2, DCE2_SMB_BAD_NEXT_COMMAND_OFFSET,
-                (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
-        }
-        DCE2_Smb2Inspect(ssd, smb_hdr, data_ptr +  data_len);
+            DCE2_Smb2Inspect(ssd, smb_hdr, data_ptr +  data_len);
+            /* In case of message compounding, find the offset of the next smb command */
+            next_command_offset = alignedNtohl(&(smb_hdr->next_command));
+            if (next_command_offset + (uint8_t *)smb_hdr > (uint8_t* )(data_ptr +  data_len))
+            {
+                dce_alert(GID_DCE2, DCE2_SMB_BAD_NEXT_COMMAND_OFFSET,
+                        (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
+
+                return;
+            }
+            if (next_command_offset)
+            {
+                smb_hdr = (Smb2Hdr *)((uint8_t *)smb_hdr + next_command_offset);
+            }
+        } while (next_command_offset && smb_hdr);
     }
     else if (ssd->pdu_state == DCE2_SMB_PDU_STATE__RAW_DATA)
     {
