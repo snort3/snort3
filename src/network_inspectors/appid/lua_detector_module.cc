@@ -29,6 +29,7 @@
 #include <libgen.h>
 
 #include <cassert>
+#include <fstream>
 
 #include "appid_config.h"
 #include "lua_detector_util.h"
@@ -40,6 +41,7 @@
 #include "log/messages.h"
 
 using namespace snort;
+using namespace std;
 
 #define MAX_LUA_DETECTOR_FILENAME_LEN 1024
 #define MAX_DEFAULT_NUM_LUA_TRACKERS  10000
@@ -185,7 +187,7 @@ LuaDetectorManager::~LuaDetectorManager()
                         lsd->package_info.name.c_str(), lua_tostring(L, -1));
                 }
             }
-	    delete lua_object;
+            delete lua_object;
         }
         lua_close(L);
     }
@@ -290,7 +292,7 @@ static inline uint32_t compute_lua_tracker_size(uint64_t rnaMemory, uint32_t num
 }
 
 // Leaves 1 value (the Detector userdata) at the top of the stack when succeeds
-static LuaObject* create_lua_detector(lua_State* L, const char* detector_name, bool is_custom)
+static LuaObject* create_lua_detector(lua_State* L, const char* detector_name, bool is_custom, const char* detector_filename)
 {
     std::string log_name;
     IpProtocol proto = IpProtocol::PROTO_NOT_SET;
@@ -302,8 +304,18 @@ static LuaObject* create_lua_detector(lua_State* L, const char* detector_name, b
     if (!lua_istable(L, -1))
     {
         if (init(L)) // for control thread only
-            ErrorMessage("Error - appid: can not read DetectorPackageInfo table from %s\n",
-                detector_name);
+        {
+            ifstream detector_file;
+
+            // Skip file if empty
+            detector_file.open(detector_filename);
+            detector_file >> ws;
+            int c = detector_file.peek();
+            detector_file.close();
+            if (c != EOF)
+                ErrorMessage("Error - appid: can not read DetectorPackageInfo table from %s\n",
+                    detector_name);
+        }
         if (!lua_isnil(L, -1)) // pop DetectorPackageInfo index if it was pushed
             lua_pop(L, 1);
         return nullptr;
@@ -396,7 +408,7 @@ void LuaDetectorManager::load_detector(char* detector_filename, bool isCustom)
         return;
     }
 
-    LuaObject* lua_object = create_lua_detector(L, detectorName, isCustom);
+    LuaObject* lua_object = create_lua_detector(L, detectorName, isCustom, detector_filename);
     if (lua_object)
         allocated_objects.push_front(lua_object);
 }
@@ -466,7 +478,7 @@ void LuaDetectorManager::activate_lua_detectors()
         //FIXIT-M: RELOAD - use lua references to get user data object from stack
         /*first parameter is DetectorUserData */
         std::string name = lsd->package_info.name + "_";
-	    lua_getglobal(L, name.c_str());
+        lua_getglobal(L, name.c_str());
 
         /*second parameter is a table containing configuration stuff. */
         lua_newtable(L);
