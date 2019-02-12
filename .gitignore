@@ -1,13 +1,14 @@
+*.gcda
+*.gcno
+*.gcov
 *.log
 *.out
 *.rej
 *.swp
-*.gcno
-*.gcda
-*.gcov
 *.trs
 *~
 ._Xcode*
+.vscode/
 Cbuild/
 Xcode*/
 doc/basic.txt
@@ -15,9 +16,9 @@ doc/builtin.txt
 doc/codec.txt
 doc/commands.txt
 doc/config.txt
-doc/counts.txt
 doc/config_changes.txt
 doc/connector.txt
+doc/counts.txt
 doc/data.txt
 doc/docbook-xsl.css
 doc/gids.txt
@@ -33,8 +34,8 @@ doc/plugins.txt
 doc/search_engine.txt
 doc/signals.txt
 doc/snort2lua_cmds.txt
-doc/snort_manual.chunked/
 doc/snort_manual.chunked.tgz
+doc/snort_manual.chunked/
 doc/snort_manual.tgz
 doc/snort_manual.xml
 doc/version.txt
@@ -42,9 +43,9 @@ extra/rule.xxd
 extra/snort_examples-1.0.tar.gz
 snort.pc
 src/framework/api_options.h
-GTAGS
-GRTAGS
 GPATH
+GRTAGS
+GTAGS
 HTML
 
 # These are related to the build-scripts

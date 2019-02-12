@@ -141,10 +141,11 @@ wizard = default_wizard
 binder =
 {
     -- port bindings required for protocols without wizard support
-    { when = { proto = 'udp', ports = '53' },  use = { type = 'dns' } },
-    { when = { proto = 'tcp', ports = '111' }, use = { type = 'rpc_decode' } },
-    { when = { proto = 'tcp', ports = '502' }, use = { type = 'modbus' } },
-    { when = { proto = 'tcp', ports = '2123 2152 3386' }, use = { type = 'gtp' } },
+    { when = { proto = 'udp', ports = '53', role='server' },  use = { type = 'dns' } },
+    { when = { proto = 'tcp', ports = '53', role='server' },  use = { type = 'dns' } },
+    { when = { proto = 'tcp', ports = '111', role='server' }, use = { type = 'rpc_decode' } },
+    { when = { proto = 'tcp', ports = '502', role='server' }, use = { type = 'modbus' } },
+    { when = { proto = 'tcp', ports = '2123 2152 3386', role='server' }, use = { type = 'gtp' } },
 
     { when = { proto = 'tcp', service = 'dcerpc' }, use = { type = 'dce_tcp' } },
     { when = { proto = 'udp', service = 'dcerpc' }, use = { type = 'dce_udp' } },

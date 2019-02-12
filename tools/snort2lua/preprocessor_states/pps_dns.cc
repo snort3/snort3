@@ -73,6 +73,7 @@ bool Dns::convert(std::istringstream& data_stream)
                 while (data_stream >> keyword && keyword != "}")
                 {
                     ports_set = true;
+                    bind.set_when_role("server");
                     bind.add_when_port(keyword);
                 }
             }
@@ -95,8 +96,11 @@ bool Dns::convert(std::istringstream& data_stream)
         }
     }
 
-    if (!ports_set)
+    if (!ports_set) 
+    {
+        bind.set_when_role("server");
         bind.add_when_port("53");
+    }
 
     return retval;
 }
