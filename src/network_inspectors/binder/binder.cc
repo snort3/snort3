@@ -394,7 +394,7 @@ static void set_service(Flow* flow, const HostAttributeEntry* host)
 
 static Inspector* get_gadget(Flow* flow)
 {
-    if ( !flow->ssn_state.snort_protocol_id )
+    if ( flow->ssn_state.snort_protocol_id == UNKNOWN_PROTOCOL_ID )
         return nullptr;
 
     const char* s = SnortConfig::get_conf()->proto_ref->get_name(flow->ssn_state.snort_protocol_id);
@@ -551,7 +551,7 @@ void Stuff::apply_service(Flow* flow, const HostAttributeEntry* host)
     {
         flow->set_gadget(gadget);
 
-        if ( !flow->ssn_state.snort_protocol_id )
+        if ( flow->ssn_state.snort_protocol_id == UNKNOWN_PROTOCOL_ID )
             flow->ssn_state.snort_protocol_id = gadget->get_service();
     }
 
@@ -718,14 +718,22 @@ void Binder::handle_flow_service_change( Flow* flow )
 
     Inspector* ins = find_gadget(flow);
 
-    if ( ins )
+    if ( flow->gadget != ins )
     {
-        if (flow->gadget != nullptr )
+        if ( flow->gadget )
             flow->clear_gadget();
-        flow->set_gadget(ins);
-        flow->ssn_state.snort_protocol_id = ins->get_service();
+        if ( ins )
+        {
+            flow->set_gadget(ins);
+            flow->ssn_state.snort_protocol_id = ins->get_service();
+        }
+        else
+            flow->ssn_state.snort_protocol_id = UNKNOWN_PROTOCOL_ID;
     }
-    else if ( flow->service )
+
+    // If there is no inspector bound to this flow after the service change, see if there's at least
+    // an associated protocol ID.
+    if ( !ins && flow->service )
         flow->ssn_state.snort_protocol_id = SnortConfig::get_conf()->proto_ref->find(flow->service);
 
     if ( !flow->is_stream() )
