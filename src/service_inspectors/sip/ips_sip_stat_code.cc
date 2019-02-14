@@ -92,7 +92,7 @@ IpsOption::EvalStatus SipStatCodeOption::eval(Cursor&, Packet* p)
 {
     Profile profile(sipStatCodeRuleOptionPerfStats);
 
-    if ((!p->is_tcp() && !p->is_udp()) || !p->flow || !p->dsize)
+    if ((!p->has_tcp_data() && !p->is_udp()) || !p->flow || !p->dsize)
         return NO_MATCH;
 
     SIPData* sd = get_sip_session_data(p->flow);

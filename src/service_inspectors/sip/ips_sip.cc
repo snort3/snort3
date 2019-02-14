@@ -102,7 +102,7 @@ IpsOption::EvalStatus SipIpsOption::eval(Cursor& c, Packet* p)
 {
     Profile profile(sip_ps[idx]);
 
-    if ((!p->is_tcp() && !p->is_udp()) || !p->flow || !p->dsize)
+    if ((!p->has_tcp_data() && !p->is_udp()) || !p->flow || !p->dsize)
         return NO_MATCH;
 
     // FIXIT-P cache id at parse time for runtime use
