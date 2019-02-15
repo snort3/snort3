@@ -146,7 +146,11 @@ PolicyMap::PolicyMap(PolicyMap* other_map)
     if ( other_map )
         clone(other_map);
     else
+    {
         add_shell(new Shell);
+        empty_ips_policy = new IpsPolicy(ips_policy.size());
+        ips_policy.emplace_back(empty_ips_policy);
+    }
 
     set_inspection_policy(inspection_policy[0]);
     set_ips_policy(ips_policy[0]);
@@ -177,6 +181,7 @@ PolicyMap::~PolicyMap()
 
         for ( auto p : network_policy )
             delete p;
+
     }
 
     shells.clear();
@@ -191,6 +196,7 @@ void PolicyMap::clone(PolicyMap *other_map)
     shells = other_map->shells;
     ips_policy = other_map->ips_policy;
     network_policy = other_map->network_policy;
+    empty_ips_policy = other_map->empty_ips_policy;
 
     for ( unsigned i = 0; i < (other_map->inspection_policy.size()); i++)
     {
@@ -301,6 +307,11 @@ void set_network_policy(NetworkPolicy* p)
 IpsPolicy* get_user_ips_policy(SnortConfig* sc, unsigned policy_id)
 {
     return sc->policy_map->get_user_ips(policy_id);
+}
+
+IpsPolicy* get_empty_ips_policy(SnortConfig* sc)
+{
+    return sc->policy_map->get_empty_ips();
 }
 
 NetworkPolicy* get_user_network_policy(SnortConfig* sc, unsigned policy_id)

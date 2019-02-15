@@ -215,6 +215,9 @@ public:
     IpsPolicy* get_ips_policy(unsigned i = 0)
     { return i < ips_policy.size() ? ips_policy[i] : nullptr; }
 
+    IpsPolicy* get_empty_ips()
+    { return empty_ips_policy; }
+
     NetworkPolicy* get_network_policy(unsigned i = 0)
     { return i < network_policy.size() ? network_policy[i] : nullptr; }
 
@@ -235,6 +238,7 @@ private:
     std::vector<InspectionPolicy*> inspection_policy;
     std::vector<IpsPolicy*> ips_policy;
     std::vector<NetworkPolicy*> network_policy;
+    IpsPolicy* empty_ips_policy;
     std::unordered_map<Shell*, std::shared_ptr<PolicyTuple>> shell_map;
     std::unordered_map<unsigned, InspectionPolicy*> user_inspection;
     std::unordered_map<unsigned, IpsPolicy*> user_ips;
@@ -260,6 +264,7 @@ SO_PUBLIC InspectionPolicy* get_default_inspection_policy(snort::SnortConfig*);
 SO_PUBLIC void set_ips_policy(IpsPolicy* p);
 SO_PUBLIC void set_network_policy(NetworkPolicy* p);
 SO_PUBLIC IpsPolicy* get_user_ips_policy(snort::SnortConfig* sc, unsigned policy_id);
+SO_PUBLIC IpsPolicy* get_empty_ips_policy(snort::SnortConfig* sc);
 SO_PUBLIC NetworkPolicy* get_user_network_policy(snort::SnortConfig* sc, unsigned policy_id);
 }
 

@@ -554,6 +554,8 @@ void ParseRules(SnortConfig* sc)
         }
     }
 
+    set_ips_policy(sc, 0);
+
     /* Compile/Finish and Print the PortList Tables */
     PortTablesFinish(sc->port_tables, sc->fast_pattern_config);
 
