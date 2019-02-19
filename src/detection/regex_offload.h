@@ -22,12 +22,11 @@
 #define REGEX_OFFLOAD_H
 
 // RegexOffload provides an interface to fast pattern search accelerators.
-// currently implemented as a simple thread offload, but will become an 
-// abstract base class with true hardware offload subclasses.  for starters
-// the thread offload will "cheat" and tightly interface with fp_detect but
-// eventually morph into such a proper subclass as the offload api emerges.
-// presently all offload is per packet thread; packet threads do not share
-// offload resources.
+// There are two flavors: MPSE and thread.  The MpseRegexOffload interfaces to
+// an MPSE that is capable of regex offload such as the RXP whereas
+// ThreadRegexOffload implements the regex search in auxiliary threads w/o
+// requiring extra MPSE instances.  presently all offload is per packet thread;
+// packet threads do not share offload resources.
 
 #include <condition_variable>
 #include <list>
@@ -45,29 +44,52 @@ struct RegexRequest;
 class RegexOffload
 {
 public:
-    RegexOffload(unsigned max);
-    ~RegexOffload();
+    static RegexOffload* get_offloader(unsigned max, bool async);
+    virtual ~RegexOffload();
 
-    void stop();
+    virtual void stop();
 
-    unsigned available()
+    virtual void put(snort::Packet*) = 0;
+    virtual bool get(snort::Packet*&) = 0;
+
+    unsigned available() const
     { return idle.size(); }
 
-    unsigned count()
+    unsigned count() const
     { return busy.size(); }
 
-    void put(snort::Packet*);
-    bool get(snort::Packet*&);
+    bool on_hold(snort::Flow*) const;
 
-    bool on_hold(snort::Flow*);
+protected:
+    RegexOffload(unsigned max);
+
+protected:
+    std::list<RegexRequest*> busy;
+    std::list<RegexRequest*> idle;
+};
+
+class MpseRegexOffload : public RegexOffload
+{
+public:
+    MpseRegexOffload(unsigned max);
+
+    void put(snort::Packet*) override;
+    bool get(snort::Packet*&) override;
+};
+
+class ThreadRegexOffload : public RegexOffload
+{
+public:
+    ThreadRegexOffload(unsigned max);
+    ~ThreadRegexOffload();
+
+    void stop() override;
+
+    void put(snort::Packet*) override;
+    bool get(snort::Packet*&) override;
 
 private:
     static void worker(RegexRequest*, snort::SnortConfig*);
-    static void tterm();
-
-private:
-    std::list<RegexRequest*> busy;
-    std::list<RegexRequest*> idle;
 };
 
 #endif

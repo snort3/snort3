@@ -23,9 +23,16 @@
 
 #include "mpse.h"
 
+#include <cassert>
+
 #include "profiler/profiler_defs.h"
 #include "search_engines/pat_stats.h"
+#include "managers/mpse_manager.h"
+#include "managers/module_manager.h"
+#include "main/snort_config.h"
+#include "detection/fp_config.h"
 
+#include "mpse_batch.h"
 
 using namespace std;
 
@@ -62,20 +69,35 @@ int Mpse::search_all(
     return _search(T, n, match, context, current_state);
 }
 
-void Mpse::search(MpseBatch& batch)
+void Mpse::search(MpseBatch& batch, MpseType mpse_type)
 {
     int start_state;
 
     for ( auto& item : batch.items )
     {
+        if (item.second.done)
+            continue;
+
+        item.second.error = false;
+        item.second.matches = 0;
+
         for ( auto& so : item.second.so )
         {
             start_state = 0;
-            so->search(item.first.buf, item.first.len, batch.mf, batch.context, &start_state);
+            switch (mpse_type)
+            {
+                case MPSE_TYPE_NORMAL:
+                    item.second.matches += so->get_normal_mpse()->search(item.first.buf,
+                            item.first.len, batch.mf, batch.context, &start_state);
+                    break;
+                case MPSE_TYPE_OFFLOAD:
+                    item.second.matches += so->get_offload_mpse()->search(item.first.buf,
+                            item.first.len, batch.mf, batch.context, &start_state);
+                    break;
+            }
         }
         item.second.done = true;
     }
-    batch.items.clear();
 }
 
 }

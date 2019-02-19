@@ -97,7 +97,7 @@ void LogHandler::log_file_name(TextLog* log, FileContext* file)
 {
     std::string& name = file->get_file_name();
 
-    if (name.length() <= 0)
+    if ( name.empty() )
         return;
 
     size_t fname_len = name.length();

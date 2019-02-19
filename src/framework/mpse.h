@@ -25,6 +25,7 @@
 // machine from the patterns, and search either a single buffer or a set
 // of (related) buffers for patterns.
 
+#include <cassert>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -45,48 +46,22 @@ struct MpseApi;
 struct MpseBatch;
 struct ProfileStats;
 
-template<typename BUF = const uint8_t*, typename LEN = unsigned>
-struct MpseBatchKey
-{
-    BUF buf;
-    LEN len;
-    MpseBatchKey(BUF b, LEN n)
-    {
-        this->buf = b;
-        this->len = n;
-    }
-
-    bool operator==(const MpseBatchKey &k) const
-    {
-        return buf == k.buf && len == k.len;
-    }
-};
-
-struct MpseBatchKeyHash
-{
-    template <class BUF, class LEN>
-    std::size_t operator()(const MpseBatchKey<BUF, LEN> &k) const
-    {
-        std::size_t h1 = std::hash<BUF>()(k.buf);
-        std::size_t h2 = std::hash<LEN>()(k.len);
-
-        return h1 ^ h2;
-    }
-};
-
-class MpseBatchItem
-{
-public:
-    std::vector<Mpse*> so;
-    bool done;
-
-    MpseBatchItem(Mpse* s = nullptr)
-    { if (s) so.push_back(s); done = false; }
-};
-
 class SO_PUBLIC Mpse
 {
 public:
+    enum MpseType
+    {
+        MPSE_TYPE_NORMAL = 0,
+        MPSE_TYPE_OFFLOAD = 1
+    };
+
+    enum MpseRespType
+    {
+        MPSE_RESP_COMPLETE_FAIL    = -1,
+        MPSE_RESP_NOT_COMPLETE     = 0,
+        MPSE_RESP_COMPLETE_SUCCESS = 1
+    };
+
     virtual ~Mpse() = default;
 
     struct PatternDescriptor
@@ -113,9 +88,10 @@ public:
     virtual int search_all(
         const uint8_t* T, int n, MpseMatch, void* context, int* current_state);
 
-    virtual void search(MpseBatch& batch);
+    virtual void search(MpseBatch& batch, MpseType mpse_type);
 
-    virtual bool receive_responses(MpseBatch&) { return true; }
+    virtual MpseRespType receive_responses(MpseBatch&)
+    { return MPSE_RESP_COMPLETE_SUCCESS; }
 
     virtual void set_opt(int) { }
     virtual int print_info() { return 0; }
@@ -139,19 +115,6 @@ private:
     const MpseApi* api;
 };
 
-struct MpseBatch
-{
-    MpseMatch mf;
-    void* context;
-    std::unordered_map<MpseBatchKey<>, MpseBatchItem, MpseBatchKeyHash> items;
-
-    void search(MpseBatch& batch)
-    { items.begin()->second.so[0]->search(batch); }
-
-    bool receive_responses(MpseBatch& batch)
-    { return items.begin()->second.so[0]->receive_responses(batch); }
-};
-
 extern THREAD_LOCAL ProfileStats mpsePerfStats;
 
 typedef void (* MpseOptFunc)(SnortConfig*);
@@ -165,6 +128,7 @@ typedef void (* MpseDelFunc)(Mpse*);
 #define MPSE_BASE   0x00
 #define MPSE_TRIM   0x01
 #define MPSE_REGEX  0x02
+#define MPSE_ASYNC  0x04
 
 struct MpseApi
 {

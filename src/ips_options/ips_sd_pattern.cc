@@ -327,8 +327,8 @@ public:
 private:
     SdPatternConfig config;
 
-    static void scratch_setup(SnortConfig* sc);
-    static void scratch_cleanup(SnortConfig* sc);
+    static void scratch_setup(SnortConfig*);
+    static void scratch_cleanup(SnortConfig*);
 };
 
 bool SdPatternModule::begin(const char*, int, SnortConfig*)
@@ -337,7 +337,7 @@ bool SdPatternModule::begin(const char*, int, SnortConfig*)
     return true;
 }
 
-bool SdPatternModule::set(const char*, Value& v, SnortConfig* sc)
+bool SdPatternModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("~pattern") )
     {

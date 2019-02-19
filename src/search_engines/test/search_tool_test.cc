@@ -31,8 +31,9 @@
 
 #include "framework/base_api.h"
 #include "framework/mpse.h"
-#include "managers/mpse_manager.h"
+#include "framework/mpse_batch.h"
 #include "main/snort_config.h"
+#include "managers/mpse_manager.h"
 
 // must appear after snort_config.h to avoid broken c++ map include
 #include <CppUTest/CommandLineTestRunner.h>
@@ -111,21 +112,37 @@ int Mpse::search_all(
     return _search(T, n, match, context, current_state);
 }
 
-void Mpse::search(MpseBatch& batch)
+void Mpse::search(MpseBatch& batch, MpseType mpse_type)
 {
     int start_state;
 
     for ( auto& item : batch.items )
     {
+        if (item.second.done)
+            continue;
+
+        item.second.error = false;
+        item.second.matches = 0;
+
         for ( auto& so : item.second.so )
         {
             start_state = 0;
-            so->search(item.first.buf, item.first.len, batch.mf, batch.context, &start_state);
+            switch (mpse_type)
+            {
+                case MPSE_TYPE_NORMAL:
+                    item.second.matches += so->normal_mpse->search(item.first.buf, item.first.len,
+                            batch.mf, batch.context, &start_state);
+                    break;
+                case MPSE_TYPE_OFFLOAD:
+                    item.second.matches += so->offload_mpse->search(item.first.buf, item.first.len,
+                            batch.mf, batch.context, &start_state);
+                    break;
+            }
         }
         item.second.done = true;
     }
-    batch.items.clear();
 }
+
 }
 
 extern const BaseApi* se_ac_bnfa;
@@ -158,6 +175,33 @@ void MpseManager::delete_search_engine(Mpse* eng)
 {
     const MpseApi* api = eng->get_api();
     api->dtor(eng);
+}
+
+MpseGroup::~MpseGroup()
+{
+    if (normal_mpse)
+    {
+        MpseManager::delete_search_engine(normal_mpse);
+        normal_mpse = nullptr;
+    }
+    if (offload_mpse)
+    {
+        MpseManager::delete_search_engine(offload_mpse);
+        offload_mpse = nullptr;
+    }
+}
+
+bool MpseGroup::create_normal_mpse(const char* type)
+{
+    normal_mpse = MpseManager::get_search_engine(type);
+
+    return true;
+}
+
+bool MpseGroup::create_offload_mpse()
+{
+    offload_mpse = nullptr;
+    return false;
 }
 
 struct ExpectedMatch
@@ -198,7 +242,7 @@ TEST_GROUP(search_tool_bnfa)
         CHECK(se_ac_bnfa);
         stool = new SearchTool("ac_bnfa");
 
-        CHECK(stool->mpse);
+        CHECK(stool->mpsegrp->normal_mpse);
 
         int pattern_id = 1;
         stool->add("the", 3, pattern_id);
@@ -288,7 +332,7 @@ TEST_GROUP(search_tool_full)
         CHECK(se_ac_full);
         stool = new SearchTool("ac_full", true);
 
-        CHECK(stool->mpse);
+        CHECK(stool->mpsegrp->normal_mpse);
 
         int pattern_id = 1;
         stool->add("the", 3, pattern_id);

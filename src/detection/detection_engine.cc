@@ -36,6 +36,7 @@
 #include "main/snort_debug.h"
 #include "main/thread.h"
 #include "managers/inspector_manager.h"
+#include "managers/mpse_manager.h"
 #include "packet_io/active.h"
 #include "parser/parser.h"
 #include "profiler/profiler_defs.h"
@@ -62,7 +63,25 @@ using namespace snort;
 //--------------------------------------------------------------------------
 
 void DetectionEngine::thread_init()
-{ offloader = new RegexOffload(SnortConfig::get_conf()->offload_threads); }
+{
+    SnortConfig* sc = SnortConfig::get_conf();
+    FastPatternConfig* fp = sc->fast_pattern_config;
+    const MpseApi* offload_search_api = fp->get_offload_search_api();
+
+    // Note: offload_threads is really the maximum number of offload_requests
+    if (offload_search_api and MpseManager::is_async_capable(offload_search_api))
+    {
+        // If the search method is async capable then the searches will be performed directly
+        // by the search engine, without requiring a processing thread.
+        offloader = RegexOffload::get_offloader(sc->offload_threads, false);
+    }
+    else
+    {
+        // If the search method is not async capable then offloaded searches will be performed
+        // in a separate processing thread that the RegexOffload instance needs to create.
+        offloader = RegexOffload::get_offloader(sc->offload_threads, true);
+    }
+}
 
 void DetectionEngine::thread_term()
 { delete offloader; }
@@ -338,6 +357,9 @@ void DetectionEngine::do_offload(Packet* p)
     p->context->conf = SnortConfig::get_conf();
     p->set_offloaded();
 
+    // Build the searches list in the packet context
+    fp_partial(p);
+
     offloader->put(p);
     pc.offloads++;
 }
@@ -359,6 +381,7 @@ bool DetectionEngine::offload(Packet* p)
     if ( depends_on_suspended )
     {
         fp_partial(p);
+        p->context->searches.search_sync();
         sw->suspend();
         return true;
     }
@@ -377,8 +400,6 @@ void DetectionEngine::idle()
             trace_logf(detection,
                 TRACE_DETECTION_ENGINE,  "(wire) %" PRIu64 " de::sleep\n", get_packet_number());
 
-            const struct timespec blip = { 0, 1 };
-            nanosleep(&blip, nullptr);
             onload();
         }
         trace_logf(detection,  TRACE_DETECTION_ENGINE, "(wire) %" PRIu64 " de::idle (r=%d)\n",

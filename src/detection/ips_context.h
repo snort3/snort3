@@ -28,6 +28,7 @@
 #include "main/snort_types.h"
 #include "framework/codec.h"
 #include "framework/mpse.h"
+#include "framework/mpse_batch.h"
 
 // required to get a decent decl of pkth
 #include "protocols/packet.h"

@@ -358,12 +358,9 @@ static bool set_network_attributes(AppIdSession* asd, Packet* p, IpProtocol& pro
 
 static bool is_packet_ignored(AppIdSession* asd, Packet* p, AppidSessionDirection direction)
 {
-// FIXIT-M - Need to convert this _dpd stream api call to the correct snort++ method
 #ifdef REMOVED_WHILE_NOT_IN_USE
-    bool is_http2     = false; // _dpd.streamAPI->is_session_http2(p->flow);
-#else
-    bool is_http2     = false;
-#endif
+    bool is_http2 = false;  // FIXIT-M _dpd.streamAPI->is_session_http2(p->flow);
+
     if (is_http2)
     {
         if (asd)
@@ -375,7 +372,9 @@ static bool is_packet_ignored(AppIdSession* asd, Packet* p, AppidSessionDirectio
             return true;
         }
     }
-    else if ( p->is_rebuilt() && !p->flow->is_proxied() )
+    else
+#endif
+    if ( p->is_rebuilt() && !p->flow->is_proxied() )
     {
         // FIXIT-M: In snort2x, a rebuilt packet was ignored whether it had a session or not.
         // Here, we are ignoring rebuilt packet only if it has a session. Why?

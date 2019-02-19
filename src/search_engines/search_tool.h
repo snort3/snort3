@@ -49,7 +49,7 @@ public:
         bool confine = false, void* user_data = nullptr);
 
 private:
-    class Mpse* mpse;
+    class MpseGroup* mpsegrp;
     unsigned max_len;
 };
 } // namespace snort

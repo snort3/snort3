@@ -26,6 +26,7 @@
 
 #include "framework/base_api.h"
 #include "framework/mpse.h"
+#include "framework/mpse_batch.h"
 #include "main/snort_config.h"
 
 // must appear after snort_config.h to avoid broken c++ map include
@@ -55,20 +56,35 @@ int Mpse::search_all(
     return _search(T, n, match, context, current_state);
 }
 
-void Mpse::search(MpseBatch& batch)
+void Mpse::search(MpseBatch& batch, MpseType mpse_type)
 {
     int start_state;
 
     for ( auto& item : batch.items )
     {
+        if (item.second.done)
+            continue;
+
+        item.second.error = false;
+        item.second.matches = 0;
+
         for ( auto& so : item.second.so )
         {
             start_state = 0;
-            so->search(item.first.buf, item.first.len, batch.mf, batch.context, &start_state);
+            switch (mpse_type)
+            {
+                case MPSE_TYPE_NORMAL:
+                    item.second.matches += so->normal_mpse->search(item.first.buf, item.first.len,
+                            batch.mf, batch.context, &start_state);
+                    break;
+                case MPSE_TYPE_OFFLOAD:
+                    item.second.matches += so->offload_mpse->search(item.first.buf, item.first.len,
+                            batch.mf, batch.context, &start_state);
+                    break;
+            }
         }
         item.second.done = true;
     }
-    batch.items.clear();
 }
 
 SnortConfig s_conf;

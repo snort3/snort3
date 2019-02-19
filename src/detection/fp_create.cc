@@ -35,6 +35,7 @@
 #include "fp_create.h"
 
 #include "framework/mpse.h"
+#include "framework/mpse_batch.h"
 #include "hash/ghash.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
@@ -59,12 +60,13 @@ using namespace snort;
 using namespace std;
 
 static unsigned mpse_count = 0;
+static unsigned offload_mpse_count = 0;
 static const char* s_group = "";
 
 static void fpDeletePMX(void* data);
 
-static int fpGetFinalPattern(
-    FastPatternConfig*, PatternMatchData*, const char*& ret_pattern, unsigned& ret_bytes);
+static int fpGetFinalPattern(FastPatternConfig*, PatternMatchData*, const char*& ret_pattern,
+    unsigned& ret_bytes, Mpse::MpseType mpse_type);
 
 static void print_nfp_info(const char*, OptTreeNode*);
 static void print_fp_info(const char*, const OptTreeNode*, const PatternMatchData*,
@@ -110,7 +112,7 @@ static bool new_sig(int num_children, detection_option_tree_node_t** nodes, OptT
     return true;
 }
 
-static int otn_create_tree(OptTreeNode* otn, void** existing_tree)
+static int otn_create_tree(OptTreeNode* otn, void** existing_tree, Mpse::MpseType mpse_type)
 {
     detection_option_tree_node_t* node = nullptr, * child;
     bool need_leaf = false;
@@ -150,7 +152,7 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree)
 
         /* Don't add contents that are only for use in the
          * fast pattern matcher */
-        if ( is_fast_pattern_only(opt_fp) )
+        if ( is_fast_pattern_only(opt_fp, mpse_type) )
         {
             opt_fp = opt_fp->next;
             continue;
@@ -344,7 +346,7 @@ static void neg_list_free(void** list)
     *list = nullptr;
 }
 
-static int pmx_create_tree(SnortConfig* sc, void* id, void** existing_tree)
+static int pmx_create_tree(SnortConfig* sc, void* id, void** existing_tree, Mpse::MpseType mpse_type)
 {
     assert(existing_tree);
 
@@ -363,51 +365,36 @@ static int pmx_create_tree(SnortConfig* sc, void* id, void** existing_tree)
     if (!*existing_tree)
         *existing_tree = new_root(otn);
 
-    return otn_create_tree(otn, existing_tree);
+    return otn_create_tree(otn, existing_tree, mpse_type);
+}
+
+static int pmx_create_tree_normal(SnortConfig* sc, void* id, void** existing_tree)
+{
+    return pmx_create_tree(sc, id, existing_tree, Mpse::MPSE_TYPE_NORMAL);
+}
+
+static int pmx_create_tree_offload(SnortConfig* sc, void* id, void** existing_tree)
+{
+    return pmx_create_tree(sc, id, existing_tree, Mpse::MPSE_TYPE_OFFLOAD);
 }
 
 static int fpFinishPortGroupRule(
-    SnortConfig* sc, PortGroup* pg,
-    OptTreeNode* otn, PatternMatchData* pmd, FastPatternConfig* fp)
+    SnortConfig* sc, snort::Mpse* mpse, OptTreeNode* otn, PatternMatchData* pmd,
+    FastPatternConfig* fp, Mpse::MpseType mpse_type, bool get_final_pat)
 {
-    if ( !pmd )
-    {
-        pg->add_nfp_rule(otn);
-        print_nfp_info(s_group, otn);
-        return 0;
-    }
-    if ( !pg->mpse[pmd->pm_type] )
-    {
-        static MpseAgent agent =
-        {
-            pmx_create_tree, add_patrn_to_neg_list,
-            fpDeletePMX, free_detection_option_root, neg_list_free
-        };
-
-        pg->mpse[pmd->pm_type] = MpseManager::get_search_engine(
-            sc, fp->get_search_api(), &agent);
-
-        if ( !pg->mpse[pmd->pm_type] )
-        {
-            ParseError("Failed to create pattern matcher for %d", pmd->pm_type);
-            return -1;
-        }
-        mpse_count++;
-
-        if ( fp->get_search_opt() )
-            pg->mpse[pmd->pm_type]->set_opt(1);
-    }
-    if (pmd->is_negated())
-        pg->add_nfp_rule(otn);
-
-    else
-        pg->add_rule();
-
     const char* pattern;
     unsigned pattern_length;
 
-    if (fpGetFinalPattern(fp, pmd, pattern, pattern_length) == -1)
-        return -1;
+    if (get_final_pat)
+    {
+        if (fpGetFinalPattern(fp, pmd, pattern, pattern_length, mpse_type) == -1)
+            return -1;
+    }
+    else
+    {
+        pattern = pmd->pattern_buf;
+        pattern_length = pmd->pattern_size;
+    }
 
     if ( fp->get_debug_print_fast_patterns() )
         print_fp_info(s_group, otn, pmd, pattern, pattern_length);
@@ -419,7 +406,7 @@ static int fpFinishPortGroupRule(
     Mpse::PatternDescriptor desc(
         pmd->is_no_case(), pmd->is_negated(), pmd->is_literal(), pmd->mpse_flags);
 
-    pg->mpse[pmd->pm_type]->add_pattern(sc, (const uint8_t*)pattern, pattern_length, desc, pmx);
+    mpse->add_pattern(sc, (const uint8_t*)pattern, pattern_length, desc, pmx);
 
     return 0;
 }
@@ -435,24 +422,56 @@ static int fpFinishPortGroup(
 
     for (i = PM_TYPE_PKT; i < PM_TYPE_MAX; i++)
     {
-        if (pg->mpse[i] != nullptr)
+        if (pg->mpsegrp[i] != nullptr)
         {
-            if (pg->mpse[i]->get_pattern_count() != 0)
+            if (pg->mpsegrp[i]->normal_mpse != nullptr)
             {
-                if ( !sc->test_mode() or sc->mem_check() )
+                if (pg->mpsegrp[i]->normal_mpse->get_pattern_count() != 0)
                 {
-                    if ( pg->mpse[i]->prep_patterns(sc) != 0 )
-                        FatalError("Failed to compile port group patterns.\n");
-                }
+                    if ( !sc->test_mode() or sc->mem_check() )
+                    {
+                        if ( pg->mpsegrp[i]->normal_mpse->prep_patterns(sc) != 0 )
+                            FatalError("Failed to compile port group patterns for normal "
+                                    "search engine.\n");
+                    }
 
-                if (fp->get_debug_mode())
-                    pg->mpse[i]->print_info();
-                rules = 1;
+                    if (fp->get_debug_mode())
+                        pg->mpsegrp[i]->normal_mpse->print_info();
+                    rules = 1;
+                }
+                else
+                {
+                    MpseManager::delete_search_engine(pg->mpsegrp[i]->normal_mpse);
+                    pg->mpsegrp[i]->normal_mpse = nullptr;
+                }
             }
-            else
+            if (pg->mpsegrp[i]->offload_mpse != nullptr)
             {
-                MpseManager::delete_search_engine(pg->mpse[i]);
-                pg->mpse[i] = nullptr;
+                if (pg->mpsegrp[i]->offload_mpse->get_pattern_count() != 0)
+                {
+                    if ( !sc->test_mode() or sc->mem_check() )
+                    {
+                        if ( pg->mpsegrp[i]->offload_mpse->prep_patterns(sc) != 0 )
+                            FatalError("Failed to compile port group patterns for offload "
+                                    "search engine.\n");
+                    }
+
+                    if (fp->get_debug_mode())
+                        pg->mpsegrp[i]->offload_mpse->print_info();
+                    rules = 1;
+                }
+                else
+                {
+                    MpseManager::delete_search_engine(pg->mpsegrp[i]->offload_mpse);
+                    pg->mpsegrp[i]->offload_mpse = nullptr;
+                }
+            }
+
+            if ((pg->mpsegrp[i]->normal_mpse == nullptr) and
+                    (pg->mpsegrp[i]->offload_mpse == nullptr))
+            {
+                delete pg->mpsegrp[i];
+                pg->mpsegrp[i] = nullptr;
             }
         }
     }
@@ -464,7 +483,7 @@ static int fpFinishPortGroup(
         for (ruleNode = pg->nfp_head; ruleNode; ruleNode = ruleNode->rnNext)
         {
             OptTreeNode* otn = (OptTreeNode*)ruleNode->rnRuleData;
-            otn_create_tree(otn, &pg->nfp_tree);
+            otn_create_tree(otn, &pg->nfp_tree, Mpse::MPSE_TYPE_NORMAL);
         }
 
         finalize_detection_option_tree(sc, (detection_option_tree_root_t*)pg->nfp_tree);
@@ -483,27 +502,21 @@ static int fpFinishPortGroup(
     return 0;
 }
 
-static void fpAddAlternatePatterns(SnortConfig* sc, PortGroup* pg,
-    OptTreeNode* otn, PatternMatchData* pmd, FastPatternConfig* fp)
+static void fpAddAlternatePatterns(SnortConfig* sc, snort::Mpse* mpse,
+    OptTreeNode* otn, PatternMatchData* pmd, FastPatternConfig* fp, Mpse::MpseType mpse_type)
 {
-    if ( fp->get_debug_print_fast_patterns() )
-        print_fp_info(s_group, otn, pmd, pmd->pattern_buf, pmd->pattern_size);
-
-    PMX* pmx = (PMX*)snort_calloc(sizeof(PMX));
-    pmx->rule_node.rnRuleData = otn;
-    pmx->pmd = pmd;
-
-    Mpse::PatternDescriptor desc(
-        pmd->is_no_case(), pmd->is_negated(), pmd->is_literal(), pmd->mpse_flags);
-
-    pg->mpse[pmd->pm_type]->add_pattern(
-        sc, (const uint8_t*)pmd->pattern_buf, pmd->pattern_size, desc, pmx);
+    fpFinishPortGroupRule(sc, mpse, otn, pmd, fp, mpse_type, false);
 }
 
 static int fpAddPortGroupRule(
     SnortConfig* sc, PortGroup* pg, OptTreeNode* otn, FastPatternConfig* fp, bool srvc)
 {
+    const MpseApi* search_api = nullptr;
+    const MpseApi* offload_search_api = nullptr;
     PatternMatchVector pmv;
+    OptFpList* next = nullptr;
+    bool only_literal;
+    bool exclude;
 
     // skip builtin rules, continue for text and so rules
     if ( otn->sigInfo.builtin )
@@ -513,31 +526,167 @@ static int fpAddPortGroupRule(
     if ( !otn->enabled )
         return -1;
 
-    OptFpList* next = nullptr;
-    bool only_literal = !MpseManager::is_regex_capable(fp->get_search_api());
-    bool exclude;
+    search_api = fp->get_search_api();
+    assert(search_api);
+
+    only_literal = !MpseManager::is_regex_capable(search_api);
 
     pmv = get_fp_content(otn, next, srvc, only_literal, exclude);
 
     if ( !pmv.empty() )
     {
-        PatternMatchData* main_pmd = pmv.back();
-        pmv.pop_back();
+        PatternMatchVector pmv_ol;
+        OptFpList* next_ol = nullptr;
+        bool add_to_offload = false;
+        bool cont = true;
+        PatternMatchData* ol_pmd = nullptr;
 
-        if ( !main_pmd->is_relative() && !main_pmd->is_negated() && main_pmd->fp_only >= 0 &&
-            // FIXIT-L no_case consideration is mpse specific, delegate
-            !main_pmd->offset && !main_pmd->depth && main_pmd->is_no_case() )
+        offload_search_api = fp->get_offload_search_api();
+
+        // Only add rule to the offload search engine if the offload search engine
+        // is different to the normal search engine.
+        if (offload_search_api and (offload_search_api != search_api))
         {
-            if ( !next || !next->ips_opt || !next->ips_opt->is_relative() )
-                main_pmd->fp_only = 1;
+            bool exclude_ol;
+            bool only_literal_ol = !MpseManager::is_regex_capable(offload_search_api);
+            pmv_ol = get_fp_content(otn, next_ol, srvc, only_literal_ol, exclude_ol);
+
+            // If we can get a fast_pattern for the normal search engine but not for the
+            // offload search engine then add rule to the non fast pattern list
+            if (!pmv_ol.empty())
+                add_to_offload = true;
+            else
+                cont = false;
         }
 
-        if (fpFinishPortGroupRule(sc, pg, otn, main_pmd, fp) == 0)
+        // From here on we will create the mpses that are needed and add the patterns
+        if (cont)
         {
-            if (main_pmd->pattern_size > otn->longestPatternLen)
-                otn->longestPatternLen = main_pmd->pattern_size;
-            for (auto p : pmv)
-                fpAddAlternatePatterns(sc, pg, otn, p, fp);
+            PatternMatchData* main_pmd = pmv.back();
+            pmv.pop_back();
+
+            if ( !main_pmd->is_relative() && !main_pmd->is_negated() && main_pmd->fp_only >= 0 &&
+                    // FIXIT-L no_case consideration is mpse specific, delegate
+                    !main_pmd->offset && !main_pmd->depth && main_pmd->is_no_case() )
+            {
+                if ( !next || !next->ips_opt || !next->ips_opt->is_relative() )
+                    main_pmd->fp_only |= (1 << Mpse::MPSE_TYPE_NORMAL);
+            }
+
+            static MpseAgent agent =
+            {
+                pmx_create_tree_normal, add_patrn_to_neg_list,
+                fpDeletePMX, free_detection_option_root, neg_list_free
+            };
+
+            if ( pg->mpsegrp[main_pmd->pm_type] == nullptr )
+            {
+                pg->mpsegrp[main_pmd->pm_type] = new MpseGroup;
+                if ( pg->mpsegrp[main_pmd->pm_type] == nullptr )
+                {
+                    ParseError("Failed to create pattern matcher for %d", main_pmd->pm_type);
+                    return -1;
+                }
+            }
+
+            if (pg->mpsegrp[main_pmd->pm_type]->normal_mpse == nullptr)
+            {
+                if (!pg->mpsegrp[main_pmd->pm_type]->create_normal_mpse(sc, &agent))
+                {
+                    ParseError("Failed to create normal pattern matcher for %d", main_pmd->pm_type);
+                    return -1;
+                }
+
+                mpse_count++;
+                if ( fp->get_search_opt() )
+                    pg->mpsegrp[main_pmd->pm_type]->normal_mpse->set_opt(1);
+            }
+
+            if (add_to_offload)
+            {
+                ol_pmd = pmv_ol.back();
+                pmv_ol.pop_back();
+
+                if ( !ol_pmd->is_relative() && !ol_pmd->is_negated() && ol_pmd->fp_only >= 0 &&
+                        // FIXIT-L no_case consideration is mpse specific, delegate
+                        !ol_pmd->offset && !ol_pmd->depth && ol_pmd->is_no_case() )
+                {
+                    if ( !next_ol || !next_ol->ips_opt || !next_ol->ips_opt->is_relative() )
+                        ol_pmd->fp_only |= (1 << Mpse::MPSE_TYPE_OFFLOAD);
+                }
+
+                static MpseAgent agent_offload =
+                {
+                    pmx_create_tree_offload, add_patrn_to_neg_list,
+                    fpDeletePMX, free_detection_option_root, neg_list_free
+                };
+
+                // Keep the created mpse alongside the same pm type as the main pmd
+                if (pg->mpsegrp[main_pmd->pm_type]->offload_mpse == nullptr)
+                {
+                    if (!pg->mpsegrp[main_pmd->pm_type]->create_offload_mpse(sc, &agent_offload))
+                    {
+                        ParseError("Failed to create offload pattern matcher for %d",
+                                main_pmd->pm_type);
+                        return -1;
+                    }
+
+                    offload_mpse_count++;
+                    if ( fp->get_search_opt() )
+                        pg->mpsegrp[main_pmd->pm_type]->offload_mpse->set_opt(1);
+                }
+            }
+
+            bool add_rule = false;
+            bool add_nfp_rule = false;
+
+            if (pg->mpsegrp[main_pmd->pm_type]->normal_mpse)
+            {
+                add_rule = true;
+                if (main_pmd->is_negated())
+                    add_nfp_rule = true;
+
+                // Now add patterns
+                if (fpFinishPortGroupRule(sc, pg->mpsegrp[main_pmd->pm_type]->normal_mpse,
+                            otn, main_pmd, fp, Mpse::MPSE_TYPE_NORMAL, true) == 0)
+                {
+                    if (main_pmd->pattern_size > otn->longestPatternLen)
+                        otn->longestPatternLen = main_pmd->pattern_size;
+
+                    // Add Alternative patterns
+                    for (auto p : pmv)
+                        fpAddAlternatePatterns(sc, pg->mpsegrp[main_pmd->pm_type]->normal_mpse,
+                                otn, p, fp, Mpse::MPSE_TYPE_NORMAL);
+                }
+            }
+
+            if (ol_pmd and pg->mpsegrp[main_pmd->pm_type]->offload_mpse)
+            {
+                add_rule = true;
+                if (ol_pmd->is_negated())
+                    add_nfp_rule = true;
+
+                // Now add patterns
+                if (fpFinishPortGroupRule(sc, pg->mpsegrp[main_pmd->pm_type]->offload_mpse,
+                            otn, ol_pmd, fp, Mpse::MPSE_TYPE_OFFLOAD, true) == 0)
+                {
+                    if (ol_pmd->pattern_size > otn->longestPatternLen)
+                        otn->longestPatternLen = ol_pmd->pattern_size;
+
+                    // Add Alternative patterns
+                    for (auto p : pmv_ol)
+                        fpAddAlternatePatterns(sc, pg->mpsegrp[main_pmd->pm_type]->offload_mpse,
+                                otn, p, fp, Mpse::MPSE_TYPE_OFFLOAD);
+                }
+            }
+
+            if (add_rule)
+            {
+                if (add_nfp_rule)
+                    pg->add_nfp_rule(otn);
+                else
+                    pg->add_rule();
+            }
 
             return 0;
         }
@@ -547,8 +696,8 @@ static int fpAddPortGroupRule(
         return 0;
 
     // no fast pattern added
-    if (fpFinishPortGroupRule(sc, pg, otn, nullptr, fp) != 0)
-        return -1;
+    pg->add_nfp_rule(otn);
+    print_nfp_info(s_group, otn);
 
     return 0;
 }
@@ -755,7 +904,7 @@ static void fpFreeRuleMaps(SnortConfig* sc)
 
 static int fpGetFinalPattern(
     FastPatternConfig* fp, PatternMatchData* pmd,
-    const char*& ret_pattern, unsigned& ret_bytes)
+    const char*& ret_pattern, unsigned& ret_bytes, Mpse::MpseType mpse_type)
 {
     if ( !fp or !pmd )
     {
@@ -779,7 +928,9 @@ static int fpGetFinalPattern(
     // 3. non-literals like regex - truncation could invalidate the
     // expression.
 
-    if ( pmd->fp_only > 0 or pmd->is_negated() or !pmd->is_literal() )
+    assert((mpse_type == Mpse::MPSE_TYPE_NORMAL) or (mpse_type == Mpse::MPSE_TYPE_OFFLOAD));
+
+    if ( (pmd->fp_only & (1 << mpse_type)) or pmd->is_negated() or !pmd->is_literal() )
     {
         ret_pattern = pattern;
         ret_bytes = bytes;
@@ -842,14 +993,23 @@ static void fpPortGroupPrintRuleCount(PortGroup* pg, const char* what)
 
     for (type = PM_TYPE_PKT; type < PM_TYPE_MAX; type++)
     {
-        int count = pg->mpse[type] ? pg->mpse[type]->get_pattern_count() : 0;
+        if (pg->mpsegrp[type])
+        {
+            int count = pg->mpsegrp[type]->normal_mpse ?
+                pg->mpsegrp[type]->normal_mpse->get_pattern_count() : 0;
+            int count_ol = pg->mpsegrp[type]->offload_mpse ?
+                pg->mpsegrp[type]->offload_mpse->get_pattern_count() : 0;
 
-        if ( count )
-            LogMessage("\t%s: %d\n", pm_type_strings[type], count);
+            if ( count )
+                LogMessage("\tNormal Pattern Matcher %s: %d\n", pm_type_strings[type], count);
+
+            if ( count_ol )
+                LogMessage("\tOffload Pattern Matcher %s: %d\n", pm_type_strings[type], count_ol);
+        }
     }
 
     if ( pg->nfp_rule_count )
-        LogMessage("\tNo content: %u\n", pg->nfp_rule_count);
+        LogMessage("\tNormal Pattern Matcher No content: %u\n", pg->nfp_rule_count);
 }
 
 static void fpDeletePMX(void* pv)
@@ -1375,7 +1535,8 @@ static void fp_sum_port_groups(PortGroup* pg, unsigned c[PM_TYPE_MAX])
         return;
 
     for ( int i = PM_TYPE_PKT; i < PM_TYPE_MAX; ++i )
-        if ( pg->mpse[i] and pg->mpse[i]->get_pattern_count() )
+        if ( pg->mpsegrp[i] and pg->mpsegrp[i]->normal_mpse and
+                pg->mpsegrp[i]->normal_mpse->get_pattern_count() )
             c[i]++;
 }
 
@@ -1531,6 +1692,7 @@ int fpCreateFastPacketDetection(SnortConfig* sc)
     }
 
     mpse_count = 0;
+    offload_mpse_count = 0;
 
     MpseManager::start_search_engine(fp->get_search_api());
 
@@ -1575,6 +1737,11 @@ int fpCreateFastPacketDetection(SnortConfig* sc)
     {
         LogLabel("search engine");
         MpseManager::print_mpse_summary(fp->get_search_api());
+    }
+    if ( offload_mpse_count and (fp->get_offload_search_api()))
+    {
+        LogLabel("offload search engine");
+        MpseManager::print_mpse_summary(fp->get_offload_search_api());
     }
 
     if ( fp->get_num_patterns_truncated() )

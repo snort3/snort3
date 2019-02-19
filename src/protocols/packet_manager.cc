@@ -685,7 +685,7 @@ int PacketManager::encode_format(
     bool update_ip4_len = false;
     uint8_t num_layers = p->num_layers;
 
-    if ( num_layers <= 0 )
+    if ( num_layers == 0 )
         return -1;
 
     c->reset();
@@ -716,7 +716,7 @@ int PacketManager::encode_format(
             update_ip4_len = true;
         }
 
-        if (num_layers <= 0)
+        if (num_layers == 0)
             return -1;
     }
 

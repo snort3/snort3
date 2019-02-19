@@ -15,6 +15,7 @@ set (FRAMEWORK_INCLUDES
     lua_api.h
     module.h
     mpse.h
+    mpse_batch.h
     parameter.h
     range.h
     so_rule.h
@@ -32,6 +33,7 @@ add_library ( framework OBJECT
     parameter.cc
     module.cc
     mpse.cc
+    mpse_batch.cc
     range.cc
     value.cc
 )

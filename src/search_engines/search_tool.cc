@@ -21,26 +21,48 @@
 #include "config.h"
 #endif
 
-#include "search_tool.h"
-
 #include <cassert>
 
-#include "managers/mpse_manager.h"
+#include "detection/fp_config.h"
+#include "framework/mpse.h"
+#include "framework/mpse_batch.h"
+#include "main/snort_config.h"
+#include "search_tool.h"
 
 namespace snort
 {
 SearchTool::SearchTool(const char* method, bool dfa)
 {
-    mpse = MpseManager::get_search_engine(method);
-    assert(mpse);
+    mpsegrp = new MpseGroup;
+
+    // When no method is passed in, a normal search engine mpse will be created
+    // with the search method the same as that configured for the fast pattern
+    // normal search method, and also an offload search engine mpse will be
+    // created with the search method the same as that configured for the fast
+    // pattern offload search method.  If a method is passed in then an offload
+    // search engine will not be created
+
+    if (mpsegrp->create_normal_mpse(method))
+    {
+        if( dfa )
+            mpsegrp->normal_mpse->set_opt(1);
+    }
+
+    if (method == nullptr)
+    {
+        if (mpsegrp->create_offload_mpse())
+        {
+            if ( dfa )
+                mpsegrp->offload_mpse->set_opt(1);
+        }
+    }
+
     max_len = 0;
-    if( dfa )
-        mpse->set_opt(1);
 }
 
 SearchTool::~SearchTool()
 {
-    MpseManager::delete_search_engine(mpse);
+    delete mpsegrp;
 }
 
 void SearchTool::add(const char* pat, unsigned len, int id, bool no_case)
@@ -62,8 +84,10 @@ void SearchTool::add(const uint8_t* pat, unsigned len, void* id, bool no_case)
 {
     Mpse::PatternDescriptor desc(no_case, false, true);
 
-    if ( mpse )
-        mpse->add_pattern(nullptr,  pat, len, desc, id);
+    if ( mpsegrp->normal_mpse )
+        mpsegrp->normal_mpse->add_pattern(nullptr,  pat, len, desc, id);
+    if ( mpsegrp->offload_mpse )
+        mpsegrp->offload_mpse->add_pattern(nullptr,  pat, len, desc, id);
 
     if ( len > max_len )
         max_len = len;
@@ -71,8 +95,10 @@ void SearchTool::add(const uint8_t* pat, unsigned len, void* id, bool no_case)
 
 void SearchTool::prep()
 {
-    if ( mpse )
-        mpse->prep_patterns(nullptr);
+    if ( mpsegrp->normal_mpse )
+        mpsegrp->normal_mpse->prep_patterns(nullptr);
+    if ( mpsegrp->offload_mpse )
+        mpsegrp->offload_mpse->prep_patterns(nullptr);
 }
 
 int SearchTool::find(
@@ -83,6 +109,10 @@ int SearchTool::find(
     bool confine,
     void* user_data)
 {
+    int num = 0;
+    SnortConfig* sc = SnortConfig::get_conf();
+    FastPatternConfig* fp = sc->fast_pattern_config;
+
     if ( confine && max_len > 0 )
     {
         if ( max_len < len )
@@ -91,7 +121,21 @@ int SearchTool::find(
     if ( !user_data )
         user_data = (void*)str;
 
-    int num = mpse->search((const uint8_t*)str, len, mf, user_data, &state);
+    if ( fp and fp->get_offload_search_api() and (len >= sc->offload_limit) and
+            (mpsegrp->get_offload_mpse() != mpsegrp->get_normal_mpse()) )
+    {
+        num = mpsegrp->get_offload_mpse()->search((const uint8_t*)str, len, mf, user_data, &state);
+
+        if ( num < 0 )
+            num = mpsegrp->get_normal_mpse()->search((const uint8_t*)str, len, mf, user_data,
+                    &state);
+    }
+    else
+        num = mpsegrp->get_normal_mpse()->search((const uint8_t*)str, len, mf, user_data, &state);
+
+    // SeachTool::find expects the number found to be returned so if we have a failure return 0
+    if ( num < 0 )
+        num = 0;
 
     return num;
 }
@@ -114,6 +158,10 @@ int SearchTool::find_all(
     bool confine,
     void* user_data)
 {
+    int num = 0;
+    SnortConfig* sc = SnortConfig::get_conf();
+    FastPatternConfig* fp = sc->fast_pattern_config;
+
     if ( confine && max_len > 0 )
     {
         if ( max_len < len )
@@ -124,7 +172,23 @@ int SearchTool::find_all(
 
     int state = 0;
 
-    int num = mpse->search_all((const uint8_t*)str, len, mf, user_data, &state);
+    if ( fp and fp->get_offload_search_api() and (len >= sc->offload_limit) and
+            (mpsegrp->get_offload_mpse() != mpsegrp->get_normal_mpse()) )
+    {
+        num = mpsegrp->get_offload_mpse()->search_all((const uint8_t*)str, len, mf, user_data,
+                &state);
+
+        if ( num < 0 )
+            num = mpsegrp->get_normal_mpse()->search_all((const uint8_t*)str, len, mf, user_data,
+                    &state);
+    }
+    else
+        num = mpsegrp->get_normal_mpse()->search_all((const uint8_t*)str, len, mf, user_data,
+                &state);
+
+    // SeachTool::find expects the number found to be returned so if we have a failure return 0
+    if ( num < 0 )
+        num = 0;
 
     return num;
 }

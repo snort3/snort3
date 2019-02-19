@@ -24,7 +24,8 @@
 #include "port_group.h"
 
 #include "detection/detection_options.h"
-#include "managers/mpse_manager.h"
+#include "framework/mpse.h"
+#include "framework/mpse_batch.h"
 #include "utils/util.h"
 
 void PortGroup::add_rule()
@@ -41,10 +42,10 @@ void PortGroup::free(PortGroup* pg)
 
     for (int i = PM_TYPE_PKT; i < PM_TYPE_MAX; i++)
     {
-        if (pg->mpse[i] != nullptr)
+        if (pg->mpsegrp[i])
         {
-            MpseManager::delete_search_engine(pg->mpse[i]);
-            pg->mpse[i] = nullptr;
+            delete pg->mpsegrp[i];
+            pg->mpsegrp[i] = nullptr;
         }
     }
 

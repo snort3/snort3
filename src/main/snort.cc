@@ -331,8 +331,14 @@ void Snort::init(int argc, char** argv)
 
     SnortConfig::get_conf()->post_setup();
 
-    MpseManager::activate_search_engine(
-        SnortConfig::get_conf()->fast_pattern_config->get_search_api(), SnortConfig::get_conf());
+    const MpseApi* search_api = SnortConfig::get_conf()->fast_pattern_config->get_search_api();
+    const MpseApi* offload_search_api = SnortConfig::get_conf()->fast_pattern_config->
+        get_offload_search_api();
+
+    MpseManager::activate_search_engine(search_api, SnortConfig::get_conf());
+
+    if ((offload_search_api != nullptr) and (offload_search_api != search_api))
+        MpseManager::activate_search_engine(offload_search_api, SnortConfig::get_conf());
 
     SFAT_Start();
 

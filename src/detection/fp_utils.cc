@@ -127,6 +127,18 @@ PatternMatchData* get_pmd(OptFpList* ofl, SnortProtocolId snort_protocol_id, Rul
     return ofl->ips_opt->get_pattern(snort_protocol_id, direction);
 }
 
+bool is_fast_pattern_only(OptFpList* ofl, Mpse::MpseType mpse_type)
+{
+    PatternMatchData* pmd = get_pmd(ofl, UNKNOWN_PROTOCOL_ID, RULE_WO_DIR);
+
+    if ( !pmd )
+        return false;
+
+    assert((mpse_type == Mpse::MPSE_TYPE_NORMAL) or (mpse_type == Mpse::MPSE_TYPE_OFFLOAD));
+
+    return (pmd->fp_only & (1 << mpse_type));
+}
+
 bool is_fast_pattern_only(OptFpList* ofl)
 {
     PatternMatchData* pmd = get_pmd(ofl, UNKNOWN_PROTOCOL_ID, RULE_WO_DIR);
@@ -249,7 +261,10 @@ bool FpSelector::is_better_than(
         if ( pmd->is_fast_pattern() )
         {
             ParseWarning(WARN_RULES, "content ineligible for fast_pattern matcher - ignored");
-            pmd->flags &= ~PatternMatchData::FAST_PAT;
+            // When we have a normal search engine we do not wish to invalidate the user
+            // indicated fast pattern as this may be a valid fast pattern for use in the offload
+            // search engine
+            // pmd->flags &= ~PatternMatchData::FAST_PAT;
         }
         return false;
     }

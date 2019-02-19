@@ -39,7 +39,6 @@ public:
 
 bool Pcre::convert(std::istringstream& data_stream)
 {
-    std::string keyword;
     bool sticky_buffer_set = false;
     std::string buffer = "pkt_data";
 

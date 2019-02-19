@@ -252,6 +252,9 @@ static const Parameter search_engine_params[] =
     { "search_method", Parameter::PT_DYNAMIC, (void*)&get_search_methods, "ac_bnfa",
       "set fast pattern algorithm - choose available search engine" },
 
+    { "offload_search_method", Parameter::PT_DYNAMIC, (void*)&get_search_methods, nullptr,
+      "set fast pattern offload algorithm - choose available search engine" },
+
     { "search_optimize", Parameter::PT_BOOL, nullptr, "true",
       "tweak state machine construction for better performance" },
 
@@ -354,6 +357,11 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("search_method") )
     {
         if ( !fp->set_search_method(v.get_string()) )
+            return false;
+    }
+    else if ( v.is("offload_search_method") )
+    {
+        if ( !fp->set_offload_search_method(v.get_string()) )
             return false;
     }
     else if ( v.is("search_optimize") )

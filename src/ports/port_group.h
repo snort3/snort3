@@ -27,7 +27,7 @@
 
 namespace snort
 {
-    class Mpse;
+    class MpseGroup;
 }
 
 // PortGroup contains a set of fast patterns in the form of an MPSE and a
@@ -65,7 +65,7 @@ struct PortGroup
     RULE_NODE* nfp_head, * nfp_tail;
 
     // pattern matchers
-    snort::Mpse* mpse[PM_TYPE_MAX];
+    snort::MpseGroup* mpsegrp[PM_TYPE_MAX];
 
     // detection option tree
     void* nfp_tree;

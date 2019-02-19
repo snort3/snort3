@@ -874,9 +874,9 @@ static int rule_tree_queue(
 }
 
 static inline int batch_search(
-    Mpse* so, OtnxMatchData* omd, const uint8_t* buf, unsigned len, PegCount& cnt)
+    MpseGroup* so, OtnxMatchData* omd, const uint8_t* buf, unsigned len, PegCount& cnt)
 {
-    assert(so->get_pattern_count() > 0);
+    assert(so->get_normal_mpse()->get_pattern_count() > 0);
     cnt++;
 
     //FIXIT-P Batch outer UDP payload searches for teredo set and the outer header
@@ -886,7 +886,7 @@ static inline int batch_search(
         int start_state = 0;
         MpseStash* stash = omd->p->context->stash;
         stash->init();
-        so->search(buf, len, rule_tree_queue, omd, &start_state);
+        so->get_normal_mpse()->search(buf, len, rule_tree_queue, omd, &start_state);
         stash->process(rule_tree_match, omd);
     }
     else
@@ -908,7 +908,8 @@ static inline int search_buffer(
 {
     if ( gadget->get_fp_buf(ibt, omd->p, buf) )
     {
-        if ( Mpse* so = omd->pg->mpse[pmt] )
+        // Depending on where we are searching we call the appropriate mpse
+        if ( MpseGroup* so = omd->pg->mpsegrp[pmt] )
         {
             // FIXIT-H DELETE ME done - get the context packet number
             trace_logf(detection, TRACE_FP_SEARCH, "%" PRIu64 " fp %s.%s[%d]\n",
@@ -937,7 +938,7 @@ static int fp_search(
     if ( (!user_mode or type < 2) and p->data and p->dsize )
     {
         // ports search raw packet only
-        if ( Mpse* so = port_group->mpse[PM_TYPE_PKT] )
+        if ( MpseGroup* so = port_group->mpsegrp[PM_TYPE_PKT] )
         {
             if ( uint16_t pattern_match_size = p->get_detect_limit() )
             {
@@ -972,7 +973,7 @@ static int fp_search(
     if ( !user_mode or type > 0 )
     {
         // file searches file only
-        if ( Mpse* so = port_group->mpse[PM_TYPE_FILE] )
+        if ( MpseGroup* so = port_group->mpsegrp[PM_TYPE_FILE] )
         {
             // FIXIT-M file data should be obtained from
             // inspector gadget as is done with search_buffer
@@ -1315,12 +1316,8 @@ void fp_full(Packet* p)
     c->searches.context = c->otnx;
     fpEvalPacket(p, FPTask::BOTH);
 
-    if (c->searches.items.size() > 0) {
-        c->searches.search(c->searches);
-        while (c->searches.items.size() > 0)
-            c->searches.receive_responses(c->searches);
+    if ( c->searches.search_sync() )
         stash->process(rule_tree_match, c->otnx);
-    }
 
     fpFinalSelectEvent(c->otnx, p);
 }
@@ -1336,11 +1333,6 @@ void fp_partial(Packet* p)
     c->searches.mf = rule_tree_queue;
     c->searches.context = c->otnx;
     fpEvalPacket(p, FPTask::FP);
-
-    if (c->searches.items.size() > 0) {
-        Mpse* so = c->searches.items.begin()->second.so[0];
-        so->search(c->searches);
-    }
 }
 
 void fp_complete(Packet* p)
@@ -1348,8 +1340,6 @@ void fp_complete(Packet* p)
     IpsContext* c = p->context;
     MpseStash* stash = c->stash;
     stash->enable_process();
-    while (c->searches.items.size() > 0)
-        c->searches.items.begin()->second.so[0]->receive_responses(c->searches);
     stash->process(rule_tree_match, c->otnx);
     fpEvalPacket(p, FPTask::NON_FP);
     fpFinalSelectEvent(c->otnx, p);

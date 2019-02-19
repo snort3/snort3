@@ -125,10 +125,16 @@ public:
     bool set_search_method(const char*);
     const char* get_search_method();
 
+    bool set_offload_search_method(const char*);
+    const char* get_offload_search_method();
+
     void set_max_pattern_len(unsigned);
 
     const snort::MpseApi* get_search_api()
     { return search_api; }
+
+    const snort::MpseApi* get_offload_search_api()
+    { return offload_search_api; }
 
     bool get_trim()
     { return trim; }
@@ -145,7 +151,8 @@ public:
     unsigned set_max(unsigned bytes);
 
 private:
-    const snort::MpseApi* search_api;
+    const snort::MpseApi* search_api = nullptr;
+    const snort::MpseApi* offload_search_api = nullptr;
 
     bool inspect_stream_insert = true;
     bool trim;

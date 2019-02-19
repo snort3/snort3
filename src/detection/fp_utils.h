@@ -24,11 +24,13 @@
 // fast pattern utilities
 #include <vector>
 #include "framework/ips_option.h"
+#include "framework/mpse.h"
 
 struct OptFpList;
 struct OptTreeNode;
 
 struct PatternMatchData* get_pmd(OptFpList*, SnortProtocolId, snort::RuleDirection);
+bool is_fast_pattern_only(OptFpList*, snort::Mpse::MpseType);
 bool is_fast_pattern_only(OptFpList*);
 void validate_fast_pattern(OptTreeNode*);
 

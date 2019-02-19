@@ -66,6 +66,25 @@ const char* FastPatternConfig::get_search_method()
     return search_api->base.name;
 }
 
+bool FastPatternConfig::set_offload_search_method(const char* method)
+{
+    const MpseApi* api = MpseManager::get_search_api(method);
+
+    if ( !api )
+        return false;
+
+    offload_search_api = api;
+    return true;
+}
+
+const char* FastPatternConfig::get_offload_search_method()
+{
+    if ( !offload_search_api )
+        return nullptr;
+
+    return offload_search_api->base.name;
+}
+
 void FastPatternConfig::set_max_pattern_len(unsigned int max_len)
 {
     if (max_pattern_len != 0)

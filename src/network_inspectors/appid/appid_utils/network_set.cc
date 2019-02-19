@@ -972,12 +972,12 @@ int NetworkSetManager::reduce(NetworkSet* network_set)
         }
         network_set->pnetwork = (Network**)snort_calloc(count * sizeof(Network*));
         SF_LNODE* iter = nullptr;
-        int i = 0;
+        int k = 0;
         for (network = (Network*)sflist_first(&network_set->networks, &iter);
-            network && i < count;
+            network && k < count;
             network = (Network*)sflist_next(&iter))
         {
-            network_set->pnetwork[i++] = network;
+            network_set->pnetwork[k++] = network;
         }
         /* bubble sort this array */
         for (int i = (count - 1); i >= 0; i--)
@@ -1035,12 +1035,12 @@ int NetworkSetManager::reduce(NetworkSet* network_set)
         }
         network_set->pnetwork6 = (Network6**)snort_calloc(count * sizeof(Network6*));
         SF_LNODE* iter = nullptr;
-        int i = 0;
+        int k = 0;
         for (network6 = (Network6*)sflist_first(&network_set->networks6, &iter);
-            network6 && i < count;
+            network6 && k < count;
             network6 = (Network6*)sflist_next(&iter))
         {
-            network_set->pnetwork6[i++] = network6;
+            network_set->pnetwork6[k++] = network6;
         }
         /* bubble sort this array */
         for (int i = (count - 1); i >= 0; i--)

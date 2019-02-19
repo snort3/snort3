@@ -33,12 +33,13 @@
 #include <vector>
 #include <thread>
 
-#include "main/snort_config.h"
-#include "latency/packet_latency.h"
-#include "latency/rule_latency.h"
 #include "fp_detect.h"
 #include "ips_context.h"
+#include "latency/packet_latency.h"
+#include "latency/rule_latency.h"
+#include "main/snort_config.h"
 
+// FIXIT-L this could be offloader specific
 struct RegexRequest
 {
     snort::Packet* packet = nullptr;
@@ -52,8 +53,16 @@ struct RegexRequest
     bool go = true;
 };
 
+RegexOffload* RegexOffload::get_offloader(unsigned max, bool async)
+{
+    if ( async )
+        return new ThreadRegexOffload(max);
+
+    return new MpseRegexOffload(max);
+}
+
 //--------------------------------------------------------------------------
-// regex offload implementation
+// base offload implementation
 //--------------------------------------------------------------------------
 
 RegexOffload::RegexOffload(unsigned max)
@@ -61,7 +70,6 @@ RegexOffload::RegexOffload(unsigned max)
     for ( unsigned i = 0; i < max; ++i )
     {
         RegexRequest* req = new RegexRequest;
-        req->thread = new std::thread(worker, req, snort::SnortConfig::get_conf());
         idle.emplace_back(req);
     }
 }
@@ -71,16 +79,108 @@ RegexOffload::~RegexOffload()
     assert(busy.empty());
 
     for ( auto* req : idle )
-    {
-        req->thread->join();
-        delete req->thread;
         delete req;
-    }
 }
 
 void RegexOffload::stop()
 {
     assert(busy.empty());
+}
+
+bool RegexOffload::on_hold(snort::Flow* f) const
+{
+    for ( auto* req : busy )
+    {
+        if ( req->packet->flow == f )
+            return true;
+    }
+    return false;
+}
+
+//--------------------------------------------------------------------------
+// synchronous (ie non) offload implementation
+//--------------------------------------------------------------------------
+
+MpseRegexOffload::MpseRegexOffload(unsigned max) : RegexOffload(max) { }
+
+void MpseRegexOffload::put(snort::Packet* p)
+{
+    assert(p);
+    assert(!idle.empty());
+
+    RegexRequest* req = idle.front();
+    idle.pop_front();  // FIXIT-H use splice to move instead
+    busy.emplace_back(req);
+
+    req->packet = p;
+
+    if (p->context->searches.items.size() > 0)
+        p->context->searches.offload_search();
+}
+
+bool MpseRegexOffload::get(snort::Packet*& p)
+{
+    assert(!busy.empty());
+
+    for ( auto i = busy.begin(); i != busy.end(); i++ )
+    {
+        RegexRequest* req = *i;
+        snort::IpsContext* c = req->packet->context;
+
+        if ( c->searches.items.size() > 0 )
+        {
+            snort::Mpse::MpseRespType resp_ret = c->searches.receive_offload_responses();
+
+            if (resp_ret == snort::Mpse::MPSE_RESP_NOT_COMPLETE)
+                continue;
+
+            else if (resp_ret == snort::Mpse::MPSE_RESP_COMPLETE_FAIL)
+            {
+                if (!c->searches.can_fallback())
+                {
+                    // FIXIT-M Add peg counts to record offload search fallback attempts
+                    c->searches.search_sync();
+                }
+                // FIXIT-M else Add peg counts to record offload search failures
+            }
+            c->searches.items.clear();
+        }
+
+        p = req->packet;
+        req->packet = nullptr;
+
+        busy.erase(i);
+        idle.emplace_back(req);
+
+        return true;
+    }
+
+    p = nullptr;
+    return false;
+}
+
+//--------------------------------------------------------------------------
+// async (threads) offload implementation
+//--------------------------------------------------------------------------
+
+ThreadRegexOffload::ThreadRegexOffload(unsigned max) : RegexOffload(max)
+{
+    for ( auto* req : idle )
+        req->thread = new std::thread(worker, req, snort::SnortConfig::get_conf());
+}
+
+ThreadRegexOffload::~ThreadRegexOffload()
+{
+    for ( auto* req : idle )
+    {
+        req->thread->join();
+        delete req->thread;
+    }
+}
+
+void ThreadRegexOffload::stop()
+{
+    RegexOffload::stop();
 
     for ( auto* req : idle )
     {
@@ -90,7 +190,50 @@ void RegexOffload::stop()
     }
 }
 
-void RegexOffload::worker(RegexRequest* req, snort::SnortConfig* initial_config)
+void ThreadRegexOffload::put(snort::Packet* p)
+{
+    assert(p);
+    assert(!idle.empty());
+
+    RegexRequest* req = idle.front();
+    idle.pop_front();  // FIXIT-H use splice to move instead
+    busy.emplace_back(req);
+
+    std::unique_lock<std::mutex> lock(req->mutex);
+    req->packet = p;
+
+    if (p->context->searches.items.size() > 0)
+    {
+        req->offload = true;
+        req->cond.notify_one();
+    }
+}
+
+bool ThreadRegexOffload::get(snort::Packet*& p)
+{
+    assert(!busy.empty());
+
+    for ( auto i = busy.begin(); i != busy.end(); i++ )
+    {
+        RegexRequest* req = *i;
+
+        if ( req->offload )
+            continue;
+
+        p = req->packet;
+        req->packet = nullptr;
+
+        busy.erase(i);
+        idle.emplace_back(req);
+
+        return true;
+    }
+
+    p = nullptr;
+    return false;
+}
+
+void ThreadRegexOffload::worker(RegexRequest* req, snort::SnortConfig* initial_config)
 {
     snort::SnortConfig::set_conf(initial_config);
 
@@ -114,69 +257,34 @@ void RegexOffload::worker(RegexRequest* req, snort::SnortConfig* initial_config)
 
         assert(req->packet);
         assert(req->packet->is_offloaded());
-        fp_partial(req->packet);
+        assert(req->packet->context->searches.items.size() > 0);
 
+        snort::MpseBatch& batch = req->packet->context->searches;
+        batch.offload_search();
+        snort::Mpse::MpseRespType resp_ret;
+
+        do
+        {
+            resp_ret = batch.receive_offload_responses();
+        }
+        while (resp_ret == snort::Mpse::MPSE_RESP_NOT_COMPLETE);
+
+        if (resp_ret == snort::Mpse::MPSE_RESP_COMPLETE_FAIL)
+        {
+            if (!batch.can_fallback())
+            {
+                // FIXIT-M Add peg counts to record offload search fallback attempts
+                batch.search_sync();
+            }
+            // FIXIT-M else Add peg counts to record offload search failures
+        }
+
+        batch.items.clear();
         req->offload = false;
     }
-    tterm();
-}
 
-void RegexOffload::tterm()
-{
     // FIXIT-M break this over-coupling. In reality we shouldn't be evaluating latency in offload.
     PacketLatency::tterm();
     RuleLatency::tterm();
-}
-
-void RegexOffload::put(snort::Packet* p)
-{
-    assert(p);
-    assert(!idle.empty());
-
-    RegexRequest* req = idle.front();
-
-    idle.pop_front();  // FIXIT-H use splice to move instead
-    busy.emplace_back(req);
-
-    std::unique_lock<std::mutex> lock(req->mutex);
-
-    req->packet = p;
-    req->offload = true;
-
-    req->cond.notify_one();
-}
-
-bool RegexOffload::get(snort::Packet*& p)
-{
-    assert(!busy.empty());
-
-    for ( auto i = busy.begin(); i != busy.end(); i++ )
-    {
-        RegexRequest* req = *i;
-
-        if ( req->offload )
-            continue;
-
-        p = req->packet;
-        req->packet = nullptr;
-
-        busy.erase(i);
-        idle.emplace_back(req);
-
-        return true;
-    }
-    
-    p = nullptr;
-    return false;
-}
-
-bool RegexOffload::on_hold(snort::Flow* f)
-{
-    for ( auto* req : busy )
-    {
-        if ( req->packet->flow == f )
-            return true;
-    }
-    return false;
 }
 

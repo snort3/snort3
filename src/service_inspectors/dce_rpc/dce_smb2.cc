@@ -707,7 +707,6 @@ void DCE2_Smb2Process(DCE2_SmbSsnData* ssd)
     Packet* p = DetectionEngine::get_current_packet();
     const uint8_t* data_ptr = p->data;
     uint16_t data_len = p->dsize;
-    uint32_t next_command_offset = 0;
 
     /*Check header length*/
     if (data_len < sizeof(NbssHdr) + SMB2_HEADER_LENGTH)
@@ -722,6 +721,7 @@ void DCE2_Smb2Process(DCE2_SmbSsnData* ssd)
     if (p->is_pdu_start())
     {
         const Smb2Hdr* smb_hdr = (const Smb2Hdr*)(data_ptr + sizeof(NbssHdr));
+        uint32_t next_command_offset;
         /* SMB protocol allows multiple smb commands to be grouped in a single packet.
            So loop through to parse all the smb commands.
 		   Reference: https://msdn.microsoft.com/en-us/library/cc246614.aspx

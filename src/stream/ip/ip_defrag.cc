@@ -403,8 +403,8 @@ static inline int FragCheckFirstLast(
     }
 
     trace_logf(stream_ip, "Frag Status: %s:%s\n",
-        ft->frag_flags&FRAG_GOT_FIRST ? "FIRST" : "No FIRST",
-        ft->frag_flags&FRAG_GOT_LAST ? "LAST" : "No LAST");
+        (ft->frag_flags&FRAG_GOT_FIRST) ? "FIRST" : "No FIRST",
+        (ft->frag_flags&FRAG_GOT_LAST) ? "LAST" : "No LAST");
     return retVal;
 }
 

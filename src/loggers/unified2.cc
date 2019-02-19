@@ -658,9 +658,11 @@ static void _AlertIP4_v2(Packet* p, const char*, Unified2Config* config, const E
             alertdata.sport_itype = htons(p->ptrs.icmph->type);
             alertdata.dport_icode = htons(p->ptrs.icmph->code);
         }
-
-        alertdata.sport_itype = htons(p->ptrs.sp);
-        alertdata.dport_icode = htons(p->ptrs.dp);
+        else
+        {
+            alertdata.sport_itype = htons(p->ptrs.sp);
+            alertdata.dport_icode = htons(p->ptrs.dp);
+        }
 
         if ( p->proto_bits & PROTO_BIT__MPLS )
             alertdata.mpls_label = htonl(p->ptrs.mplsHdr.label);
@@ -744,9 +746,11 @@ static void _AlertIP6_v2(Packet* p, const char*, Unified2Config* config, const E
             alertdata.sport_itype = htons(p->ptrs.icmph->type);
             alertdata.dport_icode = htons(p->ptrs.icmph->code);
         }
-
-        alertdata.sport_itype = htons(p->ptrs.sp);
-        alertdata.dport_icode = htons(p->ptrs.dp);
+        else
+        {
+            alertdata.sport_itype = htons(p->ptrs.sp);
+            alertdata.dport_icode = htons(p->ptrs.dp);
+        }
 
         if ( p->proto_bits & PROTO_BIT__MPLS )
             alertdata.mpls_label = htonl(p->ptrs.mplsHdr.label);

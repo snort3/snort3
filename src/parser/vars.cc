@@ -511,8 +511,7 @@ VarEntry* VarDefine(
     /* Check if this is a variable that stores an IP */
     else if (*value == '$')
     {
-        sfip_var_t* var;
-        if ((var = sfvt_lookup_var(ip_vartable, value)) != nullptr)
+        if ( sfvt_lookup_var(ip_vartable, value) )
         {
             sfvt_define(ip_vartable, name, value);
             return nullptr;

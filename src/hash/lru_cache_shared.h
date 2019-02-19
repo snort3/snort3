@@ -149,7 +149,7 @@ bool LruCacheShared<Key, Data, Hash>::set_max_size(size_t newsize)
 {
     LruListIter list_iter;
 
-    if (newsize <= 0)
+    if (newsize == 0)
         return false;   //  Not allowed to set size to zero.
 
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
