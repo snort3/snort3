@@ -1,11 +1,10 @@
 # Snort++
 
-The Snort++ project has been hard at work for a while now and we have
-released the fourth alpha of the next generation Snort IPS (Intrusion
-Prevention System).  This file will show you what Snort++ has to offer and
-guide you through the steps from download to demo.  If you are unfamiliar
-with Snort you should take a look at the Snort documentation first. We will
-cover the following topics:
+Snort 3 is the next generation Snort IPS (Intrusion Prevention System).
+This file will show you what Snort++ has to offer and guide you through the
+steps from download to demo.  If you are unfamiliar with Snort you should
+take a look at the Snort documentation first. We will cover the following
+topics:
 
 ---
 
@@ -25,8 +24,7 @@ below:
 
     Project = Snort++
     Binary = snort
-    Version = 3.0.0-a4 build 235
-    Base = 2.9.8 build 383
+    Version = 3.0.0 (Build 250) from 2.9.11
 
 Here are some key features of Snort++:
 
