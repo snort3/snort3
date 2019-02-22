@@ -299,5 +299,8 @@ ACShellCmd::~ACShellCmd()
     ControlConn* control = (control_fd >= 0)? (ControlMgmt::find_control(control_fd) ) : nullptr;
 
     if( control )
+    {
+        control->send_queued_response();
         control->unblock();
+    }
 }

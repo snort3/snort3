@@ -32,7 +32,7 @@ public:
     bool read(int&);
     const char* get() { return read_buf; }
     bool write_response(const char* s) const;
-    void respond(const char* s, bool queue_response = false);
+    void respond(const char* s, bool queue_response = false, bool remote_only = false);
 #ifdef SHELL
     void send_queued_response();
 #endif

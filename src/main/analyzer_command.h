@@ -23,6 +23,7 @@
 #include "main/snort_types.h"
 
 class Analyzer;
+class Request;
 class Swapper;
 
 class AnalyzerCommand
@@ -98,12 +99,14 @@ class ACSwap : public AnalyzerCommand
 {
 public:
     ACSwap() = delete;
-    ACSwap(Swapper* ps);
+    ACSwap(Swapper* ps, Request* req, bool from_shell);
     void execute(Analyzer&) override;
     const char* stringify() override { return "SWAP"; }
     ~ACSwap() override;
 private:
     Swapper *ps;
+    Request* request;
+    bool from_shell;
 };
 
 class ACDAQSwap : public AnalyzerCommand

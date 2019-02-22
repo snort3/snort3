@@ -84,11 +84,15 @@ bool Request::write_response(const char* s) const
 
 // FIXIT-L supporting only simple strings for now
 // could support var args formats
-void Request::respond(const char* s, bool queue_response)
+void Request::respond(const char* s, bool queue_response, bool remote_only)
 {
+    if (remote_only && (fd == STDOUT_FILENO))
+        return;
+ 
     if ( fd < 1 )
     {
-        snort::LogMessage("%s", s);
+        if (!remote_only)
+            snort::LogMessage("%s", s);
         return;
     }
 

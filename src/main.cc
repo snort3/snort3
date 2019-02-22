@@ -345,7 +345,7 @@ int main_reload_config(lua_State* L)
 
     bool from_shell = ( L != nullptr );
     current_request->respond(".. swapping configuration\n", from_shell);
-    main_broadcast_command(new ACSwap(new Swapper(old, sc, old_tc, tc)), from_shell);
+    main_broadcast_command(new ACSwap(new Swapper(old, sc, old_tc, tc), current_request, from_shell), from_shell);
 
     return 0;
 }
@@ -386,7 +386,7 @@ int main_reload_policy(lua_State* L)
 
     bool from_shell = ( L != nullptr );
     current_request->respond(".. swapping policy\n", from_shell);
-    main_broadcast_command(new ACSwap(new Swapper(old, sc)), from_shell);
+    main_broadcast_command(new ACSwap(new Swapper(old, sc), current_request, from_shell), from_shell);
 
     return 0;
 }
@@ -427,7 +427,7 @@ int main_reload_module(lua_State* L)
 
     bool from_shell = ( L != nullptr );
     current_request->respond(".. swapping module\n", from_shell);
-    main_broadcast_command(new ACSwap(new Swapper(old, sc)), from_shell);
+    main_broadcast_command(new ACSwap(new Swapper(old, sc), current_request, from_shell), from_shell);
 
     return 0;
 }
@@ -474,7 +474,7 @@ int main_reload_hosts(lua_State* L)
 
     bool from_shell = ( L != nullptr );
     current_request->respond(".. swapping hosts table\n", from_shell);
-    main_broadcast_command(new ACSwap(new Swapper(old, tc)), from_shell);
+    main_broadcast_command(new ACSwap(new Swapper(old, tc), current_request, from_shell), from_shell);
 
     return 0;
 }
@@ -515,7 +515,7 @@ int main_delete_inspector(lua_State* L)
 
     bool from_shell = ( L != nullptr );
     current_request->respond(".. deleted inspector\n", from_shell);
-    main_broadcast_command(new ACSwap(new Swapper(old, sc)), from_shell);
+    main_broadcast_command(new ACSwap(new Swapper(old, sc), current_request, from_shell), from_shell);
 
     return 0;
 }
