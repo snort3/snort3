@@ -50,28 +50,34 @@ namespace
 
 struct Tracker
 {
-    size_t allocated = 0;
-    size_t deallocated = 0;
+    size_t used_memory = 0;
 
     uint64_t allocations = 0;
     uint64_t deallocations = 0;
 
     void allocate(size_t n)
-    { allocated += n; ++allocations; }
+    {
+        used_memory += n;
+        ++allocations;
+    }
 
     void deallocate(size_t n)
-    { deallocated += n; ++deallocations; }
+    {
+        // FIXIT-H If memory is allocated in one thread and passed to another thread,
+        // when it is freed, we may have (used_memory < memory_to_be_freed)
+        // Following assertion will fail.
+        //assert(n <= used_memory);
+
+        if(n > used_memory)
+            return;
+
+        used_memory -= n;
+        ++deallocations;
+    }
 
     size_t used() const
     {
-        // FIXIT-H this assertion fails at analyzer.cc:93 / starting packet thread
-        // {allocated = 0, deallocated = 48, allocations = 0, deallocations = 1}
-        //assert(allocated >= deallocated);
-
-        if ( allocated < deallocated )
-            return 0;
-
-        return allocated - deallocated;
+        return used_memory;
     }
 
     constexpr Tracker() = default;
@@ -93,10 +99,10 @@ inline bool free_space(size_t requested, size_t cap, Tracker& trk, Handler& hand
 
     auto used = trk.used();
 
-    if ( used + requested <= cap )
+    if ( requested <= cap - used )
         return true;
 
-    while ( used + requested > cap )
+    while ( requested > cap - used )
     {
         handler();
 
@@ -311,6 +317,15 @@ TEST_CASE( "memory cap free space", "[memory]" )
         CHECK_FALSE( memory::free_space(1, 1024, tracker, handler) );
         CHECK( handler.calls == 1 );
     }
+
+    SECTION( "free_space() does not rollover" )
+    {
+        MockTracker tracker { SIZE_MAX };
+        HandlerSpy handler { -5, tracker };
+        CHECK( memory::free_space(1, SIZE_MAX, tracker, handler) );
+        CHECK( handler.calls == 1 );
+    }
+
 }
 
 #endif
