@@ -454,7 +454,7 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
     if ( asd.service_search_state == SESSION_SERVICE_SEARCH_STATE::START )
     {
         asd.service_search_state = SESSION_SERVICE_SEARCH_STATE::PORT;
-        sds = AppIdServiceState::add(ip, proto, port, asd.is_decrypted());
+        sds = AppIdServiceState::add(ip, proto, port, asd.is_decrypted(), true);
         sds->set_reset_time(0);
         SERVICE_ID_STATE sds_state = sds->get_state();
 
@@ -553,7 +553,7 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
          !asd.service_detector and ( dir == APP_ID_FROM_RESPONDER ) ) )
     {
         if (!sds)
-            sds = AppIdServiceState::add(ip, proto, port, asd.is_decrypted());
+            sds = AppIdServiceState::add(ip, proto, port, asd.is_decrypted(), true);
         // Don't log this if fail service is not due to empty list
         if (appidDebug->is_active() and !(got_fail_service and asd.service_detector))
             LogMessage("AppIdDbg %s No service %s\n", appidDebug->get_debug_session(),
@@ -574,7 +574,7 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
             tmp_ip = p->ptrs.ip_api.get_src();
 
         if (!sds)
-            sds = AppIdServiceState::add(ip, proto, port, asd.is_decrypted());
+            sds = AppIdServiceState::add(ip, proto, port, asd.is_decrypted(), true);
 
         if (got_incompatible_service)
             sds->update_service_incompatiable(tmp_ip);
@@ -774,7 +774,7 @@ int ServiceDiscovery::incompatible_data(AppIdSession& asd, const Packet* pkt, Ap
     const SfIp* ip = pkt->ptrs.ip_api.get_src();
     uint16_t port = asd.service_port ? asd.service_port : pkt->ptrs.sp;
     ServiceDiscoveryState* sds = AppIdServiceState::add(ip, asd.protocol, port,
-        asd.is_decrypted());
+        asd.is_decrypted());     // do not touch here
     sds->set_service(service);
     sds->set_reset_time(0);
     if ( !asd.service_ip.is_set() )
@@ -835,5 +835,5 @@ int ServiceDiscovery::fail_service(AppIdSession& asd, const Packet* pkt, AppidSe
 void ServiceDiscovery::release_thread_resources()
 {
     for (auto detectors : service_detector_list)
-	    detectors->release_thread_resources();
+        detectors->release_thread_resources();
 }

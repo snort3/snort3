@@ -26,6 +26,8 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
+#include <vector>
+
 namespace snort
 {
 // Stubs for logs
@@ -181,6 +183,44 @@ TEST(service_state_tests, set_service_id_failed_with_valid)
     sds.set_service_id_failed(asd, &client_ip, 0);
     sds.set_service_id_failed(asd, &client_ip, 0);
     CHECK_TRUE(sds.get_state() == SERVICE_ID_STATE::VALID);
+}
+
+TEST(service_state_tests, service_cache)
+{
+    size_t num_entries = 10, max_entries = 3;
+    size_t memcap = max_entries*MapList::sz;
+    MapList ServiceCache(memcap);
+
+    IpProtocol proto = IpProtocol::TCP;
+    uint16_t port = 3000;
+    SfIp ip;
+    ip.set("10.10.0.1");
+
+    Val_t* ss = nullptr;
+    std::vector<Val_t*> ssvec;
+        
+    // Insert past the memcap, and check the memcap is not exceeded:
+    for( size_t i = 1; i <= num_entries; i++, port++ )
+    {
+        ss = ServiceCache.add( Key_t(&ip, proto, port, 0) );
+        CHECK_TRUE(ServiceCache.size() == ( i <= max_entries ? i : max_entries));
+        ssvec.push_back(ss);
+    }
+
+    // The cache should now be port 8, 9, 10
+    Queue_t::iterator it = ServiceCache.newest();
+    std::vector<Val_t*>::iterator vit = --ssvec.end();
+    for( size_t i=0; i<max_entries; i++, --it, --vit )
+    {
+        Map_t::iterator mit = *it;
+        CHECK_TRUE( mit->second == *vit );
+    }
+        
+    // Now get an entry in the cache and check that it got touched:
+    port -= 1;
+    ss = ServiceCache.get( Key_t(&ip, proto, port, 0) );
+    CHECK_TRUE( ss != nullptr );
+    CHECK_TRUE( ss->qptr == ServiceCache.newest() );
 }
 
 int main(int argc, char** argv)

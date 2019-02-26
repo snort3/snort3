@@ -156,7 +156,7 @@ void AppIdInspector::tinit()
     AppIdStatistics::initialize_manager(*config);
     appid_forecast_tinit();
     LuaDetectorManager::initialize(*active_config);
-    AppIdServiceState::initialize();
+    AppIdServiceState::initialize(config->memcap);
     appidDebug = new AppIdDebug();
     if (active_config->mod_config and active_config->mod_config->log_all_sessions)
         appidDebug->set_enabled(true);

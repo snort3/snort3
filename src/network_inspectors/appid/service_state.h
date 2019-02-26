@@ -22,6 +22,9 @@
 #ifndef SERVICE_STATE_H
 #define SERVICE_STATE_H
 
+#include <list>
+#include <map>
+
 #include "protocols/protocol_ids.h"
 #include "sfip/sf_ip.h"
 
@@ -29,6 +32,16 @@
 #include "utils/util.h"
 
 class ServiceDetector;
+
+class AppIdServiceStateKey;
+class ServiceDiscoveryState;
+
+typedef AppIdServiceStateKey Key_t;
+typedef ServiceDiscoveryState Val_t;
+
+typedef std::map<Key_t, Val_t*> Map_t;
+typedef std::list<Map_t::iterator> Queue_t;
+
 
 enum SERVICE_ID_STATE
 {
@@ -110,6 +123,8 @@ public:
         reset_time = resetTime;
     }
 
+    Queue_t::iterator qptr; // Our place in service_state_queue
+
 private:
     SERVICE_ID_STATE state;
     ServiceDetector* service = nullptr;
@@ -133,15 +148,164 @@ private:
 class AppIdServiceState
 {
 public:
-    static void initialize();
+    static void initialize(size_t memcap = 0);
     static void clean();
-    static ServiceDiscoveryState* add(const snort::SfIp*, IpProtocol, uint16_t port, bool decrypted);
-    static ServiceDiscoveryState* get(const snort::SfIp*, IpProtocol, uint16_t port, bool decrypted);
+    static ServiceDiscoveryState* add(const snort::SfIp*, IpProtocol, uint16_t port, bool decrypted, bool do_touch = false);
+    static ServiceDiscoveryState* get(const snort::SfIp*, IpProtocol, uint16_t port, bool decrypted, bool do_touch = false);
     static void remove(const snort::SfIp*, IpProtocol, uint16_t port, bool decrypted);
     static void check_reset(AppIdSession& asd, const snort::SfIp* ip, uint16_t port);
 
     static void dump_stats();
 };
 
-#endif
 
+class AppIdServiceStateKey
+{
+public:
+    AppIdServiceStateKey()
+    {
+        ip.clear();
+        port = 0;
+        level = 0;
+        proto = IpProtocol::PROTO_NOT_SET;
+        padding[0] = padding[1] = padding[2] = 0;
+    }
+
+    AppIdServiceStateKey(const snort::SfIp* ip_in,
+        IpProtocol proto_in, uint16_t port_in, bool decrypted)
+    {
+        ip.set(*ip_in);
+        port = port_in;
+        level = decrypted != 0;
+        proto = proto_in;
+        padding[0] = padding[1] = padding[2] = 0;
+    }
+
+    bool operator<(AppIdServiceStateKey right) const
+    {
+        if ( ip.less_than(right.ip) )
+            return true;
+        else if ( right.ip.less_than(ip) )
+            return false;
+        else
+        {
+            if ( port < right.port )
+                return true;
+            else if ( right.port < port )
+                return false;
+            else if ( proto < right.proto )
+                return true;
+            else if ( right.proto < proto )
+                return false;
+            else if ( level < right.level )
+                return true;
+            else
+                return false;
+        }
+    }
+
+private:
+    snort::SfIp ip;
+    uint16_t port;
+    uint32_t level;
+    IpProtocol proto;
+    char padding[3];
+};
+
+
+class MapList
+{
+public:
+
+    MapList(size_t cap) : memcap(cap), mem_used(0) {}
+
+    ~MapList()
+    {
+        for ( auto& kv : m )
+            delete kv.second;
+    }
+
+    Val_t* add(const Key_t& k, bool do_touch = false)
+    {
+        Val_t* ss = nullptr;
+
+        Map_t::iterator it = m.find(k);
+        if ( it == m.end() )
+        {
+            // Prune the map to make room for the new sds if memcap is hit
+            if ( mem_used + sz > memcap )
+                remove( q.front() );
+
+            ss = new Val_t;
+
+            std::pair<Map_t::iterator, bool> sit = m.emplace(std::make_pair(k,ss));
+            q.emplace_back(sit.first);
+            mem_used += sz;
+            ss->qptr = --q.end(); // remember our place in the queue
+        }
+        else {
+            ss = it->second;
+            if ( do_touch )
+                touch(ss->qptr);
+        }
+        
+        return ss;
+    }
+
+    Val_t* get(const Key_t& k, bool do_touch = 0)
+    {
+        Map_t::const_iterator it = m.find(k);
+        if ( it != m.end() ) {
+            if ( do_touch )
+                touch(it->second->qptr);
+            return it->second;
+        }
+        return nullptr;
+    }
+
+    bool remove(Map_t::iterator it)
+    {
+        if ( it != m.end() )
+        {
+            mem_used -= sz;
+            q.erase(it->second->qptr);  // remove from queue
+            delete it->second;
+            m.erase(it);                // then from cache
+            return true;
+        }
+        return false;
+    }
+
+    Map_t::iterator find(const Key_t& k)
+    {
+        return m.find(k);
+    }
+
+    void touch(Queue_t::iterator& qptr)
+    {
+        // If we don't already have the highest priority...
+        if ( *qptr != q.back() )
+        {
+            q.emplace_back(*qptr);
+            q.erase(qptr);
+            qptr = --q.end();
+        }
+    }
+
+    size_t size() const { return m.size(); }
+
+    Queue_t::iterator newest() { return --q.end(); }
+    Queue_t::iterator oldest() { return q.begin(); }
+    Queue_t::iterator end() { return q.end(); }
+
+    // how much memory we add when we put an SDS in the cache:
+    static const size_t sz;
+
+private:
+    Map_t m;
+    Queue_t q;
+    size_t memcap;
+    size_t mem_used;
+};
+
+#endif

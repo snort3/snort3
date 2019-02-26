@@ -78,12 +78,12 @@ bool AppInfoManager::configured()
 { return false; }
 
 // Stubs for service_state.h
-ServiceDiscoveryState* AppIdServiceState::get(SfIp const*, IpProtocol, unsigned short, bool)
+ServiceDiscoveryState* AppIdServiceState::get(SfIp const*, IpProtocol, unsigned short, bool, bool)
 {
   return nullptr;
 }
 
-ServiceDiscoveryState* AppIdServiceState::add(SfIp const*, IpProtocol, unsigned short, bool)
+ServiceDiscoveryState* AppIdServiceState::add(SfIp const*, IpProtocol, unsigned short, bool, bool)
 {
   return nullptr;
 }
@@ -115,4 +115,3 @@ void mock_cleanup_appid_pegs()
 THREAD_LOCAL AppIdStats appid_stats;
 
 #endif
-

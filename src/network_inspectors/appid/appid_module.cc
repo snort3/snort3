@@ -60,8 +60,8 @@ static const Parameter s_params[] =
     { "first_decrypted_packet_debug", Parameter::PT_INT, "0:max32", "0",
       "the first packet of an already decrypted SSL flow (debug single session only)" },
 #endif
-    { "memcap", Parameter::PT_INT, "0:maxSZ", "0",
-      "disregard - not implemented" },  // FIXIT-M implement or delete appid.memcap
+    { "memcap", Parameter::PT_INT, "1024:maxSZ", "1048576",
+      "max size of the service cache before we start pruning the cache" },
     { "log_stats", Parameter::PT_BOOL, nullptr, "false",
       "enable logging of appid statistics" },
     { "app_stats_period", Parameter::PT_INT, "1:max32", "300",

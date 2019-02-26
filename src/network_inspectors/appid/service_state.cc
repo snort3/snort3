@@ -25,6 +25,7 @@
 
 #include "service_state.h"
 
+#include <list>
 #include <map>
 
 #include "log/messages.h"
@@ -36,6 +37,12 @@
 #include "service_plugins/service_detector.h"
 
 using namespace snort;
+
+static THREAD_LOCAL MapList* service_state_cache = nullptr;
+
+
+const size_t MapList::sz = sizeof(Val_t) +
+    sizeof(Map_t::value_type) + sizeof(Queue_t::value_type);
 
 ServiceDiscoveryState::ServiceDiscoveryState()
 {
@@ -186,129 +193,35 @@ void ServiceDiscoveryState::update_service_incompatiable(const SfIp* ip)
     }
 }
 
-class AppIdServiceStateKey
+
+void AppIdServiceState::initialize(size_t memcap)
 {
-public:
-    AppIdServiceStateKey()
-    {
-        ip.clear();
-        port = 0;
-        level = 0;
-        proto = IpProtocol::PROTO_NOT_SET;
-        padding[0] = padding[1] = padding[2] = 0;
-    }
-
-    bool operator<(AppIdServiceStateKey right) const
-    {
-        if ( ip.less_than(right.ip) )
-            return true;
-        else if ( right.ip.less_than(ip) )
-            return false;
-        else
-        {
-            if ( port < right.port )
-                return true;
-            else if ( right.port < port )
-                return false;
-            else if ( proto < right.proto )
-                return true;
-            else if ( right.proto < proto )
-                return false;
-            else if ( level < right.level )
-                return true;
-            else
-                return false;
-        }
-    }
-
-    SfIp ip;
-    uint16_t port;
-    uint32_t level;
-    IpProtocol proto;
-    char padding[3];
-};
-
-static THREAD_LOCAL std::map<AppIdServiceStateKey, ServiceDiscoveryState*>* service_state_cache =
-    nullptr;
-
-void AppIdServiceState::initialize()
-{
-    service_state_cache = new std::map<AppIdServiceStateKey, ServiceDiscoveryState*>;
+    service_state_cache = new MapList(memcap);
 }
 
 void AppIdServiceState::clean()
 {
-    if ( service_state_cache )
-    {
-        for ( auto& kv : *service_state_cache )
-            delete kv.second;
-
-        service_state_cache->clear();
-        delete service_state_cache;
-        service_state_cache = nullptr;
-    }
+    delete service_state_cache;
 }
 
 ServiceDiscoveryState* AppIdServiceState::add(const SfIp* ip, IpProtocol proto, uint16_t port,
-    bool decrypted)
+    bool decrypted, bool do_touch)
 {
-    AppIdServiceStateKey ssk;
-    ServiceDiscoveryState* ss = nullptr;
-
-    ssk.ip.set(*ip);
-    ssk.proto = proto;
-    ssk.port = port;
-    ssk.level = decrypted ? 1 : 0;
-
-    std::map<AppIdServiceStateKey, ServiceDiscoveryState*>::iterator it;
-    it = service_state_cache->find(ssk);
-    if ( it == service_state_cache->end() )
-    {
-        ss = new ServiceDiscoveryState;
-        (*service_state_cache)[ssk] = ss;
-    }
-    else
-        ss = it->second;
-
-    return ss;
+    return service_state_cache->add( AppIdServiceStateKey(ip, proto, port, decrypted), do_touch );
 }
 
 ServiceDiscoveryState* AppIdServiceState::get(const SfIp* ip, IpProtocol proto, uint16_t port,
-    bool decrypted)
+    bool decrypted, bool do_touch)
 {
-    AppIdServiceStateKey ssk;
-    ServiceDiscoveryState* ss = nullptr;
-
-    ssk.ip.set(*ip);
-    ssk.proto = proto;
-    ssk.port = port;
-    ssk.level = decrypted ? 1 : 0;
-
-    std::map<AppIdServiceStateKey, ServiceDiscoveryState*>::iterator it;
-    it = service_state_cache->find(ssk);
-    if ( it != service_state_cache->end() )
-        ss = it->second;
-
-    return ss;
+    return service_state_cache->get( AppIdServiceStateKey(ip, proto, port, decrypted), do_touch);
 }
 
 void AppIdServiceState::remove(const SfIp* ip, IpProtocol proto, uint16_t port, bool decrypted)
 {
-    AppIdServiceStateKey ssk;
+    AppIdServiceStateKey ssk(ip, proto, port, decrypted);
+    Map_t::iterator it = service_state_cache->find(ssk);
 
-    ssk.ip.set(*ip);
-    ssk.proto = proto;
-    ssk.port = port;
-    ssk.level = decrypted ? 1 : 0;
-
-    std::map<AppIdServiceStateKey, ServiceDiscoveryState*>::iterator it;
-    it = service_state_cache->find(ssk);
-    if ( it != service_state_cache->end() )
-    {
-        delete it->second;
-        service_state_cache->erase(it);
-    }
-    else
+    if ( !service_state_cache->remove(it) )
     {
         char ipstr[INET6_ADDRSTRLEN];
 
@@ -354,4 +267,3 @@ void AppIdServiceState::dump_stats()
     }
 #endif
 }
-
