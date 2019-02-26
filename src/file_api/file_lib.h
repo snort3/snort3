@@ -76,6 +76,7 @@ public:
     // Preserve the file in memory until it is released
     // The file reserved will be returned and it will be detached from file context/session
     FileCaptureState reserve_file(FileCapture*& dest);
+    int64_t get_max_file_capture_size();
 
     FileState get_file_state() { return file_state; }
 

@@ -251,6 +251,11 @@ FileCaptureState FileInfo::reserve_file(FileCapture*& dest)
     return state;
 }
 
+int64_t FileInfo::get_max_file_capture_size()
+{
+    return (file_capture ? file_capture->get_max_file_capture_size() : 0);
+}
+
 FileContext::FileContext ()
 {
     file_type_context = nullptr;

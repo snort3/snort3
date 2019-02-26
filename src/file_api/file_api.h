@@ -112,8 +112,6 @@ struct FileState
     FileSigState sig_state;
 };
 
-struct FileCaptureInfo;
-
 namespace snort
 {
 #define FILE_ID_MAX          1024

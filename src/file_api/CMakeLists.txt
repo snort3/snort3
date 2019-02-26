@@ -1,6 +1,7 @@
 
 set( FILE_API_INCLUDES
     file_api.h
+    file_capture.h
     file_config.h
     file_flows.h
     file_identifier.h 
@@ -16,7 +17,6 @@ add_library ( file_api OBJECT
     circular_buffer.cc 
     circular_buffer.h
     file_capture.cc
-    file_capture.h
     file_cache.cc
     file_cache.h
     file_config.cc 

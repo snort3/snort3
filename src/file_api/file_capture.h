@@ -50,7 +50,7 @@ struct FileCaptureBlock
     FileCaptureBlock* next;  /* next block of file data */
 };
 
-class FileCapture
+class SO_PUBLIC FileCapture
 {
 public:
     FileCapture(int64_t capture_min_size, int64_t capture_max_size);
@@ -92,6 +92,10 @@ public:
     static int64_t get_block_size() { return capture_block_size; }
 
     snort::FileInfo* get_file_info() { return file_info; }
+
+    int64_t get_max_file_capture_size() { return capture_max_size; }
+    int64_t get_file_capture_size() { return capture_size; }
+    void get_file_reset() { current_block = head; }
 
 private:
 
