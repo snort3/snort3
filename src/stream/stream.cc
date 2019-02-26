@@ -295,18 +295,10 @@ void Stream::drop_traffic(const Packet* p, char dir)
         return;
 
     if ((dir & SSN_DIR_FROM_CLIENT) && !(flow->ssn_state.session_flags & SSNFLAG_DROP_CLIENT))
-    {
         flow->ssn_state.session_flags |= SSNFLAG_DROP_CLIENT;
-        if ( p->active->packet_force_dropped() )
-            flow->ssn_state.session_flags |= SSNFLAG_FORCE_BLOCK;
-    }
 
     if ((dir & SSN_DIR_FROM_SERVER) && !(flow->ssn_state.session_flags & SSNFLAG_DROP_SERVER))
-    {
         flow->ssn_state.session_flags |= SSNFLAG_DROP_SERVER;
-        if ( p->active->packet_force_dropped() )
-            flow->ssn_state.session_flags |= SSNFLAG_FORCE_BLOCK;
-    }
 }
 
 void Stream::block_flow(const Packet* p)
