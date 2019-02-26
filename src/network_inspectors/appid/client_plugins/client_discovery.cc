@@ -305,7 +305,10 @@ int ClientDiscovery::get_detector_candidates_list(AppIdSession& asd, Packet* p, 
     return APPID_SESSION_SUCCESS;
 }
 
-int ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p,
+// This function sets the client discovery state to APPID_DISCO_STATE_FINISHED
+// on anything the client candidates return (including e.g. APPID_ENULL, etc.),
+// except on APPID_INPROCESS, in which case the discovery state remains unchanged.
+void ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p,
     AppidSessionDirection direction, AppidChangeBits& change_bits)
 {
     int ret = APPID_INPROCESS;
@@ -332,7 +335,6 @@ int ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p,
 
             if (result == APPID_SUCCESS)
             {
-                ret = APPID_SUCCESS;
                 asd.client_detector = kv->second;
                 asd.client_candidates.clear();
                 break;
@@ -342,10 +344,19 @@ int ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p,
             else
                 ++kv;
         }
-        // FIXIT-M - Set client as detected/finished when all candidates fails/empty, US#348064
+
+        // At this point, candidates that have survived must have returned
+        // either APPID_SUCCESS or APPID_INPROCESS. The others got removed
+        // from the candidates list. If the list is empty, say we're done.
+        if (asd.client_candidates.empty())
+        {
+            ret = APPID_SUCCESS;
+            asd.set_client_detected();
+        }
     }
 
-    return ret;
+    if (ret != APPID_INPROCESS)
+        asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
 }
 
 bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p,
@@ -411,26 +422,16 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p,
 
     if ( asd.client_disco_state == APPID_DISCO_STATE_DIRECT )
     {
-        int ret = APPID_INPROCESS;
         if ( direction == APP_ID_FROM_INITIATOR )
         {
             /* get out if we've already tried to validate a client app */
             if (!asd.is_client_detected() )
-                ret = exec_client_detectors(asd, p, direction, change_bits);
+                exec_client_detectors(asd, p, direction, change_bits);
         }
         else if ( asd.service_disco_state != APPID_DISCO_STATE_STATEFUL
             && asd.get_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS) )
         {
-            ret = exec_client_detectors(asd, p, direction, change_bits);
-        }
-
-        switch (ret)
-        {
-        case APPID_INPROCESS:
-            break;
-        default:
-            asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
-            break;
+            exec_client_detectors(asd, p, direction, change_bits);
         }
     }
     else if ( asd.client_disco_state == APPID_DISCO_STATE_STATEFUL )
@@ -439,22 +440,15 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p,
         isTpAppidDiscoveryDone = true;
         if ( !asd.client_candidates.empty() )
         {
-            int ret = 0;
             if ( direction == APP_ID_FROM_INITIATOR )
             {
                 /* get out if we've already tried to validate a client app */
                 if (!asd.is_client_detected())
-                    ret = exec_client_detectors(asd, p, direction, change_bits);
+                    exec_client_detectors(asd, p, direction, change_bits);
             }
             else if ( asd.service_disco_state != APPID_DISCO_STATE_STATEFUL
                 && asd.get_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS) )
-                ret = exec_client_detectors(asd, p, direction, change_bits);
-
-            if ( ret < 0 )
-            {
-                asd.set_client_detected();
-                asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
-            }
+                exec_client_detectors(asd, p, direction, change_bits);
         }
         else
         {
@@ -472,4 +466,3 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p,
 
     return isTpAppidDiscoveryDone;
 }
-

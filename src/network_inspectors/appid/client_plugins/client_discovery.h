@@ -56,7 +56,7 @@ public:
 private:
     ClientDiscovery(AppIdInspector& ins);
     void initialize() override;
-    int exec_client_detectors(AppIdSession&, snort::Packet*,
+    void exec_client_detectors(AppIdSession&, snort::Packet*,
         AppidSessionDirection direction, AppidChangeBits& change_bits);
     ClientAppMatch* find_detector_candidates(const snort::Packet* pkt, IpProtocol);
     void create_detector_candidates_list(AppIdSession&, snort::Packet*);
