@@ -99,6 +99,9 @@ public:
     virtual TcpStreamTracker::TcpState get_listener_state()
     { return TcpStreamTracker::TCP_MAX_STATES; }
 
+    TcpStreamTracker::TcpState get_peer_state(TcpStreamTracker* me)
+    { return me == &client ? server.get_tcp_state() : client.get_tcp_state(); }
+
     virtual void init_new_tcp_session(TcpSegmentDescriptor&);
     virtual void update_timestamp_tracking(TcpSegmentDescriptor&) { }
     virtual void update_session_on_syn_ack();

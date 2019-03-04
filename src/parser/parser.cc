@@ -68,16 +68,6 @@ static std::string s_aux_rules;
 // private / implementation methods
 //-------------------------------------------------------------------------
 
-static void CreateDefaultRules(SnortConfig* sc)
-{
-    CreateRuleType(sc, Actions::get_string(Actions::LOG), Actions::LOG);
-    CreateRuleType(sc, Actions::get_string(Actions::PASS), Actions::PASS);
-    CreateRuleType(sc, Actions::get_string(Actions::ALERT), Actions::ALERT);
-    CreateRuleType(sc, Actions::get_string(Actions::DROP), Actions::DROP);
-    CreateRuleType(sc, Actions::get_string(Actions::BLOCK), Actions::BLOCK);
-    CreateRuleType(sc, Actions::get_string(Actions::RESET), Actions::RESET);
-}
-
 static void FreeRuleTreeNodes(SnortConfig* sc)
 {
     RuleTreeNode* rtn;
@@ -397,8 +387,6 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname, boo
     if ( !fname )
         fname = "";
 
-    CreateDefaultRules(sc);
-
     sc->port_tables = PortTablesNew();
 
     OtnInit(sc);
@@ -654,30 +642,22 @@ void PrintRuleOrder(RuleListNode* rule_lists)
     printRuleListOrder(rule_lists);
 }
 
-/****************************************************************************
- *
- * Function: OrderRuleLists
- *
- * Purpose: Orders the rule lists into the specified order.
- *
- * Returns: void function
- *
- ***************************************************************************/
-void OrderRuleLists(SnortConfig* sc, const char* order)
+void OrderRuleLists(SnortConfig* sc)
 {
-    int i;
     int evalIndex = 0;
     RuleListNode* ordered_list = nullptr;
-    RuleListNode* node;
-    char** toks;
+
+    const char* order = sc->rule_order.c_str();
+    if ( !*order )
+        order = "pass drop alert log";  // FIXIT-H apply builtin module defaults
+
     int num_toks;
+    char** toks = mSplit(order, " \t", 0, &num_toks, 0);
 
-    toks = mSplit(order, " \t", 0, &num_toks, 0);
-
-    for ( i = 0; i < num_toks; i++ )
+    for ( int i = 0; i < num_toks; i++ )
     {
         RuleListNode* prev = nullptr;
-        node = sc->rule_lists;
+        RuleListNode* node = sc->rule_lists;
 
         while (node != nullptr)
         {
@@ -688,10 +668,8 @@ void OrderRuleLists(SnortConfig* sc, const char* order)
                 else
                     prev->next = node->next;
 
-                /* Add node to ordered list */
                 ordered_list = addNodeToOrderedList(ordered_list, node, evalIndex++);
-                sc->evalOrder[node->mode] =  evalIndex;
-
+                sc->evalOrder[node->mode] = evalIndex;
                 break;
             }
             else
@@ -700,13 +678,7 @@ void OrderRuleLists(SnortConfig* sc, const char* order)
                 node = node->next;
             }
         }
-
-        if ( node == nullptr )
-        {
-            ParseError("ruletype '%s' does not exist or "
-                "has already been ordered.", toks[i]);
-            return;
-        }
+        // ignore rule types that aren't in use
     }
 
     mSplitFree(&toks, num_toks);
@@ -714,14 +686,12 @@ void OrderRuleLists(SnortConfig* sc, const char* order)
     /* anything left in the rule lists needs to be moved to the ordered lists */
     while (sc->rule_lists != nullptr)
     {
-        node = sc->rule_lists;
+        RuleListNode* node = sc->rule_lists;
         sc->rule_lists = node->next;
-        /* Add node to ordered list */
         ordered_list = addNodeToOrderedList(ordered_list, node, evalIndex++);
         sc->evalOrder[node->mode] =  evalIndex;
     }
 
-    /* set the rulelists to the ordered list */
     sc->rule_lists = ordered_list;
 }
 

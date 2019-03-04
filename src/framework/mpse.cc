@@ -55,7 +55,7 @@ int Mpse::search(
     const unsigned char* T, int n, MpseMatch match,
     void* context, int* current_state)
 {
-    Profile profile(mpsePerfStats);
+    DeepProfile profile(mpsePerfStats);
     pmqs.matched_bytes += n;
     return _search(T, n, match, context, current_state);
 }
@@ -64,7 +64,7 @@ int Mpse::search_all(
     const unsigned char* T, int n, MpseMatch match,
     void* context, int* current_state)
 {
-    Profile profile(mpsePerfStats);
+    DeepProfile profile(mpsePerfStats);
     pmqs.matched_bytes += n;
     return _search(T, n, match, context, current_state);
 }

@@ -155,13 +155,15 @@ public:
     bool check_tags;
 
     static const unsigned buf_size = Codec::PKT_MAX;
+
+    // FIXIT-L eliminate max_ips_id and just resize data vector.
     // Only 5 inspectors currently use the ips context data.
-    // FIXIT-L This limit should to be updated if any more inspectors/modules use it.
-    static constexpr unsigned max_ips_id = 32;
+    static constexpr unsigned max_ips_id = 8;
 
 private:
     FlowSnapshot flow;
     std::vector<IpsContextData*> data;
+    std::vector<unsigned> ids_in_use;  // for indirection; FIXIT-P evaluate alternatives
     std::vector<Callback> post_callbacks;
     IpsContext* depends_on;
     IpsContext* next_to_process;

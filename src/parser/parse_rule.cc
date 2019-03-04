@@ -999,6 +999,12 @@ void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
     else
     {
         rtn.listhead = get_rule_list(sc, s);
+
+        if ( !rtn.listhead )
+        {
+            CreateRuleType(sc, s, rtn.type);
+            rtn.listhead = get_rule_list(sc, s);
+        }
     }
 
     if ( !rtn.listhead )

@@ -49,7 +49,7 @@ public:
     void purge_segment_list()
     { reassembler->purge_segment_list(trs); }
 
-    int purge_flushed_ackd()
+    void purge_flushed_ackd()
     { return reassembler->purge_flushed_ackd(trs); }
 
     int flush_stream(snort::Packet* p, uint32_t dir, bool final_flush = false)

@@ -68,8 +68,6 @@ public:
     uint16_t i_len;             // initial length of the data segment
     uint16_t c_len;             // length of data remaining for reassembly
     uint16_t offset;
-    uint16_t last_flush_len;
-    uint16_t urg_offset;
 };
 
 class TcpSegmentList
@@ -87,7 +85,7 @@ public:
             dump_me->term();
         }
 
-        head = tail = cur_rseg = nullptr;
+        head = tail = cur_rseg = cur_pseg = nullptr;
         count = 0;
         return i;
     }
@@ -137,6 +135,7 @@ public:
     TcpSegmentNode* head = nullptr;
     TcpSegmentNode* tail = nullptr;
     TcpSegmentNode* cur_rseg = nullptr;
+    TcpSegmentNode* cur_pseg = nullptr;
     uint32_t count = 0;
 };
 

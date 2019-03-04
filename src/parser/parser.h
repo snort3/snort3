@@ -45,7 +45,7 @@ snort::SnortConfig* ParseSnortConf(const snort::SnortConfig*, const char* fname 
     bool is_fatal = true);
 void ParseRules(snort::SnortConfig*);
 
-void OrderRuleLists(snort::SnortConfig*, const char*);
+void OrderRuleLists(snort::SnortConfig*);
 void PrintRuleOrder(RuleListNode*);
 
 char* ProcessFileOption(snort::SnortConfig*, const char*);

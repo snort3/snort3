@@ -110,30 +110,31 @@ public:
 class TcpCodec : public Codec
 {
 public:
-    TcpCodec() : Codec(CD_TCP_NAME)
-    {
-    }
-
+    TcpCodec() : Codec(CD_TCP_NAME) { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
+
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
         EncState&, Buffer&, Flow*) override;
+
     void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
         uint16_t lyr_len, uint32_t& updated_len) override;
+
     void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
 
 private:
+    bool valid_checksum4(const RawData&, DecodeData&);
+    bool valid_checksum6(const RawData&, const CodecData&, DecodeData&);
 
-    int OptLenValidate(const tcp::TcpOption* const opt,
-        const uint8_t* const end,
-        const int expected_len);
+    int validate_option(const tcp::TcpOption* const opt,
+        const uint8_t* const end, const int expected_len);
 
-    void DecodeTCPOptions(const uint8_t*, uint32_t, CodecData&, DecodeData&);
-    void TCPMiscTests(const tcp::TCPHdr* const tcph,
-        const DecodeData& snort,
-        const CodecData& codec);
+    void decode_options(const uint8_t*, uint32_t, CodecData&, DecodeData&);
+
+    void flag_tests(const tcp::TCPHdr* const tcph,
+        const DecodeData& snort, const CodecData& codec);
 };
 
 static sfip_var_t* SynToMulticastDstIp = nullptr;
@@ -144,6 +145,49 @@ void TcpCodec::get_protocol_ids(std::vector<ProtocolId>& v)
     v.emplace_back(ProtocolId::TCP);
 }
 
+bool TcpCodec::valid_checksum4(const RawData& raw, DecodeData& snort)
+{
+    const ip::IP4Hdr* ip4h = snort.ip_api.get_ip4h();
+
+    checksum::Pseudoheader ph;
+    ph.sip = ip4h->get_src();
+    ph.dip = ip4h->get_dst();
+    ph.zero = 0;
+    ph.protocol = ip4h->proto();
+    ph.len = htons((uint16_t)raw.len);
+
+    uint16_t csum = checksum::tcp_cksum((const uint16_t*)raw.data, raw.len, &ph);
+
+    if ( csum )
+    {
+        stats.bad_ip4_cksum++;
+        return false;
+    }
+    return true;
+}
+
+bool TcpCodec::valid_checksum6(
+    const RawData& raw, const CodecData& codec, DecodeData& snort)
+{
+    const ip::IP6Hdr* const ip6h = snort.ip_api.get_ip6h();
+
+    checksum::Pseudoheader6 ph6;
+    COPY4(ph6.sip, ip6h->get_src()->u6_addr32);
+    COPY4(ph6.dip, ip6h->get_dst()->u6_addr32);
+    ph6.zero = 0;
+    ph6.protocol = codec.ip6_csum_proto;
+    ph6.len = htons((uint16_t)raw.len);
+
+    uint16_t csum = checksum::tcp_cksum((const uint16_t*)raw.data, raw.len, &ph6);
+
+    if ( csum )
+    {
+        stats.bad_ip6_cksum++;
+        return false;
+    }
+    return true;
+}
+
 bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     if (raw.len < tcp::TCP_MIN_HEADER_LEN)
@@ -152,7 +196,6 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         return false;
     }
 
-    /* lay TCP on top of the data cause there is enough of it! */
     const tcp::TCPHdr* tcph = reinterpret_cast<const tcp::TCPHdr*>(raw.data);
     const uint16_t tcph_len = tcph->hlen();
 
@@ -168,101 +211,25 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         return false;
     }
 
-    /* Checksum code moved in front of the other decoder alerts.
-       If it's a bad checksum (maybe due to encrypted ESP traffic), the other
-       alerts could be false positives. */
     if ( SnortConfig::tcp_checksums() )
     {
-        uint16_t csum;
-        PegCount* bad_cksum_cnt;
+        bool valid;
 
         if (snort.ip_api.is_ip4())
-        {
-            bad_cksum_cnt = &(stats.bad_ip4_cksum);
-            checksum::Pseudoheader ph;
-            const ip::IP4Hdr* ip4h = snort.ip_api.get_ip4h();
-            ph.sip = ip4h->get_src();
-            ph.dip = ip4h->get_dst();
-            /* setup the pseudo header for checksum calculation */
-            ph.zero = 0;
-            ph.protocol = ip4h->proto();
-            ph.len = htons((uint16_t)raw.len);
-
-            /* if we're being "stateless" we probably don't care about the TCP
-             * checksum, but it's not bad to keep around for shits and giggles */
-            /* calculate the checksum */
-            csum = checksum::tcp_cksum((const uint16_t*)(tcph), raw.len, &ph);
-        }
-        /* IPv6 traffic */
+            valid = valid_checksum4(raw, snort);
         else
-        {
-            bad_cksum_cnt = &(stats.bad_ip6_cksum);
-            checksum::Pseudoheader6 ph6;
-            const ip::IP6Hdr* const ip6h = snort.ip_api.get_ip6h();
-            COPY4(ph6.sip, ip6h->get_src()->u6_addr32);
-            COPY4(ph6.dip, ip6h->get_dst()->u6_addr32);
-            ph6.zero = 0;
-            ph6.protocol = codec.ip6_csum_proto;
-            ph6.len = htons((uint16_t)raw.len);
+            valid = valid_checksum6(raw, codec, snort);
 
-            csum = checksum::tcp_cksum((const uint16_t*)(tcph), raw.len, &ph6);
-        }
-
-        if (csum && !codec.is_cooked())
+        if (!valid)
         {
             if ( !(codec.codec_flags & CODEC_UNSURE_ENCAP) )
-            {
-                (*bad_cksum_cnt)++;
                 snort.decode_flags |= DECODE_ERR_CKSUM_TCP;
-            }
+
             return false;
         }
     }
 
-    if (tcph->are_flags_set(TH_FIN|TH_PUSH|TH_URG))
-    {
-        if (tcph->are_flags_set(TH_SYN|TH_ACK|TH_RST))
-            codec_event(codec, DECODE_TCP_XMAS);
-        else
-            codec_event(codec, DECODE_TCP_NMAP_XMAS);
-
-        // Allowing this packet for further processing
-        // (in case there is a valid data inside it).
-        /* return;*/
-    }
-
-    if (tcph->are_flags_set(TH_SYN))
-    {
-        /* check if only SYN is set */
-        if ( tcph->th_flags == TH_SYN )
-        {
-            if ((tcph->th_seq == naptha_seq) and (snort.ip_api.get_ip4h()->ip_id  == naptha_id))
-            {
-                codec_event(codec, DECODE_DOS_NAPTHA);
-            }
-        }
-
-        if ( SnortConfig::is_address_anomaly_check_enabled() )
-        {
-            if ( sfvar_ip_in(SynToMulticastDstIp, snort.ip_api.get_dst()) )
-                codec_event(codec, DECODE_SYN_TO_MULTICAST);
-        }
-
-        if ( (tcph->th_flags & TH_RST) )
-            codec_event(codec, DECODE_TCP_SYN_RST);
-
-        if ( (tcph->th_flags & TH_FIN) )
-            codec_event(codec, DECODE_TCP_SYN_FIN);
-    }
-    else
-    {   // we already know there is no SYN
-        if ( !(tcph->th_flags & (TH_ACK|TH_RST)) )
-            codec_event(codec, DECODE_TCP_NO_SYN_ACK_RST);
-    }
-
-    if ( (tcph->th_flags & (TH_FIN|TH_PUSH|TH_URG)) &&
-        !(tcph->th_flags & TH_ACK) )
-        codec_event(codec, DECODE_TCP_MUST_ACK);
+    flag_tests(tcph, snort, codec);
 
     /* if options are present, decode them */
     uint16_t tcp_opt_len = (uint16_t)(tcph->hlen() - tcp::TCP_MIN_HEADER_LEN);
@@ -270,20 +237,23 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     if (tcp_opt_len > 0)
     {
         const uint8_t* opts = (const uint8_t*)(raw.data + tcp::TCP_MIN_HEADER_LEN);
-        DecodeTCPOptions(opts, tcp_opt_len, codec, snort);
+        decode_options(opts, tcp_opt_len, codec, snort);
     }
     int dsize = raw.len - tcph->hlen();
+
     if (dsize < 0)
         dsize = 0;
 
-    if ( (tcph->th_flags & TH_URG) &&
-        ((dsize == 0) || tcph->urp() > dsize) )
+    if ( (tcph->th_flags & TH_URG) && ((dsize == 0) || tcph->urp() > dsize) )
         codec_event(codec, DECODE_TCP_BAD_URP);
 
     // Now that we are returning true, set the tcp header
-    codec.lyr_len = tcph_len - codec.invalid_bytes; // set in DecodeTCPOptions()
+    codec.lyr_len = tcph_len - codec.invalid_bytes;
     codec.proto_bits |= PROTO_BIT__TCP;
+
+    snort.set_pkt_type(PktType::TCP);
     snort.tcph = tcph;
+
     if ((raw.pkth->flags & DAQ_PKT_FLAG_REAL_ADDRESSES) and (codec.ip_layer_cnt == 1))
     {
         snort.sp = ntohs(raw.pkth->n_real_sPort);
@@ -294,23 +264,14 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         snort.sp = tcph->src_port();
         snort.dp = tcph->dst_port();
     }
-    snort.set_pkt_type(PktType::TCP);
 
-    TCPMiscTests(tcph, snort, codec);
+    if (snort.sp == 0 || snort.dp == 0)
+        codec_event(codec, DECODE_TCP_PORT_ZERO);
 
     return true;
 }
 
 /*
- * Function: DecodeTCPOptions()
- *
- * Purpose: Fairly self explainatory name, don't you think?
- *
- *          TCP Option Header length validation is left to the caller
- *
- *          For a good listing of TCP Options,
- *          http://www.iana.org/assignments/tcp-parameters
- *
  *   ------------------------------------------------------------
  *   From: "Kastenholz, Frank" <FKastenholz@unispherenetworks.com>
  *   Subject: Re: skeeter & bubba TCP options?
@@ -342,14 +303,8 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
  *    prepared to handle an illegal option length (e.g., zero) without
  *    crashing; a suggested procedure is to reset the connection and log
  *    the reason.
- *
- * Arguments: o_list => ptr to the option list
- *            o_len => length of the option list
- *            p     => pointer to decoded packet struct
- *
- * Returns: void function
  */
-void TcpCodec::DecodeTCPOptions(
+void TcpCodec::decode_options(
     const uint8_t* start, uint32_t o_len, CodecData& codec, DecodeData& snort)
 {
     const uint8_t* const end_ptr = start + o_len; /* points to byte after last option */
@@ -386,15 +341,15 @@ void TcpCodec::DecodeTCPOptions(
             break;
 
         case tcp::TcpOptCode::MAXSEG:
-            code = OptLenValidate(opt, end_ptr, TCPOLEN_MAXSEG);
+            code = validate_option(opt, end_ptr, TCPOLEN_MAXSEG);
             break;
 
         case tcp::TcpOptCode::SACKOK:
-            code = OptLenValidate(opt, end_ptr, TCPOLEN_SACKOK);
+            code = validate_option(opt, end_ptr, TCPOLEN_SACKOK);
             break;
 
         case tcp::TcpOptCode::WSCALE:
-            code = OptLenValidate(opt, end_ptr, TCPOLEN_WSCALE);
+            code = validate_option(opt, end_ptr, TCPOLEN_WSCALE);
             if (code == 0)
             {
                 if (((uint16_t)opt->data[0] > 14))
@@ -409,17 +364,17 @@ void TcpCodec::DecodeTCPOptions(
         case tcp::TcpOptCode::ECHO: /* both use the same lengths */
         case tcp::TcpOptCode::ECHOREPLY:
             obsolete_option_found = true;
-            code = OptLenValidate(opt, end_ptr, TCPOLEN_ECHO);
+            code = validate_option(opt, end_ptr, TCPOLEN_ECHO);
             break;
 
         case tcp::TcpOptCode::MD5SIG:
             /* RFC 5925 obsoletes this option (see below) */
             obsolete_option_found = true;
-            code = OptLenValidate(opt, end_ptr, TCPOLEN_MD5SIG);
+            code = validate_option(opt, end_ptr, TCPOLEN_MD5SIG);
             break;
 
         case tcp::TcpOptCode::AUTH:
-            code = OptLenValidate(opt, end_ptr, -1);
+            code = validate_option(opt, end_ptr, -1);
 
             /* Has to have at least 4 bytes - see RFC 5925, Section 2.2 */
             if (code >= 0 && opt->len < 4)
@@ -427,7 +382,7 @@ void TcpCodec::DecodeTCPOptions(
             break;
 
         case tcp::TcpOptCode::SACK:
-            code = OptLenValidate(opt, end_ptr, -1);
+            code = validate_option(opt, end_ptr, -1);
 
             if ((code >= 0) && (opt->len < 2))
                 code = tcp::OPT_BADLEN;
@@ -438,23 +393,23 @@ void TcpCodec::DecodeTCPOptions(
         /* fall through */
         case tcp::TcpOptCode::CC:  /* all 3 use the same lengths / T/TCP */
         case tcp::TcpOptCode::CC_NEW:
-            code = OptLenValidate(opt, end_ptr, TCPOLEN_CC);
+            code = validate_option(opt, end_ptr, TCPOLEN_CC);
             break;
 
         case tcp::TcpOptCode::TRAILER_CSUM:
             experimental_option_found = true;
-            code = OptLenValidate(opt, end_ptr, TCPOLEN_TRAILER_CSUM);
+            code = validate_option(opt, end_ptr, TCPOLEN_TRAILER_CSUM);
             break;
 
         case tcp::TcpOptCode::TIMESTAMP:
-            code = OptLenValidate(opt, end_ptr, TCPOLEN_TIMESTAMP);
+            code = validate_option(opt, end_ptr, TCPOLEN_TIMESTAMP);
             break;
 
         case tcp::TcpOptCode::SKEETER:
         case tcp::TcpOptCode::BUBBA:
         case tcp::TcpOptCode::UNASSIGNED:
             obsolete_option_found = true;
-            code = OptLenValidate(opt, end_ptr, -1);
+            code = validate_option(opt, end_ptr, -1);
             break;
 
         case tcp::TcpOptCode::SCPS:
@@ -467,7 +422,7 @@ void TcpCodec::DecodeTCPOptions(
         case tcp::TcpOptCode::SNAP:
         default:
             experimental_option_found = true;
-            code = OptLenValidate(opt, end_ptr, -1);
+            code = validate_option(opt, end_ptr, -1);
             break;
         }
 
@@ -501,7 +456,7 @@ void TcpCodec::DecodeTCPOptions(
         codec_event(codec, DECODE_TCPOPT_OBSOLETE);
 }
 
-int TcpCodec::OptLenValidate(const tcp::TcpOption* const opt,
+int TcpCodec::validate_option(const tcp::TcpOption* const opt,
     const uint8_t* const end,
     const int expected_len)
 {
@@ -531,17 +486,52 @@ int TcpCodec::OptLenValidate(const tcp::TcpOption* const opt,
     return 0;
 }
 
-/* TCP-layer decoder alerts */
-void TcpCodec::TCPMiscTests(const tcp::TCPHdr* const tcph,
-    const DecodeData& snort,
-    const CodecData& codec)
+void TcpCodec::flag_tests(const tcp::TCPHdr* const tcph,
+    const DecodeData& snort, const CodecData& codec)
 {
-    if ( ((tcph->th_flags & TH_NORESERVED) == TH_SYN ) &&
-        (tcph->seq() == 674711609) )
-        codec_event(codec, DECODE_TCP_SHAFT_SYNFLOOD);
+    if (tcph->are_flags_set(TH_FIN|TH_PUSH|TH_URG))
+    {
+        if (tcph->are_flags_set(TH_SYN|TH_ACK|TH_RST))
+            codec_event(codec, DECODE_TCP_XMAS);
+        else
+            codec_event(codec, DECODE_TCP_NMAP_XMAS);
+    }
 
-    if (snort.sp == 0 || snort.dp == 0)
-        codec_event(codec, DECODE_TCP_PORT_ZERO);
+    if (tcph->are_flags_set(TH_SYN))
+    {
+        if ( tcph->th_flags == TH_SYN )
+        {
+            if ((tcph->th_seq == naptha_seq) and (snort.ip_api.get_ip4h()->ip_id  == naptha_id))
+            {
+                codec_event(codec, DECODE_DOS_NAPTHA);
+            }
+        }
+
+        if ( SnortConfig::is_address_anomaly_check_enabled() )
+        {
+            if ( sfvar_ip_in(SynToMulticastDstIp, snort.ip_api.get_dst()) )
+                codec_event(codec, DECODE_SYN_TO_MULTICAST);
+        }
+
+        if ( (tcph->th_flags & TH_RST) )
+            codec_event(codec, DECODE_TCP_SYN_RST);
+
+        if ( (tcph->th_flags & TH_FIN) )
+            codec_event(codec, DECODE_TCP_SYN_FIN);
+
+        if ( ((tcph->th_flags & TH_NORESERVED) == TH_SYN ) && (tcph->seq() == 674711609) )
+            codec_event(codec, DECODE_TCP_SHAFT_SYNFLOOD);
+    }
+    else
+    {   // we already know there is no SYN
+        if ( !(tcph->th_flags & (TH_ACK|TH_RST)) )
+            codec_event(codec, DECODE_TCP_NO_SYN_ACK_RST);
+    }
+
+    if ( (tcph->th_flags & (TH_FIN|TH_PUSH|TH_URG)) &&
+        !(tcph->th_flags & TH_ACK) )
+        codec_event(codec, DECODE_TCP_MUST_ACK);
+
 }
 
 /******************************************************************

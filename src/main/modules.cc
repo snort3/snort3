@@ -717,7 +717,7 @@ bool AlertsModule::set(const char*, Value& v, SnortConfig* sc)
         v.update_mask(sc->output_flags, OUTPUT_FLAG__ALERT_REFS);
 
     else if ( v.is("order") )
-        OrderRuleLists(sc, v.get_string());
+        sc->rule_order = v.get_string();
 
     else if ( v.is("rate_filter_memcap") )
         sc->rate_filter_config->memcap = v.get_uint32();

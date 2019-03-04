@@ -300,45 +300,40 @@ void Snort::init(int argc, char** argv)
 #ifdef PIGLET
     if ( !Piglet::piglet_mode() )
 #endif
-    if ( !SnortConfig::get_conf()->output.empty() )
-        EventManager::instantiate(SnortConfig::get_conf()->output.c_str(),
-            SnortConfig::get_conf());
+    if ( !sc->output.empty() )
+        EventManager::instantiate(sc->output.c_str(), sc);
 
     if (SnortConfig::alert_before_pass())
-    {
-        OrderRuleLists(SnortConfig::get_conf(), "drop sdrop reject alert pass log");
-    }
+        sc->rule_order = "drop sdrop reject alert pass log";
 
-    SnortConfig::get_conf()->setup();
-
+    sc->setup();
     FileService::post_init();
 
     // Must be after CodecManager::instantiate()
-    if ( !InspectorManager::configure(SnortConfig::get_conf()) )
+    if ( !InspectorManager::configure(sc) )
         ParseError("can't initialize inspectors");
     else if ( SnortConfig::log_verbose() )
-        InspectorManager::print_config(SnortConfig::get_conf());
+        InspectorManager::print_config(sc);
 
-    ModuleManager::reset_stats(SnortConfig::get_conf());
+    ModuleManager::reset_stats(sc);
 
-    if (SnortConfig::get_conf()->file_mask != 0)
-        umask(SnortConfig::get_conf()->file_mask);
+    if (sc->file_mask != 0)
+        umask(sc->file_mask);
     else
         umask(077);    /* set default to be sane */
 
     /* Need to do this after dynamic detection stuff is initialized, too */
-    IpsManager::global_init(SnortConfig::get_conf());
+    IpsManager::global_init(sc);
 
-    SnortConfig::get_conf()->post_setup();
+    sc->post_setup();
 
-    const MpseApi* search_api = SnortConfig::get_conf()->fast_pattern_config->get_search_api();
-    const MpseApi* offload_search_api = SnortConfig::get_conf()->fast_pattern_config->
-        get_offload_search_api();
+    const MpseApi* search_api = sc->fast_pattern_config->get_search_api();
+    const MpseApi* offload_search_api = sc->fast_pattern_config->get_offload_search_api();
 
-    MpseManager::activate_search_engine(search_api, SnortConfig::get_conf());
+    MpseManager::activate_search_engine(search_api, sc);
 
     if ((offload_search_api != nullptr) and (offload_search_api != search_api))
-        MpseManager::activate_search_engine(offload_search_api, SnortConfig::get_conf());
+        MpseManager::activate_search_engine(offload_search_api, sc);
 
     SFAT_Start();
 
@@ -349,15 +344,13 @@ void Snort::init(int argc, char** argv)
     Trough::setup();
 
     // FIXIT-L refactor stuff done here and in snort_config.cc::VerifyReload()
-    if ( SnortConfig::get_conf()->bpf_filter.empty() &&
-        !SnortConfig::get_conf()->bpf_file.empty() )
-        SnortConfig::get_conf()->bpf_filter = read_infile("bpf_file",
-            SnortConfig::get_conf()->bpf_file.c_str());
+    if ( sc->bpf_filter.empty() && !sc->bpf_file.empty() )
+        sc->bpf_filter = read_infile("bpf_file", sc->bpf_file.c_str());
 
-    if ( !SnortConfig::get_conf()->bpf_filter.empty() )
-        LogMessage("Snort BPF option: %s\n", SnortConfig::get_conf()->bpf_filter.c_str());
+    if ( !sc->bpf_filter.empty() )
+        LogMessage("Snort BPF option: %s\n", sc->bpf_filter.c_str());
 
-    parser_term(SnortConfig::get_conf());
+    parser_term(sc);
 
     Active::init(sc);
 }
@@ -902,7 +895,7 @@ bool Snort::inspect(Packet* p)
 {
     // Need to include this b/c call is outside the detect tree
     Profile detect_profile(detectPerfStats);
-    Profile rebuilt_profile(rebuiltPacketPerfStats);
+    DeepProfile rebuilt_profile(rebuiltPacketPerfStats);
 
     DetectionEngine de;
     return main_hook(p);

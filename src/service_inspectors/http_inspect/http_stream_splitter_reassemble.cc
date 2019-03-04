@@ -305,7 +305,7 @@ const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow* flow, unsi
 	    // stream_tcp will flush to paf max which could be well below what
 	    // has been scanned so far.  since no flush point was specified,
 	    // NHI should just deal with what it gets.
-            assert(false);
+            //assert(false);
 #endif
             return http_buf;
         }

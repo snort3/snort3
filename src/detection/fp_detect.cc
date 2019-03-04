@@ -99,7 +99,7 @@ THREAD_LOCAL ProfileStats ruleNFPEvalPerfStats;
 
 static inline void init_match_info(OtnxMatchData* o)
 {
-    for ( int i = 0; i < o->iMatchInfoArraySize; i++ )
+    for ( int i = 0; i < SnortConfig::get_conf()->num_rule_types; i++ )
         o->matchInfo[i].iMatchCount = 0;
 
     o->have_match = false;
@@ -260,7 +260,7 @@ int fpAddMatch(OtnxMatchData* omd_local, int /*pLen*/, const OptTreeNode* otn)
     int evalIndex = rtn->listhead->ruleListNode->evalIndex;
 
     /* bounds check index */
-    if ( evalIndex >= omd_local->iMatchInfoArraySize )
+    if ( evalIndex >= SnortConfig::get_conf()->num_rule_types )
     {
         pc.match_limit++;
         return 1;
@@ -308,8 +308,8 @@ int fpAddMatch(OtnxMatchData* omd_local, int /*pLen*/, const OptTreeNode* otn)
 */
 int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports)
 {
-    Profile rule_profile(rulePerfStats);
-    Profile rule_rtn_eval_profile(ruleRTNEvalPerfStats);
+    DeepProfile rule_profile(rulePerfStats);
+    DeepProfile rule_rtn_eval_profile(ruleRTNEvalPerfStats);
 
     if ( !rtn )
         return 0;
@@ -373,7 +373,7 @@ static int rule_tree_match(
     print_pattern(pmx->pmd);
 
     {
-        Profile rule_profile(rulePerfStats);
+        DeepProfile rule_profile(rulePerfStats);
         /* NOTE: The otn will be the first one in the match state. If there are
          * multiple rules associated with a match state, mucking with the otn
          * may muck with an unintended rule */
@@ -396,7 +396,7 @@ static int rule_tree_match(
 
         int ret = 0;
         {
-            Profile rule_otn_eval_profile(ruleOTNEvalPerfStats);
+            DeepProfile rule_otn_eval_profile(ruleOTNEvalPerfStats);
             ret = detection_option_tree_evaluate(root, &eval_data);
         }
 
@@ -635,7 +635,7 @@ static inline int fpFinalSelectEvent(OtnxMatchData* o, Packet* p)
     EventQueueConfig* eq = SnortConfig::get_conf()->event_queue_config;
     RuleTreeNode* rtn;
 
-    for ( i = 0; i < o->iMatchInfoArraySize; i++ )
+    for ( i = 0; i < SnortConfig::get_conf()->num_rule_types; i++ )
     {
         /* bail if were not dumping events in all the action groups,
          * and we've already got some events */
@@ -840,14 +840,8 @@ bool MpseStash::process(MpseMatch match, void* context)
 void fp_set_context(IpsContext& c)
 {
     c.stash = new MpseStash;
-
     c.otnx = (OtnxMatchData*)snort_calloc(sizeof(OtnxMatchData));
-    // FIXIT-L use dynamic array size from configure, resize it when reload
-    c.otnx->iMatchInfoArraySize = (MAX_NUM_RULE_TYPES * 2);
-
-    c.otnx->matchInfo = (MatchInfo*)snort_calloc(
-        c.otnx->iMatchInfoArraySize, sizeof(MatchInfo));
-
+    c.otnx->matchInfo = (MatchInfo*)snort_calloc(MAX_NUM_RULE_TYPES, sizeof(MatchInfo));
     c.context_num = 0;
 }
 
@@ -1057,8 +1051,8 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
 
                 int rval = 0;
                 {
-                    Profile rule_profile(rulePerfStats);
-                    Profile rule_nfp_eval_profile(ruleNFPEvalPerfStats);
+                    DeepProfile rule_profile(rulePerfStats);
+                    DeepProfile rule_nfp_eval_profile(ruleNFPEvalPerfStats);
                     trace_log(detection, TRACE_RULE_EVAL, "Testing non-content rules\n");
                     rval = detection_option_tree_evaluate(
                         (detection_option_tree_root_t*)port_group->nfp_tree, &eval_data);

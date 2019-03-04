@@ -33,7 +33,7 @@ class TcpReassembler : public SegmentOverlapEditor
 public:
     virtual int queue_packet_for_reassembly(TcpReassemblerState&, TcpSegmentDescriptor&);
     virtual void purge_segment_list(TcpReassemblerState&);
-    virtual int purge_flushed_ackd(TcpReassemblerState&);
+    virtual void purge_flushed_ackd(TcpReassemblerState&);
     virtual int flush_stream(
         TcpReassemblerState&, snort::Packet* p, uint32_t dir, bool final_flush = false);
     virtual void flush_queued_segments(
@@ -77,13 +77,14 @@ protected:
     int do_zero_byte_flush(TcpReassemblerState&, snort::Packet* p, uint32_t pkt_flags);
     uint32_t get_q_footprint(TcpReassemblerState&);
     uint32_t get_q_sequenced(TcpReassemblerState&);
+    bool is_q_sequenced(TcpReassemblerState&);
     void final_flush(TcpReassemblerState&, snort::Packet*, uint32_t dir);
     uint32_t get_reverse_packet_dir(TcpReassemblerState&, const snort::Packet*);
     uint32_t get_forward_packet_dir(TcpReassemblerState&, const snort::Packet*);
     int32_t flush_pdu_ips(TcpReassemblerState&, uint32_t*, snort::Packet*);
     void fallback(TcpReassemblerState&);
     int32_t flush_pdu_ackd(TcpReassemblerState&, uint32_t* flags, snort::Packet*);
-    int purge_to_seq(TcpReassemblerState&, uint32_t flush_seq);
+    void purge_to_seq(TcpReassemblerState&, uint32_t flush_seq);
 
     bool next_no_gap(TcpSegmentNode&);
     void update_next(TcpReassemblerState&, TcpSegmentNode&);

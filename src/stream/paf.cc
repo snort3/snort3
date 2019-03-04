@@ -232,14 +232,11 @@ static inline bool paf_eval (
 
 void paf_setup (PAF_State* ps)
 {
-    // this is already cleared when instantiated
-    //memset(ps, 0, sizeof(*ps));
     ps->paf = StreamSplitter::START;
 }
 
 void paf_reset (PAF_State* ps)
 {
-    memset(ps, 0, sizeof(*ps));
     ps->paf = StreamSplitter::START;
 }
 
@@ -260,6 +257,7 @@ int32_t paf_check (
     if ( !paf_initialized(ps) )
     {
         ps->seq = ps->pos = seq;
+        ps->fpt = ps->tot = 0;
         ps->paf = StreamSplitter::SEARCH;
     }
     else if ( SEQ_GT(seq, ps->seq) )

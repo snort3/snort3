@@ -62,8 +62,6 @@ public:
     bool validate_rst(TcpNormalizerState&, TcpSegmentDescriptor&) override;
     bool is_paws_ts_checked_required(TcpNormalizerState&, TcpSegmentDescriptor&) override;
     int handle_repeated_syn(TcpNormalizerState&, TcpSegmentDescriptor&) override;
-    uint16_t set_urg_offset(
-        TcpNormalizerState&, const tcp::TCPHdr* tcph, uint16_t dsize) override;
 };
 
 class TcpNormalizerOldLinux : public TcpNormalizer
@@ -77,8 +75,6 @@ public:
     bool validate_rst(TcpNormalizerState&, TcpSegmentDescriptor&) override;
     bool is_paws_ts_checked_required(TcpNormalizerState&, TcpSegmentDescriptor&) override;
     int handle_repeated_syn(TcpNormalizerState&, TcpSegmentDescriptor&) override;
-    uint16_t set_urg_offset(
-        TcpNormalizerState&, const tcp::TCPHdr* tcph, uint16_t dsize) override;
 };
 
 class TcpNormalizerBSD : public TcpNormalizer
@@ -256,6 +252,8 @@ static inline bool paws_3whs_zero_ts_supported(
     return check_ts;
 }
 
+#if 0
+// FIXIT-L urgent pointer schizzle - outdated
 static inline uint16_t set_urg_offset_linux(const tcp::TCPHdr* tcph, uint16_t dsize)
 {
     uint16_t urg_offset = 0;
@@ -273,6 +271,7 @@ static inline uint16_t set_urg_offset_linux(const tcp::TCPHdr* tcph, uint16_t ds
 
     return urg_offset;
 }
+#endif
 
 int TcpNormalizerFirst::handle_repeated_syn(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
@@ -304,12 +303,6 @@ int TcpNormalizerLinux::handle_repeated_syn(
     return handle_repeated_syn_bsd(tns.peer_tracker, tsd, tns.session);
 }
 
-uint16_t TcpNormalizerLinux::set_urg_offset(
-    TcpNormalizerState&, const tcp::TCPHdr* tcph, uint16_t dsize)
-{
-    return set_urg_offset_linux(tcph, dsize);
-}
-
 bool TcpNormalizerOldLinux::validate_rst(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
 {
@@ -326,12 +319,6 @@ int TcpNormalizerOldLinux::handle_repeated_syn(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
 {
     return handle_repeated_syn_bsd(tns.peer_tracker, tsd, tns.session);
-}
-
-uint16_t TcpNormalizerOldLinux::set_urg_offset(
-    TcpNormalizerState&, const tcp::TCPHdr* tcph, uint16_t dsize)
-{
-    return set_urg_offset_linux(tcph, dsize);
 }
 
 bool TcpNormalizerBSD::validate_rst(

@@ -643,10 +643,11 @@ int detection_option_node_evaluate(
                         node->children[i], eval_data, cursor);
 
                     if ( child_node->option_type == RULE_OPTION_TYPE_LEAF_NODE )
+                    {
                         // Leaf node won't have any children but will return success
-                        // or failure
-                        result += child_state->result;
-
+                        // or failure; regardless we must count them here
+                        result += 1;
+                    }
                     else if (child_state->result == child_node->num_children)
                         // Indicate that the child's tree branches are done
                         ++result;

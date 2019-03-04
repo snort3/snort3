@@ -32,7 +32,7 @@
 
 TcpSegmentNode::TcpSegmentNode(const struct timeval& tv, const uint8_t* payload, uint16_t len) :
     prev(nullptr), next(nullptr), tv(tv), ts(0), i_seq(0), c_seq(0), i_len(len),
-    c_len(len), offset(0), last_flush_len(0), urg_offset(0)
+    c_len(len), offset(0)
 {
     data = ( uint8_t* )snort_alloc(len);
     memcpy(data, payload, len);

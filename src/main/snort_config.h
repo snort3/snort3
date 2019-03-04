@@ -178,6 +178,7 @@ public:
 
     //------------------------------------------------------
     // alert module stuff
+    std::string rule_order;
     bool default_rule_state = true;
 
     SfCidr homenet;

@@ -945,7 +945,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
     ip_stats.total++;
     ip_stats.fragmented_bytes += p->pkth->caplen + 4; /* 4 for the CRC */
 
-    Profile profile(fragPerfStats);
+    DeepProfile profile(fragPerfStats);
 
     if (!ft->engine )
     {
@@ -1104,7 +1104,7 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
     int16_t fragLength;
     const uint16_t net_frag_offset = p->ptrs.ip_api.off();
 
-    Profile profile(fragInsertPerfStats);
+    DeepProfile profile(fragInsertPerfStats);
 
     if (p->is_ip6() && (net_frag_offset == 0))
     {

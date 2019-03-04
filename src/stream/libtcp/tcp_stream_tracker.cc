@@ -187,7 +187,7 @@ void TcpStreamTracker::init_tcp_state()
     tcp_state = ( client_tracker ) ?
         TcpStreamTracker::TCP_STATE_NONE : TcpStreamTracker::TCP_LISTEN;
     flush_policy = STREAM_FLPOLICY_IGNORE;
-    memset(&paf_state, 0, sizeof(paf_state));
+    paf_setup(&paf_state);
     snd_una = snd_nxt = snd_wnd = 0;
     rcv_nxt = r_win_base = iss = ts_last = ts_last_packet = 0;
     small_seg_count = wscale = mss = 0;

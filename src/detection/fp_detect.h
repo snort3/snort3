@@ -51,7 +51,7 @@ struct RuleTreeNode;
 int fpLogEvent(const RuleTreeNode*, const OptTreeNode*, snort::Packet*);
 int fpEvalRTN(RuleTreeNode*, snort::Packet*, int check_ports);
 
-#define MAX_NUM_RULE_TYPES 10   // max number of known rule types
+#define MAX_NUM_RULE_TYPES 16   // max number of allowed rule types
 
 /*
 **  This define is for the number of unique events
@@ -85,13 +85,11 @@ struct OtnxMatchData
 {
     PortGroup* pg;
     snort::Packet* p;
+    MatchInfo* matchInfo;
 
     int check_ports;
     bool have_match;
     bool do_fp;
-
-    MatchInfo* matchInfo;
-    int iMatchInfoArraySize;
 };
 
 int fpAddMatch(OtnxMatchData*, int pLen, const OptTreeNode*);

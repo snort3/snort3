@@ -77,6 +77,7 @@ IpsContext::~IpsContext()
             delete p;
         }
     }
+    ids_in_use.clear();
 
     sfeventq_free(equeue);
     fp_clear_context(*this);
@@ -90,6 +91,7 @@ void IpsContext::set_context_data(unsigned id, IpsContextData* cd)
 {
     assert(id < data.size());
     data[id] = cd;
+    ids_in_use.push_back(id);
 }
 
 IpsContextData* IpsContext::get_context_data(unsigned id) const
@@ -100,11 +102,13 @@ IpsContextData* IpsContext::get_context_data(unsigned id) const
 
 void IpsContext::clear_context_data()
 {
-    for ( auto* p : data )
+    for ( auto id : ids_in_use )
     {
+        auto* p = data[id];
         if ( p )
             p->clear();
     }
+    ids_in_use.clear();
 }
 
 void IpsContext::snapshot_flow(Flow* f)

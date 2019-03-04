@@ -322,6 +322,7 @@ void SnortConfig::setup()
 
     init_policies(this);
     ParseRules(this);
+    OrderRuleLists(this);
 
     // FIXIT-L see SnortInit() on config printing
     //detection_filter_print_config(detection_filter_config);
