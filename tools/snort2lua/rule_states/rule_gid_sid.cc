@@ -36,6 +36,10 @@ namespace rules
 {
 namespace
 {
+
+static const std::string removed_gids[] = { "146" , "147" };
+constexpr uint8_t MAX_GIDS = (sizeof(removed_gids) / sizeof(removed_gids[0]));
+
 class Gid : public ConversionState
 {
 public:
@@ -43,7 +47,7 @@ public:
     bool convert(std::istringstream& data_stream) override;
 
 private:
-    static bool rem_146;
+    static bool gids_seen[MAX_GIDS];
 };
 
 class Sid : public ConversionState
@@ -59,24 +63,29 @@ public:
 // Gid
 //
 
-bool Gid::rem_146 = false;
+bool Gid::gids_seen[MAX_GIDS];
 
 bool Gid::convert(std::istringstream& data_stream)
 {
     std::string gid = util::get_rule_option_args(data_stream);
     const std::string old_http_gid("120");
-    const std::string file_id = "146";
+    bool found = false;
 
-    if ( gid == file_id )
+    for ( int i = 0; i < MAX_GIDS; i++ )
     {
-        if ( !rem_146 )
+        if ( gid == removed_gids[i] )
         {
-            rule_api.add_comment("deleted all gid:" + file_id + " rules");
-            rem_146 = true;
+            if ( !gids_seen[i] )
+            {
+                rule_api.add_comment("deleted all gid:" + removed_gids[i] + " rules");
+                gids_seen[i] = true;
+            }
+            rule_api.make_rule_a_comment();
+            found = true;
+            break;
         }
-        rule_api.make_rule_a_comment();
     }
-    else if (gid.compare(old_http_gid) == 0)
+    if ( !found && gid.compare(old_http_gid) == 0)
     {
         const std::string nhi_gid("119");
         gid.assign(nhi_gid);
