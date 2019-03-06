@@ -523,6 +523,8 @@ Packet* TcpReassembler::initialize_pdu(
     PacketManager::format_tcp(enc_flags, p, pdu, PSEUDO_PKT_TCP, &pkth, pkth.opaque);
     prep_pdu(trs, trs.sos.session->flow, p, pkt_flags, pdu);
     (const_cast<DAQ_PktHdr_t*>(pdu->pkth))->ts = tv;
+    // FIXIT-M: This hack will go away with daqng
+    (const_cast<DAQ_PktHdr_t*>(pdu->pkth))->priv_ptr = p->pkth->priv_ptr;
     pdu->dsize = 0;
     pdu->data = nullptr;
     return pdu;
