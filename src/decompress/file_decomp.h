@@ -60,9 +60,11 @@ enum file_compression_type_t
 #define FILE_SWF_LZMA_BIT    (0x00000001)
 #define FILE_SWF_ZLIB_BIT    (0x00000002)
 #define FILE_PDF_DEFL_BIT    (0x00000004)
+#define FILE_ZIP_DEFL_BIT    (0x00000008)
 
 #define FILE_PDF_ANY         (FILE_PDF_DEFL_BIT)
 #define FILE_SWF_ANY         (FILE_SWF_LZMA_BIT | FILE_SWF_ZLIB_BIT)
+#define FILE_ZIP_ANY         (FILE_ZIP_DEFL_BIT)
 
 /* Error codes either passed to caller via the session->Error_Alert of
    the File_Decomp_Alert() call-back function. */
@@ -73,7 +75,9 @@ enum FileDecompError
     FILE_DECOMP_ERR_PDF_DEFL_FAILURE,
     FILE_DECOMP_ERR_PDF_UNSUP_COMP_TYPE,
     FILE_DECOMP_ERR_PDF_CASC_COMP,
-    FILE_DECOMP_ERR_PDF_PARSE_FAILURE
+    FILE_DECOMP_ERR_PDF_PARSE_FAILURE,
+    FILE_DECOMP_ERR_ZIP_PARSE_FAILURE,
+    FILE_DECOMP_ERR_ZIP_DEFL_FAILURE
 };
 
 /* Private Types */
@@ -82,6 +86,7 @@ enum file_type_t
     FILE_TYPE_NONE,
     FILE_TYPE_SWF,
     FILE_TYPE_PDF,
+    FILE_TYPE_ZIP,
     FILE_TYPE_MAX
 };
 
@@ -102,6 +107,7 @@ struct fd_session_t
     {
         struct fd_PDF_t* PDF;
         struct fd_SWF_t* SWF;
+        struct fd_ZIP_t* ZIP;
     };
 
     const uint8_t* Next_In;     // next input byte
@@ -257,12 +263,12 @@ inline bool Move_N(fd_session_t* SessionPtr, uint16_t N)
     if ( (SessionPtr->Next_Out != nullptr) && (SessionPtr->Avail_Out >= N) &&
         (SessionPtr->Next_In != nullptr) && (SessionPtr->Avail_In >= N) )
     {
-        strncpy( (char*)SessionPtr->Next_Out, (const char*)SessionPtr->Next_In, N);
+        memcpy( (char*)SessionPtr->Next_Out, (const char*)SessionPtr->Next_In, N);
         SessionPtr->Next_Out += N;
         SessionPtr->Next_In += N;
         SessionPtr->Avail_In -= N;
         SessionPtr->Avail_Out -= N;
-        SessionPtr->Avail_Out -= N;
+        SessionPtr->Total_In += N;
         SessionPtr->Total_Out += N;
         return( true );
     }

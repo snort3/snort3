@@ -10,6 +10,8 @@ add_library (decompress OBJECT
     file_decomp_pdf.h
     file_decomp_swf.cc
     file_decomp_swf.h
+    file_decomp_zip.cc
+    file_decomp_zip.h
 )
 
 install (FILES ${DECOMPRESS_INCLUDES}

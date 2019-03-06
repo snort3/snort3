@@ -51,6 +51,9 @@ const Parameter HttpModule::http_params[] =
     { "decompress_swf", Parameter::PT_BOOL, nullptr, "false",
       "decompress swf files in response bodies" },
 
+    { "decompress_zip", Parameter::PT_BOOL, nullptr, "false",
+      "decompress zip files in response bodies" },
+
     { "normalize_javascript", Parameter::PT_BOOL, nullptr, "false",
       "normalize javascript in response bodies" },
 
@@ -159,6 +162,10 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("decompress_swf"))
     {
         params->decompress_swf = val.get_bool();
+    }
+    else if (val.is("decompress_zip"))
+    {
+        params->decompress_zip = val.get_bool();
     }
     else if (val.is("normalize_javascript"))
     {

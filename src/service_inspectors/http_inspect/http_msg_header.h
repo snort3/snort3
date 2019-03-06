@@ -49,7 +49,7 @@ private:
     void setup_file_processing();
     void setup_encoding_decompression();
     void setup_utf_decoding();
-    void setup_pdf_swf_decompression();
+    void setup_file_decompression();
 
     // Dummy configurations to support MIME processing
     MailLogConfig mime_conf;

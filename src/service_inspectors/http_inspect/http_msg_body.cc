@@ -49,8 +49,8 @@ void HttpMsgBody::analyze()
 
     if (session_data->detect_depth_remaining[source_id] > 0)
     {
-        do_pdf_swf_decompression(decoded_body, decompressed_pdf_swf_body);
-        do_js_normalization(decompressed_pdf_swf_body, js_norm_body);
+        do_file_decompression(decoded_body, decompressed_file_body);
+        do_js_normalization(decompressed_file_body, js_norm_body);
         const int32_t detect_length =
             (js_norm_body.length() <= session_data->detect_depth_remaining[source_id]) ?
             js_norm_body.length() : session_data->detect_depth_remaining[source_id];
@@ -111,7 +111,7 @@ void HttpMsgBody::do_utf_decoding(const Field& input, Field& output)
         output.set(input);
 }
 
-void HttpMsgBody::do_pdf_swf_decompression(const Field& input, Field& output)
+void HttpMsgBody::do_file_decompression(const Field& input, Field& output)
 {
     if ((source_id == SRC_CLIENT) || (session_data->fd_state == nullptr))
     {
@@ -141,8 +141,8 @@ void HttpMsgBody::do_pdf_swf_decompression(const Field& input, Field& output)
         session_data->fd_state = nullptr;
         break;
     case File_Decomp_BlockOut:
-        add_infraction(INF_PDF_SWF_OVERRUN);
-        create_event(EVENT_PDF_SWF_OVERRUN);
+        add_infraction(INF_FILE_DECOMPR_OVERRUN);
+        create_event(EVENT_FILE_DECOMPR_OVERRUN);
         // Fall through
     default:
         output.set(session_data->fd_state->Next_Out - buffer, buffer, true);

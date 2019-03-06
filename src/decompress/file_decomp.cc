@@ -31,6 +31,7 @@
 
 #include "file_decomp_pdf.h"
 #include "file_decomp_swf.h"
+#include "file_decomp_zip.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -44,6 +45,7 @@ static const char SWF_ZLIB_Sig[3] = { 'C', 'W', 'S' };
 static const char SWF_LZMA_Sig[3] = { 'Z', 'W', 'S' };
 #endif
 static const char SWF_Uncomp_Sig[3] = { 'F', 'W', 'S' };
+static const char ZIP_Sig[4] = { 'P', 'K', 0x03, 0x04 };
 
 /* Please assure that the following value correlates with the set of sig's */
 #define MAX_SIG_LENGTH (5)
@@ -64,6 +66,9 @@ static struct sig_map_s
 #ifdef HAVE_LZMA
     { SWF_LZMA_Sig, sizeof(SWF_LZMA_Sig), false, FILE_TYPE_SWF, FILE_COMPRESSION_TYPE_LZMA },
 #endif
+
+    { ZIP_Sig, sizeof(ZIP_Sig), false, FILE_TYPE_ZIP, FILE_COMPRESSION_TYPE_NONE },
+
     { nullptr, 0, false, FILE_TYPE_NONE, FILE_COMPRESSION_TYPE_NONE }
 };
 
@@ -195,6 +200,9 @@ static fd_status_t Initialize_Decompression(fd_session_t* SessionPtr)
         Ret_Code = File_Decomp_Init_PDF(SessionPtr);
         break;
     }
+    case ( FILE_TYPE_ZIP ):
+        Ret_Code = File_Decomp_Init_ZIP(SessionPtr);
+        break;
     default:
         return( File_Decomp_Error );
     }
@@ -219,6 +227,11 @@ static fd_status_t Process_Decompression(fd_session_t* SessionPtr)
     case ( FILE_TYPE_PDF ):
     {
         Ret_Code = File_Decomp_PDF(SessionPtr);
+        break;
+    }
+    case ( FILE_TYPE_ZIP ):
+    {
+        Ret_Code = File_Decomp_ZIP(SessionPtr);
         break;
     }
     default:
@@ -262,6 +275,10 @@ fd_status_t File_Decomp_Init(fd_session_t* SessionPtr)
             ((SessionPtr->Modes & FILE_SWF_LZMA_BIT) != 0) )
             Signature_Map[Sig].Enabled = true;
 #endif
+
+        if ( (Signature_Map[Sig].File_Type == FILE_TYPE_ZIP ) &&
+            ((SessionPtr->Modes & FILE_ZIP_DEFL_BIT) != 0) )
+            Signature_Map[Sig].Enabled = true;
     }
 
     return( File_Decomp_OK );
@@ -337,6 +354,8 @@ fd_status_t File_Decomp_End(fd_session_t* SessionPtr)
     {
         return( File_Decomp_End_PDF(SessionPtr) );
     }
+    case ( FILE_TYPE_ZIP ):
+        return( File_Decomp_End_ZIP(SessionPtr) );
     }
 
     return( File_Decomp_Error );
@@ -381,6 +400,10 @@ void File_Decomp_Free(fd_session_t* SessionPtr)
     case FILE_TYPE_PDF:
         assert(SessionPtr->PDF);
         snort_free(SessionPtr->PDF);
+        break;
+    case FILE_TYPE_ZIP:
+        assert(SessionPtr->ZIP);
+        snort_free(SessionPtr->ZIP);
         break;
     }
 

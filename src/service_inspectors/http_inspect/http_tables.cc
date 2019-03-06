@@ -355,7 +355,7 @@ const snort::RuleMap HttpModule::http_events[] =
     { EVENT_UNKNOWN_ENCODING,           "unknown Content-Encoding used" },
     { EVENT_STACKED_ENCODINGS,          "multiple Content-Encodings applied" },
     { EVENT_RESPONSE_WO_REQUEST,        "server response before client request" },
-    { EVENT_PDF_SWF_OVERRUN,            "PDF/SWF decompression of server response too big" },
+    { EVENT_FILE_DECOMPR_OVERRUN,       "PDF/SWF/ZIP decompression of server response too big" },
     { EVENT_BAD_CHAR_IN_HEADER_NAME,    "nonprinting character in HTTP message header name" },
     { EVENT_BAD_CONTENT_LENGTH,         "bad Content-Length value in HTTP header" },
     { EVENT_HEADER_WRAPPING,            "HTTP header line wrapped" },

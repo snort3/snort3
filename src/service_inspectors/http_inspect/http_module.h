@@ -41,6 +41,7 @@ public:
     bool normalize_utf = true;
     bool decompress_pdf = false;
     bool decompress_swf = false;
+    bool decompress_zip = false;
 
     struct JsNormParam
     {

@@ -53,13 +53,13 @@ protected:
 private:
     void do_file_processing(Field& file_data);
     void do_utf_decoding(const Field& input, Field& output);
-    void do_pdf_swf_decompression(const Field& input, Field& output);
+    void do_file_decompression(const Field& input, Field& output);
     void do_js_normalization(const Field& input, Field& output);
 
     Field detect_data;
     Field classic_client_body;   // URI normalization applied
     Field decoded_body;
-    Field decompressed_pdf_swf_body;
+    Field decompressed_file_body;
     Field js_norm_body;
     const bool detection_section;
 };

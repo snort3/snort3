@@ -303,7 +303,7 @@ void HttpMsgHeader::prepare_body()
     setup_file_processing();
     setup_encoding_decompression();
     setup_utf_decoding();
-    setup_pdf_swf_decompression();
+    setup_file_decompression();
     update_depth();
     if (source_id == SRC_CLIENT)
     {
@@ -481,15 +481,17 @@ void HttpMsgHeader::setup_utf_decoding()
     session_data->utf_state->set_decode_utf_state_charset(charset_code);
 }
 
-void HttpMsgHeader::setup_pdf_swf_decompression()
+void HttpMsgHeader::setup_file_decompression()
 {
-    if (source_id == SRC_CLIENT || (!params->decompress_pdf && !params->decompress_swf))
+    if (source_id == SRC_CLIENT ||
+       (!params->decompress_pdf && !params->decompress_swf && !params->decompress_zip))
         return;
 
     session_data->fd_state = File_Decomp_New();
     session_data->fd_state->Modes =
         (params->decompress_pdf ? FILE_PDF_DEFL_BIT : 0) |
-        (params->decompress_swf ? (FILE_SWF_ZLIB_BIT | FILE_SWF_LZMA_BIT) : 0);
+        (params->decompress_swf ? (FILE_SWF_ZLIB_BIT | FILE_SWF_LZMA_BIT) : 0) |
+        (params->decompress_zip ? FILE_ZIP_DEFL_BIT : 0);
     session_data->fd_state->Alert_Callback = HttpMsgBody::fd_event_callback;
     session_data->fd_state->Alert_Context = &session_data->fd_alert_context;
     session_data->fd_state->Compr_Depth = 0;
