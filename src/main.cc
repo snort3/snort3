@@ -70,6 +70,7 @@ using namespace snort;
 static bool exit_requested = false;
 static int main_exit_code = 0;
 static bool paused = false;
+static bool all_pthreads_started = false;
 static std::queue<AnalyzerCommand*> orphan_commands;
 
 static std::mutex poke_mutex;
@@ -239,9 +240,8 @@ void Pig::reap_commands()
     } while (commands_to_reap > 1);
 }
 
-#ifdef REG_TEST
+
 static bool* pigs_started = nullptr;
-#endif
 static Pig* pigs = nullptr;
 static unsigned max_pigs = 0;
 
@@ -674,7 +674,8 @@ static void reap_commands()
 // FIXIT-L return true if something was done to avoid sleeping
 static bool house_keeping()
 {
-    signal_check();
+    if (all_pthreads_started)
+        signal_check();
 
     reap_commands();
 
@@ -690,7 +691,7 @@ static bool house_keeping()
 static void service_check()
 {
 #ifdef SHELL
-    if ( ControlMgmt::service_users(current_fd, current_request) )
+    if (all_pthreads_started && ControlMgmt::service_users(current_fd, current_request) )
         return;
 #endif
 
@@ -856,10 +857,6 @@ static void main_loop()
 {
     unsigned swine = 0, pending_privileges = 0;
 
-#ifdef REG_TEST
-    static bool all_pthreads_started = false;
-#endif
-
     if (SnortConfig::change_privileges())
         pending_privileges = max_pigs;
 
@@ -885,11 +882,9 @@ static void main_loop()
             if ( pig.analyzer )
             {
                 handle(pig, swine, pending_privileges);
-#ifdef REG_TEST
-                if (!pigs_started[idx] && (pig.analyzer->get_state() ==
+                if (!pigs_started[idx] && pig.analyzer && (pig.analyzer->get_state() ==
                     Analyzer::State::STARTED))
                     pigs_started[idx] = true;
-#endif
             }
             else if ( pending_privileges )
                 pending_privileges--;
@@ -900,17 +895,17 @@ static void main_loop()
             continue;
         }
 
-#ifdef REG_TEST
         if (!all_pthreads_started)
         {
             all_pthreads_started = true;
             const unsigned num_threads = (!Trough::has_next()) ? swine : max_pigs;
             for (unsigned i = 0; i < num_threads; i++)
                 all_pthreads_started &= pigs_started[i];
+#ifdef REG_TEST
             if (all_pthreads_started)
                 LogMessage("All pthreads started\n");
-        }
 #endif
+        }
 
         if ( !exit_requested and (swine < max_pigs) and (src = Trough::get_next()) )
         {
@@ -937,17 +932,13 @@ static void snort_main()
 
     pig_poke = new Ring<unsigned>((max_pigs*max_grunts)+1);
     pigs = new Pig[max_pigs];
-#ifdef REG_TEST
     pigs_started = new bool[max_pigs];
-#endif
 
     for (unsigned idx = 0; idx < max_pigs; idx++)
     {
         Pig& pig = pigs[idx];
         pig.set_index(idx);
-#ifdef REG_TEST
         pigs_started[idx] = false;
-#endif
     }
 
     main_loop();
@@ -955,10 +946,8 @@ static void snort_main()
     delete pig_poke;
     delete[] pigs;
     pigs = nullptr;
-#ifdef REG_TEST
     delete[] pigs_started;
     pigs_started = nullptr;
-#endif
 
 #ifdef SHELL
     ControlMgmt::socket_term();
