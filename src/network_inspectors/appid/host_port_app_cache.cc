@@ -26,6 +26,7 @@
 #include "host_port_app_cache.h"
 
 #include <map>
+#include <cstring>
 
 #include "log/messages.h"
 #include "main/thread.h"
@@ -45,23 +46,9 @@ struct HostPortKey
         padding = 0;
     }
 
-    bool operator<(HostPortKey right) const
+    bool operator<(const HostPortKey& right) const
     {
-        if ( ip.less_than(right.ip) )
-            return true;
-        else if ( right.ip.less_than(ip) )
-            return false;
-        else
-        {
-            if ( port < right.port)
-                return true;
-            else if ( right.port < port )
-                return false;
-            else if ( proto < right.proto)
-                return true;
-            else
-                return false;
-        }
+        return memcmp((const uint8_t*) this, (const uint8_t*) &right, sizeof(*this)) < 0;
     }
 
     SfIp ip;

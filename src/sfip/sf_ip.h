@@ -252,6 +252,10 @@ inline bool SfIp::_is_equals(const SfIp& rhs) const
     return false;
 }
 
+// FIXIT-L: when comparing ip4 vs ip6 we have !(ip4 < ip6) and !(ip6 < ip4).
+// This may be OK in some cases, but will not work e.g. on a binary tree
+// (stl::map) with SfIp as keys, whose implementation relies only on "<".
+// This affects SfIp::less_than() and SfIp::greater_than().
 inline bool SfIp::_is_lesser(const SfIp& rhs) const
 {
     if (is_ip4())
@@ -474,4 +478,3 @@ inline std::ostream& operator<<(std::ostream& os, const SfIp* addr)
 SO_PUBLIC const char* snort_inet_ntop(int family, const void* ip_raw, char* buf, int bufsize);
 } // namespace snort
 #endif
-

@@ -181,27 +181,9 @@ public:
         padding[0] = padding[1] = padding[2] = 0;
     }
 
-    bool operator<(AppIdServiceStateKey right) const
+    bool operator<(const AppIdServiceStateKey& right) const
     {
-        if ( ip.less_than(right.ip) )
-            return true;
-        else if ( right.ip.less_than(ip) )
-            return false;
-        else
-        {
-            if ( port < right.port )
-                return true;
-            else if ( right.port < port )
-                return false;
-            else if ( proto < right.proto )
-                return true;
-            else if ( right.proto < proto )
-                return false;
-            else if ( level < right.level )
-                return true;
-            else
-                return false;
-        }
+        return memcmp((const uint8_t*) this, (const uint8_t*) &right, sizeof(*this)) < 0;
     }
 
 private:
@@ -229,26 +211,28 @@ public:
     {
         Val_t* ss = nullptr;
 
-        Map_t::iterator it = m.find(k);
-        if ( it == m.end() )
+        // Try to emplace k first, with a nullptr.
+        std::pair<Map_t::iterator, bool> sit = m.emplace( std::make_pair(k, ss) );
+        Map_t::iterator it = sit.first;
+
+        if ( sit.second )
         {
-            // Prune the map to make room for the new sds if memcap is hit
-            if ( mem_used + sz > memcap )
-                remove( q.front() );
-
-            ss = new Val_t;
-
-            std::pair<Map_t::iterator, bool> sit = m.emplace(std::make_pair(k,ss));
-            q.emplace_back(sit.first);
+            // emplace succeeded
+            ss = it->second = new Val_t;
+            q.emplace_back(it);
             mem_used += sz;
             ss->qptr = --q.end(); // remember our place in the queue
+
+            if ( mem_used > memcap )
+                remove( q.front() );
         }
-        else {
+        else
+        {
             ss = it->second;
             if ( do_touch )
-                touch(ss->qptr);
+                touch( ss->qptr );
         }
-        
+
         return ss;
     }
 

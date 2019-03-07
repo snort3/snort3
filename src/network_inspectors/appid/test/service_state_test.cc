@@ -185,6 +185,22 @@ TEST(service_state_tests, set_service_id_failed_with_valid)
     CHECK_TRUE(sds.get_state() == SERVICE_ID_STATE::VALID);
 }
 
+TEST(service_state_tests, appid_service_state_key_comparison_test)
+{
+    SfIp ip4, ip6;
+    ip4.set("1.2.3.4");
+    ip6.set("1111.2222.3333.4444.5555.6666.7777.8888");
+    IpProtocol proto = IpProtocol::TCP;
+    uint16_t port=3000;
+
+    Key_t A(&ip4, proto, port, 0);
+    Key_t B(&ip6, proto, port, 0);
+
+    // We must never be in a situation where !( A<B ) and !( B<A ),
+    // because then map will consider A=B.
+    CHECK_TRUE(A<B || B<A);
+}
+
 TEST(service_state_tests, service_cache)
 {
     size_t num_entries = 10, max_entries = 3;
@@ -193,21 +209,25 @@ TEST(service_state_tests, service_cache)
 
     IpProtocol proto = IpProtocol::TCP;
     uint16_t port = 3000;
-    SfIp ip;
-    ip.set("10.10.0.1");
+    SfIp ip4, ip6;
+    ip4.set("1.2.3.4");
+    ip6.set("1111.2222.3333.4444.5555.6666.7777.8888");
 
     Val_t* ss = nullptr;
     std::vector<Val_t*> ssvec;
-        
-    // Insert past the memcap, and check the memcap is not exceeded:
+
+
+    // Insert (ipv4 and ipv6) past the memcap, and check the memcap is not exceeded.
     for( size_t i = 1; i <= num_entries; i++, port++ )
     {
-        ss = ServiceCache.add( Key_t(&ip, proto, port, 0) );
+        const SfIp* ip = ( i%2 == 1 ? &ip4 : &ip6 );
+        ss = ServiceCache.add( Key_t(ip, proto, port, 0) );
         CHECK_TRUE(ServiceCache.size() == ( i <= max_entries ? i : max_entries));
         ssvec.push_back(ss);
     }
 
-    // The cache should now be port 8, 9, 10
+    // The cache should now be  ip6:3007, ip4:3008, ip6:3009.
+    // Check that the order in the cache is correct.
     Queue_t::iterator it = ServiceCache.newest();
     std::vector<Val_t*>::iterator vit = --ssvec.end();
     for( size_t i=0; i<max_entries; i++, --it, --vit )
@@ -215,10 +235,10 @@ TEST(service_state_tests, service_cache)
         Map_t::iterator mit = *it;
         CHECK_TRUE( mit->second == *vit );
     }
-        
-    // Now get an entry in the cache and check that it got touched:
-    port -= 1;
-    ss = ServiceCache.get( Key_t(&ip, proto, port, 0) );
+
+    // Now get e.g. the oldest from the cache and check that it got touched:
+    it = ServiceCache.oldest();
+    ss = ServiceCache.get( (*it)->first, true );
     CHECK_TRUE( ss != nullptr );
     CHECK_TRUE( ss->qptr == ServiceCache.newest() );
 }
