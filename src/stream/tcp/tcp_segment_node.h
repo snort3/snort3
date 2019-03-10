@@ -32,19 +32,25 @@ class TcpSegmentDescriptor;
 // we make a lot of TcpSegments so it is organized by member
 // size/alignment requirements to minimize unused space
 // ... however, use of padding below is critical, adjust if needed
+// and we use the struct hack to avoid 2 allocs per node
 //-----------------------------------------------------------------
 
 class TcpSegmentNode
 {
-public:
-	TcpSegmentNode(const struct timeval& tv, const uint8_t* segment, uint16_t len);
+private:
+    static TcpSegmentNode* create(const struct timeval& tv, const uint8_t* segment, uint16_t len);
 
-    static TcpSegmentNode* init(TcpSegmentDescriptor& tsd);
-    static TcpSegmentNode* init(TcpSegmentNode& tns);
-    static TcpSegmentNode* init(const struct timeval&, const uint8_t*, unsigned);
+public:
+    static TcpSegmentNode* init(TcpSegmentDescriptor&);
+    static TcpSegmentNode* init(TcpSegmentNode&);
 
     void term();
+
+    static void setup();
+    static void clear();
+
     bool is_retransmit(const uint8_t*, uint16_t size, uint32_t, uint16_t, bool*);
+
     uint8_t* payload()
     { return data + offset; }
 
@@ -56,10 +62,9 @@ public:
             return (c_seq + c_len) < to_seq;
     }
 
+public:
     TcpSegmentNode* prev;
     TcpSegmentNode* next;
-
-    uint8_t* data;
 
     struct timeval tv;
     uint32_t ts;
@@ -68,6 +73,9 @@ public:
     uint16_t i_len;             // initial length of the data segment
     uint16_t c_len;             // length of data remaining for reassembly
     uint16_t offset;
+    uint16_t size;              // actual allocated size (overlaps cause i_len to differ)
+
+    uint8_t data[1];
 };
 
 class TcpSegmentList

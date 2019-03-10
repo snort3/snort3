@@ -25,6 +25,7 @@
 
 #include "detection/detection_engine.h"
 #include "file_api/file_flows.h"
+#include "memory/memory_cap.h"
 #include "packet_io/sfdaq.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
@@ -42,8 +43,11 @@ static THREAD_LOCAL ProfileStats file_ssn_stats;
 // FileSession methods
 //-------------------------------------------------------------------------
 
-FileSession::FileSession(Flow* flow) : Session(flow) { }
+FileSession::FileSession(Flow* flow) : Session(flow)
+{ memory::MemoryCap::update_allocations(sizeof(*this)); }
 
+FileSession::~FileSession()
+{ memory::MemoryCap::update_deallocations(sizeof(*this)); }
 
 bool FileSession::setup(Packet*)
 {

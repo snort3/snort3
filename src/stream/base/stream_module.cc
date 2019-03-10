@@ -37,7 +37,7 @@ using namespace std;
 //-------------------------------------------------------------------------
 Trace TRACE_NAME(stream);
 
-#define CACHE_PARAMS(name, max, prune, idle, cleanup) \
+#define CACHE_PARAMS(name, max, prune, idle, weight) \
 static const Parameter name[] = \
 { \
     { "max_sessions", Parameter::PT_INT, "2:max32", max, \
@@ -49,15 +49,18 @@ static const Parameter name[] = \
     { "idle_timeout", Parameter::PT_INT, "1:max32", idle, \
       "maximum inactive time before retiring session tracker" }, \
  \
+    { "cap_weight", Parameter::PT_INT, "0:65535", idle, \
+      "additional bytes to track per flow for better estimation against cap" }, \
+ \
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr } \
 }
 
-CACHE_PARAMS(ip_params,    "16384",  "30",  "180", "5");
-CACHE_PARAMS(icmp_params,  "65536",  "30",  "180", "5");
-CACHE_PARAMS(tcp_params,  "262144",  "30", "3600", "5");
-CACHE_PARAMS(udp_params,  "131072",  "30",  "180", "5");
-CACHE_PARAMS(user_params,   "1024",  "30",  "180", "5");
-CACHE_PARAMS(file_params,    "128",  "30",  "180", "5");
+CACHE_PARAMS(ip_params,    "16384",  "30",  "180", "64");
+CACHE_PARAMS(icmp_params,  "65536",  "30",  "180", "8");
+CACHE_PARAMS(tcp_params,  "262144",  "30", "3600", "256");
+CACHE_PARAMS(udp_params,  "131072",  "30",  "180", "128");
+CACHE_PARAMS(user_params,   "1024",  "30",  "180", "256");
+CACHE_PARAMS(file_params,    "128",  "30",  "180", "32");
 
 #define CACHE_TABLE(cache, proto, params) \
     { cache, Parameter::PT_TABLE, params, nullptr, \
@@ -166,6 +169,9 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
 
     else if ( v.is("idle_timeout") )
         fc->nominal_timeout = v.get_uint32();
+
+    else if ( v.is("cap_weight") )
+        fc->cap_weight = v.get_uint16();
 
     else
         return false;

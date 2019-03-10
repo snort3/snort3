@@ -304,6 +304,7 @@ static void base_dtor(Inspector* p)
 
 static void base_tterm()
 {
+    // this can't happen sooner because the counts haven't been harvested yet
     delete flow_con;
     flow_con = nullptr;
 }

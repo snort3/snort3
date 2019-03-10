@@ -79,6 +79,7 @@ public:
 private:
     void link_uni(snort::Flow*);
     int remove(snort::Flow*);
+    int retire(snort::Flow*);
 
 private:
     static const unsigned cleanup_flows = 1;

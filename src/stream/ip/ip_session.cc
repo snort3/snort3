@@ -23,6 +23,7 @@
 
 #include "ip_session.h"
 
+#include "memory/memory_cap.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
 
@@ -115,8 +116,10 @@ static inline void UpdateSession(Packet* p, Flow* lws)
 //-------------------------------------------------------------------------
 
 IpSession::IpSession(Flow* flow) : Session(flow)
-{
-}
+{ memory::MemoryCap::update_allocations(sizeof(*this)); }
+
+IpSession::~IpSession()
+{ memory::MemoryCap::update_deallocations(sizeof(*this)); }
 
 void IpSession::clear()
 {

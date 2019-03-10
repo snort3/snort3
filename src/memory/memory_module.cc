@@ -43,14 +43,27 @@ static const Parameter s_params[] =
     { "cap", Parameter::PT_INT, "0:maxSZ", "0",
         "set the per-packet-thread cap on memory (bytes, 0 to disable)" },
 
-    { "soft", Parameter::PT_BOOL, nullptr, "false",
-        "always succeed in allocating memory, even if above the cap" },
-
     { "threshold", Parameter::PT_INT, "0:100", "0",
         "set the per-packet-thread threshold for preemptive cleanup actions "
         "(percent, 0 to disable)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+THREAD_LOCAL MemoryCounts mem_stats;
+static MemoryCounts zero_stats = { };
+
+const PegInfo mem_pegs[] =
+{
+    { CountType::SUM, "allocations", "total number of allocations" },
+    { CountType::SUM, "deallocations", "total number of deallocations" },
+    { CountType::SUM, "allocated", "total amount of memory allocated" },
+    { CountType::SUM, "deallocated", "total amount of memory allocated" },
+    { CountType::SUM, "reap_attempts", "attempts to reclaim memory" },
+    { CountType::SUM, "reap_failures", "failures to reclaim memory" },
+    { CountType::MAX, "max_in_use", "highest allocated - deallocated" },
+    { CountType::SUM, "total_fudge", "sum of all adjustments" },
+    { CountType::END, nullptr, nullptr }
 };
 
 // -----------------------------------------------------------------------------
@@ -67,9 +80,6 @@ bool MemoryModule::set(const char*, Value& v, SnortConfig* sc)
 {
     if ( v.is("cap") )
         sc->memory->cap = v.get_size();
-
-    else if ( v.is("soft") )
-        sc->memory->soft = v.get_bool();
 
     else if ( v.is("threshold") )
         sc->memory->threshold = v.get_uint8();
@@ -88,4 +98,10 @@ bool MemoryModule::end(const char*, int, SnortConfig*)
 
 bool MemoryModule::is_active()
 { return configured; }
+
+const PegInfo* MemoryModule::get_pegs() const
+{ return mem_pegs; }
+
+PegCount* MemoryModule::get_counts() const
+{ return is_active() ? (PegCount*)&mem_stats : (PegCount*)&zero_stats; }
 

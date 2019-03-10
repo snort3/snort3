@@ -28,6 +28,7 @@ struct FlowConfig
     unsigned max_sessions = 0;
     unsigned pruning_timeout = 0;
     unsigned nominal_timeout = 0;
+    unsigned cap_weight = 0;
 };
 
 #endif

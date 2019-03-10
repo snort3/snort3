@@ -28,6 +28,7 @@
 #include "detection/detection_engine.h"
 #include "log/log.h"
 #include "main/snort.h"
+#include "memory/memory_cap.h"
 #include "profiler/profiler.h"
 #include "protocols/packet_manager.h"
 #include "time/packet_time.h"
@@ -218,6 +219,7 @@ int TcpReassembler::add_reassembly_segment(
 
     // FIXIT-L don't allocate overlapped part
     tsn = TcpSegmentNode::init(tsd);
+
     tsn->offset = slide;
     tsn->c_len = (uint16_t)newSize;
     tsn->i_len = (uint16_t)newSize;
@@ -1075,8 +1077,10 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
     }
     break;
     }
-
-    if ( flushed and !trs.sos.session->flow->two_way_traffic() and !p->ptrs.tcph->is_syn() )
+    // FIXIT-H a drop rule will yoink the seglist out from under us
+    // because apply_delayed_action is only deferred to end of context
+    if ( flushed and trs.sos.seg_count and
+        !trs.sos.session->flow->two_way_traffic() and !p->ptrs.tcph->is_syn() )
     {
         TcpStreamTracker::TcpState peer = trs.tracker->session->get_peer_state(trs.tracker);
 

@@ -81,7 +81,7 @@ class ThreadRegexOffload : public RegexOffload
 {
 public:
     ThreadRegexOffload(unsigned max);
-    ~ThreadRegexOffload();
+    ~ThreadRegexOffload() override;
 
     void stop() override;
 

@@ -51,6 +51,7 @@
 #include "detection/detection_engine.h"
 #include "detection/rules.h"
 #include "log/log.h"
+#include "memory/memory_cap.h"
 #include "profiler/profiler.h"
 #include "protocols/eth.h"
 
@@ -60,9 +61,16 @@
 #include "tcp_module.h"
 #include "tcp_normalizers.h"
 #include "tcp_reassemblers.h"
+#include "tcp_segment_node.h"
 #include "tcp_stream_state_machine.h"
 
 using namespace snort;
+
+void TcpSession::sinit()
+{ TcpSegmentNode::setup(); }
+
+void TcpSession::sterm()
+{ TcpSegmentNode::clear(); }
 
 TcpSession::TcpSession(Flow* flow)
     : TcpStreamSession(flow)
@@ -73,11 +81,14 @@ TcpSession::TcpSession(Flow* flow)
     client.session = this;
     server.session = this;
     tcpStats.instantiated++;
+
+    memory::MemoryCap::update_allocations(sizeof(*this));
 }
 
 TcpSession::~TcpSession()
 {
     clear_session(true, false, false);
+    memory::MemoryCap::update_deallocations(sizeof(*this));
 }
 
 bool TcpSession::setup(Packet* p)

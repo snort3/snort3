@@ -58,9 +58,6 @@ public:
     uint16_t get_mss(bool to_server) const;
     uint8_t get_tcp_options_len(bool to_server) const;
 
-    static void sinit();
-    static void sterm();
-
     void reset();
     void start_proxy();
     void print();

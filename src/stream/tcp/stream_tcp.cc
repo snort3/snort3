@@ -76,11 +76,13 @@ bool StreamTcp::configure(SnortConfig* sc)
 void StreamTcp::tinit()
 {
     TcpHAManager::tinit();
+    TcpSession::sinit();
 }
 
 void StreamTcp::tterm()
 {
     TcpHAManager::tterm();
+    TcpSession::sterm();
 }
 
 NORETURN_ASSERT void StreamTcp::eval(Packet*)
@@ -121,16 +123,6 @@ static Session* tcp_ssn(Flow* lws)
     return new TcpSession(lws);
 }
 
-static void tcp_tinit()
-{
-    TcpSession::sinit();
-}
-
-static void tcp_tterm()
-{
-    TcpSession::sterm();
-}
-
 static const InspectApi tcp_api =
 {
     {
@@ -151,8 +143,8 @@ static const InspectApi tcp_api =
     nullptr,  // service
     nullptr,  // init
     nullptr,  // term
-    tcp_tinit,
-    tcp_tterm,
+    nullptr,  // tinit,
+    nullptr,  // tterm,
     tcp_ctor,
     tcp_dtor,
     tcp_ssn,

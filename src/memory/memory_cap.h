@@ -23,6 +23,8 @@
 
 #include <cstddef>
 
+#include "main/thread.h"
+
 namespace memory
 {
 

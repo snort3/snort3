@@ -115,6 +115,14 @@ public:
     static unsigned create_flow_data_id()
     { return ++flow_data_id; }
 
+    void update_allocations(size_t);
+    void update_deallocations(size_t);
+
+    // return fixed size (could be an approx avg)
+    // this must be fixed for life of flow data instance
+    // track significant supplemental allocations with the above updaters
+    virtual size_t size_of() = 0;
+
     virtual void handle_expected(Packet*) { }
     virtual void handle_retransmit(Packet*) { }
     virtual void handle_eof(Packet*) { }
@@ -126,6 +134,7 @@ public:  // FIXIT-L privatize
 private:
     static unsigned flow_data_id;
     Inspector* handler;
+    size_t mem_in_use = 0;
     unsigned id;
 };
 

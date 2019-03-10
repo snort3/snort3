@@ -26,6 +26,7 @@
 #include "detection/detection_engine.h"
 #include "detection/rules.h"
 #include "main/snort.h"
+#include "memory/memory_cap.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
@@ -53,8 +54,12 @@ THREAD_LOCAL ProfileStats user_perf_stats;
 UserSegment* UserSegment::init(const uint8_t* p, unsigned n)
 {
     unsigned bucket = (n > BUCKET) ? n : BUCKET;
-    UserSegment* us = (UserSegment*)snort_alloc(sizeof(*us)+bucket-1);
+    unsigned size = sizeof(UserSegment) + bucket -1;
 
+    memory::MemoryCap::update_allocations(size);
+    UserSegment* us = (UserSegment*)snort_alloc(size);
+
+    us->size = size;
     us->len = 0;
     us->offset = 0;
     us->used = 0;
@@ -65,6 +70,7 @@ UserSegment* UserSegment::init(const uint8_t* p, unsigned n)
 
 void UserSegment::term(UserSegment* us)
 {
+    memory::MemoryCap::update_deallocations(us->size);
     snort_free(us);
 }
 
@@ -424,8 +430,11 @@ void UserSession::restart(Packet* p)
 // UserSession methods
 //-------------------------------------------------------------------------
 
-UserSession::UserSession(Flow* flow) : Session(flow) { }
+UserSession::UserSession(Flow* flow) : Session(flow)
+{ memory::MemoryCap::update_allocations(sizeof(*this)); }
 
+UserSession::~UserSession()
+{ memory::MemoryCap::update_deallocations(sizeof(*this)); }
 
 bool UserSession::setup(Packet*)
 {
@@ -443,7 +452,6 @@ void UserSession::clear()
 {
     client.term();
     server.term();
-    flow->restart();
 }
 
 void UserSession::set_splitter(bool c2s, StreamSplitter* ss)

@@ -28,6 +28,7 @@
 #include "flow/session.h"
 #include "framework/data_bus.h"
 #include "ips_options/ips_flowbits.h"
+#include "memory/memory_cap.h"
 #include "protocols/packet.h"
 #include "sfip/sf_ip.h"
 #include "utils/bitop.h"
@@ -52,7 +53,26 @@ FlowData::~FlowData()
 {
     if ( handler )
         handler->rem_ref();
+
+    assert(mem_in_use == 0);
 }
+
+void FlowData::update_allocations(size_t n)
+{
+    memory::MemoryCap::free_space(n);
+    memory::MemoryCap::update_allocations(n);
+    mem_in_use += n;
+}
+
+void FlowData::update_deallocations(size_t n)
+{
+    assert(mem_in_use >= n);
+    memory::MemoryCap::update_deallocations(n);
+    mem_in_use -= n;
+}
+
+size_t FlowData::size_of()
+{ return 1024; }  // FIXIT-H remove this default impl
 
 Flow::Flow()
 {
@@ -76,10 +96,13 @@ void Flow::init(PktType type)
 
 void Flow::term()
 {
-    if ( session )
-        delete session;
+    if ( !session )
+        return;
 
-    free_flow_data();
+    delete session;
+    session = nullptr;
+
+    assert(!flow_data);
 
     if ( mpls_client.length )
         delete[] mpls_client.start;
@@ -227,6 +250,12 @@ int Flow::set_flow_data(FlowData* fd)
         flow_data->prev = fd;
 
     flow_data = fd;
+
+    // this is after actual allocation so we can't prune beforehand
+    // but if we are that close to the edge we are in trouble anyway
+    // large allocations can be accounted for directly
+    fd->update_allocations(fd->size_of());
+
     return 0;
 }
 
@@ -262,6 +291,7 @@ void Flow::free_flow_data(FlowData* fd)
         fd->prev->next = fd->next;
         fd->next->prev = fd->prev;
     }
+    fd->update_deallocations(fd->size_of());
     delete fd;
 }
 
@@ -281,6 +311,7 @@ void Flow::free_flow_data()
     {
         FlowData* tmp = fd;
         fd = fd->next;
+        tmp->update_deallocations(tmp->size_of());
         delete tmp;
     }
     flow_data = nullptr;

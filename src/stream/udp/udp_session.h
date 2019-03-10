@@ -28,6 +28,7 @@ class UdpSession : public Session
 {
 public:
     UdpSession(snort::Flow*);
+    ~UdpSession() override;
 
     bool setup(snort::Packet*) override;
     void update_direction(char dir, const snort::SfIp*, uint16_t port) override;

@@ -76,6 +76,7 @@ class IpSession : public Session
 {
 public:
     IpSession(snort::Flow*);
+    ~IpSession() override;
 
     bool setup(snort::Packet*) override;
     int process(snort::Packet*) override;

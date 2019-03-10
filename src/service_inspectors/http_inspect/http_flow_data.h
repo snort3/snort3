@@ -63,6 +63,9 @@ public:
     friend class HttpUnitTestSetup;
 #endif
 
+    size_t size_of() override
+    { return sizeof(*this); }
+
 private:
     // Convenience routines
     void half_reset(HttpEnums::SourceId source_id);

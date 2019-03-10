@@ -26,6 +26,7 @@ class FileSession : public Session
 {
 public:
     FileSession(snort::Flow*);
+    ~FileSession() override;
 
     bool setup(snort::Packet*) override;
     void clear() override;

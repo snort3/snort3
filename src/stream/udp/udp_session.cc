@@ -26,6 +26,7 @@
 #include "flow/session.h"
 #include "framework/data_bus.h"
 #include "hash/xhash.h"
+#include "memory/memory_cap.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
 
@@ -102,8 +103,10 @@ static int ProcessUdp(
 //-------------------------------------------------------------------------
 
 UdpSession::UdpSession(Flow* flow) : Session(flow)
-{
-}
+{ memory::MemoryCap::update_allocations(sizeof(*this)); }
+
+UdpSession::~UdpSession()
+{ memory::MemoryCap::update_deallocations(sizeof(*this)); }
 
 bool UdpSession::setup(Packet* p)
 {
@@ -135,7 +138,6 @@ void UdpSession::clear()
 {
     UdpSessionCleanup(flow);
     UdpHAManager::process_deletion(flow);
-    flow->clear();
 }
 
 void UdpSession::update_direction(

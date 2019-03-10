@@ -25,42 +25,115 @@
 
 #include "tcp_segment_node.h"
 
+#include "main/thread.h"
+#include "memory/memory_cap.h"
 #include "utils/util.h"
 
 #include "segment_overlap_editor.h"
 #include "tcp_module.h"
 
-TcpSegmentNode::TcpSegmentNode(const struct timeval& tv, const uint8_t* payload, uint16_t len) :
-    prev(nullptr), next(nullptr), tv(tv), ts(0), i_seq(0), c_seq(0), i_len(len),
-    c_len(len), offset(0)
+#define USE_RESERVE
+#ifdef USE_RESERVE
+static THREAD_LOCAL TcpSegmentNode* reserved = nullptr;
+static THREAD_LOCAL unsigned reserve_sz = 0;
+
+static constexpr unsigned num_res = 4096;
+static constexpr unsigned res_min = 1024;
+static constexpr unsigned res_max = 1460;
+#endif
+
+void TcpSegmentNode::setup()
 {
-    data = ( uint8_t* )snort_alloc(len);
-    memcpy(data, payload, len);
-    tcpStats.mem_in_use += len;
+#ifdef USE_RESERVE
+    reserved = nullptr;
+    reserve_sz = 0;
+#endif
+}
+
+void TcpSegmentNode::clear()
+{
+#ifdef USE_RESERVE
+    while ( reserved )
+    {
+        TcpSegmentNode* tsn = reserved;
+        reserved = reserved->next;
+        memory::MemoryCap::update_deallocations(sizeof(*tsn) + tsn->size);
+        tcpStats.mem_in_use -= tsn->size;
+        snort_free(tsn);
+    }
+    reserve_sz = 0;
+#endif
 }
 
 //-------------------------------------------------------------------------
 // TcpSegment stuff
 //-------------------------------------------------------------------------
+
+TcpSegmentNode* TcpSegmentNode::create(
+    const struct timeval& tv, const uint8_t* payload, uint16_t len)
+{
+    TcpSegmentNode* tsn;
+
+#ifdef USE_RESERVE
+    if ( reserved and len > res_min and len <= res_max )
+    {
+        tsn = reserved;
+        reserved = tsn->next;
+        --reserve_sz;
+    }
+    else
+#endif
+    {
+        size_t size = sizeof(*tsn) + len;
+        memory::MemoryCap::update_allocations(size);
+        tsn = (TcpSegmentNode*)snort_alloc(size);
+        tsn->size = len;
+        tcpStats.mem_in_use += len;
+    }
+    tsn->tv = tv;
+    tsn->i_len = tsn->c_len = len;
+    memcpy(tsn->data, payload, len);
+
+    tsn->prev = tsn->next = nullptr;
+    tsn->i_seq = tsn->c_seq = 0;
+    tsn->offset = 0;
+    tsn->ts = 0;
+
+    return tsn;
+}
+
 TcpSegmentNode* TcpSegmentNode::init(TcpSegmentDescriptor& tsd)
 {
-    return new TcpSegmentNode(tsd.get_pkt()->pkth->ts, tsd.get_pkt()->data, tsd.get_seg_len());
+    return create(tsd.get_pkt()->pkth->ts, tsd.get_pkt()->data, tsd.get_seg_len());
 }
 
 TcpSegmentNode* TcpSegmentNode::init(TcpSegmentNode& tns)
 {
-    return new TcpSegmentNode(tns.tv, tns.payload(), tns.c_len);
+    return create(tns.tv, tns.payload(), tns.c_len);
 }
 
 void TcpSegmentNode::term()
 {
-    snort_free(data);
+#ifdef USE_RESERVE
+    if ( size == res_max and reserve_sz < num_res )
+    {
+        next = reserved;
+        reserved = this;
+        reserve_sz++;
+    }
+    else
+#endif
+    {
+        memory::MemoryCap::update_deallocations(sizeof(*this) + size);
+        tcpStats.mem_in_use -= size;
+        snort_free(this);
+    }
     tcpStats.segs_released++;
-    tcpStats.mem_in_use -= i_len;
-    delete this;
 }
 
-bool TcpSegmentNode::is_retransmit(const uint8_t* rdata, uint16_t rsize, uint32_t rseq, uint16_t orig_dsize, bool *full_retransmit)
+bool TcpSegmentNode::is_retransmit(
+    const uint8_t* rdata, uint16_t rsize, uint32_t rseq, uint16_t orig_dsize,
+    bool *full_retransmit)
 {
     // retransmit must have same payload at same place
     if ( !SEQ_EQ(i_seq, rseq) )

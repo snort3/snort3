@@ -41,6 +41,9 @@ public:
     friend bool implement_get_buf(unsigned id, Http2FlowData*, Http2Enums::SourceId,
         snort::InspectionBuffer&);
 
+    size_t size_of() override
+    { return sizeof(*this); }
+
 protected:
     // 0 element refers to client frame, 1 element refers to server frame
     bool preface[2] = { true, false };

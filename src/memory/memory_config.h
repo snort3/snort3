@@ -27,7 +27,6 @@ struct MemoryConfig
 {
     size_t cap = 0;
     unsigned threshold = 0;
-    bool soft = false;
 
     constexpr MemoryConfig() = default;
 };

@@ -24,6 +24,7 @@
 #include "icmp_session.h"
 
 #include "flow/flow_key.h"
+#include "memory/memory_cap.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/icmp4.h"
 #include "protocols/packet.h"
@@ -177,8 +178,10 @@ static int ProcessIcmpUnreach(Packet* p)
 //-------------------------------------------------------------------------
 
 IcmpSession::IcmpSession(Flow* flow) : Session(flow)
-{
-}
+{ memory::MemoryCap::update_allocations(sizeof(*this)); }
+
+IcmpSession::~IcmpSession()
+{ memory::MemoryCap::update_deallocations(sizeof(*this)); }
 
 bool IcmpSession::setup(Packet*)
 {

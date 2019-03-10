@@ -48,6 +48,7 @@ private:
     unsigned len;
     unsigned offset;
     unsigned used;
+    unsigned size;
     uint8_t data[1];
 };
 
@@ -75,6 +76,7 @@ class UserSession : public Session
 {
 public:
     UserSession(snort::Flow*);
+    ~UserSession() override;
 
     bool setup(snort::Packet*) override;
     void clear() override;

@@ -463,14 +463,6 @@ void TcpStreamSession::start_proxy()
 // tcp module stuff
 //-------------------------------------------------------------------------
 
-void TcpStreamSession::sinit()
-{
-    //AtomSplitter::init();  // FIXIT-L PAF implement
-}
-
-void TcpStreamSession::sterm()
-{ }
-
 void TcpStreamSession::print()
 {
     char buf[64];
@@ -488,5 +480,4 @@ void TcpStreamSession::print()
     LogMessage("Server Tracker:\n");
     server.print();
 }
-
 

@@ -429,6 +429,8 @@ void Snort::term()
     already_exiting = true;
     initializing = false;  // just in case we cut out early
 
+    memory::MemoryCap::print();
+
     term_signals();
     IpsManager::global_term(SnortConfig::get_conf());
     SFAT_Cleanup();

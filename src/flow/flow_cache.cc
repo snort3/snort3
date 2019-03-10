@@ -28,6 +28,7 @@
 #include "hash/zhash.h"
 #include "helpers/flag_context.h"
 #include "ips_options/ips_flowbits.h"
+#include "memory/memory_cap.h"
 #include "packet_io/active.h"
 #include "time/packet_time.h"
 #include "utils/stats.h"
@@ -61,9 +62,6 @@ FlowCache::FlowCache (const FlowConfig& cfg) : config(cfg)
 
 FlowCache::~FlowCache ()
 {
-    while ( Flow* flow = (Flow*)hash_table->pop() )
-        flow->term();
-
     delete uni_head;
     delete uni_tail;
 
@@ -142,6 +140,7 @@ Flow* FlowCache::get(const FlowKey* key)
         link_uni(flow);
     }
 
+    memory::MemoryCap::update_allocations(config.cap_weight);
     flow->last_data_seen = timestamp;
 
     return flow;
@@ -159,7 +158,16 @@ int FlowCache::remove(Flow* flow)
     if ( flow->next )
         unlink_uni(flow);
 
+    memory::MemoryCap::update_deallocations(config.cap_weight);
     return hash_table->remove(flow->key);
+}
+
+int FlowCache::retire(Flow* flow)
+{
+    flow->reset(true);
+    flow->term();
+    prune_stats.update(PruneReason::NONE);
+    return remove(flow);
 }
 
 unsigned FlowCache::prune_stale(uint32_t thetime, const Flow* save_me)
@@ -335,9 +343,12 @@ unsigned FlowCache::purge()
 
     while ( auto flow = static_cast<Flow*>(hash_table->first()) )
     {
-        release(flow, PruneReason::NONE);
+        retire(flow);
         ++retired;
     }
+
+    while ( Flow* flow = (Flow*)hash_table->pop() )
+        flow->term();
 
     return retired;
 }

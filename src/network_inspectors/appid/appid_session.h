@@ -195,9 +195,10 @@ public:
         uint16_t, IpProtocol, SnortProtocolId, int, AppIdInspector&);
 
     AppIdInspector& get_inspector() const
-    {
-        return inspector;
-    }
+    { return inspector; }
+
+    size_t size_of() override
+    { return sizeof(*this); }
 
     uint32_t session_id = 0;
     snort::Flow* flow = nullptr;

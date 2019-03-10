@@ -38,6 +38,9 @@ public:
     TcpSession(snort::Flow*);
     ~TcpSession() override;
 
+    static void sinit();
+    static void sterm();
+
     bool setup(snort::Packet*) override;
     void restart(snort::Packet* p) override;
     void precheck(snort::Packet* p) override;
