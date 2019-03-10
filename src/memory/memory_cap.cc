@@ -54,7 +54,12 @@ struct Tracker
     { mem_stats.allocated += n; ++mem_stats.allocations; }
 
     void deallocate(size_t n)
-    { mem_stats.deallocated += n; ++mem_stats.deallocations; }
+    {
+        mem_stats.deallocated += n; ++mem_stats.deallocations;
+        assert(mem_stats.deallocated <= mem_stats.allocated);
+        assert(mem_stats.deallocations <= mem_stats.allocations);
+        assert(mem_stats.allocated or !mem_stats.allocations);
+    }
 
     size_t used() const
     {
@@ -139,7 +144,7 @@ void MemoryCap::update_allocations(size_t n)
     n = fudge_it(n);
     mem_stats.total_fudge += (n - k);
     s_tracker.allocate(n);
-    auto in_use = mem_stats.allocated - mem_stats.deallocated;
+    auto in_use = s_tracker.used();
     if ( in_use > mem_stats.max_in_use )
         mem_stats.max_in_use = in_use;
     mp_active_context.update_allocs(n);

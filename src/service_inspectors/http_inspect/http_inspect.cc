@@ -274,7 +274,9 @@ void HttpInspect::eval(Packet* p)
     }
 
     const int remove_workaround = session_data->zero_byte_workaround[source_id] ? 1 : 0;
-    if (!process(p->data, p->dsize - remove_workaround, p->flow, source_id, true))
+
+    if (!process(p->data, p->dsize - remove_workaround, p->flow, source_id,
+        (p->data != p->context->buf)))
     {
         DetectionEngine::disable_content(p);
     }

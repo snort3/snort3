@@ -55,14 +55,14 @@ static MemoryCounts zero_stats = { };
 
 const PegInfo mem_pegs[] =
 {
-    { CountType::SUM, "allocations", "total number of allocations" },
-    { CountType::SUM, "deallocations", "total number of deallocations" },
-    { CountType::SUM, "allocated", "total amount of memory allocated" },
-    { CountType::SUM, "deallocated", "total amount of memory allocated" },
-    { CountType::SUM, "reap_attempts", "attempts to reclaim memory" },
-    { CountType::SUM, "reap_failures", "failures to reclaim memory" },
+    { CountType::NOW, "allocations", "total number of allocations" },
+    { CountType::NOW, "deallocations", "total number of deallocations" },
+    { CountType::NOW, "allocated", "total amount of memory allocated" },
+    { CountType::NOW, "deallocated", "total amount of memory allocated" },
+    { CountType::NOW, "reap_attempts", "attempts to reclaim memory" },
+    { CountType::NOW, "reap_failures", "failures to reclaim memory" },
     { CountType::MAX, "max_in_use", "highest allocated - deallocated" },
-    { CountType::SUM, "total_fudge", "sum of all adjustments" },
+    { CountType::NOW, "total_fudge", "sum of all adjustments" },
     { CountType::END, nullptr, nullptr }
 };
 
