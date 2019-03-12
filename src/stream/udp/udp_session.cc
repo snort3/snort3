@@ -138,6 +138,7 @@ void UdpSession::clear()
 {
     UdpSessionCleanup(flow);
     UdpHAManager::process_deletion(flow);
+    flow->clear();
 }
 
 void UdpSession::update_direction(
