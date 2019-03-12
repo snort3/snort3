@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2019 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2019-2019 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,41 +16,39 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// appid_mock_flow.h author davis mcpherson <davmcphe@cisco.com>
+// flow_stash.h author Shravan Rangaraju <shrarang@cisco.com>
 
-#ifndef APPID_MOCK_FLOW_H
-#define APPID_MOCK_FLOW_H
+#ifndef FLOW_STASH_H
+#define FLOW_STASH_H
 
-FlowData::FlowData(unsigned, Inspector*)
-{
-    next = prev = nullptr;
-    handler = nullptr;
-    id = 222;
-}
+#include <map>
+#include <string>
 
-FlowData::~FlowData() = default;
+#include "main/snort_types.h"
 
-FlowData* mock_flow_data = nullptr;
+#include "stash_item.h"
 
-typedef int32_t AppId;
-Flow::Flow() = default;
+namespace snort {
 
-class FakeFlow : public Flow
-{
+class FlowStash {
+public:
+    ~FlowStash();
+    void reset();
+    bool get(const std::string& key, int32_t& val);
+    bool get(const std::string& key, std::string& val);
+    void store(const std::string& key, int32_t val);
+    void store(const std::string& key, const std::string& val);
+    void store(const std::string& key, std::string* val);
+
+private:
+    std::map<std::string, StashItem*> container;
+
+    template<typename T>
+    bool get(const std::string& key, T& val, StashItemType type);
+    template<typename T>
+    void store(const std::string& key, T& val, StashItemType type);
 };
 
-FlowData* Flow::get_flow_data(unsigned) const
-{
-    return mock_flow_data;
 }
-
-int Flow::set_flow_data(FlowData* fd)
-{
-    mock_flow_data = fd;
-    return 0;
-}
-
-FlowStash::~FlowStash() { }
 
 #endif
-

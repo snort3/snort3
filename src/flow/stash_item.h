@@ -1,0 +1,87 @@
+//--------------------------------------------------------------------------
+// Copyright (C) 2019-2019 Cisco and/or its affiliates. All rights reserved.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
+
+// stash_item.h author Shravan Rangaraju <shrarang@cisco.com>
+
+#ifndef STASH_ITEM_H
+#define STASH_ITEM_H
+
+#include <cstdint>
+#include <string>
+
+namespace snort {
+
+enum StashItemType {
+    STASH_ITEM_TYPE_INT32,
+    STASH_ITEM_TYPE_STRING
+};
+
+union StashItemVal {
+    int32_t int32_val;
+    std::string* str_val;
+};
+
+class StashItem {
+private:
+    StashItemType type;
+    StashItemVal val;
+
+public:
+    StashItem(int32_t int32_val)
+    {
+        type = STASH_ITEM_TYPE_INT32;
+        val.int32_val = int32_val;
+    }
+
+    StashItem(const std::string& str_val)
+    {
+        type = STASH_ITEM_TYPE_STRING;
+        val.str_val = new std::string(str_val);
+    }
+
+    StashItem(std::string* str_val)
+    {
+        type = STASH_ITEM_TYPE_STRING;
+        val.str_val = str_val;
+    }
+
+    ~StashItem()
+    {
+        switch (type)
+        {
+        case STASH_ITEM_TYPE_STRING:
+            delete val.str_val;
+            break;
+        default:
+            break;
+        }
+    }
+
+    StashItemType get_type() const
+    { return type; }
+
+    void get_val(int32_t& int32_val) const
+    { int32_val = val.int32_val; }
+
+    void get_val(std::string& str_val) const
+    { str_val = *(val.str_val); }
+};
+
+}
+
+#endif

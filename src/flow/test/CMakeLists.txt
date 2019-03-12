@@ -10,3 +10,7 @@ add_cpputest( ha_module_test
         ../../sfip/sf_ip.cc
         $<TARGET_OBJECTS:catch_tests>
 )
+
+add_cpputest( flow_stash_test
+    SOURCES ../flow_stash.cc
+)

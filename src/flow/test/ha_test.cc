@@ -163,6 +163,8 @@ void packet_gettimeofday(struct timeval* tv)
 
 Flow::Flow() { ha_state = new FlowHAState; key = new FlowKey; }
 
+FlowStash::~FlowStash() { }
+
 SideChannel* SideChannelManager::get_side_channel(SCPort)
 { return &s_side_channel; }
 

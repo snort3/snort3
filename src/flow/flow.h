@@ -34,6 +34,7 @@
 #include "protocols/layer.h"
 #include "sfip/sf_ip.h"
 #include "target_based/snort_protocols.h"
+#include "flow_stash.h"
 
 #define SSNFLAG_SEEN_CLIENT         0x00000001
 #define SSNFLAG_SEEN_SENDER         0x00000001
@@ -188,6 +189,31 @@ public:
     void set_mpls_layer_per_dir(Packet*);
     Layer get_mpls_layer_per_dir(bool);
     void set_service(Packet* pkt, const char* new_service);
+    bool get_attr(const std::string& key, int32_t& val);
+    bool get_attr(const std::string& key, std::string& val);
+    void set_attr(const std::string& key, const int32_t& val);
+    void set_attr(const std::string& key, const std::string& val);
+    // Use this API when the publisher of the attribute allocated memory for it and can give up its
+    // ownership after the call.
+    void set_attr(const std::string& key, std::string* val)
+    {
+        assert(stash);
+        stash->store(key, val);
+    }
+
+    template<typename T>
+    bool get_attr(const std::string& key, T& val)
+    {
+        assert(stash);
+        return stash->get(key, val);
+    }
+
+    template<typename T>
+    void set_attr(const std::string& key, const T& val)
+    {
+        assert(stash);
+        stash->store(key, val);
+    }
 
     uint32_t update_session_flags(uint32_t flags)
     { return ssn_state.session_flags = flags; }
@@ -307,6 +333,7 @@ public:  // FIXIT-M privatize if possible
     Session* session;
     BitOp* bitop;
     FlowHAState* ha_state;
+    FlowStash* stash;
 
     uint8_t ip_proto;
     PktType pkt_type; // ^^

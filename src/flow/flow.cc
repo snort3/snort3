@@ -92,6 +92,8 @@ void Flow::init(PktType type)
     }
     mpls_client.length = 0;
     mpls_server.length = 0;
+
+    stash = new FlowStash;
 }
 
 void Flow::term()
@@ -127,6 +129,9 @@ void Flow::term()
 
     if ( ha_state )
         delete ha_state;
+
+    if (stash)
+        delete stash;
 }
 
 inline void Flow::clean()
@@ -188,6 +193,9 @@ void Flow::reset(bool do_cleanup)
 
     if ( ha_state )
         ha_state->reset();
+
+    if ( stash )
+        stash->reset();
 
     constexpr size_t offset = offsetof(Flow, flow_data);
     // FIXIT-L need a struct to zero here to make future proof
