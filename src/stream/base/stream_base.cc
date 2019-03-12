@@ -24,6 +24,7 @@
 
 #include "flow/flow_control.h"
 #include "flow/prune_stats.h"
+#include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/snort_types.h"
 #include "managers/inspector_manager.h"
@@ -217,8 +218,13 @@ bool StreamBase::configure(SnortConfig* sc)
 
 void StreamBase::show(SnortConfig*)
 {
-    // FIXIT-L SSN print
-    //StreamPrintGlobalConfig(&config);
+    LogMessage("Stream Base config:\n");
+    LogMessage("    IP   max sessions: %d\n", config.ip_cfg.max_sessions);
+    LogMessage("    ICMP max sessions: %d\n", config.icmp_cfg.max_sessions);
+    LogMessage("    TCP  max sessions: %d\n", config.tcp_cfg.max_sessions);
+    LogMessage("    UDP  max sessions: %d\n", config.udp_cfg.max_sessions);
+    LogMessage("    User max sessions: %d\n", config.user_cfg.max_sessions);
+    LogMessage("    File max sessions: %d\n", config.file_cfg.max_sessions);
 }
 
 void StreamBase::eval(Packet* p)
@@ -338,4 +344,3 @@ static const InspectApi base_api =
 };
 
 const BaseApi* nin_stream_base = &base_api.base;
-

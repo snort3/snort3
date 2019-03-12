@@ -73,6 +73,12 @@ public:
     inline static bool get_bind_wizard()
     { return bind_wizard; }
 
+    static void unset_convert_max_session()
+    { convert_max_session = false; }
+
+    static bool do_convert_max_session()
+    { return convert_max_session; }
+
     Binder& make_binder(Binder&);
     Binder& make_binder();
     Binder& make_pending_binder(int ips_policy_id);
@@ -124,6 +130,7 @@ private:
     static bool convert_conf_mult_files;
     static bool empty_args;
     static bool bind_wizard;
+    static bool convert_max_session;
 
     bool ftp_data_is_added = false;
 
@@ -154,4 +161,3 @@ private:
 };
 
 #endif
-

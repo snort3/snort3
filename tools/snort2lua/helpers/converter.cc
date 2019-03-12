@@ -39,7 +39,7 @@
 
 #define GID_REPUTATION "136"
 
-TableDelegation table_delegation = 
+TableDelegation table_delegation =
 {
     { "binder", true },
     { "detection", true },
@@ -56,6 +56,7 @@ bool Converter::empty_args = false;
 bool Converter::convert_rules_mult_files = true;
 bool Converter::convert_conf_mult_files = true;
 bool Converter::bind_wizard = false;
+bool Converter::convert_max_session = true;
 
 Converter::Converter() :
     table_api(&top_table_api, table_delegation),
@@ -292,7 +293,7 @@ int Converter::parse_file(
                 }
 
                 rule_api.resolve_pcre_buffer_options();
-		
+
                 if (commented_rule)
                     rule_api.make_rule_a_comment();
 
@@ -583,4 +584,3 @@ int Converter::convert(
     }
     return rc;
 }
-

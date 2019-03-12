@@ -88,8 +88,11 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
         else if (keyword == "max_tcp")
         {
             table_api.open_table("tcp_cache");
-            table_api.add_diff_option_comment("max_tcp", "max_sessions");
-            tmpval = parse_int_option("max_sessions", arg_stream, false);
+            if (cv.do_convert_max_session())
+            {
+                table_api.add_diff_option_comment("max_tcp", "max_sessions");
+                tmpval = parse_int_option("max_sessions", arg_stream, false);
+            }
             table_api.close_table();
         }
         else if (keyword == "tcp_cache_nominal_timeout")
@@ -109,8 +112,11 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
         else if (keyword == "max_udp")
         {
             table_api.open_table("udp_cache");
-            table_api.add_diff_option_comment("max_udp","max_sessions");
-            tmpval = parse_int_option("max_sessions", arg_stream, false);
+            if (cv.do_convert_max_session())
+            {
+                table_api.add_diff_option_comment("max_udp","max_sessions");
+                tmpval = parse_int_option("max_sessions", arg_stream, false);
+            }
             table_api.close_table();
         }
         else if (keyword == "udp_cache_pruning_timeout")
@@ -130,15 +136,21 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
         else if (keyword == "max_icmp")
         {
             table_api.open_table("icmp_cache");
-            table_api.add_diff_option_comment("max_icmp","max_sessions");
-            tmpval = parse_int_option("max_sessions", arg_stream, false);
+            if (cv.do_convert_max_session())
+            {
+                table_api.add_diff_option_comment("max_icmp","max_sessions");
+                tmpval = parse_int_option("max_sessions", arg_stream, false);
+            }
             table_api.close_table();
         }
         else if (keyword == "max_ip")
         {
             table_api.open_table("ip_cache");
-            table_api.add_diff_option_comment("max_ip","max_sessions");
-            tmpval = parse_int_option("max_sessions", arg_stream, false);
+            if (cv.do_convert_max_session())
+            {
+                table_api.add_diff_option_comment("max_ip","max_sessions");
+                tmpval = parse_int_option("max_sessions", arg_stream, false);
+            }
             table_api.close_table();
         }
         else if (keyword == "show_rebuilt_packets")
@@ -196,4 +208,3 @@ static const ConvertMap preprocessor_stream_global =
 
 const ConvertMap* stream_global_map = &preprocessor_stream_global;
 } // namespace preprocessors
-

@@ -283,6 +283,11 @@ static void print_version(const char* /*key*/, const char* /*val*/)
     std::cout << "Snort2Lua\t0.2.0";
 }
 
+static void dont_convert_max_session(const char* /*key*/, const char* /*val*/)
+{
+    Converter::unset_convert_max_session();
+}
+
 #ifdef REG_TEST
 [[noreturn]] static void print_binder_order(const char* /*key*/, const char* /*val*/)
 {
@@ -350,6 +355,9 @@ static ConfigFunc basic_opts[] =
     { "i", dont_parse_includes, "",
       "if <snort_conf> file contains any <include_file> or <policy_file> "
       "(i.e. 'include path/to/conf/other_conf'), do NOT parse those files" },
+
+    { "l", dont_convert_max_session, "",
+      "do not convert max_tcp, max_udp, max_icmp, max_ip to max_session" },
 
     { "m", add_remark, "",
       "add a remark to the end of every converted rule" },
@@ -515,4 +523,3 @@ static void help_args(const char* /*pfx*/, const char* /*val*/)
     }
 }
 } // namespace parser
-
