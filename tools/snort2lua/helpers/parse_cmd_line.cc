@@ -356,9 +356,6 @@ static ConfigFunc basic_opts[] =
       "if <snort_conf> file contains any <include_file> or <policy_file> "
       "(i.e. 'include path/to/conf/other_conf'), do NOT parse those files" },
 
-    { "l", dont_convert_max_session, "",
-      "do not convert max_tcp, max_udp, max_icmp, max_ip to max_session" },
-
     { "m", add_remark, "",
       "add a remark to the end of every converted rule" },
 
@@ -391,6 +388,9 @@ static ConfigFunc basic_opts[] =
     { "dont-parse-includes", dont_parse_includes, "",
       "Same as '-p'. if <snort_conf> file contains any <include_file> or <policy_file> "
       "(i.e. 'include path/to/conf/other_conf'), do NOT parse those files" },
+
+    { "dont-convert-max-sessions", dont_convert_max_session, "",
+      "do not convert max_tcp, max_udp, max_icmp, max_ip to max_session" },
 
     { "error-file", parse_error_file, "<error_file>",
       "Same as '-e'. output all errors to <error_file>" },
