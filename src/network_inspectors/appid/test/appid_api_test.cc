@@ -55,8 +55,6 @@ AppId AppInfoManager::get_appid_by_name(const char*)
     return APPID_UT_ID;
 }
 
-AppInfoManager& app_info_mgr = AppInfoManager::get_instance();
-
 Flow* flow = nullptr;
 AppIdSession* mock_session = nullptr;
 
@@ -180,4 +178,3 @@ int main(int argc, char** argv)
     mock_cleanup_appid_pegs();
     return rc;
 }
-

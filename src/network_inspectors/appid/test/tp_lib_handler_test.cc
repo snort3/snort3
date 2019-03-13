@@ -38,7 +38,6 @@
 using namespace std;
 
 TPLibHandler* tph = nullptr;
-AppIdModuleConfig config;
 
 AppIdModuleConfig::~AppIdModuleConfig() { }
 
@@ -48,6 +47,10 @@ TEST_GROUP(tp_lib_handler)
 
 TEST(tp_lib_handler, load_unload)
 {
+    AppIdModuleConfig config;
+    config.tp_appid_path="./libtp_mock.so";
+    config.tp_appid_config="./tp.config";
+
     tph = TPLibHandler::get();
     tph->pinit(&config);
     CHECK_TRUE(tph->have_tp());
@@ -95,11 +98,7 @@ TEST(tp_lib_handler, tp_appid_module_pinit_error)
 
 int main(int argc, char** argv)
 {
-    config.tp_appid_path="./libtp_mock.so";
-    config.tp_appid_config="./tp.config";
-    
     int rc = CommandLineTestRunner::RunAllTests(argc, argv);
 
     return rc;
 }
-

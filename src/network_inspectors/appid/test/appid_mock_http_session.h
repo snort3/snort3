@@ -67,13 +67,13 @@ char const* RSP_BODY = "this is the body of the http response";
 
 void AppIdHttpSession::update_url(AppidChangeBits&)
 {
-    const std::string* host = meta_data[REQ_HOST_FID];
-    const std::string* uri = meta_data[REQ_URI_FID];
-    if (host and uri)
+    const std::string* host_test = meta_data[REQ_HOST_FID];
+    const std::string* uri_test = meta_data[REQ_URI_FID];
+    if (host_test and uri_test)
     {
         if (meta_data[MISC_URL_FID])
             delete meta_data[MISC_URL_FID];
-        meta_data[MISC_URL_FID] = new std::string(std::string("http://") + *host + *uri);
+        meta_data[MISC_URL_FID] = new std::string(std::string("http://") + *host_test + *uri_test);
     }
 }
 
@@ -126,4 +126,3 @@ public:
 };
 
 #endif
-

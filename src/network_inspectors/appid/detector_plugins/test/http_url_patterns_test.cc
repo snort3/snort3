@@ -41,9 +41,9 @@ static AppIdModule appid_mod;
 static AppIdInspector appid_inspector(appid_mod);
 static AppIdSession session(IpProtocol::IP, sfip, 0, appid_inspector);
 static AppIdHttpSession hsession(session);
-static ChpMatchDescriptor cmd;
+static ChpMatchDescriptor cmd_test;
 static MatchedCHPAction mchp;
-static CHPAction chpa;
+static CHPAction chpa_test;
 static char* version = nullptr;
 static char* user = nullptr;
 static char* my_action_data = (char*)"0";
@@ -240,32 +240,32 @@ TEST(http_url_patterns_tests, normalize_userid)
 TEST(http_url_patterns_tests, scan_header_x_working_with)
 {
     // appid is APP_ID_ASPROXY
-    char* version = snort_strdup("456");
+    char* loc_version = snort_strdup("456");
     const char* data = "ASProxy/123";
-    CHECK(hm->scan_header_x_working_with(data, (uint32_t)strlen(data), (char**)&version) ==
+    CHECK(hm->scan_header_x_working_with(data, (uint32_t)strlen(data), (char**)&loc_version) ==
         APP_ID_ASPROXY);
-    STRCMP_EQUAL(version, "123");
-    snort_free(version);
-    version = nullptr;
+    STRCMP_EQUAL(loc_version, "123");
+    snort_free(loc_version);
+    loc_version = nullptr;
 
     // appid is APP_ID_NONE
     const char* data2 = "Not ASProxy format";
-    CHECK(hm->scan_header_x_working_with(data2, (uint32_t)strlen(data2), (char**)&version) ==
+    CHECK(hm->scan_header_x_working_with(data2, (uint32_t)strlen(data2), (char**)&loc_version) ==
         APP_ID_NONE);
-    CHECK(version == nullptr);
+    CHECK(loc_version == nullptr);
 }
 
 TEST(http_url_patterns_tests, scan_chp_defer)
 {
     // testing DEFER_TO_SIMPLE_DETECT
     test_find_all_done = false;
-    chpa.appIdInstance = APP_ID_NONE;
-    chpa.action = DEFER_TO_SIMPLE_DETECT;
-    mchp.mpattern = &chpa;
-    cmd.chp_matches[RSP_BODY_FID].emplace_back(mchp);
-    cmd.cur_ptype = RSP_BODY_FID;
+    chpa_test.appIdInstance = APP_ID_NONE;
+    chpa_test.action = DEFER_TO_SIMPLE_DETECT;
+    mchp.mpattern = &chpa_test;
+    cmd_test.chp_matches[RSP_BODY_FID].emplace_back(mchp);
+    cmd_test.cur_ptype = RSP_BODY_FID;
     mod_config.safe_search_enabled = false;
-    CHECK(hm->scan_chp(cmd, &version, &user, &total_found, &hsession, (const
+    CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &hsession, (const
         AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
 }
@@ -274,14 +274,14 @@ TEST(http_url_patterns_tests, scan_chp_alt_appid)
 {
     // testing ALTERNATE_APPID
     test_find_all_done = false;
-    chpa.action_data = my_action_data;
-    chpa.appIdInstance = APP_ID_NONE;
-    chpa.action = ALTERNATE_APPID;
-    mchp.mpattern = &chpa;
-    cmd.chp_matches[RSP_BODY_FID].emplace_back(mchp);
-    cmd.cur_ptype = RSP_BODY_FID;
+    chpa_test.action_data = my_action_data;
+    chpa_test.appIdInstance = APP_ID_NONE;
+    chpa_test.action = ALTERNATE_APPID;
+    mchp.mpattern = &chpa_test;
+    cmd_test.chp_matches[RSP_BODY_FID].emplace_back(mchp);
+    cmd_test.cur_ptype = RSP_BODY_FID;
     mod_config.safe_search_enabled = false;
-    CHECK(hm->scan_chp(cmd, &version, &user, &total_found, &hsession, (const
+    CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &hsession, (const
         AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
 }
@@ -290,18 +290,18 @@ TEST(http_url_patterns_tests, scan_chp_extract_user)
 {
     // testing EXTRACT_USER
     test_find_all_done = false;
-    chpa.action_data = my_action_data;
-    chpa.appIdInstance = APP_ID_NONE;
-    chpa.action = EXTRACT_USER;
-    chpa.psize = 1;
-    mchp.mpattern = &chpa;
+    chpa_test.action_data = my_action_data;
+    chpa_test.appIdInstance = APP_ID_NONE;
+    chpa_test.action = EXTRACT_USER;
+    chpa_test.psize = 1;
+    mchp.mpattern = &chpa_test;
     mchp.start_match_pos = 0;
-    cmd.cur_ptype = RSP_BODY_FID;
+    cmd_test.cur_ptype = RSP_BODY_FID;
     mod_config.safe_search_enabled = false;
-    cmd.chp_matches[RSP_BODY_FID].emplace_back(mchp);
-    cmd.buffer[RSP_BODY_FID] = (const char*)"userid\n\rpassword";
-    cmd.length[RSP_BODY_FID] = strlen(cmd.buffer[RSP_BODY_FID]);
-    CHECK(hm->scan_chp(cmd, &version, &user, &total_found, &hsession, (const
+    cmd_test.chp_matches[RSP_BODY_FID].emplace_back(mchp);
+    cmd_test.buffer[RSP_BODY_FID] = (const char*)"userid\n\rpassword";
+    cmd_test.length[RSP_BODY_FID] = strlen(cmd_test.buffer[RSP_BODY_FID]);
+    CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &hsession, (const
         AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
     snort_free(user);
@@ -312,95 +312,95 @@ TEST(http_url_patterns_tests, scan_chp_rewrite_field)
 {
     // testing REWRITE_FIELD
     test_find_all_done = false;
-    cmd.cur_ptype = RSP_BODY_FID;
+    cmd_test.cur_ptype = RSP_BODY_FID;
     mod_config.safe_search_enabled = false;
-    chpa.action_data = my_action_data;
-    chpa.appIdInstance = APP_ID_NONE;
-    chpa.action = REWRITE_FIELD;
-    chpa.psize = 1;
-    mchp.mpattern = &chpa;
+    chpa_test.action_data = my_action_data;
+    chpa_test.appIdInstance = APP_ID_NONE;
+    chpa_test.action = REWRITE_FIELD;
+    chpa_test.psize = 1;
+    mchp.mpattern = &chpa_test;
     mchp.start_match_pos = 0;
-    cmd.chp_matches[RSP_BODY_FID].emplace_back(mchp);
-    cmd.buffer[RSP_BODY_FID] = my_chp_data;
-    cmd.length[RSP_BODY_FID] = strlen(cmd.buffer[RSP_BODY_FID]);
-    CHECK(hm->scan_chp(cmd, &version, &user, &total_found, &hsession, (const
+    cmd_test.chp_matches[RSP_BODY_FID].emplace_back(mchp);
+    cmd_test.buffer[RSP_BODY_FID] = my_chp_data;
+    cmd_test.length[RSP_BODY_FID] = strlen(cmd_test.buffer[RSP_BODY_FID]);
+    CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &hsession, (const
         AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
-    snort_free(const_cast<char*>(cmd.chp_rewritten[RSP_BODY_FID]));
-    cmd.chp_rewritten[RSP_BODY_FID] = nullptr;
+    snort_free(const_cast<char*>(cmd_test.chp_rewritten[RSP_BODY_FID]));
+    cmd_test.chp_rewritten[RSP_BODY_FID] = nullptr;
 }
 
 TEST(http_url_patterns_tests, scan_chp_insert_without_action)
 {
     // testing INSERT_FIELD without action_data
     test_find_all_done = false;
-    cmd.cur_ptype = RSP_BODY_FID;
+    cmd_test.cur_ptype = RSP_BODY_FID;
     mod_config.safe_search_enabled = false;
-    chpa.action_data = nullptr;
-    chpa.appIdInstance = APP_ID_NONE;
-    chpa.action = INSERT_FIELD;
-    chpa.psize = 1;
-    mchp.mpattern = &chpa;
+    chpa_test.action_data = nullptr;
+    chpa_test.appIdInstance = APP_ID_NONE;
+    chpa_test.action = INSERT_FIELD;
+    chpa_test.psize = 1;
+    mchp.mpattern = &chpa_test;
     mchp.start_match_pos = 0;
-    cmd.chp_matches[RSP_BODY_FID].emplace_back(mchp);
-    cmd.buffer[RSP_BODY_FID] = my_chp_data;
-    cmd.length[RSP_BODY_FID] = strlen(cmd.buffer[RSP_BODY_FID]);
-    CHECK(hm->scan_chp(cmd, &version, &user, &total_found, &hsession, (const
+    cmd_test.chp_matches[RSP_BODY_FID].emplace_back(mchp);
+    cmd_test.buffer[RSP_BODY_FID] = my_chp_data;
+    cmd_test.length[RSP_BODY_FID] = strlen(cmd_test.buffer[RSP_BODY_FID]);
+    CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &hsession, (const
         AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
-    snort_free(const_cast<char*>(cmd.chp_rewritten[RSP_BODY_FID]));
-    cmd.chp_rewritten[RSP_BODY_FID] = nullptr;
+    snort_free(const_cast<char*>(cmd_test.chp_rewritten[RSP_BODY_FID]));
+    cmd_test.chp_rewritten[RSP_BODY_FID] = nullptr;
 }
 
 TEST(http_url_patterns_tests, scan_chp_insert_with_action)
 {
     // testing INSERT_FIELD with action_data
     test_find_all_done = false;
-    cmd.cur_ptype = RSP_BODY_FID;
+    cmd_test.cur_ptype = RSP_BODY_FID;
     mod_config.safe_search_enabled = false;
-    chpa.action_data = my_action_data;
-    chpa.appIdInstance = APP_ID_NONE;
-    chpa.action = INSERT_FIELD;
-    chpa.psize = 1;
-    mchp.mpattern = &chpa;
+    chpa_test.action_data = my_action_data;
+    chpa_test.appIdInstance = APP_ID_NONE;
+    chpa_test.action = INSERT_FIELD;
+    chpa_test.psize = 1;
+    mchp.mpattern = &chpa_test;
     mchp.start_match_pos = 0;
-    cmd.chp_matches[RSP_BODY_FID].emplace_back(mchp);
-    cmd.buffer[RSP_BODY_FID] = my_chp_data;
-    cmd.length[RSP_BODY_FID] = strlen(cmd.buffer[RSP_BODY_FID]);
-    CHECK(hm->scan_chp(cmd, &version, &user, &total_found, &hsession, (const
+    cmd_test.chp_matches[RSP_BODY_FID].emplace_back(mchp);
+    cmd_test.buffer[RSP_BODY_FID] = my_chp_data;
+    cmd_test.length[RSP_BODY_FID] = strlen(cmd_test.buffer[RSP_BODY_FID]);
+    CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &hsession, (const
         AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
-    snort_free(const_cast<char*>(cmd.chp_rewritten[RSP_BODY_FID]));
-    cmd.chp_rewritten[RSP_BODY_FID] = nullptr;
+    snort_free(const_cast<char*>(cmd_test.chp_rewritten[RSP_BODY_FID]));
+    cmd_test.chp_rewritten[RSP_BODY_FID] = nullptr;
 }
 
 TEST(http_url_patterns_tests, scan_chp_hold_and_default)
 {
     // testing HOLD_FLOW
     test_find_all_done = false;
-    chpa.action_data = my_action_data;
-    chpa.appIdInstance = APP_ID_NONE;
-    chpa.action = HOLD_FLOW;
-    mchp.mpattern = &chpa;
-    cmd.chp_matches[RSP_BODY_FID].emplace_back(mchp);
-    cmd.cur_ptype = RSP_BODY_FID;
+    chpa_test.action_data = my_action_data;
+    chpa_test.appIdInstance = APP_ID_NONE;
+    chpa_test.action = HOLD_FLOW;
+    mchp.mpattern = &chpa_test;
+    cmd_test.chp_matches[RSP_BODY_FID].emplace_back(mchp);
+    cmd_test.cur_ptype = RSP_BODY_FID;
     mod_config.safe_search_enabled = false;
-    chpa.psize = 1;
+    chpa_test.psize = 1;
     mchp.start_match_pos = 0;
-    cmd.buffer[RSP_BODY_FID] = my_chp_data;
-    cmd.length[RSP_BODY_FID] = strlen(cmd.buffer[RSP_BODY_FID]);
-    CHECK(hm->scan_chp(cmd, &version, &user, &total_found, &hsession, (const
+    cmd_test.buffer[RSP_BODY_FID] = my_chp_data;
+    cmd_test.length[RSP_BODY_FID] = strlen(cmd_test.buffer[RSP_BODY_FID]);
+    CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &hsession, (const
         AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
 
     // testing FUTURE_APPID_SESSION_SIP (default action)
     test_find_all_done = false;
-    chpa.action_data = my_action_data;
-    chpa.appIdInstance = APP_ID_NONE;
-    chpa.action = FUTURE_APPID_SESSION_SIP;
-    mchp.mpattern = &chpa;
-    cmd.chp_matches[RSP_BODY_FID].emplace_back(mchp);
-    CHECK(hm->scan_chp(cmd, &version, &user, &total_found, &hsession, (const
+    chpa_test.action_data = my_action_data;
+    chpa_test.appIdInstance = APP_ID_NONE;
+    chpa_test.action = FUTURE_APPID_SESSION_SIP;
+    mchp.mpattern = &chpa_test;
+    cmd_test.chp_matches[RSP_BODY_FID].emplace_back(mchp);
+    CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &hsession, (const
         AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
 }
@@ -707,4 +707,3 @@ int main(int argc, char** argv)
     int return_value = CommandLineTestRunner::RunAllTests(argc, argv);
     return return_value;
 }
-

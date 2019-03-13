@@ -536,7 +536,7 @@ static uint64_t is_session_monitored(AppIdSession& asd, const Packet* p, AppidSe
 static uint64_t is_session_monitored(const Packet* p, AppidSessionDirection dir,
     AppIdInspector& inspector)
 {
-    uint64_t flags = 0;
+    uint64_t flags;
     uint64_t flow_flags = APPID_SESSION_DISCOVER_APP;
 
     if ( check_port_exclusion(p, false, inspector) )
@@ -1046,4 +1046,3 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
         asd.pick_misc_app_id(), change_bits);
     publish_appid_event(change_bits, p->flow);
 }
-
