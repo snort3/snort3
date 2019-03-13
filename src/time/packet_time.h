@@ -27,6 +27,7 @@
 namespace snort
 {
 SO_PUBLIC time_t packet_time();
+SO_PUBLIC int64_t timersub_ms(const struct timeval* end, const struct timeval* start);
 }
 
 void packet_time_update(const struct timeval* cur_tv);

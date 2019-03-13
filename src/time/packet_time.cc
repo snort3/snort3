@@ -34,6 +34,7 @@
 #endif
 
 #include "main/thread.h"
+#include "time/timersub.h"
 
 #include "packet_time.h"
 
@@ -45,6 +46,19 @@ namespace snort
 time_t packet_time()
 {
     return s_recent_packet.tv_sec;
+}
+
+int64_t timersub_ms(const struct timeval* end, const struct timeval* start)
+{
+    if (!end)
+        end = &s_recent_packet; // use recent packet time instead when end is null
+
+    if (!start or !start->tv_sec or !end->tv_sec)
+        return 0;               // can't really compare when values are not set
+
+    struct timeval difftime;
+    TIMERSUB(end, start, &difftime);
+    return difftime.tv_sec*1000 + difftime.tv_usec/1000;
 }
 }
 
