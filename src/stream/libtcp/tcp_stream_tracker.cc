@@ -221,10 +221,13 @@ void TcpStreamTracker::set_splitter(StreamSplitter* ss)
 
     splitter = ss;
 
-    if ( ss )
-        paf_setup(&paf_state);
-    else
+    if ( !splitter )
         flush_policy = STREAM_FLPOLICY_IGNORE;
+    else
+    {
+        paf_setup(&paf_state);
+        reassembler.reset_paf_segment();
+    }
 }
 
 void TcpStreamTracker::set_splitter(const Flow* flow)

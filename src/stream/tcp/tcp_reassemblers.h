@@ -106,6 +106,9 @@ public:
     void set_norm_mode_test()
     { trs.sos.tcp_ips_data = NORM_MODE_TEST; }
 
+    void reset_paf_segment()
+    { trs.sos.seglist.cur_pseg = nullptr; }
+
 private:
     TcpReassembler* reassembler = nullptr;
     TcpReassemblerState trs;
