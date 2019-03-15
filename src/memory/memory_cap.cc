@@ -72,7 +72,7 @@ struct Tracker
     }
 };
 
-static THREAD_LOCAL Tracker s_tracker;
+static Tracker s_tracker;
 
 // -----------------------------------------------------------------------------
 // helpers
@@ -132,7 +132,17 @@ bool MemoryCap::free_space(size_t n)
     if ( !thread_cap )
         return true;
 
-    return memory::free_space(n, thread_cap, s_tracker, prune_handler);
+    static bool entered = false;
+    assert(!entered);
+
+    if ( entered )
+        return false;
+
+    entered = true;
+    bool avail = memory::free_space(n, thread_cap, s_tracker, prune_handler);
+    entered = false;
+
+    return avail;
 }
 
 static size_t fudge_it(size_t n)

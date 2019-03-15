@@ -155,15 +155,19 @@ inline void Flow::clean()
 
 void Flow::reset(bool do_cleanup)
 {
-    DetectionEngine::onload(this);
-    DetectionEngine::set_next_packet();
-    DetectionEngine de;
-
     if ( session )
     {
+        DetectionEngine::onload(this);
+
         if ( do_cleanup )
+        {
+            DetectionEngine::set_next_packet();
+            DetectionEngine de;
+
             session->cleanup();
 
+            de.get_context()->clear_callbacks();
+        }
         else
             session->clear();
     }
@@ -200,8 +204,6 @@ void Flow::reset(bool do_cleanup)
     constexpr size_t offset = offsetof(Flow, flow_data);
     // FIXIT-L need a struct to zero here to make future proof
     memset((uint8_t*)this+offset, 0, sizeof(Flow)-offset);
-
-    de.get_context()->clear_callbacks();
 }
 
 void Flow::restart(bool dump_flow_data)
