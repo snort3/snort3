@@ -132,7 +132,7 @@ bool MemoryCap::free_space(size_t n)
     if ( !thread_cap )
         return true;
 
-    static bool entered = false;
+    static THREAD_LOCAL bool entered = false;
     assert(!entered);
 
     if ( entered )
