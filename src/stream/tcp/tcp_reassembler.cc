@@ -526,8 +526,6 @@ Packet* TcpReassembler::initialize_pdu(
     prep_pdu(trs, trs.sos.session->flow, p, pkt_flags, pdu);
     assert(pdu->pkth == pdu->context->pkth);
     pdu->context->pkth->ts = tv;
-    // FIXIT-M: This hack will go away with daqng
-    pdu->context->pkth->priv_ptr = p->pkth->priv_ptr;
     pdu->dsize = 0;
     pdu->data = nullptr;
     return pdu;
