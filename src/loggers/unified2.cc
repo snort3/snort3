@@ -319,8 +319,9 @@ static void AlertExtraData(
         uint32_t len = 0;
         uint32_t type = 0;
         uint8_t* write_buffer;
+        LogFunction log_func = log_funcs[xid-1];
 
-        if ( log_funcs[xid-1](flow, &write_buffer, &len, &type) && (len > 0) )
+        if ( log_func(flow, &write_buffer, &len, &type) && (len > 0) )
         {
             _WriteExtraData(config, event_id, event_second, write_buffer, len, type);
         }
