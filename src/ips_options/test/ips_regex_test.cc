@@ -28,7 +28,7 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "main/snort_config.h"
-#include "profiler/memory_profiler_defs.h"
+#include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
 
 // must appear after snort_config.h to avoid broken c++ map include
@@ -91,6 +91,8 @@ char* snort_strdup(const char* s)
 
 MemoryContext::MemoryContext(MemoryTracker&) { }
 MemoryContext::~MemoryContext() = default;
+
+bool TimeProfilerStats::enabled = false;
 }
 
 extern const BaseApi* ips_regex;

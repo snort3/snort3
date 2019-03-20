@@ -47,6 +47,13 @@ struct SO_PUBLIC TimeProfilerStats
     hr_duration elapsed;
     uint64_t checks;
     mutable unsigned int ref_count;
+    static bool enabled;
+
+    static void set_enabled(bool b)
+    { enabled = b; }
+
+    static bool is_enabled()
+    { return enabled; }
 
     void update(hr_duration delta)
     { elapsed += delta; ++checks; }
@@ -90,17 +97,20 @@ public:
     TimeContext(TimeProfilerStats& stats) :
         stats(stats)
     {
-        if ( stats.enter() )
+        if ( stats.is_enabled() and stats.enter() )
             sw.start();
     }
 
     ~TimeContext()
-    { stop(); }
+    {
+        if ( stats.is_enabled() )
+            stop();
+    }
 
     // Use this for finer grained control of the TimeContext "lifetime"
     void stop()
     {
-        if ( stopped_once )
+        if ( !stats.is_enabled() or stopped_once )
             return; // stop() should only be executed once per context
 
         stopped_once = true;
@@ -130,6 +140,8 @@ public:
 
     ~TimeExclude()
     {
+        if ( !TimeProfilerStats::is_enabled() )
+            return;
         ctx.stop();
         stats.elapsed -= tmp.elapsed;
     }

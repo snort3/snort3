@@ -484,7 +484,9 @@ class ProfilerModule : public Module
 {
 public:
     ProfilerModule() : Module("profiler", profiler_help, profiler_params) { }
+
     bool set(const char*, Value&, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
     Usage get_usage() const override
     { return GLOBAL; }
@@ -506,6 +508,12 @@ bool ProfilerModule::set(const char* fqn, Value& v, SnortConfig* sc)
         return s_profiler_module_set(sc->profiler->rule, v);
 
     return false;
+}
+
+bool ProfilerModule::end(const char*, int, SnortConfig* sc)
+{
+    TimeProfilerStats::set_enabled(sc->profiler->time.show);
+    return true;
 }
 
 //-------------------------------------------------------------------------

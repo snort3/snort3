@@ -357,7 +357,6 @@ public:
 
     //------------------------------------------------------
     ProfilerConfig* profiler = nullptr;
-
     LatencyConfig* latency = nullptr;
 
     unsigned remote_control_port = 0;
