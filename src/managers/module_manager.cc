@@ -1449,6 +1449,18 @@ void ModuleManager::accumulate(SnortConfig*)
     std::lock_guard<std::mutex> lock(stats_mutex);
 }
 
+void ModuleManager::accumulate_offload(const char* name)
+{
+    ModHook* p = get_hook(name);
+    if ( p )
+    {
+        std::lock_guard<std::mutex> lock(stats_mutex);
+        p->mod->prep_counts();
+        p->mod->sum_stats(true);
+    }
+    std::lock_guard<std::mutex> lock(stats_mutex);
+}
+
 void ModuleManager::reset_stats(SnortConfig*)
 {
     for ( auto p : s_modules )
