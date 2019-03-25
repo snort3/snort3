@@ -52,13 +52,11 @@ using namespace snort;
 
 #define MAX_CANDIDATE_CLIENTS 10
 
-#ifdef APPID_DEEP_PERF_PROFILING
 static THREAD_LOCAL ProfileStats client_disco_perf_stats;
 static ProfileStats* get_profile(const char*)
 {
     return &client_disco_perf_stats;
 }
-#endif
 
 ClientDiscovery* ClientDiscovery::discovery_manager = nullptr;
 THREAD_LOCAL ClientAppMatch* match_free_list = nullptr;
@@ -128,9 +126,7 @@ void ClientDiscovery::initialize()
     for ( auto kv : udp_detectors )
         kv.second->initialize();
 
-#ifdef APPID_DEEP_PERF_PROFILING
     Profiler::register_module("client_discovery", "appid", get_profile);
-#endif
 }
 
 void ClientDiscovery::finalize_client_plugins()
@@ -362,9 +358,7 @@ void ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p,
 bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p,
     AppidSessionDirection direction, AppidChangeBits& change_bits)
 {
-#ifdef APPID_DEEP_PERF_PROFILING
-    Profile profile(client_disco_perf_stats);
-#endif
+    DeepProfile profile(client_disco_perf_stats);
     bool isTpAppidDiscoveryDone = false;
     AppInfoTableEntry* entry;
     uint32_t prevRnaClientState = asd.client_disco_state;

@@ -55,7 +55,7 @@ const char* tcp_event_names[] = {
 };
 
 TcpStreamTracker::TcpStreamTracker(bool client) :
-    client_tracker(client), tcp_state(client ? TCP_STATE_NONE : TCP_LISTEN)
+    tcp_state(client ? TCP_STATE_NONE : TCP_LISTEN), client_tracker(client)
 { }
 
 TcpStreamTracker::~TcpStreamTracker()
@@ -198,6 +198,7 @@ void TcpStreamTracker::init_tcp_state()
     fin_seq_status = TcpStreamTracker::FIN_NOT_SEEN;
     fin_seq_set = false;
     rst_pkt_sent = false;
+    order = 0;
 }
 
 //-------------------------------------------------------------------------

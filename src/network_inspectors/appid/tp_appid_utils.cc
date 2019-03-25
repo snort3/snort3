@@ -54,8 +54,8 @@ using namespace snort;
 typedef AppIdHttpSession::pair_t pair_t;
 
 static THREAD_LOCAL ProfileStats tp_lib_perf_stats;
-#ifdef APPID_DEEP_PERF_PROFILING
 static THREAD_LOCAL ProfileStats tp_disco_perf_stats;
+
 static ProfileStats* get_profile(const char* key)
 {
     if ( !strcmp(key, "tp_discovery") )
@@ -64,21 +64,12 @@ static ProfileStats* get_profile(const char* key)
         return &tp_lib_perf_stats;
     return nullptr;
 }
+
 void tp_appid_profiler_init()
 {
     Profiler::register_module("tp_discovery", "appid", get_profile);
     Profiler::register_module("tp_library", "tp_discovery", get_profile);
 }
-#else
-static ProfileStats* get_profile(const char*)
-{
-    return &tp_lib_perf_stats;
-}
-void tp_appid_profiler_init()
-{
-    Profiler::register_module("tp_library", "appid", get_profile);
-}
-#endif
 
 static inline bool contains(const vector<AppId>& vec, const AppId val)
 {
@@ -645,10 +636,7 @@ static inline void check_terminate_tp_module(AppIdSession& asd, uint16_t tpPktCo
 bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
     Packet* p, AppidSessionDirection& direction, AppidChangeBits& change_bits)
 {
-#ifdef APPID_DEEP_PERF_PROFILING
-    Profile tp_disco_profile(tp_disco_perf_stats);
-#endif
-
+    DeepProfile tp_disco_profile(tp_disco_perf_stats);
     AppId tp_app_id = asd.get_tp_app_id();
 
     if (tp_app_id == APP_ID_SSH && asd.payload.get_id() != APP_ID_SFTP &&
@@ -685,10 +673,11 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
             if (protocol != IpProtocol::TCP || (p->packet_flags & PKT_STREAM_ORDER_OK)
                 || asd.config->mod_config->tp_allow_probes)
             {
-                Profile tp_lib_profile(tp_lib_perf_stats);
+                DeepProfile tp_lib_profile(tp_lib_perf_stats);
                 int tp_confidence;
                 ThirdPartyAppIDAttributeData tp_attribute_data;
                 vector<AppId> tp_proto_list;
+
                 if (!asd.tpsession)
                 {
                     const TPLibHandler* tph = TPLibHandler::get();

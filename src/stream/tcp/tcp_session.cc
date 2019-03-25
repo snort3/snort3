@@ -343,6 +343,30 @@ void TcpSession::process_tcp_stream(TcpSegmentDescriptor& tsd)
     }
 }
 
+void TcpSession::update_stream_order(TcpSegmentDescriptor& tsd, bool aligned)
+{
+    switch ( listener->order )
+    {
+    case 0:
+        if ( aligned )
+            tsd.get_pkt()->packet_flags |= PKT_STREAM_ORDER_OK;
+        else
+            listener->order = 1;
+        break;
+    case 1:
+        if ( aligned )
+        {
+            tsd.get_pkt()->packet_flags |= PKT_STREAM_ORDER_OK;
+            listener->order = 2;
+        }
+        break;
+    default:
+        if ( !(flow->get_session_flags() & SSNFLAG_STREAM_ORDER_BAD) )
+            flow->set_session_flags(SSNFLAG_STREAM_ORDER_BAD);
+        tsd.get_pkt()->packet_flags |= PKT_STREAM_ORDER_BAD;
+    }
+}
+
 int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
 {
     DeepProfile profile(s5TcpDataPerfStats);
@@ -378,12 +402,8 @@ int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
 
         if (tsd.get_seg_len() != 0)
         {
-            if (!( flow->get_session_flags() & SSNFLAG_STREAM_ORDER_BAD))
-                tsd.get_pkt()->packet_flags |= PKT_STREAM_ORDER_OK;
-
+            update_stream_order(tsd, true);
             process_tcp_stream(tsd);
-            /* set flags to session flags */
-
             return STREAM_ALIGNED;
         }
     }
@@ -402,25 +422,9 @@ int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
             listener->normalizer.trim_win_payload(tsd);
             return STREAM_UNALIGNED;
         }
-
-        if ((listener->get_tcp_state() == TcpStreamTracker::TCP_ESTABLISHED)
-            && (listener->flush_policy == STREAM_FLPOLICY_IGNORE))
-        {
-            if (SEQ_GT(tsd.get_end_seq(), listener->rcv_nxt))
-            {
-                // set next ack so we are within the window going forward on this side.
-                // FIXIT-L for ips, must move all the way to first hole or right end
-                listener->rcv_nxt = tsd.get_end_seq();
-            }
-        }
-
         if (tsd.get_seg_len() != 0)
         {
-            if (!( flow->get_session_flags() & SSNFLAG_STREAM_ORDER_BAD))
-            {
-                if (!SEQ_LEQ((tsd.get_seg_seq() + tsd.get_seg_len()), listener->rcv_nxt))
-                    flow->set_session_flags(SSNFLAG_STREAM_ORDER_BAD);
-            }
+            update_stream_order(tsd, false);
             process_tcp_stream(tsd);
         }
     }
@@ -967,12 +971,14 @@ bool TcpSession::do_packet_analysis_pre_checks(Packet* p, TcpSegmentDescriptor& 
 
     if ( !splitter_init and tsd.get_seg_len() > 0 )
     {
-        client.set_splitter(tsd.get_flow());
-        server.set_splitter(tsd.get_flow());
+        if ( !(config->flags & STREAM_CONFIG_NO_REASSEMBLY) )
+        {
+            client.set_splitter(tsd.get_flow());
+            server.set_splitter(tsd.get_flow());
 
-        client.init_flush_policy();
-        server.init_flush_policy();
-
+            client.init_flush_policy();
+            server.init_flush_policy();
+        }
         splitter_init = true;
     }
 

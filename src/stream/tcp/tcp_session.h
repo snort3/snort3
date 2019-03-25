@@ -72,6 +72,7 @@ public:
 private:
     void set_os_policy() override;
     bool flow_exceeds_config_thresholds(TcpSegmentDescriptor&);
+    void update_stream_order(TcpSegmentDescriptor&, bool aligned);
     void process_tcp_stream(TcpSegmentDescriptor&);
     int process_tcp_data(TcpSegmentDescriptor&);
     void swap_trackers();

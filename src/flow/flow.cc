@@ -359,8 +359,6 @@ void Flow::markup_packet_flags(Packet* p)
         if ( p->packet_flags & PKT_STREAM_UNEST_UNI )
             p->packet_flags ^= PKT_STREAM_UNEST_UNI;
     }
-    if ( ssn_state.session_flags & SSNFLAG_STREAM_ORDER_BAD )
-        p->packet_flags |= PKT_STREAM_ORDER_BAD;
 }
 
 void Flow::set_direction(Packet* p)

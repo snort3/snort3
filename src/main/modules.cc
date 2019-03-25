@@ -513,6 +513,7 @@ bool ProfilerModule::set(const char* fqn, Value& v, SnortConfig* sc)
 bool ProfilerModule::end(const char*, int, SnortConfig* sc)
 {
     TimeProfilerStats::set_enabled(sc->profiler->time.show);
+    RuleContext::set_enabled(sc->profiler->rule.show);
     return true;
 }
 

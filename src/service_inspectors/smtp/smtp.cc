@@ -1050,14 +1050,7 @@ static void SMTP_ProcessServerPacket(
         else if ( !p->test_session_flags(SSNFLAG_MIDSTREAM)
             && !Stream::missed_packets(p->flow, SSN_DIR_BOTH))
         {
-            /* Check to see if the raw packet is in order */
-            if (p->packet_flags & PKT_STREAM_ORDER_OK)
-            {
-                /* revert back to command state - assume server didn't accept STARTTLS */
-                smtp_ssn->state = STATE_COMMAND;
-            }
-            else
-                return;
+            smtp_ssn->state = STATE_COMMAND;
         }
     }
 
@@ -1188,7 +1181,7 @@ static void snort_smtp(SMTP_PROTO_CONF* config, Packet* p)
             {
                 smtp_ssn->state = STATE_TLS_SERVER_PEND;
             }
-            else if (p->packet_flags & PKT_STREAM_ORDER_OK)
+            else
             {
                 /* reset state - server may have rejected STARTTLS command */
                 smtp_ssn->state = STATE_COMMAND;

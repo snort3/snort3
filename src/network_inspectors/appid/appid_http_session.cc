@@ -52,7 +52,6 @@ static const char* httpFieldName[ NUM_HTTP_FIELDS ] = // for use in debug messag
     "body",
 };
 
-#ifdef APPID_DEEP_PERF_PROFILING
 static THREAD_LOCAL snort::ProfileStats process_http_perf_stats;
 static ProfileStats* get_profile(const char*)
 {
@@ -62,9 +61,6 @@ void appid_http_profiler_init()
 {
     Profiler::register_module("http_process", "appid", get_profile);
 }
-#else
-void appid_http_profiler_init() { return; }
-#endif
 
 AppIdHttpSession::AppIdHttpSession(AppIdSession& asd)
     : asd(asd)
@@ -389,9 +385,7 @@ void AppIdHttpSession::process_chp_buffers(AppidChangeBits& change_bits)
 int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
     AppidChangeBits& change_bits)
 {
-#ifdef APPID_DEEP_PERF_PROFILING
-    snort::Profile profile(process_http_perf_stats);
-#endif
+    DeepProfile profile(process_http_perf_stats);
     AppId service_id = APP_ID_NONE;
     AppId client_id = APP_ID_NONE;
     AppId payload_id = APP_ID_NONE;

@@ -187,6 +187,9 @@ static const Parameter s_params[] =
     { "session_timeout", Parameter::PT_INT, "1:max31", "30",
       "session tracking timeout" },
 
+    { "track_only", Parameter::PT_BOOL, nullptr, "false",
+      "disable reassembly if true" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -330,6 +333,13 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
             config->flags |= STREAM_CONFIG_SHOW_PACKETS;
         else
             config->flags &= ~STREAM_CONFIG_SHOW_PACKETS;
+    }
+    else if ( v.is("track_only") )
+    {
+        if ( v.get_bool() )
+            config->flags |= STREAM_CONFIG_NO_REASSEMBLY;
+        else
+            config->flags &= ~STREAM_CONFIG_NO_REASSEMBLY;
     }
     else
         return false;

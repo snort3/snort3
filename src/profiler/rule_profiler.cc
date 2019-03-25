@@ -55,6 +55,8 @@ using namespace snort;
 
 #define s_rule_table_title "rule profile"
 
+bool RuleContext::enabled = false;
+
 static inline OtnState& operator+=(OtnState& lhs, const OtnState& rhs)
 {
     lhs.elapsed += rhs.elapsed;
@@ -334,7 +336,7 @@ void reset_rule_profiler_stats()
 
 void RuleContext::stop(bool match)
 {
-    if ( finished )
+    if ( !enabled or finished )
         return;
 
     finished = true;
@@ -682,6 +684,7 @@ TEST_CASE( "rule profiler sorting", "[profiler][rule_profiler]" )
 TEST_CASE( "rule profiler time context", "[profiler][rule_profiler]" )
 {
     dot_node_state_t stats;
+    RuleContext::set_enabled(true);
 
     stats.elapsed = 0_ticks;
     stats.checks = 0;
@@ -740,12 +743,14 @@ TEST_CASE( "rule profiler time context", "[profiler][rule_profiler]" )
         CHECK( stats.elapsed_match == save.elapsed_match );
         CHECK( stats.checks == save.checks );
     }
+    RuleContext::set_enabled(false);
 }
 
 TEST_CASE( "rule pause", "[profiler][rule_profiler]" )
 {
     dot_node_state_t stats;
     RuleContext ctx(stats);
+    RuleContext::set_enabled(true);
 
     {
         RulePause pause(ctx);
@@ -753,6 +758,7 @@ TEST_CASE( "rule pause", "[profiler][rule_profiler]" )
     }
 
     CHECK( ctx.active() );
+    RuleContext::set_enabled(false);
 }
 
 #endif

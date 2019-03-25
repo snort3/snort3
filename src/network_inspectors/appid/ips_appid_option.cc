@@ -122,11 +122,9 @@ IpsOption::EvalStatus AppIdIpsOption::eval(Cursor&, Packet* p)
     if ( !p->flow )
         return NO_MATCH;
 
-#ifdef APPID_DEEP_PERF_PROFILING
-    Profile profile(ips_appid_perf_stats);
-#endif
-
+    DeepProfile profile(ips_appid_perf_stats);
     AppIdSession* session = appid_api.get_appid_session(*(p->flow));
+
     if ( !session )
         return NO_MATCH;
 

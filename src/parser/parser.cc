@@ -201,98 +201,6 @@ static void OtnInit(SnortConfig* sc)
         ParseAbort("ParseRulesFile otn_map ghash_new failed.");
 }
 
-#define IFACE_VARS_MAX 128
-typedef struct iface_var
-{
-    char name[128];
-    uint32_t net;
-    uint32_t netmask;
-} iface_var_t;
-
-/****************************************************************************
- *
- * Function  : DefineIfaceVar()
- * Purpose   : Assign network address and network mask to IFACE_ADDR_VARNAME
- *             variable.
- * Arguments : interface name (string) netaddress and netmask (4 octets each)
- * Returns   : void function
- *
- ****************************************************************************/
-static void DefineIfaceVar(SnortConfig* sc, char* iname, const uint8_t* network, const uint8_t* netmask)
-{
-    char valbuf[32];
-    char varbuf[BUFSIZ];
-
-    if ((network == nullptr) || (*network == 0))
-        return;
-
-    SnortSnprintf(varbuf, BUFSIZ, "%s_ADDRESS", iname);
-
-    SnortSnprintf(valbuf, 32, "%d.%d.%d.%d/%d.%d.%d.%d",
-        network[0] & 0xff, network[1] & 0xff, network[2] & 0xff,
-        network[3] & 0xff, netmask[0] & 0xff, netmask[1] & 0xff,
-        netmask[2] & 0xff, netmask[3] & 0xff);
-
-    VarDefine(sc, varbuf, valbuf);
-}
-
-// Find all up interfaces and define iface_ADDRESS vars for them
-static void DefineAllIfaceVars(SnortConfig* sc)
-{
-    // FIXIT-L don't come back here on reload unless we are going to find
-    // new ifaces.  Cache retrieved devs so if user is running with dropped
-    // privs and does a reload, we can use previous values
-    static int num_vars = 0;
-
-    // should be more than enough to cover the number of interfaces on a machine
-    static iface_var_t iface_vars[IFACE_VARS_MAX];
-
-    if (num_vars > 0)
-    {
-        int i;
-
-        for (i = 0; i < num_vars; i++)
-        {
-            DefineIfaceVar(sc, iface_vars[i].name,
-                (uint8_t*)&iface_vars[i].net,
-                (uint8_t*)&iface_vars[i].netmask);
-        }
-    }
-    else
-    {
-        char errbuf[PCAP_ERRBUF_SIZE];
-        pcap_if_t* alldevs;
-        pcap_if_t* dev;
-        bpf_u_int32 net, netmask;
-
-        if (pcap_findalldevs(&alldevs, errbuf) == -1)
-            return;
-
-        for (dev = alldevs; dev != nullptr; dev = dev->next)
-        {
-            if (pcap_lookupnet(dev->name, &net, &netmask, errbuf) == 0)
-            {
-                /* We've hit the maximum variables we can cache */
-                if (num_vars >= IFACE_VARS_MAX)
-                    break;
-
-                SnortSnprintf(iface_vars[num_vars].name,
-                    sizeof(iface_vars[num_vars].name), "%s", dev->name);
-
-                DefineIfaceVar(sc, iface_vars[num_vars].name,
-                    (uint8_t*)&net,
-                    (uint8_t*)&netmask);
-
-                iface_vars[num_vars].net = net;
-                iface_vars[num_vars].netmask = netmask;
-                num_vars++;
-            }
-        }
-
-        pcap_freealldevs(alldevs);
-    }
-}
-
 static RuleListNode* addNodeToOrderedList(RuleListNode* ordered_list,
     RuleListNode* node, int evalIndex)
 {
@@ -396,11 +304,6 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname, boo
     sc->threshold_config = ThresholdConfigNew();
     sc->rate_filter_config = RateFilter_ConfigNew();
     sc->detection_filter_config = DetectionFilterConfigNew();
-
-    /* If snort is not run with root privileges, no interfaces will be defined,
-     * so user beware if an iface_ADDRESS variable is used in snort.conf and
-     * snort is not run as root (even if just in read mode) */
-    DefineAllIfaceVars(sc);
 
     /* Add command line defined variables - duplicates will already
      * have been resolved */

@@ -51,7 +51,7 @@ class TcpSession;
 class TcpStreamTracker
 {
 public:
-    enum TcpState
+    enum TcpState : uint8_t
     {
         TCP_LISTEN,
         TCP_SYN_SENT,
@@ -68,7 +68,7 @@ public:
         TCP_MAX_STATES
     };
 
-    enum TcpEvent
+    enum TcpEvent : uint8_t
     {
         TCP_SYN_SENT_EVENT,
         TCP_SYN_RECV_EVENT,
@@ -85,7 +85,7 @@ public:
         TCP_MAX_EVENTS
     };
 
-    enum FinSeqNumStatus { FIN_NOT_SEEN, FIN_WITH_SEQ_SEEN, FIN_WITH_SEQ_ACKED };
+    enum FinSeqNumStatus : uint8_t { FIN_NOT_SEEN, FIN_WITH_SEQ_SEEN, FIN_WITH_SEQ_ACKED };
 
     TcpStreamTracker(bool client);
     virtual ~TcpStreamTracker();
@@ -277,63 +277,71 @@ public:
     virtual bool is_segment_seq_valid(TcpSegmentDescriptor&);
     virtual void flush_data_on_fin_recv(TcpSegmentDescriptor&);
 
-    bool client_tracker;
-    TcpState tcp_state;
-    TcpEvent tcp_event = TCP_MAX_EVENTS;
-    bool require_3whs = false;
-
+public:
     uint32_t snd_una = 0; // SND.UNA - send unacknowledged
     uint32_t snd_nxt = 0; // SND.NXT - send next
     uint32_t snd_wnd = 0; // SND.WND - send window
-    uint16_t snd_up = 0;  // SND.UP  - send urgent pointer
     uint32_t snd_wl1 = 0; // SND.WL1 - segment sequence number used for last window update
     uint32_t snd_wl2 = 0; // SND.WL2 - segment acknowledgment number used for last window update
     uint32_t iss = 0;     // ISS     - initial send sequence number
 
     uint32_t rcv_nxt = 0; // RCV.NXT - receive next
     uint32_t rcv_wnd = 0; // RCV.WND - receive window
-    uint16_t rcv_up = 0;  // RCV.UP  - receive urgent pointer
     uint32_t irs = 0;     // IRS     - initial receive sequence number
 
+    uint16_t snd_up = 0;  // SND.UP  - send urgent pointer
+    uint16_t rcv_up = 0;  // RCV.UP  - receive urgent pointer
+
+    TcpState tcp_state;
+    TcpEvent tcp_event = TCP_MAX_EVENTS;
+
+    bool client_tracker;
+    bool require_3whs = false;
     bool rst_pkt_sent = false;
 
 // FIXIT-L make these non-public
 public:
-    uint32_t r_win_base = 0; /* remote side window base sequence number
-     * (i.e. the last ack we got) */
-
-    TcpSession* session = nullptr;
     TcpNormalizerPolicy normalizer;
     TcpReassemblerPolicy reassembler;
-    snort::StreamSplitter* splitter = nullptr;
 
-    uint32_t small_seg_count = 0;
-    uint8_t alert_count = 0;
     StreamAlertInfo alerts[MAX_SESSION_ALERTS];
-    FlushPolicy flush_policy = STREAM_FLPOLICY_IGNORE;
+
     // this is intended to be private to paf but is included
     // directly to avoid the need for allocation; do not directly
     // manipulate within this module.
     PAF_State paf_state;    // for tracking protocol aware flushing
 
+    TcpSession* session = nullptr;
+    snort::StreamSplitter* splitter = nullptr;
+
+    FlushPolicy flush_policy = STREAM_FLPOLICY_IGNORE;
+
+    uint32_t r_win_base = 0; // remote side window base sequence number (the last ack we got)
+    uint32_t small_seg_count = 0;
+
+    uint16_t wscale = 0; /* window scale setting */
+    uint16_t mss = 0; /* max segment size */
+
+    uint8_t alert_count = 0;
+    uint8_t order = 0;
+
+    FinSeqNumStatus fin_seq_status = TcpStreamTracker::FIN_NOT_SEEN;
+
 protected:
     // FIXIT-H reorganize per-flow structs to minimize padding
     uint32_t ts_last_packet = 0;
     uint32_t ts_last = 0; /* last timestamp (for PAWS) */
+
+    uint32_t fin_final_seq = 0;
+    uint32_t fin_seq_adjust = 0;
+
     uint16_t tf_flags = 0;
 
     uint8_t mac_addr[6] = { };
-    bool mac_addr_valid = false;
-    uint32_t fin_final_seq = 0;
-    uint32_t fin_seq_adjust = 0;
-    bool fin_seq_set = false;  // FIXIT-M should be obviated by tcp state
     uint8_t tcp_options_len = 0;
 
-    // FIXIT-L make this protected...
-public:
-    uint16_t wscale = 0; /* window scale setting */
-    uint16_t mss = 0; /* max segment size */
-    FinSeqNumStatus fin_seq_status = TcpStreamTracker::FIN_NOT_SEEN;
+    bool mac_addr_valid = false;
+    bool fin_seq_set = false;  // FIXIT-M should be obviated by tcp state
 };
 
 // <--- note -- the 'state' parameter must be a reference

@@ -55,20 +55,24 @@ public:
     { stop(); }
 
     void start()
-    { sw.start(); }
+    { if ( enabled ) sw.start(); }
 
     void pause()
-    { sw.stop(); }
+    { if ( enabled ) sw.stop(); }
 
     void stop(bool = false);
 
     bool active() const
-    { return sw.active(); }
+    { return enabled and sw.active(); }
+
+    static void set_enabled(bool b)
+    { enabled = b; }
 
 private:
     dot_node_state_t& stats;
     Stopwatch<SnortClock> sw;
     bool finished = false;
+    static bool enabled;
 };
 
 class RulePause
