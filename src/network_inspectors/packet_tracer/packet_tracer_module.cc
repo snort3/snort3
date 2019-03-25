@@ -105,6 +105,9 @@ static int enable(lua_State* L)
     int dport = luaL_optint(L, 5, 0);
 
     SfIp sip, dip;
+    sip.clear();
+    dip.clear();
+
     if (sipstr)
     {
         if (sip.set(sipstr) != SFIP_SUCCESS)
