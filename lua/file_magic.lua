@@ -17,7 +17,7 @@ file_magic =
     { type = 'FLIC', id = 15, category = 'Multimedia', msg = 'FLIC Animation file', rev = 2, magic = { { content = '|12 AF|', offset = 4, }, { content = '|40 01|', offset = 8, }, { content = '|c8 00|', offset = 10, }, { content = '|00 00|', offset = 20, }, { content = '|00 00 00 00 00 00 00 00|', offset = 42, }, }, },
     { type = 'MSEXE', id = 21, category = 'Executables,Dynamic Analysis Capable,Local Malware Analysis Capable', msg = 'Windows/DOS executable file ', rev = 1, magic = { { content = '| 4D 5A|', offset = 0, }, }, },
     { type = 'PDF', id = 22, category = 'PDF files,Dynamic Analysis Capable,Local Malware Analysis Capable', msg = 'PDF file ', rev = 1, magic = { { content = '| 25 50 44 46|', offset = 0, }, }, },
-    { type = 'RTF', id = 23, category = 'Office Documents,Dynamic Analysis Capable', msg = 'Rich text format word processing file ', rev = 1, magic = { { content = '| 7B 5C 72 74 66 31|', offset = 0, }, }, },
+    { type = 'RTF', id = 23, category = 'Office Documents,Dynamic Analysis Capable', msg = 'Rich text format word processing file ', rev = 2, magic = { { content = '| 7B 5C 72 74|', offset = 0, }, }, },
     { type = 'RIFF', id = 24, category = 'Multimedia', msg = 'Resource Interchange File Format', rev = 1, magic = { { content = '| 52 49 46 46|', offset = 0, }, }, },
     { type = 'MSCHM', id = 25, category = 'Office Documents', msg = 'Microsoft Compiled HTML Help File', rev = 1, magic = { { content = '| 49 54 53 46|', offset = 0, }, }, },
     { type = 'MSCAB', id = 26, category = 'Archive', msg = 'Microsoft Windows CAB', rev = 1, magic = { { content = '| 4D 53 43 46|', offset = 0, }, }, },
