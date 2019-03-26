@@ -49,7 +49,7 @@ static const Parameter name[] = \
     { "idle_timeout", Parameter::PT_INT, "1:max32", idle, \
       "maximum inactive time before retiring session tracker" }, \
  \
-    { "cap_weight", Parameter::PT_INT, "0:65535", idle, \
+    { "cap_weight", Parameter::PT_INT, "0:65535", weight, \
       "additional bytes to track per flow for better estimation against cap" }, \
  \
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr } \
@@ -57,7 +57,7 @@ static const Parameter name[] = \
 
 CACHE_PARAMS(ip_params,    "16384",  "30",  "180", "64");
 CACHE_PARAMS(icmp_params,  "65536",  "30",  "180", "8");
-CACHE_PARAMS(tcp_params,  "262144",  "30", "3600", "256");
+CACHE_PARAMS(tcp_params,  "262144",  "30", "3600", "11500");
 CACHE_PARAMS(udp_params,  "131072",  "30",  "180", "128");
 CACHE_PARAMS(user_params,   "1024",  "30",  "180", "256");
 CACHE_PARAMS(file_params,    "128",  "30",  "180", "32");
