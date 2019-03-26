@@ -28,15 +28,18 @@
 using namespace snort;
 using namespace std;
 
+class TestStashObject : public StashGenericObject
+{
+public:
+    TestStashObject(int type) : StashGenericObject(type)
+    {
+
+    }
+};
+
 TEST_GROUP(stash_tests)
 {
-    void setup()
-    {
-    }
 
-    void teardown()
-    {
-    }
 };
 
 TEST(stash_tests, new_int32_item)
@@ -112,13 +115,49 @@ TEST(stash_tests, non_existent_item)
     CHECK_FALSE(stash.get("item_2", val));
 }
 
+TEST(stash_tests, new_generic_object)
+{
+    FlowStash stash;
+    TestStashObject *test_object = new TestStashObject(111);
+
+    stash.store("item_1", test_object);
+
+    StashGenericObject *retrieved_object;
+    CHECK(stash.get("item_1", retrieved_object));
+    POINTERS_EQUAL(test_object, retrieved_object);
+    CHECK_EQUAL(test_object->get_object_type(), ((TestStashObject*)retrieved_object)->get_object_type());
+}
+
+TEST(stash_tests, update_generic_object)
+{
+    FlowStash stash;
+    TestStashObject *test_object = new TestStashObject(111);
+    stash.store("item_1", test_object);
+
+    TestStashObject *new_test_object = new TestStashObject(111);
+    stash.store("item_1", new_test_object);
+
+    StashGenericObject *retrieved_object;
+    CHECK(stash.get("item_1", retrieved_object));
+    POINTERS_EQUAL(new_test_object, retrieved_object);
+}
+
+TEST(stash_tests, non_existent_generic_object)
+{
+    FlowStash stash;
+    StashGenericObject *retrieved_object;
+    CHECK_FALSE(stash.get("item_1", retrieved_object));
+}
+
 TEST(stash_tests, mixed_items)
 {
     FlowStash stash;
+    TestStashObject *test_object = new TestStashObject(111);
 
     stash.store("item_1", 10);
     stash.store("item_2", "value_2");
     stash.store("item_3", 30);
+    stash.store("item_4", test_object);
 
     int32_t int32_val;
     string str_val;
@@ -129,6 +168,11 @@ TEST(stash_tests, mixed_items)
     STRCMP_EQUAL(str_val.c_str(), "value_2");
     CHECK(stash.get("item_3", int32_val));
     CHECK_EQUAL(int32_val, 30);
+
+    StashGenericObject *retrieved_object;
+    CHECK(stash.get("item_4", retrieved_object));
+    POINTERS_EQUAL(test_object, retrieved_object);
+    CHECK_EQUAL(test_object->get_object_type(), ((TestStashObject*)retrieved_object)->get_object_type());
 }
 
 int main(int argc, char** argv)

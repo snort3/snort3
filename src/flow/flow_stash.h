@@ -28,17 +28,21 @@
 
 #include "stash_item.h"
 
-namespace snort {
+namespace snort
+{
 
-class FlowStash {
+class FlowStash
+{
 public:
     ~FlowStash();
     void reset();
     bool get(const std::string& key, int32_t& val);
     bool get(const std::string& key, std::string& val);
+    bool get(const std::string& key, StashGenericObject* &val);
     void store(const std::string& key, int32_t val);
     void store(const std::string& key, const std::string& val);
     void store(const std::string& key, std::string* val);
+    void store(const std::string& key, StashGenericObject* val);
 
 private:
     std::map<std::string, StashItem*> container;
@@ -47,6 +51,7 @@ private:
     bool get(const std::string& key, T& val, StashItemType type);
     template<typename T>
     void store(const std::string& key, T& val, StashItemType type);
+    void store(const std::string& key, StashGenericObject* &val, StashItemType type);
 };
 
 }

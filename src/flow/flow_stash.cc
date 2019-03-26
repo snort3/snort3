@@ -49,6 +49,11 @@ bool FlowStash::get(const string& key, string& val)
     return get(key, val, STASH_ITEM_TYPE_STRING);
 }
 
+bool FlowStash::get(const std::string& key, StashGenericObject* &val)
+{
+    return get(key, val, STASH_ITEM_TYPE_GENERIC_OBJECT);
+}
+
 void FlowStash::store(const string& key, int32_t val)
 {
     store(key, val, STASH_ITEM_TYPE_INT32);
@@ -59,17 +64,33 @@ void FlowStash::store(const string& key, const string& val)
     store(key, val, STASH_ITEM_TYPE_STRING);
 }
 
-void FlowStash::store(const std::string& key, std::string* val)
+void FlowStash::store(const std::string& key, StashGenericObject* val)
 {
+    store(key, val, STASH_ITEM_TYPE_GENERIC_OBJECT);
+}
+
+void FlowStash::store(const string& key, StashGenericObject* &val, StashItemType type)
+{
+#ifdef NDEBUG
+    UNUSED(type);
+#endif
     auto item = new StashItem(val);
     auto it_and_status = container.emplace(make_pair(key, item));
 
     if (!it_and_status.second)
     {
-        assert(it_and_status.first->second->get_type() == STASH_ITEM_TYPE_STRING);
+        StashGenericObject* stored_object;
+        assert(it_and_status.first->second->get_type() == type);
+        it_and_status.first->second->get_val(stored_object);
+        assert(stored_object->get_object_type() == val->get_object_type());
         delete it_and_status.first->second;
         it_and_status.first->second = item;
     }
+}
+
+void FlowStash::store(const std::string& key, std::string* val)
+{
+    store(key, val, STASH_ITEM_TYPE_STRING);
 }
 
 template<typename T>

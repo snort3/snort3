@@ -24,23 +24,41 @@
 #include <cstdint>
 #include <string>
 
-namespace snort {
+namespace snort
+{
 
-enum StashItemType {
-    STASH_ITEM_TYPE_INT32,
-    STASH_ITEM_TYPE_STRING
+class StashGenericObject
+{
+public:
+    StashGenericObject(int type) : object_type(type)
+    {
+
+    }
+
+    int get_object_type()
+    {
+        return object_type;
+    }
+private:
+    int object_type;
 };
 
-union StashItemVal {
+enum StashItemType
+{
+    STASH_ITEM_TYPE_INT32,
+    STASH_ITEM_TYPE_STRING,
+    STASH_ITEM_TYPE_GENERIC_OBJECT
+};
+
+union StashItemVal
+{
     int32_t int32_val;
     std::string* str_val;
+    StashGenericObject* generic_obj_val;
 };
 
-class StashItem {
-private:
-    StashItemType type;
-    StashItemVal val;
-
+class StashItem
+{
 public:
     StashItem(int32_t int32_val)
     {
@@ -60,6 +78,12 @@ public:
         val.str_val = str_val;
     }
 
+    StashItem(StashGenericObject* obj)
+    {
+        type = STASH_ITEM_TYPE_GENERIC_OBJECT;
+        val.generic_obj_val = obj;
+    }
+
     ~StashItem()
     {
         switch (type)
@@ -67,6 +91,8 @@ public:
         case STASH_ITEM_TYPE_STRING:
             delete val.str_val;
             break;
+        case STASH_ITEM_TYPE_GENERIC_OBJECT:
+            delete val.generic_obj_val;
         default:
             break;
         }
@@ -80,6 +106,13 @@ public:
 
     void get_val(std::string& str_val) const
     { str_val = *(val.str_val); }
+
+    void get_val(StashGenericObject* &obj_val) const
+    { obj_val = val.generic_obj_val; }
+
+private:
+    StashItemType type;
+    StashItemVal val;
 };
 
 }
