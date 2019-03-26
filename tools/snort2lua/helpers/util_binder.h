@@ -65,6 +65,7 @@ public:
     void add_when_src_net(const std::string&);
     void add_when_dst_net(const std::string&);
     void add_when_port(const std::string&);
+    void add_when_zone(const std::string&);
     void add_when_src_port(const std::string&);
     void add_when_dst_port(const std::string&);
     void set_when_src_zone(const std::string&);
@@ -152,8 +153,9 @@ private:
     std::vector<std::string> ports;
     std::vector<std::string> src_ports;
     std::vector<std::string> dst_ports;
-    std::string when_src_zone;
-    std::string when_dst_zone;
+    std::vector<std::string> when_src_zone;
+    std::vector<std::string> when_dst_zone;
+    std::vector<std::string> zones; 
 
     std::string use_type;
     std::string use_name;

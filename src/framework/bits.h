@@ -27,6 +27,7 @@
 typedef std::bitset<65536> PortBitSet;
 typedef std::bitset<4096> VlanBitSet;
 typedef std::bitset<256> ByteBitSet;
+typedef std::bitset<64> ZoneBitSet;
 
 #endif
 

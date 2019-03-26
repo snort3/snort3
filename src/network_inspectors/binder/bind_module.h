@@ -66,6 +66,7 @@ private:
     std::vector<Binding*> bindings;
     bool unsplit_nets;
     bool unsplit_ports;
+    bool unsplit_zones;
     unsigned use_name_count;
     unsigned use_type_count;
 

@@ -66,12 +66,13 @@ Binding::Binding()
     when.src_ports.set();
     when.dst_ports.set();
 
+    when.split_zones = false;
+    when.src_zones.set();
+    when.dst_zones.set();
+
     when.protos = PROTO_BIT__ANY_TYPE;
     when.vlans.set();
     when.ifaces.reset();
-
-    when.src_zone = DAQ_PKTHDR_UNKNOWN;
-    when.dst_zone = DAQ_PKTHDR_UNKNOWN;
 
     when.ips_id = 0;
     when.ips_id_user = 0;
@@ -310,16 +311,43 @@ inline Binding::DirResult Binding::check_split_port(
         { return when_val.test(traffic_val); });
 }
 
-inline Binding::DirResult Binding::check_zone(
-    const Packet* p, const Binding::DirResult dr) const
+inline bool Binding::check_zone(const Packet* p) const
 {
-    if ( !p )
+    if ( when.split_zones or !p )
+        return true;
+
+    if (p->pkth->egress_group == DAQ_PKTHDR_UNKNOWN or
+        p->pkth->ingress_group == DAQ_PKTHDR_UNKNOWN)
+        return true;
+
+    assert(((unsigned)p->pkth->ingress_group) < when.src_zones.size());
+    assert(((unsigned)p->pkth->egress_group) < when.dst_zones.size());
+
+    if (when.src_zones.test((unsigned)p->pkth->ingress_group) or
+        when.dst_zones.test((unsigned)p->pkth->egress_group))
+        return true;
+    return false;
+}
+
+inline Binding::DirResult Binding::check_split_zone(const Packet* p, const Binding::DirResult dr) const
+{
+    if ( !when.split_zones )
         return dr;
 
-    return directional_match(when.src_zone, when.dst_zone,
-        p->pkth->ingress_group, p->pkth->egress_group, dr,
-        [](int32_t when_val, int32_t zone)
-        { return when_val == DAQ_PKTHDR_UNKNOWN or when_val == zone; });
+    int src_zone;
+    int dst_zone;
+
+    if ( p )
+    {
+        src_zone = p->pkth->ingress_group;
+        dst_zone = p->pkth->egress_group;
+    }
+    else
+        return dr;
+
+    return directional_match(when.src_zones, when.dst_zones, src_zone, dst_zone, dr,
+        [](const ZoneBitSet& when_val, int traffic_val)
+        { return traffic_val == DAQ_PKTHDR_UNKNOWN ? true : when_val.test(traffic_val); });
 }
 
 bool Binding::check_all(const Flow* flow, Packet* p) const
@@ -353,11 +381,14 @@ bool Binding::check_all(const Flow* flow, Packet* p) const
     if ( dir == Binding::DR_NO_MATCH )
         return false;
 
+    dir = check_split_zone(p, dir);
+    if ( dir == Binding::DR_NO_MATCH )
+        return false;
+
     if ( !check_service(flow) )
         return false;
 
-    dir = check_zone(p, dir);
-    if ( dir == Binding::DR_NO_MATCH )
+    if ( !check_zone(p) )
         return false;
 
     return true;

@@ -54,8 +54,9 @@ struct BindWhen
     PortBitSet src_ports;
     PortBitSet dst_ports;
 
-    int32_t src_zone;
-    int32_t dst_zone;
+    bool split_zones;
+    ZoneBitSet src_zones;
+    ZoneBitSet dst_zones;
 };
 
 struct BindUse
@@ -112,8 +113,9 @@ struct Binding
     bool check_proto(const snort::Flow*) const;
     bool check_port(const snort::Flow*) const;
     DirResult check_split_port(const snort::Flow*, const snort::Packet*, const DirResult) const;
+    bool check_zone(const snort::Packet*) const;
+    DirResult check_split_zone(const snort::Packet*, const DirResult) const;
     bool check_service(const snort::Flow*) const;
-    DirResult check_zone(const snort::Packet*, const DirResult) const;
 };
 
 #endif

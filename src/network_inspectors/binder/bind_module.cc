@@ -89,10 +89,13 @@ static const Parameter binder_when_params[] =
     { "dst_ports", Parameter::PT_BIT_LIST, "65535", nullptr,
       "list of destination ports" },
 
-    { "src_zone", Parameter::PT_INT, "0:max31", nullptr,
+    { "zones", Parameter::PT_BIT_LIST, "63", nullptr,
+      "zones" },
+
+    { "src_zone", Parameter::PT_BIT_LIST, "63", nullptr,
       "source zone" },
 
-    { "dst_zone", Parameter::PT_INT, "0:max31", nullptr,
+    { "dst_zone", Parameter::PT_BIT_LIST, "63", nullptr,
       "destination zone" },
 
     { "role", Parameter::PT_ENUM, "client | server | any", "any",
@@ -230,11 +233,21 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
         work->when.split_ports = true;
     }
 
+    else if ( v.is("zones") )
+    {
+        v.get_bits(work->when.src_zones);
+        unsplit_zones = true;
+    }
     else if ( v.is("src_zone") )
-        work->when.src_zone = v.get_int32();
-
+    {
+        v.get_bits(work->when.src_zones);
+        work->when.split_zones = true;
+    }
     else if ( v.is("dst_zone") )
-        work->when.dst_zone = v.get_int32();
+    {
+        v.get_bits(work->when.dst_zones);
+        work->when.split_zones = true;
+    }
 
     else if ( v.is("role") )
         work->when.role = (BindWhen::Role)v.get_uint8();
@@ -281,6 +294,7 @@ bool BinderModule::begin(const char* fqn, int idx, SnortConfig*)
         work = new Binding;
         unsplit_nets = false;
         unsplit_ports = false;
+        unsplit_zones = false;
         use_name_count = 0;
         use_type_count = 0;
     }
@@ -297,6 +311,9 @@ static void split_nets_warning()
 static void split_ports_warning()
 { ParseWarning(WARN_CONF, "src_ports and dst_ports override ports"); }
 
+static void split_zones_warning()
+{ ParseWarning(WARN_CONF, "src_zones and dst_zones override zones"); }
+
 bool BinderModule::end(const char* fqn, int idx, SnortConfig* sc)
 {
     if ( idx && !strcmp(fqn, BIND_NAME) )
@@ -312,6 +329,9 @@ bool BinderModule::end(const char* fqn, int idx, SnortConfig* sc)
 
         if ( unsplit_ports && work->when.split_ports )
             split_ports_warning();
+
+        if ( unsplit_zones && work->when.split_zones )
+            split_zones_warning();
 
         if ( use_type_count > 1 || use_name_count > 1 )
             file_name_type_error();

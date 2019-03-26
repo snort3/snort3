@@ -140,6 +140,7 @@ public:
     void get_bits(PortBitSet&) const;
     void get_bits(VlanBitSet&) const;
     void get_bits(ByteBitSet&) const;
+    void get_bits(ZoneBitSet&) const;
 
     void lower()
     { std::transform(str.begin(), str.end(), str.begin(), ::tolower); }

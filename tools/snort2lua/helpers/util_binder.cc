@@ -75,11 +75,14 @@ void Binder::add_to_configuration()
     for ( const auto& p : ports )
         table_api.add_list("ports", p);
 
-    if ( has_src_zone() )
-        table_api.add_option("src_zone", std::stoi(when_src_zone));
+    for ( const auto& p : when_src_zone )
+        table_api.add_list("src_zone", p);
 
-    if ( has_dst_zone() )
-        table_api.add_option("dst_zone", std::stoi(when_dst_zone));
+    for ( const auto& p : when_dst_zone )
+        table_api.add_list("dst_zone", p);
+
+    for ( const auto& p : zones )
+        table_api.add_list("zones", p);
 
     if ( has_proto() )
         table_api.add_option("proto", when_proto);
@@ -178,10 +181,13 @@ void Binder::add_when_port(const std::string& port)
 { ports.push_back(port); }
 
 void Binder::set_when_src_zone(const std::string& zone)
-{ when_src_zone = zone; }
+{ when_src_zone.push_back(zone); }
 
 void Binder::set_when_dst_zone(const std::string& zone)
-{ when_dst_zone = zone; }
+{ when_dst_zone.push_back(zone); }
+
+void Binder::add_when_zone(const std::string& zone)
+{ zones.push_back(zone); }
 
 void Binder::clear_ports()
 { ports.clear(); }
@@ -344,9 +350,12 @@ void print_binder_priorities()
             binders.back()->add_when_port("a");
 
         if ( i & (1 << 11) )
-            binders.back()->set_when_proto("a");
+            binders.back()->add_when_zone("a");
 
         if ( i & (1 << 12) )
+            binders.back()->set_when_proto("a");
+
+        if ( i & (1 << 13) )
             binders.back()->set_when_role("a");
     }
 
