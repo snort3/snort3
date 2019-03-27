@@ -104,6 +104,7 @@ class PopMime : public snort::MimeSession
     using snort::MimeSession::MimeSession;
 private:
     void decode_alert() override;
+    void decompress_alert() override;
     void reset_state(snort::Flow* ssn) override;
     bool is_end_of_data(snort::Flow* ssn) override;
 };

@@ -148,6 +148,7 @@ private:
         int max_header_len) override;
     int normalize_data(const uint8_t* ptr, const uint8_t* data_end) override;
     void decode_alert() override;
+    void decompress_alert() override;
     void reset_state(snort::Flow* ssn) override;
     bool is_end_of_data(snort::Flow* ssn) override;
 };

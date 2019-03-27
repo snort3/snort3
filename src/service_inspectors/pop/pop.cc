@@ -619,6 +619,11 @@ void PopMime::decode_alert()
     }
 }
 
+void PopMime::decompress_alert()
+{
+    DetectionEngine::queue_event(GID_POP, POP_FILE_DECOMP_FAILED);
+}
+
 void PopMime::reset_state(Flow* ssn)
 {
     POP_ResetState(ssn);

@@ -33,6 +33,7 @@
 #define POP_B64_DECODING_FAILED    4
 #define POP_QP_DECODING_FAILED     5
 #define POP_UU_DECODING_FAILED     7
+#define POP_FILE_DECOMP_FAILED     8
 
 #define POP_NAME "pop"
 #define POP_HELP "pop inspection"

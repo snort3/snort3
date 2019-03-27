@@ -33,6 +33,7 @@
 #define IMAP_B64_DECODING_FAILED    4
 #define IMAP_QP_DECODING_FAILED     5
 #define IMAP_UU_DECODING_FAILED     7
+#define IMAP_FILE_DECOMP_FAILED     8
 
 #define IMAP_NAME "imap"
 #define IMAP_HELP "imap inspection"

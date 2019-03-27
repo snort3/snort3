@@ -1368,6 +1368,11 @@ void SmtpMime::decode_alert()
     }
 }
 
+void SmtpMime::decompress_alert()
+{
+    DetectionEngine::queue_event(GID_SMTP, SMTP_FILE_DECOMP_FAILED);
+}
+
 void SmtpMime::reset_state(Flow* ssn)
 {
     SMTP_ResetState(ssn);

@@ -680,6 +680,11 @@ void ImapMime::decode_alert()
     }
 }
 
+void ImapMime::decompress_alert()
+{
+    DetectionEngine::queue_event(GID_IMAP, IMAP_FILE_DECOMP_FAILED);
+}
+
 void ImapMime::reset_state(Flow* ssn)
 {
     IMAP_ResetState(ssn);

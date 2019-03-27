@@ -88,6 +88,7 @@ private:
     virtual int handle_header_line(const uint8_t*, const uint8_t*, int) { return 0; }
     virtual int normalize_data(const uint8_t*, const uint8_t*) { return 0; }
     virtual void decode_alert() { }
+    virtual void decompress_alert() { }
     virtual void reset_state(Flow*) { }
     virtual bool is_end_of_data(Flow*) { return false; }
 

@@ -138,13 +138,74 @@ DecodeType MimeDecode::get_decode_type()
     return decode_type;
 }
 
+DecodeResult MimeDecode::decompress_data(const uint8_t* buf_in, uint32_t size_in,
+                                         const uint8_t*& buf_out, uint32_t& size_out)
+{
+    DecodeResult result = DECODE_SUCCESS;
+
+    if ( fd_state == nullptr )
+    {
+        buf_out = buf_in;
+        size_out = size_in;
+        return result;
+    }
+
+    uint8_t* decompress_buf = MimeDecodeContextData::get_decompress_buf();
+    fd_state->Next_In = buf_in;
+    fd_state->Avail_In = size_in;
+    fd_state->Next_Out = decompress_buf;
+    fd_state->Avail_Out = MAX_DEPTH;
+
+    const fd_status_t status = File_Decomp(fd_state);
+
+    switch ( status )
+    {
+    case File_Decomp_DecompError:
+        result = DECODE_FAIL;
+        // fallthrough
+    case File_Decomp_NoSig:
+    case File_Decomp_Error:
+        buf_out = buf_in;
+        size_out = size_in;
+        break;
+    default:
+        buf_out = decompress_buf;
+        size_out = fd_state->Next_Out - decompress_buf;
+        break;
+    }
+
+    return result;
+}
+
 MimeDecode::MimeDecode(snort::DecodeConfig* conf)
 {
     config = conf;
+
+    bool decompress_pdf = config->is_decompress_pdf();
+    bool decompress_swf = config->is_decompress_swf();
+    bool decompress_zip = config->is_decompress_zip();
+
+    if ( !decompress_pdf && !decompress_swf && !decompress_zip )
+        return;
+
+    fd_state = File_Decomp_New();
+    fd_state->Modes =
+        (decompress_pdf ? FILE_PDF_DEFL_BIT : 0) |
+        (decompress_swf ? (FILE_SWF_ZLIB_BIT | FILE_SWF_LZMA_BIT) : 0) |
+        (decompress_zip ? FILE_ZIP_DEFL_BIT : 0);
+    fd_state->Alert_Callback = nullptr;
+    fd_state->Alert_Context = nullptr;
+    fd_state->Compr_Depth = 0;
+    fd_state->Decompr_Depth = 0;
+
+    (void)File_Decomp_Init(fd_state);
 }
 
 MimeDecode::~MimeDecode()
 {
+    if (fd_state)
+        File_Decomp_StopFree(fd_state);
+
     if (decoder)
         delete decoder;
 }

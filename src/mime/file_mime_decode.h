@@ -22,6 +22,7 @@
 
 // Email attachment decoder, supports Base64, QP, UU, and Bit7/8
 
+#include "decompress/file_decomp.h"
 #include "framework/counts.h"
 #include "main/snort_types.h"
 #include "mime/decode_base.h"
@@ -75,12 +76,16 @@ public:
 
     DecodeType get_decode_type();
 
+    DecodeResult decompress_data(const uint8_t* buf_in, uint32_t size_in,
+                                 const uint8_t*& buf_out, uint32_t& size_out);
+
     static void init();
 
 private:
     DecodeType decode_type = DECODE_NONE;
     snort::DecodeConfig* config;
     DataDecode* decoder = nullptr;
+    fd_session_t* fd_state = nullptr;
 };
 
 } // namespace snort

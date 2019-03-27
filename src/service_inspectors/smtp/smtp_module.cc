@@ -82,6 +82,15 @@ static const Parameter s_params[] =
     { "data_cmds", Parameter::PT_STRING, nullptr, nullptr,
       "commands that initiate sending of data with an end of data delimiter" },
 
+    { "decompress_pdf", Parameter::PT_BOOL, nullptr, "false",
+      "decompress pdf files in MIME attachments" },
+
+    { "decompress_swf", Parameter::PT_BOOL, nullptr, "false",
+      "decompress swf files in MIME attachments" },
+
+    { "decompress_zip", Parameter::PT_BOOL, nullptr, "false",
+      "decompress zip files in MIME attachments" },
+
     { "email_hdrs_log_depth", Parameter::PT_INT, "0:20480", "1464",
       "depth for logging email headers" },
 
@@ -155,6 +164,7 @@ static const RuleMap smtp_rules[] =
     { SMTP_UU_DECODING_FAILED, "Unix-to-Unix decoding failed" },
     { SMTP_AUTH_ABORT_AUTH, "Cyrus SASL authentication attack" },
     { SMTP_AUTH_COMMAND_OVERFLOW, "attempted authentication command buffer overflow" },
+    { SMTP_FILE_DECOMP_FAILED, "file decompression failed" },
 
     { 0, nullptr }
 };
@@ -246,6 +256,15 @@ bool SmtpModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("data_cmds"))
         add_commands(v, PCMD_DATA);
+
+    else if ( v.is("decompress_pdf") )
+        config->decode_conf.set_decompress_pdf(v.get_bool());
+
+    else if ( v.is("decompress_swf") )
+        config->decode_conf.set_decompress_swf(v.get_bool());
+
+    else if ( v.is("decompress_zip") )
+        config->decode_conf.set_decompress_zip(v.get_bool());
 
     else if ( v.is("email_hdrs_log_depth") )
         config->log_config.email_hdrs_log_depth = v.get_uint16();

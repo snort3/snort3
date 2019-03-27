@@ -34,11 +34,15 @@ unsigned MimeDecodeContextData::mime_ips_id = 0;
 MimeDecodeContextData::MimeDecodeContextData()
 {
     decode_buf = (uint8_t*)snort_alloc(MAX_DEPTH);
+    decompress_buf = (uint8_t*)snort_alloc(MAX_DEPTH);
 }
+
 MimeDecodeContextData::~MimeDecodeContextData()
 {
     snort_free(decode_buf);
+    snort_free(decompress_buf);
     decode_buf = nullptr;
+    decompress_buf = nullptr;
 }
 
 void MimeDecodeContextData::init()
@@ -49,5 +53,12 @@ uint8_t* MimeDecodeContextData::get_decode_buf()
     MimeDecodeContextData* data = IpsContextData::get<MimeDecodeContextData>(mime_ips_id);
 
     return data->decode_buf;
+}
+
+uint8_t* MimeDecodeContextData::get_decompress_buf()
+{
+    MimeDecodeContextData* data = IpsContextData::get<MimeDecodeContextData>(mime_ips_id);
+
+    return data->decompress_buf;
 }
 

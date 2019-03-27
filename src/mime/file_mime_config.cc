@@ -81,6 +81,36 @@ int DecodeConfig::get_uu_depth()
     return uu_depth;
 }
 
+void DecodeConfig::set_decompress_pdf(bool enabled)
+{
+    decompress_pdf = enabled;
+}
+
+bool DecodeConfig::is_decompress_pdf()
+{
+    return decompress_pdf;
+}
+
+void DecodeConfig::set_decompress_swf(bool enabled)
+{
+    decompress_swf = enabled;
+}
+
+bool DecodeConfig::is_decompress_swf()
+{
+    return decompress_swf;
+}
+
+void DecodeConfig::set_decompress_zip(bool enabled)
+{
+    decompress_zip = enabled;
+}
+
+bool DecodeConfig::is_decompress_zip()
+{
+    return decompress_zip;
+}
+
 int64_t DecodeConfig::get_file_depth()
 {
     return file_depth;

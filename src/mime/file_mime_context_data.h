@@ -31,9 +31,11 @@ public:
     static unsigned mime_ips_id;
 
     uint8_t* decode_buf = nullptr;
+    uint8_t* decompress_buf = nullptr;
 
     static void init();
     static uint8_t* get_decode_buf();
+    static uint8_t* get_decompress_buf();
 };
 
 #endif

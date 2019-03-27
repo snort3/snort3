@@ -39,6 +39,15 @@ static const Parameter s_params[] =
     { "bitenc_decode_depth", Parameter::PT_INT, "-1:65535", "1460",
       "non-Encoded MIME attachment extraction depth (-1 no limit)" },
 
+    { "decompress_pdf", Parameter::PT_BOOL, nullptr, "false",
+      "decompress pdf files in MIME attachments" },
+
+    { "decompress_swf", Parameter::PT_BOOL, nullptr, "false",
+      "decompress swf files in MIME attachments" },
+
+    { "decompress_zip", Parameter::PT_BOOL, nullptr, "false",
+      "decompress zip files in MIME attachments" },
+
     { "qp_decode_depth", Parameter::PT_INT, "-1:65535", "1460",
       "quoted Printable decoding depth (-1 no limit)" },
 
@@ -55,6 +64,7 @@ static const RuleMap imap_rules[] =
     { IMAP_B64_DECODING_FAILED, "base64 decoding failed" },
     { IMAP_QP_DECODING_FAILED, "quoted-printable decoding failed" },
     { IMAP_UU_DECODING_FAILED, "Unix-to-Unix decoding failed" },
+    { IMAP_FILE_DECOMP_FAILED, "file decompression failed" },
 
     { 0, nullptr }
 };
@@ -96,6 +106,15 @@ bool ImapModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("bitenc_decode_depth") )
         config->decode_conf.set_bitenc_depth(mime_value);
+
+    else if ( v.is("decompress_pdf") )
+        config->decode_conf.set_decompress_pdf(v.get_bool());
+
+    else if ( v.is("decompress_swf") )
+        config->decode_conf.set_decompress_swf(v.get_bool());
+
+    else if ( v.is("decompress_zip") )
+        config->decode_conf.set_decompress_zip(v.get_bool());
 
     else if ( v.is("qp_decode_depth") )
         config->decode_conf.set_qp_depth(mime_value);

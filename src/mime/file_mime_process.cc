@@ -562,7 +562,7 @@ const uint8_t* MimeSession::process_mime_data_paf(
 
     if ((decode_state) != nullptr)
     {
-        DecodeConfig* conf= decode_conf;
+        DecodeConfig* conf = decode_conf;
         const uint8_t* buffer = nullptr;
         uint32_t buf_size = 0;
 
@@ -570,8 +570,19 @@ const uint8_t* MimeSession::process_mime_data_paf(
 
         if (conf)
         {
-            int detection_size = decode_state->get_detection_depth();
-            set_file_data(buffer, (uint16_t)detection_size);
+            const uint8_t* decomp_buffer = nullptr;
+            uint32_t detection_size, decomp_buf_size = 0;
+
+            detection_size = (uint32_t)decode_state->get_detection_depth();
+
+            DecodeResult result = decode_state->decompress_data(
+                buffer, detection_size, decomp_buffer, decomp_buf_size
+            );
+
+            if ( result != DECODE_SUCCESS )
+                decompress_alert();
+
+            set_file_data(decomp_buffer, decomp_buf_size);
         }
 
         /*Process file type/file signature*/
