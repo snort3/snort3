@@ -232,25 +232,6 @@ ListHead* get_rule_list(SnortConfig* sc, const char* s)
     return p ? p->RuleList : nullptr;
 }
 
-void AddRuleState(SnortConfig* sc, const RuleState& rs)  // FIXIT-L move to snort config
-{
-    if (sc == nullptr)
-        return;
-
-    RuleState* state = (RuleState*)snort_calloc(sizeof(RuleState));
-    *state = rs;
-
-    if ( !sc->rule_state_list )
-    {
-        sc->rule_state_list = state;
-    }
-    else
-    {
-        state->next = sc->rule_state_list;
-        sc->rule_state_list = state;
-    }
-}
-
 void ParseConfigFile(SnortConfig* sc, const char* fname)
 {
     if ( !fname )

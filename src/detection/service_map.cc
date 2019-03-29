@@ -258,7 +258,7 @@ int fpCreateServiceMaps(SnortConfig* sc)
                     continue;
 
                 /* Not enabled, don't do the FP content */
-                if ( !otn->enabled )
+                if ( !rtn->enabled() )
                     continue;
 
                 for (svc_idx = 0; svc_idx < otn->sigInfo.num_services; svc_idx++)

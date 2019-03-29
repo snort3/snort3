@@ -41,16 +41,16 @@ bool DefaultRuleState::convert(std::istringstream& data_stream)
     bool retval = true;
     std::string val;
 
-    table_api.open_table("alerts");
+    table_api.open_table("detection");
 
     if (data_stream >> val &&
         util::case_compare(val, "disabled"))
     {
-        table_api.add_option("default_rule_state", false);
+        table_api.add_option("global_default_rule_state", false);
     }
     else
     {
-        table_api.add_option("default_rule_state", true);
+        table_api.add_option("global_default_rule_state", true);
     }
 
     table_api.close_table();

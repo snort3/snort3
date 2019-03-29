@@ -522,8 +522,7 @@ static int fpAddPortGroupRule(
     if ( otn->sigInfo.builtin )
         return -1;
 
-    /* Rule not enabled */
-    if ( !otn->enabled )
+    if ( !otn->enabled_somewhere() )
         return -1;
 
     search_api = fp->get_search_api();
@@ -1294,7 +1293,7 @@ static int fpCreatePortGroups(SnortConfig* sc, RulePortTables* p)
 
     if (fpCreatePortTablePortGroups(sc, p->udp.dst, add_any_any))
     {
-        LogMessage("fpCreatePorTablePortGroups failed-udp.src\n");
+        LogMessage("fpCreatePorTablePortGroups failed-udp.dst\n");
         return -1;
     }
 
@@ -1303,7 +1302,7 @@ static int fpCreatePortGroups(SnortConfig* sc, RulePortTables* p)
 
     if (fpCreatePortObject2PortGroup(sc, po2, nullptr))
     {
-        LogMessage("fpCreatePorTablePortGroups failed-udp.src\n");
+        LogMessage("fpCreatePorTablePortGroups failed-udp.any\n");
         return -1;
     }
 
@@ -1773,13 +1772,13 @@ void fpDeleteFastPacketDetection(SnortConfig* sc)
 
 static void print_nfp_info(const char* group, OptTreeNode* otn)
 {
-    if ( otn->warned_fp )
+    if ( otn->warned_fp() )
         return;
 
     ParseWarning(WARN_RULES, "%s rule %u:%u:%u has no fast pattern",
         group, otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev);
 
-    otn->warned_fp = true;
+    otn->set_warned_fp();
 }
 
 void get_pattern_info(const PatternMatchData* pmd,

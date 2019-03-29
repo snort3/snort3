@@ -24,6 +24,8 @@
 
 #include "modules.h"
 
+#include <regex>
+
 #include "codecs/codec_module.h"
 #include "detection/fp_config.h"
 #include "filters/detection_filter.h"
@@ -72,6 +74,12 @@ static const Parameter detection_params[] =
     { "asn1", Parameter::PT_INT, "0:65535", "0",
       "maximum decode nodes" },
 
+    { "global_default_rule_state", Parameter::PT_BOOL, nullptr, "true",
+      "enable or disable rules by default (overridden by ips policy settings)" },
+
+    { "global_rule_state", Parameter::PT_BOOL, nullptr, "false",
+      "apply rule_state against all policies" },
+
     { "offload_limit", Parameter::PT_INT, "0:max32", "99999",
       "minimum sizeof PDU to offload fast pattern search (defaults to disabled)" },
 
@@ -118,6 +126,12 @@ bool DetectionModule::set(const char* fqn, Value& v, SnortConfig* sc)
 {
     if ( v.is("asn1") )
         sc->asn1_mem = v.get_uint16();
+
+    else if ( v.is("global_default_rule_state") )
+        sc->global_default_rule_state = v.get_bool();
+
+    else if ( v.is("global_rule_state") )
+        sc->global_rule_state = v.get_bool();
 
     else if ( v.is("offload_limit") )
         sc->offload_limit = v.get_uint32();
@@ -664,9 +678,6 @@ static const Parameter alerts_params[] =
     { "alert_with_interface_name", Parameter::PT_BOOL, nullptr, "false",
       "include interface in alert info (fast, full, or syslog only)" },
 
-    { "default_rule_state", Parameter::PT_BOOL, nullptr, "true",
-      "enable or disable ips rules" },
-
     { "detection_filter_memcap", Parameter::PT_INT, "0:max32", "1048576",
       "set available MB of memory for detection_filters" },
 
@@ -712,9 +723,6 @@ bool AlertsModule::set(const char*, Value& v, SnortConfig* sc)
 {
     if ( v.is("alert_with_interface_name") )
         v.update_mask(sc->output_flags, OUTPUT_FLAG__ALERT_IFACE);
-
-    else if ( v.is("default_rule_state") )
-        sc->default_rule_state = v.get_bool();
 
     else if ( v.is("detection_filter_memcap") )
         sc->detection_filter_config->memcap = v.get_uint32();
@@ -1210,6 +1218,9 @@ bool InspectionModule::set(const char*, Value& v, SnortConfig* sc)
 
 static const Parameter ips_params[] =
 {
+    { "default_rule_state", Parameter::PT_ENUM, "false | true | inherit", "inherit",
+      "enable or disable ips rules" },
+
     { "enable_builtin_rules", Parameter::PT_BOOL, nullptr, "false",
       "enable events from builtin rules w/o stubs" },
 
@@ -1254,7 +1265,10 @@ bool IpsModule::set(const char*, Value& v, SnortConfig* sc)
 {
     IpsPolicy* p = get_ips_policy();
 
-    if ( v.is("enable_builtin_rules") )
+    if ( v.is("default_rule_state") )
+        p->default_rule_state = (IpsPolicy::Enable)v.get_uint8();
+
+    else if ( v.is("enable_builtin_rules") )
         p->enable_builtin_rules = v.get_bool();
 
     else if ( v.is("id") )
@@ -1711,65 +1725,70 @@ bool RateFilterModule::end(const char*, int idx, SnortConfig* sc)
 // rule_state module
 //-------------------------------------------------------------------------
 
+static const Parameter single_rule_state_params[] =
+{
+    { "action", Parameter::PT_ENUM, "log | pass | alert | drop | block | reset | inherit", "inherit",
+      "apply action if rule matches or inherit from rule definition" },
+
+    { "enable", Parameter::PT_ENUM, "false | true | inherit", "inherit",
+      "enable or disable rule in current ips policy or use default defined by ips policy" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const char* rule_state_gid_sid_regex = "([0-9]+):([0-9]+)";
 static const Parameter rule_state_params[] =
 {
-    { "gid", Parameter::PT_INT, "0:max32", "0",
-      "rule generator ID" },
-
-    { "sid", Parameter::PT_INT, "0:max32", "0",
-      "rule signature ID" },
-
-    { "enable", Parameter::PT_BOOL, nullptr, "true",
-      "enable or disable rule in all policies" },
+    { rule_state_gid_sid_regex, Parameter::PT_TABLE, single_rule_state_params, nullptr,
+      "defines rule state parameters for gid:sid", true },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 #define rule_state_help \
-    "enable/disable specific IPS rules"
+    "enable/disable and set actions for specific IPS rules"
 
 class RuleStateModule : public Module
 {
 public:
-    RuleStateModule() : Module("rule_state", rule_state_help, rule_state_params, true) { }
+    RuleStateModule() : Module("rule_state", rule_state_help, rule_state_params, false) { }
     bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
 
     Usage get_usage() const override
     { return DETECT; }
-
-private:
-    RuleState state;
 };
 
-bool RuleStateModule::set(const char*, Value& v, SnortConfig*)
+bool RuleStateModule::set(const char* fqn, Value& v, SnortConfig* sc)
 {
-    if ( v.is("gid") )
-        state.gid = v.get_uint32();
+    static regex gid_sid(rule_state_gid_sid_regex);
 
-    else if ( v.is("sid") )
-        state.sid = v.get_uint32();
+    // the regex itself is passed as the fqn when declaring rule_state = { }
+    if ( strstr(fqn, rule_state_gid_sid_regex) )
+        return true;
 
-    else if ( v.is("enable") )
-        state.state = v.get_bool();
+    cmatch match;
 
+    if ( regex_search(fqn, match, gid_sid) )
+    {
+        unsigned gid = strtoul(match[1].str().c_str(), nullptr, 10);
+        unsigned sid = strtoul(match[2].str().c_str(), nullptr, 10);
+
+        if ( v.is("action") )
+        {
+            sc->rule_states.emplace_back(
+                new RuleStateAction(gid, sid, IpsPolicy::Action(v.get_uint8())));
+        }
+        else if ( v.is("enable") )
+        {
+            sc->rule_states.emplace_back(
+                new RuleStateEnable(gid, sid, IpsPolicy::Enable(v.get_uint8())));
+        }
+        else
+            return false;
+    }
     else
         return false;
 
-    return true;
-}
-
-bool RuleStateModule::begin(const char*, int, SnortConfig*)
-{
-    memset(&state, 0, sizeof(state));
-    return true;
-}
-
-bool RuleStateModule::end(const char*, int idx, SnortConfig* sc)
-{
-    if ( idx )
-        AddRuleState(sc, state);
     return true;
 }
 

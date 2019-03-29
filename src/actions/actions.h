@@ -35,7 +35,7 @@ class SO_PUBLIC Actions
 {
 public:
     // FIXIT-L if Type is changed, RateFilterModule and type in actions.cc must be updated
-    enum Type
+    enum Type : uint8_t
     { NONE = 0, LOG, PASS, ALERT, DROP, BLOCK, RESET, MAX };
 
     static const char* get_string(Type);

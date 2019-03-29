@@ -245,7 +245,6 @@ SnortConfig::~SnortConfig()
         return;
     }
 
-    free_rule_state_list();
     FreeClassifications(classifications);
     FreeReferences(references);
 
@@ -330,7 +329,8 @@ void SnortConfig::setup()
     //print_thresholding(threshold_config, 0);
     //PrintRuleOrder(rule_lists);
 
-    SetRuleStates(this);
+    for ( auto& state : rule_states )
+        state->apply(this);
 
     /* Need to do this after dynamic detection stuff is initialized, too */
     IpsManager::verify(this);
@@ -1048,19 +1048,6 @@ void SnortConfig::enable_syslog()
 
     logging_flags |= LOGGING_FLAG__SYSLOG;
     syslog_configured = true;
-}
-
-void SnortConfig::free_rule_state_list()
-{
-    RuleState* head = rule_state_list;
-
-    while ( head )
-    {
-        RuleState* tmp = head;
-        head = head->next;
-        snort_free(tmp);
-    }
-    rule_state_list = nullptr;
 }
 
 bool SnortConfig::tunnel_bypass_enabled(uint8_t proto)

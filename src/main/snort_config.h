@@ -125,7 +125,7 @@ struct LatencyConfig;
 struct PORT_RULE_MAP;
 struct RuleListNode;
 struct RulePortTables;
-struct RuleState;
+class RuleState;
 struct DetectionFilterConfig;
 struct EventQueueConfig;
 struct IpsActionsConfig;
@@ -179,7 +179,6 @@ public:
     //------------------------------------------------------
     // alert module stuff
     std::string rule_order;
-    bool default_rule_state = true;
 
     SfCidr homenet;
 
@@ -215,6 +214,9 @@ public:
 
     unsigned offload_limit = 99999;  // disabled
     unsigned offload_threads = 0;    // disabled
+
+    bool global_rule_state = false;
+    bool global_default_rule_state = true;
 
     //------------------------------------------------------
     // process stuff
@@ -306,7 +308,7 @@ public:
 
     int thiszone = 0;
 
-    RuleState* rule_state_list = nullptr;
+    std::vector<RuleState*> rule_states;
     ClassType* classifications = nullptr;
     ReferenceSystemNode* references = nullptr;
     GHash* otn_map = nullptr;
@@ -422,7 +424,6 @@ public:
     void set_umask(uint32_t);
     void set_utc(bool);
     void set_verbose(bool);
-    void free_rule_state_list();
 
     //------------------------------------------------------
     // Static convenience accessor methods
@@ -499,8 +500,21 @@ public:
     static int get_eval_index(Actions::Type type)
     { return get_conf()->evalOrder[type]; }
 
-    static int get_default_rule_state()
-    { return get_conf()->default_rule_state; }
+    static bool get_default_rule_state()
+    {
+        switch ( get_ips_policy()->default_rule_state )
+        {
+            case IpsPolicy::INHERIT_ENABLE:
+                return get_conf()->global_default_rule_state;
+
+            case IpsPolicy::TRUE:
+                return true;
+
+            case IpsPolicy::FALSE:
+                return false;
+        }
+        return true;
+    }
 
     SO_PUBLIC static bool tunnel_bypass_enabled(uint8_t proto);
 

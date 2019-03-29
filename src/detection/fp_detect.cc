@@ -139,10 +139,10 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
     int action = -1, rateAction = -1;
     int override, filterEvent = 0;
 
-    if ( Actions::is_pass(rtn->type) )
+    if ( Actions::is_pass(rtn->action) )
         p->packet_flags |= PKT_PASS_RULE;
 
-    if ( otn->stateless )
+    if ( otn->stateless() )
     {
         /* Stateless rule, set the stateless bit */
         p->packet_flags |= PKT_STATELESS;
@@ -158,12 +158,12 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
     if ((p->packet_flags & PKT_STREAM_UNEST_UNI) &&
         SnortConfig::assure_established() &&
         (!(p->packet_flags & PKT_REBUILT_STREAM)) &&
-        (otn->stateless == 0))
+        !otn->stateless() )
     {
         // We still want to drop packets that are drop rules.
         // We just don't want to see the alert.
-        Actions::apply(rtn->type, p);
-        fpLogOther(p, rtn, otn, rtn->type);
+        Actions::apply(rtn->action, p);
+        fpLogOther(p, rtn, otn, rtn->action);
         return 1;
     }
 
@@ -178,7 +178,7 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
     {
         return 1;
     }
-    action = (rateAction < 0) ? (int)rtn->type : rateAction;
+    action = (rateAction < 0) ? (int)rtn->action : rateAction;
 
     // When rate filters kick in, event filters are still processed.
     // perform event filtering tests - impacts logging
@@ -216,9 +216,9 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
      * If its order is lower than 'pass', it should have been passed.
      * This is consistent with other detection rules */
     if ( (p->packet_flags & PKT_PASS_RULE)
-        &&(SnortConfig::get_eval_index(rtn->type) > SnortConfig::get_eval_index(Actions::PASS)))
+        &&(SnortConfig::get_eval_index(rtn->action) > SnortConfig::get_eval_index(Actions::PASS)))
     {
-        fpLogOther(p, rtn, otn, rtn->type);
+        fpLogOther(p, rtn, otn, rtn->action);
         return 1;
     }
 
@@ -677,7 +677,7 @@ static inline int fpFinalSelectEvent(OtnxMatchData* o, Packet* p)
                 otn = o->matchInfo[i].MatchArray[j];
                 rtn = getRtnFromOtn(otn);
 
-                if (otn && rtn && Actions::is_pass(rtn->type))
+                if (otn && rtn && Actions::is_pass(rtn->action))
                 {
                     /* Already acted on rules, so just don't act on anymore */
                     if ( tcnt > 0 )
@@ -718,7 +718,7 @@ static inline int fpFinalSelectEvent(OtnxMatchData* o, Packet* p)
                 }
 
                 /* only log/count one pass */
-                if ( otn && rtn && Actions::is_pass(rtn->type))
+                if ( otn && rtn && Actions::is_pass(rtn->action))
                 {
                     p->packet_flags |= PKT_PASS_RULE;
                     return 1;

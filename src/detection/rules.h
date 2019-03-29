@@ -25,13 +25,7 @@
 // FIXIT-L refactor this header
 
 #include "actions/actions.h"
-
-#define ANY_SRC_PORT    0x01
-#define ANY_DST_PORT    0x02
-#define ANY_FLAGS       0x04
-#define BIDIRECTIONAL   0x08
-#define ANY_SRC_IP      0x10
-#define ANY_DST_IP      0x20
+#include "main/policy.h"
 
 #define GID_DEFAULT          1
 #define GID_SESSION        135
@@ -45,8 +39,10 @@
 namespace snort
 {
     class IpsAction;
+    struct SnortConfig;
 }
 struct OutputSet;
+struct RuleTreeNode;
 
 struct ListHead
 {
@@ -67,12 +63,47 @@ struct RuleListNode
 };
 
 // for separately overriding rule type
-struct RuleState
+class RuleState
 {
-    uint32_t sid;
-    uint32_t gid;
-    int state;
-    RuleState* next;
+public:
+    RuleState(unsigned g, unsigned s) : gid(g), sid(s)
+    { policy = snort::get_ips_policy()->policy_id; }
+
+    virtual ~RuleState() = default;
+
+    void apply(snort::SnortConfig*);
+    virtual void update_rtn(RuleTreeNode*) = 0;
+
+private:
+    unsigned gid;
+    unsigned sid;
+    unsigned policy;
+
+    void apply(snort::SnortConfig*, OptTreeNode* otn, unsigned ips_num);
+    RuleTreeNode* find_updated_rtn(RuleTreeNode*, snort::SnortConfig*, unsigned ips_num);
+    void replace_rtn(OptTreeNode*, RuleTreeNode*, snort::SnortConfig*, unsigned ips_num);
+    RuleTreeNode* dup_rtn(OptTreeNode*, snort::SnortConfig*, unsigned ips_num);
+};
+
+class RuleStateAction : public RuleState
+{
+public:
+    RuleStateAction(unsigned g, unsigned s, IpsPolicy::Action a) : RuleState(g, s), action(a) { }
+    virtual void update_rtn(RuleTreeNode*) override;
+
+private:
+    IpsPolicy::Action action;
+    
+};
+
+class RuleStateEnable : public RuleState
+{
+public:
+    RuleStateEnable(unsigned g, unsigned s, IpsPolicy::Enable e) : RuleState(g, s), enable(e) { }
+    virtual void update_rtn(RuleTreeNode*) override;
+
+private:
+    IpsPolicy::Enable enable;
 };
 
 #endif

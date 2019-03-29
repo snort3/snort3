@@ -177,12 +177,12 @@ void OtnFree(void* data)
     {
         OptFpList* tmp = opt_func;
         opt_func = opt_func->next;
-        snort_free(tmp);
+        snort_free(tmp); // FIXIT-L use c++ operators for all of this
     }
 
     if ( otn->sigInfo.message )
     {
-        if (!otn->generated)
+        if ( !otn->generated() )
             snort_free(otn->sigInfo.message);
     }
     for (unsigned svc_idx = 0; svc_idx < otn->sigInfo.num_services; svc_idx++)
@@ -211,14 +211,14 @@ void OtnFree(void* data)
 
     /* RTN was generated on the fly.  Don't necessarily know which policy
      * at this point so go through all RTNs and delete them */
-    if (otn->generated)
+    if ( otn->generated() )
     {
         for (int i = 0; i < otn->proto_node_num; i++)
         {
             RuleTreeNode* rtn = deleteRtnFromOtn(otn, i);
 
             if ( rtn )
-                snort_free(rtn);
+                delete rtn;
         }
     }
 
@@ -228,8 +228,8 @@ void OtnFree(void* data)
     if (otn->detection_filter)
         snort_free(otn->detection_filter);
 
-    snort_free(otn->state);
-    snort_free(otn);
+    delete[] otn->state;
+    delete otn;
 }
 
 GHash* OtnLookupNew()

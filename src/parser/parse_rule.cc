@@ -142,14 +142,14 @@ static int FinishPortListRule(
         break;
 
     default:
-        rtn->flags |= ANY_SRC_PORT|ANY_DST_PORT;
+        rtn->flags |= RuleTreeNode::ANY_SRC_PORT|RuleTreeNode::ANY_DST_PORT;
         dstTable = srcTable = nullptr;
         aaObject = port_tables->svc_any;
         prc = &svcCnt;
     }
 
     /* Count rules with both src and dst specific ports */
-    if (!(rtn->flags & ANY_DST_PORT) && !(rtn->flags & ANY_SRC_PORT))
+    if (!(rtn->flags & RuleTreeNode::ANY_DST_PORT) && !(rtn->flags & RuleTreeNode::ANY_SRC_PORT))
     {
         prc->both++;
     }
@@ -157,19 +157,19 @@ static int FinishPortListRule(
     /* If not an any-any rule test for port bleedover, if we are using a
      * single rule group, don't bother */
     if (!fp->get_single_rule_group() &&
-        (rtn->flags & (ANY_DST_PORT|ANY_SRC_PORT)) != (ANY_DST_PORT|ANY_SRC_PORT))
+        (rtn->flags & (RuleTreeNode::ANY_DST_PORT|RuleTreeNode::ANY_SRC_PORT)) != (RuleTreeNode::ANY_DST_PORT|RuleTreeNode::ANY_SRC_PORT))
     {
         int dst_cnt = 0;
         int src_cnt = 0;
 
-        if (!(rtn->flags & ANY_SRC_PORT))
+        if (!(rtn->flags & RuleTreeNode::ANY_SRC_PORT))
         {
             src_cnt = PortObjectPortCount(rtn->src_portobject);
             if (src_cnt >= fp->get_bleed_over_port_limit())
                 large_port_group = 1;
         }
 
-        if (!(rtn->flags & ANY_DST_PORT))
+        if (!(rtn->flags & RuleTreeNode::ANY_DST_PORT))
         {
             dst_cnt = PortObjectPortCount(rtn->dst_portobject);
             if (dst_cnt >= fp->get_bleed_over_port_limit())
@@ -198,7 +198,7 @@ static int FinishPortListRule(
      * any-any port rules...
      * If we have an any-any rule or a large port group or
      * were using a single rule group we make it an any-any rule. */
-    if (((rtn->flags & (ANY_DST_PORT|ANY_SRC_PORT)) == (ANY_DST_PORT|ANY_SRC_PORT)) ||
+    if (((rtn->flags & (RuleTreeNode::ANY_DST_PORT|RuleTreeNode::ANY_SRC_PORT)) == (RuleTreeNode::ANY_DST_PORT|RuleTreeNode::ANY_SRC_PORT)) ||
         large_port_group || fp->get_single_rule_group())
     {
         if (snort_protocol_id == SNORT_PROTO_IP)
@@ -247,7 +247,7 @@ static int FinishPortListRule(
     }
 
     /* add rule index to dst table if we have a specific dst port or port list */
-    if (!(rtn->flags & ANY_DST_PORT))
+    if (!(rtn->flags & RuleTreeNode::ANY_DST_PORT))
     {
         prc->dst++;
 
@@ -270,7 +270,7 @@ static int FinishPortListRule(
         PortObjectAddRule(pox, otn->ruleIndex);
 
         /* if bidir, add this rule and port group to the src table */
-        if (rtn->flags & BIDIRECTIONAL)
+        if (rtn->flags & RuleTreeNode::BIDIRECTIONAL)
         {
             pox = PortTableFindInputPortObjectPorts(srcTable, rtn->dst_portobject);
             if ( !pox )
@@ -290,7 +290,7 @@ static int FinishPortListRule(
     }
 
     /* add rule index to src table if we have a specific src port or port list */
-    if (!(rtn->flags & ANY_SRC_PORT))
+    if (!(rtn->flags & RuleTreeNode::ANY_SRC_PORT))
     {
         prc->src++;
         PortObject* pox = PortTableFindInputPortObjectPorts(srcTable, rtn->src_portobject);
@@ -309,7 +309,7 @@ static int FinishPortListRule(
         PortObjectAddRule(pox, otn->ruleIndex);
 
         /* if bidir, add this rule and port group to the dst table */
-        if (rtn->flags & BIDIRECTIONAL)
+        if (rtn->flags & RuleTreeNode::BIDIRECTIONAL)
         {
             pox = PortTableFindInputPortObjectPorts(dstTable, rtn->src_portobject);
             if ( !pox )
@@ -401,7 +401,7 @@ static int ProcessIP(SnortConfig*, const char* addr, RuleTreeNode* rtn, int mode
 
         if (rtn->sip->head && rtn->sip->head->flags & SFIP_ANY)
         {
-            rtn->flags |= ANY_SRC_IP;
+            rtn->flags |= RuleTreeNode::ANY_SRC_IP;
         }
     }
     /* mode == DST */
@@ -456,7 +456,7 @@ static int ProcessIP(SnortConfig*, const char* addr, RuleTreeNode* rtn, int mode
 
         if (rtn->dip->head && rtn->dip->head->flags & SFIP_ANY)
         {
-            rtn->flags |= ANY_DST_IP;
+            rtn->flags |= RuleTreeNode::ANY_DST_IP;
         }
     }
 
@@ -589,9 +589,9 @@ static int ParsePortList(
     if ( PortObjectHasAny(portobject) )
     {
         if ( dst_flag )
-            rtn->flags |= ANY_DST_PORT;
+            rtn->flags |= RuleTreeNode::ANY_DST_PORT;
         else
-            rtn->flags |= ANY_SRC_PORT;
+            rtn->flags |= RuleTreeNode::ANY_SRC_PORT;
     }
 
     /* check for a pure not rule - fatal if we find one */
@@ -619,7 +619,7 @@ bool same_headers(RuleTreeNode* rule, RuleTreeNode* rtn)
     if ( !rule or !rtn )
         return false;
 
-    if (rule->type != rtn->type)
+    if (rule->action != rtn->action)
         return false;
 
     if (rule->snort_protocol_id != rtn->snort_protocol_id)
@@ -666,7 +666,7 @@ static RuleTreeNode* findHeadNode(
 static void XferHeader(RuleTreeNode* from, RuleTreeNode* to)
 {
     to->flags = from->flags;
-    to->type = from->type;
+    to->action = from->action;
     to->sip = from->sip;
     to->dip = from->dip;
 
@@ -691,7 +691,7 @@ static void AddRuleFuncToList(
 
     if ( !idx )
     {
-        rtn->rule_func = (RuleFpList*)snort_calloc(sizeof(RuleFpList));
+        rtn->rule_func = new RuleFpList;
         rtn->rule_func->RuleHeadFunc = rfunc;
     }
     else
@@ -699,7 +699,7 @@ static void AddRuleFuncToList(
         while ( idx->next )
             idx = idx->next;
 
-        idx->next = (RuleFpList*)snort_calloc(sizeof(RuleFpList));
+        idx->next = new RuleFpList;
         idx = idx->next;
         idx->RuleHeadFunc = rfunc;
     }
@@ -722,14 +722,14 @@ static void AddrToFunc(RuleTreeNode* rtn, int mode)
     switch (mode)
     {
     case SRC:
-        if ((rtn->flags & ANY_SRC_IP) == 0)
+        if ((rtn->flags & RuleTreeNode::ANY_SRC_IP) == 0)
         {
             AddRuleFuncToList(CheckSrcIP, rtn);
         }
         break;
 
     case DST:
-        if ((rtn->flags & ANY_DST_IP) == 0)
+        if ((rtn->flags & RuleTreeNode::ANY_DST_IP) == 0)
         {
             AddRuleFuncToList(CheckDstIP, rtn);
         }
@@ -788,14 +788,14 @@ static void PortToFunc(RuleTreeNode* rtn, int any_flag, int except_flag, int mod
 // functions (addrs and ports)
 static void SetupRTNFuncList(RuleTreeNode* rtn)
 {
-    if (rtn->flags & BIDIRECTIONAL)
+    if (rtn->flags & RuleTreeNode::BIDIRECTIONAL)
     {
         AddRuleFuncToList(CheckBidirectional, rtn);
     }
     else
     {
-        PortToFunc(rtn, (rtn->flags & ANY_DST_PORT) ? 1 : 0, 0, DST);
-        PortToFunc(rtn, (rtn->flags & ANY_SRC_PORT) ? 1 : 0, 0, SRC);
+        PortToFunc(rtn, (rtn->flags & RuleTreeNode::ANY_DST_PORT) ? 1 : 0, 0, DST);
+        PortToFunc(rtn, (rtn->flags & RuleTreeNode::ANY_SRC_PORT) ? 1 : 0, 0, SRC);
 
         AddrToFunc(rtn, SRC);
         AddrToFunc(rtn, DST);
@@ -817,7 +817,7 @@ static RuleTreeNode* ProcessHeadNode(
     {
         head_count++;
 
-        rtn = (RuleTreeNode*)snort_calloc(sizeof(RuleTreeNode));
+        rtn = new RuleTreeNode;
         rtn->otnRefCount++;
 
         /* copy the prototype header info into the new header block */
@@ -854,7 +854,7 @@ static int mergeDuplicateOtn(
 
     RuleTreeNode* rtn_cur = getRtnFromOtn(otn_cur);
 
-    if ( rtn_cur and rtn_cur->type != rtn_new->type )
+    if ( rtn_cur and rtn_cur->action != rtn_new->action )
     {
         ParseError("GID %u SID %u in rule duplicates previous rule, with different type.",
             otn_new->sigInfo.gid, otn_new->sigInfo.sid);
@@ -988,10 +988,10 @@ void parse_rule_print()
 
 void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
 {
-    memset(&rtn, 0, sizeof(rtn));
-    rtn.type = get_rule_type(s);
+    rtn = RuleTreeNode();
+    rtn.action = get_rule_type(s);
 
-    if ( rtn.type == Actions::NONE )
+    if ( rtn.action == Actions::NONE )
     {
         s_ignore = true;
         return;
@@ -1002,9 +1002,11 @@ void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
 
         if ( !rtn.listhead )
         {
-            CreateRuleType(sc, s, rtn.type);
+            CreateRuleType(sc, s, rtn.action);
             rtn.listhead = get_rule_list(sc, s);
         }
+        if ( SnortConfig::get_default_rule_state() )
+            rtn.set_enabled();
     }
 
     if ( !rtn.listhead )
@@ -1070,7 +1072,7 @@ void parse_rule_dir(SnortConfig*, const char* s, RuleTreeNode& rtn)
         return;
 
     if (strcmp(s, "<>") == 0)
-        rtn.flags |= BIDIRECTIONAL;
+        rtn.flags |= RuleTreeNode::BIDIRECTIONAL;
 
     else if ( strcmp(s, "->") )
         ParseError("illegal direction specifier: %s", s);
@@ -1119,15 +1121,17 @@ OptTreeNode* parse_rule_open(SnortConfig* sc, RuleTreeNode& rtn, bool stub)
         parse_rule_nets(sc, "any", false, rtn);
         parse_rule_ports(sc, "any", false, rtn);
     }
-    OptTreeNode* otn = (OptTreeNode*)snort_calloc(sizeof(OptTreeNode));
-    otn->state = (OtnState*)snort_calloc(ThreadConfig::get_instance_max(), sizeof(OtnState));
+    OptTreeNode* otn = new OptTreeNode;
+    otn->state = new OtnState[ThreadConfig::get_instance_max()];
 
     if ( !stub )
         otn->sigInfo.gid = GID_DEFAULT;
 
     otn->chain_node_number = otn_count;
     otn->snort_protocol_id = rtn.snort_protocol_id;
-    otn->enabled = SnortConfig::get_default_rule_state();
+
+    if ( SnortConfig::get_default_rule_state() )
+        rtn.set_enabled();
 
     IpsManager::reset_options();
 

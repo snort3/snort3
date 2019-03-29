@@ -33,6 +33,7 @@ class Table
 public:
     Table(int depth);
     Table(const std::string& name, int depth);
+    Table(const std::string& name, const std::string& key, int depth);
     virtual ~Table();
 
     inline const std::string& get_name() { return name; }
@@ -61,6 +62,7 @@ public:
 
 private:
     std::string name;
+    std::string key;
     bool one_line = false;
     bool print_whitespace = true;
 

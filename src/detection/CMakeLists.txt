@@ -42,6 +42,7 @@ add_library (detection OBJECT
     regex_offload.cc
     rtn_checks.cc
     rtn_checks.h
+    rules.cc
     service_map.cc
     service_map.h
     sfrim.cc

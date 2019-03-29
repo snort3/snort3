@@ -410,13 +410,13 @@ static IpsOption* flow_ctor(Module* p, OptTreeNode* otn)
     FlowModule* m = (FlowModule*)p;
 
     if ( m->data.stateless )
-        otn->stateless = 1;
+        otn->set_stateless();
 
     if ( m->data.established )
-        otn->established = 1;
+        otn->set_established();
 
     if ( m->data.unestablished )
-        otn->unestablished = 1;
+        otn->set_unestablished();
 
     if (otn->snort_protocol_id == SNORT_PROTO_ICMP)
     {

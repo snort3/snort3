@@ -67,6 +67,13 @@ struct SO_PUBLIC Parameter
     const void* range;  // nullptr|const char*|RangeQuery*|const Parameter*
     const char* deflt;
     const char* help;
+    bool regex = false; // for name resolution
+
+    Parameter(const char* n, Type t, const void* r, const char* d, const char* h, bool re) :
+        name(n), type(t), range(r), deflt(d), help(h), regex(re) { }
+
+    Parameter(const char* n, Type t, const void* r, const char* d, const char* h) :
+        name(n), type(t), range(r), deflt(d), help(h) { }
 
     const char* get_type() const;
     const char* get_range() const;

@@ -136,6 +136,9 @@ private:
 struct IpsPolicy
 {
 public:
+    enum Action : uint8_t { LOG, PASS, ALERT, DROP, BLOCK, RESET, INHERIT_ACTION };
+    enum Enable : uint8_t { FALSE, TRUE, INHERIT_ENABLE };
+
     IpsPolicy(PolicyId = 0);
     ~IpsPolicy();
 
@@ -158,6 +161,8 @@ public:
     /* The portobjects in these are attached to rtns and used during runtime */
     PortVarTable* portVarTable;     /* named entries, uses a hash table */
     PortTable* nonamePortVarTable;  /* un-named entries */
+
+    Enable default_rule_state = INHERIT_ENABLE;
 
     bool obfuscate_pii;
 };

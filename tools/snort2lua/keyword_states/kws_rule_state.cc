@@ -36,38 +36,48 @@ public:
 };
 } // namespace
 
+using namespace std;
+
 bool RuleState::convert(std::istringstream& data_stream)
 {
+    static bool did_preamble = false;
+
     std::string arg;
     bool retval = true;
     int count = 0;
 
-    table_api.open_table("rule_state");
-    table_api.open_table();
+    if ( !did_preamble )
+    {
+        did_preamble = true;
+        table_api.open_table("detection");
+        table_api.add_option("global_rule_state", true);
+        table_api.close_table();
+        table_api.open_table("rule_state");
+        table_api.close_table();
+    }
+
+    string gid;
+    string sid;
+    string enable;
+    string action;
 
     while (util::get_string(data_stream, arg, ", "))
     {
         switch (count)
         {
         case 0:
-            table_api.add_option("sid", std::stoi(arg));
+            sid = arg;
             count++;
             break;
         case 1:
-            table_api.add_option("gid", std::stoi(arg));
+            gid = arg;
             count++;
             break;
         case 2:
             if (arg == "enabled")
-            {
-                table_api.add_diff_option_comment("enabled", "enable");
-                table_api.add_option("enable", true);
-            }
+                enable = "true";
             else if (arg == "disabled")
-            {
-                table_api.add_diff_option_comment("disabled", "enable");
-                table_api.add_option("enable", false);
-            }
+                enable = "false";
             else
             {
                 data_api.failed_conversion(data_stream, "third option must be {enabled|disabled|");
@@ -77,7 +87,7 @@ bool RuleState::convert(std::istringstream& data_stream)
             count++;
             break;
         case 3:
-            table_api.add_deleted_comment("action");
+            action = arg;
             count++;
             break;
         default:
@@ -86,8 +96,37 @@ bool RuleState::convert(std::istringstream& data_stream)
         }
     }
 
-    table_api.close_table();
-    table_api.close_table();
+    if ( count < 2 )
+    {
+        data_api.failed_conversion(data_stream, "must set a gid and sid for rule state" + arg);
+        retval = false;
+    }
+
+    if ( retval )
+    {
+        string key = gid + ":" + sid;
+        table_api.open_associative_table("rule_state", key.c_str());
+
+        if ( !enable.empty() )
+        {
+            table_api.add_diff_option_comment("enabled/disabled", "enable");
+            table_api.add_option("enable", enable);
+        }
+
+        if ( !action.empty() )
+        {
+            if ( action == "sdrop" )
+            {
+                action = "drop";
+                table_api.add_diff_option_comment("sdrop", "drop");
+            }
+
+            table_api.add_option("action", action);
+        }
+
+        table_api.close_table();
+    }
+
     return retval;
 }
 

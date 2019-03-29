@@ -89,21 +89,21 @@ enum Target
 
 struct SigInfo
 {
-    char* message;
-    ClassType* class_type;
-    ReferenceNode* refs;
-    SignatureServiceInfo* services;
+    char* message = nullptr;
+    ClassType* class_type = nullptr;
+    ReferenceNode* refs = nullptr;
+    SignatureServiceInfo* services = nullptr;
 
-    uint32_t gid;
-    uint32_t sid;
-    uint32_t rev;
+    uint32_t gid = 0;
+    uint32_t sid = 0;
+    uint32_t rev = 0;
 
-    uint32_t class_id;
-    uint32_t priority;
-    uint32_t num_services;
+    uint32_t class_id = 0;
+    uint32_t priority = 0;
+    uint32_t num_services = 0;
 
-    bool builtin;
-    Target target;
+    bool builtin = false;
+    Target target = TARGET_NONE;
 };
 
 snort::GHash* OtnLookupNew();

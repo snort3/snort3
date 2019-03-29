@@ -87,6 +87,9 @@ public:
 // open a nested table that does not contain a name --> {...})
     void open_table(bool one_line = false);
 
+// open a table using the syntax name["key"] = {...}
+    void open_associative_table(const char* name, const char* key);
+
 // close the nested table.  go to previous table level
     void close_table();
 

@@ -61,9 +61,9 @@ static int CheckAddrPort(sfip_var_t* rule_addr, PortObject* po, Packet* p,
         pkt_port = p->ptrs.sp;
 
         if (mode & INVERSE)
-            any_port_flag = flags & ANY_DST_PORT;
+            any_port_flag = flags & RuleTreeNode::ANY_DST_PORT;
         else
-            any_port_flag = flags & ANY_SRC_PORT;
+            any_port_flag = flags & RuleTreeNode::ANY_SRC_PORT;
     }
     else
     {
@@ -71,9 +71,9 @@ static int CheckAddrPort(sfip_var_t* rule_addr, PortObject* po, Packet* p,
         pkt_port = p->ptrs.dp;
 
         if (mode & INVERSE)
-            any_port_flag = flags & ANY_SRC_PORT;
+            any_port_flag = flags & RuleTreeNode::ANY_SRC_PORT;
         else
-            any_port_flag = flags & ANY_DST_PORT;
+            any_port_flag = flags & RuleTreeNode::ANY_DST_PORT;
     }
 
     if (!rule_addr)

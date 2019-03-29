@@ -148,6 +148,20 @@ void TableApi::open_table(bool one_line)
     }
 }
 
+void TableApi::open_associative_table(const char* name, const char* key)
+{
+    if ( should_delegate(name) )
+    {
+        delegate->open_associative_table(name, key);
+        delegating++;
+        return;
+    }
+
+    Table* t = new Table(name, key, 0);
+    tables.push_back(t);
+    open_tables.push(t);
+}
+
 void TableApi::close_table()
 {
     if ( should_delegate() )

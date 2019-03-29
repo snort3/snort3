@@ -51,6 +51,15 @@ Table::Table(const std::string& table_name, int d)
         Comments::CommentType::SINGLE_LINE);
 }
 
+Table::Table(const std::string& table_name, const std::string& key, int d)
+{
+    this->name = table_name;
+    this->key = key;
+    this->depth = d;
+    this->comments = new Comments(d + 1,
+        Comments::CommentType::SINGLE_LINE);
+}
+
 Table::~Table()
 {
     for ( Table* t : tables)
@@ -254,7 +263,12 @@ std::ostream& operator<<(std::ostream& out, const Table& t)
         if ( t.print_whitespace )
             out << whitespace;
 
-        out << t.name << (t.one_line ? " = " : " =\n");
+        out << t.name;
+
+        if ( !t.key.empty() )
+            out << "[\"" << t.key << "\"]";
+        
+        out << (t.one_line ? " = " : " =\n");
     }
 
     out << (t.print_whitespace ? whitespace : "")

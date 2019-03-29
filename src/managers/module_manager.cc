@@ -29,6 +29,7 @@
 #include <cassert>
 #include <iostream>
 #include <mutex>
+#include <regex>
 #include <stack>
 #include <string>
 
@@ -346,8 +347,16 @@ static const Parameter* get_params(
     }
 
     string name = new_fqn.substr(0, new_fqn.find_first_of('.'));
-    while ( p->name && name != p->name )
+    while ( p->name )
+    {
+        if ( p->regex && regex_match(name, regex(p->name)) )
+            break;
+
+        else if ( name == p->name )
+            break;
+
         ++p;
+    }
 
     if ( !p->name )
         return nullptr;
