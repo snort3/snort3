@@ -507,10 +507,10 @@ public:
             case IpsPolicy::INHERIT_ENABLE:
                 return get_conf()->global_default_rule_state;
 
-            case IpsPolicy::TRUE:
+            case IpsPolicy::ENABLED:
                 return true;
 
-            case IpsPolicy::FALSE:
+            case IpsPolicy::DISABLED:
                 return false;
         }
         return true;

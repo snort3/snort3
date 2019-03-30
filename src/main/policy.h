@@ -137,7 +137,7 @@ struct IpsPolicy
 {
 public:
     enum Action : uint8_t { LOG, PASS, ALERT, DROP, BLOCK, RESET, INHERIT_ACTION };
-    enum Enable : uint8_t { FALSE, TRUE, INHERIT_ENABLE };
+    enum Enable : uint8_t { DISABLED, ENABLED, INHERIT_ENABLE };
 
     IpsPolicy(PolicyId = 0);
     ~IpsPolicy();

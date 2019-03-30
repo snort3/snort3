@@ -164,8 +164,8 @@ void RuleStateEnable::update_rtn(RuleTreeNode* rtn)
 {
     switch( enable )
     {
-        case IpsPolicy::FALSE: rtn->clear_enabled(); break;
-        case IpsPolicy::TRUE: rtn->set_enabled(); break;
+        case IpsPolicy::DISABLED: rtn->clear_enabled(); break;
+        case IpsPolicy::ENABLED: rtn->set_enabled(); break;
         case IpsPolicy::INHERIT_ENABLE: break;
     }
 }
