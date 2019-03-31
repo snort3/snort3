@@ -20,12 +20,12 @@
 #ifndef UTILS_SAFEC_H
 #define UTILS_SAFEC_H
 
-//FIXIT-M combine these macros in the build foo 
-#if defined(HAVE_SAFEC) && defined(ENABLE_SAFEC)
+#ifdef HAVE_SAFEC
 
 extern "C"
 {
-#include <libsafec/safe_lib.h>
+#include <libsafec/safe_mem_lib.h>
+#include <libsafec/safe_str_lib.h>
 }
 
 #else

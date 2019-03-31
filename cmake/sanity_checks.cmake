@@ -143,3 +143,7 @@ if (ICONV_FOUND)
     # Not actually a sanity check at the moment...
     set (HAVE_ICONV "1")
 endif()
+
+if (SAFEC_FOUND)
+    check_library_exists (${SAFEC_LIBRARIES} printf_s "" HAVE_SAFEC)
+endif()

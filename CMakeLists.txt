@@ -133,7 +133,7 @@ else ()
     RPC DB:         Built-in")
 endif ()
 
-if (HAVE_SAFEC AND SAFEC_ENABLED)
+if (HAVE_SAFEC)
     message("\
     SafeC:          ON")
 else ()
