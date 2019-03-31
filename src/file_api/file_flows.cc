@@ -111,7 +111,7 @@ FilePolicyBase* FileFlows::get_file_policy(Flow* flow)
     FileFlows* fd = (FileFlows*)flow->get_flow_data(FileFlows::file_flow_data_id);
 
     if (fd)
-        return fd->get_file_policy(flow);
+        return fd->get_file_policy();
 
     return nullptr;
 }
