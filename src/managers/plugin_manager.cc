@@ -412,7 +412,7 @@ void PluginManager::list_plugins()
     {
         Plugin& p = it->second;
         cout << Markup::item();
-        cout << Markup::escape(p.key);
+        cout << p.key;
         cout << " v" << p.api->version;
         cout << " " << p.source;
         cout << endl;

@@ -165,28 +165,29 @@ Table of Contents
     9.21. http2_inspect
     9.22. http_inspect
     9.23. imap
-    9.24. modbus
-    9.25. normalizer
-    9.26. packet_capture
-    9.27. perf_monitor
-    9.28. pop
-    9.29. port_scan
-    9.30. reg_test
-    9.31. reputation
-    9.32. rpc_decode
-    9.33. sip
-    9.34. smtp
-    9.35. ssh
-    9.36. ssl
-    9.37. stream
-    9.38. stream_file
-    9.39. stream_icmp
-    9.40. stream_ip
-    9.41. stream_tcp
-    9.42. stream_udp
-    9.43. stream_user
-    9.44. telnet
-    9.45. wizard
+    9.24. mem_test
+    9.25. modbus
+    9.26. normalizer
+    9.27. packet_capture
+    9.28. perf_monitor
+    9.29. pop
+    9.30. port_scan
+    9.31. reg_test
+    9.32. reputation
+    9.33. rpc_decode
+    9.34. sip
+    9.35. smtp
+    9.36. ssh
+    9.37. ssl
+    9.38. stream
+    9.39. stream_file
+    9.40. stream_icmp
+    9.41. stream_ip
+    9.42. stream_tcp
+    9.43. stream_udp
+    9.44. stream_user
+    9.45. telnet
+    9.46. wizard
 
 10. IPS Action Modules
 
@@ -309,11 +310,12 @@ Table of Contents
     14.5. alert_json
     14.6. alert_sfsocket
     14.7. alert_syslog
-    14.8. alert_unixsock
-    14.9. log_codecs
-    14.10. log_hext
-    14.11. log_pcap
-    14.12. unified2
+    14.8. alert_talos
+    14.9. alert_unixsock
+    14.10. log_codecs
+    14.11. log_hext
+    14.12. log_pcap
+    14.13. unified2
 
 15. DAQ Configuration and Modules
 
@@ -380,14 +382,15 @@ Table of Contents
     20.11. Module Listing
     20.12. Plugin Listing
     20.13. LibDAQ and DAQ Modules
+    20.14. Limitations
 
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0 (Build 250) from 2.9.11
+o"  )~   Version 3.0.0 (Build 251) from 2.9.11
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
-         Copyright (C) 2014-2018 Cisco and/or its affiliates. All rights reserved.
+         Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
          Copyright (C) 1998-2013 Sourcefire, Inc., et al.
 
 
@@ -1258,8 +1261,8 @@ Optional:
     UTF16-LE filenames to UTF8 (usually included in glibc)
   * lzma >= 5.1.2 from http://tukaani.org/xz/ for decompression of
     SWF and PDF files
-  * safec from https://sourceforge.net/projects/safeclib/ for runtime
-    bounds checks on certain legacy C-library calls
+  * safec from https://github.com/rurban/safeclib/ for runtime bounds
+    checks on certain legacy C-library calls
   * source-highlight from http://www.gnu.org/software/src-highlite/
     to generate the dev guide
   * w3m from http://sourceforge.net/projects/w3m/ to build the plain
@@ -5419,8 +5422,6 @@ Configuration:
 
   * bool alerts.alert_with_interface_name = false: include interface
     in alert info (fast, full, or syslog only)
-  * bool alerts.default_rule_state = true: enable or disable ips
-    rules
   * int alerts.detection_filter_memcap = 1048576: set available MB of
     memory for detection_filters { 0:max32 }
   * int alerts.event_filter_memcap = 1048576: set available MB of
@@ -5563,6 +5564,10 @@ Usage: global
 Configuration:
 
   * int detection.asn1 = 0: maximum decode nodes { 0:65535 }
+  * bool detection.global_default_rule_state = true: enable or
+    disable rules by default (overridden by ips policy settings)
+  * bool detection.global_rule_state = false: apply rule_state
+    against all policies
   * int detection.offload_limit = 99999: minimum sizeof PDU to
     offload fast pattern search (defaults to disabled) { 0:max32 }
   * int detection.offload_threads = 0: maximum number of simultaneous
@@ -5608,6 +5613,8 @@ Peg counts:
   * detection.event_limit: events filtered (sum)
   * detection.alert_limit: events previously triggered on same PDU
     (sum)
+  * detection.context_stalls: times processing stalled to wait for an
+    available context (sum)
 
 
 6.8. event_filter
@@ -5797,6 +5804,8 @@ Usage: detect
 
 Configuration:
 
+  * enum ips.default_rule_state = inherit: enable or disable ips
+    rules { false | true | inherit }
   * bool ips.enable_builtin_rules = false: enable events from builtin
     rules w/o stubs
   * int ips.id = 0: correlate unified2 events with configuration {
@@ -5804,6 +5813,8 @@ Configuration:
   * string ips.include: legacy snort rules and includes
   * enum ips.mode: set policy mode { tap | inline | inline-test }
   * string ips.rules: snort rules and includes
+  * bool ips.obfuscate_pii = false: mask all but the last 4
+    characters of credit card and social security numbers
   * string ips.uuid = 00000000-0000-0000-0000-000000000000: IPS
     policy uuid
 
@@ -5869,10 +5880,19 @@ Configuration:
 
   * int memory.cap = 0: set the per-packet-thread cap on memory
     (bytes, 0 to disable) { 0:maxSZ }
-  * bool memory.soft = false: always succeed in allocating memory,
-    even if above the cap
   * int memory.threshold = 0: set the per-packet-thread threshold for
     preemptive cleanup actions (percent, 0 to disable) { 0:100 }
+
+Peg counts:
+
+  * memory.allocations: total number of allocations (now)
+  * memory.deallocations: total number of deallocations (now)
+  * memory.allocated: total amount of memory allocated (now)
+  * memory.deallocated: total amount of memory allocated (now)
+  * memory.reap_attempts: attempts to reclaim memory (now)
+  * memory.reap_failures: failures to reclaim memory (now)
+  * memory.max_in_use: highest allocated - deallocated (max)
+  * memory.total_fudge: sum of all adjustments (now)
 
 
 6.18. network
@@ -5933,15 +5953,13 @@ Configuration:
   * bool output.quiet = false: suppress non-fatal information (still
     show alerts, same as -q)
   * string output.logdir = .: where to put log files (same as -l)
-  * bool output.obfuscate = false: obfuscate the logged IP addresses
-    (same as -O)
-  * bool output.obfuscate_pii = false: mask all but the last 4
-    characters of credit card and social security numbers
   * bool output.show_year = false: include year in timestamp in the
     alert and log files (same as -y)
   * int output.tagged_packet_limit = 256: maximum number of packets
     tagged for non-packet metrics { 0:max32 }
   * bool output.verbose = false: be verbose (same as -v)
+  * bool output.obfuscate = false: obfuscate the logged IP addresses
+    (same as -O)
   * bool output.wide_hex_dump = false: output 20 bytes per lines
     instead of 16 when dumping buffers
 
@@ -6101,7 +6119,7 @@ Configuration:
 
 --------------
 
-What: enable/disable specific IPS rules
+What: enable/disable and set actions for specific IPS rules
 
 Type: basic
 
@@ -6109,10 +6127,12 @@ Usage: detect
 
 Configuration:
 
-  * int rule_state[].gid = 0: rule generator ID { 0:max32 }
-  * int rule_state[].sid = 0: rule signature ID { 0:max32 }
-  * bool rule_state[].enable = true: enable or disable rule in all
-    policies
+  * enum rule_state.([0-9]+):([0-9]+).action = inherit: apply action
+    if rule matches or inherit from rule definition { log | pass |
+    alert | drop | block | reset | inherit }
+  * enum rule_state.([0-9]+):([0-9]+).enable = inherit: enable or
+    disable rule in current ips policy or use default defined by ips
+    policy { false | true | inherit }
 
 
 6.27. search_engine
@@ -6152,6 +6172,10 @@ Configuration:
     algorithm - choose available search engine { ac_banded | ac_bnfa
     | ac_full | ac_sparse | ac_sparse_bands | ac_std | hyperscan |
     lowmem }
+  * dynamic search_engine.offload_search_method: set fast pattern
+    offload algorithm - choose available search engine { ac_banded |
+    ac_bnfa | ac_full | ac_sparse | ac_sparse_bands | ac_std |
+    hyperscan | lowmem }
   * bool search_engine.search_optimize = true: tweak state machine
     construction for better performance
   * bool search_engine.show_fast_patterns = false: print fast pattern
@@ -7145,10 +7169,11 @@ Usage: context
 
 Configuration:
 
-  * int appid.memcap = 0: disregard - not implemented { 0:maxSZ }
+  * int appid.memcap = 1048576: max size of the service cache before
+    we start pruning the cache { 1024:maxSZ }
   * bool appid.log_stats = false: enable logging of appid statistics
   * int appid.app_stats_period = 300: time period for collecting and
-    logging appid statistics { 0:max32 }
+    logging appid statistics { 1:max32 }
   * int appid.app_stats_rollover_size = 20971520: max file size for
     appid stats before rolling over the log file { 0:max32 }
   * int appid.app_stats_rollover_time = 86400: max time period for
@@ -7263,8 +7288,9 @@ Configuration:
   * bit_list binder[].when.src_ports: list of source ports { 65535 }
   * bit_list binder[].when.dst_ports: list of destination ports {
     65535 }
-  * int binder[].when.src_zone: source zone { 0:max31 }
-  * int binder[].when.dst_zone: destination zone { 0:max31 }
+  * bit_list binder[].when.zones: zones { 63 }
+  * bit_list binder[].when.src_zone: source zone { 63 }
+  * bit_list binder[].when.dst_zone: destination zone { 63 }
   * enum binder[].when.role = any: use the given configuration on one
     or any end of a session { client | server | any }
   * string binder[].when.service: override default configuration
@@ -7361,6 +7387,8 @@ Usage: inspect
 
 Configuration:
 
+  * bool dce_smb.limit_alerts = true: limit DCE alert to at most one
+    per signature per flow
   * bool dce_smb.disable_defrag = false: disable DCE/RPC
     defragmentation
   * int dce_smb.max_frag_len = 65535: maximum fragment size for
@@ -7531,6 +7559,8 @@ Usage: inspect
 
 Configuration:
 
+  * bool dce_tcp.limit_alerts = true: limit DCE alert to at most one
+    per signature per flow
   * bool dce_tcp.disable_defrag = false: disable DCE/RPC
     defragmentation
   * int dce_tcp.max_frag_len = 65535: maximum fragment size for
@@ -7637,6 +7667,8 @@ Usage: inspect
 
 Configuration:
 
+  * bool dce_udp.limit_alerts = true: limit DCE alert to at most one
+    per signature per flow
   * bool dce_udp.disable_defrag = false: disable DCE/RPC
     defragmentation
   * int dce_udp.max_frag_len = 65535: maximum fragment size for
@@ -8101,6 +8133,8 @@ Configuration:
     response bodies
   * bool http_inspect.decompress_swf = false: decompress swf files in
     response bodies
+  * bool http_inspect.decompress_zip = false: decompress zip files in
+    response bodies
   * bool http_inspect.normalize_javascript = false: normalize
     javascript in response bodies
   * int http_inspect.max_javascript_whitespaces = 200: maximum
@@ -8227,8 +8261,8 @@ Rules:
   * 119:226 (http_inspect) unknown Content-Encoding used
   * 119:227 (http_inspect) multiple Content-Encodings applied
   * 119:228 (http_inspect) server response before client request
-  * 119:229 (http_inspect) PDF/SWF decompression of server response
-    too big
+  * 119:229 (http_inspect) PDF/SWF/ZIP decompression of server
+    response too big
   * 119:230 (http_inspect) nonprinting character in HTTP message
     header name
   * 119:231 (http_inspect) bad Content-Length value in HTTP header
@@ -8310,6 +8344,12 @@ Configuration:
     limit) { -1:65535 }
   * int imap.bitenc_decode_depth = 1460: non-Encoded MIME attachment
     extraction depth (-1 no limit) { -1:65535 }
+  * bool imap.decompress_pdf = false: decompress pdf files in MIME
+    attachments
+  * bool imap.decompress_swf = false: decompress swf files in MIME
+    attachments
+  * bool imap.decompress_zip = false: decompress zip files in MIME
+    attachments
   * int imap.qp_decode_depth = 1460: quoted Printable decoding depth
     (-1 no limit) { -1:65535 }
   * int imap.uu_decode_depth = 1460: Unix-to-Unix decoding depth (-1
@@ -8322,6 +8362,7 @@ Rules:
   * 141:4 (imap) base64 decoding failed
   * 141:5 (imap) quoted-printable decoding failed
   * 141:7 (imap) Unix-to-Unix decoding failed
+  * 141:8 (imap) file decompression failed
 
 Peg counts:
 
@@ -8342,7 +8383,22 @@ Peg counts:
   * imap.non_encoded_bytes: total non-encoded extracted bytes (sum)
 
 
-9.24. modbus
+9.24. mem_test
+
+--------------
+
+What: for testing memory management
+
+Type: inspector
+
+Usage: inspect
+
+Peg counts:
+
+  * mem_test.packets: total packets (sum)
+
+
+9.25. modbus
 
 --------------
 
@@ -8369,7 +8425,7 @@ Peg counts:
     sessions (max)
 
 
-9.25. normalizer
+9.26. normalizer
 
 --------------
 
@@ -8505,7 +8561,7 @@ Peg counts:
   * normalizer.tcp_block: blocked segments (sum)
 
 
-9.26. packet_capture
+9.27. packet_capture
 
 --------------
 
@@ -8533,7 +8589,7 @@ Peg counts:
     filter (sum)
 
 
-9.27. perf_monitor
+9.28. perf_monitor
 
 --------------
 
@@ -8573,7 +8629,7 @@ Peg counts:
   * perf_monitor.packets: total packets (sum)
 
 
-9.28. pop
+9.29. pop
 
 --------------
 
@@ -8589,6 +8645,12 @@ Configuration:
     limit) { -1:65535 }
   * int pop.bitenc_decode_depth = 1460: Non-Encoded MIME attachment
     extraction depth (-1 no limit) { -1:65535 }
+  * bool pop.decompress_pdf = false: decompress pdf files in MIME
+    attachments
+  * bool pop.decompress_swf = false: decompress swf files in MIME
+    attachments
+  * bool pop.decompress_zip = false: decompress zip files in MIME
+    attachments
   * int pop.qp_decode_depth = 1460: Quoted Printable decoding depth
     (-1 no limit) { -1:65535 }
   * int pop.uu_decode_depth = 1460: Unix-to-Unix decoding depth (-1
@@ -8601,6 +8663,7 @@ Rules:
   * 142:4 (pop) base64 decoding failed
   * 142:5 (pop) quoted-printable decoding failed
   * 142:7 (pop) Unix-to-Unix decoding failed
+  * 142:8 (pop) file decompression failed
 
 Peg counts:
 
@@ -8621,7 +8684,7 @@ Peg counts:
   * pop.non_encoded_bytes: total non-encoded extracted bytes (sum)
 
 
-9.29. port_scan
+9.30. port_scan
 
 --------------
 
@@ -8785,7 +8848,7 @@ Peg counts:
   * port_scan.packets: total packets (sum)
 
 
-9.30. reg_test
+9.31. reg_test
 
 --------------
 
@@ -8808,7 +8871,7 @@ Peg counts:
   * reg_test.retry_packets: total retried packets received (sum)
 
 
-9.31. reputation
+9.32. reputation
 
 --------------
 
@@ -8850,7 +8913,7 @@ Peg counts:
   * reputation.memory_allocated: total memory allocated (sum)
 
 
-9.32. rpc_decode
+9.33. rpc_decode
 
 --------------
 
@@ -8877,7 +8940,7 @@ Peg counts:
     sessions (max)
 
 
-9.33. sip
+9.34. sip
 
 --------------
 
@@ -8976,7 +9039,7 @@ Peg counts:
   * sip.code_9xx: 9xx (sum)
 
 
-9.34. smtp
+9.35. smtp
 
 --------------
 
@@ -9001,6 +9064,12 @@ Configuration:
     non-encoded MIME attachments (-1 no limit) { -1:65535 }
   * string smtp.data_cmds: commands that initiate sending of data
     with an end of data delimiter
+  * bool smtp.decompress_pdf = false: decompress pdf files in MIME
+    attachments
+  * bool smtp.decompress_swf = false: decompress swf files in MIME
+    attachments
+  * bool smtp.decompress_zip = false: decompress zip files in MIME
+    attachments
   * int smtp.email_hdrs_log_depth = 1464: depth for logging email
     headers { 0:20480 }
   * bool smtp.ignore_data = false: ignore data section of mail
@@ -9051,6 +9120,7 @@ Rules:
   * 124:13 (smtp) Unix-to-Unix decoding failed
   * 124:14 (smtp) Cyrus SASL authentication attack
   * 124:15 (smtp) attempted authentication command buffer overflow
+  * 124:16 (smtp) file decompression failed
 
 Peg counts:
 
@@ -9071,7 +9141,7 @@ Peg counts:
   * smtp.non_encoded_bytes: total non-encoded extracted bytes (sum)
 
 
-9.35. ssh
+9.36. ssh
 
 --------------
 
@@ -9108,7 +9178,7 @@ Peg counts:
     (max)
 
 
-9.36. ssl
+9.37. ssl
 
 --------------
 
@@ -9157,7 +9227,7 @@ Peg counts:
     (max)
 
 
-9.37. stream
+9.38. stream
 
 --------------
 
@@ -9178,36 +9248,48 @@ Configuration:
     before being eligible for pruning { 1:max32 }
   * int stream.ip_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
+  * int stream.ip_cache.cap_weight = 64: additional bytes to track
+    per flow for better estimation against cap { 0:65535 }
   * int stream.icmp_cache.max_sessions = 65536: maximum simultaneous
     sessions tracked before pruning { 2:max32 }
   * int stream.icmp_cache.pruning_timeout = 30: minimum inactive time
     before being eligible for pruning { 1:max32 }
   * int stream.icmp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
+  * int stream.icmp_cache.cap_weight = 8: additional bytes to track
+    per flow for better estimation against cap { 0:65535 }
   * int stream.tcp_cache.max_sessions = 262144: maximum simultaneous
     sessions tracked before pruning { 2:max32 }
   * int stream.tcp_cache.pruning_timeout = 30: minimum inactive time
     before being eligible for pruning { 1:max32 }
   * int stream.tcp_cache.idle_timeout = 3600: maximum inactive time
     before retiring session tracker { 1:max32 }
+  * int stream.tcp_cache.cap_weight = 11500: additional bytes to
+    track per flow for better estimation against cap { 0:65535 }
   * int stream.udp_cache.max_sessions = 131072: maximum simultaneous
     sessions tracked before pruning { 2:max32 }
   * int stream.udp_cache.pruning_timeout = 30: minimum inactive time
     before being eligible for pruning { 1:max32 }
   * int stream.udp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
+  * int stream.udp_cache.cap_weight = 128: additional bytes to track
+    per flow for better estimation against cap { 0:65535 }
   * int stream.user_cache.max_sessions = 1024: maximum simultaneous
     sessions tracked before pruning { 2:max32 }
   * int stream.user_cache.pruning_timeout = 30: minimum inactive time
     before being eligible for pruning { 1:max32 }
   * int stream.user_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
+  * int stream.user_cache.cap_weight = 256: additional bytes to track
+    per flow for better estimation against cap { 0:65535 }
   * int stream.file_cache.max_sessions = 128: maximum simultaneous
     sessions tracked before pruning { 2:max32 }
   * int stream.file_cache.pruning_timeout = 30: minimum inactive time
     before being eligible for pruning { 1:max32 }
   * int stream.file_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
+  * int stream.file_cache.cap_weight = 32: additional bytes to track
+    per flow for better estimation against cap { 0:65535 }
   * int stream.trace: mask for enabling debug traces in module {
     0:max53 }
 
@@ -9290,7 +9372,7 @@ Peg counts:
     sync (sum)
 
 
-9.38. stream_file
+9.39. stream_file
 
 --------------
 
@@ -9305,7 +9387,7 @@ Configuration:
   * bool stream_file.upload = false: indicate file transfer direction
 
 
-9.39. stream_icmp
+9.40. stream_icmp
 
 --------------
 
@@ -9330,7 +9412,7 @@ Peg counts:
   * stream_icmp.prunes: icmp session prunes (sum)
 
 
-9.40. stream_ip
+9.41. stream_ip
 
 --------------
 
@@ -9401,7 +9483,7 @@ Peg counts:
   * stream_ip.fragmented_bytes: total fragmented bytes (sum)
 
 
-9.41. stream_tcp
+9.42. stream_tcp
 
 --------------
 
@@ -9443,6 +9525,7 @@ Configuration:
     small segments queued { 0:2048 }
   * int stream_tcp.session_timeout = 30: session tracking timeout {
     1:max31 }
+  * bool stream_tcp.track_only = false: disable reassembly if true
 
 Rules:
 
@@ -9528,7 +9611,7 @@ Peg counts:
   * stream_tcp.fins: number of fin packets (sum)
 
 
-9.42. stream_udp
+9.43. stream_udp
 
 --------------
 
@@ -9554,7 +9637,7 @@ Peg counts:
   * stream_udp.ignored: udp packets ignored (sum)
 
 
-9.43. stream_user
+9.44. stream_user
 
 --------------
 
@@ -9572,7 +9655,7 @@ Configuration:
     0:max53 }
 
 
-9.44. telnet
+9.45. telnet
 
 --------------
 
@@ -9607,7 +9690,7 @@ Peg counts:
     sessions (max)
 
 
-9.45. wizard
+9.46. wizard
 
 --------------
 
@@ -11704,7 +11787,18 @@ Configuration:
     cons | ndelay | perror | pid }
 
 
-14.8. alert_unixsock
+14.8. alert_talos
+
+--------------
+
+What: output event in Talos alert format
+
+Type: logger
+
+Usage: context
+
+
+14.9. alert_unixsock
 
 --------------
 
@@ -11715,7 +11809,7 @@ Type: logger
 Usage: context
 
 
-14.9. log_codecs
+14.10. log_codecs
 
 --------------
 
@@ -11732,7 +11826,7 @@ Configuration:
   * bool log_codecs.msg = false: include alert msg
 
 
-14.10. log_hext
+14.11. log_hext
 
 --------------
 
@@ -11754,7 +11848,7 @@ Configuration:
     0:max32 }
 
 
-14.11. log_pcap
+14.12. log_pcap
 
 --------------
 
@@ -11770,7 +11864,7 @@ Configuration:
     is unlimited) { 0:maxSZ }
 
 
-14.12. unified2
+14.13. unified2
 
 --------------
 
@@ -12578,6 +12672,8 @@ Converts the Snort configuration file specified by the -c or
   * --dont-parse-includes Same as -p. if <snort_conf> file contains
     any <include_file> or <policy_file> (i.e. include path/to/conf/
     other_conf), do NOT parse those files
+  * --dont-convert-max-sessions do not convert max_tcp, max_udp,
+    max_icmp, max_ip to max_session
   * --error-file=<error_file> Same as -e. output all errors to
     <error_file>
   * --help Same as -h. this overview of snort2lua
@@ -14048,8 +14144,6 @@ these libraries see the Getting Started section of the manual.
     character sequence
   * bool alerts.alert_with_interface_name = false: include interface
     in alert info (fast, full, or syslog only)
-  * bool alerts.default_rule_state = true: enable or disable ips
-    rules
   * int alerts.detection_filter_memcap = 1048576: set available MB of
     memory for detection_filters { 0:max32 }
   * int alerts.event_filter_memcap = 1048576: set available MB of
@@ -14080,7 +14174,7 @@ these libraries see the Getting Started section of the manual.
   * string appid.app_detector_dir: directory to load appid detectors
     from
   * int appid.app_stats_period = 300: time period for collecting and
-    logging appid statistics { 0:max32 }
+    logging appid statistics { 1:max32 }
   * int appid.app_stats_rollover_size = 20971520: max file size for
     appid stats before rolling over the log file { 0:max32 }
   * int appid.app_stats_rollover_time = 86400: max time period for
@@ -14093,7 +14187,8 @@ these libraries see the Getting Started section of the manual.
   * bool appid.log_all_sessions = false: enable logging of all appid
     sessions
   * bool appid.log_stats = false: enable logging of appid statistics
-  * int appid.memcap = 0: disregard - not implemented { 0:maxSZ }
+  * int appid.memcap = 1048576: max size of the service cache before
+    we start pruning the cache { 1024:maxSZ }
   * string appids.~: comma separated list of application names
   * bool appid.tp_appid_config_dump: print third party configuration
     on startup
@@ -14145,7 +14240,7 @@ these libraries see the Getting Started section of the manual.
   * addr_list binder[].when.dst_nets: list of destination networks
   * bit_list binder[].when.dst_ports: list of destination ports {
     65535 }
-  * int binder[].when.dst_zone: destination zone { 0:max31 }
+  * bit_list binder[].when.dst_zone: destination zone { 63 }
   * bit_list binder[].when.ifaces: list of interface indices { 255 }
   * int binder[].when.ips_policy_id = 0: unique ID for selection of
     this config by external logic { 0:max32 }
@@ -14158,8 +14253,9 @@ these libraries see the Getting Started section of the manual.
   * string binder[].when.service: override default configuration
   * addr_list binder[].when.src_nets: list of source networks
   * bit_list binder[].when.src_ports: list of source ports { 65535 }
-  * int binder[].when.src_zone: source zone { 0:max31 }
+  * bit_list binder[].when.src_zone: source zone { 63 }
   * bit_list binder[].when.vlans: list of VLAN IDs { 4095 }
+  * bit_list binder[].when.zones: zones { 63 }
   * interval bufferlen.~range: check that length of current buffer is
     in given range { 0:65535 }
   * int byte_extract.align = 0: round the number of converted bytes
@@ -14290,6 +14386,8 @@ these libraries see the Getting Started section of the manual.
     list
   * bool dce_smb.disable_defrag = false: disable DCE/RPC
     defragmentation
+  * bool dce_smb.limit_alerts = true: limit DCE alert to at most one
+    per signature per flow
   * int dce_smb.max_frag_len = 65535: maximum fragment size for
     defragmentation { 1514:65535 }
   * enum dce_smb.policy = WinXP: target based policy to use { Win2000
@@ -14313,6 +14411,8 @@ these libraries see the Getting Started section of the manual.
     v2 | all }
   * bool dce_tcp.disable_defrag = false: disable DCE/RPC
     defragmentation
+  * bool dce_tcp.limit_alerts = true: limit DCE alert to at most one
+    per signature per flow
   * int dce_tcp.max_frag_len = 65535: maximum fragment size for
     defragmentation { 1514:65535 }
   * enum dce_tcp.policy = WinXP: target based policy to use { Win2000
@@ -14322,6 +14422,8 @@ these libraries see the Getting Started section of the manual.
     before performing reassembly { 0:65535 }
   * bool dce_udp.disable_defrag = false: disable DCE/RPC
     defragmentation
+  * bool dce_udp.limit_alerts = true: limit DCE alert to at most one
+    per signature per flow
   * int dce_udp.max_frag_len = 65535: maximum fragment size for
     defragmentation { 1514:65535 }
   * int dce_udp.trace: mask for enabling debug traces in module {
@@ -14337,6 +14439,10 @@ these libraries see the Getting Started section of the manual.
     1:max32 }
   * enum detection_filter.track: track hits by source or destination
     IP address { by_src | by_dst }
+  * bool detection.global_default_rule_state = true: enable or
+    disable rules by default (overridden by ips policy settings)
+  * bool detection.global_rule_state = false: apply rule_state
+    against all policies
   * int detection.offload_limit = 99999: minimum sizeof PDU to
     offload fast pattern search (defaults to disabled) { 0:max32 }
   * int detection.offload_threads = 0: maximum number of simultaneous
@@ -14586,6 +14692,8 @@ these libraries see the Getting Started section of the manual.
     response bodies
   * bool http_inspect.decompress_swf = false: decompress swf files in
     response bodies
+  * bool http_inspect.decompress_zip = false: decompress zip files in
+    response bodies
   * string http_inspect.ignore_unreserved: do not alert when the
     specified unreserved characters are percent-encoded in a
     URI.Unreserved characters are 0-9, a-z, A-Z, period, underscore,
@@ -14715,6 +14823,12 @@ these libraries see the Getting Started section of the manual.
     limit) { -1:65535 }
   * int imap.bitenc_decode_depth = 1460: non-Encoded MIME attachment
     extraction depth (-1 no limit) { -1:65535 }
+  * bool imap.decompress_pdf = false: decompress pdf files in MIME
+    attachments
+  * bool imap.decompress_swf = false: decompress swf files in MIME
+    attachments
+  * bool imap.decompress_zip = false: decompress zip files in MIME
+    attachments
   * int imap.qp_decode_depth = 1460: quoted Printable decoding depth
     (-1 no limit) { -1:65535 }
   * int imap.uu_decode_depth = 1460: Unix-to-Unix decoding depth (-1
@@ -14727,12 +14841,16 @@ these libraries see the Getting Started section of the manual.
   * select ipopts.~opt: output format { rr|eol|nop|ts|sec|esec|lsrr|
     lsrre|ssrr|satid|any }
   * string ip_proto.~proto: [!|>|<] name or number
+  * enum ips.default_rule_state = inherit: enable or disable ips
+    rules { false | true | inherit }
   * bool ips.enable_builtin_rules = false: enable events from builtin
     rules w/o stubs
   * int ips.id = 0: correlate unified2 events with configuration {
     0:65535 }
   * string ips.include: legacy snort rules and includes
   * enum ips.mode: set policy mode { tap | inline | inline-test }
+  * bool ips.obfuscate_pii = false: mask all but the last 4
+    characters of credit card and social security numbers
   * string ips.rules: snort rules and includes
   * string ips.uuid = 00000000-0000-0000-0000-000000000000: IPS
     policy uuid
@@ -14779,8 +14897,6 @@ these libraries see the Getting Started section of the manual.
     of buffer
   * int memory.cap = 0: set the per-packet-thread cap on memory
     (bytes, 0 to disable) { 0:maxSZ }
-  * bool memory.soft = false: always succeed in allocating memory,
-    even if above the cap
   * int memory.threshold = 0: set the per-packet-thread threshold for
     preemptive cleanup actions (percent, 0 to disable) { 0:100 }
   * string metadata.*: comma-separated list of arbitrary name value
@@ -14872,8 +14988,6 @@ these libraries see the Getting Started section of the manual.
   * string output.logdir = .: where to put log files (same as -l)
   * bool output.obfuscate = false: obfuscate the logged IP addresses
     (same as -O)
-  * bool output.obfuscate_pii = false: mask all but the last 4
-    characters of credit card and social security numbers
   * bool output.quiet = false: suppress non-fatal information (still
     show alerts, same as -q)
   * bool output.show_year = false: include year in timestamp in the
@@ -14929,6 +15043,12 @@ these libraries see the Getting Started section of the manual.
     limit) { -1:65535 }
   * int pop.bitenc_decode_depth = 1460: Non-Encoded MIME attachment
     extraction depth (-1 no limit) { -1:65535 }
+  * bool pop.decompress_pdf = false: decompress pdf files in MIME
+    attachments
+  * bool pop.decompress_swf = false: decompress swf files in MIME
+    attachments
+  * bool pop.decompress_zip = false: decompress zip files in MIME
+    attachments
   * int pop.qp_decode_depth = 1460: Quoted Printable decoding depth
     (-1 no limit) { -1:65535 }
   * int pop.uu_decode_depth = 1460: Unix-to-Unix decoding depth (-1
@@ -15141,10 +15261,12 @@ these libraries see the Getting Started section of the manual.
   * int rpc.~app: application number { 0:max32 }
   * string rpc.~proc: procedure number or * for any
   * string rpc.~ver: version number or * for any
-  * bool rule_state[].enable = true: enable or disable rule in all
-    policies
-  * int rule_state[].gid = 0: rule generator ID { 0:max32 }
-  * int rule_state[].sid = 0: rule signature ID { 0:max32 }
+  * enum rule_state.([0-9]+):([0-9]+).action = inherit: apply action
+    if rule matches or inherit from rule definition { log | pass |
+    alert | drop | block | reset | inherit }
+  * enum rule_state.([0-9]+):([0-9]+).enable = inherit: enable or
+    disable rule in current ips policy or use default defined by ips
+    policy { false | true | inherit }
   * string sd_pattern.~pattern: The pattern to search for
   * int sd_pattern.threshold = 1: number of matches before alerting {
     1:max32 }
@@ -15169,6 +15291,10 @@ these libraries see the Getting Started section of the manual.
     compiling into state machine (0 means no maximum) { 0:max32 }
   * int search_engine.max_queue_events = 5: maximum number of
     matching fast pattern states to queue per packet { 2:100 }
+  * dynamic search_engine.offload_search_method: set fast pattern
+    offload algorithm - choose available search engine { ac_banded |
+    ac_bnfa | ac_full | ac_sparse | ac_sparse_bands | ac_std |
+    hyperscan | lowmem }
   * dynamic search_engine.search_method = ac_bnfa: set fast pattern
     algorithm - choose available search engine { ac_banded | ac_bnfa
     | ac_full | ac_sparse | ac_sparse_bands | ac_std | hyperscan |
@@ -15234,6 +15360,12 @@ these libraries see the Getting Started section of the manual.
     non-encoded MIME attachments (-1 no limit) { -1:65535 }
   * string smtp.data_cmds: commands that initiate sending of data
     with an end of data delimiter
+  * bool smtp.decompress_pdf = false: decompress pdf files in MIME
+    attachments
+  * bool smtp.decompress_swf = false: decompress swf files in MIME
+    attachments
+  * bool smtp.decompress_zip = false: decompress zip files in MIME
+    attachments
   * int smtp.email_hdrs_log_depth = 1464: depth for logging email
     headers { 0:20480 }
   * bool smtp.ignore_data = false: ignore data section of mail
@@ -15510,6 +15642,8 @@ these libraries see the Getting Started section of the manual.
   * implied ssl_version.!tls1.2: check for records that are not
     tls1.2
   * implied ssl_version.tls1.2: check for tls1.2
+  * int stream.file_cache.cap_weight = 32: additional bytes to track
+    per flow for better estimation against cap { 0:65535 }
   * int stream.file_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * int stream.file_cache.max_sessions = 128: maximum simultaneous
@@ -15519,6 +15653,8 @@ these libraries see the Getting Started section of the manual.
   * bool stream_file.upload = false: indicate file transfer direction
   * int stream.footprint = 0: use zero for production, non-zero for
     testing at given size (for TCP and user) { 0:max32 }
+  * int stream.icmp_cache.cap_weight = 8: additional bytes to track
+    per flow for better estimation against cap { 0:65535 }
   * int stream.icmp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * int stream.icmp_cache.max_sessions = 65536: maximum simultaneous
@@ -15527,6 +15663,8 @@ these libraries see the Getting Started section of the manual.
     before being eligible for pruning { 1:max32 }
   * int stream_icmp.session_timeout = 30: session tracking timeout {
     1:max31 }
+  * int stream.ip_cache.cap_weight = 64: additional bytes to track
+    per flow for better estimation against cap { 0:65535 }
   * int stream.ip_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * int stream.ip_cache.max_sessions = 16384: maximum simultaneous
@@ -15559,6 +15697,8 @@ these libraries see the Getting Started section of the manual.
     direction(s) { either|to_server|to_client|both }
   * interval stream_size.~range: check if the stream size is in the
     given range { 0: }
+  * int stream.tcp_cache.cap_weight = 11500: additional bytes to
+    track per flow for better estimation against cap { 0:65535 }
   * int stream.tcp_cache.idle_timeout = 3600: maximum inactive time
     before retiring session tracker { 1:max32 }
   * int stream.tcp_cache.max_sessions = 262144: maximum simultaneous
@@ -15594,8 +15734,11 @@ these libraries see the Getting Started section of the manual.
     segments queued { 0:2048 }
   * int stream_tcp.small_segments.maximum_size = 0: limit number of
     small segments queued { 0:2048 }
+  * bool stream_tcp.track_only = false: disable reassembly if true
   * int stream.trace: mask for enabling debug traces in module {
     0:max53 }
+  * int stream.udp_cache.cap_weight = 128: additional bytes to track
+    per flow for better estimation against cap { 0:65535 }
   * int stream.udp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * int stream.udp_cache.max_sessions = 131072: maximum simultaneous
@@ -15604,6 +15747,8 @@ these libraries see the Getting Started section of the manual.
     before being eligible for pruning { 1:max32 }
   * int stream_udp.session_timeout = 30: session tracking timeout {
     1:max31 }
+  * int stream.user_cache.cap_weight = 256: additional bytes to track
+    per flow for better estimation against cap { 0:65535 }
   * int stream.user_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * int stream.user_cache.max_sessions = 1024: maximum simultaneous
@@ -15879,6 +16024,8 @@ these libraries see the Getting Started section of the manual.
   * detection.analyzed: packets sent to detection (now)
   * detection.body_searches: fast pattern searches in body buffer
     (sum)
+  * detection.context_stalls: times processing stalled to wait for an
+    available context (sum)
   * detection.cooked_searches: fast pattern searches in cooked packet
     data (sum)
   * detection.event_limit: events filtered (sum)
@@ -16013,6 +16160,15 @@ these libraries see the Getting Started section of the manual.
   * latency.total_packets: total packets monitored (sum)
   * latency.total_rule_evals: total rule evals monitored (sum)
   * latency.total_usecs: total usecs elapsed (sum)
+  * memory.allocated: total amount of memory allocated (now)
+  * memory.allocations: total number of allocations (now)
+  * memory.deallocated: total amount of memory allocated (now)
+  * memory.deallocations: total number of deallocations (now)
+  * memory.max_in_use: highest allocated - deallocated (max)
+  * memory.reap_attempts: attempts to reclaim memory (now)
+  * memory.reap_failures: failures to reclaim memory (now)
+  * memory.total_fudge: sum of all adjustments (now)
+  * mem_test.packets: total packets (sum)
   * modbus.concurrent_sessions: total concurrent modbus sessions
     (now)
   * modbus.frames: total Modbus messages (sum)
@@ -16767,8 +16923,8 @@ these libraries see the Getting Started section of the manual.
   * 119:226 (http_inspect) unknown Content-Encoding used
   * 119:227 (http_inspect) multiple Content-Encodings applied
   * 119:228 (http_inspect) server response before client request
-  * 119:229 (http_inspect) PDF/SWF decompression of server response
-    too big
+  * 119:229 (http_inspect) PDF/SWF/ZIP decompression of server
+    response too big
   * 119:230 (http_inspect) nonprinting character in HTTP message
     header name
   * 119:231 (http_inspect) bad Content-Length value in HTTP header
@@ -16852,6 +17008,7 @@ these libraries see the Getting Started section of the manual.
   * 124:13 (smtp) Unix-to-Unix decoding failed
   * 124:14 (smtp) Cyrus SASL authentication attack
   * 124:15 (smtp) attempted authentication command buffer overflow
+  * 124:16 (smtp) file decompression failed
   * 125:1 (ftp_server) TELNET cmd on FTP command channel
   * 125:2 (ftp_server) invalid FTP command
   * 125:3 (ftp_server) FTP command parameters were too long
@@ -17037,11 +17194,13 @@ these libraries see the Getting Started section of the manual.
   * 141:4 (imap) base64 decoding failed
   * 141:5 (imap) quoted-printable decoding failed
   * 141:7 (imap) Unix-to-Unix decoding failed
+  * 141:8 (imap) file decompression failed
   * 142:1 (pop) unknown POP3 command
   * 142:2 (pop) unknown POP3 response
   * 142:4 (pop) base64 decoding failed
   * 142:5 (pop) quoted-printable decoding failed
   * 142:7 (pop) Unix-to-Unix decoding failed
+  * 142:8 (pop) file decompression failed
   * 143:1 (gtp_inspect) message length is invalid
   * 143:2 (gtp_inspect) information element length is invalid
   * 143:3 (gtp_inspect) information elements are out of order
@@ -17119,16 +17278,13 @@ change ->  dynamicdetection ==> 'snort.--plugin_path=<path>'
 change ->  dynamicengine ==> 'snort.--plugin_path=<path>'
 change ->  dynamicpreprocessor ==> 'snort.--plugin_path=<path>'
 change ->  dynamicsidechannel ==> 'snort.--plugin_path=<path>'
-change -> alertfile: 'config alertfile:' ==> 'alert_fast.file'
-change -> alertfile: 'config alertfile:' ==> 'alert_full.file'
 change -> attribute_table: 'STREAM_POLICY' ==> 'hosts: tcp_policy'
 change -> attribute_table: 'filename <file_name>' ==> 'hosts[]'
 change -> config ' addressspace_agnostic'  ==> ' packets. address_space_agnostic'
 change -> config ' checksum_mode'  ==> ' network. checksum_eval'
-change -> config ' daq'  ==> ' daq. type'
-change -> config ' daq_dir'  ==> ' daq. dir'
-change -> config ' daq_mode'  ==> ' daq. mode'
-change -> config ' daq_var'  ==> ' daq. var'
+change -> config ' daq'  ==> ' daq. module'
+change -> config ' daq_dir'  ==> ' daq. module_dirs, true'
+change -> config ' daq_var'  ==> ' daq. variables, true'
 change -> config ' detection_filter'  ==> ' alerts. detection_filter_memcap'
 change -> config ' enable_deep_teredo_inspection'  ==> ' udp. deep_teredo_inspection'
 change -> config ' event_filter'  ==> ' alerts. event_filter_memcap'
@@ -17139,7 +17295,10 @@ change -> config ' pkt_count'  ==> ' packets. limit'
 change -> config ' rate_filter'  ==> ' alerts. rate_filter_memcap'
 change -> config ' react'  ==> ' react. page'
 change -> config ' threshold'  ==> ' alerts. event_filter_memcap'
-change -> csv: 'dgmlen' ==> 'dgm_len'
+change -> converter: 'gen_id' ==> 'gid'
+change -> converter: 'sid_id' ==> 'sid'
+change -> csv: 'csv' ==> 'fields'
+change -> csv: 'dgmlen' ==> 'pkt_len'
 change -> csv: 'dst' ==> 'dst_addr'
 change -> csv: 'dstport' ==> 'dst_port'
 change -> csv: 'ethdst' ==> 'eth_dst'
@@ -17150,6 +17309,7 @@ change -> csv: 'icmpcode' ==> 'icmp_code'
 change -> csv: 'icmpid' ==> 'icmp_id'
 change -> csv: 'icmpseq' ==> 'icmp_seq'
 change -> csv: 'icmptype' ==> 'icmp_type'
+change -> csv: 'id' ==> 'ip_id'
 change -> csv: 'iplen' ==> 'ip_len'
 change -> csv: 'sig_generator' ==> 'gid'
 change -> csv: 'sig_id' ==> 'sid'
@@ -17162,35 +17322,43 @@ change -> csv: 'tcplen' ==> 'tcp_len'
 change -> csv: 'tcpseq' ==> 'tcp_seq'
 change -> csv: 'tcpwindow' ==> 'tcp_win'
 change -> csv: 'udplength' ==> 'udp_len'
-change -> detection: 'ac' ==> 'ac_full_q'
+change -> detection: 'ac' ==> 'ac_full'
 change -> detection: 'ac-banded' ==> 'ac_banded'
-change -> detection: 'ac-bnfa' ==> 'ac_bnfa_q'
+change -> detection: 'ac-bnfa' ==> 'ac_bnfa'
 change -> detection: 'ac-bnfa-nq' ==> 'ac_bnfa'
-change -> detection: 'ac-bnfa-q' ==> 'ac_bnfa_q'
+change -> detection: 'ac-bnfa-q' ==> 'ac_bnfa'
 change -> detection: 'ac-nq' ==> 'ac_full'
-change -> detection: 'ac-q' ==> 'ac_full_q'
+change -> detection: 'ac-q' ==> 'ac_full'
 change -> detection: 'ac-sparsebands' ==> 'ac_sparse_bands'
-change -> detection: 'ac-split' ==> 'ac_full_q'
+change -> detection: 'ac-split' ==> 'ac_full'
 change -> detection: 'ac-split' ==> 'split_any_any'
 change -> detection: 'ac-std' ==> 'ac_std'
 change -> detection: 'acs' ==> 'ac_sparse'
 change -> detection: 'bleedover-port-limit' ==> 'bleedover_port_limit'
-change -> detection: 'intel-cpm' ==> 'intel_cpm'
-change -> detection: 'lowmem' ==> 'lowmem_q'
+change -> detection: 'debug-print-fast-pattern' ==> 'show_fast_patterns'
+change -> detection: 'intel-cpm' ==> 'hyperscan'
 change -> detection: 'lowmem-nq' ==> 'lowmem'
-change -> detection: 'lowmem-q' ==> 'lowmem_q'
+change -> detection: 'lowmem-q' ==> 'lowmem'
 change -> detection: 'max-pattern-len' ==> 'max_pattern_len'
+change -> detection: 'no_stream_inserts' ==> 'detect_raw_tcp'
 change -> detection: 'search-method' ==> 'search_method'
 change -> detection: 'search-optimize' ==> 'search_optimize'
+change -> detection: 'split-any-any' ==> 'split_any_any = true by default'
 change -> detection: 'split-any-any' ==> 'split_any_any'
+change -> dnp3: 'ports' ==> 'bindings'
 change -> dns: 'ports' ==> 'bindings'
 change -> event_filter: 'gen_id' ==> 'gid'
 change -> event_filter: 'sig_id' ==> 'sid'
 change -> event_filter: 'threshold' ==> 'event_filter'
 change -> file: 'config file: file_block_timeout' ==> 'block_timeout'
+change -> file: 'config file: file_capture_block_size' ==> 'capture_block_size'
+change -> file: 'config file: file_capture_max' ==> 'capture_max_size'
+change -> file: 'config file: file_capture_memcap' ==> 'capture_memcap'
+change -> file: 'config file: file_capture_min' ==> 'capture_min_size'
 change -> file: 'config file: file_type_depth' ==> 'type_depth'
 change -> file: 'config file: signature' ==> 'enable_signature'
 change -> file: 'config file: type_id' ==> 'enable_type'
+change -> file: 'ver' ==> 'version'
 change -> frag3_engine: 'min_fragment_length' ==> 'min_frag_length'
 change -> frag3_engine: 'overlap_limit' ==> 'max_overlaps'
 change -> frag3_engine: 'policy bsd-right' ==> 'policy = bsd_right'
@@ -17198,59 +17366,60 @@ change -> frag3_engine: 'timeout' ==> 'session_timeout'
 change -> ftp_telnet_protocol: 'alt_max_param_len' ==> 'cmd_validity'
 change -> ftp_telnet_protocol: 'data_chan' ==> 'ignore_data_chan'
 change -> ftp_telnet_protocol: 'ports' ==> 'bindings'
-change -> gtp: 'ports' ==> 'gtp_ports'
-change -> http_inspect: 'http_inspect' ==> 'http_global'
-change -> http_inspect_server: 'apache_whitespace' ==> 'profile.apache_whitespace'
-change -> http_inspect_server: 'ascii' ==> 'profile.ascii'
-change -> http_inspect_server: 'bare_byte' ==> 'profile.bare_byte'
-change -> http_inspect_server: 'chunk_length' ==> 'profile.chunk_length'
-change -> http_inspect_server: 'client_flow_depth' ==> 'profile.client_flow_depth'
-change -> http_inspect_server: 'directory' ==> 'profile.directory'
-change -> http_inspect_server: 'double_decode' ==> 'profile.double_decode'
-change -> http_inspect_server: 'enable_cookie' ==> 'enable_cookies'
-change -> http_inspect_server: 'flow_depth' ==> 'server_flow_depth'
+change -> gtp: 'ports' ==> 'bindings'
+change -> http_inspect_server: 'bare_byte' ==> 'utf8_bare_byte'
+change -> http_inspect_server: 'client_flow_depth' ==> 'request_depth'
+change -> http_inspect_server: 'double_decode' ==> 'iis_double_decode'
 change -> http_inspect_server: 'http_inspect_server' ==> 'http_inspect'
-change -> http_inspect_server: 'iis_backslash' ==> 'profile.iis_backslash'
-change -> http_inspect_server: 'iis_delimiter' ==> 'profile.iis_delimiter'
-change -> http_inspect_server: 'iis_unicode' ==> 'profile.iis_unicode'
-change -> http_inspect_server: 'max_header_length' ==> 'profile.max_header_length'
-change -> http_inspect_server: 'max_headers' ==> 'profile.max_headers'
-change -> http_inspect_server: 'max_spaces' ==> 'profile.max_spaces'
-change -> http_inspect_server: 'multi_slash' ==> 'profile.multi_slash'
-change -> http_inspect_server: 'non_rfc_char' ==> 'non_rfc_chars'
-change -> http_inspect_server: 'non_strict' ==> 'profile.non_strict'
-change -> http_inspect_server: 'normalize_utf' ==> 'profile.normalize_utf'
+change -> http_inspect_server: 'iis_backslash' ==> 'backslash_to_slash'
+change -> http_inspect_server: 'inspect_gzip' ==> 'unzip'
+change -> http_inspect_server: 'non_rfc_char' ==> 'bad_characters'
 change -> http_inspect_server: 'ports' ==> 'bindings'
-change -> http_inspect_server: 'u_encode' ==> 'profile.u_encode'
-change -> http_inspect_server: 'utf_8' ==> 'profile.utf_8'
-change -> http_inspect_server: 'webroot' ==> 'profile.webroot'
-change -> http_inspect_server: 'whitespace_chars' ==> 'profile.whitespace_chars'
+change -> http_inspect_server: 'u_encode' ==> 'percent_u'
+change -> http_inspect_server: 'utf_8' ==> 'utf8'
 change -> imap: 'ports' ==> 'bindings'
-change -> paf_max: 'paf_max [0:63780]' ==> 'max_pdu [1460:63780]'
-change -> perfmonitor: 'accumulate' ==> 'reset = false'
-change -> perfmonitor: 'flow-file' ==> 'flow_file = true'
+change -> modbus: 'ports' ==> 'bindings'
+change -> na_policy_mode: 'na_policy_mode' ==> 'mode'
+change -> nap_selector: 'nap rules' ==> 'bindings'
+change -> paf_max: 'paf_max [0:63780]' ==> 'max_pdu [1460:32768]'
+change -> perfmonitor: 'console' ==> 'format = 'text''
+change -> perfmonitor: 'console' ==> 'output = 'console''
+change -> perfmonitor: 'file' ==> 'format = 'csv''
+change -> perfmonitor: 'file' ==> 'output = 'file''
+change -> perfmonitor: 'flow-file' ==> 'format = 'csv''
+change -> perfmonitor: 'flow-file' ==> 'output = 'file''
 change -> perfmonitor: 'flow-ip' ==> 'flow_ip'
-change -> perfmonitor: 'flow-ip-file' ==> 'flow_ip_file = true'
+change -> perfmonitor: 'flow-ip-file' ==> 'format = 'csv''
+change -> perfmonitor: 'flow-ip-file' ==> 'output = 'file''
 change -> perfmonitor: 'flow-ip-memcap' ==> 'flow_ip_memcap'
 change -> perfmonitor: 'flow-ports' ==> 'flow_ports'
 change -> perfmonitor: 'pktcnt' ==> 'packets'
-change -> perfmonitor: 'snortfile' ==> 'file = true'
+change -> perfmonitor: 'snortfile' ==> 'format = 'csv''
+change -> perfmonitor: 'snortfile' ==> 'output = 'file''
 change -> perfmonitor: 'time' ==> 'seconds'
 change -> policy_mode: 'inline_test' ==> 'inline-test'
 change -> pop: 'ports' ==> 'bindings'
-change -> ppm: 'max-pkt-time' ==> 'max_pkt_time'
-change -> ppm: 'max-rule-time' ==> 'max_rule_time'
-change -> ppm: 'pkt-log' ==> 'pkt_log'
-change -> ppm: 'rule-log' ==> 'rule_log'
-change -> ppm: 'suspend-timeout' ==> 'suspend_timeout'
+change -> ppm: ''both'' ==> ''alert_and_log''
+change -> ppm: 'fastpath-expensive-packets' ==> 'packet.fastpath'
+change -> ppm: 'max-pkt-time' ==> 'packet.max_time'
+change -> ppm: 'max-rule-time' ==> 'rule.max_time'
+change -> ppm: 'pkt-log' ==> 'packet.action'
+change -> ppm: 'ppm' ==> 'latency'
+change -> ppm: 'rule-log' ==> 'rule.action'
+change -> ppm: 'suspend-expensive-rules' ==> 'rule.suspend'
+change -> ppm: 'suspend-timeout' ==> 'max_suspend_time'
+change -> ppm: 'threshold' ==> 'rule.suspend_threshold'
 change -> preprocessor 'normalize_ icmp4' ==> 'normalize. icmp4'
 change -> preprocessor 'normalize_ icmp6' ==> 'normalize. icmp6'
 change -> preprocessor 'normalize_ ip6' ==> 'normalize. ip6'
 change -> profile: 'print' ==> 'count'
+change -> profile: 'sort avg_ticks' ==> 'sort = avg_check'
+change -> profile: 'sort total_ticks' ==> 'sort = total_time'
 change -> rate_filter: 'gen_id' ==> 'gid'
 change -> rate_filter: 'sig_id' ==> 'sid'
-change -> rule_state: 'disabled' ==> 'enable'
-change -> rule_state: 'enabled' ==> 'enable'
+change -> reputation: 'shared_mem' ==> 'list_dir'
+change -> rule_state: 'enabled/disabled' ==> 'enable'
+change -> rule_state: 'sdrop' ==> 'drop'
 change -> sfportscan: 'proto' ==> 'protos'
 change -> sfportscan: 'scan_type' ==> 'scan_types'
 change -> sip: 'ports' ==> 'bindings'
@@ -17275,7 +17444,6 @@ change -> stream5_tcp: 'max_queued_bytes' ==> 'queue_limit.max_bytes'
 change -> stream5_tcp: 'max_queued_segs' ==> 'queue_limit.max_segments'
 change -> stream5_tcp: 'policy hpux' ==> 'stream_tcp.policy = hpux11'
 change -> stream5_tcp: 'timeout' ==> 'session_timeout'
-change -> stream5_tcp: 'use_static_footprint_sizes' ==> 'footprint'
 change -> stream5_udp: 'timeout' ==> 'session_timeout'
 change -> suppress: 'gen_id' ==> 'gid'
 change -> suppress: 'sig_id' ==> 'sid'
@@ -17315,9 +17483,12 @@ deleted -> attribute_table: '<FRAG_POLICY>unknown</FRAG_POLICY>'
 deleted -> attribute_table: '<STREAM_POLICY>noack</STREAM_POLICY>'
 deleted -> attribute_table: '<STREAM_POLICY>unknown</STREAM_POLICY>'
 deleted -> config ' cs_dir'
+deleted -> config ' daq_mode'
+deleted -> config ' decode_data_link'
 deleted -> config ' disable_attribute_reload_thread'
 deleted -> config ' disable_decode_alerts'
 deleted -> config ' disable_decode_drops'
+deleted -> config ' disable_inline_init_failopen'
 deleted -> config ' disable_ipopt_alerts'
 deleted -> config ' disable_ipopt_drops'
 deleted -> config ' disable_tcpopt_alerts'
@@ -17347,45 +17518,84 @@ deleted -> config ' flowbits_size'
 deleted -> config ' include_vlan_in_alerts'
 deleted -> config ' interface'
 deleted -> config ' layer2resets'
-deleted -> config ' policy_version'
+deleted -> config ' log_ipv6_extra_data'
+deleted -> config ' nolog'
+deleted -> config ' protected_content'
+deleted -> config ' sidechannel'
 deleted -> config ' so_rule_memcap'
+deleted -> config 'dynamicoutput'
+deleted -> config 'sfalert_unified2'
+deleted -> config 'sflog_unified2'
+deleted -> config 'sidechannel'
 deleted -> csv: '<filename> can no longer be specific'
 deleted -> csv: 'default'
 deleted -> csv: 'trheader'
 deleted -> detection: 'mwm'
+deleted -> dnp3: 'disabled'
+deleted -> dnp3: 'memcap'
 deleted -> dns: 'enable_experimental_types'
 deleted -> dns: 'enable_obsolete_types'
 deleted -> dns: 'enable_rdata_overflow'
+deleted -> event_trace: 'file'
 deleted -> fast: '<filename> can no longer be specific'
 deleted -> frag3_engine: 'detect_anomalies'
 deleted -> frag3_global: 'disabled'
 deleted -> ftp_telnet_protocol: 'detect_anomalies'
 deleted -> full: '<filename> can no longer be specific'
+deleted -> http_inspect: 'detect_anomalous_servers'
 deleted -> http_inspect: 'disabled'
+deleted -> http_inspect: 'proxy_alert'
+deleted -> http_inspect_server: 'allow_proxy_use'
+deleted -> http_inspect_server: 'enable_cookie'
+deleted -> http_inspect_server: 'enable_xff'
+deleted -> http_inspect_server: 'extended_ascii_uri'
+deleted -> http_inspect_server: 'extended_response_inspection'
+deleted -> http_inspect_server: 'iis_unicode_map not allowed in sever'
+deleted -> http_inspect_server: 'inspect_uri_only'
+deleted -> http_inspect_server: 'log_hostname'
+deleted -> http_inspect_server: 'log_uri'
 deleted -> http_inspect_server: 'no_alerts'
+deleted -> http_inspect_server: 'no_pipeline_req'
+deleted -> http_inspect_server: 'non_strict'
+deleted -> http_inspect_server: 'normalize_cookies'
+deleted -> http_inspect_server: 'normalize_headers'
+deleted -> http_inspect_server: 'small_chunk_length'
+deleted -> http_inspect_server: 'tab_uri_delimiter'
+deleted -> http_inspect_server: 'unlimited_decompress'
 deleted -> imap: 'disabled'
 deleted -> imap: 'max_mime_mem'
 deleted -> imap: 'memcap'
+deleted -> nap_selector: 'fw_required'
+deleted -> nap_selector: 'nap_stats_time'
+deleted -> perfmonitor: 'accumulate'
 deleted -> perfmonitor: 'atexitonly'
 deleted -> perfmonitor: 'atexitonly: base-stats'
 deleted -> perfmonitor: 'atexitonly: events-stats'
 deleted -> perfmonitor: 'atexitonly: flow-ip-stats'
 deleted -> perfmonitor: 'atexitonly: flow-stats'
+deleted -> perfmonitor: 'atexitonly: reset'
+deleted -> perfmonitor: 'events'
+deleted -> perfmonitor: 'max'
 deleted -> pop: 'disabled'
 deleted -> pop: 'max_mime_mem'
 deleted -> pop: 'memcap'
 deleted -> ppm: 'debug-pkts'
 deleted -> react: 'block'
 deleted -> react: 'warn'
+deleted -> reputation: 'shared_max_instances'
+deleted -> reputation: 'shared_refresh'
 deleted -> rpc_decode: 'alert_fragments'
 deleted -> rpc_decode: 'no_alert_incomplete'
 deleted -> rpc_decode: 'no_alert_large_fragments'
 deleted -> rpc_decode: 'no_alert_multiple_requests'
-deleted -> rule_state: 'action'
 deleted -> sfportscan: 'detect_ack_scans'
 deleted -> sfportscan: 'disabled'
 deleted -> sfportscan: 'logfile'
+deleted -> sfportscan: 'sense_level'
+deleted -> sfunified2: 'mpls_event_types'
+deleted -> sfunified2: 'vlan_event_types'
 deleted -> sip: 'disabled'
+deleted -> sip: 'max_sessions'
 deleted -> smtp: 'alert_unknown_cmds'
 deleted -> smtp: 'disabled'
 deleted -> smtp: 'enable_mime_decoding'
@@ -17406,16 +17616,22 @@ deleted -> ssh: 'enable_ssh1crc32'
 deleted -> ssl: 'noinspect_encrypted'
 deleted -> stream5_global: 'disabled'
 deleted -> stream5_global: 'flush_on_alert'
+deleted -> stream5_global: 'memcap'
 deleted -> stream5_global: 'no_midstream_drop_alerts'
 deleted -> stream5_tcp: 'check_session_hijacking'
 deleted -> stream5_tcp: 'detect_anomalies'
 deleted -> stream5_tcp: 'dont_store_large_packets'
+deleted -> stream5_tcp: 'ignore_any_rules'
+deleted -> stream5_tcp: 'log_asymmetric_traffic'
 deleted -> stream5_tcp: 'policy noack'
 deleted -> stream5_tcp: 'policy unknown'
+deleted -> stream5_udp: 'ignore_any_rules'
 deleted -> tcpdump: '<filename> can no longer be specific'
 deleted -> test: 'file'
 deleted -> test: 'stdout'
 deleted -> unified2: 'filename'
+deleted -> unified2: 'mpls_event_types'
+deleted -> unified2: 'vlan_event_types'
 
 
 20.11. Module Listing
@@ -17431,6 +17647,7 @@ deleted -> unified2: 'filename'
   * alert_json (logger): output event in json format
   * alert_sfsocket (logger): output event over socket
   * alert_syslog (logger): output event to syslog
+  * alert_talos (logger): output event in Talos alert format
   * alert_unixsock (logger): output event over unix socket
   * alerts (basic): configure alerts
   * appid (inspector): application and service identification
@@ -17599,6 +17816,7 @@ deleted -> unified2: 'filename'
   * log_hext (logger): output payload suitable for daq hext
   * log_pcap (logger): log packet in pcap format
   * md5 (ips_option): payload rule option for hash matching
+  * mem_test (inspector): for testing memory management
   * memory (basic): memory management configuration
   * metadata (ips_option): rule option for conveying arbitrary name,
     value data within the rule text
@@ -17658,7 +17876,8 @@ deleted -> unified2: 'filename'
   * rewrite (ips_action): overwrite packet contents
   * rpc (ips_option): rule option to check SUNRPC CALL parameters
   * rpc_decode (inspector): RPC inspector
-  * rule_state (basic): enable/disable specific IPS rules
+  * rule_state (basic): enable/disable and set actions for specific
+    IPS rules
   * sd_pattern (ips_option): rule option for detecting sensitive data
   * search_engine (basic): configure fast pattern matcher
   * seq (ips_option): rule option to check TCP sequence number
@@ -17806,6 +18025,7 @@ deleted -> unified2: 'filename'
   * inspector::http2_inspect: the HTTP/2 inspector
   * inspector::http_inspect: the new HTTP inspector!
   * inspector::imap: imap inspection
+  * inspector::mem_test: for testing memory management
   * inspector::modbus: modbus inspection
   * inspector::normalizer: packet scrubbing for inline mode
   * inspector::packet_capture: raw packet dumping facility
@@ -18002,6 +18222,7 @@ deleted -> unified2: 'filename'
   * logger::alert_json: output event in json format
   * logger::alert_sfsocket: output event over socket
   * logger::alert_syslog: output event to syslog
+  * logger::alert_talos: output event in Talos alert format
   * logger::alert_unixsock: output event over unix socket
   * logger::log_codecs: log protocols in packet by layer
   * logger::log_hext: output payload suitable for daq hext
@@ -18538,4 +18759,64 @@ Here is one way to set things up:
     $ ./snort --daq ipfw --daq-var port=9000
 
       + Note that on OpenBSD, divert sockets don’t work with bridges!
+
+
+20.14. Limitations
+
+--------------
+
+20.14.1. Reload limitations
+
+The following parameters can’t be changed during reload, and require
+a restart:
+
+  * active.attempts
+  * active.device
+  * alerts.detection_filter_memcap
+  * alerts.event_filter_memcap
+  * alerts.rate_filter_memcap
+  * attribute_table.max_hosts
+  * attribute_table.max_services_per_host
+  * daq.snaplen
+  * daq.no_promisc
+  * detection.asn1
+  * file_id.max_files_cached
+  * port_scan.memcap
+  * process.chroot
+  * process.daemon
+  * process.set_gid
+  * process.set_uid
+  * stream.footprint
+  * stream.ip_cache.max_sessions
+  * stream.ip_cache.pruning_timeout
+  * stream.ip_cache.idle_timeout
+  * stream.icmp_cache.max_sessions
+  * stream.icmp_cache.pruning_timeout
+  * stream.icmp_cache.idle_timeout
+  * stream.tcp_cache.max_sessions
+  * stream.tcp_cache.pruning_timeout
+  * stream.tcp_cache.idle_timeout
+  * stream.udp_cache.max_sessions
+  * stream.udp_cache.pruning_timeout
+  * stream.udp_cache.idle_timeout
+  * stream.user_cache.max_sessions
+  * stream.user_cache.pruning_timeout
+  * stream.user_cache.idle_timeout
+  * stream.file_cache.max_sessions
+  * stream.file_cache.pruning_timeout
+  * stream.file_cache.idle_timeout
+
+In addition, the following scenarios require a restart:
+
+  * Enabling file capture for the first time
+  * Changing file_id.capture_memcap if file capture was previously or
+    currently enabled
+  * Changing file_id.capture_block_size if file capture was
+    previously or currently enabled
+  * Adding/removing stream_* inspectors if stream was already
+    configured
+
+In all of these cases reload will fail with the following message:
+"reload failed - restart required". The original config will remain
+in use.
 

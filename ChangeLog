@@ -1,3 +1,199 @@
+19/03/31 - build 251
+
+-- ActionManager: actions are tracked per packet for accurate packet suspension
+-- DetectionEngine: make onload safe for reentrance
+-- DetectionEngine: stall when out of contexts
+-- Flow: is_offloaded is now is_suspended
+-- IpsContext: removed useless SUSPENDED_OFFLOAD state
+-- Mpse: Addition and use of offload search method/engine
+-- Mpse: fixed build warning about constness of get_pattern_count
+-- MpseBatch: refactor into separate files
+-- Packet: fixed thread safety in onload flag checks
+-- RegexOffload: onload whatever is ready
+-- RegexOffload: refactor into mode-specific subclasses
+-- appid: Fix for FTP detection with multiline server response split across multiple packets
+-- appid: add unit test to make sure the AppIdServiceStateKey::operator<() is OK and modify
+   existing service cache memcap test to alternate ipv4 and ipv6 addresses.
+-- appid: change the service queue to store map iterators rather than the actual keys, as
+   (a) map iterators are stable and (b) sizeof(map::iterator)=8 while sizeof(key)=28.
+-- appid: compute the size of the memory used for a service cache entry only once, as it is
+   constant, and make it global.
+-- appid: fix AppIdServiceStateKey::operator<().
+-- appid: fix client discovery to only check on the first data packet.
+-- appid: fix comment in client_discovery.cc.
+-- appid: fix double free in service_state_queue and address reviewers comments.
+-- appid: fixup profiling
+-- appid: get rid of the map::find() in MapList::add(), just try to emplace directly.
+-- appid: implement service cache touch(). Must figure out where to call it from.
+-- appid: implement service discovery state queue to honor memcap.
+-- appid: introduce min memcap of 1024 with a default of 1Mb and refactor
+   AppIdServiceState::remove() to accept a ServiceCache_t::iterator rather than ip, proto,
+   port and decrypted.
+-- appid: introduce the do_touch flag to the add/get functions and call those functions with
+   the appropriate flag.
+-- appid: keep cppcheck happy.
+-- appid: more cppcheck clean-up.
+-- appid: pass HostPortKey by reference in HostPortKey::operator<().
+-- appid: put the service_state_cache and the service_state_queue into a class in its own
+   right and refactor the code.
+-- appid: remove forgotten WhereMacro.
+-- appid: rename some global variables in http_url_patterns_test.cc to suppress cppcheck messages.
+-- appid: replace the custom AppIdServiceCacheKey::operator< with memcmp in both service_state.h
+   and host_port_app_cache.cc.
+-- appid: return void in ClientDiscovery::exec_client_detectors() and set client_disco_state to
+   FINISHED in all cases except when the client validate returns APPID_INPROCESS.
+-- appid: set a range for app_stats_period parameter
+-- appid: skip empty detectors
+-- appid: the service queue should be of type AppIdServiceStateKey.
+-- appid: unit test for service cache and call the touch function.
+-- appid: untabify service_state.h and test/service_state_test.cc.
+-- appid: update unit test file.
+-- binder: Reset flow gadget and protocol ID on failed rebinding
+-- binder: store user set ips policy id from lua
+-- build: Add better support for libiconv on systems with iconv-providing libc
+-- build: fix always true warning
+-- build: fix constness warnings
+-- build: fix cppcheck warnings for file_connector, tcp_connector, ports, snort2lua, and
+   piglet_plugins,
+-- build: fix override warning
+-- catch: Update to Catch v2.7.0
+-- cd_tcp: some light refactoring
+-- conf: remove obscure and slow automatic iface var assignments; use Lua instead
+-- config: Use basename_r() function for FreeBSD versions < 12.0.0
+-- control: Avoid deleting objects on write failures so that they get deleted from main thread
+   during read polling
+-- copyright: update year to 2019
+-- cppcheck: fix some basic warnings
+-- dce_rpc: Added support to handle smb header compounding
+-- dce_rpc: Limiting each signature alert to once per session using 'limit_alerts' config
+-- dce_rpc: fix cppcheck warnings
+-- dce_rpc: fix style warning non-boolean returned
+-- decompress: add zip file decompression
+-- detection, snort2lua: added global rule state options for legacy conversions
+-- detection: Add search batching infrastructure
+-- detection: allow suspension of entire chains of contexts
+-- detection: fixed incorrect log messages
+-- detection: only swap offload configs when they change
+-- detection: split fast pattern processing when using context suspension
+-- doc: add a section for reload limitations
+-- doc: update default manuals
+-- doc: update reload limitations - adding/removing stream_*
+-- file: fixed data race at shutdown
+-- file_api: Added nullptr checking to prevent segfaults when file mempool is not configured
+-- file_api: call FileContext::set_file_name() from FileFlows::set_file_name with
+   fname = nullptr, in order to generate file event.
+-- file_api: fail the reload if max_files_cache is changed  or if capture was initially enabled
+   and capture_memcap or capture_block_size change
+-- file_api: fix policy lookup
+-- file_capture: refactor max size handling
+-- filters: call get_ips_policy instead of get_network_policy when building the key for
+   rate filter.
+-- flow: Added a support to store generic objects in a stash
+-- flow: support for flow stash - allows storage of integers and strings
+-- flow_control: remove unused session flag
+-- fp_detect: suspend instead of onload if fp_local can't occur yet
+-- hash: Added lru_cache_shared.h to HASH_INCLUDES
+-- hash: Moved list_iter assignment inside to avoid improper memory access in LruCacheShared
+-- http_inspect: disable reg test assertion until interface with stream_tcp is updated
+-- http_inspect: patch around buffer ownership confusion
+-- ips_context: minimize iterations to clear data
+-- ips_options: implement FileTypeOption::hash() and FileTypeOption::operator==(), inherited
+   from IpsOption, using the types bitset array, in order to distinguish between different
+   file type options.
+-- loggers: add alert_talos, use in talos tweak
+-- loggers: alert_talos: fix copyright, author, unneeded check
+-- loggers: alert_talos: fix copyright, warnings
+-- loggers: alert_talos: fix cppcheck error
+-- loggers: alert_talos: fix include order
+-- loggers: alert_talos: fix memory leak
+-- loggers: workaround for cppcheck's false warning
+-- lua: make RTF file magic more generic
+-- main: log message when all pthreads started (REG_TEST only)
+-- main: shell commands and signals executed only after snort finish startup
+-- memory: Use only one variable to keep track of allocated and deallocated memory
+-- memory: add configurable L3/L4 specific weights for better estimation against cap
+-- memory: add size_of to various FlowData subclasses
+-- memory: apply fudge factor to tracking to better align with RSS
+-- memory: basic flow data allocation tracking
+-- memory: basic flow pruning
+-- memory: beware the perf_monitor, for she stealeth your numbers
+-- memory: do not re-enter the pruner
+-- memory: fix re-entry check
+-- memory: increase default tcp cache cap weight; fix default values
+-- memory: initial preemptive pruning based on flow data
+-- memory: refactor stats
+-- memory: remove overloading manager to make way for new implementation
+-- memory: remove useless thread local
+-- memory: require subclass implementation of FlowData::size_of()
+-- memory: track session allocations
+-- mime: add file decompression
+-- misc: fixed warnings generated from latest gcc
+-- packet tracer: initialize sf_ip structs
+-- policy: allow an empty policy be set explicitly
+   assigned to it.
+-- policy: Rename TRUE/FALSE to ENABLE/DISABLED
+-- port_scan: Fail reload if memcap changed
+-- profile: convert remaining layer 2 or greater profile scopes to the deep, dark underbelly
+-- profiler: add quick exit if not configured to minimize overhead
+-- profiler: add quick exit if not configured to minimize overhead (rule times)
+-- protocols: fix style warning non-boolean value returned
+-- react: sending reset to server only
+-- regex_offload: fix stats for thread
+-- reload: differentiate between restart required and bad config
+-- reload: fail reload if stream is in the original config and stream_* is added/removed
+-- reload: prompt reload failure and require restart when stream cache were changed
+-- reload: send reload completed message to control channel instead of logging it
+-- rule eval: ensure leaf children are properly counted
+-- rule_state: add rtn but disable if block is set on non-inline deployment
+-- rule_state: added default rule state to ips policy
+-- rule_state: added per-ips-policy rule states
+-- rules: do not preallocate actions
+-- safec: Update to work with modern versions of LibSafeC
+-- sfip: add a FIXIT for checking that the current implementation of _is_lesser(), which only
+   compares same-family ips is OK.
+-- sip: update sip options to use has_tcp_data instead of is_tcp
+-- snort2lua: Create dev_notes.txt for sticky buffers
+-- snort2lua: adding when.role for specific inspectors
+-- snort2lua: change the -l short option to --dont-convert-max-sessions.
+-- snort2lua: combining multiple zone in one binder rule
+-- snort2lua: comment gid 147 file rules
+-- snort2lua: convert file_capture config options
+-- snort2lua: do generate the tcp_cache instance even when we don't convert tcp_max to
+   max_sessions.
+-- snort2lua: do not translate max_sessions from snort.conf to snort.lua.
+-- snort2lua: fix pcre option issues
+-- snort2lua: fix sticky buffer duplication
+-- snort2lua: fixed duplication of split_any_any from config: detection
+-- snort2lua: introduce command line option -l to suppress conversion of max_tcp, max_udp,
+   max_icmp and max_ip to max_sessions.
+-- snort2lua: move obfuscate_pii to the ips table from the output table.
+-- snort_config: Add a setter for setting run_flags and set it to TRACK_ON_SYN for hs_timeout
+   config
+-- ssl: Count calls to disable_content for ssl sessions
+-- stream: Change StreamSplitter::scan to take a Packet instead of a Flow.
+-- stream: Pass Packet in flush_pdu_* -> paf_eval -> paf_callback chain.
+-- stream: fixed ignore_flow segfault bug caused by allocating generic flow data instead of
+   inspector specific flow data
+-- stream: log StreamBase::config in StreamBase::show().
+-- stream: purge remaining flows before shutdown counts
+-- stream_tcp: add track_only to disable reassembly
+-- stream_tcp: consolidate segment node and data
+-- stream_tcp: disambiguate seglist trace
+-- stream_tcp: do not purge partially acked segment
+-- stream_tcp: fix up stream order flags
+-- stream_tcp: fixup allocation tracking for overlapped segments
+-- stream_tcp: implement reserve seglist
+-- stream_tcp: initialize priv_ptr for pdus
+-- stream_tcp: patch around premature application of delayed actions that yoink the seglist
+-- stream_tcp: remove seglist node cruft
+-- stream_tcp: reset paf segment when switching splitters
+-- stream_tcp: simplify paf init
+-- stream_tcp: support unidirectional flushing similar to Snort 2
+-- stream_tcp: tweak PAF scanning
+-- stream_tcp: tweak ips mode flushing
+-- stream_udp: ensure all flows are cleared fully
+-- time: Adding timersub_ms function to return timersub in milliseconds
+
 18/12/06 - build 250
 
 -- actions: Fix incorrect order of IPS reject unreachable codes and adding forward option
@@ -12,7 +208,8 @@
 -- build: fix some int type conversion warnings
 -- build: reduce variable scope to address warnings
 -- detection: enable offloading non-pdu packets
--- detection, stream: fixed assuming packets were offloaded when previous packets on flow have been offloaded
+-- detection, stream: fixed assuming packets were offloaded when previous packets on flow have
+   been offloaded
 -- file_api: choose whether to get file config from current config or staged one
 -- file: fail the reload if capture is enabled for the first time
 -- framework: Clone databus to new config during module reload
@@ -33,25 +230,31 @@
 -- perf_monitor: Actually allow building perf_monitor as a dynamic plugin
 -- perf_monitor: fix benign parameter errors
 -- perf_monitor: fixed fbs schema generation when not building with DEBUG
--- protocols: add vlan_idx field to Packet struct and handle multiple vlan type ids; thanks to ymansour for reporting the issue
+-- protocols: add vlan_idx field to Packet struct and handle multiple vlan type ids;
+   thanks to ymansour for reporting the issue
 -- regex worker: removed assert that didn't handle locks cleanly
--- reputation: Fix iterations of layers for different nested_ip configs and show the blacklisted IP in events
+-- reputation: Fix iterations of layers for different nested_ip configs and show the
+   blacklisted IP in events
 -- sip: Added sanity check for buffer boundary while parsing a sip message
 -- snort2lua: add code to output control = forward under the reject module
 -- snort2lua: Fix compiler warning for catching exceptions by value
 -- snort2lua: Fix pcre H and P option conversions for sip
 -- snort: add --help-limits to output max* values
 -- snort: Default to a snaplen of 1518
--- snort: fix command line parameters to support setting in Lua; thanks to Meridoff <oagvozd@gmail.com> for reporting the issue
--- snort: remove obsolete and inadequate -W option; thanks to Jaime González <jaimeglz1952@gmail.com> for reporting the issue
--- snort: terminate gracefully upon DAQ start failure; thanks to Jaime González <jaimeglz1952@gmail.com> for reporting the issue
+-- snort: fix command line parameters to support setting in Lua;
+   thanks to Meridoff <oagvozd@gmail.com> for reporting the issue
+-- snort: remove obsolete and inadequate -W option;
+   thanks to Jaime González <jaimeglz1952@gmail.com> for reporting the issue
+-- snort: terminate gracefully upon DAQ start failure;
+   thanks to Jaime González <jaimeglz1952@gmail.com> for reporting the issue
 -- so rules: add robust stub parsing
 -- stream: fixed stream_base flow peg count sum_stats bug
 -- stream tcp: fixed applying post-inspection operations to wrong rebuilt packet
 -- stream tcp: fixed sequence overlap handling when working with empty seglist
 -- style: clean up comment to reduce spelling exceptions
 -- thread: No more breaks for pigs (union busting)
--- tools: Install appid-detector-builder.sh with the other tools; thanks to Jonathan McDowell <noodles-github@earth.li> for reporting the issue
+-- tools: Install appid-detector-builder.sh with the other tools;
+   thanks to Jonathan McDowell <noodles-github@earth.li> for reporting the issue
 
 18/11/07 - build 249
 
@@ -70,15 +273,18 @@
 -- dcerpc: fixed setting endianness on one packet and checking on another
 -- detection : add function to clear ips_id from unit tests
 -- detectionengine: Only clear inspector data after offloads have completed
--- detection/http_inspect: Save a snapshot HTTP buffers in the IPS context to support offload of HTTP flows
+-- detection/http_inspect: Save a snapshot HTTP buffers in the IPS context to support offload
+   of HTTP flows
 -- doc: Adding performance consideration for developers
 -- file_api: revert deleting gid 146 so existing 146 rulesets dont attempt empty rule eval
 -- fixits: prioritize for RC
 -- flow: fixed build warning
 -- flow: track multiple offloads
 -- fp_detect: onload before running local to ensure event ordering
--- framework: replace the newly introduced loop to reset the reload_type flags with the existing Inspector::update_policy function
--- framework: set the reload_type flags to RELOAD_TYPE_NONE at the end of reload, in anticipation of future reloads.
+-- framework: replace the newly introduced loop to reset the reload_type flags with the
+   existing Inspector::update_policy function
+-- framework: set the reload_type flags to RELOAD_TYPE_NONE at the end of reload, in
+   anticipation of future reloads.
 -- host_tracker: fixed uppcase IP param issue
 -- http2_inspect: Change http2 GID from 219 to 121
 -- ips_flowbits: move static structures to snort config
@@ -92,18 +298,21 @@
 -- perfmon: fix issue for report correct stats after passing -n pkts
 -- perf_monitor: trackers keep copy of the relevant config items from the inspector
 -- reload: fixed smtp seg fault when reload failed
--- reputation: delete old conf before allocating a new one in ReputationModule::begin() if conf not null
+-- reputation: delete old conf before allocating a new one in ReputationModule::begin() if
+   conf not null
 -- rule_state: indicate list format
 -- search_tool: include bytes searched in pattern match stats
 -- search_tool: validate ac_full and ac_bnfa wrt search and search_all
 -- snort2lua: Add support for enable/disable iprep logging using suppress mechanism
 -- snort2lua: Avoid returning reference of local variable
 -- snort2lua: comment out deleted gid 146 rules
--- snort2lua: Enable address_anomaly_detection during snort2lua and fixed missing string sanity checks
+-- snort2lua: Enable address_anomaly_detection during snort2lua and fixed missing string
+   sanity checks
 -- snort2lua: fixed paf_max to stream_tcp.max_pdu convertion
 -- snort2lua: tweak for style consistency
 -- snort: add --rule-path to load rules from all files under given dir
--- snort: Code refactoring - replacing push_back/insert by emplace_back/emplace, keeping reputation_id in flow instead of flow_data, and appid code improvements
+-- snort: Code refactoring - replacing push_back/insert by emplace_back/emplace, keeping
+   reputation_id in flow instead of flow_data, and appid code improvements
 -- source: fix some typos
 -- source: minor refactoring
 -- spell: fix typo
@@ -260,14 +469,17 @@
 -- appid: change metadata buffers from std::string to pointers, to avoid extra copying
 -- appid: clean-up code for performance and implement is_tp_processing_done()
 -- appid: create referer object only for non-null string
--- appid: do not inspect out-of-order flows, ignore zero-payload packets for client/service discovery
+-- appid: do not inspect out-of-order flows, ignore zero-payload packets for client/service
+   discovery
 -- appid: fix memory leak in appid_http_event_test and warning in appid_http_session.cc
 -- appid: fix segfault due to dereferencing null host pointer.
 -- appid: fix tabs and indentation
 -- appid: fixed http fields, referer payload and appid debug
 -- appid: make tp_attribute_data more localized, so we only allocate/deallocate it if needed.
 -- appid: moved HttpFieldIds to appid_http_session
--- appid: peg count / dynamic peg count update.  Split peg counts into the ones known at compile time and dynamic ones.  Update stats , module manager and module to support dumping dynamic stats.
+-- appid: peg count / dynamic peg count update.  Split peg counts into the ones known at
+   compile time and dynamic ones.  Update stats , module manager and module to support
+   dumping dynamic stats.
 -- appid: report when third party appid is done inspecting
 -- appid: sip: moved pattern thread local to class instance
 -- base64_decode: moved buffer storage to regular heap
@@ -291,7 +503,8 @@
 -- byte_jump: fix from_beginning
 -- byte_math: allow rvalue == 0 except for division
 -- catch: Update to Catch v2.2.1
--- clock: Allow use of ARM64 CNTVCT_EL0 register for timing (#46); thanks to j.mcdowell@titan-ic.com for the patch.
+-- clock: Allow use of ARM64 CNTVCT_EL0 register for timing (#46);
+   thanks to j.mcdowell@titan-ic.com for the patch.
 -- clock: use uint64_t with tsc clock instead of std::chrono for performance
 -- cmake: Add --enable-appid-third-party to configure_cmake.sh
 -- cmake: Add support for building with tcmalloc
@@ -300,7 +513,9 @@
 -- cmake: update for iconv
 -- codecs: add config option to detection to enable check and alert for address anomalies
 -- daq_hext: Make IpAddr() static to fix compiler warning
--- dce_co_process_ctx_id needs to update its caller's (DCE2_CoCtxReq) frag_ptr as it is called in a loop in order to parse each dce/rpc ctx item, otherwise it ends up parsing the same ctx item over and over.
+-- dce_co_process_ctx_id needs to update its caller's (DCE2_CoCtxReq) frag_ptr as it is
+   called in a loop in order to parse each dce/rpc ctx item, otherwise it ends up parsing
+   the same ctx item over and over.
 -- dce_rpc: fix parsing of dce/rpc ctx items
 -- dce_rpc: pass frag_ptr by reference
 -- debug: Remove debug messages from appid, arp_spoof, and perf_monitor
@@ -364,7 +579,8 @@
 -- snort2lua: enable reject action when firewall is enabled
 -- snort: -r- will read packets from stdin
 -- spell check: fix memeory and indicies typos
--- steam_tcp: change singleton names from linux to new_linux to avoid spurious collisions with defines
+-- steam_tcp: change singleton names from linux to new_linux to avoid spurious collisions
+   with defines
 -- stream ip: refactored to use MemoryManager allocators
 -- stream: assume gid 135 so those rules are handled as standard builtins
 -- stream: be selective about flow creation for scans
@@ -372,12 +588,14 @@
 -- stream: remove usused ignore_any_rules from tcp and udp
 -- stream: respect tcp require_3whs
 -- stream: warning: potential memory leaks
--- stream_tcp: refactor tcp normalizer and reassembler to eliminate dynamic heap allocations per flow
+-- stream_tcp: refactor tcp normalizer and reassembler to eliminate dynamic heap allocations
+   per flow
 -- stream_tcp: switch to splitter max
 -- stream_tcp: tweak seglist cursor handling
 -- target_based: 100% coverage on snort_protocols.cc
 -- target_based: unit tests for ProtocolReference class
--- tcp codec: count bad ip6 checksums correctly; thanks to j.mcdowell@titan-ic.com for reporting the issue
+-- tcp codec: count bad ip6 checksums correctly; thanks to j.mcdowell@titan-ic.com for reporting
+   the issue
 -- tcp: allow data  handlding for packet with invalid ack
 -- time: initialize Stopwatch::start_time member variable to 0 ticks when TSC clock is enabled
 -- trace: add traces for deleted debug messages
@@ -407,7 +625,8 @@
 -- perf_monitor: query modules for stats only after they have all loaded
 -- snort: --rule-to-text [<delim>] raw string output
 -- snort: allow colon separated directories for --daq-dir
--- snort: wrap SO_PUBLIC APIs (classes, functions exported public from snort) in the 'snort' namespace
+-- snort: wrap SO_PUBLIC APIs (classes, functions exported public from snort) in the 'snort'
+   namespace
 
 18/02/12 - build 243
 
@@ -468,7 +687,8 @@
 -- appid: gracefully handle failed Lua state instantiation
    thanks to Noah Dietrich <noah_dietrich@86penny.org> for reporting the issue.
 -- appid: only update session flags and discovery state if service id actually set to http
--- appid: patch to update the appid discovery state when an http event results in setting of the service id for a flow
+-- appid: patch to update the appid discovery state when an http event results in setting of the
+   service id for a flow
 -- appid: return false from is_third_party_appid_available when no third party module is available.
 -- appid: tweak warnings and errors
 -- binder: activate profiler support
@@ -535,7 +755,8 @@
 -- snort2lua: remove when udp from binding to support tcp too
 -- snort2lua: tweak const name for clarity (internal)
 -- snort2lua: urilen:<> --> bufferlen:<=>
--- snort: do not dlclose plugins at shutdown during REG_TEST to avoid borked backtraces from LeakSanitizer
+-- snort: do not dlclose plugins at shutdown during REG_TEST to avoid borked backtraces
+   from LeakSanitizer
 -- soid: allow stub to contain any or all options
 -- --rule-to-*: use whole soid arg as suffix to rule and len identifiers; make static
 -- stream: change tcp idle timeout to 3600 to match 2.X nominal timeout
@@ -581,7 +802,8 @@
 -- build: fixed issues on OSX
 -- catch: update to Catch v1.10.0
 -- cd_icmp6: fix encoded cksum calculation
--- cd_pbb: initial version of codec for 802.1ah; thanks to jan hugo prins <jhp@jhprins.org> for reporting the issue
+-- cd_pbb: initial version of codec for 802.1ah; thanks to jan hugo prins <jhp@jhprins.org> for
+   reporting the issue
 -- cd_pflog: fix comments; thanks to Markus Lude <markus.lude@gmx.de> for the 2X patch
 -- content: fix relative loop condition
 -- control: delete the old binder while reloading inspector
@@ -596,11 +818,14 @@
 -- doc: add POP, IMAP and SMTP to user manual features
 -- doc: add port scan feature
 -- flow key: support associating router solicit/reply packets to a single session
--- http_inspect: HTTP headers no longer avoid detection when message unexpectedly ends after status line or headers
+-- http_inspect: HTTP headers no longer avoid detection when message unexpectedly ends after
+   status line or headers
 -- http_inspect: add random increment to message body division points
 -- http_inspect: added http_raw_buffer rule option
--- http_inspect: create message sections with body data that has been dechunked and unzipped but not otherwise nortmalized
--- http_inspect: handle borked reassembly gracefully; thanks to João Soares <joaopsys@gmail.com> for reporting the issue
+-- http_inspect: create message sections with body data that has been dechunked and unzipped but
+   not otherwise nortmalized
+-- http_inspect: handle borked reassembly gracefully;
+   thanks to João Soares <joaopsys@gmail.com> for reporting the issue
 -- http_inspect: support for u2 extra data logging
 -- http_inspect: test tool improvements
 -- http_inspect: true IP enhancements

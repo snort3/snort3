@@ -509,7 +509,7 @@ static void help_args(const char* /*pfx*/, const char* /*val*/)
                 else
                     std::cout << "\n" << std::setw(name_field_len) << " ";
 
-                std::cout << std::left << Markup::escape(help_str.substr(0, len));
+                std::cout << std::left << help_str.substr(0, len);
 
                 if (len < help_str.size())
                     help_str = help_str.substr(len + 1);

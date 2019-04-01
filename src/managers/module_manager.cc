@@ -201,16 +201,16 @@ static DumpFormat dump_fmt = DF_STD;
 static void dump_field_std(const string& key, const Parameter* p)
 {
     cout << Markup::item();
-    cout << Markup::escape(p->get_type());
+    cout << p->get_type();
     cout << " " << Markup::emphasis(Markup::escape(key));
 
     if ( p->deflt )
-        cout << " = " << Markup::escape(p->deflt);
+        cout << " = " << p->deflt;
 
     cout << ": " << p->help;
 
     if ( const char* r = p->get_range() )
-        cout << " { " << Markup::escape(r) << " }";
+        cout << " { " << r << " }";
 
     cout << endl;
 }
@@ -222,14 +222,14 @@ static void dump_field_tab(const string& key, const Parameter* p)
     cout << "\t" << Markup::emphasis(Markup::escape(key));
 
     if ( p->deflt )
-        cout << "\t" << Markup::escape(p->deflt);
+        cout << "\t" << p->deflt;
     else
         cout << "\t";
 
     cout << "\t" << p->help;
 
     if ( const char* r = p->get_range() )
-        cout << "\t" << Markup::escape(r);
+        cout << "\t" << r;
     else
         cout << "\t";
 
@@ -1027,10 +1027,10 @@ void ModuleManager::show_module(const char* name)
         if ( strcmp(m->get_name(), name) )
             continue;
 
-        cout << endl << Markup::head(3) << Markup::escape(name) << endl << endl;
+        cout << endl << Markup::head(3) << name << endl << endl;
 
         if ( const char* h = m->get_help() )
-            cout << endl << "What: " << Markup::escape(h) << endl;
+            cout << endl << "What: " << h << endl;
 
         cout << endl << "Type: "  << mod_type(p->api) << endl;
         cout << endl << "Usage: "  << mod_use(m->get_usage()) << endl;
@@ -1171,11 +1171,11 @@ void ModuleManager::show_commands(const char* pfx, bool exact)
         {
             cout << Markup::item();
             cout << Markup::emphasis_on();
-            cout << Markup::escape(p->mod->get_name());
-            cout << "." << Markup::escape(c->name);
+            cout << p->mod->get_name();
+            cout << "." << c->name;
             cout << Markup::emphasis_off();
             cout << c->get_arg_list();
-            cout << ": " << Markup::escape(c->help);
+            cout << ": " << c->help;
             cout << endl;
             c++;
         }
@@ -1211,7 +1211,7 @@ void ModuleManager::show_gids(const char* pfx, bool exact)
             cout << Markup::emphasis_on();
             cout << gid;
             cout << Markup::emphasis_off();
-            cout << ": " << Markup::escape(m->get_name());
+            cout << ": " << m->get_name();
             cout << endl;
         }
         c++;
@@ -1255,11 +1255,11 @@ void ModuleManager::show_pegs(const char* pfx, bool exact)
         {
             cout << Markup::item();
             cout << Markup::emphasis_on();
-            cout << Markup::escape(p->mod->get_name());
-            cout << "." << Markup::escape(pegs->name);
+            cout << p->mod->get_name();
+            cout << "." << pegs->name;
             cout << Markup::emphasis_off();
-            cout << ": " << Markup::escape(pegs->help);
-            cout << Markup::escape(peg_op(pegs->type));
+            cout << ": " << pegs->help;
+            cout << peg_op(pegs->type);
             cout << endl;
             ++pegs;
         }
@@ -1294,7 +1294,7 @@ void ModuleManager::show_rules(const char* pfx, bool exact)
             cout << gid << ":" << r->sid;
             cout << Markup::emphasis_off();
             cout << " (" << m->get_name() << ")";
-            cout << " " << Markup::escape(r->msg);
+            cout << " " << r->msg;
             cout << endl;
             r++;
         }

@@ -1,9 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.8" />
+<meta name="generator" content="AsciiDoc 8.6.10" />
 <title>Snort 3 User Manual</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -94,7 +95,9 @@ ul > li > * { color: black; }
   padding: 0;
   margin: 0;
 }
-
+pre {
+  white-space: pre-wrap;
+}
 
 #author {
   color: #527bbd;
@@ -223,7 +226,7 @@ div.exampleblock > div.content {
 }
 
 div.imageblock div.content { padding-left: 0; }
-span.image img { border-style: none; }
+span.image img { border-style: none; vertical-align: text-bottom; }
 a.image:visited { color: white; }
 
 dl {
@@ -779,10 +782,10 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0 (Build 250) from 2.9.11
+o"  )~   Version 3.0.0 (Build 251) from 2.9.11
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
-         Copyright (C) 2014-2018 Cisco and/or its affiliates. All rights reserved.
+         Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
          Copyright (C) 1998-2013 Sourcefire, Inc., et al.</code></pre>
 </div></div>
 <div id="toc">
@@ -2125,7 +2128,7 @@ lzma &gt;= 5.1.2 from <a href="http://tukaani.org/xz/">http://tukaani.org/xz/</a
 </li>
 <li>
 <p>
-safec from <a href="https://sourceforge.net/projects/safeclib/">https://sourceforge.net/projects/safeclib/</a> for runtime bounds
+safec from <a href="https://github.com/rurban/safeclib/">https://github.com/rurban/safeclib/</a> for runtime bounds
   checks on certain legacy C-library calls
 </p>
 </li>
@@ -3686,7 +3689,7 @@ representative byte strings to their binary equivalent and testing them.</p></di
 <div class="paragraph"><p>Snort uses the C operators for each of these operators. If the &amp;
 operator is used, then it would be the same as using</p></div>
 <div class="listingblock">
-<div class="content"><!-- Generator: GNU source-highlight 3.1.8
+<div class="content"><!-- Generator: GNU source-highlight
 by Lorenzo Bettini
 http://www.lorenzobettini.it
 http://www.gnu.org/software/src-highlite -->
@@ -3694,7 +3697,7 @@ http://www.gnu.org/software/src-highlite -->
 <div class="paragraph"><p><em>!</em> operator negates the results from the base check. <em>!&lt;oper&gt;</em> is
 considered as</p></div>
 <div class="listingblock">
-<div class="content"><!-- Generator: GNU source-highlight 3.1.8
+<div class="content"><!-- Generator: GNU source-highlight
 by Lorenzo Bettini
 http://www.lorenzobettini.it
 http://www.gnu.org/software/src-highlite -->
@@ -7070,11 +7073,6 @@ bool <strong>alerts.alert_with_interface_name</strong> = false: include interfac
 </li>
 <li>
 <p>
-bool <strong>alerts.default_rule_state</strong> = true: enable or disable ips rules
-</p>
-</li>
-<li>
-<p>
 int <strong>alerts.detection_filter_memcap</strong> = 1048576: set available MB of memory for detection_filters { 0:max32 }
 </p>
 </li>
@@ -7148,17 +7146,17 @@ int <strong>attribute_table.max_metadata_services</strong> = 8: maximum number o
 <div class="ulist"><ul>
 <li>
 <p>
-string <strong>classifications[].name</strong>: name used with classtype rule option
+string <strong><code>classifications[].name</code></strong>: name used with classtype rule option
 </p>
 </li>
 <li>
 <p>
-int <strong>classifications[].priority</strong> = 1: default priority for class { 0:max32 }
+int <strong><code>classifications[].priority</code></strong> = 1: default priority for class { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-string <strong>classifications[].text</strong>: description of class
+string <strong><code>classifications[].text</code></strong>: description of class
 </p>
 </li>
 </ul></div>
@@ -7172,7 +7170,7 @@ string <strong>classifications[].text</strong>: description of class
 <div class="ulist"><ul>
 <li>
 <p>
-string <strong>daq.module_dirs[].str</strong>: string parameter
+string <strong><code>daq.module_dirs[].str</code></strong>: string parameter
 </p>
 </li>
 <li>
@@ -7187,22 +7185,22 @@ string <strong>daq.module</strong>: DAQ module to use
 </li>
 <li>
 <p>
-string <strong>daq.variables[].str</strong>: string parameter
+string <strong><code>daq.variables[].str</code></strong>: string parameter
 </p>
 </li>
 <li>
 <p>
-int <strong>daq.instances[].id</strong>: instance ID (required) { 0:max32 }
+int <strong><code>daq.instances[].id</code></strong>: instance ID (required) { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-string <strong>daq.instances[].input_spec</strong>: input specification
+string <strong><code>daq.instances[].input_spec</code></strong>: input specification
 </p>
 </li>
 <li>
 <p>
-string <strong>daq.instances[].variables[].str</strong>: string parameter
+string <strong><code>daq.instances[].variables[].str</code></strong>: string parameter
 </p>
 </li>
 <li>
@@ -7378,6 +7376,16 @@ int <strong>detection.asn1</strong> = 0: maximum decode nodes { 0:65535 }
 </li>
 <li>
 <p>
+bool <strong>detection.global_default_rule_state</strong> = true: enable or disable rules by default (overridden by ips policy settings)
+</p>
+</li>
+<li>
+<p>
+bool <strong>detection.global_rule_state</strong> = false: apply rule_state against all policies
+</p>
+</li>
+<li>
+<p>
 int <strong>detection.offload_limit</strong> = 99999: minimum sizeof PDU to offload fast pattern search (defaults to disabled) { 0:max32 }
 </p>
 </li>
@@ -7514,6 +7522,11 @@ int <strong>detection.trace</strong>: mask for enabling debug traces in module {
 <strong>detection.alert_limit</strong>: events previously triggered on same PDU (sum)
 </p>
 </li>
+<li>
+<p>
+<strong>detection.context_stalls</strong>: times processing stalled to wait for an available context (sum)
+</p>
+</li>
 </ul></div>
 </div>
 <div class="sect2">
@@ -7525,37 +7538,37 @@ int <strong>detection.trace</strong>: mask for enabling debug traces in module {
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>event_filter[].gid</strong> = 1: rule generator ID { 0:max32 }
+int <strong><code>event_filter[].gid</code></strong> = 1: rule generator ID { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>event_filter[].sid</strong> = 1: rule signature ID { 0:max32 }
+int <strong><code>event_filter[].sid</code></strong> = 1: rule signature ID { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-enum <strong>event_filter[].type</strong>: 1st count events | every count events | once after count events { limit | threshold | both }
+enum <strong><code>event_filter[].type</code></strong>: 1st count events | every count events | once after count events { limit | threshold | both }
 </p>
 </li>
 <li>
 <p>
-enum <strong>event_filter[].track</strong>: filter only matching source or destination addresses { by_src | by_dst }
+enum <strong><code>event_filter[].track</code></strong>: filter only matching source or destination addresses { by_src | by_dst }
 </p>
 </li>
 <li>
 <p>
-int <strong>event_filter[].count</strong> = 0: number of events in interval before tripping; -1 to disable { -1:max31 }
+int <strong><code>event_filter[].count</code></strong> = 0: number of events in interval before tripping; -1 to disable { -1:max31 }
 </p>
 </li>
 <li>
 <p>
-int <strong>event_filter[].seconds</strong> = 0: count interval { 0:max32 }
+int <strong><code>event_filter[].seconds</code></strong> = 0: count interval { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-string <strong>event_filter[].ip</strong>: restrict filter to these addresses according to track
+string <strong><code>event_filter[].ip</code></strong>: restrict filter to these addresses according to track
 </p>
 </li>
 </ul></div>
@@ -7640,7 +7653,7 @@ real <strong>high_availability.min_sync</strong> = 1.0: minimum interval between
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>host_cache[].size</strong>: size of host cache { 1:max32 }
+int <strong><code>host_cache[].size</code></strong>: size of host cache { 1:max32 }
 </p>
 </li>
 </ul></div>
@@ -7692,32 +7705,32 @@ int <strong>host_cache[].size</strong>: size of host cache { 1:max32 }
 <div class="ulist"><ul>
 <li>
 <p>
-addr <strong>host_tracker[].ip</strong> = 0.0.0.0/32: hosts address / cidr
+addr <strong><code>host_tracker[].ip</code></strong> = 0.0.0.0/32: hosts address / cidr
 </p>
 </li>
 <li>
 <p>
-enum <strong>host_tracker[].frag_policy</strong>: defragmentation policy { first | linux | bsd | bsd_right | last | windows | solaris }
+enum <strong><code>host_tracker[].frag_policy</code></strong>: defragmentation policy { first | linux | bsd | bsd_right | last | windows | solaris }
 </p>
 </li>
 <li>
 <p>
-enum <strong>host_tracker[].tcp_policy</strong>: TCP reassembly policy { first | last | linux | old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | windows | win_2003 | vista | proxy }
+enum <strong><code>host_tracker[].tcp_policy</code></strong>: TCP reassembly policy { first | last | linux | old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | windows | win_2003 | vista | proxy }
 </p>
 </li>
 <li>
 <p>
-string <strong>host_tracker[].services[].name</strong>: service identifier
+string <strong><code>host_tracker[].services[].name</code></strong>: service identifier
 </p>
 </li>
 <li>
 <p>
-enum <strong>host_tracker[].services[].proto</strong> = tcp: IP protocol { tcp | udp }
+enum <strong><code>host_tracker[].services[].proto</code></strong> = tcp: IP protocol { tcp | udp }
 </p>
 </li>
 <li>
 <p>
-port <strong>host_tracker[].services[].port</strong>: port number
+port <strong><code>host_tracker[].services[].port</code></strong>: port number
 </p>
 </li>
 </ul></div>
@@ -7749,32 +7762,32 @@ port <strong>host_tracker[].services[].port</strong>: port number
 <div class="ulist"><ul>
 <li>
 <p>
-addr <strong>hosts[].ip</strong> = 0.0.0.0/32: hosts address / CIDR
+addr <strong><code>hosts[].ip</code></strong> = 0.0.0.0/32: hosts address / CIDR
 </p>
 </li>
 <li>
 <p>
-enum <strong>hosts[].frag_policy</strong>: defragmentation policy { first | linux | bsd | bsd_right | last | windows | solaris }
+enum <strong><code>hosts[].frag_policy</code></strong>: defragmentation policy { first | linux | bsd | bsd_right | last | windows | solaris }
 </p>
 </li>
 <li>
 <p>
-enum <strong>hosts[].tcp_policy</strong>: TCP reassembly policy { first | last | linux | old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | windows | win_2003 | vista | proxy }
+enum <strong><code>hosts[].tcp_policy</code></strong>: TCP reassembly policy { first | last | linux | old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | windows | win_2003 | vista | proxy }
 </p>
 </li>
 <li>
 <p>
-string <strong>hosts[].services[].name</strong>: service identifier
+string <strong><code>hosts[].services[].name</code></strong>: service identifier
 </p>
 </li>
 <li>
 <p>
-enum <strong>hosts[].services[].proto</strong> = tcp: IP protocol { tcp | udp }
+enum <strong><code>hosts[].services[].proto</code></strong> = tcp: IP protocol { tcp | udp }
 </p>
 </li>
 <li>
 <p>
-port <strong>hosts[].services[].port</strong>: port number
+port <strong><code>hosts[].services[].port</code></strong>: port number
 </p>
 </li>
 </ul></div>
@@ -7812,6 +7825,11 @@ enum <strong>inspection.mode</strong> = inline-test: set policy mode { inline | 
 <div class="ulist"><ul>
 <li>
 <p>
+enum <strong>ips.default_rule_state</strong> = inherit: enable or disable ips rules { false | true | inherit }
+</p>
+</li>
+<li>
+<p>
 bool <strong>ips.enable_builtin_rules</strong> = false: enable events from builtin rules w/o stubs
 </p>
 </li>
@@ -7833,6 +7851,11 @@ enum <strong>ips.mode</strong>: set policy mode { tap | inline | inline-test }
 <li>
 <p>
 string <strong>ips.rules</strong>: snort rules and includes
+</p>
+</li>
+<li>
+<p>
+bool <strong>ips.obfuscate_pii</strong> = false: mask all but the last 4 characters of credit card and social security numbers
 </p>
 </li>
 <li>
@@ -7961,12 +7984,50 @@ int <strong>memory.cap</strong> = 0: set the per-packet-thread cap on memory (by
 </li>
 <li>
 <p>
-bool <strong>memory.soft</strong> = false: always succeed in allocating memory, even if above the cap
+int <strong>memory.threshold</strong> = 0: set the per-packet-thread threshold for preemptive cleanup actions (percent, 0 to disable) { 0:100 }
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>memory.allocations</strong>: total number of allocations (now)
 </p>
 </li>
 <li>
 <p>
-int <strong>memory.threshold</strong> = 0: set the per-packet-thread threshold for preemptive cleanup actions (percent, 0 to disable) { 0:100 }
+<strong>memory.deallocations</strong>: total number of deallocations (now)
+</p>
+</li>
+<li>
+<p>
+<strong>memory.allocated</strong>: total amount of memory allocated (now)
+</p>
+</li>
+<li>
+<p>
+<strong>memory.deallocated</strong>: total amount of memory allocated (now)
+</p>
+</li>
+<li>
+<p>
+<strong>memory.reap_attempts</strong>: attempts to reclaim memory (now)
+</p>
+</li>
+<li>
+<p>
+<strong>memory.reap_failures</strong>: failures to reclaim memory (now)
+</p>
+</li>
+<li>
+<p>
+<strong>memory.max_in_use</strong>: highest allocated - deallocated (max)
+</p>
+</li>
+<li>
+<p>
+<strong>memory.total_fudge</strong>: sum of all adjustments (now)
 </p>
 </li>
 </ul></div>
@@ -8064,16 +8125,6 @@ string <strong>output.logdir</strong> = .: where to put log files (same as -l)
 </li>
 <li>
 <p>
-bool <strong>output.obfuscate</strong> = false: obfuscate the logged IP addresses (same as -O)
-</p>
-</li>
-<li>
-<p>
-bool <strong>output.obfuscate_pii</strong> = false: mask all but the last 4 characters of credit card and social security numbers
-</p>
-</li>
-<li>
-<p>
 bool <strong>output.show_year</strong> = false: include year in timestamp in the alert and log files (same as -y)
 </p>
 </li>
@@ -8085,6 +8136,11 @@ int <strong>output.tagged_packet_limit</strong> = 256: maximum number of packets
 <li>
 <p>
 bool <strong>output.verbose</strong> = false: be verbose (same as -v)
+</p>
+</li>
+<li>
+<p>
+bool <strong>output.obfuscate</strong> = false: obfuscate the logged IP addresses (same as -O)
 </p>
 </li>
 <li>
@@ -8174,12 +8230,12 @@ string <strong>process.chroot</strong>: set chroot directory (same as -t)
 </li>
 <li>
 <p>
-string <strong>process.threads[].cpuset</strong>: pin the associated thread to this cpuset
+string <strong><code>process.threads[].cpuset</code></strong>: pin the associated thread to this cpuset
 </p>
 </li>
 <li>
 <p>
-int <strong>process.threads[].thread</strong> = 0: set cpu affinity for the &lt;cur_thread_num&gt; thread that runs { 0:65535 }
+int <strong><code>process.threads[].thread</code></strong> = 0: set cpu affinity for the &lt;cur_thread_num&gt; thread that runs { 0:65535 }
 </p>
 </li>
 <li>
@@ -8287,42 +8343,42 @@ enum <strong>profiler.rules.sort</strong> = total_time: sort by given field { no
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>rate_filter[].gid</strong> = 1: rule generator ID { 0:max32 }
+int <strong><code>rate_filter[].gid</code></strong> = 1: rule generator ID { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>rate_filter[].sid</strong> = 1: rule signature ID { 0:max32 }
+int <strong><code>rate_filter[].sid</code></strong> = 1: rule signature ID { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-enum <strong>rate_filter[].track</strong> = by_src: filter only matching source or destination addresses { by_src | by_dst | by_rule }
+enum <strong><code>rate_filter[].track</code></strong> = by_src: filter only matching source or destination addresses { by_src | by_dst | by_rule }
 </p>
 </li>
 <li>
 <p>
-int <strong>rate_filter[].count</strong> = 1: number of events in interval before tripping { 0:max32 }
+int <strong><code>rate_filter[].count</code></strong> = 1: number of events in interval before tripping { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>rate_filter[].seconds</strong> = 1: count interval { 0:max32 }
+int <strong><code>rate_filter[].seconds</code></strong> = 1: count interval { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-enum <strong>rate_filter[].new_action</strong> = alert: take this action on future hits until timeout { log | pass | alert | drop | block | reset }
+enum <strong><code>rate_filter[].new_action</code></strong> = alert: take this action on future hits until timeout { log | pass | alert | drop | block | reset }
 </p>
 </li>
 <li>
 <p>
-int <strong>rate_filter[].timeout</strong> = 1: count interval { 0:max32 }
+int <strong><code>rate_filter[].timeout</code></strong> = 1: count interval { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-string <strong>rate_filter[].apply_to</strong>: restrict filter to these addresses according to track
+string <strong><code>rate_filter[].apply_to</code></strong>: restrict filter to these addresses according to track
 </p>
 </li>
 </ul></div>
@@ -8336,36 +8392,31 @@ string <strong>rate_filter[].apply_to</strong>: restrict filter to these address
 <div class="ulist"><ul>
 <li>
 <p>
-string <strong>references[].name</strong>: name used with reference rule option
+string <strong><code>references[].name</code></strong>: name used with reference rule option
 </p>
 </li>
 <li>
 <p>
-string <strong>references[].url</strong>: where this reference is defined
+string <strong><code>references[].url</code></strong>: where this reference is defined
 </p>
 </li>
 </ul></div>
 </div>
 <div class="sect2">
 <h3 id="_rule_state">rule_state</h3>
-<div class="paragraph"><p>What: enable/disable specific IPS rules</p></div>
+<div class="paragraph"><p>What: enable/disable and set actions for specific IPS rules</p></div>
 <div class="paragraph"><p>Type: basic</p></div>
 <div class="paragraph"><p>Usage: detect</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>rule_state[].gid</strong> = 0: rule generator ID { 0:max32 }
+enum <strong><code>rule_state.([0-9]+):([0-9]+).action</code></strong> = inherit: apply action if rule matches or inherit from rule definition { log | pass | alert | drop | block | reset | inherit }
 </p>
 </li>
 <li>
 <p>
-int <strong>rule_state[].sid</strong> = 0: rule signature ID { 0:max32 }
-</p>
-</li>
-<li>
-<p>
-bool <strong>rule_state[].enable</strong> = true: enable or disable rule in all policies
+enum <strong><code>rule_state.([0-9]+):([0-9]+).enable</code></strong> = inherit: enable or disable rule in current ips policy or use default defined by ips policy { false | true | inherit }
 </p>
 </li>
 </ul></div>
@@ -8439,6 +8490,11 @@ dynamic <strong>search_engine.search_method</strong> = ac_bnfa: set fast pattern
 </li>
 <li>
 <p>
+dynamic <strong>search_engine.offload_search_method</strong>: set fast pattern offload algorithm - choose available search engine { ac_banded | ac_bnfa | ac_full | ac_sparse | ac_sparse_bands | ac_std | hyperscan | lowmem }
+</p>
+</li>
+<li>
+<p>
 bool <strong>search_engine.search_optimize</strong> = true: tweak state machine construction for better performance
 </p>
 </li>
@@ -8506,7 +8562,7 @@ bit_list <strong>side_channel.ports</strong>: side channel message port list { 6
 </li>
 <li>
 <p>
-string <strong>side_channel.connectors[].connector</strong>: connector handle
+string <strong><code>side_channel.connectors[].connector</code></strong>: connector handle
 </p>
 </li>
 <li>
@@ -9268,22 +9324,22 @@ int <strong>snort.trace</strong>: mask for enabling debug traces in module { 0:m
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>suppress[].gid</strong> = 0: rule generator ID { 0:max32 }
+int <strong><code>suppress[].gid</code></strong> = 0: rule generator ID { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>suppress[].sid</strong> = 0: rule signature ID { 0:max32 }
+int <strong><code>suppress[].sid</code></strong> = 0: rule signature ID { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-enum <strong>suppress[].track</strong>: suppress only matching source or destination addresses { by_src | by_dst }
+enum <strong><code>suppress[].track</code></strong>: suppress only matching source or destination addresses { by_src | by_dst }
 </p>
 </li>
 <li>
 <p>
-string <strong>suppress[].ip</strong>: restrict suppression to these addresses according to track
+string <strong><code>suppress[].ip</code></strong>: restrict suppression to these addresses according to track
 </p>
 </li>
 </ul></div>
@@ -10502,7 +10558,7 @@ protocols beyond basic decoding.</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>appid.memcap</strong> = 0: disregard - not implemented { 0:maxSZ }
+int <strong>appid.memcap</strong> = 1048576: max size of the service cache before we start pruning the cache { 1024:maxSZ }
 </p>
 </li>
 <li>
@@ -10512,7 +10568,7 @@ bool <strong>appid.log_stats</strong> = false: enable logging of appid statistic
 </li>
 <li>
 <p>
-int <strong>appid.app_stats_period</strong> = 300: time period for collecting and logging appid statistics { 0:max32 }
+int <strong>appid.app_stats_period</strong> = 300: time period for collecting and logging appid statistics { 1:max32 }
 </p>
 </li>
 <li>
@@ -10627,12 +10683,12 @@ int <strong>appid.trace</strong>: mask for enabling debug traces in module { 0:m
 <div class="ulist"><ul>
 <li>
 <p>
-ip4 <strong>arp_spoof.hosts[].ip</strong>: host ip address
+ip4 <strong><code>arp_spoof.hosts[].ip</code></strong>: host ip address
 </p>
 </li>
 <li>
 <p>
-mac <strong>arp_spoof.hosts[].mac</strong>: host mac address
+mac <strong><code>arp_spoof.hosts[].mac</code></strong>: host mac address
 </p>
 </li>
 </ul></div>
@@ -10714,112 +10770,117 @@ mac <strong>arp_spoof.hosts[].mac</strong>: host mac address
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>binder[].when.ips_policy_id</strong> = 0: unique ID for selection of this config by external logic { 0:max32 }
+int <strong><code>binder[].when.ips_policy_id</code></strong> = 0: unique ID for selection of this config by external logic { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-bit_list <strong>binder[].when.ifaces</strong>: list of interface indices { 255 }
+bit_list <strong><code>binder[].when.ifaces</code></strong>: list of interface indices { 255 }
 </p>
 </li>
 <li>
 <p>
-bit_list <strong>binder[].when.vlans</strong>: list of VLAN IDs { 4095 }
+bit_list <strong><code>binder[].when.vlans</code></strong>: list of VLAN IDs { 4095 }
 </p>
 </li>
 <li>
 <p>
-addr_list <strong>binder[].when.nets</strong>: list of networks
+addr_list <strong><code>binder[].when.nets</code></strong>: list of networks
 </p>
 </li>
 <li>
 <p>
-addr_list <strong>binder[].when.src_nets</strong>: list of source networks
+addr_list <strong><code>binder[].when.src_nets</code></strong>: list of source networks
 </p>
 </li>
 <li>
 <p>
-addr_list <strong>binder[].when.dst_nets</strong>: list of destination networks
+addr_list <strong><code>binder[].when.dst_nets</code></strong>: list of destination networks
 </p>
 </li>
 <li>
 <p>
-enum <strong>binder[].when.proto</strong>: protocol { any | ip | icmp | tcp | udp | user | file }
+enum <strong><code>binder[].when.proto</code></strong>: protocol { any | ip | icmp | tcp | udp | user | file }
 </p>
 </li>
 <li>
 <p>
-bit_list <strong>binder[].when.ports</strong>: list of ports { 65535 }
+bit_list <strong><code>binder[].when.ports</code></strong>: list of ports { 65535 }
 </p>
 </li>
 <li>
 <p>
-bit_list <strong>binder[].when.src_ports</strong>: list of source ports { 65535 }
+bit_list <strong><code>binder[].when.src_ports</code></strong>: list of source ports { 65535 }
 </p>
 </li>
 <li>
 <p>
-bit_list <strong>binder[].when.dst_ports</strong>: list of destination ports { 65535 }
+bit_list <strong><code>binder[].when.dst_ports</code></strong>: list of destination ports { 65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>binder[].when.src_zone</strong>: source zone { 0:max31 }
+bit_list <strong><code>binder[].when.zones</code></strong>: zones { 63 }
 </p>
 </li>
 <li>
 <p>
-int <strong>binder[].when.dst_zone</strong>: destination zone { 0:max31 }
+bit_list <strong><code>binder[].when.src_zone</code></strong>: source zone { 63 }
 </p>
 </li>
 <li>
 <p>
-enum <strong>binder[].when.role</strong> = any: use the given configuration on one or any end of a session { client | server | any }
+bit_list <strong><code>binder[].when.dst_zone</code></strong>: destination zone { 63 }
 </p>
 </li>
 <li>
 <p>
-string <strong>binder[].when.service</strong>: override default configuration
+enum <strong><code>binder[].when.role</code></strong> = any: use the given configuration on one or any end of a session { client | server | any }
 </p>
 </li>
 <li>
 <p>
-enum <strong>binder[].use.action</strong> = inspect: what to do with matching traffic { reset | block | allow | inspect }
+string <strong><code>binder[].when.service</code></strong>: override default configuration
 </p>
 </li>
 <li>
 <p>
-string <strong>binder[].use.file</strong>: use configuration in given file
+enum <strong><code>binder[].use.action</code></strong> = inspect: what to do with matching traffic { reset | block | allow | inspect }
 </p>
 </li>
 <li>
 <p>
-string <strong>binder[].use.inspection_policy</strong>: use inspection policy from given file
+string <strong><code>binder[].use.file</code></strong>: use configuration in given file
 </p>
 </li>
 <li>
 <p>
-string <strong>binder[].use.ips_policy</strong>: use ips policy from given file
+string <strong><code>binder[].use.inspection_policy</code></strong>: use inspection policy from given file
 </p>
 </li>
 <li>
 <p>
-string <strong>binder[].use.network_policy</strong>: use network policy from given file
+string <strong><code>binder[].use.ips_policy</code></strong>: use ips policy from given file
 </p>
 </li>
 <li>
 <p>
-string <strong>binder[].use.service</strong>: override automatic service identification
+string <strong><code>binder[].use.network_policy</code></strong>: use network policy from given file
 </p>
 </li>
 <li>
 <p>
-string <strong>binder[].use.type</strong>: select module for binding
+string <strong><code>binder[].use.service</code></strong>: override automatic service identification
 </p>
 </li>
 <li>
 <p>
-string <strong>binder[].use.name</strong>: symbol name (defaults to type)
+string <strong><code>binder[].use.type</code></strong>: select module for binding
+</p>
+</li>
+<li>
+<p>
+string <strong><code>binder[].use.name</code></strong>: symbol name (defaults to type)
 </p>
 </li>
 </ul></div>
@@ -10924,6 +10985,11 @@ int <strong>data_log.limit</strong> = 0: set maximum size in MB before rollover 
 <div class="paragraph"><p>Usage: inspect</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
+<li>
+<p>
+bool <strong>dce_smb.limit_alerts</strong> = true: limit DCE alert to at most one per signature per flow
+</p>
+</li>
 <li>
 <p>
 bool <strong>dce_smb.disable_defrag</strong> = false: disable DCE/RPC defragmentation
@@ -11426,6 +11492,11 @@ int <strong>dce_smb.trace</strong>: mask for enabling debug traces in module { 0
 <div class="ulist"><ul>
 <li>
 <p>
+bool <strong>dce_tcp.limit_alerts</strong> = true: limit DCE alert to at most one per signature per flow
+</p>
+</li>
+<li>
+<p>
 bool <strong>dce_tcp.disable_defrag</strong> = false: disable DCE/RPC defragmentation
 </p>
 </li>
@@ -11684,6 +11755,11 @@ enum <strong>dce_tcp.policy</strong> = WinXP: target based policy to use { Win20
 <div class="paragraph"><p>Usage: inspect</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
+<li>
+<p>
+bool <strong>dce_udp.limit_alerts</strong> = true: limit DCE alert to at most one per signature per flow
+</p>
+</li>
 <li>
 <p>
 bool <strong>dce_udp.disable_defrag</strong> = false: disable DCE/RPC defragmentation
@@ -12133,77 +12209,77 @@ int <strong>file_id.show_data_depth</strong> = 100: print this many octets { 0:m
 </li>
 <li>
 <p>
-int <strong>file_id.file_rules[].rev</strong> = 0: rule revision { 0:max32 }
+int <strong><code>file_id.file_rules[].rev</code></strong> = 0: rule revision { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-string <strong>file_id.file_rules[].msg</strong>: information about the file type
+string <strong><code>file_id.file_rules[].msg</code></strong>: information about the file type
 </p>
 </li>
 <li>
 <p>
-string <strong>file_id.file_rules[].type</strong>: file type name
+string <strong><code>file_id.file_rules[].type</code></strong>: file type name
 </p>
 </li>
 <li>
 <p>
-int <strong>file_id.file_rules[].id</strong> = 0: file type id { 0:max32 }
+int <strong><code>file_id.file_rules[].id</code></strong> = 0: file type id { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-string <strong>file_id.file_rules[].category</strong>: file type category
+string <strong><code>file_id.file_rules[].category</code></strong>: file type category
 </p>
 </li>
 <li>
 <p>
-string <strong>file_id.file_rules[].group</strong>: comma separated list of groups associated with file type
+string <strong><code>file_id.file_rules[].group</code></strong>: comma separated list of groups associated with file type
 </p>
 </li>
 <li>
 <p>
-string <strong>file_id.file_rules[].version</strong>: file type version
+string <strong><code>file_id.file_rules[].version</code></strong>: file type version
 </p>
 </li>
 <li>
 <p>
-string <strong>file_id.file_rules[].magic[].content</strong>: file magic content
+string <strong><code>file_id.file_rules[].magic[].content</code></strong>: file magic content
 </p>
 </li>
 <li>
 <p>
-int <strong>file_id.file_rules[].magic[].offset</strong> = 0: file magic offset { 0:max32 }
+int <strong><code>file_id.file_rules[].magic[].offset</code></strong> = 0: file magic offset { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>file_id.file_policy[].when.file_type_id</strong> = 0: unique ID for file type in file magic rule { 0:max32 }
+int <strong><code>file_id.file_policy[].when.file_type_id</code></strong> = 0: unique ID for file type in file magic rule { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-string <strong>file_id.file_policy[].when.sha256</strong>: SHA 256
+string <strong><code>file_id.file_policy[].when.sha256</code></strong>: SHA 256
 </p>
 </li>
 <li>
 <p>
-enum <strong>file_id.file_policy[].use.verdict</strong> = unknown: what to do with matching traffic { unknown | log | stop | block | reset  }
+enum <strong><code>file_id.file_policy[].use.verdict</code></strong> = unknown: what to do with matching traffic { unknown | log | stop | block | reset  }
 </p>
 </li>
 <li>
 <p>
-bool <strong>file_id.file_policy[].use.enable_file_type</strong> = false: true/false &#8594; enable/disable file type identification
+bool <strong><code>file_id.file_policy[].use.enable_file_type</code></strong> = false: true/false &#8594; enable/disable file type identification
 </p>
 </li>
 <li>
 <p>
-bool <strong>file_id.file_policy[].use.enable_file_signature</strong> = false: true/false &#8594; enable/disable file signature
+bool <strong><code>file_id.file_policy[].use.enable_file_signature</code></strong> = false: true/false &#8594; enable/disable file signature
 </p>
 </li>
 <li>
 <p>
-bool <strong>file_id.file_policy[].use.enable_file_capture</strong> = false: true/false &#8594; enable/disable file capture
+bool <strong><code>file_id.file_policy[].use.enable_file_capture</code></strong> = false: true/false &#8594; enable/disable file capture
 </p>
 </li>
 <li>
@@ -12287,17 +12363,17 @@ bool <strong>ftp_client.bounce</strong> = false: check for bounces
 </li>
 <li>
 <p>
-addr <strong>ftp_client.bounce_to[].address</strong> = 1.0.0.0/32: allowed IP address in CIDR format
+addr <strong><code>ftp_client.bounce_to[].address</code></strong> = 1.0.0.0/32: allowed IP address in CIDR format
 </p>
 </li>
 <li>
 <p>
-port <strong>ftp_client.bounce_to[].port</strong> = 20: allowed port
+port <strong><code>ftp_client.bounce_to[].port</code></strong> = 20: allowed port
 </p>
 </li>
 <li>
 <p>
-port <strong>ftp_client.bounce_to[].last_port</strong>: optional allowed range from port to last_port inclusive
+port <strong><code>ftp_client.bounce_to[].last_port</code></strong>: optional allowed range from port to last_port inclusive
 </p>
 </li>
 <li>
@@ -12360,12 +12436,12 @@ string <strong>ftp_server.data_xfer_cmds</strong>: check the formatting of the g
 </li>
 <li>
 <p>
-string <strong>ftp_server.directory_cmds[].dir_cmd</strong>: directory command
+string <strong><code>ftp_server.directory_cmds[].dir_cmd</code></strong>: directory command
 </p>
 </li>
 <li>
 <p>
-int <strong>ftp_server.directory_cmds[].rsp_code</strong> = 200: expected successful response code for command { 200:max32 }
+int <strong><code>ftp_server.directory_cmds[].rsp_code</code></strong> = 200: expected successful response code for command { 200:max32 }
 </p>
 </li>
 <li>
@@ -12395,17 +12471,17 @@ bool <strong>ftp_server.check_encrypted</strong> = false: check for end of encry
 </li>
 <li>
 <p>
-string <strong>ftp_server.cmd_validity[].command</strong>: command string
+string <strong><code>ftp_server.cmd_validity[].command</code></strong>: command string
 </p>
 </li>
 <li>
 <p>
-string <strong>ftp_server.cmd_validity[].format</strong>: format specification
+string <strong><code>ftp_server.cmd_validity[].format</code></strong>: format specification
 </p>
 </li>
 <li>
 <p>
-int <strong>ftp_server.cmd_validity[].length</strong> = 0: specify non-default maximum for command { 0:max32 }
+int <strong><code>ftp_server.cmd_validity[].length</code></strong> = 0: specify non-default maximum for command { 0:max32 }
 </p>
 </li>
 <li>
@@ -12520,32 +12596,32 @@ bool <strong>ftp_server.telnet_cmds</strong> = false: detect Telnet escape seque
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>gtp_inspect[].version</strong> = 2: GTP version { 0:2 }
+int <strong><code>gtp_inspect[].version</code></strong> = 2: GTP version { 0:2 }
 </p>
 </li>
 <li>
 <p>
-int <strong>gtp_inspect[].messages[].type</strong> = 0: message type code { 0:255 }
+int <strong><code>gtp_inspect[].messages[].type</code></strong> = 0: message type code { 0:255 }
 </p>
 </li>
 <li>
 <p>
-string <strong>gtp_inspect[].messages[].name</strong>: message name
+string <strong><code>gtp_inspect[].messages[].name</code></strong>: message name
 </p>
 </li>
 <li>
 <p>
-int <strong>gtp_inspect[].infos[].type</strong> = 0: information element type code { 0:255 }
+int <strong><code>gtp_inspect[].infos[].type</code></strong> = 0: information element type code { 0:255 }
 </p>
 </li>
 <li>
 <p>
-string <strong>gtp_inspect[].infos[].name</strong>: information element name
+string <strong><code>gtp_inspect[].infos[].name</code></strong>: information element name
 </p>
 </li>
 <li>
 <p>
-int <strong>gtp_inspect[].infos[].length</strong> = 0: information element type code { 0:255 }
+int <strong><code>gtp_inspect[].infos[].length</code></strong> = 0: information element type code { 0:255 }
 </p>
 </li>
 <li>
@@ -12666,6 +12742,11 @@ bool <strong>http_inspect.decompress_pdf</strong> = false: decompress pdf files 
 <li>
 <p>
 bool <strong>http_inspect.decompress_swf</strong> = false: decompress swf files in response bodies
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.decompress_zip</strong> = false: decompress zip files in response bodies
 </p>
 </li>
 <li>
@@ -13143,7 +13224,7 @@ bool <strong>http_inspect.simplify_path</strong> = true: reduce URI directory pa
 </li>
 <li>
 <p>
-<strong>119:229</strong> (http_inspect) PDF/SWF decompression of server response too big
+<strong>119:229</strong> (http_inspect) PDF/SWF/ZIP decompression of server response too big
 </p>
 </li>
 <li>
@@ -13375,6 +13456,21 @@ int <strong>imap.bitenc_decode_depth</strong> = 1460: non-Encoded MIME attachmen
 </li>
 <li>
 <p>
+bool <strong>imap.decompress_pdf</strong> = false: decompress pdf files in MIME attachments
+</p>
+</li>
+<li>
+<p>
+bool <strong>imap.decompress_swf</strong> = false: decompress swf files in MIME attachments
+</p>
+</li>
+<li>
+<p>
+bool <strong>imap.decompress_zip</strong> = false: decompress zip files in MIME attachments
+</p>
+</li>
+<li>
+<p>
 int <strong>imap.qp_decode_depth</strong> = 1460: quoted Printable decoding depth (-1 no limit) { -1:65535 }
 </p>
 </li>
@@ -13409,6 +13505,11 @@ int <strong>imap.uu_decode_depth</strong> = 1460: Unix-to-Unix decoding depth (-
 <li>
 <p>
 <strong>141:7</strong> (imap) Unix-to-Unix decoding failed
+</p>
+</li>
+<li>
+<p>
+<strong>141:8</strong> (imap) file decompression failed
 </p>
 </li>
 </ul></div>
@@ -13472,6 +13573,20 @@ int <strong>imap.uu_decode_depth</strong> = 1460: Unix-to-Unix decoding depth (-
 <li>
 <p>
 <strong>imap.non_encoded_bytes</strong>: total non-encoded extracted bytes (sum)
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_mem_test">mem_test</h3>
+<div class="paragraph"><p>What: for testing memory management</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Usage: inspect</p></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>mem_test.packets</strong>: total packets (sum)
 </p>
 </li>
 </ul></div>
@@ -14059,12 +14174,12 @@ enum <strong>perf_monitor.output</strong> = file: output location for stats { fi
 </li>
 <li>
 <p>
-string <strong>perf_monitor.modules[].name</strong>: name of the module
+string <strong><code>perf_monitor.modules[].name</code></strong>: name of the module
 </p>
 </li>
 <li>
 <p>
-string <strong>perf_monitor.modules[].pegs</strong>: list of statistics to track or empty for all counters
+string <strong><code>perf_monitor.modules[].pegs</code></strong>: list of statistics to track or empty for all counters
 </p>
 </li>
 <li>
@@ -14106,6 +14221,21 @@ int <strong>pop.bitenc_decode_depth</strong> = 1460: Non-Encoded MIME attachment
 </li>
 <li>
 <p>
+bool <strong>pop.decompress_pdf</strong> = false: decompress pdf files in MIME attachments
+</p>
+</li>
+<li>
+<p>
+bool <strong>pop.decompress_swf</strong> = false: decompress swf files in MIME attachments
+</p>
+</li>
+<li>
+<p>
+bool <strong>pop.decompress_zip</strong> = false: decompress zip files in MIME attachments
+</p>
+</li>
+<li>
+<p>
 int <strong>pop.qp_decode_depth</strong> = 1460: Quoted Printable decoding depth (-1 no limit) { -1:65535 }
 </p>
 </li>
@@ -14140,6 +14270,11 @@ int <strong>pop.uu_decode_depth</strong> = 1460: Unix-to-Unix decoding depth (-1
 <li>
 <p>
 <strong>142:7</strong> (pop) Unix-to-Unix decoding failed
+</p>
+</li>
+<li>
+<p>
+<strong>142:8</strong> (pop) file decompression failed
 </p>
 </li>
 </ul></div>
@@ -15235,12 +15370,12 @@ string <strong>sip.methods</strong> = invite cancel ack  bye register options: l
 <div class="ulist"><ul>
 <li>
 <p>
-string <strong>smtp.alt_max_command_line_len[].command</strong>: command string
+string <strong><code>smtp.alt_max_command_line_len[].command</code></strong>: command string
 </p>
 </li>
 <li>
 <p>
-int <strong>smtp.alt_max_command_line_len[].length</strong> = 0: specify non-default maximum for command { 0:max32 }
+int <strong><code>smtp.alt_max_command_line_len[].length</code></strong> = 0: specify non-default maximum for command { 0:max32 }
 </p>
 </li>
 <li>
@@ -15266,6 +15401,21 @@ int <strong>smtp.bitenc_decode_depth</strong> = 1460: depth used to extract the 
 <li>
 <p>
 string <strong>smtp.data_cmds</strong>: commands that initiate sending of data with an end of data delimiter
+</p>
+</li>
+<li>
+<p>
+bool <strong>smtp.decompress_pdf</strong> = false: decompress pdf files in MIME attachments
+</p>
+</li>
+<li>
+<p>
+bool <strong>smtp.decompress_swf</strong> = false: decompress swf files in MIME attachments
+</p>
+</li>
+<li>
+<p>
+bool <strong>smtp.decompress_zip</strong> = false: decompress zip files in MIME attachments
 </p>
 </li>
 <li>
@@ -15424,6 +15574,11 @@ enum <strong>smtp.xlink2state</strong> = alert: enable/disable xlink2state alert
 <li>
 <p>
 <strong>124:15</strong> (smtp) attempted authentication command buffer overflow
+</p>
+</li>
+<li>
+<p>
+<strong>124:16</strong> (smtp) file decompression failed
 </p>
 </li>
 </ul></div>
@@ -15745,6 +15900,11 @@ int <strong>stream.ip_cache.idle_timeout</strong> = 180: maximum inactive time b
 </li>
 <li>
 <p>
+int <strong>stream.ip_cache.cap_weight</strong> = 64: additional bytes to track per flow for better estimation against cap { 0:65535 }
+</p>
+</li>
+<li>
+<p>
 int <strong>stream.icmp_cache.max_sessions</strong> = 65536: maximum simultaneous sessions tracked before pruning { 2:max32 }
 </p>
 </li>
@@ -15756,6 +15916,11 @@ int <strong>stream.icmp_cache.pruning_timeout</strong> = 30: minimum inactive ti
 <li>
 <p>
 int <strong>stream.icmp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1:max32 }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.icmp_cache.cap_weight</strong> = 8: additional bytes to track per flow for better estimation against cap { 0:65535 }
 </p>
 </li>
 <li>
@@ -15775,6 +15940,11 @@ int <strong>stream.tcp_cache.idle_timeout</strong> = 3600: maximum inactive time
 </li>
 <li>
 <p>
+int <strong>stream.tcp_cache.cap_weight</strong> = 11500: additional bytes to track per flow for better estimation against cap { 0:65535 }
+</p>
+</li>
+<li>
+<p>
 int <strong>stream.udp_cache.max_sessions</strong> = 131072: maximum simultaneous sessions tracked before pruning { 2:max32 }
 </p>
 </li>
@@ -15786,6 +15956,11 @@ int <strong>stream.udp_cache.pruning_timeout</strong> = 30: minimum inactive tim
 <li>
 <p>
 int <strong>stream.udp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1:max32 }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.udp_cache.cap_weight</strong> = 128: additional bytes to track per flow for better estimation against cap { 0:65535 }
 </p>
 </li>
 <li>
@@ -15805,6 +15980,11 @@ int <strong>stream.user_cache.idle_timeout</strong> = 180: maximum inactive time
 </li>
 <li>
 <p>
+int <strong>stream.user_cache.cap_weight</strong> = 256: additional bytes to track per flow for better estimation against cap { 0:65535 }
+</p>
+</li>
+<li>
+<p>
 int <strong>stream.file_cache.max_sessions</strong> = 128: maximum simultaneous sessions tracked before pruning { 2:max32 }
 </p>
 </li>
@@ -15816,6 +15996,11 @@ int <strong>stream.file_cache.pruning_timeout</strong> = 30: minimum inactive ti
 <li>
 <p>
 int <strong>stream.file_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1:max32 }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.file_cache.cap_weight</strong> = 32: additional bytes to track per flow for better estimation against cap { 0:65535 }
 </p>
 </li>
 <li>
@@ -16444,6 +16629,11 @@ int <strong>stream_tcp.small_segments.maximum_size</strong> = 0: limit number of
 int <strong>stream_tcp.session_timeout</strong> = 30: session tracking timeout { 1:max31 }
 </p>
 </li>
+<li>
+<p>
+bool <strong>stream_tcp.track_only</strong> = false: disable reassembly if true
+</p>
+</li>
 </ul></div>
 <div class="paragraph"><p>Rules:</p></div>
 <div class="ulist"><ul>
@@ -16897,52 +17087,52 @@ bool <strong>telnet.normalize</strong> = false: eliminate escape sequences
 <div class="ulist"><ul>
 <li>
 <p>
-string <strong>wizard.hexes[].service</strong>: name of service
+string <strong><code>wizard.hexes[].service</code></strong>: name of service
 </p>
 </li>
 <li>
 <p>
-select <strong>wizard.hexes[].proto</strong> = tcp: protocol to scan { tcp | udp }
+select <strong><code>wizard.hexes[].proto</code></strong> = tcp: protocol to scan { tcp | udp }
 </p>
 </li>
 <li>
 <p>
-bool <strong>wizard.hexes[].client_first</strong> = true: which end initiates data transfer
+bool <strong><code>wizard.hexes[].client_first</code></strong> = true: which end initiates data transfer
 </p>
 </li>
 <li>
 <p>
-string <strong>wizard.hexes[].to_server[].hex</strong>: sequence of data with wild chars (?)
+string <strong><code>wizard.hexes[].to_server[].hex</code></strong>: sequence of data with wild chars (?)
 </p>
 </li>
 <li>
 <p>
-string <strong>wizard.hexes[].to_client[].hex</strong>: sequence of data with wild chars (?)
+string <strong><code>wizard.hexes[].to_client[].hex</code></strong>: sequence of data with wild chars (?)
 </p>
 </li>
 <li>
 <p>
-string <strong>wizard.spells[].service</strong>: name of service
+string <strong><code>wizard.spells[].service</code></strong>: name of service
 </p>
 </li>
 <li>
 <p>
-select <strong>wizard.spells[].proto</strong> = tcp: protocol to scan { tcp | udp }
+select <strong><code>wizard.spells[].proto</code></strong> = tcp: protocol to scan { tcp | udp }
 </p>
 </li>
 <li>
 <p>
-bool <strong>wizard.spells[].client_first</strong> = true: which end initiates data transfer
+bool <strong><code>wizard.spells[].client_first</code></strong> = true: which end initiates data transfer
 </p>
 </li>
 <li>
 <p>
-string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with wild cards (*)
+string <strong><code>wizard.spells[].to_server[].spell</code></strong>: sequence of data with wild cards (*)
 </p>
 </li>
 <li>
 <p>
-string <strong>wizard.spells[].to_client[].spell</strong>: sequence of data with wild cards (*)
+string <strong><code>wizard.spells[].to_client[].spell</code></strong>: sequence of data with wild cards (*)
 </p>
 </li>
 <li>
@@ -18457,7 +18647,7 @@ implied <strong>md5.relative</strong> = false: offset from cursor instead of sta
 <div class="ulist"><ul>
 <li>
 <p>
-string <strong>metadata.</strong>*: comma-separated list of arbitrary name value pairs
+string <strong><code>metadata.*</code></strong>: comma-separated list of arbitrary name value pairs
 </p>
 </li>
 </ul></div>
@@ -18762,7 +18952,7 @@ interval <strong>seq.~range</strong>: check if TCP sequence number is in given r
 <div class="ulist"><ul>
 <li>
 <p>
-string <strong>service.</strong>*: one or more comma-separated service names
+string <strong><code>service.*</code></strong>: one or more comma-separated service names
 </p>
 </li>
 </ul></div>
@@ -18874,7 +19064,7 @@ int <strong>sid.~</strong>: signature id { 1:max32 }
 <div class="ulist"><ul>
 <li>
 <p>
-string <strong>sip_method.*method</strong>: sip method
+string <strong><code>sip_method.*method</code></strong>: sip method
 </p>
 </li>
 </ul></div>
@@ -18888,7 +19078,7 @@ string <strong>sip_method.*method</strong>: sip method
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>sip_stat_code.*code</strong>: status code { 1:999 }
+int <strong><code>sip_stat_code.*code</code></strong>: status code { 1:999 }
 </p>
 </li>
 </ul></div>
@@ -19352,12 +19542,12 @@ string <strong>alert_sfsocket.file</strong>: name of unix socket file
 </li>
 <li>
 <p>
-int <strong>alert_sfsocket.rules[].gid</strong> = 1: rule generator ID { 1:max32 }
+int <strong><code>alert_sfsocket.rules[].gid</code></strong> = 1: rule generator ID { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>alert_sfsocket.rules[].sid</strong> = 1: rule signature ID { 1:max32 }
+int <strong><code>alert_sfsocket.rules[].sid</code></strong> = 1: rule signature ID { 1:max32 }
 </p>
 </li>
 </ul></div>
@@ -19385,6 +19575,12 @@ multi <strong>alert_syslog.options</strong>: used to open the syslog connection 
 </p>
 </li>
 </ul></div>
+</div>
+<div class="sect2">
+<h3 id="_alert_talos">alert_talos</h3>
+<div class="paragraph"><p>What: output event in Talos alert format</p></div>
+<div class="paragraph"><p>Type: logger</p></div>
+<div class="paragraph"><p>Usage: context</p></div>
 </div>
 <div class="sect2">
 <h3 id="_alert_unixsock">alert_unixsock</h3>
@@ -20948,6 +21144,13 @@ options into a Snort++ configuration file</p></div>
                     Same as <em>-p</em>. if &lt;snort_conf&gt; file contains any
                     &lt;include_file&gt; or &lt;policy_file&gt; (i.e. <em>include
                     path/to/conf/other_conf</em>), do NOT parse those files
+</p>
+</li>
+<li>
+<p>
+<strong>--dont-convert-max-sessions</strong>
+                    do not convert max_tcp, max_udp, max_icmp, max_ip to
+                    max_session
 </p>
 </li>
 <li>
@@ -23939,11 +24142,6 @@ bool <strong>alerts.alert_with_interface_name</strong> = false: include interfac
 </li>
 <li>
 <p>
-bool <strong>alerts.default_rule_state</strong> = true: enable or disable ips rules
-</p>
-</li>
-<li>
-<p>
 int <strong>alerts.detection_filter_memcap</strong> = 1048576: set available MB of memory for detection_filters { 0:max32 }
 </p>
 </li>
@@ -23959,12 +24157,12 @@ string <strong>alert_sfsocket.file</strong>: name of unix socket file
 </li>
 <li>
 <p>
-int <strong>alert_sfsocket.rules[].gid</strong> = 1: rule generator ID { 1:max32 }
+int <strong><code>alert_sfsocket.rules[].gid</code></strong> = 1: rule generator ID { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>alert_sfsocket.rules[].sid</strong> = 1: rule signature ID { 1:max32 }
+int <strong><code>alert_sfsocket.rules[].sid</code></strong> = 1: rule signature ID { 1:max32 }
 </p>
 </li>
 <li>
@@ -24019,7 +24217,7 @@ string <strong>appid.app_detector_dir</strong>: directory to load appid detector
 </li>
 <li>
 <p>
-int <strong>appid.app_stats_period</strong> = 300: time period for collecting and logging appid statistics { 0:max32 }
+int <strong>appid.app_stats_period</strong> = 300: time period for collecting and logging appid statistics { 1:max32 }
 </p>
 </li>
 <li>
@@ -24059,7 +24257,7 @@ bool <strong>appid.log_stats</strong> = false: enable logging of appid statistic
 </li>
 <li>
 <p>
-int <strong>appid.memcap</strong> = 0: disregard - not implemented { 0:maxSZ }
+int <strong>appid.memcap</strong> = 1048576: max size of the service cache before we start pruning the cache { 1024:maxSZ }
 </p>
 </li>
 <li>
@@ -24094,12 +24292,12 @@ int <strong>appid.trace</strong>: mask for enabling debug traces in module { 0:m
 </li>
 <li>
 <p>
-ip4 <strong>arp_spoof.hosts[].ip</strong>: host ip address
+ip4 <strong><code>arp_spoof.hosts[].ip</code></strong>: host ip address
 </p>
 </li>
 <li>
 <p>
-mac <strong>arp_spoof.hosts[].mac</strong>: host mac address
+mac <strong><code>arp_spoof.hosts[].mac</code></strong>: host mac address
 </p>
 </li>
 <li>
@@ -24164,112 +24362,117 @@ implied <strong>base64_decode.relative</strong>: apply offset to cursor instead 
 </li>
 <li>
 <p>
-enum <strong>binder[].use.action</strong> = inspect: what to do with matching traffic { reset | block | allow | inspect }
+enum <strong><code>binder[].use.action</code></strong> = inspect: what to do with matching traffic { reset | block | allow | inspect }
 </p>
 </li>
 <li>
 <p>
-string <strong>binder[].use.file</strong>: use configuration in given file
+string <strong><code>binder[].use.file</code></strong>: use configuration in given file
 </p>
 </li>
 <li>
 <p>
-string <strong>binder[].use.inspection_policy</strong>: use inspection policy from given file
+string <strong><code>binder[].use.inspection_policy</code></strong>: use inspection policy from given file
 </p>
 </li>
 <li>
 <p>
-string <strong>binder[].use.ips_policy</strong>: use ips policy from given file
+string <strong><code>binder[].use.ips_policy</code></strong>: use ips policy from given file
 </p>
 </li>
 <li>
 <p>
-string <strong>binder[].use.name</strong>: symbol name (defaults to type)
+string <strong><code>binder[].use.name</code></strong>: symbol name (defaults to type)
 </p>
 </li>
 <li>
 <p>
-string <strong>binder[].use.network_policy</strong>: use network policy from given file
+string <strong><code>binder[].use.network_policy</code></strong>: use network policy from given file
 </p>
 </li>
 <li>
 <p>
-string <strong>binder[].use.service</strong>: override automatic service identification
+string <strong><code>binder[].use.service</code></strong>: override automatic service identification
 </p>
 </li>
 <li>
 <p>
-string <strong>binder[].use.type</strong>: select module for binding
+string <strong><code>binder[].use.type</code></strong>: select module for binding
 </p>
 </li>
 <li>
 <p>
-addr_list <strong>binder[].when.dst_nets</strong>: list of destination networks
+addr_list <strong><code>binder[].when.dst_nets</code></strong>: list of destination networks
 </p>
 </li>
 <li>
 <p>
-bit_list <strong>binder[].when.dst_ports</strong>: list of destination ports { 65535 }
+bit_list <strong><code>binder[].when.dst_ports</code></strong>: list of destination ports { 65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>binder[].when.dst_zone</strong>: destination zone { 0:max31 }
+bit_list <strong><code>binder[].when.dst_zone</code></strong>: destination zone { 63 }
 </p>
 </li>
 <li>
 <p>
-bit_list <strong>binder[].when.ifaces</strong>: list of interface indices { 255 }
+bit_list <strong><code>binder[].when.ifaces</code></strong>: list of interface indices { 255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>binder[].when.ips_policy_id</strong> = 0: unique ID for selection of this config by external logic { 0:max32 }
+int <strong><code>binder[].when.ips_policy_id</code></strong> = 0: unique ID for selection of this config by external logic { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-addr_list <strong>binder[].when.nets</strong>: list of networks
+addr_list <strong><code>binder[].when.nets</code></strong>: list of networks
 </p>
 </li>
 <li>
 <p>
-bit_list <strong>binder[].when.ports</strong>: list of ports { 65535 }
+bit_list <strong><code>binder[].when.ports</code></strong>: list of ports { 65535 }
 </p>
 </li>
 <li>
 <p>
-enum <strong>binder[].when.proto</strong>: protocol { any | ip | icmp | tcp | udp | user | file }
+enum <strong><code>binder[].when.proto</code></strong>: protocol { any | ip | icmp | tcp | udp | user | file }
 </p>
 </li>
 <li>
 <p>
-enum <strong>binder[].when.role</strong> = any: use the given configuration on one or any end of a session { client | server | any }
+enum <strong><code>binder[].when.role</code></strong> = any: use the given configuration on one or any end of a session { client | server | any }
 </p>
 </li>
 <li>
 <p>
-string <strong>binder[].when.service</strong>: override default configuration
+string <strong><code>binder[].when.service</code></strong>: override default configuration
 </p>
 </li>
 <li>
 <p>
-addr_list <strong>binder[].when.src_nets</strong>: list of source networks
+addr_list <strong><code>binder[].when.src_nets</code></strong>: list of source networks
 </p>
 </li>
 <li>
 <p>
-bit_list <strong>binder[].when.src_ports</strong>: list of source ports { 65535 }
+bit_list <strong><code>binder[].when.src_ports</code></strong>: list of source ports { 65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>binder[].when.src_zone</strong>: source zone { 0:max31 }
+bit_list <strong><code>binder[].when.src_zone</code></strong>: source zone { 63 }
 </p>
 </li>
 <li>
 <p>
-bit_list <strong>binder[].when.vlans</strong>: list of VLAN IDs { 4095 }
+bit_list <strong><code>binder[].when.vlans</code></strong>: list of VLAN IDs { 4095 }
+</p>
+</li>
+<li>
+<p>
+bit_list <strong><code>binder[].when.zones</code></strong>: zones { 63 }
 </p>
 </li>
 <li>
@@ -24544,17 +24747,17 @@ implied <strong>byte_test.string</strong>: convert from string
 </li>
 <li>
 <p>
-string <strong>classifications[].name</strong>: name used with classtype rule option
+string <strong><code>classifications[].name</code></strong>: name used with classtype rule option
 </p>
 </li>
 <li>
 <p>
-int <strong>classifications[].priority</strong> = 1: default priority for class { 0:max32 }
+int <strong><code>classifications[].priority</code></strong> = 1: default priority for class { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-string <strong>classifications[].text</strong>: description of class
+string <strong><code>classifications[].text</code></strong>: description of class
 </p>
 </li>
 <li>
@@ -24619,17 +24822,17 @@ string <strong>daq.input_spec</strong>: input specification
 </li>
 <li>
 <p>
-int <strong>daq.instances[].id</strong>: instance ID (required) { 0:max32 }
+int <strong><code>daq.instances[].id</code></strong>: instance ID (required) { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-string <strong>daq.instances[].input_spec</strong>: input specification
+string <strong><code>daq.instances[].input_spec</code></strong>: input specification
 </p>
 </li>
 <li>
 <p>
-string <strong>daq.instances[].variables[].str</strong>: string parameter
+string <strong><code>daq.instances[].variables[].str</code></strong>: string parameter
 </p>
 </li>
 <li>
@@ -24639,7 +24842,7 @@ string <strong>daq.module</strong>: DAQ module to use
 </li>
 <li>
 <p>
-string <strong>daq.module_dirs[].str</strong>: string parameter
+string <strong><code>daq.module_dirs[].str</code></strong>: string parameter
 </p>
 </li>
 <li>
@@ -24654,7 +24857,7 @@ int <strong>daq.snaplen</strong>: set snap length (same as -s) { 0:65535 }
 </li>
 <li>
 <p>
-string <strong>daq.variables[].str</strong>: string parameter
+string <strong><code>daq.variables[].str</code></strong>: string parameter
 </p>
 </li>
 <li>
@@ -24690,6 +24893,11 @@ string <strong>dce_opnum.~</strong>: match given dcerpc operation number, range 
 <li>
 <p>
 bool <strong>dce_smb.disable_defrag</strong> = false: disable DCE/RPC defragmentation
+</p>
+</li>
+<li>
+<p>
+bool <strong>dce_smb.limit_alerts</strong> = true: limit DCE alert to at most one per signature per flow
 </p>
 </li>
 <li>
@@ -24759,6 +24967,11 @@ bool <strong>dce_tcp.disable_defrag</strong> = false: disable DCE/RPC defragment
 </li>
 <li>
 <p>
+bool <strong>dce_tcp.limit_alerts</strong> = true: limit DCE alert to at most one per signature per flow
+</p>
+</li>
+<li>
+<p>
 int <strong>dce_tcp.max_frag_len</strong> = 65535: maximum fragment size for defragmentation { 1514:65535 }
 </p>
 </li>
@@ -24775,6 +24988,11 @@ int <strong>dce_tcp.reassemble_threshold</strong> = 0: minimum bytes received be
 <li>
 <p>
 bool <strong>dce_udp.disable_defrag</strong> = false: disable DCE/RPC defragmentation
+</p>
+</li>
+<li>
+<p>
+bool <strong>dce_udp.limit_alerts</strong> = true: limit DCE alert to at most one per signature per flow
 </p>
 </li>
 <li>
@@ -24815,6 +25033,16 @@ int <strong>detection_filter.seconds</strong>: length of interval to count hits 
 <li>
 <p>
 enum <strong>detection_filter.track</strong>: track hits by source or destination IP address { by_src | by_dst }
+</p>
+</li>
+<li>
+<p>
+bool <strong>detection.global_default_rule_state</strong> = true: enable or disable rules by default (overridden by ips policy settings)
+</p>
+</li>
+<li>
+<p>
+bool <strong>detection.global_rule_state</strong> = false: apply rule_state against all policies
 </p>
 </li>
 <li>
@@ -24904,37 +25132,37 @@ bool <strong>esp.decode_esp</strong> = false: enable for inspection of esp traff
 </li>
 <li>
 <p>
-int <strong>event_filter[].count</strong> = 0: number of events in interval before tripping; -1 to disable { -1:max31 }
+int <strong><code>event_filter[].count</code></strong> = 0: number of events in interval before tripping; -1 to disable { -1:max31 }
 </p>
 </li>
 <li>
 <p>
-int <strong>event_filter[].gid</strong> = 1: rule generator ID { 0:max32 }
+int <strong><code>event_filter[].gid</code></strong> = 1: rule generator ID { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-string <strong>event_filter[].ip</strong>: restrict filter to these addresses according to track
+string <strong><code>event_filter[].ip</code></strong>: restrict filter to these addresses according to track
 </p>
 </li>
 <li>
 <p>
-int <strong>event_filter[].seconds</strong> = 0: count interval { 0:max32 }
+int <strong><code>event_filter[].seconds</code></strong> = 0: count interval { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>event_filter[].sid</strong> = 1: rule signature ID { 0:max32 }
+int <strong><code>event_filter[].sid</code></strong> = 1: rule signature ID { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-enum <strong>event_filter[].track</strong>: filter only matching source or destination addresses { by_src | by_dst }
+enum <strong><code>event_filter[].track</code></strong>: filter only matching source or destination addresses { by_src | by_dst }
 </p>
 </li>
 <li>
 <p>
-enum <strong>event_filter[].type</strong>: 1st count events | every count events | once after count events { limit | threshold | both }
+enum <strong><code>event_filter[].type</code></strong>: 1st count events | every count events | once after count events { limit | threshold | both }
 </p>
 </li>
 <li>
@@ -25024,77 +25252,77 @@ bool <strong>file_id.enable_type</strong> = true: enable type ID
 </li>
 <li>
 <p>
-bool <strong>file_id.file_policy[].use.enable_file_capture</strong> = false: true/false &#8594; enable/disable file capture
+bool <strong><code>file_id.file_policy[].use.enable_file_capture</code></strong> = false: true/false &#8594; enable/disable file capture
 </p>
 </li>
 <li>
 <p>
-bool <strong>file_id.file_policy[].use.enable_file_signature</strong> = false: true/false &#8594; enable/disable file signature
+bool <strong><code>file_id.file_policy[].use.enable_file_signature</code></strong> = false: true/false &#8594; enable/disable file signature
 </p>
 </li>
 <li>
 <p>
-bool <strong>file_id.file_policy[].use.enable_file_type</strong> = false: true/false &#8594; enable/disable file type identification
+bool <strong><code>file_id.file_policy[].use.enable_file_type</code></strong> = false: true/false &#8594; enable/disable file type identification
 </p>
 </li>
 <li>
 <p>
-enum <strong>file_id.file_policy[].use.verdict</strong> = unknown: what to do with matching traffic { unknown | log | stop | block | reset  }
+enum <strong><code>file_id.file_policy[].use.verdict</code></strong> = unknown: what to do with matching traffic { unknown | log | stop | block | reset  }
 </p>
 </li>
 <li>
 <p>
-int <strong>file_id.file_policy[].when.file_type_id</strong> = 0: unique ID for file type in file magic rule { 0:max32 }
+int <strong><code>file_id.file_policy[].when.file_type_id</code></strong> = 0: unique ID for file type in file magic rule { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-string <strong>file_id.file_policy[].when.sha256</strong>: SHA 256
+string <strong><code>file_id.file_policy[].when.sha256</code></strong>: SHA 256
 </p>
 </li>
 <li>
 <p>
-string <strong>file_id.file_rules[].category</strong>: file type category
+string <strong><code>file_id.file_rules[].category</code></strong>: file type category
 </p>
 </li>
 <li>
 <p>
-string <strong>file_id.file_rules[].group</strong>: comma separated list of groups associated with file type
+string <strong><code>file_id.file_rules[].group</code></strong>: comma separated list of groups associated with file type
 </p>
 </li>
 <li>
 <p>
-int <strong>file_id.file_rules[].id</strong> = 0: file type id { 0:max32 }
+int <strong><code>file_id.file_rules[].id</code></strong> = 0: file type id { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-string <strong>file_id.file_rules[].magic[].content</strong>: file magic content
+string <strong><code>file_id.file_rules[].magic[].content</code></strong>: file magic content
 </p>
 </li>
 <li>
 <p>
-int <strong>file_id.file_rules[].magic[].offset</strong> = 0: file magic offset { 0:max32 }
+int <strong><code>file_id.file_rules[].magic[].offset</code></strong> = 0: file magic offset { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-string <strong>file_id.file_rules[].msg</strong>: information about the file type
+string <strong><code>file_id.file_rules[].msg</code></strong>: information about the file type
 </p>
 </li>
 <li>
 <p>
-int <strong>file_id.file_rules[].rev</strong> = 0: rule revision { 0:max32 }
+int <strong><code>file_id.file_rules[].rev</code></strong> = 0: rule revision { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-string <strong>file_id.file_rules[].type</strong>: file type name
+string <strong><code>file_id.file_rules[].type</code></strong>: file type name
 </p>
 </li>
 <li>
 <p>
-string <strong>file_id.file_rules[].version</strong>: file type version
+string <strong><code>file_id.file_rules[].version</code></strong>: file type version
 </p>
 </li>
 <li>
@@ -25254,17 +25482,17 @@ bool <strong>ftp_client.bounce</strong> = false: check for bounces
 </li>
 <li>
 <p>
-addr <strong>ftp_client.bounce_to[].address</strong> = 1.0.0.0/32: allowed IP address in CIDR format
+addr <strong><code>ftp_client.bounce_to[].address</code></strong> = 1.0.0.0/32: allowed IP address in CIDR format
 </p>
 </li>
 <li>
 <p>
-port <strong>ftp_client.bounce_to[].last_port</strong>: optional allowed range from port to last_port inclusive
+port <strong><code>ftp_client.bounce_to[].last_port</code></strong>: optional allowed range from port to last_port inclusive
 </p>
 </li>
 <li>
 <p>
-port <strong>ftp_client.bounce_to[].port</strong> = 20: allowed port
+port <strong><code>ftp_client.bounce_to[].port</code></strong> = 20: allowed port
 </p>
 </li>
 <li>
@@ -25294,17 +25522,17 @@ string <strong>ftp_server.chk_str_fmt</strong>: check the formatting of the give
 </li>
 <li>
 <p>
-string <strong>ftp_server.cmd_validity[].command</strong>: command string
+string <strong><code>ftp_server.cmd_validity[].command</code></strong>: command string
 </p>
 </li>
 <li>
 <p>
-string <strong>ftp_server.cmd_validity[].format</strong>: format specification
+string <strong><code>ftp_server.cmd_validity[].format</code></strong>: format specification
 </p>
 </li>
 <li>
 <p>
-int <strong>ftp_server.cmd_validity[].length</strong> = 0: specify non-default maximum for command { 0:max32 }
+int <strong><code>ftp_server.cmd_validity[].length</code></strong> = 0: specify non-default maximum for command { 0:max32 }
 </p>
 </li>
 <li>
@@ -25329,12 +25557,12 @@ int <strong>ftp_server.def_max_param_len</strong> = 100: default maximum length 
 </li>
 <li>
 <p>
-string <strong>ftp_server.directory_cmds[].dir_cmd</strong>: directory command
+string <strong><code>ftp_server.directory_cmds[].dir_cmd</code></strong>: directory command
 </p>
 </li>
 <li>
 <p>
-int <strong>ftp_server.directory_cmds[].rsp_code</strong> = 200: expected successful response code for command { 200:max32 }
+int <strong><code>ftp_server.directory_cmds[].rsp_code</code></strong> = 200: expected successful response code for command { 200:max32 }
 </p>
 </li>
 <li>
@@ -25399,27 +25627,27 @@ string <strong>gtp_info.~</strong>: info element to match
 </li>
 <li>
 <p>
-int <strong>gtp_inspect[].infos[].length</strong> = 0: information element type code { 0:255 }
+int <strong><code>gtp_inspect[].infos[].length</code></strong> = 0: information element type code { 0:255 }
 </p>
 </li>
 <li>
 <p>
-string <strong>gtp_inspect[].infos[].name</strong>: information element name
+string <strong><code>gtp_inspect[].infos[].name</code></strong>: information element name
 </p>
 </li>
 <li>
 <p>
-int <strong>gtp_inspect[].infos[].type</strong> = 0: information element type code { 0:255 }
+int <strong><code>gtp_inspect[].infos[].type</code></strong> = 0: information element type code { 0:255 }
 </p>
 </li>
 <li>
 <p>
-string <strong>gtp_inspect[].messages[].name</strong>: message name
+string <strong><code>gtp_inspect[].messages[].name</code></strong>: message name
 </p>
 </li>
 <li>
 <p>
-int <strong>gtp_inspect[].messages[].type</strong> = 0: message type code { 0:255 }
+int <strong><code>gtp_inspect[].messages[].type</code></strong> = 0: message type code { 0:255 }
 </p>
 </li>
 <li>
@@ -25429,7 +25657,7 @@ int <strong>gtp_inspect.trace</strong>: mask for enabling debug traces in module
 </li>
 <li>
 <p>
-int <strong>gtp_inspect[].version</strong> = 2: GTP version { 0:2 }
+int <strong><code>gtp_inspect[].version</code></strong> = 2: GTP version { 0:2 }
 </p>
 </li>
 <li>
@@ -25469,67 +25697,67 @@ bit_list <strong>high_availability.ports</strong>: side channel message port lis
 </li>
 <li>
 <p>
-int <strong>host_cache[].size</strong>: size of host cache { 1:max32 }
+int <strong><code>host_cache[].size</code></strong>: size of host cache { 1:max32 }
 </p>
 </li>
 <li>
 <p>
-enum <strong>hosts[].frag_policy</strong>: defragmentation policy { first | linux | bsd | bsd_right | last | windows | solaris }
+enum <strong><code>hosts[].frag_policy</code></strong>: defragmentation policy { first | linux | bsd | bsd_right | last | windows | solaris }
 </p>
 </li>
 <li>
 <p>
-addr <strong>hosts[].ip</strong> = 0.0.0.0/32: hosts address / CIDR
+addr <strong><code>hosts[].ip</code></strong> = 0.0.0.0/32: hosts address / CIDR
 </p>
 </li>
 <li>
 <p>
-string <strong>hosts[].services[].name</strong>: service identifier
+string <strong><code>hosts[].services[].name</code></strong>: service identifier
 </p>
 </li>
 <li>
 <p>
-port <strong>hosts[].services[].port</strong>: port number
+port <strong><code>hosts[].services[].port</code></strong>: port number
 </p>
 </li>
 <li>
 <p>
-enum <strong>hosts[].services[].proto</strong> = tcp: IP protocol { tcp | udp }
+enum <strong><code>hosts[].services[].proto</code></strong> = tcp: IP protocol { tcp | udp }
 </p>
 </li>
 <li>
 <p>
-enum <strong>hosts[].tcp_policy</strong>: TCP reassembly policy { first | last | linux | old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | windows | win_2003 | vista | proxy }
+enum <strong><code>hosts[].tcp_policy</code></strong>: TCP reassembly policy { first | last | linux | old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | windows | win_2003 | vista | proxy }
 </p>
 </li>
 <li>
 <p>
-enum <strong>host_tracker[].frag_policy</strong>: defragmentation policy { first | linux | bsd | bsd_right | last | windows | solaris }
+enum <strong><code>host_tracker[].frag_policy</code></strong>: defragmentation policy { first | linux | bsd | bsd_right | last | windows | solaris }
 </p>
 </li>
 <li>
 <p>
-addr <strong>host_tracker[].ip</strong> = 0.0.0.0/32: hosts address / cidr
+addr <strong><code>host_tracker[].ip</code></strong> = 0.0.0.0/32: hosts address / cidr
 </p>
 </li>
 <li>
 <p>
-string <strong>host_tracker[].services[].name</strong>: service identifier
+string <strong><code>host_tracker[].services[].name</code></strong>: service identifier
 </p>
 </li>
 <li>
 <p>
-port <strong>host_tracker[].services[].port</strong>: port number
+port <strong><code>host_tracker[].services[].port</code></strong>: port number
 </p>
 </li>
 <li>
 <p>
-enum <strong>host_tracker[].services[].proto</strong> = tcp: IP protocol { tcp | udp }
+enum <strong><code>host_tracker[].services[].proto</code></strong> = tcp: IP protocol { tcp | udp }
 </p>
 </li>
 <li>
 <p>
-enum <strong>host_tracker[].tcp_policy</strong>: TCP reassembly policy { first | last | linux | old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | windows | win_2003 | vista | proxy }
+enum <strong><code>host_tracker[].tcp_policy</code></strong>: TCP reassembly policy { first | last | linux | old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | windows | win_2003 | vista | proxy }
 </p>
 </li>
 <li>
@@ -25585,6 +25813,11 @@ bool <strong>http_inspect.decompress_pdf</strong> = false: decompress pdf files 
 <li>
 <p>
 bool <strong>http_inspect.decompress_swf</strong> = false: decompress swf files in response bodies
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.decompress_zip</strong> = false: decompress zip files in response bodies
 </p>
 </li>
 <li>
@@ -25924,6 +26157,21 @@ int <strong>imap.bitenc_decode_depth</strong> = 1460: non-Encoded MIME attachmen
 </li>
 <li>
 <p>
+bool <strong>imap.decompress_pdf</strong> = false: decompress pdf files in MIME attachments
+</p>
+</li>
+<li>
+<p>
+bool <strong>imap.decompress_swf</strong> = false: decompress swf files in MIME attachments
+</p>
+</li>
+<li>
+<p>
+bool <strong>imap.decompress_zip</strong> = false: decompress zip files in MIME attachments
+</p>
+</li>
+<li>
+<p>
 int <strong>imap.qp_decode_depth</strong> = 1460: quoted Printable decoding depth (-1 no limit) { -1:65535 }
 </p>
 </li>
@@ -25959,6 +26207,11 @@ string <strong>ip_proto.~proto</strong>: [!|&gt;|&lt;] name or number
 </li>
 <li>
 <p>
+enum <strong>ips.default_rule_state</strong> = inherit: enable or disable ips rules { false | true | inherit }
+</p>
+</li>
+<li>
+<p>
 bool <strong>ips.enable_builtin_rules</strong> = false: enable events from builtin rules w/o stubs
 </p>
 </li>
@@ -25975,6 +26228,11 @@ string <strong>ips.include</strong>: legacy snort rules and includes
 <li>
 <p>
 enum <strong>ips.mode</strong>: set policy mode { tap | inline | inline-test }
+</p>
+</li>
+<li>
+<p>
+bool <strong>ips.obfuscate_pii</strong> = false: mask all but the last 4 characters of credit card and social security numbers
 </p>
 </li>
 <li>
@@ -26104,17 +26362,12 @@ int <strong>memory.cap</strong> = 0: set the per-packet-thread cap on memory (by
 </li>
 <li>
 <p>
-bool <strong>memory.soft</strong> = false: always succeed in allocating memory, even if above the cap
-</p>
-</li>
-<li>
-<p>
 int <strong>memory.threshold</strong> = 0: set the per-packet-thread threshold for preemptive cleanup actions (percent, 0 to disable) { 0:100 }
 </p>
 </li>
 <li>
 <p>
-string <strong>metadata.</strong>*: comma-separated list of arbitrary name value pairs
+string <strong><code>metadata.*</code></strong>: comma-separated list of arbitrary name value pairs
 </p>
 </li>
 <li>
@@ -26364,11 +26617,6 @@ bool <strong>output.obfuscate</strong> = false: obfuscate the logged IP addresse
 </li>
 <li>
 <p>
-bool <strong>output.obfuscate_pii</strong> = false: mask all but the last 4 characters of credit card and social security numbers
-</p>
-</li>
-<li>
-<p>
 bool <strong>output.quiet</strong> = false: suppress non-fatal information (still show alerts, same as -q)
 </p>
 </li>
@@ -26484,12 +26732,12 @@ int <strong>perf_monitor.max_file_size</strong> = 1073741824: files will be roll
 </li>
 <li>
 <p>
-string <strong>perf_monitor.modules[].name</strong>: name of the module
+string <strong><code>perf_monitor.modules[].name</code></strong>: name of the module
 </p>
 </li>
 <li>
 <p>
-string <strong>perf_monitor.modules[].pegs</strong>: list of statistics to track or empty for all counters
+string <strong><code>perf_monitor.modules[].pegs</code></strong>: list of statistics to track or empty for all counters
 </p>
 </li>
 <li>
@@ -26525,6 +26773,21 @@ int <strong>pop.b64_decode_depth</strong> = 1460: base64 decoding depth (-1 no l
 <li>
 <p>
 int <strong>pop.bitenc_decode_depth</strong> = 1460: Non-Encoded MIME attachment extraction depth (-1 no limit) { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>pop.decompress_pdf</strong> = false: decompress pdf files in MIME attachments
+</p>
+</li>
+<li>
+<p>
+bool <strong>pop.decompress_swf</strong> = false: decompress swf files in MIME attachments
+</p>
+</li>
+<li>
+<p>
+bool <strong>pop.decompress_zip</strong> = false: decompress zip files in MIME attachments
 </p>
 </li>
 <li>
@@ -26889,12 +27152,12 @@ string <strong>process.set_uid</strong>: set user ID (same as -u)
 </li>
 <li>
 <p>
-string <strong>process.threads[].cpuset</strong>: pin the associated thread to this cpuset
+string <strong><code>process.threads[].cpuset</code></strong>: pin the associated thread to this cpuset
 </p>
 </li>
 <li>
 <p>
-int <strong>process.threads[].thread</strong> = 0: set cpu affinity for the &lt;cur_thread_num&gt; thread that runs { 0:65535 }
+int <strong><code>process.threads[].thread</code></strong> = 0: set cpu affinity for the &lt;cur_thread_num&gt; thread that runs { 0:65535 }
 </p>
 </li>
 <li>
@@ -26964,42 +27227,42 @@ enum <strong>profiler.rules.sort</strong> = total_time: sort by given field { no
 </li>
 <li>
 <p>
-string <strong>rate_filter[].apply_to</strong>: restrict filter to these addresses according to track
+string <strong><code>rate_filter[].apply_to</code></strong>: restrict filter to these addresses according to track
 </p>
 </li>
 <li>
 <p>
-int <strong>rate_filter[].count</strong> = 1: number of events in interval before tripping { 0:max32 }
+int <strong><code>rate_filter[].count</code></strong> = 1: number of events in interval before tripping { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>rate_filter[].gid</strong> = 1: rule generator ID { 0:max32 }
+int <strong><code>rate_filter[].gid</code></strong> = 1: rule generator ID { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-enum <strong>rate_filter[].new_action</strong> = alert: take this action on future hits until timeout { log | pass | alert | drop | block | reset }
+enum <strong><code>rate_filter[].new_action</code></strong> = alert: take this action on future hits until timeout { log | pass | alert | drop | block | reset }
 </p>
 </li>
 <li>
 <p>
-int <strong>rate_filter[].seconds</strong> = 1: count interval { 0:max32 }
+int <strong><code>rate_filter[].seconds</code></strong> = 1: count interval { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>rate_filter[].sid</strong> = 1: rule signature ID { 0:max32 }
+int <strong><code>rate_filter[].sid</code></strong> = 1: rule signature ID { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>rate_filter[].timeout</strong> = 1: count interval { 0:max32 }
+int <strong><code>rate_filter[].timeout</code></strong> = 1: count interval { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-enum <strong>rate_filter[].track</strong> = by_src: filter only matching source or destination addresses { by_src | by_dst | by_rule }
+enum <strong><code>rate_filter[].track</code></strong> = by_src: filter only matching source or destination addresses { by_src | by_dst | by_rule }
 </p>
 </li>
 <li>
@@ -27024,12 +27287,12 @@ string <strong>reference.~scheme</strong>: reference scheme
 </li>
 <li>
 <p>
-string <strong>references[].name</strong>: name used with reference rule option
+string <strong><code>references[].name</code></strong>: name used with reference rule option
 </p>
 </li>
 <li>
 <p>
-string <strong>references[].url</strong>: where this reference is defined
+string <strong><code>references[].url</code></strong>: where this reference is defined
 </p>
 </li>
 <li>
@@ -27154,17 +27417,12 @@ string <strong>rpc.~ver</strong>: version number or * for any
 </li>
 <li>
 <p>
-bool <strong>rule_state[].enable</strong> = true: enable or disable rule in all policies
+enum <strong><code>rule_state.([0-9]+):([0-9]+).action</code></strong> = inherit: apply action if rule matches or inherit from rule definition { log | pass | alert | drop | block | reset | inherit }
 </p>
 </li>
 <li>
 <p>
-int <strong>rule_state[].gid</strong> = 0: rule generator ID { 0:max32 }
-</p>
-</li>
-<li>
-<p>
-int <strong>rule_state[].sid</strong> = 0: rule signature ID { 0:max32 }
+enum <strong><code>rule_state.([0-9]+):([0-9]+).enable</code></strong> = inherit: enable or disable rule in current ips policy or use default defined by ips policy { false | true | inherit }
 </p>
 </li>
 <li>
@@ -27234,6 +27492,11 @@ int <strong>search_engine.max_queue_events</strong> = 5: maximum number of match
 </li>
 <li>
 <p>
+dynamic <strong>search_engine.offload_search_method</strong>: set fast pattern offload algorithm - choose available search engine { ac_banded | ac_bnfa | ac_full | ac_sparse | ac_sparse_bands | ac_std | hyperscan | lowmem }
+</p>
+</li>
+<li>
+<p>
 dynamic <strong>search_engine.search_method</strong> = ac_bnfa: set fast pattern algorithm - choose available search engine { ac_banded | ac_bnfa | ac_full | ac_sparse | ac_sparse_bands | ac_std | hyperscan | lowmem }
 </p>
 </li>
@@ -27259,7 +27522,7 @@ interval <strong>seq.~range</strong>: check if TCP sequence number is in given r
 </li>
 <li>
 <p>
-string <strong>service.</strong>*: one or more comma-separated service names
+string <strong><code>service.*</code></strong>: one or more comma-separated service names
 </p>
 </li>
 <li>
@@ -27314,7 +27577,7 @@ string <strong>side_channel.connector</strong>: connector handle
 </li>
 <li>
 <p>
-string <strong>side_channel.connectors[].connector</strong>: connector handle
+string <strong><code>side_channel.connectors[].connector</code></strong>: connector handle
 </p>
 </li>
 <li>
@@ -27379,7 +27642,7 @@ int <strong>sip.max_via_len</strong> = 1024: maximum via field size { 0:65535 }
 </li>
 <li>
 <p>
-string <strong>sip_method.*method</strong>: sip method
+string <strong><code>sip_method.*method</code></strong>: sip method
 </p>
 </li>
 <li>
@@ -27389,17 +27652,17 @@ string <strong>sip.methods</strong> = invite cancel ack  bye register options: l
 </li>
 <li>
 <p>
-int <strong>sip_stat_code.*code</strong>: status code { 1:999 }
+int <strong><code>sip_stat_code.*code</code></strong>: status code { 1:999 }
 </p>
 </li>
 <li>
 <p>
-string <strong>smtp.alt_max_command_line_len[].command</strong>: command string
+string <strong><code>smtp.alt_max_command_line_len[].command</code></strong>: command string
 </p>
 </li>
 <li>
 <p>
-int <strong>smtp.alt_max_command_line_len[].length</strong> = 0: specify non-default maximum for command { 0:max32 }
+int <strong><code>smtp.alt_max_command_line_len[].length</code></strong> = 0: specify non-default maximum for command { 0:max32 }
 </p>
 </li>
 <li>
@@ -27425,6 +27688,21 @@ int <strong>smtp.bitenc_decode_depth</strong> = 1460: depth used to extract the 
 <li>
 <p>
 string <strong>smtp.data_cmds</strong>: commands that initiate sending of data with an end of data delimiter
+</p>
+</li>
+<li>
+<p>
+bool <strong>smtp.decompress_pdf</strong> = false: decompress pdf files in MIME attachments
+</p>
+</li>
+<li>
+<p>
+bool <strong>smtp.decompress_swf</strong> = false: decompress swf files in MIME attachments
+</p>
+</li>
+<li>
+<p>
+bool <strong>smtp.decompress_zip</strong> = false: decompress zip files in MIME attachments
 </p>
 </li>
 <li>
@@ -28259,6 +28537,11 @@ implied <strong>ssl_version.tls1.2</strong>: check for tls1.2
 </li>
 <li>
 <p>
+int <strong>stream.file_cache.cap_weight</strong> = 32: additional bytes to track per flow for better estimation against cap { 0:65535 }
+</p>
+</li>
+<li>
+<p>
 int <strong>stream.file_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1:max32 }
 </p>
 </li>
@@ -28284,6 +28567,11 @@ int <strong>stream.footprint</strong> = 0: use zero for production, non-zero for
 </li>
 <li>
 <p>
+int <strong>stream.icmp_cache.cap_weight</strong> = 8: additional bytes to track per flow for better estimation against cap { 0:65535 }
+</p>
+</li>
+<li>
+<p>
 int <strong>stream.icmp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1:max32 }
 </p>
 </li>
@@ -28300,6 +28588,11 @@ int <strong>stream.icmp_cache.pruning_timeout</strong> = 30: minimum inactive ti
 <li>
 <p>
 int <strong>stream_icmp.session_timeout</strong> = 30: session tracking timeout { 1:max31 }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.ip_cache.cap_weight</strong> = 64: additional bytes to track per flow for better estimation against cap { 0:65535 }
 </p>
 </li>
 <li>
@@ -28389,6 +28682,11 @@ interval <strong>stream_size.~range</strong>: check if the stream size is in the
 </li>
 <li>
 <p>
+int <strong>stream.tcp_cache.cap_weight</strong> = 11500: additional bytes to track per flow for better estimation against cap { 0:65535 }
+</p>
+</li>
+<li>
+<p>
 int <strong>stream.tcp_cache.idle_timeout</strong> = 3600: maximum inactive time before retiring session tracker { 1:max32 }
 </p>
 </li>
@@ -28469,7 +28767,17 @@ int <strong>stream_tcp.small_segments.maximum_size</strong> = 0: limit number of
 </li>
 <li>
 <p>
+bool <strong>stream_tcp.track_only</strong> = false: disable reassembly if true
+</p>
+</li>
+<li>
+<p>
 int <strong>stream.trace</strong>: mask for enabling debug traces in module { 0:max53 }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.udp_cache.cap_weight</strong> = 128: additional bytes to track per flow for better estimation against cap { 0:65535 }
 </p>
 </li>
 <li>
@@ -28490,6 +28798,11 @@ int <strong>stream.udp_cache.pruning_timeout</strong> = 30: minimum inactive tim
 <li>
 <p>
 int <strong>stream_udp.session_timeout</strong> = 30: session tracking timeout { 1:max31 }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.user_cache.cap_weight</strong> = 256: additional bytes to track per flow for better estimation against cap { 0:65535 }
 </p>
 </li>
 <li>
@@ -28519,22 +28832,22 @@ int <strong>stream_user.trace</strong>: mask for enabling debug traces in module
 </li>
 <li>
 <p>
-int <strong>suppress[].gid</strong> = 0: rule generator ID { 0:max32 }
+int <strong><code>suppress[].gid</code></strong> = 0: rule generator ID { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-string <strong>suppress[].ip</strong>: restrict suppression to these addresses according to track
+string <strong><code>suppress[].ip</code></strong>: restrict suppression to these addresses according to track
 </p>
 </li>
 <li>
 <p>
-int <strong>suppress[].sid</strong> = 0: rule signature ID { 0:max32 }
+int <strong><code>suppress[].sid</code></strong> = 0: rule signature ID { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-enum <strong>suppress[].track</strong>: suppress only matching source or destination addresses { by_src | by_dst }
+enum <strong><code>suppress[].track</code></strong>: suppress only matching source or destination addresses { by_src | by_dst }
 </p>
 </li>
 <li>
@@ -28659,52 +28972,52 @@ multi <strong>wizard.curses</strong>: enable service identification based on int
 </li>
 <li>
 <p>
-bool <strong>wizard.hexes[].client_first</strong> = true: which end initiates data transfer
+bool <strong><code>wizard.hexes[].client_first</code></strong> = true: which end initiates data transfer
 </p>
 </li>
 <li>
 <p>
-select <strong>wizard.hexes[].proto</strong> = tcp: protocol to scan { tcp | udp }
+select <strong><code>wizard.hexes[].proto</code></strong> = tcp: protocol to scan { tcp | udp }
 </p>
 </li>
 <li>
 <p>
-string <strong>wizard.hexes[].service</strong>: name of service
+string <strong><code>wizard.hexes[].service</code></strong>: name of service
 </p>
 </li>
 <li>
 <p>
-string <strong>wizard.hexes[].to_client[].hex</strong>: sequence of data with wild chars (?)
+string <strong><code>wizard.hexes[].to_client[].hex</code></strong>: sequence of data with wild chars (?)
 </p>
 </li>
 <li>
 <p>
-string <strong>wizard.hexes[].to_server[].hex</strong>: sequence of data with wild chars (?)
+string <strong><code>wizard.hexes[].to_server[].hex</code></strong>: sequence of data with wild chars (?)
 </p>
 </li>
 <li>
 <p>
-bool <strong>wizard.spells[].client_first</strong> = true: which end initiates data transfer
+bool <strong><code>wizard.spells[].client_first</code></strong> = true: which end initiates data transfer
 </p>
 </li>
 <li>
 <p>
-select <strong>wizard.spells[].proto</strong> = tcp: protocol to scan { tcp | udp }
+select <strong><code>wizard.spells[].proto</code></strong> = tcp: protocol to scan { tcp | udp }
 </p>
 </li>
 <li>
 <p>
-string <strong>wizard.spells[].service</strong>: name of service
+string <strong><code>wizard.spells[].service</code></strong>: name of service
 </p>
 </li>
 <li>
 <p>
-string <strong>wizard.spells[].to_client[].spell</strong>: sequence of data with wild cards (*)
+string <strong><code>wizard.spells[].to_client[].spell</code></strong>: sequence of data with wild cards (*)
 </p>
 </li>
 <li>
 <p>
-string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with wild cards (*)
+string <strong><code>wizard.spells[].to_server[].spell</code></strong>: sequence of data with wild cards (*)
 </p>
 </li>
 <li>
@@ -29424,6 +29737,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>detection.context_stalls</strong>: times processing stalled to wait for an available context (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>detection.cooked_searches</strong>: fast pattern searches in cooked packet data (sum)
 </p>
 </li>
@@ -29935,6 +30253,51 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>latency.total_usecs</strong>: total usecs elapsed (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>memory.allocated</strong>: total amount of memory allocated (now)
+</p>
+</li>
+<li>
+<p>
+<strong>memory.allocations</strong>: total number of allocations (now)
+</p>
+</li>
+<li>
+<p>
+<strong>memory.deallocated</strong>: total amount of memory allocated (now)
+</p>
+</li>
+<li>
+<p>
+<strong>memory.deallocations</strong>: total number of deallocations (now)
+</p>
+</li>
+<li>
+<p>
+<strong>memory.max_in_use</strong>: highest allocated - deallocated (max)
+</p>
+</li>
+<li>
+<p>
+<strong>memory.reap_attempts</strong>: attempts to reclaim memory (now)
+</p>
+</li>
+<li>
+<p>
+<strong>memory.reap_failures</strong>: failures to reclaim memory (now)
+</p>
+</li>
+<li>
+<p>
+<strong>memory.total_fudge</strong>: sum of all adjustments (now)
+</p>
+</li>
+<li>
+<p>
+<strong>mem_test.packets</strong>: total packets (sum)
 </p>
 </li>
 <li>
@@ -33094,7 +33457,7 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>119:229</strong> (http_inspect) PDF/SWF decompression of server response too big
+<strong>119:229</strong> (http_inspect) PDF/SWF/ZIP decompression of server response too big
 </p>
 </li>
 <li>
@@ -33445,6 +33808,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>124:15</strong> (smtp) attempted authentication command buffer overflow
+</p>
+</li>
+<li>
+<p>
+<strong>124:16</strong> (smtp) file decompression failed
 </p>
 </li>
 <li>
@@ -34159,6 +34527,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>141:8</strong> (imap) file decompression failed
+</p>
+</li>
+<li>
+<p>
 <strong>142:1</strong> (pop) unknown POP3 command
 </p>
 </li>
@@ -34180,6 +34553,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>142:7</strong> (pop) Unix-to-Unix decoding failed
+</p>
+</li>
+<li>
+<p>
+<strong>142:8</strong> (pop) file decompression failed
 </p>
 </li>
 <li>
@@ -34416,16 +34794,13 @@ documentation and are not applicable elsewhere.</td>
 change -&gt;  dynamicengine ==&gt; 'snort.--plugin_path=&lt;path&gt;'
 change -&gt;  dynamicpreprocessor ==&gt; 'snort.--plugin_path=&lt;path&gt;'
 change -&gt;  dynamicsidechannel ==&gt; 'snort.--plugin_path=&lt;path&gt;'
-change -&gt; alertfile: 'config alertfile:' ==&gt; 'alert_fast.file'
-change -&gt; alertfile: 'config alertfile:' ==&gt; 'alert_full.file'
 change -&gt; attribute_table: 'STREAM_POLICY' ==&gt; 'hosts: tcp_policy'
 change -&gt; attribute_table: 'filename &lt;file_name&gt;' ==&gt; 'hosts[]'
 change -&gt; config ' addressspace_agnostic'  ==&gt; ' packets. address_space_agnostic'
 change -&gt; config ' checksum_mode'  ==&gt; ' network. checksum_eval'
-change -&gt; config ' daq'  ==&gt; ' daq. type'
-change -&gt; config ' daq_dir'  ==&gt; ' daq. dir'
-change -&gt; config ' daq_mode'  ==&gt; ' daq. mode'
-change -&gt; config ' daq_var'  ==&gt; ' daq. var'
+change -&gt; config ' daq'  ==&gt; ' daq. module'
+change -&gt; config ' daq_dir'  ==&gt; ' daq. module_dirs, true'
+change -&gt; config ' daq_var'  ==&gt; ' daq. variables, true'
 change -&gt; config ' detection_filter'  ==&gt; ' alerts. detection_filter_memcap'
 change -&gt; config ' enable_deep_teredo_inspection'  ==&gt; ' udp. deep_teredo_inspection'
 change -&gt; config ' event_filter'  ==&gt; ' alerts. event_filter_memcap'
@@ -34436,7 +34811,10 @@ change -&gt; config ' pkt_count'  ==&gt; ' packets. limit'
 change -&gt; config ' rate_filter'  ==&gt; ' alerts. rate_filter_memcap'
 change -&gt; config ' react'  ==&gt; ' react. page'
 change -&gt; config ' threshold'  ==&gt; ' alerts. event_filter_memcap'
-change -&gt; csv: 'dgmlen' ==&gt; 'dgm_len'
+change -&gt; converter: 'gen_id' ==&gt; 'gid'
+change -&gt; converter: 'sid_id' ==&gt; 'sid'
+change -&gt; csv: 'csv' ==&gt; 'fields'
+change -&gt; csv: 'dgmlen' ==&gt; 'pkt_len'
 change -&gt; csv: 'dst' ==&gt; 'dst_addr'
 change -&gt; csv: 'dstport' ==&gt; 'dst_port'
 change -&gt; csv: 'ethdst' ==&gt; 'eth_dst'
@@ -34447,6 +34825,7 @@ change -&gt; csv: 'icmpcode' ==&gt; 'icmp_code'
 change -&gt; csv: 'icmpid' ==&gt; 'icmp_id'
 change -&gt; csv: 'icmpseq' ==&gt; 'icmp_seq'
 change -&gt; csv: 'icmptype' ==&gt; 'icmp_type'
+change -&gt; csv: 'id' ==&gt; 'ip_id'
 change -&gt; csv: 'iplen' ==&gt; 'ip_len'
 change -&gt; csv: 'sig_generator' ==&gt; 'gid'
 change -&gt; csv: 'sig_id' ==&gt; 'sid'
@@ -34459,35 +34838,43 @@ change -&gt; csv: 'tcplen' ==&gt; 'tcp_len'
 change -&gt; csv: 'tcpseq' ==&gt; 'tcp_seq'
 change -&gt; csv: 'tcpwindow' ==&gt; 'tcp_win'
 change -&gt; csv: 'udplength' ==&gt; 'udp_len'
-change -&gt; detection: 'ac' ==&gt; 'ac_full_q'
+change -&gt; detection: 'ac' ==&gt; 'ac_full'
 change -&gt; detection: 'ac-banded' ==&gt; 'ac_banded'
-change -&gt; detection: 'ac-bnfa' ==&gt; 'ac_bnfa_q'
+change -&gt; detection: 'ac-bnfa' ==&gt; 'ac_bnfa'
 change -&gt; detection: 'ac-bnfa-nq' ==&gt; 'ac_bnfa'
-change -&gt; detection: 'ac-bnfa-q' ==&gt; 'ac_bnfa_q'
+change -&gt; detection: 'ac-bnfa-q' ==&gt; 'ac_bnfa'
 change -&gt; detection: 'ac-nq' ==&gt; 'ac_full'
-change -&gt; detection: 'ac-q' ==&gt; 'ac_full_q'
+change -&gt; detection: 'ac-q' ==&gt; 'ac_full'
 change -&gt; detection: 'ac-sparsebands' ==&gt; 'ac_sparse_bands'
-change -&gt; detection: 'ac-split' ==&gt; 'ac_full_q'
+change -&gt; detection: 'ac-split' ==&gt; 'ac_full'
 change -&gt; detection: 'ac-split' ==&gt; 'split_any_any'
 change -&gt; detection: 'ac-std' ==&gt; 'ac_std'
 change -&gt; detection: 'acs' ==&gt; 'ac_sparse'
 change -&gt; detection: 'bleedover-port-limit' ==&gt; 'bleedover_port_limit'
-change -&gt; detection: 'intel-cpm' ==&gt; 'intel_cpm'
-change -&gt; detection: 'lowmem' ==&gt; 'lowmem_q'
+change -&gt; detection: 'debug-print-fast-pattern' ==&gt; 'show_fast_patterns'
+change -&gt; detection: 'intel-cpm' ==&gt; 'hyperscan'
 change -&gt; detection: 'lowmem-nq' ==&gt; 'lowmem'
-change -&gt; detection: 'lowmem-q' ==&gt; 'lowmem_q'
+change -&gt; detection: 'lowmem-q' ==&gt; 'lowmem'
 change -&gt; detection: 'max-pattern-len' ==&gt; 'max_pattern_len'
+change -&gt; detection: 'no_stream_inserts' ==&gt; 'detect_raw_tcp'
 change -&gt; detection: 'search-method' ==&gt; 'search_method'
 change -&gt; detection: 'search-optimize' ==&gt; 'search_optimize'
+change -&gt; detection: 'split-any-any' ==&gt; 'split_any_any = true by default'
 change -&gt; detection: 'split-any-any' ==&gt; 'split_any_any'
+change -&gt; dnp3: 'ports' ==&gt; 'bindings'
 change -&gt; dns: 'ports' ==&gt; 'bindings'
 change -&gt; event_filter: 'gen_id' ==&gt; 'gid'
 change -&gt; event_filter: 'sig_id' ==&gt; 'sid'
 change -&gt; event_filter: 'threshold' ==&gt; 'event_filter'
 change -&gt; file: 'config file: file_block_timeout' ==&gt; 'block_timeout'
+change -&gt; file: 'config file: file_capture_block_size' ==&gt; 'capture_block_size'
+change -&gt; file: 'config file: file_capture_max' ==&gt; 'capture_max_size'
+change -&gt; file: 'config file: file_capture_memcap' ==&gt; 'capture_memcap'
+change -&gt; file: 'config file: file_capture_min' ==&gt; 'capture_min_size'
 change -&gt; file: 'config file: file_type_depth' ==&gt; 'type_depth'
 change -&gt; file: 'config file: signature' ==&gt; 'enable_signature'
 change -&gt; file: 'config file: type_id' ==&gt; 'enable_type'
+change -&gt; file: 'ver' ==&gt; 'version'
 change -&gt; frag3_engine: 'min_fragment_length' ==&gt; 'min_frag_length'
 change -&gt; frag3_engine: 'overlap_limit' ==&gt; 'max_overlaps'
 change -&gt; frag3_engine: 'policy bsd-right' ==&gt; 'policy = bsd_right'
@@ -34495,59 +34882,60 @@ change -&gt; frag3_engine: 'timeout' ==&gt; 'session_timeout'
 change -&gt; ftp_telnet_protocol: 'alt_max_param_len' ==&gt; 'cmd_validity'
 change -&gt; ftp_telnet_protocol: 'data_chan' ==&gt; 'ignore_data_chan'
 change -&gt; ftp_telnet_protocol: 'ports' ==&gt; 'bindings'
-change -&gt; gtp: 'ports' ==&gt; 'gtp_ports'
-change -&gt; http_inspect: 'http_inspect' ==&gt; 'http_global'
-change -&gt; http_inspect_server: 'apache_whitespace' ==&gt; 'profile.apache_whitespace'
-change -&gt; http_inspect_server: 'ascii' ==&gt; 'profile.ascii'
-change -&gt; http_inspect_server: 'bare_byte' ==&gt; 'profile.bare_byte'
-change -&gt; http_inspect_server: 'chunk_length' ==&gt; 'profile.chunk_length'
-change -&gt; http_inspect_server: 'client_flow_depth' ==&gt; 'profile.client_flow_depth'
-change -&gt; http_inspect_server: 'directory' ==&gt; 'profile.directory'
-change -&gt; http_inspect_server: 'double_decode' ==&gt; 'profile.double_decode'
-change -&gt; http_inspect_server: 'enable_cookie' ==&gt; 'enable_cookies'
-change -&gt; http_inspect_server: 'flow_depth' ==&gt; 'server_flow_depth'
+change -&gt; gtp: 'ports' ==&gt; 'bindings'
+change -&gt; http_inspect_server: 'bare_byte' ==&gt; 'utf8_bare_byte'
+change -&gt; http_inspect_server: 'client_flow_depth' ==&gt; 'request_depth'
+change -&gt; http_inspect_server: 'double_decode' ==&gt; 'iis_double_decode'
 change -&gt; http_inspect_server: 'http_inspect_server' ==&gt; 'http_inspect'
-change -&gt; http_inspect_server: 'iis_backslash' ==&gt; 'profile.iis_backslash'
-change -&gt; http_inspect_server: 'iis_delimiter' ==&gt; 'profile.iis_delimiter'
-change -&gt; http_inspect_server: 'iis_unicode' ==&gt; 'profile.iis_unicode'
-change -&gt; http_inspect_server: 'max_header_length' ==&gt; 'profile.max_header_length'
-change -&gt; http_inspect_server: 'max_headers' ==&gt; 'profile.max_headers'
-change -&gt; http_inspect_server: 'max_spaces' ==&gt; 'profile.max_spaces'
-change -&gt; http_inspect_server: 'multi_slash' ==&gt; 'profile.multi_slash'
-change -&gt; http_inspect_server: 'non_rfc_char' ==&gt; 'non_rfc_chars'
-change -&gt; http_inspect_server: 'non_strict' ==&gt; 'profile.non_strict'
-change -&gt; http_inspect_server: 'normalize_utf' ==&gt; 'profile.normalize_utf'
+change -&gt; http_inspect_server: 'iis_backslash' ==&gt; 'backslash_to_slash'
+change -&gt; http_inspect_server: 'inspect_gzip' ==&gt; 'unzip'
+change -&gt; http_inspect_server: 'non_rfc_char' ==&gt; 'bad_characters'
 change -&gt; http_inspect_server: 'ports' ==&gt; 'bindings'
-change -&gt; http_inspect_server: 'u_encode' ==&gt; 'profile.u_encode'
-change -&gt; http_inspect_server: 'utf_8' ==&gt; 'profile.utf_8'
-change -&gt; http_inspect_server: 'webroot' ==&gt; 'profile.webroot'
-change -&gt; http_inspect_server: 'whitespace_chars' ==&gt; 'profile.whitespace_chars'
+change -&gt; http_inspect_server: 'u_encode' ==&gt; 'percent_u'
+change -&gt; http_inspect_server: 'utf_8' ==&gt; 'utf8'
 change -&gt; imap: 'ports' ==&gt; 'bindings'
-change -&gt; paf_max: 'paf_max [0:63780]' ==&gt; 'max_pdu [1460:63780]'
-change -&gt; perfmonitor: 'accumulate' ==&gt; 'reset = false'
-change -&gt; perfmonitor: 'flow-file' ==&gt; 'flow_file = true'
+change -&gt; modbus: 'ports' ==&gt; 'bindings'
+change -&gt; na_policy_mode: 'na_policy_mode' ==&gt; 'mode'
+change -&gt; nap_selector: 'nap rules' ==&gt; 'bindings'
+change -&gt; paf_max: 'paf_max [0:63780]' ==&gt; 'max_pdu [1460:32768]'
+change -&gt; perfmonitor: 'console' ==&gt; 'format = 'text''
+change -&gt; perfmonitor: 'console' ==&gt; 'output = 'console''
+change -&gt; perfmonitor: 'file' ==&gt; 'format = 'csv''
+change -&gt; perfmonitor: 'file' ==&gt; 'output = 'file''
+change -&gt; perfmonitor: 'flow-file' ==&gt; 'format = 'csv''
+change -&gt; perfmonitor: 'flow-file' ==&gt; 'output = 'file''
 change -&gt; perfmonitor: 'flow-ip' ==&gt; 'flow_ip'
-change -&gt; perfmonitor: 'flow-ip-file' ==&gt; 'flow_ip_file = true'
+change -&gt; perfmonitor: 'flow-ip-file' ==&gt; 'format = 'csv''
+change -&gt; perfmonitor: 'flow-ip-file' ==&gt; 'output = 'file''
 change -&gt; perfmonitor: 'flow-ip-memcap' ==&gt; 'flow_ip_memcap'
 change -&gt; perfmonitor: 'flow-ports' ==&gt; 'flow_ports'
 change -&gt; perfmonitor: 'pktcnt' ==&gt; 'packets'
-change -&gt; perfmonitor: 'snortfile' ==&gt; 'file = true'
+change -&gt; perfmonitor: 'snortfile' ==&gt; 'format = 'csv''
+change -&gt; perfmonitor: 'snortfile' ==&gt; 'output = 'file''
 change -&gt; perfmonitor: 'time' ==&gt; 'seconds'
 change -&gt; policy_mode: 'inline_test' ==&gt; 'inline-test'
 change -&gt; pop: 'ports' ==&gt; 'bindings'
-change -&gt; ppm: 'max-pkt-time' ==&gt; 'max_pkt_time'
-change -&gt; ppm: 'max-rule-time' ==&gt; 'max_rule_time'
-change -&gt; ppm: 'pkt-log' ==&gt; 'pkt_log'
-change -&gt; ppm: 'rule-log' ==&gt; 'rule_log'
-change -&gt; ppm: 'suspend-timeout' ==&gt; 'suspend_timeout'
+change -&gt; ppm: ''both'' ==&gt; ''alert_and_log''
+change -&gt; ppm: 'fastpath-expensive-packets' ==&gt; 'packet.fastpath'
+change -&gt; ppm: 'max-pkt-time' ==&gt; 'packet.max_time'
+change -&gt; ppm: 'max-rule-time' ==&gt; 'rule.max_time'
+change -&gt; ppm: 'pkt-log' ==&gt; 'packet.action'
+change -&gt; ppm: 'ppm' ==&gt; 'latency'
+change -&gt; ppm: 'rule-log' ==&gt; 'rule.action'
+change -&gt; ppm: 'suspend-expensive-rules' ==&gt; 'rule.suspend'
+change -&gt; ppm: 'suspend-timeout' ==&gt; 'max_suspend_time'
+change -&gt; ppm: 'threshold' ==&gt; 'rule.suspend_threshold'
 change -&gt; preprocessor 'normalize_ icmp4' ==&gt; 'normalize. icmp4'
 change -&gt; preprocessor 'normalize_ icmp6' ==&gt; 'normalize. icmp6'
 change -&gt; preprocessor 'normalize_ ip6' ==&gt; 'normalize. ip6'
 change -&gt; profile: 'print' ==&gt; 'count'
+change -&gt; profile: 'sort avg_ticks' ==&gt; 'sort = avg_check'
+change -&gt; profile: 'sort total_ticks' ==&gt; 'sort = total_time'
 change -&gt; rate_filter: 'gen_id' ==&gt; 'gid'
 change -&gt; rate_filter: 'sig_id' ==&gt; 'sid'
-change -&gt; rule_state: 'disabled' ==&gt; 'enable'
-change -&gt; rule_state: 'enabled' ==&gt; 'enable'
+change -&gt; reputation: 'shared_mem' ==&gt; 'list_dir'
+change -&gt; rule_state: 'enabled/disabled' ==&gt; 'enable'
+change -&gt; rule_state: 'sdrop' ==&gt; 'drop'
 change -&gt; sfportscan: 'proto' ==&gt; 'protos'
 change -&gt; sfportscan: 'scan_type' ==&gt; 'scan_types'
 change -&gt; sip: 'ports' ==&gt; 'bindings'
@@ -34572,7 +34960,6 @@ change -&gt; stream5_tcp: 'max_queued_bytes' ==&gt; 'queue_limit.max_bytes'
 change -&gt; stream5_tcp: 'max_queued_segs' ==&gt; 'queue_limit.max_segments'
 change -&gt; stream5_tcp: 'policy hpux' ==&gt; 'stream_tcp.policy = hpux11'
 change -&gt; stream5_tcp: 'timeout' ==&gt; 'session_timeout'
-change -&gt; stream5_tcp: 'use_static_footprint_sizes' ==&gt; 'footprint'
 change -&gt; stream5_udp: 'timeout' ==&gt; 'session_timeout'
 change -&gt; suppress: 'gen_id' ==&gt; 'gid'
 change -&gt; suppress: 'sig_id' ==&gt; 'sid'
@@ -34612,9 +34999,12 @@ deleted -&gt; attribute_table: '&lt;FRAG_POLICY&gt;unknown&lt;/FRAG_POLICY&gt;'
 deleted -&gt; attribute_table: '&lt;STREAM_POLICY&gt;noack&lt;/STREAM_POLICY&gt;'
 deleted -&gt; attribute_table: '&lt;STREAM_POLICY&gt;unknown&lt;/STREAM_POLICY&gt;'
 deleted -&gt; config ' cs_dir'
+deleted -&gt; config ' daq_mode'
+deleted -&gt; config ' decode_data_link'
 deleted -&gt; config ' disable_attribute_reload_thread'
 deleted -&gt; config ' disable_decode_alerts'
 deleted -&gt; config ' disable_decode_drops'
+deleted -&gt; config ' disable_inline_init_failopen'
 deleted -&gt; config ' disable_ipopt_alerts'
 deleted -&gt; config ' disable_ipopt_drops'
 deleted -&gt; config ' disable_tcpopt_alerts'
@@ -34644,45 +35034,84 @@ deleted -&gt; config ' flowbits_size'
 deleted -&gt; config ' include_vlan_in_alerts'
 deleted -&gt; config ' interface'
 deleted -&gt; config ' layer2resets'
-deleted -&gt; config ' policy_version'
+deleted -&gt; config ' log_ipv6_extra_data'
+deleted -&gt; config ' nolog'
+deleted -&gt; config ' protected_content'
+deleted -&gt; config ' sidechannel'
 deleted -&gt; config ' so_rule_memcap'
+deleted -&gt; config 'dynamicoutput'
+deleted -&gt; config 'sfalert_unified2'
+deleted -&gt; config 'sflog_unified2'
+deleted -&gt; config 'sidechannel'
 deleted -&gt; csv: '&lt;filename&gt; can no longer be specific'
 deleted -&gt; csv: 'default'
 deleted -&gt; csv: 'trheader'
 deleted -&gt; detection: 'mwm'
+deleted -&gt; dnp3: 'disabled'
+deleted -&gt; dnp3: 'memcap'
 deleted -&gt; dns: 'enable_experimental_types'
 deleted -&gt; dns: 'enable_obsolete_types'
 deleted -&gt; dns: 'enable_rdata_overflow'
+deleted -&gt; event_trace: 'file'
 deleted -&gt; fast: '&lt;filename&gt; can no longer be specific'
 deleted -&gt; frag3_engine: 'detect_anomalies'
 deleted -&gt; frag3_global: 'disabled'
 deleted -&gt; ftp_telnet_protocol: 'detect_anomalies'
 deleted -&gt; full: '&lt;filename&gt; can no longer be specific'
+deleted -&gt; http_inspect: 'detect_anomalous_servers'
 deleted -&gt; http_inspect: 'disabled'
+deleted -&gt; http_inspect: 'proxy_alert'
+deleted -&gt; http_inspect_server: 'allow_proxy_use'
+deleted -&gt; http_inspect_server: 'enable_cookie'
+deleted -&gt; http_inspect_server: 'enable_xff'
+deleted -&gt; http_inspect_server: 'extended_ascii_uri'
+deleted -&gt; http_inspect_server: 'extended_response_inspection'
+deleted -&gt; http_inspect_server: 'iis_unicode_map not allowed in sever'
+deleted -&gt; http_inspect_server: 'inspect_uri_only'
+deleted -&gt; http_inspect_server: 'log_hostname'
+deleted -&gt; http_inspect_server: 'log_uri'
 deleted -&gt; http_inspect_server: 'no_alerts'
+deleted -&gt; http_inspect_server: 'no_pipeline_req'
+deleted -&gt; http_inspect_server: 'non_strict'
+deleted -&gt; http_inspect_server: 'normalize_cookies'
+deleted -&gt; http_inspect_server: 'normalize_headers'
+deleted -&gt; http_inspect_server: 'small_chunk_length'
+deleted -&gt; http_inspect_server: 'tab_uri_delimiter'
+deleted -&gt; http_inspect_server: 'unlimited_decompress'
 deleted -&gt; imap: 'disabled'
 deleted -&gt; imap: 'max_mime_mem'
 deleted -&gt; imap: 'memcap'
+deleted -&gt; nap_selector: 'fw_required'
+deleted -&gt; nap_selector: 'nap_stats_time'
+deleted -&gt; perfmonitor: 'accumulate'
 deleted -&gt; perfmonitor: 'atexitonly'
 deleted -&gt; perfmonitor: 'atexitonly: base-stats'
 deleted -&gt; perfmonitor: 'atexitonly: events-stats'
 deleted -&gt; perfmonitor: 'atexitonly: flow-ip-stats'
 deleted -&gt; perfmonitor: 'atexitonly: flow-stats'
+deleted -&gt; perfmonitor: 'atexitonly: reset'
+deleted -&gt; perfmonitor: 'events'
+deleted -&gt; perfmonitor: 'max'
 deleted -&gt; pop: 'disabled'
 deleted -&gt; pop: 'max_mime_mem'
 deleted -&gt; pop: 'memcap'
 deleted -&gt; ppm: 'debug-pkts'
 deleted -&gt; react: 'block'
 deleted -&gt; react: 'warn'
+deleted -&gt; reputation: 'shared_max_instances'
+deleted -&gt; reputation: 'shared_refresh'
 deleted -&gt; rpc_decode: 'alert_fragments'
 deleted -&gt; rpc_decode: 'no_alert_incomplete'
 deleted -&gt; rpc_decode: 'no_alert_large_fragments'
 deleted -&gt; rpc_decode: 'no_alert_multiple_requests'
-deleted -&gt; rule_state: 'action'
 deleted -&gt; sfportscan: 'detect_ack_scans'
 deleted -&gt; sfportscan: 'disabled'
 deleted -&gt; sfportscan: 'logfile'
+deleted -&gt; sfportscan: 'sense_level'
+deleted -&gt; sfunified2: 'mpls_event_types'
+deleted -&gt; sfunified2: 'vlan_event_types'
 deleted -&gt; sip: 'disabled'
+deleted -&gt; sip: 'max_sessions'
 deleted -&gt; smtp: 'alert_unknown_cmds'
 deleted -&gt; smtp: 'disabled'
 deleted -&gt; smtp: 'enable_mime_decoding'
@@ -34703,16 +35132,22 @@ deleted -&gt; ssh: 'enable_ssh1crc32'
 deleted -&gt; ssl: 'noinspect_encrypted'
 deleted -&gt; stream5_global: 'disabled'
 deleted -&gt; stream5_global: 'flush_on_alert'
+deleted -&gt; stream5_global: 'memcap'
 deleted -&gt; stream5_global: 'no_midstream_drop_alerts'
 deleted -&gt; stream5_tcp: 'check_session_hijacking'
 deleted -&gt; stream5_tcp: 'detect_anomalies'
 deleted -&gt; stream5_tcp: 'dont_store_large_packets'
+deleted -&gt; stream5_tcp: 'ignore_any_rules'
+deleted -&gt; stream5_tcp: 'log_asymmetric_traffic'
 deleted -&gt; stream5_tcp: 'policy noack'
 deleted -&gt; stream5_tcp: 'policy unknown'
+deleted -&gt; stream5_udp: 'ignore_any_rules'
 deleted -&gt; tcpdump: '&lt;filename&gt; can no longer be specific'
 deleted -&gt; test: 'file'
 deleted -&gt; test: 'stdout'
-deleted -&gt; unified2: 'filename'</code></pre>
+deleted -&gt; unified2: 'filename'
+deleted -&gt; unified2: 'mpls_event_types'
+deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </div></div>
 </div>
 <div class="sect2">
@@ -34761,6 +35196,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>alert_syslog</strong> (logger): output event to syslog
+</p>
+</li>
+<li>
+<p>
+<strong>alert_talos</strong> (logger): output event in Talos alert format
 </p>
 </li>
 <li>
@@ -35360,6 +35800,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>mem_test</strong> (inspector): for testing memory management
+</p>
+</li>
+<li>
+<p>
 <strong>memory</strong> (basic): memory management configuration
 </p>
 </li>
@@ -35570,7 +36015,7 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
-<strong>rule_state</strong> (basic): enable/disable specific IPS rules
+<strong>rule_state</strong> (basic): enable/disable and set actions for specific IPS rules
 </p>
 </li>
 <li>
@@ -36171,6 +36616,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>inspector::imap</strong>: imap inspection
+</p>
+</li>
+<li>
+<p>
+<strong>inspector::mem_test</strong>: for testing memory management
 </p>
 </li>
 <li>
@@ -36841,6 +37291,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>logger::alert_syslog</strong>: output event to syslog
+</p>
+</li>
+<li>
+<p>
+<strong>logger::alert_talos</strong>: output event in Talos alert format
 </p>
 </li>
 <li>
@@ -37546,13 +38001,225 @@ Note that on OpenBSD, divert sockets don&#8217;t work with bridges!
 </ol></div>
 </div>
 </div>
+<div class="sect2">
+<h3 id="_limitations">Limitations</h3>
+<div class="sect3">
+<h4 id="_reload_limitations">Reload limitations</h4>
+<div class="paragraph"><p>The following parameters can&#8217;t be changed during reload, and require a restart:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+active.attempts
+</p>
+</li>
+<li>
+<p>
+active.device
+</p>
+</li>
+<li>
+<p>
+alerts.detection_filter_memcap
+</p>
+</li>
+<li>
+<p>
+alerts.event_filter_memcap
+</p>
+</li>
+<li>
+<p>
+alerts.rate_filter_memcap
+</p>
+</li>
+<li>
+<p>
+attribute_table.max_hosts
+</p>
+</li>
+<li>
+<p>
+attribute_table.max_services_per_host
+</p>
+</li>
+<li>
+<p>
+daq.snaplen
+</p>
+</li>
+<li>
+<p>
+daq.no_promisc
+</p>
+</li>
+<li>
+<p>
+detection.asn1
+</p>
+</li>
+<li>
+<p>
+file_id.max_files_cached
+</p>
+</li>
+<li>
+<p>
+port_scan.memcap
+</p>
+</li>
+<li>
+<p>
+process.chroot
+</p>
+</li>
+<li>
+<p>
+process.daemon
+</p>
+</li>
+<li>
+<p>
+process.set_gid
+</p>
+</li>
+<li>
+<p>
+process.set_uid
+</p>
+</li>
+<li>
+<p>
+stream.footprint
+</p>
+</li>
+<li>
+<p>
+stream.ip_cache.max_sessions
+</p>
+</li>
+<li>
+<p>
+stream.ip_cache.pruning_timeout
+</p>
+</li>
+<li>
+<p>
+stream.ip_cache.idle_timeout
+</p>
+</li>
+<li>
+<p>
+stream.icmp_cache.max_sessions
+</p>
+</li>
+<li>
+<p>
+stream.icmp_cache.pruning_timeout
+</p>
+</li>
+<li>
+<p>
+stream.icmp_cache.idle_timeout
+</p>
+</li>
+<li>
+<p>
+stream.tcp_cache.max_sessions
+</p>
+</li>
+<li>
+<p>
+stream.tcp_cache.pruning_timeout
+</p>
+</li>
+<li>
+<p>
+stream.tcp_cache.idle_timeout
+</p>
+</li>
+<li>
+<p>
+stream.udp_cache.max_sessions
+</p>
+</li>
+<li>
+<p>
+stream.udp_cache.pruning_timeout
+</p>
+</li>
+<li>
+<p>
+stream.udp_cache.idle_timeout
+</p>
+</li>
+<li>
+<p>
+stream.user_cache.max_sessions
+</p>
+</li>
+<li>
+<p>
+stream.user_cache.pruning_timeout
+</p>
+</li>
+<li>
+<p>
+stream.user_cache.idle_timeout
+</p>
+</li>
+<li>
+<p>
+stream.file_cache.max_sessions
+</p>
+</li>
+<li>
+<p>
+stream.file_cache.pruning_timeout
+</p>
+</li>
+<li>
+<p>
+stream.file_cache.idle_timeout
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>In addition, the following scenarios require a restart:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Enabling file capture for the first time
+</p>
+</li>
+<li>
+<p>
+Changing file_id.capture_memcap if file capture was previously or currently
+ enabled
+</p>
+</li>
+<li>
+<p>
+Changing file_id.capture_block_size if file capture was previously or
+ currently enabled
+</p>
+</li>
+<li>
+<p>
+Adding/removing stream_* inspectors if stream was already configured
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>In all of these cases reload will fail with the following message: "reload
+ failed - restart required". The original config will remain in use.</p></div>
+</div>
+</div>
 </div>
 </div>
 </div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-12-06 14:30:46 EST
+Last updated
+ 2019-03-31 01:50:27 EDT
 </div>
 </div>
 </body>

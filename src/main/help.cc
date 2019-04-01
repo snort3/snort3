@@ -95,10 +95,10 @@ void help_args(const char* pfx)
             cout << Markup::item();
 
             cout << Markup::emphasis_on();
-            cout << Markup::escape(p->name);
+            cout << p->name;
             cout << Markup::emphasis_off();
 
-            cout << " " << Markup::escape(p->help);
+            cout << " " << p->help;
 
             if ( const char* r = p->get_range() )
             {
