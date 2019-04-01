@@ -192,6 +192,7 @@ static inline uint32_t SSLPP_process_alert(
         !(new_flags & SSL_HEARTBEAT_SEEN))
     {
         DetectionEngine::disable_content(packet);
+        sslstats.disabled++;
     }
 
     /* Need to negate the application flags from the opposing side. */
@@ -238,6 +239,7 @@ static inline uint32_t SSLPP_process_app(SSL_PROTO_CONF* config, uint32_t ssn_fl
         else if (!(new_flags & SSL_HEARTBEAT_SEEN))
         {
             DetectionEngine::disable_content(packet);
+            sslstats.disabled++;
         }
     }
 
@@ -264,6 +266,7 @@ static inline void SSLPP_process_other(SSL_PROTO_CONF* config, SSLData* sd, uint
         else if (!(new_flags & SSL_HEARTBEAT_SEEN))
         {
             DetectionEngine::disable_content(packet);
+            sslstats.disabled++;
         }
     }
     else
@@ -345,6 +348,7 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
         if (!(new_flags & SSL_HEARTBEAT_SEEN))
         {
             DetectionEngine::disable_content(p);
+            sslstats.disabled++;
         }
 
         sd->ssn_flags |= new_flags;
