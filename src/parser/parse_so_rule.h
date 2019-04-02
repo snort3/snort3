@@ -19,10 +19,21 @@
 #ifndef PARSE_SO_RULE_H
 #define PARSE_SO_RULE_H
 
+// must parse out stub options for --dump-dynamic-rules
+//
+// only selected options are shown in so rule stubs
+// all other options are stripped out of the stub
+//
+// assumes valid rule syntax
+// deletes all # comments
+// replaces each /* comment */ with a single space
+// replaces each newline with a single space
+// deletes more than one space between options
+// return true if parsed rule body close
+
 #include <string>
 
-bool get_so_stub(const char* in, bool plain, std::string& opts);
-bool get_so_options(const char* in, bool plain, std::string& opts);
+bool get_so_stub(const char* in, std::string& stub);
 
 #endif
 

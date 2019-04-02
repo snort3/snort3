@@ -260,7 +260,6 @@ SnortConfig::~SnortConfig()
     }
 
     FreeRuleLists(this);
-    OtnLookupFree(otn_map);
     PortTablesFree(port_tables);
 
     ThresholdConfigFree(threshold_config);
@@ -271,6 +270,7 @@ SnortConfig::~SnortConfig()
         EventQueueConfigFree(event_queue_config);
 
     fpDeleteFastPacketDetection(this);
+    OtnLookupFree(otn_map);
 
     if (rtn_hash_table)
         xhash_delete(rtn_hash_table);

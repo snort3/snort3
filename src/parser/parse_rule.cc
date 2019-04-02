@@ -1138,34 +1138,42 @@ OptTreeNode* parse_rule_open(SnortConfig* sc, RuleTreeNode& rtn, bool stub)
     return otn;
 }
 
-// return nullptr if nothing left to do
-// for so rules, return the detection options and continue parsing
-// but if already entered, don't recurse again
-const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
+void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
 {
     if ( s_ignore )
     {
         s_ignore = false;
-        return nullptr;
+        return;
     }
 
     static bool entered = false;
-    const char* so_opts = nullptr;
 
     if ( entered )
         entered = false;
 
     else if ( otn->soid )
     {
-        so_opts = SoManager::get_so_options(otn->soid);
+        // for so rules, delete the otn and parse the actual rule
+        // but if already entered, don't recurse again
 
-        if ( !so_opts )
+        // FIXIT-L RTN should be a proper object with better encapsulation
+        if ( rtn.sip )
+            sfvar_free(rtn.sip);
+        if ( rtn.dip )
+            sfvar_free(rtn.dip);
+
+        const char* rule = SoManager::get_so_rule(otn->soid);
+        IpsManager::reset_options();
+
+        if ( !rule )
             ParseError("SO rule %s not loaded.", otn->soid);
         else
         {
             entered = true;
-            return so_opts;
+            ParseConfigString(sc, rule);
         }
+        OtnFree(otn);
+        return;
     }
 
     /* The IPs in the test node get freed in ProcessHeadNode if there is
@@ -1186,7 +1194,7 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
         {
             /* We are keeping the old/dup OTN and trashing the new one
              * we just created - it's freed in the remove dup function */
-            return nullptr;
+            return;
         }
     }
     otn_count++;
@@ -1243,7 +1251,5 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
 
     // Clear ips_option vars
     ClearIpsOptionsVars();
-
-    return nullptr;
 }
 

@@ -32,37 +32,18 @@
 #include "catch/snort_catch.h"
 #endif
 
-// must parse out stub options for --dump-dynamic-rules
-// must parse out detection options (ie everything else) after loading stub
-//
-// for plain so rules, all options are in stub
-// for protected rules, stub options depend on the use of UNORDERED_OPTS
-//
-// assume valid rule syntax
-// handles # and /* */ comments
-// return true if parsed rule body close
-// no requirement to beautify ugly rules
-
 class SoRuleParser
 {
 public:
-    SoRuleParser(bool p)
-    { is_plain = p; }
+    SoRuleParser() { }
 
     bool parse_so_rule(const char* in, std::string& stub, std::string& opts);
 
 private:
     bool is_stub_option(std::string& opt);
-
-private:
-    bool in_stub;
-    bool is_plain;
+    void trim(std::string&);
 };
 
-//#define UNORDERED_OPTS
-#ifdef UNORDERED_OPTS
-// these options are shown in so rule stubs
-// any other option is considered a detection option
 static std::set<std::string> stub_opts =
 {
     "classtype", "flowbits", "gid", "metadata", "msg", "priority",
@@ -71,190 +52,196 @@ static std::set<std::string> stub_opts =
 
 bool SoRuleParser::is_stub_option(std::string& opt)
 {
-    if ( is_plain )
-        return true;
-
     size_t n = opt.find_first_of(" :;");
     std::string name = opt.substr(0, n);
     return stub_opts.find(name) != stub_opts.end();
 }
-#else
-// all options up to and including soid are shown in so rule stubs
-// any options following soid are considered detection options
-// this approach requires Talos to reorder rule options so is not
-// viable long-term.
-bool SoRuleParser::is_stub_option(std::string& opt)
-{
-    if ( is_plain )
-        return true;
-
-    if ( !in_stub )
-        return false;
-
-    size_t n = opt.find_first_of(" :;");
-    std::string name = opt.substr(0, n);
-
-    if  ( name == "soid" )
-    {
-        in_stub = false;
-        return true;
-    }
-    return true;
-}
-#endif
 
 // split rule into stub and detection options
+//
+// the FSM deletes duplicate spaces between options except in these cases:
+// -- start of rule:  "^ alert"
+// -- middle of rule: ";      " (indent following # comment)
+// -- end of rule:    ";     )" (multiple detection opts)
+//
+// the trim method below cleans up the start/end of rule cases
+// FIXIT-L the middle of rule case should be handled by the FSM
+
 bool SoRuleParser::parse_so_rule(const char* in, std::string& stub, std::string& opts)
 {
-    in_stub = true;
+    unsigned state = 0;
+    unsigned next = 0;
 
-    int state = 0;
-    int next = 0;
-
-    bool del_sp = false;
+    char prev = '\0';
+    bool drop = false;
 
     std::string opt;
     std::string* accum = &stub;
 
     while ( *in )
     {
+        char c = *in;
+
         switch ( state )
         {
-        case 0:
-            if ( *in == '#' )
+        case 0:  // in rule header
+            if ( c == '#' )
             {
                 state = 1;
                 next = 0;
+                drop = true;
                 break;
             }
-            else if ( *in == '(' )
+            else if ( c == '(' )
                 state = 5;
-            else if ( *in == '/' )
+            else if ( c == '/' )
             {
                 state = 2;
                 next = 0;
+                drop = true;
             }
             break;
-        case 1:
-            if ( *in == '\n' )
+        case 1:  // in bash-style comment
+            if ( c == '\n' )
+            {
                 state = next;
+                drop = false;
+                c = ' ';
+            }
             break;
-        case 2:
-            if ( *in == '*' )
+        case 2:  // in C-style comment begin
+            if ( c == '*' )
                 state = 3;
             else
             {
+                *accum += '/';
                 state = next;
+                drop = false;
                 continue; // repeat
             }
             break;
-        case 3:
-            if ( *in == '*' )
+        case 3:  // in C-style comment
+            if ( c == '*' )
                 state = 4;
             break;
-        case 4:
-            if ( *in == '/' )
+        case 4:  // in C-style comment end
+            if ( c == '/' )
+            {
                 state = next;
+                drop = false;
+                c = ' ';
+            }
             else
                 state = 3;
             break;
-        case 5:
-            if ( del_sp )
-            {
-                if ( std::isspace(*in) )
-                {
-                    opts += *in++;
-                    continue;
-                }
-                else
-                    del_sp = false;
-            }
-            if ( *in == '#' )
+        case 5:  // in rule ( body )
+            if ( c == '#' )
             {
                 state = 1;
                 next = 5;
+                drop = true;
                 break;
             }
-            else if ( *in == '/' )
+            else if ( c == '/' )
             {
                 state = 2;
                 next = 5;
+                drop = true;
             }
-            else if ( *in == ')' )
+            else if ( c == ')' )
             {
-                *accum += *in;
+                *accum += c;
+                trim(stub);
                 return true;
             }
-            else if ( !std::isspace(*in) )
+            else if ( !std::isspace(c) )
             {
                 opt.clear();
                 accum = &opt;
                 state = 6;
             }
             break;
-        case 6:
-            if ( *in == '#' )
+        case 6:  // in rule option
+            if ( c == '#' )
             {
                 state = 1;
                 next = 6;
+                drop = true;
                 break;
             }
-            else if ( *in == '/' )
+            else if ( c == '/' )
             {
                 state = 2;
                 next = 6;
+                drop = true;
             }
-            else if ( *in == '"' )
+            else if ( c == '"' )
             {
                 state = 7;
             }
-            else if ( *in == ';' )
+            else if ( c == ';' )
             {
                 accum = &stub;
                 state = 5;
-                
+
                 if ( is_stub_option(opt) )
                     stub += opt;
                 else
                 {
                     opts += opt;
                     opts += *in++;
-                    del_sp = true;
                     continue;
                 }
             }
             break;
-        case 7:
-            if ( *in == '\\' )
+        case 7:  // in "string"
+            if ( c == '\\' )
                 state = 8;
-            else if ( *in == '"' )
+            else if ( c == '"' )
                 state = 6;
             break;
-        case 8:
+        case 8:  // in escape
             state = 7;
             break;
         }
-        *accum += *in++;
+        if ( state < 7 and c == '\n' )
+            c = ' ';
+
+        if ( (!drop and (!std::isspace(c) or !std::isspace(prev))) or (state >= 6) )
+        {
+            *accum += c;
+            if ( *accum == stub )
+                prev = c;
+        }
+        ++in;
     }
 
     return false;
+}
+
+void SoRuleParser::trim(std::string& stub)
+{
+    while ( std::isspace(stub[0]) )
+        stub.erase(0, 1);
+
+    size_t n = stub.rfind(';');
+
+    if ( n != std::string::npos and ++n < stub.length() and std::isspace(stub[n]) )
+    {
+        ++n;
+        while ( n < stub.length() and std::isspace(stub[n]) )
+            stub.erase(n, 1);
+    }
 }
 
 //--------------------------------------------------------------------------
 // public methods
 //--------------------------------------------------------------------------
 
-bool get_so_stub(const char* in, bool plain, std::string& stub)
+bool get_so_stub(const char* in, std::string& stub)
 {
-    SoRuleParser sop(plain);
+    SoRuleParser sop;
     std::string opts;
-    return sop.parse_so_rule(in, stub, opts);
-}
-
-bool get_so_options(const char* in, bool plain, std::string& opts)
-{
-    SoRuleParser sop(plain);
-    std::string stub;
     return sop.parse_so_rule(in, stub, opts);
 }
 
@@ -272,40 +259,50 @@ struct TestCase
 
 static const TestCase syntax_tests[] =
 {
-    { "alert() ", "alert()", true },
+    { "alert()", "alert()", true },
+    { " alert() ", "alert()", true },
 
-    { "alert tcp any any -> any any ( )", 
-      "alert tcp any any -> any any ( )", true },
-
-    { "alert tcp $EXTERNAL_NET any -> $HTTP_SERVERS $HTTP_PORTS ( )", 
-      "alert tcp $EXTERNAL_NET any -> $HTTP_SERVERS $HTTP_PORTS ( )", true },
-
-    { "#alert()", "#alert()", false },
-    { "# \nalert()", "# \nalert()", true },
-    { "alert#\n()", "alert#\n()", true },
+    { "#alert()", "", false },
+    { "# \nalert()", "alert()", true },
+    { "alert#\n()", "alert ()", true },
     { "alert() # comment", "alert()", true },
-    { "alert(#\n)", "alert(#\n)", true },
-    { "alert(#)", "alert(#)", false },
+    { "alert(#\n)", "alert( )", true },
+    { "alert(#)", "alert(", false },
+    { "alert()#", "alert()", true },
 
-    { "/*alert()*/", "/*alert()*/", false },
+    { "/*alert()*/", " ", false },
     { "/ *alert()*/", "/ *alert()", true },
-    { "/* /alert()", "/* /alert()", false },
-    { "/* *alert()", "/* *alert()", false },
-    { "/*alert(*/)", "/*alert(*/)", false },
-    { "alert(/*)", "alert(/*)", false },
-    { "alert(/*)*/", "alert(/*)*/", false },
-    { "alert(/**)/", "alert(/**)/", false },
-    { "alert/*()*/", "alert/*()*/", false },
-    { "alert/*(*/)", "alert/*(*/)", false },
+    { "/* /alert()", "", false },
+    { "/* *alert()", "", false },
+    { "/*alert(*/)", " )", false },
+    { "alert(/*)", "alert(", false },
+    { "alert(/*)*/", "alert( ", false },
+    { "alert(/**)/", "alert(", false },
+    { "alert/*()*/", "alert ", false },
+    { "alert/*(*/)", "alert )", false },
 
-    { "alert(/**/) ", "alert(/**/)", true },
-    { "alert(/* sid:1; */)", "alert(/* sid:1; */)", true },
+    { "alert(/**/) ", "alert( )", true },
+    { "alert( /**/) ", "alert( )", true },
+    { "alert(/**/ ) ", "alert( )", true },
+    { "alert( /**/ ) ", "alert( )", true },
+    { "alert(/* comment */)", "alert( )", true },
 
+    { nullptr, nullptr, false }
+};
+
+static const TestCase basic_tests[] =
+{
     { "alert( sid:1; )", "alert( sid:1; )", true },
 
-    { "alert( sid:1 /*comment*/; )", "alert( sid:1 /*comment*/; )", true },
-    { "alert( sid:1 # comment\n; )", "alert( sid:1 # comment\n; )", true },
-    { "alert( sid:1; /*id:0;*/ )", "alert( sid:1; /*id:0;*/ )", true },
+    { "alert( sid:1 /*comment*/; )", "alert( sid:1  ; )", true },
+    { "alert( sid:1 # comment\n; )", "alert( sid:1  ; )", true },
+    { "alert( sid:1; /*id:0;*/ )", "alert( sid:1; )", true },
+
+    { "alert tcp any any -> any any ( )",
+      "alert tcp any any -> any any ( )", true },
+
+    { "alert tcp $EXTERNAL_NET any -> $HTTP_SERVERS $HTTP_PORTS ( )",
+      "alert tcp $EXTERNAL_NET any -> $HTTP_SERVERS $HTTP_PORTS ( )", true },
 
     { nullptr, nullptr, false }
 };
@@ -313,10 +310,9 @@ static const TestCase syntax_tests[] =
 // __STRDUMP_DISABLE__
 static const TestCase stub_tests[] =
 {
-#ifdef UNORDERED_OPTS
     { "alert( id:0; )", "alert( )", true },
     { "alert( sid:1; id:0; )", "alert( sid:1; )", true },
-    { "alert( sid:1;id:0; )", "alert( sid:1;)", true },
+    { "alert( sid:1;id:0; )", "alert( sid:1; )", true },
     { "alert( id:0;sid:1; )", "alert( sid:1; )", true },
 
     { "alert( id:/*comment*/0; )", "alert( )", true },
@@ -327,52 +323,12 @@ static const TestCase stub_tests[] =
     { R"_(alert( content:"f\"o"; ))_", "alert( )", true },
 
     { R"_(alert( soid; rem:"soid"; /*soid*/ ))_",
-      R"_(alert( soid; rem:"soid"; /*soid*/ ))_", true },
+      R"_(alert( soid; rem:"soid"; ))_", true },
 
-    { R"_(alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS ( msg:"MALWARE-CNC Win.Trojan.Hufysk variant outbound connection"; flow:to_server,established; http_uri; content:"/j.php|3F|u|3D|", fast_pattern,nocase; content:"&v=f2&r=",depth 8,offset 41,nocase; metadata:impact_flag red,policy balanced-ips drop,policy security-ips drop; service:http; reference:url,www.virustotal.com/file/bff436d8a2ccf1cdce56faabf341e97f59285435b5e73f952187bbfaf4df3396/analysis/; classtype:trojan-activity; sid:24062; rev:7; ))_", 
-      R"_(alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS ( msg:"MALWARE-CNC Win.Trojan.Hufysk variant outbound connection"; metadata:impact_flag red,policy balanced-ips drop,policy security-ips drop; service:http; reference:url,www.virustotal.com/file/bff436d8a2ccf1cdce56faabf341e97f59285435b5e73f952187bbfaf4df3396/analysis/; classtype:trojan-activity; sid:24062; rev:7; ))_", 
+    { R"_(alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS ( msg:"MALWARE-CNC Win.Trojan.Hufysk variant outbound connection"; flow:to_server,established; http_uri; content:"/j.php|3F|u|3D|", fast_pattern,nocase; content:"&v=f2&r=",depth 8,offset 41,nocase; metadata:impact_flag red,policy balanced-ips drop,policy security-ips drop; service:http; reference:url,www.virustotal.com/file/bff436d8a2ccf1cdce56faabf341e97f59285435b5e73f952187bbfaf4df3396/analysis/; classtype:trojan-activity; sid:24062; rev:7; ))_",
+      R"_(alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS ( msg:"MALWARE-CNC Win.Trojan.Hufysk variant outbound connection"; metadata:impact_flag red,policy balanced-ips drop,policy security-ips drop; service:http; reference:url,www.virustotal.com/file/bff436d8a2ccf1cdce56faabf341e97f59285435b5e73f952187bbfaf4df3396/analysis/; classtype:trojan-activity; sid:24062; rev:7; ))_",
       true },
 
-#else
-    { "alert( soid; id:0; )", "alert( soid; )", true },
-    { "alert( sid:1; soid; id:0; )", "alert( sid:1; soid; )", true },
-    { "alert( sid:1;soid;id:0; )", "alert( sid:1;soid;)", true },
-    { "alert( soid;id:0;sid:1; )", "alert( soid;)", true },
-
-    { "alert( soid; id:/*comment*/0; )", "alert( soid; )", true },
-    { "alert( soid; id: #comment\n0; )", "alert( soid; )", true },
-
-    { R"_(alert( soid; content:"foo"; ))_", "alert( soid; )", true },
-    { R"_(alert( soid; content:"f;o"; ))_", "alert( soid; )", true },
-    { R"_(alert( soid; content:"f\"o"; ))_", "alert( soid; )", true },
-
-    { R"_(alert( rem:"soid"; /*soid*/ soid; ))_",
-      R"_(alert( rem:"soid"; /*soid*/ soid; ))_", true },
-
-    { R"_(alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS ( msg:"MALWARE-CNC Win.Trojan.Hufysk variant outbound connection"; soid:a; flow:to_server,established; http_uri; content:"/j.php|3F|u|3D|", fast_pattern,nocase; content:"&v=f2&r=",depth 8,offset 41,nocase; metadata:impact_flag red,policy balanced-ips drop,policy security-ips drop; service:http; reference:url,www.virustotal.com/file/bff436d8a2ccf1cdce56faabf341e97f59285435b5e73f952187bbfaf4df3396/analysis/; classtype:trojan-activity; sid:24062; rev:7; ))_", 
-      R"_(alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS ( msg:"MALWARE-CNC Win.Trojan.Hufysk variant outbound connection"; soid:a; ))_", 
-      true },
-
-#endif
-    { nullptr, nullptr, false }
-};
-
-static const TestCase opts_tests[] =
-{
-#ifdef UNORDERED_OPTS
-    { R"_(alert( soid; rem:"soid"; /*soid*/ ))_", R"_(alert( /*soid*/ ))_", true },
-
-    { R"_(alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS ( msg:"MALWARE-CNC Win.Trojan.Hufysk variant outbound connection"; flow:to_server,established; http_uri; content:"/j.php|3F|u|3D|", fast_pattern,nocase; content:"&v=f2&r=",depth 8,offset 41,nocase; metadata:impact_flag red,policy balanced-ips drop,policy security-ips drop; service:http; reference:url,www.virustotal.com/file/bff436d8a2ccf1cdce56faabf341e97f59285435b5e73f952187bbfaf4df3396/analysis/; classtype:trojan-activity; sid:24062; rev:7; ))_", 
-      R"_(flow:to_server,established; http_uri; content:"/j.php|3F|u|3D|", fast_pattern,nocase; content:"&v=f2&r=",depth 8,offset 41,nocase; )_", 
-      true },
-
-#else
-    { R"_(alert( rem:"soid"; /*soid*/ soid; ))_", "", true },
-
-    { R"_(alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS ( msg:"MALWARE-CNC Win.Trojan.Hufysk variant outbound connection"; metadata:impact_flag red,policy balanced-ips drop,policy security-ips drop; service:http; reference:url,www.virustotal.com/file/bff436d8a2ccf1cdce56faabf341e97f59285435b5e73f952187bbfaf4df3396/analysis/; classtype:trojan-activity; sid:24062; rev:7; soid:3_24062_7; flow:to_server,established; http_uri; content:"/j.php|3F|u|3D|", fast_pattern,nocase; content:"&v=f2&r=",depth 8,offset 41,nocase; ))_", 
-      R"_(flow:to_server,established; http_uri; content:"/j.php|3F|u|3D|", fast_pattern,nocase; content:"&v=f2&r=",depth 8,offset 41,nocase; )_", 
-      true },
-#endif
     { nullptr, nullptr, false }
 };
 // __STRDUMP_ENABLE__
@@ -381,76 +337,51 @@ static const TestCase opts_tests[] =
 // unit tests
 //--------------------------------------------------------------------------
 
-TEST_CASE("parse_so_rule", "[parser]")
+TEST_CASE("parse_so_rule.syntax", "[parser]")
 {
     const TestCase* tc = syntax_tests;
 
     while ( tc->rule )
     {
-        SoRuleParser sop(false);
+        SoRuleParser sop;
         std::string stub;
         std::string opts;
         bool parse = sop.parse_so_rule(tc->rule, stub, opts);
-        CHECK(parse == tc->result);
-        CHECK(stub == tc->expect);
+        CHECK(tc->result == parse);
+        CHECK(tc->expect == stub);
         ++tc;
     }
 }
 
-TEST_CASE("get_so_stub protected", "[parser]")
+TEST_CASE("parse_so_rule.basic", "[parser]")
+{
+    const TestCase* tc = basic_tests;
+
+    while ( tc->rule )
+    {
+        SoRuleParser sop;
+        std::string stub;
+        std::string opts;
+        bool parse = sop.parse_so_rule(tc->rule, stub, opts);
+        CHECK(tc->result == parse);
+        CHECK(tc->expect == stub);
+        ++tc;
+    }
+}
+
+TEST_CASE("get_so_stub", "[parser]")
 {
     const TestCase* tc = stub_tests;
 
     while ( tc->rule )
     {
         std::string stub;
-        bool get = get_so_stub(tc->rule, false, stub);
-        CHECK(get == tc->result);
-        CHECK(stub == tc->expect);
+        bool get = get_so_stub(tc->rule, stub);
+        CHECK(tc->result == get);
+        CHECK(tc->expect == stub);
         ++tc;
     }
 }
 
-TEST_CASE("get_so_options protected", "[parser]")
-{
-    const TestCase* tc = opts_tests;
-
-    while ( tc->rule )
-    {
-        std::string opts;
-        bool get = get_so_options(tc->rule, false, opts);
-        CHECK(get == tc->result);
-        CHECK(opts == tc->expect);
-        ++tc;
-    }
-}
-
-TEST_CASE("get_so_stub plain", "[parser]")
-{
-    const TestCase* tc = stub_tests;
-
-    while ( tc->rule )
-    {
-        std::string stub;
-        bool get = get_so_stub(tc->rule, true, stub);
-        CHECK(get == tc->result);
-        CHECK(stub == tc->rule);
-        ++tc;
-    }
-}
-
-TEST_CASE("get_so_options plain", "[parser]")
-{
-    const TestCase* tc = opts_tests;
-
-    while ( tc->rule )
-    {
-        std::string opts;
-        bool get = get_so_options(tc->rule, true, opts);
-        CHECK(get == tc->result);
-        CHECK(opts == "");
-        ++tc;
-    }
-}
 #endif
 

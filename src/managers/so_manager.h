@@ -43,7 +43,7 @@ public:
     static void instantiate(const SoApi*);
 
     // soid is arg to soid option, so is arg to so option
-    static const char* get_so_options(const char* soid);
+    static const char* get_so_rule(const char* soid);
     static SoEvalFunc get_so_eval(const char* soid, const char* so, void** data);
     static void delete_so_data(const char* soid, void*);
 

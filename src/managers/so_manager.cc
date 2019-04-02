@@ -194,7 +194,7 @@ static const SoApi* get_so_api(const char* soid)
     return nullptr;
 }
 
-const char* SoManager::get_so_options(const char* soid)
+const char* SoManager::get_so_rule(const char* soid)
 {
     const SoApi* api = get_so_api(soid);
 
@@ -203,17 +203,7 @@ const char* SoManager::get_so_options(const char* soid)
 
     const char* rule = revert(api->rule, api->length);
 
-    if ( !rule )
-        return nullptr;
-
-    static std::string opts;
-    opts.clear();
-
-    if ( !::get_so_options(rule, !api->length, opts) )
-        return nullptr;
-
-    opts += " )";
-    return opts.c_str();
+    return rule;
 }
 
 SoEvalFunc SoManager::get_so_eval(const char* soid, const char* so, void** data)
@@ -249,7 +239,7 @@ void SoManager::dump_rule_stubs(const char*)
 
         std::string stub;
 
-        if ( !get_so_stub(rule, !p->length, stub) )
+        if ( !get_so_stub(rule, stub) )
             continue;
 
         cout << stub << endl;
