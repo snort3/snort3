@@ -352,4 +352,3 @@ unsigned FlowCache::purge()
 
     return retired;
 }
-

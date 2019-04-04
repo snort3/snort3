@@ -22,6 +22,8 @@
 
 #include <cassert>
 
+#include "pub_sub/stash_events.h"
+
 using namespace snort;
 using namespace std;
 
@@ -86,6 +88,9 @@ void FlowStash::store(const string& key, StashGenericObject* &val, StashItemType
         delete it_and_status.first->second;
         it_and_status.first->second = item;
     }
+
+    StashEvent e(item);
+    DataBus::publish(key.c_str(), e);
 }
 
 void FlowStash::store(const std::string& key, std::string* val)
@@ -125,4 +130,7 @@ void FlowStash::store(const string& key, T& val, StashItemType type)
         delete it_and_status.first->second;
         it_and_status.first->second = item;
     }
+
+    StashEvent e(item);
+    DataBus::publish(key.c_str(), e);
 }
