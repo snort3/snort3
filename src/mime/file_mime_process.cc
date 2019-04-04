@@ -30,6 +30,7 @@
 #include "file_api/file_flows.h"
 #include "log/messages.h"
 #include "search_engines/search_tool.h"
+#include "utils/util_cstring.h"
 
 using namespace snort;
 
@@ -369,10 +370,20 @@ const uint8_t* MimeSession::process_mime_header(const uint8_t* ptr,
             cont_disp)
         {
             bool disp_cont = (state_flags & MIME_FLAG_IN_CONT_DISP_CONT) ? true : false;
-            if (log_config->log_filename && log_state )
+            int len = extract_file_name((const char*&)cont_disp, eolm - cont_disp, &disp_cont);
+
+            if (len > 0)
             {
-                log_state->log_file_name(cont_disp, eolm - cont_disp, &disp_cont);
+                filename.assign((const char*)cont_disp, len);
+
+                if (log_config->log_filename && log_state)
+                {
+                    log_state->log_file_name(cont_disp, len);
+                }
             }
+            else
+                filename.clear();
+
             if (disp_cont)
             {
                 state_flags |= MIME_FLAG_IN_CONT_DISP_CONT;
@@ -590,7 +601,8 @@ const uint8_t* MimeSession::process_mime_data_paf(
         if (file_flows && file_flows->file_process(p, buffer, buf_size, position, upload)
             && (isFileStart(position)) && log_state)
         {
-            log_state->set_file_name_from_log(flow);
+            file_flows->set_file_name((const uint8_t*)filename.c_str(), filename.length());
+            filename.clear();
         }
         if (mime_stats)
         {
@@ -692,6 +704,68 @@ void MimeSession::set_mime_stats(MimeStats* stats)
 MailLogState* MimeSession::get_log_state()
 {
     return log_state;
+}
+
+int MimeSession::extract_file_name(const char*& start, int length, bool* disp_cont)
+{
+    const char* tmp = nullptr;
+    const char* end = start+length;
+
+    if (length <= 0)
+        return -1;
+
+    if (!(*disp_cont))
+    {
+        tmp = SnortStrcasestr(start, length, "filename");
+
+        if ( tmp == nullptr )
+            return -1;
+
+        tmp = tmp + 8;
+        while ( (tmp < end) && ((isspace(*tmp)) || (*tmp == '=') ))
+        {
+            tmp++;
+        }
+    }
+    else
+        tmp = start;
+
+    if (tmp < end)
+    {
+        if (*tmp == '"' || (*disp_cont))
+        {
+            if (*tmp == '"')
+            {
+                if (*disp_cont)
+                {
+                    *disp_cont = false;
+                    return (tmp - start);
+                }
+                tmp++;
+            }
+            start = tmp;
+            tmp = SnortStrnPbrk(start,(end - tmp),"\"");
+            if (tmp == nullptr )
+            {
+                if ((end - tmp) > 0 )
+                {
+                    tmp = end;
+                    *disp_cont = true;
+                }
+                else
+                    return -1;
+            }
+            else
+                *disp_cont = false;
+            end = tmp;
+        }
+        else
+        {
+            start = tmp;
+        }
+        return (end - start);
+    }
+    return -1;
 }
 
 /*

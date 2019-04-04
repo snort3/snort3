@@ -54,8 +54,7 @@ public:
     ~MailLogState();
 
     /* accumulate MIME attachment filenames. The filenames are appended by commas */
-    int log_file_name(const uint8_t* start, int length, bool* disp_cont);
-    void set_file_name_from_log(snort::Flow*);
+    int log_file_name(const uint8_t* start, int length);
 
     int log_email_hdrs(const uint8_t* start, int length);
     int log_email_id (const uint8_t* start, int length, EmailUserType);
@@ -70,7 +69,6 @@ public:
     bool is_email_to_present();
 
 private:
-    int extract_file_name(const char** start, int length, bool* disp_cont);
     int log_flags = 0;
     uint8_t* buf = nullptr;
     unsigned char* emailHdrs;

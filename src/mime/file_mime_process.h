@@ -23,7 +23,7 @@
 
 // Provides list of MIME processing functions. Encoded file data will be decoded
 // and file name will be extracted from MIME header
-
+#include <string>
 #include "file_api/file_api.h"
 #include "mime/file_mime_config.h"
 #include "mime/file_mime_decode.h"
@@ -83,6 +83,7 @@ private:
     MailLogConfig* log_config = nullptr;
     MailLogState* log_state = nullptr;
     MimeStats* mime_stats = nullptr;
+    std::string filename;
 
     // SMTP, IMAP, POP might have different implementation for this
     virtual int handle_header_line(const uint8_t*, const uint8_t*, int) { return 0; }
@@ -98,6 +99,7 @@ private:
     const uint8_t* process_mime_body(const uint8_t* ptr, const uint8_t* data_end,bool is_data_end);
     const uint8_t* process_mime_data_paf(Packet*, const uint8_t* start, const uint8_t* end,
         bool upload, FilePosition);
+    int extract_file_name(const char*& start, int length, bool* disp_cont);
 };
 }
 #endif
