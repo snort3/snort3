@@ -271,7 +271,8 @@ void Rule::resolve_pcre_buffer_options()
             name == "http_raw_uri" ||
             name == "http_stat_code" ||
             name == "http_stat_msg" ||
-            name == "http_uri")
+            name == "http_uri" ||
+            name == "raw_data")
         {
             if (curr_sticky_buffer == name)
             {

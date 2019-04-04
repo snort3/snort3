@@ -87,7 +87,7 @@ bool Content<option_name>::parse_options(
         rule_api.add_suboption("length", val);
 
     else if (keyword == "rawbytes")
-        add_sticky_buffer(data_stream, "pkt_data");
+        add_sticky_buffer(data_stream, "raw_data");
 
     else if (keyword == "http_client_body")
         add_sticky_buffer(data_stream, "http_client_body");
