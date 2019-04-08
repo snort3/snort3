@@ -816,23 +816,13 @@ static RuleTreeNode* ProcessHeadNode(
     if ( !rtn )
     {
         head_count++;
-
         rtn = new RuleTreeNode;
-        rtn->otnRefCount++;
-
-        /* copy the prototype header info into the new header block */
         XferHeader(test_node, rtn);
-
-        /* initialize the function list for the new RTN */
         SetupRTNFuncList(rtn);
-
-        /* add link to parent listhead */
         rtn->listhead = list;
-
     }
     else
     {
-        rtn->otnRefCount++;
         FreeRuleTreeNode(test_node);
     }
 
@@ -878,13 +868,10 @@ static int mergeDuplicateOtn(
         // Add rtn to current otn for the first rule instance in a policy,
         // otherwise ignore it
         if ( !rtn_cur )
-        {
             addRtnToOtn(sc, otn_cur, rtn_new);
-        }
         else
-        {
             DestroyRuleTreeNode(rtn_new);
-        }
+
         return true;
     }
 
@@ -913,9 +900,9 @@ static int mergeDuplicateOtn(
             ParseWarning(WARN_RULES, "%u:%u duplicates previous rule. Using revision %u.",
                 otn_new->sigInfo.gid, otn_new->sigInfo.sid, otn_new->sigInfo.rev);
         }
+        DestroyRuleTreeNode(rtn_cur);
     }
     OtnRemove(sc->otn_map, otn_cur);
-    DestroyRuleTreeNode(rtn_cur);
 
     return false;
 }
@@ -1180,7 +1167,6 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
      * already a matching RTN.  The portobjects will get freed when the
      * port var table is freed */
     RuleTreeNode* new_rtn = ProcessHeadNode(sc, &rtn, rtn.listhead);
-
     addRtnToOtn(sc, otn, new_rtn);
 
     OptTreeNode* otn_dup =

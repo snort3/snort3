@@ -412,12 +412,6 @@ static IpsOption* flow_ctor(Module* p, OptTreeNode* otn)
     if ( m->data.stateless )
         otn->set_stateless();
 
-    if ( m->data.established )
-        otn->set_established();
-
-    if ( m->data.unestablished )
-        otn->set_unestablished();
-
     if (otn->snort_protocol_id == SNORT_PROTO_ICMP)
     {
         if ( (m->data.only_reassembled != ONLY_FRAG) &&

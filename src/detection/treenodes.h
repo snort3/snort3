@@ -135,11 +135,8 @@ struct RuleTreeNode
 struct OptTreeNode
 {
     using Flag = uint8_t;
-    static constexpr Flag GENERATED     = 0x01;
-    static constexpr Flag WARNED_FP     = 0x02;
-    static constexpr Flag ESTABLISHED   = 0x04;
-    static constexpr Flag UNESTABLISHED = 0x08;
-    static constexpr Flag STATELESS     = 0x10;
+    static constexpr Flag WARNED_FP = 0x01;
+    static constexpr Flag STATELESS = 0x02;
 
     /* metadata about signature */
     SigInfo sigInfo;
@@ -169,18 +166,10 @@ struct OptTreeNode
     // Added for integrity checks during rule parsing.
     SnortProtocolId snort_protocol_id = 0;
 
-    /**number of proto_nodes. */
     unsigned short proto_node_num = 0;
-
     uint16_t longestPatternLen = 0;
 
     Flag flags = 0;
-
-    void set_generated()
-    { flags |= GENERATED; }
-
-    bool generated() const
-    { return flags & GENERATED; }
 
     void set_warned_fp()
     { flags |= WARNED_FP; }
@@ -188,20 +177,8 @@ struct OptTreeNode
     bool warned_fp() const
     { return flags & WARNED_FP; }
 
-    void set_established()
-    { flags |= ESTABLISHED; }
-
-    void set_unestablished()
-    { flags |= UNESTABLISHED; }
-
     void set_stateless()
     { flags |= STATELESS; }
-
-    bool established() const
-    { return flags & ESTABLISHED; }
-
-    bool unestablished() const
-    { return flags & UNESTABLISHED; }
 
     bool stateless() const
     { return flags & STATELESS; }

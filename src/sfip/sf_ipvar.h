@@ -99,6 +99,7 @@ struct vartable_t
 
 /* Creates a new variable that is an alias of another variable
  * Does a "deep" copy so it owns it's own pointers */
+sfip_var_t* sfvar_deep_copy(const sfip_var_t*);
 sfip_var_t* sfvar_create_alias(const sfip_var_t* alias_from, const char* alias_to);
 
 /* Allocates a new variable as according to "str" */

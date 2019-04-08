@@ -1727,7 +1727,8 @@ bool RateFilterModule::end(const char*, int idx, SnortConfig* sc)
 
 static const Parameter single_rule_state_params[] =
 {
-    { "action", Parameter::PT_ENUM, "log | pass | alert | drop | block | reset | inherit", "inherit",
+    { "action", Parameter::PT_ENUM,
+      "log | pass | alert | drop | block | reset | inherit", "inherit",
       "apply action if rule matches or inherit from rule definition" },
 
     { "enable", Parameter::PT_ENUM, "false | true | inherit", "inherit",
@@ -1739,7 +1740,7 @@ static const Parameter single_rule_state_params[] =
 static const char* rule_state_gid_sid_regex = "([0-9]+):([0-9]+)";
 static const Parameter rule_state_params[] =
 {
-    { rule_state_gid_sid_regex, Parameter::PT_TABLE, single_rule_state_params, nullptr,
+    { rule_state_gid_sid_regex, Parameter::PT_LIST, single_rule_state_params, nullptr,
       "defines rule state parameters for gid:sid", true },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -1752,13 +1753,21 @@ class RuleStateModule : public Module
 {
 public:
     RuleStateModule() : Module("rule_state", rule_state_help, rule_state_params, false) { }
+
     bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
     Usage get_usage() const override
     { return DETECT; }
+
+private:
+    unsigned gid, sid;
+    IpsPolicy::Action action;
+    IpsPolicy::Enable enable;
 };
 
-bool RuleStateModule::set(const char* fqn, Value& v, SnortConfig* sc)
+bool RuleStateModule::set(const char* fqn, Value& v, SnortConfig*)
 {
     static regex gid_sid(rule_state_gid_sid_regex);
 
@@ -1770,25 +1779,37 @@ bool RuleStateModule::set(const char* fqn, Value& v, SnortConfig* sc)
 
     if ( regex_search(fqn, match, gid_sid) )
     {
-        unsigned gid = strtoul(match[1].str().c_str(), nullptr, 10);
-        unsigned sid = strtoul(match[2].str().c_str(), nullptr, 10);
+        gid = strtoul(match[1].str().c_str(), nullptr, 10);
+        sid = strtoul(match[2].str().c_str(), nullptr, 10);
 
         if ( v.is("action") )
-        {
-            sc->rule_states.emplace_back(
-                new RuleStateAction(gid, sid, IpsPolicy::Action(v.get_uint8())));
-        }
+            action = IpsPolicy::Action(v.get_uint8());
+
         else if ( v.is("enable") )
-        {
-            sc->rule_states.emplace_back(
-                new RuleStateEnable(gid, sid, IpsPolicy::Enable(v.get_uint8())));
-        }
+            enable = IpsPolicy::Enable(v.get_uint8());
+
         else
             return false;
     }
     else
         return false;
 
+    return true;
+}
+
+bool RuleStateModule::begin(const char*, int, SnortConfig*)
+{
+    gid = sid = 0;
+    action = IpsPolicy::Action::INHERIT_ACTION;
+    enable = IpsPolicy::Enable::INHERIT_ENABLE;
+    return true;
+}
+
+bool RuleStateModule::end(const char*, int, SnortConfig* sc)
+{
+    if ( gid )
+        sc->rule_states.emplace_back(new RuleState(gid, sid, action, enable));
+    gid = 0;
     return true;
 }
 

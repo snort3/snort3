@@ -24,6 +24,8 @@
 
 #include "rules.h"
 
+#include <cassert>
+
 #include "log/messages.h"
 #include "hash/xhash.h"
 #include "main/policy.h"
@@ -64,68 +66,25 @@ void RuleState::apply(SnortConfig* sc)
 void RuleState::apply(SnortConfig* sc, OptTreeNode* otn, unsigned ips_num)
 {
     RuleTreeNode* rtn = getRtnFromOtn(otn, ips_num);
-    
+
+    if ( !rtn )
+        rtn = getRtnFromOtn(otn, 0);
+
     if ( !rtn )
         return;
 
-    if ( rtn->otnRefCount > 1 )
-    {
-        // duplicate to avoid blanket setting behavior of multiple OTNs
-        rtn = find_updated_rtn(rtn, sc, ips_num);
-        if ( !rtn )
-        {
-            rtn = dup_rtn(otn, sc, ips_num);
-            replace_rtn(otn, rtn, sc, ips_num);
-        }
-
-        else if ( rtn != getRtnFromOtn(otn, ips_num) )
-            replace_rtn(otn, rtn, sc, ips_num);
-
-        update_rtn(getRtnFromOtn(otn, ips_num));
-    }
-    else
-    {
-        RuleTreeNode* existing_rtn = find_updated_rtn(rtn, sc, ips_num);
-
-        // dedup to avoid wasting memory when transitioning RTN to behavior of existing one
-        if ( existing_rtn )
-            replace_rtn(otn, existing_rtn, sc, ips_num);
-        else
-            update_rtn(getRtnFromOtn(otn, ips_num));
-    }
+    rtn = dup_rtn(rtn);
+    update_rtn(rtn);
+    addRtnToOtn(sc, otn, rtn, ips_num);
 }
 
-RuleTreeNode* RuleState::find_updated_rtn(RuleTreeNode* rtn, SnortConfig* sc, unsigned ips_num)
+RuleTreeNode* RuleState::dup_rtn(RuleTreeNode* rtn)
 {
-    RuleTreeNode test_rtn(*rtn);
-    update_rtn(&test_rtn);
-
-    RuleTreeNodeKey key { &test_rtn, ips_num };
-    return (RuleTreeNode*)xhash_find(sc->rtn_hash_table, &key);
-}
-
-void RuleState::replace_rtn(OptTreeNode* otn, RuleTreeNode* replacement, SnortConfig* sc, unsigned ips_num)
-{
-    RuleTreeNode* rtn = getRtnFromOtn(otn, ips_num);
-    rtn->otnRefCount--;
-
-    deleteRtnFromOtn(otn, ips_num, sc, rtn->otnRefCount == 0);
-    addRtnToOtn(snort::SnortConfig::get_conf(), otn, replacement, ips_num);
-}
-
-RuleTreeNode* RuleState::dup_rtn(OptTreeNode* otn, SnortConfig* sc, unsigned ips_num)
-{
-    RuleTreeNode* rtn = getRtnFromOtn(otn, ips_num);
     RuleTreeNode* ret = new RuleTreeNode(*rtn);
-    ret->otnRefCount = 1;
-    
-    auto ip_vartable = sc->policy_map->get_ips_policy(ips_num)->ip_vartable;
 
-    if ( rtn->sip )
-        ret->sip = sfvt_lookup_var(ip_vartable, rtn->sip->name);
-
-    if ( rtn->dip )
-        ret->dip = sfvt_lookup_var(ip_vartable, rtn->dip->name);
+    ret->otnRefCount = 0;
+    ret->sip = sfvar_deep_copy(rtn->sip);
+    ret->dip = sfvar_deep_copy(rtn->dip);
 
     RuleFpList* from = rtn->rule_func;
 
@@ -146,7 +105,7 @@ RuleTreeNode* RuleState::dup_rtn(OptTreeNode* otn, SnortConfig* sc, unsigned ips
     return ret;
 }
 
-void RuleStateAction::update_rtn(RuleTreeNode* rtn)
+void RuleState::update_rtn(RuleTreeNode* rtn)
 {
     switch ( action )
     {
@@ -158,11 +117,7 @@ void RuleStateAction::update_rtn(RuleTreeNode* rtn)
         case IpsPolicy::RESET: rtn->action = snort::Actions::Type::RESET; break;
         case IpsPolicy::INHERIT_ACTION: break;
     }
-}
-
-void RuleStateEnable::update_rtn(RuleTreeNode* rtn)
-{
-    switch( enable )
+    switch ( enable )
     {
         case IpsPolicy::DISABLED: rtn->clear_enabled(); break;
         case IpsPolicy::ENABLED: rtn->set_enabled(); break;

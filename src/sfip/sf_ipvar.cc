@@ -211,7 +211,7 @@ static inline sfip_node_t* _sfvar_deep_copy_list(const sfip_node_t* idx)
 }
 
 /* Deep copy. Returns identical, new, linked list of sfipnodes. */
-static sfip_var_t* sfvar_deep_copy(const sfip_var_t* var)
+sfip_var_t* sfvar_deep_copy(const sfip_var_t* var)
 {
     sfip_var_t* ret;
 
