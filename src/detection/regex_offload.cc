@@ -108,49 +108,50 @@ void MpseRegexOffload::put(snort::Packet* p)
 {
     assert(p);
     assert(!idle.empty());
+    assert(p->context->searches.items.size() > 0);
 
     RegexRequest* req = idle.front();
     idle.pop_front();  // FIXIT-H use splice to move instead
+
     busy.emplace_back(req);
+    // Because a list is a doubly linked list we can store the iterator
+    // for later quick removal of this item from the list
+    p->context->regex_req_it = std::prev(busy.end());
 
     req->packet = p;
-
-    if (p->context->searches.items.size() > 0)
-        p->context->searches.offload_search();
+    p->context->searches.offload_search();
 }
 
 bool MpseRegexOffload::get(snort::Packet*& p)
 {
     assert(!busy.empty());
 
-    for ( auto i = busy.begin(); i != busy.end(); i++ )
+    snort::Mpse::MpseRespType resp_ret;
+    snort::MpseBatch* batch;
+
+    resp_ret = snort::MpseBatch::poll_offload_responses(batch);
+
+    if (resp_ret != snort::Mpse::MPSE_RESP_NOT_COMPLETE)
     {
-        RegexRequest* req = *i;
-        snort::IpsContext* c = req->packet->context;
-
-        if ( c->searches.items.size() > 0 )
+        if (resp_ret == snort::Mpse::MPSE_RESP_COMPLETE_FAIL)
         {
-            snort::Mpse::MpseRespType resp_ret = c->searches.receive_offload_responses();
-
-            if (resp_ret == snort::Mpse::MPSE_RESP_NOT_COMPLETE)
-                continue;
-
-            else if (resp_ret == snort::Mpse::MPSE_RESP_COMPLETE_FAIL)
+            if (batch->can_fallback())
             {
-                if (c->searches.can_fallback())
-                {
-                    // FIXIT-M Add peg counts to record offload search fallback attempts
-                    c->searches.search_sync();
-                }
-                // FIXIT-M else Add peg counts to record offload search failures
+                // FIXIT-M Add peg counts to record offload search fallback attempts
+                batch->search_sync();
             }
-            c->searches.items.clear();
+            // FIXIT-M else Add peg counts to record offload search failures
         }
 
-        p = req->packet;
-        req->packet = nullptr;
+        snort::IpsContext* c = (snort::IpsContext*)(batch->context);
+        p = c->packet;
 
-        busy.erase(i);
+        // Finished with items in batch so clear
+        batch->items.clear();
+
+        RegexRequest* req = *(c->regex_req_it);
+        req->packet = nullptr;
+        busy.erase(c->regex_req_it);
         idle.emplace_back(req);
 
         return true;
@@ -195,19 +196,19 @@ void ThreadRegexOffload::put(snort::Packet* p)
 {
     assert(p);
     assert(!idle.empty());
+    assert(p->context->searches.items.size() > 0);
 
     RegexRequest* req = idle.front();
     idle.pop_front();  // FIXIT-H use splice to move instead
+
     busy.emplace_back(req);
+    p->context->regex_req_it = std::prev(busy.end());
 
     std::unique_lock<std::mutex> lock(req->mutex);
     req->packet = p;
 
-    if (p->context->searches.items.size() > 0)
-    {
-        req->offload = true;
-        req->cond.notify_one();
-    }
+    req->offload = true;
+    req->cond.notify_one();
 }
 
 bool ThreadRegexOffload::get(snort::Packet*& p)
@@ -222,6 +223,7 @@ bool ThreadRegexOffload::get(snort::Packet*& p)
             continue;
 
         p = req->packet;
+        assert(p->context->regex_req_it == i);
         req->packet = nullptr;
 
         busy.erase(i);
@@ -260,27 +262,27 @@ void ThreadRegexOffload::worker(RegexRequest* req, snort::SnortConfig* initial_c
         assert(req->packet->is_offloaded());
         assert(req->packet->context->searches.items.size() > 0);
 
-        snort::MpseBatch& batch = req->packet->context->searches;
-        batch.offload_search();
+        snort::IpsContext* c = req->packet->context;
         snort::Mpse::MpseRespType resp_ret;
 
+        c->searches.offload_search();
         do
         {
-            resp_ret = batch.receive_offload_responses();
+            resp_ret = c->searches.receive_offload_responses();
         }
         while (resp_ret == snort::Mpse::MPSE_RESP_NOT_COMPLETE);
 
         if (resp_ret == snort::Mpse::MPSE_RESP_COMPLETE_FAIL)
         {
-            if (batch.can_fallback())
+            if (c->searches.can_fallback())
             {
                 // FIXIT-M Add peg counts to record offload search fallback attempts
-                batch.search_sync();
+                c->searches.search_sync();
             }
             // FIXIT-M else Add peg counts to record offload search failures
         }
 
-        batch.items.clear();
+        c->searches.items.clear();
         req->offload = false;
     }
     snort::ModuleManager::accumulate_offload("search_engine");

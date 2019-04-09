@@ -116,6 +116,7 @@ static const MpseApi ac_api =
     ac_dtor,
     ac_init,
     ac_print,
+    nullptr,
 };
 
 #ifdef BUILDING_SO

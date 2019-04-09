@@ -358,7 +358,7 @@ static int rule_tree_match(
     void* user, void* tree, int index, void* context, void* neg_list)
 {
     PMX* pmx = (PMX*)user;
-    OtnxMatchData* pomd = (OtnxMatchData*)context;
+    OtnxMatchData* pomd = ((IpsContext*)context)->otnx;
 
     detection_option_tree_root_t* root = (detection_option_tree_root_t*)tree;
     detection_option_eval_data_t eval_data;
@@ -856,7 +856,7 @@ void fp_clear_context(IpsContext& c)
 static int rule_tree_queue(
     void* user, void* tree, int index, void* context, void* list)
 {
-    OtnxMatchData* pomd = (OtnxMatchData*)context;
+    OtnxMatchData* pomd = ((IpsContext*)context)->otnx;
     MpseStash* stash = pomd->p->context->stash;
 
     if ( stash->push(user, tree, index, list) )
@@ -880,8 +880,8 @@ static inline int batch_search(
         int start_state = 0;
         MpseStash* stash = omd->p->context->stash;
         stash->init();
-        so->get_normal_mpse()->search(buf, len, rule_tree_queue, omd, &start_state);
-        stash->process(rule_tree_match, omd);
+        so->get_normal_mpse()->search(buf, len, rule_tree_queue, omd->p->context, &start_state);
+        stash->process(rule_tree_match, omd->p->context);
     }
     else
     {
@@ -1307,11 +1307,11 @@ void fp_full(Packet* p)
     init_match_info(c->otnx);
 
     c->searches.mf = rule_tree_queue;
-    c->searches.context = c->otnx;
+    c->searches.context = c;
     fpEvalPacket(p, FPTask::BOTH);
 
     if ( c->searches.search_sync() )
-        stash->process(rule_tree_match, c->otnx);
+        stash->process(rule_tree_match, c);
 
     fpFinalSelectEvent(c->otnx, p);
 }
@@ -1325,7 +1325,7 @@ void fp_partial(Packet* p)
     stash->disable_process();
     init_match_info(c->otnx);
     c->searches.mf = rule_tree_queue;
-    c->searches.context = c->otnx;
+    c->searches.context = c;
     fpEvalPacket(p, FPTask::FP);
 }
 
@@ -1334,7 +1334,7 @@ void fp_complete(Packet* p)
     IpsContext* c = p->context;
     MpseStash* stash = c->stash;
     stash->enable_process();
-    stash->process(rule_tree_match, c->otnx);
+    stash->process(rule_tree_match, c);
     fpEvalPacket(p, FPTask::NON_FP);
     fpFinalSelectEvent(c->otnx, p);
 }

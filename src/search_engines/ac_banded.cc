@@ -131,6 +131,7 @@ static const MpseApi acb_api =
     acb_dtor,
     acb_init,
     acb_print,
+    nullptr,
 };
 
 const BaseApi* se_ac_banded = &acb_api.base;

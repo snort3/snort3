@@ -378,6 +378,7 @@ static const MpseApi hs_api =
     hs_dtor,
     hs_init,
     hs_print,
+    nullptr,
 };
 
 #ifdef BUILDING_SO

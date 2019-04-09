@@ -25,19 +25,19 @@
 // single packet.  the state is stored in IpsContextData instances, which
 // are accessed by id.
 
-#include "main/snort_types.h"
+#include <list>
+
+#include "detection/detection_util.h"
 #include "framework/codec.h"
 #include "framework/mpse.h"
 #include "framework/mpse_batch.h"
-
-// required to get a decent decl of pkth
-#include "protocols/packet.h"
-
-#include "detection/detection_util.h"
+#include "main/snort_types.h"
+#include "protocols/packet.h" // required to get a decent decl of pkth
 
 class MpseStash;
 struct OtnxMatchData;
 struct SF_EVENTQ;
+struct RegexRequest;
 
 namespace snort
 {
@@ -143,6 +143,7 @@ public:
     MpseBatch searches;
     MpseStash* stash;
     OtnxMatchData* otnx;
+    std::list<RegexRequest*>::iterator regex_req_it;
     SF_EVENTQ* equeue;
 
     DataPointer file_data;

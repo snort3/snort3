@@ -116,6 +116,13 @@ struct MpseBatch
 
     bool search_sync();
     bool can_fallback() const;
+
+    static Mpse::MpseRespType poll_responses(MpseBatch*& batch)
+    { return Mpse::poll_responses(batch, snort::Mpse::MPSE_TYPE_NORMAL); }
+
+    static Mpse::MpseRespType poll_offload_responses(MpseBatch*& batch)
+    { return Mpse::poll_responses(batch, snort::Mpse::MPSE_TYPE_OFFLOAD); }
+
 };
 
 inline void MpseBatch::search()
@@ -126,7 +133,8 @@ inline void MpseBatch::search()
 
 inline Mpse::MpseRespType MpseBatch::receive_responses()
 {
-    return items.begin()->second.so[0]->get_normal_mpse()->receive_responses(*this);
+    return items.begin()->second.so[0]->get_normal_mpse()->
+        receive_responses(*this, Mpse::MPSE_TYPE_NORMAL);
 }
 
 inline void MpseBatch::offload_search()
@@ -142,7 +150,7 @@ inline Mpse::MpseRespType MpseBatch::receive_offload_responses()
     assert(items.begin()->second.so[0]->get_offload_mpse());
 
     return items.begin()->second.so[0]->get_offload_mpse()->
-        receive_responses(*this);
+        receive_responses(*this, Mpse::MPSE_TYPE_OFFLOAD);
 }
 
 inline bool MpseBatch::can_fallback() const

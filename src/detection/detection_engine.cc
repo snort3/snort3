@@ -71,15 +71,28 @@ void DetectionEngine::thread_init()
     // Note: offload_threads is really the maximum number of offload_requests
     if (offload_search_api and MpseManager::is_async_capable(offload_search_api))
     {
+        // Check that poll functionality has been provided
+        assert(MpseManager::is_poll_capable(offload_search_api));
+
         // If the search method is async capable then the searches will be performed directly
         // by the search engine, without requiring a processing thread.
         offloader = RegexOffload::get_offloader(sc->offload_threads, false);
     }
     else
     {
-        // If the search method is not async capable then offloaded searches will be performed
-        // in a separate processing thread that the RegexOffload instance needs to create.
-        offloader = RegexOffload::get_offloader(sc->offload_threads, true);
+        const MpseApi* search_api = fp->get_search_api();
+
+        if (MpseManager::is_async_capable(search_api))
+        {
+            assert(MpseManager::is_poll_capable(search_api));
+            offloader = RegexOffload::get_offloader(sc->offload_threads, false);
+        }
+        else
+        {
+            // If the search method is not async capable then offloaded searches will be performed
+            // in a separate processing thread that the RegexOffload instance needs to create.
+            offloader = RegexOffload::get_offloader(sc->offload_threads, true);
+        }
     }
 }
 
@@ -342,26 +355,48 @@ bool DetectionEngine::get_check_tags()
 // offload / onload
 //--------------------------------------------------------------------------
 
-void DetectionEngine::do_offload(Packet* p)
+bool DetectionEngine::do_offload(Packet* p)
 {
     ContextSwitcher* sw = Snort::get_switcher();
 
     assert(p == p->context->packet);
     assert(p->context == sw->get_context());
 
-    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " de::offload %" PRIu64 " (r=%d)\n",
-        p->context->packet_number, p->context->context_num, offloader->count());
-
-    sw->suspend();
-
     p->context->conf = SnortConfig::get_conf();
-    p->set_offloaded();
 
     // Build the searches list in the packet context
     fp_partial(p);
 
-    offloader->put(p);
-    pc.offloads++;
+    if (p->context->searches.items.size() > 0)
+    {
+        trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " de::offload %" PRIu64
+                " (r=%d)\n", p->context->packet_number, p->context->context_num,
+                offloader->count());
+
+        sw->suspend();
+        p->set_offloaded();
+
+        offloader->put(p);
+        pc.offloads++;
+
+        return true;
+    }
+    else
+    {
+        bool depends_on_suspended = p->flow ? p->flow->context_chain.front() :
+            sw->non_flow_chain.front();
+
+        if (!depends_on_suspended)
+        {
+            fp_complete(p);
+            return false;
+        }
+        else
+        {
+            sw->suspend();
+            return true;
+        }
+    }
 }
 
 bool DetectionEngine::offload(Packet* p)
@@ -374,8 +409,7 @@ bool DetectionEngine::offload(Packet* p)
 
     if ( can_offload and should_offload )
     {
-        do_offload(p);
-        return true;
+        return do_offload(p);
     }
 
     if ( depends_on_suspended )

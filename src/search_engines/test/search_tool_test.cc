@@ -114,6 +114,11 @@ int Mpse::search_all(
 
 void Mpse::search(MpseBatch& batch, MpseType mpse_type)
 {
+    _search(batch, mpse_type);
+}
+
+void Mpse::_search(MpseBatch& batch, MpseType mpse_type)
+{
     int start_state;
 
     for ( auto& item : batch.items )

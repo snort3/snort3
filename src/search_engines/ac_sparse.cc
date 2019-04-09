@@ -125,6 +125,7 @@ static const MpseApi acs_api =
     acs_dtor,
     acs_init,
     acs_print,
+    nullptr,
 };
 
 const BaseApi* se_ac_sparse = &acs_api.base;

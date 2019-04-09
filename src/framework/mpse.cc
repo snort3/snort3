@@ -71,6 +71,12 @@ int Mpse::search_all(
 
 void Mpse::search(MpseBatch& batch, MpseType mpse_type)
 {
+    DeepProfile profile(mpsePerfStats);
+    _search(batch, mpse_type);
+}
+
+void Mpse::_search(MpseBatch& batch, MpseType mpse_type)
+{
     int start_state;
 
     for ( auto& item : batch.items )
@@ -98,6 +104,34 @@ void Mpse::search(MpseBatch& batch, MpseType mpse_type)
         }
         item.second.done = true;
     }
+}
+
+Mpse::MpseRespType Mpse::poll_responses(MpseBatch*& batch, MpseType mpse_type)
+{
+    const MpseApi* search_api = nullptr;
+
+    if ( SnortConfig::get_conf()->fast_pattern_config )
+    {
+        switch (mpse_type)
+        {
+            case MPSE_TYPE_NORMAL:
+                search_api = SnortConfig::get_conf()->fast_pattern_config->get_search_api();
+                break;
+            case MPSE_TYPE_OFFLOAD:
+                search_api = SnortConfig::get_conf()->fast_pattern_config->get_offload_search_api();
+                if (!search_api)
+                    search_api = SnortConfig::get_conf()->fast_pattern_config->get_search_api();
+                break;
+        }
+    }
+
+    if (search_api)
+    {
+        assert(search_api->poll);
+        return search_api->poll(batch, mpse_type);
+    }
+
+    return MPSE_RESP_NOT_COMPLETE;
 }
 
 }

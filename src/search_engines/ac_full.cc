@@ -138,6 +138,7 @@ static const MpseApi acf_api =
     acf_dtor,
     acf_init,
     acf_print,
+    nullptr,
 };
 
 const BaseApi* se_ac_full = &acf_api.base;

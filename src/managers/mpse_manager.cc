@@ -183,6 +183,12 @@ bool MpseManager::is_regex_capable(const MpseApi* api)
     return (api->flags & MPSE_REGEX) != 0;
 }
 
+bool MpseManager::is_poll_capable(const MpseApi* api)
+{
+    assert(api);
+    return (api->poll);
+}
+
 // was called during drop stats but actually commented out
 // FIXIT-M this one has to accumulate across threads
 #if 0

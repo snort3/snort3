@@ -88,10 +88,12 @@ public:
     virtual int search_all(
         const uint8_t* T, int n, MpseMatch, void* context, int* current_state);
 
-    virtual void search(MpseBatch& batch, MpseType mpse_type);
+    void search(MpseBatch&, MpseType);
 
-    virtual MpseRespType receive_responses(MpseBatch&)
+    virtual MpseRespType receive_responses(MpseBatch&, MpseType)
     { return MPSE_RESP_COMPLETE_SUCCESS; }
+
+    static MpseRespType poll_responses(MpseBatch*&, MpseType);
 
     virtual void set_opt(int) { }
     virtual int print_info() { return 0; }
@@ -109,6 +111,8 @@ protected:
     virtual int _search(
         const uint8_t* T, int n, MpseMatch, void* context, int* current_state) = 0;
 
+    virtual void _search(MpseBatch&, MpseType);
+
 private:
     std::string method;
     int verbose;
@@ -124,6 +128,8 @@ typedef Mpse* (* MpseNewFunc)(
     SnortConfig* sc, class Module*, const MpseAgent*);
 
 typedef void (* MpseDelFunc)(Mpse*);
+
+typedef Mpse::MpseRespType (* MpsePollFunc)(MpseBatch*&, Mpse::MpseType);
 
 #define MPSE_BASE   0x00
 #define MPSE_TRIM   0x01
@@ -143,6 +149,7 @@ struct MpseApi
     MpseDelFunc dtor;
     MpseExeFunc init;
     MpseExeFunc print;
+    MpsePollFunc poll;
 };
 }
 #endif
