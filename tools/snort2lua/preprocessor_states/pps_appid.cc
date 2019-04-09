@@ -137,6 +137,19 @@ bool AppId::convert(std::istringstream& data_stream)
                 tmpval = false;
             }
         }
+        else if (keyword == "tp_config_path")
+        {
+            std::string file_name;
+            if (arg_stream >> file_name)
+            {
+                tmpval = table_api.add_option("tp_appid_config", file_name);
+            }
+            else
+            {
+                data_api.failed_conversion(arg_stream,  "appid: tp_config_path <missing_arg>");
+                tmpval = false;
+            }
+        }
         else
         {
             tmpval = false;
