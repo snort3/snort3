@@ -1598,6 +1598,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                 read_ptr++;
                 req->param_begin = nullptr;
                 req->param_end = nullptr;
+                req->param_size = 0;
             }
             else if (space || ftpssn->server.response.state != 0)
             {
@@ -1607,6 +1608,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                 if ((read_ptr = (unsigned char*)memchr(read_ptr, CR, end - read_ptr)) == nullptr)
                     read_ptr = end;
                 req->param_end = (const char*)read_ptr;
+                req->param_size = req->param_end - req->param_begin;
                 read_ptr++;
 
                 if (read_ptr < end)
@@ -1625,6 +1627,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
             /* Nothing left --> no parameters/message.  Not even an LF */
             req->param_begin = nullptr;
             req->param_end = nullptr;
+            req->param_size = 0;
         }
 
         /* Set the pointer for the next request/response
@@ -1634,7 +1637,6 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
         else
             req->pipeline_req = nullptr;
 
-        req->param_size = req->param_end - req->param_begin;
         switch (state)
         {
         case FTP_CMD_INV:

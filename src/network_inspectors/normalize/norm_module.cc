@@ -372,9 +372,7 @@ bool NormalizeModule::end(const char* fqn, int, SnortConfig* sc)
         {
             if ( Norm_IsEnabled(&config, NORM_IP4_BASE) )
                 Norm_Enable(&config, NORM_IP4_TTL);
-        }
-        if ( (policy->new_ttl > 1) && (policy->new_ttl >= policy->min_ttl) )
-        {
+
             if ( Norm_IsEnabled(&config, NORM_IP6_BASE) )
                 Norm_Enable(&config, NORM_IP6_TTL);
         }

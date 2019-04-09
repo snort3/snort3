@@ -146,7 +146,6 @@ void HttpUri::parse_abs_path()
 
 void HttpUri::check_oversize_dir(Field& uri_field)
 {
-    int32_t total_length = 0;
     const uint8_t* last_dir = nullptr;
     const uint8_t* cur;
     const uint8_t* end;
@@ -163,7 +162,7 @@ void HttpUri::check_oversize_dir(Field& uri_field)
         {
             if ( last_dir )
             {
-                total_length = cur - last_dir - 1;
+                int32_t total_length = cur - last_dir - 1;
 
                 if ( total_length > uri_param.oversize_dir_length )
                 {

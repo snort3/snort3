@@ -537,15 +537,6 @@ default_case:
  *********************  L O G G E R  ******************************
 *******************************************************************/
 
-struct ip4_addr
-{
-    union
-    {
-        uint32_t addr32;
-        uint8_t addr8[4];
-    };
-};
-
 void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const uint16_t lyr_len)
 {
@@ -558,9 +549,9 @@ void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     }
     else
     {
-        ip4_addr src, dst;
-        src.addr32 = ip4h->get_src();
-        dst.addr32 = ip4h->get_dst();
+        struct in_addr src, dst;
+        src.s_addr = ip4h->get_src();
+        dst.s_addr = ip4h->get_dst();
 
         char src_buf[INET_ADDRSTRLEN];
         char dst_buf[INET_ADDRSTRLEN];

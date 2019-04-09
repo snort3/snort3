@@ -237,7 +237,6 @@ int fpCreateServiceMaps(SnortConfig* sc)
     RuleTreeNode* rtn;
     GHashNode* hashNode;
     OptTreeNode* otn  = nullptr;
-    PolicyId policyId = 0;
     unsigned int svc_idx;
 
     for (hashNode = ghash_findfirst(sc->otn_map);
@@ -245,7 +244,7 @@ int fpCreateServiceMaps(SnortConfig* sc)
         hashNode = ghash_findnext(sc->otn_map))
     {
         otn = (OptTreeNode*)hashNode->data;
-        for ( policyId = 0;
+        for ( PolicyId policyId = 0;
             policyId < otn->proto_node_num;
             policyId++ )
         {

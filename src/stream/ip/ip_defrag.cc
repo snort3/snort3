@@ -1084,25 +1084,25 @@ void Defrag::process(Packet* p, FragTracker* ft)
  */
 int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
 {
-    uint16_t orig_offset;    /* offset specified in this fragment header */
-    uint16_t frag_offset;    /* calculated offset for this fragment */
-    uint16_t frag_end;       /* calculated end point for this fragment */
+    uint16_t orig_offset;   /* offset specified in this fragment header */
+    uint16_t frag_offset;   /* calculated offset for this fragment */
+    uint16_t frag_end;      /* calculated end point for this fragment */
     int16_t trunc = 0;      /* we truncate off the tail */
-    int32_t overlap = 0;    /* we overlap on either end of the frag */
+    int32_t overlap;        /* we overlap on either end of the frag */
     int16_t len = 0;        /* calculated size of the fragment */
     int16_t slide = 0;      /* slide up the front of the current frag */
     int done = 0;           /* flag for right-side overlap handling loop */
-    int addthis = 1;           /* flag for right-side overlap handling loop */
+    int addthis = 1;        /* flag for right-side overlap handling loop */
     int i = 0;              /* counter */
     int firstLastOk;
     int ret = FRAG_INSERT_OK;
-    unsigned char lastfrag = 0; /* Set to 1 when this is the 'last' frag */
+    unsigned char lastfrag = 0;     /* Set to 1 when this is the 'last' frag */
     unsigned char alerted_overlap = 0; /* Set to 1 when alerted */
-    Fragment* right = nullptr; /* frag ptr for right-side overlap loop */
-    Fragment* newfrag = nullptr;  /* new frag container */
-    Fragment* left = nullptr;     /* left-side overlap fragment ptr */
-    Fragment* idx = nullptr;      /* indexing fragment pointer for loops */
-    Fragment* dump_me = nullptr;  /* frag ptr for complete overlaps to dump */
+    Fragment* right = nullptr;      /* frag ptr for right-side overlap loop */
+    Fragment* newfrag = nullptr;    /* new frag container */
+    Fragment* left = nullptr;       /* left-side overlap fragment ptr */
+    Fragment* idx = nullptr;        /* indexing fragment pointer for loops */
+    Fragment* dump_me = nullptr;    /* frag ptr for complete overlaps to dump */
     const uint8_t* fragStart;
     int16_t fragLength;
     const uint16_t net_frag_offset = p->ptrs.ip_api.off();
@@ -1404,7 +1404,7 @@ left_overlap_last:
                     "truncating old pkt (offset: %d overlap: %d)\n",
                     left->offset, overlap);
 
-                if (left->size <= 0)
+                if (left->size == 0)
                 {
                     dump_me = left;
 
@@ -1526,7 +1526,7 @@ left_overlap_last:
                     "overlap: %d)\n", right->offset, overlap);
                 trace_log(stream_ip,
                     "Exiting right overlap loop...\n");
-                if (right->size <= 0)
+                if (right->size == 0)
                 {
                     dump_me = right;
 

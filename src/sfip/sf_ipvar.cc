@@ -232,7 +232,6 @@ sfip_var_t* sfvar_deep_copy(const sfip_var_t* var)
 static sfip_node_t* merge_lists(sfip_node_t* list1, sfip_node_t* list2, uint16_t list1_len,
     uint16_t list2_len, uint32_t& merge_len)
 {
-    SfIpRet ret = SFIP_SUCCESS;
     sfip_node_t* listHead = nullptr, * merge_list = nullptr, * tmp = nullptr, * node = nullptr;
     uint16_t num_nodes = 0;
 
@@ -270,7 +269,7 @@ static sfip_node_t* merge_lists(sfip_node_t* list1, sfip_node_t* list2, uint16_t
     /*Iterate till one of the list is NULL. Append each node to merge_list*/
     while (list1 && list2)
     {
-        ret = list1->ip->compare(*(list2->ip));
+        SfIpRet ret = list1->ip->compare(*(list2->ip));
         if (ret == SFIP_LESSER)
         {
             node = list1;
@@ -391,7 +390,6 @@ static SfIpRet sfvar_add_node(sfip_var_t* var, sfip_node_t* node, int negated)
 
     /* "Anys" should always be inserted first
        Otherwise, check if this IP is less than the head's IP */
-    SfIpRet node_cmp_ret = SFIP_SUCCESS;
     if (node->flags & SFIP_ANY)
     {
         sfip_node_t* tmp;
@@ -408,7 +406,7 @@ static SfIpRet sfvar_add_node(sfip_var_t* var, sfip_node_t* node, int negated)
     }
     else
     {
-        node_cmp_ret = node->ip->compare(*((*head)->ip));
+        SfIpRet node_cmp_ret = node->ip->compare(*((*head)->ip));
         if (node_cmp_ret == SFIP_EQUAL)
         {
             sfip_node_free(node);
@@ -444,7 +442,7 @@ static SfIpRet sfvar_add_node(sfip_var_t* var, sfip_node_t* node, int negated)
     /* Insertion sort */
     for (p = *head; p->next; p=p->next)
     {
-        node_cmp_ret = node->ip->compare(*(p->next->ip));
+        SfIpRet node_cmp_ret = node->ip->compare(*(p->next->ip));
         if (node_cmp_ret == SFIP_EQUAL)
         {
             sfip_node_free(node);

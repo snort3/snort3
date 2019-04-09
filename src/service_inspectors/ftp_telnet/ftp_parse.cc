@@ -355,7 +355,7 @@ static int DoNextFormat(FTP_PARAM_FMT* ThisFmt, int allocated,
     char* ErrorString, int ErrStrLen)
 {
     FTP_PARAM_FMT* NextFmt;
-    int iRet = FTPP_SUCCESS;
+    int iRet;
     char* fmt = NextToken(CONF_SEPARATORS);
 
     if (!fmt)

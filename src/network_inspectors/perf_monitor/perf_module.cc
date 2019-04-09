@@ -222,7 +222,7 @@ const PegInfo* PerfMonModule::get_pegs() const
 PegCount* PerfMonModule::get_counts() const
 { return (PegCount*)&pmstats; }
 
-void ModuleConfig::set_name(std::string name)
+void ModuleConfig::set_name(const std::string& name)
 { this->name = name; }
 
 void ModuleConfig::set_peg_names(Value& peg_names)

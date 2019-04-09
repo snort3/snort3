@@ -1078,14 +1078,12 @@ void LogXrefs(TextLog* log, const Event& e)
  */
 static void LogCharData(TextLog* log, const uint8_t* data, int len)
 {
+    if ( !data )
+        return;
+
     const uint8_t* pb = data;
     const uint8_t* end = data + len;
     int lineCount = 0;
-
-    if ( !data )
-    {
-        return;
-    }
 
     while ( pb < end )
     {

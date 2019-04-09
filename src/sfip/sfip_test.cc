@@ -32,7 +32,7 @@ using namespace snort;
 
 //---------------------------------------------------------------
 
-static int s_debug = 0;
+//#define SFIP_TEST_DEBUG
 
 static const char* const codes[] =
 {
@@ -339,15 +339,19 @@ static int FuncCheck(int i)
     {
         status = "Failed";
     }
-    if ( result != f->expected || s_debug )
+#ifndef SFIP_TEST_DEBUG
+    if ( result != f->expected )
     {
+#endif
         if ( f->arg2 )
             printf("[%d] %s: %s(%s, %s) = %s\n",
                 i, status, f->func, f->arg1, f->arg2, code);
         else
             printf("[%d] %s: %s(%s) = %s\n",
                 i, status, f->func, f->arg1, code);
+#ifndef SFIP_TEST_DEBUG
     }
+#endif
     return result == f->expected;
 }
 

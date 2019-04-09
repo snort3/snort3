@@ -134,7 +134,7 @@ IpsOption::EvalStatus IsDataAtOption::eval(Cursor& c, Packet*)
     int offset;
 
     // Get values from byte_extract variables, if present.
-    if (config.offset_var >= 0 && config.offset_var < NUM_IPS_OPTIONS_VARS)
+    if (config.offset_var != IPS_OPTIONS_NO_VAR && config.offset_var < NUM_IPS_OPTIONS_VARS)
     {
         uint32_t value;
         GetVarValueByIndex(&(value), config.offset_var);
@@ -192,8 +192,8 @@ static void isdataat_parse(const char* data, IsDataAtData* idx)
     /* set how many bytes to process from the packet */
     if (isdigit(offset[0]) || offset[0] == '-')
     {
+        idx->offset_var = IPS_OPTIONS_NO_VAR;
         idx->offset = strtol(offset, &endp, 10);
-        idx->offset_var = -1;
 
         if (offset == endp)
         {
@@ -206,7 +206,6 @@ static void isdataat_parse(const char* data, IsDataAtData* idx)
             ParseError("isdataat offset greater than max IPV4 packet size");
             return;
         }
-        idx->offset_var = IPS_OPTIONS_NO_VAR;
     }
     else
     {

@@ -63,7 +63,7 @@ struct ModuleConfig
     snort::Module* ptr;
     IndexVec pegs;
 
-    void set_name(std::string name);
+    void set_name(const std::string& name);
     void set_peg_names(snort::Value& peg_names);
     bool confirm_parse();
     bool resolve();

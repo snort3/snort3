@@ -269,7 +269,6 @@ int MdnsServiceDetector::reference_pointer(const char* start_ptr, const char** r
 int MdnsServiceDetector::analyze_user(AppIdSession& asd, const Packet* pkt, uint16_t size)
 {
     int start_index = 0;
-    uint8_t user_name_len = 0;
     uint16_t data_size = size;
 
     /* Scan for MDNS response, decided on Query value */
@@ -290,7 +289,7 @@ int MdnsServiceDetector::analyze_user(AppIdSession& asd, const Packet* pkt, uint
             processed_ans++ )
         {
             // Call Decode Reference pointer function if referenced value instead of direct value
-            user_name_len = 0;
+            uint8_t user_name_len = 0;
             int ret_value = reference_pointer(srv_original, &resp_endptr,  &start_index, data_size,
                 &user_name_len, size);
             int user_index =0;

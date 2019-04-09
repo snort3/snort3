@@ -42,7 +42,7 @@ const uint8_t blanks[] = {' ', '\t' };
 class SipSplitterUT
 {
 public:
-    SipSplitterUT(SipSplitter ss) : ss(ss) { };
+    SipSplitterUT(const SipSplitter& ss) : ss(ss) { };
 
     bool splitter_is_paf()
     { 

@@ -312,14 +312,13 @@ static inline uint32_t _dir_remove_less_specific(uint32_t* allocated, int index,
     word length, dir_sub_table_t* table)
 {
     uint32_t valueIndexRet = 0;
-    uint32_t valueIndex = 0;
 
     for (; index < fill; index++)
     {
         if ( !table->lengths[index] && table->entries[index])
         {
             dir_sub_table_t* next = (dir_sub_table_t*)table->entries[index];
-            valueIndex = _dir_remove_less_specific(allocated, 0, 1 << next->width, length, next);
+            uint32_t valueIndex = _dir_remove_less_specific(allocated, 0, 1 << next->width, length, next);
             if (valueIndex)
             {
                 valueIndexRet = valueIndex;

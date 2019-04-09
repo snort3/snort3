@@ -1038,7 +1038,7 @@ int TcpSession::process(Packet* p)
         return ACTION_NOTHING;
     else
     {
-        DeepProfile profile(s5TcpStatePerfStats);
+        DeepProfile tcp_state_profile(s5TcpStatePerfStats);
 
         if ( tsm->eval(tsd, *talker, *listener) )
         {

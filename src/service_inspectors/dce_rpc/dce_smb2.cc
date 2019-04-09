@@ -735,7 +735,7 @@ void DCE2_Smb2Process(DCE2_SmbSsnData* ssd)
             DCE2_Smb2Inspect(ssd, smb_hdr, data_ptr +  data_len);
             /* In case of message compounding, find the offset of the next smb command */
             next_command_offset = alignedNtohl(&(smb_hdr->next_command));
-            if (next_command_offset + (uint8_t *)smb_hdr > (uint8_t* )(data_ptr +  data_len))
+            if (next_command_offset + (const uint8_t *)smb_hdr > (data_ptr + data_len))
             {
                 dce_alert(GID_DCE2, DCE2_SMB_BAD_NEXT_COMMAND_OFFSET,
                         (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
@@ -744,7 +744,7 @@ void DCE2_Smb2Process(DCE2_SmbSsnData* ssd)
             }
             if (next_command_offset)
             {
-                smb_hdr = (Smb2Hdr *)((uint8_t *)smb_hdr + next_command_offset);
+                smb_hdr = (const Smb2Hdr *)((const uint8_t *)smb_hdr + next_command_offset);
             }
         } while (next_command_offset && smb_hdr);
     }

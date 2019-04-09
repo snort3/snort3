@@ -31,6 +31,7 @@ class HttpTestInput
 {
 public:
     HttpTestInput(const char* fileName);
+    ~HttpTestInput();
     void scan(uint8_t*& data, uint32_t& length, HttpEnums::SourceId source_id, uint64_t seq_num);
     void flush(uint32_t num_octets);
     void reassemble(uint8_t** buffer, unsigned& length, HttpEnums::SourceId source_id,

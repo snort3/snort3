@@ -49,6 +49,11 @@ HttpTestInput::HttpTestInput(const char* file_name)
         throw std::runtime_error("Cannot open test input file");
 }
 
+HttpTestInput::~HttpTestInput()
+{
+    fclose(test_data_file);
+}
+
 void HttpTestInput::reset()
 {
     flushed = false;

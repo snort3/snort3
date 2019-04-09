@@ -179,36 +179,28 @@ public:
         return 0;
     }
 
-#if defined(WORDS_BIGENDIAN)
-#define ntoh_ipv6(ip6) do { } while (0)
-#else
     static void ntoh_ipv6(NSIPv6Addr* ip6)
     {
+#if !defined(WORDS_BIGENDIAN)
         uint64_t tmp;
 
         tmp = BYTE_SWAP_64(ip6->hi);
         ip6->hi = BYTE_SWAP_64(ip6->lo);
         ip6->lo = tmp;
+#endif
     }
 
-#endif
-
-#if defined(WORDS_BIGENDIAN)
 
     static void _swap_ipv6(const NSIPv6Addr* ip6, NSIPv6Addr* ip6h)
     {
+#if defined(WORDS_BIGENDIAN)
         ip6h->hi = ip6->hi;
         ip6h->lo = ip6->lo;
-    }
-
 #else
-    static void _swap_ipv6(const NSIPv6Addr* ip6, NSIPv6Addr* ip6h)
-    {
         ip6h->hi = BYTE_SWAP_64(ip6->lo);
         ip6h->lo = BYTE_SWAP_64(ip6->hi);
-    }
-
 #endif
+    }
 
     static void ntoh_swap_ipv6(const ip::snort_in6_addr* ip6, NSIPv6Addr* ip6h)
     {

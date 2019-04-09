@@ -327,10 +327,10 @@ bool PortScanModule::set(const char* fqn, Value& v, SnortConfig*)
 
 bool PortScanModule::end(const char* fqn, int, SnortConfig*)
 {
-    static size_t saved_memcap = 0;
-
     if (strcmp(fqn, "port_scan") == 0)
     {
+        static size_t saved_memcap = 0;
+
         if (saved_memcap != 0  )
         {
             if (config->memcap != saved_memcap)
