@@ -45,7 +45,7 @@ public:
     { AST_ALLOW, AST_CANT, AST_WOULD, AST_FORCE, AST_MAX };
 
     enum ActiveAction : uint8_t
-    { ACT_PASS, ACT_DROP, ACT_BLOCK, ACT_RESET, ACT_RETRY, ACT_MAX };
+    { ACT_PASS, ACT_RETRY, ACT_DROP, ACT_BLOCK, ACT_RESET, ACT_MAX };
 
 public:
     static void init(SnortConfig*);

@@ -658,7 +658,8 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
     {
         //restart inspection by 3rd party
         if (!asd.tp_reinspect_by_initiator && (direction == APP_ID_FROM_INITIATOR) &&
-            check_reinspect(p, asd))
+            check_reinspect(p, asd) &&
+            p->packet_flags & PKT_STREAM_ORDER_OK)
         {
             asd.tp_reinspect_by_initiator = true;
             asd.set_session_flags(APPID_SESSION_APP_REINSPECT);

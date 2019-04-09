@@ -50,7 +50,7 @@ PADDING_GUARD_END
 
     struct FileNode
     {
-        time_t expires;
+        struct timeval cache_expire_time = {0, 0};
         snort::FileContext* file;
     };
 
@@ -64,7 +64,7 @@ PADDING_GUARD_END
     snort::FileContext* get_file(snort::Flow*, uint64_t file_id, bool to_create);
     FileVerdict cached_verdict_lookup(snort::Packet*, snort::FileInfo*,
         snort::FilePolicyBase*);
-    bool apply_verdict(snort::Packet*, snort::FileInfo*, FileVerdict, bool resume,
+    bool apply_verdict(snort::Packet*, snort::FileContext*, FileVerdict, bool resume,
         snort::FilePolicyBase*);
 
 private:

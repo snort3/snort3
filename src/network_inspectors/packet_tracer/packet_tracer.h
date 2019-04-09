@@ -97,7 +97,7 @@ public:
     static const int max_buff_size = 2048;
 
     // static functions 
-    static void set_log_file(std::string);
+    static void set_log_file(const std::string&);
     static void thread_init();
     static void thread_term();
 

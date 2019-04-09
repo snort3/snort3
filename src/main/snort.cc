@@ -965,6 +965,10 @@ static DAQ_Verdict update_verdict(Packet* p, DAQ_Verdict verdict, int& inject)
         if ( verdict == DAQ_VERDICT_PASS )
             verdict = DAQ_VERDICT_BLOCK;
     }
+    else if ( verdict == DAQ_VERDICT_RETRY )
+    {
+        return verdict;
+    }
     else if ( p->packet_flags & PKT_RESIZED )
     {
         // we never increase, only trim, but daq doesn't support resizing wire packet

@@ -63,7 +63,6 @@ public:
     std::string sha_to_string(const uint8_t* sha256);
     void set_file_id(uint64_t index);
     uint64_t get_file_id() const;
-    FileVerdict verdict = FILE_VERDICT_UNKNOWN;
 
     // Configuration functions
     void config_file_type(bool enabled);
@@ -79,6 +78,9 @@ public:
     int64_t get_max_file_capture_size();
 
     FileState get_file_state() { return file_state; }
+
+    FileVerdict verdict = FILE_VERDICT_UNKNOWN;
+    struct timeval pending_expire_time = {0, 0};
 
 protected:
     std::string file_name;

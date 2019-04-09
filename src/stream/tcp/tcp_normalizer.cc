@@ -267,11 +267,22 @@ int TcpNormalizer::validate_paws_timestamp(
 {
     if ( ( (int)( ( tsd.get_ts() - tns.peer_tracker->get_ts_last() ) + tns.paws_ts_fudge ) ) < 0 )
     {
-        /* bail, we've got a packet outside the PAWS window! */
-        //inc_tcp_discards();
-        tns.session->tel.set_tcp_event(EVENT_BAD_TIMESTAMP);
-        packet_dropper(tns, tsd, NORM_TCP_OPT);
-        return ACTION_BAD_PKT;
+        if ( tsd.get_pkt()->pkth->flags & DAQ_PKT_FLAG_RETRY_PACKET )
+        {
+            //  Retry packets can legitimately have old timestamps
+            //  in TCP options (if a re-transmit comes in before
+            //  the retry) so don't consider it an error.
+            tsd.set_ts(tns.peer_tracker->get_ts_last());
+            return ACTION_NOTHING;
+        }
+        else
+        {
+            /* bail, we've got a packet outside the PAWS window! */
+            //inc_tcp_discards();
+            tns.session->tel.set_tcp_event(EVENT_BAD_TIMESTAMP);
+            packet_dropper(tns, tsd, NORM_TCP_OPT);
+            return ACTION_BAD_PKT;
+        }
     }
     else if ( ( tns.peer_tracker->get_ts_last() != 0 )
         && ( ( uint32_t )tsd.get_pkt()->pkth->ts.tv_sec > tns.peer_tracker->get_ts_last_packet() +

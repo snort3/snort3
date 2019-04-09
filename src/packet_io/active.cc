@@ -41,6 +41,7 @@ using namespace snort;
 const char* Active::act_str[Active::ACT_MAX][Active::AST_MAX] =
 {
     { "allow", "error", "error", "error" },
+    { "retry", "error", "error", "error" },
     { "drop", "cant_drop", "would_drop", "force_drop" },
     { "block", "cant_block", "would_block", "force_block" },
     { "reset", "cant_reset", "would_reset", "force_reset" },
@@ -421,14 +422,14 @@ bool Active::daq_retry_packet(const Packet* p)
 {
     bool retry_queued = false;
 
-    // FIXIT-M may need to confirm this packet is not a retransmit...2.9.x has a check for that
-    if ( !p->is_rebuilt() and
-        ( active_action == ACT_PASS ) and
-         SFDAQ::can_retry() )
+    if ( ( active_action == ACT_PASS ) and SFDAQ::can_retry() )
     {
         if ( SFDAQ::forwarding_packet(p->pkth) )
         {
-            active_action = ACT_RETRY;
+            if(p->packet_flags & PKT_RETRANSMIT)
+                active_action = ACT_DROP;  // Don't add retransmits to retry queue.
+            else
+                active_action = ACT_RETRY;
             retry_queued = true;
         }
     }
@@ -506,6 +507,10 @@ void Active::apply_delayed_action(Packet* p)
         break;
     case ACT_RESET:
         reset_session(p, force);
+        break;
+    case ACT_RETRY:
+        if(!daq_retry_packet(p))
+            drop_packet(p, force);
         break;
     default:
         break;

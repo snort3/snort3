@@ -76,7 +76,8 @@ class Obfuscator;
 
 #define PKT_FILE_EVENT_SET   0x00400000
 #define PKT_IGNORE           0x00800000  /* this packet should be ignored, based on port */
-#define PKT_UNUSED_FLAGS     0xff000000
+#define PKT_RETRANSMIT       0x01000000  // packet is a re-transmitted pkt.
+#define PKT_UNUSED_FLAGS     0xfe000000
 
 #define PKT_TS_OFFLOADED        0x01
 

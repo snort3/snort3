@@ -28,6 +28,7 @@
 #include "main/snort_config.h"
 #include "main/thread_config.h"
 #include "packet_io/active.h"
+#include "packet_tracer/packet_tracer.h"
 #include "time/packet_time.h"
 
 #include "file_flows.h"
@@ -43,9 +44,11 @@ static int file_cache_anr_free_func(void*, void* data)
     if (!node)
         return 0;
 
-    time_t now = packet_time();
+    struct timeval now;
+    packet_gettimeofday(&now);
+
     // only recycle expired nodes
-    if (now > node->expires)
+    if (timercmp(&node->cache_expire_time, &now, <))
     {
         delete node->file;
         return 0;
@@ -62,6 +65,15 @@ static int file_cache_free_func(void*, void* data)
         delete node->file;
     }
     return 0;
+}
+
+// Return the time in ms since we started waiting for pending file lookup.
+static int64_t time_elapsed_ms(struct timeval* now, struct timeval* expire_time, int64_t lookup_timeout)
+{
+    if(!now or !now->tv_sec or !expire_time or !expire_time->tv_sec)
+        return 0;
+
+    return lookup_timeout * 1000 + timersub_ms(now, expire_time);
 }
 
 FileCache::FileCache(int64_t max_files_cached)
@@ -119,8 +131,12 @@ FileContext* FileCache::add(const FileHashKey& hashKey, int64_t timeout)
      * after that anyway because the file that
      * caused this will be gone.
      */
-    time_t now = snort::packet_time();
-    new_node.expires = now + timeout;
+    struct timeval now;
+    packet_gettimeofday(&now);
+
+    struct timeval time_to_add = { timeout, 0 };
+    timeradd(&now, &time_to_add, &new_node.cache_expire_time);
+
     new_node.file = new FileContext;
 
     std::lock_guard<std::mutex> lock(cache_mutex);
@@ -161,15 +177,23 @@ FileContext* FileCache::find(const FileHashKey& hashKey, int64_t timeout)
         return nullptr;
     }
 
-    time_t now = packet_time();
-    if (node->expires && now > node->expires)
+    struct timeval now;
+    packet_gettimeofday(&now);
+
+    if (timercmp(&node->cache_expire_time, &now, <))
     {
         xhash_free_node(fileHash, hash_node);
         return nullptr;
     }
 
-    if (node->expires <  now + timeout)
-        node->expires = now + timeout;
+    struct timeval next_expire_time;
+    struct timeval time_to_add = { timeout, 0 };
+    timeradd(&now, &time_to_add, &next_expire_time);
+
+    //  Refresh the timer on the cache.
+    if (timercmp(&node->cache_expire_time, &next_expire_time, <))
+        node->cache_expire_time = next_expire_time;
+
     return node->file;
 }
 
@@ -232,13 +256,18 @@ int FileCache::store_verdict(Flow* flow, FileInfo* file, int64_t timeout)
     return 0;
 }
 
-bool FileCache::apply_verdict(Packet* p, FileInfo* file, FileVerdict verdict,
+bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verdict,
     bool resume, FilePolicyBase* policy)
 {
     Flow* flow = p->flow;
     Active* act = p->active;
+    struct timeval now = {0, 0};
+    struct timeval add_time;
 
-    file->verdict = verdict;
+    if (verdict != FILE_VERDICT_PENDING)
+        timerclear(&file_ctx->pending_expire_time);
+
+    file_ctx->verdict = verdict;
     switch (verdict)
     {
 
@@ -246,7 +275,7 @@ bool FileCache::apply_verdict(Packet* p, FileInfo* file, FileVerdict verdict,
         return false;
     case FILE_VERDICT_LOG:
         if (resume)
-            policy->log_file_action(flow, file, FILE_RESUME_LOG);
+            policy->log_file_action(flow, file_ctx, FILE_RESUME_LOG);
         return false;
     case FILE_VERDICT_BLOCK:
          // can't block session inside a session
@@ -258,15 +287,63 @@ bool FileCache::apply_verdict(Packet* p, FileInfo* file, FileVerdict verdict,
         act->set_delayed_action(Active::ACT_RESET, true);
         break;
     case FILE_VERDICT_PENDING:
-        act->set_delayed_action(Active::ACT_DROP, true);
-        if (resume)
-            policy->log_file_action(flow, file, FILE_RESUME_BLOCK);
+        packet_gettimeofday(&now);
+
+        if (timerisset(&file_ctx->pending_expire_time) and
+            timercmp(&file_ctx->pending_expire_time, &now, <))
+        {
+            //  Timed out while waiting for pending verdict.
+            FileConfig* fc = get_file_config(SnortConfig::get_conf());
+
+            //  Block session on timeout if configured, otherwise use the
+            //  current action.
+            if (fc->block_timeout_lookup)
+                act->set_delayed_action(Active::ACT_RESET, true);
+
+            if (resume)
+                policy->log_file_action(flow, file_ctx, FILE_RESUME_BLOCK);
+
+            if (PacketTracer::is_active())
+            {
+                PacketTracer::log("File signature lookup: timed out after %" PRIi64 "ms.\n", time_elapsed_ms(&now, &file_ctx->pending_expire_time, lookup_timeout));
+            }
+        }
         else
         {
-            store_verdict(flow, file, lookup_timeout);
-            FileFlows* files = FileFlows::get_file_flows(flow);
-            if (files)
-                files->add_pending_file(file->get_file_id());
+            //  Add packet to retry queue while we wait for response.
+
+            if (!timerisset(&file_ctx->pending_expire_time))
+            {
+                add_time = { lookup_timeout, 0 };
+                timeradd(&now, &add_time, &file_ctx->pending_expire_time);
+
+                if (PacketTracer::is_active())
+                    PacketTracer::log("File signature lookup: adding new packet to retry queue.\n");
+            }
+            else if (PacketTracer::is_active())
+            {
+                //  Won't add packet to retry queue if it is a retransmit
+                //  and not from the retry queue since it should already
+                //  be there.
+                if (!(p->packet_flags & PKT_RETRANSMIT) or
+                    p->pkth->flags & DAQ_PKT_FLAG_RETRY_PACKET)
+                {
+                    PacketTracer::log("File signature lookup: adding packet to retry queue. Resume=%d, Waited %" PRIi64 "ms.\n", resume, time_elapsed_ms(&now, &file_ctx->pending_expire_time, lookup_timeout));
+                }
+            }
+
+            act->set_delayed_action(Active::ACT_RETRY, true);
+
+            if (resume)
+                policy->log_file_action(flow, file_ctx, FILE_RESUME_BLOCK);
+            else if (store_verdict(flow, file_ctx, lookup_timeout) != 0)
+                act->set_delayed_action(Active::ACT_DROP, true);
+            else
+            {
+                FileFlows* files = FileFlows::get_file_flows(flow);
+                if (files)
+                    files->add_pending_file(file_ctx->get_file_id());
+            }
         }
         return true;
     default:
@@ -274,11 +351,11 @@ bool FileCache::apply_verdict(Packet* p, FileInfo* file, FileVerdict verdict,
     }
 
     if (resume)
-        policy->log_file_action(flow, file, FILE_RESUME_BLOCK);
+        policy->log_file_action(flow, file_ctx, FILE_RESUME_BLOCK);
     else
-        store_verdict(flow, file, block_timeout);
-    return true;
+        store_verdict(flow, file_ctx, block_timeout);
 
+    return true;
 }
 
 FileVerdict FileCache::cached_verdict_lookup(Packet* p, FileInfo* file,

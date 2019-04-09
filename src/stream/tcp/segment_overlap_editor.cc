@@ -26,10 +26,27 @@
 #include "segment_overlap_editor.h"
 
 #include "log/messages.h"
+#include "packet_tracer/packet_tracer.h"
 
 #include "tcp_module.h"
 #include "tcp_normalizers.h"
 #include "tcp_session.h"
+
+
+static void set_retransmit_flag(snort::Packet* p)
+{
+    if ( snort::PacketTracer::is_active() )
+    {
+        snort::PacketTracer::log("Packet was retransmitted and %s from the retry queue.\n",
+        (p->pkth->flags & DAQ_PKT_FLAG_RETRY_PACKET) ? "is" : "is not");
+    }
+
+    // Mark the packet as being a re-transmit if it's not from the retry
+    // queue. That way we can avoid adding re-transmitted packets to
+    // the retry queue.
+    if ( !(p->pkth->flags & DAQ_PKT_FLAG_RETRY_PACKET) )
+        p->packet_flags |= PKT_RETRANSMIT;
+}
 
 void SegmentOverlapState::init_sos(TcpSession* ssn, ReassemblyPolicy pol)
 {
@@ -95,9 +112,11 @@ bool SegmentOverlapEditor::is_segment_retransmit(
     // in one segment.
     bool* pb = (trs.sos.rseq == trs.sos.tsd->get_seg_seq()) ? full_retransmit : nullptr;
 
-    if ( trs.sos.right->is_retransmit(
-        trs.sos.rdata, trs.sos.rsize, trs.sos.rseq, trs.sos.right->i_len, pb) )
+    if ( trs.sos.right->is_retransmit(trs.sos.rdata, trs.sos.rsize,
+        trs.sos.rseq, trs.sos.right->i_len, pb) )
     {
+        set_retransmit_flag(trs.sos.tsd->get_pkt());
+
         if ( !(*full_retransmit) )
         {
             trs.sos.rdata += trs.sos.right->i_len;
@@ -148,9 +167,11 @@ int SegmentOverlapEditor::eval_right(TcpReassemblerState& trs)
 
         if ( trs.sos.overlap < trs.sos.right->i_len )
         {
-            if ( trs.sos.right->is_retransmit(
-                trs.sos.rdata, trs.sos.rsize, trs.sos.rseq, trs.sos.right->i_len, nullptr) )
+            if ( trs.sos.right->is_retransmit(trs.sos.rdata, trs.sos.rsize,
+                trs.sos.rseq, trs.sos.right->i_len, nullptr) )
             {
+                set_retransmit_flag(trs.sos.tsd->get_pkt());
+
                 // All data was retransmitted
                 trs.sos.session->retransmit_process(trs.sos.tsd->get_pkt());
                 trs.sos.keep_segment = false;

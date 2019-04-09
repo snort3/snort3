@@ -28,6 +28,7 @@
 #include <cstdio>
 #include <unordered_map>
 
+#include "detection/ips_context.h"
 #include "log/log.h"
 #include "log/messages.h"
 #include "packet_io/sfdaq.h"
@@ -72,7 +73,7 @@ void PacketTracer::register_verdict_reason(uint8_t reason_code, uint8_t priority
     reasons[reason_code] = priority;
 }
 
-void PacketTracer::set_log_file(std::string file)
+void PacketTracer::set_log_file(const std::string& file)
 { log_file = file; }
 
 // template needed for unit tests
@@ -337,10 +338,15 @@ void PacketTracer::add_packet_type_info(const Packet& p)
             CreateTCPFlagString(p.ptrs.tcph, tcpFlags);
 
             if (p.ptrs.tcph->th_flags & TH_ACK)
-                PacketTracer::log("Packet: TCP %s, %s, seq %u, ack %u\n", tcpFlags, timestamp,
-                    p.ptrs.tcph->seq(), p.ptrs.tcph->ack());
+                PacketTracer::log("Packet %" PRIu64 ": TCP %s, %s, seq %u, ack %u, dsize %u%s\n",
+                    p.context->packet_number, tcpFlags, timestamp,
+                    p.ptrs.tcph->seq(), p.ptrs.tcph->ack(), p.dsize,
+                    (p.pkth->flags & DAQ_PKT_FLAG_RETRY_PACKET) ? ", retry pkt" : "");
             else
-                PacketTracer::log("Packet: TCP %s, %s, seq %u\n", tcpFlags, timestamp, p.ptrs.tcph->seq());
+                PacketTracer::log("Packet %" PRIu64 ": TCP %s, %s, seq %u, dsize %u%s\n",
+                    p.context->packet_number, tcpFlags, timestamp, p.ptrs.tcph->seq(),
+                    p.dsize,
+                    (p.pkth->flags & DAQ_PKT_FLAG_RETRY_PACKET) ? ", retry pkt" : "");
             break;
         }
 
@@ -348,13 +354,15 @@ void PacketTracer::add_packet_type_info(const Packet& p)
         {
             const char* icmp_str = is_v6 ? "ICMPv6" : "ICMP";
 
-            PacketTracer::log("Packet: %s, %s, Type: %u  Code: %u \n", icmp_str, timestamp,
+            PacketTracer::log("Packet %" PRIu64 ": %s, %s, Type: %u  Code: %u \n",
+                p.context->packet_number, icmp_str, timestamp,
                 p.ptrs.icmph->type, p.ptrs.icmph->code);
             break;
         }
 
         default:
-            PacketTracer::log("Packet: %s, %s\n", p.get_type(), timestamp);
+            PacketTracer::log("Packet %" PRIu64 ": %s, %s\n",
+                p.context->packet_number, p.get_type(), timestamp);
             break;
     }
 }

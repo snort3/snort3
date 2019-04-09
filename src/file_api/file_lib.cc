@@ -113,6 +113,7 @@ void FileInfo::copy(const FileInfo& other)
     file_signature_enabled = other.file_signature_enabled;
     file_capture_enabled = other.file_capture_enabled;
     file_state = other.file_state;
+    pending_expire_time = other.pending_expire_time;
     // only one copy of file capture
     file_capture = nullptr;
 }
