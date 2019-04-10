@@ -782,7 +782,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0 (Build 251) from 2.9.11
+o"  )~   Version 3.0.0 (Build 252) from 2.9.11
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
@@ -8411,12 +8411,12 @@ string <strong><code>references[].url</code></strong>: where this reference is d
 <div class="ulist"><ul>
 <li>
 <p>
-enum <strong><code>rule_state.([0-9]+):([0-9]+).action</code></strong> = inherit: apply action if rule matches or inherit from rule definition { log | pass | alert | drop | block | reset | inherit }
+enum <strong><code>rule_state.([0-9]+):([0-9]+)[].action</code></strong> = inherit: apply action if rule matches or inherit from rule definition { log | pass | alert | drop | block | reset | inherit }
 </p>
 </li>
 <li>
 <p>
-enum <strong><code>rule_state.([0-9]+):([0-9]+).enable</code></strong> = inherit: enable or disable rule in current ips policy or use default defined by ips policy { false | true | inherit }
+enum <strong><code>rule_state.([0-9]+):([0-9]+)[].enable</code></strong> = inherit: enable or disable rule in current ips policy or use default defined by ips policy { false | true | inherit }
 </p>
 </li>
 </ul></div>
@@ -27417,12 +27417,12 @@ string <strong>rpc.~ver</strong>: version number or * for any
 </li>
 <li>
 <p>
-enum <strong><code>rule_state.([0-9]+):([0-9]+).action</code></strong> = inherit: apply action if rule matches or inherit from rule definition { log | pass | alert | drop | block | reset | inherit }
+enum <strong><code>rule_state.([0-9]+):([0-9]+)[].action</code></strong> = inherit: apply action if rule matches or inherit from rule definition { log | pass | alert | drop | block | reset | inherit }
 </p>
 </li>
 <li>
 <p>
-enum <strong><code>rule_state.([0-9]+):([0-9]+).enable</code></strong> = inherit: enable or disable rule in current ips policy or use default defined by ips policy { false | true | inherit }
+enum <strong><code>rule_state.([0-9]+):([0-9]+)[].enable</code></strong> = inherit: enable or disable rule in current ips policy or use default defined by ips policy { false | true | inherit }
 </p>
 </li>
 <li>
@@ -38219,7 +38219,7 @@ Adding/removing stream_* inspectors if stream was already configured
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2019-03-31 01:50:27 EDT
+ 2019-04-10 13:56:30 EDT
 </div>
 </div>
 </body>

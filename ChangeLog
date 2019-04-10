@@ -1,3 +1,69 @@
+19/04/10 - build 252
+
+-- appid: Fix NetworkSet compilation on big-endian systems
+-- appid: Reduce variable scope in service_mdns
+-- appid: Reduce variable scope in service_rpc
+-- codecs/ipv4: Use struct in_addr when calling inet_ntop()
+-- dce_rpc: Fix const cast warnings in dce_smb2
+-- detection: Don't send zero size searches to the regex offloader
+   If a batch search request had nothing in it to be
+   searched for there is no purpose in sending it to
+   the offloader
+-- detection: Ensure offload search engine started with appropriate regex offloader
+   If the offload_search_method is not specified then by
+   default it will be the same as the normal search_method.
+   If this search method is an async mpse it needs started
+   using the MpseRegexOffload offloader otherwise it needs
+   started using the ThreadRegexOffload offloader
+-- file_api: add extract filename to FileFlow from mime header
+-- file_api: Add timer to limit how long we want for pending file lookup.
+-- file_api: If configured, reset session when lookup times out.
+-- file_api: Make expiration timers more granular.
+-- file_api: use more generic form of timercmp and fix timersub call.
+-- file_api: use timersub_ms, updates to packettracer logs.
+-- flow: add the override keyword to some member function to keep cppcheck happy.
+-- flow: add test to check that a handler is not getting stash events that it's not listening to.
+-- flow: stash publish event.
+-- flow: unit test for stash publish.
+-- ftp_telnet: Fix potential NULL pointer arithmetic in check_ftp()
+-- ftp_telnet: Fix val-never-used warning in DoNextFormat()
+-- http_inspect: Fix val-never-used warning in check_oversize_dir()
+-- http_inspect: Give HttpTestInput a destructor to clean up its file handle
+-- log: Fix potential NULL pointer arithmetic warning in log_text
+-- mpse: Adding performance profiling stats to Mpse batch search
+   The Mpse batch search function does not have any
+   performance profiling so this function is now wrapped
+   to facilitate the addition of performance stats
+-- normalize: Remove redundant check during configuration
+-- offload: simplify zero byte bypass
+-- offload: Framework changes to support polling for completed
+   batch searches
+   When a batch search is issued, currently we poll to
+   determine if that batch has completed its search.
+   This change facilitates polling to return any batch
+   that has completed its search.
+-- packet_io: Changes to allow daq retries to work properly.
+-- packet_io: add entry for retry in act_str due to re-ordering.
+-- packet_io: re-order ACT_RETRY to be before ACT_DROP.
+-- packet_tracer: Pass filename string parameter by reference
+-- perf_monitor: Pass ModuleConfig string parameter by reference
+-- port_scan: Reduce variable scope in configuration
+-- rule_state: rule_state: do not require rules in all policies
+-- rules: remove cruft from tree nodes
+-- sfip: Reduce variable scopes in sf_ipvar
+-- sfip: Switch test debug flag to a cpp macro
+-- sfrt: Reduce variable scope in _dir_remove_less_specific()
+-- sip: Give SipSplitterUT a proper copy constructor
+-- snort2lua: Adding support for appid tp_config_path conversion
+-- snort2lua: Convert rawbytes to raw_data sticky buffer
+-- so rules: fixup shutdown sequencing
+-- so rules: make plain stubs same as protected
+-- so rules: use stub strictly as a key
+-- stream: set retransmit flag.
+-- stream_ip: Fix sign comparison and val-never-used issues in defrag
+-- stream_tcp: Fix shadowed variable when profiling deeply
+-- u2spewfoo: update due to re-ording of retry action.
+
 19/03/31 - build 251
 
 -- ActionManager: actions are tracked per packet for accurate packet suspension

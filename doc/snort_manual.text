@@ -387,7 +387,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0 (Build 251) from 2.9.11
+o"  )~   Version 3.0.0 (Build 252) from 2.9.11
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
@@ -6127,10 +6127,10 @@ Usage: detect
 
 Configuration:
 
-  * enum rule_state.([0-9]+):([0-9]+).action = inherit: apply action
-    if rule matches or inherit from rule definition { log | pass |
-    alert | drop | block | reset | inherit }
-  * enum rule_state.([0-9]+):([0-9]+).enable = inherit: enable or
+  * enum rule_state.([0-9]+):([0-9]+)[].action = inherit: apply
+    action if rule matches or inherit from rule definition { log |
+    pass | alert | drop | block | reset | inherit }
+  * enum rule_state.([0-9]+):([0-9]+)[].enable = inherit: enable or
     disable rule in current ips policy or use default defined by ips
     policy { false | true | inherit }
 
@@ -15261,10 +15261,10 @@ these libraries see the Getting Started section of the manual.
   * int rpc.~app: application number { 0:max32 }
   * string rpc.~proc: procedure number or * for any
   * string rpc.~ver: version number or * for any
-  * enum rule_state.([0-9]+):([0-9]+).action = inherit: apply action
-    if rule matches or inherit from rule definition { log | pass |
-    alert | drop | block | reset | inherit }
-  * enum rule_state.([0-9]+):([0-9]+).enable = inherit: enable or
+  * enum rule_state.([0-9]+):([0-9]+)[].action = inherit: apply
+    action if rule matches or inherit from rule definition { log |
+    pass | alert | drop | block | reset | inherit }
+  * enum rule_state.([0-9]+):([0-9]+)[].enable = inherit: enable or
     disable rule in current ips policy or use default defined by ips
     policy { false | true | inherit }
   * string sd_pattern.~pattern: The pattern to search for
