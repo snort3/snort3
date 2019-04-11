@@ -60,8 +60,6 @@ using namespace snort;
 #define MAXHOSTNAMELEN 256
 #endif
 
-static THREAD_LOCAL DataBuffer DecodeBuffer;
-
 /*
  * Used to keep track of pipelined commands and the last one
  * that resulted in a
@@ -920,39 +918,45 @@ static int check_ftp_param_validity(Packet* p,
  */
 int initialize_ftp(FTP_SESSION* session, Packet* p, int iMode)
 {
-    int iRet;
     const unsigned char* read_ptr = p->data;
     FTP_CLIENT_REQ* req;
-    char ignoreTelnetErase = FTPP_APPLY_TNC_ERASE_CMDS;
 
-    /* Normalize this packet ala telnet */
-    if (((iMode == FTPP_SI_CLIENT_MODE) &&
-        session->client_conf->ignore_telnet_erase_cmds) ||
-        ((iMode == FTPP_SI_SERVER_MODE) &&
-        session->server_conf->ignore_telnet_erase_cmds) )
-        ignoreTelnetErase = FTPP_IGNORE_TNC_ERASE_CMDS;
-
-    iRet = normalize_telnet(nullptr, p, iMode, ignoreTelnetErase);
-
-    if (iRet != FTPP_SUCCESS && iRet != FTPP_NORMALIZED)
+    if ( session->encr_state == NO_STATE )
     {
-        if (iRet == FTPP_ALERT)
-            DetectionEngine::queue_event(GID_FTP, FTP_EVASIVE_TELNET_CMD);
+        int iRet;
+        char ignoreTelnetErase = FTPP_APPLY_TNC_ERASE_CMDS;
+        /* Normalize this packet ala telnet */
+        if (((iMode == FTPP_SI_CLIENT_MODE) &&
+            session->client_conf->ignore_telnet_erase_cmds) ||
+            ((iMode == FTPP_SI_SERVER_MODE) &&
+            session->server_conf->ignore_telnet_erase_cmds) )
+            ignoreTelnetErase = FTPP_IGNORE_TNC_ERASE_CMDS;
 
-        return iRet;
-    }
+        DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
 
-    if ( DecodeBuffer.len )
-    {
-        /* Normalized data will always be in decode buffer */
-        if ( (iMode == FTPP_SI_CLIENT_MODE) ||
-            (iMode == FTPP_SI_SERVER_MODE) )
+        iRet = normalize_telnet(nullptr, p, buf, iMode, ignoreTelnetErase, true);
+
+        if (iRet != FTPP_SUCCESS && iRet != FTPP_NORMALIZED)
         {
-            DetectionEngine::queue_event(GID_FTP, FTP_TELNET_CMD);
-            return FTPP_ALERT; /* Nothing else to do since we alerted */
+            if (iRet == FTPP_ALERT)
+                DetectionEngine::queue_event(GID_FTP, FTP_EVASIVE_TELNET_CMD);
+
+            return iRet;
         }
 
-        read_ptr = DecodeBuffer.data;
+
+        if ( buf.len )
+        {
+            /* Normalized data will always be in decode buffer */
+            if ( (iMode == FTPP_SI_CLIENT_MODE) ||
+                (iMode == FTPP_SI_SERVER_MODE) )
+            {
+                DetectionEngine::queue_event(GID_FTP, FTP_TELNET_CMD);
+                return FTPP_ALERT; /* Nothing else to do since we alerted */
+            }
+
+            read_ptr = buf.data;
+        }
     }
 
     if (iMode == FTPP_SI_CLIENT_MODE)
@@ -1305,8 +1309,9 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
 
     const unsigned char* end = p->data + p->dsize;
 
-    if ( DecodeBuffer.len )
-        end = DecodeBuffer.data + DecodeBuffer.len;
+    DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+    if ( buf.len )
+        end = buf.data + buf.len;
 
     if (iMode == FTPP_SI_CLIENT_MODE)
     {

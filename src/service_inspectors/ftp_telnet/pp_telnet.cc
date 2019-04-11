@@ -93,8 +93,8 @@ const uint8_t* get_telnet_buffer(Packet* p, unsigned& len)
  *
  */
 int normalize_telnet(
-    TELNET_SESSION* tnssn, Packet* p,
-    int iMode, char ignoreEraseCmds)
+    TELNET_SESSION* tnssn, Packet* p, DataBuffer& buf,
+    int iMode, char ignoreEraseCmds, bool on_ftp_channel)
 {
     int ret = FTPP_NORMALIZED;
     const unsigned char* read_ptr, * sb_start = nullptr;
@@ -103,8 +103,8 @@ int normalize_telnet(
     int normalization_required = 0;
     int consec_8bit_chars = 0;
 
-    DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
     const unsigned char* start = buf.data;
+    buf.len = 0;
 
     /* Telnet commands are handled in here.
     * They can be 2 bytes long -- ie, IAC NOP, IAC AYT, etc.
@@ -131,6 +131,10 @@ int normalize_telnet(
         }
         else
         {
+            if ( on_ftp_channel )
+            {
+                return FTPP_SUCCESS;
+            }
             /* Okay, it wasn't an IAC also its a midstream pickup */
             if (*read_ptr > 0x7F && Stream::is_midstream(p->flow))
             {
@@ -214,6 +218,7 @@ int normalize_telnet(
                     if (write_ptr  > start)
                     {
                         write_ptr--;
+                        buf.len--;
                     }
                 }
                 break;
@@ -227,6 +232,7 @@ int normalize_telnet(
                     {
                         /* Go to previous char */
                         write_ptr--;
+                        buf.len--;
 
                         if ((*write_ptr == CR) &&
                             ((*(write_ptr+1) == NUL) || (*(write_ptr+1) == LF)) )
@@ -236,6 +242,7 @@ int normalize_telnet(
                              * beginning of this line
                              */
                             write_ptr+=2;
+                            buf.len+=2;
                             break;
                         }
                     }
@@ -286,6 +293,7 @@ int normalize_telnet(
                 * in the data stream since it was escaped */
                 read_ptr++; /* skip past the first IAC */
                 *write_ptr++ = *read_ptr++;
+                buf.len++;
                 break;
             case TNC_WILL:
             case TNC_WONT:
@@ -415,11 +423,13 @@ int normalize_telnet(
                 if (write_ptr > start)
                 {
                     write_ptr--;
+                    buf.len--;
                 }
                 read_ptr++;
                 break;
             default:
                 *write_ptr++ = *read_ptr++;
+                buf.len++;
                 break;
             }
 

@@ -22,6 +22,8 @@
 #endif
 
 #include "ftp_splitter.h"
+#include "protocols/ssl.h"
+#include "protocols/packet.h"
 
 #include <cstring>
 
@@ -32,9 +34,14 @@ FtpSplitter::FtpSplitter(bool c2s) : StreamSplitter(c2s) { }
 // flush at last line feed in data
 // preproc will deal with any pipelined commands
 StreamSplitter::Status FtpSplitter::scan(
-    Packet*, const uint8_t* data, uint32_t len,
+    Packet* p, const uint8_t* data, uint32_t len,
     uint32_t, uint32_t* fp)
 {
+    if(IsSSL(data, len, p->packet_flags))
+    {
+        *fp = len;
+        return FLUSH;
+    }
 #ifdef HAVE_MEMRCHR
     uint8_t* lf =  (uint8_t*)memrchr(data, '\n', len);
 #else

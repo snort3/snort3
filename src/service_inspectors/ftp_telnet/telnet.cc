@@ -23,6 +23,7 @@
 
 #include "telnet.h"
 
+#include "detection/detection_engine.h"
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
@@ -79,8 +80,9 @@ static int SnortTelnet(TELNET_PROTO_CONF* telnet_config, TELNET_SESSION* Telnets
 
     if ( telnet_config->normalize )
     {
-        int ret = normalize_telnet(Telnetsession, p, iInspectMode,
-            FTPP_APPLY_TNC_ERASE_CMDS);
+        DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+        int ret = normalize_telnet(Telnetsession, p, buf, iInspectMode,
+            FTPP_APPLY_TNC_ERASE_CMDS, false);
 
         if ( ret == FTPP_SUCCESS || ret == FTPP_NORMALIZED )
         {
