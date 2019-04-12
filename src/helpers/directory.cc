@@ -77,21 +77,18 @@ const char* Directory::next()
         sub = nullptr;
     }
 
-    struct dirent de, * result;
+    struct dirent* de;
 
-    while ( dir && !readdir_r(dir, &de, &result) )
+    while ( dir && (de = readdir(dir)) )
     {
-        if ( !result )
-            break;
-
         struct stat sb;
 
-        if ( !strncmp(de.d_name, ".", 1) )
+        if ( !strncmp(de->d_name, ".", 1) )
             continue;
 
         path.erase(len);
         path += "/";
-        path += de.d_name;
+        path += de->d_name;
 
         if ( path.size() > PATH_MAX - 1 || stat(path.c_str(), &sb) )
             continue;
@@ -105,7 +102,7 @@ const char* Directory::next()
         {
             continue;
         }
-        else if ( !filter.empty() && fnmatch(filter.c_str(), de.d_name, 0) )
+        else if ( !filter.empty() && fnmatch(filter.c_str(), de->d_name, 0) )
         {
             continue;
         }
