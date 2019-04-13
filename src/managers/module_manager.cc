@@ -49,6 +49,10 @@
 
 #include "plugin_manager.h"
 
+// "Lua" includes
+#include "lua_bootstrap.h"
+#include "lua_coreinit.h"
+
 using namespace snort;
 using namespace std;
 
@@ -90,6 +94,16 @@ extern "C"
     bool set_string(const char* fqn, const char* val);
     bool set_alias(const char* from, const char* to);
 }
+
+//-------------------------------------------------------------------------
+// boot foo
+//-------------------------------------------------------------------------
+
+const char* ModuleManager::get_lua_bootstrap()
+{ return lua_bootstrap; }
+
+const char* ModuleManager::get_lua_coreinit()
+{ return lua_coreinit; }
 
 //-------------------------------------------------------------------------
 // ModHook foo

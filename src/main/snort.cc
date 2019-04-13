@@ -304,7 +304,7 @@ void Snort::init(int argc, char** argv)
         EventManager::instantiate(sc->output.c_str(), sc);
 
     if (SnortConfig::alert_before_pass())
-        sc->rule_order = "drop sdrop reject alert pass log";
+        sc->rule_order = "reset block drop alert pass log";
 
     sc->setup();
     FileService::post_init();

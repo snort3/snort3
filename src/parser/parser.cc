@@ -37,6 +37,7 @@
 #include "hash/xhash.h"
 #include "helpers/directory.h"
 #include "log/messages.h"
+#include "main/modules.h"
 #include "main/shell.h"
 #include "main/snort_config.h"
 #include "managers/event_manager.h"

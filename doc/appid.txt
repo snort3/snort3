@@ -69,8 +69,6 @@ will reduce performance.
 Below is a minimal Snort configuration that is sufficient to block flows
 based on a specific HTTP header:
 
-    require("snort_config")
-
     dir = os.getenv('SNORT_LUA_PATH')
 
     if ( not dir ) then

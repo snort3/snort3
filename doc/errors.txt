@@ -1,10 +1,4 @@
 
-_FATAL: snort_config is required_
-
-* add this line near top of file:
-
-    require('snort_config')
-
 _PANIC: unprotected error in call to Lua API (cannot open
 snort_defaults.lua: No such file or directory)_
 

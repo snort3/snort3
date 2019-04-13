@@ -34,7 +34,7 @@ struct SnortConfig;
 class Shell
 {
 public:
-    Shell(const char* file = nullptr);
+    Shell(const char* file = nullptr, bool load_defaults = false);
     ~Shell();
 
     void set_file(const char*);

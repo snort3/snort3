@@ -140,10 +140,6 @@ snort2lua will help you convert your conf and rules to the new format.
 
 ==== Environment
 
-LUA_PATH must be set based on your install:
-
-    LUA_PATH=$install_prefix/include/snort/lua/\?.lua\;\;
-
 SNORT_LUA_PATH must be set to load auxiliary configuration files if you use
 the default snort.lua.  For example:
 

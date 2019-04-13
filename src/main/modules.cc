@@ -687,7 +687,7 @@ static const Parameter alerts_params[] =
     { "log_references", Parameter::PT_BOOL, nullptr, "false",
       "include rule references in alert info (full only)" },
 
-    { "order", Parameter::PT_STRING, nullptr, "pass drop alert log",
+    { "order", Parameter::PT_STRING, nullptr, "pass reset block drop alert log",
       "change the order of rule action application" },
 
     { "rate_filter_memcap", Parameter::PT_INT, "0:max32", "1048576",
@@ -1055,7 +1055,7 @@ static const Parameter network_params[] =
       "drop if checksum is bad" },
 
     { "checksum_eval", Parameter::PT_MULTI,
-      "all | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none", "none",
+      "all | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none", "all",
       "checksums to verify" },
 
     { "decode_drops", Parameter::PT_BOOL, nullptr, "false",

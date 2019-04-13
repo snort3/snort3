@@ -39,8 +39,6 @@
 using namespace snort;
 using namespace std;
 
-#define required "require('snort_config'); "
-
 //-------------------------------------------------------------------------
 // helper functions
 //-------------------------------------------------------------------------
@@ -97,11 +95,11 @@ static bool load_config(lua_State* L, const char* file, const char* tweaks, bool
     return true;
 }
 
-static void load_overrides(lua_State* L, string& s)
+static void load_string(lua_State* L, const char* s)
 {
     Lua::ManageStack ms(L);
 
-    if ( luaL_loadstring(L, s.c_str()) )
+    if ( luaL_loadstring(L, s) )
     {
         const char* err = lua_tostring(L, -1);
         if ( strstr(err, "near '#'") )
@@ -120,10 +118,9 @@ static void run_config(lua_State* L, const char* t)
     lua_getglobal(L, "snort_config");
     lua_getglobal(L, t);
 
-    if ( !lua_isfunction(L, -2) )
-        FatalError("%s\n", "snort_config is required");
+    assert(lua_isfunction(L, -2));
 
-    else if ( lua_pcall(L, 1, 1, 0) )
+    if ( lua_pcall(L, 1, 1, 0) )
     {
         const char* err = lua_tostring(L, -1);
         FatalError("%s\n", err);
@@ -138,7 +135,7 @@ static bool config_lua(
             return false;
 
     if ( !s.empty() )
-        load_overrides(L, s);
+        load_string(L, s.c_str());
 
     run_config(L, "_G");
 
@@ -149,7 +146,7 @@ static bool config_lua(
 // public methods
 //-------------------------------------------------------------------------
 
-Shell::Shell(const char* s)
+Shell::Shell(const char* s, bool load_defaults)
 {
     // FIXIT-M should wrap in Lua::State
     lua = luaL_newstate();
@@ -167,6 +164,11 @@ Shell::Shell(const char* s)
         set_file(s);
 
     loaded = false;
+
+    load_string(lua, ModuleManager::get_lua_bootstrap());
+
+    if ( load_defaults )
+        load_string(lua, ModuleManager::get_lua_coreinit());
 }
 
 Shell::~Shell()
@@ -189,9 +191,6 @@ void Shell::set_file(const char* s)
 
 void Shell::set_overrides(const char* s)
 {
-    if ( overrides.empty() )
-        overrides = required;
-
     overrides += s;
 }
 

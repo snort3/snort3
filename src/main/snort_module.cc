@@ -284,8 +284,7 @@ static const Parameter s_params[] =
       "0 gets the number of CPU cores reported by the system; default is 1" },
 
     { "--alert-before-pass", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "process alert, drop, sdrop, or reject before pass; "
-      "default is pass before alert, drop,..." },
+      "evaluate alert rules before pass rules; default is pass rules first" },
 
     { "--bpf", Parameter::PT_STRING, nullptr, nullptr,
       "<filter options> are standard BPF options, as seen in TCPDump" },
@@ -499,10 +498,10 @@ static const Parameter s_params[] =
       "enable Talos inline rule test mode (same as --tweaks talos -Q -q)", },
 
     { "--treat-drop-as-alert", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "converts drop, sdrop, and reject rules into alert rules during startup" },
+      "converts drop, block, and reset rules into alert rules when loaded" },
 
     { "--treat-drop-as-ignore", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "use drop, sdrop, and reject rules to ignore session traffic when not inline" },
+      "use drop, block, and reset rules to ignore session traffic when not inline" },
 
     { "--tweaks", Parameter::PT_STRING, nullptr, nullptr,
       "tune configuration" },

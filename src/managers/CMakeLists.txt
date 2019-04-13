@@ -1,7 +1,15 @@
 
 set (LUA_INCLUDES
-    snort_config.lua
+    # required 'header'
     ${CMAKE_CURRENT_BINARY_DIR}/snort_plugin.lua
+    # deprecated dependency to be removed with RC
+    ${CMAKE_CURRENT_BINARY_DIR}/snort_config.lua
+)
+
+set (CPP_INCLUDES
+    ${CMAKE_CURRENT_BINARY_DIR}/lua_plugffi.h
+    ${CMAKE_CURRENT_BINARY_DIR}/lua_bootstrap.h
+    ${CMAKE_CURRENT_BINARY_DIR}/lua_coreinit.h
 )
 
 set( MANAGERS_INCLUDES
@@ -11,6 +19,7 @@ set( MANAGERS_INCLUDES
 
 add_library( managers OBJECT
     ${MANAGERS_INCLUDES}
+    ${CPP_INCLUDES}
     action_manager.h
     action_manager.cc
     codec_manager.cc
@@ -34,20 +43,31 @@ add_library( managers OBJECT
     connector_manager.h
 )
 
+add_custom_command (
+    OUTPUT lua_plugffi.h snort_plugin.lua
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/ffi_wrap.sh ${CMAKE_CURRENT_SOURCE_DIR}/lua_plugin_defs.h > plugffi.lua
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/lua_wrap.sh ${CMAKE_CURRENT_SOURCE_DIR} plugffi > lua_plugffi.h
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/plugffi.lua ${CMAKE_CURRENT_BINARY_DIR}/snort_plugin.lua
+)
+
+add_custom_command (
+    OUTPUT lua_bootstrap.h snort_config.lua
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/lua_wrap.sh ${CMAKE_CURRENT_SOURCE_DIR} bootstrap > lua_bootstrap.h
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/bootstrap.lua ${CMAKE_CURRENT_BINARY_DIR}/snort_config.lua
+)
+
+add_custom_command (
+    OUTPUT lua_coreinit.h
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/lua_wrap.sh ${CMAKE_CURRENT_SOURCE_DIR} coreinit > lua_coreinit.h
+)
+
+include_directories (${CMAKE_CURRENT_BINARY_DIR})
+
 install (FILES ${MANAGERS_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/managers"
 )
 
-add_custom_command (
-    OUTPUT snort_plugin.lua
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/ffi_wrap.sh ${CMAKE_CURRENT_SOURCE_DIR}/lua_plugin_defs.h > snort_plugin.lua
-)
-
-add_custom_target ( snort_plugin DEPENDS snort_plugin.lua )
-
-# FIXIT-L probably not the ideal way to ensure this gets built
-add_dependencies ( managers snort_plugin )
-
 install (FILES ${LUA_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/lua"
 )
+

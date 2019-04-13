@@ -147,7 +147,7 @@ PolicyMap::PolicyMap(PolicyMap* other_map)
         clone(other_map);
     else
     {
-        add_shell(new Shell);
+        add_shell(new Shell(nullptr, true));
         empty_ips_policy = new IpsPolicy(ips_policy.size());
         ips_policy.emplace_back(empty_ips_policy);
     }

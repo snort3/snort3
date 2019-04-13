@@ -126,7 +126,6 @@ Follow these steps:
 First set up the environment:
 
 ```shell
-export LUA_PATH=$my_path/include/snort/lua/\?.lua\;\;
 export SNORT_LUA_PATH=$my_path/etc/snort
 ```
 

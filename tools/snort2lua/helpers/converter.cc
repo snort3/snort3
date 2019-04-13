@@ -273,7 +273,8 @@ int Converter::parse_file(
                 }
 
                 std::string gid = rule_api.get_option("gid");
-                if (0 == gid.compare(GID_REPUTATION) && 0 == rule_api.get_rule_old_action().compare("sdrop"))
+                if (0 == gid.compare(GID_REPUTATION) && 0 ==
+                    rule_api.get_rule_old_action().compare("sdrop"))
                 {
                     std::string sid = rule_api.get_option("sid");
                     table_api.open_table("suppress");
@@ -492,13 +493,9 @@ int Converter::convert(
         out << "-- make install\n";
         out << "--\n";
         out << "-- then:\n";
-        out << "-- export LUA_PATH=$DIR/include/snort/lua/?.lua\\;\\;\n";
         out << "-- export SNORT_LUA_PATH=$DIR/conf/\n";
         out << "---------------------------------------------------------------------------\n";
         out << "\n";
-        out << "\n";
-        out << "\n";
-        out << "require(\"snort_config\")\n\n";
         out << "dir = os.getenv('SNORT_LUA_PATH')\n";
         out << "\n";
         out << "if ( not dir ) then\n";
@@ -506,7 +503,6 @@ int Converter::convert(
         out << "end\n";
         out << "\n";
         out << "dofile(dir .. '/snort_defaults.lua')\n";
-        out << "\n";
         out << "\n";
         data_api.print_data(out);
 
