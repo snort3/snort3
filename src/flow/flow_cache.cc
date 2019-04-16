@@ -281,6 +281,13 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
         if ( ignore_offloads > 0 )
             --ignore_offloads;
     }
+
+    if (!pruned and hash_table->get_count() > max_cap)
+    {
+        prune_one(PruneReason::EXCESS, true);
+        ++pruned;
+    }
+
     return pruned;
 }
 
@@ -291,6 +298,7 @@ bool FlowCache::prune_one(PruneReason reason, bool do_cleanup)
     if ( hash_table->get_count() <= 1 )
         return false;
 
+    // ZHash returns in LRU order, which is updated per packet via find --> move_to_front call
     auto flow = static_cast<Flow*>(hash_table->first());
     assert(flow);
 
