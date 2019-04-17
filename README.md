@@ -123,15 +123,9 @@ Follow these steps:
 
 # RUN SNORT
 
-First set up the environment:
+Here are some examples.
 
-```shell
-export SNORT_LUA_PATH=$my_path/etc/snort
-```
-
-Then give it a go:
-
-* Snort++ provides lots of help from the command line.  Here are some examples:
+* Snort++ provides lots of help from the command line, including:
 
     ```shell
     $my_path/bin/snort --help

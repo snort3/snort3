@@ -315,6 +315,9 @@ static const Parameter s_params[] =
     { "--dirty-pig", Parameter::PT_IMPLIED, nullptr, nullptr,
       "don't flush packets on shutdown" },
 
+    { "--disable-overrides", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "do not first look for files relative to the working directory" },
+
     { "--dump-builtin-rules", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output stub rules for selected modules" },
 
@@ -417,9 +420,6 @@ static const Parameter s_params[] =
       "<count> pause after count packets", },
 #endif
 
-    { "--parsing-follows-files", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "parse relative paths from the perspective of the current configuration file" },
-
     { "--pcap-file", Parameter::PT_STRING, nullptr, nullptr,
       "<file> file that contains a list of pcaps to read - read mode is implied" },
 
@@ -446,6 +446,11 @@ static const Parameter s_params[] =
 
     { "--pedantic", Parameter::PT_IMPLIED, nullptr, nullptr,
       "warnings are fatal" },
+
+#ifdef PIGLET
+    { "--piglet", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "enable piglet test harness mode" },
+#endif
 
     { "--plugin-path", Parameter::PT_STRING, nullptr, nullptr,
       "<path> where to find plugins" },
@@ -477,10 +482,9 @@ static const Parameter s_params[] =
       "enable the interactive command line", },
 #endif
 
-#ifdef PIGLET
-    { "--piglet", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "enable piglet test harness mode" },
-#endif
+    { "--show-file-codes", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "indicate how files are located: A=absolute and W, F, C which are relative "
+      "to the working directory, including file, and config file respectively" },
 
     { "--show-plugins", Parameter::PT_IMPLIED, nullptr, nullptr,
       "list module and plugin versions", },
@@ -799,6 +803,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("--enable-inline-test") )
         sc->run_flags |= RUN_FLAG__INLINE_TEST;
 
+    else if ( v.is("--disable-overrides") )
+        sc->run_flags |= RUN_FLAG__NO_OVERRIDES;
+
     else if ( v.is("--gen-msg-map") )
         dump_msg_map(sc, v.get_string());
 
@@ -879,9 +886,6 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->pkt_pause_cnt = v.get_uint64();
 #endif
 
-    else if ( v.is("--parsing-follows-files") )
-        parsing_follows_files = true;
-
     else if ( v.is("--pcap-file") )
     {
         Trough::add_source(Trough::SOURCE_FILE_LIST, v.get_string());
@@ -906,6 +910,11 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--pcap-show") )
         sc->run_flags |= RUN_FLAG__PCAP_SHOW;
+
+#ifdef PIGLET
+    else if ( v.is("--piglet") )
+        sc->run_flags |= RUN_FLAG__PIGLET;
+#endif
 
     else if ( v.is("--plugin-path") )
         sc->set_plugin_path(v.get_string());
@@ -936,10 +945,8 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->run_flags |= RUN_FLAG__SHELL;
 #endif
 
-#ifdef PIGLET
-    else if ( v.is("--piglet") )
-        sc->run_flags |= RUN_FLAG__PIGLET;
-#endif
+    else if ( v.is("--show-file-codes") )
+        sc->run_flags |= RUN_FLAG__SHOW_FILE_CODES;
 
     else if ( v.is("--show-plugins") )
         sc->logging_flags |= LOGGING_FLAG__SHOW_PLUGINS;

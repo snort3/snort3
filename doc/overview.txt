@@ -138,13 +138,6 @@ done with Lua, so your old conf won't work as is.  Rules are still text
 based but with syntax tweaks, so your 2.X rules must be fixed up.  However,
 snort2lua will help you convert your conf and rules to the new format.
 
-==== Environment
-
-SNORT_LUA_PATH must be set to load auxiliary configuration files if you use
-the default snort.lua.  For example:
-
-    export SNORT_LUA_PATH=$install_prefix/etc/snort
-
 ==== Command Line
 
 A simple command line might look like this:

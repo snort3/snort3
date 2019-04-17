@@ -90,12 +90,5 @@ public:
 };
 }
 
-extern "C"
-{
-    // returns the correct path component to use for referencing the file 
-    const char* push_relative_path(const char*);
-    void pop_relative_path();
-}
-
 #endif
 

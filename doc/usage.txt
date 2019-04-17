@@ -3,13 +3,6 @@ Snort install directory. Additionally, it is assumed that "$my_path/bin"
 is in your PATH.
 
 
-=== Environment
-
-SNORT_LUA_PATH is used by Snort to load supplemental configuration files.
-
-    export SNORT_LUA_PATH=$my_path/etc/snort
-
-
 === Help
 
 Print the help summary:

@@ -46,7 +46,6 @@ add_library( managers OBJECT
 add_custom_command (
     OUTPUT lua_plugffi.h snort_plugin.lua
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/ffi_wrap.sh ${CMAKE_CURRENT_SOURCE_DIR}/lua_plugin_defs.h > plugffi.lua
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/lua_wrap.sh ${CMAKE_CURRENT_SOURCE_DIR} plugffi > lua_plugffi.h
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/plugffi.lua ${CMAKE_CURRENT_BINARY_DIR}/snort_plugin.lua
 )
 

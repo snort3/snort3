@@ -59,8 +59,6 @@
 
 using namespace snort;
 
-bool parsing_follows_files = false;
-
 static struct rule_index_map_t* ruleIndexMap = nullptr;
 
 static std::string s_aux_rules;
@@ -244,9 +242,7 @@ static bool parse_file(SnortConfig* sc, Shell* sh, bool is_fatal)
     if ( !fname || !*fname )
         return false;
 
-    push_parse_location(fname, 0);
     bool success = sh->configure(sc, is_fatal);
-    pop_parse_location();
     return success;
 }
 
@@ -377,11 +373,13 @@ void ParseRules(SnortConfig* sc)
             ModuleManager::load_rules(sc);
 
         const char* fname = p->include.c_str();
+        std::string file = p->parse_from;
 
         if ( fname && *fname )
         {
-            push_parse_location(fname);
-            ParseConfigFile(sc, fname);
+            const char* code = get_config_file(fname, file);
+            push_parse_location(code, file.c_str(), fname);
+            ParseConfigFile(sc, file.c_str());
             pop_parse_location();
         }
 
@@ -390,14 +388,14 @@ void ParseRules(SnortConfig* sc)
 
         if ( !p->rules.empty() )
         {
-            push_parse_location("rules");
+            push_parse_location("C", file.c_str(), "rules");
             ParseConfigString(sc, p->rules.c_str());
             pop_parse_location();
         }
         if ( !idx && sc->stdin_rules )
         {
             LogMessage("Reading rules until EOF or a line starting with END\n");
-            push_parse_location("stdin");
+            push_parse_location("C", get_snort_conf_dir(), "stdin");
             parse_stream(std::cin, sc);
             pop_parse_location();
         }

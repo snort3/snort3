@@ -38,7 +38,7 @@ enum RunFlag
     RUN_FLAG__READ                = 0x00000001,
     RUN_FLAG__DAEMON              = 0x00000002,
     RUN_FLAG__NO_PROMISCUOUS      = 0x00000004,
-    /* UNUSED                       0x00000008 */
+    RUN_FLAG__NO_OVERRIDES        = 0x00000008,
 
     RUN_FLAG__INLINE              = 0x00000010,
     RUN_FLAG__STATIC_HASH         = 0x00000020,
@@ -55,7 +55,7 @@ enum RunFlag
     RUN_FLAG__INLINE_TEST         = 0x00004000,
     RUN_FLAG__PCAP_SHOW           = 0x00008000,
 
-    /* UNUSED                       0x00010000 */
+    RUN_FLAG__SHOW_FILE_CODES     = 0x00010000,
     RUN_FLAG__PAUSE               = 0x00020000,
     RUN_FLAG__NO_PCRE             = 0x00040000,
     /* If stream is configured, the STATEFUL flag is set.  This is
@@ -473,6 +473,12 @@ public:
 
     static bool inline_test_mode()
     { return snort::get_ips_policy()->policy_mode == POLICY_MODE__INLINE_TEST; }
+
+    static bool show_file_codes()
+    { return get_conf()->run_flags & RUN_FLAG__SHOW_FILE_CODES; }
+
+    static bool allow_overrides()
+    { return !(get_conf()->run_flags & RUN_FLAG__NO_OVERRIDES); }
 
     static bool adaptor_inline_mode()
     { return get_conf()->run_flags & RUN_FLAG__INLINE; }

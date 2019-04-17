@@ -25,7 +25,9 @@
 
 #include "parse_conf.h"
 
+#include <limits.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include <fstream>
 #include <stack>
@@ -33,6 +35,7 @@
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "managers/action_manager.h"
+#include "managers/module_manager.h"
 #include "sfip/sf_vartable.h"
 #include "target_based/snort_protocols.h"
 #include "utils/util.h"
@@ -46,14 +49,29 @@ using namespace snort;
 
 struct Location
 {
+    const char* code;
+    std::string path;
     std::string file;
     unsigned line;
 
-    Location(const char* s, unsigned u)
-    { file = s; line = u; }
+    Location(const char* c, const char* p, const char* f, unsigned u)
+    { code = c; path = p; file = f; line = u; }
 };
 
 static std::stack<Location> files;
+
+const char* get_parse_file()
+{
+    if ( !files.empty() )
+        return files.top().path.c_str();
+
+    static char dir[PATH_MAX];
+
+    if ( !getcwd(dir, sizeof(dir)) )
+        return "";
+
+    return dir;
+}
 
 void get_parse_location(const char*& file, unsigned& line)
 {
@@ -68,14 +86,27 @@ void get_parse_location(const char*& file, unsigned& line)
     line = loc.line;
 }
 
-void push_parse_location(const char* file, unsigned line)
+static void print_parse_file(const char* msg, Location& loc)
 {
-    if ( !file )
+    if ( SnortConfig::show_file_codes() )
+        LogMessage("%s %s:%s:\n", msg, (loc.code ? loc.code : "?"), loc.file.c_str());
+
+    else
+        LogMessage("%s %s:\n", msg, loc.file.c_str());
+}
+
+void push_parse_location(
+    const char* code, const char* path, const char* file, unsigned line)
+{
+    if ( !path )
         return;
 
-    Location loc(file, line);
+    if ( !file )
+        file = path;
+
+    Location loc(code, path, file, line);
     files.push(loc);
-    LogMessage("Loading %s:\n", file);
+    print_parse_file("Loading", loc);
 }
 
 void pop_parse_location()
@@ -83,40 +114,95 @@ void pop_parse_location()
     if ( !files.empty() )
     {
         Location& loc = files.top();
-        LogMessage("Finished %s.\n", loc.file.c_str());
+        print_parse_file("Finished", loc);
         files.pop();
     }
 }
 
 void inc_parse_position()
 {
+    if ( files.empty() )
+        return;
     Location& loc = files.top();
     ++loc.line;
 }
 
+static bool valid_file(const char* file, std::string& path)
+{
+    path += '/';
+    path += file;
+
+    struct stat s;
+    return stat(path.c_str(), &s) == 0;
+}
+
+static bool relative_to_parse_dir(const char* file, std::string& path)
+{
+    if ( !path.length() )
+        path = get_parse_file();
+    size_t idx = path.rfind('/');
+    if ( idx == std::string::npos )
+        idx = 0;
+    path.erase(idx);
+    return valid_file(file, path);
+}
+
+static bool relative_to_config_dir(const char* file, std::string& path)
+{
+    path = get_snort_conf_dir();
+    return valid_file(file, path);
+}
+
+static bool relative_to_working_dir(const char* file, std::string& path)
+{
+    char dir[PATH_MAX];
+    if ( !getcwd(dir, sizeof(dir)) )
+        return false;
+    path = dir;
+    return valid_file(file, path);
+}
+
+const char* get_config_file(const char* arg, std::string& file)
+{
+    bool absolute = (arg[0] == '/');
+
+    if ( absolute )
+    {
+        file = arg;
+        return "A";
+    }
+    std::string hint = file;
+
+    if ( SnortConfig::allow_overrides() and relative_to_working_dir(arg, file) )
+        return "W";
+
+    file = hint;
+
+    if ( relative_to_parse_dir(arg, file) )
+        return "F";
+
+    if ( relative_to_config_dir(arg, file) )
+        return "C";
+
+    return nullptr;
+}
+
 void parse_include(SnortConfig* sc, const char* arg)
 {
-    struct stat file_stat;  /* for include path testing */
+    assert(arg);
     arg = ExpandVars(sc, arg);
-    char* fname = snort_strdup(arg);
+    std::string file;
 
-    /* Stat the file.  If that fails, make it relative to the directory
-     * that the top level snort configuration file was in */
-    if ( stat(fname, &file_stat) == -1 && fname[0] != '/' )
+    const char* code = get_config_file(arg, file);
+
+    if ( !code )
     {
-        const char* snort_conf_dir = get_snort_conf_dir();
-
-        int path_len = strlen(snort_conf_dir) + strlen(arg) + 1;
-        snort_free(fname);
-
-        fname = (char*)snort_calloc(path_len);
-        snprintf(fname, path_len, "%s%s", snort_conf_dir, arg);
+        ParseError("can't open %s\n", arg);
+        return;
     }
-
-    push_parse_location(fname);
-    ParseConfigFile(sc, fname);
+    push_parse_location(code, file.c_str(), arg);
+    ParseConfigFile(sc, file.c_str());
     pop_parse_location();
-    snort_free((char*)fname);
 }
 
 void ParseIpVar(SnortConfig* sc, const char* var, const char* val)

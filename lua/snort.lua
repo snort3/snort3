@@ -6,38 +6,17 @@
 -- many can be used with defaults w/o any explicit configuration.
 -- use this conf as a template for your specific configuration.
 
--- 1. configure environment
--- 2. configure defaults
--- 3. configure inspection
--- 4. configure bindings
--- 5. configure performance
--- 6. configure detection
--- 7. configure filters
--- 8. configure outputs
--- 9. configure tweaks
+-- 1. configure defaults
+-- 2. configure inspection
+-- 3. configure bindings
+-- 4. configure performance
+-- 5. configure detection
+-- 6. configure filters
+-- 7. configure outputs
+-- 8. configure tweaks
 
 ---------------------------------------------------------------------------
--- 1. configure environment
----------------------------------------------------------------------------
-
--- given:
--- export DIR=/install/path
--- configure --prefix=$DIR
--- make install
-
--- then:
--- export SNORT_LUA_PATH=$DIR/etc/snort
-
--- this depends on SNORT_LUA_PATH
--- where to find other config files
-conf_dir = os.getenv('SNORT_LUA_PATH')
-
-if ( not conf_dir ) then
-    conf_dir = '${CMAKE_INSTALL_FULL_SYSCONFDIR}/snort'
-end
-
----------------------------------------------------------------------------
--- 2. configure defaults
+-- 1. configure defaults
 ---------------------------------------------------------------------------
 
 -- HOME_NET and EXTERNAL_NET must be set now
@@ -48,11 +27,11 @@ HOME_NET = 'any'
 -- (leave as "any" in most situations)
 EXTERNAL_NET = 'any'
 
-dofile(conf_dir .. '/snort_defaults.lua')
-dofile(conf_dir .. '/file_magic.lua')
+include 'snort_defaults.lua'
+include 'file_magic.lua'
 
 ---------------------------------------------------------------------------
--- 3. configure inspection
+-- 2. configure inspection
 ---------------------------------------------------------------------------
 
 -- mod = { } uses internal defaults
@@ -123,7 +102,7 @@ reputation =
 --]]
 
 ---------------------------------------------------------------------------
--- 4. configure bindings
+-- 3. configure bindings
 ---------------------------------------------------------------------------
 
 wizard = default_wizard
@@ -165,7 +144,7 @@ binder =
 }
 
 ---------------------------------------------------------------------------
--- 5. configure performance
+-- 4. configure performance
 ---------------------------------------------------------------------------
 
 -- use latency to monitor / enforce packet and rule thresholds
@@ -180,7 +159,7 @@ latency =
 --perf_monitor = { }
 
 ---------------------------------------------------------------------------
--- 6. configure detection
+-- 5. configure detection
 ---------------------------------------------------------------------------
 
 references = default_references
@@ -202,7 +181,7 @@ ips =
 -- rewrite = { }
 
 ---------------------------------------------------------------------------
--- 7. configure filters
+-- 6. configure filters
 ---------------------------------------------------------------------------
 
 -- below are examples of filters
@@ -242,7 +221,7 @@ rate_filter =
 --]]
 
 ---------------------------------------------------------------------------
--- 8. configure outputs
+-- 7. configure outputs
 ---------------------------------------------------------------------------
 
 -- event logging
@@ -266,7 +245,7 @@ rate_filter =
 --file_log = { }
 
 ---------------------------------------------------------------------------
--- 9. configure tweaks
+-- 8. configure tweaks
 ---------------------------------------------------------------------------
 
 if ( tweaks ~= nil ) then

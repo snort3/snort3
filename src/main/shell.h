@@ -48,6 +48,9 @@ public:
     const char* get_file() const
     { return file.c_str(); }
 
+    const char* get_from() const
+    { return parse_from.c_str(); }
+
     bool get_loaded() const
     { return loaded; }
 

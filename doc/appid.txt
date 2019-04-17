@@ -69,21 +69,6 @@ will reduce performance.
 Below is a minimal Snort configuration that is sufficient to block flows
 based on a specific HTTP header:
 
-    dir = os.getenv('SNORT_LUA_PATH')
-
-    if ( not dir ) then
-        dir = '.'
-    end
-
-    dofile(dir .. '/snort_defaults.lua')
-
-
-    local_rules =
-    [[
-    block http ( msg:"openAppId: test content match for app http";
-    content:"X-Header: malicious"; sid:18760; rev:4; )
-    ]]
-
     stream = { }
 
     stream_tcp = { }
@@ -106,6 +91,12 @@ based on a specific HTTP header:
     http_inspect = { }
 
     appid = { }
+
+    local_rules =
+    [[
+    block http ( msg:"openAppId: test content match for app http";
+    content:"X-Header: malicious"; sid:18760; rev:4; )
+    ]]
 
     ips =
     {

@@ -20,6 +20,7 @@
 #ifndef PARSE_CONF_H
 #define PARSE_CONF_H
 
+#include <string>
 #include "detection/rules.h"
 
 void parse_conf_init();
@@ -30,6 +31,12 @@ namespace snort
 {
 struct SnortConfig;
 }
+
+const char* get_parse_file();
+
+// returns code or nullptr if not found, file holds abs path
+// file may hold original parse path on entry
+const char* get_config_file(const char* arg, std::string& file);
 
 void ParseConfigFile(snort::SnortConfig*, const char* fname);
 void ParseConfigString(snort::SnortConfig*, const char* str);

@@ -30,7 +30,6 @@
 #include <iostream>
 #include <mutex>
 #include <regex>
-#include <stack>
 #include <string>
 
 #include "framework/base_api.h"
@@ -93,6 +92,9 @@ extern "C"
     bool set_number(const char* fqn, double val);
     bool set_string(const char* fqn, const char* val);
     bool set_alias(const char* from, const char* to);
+
+    const char* push_relative_path(const char* file);
+    void pop_relative_path();
 }
 
 //-------------------------------------------------------------------------
@@ -816,58 +818,23 @@ SO_PUBLIC bool set_string(const char* fqn, const char* s)
     return set_value(fqn, v);
 }
 
-struct DirStackItem
-{
-    string previous_dir;
-    string base_name;
-};
-
-static std::stack<DirStackItem> dir_stack;
-
 SO_PUBLIC const char* push_relative_path(const char* file)
 {
-    if ( !parsing_follows_files )
-        return file;
-
-    dir_stack.push(DirStackItem());
-    DirStackItem& dsi = dir_stack.top();
-
-    char pwd[PATH_MAX];
-
-    if ( getcwd(pwd, sizeof(pwd)) == nullptr )
-        FatalError("Unable to determine process running directory\n");
-
-    dsi.previous_dir = pwd;
-
-    char* base_name_buf = snort_strdup(file);
-    dsi.base_name = basename(base_name_buf);
-    snort_free(base_name_buf);
-
-    char* dir_name_buf = snort_strdup(file);
-    char* dir_name = dirname(dir_name_buf);
-
-    if ( chdir(dir_name) != 0 )
-        FatalError("Unable to access %s\n", dir_name);
-
-    snort_free(dir_name_buf);
-
-    return dsi.base_name.c_str();
+    static std::string path;
+    path = "";
+    const char* code = get_config_file(file, path);
+    push_parse_location(code, path.c_str(), file);
+    return path.c_str();
 }
 
 SO_PUBLIC void pop_relative_path()
 {
-    if ( !parsing_follows_files )
-        return;
-
-    assert( !dir_stack.empty() );
-
-    // We came from this directory, so it should still exist
-    const char* prev_dir = dir_stack.top().previous_dir.c_str();
-    if ( chdir(prev_dir) != 0 )
-        FatalError("Unable to access %s\n", prev_dir);
-
-    dir_stack.pop();
+    pop_parse_location();
 }
+
+//-------------------------------------------------------------------------
+// private methods
+//-------------------------------------------------------------------------
 
 static bool comp_mods(const ModHook* l, const ModHook* r)
 {
@@ -1355,7 +1322,6 @@ static void make_rule(ostream& os, const Module* m, const RuleMap* r)
 void ModuleManager::load_rules(SnortConfig* sc)
 {
     s_modules.sort(comp_gids);
-    push_parse_location("builtin");
 
     for ( auto p : s_modules )
     {
@@ -1379,7 +1345,6 @@ void ModuleManager::load_rules(SnortConfig* sc)
             r++;
         }
     }
-    pop_parse_location();
 }
 
 void ModuleManager::dump_rules(const char* pfx)

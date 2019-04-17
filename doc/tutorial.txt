@@ -111,11 +111,7 @@ c. Or use ccmake directly to configure and generate from an arbitrary build
 
 === Running
 
-First set up the environment:
-
-    export SNORT_LUA_PATH=$my_path/etc/snort/
-
-Then give it a go:
+Examples:
 
 * Get some help:
 

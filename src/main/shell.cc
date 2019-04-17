@@ -34,6 +34,7 @@
 #include "main/policy.h"
 #include "main/snort_config.h"
 #include "managers/module_manager.h"
+#include "parser/parse_conf.h"
 #include "parser/parser.h"
 
 using namespace snort;
@@ -78,10 +79,8 @@ static bool load_config(lua_State* L, const char* file, const char* tweaks, bool
         if (is_fatal)
             FatalError("can't load %s: %s\n", file, lua_tostring(L, -1));
         else
-        {
             ParseError("can't load %s: %s\n", file, lua_tostring(L, -1));
-            return false;
-        }
+        return false;
     }
     if ( tweaks and *tweaks )
     {
@@ -157,14 +156,12 @@ Shell::Shell(const char* s, bool load_defaults)
     lua_atpanic(lua, Shell::panic);
     luaL_openlibs(lua);
 
-    char pwd[PATH_MAX];
-    parse_from = getcwd(pwd, sizeof(pwd));
-
     if ( s )
-        set_file(s);
+        file = s;
+
+    parse_from = get_parse_file();
 
     loaded = false;
-
     load_string(lua, ModuleManager::get_lua_bootstrap());
 
     if ( load_defaults )
@@ -178,15 +175,7 @@ Shell::~Shell()
 
 void Shell::set_file(const char* s)
 {
-    assert(file.empty());
-
-    if ( s && s[0] != '/' && parsing_follows_files )
-    {
-        file += parse_from;
-        file += '/';
-    }
-
-    file += s;
+    file = s;
 }
 
 void Shell::set_overrides(const char* s)
@@ -216,15 +205,28 @@ bool Shell::configure(SnortConfig* sc, bool is_fatal)
         set_network_policy(pt->network);
     }
 
-    const char* base_name = push_relative_path(file.c_str());
-    if(! config_lua(lua, base_name, overrides, sc->tweaks.c_str(), is_fatal))
+    std::string path = parse_from;
+    const char* code = get_config_file(file.c_str(), path);
+
+    if ( !code )
+    {
+        if ( is_fatal )
+            FatalError("can't find %s\n", file.c_str());
+        else
+            ParseError("can't find %s\n", file.c_str());
+        return false;
+    }
+
+    push_parse_location(code, path.c_str(), file.c_str(), 0);
+
+    if ( !config_lua(lua, path.c_str(), overrides, sc->tweaks.c_str(), is_fatal) )
         return false;
 
     set_default_policy(sc);
     ModuleManager::set_config(nullptr);
     loaded = true;
 
-    pop_relative_path();
+    pop_parse_location();
     return true;
 }
 

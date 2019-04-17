@@ -74,6 +74,10 @@ static void log_message(FILE* file, const char* type, const char* msg)
 
     if ( file_line )
         snort::LogMessage(file, "%s: %s:%d %s\n", type, file_name, file_line, msg);
+
+    else if ( file_name )
+        snort::LogMessage(file, "%s: %s: %s\n", type, file_name, msg);
+
     else
         snort::LogMessage(file, "%s: %s\n", type, msg);
 }

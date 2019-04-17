@@ -36,7 +36,8 @@ void parser_term(snort::SnortConfig*);
 void get_parse_location(const char*& name, unsigned& line);
 
 // use line = 0 for lua to suppress line numbers for errors or warnings
-void push_parse_location(const char* name, unsigned line = 1);
+void push_parse_location(
+    const char* code, const char* path, const char* name = nullptr, unsigned line = 1);
 
 void pop_parse_location();
 void inc_parse_position();
@@ -100,6 +101,5 @@ struct RuleTreeNodeKey
     PolicyId policyId;
 };
 
-extern bool parsing_follows_files;
 #endif
 

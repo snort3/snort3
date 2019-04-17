@@ -152,6 +152,7 @@ public:
 
     std::string include;
     std::string rules;
+    std::string parse_from;
 
     uint32_t var_id;
 
