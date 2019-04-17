@@ -217,24 +217,6 @@ static RuleListNode* addNodeToOrderedList(RuleListNode* ordered_list,
     return ordered_list;
 }
 
-static void printRuleListOrder(RuleListNode* node)
-{
-    char buf[STD_BUF];
-    RuleListNode* first_node = node;
-
-    SnortSnprintf(buf, STD_BUF, "Rule application order: ");
-
-    while ( node != nullptr )
-    {
-        SnortSnprintfAppend(buf, STD_BUF, "%s%s",
-            node == first_node ? "" : "->", node->name);
-
-        node = node->next;
-    }
-
-    LogMessage("%s\n", buf);
-}
-
 static bool parse_file(SnortConfig* sc, Shell* sh, bool is_fatal)
 {
     const char* fname = sh->get_file();
@@ -494,11 +476,6 @@ void FreeRuleLists(SnortConfig* sc)
     }
 
     sc->rule_lists = nullptr;
-}
-
-void PrintRuleOrder(RuleListNode* rule_lists)
-{
-    printRuleListOrder(rule_lists);
 }
 
 void OrderRuleLists(SnortConfig* sc)

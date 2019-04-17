@@ -235,21 +235,16 @@ void PrintStatistics()
     DropStats();
     timing_stats();
 
-    // FIXIT-L below stats need to be made consistent with above
-    print_thresholding(SnortConfig::get_conf()->threshold_config, 1);
+    // FIXIT-L can do flag saving with RAII (much cleaner)
+    int save_quiet_flag = SnortConfig::get_conf()->logging_flags & LOGGING_FLAG__QUIET;
 
-    {
-        // FIXIT-L can do flag saving with RAII (much cleaner)
-        int save_quiet_flag = SnortConfig::get_conf()->logging_flags & LOGGING_FLAG__QUIET;
+    SnortConfig::get_conf()->logging_flags &= ~LOGGING_FLAG__QUIET;
 
-        SnortConfig::get_conf()->logging_flags &= ~LOGGING_FLAG__QUIET;
+    // once more for the main thread
+    Profiler::consolidate_stats();
+    Profiler::show_stats();
 
-        // once more for the main thread
-        Profiler::consolidate_stats();
-        Profiler::show_stats();
-
-        SnortConfig::get_conf()->logging_flags |= save_quiet_flag;
-    }
+    SnortConfig::get_conf()->logging_flags |= save_quiet_flag;
 }
 
 //-------------------------------------------------------------------------

@@ -39,8 +39,8 @@ ThresholdConfig* ThresholdConfigNew();
 void ThresholdConfigFree(ThresholdConfig*);
 void sfthreshold_reset();
 int sfthreshold_create(snort::SnortConfig*, ThresholdConfig*, THDX_STRUCT*);
-int sfthreshold_test(unsigned int, unsigned int, const snort::SfIp*, const snort::SfIp*, long curtime);
-void print_thresholding(ThresholdConfig*, unsigned shutdown);
+int sfthreshold_test(
+    unsigned int, unsigned int, const snort::SfIp*, const snort::SfIp*, long curtime);
 void sfthreshold_free();
 
 #endif

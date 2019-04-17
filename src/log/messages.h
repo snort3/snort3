@@ -52,7 +52,6 @@ unsigned get_reload_errors();
 
 namespace snort
 {
-SO_PUBLIC void ParseMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
 SO_PUBLIC void ParseWarning(WarningGroup, const char*, ...) __attribute__((format (printf, 2, 3)));
 SO_PUBLIC void ParseError(const char*, ...) __attribute__((format (printf, 1, 2)));
 SO_PUBLIC void ReloadError(const char*, ...) __attribute__((format (printf, 1, 2)));

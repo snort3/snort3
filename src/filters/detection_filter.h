@@ -47,8 +47,6 @@ void DetectionFilterConfigFree(DetectionFilterConfig*);
 void detection_filter_init(DetectionFilterConfig*);
 void detection_filter_term();
 
-void detection_filter_print_config(DetectionFilterConfig*);
-
 int detection_filter_test(void*, const snort::SfIp* sip, const snort::SfIp* dip, long curtime);
 struct THD_NODE* detection_filter_create(DetectionFilterConfig*, struct THDX_STRUCT*);
 

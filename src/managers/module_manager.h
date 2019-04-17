@@ -48,7 +48,6 @@ public:
     static void add_module(Module*, const BaseApi* = nullptr);
     SO_PUBLIC static Module* get_module(const char*);
     static Module* get_default_module(const char*, SnortConfig*);
-    static const char* get_current_module();
     SO_PUBLIC static std::list<Module*> get_all_modules();
 
     static const char* get_lua_bootstrap();

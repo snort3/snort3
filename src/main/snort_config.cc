@@ -323,12 +323,6 @@ void SnortConfig::setup()
     ParseRules(this);
     OrderRuleLists(this);
 
-    // FIXIT-L see SnortInit() on config printing
-    //detection_filter_print_config(detection_filter_config);
-    //RateFilter_PrintConfig(rate_filter_config);
-    //print_thresholding(threshold_config, 0);
-    //PrintRuleOrder(rule_lists);
-
     for ( auto& state : rule_states )
         state->apply(this);
 

@@ -899,9 +899,6 @@ Module* ModuleManager::get_default_module(const char* s, SnortConfig* sc)
     return mod;
 }
 
-const char* ModuleManager::get_current_module()
-{ return s_current.c_str(); }
-
 list<Module*> ModuleManager::get_all_modules()
 {
     list<Module*> ret;

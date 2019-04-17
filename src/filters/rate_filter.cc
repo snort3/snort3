@@ -37,8 +37,6 @@
 
 using namespace snort;
 
-//static int _printThresholdContext(RateFilterConfig*);
-
 RateFilterConfig* RateFilter_ConfigNew()
 {
     RateFilterConfig* rf_config = (RateFilterConfig*)snort_calloc(sizeof(*rf_config));
@@ -46,7 +44,6 @@ RateFilterConfig* RateFilter_ConfigNew()
     return rf_config;
 }
 
-/* Free threshold context */
 void RateFilter_ConfigFree(RateFilterConfig* config)
 {
     int i;
@@ -148,103 +145,4 @@ int RateFilter_Test(const OptTreeNode* otn, snort::Packet* p)
     return SFRF_TestThreshold(snort::SnortConfig::get_conf()->rate_filter_config, gid, sid,
         sip, dip, p->pkth->ts.tv_sec, SFRF_COUNT_INCREMENT);
 }
-
-void RateFilter_PrintConfig(RateFilterConfig*)
-{
-    // FIXIT-L print from module
-    //_printThresholdContext(config);
-}
-
-#if 0
-static int _logConfigNode(tSFRFConfigNode* p)
-{
-    const char* trackBy = "?";
-    char buf[STD_BUF+1];
-    *buf = '\0';
-
-    // SnortSnprintfAppend(buf, STD_BUF, "| thd-id=%d", p->thd_id );
-
-    if ( p->gid == 0 )
-    {
-        SnortSnprintfAppend(buf, STD_BUF, "| gen-id=global");
-    }
-    else
-    {
-        SnortSnprintfAppend(buf, STD_BUF, "| gen-id=%-6d", p->gid);
-    }
-    if ( p->sid == 0 )
-    {
-        SnortSnprintfAppend(buf, STD_BUF, " sig-id=global");
-    }
-    else
-    {
-        SnortSnprintfAppend(buf, STD_BUF, " sig-id=%-10d", p->sid);
-    }
-
-    SnortSnprintfAppend(buf, STD_BUF, " policyId=%-10d", p->policyId);
-
-    switch ( p->tracking )
-    {
-    case SFRF_TRACK_BY_SRC: trackBy = "src"; break;
-    case SFRF_TRACK_BY_DST: trackBy = "dst"; break;
-    case SFRF_TRACK_BY_RULE: trackBy = "rule"; break;
-    default: break;
-    }
-    SnortSnprintfAppend(buf, STD_BUF, " tracking=%s", trackBy);
-    SnortSnprintfAppend(buf, STD_BUF, " count=%-3d", p->count);
-    SnortSnprintfAppend(buf, STD_BUF, " seconds=%-3d", p->seconds);
-
-    LogMessage("%s\n", buf);
-
-    return 1;
-}
-
-static int _printThresholdContext(RateFilterConfig* config)
-{
-    int gid;
-    int lcnt=0;
-
-    if (config == NULL)
-        return 0;
-
-    for ( gid=0; gid < SFRF_MAX_GENID; gid++ )
-    {
-        GHashNode* item_hash_node;
-        GHash* sfrf_hash = config->genHash [ gid ];
-
-        if ( !sfrf_hash )
-        {
-            continue;
-        }
-
-        for ( item_hash_node  = ghash_findfirst(sfrf_hash);
-            item_hash_node != 0;
-            item_hash_node  = ghash_findnext(sfrf_hash) )
-        {
-            tSFRFSidNode* sfrf_item;
-            tSFRFConfigNode* sfrf_node;
-
-            /* Check for any Permanent sid objects for this gid */
-            sfrf_item = (tSFRFSidNode*)item_hash_node->data;
-            SF_LNODE* cursor;
-
-            for ( sfrf_node  =
-                (tSFRFConfigNode*)sflist_first(sfrf_item->configNodeList, &cursor);
-                sfrf_node != 0;
-                sfrf_node =
-                (tSFRFConfigNode*)sflist_next(&cursor) )
-            {
-                if ( _logConfigNode(sfrf_node) != 0 )
-                    lcnt++;
-            }
-        }
-    }
-
-    if ( !lcnt )
-        LogMessage("| none\n");
-
-    return 0;
-}
-
-#endif
 

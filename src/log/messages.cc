@@ -84,19 +84,6 @@ static void log_message(FILE* file, const char* type, const char* msg)
 
 namespace snort
 {
-void ParseMessage(const char* format, ...)
-{
-    char buf[STD_BUF+1];
-    va_list ap;
-
-    va_start(ap, format);
-    vsnprintf(buf, STD_BUF, format, ap);
-    va_end(ap);
-
-    buf[STD_BUF] = '\0';
-    log_message(stderr, "INFO", buf);
-}
-
 void ParseWarning(WarningGroup wg, const char* format, ...)
 {
     if ( !(snort::SnortConfig::get_conf()->warning_flags & (1 << wg)) )

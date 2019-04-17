@@ -1,3 +1,18 @@
+19/04/17 - build 253
+
+-- build: delete unused code called out by cppcheck
+-- doc: remove mention of obsolete LUA_PATH, SNORT_LUA_PATH, and required snort_config library
+-- flow_cache: Pruning one stream when excess pruning skips even if max_sessions is reached
+-- ftp_server: fix normalization and PDU parsing issues
+-- helpers: directory: use readdir instead of readdir_r
+-- Lua: apply the necessary builtin defaults from one place
+-- Lua: internalize snort_config.lua dependency
+-- Lua: build-time stringify Lua files for use as C++ variables
+-- Lua: remove dependency on SNORT_LUA_PATH
+-- mime: fix decompression for multiple files
+-- parser: update include file handling
+-- parser: fix defaults for alerts.order and network.checksum_eval
+
 19/04/10 - build 252
 
 -- appid: Fix NetworkSet compilation on big-endian systems

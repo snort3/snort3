@@ -53,9 +53,6 @@ void DetectionFilterConfigFree(DetectionFilterConfig* config)
     snort_free(config);
 }
 
-void detection_filter_print_config(DetectionFilterConfig*)
-{ }
-
 int detection_filter_test(void* pv, const snort::SfIp* sip, const snort::SfIp* dip, long curtime)
 {
     if (pv == nullptr)
