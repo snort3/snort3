@@ -76,6 +76,9 @@ public:
 
     DecodeType get_decode_type();
 
+    void file_decomp_reset();
+    void file_decomp_init();
+
     DecodeResult decompress_data(const uint8_t* buf_in, uint32_t size_in,
                                  const uint8_t*& buf_out, uint32_t& size_out);
 

@@ -71,6 +71,7 @@ void MimeDecode::process_decode_type(const char* start, int length, bool cnt_xf,
                     mime_stats->b64_attachments++;
                 decoder = new B64Decode(config->get_max_depth(config->get_b64_depth()),
                         config->get_b64_depth());
+                file_decomp_reset();
                 return;
             }
         }
@@ -86,6 +87,7 @@ void MimeDecode::process_decode_type(const char* start, int length, bool cnt_xf,
                     mime_stats->qp_attachments++;
                 decoder = new QPDecode(config->get_max_depth(config->get_qp_depth()),
                         config->get_qp_depth());
+                file_decomp_reset();
                 return;
             }
         }
@@ -101,6 +103,7 @@ void MimeDecode::process_decode_type(const char* start, int length, bool cnt_xf,
                     mime_stats->uu_attachments++;
                 decoder = new UUDecode(config->get_max_depth(config->get_uu_depth()),
                         config->get_uu_depth());
+                file_decomp_reset();
                 return;
             }
         }
@@ -113,6 +116,7 @@ void MimeDecode::process_decode_type(const char* start, int length, bool cnt_xf,
             mime_stats->bitenc_attachments++;
         decoder = new BitDecode(config->get_max_depth(config->get_bitenc_depth()),
             config->get_bitenc_depth());
+        file_decomp_reset();
         return;
     }
 }
@@ -142,13 +146,14 @@ DecodeResult MimeDecode::decompress_data(const uint8_t* buf_in, uint32_t size_in
                                          const uint8_t*& buf_out, uint32_t& size_out)
 {
     DecodeResult result = DECODE_SUCCESS;
+    buf_out = buf_in;
+    size_out = size_in;
 
-    if ( fd_state == nullptr )
-    {
-        buf_out = buf_in;
-        size_out = size_in;
+    if ( (fd_state == nullptr) || (size_in == 0) )
         return result;
-    }
+
+    if ( fd_state->State == STATE_COMPLETE )
+        return result;
 
     uint8_t* decompress_buf = MimeDecodeContextData::get_decompress_buf();
     fd_state->Next_In = buf_in;
@@ -165,8 +170,6 @@ DecodeResult MimeDecode::decompress_data(const uint8_t* buf_in, uint32_t size_in
         // fallthrough
     case File_Decomp_NoSig:
     case File_Decomp_Error:
-        buf_out = buf_in;
-        size_out = size_in;
         break;
     default:
         buf_out = decompress_buf;
@@ -177,10 +180,22 @@ DecodeResult MimeDecode::decompress_data(const uint8_t* buf_in, uint32_t size_in
     return result;
 }
 
-MimeDecode::MimeDecode(snort::DecodeConfig* conf)
+void MimeDecode::file_decomp_reset()
 {
-    config = conf;
+    if ( fd_state == nullptr )
+        return;
 
+    if ( fd_state->State == STATE_READY )
+        return;
+
+    File_Decomp_StopFree(fd_state);
+    fd_state = nullptr;
+
+    file_decomp_init();
+}
+
+void MimeDecode::file_decomp_init()
+{
     bool decompress_pdf = config->is_decompress_pdf();
     bool decompress_swf = config->is_decompress_swf();
     bool decompress_zip = config->is_decompress_zip();
@@ -199,6 +214,12 @@ MimeDecode::MimeDecode(snort::DecodeConfig* conf)
     fd_state->Decompr_Depth = 0;
 
     (void)File_Decomp_Init(fd_state);
+}
+
+MimeDecode::MimeDecode(snort::DecodeConfig* conf)
+{
+    config = conf;
+    file_decomp_init();
 }
 
 MimeDecode::~MimeDecode()
