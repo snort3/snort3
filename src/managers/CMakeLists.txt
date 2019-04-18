@@ -7,7 +7,6 @@ set (LUA_INCLUDES
 )
 
 set (CPP_INCLUDES
-    ${CMAKE_CURRENT_BINARY_DIR}/lua_plugffi.h
     ${CMAKE_CURRENT_BINARY_DIR}/lua_bootstrap.h
     ${CMAKE_CURRENT_BINARY_DIR}/lua_coreinit.h
 )
@@ -18,6 +17,7 @@ set( MANAGERS_INCLUDES
 )
 
 add_library( managers OBJECT
+    ${LUA_INCLUDES}
     ${MANAGERS_INCLUDES}
     ${CPP_INCLUDES}
     action_manager.h
@@ -44,7 +44,7 @@ add_library( managers OBJECT
 )
 
 add_custom_command (
-    OUTPUT lua_plugffi.h snort_plugin.lua
+    OUTPUT plugffi.lua snort_plugin.lua
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/ffi_wrap.sh ${CMAKE_CURRENT_SOURCE_DIR}/lua_plugin_defs.h > plugffi.lua
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/plugffi.lua ${CMAKE_CURRENT_BINARY_DIR}/snort_plugin.lua
 )

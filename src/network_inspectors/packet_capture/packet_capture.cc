@@ -219,8 +219,11 @@ void PacketCapture::eval(Packet* p)
 
 void PacketCapture::write_packet(Packet* p)
 {
-    //DAQ_PktHdr_t is compatible with pcap_pkthdr
-    pcap_dump((unsigned char*)dumper, (const pcap_pkthdr*)p->pkth, p->pkt);
+    struct pcap_pkthdr pcaphdr;
+    pcaphdr.ts = p->pkth->ts;
+    pcaphdr.caplen = p->pkth->caplen;
+    pcaphdr.len = p->pkth->pktlen;
+    pcap_dump((unsigned char*)dumper, &pcaphdr, p->pkt);
     pcap_dump_flush(dumper);
 }
 

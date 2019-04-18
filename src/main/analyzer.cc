@@ -208,7 +208,10 @@ void Analyzer::stop()
 void Analyzer::pause()
 {
     if (state == State::RUNNING)
+    {
         set_state(State::PAUSED);
+        LogMessage("== [%u] paused\n", id);
+    }
     else
         ErrorMessage("Analyzer: Received PAUSE command while in state %s\n",
             get_state_string());

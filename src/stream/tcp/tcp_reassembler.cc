@@ -524,9 +524,10 @@ Packet* TcpReassembler::initialize_pdu(
     trs.sos.session->GetPacketHeaderFoo(&pkth, pkt_flags);
     PacketManager::format_tcp(enc_flags, p, pdu, PSEUDO_PKT_TCP, &pkth, pkth.opaque);
     prep_pdu(trs, trs.sos.session->flow, p, pkt_flags, pdu);
-    (const_cast<DAQ_PktHdr_t*>(pdu->pkth))->ts = tv;
+    assert(pdu->pkth == pdu->context->pkth);
+    pdu->context->pkth->ts = tv;
     // FIXIT-M: This hack will go away with daqng
-    (const_cast<DAQ_PktHdr_t*>(pdu->pkth))->priv_ptr = p->pkth->priv_ptr;
+    pdu->context->pkth->priv_ptr = p->pkth->priv_ptr;
     pdu->dsize = 0;
     pdu->data = nullptr;
     return pdu;
@@ -811,12 +812,20 @@ void TcpReassembler::final_flush(TcpReassemblerState& trs, Packet* p, uint32_t d
 
 static Packet* set_packet(Flow* flow, uint32_t flags, bool c2s)
 {
+    // FIXIT-M this implicitly relies on a fresh packet/context being pushed by Flow::reset()
+    //   calling DetectionEngine::set_next_packet() while passing a null Packet through the
+    //   cleanup routines, which is super hinky, but also why we don't need to call p->reset().
+    // The end result is a skeleton of a TCP PDU packet with no data and the IPs/ports/flow set.
+    //   We should probably be clearing more Packet fields.
     Packet* p = DetectionEngine::get_current_packet();
-    p->reset();
 
-    DAQ_PktHdr_t* ph = const_cast<DAQ_PktHdr_t*>(p->pkth);
+    assert(p->pkth == p->context->pkth);
+    DAQ_PktHdr_t* ph = p->context->pkth;
     memset(ph, 0, sizeof(*ph));
     packet_gettimeofday(&ph->ts);
+
+    p->data = nullptr;
+    p->dsize = 0;
 
     p->ptrs.set_pkt_type(PktType::PDU);
     p->proto_bits |= PROTO_BIT__TCP;
