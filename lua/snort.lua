@@ -249,6 +249,6 @@ rate_filter =
 ---------------------------------------------------------------------------
 
 if ( tweaks ~= nil ) then
-    dofile(conf_dir .. '/' .. tweaks .. '.lua')
+    include(tweaks .. '.lua')
 end
 
