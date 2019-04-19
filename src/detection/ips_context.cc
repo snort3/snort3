@@ -108,7 +108,6 @@ void IpsContext::clear_context_data()
         if ( p )
             p->clear();
     }
-    ids_in_use.clear();
 }
 
 void IpsContext::snapshot_flow(Flow* f)
