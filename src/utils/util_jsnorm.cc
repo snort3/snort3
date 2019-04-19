@@ -1280,54 +1280,6 @@ int JSNormalizeDecode(const char* src, uint16_t srclen, char* dst, uint16_t dest
 
     return RET_OK;
 }
-
-/*
-int main(int argc, char *argv[])
-{
-    FILE *iFile = NULL;
-    FILE *oFile = NULL;
-    char input[65535];
-    char output[65535];
-    int bytes_copied = 0;
-    int bytes_read = 0;
-    int ret = 0;
-    char *ptr = input;
-    JSState js;
-
-    if( argc == 3 )
-    {
-        iFile = fopen(argv[1], "r");
-        oFile = fopen(argv[2], "w");
-    }
-
-    if(!oFile || !iFile)
-    {
-        fprintf(stderr, "usage: %s <in_file> <out_file>\n", argv[0]);
-        return -1;
-    }
-
-    bytes_read = fread(input, 1, sizeof(input), iFile);
-    js.allowed_spaces = 3;
-    js.allowed_levels = 1;
-    js.alerts = 0;
-
-    ret = JSNormalizeDecode(input, bytes_read, output, sizeof(output),&ptr, &bytes_copied, &js, NULL);
-    if( ret == RET_OK)
-    {
-        fwrite( output, 1, bytes_copied, oFile);
-        printf("OUTPUT IS %.*s\n",bytes_copied,output);
-        printf("REMAINING is %s\n",ptr);
-        if( js.alerts & ALERT_MIXED_ENCODINGS )
-            printf("ALERT MIXED ENCODINGS\n");
-        if(js.alerts & ALERT_SPACES_EXCEEDED)
-            printf("ALERT SPACES EXCEEDED\n");
-        if(js.alerts & ALERT_LEVELS_EXCEEDED)
-            printf("ALERT LEVELS EXCEEDED\n");
-    }
-    fclose(iFile);
-    fclose(oFile);
-    return 0;
-
-}*/
-
 }
+
+
