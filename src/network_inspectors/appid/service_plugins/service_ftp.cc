@@ -818,7 +818,7 @@ void FtpServiceDetector::create_expected_session(AppIdSession& asd, const Packet
         ftp_data_snort_protocol_id = SnortConfig::get_conf()->proto_ref->find("ftp-data");
 
     AppIdSession* fp = AppIdSession::create_future_session(pkt, cliIp, cliPort, srvIp, srvPort,
-        proto, ftp_data_snort_protocol_id, flags, handler->get_inspector());
+        proto, ftp_data_snort_protocol_id, flags);
 
     if (fp) // initialize data session
     {

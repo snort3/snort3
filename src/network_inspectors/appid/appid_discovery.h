@@ -88,13 +88,13 @@ typedef AppIdDetectors::iterator AppIdDetectorsIterator;
 class AppIdDiscovery
 {
 public:
-    AppIdDiscovery(AppIdInspector& ins);
+    AppIdDiscovery();
     virtual ~AppIdDiscovery();
 
     AppIdDiscovery(const AppIdDiscovery&) = delete;
     AppIdDiscovery& operator=(const AppIdDiscovery&) = delete;
 
-    static void initialize_plugins(AppIdInspector* ins);
+    static void initialize_plugins();
     static void finalize_plugins();
     static void release_plugins();
     static void tterm();
@@ -122,11 +122,7 @@ public:
         return &udp_detectors;
     }
 
-    AppIdInspector& get_inspector()
-    { return inspector; }
-
 protected:
-    AppIdInspector& inspector;
     AppIdDetectors tcp_detectors;
     AppIdDetectors udp_detectors;
     snort::SearchTool* tcp_patterns = nullptr;

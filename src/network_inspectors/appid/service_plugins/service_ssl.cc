@@ -1109,7 +1109,7 @@ void ssl_detector_free_patterns()
     ssl_patterns_free(&service_ssl_config.DetectorSSLCnamePatternList);
 }
 
-bool setSSLSquelch(Packet* p, int type, AppId appId, AppIdInspector& inspector)
+bool setSSLSquelch(Packet* p, int type, AppId appId)
 {
     if (!AppInfoManager::get_instance().get_app_info_flags(appId, APPINFO_FLAG_SSL_SQUELCH))
         return false;
@@ -1120,7 +1120,7 @@ bool setSSLSquelch(Packet* p, int type, AppId appId, AppIdInspector& inspector)
     // FIXIT-H: Passing appId to create_future_session() is incorrect. We
     // need to pass the snort_protocol_id associated with appId.
     AppIdSession* asd = AppIdSession::create_future_session(
-        p, sip, 0, dip, p->ptrs.dp, IpProtocol::TCP, appId, 0, inspector);
+        p, sip, 0, dip, p->ptrs.dp, IpProtocol::TCP, appId, 0);
 
     if ( asd )
     {

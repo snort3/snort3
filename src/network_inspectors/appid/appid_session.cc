@@ -29,6 +29,7 @@
 
 #include "log/messages.h"
 #include "main/snort_config.h"
+#include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
@@ -71,8 +72,7 @@ const uint8_t* service_strstr(const uint8_t* haystack, unsigned haystack_len,
 }
 
 AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto,
-    AppidSessionDirection direction,
-    AppIdInspector& inspector)
+    AppidSessionDirection direction, AppIdInspector* inspector)
 {
     uint16_t port = 0;
 
@@ -81,7 +81,7 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto,
     if ( ( proto == IpProtocol::TCP || proto == IpProtocol::UDP ) && ( p->ptrs.sp != p->ptrs.dp ) )
         port = (direction == APP_ID_FROM_INITIATOR) ? p->ptrs.sp : p->ptrs.dp;
 
-    AppIdSession* asd = new AppIdSession(proto, ip, port, inspector);
+    AppIdSession* asd = new AppIdSession(proto, ip, port, *inspector);
     asd->flow = p->flow;
     asd->stats.first_packet_second = p->pkth->ts.tv_sec;
     asd->snort_protocol_id = snortId_for_unsynchronized;
@@ -92,7 +92,7 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto,
 AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port,
     AppIdInspector& inspector)
     : FlowData(inspector_id, &inspector), config(inspector.get_appid_config()),
-    protocol(proto), inspector(inspector)
+    protocol(proto)
 {
     service_ip.clear();
     session_id = ++appid_flow_data_id;
@@ -169,7 +169,7 @@ static inline PktType get_pkt_type_from_ip_proto(IpProtocol proto)
 
 AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const SfIp* cliIp,
     uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol proto,
-    SnortProtocolId snort_protocol_id, int /*flags*/, AppIdInspector& inspector)
+    SnortProtocolId snort_protocol_id, int /*flags*/)
 {
     char src_ip[INET6_ADDRSTRLEN];
     char dst_ip[INET6_ADDRSTRLEN];
@@ -177,9 +177,13 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
 
     assert(type != PktType::NONE);
 
+    AppIdInspector* inspector = (AppIdInspector*)ctrlPkt->flow->flow_data->get_handler();
+    if ((inspector == nullptr) || strcmp(inspector->get_name(), MOD_NAME))
+        inspector = (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, true);
+
     // FIXIT-RC - port parameter passed in as 0 since we may not know client port, verify
 
-    AppIdSession* asd = new AppIdSession(proto, cliIp, 0, inspector);
+    AppIdSession* asd = new AppIdSession(proto, cliIp, 0, *inspector);
     asd->common.policyId = asd->config->appIdPolicyId;
 
     if ( Stream::set_snort_protocol_id_expected(ctrlPkt, type, proto, cliIp, cliPort, srvIp,
@@ -413,7 +417,7 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
         {
             set_client_appid_data(client_id, nullptr, change_bits);
             set_payload_appid_data((AppId)payload_id, nullptr, change_bits);
-            setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id), inspector);
+            setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id));
         }
         scan_flags &= ~SCAN_SSL_HOST_FLAG;
     }
@@ -425,7 +429,7 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
         {
             set_client_appid_data(client_id, nullptr, change_bits);
             set_payload_appid_data((AppId)payload_id, nullptr, change_bits);
-            setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id), inspector);
+            setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id));
         }
         tsession->set_tls_cname(nullptr, 0);
     }
@@ -437,7 +441,7 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
         {
             set_client_appid_data(client_id, nullptr, change_bits);
             set_payload_appid_data((AppId)payload_id, nullptr, change_bits);
-            setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id), inspector);
+            setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id));
         }
         tsession->set_tls_org_unit(nullptr, 0);
     }

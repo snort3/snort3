@@ -189,13 +189,10 @@ public:
     ~AppIdSession() override;
 
     static AppIdSession* allocate_session(const snort::Packet*, IpProtocol,
-        AppidSessionDirection, AppIdInspector&);
+        AppidSessionDirection, AppIdInspector*);
     static AppIdSession* create_future_session(const snort::Packet*, const snort::SfIp*, uint16_t,
         const snort::SfIp*,
-        uint16_t, IpProtocol, SnortProtocolId, int, AppIdInspector&);
-
-    AppIdInspector& get_inspector() const
-    { return inspector; }
+        uint16_t, IpProtocol, SnortProtocolId, int);
 
     size_t size_of() override
     { return sizeof(*this); }
@@ -365,7 +362,6 @@ private:
 
     static THREAD_LOCAL uint32_t appid_flow_data_id;
     AppId application_ids[APP_PROTOID_MAX];
-    AppIdInspector& inspector;
     bool tp_app_id_deferred = false;
     bool tp_payload_app_id_deferred = false;
 

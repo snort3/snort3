@@ -1547,13 +1547,12 @@ static int detector_port_only_service(lua_State* L)
     uint16_t port = lua_tointeger(L, ++index);
     uint8_t protocol = lua_tointeger(L, ++index);
 
-    AppIdConfig* config = ud->get_detector()->get_handler().get_inspector().get_appid_config();
     if (port == 0)
-        config->ip_protocol[protocol] = appId;
+        AppIdConfig::ip_protocol[protocol] = appId;
     else if (protocol == 6)
-        config->tcp_port_only[port] = appId;
+        AppIdConfig::tcp_port_only[port] = appId;
     else if (protocol == 17)
-        config->udp_port_only[port] = appId;
+        AppIdConfig::udp_port_only[port] = appId;
 
     AppInfoManager::get_instance().set_app_info_active(appId);
 
@@ -2288,7 +2287,7 @@ static int create_future_flow(lua_State* L)
 
     AppIdSession* fp = AppIdSession::create_future_session(lsd->ldp.pkt,  &client_addr,
         client_port, &server_addr, server_port, proto, snort_protocol_id,
-        APPID_EARLY_SESSION_FLAG_FW_RULE, ud->get_detector()->get_handler().get_inspector());
+        APPID_EARLY_SESSION_FLAG_FW_RULE);
     if (fp)
     {
         fp->service.set_id(service_id);

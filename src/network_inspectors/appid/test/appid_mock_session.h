@@ -69,7 +69,7 @@ public:
 };
 
 AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector& inspector)
-    : FlowData(inspector_id, &inspector), inspector(inspector)
+    : FlowData(inspector_id, &inspector)
 {
     common.flow_type = APPID_FLOW_TYPE_NORMAL;
     service_port = APPID_UT_SERVICE_PORT;

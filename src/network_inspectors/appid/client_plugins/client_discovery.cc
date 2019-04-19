@@ -61,8 +61,7 @@ static ProfileStats* get_profile(const char*)
 ClientDiscovery* ClientDiscovery::discovery_manager = nullptr;
 THREAD_LOCAL ClientAppMatch* match_free_list = nullptr;
 
-ClientDiscovery::ClientDiscovery(AppIdInspector& ins)
-    : AppIdDiscovery(ins)
+ClientDiscovery::ClientDiscovery()
 {
     initialize();
 }
@@ -82,12 +81,11 @@ void ClientDiscovery::release_thread_resources()
     }
 }
 
-ClientDiscovery& ClientDiscovery::get_instance(AppIdInspector* ins)
+ClientDiscovery& ClientDiscovery::get_instance()
 {
     if (!discovery_manager)
     {
-        assert(ins);
-        discovery_manager = new ClientDiscovery(*ins);
+        discovery_manager = new ClientDiscovery();
     }
 
     return *discovery_manager;

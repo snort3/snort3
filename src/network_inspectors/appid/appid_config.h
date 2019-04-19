@@ -109,7 +109,7 @@ public:
     AppIdConfig(AppIdModuleConfig*);
     ~AppIdConfig();
 
-    bool init_appid(snort::SnortConfig*, AppIdInspector*);
+    bool init_appid(snort::SnortConfig*);
     static void pterm();
     void cleanup();
     void show();
@@ -123,9 +123,12 @@ public:
     NetworkSet* net_list = nullptr;
     std::array<NetworkSet*, MAX_ZONES> net_list_by_zone;
 #endif
-    std::array<AppId, APP_ID_PORT_ARRAY_SIZE> tcp_port_only;     // port-only TCP services
-    std::array<AppId, APP_ID_PORT_ARRAY_SIZE> udp_port_only;     // port-only UDP services
-    std::array<AppId, 255> ip_protocol;         // non-TCP / UDP protocol services
+
+    //FIXIT-L remove static when reload is supported (once flag removed)
+    static std::array<AppId, APP_ID_PORT_ARRAY_SIZE> tcp_port_only;     // port-only TCP services
+    static std::array<AppId, APP_ID_PORT_ARRAY_SIZE> udp_port_only;     // port-only UDP services
+    static std::array<AppId, 256> ip_protocol;         // non-TCP / UDP protocol services
+
     SF_LIST client_app_args;                    // List of Client App arguments
     // for each potential port, an sflist of PortExclusion structs
     AppIdPortExclusions tcp_port_exclusions_src;

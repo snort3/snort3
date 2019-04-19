@@ -102,6 +102,10 @@ AppIdModuleConfig::~AppIdModuleConfig()
 
 // FIXIT-M: RELOAD - move initialization back to AppIdConfig class constructor
 AppInfoManager& AppIdConfig::app_info_mgr = AppInfoManager::get_instance();
+std::array<AppId, APP_ID_PORT_ARRAY_SIZE> AppIdConfig::tcp_port_only = {APP_ID_NONE};
+std::array<AppId, APP_ID_PORT_ARRAY_SIZE> AppIdConfig::udp_port_only = {APP_ID_NONE};
+std::array<AppId, 256> AppIdConfig::ip_protocol = {APP_ID_NONE};
+
 
 AppIdConfig::AppIdConfig(AppIdModuleConfig* config)
     : mod_config(config)
@@ -110,15 +114,6 @@ AppIdConfig::AppIdConfig(AppIdModuleConfig* config)
     for ( unsigned i = 0; i < MAX_ZONES; i++ )
         net_list_by_zone[ i ] = nullptr;
 #endif
-
-    for ( unsigned i = 0; i < 65535; i++ )
-    {
-        tcp_port_only[ i ] = APP_ID_NONE;
-        udp_port_only[ i ] = APP_ID_NONE;
-    }
-
-    for ( unsigned i = 0; i < 255; i++ )
-        ip_protocol[ i ] = APP_ID_NONE;
 
     for ( unsigned i = 0; i < APP_ID_PORT_ARRAY_SIZE; i++ )
     {
@@ -750,17 +745,17 @@ void AppIdConfig::set_safe_search_enforcement(bool enabled)
     mod_config->safe_search_enabled = enabled;
 }
 
-bool AppIdConfig::init_appid(SnortConfig* sc, AppIdInspector *ins)
+bool AppIdConfig::init_appid(SnortConfig* sc)
 {
     // FIXIT-M: RELOAD - Get rid of "once" flag
     // Handle the if condition in AppIdConfig::init_appid
     static bool once = false;
     if (!once)
-    {      
+    {   
         AppIdConfig::app_info_mgr.init_appid_info_table(mod_config, sc);
         HostPortCache::initialize();
         HttpPatternMatchers* http_matchers = HttpPatternMatchers::get_instance();
-        AppIdDiscovery::initialize_plugins(ins);
+        AppIdDiscovery::initialize_plugins();
         init_length_app_cache();
         LuaDetectorManager::initialize(*this, 1);
         PatternServiceDetector::finalize_service_port_patterns();

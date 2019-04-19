@@ -98,9 +98,9 @@ public:
         return new SipEventHandler;
     }
 
-    void set_client(SipUdpClientDetector* cd) { SipEventHandler::client = cd; }
-    void set_service(SipServiceDetector* sd) { SipEventHandler::service = sd; }
-
+    static void set_client(SipUdpClientDetector* cd) { SipEventHandler::client = cd; }
+    static void set_service(SipServiceDetector* sd) { SipEventHandler::service = sd; }
+  
     void subscribe()
     { snort::DataBus::subscribe(SIP_EVENT_TYPE_SIP_DIALOG_KEY, this); }
 

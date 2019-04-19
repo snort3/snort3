@@ -211,7 +211,7 @@ static int create_detector_flow(lua_State* L)
     LuaDetectorManager::add_detector_flow(detector_flow);
 
     detector_flow->asd = AppIdSession::create_future_session(lsd->ldp.pkt, &saddr, sport,
-        &daddr, dport, proto, 0, 0, ud->get_handler().get_inspector());
+        &daddr, dport, proto, 0, 0);
 
     if (!detector_flow->asd)
     {

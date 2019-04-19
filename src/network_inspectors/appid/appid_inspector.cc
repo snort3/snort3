@@ -113,7 +113,7 @@ bool AppIdInspector::configure(SnortConfig* sc)
     my_seh = SipEventHandler::create();
     my_seh->subscribe();
 
-    active_config->init_appid(sc, this);
+    active_config->init_appid(sc);
 
 #ifdef ENABLE_APPID_THIRD_PARTY
     if (!TPLibHandler::have_tp())

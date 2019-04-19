@@ -118,6 +118,7 @@ public:
 
     void update_allocations(size_t);
     void update_deallocations(size_t);
+    Inspector* get_handler() {return handler;}
 
     // return fixed size (could be an approx avg)
     // this must be fixed for life of flow data instance

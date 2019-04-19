@@ -191,8 +191,7 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
         dip = args.pkt->ptrs.ip_api.get_dst();
         sip = args.pkt->ptrs.ip_api.get_src();
         pf = AppIdSession::create_future_session(args.pkt, dip, 0, sip,
-            args.pkt->ptrs.sp, args.asd.protocol, tftp_snort_protocol_id, APPID_EARLY_SESSION_FLAG_FW_RULE,
-            handler->get_inspector());
+            args.pkt->ptrs.sp, args.asd.protocol, tftp_snort_protocol_id, APPID_EARLY_SESSION_FLAG_FW_RULE);
         if (pf)
         {
             data_add(*pf, tmp_td, &snort_free);

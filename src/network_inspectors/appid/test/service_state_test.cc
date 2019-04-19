@@ -72,9 +72,9 @@ THREAD_LOCAL AppIdStats appid_stats;
 void AppIdDebug::activate(const Flow*, const AppIdSession*, bool) { active = true; }
 
 AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector& inspector)
-    : FlowData(0), inspector(inspector) {}
+    : FlowData(0) {}
 AppIdSession::~AppIdSession() = default;
-AppIdDiscovery::AppIdDiscovery(AppIdInspector& ins) : inspector(ins) {}
+AppIdDiscovery::AppIdDiscovery() {}
 AppIdDiscovery::~AppIdDiscovery() {}
 void AppIdDiscovery::register_detector(const std::string&, AppIdDetector*,  IpProtocol) {}
 void AppIdDiscovery::add_pattern_data(AppIdDetector*, SearchTool*, int, const uint8_t* const,
@@ -101,12 +101,11 @@ int ServiceDiscovery::fail_service(AppIdSession&, const Packet*, AppidSessionDir
     ServiceDetector*, ServiceDiscoveryState*) { return 0; }
 int ServiceDiscovery::add_service_port(AppIdDetector*,
     const ServiceDetectorPort&) { return APPID_EINVALID; }
-ServiceDiscovery::ServiceDiscovery(AppIdInspector& ins)
-    : AppIdDiscovery(ins) {}
+ServiceDiscovery::ServiceDiscovery() {}
 
-ServiceDiscovery& ServiceDiscovery::get_instance(AppIdInspector* ins)
+ServiceDiscovery& ServiceDiscovery::get_instance()
 {
-    static ServiceDiscovery discovery_manager(*ins);
+    static ServiceDiscovery discovery_manager;
     return discovery_manager;
 }
 
@@ -127,8 +126,7 @@ TEST_GROUP(service_state_tests)
 TEST(service_state_tests, select_detector_by_brute_force)
 {
     ServiceDiscoveryState sds;
-    AppIdInspector ins;
-    ServiceDiscovery::get_instance(&ins);
+    ServiceDiscovery::get_instance();
 
     // Testing end of brute-force walk for supported and unsupported protocols
     test_log[0] = '\0';
@@ -150,8 +148,7 @@ TEST(service_state_tests, set_service_id_failed)
     AppIdInspector inspector;
     AppIdSession asd(IpProtocol::PROTO_NOT_SET, nullptr, 0, inspector);
     SfIp client_ip;
-    AppIdInspector ins;
-    ServiceDiscovery::get_instance(&ins);
+    ServiceDiscovery::get_instance();
 
     // Testing 3+ failures to exceed STATE_ID_NEEDED_DUPE_DETRACT_COUNT with valid_count = 0
     client_ip.set("1.2.3.4");
@@ -170,8 +167,7 @@ TEST(service_state_tests, set_service_id_failed_with_valid)
     AppIdInspector inspector;
     AppIdSession asd(IpProtocol::PROTO_NOT_SET, nullptr, 0, inspector);
     SfIp client_ip;
-    AppIdInspector ins;
-    ServiceDiscovery::get_instance(&ins);
+    ServiceDiscovery::get_instance();
 
     // Testing 3+ failures to exceed STATE_ID_NEEDED_DUPE_DETRACT_COUNT with valid_count > 1
     client_ip.set("1.2.3.4");

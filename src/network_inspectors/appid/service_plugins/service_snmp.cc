@@ -482,7 +482,7 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
         const snort::SfIp* dip = args.pkt->ptrs.ip_api.get_dst();
         const snort::SfIp* sip = args.pkt->ptrs.ip_api.get_src();
         AppIdSession* pf = AppIdSession::create_future_session(args.pkt, dip, 0, sip,
-            args.pkt->ptrs.sp, args.asd.protocol, snmp_snort_protocol_id, 0, handler->get_inspector());
+            args.pkt->ptrs.sp, args.asd.protocol, snmp_snort_protocol_id, 0);
         if (pf)
         {
             tmp_sd = (ServiceSNMPData*)snort_calloc(sizeof(ServiceSNMPData));

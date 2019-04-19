@@ -741,7 +741,7 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                     asd.get_session_flags(APPID_SESSION_SSL_SESSION) and
                     !(asd.scan_flags & SCAN_SSL_HOST_FLAG))
                 {
-                    setSSLSquelch(p, 1, tp_app_id, asd.get_inspector());
+                    setSSLSquelch(p, 1, tp_app_id);
                 }
 
                 if ( app_info_flags & APPINFO_FLAG_IGNORE )

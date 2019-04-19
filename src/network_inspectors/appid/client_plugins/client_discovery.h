@@ -45,7 +45,7 @@ class ClientDiscovery : public AppIdDiscovery
 {
 public:
     ~ClientDiscovery() override;
-    static ClientDiscovery& get_instance(AppIdInspector* ins = nullptr);
+    static ClientDiscovery& get_instance();
     static void release_instance();
 
     void finalize_client_plugins();
@@ -54,7 +54,7 @@ public:
         AppidSessionDirection direction, AppidChangeBits& change_bits);
 
 private:
-    ClientDiscovery(AppIdInspector& ins);
+    ClientDiscovery();
     void initialize() override;
     void exec_client_detectors(AppIdSession&, snort::Packet*,
         AppidSessionDirection direction, AppidChangeBits& change_bits);

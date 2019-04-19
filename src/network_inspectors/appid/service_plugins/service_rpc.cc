@@ -411,8 +411,7 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
 
                         AppIdSession* pf = AppIdSession::create_future_session(
                             pkt, dip, 0, sip, (uint16_t)tmp,
-                            (IpProtocol)ntohl((uint32_t)rd->proto), sunrpc_snort_protocol_id, 0,
-                            handler->get_inspector());
+                            (IpProtocol)ntohl((uint32_t)rd->proto), sunrpc_snort_protocol_id, 0);
                         if (pf)
                         {
                             pf->add_flow_data_id((uint16_t)tmp, this);

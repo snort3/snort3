@@ -95,18 +95,16 @@ static ProfileStats* get_profile(const char*)
 static ServiceDetector* ftp_service;
 ServiceDiscovery* ServiceDiscovery::discovery_manager = nullptr;
 
-ServiceDiscovery::ServiceDiscovery(AppIdInspector& ins)
-    : AppIdDiscovery(ins)
+ServiceDiscovery::ServiceDiscovery()
 {
     initialize();
 }
 
-ServiceDiscovery& ServiceDiscovery::get_instance(AppIdInspector* ins)
+ServiceDiscovery& ServiceDiscovery::get_instance()
 {
     if (!discovery_manager)
     {
-        assert(ins);
-        discovery_manager = new ServiceDiscovery(*ins);
+        discovery_manager = new ServiceDiscovery();
     }
 
     return *discovery_manager;

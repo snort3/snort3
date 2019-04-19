@@ -148,8 +148,7 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
             const snort::SfIp* dip = args.pkt->ptrs.ip_api.get_dst();
             const snort::SfIp* sip = args.pkt->ptrs.ip_api.get_src();
             AppIdSession* pf = AppIdSession::create_future_session(args.pkt, dip, 0, sip,
-                (uint16_t)port, IpProtocol::TCP, rsh_error_snort_protocol_id, APPID_EARLY_SESSION_FLAG_FW_RULE,
-                handler->get_inspector());
+                (uint16_t)port, IpProtocol::TCP, rsh_error_snort_protocol_id, APPID_EARLY_SESSION_FLAG_FW_RULE);
             if (pf)
             {
                 pf->client_disco_state = APPID_DISCO_STATE_FINISHED;

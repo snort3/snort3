@@ -177,7 +177,7 @@ void AppIdSession::examine_rtmp_metadata(AppidChangeBits&) {}
 void AppIdSession::examine_ssl_metadata(Packet*, AppidChangeBits&) {}
 void AppIdSession::update_encrypted_app_id(AppId) {}
 AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol,
-    AppidSessionDirection, AppIdInspector&)
+    AppidSessionDirection, AppIdInspector*)
 {
     return nullptr;
 }
@@ -199,33 +199,31 @@ int ServiceDiscovery::fail_service(AppIdSession&, const Packet*, AppidSessionDir
     ServiceDetector*, ServiceDiscoveryState*) { return 0; }
 int ServiceDiscovery::add_service_port(AppIdDetector*,
     const ServiceDetectorPort&) { return APPID_EINVALID; }
-ServiceDiscovery::ServiceDiscovery(AppIdInspector& ins)
-    : AppIdDiscovery(ins) {}
+ServiceDiscovery::ServiceDiscovery() {}
 void ServiceDiscovery::release_instance() {}
 void ServiceDiscovery::release_thread_resources() {}
 static AppIdModule* s_app_module = nullptr;
 static AppIdInspector* s_ins = nullptr;
 static ServiceDiscovery* s_discovery_manager = nullptr;
-ServiceDiscovery& ServiceDiscovery::get_instance(AppIdInspector*)
+ServiceDiscovery& ServiceDiscovery::get_instance()
 {
     if (!s_discovery_manager)
-        s_discovery_manager = new ServiceDiscovery(*s_ins);
+        s_discovery_manager = new ServiceDiscovery();
     return *s_discovery_manager;
 }
 
 // Stubs for ClientDiscovery
-ClientDiscovery::ClientDiscovery(AppIdInspector& ins)
-    : AppIdDiscovery(ins) {}
+ClientDiscovery::ClientDiscovery(){}
 ClientDiscovery::~ClientDiscovery() {}
 void ClientDiscovery::initialize() {}
 void ClientDiscovery::finalize_client_plugins() {}
 void ClientDiscovery::release_instance() {}
 void ClientDiscovery::release_thread_resources() {}
 static ClientDiscovery* c_discovery_manager = nullptr;
-ClientDiscovery& ClientDiscovery::get_instance(AppIdInspector*)
+ClientDiscovery& ClientDiscovery::get_instance()
 {
     if (!c_discovery_manager)
-        c_discovery_manager = new ClientDiscovery(*s_ins);
+        c_discovery_manager = new ClientDiscovery();
     return *c_discovery_manager;
 }
 bool ClientDiscovery::do_client_discovery(AppIdSession&, Packet*,

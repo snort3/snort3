@@ -52,7 +52,7 @@ public:
 };
 
 AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector& inspector)
-    : FlowData(0), inspector(inspector) { }
+    : FlowData(0) { }
 AppIdSession::~AppIdSession() = default;
 
 // Utility functions

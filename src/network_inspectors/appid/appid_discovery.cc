@@ -52,8 +52,7 @@
 
 using namespace snort;
 
-AppIdDiscovery::AppIdDiscovery(AppIdInspector& ins)
-    : inspector(ins)
+AppIdDiscovery::AppIdDiscovery()
 {
     tcp_patterns = new SearchTool("ac_full", true);
     udp_patterns = new SearchTool("ac_full", true);
@@ -76,10 +75,10 @@ AppIdDiscovery::~AppIdDiscovery()
         delete kv.second;
 }
 
-void AppIdDiscovery::initialize_plugins(AppIdInspector* ins)
+void AppIdDiscovery::initialize_plugins()
 {
-    ServiceDiscovery::get_instance(ins);
-    ClientDiscovery::get_instance(ins);
+    ServiceDiscovery::get_instance();
+    ClientDiscovery::get_instance();
 }
 
 void AppIdDiscovery::finalize_plugins()
@@ -728,7 +727,7 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
     // TMP session and that is not being freed before creating the new one below
     if ( !asd || asd->common.flow_type == APPID_FLOW_TYPE_TMP )
     {
-        *p_asd = asd = AppIdSession::allocate_session(p, protocol, direction, inspector);
+        *p_asd = asd = AppIdSession::allocate_session(p, protocol, direction, &inspector);
         if (p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
         {
             asd->set_session_flags(APPID_SESSION_MID);

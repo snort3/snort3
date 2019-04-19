@@ -28,6 +28,7 @@
 #include "appid_debug.h"
 #include "appid_inspector.h"
 #include "app_info_table.h"
+#include "managers/inspector_manager.h"
 #include "protocols/packet.h"
 
 using namespace snort;
@@ -157,7 +158,7 @@ SipUdpClientDetector::SipUdpClientDetector(ClientDiscovery* cdm)
         { APP_ID_SIP, APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER },
     };
 
-    handler->get_inspector().get_sip_event_handler().set_client(this);
+    SipEventHandler::set_client(this);
     handler->register_detector(name, this, proto);
 }
 
@@ -336,7 +337,7 @@ void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, con
 
     AppIdSession* fp = AppIdSession::create_future_session(
         pkt, cliIp, cliPort, srvIp, srvPort, proto, app_id,
-        APPID_EARLY_SESSION_FLAG_FW_RULE, handler->get_inspector());
+        APPID_EARLY_SESSION_FLAG_FW_RULE);
 
     if ( fp )
     {
@@ -356,7 +357,7 @@ void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, con
 
     AppIdSession* fp2 = AppIdSession::create_future_session(
         pkt, cliIp, cliPort + 1, srvIp, srvPort + 1, proto, app_id,
-        APPID_EARLY_SESSION_FLAG_FW_RULE, handler->get_inspector());
+        APPID_EARLY_SESSION_FLAG_FW_RULE);
 
     if ( fp2 )
     {
@@ -433,12 +434,7 @@ SipServiceDetector::SipServiceDetector(ServiceDiscovery* sd)
         { SIP_PORT, IpProtocol::TCP, false }
     };
 
-    // FIXIT-RC - detector instance in each packet thread is calling this
-    // single sip event handler, last guy end wins, works now because it is
-    // all the same but this is not right...
-    // Does this still apply?
-
-    handler->get_inspector().get_sip_event_handler().set_service(this);
+    SipEventHandler::set_service(this);
     handler->register_detector(name, this, proto);
 }
 
@@ -486,8 +482,8 @@ void SipEventHandler::handle(DataEvent& event, Flow* flow)
         const Packet* p = sip_event.get_packet();
         IpProtocol protocol = p->is_tcp() ? IpProtocol::TCP : IpProtocol::UDP;
         AppidSessionDirection direction = p->is_from_client() ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
-        asd = AppIdSession::allocate_session(p, protocol, direction,
-            client->get_handler().get_inspector());
+        AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
+        asd = AppIdSession::allocate_session(p, protocol, direction, inspector);
     }
 
     AppidChangeBits change_bits;

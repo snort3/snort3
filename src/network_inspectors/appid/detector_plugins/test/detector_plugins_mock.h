@@ -142,7 +142,7 @@ snort::ProfileStats* AppIdModule::get_profile() const
 // Stubs for inspectors
 unsigned AppIdSession::inspector_id = 0;
 AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector& inspector)
-    : snort::FlowData(inspector_id, (snort::Inspector*)&inspector), inspector(inspector) { }
+    : snort::FlowData(inspector_id, (snort::Inspector*)&inspector) { }
 AppIdSession::~AppIdSession() = default;
 AppIdHttpSession::AppIdHttpSession(AppIdSession& asd)
     : asd(asd)

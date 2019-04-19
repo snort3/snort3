@@ -68,7 +68,7 @@ enum SESSION_SERVICE_SEARCH_STATE
 class ServiceDiscovery : public AppIdDiscovery
 {
 public:
-    static ServiceDiscovery& get_instance(AppIdInspector* ins = nullptr);
+    static ServiceDiscovery& get_instance();
     static void release_instance();
 
     void finalize_service_patterns();
@@ -86,7 +86,7 @@ public:
     static int add_ftp_service_state(AppIdSession&);
     void release_thread_resources();
 private:
-    ServiceDiscovery(AppIdInspector& ins);
+    ServiceDiscovery();
     void initialize() override;
     void get_next_service(const snort::Packet*, const AppidSessionDirection dir, AppIdSession&);
     void get_port_based_services(IpProtocol, uint16_t port, AppIdSession&);
