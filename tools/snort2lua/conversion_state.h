@@ -93,6 +93,31 @@ protected:
         return false;
     }
 
+    // Reduces int value to max value if value > max value
+    inline bool parse_max_int_option(const std::string& opt_name,
+        std::istringstream& stream, int max, bool append)
+    {
+        int val;
+
+        if (stream >> val)
+        {
+            if (val > max)
+            {
+                table_api.add_comment("option value reduced to maximum: '" + opt_name + "'");
+                val = max;
+            }
+
+            if (append)
+                table_api.append_option(opt_name, val);
+            else
+                table_api.add_option(opt_name, val);
+            return true;
+        }
+
+        table_api.add_comment("snort.conf missing argument for: " + opt_name + " <int>");
+        return false;
+    }
+
     // Like parse_int_option() but reverses -1 and 0 values
     inline bool parse_int_option_reverse_m10(const std::string& opt_name,
         std::istringstream& stream)

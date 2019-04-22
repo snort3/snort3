@@ -218,15 +218,15 @@ bool Smtp::convert(std::istringstream& data_stream)
         }
         else if (keyword == "max_command_line_len")
         {
-            tmpval = parse_int_option("max_command_line_len", data_stream, false);
+            tmpval = parse_max_int_option("max_command_line_len", data_stream, 65535, false);
         }
         else if (keyword == "max_header_line_len")
         {
-            tmpval = parse_int_option("max_header_line_len", data_stream, false);
+            tmpval = parse_max_int_option("max_header_line_len", data_stream, 65535, false);
         }
         else if (keyword == "max_response_line_len")
         {
-            tmpval = parse_int_option("max_response_line_len", data_stream, false);
+            tmpval = parse_max_int_option("max_response_line_len", data_stream, 65535, false);
         }
         else if (keyword == "normalize")
         {
