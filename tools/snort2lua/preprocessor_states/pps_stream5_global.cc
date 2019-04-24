@@ -80,11 +80,8 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
             tmpval = parse_deleted_option("track_ip", arg_stream);
 
         else if (keyword == "prune_log_max")
-        {
-            table_api.add_diff_option_comment("prune_log_max", "histogram");
-            if (!eat_option(arg_stream))
-                tmpval = false;
-        }
+            tmpval = parse_deleted_option("prune_log_max", arg_stream);
+
         else if (keyword == "max_tcp")
         {
             table_api.open_table("tcp_cache");
