@@ -96,6 +96,7 @@
 #endif
 
 #ifdef SHELL
+#include "ac_shell_cmd.h"
 #include "control_mgmt.h"
 #endif
 

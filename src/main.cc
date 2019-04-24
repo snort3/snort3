@@ -61,6 +61,7 @@
 
 #ifdef SHELL
 #include "main/control_mgmt.h"
+#include "main/ac_shell_cmd.h"
 #endif
 
 //-------------------------------------------------------------------------

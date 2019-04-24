@@ -13,7 +13,7 @@ if ( ENABLE_DEBUG_MSGS )
 endif ( ENABLE_DEBUG_MSGS )
 
 if ( ENABLE_SHELL )
-    set ( SHELL_SOURCES control.cc control.h control_mgmt.cc control_mgmt.h )
+    set ( SHELL_SOURCES control.cc control.h control_mgmt.cc control_mgmt.h ac_shell_cmd.h ac_shell_cmd.cc)
 endif ( ENABLE_SHELL )
 
 add_library (main OBJECT
