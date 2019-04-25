@@ -383,6 +383,7 @@ void SnortConfig::merge(SnortConfig* cmd_line)
     output_flags |= cmd_line->output_flags;
     logging_flags |= cmd_line->logging_flags;
 
+    include_path = cmd_line->include_path;
     stdin_rules = cmd_line->stdin_rules;
 
     // only set by cmd_line to override other conf output settings
@@ -969,6 +970,14 @@ void SnortConfig::set_tunnel_verdicts(const char* args)
         tok = strtok_r(nullptr, " ,", &lasts);
     }
     snort_free(tmp);
+}
+
+void SnortConfig::set_include_path(const char* path)
+{
+    if (path)
+        include_path = path;
+    else
+        include_path.clear();
 }
 
 void SnortConfig::set_plugin_path(const char* path)

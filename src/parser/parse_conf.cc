@@ -65,12 +65,7 @@ const char* get_parse_file()
     if ( !files.empty() )
         return files.top().path.c_str();
 
-    static char dir[PATH_MAX];
-
-    if ( !getcwd(dir, sizeof(dir)) )
-        return "";
-
-    return dir;
+    return get_snort_conf();
 }
 
 void get_parse_location(const char*& file, unsigned& line)
@@ -153,12 +148,11 @@ static bool relative_to_config_dir(const char* file, std::string& path)
     return valid_file(file, path);
 }
 
-static bool relative_to_working_dir(const char* file, std::string& path)
+static bool relative_to_include_dir(const char* file, std::string& path)
 {
-    char dir[PATH_MAX];
-    if ( !getcwd(dir, sizeof(dir)) )
+    path = SnortConfig::get_conf()->include_path;
+    if ( !path.length() )
         return false;
-    path = dir;
     return valid_file(file, path);
 }
 
@@ -173,8 +167,8 @@ const char* get_config_file(const char* arg, std::string& file)
     }
     std::string hint = file;
 
-    if ( SnortConfig::allow_overrides() and relative_to_working_dir(arg, file) )
-        return "W";
+    if ( relative_to_include_dir(arg, file) )
+        return "I";
 
     file = hint;
 

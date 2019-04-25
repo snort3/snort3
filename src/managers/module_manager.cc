@@ -93,8 +93,8 @@ extern "C"
     bool set_string(const char* fqn, const char* val);
     bool set_alias(const char* from, const char* to);
 
-    const char* push_relative_path(const char* file);
-    void pop_relative_path();
+    const char* push_include_path(const char* file);
+    void pop_include_path();
 }
 
 //-------------------------------------------------------------------------
@@ -818,7 +818,7 @@ SO_PUBLIC bool set_string(const char* fqn, const char* s)
     return set_value(fqn, v);
 }
 
-SO_PUBLIC const char* push_relative_path(const char* file)
+SO_PUBLIC const char* push_include_path(const char* file)
 {
     static std::string path;
     path = "";
@@ -827,7 +827,7 @@ SO_PUBLIC const char* push_relative_path(const char* file)
     return path.c_str();
 }
 
-SO_PUBLIC void pop_relative_path()
+SO_PUBLIC void pop_include_path()
 {
     pop_parse_location();
 }

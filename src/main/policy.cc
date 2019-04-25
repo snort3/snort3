@@ -26,6 +26,7 @@
 #include "detection/detection_engine.h"
 #include "log/messages.h"
 #include "managers/inspector_manager.h"
+#include "parser/parse_conf.h"
 #include "parser/vars.h"
 #include "ports/port_var_table.h"
 
@@ -112,6 +113,7 @@ IpsPolicy::IpsPolicy(PolicyId id)
     policy_mode = POLICY_MODE__MAX;
 
     var_table = nullptr;
+    parse_from = get_parse_file();
 
     var_id = 1;
     ip_vartable = sfvt_alloc_table();

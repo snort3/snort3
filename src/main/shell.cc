@@ -188,7 +188,7 @@ void Shell::set_overrides(Shell* sh)
     overrides += sh->overrides;
 }
 
-bool Shell::configure(SnortConfig* sc, bool is_fatal)
+bool Shell::configure(SnortConfig* sc, bool is_fatal, bool is_root)
 {
     assert(file.size());
     ModuleManager::set_config(sc);
@@ -206,7 +206,15 @@ bool Shell::configure(SnortConfig* sc, bool is_fatal)
     }
 
     std::string path = parse_from;
-    const char* code = get_config_file(file.c_str(), path);
+    const char* code;
+
+    if ( !is_root )
+        code = get_config_file(file.c_str(), path);
+    else
+    {
+        code = "W";
+        path = file;
+    }
 
     if ( !code )
     {

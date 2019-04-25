@@ -40,67 +40,28 @@
 
 #include "ftp_cmd_lookup.h"
 
+#include <cassert>
+
 #include "ft_main.h"
 #include "ftpp_return_codes.h"
 
 using namespace snort;
 
-/*
- * Function: ftp_cmd_lookup_init(CMD_LOOKUP **CmdLookup)
- *
- * Purpose: Initialize the cmd_lookup structure.
- *
- *          We need to initialize the cmd_lookup structure for
- *          the FTP command configuration.  Don't want a NULL pointer
- *          flying around, when we have to look for FTP commands.
- *
- * Arguments: CmdLookup         => pointer to the pointer of the cmd
- *                                 lookup structure.
- *
- * Returns: int => return code indicating error or success
- *
- */
 int ftp_cmd_lookup_init(CMD_LOOKUP** CmdLookup)
 {
-    KMAP* km = KMapNew((KMapUserFreeFunc)CleanupFTPCMDConf);
-    *CmdLookup = km;
-    if (*CmdLookup == nullptr)
-    {
-        return FTPP_MEM_ALLOC_FAIL;
-    }
-
-    km->nocase = 1;
-
+    *CmdLookup = KMapNew((KMapUserFreeFunc)CleanupFTPCMDConf, true);
     return FTPP_SUCCESS;
 }
 
-/*
- * Function: ftp_cmd_lookup_cleanup(CMD_LOOKUP **CmdLookup)
- *
- * Purpose: Free the cmd_lookup structure.
- *          We need to free the cmd_lookup structure.
- *
- * Arguments: CmdLookup     => pointer to the pointer of the cmd
- *                             lookup structure.
- *
- * Returns: int => return code indicating error or success
- *
- */
 int ftp_cmd_lookup_cleanup(CMD_LOOKUP** CmdLookup)
 {
-    KMAP* km;
+    assert(CmdLookup);
 
-    if (CmdLookup == nullptr)
-        return FTPP_INVALID_ARG;
-
-    km = *CmdLookup;
-
-    if (km)
+    if ( *CmdLookup )
     {
-        KMapDelete(km);
+        KMapDelete(*CmdLookup);
         *CmdLookup = nullptr;
     }
-
     return FTPP_SUCCESS;
 }
 

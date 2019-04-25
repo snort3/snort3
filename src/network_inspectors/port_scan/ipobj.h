@@ -77,9 +77,7 @@ struct IPSET
 IPSET* ipset_new();
 int ipset_add(IPSET* ipset, snort::SfCidr* ip, void* port, int notflag);
 int ipset_contains(IPSET* ipset, const snort::SfIp* ip, void* port);
-IPSET* ipset_copy(IPSET* ipset);
 void ipset_free(IPSET* ipset);
-int ipset_print(IPSET* ipset);
 
 // helper functions -- all the sets work in host order
 int ipset_parse(IPSET* ipset, const char* ipstr);

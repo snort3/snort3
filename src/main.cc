@@ -462,7 +462,7 @@ int main_reload_hosts(lua_State* L)
     }
 
     Shell sh = Shell(fname);
-    sh.configure(SnortConfig::get_conf());
+    sh.configure(SnortConfig::get_conf(), false, true);
 
     tTargetBasedConfig* old = SFAT_GetConfig();
     tTargetBasedConfig* tc = SFAT_Swap();

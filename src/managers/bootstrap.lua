@@ -30,14 +30,14 @@ bool set_bool(const char*, bool);
 bool set_number(const char*, double);
 bool set_string(const char*, const char*);
 bool set_alias(const char*, const char*);
-const char* push_relative_path(const char*);
-void pop_relative_path();
+const char* push_include_path(const char*);
+void pop_include_path();
 ]]
 
 function include(file)
-    local base_name = ffi.C.push_relative_path(file)
+    local base_name = ffi.C.push_include_path(file)
     dofile(ffi.string(base_name))
-    ffi.C.pop_relative_path()
+    ffi.C.pop_include_path()
 end
 
 function snort_traverse(tab, fqn)

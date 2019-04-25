@@ -315,9 +315,6 @@ static const Parameter s_params[] =
     { "--dirty-pig", Parameter::PT_IMPLIED, nullptr, nullptr,
       "don't flush packets on shutdown" },
 
-    { "--disable-overrides", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "do not first look for files relative to the working directory" },
-
     { "--dump-builtin-rules", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output stub rules for selected modules" },
 
@@ -375,6 +372,10 @@ static const Parameter s_params[] =
 
     { "--id-zero", Parameter::PT_IMPLIED, nullptr, nullptr,
       "use id prefix / subdirectory even with one packet thread" },
+
+    { "--include-path", Parameter::PT_STRING, nullptr, nullptr,
+      "<path> where to find Lua and rule included files; "
+      "searched before current or config directories" },
 
     { "--list-buffers", Parameter::PT_IMPLIED, nullptr, nullptr,
       "output available inspection buffers" },
@@ -803,9 +804,6 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("--enable-inline-test") )
         sc->run_flags |= RUN_FLAG__INLINE_TEST;
 
-    else if ( v.is("--disable-overrides") )
-        sc->run_flags |= RUN_FLAG__NO_OVERRIDES;
-
     else if ( v.is("--gen-msg-map") )
         dump_msg_map(sc, v.get_string());
 
@@ -847,6 +845,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--id-zero") )
         sc->id_zero = true;
+
+    else if ( v.is("--include-path") )
+        sc->set_include_path(v.get_string());
 
     else if ( v.is("--list-buffers") )
         help_buffers(sc, v.get_string());

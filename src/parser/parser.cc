@@ -217,14 +217,14 @@ static RuleListNode* addNodeToOrderedList(RuleListNode* ordered_list,
     return ordered_list;
 }
 
-static bool parse_file(SnortConfig* sc, Shell* sh, bool is_fatal)
+static bool parse_file(SnortConfig* sc, Shell* sh, bool is_fatal, bool is_root)
 {
     const char* fname = sh->get_file();
 
     if ( !fname || !*fname )
         return false;
 
-    bool success = sh->configure(sc, is_fatal);
+    bool success = sh->configure(sc, is_fatal, is_root);
     return success;
 }
 
@@ -305,7 +305,7 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname, boo
 
         set_policies(sc, sh);
 
-        if (!parse_file(sc, sh, is_fatal))
+        if (!parse_file(sc, sh, is_fatal, (i == 0)))
             return sc;
     }
 
@@ -365,19 +365,24 @@ void ParseRules(SnortConfig* sc)
             pop_parse_location();
         }
 
-        if ( !idx )
-            p->rules += s_aux_rules;
-
         if ( !p->rules.empty() )
         {
-            push_parse_location("C", file.c_str(), "rules");
+            push_parse_location("C", file.c_str(), "ips.rules");
             ParseConfigString(sc, p->rules.c_str());
             pop_parse_location();
         }
-        if ( !idx && sc->stdin_rules )
+
+        if ( !idx and !s_aux_rules.empty() )
+        {
+            push_parse_location("W", "./", "rule args");
+            ParseConfigString(sc, s_aux_rules.c_str());
+            pop_parse_location();
+        }
+
+        if ( !idx and sc->stdin_rules )
         {
             LogMessage("Reading rules until EOF or a line starting with END\n");
-            push_parse_location("C", get_snort_conf_dir(), "stdin");
+            push_parse_location("W", "./", "stdin");
             parse_stream(std::cin, sc);
             pop_parse_location();
         }

@@ -196,35 +196,27 @@ bool FileTypeModule::parse_type_and_version(std::string& token, SnortConfig* sc)
     {
         // Match all versions of this type.
         get_magic_rule_ids_from_type(type_name, "", ids_set, sc);
+
         if (ids_set.none())
-        {
-            ParseError("Invalid file_type type '%s'. Not found in file_rules.", type_name.c_str());
             return false;
-        }
 
         types |= ids_set;
         return true;
     }
 
     get_magic_rule_ids_from_type(type_name, version, ids_set, sc);
+
     if (ids_set.none())
-    {
-        ParseError("Invalid file_type type '%s' or version '%s'. Not found in file_rules.",
-            type_name.c_str(), version.c_str());
         return false;
-    }
 
     types |= ids_set;
 
     while (std::getline(stream, version, ','))
     {
         get_magic_rule_ids_from_type(type_name, version, ids_set, sc);
+
         if (ids_set.none())
-        {
-            ParseError("Invalid file_type type '%s' or version '%s'. Not found in file_rules.",
-                type_name.c_str(), version.c_str());
             return false;
-        }
 
         types |= ids_set;
     }

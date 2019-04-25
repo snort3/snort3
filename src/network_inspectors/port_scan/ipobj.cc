@@ -54,21 +54,6 @@ IPSET* ipset_new()
     return p;
 }
 
-IPSET* ipset_copy(IPSET* ipsp)
-{
-    IPSET* newset = ipset_new();
-    IP_PORT* ip_port;
-    SF_LNODE* cursor;
-
-    for (ip_port =(IP_PORT*)sflist_first(&ipsp->ip_list, &cursor);
-        ip_port;
-        ip_port =(IP_PORT*)sflist_next(&cursor) )
-    {
-        ipset_add(newset, &ip_port->ip, &ip_port->portset, ip_port->notflag);
-    }
-    return newset;
-}
-
 void ipset_free(IPSET* ipc)
 {
     if (ipc)
@@ -148,38 +133,6 @@ int ipset_contains(IPSET* ipc, const SfIp* ip, void* port)
                     return 1;
                 }
             }
-        }
-    }
-    return 0;
-}
-
-int ipset_print(IPSET* ipc)
-{
-    if ( !ipc )
-        return 0;
-
-    {
-        IP_PORT* p;
-        printf("IPSET\n");
-        SF_LNODE* cur_ip;
-
-        for ( p =(IP_PORT*)sflist_first(&ipc->ip_list, &cur_ip);
-            p!=nullptr;
-            p =(IP_PORT*)sflist_next(&cur_ip) )
-        {
-            SfIpString ip_str;
-            printf("CIDR BLOCK: %c%s", p->notflag ? '!' : ' ', p->ip.get_addr()->ntop(ip_str));
-            SF_LNODE* cur_port;
-
-            for ( PORTRANGE* pr=(PORTRANGE*)sflist_first(&p->portset.port_list, &cur_port);
-                pr != nullptr;
-                pr=(PORTRANGE*)sflist_next(&cur_port) )
-            {
-                printf("  %u", pr->port_lo);
-                if ( pr->port_hi != pr->port_lo )
-                    printf("-%u", pr->port_hi);
-            }
-            printf("\n");
         }
     }
     return 0;

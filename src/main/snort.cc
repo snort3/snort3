@@ -84,7 +84,6 @@
 #include "target_based/sftarget_reader.h"
 #include "time/packet_time.h"
 #include "time/periodic.h"
-#include "utils/kmap.h"
 #include "utils/util.h"
 #include "utils/util_utf.h"
 #include "utils/util_jsnorm.h"
@@ -256,7 +255,6 @@ void Snort::init(int argc, char** argv)
     load_network_inspectors();
     load_service_inspectors();
 
-    /* chew up the command line */
     snort_cmd_line_conf = parse_cmd_line(argc, argv);
     SnortConfig::set_conf(snort_cmd_line_conf);
 
@@ -658,7 +656,7 @@ SnortConfig* Snort::get_updated_policy(SnortConfig* other_conf, const char* fnam
     if ( fname )
     {
         Shell sh = Shell(fname);
-        sh.configure(sc);
+        sh.configure(sc, false, true);
 
         if ( ModuleManager::get_errors() || !sc->verify() )
         {

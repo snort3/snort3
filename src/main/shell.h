@@ -41,7 +41,7 @@ public:
     void set_overrides(const char*);
     void set_overrides(Shell*);
 
-    bool configure(snort::SnortConfig*, bool is_fatal = true);
+    bool configure(snort::SnortConfig*, bool is_fatal = true, bool is_root = false);
     void install(const char*, const struct luaL_Reg*);
     void execute(const char*, std::string&);
 

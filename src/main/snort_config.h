@@ -38,7 +38,7 @@ enum RunFlag
     RUN_FLAG__READ                = 0x00000001,
     RUN_FLAG__DAEMON              = 0x00000002,
     RUN_FLAG__NO_PROMISCUOUS      = 0x00000004,
-    RUN_FLAG__NO_OVERRIDES        = 0x00000008,
+    // unused                     = 0x00000008,
 
     RUN_FLAG__INLINE              = 0x00000010,
     RUN_FLAG__STATIC_HASH         = 0x00000020,
@@ -229,6 +229,7 @@ public:
     bool dirty_pig = false;
 
     std::string chroot_dir;        /* -t or config chroot */
+    std::string include_path;
     std::string plugin_path;
     std::vector<std::string> script_paths;
 
@@ -412,6 +413,7 @@ public:
     void set_no_logging_timestamps(bool);
     void set_obfuscate(bool);
     void set_obfuscation_mask(const char*);
+    void set_include_path(const char*);
     void set_plugin_path(const char*);
     void set_process_all_events(bool);
     void set_quiet(bool);
@@ -476,9 +478,6 @@ public:
 
     static bool show_file_codes()
     { return get_conf()->run_flags & RUN_FLAG__SHOW_FILE_CODES; }
-
-    static bool allow_overrides()
-    { return !(get_conf()->run_flags & RUN_FLAG__NO_OVERRIDES); }
 
     static bool adaptor_inline_mode()
     { return get_conf()->run_flags & RUN_FLAG__INLINE; }

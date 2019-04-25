@@ -41,67 +41,28 @@
 
 #include "ftp_bounce_lookup.h"
 
+#include <cassert>
+
 #include "ft_main.h"
 #include "ftpp_return_codes.h"
 
 using namespace snort;
 
-/*
- * Function: ftp_bounce_lookup_init(BOUNCE_LOOKUP **BounceLookup)
- *
- * Purpose: Initialize the bounce_lookup structure.
- *
- *          We need to initialize the bounce_lookup structure for
- *          the FTP bounce configuration.  Don't want a NULL pointer
- *          flying around, when we have to look for allowable bounces.
- *
- * Arguments: BounceLookup      => pointer to the pointer of the bounce
- *                                 lookup structure.
- *
- * Returns: int => return code indicating error or success
- *
- */
 int ftp_bounce_lookup_init(BOUNCE_LOOKUP** BounceLookup)
 {
-    KMAP* km = KMapNew((KMapUserFreeFunc)CleanupFTPBounceTo);
-    *BounceLookup = km;
-    if (*BounceLookup == nullptr)
-    {
-        return FTPP_MEM_ALLOC_FAIL;
-    }
-
-    km->nocase = 1;
-
+    *BounceLookup = KMapNew((KMapUserFreeFunc)CleanupFTPBounceTo, true);
     return FTPP_SUCCESS;
 }
 
-/*
- * Function: ftp_bounce_lookup_cleanup(BOUNCE_LOOKUP **BounceLookup)
- *
- * Purpose: Free the bounce_lookup structure.
- *          We need to free the bounce_lookup structure.
- *
- * Arguments: BounceLookup  => pointer to the pointer of the bounce
- *                             lookup structure.
- *
- * Returns: int => return code indicating error or success
- *
- */
 int ftp_bounce_lookup_cleanup(BOUNCE_LOOKUP** BounceLookup)
 {
-    KMAP* km;
+    assert(BounceLookup);
 
-    if (BounceLookup == nullptr)
-        return FTPP_INVALID_ARG;
-
-    km = *BounceLookup;
-
-    if (km)
+    if ( *BounceLookup )
     {
-        KMapDelete(km);
+        KMapDelete(*BounceLookup);
         *BounceLookup = nullptr;
     }
-
     return FTPP_SUCCESS;
 }
 
