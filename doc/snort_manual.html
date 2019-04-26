@@ -782,7 +782,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0 (Build 252) from 2.9.11
+o"  )~   Version 3.0.0 (Build 254) from 2.9.11
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
@@ -1063,20 +1063,6 @@ Snort 2 code base, a lot has changed.  The configuration of Snort 3 is
 done with Lua, so your old conf won&#8217;t work as is.  Rules are still text
 based but with syntax tweaks, so your 2.X rules must be fixed up.  However,
 snort2lua will help you convert your conf and rules to the new format.</p></div>
-<div class="sect3">
-<h4 id="_environment">Environment</h4>
-<div class="paragraph"><p>LUA_PATH must be set based on your install:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>LUA_PATH=$install_prefix/include/snort/lua/\?.lua\;\;</code></pre>
-</div></div>
-<div class="paragraph"><p>SNORT_LUA_PATH must be set to load auxiliary configuration files if you use
-the default snort.lua.  For example:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>export SNORT_LUA_PATH=$install_prefix/etc/snort</code></pre>
-</div></div>
-</div>
 <div class="sect3">
 <h4 id="_command_line">Command Line</h4>
 <div class="paragraph"><p>A simple command line might look like this:</p></div>
@@ -2237,13 +2223,7 @@ To build with g++ on OS X where clang is installed, do this first:
 </div>
 <div class="sect2">
 <h3 id="_running">Running</h3>
-<div class="paragraph"><p>First set up the environment:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>export LUA_PATH=$my_path/include/snort/lua/\?.lua\;\;
-export SNORT_LUA_PATH=$my_path/etc/snort/</code></pre>
-</div></div>
-<div class="paragraph"><p>Then give it a go:</p></div>
+<div class="paragraph"><p>Examples:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
@@ -2529,18 +2509,6 @@ Report bugs to bugs@snort.org.</code></pre>
 </div>
 <div class="sect2">
 <h3 id="_common_errors">Common Errors</h3>
-<div class="paragraph"><p><em>FATAL: snort_config is required</em></p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-add this line near top of file:
-</p>
-<div class="literalblock">
-<div class="content">
-<pre><code>require('snort_config')</code></pre>
-</div></div>
-</li>
-</ul></div>
 <div class="paragraph"><p><em>PANIC: unprotected error in call to Lua API (cannot open
 snort_defaults.lua: No such file or directory)</em></p></div>
 <div class="ulist"><ul>
@@ -2706,16 +2674,6 @@ Uninstall gperftools 2.5 provided by the distribution and install gperftools
 <div class="paragraph"><p>For the following examples "$my_path" is assumed to be the path to the
 Snort install directory. Additionally, it is assumed that "$my_path/bin"
 is in your PATH.</p></div>
-<div class="sect2">
-<h3 id="_environment_2">Environment</h3>
-<div class="paragraph"><p>LUA_PATH is used directly by Lua to load and run required libraries.
-SNORT_LUA_PATH is used by Snort to load supplemental configuration files.</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>export LUA_PATH=$my_path/include/snort/lua/\?.lua\;\;
-export SNORT_LUA_PATH=$my_path/etc/snort</code></pre>
-</div></div>
-</div>
 <div class="sect2">
 <h3 id="_help_2">Help</h3>
 <div class="paragraph"><p>Print the help summary:</p></div>
@@ -3369,32 +3327,6 @@ will reduce performance.</p></div>
 based on a specific HTTP header:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><code>require("snort_config")</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>dir = os.getenv('SNORT_LUA_PATH')</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>if ( not dir ) then
-    dir = '.'
-end</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>dofile(dir .. '/snort_defaults.lua')</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>local_rules =
-[[
-block http ( msg:"openAppId: test content match for app http";
-content:"X-Header: malicious"; sid:18760; rev:4; )
-]]</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
 <pre><code>stream = { }</code></pre>
 </div></div>
 <div class="literalblock">
@@ -3425,6 +3357,14 @@ content:"X-Header: malicious"; sid:18760; rev:4; )
 <div class="literalblock">
 <div class="content">
 <pre><code>appid = { }</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>local_rules =
+[[
+block http ( msg:"openAppId: test content match for app http";
+content:"X-Header: malicious"; sid:18760; rev:4; )
+]]</code></pre>
 </div></div>
 <div class="literalblock">
 <div class="content">
@@ -7088,7 +7028,7 @@ bool <strong>alerts.log_references</strong> = false: include rule references in 
 </li>
 <li>
 <p>
-string <strong>alerts.order</strong> = pass drop alert log: change the order of rule action application
+string <strong>alerts.order</strong> = pass reset block drop alert log: change the order of rule action application
 </p>
 </li>
 <li>
@@ -8046,7 +7986,7 @@ multi <strong>network.checksum_drop</strong> = none: drop if checksum is bad { a
 </li>
 <li>
 <p>
-multi <strong>network.checksum_eval</strong> = none: checksums to verify { all | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
+multi <strong>network.checksum_eval</strong> = all: checksums to verify { all | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
 </p>
 </li>
 <li>
@@ -8774,7 +8714,7 @@ int <strong>snort.-z</strong> = 1: &lt;count&gt; maximum number of packet thread
 </li>
 <li>
 <p>
-implied <strong>snort.--alert-before-pass</strong>: process alert, drop, sdrop, or reject before pass; default is pass before alert, drop,&#8230;
+implied <strong>snort.--alert-before-pass</strong>: evaluate alert rules before pass rules; default is pass rules first
 </p>
 </li>
 <li>
@@ -8919,6 +8859,11 @@ implied <strong>snort.--id-zero</strong>: use id prefix / subdirectory even with
 </li>
 <li>
 <p>
+string <strong>snort.--include-path</strong>: &lt;path&gt; where to find Lua and rule included files; searched before current or config directories
+</p>
+</li>
+<li>
+<p>
 implied <strong>snort.--list-buffers</strong>: output available inspection buffers
 </p>
 </li>
@@ -8980,11 +8925,6 @@ implied <strong>snort.--nolock-pidfile</strong>: do not try to lock Snort PID fi
 <li>
 <p>
 implied <strong>snort.--pause</strong>: wait for resume/quit command before processing packets/terminating
-</p>
-</li>
-<li>
-<p>
-implied <strong>snort.--parsing-follows-files</strong>: parse relative paths from the perspective of the current configuration file
 </p>
 </li>
 <li>
@@ -9079,6 +9019,11 @@ implied <strong>snort.--shell</strong>: enable the interactive command line
 </li>
 <li>
 <p>
+implied <strong>snort.--show-file-codes</strong>: indicate how files are located: A=absolute and W, F, C which are relative to the working directory, including file, and config file respectively
+</p>
+</li>
+<li>
+<p>
 implied <strong>snort.--show-plugins</strong>: list module and plugin versions
 </p>
 </li>
@@ -9104,12 +9049,12 @@ implied <strong>snort.--talos</strong>: enable Talos inline rule test mode (same
 </li>
 <li>
 <p>
-implied <strong>snort.--treat-drop-as-alert</strong>: converts drop, sdrop, and reject rules into alert rules during startup
+implied <strong>snort.--treat-drop-as-alert</strong>: converts drop, block, and reset rules into alert rules when loaded
 </p>
 </li>
 <li>
 <p>
-implied <strong>snort.--treat-drop-as-ignore</strong>: use drop, sdrop, and reject rules to ignore session traffic when not inline
+implied <strong>snort.--treat-drop-as-ignore</strong>: use drop, block, and reset rules to ignore session traffic when not inline
 </p>
 </li>
 <li>
@@ -23391,25 +23336,9 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>LUA_PATH</strong>: you must export as follows so LuaJIT can find required
-  files.
-</p>
-<div class="literalblock">
-<div class="content">
-<pre><code>LUA_PATH=$install_dir/include/snort/lua/\?.lua\;\;</code></pre>
-</div></div>
-</li>
-<li>
-<p>
 <strong>SNORT_IGNORE</strong>: the list of symbols Snort should ignore when parsing the
   Lua conf.  Unknown symbols not in SNORT_IGNORE will cause warnings with
   --warn-unknown or fatals with --warn-unknown --pedantic.
-</p>
-</li>
-<li>
-<p>
-<strong>SNORT_LUA_PATH</strong>: an optional path where Snort can find supplemental conf
-  files such as classification.lua.
 </p>
 </li>
 <li>
@@ -23617,7 +23546,7 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>--alert-before-pass</strong> process alert, drop, sdrop, or reject before pass; default is pass before alert, drop,&#8230;
+<strong>--alert-before-pass</strong> evaluate alert rules before pass rules; default is pass rules first
 </p>
 </li>
 <li>
@@ -23762,6 +23691,11 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
+<strong>--include-path</strong> &lt;path&gt; where to find Lua and rule included files; searched before current or config directories
+</p>
+</li>
+<li>
+<p>
 <strong>--list-buffers</strong> output available inspection buffers
 </p>
 </li>
@@ -23823,11 +23757,6 @@ these libraries see the Getting Started section of the manual.</p></div>
 <li>
 <p>
 <strong>--pause</strong> wait for resume/quit command before processing packets/terminating
-</p>
-</li>
-<li>
-<p>
-<strong>--parsing-follows-files</strong> parse relative paths from the perspective of the current configuration file
 </p>
 </li>
 <li>
@@ -23922,6 +23851,11 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
+<strong>--show-file-codes</strong> indicate how files are located: A=absolute and W, F, C which are relative to the working directory, including file, and config file respectively
+</p>
+</li>
+<li>
+<p>
 <strong>--show-plugins</strong> list module and plugin versions
 </p>
 </li>
@@ -23947,12 +23881,12 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>--treat-drop-as-alert</strong> converts drop, sdrop, and reject rules into alert rules during startup
+<strong>--treat-drop-as-alert</strong> converts drop, block, and reset rules into alert rules when loaded
 </p>
 </li>
 <li>
 <p>
-<strong>--treat-drop-as-ignore</strong> use drop, sdrop, and reject rules to ignore session traffic when not inline
+<strong>--treat-drop-as-ignore</strong> use drop, block, and reset rules to ignore session traffic when not inline
 </p>
 </li>
 <li>
@@ -24172,7 +24106,7 @@ bool <strong>alerts.log_references</strong> = false: include rule references in 
 </li>
 <li>
 <p>
-string <strong>alerts.order</strong> = pass drop alert log: change the order of rule action application
+string <strong>alerts.order</strong> = pass reset block drop alert log: change the order of rule action application
 </p>
 </li>
 <li>
@@ -26417,7 +26351,7 @@ multi <strong>network.checksum_drop</strong> = none: drop if checksum is bad { a
 </li>
 <li>
 <p>
-multi <strong>network.checksum_eval</strong> = none: checksums to verify { all | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
+multi <strong>network.checksum_eval</strong> = all: checksums to verify { all | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
 </p>
 </li>
 <li>
@@ -27797,7 +27731,7 @@ enum <strong>smtp.xlink2state</strong> = alert: enable/disable xlink2state alert
 </li>
 <li>
 <p>
-implied <strong>snort.--alert-before-pass</strong>: process alert, drop, sdrop, or reject before pass; default is pass before alert, drop,&#8230;
+implied <strong>snort.--alert-before-pass</strong>: evaluate alert rules before pass rules; default is pass rules first
 </p>
 </li>
 <li>
@@ -28002,6 +27936,11 @@ string <strong>snort.-i</strong>: &lt;iface&gt;&#8230; list of interfaces
 </li>
 <li>
 <p>
+string <strong>snort.--include-path</strong>: &lt;path&gt; where to find Lua and rule included files; searched before current or config directories
+</p>
+</li>
+<li>
+<p>
 port <strong>snort.-j</strong>: &lt;port&gt; to listen for Telnet connections
 </p>
 </li>
@@ -28103,11 +28042,6 @@ implied <strong>snort.-O</strong>: obfuscate the logged IP addresses
 <li>
 <p>
 string <strong>snort.-?</strong>: &lt;option prefix&gt; output matching command line option quick help (same as --help-options) { (optional) }
-</p>
-</li>
-<li>
-<p>
-implied <strong>snort.--parsing-follows-files</strong>: parse relative paths from the perspective of the current configuration file
 </p>
 </li>
 <li>
@@ -28232,6 +28166,11 @@ implied <strong>snort.--shell</strong>: enable the interactive command line
 </li>
 <li>
 <p>
+implied <strong>snort.--show-file-codes</strong>: indicate how files are located: A=absolute and W, F, C which are relative to the working directory, including file, and config file respectively
+</p>
+</li>
+<li>
+<p>
 implied <strong>snort.--show-plugins</strong>: list module and plugin versions
 </p>
 </li>
@@ -28277,12 +28216,12 @@ implied <strong>snort.--trace</strong>: turn on main loop debug trace
 </li>
 <li>
 <p>
-implied <strong>snort.--treat-drop-as-alert</strong>: converts drop, sdrop, and reject rules into alert rules during startup
+implied <strong>snort.--treat-drop-as-alert</strong>: converts drop, block, and reset rules into alert rules when loaded
 </p>
 </li>
 <li>
 <p>
-implied <strong>snort.--treat-drop-as-ignore</strong>: use drop, sdrop, and reject rules to ignore session traffic when not inline
+implied <strong>snort.--treat-drop-as-ignore</strong>: use drop, block, and reset rules to ignore session traffic when not inline
 </p>
 </li>
 <li>
@@ -34948,7 +34887,6 @@ change -&gt; stream5_global: 'max_ip' ==&gt; 'max_sessions'
 change -&gt; stream5_global: 'max_tcp' ==&gt; 'max_sessions'
 change -&gt; stream5_global: 'max_udp' ==&gt; 'max_sessions'
 change -&gt; stream5_global: 'min_response_seconds' ==&gt; 'min_interval'
-change -&gt; stream5_global: 'prune_log_max' ==&gt; 'histogram'
 change -&gt; stream5_global: 'tcp_cache_nominal_timeout' ==&gt; 'pruning_timeout'
 change -&gt; stream5_global: 'tcp_cache_pruning_timeout' ==&gt; 'idle_timeout'
 change -&gt; stream5_global: 'udp_cache_nominal_timeout' ==&gt; 'idle_timeout'
@@ -38219,7 +38157,7 @@ Adding/removing stream_* inspectors if stream was already configured
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2019-04-10 13:56:30 EDT
+ 2019-04-26 17:06:59 EDT
 </div>
 </div>
 </body>

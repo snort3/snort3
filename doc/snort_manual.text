@@ -40,17 +40,16 @@ Table of Contents
 
 4. Usage
 
-    4.1. Environment
-    4.2. Help
-    4.3. Sniffing and Logging
-    4.4. Configuration
-    4.5. IDS mode
-    4.6. Plugins
-    4.7. Output Files
-    4.8. DAQ Alternatives
-    4.9. Logger Alternatives
-    4.10. Shell
-    4.11. Signals
+    4.1. Help
+    4.2. Sniffing and Logging
+    4.3. Configuration
+    4.4. IDS mode
+    4.5. Plugins
+    4.6. Output Files
+    4.7. DAQ Alternatives
+    4.8. Logger Alternatives
+    4.9. Shell
+    4.10. Signals
 
 5. Features
 
@@ -387,7 +386,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0 (Build 252) from 2.9.11
+o"  )~   Version 3.0.0 (Build 254) from 2.9.11
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
@@ -549,18 +548,7 @@ are still text based but with syntax tweaks, so your 2.X rules must
 be fixed up. However, snort2lua will help you convert your conf and
 rules to the new format.
 
-1.2.1. Environment
-
-LUA_PATH must be set based on your install:
-
-LUA_PATH=$install_prefix/include/snort/lua/\?.lua\;\;
-
-SNORT_LUA_PATH must be set to load auxiliary configuration files if
-you use the default snort.lua. For example:
-
-export SNORT_LUA_PATH=$install_prefix/etc/snort
-
-1.2.2. Command Line
+1.2.1. Command Line
 
 A simple command line might look like this:
 
@@ -599,7 +587,7 @@ like this:
 
 --lua 'ips.enable_builtin_rules = true'
 
-1.2.3. Configuration File
+1.2.2. Configuration File
 
 The configuration file gives you complete control over how Snort
 processes packets. Start with the default snort.lua included in the
@@ -660,7 +648,7 @@ do:
 
 active = { max_responses = 1, min_interval = 5 }
 
-1.2.4. Rules
+1.2.3. Rules
 
 Rules determine what Snort is looking for. They can be put directly
 in your Lua configuration file with the ips module, on the command
@@ -679,7 +667,7 @@ $ sort -c snort.lua -R rules.txt
 
 You can use both approaches together.
 
-1.2.5. Converting Your 2.X Configuration
+1.2.4. Converting Your 2.X Configuration
 
 If you have a working 2.X configuration snort2lua makes it easy to
 get up and running with Snort 3. This tool will convert your
@@ -1319,12 +1307,7 @@ Optional:
 
 --------------
 
-First set up the environment:
-
-export LUA_PATH=$my_path/include/snort/lua/\?.lua\;\;
-export SNORT_LUA_PATH=$my_path/etc/snort/
-
-Then give it a go:
+Examples:
 
   * Get some help:
 
@@ -1487,12 +1470,6 @@ Report bugs to bugs@snort.org.
 
 --------------
 
-FATAL: snort_config is required
-
-  * add this line near top of file:
-
-    require('snort_config')
-
 PANIC: unprotected error in call to Lua API (cannot open
 snort_defaults.lua: No such file or directory)
 
@@ -1599,19 +1576,7 @@ the Snort install directory. Additionally, it is assumed that
 "$my_path/bin" is in your PATH.
 
 
-4.1. Environment
-
---------------
-
-LUA_PATH is used directly by Lua to load and run required libraries.
-SNORT_LUA_PATH is used by Snort to load supplemental configuration
-files.
-
-export LUA_PATH=$my_path/include/snort/lua/\?.lua\;\;
-export SNORT_LUA_PATH=$my_path/etc/snort
-
-
-4.2. Help
+4.1. Help
 
 --------------
 
@@ -1641,7 +1606,7 @@ Snort stops reading command-line options after the "--help-" and
 "--list-" options, so any other options should be placed before them.
 
 
-4.3. Sniffing and Logging
+4.2. Sniffing and Logging
 
 --------------
 
@@ -1672,7 +1637,7 @@ Log packets to a directory:
 snort --pcap-dir /path/to/pcap/dir --pcap-filter '*.pcap' -L dump -l /path/to/log/dir
 
 
-4.4. Configuration
+4.3. Configuration
 
 --------------
 
@@ -1697,7 +1662,7 @@ Tell Snort where to look for additional Lua scripts:
 snort --script-path /path/to/script/dir
 
 
-4.5. IDS mode
+4.4. IDS mode
 
 --------------
 
@@ -1742,7 +1707,7 @@ snort -c $my_path/etc/snort/snort.lua --daq afpacket -i "eth0:eth1" \
     -A cmg
 
 
-4.6. Plugins
+4.5. Plugins
 
 --------------
 
@@ -1763,7 +1728,7 @@ alert tcp any any -> any 80 (
 END
 
 
-4.7. Output Files
+4.6. Output Files
 
 --------------
 
@@ -1803,7 +1768,7 @@ based on module name that writes the file. All text mode outputs
 default to stdout. These options can be combined.
 
 
-4.8. DAQ Alternatives
+4.7. DAQ Alternatives
 
 --------------
 
@@ -1836,7 +1801,7 @@ snort -c $my_path/etc/snort/snort.lua \
     --daq-dir $my_path/lib/snort/daqs --daq socket
 
 
-4.9. Logger Alternatives
+4.8. Logger Alternatives
 
 --------------
 
@@ -1855,7 +1820,7 @@ snort -c $my_path/etc/snort/snort.lua \
     --lua "alert_csv = { fields = 'pkt_num gid sid rev', separator = '\t' }"
 
 
-4.10. Shell
+4.9. Shell
 
 --------------
 
@@ -1890,7 +1855,7 @@ The command line interface is still under development. Suggestions
 are welcome.
 
 
-4.11. Signals
+4.10. Signals
 
 --------------
 
@@ -2193,22 +2158,6 @@ alert tcp any any -> 192.168.0.1 any ( msg:"Alert ";
 Below is a minimal Snort configuration that is sufficient to block
 flows based on a specific HTTP header:
 
-require("snort_config")
-
-dir = os.getenv('SNORT_LUA_PATH')
-
-if ( not dir ) then
-    dir = '.'
-end
-
-dofile(dir .. '/snort_defaults.lua')
-
-local_rules =
-[[
-block http ( msg:"openAppId: test content match for app http";
-content:"X-Header: malicious"; sid:18760; rev:4; )
-]]
-
 stream = { }
 
 stream_tcp = { }
@@ -2231,6 +2180,12 @@ binder =
 http_inspect = { }
 
 appid = { }
+
+local_rules =
+[[
+block http ( msg:"openAppId: test content match for app http";
+content:"X-Header: malicious"; sid:18760; rev:4; )
+]]
 
 ips =
 {
@@ -5428,8 +5383,8 @@ Configuration:
     memory for event_filters { 0:max32 }
   * bool alerts.log_references = false: include rule references in
     alert info (full only)
-  * string alerts.order = pass drop alert log: change the order of
-    rule action application
+  * string alerts.order = pass reset block drop alert log: change the
+    order of rule action application
   * int alerts.rate_filter_memcap = 1048576: set available MB of
     memory for rate_filters { 0:max32 }
   * string alerts.reference_net: set the CIDR for homenet (for use
@@ -5909,8 +5864,8 @@ Configuration:
 
   * multi network.checksum_drop = none: drop if checksum is bad { all
     | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
-  * multi network.checksum_eval = none: checksums to verify { all |
-    ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
+  * multi network.checksum_eval = all: checksums to verify { all | ip
+    | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
   * bool network.decode_drops = false: enable dropping of packets by
     the decoder
   * int network.id = 0: correlate unified2 events with configuration
@@ -6285,8 +6240,8 @@ Configuration:
   * int snort.-z = 1: <count> maximum number of packet threads (same
     as --max-packet-threads); 0 gets the number of CPU cores reported
     by the system; default is 1 { 0:max32 }
-  * implied snort.--alert-before-pass: process alert, drop, sdrop, or
-    reject before pass; default is pass before alert, drop,…
+  * implied snort.--alert-before-pass: evaluate alert rules before
+    pass rules; default is pass rules first
   * string snort.--bpf: <filter options> are standard BPF options, as
     seen in TCPDump
   * string snort.--c2x: output hex for given char (see also --x2c)
@@ -6338,6 +6293,8 @@ Configuration:
     logdir instead of instance filename prefix
   * implied snort.--id-zero: use id prefix / subdirectory even with
     one packet thread
+  * string snort.--include-path: <path> where to find Lua and rule
+    included files; searched before current or config directories
   * implied snort.--list-buffers: output available inspection buffers
   * string snort.--list-builtin: [<module prefix>] output matching
     builtin rules { (optional) }
@@ -6360,8 +6317,6 @@ Configuration:
   * implied snort.--nolock-pidfile: do not try to lock Snort PID file
   * implied snort.--pause: wait for resume/quit command before
     processing packets/terminating
-  * implied snort.--parsing-follows-files: parse relative paths from
-    the perspective of the current configuration file
   * string snort.--pcap-file: <file> file that contains a list of
     pcaps to read - read mode is implied
   * string snort.--pcap-list: <list> a space separated list of pcaps
@@ -6393,6 +6348,9 @@ Configuration:
   * string snort.--script-path: <path> to a luajit script or
     directory containing luajit scripts
   * implied snort.--shell: enable the interactive command line
+  * implied snort.--show-file-codes: indicate how files are located:
+    A=absolute and W, F, C which are relative to the working
+    directory, including file, and config file respectively
   * implied snort.--show-plugins: list module and plugin versions
   * int snort.--skip: <n> skip 1st n packets { 0:max53 }
   * int snort.--snaplen = 1518: <snap> set snaplen of packet (same as
@@ -6401,9 +6359,9 @@ Configuration:
     line starting with END is read
   * implied snort.--talos: enable Talos inline rule test mode (same
     as --tweaks talos -Q -q)
-  * implied snort.--treat-drop-as-alert: converts drop, sdrop, and
-    reject rules into alert rules during startup
-  * implied snort.--treat-drop-as-ignore: use drop, sdrop, and reject
+  * implied snort.--treat-drop-as-alert: converts drop, block, and
+    reset rules into alert rules when loaded
+  * implied snort.--treat-drop-as-ignore: use drop, block, and reset
     rules to ignore session traffic when not inline
   * string snort.--tweaks: tune configuration
   * implied snort.--version: show version number (same as -V)
@@ -13892,17 +13850,10 @@ these libraries see the Getting Started section of the manual.
 
   * HOSTTYPE: optional string that is output with the version at end
     of line.
-  * LUA_PATH: you must export as follows so LuaJIT can find required
-    files.
-
-    LUA_PATH=$install_dir/include/snort/lua/\?.lua\;\;
-
   * SNORT_IGNORE: the list of symbols Snort should ignore when
     parsing the Lua conf. Unknown symbols not in SNORT_IGNORE will
     cause warnings with --warn-unknown or fatals with --warn-unknown
     --pedantic.
-  * SNORT_LUA_PATH: an optional path where Snort can find
-    supplemental conf files such as classification.lua.
   * SNORT_PROMPT: the character sequence that is printed at startup,
     shutdown, and in the shell. The default is the mini-pig: o")~ .
   * SNORT_PLUGIN_PATH: an optional path where Snort can find
@@ -13958,8 +13909,8 @@ these libraries see the Getting Started section of the manual.
   * -z <count> maximum number of packet threads (same as
     --max-packet-threads); 0 gets the number of CPU cores reported by
     the system; default is 1 (0:max32)
-  * --alert-before-pass process alert, drop, sdrop, or reject before
-    pass; default is pass before alert, drop,…
+  * --alert-before-pass evaluate alert rules before pass rules;
+    default is pass rules first
   * --bpf <filter options> are standard BPF options, as seen in
     TCPDump
   * --c2x output hex for given char (see also --x2c)
@@ -14002,6 +13953,8 @@ these libraries see the Getting Started section of the manual.
     of instance filename prefix
   * --id-zero use id prefix / subdirectory even with one packet
     thread
+  * --include-path <path> where to find Lua and rule included files;
+    searched before current or config directories
   * --list-buffers output available inspection buffers
   * --list-builtin [<module prefix>] output matching builtin rules
     (optional)
@@ -14021,8 +13974,6 @@ these libraries see the Getting Started section of the manual.
   * --nolock-pidfile do not try to lock Snort PID file
   * --pause wait for resume/quit command before processing packets/
     terminating
-  * --parsing-follows-files parse relative paths from the perspective
-    of the current configuration file
   * --pcap-file <file> file that contains a list of pcaps to read -
     read mode is implied
   * --pcap-list <list> a space separated list of pcaps to read - read
@@ -14052,6 +14003,9 @@ these libraries see the Getting Started section of the manual.
   * --script-path <path> to a luajit script or directory containing
     luajit scripts
   * --shell enable the interactive command line
+  * --show-file-codes indicate how files are located: A=absolute and
+    W, F, C which are relative to the working directory, including
+    file, and config file respectively
   * --show-plugins list module and plugin versions
   * --skip <n> skip 1st n packets (0:max53)
   * --snaplen <snap> set snaplen of packet (same as -s) (68:65535)
@@ -14059,10 +14013,10 @@ these libraries see the Getting Started section of the manual.
     with END is read
   * --talos enable Talos inline rule test mode (same as --tweaks
     talos -Q -q)
-  * --treat-drop-as-alert converts drop, sdrop, and reject rules into
-    alert rules during startup
-  * --treat-drop-as-ignore use drop, sdrop, and reject rules to
-    ignore session traffic when not inline
+  * --treat-drop-as-alert converts drop, block, and reset rules into
+    alert rules when loaded
+  * --treat-drop-as-ignore use drop, block, and reset rules to ignore
+    session traffic when not inline
   * --tweaks tune configuration
   * --version show version number (same as -V)
   * --warn-all enable all warnings
@@ -14153,8 +14107,8 @@ these libraries see the Getting Started section of the manual.
   * int alert_sfsocket.rules[].sid = 1: rule signature ID { 1:max32 }
   * bool alerts.log_references = false: include rule references in
     alert info (full only)
-  * string alerts.order = pass drop alert log: change the order of
-    rule action application
+  * string alerts.order = pass reset block drop alert log: change the
+    order of rule action application
   * int alerts.rate_filter_memcap = 1048576: set available MB of
     memory for rate_filters { 0:max32 }
   * string alerts.reference_net: set the CIDR for homenet (for use
@@ -14917,8 +14871,8 @@ these libraries see the Getting Started section of the manual.
     }
   * multi network.checksum_drop = none: drop if checksum is bad { all
     | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
-  * multi network.checksum_eval = none: checksums to verify { all |
-    ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
+  * multi network.checksum_eval = all: checksums to verify { all | ip
+    | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
   * bool network.decode_drops = false: enable dropping of packets by
     the decoder
   * int network.id = 0: correlate unified2 events with configuration
@@ -15400,8 +15354,8 @@ these libraries see the Getting Started section of the manual.
   * string smtp.valid_cmds: list of valid commands
   * enum smtp.xlink2state = alert: enable/disable xlink2state alert {
     disable | alert | drop }
-  * implied snort.--alert-before-pass: process alert, drop, sdrop, or
-    reject before pass; default is pass before alert, drop,…
+  * implied snort.--alert-before-pass: evaluate alert rules before
+    pass rules; default is pass rules first
   * string snort.-A: <mode> set alert mode: none, cmg, or alert_*
   * addr snort.-B = 255.255.255.255/32: <mask> obfuscated IP
     addresses in alerts and packet dumps using CIDR mask
@@ -15468,6 +15422,8 @@ these libraries see the Getting Started section of the manual.
   * implied snort.--id-zero: use id prefix / subdirectory even with
     one packet thread
   * string snort.-i: <iface>… list of interfaces
+  * string snort.--include-path: <path> where to find Lua and rule
+    included files; searched before current or config directories
   * port snort.-j: <port> to listen for Telnet connections
   * enum snort.-k = all: <mode> checksum mode; default is all { all|
     noip|notcp|noudp|noicmp|none }
@@ -15501,8 +15457,6 @@ these libraries see the Getting Started section of the manual.
   * implied snort.-O: obfuscate the logged IP addresses
   * string snort.-?: <option prefix> output matching command line
     option quick help (same as --help-options) { (optional) }
-  * implied snort.--parsing-follows-files: parse relative paths from
-    the perspective of the current configuration file
   * implied snort.--pause: wait for resume/quit command before
     processing packets/terminating
   * string snort.--pcap-dir: <dir> a directory to recurse to look for
@@ -15544,6 +15498,9 @@ these libraries see the Getting Started section of the manual.
   * string snort.--script-path: <path> to a luajit script or
     directory containing luajit scripts
   * implied snort.--shell: enable the interactive command line
+  * implied snort.--show-file-codes: indicate how files are located:
+    A=absolute and W, F, C which are relative to the working
+    directory, including file, and config file respectively
   * implied snort.--show-plugins: list module and plugin versions
   * int snort.--skip: <n> skip 1st n packets { 0:max53 }
   * int snort.--snaplen = 1518: <snap> set snaplen of packet (same as
@@ -15558,9 +15515,9 @@ these libraries see the Getting Started section of the manual.
   * int snort.trace: mask for enabling debug traces in module {
     0:max53 }
   * implied snort.--trace: turn on main loop debug trace
-  * implied snort.--treat-drop-as-alert: converts drop, sdrop, and
-    reject rules into alert rules during startup
-  * implied snort.--treat-drop-as-ignore: use drop, sdrop, and reject
+  * implied snort.--treat-drop-as-alert: converts drop, block, and
+    reset rules into alert rules when loaded
+  * implied snort.--treat-drop-as-ignore: use drop, block, and reset
     rules to ignore session traffic when not inline
   * implied snort.-T: test and report on the current Snort
     configuration
@@ -17432,7 +17389,6 @@ change -> stream5_global: 'max_ip' ==> 'max_sessions'
 change -> stream5_global: 'max_tcp' ==> 'max_sessions'
 change -> stream5_global: 'max_udp' ==> 'max_sessions'
 change -> stream5_global: 'min_response_seconds' ==> 'min_interval'
-change -> stream5_global: 'prune_log_max' ==> 'histogram'
 change -> stream5_global: 'tcp_cache_nominal_timeout' ==> 'pruning_timeout'
 change -> stream5_global: 'tcp_cache_pruning_timeout' ==> 'idle_timeout'
 change -> stream5_global: 'udp_cache_nominal_timeout' ==> 'idle_timeout'

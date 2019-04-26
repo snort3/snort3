@@ -1,3 +1,21 @@
+19/04/26 - build 254
+
+-- analyzer: Print pause indicator from analyzer threads
+-- appid: remove inspector reference from detectors
+-- build: Remove perpetually stale reference to lua_plugffi.h
+-- build: remove unused cruft; clean up KMap
+-- config: replace working dir overrides with --include-path
+-- context: only clear ids_in_use in dtor
+-- file_type: remove redundant error message
+-- log_pcap, packet_capture: Don't try to use a DAQ pkthdr as a PCAP pkthdr
+-- Lua: update tweaks per latest include changes
+-- main: Use epoll (for linux systems) instead of select to get rid of limit on fd-set-size and for
+   time efficiency
+-- snort2lua: fix histogram option change comment
+-- snort2lua: Integer parameter range check
+-- stream_tcp: Try to work with a cleaner Packet when purging at shutdown
+-- test: remove cruft
+
 19/04/17 - build 253
 
 -- build: delete unused code called out by cppcheck
