@@ -150,9 +150,9 @@ public:
     PolicyMode policy_mode = POLICY_MODE__MAX;
     bool enable_builtin_rules;
 
+    std::string includer;
     std::string include;
     std::string rules;
-    std::string parse_from;
 
     uint32_t var_id;
 

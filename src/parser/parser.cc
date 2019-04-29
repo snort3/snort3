@@ -355,7 +355,7 @@ void ParseRules(SnortConfig* sc)
             ModuleManager::load_rules(sc);
 
         const char* fname = p->include.c_str();
-        std::string file = p->parse_from;
+        std::string file = p->includer;
 
         if ( fname && *fname )
         {

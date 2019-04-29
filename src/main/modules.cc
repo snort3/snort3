@@ -1228,7 +1228,10 @@ static const Parameter ips_params[] =
       "correlate unified2 events with configuration" },
 
     { "include", Parameter::PT_STRING, nullptr, nullptr,
-      "legacy snort rules and includes" },
+      "snort rules and includes" },
+
+    { "includer", Parameter::PT_STRING, "(optional)", nullptr,
+      "for internal use; where includes are included from" },
 
     // FIXIT-L no default; it breaks initialization by -Q
     { "mode", Parameter::PT_ENUM, "tap | inline | inline-test", nullptr,
@@ -1279,6 +1282,9 @@ bool IpsModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("include") )
         p->include = v.get_string();
+
+    else if ( v.is("includer") )
+        p->includer = v.get_string();
 
     else if ( v.is("mode") )
         p->policy_mode = (PolicyMode)v.get_uint8();

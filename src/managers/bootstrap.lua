@@ -34,12 +34,6 @@ const char* push_include_path(const char*);
 void pop_include_path();
 ]]
 
-function include(file)
-    local base_name = ffi.C.push_include_path(file)
-    dofile(ffi.string(base_name))
-    ffi.C.pop_include_path()
-end
-
 function snort_traverse(tab, fqn)
     local key, val
 
@@ -66,7 +60,7 @@ function snort_set(fqn, key, val)
     local name
     local idx = 0
     local what = type(val)
-        
+
     if ( not fqn ) then
         name = key
 
@@ -116,5 +110,43 @@ function snort_config(tab)
     if ( binder and type(binder) == 'table' ) then
         load_aliases()
     end
+end
+
+---------------------------------------------------------------------------
+-- path magic for includes
+---------------------------------------------------------------------------
+
+function path_push(file)
+    if ( _snort_path == nil ) then
+        _snort_path = { }
+    end
+    _snort_path[#_snort_path + 1] = file
+end
+
+function path_pop()
+    if ( _snort_path == nil ) then
+        return
+    end
+    table.remove(_snort_path, #_snort_path)
+end
+
+function path_top()
+    if ( _snort_path == nil ) then
+        return nil
+    end
+    return _snort_path[#_snort_path]
+end
+
+function include(file)
+    local cname = ffi.C.push_include_path(file)
+    local fname = ffi.string(cname);
+    path_push(fname)
+    dofile(fname)
+    local iname = path_top()
+    if ( (ips ~= nil) and (ips.includer == nil) and (iname ~= nil) ) then
+        ips.includer = iname
+    end
+    path_pop()
+    ffi.C.pop_include_path()
 end
 

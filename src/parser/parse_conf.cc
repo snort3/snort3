@@ -136,9 +136,10 @@ static bool relative_to_parse_dir(const char* file, std::string& path)
     if ( !path.length() )
         path = get_parse_file();
     size_t idx = path.rfind('/');
-    if ( idx == std::string::npos )
-        idx = 0;
-    path.erase(idx);
+    if ( idx != std::string::npos )
+        path.erase(idx);
+    else
+        path = ".";
     return valid_file(file, path);
 }
 
@@ -185,7 +186,7 @@ void parse_include(SnortConfig* sc, const char* arg)
 {
     assert(arg);
     arg = ExpandVars(sc, arg);
-    std::string file;
+    std::string file = get_ips_policy()->includer;
 
     const char* code = get_config_file(arg, file);
 
