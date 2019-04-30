@@ -184,10 +184,12 @@ void TcpConnector::process_receive()
     }
     else if (rval > 0 && pfds[0].revents & POLLIN)
     {
-        TcpConnectorMsgHandle* handle;
-        if ( (handle = read_message(sock_fd)) != nullptr )
-            if ( !receive_ring->put(handle) )
-                ErrorMessage("TcpC Input Thread: overrun\n");
+        TcpConnectorMsgHandle* handle = read_message(sock_fd);
+        if (handle && !receive_ring->put(handle))
+        {
+            ErrorMessage("TcpC Input Thread: overrun\n");
+            delete handle;
+        }
     }
 }
 

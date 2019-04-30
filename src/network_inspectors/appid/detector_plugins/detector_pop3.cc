@@ -288,6 +288,7 @@ static int pop3_server_validate(POP3DetectorData* dd, const uint8_t* data, uint1
     ServicePOP3Data* pd = &dd->server;
     const uint8_t* begin = nullptr;
 
+    assert(data);
     const uint8_t* end = data + size;
     char* v_end = pd->version + MAX_VERSION_SIZE - 1;
     switch (pd->state)

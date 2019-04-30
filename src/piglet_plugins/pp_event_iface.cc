@@ -33,8 +33,7 @@
 
 static struct SigInfo* create_sig_info()
 {
-    auto si = new SigInfo;
-    memset(si, 0, sizeof(SigInfo));
+    auto si = new SigInfo();
     return si;
 }
 

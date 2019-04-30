@@ -1017,7 +1017,7 @@ void ModuleManager::show_module(const char* name)
         const Parameter* def_params = m->get_default_parameters();
 
         if ( ( params and params->type < Parameter::PT_MAX ) ||
-             ( def_params and params->type < Parameter::PT_MAX ) )
+             ( def_params and def_params->type < Parameter::PT_MAX ) )
         {
             cout << endl << "Configuration: " << endl << endl;
             show_configs(name, true);
