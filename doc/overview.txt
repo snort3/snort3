@@ -252,6 +252,27 @@ include statement.  In addition you can load rules like:
 
 You can use both approaches together.
 
+==== Includes
+
+Your configuration file file may include other files, either directly via Lua or via
+various parameters.  Snort will find relative includes in the following order:
+
+1.  If you specify --include-path, this directory will be tried first.
+2.  Snort will try the directory containing the including file.
+3.  Snort will try the directory containing the -c configuration file.
+
+Some things to keep in mind:
+
+* If you use the Lua dofile function, then you must specify absolute paths
+  or paths relative to your working directory since Lua will execute the
+  include before Snort sees the file contents.
+
+* For best results, use include in place of dofile.  This function is
+  provided to follow Snort's include logic.
+
+* As of now, appid and reputation paths must be absolute or relative to the
+  working directory.  These will be updated in a future release.
+
 ==== Converting Your 2.X Configuration
 
 If you have a working 2.X configuration snort2lua makes it easy to get up
