@@ -706,8 +706,8 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     }
     else if ( v.is("-r") || v.is("--pcap-list") )
     {
-        Trough::add_source(Trough::SOURCE_LIST, v.get_string());
         sc->run_flags |= RUN_FLAG__READ;
+        Trough::add_source(Trough::SOURCE_LIST, v.get_string());
     }
     else if ( v.is("-S") )
         config_set_var(sc, v.get_string());
@@ -889,13 +889,13 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--pcap-file") )
     {
-        Trough::add_source(Trough::SOURCE_FILE_LIST, v.get_string());
         sc->run_flags |= RUN_FLAG__READ;
+        Trough::add_source(Trough::SOURCE_FILE_LIST, v.get_string());
     }
     else if ( v.is("--pcap-dir") )
     {
-        Trough::add_source(Trough::SOURCE_DIR, v.get_string());
         sc->run_flags |= RUN_FLAG__READ;
+        Trough::add_source(Trough::SOURCE_DIR, v.get_string());
     }
     else if ( v.is("--pcap-filter") )
         Trough::set_filter(v.get_string());
