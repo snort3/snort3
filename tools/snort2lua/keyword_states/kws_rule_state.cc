@@ -75,9 +75,9 @@ bool RuleState::convert(std::istringstream& data_stream)
             break;
         case 2:
             if (arg == "enabled")
-                enable = "true";
+                enable = "yes";
             else if (arg == "disabled")
-                enable = "false";
+                enable = "no";
             else
             {
                 data_api.failed_conversion(data_stream, "third option must be {enabled|disabled|");

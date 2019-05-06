@@ -1218,7 +1218,7 @@ bool InspectionModule::set(const char*, Value& v, SnortConfig* sc)
 
 static const Parameter ips_params[] =
 {
-    { "default_rule_state", Parameter::PT_ENUM, "false | true | inherit", "inherit",
+    { "default_rule_state", Parameter::PT_ENUM, "no | yes | inherit", "inherit",
       "enable or disable ips rules" },
 
     { "enable_builtin_rules", Parameter::PT_BOOL, nullptr, "false",
@@ -1737,7 +1737,7 @@ static const Parameter single_rule_state_params[] =
       "log | pass | alert | drop | block | reset | inherit", "inherit",
       "apply action if rule matches or inherit from rule definition" },
 
-    { "enable", Parameter::PT_ENUM, "false | true | inherit", "inherit",
+    { "enable", Parameter::PT_ENUM, "no | yes | inherit", "inherit",
       "enable or disable rule in current ips policy or use default defined by ips policy" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
