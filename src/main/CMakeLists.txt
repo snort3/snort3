@@ -16,6 +16,8 @@ if ( ENABLE_SHELL )
     set ( SHELL_SOURCES control.cc control.h control_mgmt.cc control_mgmt.h ac_shell_cmd.h ac_shell_cmd.cc)
 endif ( ENABLE_SHELL )
 
+add_subdirectory(test)
+
 add_library (main OBJECT
     analyzer.cc
     analyzer.h

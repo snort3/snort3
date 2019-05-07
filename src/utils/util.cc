@@ -284,6 +284,7 @@ void CreatePidFile(pid_t pid)
     }
     else
     {
+        fclose(pid_lockfile);
         const char* error = get_error(errno);
         ErrorMessage("Failed to create pid file %s, Error: %s\n",
             SnortConfig::get_conf()->pid_filename.c_str(), error);
@@ -454,9 +455,16 @@ std::string read_infile(const char* key, const char* fname)
     int fd = open(fname, O_RDONLY);
     struct stat buf;
 
+    if (fd < 0)
+    {
+        ErrorMessage("Failed to open file: %s with error: %s", fname, get_error(errno));
+        return "";
+    }
+
     if (fstat(fd, &buf) < 0)
     {
         ParseError("can't stat %s: %s", fname, get_error(errno));
+        close(fd);
         return "";
     }
 
@@ -464,6 +472,7 @@ std::string read_infile(const char* key, const char* fname)
     if (!S_ISREG(buf.st_mode) )
     {
         ParseError("not a regular file: %s", fname);
+        close(fd);
         return "";
     }
 
@@ -481,9 +490,10 @@ std::string read_infile(const char* key, const char* fname)
     else
     {
         ParseError("can't open file %s = %s: %s", key, fname, get_error(errno));
+        close(fd);
         return "";  
     }
-
+    close(fd);
     return line;
 }
 

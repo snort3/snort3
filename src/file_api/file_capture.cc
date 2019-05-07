@@ -512,6 +512,7 @@ void FileCapture::store_file()
         // Get file from file buffer
         if (!buff || !size )
         {
+            fclose(fh);
             return;
         }
 

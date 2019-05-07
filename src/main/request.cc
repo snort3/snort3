@@ -55,10 +55,7 @@ bool Request::read(int& f)
     }
 
     if ( n <= 0 and errno != EAGAIN and errno != EINTR )
-    {
-        f = -1;
         return false;
-    }
 
     if ( bytes_read == sizeof(read_buf) )
         bytes_read = 0;
