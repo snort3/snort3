@@ -132,7 +132,6 @@ struct THD_NODE
     int priority;
     int count;
     unsigned seconds;
-    uint64_t filtered;
     sfip_var_t* ip_address;
 };
 
@@ -253,4 +252,3 @@ int sfthd_show_objects(THD_STRUCT* thd);
 #endif
 
 #endif
-

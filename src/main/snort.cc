@@ -35,6 +35,7 @@
 #include "detection/fp_detect.h"
 #include "file_api/file_service.h"
 #include "filters/rate_filter.h"
+#include "filters/sfrf.h"
 #include "filters/sfthreshold.h"
 #include "flow/ha.h"
 #include "framework/mpse.h"
@@ -386,9 +387,6 @@ void Snort::term()
 
     //MpseManager::print_search_engine_stats();
 
-    sfthreshold_free();  // FIXDAQ etc.
-    RateFilter_Cleanup();
-
     Periodic::unregister_all();
 
     LogMessage("%s  Snort exiting\n", get_prompt());
@@ -657,4 +655,3 @@ SnortConfig* Snort::get_updated_module(SnortConfig* other_conf, const char* name
     reloading = false;
     return sc;
 }
-

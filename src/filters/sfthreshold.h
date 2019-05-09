@@ -43,5 +43,6 @@ int sfthreshold_test(
     unsigned int, unsigned int, const snort::SfIp*, const snort::SfIp*, long curtime);
 void sfthreshold_free();
 
-#endif
+int sfthreshold_alloc(unsigned int l_memcap, unsigned int g_memcap);
 
+#endif

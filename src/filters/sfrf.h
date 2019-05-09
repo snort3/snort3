@@ -178,5 +178,7 @@ inline bool is_internal_event_enabled(RateFilterConfig* config, uint32_t sid)
 
     return (config->internal_event_mask & (1 << sid));
 }
-#endif
 
+int SFRF_Alloc(unsigned int memcap);
+
+#endif

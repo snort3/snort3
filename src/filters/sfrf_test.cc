@@ -896,6 +896,8 @@ static void Init(unsigned cap)
     rfc = RateFilter_ConfigNew();
     rfc->memcap = cap;
 
+    SFRF_Alloc(rfc->memcap);
+
     for ( unsigned i = 0; i < NUM_NODES; i++ )
     {
         RateData* p = rfData + i;
@@ -1014,4 +1016,3 @@ TEST_CASE("sfrf minimum memcap", "[sfrf]")
     }
     Term();
 }
-

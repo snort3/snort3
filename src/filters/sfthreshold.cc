@@ -50,7 +50,7 @@
 #include "sfthd.h"
 
 /* Data */
-THD_STRUCT* thd_runtime = nullptr;
+static THREAD_LOCAL THD_STRUCT* thd_runtime = nullptr;
 
 static THREAD_LOCAL int thd_checked = 0; // per packet
 static THREAD_LOCAL int thd_answer = 0;  // per packet
@@ -92,6 +92,18 @@ void sfthreshold_free()
     thd_runtime = nullptr;
 }
 
+int sfthreshold_alloc(unsigned int l_memcap, unsigned int g_memcap)
+{
+    if (thd_runtime == nullptr)
+    {
+        thd_runtime = sfthd_new(l_memcap, g_memcap);
+        if (thd_runtime == nullptr)
+            return -1;
+    }
+    return 0;
+}
+
+
 int sfthreshold_create(
     snort::SnortConfig* sc, ThresholdConfig* thd_config, THDX_STRUCT* thdx)
 {
@@ -100,14 +112,6 @@ int sfthreshold_create(
 
     if (!thd_config->enabled)
         return 0;
-
-    /* Auto init - memcap must be set 1st, which is not really a problem */
-    if (thd_runtime == nullptr)
-    {
-        thd_runtime = sfthd_new(thd_config->memcap, thd_config->memcap);
-        if (thd_runtime == nullptr)
-            return -1;
-    }
 
     /* print_thdx( thdx ); */
 
@@ -162,4 +166,3 @@ void sfthreshold_reset()
 {
     thd_checked = 0;
 }
-

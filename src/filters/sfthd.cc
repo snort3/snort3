@@ -667,7 +667,6 @@ static inline int sfthd_test_suppress(
 #endif
         /* Don't log, and stop looking( event's to this address
          * for this gen_id+sig_id) */
-        sfthd_node->filtered++;
         return -1;
     }
     return 1; /* Keep looking for other suppressors */
@@ -716,7 +715,6 @@ static inline int sfthd_test_non_suppress(
 
         /* Don't Log yet, don't keep looking:
          * already logged our limit, don't log this sid  */
-        sfthd_node->filtered++;
         return -2;
     }
     if ( sfthd_node->type == THD_TYPE_LIMIT )
@@ -746,7 +744,6 @@ static inline int sfthd_test_non_suppress(
 
         /* Don't Log yet, don't keep looking:
          * already logged our limit, don't log this sid  */
-        sfthd_node->filtered++;
         return -2;
     }
     else if ( sfthd_node->type == THD_TYPE_THRESHOLD )
@@ -768,7 +765,6 @@ static inline int sfthd_test_non_suppress(
             sfthd_ip_node->tstart= curtime;
             return 0; /* Log it, stop looking */
         }
-        sfthd_node->filtered++;
         return -2; /* don't log yet */
     }
     else if ( sfthd_node->type == THD_TYPE_BOTH )
@@ -785,7 +781,6 @@ static inline int sfthd_test_non_suppress(
 
             /* Don't Log yet, keep looking:
              * only log after we reach count, which must be > '1' */
-            sfthd_node->filtered++;
             return -2;
         }
         else
@@ -796,7 +791,6 @@ static inline int sfthd_test_non_suppress(
                 {
                     /* don't log it, stop looking:
                      * log once per time interval - than block it */
-                    sfthd_node->filtered++;
                     return -2;
                 }
                 /* Log it, stop looking:
@@ -807,7 +801,6 @@ static inline int sfthd_test_non_suppress(
             {
                 /* don't log it, stop looking:
                  * we must see at least count events 1st */
-                sfthd_node->filtered++;
                 return -2;
             }
         }
@@ -1283,4 +1276,3 @@ int sfthd_show_objects(ThresholdObjects* thd_objs)
 }
 
 #endif // THD_DEBUG
-

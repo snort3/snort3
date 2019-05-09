@@ -26,6 +26,7 @@
 
 #include "sfrf.h"
 
+#include "main/thread.h"
 #include "detection/rules.h"
 #include "hash/ghash.h"
 #include "hash/xhash.h"
@@ -95,7 +96,7 @@ typedef struct
     time_t revertTime;
 } tSFRFTrackingNode;
 
-XHash* rf_hash = nullptr;
+static THREAD_LOCAL XHash* rf_hash = nullptr;
 
 // private methods ...
 static int _checkThreshold(
@@ -201,6 +202,19 @@ static void SFRF_SidNodeFree(void* item)
     snort_free(pSidnode);
 }
 
+int SFRF_Alloc(unsigned int memcap)
+{
+    if ( rf_hash == nullptr )
+    {
+        SFRF_New(memcap);
+
+        if ( rf_hash == nullptr )
+            return -1;
+    }
+    return 0;
+}
+
+
 /*  Add a permanent threshold object to the threshold table. Multiple
  * objects may be defined for each gid and sid pair. Internally
  * a unique threshold id is generated for each pair.
@@ -223,15 +237,6 @@ int SFRF_ConfigAdd(snort::SnortConfig*, RateFilterConfig* rf_config, tSFRFConfig
     tSFRFGenHashKey key = { 0,0 };
 
     PolicyId policy_id = snort::get_ips_policy()->policy_id;
-
-    // Auto init - memcap must be set 1st, which is not really a problem
-    if ( rf_hash == nullptr )
-    {
-        SFRF_New(rf_config->memcap);
-
-        if ( rf_hash == nullptr )
-            return -1;
-    }
 
     if ((rf_config == nullptr) || (cfgNode == nullptr))
         return -1;

@@ -35,6 +35,8 @@
 #include "detection/tag.h"
 #include "file_api/file_service.h"
 #include "filters/detection_filter.h"
+#include "filters/rate_filter.h"
+#include "filters/sfrf.h"
 #include "filters/sfthreshold.h"
 #include "flow/ha.h"
 #include "framework/data_bus.h"
@@ -491,6 +493,10 @@ void Analyzer::init_unprivileged()
     // in case there are HA messages waiting, process them first
     HighAvailabilityManager::process_receive();
     PacketManager::thread_init();
+
+    // init filters hash tables that depend on alerts
+    sfthreshold_alloc(sc->threshold_config->memcap, sc->threshold_config->memcap);
+    SFRF_Alloc(sc->rate_filter_config->memcap);
 }
 
 void Analyzer::reinit(SnortConfig* sc)
@@ -546,6 +552,9 @@ void Analyzer::term()
 
     Active::thread_term();
     delete switcher;
+
+    sfthreshold_free();
+    RateFilter_Cleanup();
 }
 
 Analyzer::Analyzer(SFDAQInstance* instance, unsigned i, const char* s, uint64_t msg_cnt)
@@ -792,4 +801,3 @@ void Analyzer::rotate()
 {
     DataBus::publish(THREAD_ROTATE_EVENT, nullptr);
 }
-
