@@ -40,8 +40,6 @@ public:
     bool add_suboption(const std::string& name);
     bool add_suboption(const std::string& name, const std::string& val);
 
-    bool is_relative_content();
-
     // overloading operators
     friend std::ostream& operator<<(std::ostream&, const RuleOption&);
 

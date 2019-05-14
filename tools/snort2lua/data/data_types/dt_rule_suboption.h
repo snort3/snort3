@@ -31,8 +31,6 @@ public:
     RuleSubOption(const std::string& name, const std::string& val);
     virtual ~RuleSubOption() = default;
 
-    inline const std::string& get_name() { return name; }
-
     // overloading operators
     friend std::ostream& operator<<(std::ostream&, const RuleSubOption&);
 

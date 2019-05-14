@@ -51,21 +51,6 @@ bool RuleOption::add_suboption(const std::string& subopt_name,
     return true;
 }
 
-bool RuleOption::is_relative_content()
-{
-    if (get_name() == "content")
-    {
-        for (auto rso : sub_options)
-        {
-            const std::string subopt_name = rso->get_name();
-            if (subopt_name == "within" || subopt_name == "distance")
-                return true;
-        }
-    }
-
-    return false;
-}
-
 std::ostream& operator<<(std::ostream& out, const RuleOption& opt)
 {
     bool first_print = true;

@@ -82,7 +82,6 @@ bool Pcre::convert(std::istringstream& data_stream)
     pattern += pcre_str.substr(0, pattern_end + 1);
     options = pcre_str.substr(pattern_end + 1, std::string::npos);
     new_opts = "";
-    bool relative = false;
 
     for (char c : options )
     {
@@ -109,11 +108,8 @@ bool Pcre::convert(std::istringstream& data_stream)
         case 'E':
         case 'G':
         case 'O':
-        case '"':     // end of reg_ex
-            new_opts += c;
-            break;
         case 'R':
-            relative = true;
+        case '"':     // end of reg_ex
             new_opts += c;
             break;
         default:
@@ -139,14 +135,6 @@ bool Pcre::convert(std::istringstream& data_stream)
     }
 
     rule_api.add_option("pcre", pattern + new_opts);
-
-    if ( relative )
-    {
-        if (buffer == "pcre_P_option_body")
-            buffer = "pcre_P_option_body_rel";
-        else if (buffer == "pcre_H_option_header")
-            buffer = "pcre_H_option_header_rel";
-    }
 
     rule_api.set_curr_options_buffer(buffer);
 
