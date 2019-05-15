@@ -49,7 +49,7 @@ void HttpMsgHeader::publish()
     HttpEvent http_event(this);
 
     const char* key = (source_id == SRC_CLIENT) ?
-        HTTP_REQUEST_HEADER_EVENT_KEY : HTTP_RESPONSE_HEADER_EVENT_KEY; 
+        HTTP_REQUEST_HEADER_EVENT_KEY : HTTP_RESPONSE_HEADER_EVENT_KEY;
 
     DataBus::publish(key, http_event, flow);
 }
@@ -151,7 +151,8 @@ void HttpMsgHeader::update_flow()
         return;
     }
 
-    if ((source_id == SRC_SERVER) && ((status_code_num <= 199) || (status_code_num == 204) ||
+    if ((source_id == SRC_SERVER) &&
+        ((100 <= status_code_num && status_code_num <= 199) || (status_code_num == 204) ||
         (status_code_num == 304)))
     {
         // No body allowed by RFC for these response codes. The message is over regardless of the
@@ -521,4 +522,3 @@ void HttpMsgHeader::print_section(FILE* output)
     HttpMsgSection::print_section_wrapup(output);
 }
 #endif
-
