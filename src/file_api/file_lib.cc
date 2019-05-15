@@ -351,8 +351,6 @@ void FileContext::finish_signature_lookup(Packet* p, bool final_lookup, FilePoli
             log_file_event(flow, policy);
             config_file_signature(false);
             file_stats->signatures_processed[get_file_type()][get_file_direction()]++;
-            if ( verdict == FILE_VERDICT_REJECT or verdict == FILE_VERDICT_BLOCK)
-                flow->disable_inspection();
         }
         else
         {

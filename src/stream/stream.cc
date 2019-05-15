@@ -324,6 +324,8 @@ void Stream::drop_flow(const Packet* p)
     flow->session->clear();
     flow->set_state(Flow::FlowState::BLOCK);
 
+    flow->disable_inspection();
+
     if ( !(p->packet_flags & PKT_STATELESS) )
         drop_traffic(p, SSN_DIR_BOTH);
 }
