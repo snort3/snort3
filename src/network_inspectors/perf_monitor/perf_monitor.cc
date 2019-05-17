@@ -50,34 +50,17 @@ THREAD_LOCAL SimpleStats pmstats;
 THREAD_LOCAL ProfileStats perfmonStats;
 
 static THREAD_LOCAL std::vector<PerfTracker*>* trackers;
-
+static THREAD_LOCAL FlowIPTracker* flow_ip_tracker = nullptr;
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
 
+class FlowIPDataHandler;
 class PerfMonitor : public Inspector
 {
 public:
     PerfMonitor(PerfConfig*);
-    ~PerfMonitor() override
-    {
-        if ( perf_idle_handler )
-        {
-            DataBus::unsubscribe_default(THREAD_IDLE_EVENT, perf_idle_handler);
-            delete perf_idle_handler;
-        }
-        if ( perf_rotate_handler )
-        {
-            DataBus::unsubscribe_default(THREAD_ROTATE_EVENT, perf_rotate_handler);
-            delete perf_rotate_handler;
-        }
-        if ( flow_ip_handler )
-        {
-            DataBus::unsubscribe_default(FLOW_STATE_EVENT, flow_ip_handler);
-            delete flow_ip_handler;
-        }
-        delete config;
-    }
+    ~PerfMonitor() override { delete config;}
 
     bool configure(SnortConfig*) override;
     void show(SnortConfig*) override;
@@ -92,21 +75,9 @@ public:
 
     FlowIPTracker* get_flow_ip();
 
-    void reset_perf_idle_handler()
-    { perf_idle_handler = nullptr; }
-
-    void reset_perf_rotate_handler()
-    { perf_rotate_handler = nullptr; }
-
-    void reset_flow_ip_handler()
-    { flow_ip_handler = nullptr; }
-
 private:
     PerfConfig* const config;
-    FlowIPTracker* flow_ip_tracker = nullptr;
-    DataHandler* flow_ip_handler = nullptr;
-    DataHandler* perf_idle_handler;
-    DataHandler* perf_rotate_handler;
+    FlowIPDataHandler* flow_ip_handler = nullptr;
 
     void disable_tracker(size_t);
 };
@@ -114,11 +85,8 @@ private:
 class PerfIdleHandler : public DataHandler
 {
 public:
-    PerfIdleHandler(PerfMonitor& p) : DataHandler(PERF_NAME), perf_monitor(p)
-    { DataBus::subscribe_default(THREAD_IDLE_EVENT, this); }
-
-    ~PerfIdleHandler() override
-    { perf_monitor.reset_perf_idle_handler(); }
+    PerfIdleHandler(PerfMonitor& p, SnortConfig*& sc) : DataHandler(PERF_NAME), perf_monitor(p)
+    { DataBus::subscribe_default(THREAD_IDLE_EVENT, this, sc); }
 
     void handle(DataEvent&, Flow*) override
     { perf_monitor.eval(nullptr); }
@@ -130,11 +98,8 @@ private:
 class PerfRotateHandler : public DataHandler
 {
 public:
-    PerfRotateHandler(PerfMonitor& p) : DataHandler(PERF_NAME), perf_monitor(p)
-    { DataBus::subscribe_default(THREAD_ROTATE_EVENT, this); }
-
-    ~PerfRotateHandler() override
-    { perf_monitor.reset_perf_rotate_handler(); }
+    PerfRotateHandler(PerfMonitor& p, SnortConfig* sc) : DataHandler(PERF_NAME), perf_monitor(p)
+    { DataBus::subscribe_default(THREAD_ROTATE_EVENT, this, sc); }
 
     void handle(DataEvent&, Flow*) override
     { perf_monitor.rotate(); }
@@ -146,11 +111,8 @@ private:
 class FlowIPDataHandler : public DataHandler
 {
 public:
-    FlowIPDataHandler(PerfMonitor& p) : DataHandler(PERF_NAME), perf_monitor(p)
-    { DataBus::subscribe_default(FLOW_STATE_EVENT, this); }
-
-    ~FlowIPDataHandler() override
-    { perf_monitor.reset_flow_ip_handler(); }
+    FlowIPDataHandler(PerfMonitor& p, SnortConfig* sc) : DataHandler(PERF_NAME), perf_monitor(p)
+    { DataBus::subscribe_default(FLOW_STATE_EVENT, this, sc); }
 
     void handle(DataEvent&, Flow* flow) override
     {
@@ -172,7 +134,8 @@ public:
             return;
 
         FlowIPTracker* tracker = perf_monitor.get_flow_ip();
-        tracker->update_state(&flow->client_ip, &flow->server_ip, state);
+        if (tracker)
+            tracker->update_state(&flow->client_ip, &flow->server_ip, state);
     }
 
 private:
@@ -245,6 +208,7 @@ void PerfMonitor::disable_tracker(size_t i)
     if ( tracker == flow_ip_tracker )
     {
         DataBus::unsubscribe_default(FLOW_STATE_EVENT, flow_ip_handler);
+        delete flow_ip_handler;
         flow_ip_tracker = nullptr;
     }
 
@@ -257,15 +221,13 @@ void PerfMonitor::disable_tracker(size_t i)
 // type and version fields immediately after timestamp like seconds, usec,
 // type, version#, data1, data2, ...
 
-bool PerfMonitor::configure(SnortConfig*)
+bool PerfMonitor::configure(SnortConfig* sc)
 {
-    // DataBus deletes these during shutdown, but we may also need to
-    // delete manually those subscriptions came from failed reload
-    perf_idle_handler = new PerfIdleHandler(*this);
-    perf_rotate_handler = new PerfRotateHandler(*this);
+    new PerfIdleHandler(*this, sc);
+    new PerfRotateHandler(*this, sc);
 
     if ( config->perf_flags & PERF_FLOWIP )
-        flow_ip_handler = new FlowIPDataHandler(*this);
+        flow_ip_handler = new FlowIPDataHandler(*this, sc);
 
     return config->resolve();
 }
@@ -312,6 +274,7 @@ void PerfMonitor::tterm()
             trackers->pop_back();
         }
         delete trackers;
+        flow_ip_tracker = nullptr;
     }
 }
 
@@ -378,6 +341,10 @@ bool PerfMonitor::ready_to_process(Packet* p)
     {
         if ((cur_time - sample_time) >= config->sample_interval)
         {
+            if (cnt == 0)
+                for (auto& tracker : *trackers)
+                    tracker->update_time(cur_time);
+
             cnt = 0;
             sample_time = cur_time;
             return true;
@@ -487,8 +454,5 @@ TEST_CASE("Process timing logic", "[perfmon]")
     REQUIRE((perfmon.ready_to_process(&p) == false));
     REQUIRE((perfmon.ready_to_process(&p) == false));
     REQUIRE((perfmon.ready_to_process(&p) == true));
-
-    perfmon.reset_perf_idle_handler();
-    perfmon.reset_perf_rotate_handler();
 }
 #endif

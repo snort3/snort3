@@ -106,9 +106,12 @@ void DataBus::subscribe(const char* key, DataHandler* h)
 }
 
 // for subscribers that need to receive events regardless of active inspection policy
-void DataBus::subscribe_default(const char* key, DataHandler* h)
+void DataBus::subscribe_default(const char* key, DataHandler* h, SnortConfig* sc)
 {
-    get_default_inspection_policy(SnortConfig::get_conf())->dbus._subscribe(key, h);
+    if (sc)
+        get_default_inspection_policy(sc)->dbus._subscribe(key, h);
+    else
+        get_default_inspection_policy(SnortConfig::get_conf())->dbus._subscribe(key, h);
 }
 
 void DataBus::unsubscribe(const char* key, DataHandler* h)
@@ -116,9 +119,12 @@ void DataBus::unsubscribe(const char* key, DataHandler* h)
     get_data_bus()._unsubscribe(key, h);
 }
 
-void DataBus::unsubscribe_default(const char* key, DataHandler* h)
+void DataBus::unsubscribe_default(const char* key, DataHandler* h, SnortConfig* sc)
 {
-    get_default_inspection_policy(SnortConfig::get_conf())->dbus._unsubscribe(key, h);
+    if (sc)
+        get_default_inspection_policy(sc)->dbus._unsubscribe(key, h);
+    else
+        get_default_inspection_policy(SnortConfig::get_conf())->dbus._unsubscribe(key, h);
 }
 
 // notify subscribers of event

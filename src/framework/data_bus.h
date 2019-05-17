@@ -38,6 +38,7 @@ namespace snort
 {
 class Flow;
 struct Packet;
+struct SnortConfig;
 
 class DataEvent
 {
@@ -96,9 +97,9 @@ public:
     void add_mapped_module(const char*);
 
     static void subscribe(const char* key, DataHandler*);
-    static void subscribe_default(const char* key, DataHandler*);
+    static void subscribe_default(const char* key, DataHandler*, SnortConfig* = nullptr);
     static void unsubscribe(const char* key, DataHandler*);
-    static void unsubscribe_default(const char* key, DataHandler*);
+    static void unsubscribe_default(const char* key, DataHandler*, SnortConfig* = nullptr);
     static void publish(const char* key, DataEvent&, Flow* = nullptr);
 
     // convenience methods

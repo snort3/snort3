@@ -1580,7 +1580,6 @@ static DCE2_Ret DCE2_SmbFileAPIProcess(DCE2_SmbSsnData* ssd,
 
     Profile profile(dce2_smb_pstat_smb_file_api);
     Packet* p = DetectionEngine::get_current_packet();
-    DetectionEngine::get_current_packet();
     FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
     if (!file_flows->file_process(p, data_ptr, (int)data_len, position, upload,
         DCE2_SmbIsVerdictSuspend(upload, position)))
