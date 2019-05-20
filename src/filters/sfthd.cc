@@ -37,6 +37,7 @@
 
 #include "hash/ghash.h"
 #include "hash/xhash.h"
+#include "main/thread.h"
 #include "sfip/sf_ipvar.h"
 #include "utils/dyn_array.h"
 #include "utils/sflsq.h"
@@ -46,6 +47,8 @@ using namespace snort;
 
 //  Debug Printing
 //#define THD_DEBUG
+
+THREAD_LOCAL EventFilterStats event_filter_stats;
 
 XHash* sfthd_new_hash(unsigned nbytes, size_t key, size_t data)
 {
@@ -910,6 +913,11 @@ int sfthd_test_local(
         /* Increment the event count */
         sfthd_ip_node->count++;
     }
+    else if (status == XHASH_NOMEM)
+    {
+        event_filter_stats.xhash_nomem_peg_local++;
+        return 1;
+    }
     else if (status != XHASH_OK)
     {
         /* hash error */
@@ -1002,6 +1010,11 @@ static inline int sfthd_test_global(
 
         /* Increment the event count */
         sfthd_ip_node->count++;
+    }
+    else if (status == XHASH_NOMEM)
+    {
+        event_filter_stats.xhash_nomem_peg_global++;
+        return 1;
     }
     else if (status != XHASH_OK)
     {

@@ -23,6 +23,7 @@
 #ifndef SFTHD_H
 #define SFTHD_H
 
+#include "framework/counts.h"
 #include "main/policy.h"
 #include "sfip/sf_ip.h"
 #include "utils/cpp_macros.h"
@@ -206,6 +207,12 @@ struct ThresholdObjects
     //THD_NODE * (*sfthd_garray)[THD_MAX_GENID];
     THD_NODE*** sfthd_garray;
     PolicyId numPoliciesAllocated;
+};
+
+struct EventFilterStats
+{
+    PegCount xhash_nomem_peg_local = 0;
+    PegCount xhash_nomem_peg_global = 0;
 };
 
 /*

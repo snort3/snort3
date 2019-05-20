@@ -27,6 +27,7 @@
 #include <ctime>
 
 #include "actions/actions.h"
+#include "framework/counts.h"
 #include "main/policy.h"
 
 namespace snort
@@ -143,6 +144,11 @@ struct RateFilterConfig
     unsigned noRevertCount;
     int count;
     int internal_event_mask;
+};
+
+struct RateFilterStats
+{
+    PegCount xhash_nomem_peg = 0;
 };
 
 /*

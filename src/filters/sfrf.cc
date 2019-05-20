@@ -47,6 +47,9 @@ using namespace snort;
 #define SFRF_NO_REVERT_LIMIT 1000
 
 // private data ...
+
+THREAD_LOCAL RateFilterStats rate_filter_stats;
+
 /* Key to find tracking nodes in trackingHash.
  */
 PADDING_GUARD_BEGIN
@@ -793,7 +796,14 @@ static tSFRFTrackingNode* _getSFRFTrackingNode(const snort::SfIp* ip, unsigned t
      * Check for any Permanent sid objects for this gid or add this one ...
      */
     XHashNode* hnode = xhash_get_node(rf_hash, (void*)&key);
-    if ( hnode && hnode->data )
+    if ( !hnode )
+    {
+        // xhash_get_node fails to insert only if rf_hash is full.
+        rate_filter_stats.xhash_nomem_peg++;
+        return dynNode;
+    }
+
+    if ( hnode->data )
     {
         dynNode = (tSFRFTrackingNode*)hnode->data;
 

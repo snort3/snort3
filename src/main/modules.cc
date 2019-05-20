@@ -1555,6 +1555,14 @@ static const Parameter event_filter_params[] =
 #define event_filter_help \
     "configure thresholding of events"
 
+extern THREAD_LOCAL EventFilterStats event_filter_stats; // in sfthd.cc
+const PegInfo event_filter_peg_names[] =
+{
+    { CountType::SUM, "no_memory_local", "number of times event filter ran out of local memory" },
+    { CountType::SUM, "no_memory_global", "number of times event filter ran out of global memory" },
+    { CountType::END, nullptr, nullptr }
+};
+
 class EventFilterModule : public Module
 {
 public:
@@ -1563,6 +1571,16 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
+
+    const PegInfo* get_pegs() const override
+    {
+        return event_filter_peg_names;
+    }
+
+    PegCount* get_counts() const override
+    {
+        return (PegCount*)&event_filter_stats;
+    }
 
     Usage get_usage() const override
     { return CONTEXT; }
@@ -1657,6 +1675,14 @@ static const Parameter rate_filter_params[] =
 #define rate_filter_help \
     "configure rate filters (which change rule actions)"
 
+extern THREAD_LOCAL RateFilterStats rate_filter_stats;
+const PegInfo rate_filter_peg_names[] =
+{
+    { CountType::SUM, "no_memory", "number of times rate filter ran out of memory" },
+    { CountType::END, nullptr, nullptr }
+};
+
+
 class RateFilterModule : public Module
 {
 public:
@@ -1666,6 +1692,16 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
+
+    const PegInfo* get_pegs() const override
+    {
+        return rate_filter_peg_names;
+    }
+
+    PegCount* get_counts() const override
+    {
+        return (PegCount*)&rate_filter_stats;
+    }
 
     Usage get_usage() const override
     { return DETECT; }
