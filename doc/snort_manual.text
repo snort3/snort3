@@ -386,7 +386,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0 (Build 254) from 2.9.11
+o"  )~   Version 3.0.0 (Build 256) from 2.9.11
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
@@ -667,7 +667,30 @@ $ sort -c snort.lua -R rules.txt
 
 You can use both approaches together.
 
-1.2.4. Converting Your 2.X Configuration
+1.2.4. Includes
+
+Your configuration file file may include other files, either directly
+via Lua or via various parameters. Snort will find relative includes
+in the following order:
+
+ 1. If you specify --include-path, this directory will be tried
+    first.
+ 2. Snort will try the directory containing the including file.
+ 3. Snort will try the directory containing the -c configuration
+    file.
+
+Some things to keep in mind:
+
+  * If you use the Lua dofile function, then you must specify
+    absolute paths or paths relative to your working directory since
+    Lua will execute the include before Snort sees the file contents.
+  * For best results, use include in place of dofile. This function
+    is provided to follow Snort’s include logic.
+  * As of now, appid and reputation paths must be absolute or
+    relative to the working directory. These will be updated in a
+    future release.
+
+1.2.5. Converting Your 2.X Configuration
 
 If you have a working 2.X configuration snort2lua makes it easy to
 get up and running with Snort 3. This tool will convert your
@@ -5446,16 +5469,16 @@ Usage: global
 
 Configuration:
 
-  * string daq.module_dirs[].str: string parameter
-  * string daq.input_spec: input specification
-  * string daq.module: DAQ module to use
-  * string daq.variables[].str: string parameter
-  * int daq.instances[].id: instance ID (required) { 0:max32 }
-  * string daq.instances[].input_spec: input specification
-  * string daq.instances[].variables[].str: string parameter
-  * int daq.snaplen: set snap length (same as -s) { 0:65535 }
-  * bool daq.no_promisc = false: whether to put DAQ device into
-    promiscuous mode
+  * string daq.module_dirs[].path: directory path
+  * string daq.inputs[].input: input source
+  * int daq.snaplen = 1518: set snap length (same as -s) { 0:65535 }
+  * int daq.batch_size = 64: set receive batch size (same as
+    --daq-batch-size) { 1: }
+  * string daq.modules[].name: DAQ module name (required)
+  * enum daq.modules[].mode = passive: DAQ module mode { passive |
+    inline | read-file }
+  * string daq.modules[].variables[].variable: DAQ module variable
+    (foo[=bar])
 
 Peg counts:
 
@@ -5492,6 +5515,11 @@ What: general decoder rules
 Type: basic
 
 Usage: context
+
+Configuration:
+
+  * int decode.trace: mask for enabling debug traces in module {
+    0:max53 }
 
 Rules:
 
@@ -5595,6 +5623,13 @@ Configuration:
   * int event_filter[].seconds = 0: count interval { 0:max32 }
   * string event_filter[].ip: restrict filter to these addresses
     according to track
+
+Peg counts:
+
+  * event_filter.no_memory_local: number of times event filter ran
+    out of local memory (sum)
+  * event_filter.no_memory_global: number of times event filter ran
+    out of global memory (sum)
 
 
 6.9. event_queue
@@ -5760,12 +5795,14 @@ Usage: detect
 Configuration:
 
   * enum ips.default_rule_state = inherit: enable or disable ips
-    rules { false | true | inherit }
+    rules { no | yes | inherit }
   * bool ips.enable_builtin_rules = false: enable events from builtin
     rules w/o stubs
   * int ips.id = 0: correlate unified2 events with configuration {
     0:65535 }
-  * string ips.include: legacy snort rules and includes
+  * string ips.include: snort rules and includes
+  * string ips.includer: for internal use; where includes are
+    included from { (optional) }
   * enum ips.mode: set policy mode { tap | inline | inline-test }
   * string ips.rules: snort rules and includes
   * bool ips.obfuscate_pii = false: mask all but the last 4
@@ -6053,6 +6090,11 @@ Configuration:
   * string rate_filter[].apply_to: restrict filter to these addresses
     according to track
 
+Peg counts:
+
+  * rate_filter.no_memory: number of times rate filter ran out of
+    memory (sum)
+
 
 6.25. references
 
@@ -6087,7 +6129,7 @@ Configuration:
     pass | alert | drop | block | reset | inherit }
   * enum rule_state.([0-9]+):([0-9]+)[].enable = inherit: enable or
     disable rule in current ips policy or use default defined by ips
-    policy { false | true | inherit }
+    policy { no | yes | inherit }
 
 
 6.27. search_engine
@@ -6250,10 +6292,14 @@ Configuration:
     Daemon mode
   * string snort.--daq: <type> select packet acquisition module
     (default is pcap)
+  * int snort.--daq-batch-size = 64: <size> set the DAQ receive batch
+    size { 1: }
   * string snort.--daq-dir: <dir> tell snort where to find desired
     DAQ
   * implied snort.--daq-list: list packet acquisition modules
     available in optional dir, default is static modules only
+  * enum snort.--daq-mode: <mode> select DAQ module operating mode
+    (overrides automatic selection) { passive | inline | read-file }
   * string snort.--daq-var: <name=value> specify extra DAQ
     configuration variable
   * implied snort.--dirty-pig: don’t flush packets on shutdown
@@ -8655,7 +8701,7 @@ Usage: global
 Configuration:
 
   * int port_scan.memcap = 1048576: maximum tracker memory in bytes {
-    1:maxSZ }
+    1024:maxSZ }
   * multi port_scan.protos = all: choose the protocols to monitor {
     tcp | udp | icmp | ip | all }
   * multi port_scan.scan_types = all: choose type of scans to look
@@ -13917,9 +13963,12 @@ these libraries see the Getting Started section of the manual.
   * --control-socket <file> to create unix socket
   * --create-pidfile create PID file, even when not in Daemon mode
   * --daq <type> select packet acquisition module (default is pcap)
+  * --daq-batch-size <size> set the DAQ receive batch size (1:)
   * --daq-dir <dir> tell snort where to find desired DAQ
   * --daq-list list packet acquisition modules available in optional
     dir, default is static modules only
+  * --daq-mode <mode> select DAQ module operating mode (overrides
+    automatic selection) (passive | inline | read-file)
   * --daq-var <name=value> specify extra DAQ configuration variable
   * --dirty-pig don’t flush packets on shutdown
   * --dump-builtin-rules [<module prefix>] output stub rules for
@@ -14318,16 +14367,16 @@ these libraries see the Getting Started section of the manual.
   * string content.within: var or maximum number of bytes to search
     from cursor
   * implied cvs.invalid-entry: looks for an invalid Entry string
-  * string daq.input_spec: input specification
-  * int daq.instances[].id: instance ID (required) { 0:max32 }
-  * string daq.instances[].input_spec: input specification
-  * string daq.instances[].variables[].str: string parameter
-  * string daq.module: DAQ module to use
-  * string daq.module_dirs[].str: string parameter
-  * bool daq.no_promisc = false: whether to put DAQ device into
-    promiscuous mode
-  * int daq.snaplen: set snap length (same as -s) { 0:65535 }
-  * string daq.variables[].str: string parameter
+  * int daq.batch_size = 64: set receive batch size (same as
+    --daq-batch-size) { 1: }
+  * string daq.inputs[].input: input source
+  * string daq.module_dirs[].path: directory path
+  * enum daq.modules[].mode = passive: DAQ module mode { passive |
+    inline | read-file }
+  * string daq.modules[].name: DAQ module name (required)
+  * string daq.modules[].variables[].variable: DAQ module variable
+    (foo[=bar])
+  * int daq.snaplen = 1518: set snap length (same as -s) { 0:65535 }
   * select data_log.key = http_request_header_event : name of the
     event to log { http_request_header_event |
     http_response_header_event }
@@ -14796,12 +14845,14 @@ these libraries see the Getting Started section of the manual.
     lsrre|ssrr|satid|any }
   * string ip_proto.~proto: [!|>|<] name or number
   * enum ips.default_rule_state = inherit: enable or disable ips
-    rules { false | true | inherit }
+    rules { no | yes | inherit }
   * bool ips.enable_builtin_rules = false: enable events from builtin
     rules w/o stubs
   * int ips.id = 0: correlate unified2 events with configuration {
     0:65535 }
-  * string ips.include: legacy snort rules and includes
+  * string ips.includer: for internal use; where includes are
+    included from { (optional) }
+  * string ips.include: snort rules and includes
   * enum ips.mode: set policy mode { tap | inline | inline-test }
   * bool ips.obfuscate_pii = false: mask all but the last 4
     characters of credit card and social security numbers
@@ -15055,7 +15106,7 @@ these libraries see the Getting Started section of the manual.
   * int port_scan.ip_window = 0: detection interval for all IP scans
     { 0:max32 }
   * int port_scan.memcap = 1048576: maximum tracker memory in bytes {
-    1:maxSZ }
+    1024:maxSZ }
   * multi port_scan.protos = all: choose the protocols to monitor {
     tcp | udp | icmp | ip | all }
   * multi port_scan.scan_types = all: choose type of scans to look
@@ -15220,7 +15271,7 @@ these libraries see the Getting Started section of the manual.
     pass | alert | drop | block | reset | inherit }
   * enum rule_state.([0-9]+):([0-9]+)[].enable = inherit: enable or
     disable rule in current ips policy or use default defined by ips
-    policy { false | true | inherit }
+    policy { no | yes | inherit }
   * string sd_pattern.~pattern: The pattern to search for
   * int sd_pattern.threshold = 1: number of matches before alerting {
     1:max32 }
@@ -15368,10 +15419,14 @@ these libraries see the Getting Started section of the manual.
     hex)
   * implied snort.--create-pidfile: create PID file, even when not in
     Daemon mode
+  * int snort.--daq-batch-size = 64: <size> set the DAQ receive batch
+    size { 1: }
   * string snort.--daq-dir: <dir> tell snort where to find desired
     DAQ
   * implied snort.--daq-list: list packet acquisition modules
     available in optional dir, default is static modules only
+  * enum snort.--daq-mode: <mode> select DAQ module operating mode
+    (overrides automatic selection) { passive | inline | read-file }
   * string snort.--daq: <type> select packet acquisition module
     (default is pcap)
   * string snort.--daq-var: <name=value> specify extra DAQ
@@ -16021,6 +16076,10 @@ these libraries see the Getting Started section of the manual.
   * domain_filter.checked: domains checked (sum)
   * domain_filter.filtered: domains filtered (sum)
   * dpx.packets: total packets (sum)
+  * event_filter.no_memory_global: number of times event filter ran
+    out of global memory (sum)
+  * event_filter.no_memory_local: number of times event filter ran
+    out of local memory (sum)
   * file_connector.messages: total messages (sum)
   * file_id.cache_failures: number of file cache add failures (sum)
   * file_id.total_file_data: number of file data bytes processed
@@ -16232,6 +16291,8 @@ these libraries see the Getting Started section of the manual.
   * pop.uu_attachments: total uu attachments decoded (sum)
   * pop.uu_decoded_bytes: total uu decoded bytes (sum)
   * port_scan.packets: total packets (sum)
+  * rate_filter.no_memory: number of times rate filter ran out of
+    memory (sum)
   * reg_test.packets: total packets (sum)
   * reg_test.retry_packets: total retried packets received (sum)
   * reg_test.retry_requests: total retry packets requested (sum)
@@ -17239,9 +17300,7 @@ change -> attribute_table: 'STREAM_POLICY' ==> 'hosts: tcp_policy'
 change -> attribute_table: 'filename <file_name>' ==> 'hosts[]'
 change -> config ' addressspace_agnostic'  ==> ' packets. address_space_agnostic'
 change -> config ' checksum_mode'  ==> ' network. checksum_eval'
-change -> config ' daq'  ==> ' daq. module'
 change -> config ' daq_dir'  ==> ' daq. module_dirs, true'
-change -> config ' daq_var'  ==> ' daq. variables, true'
 change -> config ' detection_filter'  ==> ' alerts. detection_filter_memcap'
 change -> config ' enable_deep_teredo_inspection'  ==> ' udp. deep_teredo_inspection'
 change -> config ' event_filter'  ==> ' alerts. event_filter_memcap'
@@ -17279,6 +17338,9 @@ change -> csv: 'tcplen' ==> 'tcp_len'
 change -> csv: 'tcpseq' ==> 'tcp_seq'
 change -> csv: 'tcpwindow' ==> 'tcp_win'
 change -> csv: 'udplength' ==> 'udp_len'
+change -> daq: 'config daq:' ==> 'name'
+change -> daq_mode: 'config daq_mode:' ==> 'mode'
+change -> daq_var: 'config daq_var:' ==> 'variables'
 change -> detection: 'ac' ==> 'ac_full'
 change -> detection: 'ac-banded' ==> 'ac_banded'
 change -> detection: 'ac-bnfa' ==> 'ac_bnfa'
@@ -17439,7 +17501,6 @@ deleted -> attribute_table: '<FRAG_POLICY>unknown</FRAG_POLICY>'
 deleted -> attribute_table: '<STREAM_POLICY>noack</STREAM_POLICY>'
 deleted -> attribute_table: '<STREAM_POLICY>unknown</STREAM_POLICY>'
 deleted -> config ' cs_dir'
-deleted -> config ' daq_mode'
 deleted -> config ' decode_data_link'
 deleted -> config ' disable_attribute_reload_thread'
 deleted -> config ' disable_decode_alerts'
@@ -17475,6 +17536,7 @@ deleted -> config ' include_vlan_in_alerts'
 deleted -> config ' interface'
 deleted -> config ' layer2resets'
 deleted -> config ' log_ipv6_extra_data'
+deleted -> config ' no_promisc'
 deleted -> config ' nolog'
 deleted -> config ' protected_content'
 deleted -> config ' sidechannel'

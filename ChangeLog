@@ -1,3 +1,33 @@
+19/05/22 - build 256
+
+-- DAQng: Port Snort and its DAQ modules to DAQ3
+   - Massive refactoring of the Analyzer thread
+   - Handle multiple offloaded wire packets
+   - Port hext and file DAQ modules to DAQng
+   - Reimplement the RETRY verdict internal to Snort
+   - Revamp skip-n/exit-after-n/pause-after-n handling
+   - Update lua tweaks with new DAQ configuration format
+   - Update sfdaq unit tests for DAQng
+   - Update snort2lua to convert to new DAQ configuration
+-- filters: add peg count for when the thd_runtime XHash table gets full.
+-- filters: make thd_runtime and rf_hash thread local and allocate them from thread init 
+   rather than from Module::end()
+-- http_inspect: fix status_code_num bug in HttpMsgHeader::update_flow() that leads to 
+   assert on input.length()>0 in norm_decimal_integer
+-- main: Fix File Descriptor leaks
+-- main: Include analyzer.h in snort.c
+-- packet_io: Refactor the Trough a bit
+-- perf_mon: Fixed time stamp and memory leak issue
+   - Add real timestamp to empty perf_stats data
+   - Updated dbus default subscription code and perf_mon event subscirption code 
+     to resolve memory leak and invalid event subscription from reloading
+   - Moved flow_ip_tracker to thread local
+-- perf_monitor: Fixing heap-use-after-free after reload failure
+-- port_scan: Change minimum memcap value to 1024 to avoid divide by zero crash
+-- rule_state: change enable values "true" / "false" to "yes" / "no"
+-- snort2lua: Remove sticky buffer duplicates
+-- stream: disable inspection of flow on reset
+
 19/05/03 - build 255
 
 -- ips: add includer for better relative path support
