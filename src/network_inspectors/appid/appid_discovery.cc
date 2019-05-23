@@ -24,6 +24,7 @@
 #endif
 
 #include "appid_discovery.h"
+#include "host_tracker/host_cache.h"
 
 #include "log/messages.h"
 #include "profiler/profiler.h"
@@ -635,6 +636,15 @@ static void lookup_appid_by_host_port(AppIdSession& asd, Packet* p, IpProtocol p
                 asd.payload.set_id(APP_ID_UNKNOWN);
         }
     }
+    else if (asd.config->mod_config->is_host_port_app_cache_runtime)
+    {
+        AppId appid = snort::host_cache_find_app_mapping(ip, port, (Protocol)protocol);
+        if (appid > APP_ID_NONE)
+        {
+            asd.client.set_id(appid);
+            asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
+        }
+    }
 }
 
 bool AppIdDiscovery::handle_unmonitored_session(AppIdSession* asd, const Packet* p,
@@ -851,8 +861,12 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
     bool is_discovery_done = false;
 
     // {host, port} based detection
-    if ( !(asd.scan_flags & SCAN_HOST_PORT_FLAG) )
-        lookup_appid_by_host_port(asd, p, protocol, direction);
+    if (!(asd.scan_flags & SCAN_HOST_PORT_FLAG))
+    {
+        if ((asd.is_tp_processing_done() && asd.get_tp_app_id() <= APP_ID_NONE) ||
+            (asd.session_packet_count > asd.config->mod_config->host_port_app_cache_lookup_delay))
+            lookup_appid_by_host_port(asd, p, protocol, direction);
+    }
 
     asd.check_app_detection_restart(change_bits);
 

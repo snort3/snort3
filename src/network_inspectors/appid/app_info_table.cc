@@ -51,6 +51,8 @@ static AppInfoTable custom_app_info_table;
 static const char* CONF_SEPARATORS = "\t\n\r";
 static const int MIN_MAX_TP_FLOW_DEPTH = 1;
 static const int MAX_MAX_TP_FLOW_DEPTH = 1000000;
+static const int MIN_HOST_PORT_APP_CACHE_LOOKUP_DELAY = 0;
+static const int MAX_HOST_PORT_APP_CACHE_LOOKUP_DELAY = 1000000;
 static const char* APP_CONFIG_FILE = "appid.conf";
 static const char* USR_CONFIG_FILE = "userappid.conf";
 const char* APP_MAPPING_FILE = "appMapping.data";
@@ -323,6 +325,28 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* config, const char* pa
                 else
                 {
                     config->max_tp_flow_depth = max_tp_flow_depth;
+                }
+            }
+            else if (!(strcasecmp(conf_key, "host_port_app_cache_lookup_delay")))
+            {
+                int host_port_app_cache_lookup_delay = atoi(conf_val);
+                if (host_port_app_cache_lookup_delay < MIN_HOST_PORT_APP_CACHE_LOOKUP_DELAY
+                    || host_port_app_cache_lookup_delay > MAX_HOST_PORT_APP_CACHE_LOOKUP_DELAY)
+                {
+                     ParseWarning(WARN_CONF,
+                        "AppId: invalid host_port_app_cache_lookup_delay %d, must be between %d and %d\n.",
+                        host_port_app_cache_lookup_delay, MIN_HOST_PORT_APP_CACHE_LOOKUP_DELAY, MAX_HOST_PORT_APP_CACHE_LOOKUP_DELAY);
+                }
+                else
+                {
+                     config->host_port_app_cache_lookup_delay = host_port_app_cache_lookup_delay;
+                }
+            }
+            else if (!(strcasecmp(conf_key, "is_host_port_app_cache_runtime")))
+            {
+                if (!(strcasecmp(conf_val, "enabled")))
+                {
+                    config->is_host_port_app_cache_runtime = true;
                 }
             }
             else if (!(strcasecmp(conf_key, "tp_allow_probes")))

@@ -23,6 +23,7 @@
 
 #define APPID_MOCK_INSPECTOR_H // avoiding mocked inspector
 
+#include "host_tracker/host_cache.h"
 #include "network_inspectors/appid/appid_discovery.cc"
 
 #include "search_engines/search_tool.h"
@@ -176,6 +177,7 @@ void AppIdSession::set_client_appid_data(AppId, char*, AppidChangeBits&) {}
 void AppIdSession::examine_rtmp_metadata(AppidChangeBits&) {}
 void AppIdSession::examine_ssl_metadata(Packet*, AppidChangeBits&) {}
 void AppIdSession::update_encrypted_app_id(AppId) {}
+bool AppIdSession::is_tp_processing_done() const {return 0;}
 AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol,
     AppidSessionDirection, AppIdInspector*)
 {
@@ -211,7 +213,7 @@ ServiceDiscovery& ServiceDiscovery::get_instance()
         s_discovery_manager = new ServiceDiscovery();
     return *s_discovery_manager;
 }
-
+AppId snort::host_cache_find_app_mapping(snort::SfIp const*, Port port , Protocol proto){ return 0; }
 // Stubs for ClientDiscovery
 ClientDiscovery::ClientDiscovery(){}
 ClientDiscovery::~ClientDiscovery() {}

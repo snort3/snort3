@@ -29,16 +29,17 @@
 #include <cstring>
 #include <list>
 #include <mutex>
-
 #include "framework/counts.h"
+#include "main/snort_types.h"
 #include "main/thread.h"
+#include "network_inspectors/appid/application_ids.h"
+#include "protocols/protocol_ids.h"
 #include "sfip/sf_ip.h"
 #include "target_based/snort_protocols.h"
 
 //  FIXIT-M For now this emulates the Snort++ attribute table.
 //  Need to add in host_tracker.h data eventually.
 
-typedef uint16_t Port;
 typedef uint16_t Protocol;
 typedef uint8_t Policy;
 
@@ -72,6 +73,13 @@ struct HostApplicationEntry
     }
 };
 
+struct AppMapping
+{
+    Port port;
+    Protocol proto;
+    AppId appid;
+};
+
 class HostTracker
 {
 private:
@@ -80,6 +88,7 @@ private:
 
     //  FIXIT-M do we need to use a host_id instead of SfIp as in sfrna?
     snort::SfIp ip_addr;
+    std::vector< AppMapping > app_mappings; 
 
     //  Policies to apply to this host.
     Policy stream_policy = 0;
@@ -92,6 +101,11 @@ public:
     HostTracker()
     {
         memset(&ip_addr, 0, sizeof(ip_addr));
+    }
+
+    HostTracker(const snort::SfIp& new_ip_addr)
+    {
+        std::memcpy(&ip_addr, &new_ip_addr, sizeof(ip_addr));
     }
 
     snort::SfIp get_ip_addr()
@@ -128,6 +142,43 @@ public:
     {
         std::lock_guard<std::mutex> lck(host_tracker_lock);
         frag_policy = policy;
+    }
+
+    void add_app_mapping(Port port, Protocol proto, AppId appid)
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        AppMapping app_map = {port, proto, appid};
+
+        app_mappings.push_back(app_map);
+    }
+
+    AppId find_app_mapping(Port port, Protocol proto)
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        for (std::vector<AppMapping>::iterator it=app_mappings.begin(); it!=app_mappings.end(); ++it)
+        {
+            if (it->port == port and it->proto ==proto)
+            {
+                return it->appid;
+            }
+        }
+        return APP_ID_NONE;
+    }
+
+    bool find_else_add_app_mapping(Port port, Protocol proto, AppId appid)
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        for (std::vector<AppMapping>::iterator it=app_mappings.begin(); it!=app_mappings.end(); ++it)
+        {
+            if (it->port == port and it->proto ==proto)
+            {
+                return false; 
+            }
+        }
+        AppMapping app_map = {port, proto, appid};
+
+        app_mappings.push_back(app_map);
+        return true;
     }
 
     //  Add host service data only if it doesn't already exist.  Returns

@@ -278,10 +278,10 @@ public:
     void clear_session_flags(uint64_t flags) { common.flags &= ~flags; }
     uint64_t get_session_flags(uint64_t flags) const { return (common.flags & flags); }
     void set_service_detected() { common.flags |= APPID_SESSION_SERVICE_DETECTED; }
-    bool is_service_detected() { return common.flags & APPID_SESSION_SERVICE_DETECTED; }
+    bool is_service_detected() { return ((common.flags & APPID_SESSION_SERVICE_DETECTED) == 0) ? false : true; }
     void set_client_detected() { common.flags |= APPID_SESSION_CLIENT_DETECTED; }
-    bool is_client_detected() { return common.flags & APPID_SESSION_CLIENT_DETECTED; }
-    bool is_decrypted() { return common.flags & APPID_SESSION_DECRYPTED; }
+    bool is_client_detected() { return ((common.flags & APPID_SESSION_CLIENT_DETECTED) == 0) ? false : true; }
+    bool is_decrypted() { return ((common.flags & APPID_SESSION_DECRYPTED) == 0) ? false : true; }
 
     void* get_flow_data(unsigned id);
     int add_flow_data(void* data, unsigned id, AppIdFreeFCN);

@@ -69,6 +69,8 @@ namespace snort
 {
 //  Insert a new service into host cache if it doesn't already exist.
 SO_PUBLIC bool host_cache_add_service(const SfIp&, Protocol, Port, const char* service);
+bool host_cache_add_app_mapping(const SfIp&, Port, Protocol, AppId);
+AppId host_cache_find_app_mapping(const SfIp* , Port, Protocol );
 }
 #endif
 

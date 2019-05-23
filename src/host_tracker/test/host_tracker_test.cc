@@ -83,6 +83,36 @@ TEST(host_tracker, policy_test)
     CHECK(expected_policy == actual_policy);
 }
 
+TEST(host_tracker, app_mapping_test)
+{
+    HostTracker ht;
+    const uint16_t expected_ports = 4123;
+    const uint16_t port1 = 4122;
+    AppId actual_appid;
+    Protocol expected_proto1 = 6; 
+    Protocol expected_proto2 = 17; 
+    AppId appid1 = 61;
+    AppId appid2 = 62;
+    bool ret;
+
+    ht.add_app_mapping(expected_ports, expected_proto1, appid1);
+
+    actual_appid = ht.find_app_mapping(expected_ports, expected_proto1);
+    CHECK(61 == actual_appid);
+
+    actual_appid = ht.find_app_mapping(expected_ports, expected_proto2);
+    CHECK(APP_ID_NONE == actual_appid);
+
+    actual_appid = ht.find_app_mapping(port1, expected_proto2);
+    CHECK(APP_ID_NONE == actual_appid);
+
+    ret = ht.find_else_add_app_mapping(port1, expected_proto1, appid2);
+    CHECK(true == ret);
+
+    ret = ht.find_else_add_app_mapping(port1, expected_proto1, appid2);
+    CHECK(false == ret);
+}
+
 //  Test HostTracker add and find service functions.
 TEST(host_tracker, add_find_service_test)
 {

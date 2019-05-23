@@ -181,6 +181,56 @@ TEST(host_cache, host_cache_add_service_test)
     host_cache.clear();     //  Free HostTracker objects
 }
 
+TEST(host_cache, host_cache_app_mapping_test )
+{
+    HostTracker* expected_ht = new HostTracker;
+    std::shared_ptr<HostTracker> actual_ht;
+    uint8_t hk[16] =
+        { 0xde,0xad,0xbe,0xef,0xab,0xcd,0xef,0x01,0x23,0x34,0x56,0x78,0x90,0xab,0xcd,0xef };
+    SfIp ip_addr1;
+    SfIp ip_addr2;
+    HostIpKey hkey(hk);
+    Port port1 = 4123;
+    Port port2 = 1827;
+    Protocol proto1 = 6;
+    Protocol proto2 = 7;
+    AppId appid1 = 61;
+    AppId appid2 = 62;
+    AppId appid3 = 63;
+    AppId ret;
+    bool add_ret;
+
+    ip_addr1.pton(AF_INET6, "beef:dead:beef:abcd:ef01:2334:5678:90ab");
+    ip_addr2.pton(AF_INET6, "beef:dead:beef:abcd:ef01:2334:5678:901b");
+
+    // Initialize cache with a HostTracker.
+    host_cache_add_host_tracker(expected_ht);
+
+    add_ret = host_cache_add_app_mapping(ip_addr1, port1, proto1, appid1);
+    CHECK(true == add_ret);
+
+    ret = host_cache_find_app_mapping(&ip_addr1, port1, proto1);
+    CHECK(61 == ret);
+
+    ret = host_cache_find_app_mapping(&ip_addr1, port2, proto1);
+    CHECK(APP_ID_NONE == ret);
+
+    ret = host_cache_find_app_mapping(&ip_addr2, port1, proto1);
+    CHECK(APP_ID_NONE == ret);
+
+    add_ret = host_cache_add_app_mapping(ip_addr1, port2, proto1, appid2);
+    CHECK(true == add_ret);
+    ret = host_cache_find_app_mapping(&ip_addr1, port2, proto1);
+    CHECK(62 == ret);
+    
+    add_ret = host_cache_add_app_mapping(ip_addr1, port1, proto2, appid3);
+    CHECK(true == add_ret);
+    ret = host_cache_find_app_mapping(&ip_addr1, port1, proto2);
+    CHECK(63 == ret);
+
+    host_cache.clear();     // Free HostTracker objects
+}
+
 int main(int argc, char** argv)
 {
     SfIp ip_addr1;

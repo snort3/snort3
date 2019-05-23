@@ -92,12 +92,14 @@ public:
     bool mdns_user_reporting = true;
     bool chp_userid_disabled = false;
     bool http2_detection_enabled = false;
+    bool is_host_port_app_cache_runtime = false;
     uint32_t ftp_userid_disabled = 0;
     uint32_t chp_body_collection_disabled = 0;
     uint32_t chp_body_collection_max = 0;
     uint32_t rtmp_max_packets = 15;
     uint32_t max_tp_flow_depth = 5;
     uint32_t tp_allow_probes = 0;
+    uint32_t host_port_app_cache_lookup_delay = 10;
     uint32_t http_response_version_enabled = 0;
 };
 

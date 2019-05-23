@@ -24,7 +24,6 @@
 #endif
 
 #include "lua_detector_api.h"
-
 #include <lua.hpp>
 #include <pcre.h>
 #include <unordered_map>
@@ -49,6 +48,7 @@
 #include "lua_detector_util.h"
 #include "service_plugins/service_discovery.h"
 #include "service_plugins/service_ssl.h"
+#include "host_tracker/host_cache.h"
 
 using namespace snort;
 
@@ -1166,6 +1166,43 @@ static int detector_add_host_port_application(lua_State* L)
 
     if (!HostPortCache::add(&ip_addr, (uint16_t)port, (IpProtocol)proto, type, app_id))
         ErrorMessage("%s:Failed to backend call\n",__func__);
+
+    return 0;
+}
+
+static int detector_add_host_port_dynamic(lua_State* L)
+{
+    auto& ud = *UserData<LuaClientObject>::check(L, DETECTOR, 1);
+    // Verify detector user data and that we are in packet context
+    ud->validate_lua_state(true);
+
+    SfIp ip_addr;
+    int index = 1;
+
+    uint8_t type = lua_tointeger(L, ++index);
+    if (type != 1)
+    {
+        return 0;
+    }
+    AppId appid  = (AppId)lua_tointeger(L, ++index);
+    size_t ipaddr_size = 0;
+    const char* ip_str = lua_tolstring(L, ++index, &ipaddr_size);
+    if (!ip_str || !ipaddr_size || !convert_string_to_address(ip_str, &ip_addr))
+    {
+        ErrorMessage("%s: Invalid IP address: %s\n",__func__, ip_str);
+        return 0;
+    }
+
+    unsigned port = lua_tointeger(L, ++index);
+    unsigned proto = lua_tointeger(L, ++index);
+    if (proto > (unsigned)IpProtocol::RESERVED)
+    {
+        ErrorMessage("%s:Invalid protocol value %u\n",__func__, proto);
+        return 0;
+    }
+
+    if (!(snort::host_cache_add_app_mapping(ip_addr, port, proto, appid)))
+        ErrorMessage("%s:Failed to add app mapping\n",__func__);
 
     return 0;
 }
@@ -2351,6 +2388,7 @@ static const luaL_Reg detector_methods[] =
     { "addSipServer",             detector_add_sip_server },
     { "addSSLCnamePattern",       detector_add_ssl_cname_pattern },
     { "addHostPortApp",           detector_add_host_port_application },
+    { "addHostPortAppDynamic",    detector_add_host_port_dynamic },
     { "addDNSHostPattern",        detector_add_dns_host_pattern },
 
     /*Obsolete - new detectors should not use this API */

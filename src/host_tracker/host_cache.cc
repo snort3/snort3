@@ -64,5 +64,41 @@ bool host_cache_add_service(const SfIp& ipaddr, Protocol ipproto, Port port, con
 
     return ht->add_service(app_entry);
 }
+
+bool host_cache_add_app_mapping(const SfIp& ipaddr, Port port, Protocol proto, AppId appId)
+{
+    HostIpKey ipkey((const uint8_t*) ipaddr.get_ip6_ptr());
+    std::shared_ptr<HostTracker> ht;
+
+    if (!host_cache.find(ipkey, ht))
+    {
+        ht = std::make_shared<HostTracker> (ipaddr);
+
+        if (ht == nullptr)
+        {
+            return false;
+        }
+        ht->add_app_mapping(port, proto, appId);
+        host_cache.insert(ipkey, ht);
+    }
+    else
+    {
+        return ht->find_else_add_app_mapping(port, proto, appId);
+    }
+
+    return true;
 }
 
+AppId host_cache_find_app_mapping(const SfIp* ipaddr, Port port, Protocol proto)
+{
+    HostIpKey ipkey((const uint8_t*) ipaddr->get_ip6_ptr());
+    std::shared_ptr<HostTracker> ht;
+
+    if (host_cache.find(ipkey, ht))
+    {
+        return ht->find_app_mapping(port, proto);
+    }
+    
+    return APP_ID_NONE;
+}
+}
