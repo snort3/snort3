@@ -660,7 +660,7 @@ static int log_events(void* event, void* user)
     {
         en->rtn = getRtnFromOtn(en->otn);
 
-        if ( !en->rtn )
+        if ( !en->rtn || !en->rtn->enabled() )
             return 0;  // not enabled
     }
 
