@@ -158,8 +158,15 @@ int FlowCache::remove(Flow* flow)
     if ( flow->next )
         unlink_uni(flow);
 
-    memory::MemoryCap::update_deallocations(config.cap_weight);
-    return hash_table->remove(flow->key);
+    bool deleted = hash_table->remove(flow->key);
+
+    // FIXIT-M This check is added for offload case where both Flow::reset
+    // and Flow::retire try remove the flow from hash. Flow::reset should
+    // just mark the flow as pending instead of trying to remove it.
+    if ( deleted )
+        memory::MemoryCap::update_deallocations(config.cap_weight);
+
+    return deleted;
 }
 
 int FlowCache::retire(Flow* flow)
