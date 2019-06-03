@@ -265,7 +265,8 @@ bool TcpNormalizer::validate_rst(
 int TcpNormalizer::validate_paws_timestamp(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
 {
-    if ( ( (int)( ( tsd.get_ts() - tns.peer_tracker->get_ts_last() ) + tns.paws_ts_fudge ) ) < 0 )
+    const uint32_t peer_ts_last = tns.peer_tracker->get_ts_last();
+    if ( peer_ts_last && ( ( (int)( ( tsd.get_ts() - peer_ts_last ) + tns.paws_ts_fudge ) ) < 0 ) )
     {
         if ( tsd.get_pkt()->is_retry() )
         {
