@@ -147,7 +147,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
     if ( !do_pre_discovery(p, &asd, inspector, protocol, direction) )
         return;
 
-    AppId service_id;
+    AppId service_id = APP_ID_NONE;
     AppidChangeBits change_bits;
     bool is_discovery_done = do_discovery(p, *asd, protocol, direction, service_id, change_bits);
 
@@ -870,6 +870,30 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
 
     asd.check_app_detection_restart(change_bits);
 
+    if (protocol != IpProtocol::TCP and protocol != IpProtocol::UDP)
+    {
+        if ( !asd.get_session_flags(APPID_SESSION_PORT_SERVICE_DONE) )
+        {
+            AppId id = asd.config->get_protocol_service_id(protocol);
+            if (id > APP_ID_NONE)
+            {
+                asd.service.set_port_service_id(id);
+                service_id = id;
+                asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
+                if (appidDebug->is_active())
+                {
+                    const char *app_name = AppInfoManager::get_instance().get_app_name(asd.service.get_port_service_id());
+                    LogMessage("AppIdDbg %s Protocol service %s (%d) from protocol\n",
+                        appidDebug->get_debug_session(), app_name ? app_name : "unknown", asd.service.get_port_service_id());
+                }
+            }
+            asd.set_session_flags(APPID_SESSION_PORT_SERVICE_DONE);
+        }
+        else
+             service_id = asd.pick_service_app_id();
+        return true;
+    }
+
     // Third party detection
 #ifdef ENABLE_APPID_THIRD_PARTY
     if ( TPLibHandler::have_tp() )
@@ -892,7 +916,6 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
             if (direction != APP_ID_FROM_RESPONDER)
                 break;
         // fallthrough
-        // All protocols other than TCP and UDP come straight here.
         default:
         {
             AppId id = asd.config->get_port_service_id(protocol, p->ptrs.sp);

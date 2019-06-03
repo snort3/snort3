@@ -117,6 +117,7 @@ public:
     void show();
     void set_safe_search_enforcement(bool enabled);
     AppId get_port_service_id(IpProtocol, uint16_t port);
+    AppId get_protocol_service_id(IpProtocol);
 
     unsigned max_service_info = 0;
 #ifdef USE_RNA_CONFIG

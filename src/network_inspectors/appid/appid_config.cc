@@ -818,12 +818,15 @@ AppId AppIdConfig::get_port_service_id(IpProtocol proto, uint16_t port)
 
     if (proto == IpProtocol::TCP)
         appId = tcp_port_only[port];
-    else if (proto == IpProtocol::UDP)
-        appId = udp_port_only[port];
     else
-        appId = ip_protocol[(uint16_t)proto];
+        appId = udp_port_only[port];
 
     return appId;
+}
+
+AppId AppIdConfig::get_protocol_service_id(IpProtocol proto)
+{
+    return ip_protocol[(uint16_t)proto];
 }
 
 static void display_port_exclusion_list(SF_LIST* pe_list, uint16_t port)

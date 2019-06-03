@@ -146,6 +146,11 @@ AppId AppIdConfig::get_port_service_id(IpProtocol, uint16_t)
     return APP_ID_NONE;
 }
 
+AppId AppIdConfig::get_protocol_service_id(IpProtocol)
+{
+    return APP_ID_NONE;
+}
+
 // Stubs for AppIdInspector
 AppIdInspector::AppIdInspector(AppIdModule&) {}
 AppIdInspector::~AppIdInspector() = default;
