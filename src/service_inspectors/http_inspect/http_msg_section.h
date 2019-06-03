@@ -34,7 +34,7 @@
 class HttpMsgSection
 {
 public:
-    virtual ~HttpMsgSection();
+    virtual ~HttpMsgSection() = default;
     virtual HttpEnums::InspectSection get_inspection_section() const
         { return HttpEnums::IS_NONE; }
     virtual bool detection_required() const;
@@ -48,8 +48,6 @@ public:
     HttpMsgTrailer* get_trailer(HttpEnums::SourceId source_id) const
         { return trailer[source_id]; }
     virtual HttpMsgBody* get_body() { return nullptr; }
-
-    void add_ips_context(snort::IpsContext* context) { ips_context = context; }
 
     // Minimum necessary processing for every message
     virtual void analyze() = 0;
@@ -101,7 +99,6 @@ protected:
     HttpEnums::MethodId method_id;
     const bool tcp_close;
 
-    snort::IpsContext* ips_context = nullptr;
     // Pointers to related message sections in the same transaction
     HttpMsgRequest* request;
     HttpMsgStatus* status;

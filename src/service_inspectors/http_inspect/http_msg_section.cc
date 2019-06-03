@@ -54,14 +54,6 @@ HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
     HttpContextData::save_snapshot(this);
 }
 
-HttpMsgSection::~HttpMsgSection()
-{
-    // FIXIT-L This clear call is to handle premature deletion (before offload completes)
-    // of message sections due to session deletion
-    if ( ips_context )
-        HttpContextData::clear_snapshot(ips_context);
-}
-
 bool HttpMsgSection::detection_required() const
 {
     return ((msg_text.length() > 0) && (get_inspection_section() != IS_NONE)) ||
@@ -269,7 +261,6 @@ void HttpMsgSection::clear()
 {
     transaction->clear_section();
     cleared = true;
-    ips_context = nullptr;
 }
 
 #ifdef REG_TEST
