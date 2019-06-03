@@ -8,6 +8,7 @@ add_subdirectory(packet_tracer)
 add_subdirectory(perf_monitor)
 add_subdirectory(port_scan)
 add_subdirectory(reputation)
+add_subdirectory(rna)
 
 if(STATIC_INSPECTORS)
     set(STATIC_INSPECTOR_OBJS
@@ -24,6 +25,7 @@ set(STATIC_NETWORK_INSPECTOR_PLUGINS
     $<TARGET_OBJECTS:packet_tracer>
     $<TARGET_OBJECTS:port_scan>
     $<TARGET_OBJECTS:reputation>
+    $<TARGET_OBJECTS:rna>
     ${STATIC_INSPECTOR_OBJS}
     CACHE INTERNAL "STATIC_NETWORK_INSPECTOR_PLUGINS"
 )
