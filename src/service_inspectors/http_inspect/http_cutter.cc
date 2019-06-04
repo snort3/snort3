@@ -250,7 +250,7 @@ ScanResult HttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
     return SCAN_NOT_FOUND;
 }
 
-ScanResult HttpBodyClCutter::cut(const uint8_t*, uint32_t length, HttpInfractions*,
+ScanResult HttpBodyClCutter::cut(const uint8_t* buffer, uint32_t length, HttpInfractions*,
     HttpEventGen*, uint32_t flow_target, bool stretch)
 {
     assert(remaining > octets_seen);
@@ -279,25 +279,23 @@ ScanResult HttpBodyClCutter::cut(const uint8_t*, uint32_t length, HttpInfraction
         stretch = false;
     }
 
-    if (!stretch)
-    {
-        num_flush = flow_target;
-        if (num_flush < remaining)
-        {
-            remaining -= num_flush;
-            return SCAN_FOUND_PIECE;
-        }
-        else
-        {
-            remaining = 0;
-            return SCAN_FOUND;
-        }
-    }
-
     if (octets_seen + length < flow_target)
     {
         octets_seen += length;
-        return SCAN_NOT_FOUND;
+        return need_accelerated_blocking(buffer, length) ? SCAN_NOT_FOUND_DETAIN : SCAN_NOT_FOUND;
+    }
+
+    if (!stretch)
+    {
+        remaining -= flow_target;
+        num_flush = flow_target - octets_seen;
+        if (remaining > 0)
+        {
+            need_accelerated_blocking(buffer, num_flush);
+            return SCAN_FOUND_PIECE;
+        }
+        else
+            return SCAN_FOUND;
     }
 
     if (octets_seen + length < remaining)
@@ -309,6 +307,7 @@ ScanResult HttpBodyClCutter::cut(const uint8_t*, uint32_t length, HttpInfraction
         else
             num_flush = flow_target - octets_seen;
         remaining -= octets_seen + num_flush;
+        need_accelerated_blocking(buffer, num_flush);
         return SCAN_FOUND_PIECE;
     }
 
@@ -323,11 +322,12 @@ ScanResult HttpBodyClCutter::cut(const uint8_t*, uint32_t length, HttpInfraction
     // Cannot stretch to the end of the message body. Cut at the original target.
     num_flush = flow_target - octets_seen;
     remaining -= flow_target;
+    need_accelerated_blocking(buffer, num_flush);
     return SCAN_FOUND_PIECE;
 }
 
-ScanResult HttpBodyOldCutter::cut(const uint8_t*, uint32_t length, HttpInfractions*, HttpEventGen*,
-    uint32_t flow_target, bool stretch)
+ScanResult HttpBodyOldCutter::cut(const uint8_t* buffer, uint32_t length, HttpInfractions*,
+    HttpEventGen*, uint32_t flow_target, bool stretch)
 {
     if (flow_target == 0)
     {
@@ -344,12 +344,13 @@ ScanResult HttpBodyOldCutter::cut(const uint8_t*, uint32_t length, HttpInfractio
     {
         // Not enough data yet to create a message section
         octets_seen += length;
-        return SCAN_NOT_FOUND;
+        return need_accelerated_blocking(buffer, length) ? SCAN_NOT_FOUND_DETAIN : SCAN_NOT_FOUND;
     }
     else if (stretch && (octets_seen + length <= flow_target + MAX_SECTION_STRETCH))
     {
         // Cut the section at the end of this TCP segment to avoid splitting a packet
         num_flush = length;
+        need_accelerated_blocking(buffer, num_flush);
         return SCAN_FOUND_PIECE;
     }
     else
@@ -357,6 +358,7 @@ ScanResult HttpBodyOldCutter::cut(const uint8_t*, uint32_t length, HttpInfractio
         // Cut the section at the target length. Either stretching is not allowed or the end of
         // the segment is too far away.
         num_flush = flow_target - octets_seen;
+        need_accelerated_blocking(buffer, num_flush);
         return SCAN_FOUND_PIECE;
     }
 }
@@ -644,5 +646,50 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
 
     octets_seen += length;
     return SCAN_NOT_FOUND;
+}
+
+// This method searches the input stream looking for the beginning of a script or other dangerous
+// content that requires accelerated blocking. Exactly what we are looking for is encapsulated in
+// dangerous().
+//
+// Return value true indicates a match and enables the packet that completes the matching sequence
+// to be detained.
+//
+// Once accelerated blocking is activated on a message body it never goes away. The first packet
+// of every subsequent message section must be detained (detention_required). Supporting this
+// requirement requires that the calling routine submit all data including buffers that are about
+// to be flushed.
+bool HttpBodyCutter::need_accelerated_blocking(const uint8_t* data, uint32_t length)
+{
+    if (!accelerated_blocking || packet_detained)
+        return false;
+    if (detention_required || dangerous(data, length))
+    {
+        packet_detained = true;
+        detention_required = true;
+        return true;
+    }
+    return false;
+}
+
+// Currently we do accelerated blocking when we see a javascript starting
+bool HttpBodyCutter::dangerous(const uint8_t* data, uint32_t length)
+{
+    static const uint8_t match_string[] = { '<', 's', 'c', 'r', 'i', 'p', 't' };
+    static const uint8_t string_length = sizeof(match_string);
+    for (uint32_t k = 0; k < length; k++)
+    {
+        // partial_match is persistent, enabling matches that cross data boundaries
+        if (data[k] == match_string[partial_match])
+        {
+            if (++partial_match == string_length)
+                return true;
+        }
+        else
+        {
+            partial_match = 0;
+        }
+    }
+    return false;
 }
 

@@ -60,7 +60,9 @@ void HttpMsgBody::analyze()
             (unsigned)detect_data.length());
     }
 
-    if (session_data->file_depth_remaining[source_id] > 0)
+    // Only give data to file processing once, when we inspect the entire message section.
+    if (!session_data->partial_flush[source_id] &&
+        (session_data->file_depth_remaining[source_id] > 0))
     {
         do_file_processing(decoded_body);
     }

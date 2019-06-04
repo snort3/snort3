@@ -299,7 +299,7 @@ static const char* get_status(uint8_t stat)
 
 static const char* get_action(uint8_t act)
 {
-    const char* acts[] = { "pass", "retry", "drop", "block", "reset" };
+    const char* acts[] = { "pass", "hold", "retry", "drop", "block", "reset" };
     return lookup(acts, sizeof(acts)/sizeof(acts[0]), act);
 }
 

@@ -29,13 +29,13 @@
 #include "utils/util_utf.h"
 #include "decompress/file_decomp.h"
 
-#include "http_cutter.h"
 #include "http_infractions.h"
 #include "http_event_gen.h"
 
 class HttpTransaction;
 class HttpJsNorm;
 class HttpMsgSection;
+class HttpCutter;
 
 class HttpFlowData : public snort::FlowData
 {
@@ -44,6 +44,7 @@ public:
     ~HttpFlowData() override;
     static unsigned inspector_id;
     static void init() { inspector_id = snort::FlowData::create_flow_data_id(); }
+    size_t size_of() override { return sizeof(*this); }
 
     friend class HttpInspect;
     friend class HttpMsgSection;
@@ -63,9 +64,6 @@ public:
     friend class HttpUnitTestSetup;
 #endif
 
-    size_t size_of() override
-    { return sizeof(*this); }
-
 private:
     // Convenience routines
     void half_reset(HttpEnums::SourceId source_id);
@@ -79,19 +77,19 @@ private:
 
     // *** StreamSplitter internal data - reassemble()
     uint8_t* section_buffer[2] = { nullptr, nullptr };
-    uint32_t section_total[2] = { 0, 0 };
     uint32_t section_offset[2] = { 0, 0 };
     uint32_t chunk_expected_length[2] = { 0, 0 };
     uint32_t running_total[2] = { 0, 0 };
     HttpEnums::ChunkState chunk_state[2] = { HttpEnums::CHUNK_NEWLINES,
         HttpEnums::CHUNK_NEWLINES };
+    uint8_t* partial_buffer[2] = { nullptr, nullptr };
+    uint32_t partial_buffer_length[2] = { 0, 0 };
 
     // *** StreamSplitter internal data - scan() => reassemble()
     uint32_t num_excess[2] = { 0, 0 };
     uint32_t num_good_chunks[2] = { 0, 0 };
     uint32_t octets_expected[2] = { 0, 0 };
     bool is_broken_chunk[2] = { false, false };
-    bool strict_length[2] = { false, false };
 
     // *** StreamSplitter => Inspector (facts about the most recent message section)
     HttpEnums::SectionType section_type[2] = { HttpEnums::SEC__NOT_COMPUTE,
@@ -99,6 +97,7 @@ private:
     int32_t num_head_lines[2] = { HttpEnums::STAT_NOT_PRESENT, HttpEnums::STAT_NOT_PRESENT };
     bool tcp_close[2] = { false, false };
     bool zero_byte_workaround[2];
+    bool partial_flush[2] = { false, false };
 
     // Infractions and events are associated with a specific message and are stored in the
     // transaction for that message. But StreamSplitter splits the start line before there is
@@ -121,6 +120,7 @@ private:
     HttpEnums::CompressId compression[2] = { HttpEnums::CMP_NONE, HttpEnums::CMP_NONE };
     HttpEnums::DetectionStatus detection_status[2] = { HttpEnums::DET_ON, HttpEnums::DET_ON };
     bool stretch_section_to_packet[2] = { false, false };
+    bool accelerated_blocking[2] = { false, false };
 
     // *** Inspector's internal data about the current message
     struct FdCallbackContext

@@ -45,7 +45,7 @@ public:
     { AST_ALLOW, AST_CANT, AST_WOULD, AST_FORCE, AST_MAX };
 
     enum ActiveAction : uint8_t
-    { ACT_PASS, ACT_RETRY, ACT_DROP, ACT_BLOCK, ACT_RESET, ACT_MAX };
+    { ACT_PASS, ACT_HOLD, ACT_RETRY, ACT_DROP, ACT_BLOCK, ACT_RESET, ACT_MAX };
 
 public:
     static void init(SnortConfig*);
@@ -86,6 +86,7 @@ public:
     void drop_packet(const Packet*, bool force = false);
     void daq_drop_packet(const Packet*);
     bool daq_retry_packet(const Packet*);
+    bool hold_packet(const Packet*);
 
     void allow_session(Packet*);
     void block_session(Packet*, bool force = false);
@@ -111,6 +112,9 @@ public:
 
     bool packet_force_dropped()
     { return active_status == AST_FORCE; }
+
+    bool is_packet_held()
+    { return active_action == ACT_HOLD; }
 
     void set_tunnel_bypass()
     { active_tunnel_bypass++; }

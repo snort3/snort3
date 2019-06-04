@@ -246,8 +246,10 @@ void HttpMsgRequest::update_flow()
     {
         session_data->half_reset(source_id);
         session_data->type_expected[source_id] = SEC_ABORT;
+        return;
     }
-    else if (*transaction->get_infractions(source_id) & INF_ZERO_NINE_REQ)
+
+    if (*transaction->get_infractions(source_id) & INF_ZERO_NINE_REQ)
     {
         session_data->half_reset(source_id);
         // There can only be one 0.9 response per connection because it ends the S2C connection. Do
@@ -259,14 +261,12 @@ void HttpMsgRequest::update_flow()
             // line and headers.
             session_data->zero_nine_expected = trans_num;
         }
+        return;
     }
-    else
-    {
-        session_data->type_expected[source_id] = SEC_HEADER;
-        session_data->version_id[source_id] = version_id;
-        session_data->method_id = method_id;
-    }
-    session_data->section_type[source_id] = SEC__NOT_COMPUTE;
+
+    session_data->type_expected[source_id] = SEC_HEADER;
+    session_data->version_id[source_id] = version_id;
+    session_data->method_id = method_id;
 }
 
 #ifdef REG_TEST

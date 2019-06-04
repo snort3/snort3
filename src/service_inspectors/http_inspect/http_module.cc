@@ -54,11 +54,14 @@ const Parameter HttpModule::http_params[] =
     { "decompress_zip", Parameter::PT_BOOL, nullptr, "false",
       "decompress zip files in response bodies" },
 
+    { "accelerated_blocking", Parameter::PT_BOOL, nullptr, "false",
+      "inspect JavaScript in response messages as soon as possible" },
+
     { "normalize_javascript", Parameter::PT_BOOL, nullptr, "false",
-      "normalize javascript in response bodies" },
+      "normalize JavaScript in response bodies" },
 
     { "max_javascript_whitespaces", Parameter::PT_INT, "1:65535", "200",
-      "maximum consecutive whitespaces allowed within the Javascript obfuscated data" },
+      "maximum consecutive whitespaces allowed within the JavaScript obfuscated data" },
 
     { "bad_characters", Parameter::PT_BIT_LIST, "255", nullptr,
       "alert when any of specified bytes are present in URI after percent decoding" },
@@ -166,6 +169,10 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("decompress_zip"))
     {
         params->decompress_zip = val.get_bool();
+    }
+    else if (val.is("accelerated_blocking"))
+    {
+        params->accelerated_blocking = val.get_bool();
     }
     else if (val.is("normalize_javascript"))
     {

@@ -232,6 +232,8 @@ public:
     static uint16_t get_mss(Flow*, bool to_server);
     static uint8_t get_tcp_options_len(Flow*, bool to_server);
 
+    static bool set_packet_action_to_hold(Packet*);
+
 private:
     static void set_ip_protocol(Flow*);
 };

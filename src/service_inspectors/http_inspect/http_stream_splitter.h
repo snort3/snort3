@@ -41,6 +41,7 @@ public:
     const snort::StreamBuffer reassemble(snort::Flow* flow, unsigned total, unsigned, const
         uint8_t* data, unsigned len, uint32_t flags, unsigned& copied) override;
     bool finish(snort::Flow* flow) override;
+    bool init_partial_flush(snort::Flow* flow) override;
     bool is_paf() override { return true; }
 
     // FIXIT-M should return actual packet buffer size
@@ -49,7 +50,7 @@ public:
 private:
     void prepare_flush(HttpFlowData* session_data, uint32_t* flush_offset, HttpEnums::SectionType
         section_type, uint32_t num_flushed, uint32_t num_excess, int32_t num_head_lines,
-        bool is_broken_chunk, uint32_t num_good_chunks, uint32_t octets_seen, bool strict_length)
+        bool is_broken_chunk, uint32_t num_good_chunks, uint32_t octets_seen)
         const;
     HttpCutter* get_cutter(HttpEnums::SectionType type, const HttpFlowData* session) const;
     void chunk_spray(HttpFlowData* session_data, uint8_t* buffer, const uint8_t* data,
@@ -57,6 +58,7 @@ private:
     static void decompress_copy(uint8_t* buffer, uint32_t& offset, const uint8_t* data,
         uint32_t length, HttpEnums::CompressId& compression, z_stream*& compress_stream,
         bool at_start, HttpInfractions* infractions, HttpEventGen* events);
+    static void detain_packet(snort::Packet* pkt);
 
     HttpInspect* const my_inspector;
     const HttpEnums::SourceId source_id;

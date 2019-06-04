@@ -178,29 +178,26 @@ void HttpMsgStatus::update_flow()
     {
         session_data->half_reset(source_id);
         session_data->type_expected[source_id] = SEC_ABORT;
+        return;
     }
-    else
+    session_data->type_expected[source_id] = SEC_HEADER;
+    session_data->version_id[source_id] = version_id;
+    session_data->status_code_num = status_code_num;
+    // 100 response means the next response message will be added to this transaction instead
+    // of being part of another transaction. As implemented it is possible for multiple 100
+    // responses to all be included in the same transaction. It's not obvious whether that is
+    // the best way to handle what should be a highly abnormal situation.
+    if (status_code_num == 100)
     {
-        session_data->type_expected[source_id] = SEC_HEADER;
-        session_data->version_id[source_id] = version_id;
-        session_data->status_code_num = status_code_num;
-        // 100 response means the next response message will be added to this transaction instead
-        // of being part of another transaction. As implemented it is possible for multiple 100
-        // responses to all be included in the same transaction. It's not obvious whether that is
-        // the best way to handle what should be a highly abnormal situation.
-        if (status_code_num == 100)
+        // Were we "Expect"-ing this?
+        if ((header[SRC_CLIENT] != nullptr) &&
+            (header[SRC_CLIENT]->get_header_count(HEAD_EXPECT) == 0))
         {
-            // Were we "Expect"-ing this?
-            if ((header[SRC_CLIENT] != nullptr) &&
-                (header[SRC_CLIENT]->get_header_count(HEAD_EXPECT) == 0))
-            {
-                add_infraction(INF_UNEXPECTED_100_RESPONSE);
-                create_event(EVENT_UNEXPECTED_100_RESPONSE);
-            }
-            transaction->set_one_hundred_response();
+            add_infraction(INF_UNEXPECTED_100_RESPONSE);
+            create_event(EVENT_UNEXPECTED_100_RESPONSE);
         }
+        transaction->set_one_hundred_response();
     }
-    session_data->section_type[source_id] = SEC__NOT_COMPUTE;
 }
 
 #ifdef REG_TEST

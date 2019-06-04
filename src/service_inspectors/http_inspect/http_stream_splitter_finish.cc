@@ -23,6 +23,7 @@
 
 #include "file_api/file_flows.h"
 
+#include "http_cutter.h"
 #include "http_module.h"
 #include "http_msg_request.h"
 #include "http_stream_splitter.h"
@@ -33,7 +34,6 @@ using namespace HttpEnums;
 bool HttpStreamSplitter::finish(snort::Flow* flow)
 {
     snort::Profile profile(HttpModule::get_profile_stats());
-    snort::Packet* p = snort::DetectionEngine::get_current_packet();
 
     HttpFlowData* session_data = (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
     // FIXIT-M - this assert has been changed to check for null session data and return false if so
@@ -89,8 +89,7 @@ bool HttpStreamSplitter::finish(snort::Flow* flow)
             session_data->cutter[source_id]->get_num_head_lines(),
             session_data->cutter[source_id]->get_is_broken_chunk(),
             session_data->cutter[source_id]->get_num_good_chunks(),
-            session_data->cutter[source_id]->get_octets_seen(),
-            true);
+            session_data->cutter[source_id]->get_octets_seen());
         delete session_data->cutter[source_id];
         session_data->cutter[source_id] = nullptr;
 
@@ -111,7 +110,7 @@ bool HttpStreamSplitter::finish(snort::Flow* flow)
         // Set up to process empty message section
         uint32_t not_used;
         prepare_flush(session_data, &not_used, session_data->type_expected[source_id], 0, 0, 0,
-            false, 0, 0, true);
+            false, 0, 0);
         return true;
     }
 
@@ -121,6 +120,7 @@ bool HttpStreamSplitter::finish(snort::Flow* flow)
         (session_data->cutter[source_id] != nullptr)               &&
         (session_data->cutter[source_id]->get_octets_seen() == 0))
     {
+        snort::Packet* packet = snort::DetectionEngine::get_current_packet();
         if (!session_data->mime_state[source_id])
         {
             snort::FileFlows* file_flows = snort::FileFlows::get_file_flows(flow);
@@ -137,11 +137,11 @@ bool HttpStreamSplitter::finish(snort::Flow* flow)
                 }
             }
 
-            file_flows->file_process(p, nullptr, 0, SNORT_FILE_END, !download, file_index);
+            file_flows->file_process(packet, nullptr, 0, SNORT_FILE_END, !download, file_index);
         }
         else
         {
-            session_data->mime_state[source_id]->process_mime_data(p, nullptr, 0, true,
+            session_data->mime_state[source_id]->process_mime_data(packet, nullptr, 0, true,
                 SNORT_FILE_POSITION_UNKNOWN);
             delete session_data->mime_state[source_id];
             session_data->mime_state[source_id] = nullptr;
@@ -150,5 +150,44 @@ bool HttpStreamSplitter::finish(snort::Flow* flow)
     }
 
     return session_data->section_type[source_id] != SEC__NOT_COMPUTE;
+}
+
+bool HttpStreamSplitter::init_partial_flush(snort::Flow* flow)
+{
+    snort::Profile profile(HttpModule::get_profile_stats());
+
+    if (source_id != SRC_SERVER)
+    {
+        assert(false);
+        return false;
+    }
+
+    HttpFlowData* session_data = (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
+    assert(session_data != nullptr);
+    if ((session_data->type_expected[source_id] != SEC_BODY_CL)      &&
+        (session_data->type_expected[source_id] != SEC_BODY_OLD)     &&
+        (session_data->type_expected[source_id] != SEC_BODY_CHUNK))
+    {
+        assert(false);
+        return false;
+    }
+
+#ifdef REG_TEST
+    if (HttpTestManager::use_test_output() && !HttpTestManager::use_test_input())
+    {
+        printf("Partial flush from flow data %" PRIu64 "\n", session_data->seq_num);
+        fflush(stdout);
+    }
+#endif
+
+    // Set up to process partial message section
+    uint32_t not_used;
+    prepare_flush(session_data, &not_used, session_data->type_expected[source_id], 0, 0, 0,
+        session_data->cutter[source_id]->get_is_broken_chunk(),
+        session_data->cutter[source_id]->get_num_good_chunks(),
+        session_data->cutter[source_id]->get_octets_seen());
+    (static_cast<HttpBodyCutter*>(session_data->cutter[source_id]))->detain_ended();
+    session_data->partial_flush[source_id] = true;
+    return true;
 }
 

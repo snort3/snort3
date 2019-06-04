@@ -49,7 +49,6 @@ void HttpMsgBodyChunk::update_flow()
     {
         update_depth();
     }
-    session_data->section_type[source_id] = SEC__NOT_COMPUTE;
 }
 
 #ifdef REG_TEST

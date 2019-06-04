@@ -294,7 +294,7 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
 
     if (verdict == DAQ_VERDICT_RETRY)
         retry_queue->put(p->daq_msg);
-    else
+    else if ( !p->active->is_packet_held() )
         p->daq_instance->finalize_message(p->daq_msg, verdict);
 }
 
@@ -394,6 +394,11 @@ void Analyzer::post_process_packet(Packet* p)
     post_process_daq_pkt_msg(p);
     // FIXIT-? There is an assumption that this is being called on the active context...
     switcher->stop();
+}
+
+void Analyzer::finalize_daq_message(DAQ_Msg_h msg, DAQ_Verdict verdict)
+{
+    daq_instance->finalize_message(msg, verdict);
 }
 
 //-------------------------------------------------------------------------

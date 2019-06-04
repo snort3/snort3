@@ -30,7 +30,6 @@ void HttpMsgBodyOld::update_flow()
     // Always more body expected
     session_data->body_octets[source_id] = body_octets;
     update_depth();
-    session_data->section_type[source_id] = SEC__NOT_COMPUTE;
 }
 
 #ifdef REG_TEST

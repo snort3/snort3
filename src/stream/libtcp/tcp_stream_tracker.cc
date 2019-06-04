@@ -26,6 +26,9 @@
 #include "tcp_stream_tracker.h"
 
 #include "log/messages.h"
+#include "main/analyzer.h"
+#include "main/snort.h"
+#include "packet_io/active.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/eth.h"
 #include "stream/stream.h"
@@ -59,9 +62,7 @@ TcpStreamTracker::TcpStreamTracker(bool client) :
 { }
 
 TcpStreamTracker::~TcpStreamTracker()
-{
-    delete splitter;
-}
+{ delete splitter; }
 
 TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(TcpSegmentDescriptor& tsd)
 {
@@ -199,6 +200,8 @@ void TcpStreamTracker::init_tcp_state()
     fin_seq_set = false;
     rst_pkt_sent = false;
     order = 0;
+    held_packet = nullptr;
+    held_seq_num = 0;
 }
 
 //-------------------------------------------------------------------------
@@ -650,6 +653,88 @@ bool TcpStreamTracker::is_segment_seq_valid(TcpSegmentDescriptor& tsd)
     return valid_seq;
 }
 
+bool TcpStreamTracker::set_held_packet(snort::Packet* p)
+{
+    // FIXIT-M - limit of packets held per packet thread should be determined based on runtime criteria
+    //           such as # of DAQ Msg buffers, # of threads, etc... for now we use small number like 10
+    if ( held_packet )
+        return false;
+    if ( tcpStats.current_packets_held >= 10 )
+    {
+        tcpStats.held_packet_limit_exceeded++;
+        return false;
+    }
+
+    if ( p->active->hold_packet(p) )
+    {
+        held_packet = p->daq_msg;
+        held_seq_num = p->ptrs.tcph->seq();
+        tcpStats.total_packets_held++;
+        if ( ++tcpStats.current_packets_held > tcpStats.max_packets_held )
+            tcpStats.max_packets_held = tcpStats.current_packets_held;
+        return true;
+    }
+
+    return false;
+}
+
+bool TcpStreamTracker::is_retransmit_of_held_packet(snort::Packet* cp)
+{
+    if ( !held_packet or ( cp->daq_msg == held_packet ) )
+        return false;
+
+    uint32_t next_send_seq = cp->ptrs.tcph->seq() + (uint32_t)cp->dsize;
+    if ( SEQ_LEQ(cp->ptrs.tcph->seq(), held_seq_num) and SEQ_GT(next_send_seq, held_seq_num) )
+    {
+        tcpStats.held_packet_rexmits++;
+        return true;
+    }
+
+    return false;
+}
+
+void TcpStreamTracker::finalize_held_packet(snort::Packet* cp)
+{
+    if ( held_packet )
+    {
+        if ( cp->active->packet_was_dropped() )
+        {
+            Analyzer::get_local_analyzer()->finalize_daq_message(held_packet, DAQ_VERDICT_BLOCK);
+            tcpStats.held_packets_dropped++;
+        }
+        else
+        {
+            Analyzer::get_local_analyzer()->finalize_daq_message(held_packet, DAQ_VERDICT_PASS);
+            tcpStats.held_packets_passed++;
+        }
+
+        held_packet = nullptr;
+        held_seq_num = 0;
+        tcpStats.current_packets_held--;
+    }
+}
+
+void TcpStreamTracker::finalize_held_packet(snort::Flow* flow)
+{
+    if ( held_packet )
+    {
+        if ( flow->ssn_state.session_flags & SSNFLAG_BLOCK )
+        {
+            Analyzer::get_local_analyzer()->finalize_daq_message(held_packet, DAQ_VERDICT_BLOCK);
+            tcpStats.held_packets_dropped++;
+        }
+        else
+        {
+            Analyzer::get_local_analyzer()->finalize_daq_message(held_packet, DAQ_VERDICT_PASS);
+            tcpStats.held_packets_passed++;
+        }
+
+        held_packet = nullptr;
+        held_seq_num = 0;
+        tcpStats.current_packets_held--;
+    }
+}
+
 void TcpStreamTracker::print()
 {
     LogMessage(" + TcpTracker +\n");
@@ -664,4 +749,3 @@ void TcpStreamTracker::print()
     LogMessage("    rcv_nxt:            %X\n", rcv_nxt);
     LogMessage("    r_win_base:         %X\n", r_win_base);
 }
-

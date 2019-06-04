@@ -310,6 +310,11 @@ int TcpStreamSession::update_alert(Packet* p, uint32_t gid, uint32_t sid,
     return -1;
 }
 
+bool TcpStreamSession::set_packet_action_to_hold(snort::Packet* p)
+{
+    return listener->set_held_packet(p);
+}
+
 void TcpStreamSession::SetPacketHeaderFoo(const Packet* p)
 {
     if ( daq_flags & DAQ_PKT_FLAG_NOT_FORWARDING )
@@ -414,6 +419,16 @@ void TcpStreamSession::cleanup(Packet* p)
     clear_session(true, true, false, p);
     client.normalizer.reset();
     server.reassembler.reset();
+    if ( p )
+    {
+        client.finalize_held_packet(p);
+        server.finalize_held_packet(p);
+    }
+    else
+    {
+        client.finalize_held_packet(flow);
+        server.finalize_held_packet(flow);
+    }
 }
 
 void TcpStreamSession::clear()
@@ -462,7 +477,6 @@ void TcpStreamSession::start_proxy()
 //-------------------------------------------------------------------------
 // tcp module stuff
 //-------------------------------------------------------------------------
-
 void TcpStreamSession::print()
 {
     char buf[64];
@@ -480,4 +494,5 @@ void TcpStreamSession::print()
     LogMessage("Server Tracker:\n");
     server.print();
 }
+
 

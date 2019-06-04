@@ -165,6 +165,7 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
         client.reassembler.flush_queued_segments(flow, true, p);
         server.reassembler.flush_queued_segments(flow, true, p);
     }
+
     client.reassembler.purge_segment_list();
     server.reassembler.purge_segment_list();
 
@@ -755,7 +756,7 @@ void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd)
             }
         }
 
-        // dunno if this is RFC but fragroute testing expects it  for the record,
+        // dunno if this is RFC but fragroute testing expects it for the record,
         // I've seen FTP data sessions that send data packets with no tcp flags set
         if ((tsd.get_tcph()->th_flags != 0) or (config->policy == StreamPolicy::OS_LINUX)
                 or (config->policy == StreamPolicy::OS_PROXY))

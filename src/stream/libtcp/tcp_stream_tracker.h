@@ -22,6 +22,8 @@
 #ifndef TCP_STREAM_TRACKER_H
 #define TCP_STREAM_TRACKER_H
 
+#include <daq_common.h>
+
 #include "stream/paf.h"
 #include "stream/tcp/segment_overlap_editor.h"
 #include "stream/tcp/tcp_defs.h"
@@ -44,6 +46,11 @@ struct StreamAlertInfo
 
 extern const char* tcp_state_names[];
 extern const char* tcp_event_names[];
+
+namespace snort
+{
+struct Packet;
+}
 
 class TcpReassembler;
 class TcpSession;
@@ -276,6 +283,10 @@ public:
     virtual bool update_on_fin_sent(TcpSegmentDescriptor&);
     virtual bool is_segment_seq_valid(TcpSegmentDescriptor&);
     virtual void flush_data_on_fin_recv(TcpSegmentDescriptor&);
+    bool set_held_packet(snort::Packet*);
+    bool is_retransmit_of_held_packet(snort::Packet*);
+    void finalize_held_packet(snort::Packet*);
+    void finalize_held_packet(snort::Flow*);
 
 public:
     uint32_t snd_una = 0; // SND.UNA - send unacknowledged
@@ -339,6 +350,8 @@ protected:
 
     uint8_t mac_addr[6] = { };
     uint8_t tcp_options_len = 0;
+    DAQ_Msg_h held_packet = nullptr;
+    uint32_t held_seq_num = 0;
 
     bool mac_addr_valid = false;
     bool fin_seq_set = false;  // FIXIT-M should be obviated by tcp state

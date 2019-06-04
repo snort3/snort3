@@ -221,8 +221,8 @@ void HttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, cons
     offset += length;
 }
 
-const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow* flow, unsigned total, unsigned,
-    const uint8_t* data, unsigned len, uint32_t flags, unsigned& copied)
+const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow* flow, unsigned total,
+    unsigned, const uint8_t* data, unsigned len, uint32_t flags, unsigned& copied)
 {
     snort::Profile profile(HttpModule::get_profile_stats());
 
@@ -243,17 +243,22 @@ const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow* flow, unsi
                 return http_buf;
             }
             bool tcp_close;
+            bool partial_flush;
             uint8_t* test_buffer;
             HttpTestManager::get_test_input_source()->reassemble(&test_buffer, len, source_id,
-                tcp_close);
+                tcp_close, partial_flush);
             if (tcp_close)
             {
                 finish(flow);
             }
+            if (partial_flush)
+            {
+                init_partial_flush(flow);
+            }
             if (test_buffer == nullptr)
             {
-                // Source ID does not match test data, no test data was flushed, or there is no
-                // more test data
+                // Source ID does not match test data, no test data was flushed, preparing for a
+                // partial flush, or there is no more test data
                 return http_buf;
             }
             data = test_buffer;
@@ -261,8 +266,9 @@ const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow* flow, unsi
         }
         else
         {
-            printf("Reassemble from flow data %" PRIu64 " direction %d total %u length %u\n",
-                session_data->seq_num, source_id, total, len);
+            printf("Reassemble from flow data %" PRIu64
+                " direction %d total %u length %u partial %d\n", session_data->seq_num, source_id,
+                total, len, session_data->partial_flush[source_id]);
             fflush(stdout);
         }
     }
@@ -282,13 +288,14 @@ const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow* flow, unsi
     }
 
     assert(session_data->section_type[source_id] != SEC__NOT_COMPUTE);
-    assert(total <= MAX_OCTETS);
+    uint8_t*& partial_buffer = session_data->partial_buffer[source_id];
+    uint32_t& partial_buffer_length = session_data->partial_buffer_length[source_id];
+    assert(partial_buffer_length + total <= MAX_OCTETS);
 
     // FIXIT-H this is a precaution/workaround for stream issues. When they are fixed replace this
     // block with an assert.
-    if ( !((session_data->octets_expected[source_id] == total) ||
-        (!session_data->strict_length[source_id] &&
-        (total <= session_data->octets_expected[source_id]))) )
+    if ((session_data->section_offset[source_id] == 0) &&
+        (session_data->octets_expected[source_id] != (total + partial_buffer_length)))
     {
         if (session_data->octets_expected[source_id] == 0)
         {
@@ -325,6 +332,7 @@ const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow* flow, unsi
             fflush(HttpTestManager::get_output_file());
         }
 #endif
+        assert(partial_buffer == nullptr);
         if (flags & PKT_PDU_TAIL)
         {
             assert(session_data->running_total[source_id] == total);
@@ -361,14 +369,26 @@ const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow* flow, unsi
         if (is_body)
             buffer = new uint8_t[MAX_OCTETS];
         else
-            buffer = new uint8_t[(total > 0) ? total : 1];
-        session_data->section_total[source_id] = total;
+        {
+            const uint32_t buffer_size = ((partial_buffer_length + total) > 0) ?
+                (partial_buffer_length + total) : 1;
+            buffer = new uint8_t[buffer_size];
+        }
     }
-    else
-        assert(session_data->section_total[source_id] == total);
 
+    // FIXIT-H there is no support here for partial flush with either chunking or compression
     if (session_data->section_type[source_id] != SEC_BODY_CHUNK)
     {
+        assert((partial_buffer_length == 0) || (session_data->compression[source_id] == CMP_NONE));
+        if (partial_buffer_length > 0)
+        {
+            assert(session_data->section_offset[source_id] == 0);
+            memcpy(buffer, partial_buffer, partial_buffer_length);
+            session_data->section_offset[source_id] = partial_buffer_length;
+            partial_buffer_length = 0;
+            delete[] partial_buffer;
+            partial_buffer = nullptr;
+        }
         const bool at_start = (session_data->body_octets[source_id] == 0) &&
              (session_data->section_offset[source_id] == 0);
         decompress_copy(buffer, session_data->section_offset[source_id], data, len,
@@ -378,6 +398,7 @@ const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow* flow, unsi
     }
     else
     {
+        assert(partial_buffer_length == 0);
         chunk_spray(session_data, buffer, data, len);
     }
 
@@ -388,6 +409,13 @@ const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow* flow, unsi
         running_total = 0;
         const uint16_t buf_size =
             session_data->section_offset[source_id] - session_data->num_excess[source_id];
+
+        if (session_data->partial_flush[source_id])
+        {
+            // Store the data from a partial flush for reuse
+            partial_buffer = buffer;
+            partial_buffer_length = buf_size;
+        }
 
         // FIXIT-M kludge until we work out issues with returning an empty buffer
         http_buf.data = buffer;

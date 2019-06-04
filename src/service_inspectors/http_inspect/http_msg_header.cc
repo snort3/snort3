@@ -141,8 +141,6 @@ void HttpMsgHeader::gen_events()
 
 void HttpMsgHeader::update_flow()
 {
-    session_data->section_type[source_id] = SEC__NOT_COMPUTE;
-
     // The following logic to determine body type is by no means the last word on this topic.
     if (tcp_close)
     {
@@ -306,6 +304,10 @@ void HttpMsgHeader::prepare_body()
     setup_utf_decoding();
     setup_file_decompression();
     update_depth();
+    // Limitations on accelerated blocking will be lifted as the feature is built out
+    session_data->accelerated_blocking[source_id] = params->accelerated_blocking &&
+        (source_id == SRC_SERVER) && (session_data->compression[source_id] == CMP_NONE) &&
+        (params->request_depth == -1);
     if (source_id == SRC_CLIENT)
     {
         HttpModule::increment_peg_counts(PEG_REQUEST_BODY);

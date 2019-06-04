@@ -25,6 +25,7 @@
 
 #include "decompress/file_decomp.h"
 
+#include "http_cutter.h"
 #include "http_module.h"
 #include "http_test_manager.h"
 #include "http_transaction.h"
@@ -41,14 +42,11 @@ uint64_t HttpFlowData::instance_count = 0;
 HttpFlowData::HttpFlowData() : FlowData(inspector_id)
 {
 #ifdef REG_TEST
-    if (HttpTestManager::use_test_output())
+    seq_num = ++instance_count;
+    if (HttpTestManager::use_test_output() && !HttpTestManager::use_test_input())
     {
-        seq_num = ++instance_count;
-        if (!HttpTestManager::use_test_input())
-        {
-            printf("Flow Data construct %" PRIu64 "\n", seq_num);
-            fflush(nullptr);
-        }
+        printf("Flow Data construct %" PRIu64 "\n", seq_num);
+        fflush(nullptr);
     }
 #endif
     HttpModule::increment_peg_counts(PEG_CONCURRENT_SESSIONS);
@@ -74,6 +72,7 @@ HttpFlowData::~HttpFlowData()
         delete infractions[k];
         delete events[k];
         delete[] section_buffer[k];
+        delete[] partial_buffer[k];
         HttpTransaction::delete_transaction(transaction[k], nullptr);
         delete cutter[k];
         if (compress_stream[k] != nullptr)
@@ -109,6 +108,7 @@ void HttpFlowData::half_reset(SourceId source_id)
     body_octets[source_id] = STAT_NOT_PRESENT;
     section_size_target[source_id] = 0;
     stretch_section_to_packet[source_id] = false;
+    accelerated_blocking[source_id] = false;
     file_depth_remaining[source_id] = STAT_NOT_PRESENT;
     detect_depth_remaining[source_id] = STAT_NOT_PRESENT;
     detection_status[source_id] = DET_REACTIVATING;

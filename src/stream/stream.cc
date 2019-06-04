@@ -805,6 +805,10 @@ uint8_t Stream::get_tcp_options_len(Flow* flow, bool to_server)
     return tcp_session->get_tcp_options_len(to_server);
 }
 
+bool Stream::set_packet_action_to_hold(Packet* p)
+{
+    return p->flow->session->set_packet_action_to_hold(p);
+}
 
 #ifdef UNIT_TEST
 

@@ -94,36 +94,57 @@ private:
     int32_t num_head_lines = 0;
 };
 
-class HttpBodyClCutter : public HttpCutter
+class HttpBodyCutter : public HttpCutter
 {
 public:
-    explicit HttpBodyClCutter(int64_t expected_length) : remaining(expected_length)
+    HttpBodyCutter(bool accelerated_blocking_) : accelerated_blocking(accelerated_blocking_) {}
+    void soft_reset() override { octets_seen = 0; packet_detained = false; }
+    void detain_ended() { packet_detained = false; }
+
+protected:
+    bool need_accelerated_blocking(const uint8_t* data, uint32_t length);
+
+private:
+    bool dangerous(const uint8_t* data, uint32_t length);
+
+    const bool accelerated_blocking;
+    bool packet_detained = false;
+    uint8_t partial_match = 0;
+    bool detention_required = false;
+};
+
+class HttpBodyClCutter : public HttpBodyCutter
+{
+public:
+    HttpBodyClCutter(int64_t expected_length, bool accelerated_blocking) :
+        HttpBodyCutter(accelerated_blocking), remaining(expected_length)
         { assert(remaining > 0); }
     HttpEnums::ScanResult cut(const uint8_t*, uint32_t length, HttpInfractions*, HttpEventGen*,
         uint32_t flow_target, bool stretch) override;
-    void soft_reset() override { octets_seen = 0; }
 
 private:
     int64_t remaining;
 };
 
-class HttpBodyOldCutter : public HttpCutter
+class HttpBodyOldCutter : public HttpBodyCutter
 {
 public:
+    explicit HttpBodyOldCutter(bool accelerated_blocking) : HttpBodyCutter(accelerated_blocking) {}
     HttpEnums::ScanResult cut(const uint8_t*, uint32_t, HttpInfractions*, HttpEventGen*,
         uint32_t flow_target, bool stretch) override;
-    void soft_reset() override { octets_seen = 0; }
 };
 
-class HttpBodyChunkCutter : public HttpCutter
+class HttpBodyChunkCutter : public HttpBodyCutter
 {
 public:
+    explicit HttpBodyChunkCutter(bool accelerated_blocking) : HttpBodyCutter(accelerated_blocking)
+        {}
     HttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
         HttpInfractions* infractions, HttpEventGen* events, uint32_t flow_target, bool stretch)
         override;
     bool get_is_broken_chunk() const override { return curr_state == HttpEnums::CHUNK_BAD; }
     uint32_t get_num_good_chunks() const override { return num_good_chunks; }
-    void soft_reset() override { octets_seen = 0; num_good_chunks = 0; }
+    void soft_reset() override { num_good_chunks = 0; HttpBodyCutter::soft_reset(); }
 
 private:
     uint32_t data_seen = 0;

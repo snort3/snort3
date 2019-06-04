@@ -2,9 +2,26 @@ The new Snort HTTP inspector (HI) is divided into two major parts. The HttpStrea
 (splitter) accepts TCP payload data from Stream and subdivides it into message sections.
 HttpInspect (inspector) processes individual message sections.
 
-Splitter finish() is called by the framework when the TCP connection closes (including pruning).
+Splitter finish() is called by Stream when the TCP connection closes (including pruning).
 It serves several specialized purposes in cases where the HTTP message is truncated (ends
 unexpectedly).
+
+The nature of splitting allows packets to be forwarded before they are aggregated into a message
+section and inspected. Accelerated blocking is a feature that allows the splitter to designate
+to Stream packets that are too risky to forward without being inspected. These packets are detained
+until such time as inspection is completed. The design is based on the principle that detaining
+one packet in a TCP stream effectively blocks all subsequent packets from being reassembled and
+delivered to a target application. Once a packet is detained no attempt is made to detain
+additional packets.
+
+Splitter init_partial_flush() is called by Stream when a previously detained packet must be dropped
+or released immediately. It sets up reassembly and inspection of a partial message section
+containing all available data. Once inspection of this partial message section is complete, for
+most of HI it is as if it never happened. scan() continues to split the original message section
+with all the original data. The inspector will perform a completely new inspection of the full
+message section. Only reassemble() knows that something different is happening. Stream only
+delivers message data for reassembly once. reassemble() stores data received for a partial
+inspection and prepends it to the buffer for the next inspection.
 
 HttpFlowData is a data class representing all HI information relating to a flow. It serves as
 persistent memory between invocations of HI by the framework. It also glues together the inspector,
@@ -166,7 +183,8 @@ Commands:
   @request and @response set the message direction. Applies to subsequent paragraphs until changed.
      The initial direction is always request and the break command resets the direction to request.
   @fill <decimal number> create a paragraph consisting of <number> octets of auto-fill data
-     ABCDEFGHIJABC ... Primarily useful for chunk testing.
+     ABCDEFGHIJABC ....
+  @partial causes a partial flush, simulating a retransmission of a detained packet
   @fileset <pathname> specifies a file from which the tool will read data into the message buffer.
      This may be used to include a zipped or other binary file into a message body. Data is read
      beginning at the start of the file.
@@ -193,19 +211,6 @@ Escape sequences begin with '\'. They may be used within a paragraph or to begin
 
 Data is separated into segments for presentation to the splitter whenever a paragraph ends (blank
 line).
-
-Whenever a segment contains insufficient data to make up a body, fill data will be provided to
-make up the difference based on the Content-Length field. Specifically, flushing more data than in
-the current segment will trigger filling. The user should include at least one character of body
-data either as part of the previous header segment or at the beginning of a new segment following
-the headers. Fill data will be read from the currently included file. If no included file is
-currently set the fill data will be generated in the pattern ABC...XYZABC...
-
-The current chunk reassembly algorithm does not flush data beyond the current segment. The fill
-feature does not work with chunked bodies but the fill command can be used.
-
-Fill data will not be provided for a paragraph that is preceded by tcpclose. The body will
-terminate at the end of the paragraph.
 
 This test tool does not implement the feature of being hardened against bad input. If you write a
 badly formatted or improper test case the program may assert or crash. The responsibility is on the

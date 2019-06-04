@@ -98,6 +98,15 @@ struct TcpStats
     PegCount syn_acks;
     PegCount resets;
     PegCount fins;
+    PegCount total_packets_held;
+    PegCount held_packet_rexmits;
+    PegCount held_packets_dropped;
+    PegCount held_packets_passed;
+    PegCount current_packets_held;
+    PegCount max_packets_held;
+    PegCount held_packet_limit_exceeded;
+    PegCount partial_flushes;
+    PegCount partial_flush_bytes;
 };
 
 extern THREAD_LOCAL struct TcpStats tcpStats;

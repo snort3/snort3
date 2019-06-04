@@ -274,9 +274,8 @@ void HttpInspect::eval(Packet* p)
     }
 
     const int remove_workaround = session_data->zero_byte_workaround[source_id] ? 1 : 0;
-
-    if (!process(p->data, p->dsize - remove_workaround, p->flow, source_id,
-        (p->data != p->context->buf)))
+    const bool partial_flush = session_data->partial_flush[source_id];
+    if (!process(p->data, p->dsize - remove_workaround, p->flow, source_id, !partial_flush))
     {
         DetectionEngine::disable_content(p);
     }
@@ -317,7 +316,10 @@ bool HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
     HttpFlowData* session_data = (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
     assert(session_data != nullptr);
 
-    HttpModule::increment_peg_counts(PEG_INSPECT);
+    if (!session_data->partial_flush[source_id])
+        HttpModule::increment_peg_counts(PEG_INSPECT);
+    else
+        HttpModule::increment_peg_counts(PEG_PARTIAL_INSPECT);
 
     switch (session_data->section_type[source_id])
     {
@@ -360,7 +362,10 @@ bool HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
 
     current_section->analyze();
     current_section->gen_events();
-    current_section->update_flow();
+    if (!session_data->partial_flush[source_id])
+        current_section->update_flow();
+    session_data->partial_flush[source_id] = false;
+    session_data->section_type[source_id] = SEC__NOT_COMPUTE;
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output())

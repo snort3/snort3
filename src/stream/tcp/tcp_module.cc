@@ -83,7 +83,16 @@ const PegInfo tcp_pegs[] =
     { CountType::SUM, "syns", "number of syn packets" },
     { CountType::SUM, "syn_acks", "number of syn-ack packets" },
     { CountType::SUM, "resets", "number of reset packets" },
-    { CountType::SUM, "fins", "number of fin packets"},
+    { CountType::SUM, "fins", "number of fin packets" },
+    { CountType::SUM, "packets_held", "number of packets held" },
+    { CountType::SUM, "held_packet_rexmits", "number of retransmits of held packets" },
+    { CountType::SUM, "held_packets_dropped", "number of held packets dropped" },
+    { CountType::SUM, "held_packets_passed", "number of held packets passed" },
+    { CountType::NOW, "cur_packets_held", "number of packets currently held" },
+    { CountType::MAX, "max_packets_held", "maximum number of packets held simultaneously" },
+    { CountType::SUM, "held_packet_limit_exceeded", "number of times limit of max held packets exceeded" },
+    { CountType::SUM, "partial_flushes", "number of partial flushes initiated" },
+    { CountType::SUM, "partial_flush_bytes", "partial flush total bytes" },
     { CountType::END, nullptr, nullptr }
 };
 

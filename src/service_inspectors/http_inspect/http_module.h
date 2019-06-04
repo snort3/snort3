@@ -42,6 +42,7 @@ public:
     bool decompress_pdf = false;
     bool decompress_swf = false;
     bool decompress_zip = false;
+    bool accelerated_blocking = false;
 
     struct JsNormParam
     {

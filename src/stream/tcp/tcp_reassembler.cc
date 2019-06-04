@@ -29,6 +29,7 @@
 #include "log/log.h"
 #include "main/analyzer.h"
 #include "memory/memory_cap.h"
+#include "packet_io/active.h"
 #include "profiler/profiler.h"
 #include "protocols/packet_manager.h"
 #include "time/packet_time.h"
@@ -588,6 +589,8 @@ int TcpReassembler::_flush_to_seq(
                 last_pdu = pdu;
             else
                 last_pdu = nullptr;
+
+            trs.tracker->finalize_held_packet(p);
         }
         else
         {
@@ -1083,8 +1086,24 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
             return flush_on_data_policy(trs, p);
         }
     }
-    break;
+        break;
     }
+
+    if ( trs.tracker->is_retransmit_of_held_packet(p) )
+    {
+        if ( trs.tracker->splitter->init_partial_flush(p->flow) )
+        {
+            flushed += flush_stream(trs, p, trs.packet_dir, false);
+            tcpStats.partial_flushes++;
+            tcpStats.partial_flush_bytes += flushed;
+            if ( trs.sos.seg_count )
+            {
+                purge_to_seq(trs, trs.sos.seglist.head->i_seq + flushed);
+                trs.tracker->r_win_base = trs.sos.seglist_base_seq;
+            }
+        }
+    }
+
     // FIXIT-H a drop rule will yoink the seglist out from under us
     // because apply_delayed_action is only deferred to end of context
     if ( flushed and trs.sos.seg_count and

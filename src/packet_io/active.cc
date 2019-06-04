@@ -29,6 +29,7 @@
 #include "main/snort_config.h"
 #include "managers/action_manager.h"
 #include "protocols/tcp.h"
+#include "pub_sub/active_events.h"
 #include "stream/stream.h"
 #include "utils/dnet_header.h"
 
@@ -41,6 +42,7 @@ using namespace snort;
 const char* Active::act_str[Active::ACT_MAX][Active::AST_MAX] =
 {
     { "allow", "error", "error", "error" },
+    { "hold", "error", "error", "error" },
     { "retry", "error", "error", "error" },
     { "drop", "cant_drop", "would_drop", "force_drop" },
     { "block", "cant_block", "would_block", "force_block" },
@@ -435,6 +437,17 @@ bool Active::daq_retry_packet(const Packet* p)
     }
 
     return retry_queued;
+}
+
+bool Active::hold_packet(const Packet*)
+{
+    if ( active_action < ACT_HOLD )
+    {
+        active_action = ACT_HOLD;
+        return true;
+    }
+
+    return false;
 }
 
 void Active::allow_session(Packet* p)

@@ -238,6 +238,13 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
                         return;
                     }
                 }
+                else if ((command_length == strlen("partial")) && !memcmp(command_value,
+                    "partial", strlen("partial")))
+                {
+                    partial = true;
+                    length = 0;
+                    return;
+                }
                 else if ((command_length > strlen("fileset")) && !memcmp(command_value, "fileset",
                     strlen("fileset")))
                 {
@@ -433,20 +440,30 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
 void HttpTestInput::flush(uint32_t num_octets)
 {
     flush_octets = previous_offset[last_source_id] + num_octets;
+    assert(flush_octets <= end_offset[last_source_id]);
     assert(flush_octets <= MAX_OCTETS);
     flushed = true;
 }
 
 void HttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId source_id,
-    bool& tcp_close)
+    bool& tcp_close, bool& partial_flush)
 {
     *buffer = nullptr;
     tcp_close = false;
+    partial_flush = false;
 
     // Only piggyback on data moving in the same direction.
     // Need flushed data unless the connection is closing.
-    if ((source_id != last_source_id) || (!flushed && !tcp_closed))
+    if ((source_id != last_source_id) || (!flushed && !tcp_closed && !partial))
     {
+        return;
+    }
+
+    if (partial)
+    {
+        // Give the caller a chance to set up for a partial flush before giving him the data
+        partial_flush = true;
+        partial = false;
         return;
     }
 
@@ -454,9 +471,8 @@ void HttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId sour
     // buffer.
     // 1. less than whole buffer - not the final flush, ignore pending close
     // 2. exactly equal - process data now and signal the close next time around
-    // 3. more than whole buffer - signal the close now and truncate and send next time around
-    // 4. there was no flush - signal the close now and send the leftovers next time around
-    if (tcp_closed && (!flushed || (flush_octets >= end_offset[last_source_id])))
+    // 3. there was no flush - signal the close now and send the leftovers next time around
+    if (tcp_closed && (!flushed || (flush_octets == end_offset[last_source_id])))
     {
         if (close_pending)
         {
@@ -479,7 +495,7 @@ void HttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId sour
             close_notified = true;
             finish_expected = true;
         }
-        else if (flush_octets == end_offset[last_source_id])
+        else
         {
             // The flush point is the end of the paragraph. Supply the data now and if necessary
             // notify the caller about close next time or otherwise just clean up.
@@ -497,38 +513,12 @@ void HttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId sour
                 close_pending = true;
             }
         }
-        else
-        {
-            // Flushed more body data than is actually available. Truncate the size of the flush,
-            // notify caller about close, and supply the data next time.
-            flush_octets = end_offset[last_source_id];
-            tcp_close = true;
-            close_notified = true;
-            finish_expected = true;
-        }
         return;
     }
 
     // Normal case with no TCP close or at least not yet
     *buffer = msg_buf[last_source_id];
     length = flush_octets;
-    if (flush_octets > end_offset[last_source_id])
-    {
-        // We need to generate additional data to fill out the body or chunk section.
-        for (uint32_t k = end_offset[last_source_id]; k < flush_octets; k++)
-        {
-            if (include_file[last_source_id] == nullptr)
-            {
-                msg_buf[last_source_id][k] = 'A' + k % 26;
-            }
-            else
-            {
-                int new_octet = getc(include_file[last_source_id]);
-                assert(new_octet != EOF);
-                msg_buf[last_source_id][k] = new_octet;
-            }
-        }
-    }
     just_flushed = true;
     flushed = false;
 }
