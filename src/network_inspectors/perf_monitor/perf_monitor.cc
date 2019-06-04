@@ -77,7 +77,6 @@ public:
 
 private:
     PerfConfig* const config;
-    FlowIPDataHandler* flow_ip_handler = nullptr;
 
     void disable_tracker(size_t);
 };
@@ -206,11 +205,7 @@ void PerfMonitor::disable_tracker(size_t i)
     auto tracker = trackers->at(i);
 
     if ( tracker == flow_ip_tracker )
-    {
-        DataBus::unsubscribe_default(FLOW_STATE_EVENT, flow_ip_handler);
-        delete flow_ip_handler;
         flow_ip_tracker = nullptr;
-    }
 
     (*trackers)[i] = (*trackers)[trackers->size() - 1];
     trackers->pop_back();
@@ -227,7 +222,7 @@ bool PerfMonitor::configure(SnortConfig* sc)
     new PerfRotateHandler(*this, sc);
 
     if ( config->perf_flags & PERF_FLOWIP )
-        flow_ip_handler = new FlowIPDataHandler(*this, sc);
+        new FlowIPDataHandler(*this, sc);
 
     return config->resolve();
 }
