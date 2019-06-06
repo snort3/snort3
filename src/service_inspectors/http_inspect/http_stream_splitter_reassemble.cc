@@ -258,7 +258,8 @@ const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow* flow, unsi
             if (test_buffer == nullptr)
             {
                 // Source ID does not match test data, no test data was flushed, preparing for a
-                // partial flush, or there is no more test data
+                // partial flush, preparing for a TCP connection close, or there is no more test
+                // data
                 return http_buf;
             }
             data = test_buffer;

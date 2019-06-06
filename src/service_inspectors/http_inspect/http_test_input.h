@@ -43,10 +43,10 @@ private:
     uint8_t msg_buf[2][2 * HttpEnums::MAX_OCTETS];
     FILE* include_file[2] = { nullptr, nullptr };
 
-    // break command has been read and we are waiting for a new flow to start
+    // break command has been read and we are waiting for a new underlying flow to start
     bool need_break = false;
 
-    // Sequence number of the flow we are currently piggybacking on
+    // Sequence number of the underlying flow we are currently piggybacking on
     uint64_t curr_seq_num = 0;
 
     // data has been flushed and must be sent by reassemble() before more data may be given to
@@ -59,7 +59,7 @@ private:
     // reassemble() just completed and all flushed octets forwarded, time to resume scan()
     bool just_flushed = true;
 
-    // TCP connection directional close at end of current paragraph
+    // TCP connection directional close
     bool tcp_closed = false;
 
     // partial flush requested, useful for testing accelerated blocking
@@ -73,15 +73,6 @@ private:
 
     // number of characters in the buffer
     uint32_t end_offset[2] = { 0, 0 };
-
-    // Need to send close with next pass through reassemble()
-    bool close_pending = false;
-
-    // Close notification already provided
-    bool close_notified = false;
-
-    // tcp_close notification given and we are waiting for a HttpStreamSplitter::finish() call.
-    bool finish_expected = false;
 
     void reset();
 };

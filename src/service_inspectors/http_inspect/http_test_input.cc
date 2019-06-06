@@ -61,9 +61,6 @@ void HttpTestInput::reset()
     just_flushed = true;
     tcp_closed = false;
     flush_octets = 0;
-    close_pending = false;
-    close_notified = false;
-    finish_expected = false;
     need_break = false;
 
     for (int k = 0; k <= 1; k++)
@@ -218,6 +215,11 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
                     "tcpclose", strlen("tcpclose")))
                 {
                     tcp_closed = true;
+                    if (!skip_to_break)
+                    {
+                        length = 0;
+                        return;
+                    }
                 }
                 else if ((command_length > strlen("fill")) && !memcmp(command_value, "fill",
                     strlen("fill")))
@@ -449,12 +451,22 @@ void HttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId sour
     bool& tcp_close, bool& partial_flush)
 {
     *buffer = nullptr;
-    tcp_close = false;
     partial_flush = false;
+    tcp_close = false;
 
     // Only piggyback on data moving in the same direction.
-    // Need flushed data unless the connection is closing.
-    if ((source_id != last_source_id) || (!flushed && !tcp_closed && !partial))
+    if (source_id != last_source_id)
+        return;
+
+    if (tcp_closed)
+    {
+        // Give the caller a chance to call finish()
+        tcp_close = true;
+        return;
+    }
+
+    // Need flushed data unless it's a partial flush.
+    if (!flushed && !partial)
     {
         return;
     }
@@ -467,56 +479,6 @@ void HttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId sour
         return;
     }
 
-    // How we process TCP close situations depends on the size of the flush relative to the data
-    // buffer.
-    // 1. less than whole buffer - not the final flush, ignore pending close
-    // 2. exactly equal - process data now and signal the close next time around
-    // 3. there was no flush - signal the close now and send the leftovers next time around
-    if (tcp_closed && (!flushed || (flush_octets == end_offset[last_source_id])))
-    {
-        if (close_pending)
-        {
-            // There is no more data. Clean up and notify caller about close.
-            just_flushed = true;
-            flushed = false;
-            end_offset[last_source_id] = 0;
-            previous_offset[last_source_id] = 0;
-            close_pending = false;
-            tcp_closed = false;
-            tcp_close = true;
-            finish_expected = true;
-        }
-        else if (!flushed)
-        {
-            // Failure to flush means scan() reached end of paragraph and returned PAF_SEARCH.
-            // Notify caller about close and they will do a zero-length flush().
-            previous_offset[last_source_id] = end_offset[last_source_id];
-            tcp_close = true;
-            close_notified = true;
-            finish_expected = true;
-        }
-        else
-        {
-            // The flush point is the end of the paragraph. Supply the data now and if necessary
-            // notify the caller about close next time or otherwise just clean up.
-            *buffer = msg_buf[last_source_id];
-            length = flush_octets;
-            if (close_notified)
-            {
-                just_flushed = true;
-                flushed = false;
-                close_notified = false;
-                tcp_closed = false;
-            }
-            else
-            {
-                close_pending = true;
-            }
-        }
-        return;
-    }
-
-    // Normal case with no TCP close or at least not yet
     *buffer = msg_buf[last_source_id];
     length = flush_octets;
     just_flushed = true;
@@ -525,13 +487,12 @@ void HttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId sour
 
 bool HttpTestInput::finish()
 {
-    if (finish_expected)
+    if (tcp_closed)
     {
-        finish_expected = false;
+        tcp_closed = false;
         return true;
     }
     return false;
 }
-
 #endif
 

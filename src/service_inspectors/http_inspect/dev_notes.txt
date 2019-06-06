@@ -179,7 +179,7 @@ lines in the middle of a paragraph.
 Commands:
   @break resets HTTP Inspect data structures and begins a new test. Use it liberally to prevent
      unrelated tests from interfering with each other.
-  @tcpclose simulates a half-duplex TCP close following the next paragraph of data.
+  @tcpclose simulates a half-duplex TCP close.
   @request and @response set the message direction. Applies to subsequent paragraphs until changed.
      The initial direction is always request and the break command resets the direction to request.
   @fill <decimal number> create a paragraph consisting of <number> octets of auto-fill data
