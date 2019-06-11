@@ -134,6 +134,18 @@ bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
     const ICMPHdr* const icmph = reinterpret_cast<const ICMPHdr*>(raw.data);
     uint16_t len = 0;
 
+    if (SnortConfig::icmp_checksums())
+    {
+        uint16_t csum = checksum::cksum_add((const uint16_t*)icmph, raw.len);
+
+        if (csum && !codec.is_cooked())
+        {
+            stats.bad_ip4_cksum++;
+            snort.decode_flags |= DECODE_ERR_CKSUM_ICMP;
+            return false;
+        }
+    }
+
     switch (icmph->type)
     {
     // fall through ...
@@ -176,18 +188,6 @@ bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
     default:
         codec_event(codec, DECODE_ICMP4_TYPE_OTHER);
         break;
-    }
-
-    if (SnortConfig::icmp_checksums())
-    {
-        uint16_t csum = checksum::cksum_add((const uint16_t*)icmph, raw.len);
-
-        if (csum && !codec.is_cooked())
-        {
-            stats.bad_ip4_cksum++;
-            snort.decode_flags |= DECODE_ERR_CKSUM_ICMP;
-            return false;
-        }
     }
 
     len =  icmp::ICMP_BASE_LEN;
