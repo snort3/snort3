@@ -31,6 +31,10 @@
 #include "ip_ha.h"
 #include "stream_ip.h"
 
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+#endif
+
 using namespace snort;
 
 const PegInfo ip_pegs[] =
@@ -80,7 +84,7 @@ static void IpSessionCleanup(Flow* lws, FragTracker* tracker)
 // private packet processing methods
 //-------------------------------------------------------------------------
 
-static inline void UpdateSession(Packet* p, Flow* lws)
+static inline void update_session(Packet* p, Flow* lws)
 {
     lws->markup_packet_flags(p);
 
@@ -105,6 +109,7 @@ static inline void UpdateSession(Packet* p, Flow* lws)
     }
 
     // Reset the session timeout.
+    if ( lws->ssn_server )
     {
         StreamIpConfig* pc = get_ip_cfg(lws->ssn_server);
         lws->set_expire(p, pc->session_timeout);
@@ -180,7 +185,7 @@ int IpSession::process(Packet* p)
         d->process(p, &tracker);
     }
 
-    UpdateSession(p, flow);
+    update_session(p, flow);
 
     return 0;
 }
@@ -222,3 +227,46 @@ bool IpSession::check_alerted(Packet* p, uint32_t gid, uint32_t sid)
     return false;
 }
 
+#ifdef UNIT_TEST
+
+// dummy
+class StreamIp : public Inspector
+{
+public:
+    StreamIp(StreamIpConfig*);
+    ~StreamIp() override;
+
+    bool configure(SnortConfig*) override;
+    void show(SnortConfig*) override;
+    NORETURN_ASSERT void eval(Packet*) override;
+    StreamIpConfig* config;
+    Defrag* defrag;
+};
+
+TEST_CASE("IP Session", "[ip_session]")
+{
+    Flow lws;
+    Packet p(false);
+    DAQ_PktHdr_t dh = {};
+    p.pkth = &dh;
+
+    SECTION("update_session without inspector")
+    {
+        lws.ssn_server = nullptr;
+
+        update_session(&p, &lws);
+        CHECK(lws.expire_time == 0);
+    }
+
+    SECTION("update_session with inspector")
+    {
+        StreamIpConfig* sic = new StreamIpConfig;
+        sic->session_timeout = 360;
+        StreamIp si(sic);
+        lws.ssn_server = &si;
+
+        update_session(&p, &lws);
+        CHECK(lws.expire_time == 360);
+    }
+}
+#endif

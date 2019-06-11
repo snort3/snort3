@@ -617,8 +617,6 @@ public:
     void handle_new_standby_flow(Flow*);
 
 private:
-    void apply(const Stuff&, Flow*);
-
     void set_binding(SnortConfig*, Binding*);
     void get_bindings(Flow*, Stuff&, Packet* = nullptr); // may be null when dealing with HA flows
     void apply(Flow*, Stuff&);
