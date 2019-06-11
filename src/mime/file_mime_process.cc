@@ -166,7 +166,7 @@ void MimeSession::setup_decode(const char* data, int size, bool cnt_xf)
  *
  * @return  i       index into p->payload where we stopped looking at data
  */
-const uint8_t* MimeSession::process_mime_header(const uint8_t* ptr,
+const uint8_t* MimeSession::process_mime_header(Packet* p, const uint8_t* ptr,
     const uint8_t* data_end_marker)
 {
     const uint8_t* eol = data_end_marker;
@@ -308,7 +308,7 @@ const uint8_t* MimeSession::process_mime_header(const uint8_t* ptr,
             state_flags &= ~MIME_FLAG_DATA_HEADER_CONT;
         }
 
-        int ret = handle_header_line(ptr, eol, max_header_name_len);
+        int ret = handle_header_line(ptr, eol, max_header_name_len, p);
         if (ret < 0)
             return nullptr;
         else if (ret > 0)
@@ -514,7 +514,7 @@ const uint8_t* MimeSession::process_mime_data_paf(
             {
                 /* if we're normalizing and not ignoring data copy data end marker
                  * and dot to alt buffer */
-                if (normalize_data(start, end) < 0)
+                if (normalize_data(start, end, p) < 0)
                     return nullptr;
 
                 reset_mime_state();
@@ -545,12 +545,12 @@ const uint8_t* MimeSession::process_mime_data_paf(
 
     if (data_state == STATE_DATA_HEADER)
     {
-        start = process_mime_header(start, end);
+        start = process_mime_header(p, start, end);
         if (start == nullptr)
             return nullptr;
     }
 
-    if (normalize_data(start, end) < 0)
+    if (normalize_data(start, end, p) < 0)
         return nullptr;
 
     // now we shouldn't have to worry about copying any data to the alt buffer
@@ -561,7 +561,7 @@ const uint8_t* MimeSession::process_mime_data_paf(
         switch (data_state)
         {
         case STATE_MIME_HEADER:
-            start = process_mime_header(start, end);
+            start = process_mime_header(p, start, end);
             break;
         case STATE_DATA_BODY:
             start = process_mime_body(start, end, isFileEnd(position) );

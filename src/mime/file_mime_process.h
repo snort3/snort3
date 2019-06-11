@@ -86,8 +86,8 @@ private:
     std::string filename;
 
     // SMTP, IMAP, POP might have different implementation for this
-    virtual int handle_header_line(const uint8_t*, const uint8_t*, int) { return 0; }
-    virtual int normalize_data(const uint8_t*, const uint8_t*) { return 0; }
+    virtual int handle_header_line(const uint8_t*, const uint8_t*, int, Packet*) { return 0; }
+    virtual int normalize_data(const uint8_t*, const uint8_t*, Packet*) { return 0; }
     virtual void decode_alert() { }
     virtual void decompress_alert() { }
     virtual void reset_state(Flow*) { }
@@ -95,7 +95,7 @@ private:
 
     void reset_mime_state();
     void setup_decode(const char* data, int size, bool cnt_xf);
-    const uint8_t* process_mime_header(const uint8_t* ptr, const uint8_t* data_end_marker);
+    const uint8_t* process_mime_header(Packet*, const uint8_t* ptr, const uint8_t* data_end_marker);
     const uint8_t* process_mime_body(const uint8_t* ptr, const uint8_t* data_end,bool is_data_end);
     const uint8_t* process_mime_data_paf(Packet*, const uint8_t* start, const uint8_t* end,
         bool upload, FilePosition);

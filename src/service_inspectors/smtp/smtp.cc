@@ -40,6 +40,10 @@
 #include "smtp_util.h"
 #include "smtp_xlink2state.h"
 
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+#endif
+
 using namespace snort;
 
 THREAD_LOCAL ProfileStats smtpPerfStats;
@@ -180,7 +184,7 @@ SmtpFlowData::SmtpFlowData() : FlowData(inspector_id)
 {
     memset(&session, 0, sizeof(session));
     smtpstats.concurrent_sessions++;
-    if(smtpstats.max_concurrent_sessions < smtpstats.concurrent_sessions)
+    if (smtpstats.max_concurrent_sessions < smtpstats.concurrent_sessions)
         smtpstats.max_concurrent_sessions = smtpstats.concurrent_sessions;
 }
 
@@ -215,7 +219,7 @@ static SMTPData* SetNewSMTPData(SMTP_PROTO_CONF* config, Packet* p)
     smtp_ssn->mime_ssn->config = config;
     smtp_ssn->mime_ssn->set_mime_stats(&(smtpstats.mime_stats));
 
-    if(Stream::is_midstream(p->flow))
+    if (Stream::is_midstream(p->flow))
     {
         smtp_ssn->state = STATE_UNKNOWN;
     }
@@ -367,7 +371,7 @@ static int GetCmdId(SMTP_PROTO_CONF* config, const char* name, SMTPCmdTypeEnum t
     return AddCmd(config, name, type);
 }
 
-static void SMTP_PrintConfig(SMTP_PROTO_CONF *config)
+static void SMTP_PrintConfig(SMTP_PROTO_CONF* config)
 {
     assert(config);
 
@@ -377,13 +381,13 @@ static void SMTP_PrintConfig(SMTP_PROTO_CONF *config)
     LogMessage("SMTP Config:\n");
     snprintf(buf, sizeof(buf) - 1, "    Normalize: ");
 
-    if(config->normalize == NORMALIZE_ALL)
+    if (config->normalize == NORMALIZE_ALL)
         sfsnprintfappend(buf, sizeof(buf) - 1, "all");
 
-    else if(config->normalize == NORMALIZE_NONE)
+    else if (config->normalize == NORMALIZE_NONE)
         sfsnprintfappend(buf, sizeof(buf) - 1, "none");
 
-    else if(config->normalize == NORMALIZE_CMDS)
+    else if (config->normalize == NORMALIZE_CMDS)
     {
         for (SMTPToken* cmd = config->cmds; cmd->name != nullptr; cmd++)
         {
@@ -459,11 +463,11 @@ static void SMTP_PrintConfig(SMTP_PROTO_CONF *config)
         (config->xlink2state == ALERT_XLINK2STATE) ? "Yes" : "No");
     if (config->xlink2state == DROP_XLINK2STATE)
     {
-        LogMessage("    Drop on X-Link2State Alert: %s\n", "Yes" );
+        LogMessage("    Drop on X-Link2State Alert: %s\n", "Yes");
     }
     else
     {
-        LogMessage("    Drop on X-Link2State Alert: %s\n", "No" );
+        LogMessage("    Drop on X-Link2State Alert: %s\n", "No");
     }
 
     snprintf(buf, sizeof(buf) - 1, "    Alert on commands: ");
@@ -984,7 +988,6 @@ static void SMTP_ProcessClientPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPDat
     const uint8_t* ptr = p->data;
     const uint8_t* end = p->data + p->dsize;
 
-
     if (smtp_ssn->state == STATE_CONNECT)
     {
         smtp_ssn->state = STATE_COMMAND;
@@ -1294,7 +1297,7 @@ static void SMTP_RegXtraDataFuncs(SMTP_PROTO_CONF* config)
 }
 
 int SmtpMime::handle_header_line(
-    const uint8_t* ptr, const uint8_t* eol, int max_header_len)
+    const uint8_t* ptr, const uint8_t* eol, int max_header_len, Packet* p)
 {
     /* get length of header line */
     int header_line_len = eol - ptr;
@@ -1306,14 +1309,13 @@ int SmtpMime::handle_header_line(
         (header_line_len > config->max_header_line_len))
     {
         DetectionEngine::queue_event(GID_SMTP, SMTP_DATA_HDR_OVERFLOW);
-
     }
 
     /* Does VRT want data headers normalized?
      * currently the code does not normalize headers */
     if (smtp_normalizing)
     {
-        int ret = SMTP_CopyToAltBuffer(nullptr, ptr, eol - ptr);
+        int ret = SMTP_CopyToAltBuffer(p, ptr, eol - ptr);
 
         if (ret == -1)
             return (-1);
@@ -1330,7 +1332,7 @@ int SmtpMime::handle_header_line(
     return 0;
 }
 
-int SmtpMime::normalize_data(const uint8_t* ptr, const uint8_t* data_end)
+int SmtpMime::normalize_data(const uint8_t* ptr, const uint8_t* data_end, Packet* p)
 {
     /* if we're ignoring data and not already normalizing, copy everything
      * up to here into alt buffer so detection engine doesn't have
@@ -1343,7 +1345,7 @@ int SmtpMime::normalize_data(const uint8_t* ptr, const uint8_t* data_end)
     else */
     if (!config->decode_conf.is_ignore_data() && smtp_normalizing)
     {
-        return SMTP_CopyToAltBuffer(nullptr, ptr, data_end - ptr);
+        return SMTP_CopyToAltBuffer(p, ptr, data_end - ptr);
     }
 
     return 0;
@@ -1377,7 +1379,6 @@ void SmtpMime::reset_state(Flow* ssn)
 {
     SMTP_ResetState(ssn);
 }
-
 
 bool SmtpMime::is_end_of_data(Flow* session)
 {
@@ -1581,5 +1582,56 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 };
 #else
 const BaseApi* sin_smtp = &smtp_api.base;
+#endif
+
+#ifdef UNIT_TEST
+TEST_CASE("handle_header_line", "[smtp]")
+{
+    // Setup
+    MailLogConfig log_config;
+    snort::DecodeConfig decode_conf;
+    log_config.log_email_hdrs = 0;
+    SmtpMime mime_ssn(&decode_conf, &log_config);
+    smtp_normalizing = true;
+    SMTP_PROTO_CONF config;
+    mime_ssn.config = &config;
+    uint8_t ptr[68] = "Date: Tue, 1 Mar 2016 22:37:56 -0500\r\nFrom: acc2 <acc2@localhost>\r\n";
+    uint8_t* eol = ptr + 38;
+    Packet p;
+    p.context = new IpsContext(1);
+    
+    int res = mime_ssn.handle_header_line(ptr, eol, 0, &p);
+    REQUIRE((res == 0));
+    unsigned len = 0;
+    const uint8_t* header = SMTP_GetAltBuffer(&p, len);
+    REQUIRE((len == 38));
+    REQUIRE((memcmp(header, ptr, len)== 0));
+
+    // Cleanup
+    delete p.context;
+}
+
+TEST_CASE("normalize_data", "[smtp]")
+{
+    // Setup
+    MailLogConfig log_config;
+    snort::DecodeConfig decode_conf;
+    SmtpMime mime_ssn(&decode_conf, &log_config);
+    smtp_normalizing = true;
+    uint8_t ptr[23] = "\r\n--wac7ysb48OaltWcw\r\n";
+    uint8_t* data_end = ptr + 22;
+    Packet p;
+    p.context = new IpsContext(1);
+    
+    int res = mime_ssn.normalize_data(ptr, data_end, &p);
+    REQUIRE((res == 0));
+    unsigned len = 0;
+    const uint8_t* data = SMTP_GetAltBuffer(&p, len);
+    REQUIRE((len == 22));
+    REQUIRE((memcmp(data, ptr, len)== 0));
+
+    // Cleanup
+    delete p.context;
+}
 #endif
 
