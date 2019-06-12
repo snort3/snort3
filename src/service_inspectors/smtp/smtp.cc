@@ -1599,7 +1599,7 @@ TEST_CASE("handle_header_line", "[smtp]")
     uint8_t* eol = ptr + 38;
     Packet p;
     p.context = new IpsContext(1);
-    
+    SMTP_ResetAltBuffer(&p);
     int res = mime_ssn.handle_header_line(ptr, eol, 0, &p);
     REQUIRE((res == 0));
     unsigned len = 0;
@@ -1618,11 +1618,13 @@ TEST_CASE("normalize_data", "[smtp]")
     snort::DecodeConfig decode_conf;
     SmtpMime mime_ssn(&decode_conf, &log_config);
     smtp_normalizing = true;
+    SMTP_PROTO_CONF config;
+    mime_ssn.config = &config;
     uint8_t ptr[23] = "\r\n--wac7ysb48OaltWcw\r\n";
     uint8_t* data_end = ptr + 22;
     Packet p;
     p.context = new IpsContext(1);
-    
+    SMTP_ResetAltBuffer(&p);
     int res = mime_ssn.normalize_data(ptr, data_end, &p);
     REQUIRE((res == 0));
     unsigned len = 0;
