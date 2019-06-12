@@ -135,6 +135,7 @@ public:
     char* get_UTF8_fname(size_t* converted_len);
 
 private:
+    void print_full_entry(Flow* f);
     uint64_t processed_bytes = 0;
     void* file_type_context;
     void* file_signature_context;
