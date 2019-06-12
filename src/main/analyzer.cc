@@ -38,6 +38,7 @@
 #include "filters/rate_filter.h"
 #include "filters/sfrf.h"
 #include "filters/sfthreshold.h"
+#include "flow/flow.h"
 #include "flow/ha.h"
 #include "framework/data_bus.h"
 #include "latency/packet_latency.h"
@@ -56,6 +57,7 @@
 #include "packet_io/sfdaq_instance.h"
 #include "packet_tracer/packet_tracer.h"
 #include "profiler/profiler.h"
+#include "pub_sub/finalize_packet_event.h"
 #include "side_channel/side_channel.h"
 #include "stream/stream.h"
 #include "time/packet_time.h"
@@ -295,7 +297,17 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
     if (verdict == DAQ_VERDICT_RETRY)
         retry_queue->put(p->daq_msg);
     else if ( !p->active->is_packet_held() )
+    {
+        // Publish an event if something has indicated that it wants the
+        // finalize event on this flow.
+        if (p->flow and p->flow->trigger_finalize_event)
+        {
+            FinalizePacketEvent event(p, verdict);
+            DataBus::publish(FINALIZE_PACKET_EVENT, event);
+        }
+
         p->daq_instance->finalize_message(p->daq_msg, verdict);
+    }
 }
 
 void Analyzer::process_daq_pkt_msg(DAQ_Msg_h msg, bool retry)

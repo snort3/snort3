@@ -28,13 +28,13 @@
 // of FlowData items.
 
 #include "detection/ips_context_chain.h"
+#include "flow/flow_stash.h"
 #include "framework/data_bus.h"
 #include "framework/decode_data.h"
 #include "framework/inspector.h"
 #include "protocols/layer.h"
 #include "sfip/sf_ip.h"
 #include "target_based/snort_protocols.h"
-#include "flow_stash.h"
 
 #define SSNFLAG_SEEN_CLIENT         0x00000001
 #define SSNFLAG_SEEN_SENDER         0x00000001
@@ -381,6 +381,7 @@ public:  // FIXIT-M privatize if possible
     uint8_t response_count;
 
     bool disable_inspect;
+    bool trigger_finalize_event;
 
 private:
     void clean();

@@ -121,7 +121,7 @@ private:
 //-------------------------------------------------------------------------
 // length of given segment splitter (pass-thru)
 
-class LogSplitter : public StreamSplitter
+class SO_PUBLIC LogSplitter : public StreamSplitter
 {
 public:
     LogSplitter(bool);
