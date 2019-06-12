@@ -23,28 +23,23 @@
 #include "flow/flow.h"
 #include "flow/ha.h"
 
-//-------------------------------------------------------------------------
-
 class __attribute__((__packed__)) SessionHAContent
 {
 public:
     snort::LwState ssn_state;
     snort::Flow::FlowState flow_state;
     uint8_t flags;
-    static const uint8_t FLAG_LOW = 0x01; // client address / port is low in key
-    static const uint8_t FLAG_IP6 = 0x02; // key addresses are ip6
+    static constexpr uint8_t FLAG_LOW = 0x01; // client address / port is low in key
+    static constexpr uint8_t FLAG_IP6 = 0x02; // key addresses are ip6
 };
 
-class StreamHAClient : public FlowHAClient
+class StreamHAClient : public snort::FlowHAClient
 {
 public:
     StreamHAClient() : FlowHAClient(sizeof(SessionHAContent), true) { }
-    bool consume(snort::Flow*&, snort::FlowKey*, HAMessage*) override;
-    bool produce(snort::Flow*, HAMessage*) override;
+    bool consume(snort::Flow*&, const snort::FlowKey*, snort::HAMessage&, uint8_t size) override;
+    bool produce(snort::Flow&, snort::HAMessage&) override;
     bool is_update_required(snort::Flow*) override;
-    bool is_delete_required(snort::Flow*) override;
-
-private:
 };
 
 class ProtocolHA
@@ -52,12 +47,9 @@ class ProtocolHA
 public:
     ProtocolHA(PktType);
     virtual ~ProtocolHA();
-    virtual void delete_session(snort::Flow*) { }
-    virtual snort::Flow* create_session(snort::FlowKey*) { return nullptr; }
+    virtual snort::Flow* create_session(const snort::FlowKey*) { return nullptr; }
     virtual void deactivate_session(snort::Flow*) { }
-    virtual void process_deletion(snort::Flow*);
-
-private:
+    virtual void process_deletion(snort::Flow&);
 };
 
 class StreamHAManager

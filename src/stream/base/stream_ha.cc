@@ -60,25 +60,25 @@ static void protocol_deactivate_session(Flow* flow)
         protocol_ha->deactivate_session(flow);
 }
 
-static Flow* protocol_create_session(FlowKey* key)
+static Flow* protocol_create_session(const FlowKey* key)
 {
     ProtocolHA* protocol_ha = get_protocol_ha(key->pkt_type);
     return protocol_ha ?  protocol_ha->create_session(key) : nullptr;
 }
 
-static bool is_client_lower(Flow* flow)
+static bool is_client_lower(const Flow& flow)
 {
-    if (flow->client_ip.fast_lt6(flow->server_ip))
+    if (flow.client_ip.fast_lt6(flow.server_ip))
         return true;
 
-    if (flow->server_ip.fast_lt6(flow->client_ip))
+    if (flow.server_ip.fast_lt6(flow.client_ip))
         return false;
 
-    switch (flow->key->pkt_type)
+    switch (flow.key->pkt_type)
     {
         case PktType::TCP:
         case PktType::UDP:
-            if (flow->client_port < flow->server_port)
+            if (flow.client_port < flow.server_port)
                 return true;
             break;
         default:
@@ -87,18 +87,14 @@ static bool is_client_lower(Flow* flow)
     return false;
 }
 
-bool StreamHAClient::consume(Flow*& flow, FlowKey* key, HAMessage* msg)
+bool StreamHAClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg, uint8_t size)
 {
     assert(key);
-    assert(msg);
 
-    // Is the message long enough to have our content?
-    if ( ((unsigned)(msg->content_length()) - (unsigned)(msg->cursor - msg->content())) <
-        sizeof(SessionHAContent) )
+    if (size != sizeof(SessionHAContent))
         return false;
 
-    SessionHAContent* hac = (SessionHAContent*)msg->cursor;
-    msg->cursor += sizeof(SessionHAContent);
+    SessionHAContent* hac = (SessionHAContent*) msg.cursor;
 
     // If flow is missing, we need to create a new one.
     if ( flow == nullptr )
@@ -137,33 +133,28 @@ bool StreamHAClient::consume(Flow*& flow, FlowKey* key, HAMessage* msg)
         flow->ha_state->add(FlowHAState::STANDBY);
     }
 
+    msg.advance_cursor(sizeof(SessionHAContent));
+
     return true;
 }
 
-bool StreamHAClient::produce(Flow* flow, HAMessage* msg)
+bool StreamHAClient::produce(Flow& flow, HAMessage& msg)
 {
-    assert(flow);
-    assert(msg);
-
-    // Check for buffer overflows
-    if ( (int)(msg->cursor - msg->content()) <= (int)(msg->content_length() -
-        sizeof(SessionHAContent)) )
-    {
-        SessionHAContent* hac = (SessionHAContent*)msg->cursor;
-
-        memcpy(&(hac->ssn_state),&(flow->ssn_state),sizeof(LwState));
-        hac->flow_state = flow->flow_state;
-        hac->flags = 0;
-        msg->cursor += sizeof(SessionHAContent);
-
-        if ( !is_client_lower(flow) )
-            hac->flags |= SessionHAContent::FLAG_LOW;
-
-        hac->flags |= SessionHAContent::FLAG_IP6;
-        return true;
-    }
-    else
+    if (!msg.fits(sizeof(SessionHAContent)))
         return false;
+
+    SessionHAContent* hac = (SessionHAContent*) msg.cursor;
+
+    hac->ssn_state = flow.ssn_state;
+    hac->flow_state = flow.flow_state;
+    hac->flags = 0;
+    if (!is_client_lower(flow))
+        hac->flags |= SessionHAContent::FLAG_LOW;
+    hac->flags |= SessionHAContent::FLAG_IP6;
+
+    msg.advance_cursor(sizeof(SessionHAContent));
+
+    return true;
 }
 
 static void update_flags(Flow* flow)
@@ -241,13 +232,8 @@ bool StreamHAClient::is_update_required(Flow* flow)
         and that we're not overrunning the synchronization threshold. */
     if ( flow->ha_state->sync_interval_elapsed() )
         return true;
-    else
-        return flow->ha_state->check_any(FlowHAState::CRITICAL);
-}
 
-bool StreamHAClient::is_delete_required(Flow*)
-{
-    return true;
+    return flow->ha_state->check_any(FlowHAState::CRITICAL);
 }
 
 ProtocolHA::ProtocolHA(PktType protocol)
@@ -277,7 +263,7 @@ ProtocolHA::~ProtocolHA()
     }
 }
 
-void ProtocolHA::process_deletion(Flow* flow)
+void ProtocolHA::process_deletion(Flow& flow)
 {
     HighAvailabilityManager::process_deletion(flow);
 }

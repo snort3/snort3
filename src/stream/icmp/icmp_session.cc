@@ -196,7 +196,7 @@ bool IcmpSession::setup(Packet*)
 void IcmpSession::clear()
 {
     IcmpSessionCleanup(flow);
-    IcmpHAManager::process_deletion(flow);
+    IcmpHAManager::process_deletion(*flow);
 }
 
 int IcmpSession::process(Packet* p)

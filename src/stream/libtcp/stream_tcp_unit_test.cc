@@ -99,7 +99,6 @@ static Packet* init_packet(Flow* flow, uint32_t talker)
 
 void release_packet(Packet* p)
 {
-    delete p->flow->session;
     delete p->context;
     delete p;
 }

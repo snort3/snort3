@@ -902,7 +902,7 @@ void TcpSession::do_packet_analysis_post_checks(Packet* p)
         flow->set_expire(p, config->session_timeout);
     }
     else
-        TcpHAManager::process_deletion(p->flow);
+        TcpHAManager::process_deletion(*p->flow);
 
     if (pkt_action_mask & ACTION_DISABLE_INSPECTION)
     {
@@ -954,7 +954,7 @@ void TcpSession::cleanup_session_if_expired(Packet* p)
             clear_session(true, true, false, p);
 
         tcpStats.timeouts++;
-        TcpHAManager::process_deletion(flow);
+        TcpHAManager::process_deletion(*flow);
     }
 }
 

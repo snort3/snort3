@@ -27,8 +27,8 @@
 #include <cmath>
 
 #include "log/messages.h"
-
-#include "ha.h"
+#include "main/snort_config.h"
+#include "profiler/profiler_defs.h"
 
 using namespace snort;
 
@@ -48,13 +48,36 @@ static const Parameter ha_params[] =
       "side channel message port list" },
 
     { "min_age", Parameter::PT_REAL, "0.0:100.0", "1.0",
-      "minimum session life before HA updates" },
+      "minimum session life in seconds before HA updates" },
 
-    { "min_sync", Parameter::PT_REAL, "0.0:100.0", "1.0",
-      "minimum interval between HA updates" },
+    { "min_sync", Parameter::PT_REAL, "0.0:100.0", "0.1",
+      "minimum interval in seconds between HA updates" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
+
+static const PegInfo ha_pegs[] =
+{
+    { CountType::SUM, "msgs_recv", "total messages received" },
+    { CountType::SUM, "update_msgs_recv", "update messages received" },
+    { CountType::SUM, "update_msgs_recv_no_flow", "update messages received without a local flow" },
+    { CountType::SUM, "update_msgs_consumed", "update messages fully consumed" },
+    { CountType::SUM, "delete_msgs_consumed", "deletion messages consumed" },
+    { CountType::SUM, "daq_stores", "states stored via daq" },
+    { CountType::SUM, "daq_imports", "states imported via daq" },
+    { CountType::SUM, "msg_version_mismatch", "messages received with a version mismatch" },
+    { CountType::SUM, "msg_length_mismatch", "messages received with an inconsistent total length" },
+    { CountType::SUM, "truncated_msgs", "truncated messages received" },
+    { CountType::SUM, "unknown_key_type", "messages received with an unknown flow key type" },
+    { CountType::SUM, "unknown_client_idx", "messages received with an unknown client index" },
+    { CountType::SUM, "client_consume_errors", "client data consume failure count" },
+    { CountType::END, nullptr, nullptr }
+};
+
+THREAD_LOCAL HAStats ha_stats;
+THREAD_LOCAL ProfileStats ha_perf_stats;
+
+//-------------------------------------------------------------------------
 
 static void convert_real_seconds_to_timeval(double seconds, struct timeval* tv)
 {
@@ -67,42 +90,61 @@ static void convert_real_seconds_to_timeval(double seconds, struct timeval* tv)
 HighAvailabilityModule::HighAvailabilityModule() :
     Module(HA_NAME, HA_HELP, ha_params)
 {
-    config.enabled = false;
-    config.daq_channel = false;
-    config.ports = nullptr;
-    convert_real_seconds_to_timeval(1.0, &config.min_session_lifetime);
-    convert_real_seconds_to_timeval(0.1, &config.min_sync_interval);
+    config = nullptr;
 }
 
 HighAvailabilityModule::~HighAvailabilityModule()
 {
-    delete config.ports;
+    if (config)
+        delete config;
+}
+
+const PegInfo* HighAvailabilityModule::get_pegs() const
+{
+    return ha_pegs;
+}
+
+PegCount* HighAvailabilityModule::get_counts() const
+{
+    return (PegCount*) &ha_stats;
 }
 
 ProfileStats* HighAvailabilityModule::get_profile() const
-{ return &ha_perf_stats; }
+{
+    return &ha_perf_stats;
+}
+
+bool HighAvailabilityModule::begin(const char*, int, SnortConfig*)
+{
+    assert(!config);
+    config = new HighAvailabilityConfig();
+
+    return true;
+}
 
 bool HighAvailabilityModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("enable") )
-        config.enabled = v.get_bool();
-
+    {
+        config->enabled = v.get_bool();
+    }
     else if ( v.is("daq_channel") )
-        config.daq_channel = v.get_bool();
-
+    {
+        config->daq_channel = v.get_bool();
+    }
     else if ( v.is("ports") )
     {
-        if ( !config.ports )
-            config.ports = new PortBitSet;
-        v.get_bits(*(config.ports) );
+        if ( !config->ports )
+            config->ports = new PortBitSet;
+        v.get_bits(*(config->ports));
     }
     else if ( v.is("min_age") )
     {
-        convert_real_seconds_to_timeval(v.get_real(), &config.min_session_lifetime);
+        convert_real_seconds_to_timeval(v.get_real(), &config->min_session_lifetime);
     }
     else if ( v.is("min_sync") )
     {
-        convert_real_seconds_to_timeval(v.get_real(), &config.min_sync_interval);
+        convert_real_seconds_to_timeval(v.get_real(), &config->min_sync_interval);
     }
     else
         return false;
@@ -110,20 +152,13 @@ bool HighAvailabilityModule::set(const char*, Value& v, SnortConfig*)
     return true;
 }
 
-bool HighAvailabilityModule::begin(const char*, int, SnortConfig*)
+bool HighAvailabilityModule::end(const char*, int, SnortConfig* sc)
 {
-    return true;
-}
-
-bool HighAvailabilityModule::end(const char*, int, SnortConfig*)
-{
-    if ( config.enabled &&
-        !HighAvailabilityManager::instantiate(config.ports, config.daq_channel,
-                        &config.min_session_lifetime, &config.min_sync_interval) )
-    {
-        ParseWarning(WARN_CONF, "Illegal HighAvailability configuration");
-        return false;
-    }
+    if ( config->enabled )
+        sc->ha_config = config;
+    else
+        delete config;
+    config = nullptr;
 
     return true;
 }

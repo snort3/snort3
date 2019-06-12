@@ -31,6 +31,8 @@
 
 struct HighAvailabilityConfig
 {
+    ~HighAvailabilityConfig() { delete ports; }
+
     bool enabled;
     bool daq_channel;
     PortBitSet* ports = nullptr;
@@ -38,24 +40,18 @@ struct HighAvailabilityConfig
     struct timeval min_sync_interval;
 };
 
-extern THREAD_LOCAL SimpleStats ha_stats;
-extern THREAD_LOCAL snort::ProfileStats ha_perf_stats;
-
 class HighAvailabilityModule : public snort::Module
 {
 public:
     HighAvailabilityModule();
     ~HighAvailabilityModule() override;
 
-    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
     bool begin(const char*, int, snort::SnortConfig*) override;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
     bool end(const char*, int, snort::SnortConfig*) override;
 
-    PegCount* get_counts() const override
-    { return (PegCount*)&ha_stats; }
-
-    const PegInfo* get_pegs() const override
-    { return snort::simple_pegs; }
+    const PegInfo* get_pegs() const override;
+    PegCount* get_counts() const override;
 
     snort::ProfileStats* get_profile() const override;
 
@@ -63,8 +59,28 @@ public:
     { return GLOBAL; }
 
 private:
-    HighAvailabilityConfig config;
+    HighAvailabilityConfig* config;
 };
+
+struct HAStats
+{
+    PegCount msgs_recv;
+    PegCount update_msgs_recv;
+    PegCount update_msgs_recv_no_flow;
+    PegCount update_msgs_consumed;
+    PegCount delete_msgs_consumed;
+    PegCount daq_stores;
+    PegCount daq_imports;
+    PegCount msg_version_mismatch;
+    PegCount msg_length_mismatch;
+    PegCount truncated_msgs;
+    PegCount unknown_key_type;
+    PegCount unknown_client_idx;
+    PegCount client_consume_errors;
+};
+
+extern THREAD_LOCAL HAStats ha_stats;
+extern THREAD_LOCAL snort::ProfileStats ha_perf_stats;
 
 #endif
 

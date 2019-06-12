@@ -195,7 +195,6 @@ void Snort::init(int argc, char** argv)
 #endif
 
     SideChannelManager::pre_config_init();
-    HighAvailabilityManager::pre_config_init();
 
     ModuleManager::init();
     ScriptManager::load_scripts(snort_cmd_line_conf->script_paths);
@@ -229,6 +228,8 @@ void Snort::init(int argc, char** argv)
 #endif
     if ( !sc->output.empty() )
         EventManager::instantiate(sc->output.c_str(), sc);
+
+    HighAvailabilityManager::configure(sc->ha_config);
 
     if (SnortConfig::alert_before_pass())
         sc->rule_order = "reset block drop alert pass log";
@@ -408,6 +409,7 @@ void Snort::term()
     }
 
     CleanupProtoNames();
+    HighAvailabilityManager::term();
     SideChannelManager::term();
     ModuleManager::term();
     PluginManager::release_plugins();

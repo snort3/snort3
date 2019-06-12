@@ -45,7 +45,7 @@ TEST_GROUP(sip_splitter_test)
 TEST(sip_splitter_test, callispaf)
 {
     bool result = ssut.splitter_is_paf();
-    CHECK(result)
+    CHECK(result);
 }
 
 TEST(sip_splitter_test, reset_states_test)

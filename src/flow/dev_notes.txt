@@ -20,27 +20,39 @@ can be freed (via garbage collection) after a reload.
 There are many flags that may be set on a flow to indicate session tracking
 state, disposition, etc.
 
+=== High Availability
+
 HighAvailability (ha.cc, ha.h) serves to synchronize session state between high
-availabity partners.  HighAvailability uses Side Channel Connectors to transmit
-and receive messages.  The HA side channel must be full duplex (both a
-transmit and receive connector).  The primary purpose is to exchange session
-state with the goal of keeping the session caches in sync.  But other clients
-may also subscribe to the HA service to exchange additional session data.  Each
-client uses the FlowHAClient class to subscribe to the service.
+availabity partners.  The primary purpose is to exchange session state with the
+goal of keeping the session caches in sync.  Other clients may also register
+with the HA service to exchange additional session data by implementing one or
+more FlowHAClient classes.
+
+HA uses Side Channel Connectors and/or DAQ module IOCTLs to transmit and receive
+HA state messages.  A full duplex Side Channel is required for Side Channel
+communications.  A DAQ module that supports the IOCTLs for setting and getting
+HA state is required for a functional DAQ-backed setup.  Modules that do not
+support these IOCTLs will silently fail and present no HA state on future
+packets in the flow.  HA state will be queried from the DAQ module prior to new
+flow creation when the appropriate DAQ packet message flag has been set on the
+intiating packet.
 
 The HA subsystem exchanges two high level message types:
   - DELETE: Indicate to the partner that a session has neen removed.  No
-additional HA client status will be exchanged.
+additional HA client status will be exchanged.  (Not used for DAQ-backed
+storage.)
   - UPDATE: Indicate all other state changes.  The message always includes
 the session state and optionally may include state from other HA clients.
+By default, the update messages are incremental.  In the case of DAQ-backed
+storage, the update messages are always fully formed.
 
 The HA subsystem implements these classes:
   - HighAvailabilityManager - A collection of static elements providing the
     top-most interface to HA capabilities.
-  - HAMessage - A wrapper around the actual message (SideChannel only for now)
-    and includes a cursor for producer/consumer activity.  Passed around
+  - HAMessage - A wrapper around the actual message and includes a cursor and
+    convenience functions for producer/consumer activity.  Passed around
     among all message handing classes/methods.
-  - HighAvailability - If HA is enabled instantiated in each packet thread and
+  - HighAvailability - If HA is enabled, instantiated in each packet thread and
     provides all primary HA functionality for the thread.  Referenced via a
     THREAD_LOCAL object pointer.
   - FlowHAState - One per flow and referenced via a pointer in the Flow object.

@@ -437,7 +437,7 @@ void TcpStreamSession::clear()
         // this does NOT flush data
         clear_session( true, false, false );
 
-    TcpHAManager::process_deletion(flow);
+    TcpHAManager::process_deletion(*flow);
 }
 
 void TcpStreamSession::set_splitter(bool to_server, StreamSplitter* ss)

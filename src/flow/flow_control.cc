@@ -36,6 +36,7 @@
 
 #include "expect_cache.h"
 #include "flow_cache.h"
+#include "ha.h"
 #include "session.h"
 
 using namespace snort;
@@ -362,6 +363,8 @@ bool FlowControl::process(PktType type, Packet* p)
     FlowKey key;
     set_key(&key, p);
     Flow* flow = con.cache->find(&key);
+    if ( !flow )
+        flow = HighAvailabilityManager::import(*p, key);
 
     if ( !flow )
     {

@@ -136,7 +136,7 @@ void IpSession::clear()
     }
 
     IpSessionCleanup(flow, &tracker);
-    IpHAManager::process_deletion(flow);
+    IpHAManager::process_deletion(*flow);
 }
 
 bool IpSession::setup(Packet* p)
@@ -173,7 +173,7 @@ int IpSession::process(Packet* p)
         if ( Stream::expected_flow(flow, p) )
             return 0;
 #endif
-        IpHAManager::process_deletion(flow);
+        IpHAManager::process_deletion(*flow);
     }
 
     if ( Stream::blocked_flow(p) || Stream::ignored_flow(flow, p) )

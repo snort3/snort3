@@ -71,7 +71,7 @@ THREAD_LOCAL AppIdStats appid_stats;
 
 void AppIdDebug::activate(const Flow*, const AppIdSession*, bool) { active = true; }
 
-AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector& inspector)
+AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector&)
     : FlowData(0) {}
 AppIdSession::~AppIdSession() = default;
 AppIdDiscovery::AppIdDiscovery() {}

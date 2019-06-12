@@ -29,7 +29,7 @@
 
 using namespace snort;
 
-Flow* TcpHA::create_session(FlowKey* key)
+Flow* TcpHA::create_session(const FlowKey* key)
 {
     assert(key);
 
@@ -60,7 +60,7 @@ void TcpHA::deactivate_session(Flow* flow)
 
 THREAD_LOCAL TcpHA* TcpHAManager::tcp_ha = nullptr;
 
-void TcpHAManager::process_deletion(Flow* flow)
+void TcpHAManager::process_deletion(Flow& flow)
 {
     if( tcp_ha != nullptr )
         tcp_ha->process_deletion(flow);

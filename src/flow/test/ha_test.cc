@@ -16,19 +16,14 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// ha_test.cc author Ed Borgoyn <eborgoyn@cisco.com>
+// ha_test.cc authors Ed Borgoyn <eborgoyn@cisco.com>, Michael Altizer <mialtize@cisco.com>
 // unit test main
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "flow/ha.h"
-
-#include "flow/flow.h"
-#include "flow/flow_key.h"
-#include "main/snort_debug.h"
-#include "stream/stream.h"
+#include "flow/ha.cc"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
@@ -40,31 +35,53 @@ using namespace snort;
 
 class StreamHAClient;
 
-static const uint8_t s_test_key[] =
+static const FlowKey s_test_key =
 {
-TEST_KEY
-};
-
-static const uint8_t s_delete_message[] =
-{
-    0x01,
-    0x03,
-    0x00,
-    0x00,
-    0x01,
-TEST_KEY
-};
-
-static const uint8_t s_update_stream_message[] =
-{
-    0x02,
-    0x03,
-    0x00,
-    0x00,
-    0x01,
-TEST_KEY,
-    0x00,
+    { 1, 2, 3, 4 },
+    { 5, 6, 7, 8 },
+    9,
     10,
+    11,
+    12,
+    13,
+    14,
+    PktType::TCP,
+    14,
+    0,
+};
+
+static struct __attribute__((__packed__)) TestDeleteMessage {
+    HAMessageHeader mhdr;
+    FlowKey key;
+} s_delete_message =
+{
+    {
+        HA_DELETE_EVENT,
+        HA_MESSAGE_VERSION,
+        0x35,
+        KEY_TYPE_IP6
+    },
+    s_test_key
+};
+
+static struct __attribute__((__packed__)) TestUpdateMessage {
+    HAMessageHeader mhdr;
+    FlowKey key;
+    HAClientHeader schdr;
+    uint8_t scmsg[10];
+} s_update_stream_message =
+{
+    {
+        HA_UPDATE_EVENT,
+        HA_MESSAGE_VERSION,
+        0x41,
+        KEY_TYPE_IP6
+    },
+    s_test_key,
+    {
+        0,
+        10
+    },
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9
 };
 
@@ -75,7 +92,9 @@ static SideChannel s_side_channel;
 static SCMessage s_sc_message;
 static SCMessage s_rec_sc_message;
 static bool s_stream_consume_called = false;
+static uint8_t s_stream_consume_size = 0;
 static bool s_other_consume_called = false;
+static uint8_t s_other_consume_size = 0;
 static bool s_get_session_called = false;
 static bool s_delete_session_called = false;
 static bool s_transmit_message_called = false;
@@ -85,7 +104,7 @@ static uint8_t* s_message_content = nullptr;
 static uint8_t s_message_length = 0;
 static Flow s_flow;
 static FlowKey s_flowkey;
-static DAQ_PktHdr_t s_pkthdr;
+static Packet s_pkt;
 static StreamHAClient* s_ha_client;
 static FlowHAClient* s_other_ha_client;
 static std::function<void (SCMessage*)> s_handler = nullptr;
@@ -96,23 +115,33 @@ class StreamHAClient : public FlowHAClient
 public:
     StreamHAClient() : FlowHAClient(10, true) { }
     ~StreamHAClient() override = default;
-    bool consume(Flow*&, FlowKey*, HAMessage*) override
+    bool consume(Flow*&, const FlowKey*, HAMessage& msg, uint8_t size) override
     {
         s_stream_consume_called = true;
-        return true;
-    }
-    bool produce(Flow*, HAMessage* msg) override
-    {
-        for ( uint8_t i=0; i<10; i++ )
-            *(msg->cursor)++ = i;
-        return true;
-    }
-    uint8_t get_message_size() { return 10; }
-    bool is_update_required(Flow*) override { return s_stream_update_required; }
-    bool fit(HAMessage*,uint8_t) { return true; }
-    bool place(HAMessage*,uint8_t*,uint8_t) { return true; }
+        s_stream_consume_size = size;
 
-private:
+        for ( uint8_t i = 0; i < 10; i++ )
+        {
+            if (*msg.cursor != i)
+                return false;
+            msg.advance_cursor(sizeof(*msg.cursor));
+        }
+
+        return true;
+    }
+    bool produce(Flow&, HAMessage& msg) override
+    {
+        if (!msg.fits(10))
+            return false;
+
+        for ( uint8_t i = 0; i < 10; i++ )
+        {
+            *msg.cursor = i;
+            msg.advance_cursor(sizeof(*msg.cursor));
+        }
+        return true;
+    }
+    bool is_update_required(Flow*) override { return s_stream_update_required; }
 };
 
 class OtherHAClient : public FlowHAClient
@@ -120,31 +149,50 @@ class OtherHAClient : public FlowHAClient
 public:
     OtherHAClient() : FlowHAClient(5, false) { }
     ~OtherHAClient() override = default;
-    bool consume(Flow*&, HAMessage*)
+    bool consume(Flow*&, const FlowKey*, HAMessage& msg, uint8_t size) override
     {
         s_other_consume_called = true;
-        return true;
-    }
-    bool produce(Flow*, HAMessage* msg) override
-    {
-        for ( uint8_t i=0; i<5; i++ )
-            *(msg->cursor)++ = i;
-        return true;
-    }
-    uint8_t get_message_size() { return 5; }
-    bool is_update_required(Flow*) override { return s_other_update_required; }
-    bool fit(HAMessage*,uint8_t) { return true; }
-    bool place(HAMessage*,uint8_t*,uint8_t) { return true; }
+        s_other_consume_size = size;
 
-private:
+        for ( uint8_t i = 0; i < 5; i++ )
+        {
+            if (*msg.cursor != i)
+                return false;
+            msg.advance_cursor(sizeof(*msg.cursor));
+        }
+
+        return true;
+    }
+    bool produce(Flow&, HAMessage& msg) override
+    {
+        if (!msg.fits(5))
+            return false;
+
+        for ( uint8_t i = 0; i < 5; i++ )
+        {
+            *msg.cursor = i;
+            msg.advance_cursor(sizeof(*msg.cursor));
+        }
+        return true;
+    }
+    bool is_update_required(Flow*) override { return s_other_update_required; }
 };
 
-Flow*  Stream::get_flow(const FlowKey* flowkey)
+//-------------------------------------------------------------------------
+// stubs, spies, etc.
+//-------------------------------------------------------------------------
+
+THREAD_LOCAL HAStats ha_stats = { };
+
+Flow* Stream::get_flow(const FlowKey* flowkey)
 {
     s_flowkey = *flowkey;
     s_get_session_called = true;
     return &s_flow;
 }
+
+Packet::Packet(bool) { }
+Packet::~Packet() = default;
 
 void Stream::delete_flow(const FlowKey* flowkey)
 {
@@ -158,10 +206,15 @@ void ErrorMessage(const char*,...) { }
 void LogMessage(const char*,...) { }
 }
 
+int FlowKey::compare(const void*, const void*, size_t) { return 0; }
+
+int SFDAQInstance::ioctl(DAQ_IoctlCmd, void*, size_t) { return DAQ_SUCCESS; }
+
 void packet_gettimeofday(struct timeval* tv)
 { *tv = s_packet_time; }
 
 Flow::Flow() { ha_state = new FlowHAState; key = new FlowKey; }
+Flow::~Flow() { delete key; delete ha_state; }
 
 FlowStash::~FlowStash() { }
 
@@ -205,7 +258,8 @@ bool SideChannel::transmit_message(SCMessage* msg)
     s_transmit_message_called = true;
     s_message_content = msg->content;
     s_message_length = msg->content_length;
-    return true; }
+    return true;
+}
 
 SCMessage* SideChannel::alloc_transmit_message(uint32_t len)
 {
@@ -217,22 +271,22 @@ SCMessage* SideChannel::alloc_transmit_message(uint32_t len)
     return &s_sc_message;
 }
 
+//-------------------------------------------------------------------------
+// tests
+//-------------------------------------------------------------------------
+
 TEST_GROUP(high_availability_manager_test)
 {
-    void setup() override
-    {
-        MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
-    }
-
     void teardown() override
     {
-        MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
+        HighAvailabilityManager::term();
     }
 };
 
 TEST(high_availability_manager_test, init_term)
 {
-    HighAvailabilityManager::pre_config_init();
+    HighAvailabilityConfig hac = { };
+    HighAvailabilityManager::configure(&hac);
     HighAvailabilityManager::thread_init();
     CHECK(HighAvailabilityManager::active()==false);
     HighAvailabilityManager::thread_term();
@@ -241,12 +295,15 @@ TEST(high_availability_manager_test, init_term)
 
 TEST(high_availability_manager_test, inst_init_term)
 {
-    HighAvailabilityManager::pre_config_init();
-    PortBitSet port_set;
-    port_set.set(1);
-    struct timeval age = { 1, 0 };
-    struct timeval interval = { 0, 500000 };
-    HighAvailabilityManager::instantiate(&port_set, false, &age, &interval);
+    HighAvailabilityConfig hac;
+    hac.enabled = true;
+    hac.daq_channel = false;
+    hac.ports = new PortBitSet();
+    hac.ports->set(1);
+    hac.min_session_lifetime = { 1, 0 };
+    hac.min_sync_interval = { 0, 500000 };
+
+    HighAvailabilityManager::configure(&hac);
     HighAvailabilityManager::thread_init();
     s_ha_client = new StreamHAClient;
     CHECK(HighAvailabilityManager::active()==true);
@@ -322,13 +379,17 @@ TEST_GROUP(high_availability_test)
 {
     void setup() override
     {
-        MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
-        HighAvailabilityManager::pre_config_init();
-        PortBitSet port_set;
-        port_set.set(1);
-        struct timeval age = { 1, 0 };
-        struct timeval interval = { 0, 500000 };
-        HighAvailabilityManager::instantiate(&port_set, false, &age, &interval);
+        memset(&ha_stats, 0, sizeof(ha_stats));
+
+        HighAvailabilityConfig hac;
+        hac.enabled = true;
+        hac.daq_channel = false;
+        hac.ports = new PortBitSet();
+        hac.ports->set(1);
+        hac.min_session_lifetime = { 1, 0 };
+        hac.min_sync_interval = { 0, 500000 };
+
+        HighAvailabilityManager::configure(&hac);
         HighAvailabilityManager::thread_init();
         s_ha_client = new StreamHAClient;
         s_other_ha_client = new OtherHAClient;
@@ -339,14 +400,14 @@ TEST_GROUP(high_availability_test)
         delete s_other_ha_client;
         delete s_ha_client;
         HighAvailabilityManager::thread_term();
-        MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
+        HighAvailabilityManager::term();
     }
 };
 
 TEST(high_availability_test, receive_deletion)
 {
     s_delete_session_called = false;
-    s_message_content = (uint8_t*)s_delete_message;
+    s_message_content = (uint8_t*) &s_delete_message;
     s_message_length = sizeof(s_delete_message);
     HighAvailabilityManager::process_receive();
     CHECK(s_delete_session_called == true);
@@ -356,17 +417,19 @@ TEST(high_availability_test, receive_deletion)
 TEST(high_availability_test, receive_update_stream_only)
 {
     s_stream_consume_called = false;
-    s_message_content = (uint8_t*)s_update_stream_message;
+    s_stream_consume_size = 0;
+    s_message_content = (uint8_t*) &s_update_stream_message;
     s_message_length = sizeof(s_update_stream_message);
     HighAvailabilityManager::process_receive();
     CHECK(s_stream_consume_called == true);
+    CHECK(s_stream_consume_size == 10);
     CHECK(memcmp((const void*)&s_flowkey, (const void*)&s_test_key, sizeof(s_test_key)) == 0);
 }
 
 TEST(high_availability_test, transmit_deletion)
 {
     s_transmit_message_called = false;
-    HighAvailabilityManager::process_deletion(&s_flow);
+    HighAvailabilityManager::process_deletion(s_flow);
     CHECK(s_transmit_message_called == true);
 }
 
@@ -375,7 +438,7 @@ TEST(high_availability_test, transmit_update_no_update)
     s_transmit_message_called = false;
     s_stream_update_required = false;
     s_other_update_required = false;
-    HighAvailabilityManager::process_update(&s_flow, &s_pkthdr);
+    HighAvailabilityManager::process_update(&s_flow, &s_pkt);
     CHECK(s_transmit_message_called == false);
 }
 
@@ -384,7 +447,7 @@ TEST(high_availability_test, transmit_update_stream_only)
     s_transmit_message_called = false;
     s_stream_update_required = true;
     s_other_update_required = false;
-    HighAvailabilityManager::process_update(&s_flow, &s_pkthdr);
+    HighAvailabilityManager::process_update(&s_flow, &s_pkt);
     CHECK(s_transmit_message_called == true);
 }
 
@@ -395,8 +458,137 @@ TEST(high_availability_test, transmit_update_both_update)
     s_other_update_required = true;
     CHECK(s_other_ha_client->handle == 1);
     s_flow.ha_state->set_pending(s_other_ha_client->handle);
-    HighAvailabilityManager::process_update(&s_flow, &s_pkthdr);
+    HighAvailabilityManager::process_update(&s_flow, &s_pkt);
     CHECK(s_transmit_message_called == true);
+}
+
+TEST(high_availability_test, read_flow_key_error_v4)
+{
+    HAMessageHeader hdr = { 0, 0, 0, KEY_TYPE_IP4 };
+    HAMessage msg((uint8_t*) &s_test_key, KEY_SIZE_IP4 / 2);
+    FlowKey key;
+
+    CHECK(read_flow_key(msg, &hdr, key) == 0);
+    CHECK(ha_stats.truncated_msgs == 1);
+}
+
+TEST(high_availability_test, read_flow_key_error_v6)
+{
+    HAMessageHeader hdr = { 0, 0, 0, KEY_TYPE_IP6 };
+    HAMessage msg((uint8_t*) &s_test_key, KEY_SIZE_IP6 / 2);
+    FlowKey key;
+
+    CHECK(read_flow_key(msg, &hdr, key) == 0);
+    CHECK(ha_stats.truncated_msgs == 1);
+}
+
+TEST(high_availability_test, read_flow_key_error_unknown)
+{
+    HAMessageHeader hdr = { 0, 0, 0, 0x42 };
+    HAMessage msg((uint8_t*) &s_test_key, sizeof(s_test_key));
+    FlowKey key;
+
+    CHECK(read_flow_key(msg, &hdr, key) == 0);
+    CHECK(ha_stats.unknown_key_type == 1);
+}
+
+TEST(high_availability_test, consume_error_truncated_client_hdr)
+{
+    HAClientHeader chdr = { 0, 0 };
+    HAMessage msg((uint8_t*) &chdr, sizeof(chdr) / 2);
+    FlowKey key;
+
+    consume_ha_update_message(msg, key);
+    CHECK(ha_stats.update_msgs_consumed == 0);
+    CHECK(ha_stats.truncated_msgs == 1);
+}
+
+TEST(high_availability_test, consume_error_invalid_client_idx)
+{
+    HAClientHeader chdr = { 0x42, 0 };
+    HAMessage msg((uint8_t*) &chdr, sizeof(chdr));
+    FlowKey key;
+
+    consume_ha_update_message(msg, key);
+    CHECK(ha_stats.update_msgs_consumed == 0);
+    CHECK(ha_stats.unknown_client_idx == 1);
+}
+
+TEST(high_availability_test, consume_error_truncated_client_msg)
+{
+    struct __attribute__((__packed__))
+    {
+        HAClientHeader chdr = { 0, 0x42 };
+        uint8_t cmsg[0x42 / 2] = { };
+    } input;
+    HAMessage msg((uint8_t*) &input, sizeof(input));
+    FlowKey key;
+
+    consume_ha_update_message(msg, key);
+    CHECK(ha_stats.update_msgs_consumed == 0);
+    CHECK(ha_stats.truncated_msgs == 1);
+}
+
+TEST(high_availability_test, consume_error_client_consume)
+{
+    struct __attribute__((__packed__))
+    {
+        HAClientHeader chdr = { 0, 10 };
+        uint8_t cmsg[0x42 / 2] = { };
+    } input;
+    HAMessage msg((uint8_t*) &input, sizeof(input));
+    FlowKey key;
+
+    consume_ha_update_message(msg, key);
+    CHECK(ha_stats.update_msgs_consumed == 0);
+    CHECK(ha_stats.client_consume_errors == 1);
+}
+
+TEST(high_availability_test, consume_error_truncated_msg_hdr)
+{
+    HAMessageHeader hdr = { };
+    HAMessage msg((uint8_t*) &hdr, sizeof(hdr) / 2);
+
+    CHECK(consume_ha_message(msg) == nullptr);
+    CHECK(ha_stats.truncated_msgs == 1);
+}
+
+TEST(high_availability_test, consume_error_version_mismatch)
+{
+    HAMessageHeader hdr = { 0, HA_MESSAGE_VERSION + 1, 0, 0 };
+    HAMessage msg((uint8_t*) &hdr, sizeof(hdr));
+
+    CHECK(consume_ha_message(msg) == nullptr);
+    CHECK(ha_stats.msg_version_mismatch == 1);
+}
+
+TEST(high_availability_test, consume_error_length_mismatch)
+{
+    HAMessageHeader hdr = { 0, HA_MESSAGE_VERSION, 0x42, 0 };
+    HAMessage msg((uint8_t*) &hdr, sizeof(hdr));
+
+    CHECK(consume_ha_message(msg) == nullptr);
+    CHECK(ha_stats.msg_length_mismatch == 1);
+}
+
+TEST(high_availability_test, produce_error_client_hdr_overflow)
+{
+    uint8_t buffer[sizeof(HAClientHeader) / 2];
+    HAMessage msg(buffer, sizeof(buffer));
+    Flow flow;
+
+    write_update_msg_client(s_ha_client, flow, msg);
+    CHECK(msg.cursor == msg.buffer);
+}
+
+TEST(high_availability_test, produce_error_client_produce)
+{
+    uint8_t buffer[sizeof(HAClientHeader)];
+    HAMessage msg(buffer, sizeof(buffer));
+    Flow flow;
+
+    write_update_msg_client(s_ha_client, flow, msg);
+    CHECK(msg.cursor == msg.buffer);
 }
 
 int main(int argc, char** argv)

@@ -75,7 +75,6 @@ public:
     static void timeout_flows(time_t cur_time);
     static void prune_flows();
     static bool expected_flow(Flow*, Packet*);
-    static Flow* new_flow(FlowKey*);
 
     // Looks in the flow cache for flow session with specified key and returns
     // pointer to flow session object if found, otherwise null.

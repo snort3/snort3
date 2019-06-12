@@ -33,7 +33,7 @@ class TcpHA : public ProtocolHA
 {
 public:
     TcpHA() : ProtocolHA(PktType::TCP) { }
-    snort::Flow* create_session(snort::FlowKey*) override;
+    snort::Flow* create_session(const snort::FlowKey*) override;
     void deactivate_session(snort::Flow*) override;
 
 private:
@@ -42,7 +42,7 @@ private:
 class TcpHAManager
 {
 public:
-    static void process_deletion(snort::Flow* flow);
+    static void process_deletion(snort::Flow& flow);
     static void tinit();
     static void tterm();
     static THREAD_LOCAL TcpHA* tcp_ha;

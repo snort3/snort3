@@ -93,11 +93,11 @@
 #define STREAM_STATE_BLOCK_PENDING     0x4000
 
 class BitOp;
-class FlowHAState;
 class Session;
 
 namespace snort
 {
+class FlowHAState;
 struct FlowKey;
 class IpsContext;
 struct Packet;
@@ -164,6 +164,7 @@ public:
         ALLOW
     };
     Flow();
+    ~Flow();
 
     Flow(const Flow&) = delete;
     Flow& operator=(const Flow&) = delete;

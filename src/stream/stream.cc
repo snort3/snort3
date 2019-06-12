@@ -73,11 +73,6 @@ Flow* Stream::get_flow(const FlowKey* key)
 Flow* Stream::new_flow(const FlowKey* key)
 { return flow_con->new_flow(key); }
 
-Flow* Stream::new_flow(FlowKey* key)
-{
-    return flow_con ? flow_con->new_flow(key) : nullptr;
-}
-
 void Stream::delete_flow(const FlowKey* key)
 { flow_con->delete_flow(key); }
 

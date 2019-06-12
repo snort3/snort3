@@ -137,7 +137,7 @@ bool UdpSession::setup(Packet* p)
 void UdpSession::clear()
 {
     UdpSessionCleanup(flow);
-    UdpHAManager::process_deletion(flow);
+    UdpHAManager::process_deletion(*flow);
     flow->clear();
 }
 
@@ -187,7 +187,7 @@ int UdpSession::process(Packet* p)
         flow->restart();
         flow->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
         udpStats.created++;
-        UdpHAManager::process_deletion(flow);
+        UdpHAManager::process_deletion(*flow);
     }
 
     ProcessUdp(flow, p, pc, nullptr);

@@ -288,7 +288,7 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
         PacketTracer::dump(p);
     }
 
-    HighAvailabilityManager::process_update(p->flow, p->pkth);
+    HighAvailabilityManager::process_update(p->flow, p);
 
     p->pkth = nullptr;  // no longer avail upon sig segv
 

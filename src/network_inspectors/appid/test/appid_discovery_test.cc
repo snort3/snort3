@@ -218,7 +218,7 @@ ServiceDiscovery& ServiceDiscovery::get_instance()
         s_discovery_manager = new ServiceDiscovery();
     return *s_discovery_manager;
 }
-AppId snort::host_cache_find_app_mapping(snort::SfIp const*, Port port , Protocol proto){ return 0; }
+AppId snort::host_cache_find_app_mapping(snort::SfIp const*, Port, Protocol){ return 0; }
 // Stubs for ClientDiscovery
 ClientDiscovery::ClientDiscovery(){}
 ClientDiscovery::~ClientDiscovery() {}

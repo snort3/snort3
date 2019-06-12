@@ -22,48 +22,44 @@
 
 #include <daq_common.h>
 
+#include <cassert>
+
+#include "framework/bits.h"
 #include "main/thread.h"
-#include "side_channel/side_channel.h"
 
 //-------------------------------------------------------------------------
+
+struct HighAvailabilityConfig;
 
 namespace snort
 {
 class Flow;
 struct FlowKey;
-}
+struct Packet;
+struct ProfileStats;
 
 // The FlowHAHandle is the dynamically allocated index used uniquely identify
 //   the client.  Used both in the API and HA messages.
 // Handle 0 is defined to be the primary session client.
 // NOTE: The type, masks, and count values must be in sync,
 typedef uint16_t FlowHAClientHandle;
-const FlowHAClientHandle SESSION_HA_CLIENT = 0x0000;
-const uint8_t SESSION_HA_CLIENT_INDEX = 0;
-const FlowHAClientHandle ALL_CLIENTS = 0xffff;
-// One client for each mask bit plus one 'automatic' session client
-//   client handle = (1<<(client_index-1)
-//   session client has handle of 0 and index of 0
-const uint8_t MAX_CLIENTS = 17;
-
-enum HAEvent
-{
-    HA_DELETE_EVENT = 1,
-    HA_UPDATE_EVENT = 2
-};
+constexpr FlowHAClientHandle ALL_CLIENTS = 0xffff;
 
 // Each active flow will have an associated FlowHAState instance.
-class FlowHAState
+class SO_PUBLIC FlowHAState
 {
 public:
-    static const uint8_t CRITICAL = 0x80;
-    static const uint8_t MAJOR = 0x40;
+    static constexpr uint8_t CRITICAL = 0x80;
+    static constexpr uint8_t MAJOR = 0x40;
 
-    static const uint8_t NEW = 0x01;
-    static const uint8_t MODIFIED = 0x02;
-    static const uint8_t DELETED = 0x04;
-    static const uint8_t STANDBY = 0x08;
-    static const uint8_t NEW_SESSION = 0x10;
+    enum : uint8_t
+    {
+        NEW = 0x01,
+        MODIFIED = 0x02,
+        DELETED = 0x04,
+        STANDBY = 0x08,
+        NEW_SESSION = 0x10,
+    };
 
     FlowHAState();
 
@@ -74,123 +70,108 @@ public:
     void add(uint8_t state);
     void clear(uint8_t state);
     bool check_any(uint8_t state);
-    static void config_timers(timeval,timeval);
+    static void config_timers(struct timeval, struct timeval);
     bool sync_interval_elapsed();
     void set_next_update();
     void reset();
 
 private:
-    static const uint8_t INITIAL_STATE = 0x00;
-    static const uint16_t NONE_PENDING = 0x0000;
-
+    static constexpr uint8_t INITIAL_STATE = 0x00;
+    static constexpr uint16_t NONE_PENDING = 0x0000;
     static struct timeval min_session_lifetime;
     static struct timeval min_sync_interval;
-    uint8_t state;
-    uint16_t pending;
+
     struct timeval next_update;
-};
-
-struct __attribute__((__packed__)) HAMessageHeader
-{
-    uint8_t event;
-    uint8_t version;
-    uint16_t total_length;
-    uint8_t key_type;
-};
-
-struct __attribute__((__packed__)) HAClientHeader
-{
-    uint8_t client;
-    uint8_t length;
+    uint16_t pending;
+    uint8_t state;
 };
 
 // Describe the message being produced or consumed.
 class HAMessage
 {
 public:
-    HAMessage(SCMessage* msg)
-    { sc_msg = msg; }
+    HAMessage(uint8_t* buffer, uint32_t buffer_length) :
+        buffer(buffer), buffer_length(buffer_length), cursor(buffer) { }
 
-    uint8_t* content()
-    { return sc_msg->content; }
-    uint16_t content_length()
-    { return sc_msg->content_length; }
+    bool fits(uint32_t size) const { return size <= (buffer_length - (cursor - buffer)); }
+
+    void advance_cursor(uint32_t size)
+    {
+        assert(fits(size));
+        cursor += size;
+    }
+
+    void reset_cursor(uint8_t* pos = nullptr)
+    {
+        if (pos)
+        {
+            assert(pos >= buffer && pos <= (buffer + buffer_length));
+            cursor = pos;
+        }
+        else
+            cursor = buffer;
+    }
+
+    uint32_t cursor_position() const { return (uint32_t) (cursor - buffer); }
+
+    uint8_t* buffer;
+    const uint32_t buffer_length;
     uint8_t* cursor;
-
-private:
-    SCMessage* sc_msg;
 };
 
 // A FlowHAClient subclass for each producer/consumer of flow HA data
-class FlowHAClient
+class SO_PUBLIC FlowHAClient
 {
 public:
     virtual ~FlowHAClient() = default;
-    virtual bool consume(snort::Flow*&, snort::FlowKey*, HAMessage*) { return false; }
-    virtual bool produce(snort::Flow*, HAMessage*) { return false; }
+    virtual bool consume(snort::Flow*&, const snort::FlowKey*, snort::HAMessage&, uint8_t size) = 0;
+    virtual bool produce(snort::Flow&, snort::HAMessage&) = 0;
     virtual bool is_update_required(snort::Flow*) { return false; }
-    virtual bool is_delete_required(snort::Flow*) { return false; }
-    uint8_t get_message_size() { return header.length; }
-    bool fit(HAMessage*, uint8_t);
-    bool place(HAMessage*, uint8_t*, uint8_t);
+    uint8_t get_message_size() { return max_length; }
+
     FlowHAClientHandle handle;  // Actual handle for the instance
-    HAClientHeader header;
+    uint8_t index;
+    uint8_t max_length;
 
 protected:
-    FlowHAClient(uint8_t, bool);
-
-};
-
-// HighAvailability is instantiated for each packet-thread.
-// FIXIT-M make the SideChannel the THREAD_LOCAL element and collapse
-//  into HighAvailabilityManager
-class HighAvailability
-{
-public:
-    HighAvailability(PortBitSet*,bool);
-    ~HighAvailability();
-
-    void process_update(snort::Flow*, const DAQ_PktHdr_t*);
-    void process_deletion(snort::Flow*);
-    void process_receive();
-
-private:
-    void receive_handler(SCMessage*);
-    SideChannel* sc = nullptr;
+    FlowHAClient(uint8_t length, bool session_client);
 };
 
 // Top level management of HighAvailability components.
-class HighAvailabilityManager
+class SO_PUBLIC HighAvailabilityManager
 {
 public:
-    // Prior to parsing configuration
-    static void pre_config_init();
-
-    // Invoked by the module configuration parsing to create HA instance
-    static bool instantiate(PortBitSet*,bool,struct timeval*,struct timeval*);
+    static void configure(HighAvailabilityConfig*);
     static void thread_init();
     static void thread_term_beginning(); // thread is about to be terminated
     static void thread_term();
+    static void term();
 
     // true if we are configured and able to process
     static bool active();
 
-    // Within the packet callback, analyze the packet and flow for potential update messages
-    static void process_update(snort::Flow*, const DAQ_PktHdr_t*);
+    // Within packet processing, analyze the packet and flow for potential update messages
+    static void process_update(snort::Flow*, snort::Packet*);
 
     // Anytime a flow is deleted, potentially generate a deletion message
-    static void process_deletion(snort::Flow*);
+    static void process_deletion(snort::Flow&);
 
     // Look for and dispatch receive messages.
     static void process_receive();
     static void set_modified(snort::Flow*);
     static bool in_standby(snort::Flow*);
 
+    // Attempt to import HA data from the Packet
+    static Flow* import(snort::Packet& p, snort::FlowKey& key);
+
 private:
+    static void reset_config();
+
     HighAvailabilityManager() = delete;
     static bool use_daq_channel;
     static PortBitSet* ports;
-    static THREAD_LOCAL bool shutting_down;
 };
+}
+
 #endif
 

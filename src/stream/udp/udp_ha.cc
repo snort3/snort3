@@ -29,7 +29,7 @@
 
 using namespace snort;
 
-Flow* UdpHA::create_session(FlowKey* key)
+Flow* UdpHA::create_session(const FlowKey* key)
 {
     assert(key);
 
@@ -46,7 +46,7 @@ Flow* UdpHA::create_session(FlowKey* key)
 
 THREAD_LOCAL UdpHA* UdpHAManager::udp_ha = nullptr;
 
-void UdpHAManager::process_deletion(Flow* flow)
+void UdpHAManager::process_deletion(Flow& flow)
 {
     if( udp_ha != nullptr )
         udp_ha->process_deletion(flow);

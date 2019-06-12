@@ -35,6 +35,7 @@
 #include "filters/rate_filter.h"
 #include "filters/sfrf.h"
 #include "filters/sfthreshold.h"
+#include "flow/ha_module.h"
 #include "hash/xhash.h"
 #include "helpers/process.h"
 #include "ips_options/ips_flowbits.h"
@@ -298,6 +299,7 @@ SnortConfig::~SnortConfig()
 
     delete[] state;
     delete thread_config;
+    delete ha_config;
 
     if (gtp_ports)
         delete gtp_ports;

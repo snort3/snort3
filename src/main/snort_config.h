@@ -116,29 +116,29 @@ enum TunnelFlags
     TUNNEL_MPLS   = 0x80
 };
 
-struct ClassType;
+class FastPatternConfig;
+class RuleState;
+class ThreadConfig;
+
 struct srmm_table_t;
 struct sopg_table_t;
-
-struct MemoryConfig;
-struct LatencyConfig;
-struct PORT_RULE_MAP;
-struct RuleListNode;
-struct RulePortTables;
-class RuleState;
+struct ClassType;
 struct DetectionFilterConfig;
 struct EventQueueConfig;
-struct IpsActionsConfig;
-class FastPatternConfig;
-struct FrameworkConfig;
-struct ThresholdConfig;
-struct RateFilterConfig;
-struct SFDAQConfig;
-class ThreadConfig;
-struct ReferenceSystemNode;
-struct VarNode;
-struct _IntelPmHandles;
 struct FlowBitState;
+struct FrameworkConfig;
+struct HighAvailabilityConfig;
+struct IpsActionsConfig;
+struct LatencyConfig;
+struct MemoryConfig;
+struct PORT_RULE_MAP;
+struct RateFilterConfig;
+struct ReferenceSystemNode;
+struct RuleListNode;
+struct RulePortTables;
+struct SFDAQConfig;
+struct ThresholdConfig;
+struct VarNode;
 
 namespace snort
 {
@@ -372,6 +372,7 @@ public:
     unsigned num_slots = 0;
 
     ThreadConfig* thread_config;
+    HighAvailabilityConfig* ha_config = nullptr;
 
     //------------------------------------------------------
     //Reload inspector related

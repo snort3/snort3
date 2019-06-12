@@ -262,7 +262,7 @@ TEST(appid_session_api, get_appid_session_attribute)
         CHECK_TRUE((fv & flags) == flags);
         mock_session->clear_session_flags(flags);
         fv = appid_session_api->get_appid_session_attribute(flags);
-        CHECK_TRUE((fv & flags) == 0)
+        CHECK_TRUE((fv & flags) == 0);
     }
 }
 
