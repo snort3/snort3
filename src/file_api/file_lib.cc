@@ -1,3 +1,6 @@
+#include "log/text_log.h"
+#include "time/packet_time.h"
+
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2012-2013 Sourcefire, Inc.
@@ -348,7 +351,9 @@ void FileContext::finish_signature_lookup(Packet* p, bool final_lookup, FilePoli
             FileCache* file_cache = FileService::get_file_cache();
             if (file_cache)
                 file_cache->apply_verdict(p, this, verdict, false, policy);
-            log_file_event(flow, policy);
+            print_full_entry(flow);
+
+            //log_file_event(flow, policy);
             config_file_signature(false);
             file_stats->signatures_processed[get_file_type()][get_file_direction()]++;
             if ( verdict == FILE_VERDICT_REJECT or verdict == FILE_VERDICT_BLOCK)
@@ -360,6 +365,76 @@ void FileContext::finish_signature_lookup(Packet* p, bool final_lookup, FilePoli
             sha256 = nullptr;
         }
     }
+}
+
+void FileContext::print_full_entry(Flow* f)
+{
+    TextLog* tlog = TextLog_Init("file.log", 64 * 1024, 1 * 1024 * 1024);
+    struct timeval pkt_time;
+    packet_gettimeofday(&pkt_time);
+    char timestamp[TIMEBUF_SIZE];
+    ts_print(&pkt_time, timestamp);
+    TextLog_Puts(tlog, timestamp);
+    TextLog_Print(tlog, " ");
+    char ip_str[128];
+    TextLog_Print(tlog, " %s:%d -> ", f->client_ip.ntop(ip_str), f->client_port);
+    TextLog_Print(tlog, "%s:%d, ", f->server_ip.ntop(ip_str), f->server_port);
+
+    std::string& name = get_file_name();
+
+    if ( name.empty() )
+        return;
+
+    size_t fname_len = name.length();
+    char* outbuf = get_UTF8_fname(&fname_len);
+    const char* fname = (outbuf != nullptr) ? outbuf : name.c_str();
+
+    TextLog_Puts(tlog, "[Name: ");
+    TextLog_Putc(tlog, '"');
+
+    size_t pos = 0;
+    while (pos < fname_len)
+    {
+        if (isprint((int)fname[pos]))
+        {
+            TextLog_Putc(tlog, fname[pos]);
+            pos++;
+        }
+        else
+        {
+            TextLog_Putc(tlog, '|');
+            bool add_space = false;
+            while ((pos < fname_len) && !isprint((int)fname[pos]))
+            {
+                if (add_space)
+                    TextLog_Print(tlog, " %02X", (uint8_t)fname[pos]);
+                else
+                {
+                    TextLog_Print(tlog, "%02X", (uint8_t)fname[pos]);
+                    add_space = true;
+                }
+                pos++;
+            }
+            TextLog_Putc(tlog, '|');
+        }
+    }
+
+    TextLog_Puts(tlog, "\"] ");
+    if (outbuf)
+        snort_free(outbuf);
+
+    std::string VerdictName[] =
+            {"Unknown", "Log", "Stop", "Block", "Reset", "Pending", "Stop Capture", "INVALID"};
+    TextLog_Print(tlog, "[Verdict: %s] ", VerdictName[verdict].c_str());
+
+    TextLog_Print(tlog, "[SHA: %s] ", (sha_to_string(sha256)).c_str());
+    TextLog_Print(tlog, "[Size: %u] ", get_file_size());
+    TextLog_Print(tlog, "\n");
+    TextLog_Flush(tlog);
+    TextLog_Term(tlog);
+
+
+
 }
 
 void FileContext::set_signature_state(bool gen_sig)
