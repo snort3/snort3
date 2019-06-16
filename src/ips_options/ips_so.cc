@@ -40,27 +40,32 @@ static THREAD_LOCAL ProfileStats soPerfStats;
 class SoOption : public IpsOption
 {
 public:
-    SoOption(const char*, const char*, SoEvalFunc f, void* v);
+    SoOption(const char*, const char*, bool, SoEvalFunc f, void* v);
     ~SoOption() override;
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
+
+    bool is_relative() override
+    { return relative_flag; }
 
     EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     const char* soid;
     const char* so;
+    bool relative_flag;
     SoEvalFunc func;
     void* data;
 };
 
 SoOption::SoOption(
-    const char* id, const char* s, SoEvalFunc f, void* v)
+    const char* id, const char* s, bool r, SoEvalFunc f, void* v)
     : IpsOption(s_name)
 {
     soid = id;
     so = s;
+    relative_flag = r;
     func = f;
     data = v;
 }
@@ -73,7 +78,7 @@ SoOption::~SoOption()
 
 uint32_t SoOption::hash() const
 {
-    uint32_t a = 0, b = 0, c = 0;
+    uint32_t a = relative_flag, b = 0, c = 0;
     mix_str(a,b,c,soid);
     mix_str(a,b,c,so);
     finalize(a,b,c);
@@ -88,6 +93,9 @@ bool SoOption::operator==(const IpsOption& ips) const
         return false;
 
     if ( strcmp(so, rhs.so) )
+        return false;
+
+    if ( relative_flag != rhs.relative_flag )
         return false;
 
     return true;
@@ -107,6 +115,9 @@ static const Parameter s_params[] =
 {
     { "~func", Parameter::PT_STRING, nullptr, nullptr,
       "name of eval function" },
+
+    { "relative", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "offset from cursor instead of start of buffer" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -130,11 +141,13 @@ public:
 
 public:
     string name;
+    bool relative_flag;
 };
 
 bool SoModule::begin(const char*, int, SnortConfig*)
 {
     name.clear();
+    relative_flag = false;
     return true;
 }
 
@@ -142,6 +155,9 @@ bool SoModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("~func") )
         name = v.get_string();
+
+    else if ( v.is("relative") )
+        relative_flag = true;
 
     else
         return false;
@@ -168,6 +184,7 @@ static IpsOption* so_ctor(Module* p, OptTreeNode* otn)
     void* data = nullptr;
     SoModule* m = (SoModule*)p;
     const char* name = m->name.c_str();
+    bool relative_flag = m->relative_flag;
 
     if ( !otn->soid )
     {
@@ -181,7 +198,7 @@ static IpsOption* so_ctor(Module* p, OptTreeNode* otn)
         ParseError("can't link so:%s", name);
         return nullptr;
     }
-    return new SoOption(otn->soid, name, func, data);
+    return new SoOption(otn->soid, name, relative_flag, func, data);
 }
 
 static void so_dtor(IpsOption* p)
