@@ -39,6 +39,9 @@
 #include "latency/rule_latency.h"
 #include "main/snort_config.h"
 #include "managers/module_manager.h"
+#include "utils/stats.h"
+
+using namespace snort;
 
 // FIXIT-L this could be offloader specific
 struct RegexRequest
@@ -137,10 +140,10 @@ bool MpseRegexOffload::get(snort::Packet*& p)
         {
             if (batch->can_fallback())
             {
-                // FIXIT-M Add peg counts to record offload search fallback attempts
                 batch->search_sync();
+                pc.offload_fallback++;
             }
-            // FIXIT-M else Add peg counts to record offload search failures
+            pc.offload_failures++;
         }
 
         snort::IpsContext* c = (snort::IpsContext*)(batch->context);
@@ -276,16 +279,17 @@ void ThreadRegexOffload::worker(RegexRequest* req, snort::SnortConfig* initial_c
         {
             if (c->searches.can_fallback())
             {
-                // FIXIT-M Add peg counts to record offload search fallback attempts
                 c->searches.search_sync();
+                pc.offload_fallback++;
             }
-            // FIXIT-M else Add peg counts to record offload search failures
+            pc.offload_failures++;
         }
 
         c->searches.items.clear();
         req->offload = false;
     }
     snort::ModuleManager::accumulate_offload("search_engine");
+    snort::ModuleManager::accumulate_offload("detection");
 
     // FIXIT-M break this over-coupling. In reality we shouldn't be evaluating latency in offload.
     PacketLatency::tterm();

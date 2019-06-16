@@ -399,6 +399,7 @@ bool DetectionEngine::do_offload(Packet* p)
         else
         {
             sw->suspend();
+            pc.offload_suspends++;
             return true;
         }
     }
@@ -408,13 +409,17 @@ bool DetectionEngine::offload(Packet* p)
 {
     ContextSwitcher* sw = Analyzer::get_switcher();
 
-    bool depends_on_suspended = p->flow ? p->flow->context_chain.front() : sw->non_flow_chain.front();
-    bool can_offload = offloader->available();
+    bool depends_on_suspended = 
+        p->flow ? p->flow->context_chain.front() : sw->non_flow_chain.front();
+
     bool should_offload = p->dsize >= SnortConfig::get_conf()->offload_limit;
 
-    if ( can_offload and should_offload )
+    if ( should_offload )
     {
-        return do_offload(p);
+        if ( offloader->available() )
+            return do_offload(p);
+
+        pc.offload_busy++;
     }
 
     if ( depends_on_suspended )
@@ -422,6 +427,7 @@ bool DetectionEngine::offload(Packet* p)
         fp_partial(p);
         p->context->searches.search_sync();
         sw->suspend();
+        pc.offload_suspends++;
         return true;
     }
 
@@ -450,6 +456,9 @@ void DetectionEngine::idle()
 
 void DetectionEngine::onload(Flow* flow)
 {
+    if ( flow->is_suspended() )
+        pc.onload_waits++;
+
     while ( flow->is_suspended() )
     {
         trace_logf(detection,

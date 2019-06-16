@@ -190,6 +190,11 @@ const PegInfo pc_names[] =
     { CountType::SUM, "event_limit", "events filtered" },
     { CountType::SUM, "alert_limit", "events previously triggered on same PDU" },
     { CountType::SUM, "context_stalls", "times processing stalled to wait for an available context" },
+    { CountType::SUM, "offload_busy", "times offload was not available" },
+    { CountType::SUM, "onload_waits", "times processing waited for onload to complete" },
+    { CountType::SUM, "offload_fallback", "fast pattern offload search fallback attempts" },
+    { CountType::SUM, "offload_failures", "fast pattern offload search failures" },
+    { CountType::SUM, "offload_suspends", "fast pattern search suspends due to offload context chains" },
     { CountType::END, nullptr, nullptr }
 };
 
