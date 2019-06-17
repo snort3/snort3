@@ -1276,8 +1276,7 @@ static void fpEvalPacket(Packet* p, FPTask task)
         if ( SnortConfig::get_conf()->sopgTable->user_mode )
             fpEvalHeaderSvc(p, omd, SNORT_PROTO_USER, task);
 
-        // use ports if we don't know service or don't have rules
-        else if ( p->proto_bits & PROTO_BIT__TCP )
+        if ( p->proto_bits & PROTO_BIT__TCP )
         {
             if ( p->get_snort_protocol_id() == UNKNOWN_PROTOCOL_ID or !fpEvalHeaderSvc(p, omd, SNORT_PROTO_TCP, task) )
                 fpEvalHeaderTcp(p, omd, task);
