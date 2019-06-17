@@ -1,4 +1,4 @@
-[ This inspector is still in experimental (work-in-progress) state! ]
+This inspector is still in experimental (work-in-progress) state.
 
 The Real-time Network Awareness (RNA) inspector provides visibility into
 a network using Passive Network Discovery (PND). RNA analyzes traffic
