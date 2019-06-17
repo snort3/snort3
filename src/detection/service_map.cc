@@ -248,7 +248,7 @@ int fpCreateServiceMaps(SnortConfig* sc)
             policyId < otn->proto_node_num;
             policyId++ )
         {
-            rtn = getRtnFromOtn(otn);
+            rtn = getRtnFromOtn(otn, policyId);
 
             if ( rtn )
             {
