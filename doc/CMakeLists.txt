@@ -44,7 +44,6 @@ if ( MAKE_DOC )
 	concepts.txt
 	connectors.txt
 	daq.txt
-	daq_readme.txt
 	dcerpc.txt
 	differences.txt
 	enviro.txt

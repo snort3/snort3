@@ -51,10 +51,6 @@ include::modules.txt[]
 
 include::plugins.txt[]
 
-=== LibDAQ and DAQ Modules
-
-include::daq_readme.txt[]
-
 === Limitations
 
 include::reload_limitations.txt[]

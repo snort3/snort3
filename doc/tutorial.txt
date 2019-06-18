@@ -7,9 +7,9 @@ out more advanced usage.
 
 Required:
 
-* autotools or cmake to build from source
+* cmake to build from source
 
-* daq from http://www.snort.org for packet IO
+* daq from https://github.com/snort3/libdaq for packet IO
 
 * g\++ >= 4.8 or other recent C++11 compiler
 
@@ -76,9 +76,9 @@ Optional:
     export my_path=/path/to/snorty
     mkdir -p $my_path
 
-* If you are using a github clone with autotools, do this:
+* If LibDAQ was installed to a custom, non-system path:
 
-    autoreconf -isvf
+    export PKG_CONFIG_PATH=/libdaq/install/path/lib/pkgconfig:$PKG_CONFIG_PATH
 
 * Now do one of the following:
 
@@ -87,7 +87,7 @@ a. To build with cmake and make, run configure_cmake.sh.  It will
 
     ./configure_cmake.sh --prefix=$my_path
     cd build
-    make -j 8
+    make -j
     make install
     ln -s $my_path/conf $my_path/etc
 
