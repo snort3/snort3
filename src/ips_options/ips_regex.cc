@@ -176,7 +176,8 @@ IpsOption::EvalStatus RegexOption::eval(Cursor& c, Packet*)
     if ( pos > c.size() )
         return NO_MATCH;
 
-    hs_scratch_t *ss = (hs_scratch_t *) SnortConfig::get_conf()->state[get_instance_id()][scratch_index];
+    hs_scratch_t *ss =
+        (hs_scratch_t *) SnortConfig::get_conf()->state[get_instance_id()][scratch_index];
 
     s_to = 0;
 
@@ -186,6 +187,7 @@ IpsOption::EvalStatus RegexOption::eval(Cursor& c, Packet*)
 
     if ( s_to and stat == HS_SCAN_TERMINATED )
     {
+        s_to += pos;
         c.set_pos(s_to);
         c.set_delta(s_to);
         return MATCH;
