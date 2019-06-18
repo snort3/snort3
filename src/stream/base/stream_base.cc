@@ -24,6 +24,7 @@
 
 #include "flow/flow_control.h"
 #include "flow/prune_stats.h"
+#include "framework/data_bus.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/snort_types.h"
@@ -142,7 +143,6 @@ class StreamBase : public Inspector
 public:
     StreamBase(const StreamModuleConfig*);
 
-    bool configure(SnortConfig*) override;
     void show(SnortConfig*) override;
 
     void tinit() override;
@@ -210,12 +210,6 @@ void StreamBase::tterm()
     FlushBucket::clear();
 }
 
-bool StreamBase::configure(SnortConfig* sc)
-{
-    config.track_on_syn = sc->track_on_syn();
-    return true;
-}
-
 void StreamBase::show(SnortConfig*)
 {
     LogMessage("Stream Base config:\n");
@@ -240,8 +234,14 @@ void StreamBase::eval(Packet* p)
         break;
 
     case PktType::IP:
-        if ( p->has_ip() and ((p->ptrs.decode_flags & DECODE_FRAG) or !config.ip_frags_only) )
-            flow_con->process(PktType::IP, p);
+        if ( p->has_ip() and ((p->ptrs.decode_flags & DECODE_FRAG) or
+            !SnortConfig::get_conf()->ip_frags_only()) )
+        {
+            bool new_flow = false;
+            flow_con->process(PktType::IP, p, &new_flow);
+            if ( new_flow )
+                DataBus::publish(STREAM_IP_NEW_FLOW_EVENT, p);
+        }
         break;
 
     case PktType::TCP:
@@ -254,14 +254,22 @@ void StreamBase::eval(Packet* p)
             flow_con->process(PktType::IP, p);
 
         if ( p->ptrs.udph )
-            flow_con->process(PktType::UDP, p);
+        {
+            bool new_flow = false;
+            flow_con->process(PktType::UDP, p, &new_flow);
+            if ( new_flow )
+                DataBus::publish(STREAM_UDP_NEW_FLOW_EVENT, p);
+        }
         break;
 
     case PktType::ICMP:
         if ( p->ptrs.icmph )
         {
-            if ( !flow_con->process(PktType::ICMP, p) )
-                flow_con->process(PktType::IP, p);
+            bool new_flow = false;
+            if ( !flow_con->process(PktType::ICMP, p, &new_flow) )
+                flow_con->process(PktType::IP, p, &new_flow);
+            if ( new_flow )
+                DataBus::publish(STREAM_ICMP_NEW_FLOW_EVENT, p);
         }
         break;
 

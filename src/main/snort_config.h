@@ -73,6 +73,7 @@ enum RunFlag
 #endif
     RUN_FLAG__MEM_CHECK           = 0x02000000,
     RUN_FLAG__TRACK_ON_SYN        = 0x04000000,
+    RUN_FLAG__IP_FRAGS_ONLY       = 0x08000000,
 };
 
 enum OutputFlag
@@ -666,6 +667,12 @@ public:
 
     bool track_on_syn() const
     { return (run_flags & RUN_FLAG__TRACK_ON_SYN) != 0; }
+
+    bool ip_frags_only() const
+    { return (run_flags & RUN_FLAG__IP_FRAGS_ONLY) != 0; }
+
+    void clear_run_flags(RunFlag flag)
+    { run_flags &= ~flag; }
 
     void set_run_flags(RunFlag flag)
     { run_flags |= flag; }

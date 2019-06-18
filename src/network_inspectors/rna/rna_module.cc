@@ -27,6 +27,7 @@
 #include <cassert>
 
 #include "log/messages.h"
+#include "main/snort_config.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -35,7 +36,7 @@
 using namespace snort;
 
 //-------------------------------------------------------------------------
-// rna params
+// rna params and pegs
 //-------------------------------------------------------------------------
 
 static const Parameter rna_params[] =
@@ -55,6 +56,18 @@ static const Parameter rna_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const PegInfo rna_pegs[] =
+{
+    { CountType::SUM, "icmp", "count of ICMP packets received" },
+    { CountType::SUM, "ip", "count of IP packets received" },
+    { CountType::SUM, "udp", "count of UDP packets received" },
+    { CountType::SUM, "tcp_syn", "count of TCP SYN packets received" },
+    { CountType::SUM, "tcp_syn_ack", "count of TCP SYN-ACK packets received" },
+    { CountType::SUM, "tcp_midstream", "count of TCP midstream packets received" },
+    { CountType::SUM, "other_packets", "count of packets received without session tracking" },
+    { CountType::END, nullptr, nullptr},
+};
+
 //-------------------------------------------------------------------------
 // rna module
 //-------------------------------------------------------------------------
@@ -69,7 +82,7 @@ RnaModule::~RnaModule()
 
 bool RnaModule::begin(const char* fqn, int, SnortConfig*)
 {
-    if (strcmp(fqn, "rna"))
+    if (strcmp(fqn, RNA_NAME))
         return false;
     else if (!mod_conf)
         mod_conf = new RnaModuleConfig;
@@ -92,10 +105,18 @@ bool RnaModule::set(const char*, Value& v, SnortConfig*)
     return true;
 }
 
-bool RnaModule::end(const char* fqn, int, SnortConfig*)
+bool RnaModule::end(const char* fqn, int, SnortConfig* sc)
 {
-    if (mod_conf == nullptr and strcmp(fqn, "rna") == 0)
+    if ( mod_conf == nullptr and strcmp(fqn, RNA_NAME) == 0 )
         return false;
+
+    sc->set_run_flags(RUN_FLAG__TRACK_ON_SYN); // Internal flag to track TCP on SYN
+
+    if ( sc->ip_frags_only() )
+    {
+        WarningMessage("RNA: Disabling stream.ip_frags_only option!\n");
+        sc->clear_run_flags(RUN_FLAG__IP_FRAGS_ONLY);
+    }
 
     return true;
 }
@@ -111,7 +132,7 @@ PegCount* RnaModule::get_counts() const
 { return (PegCount*)&rna_stats; }
 
 const PegInfo* RnaModule::get_pegs() const
-{ return snort::simple_pegs; }
+{ return rna_pegs; }
 
 ProfileStats* RnaModule::get_profile() const
 { return &rna_perf_stats; }
@@ -122,6 +143,7 @@ TEST_CASE("RNA module", "[rna_module]")
     SECTION("module begin, set, end")
     {
         RnaModule mod;
+        SnortConfig sc;
 
         CHECK_FALSE(mod.begin("dummy", 0, nullptr));
         CHECK(mod.end("rna", 0, nullptr) == false);
@@ -145,7 +167,7 @@ TEST_CASE("RNA module", "[rna_module]")
 
         Value v5("dummy");
         CHECK(mod.set(nullptr, v5, nullptr) == false);
-        CHECK(mod.end("rna", 0, nullptr) == true);
+        CHECK(mod.end("rna", 0, &sc) == true);
 
         RnaModuleConfig* rc = mod.get_config();
         CHECK(rc != nullptr);
@@ -155,6 +177,36 @@ TEST_CASE("RNA module", "[rna_module]")
         CHECK(rc->custom_fingerprint_dir == "/dir/custom_fingerprints");
 
         delete rc;
+    }
+
+    SECTION("ip_frags_only is false")
+    {
+        RnaModule mod;
+        SnortConfig sc;
+
+        sc.set_run_flags(RUN_FLAG__IP_FRAGS_ONLY);
+        CHECK(sc.ip_frags_only() == true);
+
+        CHECK(mod.begin(RNA_NAME, 0, nullptr) == true);
+        CHECK(mod.end(RNA_NAME, 0, &sc) == true);
+        CHECK(sc.ip_frags_only() == false);
+
+        delete mod.get_config();
+    }
+
+    SECTION("track_on_syn is true")
+    {
+        RnaModule mod;
+        SnortConfig sc;
+
+        sc.clear_run_flags(RUN_FLAG__TRACK_ON_SYN);
+        CHECK(sc.track_on_syn() == false);
+
+        CHECK(mod.begin(RNA_NAME, 0, nullptr) == true);
+        CHECK(mod.end(RNA_NAME, 0, &sc) == true);
+        CHECK(sc.track_on_syn() == true);
+
+        delete mod.get_config();
     }
 }
 #endif

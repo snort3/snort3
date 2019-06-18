@@ -52,7 +52,7 @@ public:
     ~FlowControl();
 
 public:
-    bool process(PktType, snort::Packet*);
+    bool process(PktType, snort::Packet*, bool* new_flow = nullptr);
 
     snort::Flow* find_flow(const snort::FlowKey*);
     snort::Flow* new_flow(const snort::FlowKey*);

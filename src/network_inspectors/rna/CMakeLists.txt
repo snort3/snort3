@@ -1,5 +1,7 @@
 
 set ( RNA_SOURCES
+    rna_event_handler.cc
+    rna_event_handler.h
     rna_inspector.cc
     rna_inspector.h
     rna_module.cc

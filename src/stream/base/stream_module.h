@@ -73,8 +73,6 @@ struct StreamModuleConfig
     FlowConfig file_cfg;
 
     unsigned footprint;
-    bool ip_frags_only;
-    bool track_on_syn;
 };
 
 class StreamModule : public snort::Module

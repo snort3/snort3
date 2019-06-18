@@ -353,7 +353,7 @@ static bool want_flow(PktType type, Packet* p)
     return false;
 }
 
-bool FlowControl::process(PktType type, Packet* p)
+bool FlowControl::process(PktType type, Packet* p, bool* new_flow)
 {
     auto& con = proto[to_utype(type)];
 
@@ -364,18 +364,24 @@ bool FlowControl::process(PktType type, Packet* p)
     set_key(&key, p);
     Flow* flow = con.cache->find(&key);
     if ( !flow )
+    {
         flow = HighAvailabilityManager::import(*p, key);
 
-    if ( !flow )
-    {
-        if ( !want_flow(type, p) )
-            return true;
-
-        flow = con.cache->get(&key);
-
         if ( !flow )
-            return true;
+        {
+            if ( !want_flow(type, p) )
+                return true;
+
+            flow = con.cache->get(&key);
+
+            if ( !flow )
+                return true;
+
+            if ( new_flow )
+                *new_flow = true;
+        }
     }
+
     if ( !flow->session )
     {
         flow->init(type);

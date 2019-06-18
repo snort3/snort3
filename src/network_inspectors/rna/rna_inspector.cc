@@ -31,8 +31,9 @@
 
 #include "log/messages.h"
 #include "managers/inspector_manager.h"
-#include "profiler/profiler.h"
 #include "protocols/packet.h"
+
+#include "rna_event_handler.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -41,7 +42,7 @@
 using namespace snort;
 using namespace std;
 
-THREAD_LOCAL SimpleStats rna_stats;
+THREAD_LOCAL RnaStats rna_stats;
 THREAD_LOCAL ProfileStats rna_perf_stats;
 
 //-------------------------------------------------------------------------
@@ -61,14 +62,31 @@ RnaInspector::~RnaInspector()
     delete rna_conf;
 }
 
+bool RnaInspector::configure(SnortConfig*)
+{
+    DataBus::subscribe( STREAM_ICMP_NEW_FLOW_EVENT, new RnaIcmpEventHandler() );
+    DataBus::subscribe( STREAM_IP_NEW_FLOW_EVENT, new RnaIpEventHandler() );
+    DataBus::subscribe( STREAM_UDP_NEW_FLOW_EVENT, new RnaUdpEventHandler() );
+    DataBus::subscribe( STREAM_TCP_SYN_EVENT, new RnaTcpSynEventHandler() );
+    DataBus::subscribe( STREAM_TCP_SYN_ACK_EVENT, new RnaTcpSynAckEventHandler() );
+    DataBus::subscribe( STREAM_TCP_MIDSTREAM_EVENT, new RnaTcpMidstreamEventHandler() );
+
+    return true;
+}
+
 void RnaInspector::eval(Packet* p)
 {
     Profile profile(rna_perf_stats);
 
-    if (p->packet_flags & PKT_REBUILT_STREAM)
-        return;
+    // Handling untracked sessions, e.g., non-IP packets
+    assert( !p->flow );
+    assert( !(BIT((unsigned)p->type()) & PROTO_BIT__ANY_SSN) );
 
-    ++rna_stats.total_packets;
+    ++rna_stats.other_packets;
+
+#ifdef NDEBUG
+    UNUSED(p);
+#endif
 }
 
 void RnaInspector::show(SnortConfig*)
@@ -130,7 +148,7 @@ bool RnaInspector::load_rna_conf()
     {
         string line;
         getline(in_stream, line);
-        line_num++;
+        ++line_num;
         if (line.empty() or line.front() == '#')
             continue;
 
@@ -206,7 +224,7 @@ static const InspectApi rna_inspector_api =
         rna_mod_dtor
     },
     IT_CONTROL,
-    PROTO_BIT__ANY_IP,
+    PROTO_BIT__ALL ^ PROTO_BIT__ANY_SSN,
     nullptr, // buffers
     nullptr, // service
     rna_inspector_pinit,

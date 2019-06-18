@@ -22,13 +22,25 @@
 #define RNA_MODULE_H
 
 #include "framework/module.h"
+#include "profiler/profiler.h"
 
 #include "rna_config.h"
 
 #define RNA_NAME "rna"
 #define RNA_HELP "Real-time network awareness and OS fingerprinting (experimental)"
 
-extern THREAD_LOCAL SimpleStats rna_stats;
+struct RnaStats
+{
+    PegCount icmp;
+    PegCount ip;
+    PegCount udp;
+    PegCount tcp_syn;
+    PegCount tcp_syn_ack;
+    PegCount tcp_midstream;
+    PegCount other_packets;
+};
+
+extern THREAD_LOCAL RnaStats rna_stats;
 extern THREAD_LOCAL snort::ProfileStats rna_perf_stats;
 
 class RnaModule : public snort::Module

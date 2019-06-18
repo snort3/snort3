@@ -27,6 +27,7 @@
 #include "detection/rules.h"
 #include "log/messages.h"
 #include "main/snort.h"
+#include "main/snort_config.h"
 #include "main/snort_debug.h"
 
 using namespace snort;
@@ -137,7 +138,8 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
     }
     else if ( v.is("ip_frags_only") )
     {
-        config.ip_frags_only = v.get_bool();
+        if ( v.get_bool() )
+            c->set_run_flags(RUN_FLAG__IP_FRAGS_ONLY);
         return true;
     }
     else if ( strstr(fqn, "ip_cache") )

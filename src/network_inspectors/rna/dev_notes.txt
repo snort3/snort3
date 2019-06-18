@@ -15,3 +15,9 @@ as input so that RNA can analyze traffic.
 
 RNA discoveries will be stored globally in host_tracker objects and to be shared among
 multiple threads. RNA memory and discovery are bounded by the memcap in host_tracker.
+
+Packets from untracked sessions (e.g., non-IP) are processed via the eval method as per
+proto-bit registrations. Packets from tracked sessions (e.g., IP, TCP, UDP, and ICMP)
+are processed via events as per subscriptions. Since RNA needs to see the first packet
+of a session published from stream trackers, these modules (e.g., stream, stream_ip,
+stream_tcp, and stream_udp) should be enabled whenever RNA module is enabled.

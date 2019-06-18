@@ -105,11 +105,18 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(TcpSegmentDescriptor&
         {
             tcp_event = TCP_SYN_RECV_EVENT;
             tcpStats.syns++;
+            if ( tcp_state == TcpStreamTracker::TCP_LISTEN )
+                DataBus::publish(STREAM_TCP_SYN_EVENT, tsd.get_pkt());
         }
         else if ( tcph->is_syn_ack() )
         {
             tcp_event = TCP_SYN_ACK_RECV_EVENT;
             tcpStats.syn_acks++;
+            if ( tcp_state == TcpStreamTracker::TCP_SYN_SENT or
+                (!Stream::is_midstream(tsd.get_flow()) and
+                (tcp_state == TcpStreamTracker::TCP_LISTEN or
+                tcp_state == TcpStreamTracker::TCP_STATE_NONE)) )
+                DataBus::publish(STREAM_TCP_SYN_ACK_EVENT, tsd.get_pkt());
         }
         else if ( tcph->is_rst() )
         {

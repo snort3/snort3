@@ -144,7 +144,11 @@ bool TcpStateListen::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
         Flow* flow = tsd.get_flow();
 
         flow->session_state |= STREAM_STATE_MIDSTREAM;
-        flow->set_session_flags(SSNFLAG_MIDSTREAM);
+        if ( !Stream::is_midstream(flow) )
+        {
+            flow->set_session_flags(SSNFLAG_MIDSTREAM);
+            DataBus::publish(STREAM_TCP_MIDSTREAM_EVENT, tsd.get_pkt());
+        }
 
         trk.init_on_data_seg_sent(tsd);
         trk.session->init_new_tcp_session(tsd);
@@ -167,7 +171,11 @@ bool TcpStateListen::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
         Flow* flow = tsd.get_flow();
 
         flow->session_state |= STREAM_STATE_MIDSTREAM;
-        flow->set_session_flags(SSNFLAG_MIDSTREAM);
+        if ( !Stream::is_midstream(flow) )
+        {
+            flow->set_session_flags(SSNFLAG_MIDSTREAM);
+            DataBus::publish(STREAM_TCP_MIDSTREAM_EVENT, tsd.get_pkt());
+        }
         trk.init_on_data_seg_recv(tsd);
         trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs());
         trk.session->handle_data_segment(tsd);

@@ -16,37 +16,54 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// rna_inspector.h author Masud Hasan <mashasan@cisco.com>
+// rna_event_handler.cc author Masud Hasan <mashasan@cisco.com>
 
-#ifndef RNA_INSPECTOR_H
-#define RNA_INSPECTOR_H
-
-#include "framework/inspector.h"
-
-#include "rna_module.h"
-
-namespace snort
-{
-struct Packet;
-}
-
-class RnaInspector : public snort::Inspector
-{
-public:
-    RnaInspector(RnaModule*);
-    ~RnaInspector() override;
-
-    bool configure(snort::SnortConfig*) override;
-    void eval(snort::Packet*) override;
-    void show(snort::SnortConfig*) override;
-    void tinit() override;
-    void tterm() override;
-
-private:
-    bool load_rna_conf();
-    const RnaModuleConfig* mod_conf = nullptr;
-    RnaConfig* rna_conf = nullptr;
-};
-
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
 
+#include "rna_event_handler.h"
+
+using namespace snort;
+
+void RnaIcmpEventHandler::handle(snort::DataEvent&, snort::Flow*)
+{
+    Profile profile(rna_perf_stats);
+
+    ++rna_stats.icmp;
+}
+
+void RnaIpEventHandler::handle(snort::DataEvent&, snort::Flow*)
+{
+    Profile profile(rna_perf_stats);
+
+    ++rna_stats.ip;
+}
+
+void RnaUdpEventHandler::handle(snort::DataEvent&, snort::Flow*)
+{
+    Profile profile(rna_perf_stats);
+
+    ++rna_stats.udp;
+}
+
+void RnaTcpSynEventHandler::handle(snort::DataEvent&, snort::Flow*)
+{
+    Profile profile(rna_perf_stats);
+
+    ++rna_stats.tcp_syn;
+}
+
+void RnaTcpSynAckEventHandler::handle(snort::DataEvent&, snort::Flow*)
+{
+    Profile profile(rna_perf_stats);
+
+    ++rna_stats.tcp_syn_ack;
+}
+
+void RnaTcpMidstreamEventHandler::handle(snort::DataEvent&, snort::Flow*)
+{
+    Profile profile(rna_perf_stats);
+
+    ++rna_stats.tcp_midstream;
+}
