@@ -1,3 +1,35 @@
+19/06/19 - build 257
+
+-- analyzer: publish finalize packet event before calling finalize_message.
+-- appid: Protocol based detection for non-TCP non-UDP traffic.
+-- appid: support for dynamic host cache lookup-based app detection.
+-- build: Fix unused parameter warnings in unit tests
+-- check: Fix missing semicolons on CHECK calls
+-- detection: adding pegcounts for fallback, offload failures
+-- detection: add peg for onload wait conditions
+-- detection: fix check for disabled rules
+-- detection: fix creation of service map to use ips policy id
+-- detection: on PDUs search TCP/UDP portgroups even when user_mode services exist
+-- doc: Remove perpetually out-of-date copy of LibDAQ's README
+-- doc: Update documentation to reflect post-DAQng reality
+-- flow: check if flow is actually deleted before updating memstats
+-- flow: Implement storing and importing HA data via DAQ IOCTLs
+-- http_inspect: stop clearing http data snapshots from ips contexts on flow deletion
+-- http_inspect/stream: accelerated blocking
+-- http_inspect: test tool enhancement
+-- icmp4: verify checksum before the type validation
+-- ips_options: add relative parameter to so option
+-- perf_mon: removed flow_ip_handler from PerfMonitor
+-- regex: fix repeated search offset
+-- rna: Fixing doc build failure due to asciidoc format issue
+-- rna: Implementing event-driven RNA inspections
+-- rna: Introducing barebone RNA module and inspector
+-- rna: Renaming peg counts and adding a warning when config changes
+-- smtp: Fix handle_header_line and normalize_data unit tests
+-- smtp: pass packet pointer instead of nullptr to SMTP_CopyToAltBuffer
+-- stream: Do not validate timestamp until peer timestamp is set
+-- stream_ip: Checking null inspector while updating session
+
 19/05/22 - build 256
 
 -- DAQng: Port Snort and its DAQ modules to DAQ3

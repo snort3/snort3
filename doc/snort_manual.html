@@ -782,7 +782,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0 (Build 256) from 2.9.11
+o"  )~   Version 3.0.0 (Build 257) from 2.9.11
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
@@ -2054,12 +2054,12 @@ out more advanced usage.</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-autotools or cmake to build from source
+cmake to build from source
 </p>
 </li>
 <li>
 <p>
-daq from <a href="http://www.snort.org">http://www.snort.org</a> for packet IO
+daq from <a href="https://github.com/snort3/libdaq">https://github.com/snort3/libdaq</a> for packet IO
 </p>
 </li>
 <li>
@@ -2201,11 +2201,11 @@ mkdir -p $my_path</code></pre>
 </li>
 <li>
 <p>
-If you are using a github clone with autotools, do this:
+If LibDAQ was installed to a custom, non-system path:
 </p>
 <div class="literalblock">
 <div class="content">
-<pre><code>autoreconf -isvf</code></pre>
+<pre><code>export PKG_CONFIG_PATH=/libdaq/install/path/lib/pkgconfig:$PKG_CONFIG_PATH</code></pre>
 </div></div>
 </li>
 <li>
@@ -2222,7 +2222,7 @@ To build with cmake and make, run configure_cmake.sh.  It will
 <div class="content">
 <pre><code>./configure_cmake.sh --prefix=$my_path
 cd build
-make -j 8
+make -j
 make install
 ln -s $my_path/conf $my_path/etc</code></pre>
 </div></div>
@@ -5250,6 +5250,18 @@ depth parameter entirely because that is the default.</p></div>
 processing.</p></div>
 </div>
 <div class="sect4">
+<h5 id="_accelerated_blocking">accelerated_blocking</h5>
+<div class="paragraph"><p>Accelerated blocking is an experimental feature currently under
+development. It enables Snort to more quickly detect and block response
+messages containing malicious JavaScript. As this feature involves
+actively blocking traffic it is designed for use with inline mode
+operation (-Q).</p></div>
+<div class="paragraph"><p>This feature only functions with response_depth = -1 (unlimited). This
+limitation will be removed in a future version.</p></div>
+<div class="paragraph"><p>This feature is off by default. accelerated_blocking = true will activate
+it.</p></div>
+</div>
+<div class="sect4">
 <h5 id="_gzip">gzip</h5>
 <div class="paragraph"><p>http_inspect by default decompresses deflate and gzip message bodies
 before inspecting them. This feature can be turned off by unzip = false.
@@ -7509,6 +7521,31 @@ int <strong>detection.trace</strong>: mask for enabling debug traces in module {
 <strong>detection.context_stalls</strong>: times processing stalled to wait for an available context (sum)
 </p>
 </li>
+<li>
+<p>
+<strong>detection.offload_busy</strong>: times offload was not available (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>detection.onload_waits</strong>: times processing waited for onload to complete (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>detection.offload_fallback</strong>: fast pattern offload search fallback attempts (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>detection.offload_failures</strong>: fast pattern offload search failures (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>detection.offload_suspends</strong>: fast pattern search suspends due to offload context chains (sum)
+</p>
+</li>
 </ul></div>
 </div>
 <div class="sect2">
@@ -7621,12 +7658,12 @@ bit_list <strong>high_availability.ports</strong>: side channel message port lis
 </li>
 <li>
 <p>
-real <strong>high_availability.min_age</strong> = 1.0: minimum session life before HA updates { 0.0:100.0 }
+real <strong>high_availability.min_age</strong> = 1.0: minimum session life in seconds before HA updates { 0.0:100.0 }
 </p>
 </li>
 <li>
 <p>
-real <strong>high_availability.min_sync</strong> = 1.0: minimum interval between HA updates { 0.0:100.0 }
+real <strong>high_availability.min_sync</strong> = 0.1: minimum interval in seconds between HA updates { 0.0:100.0 }
 </p>
 </li>
 </ul></div>
@@ -7634,7 +7671,67 @@ real <strong>high_availability.min_sync</strong> = 1.0: minimum interval between
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>high_availability.packets</strong>: total packets (sum)
+<strong>high_availability.msgs_recv</strong>: total messages received (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>high_availability.update_msgs_recv</strong>: update messages received (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>high_availability.update_msgs_recv_no_flow</strong>: update messages received without a local flow (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>high_availability.update_msgs_consumed</strong>: update messages fully consumed (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>high_availability.delete_msgs_consumed</strong>: deletion messages consumed (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>high_availability.daq_stores</strong>: states stored via daq (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>high_availability.daq_imports</strong>: states imported via daq (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>high_availability.msg_version_mismatch</strong>: messages received with a version mismatch (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>high_availability.msg_length_mismatch</strong>: messages received with an inconsistent total length (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>high_availability.truncated_msgs</strong>: truncated messages received (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>high_availability.unknown_key_type</strong>: messages received with an unknown flow key type (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>high_availability.unknown_client_idx</strong>: messages received with an unknown client index (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>high_availability.client_consume_errors</strong>: client data consume failure count (sum)
 </p>
 </li>
 </ul></div>
@@ -12373,6 +12470,38 @@ bool <strong>file_log.log_sys_time</strong> = false: log the system time when ev
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_finalize_packet">finalize_packet</h3>
+<div class="paragraph"><p>What: handle the finalize packet event</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Usage: inspect</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+int <strong>finalize_packet.start_pdu</strong> = 0: Register to receive finalize packet event starting on this PDU { 0:max32 }
+</p>
+</li>
+<li>
+<p>
+int <strong>finalize_packet.end_pdu</strong> = 0: Deregister for finalize packet events on this PDU { 0:max32 }
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>finalize_packet.pdus</strong>: total PDUs seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>finalize_packet.events</strong>: total events seen (sum)
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_ftp_client">ftp_client</h3>
 <div class="paragraph"><p>What: FTP client configuration module for use with ftp_server</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
@@ -12774,12 +12903,17 @@ bool <strong>http_inspect.decompress_zip</strong> = false: decompress zip files 
 </li>
 <li>
 <p>
-bool <strong>http_inspect.normalize_javascript</strong> = false: normalize javascript in response bodies
+bool <strong>http_inspect.accelerated_blocking</strong> = false: inspect JavaScript in response messages as soon as possible
 </p>
 </li>
 <li>
 <p>
-int <strong>http_inspect.max_javascript_whitespaces</strong> = 200: maximum consecutive whitespaces allowed within the Javascript obfuscated data { 1:65535 }
+bool <strong>http_inspect.normalize_javascript</strong> = false: normalize JavaScript in response bodies
+</p>
+</li>
+<li>
+<p>
+int <strong>http_inspect.max_javascript_whitespaces</strong> = 200: maximum consecutive whitespaces allowed within the JavaScript obfuscated data { 1:65535 }
 </p>
 </li>
 <li>
@@ -13456,6 +13590,16 @@ bool <strong>http_inspect.simplify_path</strong> = true: reduce URI directory pa
 <li>
 <p>
 <strong>http_inspect.max_concurrent_sessions</strong>: maximum concurrent http sessions (max)
+</p>
+</li>
+<li>
+<p>
+<strong>http_inspect.detained_packets</strong>: TCP packets delayed by accelerated blocking (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>http_inspect.partial_inspections</strong>: pre-inspections for accelerated blocking (sum)
 </p>
 </li>
 </ul></div>
@@ -14841,38 +14985,6 @@ int <strong>port_scan.icmp_window</strong> = 0: detection interval for all ICMP 
 </ul></div>
 </div>
 <div class="sect2">
-<h3 id="_reg_test">reg_test</h3>
-<div class="paragraph"><p>What: The regression test inspector (rti) is used when special packet handling is required for a reg test</p></div>
-<div class="paragraph"><p>Type: inspector</p></div>
-<div class="paragraph"><p>Usage: context</p></div>
-<div class="paragraph"><p>Configuration:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-bool <strong>reg_test.test_daq_retry</strong> = true: test daq packet retry feature
-</p>
-</li>
-</ul></div>
-<div class="paragraph"><p>Peg counts:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-<strong>reg_test.packets</strong>: total packets (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>reg_test.retry_requests</strong>: total retry packets requested (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>reg_test.retry_packets</strong>: total retried packets received (sum)
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect2">
 <h3 id="_reputation">reputation</h3>
 <div class="paragraph"><p>What: reputation inspection</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
@@ -14968,6 +15080,73 @@ string <strong>reputation.whitelist</strong>: whitelist file name with IP lists
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_rna">rna</h3>
+<div class="paragraph"><p>What: Real-time network awareness and OS fingerprinting (experimental)</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Usage: context</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+string <strong>rna.rna_conf_path</strong>: path to RNA configuration
+</p>
+</li>
+<li>
+<p>
+string <strong>rna.rna_util_lib_path</strong>: path to library for utilities such as fingerprint decoder
+</p>
+</li>
+<li>
+<p>
+string <strong>rna.fingerprint_dir</strong>: directory to fingerprint patterns
+</p>
+</li>
+<li>
+<p>
+string <strong>rna.custom_fingerprint_dir</strong>: directory to custom fingerprint patterns
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>rna.icmp</strong>: count of ICMP packets received (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rna.ip</strong>: count of IP packets received (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rna.udp</strong>: count of UDP packets received (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rna.tcp_syn</strong>: count of TCP SYN packets received (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rna.tcp_syn_ack</strong>: count of TCP SYN-ACK packets received (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rna.tcp_midstream</strong>: count of TCP midstream packets received (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rna.other_packets</strong>: count of packets received without session tracking (sum)
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_rpc_decode">rpc_decode</h3>
 <div class="paragraph"><p>What: RPC inspector</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
@@ -15015,6 +15194,67 @@ string <strong>reputation.whitelist</strong>: whitelist file name with IP lists
 <li>
 <p>
 <strong>rpc_decode.max_concurrent_sessions</strong>: maximum concurrent rpc sessions (max)
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_rt_packet">rt_packet</h3>
+<div class="paragraph"><p>What: The regression test packet inspector is used when special packet handling is required for a reg test</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Usage: context</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+bool <strong>rt_packet.test_daq_retry</strong> = true: test daq packet retry feature
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>rt_packet.packets</strong>: total packets (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rt_packet.retry_requests</strong>: total retry packets requested (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rt_packet.retry_packets</strong>: total retried packets received (sum)
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_rt_service">rt_service</h3>
+<div class="paragraph"><p>What: The regression test service inspector is used by regression tests that require custom service inspector support.</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Usage: context</p></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>rt_service.packets</strong>: total packets (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rt_service.flush_requests</strong>: total splitter flush requests (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rt_service.hold_requests</strong>: total splitter hold requests (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rt_service.search_requests</strong>: total splitter search requests (sum)
 </p>
 </li>
 </ul></div>
@@ -16961,6 +17201,51 @@ bool <strong>stream_tcp.track_only</strong> = false: disable reassembly if true
 <li>
 <p>
 <strong>stream_tcp.fins</strong>: number of fin packets (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream_tcp.packets_held</strong>: number of packets held (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream_tcp.held_packet_rexmits</strong>: number of retransmits of held packets (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream_tcp.held_packets_dropped</strong>: number of held packets dropped (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream_tcp.held_packets_passed</strong>: number of held packets passed (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream_tcp.cur_packets_held</strong>: number of packets currently held (now)
+</p>
+</li>
+<li>
+<p>
+<strong>stream_tcp.max_packets_held</strong>: maximum number of packets held simultaneously (max)
+</p>
+</li>
+<li>
+<p>
+<strong>stream_tcp.held_packet_limit_exceeded</strong>: number of times limit of max held packets exceeded (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream_tcp.partial_flushes</strong>: number of partial flushes initiated (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream_tcp.partial_flush_bytes</strong>: partial flush total bytes (sum)
 </p>
 </li>
 </ul></div>
@@ -19118,6 +19403,11 @@ int <strong><code>sip_stat_code.*code</code></strong>: status code { 1:999 }
 string <strong>so.~func</strong>: name of eval function
 </p>
 </li>
+<li>
+<p>
+implied <strong>so.relative</strong>: offset from cursor instead of start of buffer
+</p>
+</li>
 </ul></div>
 </div>
 <div class="sect2">
@@ -19710,64 +20000,73 @@ and mode when invoking Snort to perform pcap readback or inline operation,
 etc.  The DAQ library may be useful for other packet processing
 applications and the modular nature allows you to build new modules for
 other platforms.</p></div>
-<div class="paragraph"><p>The DAQ library is provided as a separate package on the official Snort
-download site (<a href="https://snort.org/downloads">https://snort.org/downloads</a>) and contains a number of DAQ
-modules including PCAP, AFPacket, NFQ, IPFQ, Netmap, and Dump implementations.
+<div class="paragraph"><p>The DAQ library exists as a separate repository on the official Snort 3 GitHub
+project (<a href="https://github.com/snort3/libdaq">https://github.com/snort3/libdaq</a>) and contains a number of bundled DAQ
+modules including AFPacket, Divert, NFQ, PCAP, and Netmap implementations.
 Snort 3 itself contains a few new DAQ modules mostly used for testing as
 described below.  Additionally, DAQ modules developed by third parties to
 facilitate the usage of their own hardware and software platforms exist.</p></div>
 <div class="sect2">
 <h3 id="_building_the_daq_library_and_its_bundled_daq_modules">Building the DAQ Library and Its Bundled DAQ Modules</h3>
-<div class="paragraph"><p>Refer to the README in the LibDAQ source tarball for instructions on how to
+<div class="paragraph"><p>Refer to the READMEs in the LibDAQ source tarball for instructions on how to
 build the library and modules as well as details on configuring and using the
 bundled DAQ modules.</p></div>
-<div class="paragraph"><p>A copy of the README from LibDAQ has been included in the Reference section of
-this manual for convenience.  For the most up-to-date information, please refer
-to the version that came with your installation&#8217;s source code.</p></div>
 </div>
 <div class="sect2">
 <h3 id="_configuration_7">Configuration</h3>
 <div class="paragraph"><p>As with a number of features in Snort 3, the LibDAQ and DAQ module
-configuration may be controlled using either the command line options or direct
-Snort module configuration.</p></div>
+configuration may be controlled using either the command line options or by
+configuring the <em>daq</em> Snort module in the Lua configuration.</p></div>
 <div class="paragraph"><p>DAQ modules may be statically built into Snort, but the more common case is to
 use DAQ modules that have been built as dynamically loadable objects.  Because
 of this, the first thing to take care of is informing Snort of any locations it
 should search for dynamic DAQ modules.  From the command line, this can be done
-with one or more invocations of the --daq-dir option, which takes a path to
-search as its argument.  All arguments will be collected into a list of
-locations to be searched. In the Lua configuration, the <em>module_dirs</em> property
-of the <em>daq</em> Snort module is a list of paths for the same purpose.</p></div>
-<div class="paragraph"><p>Next, one must select which DAQ module they wish to use by name.  This is done
-using the --daq option from the command line or the <em>module</em> property of the
-<em>daq</em> Snort module.  To get a list of the available modules, run Snort with the
---daq-list option making sure to specify any DAQ module search directories
-beforehand.  If no DAQ module is specified, Snort will default to attempting to
-find and use the <em>pcap</em> DAQ module.</p></div>
+with one or more invocations of the --daq-dir option, which takes a
+colon-separated set of paths to search as its argument.  All arguments will be
+collected into a list of locations to be searched. In the Lua configuration, the
+<em>daq.module_dirs[]</em> property is a list of paths for the same purpose.</p></div>
+<div class="paragraph"><p>Next, one must select which DAQ modules they wish to use by name.  At least one
+base module and zero or more wrapper modules may be selected.  This is done
+using the --daq options from the command line or the <em>daq.modules[]</em> list-type
+property.  To get a list of the available modules, run Snort with the --daq-list
+option making sure to specify any DAQ module search directories beforehand.  If
+no DAQ module is specified, Snort will default to attempting to find and use a
+DAQ module named <em>pcap</em>.</p></div>
 <div class="paragraph"><p>Some DAQ modules can be further directly configured using DAQ module variables.
 All DAQ module variables come in the form of either just a key or a key and a
 value separated by an equals sign.  For example, <em>debug</em> or <em>fanout_type=hash</em>.
 The command line option for specifying these is --daq-var and the configuration
-file equivalent is the <em>variables</em> property of the <em>daq</em> Snort module.</p></div>
+file equivalent is the <em>daq.modules[].variables[]</em> property.  The available
+variables for each module will be shown when listing the available DAQ modules
+with --daq-list.</p></div>
 <div class="paragraph"><p>The LibDAQ concept of operational mode (passive, inline, or file readback) is
-not directly configurable but instead inferred from other Snort configuration.
-The DAQ module acquisition timeout is always configured to 1 second and the
-packet capture length (snaplen) is configured by the -s command line option and
-defaults to 1514 bytes.</p></div>
+automatically configured based on inferring the mode from other Snort
+configuration.  The presence of -r or --pcap-* options implies <em>read-file</em>, -i
+without -Q implies <em>passive</em>, and -i with -Q implies <em>inline</em>.  The mode can be
+overridden on a per-DAQ module basis with the --daq-mode option on the command
+line or the <em>daq.modules[].mode</em> property.</p></div>
+<div class="paragraph"><p>The DAQ module receive timeout is always configured to 1 second.  The packet
+capture length (snaplen) defaults to 1518 bytes and can be overridden by the -s
+command line option or <em>daq.snaplen</em> property.</p></div>
 <div class="paragraph"><p>Finally, and most importantly, is the input specification for the DAQ module.
 In readback mode, this is simply the file to be read back and analyzed.  For
 live traffic processing, this is the name of the interface or other necessary
 input specification as required by the DAQ module to understand what to operate
 upon.  From the command line, the -r option is used to specify a file to be
 read back and the -i option is used to indicate a live interface input
-specification.  Both are covered by the <em>input_spec</em> property of the <em>daq</em>
-Snort module.</p></div>
+specification.  Both are covered by the <em>daq.inputs[]</em> property.</p></div>
+<div class="paragraph"><p>For advanced use cases, one additional LibDAQ configuration exists: the number
+of DAQ messages to request per receive call.  In Snort, this is referred to as
+the DAQ "batch size" and defaults to 64.  The default can be overridden with
+the --daq-batch-size command line option or <em>daq.batch_size</em> property.  The
+message pool size requested from the DAQ module will be four times this batch
+size.</p></div>
 <div class="sect3">
 <h4 id="_command_line_example">Command Line Example</h4>
 <div class="literalblock">
 <div class="content">
 <pre><code>    snort --daq-dir /usr/local/lib/daq --daq-dir /opt/lib/daq --daq afpacket
---daq-var debug --daq-var fanout_type=hash -i eth1:eth2</code></pre>
+--daq-var debug --daq-var fanout_type=hash -i eth1:eth2 -Q</code></pre>
 </div></div>
 </div>
 <div class="sect3">
@@ -19783,104 +20082,77 @@ Lua form:</p></div>
         '/usr/local/lib/daq',
         '/opt/lib/daq'
     },
-    module = 'afpacket',
-    input_spec = 'eth1:eth2',
-    variables =
+    modules =
     {
-        'debug',
-        'fanout_type=hash'
-    }
+        {
+            name = 'afpacket',
+            mode = 'inline',
+            variables =
+            {
+                'debug',
+                'fanout_type=hash'
+            }
+        }
+    },
+    inputs =
+    {
+        'eth1:eth2',
+    },
+    snaplen = 1518
 }</code></pre>
 </div></div>
+<div class="paragraph"><p>The <em>daq.snaplen</em> property was included for completeness and may be omitted if
+the default value is acceptable.</p></div>
 </div>
 <div class="sect3">
-<h4 id="_interaction_with_multiple_packet_threads">Interaction With Multiple Packet Threads</h4>
-<div class="paragraph"><p>DAQ configuration can become much more complicated as additional packet threads
-are introduced.  To allow for more flexibility in configuring DAQ module
-instances, each packet thread can be configured with its own input
-specification and/or DAQ module variables, which creates two classes of each:
-instance-specific and global.  Global DAQ module variables are those defined
-before any -i option on the command line or in the top-level <em>variables</em>
-property demonstrated in the previous section.  The global input specification
-is defined by either the first -i option on the command line (which doubles as
-the input specification for instance 0) or the top-level <em>input_spec</em> in the
-i&#8217;daq' Snort module.  Instance-specific input specifiers are configured on the
-command line by giving multiple -i options.  In the same way, instance-specific
-DAQ module variables on the command line are declared normally but follow and
-apply only to the instance operating on the last -i option.  When configuring
-through Lua, the <em>instances</em> property of the <em>daq</em> Snort module is a list of
-tables, each defining instance-specific configuration for a given instance ID.</p></div>
-<div class="paragraph"><p>Each packet thread will create an instance of the chosen DAQ
-module using the global interface specification and global set of DAQ module
-variables <strong>unless</strong> they were overridden with instance-specific values.  When
-DAQ module instances are configured, any global DAQ modules will be set and
-then any instance-specific DAQ variables.  This means that an instance will
-"inherit" the global DAQ modules and can override those by specifying them
-again with different values or add to them by specifying new variables
-entirely.</p></div>
-<div class="paragraph"><p>Here is the configuration for a hypothetical AFPacket DAQ module that has been
-modified to loadbalance based on DAQ variables (lb_total is the total number of
-instances to loadbalance across and is set globally, and lb_id is the
-instance&#8217;s loadbalancing ID within that total and is set per-instance) across 4
-packet processing threads within Snort:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>daq =
-{
-    module_dirs =
-    {
-        '/usr/local/sf/lib/daq'
-    },
-    module = 'afpacket',
-    input_spec = 'eth1',
-    variables =
-    {
-        'lb_total=4'
-    },
-    instances =
-    {
-        {
-            id = 0,
-            variables =
-            {
-                'lb_id=1',
-            }
-        },
-        {
-            id = 1,
-            variables =
-            {
-                'lb_id=2',
-            }
-        },
-        {
-            id = 2,
-            variables =
-            {
-                'lb_id=3',
-            }
-        },
-        {
-            id = 3,
-            variables =
-            {
-                'lb_id=4',
-            }
-        },
-    }
-}</code></pre>
-</div></div>
-<div class="paragraph"><p>The equivalent command line invocation would look like this (made uglier by the
-lack of needing a different input specification for each thread):</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>    snort --daq-dir /usr/local/sf/lib/daq --daq afpacket --daq-var lb_total=4 -i
-eth1 --daq-var lb_id=1 -i eth1 --daq-var lb_id=2 -i eth1 --daq-var lb_id=3 -i
-eth1 --daq-var lb_id=4 -z 4</code></pre>
-</div></div>
+<h4 id="_daq_module_configuration_stacks">DAQ Module Configuration Stacks</h4>
+<div class="paragraph"><p>Like briefly mentioned above, a DAQ configuration consists of a base DAQ module
+and zero or more wrapper DAQ modules.  DAQ wrapper modules provide additional
+functionality layered on top of the base module in a decorator pattern.  For
+example, the Dump DAQ module will capture all passed or injected packets and
+save them to a PCAP savefile.  This can be layered on top of something like the
+PCAP DAQ module to assess which packets are making it through Snort without
+being dropped and what actions Snort has taken that involved sending new or
+modified packets out onto the network (e.g., TCP reset packets and TCP
+normalizations).</p></div>
+<div class="paragraph"><p>To configure a DAQ module stack from the command line, the --daq option must
+be given multiple times with the base module specified first followed by the
+wrapper modules in the desired order (building up the stack).  Each --daq
+option changes which module is being configured by subsequent --daq-var and
+--daq mode options.</p></div>
+<div class="paragraph"><p>When configuring the same sort of stack in Lua, everything lives in the
+<em>daq.modules[]</em> property.  <em>daq.modules[]</em> is an array of module configurations
+pushed onto the stack from top to bottom.  Each module configuration <strong>must</strong>
+contain the name of the DAQ module.  Additionally, it may contain an array of
+variables (<em>daq.modules[].variables[]</em>) and/or an operational mode
+(<em>daq.modules[].mode</em>).</p></div>
+<div class="paragraph"><p>If only wrapper modules were specified, Snort will default to implicitly
+configuring a base module with the name <em>pcap</em> in <em>read-file</em> mode.  This is a
+convenience to mimic the previous behavior when selecting something like the
+old Dump DAQ module that may be removed in the future.</p></div>
 <div class="paragraph"><p>For any particularly complicated setup, it is recommended that one configure
 via a Lua configuration file rather than using the command line options.</p></div>
 </div>
+</div>
+<div class="sect2">
+<h3 id="_interaction_with_multiple_packet_threads">Interaction With Multiple Packet Threads</h3>
+<div class="paragraph"><p>All packet threads will receive the same DAQ instance configuration with the
+potential exception of the input specification.</p></div>
+<div class="paragraph"><p>If Snort is in file readback mode, a full set of files will be constructed from
+the -r/--pcap-file/--pcap-list/--pcap-dir/--pcap-filter options.  A number of
+packet threads will be started up to the configured maximum (-z) to process
+these files one at a time.  As a packet thread completes processing of a file,
+it will be stopped and then started again with a different file input to
+process.  If the number of packet threads configured exceeds the number of
+files to process, or as the number of remaining input files dwindles below that
+number, Snort will stop spawning new packet threads when it runs out of
+unhandled input files.</p></div>
+<div class="paragraph"><p>When Snort is operating on live interfaces (-i), all packet threads up to the
+configured maximum will always be started.  By default, if only one input
+specification is given, all packet threads will receive the same input in their
+configuration.  If multiple inputs are given, each thread will be given the
+matching input (ordinally), falling back to the first if the number of packet
+threads exceeds the number of inputs.</p></div>
 </div>
 <div class="sect2">
 <h3 id="_daq_modules_included_with_snort_3">DAQ Modules Included With Snort 3</h3>
@@ -19893,16 +20165,16 @@ considered the client and the second connection accepted is considered the
 server.  If there is only one connection, stream data can&#8217;t be forwarded
 but it is still inspected.</p></div>
 <div class="paragraph"><p>Each read from a socket of up to snaplen bytes is passed as a packet to
-Snort along with a DAQ_SktHdr_t pointer in DAQ_PktHdr_t&#8594;priv_ptr.
-DAQ_SktHdr_t conveys IP4 address, ports, protocol, and direction.  Socket
+Snort along with the ability to retrieve a DAQ_UsrHdr_t structure via ioctl.
+DAQ_UsrHdr_t conveys IP4 address, ports, protocol, and direction.  Socket
 packets can be configured to be TCP or UDP.  The socket DAQ can be operated
 in inline mode and is able to block packets.</p></div>
-<div class="paragraph"><p>The socket DAQ uses DLT_SOCKET and requires that Snort load the socket
-codec which is included in the extra package.</p></div>
+<div class="paragraph"><p>Packets from the socket DAQ module are handled by Snort&#8217;s stream_user module,
+which must be configured in the Snort configuration.</p></div>
 <div class="paragraph"><p>To use the socket DAQ, start Snort like this:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><code>./snort --plugin-path /path/to/lib/snort_extra \
+<pre><code>./snort --daq-dir /path/to/lib/snort_extra/daq \
     --daq socket [--daq-var port=&lt;port&gt;] [--daq-var proto=&lt;proto&gt;] [-Q]</code></pre>
 </div></div>
 <div class="literalblock">
@@ -19931,10 +20203,10 @@ This module is primarily for development and test.
 </div>
 <div class="sect3">
 <h4 id="_file_module">File Module</h4>
-<div class="paragraph"><p>The file module provides the ability to process files directly w/o having
-to extract them from pcaps.  Use the file module with Snort&#8217;s stream_file
-to get file type identification and signature services.  The usual IPS
-detection and logging etc. is available too.</p></div>
+<div class="paragraph"><p>The file module provides the ability to process files directly without having
+to extract them from pcaps.  Use the file module with Snort&#8217;s stream_file to
+get file type identification and signature services.  The usual IPS detection
+and logging, etc. is also available.</p></div>
 <div class="paragraph"><p>You can process all the files in a directory recursively using 8 threads
 with these Snort options:</p></div>
 <div class="literalblock">
@@ -25399,6 +25671,16 @@ string <strong>file_type.~</strong>: list of file type IDs to match
 </li>
 <li>
 <p>
+int <strong>finalize_packet.end_pdu</strong> = 0: Deregister for finalize packet events on this PDU { 0:max32 }
+</p>
+</li>
+<li>
+<p>
+int <strong>finalize_packet.start_pdu</strong> = 0: Register to receive finalize packet event starting on this PDU { 0:max32 }
+</p>
+</li>
+<li>
+<p>
 string <strong>flags.~mask_flags</strong>: these flags are don&#8217;t cares
 </p>
 </li>
@@ -25694,12 +25976,12 @@ bool <strong>high_availability.enable</strong> = false: enable high availability
 </li>
 <li>
 <p>
-real <strong>high_availability.min_age</strong> = 1.0: minimum session life before HA updates { 0.0:100.0 }
+real <strong>high_availability.min_age</strong> = 1.0: minimum session life in seconds before HA updates { 0.0:100.0 }
 </p>
 </li>
 <li>
 <p>
-real <strong>high_availability.min_sync</strong> = 1.0: minimum interval between HA updates { 0.0:100.0 }
+real <strong>high_availability.min_sync</strong> = 0.1: minimum interval in seconds between HA updates { 0.0:100.0 }
 </p>
 </li>
 <li>
@@ -25809,6 +26091,11 @@ implied <strong>http_header.with_trailer</strong>: parts of this rule examine HT
 </li>
 <li>
 <p>
+bool <strong>http_inspect.accelerated_blocking</strong> = false: inspect JavaScript in response messages as soon as possible
+</p>
+</li>
+<li>
+<p>
 bool <strong>http_inspect.backslash_to_slash</strong> = false: replace \ with / when normalizing URIs
 </p>
 </li>
@@ -25859,12 +26146,12 @@ string <strong>http_inspect.iis_unicode_map_file</strong>: file containing code 
 </li>
 <li>
 <p>
-int <strong>http_inspect.max_javascript_whitespaces</strong> = 200: maximum consecutive whitespaces allowed within the Javascript obfuscated data { 1:65535 }
+int <strong>http_inspect.max_javascript_whitespaces</strong> = 200: maximum consecutive whitespaces allowed within the JavaScript obfuscated data { 1:65535 }
 </p>
 </li>
 <li>
 <p>
-bool <strong>http_inspect.normalize_javascript</strong> = false: normalize javascript in response bodies
+bool <strong>http_inspect.normalize_javascript</strong> = false: normalize JavaScript in response bodies
 </p>
 </li>
 <li>
@@ -27344,11 +27631,6 @@ implied <strong>regex.relative</strong>: start search from end of last match ins
 </li>
 <li>
 <p>
-bool <strong>reg_test.test_daq_retry</strong> = true: test daq packet retry feature
-</p>
-</li>
-<li>
-<p>
 enum <strong>reject.control</strong>: send ICMP unreachable(s) { network|host|port|forward|all }
 </p>
 </li>
@@ -27419,6 +27701,26 @@ bool <strong>rewrite.disable_replace</strong> = false: disable replace of packet
 </li>
 <li>
 <p>
+string <strong>rna.custom_fingerprint_dir</strong>: directory to custom fingerprint patterns
+</p>
+</li>
+<li>
+<p>
+string <strong>rna.fingerprint_dir</strong>: directory to fingerprint patterns
+</p>
+</li>
+<li>
+<p>
+string <strong>rna.rna_conf_path</strong>: path to RNA configuration
+</p>
+</li>
+<li>
+<p>
+string <strong>rna.rna_util_lib_path</strong>: path to library for utilities such as fingerprint decoder
+</p>
+</li>
+<li>
+<p>
 int <strong>rpc.~app</strong>: application number { 0:max32 }
 </p>
 </li>
@@ -27430,6 +27732,11 @@ string <strong>rpc.~proc</strong>: procedure number or * for any
 <li>
 <p>
 string <strong>rpc.~ver</strong>: version number or * for any
+</p>
+</li>
+<li>
+<p>
+bool <strong>rt_packet.test_daq_retry</strong> = true: test daq packet retry feature
 </p>
 </li>
 <li>
@@ -28440,6 +28747,11 @@ string <strong>so.~func</strong>: name of eval function
 <li>
 <p>
 string <strong>soid.~</strong>: SO rule ID is unique key, eg &lt;gid&gt;_&lt;sid&gt;_&lt;rev&gt; like 3_45678_9
+</p>
+</li>
+<li>
+<p>
+implied <strong>so.relative</strong>: offset from cursor instead of start of buffer
 </p>
 </li>
 <li>
@@ -29819,7 +30131,32 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>detection.offload_busy</strong>: times offload was not available (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>detection.offload_failures</strong>: fast pattern offload search failures (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>detection.offload_fallback</strong>: fast pattern offload search fallback attempts (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>detection.offloads</strong>: fast pattern searches that were offloaded (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>detection.offload_suspends</strong>: fast pattern search suspends due to offload context chains (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>detection.onload_waits</strong>: times processing waited for onload to complete (sum)
 </p>
 </li>
 <li>
@@ -29959,6 +30296,16 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>finalize_packet.events</strong>: total events seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>finalize_packet.pdus</strong>: total PDUs seen (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>ftp_data.packets</strong>: total packets (sum)
 </p>
 </li>
@@ -30009,7 +30356,67 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>high_availability.packets</strong>: total packets (sum)
+<strong>high_availability.client_consume_errors</strong>: client data consume failure count (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>high_availability.daq_imports</strong>: states imported via daq (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>high_availability.daq_stores</strong>: states stored via daq (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>high_availability.delete_msgs_consumed</strong>: deletion messages consumed (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>high_availability.msg_length_mismatch</strong>: messages received with an inconsistent total length (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>high_availability.msgs_recv</strong>: total messages received (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>high_availability.msg_version_mismatch</strong>: messages received with a version mismatch (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>high_availability.truncated_msgs</strong>: truncated messages received (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>high_availability.unknown_client_idx</strong>: messages received with an unknown client index (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>high_availability.unknown_key_type</strong>: messages received with an unknown flow key type (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>high_availability.update_msgs_consumed</strong>: update messages fully consumed (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>high_availability.update_msgs_recv_no_flow</strong>: update messages received without a local flow (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>high_availability.update_msgs_recv</strong>: update messages received (sum)
 </p>
 </li>
 <li>
@@ -30099,6 +30506,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>http_inspect.detained_packets</strong>: TCP packets delayed by accelerated blocking (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>http_inspect.flows</strong>: HTTP connections inspected (sum)
 </p>
 </li>
@@ -30130,6 +30542,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>http_inspect.other_requests</strong>: other request methods inspected (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>http_inspect.partial_inspections</strong>: pre-inspections for accelerated blocking (sum)
 </p>
 </li>
 <li>
@@ -30749,21 +31166,6 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>reg_test.packets</strong>: total packets (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>reg_test.retry_packets</strong>: total retried packets received (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>reg_test.retry_requests</strong>: total retry packets requested (sum)
-</p>
-</li>
-<li>
-<p>
 <strong>reputation.blacklisted</strong>: number of packets blacklisted (sum)
 </p>
 </li>
@@ -30789,6 +31191,41 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>rna.icmp</strong>: count of ICMP packets received (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rna.ip</strong>: count of IP packets received (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rna.other_packets</strong>: count of packets received without session tracking (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rna.tcp_midstream</strong>: count of TCP midstream packets received (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rna.tcp_syn_ack</strong>: count of TCP SYN-ACK packets received (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rna.tcp_syn</strong>: count of TCP SYN packets received (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rna.udp</strong>: count of UDP packets received (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>rpc_decode.concurrent_sessions</strong>: total concurrent rpc sessions (now)
 </p>
 </li>
@@ -30800,6 +31237,41 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>rpc_decode.total_packets</strong>: total packets (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rt_packet.packets</strong>: total packets (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rt_packet.retry_packets</strong>: total retried packets received (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rt_packet.retry_requests</strong>: total retry packets requested (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rt_service.flush_requests</strong>: total splitter flush requests (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rt_service.hold_requests</strong>: total splitter hold requests (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rt_service.packets</strong>: total packets (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rt_service.search_requests</strong>: total splitter search requests (sum)
 </p>
 </li>
 <li>
@@ -31529,6 +32001,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>stream_tcp.cur_packets_held</strong>: number of packets currently held (now)
+</p>
+</li>
+<li>
+<p>
 <strong>stream_tcp.data_trackers</strong>: tcp session tracking started on data (sum)
 </p>
 </li>
@@ -31584,6 +32061,26 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>stream_tcp.held_packet_limit_exceeded</strong>: number of times limit of max held packets exceeded (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream_tcp.held_packet_rexmits</strong>: number of retransmits of held packets (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream_tcp.held_packets_dropped</strong>: number of held packets dropped (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream_tcp.held_packets_passed</strong>: number of held packets passed (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>stream.tcp_idle_prunes</strong>: tcp sessions pruned due to timeout (sum)
 </p>
 </li>
@@ -31614,6 +32111,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>stream_tcp.max_packets_held</strong>: maximum number of packets held simultaneously (max)
+</p>
+</li>
+<li>
+<p>
 <strong>stream.tcp_memcap_prunes</strong>: tcp sessions pruned due to memcap (sum)
 </p>
 </li>
@@ -31625,6 +32127,21 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>stream_tcp.overlaps</strong>: overlapping segments queued (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream_tcp.packets_held</strong>: number of packets held (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream_tcp.partial_flush_bytes</strong>: partial flush total bytes (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream_tcp.partial_flushes</strong>: number of partial flushes initiated (sum)
 </p>
 </li>
 <li>
@@ -35537,6 +36054,11 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
+<strong>finalize_packet</strong> (inspector): handle the finalize packet event
+</p>
+</li>
+<li>
+<p>
 <strong>flags</strong> (ips_option): rule option to test TCP control flags
 </p>
 </li>
@@ -36012,11 +36534,6 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
-<strong>reg_test</strong> (inspector): The regression test inspector (rti) is used when special packet handling is required for a reg test
-</p>
-</li>
-<li>
-<p>
 <strong>regex</strong> (ips_option): rule option for matching payload data with hyperscan regex
 </p>
 </li>
@@ -36052,12 +36569,27 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
+<strong>rna</strong> (inspector): Real-time network awareness and OS fingerprinting (experimental)
+</p>
+</li>
+<li>
+<p>
 <strong>rpc</strong> (ips_option): rule option to check SUNRPC CALL parameters
 </p>
 </li>
 <li>
 <p>
 <strong>rpc_decode</strong> (inspector): RPC inspector
+</p>
+</li>
+<li>
+<p>
+<strong>rt_packet</strong> (inspector): The regression test packet inspector is used when special packet handling is required for a reg test
+</p>
+</li>
+<li>
+<p>
+<strong>rt_service</strong> (inspector): The regression test service inspector is used by regression tests that require custom service inspector support.
 </p>
 </li>
 <li>
@@ -36632,6 +37164,11 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
+<strong>inspector::finalize_packet</strong>: handle the finalize packet event
+</p>
+</li>
+<li>
+<p>
 <strong>inspector::ftp_client</strong>: FTP inspector client module
 </p>
 </li>
@@ -36702,17 +37239,27 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
-<strong>inspector::reg_test</strong>: The regression test inspector (rti) is used when special packet handling is required for a reg test
-</p>
-</li>
-<li>
-<p>
 <strong>inspector::reputation</strong>: reputation inspection
 </p>
 </li>
 <li>
 <p>
+<strong>inspector::rna</strong>: Real-time network awareness and OS fingerprinting (experimental)
+</p>
+</li>
+<li>
+<p>
 <strong>inspector::rpc_decode</strong>: RPC inspector
+</p>
+</li>
+<li>
+<p>
+<strong>inspector::rt_packet</strong>: The regression test packet inspector is used when special packet handling is required for a reg test
+</p>
+</li>
+<li>
+<p>
+<strong>inspector::rt_service</strong>: The regression test service inspector is used by regression tests that require custom service inspector support.
 </p>
 </li>
 <li>
@@ -37423,632 +37970,6 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </ul></div>
 </div>
 <div class="sect2">
-<h3 id="_libdaq_and_daq_modules">LibDAQ and DAQ Modules</h3>
-<div class="paragraph"><p>Snort 2.9 introduces the DAQ, or Data Acquisition library, for packet I/O.  The
-DAQ replaces direct calls to libpcap functions with an abstraction layer that
-facilitates operation on a variety of hardware and software interfaces without
-requiring changes to Snort.  It is possible to select the DAQ type and mode
-when invoking Snort to perform pcap readback or inline operation, etc.  The
-DAQ library may be useful for other packet processing applications and the
-modular nature allows you to build new modules for other platforms.</p></div>
-<div class="paragraph"><p>This README summarizes the important things you need to know to use the DAQ.</p></div>
-<div class="sect3">
-<h4 id="_building_the_daq_library_and_daq_modules">Building the DAQ Library and DAQ Modules</h4>
-<div class="paragraph"><p>The DAQ is bundled with Snort but must be built first using these steps:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>./configure
-make
-sudo make install</code></pre>
-</div></div>
-<div class="paragraph"><p>This will build and install both static and dynamic DAQ modules.</p></div>
-<div class="paragraph"><p>Note that pcap &gt;= 1.5.0 is required.  pcap 1.8.1 is available at the time
-of this writing and is recommended.</p></div>
-<div class="paragraph"><p>Also, libdnet is required for IPQ and NFQ DAQs.  If you get a relocation error
-trying to build those DAQs, you may need to reinstall libdnet and configure it
-with something like this:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>./configure "CFLAGS=-fPIC -g -O2"</code></pre>
-</div></div>
-<div class="paragraph"><p>You may also experience problems trying to find the dynamic dnet library
-because it isn&#8217;t always named properly.  Try creating a link to the shared
-library (identified by its .x or .x.y etc. extension) with the same name but
-with ".so" inserted as follows:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>$ ln -s libdnet.1.1 libdnet.so.1.1
-$ ldconfig -Rv /usr/local/lib 2&gt;&amp;1 | grep dnet
-  Adding /usr/local/lib/libdnet.so.1.1</code></pre>
-</div></div>
-<div class="paragraph"><p>Alternatively, you should be able to fix both issues as follows:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>libtoolize --copy --force
-aclocal -I config
-autoheader
-autoconf
-automake --foreign</code></pre>
-</div></div>
-<div class="paragraph"><p>When the DAQ library is built, both static and dynamic flavors will be
-generated.  The various DAQ modules will be built if the requisite headers and
-libraries are available.  You can disable individual modules, etc. with options
-to configure.  For the complete list of configure options, run:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>./configure --help</code></pre>
-</div></div>
-</div>
-<div class="sect3">
-<h4 id="_pcap_module">PCAP Module</h4>
-<div class="paragraph"><p>pcap is the default DAQ.  If snort is run w/o any DAQ arguments, it will
-operate as it always did using this module.  These are equivalent:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>./snort -i &lt;device&gt;
-./snort -r &lt;file&gt;</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>./snort --daq pcap --daq-mode passive -i &lt;device&gt;
-./snort --daq pcap --daq-mode read-file -r &lt;file&gt;</code></pre>
-</div></div>
-<div class="paragraph"><p>You can specify the buffer size pcap uses with:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>./snort --daq pcap --daq-var buffer_size=&lt;#bytes&gt;</code></pre>
-</div></div>
-<div class="paragraph"><p>Immediate (less-buffered or unbuffered) delivery mode can be enabled with:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>./snort --daq pcap --daq-var immediate=1</code></pre>
-</div></div>
-<div class="paragraph"><p>This immediate delivery mode can be particularly useful on modern Linux systems
-with TPACKET_V3 support.  LibPCAP will attempt to use this mode when it is
-available, but it introduces some potentially undesirable behavior in exchange
-for better performance.  The most notable behavior change is that the packet
-timeout will never occur if packets are not being received, causing the poll()
-to potentially hang indefinitely.  Enabling immediate delivery mode will cause
-LibPCAP to use TPACKET_V2 instead of TPACKET_V3.</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-The pcap DAQ does not count filtered packets. *
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect3">
-<h4 id="_afpacket_module">AFPACKET Module</h4>
-<div class="paragraph"><p>afpacket functions similar to the pcap DAQ but with better performance:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>./snort --daq afpacket -i &lt;device&gt;
-        [--daq-var buffer_size_mb=&lt;#MB&gt;]
-        [--daq-var debug]</code></pre>
-</div></div>
-<div class="paragraph"><p>If you want to run afpacket in inline mode, you must craft the device string as
-one or more interface pairs, where each member of a pair is separated by a
-single colon and each pair is separated by a double colon like this:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>eth0:eth1</code></pre>
-</div></div>
-<div class="paragraph"><p>or this:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>eth0:eth1::eth2:eth3</code></pre>
-</div></div>
-<div class="paragraph"><p>By default, the afpacket DAQ allocates 128MB for packet memory.  You can change
-this with:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>--daq-var buffer_size_mb=&lt;#MB&gt;</code></pre>
-</div></div>
-<div class="paragraph"><p>Note that the total allocated is actually higher, here&#8217;s why.  Assuming the
-default packet memory with a snaplen of 1518, the numbers break down like this:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-The frame size is 1518 (snaplen) + the size of the AFPacket header (66
-  bytes) = 1584 bytes.
-</p>
-</li>
-<li>
-<p>
-The number of frames is 128 MB / 1518 = 84733.
-</p>
-</li>
-<li>
-<p>
-The smallest block size that can fit at least one frame is  4 KB = 4096 bytes
-  @ 2 frames per block.
-</p>
-</li>
-<li>
-<p>
-As a result, we need 84733 / 2 = 42366 blocks.
-</p>
-</li>
-<li>
-<p>
-Actual memory allocated is 42366 * 4 KB = 165.5 MB.
-</p>
-</li>
-</ul></div>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<img src="./images/icons/note.png" alt="Note" />
-</td>
-<td class="content">Linux kernel version 2.6.31 or higher is required for the AFPacket DAQ
-module due to its dependency on both TPACKET v2 and PACKET_TX_RING support.</td>
-</tr></table>
-</div>
-<div class="sect4">
-<h5 id="_fanout_kernel_loadbalancing">Fanout (Kernel Loadbalancing)</h5>
-<div class="paragraph"><p>More recent Linux kernel versions (3.1+) support various kernel-space
-loadbalancing methods within AFPacket configured using the PACKET_FANOUT ioctl.
-This allows you to have multiple AFPacket DAQ module instances processing
-packets from the same interfaces in parallel for significantly improved
-throughput.</p></div>
-<div class="paragraph"><p>To configure PACKET_FANOUT in the AFPacket DAQ module, two DAQ variables are
-used:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>--daq-var fanout_type=&lt;hash|lb|cpu|rollover|rnd|qm&gt;</code></pre>
-</div></div>
-<div class="paragraph"><p>and (optionally):</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>--daq-var fanout_flag=&lt;rollover|defrag&gt;</code></pre>
-</div></div>
-<div class="paragraph"><p>In general, you&#8217;re going to want to use the <em>hash</em> fanout type, but the others
-have been included for completeness.  The <em>defrag</em> fanout flag is probably a
-good idea to correctly handle loadbalancing of flows containing fragmented
-packets.</p></div>
-<div class="paragraph"><p>Please read the man page for <em>packet</em> or packet_mmap.txt in the Linux kernel
-source for more details on the different fanout types and modifier flags.</p></div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_nfq_module">NFQ Module</h4>
-<div class="paragraph"><p>NFQ is the new and improved way to process iptables packets:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>./snort --daq nfq \
-    [--daq-var device=&lt;dev&gt;] \
-    [--daq-var proto=&lt;proto&gt;] \
-    [--daq-var queue=&lt;qid&gt;]</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>&lt;dev&gt; ::= ip | eth0, etc; default is IP injection
-&lt;proto&gt; ::= ip4 | ip6 |; default is ip4
-&lt;qid&gt; ::= 0..65535; default is 0</code></pre>
-</div></div>
-<div class="paragraph"><p>This module can not run unprivileged so ./snort -u -g will produce a warning
-and won&#8217;t change user or group.</p></div>
-<div class="paragraph"><p>Notes on iptables are given below.</p></div>
-</div>
-<div class="sect3">
-<h4 id="_ipq_module">IPQ Module</h4>
-<div class="paragraph"><p>IPQ is the old way to process iptables packets.  It replaces the inline version
-available in pre-2.9 versions built with this:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>./configure --enable-inline</code></pre>
-</div></div>
-<div class="paragraph"><p>Note that layer 2 resets are not supported with the IPQ DAQ:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>config layer2resets[: &lt;mac&gt;]</code></pre>
-</div></div>
-<div class="paragraph"><p>Start the IPQ DAQ as follows:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>./snort --daq ipq \
-    [--daq-var device=&lt;dev&gt;] \
-    [--daq-var proto=&lt;proto&gt;] \</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>&lt;dev&gt; ::= ip | eth0, etc; default is IP injection
-&lt;proto&gt; ::= ip4 | ip6; default is ip4</code></pre>
-</div></div>
-<div class="paragraph"><p>This module can not run unprivileged so ./snort -u -g will produce a warning
-and won&#8217;t change user or group.</p></div>
-<div class="paragraph"><p>Notes on iptables are given below.</p></div>
-</div>
-<div class="sect3">
-<h4 id="_ipfw_module">IPFW Module</h4>
-<div class="paragraph"><p>IPFW is available for BSD systems.  It replaces the inline version available in
-pre-2.9 versions built with this:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>./configure --enable-ipfw</code></pre>
-</div></div>
-<div class="paragraph"><p>This command line argument is no longer supported:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>./snort -J &lt;port#&gt;</code></pre>
-</div></div>
-<div class="paragraph"><p>Instead, start Snort like this:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>./snort --daq ipfw [--daq-var port=&lt;port&gt;]</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>&lt;port&gt; ::= 1..65535; default is 8000</code></pre>
-</div></div>
-<div class="ulist"><ul>
-<li>
-<p>
-IPFW only supports ip4 traffic.
-</p>
-</li>
-</ul></div>
-<div class="paragraph"><p>Notes on FreeBSD and OpenBSD are given below.</p></div>
-</div>
-<div class="sect3">
-<h4 id="_dump_module">Dump Module</h4>
-<div class="paragraph"><p>The dump DAQ allows you to test the various inline mode features available in
-2.9 Snort like injection and normalization.</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>./snort -i &lt;device&gt; --daq dump
-./snort -r &lt;pcap&gt; --daq dump</code></pre>
-</div></div>
-<div class="paragraph"><p>By default a file named inline-out.pcap will be created containing all packets
-that passed through or were generated by snort.  You can optionally specify a
-different name.</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>./snort --daq dump --daq-var file=&lt;name&gt;</code></pre>
-</div></div>
-<div class="paragraph"><p>The dump DAQ also supports text output of verdicts rendered, injected packets,
-and other such items.  In order to enable text output, the <em>output</em> DAQ
-variable must be set to either <em>text</em> (text output only) or <em>both</em> (both text
-and PCAP output will be written). The default filename for the text output is
-inline-out.txt, but it can be overridden like so:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>./snort --daq dump --daq-var output=text --daq-var text-file=&lt;filename&gt;</code></pre>
-</div></div>
-<div class="paragraph"><p>dump uses the pcap daq for packet acquisition.  It therefore does not count
-filtered packets (a pcap limitation).</p></div>
-<div class="paragraph"><p>Note that the dump DAQ inline mode is not an actual inline mode.  Furthermore,
-you will probably want to have the pcap DAQ acquire in another mode like this:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>./snort -r &lt;pcap&gt; -Q --daq dump --daq-var load-mode=read-file
-./snort -i &lt;device&gt; -Q --daq dump --daq-var load-mode=passive</code></pre>
-</div></div>
-</div>
-<div class="sect3">
-<h4 id="_netmap_module">Netmap Module</h4>
-<div class="paragraph"><p>The netmap project is a framework for very high speed packet I/O.  It is
-available on both FreeBSD and Linux with varying amounts of preparatory
-setup required.  Specific notes for each follow.</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>./snort --daq netmap -i &lt;device&gt;
-        [--daq-var debug]</code></pre>
-</div></div>
-<div class="paragraph"><p>If you want to run netmap in inline mode, you must craft the device string as
-one or more interface pairs, where each member of a pair is separated by a
-single colon and each pair is separated by a double colon like this:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>em1:em2</code></pre>
-</div></div>
-<div class="paragraph"><p>or this:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>em1:em2::em3:em4</code></pre>
-</div></div>
-<div class="paragraph"><p>Inline operation performs Layer 2 forwarding with no MAC filtering, akin to the
-AFPacket module&#8217;s behavior.  All packets received on one interface in an inline
-pair will be forwarded out the other interface unless dropped by the reader and
-vice versa.</p></div>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<img src="./images/icons/important.png" alt="Important" />
-</td>
-<td class="content">The interfaces will need to be up and in promiscuous mode in order to
-function (<em>ifconfig em1 up promisc</em>).  The DAQ module does not currently do
-either of these configuration steps for itself.</td>
-</tr></table>
-</div>
-<div class="sect4">
-<h5 id="_freebsd">FreeBSD</h5>
-<div class="paragraph"><p>In FreeBSD 10.0, netmap has been integrated into the core OS.  In order to use
-it, you must recompile your kernel with the line</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>device netmap</code></pre>
-</div></div>
-<div class="paragraph"><p>added to your kernel config.</p></div>
-</div>
-<div class="sect4">
-<h5 id="_linux">Linux</h5>
-<div class="paragraph"><p>You will need to download the netmap source code from the project&#8217;s repository:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>https://code.google.com/p/netmap/</code></pre>
-</div></div>
-<div class="paragraph"><p>Follow the instructions on the project&#8217;s homepage for compiling and installing
-the code:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>http://info.iet.unipi.it/~luigi/netmap/</code></pre>
-</div></div>
-<div class="paragraph"><p>It will involve a standalone kernel module (netmap_lin) as well as patching and
-rebuilding the kernel module used to drive your network adapters. The following
-drivers are supported under Linux at the time of writing (June 2014):</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>e1000
-e1000e
-forcedeth
-igb
-ixgbe
-r8169
-virtio</code></pre>
-</div></div>
-<div class="paragraph"><p>TODO:
-- Support for attaching to only a single ring (queue) on a network adapter.
-- Support for VALE and netmap pipes.</p></div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_notes_on_iptables">Notes on iptables</h4>
-<div class="paragraph"><p>These notes are just a quick reminder that you need to set up iptables to use
-the IPQ or NFQ DAQs.  Doing so may cause problems with your network so tread
-carefully.  The examples below are intentionally incomplete so please read the
-related documentation first.</p></div>
-<div class="paragraph"><p>Here is a blog post by Marty for historical reference:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>http://archives.neohapsis.com/archives/snort/2000-11/0394.html</code></pre>
-</div></div>
-<div class="paragraph"><p>You can check this out for queue sizing tips:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>http://www.inliniac.net/blog/2008/01/23/improving-snort_inlines-nfq-performance.html</code></pre>
-</div></div>
-<div class="paragraph"><p>You might find useful IPQ info here:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>http://snort-inline.sourceforge.net/</code></pre>
-</div></div>
-<div class="paragraph"><p>Use this to examine your iptables:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>sudo /sbin/iptables -L</code></pre>
-</div></div>
-<div class="paragraph"><p>Use something like this to set up NFQ:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>sudo /sbin/iptables
-    -I &lt;table&gt; [&lt;protocol stuff&gt;] [&lt;state stuff&gt;]
-    -j NFQUEUE --queue-num 1</code></pre>
-</div></div>
-<div class="paragraph"><p>Use something like this to set up IPQ:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>sudo iptables -I FORWARD -j QUEUE</code></pre>
-</div></div>
-<div class="paragraph"><p>Use something like this to "disconnect" snort:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>sudo /sbin/iptables -D &lt;table&gt; &lt;rule pos&gt;</code></pre>
-</div></div>
-<div class="paragraph"><p>Be sure to start Snort prior to routing packets through NFQ with iptables.
-Such packets will be dropped until Snort is started.</p></div>
-<div class="paragraph"><p>The queue-num is the number you must give Snort.</p></div>
-<div class="paragraph"><p>If you are running on a system with both NFQ and IPQ support, you may
-experience some start-up failures of the sort:</p></div>
-<div class="paragraph"><p>The solution seems to be to remove both modules from the kernel like this:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>modprobe -r nfnetlink_queue
-modprobe -r ip_queue</code></pre>
-</div></div>
-<div class="paragraph"><p>and then install the module you want:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>modprobe ip_queue</code></pre>
-</div></div>
-<div class="paragraph"><p>or:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>modprobe nfnetlink_queue</code></pre>
-</div></div>
-<div class="paragraph"><p>These DAQs should be run with a snaplen of 65535 since the kernel defrags the
-packets before queuing.  Also, no need to configure frag3.</p></div>
-</div>
-<div class="sect3">
-<h4 id="_notes_on_freebsd_ipfw">Notes on FreeBSD::IPFW</h4>
-<div class="paragraph"><p>Check the online manual at:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>http://www.freebsd.org/doc/handbook/firewalls-ipfw.html.</code></pre>
-</div></div>
-<div class="paragraph"><p>Here is a brief example to divert icmp packets to Snort at port 8000:</p></div>
-<div class="paragraph"><p>To enable support for divert sockets, place the following lines in the
-kernel configuration file:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>options IPFIREWALL
-options IPDIVERT</code></pre>
-</div></div>
-<div class="paragraph"><p>(The file in this case was: /usr/src/sys/i386/conf/GENERIC; which is platform
-dependent.)</p></div>
-<div class="paragraph"><p>You may need to also set these to use the loadable kernel modules:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>/etc/rc.conf:
-firewall_enable="YES"</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>/boot/loader.conf:
-ipfw_load="YES"
-ipdivert_load="YES"</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>$ dmesg | grep ipfw
-ipfw2 (+ipv6) initialized, divert loadable, nat loadable, rule-based
-forwarding disabled, default to deny, logging disabled</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>$ kldload -v ipdivert
-Loaded ipdivert, id=4</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>$ ipfw add 75 divert 8000 icmp from any to any
-00075 divert 8000 icmp from any to any</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>$ ipfw list
-...
-00075 divert 8000 icmp from any to any
-00080 allow icmp from any to any
-...</code></pre>
-</div></div>
-<div class="ulist"><ul>
-<li>
-<p>
-Note that on FreeBSD, divert sockets don&#8217;t work with bridges!
-</p>
-</li>
-</ul></div>
-<div class="paragraph"><p>Please refer to the following articles for more information:</p></div>
-<div class="paragraph"><p><a href="https://forums.snort.org/forums/support/topics/snort-inline-on-freebsd-ipfw">https://forums.snort.org/forums/support/topics/snort-inline-on-freebsd-ipfw</a>
-<a href="http://freebsd.rogness.net/snort_inline/">http://freebsd.rogness.net/snort_inline/</a></p></div>
-<div class="paragraph"><p>NAT gateway can be used with divert sockets if the network environment is
-conducive to using NAT.</p></div>
-<div class="paragraph"><p>The steps to set up NAT with ipfw are as follows:</p></div>
-<div class="olist arabic"><ol class="arabic">
-<li>
-<p>
-Set up NAT with two interface em0 and em1 by adding the following to
-/etc/rc.conf.  Here em0 is connected to external network and em1 to host-only
-LAN.
-</p>
-<div class="literalblock">
-<div class="content">
-<pre><code>gateway_enable="YES"
-natd_program="/sbin/natd"   # path to natd
-natd_enable="YES"           # Enable natd (if firewall_enable == YES)
-natd_interface="em0"       # Public interface or IP Address
-natd_flags="-dynamic"       # Additional flags
-defaultrouter=""
-ifconfig_em0="DHCP"
-ifconfig_em1="inet 192.168.1.2 netmask 255.255.255.0"
-firewall_enable="YES"
-firewall_script="/etc/rc.firewall"
-firewall_type="simple"</code></pre>
-</div></div>
-</li>
-<li>
-<p>
-Add the following divert rules to divert packets to Snort above and
-below the NAT rule in the "Simple" section of /etc/rc.firewall.
-</p>
-<div class="literalblock">
-<div class="content">
-<pre><code>   ...
-   # Inspect outbound packets (those arriving on "inside" interface)
-   # before NAT translation.
-   ${fwcmd} add divert 8000 all from any to any in via ${iif}
-   case ${natd_enable} in
-   [Yy][Ee][Ss])
-       if [ -n "${natd_interface}" ]; then
-           ${fwcmd} add divert natd all from any to any via
-${natd_interface}
-       fi
-       ;;
-   esac
-   ...
-   # Inspect inbound packets (those arriving on "outside" interface)
-   # after NAT translation that aren't blocked for other reasons,
-   # after the TCP "established" rule.
-   ${fwcmd} add divert 8000 all from any to any in via ${oif}</code></pre>
-</div></div>
-</li>
-</ol></div>
-</div>
-<div class="sect3">
-<h4 id="_notes_on_openbsd_ipfw">Notes on OpenBSD::IPFW</h4>
-<div class="paragraph"><p>OpenBSD supports divert sockets as of 4.7, so we use the ipfw DAQ.</p></div>
-<div class="paragraph"><p>Here is one way to set things up:</p></div>
-<div class="olist arabic"><ol class="arabic">
-<li>
-<p>
-Configure the system to forward packets:
-</p>
-<div class="literalblock">
-<div class="content">
-<pre><code>$ sysctl net.inet.ip.forwarding=1
-$ sysctl net.inet6.ip6.forwarding=1</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>(You can also put that in /etc/sysctl.conf to enable on boot.)</code></pre>
-</div></div>
-</li>
-<li>
-<p>
-Set up interfaces
-</p>
-<div class="literalblock">
-<div class="content">
-<pre><code>$ dhclient vic1
-$ dhclient vic2</code></pre>
-</div></div>
-</li>
-<li>
-<p>
-Set up packet filter rules:
-</p>
-<div class="literalblock">
-<div class="content">
-<pre><code>$ echo "pass out on vic1 divert-packet port 9000 keep-state" &gt; rules.txt
-$ echo "pass out on vic2 divert-packet port 9000 keep-state" &gt;&gt; rules.txt</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>$ pfctl -v -f rules.txt</code></pre>
-</div></div>
-</li>
-<li>
-<p>
-Analyze packets diverted to port 9000:
-</p>
-<div class="literalblock">
-<div class="content">
-<pre><code>$ ./snort --daq ipfw --daq-var port=9000</code></pre>
-</div></div>
-<div class="ulist"><ul>
-<li>
-<p>
-Note that on OpenBSD, divert sockets don&#8217;t work with bridges!
-</p>
-</li>
-</ul></div>
-</li>
-</ol></div>
-</div>
-</div>
-<div class="sect2">
 <h3 id="_limitations">Limitations</h3>
 <div class="sect3">
 <h4 id="_reload_limitations">Reload limitations</h4>
@@ -38266,7 +38187,7 @@ Adding/removing stream_* inspectors if stream was already configured
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2019-05-22 13:47:52 EDT
+ 2019-06-19 10:25:02 EDT
 </div>
 </div>
 </body>
