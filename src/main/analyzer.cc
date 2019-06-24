@@ -478,7 +478,11 @@ void Analyzer::idle()
 void Analyzer::init_unprivileged()
 {
     // using dummy values until further integration
+#ifdef REG_TEST
     const unsigned max_contexts = 20;
+#else
+    const unsigned max_contexts = 1024;
+#endif
 
     switcher = new ContextSwitcher;
 
@@ -486,7 +490,6 @@ void Analyzer::init_unprivileged()
         switcher->push(new IpsContext);
 
     SnortConfig* sc = SnortConfig::get_conf();
-
     CodecManager::thread_init(sc);
 
     // this depends on instantiated daq capabilities
@@ -496,7 +499,6 @@ void Analyzer::init_unprivileged()
     InitTag();
     EventTrace_Init();
     detection_filter_init(sc->detection_filter_config);
-    DetectionEngine::thread_init();
 
     EventManager::open_outputs();
     IpsManager::setup_options();
@@ -605,6 +607,9 @@ void Analyzer::operator()(Swapper* ps, uint16_t run_num)
 
     if (SnortConfig::pcap_show())
         show_source();
+
+    // init here to pin separately from packet threads
+    DetectionEngine::thread_init();
 
     // Perform all packet thread initialization actions that need to be taken with escalated
     // privileges prior to starting the DAQ module.

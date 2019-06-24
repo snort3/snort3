@@ -513,9 +513,7 @@ static int fpAddPortGroupRule(
 {
     const MpseApi* search_api = nullptr;
     const MpseApi* offload_search_api = nullptr;
-    PatternMatchVector pmv;
     OptFpList* next = nullptr;
-    bool only_literal;
     bool exclude;
 
     // skip builtin rules, continue for text and so rules
@@ -528,9 +526,8 @@ static int fpAddPortGroupRule(
     search_api = fp->get_search_api();
     assert(search_api);
 
-    only_literal = !MpseManager::is_regex_capable(search_api);
-
-    pmv = get_fp_content(otn, next, srvc, only_literal, exclude);
+    bool only_literal = !MpseManager::is_regex_capable(search_api);
+    PatternMatchVector pmv = get_fp_content(otn, next, srvc, only_literal, exclude);
 
     if ( !pmv.empty() )
     {
@@ -565,8 +562,8 @@ static int fpAddPortGroupRule(
             pmv.pop_back();
 
             if ( !main_pmd->is_relative() && !main_pmd->is_negated() && main_pmd->fp_only >= 0 &&
-                    // FIXIT-L no_case consideration is mpse specific, delegate
-                    !main_pmd->offset && !main_pmd->depth && main_pmd->is_no_case() )
+                // FIXIT-L no_case consideration is mpse specific, delegate
+                !main_pmd->offset && !main_pmd->depth && main_pmd->is_no_case() )
             {
                 if ( !next || !next->ips_opt || !next->ips_opt->is_relative() )
                     main_pmd->fp_only |= (1 << Mpse::MPSE_TYPE_NORMAL);
@@ -592,7 +589,8 @@ static int fpAddPortGroupRule(
             {
                 if (!pg->mpsegrp[main_pmd->pm_type]->create_normal_mpse(sc, &agent))
                 {
-                    ParseError("Failed to create normal pattern matcher for %d", main_pmd->pm_type);
+                    ParseError("Failed to create normal pattern matcher for %d",
+                        main_pmd->pm_type);
                     return -1;
                 }
 
@@ -607,8 +605,8 @@ static int fpAddPortGroupRule(
                 pmv_ol.pop_back();
 
                 if ( !ol_pmd->is_relative() && !ol_pmd->is_negated() && ol_pmd->fp_only >= 0 &&
-                        // FIXIT-L no_case consideration is mpse specific, delegate
-                        !ol_pmd->offset && !ol_pmd->depth && ol_pmd->is_no_case() )
+                    // FIXIT-L no_case consideration is mpse specific, delegate
+                    !ol_pmd->offset && !ol_pmd->depth && ol_pmd->is_no_case() )
                 {
                     if ( !next_ol || !next_ol->ips_opt || !next_ol->ips_opt->is_relative() )
                         ol_pmd->fp_only |= (1 << Mpse::MPSE_TYPE_OFFLOAD);
@@ -626,7 +624,7 @@ static int fpAddPortGroupRule(
                     if (!pg->mpsegrp[main_pmd->pm_type]->create_offload_mpse(sc, &agent_offload))
                     {
                         ParseError("Failed to create offload pattern matcher for %d",
-                                main_pmd->pm_type);
+                            main_pmd->pm_type);
                         return -1;
                     }
 
@@ -647,7 +645,7 @@ static int fpAddPortGroupRule(
 
                 // Now add patterns
                 if (fpFinishPortGroupRule(sc, pg->mpsegrp[main_pmd->pm_type]->normal_mpse,
-                            otn, main_pmd, fp, Mpse::MPSE_TYPE_NORMAL, true) == 0)
+                        otn, main_pmd, fp, Mpse::MPSE_TYPE_NORMAL, true) == 0)
                 {
                     if (main_pmd->pattern_size > otn->longestPatternLen)
                         otn->longestPatternLen = main_pmd->pattern_size;
@@ -655,7 +653,7 @@ static int fpAddPortGroupRule(
                     // Add Alternative patterns
                     for (auto p : pmv)
                         fpAddAlternatePatterns(sc, pg->mpsegrp[main_pmd->pm_type]->normal_mpse,
-                                otn, p, fp, Mpse::MPSE_TYPE_NORMAL);
+                            otn, p, fp, Mpse::MPSE_TYPE_NORMAL);
                 }
             }
 
@@ -667,7 +665,7 @@ static int fpAddPortGroupRule(
 
                 // Now add patterns
                 if (fpFinishPortGroupRule(sc, pg->mpsegrp[main_pmd->pm_type]->offload_mpse,
-                            otn, ol_pmd, fp, Mpse::MPSE_TYPE_OFFLOAD, true) == 0)
+                        otn, ol_pmd, fp, Mpse::MPSE_TYPE_OFFLOAD, true) == 0)
                 {
                     if (ol_pmd->pattern_size > otn->longestPatternLen)
                         otn->longestPatternLen = ol_pmd->pattern_size;
@@ -675,18 +673,20 @@ static int fpAddPortGroupRule(
                     // Add Alternative patterns
                     for (auto p : pmv_ol)
                         fpAddAlternatePatterns(sc, pg->mpsegrp[main_pmd->pm_type]->offload_mpse,
-                                otn, p, fp, Mpse::MPSE_TYPE_OFFLOAD);
+                            otn, p, fp, Mpse::MPSE_TYPE_OFFLOAD);
                 }
             }
 
-            if (add_rule)
+            if ( add_rule )
             {
-                if (add_nfp_rule)
-                    pg->add_nfp_rule(otn);
-                else
+                if ( !add_nfp_rule )
                     pg->add_rule();
+                else
+                {
+                    pg->add_nfp_rule(otn);
+                    print_nfp_info(s_group, otn);
+                }
             }
-
             return 0;
         }
     }
@@ -1775,8 +1775,10 @@ static void print_nfp_info(const char* group, OptTreeNode* otn)
     if ( otn->warned_fp() )
         return;
 
-    ParseWarning(WARN_RULES, "%s rule %u:%u:%u has no fast pattern",
-        group, otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev);
+    const char* type = otn->longestPatternLen ? "negated" : "no";
+
+    ParseWarning(WARN_RULES, "%s rule %u:%u:%u has %s fast pattern",
+        group, otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev, type);
 
     otn->set_warned_fp();
 }

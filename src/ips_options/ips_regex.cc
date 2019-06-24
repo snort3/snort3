@@ -176,8 +176,8 @@ IpsOption::EvalStatus RegexOption::eval(Cursor& c, Packet*)
     if ( pos > c.size() )
         return NO_MATCH;
 
-    hs_scratch_t *ss =
-        (hs_scratch_t *) SnortConfig::get_conf()->state[get_instance_id()][scratch_index];
+    hs_scratch_t* ss =
+        (hs_scratch_t*)SnortConfig::get_conf()->state[get_instance_id()][scratch_index];
 
     s_to = 0;
 

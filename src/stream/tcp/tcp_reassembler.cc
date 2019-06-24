@@ -583,7 +583,11 @@ int TcpReassembler::_flush_to_seq(
             tcpStats.rebuilt_packets++;
             tcpStats.rebuilt_bytes += flushed_bytes;
 
+#ifdef DEEP_PROFILING
             NoProfile exclude(s5TcpFlushPerfStats);
+#else
+            NoProfile exclude(s5TcpPerfStats);
+#endif
 
             if ( !Analyzer::get_local_analyzer()->inspect_rebuilt(pdu) )
                 last_pdu = pdu;
@@ -672,7 +676,13 @@ int TcpReassembler::do_zero_byte_flush(TcpReassemblerState& trs, Packet* p, uint
         trs.flush_count++;
 
         show_rebuilt_packet(trs, pdu);
-        NoProfile profile_exclude(s5TcpFlushPerfStats);
+
+#ifdef DEEP_PROFILING
+        NoProfile exclude(s5TcpFlushPerfStats);
+#else
+        NoProfile exclude(s5TcpPerfStats);
+#endif
+
         Analyzer::get_local_analyzer()->inspect_rebuilt(pdu);
 
         if ( trs.tracker->splitter )

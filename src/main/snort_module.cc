@@ -279,7 +279,9 @@ static const Parameter s_params[] =
     { "-y", Parameter::PT_IMPLIED, nullptr, nullptr,
       "include year in timestamp in the alert and log files" },
 
-    { "-z", Parameter::PT_INT, "0:max32", "1",
+    // do not provide parameter default as it will cause the value to change
+    // after allocations in SnortConfig if snort = { } is set in Lua
+    { "-z", Parameter::PT_INT, "0:max32", nullptr,
       "<count> maximum number of packet threads (same as --max-packet-threads); "
       "0 gets the number of CPU cores reported by the system; default is 1" },
 
@@ -407,7 +409,7 @@ static const Parameter s_params[] =
     { "--markup", Parameter::PT_IMPLIED, nullptr, nullptr,
       "output help in asciidoc compatible format" },
 
-    { "--max-packet-threads", Parameter::PT_INT, "0:max32", "1",
+    { "--max-packet-threads", Parameter::PT_INT, "0:max32", nullptr,
       "<count> configure maximum number of packet threads (same as -z)" },
 
     { "--mem-check", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -595,6 +597,7 @@ public:
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
     const PegInfo* get_pegs() const override
     { return proc_names; }
@@ -1037,6 +1040,14 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if (v.is("--trace"))
         Module::enable_trace();
+
+    return true;
+}
+
+bool SnortModule::end(const char*, int, SnortConfig* sc)
+{
+    if ( sc->offload_threads and ThreadConfig::get_instance_max() != 1 )
+        ParseError("You can not enable experimental offload with more than one packet thread.");
 
     return true;
 }

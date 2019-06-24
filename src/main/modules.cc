@@ -110,7 +110,9 @@ class DetectionModule : public Module
 public:
     DetectionModule() :
         Module("detection", detection_help, detection_params, false, &TRACE_NAME(detection)) {}
+
     bool set(const char*, Value&, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
     const PegInfo* get_pegs() const override
     { return pc_names; }
@@ -121,6 +123,14 @@ public:
     Usage get_usage() const override
     { return GLOBAL; }
 };
+
+bool DetectionModule::end(const char*, int, SnortConfig* sc)
+{
+    if ( sc->offload_threads and ThreadConfig::get_instance_max() != 1 )
+        ParseError("You can not enable experimental offload with more than one packet thread.");
+
+    return true;
+}
 
 bool DetectionModule::set(const char* fqn, Value& v, SnortConfig* sc)
 {

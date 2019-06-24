@@ -82,7 +82,7 @@ const MpseApi* MpseManager::get_search_api(const char* name)
 {
     const MpseApi* api = ::get_api(name);
 
-    if ( api )
+    if ( api and api->init )
         api->init();
 
     return api;
@@ -134,6 +134,7 @@ void MpseManager::delete_search_engine(Mpse* eng)
 void MpseManager::print_mpse_summary(const MpseApi* api)
 {
     assert(api);
+    if ( api->print )
     api->print();
 }
 

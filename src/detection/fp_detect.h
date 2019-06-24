@@ -99,7 +99,7 @@ void fp_clear_context(snort::IpsContext&);
 
 void fp_full(snort::Packet*);
 void fp_partial(snort::Packet*);
-void fp_complete(snort::Packet*);
+void fp_complete(snort::Packet*, bool search = false);
 
 #endif
 

@@ -93,6 +93,8 @@ THREAD_LOCAL ProfileStats ruleRTNEvalPerfStats;
 THREAD_LOCAL ProfileStats ruleOTNEvalPerfStats;
 THREAD_LOCAL ProfileStats ruleNFPEvalPerfStats;
 
+static void fp_immediate(Packet*);
+
 // Initialize the OtnxMatchData structure.  We do this for
 // every packet so this only sets the necessary counters to
 // zero which saves us time.
@@ -873,8 +875,8 @@ static inline int batch_search(
     assert(so->get_normal_mpse()->get_pattern_count() > 0);
     cnt++;
 
-    //FIXIT-P Batch outer UDP payload searches for teredo set and the outer header
-    //during any signature evaluation
+    // FIXIT-P Batch outer UDP payload searches for teredo set and the outer header
+    // during any signature evaluation
     if ( omd->p->ptrs.udph && (omd->p->proto_bits & (PROTO_BIT__TEREDO | PROTO_BIT__GTP)) )
     {
         int start_state = 0;
@@ -985,6 +987,126 @@ static int fp_search(
     return 0;
 }
 
+static inline void eval_fp(
+    PortGroup* port_group, Packet* p, OtnxMatchData* omd, char ip_rule,
+    int check_ports, int type)
+{
+    const uint8_t* tmp_payload = nullptr;
+    uint16_t tmp_dsize = 0;
+
+    if ( !ip_rule )
+        p->packet_flags &= ~PKT_IP_RULE;
+
+    else
+    {
+        int8_t curr_ip_layer = 0;
+
+        tmp_payload = p->data;  // FIXIT-H restore even with offload
+        tmp_dsize = p->dsize;
+
+        if (layer::set_outer_ip_api(p, p->ptrs.ip_api, curr_ip_layer))
+        {
+            p->data = p->ptrs.ip_api.ip_data();
+            p->dsize = p->ptrs.ip_api.pay_len();
+            p->packet_flags |= PKT_IP_RULE;
+        }
+    }
+
+    if ( DetectionEngine::content_enabled(p) )
+    {
+        FastPatternConfig* fp = SnortConfig::get_conf()->fast_pattern_config;
+
+        if ( fp->get_stream_insert() || !(p->packet_flags & PKT_STREAM_INSERT) )
+            if ( fp_search(port_group, p, check_ports, type, omd) )
+                return;
+    }
+    if ( ip_rule )
+    {
+        p->data = tmp_payload;
+        p->dsize = tmp_dsize;
+    }
+}
+
+static inline void eval_nfp(
+    PortGroup* port_group, Packet* p, OtnxMatchData* omd, char ip_rule)
+{
+    bool repeat = false;
+    int8_t curr_ip_layer = 0;
+
+    const uint8_t* tmp_payload = nullptr;
+    uint16_t tmp_dsize = 0;
+
+    FastPatternConfig* fp = SnortConfig::get_conf()->fast_pattern_config;
+
+    if (ip_rule)
+    {
+        tmp_payload = p->data;
+        tmp_dsize = p->dsize;
+
+        if (layer::set_outer_ip_api(p, p->ptrs.ip_api, curr_ip_layer))
+        {
+            p->data = p->ptrs.ip_api.ip_data();
+            p->dsize = p->ptrs.ip_api.pay_len();
+            p->packet_flags |= PKT_IP_RULE;
+            repeat = true;
+        }
+    }
+    do
+    {
+        if (port_group->nfp_rule_count)
+        {
+            // walk and test the nfp OTNs
+            if ( fp->get_debug_print_nc_rules() )
+                LogMessage("NC-testing %u rules\n", port_group->nfp_rule_count);
+
+            detection_option_eval_data_t eval_data;
+
+            eval_data.pomd = omd;
+            eval_data.p = p;
+            eval_data.pmd = nullptr;
+            eval_data.flowbit_failed = 0;
+            eval_data.flowbit_noalert = 0;
+
+            int rval = 0;
+            {
+                DeepProfile rule_profile(rulePerfStats);
+                DeepProfile rule_nfp_eval_profile(ruleNFPEvalPerfStats);
+                trace_log(detection, TRACE_RULE_EVAL, "Testing non-content rules\n");
+                rval = detection_option_tree_evaluate(
+                    (detection_option_tree_root_t*)port_group->nfp_tree, &eval_data);
+            }
+
+            if (rval)
+                pmqs.qualified_events++;
+            else
+                pmqs.non_qualified_events++;
+
+            pc.hard_evals++;
+        }
+
+        // FIXIT-L should really be logging any events based on curr_ip_layer
+        if (ip_rule)
+        {
+            /* Evaluate again with the next IP layer */
+            if (layer::set_outer_ip_api(p, p->ptrs.ip_api, curr_ip_layer))
+            {
+                p->data = p->ptrs.ip_api.ip_data();
+                p->dsize = p->ptrs.ip_api.pay_len();
+                p->packet_flags |= PKT_IP_RULE_2ND | PKT_IP_RULE;
+            }
+            else
+            {
+                /* Set the data & dsize back to original values. */
+                p->data = tmp_payload;
+                p->dsize = tmp_dsize;
+                p->packet_flags &= ~(PKT_IP_RULE| PKT_IP_RULE_2ND);
+                repeat = false;
+            }
+        }
+    }
+    while (repeat);
+}
+
 //  This function does a set-wise match on content, and walks an otn list
 //  for non-content.  The otn list search will eventually be redone for
 //  for performance purposes.
@@ -995,100 +1117,13 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
     if ( !p->is_detection_enabled(p->packet_flags & PKT_FROM_CLIENT) )
         return 0;
 
-    const uint8_t* tmp_payload = nullptr;
-    int8_t curr_ip_layer = 0;
-    bool repeat = false;
-    uint16_t tmp_dsize = 0;
-    FastPatternConfig* fp = SnortConfig::get_conf()->fast_pattern_config;
-
     print_pkt_info(p);
 
     if ( task & FPTask::FP )
-    {
-        if (ip_rule)
-        {
-            tmp_payload = p->data;
-            tmp_dsize = p->dsize;
-
-            if (layer::set_outer_ip_api(p, p->ptrs.ip_api, curr_ip_layer))
-            {
-                p->data = p->ptrs.ip_api.ip_data();
-                p->dsize = p->ptrs.ip_api.pay_len();
-                p->packet_flags |= PKT_IP_RULE;
-                repeat = true;
-            }
-        }
-        else
-        {
-            p->packet_flags &= ~PKT_IP_RULE;
-        }
-
-        if ( DetectionEngine::content_enabled(p) )
-        {
-            if ( fp->get_stream_insert() || !(p->packet_flags & PKT_STREAM_INSERT) )
-                if ( fp_search(port_group, p, check_ports, type, omd) )
-                    return 0;
-        }
-    }
+        eval_fp(port_group, p, omd, ip_rule, check_ports, type);
 
     if ( task & FPTask::NON_FP )
-    {
-        do
-        {
-            if (port_group->nfp_rule_count)
-            {
-                // walk and test the nfp OTNs
-                if ( fp->get_debug_print_nc_rules() )
-                    LogMessage("NC-testing %u rules\n", port_group->nfp_rule_count);
-
-                detection_option_eval_data_t eval_data;
-
-                eval_data.pomd = omd;
-                eval_data.p = p;
-                eval_data.pmd = nullptr;
-                eval_data.flowbit_failed = 0;
-                eval_data.flowbit_noalert = 0;
-
-                int rval = 0;
-                {
-                    DeepProfile rule_profile(rulePerfStats);
-                    DeepProfile rule_nfp_eval_profile(ruleNFPEvalPerfStats);
-                    trace_log(detection, TRACE_RULE_EVAL, "Testing non-content rules\n");
-                    rval = detection_option_tree_evaluate(
-                        (detection_option_tree_root_t*)port_group->nfp_tree, &eval_data);
-                }
-
-                if (rval)
-                    pmqs.qualified_events++;
-                else
-                    pmqs.non_qualified_events++;
-
-                pc.hard_evals++;
-            }
-
-            // FIXIT-L need to eval all IP layers, etc.
-            // FIXIT-L why run only nfp rules?
-            if (ip_rule)
-            {
-                /* Evaluate again with the next IP layer */
-                if (layer::set_outer_ip_api(p, p->ptrs.ip_api, curr_ip_layer))
-                {
-                    p->data = p->ptrs.ip_api.ip_data();
-                    p->dsize = p->ptrs.ip_api.pay_len();
-                    p->packet_flags |= PKT_IP_RULE_2ND | PKT_IP_RULE;
-                }
-                else
-                {
-                    /* Set the data & dsize back to original values. */
-                    p->data = tmp_payload;
-                    p->dsize = tmp_dsize;
-                    p->packet_flags &= ~(PKT_IP_RULE| PKT_IP_RULE_2ND);
-                    repeat = false;
-                }
-            }
-        }
-        while (repeat);
-    }
+        eval_nfp(port_group, p, omd, ip_rule);
 
     return 0;
 }
@@ -1220,6 +1255,10 @@ static void fpEvalPacketUdp(Packet* p, OtnxMatchData* omd, FPTask task)
 
     fpEvalHeaderUdp(p, omd, task);
 
+    // FIXIT-P Batch outer UDP payload searches for teredo set and the outer header
+    // during any signature evaluation
+    fp_immediate(p);
+
     p->ptrs.sp = tmp_sp;
     p->ptrs.dp = tmp_dp;
     p->ptrs.udph = tmp_udph;
@@ -1297,24 +1336,6 @@ static void fpEvalPacket(Packet* p, FPTask task)
     }
 }
 
-void fp_full(Packet* p)
-{
-    IpsContext* c = p->context;
-    MpseStash* stash = c->stash;
-    stash->enable_process();
-    stash->init();
-    init_match_info(c->otnx);
-
-    c->searches.mf = rule_tree_queue;
-    c->searches.context = c;
-    fpEvalPacket(p, FPTask::BOTH);
-
-    if ( c->searches.search_sync() )
-        stash->process(rule_tree_match, c);
-
-    fpFinalSelectEvent(c->otnx, p);
-}
-
 void fp_partial(Packet* p)
 {
     IpsContext* c = p->context;
@@ -1325,16 +1346,38 @@ void fp_partial(Packet* p)
     init_match_info(c->otnx);
     c->searches.mf = rule_tree_queue;
     c->searches.context = c;
+    assert(!c->searches.items.size());
     fpEvalPacket(p, FPTask::FP);
 }
 
-void fp_complete(Packet* p)
+void fp_complete(Packet* p, bool search)
 {
     IpsContext* c = p->context;
     MpseStash* stash = c->stash;
     stash->enable_process();
+
+    if ( search )
+        c->searches.search_sync();
+
     stash->process(rule_tree_match, c);
     fpEvalPacket(p, FPTask::NON_FP);
     fpFinalSelectEvent(c->otnx, p);
+    c->searches.items.clear();
+}
+
+void fp_full(Packet* p)
+{
+    fp_partial(p);
+    fp_complete(p, true);
+}
+
+static void fp_immediate(Packet* p)
+{
+    IpsContext* c = p->context;
+    MpseStash* stash = c->stash;
+    stash->enable_process();
+    c->searches.search_sync();
+    stash->process(rule_tree_match, c);
+    c->searches.items.clear();
 }
 

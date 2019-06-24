@@ -108,6 +108,7 @@ private:
     static struct SF_EVENTQ* get_event_queue();
     static bool do_offload(snort::Packet*);
     static void offload_thread(IpsContext*);
+    static void complete(snort::Packet*);
     static void resume(snort::Packet*);
     static void resume_ready_suspends(IpsContextChain&);
 

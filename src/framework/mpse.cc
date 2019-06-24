@@ -90,17 +90,12 @@ void Mpse::_search(MpseBatch& batch, MpseType mpse_type)
         for ( auto& so : item.second.so )
         {
             start_state = 0;
-            switch (mpse_type)
-            {
-                case MPSE_TYPE_NORMAL:
-                    item.second.matches += so->get_normal_mpse()->search(item.first.buf,
-                            item.first.len, batch.mf, batch.context, &start_state);
-                    break;
-                case MPSE_TYPE_OFFLOAD:
-                    item.second.matches += so->get_offload_mpse()->search(item.first.buf,
-                            item.first.len, batch.mf, batch.context, &start_state);
-                    break;
-            }
+
+            Mpse* mpse = (mpse_type == MPSE_TYPE_OFFLOAD) ?
+                so->get_offload_mpse() : so->get_normal_mpse();
+
+            item.second.matches += mpse->search(
+                item.first.buf, item.first.len, batch.mf, batch.context, &start_state);
         }
         item.second.done = true;
     }
@@ -108,21 +103,23 @@ void Mpse::_search(MpseBatch& batch, MpseType mpse_type)
 
 Mpse::MpseRespType Mpse::poll_responses(MpseBatch*& batch, MpseType mpse_type)
 {
+    FastPatternConfig* fp = SnortConfig::get_conf()->fast_pattern_config;
+    assert(fp);
+
     const MpseApi* search_api = nullptr;
 
-    if ( SnortConfig::get_conf()->fast_pattern_config )
+    switch (mpse_type)
     {
-        switch (mpse_type)
-        {
-            case MPSE_TYPE_NORMAL:
-                search_api = SnortConfig::get_conf()->fast_pattern_config->get_search_api();
-                break;
-            case MPSE_TYPE_OFFLOAD:
-                search_api = SnortConfig::get_conf()->fast_pattern_config->get_offload_search_api();
-                if (!search_api)
-                    search_api = SnortConfig::get_conf()->fast_pattern_config->get_search_api();
-                break;
-        }
+    case MPSE_TYPE_NORMAL:
+        search_api = fp->get_search_api();
+        break;
+
+    case MPSE_TYPE_OFFLOAD:
+        search_api = fp->get_offload_search_api();
+
+        if (!search_api)
+            search_api = fp->get_search_api();
+        break;
     }
 
     if (search_api)

@@ -38,6 +38,8 @@
 #include "latency/packet_latency.h"
 #include "latency/rule_latency.h"
 #include "main/snort_config.h"
+#include "main/thread.h"
+#include "main/thread_config.h"
 #include "managers/module_manager.h"
 #include "utils/stats.h"
 
@@ -51,6 +53,12 @@ struct RegexRequest
     std::thread* thread;
     std::mutex mutex;
     std::condition_variable cond;
+
+#ifdef REG_TEST
+    // used to make main thread wait for results to get predictable behavior
+    std::mutex sync_mutex;
+    std::condition_variable sync_cond;
+#endif
 
     std::atomic<bool> offload { false };
 
@@ -170,8 +178,10 @@ bool MpseRegexOffload::get(snort::Packet*& p)
 
 ThreadRegexOffload::ThreadRegexOffload(unsigned max) : RegexOffload(max)
 {
+    unsigned i = ThreadConfig::get_instance_max();
+
     for ( auto* req : idle )
-        req->thread = new std::thread(worker, req, snort::SnortConfig::get_conf());
+        req->thread = new std::thread(worker, req, snort::SnortConfig::get_conf(), i++);
 }
 
 ThreadRegexOffload::~ThreadRegexOffload()
@@ -207,11 +217,21 @@ void ThreadRegexOffload::put(snort::Packet* p)
     busy.emplace_back(req);
     p->context->regex_req_it = std::prev(busy.end());
 
-    std::unique_lock<std::mutex> lock(req->mutex);
-    req->packet = p;
+    {
+        std::unique_lock<std::mutex> lock(req->mutex);
+        req->packet = p;
 
-    req->offload = true;
-    req->cond.notify_one();
+        req->offload = true;
+        req->cond.notify_one();
+    }
+
+#ifdef REG_TEST
+    {
+        std::unique_lock<std::mutex> sync_lock(req->sync_mutex);
+        while ( req->offload and req->sync_cond.wait_for(sync_lock, std::chrono::seconds(1))
+            == std::cv_status::timeout );
+    }
+#endif
 }
 
 bool ThreadRegexOffload::get(snort::Packet*& p)
@@ -239,8 +259,10 @@ bool ThreadRegexOffload::get(snort::Packet*& p)
     return false;
 }
 
-void ThreadRegexOffload::worker(RegexRequest* req, snort::SnortConfig* initial_config)
+void ThreadRegexOffload::worker(
+    RegexRequest* req, snort::SnortConfig* initial_config, unsigned id)
 {
+    set_instance_id(id);
     snort::SnortConfig::set_conf(initial_config);
 
     while ( true )
@@ -248,11 +270,6 @@ void ThreadRegexOffload::worker(RegexRequest* req, snort::SnortConfig* initial_c
         {
             std::unique_lock<std::mutex> lock(req->mutex);
             req->cond.wait_for(lock, std::chrono::seconds(1));
-
-            // setting conf is somewhat expensive, checking the conf is not
-            // this occurs here to take advantage if idling
-            if ( req->packet and req->packet->context->conf != snort::SnortConfig::get_conf() )
-                snort::SnortConfig::set_conf(req->packet->context->conf);
 
             if ( !req->go )
                 break;
@@ -265,10 +282,12 @@ void ThreadRegexOffload::worker(RegexRequest* req, snort::SnortConfig* initial_c
         assert(req->packet->is_offloaded());
         assert(req->packet->context->searches.items.size() > 0);
 
+        snort::SnortConfig::set_conf(req->packet->context->conf);
         snort::IpsContext* c = req->packet->context;
         snort::Mpse::MpseRespType resp_ret;
 
         c->searches.offload_search();
+
         do
         {
             resp_ret = c->searches.receive_offload_responses();
@@ -287,6 +306,13 @@ void ThreadRegexOffload::worker(RegexRequest* req, snort::SnortConfig* initial_c
 
         c->searches.items.clear();
         req->offload = false;
+
+#ifdef REG_TEST
+        {
+            std::unique_lock<std::mutex> lock(req->sync_mutex);
+            req->sync_cond.notify_one();
+        }
+#endif
     }
     snort::ModuleManager::accumulate_offload("search_engine");
     snort::ModuleManager::accumulate_offload("detection");

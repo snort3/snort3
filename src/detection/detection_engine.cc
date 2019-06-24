@@ -369,52 +369,31 @@ bool DetectionEngine::do_offload(Packet* p)
 
     p->context->conf = SnortConfig::get_conf();
 
-    // Build the searches list in the packet context
-    fp_partial(p);
+    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " de::offload %" PRIu64
+        " (r=%d)\n", p->context->packet_number, p->context->context_num,
+        offloader->count());
 
-    if (p->context->searches.items.size() > 0)
-    {
-        trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " de::offload %" PRIu64
-                " (r=%d)\n", p->context->packet_number, p->context->context_num,
-                offloader->count());
+    sw->suspend();
+    p->set_offloaded();
 
-        sw->suspend();
-        p->set_offloaded();
+    offloader->put(p);
+    pc.offloads++;
 
-        offloader->put(p);
-        pc.offloads++;
-
-        return true;
-    }
-    else
-    {
-        bool depends_on_suspended = p->flow ? p->flow->context_chain.front() :
-            sw->non_flow_chain.front();
-
-        if (!depends_on_suspended)
-        {
-            fp_complete(p);
-            return false;
-        }
-        else
-        {
-            sw->suspend();
-            pc.offload_suspends++;
-            return true;
-        }
-    }
+#ifdef REG_TEST
+    onload();
+    return false;
+#else
+    return true;
+#endif
 }
 
 bool DetectionEngine::offload(Packet* p)
 {
     ContextSwitcher* sw = Analyzer::get_switcher();
+    fp_partial(p);
 
-    bool depends_on_suspended = 
-        p->flow ? p->flow->context_chain.front() : sw->non_flow_chain.front();
-
-    bool should_offload = p->dsize >= SnortConfig::get_conf()->offload_limit;
-
-    if ( should_offload )
+    if ( p->dsize >= SnortConfig::get_conf()->offload_limit and
+        p->context->searches.items.size() > 0 )
     {
         if ( offloader->available() )
             return do_offload(p);
@@ -422,9 +401,8 @@ bool DetectionEngine::offload(Packet* p)
         pc.offload_busy++;
     }
 
-    if ( depends_on_suspended )
+    if ( p->flow ? p->flow->context_chain.front() : sw->non_flow_chain.front() )
     {
-        fp_partial(p);
         p->context->searches.search_sync();
         sw->suspend();
         pc.offload_suspends++;
@@ -432,7 +410,7 @@ bool DetectionEngine::offload(Packet* p)
     }
 
     assert(p->flow ? !p->flow->is_suspended() : true);
-    fp_full(p);
+    fp_complete(p, true);
     return false;
 }
 
@@ -489,10 +467,16 @@ void DetectionEngine::onload()
 void DetectionEngine::resume_ready_suspends(IpsContextChain& chain)
 {
     while ( chain.front() and !chain.front()->packet->is_offloaded() )
+    {
+#ifdef REG_TEST
+        complete(chain.front()->packet);
+#else
         resume(chain.front()->packet);
+#endif
+    }
 }
 
-void DetectionEngine::resume(Packet* p)
+void DetectionEngine::complete(Packet* p)
 {
     trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " de::resume %" PRIu64 " (r=%d)\n",
         p->context->packet_number, p->context->context_num, offloader->count());
@@ -501,6 +485,12 @@ void DetectionEngine::resume(Packet* p)
     sw->resume(p->context);
     
     fp_complete(p);
+}
+
+void DetectionEngine::resume(Packet* p)
+{
+    complete(p);
+
     finish_inspect_with_latency(p); // FIXIT-L should latency be evaluated here?
     finish_inspect(p, true);
     finish_packet(p);

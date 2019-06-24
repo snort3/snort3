@@ -73,7 +73,8 @@ SThreadType get_thread_type()
 const char* get_instance_file(std::string& file, const char* name)
 {
     bool sep = false;
-    file = !snort::SnortConfig::get_conf()->log_dir.empty() ? snort::SnortConfig::get_conf()->log_dir : "./";
+    file = !snort::SnortConfig::get_conf()->log_dir.empty() ?
+        snort::SnortConfig::get_conf()->log_dir : "./";
 
     if ( file.back() != '/' )
         file += '/';
@@ -87,7 +88,8 @@ const char* get_instance_file(std::string& file, const char* name)
     if ( (ThreadConfig::get_instance_max() > 1) || snort::SnortConfig::get_conf()->id_zero )
     {
         char id[8];
-        snprintf(id, sizeof(id), "%u", get_instance_id() + snort::SnortConfig::get_conf()->id_offset);
+        snprintf(id, sizeof(id), "%u",
+            get_instance_id() + snort::SnortConfig::get_conf()->id_offset);
         file += id;
         sep = true;
     }

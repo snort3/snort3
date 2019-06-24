@@ -95,19 +95,13 @@ void StoreSnortInfoStrings()
  ****************************************************************************/
 int DisplayBanner()
 {
-    const char* info = getenv("HOSTTYPE");
-
-    if ( !info )
-        info="from 2.9.11";  // last sync with head
-
     const char* ljv = LUAJIT_VERSION;
     while ( *ljv && !isdigit(*ljv) )
         ++ljv;
 
     LogMessage("\n");
     LogMessage("   ,,_     -*> Snort++ <*-\n");
-    LogMessage("  o\"  )~   Version %s (Build %s) %s\n",
-        VERSION, BUILD, info);
+    LogMessage("  o\"  )~   Version %s (Build %s)\n", VERSION, BUILD);
     LogMessage("   ''''    By Martin Roesch & The Snort Team\n");
     LogMessage("           http://snort.org/contact#team\n");
     LogMessage("           Copyright (C) 2014-2019 Cisco and/or its affiliates."

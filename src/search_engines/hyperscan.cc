@@ -280,7 +280,8 @@ int HyperscanMpse::_search(
     match_cb = mf;
     match_ctx = pv;
 
-    hs_scratch_t *ss = (hs_scratch_t *) SnortConfig::get_conf()->state[get_instance_id()][scratch_index];
+    hs_scratch_t* ss =
+        (hs_scratch_t*)SnortConfig::get_conf()->state[get_instance_id()][scratch_index];
 
     // scratch is null for the degenerate case w/o patterns
     assert(!hs_db or ss);

@@ -194,8 +194,8 @@ void SnortConfig::init(const SnortConfig* const other_conf, ProtocolReference* p
         ActionManager::new_config(this);
         InspectorManager::new_config(this);
 
-        num_slots = ThreadConfig::get_instance_max();
-        state = new std::vector<void*>[num_slots];
+        num_slots = 0;
+        state = nullptr;
 
         profiler = new ProfilerConfig;
         latency = new LatencyConfig();
@@ -250,7 +250,7 @@ SnortConfig::~SnortConfig()
     FreeReferences(references);
 
     // Only call scratch cleanup if we actually called scratch setup
-    if ( state[0].size() > 0 )
+    if ( state and state[0].size() > 0 )
     {
         for ( unsigned i = scratch_handlers.size(); i > 0; i-- )
         {
@@ -489,8 +489,8 @@ void SnortConfig::merge(SnortConfig* cmd_line)
     // FIXIT-M should cmd_line use the same var list / table?
     var_list = nullptr;
 
-    delete[] state;
-    num_slots = ThreadConfig::get_instance_max();
+    assert(!state);
+    num_slots = offload_threads + ThreadConfig::get_instance_max();
     state = new std::vector<void*>[num_slots];
 }
 

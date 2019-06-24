@@ -89,7 +89,7 @@ public:
     bool get(snort::Packet*&) override;
 
 private:
-    static void worker(RegexRequest*, snort::SnortConfig*);
+    static void worker(RegexRequest*, snort::SnortConfig*, unsigned id);
 };
 
 #endif
