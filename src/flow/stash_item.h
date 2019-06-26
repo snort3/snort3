@@ -46,6 +46,7 @@ private:
 enum StashItemType
 {
     STASH_ITEM_TYPE_INT32,
+    STASH_ITEM_TYPE_UINT32,
     STASH_ITEM_TYPE_STRING,
     STASH_ITEM_TYPE_GENERIC_OBJECT
 };
@@ -53,6 +54,7 @@ enum StashItemType
 union StashItemVal
 {
     int32_t int32_val;
+    uint32_t uint32_val;
     std::string* str_val;
     StashGenericObject* generic_obj_val;
 };
@@ -64,6 +66,12 @@ public:
     {
         type = STASH_ITEM_TYPE_INT32;
         val.int32_val = int32_val;
+    }
+
+    StashItem(uint32_t uint32_val)
+    {
+        type = STASH_ITEM_TYPE_UINT32;
+        val.uint32_val = uint32_val;
     }
 
     StashItem(const std::string& str_val)
@@ -103,6 +111,9 @@ public:
 
     void get_val(int32_t& int32_val) const
     { int32_val = val.int32_val; }
+
+    void get_val(uint32_t& uint32_val) const
+    { uint32_val = val.uint32_val; }
 
     void get_val(std::string& str_val) const
     { str_val = *(val.str_val); }

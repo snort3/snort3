@@ -209,6 +209,31 @@ TEST(stash_tests, update_int32_item)
     CHECK_EQUAL(val, 20);
 }
 
+TEST(stash_tests, new_uint32_item)
+{
+    FlowStash stash;
+
+    stash.store("item_1", 10u);
+
+    uint32_t val;
+
+    CHECK(stash.get("item_1", val));
+    CHECK_EQUAL(val, 10u);
+}
+
+TEST(stash_tests, update_uint32_item)
+{
+    FlowStash stash;
+
+    stash.store("item_1", 10u);
+    stash.store("item_1", 20u);
+
+    uint32_t val;
+
+    CHECK(stash.get("item_1", val));
+    CHECK_EQUAL(val, 20u);
+}
+
 TEST(stash_tests, new_str_item_ref)
 {
     FlowStash stash;

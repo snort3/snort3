@@ -31,15 +31,17 @@
 namespace snort
 {
 
-class FlowStash
+class SO_PUBLIC FlowStash
 {
 public:
     ~FlowStash();
     void reset();
     bool get(const std::string& key, int32_t& val);
+    bool get(const std::string& key, uint32_t& val);
     bool get(const std::string& key, std::string& val);
     bool get(const std::string& key, StashGenericObject* &val);
     void store(const std::string& key, int32_t val);
+    void store(const std::string& key, uint32_t val);
     void store(const std::string& key, const std::string& val);
     void store(const std::string& key, std::string* val);
     void store(const std::string& key, StashGenericObject* val);

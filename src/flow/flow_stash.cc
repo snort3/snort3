@@ -18,6 +18,10 @@
 
 // flow_stash.cc author Shravan Rangaraju <shrarang@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "flow_stash.h"
 
 #include <cassert>
@@ -46,6 +50,11 @@ bool FlowStash::get(const string& key, int32_t& val)
     return get(key, val, STASH_ITEM_TYPE_INT32);
 }
 
+bool FlowStash::get(const string& key, uint32_t& val)
+{
+    return get(key, val, STASH_ITEM_TYPE_UINT32);
+}
+
 bool FlowStash::get(const string& key, string& val)
 {
     return get(key, val, STASH_ITEM_TYPE_STRING);
@@ -59,6 +68,11 @@ bool FlowStash::get(const std::string& key, StashGenericObject* &val)
 void FlowStash::store(const string& key, int32_t val)
 {
     store(key, val, STASH_ITEM_TYPE_INT32);
+}
+
+void FlowStash::store(const string& key, uint32_t val)
+{
+    store(key, val, STASH_ITEM_TYPE_UINT32);
 }
 
 void FlowStash::store(const string& key, const string& val)
