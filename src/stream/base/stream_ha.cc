@@ -146,6 +146,8 @@ bool StreamHAClient::produce(Flow& flow, HAMessage& msg)
     SessionHAContent* hac = (SessionHAContent*) msg.cursor;
 
     hac->ssn_state = flow.ssn_state;
+    hac->ssn_state.session_flags &= ~HA_IGNORED_SESSION_FLAGS;
+
     hac->flow_state = flow.flow_state;
     hac->flags = 0;
     if (!is_client_lower(flow))

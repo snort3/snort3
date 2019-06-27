@@ -45,6 +45,14 @@
 
 using namespace snort;
 
+namespace snort
+{
+
+class Inspector* InspectorManager::get_inspector(char const*, bool, SnortConfig*)
+{ return nullptr; }
+
+}
+
 const char* AppInfoManager::get_app_name(AppId)
 {
     return test_app_name;
@@ -87,7 +95,6 @@ TEST(appid_api, get_application_id)
 }
 
 // FIXIT - enable this test when consume ha appid api call is fixed
-#ifdef APPID_HA_SUPPORT_ENABLED
 TEST(appid_api, produce_ha_state)
 {
     AppIdSessionHA appHA, cmp_buf;
@@ -96,11 +103,11 @@ TEST(appid_api, produce_ha_state)
     memset((void*)&cmp_buf, 0, sizeof(cmp_buf));
     mock_session->common.flow_type = APPID_FLOW_TYPE_IGNORE;
     mock_session->common.flags |= APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_HTTP_SESSION;
-    uint32_t val = appid_api.produce_ha_state(flow, (uint8_t*)&appHA);
+    uint32_t val = appid_api.produce_ha_state(*flow, (uint8_t*)&appHA);
     CHECK_TRUE(val == sizeof(appHA));
     CHECK_TRUE(memcmp(&appHA, &cmp_buf, val) == 0);
     mock_session->common.flow_type = APPID_FLOW_TYPE_NORMAL;
-    val = appid_api.produce_ha_state(flow, (uint8_t*)&appHA);
+    val = appid_api.produce_ha_state(*flow, (uint8_t*)&appHA);
     CHECK_TRUE(val == sizeof(appHA));
     CHECK_TRUE(appHA.appId[0] == APPID_UT_ID);
     CHECK_TRUE(appHA.appId[1] == APPID_UT_ID + 1);
@@ -116,7 +123,10 @@ TEST(appid_api, produce_ha_state)
     mock_flow_data= nullptr;
     SfIp ip;
     ip.pton(AF_INET, "192.168.1.222");
-    appid_api.consume_ha_state(flow, (uint8_t*)&appHA, 0, IpProtocol::TCP, &ip, 1066);
+    val = appid_api.consume_ha_state(*flow, (uint8_t*)&appHA, 0, IpProtocol::TCP, &ip, 1066);
+    CHECK_TRUE(val == sizeof(appHA));
+    //FIXIT-H refactor below code to test AppId consume functionality
+    /*
     AppIdSession* session = (AppIdSession*)flow->get_flow_data(AppIdSession::inspector_id);
     CHECK_TRUE(session);
     CHECK_TRUE(session->get_tp_app_id() == appHA.appId[0]);
@@ -130,11 +140,15 @@ TEST(appid_api, produce_ha_state)
     CHECK_TRUE(session->service_disco_state == APPID_DISCO_STATE_FINISHED);
     CHECK_TRUE(session->client_disco_state == APPID_DISCO_STATE_FINISHED);
     delete session;
+    */
 
     // test logic when service app is ftp control
     appHA.appId[1] = APP_ID_FTP_CONTROL;
     mock_flow_data= nullptr;
-    appid_api.consume_ha_state(flow, (uint8_t*)&appHA, 0, IpProtocol::TCP, &ip, 1066);
+    val = appid_api.consume_ha_state(*flow, (uint8_t*)&appHA, 0, IpProtocol::TCP, &ip, 1066);
+    CHECK_TRUE(val == sizeof(appHA));
+    //FIXIT-H refactor below code to test AppId consume functionality
+    /*
     session = (AppIdSession*)flow->get_flow_data(AppIdSession::inspector_id);
     CHECK_TRUE(session);
     uint64_t flags = session->get_session_flags(APPID_SESSION_CLIENT_DETECTED |
@@ -145,8 +159,8 @@ TEST(appid_api, produce_ha_state)
     CHECK_TRUE(session->service_disco_state == APPID_DISCO_STATE_STATEFUL);
     CHECK_TRUE(session->client_disco_state == APPID_DISCO_STATE_FINISHED);
     delete session;
+    */
 }
-#endif
 
 TEST(appid_api, create_appid_session_api)
 {

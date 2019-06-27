@@ -34,6 +34,7 @@
 #include "flow.h"
 #include "flow_key.h"
 #include "ha_module.h"
+#include "session.h"
 
 using namespace snort;
 
@@ -180,6 +181,12 @@ bool FlowHAState::sync_interval_elapsed()
            ( pkt_time.tv_usec > next_update.tv_usec ) ) );
 }
 
+void FlowHAState::init_next_update()
+{
+    packet_gettimeofday(&next_update);
+    timeradd(&next_update, &min_session_lifetime, &next_update);
+}
+
 void FlowHAState::set_next_update()
 {
     timeradd(&next_update, &min_sync_interval, &next_update);
@@ -189,6 +196,7 @@ void FlowHAState::reset()
 {
     state = INITIAL_STATE;
     pending = NONE_PENDING;
+    init_next_update();
 }
 
 FlowHAClient::FlowHAClient(uint8_t length, bool session_client)
@@ -314,7 +322,7 @@ static uint16_t calculate_update_msg_content_length(Flow& flow, bool full)
         if ((i == 0) || full || flow.ha_state->check_pending(1 << (i - 1)))
         {
             assert(ha->client_map[i]);
-            length += (ha->client_map[i]->get_message_size() + sizeof(HAClientHeader));
+            length += (ha->client_map[i]->get_message_size(flow) + sizeof(HAClientHeader));
         }
     }
 
@@ -377,12 +385,16 @@ static void consume_ha_delete_message(HAMessage&, const FlowKey& key)
     Stream::delete_flow(&key);
 }
 
-static Flow* consume_ha_update_message(HAMessage& msg, const FlowKey& key)
+static Flow* consume_ha_update_message(HAMessage& msg, const FlowKey& key, Packet* p)
 {
     // flow will be nullptr if/when the session does not exist in the caches
+    bool no_flow_found = false;
     Flow* flow = Stream::get_flow(&key);
     if (!flow)
+    {
+        no_flow_found = true;
         ha_stats.update_msgs_recv_no_flow++;
+    }
 
     // pointer to one past the last byte in the message
     const uint8_t* content_end = msg.buffer + msg.buffer_length;
@@ -429,10 +441,15 @@ static Flow* consume_ha_update_message(HAMessage& msg, const FlowKey& key)
     if (msg.cursor == content_end)
         ha_stats.update_msgs_consumed++;
 
+    if( p && no_flow_found && flow && flow->session )
+    {
+        flow->session->setup(p);
+    }
+
     return flow;
 }
 
-static Flow* consume_ha_message(HAMessage& msg)
+static Flow* consume_ha_message(HAMessage& msg, Packet* p = nullptr)
 {
     ha_stats.msgs_recv++;
 
@@ -473,7 +490,7 @@ static Flow* consume_ha_message(HAMessage& msg)
         }
         case HA_UPDATE_EVENT:
         {
-            flow = consume_ha_update_message(msg, key);
+            flow = consume_ha_update_message(msg, key, p);
             ha_stats.update_msgs_recv++;
             break;
         }
@@ -635,7 +652,7 @@ Flow* HighAvailability::process_daq_import(Packet& p, FlowKey& key)
         if (p.daq_instance->ioctl(DIOCTL_GET_FLOW_HA_STATE, &fhs, sizeof(fhs)) == DAQ_SUCCESS)
         {
             HAMessage ha_msg(fhs.data, fhs.length);
-            flow = consume_ha_message(ha_msg);
+            flow = consume_ha_message(ha_msg, &p);
             ha_stats.daq_imports++;
             // Validate that the imported flow matches up with the given flow key.
             if (flow)

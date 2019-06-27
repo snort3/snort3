@@ -25,8 +25,10 @@
 
 #include "appid_api.h"
 
+#include "managers/inspector_manager.h"
 #include "utils/util.h"
 
+#include "appid_module.h"
 #include "appid_session.h"
 #include "appid_session_api.h"
 #include "app_info_table.h"
@@ -121,10 +123,8 @@ uint32_t AppIdApi::produce_ha_state(Flow& flow, uint8_t* buf)
     return sizeof(*appHA);
 }
 
-// FIXIT-H last param AppIdSession ctor is appid inspector, we need that but no good way to get it
-// at the moment...code to allocate session ifdef'ed out until this is resolved...
-uint32_t AppIdApi::consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t, IpProtocol /*proto*/,
-    SfIp* /*ip*/, uint16_t /*port*/)
+uint32_t AppIdApi::consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t, IpProtocol proto,
+    SfIp* ip, uint16_t port)
 {
     const AppIdSessionHA* appHA = (const AppIdSessionHA*)buf;
     if (appHA->flags & APPID_HA_FLAGS_APP)
@@ -132,37 +132,39 @@ uint32_t AppIdApi::consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t, IpP
         AppIdSession* asd =
             (AppIdSession*)(flow.get_flow_data(AppIdSession::inspector_id));
 
-#ifdef APPID_HA_SUPPORT_ENABLED
         if (!asd)
         {
-            asd = new AppIdSession(proto, ip, port, nullptr);
-            flow.set_flow_data(asd);
-            asd->service.set_id(appHA->appId[1]);
-            if ( asd->service.get_id() == APP_ID_FTP_CONTROL )
+            AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
+            if(inspector)
             {
-                asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED |
-                    APPID_SESSION_NOT_A_SERVICE | APPID_SESSION_SERVICE_DETECTED);
-                if ( !ServiceDiscovery::add_ftp_service_state(*asd) )
-                    asd->set_session_flags(APPID_SESSION_CONTINUE);
 
-                asd->service_disco_state = APPID_DISCO_STATE_STATEFUL;
-            }
-            else
-                asd->service_disco_state = APPID_DISCO_STATE_FINISHED;
+                asd = new AppIdSession(proto, ip, port, *inspector);
+                flow.set_flow_data(asd);
+                asd->service.set_id(appHA->appId[1]);
+                if ( asd->service.get_id() == APP_ID_FTP_CONTROL )
+                {
+                    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED |
+                            APPID_SESSION_NOT_A_SERVICE | APPID_SESSION_SERVICE_DETECTED);
+                    if ( !ServiceDiscovery::add_ftp_service_state(*asd) )
+                        asd->set_session_flags(APPID_SESSION_CONTINUE);
 
-            asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
+                    asd->service_disco_state = APPID_DISCO_STATE_STATEFUL;
+                }
+                else
+                    asd->service_disco_state = APPID_DISCO_STATE_FINISHED;
+
+                asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
 #ifdef ENABLE_APPID_THIRD_PARTY
-            if (asd->tpsession)
-                asd->tpsession->set_state(TP_STATE_HA);
+                if (asd->tpsession)
+                    asd->tpsession->set_state(TP_STATE_HA);
 #endif
+            }
         }
-#else
+
         if ( !asd )
         {
-            assert(false);
             return sizeof(*appHA);
         }
-#endif
 
         if( (appHA->flags & APPID_HA_FLAGS_TP_DONE) && asd->tpsession )
         {

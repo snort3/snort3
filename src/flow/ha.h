@@ -72,6 +72,7 @@ public:
     bool check_any(uint8_t state);
     static void config_timers(struct timeval, struct timeval);
     bool sync_interval_elapsed();
+    void init_next_update();
     void set_next_update();
     void reset();
 
@@ -127,7 +128,7 @@ public:
     virtual bool consume(snort::Flow*&, const snort::FlowKey*, snort::HAMessage&, uint8_t size) = 0;
     virtual bool produce(snort::Flow&, snort::HAMessage&) = 0;
     virtual bool is_update_required(snort::Flow*) { return false; }
-    uint8_t get_message_size() { return max_length; }
+    virtual uint8_t get_message_size(Flow&) { return max_length; }
 
     FlowHAClientHandle handle;  // Actual handle for the instance
     uint8_t index;
