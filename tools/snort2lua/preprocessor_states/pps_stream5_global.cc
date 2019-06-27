@@ -59,8 +59,11 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
             table_api.add_deleted_comment("disabled");
 
         else if (keyword == "enable_ha")
-            table_api.add_unsupported_comment("enable_ha");
-
+        {
+            table_api.open_top_level_table("high_availability");
+            table_api.add_option("enable", true);
+            table_api.close_table();
+        }
         else if (keyword == "memcap")
             table_api.add_deleted_comment("memcap");
 

@@ -47,11 +47,11 @@ static const Parameter ha_params[] =
     { "ports", Parameter::PT_BIT_LIST, "65535", nullptr,
       "side channel message port list" },
 
-    { "min_age", Parameter::PT_REAL, "0.0:100.0", "1.0",
-      "minimum session life in seconds before HA updates" },
+    { "min_age", Parameter::PT_INT, "0:max32", "0",
+      "minimum session life in milliseconds before HA updates" },
 
-    { "min_sync", Parameter::PT_REAL, "0.0:100.0", "0.1",
-      "minimum interval in seconds between HA updates" },
+    { "min_sync", Parameter::PT_INT, "0:max32", "0",
+      "minimum interval in milliseconds between HA updates" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -79,12 +79,10 @@ THREAD_LOCAL ProfileStats ha_perf_stats;
 
 //-------------------------------------------------------------------------
 
-static void convert_real_seconds_to_timeval(double seconds, struct timeval* tv)
+static void convert_milliseconds_to_timeval(uint32_t milliseconds, struct timeval* tv)
 {
-    double whole = trunc(seconds);
-    double fraction = (seconds - whole);
-    tv->tv_sec = (time_t)whole;
-    tv->tv_usec = (long int)(fraction * 1.0E6);
+    tv->tv_sec = (milliseconds / 1000);
+    tv->tv_usec = (milliseconds % 1000) * 1000;
 }
 
 HighAvailabilityModule::HighAvailabilityModule() :
@@ -140,11 +138,11 @@ bool HighAvailabilityModule::set(const char*, Value& v, SnortConfig*)
     }
     else if ( v.is("min_age") )
     {
-        convert_real_seconds_to_timeval(v.get_real(), &config->min_session_lifetime);
+        convert_milliseconds_to_timeval(v.get_uint32(), &config->min_session_lifetime);
     }
     else if ( v.is("min_sync") )
     {
-        convert_real_seconds_to_timeval(v.get_real(), &config->min_sync_interval);
+        convert_milliseconds_to_timeval(v.get_uint32(), &config->min_sync_interval);
     }
     else
         return false;

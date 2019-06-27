@@ -18,8 +18,8 @@ The HA module is configured with these items:
     {
         ports = "1",
         enable = true,
-        min_age = 0.0,
-        min_sync = 0.0
+        min_age = 0,
+        min_sync = 0
     }
 
 The 'ports' item maps to the SideChannel port to use for the HA messaging.
@@ -27,10 +27,10 @@ The 'ports' item maps to the SideChannel port to use for the HA messaging.
 The 'enabled' item controls the overall HA operation.
 
 The items min_age and min_sync are used in the stream HA logic.  min_age is
-the number of seconds that a flow must exist in the flow cache before sending
+the number of milliseconds that a flow must exist in the flow cache before sending
 HA messages to the partner.  min_sync is the minimum time between HA status
 updates.  HA messages for a particular flow will not be sent faster than
-min_sync.  Both are expressed as a floating point number of seconds.
+min_sync.  Both are expressed as a number of milliseconds.
 
 HA messages are composed of the base 'stream' information plus any content
 from additional modules.  Modules subscribe HA in order to add message

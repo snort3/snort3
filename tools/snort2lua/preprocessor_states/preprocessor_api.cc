@@ -62,6 +62,7 @@ extern const ConvertMap* stream_ip_map;
 extern const ConvertMap* stream_global_map;
 extern const ConvertMap* stream_tcp_map;
 extern const ConvertMap* stream_udp_map;
+extern const ConvertMap* stream_ha_map;
 
 std::vector<const ConvertMap*> preprocessor_api =
 {
@@ -100,8 +101,9 @@ std::vector<const ConvertMap*> preprocessor_api =
     smtp_map,
     ssh_map,
     ssl_map,
-    stream_ip_map,
     stream_global_map,
+    stream_ha_map,
+    stream_ip_map,
     stream_tcp_map,
     stream_udp_map,
 };

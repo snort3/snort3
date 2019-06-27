@@ -35,6 +35,7 @@ add_library(preprocessor_states OBJECT
     pps_stream5_global.cc
     pps_stream5_tcp.cc
     pps_stream5_udp.cc
+    pps_stream5_ha.cc
     preprocessor_api.h
     preprocessor_api.cc
 )
