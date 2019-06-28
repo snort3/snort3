@@ -1312,9 +1312,6 @@ static void fpEvalPacket(Packet* p, FPTask task)
         break;
 
     case PktType::PDU:
-        if ( SnortConfig::get_conf()->sopgTable->user_mode )
-            fpEvalHeaderSvc(p, omd, SNORT_PROTO_USER, task);
-
         if ( p->proto_bits & PROTO_BIT__TCP )
         {
             if ( p->get_snort_protocol_id() == UNKNOWN_PROTOCOL_ID or !fpEvalHeaderSvc(p, omd, SNORT_PROTO_TCP, task) )
@@ -1325,6 +1322,10 @@ static void fpEvalPacket(Packet* p, FPTask task)
             if ( p->get_snort_protocol_id() == UNKNOWN_PROTOCOL_ID or !fpEvalHeaderSvc(p, omd, SNORT_PROTO_UDP, task) )
                 fpEvalHeaderUdp(p, omd, task);
         }
+
+        if ( SnortConfig::get_conf()->sopgTable->user_mode )
+            fpEvalHeaderSvc(p, omd, SNORT_PROTO_USER, task);
+
         break;
 
     case PktType::FILE:
