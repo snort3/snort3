@@ -38,7 +38,6 @@ using namespace std;
 
 namespace snort
 {
-THREAD_LOCAL ProfileStats mpsePerfStats;
 
 //-------------------------------------------------------------------------
 // base stuff
@@ -55,7 +54,6 @@ int Mpse::search(
     const unsigned char* T, int n, MpseMatch match,
     void* context, int* current_state)
 {
-    DeepProfile profile(mpsePerfStats);
     pmqs.matched_bytes += n;
     return _search(T, n, match, context, current_state);
 }
@@ -64,14 +62,12 @@ int Mpse::search_all(
     const unsigned char* T, int n, MpseMatch match,
     void* context, int* current_state)
 {
-    DeepProfile profile(mpsePerfStats);
     pmqs.matched_bytes += n;
     return _search(T, n, match, context, current_state);
 }
 
 void Mpse::search(MpseBatch& batch, MpseType mpse_type)
 {
-    DeepProfile profile(mpsePerfStats);
     _search(batch, mpse_type);
 }
 

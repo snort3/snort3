@@ -154,27 +154,6 @@ bool dce2_paf_abort(Flow* flow, DCE2_SsnData* sd)
 }
 
 
-static void dce2_protocol_detect(DCE2_SsnData* sd, snort::Packet* pkt)
-{
-    if (sd->trans == DCE2_TRANS_TYPE__TCP)
-    {
-        // FIXIT-M this doesn't look right; profile immediately goes out of scope
-        Profile profile(dce2_tcp_pstat_detect);
-    }
-    else if (sd->trans == DCE2_TRANS_TYPE__SMB)
-    {
-        Profile profile(dce2_smb_pstat_detect);
-    }
-    else
-    {
-        Profile profile(dce2_udp_pstat_detect);
-    }
-
-    DetectionEngine::detect(pkt);
-
-    dce2_detected = 1;
-}
-
 void DCE2_Detect(DCE2_SsnData* sd)
 {
     DceContextData::set_current_ropts(sd);
@@ -186,7 +165,8 @@ void DCE2_Detect(DCE2_SsnData* sd)
         return;
     }
     snort::Packet* top_pkt = DetectionEngine::get_current_packet();
-    dce2_protocol_detect(sd, top_pkt);
+    DetectionEngine::detect(top_pkt);
+    dce2_detected = 1;
     /* Always reset rule option data after detecting */
     DCE2_ResetRopts(sd , top_pkt);
 }

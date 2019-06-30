@@ -265,7 +265,7 @@ unsigned SdPatternOption::SdSearch(Cursor& c, Packet* p)
 
 IpsOption::EvalStatus SdPatternOption::eval(Cursor& c, Packet* p)
 {
-    Profile profile(sd_pattern_perf_stats);
+    RuleProfile profile(sd_pattern_perf_stats);
 
     unsigned matches = SdSearch(c, p);
 

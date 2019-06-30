@@ -135,6 +135,7 @@ private:
     std::mutex pending_work_queue_mutex;
 };
 
+extern THREAD_LOCAL snort::ProfileStats daqPerfStats;
 extern THREAD_LOCAL snort::ProfileStats totalPerfStats;
 
 #endif

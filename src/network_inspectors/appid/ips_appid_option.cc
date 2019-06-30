@@ -119,10 +119,11 @@ bool AppIdIpsOption::match_id_against_rule(int32_t id)
 // first match wins...
 IpsOption::EvalStatus AppIdIpsOption::eval(Cursor&, Packet* p)
 {
+    RuleProfile profile(ips_appid_perf_stats);
+
     if ( !p->flow )
         return NO_MATCH;
 
-    DeepProfile profile(ips_appid_perf_stats);
     AppIdSession* session = appid_api.get_appid_session(*(p->flow));
 
     if ( !session )

@@ -110,11 +110,12 @@ bool ReassembleOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus ReassembleOption::eval(Cursor&, Packet* pkt)
 {
+    RuleProfile profile(streamReassembleRuleOptionPerfStats);
+
     if (!pkt->flow || !pkt->ptrs.tcph)
         return NO_MATCH;
 
     {
-        DeepProfile profile(streamReassembleRuleOptionPerfStats);
         Flow* lwssn = (Flow*)pkt->flow;
         TcpSession* tcpssn = (TcpSession*)lwssn->session;
 

@@ -391,12 +391,10 @@ uint32_t TcpReassembler::get_flush_data_len(
 int TcpReassembler::flush_data_segments(
     TcpReassemblerState& trs, Packet* p, uint32_t total, Packet* pdu)
 {
+    assert(trs.sos.seglist.cur_rseg);
+
     uint32_t total_flushed = 0;
     uint32_t flags = PKT_PDU_HEAD;
-
-    assert(trs.sos.seglist.cur_rseg);
-    DeepProfile profile(s5TcpBuildPacketPerfStats);
-
     uint32_t to_seq = trs.sos.seglist.cur_rseg->c_seq + total;
 
     while ( SEQ_LT(trs.sos.seglist.cur_rseg->c_seq, to_seq) )
@@ -535,8 +533,6 @@ Packet* TcpReassembler::initialize_pdu(
 int TcpReassembler::_flush_to_seq(
     TcpReassemblerState& trs, uint32_t bytes, Packet* p, uint32_t pkt_flags)
 {
-    DeepProfile profile(s5TcpFlushPerfStats);
-
     if ( !p )
     {
         // FIXIT-H we need to have user_policy_id in this case
@@ -583,11 +579,7 @@ int TcpReassembler::_flush_to_seq(
             tcpStats.rebuilt_packets++;
             tcpStats.rebuilt_bytes += flushed_bytes;
 
-#ifdef DEEP_PROFILING
-            NoProfile exclude(s5TcpFlushPerfStats);
-#else
             NoProfile exclude(s5TcpPerfStats);
-#endif
 
             if ( !Analyzer::get_local_analyzer()->inspect_rebuilt(pdu) )
                 last_pdu = pdu;
@@ -676,13 +668,7 @@ int TcpReassembler::do_zero_byte_flush(TcpReassemblerState& trs, Packet* p, uint
         trs.flush_count++;
 
         show_rebuilt_packet(trs, pdu);
-
-#ifdef DEEP_PROFILING
-        NoProfile exclude(s5TcpFlushPerfStats);
-#else
         NoProfile exclude(s5TcpPerfStats);
-#endif
-
         Analyzer::get_local_analyzer()->inspect_rebuilt(pdu);
 
         if ( trs.tracker->splitter )
@@ -913,7 +899,6 @@ uint32_t TcpReassembler::get_forward_packet_dir(TcpReassemblerState&, const Pack
 int32_t TcpReassembler::flush_pdu_ips(TcpReassemblerState& trs, uint32_t* flags, Packet* p)
 {
     assert(trs.sos.session->flow == p->flow);
-    DeepProfile profile(s5TcpPAFPerfStats);
 
     if ( !is_q_sequenced(trs) )
         return -1;
@@ -946,9 +931,13 @@ int32_t TcpReassembler::flush_pdu_ips(TcpReassemblerState& trs, uint32_t* flags,
             continue;
         }
 
-        int32_t flush_pt = paf_check(
-            trs.tracker->splitter, &trs.tracker->paf_state, p, tsn->payload(),
-            tsn->c_len, total, tsn->c_seq, flags);
+        int32_t flush_pt;
+        {
+            NoProfile exclude(s5TcpPerfStats);
+            flush_pt = paf_check(
+                trs.tracker->splitter, &trs.tracker->paf_state, p, tsn->payload(),
+                tsn->c_len, total, tsn->c_seq, flags);
+        }
 
         if (flush_pt >= 0)
         {
@@ -996,7 +985,6 @@ void TcpReassembler::fallback(TcpReassemblerState& trs)
 int32_t TcpReassembler::flush_pdu_ackd(TcpReassemblerState& trs, uint32_t* flags, Packet* p)
 {
     assert(trs.sos.session->flow == p->flow);
-    DeepProfile profile(s5TcpPAFPerfStats);
 
     uint32_t total = 0;
     TcpSegmentNode* tsn = SEQ_LT(trs.sos.seglist_base_seq, trs.tracker->r_win_base) ?
@@ -1022,10 +1010,13 @@ int32_t TcpReassembler::flush_pdu_ackd(TcpReassemblerState& trs, uint32_t* flags
             size = trs.tracker->r_win_base - tsn->c_seq;
 
         total += size;
-
-        int32_t flush_pt = paf_check(
-            trs.tracker->splitter, &trs.tracker->paf_state, p, tsn->payload(),
-            size, total, tsn->c_seq, flags);
+        int32_t flush_pt;
+        {
+            NoProfile exclude(s5TcpPerfStats);
+            flush_pt = paf_check(
+                trs.tracker->splitter, &trs.tracker->paf_state, p, tsn->payload(),
+                size, total, tsn->c_seq, flags);
+        }
 
         if ( flush_pt >= 0 )
         {
@@ -1317,8 +1308,6 @@ int TcpReassembler::insert_segment_in_seglist(
 int TcpReassembler::queue_packet_for_reassembly(
     TcpReassemblerState& trs, TcpSegmentDescriptor& tsd)
 {
-    DeepProfile profile(s5TcpInsertPerfStats);
-
     int rc = STREAM_INSERT_OK;
 
     if ( trs.sos.seg_count == 0 )

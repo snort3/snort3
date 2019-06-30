@@ -205,7 +205,7 @@ bool HttpIpsOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus HttpIpsOption::eval(Cursor& c, Packet* p)
 {
-    Profile profile(HttpCursorModule::http_ps[psi]);
+    RuleProfile profile(HttpCursorModule::http_ps[psi]);
 
     if (!p->flow || !p->flow->gadget)
         return NO_MATCH;

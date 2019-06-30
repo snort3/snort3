@@ -103,52 +103,9 @@ PegCount* Dce2UdpModule::get_counts() const
     return (PegCount*)&dce2_udp_stats;
 }
 
-ProfileStats* Dce2UdpModule::get_profile(
-    unsigned index, const char*& name, const char*& parent) const
+ProfileStats* Dce2UdpModule::get_profile() const
 {
-    switch ( index )
-    {
-    case 0:
-        name = "dce_udp_main";
-        parent = nullptr;
-        return &dce2_udp_pstat_main;
-
-    case 1:
-        name = "dce_udp_session";
-        parent = "dce_udp_main";
-        return &dce2_udp_pstat_session;
-
-    case 2:
-        name = "dce_udp_new_session";
-        parent = "dce_udp_session";
-        return &dce2_udp_pstat_new_session;
-
-    case 3:
-        name = "dce_udp_detect";
-        parent = "dce_udp_main";
-        return &dce2_udp_pstat_detect;
-
-    case 4:
-        name = "dce_udp_log";
-        parent = "dce_udp_main";
-        return &dce2_udp_pstat_log;
-
-    case 5:
-        name = "dce_udp_cl_acts";
-        parent = "dce_udp_main";
-        return &dce2_udp_pstat_cl_acts;
-
-    case 6:
-        name = "dce_udp_cl_frag";
-        parent = "dce_udp_main";
-        return &dce2_udp_pstat_cl_frag;
-
-    case 7:
-        name = "dce_udp_cl_reass";
-        parent = "dce_udp_main";
-        return &dce2_udp_pstat_cl_reass;
-    }
-    return nullptr;
+    return &dce2_udp_pstat_main;
 }
 
 bool Dce2UdpModule::set(const char* fqn, Value& v, SnortConfig* c)

@@ -156,7 +156,7 @@ bool ReplaceOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus ReplaceOption::eval(Cursor& c, Packet* p)
 {
-    Profile profile(replacePerfStats);
+    RuleProfile profile(replacePerfStats);
 
     if ( p->is_cooked() )
         return NO_MATCH;
@@ -175,7 +175,7 @@ IpsOption::EvalStatus ReplaceOption::eval(Cursor& c, Packet* p)
 
 void ReplaceOption::action(Packet*)
 {
-    Profile profile(replacePerfStats);
+    RuleProfile profile(replacePerfStats);
 
     if ( pending() )
         Replace_QueueChange(repl, (unsigned)pos());

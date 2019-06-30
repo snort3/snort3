@@ -84,16 +84,14 @@ using namespace snort;
 enum FPTask : uint8_t
 {
     FP = 1,
-    NON_FP = 2,
-    BOTH = FP | NON_FP
+    NON_FP = 2
 };
 
+THREAD_LOCAL ProfileStats mpsePerfStats;
 THREAD_LOCAL ProfileStats rulePerfStats;
-THREAD_LOCAL ProfileStats ruleRTNEvalPerfStats;
-THREAD_LOCAL ProfileStats ruleOTNEvalPerfStats;
-THREAD_LOCAL ProfileStats ruleNFPEvalPerfStats;
 
 static void fp_immediate(Packet*);
+static void fp_immediate(MpseGroup*, OtnxMatchData*, const uint8_t*, unsigned);
 
 // Initialize the OtnxMatchData structure.  We do this for
 // every packet so this only sets the necessary counters to
@@ -310,9 +308,6 @@ int fpAddMatch(OtnxMatchData* omd_local, int /*pLen*/, const OptTreeNode* otn)
 */
 int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports)
 {
-    DeepProfile rule_profile(rulePerfStats);
-    DeepProfile rule_rtn_eval_profile(ruleRTNEvalPerfStats);
-
     if ( !rtn )
         return 0;
 
@@ -328,6 +323,16 @@ int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports)
     **  of this routine.
     */
     return 1;
+}
+
+int fp_eval_option(void* v, Cursor& c, Packet* p)
+{
+    IpsOption* opt = (IpsOption*)v;
+    // FIXIT-L use this with RuleProfile enabled in profiler_defs.h
+    // all ips options should be double counted w/o this exclude but
+    // this causes rule_eval to underflow.
+    //ProfileExclude exclude(rulePerfStats);
+    return opt->eval(c, p);
 }
 
 static int detection_option_tree_evaluate(detection_option_tree_root_t* root,
@@ -375,7 +380,6 @@ static int rule_tree_match(
     print_pattern(pmx->pmd);
 
     {
-        DeepProfile rule_profile(rulePerfStats);
         /* NOTE: The otn will be the first one in the match state. If there are
          * multiple rules associated with a match state, mucking with the otn
          * may muck with an unintended rule */
@@ -396,11 +400,7 @@ static int rule_tree_match(
             last_check->rebuild_flag = (eval_data.p->packet_flags & PKT_REBUILT_STREAM);
         }
 
-        int ret = 0;
-        {
-            DeepProfile rule_otn_eval_profile(ruleOTNEvalPerfStats);
-            ret = detection_option_tree_evaluate(root, &eval_data);
-        }
+        int ret = detection_option_tree_evaluate(root, &eval_data);
 
         if ( ret )
             pmqs.qualified_events++;
@@ -879,11 +879,7 @@ static inline int batch_search(
     // during any signature evaluation
     if ( omd->p->ptrs.udph && (omd->p->proto_bits & (PROTO_BIT__TEREDO | PROTO_BIT__GTP)) )
     {
-        int start_state = 0;
-        MpseStash* stash = omd->p->context->stash;
-        stash->init();
-        so->get_normal_mpse()->search(buf, len, rule_tree_queue, omd->p->context, &start_state);
-        stash->process(rule_tree_match, omd->p->context);
+        fp_immediate(so, omd, buf, len);
     }
     else
     {
@@ -1069,8 +1065,6 @@ static inline void eval_nfp(
 
             int rval = 0;
             {
-                DeepProfile rule_profile(rulePerfStats);
-                DeepProfile rule_nfp_eval_profile(ruleNFPEvalPerfStats);
                 trace_log(detection, TRACE_RULE_EVAL, "Testing non-content rules\n");
                 rval = detection_option_tree_evaluate(
                     (detection_option_tree_root_t*)port_group->nfp_tree, &eval_data);
@@ -1339,6 +1333,7 @@ static void fpEvalPacket(Packet* p, FPTask task)
 
 void fp_partial(Packet* p)
 {
+    Profile mpse_profile(mpsePerfStats);
     IpsContext* c = p->context;
     MpseStash* stash = c->stash;
     stash->enable_process();
@@ -1358,12 +1353,17 @@ void fp_complete(Packet* p, bool search)
     stash->enable_process();
 
     if ( search )
+    {
+        Profile mpse_profile(mpsePerfStats);
         c->searches.search_sync();
-
-    stash->process(rule_tree_match, c);
-    fpEvalPacket(p, FPTask::NON_FP);
-    fpFinalSelectEvent(c->otnx, p);
-    c->searches.items.clear();
+    }
+    {
+        Profile rule_profile(rulePerfStats);
+        stash->process(rule_tree_match, c);
+        fpEvalPacket(p, FPTask::NON_FP);
+        fpFinalSelectEvent(c->otnx, p);
+        c->searches.items.clear();
+    }
 }
 
 void fp_full(Packet* p)
@@ -1376,9 +1376,30 @@ static void fp_immediate(Packet* p)
 {
     IpsContext* c = p->context;
     MpseStash* stash = c->stash;
-    stash->enable_process();
-    c->searches.search_sync();
-    stash->process(rule_tree_match, c);
-    c->searches.items.clear();
+    {
+        Profile mpse_profile(mpsePerfStats);
+        stash->enable_process();
+        c->searches.search_sync();
+    }
+    {
+        Profile rule_profile(rulePerfStats);
+        stash->process(rule_tree_match, c);
+        c->searches.items.clear();
+    }
+}
+
+static void fp_immediate(MpseGroup* so, OtnxMatchData* omd, const uint8_t* buf, unsigned len)
+{
+    MpseStash* stash = omd->p->context->stash;
+    {
+        Profile mpse_profile(mpsePerfStats);
+        int start_state = 0;
+        stash->init();
+        so->get_normal_mpse()->search(buf, len, rule_tree_queue, omd->p->context, &start_state);
+    }
+    {
+        Profile rule_profile(rulePerfStats);
+        stash->process(rule_tree_match, omd->p->context);
+    }
 }
 

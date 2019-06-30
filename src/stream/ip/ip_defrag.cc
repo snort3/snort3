@@ -183,10 +183,6 @@ static const char* const frag_policy_names[] =
     "SOLARIS"
 };
 
-THREAD_LOCAL ProfileStats fragPerfStats;
-THREAD_LOCAL ProfileStats fragInsertPerfStats;
-THREAD_LOCAL ProfileStats fragRebuildPerfStats;
-
 static void FragPrintEngineConfig(FragEngine* engine)
 {
     LogMessage("Defrag engine config:\n");
@@ -604,7 +600,6 @@ static inline int FragIsComplete(FragTracker* ft)
  */
 static void FragRebuild(FragTracker* ft, Packet* p)
 {
-    DeepProfile profile(fragRebuildPerfStats);
     size_t offset = 0;
 
     Packet* dpkt = DetectionEngine::set_next_packet(p);
@@ -948,8 +943,6 @@ void Defrag::process(Packet* p, FragTracker* ft)
     ip_stats.total++;
     ip_stats.fragmented_bytes += p->pktlen + 4; /* 4 for the CRC */
 
-    DeepProfile profile(fragPerfStats);
-
     if (!ft->engine )
     {
         new_tracker(p, ft);
@@ -1106,8 +1099,6 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
     const uint8_t* fragStart;
     int16_t fragLength;
     const uint16_t net_frag_offset = p->ptrs.ip_api.off();
-
-    DeepProfile profile(fragInsertPerfStats);
 
     if (p->is_ip6() && (net_frag_offset == 0))
     {

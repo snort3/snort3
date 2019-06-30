@@ -256,8 +256,6 @@ void TcpStreamTracker::set_splitter(const Flow* flow)
 
 void TcpStreamTracker::init_on_syn_sent(TcpSegmentDescriptor& tsd)
 {
-    DeepProfile profile(s5TcpNewSessPerfStats);
-
     tsd.get_flow()->set_session_flags(SSNFLAG_SEEN_CLIENT);
     if ( tsd.get_tcph()->are_flags_set(TH_CWR | TH_ECE) )
         tsd.get_flow()->set_session_flags(SSNFLAG_ECN_CLIENT_QUERY);
@@ -282,8 +280,6 @@ void TcpStreamTracker::init_on_syn_sent(TcpSegmentDescriptor& tsd)
 
 void TcpStreamTracker::init_on_syn_recv(TcpSegmentDescriptor& tsd)
 {
-    DeepProfile profile(s5TcpNewSessPerfStats);
-
     irs = tsd.get_seg_seq();
     // FIXIT-H can we really set the vars below now?
     rcv_nxt = tsd.get_seg_seq() + 1;
@@ -296,8 +292,6 @@ void TcpStreamTracker::init_on_syn_recv(TcpSegmentDescriptor& tsd)
 
 void TcpStreamTracker::init_on_synack_sent(TcpSegmentDescriptor& tsd)
 {
-    DeepProfile profile(s5TcpNewSessPerfStats);
-
     tsd.get_flow()->set_session_flags(SSNFLAG_SEEN_SERVER);
     if (tsd.get_tcph()->are_flags_set(TH_CWR | TH_ECE))
         tsd.get_flow()->set_session_flags(SSNFLAG_ECN_SERVER_REPLY);
@@ -327,8 +321,6 @@ void TcpStreamTracker::init_on_synack_sent(TcpSegmentDescriptor& tsd)
 
 void TcpStreamTracker::init_on_synack_recv(TcpSegmentDescriptor& tsd)
 {
-    DeepProfile profile(s5TcpNewSessPerfStats);
-
     iss = tsd.get_seg_ack() - 1;
     irs = tsd.get_seg_seq();
     snd_una = tsd.get_seg_ack();
@@ -344,8 +336,6 @@ void TcpStreamTracker::init_on_synack_recv(TcpSegmentDescriptor& tsd)
 
 void TcpStreamTracker::init_on_3whs_ack_sent(TcpSegmentDescriptor& tsd)
 {
-    DeepProfile profile(s5TcpNewSessPerfStats);
-
     tsd.get_flow()->set_session_flags(SSNFLAG_SEEN_CLIENT);
 
     if ( tsd.get_tcph()->are_flags_set(TH_CWR | TH_ECE) )
@@ -373,8 +363,6 @@ void TcpStreamTracker::init_on_3whs_ack_sent(TcpSegmentDescriptor& tsd)
 
 void TcpStreamTracker::init_on_3whs_ack_recv(TcpSegmentDescriptor& tsd)
 {
-    DeepProfile profile(s5TcpNewSessPerfStats);
-
     iss = tsd.get_seg_ack() - 1;
     irs = tsd.get_seg_seq();
     snd_una = tsd.get_seg_ack();
@@ -391,8 +379,6 @@ void TcpStreamTracker::init_on_3whs_ack_recv(TcpSegmentDescriptor& tsd)
 
 void TcpStreamTracker::init_on_data_seg_sent(TcpSegmentDescriptor& tsd)
 {
-    DeepProfile profile(s5TcpNewSessPerfStats);
-
     Flow* flow = tsd.get_flow();
 
     if ( flow->ssn_state.direction == FROM_CLIENT )
@@ -424,8 +410,6 @@ void TcpStreamTracker::init_on_data_seg_sent(TcpSegmentDescriptor& tsd)
 
 void TcpStreamTracker::init_on_data_seg_recv(TcpSegmentDescriptor& tsd)
 {
-    DeepProfile profile(s5TcpNewSessPerfStats);
-
     iss = tsd.get_seg_ack();
     irs = tsd.get_seg_seq();
     snd_una = tsd.get_seg_ack();

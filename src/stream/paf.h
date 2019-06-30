@@ -25,12 +25,16 @@
 #ifndef PAF_H
 #define PAF_H
 
+#include "main/thread.h"
+#include "profiler/profiler_defs.h"
 #include "stream/stream_splitter.h"
 
 namespace snort
 {
 struct Packet;
 }
+
+extern THREAD_LOCAL snort::ProfileStats pafPerfStats;
 
 void* paf_new(unsigned max);     // create new paf config (per policy)
 void paf_delete(void*);  // free config

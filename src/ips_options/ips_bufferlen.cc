@@ -82,7 +82,7 @@ bool LenOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus LenOption::eval(Cursor& c, Packet*)
 {
-    Profile profile(lenCheckPerfStats);
+    RuleProfile profile(lenCheckPerfStats);
 
     if ( config.eval(c.length()) )
         return MATCH;

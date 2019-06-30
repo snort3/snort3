@@ -123,7 +123,6 @@ void DCE2_ClProcess(DCE2_SsnData* sd, DCE2_ClTracker* clt)
     if (DCE2_ClHdrChecks(sd, cl_hdr) != DCE2_RET__SUCCESS)
         return;
 
-    Profile profile(dce2_udp_pstat_cl_acts);
     at = DCE2_ClGetActTracker(clt, cl_hdr);
     if (at == nullptr)
         return;
@@ -386,8 +385,6 @@ static void DCE2_ClHandleFrag(DCE2_SsnData* sd, DCE2_ClActTracker* at, const Dce
     uint16_t frag_len;
     int status;
 
-    Profile profile(dce2_udp_pstat_cl_frag);
-
     /* If the frag length is less than data length there might be authentication
      * data that we don't want to include, otherwise just set to data len */
     if (DceRpcClLen(cl_hdr) < data_len)
@@ -547,8 +544,6 @@ static void DCE2_ClFragReassemble(
     uint16_t rlen = sizeof(dce2_cl_rbuf);
     DCE2_ClFragNode* fnode;
     uint32_t stub_len = 0;
-
-    Profile profile(dce2_udp_pstat_cl_reass);
 
     for (fnode = (DCE2_ClFragNode*)DCE2_ListFirst(ft->frags);
         fnode != nullptr;

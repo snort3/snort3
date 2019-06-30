@@ -30,6 +30,7 @@
 // matches trigger rule tree evaluation.
 
 #include "main/thread.h"
+#include "profiler/profiler_defs.h"
 
 #define REBUILD_FLAGS (PKT_REBUILT_FRAG | PKT_REBUILT_STREAM)
 
@@ -39,17 +40,18 @@ class IpsContext;
 struct Packet;
 struct ProfileStats;
 }
+
+class Cursor;
 struct PortGroup;
 struct OptTreeNode;
 
+extern THREAD_LOCAL snort::ProfileStats mpsePerfStats;
 extern THREAD_LOCAL snort::ProfileStats rulePerfStats;
-extern THREAD_LOCAL snort::ProfileStats ruleRTNEvalPerfStats;
-extern THREAD_LOCAL snort::ProfileStats ruleOTNEvalPerfStats;
-extern THREAD_LOCAL snort::ProfileStats ruleNFPEvalPerfStats;
 
 struct RuleTreeNode;
 int fpLogEvent(const RuleTreeNode*, const OptTreeNode*, snort::Packet*);
 int fpEvalRTN(RuleTreeNode*, snort::Packet*, int check_ports);
+int fp_eval_option(void*, Cursor&, snort::Packet*);
 
 #define MAX_NUM_RULE_TYPES 16   // max number of allowed rule types
 

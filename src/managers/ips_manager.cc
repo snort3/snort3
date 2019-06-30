@@ -26,6 +26,7 @@
 #include <cassert>
 #include <list>
 
+#include "detection/fp_detect.h"
 #include "detection/treenodes.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
@@ -293,7 +294,7 @@ bool IpsManager::option_end(
         ips = (IpsOption*)prev;
     }
 
-    OptFpList* fpl = AddOptFuncToList(IpsOption::eval, otn);
+    OptFpList* fpl = AddOptFuncToList(fp_eval_option, otn);
     fpl->ips_opt = ips;
     fpl->type = ips->get_type();
 

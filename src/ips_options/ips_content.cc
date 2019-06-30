@@ -376,7 +376,7 @@ static int uniSearchReal(ContentData* cd, Cursor& c)
 
 static IpsOption::EvalStatus CheckANDPatternMatch(ContentData* idx, Cursor& c)
 {
-    Profile profile(contentPerfStats);
+    RuleProfile profile(contentPerfStats);
 
     int found = uniSearchReal(idx, c);
 

@@ -70,7 +70,7 @@ bool ModbusDataOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus ModbusDataOption::eval(Cursor& c, Packet* p)
 {
-    Profile profile(modbus_data_prof);
+    RuleProfile profile(modbus_data_prof);
 
     if ( !p->flow )
         return NO_MATCH;

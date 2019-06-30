@@ -155,8 +155,6 @@ DCE2_Ret DCE2_SmbFindUid(DCE2_SmbSsnData* ssd, const uint16_t uid)
 {
     DCE2_Ret status;
 
-    Profile profile(dce2_smb_pstat_smb_uid);
-
     if ((ssd->uid != DCE2_SENTINEL) && (ssd->uid == (int)uid))
         status = DCE2_RET__SUCCESS;
     else
@@ -167,8 +165,6 @@ DCE2_Ret DCE2_SmbFindUid(DCE2_SmbSsnData* ssd, const uint16_t uid)
 
 void DCE2_SmbInsertUid(DCE2_SmbSsnData* ssd, const uint16_t uid)
 {
-    Profile profile(dce2_smb_pstat_smb_uid);
-
     if (ssd->uid == DCE2_SENTINEL)
     {
         ssd->uid = (int)uid;
@@ -193,8 +189,6 @@ void DCE2_SmbInsertUid(DCE2_SmbSsnData* ssd, const uint16_t uid)
 void DCE2_SmbRemoveUid(DCE2_SmbSsnData* ssd, const uint16_t uid)
 {
     const DCE2_Policy policy = DCE2_SsnGetServerPolicy(&ssd->sd);
-
-    Profile profile(dce2_smb_pstat_smb_uid);
 
     if ((ssd->uid != DCE2_SENTINEL) && (ssd->uid == (int)uid))
         ssd->uid = DCE2_SENTINEL;
@@ -260,8 +254,6 @@ DCE2_SmbRequestTracker* DCE2_SmbNewRequestTracker(DCE2_SmbSsnData* ssd,
     uint16_t mid = SmbMid(smb_hdr);
     uint16_t uid = SmbUid(smb_hdr);
     uint16_t tid = SmbTid(smb_hdr);
-
-    Profile profile(dce2_smb_pstat_smb_req);
 
     if (ssd == nullptr)
     {
@@ -342,8 +334,6 @@ DCE2_SmbRequestTracker* DCE2_SmbNewRequestTracker(DCE2_SmbSsnData* ssd,
 DCE2_SmbFileTracker* DCE2_SmbNewFileTracker(DCE2_SmbSsnData* ssd,
     const uint16_t uid, const uint16_t tid, const uint16_t fid)
 {
-    Profile profile(dce2_smb_pstat_smb_fid);
-
     // Already have tracker for file API and not setting file data pointer
     // so don't create new file tracker.
     bool is_ipc = DCE2_SmbIsTidIPC(ssd, tid);
@@ -448,8 +438,6 @@ DCE2_Ret DCE2_SmbInitFileTracker(DCE2_SmbSsnData* ssd,
 DCE2_SmbFileTracker* DCE2_SmbFindFileTracker(DCE2_SmbSsnData* ssd,
     const uint16_t uid, const uint16_t tid, const uint16_t fid)
 {
-    Profile profile(dce2_smb_pstat_smb_fid);
-
     DCE2_SmbFileTracker* ftracker;
     if ((ssd->ftracker.fid_v1 != DCE2_SENTINEL) && (ssd->ftracker.fid_v1 == (int)fid))
     {
@@ -552,8 +540,6 @@ void DCE2_SmbRemoveFileTracker(DCE2_SmbSsnData* ssd, DCE2_SmbFileTracker* ftrack
     if (ftracker == nullptr)
         return;
 
-    Profile profile(dce2_smb_pstat_smb_fid);
-
     if (ssd->fapi_ftracker == ftracker)
         DCE2_SmbFinishFileAPI(ssd);
 
@@ -572,8 +558,6 @@ void DCE2_SmbCleanFileTracker(DCE2_SmbFileTracker* ftracker)
 {
     if (ftracker == nullptr)
         return;
-
-    Profile profile(dce2_smb_pstat_smb_fid);
 
     ftracker->fid_v1 = DCE2_SENTINEL;
     if (ftracker->file_name != nullptr)
@@ -644,8 +628,6 @@ void DCE2_SmbCleanSessionFileTracker(DCE2_SmbSsnData* ssd, DCE2_SmbFileTracker* 
 
 void DCE2_SmbCleanTransactionTracker(DCE2_SmbTransactionTracker* ttracker)
 {
-    Profile profile(dce2_smb_pstat_smb_req);
-
     if (ttracker == nullptr)
     {
         return;
@@ -662,8 +644,6 @@ void DCE2_SmbCleanTransactionTracker(DCE2_SmbTransactionTracker* ttracker)
 
 void DCE2_SmbCleanRequestTracker(DCE2_SmbRequestTracker* rtracker)
 {
-    Profile profile(dce2_smb_pstat_smb_req);
-
     if (rtracker == nullptr)
     {
         return;
@@ -694,8 +674,6 @@ void DCE2_SmbCleanRequestTracker(DCE2_SmbRequestTracker* rtracker)
 void DCE2_SmbRemoveRequestTracker(DCE2_SmbSsnData* ssd,
     DCE2_SmbRequestTracker* rtracker)
 {
-    Profile profile(dce2_smb_pstat_smb_req);
-
     if ((ssd == nullptr) || (rtracker == nullptr))
     {
         return;
@@ -749,8 +727,6 @@ void DCE2_SmbRemoveFileTrackerFromRequestTrackers(DCE2_SmbSsnData* ssd,
 DCE2_SmbFileTracker* DCE2_SmbDequeueTmpFileTracker(DCE2_SmbSsnData* ssd,
     DCE2_SmbRequestTracker* rtracker, const uint16_t fid)
 {
-    Profile profile(dce2_smb_pstat_smb_fid);
-
     DCE2_SmbFileTracker* ftracker = (DCE2_SmbFileTracker*)DCE2_QueueDequeue(rtracker->ft_queue);
 
     if (ftracker == nullptr)
@@ -810,8 +786,6 @@ DCE2_Ret DCE2_SmbFindTid(DCE2_SmbSsnData* ssd, const uint16_t tid)
 {
     DCE2_Ret status;
 
-    Profile profile(dce2_smb_pstat_smb_tid);
-
     if ((ssd->tid != DCE2_SENTINEL) && ((ssd->tid & 0x0000ffff) == (int)tid))
         status = DCE2_RET__SUCCESS;
     else
@@ -822,8 +796,6 @@ DCE2_Ret DCE2_SmbFindTid(DCE2_SmbSsnData* ssd, const uint16_t tid)
 
 void DCE2_SmbRemoveTid(DCE2_SmbSsnData* ssd, const uint16_t tid)
 {
-    Profile profile(dce2_smb_pstat_smb_tid);
-
     if ((ssd->tid != DCE2_SENTINEL) && ((ssd->tid & 0x0000ffff) == (int)tid))
         ssd->tid = DCE2_SENTINEL;
     else
@@ -862,8 +834,6 @@ void DCE2_SmbRemoveTid(DCE2_SmbSsnData* ssd, const uint16_t tid)
 void DCE2_SmbInsertTid(DCE2_SmbSsnData* ssd,
     const uint16_t tid, const bool is_ipc)
 {
-    Profile profile(dce2_smb_pstat_smb_tid);
-
     if (!is_ipc && (!DCE2_ScSmbFileInspection((dce2SmbProtoConf*)ssd->sd.config)
         || ((ssd->max_file_depth == -1) && DCE2_ScSmbFileDepth(
         (dce2SmbProtoConf*)ssd->sd.config) == -1)))
@@ -979,8 +949,6 @@ void DCE2_SmbInvalidShareCheck(DCE2_SmbSsnData* ssd,
 void DCE2_SmbQueueTmpFileTracker(DCE2_SmbSsnData* ssd,
     DCE2_SmbRequestTracker* rtracker, const uint16_t uid, const uint16_t tid)
 {
-    Profile profile(dce2_smb_pstat_smb_fid);
-
     DCE2_SmbFileTracker* ftracker = (DCE2_SmbFileTracker*)
         snort_calloc(sizeof(DCE2_SmbFileTracker));
 
@@ -1272,8 +1240,6 @@ Packet* DCE2_SmbGetRpkt(DCE2_SmbSsnData* ssd,
 DCE2_Ret DCE2_SmbHandleSegmentation(DCE2_Buffer** buf,
     const uint8_t* data_ptr, uint32_t add_len, uint32_t alloc_size)
 {
-    Profile profile(dce2_smb_pstat_smb_seg);
-
     if (buf == nullptr)
     {
         return DCE2_RET__ERROR;
@@ -1468,8 +1434,6 @@ static void DCE2_SmbInjectDeletePdu(DCE2_SmbFileTracker* ftracker)
 
 static FileVerdict DCE2_SmbLookupFileVerdict()
 {
-    Profile profile(dce2_smb_pstat_smb_file_api);
-
     FileContext* file = DCE2_get_main_file_context();
 
     if ( !file )
@@ -1485,8 +1449,6 @@ static FileVerdict DCE2_SmbLookupFileVerdict()
 
 static void DCE2_SmbFinishFileBlockVerdict(DCE2_SmbSsnData* ssd)
 {
-    Profile profile(dce2_smb_pstat_smb_file);
-
     FileVerdict verdict = DCE2_SmbLookupFileVerdict();
     if ((verdict == FILE_VERDICT_BLOCK) || (verdict == FILE_VERDICT_REJECT))
     {
@@ -1505,7 +1467,6 @@ static void DCE2_SmbFinishFileAPI(DCE2_SmbSsnData* ssd)
     if (ftracker == nullptr)
         return;
 
-    Profile profile(dce2_smb_pstat_smb_file);
     FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
     bool upload = (ftracker->ff_file_direction == DCE2_SMB_FILE_DIRECTION__UPLOAD);
 
@@ -1516,7 +1477,6 @@ static void DCE2_SmbFinishFileAPI(DCE2_SmbSsnData* ssd)
         if ((ftracker->ff_file_size == 0)
             && (ftracker->ff_bytes_processed != 0))
         {
-            Profile sub_profile(dce2_smb_pstat_smb_file_api);
             if (file_flows->file_process(p, nullptr, 0, SNORT_FILE_END, upload))
             {
                 if (upload)
@@ -1578,7 +1538,6 @@ static DCE2_Ret DCE2_SmbFileAPIProcess(DCE2_SmbSsnData* ssd,
             position = SNORT_FILE_MIDDLE;
     }
 
-    Profile profile(dce2_smb_pstat_smb_file_api);
     Packet* p = DetectionEngine::get_current_packet();
     FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
     if (!file_flows->file_process(p, data_ptr, (int)data_len, position, upload,
@@ -1762,8 +1721,6 @@ void DCE2_SmbProcessFileData(DCE2_SmbSsnData* ssd,
     if (data_len == 0)
         return;
 
-    Profile profile(dce2_smb_pstat_smb_file);
-
     // Account for wrapping.  Not likely but just in case.
     if ((ftracker->ff_bytes_processed + data_len) < ftracker->ff_bytes_processed)
     {
@@ -1886,10 +1843,7 @@ void DCE2_SmbProcessFileData(DCE2_SmbSsnData* ssd,
 void DCE2_FileDetect()
 {
     Packet* top_pkt = DetectionEngine::get_current_packet();
-
-    Profile profile(dce2_smb_pstat_smb_file_detect);
     DetectionEngine::detect(top_pkt);
-
     dce2_detected = 1;
 }
 

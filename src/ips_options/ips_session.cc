@@ -129,7 +129,7 @@ bool SessionOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus SessionOption::eval(Cursor&, Packet* p)
 {
-    Profile profile(sessionPerfStats);
+    RuleProfile profile(sessionPerfStats);
 
     if ( !p->dsize || !p->data )
         return MATCH;

@@ -80,7 +80,7 @@ bool TtlOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus TtlOption::eval(Cursor&, Packet* p)
 {
-    Profile profile(ttlCheckPerfStats);
+    RuleProfile profile(ttlCheckPerfStats);
 
     if(!p->ptrs.ip_api.is_ip())
         return NO_MATCH;

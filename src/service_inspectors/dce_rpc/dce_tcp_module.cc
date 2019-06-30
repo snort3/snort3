@@ -137,57 +137,9 @@ PegCount* Dce2TcpModule::get_counts() const
     return (PegCount*)&dce2_tcp_stats;
 }
 
-ProfileStats* Dce2TcpModule::get_profile(
-    unsigned index, const char*& name, const char*& parent) const
+ProfileStats* Dce2TcpModule::get_profile() const
 {
-    switch ( index )
-    {
-    case 0:
-        name = "dce_tcp_main";
-        parent = nullptr;
-        return &dce2_tcp_pstat_main;
-
-    case 1:
-        name = "dce_tcp_session";
-        parent = "dce_tcp_main";
-        return &dce2_tcp_pstat_session;
-
-    case 2:
-        name = "dce_tcp_new_session";
-        parent = "dce_tcp_session";
-        return &dce2_tcp_pstat_new_session;
-
-    case 3:
-        name = "dce_tcp_detect";
-        parent = "dce_tcp_main";
-        return &dce2_tcp_pstat_detect;
-
-    case 4:
-        name = "dce_tcp_log";
-        parent = "dce_tcp_main";
-        return &dce2_tcp_pstat_log;
-
-    case 5:
-        name = "dce_tcp_co_segment";
-        parent = "dce_tcp_main";
-        return &dce2_tcp_pstat_co_seg;
-
-    case 6:
-        name = "dce_tcp_co_fragment";
-        parent = "dce_tcp_main";
-        return &dce2_tcp_pstat_co_frag;
-
-    case 7:
-        name = "dce_tcp_co_reassembly";
-        parent = "dce_tcp_main";
-        return &dce2_tcp_pstat_co_reass;
-
-    case 8:
-        name = "dce_tcp_co_context";
-        parent = "dce_tcp_main";
-        return &dce2_tcp_pstat_co_ctx;
-    }
-    return nullptr;
+    return &dce2_tcp_pstat_main;
 }
 
 bool Dce2TcpModule::set(const char*, Value& v, SnortConfig*)

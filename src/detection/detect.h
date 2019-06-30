@@ -35,8 +35,6 @@ struct RuleFpList;
 struct RuleTreeNode;
 
 extern THREAD_LOCAL snort::ProfileStats eventqPerfStats;
-extern THREAD_LOCAL snort::ProfileStats detectPerfStats;
-extern THREAD_LOCAL snort::ProfileStats rebuiltPacketPerfStats;
 
 // main loop hooks
 bool snort_ignore(snort::Packet*);

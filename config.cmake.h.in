@@ -79,9 +79,6 @@
 /* disable snort memory manager */
 #cmakedefine NO_MEM_MGR 1
 
-/* enable deep profiling */
-#cmakedefine DEEP_PROFILING 1
-
 /* signal to dump stats  */
 #cmakedefine SIGNAL_SNORT_DUMP_STATS @SIGNAL_SNORT_DUMP_STATS@
 

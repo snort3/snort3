@@ -103,7 +103,7 @@ bool IcmpIdOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus IcmpIdOption::eval(Cursor&, Packet* p)
 {
-    Profile profile(icmpIdPerfStats);
+    RuleProfile profile(icmpIdPerfStats);
 
     if (!p->ptrs.icmph)
         return NO_MATCH;

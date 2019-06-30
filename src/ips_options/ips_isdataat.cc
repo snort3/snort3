@@ -129,7 +129,7 @@ bool IsDataAtOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus IsDataAtOption::eval(Cursor& c, Packet*)
 {
-    Profile profile(isDataAtPerfStats);
+    RuleProfile profile(isDataAtPerfStats);
 
     int offset;
 

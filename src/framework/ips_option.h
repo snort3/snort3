@@ -102,12 +102,6 @@ public:
     virtual PatternMatchData* get_alternate_pattern()
     { return nullptr; }
 
-    static int eval(void* v, Cursor& c, Packet* p)
-    {
-        IpsOption* opt = (IpsOption*)v;
-        return opt->eval(c, p);
-    }
-
     static void set_buffer(const char*);
 
 protected:

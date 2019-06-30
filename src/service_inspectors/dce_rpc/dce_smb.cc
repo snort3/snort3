@@ -39,29 +39,7 @@
 #include "dce_smb2.h"
 
 THREAD_LOCAL dce2SmbStats dce2_smb_stats;
-
-// used here
 THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_main;
-THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_session;
-THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_new_session;
-THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_smb_req;
-
-// used elsewhere
-THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_detect;
-THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_log;
-THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_co_seg;
-THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_co_frag;
-THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_co_reass;
-THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_co_ctx;
-THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_smb_seg;
-THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_smb_uid;
-THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_smb_tid;
-THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_smb_fid;
-THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_smb_file;
-THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_smb_file_detect;
-THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_smb_file_api;
-THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_smb_fingerprint;
-THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_smb_negotiate;
 
 //-------------------------------------------------------------------------
 // debug stuff

@@ -446,8 +446,6 @@ static DCE2_SmbRequestTracker* DCE2_SmbFindRequestTracker(DCE2_SmbSsnData* ssd,
     uint16_t pid = SmbPid(smb_hdr);
     uint16_t mid = SmbMid(smb_hdr);
 
-    Profile profile(dce2_smb_pstat_smb_req);
-
     DCE2_SmbRequestTracker* tmp_rtracker = &ssd->rtracker;
     int smb_com = SmbCom(smb_hdr);
     switch (smb_com)
@@ -1334,8 +1332,6 @@ static DCE2_SmbSsnData* set_new_dce2_smb_session(Packet* p)
 
 static DCE2_SmbSsnData* dce2_create_new_smb_session(Packet* p, dce2SmbProtoConf* config)
 {
-    Profile profile(dce2_smb_pstat_new_session);
-
     DCE2_SmbSsnData* dce2_smb_sess = set_new_dce2_smb_session(p);
     if ( dce2_smb_sess )
     {
@@ -2549,8 +2545,6 @@ void DCE2_SmbInitGlobals()
 
 DCE2_SmbSsnData* dce2_handle_smb_session(Packet* p, dce2SmbProtoConf* config)
 {
-    Profile profile(dce2_smb_pstat_session);
-
     DCE2_SmbSsnData* dce2_smb_sess =  get_dce2_smb_session_data(p->flow);
 
     if (dce2_smb_sess == nullptr)

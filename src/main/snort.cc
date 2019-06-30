@@ -100,29 +100,17 @@ static pid_t snort_main_thread_pid = 0;
 
 static ProfileStats* get_profile(const char* key)
 {
-    if ( !strcmp(key, "detect") )
-        return &detectPerfStats;
+    if ( !strcmp(key, "daq") )
+        return &daqPerfStats;
+
+    if ( !strcmp(key, "decode") )
+        return &decodePerfStats;
 
     if ( !strcmp(key, "mpse") )
         return &mpsePerfStats;
 
-    if ( !strcmp(key, "rebuilt_packet") )
-        return &rebuiltPacketPerfStats;
-
     if ( !strcmp(key, "rule_eval") )
         return &rulePerfStats;
-
-    if ( !strcmp(key, "rtn_eval") )
-        return &ruleRTNEvalPerfStats;
-
-    if ( !strcmp(key, "rule_tree_eval") )
-        return &ruleOTNEvalPerfStats;
-
-    if ( !strcmp(key, "nfp_rule_tree_eval") )
-        return &ruleNFPEvalPerfStats;
-
-    if ( !strcmp(key, "decode") )
-        return &decodePerfStats;
 
     if ( !strcmp(key, "eventq") )
         return &eventqPerfStats;
@@ -135,22 +123,13 @@ static ProfileStats* get_profile(const char* key)
 
 static void register_profiles()
 {
-    Profiler::register_module("detect", nullptr, get_profile);
-    Profiler::register_module("mpse", "detect", get_profile);
-    Profiler::register_module("rebuilt_packet", "detect", get_profile);
-    Profiler::register_module("rule_eval", "detect", get_profile);
-    Profiler::register_module("rtn_eval", "rule_eval", get_profile);
-    Profiler::register_module("rule_tree_eval", "rule_eval", get_profile);
-    Profiler::register_module("nfp_rule_tree_eval", "rule_eval", get_profile);
+    Profiler::register_module("daq", nullptr, get_profile);
     Profiler::register_module("decode", nullptr, get_profile);
+    Profiler::register_module("mpse", nullptr, get_profile);
+    Profiler::register_module("rule_eval", nullptr, get_profile);
     Profiler::register_module("eventq", nullptr, get_profile);
     Profiler::register_module("total", nullptr, get_profile);
-    Profiler::register_module("daq_meta", nullptr, get_profile);
 }
-
-//-------------------------------------------------------------------------
-// helpers
-//-------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------
 // initialization

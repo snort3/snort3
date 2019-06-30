@@ -179,7 +179,7 @@ bool LuaJitOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus LuaJitOption::eval(Cursor& c, Packet*)
 {
-    Profile profile(luaIpsPerfStats);
+    RuleProfile profile(luaIpsPerfStats);
 
     cursor = &c;
 

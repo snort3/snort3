@@ -124,27 +124,21 @@ public:
 
 #ifdef NO_PROFILER
 using Profile = ProfileDisabled;
-using DeepProfile = ProfileDisabled;
 using NoProfile = ProfileDisabled;
 #else
 #ifdef NO_MEM_MGR
 using Profile = NoMemContext;
 using NoProfile = NoMemExclude;
-#ifdef DEEP_PROFILING
-using DeepProfile = NoMemContext;
-#else
-using DeepProfile = ProfileDisabled;
-#endif
 #else
 using Profile = ProfileContext;
 using NoProfile = ProfileExclude;
-#ifdef DEEP_PROFILING
-using DeepProfile = ProfileContext;
-#else
-using DeepProfile = ProfileDisabled;
 #endif
 #endif
-#endif
+
+// developer enable for profiling rule options
+// see also fp_eval_option
+//using RuleProfile = ProfileContext;
+using RuleProfile = ProfileDisabled;
 
 }
 #endif

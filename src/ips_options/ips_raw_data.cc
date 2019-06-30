@@ -46,7 +46,7 @@ public:
 
 IpsOption::EvalStatus RawDataOption::eval(Cursor& c, Packet* p)
 {
-    Profile profile(rawDataPerfStats);
+    RuleProfile profile(rawDataPerfStats);
 
     c.set(s_name, p->data, p->dsize);
     return MATCH;

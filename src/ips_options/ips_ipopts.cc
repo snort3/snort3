@@ -99,7 +99,7 @@ bool IpOptOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus IpOptOption::eval(Cursor&, Packet* p)
 {
-    Profile profile(ipOptionPerfStats);
+    RuleProfile profile(ipOptionPerfStats);
 
     if ( !p->is_ip4() )
         // if error occurred while ip header

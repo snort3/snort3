@@ -34,15 +34,7 @@
 using namespace snort;
 
 THREAD_LOCAL dce2UdpStats dce2_udp_stats;
-
 THREAD_LOCAL ProfileStats dce2_udp_pstat_main;
-THREAD_LOCAL ProfileStats dce2_udp_pstat_session;
-THREAD_LOCAL ProfileStats dce2_udp_pstat_new_session;
-THREAD_LOCAL ProfileStats dce2_udp_pstat_detect;
-THREAD_LOCAL ProfileStats dce2_udp_pstat_log;
-THREAD_LOCAL ProfileStats dce2_udp_pstat_cl_acts;
-THREAD_LOCAL ProfileStats dce2_udp_pstat_cl_frag;
-THREAD_LOCAL ProfileStats dce2_udp_pstat_cl_reass;
 
 static void DCE2_ClCleanTracker(DCE2_ClTracker* clt)
 {
@@ -91,10 +83,7 @@ static DCE2_UdpSsnData* set_new_dce2_udp_session(Packet* p)
 
 static DCE2_UdpSsnData* dce2_create_new_udp_session(Packet* p, dce2UdpProtoConf* config)
 {
-    Profile profile(dce2_udp_pstat_new_session);
-
     DCE2_UdpSsnData* dce2_udp_sess = set_new_dce2_udp_session(p);
-
     DCE2_ResetRopts(&dce2_udp_sess->sd, p);
 
     dce2_udp_stats.udp_sessions++;
@@ -106,8 +95,6 @@ static DCE2_UdpSsnData* dce2_create_new_udp_session(Packet* p, dce2UdpProtoConf*
 
 static DCE2_UdpSsnData* dce2_handle_udp_session(Packet* p, dce2UdpProtoConf* config)
 {
-    Profile profile(dce2_udp_pstat_session);
-
     DCE2_UdpSsnData* dce2_udp_sess =  get_dce2_udp_session_data(p->flow);
 
     if (dce2_udp_sess == nullptr)

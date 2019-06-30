@@ -225,17 +225,6 @@ static DCE2_Ret DCE2_CoSetIface(DCE2_SsnData* sd, DCE2_CoTracker* cot, uint16_t 
     if (cot->ctx_ids == nullptr)
         return DCE2_RET__ERROR;
 
-    // FIXIT-M these Profile aren't actually helping ...
-    if (sd->trans == DCE2_TRANS_TYPE__TCP)
-    {
-        Profile profile(dce2_tcp_pstat_co_ctx);
-    }
-    else
-    {
-        Profile profile(dce2_smb_pstat_co_ctx);
-    }
-    // FIXIT-M add missing cases (HTTP, UDP, ...)
-
     DCE2_CoCtxIdNode* ctx_id_node =
         (DCE2_CoCtxIdNode*)DCE2_ListFind(cot->ctx_ids, (void*)(uintptr_t)ctx_id);
 
@@ -567,14 +556,6 @@ static DCE2_CoCtxIdNode* dce_co_process_ctx_id(DCE2_SsnData* sd,DCE2_CoTracker* 
 
         dce2_move(frag_ptr, frag_len, sizeof(DceRpcCoSynId));
     }
-    if (sd->trans == DCE2_TRANS_TYPE__TCP)
-    {
-        Profile profile(dce2_tcp_pstat_co_ctx);
-    }
-    else
-    {
-        Profile profile(dce2_smb_pstat_co_ctx);
-    }
 
     /* If there is already an accepted node with in the list
      * with this ctx, just return */
@@ -657,21 +638,11 @@ static void DCE2_CoCtxReq(DCE2_SsnData* sd, DCE2_CoTracker* cot, const DceRpcCoH
     }
 }
 
-static void dce_co_process_ctx_result(DCE2_SsnData* sd,DCE2_CoTracker* cot,
-    const DceRpcCoHdr* co_hdr,DCE2_Policy policy,
-    uint16_t result)
+static void dce_co_process_ctx_result(DCE2_SsnData*, DCE2_CoTracker* cot,
+    const DceRpcCoHdr* co_hdr,DCE2_Policy policy, uint16_t result)
 {
     DCE2_CoCtxIdNode* ctx_node, * existing_ctx_node;
     DCE2_Ret status;
-
-    if (sd->trans == DCE2_TRANS_TYPE__TCP)
-    {
-        Profile profile(dce2_tcp_pstat_co_ctx);
-    }
-    else
-    {
-        Profile profile(dce2_smb_pstat_co_ctx);
-    }
 
     /* Dequeue context item in pending queue - this will get put in the permanent
      * context id list or freed */
@@ -1202,15 +1173,6 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     int co_hdr_len = from_client ? DCE2_MOCK_HDR_LEN__CO_CLI : DCE2_MOCK_HDR_LEN__CO_SRV;
     int smb_hdr_len = from_client ? DCE2_MOCK_HDR_LEN__SMB_CLI : DCE2_MOCK_HDR_LEN__SMB_SRV;
 
-    if (sd->trans == DCE2_TRANS_TYPE__TCP)
-    {
-        Profile profile(dce2_tcp_pstat_co_reass);
-    }
-    else
-    {
-        Profile profile(dce2_smb_pstat_co_reass);
-    }
-
     DCE2_RpktType rpkt_type;
     Packet* rpkt = DCE2_CoGetRpkt(sd, cot, co_rtype, &rpkt_type);
     if (rpkt == nullptr)
@@ -1315,15 +1277,6 @@ static DCE2_Ret dce_co_handle_frag(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     DCE2_Ret status;
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
     Packet* p = DetectionEngine::get_current_packet();
-
-    if (sd->trans == DCE2_TRANS_TYPE__TCP)
-    {
-        Profile profile(dce2_tcp_pstat_co_frag);
-    }
-    else
-    {
-        Profile profile(dce2_smb_pstat_co_frag);
-    }
 
     if ( p->is_from_client() )
     {
@@ -2052,15 +2005,6 @@ static Packet* DCE2_CoGetSegRpkt(DCE2_SsnData* sd,
     Packet* rpkt = nullptr;
     int smb_hdr_len = p->is_from_client() ? DCE2_MOCK_HDR_LEN__SMB_CLI : DCE2_MOCK_HDR_LEN__SMB_SRV;
 
-    if (sd->trans == DCE2_TRANS_TYPE__TCP)
-    {
-        Profile profile(dce2_tcp_pstat_co_reass);
-    }
-    else
-    {
-        Profile profile(dce2_smb_pstat_co_reass);
-    }
-
     switch (sd->trans)
     {
     case DCE2_TRANS_TYPE__SMB:
@@ -2208,20 +2152,9 @@ static DCE2_Ret DCE2_HandleSegmentation(DCE2_Buffer* seg_buf, const uint8_t* dat
  * buffer object if necessary.
  *
  ********************************************************************/
-static DCE2_Ret DCE2_CoHandleSegmentation(DCE2_SsnData* sd, DCE2_CoSeg* seg,
+static DCE2_Ret DCE2_CoHandleSegmentation(DCE2_SsnData*, DCE2_CoSeg* seg,
     const uint8_t* data_ptr, uint16_t data_len, uint16_t need_len, uint16_t* data_used)
 {
-    DCE2_Ret status;
-
-    if (sd->trans == DCE2_TRANS_TYPE__TCP)
-    {
-        Profile profile(dce2_tcp_pstat_co_seg);
-    }
-    else
-    {
-        Profile profile(dce2_smb_pstat_co_seg);
-    }
-
     if (seg == nullptr)
     {
         return DCE2_RET__ERROR;
@@ -2236,10 +2169,7 @@ static DCE2_Ret DCE2_CoHandleSegmentation(DCE2_SsnData* sd, DCE2_CoSeg* seg,
         }
     }
 
-    status = DCE2_HandleSegmentation(seg->buf,
-        data_ptr, data_len, need_len, data_used);
-
-    return status;
+    return DCE2_HandleSegmentation(seg->buf, data_ptr, data_len, need_len, data_used);
 }
 
 /********************************************************************

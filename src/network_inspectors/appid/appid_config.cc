@@ -766,10 +766,6 @@ bool AppIdConfig::init_appid(SnortConfig* sc)
         dns_host_detector_process_patterns();
         read_port_detectors(ODP_PORT_DETECTORS);
         read_port_detectors(CUSTOM_PORT_DETECTORS);
-        appid_http_profiler_init();
-#ifdef ENABLE_APPID_THIRD_PARTY
-        tp_appid_profiler_init();
-#endif
         once = true;
     }
 #ifdef USE_RNA_CONFIG

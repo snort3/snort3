@@ -100,7 +100,7 @@ private:
 
 IpsOption::EvalStatus SipIpsOption::eval(Cursor& c, Packet* p)
 {
-    Profile profile(sip_ps[idx]);
+    RuleProfile profile(sip_ps[idx]);
 
     if ((!p->has_tcp_data() && !p->is_udp()) || !p->flow || !p->dsize)
         return NO_MATCH;

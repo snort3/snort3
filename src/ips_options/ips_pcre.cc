@@ -538,7 +538,7 @@ bool PcreOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus PcreOption::eval(Cursor& c, Packet*)
 {
-    Profile profile(pcrePerfStats);
+    RuleProfile profile(pcrePerfStats);
 
     // short circuit this for testing pcre performance impact
     if ( SnortConfig::no_pcre() )

@@ -50,9 +50,7 @@
 
 using namespace snort;
 
-THREAD_LOCAL ProfileStats detectPerfStats;
 THREAD_LOCAL ProfileStats eventqPerfStats;
-THREAD_LOCAL ProfileStats rebuiltPacketPerfStats;
 
 bool snort_ignore(Packet*) { return true; }
 

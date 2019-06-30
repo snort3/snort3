@@ -81,7 +81,7 @@ bool FileTypeOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus FileTypeOption::eval(Cursor&, Packet* pkt)
 {
-    Profile profile(fileTypePerfStats);
+    RuleProfile profile(fileTypePerfStats);
 
     if (!pkt->flow)
         return NO_MATCH;

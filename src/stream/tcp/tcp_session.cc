@@ -370,8 +370,6 @@ void TcpSession::update_stream_order(TcpSegmentDescriptor& tsd, bool aligned)
 
 int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
 {
-    DeepProfile profile(s5TcpDataPerfStats);
-
     const tcp::TCPHdr* tcph = tsd.get_tcph();
     uint32_t seq = tsd.get_seg_seq();
 
@@ -1039,8 +1037,6 @@ int TcpSession::process(Packet* p)
         return ACTION_NOTHING;
     else
     {
-        DeepProfile tcp_state_profile(s5TcpStatePerfStats);
-
         if ( tsm->eval(tsd, *talker, *listener) )
         {
             do_packet_analysis_post_checks(p);

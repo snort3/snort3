@@ -153,7 +153,6 @@ bool IpSession::setup(Packet* p)
     if ( Stream::expected_flow(flow, p) )
     {
         ip_stats.sessions--; // Incremented in SESSION_STATS_ADD
-        MODULE_PROFILE_END(ip_perf_stats);
         return false;
     }
 #endif

@@ -118,7 +118,7 @@ bool RpcOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus RpcOption::eval(Cursor&, Packet* p)
 {
-    Profile profile(rpcCheckPerfStats);
+    RuleProfile profile(rpcCheckPerfStats);
 
     if ( !is_valid(p) )
         return NO_MATCH;

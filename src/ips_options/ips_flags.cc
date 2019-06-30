@@ -115,7 +115,7 @@ bool TcpFlagOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus TcpFlagOption::eval(Cursor&, Packet* p)
 {
-    Profile profile(tcpFlagsPerfStats);
+    RuleProfile profile(tcpFlagsPerfStats);
 
     // if error appeared when tcp header was processed,
     // test fails automagically.

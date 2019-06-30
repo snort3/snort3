@@ -103,7 +103,7 @@ bool SoOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus SoOption::eval(Cursor& c, Packet* p)
 {
-    Profile profile(soPerfStats);
+    RuleProfile profile(soPerfStats);
     return func(data, c, p);
 }
 

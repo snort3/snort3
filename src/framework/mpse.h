@@ -119,8 +119,6 @@ private:
     const MpseApi* api;
 };
 
-extern THREAD_LOCAL ProfileStats mpsePerfStats;
-
 typedef void (* MpseOptFunc)(SnortConfig*);
 typedef void (* MpseExeFunc)();
 

@@ -71,15 +71,6 @@ struct dce2TcpStats
 
 extern THREAD_LOCAL dce2TcpStats dce2_tcp_stats;
 extern THREAD_LOCAL snort::ProfileStats dce2_tcp_pstat_main;
-extern THREAD_LOCAL snort::ProfileStats dce2_tcp_pstat_session;
-extern THREAD_LOCAL snort::ProfileStats dce2_tcp_pstat_new_session;
-extern THREAD_LOCAL snort::ProfileStats dce2_tcp_pstat_session_state;
-extern THREAD_LOCAL snort::ProfileStats dce2_tcp_pstat_detect;
-extern THREAD_LOCAL snort::ProfileStats dce2_tcp_pstat_log;
-extern THREAD_LOCAL snort::ProfileStats dce2_tcp_pstat_co_seg;
-extern THREAD_LOCAL snort::ProfileStats dce2_tcp_pstat_co_frag;
-extern THREAD_LOCAL snort::ProfileStats dce2_tcp_pstat_co_reass;
-extern THREAD_LOCAL snort::ProfileStats dce2_tcp_pstat_co_ctx;
 
 inline bool DCE2_TcpAutodetect(snort::Packet* p)
 {

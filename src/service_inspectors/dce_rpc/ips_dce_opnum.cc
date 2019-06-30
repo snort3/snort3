@@ -400,7 +400,7 @@ bool Dce2OpnumOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus Dce2OpnumOption::eval(Cursor&, Packet* p)
 {
-    Profile profile(dce2_opnum_perf_stats);
+    RuleProfile profile(dce2_opnum_perf_stats);
 
     if (p->dsize == 0)
     {

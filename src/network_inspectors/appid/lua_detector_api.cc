@@ -64,19 +64,6 @@ enum LuaLogLevels
     LUA_LOG_TRACE = 5,
 };
 
-// FIXIT-L: Add separate perf stats for ODP detectors and custom
-// detectors if more granularity is desired
-static THREAD_LOCAL ProfileStats lua_validate_perf_stats;
-
-static ProfileStats* get_profile(const char*)
-{
-    return &lua_validate_perf_stats;
-}
-void lua_detector_profiler_init()
-{
-    Profiler::register_module("lua_validate", "appid", get_profile);
-}
-
 static std::unordered_map<AppId, CHPApp*>* CHP_glossary = nullptr; // tracks http multipatterns
 
 void init_chp_glossary()
@@ -2673,7 +2660,6 @@ LuaServiceObject::LuaServiceObject(AppIdDiscovery* sdm, const std::string& detec
 
 int LuaServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    DeepProfile profile(lua_validate_perf_stats);
     //FIXIT-M: RELOAD - use lua references to get user data object from stack
     auto my_lua_state = lua_detector_mgr? lua_detector_mgr->L : nullptr;
     lua_settop(my_lua_state,0);
@@ -2751,7 +2737,6 @@ LuaStateDescriptor* LuaObject::validate_lua_state(bool packet_context)
 
 int LuaClientDetector::validate(AppIdDiscoveryArgs& args)
 {
-    DeepProfile profile(lua_validate_perf_stats);
     //FIXIT-M: RELOAD - use lua references to get user data object from stack
     auto my_lua_state = lua_detector_mgr? lua_detector_mgr->L : nullptr;
     std::string name = this->name + "_";

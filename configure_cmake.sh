@@ -51,8 +51,6 @@ Optional Features:
     --enable-gprof-profile  enable gprof profiling options (developers only)
     --disable-snort-profiler
                             disable snort performance profiling (cpu and memory) (developers only)
-    --enable-deep-profiling
-                            enabled detailed snort performance profiling (developers only)
     --disable-memory-manager
                             disable snort memory manager (developers only)
     --disable-corefiles     prevent Snort from generating core files
@@ -245,9 +243,6 @@ while [ $# -ne 0 ]; do
             ;;
         --disable-snort-profiler)
             append_cache_entry DISABLE_SNORT_PROFILER   BOOL true
-            ;;
-        --enable-deep-profiling)
-            append_cache_entry ENABLE_DEEP_PROFILING    BOOL true
             ;;
         --disable-memory-manager)
             append_cache_entry DISABLE_MEMORY_MANAGER   BOOL true

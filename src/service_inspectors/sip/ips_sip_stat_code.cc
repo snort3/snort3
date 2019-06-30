@@ -90,7 +90,7 @@ bool SipStatCodeOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus SipStatCodeOption::eval(Cursor&, Packet* p)
 {
-    Profile profile(sipStatCodeRuleOptionPerfStats);
+    RuleProfile profile(sipStatCodeRuleOptionPerfStats);
 
     if ((!p->has_tcp_data() && !p->is_udp()) || !p->flow || !p->dsize)
         return NO_MATCH;

@@ -46,7 +46,7 @@ public:
 
 IpsOption::EvalStatus PktDataOption::eval(Cursor& c, Packet* p)
 {
-    Profile profile(pktDataPerfStats);
+    RuleProfile profile(pktDataPerfStats);
 
     c.reset(p);
     return MATCH;

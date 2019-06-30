@@ -1216,8 +1216,6 @@ DCE2_Ret DCE2_SmbSessionSetupAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             if ((word_count != 13) && (word_count != 12))
                 return DCE2_RET__SUCCESS;
 
-            snort::Profile profile(dce2_smb_pstat_smb_fingerprint);
-
             if (word_count == 13)
             {
                 uint16_t oem_pass_len =
@@ -1385,8 +1383,6 @@ DCE2_Ret DCE2_SmbSessionSetupAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
             if (DCE2_ComInfoByteCount(com_info) == 0)
                 return DCE2_RET__SUCCESS;
-
-            snort::Profile profile(dce2_smb_pstat_smb_fingerprint);
 
             if (DCE2_ComInfoWordCount(com_info) == 3)
             {
@@ -1566,8 +1562,6 @@ DCE2_Ret DCE2_SmbNegotiate(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
 {
     if (!DCE2_ComInfoCanProcessCommand(com_info))
         return DCE2_RET__ERROR;
-
-    snort::Profile profile(dce2_smb_pstat_smb_negotiate);
 
     if (DCE2_ComInfoIsRequest(com_info))
     {

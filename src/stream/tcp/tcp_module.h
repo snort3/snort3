@@ -52,13 +52,6 @@
 extern const PegInfo tcp_pegs[];
 
 extern THREAD_LOCAL snort::ProfileStats s5TcpPerfStats;
-extern THREAD_LOCAL snort::ProfileStats s5TcpNewSessPerfStats;
-extern THREAD_LOCAL snort::ProfileStats s5TcpStatePerfStats;
-extern THREAD_LOCAL snort::ProfileStats s5TcpDataPerfStats;
-extern THREAD_LOCAL snort::ProfileStats s5TcpInsertPerfStats;
-extern THREAD_LOCAL snort::ProfileStats s5TcpPAFPerfStats;
-extern THREAD_LOCAL snort::ProfileStats s5TcpFlushPerfStats;
-extern THREAD_LOCAL snort::ProfileStats s5TcpBuildPacketPerfStats;
 extern THREAD_LOCAL snort::ProfileStats streamSizePerfStats;
 
 struct TcpStats

@@ -257,7 +257,7 @@ bool FlowBitsOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus FlowBitsOption::eval(Cursor&, Packet* p)
 {
-    Profile profile(flowBitsPerfStats);
+    RuleProfile profile(flowBitsPerfStats);
 
     FLOWBITS_OP* flowbits = config;
 

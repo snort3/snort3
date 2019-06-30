@@ -197,7 +197,7 @@ int HashOption::match(Cursor& c)
 
 IpsOption::EvalStatus HashOption::eval(Cursor& c, Packet*)
 {
-    Profile profile(hash_ps[idx]);
+    RuleProfile profile(hash_ps[idx]);
 
     int found = match(c);
 

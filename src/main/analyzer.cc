@@ -75,6 +75,8 @@ using namespace std;
 static MainHook_f main_hook = snort_ignore;
 
 THREAD_LOCAL ProfileStats totalPerfStats;
+THREAD_LOCAL ProfileStats daqPerfStats;
+
 static THREAD_LOCAL Analyzer* local_analyzer = nullptr;
 
 //-------------------------------------------------------------------------
@@ -285,8 +287,8 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
         PacketTracer::log("Policies: Network %u, Inspection %u, Detection %u\n",
             get_network_policy()->user_policy_id, get_inspection_policy()->user_policy_id,
             get_ips_policy()->user_policy_id);
-        PacketTracer::log("Verdict: %s\n", SFDAQ::verdict_to_string(verdict));
 
+        PacketTracer::log("Verdict: %s\n", SFDAQ::verdict_to_string(verdict));
         PacketTracer::dump(p);
     }
 
@@ -296,6 +298,7 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
 
     if (verdict == DAQ_VERDICT_RETRY)
         retry_queue->put(p->daq_msg);
+
     else if ( !p->active->is_packet_held() )
     {
         // Publish an event if something has indicated that it wants the
@@ -305,17 +308,18 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
             FinalizePacketEvent event(p, verdict);
             DataBus::publish(FINALIZE_PACKET_EVENT, event);
         }
-
-        p->daq_instance->finalize_message(p->daq_msg, verdict);
+        {
+            Profile profile(daqPerfStats);
+            p->daq_instance->finalize_message(p->daq_msg, verdict);
+        }
     }
 }
 
 void Analyzer::process_daq_pkt_msg(DAQ_Msg_h msg, bool retry)
 {
-    const DAQ_PktHdr_t* pkthdr = daq_msg_get_pkthdr(msg);
-
-    set_default_policy();
     Profile profile(totalPerfStats);
+    const DAQ_PktHdr_t* pkthdr = daq_msg_get_pkthdr(msg);
+    set_default_policy();
 
     if (!retry)
     {
@@ -363,7 +367,10 @@ void Analyzer::process_daq_msg(DAQ_Msg_h msg, bool retry)
         default:
             break;
     }
-    daq_instance->finalize_message(msg, DAQ_VERDICT_PASS);
+    {
+        Profile profile(daqPerfStats);
+        daq_instance->finalize_message(msg, DAQ_VERDICT_PASS);
+    }
 }
 
 void Analyzer::process_retry_queue()
@@ -383,10 +390,6 @@ void Analyzer::process_retry_queue()
  */
 bool Analyzer::inspect_rebuilt(Packet* p)
 {
-    // Need to include this b/c call is outside the detect tree
-    Profile detect_profile(detectPerfStats);
-    DeepProfile rebuilt_profile(rebuiltPacketPerfStats);
-
     DetectionEngine de;
     return main_hook(p);
 }
@@ -410,6 +413,12 @@ void Analyzer::post_process_packet(Packet* p)
 
 void Analyzer::finalize_daq_message(DAQ_Msg_h msg, DAQ_Verdict verdict)
 {
+    // FIXIT-L excluding daqPerfStats profile here because it needs to
+    // be excluded by stream_tcp which requires some refactoring.
+    // Instead the profiler could automatically exclude from current
+    // context if new scope has no parent but that requires additional
+    // plumbing.
+    // Profile profile(daqPerfStats);
     daq_instance->finalize_message(msg, verdict);
 }
 
@@ -551,7 +560,10 @@ void Analyzer::term()
     {
         DAQ_Msg_h msg;
         while ((msg = retry_queue->get()) != nullptr)
+        {
+            Profile profile(daqPerfStats);
             daq_instance->finalize_message(msg, DAQ_VERDICT_BLOCK);
+        }
         daq_instance->stop();
     }
     SFDAQ::set_local_instance(nullptr);
@@ -681,7 +693,11 @@ DAQ_RecvStatus Analyzer::process_messages()
     if (pause_after_cnt && pause_after_cnt < max_recv)
         max_recv = pause_after_cnt;
 
-    DAQ_RecvStatus rstat = daq_instance->receive_messages(max_recv);
+    DAQ_RecvStatus rstat;
+    {
+        Profile profile(daqPerfStats);
+        rstat = daq_instance->receive_messages(max_recv);
+    }
 
     unsigned num_recv = 0;
     DAQ_Msg_h msg;
@@ -690,6 +706,7 @@ DAQ_RecvStatus Analyzer::process_messages()
         // Dispose of any messages to be skipped first.
         if (skip_cnt > 0)
         {
+            Profile profile(daqPerfStats);
             aux_counts.skipped++;
             skip_cnt--;
             daq_instance->finalize_message(msg, DAQ_VERDICT_PASS);

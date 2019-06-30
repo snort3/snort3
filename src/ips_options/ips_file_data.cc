@@ -51,7 +51,7 @@ public:
 
 IpsOption::EvalStatus FileDataOption::eval(Cursor& c, Packet* p)
 {
-    Profile profile(fileDataPerfStats);
+    RuleProfile profile(fileDataPerfStats);
 
     DataPointer dp = DetectionEngine::get_file_data(p->context);
 

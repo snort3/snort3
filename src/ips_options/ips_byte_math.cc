@@ -161,7 +161,7 @@ bool ByteMathOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus ByteMathOption::eval(Cursor& c, Packet* p)
 {
-    Profile profile(byteMathPerfStats);
+    RuleProfile profile(byteMathPerfStats);
 
     if (p == nullptr)
         return NO_MATCH;

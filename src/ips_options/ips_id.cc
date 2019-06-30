@@ -79,7 +79,7 @@ bool IpIdOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus IpIdOption::eval(Cursor&, Packet* p)
 {
-    Profile profile(ipIdPerfStats);
+    RuleProfile profile(ipIdPerfStats);
 
     if (!p->has_ip())
         return NO_MATCH;

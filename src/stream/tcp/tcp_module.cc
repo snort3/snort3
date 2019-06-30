@@ -26,6 +26,7 @@
 
 #include "main/snort_config.h"
 #include "profiler/profiler_defs.h"
+#include "stream/paf.h"
 
 using namespace snort;
 using namespace std;
@@ -35,13 +36,6 @@ using namespace std;
 //-------------------------------------------------------------------------
 
 THREAD_LOCAL ProfileStats s5TcpPerfStats;
-THREAD_LOCAL ProfileStats s5TcpNewSessPerfStats;
-THREAD_LOCAL ProfileStats s5TcpStatePerfStats;
-THREAD_LOCAL ProfileStats s5TcpDataPerfStats;
-THREAD_LOCAL ProfileStats s5TcpInsertPerfStats;
-THREAD_LOCAL ProfileStats s5TcpPAFPerfStats;
-THREAD_LOCAL ProfileStats s5TcpFlushPerfStats;
-THREAD_LOCAL ProfileStats s5TcpBuildPacketPerfStats;
 
 const PegInfo tcp_pegs[] =
 {
@@ -249,39 +243,9 @@ ProfileStats* StreamTcpModule::get_profile(
         return &s5TcpPerfStats;
 
     case 1:
-        name = "tcpNewSess";
-        parent = "stream_tcp";
-        return &s5TcpNewSessPerfStats;
-
-    case 2:
-        name = "tcpState";
-        parent = "stream_tcp";
-        return &s5TcpStatePerfStats;
-
-    case 3:
-        name = "tcpData";
-        parent = "tcpState";
-        return &s5TcpDataPerfStats;
-
-    case 4:
-        name = "tcpPktInsert";
-        parent = "tcpData";
-        return &s5TcpInsertPerfStats;
-
-    case 5:
-        name = "tcpPAF";
-        parent = "tcpState";
-        return &s5TcpPAFPerfStats;
-
-    case 6:
-        name = "tcpFlush";
-        parent = "tcpState";
-        return &s5TcpFlushPerfStats;
-
-    case 7:
-        name = "tcpBuildPacket";
-        parent = "tcpFlush";
-        return &s5TcpBuildPacketPerfStats;
+        name = "paf";
+        parent = nullptr;
+        return &pafPerfStats;
     }
     return nullptr;
 }

@@ -86,12 +86,6 @@
 
 using namespace snort;
 
-static THREAD_LOCAL ProfileStats service_disco_perf_stats;
-static ProfileStats* get_profile(const char*)
-{
-    return &service_disco_perf_stats;
-}
-
 static ServiceDetector* ftp_service;
 ServiceDiscovery* ServiceDiscovery::discovery_manager = nullptr;
 
@@ -177,8 +171,6 @@ void ServiceDiscovery::initialize()
         kv.second->initialize();
         service_detector_list.emplace_back(kv.second);
     }
-
-    Profiler::register_module("service_discovery", "appid", get_profile);
 }
 
 void ServiceDiscovery::finalize_service_patterns()
@@ -589,7 +581,6 @@ int ServiceDiscovery::add_ftp_service_state(AppIdSession& asd)
 bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
     AppidSessionDirection direction, AppidChangeBits& change_bits)
 {
-    DeepProfile profile(service_disco_perf_stats);
     bool isTpAppidDiscoveryDone = false;
     uint32_t prevRnaServiceState = asd.service_disco_state;
     AppId tp_app_id = asd.get_tp_app_id();

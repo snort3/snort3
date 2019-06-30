@@ -57,6 +57,8 @@ struct PafAux
 // max paf max = max datagram - eth mtu - 255 = 63780
 #define MAX_PAF_MAX (65535 -  PAF_LIMIT_FUZZ - 255)
 
+THREAD_LOCAL snort::ProfileStats pafPerfStats;
+
 //--------------------------------------------------------------------
 
 static uint32_t paf_flush (PAF_State* ps, PafAux& px, uint32_t* flags)
@@ -252,6 +254,7 @@ int32_t paf_check (
     const uint8_t* data, uint32_t len, uint32_t total,
     uint32_t seq, uint32_t* flags)
 {
+    Profile profile(pafPerfStats);
     PafAux px;
 
     if ( !paf_initialized(ps) )

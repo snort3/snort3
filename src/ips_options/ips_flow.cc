@@ -117,7 +117,7 @@ bool FlowCheckOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus FlowCheckOption::eval(Cursor&, Packet* p)
 {
-    Profile profile(flowCheckPerfStats);
+    RuleProfile profile(flowCheckPerfStats);
 
     FlowCheckData* fcd = &config;
 

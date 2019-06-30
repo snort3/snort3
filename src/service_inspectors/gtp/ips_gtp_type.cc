@@ -98,7 +98,7 @@ bool GtpTypeOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus GtpTypeOption::eval(Cursor&, Packet* p)
 {
-    Profile profile(gtp_type_prof);
+    RuleProfile profile(gtp_type_prof);
 
     if ( !p or !p->flow )
         return NO_MATCH;

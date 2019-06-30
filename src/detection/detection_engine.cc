@@ -524,7 +524,6 @@ void DetectionEngine::wait_for_context()
 bool DetectionEngine::detect(Packet* p, bool offload_ok)
 {
     assert(p);
-    Profile profile(detectPerfStats);
 
     if ( !p->ptrs.ip_api.is_valid() )
         return false;

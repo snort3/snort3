@@ -370,8 +370,6 @@ DCE2_Ret DCE2_SmbValidateTransactionFields(
 DCE2_Ret DCE2_SmbBufferTransactionData(DCE2_SmbTransactionTracker* ttracker,
     const uint8_t* data_ptr, uint16_t dcnt, uint16_t ddisp)
 {
-    snort::Profile profile(dce2_smb_pstat_smb_req);
-
     if (ttracker->dbuf == nullptr)
     {
         /* Buf size should be the total data count we need */
@@ -390,8 +388,6 @@ DCE2_Ret DCE2_SmbBufferTransactionData(DCE2_SmbTransactionTracker* ttracker,
 DCE2_Ret DCE2_SmbBufferTransactionParameters(DCE2_SmbTransactionTracker* ttracker,
     const uint8_t* param_ptr, uint16_t pcnt, uint16_t pdisp)
 {
-    snort::Profile profile(dce2_smb_pstat_smb_req);
-
     if (ttracker->pbuf == nullptr)
     {
         /* Buf size should be the total data count we need */

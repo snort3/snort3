@@ -80,7 +80,7 @@ bool IcodeOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus IcodeOption::eval(Cursor&, Packet* p)
 {
-    Profile profile(icmpCodePerfStats);
+    RuleProfile profile(icmpCodePerfStats);
 
     // return 0  if we don't have an icmp header
     if (!p->ptrs.icmph)

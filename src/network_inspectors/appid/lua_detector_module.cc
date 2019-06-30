@@ -198,9 +198,6 @@ LuaDetectorManager::~LuaDetectorManager()
 
 void LuaDetectorManager::initialize(AppIdConfig& config, int is_control)
 {
-    if (is_control)
-        lua_detector_profiler_init();
-
     // FIXIT-M: RELOAD - When reload is supported, remove this line which prevents re-initialize
     if (lua_detector_mgr)
         return;

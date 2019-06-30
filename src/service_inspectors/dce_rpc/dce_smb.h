@@ -193,24 +193,6 @@ struct dce2SmbStats
 
 extern THREAD_LOCAL dce2SmbStats dce2_smb_stats;
 extern THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_main;
-extern THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_session;
-extern THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_new_session;
-extern THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_detect;
-extern THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_log;
-extern THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_co_seg;
-extern THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_co_frag;
-extern THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_co_reass;
-extern THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_co_ctx;
-extern THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_smb_seg;
-extern THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_smb_req;
-extern THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_smb_uid;
-extern THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_smb_tid;
-extern THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_smb_fid;
-extern THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_smb_file;
-extern THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_smb_file_detect;
-extern THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_smb_file_api;
-extern THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_smb_fingerprint;
-extern THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_smb_negotiate;
 
 enum DCE2_SmbSsnState
 {

@@ -82,7 +82,7 @@ public:
     const snort::RuleMap* get_rules() const override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
-    snort::ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
+    snort::ProfileStats* get_profile() const override;
     void get_data(dce2SmbProtoConf&);
 
     Usage get_usage() const override

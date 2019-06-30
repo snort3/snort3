@@ -82,7 +82,7 @@ bool DsizeOption::operator==(const IpsOption& ips) const
 // Test the packet's payload size against the rule payload size value
 IpsOption::EvalStatus DsizeOption::eval(Cursor&, Packet* p)
 {
-    Profile profile(dsizePerfStats);
+    RuleProfile profile(dsizePerfStats);
 
     /* fake packet dsizes are always wrong
        (unless they are PDUs) */

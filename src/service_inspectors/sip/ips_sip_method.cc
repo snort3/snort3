@@ -103,7 +103,7 @@ bool SipMethodOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus SipMethodOption::eval(Cursor&, Packet* p)
 {
-    Profile profile(sipMethodRuleOptionPerfStats);
+    RuleProfile profile(sipMethodRuleOptionPerfStats);
 
     if ( !p->flow )
         return NO_MATCH;

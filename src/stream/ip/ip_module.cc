@@ -136,33 +136,8 @@ StreamIpModule::~StreamIpModule()
 const RuleMap* StreamIpModule::get_rules() const
 { return stream_ip_rules; }
 
-ProfileStats* StreamIpModule::get_profile(
-    unsigned index, const char*& name, const char*& parent) const
-{
-    switch ( index )
-    {
-    case 0:
-        name = "stream_ip";
-        parent = nullptr;
-        return &ip_perf_stats;
-
-    case 1:
-        name = "frag";
-        parent = "stream_ip";
-        return &fragPerfStats;
-
-    case 2:
-        name = "frag_insert";
-        parent = "frag";
-        return &fragInsertPerfStats;
-
-    case 3:
-        name = "frag_rebuild";
-        parent = "frag";
-        return &fragRebuildPerfStats;
-    }
-    return nullptr;
-}
+ProfileStats* StreamIpModule::get_profile() const
+{ return &ip_perf_stats; }
 
 StreamIpConfig* StreamIpModule::get_data()
 {

@@ -106,7 +106,7 @@ bool IpProtoOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus IpProtoOption::eval(Cursor&, Packet* p)
 {
-    Profile profile(ipProtoPerfStats);
+    RuleProfile profile(ipProtoPerfStats);
 
     IpProtoData* ipd = &config;
 

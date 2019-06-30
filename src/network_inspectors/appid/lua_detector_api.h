@@ -138,7 +138,6 @@ public:
     { return cd; }
 };
 
-void lua_detector_profiler_init();
 int register_detector(lua_State*);
 void init_chp_glossary();
 int init(lua_State*, int result=0);

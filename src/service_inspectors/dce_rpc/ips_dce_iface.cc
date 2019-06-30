@@ -366,7 +366,7 @@ bool Dce2IfaceOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus Dce2IfaceOption::eval(Cursor&, Packet* p)
 {
-    Profile profile(dce2_iface_perf_stats);
+    RuleProfile profile(dce2_iface_perf_stats);
 
     if (p->dsize == 0)
     {

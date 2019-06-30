@@ -107,7 +107,7 @@ bool Dnp3ObjOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus Dnp3ObjOption::eval(Cursor&, Packet* p)
 {
-    Profile profile(dnp3_obj_perf_stats);
+    RuleProfile profile(dnp3_obj_perf_stats);
 
     size_t header_size;
 

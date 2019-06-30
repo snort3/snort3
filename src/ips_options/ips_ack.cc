@@ -83,7 +83,7 @@ bool TcpAckOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus TcpAckOption::eval(Cursor&, Packet* p)
 {
-    Profile profile(tcpAckPerfStats);
+    RuleProfile profile(tcpAckPerfStats);
 
     if ( p->ptrs.tcph && config.eval(p->ptrs.tcph->th_ack) )
         return MATCH;
