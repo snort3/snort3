@@ -18,10 +18,6 @@
 
 // flow_stash_keys.h author Deepak Ramadass <deramada@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #ifndef FLOW_STASH_KEYS_H
 #define FLOW_STASH_KEYS_H
 
