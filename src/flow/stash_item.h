@@ -101,6 +101,7 @@ public:
             break;
         case STASH_ITEM_TYPE_GENERIC_OBJECT:
             delete val.generic_obj_val;
+            break;
         default:
             break;
         }
@@ -117,6 +118,9 @@ public:
 
     void get_val(std::string& str_val) const
     { str_val = *(val.str_val); }
+
+    void get_val(std::string*& str_val) const
+    { str_val = val.str_val; }
 
     void get_val(StashGenericObject* &obj_val) const
     { obj_val = val.generic_obj_val; }

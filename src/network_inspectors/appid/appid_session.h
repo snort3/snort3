@@ -27,6 +27,8 @@
 #include <unordered_map>
 
 #include "pub_sub/appid_events.h"
+#include "flow/flow.h"
+#include "flow/flow_stash_keys.h"
 
 #include "app_info_table.h"
 #include "appid_api.h"
@@ -37,10 +39,10 @@
 #include "length_app_cache.h"
 #include "service_state.h"
 
-class ClientDetector;
-class ServiceDetector;
 class AppIdDnsSession;
 class AppIdHttpSession;
+class ClientDetector;
+class ServiceDetector;
 class ThirdPartyAppIDSession;
 
 using AppIdFreeFCN = void (*)(void*);
@@ -306,6 +308,7 @@ public:
     AppId get_application_ids_client();
     AppId get_application_ids_payload();
     AppId get_application_ids_misc();
+    void update_flow_attrs(AppidChangeBits& change_bits);
 
     bool is_ssl_session_decrypted();
     void examine_ssl_metadata(snort::Packet*, AppidChangeBits& change_bits);
@@ -361,7 +364,6 @@ private:
     void delete_session_data();
 
     static THREAD_LOCAL uint32_t appid_flow_data_id;
-    AppId application_ids[APP_PROTOID_MAX];
     bool tp_app_id_deferred = false;
     bool tp_payload_app_id_deferred = false;
 

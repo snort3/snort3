@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2019 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2019-2019 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,46 +16,54 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// appid_mock_flow.h author davis mcpherson <davmcphe@cisco.com>
+// flow_stash_keys.h author Deepak Ramadass <deramada@cisco.com>
 
-#ifndef APPID_MOCK_FLOW_H
-#define APPID_MOCK_FLOW_H
-
-FlowData::FlowData(unsigned, Inspector*)
-{
-    next = prev = nullptr;
-    handler = nullptr;
-    id = 222;
-}
-
-FlowData::~FlowData() = default;
-
-FlowData* mock_flow_data = nullptr;
-
-typedef int32_t AppId;
-Flow::Flow() = default;
-Flow::~Flow() = default;
-
-class FakeFlow : public Flow
-{
-};
-
-FlowData* Flow::get_flow_data(unsigned) const
-{
-    return mock_flow_data;
-}
-
-int Flow::set_flow_data(FlowData* fd)
-{
-    mock_flow_data = fd;
-    return 0;
-}
-
-bool snort::FlowStash::get(const int&, int32_t&) { return true; }
-void snort::FlowStash::store(const int&, const int32_t) { }
-void snort::FlowStash::store(const int&, const std::string&) { }
-void snort::FlowStash::remove(const FlowStashKey&) { }
-snort::FlowStash::~FlowStash() { }
-
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
 
+#ifndef FLOW_STASH_KEYS_H
+#define FLOW_STASH_KEYS_H
+
+enum FlowStashKey
+{
+    STASH_APPID_SERVICE = 0,
+    STASH_APPID_CLIENT,
+    STASH_APPID_PAYLOAD,
+    STASH_APPID_MISC,
+    STASH_APPID_REFERRED,
+ 
+    STASH_HOST,
+    STASH_TLS_HOST,
+    STASH_URL,
+    STASH_USER_AGENT,
+    STASH_RESPONSE_CODE,
+    STASH_REFERER,
+    STASH_XFF,
+    STASH_CLIENT_VERSION,
+
+    STASH_MAX_SIZE
+};
+
+static const char* FlowStashKeyNames[] =
+{
+    "appid-service",
+    "appid-client",
+    "appid-payload",
+    "appid-misc",
+    "appid-referred",
+    "host",
+    "tls-host",
+    "url",
+    "user-agent",
+    "response-code",
+    "referer",
+    "xff",
+    "client-version"
+};
+
+inline const char * get_key_name( int key )
+{
+    return FlowStashKeyNames[key];
+}
+#endif

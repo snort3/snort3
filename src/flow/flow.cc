@@ -215,7 +215,12 @@ void Flow::restart(bool dump_flow_data)
     DetectionEngine::onload(this);
 
     if ( dump_flow_data )
+    {
         free_flow_data();
+
+        if ( stash )
+            stash->reset();
+    }
 
     clean();
 

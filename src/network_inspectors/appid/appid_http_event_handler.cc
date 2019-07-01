@@ -134,7 +134,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
         asd->set_application_ids(asd->pick_service_app_id(), asd->pick_client_app_id(),
             asd->pick_payload_app_id(), asd->pick_misc_app_id(), change_bits);
     }
-
+    asd->update_flow_attrs(change_bits);
     AppIdDiscovery::publish_appid_event(change_bits, flow);
 }
 

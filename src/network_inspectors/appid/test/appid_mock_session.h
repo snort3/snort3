@@ -167,26 +167,36 @@ void* AppIdSession::remove_flow_data(unsigned type)
 }
 
 void AppIdSession::set_application_ids(AppId service_id, AppId client_id,
-    AppId payload_id, AppId misc_id, AppidChangeBits& change_bits)
+     AppId payload_id, AppId misc_id, AppidChangeBits& change_bits)
 {
-    if (application_ids[APP_PROTOID_SERVICE] != service_id)
+    AppId service, client, payload, misc;
+    service = client = payload = misc = APP_ID_NONE;
+
+    flow->get_attr(STASH_APPID_SERVICE, service);
+    if (service != service_id)
     {
-        application_ids[APP_PROTOID_SERVICE] = service_id;
+        flow->set_attr(STASH_APPID_SERVICE, service_id);
         change_bits.set(APPID_SERVICE_BIT);
     }
-    if (application_ids[APP_PROTOID_CLIENT] != client_id)
+
+    flow->get_attr(STASH_APPID_CLIENT, client);
+    if (client != client_id)
     {
-        application_ids[APP_PROTOID_CLIENT] = client_id;
+        flow->set_attr(STASH_APPID_CLIENT, client_id);
         change_bits.set(APPID_CLIENT_BIT);
     }
-    if (application_ids[APP_PROTOID_PAYLOAD] != payload_id)
+
+    flow->get_attr(STASH_APPID_PAYLOAD, payload);
+    if (payload != payload_id)
     {
-        application_ids[APP_PROTOID_PAYLOAD] = payload_id;
+        flow->set_attr(STASH_APPID_PAYLOAD, payload_id);
         change_bits.set(APPID_PAYLOAD_BIT);
     }
-    if (application_ids[APP_PROTOID_MISC] != misc_id)
+
+    flow->get_attr(STASH_APPID_MISC, misc);
+    if (misc != misc_id)
     {
-        application_ids[APP_PROTOID_MISC] = misc_id;
+        flow->set_attr(STASH_APPID_MISC, misc_id);
         change_bits.set(APPID_MISC_BIT);
     }
 }

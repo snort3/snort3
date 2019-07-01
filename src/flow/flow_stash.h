@@ -21,11 +21,12 @@
 #ifndef FLOW_STASH_H
 #define FLOW_STASH_H
 
-#include <map>
 #include <string>
+#include <vector>
 
 #include "main/snort_types.h"
 
+#include "flow_stash_keys.h"
 #include "stash_item.h"
 
 namespace snort
@@ -34,26 +35,29 @@ namespace snort
 class SO_PUBLIC FlowStash
 {
 public:
+    FlowStash() : container(STASH_MAX_SIZE, nullptr) { }
     ~FlowStash();
     void reset();
-    bool get(const std::string& key, int32_t& val);
-    bool get(const std::string& key, uint32_t& val);
-    bool get(const std::string& key, std::string& val);
-    bool get(const std::string& key, StashGenericObject* &val);
-    void store(const std::string& key, int32_t val);
-    void store(const std::string& key, uint32_t val);
-    void store(const std::string& key, const std::string& val);
-    void store(const std::string& key, std::string* val);
-    void store(const std::string& key, StashGenericObject* val);
+    bool get(const int& key, int32_t& val);
+    bool get(const int& key, uint32_t& val);
+    bool get(const int& key, std::string& val);
+    bool get(const int& key, std::string*& val);
+    bool get(const int& key, StashGenericObject* &val);
+    void store(const int& key, int32_t val);
+    void store(const int& key, uint32_t val);
+    void store(const int& key, const std::string& val);
+    void store(const int& key, std::string* val);
+    void store(const int& key, StashGenericObject* val);
+    void remove(const FlowStashKey& key);
 
 private:
-    std::map<std::string, StashItem*> container;
+    std::vector<StashItem*> container;
 
     template<typename T>
-    bool get(const std::string& key, T& val, StashItemType type);
+    bool get(const int& key, T& val, StashItemType type);
     template<typename T>
-    void store(const std::string& key, T& val, StashItemType type);
-    void store(const std::string& key, StashGenericObject* &val, StashItemType type);
+    void store(const int& key, T& val, StashItemType type);
+    void store(const int& key, StashGenericObject* &val, StashItemType type);
 };
 
 }

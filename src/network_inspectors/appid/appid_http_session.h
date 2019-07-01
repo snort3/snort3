@@ -26,6 +26,7 @@
 #include <utility>
 
 #include "flow/flow.h"
+#include "flow/flow_stash_keys.h"
 #include "pub_sub/appid_events.h"
 #include "sfip/sf_ip.h"
 
@@ -106,8 +107,11 @@ public:
     {
         delete meta_data[id];
         meta_data[id] = str;
+
         if (str)
+        {
             set_http_change_bits(change_bits, id);
+        }
     }
 
     void set_field(HttpFieldIds id, const uint8_t* str, int32_t len, AppidChangeBits& change_bits)
@@ -188,6 +192,8 @@ public:
     virtual void custom_init() { }
 
     void clear_all_fields();
+
+    void update_flow_attrs(AppidChangeBits& change_bits);
 
 protected:
 

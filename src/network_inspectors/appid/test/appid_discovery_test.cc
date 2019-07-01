@@ -188,6 +188,7 @@ AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol,
 {
     return nullptr;
 }
+void AppIdSession::update_flow_attrs(AppidChangeBits&) {}
 
 // Stubs for ServiceDiscovery
 void ServiceDiscovery::initialize() {}
@@ -268,6 +269,8 @@ AppId check_session_for_AF_forecast(AppIdSession&, Packet*, AppidSessionDirectio
     return APP_ID_UNKNOWN;
 }
 
+void AppIdHttpSession::update_flow_attrs(AppidChangeBits&) {}
+
 TEST_GROUP(appid_discovery_tests)
 {
     void setup() override
@@ -316,6 +319,7 @@ TEST(appid_discovery_tests, event_published_when_ignoring_flow)
     AppIdSession* asd = new AppIdSession(IpProtocol::TCP, nullptr, 21, ins);
     Flow* flow = new Flow;
     flow->set_flow_data(asd);
+    flow->stash = new snort::FlowStash;
     p.flow = flow;
     asd->config = &my_app_config;
     asd->common.initiator_port = 21;
@@ -328,6 +332,7 @@ TEST(appid_discovery_tests, event_published_when_ignoring_flow)
     CHECK_EQUAL(databus_publish_called, true);
     STRCMP_EQUAL(test_log, "Published change_bits == 0000000001111");
     delete asd;
+    delete flow->stash;
     delete flow;
 }
 
@@ -347,6 +352,7 @@ TEST(appid_discovery_tests, event_published_when_processing_flow)
     AppIdSession* asd = new AppIdSession(IpProtocol::TCP, nullptr, 21, ins);
     Flow* flow = new Flow;
     flow->set_flow_data(asd);
+    flow->stash = new snort::FlowStash;
     p.flow = flow;
     asd->config = &my_app_config;
     asd->common.initiator_port = 21;
@@ -356,8 +362,9 @@ TEST(appid_discovery_tests, event_published_when_processing_flow)
 
     // Detect changes in service, client, payload, and misc appid
     CHECK_EQUAL(databus_publish_called, true);
-    STRCMP_EQUAL(test_log, "Published change_bits == 0000000001111");
+    STRCMP_EQUAL(test_log, "Published change_bits == 0000000001110");
     delete asd;
+    delete flow->stash;
     delete flow;
 }
 
@@ -401,8 +408,9 @@ TEST(appid_discovery_tests, change_bits_for_non_http_appid)
     AppIdModule app_module;
     AppIdInspector ins(app_module);
     AppIdSession* asd = new AppIdSession(IpProtocol::TCP, nullptr, 21, ins);
-    Flow* flow = new Flow;
+    FakeFlow* flow = new FakeFlow;
     flow->set_flow_data(asd);
+    flow->stash = new snort::FlowStash;
     p.flow = flow;
     asd->config = &my_app_config;
     asd->common.initiator_port = 21;
@@ -432,6 +440,7 @@ TEST(appid_discovery_tests, change_bits_for_non_http_appid)
     CHECK_EQUAL(asd->service.get_id(), APP_ID_DNS);
 
     delete asd;
+    delete flow->stash;
     delete flow;
 }
 

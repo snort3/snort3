@@ -47,8 +47,6 @@ class DBConsumer : public DataHandler
 {
 public:
 
-    static const char* STASH_EVENT;
-
     // event we'll be listening to on the DataBus:
     // static constexpr char STASH_EVENT[] = "foo.stash.event";
 
@@ -62,7 +60,7 @@ public:
 
     Type get_from_stash(FlowStash& stash)
     {
-        stash.get(STASH_EVENT, value);
+        stash.get(STASH_APPID_SERVICE, value);
         return value;
     }
 
@@ -71,10 +69,6 @@ public:
 private:
     Type value;
 };
-
-template<class Type>
-const char* DBConsumer<Type>::STASH_EVENT = "foo.stash.event";
-
 
 
 // DataBus mock: most functions are stubs, but _subscribe() and  _publish()
@@ -152,27 +146,27 @@ TEST(stash_tests, data_bus_publish_test)
     typedef int32_t value_t;
 
     // DB deletes the subscribers so make c a pointer, not a local object.
-    DBConsumer<value_t>* c = new DBConsumer<value_t>("foo");
-    DataBus::subscribe(DBConsumer<value_t>::STASH_EVENT, c);
+    DBConsumer<value_t>* c = new DBConsumer<value_t>("appid-service");
+    DataBus::subscribe("appid-service", c);
 
     FlowStash stash;
     value_t vin, vout;
 
     // stash/publish 10
     vin = 10;
-    stash.store(DBConsumer<value_t>::STASH_EVENT, vin);
+    stash.store(STASH_APPID_SERVICE, vin);
     vout = c->get_value();
     CHECK_EQUAL(vin, vout);
 
     // stash/publish 20, with the same key as before
     vin = 20;
-    stash.store(DBConsumer<value_t>::STASH_EVENT, vin);
+    stash.store(STASH_APPID_SERVICE, vin);
     vout = c->get_value();
     CHECK_EQUAL(vin, vout);
 
     // do we get some event that we're not listening to?
     value_t before = c->get_value();
-    stash.store("bar.stash.event", 30);
+    stash.store(STASH_APPID_CLIENT, 30);
     value_t after = c->get_value();
     CHECK_EQUAL(before, after);
 
@@ -188,11 +182,11 @@ TEST(stash_tests, new_int32_item)
 {
     FlowStash stash;
 
-    stash.store("item_1", 10);
+    stash.store(STASH_APPID_SERVICE, 10);
 
     int32_t val;
 
-    CHECK(stash.get("item_1", val));
+    CHECK(stash.get(STASH_APPID_SERVICE, val));
     CHECK_EQUAL(val, 10);
 }
 
@@ -200,12 +194,12 @@ TEST(stash_tests, update_int32_item)
 {
     FlowStash stash;
 
-    stash.store("item_1", 10);
-    stash.store("item_1", 20);
+    stash.store(STASH_APPID_SERVICE, 10);
+    stash.store(STASH_APPID_SERVICE, 20);
 
     int32_t val;
 
-    CHECK(stash.get("item_1", val));
+    CHECK(stash.get(STASH_APPID_SERVICE, val));
     CHECK_EQUAL(val, 20);
 }
 
@@ -213,11 +207,11 @@ TEST(stash_tests, new_uint32_item)
 {
     FlowStash stash;
 
-    stash.store("item_1", 10u);
+    stash.store(STASH_APPID_SERVICE, 10u);
 
     uint32_t val;
 
-    CHECK(stash.get("item_1", val));
+    CHECK(stash.get(STASH_APPID_SERVICE, val));
     CHECK_EQUAL(val, 10u);
 }
 
@@ -225,12 +219,12 @@ TEST(stash_tests, update_uint32_item)
 {
     FlowStash stash;
 
-    stash.store("item_1", 10u);
-    stash.store("item_1", 20u);
+    stash.store(STASH_APPID_SERVICE, 10u);
+    stash.store(STASH_APPID_SERVICE, 20u);
 
     uint32_t val;
 
-    CHECK(stash.get("item_1", val));
+    CHECK(stash.get(STASH_APPID_SERVICE, val));
     CHECK_EQUAL(val, 20u);
 }
 
@@ -238,11 +232,11 @@ TEST(stash_tests, new_str_item_ref)
 {
     FlowStash stash;
 
-    stash.store("item_1", "value_1");
+    stash.store(STASH_HOST, "value_1");
 
     string val;
 
-    CHECK(stash.get("item_1", val));
+    CHECK(stash.get(STASH_HOST, val));
     STRCMP_EQUAL(val.c_str(), "value_1");
 }
 
@@ -250,11 +244,11 @@ TEST(stash_tests, new_str_item_ptr)
 {
     FlowStash stash;
 
-    stash.store("item_1", new string("value_1"));
+    stash.store(STASH_HOST, new string("value_1"));
 
     string val;
 
-    CHECK(stash.get("item_1", val));
+    CHECK(stash.get(STASH_HOST, val));
     STRCMP_EQUAL(val.c_str(), "value_1");
 }
 
@@ -262,12 +256,12 @@ TEST(stash_tests, update_str_item)
 {
     FlowStash stash;
 
-    stash.store("item_1", "value_1");
-    stash.store("item_1", new string("value_2"));
+    stash.store(STASH_HOST, "value_1");
+    stash.store(STASH_HOST, new string("value_2"));
 
     string val;
 
-    CHECK(stash.get("item_1", val));
+    CHECK(stash.get(STASH_HOST, val));
     STRCMP_EQUAL(val.c_str(), "value_2");
 }
 
@@ -275,11 +269,11 @@ TEST(stash_tests, non_existent_item)
 {
     FlowStash stash;
 
-    stash.store("item_1", 10);
+    stash.store(STASH_HOST, 10);
 
     int32_t val;
 
-    CHECK_FALSE(stash.get("item_2", val));
+    CHECK_FALSE(stash.get(STASH_URL, val));
 }
 
 TEST(stash_tests, new_generic_object)
@@ -287,10 +281,10 @@ TEST(stash_tests, new_generic_object)
     FlowStash stash;
     TestStashObject *test_object = new TestStashObject(111);
 
-    stash.store("item_1", test_object);
+    stash.store(STASH_XFF, test_object);
 
     StashGenericObject *retrieved_object;
-    CHECK(stash.get("item_1", retrieved_object));
+    CHECK(stash.get(STASH_XFF, retrieved_object));
     POINTERS_EQUAL(test_object, retrieved_object);
     CHECK_EQUAL(test_object->get_object_type(), ((TestStashObject*)retrieved_object)->get_object_type());
 }
@@ -299,13 +293,13 @@ TEST(stash_tests, update_generic_object)
 {
     FlowStash stash;
     TestStashObject *test_object = new TestStashObject(111);
-    stash.store("item_1", test_object);
+    stash.store(STASH_XFF, test_object);
 
     TestStashObject *new_test_object = new TestStashObject(111);
-    stash.store("item_1", new_test_object);
+    stash.store(STASH_XFF, new_test_object);
 
     StashGenericObject *retrieved_object;
-    CHECK(stash.get("item_1", retrieved_object));
+    CHECK(stash.get(STASH_XFF, retrieved_object));
     POINTERS_EQUAL(new_test_object, retrieved_object);
 }
 
@@ -313,7 +307,7 @@ TEST(stash_tests, non_existent_generic_object)
 {
     FlowStash stash;
     StashGenericObject *retrieved_object;
-    CHECK_FALSE(stash.get("item_1", retrieved_object));
+    CHECK_FALSE(stash.get(STASH_XFF, retrieved_object));
 }
 
 TEST(stash_tests, mixed_items)
@@ -321,23 +315,23 @@ TEST(stash_tests, mixed_items)
     FlowStash stash;
     TestStashObject *test_object = new TestStashObject(111);
 
-    stash.store("item_1", 10);
-    stash.store("item_2", "value_2");
-    stash.store("item_3", 30);
-    stash.store("item_4", test_object);
+    stash.store(STASH_APPID_SERVICE, 10);
+    stash.store(STASH_HOST, "value_2");
+    stash.store(STASH_APPID_CLIENT, 30);
+    stash.store(STASH_XFF, test_object);
 
     int32_t int32_val;
     string str_val;
 
-    CHECK(stash.get("item_1", int32_val));
+    CHECK(stash.get(STASH_APPID_SERVICE, int32_val));
     CHECK_EQUAL(int32_val, 10);
-    CHECK(stash.get("item_2", str_val));
+    CHECK(stash.get(STASH_HOST, str_val));
     STRCMP_EQUAL(str_val.c_str(), "value_2");
-    CHECK(stash.get("item_3", int32_val));
+    CHECK(stash.get(STASH_APPID_CLIENT, int32_val));
     CHECK_EQUAL(int32_val, 30);
 
     StashGenericObject *retrieved_object;
-    CHECK(stash.get("item_4", retrieved_object));
+    CHECK(stash.get(STASH_XFF, retrieved_object));
     POINTERS_EQUAL(test_object, retrieved_object);
     CHECK_EQUAL(test_object->get_object_type(), ((TestStashObject*)retrieved_object)->get_object_type());
 }

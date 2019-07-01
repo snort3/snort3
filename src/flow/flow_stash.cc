@@ -38,113 +38,131 @@ FlowStash::~FlowStash()
 
 void FlowStash::reset()
 {
-    for(map<string, StashItem*>::iterator it = container.begin(); it != container.end(); ++it)
+    for (auto& it : container)
     {
-        delete it->second;
+        if (it)
+        {
+            delete it;
+            it = nullptr;
+        }
     }
-    container.clear();
 }
 
-bool FlowStash::get(const string& key, int32_t& val)
+void FlowStash::remove(const FlowStashKey& key)
+{
+    auto& item = container[key];
+
+    if (item)
+    {
+        delete item;
+        item = nullptr;
+    }
+}
+
+bool FlowStash::get(const int& key, int32_t& val)
 {
     return get(key, val, STASH_ITEM_TYPE_INT32);
 }
 
-bool FlowStash::get(const string& key, uint32_t& val)
+bool FlowStash::get(const int& key, uint32_t& val)
 {
     return get(key, val, STASH_ITEM_TYPE_UINT32);
 }
 
-bool FlowStash::get(const string& key, string& val)
+bool FlowStash::get(const int& key, string& val)
 {
     return get(key, val, STASH_ITEM_TYPE_STRING);
 }
 
-bool FlowStash::get(const std::string& key, StashGenericObject* &val)
+bool FlowStash::get(const int& key, string*& val)
+{
+    auto& it = container[key];
+
+    if (it)
+    {
+        assert(it->get_type() == STASH_ITEM_TYPE_STRING);
+        it->get_val(val);
+        return true;
+    }
+    return false;
+}
+
+bool FlowStash::get(const int& key, StashGenericObject* &val)
 {
     return get(key, val, STASH_ITEM_TYPE_GENERIC_OBJECT);
 }
 
-void FlowStash::store(const string& key, int32_t val)
+void FlowStash::store(const int& key, int32_t val)
 {
     store(key, val, STASH_ITEM_TYPE_INT32);
 }
 
-void FlowStash::store(const string& key, uint32_t val)
+void FlowStash::store(const int& key, uint32_t val)
 {
     store(key, val, STASH_ITEM_TYPE_UINT32);
 }
 
-void FlowStash::store(const string& key, const string& val)
+void FlowStash::store(const int& key, const string& val)
 {
     store(key, val, STASH_ITEM_TYPE_STRING);
 }
 
-void FlowStash::store(const std::string& key, StashGenericObject* val)
+void FlowStash::store(const int& key, StashGenericObject* val)
 {
     store(key, val, STASH_ITEM_TYPE_GENERIC_OBJECT);
 }
 
-void FlowStash::store(const string& key, StashGenericObject* &val, StashItemType type)
+void FlowStash::store(const int& key, StashGenericObject* &val, StashItemType type)
 {
 #ifdef NDEBUG
     UNUSED(type);
 #endif
-    auto item = new StashItem(val);
-    auto it_and_status = container.emplace(make_pair(key, item));
+    auto& it = container[key];
+    if (it)
+        delete it;
 
-    if (!it_and_status.second)
-    {
-        StashGenericObject* stored_object;
-        assert(it_and_status.first->second->get_type() == type);
-        it_and_status.first->second->get_val(stored_object);
-        assert(stored_object->get_object_type() == val->get_object_type());
-        delete it_and_status.first->second;
-        it_and_status.first->second = item;
-    }
+    it = new StashItem(val);
+    assert(it->get_type() == type);
 
-    StashEvent e(item);
-    DataBus::publish(key.c_str(), e);
+    StashEvent e(it);
+    DataBus::publish(get_key_name(key), e);
 }
 
-void FlowStash::store(const std::string& key, std::string* val)
+void FlowStash::store(const int& key, std::string* val)
 {
     store(key, val, STASH_ITEM_TYPE_STRING);
 }
 
 template<typename T>
-bool FlowStash::get(const string& key, T& val, StashItemType type)
+bool FlowStash::get(const int& key, T& val, StashItemType type)
 {
 #ifdef NDEBUG
     UNUSED(type);
 #endif
-    auto it = container.find(key);
+    auto& it = container[key];
 
-    if (it != container.end())
+    if (it)
     {
-        assert(it->second->get_type() == type);
-        it->second->get_val(val);
+        assert(it->get_type() == type);
+        it->get_val(val);
         return true;
     }
     return false;
 }
 
 template<typename T>
-void FlowStash::store(const string& key, T& val, StashItemType type)
+void FlowStash::store(const int& key, T& val, StashItemType type)
 {
 #ifdef NDEBUG
     UNUSED(type);
 #endif
-    auto item = new StashItem(val);
-    auto it_and_status = container.emplace(make_pair(key, item));
+    auto& it = container[key];
+    if (it)
+        delete it;
 
-    if (!it_and_status.second)
-    {
-        assert(it_and_status.first->second->get_type() == type);
-        delete it_and_status.first->second;
-        it_and_status.first->second = item;
-    }
+    it = new StashItem(val);
+    assert(it->get_type() == type);
 
-    StashEvent e(item);
-    DataBus::publish(key.c_str(), e);
+    StashEvent e(it);
+    DataBus::publish(get_key_name(key), e);
 }
