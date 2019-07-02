@@ -90,12 +90,16 @@ bool VlanCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     else
         codec.next_prot_id = (ProtocolId)proto;
 
+    codec.lyr_len = sizeof(vlan::VlanTagHdr);
+
+    if (raw.pkth->flags & DAQ_PKT_FLAG_IGNORE_VLAN)
+        return true;
+
     // Vlan IDs 0 and 4095 are reserved.
     const uint16_t vid = vh->vid();
     if (vid == 0 || vid == 4095)
         codec_event(codec, DECODE_BAD_VLAN);
 
-    codec.lyr_len = sizeof(vlan::VlanTagHdr);
     codec.proto_bits |= PROTO_BIT__VLAN;
     return true;
 }

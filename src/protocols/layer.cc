@@ -144,13 +144,10 @@ const Layer* get_mpls_layer(const Packet* const p)
 
 const vlan::VlanTagHdr* get_vlan_layer(const Packet* const p)
 {
-    if ( p->proto_bits & PROTO_BIT__VLAN )
-    {
-        assert( p->vlan_idx < p->num_layers );
-        const Layer* lyr = p->layers + p->vlan_idx;
-        return reinterpret_cast<const vlan::VlanTagHdr*>(lyr->start);
-    }
-    return nullptr;
+    assert( p->proto_bits & PROTO_BIT__VLAN );
+    assert( p->vlan_idx < p->num_layers );
+    const Layer* lyr = p->layers + p->vlan_idx;
+    return reinterpret_cast<const vlan::VlanTagHdr*>(lyr->start);
 }
 
 const eth::EtherHdr* get_eth_layer(const Packet* const p)
