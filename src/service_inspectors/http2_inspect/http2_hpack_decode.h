@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2018-2019 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2019-2019 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,31 +15,33 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// http2_tables.cc author Tom Peters <thopeter@cisco.com>
+// http2_hpack_decode.h author Maya Dagon <mdagon@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include "framework/counts.h"
+#ifndef HTTP2_HPACK_DECODE_H
+#define HTTP2_HPACK_DECODE_H
 
 #include "http2_enum.h"
-#include "http2_module.h"
+#include "main/snort_types.h"
+#include "service_inspectors/http_inspect/http_field.h"
+#include "utils/event_gen.h"
+#include "utils/infractions.h"
 
-using namespace Http2Enums;
+using Http2Infractions = Infractions<Http2Enums::INF__MAX_VALUE, Http2Enums::INF__NONE>;
 
-const snort::RuleMap Http2Module::http2_events[] =
+using Http2EventGen = EventGen<Http2Enums::EVENT__MAX_VALUE, Http2Enums::EVENT__NONE,
+    Http2Enums::HTTP2_GID>;
+
+class Http2HpackIntDecode
 {
-    { EVENT_INT_DECODE_FAILURE, "Failed to decode integer value" },
-    { EVENT_INT_LEADING_ZEROS, "Integer value has leading zeros" },
-    { 0, nullptr }
+public:
+    Http2HpackIntDecode(uint8_t prefix, Http2EventGen* events, Http2Infractions* infractions);
+    bool translate(const Field& msg, int32_t& bytes_consumed, uint64_t& result);
+
+private:
+    const uint8_t prefix_mask;
+    Http2EventGen* const events;
+    Http2Infractions* const infractions;
 };
 
-const PegInfo Http2Module::peg_names[PEG_COUNT_MAX+1] =
-{
-    { CountType::SUM, "flows", "HTTP connections inspected" },
-    { CountType::NOW, "concurrent_sessions", "total concurrent HTTP/2 sessions" },
-    { CountType::MAX, "max_concurrent_sessions", "maximum concurrent HTTP/2 sessions" },
-    { CountType::END, nullptr, nullptr }
-};
+#endif
 

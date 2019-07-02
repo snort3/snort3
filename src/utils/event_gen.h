@@ -15,62 +15,47 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// http_event_gen.h author Tom Peters <thopeter@cisco.com>
+// event_gen.h author Tom Peters <thopeter@cisco.com>
 
-#ifndef HTTP_EVENT_GEN_H
-#define HTTP_EVENT_GEN_H
+#ifndef EVENT_GEN_H
+#define EVENT_GEN_H
 
 #include <bitset>
 #include <cassert>
 
 #include "detection/detection_engine.h"
-#include "events/event_queue.h"
-#include "utils/util_cstring.h"
-
-#include "http_enum.h"
 
 //-------------------------------------------------------------------------
 // Event generator class
 //-------------------------------------------------------------------------
 
-class HttpEventGen
+template <int EVENT_MAX, int EVENT_NONE, int GID>
+class EventGen
 {
 public:
-    virtual ~HttpEventGen() = default;
+    virtual ~EventGen() = default;
 
     virtual void create_event(int sid)
     {
-        if (sid == HttpEnums::EVENT__NONE)
+        if (sid == EVENT_NONE)
             return;
-        assert((sid > 0) && (sid <= MAX));
+        assert((sid > 0) && (sid <= EVENT_MAX));
         if (!events_generated[sid-1])
         {
-            snort::DetectionEngine::queue_event(HttpEnums::HTTP_GID, (uint32_t)sid);
+            snort::DetectionEngine::queue_event(GID, (uint32_t)sid);
             events_generated[sid-1] = true;
         }
     }
 
-    void generate_misformatted_http(const uint8_t* buffer, uint32_t length)
-    {
-        if ( snort::SnortStrnStr((const char*)buffer, length, "HTTP/") != nullptr )
-            create_event(HttpEnums::EVENT_MISFORMATTED_HTTP);
-        else
-            create_event(HttpEnums::EVENT_LOSS_OF_SYNC);
-    }
+    bool none_found() const { return events_generated == 0; }
 
-    // The following methods are for convenience of debug and test output only!
+    // The following method is for convenience of debug and test output only!
     uint64_t get_raw() const { return
-       (events_generated & std::bitset<MAX>(0xFFFFFFFFFFFFFFFF)).to_ulong(); }
-    uint64_t get_raw2() const { return
-       ((events_generated >> BASE_1XX_EVENTS) & std::bitset<MAX>(0xFFFFFFFFFFFFFFFF)).to_ulong(); }
-    uint64_t get_raw3() const { return
-       ((events_generated >> BASE_2XX_EVENTS) & std::bitset<MAX>(0xFFFFFFFFFFFFFFFF)).to_ulong(); }
-private:
-    static const unsigned BASE_1XX_EVENTS = 100;
-    static const unsigned BASE_2XX_EVENTS = 200;
-    static const int MAX = HttpEnums::EVENT__MAX_VALUE;
-    std::bitset<MAX> events_generated = 0;
+        (events_generated & bitmask).to_ulong(); }
+
+protected:
+    std::bitset<EVENT_MAX> events_generated = 0;
+    const std::bitset<EVENT_MAX> bitmask = 0xFFFFFFFFFFFFFFFF;
 };
 
 #endif
-

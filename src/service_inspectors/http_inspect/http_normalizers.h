@@ -20,8 +20,7 @@
 #ifndef HTTP_NORMALIZERS_H
 #define HTTP_NORMALIZERS_H
 
-#include "http_infractions.h"
-#include "http_event_gen.h"
+#include "http_event.h"
 #include "http_field.h"
 #include "http_str_to_code.h"
 

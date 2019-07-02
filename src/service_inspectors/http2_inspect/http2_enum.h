@@ -49,9 +49,22 @@ enum PEG_COUNT { PEG_CONCURRENT_SESSIONS = 0, PEG_MAX_CONCURRENT_SESSIONS, PEG_F
 enum EventSid
 {
     EVENT__NONE = -1,
+    EVENT_INT_DECODE_FAILURE = 1,
+    EVENT_INT_LEADING_ZEROS = 2,
     EVENT__MAX_VALUE
 };
 
+// All the infractions we might find while parsing and analyzing a message
+enum Infraction
+{
+    INF__NONE = -1,
+    INF_INT_EMPTY_BUFF = 0,
+    INF_INT_MISSING_BYTES = 1,
+    INF_INT_OVERFLOW = 2,
+    INF_INT_LEADING_ZEROS = 3,
+    INF__MAX_VALUE
+};    
+ 
 } // end namespace Http2Enums
 
 #endif

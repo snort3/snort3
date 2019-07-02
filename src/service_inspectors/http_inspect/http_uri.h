@@ -24,8 +24,7 @@
 #include "http_module.h"
 #include "http_uri_norm.h"
 #include "http_field.h"
-#include "http_infractions.h"
-#include "http_event_gen.h"
+#include "http_event.h"
 
 //-------------------------------------------------------------------------
 // HttpUri class

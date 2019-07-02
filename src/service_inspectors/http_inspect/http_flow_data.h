@@ -29,8 +29,7 @@
 #include "utils/util_utf.h"
 #include "decompress/file_decomp.h"
 
-#include "http_infractions.h"
-#include "http_event_gen.h"
+#include "http_event.h"
 
 class HttpTransaction;
 class HttpJsNorm;

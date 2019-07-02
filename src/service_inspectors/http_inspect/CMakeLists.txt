@@ -61,8 +61,7 @@ set (FILE_LIST
     http_stream_splitter.h
     http_cutter.cc
     http_cutter.h
-    http_infractions.h
-    http_event_gen.h
+    http_event.h
     http_js_norm.cc
     http_js_norm.h
 )

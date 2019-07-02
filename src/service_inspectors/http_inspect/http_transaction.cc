@@ -23,8 +23,7 @@
 
 #include "http_transaction.h"
 
-#include "http_event_gen.h"
-#include "http_infractions.h"
+#include "http_event.h"
 #include "http_msg_body.h"
 #include "http_msg_header.h"
 #include "http_msg_request.h"

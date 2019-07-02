@@ -21,7 +21,6 @@
 #define HTTP_HEADER_NORMALIZER_H
 
 #include "http_field.h"
-#include "http_infractions.h"
 #include "http_normalizers.h"
 
 //-------------------------------------------------------------------------

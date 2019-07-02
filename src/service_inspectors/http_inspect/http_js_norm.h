@@ -25,8 +25,7 @@
 #include "search_engines/search_tool.h"
 
 #include "http_field.h"
-#include "http_event_gen.h"
-#include "http_infractions.h"
+#include "http_event.h"
 #include "http_module.h"
 
 //-------------------------------------------------------------------------

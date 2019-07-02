@@ -30,8 +30,9 @@ class HttpMsgTrailer;
 class HttpMsgSection;
 class HttpMsgBody;
 class HttpMsgHeadShared;
-class HttpInfractions;
 class HttpEventGen;
+template <int MAX, int NONE> class Infractions;
+using HttpInfractions = Infractions<HttpEnums::INF__MAX_VALUE, HttpEnums::INF__NONE>;
 
 class HttpTransaction
 {

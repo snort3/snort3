@@ -15,37 +15,36 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// http_infractions.h author Tom Peters <thopeter@cisco.com>
+// infractions.h author Tom Peters <thopeter@cisco.com>
 
-#ifndef HTTP_INFRACTIONS_H
-#define HTTP_INFRACTIONS_H
+#ifndef INFRACTIONS_H
+#define INFRACTIONS_H
 
 #include <bitset>
 #include <cassert>
-
-#include "http_enum.h"
 
 //-------------------------------------------------------------------------
 // Infractions class
 //-------------------------------------------------------------------------
 
-class HttpInfractions
+template <int MAX, int NONE>
+class Infractions
 {
 public:
-    HttpInfractions() = default;
-    HttpInfractions(int inf)
+    Infractions() = default;
+    Infractions(int inf)
     {
-        if (inf == HttpEnums::INF__NONE)
+        if (inf == NONE)
             return;
         assert((inf >= 0) && (inf < MAX));
         infractions[inf] = true;
     }
     bool none_found() const { return infractions == 0; }
-    HttpInfractions& operator+=(const HttpInfractions& rhs)
+    Infractions& operator+=(const Infractions& rhs)
         { infractions |= rhs.infractions; return *this; }
-    friend HttpInfractions operator+(HttpInfractions lhs, const HttpInfractions& rhs)
+    friend Infractions operator+(Infractions lhs, const Infractions& rhs)
         { lhs += rhs; return lhs; }
-    friend bool operator&(const HttpInfractions& lhs, const HttpInfractions& rhs)
+    friend bool operator&(const Infractions& lhs, const Infractions& rhs)
         { return (lhs.infractions & rhs.infractions) != 0; }
 
     // The following methods are for convenience of debug and test output only!
@@ -55,9 +54,7 @@ public:
         ((infractions >> 64) & std::bitset<MAX>(0xFFFFFFFFFFFFFFFF)).to_ulong(); }
 
 private:
-    static const int MAX = HttpEnums::INF__MAX_VALUE;
     std::bitset<MAX> infractions = 0;
 };
 
 #endif
-

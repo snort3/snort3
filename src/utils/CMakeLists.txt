@@ -3,6 +3,8 @@ set( UTIL_INCLUDES
     bitop.h
     cpp_macros.h
     endian.h
+    event_gen.h
+    infractions.h
     kmap.h
     primed_allocator.h
     safec.h

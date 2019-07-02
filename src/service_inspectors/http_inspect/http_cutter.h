@@ -23,8 +23,7 @@
 #include <cassert>
 
 #include "http_enum.h"
-#include "http_event_gen.h"
-#include "http_infractions.h"
+#include "http_event.h"
 
 //-------------------------------------------------------------------------
 // HttpCutter class and subclasses
