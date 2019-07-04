@@ -38,7 +38,7 @@ using namespace snort;
 
 std::vector<struct Trough::PcapReadObject> Trough::pcap_object_list;
 std::vector<std::string> Trough::pcap_queue;
-std::string Trough::pcap_filter;
+std::string Trough::pcap_filter = "*.*cap*";
 std::vector<std::string>::const_iterator Trough::pcap_queue_iter;
 
 unsigned Trough::pcap_loop_count = 0;

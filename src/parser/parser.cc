@@ -374,6 +374,7 @@ void ParseRules(SnortConfig* sc)
 
         if ( !idx and !s_aux_rules.empty() )
         {
+            p->includer.clear();
             push_parse_location("W", "./", "rule args");
             ParseConfigString(sc, s_aux_rules.c_str());
             pop_parse_location();

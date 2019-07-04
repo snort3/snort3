@@ -13,7 +13,7 @@ daq =
         },
         {
             name = 'dump',
-            variables = { 'output = none' }
+            variables = { 'output=none' }
         },
     },
 }

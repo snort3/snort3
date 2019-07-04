@@ -442,7 +442,7 @@ static const Parameter s_params[] =
     { "--pcap-dir", Parameter::PT_STRING, nullptr, nullptr,
       "<dir> a directory to recurse to look for pcaps - read mode is implied" },
 
-    { "--pcap-filter", Parameter::PT_STRING, nullptr, nullptr,
+    { "--pcap-filter", Parameter::PT_STRING, nullptr, "*.*cap*",
       "<filter> filter to apply when getting pcaps from file or directory" },
 
     { "--pcap-loop", Parameter::PT_INT, "0:max32", nullptr,
@@ -512,7 +512,7 @@ static const Parameter s_params[] =
       "read rules from stdin until EOF or a line starting with END is read", },
 
     { "--talos", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "enable Talos inline rule test mode (same as --tweaks talos -Q -q)", },
+      "enable Talos tweak (same as --tweaks talos)", },
 
     { "--treat-drop-as-alert", Parameter::PT_IMPLIED, nullptr, nullptr,
       "converts drop, block, and reset rules into alert rules when loaded" },
@@ -987,11 +987,8 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->stdin_rules = true;
 
     else if ( v.is("--talos") )
-    {
         sc->set_tweaks("talos");
-        sc->run_flags |= RUN_FLAG__INLINE;
-        sc->set_alert_mode("talos");
-    }
+
     else if ( v.is("--treat-drop-as-alert") )
         sc->set_treat_drop_as_alert(true);
 
