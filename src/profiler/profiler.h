@@ -21,6 +21,7 @@
 #ifndef PROFILER_H
 #define PROFILER_H
 
+#include "main/thread.h"
 #include "profiler_defs.h"
 
 namespace snort
@@ -33,14 +34,14 @@ class Profiler
 public:
     static void register_module(snort::Module*);
     static void register_module(const char*, const char*, snort::Module*);
-    static void register_module(const char*, const char*, snort::get_profile_stats_fn);
 
-    // FIXIT-RC do we need to call on main thread?  we should know the answer by now.
-    // call from packet threads, just before thread termination
-    static void consolidate_stats();
+    static void consolidate_stats(uint64_t pkts = 0, uint64_t usecs = 0);
+
     static void reset_stats();
     static void show_stats();
 };
 
+extern THREAD_LOCAL snort::ProfileStats totalPerfStats;
+extern THREAD_LOCAL snort::ProfileStats otherPerfStats;
 
 #endif

@@ -90,7 +90,6 @@ public:
     { return nodes.end(); }
 
     void register_node(const std::string&, const char*, snort::Module*);
-    void register_node(const std::string&, const char*, snort::get_profile_stats_fn);
 
     void accumulate_nodes();
     void reset_nodes();

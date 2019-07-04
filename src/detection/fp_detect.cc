@@ -328,10 +328,6 @@ int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports)
 int fp_eval_option(void* v, Cursor& c, Packet* p)
 {
     IpsOption* opt = (IpsOption*)v;
-    // FIXIT-L use this with RuleProfile enabled in profiler_defs.h
-    // all ips options should be double counted w/o this exclude but
-    // this causes rule_eval to underflow.
-    //ProfileExclude exclude(rulePerfStats);
     return opt->eval(c, p);
 }
 

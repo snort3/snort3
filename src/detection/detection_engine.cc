@@ -403,6 +403,7 @@ bool DetectionEngine::offload(Packet* p)
 
     if ( p->flow ? p->flow->context_chain.front() : sw->non_flow_chain.front() )
     {
+        Profile profile(mpsePerfStats);
         p->context->searches.search_sync();
         sw->suspend();
         pc.offload_suspends++;
@@ -450,15 +451,19 @@ void DetectionEngine::onload(Flow* flow)
 
 void DetectionEngine::onload()
 {
+    Profile profile(mpsePerfStats);
     Packet* p;
+
     while (offloader->count() and offloader->get(p))
     {
-        trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " de::onload %" PRIu64 " (r=%d)\n",
+        trace_logf(detection, TRACE_DETECTION_ENGINE,
+            "%" PRIu64 " de::onload %" PRIu64 " (r=%d)\n",
             p->context->packet_number, p->context->context_num, offloader->count());
         
         p->clear_offloaded();
         
-        IpsContextChain& chain = p->flow ? p->flow->context_chain : Analyzer::get_switcher()->non_flow_chain;
+        IpsContextChain& chain = p->flow ? p->flow->context_chain :
+            Analyzer::get_switcher()->non_flow_chain;
         
         resume_ready_suspends(chain);
     }

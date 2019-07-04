@@ -41,6 +41,11 @@
 
 using namespace snort;
 
+THREAD_LOCAL ProfileStats totalPerfStats;
+THREAD_LOCAL ProfileStats otherPerfStats;
+
+THREAD_LOCAL TimeContext* ProfileContext::curr_time = nullptr;
+
 static ProfilerNodeMap s_profiler_nodes;
 
 void Profiler::register_module(Module* m)
@@ -52,8 +57,8 @@ void Profiler::register_module(Module* m)
     {
         unsigned i = 0;
         const char* n, * pn;
-        // const ProfilerStats* ps = nullptr;
         const ProfileStats* ps = nullptr;
+
         while ( (ps = m->get_profile(i++, n, pn)) )
             register_module(n, pn, m);
     }
@@ -65,14 +70,23 @@ void Profiler::register_module(const char* n, const char* pn, Module* m)
     s_profiler_nodes.register_node(n, pn, m);
 }
 
-void Profiler::register_module(const char* n, const char* pn, get_profile_stats_fn fn)
+void Profiler::consolidate_stats(uint64_t num_pkts, uint64_t usecs)
 {
-    assert(n);
-    s_profiler_nodes.register_node(n, pn, fn);
-}
+    totalPerfStats.time.checks = otherPerfStats.time.checks = num_pkts;
 
-void Profiler::consolidate_stats()
-{
+#ifdef USE_TSC_CLOCK
+    totalPerfStats.time.elapsed = otherPerfStats.time.elapsed = clock_ticks(usecs);
+#else
+    hr_duration dt = TO_DURATION(dt, usecs);
+    totalPerfStats.time.elapsed = otherPerfStats.time.elapsed = dt;
+#endif
+
+    const ProfilerNode& root = s_profiler_nodes.get_root();
+    auto children = root.get_children();
+
+    for ( auto pn : children )
+        otherPerfStats.time.elapsed -= pn->get_stats().time.elapsed;
+
     s_profiler_nodes.accumulate_nodes();
     MemoryProfiler::consolidate_fallthrough_stats();
 }

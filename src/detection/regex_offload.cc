@@ -117,6 +117,8 @@ MpseRegexOffload::MpseRegexOffload(unsigned max) : RegexOffload(max) { }
 
 void MpseRegexOffload::put(snort::Packet* p)
 {
+    Profile profile(mpsePerfStats);
+
     assert(p);
     assert(!idle.empty());
     assert(p->context->searches.items.size() > 0);
@@ -135,6 +137,7 @@ void MpseRegexOffload::put(snort::Packet* p)
 
 bool MpseRegexOffload::get(snort::Packet*& p)
 {
+    Profile profile(mpsePerfStats);
     assert(!busy.empty());
 
     snort::Mpse::MpseRespType resp_ret;
@@ -207,6 +210,8 @@ void ThreadRegexOffload::stop()
 
 void ThreadRegexOffload::put(snort::Packet* p)
 {
+    Profile profile(mpsePerfStats);
+
     assert(p);
     assert(!idle.empty());
     assert(p->context->searches.items.size() > 0);
@@ -236,6 +241,7 @@ void ThreadRegexOffload::put(snort::Packet* p)
 
 bool ThreadRegexOffload::get(snort::Packet*& p)
 {
+    Profile profile(mpsePerfStats);
     assert(!busy.empty());
 
     for ( auto i = busy.begin(); i != busy.end(); i++ )

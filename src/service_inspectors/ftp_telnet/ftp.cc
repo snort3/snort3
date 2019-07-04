@@ -93,8 +93,6 @@ static int SnortFTP(
     ret = check_ftp(FTPsession, p, iInspectMode);
     if ( ret == FTPP_SUCCESS )
     {
-        NoProfile exclude(ftpPerfStats);
-
         // FIXIT-L ideally do_detection will look at the cmd & param buffers
         // or the rsp & msg buffers.  We should call it from inside check_ftp
         // each time we process a pipelined FTP command.

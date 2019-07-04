@@ -163,11 +163,7 @@ void Profiler::register_module(const char*, const char*, Module*)
 {
 }
 
-void Profiler::register_module(const char*, const char*, get_profile_stats_fn)
-{
-}
-
-void Profiler::consolidate_stats()
+void Profiler::consolidate_stats(uint64_t, uint64_t)
 {
 }
 

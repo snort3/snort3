@@ -30,9 +30,7 @@
 #include "actions/ips_actions.h"
 #include "codecs/codec_api.h"
 #include "connectors/connectors.h"
-#include "detection/detect.h"
 #include "detection/fp_config.h"
-#include "detection/fp_detect.h"
 #include "file_api/file_service.h"
 #include "filters/rate_filter.h"
 #include "filters/sfrf.h"
@@ -82,7 +80,6 @@
 #include "control_mgmt.h"
 #endif
 
-#include "analyzer.h"
 #include "build.h"
 #include "snort_config.h"
 #include "thread_config.h"
@@ -92,44 +89,6 @@ using namespace std;
 
 static SnortConfig* snort_cmd_line_conf = nullptr;
 static pid_t snort_main_thread_pid = 0;
-
-//-------------------------------------------------------------------------
-// perf stats
-// FIXIT-M move these to appropriate modules
-//-------------------------------------------------------------------------
-
-static ProfileStats* get_profile(const char* key)
-{
-    if ( !strcmp(key, "daq") )
-        return &daqPerfStats;
-
-    if ( !strcmp(key, "decode") )
-        return &decodePerfStats;
-
-    if ( !strcmp(key, "mpse") )
-        return &mpsePerfStats;
-
-    if ( !strcmp(key, "rule_eval") )
-        return &rulePerfStats;
-
-    if ( !strcmp(key, "eventq") )
-        return &eventqPerfStats;
-
-    if ( !strcmp(key, "total") )
-        return &totalPerfStats;
-
-    return nullptr;
-}
-
-static void register_profiles()
-{
-    Profiler::register_module("daq", nullptr, get_profile);
-    Profiler::register_module("decode", nullptr, get_profile);
-    Profiler::register_module("mpse", nullptr, get_profile);
-    Profiler::register_module("rule_eval", nullptr, get_profile);
-    Profiler::register_module("eventq", nullptr, get_profile);
-    Profiler::register_module("total", nullptr, get_profile);
-}
 
 //-------------------------------------------------------------------------
 // initialization
@@ -186,7 +145,6 @@ void Snort::init(int argc, char** argv)
     }
 
     FileService::init();
-    register_profiles();
 
     parser_init();
     SnortConfig* sc = ParseSnortConf(snort_cmd_line_conf);

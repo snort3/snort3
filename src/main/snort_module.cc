@@ -24,11 +24,14 @@
 
 #include "snort_module.h"
 
+#include "detection/detect.h"
+#include "detection/fp_detect.h"
 #include "framework/module.h"
 #include "framework/parameter.h"
 #include "log/messages.h"
 #include "main.h"
 #include "main/snort_debug.h"
+#include "managers/codec_manager.h"
 #include "packet_io/sfdaq_config.h"
 #include "packet_io/trough.h"
 #include "parser/config_file.h"
@@ -40,6 +43,7 @@
 #include "catch/unit_test.h"
 #endif
 
+#include "analyzer.h"
 #include "help.h"
 #include "shell.h"
 #include "snort_config.h"
@@ -611,11 +615,13 @@ public:
     void sum_stats(bool) override
     { }  // accumulate externally
 
+    ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
+
     Usage get_usage() const override
     { return GLOBAL; }
 
 private:
-    SFDAQModuleConfig *module_config;
+    SFDAQModuleConfig* module_config;
 };
 
 bool SnortModule::begin(const char* fqn, int, SnortConfig*)
@@ -1050,6 +1056,39 @@ bool SnortModule::end(const char*, int, SnortConfig* sc)
         ParseError("You can not enable experimental offload with more than one packet thread.");
 
     return true;
+}
+
+ProfileStats* SnortModule::get_profile(
+    unsigned index, const char*& name, const char*& parent) const
+{
+    switch ( index )
+    {
+    case 0:
+        name = "daq";
+        parent = nullptr;
+        return &daqPerfStats;
+
+    case 1:
+        name = "decode";
+        parent = nullptr;
+        return &decodePerfStats;
+
+    case 2:
+        name = "mpse";
+        parent = nullptr;
+        return &mpsePerfStats;
+
+    case 3:
+        name = "rule_eval";
+        parent = nullptr;
+        return &rulePerfStats;
+
+    case 4:
+        name = "eventq";
+        parent = nullptr;
+        return &eventqPerfStats;
+    }
+    return nullptr;
 }
 
 //-------------------------------------------------------------------------

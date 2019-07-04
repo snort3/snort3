@@ -411,10 +411,7 @@ bool dnp3_full_reassembly(dnp3ProtoConf& config, dnp3_session_data_t* session, P
            via the get_buf() inspector api */
         if ((ret == true) && (packet->is_udp()))
         {
-            {
-                NoProfile exclude(dnp3_perf_stats);
-                DetectionEngine::detect(packet);
-            }
+            DetectionEngine::detect(packet);
 
             /* Since detection was done, reset reassembly state to avoid double alerts
                on the last PDU */

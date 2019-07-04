@@ -49,7 +49,7 @@
 #include "parser/parse_conf.h"
 #include "parser/parse_ip.h"
 #include "parser/parser.h"
-#include "profiler/profiler_defs.h"
+#include "profiler/profiler.h"
 #include "search_engines/pat_stats.h"
 #include "side_channel/side_channel_module.h"
 #include "sfip/sf_ipvar.h"
@@ -512,6 +512,8 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
 
+    ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
+
     Usage get_usage() const override
     { return GLOBAL; }
 };
@@ -539,6 +541,24 @@ bool ProfilerModule::end(const char*, int, SnortConfig* sc)
     TimeProfilerStats::set_enabled(sc->profiler->time.show);
     RuleContext::set_enabled(sc->profiler->rule.show);
     return true;
+}
+
+ProfileStats* ProfilerModule::get_profile(
+    unsigned index, const char*& name, const char*& parent) const
+{
+    switch ( index )
+    {
+    case 0:
+        name = "total";
+        parent = nullptr;
+        return &totalPerfStats;
+
+    case 1:
+        name = "other";
+        parent = nullptr;
+        return &otherPerfStats;
+    }
+    return nullptr;
 }
 
 //-------------------------------------------------------------------------

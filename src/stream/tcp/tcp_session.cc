@@ -1017,7 +1017,6 @@ bool TcpSession::validate_packet_established_session(TcpSegmentDescriptor& tsd)
 int TcpSession::process(Packet* p)
 {
     Profile profile(s5TcpPerfStats);
-
     assert(flow->ssn_server);
 
     // FIXIT-H need to do something here to handle check for need to swap trackers??
@@ -1035,6 +1034,7 @@ int TcpSession::process(Packet* p)
     if ( ( flow->get_session_flags() & SSNFLAG_RESET ) && tsd.get_tcph()->is_syn()
         && !handle_syn_on_reset_session(tsd) )
         return ACTION_NOTHING;
+
     else
     {
         if ( tsm->eval(tsd, *talker, *listener) )

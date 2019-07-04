@@ -134,7 +134,7 @@ void TimeStop()
     gettimeofday(&endtime, nullptr);
 }
 
-static void timing_stats()
+static void timing_stats(uint64_t& num_pkts, uint64_t& usecs)
 {
     struct timeval difftime;
     TIMERSUB(&endtime, &starttime, &difftime);
@@ -155,10 +155,12 @@ static void timing_stats()
 
     LogMessage("%25.25s: %02d:%02d:%02d\n", "runtime", hrs, mins, secs);
 
-    LogMessage("%25.25s: %lu.%lu\n", "seconds",
+    LogMessage("%25.25s: %lu.%06lu\n", "seconds",
         (unsigned long)difftime.tv_sec, (unsigned long)difftime.tv_usec);
 
-    PegCount num_pkts = ModuleManager::get_module("daq")->get_global_count("received");
+    usecs = (uint64_t)difftime.tv_sec * 1000000 + difftime.tv_usec;
+    num_pkts = (uint64_t)ModuleManager::get_module("daq")->get_global_count("received");
+
     LogMessage("%25.25s: " STDu64 "\n", "packets", num_pkts);
 
     uint64_t pps = (num_pkts / total_secs);
@@ -238,7 +240,10 @@ void DropStats()
 void PrintStatistics()
 {
     DropStats();
-    timing_stats();
+
+    PegCount pkts;
+    uint64_t usecs;
+    timing_stats(pkts, usecs);
 
     // FIXIT-L can do flag saving with RAII (much cleaner)
     int save_quiet_flag = SnortConfig::get_conf()->logging_flags & LOGGING_FLAG__QUIET;
@@ -246,7 +251,7 @@ void PrintStatistics()
     SnortConfig::get_conf()->logging_flags &= ~LOGGING_FLAG__QUIET;
 
     // once more for the main thread
-    Profiler::consolidate_stats();
+    Profiler::consolidate_stats(pkts, usecs);
     Profiler::show_stats();
 
     SnortConfig::get_conf()->logging_flags |= save_quiet_flag;

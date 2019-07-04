@@ -30,9 +30,6 @@ namespace snort
 struct Packet;
 struct ProfileStats;
 }
-struct Event;
-struct RuleFpList;
-struct RuleTreeNode;
 
 extern THREAD_LOCAL snort::ProfileStats eventqPerfStats;
 
@@ -41,7 +38,7 @@ bool snort_ignore(snort::Packet*);
 bool snort_log(snort::Packet*);
 
 // alerts
-void CallLogFuncs(snort::Packet*, ListHead*, Event*, const char*);
+void CallLogFuncs(snort::Packet*, ListHead*, struct Event*, const char*);
 void CallLogFuncs(snort::Packet*, const OptTreeNode*, ListHead*);
 void CallAlertFuncs(snort::Packet*, const OptTreeNode*, ListHead*);
 

@@ -74,7 +74,6 @@ using namespace std;
 
 static MainHook_f main_hook = snort_ignore;
 
-THREAD_LOCAL ProfileStats totalPerfStats;
 THREAD_LOCAL ProfileStats daqPerfStats;
 
 static THREAD_LOCAL Analyzer* local_analyzer = nullptr;
@@ -317,7 +316,6 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
 
 void Analyzer::process_daq_pkt_msg(DAQ_Msg_h msg, bool retry)
 {
-    Profile profile(totalPerfStats);
     const DAQ_PktHdr_t* pkthdr = daq_msg_get_pkthdr(msg);
     set_default_policy();
 
@@ -413,12 +411,7 @@ void Analyzer::post_process_packet(Packet* p)
 
 void Analyzer::finalize_daq_message(DAQ_Msg_h msg, DAQ_Verdict verdict)
 {
-    // FIXIT-L excluding daqPerfStats profile here because it needs to
-    // be excluded by stream_tcp which requires some refactoring.
-    // Instead the profiler could automatically exclude from current
-    // context if new scope has no parent but that requires additional
-    // plumbing.
-    // Profile profile(daqPerfStats);
+    Profile profile(daqPerfStats);
     daq_instance->finalize_message(msg, verdict);
 }
 
@@ -487,10 +480,12 @@ void Analyzer::idle()
 void Analyzer::init_unprivileged()
 {
     // using dummy values until further integration
+    // FIXIT-H max_contexts must be <= DAQ msg pool to avoid permanent stall
+    // condition (polling for packets that won't come to resume ready suspends)
 #ifdef REG_TEST
     const unsigned max_contexts = 20;
 #else
-    const unsigned max_contexts = 1024;
+    const unsigned max_contexts = 255;
 #endif
 
     switcher = new ContextSwitcher;

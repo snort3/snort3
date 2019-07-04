@@ -120,6 +120,12 @@ public:
             stats.update(sw.get());
     }
 
+    void pause()
+    { sw.stop(); }
+
+    void resume()
+    { sw.start(); }
+
     bool active() const
     { return !stopped_once; }
 

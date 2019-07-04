@@ -151,12 +151,18 @@ public:
             // delegate to user function
             print(table, cur.view);
 
-            // don't need to print %/caller or %/total if root
+            // don't need to print %/caller if root
             if ( root == cur )
-                table << "--" << "--";
+                table << "--" << total;
 
             else
-                table << cur.view.pct_caller() << cur.view.pct_of(root.view.get_stats());
+            {
+                float value = cur.view.pct_of(root.view.get_stats());
+                table << cur.view.pct_caller() << value;
+
+                if ( layer == 1 )
+                    total += value;
+            }
         }
 
         snort::LogMessage("%s", ss.str().c_str());
@@ -166,6 +172,7 @@ private:
     const StatsTable::Field* fields;
     const PrintFn print;
     const Sorter& sort;
+    float total = 0;
 };
 
 #endif

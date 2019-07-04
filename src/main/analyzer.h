@@ -136,7 +136,6 @@ private:
 };
 
 extern THREAD_LOCAL snort::ProfileStats daqPerfStats;
-extern THREAD_LOCAL snort::ProfileStats totalPerfStats;
 
 #endif
 

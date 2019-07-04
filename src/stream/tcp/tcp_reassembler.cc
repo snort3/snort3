@@ -579,8 +579,6 @@ int TcpReassembler::_flush_to_seq(
             tcpStats.rebuilt_packets++;
             tcpStats.rebuilt_bytes += flushed_bytes;
 
-            NoProfile exclude(s5TcpPerfStats);
-
             if ( !Analyzer::get_local_analyzer()->inspect_rebuilt(pdu) )
                 last_pdu = pdu;
             else
@@ -668,7 +666,6 @@ int TcpReassembler::do_zero_byte_flush(TcpReassemblerState& trs, Packet* p, uint
         trs.flush_count++;
 
         show_rebuilt_packet(trs, pdu);
-        NoProfile exclude(s5TcpPerfStats);
         Analyzer::get_local_analyzer()->inspect_rebuilt(pdu);
 
         if ( trs.tracker->splitter )
@@ -931,13 +928,9 @@ int32_t TcpReassembler::flush_pdu_ips(TcpReassemblerState& trs, uint32_t* flags,
             continue;
         }
 
-        int32_t flush_pt;
-        {
-            NoProfile exclude(s5TcpPerfStats);
-            flush_pt = paf_check(
-                trs.tracker->splitter, &trs.tracker->paf_state, p, tsn->payload(),
-                tsn->c_len, total, tsn->c_seq, flags);
-        }
+        int32_t flush_pt = paf_check(
+            trs.tracker->splitter, &trs.tracker->paf_state, p, tsn->payload(),
+            tsn->c_len, total, tsn->c_seq, flags);
 
         if (flush_pt >= 0)
         {
@@ -1010,13 +1003,10 @@ int32_t TcpReassembler::flush_pdu_ackd(TcpReassemblerState& trs, uint32_t* flags
             size = trs.tracker->r_win_base - tsn->c_seq;
 
         total += size;
-        int32_t flush_pt;
-        {
-            NoProfile exclude(s5TcpPerfStats);
-            flush_pt = paf_check(
-                trs.tracker->splitter, &trs.tracker->paf_state, p, tsn->payload(),
-                size, total, tsn->c_seq, flags);
-        }
+
+        int32_t flush_pt = paf_check(
+            trs.tracker->splitter, &trs.tracker->paf_state, p, tsn->payload(),
+            size, total, tsn->c_seq, flags);
 
         if ( flush_pt >= 0 )
         {
