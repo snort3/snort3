@@ -90,6 +90,7 @@ public:
     // Removes the flow session object from the flow cache table and returns
     // the resources allocated to that flow to the free list.
     static void delete_flow(const FlowKey*);
+    static void delete_flow(Flow*);
 
     // Examines the source and destination ip addresses and ports to determine if the
     // packet is from the client or server side of the flow and sets bits in the

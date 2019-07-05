@@ -76,6 +76,11 @@ Flow* Stream::new_flow(const FlowKey* key)
 void Stream::delete_flow(const FlowKey* key)
 { flow_con->delete_flow(key); }
 
+void Stream::delete_flow(Flow* flow)
+{
+    flow_con->delete_flow(flow, PruneReason::NONE);
+}
+
 //-------------------------------------------------------------------------
 // key foo
 //-------------------------------------------------------------------------
