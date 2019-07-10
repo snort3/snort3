@@ -1,1 +1,0 @@
--m 027 -D -l /var/log/snort -d -u snort -g snort
