@@ -1,0 +1,390 @@
+# Translation of snort debconf templates to French
+# Copyright (C) 2007 Christian Perrier <bubulle@debian.org>
+# This file is distributed under the same license as the snort package.
+#
+# Christian Perrier <bubulle@debian.org>, 2004, 2006, 2007, 2008.
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: snort@packages.debian.org\n"
+"POT-Creation-Date: 2013-09-13 08:03+0200\n"
+"PO-Revision-Date: 2013-09-16 09:38+0200\n"
+"Last-Translator: JP Guillonneau <guillonneau.jeanpaul@free.fr>\n"
+"Language-Team: French <debian-l10n-french@lists.debian.org>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: \n"
+
+#. Type: select
+#. Choices
+#: ../snort.templates:2001
+msgid "boot"
+msgstr "Au démarrage"
+
+#. Type: select
+#. Choices
+#: ../snort.templates:2001
+msgid "dialup"
+msgstr "À la connexion"
+
+#. Type: select
+#. Choices
+#: ../snort.templates:2001
+msgid "manual"
+msgstr "Manuellement"
+
+#. Type: select
+#. Description
+#: ../snort.templates:2002
+msgid "Snort start method:"
+msgstr "Méthode de lancement de Snort :"
+
+#. Type: select
+#. Description
+#: ../snort.templates:2002
+msgid ""
+"Please choose how Snort should be started: automatically on boot, "
+"automatically when connecting to the net with pppd, or manually with the /"
+"usr/sbin/snort command."
+msgstr ""
+"Snort peut être lancé au démarrage du système, lors de la connexion au "
+"réseau avec pppd ou à la demande avec la commande « /usr/sbin/snort »."
+
+#. Type: string
+#. Description
+#: ../snort.templates:3001
+msgid "Interface(s) which Snort should listen on:"
+msgstr "Interface(s) où Snort sera à l'écoute :"
+
+#. Type: string
+#. Description
+#: ../snort.templates:3001
+msgid ""
+"This value is usually \"eth0\", but this may be inappropriate in some "
+"network environments; for a dialup connection \"ppp0\" might be more "
+"appropriate (see the output of \"/sbin/ifconfig\")."
+msgstr ""
+"La valeur habituelle est « eth0 » mais elle peut varier selon "
+"l'environnement réseau : pour une connexion ponctuelle (« dialup »), "
+"« ppp0 » est probablement plus adapté (voir le résultat de la commande « /"
+"sbin/ifconfig »)."
+
+#. Type: string
+#. Description
+#: ../snort.templates:3001
+msgid ""
+"Typically, this is the same interface as the \"default route\" is on. You "
+"can determine which interface is used for this by running \"/sbin/route -n"
+"\" (look for \"0.0.0.0\")."
+msgstr ""
+"L'interface est celle qu'utilise la route par défaut. Vous pouvez obtenir "
+"cette information avec la commande « /sbin/route -n » (rechercher "
+"« 0.0.0.0 »)."
+
+#. Type: string
+#. Description
+#: ../snort.templates:3001
+msgid ""
+"It is also not uncommon to use an interface with no IP address configured in "
+"promiscuous mode. For such cases, select the interface in this system that "
+"is physically connected to the network that should be inspected, enable "
+"promiscuous mode later on and make sure that the network traffic is sent to "
+"this interface (either connected to a \"port mirroring/spanning\" port in a "
+"switch, to a hub, or to a tap)."
+msgstr ""
+"Il est également fréquent d'utiliser Snort sur une interface sans adresse "
+"IP, en mode promiscuité (« promiscuous »). Dans ce cas, choisissez "
+"l'interface connectée physiquement au réseau que vous voulez analyser et "
+"activez ce mode plus tard. Assurez-vous que le trafic réseau est bien envoyé "
+"à cette interface (soit connectée à un port de miroir ou de répartition "
+"(« mirroring/spanning port ») sur un commutateur réseau, soit connectée à un "
+"répartiteur ou à un dérivateur)."
+
+#. Type: string
+#. Description
+#: ../snort.templates:3001
+msgid ""
+"You can configure multiple interfaces, just by adding more than one "
+"interface name separated by spaces. Each interface can have its own specific "
+"configuration."
+msgstr ""
+"Il est possible de configurer plusieurs interfaces en les mentionnant "
+"toutes, séparées par des espaces. Chacune d'elles pourra avoir une "
+"configuration différente."
+
+#. Type: string
+#. Description
+#: ../snort.templates:4001
+msgid "Address range for the local network:"
+msgstr "Plage d'adresses du réseau local :"
+
+#. Type: string
+#. Description
+#: ../snort.templates:4001
+msgid ""
+"Please use the CIDR form - for example, 192.168.1.0/24 for a block of 256 "
+"addresses or 192.168.1.42/32 for just one. Multiple values should be comma-"
+"separated (without spaces)."
+msgstr ""
+"Veuillez utiliser le format CIDR, par exemple 192.168.1.0/24 pour un bloc de "
+"256 adresses IP ou 192.168.1.42/32 pour une seule adresse. Il est possible "
+"d'indiquer plusieurs adresses sur une seule ligne en les séparant par des "
+"virgules (sans espaces)."
+
+#. Type: string
+#. Description
+#: ../snort.templates:4001
+msgid ""
+"Please note that if Snort is configured to use multiple interfaces, it will "
+"use this value as the HOME_NET definition for all of them."
+msgstr ""
+"Veuillez noter que si Snort est configuré pour utiliser plusieurs "
+"interfaces, la valeur définie ici sera la valeur HOME_NET pour chacune "
+"d'elles."
+
+#. Type: boolean
+#. Description
+#: ../snort.templates:5001
+msgid "Should Snort disable promiscuous mode on the interface?"
+msgstr "Faut-il désactiver le mode promiscuité sur l'interface ?"
+
+#. Type: boolean
+#. Description
+#: ../snort.templates:5001
+msgid ""
+"Disabling promiscuous mode means that Snort will only see packets addressed "
+"to the interface it is monitoring. Enabling it allows Snort to check every "
+"packet that passes the Ethernet segment even if it's a connection between "
+"two other computers."
+msgstr ""
+"Si le mode promiscuité (« promiscuous ») est désactivé, Snort ne verra que "
+"les paquets adressés à sa propre interface. S'il est activé, il vérifiera "
+"chaque paquet transitant sur le segment Ethernet même s'il s'agit d'échanges "
+"entres deux autres ordinateurs."
+
+#. Type: error
+#. Description
+#: ../snort.templates:6001
+msgid "Invalid interface"
+msgstr "Interface non valable"
+
+#. Type: error
+#. Description
+#: ../snort.templates:6001
+msgid ""
+"Snort is trying to use an interface which does not exist or is down. Either "
+"it is defaulting inappropriately to \"eth0\", or you specified one which is "
+"invalid."
+msgstr ""
+"Snort tente d'utiliser une interface inexistante ou inactive. Soit il "
+"utilise par erreur la valeur par défaut (eth0), soit l'adresse indiquée "
+"n'est pas valable."
+
+#. Type: boolean
+#. Description
+#: ../snort.templates:7001
+msgid "Should daily summaries be sent by e-mail?"
+msgstr "Faut-il envoyer des rapports quotidiens par courriel ?"
+
+#. Type: boolean
+#. Description
+#: ../snort.templates:7001
+msgid ""
+"A cron job can be set up to send daily summaries of Snort logs to a selected "
+"e-mail address."
+msgstr ""
+"Une tâche quotidienne de cron créera un résumé de l'information des journaux "
+"de Snort et l'enverra à une adresse électronique prédéfinie."
+
+#. Type: boolean
+#. Description
+#: ../snort.templates:7001
+msgid "Please choose whether you want to activate this feature."
+msgstr "Veuillez choisir si vous souhaitez activer cette fonctionnalité."
+
+#. Type: string
+#. Description
+#: ../snort.templates:8001
+msgid "Recipient of daily statistics mails:"
+msgstr "Destinataire des courriers électroniques quotidiens de statistiques :"
+
+#. Type: string
+#. Description
+#: ../snort.templates:8001
+msgid ""
+"Please specify the e-mail address that should receive daily summaries of "
+"Snort logs."
+msgstr ""
+"Veuillez indiquer l'adresse électronique qui recevra les résumés quotidiens "
+"des journaux de Snort."
+
+#. Type: string
+#. Description
+#: ../snort.templates:9001
+msgid "Additional custom options:"
+msgstr "Options personnelles supplémentaires :"
+
+#. Type: string
+#. Description
+#: ../snort.templates:9001
+msgid "Please specify any additional options Snort should use."
+msgstr "Veuillez indiquer les options supplémentaires qu'utilisera Snort."
+
+#. Type: string
+#. Description
+#: ../snort.templates:10001
+msgid "Minimum occurrences before alerts are reported:"
+msgstr "Nombre d'occurrences minimales avant l'envoi d'alertes :"
+
+#. Type: string
+#. Description
+#: ../snort.templates:10001
+msgid ""
+"Please enter the minimum number of alert occurrences before a given alert is "
+"included in the daily statistics."
+msgstr ""
+"Une alerte doit se produire un nombre de fois supérieur à celui indiqué pour "
+"être comptabilisée dans les statistiques quotidiennes."
+
+#. Type: note
+#. Description
+#: ../snort.templates:11001
+msgid "Snort restart required"
+msgstr "Redémarrage de Snort indispensable"
+
+#. Type: note
+#. Description
+#: ../snort.templates:11001
+msgid ""
+"As Snort is manually launched, you need to run \"service snort restart\" for "
+"the changes to take place."
+msgstr ""
+"Comme Snort est lancé manuellement, il est nécessaire d'exécuter la commande "
+"« service snort restart » pour que les modifications soient prises en compte."
+
+#. Type: error
+#. Description
+#: ../snort.templates:12001
+msgid "Obsolete configuration file"
+msgstr "Fichier de configuration obsolète"
+
+#. Type: error
+#. Description
+#: ../snort.templates:12001
+msgid ""
+"This system uses an obsolete configuration file (/etc/snort/snort.common."
+"parameters) which has been automatically converted into the new "
+"configuration file format (at /etc/default/snort)."
+msgstr ""
+"Le système utilise un fichier de configuration obsolète (/etc/snort/snort."
+"common.parameters) qui a été automatiquement converti vers le nouveau format "
+"(dans /etc/default/snort)."
+
+#. Type: error
+#. Description
+#: ../snort.templates:12001
+msgid ""
+"Please review the new configuration and remove the obsolete one. Until you "
+"do this, the initialization script will not use the new configuration and "
+"you will not take advantage of the benefits introduced in newer releases."
+msgstr ""
+"Veuillez vérifier le nouveau fichier de configuration et supprimer l'ancien. "
+"Tant que cela n'aura pas été fait, le script de démarrage n'utilisera pas la "
+"nouvelle configuration et vous ne bénéficierez pas des améliorations des "
+"versions plus récentes."
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:2001
+msgid "Deprecated options in configuration file"
+msgstr "Fichier de configuration avec des options obsolètes"
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:2001
+msgid ""
+"The Snort configuration file (/etc/snort/snort.conf) uses deprecated options "
+"no longer available for this Snort release. Snort will not be able to start "
+"unless you provide a correct configuration file. Either allow the "
+"configuration file to be replaced with the one provided in this package or "
+"fix it manually by removing deprecated options."
+msgstr ""
+"Le fichier de configuration de Snort (/etc/snort/snort.conf) utilise des "
+"options qui ne sont plus disponibles dans cette version du logiciel. Snort "
+"ne pourra pas démarrer tant que le fichier de configuration ne sera pas "
+"corrigé. Vous pouvez remplacer ce fichier par celui fourni avec le paquet ou "
+"le corriger vous-même pour supprimer les options obsolètes."
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:2001
+msgid ""
+"The following deprecated options were found in the configuration file: "
+"${DEP_CONFIG}"
+msgstr ""
+"Liste des options obsolètes dans le fichier de configuration : ${DEP_CONFIG}"
+
+#. Type: error
+#. Description
+#: ../snort-common.templates:3001
+msgid "Configuration error"
+msgstr "Erreur de configuration"
+
+#. Type: error
+#. Description
+#: ../snort-common.templates:3001
+msgid ""
+"The current Snort configuration is invalid and will prevent Snort starting "
+"up normally. Please review and correct it."
+msgstr ""
+"La configuration actuelle de Snort n'est pas valable et l'empêchera de "
+"démarrer. Veuillez la contrôler et la corriger."
+
+#. Type: error
+#. Description
+#: ../snort-common.templates:3001
+msgid ""
+"To diagnose errors in your Snort configuration you can run (as root) the "
+"following: \"/usr/sbin/snort -T -c /etc/snort/snort.conf\""
+msgstr ""
+"Le diagnostic des erreurs du fichier de configuration de Snort peut se faire "
+"(comme superutilisateur) avec la commande « /usr/sbin/snort -T -c /etc/snort/"
+"snort.conf »."
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:4001
+msgid "Deprecated configuration file"
+msgstr "Fichier de configuration obsolète"
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:4001
+msgid ""
+"Your system has deprecated configuration files which should not be used any "
+"longer and might contain deprecated options. If included through the "
+"standard configuration file (/etc/snort/snort.conf), they might prevent "
+"Snort from starting up properly."
+msgstr ""
+"Le système contient des fichiers de configuration obsolètes qui ne doivent "
+"plus être utilisés et pouvant contenir des options obsolètes. S’ils sont "
+"utilisés par le fichier de configuration standard (/etc/snort/snort.conf), "
+"ils peuvent empêcher Snort de démarrer correctement. "
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:4001
+msgid ""
+"Please remove these files as well as any existing references to them in the /"
+"etc/snort/snort.conf configuration file."
+msgstr ""
+"Veuillez supprimer ces fichiers ainsi que toutes leurs références dans le "
+"fichier de configuration /etc/snort/snort.conf. "
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:4001
+msgid "The following deprecated configuration files were found: ${DEP_FILE}"
+msgstr "Liste des fichiers de configuration obsolètes : ${DEP_FILE}"

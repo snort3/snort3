@@ -1,0 +1,423 @@
+Description: Additional documentation
+Last-Update: 2011-11-28
+
+--- /dev/null
++++ snort-2.9.2/doc/RELEASE.NOTES.2.3
+@@ -0,0 +1,133 @@
++2005-04-22 - Snort 2.3.3 Released
++
++* Fixed sfPortscan Open Ports not getting suppressed.
++
++* Added new mini-preprocessor to catch the X-Link2State vulnerability.
++  See Snort manual for details.
++
++2005-03-10 - Snort 2.3.2 Released
++
++* Removed end-of-line parser fix in favor of completely reworking
++  this at the next parser overhaul.
++
++2005-03-09 - Snort 2.3.1 Released
++
++* Fixed issue where the number of flowbits were too small. Thanks Marc
++  Norton for the fix.
++
++* Fixed parsing of comments at end of line in config file.  In
++  snort.conf, anything that follows a # on a line is considered a
++  comment. Thanks Steve Sturges for the fix.
++
++* Fixed alignment issue causing sfPortscan to crash on Solaris/HPUX.
++  Thanks Andy Mullican for the fix. Thanks Senthil Prabu.S and
++  Jonathan Miner for working with us on this.
++
++2005-01-25 - Snort 2.3.0 Final Released
++
++* Fixed issue with sfPortscan reporting incorrect IP datagram length.
++  Thanks Jon Hart for the test case and finding the bug, and Marc Norton
++  for resolving the issue.
++
++* Threshold/Suppression now prints properly when logging to syslog.
++  Thanks Sekure for pointing out the problem. Thanks Steve Sturges for
++  working on the fix.
++
++* Threshold memcap argument now correctly handles non-integer input.
++  Thanks nnposter for the patch.
++
++* Fixed issue reported by Allan Jensen, where on MacOS X, ppp links were
++  not decoded properly. Thanks Dan Roelker for the fix.
++
++* Snort manual and FAQ are updated for 2.3. Thanks Jen Harvey for your
++  work on putting it all together. 
++
++2004-12-15 - Snort 2.3.0 RC2 Released
++
++* Small performance improvement to arpspoof and also fixed a problem
++  where the list of configured IP/MAC entries would contain only one
++  entry and leaked memory (Jeff Nathan).
++
++* Fixed a problem affecting MacOS X where linking may fail with
++  non-standard libraries when global symbols are encountered multiple
++  times (Jeff Nathan).
++
++* Ignore RST|ACK midstream pickup case so we don't get an evasive TCP
++  alerts.  Thanks for the report, Sekure. Thanks Dan Roelker for the fix.
++
++* Moved CheckLogDir() to after parsing snort.conf (for IDS mode) so the 
++  logdir config will work if the default or command-line logdir does not
++  exist on the system. Thanks Dan Roelker.
++
++* Fixed bug when setting the doe_ptr on a successful pcre match.
++  It is now set relative to base_ptr. Thanks Steve Sturges for the
++  fix.
++
++* Added from_beginning and multiplier options for byte_jump.
++  from_beginning skips bytes from the beginning of the content,
++  instead of from the location immediately following the number
++  of bytes to skip.  multiplier takes a numeric argument, and
++  skips x times that number of bytes. Thanks again to Steve Sturges.
++
++* In "fast" output, now log only actual packet contents when UDP
++  data length is greater than actual data length. Thanks Brian
++  Caswell for spotting this, and Andrew Mullican for working on the fix.
++
++* Please check the ChangeLog for further details.  
++
++2004-11-18 - Snort 2.3.0 RC1 Released
++
++* Added IPS functionality from Snort-Inline.  A big thanks to the
++  Snort-Inline guys (Jed Haile, Rob McMillen, William Metcalf, and Victor
++  Julien).  Also, Thanks Dan Roelker for doing the integrating of
++  Snort-Inline into the official Snort project.  
++
++* Added new portscan detector.  The design and implementation was headed
++  up by Dan Roelker, and included Marc Norton and Jeremy Hewlett.  
++
++* Numerous changes for better 64bit Snort support from Jeremy Hewlett and
++  Marc Norton.  Additionally, an --enable-64bit-gcc option was added to
++  configure.  However, there are still some memory alignment issues to
++  work out before 64bit mode is fully functional, patches are welcomed.
++  Thanks Chris Baker for doing 64bit testing.  
++
++* Added not_established keyword to the flow detection option.  This allows
++  snort to do dynamic firewall rulesets.  Experimental for now.  
++
++* Added an enforce_state keyword to stream4 so we won't pick up midstream
++  sessions.  This works well for asynchronous links and also for
++  just monitoring legitimate traffic.  
++
++* Relocated ./contrib files to http://www.snort.org/dl/contrib as many
++  are not maintained by Sourcefire and are out of date. The rpm and
++  schema files have been relocated in their respective 'rpm' and 'schemas'
++  directories under the snort parent directory.
++
++* perfmonitor config line can now be configured with "accumulate" or
++  "reset."  Thanks Marc Norton for the feature, and Barry Basselgia for
++  pointing out the issue.  Thanks Scott Dexter and Andreas Ostling for
++  doing some initial testing.  
++
++* Fixed 64-bit bug in sfmemcap.c found and tested by Ryan Matteson
++  and Clay McClure.  Thanks guys.  
++
++* Fixed reference times to match log time for first packet, for an event
++  generated by a reassembled packet.  Incremented event ID to give
++  unique ID for each packet.  Also made unified logging compatible with
++  Windows.  Thanks Andrew Mullican for the fix.  
++
++* Fixed linux perfmonitoring stats for the 2.6 kernel.  Thanks to
++  everyone that reported this bug.  Thanks Dan Roelker for the fix.  
++
++* Get thresholding/suppression to work for alerts that do not
++  contain an ip header (primarily decode alerts).  Thanks
++  Brian Caswell.  
++
++* Fix conditions where snort would log double web alerts that
++  contained only content options (no uricontents).  Thanks to kawa for
++  finding and reporting this bug.  
++
++* Fix suppression/thresholding bug for non-rule alerts.  Thanks to
++  Alex Butcher for reporting it to us.  
++
++* Many other bug fixes, please check the ChangeLog for details.  
+--- /dev/null
++++ snort-2.9.2/doc/RELEASE.NOTES.2.6
+@@ -0,0 +1,114 @@
++2007-05-09 - Snort 2.6.1.5 Released
++[*] New Additions
++    * Updated HttpInspect to normalize parameters that are part of the
++      client request body in the same way it normalizes HTTP URIs.
++      Added a modifier keyword to be used in conjunction with a content
++      option in the rules to search only the normalized HTTP client request
++      body.  Also added stats for HttpInspect to track number of various
++      types of normalizations and HTTP methods.
++
++[*] Improvements
++    * Fix header files to avoid conflicts with system files on BSD for
++      IPv6 data structures.
++
++    * Fix possible memory leak in Stream4 when HttpInspect is being
++      used.
++
++2007-03-26 - Snort 2.6.1.4 Released
++[*] New Additions
++    * Added detection for BSD IPv6 fragmentation overflow (CVE-2007-1365).
++      New options configure the behavior of the detection and new decoder
++      alerts for truncated IPv6 headers and a Fragmentation alert for the 
++      specific overflow attack.
++
++[*] Security Improvements
++    * Updated code to use safer functions that perform bounds checking
++      when doing string or memory copies and snprintf buffer writes.
++      Ensure null termination on string buffers and perform initialization
++      on memory allocations.
++
++2007-02-18 - Snort 2.6.1.3 Released
++[*] Improvements
++    * Updated DCE/RPC dynamic protocol normalizer to perform additional
++      boundary checking when reassembling SMB fragments.  This addresses
++      a potential remotely exploitable stack-based buffer overflow.
++
++    * Updated Frag3 to protect against potential for fragments without
++      ethernet header being passed from iptables to Snort inline.
++
++2006-12-07 - Snort 2.6.1.2 Released
++[*] Improvements
++    * Fixed problem with snort using high CPU and potentially reprocessing
++      the same TCP reassembled packets with a sequence number wrap and
++      packets missing from the queue (out of order, dropped, or async
++      network).
++
++    * Updated DCE/RPC dynamic protocol normalizer to protect against
++      integer underflow conditions.
++
++    * Updated unified output plugin to work correctly on certain 64bit
++      platforms where timeval structure is a different size.  A patch
++      to barnyard that is associated with this fix can be found at:
++      http://secure.lv/~nikns/stuff/barnyard_64bit.diff.
++
++2006-11-22 - Snort 2.6.1.1 Released
++[*] Improvements
++    * Fixed problem with snort using high CPU and potentially reprocessing
++      the same TCP reassembled packets at session end or TCP ACK of only
++      part of a packet.
++
++2006-11-16 - Snort 2.6.1 Released
++[*] New Additions
++    * Support for UDP "session" tracking to Stream4.  Enable via
++      --enable-stream4udp option to configure script.  This allows
++      the use of flow option with UDP rules.  Includes tracking
++      of stats for UDP sessions.  A session is created for rules that
++      use the flow or flowbits keywords.  Also provided the ability to
++      ignore UDP any any -> any any rules as a performance improvement.
++
++    * Stream5 (for Beta testing) as replacement for Stream4
++      and Flow preprocessors.  See README.stream for details.
++
++    * Allow blocking of entire session in inline mode via stream API.
++      All subsequent packets on that session are blocked.
++
++    * Dynamic DCE/RPC protocol normalizer and defragmentation
++      module.  See README.dcerpc for details.
++
++    * SSH (for Beta testing) protocol analyzer.  See README.ssh for
++      details.
++
++    * Support for GRE encapsulated protocol (experimental).  Enable via
++      --enable-gre option to configure script.
++    
++    * Aruba networks output plugin (experimental).  See README.ARUBA for
++      details.  Enable via --enable-aruba option to configure script.
++
++    * Smaller memory footprint pattern mattcher using Aho-Corasick,
++      using NFA.  Use 'config detection: search-method ac-bnfa' to 
++      enable.  This will become the default pattern matcher in future
++      releases.  Wu-Manhber has been deprecated (mwm).
++
++[*] Improvements
++
++    * Added parameter to dynamicengine to allow specification of
++      directory instead of implicit file.  This will load all engine shared
++      libraries within the specified directory.  Can also use
++      --dynamic-engine-lib-dir command-line option.  Fix handling of
++      loading multiple instances of the same dynamic library (engine,
++      detection, or preprocessor).
++
++    * Updates to HTTP inspect to handle different versions of IIS with
++      the related iis profiles.  See README.httpinspect for details.
++
++    * Cleaned up inline initialization to better handle test mode.
++
++    * Updates to interface dependent variable definitions.
++
++    * Added stats for packets not yet processed -- those that are still in
++      the buffer used by pcap.
++
++    * Fixed issue with fewer alerts being generated when snort is compiled
++      with gcc 4.x by using no-strict-aliasing flag.
++
++    * Require each rule to have a unique sid/gid pair.
+--- /dev/null
++++ snort-2.9.2/doc/RELEASE.NOTES.2.7
+@@ -0,0 +1,23 @@
++2007-07-09 - Snort 2.7.0
++
++[*] New Additions
++    * Stream5 is now the default stream processor and replaces both flow
++      and Stream4.  Refer to the Snort manual and README.stream5 for
++      details on how to configure it for OS target-specific TCP
++      processing.
++
++[*] Improvements
++    * Fixed header files to avoid conflicts with system files on BSD for
++      IPv6 data structures.
++
++    * Reduced memory footprint for smtp preprocessor.
++
++    * Ensured Snort frees memory from preprocessors before exit.  Only
++      outstanding memory in use is related to pattern matcher and
++      rules.
++
++[*] Security Improvements
++    * Further updates that use safer functions that perform bounds checking
++      when doing string or memory copies and snprintf buffer writes.
++      Ensure null termination on string buffers and perform initialization
++      on memory allocations.
+--- /dev/null
++++ snort-2.9.2/doc/RELEASE.NOTES.2.4
+@@ -0,0 +1,138 @@
++2006-06-05 - Snort 2.4.5 Released
++    * Fixed potential evasion in URI content buffers
++    * Fixed potential evasion in Stream4
++
++2006-03-08 - Snort 2.4.4 Released
++[*] Improvements
++    * Fixed ip options handling in Frag3.
++    * Fixed bug in Wu-Manbher implementation regarding multiple
++      recurring patterns.
++    * Fixed a config file parsing bug which required DNS resolution
++      in certain circumstances.
++    * Updated perfmonitor to properly handle wraps on 64 bit platforms.
++    * Fixed crash in portscan related to bogus data in sfxhash.
++    * Fixed memory leak in Frag3.
++    * Allow use of 0 as a value to -G.
++
++2005-10-17 - Snort 2.4.3 Released
++[*] Improvements
++    * Fixed possible buffer overflow in  back orifice preprocessor.
++    * Added snort.conf options to bo preprocessor for finer control of 
++      alerting and dropping of bo traffic.
++    * Added alert to detect the bo buffer overflow attack against snort.
++
++2005-09-28 - Snort 2.4.2 Released
++[*] Improvements
++    * Fixed crash bug with -T and default logging setup first reported by 
++      Zultan.
++    * Corrected Win32 directory setup for new WinPCAP.
++
++2005-09-16 - Snort 2.4.1 Released
++[*] New additions
++    * Added a -K command line option to manually select the logging mode using
++      a single switch.  The -b and -N switches will be deprecated in version 
++      2.7.  Pcap logging is now the default for Snort at startup, use "-K ascii"
++      to revert to old behavior.
++
++[*] Improvements
++    * Win32 version now supports winpcap 3.1 and MySQL client 4.13.
++    * Added event on zero-length RPC fragments.
++    * Fixed TCP SACK processing for text based outputs that could result in a 
++      DoS.
++    * General improvements to frag3 including Teardrop detection fix.
++    * Fixed a bug in the PPPoE decoder.
++    * Added patch for time stats from Bill Parker.  Enable with configure 
++      --enable-timestats.
++    * Fixed IDS mode bailing at startup if logdir is specified in snort.conf
++      and /var/log/snort doesn't exist.
++    * Added decoder for IPEnc for OpenBSD.  Thanks Jason Ish for the patch 
++      (long time ago) and Chris Kuethe for reraising the issue.
++    * Allow snort to use usernames (-u) and groupnames (-g) that include 
++      numbers.  Thanks to Shaick for the patch.
++    * Fixed broken -T option.
++    * Change ip_proto to ip for portscan configuration.  Thanks David Bianco
++      for pointing this out.
++    * Fix for prelude initialization.  Thanks Yoann Vandoorselaere for the
++      update.
++    * For content matches, when subsequent rule options fail, start searching
++      again in correct location.
++    * Updated Win32 to handle pflog patch.
++    * Added support for new OpenBSD pflog format.  Older pflog format,
++      OpenBSD 3.3 and earlier is still supported.  Thanks Breno Leitao
++      and Christian Reis for the patch.
++    * Added statistics counter for ETH_LOOPBACK packets.  Thanks rmkml
++      for the patch.
++
++2005-07-22 - Snort 2.4.0 Released
++
++[*] Distribution Change
++    * Rules are no longer distributed as part of the Snort releases, they are
++      available as a separate download from snort.org.  This was done for 
++      three reasons: 
++        1) To better manage the new rules licensing.
++        2) To reduce the size of the engine download.
++        3) To move the thousands of documentation files for the rules into
++           the rules tarballs.  If you've ever checked Snort out of CVS you'll
++           know why this is a Good Thing.
++
++[*] New additions
++    * Added new IP defragmentation preprocessor, Frag3. The frag3 preprocessor 
++      is a target-based IP defragmentation module, and is intended as a 
++      replacement for the frag2 module.  Check out the README.frag3 for full
++      info on this new preprocessor.
++
++    * Libprelude support has been added (enable with --enable-prelude).
++      Thanks Yoann Vandoorselaere!
++
++    * An "ftpbounce" rule detection plugin was added for easier detection of
++      FTP bounce attacks.
++
++    * Added a new Snort config option, "ignore_ports," to ignore packets
++      based on port number.  This is similar to bpf filters, but done within
++      snort.conf.
++
++[*] Improvements
++    * Snort startup messages printed in syslog now contain a PID before each
++      entry. Thanks Sekure for initially bringing this up.
++
++    * Stream4: Performance improvements.
++    
++    * Stream4: Added 'max_session_limit' option which limits number of 
++      concurrent sessions tracked.  Added favor_old/favor_new options that 
++      affect order in which packets are put together for reassembly.  
++
++    * Stream4: New configuration options to manage flushpoints for improved
++      anti-evasion.  The flush_behavior option selects flushpoint management 
++      mode.  New flush_base, flush_range, and flush_seed manage randomized 
++      flushing.  Check out the snort.conf file for full config data on the 
++      new flush options. 
++
++    * Added two more alerts for BackOrifice client and server packets. This
++      allows specific alerts to be suppressed.
++
++    * PerfMon preprocessor updated to include more detailed stats for rebuilt
++      packets (applayer, wire, fragmented & TCP). Also added 'atexitonly'
++      option that dumps stats at exit of snort, and command line -Z flag to
++      specify the file to which stats are logged.
++
++    * Added new Http Inspect config item, "tab_uri_delimiter," which if
++      specified, lets a tab character (0x09) act as the delimiter for a URI.
++
++    * Added a '-G' command line flag to snort that specifies the Snort
++      instance log identifier. It takes a single argument that can be either
++      hex (prefaced with 0x) or decimal. The unified log files will include
++      the instance ID when the -G flag is used.
++
++    * "Same SRC/DST" (sid 527) and "Loopback Traffic" (sid 528) are now
++      handled in the IP decoder. Those sids are now considered obsolete.
++
++    * Http_Inspect "flow_depth" option now accepts a -1 value which tells
++      Snort to ignore all server-side traffic.
++
++    * RPMs have been updated to be more portable, and also now include a
++      "--with inline" option for those wanting to build Inline RPMs. Thanks
++      Daniel Wittenberg and JP Vossen for your help!
++
++    * Many, many bug fixes have also gone into this release, please see the
++      ChangeLog for details.
++

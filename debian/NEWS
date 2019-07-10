@@ -1,0 +1,85 @@
+snort (2.9.2.2-3) experimental; urgency=medium
+
+  The database output plugins have been removed by the upstream maintainers in
+  Snort 2.9.3. These output plugins were already deprecated as of Snort 2.9.2.
+  These have been removed alongside the Aruba and Prelude outputs.
+  
+  After the upgrade to a Snort 2.9.3.x release, systems using the database
+  output should move to full unified2 logging and use barnyard2 to read those
+  unified2 files and input them into their database. 
+
+  For more information see
+  http://blog.snort.org/2012/07/database-output-is-dead-rip.html
+  http://blog.snort.org/2012/05/two-things-you-should-know-about-snort.html
+  and
+  http://blog.snort.org/2011/06/snorts-output-methods.html
+
+ -- Javier Fernández-Sanguino Peña <jfs@debian.org>  Wed, 08 Aug 2012 21:13:42 +0200
+
+snort (2.8.5.2-3) unstable; urgency=low
+
+  The database information used by Snort to log alerts into a database 
+  (and configured automatically through Debconf) has now been moved to the
+  /etc/snort/database.conf file.
+
+  Note that this file might be empty if you are not logging to a database
+
+ -- Javier Fernandez-Sanguino Pen~a <jfs@debian.org>  Mon, 20 Dec 2010 15:31:24 +0100
+
+snort (2.7.0-15) unstable; urgency=low
+
+  The Database schema changed in Snort from 2.6 to the 2.7 release,
+  if you are upgrading from an older release please see the document
+  README-database-upgrade.Debian (available in the Snort documentation
+  directory /usr/share/doc/snort-{mysql,pgsql}) and take the appropriate 
+  steps to update your Database schema.
+
+ -- Javier Fernandez-Sanguino Pen~a <jfs@debian.org>  Thu, 01 May 2008 22:38:46 +0200
+
+snort (2.7.0-1) unstable; urgency=low
+
+  Sourcefire changed the license of the IDS ruleset in 2.4 introducing the "VRT
+  Certified rules" ruleset which is the official ruleset for Snort. This
+  ruleset, however, is provided only through a non-free license which prohibits
+  redistribution within this package.
+
+  As a consequence this package provides only free (GPL) rules. No rule 
+  with a sid in the 3,465-1,000,000 range (VRT Certified) is included here.
+  The rules provided on this package are based on the official ruleset for
+  Snort 2.4 (updated 7/27/05) and the Community ruleset.
+
+  Certified rules download require users either to pay (if they want the latest
+  rules) or register (for rules provided with a 30-delay period). Users
+  wishing to go this way can use the 'oinkmaster' package to auomatically
+  update their rulesets once they have registered at snort.org's site.
+
+ -- Javier Fernandez-Sanguino Pen~a <jfs@debian.org>  Tue, 31 Jul 2007 23:42:44 +0200
+
+snort (2.3.2-1) unstable; urgency=medium
+
+  * In Snort version 2.3.0 and later the preferred configuration method
+    uses /etc/default/snort rather than /etc/snort/snort.common.parameters.
+    The new approach makes it possible to introduce improvements in the
+    init.d script, such as sanity checks for common misconfigurations.
+
+  * Upgrading automatically generates the file /etc/default/snort
+    from /etc/snort/snort.common.parameters. 
+
+  * Since the automatically generated file may not be correct, you should 
+    inspect it or create a new one to your liking.  If the configuration
+    file is correct, delete /etc/snort/snort.common.parameters and restart
+    the server to use the new file. The system will run Snort with the old
+    configuration file until you do so.
+
+ -- Javier Fernandez-Sanguino Pen~a <jfs@computer.org>  Tue,  8 Feb 2005 23:55:57 +0100
+snort (2.9.2.2-3) unstable; urgency=medium
+
+  The database information used by Snort to log alerts into a database 
+  (and configured automatically through Debconf) has now been moved to the
+  /etc/snort/database.conf file.
+
+  Note that this file might be empty if you are not logging to a database
+
+  
+
+ -- Javier Fernandez-Sanguino Pen~a <jfs@debian.org>  Mon, 20 Dec 2010 15:31:24 +0100

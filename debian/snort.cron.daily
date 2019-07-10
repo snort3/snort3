@@ -1,0 +1,35 @@
+#!/bin/sh -e
+
+test -f /usr/sbin/snort || exit 0
+
+LOGFILE=/var/log/snort/alert
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+CONFIG=/etc/snort/snort.debian.conf
+. $CONFIG
+
+# Don't generate stats if we are configured not to
+[ "$DEBIAN_SNORT_SEND_STATS" = "false" ] && exit 0
+
+export DEBIAN_SNORT_STATS_RCPT DEBIAN_SNORT_STATS_THRESHOLD
+
+# Just in case it's not properly configured for whatever reason
+[ -z "$DEBIAN_SNORT_STATS_THRESHOLD" ] && DEBIAN_SNORT_STATS_THRESHOLD=1
+[ -z "$DEBIAN_SNORT_STATS_RCPT" ] && DEBIAN_SNORT_STATS_RCPT=root
+
+# Cannot use logrotate to rotate these logfiles...
+# 'rotate' saved RAW-Ethernet streams
+# New snort has different naming scheme, old one still here for upgrades
+find /var/log/snort -name "snort-*@*.log" -mtime +15 | xargs --no-run-if-empty rm
+find /var/log/snort -name "tcpdump.log.*" -mtime +15 | xargs --no-run-if-empty rm
+find /var/log/snort -name "snort.log.*" -mtime +15 | xargs --no-run-if-empty rm
+
+# Mail snort stats
+if [ -s $LOGFILE ]; then
+	(echo "To: $DEBIAN_SNORT_STATS_RCPT"; snort-stat -a -t $DEBIAN_SNORT_STATS_THRESHOLD < $LOGFILE) | sendmail -t
+fi
+
+# Restarting snort is now handled by the logrotate configuration.
+# The 'intelligence' of not to start in certain startup-modes moved
+# to the init.d script as well.
+
+exit 0

@@ -1,0 +1,11 @@
+debian/README.docs
+doc/BUGS
+doc/NEWS
+doc/PROBLEMS
+doc/snort_manual.pdf
+doc/TODO
+doc/USAGE
+doc/WISHLIST
+debian/my/lisapaper.txt
+doc/README*
+doc/RELEASE.NOTES.*

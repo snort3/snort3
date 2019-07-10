@@ -1,0 +1,11 @@
+Document: snort-manual
+Title: Snort Users Manual
+Author: Martin Roesch
+Abstract: Users manual to the Snort NIDS
+ The users manual to the Snort network intrusion detection system,
+ providing an overview of snort and how to write rule files for it.
+Section: Network/Monitoring
+
+Format: pdf
+Files: /usr/share/doc/snort-doc/snort_manual.pdf.gz
+

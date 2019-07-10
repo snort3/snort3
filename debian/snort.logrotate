@@ -1,0 +1,16 @@
+/var/log/snort/portscan.log /var/log/snort/alert /var/log/snort/portscan2.log {
+    daily
+    rotate 7
+    compress
+    missingok
+    notifempty
+    create 0640 snort adm
+    sharedscripts
+    postrotate
+        if [ -x /usr/sbin/invoke-rc.d ]; then \
+            invoke-rc.d snort restart > /dev/null; \
+        else \
+            /etc/init.d/snort restart > /dev/null; \
+        fi; 
+    endscript
+}

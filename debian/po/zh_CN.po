@@ -1,0 +1,355 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: snort\n"
+"Report-Msgid-Bugs-To: snort@packages.debian.org\n"
+"POT-Creation-Date: 2013-09-13 08:03+0200\n"
+"PO-Revision-Date: 2013-09-16 17:49+0800\n"
+"Last-Translator: Yi Mingjing <hackergene@opensource.org.cn>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Chinese\n"
+"X-Poedit-Country: CHINA\n"
+"X-Poedit-SourceCharset: utf-8\n"
+
+#. Type: select
+#. Choices
+#: ../snort.templates:2001
+msgid "boot"
+msgstr "引导"
+
+#. Type: select
+#. Choices
+#: ../snort.templates:2001
+msgid "dialup"
+msgstr "拨号"
+
+#. Type: select
+#. Choices
+#: ../snort.templates:2001
+msgid "manual"
+msgstr "手册"
+
+#. Type: select
+#. Description
+#: ../snort.templates:2002
+msgid "Snort start method:"
+msgstr "启动Snort"
+
+#. Type: select
+#. Description
+#: ../snort.templates:2002
+msgid ""
+"Please choose how Snort should be started: automatically on boot, "
+"automatically when connecting to the net with pppd, or manually with the /"
+"usr/sbin/snort command."
+msgstr ""
+"请选择Snort运行方式：在系统引导时自动运行，当系统联网时自动运行，或者在/usr/"
+"sbin/snort路径下手动启动。"
+
+#. Type: string
+#. Description
+#: ../snort.templates:3001
+msgid "Interface(s) which Snort should listen on:"
+msgstr "Snort监听端口："
+
+#. Type: string
+#. Description
+#: ../snort.templates:3001
+msgid ""
+"This value is usually \"eth0\", but this may be inappropriate in some "
+"network environments; for a dialup connection \"ppp0\" might be more "
+"appropriate (see the output of \"/sbin/ifconfig\")."
+msgstr ""
+"通常情况下为\"eth0\"，但是在某些网络环境下不适用。例如，在拨号连接"
+"时，\"ppp0\"或许更为合适。网络连接状态请见\"/sbin/ifconfig\"。"
+
+#. Type: string
+#. Description
+#: ../snort.templates:3001
+msgid ""
+"Typically, this is the same interface as the \"default route\" is on. You "
+"can determine which interface is used for this by running \"/sbin/route -n"
+"\" (look for \"0.0.0.0\")."
+msgstr ""
+"通常，当开启\"defalt route\"(\"默认路由\")后为同一网段。您可以使用\"/sbin/"
+"route -n\"来选择运行在那个网段下。"
+
+#. Type: string
+#. Description
+#: ../snort.templates:3001
+msgid ""
+"It is also not uncommon to use an interface with no IP address configured in "
+"promiscuous mode. For such cases, select the interface in this system that "
+"is physically connected to the network that should be inspected, enable "
+"promiscuous mode later on and make sure that the network traffic is sent to "
+"this interface (either connected to a \"port mirroring/spanning\" port in a "
+"switch, to a hub, or to a tap)."
+msgstr ""
+"在混杂模式中，不使用IP地址来配置Snort也是可行的。例如，当系统通过物理连接到网"
+"络后选择一个网段，然后开启混杂模式，进而确定在此网段中（或交换机到集线器中的"
+"映射端口）的网络流量。"
+
+#. Type: string
+#. Description
+#: ../snort.templates:3001
+msgid ""
+"You can configure multiple interfaces, just by adding more than one "
+"interface name separated by spaces. Each interface can have its own specific "
+"configuration."
+msgstr ""
+"您可以通过在各网段间用空格隔开的方式配置多个网段。每个网络都可以单独配置。"
+
+#. Type: string
+#. Description
+#: ../snort.templates:4001
+msgid "Address range for the local network:"
+msgstr "本机地址范围："
+
+#. Type: string
+#. Description
+#: ../snort.templates:4001
+msgid ""
+"Please use the CIDR form - for example, 192.168.1.0/24 for a block of 256 "
+"addresses or 192.168.1.42/32 for just one. Multiple values should be comma-"
+"separated (without spaces)."
+msgstr ""
+"请使用CIDR的格式。例如， 形如192.168.1.0/24或192.168.1.42/32。请用逗号\",\"隔"
+"开。"
+
+#. Type: string
+#. Description
+#: ../snort.templates:4001
+msgid ""
+"Please note that if Snort is configured to use multiple interfaces, it will "
+"use this value as the HOME_NET definition for all of them."
+msgstr ""
+"请注意，如果将Snort配置了多个网段，那么这个将作为定义HOME_NET的默认值。"
+
+#. Type: boolean
+#. Description
+#: ../snort.templates:5001
+msgid "Should Snort disable promiscuous mode on the interface?"
+msgstr "禁用混杂模式吗？"
+
+#. Type: boolean
+#. Description
+#: ../snort.templates:5001
+msgid ""
+"Disabling promiscuous mode means that Snort will only see packets addressed "
+"to the interface it is monitoring. Enabling it allows Snort to check every "
+"packet that passes the Ethernet segment even if it's a connection between "
+"two other computers."
+msgstr ""
+"禁用混杂模式，意味着Snort将只能看到被监控网段的数据包。开启混杂模式后，Snort"
+"将监控两台机器之间的任何数据包。"
+
+#. Type: error
+#. Description
+#: ../snort.templates:6001
+msgid "Invalid interface"
+msgstr "非法网段"
+
+#. Type: error
+#. Description
+#: ../snort.templates:6001
+msgid ""
+"Snort is trying to use an interface which does not exist or is down. Either "
+"it is defaulting inappropriately to \"eth0\", or you specified one which is "
+"invalid."
+msgstr ""
+"Snort监控的网络不存在或未被启用。或许它不是默认的\"eth0\"，也可能您指定的网络"
+"名称错误。"
+
+#. Type: boolean
+#. Description
+#: ../snort.templates:7001
+msgid "Should daily summaries be sent by e-mail?"
+msgstr "需要邮件发送每日概况吗？"
+
+#. Type: boolean
+#. Description
+#: ../snort.templates:7001
+msgid ""
+"A cron job can be set up to send daily summaries of Snort logs to a selected "
+"e-mail address."
+msgstr "可以使用计划任务将每天的Snort日志概要发送至指定的邮箱。"
+
+#. Type: boolean
+#. Description
+#: ../snort.templates:7001
+msgid "Please choose whether you want to activate this feature."
+msgstr "请选择是否开启此功能"
+
+#. Type: string
+#. Description
+#: ../snort.templates:8001
+msgid "Recipient of daily statistics mails:"
+msgstr "接收每日数据分析的邮箱地址："
+
+#. Type: string
+#. Description
+#: ../snort.templates:8001
+msgid ""
+"Please specify the e-mail address that should receive daily summaries of "
+"Snort logs."
+msgstr "请指定接收每天Snort日志概要的邮箱。"
+
+#. Type: string
+#. Description
+#: ../snort.templates:9001
+msgid "Additional custom options:"
+msgstr "自定义可选项："
+
+#. Type: string
+#. Description
+#: ../snort.templates:9001
+msgid "Please specify any additional options Snort should use."
+msgstr "请指定Snort启用的可选项："
+
+#. Type: string
+#. Description
+#: ../snort.templates:10001
+msgid "Minimum occurrences before alerts are reported:"
+msgstr "最小报警间隔时间："
+
+#. Type: string
+#. Description
+#: ../snort.templates:10001
+msgid ""
+"Please enter the minimum number of alert occurrences before a given alert is "
+"included in the daily statistics."
+msgstr "请输入分析日志中的最小报警时间。"
+
+#. Type: note
+#. Description
+#: ../snort.templates:11001
+msgid "Snort restart required"
+msgstr "请重启Snort"
+
+#. Type: note
+#. Description
+#: ../snort.templates:11001
+msgid ""
+"As Snort is manually launched, you need to run \"service snort restart\" for "
+"the changes to take place."
+msgstr "手动启动Snort，请运行\"service snort restart\"使变更生效。"
+
+#. Type: error
+#. Description
+#: ../snort.templates:12001
+msgid "Obsolete configuration file"
+msgstr "旧配置文件"
+
+#. Type: error
+#. Description
+#: ../snort.templates:12001
+msgid ""
+"This system uses an obsolete configuration file (/etc/snort/snort.common."
+"parameters) which has been automatically converted into the new "
+"configuration file format (at /etc/default/snort)."
+msgstr ""
+"系统使用旧配置文件（路径：/etc/snort/snort.common.parameters），该文件被自动"
+"加载到新的配置文件中（路径：/etc/default/snort）。"
+
+#. Type: error
+#. Description
+#: ../snort.templates:12001
+msgid ""
+"Please review the new configuration and remove the obsolete one. Until you "
+"do this, the initialization script will not use the new configuration and "
+"you will not take advantage of the benefits introduced in newer releases."
+msgstr ""
+"请检查新版本配置，并去掉老的配置。完成后，初始化脚本将使用新的配置，并且系统"
+"将拥有新版本中的特性。"
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:2001
+msgid "Deprecated options in configuration file"
+msgstr "配置文件中存在不合法的配置信息"
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:2001
+msgid ""
+"The Snort configuration file (/etc/snort/snort.conf) uses deprecated options "
+"no longer available for this Snort release. Snort will not be able to start "
+"unless you provide a correct configuration file. Either allow the "
+"configuration file to be replaced with the one provided in this package or "
+"fix it manually by removing deprecated options."
+msgstr ""
+"Snort配置文件（路径：/etc/snort/snort.conf）存在当前版本无法使用的配置信息。"
+"您需要更正Snort配置以启动Snort。您可以用本软件包提供的配置文件替换掉旧的配置"
+"文件，或者手工修改配置文件。"
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:2001
+msgid ""
+"The following deprecated options were found in the configuration file: "
+"${DEP_CONFIG}"
+msgstr "下列配置文件错误：${DEP_CONFIG}"
+
+#. Type: error
+#. Description
+#: ../snort-common.templates:3001
+msgid "Configuration error"
+msgstr "配置错误"
+
+#. Type: error
+#. Description
+#: ../snort-common.templates:3001
+msgid ""
+"The current Snort configuration is invalid and will prevent Snort starting "
+"up normally. Please review and correct it."
+msgstr "当前Snort配置错误以致Snort无法正常启动。请重新查看。"
+
+#. Type: error
+#. Description
+#: ../snort-common.templates:3001
+msgid ""
+"To diagnose errors in your Snort configuration you can run (as root) the "
+"following: \"/usr/sbin/snort -T -c /etc/snort/snort.conf\""
+msgstr ""
+"您可以在命令行中使用（需root权限）：/usr/sbin/snort -T -c /etc/snort/snort."
+"conf来检查配置文件是否存在错误。"
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:4001
+msgid "Deprecated configuration file"
+msgstr "错误的配置文件"
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:4001
+msgid ""
+"Your system has deprecated configuration files which should not be used any "
+"longer and might contain deprecated options. If included through the "
+"standard configuration file (/etc/snort/snort.conf), they might prevent "
+"Snort from starting up properly."
+msgstr ""
+"您的系统使用了不正确的配置文件。在/etc/snort/snort.conf配置文件中存在不正确的"
+"配置，会使Snort无法正常启动。"
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:4001
+msgid ""
+"Please remove these files as well as any existing references to them in the /"
+"etc/snort/snort.conf configuration file."
+msgstr "请在Snort配置文件中删除这些不正确的配置信息。"
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:4001
+msgid "The following deprecated configuration files were found: ${DEP_FILE}"
+msgstr "不正确的配置文件：${DEP_FILE}"

@@ -1,0 +1,31 @@
+Description: Strip properly werror
+
+ When removing -Werror, make sure that we strip it
+ properly, including the possibility of it having a 
+ value.
+
+ If not done this way, the configure script will complain
+ that gcc cannot build executables because it ends up
+ replacing 'gcc -Werror=format-security' and changing
+ it into 'gcc =format-security', which fails to build
+
+Author: Javier Fernández-Sanguino Peña <jfs@debian.org>
+Origin: vendor
+Last-Update: 2014-10-24
+
+
+diff --git a/configure.in b/configure.in
+index b2bd444..8910ab6 100644
+--- a/configure.in
++++ b/configure.in
+@@ -15,6 +15,10 @@ ADD_WERROR="no"
+ # for example AC_CHECK_LIB, will fail because of
+ # warning: conflicting types for built-in function <func>
+ if eval "echo $CFLAGS | grep -e -Werror"; then
++    CFLAGS=`echo $CFLAGS | sed -e "s/-Werror=.* / /g"` # Remove Werrror with parameter ('Werror=somevalue') first, possible in gcc 4.6
++    # Note: we do not ADD -Werror if we get it with a parameter
++fi
++if eval "echo $CFLAGS | grep -e -Werror"; then
+     CFLAGS=`echo $CFLAGS | sed -e "s/-Werror//g"`
+     ADD_WERROR="yes"
+ fi

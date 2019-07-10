@@ -1,0 +1,52 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.\" First parameter, NAME, should be all caps
+.\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
+.\" other parameters are allowed: see man(7), man(1)
+.TH U2BOAT 8  "12th December 2014"
+.\" Please adjust this date whenever revising the manpage.
+.\"
+.\" Some roff macros, for reference:
+.\" .nh        disable hyphenation
+.\" .hy        enable hyphenation
+.\" .ad l      left justify
+.\" .ad b      justify to both left and right margins
+.\" .nf        disable filling
+.\" .fi        enable filling
+.\" .br        insert line break
+.\" .sp <n>    insert n+1 empty lines
+.\" for manpage-specific macros, see man(7)
+.SH NAME
+u2boat \- Unified2 Binary Output & Alert Tool
+.SH SYNOPSIS
+.B u2boat
+.RI [-t type]
+.RI <infile>
+.RI <outfile>
+.br
+.SH DESCRIPTION
+This manual page documents briefly the
+.B u2boat
+command.
+This manual page was written for the Debian distribution
+because the original program does not have a manual page.
+.PP
+.B u2boat
+is a utility that converts Snort's Unified2 logs to other formats. It 
+was introduced in Snort due to the lack of support for
+formats that were present in the Snort 2.8.x releases.
+Unified2 logs to other formats.
+
+.SH OPTIONS
+.TP
+.B \-t type
+Type specifies the type of output that the program should create. The only
+current valid option is 'pcap'
+
+.SH SEE ALSO
+.B snort
+
+.SH AUTHOR
+This program was written by Ryan Jordan.
+
+This manual page was written by Javier Fernandez-Sanguino <jfs@debian.org>,
+for the Debian GNU/Linux system (but may be used by others).

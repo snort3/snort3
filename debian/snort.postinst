@@ -1,0 +1,306 @@
+#!/bin/sh -e
+
+CONFIG=/etc/snort/snort.debian.conf
+CONFIG_CHECKSUM=/var/lib/snort/snort.debian.conf.md5sum
+# Create the checksum directory if it does not exist
+if [ ! -d $(dirname $CONFIG_CHECKSUM) ]; then
+    mkdir $(dirname $CONFIG_CHECKSUM)
+fi
+
+. /usr/share/debconf/confmodule
+test $DEBIAN_SCRIPT_DEBUG && set -v -x
+
+# summary of how this script can be called:
+#        * <postinst> `configure' <most-recently-configured-version>
+#        * <old-postinst> `abort-upgrade' <new version>
+#        * <conflictor's-postinst> `abort-remove' `in-favour' <package>
+#          <new-version>
+#        * <deconfigured's-postinst> `abort-deconfigure' `in-favour'
+#          <failed-install-package> <version> `removing'
+#          <conflicting-package> <version>
+# for details, see /usr/doc/packaging-manual/
+#
+# quoting from the policy:
+#     Any necessary prompting should almost always be confined to the
+#     post-installation script, and should be protected with a conditional
+#     so that unnecessary prompting doesn't happen if a package's
+#     installation fails and the `postinst' is called with `abort-upgrade',
+#     `abort-remove' or `abort-deconfigure'.
+
+
+FIRSTINST=
+RECONFIGURE=
+if [ "$1" = "reconfigure" ] || [ -n "$DEBCONF_RECONFIGURE" ]; then
+  RECONFIGURE="true"
+  else
+  RECONFIGURE=
+fi
+
+if ([ "$1" = "install" ] || [ "$1" = "configure" ]) && [ -z "$2" ]; then
+    FIRSTINST="yes"
+fi
+
+if [ -z "$RECONFIGURE" ] && [ -z "$FIRSTINST" ]; then
+    UPGRADE="yes"
+fi
+
+
+
+case "$1" in
+    install)
+	;;
+    upgrade)
+	db_get snort/startup || true
+	if [ "$RET" = "manual" ]; then
+		echo "You have chosen to (re)start snort manually."
+		echo "Please restart Snort manually."
+		sleep 2
+		#db_fset snort/please_restart_manually seen false
+		#db_beginblock
+		#db_input high snort/please_restart_manually || true
+		#db_endblock
+		#db_go
+		#db_stop
+	fi
+	;;
+    configure)
+
+        # only mess with config file it exists; otherwise, assume that's the way the
+        # user wants it, but only if upgrading
+        if [ -e "$CONFIG" ] || [ -z "$UPGRADE" ]; then
+          # similarly, check for the existence of the checksum file; if it doesn't
+          # exist, assume that's the way the user wants it, but only if upgrading
+            if [ -e "$CONFIG_CHECKSUM" ] || [ -z "$UPGRADE" ]; then
+        # next, compare the current and stored checksums; if they do not match,
+        # assume that's the way the user wants it ... upgrading etc
+             if [ "$(md5sum "$CONFIG" 2>/dev/null)" = \
+                  "$(cat "$CONFIG_CHECKSUM" 2>/dev/null)" ] || \
+                  [ -z "$UPGRADE" ]; then
+                    # they match; get ready to prepare a new version of the config file
+                  overwrite_config="yes"
+             fi
+            fi
+        fi
+
+	# generate new config file
+	db_get snort/startup || true; 		STARTUP="$RET"
+	db_get snort/interface || true; 	INTERFACE="$RET"
+	db_get snort/address_range || true;	ADDRESS_RANGE="$RET"
+	db_get snort/disable_promiscuous || true; DISABLE_PROMISCUOUS="$RET"
+	db_get snort/send_stats || true;	STATS_SEND="$RET"
+	db_get snort/stats_rcpt || true;	STATS_RCPT="$RET"
+	db_get snort/stats_treshold || true;	STATS_THRESHOLD="$RET"
+	db_get snort/options || true;		OPTIONS="$RET"
+
+	test "$DISABLE_PROMISCUOUS" = "true" && OPTIONS="$OPTIONS -p"
+
+	# Failsafe in case the values above are blank (jfs)
+	[ -z "$STATS_RCPT" ] && STATS_RCPT=root
+	[ -z "$STATS_THRESHOLD" ] && STATS_THRESHOLD=1
+	# STATS_RCPT=`echo "$STATS_RCPT" | sed -e 's/@/\\\\@/g' -e 's/,/\\\\,/g'`
+
+
+        # If this is an upgrade from a previous release that did not have
+        # a configuration checksum then try to determine if we can
+        # upgrade.
+        #
+        # To do this: tlest the current configuration against the old auto-generated configuration 
+        # file if there is no configuration checksum and create one if it exists.
+        # Also, tell the script to overwrite with the new configuration file.
+        if  [ ! -e "$CONFIG_CHECKSUM" ] && [ -e "$CONFIG" ] && dpkg --compare-versions "$2" lt-nl 2.8.5.2-6; then
+        OLD_CONFIG=$(tempfile)
+	cat <<EOF >>"$OLD_CONFIG"
+# This file is used for options that are changed by Debian to leave
+# the original lib files untouched.
+# You have to use "dpkg-reconfigure snort" to change them.
+
+DEBIAN_SNORT_STARTUP="$STARTUP"
+DEBIAN_SNORT_HOME_NET="$ADDRESS_RANGE"
+DEBIAN_SNORT_OPTIONS="$OPTIONS"
+DEBIAN_SNORT_INTERFACE="$INTERFACE"
+DEBIAN_SNORT_SEND_STATS="$STATS_SEND"
+DEBIAN_SNORT_STATS_RCPT="$STATS_RCPT"
+DEBIAN_SNORT_STATS_THRESHOLD="$STATS_THRESHOLD"
+EOF
+            if cmp -s "$CONFIG" "$OLD_CONFIG"; then
+                md5sum "$CONFIG" > "$CONFIG_CHECKSUM"
+                overwrite_config="yes"
+            fi
+        rm -f "$OLD_CONFIG"
+        fi
+
+        # Create the new configuration file based on debconf information
+        NEW_CONFIG=$(tempfile)
+
+	cat <<EOF >>"$NEW_CONFIG"
+# snort.debian.config (Debian Snort configuration file)
+#
+# This file was generated by the post-installation script of the snort
+# package using values from the debconf database.
+#
+# It is used for options that are changed by Debian to leave
+# the original configuration files untouched.
+#
+# This file is automatically updated on upgrades of the snort package
+# *only* if it has not been modified since the last upgrade of that package.
+#
+# If you have edited this file but would like it to be automatically updated
+# again, run the following command as root:
+#   dpkg-reconfigure snort
+
+DEBIAN_SNORT_STARTUP="$STARTUP"
+DEBIAN_SNORT_HOME_NET="$ADDRESS_RANGE"
+DEBIAN_SNORT_OPTIONS="$OPTIONS"
+DEBIAN_SNORT_INTERFACE="$INTERFACE"
+DEBIAN_SNORT_SEND_STATS="$STATS_SEND"
+DEBIAN_SNORT_STATS_RCPT="$STATS_RCPT"
+DEBIAN_SNORT_STATS_THRESHOLD="$STATS_THRESHOLD"
+EOF
+
+        if ! cmp -s "$CONFIG" "$NEW_CONFIG"; then
+                if [ "$overwrite_config" = "yes" ] ;then
+                    cp "$NEW_CONFIG" "$CONFIG.dpkg-new"
+                    mv "$CONFIG.dpkg-new" "$CONFIG"
+                    md5sum "$CONFIG" > "$CONFIG_CHECKSUM"
+                else
+                    if [ ! -e "$CONFIG" ] ; then
+                        echo "snort: not updating $CONFIG; file does not exist" >&2
+                    else 
+                        if [ ! -e "$CONFIG_CHECKSUM" ] ; then
+                            echo "snort: not updating $CONFIG; no stored checksum available and it does not match the debconf database configuration" >&2
+                        else
+                            echo "snort: not updating $CONFIG; file has been customized" >&2
+                        fi
+                    fi
+                fi
+        else
+            # Update the md5sum file
+            md5sum "$CONFIG" > "$CONFIG_CHECKSUM"
+        fi
+        rm -f "$NEW_CONFIG"
+
+	if [ -f /etc/snort/snort.conf ]; then
+		# Ensure the config file is readable by root.root and mode 600
+		if ! dpkg-statoverride --list /etc/snort/snort.conf >/dev/null
+		then
+			chown root:snort /etc/snort/snort.conf
+			chmod 640 /etc/snort/snort.conf
+		fi
+	fi
+
+	db_stop
+
+	# Check for left-over files from woody packages.
+	OLDCONF=/etc/snort/snort.rules.conf
+	if [ -f "$OLDCONF" ]; then
+		mv "$OLDCONF" "$OLDCONF.OBSOLETE"
+	fi
+
+	# Update the rc.d's
+	update-rc.d snort defaults >/dev/null
+
+	# in the case we reconfigure we have to restart and not just to start.
+	if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
+		invoke-rc.d snort stop || exit $?
+	else
+		/etc/init.d/snort stop || exit $?
+	fi
+	;;
+    abort-upgrade)
+	;;
+    *)
+	echo "postinst called with unknown argument \`$1'" >&2
+	exit 0
+	;;
+esac
+
+if [ "$STARTUP" = "dialup" ]; then
+
+	# Try to guess environments for all pppds we have no .env for...
+	for PPPD_PID in $(pidof pppd ipppd); do
+		# If we got an empty PID (however), we break here
+		test "$PPPD_PID" || continue
+
+		#
+		# This is a lot of shell voodoo, let's try to figure it out:
+		# 1. egrep:
+		#    It greps for our current pppd PID in all pppd and ipppd
+		#    pidfiles.
+		#    It *should* return exactly one file name: the one with
+		#    our current pppd PID in it; however, to be safe, we fence
+		#    it with a head -1.
+		# 2. basename $(egrep ...) .pid:
+		#    It takes the file name from the egrep and strips off its
+		#    path and the .pid suffix
+		# 3. sed:
+		#    Unfortunately the filenames of pppd and ipppd differ:
+		#    pppd uses $INTERFACE.pid, while ipppd uses
+		#    ipppd.$INTERFACE.pid.
+		#    The .pid is already stripped off by basename, thus, we
+		#    just strip off any "ipppd." prefix and end up in the
+		#    plain interface name.
+		#    Maybe pppd decides to change it's pidfile naming
+		#    convention according to ipppd somewhere in the future,
+		#    thus, we use '^i\?pppd\.' (sed eregex) and thus strip
+		#    off all "ipppd." and all "pppd." prefixes. This doesn't
+		#    harm anyways.
+		#    Because of the pppd pidfile naming convention, our
+		#    approach works always with ipppd and mostly with pppd:
+		#    the latter only, if the user did not decide to rename
+		#    his ppp interface to something else than ppp*
+		#    (not possible currently, afaics).
+		#
+		PPP_IFACE=$(basename $(egrep -l "^[[:space:]]*$PPPD_PID[[:space:]]*\$" /var/run/ppp*.pid /var/run/ipppd.*.pid 2> /dev/null | head -1) .pid | sed -e 's/^i\?pppd\.//')
+
+		#
+		# If we got no interface from pidfiles (because there are no
+		# pidfiles, for example), we assume the most common case:
+		# one pppd with default route set.
+		# This is ugly, but there is no other chance. Let's hope,
+		# nobody ever manages multiple pppds without pidfiles for
+		# them.
+		#
+		test "$PPP_IFACE" || PPP_IFACE=$(route -n |
+			awk '/^0\.0\.0\.0 / { print $8 }')
+
+		# If we couldn't discover an interface name, we break here
+		test "$PPP_IFACE" || continue
+
+		PPP_LOCAL=$(ifconfig $PPP_IFACE |
+			awk '/inet addr:/ { gsub("addr:", ""); print $2 }')
+
+		# If we couldn't discover a local IP, we break here
+		test "$PPP_LOCAL" || continue
+
+		ENVFILE=/var/run/snort_$PPP_IFACE.env
+
+		# If we already have an .env for that interface, we break here
+		test -e "$ENVFILE" && continue
+
+		# Write .env for that interface
+		echo "Creating missing $ENVFILE"
+		echo "PPPD_PID=$PPPD_PID"    > "$ENVFILE"
+		echo "PPP_IFACE=$PPP_IFACE" >> "$ENVFILE"
+		echo "PPP_LOCAL=$PPP_LOCAL" >> "$ENVFILE"
+
+		# If such a snort is still running, just kill it
+		ps -ef | grep /usr/sbin/snort | grep "$PPP_LOCAL" |
+			grep "$PPP_IFACE" | awk '{ print $2 }' |
+			xargs --no-run-if-empty kill -s KILL >/dev/null
+	done
+fi
+
+if [ "$STARTUP" = "boot" ] || [ "$STARTUP" = "dialup" ]; then
+	if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
+		invoke-rc.d snort start || exit $?
+	else
+		/etc/init.d/snort start || exit $?
+	fi
+fi
+
+# dh_installdeb will replace this with shell code automatically
+# generated by other debhelper scripts.
+
+#DEBHELPER#
+
+exit 0

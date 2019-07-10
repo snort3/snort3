@@ -1,0 +1,24 @@
+#
+# files modified outside the debian directory
+#
+snort-lib:
+	* Activated alert_syslog LOG_AUTH LOG_ALERT
+	* Activated output log_tcpdump snort.log # easier for logrotate
+	* Activated preprocessor defrag
+	* Commented out the HOME_NET variable - this will be set in
+	  snort-startup-script.
+	* Commented out the DNS_SERVER variable. What's the benefit?
+	* Added 'include local-first' as first include and
+	  'include local-last' as last include for user-specific
+          extensions.
+	* Commented out backdoor-lib completely. Too many false positives.
+	* Commented out ping-lib completely. Too many false positives.
+
+I commented out the following detections as they either generated too many
+false positives or generate too much noise for harmless things like 
+traceroutes or nmap fingerprint attempts. (marked by s/^/#debian#/)
+scan-lib:
+ "detect fingerprinting attempts"
+ "Windows Traceroutes"
+ "Standard Traceroutes"
+ "dst port 8080" # http proxy

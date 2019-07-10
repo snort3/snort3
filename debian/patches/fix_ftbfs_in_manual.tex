@@ -1,0 +1,48 @@
+Description: Fix FTBFS in manual.tex caused by missing html.sty
+Author: Michael Bienia <michael@vorlon.ping.de>
+Origin: vendor
+Bug-Debian: http://bugs.debian.org/436244
+Last-Update: 2011-11-28
+
+--- snort-2.9.2.orig/doc/snort_manual.tex
++++ snort-2.9.2/doc/snort_manual.tex
+@@ -16,7 +16,7 @@
+ %\IfFileExists{url.sty}{\usepackage{url}}
+ %                      {\newcommand{\url}{\texttt}}
+ 
+-\usepackage{html}
++\usepackage{hyperref}
+ 
+ % \makeatletter
+ 
+@@ -71,18 +71,18 @@
+ }
+ %\end{latexonly}
+ 
+-\begin{htmlonly}
+-\newenvironment{note}{
+-        \begin{rawhtml}
+-        <p><table border="1"><tr><td><b>
+-        Note:&nbsp;&nbsp;</b>
+-        \end{rawhtml}
+-}{
+-        \begin{rawhtml}
+-        </b></td></tr></table></p>
+-        \end{rawhtml}
+-}
+-\end{htmlonly}
++%\begin{htmlonly}
++%\newenvironment{note}{
++%        \begin{rawhtml}
++%        <p><table border="1"><tr><td><b>
++%        Note:&nbsp;&nbsp;</b>
++%        \end{rawhtml}
++%}{
++%        \begin{rawhtml}
++%        </b></td></tr></table></p>
++%        \end{rawhtml}
++%}
++%\end{htmlonly}
+ 
+ \usepackage{babel}
+ 

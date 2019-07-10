@@ -1,0 +1,39 @@
+
+TODO for Snort's packaging
+--------------------------
+
+- Move to dpkg format v3. We have only a few changes in the source
+  package so that should be easy to do.
+
+- Make it possible for admins to provide more than one interface Snort will
+  listen to when configuring the package
+
+- Make it easier to do changes in maintainer's config files if different 
+  'flavors' are provided (with different compilation flags). Although
+  currently there is one flavor of the snort package, if different flavors
+  are generated they might duplicate a lot of common code which makes it
+  unmaintainable and leads to bugs.
+  
+  For example, when the database flavor packages were provided (snort-pgsql and
+  snort-mysql) bugs (e.g. #502084) might be fixed in the basic flavor but
+  not in other packages.
+
+  --> This might require that the generation of the
+  /etc/snort/snort.debian.conf configuration file and its handling (through
+  scripts common for all packages) should be moved over to snort-common (along
+  with all of the questions and templates)
+
+- Share information between package installations. If a user installs the
+  basic 'snort' package and later on a different snort-xxx 'flavor' 
+  (e.g. with inline support) he will be asked the same questions (interface, IP
+  range) twice. Maybe use snort-common as a placeholder for shared information.
+  Also simplifies code sharing between config files
+
+  --> Fixes the above.
+
+----
+
+Javier Fernandez-Sanguino
+Wed, 08 Aug 2012 21:12:54 +0200
+
+

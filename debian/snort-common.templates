@@ -1,0 +1,44 @@
+# These templates have been reviewed by the debian-l10n-english
+# team
+#
+# If modifications/additions/rewording are needed, please ask
+# debian-l10n-english@lists.debian.org for advice.
+#
+# Even minor modifications require translation updates and such
+# changes should be coordinated with translators and reviewers.
+
+Template: snort/deprecated_config
+Type: note
+_Description: Deprecated options in configuration file
+ The Snort configuration file (/etc/snort/snort.conf) uses deprecated
+ options no longer available for this Snort release. Snort will not be able to
+ start unless you provide a correct configuration file. Either allow the
+ configuration file to be replaced with the one provided in this package or fix
+ it manually by removing deprecated options.
+ .
+ The following deprecated options were found in the configuration file:
+ ${DEP_CONFIG}
+
+Template: snort/config_error
+Type: error
+_Description: Configuration error
+ The current Snort configuration is invalid and will prevent Snort
+ starting up normally. Please review and correct it.
+ .
+ To diagnose errors in your Snort configuration you can run (as root)
+ the following: "/usr/sbin/snort -T -c /etc/snort/snort.conf"
+
+Template: snort/deprecated_file
+Type: note
+_Description: Deprecated configuration file
+ Your system has deprecated configuration files which should not be used any
+ longer and might contain deprecated options. If included through the standard
+ configuration file (/etc/snort/snort.conf), they might prevent Snort from
+ starting up properly.
+ . 
+ Please remove these files as well as any existing references to them in the
+ /etc/snort/snort.conf configuration file.
+ .
+ The following deprecated configuration files were found:
+ ${DEP_FILE}
+

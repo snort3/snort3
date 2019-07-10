@@ -1,0 +1,69 @@
+
+README for snort-rules-default
+-----------------------------
+
+  A common question by Snort users is: why is the default ruleset provided by
+  the snort-rules-default package outdated?
+
+  The answer is simple: starting with the 2.4 release of Snort, Sourcefire, the
+  company developing the program, decided to stop distributing any ruleset with
+  the Snort software itself.
+
+  At the same time, the company changed the license of the IDS ruleset provided
+  introducing "Sourcefire VRT Certified rules" ruleset which is considered the
+  official ruleset for Snort. This ruleset is:
+    
+    - provided only to registered users through the snort.org site
+    - distributed under a non-free license which prohibits redistribution 
+      by other sources (including this package)
+
+  However, since providing a network IDS such as Snort without *any* ruleset
+  makes it completely useless, for the benefit of those users with no Internet
+  connection, the Debian maintainer continued provided the the free (GPLv2)
+  ruleset that was provided with the Snort back in 2005. This ruleset was later
+  increased with the rulese provided in "Community" ruleset later on
+  (in 2007).
+
+  This rulesets is provided for testing purposes. It can be useful to define
+  new (local) rules using the provided rules as a basis.
+  
+  Please note that, since network threats are constantly changing, a network
+  intrusion detection system using rules developed in 2007 cannot be considered
+  to "protect" a network and detect recent network attacks. No more than an
+  anti-virus program using a 5-year-old database can be considered an
+  "effective" measure to detect and remove new virii.
+
+
+  Users that want to use Snort in production environments are recommended
+  to either:
+
+    - Obtain additional/updated rulesets from Open Source projects
+      such as "Emerging Threats". 
+
+      For more information see http://www.emergingthreats.net/
+      For rulesets seet http://rules.emergingthreats.net/open/
+
+    - Obtain additional/updated rulesets from Sourcefire or any other
+      companies providing non-free content. For Sourcefire, this requires
+      registration at their site.
+      
+      For more information see http://www.snort.org/snort-rules/
+
+    - Develop their own ruleset
+
+  To automatically download rules and keep their Snort system up-to-date users
+  can use the 'oinkmaster' package. This program will automatically update the
+  rulesets once configured to download from an appropriate location.
+
+
+  In any case, should you find any issues (such as false positives, performance
+  problems), please file a bug against the Debian 'snort-rules-default' package.
+  The Debian package maintainers will do their best to keep the ruleset bug-free
+  though not necessarily up-to-date.
+
+  You can find the list of known problems at 
+
+   http://bugs.debian.org/snort-rules-default
+
+
+ -- Javier Fernandez-Sanguino Pen~a <jfs@debian.org>  Wed, 08 Aug 2012 01:23:41 +0200

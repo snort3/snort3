@@ -1,0 +1,159 @@
+
+ SNORT INIT.D
+------------------------------
+
+The Debian provided init.d script tries to provide many features
+unavailable upstream:
+
+  - run Snort on demand, when there is no permanent interface to the network
+    (i.e. ppp serial lines)
+
+  - run multiple instances of Snort in different network interfaces and allow
+    for different configuration for each of these instances (see below for more
+    on this)
+
+  - start or stop specific Snort instances (i.e those listening in different
+    network interfaces)
+
+This makes the provied init.d script somewhat complex and with different ways
+in which the administrator can change its behavior.
+
+In order to change the behavior of the init.d script you can use:
+
+  - /etc/default/snort: to configure the parameters for the Snort daemon.
+    This is done similarly to other packages (exim4, ntp, etc.) so that users
+    do not have to modify the init.d script only for parameter tweaking (which
+    would produce issues when upgrading packages if the init.d changes).
+
+  - /etc/snort/snort.debian.conf, this configuration file holds generic
+    configuration information and is handled by Debian's configuration
+    management system Debconf. If you want to modify its contents 
+    run "dpkg-reconfigure snort"
+
+  - /etc/snort.conf, this configuration file handles Snort itself. It is
+    possible to have different configuration file for different interfaces by
+    adding the interface name (e.g. /etc/snort.eth0.conf for the 'eth0'
+    interface)
+
+If you have issues with the behaviour in the init.d script please provide a bug
+report with the following information:
+
+    - the contents of /etc/default/snort
+    - the contents of /etc/snort/snort.debian.conf
+    - the contents of /etc/snort/snort.conf, and any other
+      /etc/snort/snort.*.conf files
+    - the output of running the init.d script when 
+            started ('sh -x /etc/init.d/snort start'), 
+            stopped ('sh -x /etc/init.d/snort start'), 
+            requesting the status of the Snort instances 
+            ('sh -x /etc/init.d/snort status') 
+            and checking its configuration 
+            ('sh -x /etc/init.d/snort config-check')
+
+ SNORT ON MULTIPLE INTERFACES
+------------------------------
+
+There is no provision upstream to have multiple instances of Snort
+running in the same system. If you want to setup a sensor in more than one
+network interface (for example, you are setting up an IDS listening to multiple
+network segments) then upstream's scripts are not useful.
+
+This package of snort is capable of managing multiple interfaces.  The
+current init.d script is capable of launching more than one snort
+instance. You just need to answer the debconf question "On which
+interface(s) should snort listen on" with a list (separated by spaces
+of interafes you want to use). This actually modifies the value of 
+DEBIAN_SNORT_INTERFACE definition in /etc/snort/snort.debian.conf.
+
+Afterwards, you need to create different
+/etc/snort/snort.$INTERFACE.conf configuration files (where $INTERFACE
+is your interface names, e.g., eth0 or eth1) for each interface you
+want Snort to listen on. All sensors can use the same rule set so it's
+easy to update them and all your sensors simultaneously. If no
+/etc/snort/snort.$INTERFACE.conf file exists for a given interface,
+then the regular /etc/snort/snort.conf file is used.
+
+Notice, however, that the same HOME_NET definition will be used for
+all interfaces (the answer to the "address range snort will listen
+on"). The debconf scripts don't currently support a way to give
+different HOME_NET definitions to different interfaces.
+
+This is still work in progress. Please file bugs to the snort package.
+
+-----------------------------------------------------------------------------
+
+-----------------------------------------------------------------------------
+
+ FREQUENT QUESTIONS AND ANSWERS
+---------------------------------
+
+Q.  I want to use FLEXRESP rules, but snort won't start with those rules
+    enabled! What is wrong, what should I do?
+A.	FLEXRESP rules need root-priviledges to access raw ethernet interface.
+    To resolve this, start snort as root.
+
+Q0. I can reconfigure snort as often as I want but it won't ask me any
+    questions!
+A0. You are probably victim of a bug in an older version of debconf. Just do:
+    dpkg-reconfigure --priority=low debconf; dpkg-reconfigure snort
+
+Q1. How can I test snort without having an ethernet card or a connection
+    to other computers ?
+A1. You have to use routing between two dummy devices:
+    # modprobe -a dummy    (The dummy device has to be build by the kernel)
+    # ifconfig dummy0   192.168.0.1
+    # ifconfig dummy0:0 192.168.0.2
+    # telnet 192.168.0.3 12345
+
+    It's important that the second IP is on the same interface and not
+    e.g. dummy1 or dummy2 and that the IP you try to access is *not* one
+    of those you put on the interfaces. Use snort's ability to hear in
+    promiscuous mode on an IP address range. (HOMEDIR=192.168.0.0/16)
+
+Q2. I saw that syslog logging is enabled, but I can't see any warnings in
+    /var/log/syslog ?
+A2. That's because /etc/syslog.conf directs every output for the syslog
+    facility LOG_AUTH to the /var/log/auth.log file. You can still find
+    detail information about every logged scan in /var/log/snort/.
+
+Q3. You told me about the files in /var/log/snort, but I can't read them!
+A3. For performance reasons they are logged in tcpdump-binary format. You 
+    can read them with "tcpdump -r /var/log/snort/snort.log" or 
+	mkdir /tmp/dir
+    	cd /etc/snort
+	. snort.conf
+	snort -r /var/log/snort/snort.log \
+		-S "HOME_NET=$DEBIAN_SNORT_HOME_NET" \
+		-c /etc/snort/snort.conf-lib \
+		-l /tmp/dir
+    The "-l /tmp/dir" creates the files in the /tmp/dir directory which MUST
+    be existing. You can use -s instead for logging to /var/log/auth.log.
+    
+Q4. It seems you disabled some checks and modified snort-lib, why?
+A4. Because they either generated too many false positives or generate too 
+    much noise for harmless things like traceroutes or nmap fingerprint 
+    attempts. These modifications are marked by a leading #debian#.
+    For more information see /usr/share/doc/snort/README.Maintainer.
+
+Q5. How can I update my rule database with the Debian packages? 
+    (Hint: I'm running stable)
+A5. Signature updates are provided by the snort-rules-default package but
+    if you are using stable, you will not see any changes in that package
+    since they are not allowed for stable releases. If you want to keep
+    your ruleset up-to-date you have two options:
+
+    	- Use the snort-rules-default from the unstable distribution, this
+	  might work as long as it does not belong to a different Snort
+	  release since in between releases snort rules might be updated
+	  in such a way that they are not backwards compatible.
+	- Use a script to manage rule updates, such as 'oinkmaster' (currently
+	  provided as a Debian package) or 'updateSnort'
+	- Use a backported version of Snort which includes these signatures.
+
+   Always make sure that your new rules will be loaded fine by the sensor
+   by using 'snort -T' 
+
+   See also upstreams Snort FAQ item 3.18
+
+ -- Javier Fernandez-Sanguino Pen~a <jfs@debian.org>
+ Wed, 23 Sep 2009 02:02:25 +0200

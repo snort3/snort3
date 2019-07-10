@@ -1,0 +1,383 @@
+# Czech PO debconf template translation of snort.
+# Copyright (C) 2008 Jan Outrata <outrata@pharaoh.inf.upol.cz>
+# This file is distributed under the same license as the snort package.
+# Michal Simunek <michal.simunek@gmail.com>, 2013.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: snort 2.9.5.3-2\n"
+"Report-Msgid-Bugs-To: snort@packages.debian.org\n"
+"POT-Creation-Date: 2013-09-13 08:03+0200\n"
+"PO-Revision-Date: 2013-09-23 12:01+0200\n"
+"Last-Translator: Michal Simunek <michal.simunek@gmail.com>\n"
+"Language-Team: Czech <debian-l10n-czech@lists.debian.org>\n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Type: select
+#. Choices
+#: ../snort.templates:2001
+msgid "boot"
+msgstr "při zavádění"
+
+#. Type: select
+#. Choices
+#: ../snort.templates:2001
+msgid "dialup"
+msgstr "při vytáčeném připojení"
+
+#. Type: select
+#. Choices
+#: ../snort.templates:2001
+msgid "manual"
+msgstr "ručně"
+
+#. Type: select
+#. Description
+#: ../snort.templates:2002
+msgid "Snort start method:"
+msgstr "Způsob spuštění Snort:"
+
+#. Type: select
+#. Description
+#: ../snort.templates:2002
+msgid ""
+"Please choose how Snort should be started: automatically on boot, "
+"automatically when connecting to the net with pppd, or manually with the /"
+"usr/sbin/snort command."
+msgstr ""
+"Zvolte si prosím, jak se má Snort spouštět: automaticky při zavádění, "
+"automaticky při připojování k síti s pppd, nebo ručně příkazem /"
+"usr/sbin/snort."
+
+#. Type: string
+#. Description
+#: ../snort.templates:3001
+msgid "Interface(s) which Snort should listen on:"
+msgstr "Rozhraní, na kterém (kterých) má Snort naslouchat:"
+
+#. Type: string
+#. Description
+#: ../snort.templates:3001
+msgid ""
+"This value is usually \"eth0\", but this may be inappropriate in some "
+"network environments; for a dialup connection \"ppp0\" might be more "
+"appropriate (see the output of \"/sbin/ifconfig\")."
+msgstr ""
+"Tato hodnota obyčejně bývá \"eth0\", ale to nemusí být v některých síťových "
+"prostředích vhodné; pro vytáčené připojení může být vhodnější \"ppp0\" (viz "
+"výstup \"/sbin/ifconfig\")."
+
+#. Type: string
+#. Description
+#: ../snort.templates:3001
+msgid ""
+"Typically, this is the same interface as the \"default route\" is on. You "
+"can determine which interface is used for this by running \"/sbin/route -n"
+"\" (look for \"0.0.0.0\")."
+msgstr ""
+"Typicky je to stejné rozhraní jako je \"výchozí směrování (default route)\". "
+"Které rozhraní se pro toto používá, můžete zjistit spuštěním \"/sbin/route -"
+"n' (hledejte '0.0.0.0\")."
+
+#. Type: string
+#. Description
+#: ../snort.templates:3001
+msgid ""
+"It is also not uncommon to use an interface with no IP address configured in "
+"promiscuous mode. For such cases, select the interface in this system that "
+"is physically connected to the network that should be inspected, enable "
+"promiscuous mode later on and make sure that the network traffic is sent to "
+"this interface (either connected to a \"port mirroring/spanning\" port in a "
+"switch, to a hub, or to a tap)."
+msgstr ""
+"Také není neobvyklé použít rozhraní bez IP adresy nastavené do "
+"promiskuitního módu. V tomto případě vyberte rozhraní systému fyzicky "
+"připojené k síti a které chcete sledovat, následně povolte promiskuitní mód "
+"a ujistěte se, že je síťový provoz posílán na toto rozhraní (buď připojené k "
+"\"port mirroring/spanning\" portu přepínače, k hubu nebo k tap rozhraní)."
+
+#. Type: string
+#. Description
+#: ../snort.templates:3001
+msgid ""
+"You can configure multiple interfaces, just by adding more than one "
+"interface name separated by spaces. Each interface can have its own specific "
+"configuration."
+msgstr ""
+"Můžete také zadat více rozhraní, jednoduše zapsáním více než jednoho jména "
+"rozhraní, oddělených mezerami. Každé rozhraní může mít své specifické "
+"nastavení."
+
+#. Type: string
+#. Description
+#: ../snort.templates:4001
+msgid "Address range for the local network:"
+msgstr "Adresní rozsah lokální sítě:"
+
+#. Type: string
+#. Description
+#: ../snort.templates:4001
+msgid ""
+"Please use the CIDR form - for example, 192.168.1.0/24 for a block of 256 "
+"addresses or 192.168.1.42/32 for just one. Multiple values should be comma-"
+"separated (without spaces)."
+msgstr ""
+"Použijte zápis CIDR - například 192.168.1.0/24 pro blok 256 adres nebo "
+"192.168.1.42/32 pro jednu jedinou adresu. Více adres zadejte oddělených "
+"čárkou (bez mezer)."
+
+#. Type: string
+#. Description
+#: ../snort.templates:4001
+msgid ""
+"Please note that if Snort is configured to use multiple interfaces, it will "
+"use this value as the HOME_NET definition for all of them."
+msgstr ""
+"Pokud je Snort nakonfigurován pro použití více rozhraní, použije tuto "
+"hodnotu jako definici HOME_NET pro všechna z nich."
+
+#. Type: boolean
+#. Description
+#: ../snort.templates:5001
+msgid "Should Snort disable promiscuous mode on the interface?"
+msgstr "Má Snort zakázat promiskuitní mód na tomto rozhraní?"
+
+#. Type: boolean
+#. Description
+#: ../snort.templates:5001
+msgid ""
+"Disabling promiscuous mode means that Snort will only see packets addressed "
+"to the interface it is monitoring. Enabling it allows Snort to check every "
+"packet that passes the Ethernet segment even if it's a connection between "
+"two other computers."
+msgstr ""
+"Zakázání promiskuitního módu znamená, že Snort uvidí jen pakety adresované "
+"rozhraní, které monitoruje. Povolení umožňuje Snortu kontrolovat každý "
+"paket, který prochází ethernetovým segmentem, i když je to spojení mezi "
+"jinými dvěma počítači."
+
+#. Type: error
+#. Description
+#: ../snort.templates:6001
+msgid "Invalid interface"
+msgstr "Neplatné rozhraní"
+
+#. Type: error
+#. Description
+#: ../snort.templates:6001
+msgid ""
+"Snort is trying to use an interface which does not exist or is down. Either "
+"it is defaulting inappropriately to \"eth0\", or you specified one which is "
+"invalid."
+msgstr ""
+"Snort se pokouší použít rozhraní, které neexistuje nebo je vypnuté. Buď se "
+"jedná o výchozí nastavení na \"eth0\", nebo bylo zadáno neplatné rozhraní."
+
+#. Type: boolean
+#. Description
+#: ../snort.templates:7001
+msgid "Should daily summaries be sent by e-mail?"
+msgstr "Mají se denní souhrny zasílat e-mailem?"
+
+#. Type: boolean
+#. Description
+#: ../snort.templates:7001
+msgid ""
+"A cron job can be set up to send daily summaries of Snort logs to a selected "
+"e-mail address."
+msgstr ""
+"Pro zasílání denních souhrnů logů Snortu na zvolenou e-mailovou adresu může "
+"být nastavena úloha cronu."
+
+#. Type: boolean
+#. Description
+#: ../snort.templates:7001
+msgid "Please choose whether you want to activate this feature."
+msgstr "Zvolte, zda chcete aktivovat tuto možnost."
+
+#. Type: string
+#. Description
+#: ../snort.templates:8001
+msgid "Recipient of daily statistics mails:"
+msgstr "Příjemce denních mailů se statistikami:"
+
+#. Type: string
+#. Description
+#: ../snort.templates:8001
+msgid ""
+"Please specify the e-mail address that should receive daily summaries of "
+"Snort logs."
+msgstr ""
+"Zadejte e-mailovou adresu, na kterou mají být zasílány denní souhrny logů "
+"Snortu."
+
+#. Type: string
+#. Description
+#: ../snort.templates:9001
+msgid "Additional custom options:"
+msgstr "Další vlastní volby:"
+
+#. Type: string
+#. Description
+#: ../snort.templates:9001
+msgid "Please specify any additional options Snort should use."
+msgstr "Zadejte jakékoliv další volby, které by měl Snort použít."
+
+#. Type: string
+#. Description
+#: ../snort.templates:10001
+msgid "Minimum occurrences before alerts are reported:"
+msgstr "Minimální počet výskytů před hlášením upozornění:"
+
+#. Type: string
+#. Description
+#: ../snort.templates:10001
+msgid ""
+"Please enter the minimum number of alert occurrences before a given alert is "
+"included in the daily statistics."
+msgstr ""
+"Zadejte minimální počet výskytů upozornění před tím, než je toto upozornění "
+"obsaženo v denní statistice."
+
+#. Type: note
+#. Description
+#: ../snort.templates:11001
+msgid "Snort restart required"
+msgstr "Vyžadován restart Snortu"
+
+#. Type: note
+#. Description
+#: ../snort.templates:11001
+msgid ""
+"As Snort is manually launched, you need to run \"service snort restart\" for "
+"the changes to take place."
+msgstr ""
+"Jelikož je Snort spouštěn ručně, pro uplatnění změn musíte spustit "
+"\"service snort restart\""
+
+#. Type: error
+#. Description
+#: ../snort.templates:12001
+msgid "Obsolete configuration file"
+msgstr "Zastaralý konfigurační soubor"
+
+#. Type: error
+#. Description
+#: ../snort.templates:12001
+msgid ""
+"This system uses an obsolete configuration file (/etc/snort/snort.common."
+"parameters) which has been automatically converted into the new "
+"configuration file format (at /etc/default/snort)."
+msgstr ""
+"Tento systém používá zastaralý konfigurační soubor (/etc/snort/snort.common."
+"parameters), který byl automaticky převeden do nového formátu konfiguračního "
+"souboru (v /etc/default/snort)."
+
+#. Type: error
+#. Description
+#: ../snort.templates:12001
+msgid ""
+"Please review the new configuration and remove the obsolete one. Until you "
+"do this, the initialization script will not use the new configuration and "
+"you will not take advantage of the benefits introduced in newer releases."
+msgstr ""
+"Zkontrolujte novou konfiguraci a odstraňte tu zastaralou. Dokud to "
+"neuděláte, inicializační skript nebude používat novou konfiguraci a "
+"nevyužijete tak výhod představených v novějších verzích."
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:2001
+msgid "Deprecated options in configuration file"
+msgstr "Zastaralé volby v konfiguračním souboru"
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:2001
+msgid ""
+"The Snort configuration file (/etc/snort/snort.conf) uses deprecated options "
+"no longer available for this Snort release. Snort will not be able to start "
+"unless you provide a correct configuration file. Either allow the "
+"configuration file to be replaced with the one provided in this package or "
+"fix it manually by removing deprecated options."
+msgstr ""
+"Konfigurační soubor Snortu (/etc/snort/snort.conf) používá zrušené volby, "
+"které již nejsou v tomto vydání Snortu dostupné. Snort se nebude moci "
+"spustit, dokud neposkytnete korektní konfigurační soubor. Můžete povolit "
+"nahrazení konfiguračního souboru souborem obsaženým v tomto balíku nebo to "
+"opravit ručně odstraněním zrušených voleb."
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:2001
+msgid ""
+"The following deprecated options were found in the configuration file: "
+"${DEP_CONFIG}"
+msgstr ""
+"V konfiguračním souboru byly nalezeny následující zrušené volby: "
+"${DEP_CONFIG}"
+
+#. Type: error
+#. Description
+#: ../snort-common.templates:3001
+msgid "Configuration error"
+msgstr "Chyba konfigurace"
+
+#. Type: error
+#. Description
+#: ../snort-common.templates:3001
+msgid ""
+"The current Snort configuration is invalid and will prevent Snort starting "
+"up normally. Please review and correct it."
+msgstr ""
+"Aktuální konfigurace Snortu je neplatná a Snort nebude možné normálně "
+"spustit. Zkontrolujte a opravte ji."
+
+#. Type: error
+#. Description
+#: ../snort-common.templates:3001
+msgid ""
+"To diagnose errors in your Snort configuration you can run (as root) the "
+"following: \"/usr/sbin/snort -T -c /etc/snort/snort.conf\""
+msgstr ""
+"Pro diagnostikování chyb v nastavení Snort spusťte (jako root) tento "
+"příkaz: \"/usr/sbin/snort -T -c /etc/snort/snort.conf\""
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:4001
+msgid "Deprecated configuration file"
+msgstr "Zrušený konfigurační soubor"
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:4001
+msgid ""
+"Your system has deprecated configuration files which should not be used any "
+"longer and might contain deprecated options. If included through the "
+"standard configuration file (/etc/snort/snort.conf), they might prevent "
+"Snort from starting up properly."
+msgstr ""
+"Váš systém má zastaralé konfigurační soubory, které by se dále neměly používat, "
+"protože mohou obsahovat zastaralé volby. Pokud jsou obsaženy ve standardním "
+"konfiguračním souboru (/etc/snort/snort.conf), mohou bránit tomu, aby se Snort "
+"správně spouštěl."
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:4001
+msgid ""
+"Please remove these files as well as any existing references to them in the /"
+"etc/snort/snort.conf configuration file."
+msgstr ""
+"Odstraňte prosím tyto soubory a také všechny stávající odkazy na ně z "
+"konfiguračního souboru /etc/snort/snort.conf."
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:4001
+msgid "The following deprecated configuration files were found: ${DEP_FILE}"
+msgstr "Byly nalezeny následující zastaralé konfigurační soubory: ${DEP_FILE}"

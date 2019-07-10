@@ -1,0 +1,59 @@
+Description: Fix -Werror issues
+
+ Snort does not build when enabling -Werror
+ due to some bugs in the code. The following patch
+ fixes:
+  
+ - Build error due to definition of ScSetInternalLogLevel and ScRestoreInternalLogLevel:
+
+..........................................................................................................
+
+In file included from acsmx2.c:144:0:
+../../src/snort.h: In function ‘ScSetInternalLogLevel’:
+../../src/snort.h:1231:1: error: no return statement in function returning non-void [-Werror=return-type]
+}
+^
+../../src/snort.h: In function ‘ScRestoreInternalLogLevel’:
+../../src/snort.h:1236:1: error: no return statement in function returning non-void [-Werror=return-type]
+}
+^
+..........................................................................................................
+    
+Author: Javier Fernández-Sanguino Peña <jfs@debian.org>
+Origin: vendor
+Last-Update: 2014-10-24
+
+
+
+diff --git a/src/snort.h b/src/snort.h
+index 25b4485..7a4622a 100644
+--- a/src/snort.h
++++ b/src/snort.h
+@@ -1224,13 +1224,13 @@ static inline int ScCheckInternalLogLevel(int level)
+     return internal_log_level >= level;
+ }
+ 
+-static inline int ScSetInternalLogLevel(int level)
++static inline void ScSetInternalLogLevel(int level)
+ {
+     if (!ScLogQuiet())
+         internal_log_level = level;
+ }
+ 
+-static inline int ScRestoreInternalLogLevel(void)
++static inline void ScRestoreInternalLogLevel(void)
+ {
+     internal_log_level = snort_conf->internal_log_level;
+ }
+diff --git a/src/detection-plugins/detection_options.c b/src/detection-plugins/detection_options.c
+index eed708a..f64977e 100644
+--- a/src/detection-plugins/detection_options.c
++++ b/src/detection-plugins/detection_options.c
+@@ -875,6 +875,7 @@ int detection_option_node_evaluate(detection_option_tree_node_t *node, detection
+     uint16_t save_dflags = 0;
+     uint64_t cur_eval_pkt_count = (rule_eval_pkt_count + (GetRebuiltPktCount()));
+     NODE_PROFILE_VARS;
++    node_ticks_start = 0;
+ 
+     if (!node || !eval_data || !eval_data->p || !eval_data->pomd)
+         return 0;

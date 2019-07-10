@@ -1,0 +1,571 @@
+# translation of snort-eu.po to Euskara
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+#
+# Piarres Beobide <pi@beobide.net>, 2008.
+msgid ""
+msgstr ""
+"Project-Id-Version: snort-eu\n"
+"Report-Msgid-Bugs-To: snort@packages.debian.org\n"
+"POT-Creation-Date: 2013-09-29 00:16+0200\n"
+"PO-Revision-Date: 2008-04-30 12:13+0200\n"
+"Last-Translator: Piarres Beobide <pi@beobide.net>\n"
+"Language-Team: Euskara <debian-l10n-basque@lists.debian.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.11.4\n"
+
+#. Type: select
+#. Choices
+#: ../snort.templates:2001
+msgid "boot"
+msgstr "abioan"
+
+#. Type: select
+#. Choices
+#: ../snort.templates:2001
+msgid "dialup"
+msgstr "markatzean"
+
+#. Type: select
+#. Choices
+#: ../snort.templates:2001
+msgid "manual"
+msgstr "eskuz"
+
+#. Type: select
+#. Description
+#: ../snort.templates:2002
+msgid "Snort start method:"
+msgstr "Snort abiarazteko metodoa:"
+
+#. Type: select
+#. Description
+#: ../snort.templates:2002
+#, fuzzy
+#| msgid ""
+#| "Snort can be started during boot, when connecting to the net with pppd or "
+#| "only manually with the /usr/sbin/snort command."
+msgid ""
+"Please choose how Snort should be started: automatically on boot, "
+"automatically when connecting to the net with pppd, or manually with the /"
+"usr/sbin/snort command."
+msgstr ""
+"Snort sistema abioan, sarera pppd bidez konektatzean edo eskuz /usr/sbin/"
+"snort komandoa erabiliaz abiarazi daiteke."
+
+#. Type: string
+#. Description
+#: ../snort.templates:3001
+msgid "Interface(s) which Snort should listen on:"
+msgstr "Snort-ek entzun behar duen interfazea(k):"
+
+#. Type: string
+#. Description
+#: ../snort.templates:3001
+#, fuzzy
+#| msgid ""
+#| "This value is usually 'eth0', but this may be inappropriate in some "
+#| "network environments; for a dialup connection 'ppp0' might be more "
+#| "appropriate (see the output of '/sbin/ifconfig')."
+msgid ""
+"This value is usually \"eth0\", but this may be inappropriate in some "
+"network environments; for a dialup connection \"ppp0\" might be more "
+"appropriate (see the output of \"/sbin/ifconfig\")."
+msgstr ""
+"Balio hau arruntean 'eth0' da, baina hau baliogabea izan daiteke zenbait "
+"sare inguruneetan markaketa bidezko konexioetarako 'ppp0' izan daiteke "
+"egokiagoa (begiratu '/sbin/ifconfig' irteeran)."
+
+#. Type: string
+#. Description
+#: ../snort.templates:3001
+#, fuzzy
+#| msgid ""
+#| "Typically, this is the same interface as the 'default route' is on. You "
+#| "can determine which interface is used for this by running '/sbin/route -"
+#| "n' (look for '0.0.0.0')."
+msgid ""
+"Typically, this is the same interface as the \"default route\" is on. You "
+"can determine which interface is used for this by running \"/sbin/route -n"
+"\" (look for \"0.0.0.0\")."
+msgstr ""
+"Normalean hau 'default route' (lehenetsiriko bidea) ezarria duen interfazea "
+"da. Zein interfaze erabiltzen den jakiteko '/sbin/route -n' komandoaren "
+"irteera begiratu ('0.0.0.0' bilatu)."
+
+#. Type: string
+#. Description
+#: ../snort.templates:3001
+#, fuzzy
+#| msgid ""
+#| "It is also not uncommon to use an interface with no IP address configured "
+#| "in promiscuous mode. For such cases, select the interface in this system "
+#| "that is physically connected to the network that should be inspected, "
+#| "enable promiscuous mode later on and make sure that the network traffic "
+#| "is sent to this interface (either connected to a 'port mirroring/"
+#| "spanning' port in a switch, to a hub or to a tap)."
+msgid ""
+"It is also not uncommon to use an interface with no IP address configured in "
+"promiscuous mode. For such cases, select the interface in this system that "
+"is physically connected to the network that should be inspected, enable "
+"promiscuous mode later on and make sure that the network traffic is sent to "
+"this interface (either connected to a \"port mirroring/spanning\" port in a "
+"switch, to a hub, or to a tap)."
+msgstr ""
+"Ez da guztiz arraroa ere promiskuoa moduan konfiguratutako IP gabeko "
+"interfaze bat erabiltzea ere. Kasu hauetan gainbegiratu behar den sarera "
+"konektaturik dagoen interfazea hautatu, promiskuo modua gaitu eta ziurtatu "
+"sareko trafikoa interfaze honetara bidaltzen dela (ataka ispilu/spanning "
+"port batetan switch batetan, hub batetan edo \"tap\" batetan)."
+
+#. Type: string
+#. Description
+#: ../snort.templates:3001
+msgid ""
+"You can configure multiple interfaces, just by adding more than one "
+"interface name separated by spaces. Each interface can have its own specific "
+"configuration."
+msgstr ""
+"Interfaze anitz konfiguratu ditzakezu, interfaze izenak bata bestean atzean "
+"zuriune batez bereizirik. Interfaze bakoitzak bere konfigurazio berezia izan "
+"dezake."
+
+#. Type: string
+#. Description
+#: ../snort.templates:4001
+msgid "Address range for the local network:"
+msgstr "Sare lokaleko helbide tartea:"
+
+#. Type: string
+#. Description
+#: ../snort.templates:4001
+msgid ""
+"Please use the CIDR form - for example, 192.168.1.0/24 for a block of 256 "
+"addresses or 192.168.1.42/32 for just one. Multiple values should be comma-"
+"separated (without spaces)."
+msgstr ""
+"Mesedez erabili CIDR formatua - adibidez, 192.168.1.0/24 256 helbideetako "
+"bloke batentzat edo 192.168.1.42/32 bakar batentzat. Balio ezberdinak gakoz "
+"bereizi behar dira (hutsunerik gabe)."
+
+#. Type: string
+#. Description
+#: ../snort.templates:4001
+msgid ""
+"Please note that if Snort is configured to use multiple interfaces, it will "
+"use this value as the HOME_NET definition for all of them."
+msgstr ""
+"Mesedez kontutan izan Snort interfaze anitz erabiltzeko konfiguraturik "
+"dagoela, balio hau HOME_NET definizio bezala erabiliko da guztietan."
+
+#. Type: boolean
+#. Description
+#: ../snort.templates:5001
+msgid "Should Snort disable promiscuous mode on the interface?"
+msgstr "Snort-ek modu promiskuoa ezgaitu behar al du interfaze guztietan?"
+
+#. Type: boolean
+#. Description
+#: ../snort.templates:5001
+msgid ""
+"Disabling promiscuous mode means that Snort will only see packets addressed "
+"to the interface it is monitoring. Enabling it allows Snort to check every "
+"packet that passes the Ethernet segment even if it's a connection between "
+"two other computers."
+msgstr ""
+"Modu promiskuoa ezgaitzeak Snort-ek monitorizatzen ari den interfazerako "
+"diren paketeak bakarrik ikustea eragingo du. Berau gaitzean Snort ethernet "
+"segmentutik pasatzen diren pakete guztiak arakatzeko aukera ematen dio nahiz "
+"beste bi ordenagailuen arteko konexio bat denean."
+
+#. Type: error
+#. Description
+#: ../snort.templates:6001
+msgid "Invalid interface"
+msgstr "Interfaze baliogabea"
+
+#. Type: error
+#. Description
+#: ../snort.templates:6001
+#, fuzzy
+#| msgid ""
+#| "Snort is trying to use an interface which does not exist or is down. "
+#| "Either it is defaulting inappropriately to 'eth0', or you specified one "
+#| "which is invalid."
+msgid ""
+"Snort is trying to use an interface which does not exist or is down. Either "
+"it is defaulting inappropriately to \"eth0\", or you specified one which is "
+"invalid."
+msgstr ""
+"Snort edo ez dagoen edo konexio gabe dagoen interfaze bat erabiltzen "
+"saiatzen ari da. Edo modu okerrean 'eth0' lehenespena da, edo interfaze "
+"baliogabe bat ezarri duzu."
+
+#. Type: boolean
+#. Description
+#: ../snort.templates:7001
+msgid "Should daily summaries be sent by e-mail?"
+msgstr "Eguneko laburpena eposta bidez bidali behar al da?"
+
+#. Type: boolean
+#. Description
+#: ../snort.templates:7001
+msgid ""
+"A cron job can be set up to send daily summaries of Snort logs to a selected "
+"e-mail address."
+msgstr ""
+"Cron lan bat ezarri daiteke Snort erregistroen eguneko laburpena hautatutako "
+"eposta helbidera bidali dadin."
+
+#. Type: boolean
+#. Description
+#: ../snort.templates:7001
+msgid "Please choose whether you want to activate this feature."
+msgstr "Mesedez hautatu ezaugarri hau gaitu nahi duzun."
+
+#. Type: string
+#. Description
+#: ../snort.templates:8001
+msgid "Recipient of daily statistics mails:"
+msgstr "Eguneroko estatistika eposta hartzailea:"
+
+#. Type: string
+#. Description
+#: ../snort.templates:8001
+msgid ""
+"Please specify the e-mail address that should receive daily summaries of "
+"Snort logs."
+msgstr ""
+"Mesedez ezarri Snort erregistroen eguneroko laburpena jaso behar duen eposta "
+"helbidea."
+
+#. Type: string
+#. Description
+#: ../snort.templates:9001
+msgid "Additional custom options:"
+msgstr "Aukera pertsonal gehigarriak:"
+
+#. Type: string
+#. Description
+#: ../snort.templates:9001
+msgid "Please specify any additional options Snort should use."
+msgstr "Mesedez ezarri Snort-ek erabili behar duen edozein aukera gehigarri."
+
+#. Type: string
+#. Description
+#: ../snort.templates:10001
+msgid "Minimum occurrences before alerts are reported:"
+msgstr "Alertak erreportatzeko errepikatze gutxienekoa:"
+
+#. Type: string
+#. Description
+#: ../snort.templates:10001
+msgid ""
+"Please enter the minimum number of alert occurrences before a given alert is "
+"included in the daily statistics."
+msgstr ""
+"Mesedez ezarri alerta bat eguneroko estatistiketan sartzeko gertatu behar "
+"diren gutxieneko errepikapenak."
+
+#. Type: note
+#. Description
+#: ../snort.templates:11001
+msgid "Snort restart required"
+msgstr "Snort berrabiaraztea beharrezkoa"
+
+#. Type: note
+#. Description
+#: ../snort.templates:11001
+#, fuzzy
+#| msgid ""
+#| "As Snort is manually launched, you need to run '/etc/init.d/snort' for "
+#| "the changes to take place."
+msgid ""
+"As Snort is manually launched, you need to run \"service snort restart\" for "
+"the changes to take place."
+msgstr ""
+"Snort eskuz abiarazirik dagoenez, '/etc/init.d/snort' exekutatu behar duzu "
+"aldaketak egiteko."
+
+#. Type: error
+#. Description
+#: ../snort.templates:12001
+msgid "Obsolete configuration file"
+msgstr "Zaharkitutako konfigurazio fitxategia"
+
+#. Type: error
+#. Description
+#: ../snort.templates:12001
+msgid ""
+"This system uses an obsolete configuration file (/etc/snort/snort.common."
+"parameters) which has been automatically converted into the new "
+"configuration file format (at /etc/default/snort)."
+msgstr ""
+"Sistema honek automatikoki konfigurazio formatu berrira (/etc/default/snort-"
+"en) bihurtu den zaharkituriko konfigurazio fitxategi bat erabiltzen du (/etc/"
+"snort/snort.common.parameters)."
+
+#. Type: error
+#. Description
+#: ../snort.templates:12001
+msgid ""
+"Please review the new configuration and remove the obsolete one. Until you "
+"do this, the initialization script will not use the new configuration and "
+"you will not take advantage of the benefits introduced in newer releases."
+msgstr ""
+"Mesedez gainbegiratu konfigurazio berria eta kendu zaharra. Zuk hau egin "
+"arte abiarazte skriptak ez du konfigurazio berria erabiliko eta ez duzu "
+"bertsio berrietan sartutako hobetzeen erabilerarik egingo."
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:2001
+#, fuzzy
+#| msgid "Deprecated configuration file"
+msgid "Deprecated options in configuration file"
+msgstr "Zaharkitutako konfigurazio fitxategia"
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:2001
+msgid ""
+"The Snort configuration file (/etc/snort/snort.conf) uses deprecated options "
+"no longer available for this Snort release. Snort will not be able to start "
+"unless you provide a correct configuration file. Either allow the "
+"configuration file to be replaced with the one provided in this package or "
+"fix it manually by removing deprecated options."
+msgstr ""
+"Snort konfigurazio fitxategiak (/etc/snort/snort.conf) Snort bertsio onetan "
+"onartzen ez diren zaharkituriko aukerak erabiltzen ditu. Snort ez da "
+"abiarazteko gai izango zuk konfigurazio zuzen bat sortu arte. Edo onartu "
+"pakete honek dakarren konfigurazio fitxategiaz ordeztea edo eskuz konpondu "
+"zaharkituriko aukerak kenduaz."
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:2001
+msgid ""
+"The following deprecated options were found in the configuration file: "
+"${DEP_CONFIG}"
+msgstr ""
+"Hurrengo zaharkituriko aukerak aurkitu dira konfigurazio fitxategian: "
+"${DEP_CONFIG}"
+
+#. Type: error
+#. Description
+#: ../snort-common.templates:3001
+msgid "Configuration error"
+msgstr "Konfigurazio errorea"
+
+#. Type: error
+#. Description
+#: ../snort-common.templates:3001
+msgid ""
+"The current Snort configuration is invalid and will prevent Snort starting "
+"up normally. Please review and correct it."
+msgstr ""
+"Dagoen Snort konfigurazioa baliogabea da eta Snort behar bezala abiaraztea "
+"ezintzen du. Mesedez egiaztatu eta konpondu ezazu."
+
+#. Type: error
+#. Description
+#: ../snort-common.templates:3001
+#, fuzzy
+#| msgid ""
+#| "To diagnose an error in a Snort configuration file, use '/usr/sbin/snort -"
+#| "T -c <file>'."
+msgid ""
+"To diagnose errors in your Snort configuration you can run (as root) the "
+"following: \"/usr/sbin/snort -T -c /etc/snort/snort.conf\""
+msgstr ""
+"Snort konfigurazio fitxategian errore bat aztertzeko '/usr/sbin/snort -T -c "
+"<fitxategia>' erabili."
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:4001
+msgid "Deprecated configuration file"
+msgstr "Zaharkitutako konfigurazio fitxategia"
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:4001
+msgid ""
+"Your system has deprecated configuration files which should not be used any "
+"longer and might contain deprecated options. If included through the "
+"standard configuration file (/etc/snort/snort.conf), they might prevent "
+"Snort from starting up properly."
+msgstr ""
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:4001
+msgid ""
+"Please remove these files as well as any existing references to them in the /"
+"etc/snort/snort.conf configuration file."
+msgstr ""
+
+#. Type: note
+#. Description
+#: ../snort-common.templates:4001
+#, fuzzy
+#| msgid ""
+#| "The following deprecated options were found in the configuration file: "
+#| "${DEP_CONFIG}"
+msgid "The following deprecated configuration files were found: ${DEP_FILE}"
+msgstr ""
+"Hurrengo zaharkituriko aukerak aurkitu dira konfigurazio fitxategian: "
+"${DEP_CONFIG}"
+
+#~ msgid "Set up a database for snort-mysql to log to?"
+#~ msgstr "Datubase bat konfiguratu snort-mysql bertan erregistratzeko?"
+
+#~ msgid ""
+#~ "No database has been set up for Snort to log to. Before continuing, you "
+#~ "should make sure you have:"
+#~ msgstr ""
+#~ "Ez da datubaserik konfiguratu Snort-ek bertan erregistroa egiteko. "
+#~ "Aurrera jarraitu haurretik hurrengo hauek betetzen dituzula ziurtatu:"
+
+#~ msgid ""
+#~ " - the server host name (that server must allow TCP connections\n"
+#~ "   from this machine);\n"
+#~ " - a database on that server;\n"
+#~ " - a username and password to access the database."
+#~ msgstr ""
+#~ " - zerbitari ostalari-izena (zerbitzari horrek makina honetako TCP \n"
+#~ "   konexioak onartu behar ditu);\n"
+#~ " - datubase bat zerbitzari horretan;\n"
+#~ " - datubase hori erabili ahal izateko erabiltzaile eta pasahitz bat."
+
+#~ msgid ""
+#~ "If some of these requirements are missing, reject this option and run "
+#~ "with regular file logging support."
+#~ msgstr ""
+#~ "Eskakizun hauetako batenbat falta bada, baztertu aukera hau eta fitxategi "
+#~ "bidezko erregistro onarpen arruntaz exekutatu."
+
+#~ msgid ""
+#~ "Database logging can be reconfigured later by running 'dpkg-reconfigure -"
+#~ "plow snort-mysql'."
+#~ msgstr ""
+#~ "Datubase erregistroa beranduago konfiguratu daiteke 'dpkg-reconfigure -"
+#~ "plow snort-mysql' exekutatuaz."
+
+#~ msgid "Database server hostname:"
+#~ msgstr "Datubase zerbitzari ostalari-izena:"
+
+#~ msgid ""
+#~ "Please specify the host name of a database server that allows incoming "
+#~ "connections from this host."
+#~ msgstr ""
+#~ "Mesedez ezarri ostalari honetatik konexioak onartzen dituen datubase "
+#~ "zerbitzariaren ostalari izena."
+
+#~ msgid "Database name:"
+#~ msgstr "Datu-base izena:"
+
+#~ msgid ""
+#~ "Please specify the name of an existing database to which the database "
+#~ "user has write access."
+#~ msgstr ""
+#~ "Mesedez ezarri datubase erabiltzaileak idazketa baimena duen sorturiko "
+#~ "datubase baten izena."
+
+#~ msgid "Username for database access:"
+#~ msgstr "Datubasea atzitzeko erabiltzaile-izena:"
+
+#~ msgid ""
+#~ "Please specify a database server username with write access to the "
+#~ "database."
+#~ msgstr ""
+#~ "Mesedez ezarri datubasean idazketa baimena duen datubase zerbitzari "
+#~ "erabiltzaile izen bat."
+
+#~ msgid "Password for the database connection:"
+#~ msgstr "Datubase konexiorako pasahitza:"
+
+#~ msgid ""
+#~ "Please enter the password to use to connect to the Snort Alert database."
+#~ msgstr ""
+#~ "Mesedez idatzi Snort alerta datubasera konektatzeko etabiliko den "
+#~ "pasahitza."
+
+#~ msgid "Configured database mandatory for Snort"
+#~ msgstr "Konfiguratutako datubasea beharrezkoa Snort erabiltzeko"
+
+#~ msgid ""
+#~ "Snort needs a configured database before it can successfully start up. In "
+#~ "order to create the structure you need to run the following commands "
+#~ "AFTER the package is installed:"
+#~ msgstr ""
+#~ "Snort-ek konfiguratutako datubase bat behar du behar bezala abiarazteko. "
+#~ "Egitura sortu ahala izateko hurrengo komandoak exekutatu behar dituzu "
+#~ "paketea instalatu AURRETIK:"
+
+#~ msgid ""
+#~ " cd /usr/share/doc/snort-mysql/\n"
+#~ " zcat create_mysql.gz | mysql -u <user> -h <host> -p <databasename>"
+#~ msgstr ""
+#~ " cd /usr/share/doc/snort-mysql/\n"
+#~ " zcat create_mysql.gz | mysql -u <erabiltzailea> -h <ostalaria> -p "
+#~ "<datubase-izena>"
+
+#~ msgid ""
+#~ "Fill in the correct values for the user, host, and database names. MySQL "
+#~ "will prompt you for the password."
+#~ msgstr ""
+#~ "Bete erabiltzaile, ostalari eta datubase izenaren balio zuzenak. MySQL-k "
+#~ "pasahitza eskatuko dizu."
+
+#~ msgid ""
+#~ "After you have created the database structure, you will need to start "
+#~ "Snort manually."
+#~ msgstr ""
+#~ "Behin datubase egitura sortu duzunean, Snort eskuz abiarazi beharko duzu."
+
+#~ msgid "Set up a database for snort-pgsql to log to?"
+#~ msgstr "Datubase bat konfiguratu snort-pgsql bertan erregistratzeko?"
+
+#~ msgid ""
+#~ "Database logging can be reconfigured later by running 'dpkg-reconfigure -"
+#~ "plow snort-pgsql'."
+#~ msgstr ""
+#~ "Datubase erregistroa beranduago berkonfiguratu daiteke 'dpkg-reconfigure -"
+#~ "plow snort-pgsql' exekutatuaz."
+
+#~ msgid ""
+#~ " cd /usr/share/doc/snort-pgsql/\n"
+#~ " zcat create_postgresql.gz | psql -U <user> -h <host> -W <databasename>"
+#~ msgstr ""
+#~ " cd /usr/share/doc/snort-pgsql/\n"
+#~ " zcat create_postgresql.gz | psql -U <erabiltzailea> -h <ostalaria> -W "
+#~ "<datubase-izena>"
+
+#~ msgid ""
+#~ "Fill in the correct values for the user, host, and database names. "
+#~ "PostgreSQL will prompt you for the password."
+#~ msgstr ""
+#~ "Bete erabiltzaile, ostalari eta datubase izenaren balio zuzenak. "
+#~ "PostgreSQL -k pasahitza eskatuko dizu."
+
+#~ msgid "Should Snort's testing order be changed to Pass|Alert|Log?"
+#~ msgstr "Snort probatze ordena Pasa|Alerta|Erregistro-ra aldatu?"
+
+#~ msgid ""
+#~ "Snort's default testing order is Alert|Pass|Log; if you accept this "
+#~ "option, the order will be changed to Pass|Alert|Log, which can make it "
+#~ "simpler to use Snort with some packet-filtering tools."
+#~ msgstr ""
+#~ "Snort-en proba orden lehenetsia Alerta|Pasa|Erregistroa da; aukera hau "
+#~ "onartzen baduzu berau Pasa|Alerta|Erregistroa izatera pasako da zenbait "
+#~ "pakete-iragazte lanabesekin Snort erabiltzea errazagoa izan dadin."
+
+#~ msgid "You are running Snort manually"
+#~ msgstr "Snort eskuz exekutatzen ari zara"
+
+#~ msgid "There is an error in your configuration"
+#~ msgstr "Errore bat aurkitu da zure konfigurazioan"

@@ -1,0 +1,104 @@
+This package was adopted by Sander Smeenk <ssmeenk@debian.org>
+Tue,  4 Jun 2002 21:56:15 +0200
+
+This package was debianized by Robert van der Meulen <rvdm@debian.org>
+Sun Feb  4 17:20:36 CET 2001.
+
+It was downloaded from http://www.snort.org/
+
+Upstream Author: Martin Roesch <roesch@clark.net>
+
+
+Copyright:
+
+Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+
+Portions:
+ - Copyright (C) 2002-2007  Sourcefire, Inc.
+ - Copyright (C) 1993-1998 by Christopher R. Hertel
+ - Copyright (C) 2001 Brian Caswell <bmc@mitre.org>
+ - Copyright (C) 2000,2001 Andrew R. Baker <andrewb@uab.edu>
+ - Copyright (C) 2006 Joshua Wright <jwright@arubanetworks.com>
+ - Copyright (C) 2002-2004 Jeff Nathan <jeff@snort.org>
+ - Copyright (C) 2000,2001,2002 Carnegie Mellon University
+ - Copyright (C) 2001 Jed Pickel <jed@pickel.net>
+ - Copyright (C) 2000-2003 MySQL AB & MySQL Finland AB & TCX DataKonsult AB
+ - Copyright (C) 2005 PreludeIDS Technologies. 
+ - Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
+ - Copyright(C) 1975 Association for Computing Machinery,Inc
+ - Copyright(C) 2002,2003,2004 Marc Norton
+ - Copyright(C) 2003,2004 Daniel Roelker 
+ - Copyright (c) 2001 Michael Davis <mike@datanerds.net>
+ - Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ - Copyright (c) 1997-2003 University of Cambridge
+ - Copyright (C) 2000,2001 Maciej Szarpak
+ - Copyright (C) 2001 Phil Wood <cpw@lanl.gov>
+ - Copyright (C) 1999,2000,2001 Christian Lademann <cal@zls.de>
+ - Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+ - Copyright (c) 1997 Eric P. Allman.  All rights reserved.
+ - Copyright (c) 1988, 1993 The Regents of the University of California
+ - Copyright (C) 2000,2001 Christopher Cramer <cec@ee.duke.edu>
+ - Copyright (C) 2003 Michael J. Pomraning <mjp@securepipe.com>
+ - Copyright (C) 1999,2000,2001 Christian Lademann <cal@zls.de>
+ - Copyright (C) 2000 Mike Andersen <mike@src.no>
+ - Copyright (C) 2001 Andrew Stubbs <andrews@stusoft.com>
+ - Copyright (C) 2002 Chris Reid <chris.reid@codecraftconsulants.com>
+
+
+
+License:
+
+   This package is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; version 2 dated June, 1991.
+   You may not use, modify or distribute this program under any other version
+   of the GNU General Public License.
+
+   This package is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this package; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
+   MA  02110-1301  USA
+
+
+On Debian GNU/Linux systems, the complete text of the GNU General
+Public License can be found in `/usr/share/common-licenses/GPL-2'.
+
+Additional licenses / copyrights:
+---------------------------------
+
+Snort includes Winpcap which is:
+
+ * Copyright (c) 2001 - 2003
+ * NetGroup, Politecnico di Torino (Italy)
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the Politecnico di Torino nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+

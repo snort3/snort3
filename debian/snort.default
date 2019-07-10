@@ -1,0 +1,34 @@
+# Parameters for the daemon
+# Add any additional parameteres here.
+PARAMS="-m 027 -D -d "
+#
+# Snort user
+# This user will be used to launch snort. Notice that the 
+# preinst script of the package might do changes to the user 
+# (home directory, User Name) when the package is upgraded or
+# reinstalled.  So, do *not* change this to 'root' or to any other user 
+# unless you are sure there is no problem with those changes being introduced.
+# 
+SNORTUSER="snort"
+#
+# Logging directory
+# Snort logs will be dropped here and this will be the home
+# directory for the SNORTUSER. If you change this value you should
+# change the /etc/logrotate.d/snort definition too, otherwise logs
+# will not be rotated properly.
+#
+LOGDIR="/var/log/snort"
+#
+# Snort group
+# This is the group that the snort user will be added to.
+#
+SNORTGROUP="snort"
+# 
+# Allow Snort's init.d script to work if the configured interfaces
+# are not available. Set this to yes if you configure Snort with
+# multiple interfaces but some might not be available on boot
+# (e.g. wireless interfaces)
+# 
+# Note: In order for this to work the 'iproute' package needs to 
+# be installed.
+ALLOW_UNAVAILABLE="no"
