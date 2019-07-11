@@ -25,32 +25,31 @@
 
 #include "framework/module.h"
 
-#define host_cache_help \
-    "configure hosts"
+#define HOST_CACHE_NAME "host_cache"
+#define HOST_CACHE_HELP "global LRU cache of host_tracker data about hosts"
 
 class HostCacheModule : public snort::Module
 {
 public:
-    HostCacheModule() : snort::Module("host_cache", host_cache_help, host_cache_params, true)
-    {
-    }
+    HostCacheModule();
+    ~HostCacheModule() override;
 
     bool begin(const char*, int, snort::SnortConfig*) override;
     bool end(const char*, int, snort::SnortConfig*) override;
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
 
+    const snort::Command* get_commands() const override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
-
     void sum_stats(bool) override;
 
     Usage get_usage() const override
     { return GLOBAL; }
 
-private:
-    static const snort::Parameter host_cache_params[];
-    static const snort::Parameter service_params[];
+    void log_host_cache(const char* file_name, bool verbose = false);
 
+private:
+    const char* dump_file = nullptr;
     uint32_t host_cache_size;
 };
 

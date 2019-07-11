@@ -29,25 +29,26 @@
 #include "hash/lru_cache_shared.h"
 #include "host_tracker/host_tracker.h"
 
+#define HOST_IP_KEY_SIZE 16
+
 struct HostIpKey
 {
-    static const int key_size = 16;
     union host_ip_addr
     {
-        uint8_t ip8[key_size];
-        uint64_t ip64[key_size/8];
+        uint8_t ip8[HOST_IP_KEY_SIZE];
+        uint64_t ip64[HOST_IP_KEY_SIZE/8];
     } ip_addr = {{0}}; //  Holds either IPv4 or IPv6 addr
 
     HostIpKey() = default;
 
-    HostIpKey(const uint8_t ip[key_size])
+    HostIpKey(const uint8_t ip[HOST_IP_KEY_SIZE])
     {
-        memcpy(&ip_addr, ip, key_size);
+        memcpy(&ip_addr, ip, HOST_IP_KEY_SIZE);
     }
 
     inline bool operator==(const HostIpKey& rhs) const
     {
-        return !memcmp(&ip_addr, &rhs.ip_addr, key_size);
+        return !memcmp(&ip_addr, &rhs.ip_addr, HOST_IP_KEY_SIZE);
     }
 };
 

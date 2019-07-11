@@ -38,7 +38,6 @@
 #include "flow/ha.h"
 #include "framework/mpse.h"
 #include "helpers/process.h"
-#include "host_tracker/host_cache.h"
 #include "ips_options/ips_options.h"
 #include "log/log.h"
 #include "log/messages.h"
@@ -302,7 +301,6 @@ void Snort::term()
     term_signals();
     IpsManager::global_term(SnortConfig::get_conf());
     SFAT_Cleanup();
-    host_cache.clear();
 
 #ifdef PIGLET
     if ( !Piglet::piglet_mode() )

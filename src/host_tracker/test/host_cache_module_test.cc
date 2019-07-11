@@ -23,9 +23,12 @@
 #include "config.h"
 #endif
 
+#include <cstdarg>
+
 #include "host_tracker/host_cache_module.h"
 #include "host_tracker/host_cache.h"
 #include "main/snort_config.h"
+#include "managers/module_manager.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
@@ -33,6 +36,13 @@
 #include "sfip/sf_ip.h"
 
 using namespace snort;
+using namespace std;
+
+// All tests here use the same module since host_cache is global. Creating a local module for each
+// test will cause host_cache PegCount testing to be dependent on the order of running these tests.
+static HostCacheModule module;
+#define LOG_MAX 128
+static char logged_message[LOG_MAX+1];
 
 namespace snort
 {
@@ -40,8 +50,20 @@ namespace snort
 SnortProtocolId ProtocolReference::add(char const*) { return 0; }
 SnortProtocolId ProtocolReference::find(char const*) { return 0; }
 SnortConfig* SnortConfig::get_conf() { return nullptr; }
-char* snort_strdup(const char* s)
-{ return strdup(s); }
+char* snort_strdup(const char* s) { return strdup(s); }
+Module* ModuleManager::get_module(const char*) { return nullptr; }
+void LogMessage(const char* format,...)
+{
+    va_list args;
+    va_start(args, format);
+    vsnprintf(logged_message, LOG_MAX, format, args);
+    logged_message[LOG_MAX] = '\0';
+}
+}
+
+extern "C"
+{
+const char* luaL_optlstring(lua_State*, int, const char*, size_t*) { return nullptr; }
 }
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*)
@@ -53,17 +75,24 @@ void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*)
 #define FRAG_POLICY 33
 #define STREAM_POLICY 100
 
-SfIp expected_addr;
-
 TEST_GROUP(host_cache_module)
-{ };
+{
+    void setup() override
+    {
+        MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
+    }
+
+    void teardown() override
+    {
+        MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
+    }
+};
 
 //  Test that HostCacheModule sets up host_cache size based on config.
 TEST(host_cache_module, host_cache_module_test_values)
 {
     Value size_val((double)2112);
     Parameter size_param = { "size", Parameter::PT_INT, nullptr, nullptr, "cache size" };
-    HostCacheModule module;
     const PegInfo* ht_pegs = module.get_pegs();
     const PegCount* ht_stats = module.get_counts();
 
@@ -95,6 +124,22 @@ TEST(host_cache_module, host_cache_module_test_values)
     CHECK(ht_stats[0] == 0);
 
     CHECK(2112 == host_cache.get_max_size());
+}
+
+TEST(host_cache_module, log_host_cache_messages)
+{
+    module.log_host_cache(nullptr, true);
+    STRCMP_EQUAL(logged_message, "File name is needed!\n");
+
+    module.log_host_cache("nowhere/host_cache.dump", true);
+    STRCMP_EQUAL(logged_message, "Couldn't open nowhere/host_cache.dump to write!\n");
+
+    module.log_host_cache("host_cache.dump", true);
+    STRCMP_EQUAL(logged_message, "Dumped host cache of size = 0 to host_cache.dump\n");
+
+    module.log_host_cache("host_cache.dump", true);
+    STRCMP_EQUAL(logged_message, "File host_cache.dump already exists!\n");
+    remove("host_cache.dump");
 }
 
 int main(int argc, char** argv)
