@@ -57,6 +57,7 @@ void LogMessage(const char* format,...)
     va_list args;
     va_start(args, format);
     vsnprintf(logged_message, LOG_MAX, format, args);
+    va_end(args);
     logged_message[LOG_MAX] = '\0';
 }
 }
