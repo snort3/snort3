@@ -15,13 +15,13 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// http2_hpack_decode.cc author Maya Dagon <mdagon@cisco.com>
+// http2_hpack_int_decode.cc author Maya Dagon <mdagon@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "http2_hpack_decode.h"
+#include "http2_hpack_int_decode.h"
 
 #include "http2_enum.h"
 
@@ -37,20 +37,20 @@ Http2HpackIntDecode::Http2HpackIntDecode(uint8_t prefix, Http2EventGen* events,
     assert ((0 < prefix) && (prefix < 9));
 }
 
-bool Http2HpackIntDecode::translate(const Field& msg, int32_t& bytes_consumed, uint64_t& result)
+bool Http2HpackIntDecode::translate(const uint8_t* in_buff, const uint32_t in_len,
+    uint32_t& bytes_consumed, uint64_t& result)
 {
     bytes_consumed = 0;
     result = 0;
 
-    if (bytes_consumed >= msg.length())
+    if (in_len == 0)
     {
         *infractions += INF_INT_EMPTY_BUFF;
         events->create_event(EVENT_INT_DECODE_FAILURE);
         return false;
     }
 
-    const uint8_t* buff = msg.start();
-    const uint8_t prefix_val = buff[bytes_consumed++] & prefix_mask;
+    const uint8_t prefix_val = in_buff[bytes_consumed++] & prefix_mask;
 
     if (prefix_val < prefix_mask)
     {
@@ -61,13 +61,13 @@ bool Http2HpackIntDecode::translate(const Field& msg, int32_t& bytes_consumed, u
     uint8_t byte = 0;
     for (uint8_t multiplier = 0; multiplier < 64; multiplier += 7)
     {
-        if (bytes_consumed >= msg.length())
+        if (bytes_consumed >= in_len)
         {
             *infractions += INF_INT_MISSING_BYTES;
             events->create_event(EVENT_INT_DECODE_FAILURE);
             return false;
         }
-        byte = buff[bytes_consumed++];
+        byte = in_buff[bytes_consumed++];
 
         // For multiplier == 63, do overflow checks
         if (multiplier == 63)

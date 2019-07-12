@@ -14,7 +14,12 @@ add_cpputest( http2_stream_splitter_impl_test
         ../http2_tables.cc
         ../../../framework/module.cc
 )
-add_cpputest( http2_hpack_decode_test
+add_cpputest( http2_hpack_int_decode_test
     SOURCES
-        ../http2_hpack_decode.cc
+        ../http2_hpack_int_decode.cc
+)
+add_cpputest( http2_hpack_string_decode_test
+    SOURCES
+        ../http2_hpack_int_decode.cc
+        ../http2_hpack_string_decode.cc
 )
