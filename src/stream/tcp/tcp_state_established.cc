@@ -79,6 +79,8 @@ bool TcpStateEstablished::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 bool TcpStateEstablished::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.update_tracker_ack_sent(tsd);
+    if ( trk.session->config->no_ack )
+        trk.update_tracker_no_ack_recv(tsd);
     return true;
 }
 
@@ -86,6 +88,8 @@ bool TcpStateEstablished::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTrac
 {
     trk.update_tracker_ack_recv(tsd);
     trk.session->handle_data_segment(tsd);
+    if ( trk.session->config->no_ack )
+        trk.update_tracker_no_ack_sent(tsd);
     return true;
 }
 

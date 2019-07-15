@@ -276,6 +276,8 @@ public:
 
     virtual void update_tracker_ack_recv(TcpSegmentDescriptor&);
     virtual void update_tracker_ack_sent(TcpSegmentDescriptor&);
+    virtual void update_tracker_no_ack_recv(TcpSegmentDescriptor&);
+    virtual void update_tracker_no_ack_sent(TcpSegmentDescriptor&);
     virtual bool update_on_3whs_ack(TcpSegmentDescriptor&);
     virtual bool update_on_rst_recv(TcpSegmentDescriptor&);
     virtual void update_on_rst_sent();

@@ -474,6 +474,18 @@ void TcpStreamTracker::update_tracker_ack_recv(TcpSegmentDescriptor& tsd)
     }
 }
 
+// In no-ack policy, data is implicitly acked immediately.
+void TcpStreamTracker::update_tracker_no_ack_recv(TcpSegmentDescriptor& tsd)
+{
+    snd_una = snd_nxt = tsd.get_end_seq();
+}
+
+void TcpStreamTracker::update_tracker_no_ack_sent(TcpSegmentDescriptor& tsd)
+{
+    r_win_base = tsd.get_end_seq();
+    reassembler.flush_on_ack_policy(tsd.get_pkt());
+}
+
 void TcpStreamTracker::update_tracker_ack_sent(TcpSegmentDescriptor& tsd)
 {
     // ** this is how we track the last seq number sent

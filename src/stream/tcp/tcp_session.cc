@@ -747,6 +747,8 @@ void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd)
                 st->normalizer.trim_win_payload(
                     tsd, (st->r_win_base + st->get_snd_wnd() - st->rcv_nxt));
 
+                // FIXIT-H: MSS is not being set on client so packets sent
+                // to client are not trimmed.
                 if (st->get_mss())
                     st->normalizer.trim_mss_payload(tsd, st->get_mss());
 

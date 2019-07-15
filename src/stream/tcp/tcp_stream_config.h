@@ -69,8 +69,10 @@ public:
     uint32_t max_consec_small_segs = STREAM_DEFAULT_CONSEC_SMALL_SEGS;
     uint32_t max_consec_small_seg_size = STREAM_DEFAULT_MAX_SMALL_SEG_SIZE;
 
-    int hs_timeout = -1;
     uint32_t paf_max = 16384;
+    int hs_timeout = -1;
+
+    bool no_ack;
 };
 
 #endif

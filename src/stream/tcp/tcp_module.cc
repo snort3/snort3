@@ -169,6 +169,11 @@ static const Parameter s_params[] =
     { "max_pdu", Parameter::PT_INT, "1460:32768", "16384",
       "maximum reassembled PDU size" },
 
+    // FIXIT-H: This should become an API call so that
+    // an inspector can enable no-ack processing on specific flows
+    { "no_ack", Parameter::PT_BOOL, nullptr, "false",
+      "received data is implicitly acked immediately" },
+
     { "policy", Parameter::PT_ENUM, TCP_POLICIES, "bsd",
       "determines operating system characteristics like reassembly" },
 
@@ -279,6 +284,9 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("max_pdu") )
         config->paf_max = v.get_uint16();
+
+    else if ( v.is("no_ack") )
+        config->no_ack = v.get_bool();
 
     else if ( v.is("policy") )
         config->policy = static_cast< StreamPolicy >( v.get_uint8() + 1 );
