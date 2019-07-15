@@ -104,6 +104,7 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port,
     length_sequence.proto = IpProtocol::PROTO_NOT_SET;
     length_sequence.sequence_cnt = 0;
     memset(length_sequence.sequence, '\0', sizeof(length_sequence.sequence));
+    memset(application_ids, 0, sizeof(application_ids));
     appid_stats.total_sessions++;
 }
 
@@ -777,103 +778,63 @@ AppId AppIdSession::pick_referred_payload_app_id()
 void AppIdSession::set_application_ids(AppId service_id, AppId client_id,
     AppId payload_id, AppId misc_id, AppidChangeBits& change_bits)
 {
-    AppId service, client, payload, misc;
-    service = client = payload = misc = APP_ID_NONE;
-
-    flow->get_attr(STASH_APPID_SERVICE, service);
-    if (service != service_id)
+    if (application_ids[APP_PROTOID_SERVICE] != service_id)
     {
-        flow->set_attr(STASH_APPID_SERVICE, service_id);
+        application_ids[APP_PROTOID_SERVICE] = service_id;
         change_bits.set(APPID_SERVICE_BIT);
     }
-
-    flow->get_attr(STASH_APPID_CLIENT, client);
-    if (client != client_id)
+    if (application_ids[APP_PROTOID_CLIENT] != client_id)
     {
-        flow->set_attr(STASH_APPID_CLIENT, client_id);
+        application_ids[APP_PROTOID_CLIENT] = client_id;
         change_bits.set(APPID_CLIENT_BIT);
     }
-
-    flow->get_attr(STASH_APPID_PAYLOAD, payload);
-    if (payload != payload_id)
+    if (application_ids[APP_PROTOID_PAYLOAD] != payload_id)
     {
-        flow->set_attr(STASH_APPID_PAYLOAD, payload_id);
+        application_ids[APP_PROTOID_PAYLOAD] = payload_id;
         change_bits.set(APPID_PAYLOAD_BIT);
     }
-
-    flow->get_attr(STASH_APPID_MISC, misc);
-    if (misc != misc_id)
+    if (application_ids[APP_PROTOID_MISC] != misc_id)
     {
-        flow->set_attr(STASH_APPID_MISC, misc_id);
+        application_ids[APP_PROTOID_MISC] = misc_id;
         change_bits.set(APPID_MISC_BIT);
     }
-}
-
- void AppIdSession::update_flow_attrs(AppidChangeBits& change_bits)
- {
-    if (change_bits[APPID_REFERRED_BIT])
-        flow->set_attr(STASH_APPID_REFERRED, referred_payload_app_id);
-
-    if (change_bits[APPID_TLSHOST_BIT] and tsession and tsession->get_tls_host())
-        flow->set_attr(STASH_TLS_HOST, tsession->get_tls_host());
-
-    if (change_bits[APPID_VERSION_BIT])
-    {
-        if  (client.get_version())
-            flow->set_attr(STASH_CLIENT_VERSION, client.get_version());
-        else
-            flow->remove_attr(STASH_CLIENT_VERSION);
-    }
-
-    if (hsession)
-        hsession->update_flow_attrs(change_bits);
 }
 
 void AppIdSession::get_application_ids(AppId& service_id, AppId& client_id,
     AppId& payload_id, AppId& misc_id)
 {
-    service_id = client_id = payload_id = misc_id = APP_ID_NONE;
-    flow->get_attr(STASH_APPID_SERVICE, service_id);
-    flow->get_attr(STASH_APPID_CLIENT, client_id);
-    flow->get_attr(STASH_APPID_PAYLOAD, payload_id);
-    flow->get_attr(STASH_APPID_MISC, misc_id);
+    service_id = application_ids[APP_PROTOID_SERVICE];
+    client_id  = application_ids[APP_PROTOID_CLIENT];
+    payload_id = application_ids[APP_PROTOID_PAYLOAD];
+    misc_id    = application_ids[APP_PROTOID_MISC];
 }
 
 void AppIdSession::get_application_ids(AppId& service_id, AppId& client_id,
     AppId& payload_id)
-{    
-    service_id = client_id = payload_id = APP_ID_NONE;
-    flow->get_attr(STASH_APPID_SERVICE, service_id);
-    flow->get_attr(STASH_APPID_CLIENT, client_id);
-    flow->get_attr(STASH_APPID_PAYLOAD, payload_id);
+{
+    service_id = application_ids[APP_PROTOID_SERVICE];
+    client_id  = application_ids[APP_PROTOID_CLIENT];
+    payload_id = application_ids[APP_PROTOID_PAYLOAD];
 }
 
 AppId AppIdSession::get_application_ids_service()
 {
-    AppId service_id = APP_ID_NONE;;
-    flow->get_attr(STASH_APPID_SERVICE, service_id);
-    return service_id;
+    return application_ids[APP_PROTOID_SERVICE];
 }
 
 AppId AppIdSession::get_application_ids_client()
 {
-    AppId client_id = APP_ID_NONE;;
-    flow->get_attr(STASH_APPID_CLIENT, client_id);
-    return client_id;
+    return application_ids[APP_PROTOID_CLIENT];
 }
 
 AppId AppIdSession::get_application_ids_payload()
 {
-    AppId payload_id = APP_ID_NONE;;
-    flow->get_attr(STASH_APPID_PAYLOAD, payload_id);
-    return payload_id;
+    return application_ids[APP_PROTOID_PAYLOAD];
 }
 
 AppId AppIdSession::get_application_ids_misc()
 {
-    AppId misc_id = APP_ID_NONE;;
-    flow->get_attr(STASH_APPID_MISC, misc_id);
-    return misc_id;
+    return application_ids[APP_PROTOID_MISC];
 }
 
 bool AppIdSession::is_ssl_session_decrypted()

@@ -1080,6 +1080,5 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
 
     asd.set_application_ids(service_id, asd.pick_client_app_id(), payload_id,
         asd.pick_misc_app_id(), change_bits);
-    asd.update_flow_attrs(change_bits);
     publish_appid_event(change_bits, p->flow);
 }

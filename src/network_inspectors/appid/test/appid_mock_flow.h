@@ -51,11 +51,7 @@ int Flow::set_flow_data(FlowData* fd)
     return 0;
 }
 
-bool snort::FlowStash::get(const int&, int32_t&) { return true; }
-void snort::FlowStash::store(const int&, const int32_t) { }
-void snort::FlowStash::store(const int&, const std::string&) { }
-void snort::FlowStash::remove(const FlowStashKey&) { }
-snort::FlowStash::~FlowStash() { }
+FlowStash::~FlowStash() { }
 
 #endif
 

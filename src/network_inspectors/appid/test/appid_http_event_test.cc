@@ -44,9 +44,6 @@
 THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
 void AppIdDebug::activate(const Flow*, const AppIdSession*, bool) { active = true; }
 
-//Stubs for AppIdHttpSession
-void AppIdSession::update_flow_attrs(AppidChangeBits&) {}
-
 using namespace snort;
 
 namespace snort

@@ -103,49 +103,6 @@ void AppIdHttpSession::set_http_change_bits(AppidChangeBits& change_bits, HttpFi
     }
 }
 
-void AppIdHttpSession::update_flow_attrs(AppidChangeBits& change_bits)
-{
-    if (change_bits[APPID_HOST_BIT])
-    {
-        if (meta_data[REQ_HOST_FID] and !meta_data[REQ_HOST_FID]->empty())
-            asd.flow->set_attr(STASH_HOST, *meta_data[REQ_HOST_FID]);
-        else
-            asd.flow->remove_attr(STASH_HOST);
-    }
-    
-    if (change_bits[APPID_URL_BIT])
-    {
-       if (meta_data[MISC_URL_FID] and !meta_data[MISC_URL_FID]->empty())
-            asd.flow->set_attr(STASH_URL, *meta_data[MISC_URL_FID]);
-        else
-            asd.flow->remove_attr(STASH_URL);
-    }
-
-    if (change_bits[APPID_USERAGENT_BIT])
-    {
-        if (meta_data[REQ_AGENT_FID] and !meta_data[REQ_AGENT_FID]->empty())
-            asd.flow->set_attr(STASH_USER_AGENT, *meta_data[REQ_AGENT_FID]);
-        else
-            asd.flow->remove_attr(STASH_USER_AGENT);
-    }
-
-    if (change_bits[APPID_RESPONSE_BIT])
-    {
-        if (meta_data[MISC_RESP_CODE_FID] and !meta_data[MISC_RESP_CODE_FID]->empty())
-            asd.flow->set_attr(STASH_RESPONSE_CODE, *meta_data[MISC_RESP_CODE_FID]);
-        else
-            asd.flow->remove_attr(STASH_RESPONSE_CODE);
-    }
-
-    if (change_bits[APPID_REFERER_BIT])
-    {
-        if (meta_data[REQ_REFERER_FID] and !meta_data[REQ_REFERER_FID]->empty())
-            asd.flow->set_attr(STASH_REFERER, *meta_data[REQ_REFERER_FID]);
-        else
-            asd.flow->remove_attr(STASH_REFERER);
-    }
-}
-
 int AppIdHttpSession::initial_chp_sweep(ChpMatchDescriptor& cmd)
 {
     CHPApp* cah = nullptr;

@@ -108,9 +108,6 @@ bool AppIdIpsOption::match_id_against_rule(int32_t id)
     if ( nullptr != app_name_key )
     {
         string app_name(app_name_key);
-        //FIXIT-L: Inbuilt find of the set class does a partial (equivalent) key
-        //match. It does not match the complete appid id. Ex: "foo" will be
-        //matched with "foo bar"
         if ( appid_table.find(app_name) != appid_table.end() )
             return true;
     }

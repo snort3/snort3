@@ -191,39 +191,30 @@ public:
     void set_mpls_layer_per_dir(Packet*);
     Layer get_mpls_layer_per_dir(bool);
     void set_service(Packet* pkt, const char* new_service);
-
+    bool get_attr(const std::string& key, int32_t& val);
+    bool get_attr(const std::string& key, std::string& val);
+    void set_attr(const std::string& key, const int32_t& val);
+    void set_attr(const std::string& key, const std::string& val);
     // Use this API when the publisher of the attribute allocated memory for it and can give up its
     // ownership after the call.
-    void set_attr(const int& key, std::string* val)
+    void set_attr(const std::string& key, std::string* val)
     {
         assert(stash);
         stash->store(key, val);
     }
 
-    bool get_attr(const int& key, std::string*& val)
+    template<typename T>
+    bool get_attr(const std::string& key, T& val)
     {
         assert(stash);
         return stash->get(key, val);
     }
 
     template<typename T>
-    bool get_attr(const int& key, T& val)
-    {
-        assert(stash);
-        return stash->get(key, val);
-    }
-
-    template<typename T>
-    void set_attr(const int& key, const T& val)
+    void set_attr(const std::string& key, const T& val)
     {
         assert(stash);
         stash->store(key, val);
-    }
-
-    void remove_attr(const FlowStashKey& key)
-    {
-        assert(stash);
-        stash->remove(key);
     }
 
     uint32_t update_session_flags(uint32_t flags)
