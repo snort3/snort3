@@ -105,7 +105,7 @@ URI normalization is performed during HttpUri construction in four steps.
 
 Step 1: Identify the type of URI.
 
-NHI recognizes four types of URI:
+HI recognizes four types of URI:
 
 1. Asterisk: a lone ‘*’ character signifying that the request does not refer to any resource in
 particular. Often used with the OPTIONS method. This is not normalized.
@@ -144,7 +144,7 @@ This allows rules to be written against a normalized whole URI as is done in 2.X
 The procedures for normalizing the individual pieces are mostly identical to 2.X. Some points
 warrant mention:
 
-1. NHI considers it to be normal for reserved characters to be percent encoded and does not
+1. HI considers it to be normal for reserved characters to be percent encoded and does not
 generate an alert. The 119/1 alert is used only for unreserved characters that are found to be
 percent encoded. The ignore_unreserved configuration option allows the user to specify a list of
 unreserved characters that are exempt from this alert.
@@ -214,7 +214,7 @@ line).
 
 This test tool does not implement the feature of being hardened against bad input. If you write a
 badly formatted or improper test case the program may assert or crash. The responsibility is on the
-developer to get it right. Currently that is the best use of resources.
+developer to get it right.
 
 Test input is currently designed for single-threaded operation only.
 

@@ -293,12 +293,6 @@ void HttpMsgHeader::prepare_body()
     const int64_t& depth = (source_id == SRC_CLIENT) ? params->request_depth :
         params->response_depth;
     session_data->detect_depth_remaining[source_id] = (depth != -1) ? depth : INT64_MAX;
-    if (session_data->detect_depth_remaining[source_id] > 0)
-    {
-        // Depth must be positive because first body section must actually go to detection in order
-        // to be the detection section
-        detection_section = false;
-    }
     setup_file_processing();
     setup_encoding_decompression();
     setup_utf_decoding();

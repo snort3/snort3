@@ -37,7 +37,8 @@ public:
         HttpEnums::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
         const HttpParaList* params_);
     HttpEnums::InspectSection get_inspection_section() const override
-        { return detection_section ? HttpEnums::IS_DETECTION : HttpEnums::IS_NONE; }
+        { return HttpEnums::IS_HEADER; }
+    bool detection_required() const override { return true; }
     void update_flow() override;
     void gen_events() override;
     void publish() override;
@@ -57,8 +58,6 @@ private:
 
     Field true_ip;
     Field true_ip_addr;
-
-    bool detection_section = true;
 
 #ifdef REG_TEST
     void print_section(FILE* output) override;

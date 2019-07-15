@@ -34,6 +34,7 @@ public:
         const HttpParaList* params_);
     HttpEnums::InspectSection get_inspection_section() const override
         { return HttpEnums::IS_TRAILER; }
+    bool detection_required() const override { return (msg_text.length() > 0); }
     void gen_events() override;
     void update_flow() override;
 

@@ -37,7 +37,7 @@ HttpMsgBody::HttpMsgBody(const uint8_t* buffer, const uint16_t buf_size,
     const HttpParaList* params_) :
     HttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_),
     body_octets(session_data->body_octets[source_id]),
-    detection_section((body_octets == 0) && (session_data->detect_depth_remaining[source_id] > 0))
+    first_body(session_data->body_octets[source_id] == 0)
 {
     transaction->set_body(this);
     get_related_sections();
@@ -68,11 +68,6 @@ void HttpMsgBody::analyze()
     }
 
     body_octets += msg_text.length();
-}
-
-bool HttpMsgBody::detection_required() const
-{
-    return (detect_data.length() > 0) || (get_inspection_section() == IS_DETECTION);
 }
 
 void HttpMsgBody::do_utf_decoding(const Field& input, Field& output)

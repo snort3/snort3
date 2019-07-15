@@ -54,12 +54,6 @@ HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
     HttpContextData::save_snapshot(this);
 }
 
-bool HttpMsgSection::detection_required() const
-{
-    return ((msg_text.length() > 0) && (get_inspection_section() != IS_NONE)) ||
-           (get_inspection_section() == IS_DETECTION);
-}
-
 void HttpMsgSection::add_infraction(int infraction)
 {
     *transaction->get_infractions(source_id) += infraction;

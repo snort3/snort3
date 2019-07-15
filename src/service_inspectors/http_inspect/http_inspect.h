@@ -54,6 +54,7 @@ public:
         return new HttpStreamSplitter(is_client_to_server, this);
     }
     static HttpEnums::InspectSection get_latest_is(const snort::Packet* p);
+    static HttpEnums::SourceId get_latest_src(const snort::Packet* p);
 
     // Callbacks that provide "extra data"
     static int get_xtra_trueip(snort::Flow*, uint8_t**, uint32_t*, uint32_t*);
@@ -67,7 +68,6 @@ private:
 
     bool process(const uint8_t* data, const uint16_t dsize, snort::Flow* const flow,
         HttpEnums::SourceId source_id_, bool buf_owner) const;
-    static HttpEnums::SourceId get_latest_src(const snort::Packet* p);
 
     const HttpParaList* const params;
 

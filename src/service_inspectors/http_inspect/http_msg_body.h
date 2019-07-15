@@ -32,8 +32,8 @@ class HttpMsgBody : public HttpMsgSection
 public:
     void analyze() override;
     HttpEnums::InspectSection get_inspection_section() const override
-        { return detection_section ? HttpEnums::IS_DETECTION : HttpEnums::IS_BODY; }
-    bool detection_required() const override;
+        { return first_body ? HttpEnums::IS_FIRST_BODY : HttpEnums::IS_BODY; }
+    bool detection_required() const override { return (detect_data.length() > 0); }
     HttpMsgBody* get_body() override { return this; }
     const Field& get_classic_client_body();
     const Field& get_detect_data() { return detect_data; }
@@ -45,6 +45,7 @@ protected:
         const HttpParaList* params_);
 
     int64_t body_octets;
+    bool first_body;
 
 #ifdef REG_TEST
     void print_body_section(FILE* output);
@@ -61,7 +62,6 @@ private:
     Field decoded_body;
     Field decompressed_file_body;
     Field js_norm_body;
-    const bool detection_section;
 };
 
 #endif

@@ -493,40 +493,16 @@ Whenever a new URI is available this rule will be evaluated. Nothing
 complicated about that, but suppose we use more than one rule option:
 
     alert tcp any any -> any any ( msg:"combined example"; flow:established,
-    to_server; http_uri; content:"chocolate"; file_data;
+    to_server; http_uri: with_body; content:"chocolate"; file_data;
     content:"sinister POST data"; sid:5; rev:1; )
 
-This rule requires both the URI and the request message body. That sounds
-simple until one considers that the message body may be millions of bytes
-long. The headers with the URI may be long gone by that time.
-
-Is this rule going to work or do we need to do something different?
-
-It is helpful to understand when things happen. All the message headers and
-the first few thousand bytes of the body go through detection at the same
-time. Commonly this is about 16K bytes but there are several exceptions and
-there is no guaranteed minimum amount.
-
-That may be all you need. In many cases that will be the entire message. Or
-it may be more than your request_depth/response_depth. Or this rule may
-simply not care what happens after that in a very long message body.
-
-Beyond that the message body will continue to be subdivided into roughly
-16K-byte sections and inspected. But the previous rule will not be able to
-see the URI and hence will not work unless we rewrite it:
-
-    alert tcp any any -> any any ( msg:"URI with_body"; flow:established,
-    to_server; http_uri: with_body; content:"chocolate"; file_data;
-    content:"sinister POST data"; sid:5; rev:2; )
-
 The with_body option to http_uri causes the URI to be made available with
-every body section, not just the first one. These extra inspections have a
-performance cost which is why they are not done automatically. with_body is
-an option to be used when you actually need it.
+the message body. Use with_body for header-related rule options in rules
+that also examine the message body.
 
 The with_trailer option is analogous and causes an earlier message element
-to be made available at the end of the message when the trailers following a
-chunked body arrive.
+to be made available at the end of the message when the trailers following
+a chunked body arrive.
 
     alert tcp any any -> any any ( msg:"double content-language";
     flow:established, to_client; http_header: with_trailer, field
@@ -581,33 +557,29 @@ http_header to be searched is the request header.
 Let's put all of this together. There are six opportunities to do
 detection:
 
-1. When the first part of the request message body arrives. The request
-line, all of the headers, and the first part of the body all go through
-detection at the same time. Of course most requests don't have a body. In
-that case the request line and the headers are the whole message and get
-done at the same time.
+1. When the the request headers arrive. The request line and all of the
+headers go through detection at the same time.
 
-2. When subsequent sections of the request message body arrive. If you want
-to combine this with something from the request line or headers you must
-use the with_body option.
+2. When sections of the request message body arrive. If you want to combine
+this with something from the request line or headers you must use the
+with_body option.
 
 3. When the request trailers arrive. If you want to combine this with
 something from the request line or headers you must use the with_trailer
 option.
 
-4. When the first part of the response message body arrives. The status
-line, all of the headers, and the first part of the body all go through
-detection at the same time. These may be combined with elements from the
-request line, request headers, or request trailers. Where ambiguity arises
-use the request option.
+4. When the response headers arrive. The status line and all of the headers
+go through detection at the same time. These may be combined with elements
+from the request line, request headers, or request trailers. Where
+ambiguity arises use the request option.
 
-5. When subsequent sections of the response message body arrive. These may
-be combined with the status line, response headers, request line, request
-headers, or request trailers as described above.
+5. When sections of the response message body arrive. These may be combined
+with the status line, response headers, request line, request headers, or
+request trailers as described above.
 
 6. When the response trailers arrive. Again these may be combined as
 described above.
 
-Message body data can only go through detection at the time it is received.
-Headers may be combined with later items but the body cannot.
+Message body sections can only go through detection at the time they are
+received. Headers may be combined with later items but the body cannot.
 

@@ -106,7 +106,7 @@ enum UriType { URI__NOT_COMPUTE=-14, URI__PROBLEMATIC=-12, URI_ASTERISK = 2, URI
 enum CompressId { CMP_NONE=2, CMP_GZIP, CMP_DEFLATE };
 
 // Message section in which an IPS option provides the buffer
-enum InspectSection { IS_NONE, IS_DETECTION, IS_BODY, IS_TRAILER };
+enum InspectSection { IS_NONE, IS_HEADER, IS_FLEX_HEADER, IS_FIRST_BODY, IS_BODY, IS_TRAILER };
 
 // Part of the URI to be provided
 enum UriComponent { UC_SCHEME = 1, UC_HOST, UC_PORT, UC_PATH, UC_QUERY, UC_FRAGMENT };

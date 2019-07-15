@@ -31,6 +31,7 @@ class HttpMsgStart : public HttpMsgSection
 {
 public:
     void analyze() override;
+    bool detection_required() const override { return false; }
     const Field& get_version() const { return version; }
 
 protected:

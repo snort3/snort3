@@ -87,6 +87,11 @@ InspectSection HttpInspect::get_latest_is(const Packet* p)
     if (current_section == nullptr)
         return HttpEnums::IS_NONE;
 
+    // FIXIT-L revisit why we need this check. We should not be getting a current section back
+    // for a raw packet but one of the test cases did exactly that.
+    if (!(p->packet_flags & PKT_PSEUDO))
+        return HttpEnums::IS_NONE;
+
     return current_section->get_inspection_section();
 }
 
@@ -143,19 +148,26 @@ bool HttpInspect::http_get_buf(unsigned id, uint64_t sub_id, uint64_t form, Pack
 
 bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
 {
+    if (get_latest_is(p) == IS_NONE)
+        return false;
+
     // Fast pattern buffers only supplied at specific times
     switch (ibt)
     {
     case InspectionBuffer::IBT_KEY:
-        if ((get_latest_is(p) != IS_DETECTION) || (get_latest_src(p) != SRC_CLIENT))
+        // Many rules targeting POST feature http_uri fast pattern with http_client_body. We
+        // accept the performance hit of rerunning http_uri fast pattern with request body message
+        // sections
+        if (get_latest_src(p) != SRC_CLIENT)
             return false;
         break;
     case InspectionBuffer::IBT_HEADER:
-        if ((get_latest_is(p) != IS_DETECTION) && (get_latest_is(p) != IS_TRAILER))
+        // http_header fast patterns for response bodies limited to first section
+        if ((get_latest_src(p) == SRC_SERVER) && (get_latest_is(p) == IS_BODY))
             return false;
         break;
     case InspectionBuffer::IBT_BODY:
-        if ((get_latest_is(p) != IS_DETECTION) && (get_latest_is(p) != IS_BODY))
+        if ((get_latest_is(p) != IS_FIRST_BODY) && (get_latest_is(p) != IS_BODY))
             return false;
         break;
     default:
@@ -265,6 +277,14 @@ void HttpInspect::eval(Packet* p)
     // FIXIT-H Workaround for unexpected eval() calls
     if (session_data->section_type[source_id] == SEC__NOT_COMPUTE)
         return;
+
+    // Don't make pkt_data for headers available to detection
+    // FIXIT-M One byte to avoid potential problems with zero
+    if ((session_data->section_type[source_id] == SEC_HEADER) ||
+        (session_data->section_type[source_id] == SEC_TRAILER))
+    {
+        p->set_detect_limit(1);
+    }
 
     // Limit alt_dsize of message body sections to request/response depth
     if ((session_data->detect_depth_remaining[source_id] > 0) &&

@@ -37,7 +37,7 @@ public:
     virtual ~HttpMsgSection() = default;
     virtual HttpEnums::InspectSection get_inspection_section() const
         { return HttpEnums::IS_NONE; }
-    virtual bool detection_required() const;
+    virtual bool detection_required() const = 0;
     HttpEnums::SourceId get_source_id() const { return source_id; }
     HttpTransaction* get_transaction() const { return transaction; }
     const HttpParaList* get_params() const { return params; }
