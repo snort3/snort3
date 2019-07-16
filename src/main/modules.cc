@@ -25,6 +25,7 @@
 #include "modules.h"
 
 #include <regex>
+#include <sys/resource.h>
 
 #include "codecs/codec_module.h"
 #include "detection/fp_config.h"
@@ -156,7 +157,38 @@ bool DetectionModule::set(const char* fqn, Value& v, SnortConfig* sc)
         sc->pcre_match_limit = v.get_uint32();
 
     else if ( v.is("pcre_match_limit_recursion") )
+    {
+        // Cap the pcre recursion limit to not exceed the stack size.
+        //
+        // Note that even if we tried to call setrlimit() here, the threads
+        // will still get the stack size decided upon the start of snort3,
+        // which is 2M (for x86_64!) if snort3 started with unlimited
+        // stack size (ulimit -s). See the pthread_create() man page, or glibc
+        // source code.
+
+        // Determine the current stack size limit:
+        rlimit lim;
+        getrlimit(RLIMIT_STACK, &lim);
+        rlim_t thread_stack_size = lim.rlim_cur;
+
+        const size_t fudge_factor = 1 << 19;         // 1/2 M
+        const size_t pcre_stack_frame_size = 1024;   // pcretest -m -C
+
+        if (lim.rlim_cur == RLIM_INFINITY)
+            thread_stack_size = 1 << 21;             // 2M
+
+        long int max_rec = (thread_stack_size - fudge_factor) / pcre_stack_frame_size;
+        if (max_rec < 0)
+            max_rec = 0;
+
         sc->pcre_match_limit_recursion = v.get_uint32();
+        if (sc->pcre_match_limit_recursion > max_rec)
+        {
+            sc->pcre_match_limit_recursion = max_rec;
+            LogMessage("Capping pcre_match_limit_recursion to %ld, thread stack_size %ld.\n",
+                sc->pcre_match_limit_recursion, thread_stack_size);
+        }
+    }
 
     else if ( v.is("enable_address_anomaly_checks") )
         sc->address_anomaly_check_enabled = v.get_bool();
