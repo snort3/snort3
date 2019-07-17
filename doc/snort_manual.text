@@ -389,7 +389,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0 (Build 257) from 2.9.11
+o"  )~   Version 3.0.0 (Build 258)
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
@@ -3262,8 +3262,8 @@ high_availability =
 {
     ports = "1",
     enable = true,
-    min_age = 0.0,
-    min_sync = 0.0
+    min_age = 0,
+    min_sync = 0
 }
 
 The ports item maps to the SideChannel port to use for the HA
@@ -3272,11 +3272,11 @@ messaging.
 The enabled item controls the overall HA operation.
 
 The items min_age and min_sync are used in the stream HA logic.
-min_age is the number of seconds that a flow must exist in the flow
-cache before sending HA messages to the partner. min_sync is the
+min_age is the number of milliseconds that a flow must exist in the
+flow cache before sending HA messages to the partner. min_sync is the
 minimum time between HA status updates. HA messages for a particular
 flow will not be sent faster than min_sync. Both are expressed as a
-floating point number of seconds.
+number of milliseconds.
 
 HA messages are composed of the base stream information plus any
 content from additional modules. Modules subscribe HA in order to add
@@ -4178,41 +4178,12 @@ Whenever a new URI is available this rule will be evaluated. Nothing
 complicated about that, but suppose we use more than one rule option:
 
 alert tcp any any -> any any ( msg:"combined example"; flow:established,
-to_server; http_uri; content:"chocolate"; file_data;
+to_server; http_uri: with_body; content:"chocolate"; file_data;
 content:"sinister POST data"; sid:5; rev:1; )
 
-This rule requires both the URI and the request message body. That
-sounds simple until one considers that the message body may be
-millions of bytes long. The headers with the URI may be long gone by
-that time.
-
-Is this rule going to work or do we need to do something different?
-
-It is helpful to understand when things happen. All the message
-headers and the first few thousand bytes of the body go through
-detection at the same time. Commonly this is about 16K bytes but
-there are several exceptions and there is no guaranteed minimum
-amount.
-
-That may be all you need. In many cases that will be the entire
-message. Or it may be more than your request_depth/response_depth. Or
-this rule may simply not care what happens after that in a very long
-message body.
-
-Beyond that the message body will continue to be subdivided into
-roughly 16K-byte sections and inspected. But the previous rule will
-not be able to see the URI and hence will not work unless we rewrite
-it:
-
-alert tcp any any -> any any ( msg:"URI with_body"; flow:established,
-to_server; http_uri: with_body; content:"chocolate"; file_data;
-content:"sinister POST data"; sid:5; rev:2; )
-
 The with_body option to http_uri causes the URI to be made available
-with every body section, not just the first one. These extra
-inspections have a performance cost which is why they are not done
-automatically. with_body is an option to be used when you actually
-need it.
+with the message body. Use with_body for header-related rule options
+in rules that also examine the message body.
 
 The with_trailer option is analogous and causes an earlier message
 element to be made available at the end of the message when the
@@ -4272,31 +4243,26 @@ http_header to be searched is the request header.
 Let’s put all of this together. There are six opportunities to do
 detection:
 
- 1. When the first part of the request message body arrives. The
-    request line, all of the headers, and the first part of the body
-    all go through detection at the same time. Of course most
-    requests don’t have a body. In that case the request line and the
-    headers are the whole message and get done at the same time.
- 2. When subsequent sections of the request message body arrive. If
-    you want to combine this with something from the request line or
-    headers you must use the with_body option.
+ 1. When the the request headers arrive. The request line and all of
+    the headers go through detection at the same time.
+ 2. When sections of the request message body arrive. If you want to
+    combine this with something from the request line or headers you
+    must use the with_body option.
  3. When the request trailers arrive. If you want to combine this
     with something from the request line or headers you must use the
     with_trailer option.
- 4. When the first part of the response message body arrives. The
-    status line, all of the headers, and the first part of the body
-    all go through detection at the same time. These may be combined
-    with elements from the request line, request headers, or request
-    trailers. Where ambiguity arises use the request option.
- 5. When subsequent sections of the response message body arrive.
-    These may be combined with the status line, response headers,
-    request line, request headers, or request trailers as described
-    above.
+ 4. When the response headers arrive. The status line and all of the
+    headers go through detection at the same time. These may be
+    combined with elements from the request line, request headers, or
+    request trailers. Where ambiguity arises use the request option.
+ 5. When sections of the response message body arrive. These may be
+    combined with the status line, response headers, request line,
+    request headers, or request trailers as described above.
  6. When the response trailers arrive. Again these may be combined as
     described above.
 
-Message body data can only go through detection at the time it is
-received. Headers may be combined with later items but the body
+Message body sections can only go through detection at the time they
+are received. Headers may be combined with later items but the body
 cannot.
 
 
@@ -5696,10 +5662,10 @@ Configuration:
     data plane channel
   * bit_list high_availability.ports: side channel message port list
     { 65535 }
-  * real high_availability.min_age = 1.0: minimum session life in
-    seconds before HA updates { 0.0:100.0 }
-  * real high_availability.min_sync = 0.1: minimum interval in
-    seconds between HA updates { 0.0:100.0 }
+  * int high_availability.min_age = 0: minimum session life in
+    milliseconds before HA updates { 0:max32 }
+  * int high_availability.min_sync = 0: minimum interval in
+    milliseconds between HA updates { 0:max32 }
 
 Peg counts:
 
@@ -5732,7 +5698,7 @@ Peg counts:
 
 --------------
 
-What: configure hosts
+What: global LRU cache of host_tracker data about hosts
 
 Type: basic
 
@@ -5740,7 +5706,13 @@ Usage: global
 
 Configuration:
 
-  * int host_cache[].size: size of host cache { 1:max32 }
+  * string host_cache.dump_file: file name to dump host cache on
+    shutdown; won’t dump by default
+  * int host_cache.size: size of host cache { 1:max32 }
+
+Commands:
+
+  * host_cache.dump(file_name): dump host cache
 
 Peg counts:
 
@@ -6327,9 +6299,9 @@ Configuration:
   * implied snort.-x: same as --pedantic
   * implied snort.-y: include year in timestamp in the alert and log
     files
-  * int snort.-z = 1: <count> maximum number of packet threads (same
-    as --max-packet-threads); 0 gets the number of CPU cores reported
-    by the system; default is 1 { 0:max32 }
+  * int snort.-z: <count> maximum number of packet threads (same as
+    --max-packet-threads); 0 gets the number of CPU cores reported by
+    the system; default is 1 { 0:max32 }
   * implied snort.--alert-before-pass: evaluate alert rules before
     pass rules; default is pass rules first
   * string snort.--bpf: <filter options> are standard BPF options, as
@@ -6402,8 +6374,8 @@ Configuration:
   * int snort.--logid: <0xid> log Identifier to uniquely id events
     for multiple snorts (same as -G) { 0:65535 }
   * implied snort.--markup: output help in asciidoc compatible format
-  * int snort.--max-packet-threads = 1: <count> configure maximum
-    number of packet threads (same as -z) { 0:max32 }
+  * int snort.--max-packet-threads: <count> configure maximum number
+    of packet threads (same as -z) { 0:max32 }
   * implied snort.--mem-check: like -T but also compile search
     engines
   * implied snort.--nostamps: don’t include timestamps in log file
@@ -6417,8 +6389,8 @@ Configuration:
     to read - read mode is implied
   * string snort.--pcap-dir: <dir> a directory to recurse to look for
     pcaps - read mode is implied
-  * string snort.--pcap-filter: <filter> filter to apply when getting
-    pcaps from file or directory
+  * string snort.--pcap-filter = .*cap: <filter> filter to apply when
+    getting pcaps from file or directory
   * int snort.--pcap-loop: <count> read all pcaps <count> times; 0
     will read until Snort is terminated { 0:max32 }
   * implied snort.--pcap-no-filter: reset to use no filter when
@@ -6451,8 +6423,8 @@ Configuration:
     -s) { 68:65535 }
   * implied snort.--stdin-rules: read rules from stdin until EOF or a
     line starting with END is read
-  * implied snort.--talos: enable Talos inline rule test mode (same
-    as --tweaks talos -Q -q)
+  * implied snort.--talos: enable Talos tweak (same as --tweaks
+    talos)
   * implied snort.--treat-drop-as-alert: converts drop, block, and
     reset rules into alert rules when loaded
   * implied snort.--treat-drop-as-ignore: use drop, block, and reset
@@ -8175,6 +8147,10 @@ Usage: inspect
 
 Rules:
 
+  * 121:1 (http2_inspect) Error in HPACK integer value
+  * 121:2 (http2_inspect) Integer value has leading zeros
+  * 121:3 (http2_inspect) Error in HPACK string value
+
 Peg counts:
 
   * http2_inspect.flows: HTTP connections inspected (sum)
@@ -9637,6 +9613,8 @@ Configuration:
     overlapping segments per session { 0:max32 }
   * int stream_tcp.max_pdu = 16384: maximum reassembled PDU size {
     1460:32768 }
+  * bool stream_tcp.no_ack = false: received data is implicitly acked
+    immediately
   * enum stream_tcp.policy = bsd: determines operating system
     characteristics like reassembly { first | last | linux |
     old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 |
@@ -10613,6 +10591,8 @@ Configuration:
 
   * implied http_cookie.request: match against the cookie from the
     request message even when examining the response
+  * implied http_cookie.with_header: this rule is limited to
+    examining HTTP message headers
   * implied http_cookie.with_body: parts of this rule examine HTTP
     message body
   * implied http_cookie.with_trailer: parts of this rule examine HTTP
@@ -10636,6 +10616,8 @@ Configuration:
     is case insensitive.
   * implied http_header.request: match against the headers from the
     request message even when examining the response
+  * implied http_header.with_header: this rule is limited to
+    examining HTTP message headers
   * implied http_header.with_body: parts of this rule examine HTTP
     message body
   * implied http_header.with_trailer: parts of this rule examine HTTP
@@ -10655,6 +10637,8 @@ Usage: detect
 
 Configuration:
 
+  * implied http_method.with_header: this rule is limited to
+    examining HTTP message headers
   * implied http_method.with_body: parts of this rule examine HTTP
     message body
   * implied http_method.with_trailer: parts of this rule examine HTTP
@@ -10688,6 +10672,8 @@ Configuration:
 
   * implied http_raw_cookie.request: match against the cookie from
     the request message even when examining the response
+  * implied http_raw_cookie.with_header: this rule is limited to
+    examining HTTP message headers
   * implied http_raw_cookie.with_body: parts of this rule examine
     HTTP message body
   * implied http_raw_cookie.with_trailer: parts of this rule examine
@@ -10709,6 +10695,8 @@ Configuration:
 
   * implied http_raw_header.request: match against the headers from
     the request message even when examining the response
+  * implied http_raw_header.with_header: this rule is limited to
+    examining HTTP message headers
   * implied http_raw_header.with_body: parts of this rule examine
     HTTP message body
   * implied http_raw_header.with_trailer: parts of this rule examine
@@ -10728,6 +10716,8 @@ Usage: detect
 
 Configuration:
 
+  * implied http_raw_request.with_header: this rule is limited to
+    examining HTTP message headers
   * implied http_raw_request.with_body: parts of this rule examine
     HTTP message body
   * implied http_raw_request.with_trailer: parts of this rule examine
@@ -10786,6 +10776,8 @@ Usage: detect
 
 Configuration:
 
+  * implied http_raw_uri.with_header: this rule is limited to
+    examining HTTP message headers
   * implied http_raw_uri.with_body: parts of this rule examine HTTP
     message body
   * implied http_raw_uri.with_trailer: parts of this rule examine
@@ -10873,6 +10865,8 @@ Usage: detect
 
 Configuration:
 
+  * implied http_true_ip.with_header: this rule is limited to
+    examining HTTP message headers
   * implied http_true_ip.with_body: parts of this rule examine HTTP
     message body
   * implied http_true_ip.with_trailer: parts of this rule examine
@@ -10892,6 +10886,8 @@ Usage: detect
 
 Configuration:
 
+  * implied http_uri.with_header: this rule is limited to examining
+    HTTP message headers
   * implied http_uri.with_body: parts of this rule examine HTTP
     message body
   * implied http_uri.with_trailer: parts of this rule examine HTTP
@@ -10919,6 +10915,8 @@ Configuration:
 
   * implied http_version.request: match against the version from the
     request message even when examining the response
+  * implied http_version.with_header: this rule is limited to
+    examining HTTP message headers
   * implied http_version.with_body: parts of this rule examine HTTP
     message body
   * implied http_version.with_trailer: parts of this rule examine
@@ -14200,8 +14198,7 @@ these libraries see the Getting Started section of the manual.
   * --snaplen <snap> set snaplen of packet (same as -s) (68:65535)
   * --stdin-rules read rules from stdin until EOF or a line starting
     with END is read
-  * --talos enable Talos inline rule test mode (same as --tweaks
-    talos -Q -q)
+  * --talos enable Talos tweak (same as --tweaks talos)
   * --treat-drop-as-alert converts drop, block, and reset rules into
     alert rules when loaded
   * --treat-drop-as-ignore use drop, block, and reset rules to ignore
@@ -14791,13 +14788,15 @@ these libraries see the Getting Started section of the manual.
   * bool high_availability.daq_channel = false: enable use of daq
     data plane channel
   * bool high_availability.enable = false: enable high availability
-  * real high_availability.min_age = 1.0: minimum session life in
-    seconds before HA updates { 0.0:100.0 }
-  * real high_availability.min_sync = 0.1: minimum interval in
-    seconds between HA updates { 0.0:100.0 }
+  * int high_availability.min_age = 0: minimum session life in
+    milliseconds before HA updates { 0:max32 }
+  * int high_availability.min_sync = 0: minimum interval in
+    milliseconds between HA updates { 0:max32 }
   * bit_list high_availability.ports: side channel message port list
     { 65535 }
-  * int host_cache[].size: size of host cache { 1:max32 }
+  * string host_cache.dump_file: file name to dump host cache on
+    shutdown; won’t dump by default
+  * int host_cache.size: size of host cache { 1:max32 }
   * enum hosts[].frag_policy: defragmentation policy { first | linux
     | bsd | bsd_right | last | windows | solaris }
   * addr hosts[].ip = 0.0.0.0/32: hosts address / CIDR
@@ -14821,6 +14820,8 @@ these libraries see the Getting Started section of the manual.
     request message even when examining the response
   * implied http_cookie.with_body: parts of this rule examine HTTP
     message body
+  * implied http_cookie.with_header: this rule is limited to
+    examining HTTP message headers
   * implied http_cookie.with_trailer: parts of this rule examine HTTP
     message trailers
   * string http_header.field: restrict to given header. Header name
@@ -14829,6 +14830,8 @@ these libraries see the Getting Started section of the manual.
     request message even when examining the response
   * implied http_header.with_body: parts of this rule examine HTTP
     message body
+  * implied http_header.with_header: this rule is limited to
+    examining HTTP message headers
   * implied http_header.with_trailer: parts of this rule examine HTTP
     message trailers
   * bool http_inspect.accelerated_blocking = false: inspect
@@ -14883,22 +14886,30 @@ these libraries see the Getting Started section of the manual.
     characters to a single byte
   * implied http_method.with_body: parts of this rule examine HTTP
     message body
+  * implied http_method.with_header: this rule is limited to
+    examining HTTP message headers
   * implied http_method.with_trailer: parts of this rule examine HTTP
     message trailers
   * implied http_raw_cookie.request: match against the cookie from
     the request message even when examining the response
   * implied http_raw_cookie.with_body: parts of this rule examine
     HTTP message body
+  * implied http_raw_cookie.with_header: this rule is limited to
+    examining HTTP message headers
   * implied http_raw_cookie.with_trailer: parts of this rule examine
     HTTP message trailers
   * implied http_raw_header.request: match against the headers from
     the request message even when examining the response
   * implied http_raw_header.with_body: parts of this rule examine
     HTTP message body
+  * implied http_raw_header.with_header: this rule is limited to
+    examining HTTP message headers
   * implied http_raw_header.with_trailer: parts of this rule examine
     HTTP message trailers
   * implied http_raw_request.with_body: parts of this rule examine
     HTTP message body
+  * implied http_raw_request.with_header: this rule is limited to
+    examining HTTP message headers
   * implied http_raw_request.with_trailer: parts of this rule examine
     HTTP message trailers
   * implied http_raw_status.with_body: parts of this rule examine
@@ -14922,6 +14933,8 @@ these libraries see the Getting Started section of the manual.
     only
   * implied http_raw_uri.with_body: parts of this rule examine HTTP
     message body
+  * implied http_raw_uri.with_header: this rule is limited to
+    examining HTTP message headers
   * implied http_raw_uri.with_trailer: parts of this rule examine
     HTTP message trailers
   * implied http_stat_code.with_body: parts of this rule examine HTTP
@@ -14941,6 +14954,8 @@ these libraries see the Getting Started section of the manual.
     response message headers (must be combined with request)
   * implied http_true_ip.with_body: parts of this rule examine HTTP
     message body
+  * implied http_true_ip.with_header: this rule is limited to
+    examining HTTP message headers
   * implied http_true_ip.with_trailer: parts of this rule examine
     HTTP message trailers
   * implied http_uri.fragment: match against fragment section of URI
@@ -14952,12 +14967,16 @@ these libraries see the Getting Started section of the manual.
   * implied http_uri.scheme: match against scheme section of URI only
   * implied http_uri.with_body: parts of this rule examine HTTP
     message body
+  * implied http_uri.with_header: this rule is limited to examining
+    HTTP message headers
   * implied http_uri.with_trailer: parts of this rule examine HTTP
     message trailers
   * implied http_version.request: match against the version from the
     request message even when examining the response
   * implied http_version.with_body: parts of this rule examine HTTP
     message body
+  * implied http_version.with_header: this rule is limited to
+    examining HTTP message headers
   * implied http_version.with_trailer: parts of this rule examine
     HTTP message trailers
   * interval icmp_id.~range: check if ICMP ID is in given range {
@@ -15650,8 +15669,8 @@ these libraries see the Getting Started section of the manual.
   * string snort.--lua: <chunk> extend/override conf with chunk; may
     be repeated
   * implied snort.--markup: output help in asciidoc compatible format
-  * int snort.--max-packet-threads = 1: <count> configure maximum
-    number of packet threads (same as -z) { 0:max32 }
+  * int snort.--max-packet-threads: <count> configure maximum number
+    of packet threads (same as -z) { 0:max32 }
   * implied snort.--mem-check: like -T but also compile search
     engines
   * implied snort.-M: log messages to syslog (not alerts)
@@ -15670,8 +15689,8 @@ these libraries see the Getting Started section of the manual.
     pcaps - read mode is implied
   * string snort.--pcap-file: <file> file that contains a list of
     pcaps to read - read mode is implied
-  * string snort.--pcap-filter: <filter> filter to apply when getting
-    pcaps from file or directory
+  * string snort.--pcap-filter = .*cap: <filter> filter to apply when
+    getting pcaps from file or directory
   * string snort.--pcap-list: <list> a space separated list of pcaps
     to read - read mode is implied
   * int snort.--pcap-loop: <count> read all pcaps <count> times; 0
@@ -15715,8 +15734,8 @@ these libraries see the Getting Started section of the manual.
   * implied snort.--stdin-rules: read rules from stdin until EOF or a
     line starting with END is read
   * string snort.-S: <x=v> set config variable x equal to value v
-  * implied snort.--talos: enable Talos inline rule test mode (same
-    as --tweaks talos -Q -q)
+  * implied snort.--talos: enable Talos tweak (same as --tweaks
+    talos)
   * string snort.-t: <dir> chroots process to <dir> after
     initialization
   * int snort.trace: mask for enabling debug traces in module {
@@ -15761,9 +15780,9 @@ these libraries see the Getting Started section of the manual.
   * implied snort.-x: same as --pedantic
   * implied snort.-y: include year in timestamp in the alert and log
     files
-  * int snort.-z = 1: <count> maximum number of packet threads (same
-    as --max-packet-threads); 0 gets the number of CPU cores reported
-    by the system; default is 1 { 0:max32 }
+  * int snort.-z: <count> maximum number of packet threads (same as
+    --max-packet-threads); 0 gets the number of CPU cores reported by
+    the system; default is 1 { 0:max32 }
   * string so.~func: name of eval function
   * string soid.~: SO rule ID is unique key, eg <gid>_<sid>_<rev>
     like 3_45678_9
@@ -15878,6 +15897,8 @@ these libraries see the Getting Started section of the manual.
     1460:32768 }
   * int stream_tcp.max_window = 0: maximum allowed TCP window {
     0:1073725440 }
+  * bool stream_tcp.no_ack = false: received data is implicitly acked
+    immediately
   * int stream_tcp.overlap_limit = 0: maximum number of allowed
     overlapping segments per session { 0:max32 }
   * enum stream_tcp.policy = bsd: determines operating system
@@ -17192,6 +17213,9 @@ these libraries see the Getting Started section of the manual.
     value
   * 119:248 (http_inspect) gzip compressed data followed by
     unexpected non-gzip data
+  * 121:1 (http2_inspect) Error in HPACK integer value
+  * 121:2 (http2_inspect) Integer value has leading zeros
+  * 121:3 (http2_inspect) Error in HPACK string value
   * 122:1 (port_scan) TCP portscan
   * 122:2 (port_scan) TCP decoy portscan
   * 122:3 (port_scan) TCP portsweep
@@ -17465,6 +17489,7 @@ these libraries see the Getting Started section of the manual.
   * appid.enable_debug(proto, src_ip, src_port, dst_ip, dst_port):
     enable appid debugging
   * appid.disable_debug(): disable appid debugging
+  * host_cache.dump(file_name): dump host cache
   * packet_capture.enable(filter): dump raw packets
   * packet_capture.disable(): stop packet dump
   * packet_tracer.enable(proto, src_ip, src_port, dst_ip, dst_port):
@@ -17674,6 +17699,10 @@ change -> stream5_global: 'tcp_cache_nominal_timeout' ==> 'pruning_timeout'
 change -> stream5_global: 'tcp_cache_pruning_timeout' ==> 'idle_timeout'
 change -> stream5_global: 'udp_cache_nominal_timeout' ==> 'idle_timeout'
 change -> stream5_global: 'udp_cache_pruning_timeout' ==> 'pruning_timeout'
+change -> stream5_ha: 'min_session_lifetime' ==> 'min_age'
+change -> stream5_ha: 'min_sync_interval' ==> 'min_sync'
+change -> stream5_ha: 'stream5_ha' ==> 'high_availability'
+change -> stream5_ha: 'use_daq' ==> 'daq_channel'
 change -> stream5_ip: 'timeout' ==> 'session_timeout'
 change -> stream5_tcp: 'bind_to' ==> 'bindings'
 change -> stream5_tcp: 'dont_reassemble_async' ==> 'reassemble_async'
@@ -17987,7 +18016,8 @@ deleted -> unified2: 'vlan_event_types'
   * gtp_version (ips_option): rule option to check GTP version
   * high_availability (basic): implement flow tracking high
     availability
-  * host_cache (basic): configure hosts
+  * host_cache (basic): global LRU cache of host_tracker data about
+    hosts
   * host_tracker (basic): configure hosts
   * hosts (basic): configure hosts
   * http2_frame_data (ips_option): rule option to see HTTP/2 frame

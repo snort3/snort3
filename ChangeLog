@@ -1,3 +1,42 @@
+19/07/17 - build 258
+
+-- analyzer: 1024 contexts max is a better default until configurable
+-- appid: fix header order in appid_session
+-- codec: add support of ignore_vlan flag from daq header
+-- detection: allocate scratch after configuration
+-- detection: immediately onload after offloading when running regression tests
+-- detection: on PDUs change search order to set check_ports correctly
+-- detection: reduce hard number of contexts to work with pcap default
+-- detection: start offload threads before packet threads are pinned
+-- detection: use offload_threads = N with -z = 1
+-- flow: Extend stash to support uint32_t and make it SO_PUBLIC
+-- flow: Fixes for DAQ-backed HA implementation
+-- flow: remove config.h from flow_stash_keys
+-- high_availability: high availability support in Snort2Lua
+-- host_cache: Adding command and config option to dump hosts
+-- host_cache: Closing va_list after usage using va_end
+-- http2: decode HPACK uint
+-- http2: hpack string decode
+-- http_inspect: perf improvements
+-- http_inspect: send headers to detection separately
+-- ips: add missing non-fast-pattern warning
+-- ips: refactor fast pattern searching
+-- mpse: api init and print methods are optional
+-- no_ack: Purge segment list withouth waiting for ack when using no_ack feature.
+-- pcre: cap the pcre_match_limit_recursion based on the stack size available.
+-- profiler: convert ips options to use optional profiles
+-- profiler: eliminate deep profiling
+-- profiler: implement general exclusion
+-- profiler: include onload/offload efforts in mpse
+-- profiler: refactor
+-- profiler: split out paf from stream_tcp
+-- profiler: track DAQ message receives and finalizes
+-- snort: remove out-of-date Snort 2 version from -V
+-- stream: add convenient method for flow deletion
+-- stream_tcp: Add no-ack policy to handle flows that have no ACKs for data.
+-- stream_tcp: fix non-deep detect profile exclusion
+-- talos.lua: various fixes for command line usage
+
 19/06/19 - build 257
 
 -- analyzer: publish finalize packet event before calling finalize_message.

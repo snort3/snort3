@@ -782,7 +782,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0 (Build 257) from 2.9.11
+o"  )~   Version 3.0.0 (Build 258)
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
@@ -4693,17 +4693,17 @@ Delete - A flow has been removed from the cache
 {
     ports = "1",
     enable = true,
-    min_age = 0.0,
-    min_sync = 0.0
+    min_age = 0,
+    min_sync = 0
 }</code></pre>
 </div></div>
 <div class="paragraph"><p>The <em>ports</em> item maps to the SideChannel port to use for the HA messaging.</p></div>
 <div class="paragraph"><p>The <em>enabled</em> item controls the overall HA operation.</p></div>
 <div class="paragraph"><p>The items min_age and min_sync are used in the stream HA logic.  min_age is
-the number of seconds that a flow must exist in the flow cache before sending
+the number of milliseconds that a flow must exist in the flow cache before sending
 HA messages to the partner.  min_sync is the minimum time between HA status
 updates.  HA messages for a particular flow will not be sent faster than
-min_sync.  Both are expressed as a floating point number of seconds.</p></div>
+min_sync.  Both are expressed as a number of milliseconds.</p></div>
 <div class="paragraph"><p>HA messages are composed of the base <em>stream</em> information plus any content
 from additional modules.  Modules subscribe HA in order to add message
 content.  The <em>stream</em> HA content is always present in the messages while
@@ -5673,36 +5673,15 @@ complicated about that, but suppose we use more than one rule option:</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>alert tcp any any -&gt; any any ( msg:"combined example"; flow:established,
-to_server; http_uri; content:"chocolate"; file_data;
+to_server; http_uri: with_body; content:"chocolate"; file_data;
 content:"sinister POST data"; sid:5; rev:1; )</code></pre>
 </div></div>
-<div class="paragraph"><p>This rule requires both the URI and the request message body. That sounds
-simple until one considers that the message body may be millions of bytes
-long. The headers with the URI may be long gone by that time.</p></div>
-<div class="paragraph"><p>Is this rule going to work or do we need to do something different?</p></div>
-<div class="paragraph"><p>It is helpful to understand when things happen. All the message headers and
-the first few thousand bytes of the body go through detection at the same
-time. Commonly this is about 16K bytes but there are several exceptions and
-there is no guaranteed minimum amount.</p></div>
-<div class="paragraph"><p>That may be all you need. In many cases that will be the entire message. Or
-it may be more than your request_depth/response_depth. Or this rule may
-simply not care what happens after that in a very long message body.</p></div>
-<div class="paragraph"><p>Beyond that the message body will continue to be subdivided into roughly
-16K-byte sections and inspected. But the previous rule will not be able to
-see the URI and hence will not work unless we rewrite it:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>alert tcp any any -&gt; any any ( msg:"URI with_body"; flow:established,
-to_server; http_uri: with_body; content:"chocolate"; file_data;
-content:"sinister POST data"; sid:5; rev:2; )</code></pre>
-</div></div>
 <div class="paragraph"><p>The with_body option to http_uri causes the URI to be made available with
-every body section, not just the first one. These extra inspections have a
-performance cost which is why they are not done automatically. with_body is
-an option to be used when you actually need it.</p></div>
+the message body. Use with_body for header-related rule options in rules
+that also examine the message body.</p></div>
 <div class="paragraph"><p>The with_trailer option is analogous and causes an earlier message element
-to be made available at the end of the message when the trailers following a
-chunked body arrive.</p></div>
+to be made available at the end of the message when the trailers following
+a chunked body arrive.</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>alert tcp any any -&gt; any any ( msg:"double content-language";
@@ -5759,18 +5738,15 @@ detection:</p></div>
 <div class="olist arabic"><ol class="arabic">
 <li>
 <p>
-When the first part of the request message body arrives. The request
-line, all of the headers, and the first part of the body all go through
-detection at the same time. Of course most requests don&#8217;t have a body. In
-that case the request line and the headers are the whole message and get
-done at the same time.
+When the the request headers arrive. The request line and all of the
+headers go through detection at the same time.
 </p>
 </li>
 <li>
 <p>
-When subsequent sections of the request message body arrive. If you want
-to combine this with something from the request line or headers you must
-use the with_body option.
+When sections of the request message body arrive. If you want to combine
+this with something from the request line or headers you must use the
+with_body option.
 </p>
 </li>
 <li>
@@ -5782,18 +5758,17 @@ option.
 </li>
 <li>
 <p>
-When the first part of the response message body arrives. The status
-line, all of the headers, and the first part of the body all go through
-detection at the same time. These may be combined with elements from the
-request line, request headers, or request trailers. Where ambiguity arises
-use the request option.
+When the response headers arrive. The status line and all of the headers
+go through detection at the same time. These may be combined with elements
+from the request line, request headers, or request trailers. Where
+ambiguity arises use the request option.
 </p>
 </li>
 <li>
 <p>
-When subsequent sections of the response message body arrive. These may
-be combined with the status line, response headers, request line, request
-headers, or request trailers as described above.
+When sections of the response message body arrive. These may be combined
+with the status line, response headers, request line, request headers, or
+request trailers as described above.
 </p>
 </li>
 <li>
@@ -5803,8 +5778,8 @@ described above.
 </p>
 </li>
 </ol></div>
-<div class="paragraph"><p>Message body data can only go through detection at the time it is received.
-Headers may be combined with later items but the body cannot.</p></div>
+<div class="paragraph"><p>Message body sections can only go through detection at the time they are
+received. Headers may be combined with later items but the body cannot.</p></div>
 </div>
 </div>
 <div class="sect2">
@@ -7658,12 +7633,12 @@ bit_list <strong>high_availability.ports</strong>: side channel message port lis
 </li>
 <li>
 <p>
-real <strong>high_availability.min_age</strong> = 1.0: minimum session life in seconds before HA updates { 0.0:100.0 }
+int <strong>high_availability.min_age</strong> = 0: minimum session life in milliseconds before HA updates { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-real <strong>high_availability.min_sync</strong> = 0.1: minimum interval in seconds between HA updates { 0.0:100.0 }
+int <strong>high_availability.min_sync</strong> = 0: minimum interval in milliseconds between HA updates { 0:max32 }
 </p>
 </li>
 </ul></div>
@@ -7738,14 +7713,27 @@ real <strong>high_availability.min_sync</strong> = 0.1: minimum interval in seco
 </div>
 <div class="sect2">
 <h3 id="_host_cache">host_cache</h3>
-<div class="paragraph"><p>What: configure hosts</p></div>
+<div class="paragraph"><p>What: global LRU cache of host_tracker data about hosts</p></div>
 <div class="paragraph"><p>Type: basic</p></div>
 <div class="paragraph"><p>Usage: global</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong><code>host_cache[].size</code></strong>: size of host cache { 1:max32 }
+string <strong>host_cache.dump_file</strong>: file name to dump host cache on shutdown; won&#8217;t dump by default
+</p>
+</li>
+<li>
+<p>
+int <strong>host_cache.size</strong>: size of host cache { 1:max32 }
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Commands:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>host_cache.dump</strong>(file_name): dump host cache
 </p>
 </li>
 </ul></div>
@@ -8874,7 +8862,7 @@ implied <strong>snort.-y</strong>: include year in timestamp in the alert and lo
 </li>
 <li>
 <p>
-int <strong>snort.-z</strong> = 1: &lt;count&gt; maximum number of packet threads (same as --max-packet-threads); 0 gets the number of CPU cores reported by the system; default is 1 { 0:max32 }
+int <strong>snort.-z</strong>: &lt;count&gt; maximum number of packet threads (same as --max-packet-threads); 0 gets the number of CPU cores reported by the system; default is 1 { 0:max32 }
 </p>
 </li>
 <li>
@@ -9079,7 +9067,7 @@ implied <strong>snort.--markup</strong>: output help in asciidoc compatible form
 </li>
 <li>
 <p>
-int <strong>snort.--max-packet-threads</strong> = 1: &lt;count&gt; configure maximum number of packet threads (same as -z) { 0:max32 }
+int <strong>snort.--max-packet-threads</strong>: &lt;count&gt; configure maximum number of packet threads (same as -z) { 0:max32 }
 </p>
 </li>
 <li>
@@ -9119,7 +9107,7 @@ string <strong>snort.--pcap-dir</strong>: &lt;dir&gt; a directory to recurse to 
 </li>
 <li>
 <p>
-string <strong>snort.--pcap-filter</strong>: &lt;filter&gt; filter to apply when getting pcaps from file or directory
+string <strong>snort.--pcap-filter</strong> = <strong>.*cap</strong>: &lt;filter&gt; filter to apply when getting pcaps from file or directory
 </p>
 </li>
 <li>
@@ -9219,7 +9207,7 @@ implied <strong>snort.--stdin-rules</strong>: read rules from stdin until EOF or
 </li>
 <li>
 <p>
-implied <strong>snort.--talos</strong>: enable Talos inline rule test mode (same as --tweaks talos -Q -q)
+implied <strong>snort.--talos</strong>: enable Talos tweak (same as --tweaks talos)
 </p>
 </li>
 <li>
@@ -12840,6 +12828,23 @@ int <strong>gtp_inspect.trace</strong>: mask for enabling debug traces in module
 <div class="paragraph"><p>Type: inspector</p></div>
 <div class="paragraph"><p>Usage: inspect</p></div>
 <div class="paragraph"><p>Rules:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>121:1</strong> (http2_inspect) Error in HPACK integer value
+</p>
+</li>
+<li>
+<p>
+<strong>121:2</strong> (http2_inspect) Integer value has leading zeros
+</p>
+</li>
+<li>
+<p>
+<strong>121:3</strong> (http2_inspect) Error in HPACK string value
+</p>
+</li>
+</ul></div>
 <div class="paragraph"><p>Peg counts:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -16849,6 +16854,11 @@ int <strong>stream_tcp.max_pdu</strong> = 16384: maximum reassembled PDU size { 
 </li>
 <li>
 <p>
+bool <strong>stream_tcp.no_ack</strong> = false: received data is implicitly acked immediately
+</p>
+</li>
+<li>
+<p>
 enum <strong>stream_tcp.policy</strong> = bsd: determines operating system characteristics like reassembly { first | last | linux | old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | windows | win_2003 | vista | proxy }
 </p>
 </li>
@@ -18418,6 +18428,11 @@ implied <strong>http_cookie.request</strong>: match against the cookie from the 
 </li>
 <li>
 <p>
+implied <strong>http_cookie.with_header</strong>: this rule is limited to examining HTTP message headers
+</p>
+</li>
+<li>
+<p>
 implied <strong>http_cookie.with_body</strong>: parts of this rule examine HTTP message body
 </p>
 </li>
@@ -18447,6 +18462,11 @@ implied <strong>http_header.request</strong>: match against the headers from the
 </li>
 <li>
 <p>
+implied <strong>http_header.with_header</strong>: this rule is limited to examining HTTP message headers
+</p>
+</li>
+<li>
+<p>
 implied <strong>http_header.with_body</strong>: parts of this rule examine HTTP message body
 </p>
 </li>
@@ -18464,6 +18484,11 @@ implied <strong>http_header.with_trailer</strong>: parts of this rule examine HT
 <div class="paragraph"><p>Usage: detect</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
+<li>
+<p>
+implied <strong>http_method.with_header</strong>: this rule is limited to examining HTTP message headers
+</p>
+</li>
 <li>
 <p>
 implied <strong>http_method.with_body</strong>: parts of this rule examine HTTP message body
@@ -18496,6 +18521,11 @@ implied <strong>http_raw_cookie.request</strong>: match against the cookie from 
 </li>
 <li>
 <p>
+implied <strong>http_raw_cookie.with_header</strong>: this rule is limited to examining HTTP message headers
+</p>
+</li>
+<li>
+<p>
 implied <strong>http_raw_cookie.with_body</strong>: parts of this rule examine HTTP message body
 </p>
 </li>
@@ -18520,6 +18550,11 @@ implied <strong>http_raw_header.request</strong>: match against the headers from
 </li>
 <li>
 <p>
+implied <strong>http_raw_header.with_header</strong>: this rule is limited to examining HTTP message headers
+</p>
+</li>
+<li>
+<p>
 implied <strong>http_raw_header.with_body</strong>: parts of this rule examine HTTP message body
 </p>
 </li>
@@ -18537,6 +18572,11 @@ implied <strong>http_raw_header.with_trailer</strong>: parts of this rule examin
 <div class="paragraph"><p>Usage: detect</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
+<li>
+<p>
+implied <strong>http_raw_request.with_header</strong>: this rule is limited to examining HTTP message headers
+</p>
+</li>
 <li>
 <p>
 implied <strong>http_raw_request.with_body</strong>: parts of this rule examine HTTP message body
@@ -18599,6 +18639,11 @@ implied <strong>http_raw_trailer.with_body</strong>: parts of this rule examine 
 <div class="paragraph"><p>Usage: detect</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
+<li>
+<p>
+implied <strong>http_raw_uri.with_header</strong>: this rule is limited to examining HTTP message headers
+</p>
+</li>
 <li>
 <p>
 implied <strong>http_raw_uri.with_body</strong>: parts of this rule examine HTTP message body
@@ -18717,6 +18762,11 @@ implied <strong>http_trailer.with_body</strong>: parts of this rule examine HTTP
 <div class="ulist"><ul>
 <li>
 <p>
+implied <strong>http_true_ip.with_header</strong>: this rule is limited to examining HTTP message headers
+</p>
+</li>
+<li>
+<p>
 implied <strong>http_true_ip.with_body</strong>: parts of this rule examine HTTP message body
 </p>
 </li>
@@ -18734,6 +18784,11 @@ implied <strong>http_true_ip.with_trailer</strong>: parts of this rule examine H
 <div class="paragraph"><p>Usage: detect</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
+<li>
+<p>
+implied <strong>http_uri.with_header</strong>: this rule is limited to examining HTTP message headers
+</p>
+</li>
 <li>
 <p>
 implied <strong>http_uri.with_body</strong>: parts of this rule examine HTTP message body
@@ -18786,6 +18841,11 @@ implied <strong>http_uri.fragment</strong>: match against fragment section of UR
 <li>
 <p>
 implied <strong>http_version.request</strong>: match against the version from the request message even when examining the response
+</p>
+</li>
+<li>
+<p>
+implied <strong>http_version.with_header</strong>: this rule is limited to examining HTTP message headers
 </p>
 </li>
 <li>
@@ -24236,7 +24296,7 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>--talos</strong> enable Talos inline rule test mode (same as --tweaks talos -Q -q)
+<strong>--talos</strong> enable Talos tweak (same as --tweaks talos)
 </p>
 </li>
 <li>
@@ -25976,12 +26036,12 @@ bool <strong>high_availability.enable</strong> = false: enable high availability
 </li>
 <li>
 <p>
-real <strong>high_availability.min_age</strong> = 1.0: minimum session life in seconds before HA updates { 0.0:100.0 }
+int <strong>high_availability.min_age</strong> = 0: minimum session life in milliseconds before HA updates { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-real <strong>high_availability.min_sync</strong> = 0.1: minimum interval in seconds between HA updates { 0.0:100.0 }
+int <strong>high_availability.min_sync</strong> = 0: minimum interval in milliseconds between HA updates { 0:max32 }
 </p>
 </li>
 <li>
@@ -25991,7 +26051,12 @@ bit_list <strong>high_availability.ports</strong>: side channel message port lis
 </li>
 <li>
 <p>
-int <strong><code>host_cache[].size</code></strong>: size of host cache { 1:max32 }
+string <strong>host_cache.dump_file</strong>: file name to dump host cache on shutdown; won&#8217;t dump by default
+</p>
+</li>
+<li>
+<p>
+int <strong>host_cache.size</strong>: size of host cache { 1:max32 }
 </p>
 </li>
 <li>
@@ -26066,6 +26131,11 @@ implied <strong>http_cookie.with_body</strong>: parts of this rule examine HTTP 
 </li>
 <li>
 <p>
+implied <strong>http_cookie.with_header</strong>: this rule is limited to examining HTTP message headers
+</p>
+</li>
+<li>
+<p>
 implied <strong>http_cookie.with_trailer</strong>: parts of this rule examine HTTP message trailers
 </p>
 </li>
@@ -26082,6 +26152,11 @@ implied <strong>http_header.request</strong>: match against the headers from the
 <li>
 <p>
 implied <strong>http_header.with_body</strong>: parts of this rule examine HTTP message body
+</p>
+</li>
+<li>
+<p>
+implied <strong>http_header.with_header</strong>: this rule is limited to examining HTTP message headers
 </p>
 </li>
 <li>
@@ -26211,6 +26286,11 @@ implied <strong>http_method.with_body</strong>: parts of this rule examine HTTP 
 </li>
 <li>
 <p>
+implied <strong>http_method.with_header</strong>: this rule is limited to examining HTTP message headers
+</p>
+</li>
+<li>
+<p>
 implied <strong>http_method.with_trailer</strong>: parts of this rule examine HTTP message trailers
 </p>
 </li>
@@ -26222,6 +26302,11 @@ implied <strong>http_raw_cookie.request</strong>: match against the cookie from 
 <li>
 <p>
 implied <strong>http_raw_cookie.with_body</strong>: parts of this rule examine HTTP message body
+</p>
+</li>
+<li>
+<p>
+implied <strong>http_raw_cookie.with_header</strong>: this rule is limited to examining HTTP message headers
 </p>
 </li>
 <li>
@@ -26241,12 +26326,22 @@ implied <strong>http_raw_header.with_body</strong>: parts of this rule examine H
 </li>
 <li>
 <p>
+implied <strong>http_raw_header.with_header</strong>: this rule is limited to examining HTTP message headers
+</p>
+</li>
+<li>
+<p>
 implied <strong>http_raw_header.with_trailer</strong>: parts of this rule examine HTTP message trailers
 </p>
 </li>
 <li>
 <p>
 implied <strong>http_raw_request.with_body</strong>: parts of this rule examine HTTP message body
+</p>
+</li>
+<li>
+<p>
+implied <strong>http_raw_request.with_header</strong>: this rule is limited to examining HTTP message headers
 </p>
 </li>
 <li>
@@ -26316,6 +26411,11 @@ implied <strong>http_raw_uri.with_body</strong>: parts of this rule examine HTTP
 </li>
 <li>
 <p>
+implied <strong>http_raw_uri.with_header</strong>: this rule is limited to examining HTTP message headers
+</p>
+</li>
+<li>
+<p>
 implied <strong>http_raw_uri.with_trailer</strong>: parts of this rule examine HTTP message trailers
 </p>
 </li>
@@ -26366,6 +26466,11 @@ implied <strong>http_true_ip.with_body</strong>: parts of this rule examine HTTP
 </li>
 <li>
 <p>
+implied <strong>http_true_ip.with_header</strong>: this rule is limited to examining HTTP message headers
+</p>
+</li>
+<li>
+<p>
 implied <strong>http_true_ip.with_trailer</strong>: parts of this rule examine HTTP message trailers
 </p>
 </li>
@@ -26406,6 +26511,11 @@ implied <strong>http_uri.with_body</strong>: parts of this rule examine HTTP mes
 </li>
 <li>
 <p>
+implied <strong>http_uri.with_header</strong>: this rule is limited to examining HTTP message headers
+</p>
+</li>
+<li>
+<p>
 implied <strong>http_uri.with_trailer</strong>: parts of this rule examine HTTP message trailers
 </p>
 </li>
@@ -26417,6 +26527,11 @@ implied <strong>http_version.request</strong>: match against the version from th
 <li>
 <p>
 implied <strong>http_version.with_body</strong>: parts of this rule examine HTTP message body
+</p>
+</li>
+<li>
+<p>
+implied <strong>http_version.with_header</strong>: this rule is limited to examining HTTP message headers
 </p>
 </li>
 <li>
@@ -28401,7 +28516,7 @@ implied <strong>snort.--markup</strong>: output help in asciidoc compatible form
 </li>
 <li>
 <p>
-int <strong>snort.--max-packet-threads</strong> = 1: &lt;count&gt; configure maximum number of packet threads (same as -z) { 0:max32 }
+int <strong>snort.--max-packet-threads</strong>: &lt;count&gt; configure maximum number of packet threads (same as -z) { 0:max32 }
 </p>
 </li>
 <li>
@@ -28461,7 +28576,7 @@ string <strong>snort.--pcap-file</strong>: &lt;file&gt; file that contains a lis
 </li>
 <li>
 <p>
-string <strong>snort.--pcap-filter</strong>: &lt;filter&gt; filter to apply when getting pcaps from file or directory
+string <strong>snort.--pcap-filter</strong> = <strong>.*cap</strong>: &lt;filter&gt; filter to apply when getting pcaps from file or directory
 </p>
 </li>
 <li>
@@ -28596,7 +28711,7 @@ string <strong>snort.-S</strong>: &lt;x=v&gt; set config variable x equal to val
 </li>
 <li>
 <p>
-implied <strong>snort.--talos</strong>: enable Talos inline rule test mode (same as --tweaks talos -Q -q)
+implied <strong>snort.--talos</strong>: enable Talos tweak (same as --tweaks talos)
 </p>
 </li>
 <li>
@@ -28736,7 +28851,7 @@ implied <strong>snort.-y</strong>: include year in timestamp in the alert and lo
 </li>
 <li>
 <p>
-int <strong>snort.-z</strong> = 1: &lt;count&gt; maximum number of packet threads (same as --max-packet-threads); 0 gets the number of CPU cores reported by the system; default is 1 { 0:max32 }
+int <strong>snort.-z</strong>: &lt;count&gt; maximum number of packet threads (same as --max-packet-threads); 0 gets the number of CPU cores reported by the system; default is 1 { 0:max32 }
 </p>
 </li>
 <li>
@@ -29057,6 +29172,11 @@ int <strong>stream_tcp.max_pdu</strong> = 16384: maximum reassembled PDU size { 
 <li>
 <p>
 int <strong>stream_tcp.max_window</strong> = 0: maximum allowed TCP window { 0:1073725440 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>stream_tcp.no_ack</strong> = false: received data is implicitly acked immediately
 </p>
 </li>
 <li>
@@ -34121,6 +34241,21 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>121:1</strong> (http2_inspect) Error in HPACK integer value
+</p>
+</li>
+<li>
+<p>
+<strong>121:2</strong> (http2_inspect) Integer value has leading zeros
+</p>
+</li>
+<li>
+<p>
+<strong>121:3</strong> (http2_inspect) Error in HPACK string value
+</p>
+</li>
+<li>
+<p>
 <strong>122:1</strong> (port_scan) TCP portscan
 </p>
 </li>
@@ -35211,6 +35346,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>host_cache.dump</strong>(file_name): dump host cache
+</p>
+</li>
+<li>
+<p>
 <strong>packet_capture.enable</strong>(filter): dump raw packets
 </p>
 </li>
@@ -35517,6 +35657,10 @@ change -&gt; stream5_global: 'tcp_cache_nominal_timeout' ==&gt; 'pruning_timeout
 change -&gt; stream5_global: 'tcp_cache_pruning_timeout' ==&gt; 'idle_timeout'
 change -&gt; stream5_global: 'udp_cache_nominal_timeout' ==&gt; 'idle_timeout'
 change -&gt; stream5_global: 'udp_cache_pruning_timeout' ==&gt; 'pruning_timeout'
+change -&gt; stream5_ha: 'min_session_lifetime' ==&gt; 'min_age'
+change -&gt; stream5_ha: 'min_sync_interval' ==&gt; 'min_sync'
+change -&gt; stream5_ha: 'stream5_ha' ==&gt; 'high_availability'
+change -&gt; stream5_ha: 'use_daq' ==&gt; 'daq_channel'
 change -&gt; stream5_ip: 'timeout' ==&gt; 'session_timeout'
 change -&gt; stream5_tcp: 'bind_to' ==&gt; 'bindings'
 change -&gt; stream5_tcp: 'dont_reassemble_async' ==&gt; 'reassemble_async'
@@ -36139,7 +36283,7 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
-<strong>host_cache</strong> (basic): configure hosts
+<strong>host_cache</strong> (basic): global LRU cache of host_tracker data about hosts
 </p>
 </li>
 <li>
@@ -38187,7 +38331,7 @@ Adding/removing stream_* inspectors if stream was already configured
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2019-06-19 10:25:02 EDT
+ 2019-07-17 09:38:43 EDT
 </div>
 </div>
 </body>
