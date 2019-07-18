@@ -105,6 +105,7 @@ static uint8_t s_message_length = 0;
 static Flow s_flow;
 static FlowKey s_flowkey;
 static Packet s_pkt;
+static Active active;
 static StreamHAClient* s_ha_client;
 static FlowHAClient* s_other_ha_client;
 static std::function<void (SCMessage*)> s_handler = nullptr;
@@ -438,6 +439,7 @@ TEST(high_availability_test, transmit_update_no_update)
     s_transmit_message_called = false;
     s_stream_update_required = false;
     s_other_update_required = false;
+    s_pkt.active = &active;
     HighAvailabilityManager::process_update(&s_flow, &s_pkt);
     CHECK(s_transmit_message_called == false);
 }
@@ -447,6 +449,7 @@ TEST(high_availability_test, transmit_update_stream_only)
     s_transmit_message_called = false;
     s_stream_update_required = true;
     s_other_update_required = false;
+    s_pkt.active = &active;
     HighAvailabilityManager::process_update(&s_flow, &s_pkt);
     CHECK(s_transmit_message_called == true);
 }
@@ -456,6 +459,7 @@ TEST(high_availability_test, transmit_update_both_update)
     s_transmit_message_called = false;
     s_stream_update_required = true;
     s_other_update_required = true;
+    s_pkt.active = &active;
     CHECK(s_other_ha_client->handle == 1);
     s_flow.ha_state->set_pending(s_other_ha_client->handle);
     HighAvailabilityManager::process_update(&s_flow, &s_pkt);

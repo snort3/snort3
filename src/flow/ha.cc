@@ -25,6 +25,7 @@
 
 #include "framework/counts.h"
 #include "log/messages.h"
+#include "packet_io/active.h"
 #include "packet_io/sfdaq_instance.h"
 #include "protocols/packet.h"
 #include "side_channel/side_channel.h"
@@ -736,7 +737,7 @@ void HighAvailabilityManager::thread_term()
 
 void HighAvailabilityManager::process_update(Flow* flow, Packet* p)
 {
-    if (ha && p && flow)
+    if (ha && flow && !p->active->get_tunnel_bypass())
         ha->process_update(flow, p);
 }
 
