@@ -68,12 +68,12 @@ AppInfoTableEntry* add_static_entry(AppId id, const char* name)
 
 TEST_GROUP(app_info_table)
 {
-    void setup()
+    void setup() override
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     }
 
-    void teardown()
+    void teardown() override
     {
         app_info_mgr.cleanup_appid_info_table();
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();

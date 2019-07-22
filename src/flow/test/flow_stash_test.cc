@@ -135,12 +135,12 @@ void DataBus::_publish(const char* key, DataEvent& e, Flow* f)
 
 TEST_GROUP(stash_tests)
 {
-    void setup()
+    void setup() override
     {
         DB = new DataBus();
     }
 
-    void teardown()
+    void teardown() override
     {
         delete DB;
     }

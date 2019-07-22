@@ -35,7 +35,7 @@ public:
     inline const std::string& get_name() { return name; }
     std::string get_value(DataApi*);
     bool add_value(std::string);
-    void set_value(std::string, bool quoted);
+    void set_value(const std::string&, bool quoted);
     
     void set_print_whitespace(bool w)
     { print_whitespace = w; }

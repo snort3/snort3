@@ -54,7 +54,7 @@ std::string Variable::get_value(DataApi* ld)
     return variable;
 }
 
-void Variable::set_value(std::string val, bool quoted)
+void Variable::set_value(const std::string& val, bool quoted)
 {
     VarData* vd = new VarData();
     vd->type = quoted ? VarType::STRING : VarType::VARIABLE;

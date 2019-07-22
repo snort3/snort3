@@ -35,7 +35,7 @@ TEST_GROUP(sip_splitter_scan_test)
 {
     SipSplitterUT ssut = SipSplitterUT(SipSplitter(true));
 
-    void setup()
+    void setup() override
     {
         ssut.splitter_reset_states();
     }

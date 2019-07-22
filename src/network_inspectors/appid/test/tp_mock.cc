@@ -54,39 +54,39 @@ public:
 
     // Hack: use cfg to manipulate pinit to return 1, so we can hit the
     // if (ret != 0) case in tp_lib_handler.cc.
-    int pinit(ThirdPartyConfig& cfg)
+    int pinit(ThirdPartyConfig& cfg) override
     {
         cerr << WhereMacro << endl;
         return cfg.tp_appid_config.empty() ? 1 : 0;
     }
 
-    int tinit() { return 0; }
-    int reconfigure(const ThirdPartyConfig&) { return 0; }
-    int pfini()
+    int tinit() override { return 0; }
+    int reconfigure(const ThirdPartyConfig&) override { return 0; }
+    int pfini() override
     {
         cerr << WhereMacro << endl;
         return 0;
     }
 
-    int tfini() { return 0; }
-    int print_stats() { return 0; }
-    int reset_stats() { return 0; }
+    int tfini() override { return 0; }
+    int print_stats() override { return 0; }
+    int reset_stats() override { return 0; }
 };
 
 class ThirdPartyAppIDSessionImpl : public ThirdPartyAppIDSession
 {
 public:
 
-    bool reset() { return 1; }
+    bool reset() override { return 1; }
     TPState process(const snort::Packet&, AppidSessionDirection, vector<AppId>&,
-        ThirdPartyAppIDAttributeData&) { return TP_STATE_INIT; }
+        ThirdPartyAppIDAttributeData&) override { return TP_STATE_INIT; }
 
-    int disable_flags(uint32_t) { return 0; }
-    TPState get_state() { return state; }
-    void set_state(TPState s) { state=s; }
-    void clear_attr(TPSessionAttr attr) { flags &= ~attr; }
-    void set_attr(TPSessionAttr attr) { flags |= attr; }
-    unsigned get_attr(TPSessionAttr attr) { return flags & attr; }
+    int disable_flags(uint32_t) override { return 0; }
+    TPState get_state() override { return state; }
+    void set_state(TPState s) override { state=s; }
+    void clear_attr(TPSessionAttr attr) override { flags &= ~attr; }
+    void set_attr(TPSessionAttr attr) override { flags |= attr; }
+    unsigned get_attr(TPSessionAttr attr) override { return flags & attr; }
 
 private:
     unsigned flags = 0;

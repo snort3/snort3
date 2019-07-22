@@ -102,16 +102,6 @@ NormMode Normalize_GetMode(NormFlags )
 
 TEST_GROUP(tcp_normalizers)
 {
-    //Flow* flow = nullptr;
-    //TcpSession* session = nullptr;
-
-    void setup()
-    {
-    }
-
-    void teardown()
-    {
-    }
 };
 
 TEST(tcp_normalizers, os_policy)
