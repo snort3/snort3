@@ -28,11 +28,15 @@
 #include "target_based/snort_protocols.h"
 
 using namespace snort;
+using namespace std;
 
 #define LRU_CACHE_INITIAL_SIZE 65535
 
 LruCacheShared<HostIpKey, std::shared_ptr<HostTracker>, HashHostIpKey>
     host_cache(LRU_CACHE_INITIAL_SIZE);
+
+namespace snort
+{
 
 void host_cache_add_host_tracker(HostTracker* ht)
 {
@@ -40,19 +44,15 @@ void host_cache_add_host_tracker(HostTracker* ht)
     host_cache.insert((const uint8_t*) ht->get_ip_addr().get_ip6_ptr(), sptr);
 }
 
-namespace snort
-{
-bool host_cache_add_service(const SfIp& ipaddr, Protocol ipproto, Port port, const char* service)
+bool host_cache_add_service(const SfIp& ipaddr, Protocol ipproto, Port port, SnortProtocolId id)
 {
     HostIpKey ipkey((const uint8_t*) ipaddr.get_ip6_ptr());
-    SnortProtocolId proto_id = SnortConfig::get_conf()->proto_ref->find(service);
-    HostApplicationEntry app_entry(ipproto, port, proto_id);
     std::shared_ptr<HostTracker> ht;
 
     if (!host_cache.find(ipkey, ht))
     {
         //  This host hasn't been seen.  Add it.
-        ht = std::make_shared<HostTracker>();
+        ht = std::make_shared<HostTracker>(ipaddr);
 
         if (ht == nullptr)
         {
@@ -62,7 +62,14 @@ bool host_cache_add_service(const SfIp& ipaddr, Protocol ipproto, Port port, con
         host_cache.insert(ipkey, ht);
     }
 
+    HostApplicationEntry app_entry(ipproto, port, id);
     return ht->add_service(app_entry);
+}
+
+bool host_cache_add_service(const SfIp& ipaddr, Protocol ipproto, Port port, const char* service)
+{
+    return host_cache_add_service(ipaddr, ipproto, port,
+        SnortConfig::get_conf()->proto_ref->find(service));
 }
 
 bool host_cache_add_app_mapping(const SfIp& ipaddr, Port port, Protocol proto, AppId appId)

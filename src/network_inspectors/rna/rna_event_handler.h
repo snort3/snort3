@@ -24,47 +24,60 @@
 #include "framework/data_bus.h"
 
 #include "rna_module.h"
+#include "rna_pnd.h"
 
 class RnaIcmpEventHandler : public snort::DataHandler
 {
 public:
-    RnaIcmpEventHandler() : DataHandler(RNA_NAME) { }
+    RnaIcmpEventHandler(RnaPnd& nd) : DataHandler(RNA_NAME), pnd(nd) { }
     void handle(snort::DataEvent&, snort::Flow*) override;
+private:
+    RnaPnd& pnd;
 };
 
 class RnaIpEventHandler : public snort::DataHandler
 {
 public:
-    RnaIpEventHandler() : DataHandler(RNA_NAME) { }
+    RnaIpEventHandler(RnaPnd& nd) : DataHandler(RNA_NAME), pnd(nd) { }
     void handle(snort::DataEvent&, snort::Flow*) override;
-};
-
-class RnaUdpEventHandler : public snort::DataHandler
-{
-public:
-    RnaUdpEventHandler() : DataHandler(RNA_NAME) { }
-    void handle(snort::DataEvent&, snort::Flow*) override;
+private:
+    RnaPnd& pnd;
 };
 
 class RnaTcpSynEventHandler : public snort::DataHandler
 {
 public:
-    RnaTcpSynEventHandler() : DataHandler(RNA_NAME) { }
+    RnaTcpSynEventHandler(RnaPnd& nd) : DataHandler(RNA_NAME), pnd(nd) { }
     void handle(snort::DataEvent&, snort::Flow*) override;
+private:
+    RnaPnd& pnd;
 };
 
 class RnaTcpSynAckEventHandler : public snort::DataHandler
 {
 public:
-    RnaTcpSynAckEventHandler() : DataHandler(RNA_NAME) { }
+    RnaTcpSynAckEventHandler(RnaPnd& nd) : DataHandler(RNA_NAME), pnd(nd) { }
     void handle(snort::DataEvent&, snort::Flow*) override;
+private:
+    RnaPnd& pnd;
 };
 
 class RnaTcpMidstreamEventHandler : public snort::DataHandler
 {
 public:
-    RnaTcpMidstreamEventHandler() : DataHandler(RNA_NAME) { }
+    RnaTcpMidstreamEventHandler(RnaPnd& nd) : DataHandler(RNA_NAME), pnd(nd) { }
     void handle(snort::DataEvent&, snort::Flow*) override;
+private:
+    RnaPnd& pnd;
+};
+
+class RnaUdpEventHandler : public snort::DataHandler
+{
+public:
+    RnaUdpEventHandler(RnaPnd& nd) : DataHandler(RNA_NAME), pnd(nd) { }
+    void handle(snort::DataEvent&, snort::Flow*) override;
+private:
+    RnaPnd& pnd;
 };
 
 #endif

@@ -64,12 +64,12 @@ RnaInspector::~RnaInspector()
 
 bool RnaInspector::configure(SnortConfig*)
 {
-    DataBus::subscribe( STREAM_ICMP_NEW_FLOW_EVENT, new RnaIcmpEventHandler() );
-    DataBus::subscribe( STREAM_IP_NEW_FLOW_EVENT, new RnaIpEventHandler() );
-    DataBus::subscribe( STREAM_UDP_NEW_FLOW_EVENT, new RnaUdpEventHandler() );
-    DataBus::subscribe( STREAM_TCP_SYN_EVENT, new RnaTcpSynEventHandler() );
-    DataBus::subscribe( STREAM_TCP_SYN_ACK_EVENT, new RnaTcpSynAckEventHandler() );
-    DataBus::subscribe( STREAM_TCP_MIDSTREAM_EVENT, new RnaTcpMidstreamEventHandler() );
+    DataBus::subscribe( STREAM_ICMP_NEW_FLOW_EVENT, new RnaIcmpEventHandler(pnd) );
+    DataBus::subscribe( STREAM_IP_NEW_FLOW_EVENT, new RnaIpEventHandler(pnd) );
+    DataBus::subscribe( STREAM_UDP_NEW_FLOW_EVENT, new RnaUdpEventHandler(pnd) );
+    DataBus::subscribe( STREAM_TCP_SYN_EVENT, new RnaTcpSynEventHandler(pnd) );
+    DataBus::subscribe( STREAM_TCP_SYN_ACK_EVENT, new RnaTcpSynAckEventHandler(pnd) );
+    DataBus::subscribe( STREAM_TCP_MIDSTREAM_EVENT, new RnaTcpMidstreamEventHandler(pnd) );
 
     return true;
 }
@@ -77,16 +77,14 @@ bool RnaInspector::configure(SnortConfig*)
 void RnaInspector::eval(Packet* p)
 {
     Profile profile(rna_perf_stats);
+    ++rna_stats.other_packets;
 
-    // Handling untracked sessions, e.g., non-IP packets
     assert( !p->flow );
     assert( !(BIT((unsigned)p->type()) & PROTO_BIT__ANY_SSN) );
 
-    ++rna_stats.other_packets;
-
-#ifdef NDEBUG
+    // Handling untracked sessions, e.g., non-IP packets
+    // pnd.analyze_flow_non_ip(p);
     UNUSED(p);
-#endif
 }
 
 void RnaInspector::show(SnortConfig*)

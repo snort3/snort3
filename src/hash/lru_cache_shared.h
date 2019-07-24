@@ -189,7 +189,7 @@ void LruCacheShared<Key, Data, Hash>::insert(const Key& key, const Data& data)
     }
 
     //  Add key/data pair to front of list.
-    list.push_front(std::make_pair(key, data));
+    list.emplace_front(std::make_pair(key, data));
 
     //  Add list iterator for the new entry to map.
     map[key] = list.begin();

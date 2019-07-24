@@ -6,6 +6,8 @@ set ( RNA_SOURCES
     rna_inspector.h
     rna_module.cc
     rna_module.h
+    rna_pnd.cc
+    rna_pnd.h
 )
 
 #if (STATIC_INSPECTORS)

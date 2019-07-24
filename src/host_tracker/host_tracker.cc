@@ -70,7 +70,7 @@ void HostTracker::add_app_mapping(Port port, Protocol proto, AppId appid)
     std::lock_guard<std::mutex> lck(host_tracker_lock);
     AppMapping app_map = {port, proto, appid};
 
-    app_mappings.push_back(app_map);
+    app_mappings.emplace_back(app_map);
 }
 
 AppId HostTracker::find_app_mapping(Port port, Protocol proto)
@@ -98,7 +98,7 @@ bool HostTracker::find_else_add_app_mapping(Port port, Protocol proto, AppId app
     }
     AppMapping app_map = {port, proto, appid};
 
-    app_mappings.push_back(app_map);
+    app_mappings.emplace_back(app_map);
     return true;
 }
 
@@ -112,7 +112,7 @@ bool HostTracker::add_service(const HostApplicationEntry& app_entry)
     if (iter != services.end())
         return false;   //  Already exists.
 
-    services.push_front(app_entry);
+    services.emplace_front(app_entry);
     return true;
 }
 
@@ -126,7 +126,7 @@ void HostTracker::add_or_replace_service(const HostApplicationEntry& app_entry)
     if (iter != services.end())
         services.erase(iter);
 
-    services.push_front(app_entry);
+    services.emplace_front(app_entry);
 }
 
 bool HostTracker::find_service(Protocol ipproto, Port port, HostApplicationEntry& app_entry)

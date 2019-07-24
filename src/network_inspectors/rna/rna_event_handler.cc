@@ -26,44 +26,44 @@
 
 using namespace snort;
 
-void RnaIcmpEventHandler::handle(snort::DataEvent&, snort::Flow*)
+void RnaIcmpEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
-
     ++rna_stats.icmp;
+    pnd.analyze_flow_icmp(event.get_packet());
 }
 
-void RnaIpEventHandler::handle(snort::DataEvent&, snort::Flow*)
+void RnaIpEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
-
     ++rna_stats.ip;
+    pnd.analyze_flow_ip(event.get_packet());
 }
 
-void RnaUdpEventHandler::handle(snort::DataEvent&, snort::Flow*)
+void RnaTcpSynEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
-
-    ++rna_stats.udp;
-}
-
-void RnaTcpSynEventHandler::handle(snort::DataEvent&, snort::Flow*)
-{
-    Profile profile(rna_perf_stats);
-
     ++rna_stats.tcp_syn;
+    pnd.analyze_flow_tcp(event.get_packet(), false);
 }
 
-void RnaTcpSynAckEventHandler::handle(snort::DataEvent&, snort::Flow*)
+void RnaTcpSynAckEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
-
     ++rna_stats.tcp_syn_ack;
+    pnd.analyze_flow_tcp(event.get_packet(), false);
 }
 
-void RnaTcpMidstreamEventHandler::handle(snort::DataEvent&, snort::Flow*)
+void RnaTcpMidstreamEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
-
     ++rna_stats.tcp_midstream;
+    pnd.analyze_flow_tcp(event.get_packet(), true);
+}
+
+void RnaUdpEventHandler::handle(DataEvent& event, Flow*)
+{
+    Profile profile(rna_perf_stats);
+    ++rna_stats.udp;
+    pnd.analyze_flow_udp(event.get_packet());
 }
