@@ -35,7 +35,7 @@ namespace snort
 class SO_PUBLIC FinalizePacketEvent : public snort::DataEvent
 {
 public:
-    FinalizePacketEvent(const snort::Packet* p, const DAQ_Verdict v) :
+    FinalizePacketEvent(const snort::Packet* p, DAQ_Verdict& v) :
         pkt(p), verdict(v)
     {
     }
@@ -43,12 +43,12 @@ public:
     const snort::Packet* get_packet() override
     { return pkt; }
 
-    DAQ_Verdict get_verdict()
+    DAQ_Verdict& get_verdict()
     { return verdict; }
 
 private:
     const snort::Packet* pkt;
-    const DAQ_Verdict verdict;
+    DAQ_Verdict& verdict;
 };
 
 }
