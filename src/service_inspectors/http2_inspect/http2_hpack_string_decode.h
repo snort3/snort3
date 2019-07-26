@@ -40,7 +40,9 @@ private:
         uint8_t* out_buff, const uint32_t out_len, uint32_t& bytes_written);
     bool get_huffman_string(const uint8_t* in_buff, const uint32_t encoded_len,
         uint32_t& bytes_consumed, uint8_t* out_buff, const uint32_t out_len, uint32_t& bytes_written);
-
+    bool get_next_byte(const uint8_t* in_buff, const uint32_t last_byte,
+		       uint32_t& bytes_consumed, uint8_t& cur_bit, uint8_t match_len, uint8_t& byte, bool& another_search);
+  
     Http2HpackIntDecode* const decode7;
     Http2EventGen* const events;
     Http2Infractions* const infractions;

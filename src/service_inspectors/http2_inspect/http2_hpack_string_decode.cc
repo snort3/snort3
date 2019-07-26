@@ -24,10 +24,17 @@
 #include "http2_hpack_string_decode.h"
 
 #include "http2_enum.h"
+#include "http2_huffman_state_machine.h"
+
+#include <math.h>
 
 using namespace Http2Enums;
 
 static const uint8_t HUFFMAN_FLAG = 0x80;
+
+// Minimum bit length for each lookup table
+static const uint8_t min_decode_len[HUFFMAN_LOOKUP_MAX + 1] =
+    {5, 2, 2, 3, 5, 1, 1, 2, 2, 2, 2, 3, 3, 3, 4};
 
 Http2HpackStringDecode::Http2HpackStringDecode(Http2EventGen* events,
     Http2Infractions* infractions) : decode7(new Http2HpackIntDecode(7, events, infractions)),
@@ -93,6 +100,145 @@ bool Http2HpackStringDecode::get_string(const uint8_t* in_buff, const uint32_t e
     return true;
 }
 
-bool Http2HpackStringDecode::get_huffman_string(const uint8_t*, const uint32_t, uint32_t&,
-    uint8_t*, const uint32_t, uint32_t&) { return false; }
+// return is tail/padding
+bool Http2HpackStringDecode::get_next_byte(const uint8_t* in_buff, const uint32_t last_byte,
+    uint32_t& bytes_consumed, uint8_t& cur_bit, uint8_t match_len, uint8_t& byte,
+    bool& another_search)
+{
+    another_search = true;
+    cur_bit += match_len;
+
+    if (cur_bit >= 8) // done with current bit
+    {
+        bytes_consumed++;
+        cur_bit -= 8;
+    }
+
+    bool tail = false;
+    uint8_t msb, lsb = 0xff;
+    if (bytes_consumed == last_byte)
+    {
+        // bytes consumed must be bigger than 1 - int length is at least 1
+        msb = in_buff[bytes_consumed-1];
+        another_search = false;
+        tail = true;
+    }
+    else if ((bytes_consumed + 1) == last_byte)
+    {
+        if (cur_bit != 0)
+        {
+            msb = in_buff[bytes_consumed++];
+            tail = true;
+        }
+        else
+        {
+            byte = in_buff[bytes_consumed];
+            return false;
+        }
+    }
+    else
+    {
+        msb = in_buff[bytes_consumed];
+        lsb = in_buff[bytes_consumed+1];
+    }
+
+    const uint16_t tmp = (uint16_t)(msb << 8) | lsb;
+    byte = (tmp & (0xff00 >> cur_bit)) >> (8 - cur_bit);
+    return tail;
+}
+
+bool Http2HpackStringDecode::get_huffman_string(const uint8_t* in_buff, const uint32_t encoded_len,
+    uint32_t& bytes_consumed, uint8_t* out_buff, const uint32_t out_len, uint32_t& bytes_written)
+{
+    const uint32_t last_encoded_byte = bytes_consumed + encoded_len;
+    uint8_t byte;
+    uint8_t cur_bit = 0;
+    HuffmanEntry result = { 0, 0, HUFFMAN_LOOKUP_1 };
+    bool another_search = false;
+    HuffmanState state = HUFFMAN_LOOKUP_1;
+
+    // Check length
+    const uint32_t max_length = floor(encoded_len * 8.0/5.0);
+    if (max_length > out_len)
+    {
+        *infractions += INF_OUT_BUFF_OUT_OF_SPACE;
+        events->create_event(EVENT_STRING_DECODE_FAILURE);
+        return false;
+    }
+
+    while (!get_next_byte(in_buff, last_encoded_byte, bytes_consumed, cur_bit, result.len, byte,
+        another_search))
+    {
+        result = huffman_decode[state][byte];
+
+        switch (result.state) {
+
+        case HUFFMAN_MATCH:
+            out_buff[bytes_written++] = result.symbol;
+            state = HUFFMAN_LOOKUP_1;
+            break;
+
+        case HUFFMAN_LOOKUP_2:
+        case HUFFMAN_LOOKUP_3:
+        case HUFFMAN_LOOKUP_4:
+        case HUFFMAN_LOOKUP_5:
+        case HUFFMAN_LOOKUP_6:
+        case HUFFMAN_LOOKUP_7:
+        case HUFFMAN_LOOKUP_8:
+        case HUFFMAN_LOOKUP_9:
+        case HUFFMAN_LOOKUP_10:
+        case HUFFMAN_LOOKUP_11:
+        case HUFFMAN_LOOKUP_12:
+        case HUFFMAN_LOOKUP_13:
+        case HUFFMAN_LOOKUP_14:
+        case HUFFMAN_LOOKUP_15:
+            state = result.state;
+            break;
+
+        case HUFFMAN_FAILURE:
+            *infractions += INF_HUFFMAN_DECODED_EOS;
+            events->create_event(EVENT_STRING_DECODE_FAILURE);
+            return false;
+            break;
+
+        default:
+            break;	    
+        }
+    }
+
+    // Tail needs 1 last lookup in case the leftover is big enough for a match.
+    // Make sure match length <= available length
+    uint8_t leftover_len = 8 - cur_bit;
+    uint8_t old_result = result.len;
+    if (another_search && (leftover_len >= min_decode_len[state]))
+    {
+        result = huffman_decode[state][byte];
+        if ((result.state == HUFFMAN_MATCH) && (result.len <= leftover_len))
+        {
+            out_buff[bytes_written++] = result.symbol;
+            byte = (byte << result.len) | (((uint16_t)1 << result.len) - 1);
+        }
+        else
+            result.len = old_result;
+    }
+
+    // Padding check
+    if (result.len < 8)
+    {
+        if (byte != 0xff)
+        {
+            *infractions += INF_HUFFMAN_BAD_PADDING;
+            events->create_event(EVENT_STRING_DECODE_FAILURE);
+            return false;
+        }
+    }
+    else if (result.state != HUFFMAN_MATCH)
+    {
+        *infractions += INF_HUFFMAN_INCOMPLETE_CODE_PADDING;
+        events->create_event(EVENT_STRING_DECODE_FAILURE);
+        return false;
+    }
+
+    return true;
+}
 
