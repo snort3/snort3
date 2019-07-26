@@ -23,13 +23,14 @@
 
 #include "pp_codec_iface.h"
 
+#include <daq_common.h>
+
 #include "framework/codec.h"
 #include "lua/lua_arg.h"
 #include "log/text_log.h"
 
 #include "pp_buffer_iface.h"
 #include "pp_codec_data_iface.h"
-#include "pp_daq_pkthdr_iface.h"
 #include "pp_decode_data_iface.h"
 #include "pp_enc_state_iface.h"
 #include "pp_flow_iface.h"
@@ -104,25 +105,36 @@ static const luaL_Reg methods[] =
         {
             bool result;
 
-            auto& daq = DAQHeaderIface.get(L, 1);
             auto& cd = CodecDataIface.get(L, 3);
             auto& dd = DecodeDataIface.get(L, 4);
 
             auto& self = CodecIface.get(L);
 
+            size_t len = 0;
+            const uint8_t* data;
+
             if ( RawBufferIface.is(L, 2) )
             {
-                RawData rd(nullptr, &daq, get_data(RawBufferIface.get(L, 2)), get_data_length(RawBufferIface.get(L, 2)));
-                result = self.decode(rd, cd, dd);
+                data = get_data(RawBufferIface.get(L, 2));
+                len = get_data_length(RawBufferIface.get(L, 2));
             }
             else
-            {
-                size_t len = 0;
-                const uint8_t* data = reinterpret_cast<const uint8_t*>(luaL_checklstring(L, 2, &len));
-                RawData rd(nullptr, &daq, data, len);
+                data = reinterpret_cast<const uint8_t*>(luaL_checklstring(L, 2, &len));
 
-                result = self.decode(rd, cd, dd);
-            }
+            // Create a fake DAQ packet message to pass through decoding since there is assumed to
+            // be one.  The constness of the data should be safe since codecs shouldn't attempt to
+            // modify message data.
+            DAQ_PktHdr_t daq_pkth = { };
+            daq_pkth.pktlen = len;
+            DAQ_Msg_t daq_msg = { };
+            daq_msg.type = DAQ_MSG_TYPE_PACKET;
+            daq_msg.hdr = &daq_pkth;
+            daq_msg.hdr_len = sizeof(daq_pkth);
+            daq_msg.data = const_cast<uint8_t*>(data);
+            daq_msg.data_len = len;
+
+            RawData rd(&daq_msg, daq_msg.data, daq_msg.data_len);
+            result = self.decode(rd, cd, dd);
 
             lua_pushboolean(L, result);
 

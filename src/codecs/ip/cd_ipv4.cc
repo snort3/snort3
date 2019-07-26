@@ -22,6 +22,7 @@
 #include "config.h"
 #endif
 
+#include <daq.h>
 #include <daq_dlt.h>
 
 #include <random>
@@ -220,14 +221,13 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     // set the api now since this layer has been verified as valid
     snort.ip_api.set(iph);
     // update to real IP when needed
-    if ((raw.pkth->flags & DAQ_PKT_FLAG_REAL_ADDRESSES) and codec.ip_layer_cnt == 1)
+    const DAQ_NAPTInfo_t* napti = (const DAQ_NAPTInfo_t*) daq_msg_get_meta(raw.daq_msg, DAQ_PKT_META_NAPT_INFO);
+    if (napti && codec.ip_layer_cnt == 1)
     {
         SfIp real_src;
         SfIp real_dst;
-        real_src.set(&raw.pkth->real_sIP,
-            ((raw.pkth->flags & DAQ_PKT_FLAG_REAL_SIP_V6) ? AF_INET6 : AF_INET));
-        real_dst.set(&raw.pkth->real_dIP,
-            ((raw.pkth->flags & DAQ_PKT_FLAG_REAL_DIP_V6) ? AF_INET6 : AF_INET));
+        real_src.set(&napti->src_addr, daq_napt_info_src_addr_family(napti));
+        real_dst.set(&napti->dst_addr, daq_napt_info_dst_addr_family(napti));
         snort.ip_api.update(real_src, real_dst);
     }
 

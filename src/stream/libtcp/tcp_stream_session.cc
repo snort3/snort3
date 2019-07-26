@@ -339,13 +339,6 @@ void TcpStreamSession::SetPacketHeaderFoo(const Packet* p)
     }
     daq_flags = p->pkth->flags;
     address_space_id = p->pkth->address_space_id;
-    if (daq_flags & DAQ_PKT_FLAG_REAL_ADDRESSES)
-    {
-        memcpy(real_src_ip.u6_addr8, &p->pkth->real_sIP, sizeof(ip::snort_in6_addr));
-        memcpy(real_dst_ip.u6_addr8, &p->pkth->real_dIP, sizeof(ip::snort_in6_addr));
-        real_src_port = p->pkth->n_real_sPort;
-        real_dst_port = p->pkth->n_real_dPort;
-    }
 }
 
 void TcpStreamSession::GetPacketHeaderFoo(DAQ_PktHdr_t* pkth, uint32_t dir)
@@ -367,13 +360,6 @@ void TcpStreamSession::GetPacketHeaderFoo(DAQ_PktHdr_t* pkth, uint32_t dir)
     pkth->opaque = 0;
     pkth->flags = daq_flags;
     pkth->address_space_id = address_space_id;
-    if (daq_flags & DAQ_PKT_FLAG_REAL_ADDRESSES)
-    {
-        memcpy(&pkth->real_sIP, real_src_ip.u6_addr8, sizeof(ip::snort_in6_addr));
-        memcpy(&pkth->real_dIP, real_dst_ip.u6_addr8, sizeof(ip::snort_in6_addr));
-        pkth->n_real_sPort = real_src_port;
-        pkth->n_real_dPort = real_dst_port;
-    }
 }
 
 void TcpStreamSession::SwapPacketHeaderFoo()

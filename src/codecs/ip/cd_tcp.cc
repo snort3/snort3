@@ -22,6 +22,8 @@
 #include "config.h"
 #endif
 
+#include <daq.h>
+
 #include "codecs/codec_module.h"
 #include "framework/codec.h"
 #include "log/log.h"
@@ -254,10 +256,11 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     snort.set_pkt_type(PktType::TCP);
     snort.tcph = tcph;
 
-    if ((raw.pkth->flags & DAQ_PKT_FLAG_REAL_ADDRESSES) and (codec.ip_layer_cnt == 1))
+    const DAQ_NAPTInfo_t* napti = (const DAQ_NAPTInfo_t*) daq_msg_get_meta(raw.daq_msg, DAQ_PKT_META_NAPT_INFO);
+    if (napti && codec.ip_layer_cnt == 1)
     {
-        snort.sp = ntohs(raw.pkth->n_real_sPort);
-        snort.dp = ntohs(raw.pkth->n_real_dPort);
+        snort.sp = ntohs(napti->src_port);
+        snort.dp = ntohs(napti->dst_port);
     }
     else
     {

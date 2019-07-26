@@ -369,6 +369,8 @@ void Flow::set_direction(Packet* p)
 {
     ip::IpApi* ip_api = &p->ptrs.ip_api;
 
+    // FIXIT-M This does not work properly for NAT "real" v6 addresses on top of v4 packet data
+    //  (it will only compare a portion of the address)
     if (ip_api->is_ip4())
     {
         if (ip_api->get_src()->fast_eq4(client_ip))

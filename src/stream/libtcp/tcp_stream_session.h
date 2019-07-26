@@ -148,12 +148,6 @@ public:
     TcpStreamConfig* config = nullptr;
     TcpEventLogger tel;
 
-private:
-    snort::ip::snort_in6_addr real_src_ip;
-    snort::ip::snort_in6_addr real_dst_ip;
-    uint16_t real_src_port = 0;
-    uint16_t real_dst_port = 0;
-
 protected:
     TcpStreamSession(snort::Flow*);
     virtual void set_os_policy() = 0;

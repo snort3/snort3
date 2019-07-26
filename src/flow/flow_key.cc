@@ -239,7 +239,7 @@ bool FlowKey::init(
      * that IP is stored in port_l.
      */
 
-    if (srcIP->is_ip4())
+    if (srcIP->is_ip4() && dstIP->is_ip4())
     {
         version = 4;
         reversed = init4(ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId);
@@ -271,7 +271,7 @@ bool FlowKey::init(
     uint16_t srcPort = id & 0xFFFF;
     uint16_t dstPort = id >> 16;
 
-    if (srcIP->is_ip4())
+    if (srcIP->is_ip4() && dstIP->is_ip4())
     {
         version = 4;
         init4(ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId, false);

@@ -207,60 +207,59 @@ static bool is_bidirectional(const Flow* flow)
     return (flow->ssn_state.session_flags & bidir) == bidir;
 }
 
-// FIXIT-L init_roles* should take const Packet*
-static void init_roles_ip(Packet* p, Flow* flow)
+static void init_roles_ip(const Packet* p, Flow* flow)
 {
     flow->ssn_state.direction = FROM_CLIENT;
     flow->client_ip.set(*p->ptrs.ip_api.get_src());
     flow->server_ip.set(*p->ptrs.ip_api.get_dst());
 }
 
-static void init_roles_tcp(Packet* p, Flow* flow)
+static void init_roles_tcp(const Packet* p, Flow* flow)
 {
     if ( p->ptrs.tcph->is_syn_only() )
     {
         flow->ssn_state.direction = FROM_CLIENT;
         flow->client_ip.set(*p->ptrs.ip_api.get_src());
-        flow->client_port = ntohs(p->ptrs.tcph->th_sport);
+        flow->client_port = p->ptrs.sp;
         flow->server_ip.set(*p->ptrs.ip_api.get_dst());
-        flow->server_port = ntohs(p->ptrs.tcph->th_dport);
+        flow->server_port = p->ptrs.dp;
     }
     else if ( p->ptrs.tcph->is_syn_ack() )
     {
         flow->ssn_state.direction = FROM_SERVER;
         flow->client_ip.set(*p->ptrs.ip_api.get_dst());
-        flow->client_port = ntohs(p->ptrs.tcph->th_dport);
+        flow->client_port = p->ptrs.dp;
         flow->server_ip.set(*p->ptrs.ip_api.get_src());
-        flow->server_port = ntohs(p->ptrs.tcph->th_sport);
+        flow->server_port = p->ptrs.sp;
     }
     else if (p->ptrs.sp > p->ptrs.dp)
     {
         flow->ssn_state.direction = FROM_CLIENT;
         flow->client_ip.set(*p->ptrs.ip_api.get_src());
-        flow->client_port = ntohs(p->ptrs.tcph->th_sport);
+        flow->client_port = p->ptrs.sp;
         flow->server_ip.set(*p->ptrs.ip_api.get_dst());
-        flow->server_port = ntohs(p->ptrs.tcph->th_dport);
+        flow->server_port = p->ptrs.dp;
     }
     else
     {
         flow->ssn_state.direction = FROM_SERVER;
         flow->client_ip.set(*p->ptrs.ip_api.get_dst());
-        flow->client_port = ntohs(p->ptrs.tcph->th_dport);
+        flow->client_port = p->ptrs.dp;
         flow->server_ip.set(*p->ptrs.ip_api.get_src());
-        flow->server_port = ntohs(p->ptrs.tcph->th_sport);
+        flow->server_port = p->ptrs.sp;
     }
 }
 
-static void init_roles_udp(Packet* p, Flow* flow)
+static void init_roles_udp(const Packet* p, Flow* flow)
 {
     flow->ssn_state.direction = FROM_CLIENT;
     flow->client_ip.set(*p->ptrs.ip_api.get_src());
-    flow->client_port = ntohs(p->ptrs.udph->uh_sport);
+    flow->client_port = p->ptrs.sp;
     flow->server_ip.set(*p->ptrs.ip_api.get_dst());
-    flow->server_port = ntohs(p->ptrs.udph->uh_dport);
+    flow->server_port = p->ptrs.dp;
 }
 
-static void init_roles_user(Packet* p, Flow* flow)
+static void init_roles_user(const Packet* p, Flow* flow)
 {
     if ( p->ptrs.decode_flags & DECODE_C2S )
     {
@@ -280,6 +279,7 @@ static void init_roles_user(Packet* p, Flow* flow)
     }
 }
 
+// FIXIT-L init_roles should take const Packet*
 static void init_roles(Packet* p, Flow* flow)
 {
     switch ( flow->pkt_type )

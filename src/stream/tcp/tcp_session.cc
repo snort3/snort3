@@ -328,7 +328,7 @@ void TcpSession::process_tcp_stream(TcpSegmentDescriptor& tsd)
     if (tsd.get_pkt()->packet_flags & PKT_IGNORE)
         return;
 
-    SetPacketHeaderFoo(tsd.get_pkt() );
+    SetPacketHeaderFoo(tsd.get_pkt());
 
     if ( flow_exceeds_config_thresholds(tsd) )
         return;

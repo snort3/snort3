@@ -136,7 +136,7 @@ void PacketManager::decode(
     ProtocolIndex mapped_prot = CodecManager::grinder;
     ProtocolId prev_prot_id = CodecManager::grinder_id;
 
-    RawData raw(p->daq_msg, pkthdr, pkt, pktlen);
+    RawData raw(p->daq_msg, pkt, pktlen);
     CodecData codec_data(ProtocolId::FINISHED_DECODE);
 
     if ( cooked )
@@ -621,7 +621,8 @@ static void set_hdr(
     if ( !phdr )
         phdr = p->pkth;
 
-    DAQ_PktHdr_t* pkth = const_cast<DAQ_PktHdr_t*>(c->pkth);
+    assert(c->pkth == c->context->pkth);
+    DAQ_PktHdr_t* pkth = c->context->pkth;
     pkth->ingress_index = phdr->ingress_index;
     pkth->ingress_group = phdr->ingress_group;
     pkth->egress_index = phdr->egress_index;
@@ -629,13 +630,6 @@ static void set_hdr(
     pkth->flags = phdr->flags & (~DAQ_PKT_FLAG_HW_TCP_CS_GOOD);
     pkth->address_space_id = phdr->address_space_id;
     pkth->opaque = opaque;
-    if (pkth->flags & DAQ_PKT_FLAG_REAL_ADDRESSES)
-    {
-        pkth->n_real_sPort = phdr->n_real_sPort;
-        pkth->n_real_dPort = phdr->n_real_dPort;
-        pkth->real_sIP = phdr->real_sIP;
-        pkth->real_dIP = phdr->real_dIP;
-    }
 }
 
 //-------------------------------------------------------------------------
@@ -663,10 +657,10 @@ int PacketManager::format_tcp(
     c->user_network_policy_id = p->user_network_policy_id;
 
     // setup pkt capture header
-    DAQ_PktHdr_t* pkth = const_cast<DAQ_PktHdr_t*>(c->pkth);
     c->pktlen = 0;
-    pkth->pktlen = 0;
-    pkth->ts = p->pkth->ts;
+    assert(c->pkth == c->context->pkth);
+    c->context->pkth->pktlen = 0;
+    c->context->pkth->ts = p->pkth->ts;
 
     total_rebuilt_pkts++;
     return 0;
@@ -769,10 +763,10 @@ int PacketManager::encode_format(
     c->user_network_policy_id = p->user_network_policy_id;
 
     // setup pkt capture header
-    DAQ_PktHdr_t* pkth = const_cast<DAQ_PktHdr_t*>(c->pkth);
     c->pktlen = len;
-    pkth->pktlen = len;
-    pkth->ts = p->pkth->ts;
+    assert(c->pkth == c->context->pkth);
+    c->context->pkth->pktlen = len;
+    c->context->pkth->ts = p->pkth->ts;
 
     layer::set_packet_pointer(c);  // ensure we are looking at the new packet
     total_rebuilt_pkts++;
@@ -834,12 +828,15 @@ void PacketManager::encode_update(Packet* p)
             tmp_api, flags, const_cast<uint8_t*>(l.start), l.length, len);
     }
 
-    // see IP6_Update() for an explanation of this ...
     if ( !(p->packet_flags & PKT_MODIFIED) || (p->packet_flags & PKT_RESIZED) )
     {
-        DAQ_PktHdr_t* pkth = const_cast<DAQ_PktHdr_t*>(p->pkth);
         p->pktlen = len;
-        pkth->pktlen = len;
+        // Only attempt to update the DAQ packet header for manufactured (defragged) packets.  If
+        // this is the original wire packet, leave the header alone; the drop/inject for resize
+        // will use pktlen from Packet for the injection length.
+        // FIXIT-L there should be a better way to detect that this is manufactured packet
+        if (p->pkth == p->context->pkth)
+            p->context->pkth->pktlen = len;
     }
 }
 

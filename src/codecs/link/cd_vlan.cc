@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <daq.h>
+
 #include "codecs/codec_module.h"
 #include "framework/codec.h"
 #include "log/text_log.h"
@@ -92,7 +94,8 @@ bool VlanCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
     codec.lyr_len = sizeof(vlan::VlanTagHdr);
 
-    if (raw.pkth->flags & DAQ_PKT_FLAG_IGNORE_VLAN)
+    const DAQ_PktHdr_t* pkth = daq_msg_get_pkthdr(raw.daq_msg);
+    if (pkth->flags & DAQ_PKT_FLAG_IGNORE_VLAN)
         return true;
 
     // Vlan IDs 0 and 4095 are reserved.
