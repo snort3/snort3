@@ -765,6 +765,8 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
 
     asd->common.flags = flow_flags;
     asd->common.policyId = asd->config->appIdPolicyId;
+    if (!asd->get_session_flags(APPID_SESSION_PAYLOAD_SEEN) and p->dsize)
+        asd->set_session_flags(APPID_SESSION_PAYLOAD_SEEN);
 
     if (asd->get_session_flags(APPID_SESSION_IGNORE_FLOW))
     {
@@ -859,6 +861,43 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
     return true;
 }
 
+void AppIdDiscovery::do_port_based_discovery(Packet* p, AppIdSession& asd, IpProtocol protocol,
+    AppidSessionDirection direction)
+{
+    // Delay port-based detection until payload data is seen for the session. This ensures
+    // pattern-based detection gets higher priority than port-based detection.
+    // Do port-based detection only for responder packets.
+    if (asd.get_session_flags(APPID_SESSION_PORT_SERVICE_DONE) or
+        !asd.get_session_flags(APPID_SESSION_PAYLOAD_SEEN) or
+        (direction != APP_ID_FROM_RESPONDER))
+        return;
+
+    if (p->ptrs.tcph)
+    {
+        if (asd.get_session_flags(APPID_SESSION_SYN_RST))
+            return;
+
+        // we have to check for SYN/ACK here explicitly in case of TCP Fast Open
+        if (p->ptrs.tcph->is_syn_ack())
+            return;
+    }
+
+    AppId id = asd.config->get_port_service_id(protocol, p->ptrs.sp);
+    if (id > APP_ID_NONE)
+    {
+        asd.service.set_port_service_id(id);
+        if (appidDebug->is_active())
+        {
+            const char *app_name =
+                AppInfoManager::get_instance().get_app_name(asd.service.get_port_service_id());
+            LogMessage("AppIdDbg %s Port service %s (%d) from port\n",
+                appidDebug->get_debug_session(), app_name ? app_name : "unknown",
+                asd.service.get_port_service_id());
+        }
+    }
+    asd.set_session_flags(APPID_SESSION_PORT_SERVICE_DONE);
+}
+
 bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol protocol,
     AppidSessionDirection direction, AppId& service_id, AppidChangeBits& change_bits)
 {
@@ -905,39 +944,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
 #endif
 
     // Port-based service detection
-    if ( !asd.get_session_flags(APPID_SESSION_PORT_SERVICE_DONE) )
-    {
-        switch (protocol)
-        {
-        case IpProtocol::TCP:
-            if (asd.get_session_flags(APPID_SESSION_SYN_RST)) // TCP-specific exception
-                break;
-        // fallthrough
-        case IpProtocol::UDP:
-            // Both TCP and UDP need this test to be made
-            // against only the p->src_port of the response.
-            // For all other cases the port parameter is never checked.
-            if (direction != APP_ID_FROM_RESPONDER)
-                break;
-        // fallthrough
-        default:
-        {
-            AppId id = asd.config->get_port_service_id(protocol, p->ptrs.sp);
-            if (id > APP_ID_NONE)
-            {
-                asd.service.set_port_service_id(id);
-                if (appidDebug->is_active())
-                {
-                    const char *app_name = AppInfoManager::get_instance().get_app_name(asd.service.get_port_service_id());
-                    LogMessage("AppIdDbg %s Port service %s (%d) from port\n",
-                        appidDebug->get_debug_session(), app_name ? app_name : "unknown", asd.service.get_port_service_id());
-                }
-            }
-            asd.set_session_flags(APPID_SESSION_PORT_SERVICE_DONE);
-        }
-        break;
-        }
-    }
+    do_port_based_discovery(p, asd, protocol, direction);
 
     // exceptions for rexec and any other service detector that need to see SYN and SYN/ACK
     if (asd.get_session_flags(APPID_SESSION_REXEC_STDERR))
