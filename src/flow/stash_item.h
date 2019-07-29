@@ -34,7 +34,10 @@ public:
     {
 
     }
+    virtual ~StashGenericObject()
+    {
 
+    }
     int get_object_type()
     {
         return object_type;
