@@ -394,8 +394,19 @@ static bool pcre_search(
     {
         matched = false;
     }
+    else if (result == PCRE_ERROR_MATCHLIMIT)
+    {
+        pc.pcre_match_limit++;
+        matched = false;
+    }
+    else if (result == PCRE_ERROR_RECURSIONLIMIT)
+    {
+        pc.pcre_recursion_limit++;
+        matched = false;
+    }
     else
     {
+        pc.pcre_error++;
         return false;
     }
 

@@ -197,6 +197,9 @@ const PegInfo pc_names[] =
     { CountType::SUM, "offload_fallback", "fast pattern offload search fallback attempts" },
     { CountType::SUM, "offload_failures", "fast pattern offload search failures" },
     { CountType::SUM, "offload_suspends", "fast pattern search suspends due to offload context chains" },
+    { CountType::SUM, "pcre_match_limit", "total number of times pcre hit the match limit" },
+    { CountType::SUM, "pcre_recursion_limit", "total number of times pcre hit the recursion limit" },
+    { CountType::SUM, "pcre_error", "total number of times pcre returns error" },
     { CountType::END, nullptr, nullptr }
 };
 
@@ -220,7 +223,7 @@ void DropStats()
 {
     LogLabel("Packet Statistics");
     ModuleManager::get_module("daq")->show_stats();
-    
+
     PacketManager::dump_stats();
 
     LogLabel("Module Statistics");

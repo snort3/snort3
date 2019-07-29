@@ -60,6 +60,9 @@ struct PacketCount
     PegCount offload_fallback;
     PegCount offload_failures;
     PegCount offload_suspends;
+    PegCount pcre_match_limit;
+    PegCount pcre_recursion_limit;
+    PegCount pcre_error;
 };
 
 struct ProcessCount
@@ -121,4 +124,3 @@ void TimeStart();
 void TimeStop();
 
 #endif
-
