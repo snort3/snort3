@@ -29,165 +29,58 @@ using namespace std;
 
 THREAD_LOCAL struct HostTrackerStats host_tracker_stats;
 
-snort::SfIp HostTracker::get_ip_addr()
+bool HostTracker::add_service(Port port, IpProtocol proto, AppId appid, bool inferred_appid)
 {
+    host_tracker_stats.service_adds++;
     std::lock_guard<std::mutex> lck(host_tracker_lock);
-    return ip_addr;
-}
 
-void HostTracker::set_ip_addr(const snort::SfIp& new_ip_addr)
-{
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
-    std::memcpy(&ip_addr, &new_ip_addr, sizeof(ip_addr));
-}
-
-Policy HostTracker::get_stream_policy()
-{
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
-    return stream_policy;
-}
-
-void HostTracker::set_stream_policy(const Policy& policy)
-{
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
-    stream_policy = policy;
-}
-
-Policy HostTracker::get_frag_policy()
-{
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
-    return frag_policy;
-}
-
-void HostTracker::set_frag_policy(const Policy& policy)
-{
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
-    frag_policy = policy;
-}
-
-void HostTracker::add_app_mapping(Port port, Protocol proto, AppId appid)
-{
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
-    AppMapping app_map = {port, proto, appid};
-
-    app_mappings.emplace_back(app_map);
-}
-
-AppId HostTracker::find_app_mapping(Port port, Protocol proto)
-{
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
-    for (std::vector<AppMapping>::iterator it=app_mappings.begin(); it!=app_mappings.end(); ++it)
+    for ( auto& s : services )
     {
-        if (it->port == port and it->proto ==proto)
+        if ( s.port == port and s.proto == proto )
         {
-            return it->appid;
+            if ( s.appid != appid and appid != APP_ID_NONE )
+            {
+                s.appid = appid;
+                s.inferred_appid = inferred_appid;
+            }
+            return true;
         }
     }
-    return APP_ID_NONE;
-}
 
-bool HostTracker::find_else_add_app_mapping(Port port, Protocol proto, AppId appid)
-{
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
-    for (std::vector<AppMapping>::iterator it=app_mappings.begin(); it!=app_mappings.end(); ++it)
-    {
-        if (it->port == port and it->proto ==proto)
-        {
-            return false;
-        }
-    }
-    AppMapping app_map = {port, proto, appid};
-
-    app_mappings.emplace_back(app_map);
+    services.emplace_back( HostApplication{port, proto, appid, inferred_appid} );
     return true;
 }
 
-bool HostTracker::add_service(const HostApplicationEntry& app_entry)
+AppId HostTracker::get_appid(Port port, IpProtocol proto, bool inferred_only)
 {
-    host_tracker_stats.service_adds++;
-
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
-
-    auto iter = std::find(services.begin(), services.end(), app_entry);
-    if (iter != services.end())
-        return false;   //  Already exists.
-
-    services.emplace_front(app_entry);
-    return true;
-}
-
-void HostTracker::add_or_replace_service(const HostApplicationEntry& app_entry)
-{
-    host_tracker_stats.service_adds++;
-
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
-
-    auto iter = std::find(services.begin(), services.end(), app_entry);
-    if (iter != services.end())
-        services.erase(iter);
-
-    services.emplace_front(app_entry);
-}
-
-bool HostTracker::find_service(Protocol ipproto, Port port, HostApplicationEntry& app_entry)
-{
-    HostApplicationEntry tmp_entry(ipproto, port, UNKNOWN_PROTOCOL_ID);
     host_tracker_stats.service_finds++;
-
     std::lock_guard<std::mutex> lck(host_tracker_lock);
 
-    auto iter = std::find(services.begin(), services.end(), tmp_entry);
-    if (iter != services.end())
+    for ( const auto& s : services )
     {
-        app_entry = *iter;
-        return true;
+        if ( s.port == port and s.proto == proto and
+            (!inferred_only or s.inferred_appid == inferred_only) )
+            return s.appid;
     }
 
-    return false;
-}
-
-bool HostTracker::remove_service(Protocol ipproto, Port port)
-{
-    HostApplicationEntry tmp_entry(ipproto, port, UNKNOWN_PROTOCOL_ID);
-    host_tracker_stats.service_removes++;
-
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
-
-    auto iter = std::find(services.begin(), services.end(), tmp_entry);
-    if (iter != services.end())
-    {
-        services.erase(iter);
-        return true;   //  Assumes only one matching entry.
-    }
-
-    return false;
+    return APP_ID_NONE;
 }
 
 void HostTracker::stringify(string& str)
 {
-    str = "IP: ";
-    SfIpString ip_str;
-    str += ip_addr.ntop(ip_str);
-
-    if ( !app_mappings.empty() )
-    {
-        str += "\napp_mappings size: " + to_string(app_mappings.size());
-        for ( const auto& elem : app_mappings )
-            str += "\n    port: " + to_string(elem.port)
-                + ", proto: " + to_string(elem.proto)
-                + ", appid: " + to_string(elem.appid);
-    }
-
-    if ( stream_policy or frag_policy )
-        str += "\nstream policy: " + to_string(stream_policy)
-            + ", frag policy: " + to_string(frag_policy);
-
     if ( !services.empty() )
     {
         str += "\nservices size: " + to_string(services.size());
-        for ( const auto& elem : services )
-            str += "\n    port: " + to_string(elem.port)
-                + ", proto: " + to_string(elem.ipproto)
-                + ", snort proto: " + to_string(elem.snort_protocol_id);
-    }
+        for ( const auto& s : services )
+        {
+            str += "\n    port: " + to_string(s.port)
+                + ", proto: " + to_string((uint8_t) s.proto);
+            if ( s.appid != APP_ID_NONE )
+            {
+                str += ", appid: " + to_string(s.appid);
+                if ( s.inferred_appid )
+                    str += ", inferred";
+            }
+        }
+   }
 }

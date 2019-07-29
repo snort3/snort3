@@ -123,7 +123,6 @@ HostCacheModule::~HostCacheModule()
         log_host_cache(dump_file);
         snort_free((void*)dump_file);
     }
-    host_cache.clear();
 }
 
 void HostCacheModule::log_host_cache(const char* file_name, bool verbose)
@@ -153,9 +152,12 @@ void HostCacheModule::log_host_cache(const char* file_name, bool verbose)
     }
 
     string str;
+    SfIpString ip_str;
     const auto&& lru_data = host_cache.get_all_data();
     for ( const auto& elem : lru_data )
     {
+        str = "IP: ";
+        str += elem.first.ntop(ip_str);
         elem.second->stringify(str);
         out_stream << str << endl << endl;
     }

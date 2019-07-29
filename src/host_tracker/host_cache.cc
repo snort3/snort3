@@ -24,88 +24,8 @@
 
 #include "host_cache.h"
 
-#include "main/snort_config.h"
-#include "target_based/snort_protocols.h"
-
 using namespace snort;
-using namespace std;
 
 #define LRU_CACHE_INITIAL_SIZE 65535
 
-LruCacheShared<HostIpKey, std::shared_ptr<HostTracker>, HashHostIpKey>
-    host_cache(LRU_CACHE_INITIAL_SIZE);
-
-namespace snort
-{
-
-void host_cache_add_host_tracker(HostTracker* ht)
-{
-    std::shared_ptr<HostTracker> sptr(ht);
-    host_cache.insert((const uint8_t*) ht->get_ip_addr().get_ip6_ptr(), sptr);
-}
-
-bool host_cache_add_service(const SfIp& ipaddr, Protocol ipproto, Port port, SnortProtocolId id)
-{
-    HostIpKey ipkey((const uint8_t*) ipaddr.get_ip6_ptr());
-    std::shared_ptr<HostTracker> ht;
-
-    if (!host_cache.find(ipkey, ht))
-    {
-        //  This host hasn't been seen.  Add it.
-        ht = std::make_shared<HostTracker>(ipaddr);
-
-        if (ht == nullptr)
-        {
-            //  FIXIT-L add error count
-            return false;
-        }
-        host_cache.insert(ipkey, ht);
-    }
-
-    HostApplicationEntry app_entry(ipproto, port, id);
-    return ht->add_service(app_entry);
-}
-
-bool host_cache_add_service(const SfIp& ipaddr, Protocol ipproto, Port port, const char* service)
-{
-    return host_cache_add_service(ipaddr, ipproto, port,
-        SnortConfig::get_conf()->proto_ref->find(service));
-}
-
-bool host_cache_add_app_mapping(const SfIp& ipaddr, Port port, Protocol proto, AppId appId)
-{
-    HostIpKey ipkey((const uint8_t*) ipaddr.get_ip6_ptr());
-    std::shared_ptr<HostTracker> ht;
-
-    if (!host_cache.find(ipkey, ht))
-    {
-        ht = std::make_shared<HostTracker> (ipaddr);
-
-        if (ht == nullptr)
-        {
-            return false;
-        }
-        ht->add_app_mapping(port, proto, appId);
-        host_cache.insert(ipkey, ht);
-    }
-    else
-    {
-        return ht->find_else_add_app_mapping(port, proto, appId);
-    }
-
-    return true;
-}
-
-AppId host_cache_find_app_mapping(const SfIp* ipaddr, Port port, Protocol proto)
-{
-    HostIpKey ipkey((const uint8_t*) ipaddr->get_ip6_ptr());
-    std::shared_ptr<HostTracker> ht;
-
-    if (host_cache.find(ipkey, ht))
-    {
-        return ht->find_app_mapping(port, proto);
-    }
-    
-    return APP_ID_NONE;
-}
-}
+LruCacheShared<SfIp, HostTracker, HashIp> host_cache(LRU_CACHE_INITIAL_SIZE);

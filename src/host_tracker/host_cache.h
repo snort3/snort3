@@ -24,56 +24,22 @@
 // The host cache is used to cache information about hosts so that it can
 // be shared among threads.
 
-#include <memory>
-
 #include "hash/lru_cache_shared.h"
 #include "host_tracker/host_tracker.h"
-
-#define HOST_IP_KEY_SIZE 16
-
-struct HostIpKey
-{
-    union host_ip_addr
-    {
-        uint8_t ip8[HOST_IP_KEY_SIZE];
-        uint64_t ip64[HOST_IP_KEY_SIZE/8];
-    } ip_addr = {{0}}; //  Holds either IPv4 or IPv6 addr
-
-    HostIpKey() = default;
-
-    HostIpKey(const uint8_t ip[HOST_IP_KEY_SIZE])
-    {
-        memcpy(&ip_addr, ip, HOST_IP_KEY_SIZE);
-    }
-
-    inline bool operator==(const HostIpKey& rhs) const
-    {
-        return !memcmp(&ip_addr, &rhs.ip_addr, HOST_IP_KEY_SIZE);
-    }
-};
+#include "sfip/sf_ip.h"
 
 //  Used to create hash of key for indexing into cache.
-struct HashHostIpKey
+struct HashIp
 {
-    size_t operator()(const HostIpKey& ip) const
+    size_t operator()(const snort::SfIp& ip) const
     {
-        return std::hash<uint64_t>() (ip.ip_addr.ip64[0]) ^
-               std::hash<uint64_t>() (ip.ip_addr.ip64[1]);
+        const uint64_t* ip64 = (const uint64_t*) ip.get_ip6_ptr();
+        return std::hash<uint64_t>() (ip64[0]) ^
+               std::hash<uint64_t>() (ip64[1]);
     }
 };
 
-extern LruCacheShared<HostIpKey, std::shared_ptr<HostTracker>, HashHostIpKey> host_cache;
+extern SO_PUBLIC LruCacheShared<snort::SfIp, HostTracker, HashIp> host_cache;
 
-namespace snort
-{
-void host_cache_add_host_tracker(HostTracker*);
-
-//  Insert a new service into host cache if it doesn't already exist.
-SO_PUBLIC bool host_cache_add_service(const SfIp&, Protocol, Port, SnortProtocolId);
-SO_PUBLIC bool host_cache_add_service(const SfIp&, Protocol, Port, const char*);
-
-bool host_cache_add_app_mapping(const SfIp&, Port, Protocol, AppId);
-AppId host_cache_find_app_mapping(const SfIp* , Port, Protocol );
-}
 #endif
 

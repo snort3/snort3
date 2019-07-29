@@ -27,12 +27,9 @@
 const PegInfo lru_cache_shared_peg_names[] =
 {
     { CountType::SUM, "lru_cache_adds", "lru cache added new entry" },
-    { CountType::SUM, "lru_cache_replaces", "lru cache replaced existing entry" },
     { CountType::SUM, "lru_cache_prunes", "lru cache pruned entry to make space for new entry" },
     { CountType::SUM, "lru_cache_find_hits", "lru cache found entry in cache" },
     { CountType::SUM, "lru_cache_find_misses", "lru cache did not find entry in cache" },
-    { CountType::SUM, "lru_cache_removes", "lru cache found entry and removed it" },
-    { CountType::SUM, "lru_cache_clears", "lru cache clear API calls" },
     { CountType::END, nullptr, nullptr },
 };
 

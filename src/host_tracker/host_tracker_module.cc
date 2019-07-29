@@ -24,11 +24,8 @@
 
 #include "host_tracker_module.h"
 
+#include "log/messages.h"
 #include "main/snort_config.h"
-#include "stream/stream.h"
-#include "target_based/snort_protocols.h"
-
-#include "host_cache.h"
 
 using namespace snort;
 
@@ -36,34 +33,21 @@ const PegInfo host_tracker_pegs[] =
 {
     { CountType::SUM, "service_adds", "host service adds" },
     { CountType::SUM, "service_finds", "host service finds" },
-    { CountType::SUM, "service_removes", "host service removes" },
     { CountType::END, nullptr, nullptr },
 };
 
 const Parameter HostTrackerModule::service_params[] =
 {
-    { "name", Parameter::PT_STRING, nullptr, nullptr,
-      "service identifier" },
+    { "port", Parameter::PT_PORT, nullptr, nullptr, "port number" },
 
-    { "proto", Parameter::PT_ENUM, "tcp | udp", "tcp",
-      "IP protocol" },
-
-    { "port", Parameter::PT_PORT, nullptr, nullptr,
-      "port number" },
+    { "proto", Parameter::PT_ENUM, "ip | tcp | udp", nullptr, "IP protocol" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 const Parameter HostTrackerModule::host_tracker_params[] =
 {
-    { "ip", Parameter::PT_ADDR, nullptr, "0.0.0.0/32",
-      "hosts address / cidr" },
-
-    { "frag_policy", Parameter::PT_ENUM, IP_POLICIES, nullptr,
-      "defragmentation policy" },
-
-    { "tcp_policy", Parameter::PT_ENUM, TCP_POLICIES, nullptr,
-      "TCP reassembly policy" },
+    { "ip", Parameter::PT_ADDR, nullptr, nullptr, "hosts address / cidr" },
 
     { "services", Parameter::PT_LIST, HostTrackerModule::service_params, nullptr,
       "list of service parameters" },
@@ -71,28 +55,20 @@ const Parameter HostTrackerModule::host_tracker_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-bool HostTrackerModule::set(const char*, Value& v, SnortConfig* sc)
+bool HostTrackerModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( host and v.is("ip") )
-    {
-        SfIp addr;
+    if ( v.is("ip") )
         v.get_addr(addr);
-        host->set_ip_addr(addr);
-    }
-    else if ( host and v.is("frag_policy") )
-        host->set_frag_policy(v.get_uint8() + 1);
-
-    else if ( host and v.is("tcp_policy") )
-        host->set_stream_policy(v.get_uint8() + 1);
-
-    else if ( v.is("name") )
-        app.snort_protocol_id = sc->proto_ref->add(v.get_string());
-
-    else if ( v.is("proto") )
-        app.ipproto = sc->proto_ref->add(v.get_string());
 
     else if ( v.is("port") )
         app.port = v.get_uint16();
+
+    else if ( v.is("proto") )
+    {
+        const IpProtocol mask[] =
+        { IpProtocol::IP, IpProtocol::TCP, IpProtocol::UDP };
+        app.proto = mask[v.get_uint8()];
+    }
 
     else
         return false;
@@ -103,8 +79,10 @@ bool HostTrackerModule::set(const char*, Value& v, SnortConfig* sc)
 bool HostTrackerModule::begin(const char* fqn, int idx, SnortConfig*)
 {
     if ( idx && !strcmp(fqn, "host_tracker") )
-        host = new HostTracker;
-
+    {
+        addr.clear();
+        app = {};
+    }
     return true;
 }
 
@@ -112,13 +90,14 @@ bool HostTrackerModule::end(const char* fqn, int idx, SnortConfig*)
 {
     if ( idx && !strcmp(fqn, "host_tracker.services") )
     {
-        host->add_service(app);
+        if ( addr.is_set() )
+            host_cache[addr]->add_service(app.port, app.proto);
         app = {};
     }
-    else if ( idx && !strcmp(fqn, "host_tracker") )
+    else if ( idx && !strcmp(fqn, "host_tracker") && addr.is_set() )
     {
-        host_cache_add_host_tracker(host);
-        host = nullptr;  //  Host cache is now responsible for freeing host
+        host_cache[addr];
+        addr.clear();
     }
 
     return true;

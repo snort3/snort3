@@ -30,7 +30,7 @@
 #include <cassert>
 
 #include "framework/module.h"
-#include "host_tracker/host_tracker.h"
+#include "host_tracker/host_cache.h"
 
 #define host_tracker_help \
     "configure hosts"
@@ -38,11 +38,8 @@
 class HostTrackerModule : public snort::Module
 {
 public:
-    HostTrackerModule() : snort::Module("host_tracker", host_tracker_help, host_tracker_params, true)
-    { host = nullptr; }
-
-    ~HostTrackerModule() override
-    { assert(!host); }
+    HostTrackerModule() :
+        snort::Module("host_tracker", host_tracker_help, host_tracker_params, true) { }
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
@@ -58,8 +55,8 @@ private:
     static const snort::Parameter host_tracker_params[];
     static const snort::Parameter service_params[];
 
-    HostApplicationEntry app;
-    HostTracker* host;
+    HostApplication app;
+    snort::SfIp addr;
 };
 
 #endif

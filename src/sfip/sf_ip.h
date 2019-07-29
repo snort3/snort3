@@ -81,6 +81,7 @@ struct SO_PUBLIC SfIp
     bool fast_gt6(const SfIp& ip2) const;
     bool fast_eq6(const SfIp& ip2) const;
     bool fast_equals_raw(const SfIp& ip2) const;
+    bool operator==(const SfIp& ip2) const;
 
     /*
      * Miscellaneous
@@ -461,6 +462,11 @@ inline bool SfIp::fast_equals_raw(const SfIp& ip2) const
             return true;
     }
     return false;
+}
+
+inline bool SfIp::operator==(const SfIp& ip2) const
+{
+    return fast_equals_raw(ip2);
 }
 
 /* End of member function definitions */

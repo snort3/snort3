@@ -1181,15 +1181,15 @@ static int detector_add_host_port_dynamic(lua_State* L)
     }
 
     unsigned port = lua_tointeger(L, ++index);
-    unsigned proto = lua_tointeger(L, ++index);
-    if (proto > (unsigned)IpProtocol::RESERVED)
+    IpProtocol proto = (IpProtocol) lua_tointeger(L, ++index);
+    if (proto > IpProtocol::RESERVED)
     {
-        ErrorMessage("%s:Invalid protocol value %u\n",__func__, proto);
+        ErrorMessage("%s:Invalid protocol value %u\n",__func__, (unsigned) proto);
         return 0;
     }
 
-    if (!(snort::host_cache_add_app_mapping(ip_addr, port, proto, appid)))
-        ErrorMessage("%s:Failed to add app mapping\n",__func__);
+    if ( !host_cache[ip_addr]->add_service(port, proto, appid, true) )
+        ErrorMessage("%s:Failed to add host tracker service\n",__func__);
 
     return 0;
 }

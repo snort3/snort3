@@ -46,9 +46,6 @@ static char logged_message[LOG_MAX+1];
 
 namespace snort
 {
-//  Fakes to avoid bringing in a ton of dependencies.
-SnortProtocolId ProtocolReference::add(char const*) { return 0; }
-SnortProtocolId ProtocolReference::find(char const*) { return 0; }
 SnortConfig* SnortConfig::get_conf() { return nullptr; }
 char* snort_strdup(const char* s) { return strdup(s); }
 Module* ModuleManager::get_module(const char*) { return nullptr; }
@@ -73,9 +70,6 @@ void show_stats(PegCount*, const PegInfo*, unsigned, const char*)
 void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*)
 { }
 
-#define FRAG_POLICY 33
-#define STREAM_POLICY 100
-
 TEST_GROUP(host_cache_module)
 {
     void setup() override
@@ -98,21 +92,15 @@ TEST(host_cache_module, host_cache_module_test_values)
     const PegCount* ht_stats = module.get_counts();
 
     CHECK(!strcmp(ht_pegs[0].name, "lru_cache_adds"));
-    CHECK(!strcmp(ht_pegs[1].name, "lru_cache_replaces"));
-    CHECK(!strcmp(ht_pegs[2].name, "lru_cache_prunes"));
-    CHECK(!strcmp(ht_pegs[3].name, "lru_cache_find_hits"));
-    CHECK(!strcmp(ht_pegs[4].name, "lru_cache_find_misses"));
-    CHECK(!strcmp(ht_pegs[5].name, "lru_cache_removes"));
-    CHECK(!strcmp(ht_pegs[6].name, "lru_cache_clears"));
-    CHECK(!ht_pegs[7].name);
+    CHECK(!strcmp(ht_pegs[1].name, "lru_cache_prunes"));
+    CHECK(!strcmp(ht_pegs[2].name, "lru_cache_find_hits"));
+    CHECK(!strcmp(ht_pegs[3].name, "lru_cache_find_misses"));
+    CHECK(!ht_pegs[4].name);
 
     CHECK(ht_stats[0] == 0);
     CHECK(ht_stats[1] == 0);
     CHECK(ht_stats[2] == 0);
     CHECK(ht_stats[3] == 0);
-    CHECK(ht_stats[4] == 0);
-    CHECK(ht_stats[5] == 0);
-    CHECK(ht_stats[6] == 0);
 
     size_val.set(&size_param);
 
@@ -123,8 +111,6 @@ TEST(host_cache_module, host_cache_module_test_values)
 
     ht_stats = module.get_counts();
     CHECK(ht_stats[0] == 0);
-
-    CHECK(2112 == host_cache.get_max_size());
 }
 
 TEST(host_cache_module, log_host_cache_messages)

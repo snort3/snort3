@@ -638,11 +638,15 @@ static void lookup_appid_by_host_port(AppIdSession& asd, Packet* p, IpProtocol p
     }
     else if (asd.config->mod_config->is_host_port_app_cache_runtime)
     {
-        AppId appid = snort::host_cache_find_app_mapping(ip, port, (Protocol)protocol);
-        if (appid > APP_ID_NONE)
+        auto ht = host_cache.find(*ip);
+        if ( ht )
         {
-            asd.client.set_id(appid);
-            asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
+            AppId appid = ht->get_appid(port, protocol, true);
+            if ( appid > APP_ID_NONE )
+            {
+                asd.client.set_id(appid);
+                asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
+            }
         }
     }
 }

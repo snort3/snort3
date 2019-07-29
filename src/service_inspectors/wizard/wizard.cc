@@ -263,11 +263,9 @@ bool Wizard::spellbind(
 {
     f->service = m->book.find_spell(data, len, m);
 
-    if (f->service != nullptr)
+    if ( f->service != nullptr )
     {
-        // FIXIT-H need to make sure Flow's ipproto and service
-        // correspond to HostApplicationEntry's ipproto and service
-        host_cache_add_service(f->server_ip, f->ip_proto, f->server_port, f->service);
+        host_cache[f->server_ip]->add_service(f->server_port, (IpProtocol)f->ip_proto);
         return true;
     }
 
@@ -282,10 +280,11 @@ bool Wizard::cursebind(vector<CurseServiceTracker>& curse_tracker, Flow* f,
         if (cst.curse->alg(data, len, cst.tracker))
         {
             f->service = cst.curse->service.c_str();
-            // FIXIT-H need to make sure Flow's ipproto and service
-            // correspond to HostApplicationEntry's ipproto and service
-            host_cache_add_service(f->server_ip, f->ip_proto, f->server_port, f->service);
-            return true;
+            if ( f->service != nullptr )
+            {
+                host_cache[f->server_ip]->add_service(f->server_port, (IpProtocol)f->ip_proto);
+                return true;
+            }
         }
     }
 

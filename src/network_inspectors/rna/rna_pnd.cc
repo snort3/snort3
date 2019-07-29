@@ -105,16 +105,16 @@ void RnaPnd::analyze_flow_udp(const Packet* p)
 
 void RnaPnd::discover_network_icmp(const Packet* p)
 {
-    if ( !host_cache_add_service(p->flow->client_ip, (uint8_t)p->get_ip_proto_next(),
-        p->flow->client_port, SNORT_PROTO_ICMP) )
+    if ( !(host_cache[p->flow->client_ip]->
+        add_service(p->flow->client_port, p->get_ip_proto_next())) )
         return;
     // process rna discovery for icmp
 }
 
 void RnaPnd::discover_network_ip(const Packet* p)
 {
-    if ( !host_cache_add_service(p->flow->client_ip, (uint8_t)p->get_ip_proto_next(),
-        p->flow->client_port, SNORT_PROTO_IP) )
+    if ( !(host_cache[p->flow->client_ip]->
+        add_service(p->flow->client_port, p->get_ip_proto_next())) )
         return;
     // process rna discovery for ip
 }
@@ -128,8 +128,8 @@ void RnaPnd::discover_network_non_ip(const Packet* p)
 void RnaPnd::discover_network_tcp(const Packet* p)
 {
     // Track from initiator direction, if not already seen
-    if ( !host_cache_add_service(p->flow->client_ip, (uint8_t)p->get_ip_proto_next(),
-        p->flow->client_port, SNORT_PROTO_TCP) )
+    if ( !(host_cache[p->flow->client_ip]->
+        add_service(p->flow->client_port, p->get_ip_proto_next())) )
         return;
 
     // Add mac address to ht list, ttl, last_seen, etc.
@@ -138,8 +138,8 @@ void RnaPnd::discover_network_tcp(const Packet* p)
 
 void RnaPnd::discover_network_udp(const Packet* p)
 {
-    if ( !host_cache_add_service(p->flow->client_ip, (uint8_t)p->get_ip_proto_next(),
-        p->flow->client_port, SNORT_PROTO_UDP) )
+    if ( !(host_cache[p->flow->client_ip]->
+        add_service(p->flow->client_port, p->get_ip_proto_next())) )
         return;
     // process rna discovery for udp
 }
