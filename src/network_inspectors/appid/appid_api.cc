@@ -58,28 +58,28 @@ const char* AppIdApi::get_application_name(AppId app_id)
 const char* AppIdApi::get_application_name(Flow& flow, bool from_client)
 {
     const char* app_name = nullptr;
+    AppId appid = APP_ID_NONE;
     AppIdSession* asd = get_appid_session(flow);
     if ( asd )
     {
-        if ( asd->payload.get_id() )
-            app_name = AppInfoManager::get_instance().get_app_name(asd->payload.get_id());
-        else if ( asd->misc_app_id )
-            app_name = AppInfoManager::get_instance().get_app_name(asd->misc_app_id);
-        else if ( from_client )
+        appid = asd->pick_payload_app_id();
+        if (  !appid )
+            appid = asd->pick_misc_app_id();
+        if (  !appid and from_client)
         {
-            if ( asd->client.get_id() )
-                app_name = AppInfoManager::get_instance().get_app_name(asd->client.get_id());
-            else
-                app_name = AppInfoManager::get_instance().get_app_name(asd->service.get_id());
+            appid = asd->pick_client_app_id();
+            if ( !appid)
+                appid = asd->pick_service_app_id();
         }
-        else
+        else if ( !appid )
         {
-            if ( asd->service.get_id() )
-                app_name = AppInfoManager::get_instance().get_app_name(asd->service.get_id());
-            else
-                app_name = AppInfoManager::get_instance().get_app_name(asd->client.get_id());
+            appid = asd->pick_service_app_id();
+            if ( !appid)
+                appid = asd->pick_client_app_id();
         }
     }
+    if (appid  > APP_ID_NONE && appid < SF_APPID_MAX)
+        app_name = AppInfoManager::get_instance().get_app_name(appid);
 
     return app_name;
 }
