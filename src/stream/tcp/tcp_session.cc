@@ -362,9 +362,15 @@ void TcpSession::update_stream_order(TcpSegmentDescriptor& tsd, bool aligned)
         }
         break;
     default:
-        if ( !(flow->get_session_flags() & SSNFLAG_STREAM_ORDER_BAD) )
-            flow->set_session_flags(SSNFLAG_STREAM_ORDER_BAD);
-        tsd.get_pkt()->packet_flags |= PKT_STREAM_ORDER_BAD;
+        if ( aligned )
+            tsd.get_pkt()->packet_flags |= PKT_STREAM_ORDER_OK;
+
+        else
+        {
+            if ( !(flow->get_session_flags() & SSNFLAG_STREAM_ORDER_BAD) )
+                flow->set_session_flags(SSNFLAG_STREAM_ORDER_BAD);
+            tsd.get_pkt()->packet_flags |= PKT_STREAM_ORDER_BAD;
+         }
     }
 }
 
