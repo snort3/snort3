@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include "host_tracker/host_cache.h"
 #include "flow/flow.h"
 #include "log/messages.h"
 #include "profiler/profiler.h"
@@ -262,14 +261,7 @@ bool Wizard::spellbind(
     const MagicPage*& m, Flow* f, const uint8_t* data, unsigned len)
 {
     f->service = m->book.find_spell(data, len, m);
-
-    if ( f->service != nullptr )
-    {
-        host_cache[f->server_ip]->add_service(f->server_port, (IpProtocol)f->ip_proto);
-        return true;
-    }
-
-    return false;
+    return ( f->service != nullptr );
 }
 
 bool Wizard::cursebind(vector<CurseServiceTracker>& curse_tracker, Flow* f,
@@ -281,10 +273,7 @@ bool Wizard::cursebind(vector<CurseServiceTracker>& curse_tracker, Flow* f,
         {
             f->service = cst.curse->service.c_str();
             if ( f->service != nullptr )
-            {
-                host_cache[f->server_ip]->add_service(f->server_port, (IpProtocol)f->ip_proto);
                 return true;
-            }
         }
     }
 
