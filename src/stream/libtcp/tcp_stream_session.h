@@ -67,6 +67,8 @@ public:
     void SetPacketHeaderFoo(const snort::Packet* p);
     void GetPacketHeaderFoo(DAQ_PktHdr_t* pkth, uint32_t dir);
     void SwapPacketHeaderFoo();
+    void set_no_ack(bool b) { no_ack = b; }
+    bool no_ack_mode_enabled() { return no_ack; }
 
     virtual void update_perf_base_state(char) { }
     virtual void clear_session(
@@ -147,6 +149,9 @@ public:
     bool generate_3whs_alert = true;
     TcpStreamConfig* config = nullptr;
     TcpEventLogger tel;
+
+private:
+    bool no_ack = false;
 
 protected:
     TcpStreamSession(snort::Flow*);

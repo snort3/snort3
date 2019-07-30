@@ -810,6 +810,14 @@ bool Stream::set_packet_action_to_hold(Packet* p)
     return p->flow->session->set_packet_action_to_hold(p);
 }
 
+void Stream::set_no_ack_mode(Flow* flow, bool on_off)
+{
+    assert(flow and flow->session and flow->pkt_type == PktType::TCP);
+
+    TcpStreamSession* tcp_session = (TcpStreamSession*)flow->session;
+    tcp_session->set_no_ack(on_off);
+}
+
 #ifdef UNIT_TEST
 
 TEST_CASE("Stream API", "[stream_api][stream]")
