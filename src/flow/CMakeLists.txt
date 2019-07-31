@@ -17,8 +17,9 @@ add_library (flow OBJECT
     flow_control.cc
     flow_control.h
     flow_key.cc
-    flow_stash.h
     flow_stash.cc
+    flow_stash.h
+    flow_uni_list.h
     ha.cc
     ha_module.cc
     ha_module.h

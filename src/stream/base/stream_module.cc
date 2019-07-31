@@ -38,15 +38,9 @@ using namespace std;
 //-------------------------------------------------------------------------
 Trace TRACE_NAME(stream);
 
-#define CACHE_PARAMS(name, max, prune, idle, weight) \
+#define FLOW_TYPE_PARAMS(name, idle, weight) \
 static const Parameter name[] = \
 { \
-    { "max_sessions", Parameter::PT_INT, "2:max32", max, \
-      "maximum simultaneous sessions tracked before pruning" }, \
- \
-    { "pruning_timeout", Parameter::PT_INT, "1:max32", prune, \
-      "minimum inactive time before being eligible for pruning" }, \
- \
     { "idle_timeout", Parameter::PT_INT, "1:max32", idle, \
       "maximum inactive time before retiring session tracker" }, \
  \
@@ -56,31 +50,37 @@ static const Parameter name[] = \
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr } \
 }
 
-CACHE_PARAMS(ip_params,    "16384",  "30",  "180", "64");
-CACHE_PARAMS(icmp_params,  "65536",  "30",  "180", "8");
-CACHE_PARAMS(tcp_params,  "262144",  "30", "3600", "11500");
-CACHE_PARAMS(udp_params,  "131072",  "30",  "180", "128");
-CACHE_PARAMS(user_params,   "1024",  "30",  "180", "256");
-CACHE_PARAMS(file_params,    "128",  "30",  "180", "32");
+FLOW_TYPE_PARAMS(ip_params, "180", "64");
+FLOW_TYPE_PARAMS(icmp_params, "180", "8");
+FLOW_TYPE_PARAMS(tcp_params, "3600", "11500");
+FLOW_TYPE_PARAMS(udp_params, "180", "128");
+FLOW_TYPE_PARAMS(user_params,"180", "256");
+FLOW_TYPE_PARAMS(file_params, "180", "32");
 
-#define CACHE_TABLE(cache, proto, params) \
-    { cache, Parameter::PT_TABLE, params, nullptr, \
+#define FLOW_TYPE_TABLE(flow_type, proto, params) \
+    { flow_type, Parameter::PT_TABLE, params, nullptr, \
       "configure " proto " cache limits" }
 
 static const Parameter s_params[] =
 {
     { "footprint", Parameter::PT_INT, "0:max32", "0",
-      "use zero for production, non-zero for testing at given size (for TCP and user)" },
+        "use zero for production, non-zero for testing at given size (for TCP and user)" },
 
     { "ip_frags_only", Parameter::PT_BOOL, nullptr, "false",
-      "don't process non-frag flows" },
+            "don't process non-frag flows" },
 
-    CACHE_TABLE("ip_cache",   "ip",   ip_params),
-    CACHE_TABLE("icmp_cache", "icmp", icmp_params),
-    CACHE_TABLE("tcp_cache",  "tcp",  tcp_params),
-    CACHE_TABLE("udp_cache",  "udp",  udp_params),
-    CACHE_TABLE("user_cache", "user", user_params),
-    CACHE_TABLE("file_cache", "file", file_params),
+    { "max_flows", Parameter::PT_INT, "2:max32", "476288",
+                "maximum simultaneous flows tracked before pruning" },
+
+    { "pruning_timeout", Parameter::PT_INT, "1:max32", "30",
+                    "minimum inactive time before being eligible for pruning" },
+
+    FLOW_TYPE_TABLE("ip_cache",   "ip",   ip_params),
+    FLOW_TYPE_TABLE("icmp_cache", "icmp", icmp_params),
+    FLOW_TYPE_TABLE("tcp_cache",  "tcp",  tcp_params),
+    FLOW_TYPE_TABLE("udp_cache",  "udp",  udp_params),
+    FLOW_TYPE_TABLE("user_cache", "user", user_params),
+    FLOW_TYPE_TABLE("file_cache", "file", file_params),
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -129,7 +129,7 @@ bool StreamModule::begin(const char* fqn, int, SnortConfig*)
 
 bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
 {
-    FlowConfig* fc = nullptr;
+    PktType type = PktType::NONE;
 
     if ( v.is("footprint") )
     {
@@ -142,59 +142,65 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
             c->set_run_flags(RUN_FLAG__IP_FRAGS_ONLY);
         return true;
     }
+    else if ( v.is("max_flows") )
+    {
+        config.flow_cache_cfg.max_flows = v.get_uint32();
+        return true;
+    }
+    else if ( v.is("pruning_timeout") )
+    {
+        config.flow_cache_cfg.pruning_timeout = v.get_uint32();
+        return true;
+    }
     else if ( strstr(fqn, "ip_cache") )
-        fc = &config.ip_cfg;
-
+        type = PktType::IP;
     else if ( strstr(fqn, "icmp_cache") )
-        fc = &config.icmp_cfg;
-
+        type = PktType::ICMP;
     else if ( strstr(fqn, "tcp_cache") )
-        fc = &config.tcp_cfg;
-
+        type = PktType::TCP;
     else if ( strstr(fqn, "udp_cache") )
-        fc = &config.udp_cfg;
-
+        type = PktType::UDP;
     else if ( strstr(fqn, "user_cache") )
-        fc = &config.user_cfg;
-
+        type = PktType::PDU;
     else if ( strstr(fqn, "file_cache") )
-        fc = &config.file_cfg;
-
+        type = PktType::FILE;
     else
         return Module::set(fqn, v, c);
 
-    if ( v.is("max_sessions") )
-        fc->max_sessions = v.get_uint32();
-
-    else if ( v.is("pruning_timeout") )
-        fc->pruning_timeout = v.get_uint32();
-
-    else if ( v.is("idle_timeout") )
-        fc->nominal_timeout = v.get_uint32();
-
+    if ( v.is("idle_timeout") )
+        config.flow_cache_cfg.proto[to_utype(type)].nominal_timeout = v.get_uint32();
     else if ( v.is("cap_weight") )
-        fc->cap_weight = v.get_uint16();
-
+        config.flow_cache_cfg.proto[to_utype(type)].cap_weight = v.get_uint16();
     else
         return false;
 
     return true;
 }
 
-static int check_cache_change(const char* fqn, const char* name, const FlowConfig& new_cfg,
-    const FlowConfig& saved_cfg)
+static int check_stream_config(const FlowCacheConfig& new_cfg, const FlowCacheConfig& saved_cfg)
 {
     int ret = 0;
-    if ( saved_cfg.max_sessions and strstr(fqn, name) )
+
+    if ( saved_cfg.max_flows != new_cfg.max_flows
+            or saved_cfg.pruning_timeout != new_cfg.pruning_timeout )
     {
-        if ( saved_cfg.max_sessions != new_cfg.max_sessions
-            or saved_cfg.pruning_timeout != new_cfg.pruning_timeout
-            or saved_cfg.nominal_timeout != new_cfg.nominal_timeout )
-        {
-            ReloadError("Changing of %s requires a restart\n", name);
-            ret = 1;
-        }
+        ReloadError("Change of stream flow cache options requires a restart\n");
+        ret = 1;
     }
+
+    return ret;
+}
+
+static int check_stream_proto_config(const FlowCacheConfig& new_cfg, const FlowCacheConfig& saved_cfg, PktType type)
+{
+    int ret = 0;
+
+    if ( saved_cfg.proto[to_utype(type)].nominal_timeout != new_cfg.proto[to_utype(type)].nominal_timeout )
+    {
+        ReloadError("Change of stream protocol configuration options requires a restart\n");
+        ret = 1;
+    }
+
     return ret;
 }
 
@@ -205,16 +211,21 @@ bool StreamModule::end(const char* fqn, int, SnortConfig*)
     static StreamModuleConfig saved_config = {};
     static int issue_found = 0;
 
-    issue_found += check_cache_change(fqn, "ip_cache", config.ip_cfg, saved_config.ip_cfg);
-    issue_found += check_cache_change(fqn, "icmp_cache", config.icmp_cfg, saved_config.icmp_cfg);
-    issue_found += check_cache_change(fqn, "tcp_cache", config.tcp_cfg, saved_config.tcp_cfg);
-    issue_found += check_cache_change(fqn, "udp_cache", config.udp_cfg, saved_config.udp_cfg);
-    issue_found += check_cache_change(fqn, "user_cache", config.ip_cfg, saved_config.user_cfg);
-    issue_found += check_cache_change(fqn, "file_cache", config.ip_cfg, saved_config.file_cfg);
+    if ( saved_config.flow_cache_cfg.max_flows )
+    {
+        // FIXIT-H - stream reload story will change this to look for change to max_flows config option
+        issue_found += check_stream_config(config.flow_cache_cfg, saved_config.flow_cache_cfg);
+        issue_found += check_stream_proto_config(config.flow_cache_cfg, saved_config.flow_cache_cfg, PktType::IP);
+        issue_found += check_stream_proto_config(config.flow_cache_cfg, saved_config.flow_cache_cfg, PktType::UDP);
+        issue_found += check_stream_proto_config(config.flow_cache_cfg, saved_config.flow_cache_cfg, PktType::TCP);
+        issue_found += check_stream_proto_config(config.flow_cache_cfg, saved_config.flow_cache_cfg, PktType::ICMP);
+        issue_found += check_stream_proto_config(config.flow_cache_cfg, saved_config.flow_cache_cfg, PktType::PDU);
+        issue_found += check_stream_proto_config(config.flow_cache_cfg, saved_config.flow_cache_cfg, PktType::FILE);
+    }
 
     if ( !strcmp(fqn, "stream") )
     {
-        if ( saved_config.ip_cfg.max_sessions   // saved config is valid
+        if ( saved_config.flow_cache_cfg.max_flows   // saved config is valid
             and config.footprint != saved_config.footprint )
         {
             ReloadError("Changing of stream.footprint requires a restart\n");
@@ -224,6 +235,7 @@ bool StreamModule::end(const char* fqn, int, SnortConfig*)
             saved_config = config;
         issue_found = 0;
     }
+
     return true;
 }
 

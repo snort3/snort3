@@ -21,14 +21,20 @@
 #ifndef FLOW_CONFIG_H
 #define FLOW_CONFIG_H
 
-// configured by the stream module for each cache instance
+#include "framework/decode_data.h"
 
-struct FlowConfig
+// configured by the stream module
+struct FlowTypeConfig
 {
-    unsigned max_sessions = 0;
-    unsigned pruning_timeout = 0;
     unsigned nominal_timeout = 0;
     unsigned cap_weight = 0;
+};
+
+struct FlowCacheConfig
+{
+    unsigned max_flows = 0;
+    unsigned pruning_timeout = 0;
+    FlowTypeConfig proto[to_utype(PktType::MAX)];
 };
 
 #endif

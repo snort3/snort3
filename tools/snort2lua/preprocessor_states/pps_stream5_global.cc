@@ -43,6 +43,9 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
 
     table_api.open_table("stream");
 
+    int tcp_max = 262144, udp_max = 131072, ip_max = 16384, icmp_max = 65536;
+    int pruning_timeout = INT_MAX;
+
     while (util::get_string(data_stream, keyword, ","))
     {
         bool tmpval = true;
@@ -87,44 +90,46 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
 
         else if (keyword == "max_tcp")
         {
-            table_api.open_table("tcp_cache");
             if (cv.do_convert_max_session())
             {
-                table_api.add_diff_option_comment("max_tcp", "max_sessions");
-                tmpval = parse_int_option("max_sessions", arg_stream, false);
+                int val;
+                if (arg_stream >> val)
+                    tcp_max = val;
             }
-            table_api.close_table();
         }
         else if (keyword == "tcp_cache_nominal_timeout")
         {
             table_api.open_table("tcp_cache");
-            table_api.add_diff_option_comment("tcp_cache_nominal_timeout", "pruning_timeout");
-            tmpval = parse_int_option("pruning_timeout", arg_stream, false);
+            table_api.add_diff_option_comment("tcp_cache_nominal_timeout", "idle_timeout");
+            tmpval = parse_int_option("idle_timeout", arg_stream, false);
             table_api.close_table();
         }
         else if (keyword == "tcp_cache_pruning_timeout")
         {
-            table_api.open_table("tcp_cache");
-            table_api.add_diff_option_comment("tcp_cache_pruning_timeout", "idle_timeout");
-            tmpval = parse_int_option("idle_timeout", arg_stream, false);
-            table_api.close_table();
+            int val;
+            if (arg_stream >> val)
+            {
+                if (pruning_timeout > val)
+                    pruning_timeout = val;
+            }
         }
         else if (keyword == "max_udp")
         {
-            table_api.open_table("udp_cache");
             if (cv.do_convert_max_session())
             {
-                table_api.add_diff_option_comment("max_udp","max_sessions");
-                tmpval = parse_int_option("max_sessions", arg_stream, false);
+                int val;
+                if (arg_stream >> val)
+                    udp_max = val;
             }
-            table_api.close_table();
         }
         else if (keyword == "udp_cache_pruning_timeout")
         {
-            table_api.open_table("udp_cache");
-            table_api.add_diff_option_comment("udp_cache_pruning_timeout","pruning_timeout");
-            tmpval = parse_int_option("pruning_timeout", arg_stream, false);
-            table_api.close_table();
+            int val;
+            if (arg_stream >> val)
+            {
+                if (pruning_timeout > val)
+                    pruning_timeout = val;
+            }
         }
         else if (keyword == "udp_cache_nominal_timeout")
         {
@@ -135,23 +140,21 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
         }
         else if (keyword == "max_icmp")
         {
-            table_api.open_table("icmp_cache");
             if (cv.do_convert_max_session())
             {
-                table_api.add_diff_option_comment("max_icmp","max_sessions");
-                tmpval = parse_int_option("max_sessions", arg_stream, false);
+                int val;
+                if (arg_stream >> val)
+                    icmp_max = val;
             }
-            table_api.close_table();
         }
         else if (keyword == "max_ip")
         {
-            table_api.open_table("ip_cache");
             if (cv.do_convert_max_session())
             {
-                table_api.add_diff_option_comment("max_ip","max_sessions");
-                tmpval = parse_int_option("max_sessions", arg_stream, false);
+                int val;
+                if (arg_stream >> val)
+                    ip_max = val;
             }
-            table_api.close_table();
         }
         else if (keyword == "show_rebuilt_packets")
         {
@@ -187,7 +190,8 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
             retval = false;
         }
     }
-
+    table_api.add_option("max_flows", tcp_max + udp_max + icmp_max + ip_max);
+    table_api.add_option("pruning_timeout", INT_MAX == pruning_timeout ? 30 : pruning_timeout);
     return retval;
 }
 

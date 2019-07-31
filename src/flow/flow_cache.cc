@@ -24,7 +24,6 @@
 
 #include "flow/flow_cache.h"
 
-#include "flow/ha.h"
 #include "hash/zhash.h"
 #include "helpers/flag_context.h"
 #include "ips_options/ips_flowbits.h"
@@ -33,7 +32,11 @@
 #include "time/packet_time.h"
 #include "utils/stats.h"
 
+#include "flow.h"
 #include "flow_key.h"
+#include "flow_uni_list.h"
+#include "ha.h"
+#include "session.h"
 
 using namespace snort;
 
@@ -43,28 +46,23 @@ using namespace snort;
 // FlowCache stuff
 //-------------------------------------------------------------------------
 
-FlowCache::FlowCache (const FlowConfig& cfg) : config(cfg)
+FlowCache::FlowCache(const FlowCacheConfig& cfg) : config(cfg)
 {
-    hash_table = new ZHash(config.max_sessions, sizeof(FlowKey));
+    hash_table = new ZHash(config.max_flows, sizeof(FlowKey));
     hash_table->set_keyops(FlowKey::hash, FlowKey::compare);
 
-    uni_head = new Flow;
-    uni_tail = new Flow;
+    uni_flows = new FlowUniList;
+    uni_ip_flows = new FlowUniList;
 
-    uni_head->next = uni_tail;
-    uni_tail->prev = uni_head;
-
-    uni_count = 0;
     flags = 0x0;
 
     assert(prune_stats.get_total() == 0);
 }
 
-FlowCache::~FlowCache ()
+FlowCache::~FlowCache()
 {
-    delete uni_head;
-    delete uni_tail;
-
+    delete uni_flows;
+    delete uni_ip_flows;
     delete hash_table;
 }
 
@@ -97,27 +95,19 @@ Flow* FlowCache::find(const FlowKey* key)
 // always prepend
 void FlowCache::link_uni(Flow* flow)
 {
-    flow->next = uni_head->next;
-    flow->prev = uni_head;
-
-    uni_head->next->prev = flow;
-    uni_head->next = flow;
-
-    ++uni_count;
+    if ( flow->pkt_type == PktType::IP )
+        uni_ip_flows->link_uni(flow);
+    else
+        uni_flows->link_uni(flow);
 }
 
 // but remove from any point
 void FlowCache::unlink_uni(Flow* flow)
 {
-    if ( !flow->next )
-        return;
-
-    --uni_count;
-
-    flow->next->prev = flow->prev;
-    flow->prev->next = flow->next;
-
-    flow->next = flow->prev = nullptr;
+    if ( flow->pkt_type == PktType::IP )
+        uni_ip_flows->unlink_uni(flow);
+    else
+        uni_flows->unlink_uni(flow);
 }
 
 Flow* FlowCache::get(const FlowKey* key)
@@ -129,18 +119,24 @@ Flow* FlowCache::get(const FlowKey* key)
     {
         if ( !prune_stale(timestamp, nullptr) )
         {
-            if ( !prune_unis() )
+            if ( !prune_unis(key->pkt_type) )
                 prune_excess(nullptr);
         }
 
         flow = (Flow*)hash_table->get(key);
-
         assert(flow);
-        flow->reset();
+
+        if ( flow->session && flow->pkt_type != key->pkt_type )
+            flow->term();
+        else
+            flow->reset();
         link_uni(flow);
     }
 
-    memory::MemoryCap::update_allocations(config.cap_weight);
+    if ( flow->session && flow->pkt_type != key->pkt_type )
+        flow->term();
+
+    memory::MemoryCap::update_allocations(config.proto[to_utype(key->pkt_type)].cap_weight);
     flow->last_data_seen = timestamp;
 
     return flow;
@@ -164,7 +160,7 @@ int FlowCache::remove(Flow* flow)
     // and Flow::retire try remove the flow from hash. Flow::reset should
     // just mark the flow as pending instead of trying to remove it.
     if ( deleted )
-        memory::MemoryCap::update_deallocations(config.cap_weight);
+        memory::MemoryCap::update_deallocations(config.proto[to_utype(flow->key->pkt_type)].cap_weight);
 
     return deleted;
 }
@@ -221,26 +217,31 @@ unsigned FlowCache::prune_stale(uint32_t thetime, const Flow* save_me)
     return pruned;
 }
 
-unsigned FlowCache::prune_unis()
+unsigned FlowCache::prune_unis(PktType pkt_type)
 {
     ActiveSuspendContext act_susp;
 
     // we may have many or few unis; need to find reasonable ratio
     // FIXIT-M max_uni should be based on typical ratios seen in perfmon
-    const unsigned max_uni = (config.max_sessions >> 2) + 1;
-
-    Flow* curr = uni_tail->prev;
+    const unsigned max_uni = (config.max_flows >> 2) + 1;
     unsigned pruned = 0;
+    FlowUniList* uni_list;
 
-    while ( (uni_count > max_uni) && curr && (pruned < cleanup_flows) )
+    if ( pkt_type == PktType::IP )
+        uni_list = uni_ip_flows;
+    else
+        uni_list = uni_flows;
+
+    Flow* flow = uni_list->get_oldest_uni();
+    while ( (uni_list->get_count() > max_uni) && flow && (pruned < cleanup_flows) )
     {
-        Flow* flow = curr;
-        curr = curr->prev;
+        Flow* prune_me = flow;
+        flow = prune_me->prev;
 
-        if ( flow->was_blocked() )
+        if ( prune_me->was_blocked() )
             continue;
 
-        release(flow, PruneReason::UNI);
+        release(prune_me, PruneReason::UNI);
         ++pruned;
     }
 
@@ -251,7 +252,7 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
 {
     ActiveSuspendContext act_susp;
 
-    auto max_cap = config.max_sessions - cleanup_flows;
+    auto max_cap = config.max_flows - cleanup_flows;
     assert(max_cap > 0);
 
     unsigned pruned = 0;
@@ -327,7 +328,7 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
 
     while ( flow and (retired < num_flows) )
     {
-        if ( flow->last_data_seen + config.nominal_timeout > thetime )
+        if ( flow->last_data_seen + config.proto[to_utype(flow->key->pkt_type)].nominal_timeout > thetime )
             break;
 
         if ( HighAvailabilityManager::in_standby(flow) or

@@ -350,12 +350,7 @@ void Stream::purge_flows()
     if ( !flow_con )
         return;
 
-    flow_con->purge_flows(PktType::IP);
-    flow_con->purge_flows(PktType::ICMP);
-    flow_con->purge_flows(PktType::TCP);
-    flow_con->purge_flows(PktType::UDP);
-    flow_con->purge_flows(PktType::PDU);
-    flow_con->purge_flows(PktType::FILE);
+    flow_con->purge_flows();
 }
 
 void Stream::timeout_flows(time_t cur_time)

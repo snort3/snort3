@@ -41,17 +41,22 @@
 
 using namespace snort;
 
-FlowControl::FlowControl() = default;
+FlowControl::FlowControl(const FlowCacheConfig& fc)
+{
+    cache = new FlowCache(fc);
+
+    mem = (Flow*)snort_calloc(fc.max_flows, sizeof(Flow));
+
+    for ( unsigned i = 0; i < fc.max_flows; ++i )
+        cache->push(mem + i);
+}
 
 FlowControl::~FlowControl()
 {
     DetectionEngine de;
 
-    for ( int i = 0; i < to_utype(PktType::MAX); ++i )
-    {
-        delete proto[i].cache;
-        snort_free(proto[i].mem);
-    }
+    delete cache;
+    snort_free(mem);
     delete exp_cache;
 }
 
@@ -59,15 +64,15 @@ FlowControl::~FlowControl()
 // count foo
 //-------------------------------------------------------------------------
 
-PegCount FlowControl::get_total_prunes(PktType type) const
+PegCount FlowControl::get_total_prunes() const
 {
-    auto cache = get_cache(type);
+    auto cache = get_cache();
     return cache ? cache->get_total_prunes() : 0;
 }
 
-PegCount FlowControl::get_prunes(PktType type, PruneReason reason) const
+PegCount FlowControl::get_prunes(PruneReason reason) const
 {
-    auto cache = get_cache(type);
+    auto cache = get_cache();
     return cache ? cache->get_prunes(reason) : 0;
 }
 
@@ -75,10 +80,10 @@ void FlowControl::clear_counts()
 {
     for ( int i = 0; i < to_utype(PktType::MAX); ++i )
     {
-        if ( proto[i].cache )
-            proto[i].cache->reset_stats();
+        if ( cache )
+            cache->reset_stats();
 
-        proto[i].num_flows = 0;
+        num_flows = 0;
     }
 }
 
@@ -88,7 +93,7 @@ void FlowControl::clear_counts()
 
 Flow* FlowControl::find_flow(const FlowKey* key)
 {
-    if ( auto cache = get_cache(key->pkt_type) )
+    if ( auto cache = get_cache() )
         return cache->find(key);
 
     return nullptr;
@@ -96,7 +101,7 @@ Flow* FlowControl::find_flow(const FlowKey* key)
 
 Flow* FlowControl::new_flow(const FlowKey* key)
 {
-    if ( auto cache = get_cache(key->pkt_type) )
+    if ( auto cache = get_cache() )
         return cache->get(key);
 
     return nullptr;
@@ -106,7 +111,7 @@ Flow* FlowControl::new_flow(const FlowKey* key)
 // packet type are obviated for existing / initialized flows
 void FlowControl::delete_flow(const FlowKey* key)
 {
-    FlowCache* cache = get_cache(key->pkt_type);
+    FlowCache* cache = get_cache();
 
     if ( !cache )
         return;
@@ -117,20 +122,20 @@ void FlowControl::delete_flow(const FlowKey* key)
 
 void FlowControl::delete_flow(Flow* flow, PruneReason reason)
 {
-    if ( auto cache = get_cache(flow->pkt_type) )
+    if ( auto cache = get_cache() )
         cache->release(flow, reason);
 }
 
-void FlowControl::purge_flows (PktType type)
+void FlowControl::purge_flows ()
 {
-    if ( auto cache = get_cache(type) )
+    if ( auto cache = get_cache() )
         cache->purge();
 }
 
 // hole for memory manager/prune handler
 bool FlowControl::prune_one(PruneReason reason, bool do_cleanup)
 {
-    auto cache = get_cache(last_pkt_type);
+    auto cache = get_cache();
     return cache ? cache->prune_one(reason, do_cleanup) : false;
 }
 
@@ -140,7 +145,7 @@ void FlowControl::timeout_flows(time_t cur_time)
         return;
 
     ActiveSuspendContext act_susp;
-    FlowCache* fc = get_cache(types[next]);
+    FlowCache* fc = get_cache();
 
     if ( ++next >= types.size() )
         next = 0;
@@ -315,21 +320,11 @@ static void init_roles(Packet* p, Flow* flow)
 // proto
 //-------------------------------------------------------------------------
 
-void FlowControl::init_proto(
-    PktType type, const FlowConfig& fc, InspectSsnFunc get_ssn)
+void FlowControl::init_proto(PktType type, InspectSsnFunc get_ssn)
 {
-    if ( !fc.max_sessions || !get_ssn )
-        return;
+    assert(get_ssn);
 
-    auto& con = proto[to_utype(type)];
-
-    con.cache = new FlowCache(fc);
-    con.mem = (Flow*)snort_calloc(fc.max_sessions, sizeof(Flow));
-
-    for ( unsigned i = 0; i < fc.max_sessions; ++i )
-        con.cache->push(con.mem + i);
-
-    con.get_ssn = get_ssn;
+    proto[to_utype(type)].get_ssn = get_ssn;
     types.emplace_back(type);
 }
 
@@ -355,14 +350,12 @@ static bool want_flow(PktType type, Packet* p)
 
 bool FlowControl::process(PktType type, Packet* p, bool* new_flow)
 {
-    auto& con = proto[to_utype(type)];
-
-    if ( !con.cache )
+    if ( !proto[to_utype(type)].get_ssn )
         return false;
 
     FlowKey key;
     set_key(&key, p);
-    Flow* flow = con.cache->find(&key);
+    Flow* flow = cache->find(&key);
     if ( !flow )
     {
         flow = HighAvailabilityManager::import(*p, key);
@@ -372,7 +365,7 @@ bool FlowControl::process(PktType type, Packet* p, bool* new_flow)
             if ( !want_flow(type, p) )
                 return true;
 
-            flow = con.cache->get(&key);
+            flow = cache->get(&key);
 
             if ( !flow )
                 return true;
@@ -385,15 +378,15 @@ bool FlowControl::process(PktType type, Packet* p, bool* new_flow)
     if ( !flow->session )
     {
         flow->init(type);
-        flow->session = con.get_ssn(flow);
+        flow->session = proto[to_utype(type)].get_ssn(flow);
     }
 
-    con.num_flows += process(flow, p);
+    num_flows += process(flow, p);
 
     // FIXIT-M refactor to unlink_uni immediately after session
     // is processed by inspector manager (all flows)
     if ( flow->next && is_bidirectional(flow) )
-        con.cache->unlink_uni(flow);
+        cache->unlink_uni(flow);
 
     return true;
 }

@@ -120,10 +120,16 @@ void Flow::term()
         delete bitop;
 
     if ( ssn_client )
+    {
         ssn_client->rem_ref();
+        ssn_client = nullptr;
+    }
 
     if ( ssn_server )
+    {
         ssn_server->rem_ref();
+        ssn_server = nullptr;
+    }
 
     if ( clouseau )
         clouseau->rem_ref();
@@ -135,7 +141,10 @@ void Flow::term()
         delete ha_state;
 
     if (stash)
+    {
         delete stash;
+        stash = nullptr;
+    }
 }
 
 inline void Flow::clean()

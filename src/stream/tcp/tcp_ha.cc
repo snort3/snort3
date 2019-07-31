@@ -42,7 +42,6 @@ Flow* TcpHA::create_session(const FlowKey* key)
     }
 
     return flow;
-
 }
 
 void TcpHA::deactivate_session(Flow* flow)

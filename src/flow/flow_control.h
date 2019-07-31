@@ -48,7 +48,7 @@ enum class PruneReason : uint8_t;
 class FlowControl
 {
 public:
-    FlowControl();
+    FlowControl(const FlowCacheConfig& fc);
     ~FlowControl();
 
 public:
@@ -57,12 +57,12 @@ public:
     snort::Flow* find_flow(const snort::FlowKey*);
     snort::Flow* new_flow(const snort::FlowKey*);
 
-    void init_proto(PktType, const FlowConfig&, snort::InspectSsnFunc);
+    void init_proto(PktType, snort::InspectSsnFunc);
     void init_exp(uint32_t max);
 
     void delete_flow(const snort::FlowKey*);
     void delete_flow(snort::Flow*, PruneReason);
-    void purge_flows(PktType);
+    void purge_flows();
     bool prune_one(PruneReason, bool do_cleanup);
 
     void timeout_flows(time_t cur_time);
@@ -82,20 +82,20 @@ public:
         const snort::SfIp *dstIP, uint16_t dstPort,
         SnortProtocolId snort_protocol_id, snort::FlowData*);
 
-    PegCount get_flows(PktType pt)
-    { return proto[to_utype(pt)].num_flows; }
+    PegCount get_flows()
+    { return num_flows; }
 
-    PegCount get_total_prunes(PktType) const;
-    PegCount get_prunes(PktType, PruneReason) const;
+    PegCount get_total_prunes() const;
+    PegCount get_prunes(PruneReason) const;
 
     void clear_counts();
 
 private:
-    FlowCache* get_cache(PktType pt)
-    { return proto[to_utype(pt)].cache; }
+    FlowCache* get_cache()
+    { return cache; }
 
-    const FlowCache* get_cache(PktType pt) const
-    { return proto[to_utype(pt)].cache; }
+    const FlowCache* get_cache() const
+    { return cache; }
 
     void set_key(snort::FlowKey*, snort::Packet*);
 
@@ -105,12 +105,12 @@ private:
 private:
     struct
     {
-        FlowCache* cache = nullptr;
-        snort::Flow* mem = nullptr;
         snort::InspectSsnFunc get_ssn = nullptr;
-        PegCount num_flows = 0;
     } proto[to_utype(PktType::MAX)];
 
+    PegCount num_flows = 0;
+    FlowCache* cache = nullptr;
+    snort::Flow* mem = nullptr;
     class ExpectCache* exp_cache = nullptr;
     PktType last_pkt_type = PktType::NONE;
 

@@ -49,41 +49,17 @@ THREAD_LOCAL FlowControl* flow_con = nullptr;
 static BaseStats g_stats;
 THREAD_LOCAL BaseStats stream_base_stats;
 
-#define PROTO_PEGS(proto_str) \
-    { CountType::SUM, proto_str "_flows", "total " proto_str " sessions" }, \
-    { CountType::SUM, proto_str "_total_prunes", "total " proto_str " sessions pruned" }, \
-    { CountType::SUM, proto_str "_idle_prunes", proto_str " sessions pruned due to timeout" }, \
-    { CountType::SUM, proto_str "_excess_prunes", proto_str " sessions pruned due to excess" }, \
-    { CountType::SUM, proto_str "_uni_prunes", proto_str " uni sessions pruned" }, \
-    { CountType::SUM, proto_str "_preemptive_prunes", proto_str " sessions pruned during preemptive pruning" }, \
-    { CountType::SUM, proto_str "_memcap_prunes", proto_str " sessions pruned due to memcap" }, \
-    { CountType::SUM, proto_str "_ha_prunes", proto_str " sessions pruned by high availability sync" }
-
-#define SET_PROTO_COUNTS(proto, pkttype) \
-    stream_base_stats.proto ## _flows = flow_con->get_flows(PktType::pkttype); \
-    stream_base_stats.proto ## _total_prunes = flow_con->get_total_prunes(PktType::pkttype), \
-    stream_base_stats.proto ## _timeout_prunes = \
-        flow_con->get_prunes(PktType::pkttype, PruneReason::IDLE), \
-    stream_base_stats.proto ## _excess_prunes = \
-        flow_con->get_prunes(PktType::pkttype, PruneReason::EXCESS), \
-    stream_base_stats.proto ## _uni_prunes = \
-        flow_con->get_prunes(PktType::pkttype, PruneReason::UNI), \
-    stream_base_stats.proto ## _preemptive_prunes = \
-        flow_con->get_prunes(PktType::pkttype, PruneReason::PREEMPTIVE), \
-    stream_base_stats.proto ## _memcap_prunes = \
-        flow_con->get_prunes(PktType::pkttype, PruneReason::MEMCAP), \
-    stream_base_stats.proto ## _ha_prunes = \
-        flow_con->get_prunes(PktType::pkttype, PruneReason::HA)
-
 // FIXIT-L dependency on stats define in another file
 const PegInfo base_pegs[] =
 {
-    PROTO_PEGS("ip"),
-    PROTO_PEGS("icmp"),
-    PROTO_PEGS("tcp"),
-    PROTO_PEGS("udp"),
-    PROTO_PEGS("user"),
-    PROTO_PEGS("file"),
+    { CountType::SUM, "flows", "total sessions" },
+    { CountType::SUM, "total_prunes", "total sessions pruned" },
+    { CountType::SUM, "idle_prunes", " sessions pruned due to timeout" },
+    { CountType::SUM, "excess_prunes", "sessions pruned due to excess" },
+    { CountType::SUM, "uni_prunes", "uni sessions pruned" },
+    { CountType::SUM, "preemptive_prunes", "sessions pruned during preemptive pruning" },
+    { CountType::SUM, "memcap_prunes", "sessions pruned due to memcap" },
+    { CountType::SUM, "ha_prunes", "sessions pruned by high availability sync" },
     { CountType::END, nullptr, nullptr }
 };
 
@@ -93,12 +69,14 @@ void base_sum()
     if ( !flow_con )
         return;
 
-    SET_PROTO_COUNTS(ip, IP);
-    SET_PROTO_COUNTS(icmp, ICMP);
-    SET_PROTO_COUNTS(tcp, TCP);
-    SET_PROTO_COUNTS(udp, UDP);
-    SET_PROTO_COUNTS(user, PDU);
-    SET_PROTO_COUNTS(file, FILE);
+    stream_base_stats.flows = flow_con->get_flows();
+    stream_base_stats.prunes = flow_con->get_total_prunes();
+    stream_base_stats.timeout_prunes = flow_con->get_prunes(PruneReason::IDLE);
+    stream_base_stats.excess_prunes = flow_con->get_prunes(PruneReason::EXCESS);
+    stream_base_stats.uni_prunes = flow_con->get_prunes(PruneReason::UNI);
+    stream_base_stats.preemptive_prunes = flow_con->get_prunes(PruneReason::PREEMPTIVE);
+    stream_base_stats.memcap_prunes = flow_con->get_prunes(PruneReason::MEMCAP);
+    stream_base_stats.ha_prunes = flow_con->get_prunes(PruneReason::HA);
 
     sum_stats((PegCount*)&g_stats, (PegCount*)&stream_base_stats,
         array_size(base_pegs)-1);
@@ -159,47 +137,34 @@ StreamBase::StreamBase(const StreamModuleConfig* c)
 
 void StreamBase::tinit()
 {
-    assert(!flow_con);
-    flow_con = new FlowControl;
+    assert(!flow_con && config.flow_cache_cfg.max_flows);
+
+    // this is temp added to suppress the compiler error only
+    flow_con = new FlowControl(config.flow_cache_cfg);
     InspectSsnFunc f;
 
     StreamHAManager::tinit();
 
-    if ( config.ip_cfg.max_sessions )
-    {
-        if ( (f = InspectorManager::get_session(PROTO_BIT__IP)) )
-            flow_con->init_proto(PktType::IP, config.ip_cfg, f);
-    }
-    if ( config.icmp_cfg.max_sessions )
-    {
-        if ( (f = InspectorManager::get_session(PROTO_BIT__ICMP)) )
-            flow_con->init_proto(PktType::ICMP, config.icmp_cfg, f);
-    }
-    if ( config.tcp_cfg.max_sessions )
-    {
-        if ( (f = InspectorManager::get_session(PROTO_BIT__TCP)) )
-            flow_con->init_proto(PktType::TCP, config.tcp_cfg, f);
-    }
-    if ( config.udp_cfg.max_sessions )
-    {
-        if ( (f = InspectorManager::get_session(PROTO_BIT__UDP)) )
-            flow_con->init_proto(PktType::UDP, config.udp_cfg, f);
-    }
-    if ( config.user_cfg.max_sessions )
-    {
-        if ( (f = InspectorManager::get_session(PROTO_BIT__PDU)) )
-            flow_con->init_proto(PktType::PDU, config.user_cfg, f);
-    }
-    if ( config.file_cfg.max_sessions )
-    {
-        if ( (f = InspectorManager::get_session(PROTO_BIT__FILE)) )
-            flow_con->init_proto(PktType::FILE, config.file_cfg, f);
-    }
-    uint32_t max = config.tcp_cfg.max_sessions + config.udp_cfg.max_sessions
-        + config.user_cfg.max_sessions;
+    if ( (f = InspectorManager::get_session(PROTO_BIT__IP)) )
+        flow_con->init_proto(PktType::IP, f);
 
-    if ( max > 0 )
-        flow_con->init_exp(max);
+    if ( (f = InspectorManager::get_session(PROTO_BIT__ICMP)) )
+        flow_con->init_proto(PktType::ICMP, f);
+
+    if ( (f = InspectorManager::get_session(PROTO_BIT__TCP)) )
+        flow_con->init_proto(PktType::TCP, f);
+
+    if ( (f = InspectorManager::get_session(PROTO_BIT__UDP)) )
+        flow_con->init_proto(PktType::UDP, f);
+
+    if ( (f = InspectorManager::get_session(PROTO_BIT__PDU)) )
+        flow_con->init_proto(PktType::PDU, f);
+
+    if ( (f = InspectorManager::get_session(PROTO_BIT__FILE)) )
+        flow_con->init_proto(PktType::FILE, f);
+
+    if ( config.flow_cache_cfg.max_flows > 0 )
+        flow_con->init_exp(config.flow_cache_cfg.max_flows);
 
     FlushBucket::set(config.footprint);
 }
@@ -213,12 +178,8 @@ void StreamBase::tterm()
 void StreamBase::show(SnortConfig*)
 {
     LogMessage("Stream Base config:\n");
-    LogMessage("    IP   max sessions: %d\n", config.ip_cfg.max_sessions);
-    LogMessage("    ICMP max sessions: %d\n", config.icmp_cfg.max_sessions);
-    LogMessage("    TCP  max sessions: %d\n", config.tcp_cfg.max_sessions);
-    LogMessage("    UDP  max sessions: %d\n", config.udp_cfg.max_sessions);
-    LogMessage("    User max sessions: %d\n", config.user_cfg.max_sessions);
-    LogMessage("    File max sessions: %d\n", config.file_cfg.max_sessions);
+    LogMessage("    Max flows: %d\n", config.flow_cache_cfg.max_flows);
+    LogMessage("    Pruning timeout: %d\n", config.flow_cache_cfg.pruning_timeout);
 }
 
 void StreamBase::eval(Packet* p)

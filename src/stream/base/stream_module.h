@@ -39,24 +39,16 @@ extern Trace TRACE_NAME(stream);
 #define MOD_NAME "stream"
 #define MOD_HELP "common flow tracking"
 
-#define PROTO_FIELDS(proto) \
-    PegCount proto ## _flows; \
-    PegCount proto ## _total_prunes; \
-    PegCount proto ## _timeout_prunes; \
-    PegCount proto ## _excess_prunes; \
-    PegCount proto ## _uni_prunes; \
-    PegCount proto ## _preemptive_prunes; \
-    PegCount proto ## _memcap_prunes; \
-    PegCount proto ## _ha_prunes
-
 struct BaseStats
 {
-    PROTO_FIELDS(ip);
-    PROTO_FIELDS(icmp);
-    PROTO_FIELDS(tcp);
-    PROTO_FIELDS(udp);
-    PROTO_FIELDS(user);
-    PROTO_FIELDS(file);
+     PegCount flows;
+     PegCount prunes;
+     PegCount timeout_prunes;
+     PegCount excess_prunes;
+     PegCount uni_prunes;
+     PegCount preemptive_prunes;
+     PegCount memcap_prunes;
+     PegCount ha_prunes;
 };
 
 extern const PegInfo base_pegs[];
@@ -65,13 +57,7 @@ extern THREAD_LOCAL BaseStats stream_base_stats;
 
 struct StreamModuleConfig
 {
-    FlowConfig ip_cfg;
-    FlowConfig icmp_cfg;
-    FlowConfig tcp_cfg;
-    FlowConfig udp_cfg;
-    FlowConfig user_cfg;
-    FlowConfig file_cfg;
-
+    FlowCacheConfig flow_cache_cfg;
     unsigned footprint;
 };
 

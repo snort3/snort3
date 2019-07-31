@@ -37,10 +37,12 @@ class Flow;
 struct FlowKey;
 }
 
+class FlowUniList;
+
 class FlowCache
 {
 public:
-    FlowCache(const FlowConfig&);
+    FlowCache(const FlowCacheConfig&);
     ~FlowCache();
 
     FlowCache(const FlowCache&) = delete;
@@ -53,7 +55,6 @@ public:
 
     int release(snort::Flow*, PruneReason = PruneReason::NONE, bool do_cleanup = true);
 
-    unsigned prune_unis();
     unsigned prune_stale(uint32_t thetime, const snort::Flow* save_me);
     unsigned prune_excess(const snort::Flow* save_me);
     bool prune_one(PruneReason, bool do_cleanup);
@@ -63,7 +64,7 @@ public:
     unsigned get_count();
 
     unsigned get_max_flows() const
-    { return config.max_sessions; }
+    { return config.max_flows; }
 
     PegCount get_total_prunes() const
     { return prune_stats.get_total(); }
@@ -83,14 +84,16 @@ private:
 
 private:
     static const unsigned cleanup_flows = 1;
-    const FlowConfig config;
-    unsigned uni_count;
+    const FlowCacheConfig config;
     uint32_t flags;
 
     class ZHash* hash_table;
-    snort::Flow* uni_head, * uni_tail;
-    PruneStats prune_stats;
-};
+    FlowUniList* uni_flows;
+    FlowUniList* uni_ip_flows;
 
+    //snort::Flow* uni_head_ip, *uni_tail_ip, *uni_head_nonip, *uni_tail_nonip;
+    PruneStats prune_stats;
+    unsigned prune_unis(PktType);
+};
 #endif
 
