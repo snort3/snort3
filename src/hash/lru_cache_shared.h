@@ -42,6 +42,7 @@ struct LruCacheSharedStats
                              //  room for a new entry.
     PegCount find_hits = 0;  //  Found entry in cache.
     PegCount find_misses = 0; //  Did not find entry in cache.
+    PegCount removes = 0;    //  Found entry and removed it.
 };
 
 template<typename Key, typename Value, typename Hash>
@@ -69,9 +70,31 @@ public:
     // Return all data from the LruCache in order (most recently used to least)
     std::vector<std::pair<Key, Data> > get_all_data();
 
+    //  Get current number of elements in the LruCache.
+    size_t size()
+    {
+        std::lock_guard<std::mutex> cache_lock(cache_mutex);
+        return current_size;
+    }
+
+    size_t get_max_size()
+    {
+        std::lock_guard<std::mutex> cache_lock(cache_mutex);
+        return max_size;
+    }
+
     //  Modify the maximum number of entries allowed in the cache.
     //  If the size is reduced, the oldest entries are removed.
     bool set_max_size(size_t newsize);
+
+    //  Remove entry associated with Key.
+    //  Returns true if entry existed, false otherwise.
+    bool remove(const Key& key);
+
+    //  Remove entry associated with key and return removed data.
+    //  Returns true and copy of data if entry existed.  Returns false if
+    //  entry did not exist.
+    bool remove(const Key& key, Data& data);
 
     const PegInfo* get_pegs() const
     {
@@ -214,5 +237,41 @@ LruCacheShared<Key, Value, Hash>::get_all_data()
     return vec;
 }
 
-#endif
+template<typename Key, typename Value, typename Hash>
+bool LruCacheShared<Key, Value, Hash>::remove(const Key& key)
+{
+    LruMapIter map_iter;
+    std::lock_guard<std::mutex> cache_lock(cache_mutex);
 
+    map_iter = map.find(key);
+    if (map_iter == map.end())
+        return false;   //  Key is not in LruCache.
+
+    current_size--;
+    list.erase(map_iter->second);
+    map.erase(map_iter);
+    stats.removes++;
+    return true;
+}
+
+template<typename Key, typename Value, typename Hash>
+bool LruCacheShared<Key, Value, Hash>::remove(const Key& key, std::shared_ptr<Value>& data)
+{
+    LruMapIter map_iter;
+    std::lock_guard<std::mutex> cache_lock(cache_mutex);
+
+    map_iter = map.find(key);
+    if (map_iter == map.end())
+        return false;   //  Key is not in LruCache.
+
+    data = map_iter->second->second;
+
+    current_size--;
+    list.erase(map_iter->second);
+    map.erase(map_iter);
+    stats.removes++;
+    return true;
+}
+
+
+#endif

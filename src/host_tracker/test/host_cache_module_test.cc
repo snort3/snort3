@@ -95,12 +95,14 @@ TEST(host_cache_module, host_cache_module_test_values)
     CHECK(!strcmp(ht_pegs[1].name, "lru_cache_prunes"));
     CHECK(!strcmp(ht_pegs[2].name, "lru_cache_find_hits"));
     CHECK(!strcmp(ht_pegs[3].name, "lru_cache_find_misses"));
-    CHECK(!ht_pegs[4].name);
+    CHECK(!strcmp(ht_pegs[4].name, "lru_cache_removes"));
+    CHECK(!ht_pegs[5].name);
 
     CHECK(ht_stats[0] == 0);
     CHECK(ht_stats[1] == 0);
     CHECK(ht_stats[2] == 0);
     CHECK(ht_stats[3] == 0);
+    CHECK(ht_stats[4] == 0);
 
     size_val.set(&size_param);
 
@@ -133,4 +135,3 @@ int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

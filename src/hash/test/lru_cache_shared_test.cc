@@ -34,7 +34,16 @@ TEST_GROUP(lru_cache_shared)
 {
 };
 
-//  Test LruCacheShared find, operator[], and get_all_data functions.
+//  Test LruCacheShared constructor and member access.
+TEST(lru_cache_shared, constructor_test)
+{
+    LruCacheShared<int, std::string, std::hash<int> > lru_cache(5);
+
+    CHECK(lru_cache.get_max_size() == 5);
+    CHECK(lru_cache.size() == 0);
+}
+
+//  Test LruCacheShared find and get_all_data functions.
 TEST(lru_cache_shared, insert_test)
 {
     LruCacheShared<int, std::string, std::hash<int> > lru_cache(3);
@@ -71,7 +80,71 @@ TEST(lru_cache_shared, insert_test)
     CHECK(vec[2].second->compare("two") == 0);
 }
 
-//  Test statistics counters and set_max_size.
+// Test set / get max size.
+TEST(lru_cache_shared, max_size)
+{
+    std::string data;
+    LruCacheShared<int, std::string, std::hash<int> > lru_cache(5);
+
+    size_t sz = lru_cache.get_max_size();
+    CHECK(sz == 5);
+
+    for (size_t i = 0; i < sz; i++)
+        lru_cache[i]->assign(std::to_string(i));
+
+    // Check that we can't set max size to 0
+    CHECK(lru_cache.set_max_size(0) == false);
+    CHECK(lru_cache.get_max_size() == sz);
+
+    // this prunes and should kick out the three oldest, i.e. 0, 1 and 2
+    CHECK(lru_cache.set_max_size(2) == true);
+
+    auto vec = lru_cache.get_all_data();
+    CHECK(vec.size() == 2);
+    CHECK(vec[0].first == 4 and *vec[0].second == "4");
+    CHECK(vec[1].first == 3 and *vec[1].second == "3");
+}
+
+//  Test the remove functions.
+TEST(lru_cache_shared, remove_test)
+{
+    std::string data;
+    LruCacheShared<int, std::string, std::hash<int> > lru_cache(5);
+
+    for (int i = 0; i < 5; i++)
+    {
+        lru_cache[i]->assign(std::to_string(i));
+        CHECK(true == lru_cache.remove(i));
+        CHECK(lru_cache.find(i) == nullptr);
+    }
+
+    CHECK(0 == lru_cache.size());
+
+    //  Test remove API that returns the removed data.
+    std::shared_ptr<std::string> data_ptr;
+    lru_cache[1]->assign("one");
+    CHECK(1 == lru_cache.size());
+    CHECK(true == lru_cache.remove(1, data_ptr));
+    CHECK(*data_ptr == "one");
+    CHECK(0 == lru_cache.size());
+
+    lru_cache[1]->assign("one");
+    lru_cache[2]->assign("two");
+    CHECK(2 == lru_cache.size());
+
+    //  Verify that removing an item that does not exist does not affect
+    //  cache.
+    CHECK(false == lru_cache.remove(3));
+    CHECK(false == lru_cache.remove(4, data_ptr));
+    CHECK(2 == lru_cache.size());
+
+    auto vec = lru_cache.get_all_data();
+    CHECK(2 == vec.size());
+    CHECK(vec[0].first == 2 and *vec[0].second == "two");
+    CHECK(vec[1].first == 1 and *vec[1].second == "one");
+}
+
+//  Test statistics counters.
 TEST(lru_cache_shared, stats_test)
 {
     LruCacheShared<int, std::string, std::hash<int> > lru_cache(5);
@@ -88,12 +161,16 @@ TEST(lru_cache_shared, stats_test)
 
     CHECK(lru_cache.set_max_size(3) == true); // change size prunes; in addition to previous 5
 
+    lru_cache.remove(7);    // Removes - hit
+    lru_cache.remove(10);   // Removes - miss
+
     PegCount* stats = lru_cache.get_counts();
 
     CHECK(stats[0] == 10);  //  adds
     CHECK(stats[1] == 7);   //  prunes
     CHECK(stats[2] == 3);   //  find hits
     CHECK(stats[3] == 12);  //  find misses
+    CHECK(stats[4] == 1);   //  removes
 
     // Check statistics names.
     const PegInfo* pegs = lru_cache.get_pegs();
@@ -101,10 +178,10 @@ TEST(lru_cache_shared, stats_test)
     CHECK(!strcmp(pegs[1].name, "lru_cache_prunes"));
     CHECK(!strcmp(pegs[2].name, "lru_cache_find_hits"));
     CHECK(!strcmp(pegs[3].name, "lru_cache_find_misses"));
+    CHECK(!strcmp(pegs[4].name, "lru_cache_removes"));
 }
 
 int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-
