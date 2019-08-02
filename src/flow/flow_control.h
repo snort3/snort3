@@ -64,6 +64,7 @@ public:
     void delete_flow(snort::Flow*, PruneReason);
     void purge_flows();
     bool prune_one(PruneReason, bool do_cleanup);
+    snort::Flow* stale_flow_cleanup(FlowCache*, snort::Flow*, snort::Packet*);
 
     void timeout_flows(time_t cur_time);
 

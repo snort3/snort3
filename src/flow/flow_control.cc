@@ -20,6 +20,8 @@
 #include "config.h"
 #endif
 
+#include <daq_common.h>
+
 #include "flow_control.h"
 
 #include "detection/detection_engine.h"
@@ -27,6 +29,7 @@
 #include "managers/inspector_manager.h"
 #include "memory/memory_cap.h"
 #include "packet_io/active.h"
+#include "packet_tracer/packet_tracer.h"
 #include "protocols/icmp4.h"
 #include "protocols/tcp.h"
 #include "protocols/udp.h"
@@ -162,6 +165,20 @@ void FlowControl::preemptive_cleanup()
         if ( !prune_one(PruneReason::PREEMPTIVE, true) )
             break;
     }
+}
+
+Flow* FlowControl::stale_flow_cleanup(FlowCache* cache, Flow* flow, Packet* p)
+{
+    if ( p->pkth->flags & DAQ_PKT_FLAG_NEW_FLOW )
+    {
+        if (PacketTracer::is_active())
+            PacketTracer::log("Session: deleting snort session, reason: stale and not cleaned \n");
+
+        cache->release(flow, PruneReason::STALE);
+        flow = nullptr;
+    }
+
+    return flow;
 }
 
 //-------------------------------------------------------------------------
@@ -356,6 +373,10 @@ bool FlowControl::process(PktType type, Packet* p, bool* new_flow)
     FlowKey key;
     set_key(&key, p);
     Flow* flow = cache->find(&key);
+
+    if (flow)
+        flow = stale_flow_cleanup(cache, flow, p);
+
     if ( !flow )
     {
         flow = HighAvailabilityManager::import(*p, key);

@@ -284,7 +284,7 @@ struct SO_PUBLIC Packet
 
     bool is_offloaded() const
     { return (ts_packet_flags & PKT_TS_OFFLOADED) != 0; }
-
+ 
     void set_offloaded()
     { ts_packet_flags |= PKT_TS_OFFLOADED; }
 
