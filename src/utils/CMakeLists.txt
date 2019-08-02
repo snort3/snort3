@@ -13,6 +13,7 @@ set( UTIL_INCLUDES
     sfmemcap.h
     stats.h
     util.h
+    util_ber.h
     util_cstring.h
     util_jsnorm.h
     util_unfold.h
@@ -38,6 +39,7 @@ add_library ( utils OBJECT
     snort_bounds.h
     stats.cc
     util.cc
+    util_ber.cc
     util_cstring.cc
     util_jsnorm.cc 
     util_net.cc 

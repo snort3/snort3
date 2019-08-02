@@ -48,6 +48,8 @@ extern const BaseApi* ips_so;
 extern const BaseApi* ips_ack[];
 extern const BaseApi* ips_asn1[];
 extern const BaseApi* ips_base64[];
+extern const BaseApi* ips_ber_data[];
+extern const BaseApi* ips_ber_skip[];
 extern const BaseApi* ips_byte_extract[];
 extern const BaseApi* ips_byte_jump[];
 extern const BaseApi* ips_byte_math[];
@@ -118,6 +120,8 @@ void load_ips_options()
     PluginManager::load_plugins(ips_ack);
     PluginManager::load_plugins(ips_asn1);
     PluginManager::load_plugins(ips_base64);
+    PluginManager::load_plugins(ips_ber_data);
+    PluginManager::load_plugins(ips_ber_skip);
     PluginManager::load_plugins(ips_byte_extract);
     PluginManager::load_plugins(ips_byte_jump);
     PluginManager::load_plugins(ips_byte_math);
