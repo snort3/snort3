@@ -40,6 +40,10 @@ namespace preprocessors
     {
         bool retval = true;
 
+        // identity
+        bool identity_table = false;
+        std::streampos pos = data_stream.tellg();
+
         table_api.open_table("firewall");
 
         std::string keyword;
@@ -159,7 +163,7 @@ namespace preprocessors
             else if (keyword == "debug_future_date")
                 tmpval = table_api.add_option("future_date_debug_enabled", true);
             else if (keyword == "identity_rule_path")
-                tmpval = parse_string_option("identity_rule_path", data_stream);
+                identity_table = tmpval = parse_string_option("identity_rule_path", data_stream);
             else if (keyword == "interface_ip_map_path")
                 tmpval = parse_string_option("intf_ip_map_path", data_stream);
             else if (keyword == "daqif_path")
@@ -174,6 +178,42 @@ namespace preprocessors
                 data_api.failed_conversion(data_stream, keyword);
                 retval = false;
             }
+        }
+        table_api.close_table();
+
+        // identity, reading data_stream again
+        if ( identity_table )
+        {
+            data_stream.clear();
+            data_stream.seekg(pos);
+
+            table_api.open_top_level_table("identity");
+            while (data_stream >> keyword)
+            {
+                bool tmpval = true;
+
+                if (keyword == "fw_usrc_memcap")
+                    tmpval = parse_int_option("user_cache_memcap", data_stream, false);
+                else if (keyword == "identity_rule_path")
+                    tmpval = parse_string_option("identity_rule_path", data_stream);
+                else if (keyword == "interface_ip_map_path")
+                    tmpval = parse_string_option("intf_ip_map_path", data_stream);
+                else if (keyword == "daqif_path")
+                    tmpval = parse_string_option("daq_intf_path", data_stream);
+                else if (keyword == "running_config_network_path")
+                    tmpval = parse_string_option("running_network_config_path", data_stream);
+
+                if (!tmpval)
+                {
+                    data_api.failed_conversion(data_stream, keyword);
+                    retval = false;
+                }
+            }
+#ifdef REG_TEST
+            table_api.add_option("regtest", true);
+            table_api.add_option("user_snapshot_path", "./");
+#endif
+            table_api.close_table();
         }
 
         // Auto enable for firewall
