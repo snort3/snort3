@@ -1022,7 +1022,9 @@ void InspectorManager::full_inspection(Packet* p)
     if ( flow->service and flow->clouseau and !p->is_cooked() )
         bumble(p);
 
-    if ( !p->dsize )
+    // For reassembled PDUs, a null data buffer signals no detection. Detection can be required
+    // with a length of 0. For raw packets, a length of 0 does signal no detection.
+    if ( (p->is_cooked() and !p->data) or (!p->is_cooked() and !p->dsize) )
         DetectionEngine::disable_content(p);
 
     else if ( flow->gadget && flow->gadget->likes(p) )

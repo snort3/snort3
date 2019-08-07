@@ -279,11 +279,10 @@ void HttpInspect::eval(Packet* p)
         return;
 
     // Don't make pkt_data for headers available to detection
-    // FIXIT-M One byte to avoid potential problems with zero
     if ((session_data->section_type[source_id] == SEC_HEADER) ||
         (session_data->section_type[source_id] == SEC_TRAILER))
     {
-        p->set_detect_limit(1);
+        p->set_detect_limit(0);
     }
 
     // Limit alt_dsize of message body sections to request/response depth
@@ -293,9 +292,8 @@ void HttpInspect::eval(Packet* p)
         p->set_detect_limit(session_data->detect_depth_remaining[source_id]);
     }
 
-    const int remove_workaround = session_data->zero_byte_workaround[source_id] ? 1 : 0;
     const bool partial_flush = session_data->partial_flush[source_id];
-    if (!process(p->data, p->dsize - remove_workaround, p->flow, source_id, !partial_flush))
+    if (!process(p->data, p->dsize, p->flow, source_id, !partial_flush))
     {
         DetectionEngine::disable_content(p);
     }

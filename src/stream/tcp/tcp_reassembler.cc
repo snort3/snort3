@@ -568,7 +568,7 @@ int TcpReassembler::_flush_to_seq(
         bytes_processed += flushed_bytes;
         trs.sos.seglist_base_seq += flushed_bytes;
 
-        if ( pdu->dsize )
+        if ( pdu->data )
         {
             if ( p->packet_flags & PKT_PDU_TAIL )
                 pdu->packet_flags |= ( PKT_REBUILT_STREAM | PKT_STREAM_EST | PKT_PDU_TAIL );

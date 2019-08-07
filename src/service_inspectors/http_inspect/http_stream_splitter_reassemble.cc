@@ -418,19 +418,9 @@ const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow* flow, unsi
             partial_buffer_length = buf_size;
         }
 
-        // FIXIT-M kludge until we work out issues with returning an empty buffer
         http_buf.data = buffer;
-        if (buf_size > 0)
-        {
-            http_buf.length = buf_size;
-            session_data->zero_byte_workaround[source_id] = false;
-        }
-        else
-        {
-            buffer[0] = '\0';
-            http_buf.length = 1;
-            session_data->zero_byte_workaround[source_id] = true;
-        }
+        http_buf.length = buf_size;
+
         buffer = nullptr;
         session_data->section_offset[source_id] = 0;
     }

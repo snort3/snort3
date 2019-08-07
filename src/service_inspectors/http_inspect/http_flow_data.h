@@ -95,7 +95,6 @@ private:
                                                 HttpEnums::SEC__NOT_COMPUTE };
     int32_t num_head_lines[2] = { HttpEnums::STAT_NOT_PRESENT, HttpEnums::STAT_NOT_PRESENT };
     bool tcp_close[2] = { false, false };
-    bool zero_byte_workaround[2];
     bool partial_flush[2] = { false, false };
 
     // Infractions and events are associated with a specific message and are stored in the
