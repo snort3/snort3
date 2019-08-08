@@ -436,6 +436,9 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
 
     else
     {
+        if (PacketTracer::is_active())
+            PacketTracer::log("Session: new snort session\n");
+
         init_roles(p, flow);
         DataBus::publish(FLOW_STATE_SETUP_EVENT, p);
 
