@@ -59,7 +59,7 @@ public:
     void show(SnortConfig*) override;
     NORETURN_ASSERT void eval(Packet*) override;
 
-private:
+public:
     StreamIcmpConfig* config;
 };
 
@@ -82,6 +82,12 @@ NORETURN_ASSERT void StreamIcmp::eval(Packet*)
 {
     // session::process() instead
     assert(false);
+}
+
+StreamIcmpConfig* get_icmp_cfg(Inspector* ins)
+{
+    assert(ins);
+    return ((StreamIcmp*)ins)->config;
 }
 
 //-------------------------------------------------------------------------

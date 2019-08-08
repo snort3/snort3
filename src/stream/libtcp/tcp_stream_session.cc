@@ -53,7 +53,8 @@ void TcpStreamSession::init_new_tcp_session(TcpSegmentDescriptor& tsd)
 
     /* New session, previous was marked as reset.  Clear the reset flag. */
     flow->clear_session_flags(SSNFLAG_RESET);
-    flow->set_expire(tsd.get_pkt(), config->session_timeout);
+
+    flow->set_expire(tsd.get_pkt(), flow->default_session_timeout); 
 
     update_perf_base_state(TcpStreamTracker::TCP_SYN_SENT);
 

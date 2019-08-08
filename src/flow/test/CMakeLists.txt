@@ -9,3 +9,7 @@ add_cpputest( flow_control_test
 )
 
 add_cpputest( session_test )
+
+add_cpputest( flow_test
+    SOURCES ../flow.cc
+)

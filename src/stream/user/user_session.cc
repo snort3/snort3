@@ -405,8 +405,7 @@ void UserSession::update(Packet* p, Flow* flow)
         }
     }
 
-    StreamUserConfig* pc = get_user_cfg(flow->ssn_server);
-    flow->set_expire(p, pc->session_timeout);
+    flow->set_expire(p, flow->default_session_timeout);
 }
 
 void UserSession::restart(Packet* p)
@@ -440,6 +439,9 @@ bool UserSession::setup(Packet*)
 {
     client.init();
     server.init();
+
+    StreamUserConfig* pc = get_user_cfg(flow->ssn_server);
+    flow->set_default_session_timeout(pc->session_timeout, false);
 
 #ifdef ENABLE_EXPECTED_USER
     if ( Stream::expected_flow(flow, p) )

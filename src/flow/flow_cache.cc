@@ -328,7 +328,12 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
 
     while ( flow and (retired < num_flows) )
     {
-        if ( flow->last_data_seen + config.proto[to_utype(flow->key->pkt_type)].nominal_timeout > thetime )
+        if ( flow->is_hard_expiration() )
+        {
+            if ( flow->expire_time > (uint64_t) thetime )
+                break;
+        }
+        else if ( flow->last_data_seen + config.proto[to_utype(flow->key->pkt_type)].nominal_timeout > thetime )
             break;
 
         if ( HighAvailabilityManager::in_standby(flow) or

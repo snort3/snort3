@@ -111,8 +111,7 @@ static inline void update_session(Packet* p, Flow* lws)
     // Reset the session timeout.
     if ( lws->ssn_server )
     {
-        StreamIpConfig* pc = get_ip_cfg(lws->ssn_server);
-        lws->set_expire(p, pc->session_timeout);
+        lws->set_expire(p, lws->default_session_timeout);
     }
 }
 
@@ -143,6 +142,9 @@ bool IpSession::setup(Packet* p)
 {
     SESSION_STATS_ADD(ip_stats);
     memset(&tracker, 0, sizeof(tracker));
+
+    StreamIpConfig* pc = get_ip_cfg(flow->ssn_server);
+    flow->set_default_session_timeout(pc->session_timeout, false);
 
     if ( p->ptrs.decode_flags & DECODE_FRAG )
     {
@@ -261,6 +263,7 @@ TEST_CASE("IP Session", "[ip_session]")
     {
         StreamIpConfig* sic = new StreamIpConfig;
         sic->session_timeout = 360;
+        lws.set_default_session_timeout(sic->session_timeout, true);
         StreamIp si(sic);
         lws.ssn_server = &si;
 

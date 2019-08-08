@@ -72,6 +72,8 @@
 #define SSNFLAG_ABORT_CLIENT        0x10000000
 #define SSNFLAG_ABORT_SERVER        0x20000000
 
+#define SSNFLAG_HARD_EXPIRATION     0x40000000
+
 #define SSNFLAG_NONE                0x00000000 /* nothing, an MT bag of chips */
 
 #define SSNFLAG_SEEN_BOTH (SSNFLAG_SEEN_SERVER | SSNFLAG_SEEN_CLIENT)
@@ -326,6 +328,18 @@ public:
     bool is_suspended() const
     { return context_chain.front(); }
 
+    void set_default_session_timeout(uint32_t dst, bool force)
+    { 
+        if (force || (default_session_timeout == 0))
+            default_session_timeout = dst; 
+    }
+
+    void set_hard_expiration()
+    { ssn_state.session_flags |= SSNFLAG_HARD_EXPIRATION; }
+
+    bool is_hard_expiration()
+    { return (ssn_state.session_flags & SSNFLAG_HARD_EXPIRATION) != 0; }
+
 public:  // FIXIT-M privatize if possible
     // fields are organized by initialization and size to minimize
     // void space and allow for memset of tail end of struct
@@ -368,6 +382,8 @@ public:  // FIXIT-M privatize if possible
     unsigned ips_policy_id;
     unsigned network_policy_id;
     unsigned reputation_id;
+
+    uint32_t default_session_timeout;
 
     uint16_t client_port;
     uint16_t server_port;

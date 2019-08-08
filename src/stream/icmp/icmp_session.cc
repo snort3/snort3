@@ -190,6 +190,10 @@ bool IcmpSession::setup(Packet*)
     ssn_time.tv_usec = 0;
     flow->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
     SESSION_STATS_ADD(icmpStats);
+    
+    StreamIcmpConfig* pc = get_icmp_cfg(flow->ssn_server);
+    flow->set_default_session_timeout(pc->session_timeout, false);
+
     return true;
 }
 
@@ -202,6 +206,8 @@ void IcmpSession::clear()
 int IcmpSession::process(Packet* p)
 {
     int status;
+    
+    flow->set_expire(p, flow->default_session_timeout);
 
     switch (p->ptrs.icmph->type)
     {

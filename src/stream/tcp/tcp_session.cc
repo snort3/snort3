@@ -96,6 +96,9 @@ bool TcpSession::setup(Packet* p)
     TcpStreamSession::setup(p);
     splitter_init = false;
 
+    TcpStreamConfig* pc = get_tcp_cfg(flow->ssn_server);
+    flow->set_default_session_timeout(pc->session_timeout, false);
+
     SESSION_STATS_ADD(tcpStats);
     tcpStats.setups++;
     return true;
@@ -905,7 +908,8 @@ void TcpSession::do_packet_analysis_post_checks(Packet* p)
     if (!(pkt_action_mask & ACTION_LWSSN_CLOSED))
     {
         flow->markup_packet_flags(p);
-        flow->set_expire(p, config->session_timeout);
+
+        flow->set_expire(p, flow->default_session_timeout);
     }
     else
         TcpHAManager::process_deletion(*p->flow);

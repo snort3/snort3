@@ -119,7 +119,7 @@ bool UdpSession::setup(Packet* p)
     flow->ssn_state.direction = FROM_CLIENT;
 
     StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);
-    flow->set_expire(p, pc->session_timeout);
+    flow->set_default_session_timeout(pc->session_timeout, false);
 
     SESSION_STATS_ADD(udpStats);
 
@@ -192,7 +192,8 @@ int UdpSession::process(Packet* p)
 
     ProcessUdp(flow, p, pc, nullptr);
     flow->markup_packet_flags(p);
-    flow->set_expire(p, pc->session_timeout);
+    
+    flow->set_expire(p, flow->default_session_timeout);
 
     return 0;
 }

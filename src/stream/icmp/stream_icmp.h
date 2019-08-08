@@ -22,12 +22,19 @@
 
 #include <cstdint>
 
+namespace snort
+{
+class Inspector;
+}
+
 struct StreamIcmpConfig
 {
     uint32_t session_timeout;
 
     StreamIcmpConfig();
 };
+
+StreamIcmpConfig* get_icmp_cfg(snort::Inspector*);
 
 #endif
 
