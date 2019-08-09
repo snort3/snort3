@@ -261,6 +261,56 @@ static void xhash_delete_free_list(XHash* t)
 }
 
 /*!
+ * Try to change the memcap
+ *  Behavior is undefined when t->usrfree is set
+ *
+ * t             SFXHASH table pointer
+ * new_memcap    the new desired memcap
+ * max_work      the maximum amount of work for the function to do (0 = do all available work)
+ *
+ * returns
+ * XHASH_OK           when memcap is successfully decreased
+ * XHASH_PENDING      when more work needs to be done
+ * XHASH_NOMEM        when there isn't enough memory in the hash table
+ * XHASH_ERR          when an error has occurred
+ */
+int xhash_change_memcap(XHash *t, unsigned long new_memcap, unsigned *max_work)
+{
+    if (t == nullptr or new_memcap < t->overhead_bytes)
+        return XHASH_ERR;
+    
+    if (new_memcap == t->mc.memcap)
+        return XHASH_OK;
+
+    if (new_memcap > t->mc.memcap)
+    {
+        t->mc.memcap = new_memcap;
+        return XHASH_OK;
+    }
+
+    unsigned work = 0;
+    while (new_memcap < t->mc.memused
+            and (work < *max_work or *max_work == 0)
+            and (xhash_free_anr_lru(t) == XHASH_OK))
+        work++;
+
+    if (*max_work != 0 and (work == *max_work and new_memcap < t->mc.memused))
+    {
+        *max_work -= work;
+        return XHASH_PENDING;
+    }
+
+    //we ran out of nodes to free and there still isn't enough memory
+    //or (we have undefined behavior: t->usrfree is set and xhash_free_anr_lru is returning XHASH_ERR)
+    if (new_memcap < t->mc.memused)
+        return XHASH_NOMEM;
+ 
+    t->mc.memcap = new_memcap;
+    return XHASH_OK; 
+}
+
+
+/*!
  *  Delete the hash Table
  *
  *  free key's, free node's, and free the users data.
@@ -963,6 +1013,56 @@ static void xhash_next(XHash* t)
             return;
         }
     }
+}
+
+static inline int xhash_delete_free_node(XHash *t)
+{
+    XHashNode* fn = xhash_get_free_node(t);
+    if (fn)
+    {
+        s_free(t, fn);
+        return XHASH_OK;
+    }
+    return XHASH_ERR;
+}
+
+/*!
+ * Unlink and free an ANR node or the oldest node, if ANR is empty
+ * behavior is undefined if t->usrfree is set
+ *
+ * t XHash table pointer
+ *
+ * returns
+ * XHASH_ERR if error occures
+ * XHASH_OK  if node is freed
+ */
+int xhash_free_anr_lru(XHash *t)
+{
+    if (t == nullptr)
+        return XHASH_ERR;
+    
+    if (t->fhead)
+    {
+        if (xhash_delete_free_node(t) == XHASH_OK)
+            return XHASH_OK;
+    }
+
+    if (t->gtail)
+    {
+        if (xhash_free_node(t, t->gtail) == XHASH_OK)
+        {
+            if (t->fhead)
+            {
+                if (xhash_delete_free_node(t) == XHASH_OK)
+                    return XHASH_OK;
+            }
+            else if (!t->recycle_nodes)
+            {
+                return XHASH_OK;
+            }
+        }
+    }
+    return XHASH_ERR;
 }
 
 /*!

@@ -36,6 +36,7 @@ namespace snort
 #define XHASH_ERR      (-1)
 #define XHASH_OK        0
 #define XHASH_INTABLE   1
+#define XHASH_PENDING   2
 
 struct XHashNode
 {
@@ -99,7 +100,7 @@ SO_PUBLIC XHash* xhash_new(int nrows, int keysize, int datasize, unsigned long m
     int recycle_flag);
 
 SO_PUBLIC void xhash_set_max_nodes(XHash* h, int max_nodes);
-
+SO_PUBLIC int xhash_change_memcap(XHash *t, unsigned long new_memcap, unsigned *max_work);
 SO_PUBLIC void xhash_delete(XHash* h);
 SO_PUBLIC int xhash_make_empty(XHash*);
 
@@ -135,6 +136,7 @@ inline unsigned xhash_overhead_bytes(XHash* t)
 inline unsigned xhash_overhead_blocks(XHash* t)
 { return t->overhead_blocks; }
 
+SO_PUBLIC int xhash_free_anr_lru(XHash* t);
 SO_PUBLIC void* xhash_mru(XHash* t);
 SO_PUBLIC void* xhash_lru(XHash* t);
 SO_PUBLIC void* xhash_find(XHash* h, void* key);
