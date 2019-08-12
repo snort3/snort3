@@ -1021,6 +1021,14 @@ enum ApplicationIds : AppId
     APP_ID_UNKNOWN_UI                     = 65535   // UI renders this value as 'Unknown'
 };
 
+enum AppIdType
+{
+    APP_ID_TYPE_SERVICE,
+    APP_ID_TYPE_CLIENT,
+    APP_ID_TYPE_PAYLOAD,
+    APP_ID_TYPE_MAX
+};
+
 struct AppRegistryEntry
 {
     AppId appId;

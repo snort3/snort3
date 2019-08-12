@@ -135,12 +135,15 @@ private:
     static bool do_pre_discovery(snort::Packet* p, AppIdSession** p_asd, AppIdInspector& inspector,
         IpProtocol& protocol, AppidSessionDirection& direction);
     static bool do_discovery(snort::Packet* p, AppIdSession& asd, IpProtocol protocol,
-        AppidSessionDirection direction, AppId& service_id, AppidChangeBits& change_bits);
+        AppidSessionDirection direction, AppId& service_id, AppId& client_id, AppId& payload_id,
+        AppId& misc_id, AppidChangeBits& change_bits);
     static void do_post_discovery(snort::Packet* p, AppIdSession& asd,
-        AppidSessionDirection direction, bool is_discovery_done, AppId service_id,
-        AppidChangeBits& change_bits);
+        AppidSessionDirection direction, bool is_discovery_done, AppId service_id, AppId client_id,
+        AppId payload_id, AppId misc_id, AppidChangeBits& change_bits);
     static void do_port_based_discovery(snort::Packet* p, AppIdSession& asd, IpProtocol protocol,
         AppidSessionDirection direction);
+    static bool do_host_port_based_discovery(snort::Packet* p, AppIdSession& asd,
+        IpProtocol protocol, AppidSessionDirection direction);
     static bool handle_unmonitored_session(AppIdSession* asd, const snort::Packet* p,
         IpProtocol protocol, AppidSessionDirection dir, AppIdInspector& inspector,
         uint64_t& flow_flags);

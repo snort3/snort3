@@ -34,7 +34,7 @@ class DummySession : public Session
 {
     public:
         DummySession(snort::Flow* f) : Session(f) { }
-        void clear() { }
+        void clear() override { }
         ~DummySession() { }
 };
 

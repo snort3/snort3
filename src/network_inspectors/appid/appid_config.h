@@ -99,7 +99,8 @@ public:
     uint32_t rtmp_max_packets = 15;
     uint32_t max_tp_flow_depth = 5;
     uint32_t tp_allow_probes = 0;
-    uint32_t host_port_app_cache_lookup_delay = 10;
+    uint32_t host_port_app_cache_lookup_interval = 10;
+    uint32_t host_port_app_cache_lookup_range = 100000;
     uint32_t http_response_version_enabled = 0;
 };
 
