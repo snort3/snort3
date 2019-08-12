@@ -32,6 +32,8 @@
 #include "network_inspectors/packet_tracer/packet_tracer.h"
 #include "packet_io/active.h"
 #include "profiler/profiler.h"
+#include "protocols/packet.h"
+
 
 #include "reputation_parse.h"
 
@@ -298,6 +300,7 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
     }
     else if (MONITORED == decision)
     {
+        p->packet_flags |= PKT_REP_MONITORED;
         DetectionEngine::queue_event(GID_REPUTATION, REPUTATION_EVENT_MONITOR);
         reputationstats.monitored++;
     }

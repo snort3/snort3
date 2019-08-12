@@ -79,11 +79,11 @@ class SFDAQInstance;
 #define PKT_IGNORE           0x00800000  /* this packet should be ignored, based on port */
 #define PKT_RETRANSMIT       0x01000000  // packet is a re-transmitted pkt.
 #define PKT_RETRY            0x02000000  /* this packet is being re-evaluated from the internal retry queue */
-#define PKT_UNUSED_FLAGS     0xfc000000
+#define PKT_REP_MONITORED    0x04000000   /* this packet is monitored by reputation */ 
+#define PKT_UNUSED_FLAGS     0xf8000000
 
 #define PKT_TS_OFFLOADED        0x01
 
-// 0x40000000 are available
 #define PKT_PDU_FULL (PKT_PDU_HEAD | PKT_PDU_TAIL)
 
 enum PseudoPacketType
