@@ -350,7 +350,10 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
     }
 
     if (resume)
+    {
+        file_ctx->log_file_event(flow, policy);
         policy->log_file_action(flow, file_ctx, FILE_RESUME_BLOCK);
+    }
     else
         store_verdict(flow, file_ctx, block_timeout);
 
@@ -375,6 +378,8 @@ FileVerdict FileCache::cached_verdict_lookup(Packet* p, FileInfo* file,
         /*Query the file policy in case verdict has been changed*/
         verdict = check_verdict(p, file_found, policy);
         apply_verdict(p, file_found, verdict, true, policy);
+        // Update the current file context from cached context
+        *file = *(FileInfo*)file_found;
     }
 
     return verdict;
