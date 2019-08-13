@@ -23,12 +23,15 @@
 
 #include "file_api/file_flows.h"
 
+#include "http_common.h"
 #include "http_cutter.h"
+#include "http_enum.h"
 #include "http_module.h"
 #include "http_msg_request.h"
 #include "http_stream_splitter.h"
 #include "http_test_input.h"
 
+using namespace HttpCommon;
 using namespace HttpEnums;
 
 bool HttpStreamSplitter::finish(snort::Flow* flow)
@@ -44,9 +47,9 @@ bool HttpStreamSplitter::finish(snort::Flow* flow)
         return false;
 
 #ifdef REG_TEST
-    if (HttpTestManager::use_test_output())
+    if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
     {
-        if (HttpTestManager::use_test_input())
+        if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
         {
             if (!HttpTestManager::get_test_input_source()->finish())
                 return false;
@@ -173,7 +176,8 @@ bool HttpStreamSplitter::init_partial_flush(snort::Flow* flow)
     }
 
 #ifdef REG_TEST
-    if (HttpTestManager::use_test_output() && !HttpTestManager::use_test_input())
+    if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP) &&
+        !HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
     {
         printf("Partial flush from flow data %" PRIu64 "\n", session_data->seq_num);
         fflush(stdout);

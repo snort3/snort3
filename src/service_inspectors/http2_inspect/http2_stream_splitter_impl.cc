@@ -25,13 +25,15 @@
 
 #include "http2_stream_splitter.h"
 #include "protocols/packet.h"
+#include "service_inspectors/http_inspect/http_common.h"
 #include "http2_flow_data.h"
 
 using namespace snort;
+using namespace HttpCommon;
 using namespace Http2Enums;
 
 StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t* data,
-    uint32_t length, uint32_t* flush_offset, Http2Enums::SourceId source_id)
+    uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id)
 {
     if (session_data->preface[source_id])
     {
@@ -93,8 +95,8 @@ StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t
 }
 
 const StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned total,
-    unsigned offset, const uint8_t* data, unsigned len, uint32_t flags, unsigned& copied,
-    Http2Enums::SourceId source_id)
+    unsigned offset, const uint8_t* data, unsigned len, uint32_t flags,
+    HttpCommon::SourceId source_id)
 {
     assert(offset+len <= total);
     assert(total >= FRAME_HEADER_LENGTH);
@@ -110,7 +112,6 @@ const StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned to
     assert(session_data->frame_size[source_id] == total);
 
     memcpy(session_data->frame[source_id]+offset, data, len);
-    copied = len;
     if (flags & PKT_PDU_TAIL)
     {
         assert(offset+len == total);

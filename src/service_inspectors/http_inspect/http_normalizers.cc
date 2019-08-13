@@ -21,10 +21,12 @@
 #include "config.h"
 #endif
 
+#include "http_common.h"
 #include "http_normalizers.h"
 
 #include <cstring>
 
+using namespace HttpCommon;
 using namespace HttpEnums;
 
 // Collection of stock normalization functions. This will probably grow throughout the life of the

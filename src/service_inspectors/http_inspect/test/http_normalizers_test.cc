@@ -23,6 +23,7 @@
 #include "config.h"
 #endif
 
+#include "service_inspectors/http_inspect/http_common.h"
 #include "service_inspectors/http_inspect/http_field.h"
 #include "service_inspectors/http_inspect/http_normalizers.h"
 #include "service_inspectors/http_inspect/http_test_manager.h"
@@ -32,7 +33,7 @@
 #include <CppUTestExt/MockSupport.h>
 
 using namespace snort;
-using namespace HttpEnums;
+using namespace HttpCommon;
 
 // Stubs whose sole purpose is to make the test code link
 const bool HttpEnums::is_sp_tab[256] {};

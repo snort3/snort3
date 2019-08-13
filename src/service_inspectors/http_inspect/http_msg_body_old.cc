@@ -23,8 +23,6 @@
 
 #include "http_msg_body_old.h"
 
-using namespace HttpEnums;
-
 void HttpMsgBodyOld::update_flow()
 {
     // Always more body expected

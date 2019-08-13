@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2019-2019 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,31 +15,24 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// http_msg_body_chunk.h author Tom Peters <thopeter@cisco.com>
+// http_common.h author Tom Peters <thopeter@cisco.com>
 
-#ifndef HTTP_MSG_BODY_CHUNK_H
-#define HTTP_MSG_BODY_CHUNK_H
+#ifndef HTTP_COMMON_H
+#define HTTP_COMMON_H
 
-#include "http_common.h"
-#include "http_msg_body.h"
+#include <cstdint>
 
-//-------------------------------------------------------------------------
-// HttpMsgBodyChunk class
-//-------------------------------------------------------------------------
-
-class HttpMsgBodyChunk : public HttpMsgBody
+namespace HttpCommon
 {
-public:
-    HttpMsgBodyChunk(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
-        HttpCommon::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
-        const HttpParaList* params_)
-        : HttpMsgBody(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_) {}
-    void update_flow() override;
+// Field status codes for when no valid value is present in length or integer value. Positive
+// values are actual length or field value.
+enum StatusCode { STAT_NO_SOURCE=-16, STAT_NOT_CONFIGURED=-15, STAT_NOT_COMPUTE=-14,
+    STAT_PROBLEMATIC=-12, STAT_NOT_PRESENT=-11, STAT_EMPTY_STRING=0, STAT_OTHER=1 };
 
-#ifdef REG_TEST
-    void print_section(FILE* output) override;
-#endif
-};
+// Message originator--client or server
+enum SourceId { SRC__NOT_COMPUTE=-14, SRC_CLIENT=0, SRC_SERVER=1 };
+
+} // end namespace HttpCommon
 
 #endif
 

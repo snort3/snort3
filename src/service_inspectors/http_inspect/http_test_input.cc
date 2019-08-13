@@ -25,9 +25,12 @@
 
 #include "http_test_input.h"
 
+#include "http_common.h"
+#include "http_enum.h"
 #include "http_module.h"
 #include "http_test_manager.h"
 
+using namespace HttpCommon;
 using namespace HttpEnums;
 
 static unsigned convert_num_octets(const char buffer[], unsigned length)

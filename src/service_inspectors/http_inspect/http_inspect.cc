@@ -29,7 +29,9 @@
 #include "protocols/packet.h"
 #include "stream/stream.h"
 
+#include "http_common.h"
 #include "http_context_data.h"
+#include "http_enum.h"
 #include "http_js_norm.h"
 #include "http_msg_body.h"
 #include "http_msg_body_chunk.h"
@@ -42,6 +44,7 @@
 #include "http_test_manager.h"
 
 using namespace snort;
+using namespace HttpCommon;
 using namespace HttpEnums;
 
 uint32_t HttpInspect::xtra_trueip_id;
@@ -54,16 +57,19 @@ HttpInspect::HttpInspect(const HttpParaList* params_) : params(params_)
 #ifdef REG_TEST
     if (params->test_input)
     {
-        HttpTestManager::activate_test_input();
+        HttpTestManager::activate_test_input(HttpTestManager::IN_HTTP);
     }
     if (params->test_output)
     {
-        HttpTestManager::activate_test_output();
+        HttpTestManager::activate_test_output(HttpTestManager::IN_HTTP);
     }
-    HttpTestManager::set_print_amount(params->print_amount);
-    HttpTestManager::set_print_hex(params->print_hex);
-    HttpTestManager::set_show_pegs(params->show_pegs);
-    HttpTestManager::set_show_scan(params->show_scan);
+    if ((params->test_input) || (params->test_output))
+    {
+        HttpTestManager::set_print_amount(params->print_amount);
+        HttpTestManager::set_print_hex(params->print_hex);
+        HttpTestManager::set_show_pegs(params->show_pegs);
+        HttpTestManager::set_show_scan(params->show_scan);
+    }
 #endif
 }
 
@@ -85,12 +91,12 @@ InspectSection HttpInspect::get_latest_is(const Packet* p)
     HttpMsgSection* current_section = HttpContextData::get_snapshot(p);
 
     if (current_section == nullptr)
-        return HttpEnums::IS_NONE;
+        return IS_NONE;
 
     // FIXIT-L revisit why we need this check. We should not be getting a current section back
     // for a raw packet but one of the test cases did exactly that.
     if (!(p->packet_flags & PKT_PSEUDO))
-        return HttpEnums::IS_NONE;
+        return IS_NONE;
 
     return current_section->get_inspection_section();
 }
@@ -100,7 +106,7 @@ SourceId HttpInspect::get_latest_src(const Packet* p)
     HttpMsgSection* current_section = HttpContextData::get_snapshot(p);
 
     if (current_section == nullptr)
-        return HttpEnums::SRC__NOT_COMPUTE;
+        return SRC__NOT_COMPUTE;
 
     return current_section->get_source_id();
 }
@@ -301,7 +307,7 @@ void HttpInspect::eval(Packet* p)
 #ifdef REG_TEST
     else
     {
-        if (HttpTestManager::use_test_output())
+        if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
         {
             fprintf(HttpTestManager::get_output_file(), "Sent to detection %hu octets\n\n",
                 p->dsize);
@@ -386,11 +392,11 @@ bool HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
     session_data->section_type[source_id] = SEC__NOT_COMPUTE;
 
 #ifdef REG_TEST
-    if (HttpTestManager::use_test_output())
+    if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
     {
         current_section->print_section(HttpTestManager::get_output_file());
         fflush(HttpTestManager::get_output_file());
-        if (HttpTestManager::use_test_input())
+        if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
         {
             printf("Finished processing section from test %" PRIi64 "\n",
                 HttpTestManager::get_test_number());

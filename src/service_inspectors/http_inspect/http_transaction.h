@@ -20,6 +20,7 @@
 #ifndef TRANSACTION_H
 #define TRANSACTION_H
 
+#include "http_common.h"
 #include "http_enum.h"
 #include "http_flow_data.h"
 
@@ -39,7 +40,7 @@ class HttpTransaction
 public:
     ~HttpTransaction();
     static HttpTransaction* attach_my_transaction(HttpFlowData* session_data,
-        HttpEnums::SourceId source_id);
+        HttpCommon::SourceId source_id);
     static void delete_transaction(HttpTransaction* transaction, HttpFlowData* session_data);
 
     HttpMsgRequest* get_request() const { return request; }
@@ -48,18 +49,18 @@ public:
     HttpMsgStatus* get_status() const { return status; }
     void set_status(HttpMsgStatus* status_) { status = status_; }
 
-    HttpMsgHeader* get_header(HttpEnums::SourceId source_id) const { return header[source_id]; }
-    void set_header(HttpMsgHeader* header_, HttpEnums::SourceId source_id)
+    HttpMsgHeader* get_header(HttpCommon::SourceId source_id) const { return header[source_id]; }
+    void set_header(HttpMsgHeader* header_, HttpCommon::SourceId source_id)
         { header[source_id] = header_; }
 
-    HttpMsgTrailer* get_trailer(HttpEnums::SourceId source_id) const
+    HttpMsgTrailer* get_trailer(HttpCommon::SourceId source_id) const
         { return trailer[source_id]; }
-    void set_trailer(HttpMsgTrailer* trailer_, HttpEnums::SourceId source_id)
+    void set_trailer(HttpMsgTrailer* trailer_, HttpCommon::SourceId source_id)
         { trailer[source_id] = trailer_; }
     void set_body(HttpMsgBody* latest_body);
 
-    HttpInfractions* get_infractions(HttpEnums::SourceId source_id);
-    HttpEventGen* get_events(HttpEnums::SourceId source_id);
+    HttpInfractions* get_infractions(HttpCommon::SourceId source_id);
+    HttpEventGen* get_events(HttpCommon::SourceId source_id);
 
     void set_one_hundred_response();
     bool final_response() const { return !second_response_expected; }

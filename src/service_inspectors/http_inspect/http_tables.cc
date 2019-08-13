@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include "http_enum.h"
 #include "http_msg_header.h"
 #include "http_msg_request.h"
 

@@ -22,6 +22,7 @@
 
 #include "file_api/file_api.h"
 
+#include "http_common.h"
 #include "http_enum.h"
 #include "http_field.h"
 #include "http_msg_head_shared.h"
@@ -34,7 +35,7 @@ class HttpMsgHeader : public HttpMsgHeadShared
 {
 public:
     HttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
-        HttpEnums::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
+        HttpCommon::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
         const HttpParaList* params_);
     HttpEnums::InspectSection get_inspection_section() const override
         { return HttpEnums::IS_HEADER; }

@@ -26,10 +26,13 @@
 #include "file_api/file_flows.h"
 
 #include "http_api.h"
+#include "http_common.h"
+#include "http_enum.h"
 #include "http_js_norm.h"
 #include "http_msg_request.h"
 
 using namespace snort;
+using namespace HttpCommon;
 using namespace HttpEnums;
 
 HttpMsgBody::HttpMsgBody(const uint8_t* buffer, const uint16_t buf_size,

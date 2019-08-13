@@ -29,8 +29,8 @@
 
 #include "http_test_input.h"
 
-bool HttpTestManager::test_input = false;
-bool HttpTestManager::test_output = false;
+unsigned HttpTestManager::test_input = IN_NONE;
+unsigned HttpTestManager::test_output = IN_NONE;
 HttpTestInput* HttpTestManager::test_input_source = nullptr;
 const char* HttpTestManager::test_output_prefix = "httpresults/testcase";
 int64_t HttpTestManager::test_number = -1;
@@ -55,9 +55,9 @@ void HttpTestManager::update_test_number(int64_t new_test_number)
     }
 }
 
-void HttpTestManager::activate_test_input()
+void HttpTestManager::activate_test_input(INPUT_TYPE type)
 {
-    test_input = true;
+    test_input |= type;
     if (test_input_source == nullptr)
     {
         test_input_source = new HttpTestInput("http_test_msgs.txt");

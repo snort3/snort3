@@ -23,8 +23,6 @@
 
 #include "http_msg_body_cl.h"
 
-using namespace HttpEnums;
-
 void HttpMsgBodyCl::update_flow()
 {
     if (session_data->cutter[source_id] != nullptr)

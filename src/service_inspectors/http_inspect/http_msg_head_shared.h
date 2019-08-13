@@ -22,10 +22,12 @@
 
 #include <bitset>
 
-#include "http_str_to_code.h"
+#include "http_common.h"
+#include "http_enum.h"
+#include "http_field.h"
 #include "http_header_normalizer.h"
 #include "http_msg_section.h"
-#include "http_field.h"
+#include "http_str_to_code.h"
 
 //-------------------------------------------------------------------------
 // HttpMsgHeadShared class
@@ -52,7 +54,7 @@ public:
 
 protected:
     HttpMsgHeadShared(const uint8_t* buffer, const uint16_t buf_size,
-        HttpFlowData* session_data_, HttpEnums::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
+        HttpFlowData* session_data_, HttpCommon::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
         const HttpParaList* params_)
         : HttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_)
         { }
@@ -115,7 +117,7 @@ private:
     NormalizedHeader* get_header_node(HttpEnums::HeaderId k) const;
     NormalizedHeader* norm_heads = nullptr;
 
-    int32_t num_headers = HttpEnums::STAT_NOT_COMPUTE;
+    int32_t num_headers = HttpCommon::STAT_NOT_COMPUTE;
     std::bitset<MAX> headers_present = 0;
 };
 

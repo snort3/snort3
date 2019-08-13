@@ -24,6 +24,7 @@
 
 #include <cstdio>
 
+#include "http_common.h"
 #include "http_enum.h"
 #include "http_flow_data.h"
 
@@ -32,9 +33,9 @@ class HttpTestInput
 public:
     HttpTestInput(const char* fileName);
     ~HttpTestInput();
-    void scan(uint8_t*& data, uint32_t& length, HttpEnums::SourceId source_id, uint64_t seq_num);
+    void scan(uint8_t*& data, uint32_t& length, HttpCommon::SourceId source_id, uint64_t seq_num);
     void flush(uint32_t num_octets);
-    void reassemble(uint8_t** buffer, unsigned& length, HttpEnums::SourceId source_id,
+    void reassemble(uint8_t** buffer, unsigned& length, HttpCommon::SourceId source_id,
         bool& tcp_close, bool& partial_flush);
     bool finish();
 
@@ -54,7 +55,7 @@ private:
     bool flushed = false;
 
     // current direction of traffic flow. Toggled by commands in file.
-    HttpEnums::SourceId last_source_id = HttpEnums::SRC_CLIENT;
+    HttpCommon::SourceId last_source_id = HttpCommon::SRC_CLIENT;
 
     // reassemble() just completed and all flushed octets forwarded, time to resume scan()
     bool just_flushed = true;

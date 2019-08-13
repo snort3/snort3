@@ -24,6 +24,8 @@
 
 #include "stream/stream_splitter.h"
 
+#include "http_common.h"
+#include "http_enum.h"
 #include "http_flow_data.h"
 #include "http_test_manager.h"
 
@@ -35,7 +37,7 @@ public:
     HttpStreamSplitter(bool is_client_to_server, HttpInspect* my_inspector_) :
         snort::StreamSplitter(is_client_to_server),
         my_inspector(my_inspector_),
-        source_id(is_client_to_server ? HttpEnums::SRC_CLIENT : HttpEnums::SRC_SERVER) {}
+        source_id(is_client_to_server ? HttpCommon::SRC_CLIENT : HttpCommon::SRC_SERVER) {}
     Status scan(snort::Packet* pkt, const uint8_t* data, uint32_t length, uint32_t not_used,
         uint32_t* flush_offset) override;
     const snort::StreamBuffer reassemble(snort::Flow* flow, unsigned total, unsigned, const
@@ -43,6 +45,7 @@ public:
     bool finish(snort::Flow* flow) override;
     bool init_partial_flush(snort::Flow* flow) override;
     bool is_paf() override { return true; }
+    static StreamSplitter::Status status_value(StreamSplitter::Status ret_val, bool http2 = false);
 
     // FIXIT-M should return actual packet buffer size
     unsigned max(snort::Flow*) override { return HttpEnums::MAX_OCTETS; }
@@ -61,7 +64,7 @@ private:
     static void detain_packet(snort::Packet* pkt);
 
     HttpInspect* const my_inspector;
-    const HttpEnums::SourceId source_id;
+    const HttpCommon::SourceId source_id;
 };
 
 #endif

@@ -24,6 +24,8 @@
 #include "http_msg_section.h"
 
 #include "http_context_data.h"
+#include "http_common.h"
+#include "http_enum.h"
 #include "http_msg_body.h"
 #include "http_msg_head_shared.h"
 #include "http_msg_header.h"
@@ -33,6 +35,7 @@
 #include "http_test_manager.h"
 #include "stream/flush_bucket.h"
 
+using namespace HttpCommon;
 using namespace HttpEnums;
 
 HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,

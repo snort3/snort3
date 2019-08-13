@@ -25,6 +25,7 @@
 
 #include <sstream>
 
+#include "http_enum.h"
 #include "log/messages.h"
 
 using namespace HttpEnums;

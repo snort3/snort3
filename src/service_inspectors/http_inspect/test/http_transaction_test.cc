@@ -23,6 +23,7 @@
 #include "config.h"
 #endif
 
+#include "service_inspectors/http_inspect/http_common.h"
 #include "service_inspectors/http_inspect/http_enum.h"
 #include "service_inspectors/http_inspect/http_flow_data.h"
 #include "service_inspectors/http_inspect/http_module.h"
@@ -33,6 +34,7 @@
 #include <CppUTestExt/MockSupport.h>
 
 using namespace snort;
+using namespace HttpCommon;
 using namespace HttpEnums;
 
 namespace snort

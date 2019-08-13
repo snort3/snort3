@@ -21,7 +21,9 @@
 #include "config.h"
 #endif
 
+#include "http_common.h"
 #include "http_cutter.h"
+#include "http_enum.h"
 #include "http_inspect.h"
 #include "http_module.h"
 #include "http_stream_splitter.h"
@@ -29,6 +31,7 @@
 #include "stream/stream.h"
 
 using namespace snort;
+using namespace HttpCommon;
 using namespace HttpEnums;
 
 // Convenience function. All housekeeping that must be done before we can return FLUSH to stream.
@@ -46,7 +49,7 @@ void HttpStreamSplitter::prepare_flush(HttpFlowData* session_data, uint32_t* flu
     if (flush_offset != nullptr)
     {
 #ifdef REG_TEST
-        if (HttpTestManager::use_test_input())
+        if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
         {
             HttpTestManager::get_test_input_source()->flush(num_flushed);
         }
@@ -81,15 +84,20 @@ HttpCutter* HttpStreamSplitter::get_cutter(SectionType type,
     }
 }
 
-static StreamSplitter::Status status_value(StreamSplitter::Status ret_val)
+// FIXIT-M this function is shared code that needs to get rolled up into a utility that supports
+// HI, H2I, and future service inspectors
+StreamSplitter::Status HttpStreamSplitter::status_value(StreamSplitter::Status ret_val, bool http2)
 {
+    UNUSED(http2);
 #ifdef REG_TEST
-    if (HttpTestManager::use_test_output())
+    const HttpTestManager::INPUT_TYPE type =
+        http2 ? HttpTestManager::IN_HTTP2 : HttpTestManager::IN_HTTP;
+    if (HttpTestManager::use_test_output(type))
     {
         fprintf(HttpTestManager::get_output_file(), "scan() returning status %d\n", ret_val);
         fflush(HttpTestManager::get_output_file());
     }
-    if (HttpTestManager::use_test_input())
+    if (HttpTestManager::use_test_input(type))
     {
         if (ret_val == StreamSplitter::ABORT)
             return StreamSplitter::ABORT;
@@ -103,12 +111,12 @@ static StreamSplitter::Status status_value(StreamSplitter::Status ret_val)
 void HttpStreamSplitter::detain_packet(Packet* pkt)
 {
 #ifdef REG_TEST
-    if (HttpTestManager::use_test_output())
+    if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
     {
         fprintf(HttpTestManager::get_output_file(), "Packet detain request\n");
         fflush(HttpTestManager::get_output_file());
     }
-    if (!HttpTestManager::use_test_input())
+    if (!HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
 #endif
     Stream::set_packet_action_to_hold(pkt);
     HttpModule::increment_peg_counts(PEG_DETAINED);
@@ -140,7 +148,7 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
         return status_value(StreamSplitter::ABORT);
 
 #ifdef REG_TEST
-    if (HttpTestManager::use_test_input())
+    if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
     {
         // This block substitutes a completely new data buffer supplied by the test tool in place
         // of the "real" data. It also rewrites the buffer length.
@@ -152,7 +160,7 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
             return StreamSplitter::FLUSH;
         data = test_data;
     }
-    else if (HttpTestManager::use_test_output())
+    else if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
     {
         printf("Scan from flow data %" PRIu64
             " direction %d length %u client port %hu server port %hu\n", session_data->seq_num,

@@ -34,12 +34,16 @@ class HttpTestInput;
 class HttpTestManager
 {
 public:
-    static bool use_test_input() { return test_input; }
-    static void activate_test_input();
-    static void activate_test_output() { test_output = true; }
+    // Bitmap: 1, 2, 4, 8, ...
+    enum INPUT_TYPE { IN_NONE = 0, IN_HTTP = 0x1, IN_HTTP2 = 0x2 };
+
+    static bool use_test_input(INPUT_TYPE type) { return (type & test_input) != 0; }
+    static void activate_test_input(INPUT_TYPE type);
+    static void activate_test_output(INPUT_TYPE type) { test_output |= type; }
     static HttpTestInput* get_test_input_source() { return test_input_source; }
     static void update_test_number(int64_t new_test_number);
-    static bool use_test_output() { return test_output || test_input; }
+    static bool use_test_output(INPUT_TYPE type)
+        { return (test_output & type) || (test_input & type); }
     static FILE* get_output_file() { return (test_out != nullptr) ? test_out : stdout; }
     static int64_t get_test_number() { return test_number; }
     static void set_print_amount(long print_amount_) { print_amount = print_amount_; }
@@ -54,11 +58,11 @@ public:
 private:
     HttpTestManager() = delete;
 
-    static bool test_input;
+    static unsigned test_input;
     static HttpTestInput* test_input_source;
 
     // Printing results of message processing
-    static bool test_output;
+    static unsigned test_output;
     static const char* test_output_prefix;
     static FILE* test_out;
     static int64_t test_number;

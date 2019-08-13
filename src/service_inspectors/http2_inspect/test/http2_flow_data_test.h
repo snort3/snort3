@@ -21,7 +21,8 @@
 #ifndef HTTP2_FLOW_DATA_TEST_H
 #define HTTP2_FLOW_DATA_TEST_H
 
-#include "service_inspectors/http2_inspect/http2_enum.h"
+#include "service_inspectors/http_inspect/http_common.h"
+//#include "service_inspectors/http2_inspect/http2_enum.h"
 #include "service_inspectors/http2_inspect/http2_flow_data.h"
 #include "service_inspectors/http2_inspect/http2_module.h"
 
@@ -36,28 +37,28 @@ void show_stats(SimpleStats*, const char*) { }
 class Http2FlowDataTest : public Http2FlowData
 {
 public:
-    bool get_preface(Http2Enums::SourceId source_id) { return preface[source_id]; }
-    void set_preface(bool value, Http2Enums::SourceId source_id) { preface[source_id] = value; }
-    bool get_header_coming(Http2Enums::SourceId source_id) { return header_coming[source_id]; }
-    void set_header_coming(bool value, Http2Enums::SourceId source_id)
+    bool get_preface(HttpCommon::SourceId source_id) { return preface[source_id]; }
+    void set_preface(bool value, HttpCommon::SourceId source_id) { preface[source_id] = value; }
+    bool get_header_coming(HttpCommon::SourceId source_id) { return header_coming[source_id]; }
+    void set_header_coming(bool value, HttpCommon::SourceId source_id)
         { header_coming[source_id] = value; }
-    uint8_t* get_frame_header(Http2Enums::SourceId source_id) { return frame_header[source_id]; }
-    void set_frame_header(uint8_t* value, Http2Enums::SourceId source_id)
+    uint8_t* get_frame_header(HttpCommon::SourceId source_id) { return frame_header[source_id]; }
+    void set_frame_header(uint8_t* value, HttpCommon::SourceId source_id)
         { frame_header[source_id] = value; }
-    uint8_t* get_frame(Http2Enums::SourceId source_id) { return frame[source_id]; }
-    void set_frame(uint8_t* value, Http2Enums::SourceId source_id) { frame[source_id] = value; }
-    uint32_t get_frame_size(Http2Enums::SourceId source_id) { return frame_size[source_id]; }
-    void set_frame_size(uint32_t value, Http2Enums::SourceId source_id)
+    uint8_t* get_frame(HttpCommon::SourceId source_id) { return frame[source_id]; }
+    void set_frame(uint8_t* value, HttpCommon::SourceId source_id) { frame[source_id] = value; }
+    uint32_t get_frame_size(HttpCommon::SourceId source_id) { return frame_size[source_id]; }
+    void set_frame_size(uint32_t value, HttpCommon::SourceId source_id)
         { frame_size[source_id] = value; }
-    uint8_t* get_frame_data(Http2Enums::SourceId source_id) { return frame_data[source_id]; }
-    void set_frame_data(uint8_t* value, Http2Enums::SourceId source_id)
+    uint8_t* get_frame_data(HttpCommon::SourceId source_id) { return frame_data[source_id]; }
+    void set_frame_data(uint8_t* value, HttpCommon::SourceId source_id)
         { frame_data[source_id] = value; }
-    uint32_t get_frame_data_size(Http2Enums::SourceId source_id)
+    uint32_t get_frame_data_size(HttpCommon::SourceId source_id)
         { return frame_data_size[source_id]; }
-    void set_frame_data_size(uint32_t value, Http2Enums::SourceId source_id)
+    void set_frame_data_size(uint32_t value, HttpCommon::SourceId source_id)
         { frame_data_size[source_id] = value; }
-    uint32_t get_leftover_data(Http2Enums::SourceId source_id) { return leftover_data[source_id]; }
-    void set_leftover_data(uint32_t value, Http2Enums::SourceId source_id)
+    uint32_t get_leftover_data(HttpCommon::SourceId source_id) { return leftover_data[source_id]; }
+    void set_leftover_data(uint32_t value, HttpCommon::SourceId source_id)
         { leftover_data[source_id] = value; }
 };
 

@@ -36,14 +36,6 @@ static const int MAX_FIELD_NAME_LENGTH = 100;
 // This can grow into a bitmap for the get_buf() form parameter
 static const uint64_t FORM_REQUEST = 0x1;
 
-// Field status codes for when no valid value is present in length or integer value. Positive
-// values are actual length or field value.
-enum StatusCode { STAT_NO_SOURCE=-16, STAT_NOT_CONFIGURED=-15, STAT_NOT_COMPUTE=-14,
-    STAT_PROBLEMATIC=-12, STAT_NOT_PRESENT=-11, STAT_EMPTY_STRING=0, STAT_OTHER=1 };
-
-// Message originator--client or server
-enum SourceId { SRC__NOT_COMPUTE=-14, SRC_CLIENT=0, SRC_SERVER=1 };
-
 // Type of message section
 enum SectionType { SEC_DISCARD = -19, SEC_ABORT = -18, SEC__NOT_COMPUTE=-14, SEC__NOT_PRESENT=-11,
     SEC_REQUEST = 2, SEC_STATUS, SEC_HEADER, SEC_BODY_CL, SEC_BODY_CHUNK, SEC_TRAILER,

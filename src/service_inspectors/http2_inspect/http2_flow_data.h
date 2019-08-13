@@ -21,6 +21,7 @@
 #define HTTP2_FLOW_DATA_H
 
 #include "flow/flow.h"
+#include "service_inspectors/http_inspect/http_common.h"
 #include "stream/stream_splitter.h"
 #include "http2_enum.h"
 
@@ -35,10 +36,10 @@ public:
     friend class Http2Inspect;
     friend class Http2StreamSplitter;
     friend const snort::StreamBuffer implement_reassemble(Http2FlowData*, unsigned, unsigned,
-        const uint8_t*, unsigned, uint32_t, unsigned&, Http2Enums::SourceId);
+        const uint8_t*, unsigned, uint32_t, HttpCommon::SourceId);
     friend snort::StreamSplitter::Status implement_scan(Http2FlowData*, const uint8_t*, uint32_t,
-        uint32_t*, Http2Enums::SourceId);
-    friend bool implement_get_buf(unsigned id, Http2FlowData*, Http2Enums::SourceId,
+        uint32_t*, HttpCommon::SourceId);
+    friend bool implement_get_buf(unsigned id, Http2FlowData*, HttpCommon::SourceId,
         snort::InspectionBuffer&);
 
     size_t size_of() override
@@ -56,6 +57,11 @@ protected:
     uint32_t leftover_data[2] = { 0, 0 };
     uint32_t octets_seen[2] = { 0, 0 };
     bool frame_in_detection = false;
+
+#ifdef REG_TEST
+    static uint64_t instance_count;
+    uint64_t seq_num;
+#endif
 };
 
 #endif

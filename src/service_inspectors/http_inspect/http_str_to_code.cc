@@ -25,7 +25,7 @@
 
 #include <cstring>
 
-#include "http_enum.h"
+#include "http_common.h"
 
 // Need to replace this simple algorithm for better performance FIXIT-P
 int32_t str_to_code(const uint8_t* text, const int32_t text_len, const StrCode table[])
@@ -38,7 +38,7 @@ int32_t str_to_code(const uint8_t* text, const int32_t text_len, const StrCode t
             return table[k].code;
         }
     }
-    return HttpEnums::STAT_OTHER;
+    return HttpCommon::STAT_OTHER;
 }
 
 int32_t substr_to_code(const uint8_t* text, const int32_t text_len, const StrCode table[])
@@ -52,6 +52,6 @@ int32_t substr_to_code(const uint8_t* text, const int32_t text_len, const StrCod
             return table[k].code;
         }
     }
-    return HttpEnums::STAT_OTHER;
+    return HttpCommon::STAT_OTHER;
 }
 

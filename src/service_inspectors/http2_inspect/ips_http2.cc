@@ -66,7 +66,7 @@ bool Http2IpsOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus Http2IpsOption::eval(Cursor& c, Packet* p)
 {
-    Profile profile(Http2CursorModule::http2_ps[psi]);
+    RuleProfile profile(Http2CursorModule::http2_ps[psi]);
 
     if (!p->flow || !p->flow->gadget)
         return NO_MATCH;

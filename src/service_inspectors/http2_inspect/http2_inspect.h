@@ -25,6 +25,7 @@
 //-------------------------------------------------------------------------
 
 #include "log/messages.h"
+#include "service_inspectors/http_inspect/http_common.h"
 
 #include "http2_enum.h"
 #include "http2_flow_data.h"
@@ -58,7 +59,7 @@ private:
     const Http2ParaList* const params;
 };
 
-bool implement_get_buf(unsigned id, Http2FlowData* session_data, Http2Enums::SourceId source_id,
+bool implement_get_buf(unsigned id, Http2FlowData* session_data, HttpCommon::SourceId source_id,
     snort::InspectionBuffer& b);
 
 #endif

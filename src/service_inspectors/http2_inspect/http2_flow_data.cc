@@ -23,6 +23,8 @@
 
 #include "http2_flow_data.h"
 
+#include "service_inspectors/http_inspect/http_test_manager.h"
+
 #include "http2_enum.h"
 #include "http2_module.h"
 
@@ -31,8 +33,21 @@ using namespace Http2Enums;
 
 unsigned Http2FlowData::inspector_id = 0;
 
+#ifdef REG_TEST
+uint64_t Http2FlowData::instance_count = 0;
+#endif
+
 Http2FlowData::Http2FlowData() : FlowData(inspector_id)
 {
+#ifdef REG_TEST
+    seq_num = ++instance_count;
+    if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2) &&
+        !HttpTestManager::use_test_input(HttpTestManager::IN_HTTP2))
+    {
+        printf("HTTP/2 Flow Data construct %" PRIu64 "\n", seq_num);
+        fflush(nullptr);
+    }
+#endif
     Http2Module::increment_peg_counts(PEG_CONCURRENT_SESSIONS);
     if (Http2Module::get_peg_counts(PEG_MAX_CONCURRENT_SESSIONS) <
         Http2Module::get_peg_counts(PEG_CONCURRENT_SESSIONS))
@@ -41,6 +56,14 @@ Http2FlowData::Http2FlowData() : FlowData(inspector_id)
 
 Http2FlowData::~Http2FlowData()
 {
+#ifdef REG_TEST
+    if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2) &&
+        !HttpTestManager::use_test_input(HttpTestManager::IN_HTTP2))
+    {
+        printf("HTTP/2 Flow Data destruct %" PRIu64 "\n", seq_num);
+        fflush(nullptr);
+    }
+#endif
     if (Http2Module::get_peg_counts(PEG_CONCURRENT_SESSIONS) > 0)
         Http2Module::decrement_peg_counts(PEG_CONCURRENT_SESSIONS);
 

@@ -28,6 +28,26 @@ using namespace Http2Enums;
 
 const Parameter Http2Module::http2_params[] =
 {
+#ifdef REG_TEST
+    { "test_input", Parameter::PT_BOOL, nullptr, "false",
+      "read HTTP/2 messages from text file" },
+
+    { "test_output", Parameter::PT_BOOL, nullptr, "false",
+      "print out HTTP section data" },
+
+    { "print_amount", Parameter::PT_INT, "1:max53", "1200",
+      "number of characters to print from a Field" },
+
+    { "print_hex", Parameter::PT_BOOL, nullptr, "false",
+      "nonprinting characters printed in [HH] format instead of using an asterisk" },
+
+    { "show_pegs", Parameter::PT_BOOL, nullptr, "true",
+      "display peg counts with test output" },
+
+    { "show_scan", Parameter::PT_BOOL, nullptr, "false",
+      "display scanned segments" },
+#endif
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -45,9 +65,42 @@ bool Http2Module::begin(const char*, int, SnortConfig*)
     return true;
 }
 
-bool Http2Module::set(const char*, Value& /*val*/, SnortConfig*)
+bool Http2Module::set(const char*, Value& val, SnortConfig*)
 {
+#ifdef REG_TEST
+    if (val.is("test_input"))
+    {
+        params->test_input = val.get_bool();
+    }
+    else if (val.is("test_output"))
+    {
+        params->test_output = val.get_bool();
+    }
+    else if (val.is("print_amount"))
+    {
+        params->print_amount = val.get_int64();
+    }
+    else if (val.is("print_hex"))
+    {
+        params->print_hex = val.get_bool();
+    }
+    else if (val.is("show_pegs"))
+    {
+        params->show_pegs = val.get_bool();
+    }
+    else if (val.is("show_scan"))
+    {
+        params->show_scan = val.get_bool();
+    }
+    else
+    {
+        return false;
+    }
+    return true;
+#else
+    UNUSED(val);
     return false;
+#endif
 }
 
 bool Http2Module::end(const char*, int, SnortConfig*)

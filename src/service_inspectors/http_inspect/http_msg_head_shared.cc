@@ -21,8 +21,11 @@
 #include "config.h"
 #endif
 
+#include "http_common.h"
+#include "http_enum.h"
 #include "http_msg_head_shared.h"
 
+using namespace HttpCommon;
 using namespace HttpEnums;
 
 HttpMsgHeadShared::~HttpMsgHeadShared()

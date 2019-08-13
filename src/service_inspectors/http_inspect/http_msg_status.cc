@@ -24,9 +24,12 @@
 #include "http_msg_status.h"
 
 #include "http_api.h"
+#include "http_common.h"
+#include "http_enum.h"
 #include "http_msg_header.h"
 #include "stream/stream.h"
 
+using namespace HttpCommon;
 using namespace HttpEnums;
 
 HttpMsgStatus::HttpMsgStatus(const uint8_t* buffer, const uint16_t buf_size,

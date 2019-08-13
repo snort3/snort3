@@ -24,7 +24,10 @@
 #include "http_msg_request.h"
 
 #include "http_api.h"
+#include "http_common.h"
+#include "http_enum.h"
 
+using namespace HttpCommon;
 using namespace HttpEnums;
 
 HttpMsgRequest::HttpMsgRequest(const uint8_t* buffer, const uint16_t buf_size,

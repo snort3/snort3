@@ -27,12 +27,15 @@
 #include "file_api/file_flows.h"
 #include "file_api/file_service.h"
 #include "http_api.h"
+#include "http_common.h"
+#include "http_enum.h"
 #include "http_msg_request.h"
 #include "http_msg_body.h"
 #include "pub_sub/http_events.h"
 #include "sfip/sf_ip.h"
 
 using namespace snort;
+using namespace HttpCommon;
 using namespace HttpEnums;
 
 HttpMsgHeader::HttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size,

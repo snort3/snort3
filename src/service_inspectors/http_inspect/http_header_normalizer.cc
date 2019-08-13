@@ -21,11 +21,13 @@
 #include "config.h"
 #endif
 
+#include "http_common.h"
 #include "http_enum.h"
 #include "http_header_normalizer.h"
 
 #include <cstring>
 
+using namespace HttpCommon;
 using namespace HttpEnums;
 
 // This derivation removes leading and trailing linear white space and replaces internal strings of

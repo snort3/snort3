@@ -34,6 +34,15 @@
 struct Http2ParaList
 {
 public:
+#ifdef REG_TEST
+    int64_t print_amount;
+
+    bool test_input;
+    bool test_output;
+    bool print_hex;
+    bool show_pegs;
+    bool show_scan;
+#endif
 };
 
 class Http2Module : public snort::Module

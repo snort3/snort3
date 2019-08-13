@@ -26,6 +26,8 @@
 #include "utils/util_jsnorm.h"
 #include "utils/safec.h"
 
+#include "http_enum.h"
+
 using namespace HttpEnums;
 using namespace snort;
 

@@ -24,16 +24,34 @@
 #include "http2_inspect.h"
 #include "detection/detection_engine.h"
 #include "protocols/packet.h"
-#include "service_inspectors/http_inspect/http_enum.h"
+#include "service_inspectors/http_inspect/http_common.h"
 #include "service_inspectors/http_inspect/http_field.h"
 #include "service_inspectors/http_inspect/http_test_manager.h"
 #include "stream/stream.h"
 
 using namespace snort;
+using namespace HttpCommon;
 using namespace Http2Enums;
 
 Http2Inspect::Http2Inspect(const Http2ParaList* params_) : params(params_)
 {
+#ifdef REG_TEST
+    if (params->test_input)
+    {
+        HttpTestManager::activate_test_input(HttpTestManager::IN_HTTP2);
+    }
+    if (params->test_output)
+    {
+        HttpTestManager::activate_test_output(HttpTestManager::IN_HTTP2);
+    }
+    if ((params->test_input) || (params->test_output))
+    {
+        HttpTestManager::set_print_amount(params->print_amount);
+        HttpTestManager::set_print_hex(params->print_hex);
+        HttpTestManager::set_show_pegs(params->show_pegs);
+        HttpTestManager::set_show_scan(params->show_scan);
+    }
+#endif
 }
 
 bool Http2Inspect::configure(SnortConfig* )
@@ -85,14 +103,16 @@ void Http2Inspect::eval(Packet* p)
     session_data->frame_in_detection = true;
 
 #ifdef REG_TEST
-    if (HttpTestManager::use_test_output())
+    if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2))
     {
         Field((session_data->frame_header[source_id] != nullptr) ? FRAME_HEADER_LENGTH :
-            HttpEnums::STAT_NOT_PRESENT,
-            session_data->frame_header[source_id]).print(stdout, "frame header");
+            HttpCommon::STAT_NOT_PRESENT,
+            session_data->frame_header[source_id]).print(HttpTestManager::get_output_file(),
+            "Frame Header");
         Field((session_data->frame_data[source_id] != nullptr) ?
-            (int) session_data->frame_data_size[source_id] : HttpEnums::STAT_NOT_PRESENT,
-            session_data->frame_data[source_id]).print(stdout, "frame data");
+            (int) session_data->frame_data_size[source_id] : HttpCommon::STAT_NOT_PRESENT,
+            session_data->frame_data[source_id]).print(HttpTestManager::get_output_file(),
+            "Frame Data");
     }
 #endif
 }

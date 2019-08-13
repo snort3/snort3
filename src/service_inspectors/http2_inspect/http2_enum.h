@@ -30,9 +30,6 @@ static const int FRAME_HEADER_LENGTH = 9;
 
 static const uint32_t HTTP2_GID = 121;
 
-// Message originator--client or server
-enum SourceId { SRC__NOT_COMPUTE=-14, SRC_CLIENT=0, SRC_SERVER=1 };
-
 // Frame type codes (fourth octet of frame header)
 enum FrameType { FT_DATA=0, FT_HEADERS=1, FT_PRIORITY=2, FT_RST_STREAM=3, FT_SETTINGS=4,
     FT_PUSH_PROMISE=5, FT_PING=6, FT_GOAWAY=7, FT_WINDOW_UPDATE=8, FT_CONTINUATION=9 };

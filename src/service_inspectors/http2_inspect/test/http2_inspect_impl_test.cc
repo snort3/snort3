@@ -26,6 +26,8 @@
 #include "service_inspectors/http2_inspect/http2_stream_splitter.h"
 
 #include "protocols/packet.h"
+#include "service_inspectors/http_inspect/http_common.h"
+#include "service_inspectors/http_inspect/http_test_manager.h"
 #include "service_inspectors/http2_inspect/http2_enum.h"
 
 #include "http2_flow_data_test.h"
@@ -35,7 +37,12 @@
 #include <CppUTestExt/MockSupport.h>
 
 using namespace snort;
+using namespace HttpCommon;
 using namespace Http2Enums;
+
+// Stubs whose sole purpose is to make the test code link
+unsigned HttpTestManager::test_input = IN_NONE;
+unsigned HttpTestManager::test_output = IN_NONE;
 
 TEST_GROUP(http2_get_buf_test)
 {

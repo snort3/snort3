@@ -23,8 +23,11 @@
 
 #include "http_uri.h"
 
+#include "http_common.h"
+#include "http_enum.h"
 #include "hash/hashfcn.h"
 
+using namespace HttpCommon;
 using namespace HttpEnums;
 
 void HttpUri::parse_uri()

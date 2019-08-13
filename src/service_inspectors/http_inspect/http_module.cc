@@ -25,6 +25,7 @@
 
 #include "log/messages.h"
 
+#include "http_enum.h"
 #include "http_js_norm.h"
 #include "http_uri_norm.h"
 

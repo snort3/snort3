@@ -26,11 +26,14 @@
 #include "decompress/file_decomp.h"
 
 #include "http_cutter.h"
+#include "http_common.h"
+#include "http_enum.h"
 #include "http_module.h"
 #include "http_test_manager.h"
 #include "http_transaction.h"
 
 using namespace snort;
+using namespace HttpCommon;
 using namespace HttpEnums;
 
 unsigned HttpFlowData::inspector_id = 0;
@@ -43,7 +46,8 @@ HttpFlowData::HttpFlowData() : FlowData(inspector_id)
 {
 #ifdef REG_TEST
     seq_num = ++instance_count;
-    if (HttpTestManager::use_test_output() && !HttpTestManager::use_test_input())
+    if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP) &&
+        !HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
     {
         printf("Flow Data construct %" PRIu64 "\n", seq_num);
         fflush(nullptr);
@@ -58,7 +62,8 @@ HttpFlowData::HttpFlowData() : FlowData(inspector_id)
 HttpFlowData::~HttpFlowData()
 {
 #ifdef REG_TEST
-    if (!HttpTestManager::use_test_input() && HttpTestManager::use_test_output())
+    if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP) &&
+        !HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
     {
         printf("Flow Data destruct %" PRIu64 "\n", seq_num);
         fflush(nullptr);
@@ -223,7 +228,7 @@ void HttpFlowData::delete_pipeline()
     delete[] pipeline;
 }
 
-HttpInfractions* HttpFlowData::get_infractions(HttpEnums::SourceId source_id)
+HttpInfractions* HttpFlowData::get_infractions(SourceId source_id)
 {
     if (infractions[source_id] != nullptr)
         return infractions[source_id];
@@ -232,7 +237,7 @@ HttpInfractions* HttpFlowData::get_infractions(HttpEnums::SourceId source_id)
     return transaction[source_id]->get_infractions(source_id);
 }
 
-HttpEventGen* HttpFlowData::get_events(HttpEnums::SourceId source_id)
+HttpEventGen* HttpFlowData::get_events(SourceId source_id)
 {
     if (events[source_id] != nullptr)
         return events[source_id];

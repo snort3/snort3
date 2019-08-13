@@ -28,11 +28,14 @@
 #include "log/messages.h"
 #include "protocols/packet.h"
 
+#include "http_common.h"
+#include "http_enum.h"
 #include "http_flow_data.h"
 #include "http_inspect.h"
 #include "http_msg_head_shared.h"
 
 using namespace snort;
+using namespace HttpCommon;
 using namespace HttpEnums;
 
 THREAD_LOCAL std::array<ProfileStats, PSI_MAX> HttpCursorModule::http_ps;

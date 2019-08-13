@@ -22,6 +22,8 @@
 
 #include "detection/detection_util.h"
 
+#include "http_common.h"
+#include "http_enum.h"
 #include "http_field.h"
 #include "http_module.h"
 #include "http_flow_data.h"
@@ -38,14 +40,14 @@ public:
     virtual HttpEnums::InspectSection get_inspection_section() const
         { return HttpEnums::IS_NONE; }
     virtual bool detection_required() const = 0;
-    HttpEnums::SourceId get_source_id() const { return source_id; }
+    HttpCommon::SourceId get_source_id() const { return source_id; }
     HttpTransaction* get_transaction() const { return transaction; }
     const HttpParaList* get_params() const { return params; }
 
     HttpMsgRequest* get_request() const { return request; }
     HttpMsgStatus* get_status() const { return status; }
-    HttpMsgHeader* get_header(HttpEnums::SourceId source_id) const { return header[source_id]; }
-    HttpMsgTrailer* get_trailer(HttpEnums::SourceId source_id) const
+    HttpMsgHeader* get_header(HttpCommon::SourceId source_id) const { return header[source_id]; }
+    HttpMsgTrailer* get_trailer(HttpCommon::SourceId source_id) const
         { return trailer[source_id]; }
     virtual HttpMsgBody* get_body() { return nullptr; }
 
@@ -82,7 +84,7 @@ public:
 
 protected:
     HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
-        HttpEnums::SourceId source_id_, bool buf_owner, snort::Flow* flow_, const HttpParaList*
+        HttpCommon::SourceId source_id_, bool buf_owner, snort::Flow* flow_, const HttpParaList*
         params_);
 
     void get_related_sections();
@@ -94,7 +96,7 @@ protected:
     HttpTransaction* const transaction;
     uint64_t trans_num;
     int32_t status_code_num;
-    const HttpEnums::SourceId source_id;
+    const HttpCommon::SourceId source_id;
     HttpEnums::VersionId version_id;
     HttpEnums::MethodId method_id;
     const bool tcp_close;

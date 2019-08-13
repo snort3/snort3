@@ -23,6 +23,8 @@
 
 #include "http_transaction.h"
 
+#include "http_common.h"
+#include "http_enum.h"
 #include "http_event.h"
 #include "http_msg_body.h"
 #include "http_msg_header.h"
@@ -30,6 +32,7 @@
 #include "http_msg_status.h"
 #include "http_msg_trailer.h"
 
+using namespace HttpCommon;
 using namespace HttpEnums;
 
 static void delete_section_list(HttpMsgSection* section_list)
@@ -240,12 +243,12 @@ void HttpTransaction::set_body(HttpMsgBody* latest_body)
     body_list = latest_body;
 }
 
-HttpInfractions* HttpTransaction::get_infractions(HttpEnums::SourceId source_id)
+HttpInfractions* HttpTransaction::get_infractions(SourceId source_id)
 {
     return infractions[source_id];
 }
 
-HttpEventGen* HttpTransaction::get_events(HttpEnums::SourceId source_id)
+HttpEventGen* HttpTransaction::get_events(SourceId source_id)
 {
     return events[source_id];
 }

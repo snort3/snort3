@@ -20,8 +20,10 @@
 #ifndef HTTP_MSG_BODY_H
 #define HTTP_MSG_BODY_H
 
-#include "http_msg_section.h"
+#include "http_common.h"
+#include "http_enum.h"
 #include "http_field.h"
+#include "http_msg_section.h"
 
 //-------------------------------------------------------------------------
 // HttpMsgBody class
@@ -41,7 +43,7 @@ public:
 
 protected:
     HttpMsgBody(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
-        HttpEnums::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
+        HttpCommon::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
         const HttpParaList* params_);
 
     int64_t body_octets;

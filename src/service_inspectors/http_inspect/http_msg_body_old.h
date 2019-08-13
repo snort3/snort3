@@ -20,9 +20,10 @@
 #ifndef HTTP_MSG_BODY_OLD_H
 #define HTTP_MSG_BODY_OLD_H
 
-#include "http_msg_section.h"
-#include "http_msg_body.h"
+#include "http_common.h"
 #include "http_field.h"
+#include "http_msg_body.h"
+#include "http_msg_section.h"
 
 //-------------------------------------------------------------------------
 // HttpMsgBodyOld class
@@ -32,7 +33,7 @@ class HttpMsgBodyOld : public HttpMsgBody
 {
 public:
     HttpMsgBodyOld(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
-        HttpEnums::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
+        HttpCommon::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
         const HttpParaList* params_)
         : HttpMsgBody(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_) {}
     void update_flow() override;

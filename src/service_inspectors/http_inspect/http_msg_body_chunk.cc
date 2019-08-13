@@ -22,8 +22,9 @@
 #endif
 
 #include "http_msg_body_chunk.h"
+#include "http_common.h"
 
-using namespace HttpEnums;
+using namespace HttpCommon;
 
 void HttpMsgBodyChunk::update_flow()
 {

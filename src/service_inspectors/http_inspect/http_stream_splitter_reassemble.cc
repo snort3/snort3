@@ -234,9 +234,9 @@ const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow* flow, unsi
     assert(session_data != nullptr);
 
 #ifdef REG_TEST
-    if (HttpTestManager::use_test_output())
+    if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
     {
-        if (HttpTestManager::use_test_input())
+        if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
         {
             if (!(flags & PKT_PDU_TAIL))
             {
@@ -327,7 +327,7 @@ const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow* flow, unsi
     if (session_data->section_type[source_id] == SEC_DISCARD)
     {
 #ifdef REG_TEST
-        if (HttpTestManager::use_test_output())
+        if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
         {
             fprintf(HttpTestManager::get_output_file(), "Discarded %u octets\n\n", len);
             fflush(HttpTestManager::get_output_file());

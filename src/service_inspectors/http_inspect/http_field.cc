@@ -23,8 +23,11 @@
 
 #include "http_field.h"
 
+#include "http_common.h"
+#include "http_enum.h"
 #include "http_test_manager.h"
 
+using namespace HttpCommon;
 using namespace HttpEnums;
 
 const Field Field::FIELD_NULL { STAT_NO_SOURCE };

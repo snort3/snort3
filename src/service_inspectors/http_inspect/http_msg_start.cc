@@ -23,6 +23,8 @@
 
 #include "http_msg_start.h"
 
+#include "http_enum.h"
+
 using namespace HttpEnums;
 
 void HttpMsgStart::analyze()

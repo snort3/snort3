@@ -22,9 +22,12 @@
 #endif
 
 #include "http2_inspect.h"
+#include "http2_enum.h"
 #include "http2_flow_data.h"
+#include "service_inspectors/http_inspect/http_common.h"
 
 using namespace snort;
+using namespace HttpCommon;
 using namespace Http2Enums;
 
 bool implement_get_buf(unsigned id, Http2FlowData* session_data, SourceId source_id,
