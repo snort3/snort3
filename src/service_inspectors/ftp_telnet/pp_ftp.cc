@@ -42,6 +42,7 @@
 
 #include "detection/detection_engine.h"
 #include "detection/detection_util.h"
+#include "hash/hashfcn.h"
 #include "file_api/file_service.h"
 #include "protocols/packet.h"
 #include "stream/stream.h"
@@ -1735,6 +1736,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                         {
                             snort_free(ftpssn->filename);
                             ftpssn->filename = nullptr;
+                            ftpssn->path_hash = 0;
                             ftpssn->file_xfer_info = FTPP_FILE_IGNORE;
                         }
 
@@ -1748,6 +1750,10 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                             memcpy(ftpssn->filename, req->param_begin, req->param_size);
                             ftpssn->filename[req->param_size] = '\0';
                             ftpssn->file_xfer_info = req->param_size;
+                            char *file_name = strrchr(ftpssn->filename, '/');
+                            if(!file_name)
+                                file_name = ftpssn->filename;
+                            ftpssn->path_hash = snort::str_to_hash((uint8_t *)file_name, strlen(file_name));
 
                             // 0 for Download, 1 for Upload
                             ftpssn->data_xfer_dir = CmdConf->file_get_cmd ? false : true;

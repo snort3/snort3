@@ -169,6 +169,7 @@ struct FTP_SESSION
 
     /* A file is being transferred on ftp-data channel */
     char* filename;
+    size_t path_hash;
     int file_xfer_info; /* -1: ignore, 0: unknown, >0: filename length */
     unsigned char flags;
 
@@ -208,6 +209,7 @@ struct FTP_DATA_SESSION
     FTP_TELNET_SESSION ft_ssn;
     snort::FlowKey ftp_key;
     char* filename;
+    size_t path_hash;
     int data_chan;
     int file_xfer_info;
     FilePosition position;

@@ -76,7 +76,7 @@ static void FTPDataProcess(
         file_flows->set_sig_gen_state( false );
 
     status = file_flows->file_process(p, file_data, data_length,
-        data_ssn->position, data_ssn->direction);
+        data_ssn->position, data_ssn->direction, data_ssn->path_hash);
 
     if ( p->active->packet_force_dropped() )
     {
@@ -157,7 +157,9 @@ static int SnortFTPData(Packet* p)
             data_ssn->file_xfer_info = ftp_ssn->file_xfer_info;
             ftp_ssn->file_xfer_info  = 0;
             data_ssn->filename  = ftp_ssn->filename;
+            data_ssn->path_hash = ftp_ssn->path_hash;
             ftp_ssn->filename   = nullptr;
+            ftp_ssn->path_hash = 0;
             break;
         }
     }
