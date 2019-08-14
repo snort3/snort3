@@ -2623,24 +2623,24 @@ LuaServiceObject::LuaServiceObject(AppIdDiscovery* sdm, const std::string& detec
     }
     else
     {
-	    AppIdDetector *ad = nullptr;
-	    AppIdDetectors *appid_detectors = nullptr;
+        AppIdDetector *ad = nullptr;
+        AppIdDetectors *appid_detectors = nullptr;
 
-	    if (protocol == IpProtocol::TCP)
+        if (protocol == IpProtocol::TCP)
         {
             appid_detectors = ServiceDiscovery::get_instance().get_tcp_detectors();
-	        auto detector = appid_detectors->find(detector_name);
+            auto detector = appid_detectors->find(detector_name);
             if (detector != appid_detectors->end())
                 ad = detector->second;  
         }
-	    else if (protocol == IpProtocol::UDP)
+        else if (protocol == IpProtocol::UDP)
         {
             appid_detectors = ServiceDiscovery::get_instance().get_udp_detectors();
-	        auto detector = appid_detectors->find(detector_name);
+            auto detector = appid_detectors->find(detector_name);
             if (detector != appid_detectors->end())
                 ad = detector->second;  
         }
-	    sd = (ServiceDetector*)ad;
+        sd = (ServiceDetector*)ad;
     }  
 
     UserData<LuaServiceObject>::push(L, DETECTOR, this);
@@ -2693,24 +2693,24 @@ LuaClientObject::LuaClientObject(AppIdDiscovery* cdm, const std::string& detecto
     }
     else
     {
-	    AppIdDetector *ad = nullptr;
-	    AppIdDetectors *appid_detectors = nullptr;
+        AppIdDetector *ad = nullptr;
+        AppIdDetectors *appid_detectors = nullptr;
 
-	    if (protocol == IpProtocol::TCP)
+        if (protocol == IpProtocol::TCP)
         {
             appid_detectors = ClientDiscovery::get_instance().get_tcp_detectors();
-	        auto detector = appid_detectors->find(detector_name);
+            auto detector = appid_detectors->find(detector_name);
             if (detector != appid_detectors->end())
                 ad = detector->second;  
         }
-	    else if (protocol == IpProtocol::UDP)
+        else if (protocol == IpProtocol::UDP)
         {
             appid_detectors = ClientDiscovery::get_instance().get_udp_detectors();
-	        auto detector = appid_detectors->find(detector_name);
+            auto detector = appid_detectors->find(detector_name);
             if (detector != appid_detectors->end())
                 ad = detector->second;  
         }
-	    cd = (ClientDetector*)ad;
+        cd = (ClientDetector*)ad;
     }  
     
     UserData<LuaClientObject>::push(L, DETECTOR, this);

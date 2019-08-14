@@ -800,9 +800,9 @@ void HttpPatternMatchers::get_http_offsets(snort::Packet* pkt, AppIdHttpSession*
 
     for (int fieldId = REQ_AGENT_FID; fieldId <= REQ_COOKIE_FID; fieldId++)
     {
-	pair_t off;
-	if ( hsession->get_offset(fieldId, off.first, off.second) )
-	    hsession->set_offset(fieldId, 0, off.second);
+        pair_t off;
+        if ( hsession->get_offset(fieldId, off.first, off.second) )
+            hsession->set_offset(fieldId, 0, off.second);
     }
 
     if (!pkt->data || pkt->dsize < MIN_HTTP_REQ_HEADER_SIZE)

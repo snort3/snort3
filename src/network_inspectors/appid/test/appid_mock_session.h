@@ -68,13 +68,14 @@ public:
     }
 };
 
-AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector& inspector)
-    : FlowData(inspector_id, &inspector)
+AppIdSession::AppIdSession(IpProtocol proto, const SfIp*, uint16_t, AppIdInspector& inspector)
+    : FlowData(inspector_id, &inspector), protocol(proto)
 {
     common.flow_type = APPID_FLOW_TYPE_NORMAL;
     service_port = APPID_UT_SERVICE_PORT;
     AppidChangeBits change_bits;
 
+    memset(application_ids, 0, sizeof(application_ids));
     client.update_user(APPID_UT_ID, APPID_UT_USERNAME);
     client.set_version(APPID_UT_CLIENT_VERSION, change_bits);
 

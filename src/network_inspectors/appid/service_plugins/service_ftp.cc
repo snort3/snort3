@@ -432,9 +432,9 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset,
             {
                 fd.rstate = FTP_REPLY_MID;
                 if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_MULTI))
-		            return -1;
+                    return -1;
                 if (fd.rstate == FTP_REPLY_MID)
-		            fd.rstate = FTP_REPLY_LONG;
+                    fd.rstate = FTP_REPLY_LONG;
             }
             else
             {
@@ -456,36 +456,36 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset,
                 tmp_state = fd.rstate;
                 fd.rstate = FTP_REPLY_MID;
                 if (ftp_parse_response(data, offset, size, fd, tmp_state))
-		            return -1;
+                    return -1;
                 if (fd.rstate == FTP_REPLY_MID)
-		            fd.rstate = FTP_REPLY_LONG;
+                    fd.rstate = FTP_REPLY_LONG;
             }
             break;
         case FTP_REPLY_LONG:
             fd.rstate = FTP_REPLY_MID;
-	        if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_LONG))
-		        return -1;
+            if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_LONG))
+                return -1;
             if (++offset >= size)
             {
                 fd.rstate = FTP_REPLY_BEGIN;
                 break;
             }
-	        if (fd.rstate == FTP_REPLY_MID)
-	        {
+            if (fd.rstate == FTP_REPLY_MID)
+            {
                 fd.rstate = FTP_REPLY_LONG;
-		        break;
-	        }
+                break;
+            }
             if (size - offset < (int)sizeof(ServiceFTPCode))
             {
-		        fd.rstate = FTP_REPLY_MID;
-		        if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_LONG))
-		            return -1;
+                fd.rstate = FTP_REPLY_MID;
+                if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_LONG))
+                    return -1;
                 if (fd.rstate == FTP_REPLY_MID)
                     fd.rstate = FTP_REPLY_LONG;
             }
             else
-	        {
-	            code_hdr = (const ServiceFTPCode*)(data + offset);
+            {
+                code_hdr = (const ServiceFTPCode*)(data + offset);
                 if(code_hdr->code[0] >= '1' and code_hdr->code[0] <= '5' and
                     code_hdr->code[1] >= '1' and code_hdr->code[1] <= '5' and
                     isdigit(code_hdr->code[2]))
@@ -496,23 +496,23 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset,
                     if (tmp == fd.code)
                     {
                         offset += sizeof(ServiceFTPCode);
-			            if (code_hdr->sp == ' ' or code_hdr->sp == 0x09)
-			            {
-			                fd.rstate = FTP_REPLY_MID;
-			                if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_BEGIN))
-				                return -1;
-			            }
-			            else if (code_hdr->sp == '-')
-			            {
-			                fd.rstate = FTP_REPLY_MID;
-			                if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_MULTI))
-				                return -1;
-			            }
-			            if (fd.rstate == FTP_REPLY_MID)
+                        if (code_hdr->sp == ' ' or code_hdr->sp == 0x09)
+                        {
+                            fd.rstate = FTP_REPLY_MID;
+                            if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_BEGIN))
+                                return -1;
+                        }
+                        else if (code_hdr->sp == '-')
+                        {
+                            fd.rstate = FTP_REPLY_MID;
+                            if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_MULTI))
+                                return -1;
+                        }
+                        if (fd.rstate == FTP_REPLY_MID)
                             fd.rstate = FTP_REPLY_LONG;
                     }
                 }
-	        }
+            }
             break;
         default:
             return -1;
