@@ -1033,7 +1033,7 @@ static inline int xhash_delete_free_node(XHash *t)
  * t XHash table pointer
  *
  * returns
- * XHASH_ERR if error occures
+ * XHASH_ERR if error occurs
  * XHASH_OK  if node is freed
  */
 int xhash_free_anr_lru(XHash *t)

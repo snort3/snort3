@@ -348,6 +348,7 @@ TEST(appid_discovery_tests, event_published_when_processing_flow)
     p.pkth = &pkth;
     SfIp ip;
     p.ptrs.ip_api.set(ip, ip);
+    p.ptrs.tcph = nullptr;
     AppIdModule app_module;
     AppIdInspector ins(app_module);
     AppIdSession* asd = new AppIdSession(IpProtocol::TCP, nullptr, 21, ins);
@@ -410,6 +411,7 @@ TEST(appid_discovery_tests, change_bits_for_non_http_appid)
     Flow* flow = new Flow;
     flow->set_flow_data(asd);
     p.flow = flow;
+    p.ptrs.tcph = nullptr;
     asd->config = &my_app_config;
     asd->common.initiator_port = 21;
     asd->common.initiator_ip.set("1.2.3.4");
