@@ -75,6 +75,17 @@ struct RuleMap
     const char* msg;
 };
 
+class ReloadMemcapManager
+{
+public:
+    virtual ~ReloadMemcapManager() = default;
+
+    virtual bool tune_memcap() = 0;
+    virtual bool tune_memcap_idle() = 0;
+protected:
+    ReloadMemcapManager() = default;
+};
+
 class SO_PUBLIC Module
 {
 public:
@@ -185,6 +196,9 @@ public:
 
     void enable_trace();
 
+    const ReloadMemcapManager* get_reload_mcm() const
+    { return reload_mcm; }
+
 protected:
     Module(const char* name, const char* help);
     Module(const char* name, const char* help, const Parameter*,
@@ -206,6 +220,7 @@ private:
     int table_level = 0;
 
     Trace* trace;
+    ReloadMemcapManager* reload_mcm = nullptr;
 
     void set_peg_count(int index, PegCount value)
     {

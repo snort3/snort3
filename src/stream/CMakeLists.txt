@@ -10,6 +10,7 @@ add_subdirectory(file)
 add_subdirectory(test)
 
 set (STREAM_INCLUDES
+    flush_bucket.h
     paf.h
     stream.h
     stream_splitter.h

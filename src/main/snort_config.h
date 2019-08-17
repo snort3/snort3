@@ -31,6 +31,8 @@
 #include "main/thread.h"
 #include "sfip/sf_cidr.h"
 
+#include <list>
+
 #define DEFAULT_LOG_DIR "."
 
 enum RunFlag
@@ -148,12 +150,16 @@ class ProtocolReference;
 struct GHash;
 struct XHash;
 
+class ReloadMemcapManager;
+
 struct SnortConfig;
 typedef void (* ScScratchFunc)(SnortConfig* sc);
 
 struct SnortConfig
 {
 private:
+    std::list<ReloadMemcapManager *> reload_managers;
+
     void init(const SnortConfig* const, ProtocolReference*);
     bool verify_stream_inspectors();
 
@@ -163,6 +169,9 @@ public:
     ~SnortConfig();
 
     SnortConfig(const SnortConfig&) = delete;
+
+    SO_PUBLIC bool register_reload_memcap_manager(ReloadMemcapManager *);
+    std::list<ReloadMemcapManager *> get_reload_memcap_managers();
 
     void setup();
     void post_setup();

@@ -75,6 +75,7 @@ using namespace std;
 static MainHook_f main_hook = snort_ignore;
 
 THREAD_LOCAL ProfileStats daqPerfStats;
+THREAD_LOCAL std::list<snort::ReloadMemcapManager *> *rel_managers;
 
 static THREAD_LOCAL Analyzer* local_analyzer = nullptr;
 
@@ -526,6 +527,7 @@ void Analyzer::reinit(SnortConfig* sc)
 {
     InspectorManager::thread_reinit(sc);
     ActionManager::thread_reinit(sc);
+    rel_managers = new std::list<snort::ReloadMemcapManager *>(sc->get_reload_memcap_managers());
 }
 
 void Analyzer::term()
@@ -578,6 +580,8 @@ void Analyzer::term()
 
     Active::thread_term();
     delete switcher;
+
+    delete rel_managers;
 
     sfthreshold_free();
     RateFilter_Cleanup();
@@ -665,11 +669,20 @@ bool Analyzer::handle_command()
 
     ac->execute(*this);
 
-    completed_work_queue_mutex.lock();
-    completed_work_queue.push(ac);
-    completed_work_queue_mutex.unlock();
+    add_command_to_completed_queue(ac);
 
     return true;
+}
+
+void Analyzer::add_command_to_completed_queue(AnalyzerCommand *ac)
+{
+    if (ac->is_complete())
+    {
+        completed_work_queue_mutex.lock();
+        completed_work_queue.push(ac);
+        completed_work_queue_mutex.unlock();
+    } else
+        cache_analyzer_command(ac);
 }
 
 void Analyzer::handle_commands()
@@ -713,6 +726,21 @@ DAQ_RecvStatus Analyzer::process_messages()
         process_daq_msg(msg, false);
         DetectionEngine::onload();
         process_retry_queue();
+
+        if (rel_managers and rel_managers->size())
+        {
+            auto manager = rel_managers->front();
+            if (manager->tune_memcap())
+            {
+                rel_managers->pop_front();
+            }
+        }
+        else
+        {
+            if(ac)
+                add_command_to_completed_queue(ac);
+        }
+
     }
 
     if (exit_after_cnt && (exit_after_cnt -= num_recv) == 0)

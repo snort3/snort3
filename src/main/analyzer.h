@@ -30,6 +30,7 @@
 #include <mutex>
 #include <queue>
 #include <string>
+#include <list>
 
 #include "thread.h"
 
@@ -45,6 +46,7 @@ class SFDAQInstance;
 struct Packet;
 struct SnortConfig;
 struct ProfileStats;
+class ReloadMemcapManager;
 }
 
 typedef bool (* MainHook_f)(snort::Packet*);
@@ -110,7 +112,9 @@ private:
     void init_unprivileged();
     void term();
     void show_source();
-
+    void cache_analyzer_command(AnalyzerCommand* aci) { ac = aci; }
+    void add_command_to_completed_queue(AnalyzerCommand *ac);
+    AnalyzerCommand* get_analyzer_command() { return ac; }
 public:
     std::queue<AnalyzerCommand*> completed_work_queue;
     std::mutex completed_work_queue_mutex;
@@ -131,6 +135,7 @@ private:
     RetryQueue* retry_queue = nullptr;
     OopsHandler* oops_handler = nullptr;
     ContextSwitcher* switcher = nullptr;
+    AnalyzerCommand* ac = nullptr;
 
     std::mutex pending_work_queue_mutex;
 };

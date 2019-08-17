@@ -34,8 +34,11 @@ public:
     virtual const char* stringify() = 0;
     unsigned get() { return ++ref_count; }
     unsigned put() { return --ref_count; }
+    bool is_complete() { return completion_status; }
+    void set_completion_status(bool status) { completion_status = status; }
 private:
     unsigned ref_count = 0;
+    bool completion_status = true;
 };
 
 class ACGetStats : public AnalyzerCommand
