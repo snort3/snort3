@@ -26,18 +26,18 @@
 #include "main/analyzer.h"
 #include "main/analyzer_command.h"
 
-class ACShellCmd : public AnalyzerCommand
+class ACShellCmd : public snort::AnalyzerCommand
 {
 public:
     ACShellCmd() = delete;
-    ACShellCmd(int fd, AnalyzerCommand* ac_cmd);
+    ACShellCmd(int fd, snort::AnalyzerCommand* ac_cmd);
     void execute(Analyzer&) override;
     const char* stringify() override { return ac->stringify(); }
     ~ACShellCmd() override;
 
 private:
     int control_fd = -1;
-    AnalyzerCommand* ac;
+    snort::AnalyzerCommand* ac;
 };
 
 #endif

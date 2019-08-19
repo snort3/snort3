@@ -34,7 +34,6 @@
 
 #include "thread.h"
 
-class AnalyzerCommand;
 class ContextSwitcher;
 class OopsHandler;
 class RetryQueue;
@@ -42,6 +41,7 @@ class Swapper;
 
 namespace snort
 {
+class AnalyzerCommand;
 class SFDAQInstance;
 struct Packet;
 struct SnortConfig;
@@ -80,7 +80,7 @@ public:
     void set_pause_after_cnt(uint64_t msg_cnt) { pause_after_cnt = msg_cnt; }
     void set_skip_cnt(uint64_t msg_cnt) { skip_cnt = msg_cnt; }
 
-    void execute(AnalyzerCommand*);
+    void execute(snort::AnalyzerCommand*);
 
     void post_process_packet(snort::Packet*);
     bool process_rebuilt_packet(snort::Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt, uint32_t pktlen);
@@ -96,6 +96,7 @@ public:
     void reload_daq();
     void reinit(snort::SnortConfig*);
     void rotate();
+    snort::SFDAQInstance* get_daq_instance() { return daq_instance; }
 
 private:
     void analyze();
@@ -112,13 +113,13 @@ private:
     void init_unprivileged();
     void term();
     void show_source();
-    void cache_analyzer_command(AnalyzerCommand* aci) { ac = aci; }
-    void add_command_to_completed_queue(AnalyzerCommand *ac);
-    AnalyzerCommand* get_analyzer_command() { return ac; }
+    void cache_analyzer_command(snort::AnalyzerCommand* aci) { ac = aci; }
+    void add_command_to_completed_queue(snort::AnalyzerCommand *ac);
+    snort::AnalyzerCommand* get_analyzer_command() { return ac; }
 public:
-    std::queue<AnalyzerCommand*> completed_work_queue;
+    std::queue<snort::AnalyzerCommand*> completed_work_queue;
     std::mutex completed_work_queue_mutex;
-    std::queue<AnalyzerCommand*> pending_work_queue;
+    std::queue<snort::AnalyzerCommand*> pending_work_queue;
 
 private:
     std::atomic<State> state;
@@ -135,7 +136,7 @@ private:
     RetryQueue* retry_queue = nullptr;
     OopsHandler* oops_handler = nullptr;
     ContextSwitcher* switcher = nullptr;
-    AnalyzerCommand* ac = nullptr;
+    snort::AnalyzerCommand* ac = nullptr;
 
     std::mutex pending_work_queue_mutex;
 };

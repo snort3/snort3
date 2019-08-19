@@ -113,3 +113,7 @@ ACDAQSwap::~ACDAQSwap()
     snort::LogMessage("== daq module reload complete\n");
 }
 
+snort::SFDAQInstance* snort::AnalyzerCommand::get_daq_instance(Analyzer& analyzer) 
+{
+    return analyzer.get_daq_instance();
+}
