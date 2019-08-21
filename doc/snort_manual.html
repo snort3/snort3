@@ -782,7 +782,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0 (Build 258)
+o"  )~   Version 3.0.0 (Build 259)
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
@@ -7521,6 +7521,21 @@ int <strong>detection.trace</strong>: mask for enabling debug traces in module {
 <strong>detection.offload_suspends</strong>: fast pattern search suspends due to offload context chains (sum)
 </p>
 </li>
+<li>
+<p>
+<strong>detection.pcre_match_limit</strong>: total number of times pcre hit the match limit (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>detection.pcre_recursion_limit</strong>: total number of times pcre hit the recursion limit (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>detection.pcre_error</strong>: total number of times pcre returns error (sum)
+</p>
+</li>
 </ul></div>
 </div>
 <div class="sect2">
@@ -7746,11 +7761,6 @@ int <strong>host_cache.size</strong>: size of host cache { 1:max32 }
 </li>
 <li>
 <p>
-<strong>host_cache.lru_cache_replaces</strong>: lru cache replaced existing entry (sum)
-</p>
-</li>
-<li>
-<p>
 <strong>host_cache.lru_cache_prunes</strong>: lru cache pruned entry to make space for new entry (sum)
 </p>
 </li>
@@ -7769,11 +7779,6 @@ int <strong>host_cache.size</strong>: size of host cache { 1:max32 }
 <strong>host_cache.lru_cache_removes</strong>: lru cache found entry and removed it (sum)
 </p>
 </li>
-<li>
-<p>
-<strong>host_cache.lru_cache_clears</strong>: lru cache clear API calls (sum)
-</p>
-</li>
 </ul></div>
 </div>
 <div class="sect2">
@@ -7785,32 +7790,17 @@ int <strong>host_cache.size</strong>: size of host cache { 1:max32 }
 <div class="ulist"><ul>
 <li>
 <p>
-addr <strong><code>host_tracker[].ip</code></strong> = 0.0.0.0/32: hosts address / cidr
-</p>
-</li>
-<li>
-<p>
-enum <strong><code>host_tracker[].frag_policy</code></strong>: defragmentation policy { first | linux | bsd | bsd_right | last | windows | solaris }
-</p>
-</li>
-<li>
-<p>
-enum <strong><code>host_tracker[].tcp_policy</code></strong>: TCP reassembly policy { first | last | linux | old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | windows | win_2003 | vista | proxy }
-</p>
-</li>
-<li>
-<p>
-string <strong><code>host_tracker[].services[].name</code></strong>: service identifier
-</p>
-</li>
-<li>
-<p>
-enum <strong><code>host_tracker[].services[].proto</code></strong> = tcp: IP protocol { tcp | udp }
+addr <strong><code>host_tracker[].ip</code></strong>: hosts address / cidr
 </p>
 </li>
 <li>
 <p>
 port <strong><code>host_tracker[].services[].port</code></strong>: port number
+</p>
+</li>
+<li>
+<p>
+enum <strong><code>host_tracker[].services[].proto</code></strong>: IP protocol { ip | tcp | udp }
 </p>
 </li>
 </ul></div>
@@ -7824,11 +7814,6 @@ port <strong><code>host_tracker[].services[].port</code></strong>: port number
 <li>
 <p>
 <strong>host_tracker.service_finds</strong>: host service finds (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>host_tracker.service_removes</strong>: host service removes (sum)
 </p>
 </li>
 </ul></div>
@@ -12474,6 +12459,16 @@ int <strong>finalize_packet.start_pdu</strong> = 0: Register to receive finalize
 int <strong>finalize_packet.end_pdu</strong> = 0: Deregister for finalize packet events on this PDU { 0:max32 }
 </p>
 </li>
+<li>
+<p>
+int <strong>finalize_packet.modify.pdu</strong> = 0: Modify verdict in finalize packet for this PDU { 0:max32 }
+</p>
+</li>
+<li>
+<p>
+enum <strong>finalize_packet.modify.verdict</strong>: output format for stats { pass | block | replace | whitelist | blacklist | ignore | retry }
+</p>
+</li>
 </ul></div>
 <div class="paragraph"><p>Peg counts:</p></div>
 <div class="ulist"><ul>
@@ -15240,6 +15235,14 @@ bool <strong>rt_packet.test_daq_retry</strong> = true: test daq packet retry fea
 <div class="paragraph"><p>What: The regression test service inspector is used by regression tests that require custom service inspector support.</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
 <div class="paragraph"><p>Usage: context</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+int <strong>rt_service.memcap</strong>: cap on amount of memory used
+</p>
+</li>
+</ul></div>
 <div class="paragraph"><p>Peg counts:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -16153,12 +16156,12 @@ bool <strong>stream.ip_frags_only</strong> = false: don&#8217;t process non-frag
 </li>
 <li>
 <p>
-int <strong>stream.ip_cache.max_sessions</strong> = 16384: maximum simultaneous sessions tracked before pruning { 2:max32 }
+int <strong>stream.max_flows</strong> = 476288: maximum simultaneous flows tracked before pruning { 2:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.ip_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
+int <strong>stream.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
 </p>
 </li>
 <li>
@@ -16173,32 +16176,12 @@ int <strong>stream.ip_cache.cap_weight</strong> = 64: additional bytes to track 
 </li>
 <li>
 <p>
-int <strong>stream.icmp_cache.max_sessions</strong> = 65536: maximum simultaneous sessions tracked before pruning { 2:max32 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.icmp_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
-</p>
-</li>
-<li>
-<p>
 int <strong>stream.icmp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1:max32 }
 </p>
 </li>
 <li>
 <p>
 int <strong>stream.icmp_cache.cap_weight</strong> = 8: additional bytes to track per flow for better estimation against cap { 0:65535 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.tcp_cache.max_sessions</strong> = 262144: maximum simultaneous sessions tracked before pruning { 2:max32 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.tcp_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
 </p>
 </li>
 <li>
@@ -16213,16 +16196,6 @@ int <strong>stream.tcp_cache.cap_weight</strong> = 11500: additional bytes to tr
 </li>
 <li>
 <p>
-int <strong>stream.udp_cache.max_sessions</strong> = 131072: maximum simultaneous sessions tracked before pruning { 2:max32 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.udp_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
-</p>
-</li>
-<li>
-<p>
 int <strong>stream.udp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1:max32 }
 </p>
 </li>
@@ -16233,32 +16206,12 @@ int <strong>stream.udp_cache.cap_weight</strong> = 128: additional bytes to trac
 </li>
 <li>
 <p>
-int <strong>stream.user_cache.max_sessions</strong> = 1024: maximum simultaneous sessions tracked before pruning { 2:max32 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.user_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
-</p>
-</li>
-<li>
-<p>
 int <strong>stream.user_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1:max32 }
 </p>
 </li>
 <li>
 <p>
 int <strong>stream.user_cache.cap_weight</strong> = 256: additional bytes to track per flow for better estimation against cap { 0:65535 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.file_cache.max_sessions</strong> = 128: maximum simultaneous sessions tracked before pruning { 2:max32 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.file_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
 </p>
 </li>
 <li>
@@ -16299,242 +16252,42 @@ int <strong>stream.trace</strong>: mask for enabling debug traces in module { 0:
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>stream.ip_flows</strong>: total ip sessions (sum)
+<strong>stream.flows</strong>: total sessions (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>stream.ip_total_prunes</strong>: total ip sessions pruned (sum)
+<strong>stream.total_prunes</strong>: total sessions pruned (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>stream.ip_idle_prunes</strong>: ip sessions pruned due to timeout (sum)
+<strong>stream.idle_prunes</strong>:  sessions pruned due to timeout (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>stream.ip_excess_prunes</strong>: ip sessions pruned due to excess (sum)
+<strong>stream.excess_prunes</strong>: sessions pruned due to excess (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>stream.ip_uni_prunes</strong>: ip uni sessions pruned (sum)
+<strong>stream.uni_prunes</strong>: uni sessions pruned (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>stream.ip_preemptive_prunes</strong>: ip sessions pruned during preemptive pruning (sum)
+<strong>stream.preemptive_prunes</strong>: sessions pruned during preemptive pruning (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>stream.ip_memcap_prunes</strong>: ip sessions pruned due to memcap (sum)
+<strong>stream.memcap_prunes</strong>: sessions pruned due to memcap (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>stream.ip_ha_prunes</strong>: ip sessions pruned by high availability sync (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.icmp_flows</strong>: total icmp sessions (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.icmp_total_prunes</strong>: total icmp sessions pruned (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.icmp_idle_prunes</strong>: icmp sessions pruned due to timeout (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.icmp_excess_prunes</strong>: icmp sessions pruned due to excess (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.icmp_uni_prunes</strong>: icmp uni sessions pruned (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.icmp_preemptive_prunes</strong>: icmp sessions pruned during preemptive pruning (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.icmp_memcap_prunes</strong>: icmp sessions pruned due to memcap (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.icmp_ha_prunes</strong>: icmp sessions pruned by high availability sync (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.tcp_flows</strong>: total tcp sessions (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.tcp_total_prunes</strong>: total tcp sessions pruned (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.tcp_idle_prunes</strong>: tcp sessions pruned due to timeout (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.tcp_excess_prunes</strong>: tcp sessions pruned due to excess (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.tcp_uni_prunes</strong>: tcp uni sessions pruned (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.tcp_preemptive_prunes</strong>: tcp sessions pruned during preemptive pruning (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.tcp_memcap_prunes</strong>: tcp sessions pruned due to memcap (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.tcp_ha_prunes</strong>: tcp sessions pruned by high availability sync (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.udp_flows</strong>: total udp sessions (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.udp_total_prunes</strong>: total udp sessions pruned (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.udp_idle_prunes</strong>: udp sessions pruned due to timeout (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.udp_excess_prunes</strong>: udp sessions pruned due to excess (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.udp_uni_prunes</strong>: udp uni sessions pruned (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.udp_preemptive_prunes</strong>: udp sessions pruned during preemptive pruning (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.udp_memcap_prunes</strong>: udp sessions pruned due to memcap (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.udp_ha_prunes</strong>: udp sessions pruned by high availability sync (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.user_flows</strong>: total user sessions (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.user_total_prunes</strong>: total user sessions pruned (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.user_idle_prunes</strong>: user sessions pruned due to timeout (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.user_excess_prunes</strong>: user sessions pruned due to excess (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.user_uni_prunes</strong>: user uni sessions pruned (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.user_preemptive_prunes</strong>: user sessions pruned during preemptive pruning (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.user_memcap_prunes</strong>: user sessions pruned due to memcap (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.user_ha_prunes</strong>: user sessions pruned by high availability sync (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.file_flows</strong>: total file sessions (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.file_total_prunes</strong>: total file sessions pruned (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.file_idle_prunes</strong>: file sessions pruned due to timeout (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.file_excess_prunes</strong>: file sessions pruned due to excess (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.file_uni_prunes</strong>: file uni sessions pruned (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.file_preemptive_prunes</strong>: file sessions pruned during preemptive pruning (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.file_memcap_prunes</strong>: file sessions pruned due to memcap (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.file_ha_prunes</strong>: file sessions pruned by high availability sync (sum)
+<strong>stream.ha_prunes</strong>: sessions pruned by high availability sync (sum)
 </p>
 </li>
 </ul></div>
@@ -17649,6 +17402,39 @@ int <strong>base64_decode.offset</strong> = 0: bytes past start of buffer to sta
 <li>
 <p>
 implied <strong>base64_decode.relative</strong>: apply offset to cursor instead of start of buffer
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_ber_data">ber_data</h3>
+<div class="paragraph"><p>What: rule option to move to the data for a specified BER element</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Usage: detect</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+int <strong>ber_data.~type</strong>: move to the data for the specified BER element type { 0:255 }
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_ber_skip">ber_skip</h3>
+<div class="paragraph"><p>What: rule option to skip BER element</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Usage: detect</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+int <strong>ber_skip.~type</strong>: BER element type to skip { 0:255 }
+</p>
+</li>
+<li>
+<p>
+implied <strong>ber_skip.optional</strong>: match even if the specified BER type is not found
 </p>
 </li>
 </ul></div>
@@ -24716,6 +24502,21 @@ implied <strong>base64_decode.relative</strong>: apply offset to cursor instead 
 </li>
 <li>
 <p>
+int <strong>ber_data.~type</strong>: move to the data for the specified BER element type { 0:255 }
+</p>
+</li>
+<li>
+<p>
+implied <strong>ber_skip.optional</strong>: match even if the specified BER type is not found
+</p>
+</li>
+<li>
+<p>
+int <strong>ber_skip.~type</strong>: BER element type to skip { 0:255 }
+</p>
+</li>
+<li>
+<p>
 enum <strong><code>binder[].use.action</code></strong> = inspect: what to do with matching traffic { reset | block | allow | inspect }
 </p>
 </li>
@@ -25736,6 +25537,16 @@ int <strong>finalize_packet.end_pdu</strong> = 0: Deregister for finalize packet
 </li>
 <li>
 <p>
+int <strong>finalize_packet.modify.pdu</strong> = 0: Modify verdict in finalize packet for this PDU { 0:max32 }
+</p>
+</li>
+<li>
+<p>
+enum <strong>finalize_packet.modify.verdict</strong>: output format for stats { pass | block | replace | whitelist | blacklist | ignore | retry }
+</p>
+</li>
+<li>
+<p>
 int <strong>finalize_packet.start_pdu</strong> = 0: Register to receive finalize packet event starting on this PDU { 0:max32 }
 </p>
 </li>
@@ -26091,17 +25902,7 @@ enum <strong><code>hosts[].tcp_policy</code></strong>: TCP reassembly policy { f
 </li>
 <li>
 <p>
-enum <strong><code>host_tracker[].frag_policy</code></strong>: defragmentation policy { first | linux | bsd | bsd_right | last | windows | solaris }
-</p>
-</li>
-<li>
-<p>
-addr <strong><code>host_tracker[].ip</code></strong> = 0.0.0.0/32: hosts address / cidr
-</p>
-</li>
-<li>
-<p>
-string <strong><code>host_tracker[].services[].name</code></strong>: service identifier
+addr <strong><code>host_tracker[].ip</code></strong>: hosts address / cidr
 </p>
 </li>
 <li>
@@ -26111,12 +25912,7 @@ port <strong><code>host_tracker[].services[].port</code></strong>: port number
 </li>
 <li>
 <p>
-enum <strong><code>host_tracker[].services[].proto</code></strong> = tcp: IP protocol { tcp | udp }
-</p>
-</li>
-<li>
-<p>
-enum <strong><code>host_tracker[].tcp_policy</code></strong>: TCP reassembly policy { first | last | linux | old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | windows | win_2003 | vista | proxy }
+enum <strong><code>host_tracker[].services[].proto</code></strong>: IP protocol { ip | tcp | udp }
 </p>
 </li>
 <li>
@@ -27856,6 +27652,11 @@ bool <strong>rt_packet.test_daq_retry</strong> = true: test daq packet retry fea
 </li>
 <li>
 <p>
+int <strong>rt_service.memcap</strong>: cap on amount of memory used
+</p>
+</li>
+<li>
+<p>
 enum <strong><code>rule_state.([0-9]+):([0-9]+)[].action</code></strong> = inherit: apply action if rule matches or inherit from rule definition { log | pass | alert | drop | block | reset | inherit }
 </p>
 </li>
@@ -29006,16 +28807,6 @@ int <strong>stream.file_cache.idle_timeout</strong> = 180: maximum inactive time
 </li>
 <li>
 <p>
-int <strong>stream.file_cache.max_sessions</strong> = 128: maximum simultaneous sessions tracked before pruning { 2:max32 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.file_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
-</p>
-</li>
-<li>
-<p>
 bool <strong>stream_file.upload</strong> = false: indicate file transfer direction
 </p>
 </li>
@@ -29036,16 +28827,6 @@ int <strong>stream.icmp_cache.idle_timeout</strong> = 180: maximum inactive time
 </li>
 <li>
 <p>
-int <strong>stream.icmp_cache.max_sessions</strong> = 65536: maximum simultaneous sessions tracked before pruning { 2:max32 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.icmp_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
-</p>
-</li>
-<li>
-<p>
 int <strong>stream_icmp.session_timeout</strong> = 30: session tracking timeout { 1:max31 }
 </p>
 </li>
@@ -29057,16 +28838,6 @@ int <strong>stream.ip_cache.cap_weight</strong> = 64: additional bytes to track 
 <li>
 <p>
 int <strong>stream.ip_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1:max32 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.ip_cache.max_sessions</strong> = 16384: maximum simultaneous sessions tracked before pruning { 2:max32 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.ip_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
 </p>
 </li>
 <li>
@@ -29111,6 +28882,16 @@ int <strong>stream_ip.trace</strong>: mask for enabling debug traces in module {
 </li>
 <li>
 <p>
+int <strong>stream.max_flows</strong> = 476288: maximum simultaneous flows tracked before pruning { 2:max32 }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
+</p>
+</li>
+<li>
+<p>
 enum <strong>stream_reassemble.action</strong>: stop or start stream reassembly { disable|enable }
 </p>
 </li>
@@ -29147,16 +28928,6 @@ int <strong>stream.tcp_cache.cap_weight</strong> = 11500: additional bytes to tr
 <li>
 <p>
 int <strong>stream.tcp_cache.idle_timeout</strong> = 3600: maximum inactive time before retiring session tracker { 1:max32 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.tcp_cache.max_sessions</strong> = 262144: maximum simultaneous sessions tracked before pruning { 2:max32 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.tcp_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
 </p>
 </li>
 <li>
@@ -29251,16 +29022,6 @@ int <strong>stream.udp_cache.idle_timeout</strong> = 180: maximum inactive time 
 </li>
 <li>
 <p>
-int <strong>stream.udp_cache.max_sessions</strong> = 131072: maximum simultaneous sessions tracked before pruning { 2:max32 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.udp_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
-</p>
-</li>
-<li>
-<p>
 int <strong>stream_udp.session_timeout</strong> = 30: session tracking timeout { 1:max31 }
 </p>
 </li>
@@ -29272,16 +29033,6 @@ int <strong>stream.user_cache.cap_weight</strong> = 256: additional bytes to tra
 <li>
 <p>
 int <strong>stream.user_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1:max32 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.user_cache.max_sessions</strong> = 1024: maximum simultaneous sessions tracked before pruning { 2:max32 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.user_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1:max32 }
 </p>
 </li>
 <li>
@@ -30286,6 +30037,21 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>detection.pcre_error</strong>: total number of times pcre returns error (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>detection.pcre_match_limit</strong>: total number of times pcre hit the match limit (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>detection.pcre_recursion_limit</strong>: total number of times pcre hit the recursion limit (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>detection.pkt_searches</strong>: fast pattern searches in packet data (sum)
 </p>
 </li>
@@ -30546,11 +30312,6 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>host_cache.lru_cache_clears</strong>: lru cache clear API calls (sum)
-</p>
-</li>
-<li>
-<p>
 <strong>host_cache.lru_cache_find_hits</strong>: lru cache found entry in cache (sum)
 </p>
 </li>
@@ -30571,22 +30332,12 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>host_cache.lru_cache_replaces</strong>: lru cache replaced existing entry (sum)
-</p>
-</li>
-<li>
-<p>
 <strong>host_tracker.service_adds</strong>: host service adds (sum)
 </p>
 </li>
 <li>
 <p>
 <strong>host_tracker.service_finds</strong>: host service finds (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>host_tracker.service_removes</strong>: host service removes (sum)
 </p>
 </li>
 <li>
@@ -31836,42 +31587,17 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>stream.file_excess_prunes</strong>: file sessions pruned due to excess (sum)
+<strong>stream.excess_prunes</strong>: sessions pruned due to excess (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>stream.file_flows</strong>: total file sessions (sum)
+<strong>stream.flows</strong>: total sessions (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>stream.file_ha_prunes</strong>: file sessions pruned by high availability sync (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.file_idle_prunes</strong>: file sessions pruned due to timeout (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.file_memcap_prunes</strong>: file sessions pruned due to memcap (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.file_preemptive_prunes</strong>: file sessions pruned during preemptive pruning (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.file_total_prunes</strong>: total file sessions pruned (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.file_uni_prunes</strong>: file uni sessions pruned (sum)
+<strong>stream.ha_prunes</strong>: sessions pruned by high availability sync (sum)
 </p>
 </li>
 <li>
@@ -31881,37 +31607,7 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>stream.icmp_excess_prunes</strong>: icmp sessions pruned due to excess (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.icmp_flows</strong>: total icmp sessions (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.icmp_ha_prunes</strong>: icmp sessions pruned by high availability sync (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.icmp_idle_prunes</strong>: icmp sessions pruned due to timeout (sum)
-</p>
-</li>
-<li>
-<p>
 <strong>stream_icmp.max</strong>: max icmp sessions (max)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.icmp_memcap_prunes</strong>: icmp sessions pruned due to memcap (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.icmp_preemptive_prunes</strong>: icmp sessions pruned during preemptive pruning (sum)
 </p>
 </li>
 <li>
@@ -31936,12 +31632,7 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>stream.icmp_total_prunes</strong>: total icmp sessions pruned (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.icmp_uni_prunes</strong>: icmp uni sessions pruned (sum)
+<strong>stream.idle_prunes</strong>:  sessions pruned due to timeout (sum)
 </p>
 </li>
 <li>
@@ -31976,16 +31667,6 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>stream.ip_excess_prunes</strong>: ip sessions pruned due to excess (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.ip_flows</strong>: total ip sessions (sum)
-</p>
-</li>
-<li>
-<p>
 <strong>stream_ip.fragmented_bytes</strong>: total fragmented bytes (sum)
 </p>
 </li>
@@ -31996,27 +31677,12 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>stream.ip_ha_prunes</strong>: ip sessions pruned by high availability sync (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.ip_idle_prunes</strong>: ip sessions pruned due to timeout (sum)
-</p>
-</li>
-<li>
-<p>
 <strong>stream_ip.max_frags</strong>: max fragments (sum)
 </p>
 </li>
 <li>
 <p>
 <strong>stream_ip.max</strong>: max ip sessions (max)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.ip_memcap_prunes</strong>: ip sessions pruned due to memcap (sum)
 </p>
 </li>
 <li>
@@ -32032,11 +31698,6 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>stream_ip.overlaps</strong>: overlapping fragments (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.ip_preemptive_prunes</strong>: ip sessions pruned during preemptive pruning (sum)
 </p>
 </li>
 <li>
@@ -32076,11 +31737,6 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>stream.ip_total_prunes</strong>: total ip sessions pruned (sum)
-</p>
-</li>
-<li>
-<p>
 <strong>stream_ip.trackers_added</strong>: datagram trackers created (sum)
 </p>
 </li>
@@ -32101,7 +31757,12 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>stream.ip_uni_prunes</strong>: ip uni sessions pruned (sum)
+<strong>stream.memcap_prunes</strong>: sessions pruned due to memcap (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream.preemptive_prunes</strong>: sessions pruned during preemptive pruning (sum)
 </p>
 </li>
 <li>
@@ -32156,27 +31817,12 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>stream.tcp_excess_prunes</strong>: tcp sessions pruned due to excess (sum)
-</p>
-</li>
-<li>
-<p>
 <strong>stream_tcp.fins</strong>: number of fin packets (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>stream.tcp_flows</strong>: total tcp sessions (sum)
-</p>
-</li>
-<li>
-<p>
 <strong>stream_tcp.gaps</strong>: missing data between PDUs (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.tcp_ha_prunes</strong>: tcp sessions pruned by high availability sync (sum)
 </p>
 </li>
 <li>
@@ -32197,11 +31843,6 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>stream_tcp.held_packets_passed</strong>: number of held packets passed (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.tcp_idle_prunes</strong>: tcp sessions pruned due to timeout (sum)
 </p>
 </li>
 <li>
@@ -32236,11 +31877,6 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>stream.tcp_memcap_prunes</strong>: tcp sessions pruned due to memcap (sum)
-</p>
-</li>
-<li>
-<p>
 <strong>stream_tcp.memory</strong>: current memory in use (now)
 </p>
 </li>
@@ -32262,11 +31898,6 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>stream_tcp.partial_flushes</strong>: number of partial flushes initiated (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.tcp_preemptive_prunes</strong>: tcp sessions pruned during preemptive pruning (sum)
 </p>
 </li>
 <li>
@@ -32376,42 +32007,17 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>stream.tcp_total_prunes</strong>: total tcp sessions pruned (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.tcp_uni_prunes</strong>: tcp uni sessions pruned (sum)
-</p>
-</li>
-<li>
-<p>
 <strong>stream_tcp.untracked</strong>: tcp packets not tracked (sum)
 </p>
 </li>
 <li>
 <p>
+<strong>stream.total_prunes</strong>: total sessions pruned (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>stream_udp.created</strong>: udp session trackers created (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.udp_excess_prunes</strong>: udp sessions pruned due to excess (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.udp_flows</strong>: total udp sessions (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.udp_ha_prunes</strong>: udp sessions pruned by high availability sync (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.udp_idle_prunes</strong>: udp sessions pruned due to timeout (sum)
 </p>
 </li>
 <li>
@@ -32422,16 +32028,6 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>stream_udp.max</strong>: max udp sessions (max)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.udp_memcap_prunes</strong>: udp sessions pruned due to memcap (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.udp_preemptive_prunes</strong>: udp sessions pruned during preemptive pruning (sum)
 </p>
 </li>
 <li>
@@ -32456,52 +32052,7 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>stream.udp_total_prunes</strong>: total udp sessions pruned (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.udp_uni_prunes</strong>: udp uni sessions pruned (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.user_excess_prunes</strong>: user sessions pruned due to excess (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.user_flows</strong>: total user sessions (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.user_ha_prunes</strong>: user sessions pruned by high availability sync (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.user_idle_prunes</strong>: user sessions pruned due to timeout (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.user_memcap_prunes</strong>: user sessions pruned due to memcap (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.user_preemptive_prunes</strong>: user sessions pruned during preemptive pruning (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.user_total_prunes</strong>: total user sessions pruned (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream.user_uni_prunes</strong>: user uni sessions pruned (sum)
+<strong>stream.uni_prunes</strong>: uni sessions pruned (sum)
 </p>
 </li>
 <li>
@@ -35648,15 +35199,9 @@ change -&gt; smtp: 'ports' ==&gt; 'bindings'
 change -&gt; ssh: 'server_ports' ==&gt; 'bindings'
 change -&gt; ssl: 'ports' ==&gt; 'bindings'
 change -&gt; stream5_global: 'max_active_responses' ==&gt; 'max_responses'
-change -&gt; stream5_global: 'max_icmp' ==&gt; 'max_sessions'
-change -&gt; stream5_global: 'max_ip' ==&gt; 'max_sessions'
-change -&gt; stream5_global: 'max_tcp' ==&gt; 'max_sessions'
-change -&gt; stream5_global: 'max_udp' ==&gt; 'max_sessions'
 change -&gt; stream5_global: 'min_response_seconds' ==&gt; 'min_interval'
-change -&gt; stream5_global: 'tcp_cache_nominal_timeout' ==&gt; 'pruning_timeout'
-change -&gt; stream5_global: 'tcp_cache_pruning_timeout' ==&gt; 'idle_timeout'
+change -&gt; stream5_global: 'tcp_cache_nominal_timeout' ==&gt; 'idle_timeout'
 change -&gt; stream5_global: 'udp_cache_nominal_timeout' ==&gt; 'idle_timeout'
-change -&gt; stream5_global: 'udp_cache_pruning_timeout' ==&gt; 'pruning_timeout'
 change -&gt; stream5_ha: 'min_session_lifetime' ==&gt; 'min_age'
 change -&gt; stream5_ha: 'min_sync_interval' ==&gt; 'min_sync'
 change -&gt; stream5_ha: 'stream5_ha' ==&gt; 'high_availability'
@@ -35964,6 +35509,16 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 <li>
 <p>
 <strong>base64_decode</strong> (ips_option): rule option to decode base64 data - must be used with base64_data option
+</p>
+</li>
+<li>
+<p>
+<strong>ber_data</strong> (ips_option): rule option to move to the data for a specified BER element
+</p>
+</li>
+<li>
+<p>
+<strong>ber_skip</strong> (ips_option): rule option to skip BER element
 </p>
 </li>
 <li>
@@ -37513,6 +37068,16 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
+<strong>ips_option::ber_data</strong>: rule option to move to the data for a specified BER element
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::ber_skip</strong>: rule option to skip BER element
+</p>
+</li>
+<li>
+<p>
 <strong>ips_option::bufferlen</strong>: rule option to check length of current buffer
 </p>
 </li>
@@ -38331,7 +37896,7 @@ Adding/removing stream_* inspectors if stream was already configured
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2019-07-17 09:38:43 EDT
+ 2019-08-21 14:26:59 EDT
 </div>
 </div>
 </body>

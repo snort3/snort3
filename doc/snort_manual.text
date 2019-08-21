@@ -203,103 +203,105 @@ Table of Contents
     11.2. appids
     11.3. asn1
     11.4. base64_decode
-    11.5. bufferlen
-    11.6. byte_extract
-    11.7. byte_jump
-    11.8. byte_math
-    11.9. byte_test
-    11.10. classtype
-    11.11. content
-    11.12. cvs
-    11.13. dce_iface
-    11.14. dce_opnum
-    11.15. dce_stub_data
-    11.16. detection_filter
-    11.17. dnp3_data
-    11.18. dnp3_func
-    11.19. dnp3_ind
-    11.20. dnp3_obj
-    11.21. dsize
-    11.22. file_data
-    11.23. file_type
-    11.24. flags
-    11.25. flow
-    11.26. flowbits
-    11.27. fragbits
-    11.28. fragoffset
-    11.29. gid
-    11.30. gtp_info
-    11.31. gtp_type
-    11.32. gtp_version
-    11.33. http2_frame_data
-    11.34. http2_frame_header
-    11.35. http_client_body
-    11.36. http_cookie
-    11.37. http_header
-    11.38. http_method
-    11.39. http_raw_body
-    11.40. http_raw_cookie
-    11.41. http_raw_header
-    11.42. http_raw_request
-    11.43. http_raw_status
-    11.44. http_raw_trailer
-    11.45. http_raw_uri
-    11.46. http_stat_code
-    11.47. http_stat_msg
-    11.48. http_trailer
-    11.49. http_true_ip
-    11.50. http_uri
-    11.51. http_version
-    11.52. icmp_id
-    11.53. icmp_seq
-    11.54. icode
-    11.55. id
-    11.56. ip_proto
-    11.57. ipopts
-    11.58. isdataat
-    11.59. itype
-    11.60. md5
-    11.61. metadata
-    11.62. modbus_data
-    11.63. modbus_func
-    11.64. modbus_unit
-    11.65. msg
-    11.66. mss
-    11.67. pcre
-    11.68. pkt_data
-    11.69. pkt_num
-    11.70. priority
-    11.71. raw_data
-    11.72. reference
-    11.73. regex
-    11.74. rem
-    11.75. replace
-    11.76. rev
-    11.77. rpc
-    11.78. sd_pattern
-    11.79. seq
-    11.80. service
-    11.81. session
-    11.82. sha256
-    11.83. sha512
-    11.84. sid
-    11.85. sip_body
-    11.86. sip_header
-    11.87. sip_method
-    11.88. sip_stat_code
-    11.89. so
-    11.90. soid
-    11.91. ssl_state
-    11.92. ssl_version
-    11.93. stream_reassemble
-    11.94. stream_size
-    11.95. tag
-    11.96. target
-    11.97. tos
-    11.98. ttl
-    11.99. urg
-    11.100. window
-    11.101. wscale
+    11.5. ber_data
+    11.6. ber_skip
+    11.7. bufferlen
+    11.8. byte_extract
+    11.9. byte_jump
+    11.10. byte_math
+    11.11. byte_test
+    11.12. classtype
+    11.13. content
+    11.14. cvs
+    11.15. dce_iface
+    11.16. dce_opnum
+    11.17. dce_stub_data
+    11.18. detection_filter
+    11.19. dnp3_data
+    11.20. dnp3_func
+    11.21. dnp3_ind
+    11.22. dnp3_obj
+    11.23. dsize
+    11.24. file_data
+    11.25. file_type
+    11.26. flags
+    11.27. flow
+    11.28. flowbits
+    11.29. fragbits
+    11.30. fragoffset
+    11.31. gid
+    11.32. gtp_info
+    11.33. gtp_type
+    11.34. gtp_version
+    11.35. http2_frame_data
+    11.36. http2_frame_header
+    11.37. http_client_body
+    11.38. http_cookie
+    11.39. http_header
+    11.40. http_method
+    11.41. http_raw_body
+    11.42. http_raw_cookie
+    11.43. http_raw_header
+    11.44. http_raw_request
+    11.45. http_raw_status
+    11.46. http_raw_trailer
+    11.47. http_raw_uri
+    11.48. http_stat_code
+    11.49. http_stat_msg
+    11.50. http_trailer
+    11.51. http_true_ip
+    11.52. http_uri
+    11.53. http_version
+    11.54. icmp_id
+    11.55. icmp_seq
+    11.56. icode
+    11.57. id
+    11.58. ip_proto
+    11.59. ipopts
+    11.60. isdataat
+    11.61. itype
+    11.62. md5
+    11.63. metadata
+    11.64. modbus_data
+    11.65. modbus_func
+    11.66. modbus_unit
+    11.67. msg
+    11.68. mss
+    11.69. pcre
+    11.70. pkt_data
+    11.71. pkt_num
+    11.72. priority
+    11.73. raw_data
+    11.74. reference
+    11.75. regex
+    11.76. rem
+    11.77. replace
+    11.78. rev
+    11.79. rpc
+    11.80. sd_pattern
+    11.81. seq
+    11.82. service
+    11.83. session
+    11.84. sha256
+    11.85. sha512
+    11.86. sid
+    11.87. sip_body
+    11.88. sip_header
+    11.89. sip_method
+    11.90. sip_stat_code
+    11.91. so
+    11.92. soid
+    11.93. ssl_state
+    11.94. ssl_version
+    11.95. stream_reassemble
+    11.96. stream_size
+    11.97. tag
+    11.98. target
+    11.99. tos
+    11.100. ttl
+    11.101. urg
+    11.102. window
+    11.103. wscale
 
 12. Search Engine Modules
 13. SO Rule Modules
@@ -389,7 +391,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0 (Build 258)
+o"  )~   Version 3.0.0 (Build 259)
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
@@ -5590,6 +5592,12 @@ Peg counts:
     (sum)
   * detection.offload_suspends: fast pattern search suspends due to
     offload context chains (sum)
+  * detection.pcre_match_limit: total number of times pcre hit the
+    match limit (sum)
+  * detection.pcre_recursion_limit: total number of times pcre hit
+    the recursion limit (sum)
+  * detection.pcre_error: total number of times pcre returns error
+    (sum)
 
 
 6.8. event_filter
@@ -5717,8 +5725,6 @@ Commands:
 Peg counts:
 
   * host_cache.lru_cache_adds: lru cache added new entry (sum)
-  * host_cache.lru_cache_replaces: lru cache replaced existing entry
-    (sum)
   * host_cache.lru_cache_prunes: lru cache pruned entry to make space
     for new entry (sum)
   * host_cache.lru_cache_find_hits: lru cache found entry in cache
@@ -5727,7 +5733,6 @@ Peg counts:
     cache (sum)
   * host_cache.lru_cache_removes: lru cache found entry and removed
     it (sum)
-  * host_cache.lru_cache_clears: lru cache clear API calls (sum)
 
 
 6.12. host_tracker
@@ -5742,22 +5747,15 @@ Usage: global
 
 Configuration:
 
-  * addr host_tracker[].ip = 0.0.0.0/32: hosts address / cidr
-  * enum host_tracker[].frag_policy: defragmentation policy { first |
-    linux | bsd | bsd_right | last | windows | solaris }
-  * enum host_tracker[].tcp_policy: TCP reassembly policy { first |
-    last | linux | old_linux | bsd | macos | solaris | irix | hpux11
-    | hpux10 | windows | win_2003 | vista | proxy }
-  * string host_tracker[].services[].name: service identifier
-  * enum host_tracker[].services[].proto = tcp: IP protocol { tcp |
-    udp }
+  * addr host_tracker[].ip: hosts address / cidr
   * port host_tracker[].services[].port: port number
+  * enum host_tracker[].services[].proto: IP protocol { ip | tcp |
+    udp }
 
 Peg counts:
 
   * host_tracker.service_adds: host service adds (sum)
   * host_tracker.service_finds: host service finds (sum)
-  * host_tracker.service_removes: host service removes (sum)
 
 
 6.13. hosts
@@ -7970,6 +7968,10 @@ Configuration:
     packet event starting on this PDU { 0:max32 }
   * int finalize_packet.end_pdu = 0: Deregister for finalize packet
     events on this PDU { 0:max32 }
+  * int finalize_packet.modify.pdu = 0: Modify verdict in finalize
+    packet for this PDU { 0:max32 }
+  * enum finalize_packet.modify.verdict: output format for stats {
+    pass | block | replace | whitelist | blacklist | ignore | retry }
 
 Peg counts:
 
@@ -9040,6 +9042,10 @@ Type: inspector
 
 Usage: context
 
+Configuration:
+
+  * int rt_service.memcap: cap on amount of memory used
+
 Peg counts:
 
   * rt_service.packets: total packets (sum)
@@ -9350,50 +9356,30 @@ Configuration:
   * int stream.footprint = 0: use zero for production, non-zero for
     testing at given size (for TCP and user) { 0:max32 }
   * bool stream.ip_frags_only = false: don’t process non-frag flows
-  * int stream.ip_cache.max_sessions = 16384: maximum simultaneous
-    sessions tracked before pruning { 2:max32 }
-  * int stream.ip_cache.pruning_timeout = 30: minimum inactive time
-    before being eligible for pruning { 1:max32 }
+  * int stream.max_flows = 476288: maximum simultaneous flows tracked
+    before pruning { 2:max32 }
+  * int stream.pruning_timeout = 30: minimum inactive time before
+    being eligible for pruning { 1:max32 }
   * int stream.ip_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * int stream.ip_cache.cap_weight = 64: additional bytes to track
     per flow for better estimation against cap { 0:65535 }
-  * int stream.icmp_cache.max_sessions = 65536: maximum simultaneous
-    sessions tracked before pruning { 2:max32 }
-  * int stream.icmp_cache.pruning_timeout = 30: minimum inactive time
-    before being eligible for pruning { 1:max32 }
   * int stream.icmp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * int stream.icmp_cache.cap_weight = 8: additional bytes to track
     per flow for better estimation against cap { 0:65535 }
-  * int stream.tcp_cache.max_sessions = 262144: maximum simultaneous
-    sessions tracked before pruning { 2:max32 }
-  * int stream.tcp_cache.pruning_timeout = 30: minimum inactive time
-    before being eligible for pruning { 1:max32 }
   * int stream.tcp_cache.idle_timeout = 3600: maximum inactive time
     before retiring session tracker { 1:max32 }
   * int stream.tcp_cache.cap_weight = 11500: additional bytes to
     track per flow for better estimation against cap { 0:65535 }
-  * int stream.udp_cache.max_sessions = 131072: maximum simultaneous
-    sessions tracked before pruning { 2:max32 }
-  * int stream.udp_cache.pruning_timeout = 30: minimum inactive time
-    before being eligible for pruning { 1:max32 }
   * int stream.udp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * int stream.udp_cache.cap_weight = 128: additional bytes to track
     per flow for better estimation against cap { 0:65535 }
-  * int stream.user_cache.max_sessions = 1024: maximum simultaneous
-    sessions tracked before pruning { 2:max32 }
-  * int stream.user_cache.pruning_timeout = 30: minimum inactive time
-    before being eligible for pruning { 1:max32 }
   * int stream.user_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * int stream.user_cache.cap_weight = 256: additional bytes to track
     per flow for better estimation against cap { 0:65535 }
-  * int stream.file_cache.max_sessions = 128: maximum simultaneous
-    sessions tracked before pruning { 2:max32 }
-  * int stream.file_cache.pruning_timeout = 30: minimum inactive time
-    before being eligible for pruning { 1:max32 }
   * int stream.file_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * int stream.file_cache.cap_weight = 32: additional bytes to track
@@ -9409,75 +9395,15 @@ Rules:
 
 Peg counts:
 
-  * stream.ip_flows: total ip sessions (sum)
-  * stream.ip_total_prunes: total ip sessions pruned (sum)
-  * stream.ip_idle_prunes: ip sessions pruned due to timeout (sum)
-  * stream.ip_excess_prunes: ip sessions pruned due to excess (sum)
-  * stream.ip_uni_prunes: ip uni sessions pruned (sum)
-  * stream.ip_preemptive_prunes: ip sessions pruned during preemptive
+  * stream.flows: total sessions (sum)
+  * stream.total_prunes: total sessions pruned (sum)
+  * stream.idle_prunes: sessions pruned due to timeout (sum)
+  * stream.excess_prunes: sessions pruned due to excess (sum)
+  * stream.uni_prunes: uni sessions pruned (sum)
+  * stream.preemptive_prunes: sessions pruned during preemptive
     pruning (sum)
-  * stream.ip_memcap_prunes: ip sessions pruned due to memcap (sum)
-  * stream.ip_ha_prunes: ip sessions pruned by high availability sync
-    (sum)
-  * stream.icmp_flows: total icmp sessions (sum)
-  * stream.icmp_total_prunes: total icmp sessions pruned (sum)
-  * stream.icmp_idle_prunes: icmp sessions pruned due to timeout
-    (sum)
-  * stream.icmp_excess_prunes: icmp sessions pruned due to excess
-    (sum)
-  * stream.icmp_uni_prunes: icmp uni sessions pruned (sum)
-  * stream.icmp_preemptive_prunes: icmp sessions pruned during
-    preemptive pruning (sum)
-  * stream.icmp_memcap_prunes: icmp sessions pruned due to memcap
-    (sum)
-  * stream.icmp_ha_prunes: icmp sessions pruned by high availability
-    sync (sum)
-  * stream.tcp_flows: total tcp sessions (sum)
-  * stream.tcp_total_prunes: total tcp sessions pruned (sum)
-  * stream.tcp_idle_prunes: tcp sessions pruned due to timeout (sum)
-  * stream.tcp_excess_prunes: tcp sessions pruned due to excess (sum)
-  * stream.tcp_uni_prunes: tcp uni sessions pruned (sum)
-  * stream.tcp_preemptive_prunes: tcp sessions pruned during
-    preemptive pruning (sum)
-  * stream.tcp_memcap_prunes: tcp sessions pruned due to memcap (sum)
-  * stream.tcp_ha_prunes: tcp sessions pruned by high availability
-    sync (sum)
-  * stream.udp_flows: total udp sessions (sum)
-  * stream.udp_total_prunes: total udp sessions pruned (sum)
-  * stream.udp_idle_prunes: udp sessions pruned due to timeout (sum)
-  * stream.udp_excess_prunes: udp sessions pruned due to excess (sum)
-  * stream.udp_uni_prunes: udp uni sessions pruned (sum)
-  * stream.udp_preemptive_prunes: udp sessions pruned during
-    preemptive pruning (sum)
-  * stream.udp_memcap_prunes: udp sessions pruned due to memcap (sum)
-  * stream.udp_ha_prunes: udp sessions pruned by high availability
-    sync (sum)
-  * stream.user_flows: total user sessions (sum)
-  * stream.user_total_prunes: total user sessions pruned (sum)
-  * stream.user_idle_prunes: user sessions pruned due to timeout
-    (sum)
-  * stream.user_excess_prunes: user sessions pruned due to excess
-    (sum)
-  * stream.user_uni_prunes: user uni sessions pruned (sum)
-  * stream.user_preemptive_prunes: user sessions pruned during
-    preemptive pruning (sum)
-  * stream.user_memcap_prunes: user sessions pruned due to memcap
-    (sum)
-  * stream.user_ha_prunes: user sessions pruned by high availability
-    sync (sum)
-  * stream.file_flows: total file sessions (sum)
-  * stream.file_total_prunes: total file sessions pruned (sum)
-  * stream.file_idle_prunes: file sessions pruned due to timeout
-    (sum)
-  * stream.file_excess_prunes: file sessions pruned due to excess
-    (sum)
-  * stream.file_uni_prunes: file uni sessions pruned (sum)
-  * stream.file_preemptive_prunes: file sessions pruned during
-    preemptive pruning (sum)
-  * stream.file_memcap_prunes: file sessions pruned due to memcap
-    (sum)
-  * stream.file_ha_prunes: file sessions pruned by high availability
-    sync (sum)
+  * stream.memcap_prunes: sessions pruned due to memcap (sum)
+  * stream.ha_prunes: sessions pruned by high availability sync (sum)
 
 
 9.42. stream_file
@@ -10012,7 +9938,40 @@ Configuration:
     start of buffer
 
 
-11.5. bufferlen
+11.5. ber_data
+
+--------------
+
+What: rule option to move to the data for a specified BER element
+
+Type: ips_option
+
+Usage: detect
+
+Configuration:
+
+  * int ber_data.~type: move to the data for the specified BER
+    element type { 0:255 }
+
+
+11.6. ber_skip
+
+--------------
+
+What: rule option to skip BER element
+
+Type: ips_option
+
+Usage: detect
+
+Configuration:
+
+  * int ber_skip.~type: BER element type to skip { 0:255 }
+  * implied ber_skip.optional: match even if the specified BER type
+    is not found
+
+
+11.7. bufferlen
 
 --------------
 
@@ -10028,7 +9987,7 @@ Configuration:
     in given range { 0:65535 }
 
 
-11.6. byte_extract
+11.8. byte_extract
 
 --------------
 
@@ -10063,7 +10022,7 @@ Configuration:
     value before storage in name { 0x1:0xFFFFFFFF }
 
 
-11.7. byte_jump
+11.9. byte_jump
 
 --------------
 
@@ -10102,7 +10061,7 @@ Configuration:
     0x1:0xFFFFFFFF }
 
 
-11.8. byte_math
+11.10. byte_math
 
 --------------
 
@@ -10134,7 +10093,7 @@ Configuration:
     value before storage in name { 0x1:0xFFFFFFFF }
 
 
-11.9. byte_test
+11.11. byte_test
 
 --------------
 
@@ -10167,7 +10126,7 @@ Configuration:
     0x1:0xFFFFFFFF }
 
 
-11.10. classtype
+11.12. classtype
 
 --------------
 
@@ -10182,7 +10141,7 @@ Configuration:
   * string classtype.~: classification for this rule
 
 
-11.11. content
+11.13. content
 
 --------------
 
@@ -10213,7 +10172,7 @@ Configuration:
     from cursor
 
 
-11.12. cvs
+11.14. cvs
 
 --------------
 
@@ -10228,7 +10187,7 @@ Configuration:
   * implied cvs.invalid-entry: looks for an invalid Entry string
 
 
-11.13. dce_iface
+11.15. dce_iface
 
 --------------
 
@@ -10245,7 +10204,7 @@ Configuration:
   * implied dce_iface.any_frag: match on any fragment
 
 
-11.14. dce_opnum
+11.16. dce_opnum
 
 --------------
 
@@ -10261,7 +10220,7 @@ Configuration:
     list
 
 
-11.15. dce_stub_data
+11.17. dce_stub_data
 
 --------------
 
@@ -10272,7 +10231,7 @@ Type: ips_option
 Usage: detect
 
 
-11.16. detection_filter
+11.18. detection_filter
 
 --------------
 
@@ -10293,7 +10252,7 @@ Configuration:
     1:max32 }
 
 
-11.17. dnp3_data
+11.19. dnp3_data
 
 --------------
 
@@ -10304,7 +10263,7 @@ Type: ips_option
 Usage: detect
 
 
-11.18. dnp3_func
+11.20. dnp3_func
 
 --------------
 
@@ -10319,7 +10278,7 @@ Configuration:
   * string dnp3_func.~: match DNP3 function code or name
 
 
-11.19. dnp3_ind
+11.21. dnp3_ind
 
 --------------
 
@@ -10334,7 +10293,7 @@ Configuration:
   * string dnp3_ind.~: match given DNP3 indicator flags
 
 
-11.20. dnp3_obj
+11.22. dnp3_obj
 
 --------------
 
@@ -10352,7 +10311,7 @@ Configuration:
     }
 
 
-11.21. dsize
+11.23. dsize
 
 --------------
 
@@ -10368,7 +10327,7 @@ Configuration:
     given range { 0:65535 }
 
 
-11.22. file_data
+11.24. file_data
 
 --------------
 
@@ -10379,7 +10338,7 @@ Type: ips_option
 Usage: detect
 
 
-11.23. file_type
+11.25. file_type
 
 --------------
 
@@ -10394,7 +10353,7 @@ Configuration:
   * string file_type.~: list of file type IDs to match
 
 
-11.24. flags
+11.26. flags
 
 --------------
 
@@ -10410,7 +10369,7 @@ Configuration:
   * string flags.~mask_flags: these flags are don’t cares
 
 
-11.25. flow
+11.27. flow
 
 --------------
 
@@ -10436,7 +10395,7 @@ Configuration:
   * implied flow.only_frag: match on defragmented packets only
 
 
-11.26. flowbits
+11.28. flowbits
 
 --------------
 
@@ -10453,7 +10412,7 @@ Configuration:
   * string flowbits.~arg2: group if arg1 is bits
 
 
-11.27. fragbits
+11.29. fragbits
 
 --------------
 
@@ -10468,7 +10427,7 @@ Configuration:
   * string fragbits.~flags: these flags are tested
 
 
-11.28. fragoffset
+11.30. fragoffset
 
 --------------
 
@@ -10484,7 +10443,7 @@ Configuration:
     given range { 0:8192 }
 
 
-11.29. gid
+11.31. gid
 
 --------------
 
@@ -10499,7 +10458,7 @@ Configuration:
   * int gid.~: generator id { 1:max32 }
 
 
-11.30. gtp_info
+11.32. gtp_info
 
 --------------
 
@@ -10514,7 +10473,7 @@ Configuration:
   * string gtp_info.~: info element to match
 
 
-11.31. gtp_type
+11.33. gtp_type
 
 --------------
 
@@ -10529,7 +10488,7 @@ Configuration:
   * string gtp_type.~: list of types to match
 
 
-11.32. gtp_version
+11.34. gtp_version
 
 --------------
 
@@ -10544,7 +10503,7 @@ Configuration:
   * int gtp_version.~: version to match { 0:2 }
 
 
-11.33. http2_frame_data
+11.35. http2_frame_data
 
 --------------
 
@@ -10555,7 +10514,7 @@ Type: ips_option
 Usage: detect
 
 
-11.34. http2_frame_header
+11.36. http2_frame_header
 
 --------------
 
@@ -10566,7 +10525,7 @@ Type: ips_option
 Usage: detect
 
 
-11.35. http_client_body
+11.37. http_client_body
 
 --------------
 
@@ -10577,7 +10536,7 @@ Type: ips_option
 Usage: detect
 
 
-11.36. http_cookie
+11.38. http_cookie
 
 --------------
 
@@ -10599,7 +10558,7 @@ Configuration:
     message trailers
 
 
-11.37. http_header
+11.39. http_header
 
 --------------
 
@@ -10624,7 +10583,7 @@ Configuration:
     message trailers
 
 
-11.38. http_method
+11.40. http_method
 
 --------------
 
@@ -10645,7 +10604,7 @@ Configuration:
     message trailers
 
 
-11.39. http_raw_body
+11.41. http_raw_body
 
 --------------
 
@@ -10657,7 +10616,7 @@ Type: ips_option
 Usage: detect
 
 
-11.40. http_raw_cookie
+11.42. http_raw_cookie
 
 --------------
 
@@ -10680,7 +10639,7 @@ Configuration:
     HTTP message trailers
 
 
-11.41. http_raw_header
+11.43. http_raw_header
 
 --------------
 
@@ -10703,7 +10662,7 @@ Configuration:
     HTTP message trailers
 
 
-11.42. http_raw_request
+11.44. http_raw_request
 
 --------------
 
@@ -10724,7 +10683,7 @@ Configuration:
     HTTP message trailers
 
 
-11.43. http_raw_status
+11.45. http_raw_status
 
 --------------
 
@@ -10743,7 +10702,7 @@ Configuration:
     HTTP message trailers
 
 
-11.44. http_raw_trailer
+11.46. http_raw_trailer
 
 --------------
 
@@ -10764,7 +10723,7 @@ Configuration:
     HTTP response message body (must be combined with request)
 
 
-11.45. http_raw_uri
+11.47. http_raw_uri
 
 --------------
 
@@ -10793,7 +10752,7 @@ Configuration:
     URI only
 
 
-11.46. http_stat_code
+11.48. http_stat_code
 
 --------------
 
@@ -10811,7 +10770,7 @@ Configuration:
     HTTP message trailers
 
 
-11.47. http_stat_msg
+11.49. http_stat_msg
 
 --------------
 
@@ -10830,7 +10789,7 @@ Configuration:
     HTTP message trailers
 
 
-11.48. http_trailer
+11.50. http_trailer
 
 --------------
 
@@ -10852,7 +10811,7 @@ Configuration:
     message body (must be combined with request)
 
 
-11.49. http_true_ip
+11.51. http_true_ip
 
 --------------
 
@@ -10873,7 +10832,7 @@ Configuration:
     HTTP message trailers
 
 
-11.50. http_uri
+11.52. http_uri
 
 --------------
 
@@ -10901,7 +10860,7 @@ Configuration:
     only
 
 
-11.51. http_version
+11.53. http_version
 
 --------------
 
@@ -10923,7 +10882,7 @@ Configuration:
     HTTP message trailers
 
 
-11.52. icmp_id
+11.54. icmp_id
 
 --------------
 
@@ -10939,7 +10898,7 @@ Configuration:
     0:65535 }
 
 
-11.53. icmp_seq
+11.55. icmp_seq
 
 --------------
 
@@ -10955,7 +10914,7 @@ Configuration:
     given range { 0:65535 }
 
 
-11.54. icode
+11.56. icode
 
 --------------
 
@@ -10971,7 +10930,7 @@ Configuration:
     0:255 }
 
 
-11.55. id
+11.57. id
 
 --------------
 
@@ -10987,7 +10946,7 @@ Configuration:
     }
 
 
-11.56. ip_proto
+11.58. ip_proto
 
 --------------
 
@@ -11002,7 +10961,7 @@ Configuration:
   * string ip_proto.~proto: [!|>|<] name or number
 
 
-11.57. ipopts
+11.59. ipopts
 
 --------------
 
@@ -11018,7 +10977,7 @@ Configuration:
     lsrre|ssrr|satid|any }
 
 
-11.58. isdataat
+11.60. isdataat
 
 --------------
 
@@ -11035,7 +10994,7 @@ Configuration:
     buffer
 
 
-11.59. itype
+11.61. itype
 
 --------------
 
@@ -11051,7 +11010,7 @@ Configuration:
     0:255 }
 
 
-11.60. md5
+11.62. md5
 
 --------------
 
@@ -11071,7 +11030,7 @@ Configuration:
     of buffer
 
 
-11.61. metadata
+11.63. metadata
 
 --------------
 
@@ -11088,7 +11047,7 @@ Configuration:
     pairs
 
 
-11.62. modbus_data
+11.64. modbus_data
 
 --------------
 
@@ -11099,7 +11058,7 @@ Type: ips_option
 Usage: detect
 
 
-11.63. modbus_func
+11.65. modbus_func
 
 --------------
 
@@ -11114,7 +11073,7 @@ Configuration:
   * string modbus_func.~: function code to match
 
 
-11.64. modbus_unit
+11.66. modbus_unit
 
 --------------
 
@@ -11129,7 +11088,7 @@ Configuration:
   * int modbus_unit.~: Modbus unit ID { 0:255 }
 
 
-11.65. msg
+11.67. msg
 
 --------------
 
@@ -11144,7 +11103,7 @@ Configuration:
   * string msg.~: message describing rule
 
 
-11.66. mss
+11.68. mss
 
 --------------
 
@@ -11160,7 +11119,7 @@ Configuration:
     }
 
 
-11.67. pcre
+11.69. pcre
 
 --------------
 
@@ -11175,7 +11134,7 @@ Configuration:
   * string pcre.~re: Snort regular expression
 
 
-11.68. pkt_data
+11.70. pkt_data
 
 --------------
 
@@ -11187,7 +11146,7 @@ Type: ips_option
 Usage: detect
 
 
-11.69. pkt_num
+11.71. pkt_num
 
 --------------
 
@@ -11203,7 +11162,7 @@ Configuration:
     { 1: }
 
 
-11.70. priority
+11.72. priority
 
 --------------
 
@@ -11219,7 +11178,7 @@ Configuration:
     1:max31 }
 
 
-11.71. raw_data
+11.73. raw_data
 
 --------------
 
@@ -11230,7 +11189,7 @@ Type: ips_option
 Usage: detect
 
 
-11.72. reference
+11.74. reference
 
 --------------
 
@@ -11246,7 +11205,7 @@ Configuration:
   * string reference.~id: reference id
 
 
-11.73. regex
+11.75. regex
 
 --------------
 
@@ -11269,7 +11228,7 @@ Configuration:
     instead of start of buffer
 
 
-11.74. rem
+11.76. rem
 
 --------------
 
@@ -11284,7 +11243,7 @@ Configuration:
   * string rem.~: comment
 
 
-11.75. replace
+11.77. replace
 
 --------------
 
@@ -11299,7 +11258,7 @@ Configuration:
   * string replace.~: byte code to replace with
 
 
-11.76. rev
+11.78. rev
 
 --------------
 
@@ -11314,7 +11273,7 @@ Configuration:
   * int rev.~: revision { 1:max32 }
 
 
-11.77. rpc
+11.79. rpc
 
 --------------
 
@@ -11331,7 +11290,7 @@ Configuration:
   * string rpc.~proc: procedure number or * for any
 
 
-11.78. sd_pattern
+11.80. sd_pattern
 
 --------------
 
@@ -11355,7 +11314,7 @@ Peg counts:
   * sd_pattern.terminated: hyperscan terminated (sum)
 
 
-11.79. seq
+11.81. seq
 
 --------------
 
@@ -11371,7 +11330,7 @@ Configuration:
     range { 0: }
 
 
-11.80. service
+11.82. service
 
 --------------
 
@@ -11386,7 +11345,7 @@ Configuration:
   * string service.*: one or more comma-separated service names
 
 
-11.81. session
+11.83. session
 
 --------------
 
@@ -11401,7 +11360,7 @@ Configuration:
   * enum session.~mode: output format { printable|binary|all }
 
 
-11.82. sha256
+11.84. sha256
 
 --------------
 
@@ -11421,7 +11380,7 @@ Configuration:
     start of buffer
 
 
-11.83. sha512
+11.85. sha512
 
 --------------
 
@@ -11441,7 +11400,7 @@ Configuration:
     start of buffer
 
 
-11.84. sid
+11.86. sid
 
 --------------
 
@@ -11456,7 +11415,7 @@ Configuration:
   * int sid.~: signature id { 1:max32 }
 
 
-11.85. sip_body
+11.87. sip_body
 
 --------------
 
@@ -11467,7 +11426,7 @@ Type: ips_option
 Usage: detect
 
 
-11.86. sip_header
+11.88. sip_header
 
 --------------
 
@@ -11479,7 +11438,7 @@ Type: ips_option
 Usage: detect
 
 
-11.87. sip_method
+11.89. sip_method
 
 --------------
 
@@ -11494,7 +11453,7 @@ Configuration:
   * string sip_method.*method: sip method
 
 
-11.88. sip_stat_code
+11.90. sip_stat_code
 
 --------------
 
@@ -11509,7 +11468,7 @@ Configuration:
   * int sip_stat_code.*code: status code { 1:999 }
 
 
-11.89. so
+11.91. so
 
 --------------
 
@@ -11526,7 +11485,7 @@ Configuration:
     buffer
 
 
-11.90. soid
+11.92. soid
 
 --------------
 
@@ -11542,7 +11501,7 @@ Configuration:
     like 3_45678_9
 
 
-11.91. ssl_state
+11.93. ssl_state
 
 --------------
 
@@ -11571,7 +11530,7 @@ Configuration:
     unknown
 
 
-11.92. ssl_version
+11.94. ssl_version
 
 --------------
 
@@ -11598,7 +11557,7 @@ Configuration:
     tls1.2
 
 
-11.93. stream_reassemble
+11.95. stream_reassemble
 
 --------------
 
@@ -11619,7 +11578,7 @@ Configuration:
     remainder of the session
 
 
-11.94. stream_size
+11.96. stream_size
 
 --------------
 
@@ -11637,7 +11596,7 @@ Configuration:
     direction(s) { either|to_server|to_client|both }
 
 
-11.95. tag
+11.97. tag
 
 --------------
 
@@ -11656,7 +11615,7 @@ Configuration:
   * int tag.bytes: tag for this many bytes { 1:max32 }
 
 
-11.96. target
+11.98. target
 
 --------------
 
@@ -11672,7 +11631,7 @@ Configuration:
     dst_ip }
 
 
-11.97. tos
+11.99. tos
 
 --------------
 
@@ -11687,7 +11646,7 @@ Configuration:
   * interval tos.~range: check if IP TOS is in given range { 0:255 }
 
 
-11.98. ttl
+11.100. ttl
 
 --------------
 
@@ -11703,7 +11662,7 @@ Configuration:
     0:255 }
 
 
-11.99. urg
+11.101. urg
 
 --------------
 
@@ -11719,7 +11678,7 @@ Configuration:
     { 0:65535 }
 
 
-11.100. window
+11.102. window
 
 --------------
 
@@ -11735,7 +11694,7 @@ Configuration:
     range { 0:65535 }
 
 
-11.101. wscale
+11.103. wscale
 
 --------------
 
@@ -14365,6 +14324,11 @@ these libraries see the Getting Started section of the manual.
     decoding { 0:max32 }
   * implied base64_decode.relative: apply offset to cursor instead of
     start of buffer
+  * int ber_data.~type: move to the data for the specified BER
+    element type { 0:255 }
+  * implied ber_skip.optional: match even if the specified BER type
+    is not found
+  * int ber_skip.~type: BER element type to skip { 0:255 }
   * enum binder[].use.action = inspect: what to do with matching
     traffic { reset | block | allow | inspect }
   * string binder[].use.file: use configuration in given file
@@ -14697,6 +14661,10 @@ these libraries see the Getting Started section of the manual.
   * string file_type.~: list of file type IDs to match
   * int finalize_packet.end_pdu = 0: Deregister for finalize packet
     events on this PDU { 0:max32 }
+  * int finalize_packet.modify.pdu = 0: Modify verdict in finalize
+    packet for this PDU { 0:max32 }
+  * enum finalize_packet.modify.verdict: output format for stats {
+    pass | block | replace | whitelist | blacklist | ignore | retry }
   * int finalize_packet.start_pdu = 0: Register to receive finalize
     packet event starting on this PDU { 0:max32 }
   * string flags.~mask_flags: these flags are don’t cares
@@ -14806,16 +14774,10 @@ these libraries see the Getting Started section of the manual.
   * enum hosts[].tcp_policy: TCP reassembly policy { first | last |
     linux | old_linux | bsd | macos | solaris | irix | hpux11 |
     hpux10 | windows | win_2003 | vista | proxy }
-  * enum host_tracker[].frag_policy: defragmentation policy { first |
-    linux | bsd | bsd_right | last | windows | solaris }
-  * addr host_tracker[].ip = 0.0.0.0/32: hosts address / cidr
-  * string host_tracker[].services[].name: service identifier
+  * addr host_tracker[].ip: hosts address / cidr
   * port host_tracker[].services[].port: port number
-  * enum host_tracker[].services[].proto = tcp: IP protocol { tcp |
+  * enum host_tracker[].services[].proto: IP protocol { ip | tcp |
     udp }
-  * enum host_tracker[].tcp_policy: TCP reassembly policy { first |
-    last | linux | old_linux | bsd | macos | solaris | irix | hpux11
-    | hpux10 | windows | win_2003 | vista | proxy }
   * implied http_cookie.request: match against the cookie from the
     request message even when examining the response
   * implied http_cookie.with_body: parts of this rule examine HTTP
@@ -15437,6 +15399,7 @@ these libraries see the Getting Started section of the manual.
   * string rpc.~ver: version number or * for any
   * bool rt_packet.test_daq_retry = true: test daq packet retry
     feature
+  * int rt_service.memcap: cap on amount of memory used
   * enum rule_state.([0-9]+):([0-9]+)[].action = inherit: apply
     action if rule matches or inherit from rule definition { log |
     pass | alert | drop | block | reset | inherit }
@@ -15831,10 +15794,6 @@ these libraries see the Getting Started section of the manual.
     per flow for better estimation against cap { 0:65535 }
   * int stream.file_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
-  * int stream.file_cache.max_sessions = 128: maximum simultaneous
-    sessions tracked before pruning { 2:max32 }
-  * int stream.file_cache.pruning_timeout = 30: minimum inactive time
-    before being eligible for pruning { 1:max32 }
   * bool stream_file.upload = false: indicate file transfer direction
   * int stream.footprint = 0: use zero for production, non-zero for
     testing at given size (for TCP and user) { 0:max32 }
@@ -15842,20 +15801,12 @@ these libraries see the Getting Started section of the manual.
     per flow for better estimation against cap { 0:65535 }
   * int stream.icmp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
-  * int stream.icmp_cache.max_sessions = 65536: maximum simultaneous
-    sessions tracked before pruning { 2:max32 }
-  * int stream.icmp_cache.pruning_timeout = 30: minimum inactive time
-    before being eligible for pruning { 1:max32 }
   * int stream_icmp.session_timeout = 30: session tracking timeout {
     1:max31 }
   * int stream.ip_cache.cap_weight = 64: additional bytes to track
     per flow for better estimation against cap { 0:65535 }
   * int stream.ip_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
-  * int stream.ip_cache.max_sessions = 16384: maximum simultaneous
-    sessions tracked before pruning { 2:max32 }
-  * int stream.ip_cache.pruning_timeout = 30: minimum inactive time
-    before being eligible for pruning { 1:max32 }
   * bool stream.ip_frags_only = false: don’t process non-frag flows
   * int stream_ip.max_frags = 8192: maximum number of simultaneous
     fragments being tracked { 1:max32 }
@@ -15871,6 +15822,10 @@ these libraries see the Getting Started section of the manual.
     1:max31 }
   * int stream_ip.trace: mask for enabling debug traces in module {
     0:max53 }
+  * int stream.max_flows = 476288: maximum simultaneous flows tracked
+    before pruning { 2:max32 }
+  * int stream.pruning_timeout = 30: minimum inactive time before
+    being eligible for pruning { 1:max32 }
   * enum stream_reassemble.action: stop or start stream reassembly {
     disable|enable }
   * enum stream_reassemble.direction: action applies to the given
@@ -15886,10 +15841,6 @@ these libraries see the Getting Started section of the manual.
     track per flow for better estimation against cap { 0:65535 }
   * int stream.tcp_cache.idle_timeout = 3600: maximum inactive time
     before retiring session tracker { 1:max32 }
-  * int stream.tcp_cache.max_sessions = 262144: maximum simultaneous
-    sessions tracked before pruning { 2:max32 }
-  * int stream.tcp_cache.pruning_timeout = 30: minimum inactive time
-    before being eligible for pruning { 1:max32 }
   * int stream_tcp.flush_factor = 0: flush upon seeing a drop in
     segment size after given number of non-decreasing segments {
     0:65535 }
@@ -15928,20 +15879,12 @@ these libraries see the Getting Started section of the manual.
     per flow for better estimation against cap { 0:65535 }
   * int stream.udp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
-  * int stream.udp_cache.max_sessions = 131072: maximum simultaneous
-    sessions tracked before pruning { 2:max32 }
-  * int stream.udp_cache.pruning_timeout = 30: minimum inactive time
-    before being eligible for pruning { 1:max32 }
   * int stream_udp.session_timeout = 30: session tracking timeout {
     1:max31 }
   * int stream.user_cache.cap_weight = 256: additional bytes to track
     per flow for better estimation against cap { 0:65535 }
   * int stream.user_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
-  * int stream.user_cache.max_sessions = 1024: maximum simultaneous
-    sessions tracked before pruning { 2:max32 }
-  * int stream.user_cache.pruning_timeout = 30: minimum inactive time
-    before being eligible for pruning { 1:max32 }
   * int stream_user.session_timeout = 30: session tracking timeout {
     1:max31 }
   * int stream_user.trace: mask for enabling debug traces in module {
@@ -16237,6 +16180,12 @@ these libraries see the Getting Started section of the manual.
   * detection.onload_waits: times processing waited for onload to
     complete (sum)
   * detection.passed: passed packets (sum)
+  * detection.pcre_error: total number of times pcre returns error
+    (sum)
+  * detection.pcre_match_limit: total number of times pcre hit the
+    match limit (sum)
+  * detection.pcre_recursion_limit: total number of times pcre hit
+    the recursion limit (sum)
   * detection.pkt_searches: fast pattern searches in packet data
     (sum)
   * detection.queue_limit: events not queued because queue full (sum)
@@ -16310,7 +16259,6 @@ these libraries see the Getting Started section of the manual.
   * high_availability.update_msgs_recv: update messages received
     (sum)
   * host_cache.lru_cache_adds: lru cache added new entry (sum)
-  * host_cache.lru_cache_clears: lru cache clear API calls (sum)
   * host_cache.lru_cache_find_hits: lru cache found entry in cache
     (sum)
   * host_cache.lru_cache_find_misses: lru cache did not find entry in
@@ -16319,11 +16267,8 @@ these libraries see the Getting Started section of the manual.
     for new entry (sum)
   * host_cache.lru_cache_removes: lru cache found entry and removed
     it (sum)
-  * host_cache.lru_cache_replaces: lru cache replaced existing entry
-    (sum)
   * host_tracker.service_adds: host service adds (sum)
   * host_tracker.service_finds: host service finds (sum)
-  * host_tracker.service_removes: host service removes (sum)
   * http2_inspect.concurrent_sessions: total concurrent HTTP/2
     sessions (now)
   * http2_inspect.flows: HTTP connections inspected (sum)
@@ -16633,59 +16578,29 @@ these libraries see the Getting Started section of the manual.
   * ssl.server_key_exchange: total server key exchanges (sum)
   * ssl.sessions_ignored: total sessions ignore (sum)
   * ssl.unrecognized_records: total unrecognized records (sum)
-  * stream.file_excess_prunes: file sessions pruned due to excess
-    (sum)
-  * stream.file_flows: total file sessions (sum)
-  * stream.file_ha_prunes: file sessions pruned by high availability
-    sync (sum)
-  * stream.file_idle_prunes: file sessions pruned due to timeout
-    (sum)
-  * stream.file_memcap_prunes: file sessions pruned due to memcap
-    (sum)
-  * stream.file_preemptive_prunes: file sessions pruned during
-    preemptive pruning (sum)
-  * stream.file_total_prunes: total file sessions pruned (sum)
-  * stream.file_uni_prunes: file uni sessions pruned (sum)
+  * stream.excess_prunes: sessions pruned due to excess (sum)
+  * stream.flows: total sessions (sum)
+  * stream.ha_prunes: sessions pruned by high availability sync (sum)
   * stream_icmp.created: icmp session trackers created (sum)
-  * stream.icmp_excess_prunes: icmp sessions pruned due to excess
-    (sum)
-  * stream.icmp_flows: total icmp sessions (sum)
-  * stream.icmp_ha_prunes: icmp sessions pruned by high availability
-    sync (sum)
-  * stream.icmp_idle_prunes: icmp sessions pruned due to timeout
-    (sum)
   * stream_icmp.max: max icmp sessions (max)
-  * stream.icmp_memcap_prunes: icmp sessions pruned due to memcap
-    (sum)
-  * stream.icmp_preemptive_prunes: icmp sessions pruned during
-    preemptive pruning (sum)
   * stream_icmp.prunes: icmp session prunes (sum)
   * stream_icmp.released: icmp session trackers released (sum)
   * stream_icmp.sessions: total icmp sessions (sum)
   * stream_icmp.timeouts: icmp session timeouts (sum)
-  * stream.icmp_total_prunes: total icmp sessions pruned (sum)
-  * stream.icmp_uni_prunes: icmp uni sessions pruned (sum)
+  * stream.idle_prunes: sessions pruned due to timeout (sum)
   * stream_ip.alerts: alerts generated (sum)
   * stream_ip.anomalies: anomalies detected (sum)
   * stream_ip.created: ip session trackers created (sum)
   * stream_ip.current_frags: current fragments (now)
   * stream_ip.discards: fragments discarded (sum)
   * stream_ip.drops: fragments dropped (sum)
-  * stream.ip_excess_prunes: ip sessions pruned due to excess (sum)
-  * stream.ip_flows: total ip sessions (sum)
   * stream_ip.fragmented_bytes: total fragmented bytes (sum)
   * stream_ip.frag_timeouts: datagrams abandoned (sum)
-  * stream.ip_ha_prunes: ip sessions pruned by high availability sync
-    (sum)
-  * stream.ip_idle_prunes: ip sessions pruned due to timeout (sum)
   * stream_ip.max_frags: max fragments (sum)
   * stream_ip.max: max ip sessions (max)
-  * stream.ip_memcap_prunes: ip sessions pruned due to memcap (sum)
   * stream_ip.nodes_deleted: fragments deleted from tracker (sum)
   * stream_ip.nodes_inserted: fragments added to tracker (sum)
   * stream_ip.overlaps: overlapping fragments (sum)
-  * stream.ip_preemptive_prunes: ip sessions pruned during preemptive
-    pruning (sum)
   * stream_ip.prunes: ip session prunes (sum)
   * stream_ip.reassembled_bytes: total reassembled bytes (sum)
   * stream_ip.reassembled: reassembled datagrams (sum)
@@ -16693,12 +16608,13 @@ these libraries see the Getting Started section of the manual.
   * stream_ip.sessions: total ip sessions (sum)
   * stream_ip.timeouts: ip session timeouts (sum)
   * stream_ip.total_frags: total fragments (sum)
-  * stream.ip_total_prunes: total ip sessions pruned (sum)
   * stream_ip.trackers_added: datagram trackers created (sum)
   * stream_ip.trackers_cleared: datagram trackers cleared (sum)
   * stream_ip.trackers_completed: datagram trackers completed (sum)
   * stream_ip.trackers_freed: datagram trackers released (sum)
-  * stream.ip_uni_prunes: ip uni sessions pruned (sum)
+  * stream.memcap_prunes: sessions pruned due to memcap (sum)
+  * stream.preemptive_prunes: sessions pruned during preemptive
+    pruning (sum)
   * stream_tcp.client_cleanups: number of times data from server was
     flushed when session released (sum)
   * stream_tcp.closing: number of sessions currently closing (now)
@@ -16715,12 +16631,8 @@ these libraries see the Getting Started section of the manual.
     byte limit was reached (sum)
   * stream_tcp.exceeded_max_segs: number of times the maximum queued
     segment limit was reached (sum)
-  * stream.tcp_excess_prunes: tcp sessions pruned due to excess (sum)
   * stream_tcp.fins: number of fin packets (sum)
-  * stream.tcp_flows: total tcp sessions (sum)
   * stream_tcp.gaps: missing data between PDUs (sum)
-  * stream.tcp_ha_prunes: tcp sessions pruned by high availability
-    sync (sum)
   * stream_tcp.held_packet_limit_exceeded: number of times limit of
     max held packets exceeded (sum)
   * stream_tcp.held_packet_rexmits: number of retransmits of held
@@ -16729,7 +16641,6 @@ these libraries see the Getting Started section of the manual.
     (sum)
   * stream_tcp.held_packets_passed: number of held packets passed
     (sum)
-  * stream.tcp_idle_prunes: tcp sessions pruned due to timeout (sum)
   * stream_tcp.ignored: tcp packets ignored (sum)
   * stream_tcp.initializing: number of sessions currently
     initializing (now)
@@ -16738,15 +16649,12 @@ these libraries see the Getting Started section of the manual.
   * stream_tcp.max: max tcp sessions (max)
   * stream_tcp.max_packets_held: maximum number of packets held
     simultaneously (max)
-  * stream.tcp_memcap_prunes: tcp sessions pruned due to memcap (sum)
   * stream_tcp.memory: current memory in use (now)
   * stream_tcp.overlaps: overlapping segments queued (sum)
   * stream_tcp.packets_held: number of packets held (sum)
   * stream_tcp.partial_flush_bytes: partial flush total bytes (sum)
   * stream_tcp.partial_flushes: number of partial flushes initiated
     (sum)
-  * stream.tcp_preemptive_prunes: tcp sessions pruned during
-    preemptive pruning (sum)
   * stream_tcp.prunes: tcp session prunes (sum)
   * stream_tcp.rebuilt_buffers: rebuilt PDU sections (sum)
   * stream_tcp.rebuilt_bytes: total rebuilt bytes (sum)
@@ -16774,39 +16682,16 @@ these libraries see the Getting Started section of the manual.
   * stream_tcp.three_way_trackers: tcp session tracking started on
     ack (sum)
   * stream_tcp.timeouts: tcp session timeouts (sum)
-  * stream.tcp_total_prunes: total tcp sessions pruned (sum)
-  * stream.tcp_uni_prunes: tcp uni sessions pruned (sum)
   * stream_tcp.untracked: tcp packets not tracked (sum)
+  * stream.total_prunes: total sessions pruned (sum)
   * stream_udp.created: udp session trackers created (sum)
-  * stream.udp_excess_prunes: udp sessions pruned due to excess (sum)
-  * stream.udp_flows: total udp sessions (sum)
-  * stream.udp_ha_prunes: udp sessions pruned by high availability
-    sync (sum)
-  * stream.udp_idle_prunes: udp sessions pruned due to timeout (sum)
   * stream_udp.ignored: udp packets ignored (sum)
   * stream_udp.max: max udp sessions (max)
-  * stream.udp_memcap_prunes: udp sessions pruned due to memcap (sum)
-  * stream.udp_preemptive_prunes: udp sessions pruned during
-    preemptive pruning (sum)
   * stream_udp.prunes: udp session prunes (sum)
   * stream_udp.released: udp session trackers released (sum)
   * stream_udp.sessions: total udp sessions (sum)
   * stream_udp.timeouts: udp session timeouts (sum)
-  * stream.udp_total_prunes: total udp sessions pruned (sum)
-  * stream.udp_uni_prunes: udp uni sessions pruned (sum)
-  * stream.user_excess_prunes: user sessions pruned due to excess
-    (sum)
-  * stream.user_flows: total user sessions (sum)
-  * stream.user_ha_prunes: user sessions pruned by high availability
-    sync (sum)
-  * stream.user_idle_prunes: user sessions pruned due to timeout
-    (sum)
-  * stream.user_memcap_prunes: user sessions pruned due to memcap
-    (sum)
-  * stream.user_preemptive_prunes: user sessions pruned during
-    preemptive pruning (sum)
-  * stream.user_total_prunes: total user sessions pruned (sum)
-  * stream.user_uni_prunes: user uni sessions pruned (sum)
+  * stream.uni_prunes: uni sessions pruned (sum)
   * tcp.bad_tcp4_checksum: nonzero tcp over ip checksums (sum)
   * tcp.bad_tcp6_checksum: nonzero tcp over ipv6 checksums (sum)
   * tcp_connector.messages: total messages (sum)
@@ -17690,15 +17575,9 @@ change -> smtp: 'ports' ==> 'bindings'
 change -> ssh: 'server_ports' ==> 'bindings'
 change -> ssl: 'ports' ==> 'bindings'
 change -> stream5_global: 'max_active_responses' ==> 'max_responses'
-change -> stream5_global: 'max_icmp' ==> 'max_sessions'
-change -> stream5_global: 'max_ip' ==> 'max_sessions'
-change -> stream5_global: 'max_tcp' ==> 'max_sessions'
-change -> stream5_global: 'max_udp' ==> 'max_sessions'
 change -> stream5_global: 'min_response_seconds' ==> 'min_interval'
-change -> stream5_global: 'tcp_cache_nominal_timeout' ==> 'pruning_timeout'
-change -> stream5_global: 'tcp_cache_pruning_timeout' ==> 'idle_timeout'
+change -> stream5_global: 'tcp_cache_nominal_timeout' ==> 'idle_timeout'
 change -> stream5_global: 'udp_cache_nominal_timeout' ==> 'idle_timeout'
-change -> stream5_global: 'udp_cache_pruning_timeout' ==> 'pruning_timeout'
 change -> stream5_ha: 'min_session_lifetime' ==> 'min_age'
 change -> stream5_ha: 'min_sync_interval' ==> 'min_sync'
 change -> stream5_ha: 'stream5_ha' ==> 'high_availability'
@@ -17926,6 +17805,9 @@ deleted -> unified2: 'vlan_event_types'
   * back_orifice (inspector): back orifice detection
   * base64_decode (ips_option): rule option to decode base64 data -
     must be used with base64_data option
+  * ber_data (ips_option): rule option to move to the data for a
+    specified BER element
+  * ber_skip (ips_option): rule option to skip BER element
   * binder (inspector): configure processing based on CIDRs, ports,
     services, etc.
   * bufferlen (ips_option): rule option to check length of current
@@ -18346,6 +18228,9 @@ deleted -> unified2: 'vlan_event_types'
     data
   * ips_option::base64_decode: rule option to decode base64 data -
     must be used with base64_data option
+  * ips_option::ber_data: rule option to move to the data for a
+    specified BER element
+  * ips_option::ber_skip: rule option to skip BER element
   * ips_option::bufferlen: rule option to check length of current
     buffer
   * ips_option::byte_extract: rule option to convert data to an

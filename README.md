@@ -51,8 +51,8 @@ Additional features on the roadmap include:
 If you already build Snort, you may have everything you need.  If not, grab
 the latest:
 
-* autotools or cmake to build from source
-* daq from http://www.snort.org for packet IO
+* cmake to build from source
+* daq from https://github.com/snort3/libdaq for packet IO
 * dnet from https://github.com/dugsong/libdnet.git for network utility functions
 * g++ >= 4.8 or other C++11 compiler
 * hwloc from https://www.open-mpi.org/projects/hwloc/ for CPU affinity management
@@ -74,7 +74,7 @@ There is a source tarball available in the Downloads section on snort.org:
 
 You can also get the code with:
 
-    git clone git://github.com/snortadmin/snort3.git
+    git clone git://github.com/snort3/snort3.git
 
 There are separate extras packages for cmake that provide additional
 features and demonstrate how to build plugins. The source for extras

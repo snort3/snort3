@@ -1,3 +1,52 @@
+19/07/21 - build 259
+
+-- analyzer_command: Import into snort namespace and add the ability to retrieve the DAQ instance
+   from an Analyzer
+-- appid: delay port-based detection until a non-zero payload packet is seen for the session
+-- appid: fix discovery unit test that was failing intermittently
+-- appid: Fix for app name not getting evaluated for port/protocol based detectors
+-- appid: support for bittorrent detection when UDP tracker packet arrives after the TCP resumed
+   session has already started
+-- build: Fix miscellaneous cppcheck warnings
+-- codec: Adapt to new DAQ message metadata source for Real IP/port info
+-- file_api: generate events each time file is seen, not just first time
+-- finalize_packet: pass verdict by reference in inspector event
+-- flow: add virtual destructor to stash generic object
+-- flow: Bypass HA write for unsupported Tunnel flows
+-- flow: delete stale flow on receiving NEW_FLOW flag
+-- flow: if no 'get_ssn' handler configured then skip processing of the flow
+-- flow: introduced variable for handling idle session timeouts and flag for actively pruning flows
+   based on the expire_time
+-- flow: make a single flow cache for all the protocols
+-- flow: refactor flow config object to work with single flow cache concept
+-- flow: refactor uni list managment into a separate class and instantiate an instance for ip flows
+   and another for all non-ip flows
+-- flow: release session object allocated for a flow when the Flow object is reused and the PktType
+   of the new flow is different from the previous use
+-- flow: Add packet tracer message when a new session is started
+-- ftp_telnet: add support for ftp file resume block by calculating path hash used as file id
+-- hash: add back size(), get_max_size() and remove() functions to lru_cache_shared.
+-- hash: add unit test for explicitly testing get / set max size.
+-- host_cache: Refactoring code to fix multithreading issues and to remove redundancy
+-- http2: huffman string decode
+-- http2_inspect: add HI test tool
+-- http_inspect: remove 0-byte workaround
+-- ips_options: add ber_data and ber_skip
+-- main: Implement reload memcap framework
+-- pcre: add peg counts for PCRE_ERROR_MATCHLIMIT and PCRE_ERROR_RECURSIONLIMIT return status from
+   pcre_exec().
+-- reputation: Fixed issues with reputation monitor
+-- rna: Add new hosts with IP-address into host cache
+-- snort2lua: Combine proto specific cache options for max_session in one max_flows option
+-- stream_tcp: add API for switching to no_ack mode
+-- stream_tcp: fix 3-1-2 ordering markup
+-- stream: update checks for modified stream config to work with updates to stream config options
+-- stream: updated the protocol setup and process logic of TCP,UDP,IP,ICMP and USER sessions for
+   setting and updating idle session timeouts
+-- time: Make TscClock fail to compile on non-x86/AArch64 systems
+-- wizard: Avoid host cache service insertion since we are using flow service
+-- xhash: Ported sfxhash_change_memcap() from snort2 to snort3
+
 19/07/17 - build 258
 
 -- analyzer: 1024 contexts max is a better default until configurable
