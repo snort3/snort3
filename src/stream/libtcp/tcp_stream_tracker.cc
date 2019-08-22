@@ -497,9 +497,6 @@ void TcpStreamTracker::update_tracker_ack_sent(TcpSegmentDescriptor& tsd)
     if ( SEQ_GT(tsd.get_end_seq(), snd_nxt) )
         snd_nxt = tsd.get_end_seq();
 
-    if ( !SEQ_EQ(r_win_base, tsd.get_seg_ack() ) )
-        small_seg_count = 0;
-
     if ( SEQ_GT(tsd.get_seg_ack(), r_win_base) )
         r_win_base = tsd.get_seg_ack();
 

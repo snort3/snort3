@@ -292,19 +292,13 @@ bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
     if ( ( config->flags & STREAM_CONFIG_NO_ASYNC_REASSEMBLY ) && !flow->two_way_traffic() )
         return true;
 
-    if ( config->max_consec_small_segs
-            && ( tsd.get_seg_len() < config->max_consec_small_seg_size ) )
+    if ( config->max_consec_small_segs )
     {
-        listener->small_seg_count++;
-
-        if ( listener->small_seg_count > config->max_consec_small_segs )
-        {
-            /* Above threshold, log it...  in this TCP policy,
-             * action controlled by preprocessor rule. */
-            tel.set_tcp_event(EVENT_MAX_SMALL_SEGS_EXCEEDED);
-            /* Reset counter, so we're not too noisy */
+        if ( tsd.get_seg_len() >= config->max_consec_small_seg_size )
             listener->small_seg_count = 0;
-        }
+
+        else if ( ++listener->small_seg_count == config->max_consec_small_segs )
+            tel.set_tcp_event(EVENT_MAX_SMALL_SEGS_EXCEEDED);
     }
 
     if ( config->max_queued_bytes
