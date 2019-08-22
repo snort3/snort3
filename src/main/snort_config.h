@@ -25,13 +25,13 @@
 
 #include <sys/types.h>
 
+#include <list>
+
 #include "events/event_queue.h"
 #include "framework/bits.h"
 #include "main/policy.h"
 #include "main/thread.h"
 #include "sfip/sf_cidr.h"
-
-#include <list>
 
 #define DEFAULT_LOG_DIR "."
 
@@ -145,21 +145,36 @@ struct VarNode;
 
 namespace snort
 {
-struct ProfilerConfig;
 class ProtocolReference;
+class ReloadResourceTuner;
+struct ProfilerConfig;
 struct GHash;
 struct XHash;
-
-class ReloadMemcapManager;
-
 struct SnortConfig;
+
 typedef void (* ScScratchFunc)(SnortConfig* sc);
+
+class ReloadResourceTuner
+{
+public:
+    static const unsigned RELOAD_MAX_WORK_PER_PACKET = 3;
+    static const unsigned RELOAD_MAX_WORK_WHEN_IDLE = 10;
+
+    virtual ~ReloadResourceTuner() = default;
+
+    virtual bool tune_resources() = 0;
+    virtual bool tune_resources_idle() = 0;
+
+protected:
+    ReloadResourceTuner() = default;
+
+    unsigned max_work = RELOAD_MAX_WORK_PER_PACKET;
+    unsigned max_work_idle = RELOAD_MAX_WORK_WHEN_IDLE;
+};
 
 struct SnortConfig
 {
 private:
-    std::list<ReloadMemcapManager *> reload_managers;
-
     void init(const SnortConfig* const, ProtocolReference*);
     bool verify_stream_inspectors();
 
@@ -169,9 +184,6 @@ public:
     ~SnortConfig();
 
     SnortConfig(const SnortConfig&) = delete;
-
-    SO_PUBLIC bool register_reload_memcap_manager(ReloadMemcapManager *);
-    std::list<ReloadMemcapManager *> get_reload_memcap_managers();
 
     void setup();
     void post_setup();
@@ -389,6 +401,10 @@ public:
 
     bool cloned = false;
 
+private:
+    std::list<ReloadResourceTuner*> reload_tuners;
+
+public:
     //------------------------------------------------------
     // decoding related
     uint8_t get_num_layers() const
@@ -694,6 +710,15 @@ public:
     static void set_conf(SnortConfig*);
 
     SO_PUBLIC static SnortConfig* get_conf();
+
+    SO_PUBLIC void register_reload_resource_tuner(ReloadResourceTuner& rrt)
+    { reload_tuners.push_back(&rrt); }
+
+    const std::list<ReloadResourceTuner*>& get_reload_resource_tuners() const
+    { return reload_tuners; }
+
+    void clear_reload_resource_tuner_list()
+    { reload_tuners.clear(); }
 };
 }
 

@@ -34,23 +34,21 @@ class AnalyzerCommand
 {
 public:
     virtual ~AnalyzerCommand() = default;
-    virtual void execute(Analyzer&) = 0;
+    virtual bool execute(Analyzer&, void**) = 0;
     virtual const char* stringify() = 0;
     unsigned get() { return ++ref_count; }
     unsigned put() { return --ref_count; }
-    bool is_complete() { return completion_status; }
-    void set_completion_status(bool status) { completion_status = status; }
     SO_PUBLIC static snort::SFDAQInstance* get_daq_instance(Analyzer& analyzer);
+
 private:
     unsigned ref_count = 0;
-    bool completion_status = true;
 };
 }
 
 class ACGetStats : public snort::AnalyzerCommand
 {
 public:
-    void execute(Analyzer&) override;
+    bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "GET_STATS"; }
     ~ACGetStats() override;
 };
@@ -58,7 +56,7 @@ public:
 class ACPause : public snort::AnalyzerCommand
 {
 public:
-    void execute(Analyzer&) override;
+    bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "PAUSE"; }
 };
 
@@ -66,7 +64,7 @@ class ACResume : public snort::AnalyzerCommand
 {
 public:
     ACResume(uint64_t msg_cnt): msg_cnt(msg_cnt) { }
-    void execute(Analyzer&) override;
+    bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "RESUME"; }
 private:
     uint64_t msg_cnt;
@@ -75,7 +73,7 @@ private:
 class ACRotate : public snort::AnalyzerCommand
 {
 public:
-    void execute(Analyzer&) override;
+    bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "ROTATE"; }
 };
 
@@ -84,7 +82,7 @@ class ACRun : public snort::AnalyzerCommand
 public:
     ACRun() = delete;
     ACRun(bool is_paused = false ) { paused = is_paused; }
-    void execute(Analyzer&) override;
+    bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "RUN"; }
 private:
     bool paused = false;
@@ -93,14 +91,14 @@ private:
 class ACStart : public snort::AnalyzerCommand
 {
 public:
-    void execute(Analyzer&) override;
+    bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "START"; }
 };
 
 class ACStop : public snort::AnalyzerCommand
 {
 public:
-    void execute(Analyzer&) override;
+    bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "STOP"; }
 };
 
@@ -109,7 +107,7 @@ class ACSwap : public snort::AnalyzerCommand
 public:
     ACSwap() = delete;
     ACSwap(Swapper* ps, Request* req, bool from_shell);
-    void execute(Analyzer&) override;
+    bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "SWAP"; }
     ~ACSwap() override;
 private:
@@ -121,7 +119,7 @@ private:
 class ACDAQSwap : public snort::AnalyzerCommand
 {
 public:
-    void execute(Analyzer&) override;
+    bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "DAQ_SWAP"; }
     ~ACDAQSwap() override;
 };

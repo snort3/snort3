@@ -310,7 +310,7 @@ SnortConfig::~SnortConfig()
     delete daq_config;
     delete proto_ref;
 
-    reload_managers.clear();
+    reload_tuners.clear();
 
     trim_heap();
 }
@@ -1084,15 +1084,4 @@ void SnortConfig::set_conf(SnortConfig* sc)
         if (sc->policy_map->get_policies(sh))
             set_policies(sc, sh);
     }
-}
-
-SO_PUBLIC bool SnortConfig::register_reload_memcap_manager(ReloadMemcapManager *memcap_manager)
-{
-    reload_managers.push_back(memcap_manager);
-    return true;
-}
-
-std::list<ReloadMemcapManager *> SnortConfig::get_reload_memcap_managers()
-{
-    return reload_managers;
 }

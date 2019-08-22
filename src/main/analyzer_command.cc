@@ -25,6 +25,7 @@
 
 #include <cassert>
 
+#include "framework/module.h"
 #include "log/messages.h"
 #include "managers/module_manager.h"
 #include "utils/stats.h"
@@ -35,44 +36,51 @@
 #include "snort_config.h"
 #include "swapper.h"
 
-void ACStart::execute(Analyzer& analyzer)
+bool ACStart::execute(Analyzer& analyzer, void**)
 {
     analyzer.start();
+    return true;
 }
 
-void ACRun::execute(Analyzer& analyzer)
+bool ACRun::execute(Analyzer& analyzer, void**)
 {
     analyzer.run(paused);
     paused = false;
+    return true;
 }
 
-void ACStop::execute(Analyzer& analyzer)
+bool ACStop::execute(Analyzer& analyzer, void**)
 {
     analyzer.stop();
+    return true;
 }
 
-void ACPause::execute(Analyzer& analyzer)
+bool ACPause::execute(Analyzer& analyzer, void**)
 {
     analyzer.pause();
+    return true;
 }
 
-void ACResume::execute(Analyzer& analyzer)
+bool ACResume::execute(Analyzer& analyzer, void**)
 {
     analyzer.resume(msg_cnt);
+    return true;
 }
 
-void ACRotate::execute(Analyzer& analyzer)
+bool ACRotate::execute(Analyzer& analyzer, void**)
 {
     analyzer.rotate();
+    return true;
 }
 
-void ACGetStats::execute(Analyzer&)
+bool ACGetStats::execute(Analyzer&, void**)
 {
 
     // FIXIT-P This incurs locking on all threads to retrieve stats.  It
     // could be reimplemented to optimize for large thread counts by
     // retrieving stats in the command and accumulating in the main thread.
     snort::ModuleManager::accumulate(snort::SnortConfig::get_conf());
+    return true;
 }
 
 ACGetStats::~ACGetStats()
@@ -89,23 +97,64 @@ ACSwap::ACSwap(Swapper* ps, Request* req, bool from_shell) : ps(ps), request(req
     Swapper::set_reload_in_progress(true);
 }
 
-void ACSwap::execute(Analyzer& analyzer)
+bool ACSwap::execute(Analyzer& analyzer, void** ac_state)
 {
     if (ps)
+    {
         ps->apply(analyzer);
+
+        snort::SnortConfig* sc = ps->get_new_conf();
+        if ( sc )
+        {
+            std::list<snort::ReloadResourceTuner*>* reload_tuners;
+
+            if ( !*ac_state )
+            {
+                reload_tuners = new std::list<snort::ReloadResourceTuner*>(sc->get_reload_resource_tuners());
+                *ac_state = reload_tuners;
+            }
+            else
+                reload_tuners = (std::list<snort::ReloadResourceTuner*>*)*ac_state;
+
+            if ( !reload_tuners->empty() )
+            {
+                auto rrt = reload_tuners->front();
+                if (rrt->tune_resources())
+                    reload_tuners->pop_front();
+            }
+
+            // check for empty again and free list instance if we are done
+            if ( reload_tuners->empty() )
+            {
+                delete reload_tuners;
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    return true;
 }
 
 ACSwap::~ACSwap()
 {
+    if (ps)
+    {
+        snort::SnortConfig* sc = ps->get_new_conf();
+        if ( sc )
+            sc->clear_reload_resource_tuner_list();
+    }
     delete ps;
     Swapper::set_reload_in_progress(false);
     snort::LogMessage("== reload complete\n");
     request->respond("== reload complete\n", from_shell, true);
 }
 
-void ACDAQSwap::execute(Analyzer& analyzer)
+bool ACDAQSwap::execute(Analyzer& analyzer, void**)
 {
     analyzer.reload_daq();
+    return true;
 }
 
 ACDAQSwap::~ACDAQSwap()

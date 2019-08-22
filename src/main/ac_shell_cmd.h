@@ -31,7 +31,7 @@ class ACShellCmd : public snort::AnalyzerCommand
 public:
     ACShellCmd() = delete;
     ACShellCmd(int fd, snort::AnalyzerCommand* ac_cmd);
-    void execute(Analyzer&) override;
+    bool execute(Analyzer&, void**) override;
     const char* stringify() override { return ac->stringify(); }
     ~ACShellCmd() override;
 

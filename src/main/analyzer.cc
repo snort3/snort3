@@ -75,8 +75,6 @@ using namespace std;
 static MainHook_f main_hook = snort_ignore;
 
 THREAD_LOCAL ProfileStats daqPerfStats;
-THREAD_LOCAL std::list<snort::ReloadMemcapManager *> *rel_managers;
-
 static THREAD_LOCAL Analyzer* local_analyzer = nullptr;
 
 //-------------------------------------------------------------------------
@@ -527,7 +525,6 @@ void Analyzer::reinit(SnortConfig* sc)
 {
     InspectorManager::thread_reinit(sc);
     ActionManager::thread_reinit(sc);
-    rel_managers = new std::list<snort::ReloadMemcapManager *>(sc->get_reload_memcap_managers());
 }
 
 void Analyzer::term()
@@ -580,8 +577,6 @@ void Analyzer::term()
 
     Active::thread_term();
     delete switcher;
-
-    delete rel_managers;
 
     sfthreshold_free();
     RateFilter_Cleanup();
@@ -667,28 +662,51 @@ bool Analyzer::handle_command()
     if (!ac)
         return false;
 
-    ac->execute(*this);
-
-    add_command_to_completed_queue(ac);
+    void* ac_state = nullptr;
+    if ( ac->execute(*this, &ac_state) )
+        add_command_to_completed_queue(ac);
+    else
+        add_command_to_uncompleted_queue(ac, ac_state);
 
     return true;
 }
 
-void Analyzer::add_command_to_completed_queue(AnalyzerCommand *ac)
+void Analyzer::add_command_to_uncompleted_queue(AnalyzerCommand* aci, void* acs)
 {
-    if (ac->is_complete())
-    {
+    UncompletedAnalyzerCommand* cac = new UncompletedAnalyzerCommand(aci, acs);
+
+    uncompleted_work_queue.push_back(cac);
+}
+
+void Analyzer::add_command_to_completed_queue(AnalyzerCommand* ac)
+{
         completed_work_queue_mutex.lock();
         completed_work_queue.push(ac);
         completed_work_queue_mutex.unlock();
-    } else
-        cache_analyzer_command(ac);
 }
 
 void Analyzer::handle_commands()
 {
     while (handle_command())
         ;
+}
+
+void Analyzer::handle_uncompleted_commands()
+{
+    std::list<UncompletedAnalyzerCommand*>::iterator it = uncompleted_work_queue.begin();
+    while (it != uncompleted_work_queue.end() )
+    {
+        UncompletedAnalyzerCommand* cac = *it;
+
+        if (cac->command->execute(*this, &cac->state) )
+        {
+            add_command_to_completed_queue(cac->command);
+            it = uncompleted_work_queue.erase(it);
+            delete cac;
+        }
+        else
+            ++it;
+    }
 }
 
 DAQ_RecvStatus Analyzer::process_messages()
@@ -726,21 +744,7 @@ DAQ_RecvStatus Analyzer::process_messages()
         process_daq_msg(msg, false);
         DetectionEngine::onload();
         process_retry_queue();
-
-        if (rel_managers and rel_managers->size())
-        {
-            auto manager = rel_managers->front();
-            if (manager->tune_memcap())
-            {
-                rel_managers->pop_front();
-            }
-        }
-        else
-        {
-            if(ac)
-                add_command_to_completed_queue(ac);
-        }
-
+        handle_uncompleted_commands();
     }
 
     if (exit_after_cnt && (exit_after_cnt -= num_recv) == 0)

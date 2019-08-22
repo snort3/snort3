@@ -95,7 +95,7 @@ class AcAppIdDebug : public AnalyzerCommand
 {
 public:
     AcAppIdDebug(AppIdDebugSessionConstraints* cs);
-    void execute(Analyzer&) override;
+    bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "APPID_DEBUG"; }
 
 private:
@@ -112,7 +112,7 @@ AcAppIdDebug::AcAppIdDebug(AppIdDebugSessionConstraints* cs)
     }
 }
 
-void AcAppIdDebug::execute(Analyzer&)
+bool AcAppIdDebug::execute(Analyzer&, void**)
 {
     if (appidDebug)
     {
@@ -122,6 +122,8 @@ void AcAppIdDebug::execute(Analyzer&)
             appidDebug->set_constraints("appid", nullptr);
     }
     // FIXIT-L Add a warning if command was called without appid configured?
+
+    return true;
 }
 
 static int enable_debug(lua_State* L)

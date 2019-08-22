@@ -70,8 +70,8 @@ static const Command packet_tracer_cmds[] =
 class PacketTracerDebug : public AnalyzerCommand
 {
   public:
-    PacketTracerDebug(PTSessionConstraints *cs);
-    void execute(Analyzer &) override;
+    PacketTracerDebug(PTSessionConstraints* cs);
+    bool execute(Analyzer&, void**) override;
     const char *stringify() override { return "PACKET_TRACER_DEBUG"; }
 
   private:
@@ -79,7 +79,7 @@ class PacketTracerDebug : public AnalyzerCommand
     bool enable = false;
 };
 
-PacketTracerDebug::PacketTracerDebug(PTSessionConstraints *cs)
+PacketTracerDebug::PacketTracerDebug(PTSessionConstraints* cs)
 {
     if (cs)
     {
@@ -88,12 +88,14 @@ PacketTracerDebug::PacketTracerDebug(PTSessionConstraints *cs)
     }
 }
 
-void PacketTracerDebug::execute(Analyzer &)
+bool PacketTracerDebug::execute(Analyzer&, void**)
 {
     if (enable)
         PacketTracer::set_constraints(&constraints);
     else 
         PacketTracer::set_constraints(nullptr);
+
+    return true;
 }
 
 static int enable(lua_State* L)

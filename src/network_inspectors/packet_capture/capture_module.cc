@@ -72,7 +72,7 @@ class PacketCaptureDebug : public AnalyzerCommand
 {
 public:
     PacketCaptureDebug(const char* f);
-    void execute(Analyzer&) override;
+    bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "PACKET_CAPTURE_DEBUG"; }
 private:
     bool enable = false;
@@ -107,12 +107,14 @@ PacketCaptureDebug::PacketCaptureDebug(const char* f)
     } 
 }
 
-void PacketCaptureDebug::execute(Analyzer&)
+bool PacketCaptureDebug::execute(Analyzer&, void**)
 {
     if (enable)
         packet_capture_enable(filter);
     else
         packet_capture_disable();
+
+    return true;
 }
 
 CaptureModule::CaptureModule() :

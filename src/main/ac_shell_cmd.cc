@@ -41,14 +41,14 @@ ACShellCmd::ACShellCmd(int fd, AnalyzerCommand *ac) : ac(ac)
     }
 }
 
-void ACShellCmd::execute(Analyzer& analyzer)
+bool ACShellCmd::execute(Analyzer& analyzer, void** state)
 {
     ControlConn* control_conn = ControlMgmt::find_control(control_fd);
 
     if( control_conn )
         control_conn->send_queued_response();
 
-    ac->execute(analyzer);
+    return ac->execute(analyzer, state);
 }
 
 ACShellCmd::~ACShellCmd()
