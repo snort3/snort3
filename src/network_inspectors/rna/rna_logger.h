@@ -1,5 +1,6 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2019-2019 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2003-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,39 +17,40 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// rna_inspector.h author Masud Hasan <mashasan@cisco.com>
+#ifndef RNA_LOGGER_H
+#define RNA_LOGGER_H
 
-#ifndef RNA_INSPECTOR_H
-#define RNA_INSPECTOR_H
-
-#include "framework/inspector.h"
-
-#include "rna_module.h"
-#include "rna_pnd.h"
+#include "events/event.h"
+#include "host_tracker/host_cache.h"
 
 namespace snort
 {
+class Flow;
 struct Packet;
 }
 
-class RnaInspector : public snort::Inspector
+using RnaTracker = std::shared_ptr<snort::HostTracker>;
+
+struct RnaLoggerEvent : public Event
+{
+    RnaLoggerEvent(uint16_t p_type, uint16_t p_subtype, const RnaTracker* p_ht,
+        const u_int8_t* p_mac) : type(p_type), subtype(p_subtype), ht(p_ht), mac(p_mac) { }
+    uint16_t type;
+    uint16_t subtype;
+    const RnaTracker* ht;
+    const u_int8_t* mac;
+    const struct in6_addr* ip;
+};
+
+class RnaLogger
 {
 public:
-    RnaInspector(RnaModule*);
-    ~RnaInspector() override;
-
-    bool configure(snort::SnortConfig*) override;
-    void eval(snort::Packet*) override;
-    void show(snort::SnortConfig*) override;
-    void tinit() override;
-    void tterm() override;
+    RnaLogger(const bool enable) : enabled(enable) { }
+    bool log(uint16_t type, uint16_t subtype, const snort::Packet* p, const RnaTracker* ht,
+        const struct in6_addr* src_ip, const u_int8_t* src_mac);
 
 private:
-    void load_rna_conf();
-    const RnaModuleConfig* mod_conf = nullptr;
-    RnaConfig* rna_conf = nullptr;
-    RnaPnd* pnd = nullptr;
+    const bool enabled;
 };
 
 #endif
-

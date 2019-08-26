@@ -55,7 +55,7 @@ private:
     static const snort::Parameter host_tracker_params[];
     static const snort::Parameter service_params[];
 
-    HostApplication app;
+    snort::HostApplication app;
     snort::SfIp addr;
 };
 

@@ -40,6 +40,7 @@ char* snort_strdup(const char* str)
 {
     return strdup(str);
 }
+time_t packet_time() { return 0; }
 }
 
 TEST_GROUP(host_cache)

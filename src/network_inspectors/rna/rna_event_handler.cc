@@ -44,21 +44,21 @@ void RnaTcpSynEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
     ++rna_stats.tcp_syn;
-    pnd.analyze_flow_tcp(event.get_packet(), false);
+    pnd.analyze_flow_tcp(event.get_packet(), TcpPacketType::SYN);
 }
 
 void RnaTcpSynAckEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
     ++rna_stats.tcp_syn_ack;
-    pnd.analyze_flow_tcp(event.get_packet(), false);
+    pnd.analyze_flow_tcp(event.get_packet(), TcpPacketType::SYN_ACK);
 }
 
 void RnaTcpMidstreamEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
     ++rna_stats.tcp_midstream;
-    pnd.analyze_flow_tcp(event.get_packet(), true);
+    pnd.analyze_flow_tcp(event.get_packet(), TcpPacketType::MIDSTREAM);
 }
 
 void RnaUdpEventHandler::handle(DataEvent& event, Flow*)

@@ -1,23 +1,23 @@
 This inspector is still in experimental (work-in-progress) state.
 
-The Real-time Network Awareness (RNA) inspector provides visibility into
-a network using Passive Network Discovery (PND). RNA analyzes traffic
-to discover hosts on the network, and detect operating systems, protocols and
-applications running on these hosts. It does not generate or alter traffic on its own.
+The Real-time Network Awareness (RNA) inspector provides visibility into a network using
+Passive Network Discovery (PND). RNA analyzes traffic to discover hosts on the network
+and to detect operating system (OS) running on a host. It uses fingerprints for OS detection.
+It logs ip/mac addresses, ports, protocols, OS, and other information about traffic running
+on these hosts. It does not generate or alter traffic on its own.
 
-RNA generates events for the information it discovers by parsing
-TCP/UDP/IP/Link-layer protocols and analyzing data found by other
-inspectors (e.g., monitoring application IDs, client versions, user-agents from stash).
-Operating systems have different signatures which are apparent in different parameters
-in the packets that it sends. These parameters include things like TCP window sizes,
-TCP options, segment sizes, etc. Such fingerprinting information is provided to RNA
-as input so that RNA can analyze traffic.
+RNA logs information it discovers by parsing TCP/UDP/IP/Link-layer protocols and observing
+data found by other inspectors (e.g., monitoring application IDs, client versions,
+user-agents found by appid or http inspectors). Operating systems have different signatures
+which are apparent in different parameters in the packets that it sends. These parameters
+include things like TCP window sizes, TCP options, segment sizes, etc. Such fingerprinting
+information is provided to RNA as input so that RNA can analyze traffic.
 
-RNA discoveries will be stored globally in host_tracker objects and to be shared among
-multiple threads. RNA memory and discovery are bounded by the memcap in host_tracker.
+RNA discoveries is stored in host tracker objects, which are saved globally in an LRU cache
+and shared among threads. RNA memory and discovery are bounded by the memcap of cache.
 
 Packets from untracked sessions (e.g., non-IP) are processed via the eval method as per
 proto-bit registrations. Packets from tracked sessions (e.g., IP, TCP, UDP, and ICMP)
 are processed via events as per subscriptions. Since RNA needs to see the first packet
-of a session published from stream trackers, these modules (e.g., stream, stream_ip,
-stream_tcp, and stream_udp) should be enabled whenever RNA module is enabled.
+of a session published from stream trackers, these modules (e.g., stream, stream_icmp,
+stream_ip, stream_tcp, and stream_udp) should be enabled whenever RNA module is enabled.

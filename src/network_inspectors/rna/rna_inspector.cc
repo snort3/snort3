@@ -52,24 +52,25 @@ THREAD_LOCAL ProfileStats rna_perf_stats;
 RnaInspector::RnaInspector(RnaModule* mod)
 {
     mod_conf = mod->get_config();
-    if (!load_rna_conf())
-        WarningMessage("RNA: Failed to load configurations from file! Using defaults.\n");
+    load_rna_conf();
+    pnd = new RnaPnd(mod_conf? mod_conf->enable_logger : false);
 }
 
 RnaInspector::~RnaInspector()
 {
-    delete mod_conf;
+    delete pnd;
     delete rna_conf;
+    delete mod_conf;
 }
 
 bool RnaInspector::configure(SnortConfig*)
 {
-    DataBus::subscribe( STREAM_ICMP_NEW_FLOW_EVENT, new RnaIcmpEventHandler(pnd) );
-    DataBus::subscribe( STREAM_IP_NEW_FLOW_EVENT, new RnaIpEventHandler(pnd) );
-    DataBus::subscribe( STREAM_UDP_NEW_FLOW_EVENT, new RnaUdpEventHandler(pnd) );
-    DataBus::subscribe( STREAM_TCP_SYN_EVENT, new RnaTcpSynEventHandler(pnd) );
-    DataBus::subscribe( STREAM_TCP_SYN_ACK_EVENT, new RnaTcpSynAckEventHandler(pnd) );
-    DataBus::subscribe( STREAM_TCP_MIDSTREAM_EVENT, new RnaTcpMidstreamEventHandler(pnd) );
+    DataBus::subscribe( STREAM_ICMP_NEW_FLOW_EVENT, new RnaIcmpEventHandler(*pnd) );
+    DataBus::subscribe( STREAM_IP_NEW_FLOW_EVENT, new RnaIpEventHandler(*pnd) );
+    DataBus::subscribe( STREAM_UDP_NEW_FLOW_EVENT, new RnaUdpEventHandler(*pnd) );
+    DataBus::subscribe( STREAM_TCP_SYN_EVENT, new RnaTcpSynEventHandler(*pnd) );
+    DataBus::subscribe( STREAM_TCP_SYN_ACK_EVENT, new RnaTcpSynAckEventHandler(*pnd) );
+    DataBus::subscribe( STREAM_TCP_MIDSTREAM_EVENT, new RnaTcpMidstreamEventHandler(*pnd) );
 
     return true;
 }
@@ -83,7 +84,7 @@ void RnaInspector::eval(Packet* p)
     assert( !(BIT((unsigned)p->type()) & PROTO_BIT__ANY_SSN) );
 
     // Handling untracked sessions, e.g., non-IP packets
-    // pnd.analyze_flow_non_ip(p);
+    // pnd->analyze_flow_non_ip(p);
     UNUSED(p);
 }
 
@@ -102,6 +103,7 @@ void RnaInspector::show(SnortConfig*)
         if (!mod_conf->custom_fingerprint_dir.empty())
             LogMessage("    Custom fingerprint dir: %s\n",
                 mod_conf->custom_fingerprint_dir.c_str());
+        LogMessage("    Enable logger:          %d\n", mod_conf->enable_logger);
     }
 
     if (rna_conf)
@@ -127,18 +129,18 @@ void RnaInspector::tterm()
     // thread local cleanup
 }
 
-bool RnaInspector::load_rna_conf()
+void RnaInspector::load_rna_conf()
 {
     if (rna_conf)
         delete rna_conf;
     rna_conf = new RnaConfig; // initialize with defaults
 
     if (!mod_conf)
-        return false;
+        return;
 
     ifstream in_stream(mod_conf->rna_conf_path);
     if (!in_stream)
-        return false;
+        return;
 
     uint32_t line_num = 0;
 
@@ -178,7 +180,6 @@ bool RnaInspector::load_rna_conf()
     }
 
     in_stream.close();
-    return true;
 }
 
 //-------------------------------------------------------------------------

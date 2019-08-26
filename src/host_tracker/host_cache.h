@@ -39,7 +39,7 @@ struct HashIp
     }
 };
 
-extern SO_PUBLIC LruCacheShared<snort::SfIp, HostTracker, HashIp> host_cache;
+extern SO_PUBLIC LruCacheShared<snort::SfIp, snort::HostTracker, HashIp> host_cache;
 
 #endif
 

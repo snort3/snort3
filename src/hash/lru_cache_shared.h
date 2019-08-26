@@ -67,6 +67,9 @@ public:
     // Return data entry associated with key. If doesn't exist, create a new entry.
     Data operator[](const Key& key);
 
+    // Same as operator[]; additionally, sets the boolean if a new entry is created.
+    Data find_else_create(const Key& key, bool* new_data);
+
     // Return all data from the LruCache in order (most recently used to least)
     std::vector<std::pair<Key, Data> > get_all_data();
 
@@ -184,6 +187,13 @@ std::shared_ptr<Value> LruCacheShared<Key, Value, Hash>::find(const Key& key)
 template<typename Key, typename Value, typename Hash>
 std::shared_ptr<Value> LruCacheShared<Key, Value, Hash>::operator[](const Key& key)
 {
+    return find_else_create(key, nullptr);
+}
+
+template<typename Key, typename Value, typename Hash>
+std::shared_ptr<Value> LruCacheShared<Key, Value, Hash>::
+find_else_create(const Key& key, bool* new_data)
+{
     LruMapIter map_iter;
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
 
@@ -197,6 +207,8 @@ std::shared_ptr<Value> LruCacheShared<Key, Value, Hash>::operator[](const Key& k
 
     stats.find_misses++;
     stats.adds++;
+    if ( new_data )
+        *new_data = true;
     Data data = Data(new Value);
 
     //  Add key/data pair to front of list.

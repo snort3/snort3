@@ -1,5 +1,6 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2019-2019 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2003-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,39 +17,11 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// rna_inspector.h author Masud Hasan <mashasan@cisco.com>
+#ifndef RNA_LOGGER_COMMON_H
+#define RNA_LOGGER_COMMON_H
 
-#ifndef RNA_INSPECTOR_H
-#define RNA_INSPECTOR_H
-
-#include "framework/inspector.h"
-
-#include "rna_module.h"
-#include "rna_pnd.h"
-
-namespace snort
-{
-struct Packet;
-}
-
-class RnaInspector : public snort::Inspector
-{
-public:
-    RnaInspector(RnaModule*);
-    ~RnaInspector() override;
-
-    bool configure(snort::SnortConfig*) override;
-    void eval(snort::Packet*) override;
-    void show(snort::SnortConfig*) override;
-    void tinit() override;
-    void tterm() override;
-
-private:
-    void load_rna_conf();
-    const RnaModuleConfig* mod_conf = nullptr;
-    RnaConfig* rna_conf = nullptr;
-    RnaPnd* pnd = nullptr;
-};
+// Common definitions between rna logger and pnd modules
+#define RNA_EVENT_NEW       1000
+    #define NEW_HOST            1
 
 #endif
-

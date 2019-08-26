@@ -25,7 +25,9 @@
 // configuration or dynamic discovery).  It provides a thread-safe API to
 // set/get the host data.
 
+#include <cstring>
 #include <mutex>
+#include <list>
 #include <vector>
 
 #include "framework/counts.h"
@@ -33,6 +35,7 @@
 #include "main/thread.h"
 #include "network_inspectors/appid/application_ids.h"
 #include "protocols/protocol_ids.h"
+#include "time/packet_time.h"
 
 struct HostTrackerStats
 {
@@ -41,6 +44,23 @@ struct HostTrackerStats
 };
 
 extern THREAD_LOCAL struct HostTrackerStats host_tracker_stats;
+
+namespace snort
+{
+#define MAC_SIZE 6
+extern const uint8_t zero_mac[MAC_SIZE];
+
+struct HostMac
+{
+    HostMac(u_int8_t p_ttl, const u_int8_t* p_mac, u_int8_t p_primary, uint32_t p_last_seen)
+        : ttl(p_ttl), primary(p_primary), last_seen (p_last_seen) { memcpy(mac, p_mac, MAC_SIZE); }
+
+    // the type and order below should match logger's serialization
+    u_int8_t ttl;
+    u_int8_t mac[MAC_SIZE];
+    u_int8_t primary;
+    uint32_t last_seen;
+};
 
 struct HostApplication
 {
@@ -53,6 +73,17 @@ struct HostApplication
 class SO_PUBLIC HostTracker
 {
 public:
+    HostTracker() : hops(-1)
+    { last_seen = (uint32_t) packet_time(); }
+
+    void update_last_seen();
+
+    // Returns true if a new mac entry is added, false otherwise
+    bool add_mac(const u_int8_t* mac, u_int8_t ttl, u_int8_t primary);
+
+    // The caller owns and deletes the copied list of mac addresses
+    void copy_data(uint8_t& p_hops, uint32_t& p_last_seen, std::list<HostMac>*& p_macs);
+
     // Appid may not be identified always. Inferred means dynamic/runtime
     // appid detected from one flow to another flow such as BitTorrent.
     bool add_service(Port port, IpProtocol proto,
@@ -64,11 +95,11 @@ public:
     void stringify(std::string& str);
 
 private:
-    //  Ensure that updates to a shared object are safe
-    std::mutex host_tracker_lock;
-
+    std::mutex host_tracker_lock; // ensure that updates to a shared object are safe
+    uint8_t hops;                 // hops from the snort inspector, e.g., zero for ARP
+    uint32_t last_seen;           // the last time this host was seen
+    std::list<HostMac> macs;
     std::vector<HostApplication> services;
 };
-
+} // namespace snort
 #endif
-

@@ -53,6 +53,9 @@ static const Parameter rna_params[] =
     { "custom_fingerprint_dir", Parameter::PT_STRING, nullptr, nullptr,
       "directory to custom fingerprint patterns" },
 
+    { "enable_logger", Parameter::PT_BOOL, nullptr, "true",
+      "enable or disable writing discovery events into logger" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -99,6 +102,8 @@ bool RnaModule::set(const char*, Value& v, SnortConfig*)
         mod_conf->fingerprint_dir = std::string(v.get_string());
     else if (v.is("custom_fingerprint_dir"))
         mod_conf->custom_fingerprint_dir = std::string(v.get_string());
+    else if (v.is("enable_logger"))
+        mod_conf->enable_logger = v.get_bool();
     else
         return false;
 

@@ -57,6 +57,7 @@ void LogMessage(const char* format,...)
     va_end(args);
     logged_message[LOG_MAX] = '\0';
 }
+time_t packet_time() { return 0; }
 }
 
 extern "C"

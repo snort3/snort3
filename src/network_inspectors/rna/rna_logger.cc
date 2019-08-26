@@ -17,42 +17,49 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#ifndef RNA_PND_H
-#define RNA_PND_H
+// rna_logger.h author Masud Hasan <mashasan@cisco.com>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "rna_logger.h"
 
-namespace snort
+#include "managers/event_manager.h"
+#include "protocols/packet.h"
+
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+#endif
+
+using namespace snort;
+
+bool RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, const RnaTracker* ht,
+    const struct in6_addr* src_ip, const u_int8_t* src_mac)
 {
-struct Packet;
+    if ( !enabled )
+        return false;
+
+    RnaLoggerEvent rle(type, subtype, ht, src_mac);
+    if ( src_ip and (!IN6_IS_ADDR_V4MAPPED(src_ip) or src_ip->s6_addr32[3]) )
+        rle.ip = src_ip;
+    else
+        rle.ip = nullptr;
+
+    EventManager::call_loggers(nullptr, const_cast<Packet*>(p), "RNA", &rle);
+    return true;
 }
 
-enum class TcpPacketType
+#ifdef UNIT_TEST
+TEST_CASE("RNA logger", "[rna_logger]")
 {
-    SYN, SYN_ACK, MIDSTREAM
-};
+    SECTION("Checking enabled flag")
+    {
+        RnaLogger logger1(false);
+        CHECK(logger1.log(0, 0, 0, 0, 0, 0) == false);
 
-class RnaPnd
-{
-public:
-    RnaPnd(const bool en) : logger(RnaLogger(en)) { }
-
-    void analyze_flow_icmp(const snort::Packet* p);
-    void analyze_flow_ip(const snort::Packet* p);
-    void analyze_flow_non_ip(const snort::Packet* p);
-    void analyze_flow_tcp(const snort::Packet* p, TcpPacketType type);
-    void analyze_flow_udp(const snort::Packet* p);
-
-private:
-    // General rna utilities not associated with flow
-    void discover_network_icmp(const snort::Packet* p);
-    void discover_network_ip(const snort::Packet* p);
-    void discover_network_non_ip(const snort::Packet* p);
-    void discover_network_tcp(const snort::Packet* p);
-    void discover_network_udp(const snort::Packet* p);
-    void discover_network(const snort::Packet* p, u_int8_t ttl);
-
-    RnaLogger logger;
-};
-
+        RnaLogger logger2(true);
+        CHECK(logger2.log(0, 0, 0, 0, 0, 0) == true);
+    }
+}
 #endif

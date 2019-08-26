@@ -26,36 +26,43 @@
 
 #include "rna_pnd.h"
 
-#include "host_tracker/host_cache.h"
+#include "protocols/eth.h"
+#include "protocols/icmp4.h"
+#include "protocols/packet.h"
+#include "protocols/tcp.h"
+
+#include "rna_logger_common.h"
+
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+#endif
 
 using namespace snort;
 
-static const uint8_t zeromac[6] = {0, 0, 0, 0, 0, 0};
-
-static inline bool is_eligible_packet(const snort::Packet* p)
+static inline bool is_eligible_packet(const Packet* p)
 {
     if ( p->has_ip() or
-        memcmp(snort::layer::get_eth_layer(p)->ether_src, zeromac, sizeof(zeromac)) )
+        memcmp(snort::layer::get_eth_layer(p)->ether_src, zero_mac, MAC_SIZE) )
         return true;
     return false;
 }
 
-static inline bool is_eligible_ip(const snort::Packet* p)
+static inline bool is_eligible_ip(const Packet* p)
 {
     // If payload needs to be inspected ever, allow rebuilt packet when is_proxied
-    if ( !is_eligible_packet(p) or p->is_rebuilt() or !p->flow )
+    if ( !p->has_ip() or p->is_rebuilt() or !p->flow )
         return false;
     return true;
 }
 
-static inline bool is_eligible_tcp(const snort::Packet* p)
+static inline bool is_eligible_tcp(const Packet* p)
 {
     if ( !is_eligible_ip(p) or p->ptrs.tcph->is_rst() )
         return false;
     return true;
 }
 
-static inline bool is_eligible_udp(const snort::Packet* p)
+static inline bool is_eligible_udp(const Packet* p)
 {
     if ( !is_eligible_ip(p) )
         return false;
@@ -88,13 +95,13 @@ void RnaPnd::analyze_flow_non_ip(const Packet* p)
         discover_network_non_ip(p);
 }
 
-void RnaPnd::analyze_flow_tcp(const Packet* p, bool is_midstream)
+void RnaPnd::analyze_flow_tcp(const Packet* p, TcpPacketType type)
 {
     // If and when flow stores rna state, process the flow data here before global cache access
     if ( is_eligible_tcp(p) )
         discover_network_tcp(p);
 
-    UNUSED(is_midstream);
+    UNUSED(type);
 }
 
 void RnaPnd::analyze_flow_udp(const Packet* p)
@@ -105,18 +112,12 @@ void RnaPnd::analyze_flow_udp(const Packet* p)
 
 void RnaPnd::discover_network_icmp(const Packet* p)
 {
-    if ( !(host_cache[p->flow->client_ip]->
-        add_service(p->flow->client_port, p->get_ip_proto_next())) )
-        return;
-    // process rna discovery for icmp
+    discover_network(p, 0);
 }
 
 void RnaPnd::discover_network_ip(const Packet* p)
 {
-    if ( !(host_cache[p->flow->client_ip]->
-        add_service(p->flow->client_port, p->get_ip_proto_next())) )
-        return;
-    // process rna discovery for ip
+    discover_network(p, p->ptrs.ip_api.ttl());
 }
 
 void RnaPnd::discover_network_non_ip(const Packet* p)
@@ -127,20 +128,52 @@ void RnaPnd::discover_network_non_ip(const Packet* p)
 
 void RnaPnd::discover_network_tcp(const Packet* p)
 {
-    // Track from initiator direction, if not already seen
-    if ( !(host_cache[p->flow->client_ip]->
-        add_service(p->flow->client_port, p->get_ip_proto_next())) )
-        return;
-
-    // Add mac address to ht list, ttl, last_seen, etc.
-    // Generate new host events
+    // once fingerprints and other stuff are supported, the discovery code will evolve
+    discover_network(p, p->ptrs.ip_api.ttl());
 }
 
 void RnaPnd::discover_network_udp(const Packet* p)
 {
-    if ( !(host_cache[p->flow->client_ip]->
-        add_service(p->flow->client_port, p->get_ip_proto_next())) )
-        return;
-    // process rna discovery for udp
+    const auto& ip_api = p->ptrs.ip_api;
+    if ( IN6_IS_ADDR_MULTICAST(ip_api.get_dst()->get_ip6_ptr()) )
+        discover_network(p, 0);
+    else
+        discover_network(p, ip_api.ttl());
 }
 
+void RnaPnd::discover_network(const Packet* p, u_int8_t ttl)
+{
+    bool new_host = false;
+    const auto& src_ip = p->ptrs.ip_api.get_src();
+    auto ht = host_cache.find_else_create(*src_ip, &new_host);
+    if ( !new_host )
+        ht->update_last_seen(); // this should be done always and foremost
+
+    const auto& src_mac = layer::get_eth_layer(p)->ether_src;
+    ht->add_mac(src_mac, ttl, 0);
+
+    if ( new_host )
+        logger.log(RNA_EVENT_NEW, NEW_HOST, p, &ht,
+            (const struct in6_addr*) src_ip->get_ip6_ptr(), src_mac);
+}
+
+#ifdef UNIT_TEST
+TEST_CASE("RNA pnd", "[non-ip]")
+{
+    SECTION("Testing eligible packet")
+    {
+        Packet p;
+        eth::EtherHdr eh;
+        memcpy(eh.ether_src, zero_mac, MAC_SIZE);
+        p.num_layers = 1;
+        p.layers[0].start = (const uint8_t*) &eh;
+        CHECK(is_eligible_packet(&p) == false);
+
+        ip::IP4Hdr h4;
+        p.ptrs.ip_api.set(&h4);
+        RnaPnd pnd(false);
+        pnd.analyze_flow_non_ip(&p);
+        CHECK(is_eligible_packet(&p) == true);
+    }
+}
+#endif

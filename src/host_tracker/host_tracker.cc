@@ -24,10 +24,53 @@
 
 #include "host_tracker.h"
 
+#include "utils/util.h"
+
 using namespace snort;
 using namespace std;
 
 THREAD_LOCAL struct HostTrackerStats host_tracker_stats;
+
+const uint8_t snort::zero_mac[MAC_SIZE] = {0, 0, 0, 0, 0, 0};
+
+void HostTracker::update_last_seen()
+{
+    std::lock_guard<std::mutex> lck(host_tracker_lock);
+    last_seen = (uint32_t) packet_time();
+}
+
+bool HostTracker::add_mac(const u_int8_t* mac, u_int8_t ttl, u_int8_t primary)
+{
+    if ( !mac or !memcmp(mac, zero_mac, MAC_SIZE) )
+        return false;
+
+    std::lock_guard<std::mutex> lck(host_tracker_lock);
+
+    for ( auto& hm : macs )
+        if ( !memcmp(mac, hm.mac, MAC_SIZE) )
+            return false;
+
+    if ( primary )
+    {
+        // only one primary mac (e.g., from ARP) is maintained at the front
+        if ( !macs.empty() )
+            macs.front().primary = 0;
+        macs.emplace_front(ttl, mac, primary, last_seen);
+    }
+    else
+        macs.emplace_back(ttl, mac, primary, last_seen);
+    return true;
+}
+
+void HostTracker::copy_data(uint8_t& p_hops, uint32_t& p_last_seen, list<HostMac>*& p_macs)
+{
+    std::lock_guard<std::mutex> lck(host_tracker_lock);
+
+    p_hops = hops;
+    p_last_seen = last_seen;
+    if ( !macs.empty() )
+        p_macs = new list<HostMac>(macs.begin(), macs.end());
+}
 
 bool HostTracker::add_service(Port port, IpProtocol proto, AppId appid, bool inferred_appid)
 {
@@ -66,8 +109,41 @@ AppId HostTracker::get_appid(Port port, IpProtocol proto, bool inferred_only)
     return APP_ID_NONE;
 }
 
+static inline string to_time_string(uint32_t p_time)
+{
+    time_t raw_time = (time_t) p_time;
+    struct tm* timeinfo = gmtime(&raw_time);
+    char buffer[30];
+    strftime(buffer, 30, "%F %T", timeinfo);
+    return buffer;
+}
+
+static inline string to_mac_string(const u_int8_t* mac)
+{
+    char mac_addr[18];
+    snprintf(mac_addr, 18, "%02X:%02X:%02X:%02X:%02X:%02X",
+        mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    return mac_addr;
+}
+
 void HostTracker::stringify(string& str)
 {
+    std::lock_guard<std::mutex> lck(host_tracker_lock);
+
+    str += "\n    hops: " + to_string(hops) + ", time: " + to_time_string(last_seen);
+
+    if ( !macs.empty() )
+    {
+        str += "\nmacs size: " + to_string(macs.size());
+        for ( const auto& m : macs )
+        {
+            str += "\n    mac: " + to_mac_string(m.mac)
+                + ", ttl: " + to_string(m.ttl)
+                + ", primary: " + to_string(m.primary)
+                + ", time: " + to_time_string(m.last_seen);
+        }
+    }
+
     if ( !services.empty() )
     {
         str += "\nservices size: " + to_string(services.size());

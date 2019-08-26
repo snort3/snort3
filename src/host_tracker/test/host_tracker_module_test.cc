@@ -39,6 +39,7 @@ namespace snort
 {
 char* snort_strdup(const char* s)
 { return strdup(s); }
+time_t packet_time() { return 0; }
 }
 
 //  Fake show_stats to avoid bringing in a ton of dependencies.

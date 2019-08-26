@@ -27,6 +27,7 @@ struct RnaModuleConfig
     std::string rna_util_lib_path;
     std::string fingerprint_dir;
     std::string custom_fingerprint_dir;
+    bool enable_logger;
 };
 
 // Give default values so that RNA can work even if rna_conf_path is not provided
