@@ -726,7 +726,8 @@ not_v2:     ;
                     hdr3 = (const ServiceSSLV3Hdr*)data;
                     ver = ntohs(hdr3->version);
                     if (size < sizeof(ServiceSSLV3Hdr) ||
-                        hdr3->type != SSL_HANDSHAKE ||
+                        (hdr3->type != SSL_HANDSHAKE &&
+                        hdr3->type != SSL_CHANGE_CIPHER ) ||
                         (ver != 0x0300 &&
                         ver != 0x0301 &&
                         ver != 0x0302 &&
@@ -734,6 +735,8 @@ not_v2:     ;
                     {
                         goto fail;
                     }
+                    if (hdr3->type == SSL_CHANGE_CIPHER)
+                        goto success;
                     data += sizeof(ServiceSSLV3Hdr);
                     size -= sizeof(ServiceSSLV3Hdr);
                     ss->tot_length = ntohs(hdr3->len);
