@@ -118,28 +118,25 @@ const StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned to
         if (!session_data->header_coming[source_id])
         {
             session_data->frame_data[source_id] = session_data->frame[source_id];
-            frame_buf.data = session_data->frame_data[source_id];
             session_data->frame_data_size[source_id] = session_data->frame_size[source_id];
-            frame_buf.length = session_data->frame_data_size[source_id];
         }
         else if (session_data->frame_size[source_id] == FRAME_HEADER_LENGTH)
         {
             session_data->frame_data[source_id] = nullptr;
             session_data->frame_data_size[source_id] = 0;
-            // Don't send empty frame body to detection, use header so there is something
-            frame_buf.data = session_data->frame[source_id];
-            frame_buf.length = session_data->frame_size[source_id];
         }
         else
         {
             // Adjust for frame header
             session_data->frame_data[source_id] =
                 session_data->frame[source_id] + FRAME_HEADER_LENGTH;
-            frame_buf.data = session_data->frame_data[source_id];
             session_data->frame_data_size[source_id] =
                 session_data->frame_size[source_id] - FRAME_HEADER_LENGTH;
-            frame_buf.length = session_data->frame_data_size[source_id];
         }
+        // Return 0-length non-null buffer to stream which signals detection required, but don't 
+        // create pkt_data buffer
+        frame_buf.length = 0;
+        frame_buf.data = session_data->frame[source_id];
     }
     return frame_buf;
 }
