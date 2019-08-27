@@ -745,19 +745,49 @@ void Binder::handle_flow_service_change( Flow* flow )
 
     assert(flow);
 
-    Inspector* ins = find_gadget(flow);
-
-    if ( flow->gadget != ins )
+    Inspector* ins = nullptr;
+    if (flow->service)
     {
+        ins = find_gadget(flow);
+        if ( flow->gadget != ins )
+        {
+            if ( flow->gadget )
+                flow->clear_gadget();
+            if ( ins )
+            {
+                flow->set_gadget(ins);
+                flow->ssn_state.snort_protocol_id = ins->get_service();
+            }
+            else
+                flow->ssn_state.snort_protocol_id = UNKNOWN_PROTOCOL_ID;
+        }
+    }
+    else
+    {
+        // reset to wizard when serviec is not specified
+        unsigned sz = bindings.size();
+        for ( unsigned i = 0; i < sz; i++ )
+        {
+            Binding* pb = bindings[i];
+            if ( pb->use.ips_index or pb->use.inspection_index or pb->use.network_index )
+                continue;
+
+            if ( pb->use.what == BindUse::BW_WIZARD )
+            {
+                ins = (Inspector*)pb->use.object;
+                break;
+            }
+        }
+
         if ( flow->gadget )
             flow->clear_gadget();
+        if ( flow->clouseau )
+            flow->clear_clouseau();
         if ( ins )
         {
-            flow->set_gadget(ins);
-            flow->ssn_state.snort_protocol_id = ins->get_service();
+            flow->set_clouseau(ins);
         }
-        else
-            flow->ssn_state.snort_protocol_id = UNKNOWN_PROTOCOL_ID;
+        flow->ssn_state.snort_protocol_id = UNKNOWN_PROTOCOL_ID;
     }
 
     // If there is no inspector bound to this flow after the service change, see if there's at least
