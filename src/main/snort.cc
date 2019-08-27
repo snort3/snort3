@@ -38,6 +38,7 @@
 #include "flow/ha.h"
 #include "framework/mpse.h"
 #include "helpers/process.h"
+#include "host_tracker/host_cache.h"
 #include "ips_options/ips_options.h"
 #include "log/log.h"
 #include "log/messages.h"
@@ -397,6 +398,7 @@ void Snort::setup(int argc, char* argv[])
 
     memory::MemoryCap::calculate(ThreadConfig::get_instance_max());
     memory::MemoryCap::print();
+    host_cache.print_config();
 
     TimeStart();
 }

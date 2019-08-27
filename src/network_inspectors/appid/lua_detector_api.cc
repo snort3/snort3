@@ -1490,13 +1490,13 @@ static int detector_create_chp_multi_application(lua_State* L)
             continue;
         break;
     }
-    
+
     if (!control)
     {
         lua_pushnumber(L, appIdInstance);
         return 1;
     }
-    
+
     // We only want a maximum of these for each appId.
     if (instance == CHP_APPID_INSTANCE_MAX)
     {
@@ -1923,7 +1923,7 @@ static int detector_add_sip_user_agent(lua_State* L)
 }
 
 static int create_custom_application(lua_State* L)
-{ 
+{
     auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
     // Verify detector user data and that we are NOT in packet context
     ud->validate_lua_state(false);
@@ -1948,9 +1948,9 @@ static int create_custom_application(lua_State* L)
         appId = entry->appId;
         AppIdPegCounts::add_app_peg_info(tmp_string, appId);
     }
-    else 
+    else
         appId  = AppInfoManager::get_instance().get_appid_by_name(tmp_string);
-       
+
     lua_pushnumber(L, appId);
     return 1;   /*number of results */
 }
@@ -2631,26 +2631,26 @@ LuaServiceObject::LuaServiceObject(AppIdDiscovery* sdm, const std::string& detec
             appid_detectors = ServiceDiscovery::get_instance().get_tcp_detectors();
             auto detector = appid_detectors->find(detector_name);
             if (detector != appid_detectors->end())
-                ad = detector->second;  
+                ad = detector->second;
         }
         else if (protocol == IpProtocol::UDP)
         {
             appid_detectors = ServiceDiscovery::get_instance().get_udp_detectors();
             auto detector = appid_detectors->find(detector_name);
             if (detector != appid_detectors->end())
-                ad = detector->second;  
+                ad = detector->second;
         }
         sd = (ServiceDetector*)ad;
-    }  
+    }
 
     UserData<LuaServiceObject>::push(L, DETECTOR, this);
 
     lua_pushvalue(L, -1);
 
-    // FIXIT-M: RELOAD - go back to using lua reference 
+    // FIXIT-M: RELOAD - go back to using lua reference
     // instead of using a string for lookups
     // lsd.detector_user_data_ref = luaL_ref(L, LUA_REGISTRYINDEX);
-    
+
     // FIXIT-H: The control and thread states have the same initialization
     // sequence, the stack index shouldn't change between the states, maybe
     // use a common index for a detector between all the states
@@ -2701,26 +2701,26 @@ LuaClientObject::LuaClientObject(AppIdDiscovery* cdm, const std::string& detecto
             appid_detectors = ClientDiscovery::get_instance().get_tcp_detectors();
             auto detector = appid_detectors->find(detector_name);
             if (detector != appid_detectors->end())
-                ad = detector->second;  
+                ad = detector->second;
         }
         else if (protocol == IpProtocol::UDP)
         {
             appid_detectors = ClientDiscovery::get_instance().get_udp_detectors();
             auto detector = appid_detectors->find(detector_name);
             if (detector != appid_detectors->end())
-                ad = detector->second;  
+                ad = detector->second;
         }
         cd = (ClientDetector*)ad;
-    }  
-    
+    }
+
     UserData<LuaClientObject>::push(L, DETECTOR, this);
 
     lua_pushvalue(L, -1);
 
-    // FIXIT-M: RELOAD - go back to using lua reference 
+    // FIXIT-M: RELOAD - go back to using lua reference
     // instead of using a string for lookups
     // lsd.detector_user_data_ref = luaL_ref(L, LUA_REGISTRYINDEX);
-    
+
     // FIXIT-H: The control and thread states have the same initialization
     // sequence, the stack index shouldn't change between the states, maybe
     // use a common index for a detector between all the states

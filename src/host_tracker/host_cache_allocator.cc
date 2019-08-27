@@ -16,18 +16,34 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// host_cache.cc author Steve Chew <stechew@cisco.com>
+// host_cache_allocator.cc author Silviu Minut <sminut@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef HOST_CACHE_ALLOCATOR_CC
+#define HOST_CACHE_ALLOCATOR_CC
 
 #include "host_cache.h"
 
-using namespace snort;
+template <class T>
+T* HostCacheAlloc<T>::allocate(std::size_t n)
+{
+    size_t sz=n*sizeof(T);
+    T* out=std::allocator<T>::allocate(n);
+    lru->update(sz);
+    return out;
+}
 
-// Default host cache size in bytes.
-// Must agree with default memcap in host_cache_module.cc.
-#define LRU_CACHE_INITIAL_SIZE 16384 * 512
+template <class T>
+void HostCacheAlloc<T>::deallocate(T* p, std::size_t n) noexcept
+{
+    size_t sz = n*sizeof(T);
+    std::allocator<T>::deallocate(p, n);
+    lru->update( -(int) sz);
+}
 
-HostCacheIp host_cache(LRU_CACHE_INITIAL_SIZE);
+template <class T>
+HostCacheAllocIp<T>::HostCacheAllocIp()
+{
+    lru = &host_cache;
+}
+
+#endif

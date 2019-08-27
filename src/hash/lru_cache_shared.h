@@ -24,6 +24,7 @@
 // LruCacheShared -- Implements a thread-safe unordered map where the
 // least-recently-used (LRU) entries are removed once a fixed size is hit.
 
+#include <cassert>
 #include <list>
 #include <memory>
 #include <mutex>
@@ -49,6 +50,7 @@ template<typename Key, typename Value, typename Hash>
 class LruCacheShared
 {
 public:
+
     //  Do not allow default constructor, copy constructor or assignment
     //  operator.  Cannot safely copy the LruCacheShared due to the mutex
     //  lock.
@@ -60,6 +62,7 @@ public:
         max_size(initial_size), current_size(0) { }
 
     using Data = std::shared_ptr<Value>;
+    using ValueType = Value;
 
     // Return data entry associated with key. If doesn't exist, return nullptr.
     Data find(const Key& key);
@@ -77,7 +80,13 @@ public:
     size_t size()
     {
         std::lock_guard<std::mutex> cache_lock(cache_mutex);
-        return current_size;
+        return list.size();
+    }
+
+    virtual size_t mem_size()
+    {
+        std::lock_guard<std::mutex> cache_lock(cache_mutex);
+        return list.size() * mem_chunk;
     }
 
     size_t get_max_size()
@@ -119,17 +128,17 @@ public:
         cache_mutex.unlock();
     }
 
-private:
+protected:
     using LruList = std::list<std::pair<Key, Data> >;
     using LruListIter = typename LruList::iterator;
     using LruMap  = std::unordered_map<Key, LruListIter, Hash>;
     using LruMapIter = typename LruMap::iterator;
 
+    static constexpr size_t mem_chunk = sizeof(Data) + sizeof(Value);
+
     size_t max_size;   // Once max_size elements are in the cache, start to
                        // remove the least-recently-used elements.
 
-    //  NOTE: std::list::size() is O(n) (it recounts the list every time)
-    //        so instead we keep track of the current size manually.
     size_t current_size;    // Number of entries currently in the cache.
 
     std::mutex cache_mutex;
@@ -138,30 +147,53 @@ private:
     LruMap map;    //  Maps key to list iterator for fast lookup.
 
     struct LruCacheSharedStats stats;
+
+    // These get called only from within the LRU and assume the LRU is locked.
+    virtual void increase_size()
+    {
+        current_size++;
+    }
+
+    virtual void decrease_size()
+    {
+        current_size--;
+    }
+
+    // Caller must lock and unlock.
+    void prune(std::list<Data>& data)
+    {
+        LruListIter list_iter;
+        assert(data.empty());
+        while (current_size > max_size && !list.empty())
+        {
+            list_iter = --list.end();
+            data.push_back(list_iter->second); // increase reference count
+            decrease_size();
+            map.erase(list_iter->first);
+            list.erase(list_iter);
+            stats.prunes++;
+        }
+    }
 };
 
 template<typename Key, typename Value, typename Hash>
 bool LruCacheShared<Key, Value, Hash>::set_max_size(size_t newsize)
 {
-    LruListIter list_iter;
-
     if (newsize == 0)
         return false;   //  Not allowed to set size to zero.
+
+    // Like with remove(), we need local temporary references to data being
+    // deleted, to avoid race condition. This data list needs to self-destruct
+    // after the cache_lock does.
+    std::list<Data> data;
 
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
 
     //  Remove the oldest entries if we have to reduce cache size.
-    while (current_size > newsize)
-    {
-        list_iter = list.end();
-        --list_iter;
-        current_size--;
-        map.erase(list_iter->first);
-        list.erase(list_iter);
-        stats.prunes++;
-    }
-
     max_size = newsize;
+
+    prune(data);
+
     return true;
 }
 
@@ -195,6 +227,15 @@ std::shared_ptr<Value> LruCacheShared<Key, Value, Hash>::
 find_else_create(const Key& key, bool* new_data)
 {
     LruMapIter map_iter;
+
+    // As with remove and operator[], we need a temporary list of references
+    // to delay the destruction of the items being removed by prune().
+    // This is one instance where we cannot get by with directly locking and
+    // unlocking the cache_mutex, because the cache must be locked when we
+    // return the data pointer (below), or else, some other thread might
+    // delete it before we got a chance to return it.
+    std::list<Data> tmp_data;
+
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
 
     map_iter = map.find(key);
@@ -213,24 +254,13 @@ find_else_create(const Key& key, bool* new_data)
 
     //  Add key/data pair to front of list.
     list.emplace_front(std::make_pair(key, data));
+    increase_size();
 
     //  Add list iterator for the new entry to map.
     map[key] = list.begin();
 
-    //  If we've exceeded the configured size, remove the oldest entry.
-    if (current_size >= max_size)
-    {
-        LruListIter list_iter;
-        list_iter = list.end();
-        --list_iter;
-        map.erase(list_iter->first);
-        list.erase(list_iter);
-        stats.prunes++;
-    }
-    else
-    {
-        current_size++;
-    }
+    prune(tmp_data);
+
     return data;
 }
 
@@ -253,16 +283,40 @@ template<typename Key, typename Value, typename Hash>
 bool LruCacheShared<Key, Value, Hash>::remove(const Key& key)
 {
     LruMapIter map_iter;
+
+    // There is a potential race condition here, when the destructor of
+    // the object being removed needs to call back into the cache and lock
+    // the cache (e.g. via an allocator) to update the size of the cache.
+    //
+    // The shared pointer below fixes this condition by increasing the
+    // reference count to the object being deleted, thus delaying the
+    // call to the destructor until after the cache is unlocked.
+    //
+    // In particular, since the cache must be unlocked when data self-destructs
+    // data must be defined before cache_lock. Do not change the order of
+    // data and cache_lock!
+    Data data;
+
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
 
     map_iter = map.find(key);
     if (map_iter == map.end())
+    {
         return false;   //  Key is not in LruCache.
+    }
 
-    current_size--;
+    data = map_iter->second->second;
+
+    decrease_size();
     list.erase(map_iter->second);
     map.erase(map_iter);
     stats.removes++;
+
+    assert( data.use_count() > 0 );
+
+    // Now, data can go out of scope and if it needs to lock again while
+    // deleting the Value object, it can do so.
+
     return true;
 }
 
@@ -270,20 +324,25 @@ template<typename Key, typename Value, typename Hash>
 bool LruCacheShared<Key, Value, Hash>::remove(const Key& key, std::shared_ptr<Value>& data)
 {
     LruMapIter map_iter;
+
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
 
     map_iter = map.find(key);
     if (map_iter == map.end())
+    {
         return false;   //  Key is not in LruCache.
+    }
 
     data = map_iter->second->second;
 
-    current_size--;
+    decrease_size();
     list.erase(map_iter->second);
     map.erase(map_iter);
     stats.removes++;
+
+    assert( data.use_count() > 0 );
+
     return true;
 }
-
 
 #endif

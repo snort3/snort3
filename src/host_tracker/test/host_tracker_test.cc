@@ -25,7 +25,8 @@
 
 #include <cstring>
 
-#include "host_tracker/host_tracker.h"
+#include "host_tracker/host_cache.h"
+#include "host_tracker/host_cache_allocator.cc"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
@@ -42,6 +43,11 @@ char* snort_strdup(const char* str)
 time_t packet_time() { return test_time; }
 }
 
+// There always needs to be a HostCacheIp associated with HostTracker,
+// because any allocation / deallocation into the HostTracker will take up
+// memory managed by the cache.
+HostCacheIp host_cache(1024);
+
 TEST_GROUP(host_tracker)
 {
 };
@@ -49,6 +55,8 @@ TEST_GROUP(host_tracker)
 //  Test HostTracker find appid and add service functions.
 TEST(host_tracker, add_find_service_test)
 {
+    // Having standalone host tracker objects works, but it should be avoided
+    // because they take up memory from the host cache. OK for testing.
     HostTracker ht;
 
     //  Try a find on an empty list.
@@ -130,4 +138,3 @@ int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

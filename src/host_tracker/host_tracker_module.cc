@@ -23,6 +23,7 @@
 #endif
 
 #include "host_tracker_module.h"
+#include "host_cache_allocator.cc"
 
 #include "log/messages.h"
 #include "main/snort_config.h"
@@ -108,4 +109,3 @@ const PegInfo* HostTrackerModule::get_pegs() const
 
 PegCount* HostTrackerModule::get_counts() const
 { return (PegCount*)&host_tracker_stats; }
-

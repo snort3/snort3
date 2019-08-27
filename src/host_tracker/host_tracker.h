@@ -31,6 +31,7 @@
 #include <vector>
 
 #include "framework/counts.h"
+#include "host_cache_allocator.h"
 #include "main/snort_types.h"
 #include "main/thread.h"
 #include "network_inspectors/appid/application_ids.h"
@@ -70,6 +71,9 @@ struct HostApplication
     bool inferred_appid;
 };
 
+typedef HostCacheAllocIp<HostMac> HostMacAllocator;
+typedef HostCacheAllocIp<HostApplication> HostAppAllocator;
+
 class SO_PUBLIC HostTracker
 {
 public:
@@ -98,8 +102,25 @@ private:
     std::mutex host_tracker_lock; // ensure that updates to a shared object are safe
     uint8_t hops;                 // hops from the snort inspector, e.g., zero for ARP
     uint32_t last_seen;           // the last time this host was seen
-    std::list<HostMac> macs;
-    std::vector<HostApplication> services;
+    std::list<HostMac, HostMacAllocator> macs;
+    std::vector<HostApplication, HostAppAllocator> services;
+
+    // Hide / delete the constructor from the outside world. We don't want to
+    // have zombie host trackers, i.e. host tracker objects that live outside
+    // the host cache.
+    HostTracker( const HostTracker& ) = delete;
+    HostTracker( const HostTracker&& ) = delete;
+
+    HostTracker& operator=( const HostTracker& ) = delete;
+    HostTracker& operator=( const HostTracker&& ) = delete;
+
+    // Only the host cache can create them ...
+    template<class Key, class Value, class Hash>
+    friend class LruCacheShared;
+
+    // ... and some unit tests. See Utest.h and UtestMacros.h in cpputest.
+    friend class TEST_host_tracker_add_find_service_test_Test;
+    friend class TEST_host_tracker_stringify_Test;
 };
 } // namespace snort
 #endif

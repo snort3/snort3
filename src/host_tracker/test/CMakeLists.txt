@@ -38,3 +38,13 @@ add_cpputest( host_tracker_module_test
         ${DNET_LIBRARIES}
 )
 
+add_cpputest( host_cache_allocator_ht_test
+    SOURCES
+        ../host_tracker.cc
+        ../../sfip/sf_ip.cc
+)
+
+add_cpputest( host_cache_allocator_test
+    SOURCES
+        ../host_tracker.cc
+)

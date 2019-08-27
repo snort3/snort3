@@ -219,7 +219,7 @@ ServiceDiscovery& ServiceDiscovery::get_instance()
     return *s_discovery_manager;
 }
 
-LruCacheShared<SfIp, HostTracker, HashIp> host_cache(50);
+HostCacheIp host_cache(50);
 AppId HostTracker::get_appid(Port, IpProtocol, bool)
 {
     return APP_ID_NONE;

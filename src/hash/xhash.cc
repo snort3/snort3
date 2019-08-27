@@ -278,7 +278,7 @@ int xhash_change_memcap(XHash *t, unsigned long new_memcap, unsigned *max_work)
 {
     if (t == nullptr or new_memcap < t->overhead_bytes)
         return XHASH_ERR;
-    
+
     if (new_memcap == t->mc.memcap)
         return XHASH_OK;
 
@@ -304,9 +304,9 @@ int xhash_change_memcap(XHash *t, unsigned long new_memcap, unsigned *max_work)
     //or (we have undefined behavior: t->usrfree is set and xhash_free_anr_lru is returning XHASH_ERR)
     if (new_memcap < t->mc.memused)
         return XHASH_NOMEM;
- 
+
     t->mc.memcap = new_memcap;
-    return XHASH_OK; 
+    return XHASH_OK;
 }
 
 
@@ -1040,7 +1040,7 @@ int xhash_free_anr_lru(XHash *t)
 {
     if (t == nullptr)
         return XHASH_ERR;
-    
+
     if (t->fhead)
     {
         if (xhash_delete_free_node(t) == XHASH_OK)
@@ -1128,4 +1128,3 @@ void xhash_set_keyops(XHash* h, hash_func hash_fcn, keycmp_func keycmp_fcn)
     hashfcn_set_keyops(h->hashfcn, hash_fcn, keycmp_fcn);
 }
 } // namespace snort
-

@@ -23,6 +23,7 @@
 #endif
 
 #include "host_tracker.h"
+#include "host_cache_allocator.cc"
 
 #include "utils/util.h"
 

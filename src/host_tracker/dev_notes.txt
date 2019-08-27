@@ -7,7 +7,7 @@ manner.
 * The global host_cache is used to cache HostTracker objects so that they
 can be shared between threads.
     - The host_cache holds a shared_ptr to each HostTracker object. This
-    allows the HostTracker to be removed from the host cache without 
+    allows the HostTracker to be removed from the host cache without
     invalidating the HostTracker held by other threads.
 
 * The HostTrackerModule is used to read in initial known information about
@@ -22,3 +22,112 @@ about hosts.
 
 * The HostCacheModule is used to configure the HostCache's size.
 
+
+Memory Usage Issues
+
+* The host cache can grow fairly big, so we want to cap it at a certain size.
+This size can be set in the lua configuration file as host_cache.memcap and
+will be read in and honored by host_cache_module.cc.
+
+* The LruCacheShared class defined in hash/lru_cache_shared.h tracks its
+memory usage in terms of number of items it contains. That is fine as long
+as the items in the cache have constant size at run-time, since in that case
+the memory in bytes is a constant multiple of the number of items.
+
+However, in the case of HostTracker items, the memory usage does not remain
+constant at run-time. The HostTracker class contains a vector<HostApplication>,
+which can grow indefinitely as snort discovers more services on a given host.
+
+The LruCacheShared container and the items within know nothing about each other.
+This independence is desirable and we want to maintain it. However, when an
+item owned by the cache grows, it must - in good faith - update the cache size,
+or the cache won't know that it now owns more memory. This breaks the
+independence between the cache and its items.
+
+We address this problem by passing a custom allocator to the STL containers
+that the HostTracker contains - for example, vector<HostApplication>. The
+allocator gets called by STL whenever the vector requests or releases memory.
+In turn, the allocator calls back into the global host cache object, updating
+it with the size that it just allocated or de-allocated. This way, although the
+HostTracker communicates with the host cache (indirectly, through the
+allocator), the memory accounting is done automatically by the allocator,
+transparently to the HostTracker users. The alternative would be that each
+time new information is added to the HostTracker, the user updates the cache
+explicitly - which is prone to error.
+
+Every container HostTracker might contain must be instantiated with our
+custom allocator as a parameter.
+
+
+Memory Usage vs. Number of Items
+
+In some cases it is preferable that the size of the cache is measured in
+number of items within the cache, whereas in other cases (HostTracker) we
+measure the size of the cache in bytes.
+
+Upon careful analysis, the only difference between the two cases is that
+we must increase/decrease the size by 1 when size is measured in number of
+items, and by sizeof(Item) when the size is measured in bytes. The rest of
+the code (insert, prune, remove, etc.) remains the same.
+
+Consequently, we can have the LruCacheShared class measure its size in
+number of items, and derive from it another cache class - LruCacheSharedMemcap -
+that measures size in bytes. All we need to do is provide virtual
+increase_size() / decrease_size() functions in the base class, which will
+update the size by the appropriate amount in each case. See host_cache.h and
+hash/lru_cache_shared.h.
+
+The LruCacheShared need not know anything about the custom allocator described
+above, since it operates under the assumption that its items do not grow at
+run-time. All size accounting can be done at item insertion time.
+
+The derived LruCacheSharedMemcap, however, must contain an update() function
+to be used solely by the allocator. The update() function must lock the cache.
+
+The prune(), increase_size() and decrease_size() functions do not lock the
+cache. They must be called exclusively from functions like insert() or remove(),
+that do lock. On the other hand, the update() function in the derived cache
+class has to lock the cache, as it is called asynchronously from different
+threads (via the allocator).
+
+
+Allocator Implementation Issues
+
+There is a circular dependency between the HostCache, the HostTracker and the
+allocator that needs to be broken. This is true in the HostTracker case, but
+it will be true for any cache item that requires an allocator.
+
+The allocator is ephemeral, it comes into existence inside STL for a brief
+period of time, allocates/deallocates memory and then it gets destroyed.
+STL assumes the allocator constructor has no parameters, so we can't pass
+a (pointer to a) host cache object to the allocator upon construction.
+Therefore, the allocator must have an internal host cache pointer that gets set
+in the constructor to the global host cache instance. Hence, the allocator
+must know about the host cache.
+
+On the other hand, the host cache must know about its item (the HostTracker)
+at instantiation time.
+
+Finally, the HostTracker must know about the allocator, so it can inform the
+cache about memory changes.
+
+This is a circular dependency:
+
+
+     ------> Allocator ----
+    |                      |
+    |                      |
+    |                      V
+HostCache <----------- HostTracker
+
+It is common to implement a class template (like Allocator, in our case) in
+a single .h file. However, to break this dependency, we have to split the
+Allocator into a .h and a .cc file. We include the .h file in HostTracker
+and declare HostCache extern only in the .cc file. Then, we have to include
+the .cc file also in the HostTracker implementation file because Allocator
+is templated. See host_cache.h, host_cache_allocator.h, host_cache_allocator.cc,
+host_tracker.h and host_tracker.cc.
+
+Illustrative examples are test/host_cache_allocator_test.cc (standalone
+host cache / allocator example) and test/host_cache_allocator_ht_test.cc
+(host_cache / allocator with host tracker example).
