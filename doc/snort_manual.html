@@ -782,7 +782,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0 (Build 259)
+o"  )~   Version 3.0.0 (Build 260)
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
@@ -7740,7 +7740,7 @@ string <strong>host_cache.dump_file</strong>: file name to dump host cache on sh
 </li>
 <li>
 <p>
-int <strong>host_cache.size</strong>: size of host cache { 1:max32 }
+int <strong>host_cache.memcap</strong> = 8388608: maximum host cache size in bytes { 512:max32 }
 </p>
 </li>
 </ul></div>
@@ -12469,6 +12469,11 @@ int <strong>finalize_packet.modify.pdu</strong> = 0: Modify verdict in finalize 
 enum <strong>finalize_packet.modify.verdict</strong>: output format for stats { pass | block | replace | whitelist | blacklist | ignore | retry }
 </p>
 </li>
+<li>
+<p>
+bool <strong>finalize_packet.switch_to_wizard</strong> = false: switch to wizard on first finalize event
+</p>
+</li>
 </ul></div>
 <div class="paragraph"><p>Peg counts:</p></div>
 <div class="ulist"><ul>
@@ -15106,6 +15111,11 @@ string <strong>rna.fingerprint_dir</strong>: directory to fingerprint patterns
 string <strong>rna.custom_fingerprint_dir</strong>: directory to custom fingerprint patterns
 </p>
 </li>
+<li>
+<p>
+bool <strong>rna.enable_logger</strong> = true: enable or disable writing discovery events into logger
+</p>
+</li>
 </ul></div>
 <div class="paragraph"><p>Peg counts:</p></div>
 <div class="ulist"><ul>
@@ -15199,6 +15209,28 @@ string <strong>rna.custom_fingerprint_dir</strong>: directory to custom fingerpr
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_rt_global">rt_global</h3>
+<div class="paragraph"><p>What: The regression test global inspector is used for regression tests specific to a global inspector</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Usage: global</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+int <strong>rt_global.memcap</strong> = 2048: cap on amount of memory used
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>rt_global.packets</strong>: total packets (sum)
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_rt_packet">rt_packet</h3>
 <div class="paragraph"><p>What: The regression test packet inspector is used when special packet handling is required for a reg test</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
@@ -15235,14 +15267,6 @@ bool <strong>rt_packet.test_daq_retry</strong> = true: test daq packet retry fea
 <div class="paragraph"><p>What: The regression test service inspector is used by regression tests that require custom service inspector support.</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
 <div class="paragraph"><p>Usage: context</p></div>
-<div class="paragraph"><p>Configuration:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-int <strong>rt_service.memcap</strong>: cap on amount of memory used
-</p>
-</li>
-</ul></div>
 <div class="paragraph"><p>Peg counts:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -25552,6 +25576,11 @@ int <strong>finalize_packet.start_pdu</strong> = 0: Register to receive finalize
 </li>
 <li>
 <p>
+bool <strong>finalize_packet.switch_to_wizard</strong> = false: switch to wizard on first finalize event
+</p>
+</li>
+<li>
+<p>
 string <strong>flags.~mask_flags</strong>: these flags are don&#8217;t cares
 </p>
 </li>
@@ -25867,7 +25896,7 @@ string <strong>host_cache.dump_file</strong>: file name to dump host cache on sh
 </li>
 <li>
 <p>
-int <strong>host_cache.size</strong>: size of host cache { 1:max32 }
+int <strong>host_cache.memcap</strong> = 8388608: maximum host cache size in bytes { 512:max32 }
 </p>
 </li>
 <li>
@@ -27617,6 +27646,11 @@ string <strong>rna.custom_fingerprint_dir</strong>: directory to custom fingerpr
 </li>
 <li>
 <p>
+bool <strong>rna.enable_logger</strong> = true: enable or disable writing discovery events into logger
+</p>
+</li>
+<li>
+<p>
 string <strong>rna.fingerprint_dir</strong>: directory to fingerprint patterns
 </p>
 </li>
@@ -27647,12 +27681,12 @@ string <strong>rpc.~ver</strong>: version number or * for any
 </li>
 <li>
 <p>
-bool <strong>rt_packet.test_daq_retry</strong> = true: test daq packet retry feature
+int <strong>rt_global.memcap</strong> = 2048: cap on amount of memory used
 </p>
 </li>
 <li>
 <p>
-int <strong>rt_service.memcap</strong>: cap on amount of memory used
+bool <strong>rt_packet.test_daq_retry</strong> = true: test daq packet retry feature
 </p>
 </li>
 <li>
@@ -31108,6 +31142,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>rpc_decode.total_packets</strong>: total packets (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rt_global.packets</strong>: total packets (sum)
 </p>
 </li>
 <li>
@@ -36283,6 +36322,11 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
+<strong>rt_global</strong> (inspector): The regression test global inspector is used for regression tests specific to a global inspector
+</p>
+</li>
+<li>
+<p>
 <strong>rt_packet</strong> (inspector): The regression test packet inspector is used when special packet handling is required for a reg test
 </p>
 </li>
@@ -36949,6 +36993,11 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 <li>
 <p>
 <strong>inspector::rpc_decode</strong>: RPC inspector
+</p>
+</li>
+<li>
+<p>
+<strong>inspector::rt_global</strong>: The regression test global inspector is used for regression tests specific to a global inspector
 </p>
 </li>
 <li>
@@ -37896,7 +37945,7 @@ Adding/removing stream_* inspectors if stream was already configured
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2019-08-21 14:26:59 EDT
+ 2019-08-28 09:32:47 EDT
 </div>
 </div>
 </body>

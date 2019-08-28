@@ -175,21 +175,22 @@ Table of Contents
     9.32. reputation
     9.33. rna
     9.34. rpc_decode
-    9.35. rt_packet
-    9.36. rt_service
-    9.37. sip
-    9.38. smtp
-    9.39. ssh
-    9.40. ssl
-    9.41. stream
-    9.42. stream_file
-    9.43. stream_icmp
-    9.44. stream_ip
-    9.45. stream_tcp
-    9.46. stream_udp
-    9.47. stream_user
-    9.48. telnet
-    9.49. wizard
+    9.35. rt_global
+    9.36. rt_packet
+    9.37. rt_service
+    9.38. sip
+    9.39. smtp
+    9.40. ssh
+    9.41. ssl
+    9.42. stream
+    9.43. stream_file
+    9.44. stream_icmp
+    9.45. stream_ip
+    9.46. stream_tcp
+    9.47. stream_udp
+    9.48. stream_user
+    9.49. telnet
+    9.50. wizard
 
 10. IPS Action Modules
 
@@ -391,7 +392,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0 (Build 259)
+o"  )~   Version 3.0.0 (Build 260)
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
@@ -5716,7 +5717,8 @@ Configuration:
 
   * string host_cache.dump_file: file name to dump host cache on
     shutdown; won’t dump by default
-  * int host_cache.size: size of host cache { 1:max32 }
+  * int host_cache.memcap = 8388608: maximum host cache size in bytes
+    { 512:max32 }
 
 Commands:
 
@@ -7972,6 +7974,8 @@ Configuration:
     packet for this PDU { 0:max32 }
   * enum finalize_packet.modify.verdict: output format for stats {
     pass | block | replace | whitelist | blacklist | ignore | retry }
+  * bool finalize_packet.switch_to_wizard = false: switch to wizard
+    on first finalize event
 
 Peg counts:
 
@@ -8968,6 +8972,8 @@ Configuration:
   * string rna.fingerprint_dir: directory to fingerprint patterns
   * string rna.custom_fingerprint_dir: directory to custom
     fingerprint patterns
+  * bool rna.enable_logger = true: enable or disable writing
+    discovery events into logger
 
 Peg counts:
 
@@ -9008,7 +9014,27 @@ Peg counts:
     sessions (max)
 
 
-9.35. rt_packet
+9.35. rt_global
+
+--------------
+
+What: The regression test global inspector is used for regression
+tests specific to a global inspector
+
+Type: inspector
+
+Usage: global
+
+Configuration:
+
+  * int rt_global.memcap = 2048: cap on amount of memory used
+
+Peg counts:
+
+  * rt_global.packets: total packets (sum)
+
+
+9.36. rt_packet
 
 --------------
 
@@ -9031,7 +9057,7 @@ Peg counts:
   * rt_packet.retry_packets: total retried packets received (sum)
 
 
-9.36. rt_service
+9.37. rt_service
 
 --------------
 
@@ -9042,10 +9068,6 @@ Type: inspector
 
 Usage: context
 
-Configuration:
-
-  * int rt_service.memcap: cap on amount of memory used
-
 Peg counts:
 
   * rt_service.packets: total packets (sum)
@@ -9054,7 +9076,7 @@ Peg counts:
   * rt_service.search_requests: total splitter search requests (sum)
 
 
-9.37. sip
+9.38. sip
 
 --------------
 
@@ -9153,7 +9175,7 @@ Peg counts:
   * sip.code_9xx: 9xx (sum)
 
 
-9.38. smtp
+9.39. smtp
 
 --------------
 
@@ -9255,7 +9277,7 @@ Peg counts:
   * smtp.non_encoded_bytes: total non-encoded extracted bytes (sum)
 
 
-9.39. ssh
+9.40. ssh
 
 --------------
 
@@ -9292,7 +9314,7 @@ Peg counts:
     (max)
 
 
-9.40. ssl
+9.41. ssl
 
 --------------
 
@@ -9341,7 +9363,7 @@ Peg counts:
     (max)
 
 
-9.41. stream
+9.42. stream
 
 --------------
 
@@ -9406,7 +9428,7 @@ Peg counts:
   * stream.ha_prunes: sessions pruned by high availability sync (sum)
 
 
-9.42. stream_file
+9.43. stream_file
 
 --------------
 
@@ -9421,7 +9443,7 @@ Configuration:
   * bool stream_file.upload = false: indicate file transfer direction
 
 
-9.43. stream_icmp
+9.44. stream_icmp
 
 --------------
 
@@ -9446,7 +9468,7 @@ Peg counts:
   * stream_icmp.prunes: icmp session prunes (sum)
 
 
-9.44. stream_ip
+9.45. stream_ip
 
 --------------
 
@@ -9517,7 +9539,7 @@ Peg counts:
   * stream_ip.fragmented_bytes: total fragmented bytes (sum)
 
 
-9.45. stream_tcp
+9.46. stream_tcp
 
 --------------
 
@@ -9663,7 +9685,7 @@ Peg counts:
   * stream_tcp.partial_flush_bytes: partial flush total bytes (sum)
 
 
-9.46. stream_udp
+9.47. stream_udp
 
 --------------
 
@@ -9689,7 +9711,7 @@ Peg counts:
   * stream_udp.ignored: udp packets ignored (sum)
 
 
-9.47. stream_user
+9.48. stream_user
 
 --------------
 
@@ -9707,7 +9729,7 @@ Configuration:
     0:max53 }
 
 
-9.48. telnet
+9.49. telnet
 
 --------------
 
@@ -9742,7 +9764,7 @@ Peg counts:
     sessions (max)
 
 
-9.49. wizard
+9.50. wizard
 
 --------------
 
@@ -14667,6 +14689,8 @@ these libraries see the Getting Started section of the manual.
     pass | block | replace | whitelist | blacklist | ignore | retry }
   * int finalize_packet.start_pdu = 0: Register to receive finalize
     packet event starting on this PDU { 0:max32 }
+  * bool finalize_packet.switch_to_wizard = false: switch to wizard
+    on first finalize event
   * string flags.~mask_flags: these flags are don’t cares
   * string flags.~test_flags: these flags are tested
   * string flowbits.~arg1: bits or group
@@ -14764,7 +14788,8 @@ these libraries see the Getting Started section of the manual.
     { 65535 }
   * string host_cache.dump_file: file name to dump host cache on
     shutdown; won’t dump by default
-  * int host_cache.size: size of host cache { 1:max32 }
+  * int host_cache.memcap = 8388608: maximum host cache size in bytes
+    { 512:max32 }
   * enum hosts[].frag_policy: defragmentation policy { first | linux
     | bsd | bsd_right | last | windows | solaris }
   * addr hosts[].ip = 0.0.0.0/32: hosts address / CIDR
@@ -15390,6 +15415,8 @@ these libraries see the Getting Started section of the manual.
     contents with rewrite rules
   * string rna.custom_fingerprint_dir: directory to custom
     fingerprint patterns
+  * bool rna.enable_logger = true: enable or disable writing
+    discovery events into logger
   * string rna.fingerprint_dir: directory to fingerprint patterns
   * string rna.rna_conf_path: path to RNA configuration
   * string rna.rna_util_lib_path: path to library for utilities such
@@ -15397,9 +15424,9 @@ these libraries see the Getting Started section of the manual.
   * int rpc.~app: application number { 0:max32 }
   * string rpc.~proc: procedure number or * for any
   * string rpc.~ver: version number or * for any
+  * int rt_global.memcap = 2048: cap on amount of memory used
   * bool rt_packet.test_daq_retry = true: test daq packet retry
     feature
-  * int rt_service.memcap: cap on amount of memory used
   * enum rule_state.([0-9]+):([0-9]+)[].action = inherit: apply
     action if rule matches or inherit from rule definition { log |
     pass | alert | drop | block | reset | inherit }
@@ -16468,6 +16495,7 @@ these libraries see the Getting Started section of the manual.
   * rpc_decode.max_concurrent_sessions: maximum concurrent rpc
     sessions (max)
   * rpc_decode.total_packets: total packets (sum)
+  * rt_global.packets: total packets (sum)
   * rt_packet.packets: total packets (sum)
   * rt_packet.retry_packets: total retried packets received (sum)
   * rt_packet.retry_requests: total retry packets requested (sum)
@@ -18026,6 +18054,8 @@ deleted -> unified2: 'vlan_event_types'
     fingerprinting (experimental)
   * rpc (ips_option): rule option to check SUNRPC CALL parameters
   * rpc_decode (inspector): RPC inspector
+  * rt_global (inspector): The regression test global inspector is
+    used for regression tests specific to a global inspector
   * rt_packet (inspector): The regression test packet inspector is
     used when special packet handling is required for a reg test
   * rt_service (inspector): The regression test service inspector is
@@ -18194,6 +18224,8 @@ deleted -> unified2: 'vlan_event_types'
   * inspector::rna: Real-time network awareness and OS fingerprinting
     (experimental)
   * inspector::rpc_decode: RPC inspector
+  * inspector::rt_global: The regression test global inspector is
+    used for regression tests specific to a global inspector
   * inspector::rt_packet: The regression test packet inspector is
     used when special packet handling is required for a reg test
   * inspector::rt_service: The regression test service inspector is

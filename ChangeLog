@@ -1,4 +1,17 @@
-19/07/21 - build 259
+19/08/28 - build 260
+
+-- appid: handle 'change cipher spec' in 'server hello' to allow some app detection for tls 1.3
+   traffic
+-- binder: updated change_service event to support service reset via wizard
+-- host_tracker: derive LruCacheSharedMemcap from the general LruCacheShared that tracks size in
+   bytes, rather than number of items and instantiate host_cache from LruCacheSharedMemcap.
+-- http2_inspect: Remove pkt_data buffer option
+-- reload: fix coding style issues, support multiple in progress analyzer commands, support
+   associated AC state for execute method, move reload tune logic for ACSwap to the execute command
+-- rna: Support for rna unified2 logging
+-- stream_tcp: clear consecutive small segs count upon non-small segs only
+
+19/08/21 - build 259
 
 -- analyzer_command: Import into snort namespace and add the ability to retrieve the DAQ instance
    from an Analyzer
