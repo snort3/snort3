@@ -764,7 +764,7 @@ void Binder::handle_flow_service_change( Flow* flow )
     }
     else
     {
-        // reset to wizard when serviec is not specified
+        // reset to wizard when service is not specified
         unsigned sz = bindings.size();
         for ( unsigned i = 0; i < sz; i++ )
         {
