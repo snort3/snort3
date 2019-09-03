@@ -51,9 +51,6 @@ namespace snort
 
 THREAD_LOCAL PacketCount pc;
 
-PegCount get_packet_number()
-{ return pc.total_from_daq; }
-
 //-------------------------------------------------------------------------
 
 static inline void LogSeparator(FILE* fh = stdout)
@@ -171,7 +168,7 @@ static void timing_stats(uint64_t& num_pkts, uint64_t& usecs)
 
 const PegInfo pc_names[] =
 {
-    { CountType::NOW, "analyzed", "packets sent to detection" },
+    { CountType::NOW, "analyzed", "total packets processed" },
     { CountType::SUM, "hard_evals", "non-fast pattern rule evaluations" },
     { CountType::SUM, "raw_searches", "fast pattern searches in raw packet data" },
     { CountType::SUM, "cooked_searches", "fast pattern searches in cooked packet data" },

@@ -34,6 +34,7 @@
 #include "utils/dnet_header.h"
 
 #include "sfdaq.h"
+#include "sfdaq_instance.h"
 
 using namespace snort;
 
@@ -420,23 +421,28 @@ void Active::daq_drop_packet(const Packet* p)
     daq_update_status(p);
 }
 
-bool Active::daq_retry_packet(const Packet* p)
+bool Active::retry_packet(const Packet* p)
 {
-    bool retry_queued = false;
+    if (active_action != ACT_PASS || !SFDAQ::forwarding_packet(p->pkth))
+        return false;
 
-    if ( !p->is_rebuilt() && (active_action == ACT_PASS) )
+    // FIXIT-L semi-arbitrary heuristic for preventing retry queue saturation - reevaluate later
+    if (p->daq_instance->get_pool_available() < p->daq_instance->get_batch_size())
     {
-        if ( SFDAQ::forwarding_packet(p->pkth) )
-        {
-            if (p->packet_flags & PKT_RETRANSMIT)
-                active_action = ACT_DROP;  // Don't add retransmits to retry queue.
-            else
-                active_action = ACT_RETRY;
-            retry_queued = true;
-        }
+        // Fall back on dropping the packet and relying on the host to retransmit
+        active_action = ACT_DROP;
+        aux_counts.retries_dropped++;
+        return false;
     }
 
-    return retry_queued;
+    // If a retransmit would be added to the retry queue, drop it instead.
+    // FIXIT-L this behavior needs to be reevaluated and probably moved somewhere else
+    if (p->packet_flags & PKT_RETRANSMIT)
+        active_action = ACT_DROP;
+    else
+        active_action = ACT_RETRY;
+
+    return true;
 }
 
 bool Active::hold_packet(const Packet*)
@@ -522,7 +528,7 @@ void Active::apply_delayed_action(Packet* p)
         reset_session(p, force);
         break;
     case ACT_RETRY:
-        if(!daq_retry_packet(p))
+        if(!retry_packet(p))
             drop_packet(p, force);
         break;
     default:

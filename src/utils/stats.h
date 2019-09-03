@@ -34,7 +34,7 @@ using IndexVec = std::vector<unsigned>;
 // FIXIT-L split this out into appropriate modules
 struct PacketCount
 {
-    PegCount total_from_daq;
+    PegCount analyzed_pkts;
     PegCount hard_evals;
     PegCount raw_searches;
     PegCount cooked_searches;
@@ -85,6 +85,10 @@ struct AuxCount
     PegCount idle;
     PegCount rx_bytes;
     PegCount skipped;
+    PegCount retries_queued;
+    PegCount retries_dropped;
+    PegCount retries_processed;
+    PegCount retries_discarded;
 };
 
 extern ProcessCount proc_stats;
@@ -98,7 +102,7 @@ namespace snort
 {
 extern SO_PUBLIC THREAD_LOCAL PacketCount pc;
 
-SO_PUBLIC PegCount get_packet_number();
+SO_PUBLIC inline PegCount get_packet_number() { return pc.analyzed_pkts; }
 
 SO_PUBLIC void LogLabel(const char*, FILE* = stdout);
 SO_PUBLIC void LogValue(const char*, const char*, FILE* = stdout);

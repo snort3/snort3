@@ -106,16 +106,7 @@ void SFDAQInstance::reload()
     }
 }
 
-void SFDAQInstance::abort()
-{
-    if (was_started())
-        stop();
-
-    //DAQ_Delete();
-    //DAQ_Term();  FIXIT-L this must be called from main thread on abort
-}
-
-const char* SFDAQInstance::get_input_spec()
+const char* SFDAQInstance::get_input_spec() const
 {
     return input_spec.c_str();
 }
@@ -125,32 +116,32 @@ const char* SFDAQInstance::get_input_spec()
 // the datalink type in the file must be used - which may not be known until
 // start.  The value is cached here since it used for packet operations like
 // logging and is needed at shutdown.  This avoids sequencing issues.
-int SFDAQInstance::get_base_protocol()
+int SFDAQInstance::get_base_protocol() const
 {
     return dlt;
 }
 
-bool SFDAQInstance::can_inject()
+bool SFDAQInstance::can_inject() const
 {
     return (daq_instance_get_capabilities(instance) & DAQ_CAPA_INJECT) != 0;
 }
 
-bool SFDAQInstance::can_inject_raw()
+bool SFDAQInstance::can_inject_raw() const
 {
     return (daq_instance_get_capabilities(instance) & DAQ_CAPA_INJECT_RAW) != 0;
 }
 
-bool SFDAQInstance::can_replace()
+bool SFDAQInstance::can_replace() const
 {
     return (daq_instance_get_capabilities(instance) & DAQ_CAPA_REPLACE) != 0;
 }
 
-bool SFDAQInstance::can_start_unprivileged()
+bool SFDAQInstance::can_start_unprivileged() const
 {
     return (daq_instance_get_capabilities(instance) & DAQ_CAPA_UNPRIV_START) != 0;
 }
 
-bool SFDAQInstance::can_whitelist()
+bool SFDAQInstance::can_whitelist() const
 {
     return (daq_instance_get_capabilities(instance) & DAQ_CAPA_WHITELIST) != 0;
 }
@@ -241,21 +232,21 @@ bool SFDAQInstance::get_tunnel_bypass(uint8_t proto)
     return (daq_tunnel_mask & proto) != 0;
 }
 
-bool SFDAQInstance::was_started()
+bool SFDAQInstance::was_started() const
 {
-    DAQ_State s;
-
     if (!instance)
         return false;
 
-    s = daq_instance_check_status(instance);
-
-    return (DAQ_STATE_STARTED == s);
+    DAQ_State s = daq_instance_check_status(instance);
+    return (s == DAQ_STATE_STARTED);
 }
 
 bool SFDAQInstance::stop()
 {
     assert(pool_size == pool_available);
+
+    if (!was_started())
+        return true;
 
     int rval = daq_instance_stop(instance);
 

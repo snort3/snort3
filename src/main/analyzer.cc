@@ -203,11 +203,7 @@ static DAQ_Verdict distill_verdict(Packet* p)
     Active* act = p->active;
 
     // First Pass
-    if ( act->packet_retry_requested() )
-    {
-        verdict = DAQ_VERDICT_RETRY;
-    }
-    else if ( act->session_was_blocked() )
+    if ( act->session_was_blocked() )
     {
         if ( !act->can_block() )
             verdict = DAQ_VERDICT_PASS;
@@ -227,9 +223,6 @@ static DAQ_Verdict distill_verdict(Packet* p)
     {
         if ( verdict == DAQ_VERDICT_PASS )
             verdict = DAQ_VERDICT_BLOCK;
-    }
-    else if ( verdict == DAQ_VERDICT_RETRY )
-    {
     }
     else if ( p->packet_flags & PKT_RESIZED )
     {
@@ -278,7 +271,15 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
 {
     ActionManager::execute(p);
 
-    DAQ_Verdict verdict = distill_verdict(p);
+    DAQ_Verdict verdict = MAX_DAQ_VERDICT;
+
+    if (p->active->packet_retry_requested())
+    {
+        retry_queue->put(p->daq_msg);
+        aux_counts.retries_queued++;
+    }
+    else if (!p->active->is_packet_held())
+        verdict = distill_verdict(p);
 
     if (PacketTracer::is_active())
     {
@@ -286,7 +287,12 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
             get_network_policy()->user_policy_id, get_inspection_policy()->user_policy_id,
             get_ips_policy()->user_policy_id);
 
-        PacketTracer::log("Verdict: %s\n", SFDAQ::verdict_to_string(verdict));
+        if (p->active->packet_retry_requested())
+            PacketTracer::log("Verdict: Queuing for Retry\n");
+        else if (p->active->is_packet_held())
+            PacketTracer::log("Verdict: Holding for Detection\n");
+        else
+            PacketTracer::log("Verdict: %s\n", SFDAQ::verdict_to_string(verdict));
         PacketTracer::dump(p);
     }
 
@@ -294,10 +300,7 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
 
     p->pkth = nullptr;  // no longer avail upon sig segv
 
-    if (verdict == DAQ_VERDICT_RETRY)
-        retry_queue->put(p->daq_msg);
-
-    else if ( !p->active->is_packet_held() )
+    if (verdict != MAX_DAQ_VERDICT)
     {
         // Publish an event if something has indicated that it wants the
         // finalize event on this flow.
@@ -318,18 +321,17 @@ void Analyzer::process_daq_pkt_msg(DAQ_Msg_h msg, bool retry)
     const DAQ_PktHdr_t* pkthdr = daq_msg_get_pkthdr(msg);
     set_default_policy();
 
+    pc.analyzed_pkts++;
+
     if (!retry)
-    {
-        pc.total_from_daq++;
         packet_time_update(&pkthdr->ts);
-    }
 
     DetectionEngine::wait_for_context();
     switcher->start();
     Packet* p = switcher->get_context()->packet;
     oops_handler->set_current_packet(p);
     p->context->wire_packet = p;
-    p->context->packet_number = pc.total_from_daq;
+    p->context->packet_number = get_packet_number();
 
     DetectionEngine::reset();
 
@@ -378,7 +380,10 @@ void Analyzer::process_retry_queue()
         packet_gettimeofday(&now);
         DAQ_Msg_h msg;
         while ((msg = retry_queue->get(&now)) != nullptr)
+        {
             process_daq_msg(msg, true);
+            aux_counts.retries_processed++;
+        }
     }
 }
 
@@ -463,12 +468,24 @@ const char* Analyzer::get_state_string()
 void Analyzer::idle()
 {
     // FIXIT-L this whole thing could be pub-sub
-    DataBus::publish(THREAD_IDLE_EVENT, nullptr);
-    if (SnortConfig::read_mode())
-        Stream::timeout_flows(packet_time());
-    else
-        Stream::timeout_flows(time(nullptr));
     aux_counts.idle++;
+
+    // This should only be called if the DAQ timeout elapsed, so increment the packet time
+    // by the DAQ timeout.
+    struct timeval now, increment;
+    unsigned int timeout = SnortConfig::get_conf()->daq_config->timeout;
+    packet_gettimeofday(&now);
+    increment = { timeout / 1000, (timeout % 1000) * 1000 };
+    timeradd(&now, &increment, &now);
+    packet_time_update(&now);
+
+    DataBus::publish(THREAD_IDLE_EVENT, nullptr);
+
+    // Service the retry queue with the new packet time.
+    process_retry_queue();
+
+    Stream::timeout_flows(packet_time());
+
     HighAvailabilityManager::process_receive();
 }
 
@@ -536,6 +553,14 @@ void Analyzer::term()
     if ( !sc->dirty_pig )
         Stream::purge_flows();
 
+    DAQ_Msg_h msg;
+    while ((msg = retry_queue->get()) != nullptr)
+    {
+        aux_counts.retries_discarded++;
+        Profile profile(daqPerfStats);
+        daq_instance->finalize_message(msg, DAQ_VERDICT_BLOCK);
+    }
+
     DetectionEngine::idle();
     InspectorManager::thread_stop(sc);
     ModuleManager::accumulate(sc);
@@ -550,16 +575,7 @@ void Analyzer::term()
 
     oops_handler->set_current_packet(nullptr);
 
-    if ( daq_instance->was_started() )
-    {
-        DAQ_Msg_h msg;
-        while ((msg = retry_queue->get()) != nullptr)
-        {
-            Profile profile(daqPerfStats);
-            daq_instance->finalize_message(msg, DAQ_VERDICT_BLOCK);
-        }
-        daq_instance->stop();
-    }
+    daq_instance->stop();
     SFDAQ::set_local_instance(nullptr);
 
     PacketLatency::tterm();
@@ -725,6 +741,10 @@ DAQ_RecvStatus Analyzer::process_messages()
         rstat = daq_instance->receive_messages(max_recv);
     }
 
+    // Preemptively service available onloads to potentially unblock processing the first message.
+    // This conveniently handles servicing offloads in the no messages received case as well.
+    DetectionEngine::onload();
+
     unsigned num_recv = 0;
     DAQ_Msg_h msg;
     while ((msg = daq_instance->next_message()) != nullptr)
@@ -738,9 +758,9 @@ DAQ_RecvStatus Analyzer::process_messages()
             daq_instance->finalize_message(msg, DAQ_VERDICT_PASS);
             continue;
         }
-        // FIXIT-M add fail open capability
-        // IMPORTANT: process_daq_msg() is responsible for finalizing the messages.
+        // FIXIT-M reimplement fail-open capability?
         num_recv++;
+        // IMPORTANT: process_daq_msg() is responsible for finalizing the messages.
         process_daq_msg(msg, false);
         DetectionEngine::onload();
         process_retry_queue();

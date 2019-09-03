@@ -186,6 +186,10 @@ struct DAQStats
     PegCount skipped;
     PegCount idle;
     PegCount rx_bytes;
+    PegCount retries_queued;
+    PegCount retries_dropped;
+    PegCount retries_processed;
+    PegCount retries_discarded;
 };
 
 const PegInfo daq_names[] =
@@ -213,6 +217,10 @@ const PegInfo daq_names[] =
     { CountType::SUM, "skipped", "packets skipped at startup" },
     { CountType::SUM, "idle", "attempts to acquire from DAQ without available packets" },
     { CountType::SUM, "rx_bytes", "total bytes received" },
+    { CountType::SUM, "retries_queued", "messages queued for retry" },
+    { CountType::SUM, "retries_dropped", "messages dropped when overrunning the retry queue" },
+    { CountType::SUM, "retries_processed", "messages processed from the retry queue" },
+    { CountType::SUM, "retries_discarded", "messages discarded when purging the retry queue" },
     { CountType::END, nullptr, nullptr }
 };
 
@@ -283,6 +291,10 @@ void SFDAQModule::prep_counts()
     stats.skipped = aux_counts.skipped;
     stats.idle = aux_counts.idle;
     stats.rx_bytes = aux_counts.rx_bytes;
+    stats.retries_queued = aux_counts.retries_queued;
+    stats.retries_dropped = aux_counts.retries_dropped;
+    stats.retries_processed = aux_counts.retries_processed;
+    stats.retries_discarded = aux_counts.retries_discarded;
 
     memset(&aux_counts, 0, sizeof(AuxCount));
 

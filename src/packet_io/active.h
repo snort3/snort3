@@ -69,23 +69,23 @@ public:
     bool is_reset_candidate(const Packet*);
     bool is_unreachable_candidate(const Packet*);
 
-    ActiveAction get_action()
+    ActiveAction get_action() const
     { return active_action; }
 
-    ActiveStatus get_status()
+    ActiveStatus get_status() const
     { return active_status; }
 
     void kill_session(Packet*, EncodeFlags = ENC_FLAG_FWD);
 
-    bool can_block()
+    bool can_block() const
     { return active_status == AST_ALLOW or active_status == AST_FORCE; }
 
-    const char* get_action_string()
+    const char* get_action_string() const
     { return act_str[active_action][active_status]; }
 
     void drop_packet(const Packet*, bool force = false);
     void daq_drop_packet(const Packet*);
-    bool daq_retry_packet(const Packet*);
+    bool retry_packet(const Packet*);
     bool hold_packet(const Packet*);
 
     void allow_session(Packet*);
@@ -98,22 +98,22 @@ public:
     void reset_again()
     { active_action = ACT_RESET; }
 
-    bool packet_was_dropped()
+    bool packet_was_dropped() const
     { return active_action >= ACT_DROP; }
 
-    bool packet_would_be_dropped()
+    bool packet_would_be_dropped() const
     { return active_status == AST_WOULD; }
 
-    bool packet_retry_requested()
+    bool packet_retry_requested() const
     { return active_action == ACT_RETRY; }
 
-    bool session_was_blocked()
+    bool session_was_blocked() const
     { return active_action >= ACT_BLOCK; }
 
-    bool packet_force_dropped()
+    bool packet_force_dropped() const
     { return active_status == AST_FORCE; }
 
-    bool is_packet_held()
+    bool is_packet_held() const
     { return active_action == ACT_HOLD; }
 
     void set_tunnel_bypass()
@@ -122,7 +122,7 @@ public:
     void clear_tunnel_bypass()
     { active_tunnel_bypass--; }
 
-    bool get_tunnel_bypass()
+    bool get_tunnel_bypass() const
     { return active_tunnel_bypass > 0; }
 
     void set_delayed_action(ActiveAction, bool force = false);

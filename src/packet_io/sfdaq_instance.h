@@ -45,10 +45,9 @@ public:
     bool init(DAQ_Config_h, const std::string& bpf_string);
 
     bool start();
-    bool was_started();
+    bool was_started() const;
     bool stop();
     void reload();
-    void abort();
 
     DAQ_RecvStatus receive_messages(unsigned max_recv);
     DAQ_Msg_h next_message()
@@ -60,16 +59,17 @@ public:
     int finalize_message(DAQ_Msg_h msg, DAQ_Verdict verdict);
     const char* get_error();
 
-    int get_base_protocol();
-    uint32_t get_batch_size() { return batch_size; }
-    const char* get_input_spec();
+    int get_base_protocol() const;
+    uint32_t get_batch_size() const { return batch_size; }
+    uint32_t get_pool_available() const { return pool_available; }
+    const char* get_input_spec() const;
     const DAQ_Stats_t* get_stats();
 
-    bool can_inject();
-    bool can_inject_raw();
-    bool can_replace();
-    bool can_start_unprivileged();
-    SO_PUBLIC bool can_whitelist();
+    bool can_inject() const;
+    bool can_inject_raw() const;
+    bool can_replace() const;
+    bool can_start_unprivileged() const;
+    SO_PUBLIC bool can_whitelist() const;
 
     int inject(DAQ_Msg_h, int rev, const uint8_t* buf, uint32_t len);
     bool interrupt();
