@@ -30,9 +30,11 @@ using namespace Http2Enums;
 
 const snort::RuleMap Http2Module::http2_events[] =
 {
-    { EVENT_INT_DECODE_FAILURE, "Error in HPACK integer value" },
-    { EVENT_INT_LEADING_ZEROS, "Integer value has leading zeros" },
-    { EVENT_STRING_DECODE_FAILURE, "Error in HPACK string value" },
+    { EVENT_INT_DECODE_FAILURE, "error in HPACK integer value" },
+    { EVENT_INT_LEADING_ZEROS, "integer value has leading zeros" },
+    { EVENT_STRING_DECODE_FAILURE, "error in HPACK string value" },
+    { EVENT_MISSING_CONTINUATION, "missing continuation frame"},
+    { EVENT_UNEXPECTED_CONTINUATION, "unexpected continuation frame"},
     { 0, nullptr }
 };
 

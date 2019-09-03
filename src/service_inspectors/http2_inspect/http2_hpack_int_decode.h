@@ -39,6 +39,8 @@ public:
 
 private:
     const uint8_t prefix_mask;
+    // FIXIT-M These will get merged into the corresponding frame/stream object infractions and
+    // events
     Http2EventGen* const events;
     Http2Infractions* const infractions;
 };

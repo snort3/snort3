@@ -36,7 +36,7 @@ public:
     static const Field FIELD_NULL;
 
     Field(int32_t length, const uint8_t* start, bool own_the_buffer_ = false) : strt(start),
-        len(length), own_the_buffer(own_the_buffer_) { assert(length <= HttpEnums::MAX_OCTETS); }
+        len(length), own_the_buffer(own_the_buffer_) { }
     explicit Field(int32_t length) : len(length) { assert(length<=0); }
     Field() = default;
     ~Field() { if (own_the_buffer) delete[] strt; }

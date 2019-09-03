@@ -43,6 +43,7 @@ using namespace Http2Enums;
 // Stubs whose sole purpose is to make the test code link
 unsigned HttpTestManager::test_input = IN_NONE;
 unsigned HttpTestManager::test_output = IN_NONE;
+int DetectionEngine::queue_event(unsigned int, unsigned int, Actions::Type) { return 0; }
 
 TEST_GROUP(http2_get_buf_test)
 {

@@ -29,6 +29,7 @@
 #include "service_inspectors/http_inspect/http_common.h"
 #include "service_inspectors/http_inspect/http_test_manager.h"
 #include "service_inspectors/http2_inspect/http2_enum.h"
+#include "service_inspectors/http2_inspect/http2_flow_data.h"
 
 #include "http2_flow_data_test.h"
 
@@ -43,6 +44,7 @@ using namespace Http2Enums;
 // Stubs whose sole purpose is to make the test code link
 unsigned HttpTestManager::test_input = IN_NONE;
 unsigned HttpTestManager::test_output = IN_NONE;
+int DetectionEngine::queue_event(unsigned int, unsigned int, Actions::Type) { return 0; }
 
 TEST_GROUP(http2_scan_test)
 {
@@ -88,8 +90,8 @@ TEST(http2_scan_test, header_without_data)
     const StreamSplitter::Status result = implement_scan(session_data,
         (const uint8_t*)"\x00\x00\x0A\x02\x00\x00\x00\x00\x00",
         9, &flush_offset, SRC_CLIENT);
-    CHECK(result == StreamSplitter::FLUSH);
-    CHECK(flush_offset == 19);
+    CHECK(result == StreamSplitter::SEARCH);
+    CHECK(flush_offset == 0);
     CHECK(session_data->get_header_coming(SRC_CLIENT));
 }
 
@@ -123,10 +125,10 @@ TEST(http2_scan_test, short_input)
     result = implement_scan(session_data, (const uint8_t*)"\x04\x05\x06", 3, &flush_offset,
         SRC_SERVER);
     CHECK(result == StreamSplitter::SEARCH);
-    result = implement_scan(session_data, (const uint8_t*)"\x07\x08\x09YZ", 5, &flush_offset,
+    result = implement_scan(session_data, (const uint8_t*)"\x07\x08\x09" "0123456789ABCDEF", 19, &flush_offset,
         SRC_SERVER);
     CHECK(result == StreamSplitter::FLUSH);
-    CHECK(flush_offset == 25);
+    CHECK(flush_offset == 19);
     CHECK(session_data->get_header_coming(SRC_SERVER));
     CHECK(memcmp(session_data->get_frame_header(SRC_SERVER),
         "\x00\x00\x10\x04\x05\x06\x07\x08\x09", 9) == 0);
@@ -143,9 +145,10 @@ TEST(http2_scan_test, oversize_non_data_frame)
 
 TEST(http2_scan_test, maximum_frame)
 {
+    uint8_t data[63870] = { 'A' };
+    memcpy(data,"\x00\xF9\x1B\x04", 4);
     const StreamSplitter::Status result = implement_scan(session_data,
-        (const uint8_t*)"\x00\xF9\x1B" "12345678901234567",
-        20, &flush_offset, SRC_SERVER);
+        data, 63780, &flush_offset, SRC_SERVER);
     CHECK(result == StreamSplitter::FLUSH);
     CHECK(flush_offset == 63780);
     CHECK(session_data->get_header_coming(SRC_SERVER));
@@ -153,40 +156,35 @@ TEST(http2_scan_test, maximum_frame)
 
 TEST(http2_scan_test, data_sections)
 {
+    uint8_t data[DATA_SECTION_SIZE+9] ={ 'A' };
+    memcpy(data,"\x01\x21\x3C\x00\x00\x00\x00\x00\x00", 9);
     StreamSplitter::Status result = implement_scan(session_data,
-        (const uint8_t*)"\x01\x21\x3C\x00\x00\x00\x00\x00\x00" "abcdefghij",
-        19, &flush_offset, SRC_SERVER);
+        data, DATA_SECTION_SIZE + 9, &flush_offset, SRC_SERVER);
     CHECK(result == StreamSplitter::FLUSH);
     CHECK(flush_offset == DATA_SECTION_SIZE + 9);
     CHECK(session_data->get_header_coming(SRC_SERVER));
     CHECK(session_data->get_leftover_data(SRC_SERVER) == 0xE13C);
     result = implement_scan(session_data,
-        (const uint8_t*)"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstu"
-         "vwxyz+-",
-        80, &flush_offset, SRC_SERVER);
+        data, DATA_SECTION_SIZE, &flush_offset, SRC_SERVER);
     CHECK(result == StreamSplitter::FLUSH);
     CHECK(flush_offset == DATA_SECTION_SIZE);
     CHECK(!session_data->get_header_coming(SRC_SERVER));
     result = implement_scan(session_data,
-        (const uint8_t*)"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstu"
-         "vwxyz+-=",
-        81, &flush_offset, SRC_SERVER);
+        data, DATA_SECTION_SIZE, &flush_offset, SRC_SERVER);
     CHECK(result == StreamSplitter::FLUSH);
     CHECK(flush_offset == DATA_SECTION_SIZE);
     CHECK(!session_data->get_header_coming(SRC_SERVER));
     result = implement_scan(session_data,
-        (const uint8_t*)"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstu"
-         "vwxyz+-=*",
-        82, &flush_offset, SRC_SERVER);
+        data, DATA_SECTION_SIZE, &flush_offset, SRC_SERVER);
     CHECK(result == StreamSplitter::FLUSH);
     CHECK(flush_offset == DATA_SECTION_SIZE);
     CHECK(!session_data->get_header_coming(SRC_SERVER));
     result = implement_scan(session_data,
-        (const uint8_t*)"!",
-        1, &flush_offset, SRC_SERVER);
+        data, 8508, &flush_offset, SRC_SERVER);
     CHECK(result == StreamSplitter::FLUSH);
-    CHECK(flush_offset == 0x213C);
+    CHECK(flush_offset == 8508);
     CHECK(!session_data->get_header_coming(SRC_SERVER));
+    CHECK(session_data->get_leftover_data(SRC_SERVER) == 0);
 }
 
 TEST_GROUP(http2_reassemble_test)

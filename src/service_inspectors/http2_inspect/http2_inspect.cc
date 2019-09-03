@@ -131,6 +131,16 @@ void Http2Inspect::clear(Packet* p)
     session_data->frame_header[source_id] = nullptr;
     delete[] session_data->frame[source_id];
     session_data->frame[source_id] = nullptr;
+    session_data->frame_data[source_id] = nullptr;
     session_data->frame_in_detection = false;
+    delete[] session_data->http2_decoded_header[source_id];
+    session_data->http2_decoded_header[source_id] = nullptr;
+    session_data->continuation_expected = false;
+    if (session_data->header_frame_header[source_id])
+    {
+        delete[] session_data->header_frame_header[source_id];
+        session_data->header_frame_header[source_id] = nullptr;
+    }
+    session_data->continuation_frame_lengths.clear();
 }
 

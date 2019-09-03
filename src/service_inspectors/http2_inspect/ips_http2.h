@@ -28,7 +28,7 @@
 
 #include "http2_enum.h"
 
-enum PsIdx { PSI_FRAME_DATA, PSI_FRAME_HEADER, PSI_MAX };
+enum PsIdx { PSI_FRAME_DATA, PSI_FRAME_HEADER, PSI_DECODED_HEADER, PSI_MAX };
 
 class Http2CursorModule : public snort::Module
 {

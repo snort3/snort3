@@ -40,6 +40,7 @@ const char* Http2Api::classic_buffer_names[] =
 {
     "http2_frame_type",
     "http2_raw_frame",
+    "http2_decoded_header",
     nullptr
 };
 
@@ -73,6 +74,7 @@ const InspectApi Http2Api::http2_api =
 
 extern const BaseApi* ips_http2_frame_header;
 extern const BaseApi* ips_http2_frame_data;
+extern const BaseApi* ips_http2_decoded_header;
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
@@ -83,6 +85,7 @@ const BaseApi* sin_http2[] =
     &Http2Api::http2_api.base,
     ips_http2_frame_header,
     ips_http2_frame_data,
+    ips_http2_decoded_header,
     nullptr
 };
 

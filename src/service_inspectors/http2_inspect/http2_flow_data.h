@@ -20,10 +20,22 @@
 #ifndef HTTP2_FLOW_DATA_H
 #define HTTP2_FLOW_DATA_H
 
+#include <vector>
+
+#include "main/snort_types.h"
+#include "utils/event_gen.h"
+#include "utils/infractions.h"
 #include "flow/flow.h"
 #include "service_inspectors/http_inspect/http_common.h"
+#include "service_inspectors/http_inspect/http_field.h"
 #include "stream/stream_splitter.h"
+
 #include "http2_enum.h"
+
+using Http2Infractions = Infractions<Http2Enums::INF__MAX_VALUE, Http2Enums::INF__NONE>;
+
+using Http2EventGen = EventGen<Http2Enums::EVENT__MAX_VALUE, Http2Enums::EVENT__NONE,
+    Http2Enums::HTTP2_GID>;
 
 class Http2FlowData : public snort::FlowData
 {
@@ -54,9 +66,28 @@ protected:
     uint32_t frame_size[2] = { 0, 0 };
     uint8_t* frame_data[2] = { nullptr, nullptr };
     uint32_t frame_data_size[2] = { 0, 0 };
+    uint8_t* http2_decoded_header[2] = { nullptr, nullptr };
+    uint32_t http2_decoded_header_size[2] = { 0, 0 };
     uint32_t leftover_data[2] = { 0, 0 };
     uint32_t octets_seen[2] = { 0, 0 };
+    uint32_t header_octets_seen[2] = { 0, 0 };
+    uint32_t inspection_section_length[2] = { 0, 0 };
     bool frame_in_detection = false;
+    
+    int32_t get_frame_type(HttpCommon::SourceId source_id);
+    int32_t get_frame_flags(HttpCommon::SourceId source_id);
+
+    bool continuation_expected = false;
+    //FIXIT-M Most of this will need to change when we handle multiple streams, so this vector is 
+    //not intended to be the best long-term solution
+    std::vector<uint32_t> continuation_frame_lengths;
+    uint8_t* header_frame_header[2] = { nullptr, nullptr };  
+ 
+    // These will eventually be moved over to the frame/stream object, as they are moved to the
+    // transaction in NHI. Also as in NHI accessor methods will need to be added.
+    Http2Infractions* infractions[2] = { new Http2Infractions, new Http2Infractions };
+    Http2EventGen* events[2] = { new Http2EventGen, new Http2EventGen };
+    
 
 #ifdef REG_TEST
     static uint64_t instance_count;

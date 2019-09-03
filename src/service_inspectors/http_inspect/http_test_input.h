@@ -41,6 +41,7 @@ public:
 
 private:
     FILE* test_data_file;
+    // FIXIT-L Figure out how big this buf needs to be and revise value
     uint8_t msg_buf[2][2 * HttpEnums::MAX_OCTETS];
     FILE* include_file[2] = { nullptr, nullptr };
 

@@ -88,7 +88,7 @@ IpsOption::EvalStatus Http2IpsOption::eval(Cursor& c, Packet* p)
 #undef IPS_OPT
 #define IPS_OPT "http2_frame_data"
 #undef IPS_HELP
-#define IPS_HELP "rule option to see HTTP/2 frame body"
+#define IPS_HELP "rule option to set detection cursor to the HTTP/2 frame body"
 
 static Module* frame_data_mod_ctor()
 {
@@ -128,7 +128,7 @@ static const IpsApi frame_data_api =
 #undef IPS_OPT
 #define IPS_OPT "http2_frame_header"
 #undef IPS_HELP
-#define IPS_HELP "rule option to see 9-octet HTTP/2 frame header"
+#define IPS_HELP "rule option to set detection cursor to the 9-octet HTTP/2 frame header"
 
 static Module* frame_header_mod_ctor()
 {
@@ -162,9 +162,50 @@ static const IpsApi frame_header_api =
 };
 
 //-------------------------------------------------------------------------
+// http2_decoded_header
+//-------------------------------------------------------------------------
+
+#undef IPS_OPT
+#define IPS_OPT "http2_decoded_header"
+#undef IPS_HELP
+#define IPS_HELP "rule option to set detection cursor to the decoded HTTP/2 header"
+
+static Module* decoded_header_mod_ctor()
+{
+    return new Http2CursorModule(IPS_OPT, IPS_HELP, HTTP2_BUFFER_DECODED_HEADER, CAT_SET_OTHER,
+        PSI_DECODED_HEADER);
+}
+
+static const IpsApi decoded_header_api =
+{
+    {
+        PT_IPS_OPTION,
+        sizeof(IpsApi),
+        IPSAPI_VERSION,
+        1,
+        API_RESERVED,
+        API_OPTIONS,
+        IPS_OPT,
+        IPS_HELP,
+        decoded_header_mod_ctor,
+        Http2CursorModule::mod_dtor
+    },
+    OPT_TYPE_DETECTION,
+    0, PROTO_BIT__TCP,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    Http2IpsOption::opt_ctor,
+    Http2IpsOption::opt_dtor,
+    nullptr
+};
+
+//-------------------------------------------------------------------------
 // plugins
 //-------------------------------------------------------------------------
 
 const BaseApi* ips_http2_frame_data = &frame_data_api.base;
 const BaseApi* ips_http2_frame_header = &frame_header_api.base;
+const BaseApi* ips_http2_decoded_header = &decoded_header_api.base;
 

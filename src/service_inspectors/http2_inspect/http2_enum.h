@@ -36,7 +36,8 @@ enum FrameType { FT_DATA=0, FT_HEADERS=1, FT_PRIORITY=2, FT_RST_STREAM=3, FT_SET
 
 // Message buffers available to clients
 // This enum must remain synchronized with Http2Api::classic_buffer_names[]
-enum HTTP2_BUFFER { HTTP2_BUFFER_FRAME_HEADER = 1, HTTP2_BUFFER_FRAME_DATA, HTTP2_BUFFER_MAX };
+enum HTTP2_BUFFER { HTTP2_BUFFER_FRAME_HEADER = 1, HTTP2_BUFFER_FRAME_DATA, HTTP2_BUFFER_DECODED_HEADER, 
+    HTTP2_BUFFER_MAX };
 
 // Peg counts
 // This enum must remain synchronized with Http2Module::peg_names[] in http2_tables.cc
@@ -49,6 +50,8 @@ enum EventSid
     EVENT_INT_DECODE_FAILURE = 1,
     EVENT_INT_LEADING_ZEROS = 2,
     EVENT_STRING_DECODE_FAILURE = 3,
+    EVENT_MISSING_CONTINUATION = 4,
+    EVENT_UNEXPECTED_CONTINUATION = 5,
     EVENT__MAX_VALUE
 };
 
@@ -66,8 +69,19 @@ enum Infraction
     INF_HUFFMAN_BAD_PADDING = 7,
     INF_HUFFMAN_DECODED_EOS = 8,
     INF_HUFFMAN_INCOMPLETE_CODE_PADDING = 9,
+    INF_MISSING_CONTINUATION = 10,
+    INF_UNEXPECTED_CONTINUATION = 11,
     INF__MAX_VALUE
-};    
+};
+
+enum HeaderFrameFlags 
+{
+    END_STREAM = 0x1,
+    END_HEADERS = 0x4,
+    PADDED = 0x8,
+    PRIORITY = 0x20,
+};
+
  
 } // end namespace Http2Enums
 

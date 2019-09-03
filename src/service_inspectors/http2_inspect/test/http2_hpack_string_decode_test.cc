@@ -25,6 +25,7 @@
 #include "../http2_enum.h"
 #include "../http2_huffman_state_machine.h"
 #include "../http2_hpack_string_decode.h"
+#include "../../http_inspect/http_common.h"
 #include "../../http_inspect/http_enum.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
@@ -38,6 +39,7 @@ int DetectionEngine::queue_event(unsigned int, unsigned int, Actions::Type) { re
 }
 
 using namespace Http2Enums;
+using namespace HttpCommon;
 
 //
 // The following tests should result in a successful decode, no infractions/events
@@ -137,21 +139,21 @@ TEST(http2_hpack_string_decode_success, string_len_1)
 TEST(http2_hpack_string_decode_success, max_field_length)
 {
     // prepare buf to decode - int + string == MAX_OCTETS (Field limitation)
-    uint8_t buf[HttpEnums::MAX_OCTETS];
+    uint8_t buf[MAX_OCTETS];
     buf[0] = 0x7F;
     buf[1] = 0xA1;
     buf[2] = 0xF1;
     buf[3]= 0x3;
-    memset(&buf[4], 'A', HttpEnums::MAX_OCTETS-4);
+    memset(&buf[4], 'A', MAX_OCTETS-4);
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
-    uint8_t res[HttpEnums::MAX_OCTETS];
-    bool success = decode->translate(buf, HttpEnums::MAX_OCTETS, bytes_processed, res,
-        HttpEnums::MAX_OCTETS, bytes_written);
+    uint8_t res[MAX_OCTETS];
+    bool success = decode->translate(buf, MAX_OCTETS, bytes_processed, res,
+        MAX_OCTETS, bytes_written);
     // check results
     CHECK(success == true);
-    CHECK(bytes_processed == HttpEnums::MAX_OCTETS);
-    CHECK(bytes_written == (HttpEnums::MAX_OCTETS-4));
+    CHECK(bytes_processed == MAX_OCTETS);
+    CHECK(bytes_written == (MAX_OCTETS-4));
     CHECK(memcmp(res, &buf[4], bytes_written) == 0);
 }
 
@@ -626,17 +628,17 @@ TEST(http2_hpack_string_decode_infractions, max_field_length_plus_1)
     Http2Infractions local_inf;
     Http2HpackStringDecode local_decode(&local_events, &local_inf);
     // prepare buf to decode -  int + string == MAX_OCTETS+1 (Field limitation + 1)
-    uint8_t buf[HttpEnums::MAX_OCTETS];
+    uint8_t buf[MAX_OCTETS];
     buf[0] = 0x7F;
     buf[1] = 0xA2;
     buf[2] = 0xF1;
     buf[3]= 0x3;
-    memset(&buf[4], 'A', HttpEnums::MAX_OCTETS-4);
+    memset(&buf[4], 'A', MAX_OCTETS-4);
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
-    uint8_t res[HttpEnums::MAX_OCTETS];
-    bool success = local_decode.translate(buf, HttpEnums::MAX_OCTETS, bytes_processed, res,
-        HttpEnums::MAX_OCTETS, bytes_written);
+    uint8_t res[MAX_OCTETS];
+    bool success = local_decode.translate(buf, MAX_OCTETS, bytes_processed, res,
+        MAX_OCTETS, bytes_written);
     // check results
     CHECK(success == false);
     CHECK(bytes_processed == 4);
@@ -652,17 +654,17 @@ TEST(http2_hpack_string_decode_infractions, out_buf_out_of_space)
     Http2Infractions local_inf;
     Http2HpackStringDecode local_decode(&local_events, &local_inf);
     // prepare buf to decode
-    uint8_t buf[HttpEnums::MAX_OCTETS];
+    uint8_t buf[MAX_OCTETS];
     buf[0] = 0x7F;
     buf[1] = 0xA1;
     buf[2] = 0xF1;
     buf[3]= 0x3;
-    memset(&buf[4], 'A', HttpEnums::MAX_OCTETS-4);
+    memset(&buf[4], 'A', MAX_OCTETS-4);
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
-    uint8_t res[HttpEnums::MAX_OCTETS-5];
-    bool success = local_decode.translate(buf, HttpEnums::MAX_OCTETS, bytes_processed, res,
-        HttpEnums::MAX_OCTETS-5, bytes_written);
+    uint8_t res[MAX_OCTETS-5];
+    bool success = local_decode.translate(buf, MAX_OCTETS, bytes_processed, res,
+        MAX_OCTETS-5, bytes_written);
     // check results
     CHECK(success == false);
     CHECK(bytes_processed == 4);
