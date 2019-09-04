@@ -298,39 +298,3 @@ const BaseApi* nin_appid[] =
     nullptr
 };
 
-// @returns 1 if some appid is found, 0 otherwise.
-//int sslAppGroupIdLookup(void* ssnptr, const char* serverName, const char* commonName,
-//    AppId* service_id, AppId* client_id, AppId* payload_id)
-int sslAppGroupIdLookup(void*, const char*, const char*, AppId*, AppId*, AppId*)
-{
-    // FIXIT-M determine need and proper location for this code when support for ssl is implemented
-    //         also once this is done the call to get the appid config should change to use the
-    //         config assigned to the flow being processed
-#ifdef REMOVED_WHILE_NOT_IN_USE
-    AppIdSession* asd;
-    *service_id = *client_id = *payload_id = APP_ID_NONE;
-
-    if (commonName)
-    {
-        ssl_scan_cname((const uint8_t*)commonName, strlen(commonName), client_id, payload_app_id,
-            &get_appid_config()->serviceSslConfig);
-    }
-    if (serverName)
-    {
-        ssl_scan_hostname((const uint8_t*)serverName, strlen(serverName), client_id,
-            payload_app_id, &get_appid_config()->serviceSslConfig);
-    }
-
-    if (ssnptr && (asd = appid_api.get_appid_session(ssnptr)))
-        asd->get_application_ids(*service_id, *client_id, *payload_id);
-
-    if (*service_id != APP_ID_NONE ||
-        *client_id != APP_ID_NONE ||
-        *payload_id != APP_ID_NONE)
-    {
-        return 1;
-    }
-#endif
-
-    return 0;
-}

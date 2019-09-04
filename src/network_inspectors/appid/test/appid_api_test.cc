@@ -162,6 +162,31 @@ TEST(appid_api, produce_ha_state)
     */
 }
 
+TEST(appid_api, ssl_app_group_id_lookup)
+{
+    AppId service, client, payload = APP_ID_NONE;
+    bool val = false;
+    mock_session->common.flow_type = APPID_FLOW_TYPE_IGNORE;
+    val = appid_api.ssl_app_group_id_lookup(flow, nullptr, nullptr, service, client, payload);
+    CHECK_TRUE(!val);
+    CHECK_EQUAL(service, APP_ID_NONE);
+    CHECK_EQUAL(client, APP_ID_NONE);
+    CHECK_EQUAL(payload, APP_ID_NONE);
+    mock_session->common.flow_type = APPID_FLOW_TYPE_NORMAL;
+    val = appid_api.ssl_app_group_id_lookup(flow, nullptr, nullptr, service, client, payload);
+    CHECK_TRUE(val);
+    CHECK_EQUAL(service, APPID_UT_ID);
+    CHECK_EQUAL(client, APPID_UT_ID);
+    CHECK_EQUAL(payload, APPID_UT_ID);
+    service = APP_ID_NONE;
+    client = APP_ID_NONE;
+    payload = APP_ID_NONE;
+    val = appid_api.ssl_app_group_id_lookup(flow, (const char*)APPID_UT_TLS_HOST, (const char*)APPID_UT_TLS_HOST, service, client, payload);
+    CHECK_TRUE(val);
+    CHECK_EQUAL(client, APPID_UT_ID + 1);
+    CHECK_EQUAL(payload, APPID_UT_ID + 1);
+}
+
 TEST(appid_api, create_appid_session_api)
 {
     AppIdSessionApi* appid_session_api = appid_api.create_appid_session_api(*flow);

@@ -975,7 +975,7 @@ bool is_service_over_ssl(AppId appId)
 }
 
 static int ssl_scan_patterns(SearchTool* matcher, const uint8_t* data, size_t size,
-    AppId* ClientAppId, AppId* payloadId)
+    AppId& client_id, AppId& payload_id)
 {
     MatchedSSLPatterns* mp = nullptr;
     SSLCertPattern* best_match;
@@ -1014,13 +1014,13 @@ static int ssl_scan_patterns(SearchTool* matcher, const uint8_t* data, size_t si
     {
     /* type 0 means WEB APP */
     case 0:
-        *ClientAppId = APP_ID_SSL_CLIENT;
-        *payloadId = best_match->appId;
+        client_id = APP_ID_SSL_CLIENT;
+        payload_id = best_match->appId;
         break;
     /* type 1 means CLIENT */
     case 1:
-        *ClientAppId = best_match->appId;
-        *payloadId = 0;
+        client_id = best_match->appId;
+        payload_id = 0;
         break;
     default:
         return 0;
@@ -1029,16 +1029,16 @@ static int ssl_scan_patterns(SearchTool* matcher, const uint8_t* data, size_t si
     return 1;
 }
 
-int ssl_scan_hostname(const uint8_t* hostname, size_t size, AppId* ClientAppId, AppId* payloadId)
+int ssl_scan_hostname(const uint8_t* hostname, size_t size, AppId& client_id, AppId& payload_id)
 {
-    return ssl_scan_patterns(service_ssl_config.ssl_host_matcher, hostname, size, ClientAppId,
-        payloadId);
+    return ssl_scan_patterns(service_ssl_config.ssl_host_matcher, hostname, size, client_id,
+        payload_id);
 }
 
-int ssl_scan_cname(const uint8_t* common_name, size_t size, AppId* ClientAppId, AppId* payloadId)
+int ssl_scan_cname(const uint8_t* common_name, size_t size, AppId& client_id, AppId& payload_id)
 {
-    return ssl_scan_patterns(service_ssl_config.ssl_cname_matcher, common_name, size, ClientAppId,
-        payloadId);
+    return ssl_scan_patterns(service_ssl_config.ssl_cname_matcher, common_name, size, client_id,
+        payload_id);
 }
 
 void service_ssl_clean()

@@ -413,7 +413,7 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
     {
         size_t size = strlen(tls_str);
         if ((ret = ssl_scan_hostname((const uint8_t*)tls_str, size,
-                &client_id, &payload_id)))
+                client_id, payload_id)))
         {
             set_client_appid_data(client_id, nullptr, change_bits);
             set_payload_appid_data((AppId)payload_id, nullptr, change_bits);
@@ -425,7 +425,7 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
     {
         size_t size = strlen(tls_str);
         if ((ret = ssl_scan_cname((const uint8_t*)tls_str, size,
-                &client_id, &payload_id)))
+                client_id, payload_id)))
         {
             set_client_appid_data(client_id, nullptr, change_bits);
             set_payload_appid_data((AppId)payload_id, nullptr, change_bits);
@@ -437,7 +437,7 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
     {
         size_t size = strlen(tls_str);
         if ((ret = ssl_scan_cname((const uint8_t*)tls_str, size,
-                &client_id, &payload_id)))
+                client_id, payload_id)))
         {
             set_client_appid_data(client_id, nullptr, change_bits);
             set_payload_appid_data((AppId)payload_id, nullptr, change_bits);

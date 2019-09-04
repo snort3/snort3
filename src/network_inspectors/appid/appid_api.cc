@@ -32,6 +32,7 @@
 #include "appid_session.h"
 #include "appid_session_api.h"
 #include "app_info_table.h"
+#include "service_plugins/service_ssl.h"
 #ifdef ENABLE_APPID_THIRD_PARTY
 #include "tp_appid_session_api.h"
 #endif
@@ -190,6 +191,36 @@ uint32_t AppIdApi::consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t, IpP
         asd->misc_app_id = appHA->appId[7];
     }
     return sizeof(*appHA);
+}
+
+bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name, const char* common_name, AppId& service_id, AppId& client_id, AppId& payload_id)
+{
+    AppIdSession* asd;
+    service_id = APP_ID_NONE;
+    client_id = APP_ID_NONE;
+    payload_id = APP_ID_NONE;
+
+    if (common_name)
+        ssl_scan_cname((const uint8_t*)common_name, strlen(common_name), client_id, payload_id);
+
+    if (server_name)
+        ssl_scan_hostname((const uint8_t*)server_name, strlen(server_name), client_id, payload_id);
+
+    if (flow and (asd = get_appid_session(*flow)))
+    {
+        service_id = asd->get_application_ids_service();
+        if (client_id == APP_ID_NONE)
+            client_id = asd->get_application_ids_client();
+        if (payload_id == APP_ID_NONE)
+            payload_id = asd->get_application_ids_payload();
+    }
+
+    if (service_id != APP_ID_NONE or client_id != APP_ID_NONE or payload_id != APP_ID_NONE)
+    {
+        return true;
+    }
+
+    return false;
 }
 
 AppIdSessionApi* AppIdApi::create_appid_session_api(Flow& flow)
