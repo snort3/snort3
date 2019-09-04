@@ -209,6 +209,12 @@ int IcmpSession::process(Packet* p)
     
     flow->set_expire(p, flow->default_session_timeout);
 
+    if (!(flow->ssn_state.session_flags & SSNFLAG_ESTABLISHED) and !(p->is_from_client()))
+    {
+        DataBus::publish(STREAM_ICMP_BIDIRECTIONAL_EVENT, p);
+        flow->ssn_state.session_flags |= SSNFLAG_ESTABLISHED;
+    }
+
     switch (p->ptrs.icmph->type)
     {
     case ICMP_DEST_UNREACH:

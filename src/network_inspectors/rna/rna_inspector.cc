@@ -65,9 +65,15 @@ RnaInspector::~RnaInspector()
 
 bool RnaInspector::configure(SnortConfig*)
 {
-    DataBus::subscribe( STREAM_ICMP_NEW_FLOW_EVENT, new RnaIcmpEventHandler(*pnd) );
-    DataBus::subscribe( STREAM_IP_NEW_FLOW_EVENT, new RnaIpEventHandler(*pnd) );
-    DataBus::subscribe( STREAM_UDP_NEW_FLOW_EVENT, new RnaUdpEventHandler(*pnd) );
+    DataBus::subscribe( STREAM_ICMP_NEW_FLOW_EVENT, new RnaIcmpNewFlowEventHandler(*pnd) );
+    DataBus::subscribe( STREAM_ICMP_BIDIRECTIONAL_EVENT, new RnaIcmpBidirectionalEventHandler(*pnd) );
+
+    DataBus::subscribe( STREAM_IP_NEW_FLOW_EVENT, new RnaIpNewFlowEventHandler(*pnd) );
+    DataBus::subscribe( STREAM_IP_BIDIRECTIONAL_EVENT, new RnaIpBidirectionalEventHandler(*pnd) );
+
+    DataBus::subscribe( STREAM_UDP_NEW_FLOW_EVENT, new RnaUdpNewFlowEventHandler(*pnd) );
+    DataBus::subscribe( STREAM_UDP_BIDIRECTIONAL_EVENT, new RnaUdpBidirectionalEventHandler(*pnd) );
+
     DataBus::subscribe( STREAM_TCP_SYN_EVENT, new RnaTcpSynEventHandler(*pnd) );
     DataBus::subscribe( STREAM_TCP_SYN_ACK_EVENT, new RnaTcpSynAckEventHandler(*pnd) );
     DataBus::subscribe( STREAM_TCP_MIDSTREAM_EVENT, new RnaTcpMidstreamEventHandler(*pnd) );

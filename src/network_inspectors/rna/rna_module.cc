@@ -61,9 +61,12 @@ static const Parameter rna_params[] =
 
 static const PegInfo rna_pegs[] =
 {
-    { CountType::SUM, "icmp", "count of ICMP packets received" },
-    { CountType::SUM, "ip", "count of IP packets received" },
-    { CountType::SUM, "udp", "count of UDP packets received" },
+    { CountType::SUM, "icmp_bidirectional", "count of bidirectional ICMP flows received" },
+    { CountType::SUM, "icmp_new", "count of new ICMP flows received" },
+    { CountType::SUM, "ip_bidirectional", "count of bidirectional IP received" },
+    { CountType::SUM, "ip_new", "count of new IP flows received" },
+    { CountType::SUM, "udp_bidirectional", "count of bidirectional UDP flows received" },
+    { CountType::SUM, "udp_new", "count of new UDP flows received" },
     { CountType::SUM, "tcp_syn", "count of TCP SYN packets received" },
     { CountType::SUM, "tcp_syn_ack", "count of TCP SYN-ACK packets received" },
     { CountType::SUM, "tcp_midstream", "count of TCP midstream packets received" },

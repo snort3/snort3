@@ -26,19 +26,38 @@
 #include "rna_module.h"
 #include "rna_pnd.h"
 
-class RnaIcmpEventHandler : public snort::DataHandler
+class RnaIcmpNewFlowEventHandler : public snort::DataHandler
 {
 public:
-    RnaIcmpEventHandler(RnaPnd& nd) : DataHandler(RNA_NAME), pnd(nd) { }
+    RnaIcmpNewFlowEventHandler(RnaPnd& nd) : DataHandler(RNA_NAME), pnd(nd) { }
     void handle(snort::DataEvent&, snort::Flow*) override;
 private:
     RnaPnd& pnd;
 };
 
-class RnaIpEventHandler : public snort::DataHandler
+class RnaIcmpBidirectionalEventHandler : public snort::DataHandler
 {
 public:
-    RnaIpEventHandler(RnaPnd& nd) : DataHandler(RNA_NAME), pnd(nd) { }
+    RnaIcmpBidirectionalEventHandler(RnaPnd& nd) : DataHandler(RNA_NAME), pnd(nd) { }
+    void handle(snort::DataEvent&, snort::Flow*) override;
+private:
+    RnaPnd& pnd;
+};
+
+class RnaIpNewFlowEventHandler : public snort::DataHandler
+{
+public:
+    RnaIpNewFlowEventHandler(RnaPnd& nd) : DataHandler(RNA_NAME), pnd(nd) { }
+    void handle(snort::DataEvent&, snort::Flow*) override;
+private:
+    RnaPnd& pnd;
+};
+
+
+class RnaIpBidirectionalEventHandler : public snort::DataHandler
+{
+public:
+    RnaIpBidirectionalEventHandler(RnaPnd& nd) : DataHandler(RNA_NAME), pnd(nd) { }
     void handle(snort::DataEvent&, snort::Flow*) override;
 private:
     RnaPnd& pnd;
@@ -71,10 +90,19 @@ private:
     RnaPnd& pnd;
 };
 
-class RnaUdpEventHandler : public snort::DataHandler
+class RnaUdpNewFlowEventHandler : public snort::DataHandler
 {
 public:
-    RnaUdpEventHandler(RnaPnd& nd) : DataHandler(RNA_NAME), pnd(nd) { }
+    RnaUdpNewFlowEventHandler(RnaPnd& nd) : DataHandler(RNA_NAME), pnd(nd) { }
+    void handle(snort::DataEvent&, snort::Flow*) override;
+private:
+    RnaPnd& pnd;
+};
+
+class RnaUdpBidirectionalEventHandler : public snort::DataHandler
+{
+public:
+    RnaUdpBidirectionalEventHandler(RnaPnd& nd) : DataHandler(RNA_NAME), pnd(nd) { }
     void handle(snort::DataEvent&, snort::Flow*) override;
 private:
     RnaPnd& pnd;

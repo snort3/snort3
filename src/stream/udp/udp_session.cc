@@ -89,6 +89,7 @@ static int ProcessUdp(
             (lwssn->ssn_state.session_flags & SSNFLAG_SEEN_RESPONDER))
         {
             lwssn->ssn_state.session_flags |= SSNFLAG_ESTABLISHED;
+            DataBus::publish(STREAM_UDP_BIDIRECTIONAL_EVENT, p);
         }
     }
 

@@ -31,9 +31,12 @@
 
 struct RnaStats
 {
-    PegCount icmp;
-    PegCount ip;
-    PegCount udp;
+    PegCount icmp_bidirectional;
+    PegCount icmp_new;
+    PegCount ip_bidirectional;
+    PegCount ip_new;
+    PegCount udp_bidirectional;
+    PegCount udp_new;
     PegCount tcp_syn;
     PegCount tcp_syn_ack;
     PegCount tcp_midstream;

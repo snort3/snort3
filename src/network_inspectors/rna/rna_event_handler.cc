@@ -26,17 +26,31 @@
 
 using namespace snort;
 
-void RnaIcmpEventHandler::handle(DataEvent& event, Flow*)
+void RnaIcmpBidirectionalEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
-    ++rna_stats.icmp;
+    ++rna_stats.icmp_bidirectional;
     pnd.analyze_flow_icmp(event.get_packet());
 }
 
-void RnaIpEventHandler::handle(DataEvent& event, Flow*)
+void RnaIcmpNewFlowEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
-    ++rna_stats.ip;
+    ++rna_stats.icmp_new;
+    pnd.analyze_flow_icmp(event.get_packet());
+}
+
+void RnaIpBidirectionalEventHandler::handle(DataEvent& event, Flow*)
+{
+    Profile profile(rna_perf_stats);
+    ++rna_stats.ip_bidirectional;
+    pnd.analyze_flow_ip(event.get_packet());
+}
+
+void RnaIpNewFlowEventHandler::handle(DataEvent& event, Flow*)
+{
+    Profile profile(rna_perf_stats);
+    ++rna_stats.ip_new;
     pnd.analyze_flow_ip(event.get_packet());
 }
 
@@ -61,9 +75,16 @@ void RnaTcpMidstreamEventHandler::handle(DataEvent& event, Flow*)
     pnd.analyze_flow_tcp(event.get_packet(), TcpPacketType::MIDSTREAM);
 }
 
-void RnaUdpEventHandler::handle(DataEvent& event, Flow*)
+void RnaUdpBidirectionalEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
-    ++rna_stats.udp;
+    ++rna_stats.udp_bidirectional;
+    pnd.analyze_flow_udp(event.get_packet());
+}
+
+void RnaUdpNewFlowEventHandler::handle(DataEvent& event, Flow*)
+{
+    Profile profile(rna_perf_stats);
+    ++rna_stats.udp_new;
     pnd.analyze_flow_udp(event.get_packet());
 }
