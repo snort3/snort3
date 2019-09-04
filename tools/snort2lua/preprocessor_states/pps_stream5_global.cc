@@ -45,6 +45,8 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
 
     int tcp_max = 262144, udp_max = 131072, ip_max = 16384, icmp_max = 65536;
     int pruning_timeout = INT_MAX;
+    bool emit_pruning_timeout = false;
+    bool emit_max_flows = false;
 
     while (util::get_string(data_stream, keyword, ","))
     {
@@ -95,6 +97,7 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
                 int val;
                 if (arg_stream >> val)
                     tcp_max = val;
+                emit_max_flows = true;
             }
         }
         else if (keyword == "tcp_cache_nominal_timeout")
@@ -112,6 +115,7 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
                 if (pruning_timeout > val)
                     pruning_timeout = val;
             }
+            emit_pruning_timeout = true;
         }
         else if (keyword == "max_udp")
         {
@@ -121,7 +125,8 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
                 if (arg_stream >> val)
                     udp_max = val;
             }
-        }
+            emit_max_flows = true;
+       }
         else if (keyword == "udp_cache_pruning_timeout")
         {
             int val;
@@ -130,6 +135,7 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
                 if (pruning_timeout > val)
                     pruning_timeout = val;
             }
+            emit_pruning_timeout = true;
         }
         else if (keyword == "udp_cache_nominal_timeout")
         {
@@ -146,6 +152,7 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
                 if (arg_stream >> val)
                     icmp_max = val;
             }
+            emit_max_flows = true;
         }
         else if (keyword == "max_ip")
         {
@@ -155,6 +162,7 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
                 if (arg_stream >> val)
                     ip_max = val;
             }
+            emit_max_flows = true;
         }
         else if (keyword == "show_rebuilt_packets")
         {
@@ -190,8 +198,12 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
             retval = false;
         }
     }
-    table_api.add_option("max_flows", tcp_max + udp_max + icmp_max + ip_max);
-    table_api.add_option("pruning_timeout", INT_MAX == pruning_timeout ? 30 : pruning_timeout);
+    if ( emit_max_flows )
+    	table_api.add_option("max_flows", tcp_max + udp_max + icmp_max + ip_max);
+
+    if ( emit_pruning_timeout )
+    	table_api.add_option("pruning_timeout", INT_MAX == pruning_timeout ? 30 : pruning_timeout);
+
     return retval;
 }
 
