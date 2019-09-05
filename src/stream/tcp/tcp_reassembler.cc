@@ -1085,6 +1085,7 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
         if ( trs.tracker->splitter->init_partial_flush(p->flow) )
         {
             flushed += flush_stream(trs, p, trs.packet_dir, false);
+            paf_jump(&trs.tracker->paf_state, flushed);
             tcpStats.partial_flushes++;
             tcpStats.partial_flush_bytes += flushed;
             if ( trs.sos.seg_count )
