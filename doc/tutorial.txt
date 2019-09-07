@@ -56,7 +56,7 @@ Optional:
 * lzma >= 5.1.2 from http://tukaani.org/xz/ for decompression of SWF and
   PDF files
 
-* safec from https://github.com/rurban/safeclib/ for runtime bounds
+* safec >= 3.5 from https://github.com/rurban/safeclib/ for runtime bounds
   checks on certain legacy C-library calls
 
 * source-highlight from http://www.gnu.org/software/src-highlite/ to

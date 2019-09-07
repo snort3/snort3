@@ -24,8 +24,8 @@
 
 extern "C"
 {
-#include <libsafec/safe_mem_lib.h>
-#include <libsafec/safe_str_lib.h>
+#include <safe_mem_lib.h>
+#include <safe_str_lib.h>
 }
 
 #else

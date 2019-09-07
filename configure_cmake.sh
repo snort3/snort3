@@ -27,7 +27,7 @@ Optional Features:
     --enable-code-coverage  Whether to enable code coverage support
     --enable-hardened-build Detect and use compile-time hardening options
     --enable-pie            Attempt to produce a position-independent executable
-    --disable-safec         do not use libsafec bounds checking  even if available
+    --disable-safec         do not use libsafec bounds checking even if available
     --disable-static-ips-actions
                             do not include ips actions in binary
     --disable-static-inspectors

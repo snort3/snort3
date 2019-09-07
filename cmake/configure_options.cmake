@@ -94,10 +94,6 @@ if ( ENABLE_PIE )
     endif ()
 endif ( ENABLE_PIE )
 
-if ( ENABLE_SAFEC )
-    set(ENABLE_SAFEC "1")
-endif ( ENABLE_SAFEC )
-
 # debugging
 
 set ( DEBUG_MSGS ${ENABLE_DEBUG_MSGS} )
