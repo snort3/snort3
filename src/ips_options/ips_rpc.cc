@@ -251,7 +251,7 @@ public:
     ProfileStats* get_profile() const override
     { return &rpcCheckPerfStats; }
 
-    bool set(Value&, uint32_t& field, int flag);
+    bool set(const Value&, uint32_t& field, int flag);
 
     Usage get_usage() const override
     { return DETECT; }
@@ -283,7 +283,7 @@ bool RpcModule::set(const char*, Value& v, SnortConfig*)
     return true;
 }
 
-bool RpcModule::set(Value& v, uint32_t& field, int flag)
+bool RpcModule::set(const Value& v, uint32_t& field, int flag)
 {
     if ( flag and !strcmp(v.get_string(), "*") )
         return true;

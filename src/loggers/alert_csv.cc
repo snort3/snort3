@@ -69,12 +69,12 @@ struct Args
     const Event& event;
 };
 
-static void ff_action(Args& a)
+static void ff_action(const Args& a)
 {
     TextLog_Puts(csv_log, a.pkt->active->get_action_string());
 }
 
-static void ff_class(Args& a)
+static void ff_class(const Args& a)
 {
     const char* cls = "none";
     if ( a.event.sig_info->class_type and a.event.sig_info->class_type->name )
@@ -82,7 +82,7 @@ static void ff_class(Args& a)
     TextLog_Puts(csv_log, cls);
 }
 
-static void ff_b64_data(Args& a)
+static void ff_b64_data(const Args& a)
 {
     const unsigned block_size = 2048;
     char out[2*block_size];
@@ -107,7 +107,7 @@ static void ff_b64_data(Args& a)
     TextLog_Putc(csv_log, '"');
 }
 
-static void ff_dir(Args& a)
+static void ff_dir(const Args& a)
 {
     const char* dir;
 
@@ -121,7 +121,7 @@ static void ff_dir(Args& a)
     TextLog_Puts(csv_log, dir);
 }
 
-static void ff_dst_addr(Args& a)
+static void ff_dst_addr(const Args& a)
 {
     if ( a.pkt->has_ip() or a.pkt->is_data() )
     {
@@ -130,7 +130,7 @@ static void ff_dst_addr(Args& a)
     }
 }
 
-static void ff_dst_ap(Args& a)
+static void ff_dst_ap(const Args& a)
 {
     SfIpString addr = "";
     unsigned port = 0;
@@ -144,13 +144,13 @@ static void ff_dst_ap(Args& a)
     TextLog_Print(csv_log, "%s:%u", addr, port);
 }
 
-static void ff_dst_port(Args& a)
+static void ff_dst_port(const Args& a)
 {
     if ( a.pkt->proto_bits & (PROTO_BIT__TCP|PROTO_BIT__UDP) )
         TextLog_Print(csv_log, "%u", a.pkt->ptrs.dp);
 }
 
-static void ff_eth_dst(Args& a)
+static void ff_eth_dst(const Args& a)
 {
     if ( !(a.pkt->proto_bits & PROTO_BIT__ETH) )
         return;
@@ -162,7 +162,7 @@ static void ff_eth_dst(Args& a)
         eh->ether_dst[4], eh->ether_dst[5]);
 }
 
-static void ff_eth_len(Args& a)
+static void ff_eth_len(const Args& a)
 {
     if ( !(a.pkt->proto_bits & PROTO_BIT__ETH) )
         return;
@@ -170,7 +170,7 @@ static void ff_eth_len(Args& a)
     TextLog_Print(csv_log, "%u", a.pkt->pkth->pktlen);
 }
 
-static void ff_eth_src(Args& a)
+static void ff_eth_src(const Args& a)
 {
     if ( !(a.pkt->proto_bits & PROTO_BIT__ETH) )
         return;
@@ -182,7 +182,7 @@ static void ff_eth_src(Args& a)
         eh->ether_src[4], eh->ether_src[5]);
 }
 
-static void ff_eth_type(Args& a)
+static void ff_eth_type(const Args& a)
 {
     if ( !(a.pkt->proto_bits & PROTO_BIT__ETH) )
         return;
@@ -191,58 +191,58 @@ static void ff_eth_type(Args& a)
     TextLog_Print(csv_log, "0x%X", ntohs(eh->ether_type));
 }
 
-static void ff_gid(Args& a)
+static void ff_gid(const Args& a)
 {
     TextLog_Print(csv_log, "%u",  a.event.sig_info->gid);
 }
 
-static void ff_icmp_code(Args& a)
+static void ff_icmp_code(const Args& a)
 {
     if (a.pkt->ptrs.icmph )
         TextLog_Print(csv_log, "%u", a.pkt->ptrs.icmph->code);
 }
 
-static void ff_icmp_id(Args& a)
+static void ff_icmp_id(const Args& a)
 {
     if (a.pkt->ptrs.icmph )
         TextLog_Print(csv_log, "%u", ntohs(a.pkt->ptrs.icmph->s_icmp_id));
 }
 
-static void ff_icmp_seq(Args& a)
+static void ff_icmp_seq(const Args& a)
 {
     if (a.pkt->ptrs.icmph )
         TextLog_Print(csv_log, "%u", ntohs(a.pkt->ptrs.icmph->s_icmp_seq));
 }
 
-static void ff_icmp_type(Args& a)
+static void ff_icmp_type(const Args& a)
 {
     if (a.pkt->ptrs.icmph )
         TextLog_Print(csv_log, "%u", a.pkt->ptrs.icmph->type);
 }
 
-static void ff_iface(Args&)
+static void ff_iface(const Args&)
 {
     TextLog_Print(csv_log, "%s", SFDAQ::get_input_spec());
 }
 
-static void ff_ip_id(Args& a)
+static void ff_ip_id(const Args& a)
 {
     if (a.pkt->has_ip())
         TextLog_Print(csv_log, "%u", a.pkt->ptrs.ip_api.id());
 }
 
-static void ff_ip_len(Args& a)
+static void ff_ip_len(const Args& a)
 {
     if (a.pkt->has_ip())
         TextLog_Print(csv_log, "%u", a.pkt->ptrs.ip_api.pay_len());
 }
 
-static void ff_msg(Args& a)
+static void ff_msg(const Args& a)
 {
     TextLog_Puts(csv_log, a.msg);
 }
 
-static void ff_mpls(Args& a)
+static void ff_mpls(const Args& a)
 {
     uint32_t mpls;
 
@@ -258,12 +258,12 @@ static void ff_mpls(Args& a)
     TextLog_Print(csv_log, "%u", ntohl(mpls));
 }
 
-static void ff_pkt_gen(Args& a)
+static void ff_pkt_gen(const Args& a)
 {
     TextLog_Puts(csv_log, a.pkt->get_pseudo_type());
 }
 
-static void ff_pkt_len(Args& a)
+static void ff_pkt_len(const Args& a)
 {
     if (a.pkt->has_ip())
         TextLog_Print(csv_log, "%u", a.pkt->ptrs.ip_api.dgram_len());
@@ -271,38 +271,38 @@ static void ff_pkt_len(Args& a)
         TextLog_Print(csv_log, "%u", a.pkt->dsize);
 }
 
-static void ff_pkt_num(Args& a)
+static void ff_pkt_num(const Args& a)
 {
     TextLog_Print(csv_log, STDu64, a.pkt->context->packet_number);
 }
 
-static void ff_priority(Args& a)
+static void ff_priority(const Args& a)
 {
     TextLog_Print(csv_log, "%u", a.event.sig_info->priority);
 }
 
-static void ff_proto(Args& a)
+static void ff_proto(const Args& a)
 {
     TextLog_Puts(csv_log, a.pkt->get_type());
 }
 
-static void ff_rev(Args& a)
+static void ff_rev(const Args& a)
 {
     TextLog_Print(csv_log, "%u",  a.event.sig_info->rev);
 }
 
-static void ff_rule(Args& a)
+static void ff_rule(const Args& a)
 {
     TextLog_Print(csv_log, "%u:%u:%u",
         a.event.sig_info->gid, a.event.sig_info->sid, a.event.sig_info->rev);
 }
 
-static void ff_seconds(Args& a)
+static void ff_seconds(const Args& a)
 {
     TextLog_Print(csv_log, "%u",  a.pkt->pkth->ts.tv_sec);
 }
 
-static void ff_service(Args& a)
+static void ff_service(const Args& a)
 {
     const char* svc = "unknown";
     if ( a.pkt->flow and a.pkt->flow->service )
@@ -310,12 +310,12 @@ static void ff_service(Args& a)
     TextLog_Puts(csv_log, svc);
 }
 
-static void ff_sid(Args& a)
+static void ff_sid(const Args& a)
 {
     TextLog_Print(csv_log, "%u",  a.event.sig_info->sid);
 }
 
-static void ff_src_addr(Args& a)
+static void ff_src_addr(const Args& a)
 {
     if ( a.pkt->has_ip() or a.pkt->is_data() )
     {
@@ -324,7 +324,7 @@ static void ff_src_addr(Args& a)
     }
 }
 
-static void ff_src_ap(Args& a)
+static void ff_src_ap(const Args& a)
 {
     SfIpString addr = "";
     unsigned port = 0;
@@ -338,13 +338,13 @@ static void ff_src_ap(Args& a)
     TextLog_Print(csv_log, "%s:%u", addr, port);
 }
 
-static void ff_src_port(Args& a)
+static void ff_src_port(const Args& a)
 {
     if ( a.pkt->proto_bits & (PROTO_BIT__TCP|PROTO_BIT__UDP) )
         TextLog_Print(csv_log, "%u", a.pkt->ptrs.sp);
 }
 
-static void ff_target(Args& a)
+static void ff_target(const Args& a)
 {
     SfIpString addr = "";
 
@@ -360,13 +360,13 @@ static void ff_target(Args& a)
     TextLog_Print(csv_log, "%s", addr);
 }
 
-static void ff_tcp_ack(Args& a)
+static void ff_tcp_ack(const Args& a)
 {
     if (a.pkt->ptrs.tcph )
         TextLog_Print(csv_log, "0x%lX", (u_long)ntohl(a.pkt->ptrs.tcph->th_ack));
 }
 
-static void ff_tcp_flags(Args& a)
+static void ff_tcp_flags(const Args& a)
 {
     if (a.pkt->ptrs.tcph )
     {
@@ -376,48 +376,48 @@ static void ff_tcp_flags(Args& a)
     }
 }
 
-static void ff_tcp_len(Args& a)
+static void ff_tcp_len(const Args& a)
 {
     if (a.pkt->ptrs.tcph )
         TextLog_Print(csv_log, "%u", (a.pkt->ptrs.tcph->off()));
 }
 
-static void ff_tcp_seq(Args& a)
+static void ff_tcp_seq(const Args& a)
 {
     if (a.pkt->ptrs.tcph )
         TextLog_Print(csv_log, "0x%lX", (u_long)ntohl(a.pkt->ptrs.tcph->th_seq));
 }
 
-static void ff_tcp_win(Args& a)
+static void ff_tcp_win(const Args& a)
 {
     if (a.pkt->ptrs.tcph )
         TextLog_Print(csv_log, "0x%X", ntohs(a.pkt->ptrs.tcph->th_win));
 }
 
-static void ff_timestamp(Args& a)
+static void ff_timestamp(const Args& a)
 {
     LogTimeStamp(csv_log, a.pkt);
 }
 
-static void ff_tos(Args& a)
+static void ff_tos(const Args& a)
 {
     if (a.pkt->has_ip())
         TextLog_Print(csv_log, "%u", a.pkt->ptrs.ip_api.tos());
 }
 
-static void ff_ttl(Args& a)
+static void ff_ttl(const Args& a)
 {
     if (a.pkt->has_ip())
         TextLog_Print(csv_log, "%u",a.pkt->ptrs.ip_api.ttl());
 }
 
-static void ff_udp_len(Args& a)
+static void ff_udp_len(const Args& a)
 {
     if (a.pkt->ptrs.udph )
         TextLog_Print(csv_log, "%u", ntohs(a.pkt->ptrs.udph->uh_len));
 }
 
-static void ff_vlan(Args& a)
+static void ff_vlan(const Args& a)
 {
     uint16_t vid;
 
@@ -437,7 +437,7 @@ static void ff_vlan(Args& a)
 // module stuff
 //-------------------------------------------------------------------------
 
-typedef void (*CsvFunc)(Args&);
+typedef void (*CsvFunc)(const Args&);
 
 static const CsvFunc csv_func[] =
 {

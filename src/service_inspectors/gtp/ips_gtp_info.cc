@@ -109,7 +109,7 @@ IpsOption::EvalStatus GtpInfoOption::eval(Cursor& c, Packet* p)
     if ( !gfd or !gfd->ropts.gtp_infoElements )
         return NO_MATCH;
 
-    GTP_Roptions& ropts = gfd->ropts;
+    const GTP_Roptions& ropts = gfd->ropts;
 
     // match the status code
     uint8_t ieType = types[ropts.gtp_version];

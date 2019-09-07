@@ -305,7 +305,7 @@ void show_stats(
 
 void show_stats(
     PegCount* pegs, const PegInfo* info,
-    IndexVec& peg_idxs, const char* module_name, FILE* fh)
+    const IndexVec& peg_idxs, const char* module_name, FILE* fh)
 {
     bool head = false;
 

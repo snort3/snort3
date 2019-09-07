@@ -106,7 +106,7 @@ static void dnp3_reset_alt_buffer(const Packet* p)
     }
 }
 
-static bool dnp3_process_udp(dnp3ProtoConf& config, dnp3_session_data_t* dnp3_sess, Packet* p)
+static bool dnp3_process_udp(const dnp3ProtoConf& config, dnp3_session_data_t* dnp3_sess, Packet* p)
 {
     /* Possibly multiple PDUs in this UDP payload.
        Split up and process individually. */
@@ -161,7 +161,7 @@ static bool dnp3_process_udp(dnp3ProtoConf& config, dnp3_session_data_t* dnp3_se
 
 /* Main runtime entry point */
 
-static void process_dnp3(dnp3ProtoConf& config, Packet* p)
+static void process_dnp3(const dnp3ProtoConf& config, Packet* p)
 {
     if ( p->has_tcp_data() && !p->is_full_pdu() )
     {
@@ -216,7 +216,7 @@ static void process_dnp3(dnp3ProtoConf& config, Packet* p)
 class Dnp3 : public Inspector
 {
 public:
-    Dnp3(dnp3ProtoConf&);
+    Dnp3(const dnp3ProtoConf&);
 
     void show(SnortConfig*) override;
     void eval(Packet*) override;
@@ -232,7 +232,7 @@ private:
     dnp3ProtoConf config;
 };
 
-Dnp3::Dnp3(dnp3ProtoConf& pc)
+Dnp3::Dnp3(const dnp3ProtoConf& pc)
 {
     config.check_crc = pc.check_crc;
 }

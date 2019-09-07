@@ -93,8 +93,7 @@ THREAD_LOCAL ProfileStats arpPerfStats;
 // implementation stuff
 //-------------------------------------------------------------------------
 
-static IPMacEntry* LookupIPMacEntryByIP(
-    IPMacEntryList& ipmel, uint32_t ipv4_addr)
+static const IPMacEntry* LookupIPMacEntryByIP(const IPMacEntryList& ipmel, uint32_t ipv4_addr)
 {
     for ( auto& p : ipmel )
     {
@@ -222,7 +221,7 @@ void ArpSpoof::eval(Packet* p)
     if (!config->check_overwrite)
         return;
 
-    IPMacEntry* ipme = LookupIPMacEntryByIP(config->ipmel, ah->arp_spa32);
+    const IPMacEntry* ipme = LookupIPMacEntryByIP(config->ipmel, ah->arp_spa32);
     if ( ipme )
     {
         auto cmp_ether_src = memcmp(src_mac_addr, ipme->mac_addr, 6);

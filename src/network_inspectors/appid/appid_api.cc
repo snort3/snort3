@@ -44,7 +44,7 @@ namespace snort
 AppIdApi appid_api;
 }
 
-AppIdSession* AppIdApi::get_appid_session(Flow& flow)
+AppIdSession* AppIdApi::get_appid_session(const Flow& flow)
 {
     AppIdSession* asd = (AppIdSession*)flow.get_flow_data(AppIdSession::inspector_id);
 
@@ -56,7 +56,7 @@ const char* AppIdApi::get_application_name(AppId app_id)
     return AppInfoManager::get_instance().get_app_name(app_id);
 }
 
-const char* AppIdApi::get_application_name(Flow& flow, bool from_client)
+const char* AppIdApi::get_application_name(const Flow& flow, bool from_client)
 {
     const char* app_name = nullptr;
     AppId appid = APP_ID_NONE;
@@ -95,7 +95,7 @@ AppId AppIdApi::get_application_id(const char* appName)
 #define APPID_HA_FLAGS_SVC_DONE ( 1 << 2 )
 #define APPID_HA_FLAGS_HTTP ( 1 << 3 )
 
-uint32_t AppIdApi::produce_ha_state(Flow& flow, uint8_t* buf)
+uint32_t AppIdApi::produce_ha_state(const Flow& flow, uint8_t* buf)
 {
     assert(buf);
     AppIdSessionHA* appHA = (AppIdSessionHA*)buf;
@@ -223,7 +223,7 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name, cons
     return false;
 }
 
-AppIdSessionApi* AppIdApi::create_appid_session_api(Flow& flow)
+AppIdSessionApi* AppIdApi::create_appid_session_api(const Flow& flow)
 {
     AppIdSession* asd = (AppIdSession*)flow.get_flow_data(AppIdSession::inspector_id);
 

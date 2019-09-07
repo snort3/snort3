@@ -54,7 +54,7 @@ protected:
 #endif
 
 private:
-    void do_file_processing(Field& file_data);
+    void do_file_processing(const Field& file_data);
     void do_utf_decoding(const Field& input, Field& output);
     void do_file_decompression(const Field& input, Field& output);
     void do_js_normalization(const Field& input, Field& output);

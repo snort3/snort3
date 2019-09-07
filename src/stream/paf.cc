@@ -61,7 +61,7 @@ THREAD_LOCAL snort::ProfileStats pafPerfStats;
 
 //--------------------------------------------------------------------
 
-static uint32_t paf_flush (PAF_State* ps, PafAux& px, uint32_t* flags)
+static uint32_t paf_flush (PAF_State* ps, const PafAux& px, uint32_t* flags)
 {
     uint32_t at = 0;
     *flags &= ~(PKT_PDU_HEAD | PKT_PDU_TAIL);

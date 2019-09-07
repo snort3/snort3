@@ -65,11 +65,8 @@ extern "C"
 const char* luaL_optlstring(lua_State*, int, const char*, size_t*) { return nullptr; }
 }
 
-void show_stats(PegCount*, const PegInfo*, unsigned, const char*)
-{ }
-
-void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*)
-{ }
+void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
+void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
 
 TEST_GROUP(host_cache_module)
 {

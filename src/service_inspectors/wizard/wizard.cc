@@ -128,7 +128,7 @@ public:
     bool finished(Wand&);
     bool cast_spell(Wand&, Flow*, const uint8_t*, unsigned);
     bool spellbind(const MagicPage*&, Flow*, const uint8_t*, unsigned);
-    bool cursebind(vector<CurseServiceTracker>&, Flow*, const uint8_t*, unsigned);
+    bool cursebind(const vector<CurseServiceTracker>&, Flow*, const uint8_t*, unsigned);
 
 public:
     MagicBook* c2s_hexes;
@@ -264,7 +264,7 @@ bool Wizard::spellbind(
     return ( f->service != nullptr );
 }
 
-bool Wizard::cursebind(vector<CurseServiceTracker>& curse_tracker, Flow* f,
+bool Wizard::cursebind(const vector<CurseServiceTracker>& curse_tracker, Flow* f,
         const uint8_t* data, unsigned len)
 {
     for (const CurseServiceTracker& cst : curse_tracker)

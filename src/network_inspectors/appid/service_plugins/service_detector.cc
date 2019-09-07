@@ -176,7 +176,7 @@ int ServiceDetector::fail_service(AppIdSession& asd, const Packet* pkt, AppidSes
     return static_cast<ServiceDiscovery*>(handler)->fail_service(asd, pkt, dir, this);
 }
 
-void ServiceDetector::initialize_expected_session(AppIdSession& parent, AppIdSession& expected,
+void ServiceDetector::initialize_expected_session(const AppIdSession& parent, AppIdSession& expected,
     uint64_t flags, AppidSessionDirection dir)
 {
     if (dir == APP_ID_FROM_INITIATOR)

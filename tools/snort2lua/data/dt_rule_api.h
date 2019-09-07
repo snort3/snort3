@@ -68,7 +68,7 @@ public:
     void add_option(const std::string& keyword);
     void add_option(const std::string& keyword, const std::string& val);
     std::string get_option(const std::string& keyword);
-    void update_option(const std::string& keyword, std::string& val);
+    void update_option(const std::string& keyword, const std::string& val);
     void add_suboption(const std::string& keyword);
     void add_suboption(const std::string& keyword, const std::string& val);
     void set_curr_options_buffer(const std::string& buffer, bool add_option=false);

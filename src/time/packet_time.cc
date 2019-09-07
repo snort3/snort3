@@ -33,10 +33,10 @@
 #include "config.h"
 #endif
 
+#include "packet_time.h"
+
 #include "main/thread.h"
 #include "time/timersub.h"
-
-#include "packet_time.h"
 
 static THREAD_LOCAL struct timeval s_recent_packet = { 0, 0 };
 static THREAD_LOCAL uint32_t s_first_packet = 0;
@@ -64,7 +64,7 @@ int64_t timersub_ms(const struct timeval* end, const struct timeval* start)
 
 void packet_time_update(const struct timeval* cur_tv)
 {
-    if (timercmp(cur_tv, &s_recent_packet, >))
+    if (timercmp(&s_recent_packet, cur_tv, <))
     {
         if ( !s_first_packet )
             s_first_packet = cur_tv->tv_sec;

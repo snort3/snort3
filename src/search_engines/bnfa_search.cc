@@ -1184,8 +1184,6 @@ bnfa_struct_t* bnfaNew(const MpseAgent* agent)
 {
     int bnfa_memory=0;
     bnfa_struct_t* p = (bnfa_struct_t*)BNFA_MALLOC(sizeof(bnfa_struct_t),bnfa_memory);
-    if (!p)
-        return nullptr;
 
     if ( p )
     {

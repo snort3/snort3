@@ -36,7 +36,7 @@ Request::Request(int f)
     bytes_read = 0;
 }
 
-bool Request::read(int& f)
+bool Request::read(const int& f)
 {
     bool newline_found = false;
     char buf;

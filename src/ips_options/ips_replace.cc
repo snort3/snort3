@@ -77,7 +77,7 @@ static THREAD_LOCAL ProfileStats replacePerfStats;
 class ReplaceOption : public IpsOption
 {
 public:
-    ReplaceOption(string&);
+    ReplaceOption(const string&);
     ~ReplaceOption() override;
 
     EvalStatus eval(Cursor&, Packet*) override;
@@ -106,7 +106,7 @@ private:
     int* offset; /* >=0 is offset to start of replace */
 };
 
-ReplaceOption::ReplaceOption(string& s) : IpsOption(s_name)
+ReplaceOption::ReplaceOption(const string& s) : IpsOption(s_name)
 {
     unsigned n = ThreadConfig::get_instance_max();
     offset = new int[n];

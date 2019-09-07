@@ -83,7 +83,7 @@ static void dl_tterm()
 class LogHandler : public DataHandler
 {
 public:
-    LogHandler(FileLogConfig& conf) : DataHandler(s_name)
+    LogHandler(const FileLogConfig& conf) : DataHandler(s_name)
     { config = conf; }
 
     void handle(DataEvent&, Flow*) override;
@@ -204,7 +204,7 @@ void LogHandler::handle(DataEvent&, Flow* f)
 class FileLog : public Inspector
 {
 public:
-    FileLog(FileLogConfig& conf) { config = conf; }
+    FileLog(const FileLogConfig& conf) { config = conf; }
 
     void show(SnortConfig*) override;
     void eval(Packet*) override { }

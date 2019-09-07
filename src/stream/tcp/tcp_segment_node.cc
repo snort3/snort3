@@ -102,7 +102,7 @@ TcpSegmentNode* TcpSegmentNode::create(
     return tsn;
 }
 
-TcpSegmentNode* TcpSegmentNode::init(TcpSegmentDescriptor& tsd)
+TcpSegmentNode* TcpSegmentNode::init(const TcpSegmentDescriptor& tsd)
 {
     return create(tsd.get_pkt()->pkth->ts, tsd.get_pkt()->data, tsd.get_seg_len());
 }

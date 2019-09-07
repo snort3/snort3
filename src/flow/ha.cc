@@ -230,7 +230,7 @@ FlowHAClient::FlowHAClient(uint8_t length, bool session_client)
 
 // Write the key type, key length, and key into the message.
 // Return the type of key written so it can be stored in the message header.
-static uint8_t write_flow_key(Flow& flow, HAMessage& msg)
+static uint8_t write_flow_key(const Flow& flow, HAMessage& msg)
 {
     const FlowKey* key = flow.key;
     assert(key);
@@ -332,7 +332,7 @@ static uint16_t calculate_update_msg_content_length(Flow& flow, bool full)
 
 // Write the HA header and key sections.  Position the cursor
 // at the beginning of the content section.
-static void write_msg_header(Flow& flow, HAEvent event, uint16_t content_length, HAMessage& msg)
+static void write_msg_header(const Flow& flow, HAEvent event, uint16_t content_length, HAMessage& msg)
 {
     HAMessageHeader* hdr = (HAMessageHeader*) msg.cursor;
     hdr->event = (uint8_t) event;
@@ -342,7 +342,7 @@ static void write_msg_header(Flow& flow, HAEvent event, uint16_t content_length,
     hdr->key_type = write_flow_key(flow, msg);
 }
 
-static uint16_t update_msg_header_length(HAMessage& msg)
+static uint16_t update_msg_header_length(const HAMessage& msg)
 {
     HAMessageHeader* hdr = (HAMessageHeader*) msg.buffer;
     hdr->total_length = msg.cursor_position();

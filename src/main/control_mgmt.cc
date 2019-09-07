@@ -181,26 +181,25 @@ int ControlMgmt::socket_term()
 
 bool ControlMgmt::process_control_commands(int& current_fd, Request*& current_request, int evnt_fd)
 {
-    bool ret = false;
     auto control_conn = controls.find(evnt_fd);
 
     if (control_conn == controls.end())
-        return ret;
+        return false;
 
     Request* old_request = current_request;
     int fd = control_conn->second->shell_execute(current_fd, current_request);
     current_fd = -1;
     current_request = old_request;
 
-    if (fd >= 0)
-    {
-        if (control_conn->second->is_local_control())
-             proc_stats.local_commands++;
-        else
-             proc_stats.remote_commands++;
-        ret = true;
-    }
-    return ret;
+    if (fd < 0)
+        return false;
+
+    if (control_conn->second->is_local_control())
+        proc_stats.local_commands++;
+    else
+        proc_stats.remote_commands++;
+
+    return true;
 }
 
 bool ControlMgmt::service_users(int& current_fd, Request*& current_request)

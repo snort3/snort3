@@ -108,7 +108,7 @@ static DCE2_TcpSsnData* dce2_handle_tcp_session(Packet* p, dce2TcpProtoConf* con
 class Dce2Tcp : public Inspector
 {
 public:
-    Dce2Tcp(dce2TcpProtoConf&);
+    Dce2Tcp(const dce2TcpProtoConf&);
 
     void show(SnortConfig*) override;
     void eval(Packet*) override;
@@ -122,7 +122,7 @@ private:
     dce2TcpProtoConf config;
 };
 
-Dce2Tcp::Dce2Tcp(dce2TcpProtoConf& pc)
+Dce2Tcp::Dce2Tcp(const dce2TcpProtoConf& pc)
 {
     config = pc;
 }

@@ -124,7 +124,7 @@ bool FtpClientModule::set(const char*, Value& v, SnortConfig*)
     return true;
 }
 
-BounceTo::BounceTo(string& a, Port l, Port h)
+BounceTo::BounceTo(const string& a, Port l, Port h)
 {
     address = a;
     low = l;
@@ -190,14 +190,14 @@ bool FtpClientModule::end(const char* fqn, int idx, SnortConfig*)
 // server stuff
 //-------------------------------------------------------------------------
 
-FtpCmd::FtpCmd(std::string& key, uint32_t flg, int num)
+FtpCmd::FtpCmd(const std::string& key, uint32_t flg, int num)
 {
     name = key;
     flags = flg;
     number = num;
 }
 
-FtpCmd::FtpCmd(std::string& key, std::string& fmt, int num)
+FtpCmd::FtpCmd(const std::string& key, const std::string& fmt, int num)
 {
     name = key;
     format = fmt;

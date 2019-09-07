@@ -108,7 +108,7 @@ static DCE2_UdpSsnData* dce2_handle_udp_session(Packet* p, dce2UdpProtoConf* con
 class Dce2Udp : public Inspector
 {
 public:
-    Dce2Udp(dce2UdpProtoConf&);
+    Dce2Udp(const dce2UdpProtoConf&);
     void show(SnortConfig*) override;
     void eval(Packet*) override;
     void clear(Packet*) override;
@@ -117,7 +117,7 @@ private:
     dce2UdpProtoConf config;
 };
 
-Dce2Udp::Dce2Udp(dce2UdpProtoConf& pc)
+Dce2Udp::Dce2Udp(const dce2UdpProtoConf& pc)
 {
     config = pc;
 }

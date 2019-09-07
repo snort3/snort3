@@ -155,7 +155,7 @@ class SO_PUBLIC AppIdSessionApi
 {
 public:
     AppIdSessionApi(AppIdSession* asd) : asd(asd) {}
-    bool refresh(Flow& flow);
+    bool refresh(const Flow& flow);
     AppId get_service_app_id();
     AppId get_port_service_app_id();
     AppId get_only_service_app_id();

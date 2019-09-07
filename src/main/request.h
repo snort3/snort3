@@ -29,7 +29,7 @@ class Request
 public:
     Request(int f = -1);
 
-    bool read(int&);
+    bool read(const int&);
     const char* get() { return read_buf; }
     bool write_response(const char* s) const;
     void respond(const char* s, bool queue_response = false, bool remote_only = false);

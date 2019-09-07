@@ -181,7 +181,7 @@ public:
 
 static inline int handle_repeated_syn_mswin(
     TcpStreamTracker* talker, TcpStreamTracker* listener,
-    TcpSegmentDescriptor& tsd, TcpStreamSession* session)
+    const TcpSegmentDescriptor& tsd, TcpStreamSession* session)
 {
     /* Windows has some strange behavior here.  If the sequence of the reset is the
      * next expected sequence, it Resets.  Otherwise it ignores the 2nd SYN.
@@ -200,7 +200,7 @@ static inline int handle_repeated_syn_mswin(
 }
 
 static inline int handle_repeated_syn_bsd(
-    TcpStreamTracker* talker, TcpSegmentDescriptor& tsd, TcpStreamSession* session)
+    TcpStreamTracker* talker, const TcpSegmentDescriptor& tsd, TcpStreamSession* session)
 {
     /* If its not a retransmission of the actual SYN... RESET */
     if (!SEQ_EQ(tsd.get_seg_seq(), talker->get_iss()))
@@ -234,7 +234,7 @@ static inline bool paws_3whs_zero_ts_not_supported(
 
 // Older Linux ( <= 2.2 kernel ), Win32 (non 2K3) allow the 3whs to use a 0 timestamp.
 static inline bool paws_3whs_zero_ts_supported(
-    TcpStreamTracker* talker, TcpStreamTracker* listener, TcpSegmentDescriptor& tsd)
+    TcpStreamTracker* talker, TcpStreamTracker* listener, const TcpSegmentDescriptor& tsd)
 {
     bool check_ts = true;
 

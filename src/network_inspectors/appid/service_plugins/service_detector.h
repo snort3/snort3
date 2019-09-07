@@ -59,7 +59,7 @@ public:
         asd.misc_app_id = miscId;
     }
 
-    void initialize_expected_session(AppIdSession&, AppIdSession&, uint64_t flags, AppidSessionDirection dir);
+    void initialize_expected_session(const AppIdSession&, AppIdSession&, uint64_t flags, AppidSessionDirection dir);
 
 private:
     int update_service_data(AppIdSession&, const snort::Packet*, AppidSessionDirection dir, AppId,

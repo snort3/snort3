@@ -71,8 +71,8 @@ struct SmtpCmd
     uint32_t flags;
     unsigned number;
 
-    SmtpCmd(std::string&, uint32_t, int);
-    SmtpCmd(std::string&, int);
+    SmtpCmd(const std::string&, uint32_t, int);
+    SmtpCmd(const std::string&, int);
 };
 
 class SmtpModule : public snort::Module

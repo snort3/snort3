@@ -126,7 +126,7 @@ public:
     EvalStatus eval(Cursor&, Packet* p) override;
 
 private:
-    unsigned SdSearch(Cursor&, Packet*);
+    unsigned SdSearch(const Cursor&, Packet*);
     SdPatternConfig config;
 };
 
@@ -243,7 +243,7 @@ static int hs_match(unsigned int /*id*/, unsigned long long from,
     return 0;
 }
 
-unsigned SdPatternOption::SdSearch(Cursor& c, Packet* p)
+unsigned SdPatternOption::SdSearch(const Cursor& c, Packet* p)
 {
     const uint8_t* const start = c.buffer();
     const uint8_t* buf = c.start();

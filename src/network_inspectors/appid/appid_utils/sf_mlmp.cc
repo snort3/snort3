@@ -440,7 +440,7 @@ static int addPatternRecursively(tMlmpTree* rootNode, const tMlmpPattern* inputP
     tPatternNode* newNode;
     tPatternPrimaryNode* prevPrimaryPatternNode = nullptr;
     tPatternPrimaryNode* primaryNode = nullptr;
-    const tMlmpPattern* patterns = inputPatternList;
+    const tMlmpPattern* patterns;
     uint32_t partTotal = 0;
     uint32_t i;
 

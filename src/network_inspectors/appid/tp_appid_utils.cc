@@ -558,7 +558,7 @@ static inline void process_ftp_control(AppIdSession& asd,
 }
 
 static inline void process_third_party_results(AppIdSession& asd, int confidence,
-    vector<AppId>& proto_list, ThirdPartyAppIDAttributeData& attribute_data,
+    const vector<AppId>& proto_list, ThirdPartyAppIDAttributeData& attribute_data,
     AppidChangeBits& change_bits)
 {
     if ( asd.payload.get_id() == APP_ID_NONE and contains(proto_list, APP_ID_EXCHANGE) )

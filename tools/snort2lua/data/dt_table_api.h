@@ -58,7 +58,7 @@ class TableApi
 {
 public:
     TableApi() = default;
-    TableApi(TableApi* d, TableDelegation& td) : delegate(d), delegations(td) {}
+    TableApi(TableApi* d, const TableDelegation& td) : delegate(d), delegations(td) {}
     virtual ~TableApi();
 
     void reset_state();

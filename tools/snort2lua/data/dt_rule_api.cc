@@ -207,7 +207,7 @@ std::string RuleApi::get_option(const std::string& keyword)
     return curr_rule->get_option(keyword);
 }
 
-void RuleApi::update_option(const std::string& keyword, std::string& val)
+void RuleApi::update_option(const std::string& keyword, const std::string& val)
 {
     if (!curr_rule)
         return;

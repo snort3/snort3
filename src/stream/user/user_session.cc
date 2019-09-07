@@ -210,7 +210,6 @@ int UserTracker::scan(Packet* p, uint32_t& flags)
 void UserTracker::flush(Packet* p, unsigned flush_amt, uint32_t flags)
 {
     unsigned bytes_flushed = 0;
-    StreamBuffer sb = { nullptr, 0 };
     trace_logf(stream_user, "flush[%d]\n", flush_amt);
     uint32_t rflags = flags & ~PKT_PDU_TAIL;
     Packet* up = DetectionEngine::set_next_packet(p);
@@ -232,7 +231,7 @@ void UserTracker::flush(Packet* p, unsigned flush_amt, uint32_t flags)
         }
 
         trace_logf(stream_user, "reassemble[%d]\n", len);
-        sb = splitter->reassemble(
+        StreamBuffer sb = splitter->reassemble(
             p->flow, flush_amt, bytes_flushed, data, len, rflags, bytes_copied);
 
         bytes_flushed += bytes_copied;
@@ -471,7 +470,7 @@ void UserSession::set_splitter(bool c2s, StreamSplitter* ss)
 
 StreamSplitter* UserSession::get_splitter(bool c2s)
 {
-    UserTracker& ut = c2s ? server : client;
+    const UserTracker& ut = c2s ? server : client;
     return ut.splitter;
 }
 

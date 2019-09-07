@@ -85,7 +85,7 @@ static THREAD_LOCAL ProfileStats asn1PerfStats;
 class Asn1Option : public IpsOption
 {
 public:
-    Asn1Option(ASN1_CTXT& c) : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE)
+    Asn1Option(const ASN1_CTXT& c) : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE)
     { config = c; }
 
     uint32_t hash() const override;

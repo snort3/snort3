@@ -881,7 +881,7 @@ bool RpcDecode::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer&
     if ( ibt != InspectionBuffer::IBT_ALT )
         return false;
 
-    DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+    const DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
     b.len = buf.len;
     b.data = (b.len > 0) ? buf.data : nullptr;
 

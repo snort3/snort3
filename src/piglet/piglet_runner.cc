@@ -46,7 +46,7 @@ static inline bool load_chunk(lua_State* L, const Chunk& chunk)
         L, chunk.buffer.c_str(), chunk.buffer.size(), chunk.filename.c_str());
 }
 
-static bool setup_globals(lua_State* L, Test& t)
+static bool setup_globals(lua_State* L, const Test& t)
 {
     // Add script_dir env var
     Lua::set_script_dir(L, SCRIPT_DIR_VARNAME, t.chunk->filename);

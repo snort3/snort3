@@ -69,8 +69,8 @@ void HttpMsgSection::create_event(int sid)
 
 void HttpMsgSection::update_depth() const
 {
-    int64_t& file_depth_remaining = session_data->file_depth_remaining[source_id];
-    int64_t& detect_depth_remaining = session_data->detect_depth_remaining[source_id];
+    const int64_t& file_depth_remaining = session_data->file_depth_remaining[source_id];
+    const int64_t& detect_depth_remaining = session_data->detect_depth_remaining[source_id];
 
     if ((detect_depth_remaining <= 0) &&
         (session_data->detection_status[source_id] == DET_ON))

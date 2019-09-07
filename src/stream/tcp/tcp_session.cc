@@ -279,7 +279,7 @@ void TcpSession::update_perf_base_state(char newState)
         DataBus::publish(FLOW_STATE_EVENT, nullptr, flow);
 }
 
-bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
+bool TcpSession::flow_exceeds_config_thresholds(const TcpSegmentDescriptor& tsd)
 {
     if ( listener->flush_policy == STREAM_FLPOLICY_IGNORE )
     {
@@ -341,7 +341,7 @@ void TcpSession::process_tcp_stream(TcpSegmentDescriptor& tsd)
     }
 }
 
-void TcpSession::update_stream_order(TcpSegmentDescriptor& tsd, bool aligned)
+void TcpSession::update_stream_order(const TcpSegmentDescriptor& tsd, bool aligned)
 {
     switch ( listener->order )
     {
@@ -886,7 +886,7 @@ void TcpSession::set_extra_data(Packet* p, uint32_t xid)
     st.reassembler.set_xtradata_mask(st.reassembler.get_xtradata_mask() | BIT(xid));
 }
 
-static inline void set_window_scale(TcpStreamTracker& talker, TcpStreamTracker& listener,
+static inline void set_window_scale(const TcpStreamTracker& talker, const TcpStreamTracker& listener,
     TcpSegmentDescriptor& tsd)
 {
     // scale the window.  Only if BOTH client and server specified wscale option as part

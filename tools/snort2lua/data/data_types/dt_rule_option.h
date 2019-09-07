@@ -35,7 +35,7 @@ public:
 
     inline const std::string& get_name() { return name; }
     inline const std::string& get_value() { return value; }
-    inline void update_value(std::string& new_value) { value = new_value; }
+    inline void update_value(const std::string& new_value) { value = new_value; }
 
     bool add_suboption(const std::string& name);
     bool add_suboption(const std::string& name, const std::string& val);

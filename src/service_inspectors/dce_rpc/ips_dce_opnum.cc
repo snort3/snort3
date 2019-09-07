@@ -342,7 +342,7 @@ static DCE2_Ret DCE2_OpnumParse(char* args, DCE2_Opnum* opnum)
 class Dce2OpnumOption : public IpsOption
 {
 public:
-    Dce2OpnumOption(DCE2_Opnum& src_opnum) : IpsOption(s_name)
+    Dce2OpnumOption(const DCE2_Opnum& src_opnum) : IpsOption(s_name)
     { opnum = src_opnum; }
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;

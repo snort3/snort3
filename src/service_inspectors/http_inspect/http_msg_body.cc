@@ -198,7 +198,7 @@ void HttpMsgBody::do_js_normalization(const Field& input, Field& output)
         transaction->get_infractions(source_id), transaction->get_events(source_id));
 }
 
-void HttpMsgBody::do_file_processing(Field& file_data)
+void HttpMsgBody::do_file_processing(const Field& file_data)
 {
     // Using the trick that cutter is deleted when regular or chunked body is complete
     Packet* p = DetectionEngine::get_current_packet();

@@ -43,8 +43,7 @@ int DetectionEngine::queue_event(unsigned int, unsigned int, Actions::Type) { re
 }
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
-void show_stats( PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
-void show_stats(SimpleStats*, const char*) { }
+void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
 
 HttpJsNorm::HttpJsNorm(int, const HttpParaList::UriParam& uri_param_) :
     max_javascript_whitespaces(0), uri_param(uri_param_), javascript_search_mpse(nullptr),

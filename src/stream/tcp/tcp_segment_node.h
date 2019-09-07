@@ -41,7 +41,7 @@ private:
     static TcpSegmentNode* create(const struct timeval& tv, const uint8_t* segment, uint16_t len);
 
 public:
-    static TcpSegmentNode* init(TcpSegmentDescriptor&);
+    static TcpSegmentNode* init(const TcpSegmentDescriptor&);
     static TcpSegmentNode* init(TcpSegmentNode&);
 
     void term();

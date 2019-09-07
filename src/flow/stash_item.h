@@ -38,7 +38,7 @@ public:
     {
 
     }
-    int get_object_type()
+    int get_object_type() const
     {
         return object_type;
     }

@@ -282,7 +282,7 @@ static bool dnp3_check_crc(const unsigned char* buf, uint16_t buflen)
 }
 
 /* Check CRCs in a Link-Layer Frame, then fill a buffer containing just the user data  */
-static bool dnp3_check_remove_crc(dnp3ProtoConf& config, const uint8_t* pdu_start,
+static bool dnp3_check_remove_crc(const dnp3ProtoConf& config, const uint8_t* pdu_start,
     uint16_t pdu_length, char* buf, uint16_t* buflen)
 {
     const char* cursor;
@@ -354,7 +354,7 @@ static bool dnp3_check_reserved_addrs(const dnp3_link_header_t* link)
 }
 
 /* Main DNP3 Reassembly function. */
-bool dnp3_full_reassembly(dnp3ProtoConf& config, dnp3_session_data_t* session, Packet* packet,
+bool dnp3_full_reassembly(const dnp3ProtoConf& config, dnp3_session_data_t* session, Packet* packet,
     const uint8_t* pdu_start, uint16_t pdu_length)
 {
     char buf[DNP3_TPDU_MAX];

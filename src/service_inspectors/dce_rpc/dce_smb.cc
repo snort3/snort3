@@ -317,7 +317,7 @@ const char* get_smb_com_string(uint8_t b)
 class Dce2Smb : public snort::Inspector
 {
 public:
-    Dce2Smb(dce2SmbProtoConf&);
+    Dce2Smb(const dce2SmbProtoConf&);
     ~Dce2Smb() override;
 
     void show(snort::SnortConfig*) override;
@@ -332,7 +332,7 @@ private:
     dce2SmbProtoConf config;
 };
 
-Dce2Smb::Dce2Smb(dce2SmbProtoConf& pc)
+Dce2Smb::Dce2Smb(const dce2SmbProtoConf& pc)
 {
     config = pc;
     if ((config.smb_file_inspection == DCE2_SMB_FILE_INSPECTION_ONLY)

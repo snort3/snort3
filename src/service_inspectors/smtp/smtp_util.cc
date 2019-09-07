@@ -77,7 +77,7 @@ void SMTP_ResetAltBuffer(Packet* p)
 
 const uint8_t* SMTP_GetAltBuffer(Packet* p, unsigned& len)
 {
-    DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+    const DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
     len = buf.len;
     return len ? buf.data : nullptr;
 }

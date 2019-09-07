@@ -93,7 +93,7 @@ TEST(host_tracker, copy_data_test)
     CHECK(p_last_seen == 1562198400);
     CHECK(p_macs != nullptr);
     CHECK(p_macs->size() == 1);
-    auto& copied_data = p_macs->front();
+    const auto& copied_data = p_macs->front();
     CHECK(copied_data.ttl == 50);
     CHECK(copied_data.primary == 1);
     CHECK(copied_data.last_seen == 1562198400);

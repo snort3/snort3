@@ -45,7 +45,7 @@ struct BerElement
 class SO_PUBLIC BerReader
 {
 public:
-    BerReader(Cursor& c)
+    BerReader(const Cursor& c)
     {
         beg = c.buffer();
         end = c.endo();
@@ -53,7 +53,7 @@ public:
 
     bool read(const uint8_t* c, BerElement& e);
 
-    bool convert(BerElement& e, uint32_t& intval);
+    bool convert(const BerElement& e, uint32_t& intval);
     bool extract(const uint8_t*& c, uint32_t& intval);
 
     bool skip(const uint8_t*& c, uint32_t type);

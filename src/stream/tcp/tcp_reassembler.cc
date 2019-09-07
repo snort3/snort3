@@ -133,12 +133,12 @@ bool TcpReassembler::flush_data_ready(TcpReassemblerState& trs)
     return ( get_pending_segment_count(trs, 2) > 1 );  // FIXIT-L return false?
 }
 
-bool TcpReassembler::next_no_gap(TcpSegmentNode& tsn)
+bool TcpReassembler::next_no_gap(const TcpSegmentNode& tsn)
 {
     return tsn.next and (tsn.next->i_seq == tsn.i_seq + tsn.i_len);
 }
 
-void TcpReassembler::update_next(TcpReassemblerState& trs, TcpSegmentNode& tsn)
+void TcpReassembler::update_next(TcpReassemblerState& trs, const TcpSegmentNode& tsn)
 {
     trs.sos.seglist.cur_rseg = next_no_gap(tsn) ?  tsn.next : nullptr;
     if ( trs.sos.seglist.cur_rseg )
@@ -190,7 +190,7 @@ void TcpReassembler::queue_reassembly_segment(
 }
 
 bool TcpReassembler::is_segment_fasttrack(
-    TcpReassemblerState&, TcpSegmentNode* tail, TcpSegmentDescriptor& tsd)
+    TcpReassemblerState&, TcpSegmentNode* tail, const TcpSegmentDescriptor& tsd)
 {
     if ( SEQ_EQ(tsd.get_seg_seq(), tail->i_seq + tail->i_len) )
         return true;

@@ -96,7 +96,7 @@ std::string Rule::get_option(const std::string& keyword)
     return std::string();
 }
 
-void Rule::update_option(const std::string& keyword, std::string& val)
+void Rule::update_option(const std::string& keyword, const std::string& val)
 {
     for (auto option : options)
     {
@@ -232,7 +232,7 @@ void Rule::resolve_pcre_buffer_options()
             {
                 curr_sticky_buffer = new_buffer;
                 RuleOption* new_opt = new RuleOption(new_buffer);
-                options.insert(iter, new_opt);
+                iter = options.insert(iter, new_opt);
                 ++iter;
             }
         }

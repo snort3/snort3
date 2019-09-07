@@ -115,7 +115,7 @@ SO_PUBLIC void LogStat(const char*, double, FILE* = stdout);
 void sum_stats(PegCount* sums, PegCount* counts, unsigned n);
 void show_stats(PegCount*, const PegInfo*, const char* module_name = nullptr);
 void show_stats(PegCount*, const PegInfo*, unsigned n, const char* module_name = nullptr);
-void show_stats(PegCount*, const PegInfo*, IndexVec&, const char* module_name, FILE*);
+void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char* module_name, FILE*);
 void show_percent_stats(PegCount*, const char*[], unsigned n, const char* module_name = nullptr);
 
 void sum_stats(SimpleStats* sums, SimpleStats* counts);

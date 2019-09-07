@@ -229,7 +229,7 @@ AppIdStatistics* AppIdStatistics::get_stats_manager()
 void AppIdStatistics::cleanup()
 { delete appid_stats_manager; }
 
-static void update_stats(AppIdSession& asd, AppId app_id, StatsBucket* bucket)
+static void update_stats(const AppIdSession& asd, AppId app_id, StatsBucket* bucket)
 {
     AppIdStatRecord* record = (AppIdStatRecord*)(fwAvlLookup(app_id, bucket->appsTree));
     if ( !record )

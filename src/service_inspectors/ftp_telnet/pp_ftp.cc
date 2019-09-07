@@ -1310,7 +1310,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
 
     const unsigned char* end = p->data + p->dsize;
 
-    DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+    const DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
     if ( buf.len )
         end = buf.data + buf.len;
 

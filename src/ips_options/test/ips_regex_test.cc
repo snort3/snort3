@@ -101,7 +101,7 @@ Cursor::Cursor(Packet* p)
 { set("pkt_data", p->data, p->dsize); }
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
-void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
+void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
 
 //-------------------------------------------------------------------------
 // helpers

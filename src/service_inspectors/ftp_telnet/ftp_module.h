@@ -51,7 +51,7 @@ struct BounceTo
     Port low;
     Port high;
 
-    BounceTo(std::string& address, Port lo, Port hi);
+    BounceTo(const std::string& address, Port lo, Port hi);
 };
 
 class FtpClientModule : public snort::Module
@@ -101,8 +101,8 @@ struct FtpCmd
     uint32_t flags;
     unsigned number;
 
-    FtpCmd(std::string&, uint32_t, int);
-    FtpCmd(std::string&, std::string&, int);
+    FtpCmd(const std::string&, uint32_t, int);
+    FtpCmd(const std::string&, const std::string&, int);
 };
 
 class FtpServerModule : public snort::Module

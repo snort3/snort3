@@ -408,7 +408,7 @@ static bool is_packet_ignored(AppIdSession* asd, Packet* p, AppidSessionDirectio
     return false;
 }
 
-static uint64_t is_session_monitored(AppIdSession& asd, const Packet* p, AppidSessionDirection dir,
+static uint64_t is_session_monitored(const AppIdSession& asd, const Packet* p, AppidSessionDirection dir,
     AppIdInspector& inspector)
 {
     uint64_t flags;

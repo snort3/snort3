@@ -469,7 +469,7 @@ void DetectionEngine::onload()
     }
 }
 
-void DetectionEngine::resume_ready_suspends(IpsContextChain& chain)
+void DetectionEngine::resume_ready_suspends(const IpsContextChain& chain)
 {
     while ( chain.front() and !chain.front()->packet->is_offloaded() )
     {

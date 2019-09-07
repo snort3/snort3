@@ -68,7 +68,7 @@ private:
     static bool add_pcaps_dir(const std::string& dirname, const std::string& filter);
     static bool add_pcaps_list_file(const std::string& list_filename, const std::string& filter);
     static bool add_pcaps_list(const std::string& list);
-    static bool get_pcaps(std::vector<struct PcapReadObject> &pol);
+    static bool get_pcaps(const std::vector<struct PcapReadObject> &pol);
 
     static std::vector<struct PcapReadObject> pcap_object_list;
     static std::vector<std::string> pcap_queue;

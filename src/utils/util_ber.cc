@@ -165,7 +165,7 @@ bool BerReader::read(const uint8_t* c, BerElement& e)
     return true;
 }
 
-bool BerReader::convert(BerElement& e, uint32_t& intval)
+bool BerReader::convert(const BerElement& e, uint32_t& intval)
 {
     if ( e.type != BerType::INTEGER )
         return false;

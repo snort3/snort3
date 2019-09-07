@@ -64,7 +64,7 @@ TcpStreamTracker::TcpStreamTracker(bool client) :
 TcpStreamTracker::~TcpStreamTracker()
 { delete splitter; }
 
-TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(TcpSegmentDescriptor& tsd)
+TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(const TcpSegmentDescriptor& tsd)
 {
     bool talker;
     const tcp::TCPHdr* tcph = tsd.get_tcph();
@@ -159,7 +159,7 @@ bool TcpStreamTracker::compare_mac_addresses(const uint8_t eth_addr[])
     return true;
 }
 
-void TcpStreamTracker::cache_mac_address(TcpSegmentDescriptor& tsd, uint8_t direction)
+void TcpStreamTracker::cache_mac_address(const TcpSegmentDescriptor& tsd, uint8_t direction)
 {
     /* Not Ethernet based, nothing to do */
     if ( tsd.get_pkt()->is_eth() )

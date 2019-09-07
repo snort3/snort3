@@ -30,14 +30,14 @@
 using namespace snort;
 using namespace std;
 
-SmtpCmd::SmtpCmd(std::string& key, uint32_t flg, int num)
+SmtpCmd::SmtpCmd(const std::string& key, uint32_t flg, int num)
 {
     name = key;
     flags = flg;
     number = num;
 }
 
-SmtpCmd::SmtpCmd(std::string& key, int num)
+SmtpCmd::SmtpCmd(const std::string& key, int num)
 {
     name = key;
 

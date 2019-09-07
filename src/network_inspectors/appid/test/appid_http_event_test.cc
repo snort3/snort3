@@ -175,7 +175,7 @@ bool HttpEvent::contains_webdav_method()
 Flow* flow = nullptr;
 AppIdSession* mock_session = nullptr;
 
-AppIdSession* AppIdApi::get_appid_session(Flow&)
+AppIdSession* AppIdApi::get_appid_session(const Flow&)
 {
     mock().actualCall("get_appid_session");
     return mock_session;

@@ -35,7 +35,7 @@ void HttpStreamSplitter::chunk_spray(HttpFlowData* session_data, uint8_t* buffer
 {
     ChunkState& curr_state = session_data->chunk_state[source_id];
     uint32_t& expected = session_data->chunk_expected_length[source_id];
-    bool& is_broken_chunk = session_data->is_broken_chunk[source_id];
+    const bool& is_broken_chunk = session_data->is_broken_chunk[source_id];
     uint32_t& num_good_chunks = session_data->num_good_chunks[source_id];
 
     if (is_broken_chunk && (num_good_chunks == 0))

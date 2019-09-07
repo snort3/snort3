@@ -71,7 +71,7 @@ struct Args
     bool comma;
 };
 
-static void print_label(Args& a, const char* label)
+static void print_label(const Args& a, const char* label)
 {
     if ( a.comma )
         TextLog_Print(json_log, ",");
@@ -79,14 +79,14 @@ static void print_label(Args& a, const char* label)
     TextLog_Print(json_log, " \"%s\" : ", label);
 }
 
-static bool ff_action(Args& a)
+static bool ff_action(const Args& a)
 {
     print_label(a, "action");
     TextLog_Quote(json_log, a.pkt->active->get_action_string());
     return true;
 }
 
-static bool ff_class(Args& a)
+static bool ff_class(const Args& a)
 {
     const char* cls = "none";
 
@@ -98,7 +98,7 @@ static bool ff_class(Args& a)
     return true;
 }
 
-static bool ff_b64_data(Args& a)
+static bool ff_b64_data(const Args& a)
 {
     if ( !a.pkt->dsize )
         return false;
@@ -128,7 +128,7 @@ static bool ff_b64_data(Args& a)
     return true;
 }
 
-static bool ff_dir(Args& a)
+static bool ff_dir(const Args& a)
 {
     const char* dir;
 
@@ -144,7 +144,7 @@ static bool ff_dir(Args& a)
     return true;
 }
 
-static bool ff_dst_addr(Args& a)
+static bool ff_dst_addr(const Args& a)
 {
     if ( a.pkt->has_ip() or a.pkt->is_data() )
     {
@@ -156,7 +156,7 @@ static bool ff_dst_addr(Args& a)
     return false;
 }
 
-static bool ff_dst_ap(Args& a)
+static bool ff_dst_ap(const Args& a)
 {
     SfIpString addr = "";
     unsigned port = 0;
@@ -172,7 +172,7 @@ static bool ff_dst_ap(Args& a)
     return true;
 }
 
-static bool ff_dst_port(Args& a)
+static bool ff_dst_port(const Args& a)
 {
     if ( a.pkt->proto_bits & (PROTO_BIT__TCP|PROTO_BIT__UDP) )
     {
@@ -183,7 +183,7 @@ static bool ff_dst_port(Args& a)
     return false;
 }
 
-static bool ff_eth_dst(Args& a)
+static bool ff_eth_dst(const Args& a)
 {
     if ( !(a.pkt->proto_bits & PROTO_BIT__ETH) )
         return false;
@@ -198,7 +198,7 @@ static bool ff_eth_dst(Args& a)
     return true;
 }
 
-static bool ff_eth_len(Args& a)
+static bool ff_eth_len(const Args& a)
 {
     if ( !(a.pkt->proto_bits & PROTO_BIT__ETH) )
         return false;
@@ -208,7 +208,7 @@ static bool ff_eth_len(Args& a)
     return true;
 }
 
-static bool ff_eth_src(Args& a)
+static bool ff_eth_src(const Args& a)
 {
     if ( !(a.pkt->proto_bits & PROTO_BIT__ETH) )
         return false;
@@ -222,7 +222,7 @@ static bool ff_eth_src(Args& a)
     return true;
 }
 
-static bool ff_eth_type(Args& a)
+static bool ff_eth_type(const Args& a)
 {
     if ( !(a.pkt->proto_bits & PROTO_BIT__ETH) )
         return false;
@@ -234,14 +234,14 @@ static bool ff_eth_type(Args& a)
     return true;
 }
 
-static bool ff_gid(Args& a)
+static bool ff_gid(const Args& a)
 {
     print_label(a, "gid");
     TextLog_Print(json_log, "%u",  a.event.sig_info->gid);
     return true;
 }
 
-static bool ff_icmp_code(Args& a)
+static bool ff_icmp_code(const Args& a)
 {
     if (a.pkt->ptrs.icmph )
     {
@@ -252,7 +252,7 @@ static bool ff_icmp_code(Args& a)
     return false;
 }
 
-static bool ff_icmp_id(Args& a)
+static bool ff_icmp_id(const Args& a)
 {
     if (a.pkt->ptrs.icmph )
     {
@@ -263,7 +263,7 @@ static bool ff_icmp_id(Args& a)
     return false;
 }
 
-static bool ff_icmp_seq(Args& a)
+static bool ff_icmp_seq(const Args& a)
 {
     if (a.pkt->ptrs.icmph )
     {
@@ -274,7 +274,7 @@ static bool ff_icmp_seq(Args& a)
     return false;
 }
 
-static bool ff_icmp_type(Args& a)
+static bool ff_icmp_type(const Args& a)
 {
     if (a.pkt->ptrs.icmph )
     {
@@ -285,14 +285,14 @@ static bool ff_icmp_type(Args& a)
     return false;
 }
 
-static bool ff_iface(Args& a)
+static bool ff_iface(const Args& a)
 {
     print_label(a, "iface");
     TextLog_Quote(json_log, SFDAQ::get_input_spec());
     return true;
 }
 
-static bool ff_ip_id(Args& a)
+static bool ff_ip_id(const Args& a)
 {
     if (a.pkt->has_ip())
     {
@@ -303,7 +303,7 @@ static bool ff_ip_id(Args& a)
     return false;
 }
 
-static bool ff_ip_len(Args& a)
+static bool ff_ip_len(const Args& a)
 {
     if (a.pkt->has_ip())
     {
@@ -314,14 +314,14 @@ static bool ff_ip_len(Args& a)
     return false;
 }
 
-static bool ff_msg(Args& a)
+static bool ff_msg(const Args& a)
 {
     print_label(a, "msg");
     TextLog_Puts(json_log, a.msg);
     return true;
 }
 
-static bool ff_mpls(Args& a)
+static bool ff_mpls(const Args& a)
 {
     uint32_t mpls;
 
@@ -339,14 +339,14 @@ static bool ff_mpls(Args& a)
     return true;
 }
 
-static bool ff_pkt_gen(Args& a)
+static bool ff_pkt_gen(const Args& a)
 {
     print_label(a, "pkt_gen");
     TextLog_Quote(json_log, a.pkt->get_pseudo_type());
     return true;
 }
 
-static bool ff_pkt_len(Args& a)
+static bool ff_pkt_len(const Args& a)
 {
     print_label(a, "pkt_len");
 
@@ -358,35 +358,35 @@ static bool ff_pkt_len(Args& a)
     return true;
 }
 
-static bool ff_pkt_num(Args& a)
+static bool ff_pkt_num(const Args& a)
 {
     print_label(a, "pkt_num");
     TextLog_Print(json_log, STDu64, a.pkt->context->packet_number);
     return true;
 }
 
-static bool ff_priority(Args& a)
+static bool ff_priority(const Args& a)
 {
     print_label(a, "priority");
     TextLog_Print(json_log, "%u", a.event.sig_info->priority);
     return true;
 }
 
-static bool ff_proto(Args& a)
+static bool ff_proto(const Args& a)
 {
     print_label(a, "proto");
     TextLog_Quote(json_log, a.pkt->get_type());
     return true;
 }
 
-static bool ff_rev(Args& a)
+static bool ff_rev(const Args& a)
 {
     print_label(a, "rev");
     TextLog_Print(json_log, "%u",  a.event.sig_info->rev);
     return true;
 }
 
-static bool ff_rule(Args& a)
+static bool ff_rule(const Args& a)
 {
     print_label(a, "rule");
 
@@ -396,14 +396,14 @@ static bool ff_rule(Args& a)
     return true;
 }
 
-static bool ff_seconds(Args& a)
+static bool ff_seconds(const Args& a)
 {
     print_label(a, "seconds");
     TextLog_Print(json_log, "%u",  a.pkt->pkth->ts.tv_sec);
     return true;
 }
 
-static bool ff_service(Args& a)
+static bool ff_service(const Args& a)
 {
     const char* svc = "unknown";
 
@@ -415,14 +415,14 @@ static bool ff_service(Args& a)
     return true;
 }
 
-static bool ff_sid(Args& a)
+static bool ff_sid(const Args& a)
 {
     print_label(a, "sid");
     TextLog_Print(json_log, "%u",  a.event.sig_info->sid);
     return true;
 }
 
-static bool ff_src_addr(Args& a)
+static bool ff_src_addr(const Args& a)
 {
     if ( a.pkt->has_ip() or a.pkt->is_data() )
     {
@@ -434,7 +434,7 @@ static bool ff_src_addr(Args& a)
     return false;
 }
 
-static bool ff_src_ap(Args& a)
+static bool ff_src_ap(const Args& a)
 {
     SfIpString addr = "";
     unsigned port = 0;
@@ -450,7 +450,7 @@ static bool ff_src_ap(Args& a)
     return true;
 }
 
-static bool ff_src_port(Args& a)
+static bool ff_src_port(const Args& a)
 {
     if ( a.pkt->proto_bits & (PROTO_BIT__TCP|PROTO_BIT__UDP) )
     {
@@ -461,7 +461,7 @@ static bool ff_src_port(Args& a)
     return false;
 }
 
-static bool ff_target(Args& a)
+static bool ff_target(const Args& a)
 {
     SfIpString addr = "";
 
@@ -479,7 +479,7 @@ static bool ff_target(Args& a)
     return true;
 }
 
-static bool ff_tcp_ack(Args& a)
+static bool ff_tcp_ack(const Args& a)
 {
     if (a.pkt->ptrs.tcph )
     {
@@ -490,7 +490,7 @@ static bool ff_tcp_ack(Args& a)
     return false;
 }
 
-static bool ff_tcp_flags(Args& a)
+static bool ff_tcp_flags(const Args& a)
 {
     if (a.pkt->ptrs.tcph )
     {
@@ -504,7 +504,7 @@ static bool ff_tcp_flags(Args& a)
     return false;
 }
 
-static bool ff_tcp_len(Args& a)
+static bool ff_tcp_len(const Args& a)
 {
     if (a.pkt->ptrs.tcph )
     {
@@ -515,7 +515,7 @@ static bool ff_tcp_len(Args& a)
     return false;
 }
 
-static bool ff_tcp_seq(Args& a)
+static bool ff_tcp_seq(const Args& a)
 {
     if (a.pkt->ptrs.tcph )
     {
@@ -526,7 +526,7 @@ static bool ff_tcp_seq(Args& a)
     return false;
 }
 
-static bool ff_tcp_win(Args& a)
+static bool ff_tcp_win(const Args& a)
 {
     if (a.pkt->ptrs.tcph )
     {
@@ -537,7 +537,7 @@ static bool ff_tcp_win(Args& a)
     return false;
 }
 
-static bool ff_timestamp(Args& a)
+static bool ff_timestamp(const Args& a)
 {
     print_label(a, "timestamp");
     TextLog_Putc(json_log, '"');
@@ -546,7 +546,7 @@ static bool ff_timestamp(Args& a)
     return true;
 }
 
-static bool ff_tos(Args& a)
+static bool ff_tos(const Args& a)
 {
     if (a.pkt->has_ip())
     {
@@ -557,7 +557,7 @@ static bool ff_tos(Args& a)
     return false;
 }
 
-static bool ff_ttl(Args& a)
+static bool ff_ttl(const Args& a)
 {
     if (a.pkt->has_ip())
     {
@@ -568,7 +568,7 @@ static bool ff_ttl(Args& a)
     return false;
 }
 
-static bool ff_udp_len(Args& a)
+static bool ff_udp_len(const Args& a)
 {
     if (a.pkt->ptrs.udph )
     {
@@ -579,7 +579,7 @@ static bool ff_udp_len(Args& a)
     return false;
 }
 
-static bool ff_vlan(Args& a)
+static bool ff_vlan(const Args& a)
 {
     uint16_t vid;
 
@@ -601,7 +601,7 @@ static bool ff_vlan(Args& a)
 // module stuff
 //-------------------------------------------------------------------------
 
-typedef bool (*JsonFunc)(Args&);
+typedef bool (*JsonFunc)(const Args&);
 
 static const JsonFunc json_func[] =
 {

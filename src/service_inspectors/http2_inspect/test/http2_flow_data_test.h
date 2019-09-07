@@ -31,8 +31,7 @@ snort::FlowData::FlowData(unsigned u, Inspector* ph) : next(nullptr), prev(nullp
 snort::FlowData::~FlowData() = default;
 unsigned snort::FlowData::flow_data_id = 0;
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
-void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
-void show_stats(SimpleStats*, const char*) { }
+void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
 
 class Http2FlowDataTest : public Http2FlowData
 {

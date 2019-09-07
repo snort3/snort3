@@ -165,7 +165,7 @@ bool Trough::add_pcaps_list(const std::string& list)
     return true;
 }
 
-bool Trough::get_pcaps(std::vector<struct PcapReadObject> &pol)
+bool Trough::get_pcaps(const std::vector<struct PcapReadObject> &pol)
 {
     for (const PcapReadObject &pro : pol)
     {

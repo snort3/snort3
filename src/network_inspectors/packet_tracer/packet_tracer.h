@@ -46,15 +46,15 @@ struct PTSessionConstraints
     uint16_t dport;
     IpProtocol protocol = IpProtocol::PROTO_NOT_SET;
 
-    bool proto_match(IpProtocol& proto)
+    bool proto_match(const IpProtocol& proto) const
     {
         return (protocol == IpProtocol::PROTO_NOT_SET or protocol == proto);
     }
-    bool port_match(uint16_t p1, uint16_t p2)
+    bool port_match(uint16_t p1, uint16_t p2) const
     {
         return (!sport or sport == p1) and (!dport or dport == p2);
     }
-    bool ip_match(const uint32_t* ip1, const uint32_t* ip2)
+    bool ip_match(const uint32_t* ip1, const uint32_t* ip2) const
     {
         return
             ((!sip_flag or !memcmp(sip.get_ip6_ptr(), ip1, sizeof(snort::ip::snort_in6_addr))) and

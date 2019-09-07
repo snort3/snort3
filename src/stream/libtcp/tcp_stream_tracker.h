@@ -112,7 +112,7 @@ public:
     TcpEvent get_tcp_event() const
     { return tcp_event; }
 
-    TcpEvent set_tcp_event(TcpSegmentDescriptor&);
+    TcpEvent set_tcp_event(const TcpSegmentDescriptor&);
 
     void set_tcp_event(TcpEvent tcp_event)
     { this->tcp_event = tcp_event; }
@@ -209,7 +209,7 @@ public:
     }
 
     // ack number must ack syn
-    bool is_rst_valid_in_syn_sent(TcpSegmentDescriptor& tsd)
+    bool is_rst_valid_in_syn_sent(const TcpSegmentDescriptor& tsd) const
     { return tsd.get_seg_ack() == snd_una; }
 
     uint32_t get_ts_last() const
@@ -245,7 +245,7 @@ public:
     void set_tcp_options_len(uint8_t tcp_options_len)
     { this->tcp_options_len = tcp_options_len; }
 
-    void cache_mac_address(TcpSegmentDescriptor&, uint8_t direction);
+    void cache_mac_address(const TcpSegmentDescriptor&, uint8_t direction);
     bool compare_mac_addresses(const uint8_t eth_addr[]);
 
     bool is_rst_pkt_sent() const

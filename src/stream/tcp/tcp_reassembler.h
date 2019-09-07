@@ -61,7 +61,7 @@ protected:
     int trim_delete_reassembly_segment(TcpReassemblerState&, TcpSegmentNode*, uint32_t flush_seq);
     void queue_reassembly_segment(TcpReassemblerState&, TcpSegmentNode* prev, TcpSegmentNode*);
     void init_overlap_editor(TcpReassemblerState&, TcpSegmentDescriptor&);
-    bool is_segment_fasttrack(TcpReassemblerState&, TcpSegmentNode* tail, TcpSegmentDescriptor&);
+    bool is_segment_fasttrack(TcpReassemblerState&, TcpSegmentNode* tail, const TcpSegmentDescriptor&);
     void show_rebuilt_packet(TcpReassemblerState&, snort::Packet*);
     uint32_t get_flush_data_len(
         TcpReassemblerState&, TcpSegmentNode*, uint32_t to_seq, unsigned max);
@@ -86,8 +86,8 @@ protected:
     int32_t flush_pdu_ackd(TcpReassemblerState&, uint32_t* flags, snort::Packet*);
     void purge_to_seq(TcpReassemblerState&, uint32_t flush_seq);
 
-    bool next_no_gap(TcpSegmentNode&);
-    void update_next(TcpReassemblerState&, TcpSegmentNode&);
+    bool next_no_gap(const TcpSegmentNode&);
+    void update_next(TcpReassemblerState&, const TcpSegmentNode&);
 };
 
 #endif

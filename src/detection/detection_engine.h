@@ -110,7 +110,7 @@ private:
     static void offload_thread(IpsContext*);
     static void complete(snort::Packet*);
     static void resume(snort::Packet*);
-    static void resume_ready_suspends(IpsContextChain&);
+    static void resume_ready_suspends(const IpsContextChain&);
 
     static int log_events(Packet*);
     static void clear_events(Packet*);

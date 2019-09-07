@@ -135,7 +135,7 @@ bool FastModule::begin(const char*, int, SnortConfig*)
 // helper
 
 static void load_buf_ids(
-    Inspector* ins, std::vector<const char*>& keys, std::vector<unsigned>& ids)
+    Inspector* ins, const std::vector<const char*>& keys, std::vector<unsigned>& ids)
 {
     for ( auto key : keys )
     {

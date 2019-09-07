@@ -343,7 +343,7 @@ void* add_detection_option_tree(SnortConfig* sc, detection_option_tree_node_t* o
 
 int detection_option_node_evaluate(
     detection_option_tree_node_t* node, detection_option_eval_data_t* eval_data,
-    Cursor& orig_cursor)
+    const Cursor& orig_cursor)
 {
     // need node->state to do perf profiling
     if ( !node )

@@ -33,7 +33,7 @@
 
 using namespace snort;
 
-bool AppIdSessionApi::refresh(Flow& flow)
+bool AppIdSessionApi::refresh(const Flow& flow)
 {
     AppIdSession* new_asd = (AppIdSession*)flow.get_flow_data(AppIdSession::inspector_id);
 

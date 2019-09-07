@@ -604,8 +604,6 @@ static bool SMTP_IsAuthCtxIgnored(const uint8_t* start, int length)
 static bool SMTP_IsAuthChanged(SMTPData* smtp_ssn, const uint8_t* start_ptr, const
     uint8_t* end_ptr)
 {
-    int length;
-    bool auth_changed = false;
     const uint8_t* start = start_ptr;
     const uint8_t* end = end_ptr;
 
@@ -615,17 +613,18 @@ static bool SMTP_IsAuthChanged(SMTPData* smtp_ssn, const uint8_t* start_ptr, con
         end--;
 
     if (start >= end)
-        return auth_changed;
+        return false;
 
-    length = end - start;
+    int length = end - start;
 
     if (length > MAX_AUTH_NAME_LEN)
-        return auth_changed;
+        return false;
 
     if (SMTP_IsAuthCtxIgnored(start, length))
-        return auth_changed;
+        return false;
 
     /* if authentication mechanism is set, compare it with current one*/
+    bool auth_changed = false;
     if (smtp_ssn->auth_name)
     {
         if (smtp_ssn->auth_name->length != length)

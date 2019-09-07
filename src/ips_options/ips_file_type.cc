@@ -40,7 +40,7 @@ static THREAD_LOCAL ProfileStats fileTypePerfStats;
 class FileTypeOption : public IpsOption
 {
 public:
-    FileTypeOption(FileTypeBitSet&);
+    FileTypeOption(const FileTypeBitSet&);
 
     uint32_t hash() const override;
     bool operator==(const IpsOption& ips) const override;
@@ -57,7 +57,7 @@ public:
 // class methods
 //-------------------------------------------------------------------------
 
-FileTypeOption::FileTypeOption(FileTypeBitSet& t) : IpsOption(s_name)
+FileTypeOption::FileTypeOption(const FileTypeBitSet& t) : IpsOption(s_name)
 {
     types = t;
 }
