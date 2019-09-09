@@ -48,7 +48,17 @@ enum FTPReplyState
     FTP_REPLY_BEGIN,
     FTP_REPLY_MULTI,
     FTP_REPLY_LONG,
-    FTP_REPLY_MID
+    FTP_REPLY_MID,
+    FTP_REPLY_PARTIAL_EOL,
+    FTP_REPLY_PARTIAL_RESP
+};
+
+enum FtpEolReturn
+{
+    FTP_FOUND_EOL,
+    FTP_NOT_FOUND_EOL,
+    FTP_PARTIAL_EOL,
+    FTP_INCORRECT_EOL,
 };
 
 enum FTPCmd
@@ -69,6 +79,9 @@ struct ServiceFTPData
     FTPCmd cmd;
     SfIp address;
     uint16_t port;
+    int part_code_resp = 0;
+    int part_code_len;
+    
 };
 
 #pragma pack(1)
@@ -294,7 +307,7 @@ static int CheckVendorVersion(const uint8_t* data, uint16_t init_offset,
     return 0;
 }
 
-static int ftp_parse_response(const uint8_t* data, uint16_t& offset, 
+static FtpEolReturn ftp_parse_response(const uint8_t* data, uint16_t& offset, 
     uint16_t size, ServiceFTPData& fd, FTPReplyState rstate)
 {
     for (; offset < size; ++offset)
@@ -302,31 +315,67 @@ static int ftp_parse_response(const uint8_t* data, uint16_t& offset,
         if (data[offset] == 0x0D)
         {
             if (++offset >= size)
-                return -1;
+                return FTP_PARTIAL_EOL;
             if (data[offset] == 0x0D)
             {
                 if (++offset >= size)
-                    return -1;
+                    return FTP_PARTIAL_EOL;
             }
             if (data[offset] != 0x0A)
-                return -1;
+                return FTP_INCORRECT_EOL;
             fd.rstate = rstate;
-            break;
+            return FTP_FOUND_EOL;
         }
         if (data[offset] == 0x0A)
         {
             fd.rstate = rstate;
+            return FTP_FOUND_EOL;
+        }
+    }
+    return FTP_NOT_FOUND_EOL;
+}
+
+static bool check_ret_digit_code(const uint8_t* code_raw, int start_digit_place, int end_digit_place, int& code, ServiceFTPData& fd)
+{
+    bool ret = true;
+    for (int index = 0; start_digit_place >= end_digit_place; start_digit_place--, index++)
+    {
+        switch (start_digit_place)
+        {
+        case 3:
+            if (code_raw[index] >='1' and code_raw[index] <= '5')
+                code += (code_raw[index] - '0') * 100;
+            else
+                ret = false;
+            break;    
+        case 2:
+            if (ret and fd.rstate == FTP_REPLY_BEGIN and  code_raw[index ] >='0' and code_raw[index] <= '5')
+                code += (code_raw[index] - '0') * 10;
+            else if (ret and fd.rstate != FTP_REPLY_BEGIN and  code_raw[index ] >='1' and code_raw[index] <= '5')
+                code += (code_raw[index] - '0') * 10;
+            else 
+                ret = false;
+            break;  
+        case 1:     
+            if (ret and isdigit(code_raw[index ]))
+                code += (code_raw[index] - '0') ;
+            else 
+                ret = false;
+            break;
+        default:
             break;
         }
     }
-    return 0;
+    
+    return ret;
 }
 
 static int ftp_validate_reply(const uint8_t* data, uint16_t& offset,
     uint16_t size, ServiceFTPData& fd)
 {
     const ServiceFTPCode* code_hdr;
-    int tmp;
+    int tmp = 0 ;
+    bool ret_code;
     FTPReplyState tmp_state;
 
     for (; offset < size; ++offset)
@@ -346,22 +395,16 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset,
 
             code_hdr = (const ServiceFTPCode*)(data + offset);
 
+            fd.code = 0;
+            ret_code = check_ret_digit_code(code_hdr->code, 3,1, fd.code, fd );
+            
+            if(!ret_code)
+                return -1; 
+
             if (code_hdr->sp == '-')
                 fd.rstate = FTP_REPLY_MULTI;
             else if (code_hdr->sp != ' ' and code_hdr->sp != 0x09)
                 return -1;
-
-            if (code_hdr->code[0] < '1' or code_hdr->code[0] > '5')
-                return -1;
-            fd.code = (code_hdr->code[0] - '0') * 100;
-
-            if (code_hdr->code[1] < '0' or code_hdr->code[1] > '5')
-                return -1;
-            fd.code += (code_hdr->code[1] - '0') * 10;
-
-            if (!isdigit(code_hdr->code[2]))
-                return -1;
-            fd.code += code_hdr->code[2] - '0';
 
             offset += sizeof(ServiceFTPCode);
             tmp_state = fd.rstate;
@@ -422,31 +465,41 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset,
             }
 
             fd.rstate = FTP_REPLY_MID;
-            if (ftp_parse_response(data, offset, size, fd, tmp_state))
+            
+            if ( ftp_parse_response(data, offset, size, fd, tmp_state ) == FTP_INCORRECT_EOL)
                 return -1;
             if (fd.rstate == FTP_REPLY_MID)
                 fd.rstate = FTP_REPLY_LONG;
+                 
             break;
         case FTP_REPLY_MULTI:
             if (size - offset < (int)sizeof(ServiceFTPCode))
             {
                 fd.rstate = FTP_REPLY_MID;
-                if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_MULTI))
+                int temp = offset;
+                FtpEolReturn parse_ret = ftp_parse_response(data, offset, size, fd, FTP_REPLY_MULTI);
+                if( parse_ret == FTP_INCORRECT_EOL)
                     return -1;
+                else if (parse_ret == FTP_PARTIAL_EOL)
+                    fd.rstate = FTP_REPLY_PARTIAL_EOL;
+                else if (parse_ret == FTP_NOT_FOUND_EOL)
+                {
+                    check_ret_digit_code((data+temp), 3, 4 - (size - (temp)), fd.part_code_resp, fd );
+                    fd.rstate = FTP_REPLY_PARTIAL_RESP;
+                    fd.part_code_len = 3 - (size - (temp ));
+                }
+
                 if (fd.rstate == FTP_REPLY_MID)
                     fd.rstate = FTP_REPLY_LONG;
+                    
             }
             else
             {
                 code_hdr = (const ServiceFTPCode*)(data + offset);
-                if ((code_hdr->sp == ' ' or code_hdr->sp == 0x09) and
-                    code_hdr->code[0] >= '1' and code_hdr->code[0] <= '5' and
-                    code_hdr->code[1] >= '1' and code_hdr->code[1] <= '5' and
-                    isdigit(code_hdr->code[2]))
+                tmp = 0;
+
+                if (check_ret_digit_code(code_hdr->code, 3,1, tmp, fd) and (code_hdr->sp == ' ' or code_hdr->sp == 0x09))
                 {
-                    tmp = (code_hdr->code[0] - '0') * 100;
-                    tmp += (code_hdr->code[1] - '0') * 10;
-                    tmp += code_hdr->code[2] - '0';
                     if (tmp == fd.code)
                     {
                         offset += sizeof(ServiceFTPCode);
@@ -455,57 +508,72 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset,
                 }
                 tmp_state = fd.rstate;
                 fd.rstate = FTP_REPLY_MID;
-                if (ftp_parse_response(data, offset, size, fd, tmp_state))
+                if (ftp_parse_response(data, offset, size, fd, tmp_state) == FTP_INCORRECT_EOL)
                     return -1;
                 if (fd.rstate == FTP_REPLY_MID)
                     fd.rstate = FTP_REPLY_LONG;
             }
             break;
+        case FTP_REPLY_PARTIAL_EOL:
+        case FTP_REPLY_PARTIAL_RESP:
         case FTP_REPLY_LONG:
-            fd.rstate = FTP_REPLY_MID;
-            if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_LONG))
-                return -1;
-            if (++offset >= size)
+            if (fd.rstate != FTP_REPLY_PARTIAL_RESP)
             {
-                fd.rstate = FTP_REPLY_BEGIN;
-                break;
-            }
-            if (fd.rstate == FTP_REPLY_MID)
-            {
-                fd.rstate = FTP_REPLY_LONG;
-                break;
+                fd.rstate = FTP_REPLY_MID;
+                if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_LONG)== FTP_INCORRECT_EOL)
+                    return -1;
+                if (++offset >= size)
+                {
+                    fd.rstate = FTP_REPLY_BEGIN;
+                    break;
+                }
+                if (fd.rstate == FTP_REPLY_MID)
+                {
+                    fd.rstate = FTP_REPLY_LONG;
+                    break;
+                }
             }
             if (size - offset < (int)sizeof(ServiceFTPCode))
             {
                 fd.rstate = FTP_REPLY_MID;
-                if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_LONG))
+                if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_LONG)  == FTP_INCORRECT_EOL)
                     return -1;
                 if (fd.rstate == FTP_REPLY_MID)
                     fd.rstate = FTP_REPLY_LONG;
             }
             else
             {
-                code_hdr = (const ServiceFTPCode*)(data + offset);
-                if(code_hdr->code[0] >= '1' and code_hdr->code[0] <= '5' and
-                    code_hdr->code[1] >= '1' and code_hdr->code[1] <= '5' and
-                    isdigit(code_hdr->code[2]))
+                if (fd.rstate == FTP_REPLY_PARTIAL_RESP)
                 {
-                    tmp = (code_hdr->code[0] - '0') * 100;
-                    tmp += (code_hdr->code[1] - '0') * 10;
-                    tmp += code_hdr->code[2] - '0';
-                    if (tmp == fd.code)
+                    tmp = 0;
+                    ret_code = check_ret_digit_code(data + offset, fd.part_code_len ,1, tmp, fd);
+
+                    if(!ret_code)
+                        return -1;
+                    fd.code = tmp + fd.part_code_resp;
+                    fd.part_code_resp = 0; 
+                    if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_LONG)  == FTP_INCORRECT_EOL)
+                        return -1;
+
+                }
+                else
+                {
+                    code_hdr = (const ServiceFTPCode*)(data + offset);
+                    tmp = 0;
+
+                    if (check_ret_digit_code(code_hdr->code, 3,1, tmp, fd) and tmp == fd.code)
                     {
                         offset += sizeof(ServiceFTPCode);
                         if (code_hdr->sp == ' ' or code_hdr->sp == 0x09)
                         {
                             fd.rstate = FTP_REPLY_MID;
-                            if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_BEGIN))
+                            if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_BEGIN) == FTP_INCORRECT_EOL)
                                 return -1;
                         }
                         else if (code_hdr->sp == '-')
                         {
                             fd.rstate = FTP_REPLY_MID;
-                            if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_MULTI))
+                            if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_MULTI) == FTP_INCORRECT_EOL)
                                 return -1;
                         }
                         if (fd.rstate == FTP_REPLY_MID)
