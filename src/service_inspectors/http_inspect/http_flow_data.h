@@ -83,6 +83,7 @@ private:
     uint32_t running_total[2] = { 0, 0 };
     HttpEnums::ChunkState chunk_state[2] = { HttpEnums::CHUNK_NEWLINES,
         HttpEnums::CHUNK_NEWLINES };
+    uint32_t partial_raw_bytes[2] = { 0, 0 };
     uint8_t* partial_buffer[2] = { nullptr, nullptr };
     uint32_t partial_buffer_length[2] = { 0, 0 };
 

@@ -371,6 +371,8 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
 
     const uint32_t adjusted_target = stretch ? MAX_SECTION_STRETCH + flow_target : flow_target;
 
+    bool detain_this_packet = false;
+
     for (int32_t k=0; k < static_cast<int32_t>(length); k++)
     {
         switch (curr_state)
@@ -548,6 +550,10 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
             { // Do not exceed requested section size (including stretching)
                 skip_amount = adjusted_target-data_seen;
             }
+
+            if (!detain_this_packet)
+                detain_this_packet = need_accelerated_blocking(buffer+k, skip_amount);
+
             k += skip_amount - 1;
             if ((expected -= skip_amount) == 0)
             {
@@ -620,6 +626,8 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
             uint32_t skip_amount = length-k;
             skip_amount = (skip_amount <= adjusted_target-data_seen) ? skip_amount :
                 adjusted_target-data_seen;
+            if (!detain_this_packet)
+                detain_this_packet = need_accelerated_blocking(buffer+k, skip_amount);
             k += skip_amount - 1;
             if ((data_seen += skip_amount) == adjusted_target)
             {
@@ -645,7 +653,7 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
     }
 
     octets_seen += length;
-    return SCAN_NOT_FOUND;
+    return detain_this_packet ? SCAN_NOT_FOUND_DETAIN : SCAN_NOT_FOUND;
 }
 
 // This method searches the input stream looking for the beginning of a script or other dangerous

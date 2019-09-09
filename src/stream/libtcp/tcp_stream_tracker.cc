@@ -659,7 +659,7 @@ bool TcpStreamTracker::set_held_packet(snort::Packet* p)
     //           such as # of DAQ Msg buffers, # of threads, etc... for now we use small number like 10
     if ( held_packet )
         return false;
-    if ( tcpStats.current_packets_held >= 10 )
+    if ( tcpStats.current_packets_held >= 50 )
     {
         tcpStats.held_packet_limit_exceeded++;
         return false;

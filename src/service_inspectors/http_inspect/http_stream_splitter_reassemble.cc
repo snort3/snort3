@@ -291,12 +291,13 @@ const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow* flow, unsi
     assert(session_data->section_type[source_id] != SEC__NOT_COMPUTE);
     uint8_t*& partial_buffer = session_data->partial_buffer[source_id];
     uint32_t& partial_buffer_length = session_data->partial_buffer_length[source_id];
-    assert(partial_buffer_length + total <= MAX_OCTETS);
+    uint32_t& partial_raw_bytes = session_data->partial_raw_bytes[source_id];
+    assert(partial_raw_bytes + total <= MAX_OCTETS);
 
     // FIXIT-H this is a precaution/workaround for stream issues. When they are fixed replace this
     // block with an assert.
     if ((session_data->section_offset[source_id] == 0) &&
-        (session_data->octets_expected[source_id] != (total + partial_buffer_length)))
+        (session_data->octets_expected[source_id] != partial_raw_bytes + total))
     {
         if (session_data->octets_expected[source_id] == 0)
         {
@@ -371,25 +372,25 @@ const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow* flow, unsi
             buffer = new uint8_t[MAX_OCTETS];
         else
         {
-            const uint32_t buffer_size = ((partial_buffer_length + total) > 0) ?
-                (partial_buffer_length + total) : 1;
+            const uint32_t buffer_size = (total > 0) ? total : 1;
             buffer = new uint8_t[buffer_size];
         }
     }
 
-    // FIXIT-H there is no support here for partial flush with either chunking or compression
+    // FIXIT-H there is no support for partial flush with compression
+    assert((partial_buffer_length == 0) || (session_data->compression[source_id] == CMP_NONE));
+    if (partial_buffer_length > 0)
+    {
+        assert(session_data->section_offset[source_id] == 0);
+        memcpy(buffer, partial_buffer, partial_buffer_length);
+        session_data->section_offset[source_id] = partial_buffer_length;
+        partial_buffer_length = 0;
+        delete[] partial_buffer;
+        partial_buffer = nullptr;
+    }
+
     if (session_data->section_type[source_id] != SEC_BODY_CHUNK)
     {
-        assert((partial_buffer_length == 0) || (session_data->compression[source_id] == CMP_NONE));
-        if (partial_buffer_length > 0)
-        {
-            assert(session_data->section_offset[source_id] == 0);
-            memcpy(buffer, partial_buffer, partial_buffer_length);
-            session_data->section_offset[source_id] = partial_buffer_length;
-            partial_buffer_length = 0;
-            delete[] partial_buffer;
-            partial_buffer = nullptr;
-        }
         const bool at_start = (session_data->body_octets[source_id] == 0) &&
              (session_data->section_offset[source_id] == 0);
         decompress_copy(buffer, session_data->section_offset[source_id], data, len,
@@ -399,7 +400,6 @@ const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow* flow, unsi
     }
     else
     {
-        assert(partial_buffer_length == 0);
         chunk_spray(session_data, buffer, data, len);
     }
 
@@ -416,7 +416,10 @@ const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow* flow, unsi
             // Store the data from a partial flush for reuse
             partial_buffer = buffer;
             partial_buffer_length = buf_size;
+            partial_raw_bytes += total;
         }
+        else
+            partial_raw_bytes = 0;
 
         http_buf.data = buffer;
         http_buf.length = buf_size;

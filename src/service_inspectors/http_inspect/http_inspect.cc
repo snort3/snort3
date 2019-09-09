@@ -298,8 +298,8 @@ void HttpInspect::eval(Packet* p)
         p->set_detect_limit(session_data->detect_depth_remaining[source_id]);
     }
 
-    const bool partial_flush = session_data->partial_flush[source_id];
-    if (!process(p->data, p->dsize, p->flow, source_id, !partial_flush))
+    const bool buf_owner = !session_data->partial_flush[source_id];
+    if (!process(p->data, p->dsize, p->flow, source_id, buf_owner))
     {
         DetectionEngine::disable_content(p);
     }

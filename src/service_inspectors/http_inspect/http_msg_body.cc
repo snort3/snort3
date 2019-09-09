@@ -58,7 +58,8 @@ void HttpMsgBody::analyze()
             (js_norm_body.length() <= session_data->detect_depth_remaining[source_id]) ?
             js_norm_body.length() : session_data->detect_depth_remaining[source_id];
         detect_data.set(detect_length, js_norm_body.start());
-        session_data->detect_depth_remaining[source_id] -= detect_length;
+        if (!session_data->partial_flush[source_id])
+            session_data->detect_depth_remaining[source_id] -= detect_length;
         snort::set_file_data(const_cast<uint8_t*>(detect_data.start()),
             (unsigned)detect_data.length());
     }
