@@ -10,6 +10,8 @@ add_library (helpers OBJECT
     chunk.h
     directory.cc
     directory.h
+    discovery_filter.cc
+    discovery_filter.h
     flag_context.h
     markup.cc
     markup.h

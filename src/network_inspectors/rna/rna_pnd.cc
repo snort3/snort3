@@ -79,26 +79,26 @@ static inline bool is_eligible_udp(const Packet* p)
 
 void RnaPnd::analyze_flow_icmp(const Packet* p)
 {
-    if ( is_eligible_ip(p) )
+    if ( is_eligible_ip(p) and filter.is_host_monitored(p) )
         discover_network_icmp(p);
 }
 
 void RnaPnd::analyze_flow_ip(const Packet* p)
 {
-    if ( is_eligible_ip(p) )
+    if ( is_eligible_ip(p) and filter.is_host_monitored(p) )
         discover_network_ip(p);
 }
 
 void RnaPnd::analyze_flow_non_ip(const Packet* p)
 {
-    if ( is_eligible_packet(p) )
+    if ( is_eligible_packet(p) and filter.is_host_monitored(p) )
         discover_network_non_ip(p);
 }
 
 void RnaPnd::analyze_flow_tcp(const Packet* p, TcpPacketType type)
 {
     // If and when flow stores rna state, process the flow data here before global cache access
-    if ( is_eligible_tcp(p) )
+    if ( is_eligible_tcp(p) and filter.is_host_monitored(p) )
         discover_network_tcp(p);
 
     UNUSED(type);
@@ -106,7 +106,7 @@ void RnaPnd::analyze_flow_tcp(const Packet* p, TcpPacketType type)
 
 void RnaPnd::analyze_flow_udp(const Packet* p)
 {
-    if ( is_eligible_udp(p) )
+    if ( is_eligible_udp(p) and filter.is_host_monitored(p) )
         discover_network_udp(p);
 }
 
@@ -171,7 +171,7 @@ TEST_CASE("RNA pnd", "[non-ip]")
 
         ip::IP4Hdr h4;
         p.ptrs.ip_api.set(&h4);
-        RnaPnd pnd(false);
+        RnaPnd pnd(false, "");
         pnd.analyze_flow_non_ip(&p);
         CHECK(is_eligible_packet(&p) == true);
     }

@@ -20,6 +20,8 @@
 #ifndef RNA_PND_H
 #define RNA_PND_H
 
+#include "helpers/discovery_filter.h"
+
 #include "rna_logger.h"
 
 namespace snort
@@ -35,7 +37,8 @@ enum class TcpPacketType
 class RnaPnd
 {
 public:
-    RnaPnd(const bool en) : logger(RnaLogger(en)) { }
+    RnaPnd(const bool en, const std::string& conf)
+        : logger(RnaLogger(en)), filter(DiscoveryFilter(conf)) { }
 
     void analyze_flow_icmp(const snort::Packet* p);
     void analyze_flow_ip(const snort::Packet* p);
@@ -53,6 +56,7 @@ private:
     void discover_network(const snort::Packet* p, u_int8_t ttl);
 
     RnaLogger logger;
+    DiscoveryFilter filter;
 };
 
 #endif

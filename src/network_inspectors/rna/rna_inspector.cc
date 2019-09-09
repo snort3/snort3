@@ -53,7 +53,10 @@ RnaInspector::RnaInspector(RnaModule* mod)
 {
     mod_conf = mod->get_config();
     load_rna_conf();
-    pnd = new RnaPnd(mod_conf? mod_conf->enable_logger : false);
+    if ( mod_conf )
+        pnd = new RnaPnd(mod_conf->enable_logger, mod_conf->rna_conf_path);
+    else
+        pnd = new RnaPnd(false, "");
 }
 
 RnaInspector::~RnaInspector()

@@ -210,6 +210,64 @@ static inline sfip_node_t* _sfvar_deep_copy_list(const sfip_node_t* idx)
     return ret;
 }
 
+/* Returns true if the node is contained by a network from the sorted list; deletes/consumes
+ * the node. Returns false otherwise; does not delete the node but removes any network from the
+ * list that is contained by the node so that the caller can insert the node without overlap. */
+static inline bool list_contains_node(sfip_node_t*& head, sfip_node_t*& tail, uint32_t& count,
+    sfip_node_t*& node)
+{
+    sfip_node_t* cur = nullptr;
+    sfip_node_t* prev = nullptr;
+
+    if ( node->ip->get_family() == AF_INET )
+    {
+        for ( cur = head; cur; prev = cur, cur = cur->next )
+            if ( !cur->ip->is_set() or cur->ip->get_family() != AF_INET )
+                continue;
+            else if ( node->ip->fast_cont4(*cur->ip->get_addr()) )
+                break;
+            else if ( cur->ip->fast_cont4(*node->ip->get_addr()) )
+            {
+                sfip_node_free(node);
+                return true;
+            }
+    }
+    else if ( node->ip->get_family() == AF_INET6 )
+    {
+        for ( cur = head; cur; prev = cur, cur = cur->next )
+            if ( !cur->ip->is_set() or cur->ip->get_family() != AF_INET6 )
+                continue;
+            else if ( node->ip->fast_cont6(*cur->ip->get_addr()) )
+                break;
+            else if ( cur->ip->fast_cont6(*node->ip->get_addr()) )
+            {
+                sfip_node_free(node);
+                return true;
+            }
+    }
+
+    if ( cur ) // this network is contained by the node
+    {
+        if ( prev )
+        {
+            prev->next = cur->next;
+            if ( !prev->next )
+                tail = prev;
+        }
+        else if ( cur->next )
+            head = cur->next;
+        else // only one node
+        {
+            head = tail = node;
+            sfip_node_free(cur);
+            return true;
+        }
+        sfip_node_free(cur); // overlaps removed so that caller can insert the node
+        --count;
+    }
+    return false;
+}
+
 /* Deep copy. Returns identical, new, linked list of sfipnodes. */
 sfip_var_t* sfvar_deep_copy(const sfip_var_t* var)
 {
@@ -233,7 +291,7 @@ static sfip_node_t* merge_lists(sfip_node_t* list1, sfip_node_t* list2, uint16_t
     uint16_t list2_len, uint32_t& merge_len)
 {
     sfip_node_t* listHead = nullptr, * merge_list = nullptr, * tmp = nullptr, * node = nullptr;
-    uint16_t num_nodes = 0;
+    uint32_t num_nodes = 0;
 
     if (!list1 && !list2)
     {
@@ -269,6 +327,25 @@ static sfip_node_t* merge_lists(sfip_node_t* list1, sfip_node_t* list2, uint16_t
     /*Iterate till one of the list is NULL. Append each node to merge_list*/
     while (list1 && list2)
     {
+        if ( num_nodes )
+        {
+            tmp = list1->next;
+            if ( list_contains_node(listHead, merge_list, num_nodes, list1) )
+            {
+                list1 = tmp;
+                list1_len--;
+                continue;
+            }
+
+            tmp = list2->next;
+            if ( list_contains_node(listHead, merge_list, num_nodes, list2) )
+            {
+                list2 = tmp;
+                list2_len--;
+                continue;
+            }
+        }
+
         SfIpRet ret = list1->ip->compare(*(list2->ip));
         if (ret == SFIP_LESSER)
         {
@@ -294,6 +371,8 @@ static sfip_node_t* merge_lists(sfip_node_t* list1, sfip_node_t* list2, uint16_t
             list1_len--;
             list2_len--;
         }
+        else // SFIP_FAILURE
+            break;
 
         if (!merge_list)
         {
@@ -305,20 +384,34 @@ static sfip_node_t* merge_lists(sfip_node_t* list1, sfip_node_t* list2, uint16_t
             merge_list->next = node;
             merge_list = merge_list->next;
         }
+        node->next = nullptr;
         num_nodes++;
     }
 
     /*list2 is NULL. Append list1*/
-    if (list1)
+    while ( list1 )
     {
-        merge_list->next = list1;
-        num_nodes += list1_len;
+        tmp = list1->next;
+        if ( !list_contains_node(listHead, merge_list, num_nodes, list1) and merge_list )
+        {
+            merge_list->next = list1;
+            num_nodes += list1_len;
+            break;
+        }
+        list1 = tmp;
     }
+
     /*list1 is NULL. Append list2*/
-    if (list2)
+    while ( list2 )
     {
-        merge_list->next = list2;
-        num_nodes += list2_len;
+        tmp = list2->next;
+        if ( !list_contains_node(listHead, merge_list, num_nodes, list2) and merge_list )
+        {
+            merge_list->next = list2;
+            num_nodes += list2_len;
+            break;
+        }
+        list2 = tmp;
     }
 
     merge_len = num_nodes;
@@ -388,44 +481,36 @@ static SfIpRet sfvar_add_node(sfip_var_t* var, sfip_node_t* node, int negated)
         return SFIP_SUCCESS;
     }
 
-    /* "Anys" should always be inserted first
-       Otherwise, check if this IP is less than the head's IP */
+    /* "Anys" should always be inserted first */
     if (node->flags & SFIP_ANY)
     {
-        sfip_node_t* tmp;
         /*Free the list when adding any*/
         while (*head)
         {
-            tmp = (*head)->next;
+            swp = (*head)->next;
             sfip_node_free(*head);
-            *head = tmp;
+            *head = swp;
         }
         *head = node;
         *count = 1;
         return SFIP_SUCCESS;
     }
-    else
-    {
-        SfIpRet node_cmp_ret = node->ip->compare(*((*head)->ip));
-        if (node_cmp_ret == SFIP_EQUAL)
-        {
-            sfip_node_free(node);
-            return SFIP_SUCCESS;
-        }
-        else if (node_cmp_ret == SFIP_LESSER)
-        {
-            node->next = *head;
-            *head = node;
-            ++*count;
-            return SFIP_SUCCESS;
-        }
-    }
 
-    if ((node->flags & SFIP_ANY) ||
-        node->ip->get_addr()->compare(*(*head)->ip->get_addr()) == SFIP_LESSER)
+    if ( list_contains_node(*head, swp, *count, node) )
+        return SFIP_SUCCESS;
+
+    /* To insert the new node, first check if this IP is less than the head's IP */
+    SfIpRet node_cmp_ret = node->ip->compare(*((*head)->ip));
+    if (node_cmp_ret == SFIP_EQUAL)
+    {
+        sfip_node_free(node);
+        return SFIP_SUCCESS;
+    }
+    else if (node_cmp_ret == SFIP_LESSER)
     {
         node->next = *head;
         *head = node;
+        ++*count;
         return SFIP_SUCCESS;
     }
 
@@ -442,7 +527,7 @@ static SfIpRet sfvar_add_node(sfip_var_t* var, sfip_node_t* node, int negated)
     /* Insertion sort */
     for (p = *head; p->next; p=p->next)
     {
-        SfIpRet node_cmp_ret = node->ip->compare(*(p->next->ip));
+        node_cmp_ret = node->ip->compare(*(p->next->ip));
         if (node_cmp_ret == SFIP_EQUAL)
         {
             sfip_node_free(node);
@@ -1146,18 +1231,23 @@ TEST_CASE("SfIpVarListMerge", "[SfIpVar]")
         CHECK(!strcmp("192.168.2.1,192.168.6.1,255.255.241.0", sfipvar_test_buff));
 
         // add CIDR addresses
-        CHECK(sfvt_add_str(table, "my_cidr [ 192.168.0.0/16, f0:e0:d0:c0::8/64, 10.10.1.8/19] ",
-            &var2) == SFIP_SUCCESS);
+        CHECK(sfvt_add_str(table, "my_cidr [ 192.168.0.0/16, f0:e0:d0:c0::8/64, 10.10.1.8/19,"
+            " f0:e0:d1:c1::1/32]", &var2) == SFIP_SUCCESS);
         print_var_list(var2->head);
-        CHECK(!strcmp("10.10.0.0,192.168.0.0,00f0:00e0:00d0:00c0:0000:0000:0000:0000",
+        CHECK(!strcmp("10.10.0.0,192.168.0.0,00f0:00e0:0000:0000:0000:0000:0000:0000",
             sfipvar_test_buff));
 
         // merge the list
+        CHECK(SFIP_SUCCESS == sfvar_add(var2, var1));
+        print_var_list(var2->head);
+        CHECK(!strcmp("10.10.0.0,192.168.0.0,255.255.241.0,255.255.248.0,"
+            "00f0:00e0:0000:0000:0000:0000:0000:0000", sfipvar_test_buff));
+
+        // merge the list again; should yield the same result
         CHECK(SFIP_SUCCESS == sfvar_add(var1, var2));
         print_var_list(var1->head);
-        CHECK(!strcmp("10.10.0.0,192.168.0.0,192.168.0.1,192.168.0.2,192.168.2.1,192.168.5.0," \
-            "255.255.241.0,255.255.248.0,00f0:00e0:00d0:00c0:0000:0000:0000:0000",
-            sfipvar_test_buff));
+        CHECK(!strcmp("10.10.0.0,192.168.0.0,255.255.241.0,255.255.248.0,"
+            "00f0:00e0:0000:0000:0000:0000:0000:0000", sfipvar_test_buff));
 
         sfvt_free_table(table);
     }
@@ -1172,8 +1262,7 @@ TEST_CASE("SfIpVarListMerge", "[SfIpVar]")
             == SFIP_SUCCESS);
         CHECK(SFIP_SUCCESS == sfvar_add(var1, var2));
         print_var_list(var1->head, true);
-        CHECK(!strcmp("192.168.240.0/116,192.168.248.0/117,192.168.255.2/127,192.168.255.2/128",
-            sfipvar_test_buff));
+        CHECK(!strcmp("192.168.240.0/116", sfipvar_test_buff));
 
         //[ 1.2.3.8, 1.2.3.9, 1.2.3.10 ] with [ 1.2.3.255/25 ]
         CHECK(sfvt_add_str(table, "ip21 [ 1.2.3.8, 1.2.3.9, 1.2.3.10]", &var1) == SFIP_SUCCESS);
@@ -1190,6 +1279,67 @@ TEST_CASE("SfIpVarListMerge", "[SfIpVar]")
         CHECK(!strcmp("10.9.8.7/128", sfipvar_test_buff));
         print_var_list(var1->neg_head, true);
         CHECK(!strcmp("!10.9.8.7/128", sfipvar_test_buff));
+
+        // Duplicate ip in lists of a single ip
+        CHECK(sfvt_add_str(table, "once [ 1.1.1.1/16 ]", &var1)
+            == SFIP_SUCCESS);
+        CHECK(sfvt_add_str(table, "again [ 1.1.1.1/16 ]", &var2)
+            == SFIP_SUCCESS);
+        CHECK(SFIP_SUCCESS == sfvar_add(var1, var2));
+        print_var_list(var1->head);
+        CHECK(!strcmp("1.1.0.0", sfipvar_test_buff));
+
+        // Subset of ip in lists of a single ip
+        CHECK(sfvt_add_str(table, "single [ 1.1.1.1 ]", &var1)
+            == SFIP_SUCCESS);
+        CHECK(sfvt_add_str(table, "similar [ 1.1.1.1/16 ]", &var2)
+            == SFIP_SUCCESS);
+        CHECK(SFIP_SUCCESS == sfvar_add(var1, var2));
+        print_var_list(var1->head);
+        CHECK(!strcmp("1.1.0.0", sfipvar_test_buff));
+        sfvt_free_table(table);
+    }
+
+    SECTION("merge contained IPs and negated-IPs")
+    {
+        table = sfvt_alloc_table();
+
+        CHECK(sfvt_add_str(table, "foo 1.2.3.4, cafe:feed:beef::0/48", &var1) == SFIP_SUCCESS);
+        CHECK(sfvt_add_to_var(table, var1, "1.2.3.5/24, cafe:feed::0/16") == SFIP_SUCCESS);
+        CHECK(sfvt_add_to_var(table, var1, "!9.8.7.6, !dead:beef:abcd::5") == SFIP_SUCCESS);
+        CHECK(sfvt_add_to_var(table, var1, "!9.8.5.4/8, cafe:feed:abcd::0") == SFIP_SUCCESS);
+        CHECK(sfvt_add_to_var(table, var1, "!9.8.3.2, 1.2.6.7/16") == SFIP_SUCCESS);
+        CHECK(sfvt_add_to_var(table, var1, "1.2.3.4/32, cafe:feed::0") == SFIP_SUCCESS);
+        CHECK(sfvt_add_to_var(table, var1, "!dead:beef:abcd::0/32") == SFIP_SUCCESS);
+
+        /* Check merged IP lists */
+        print_var_list(var1->head);
+        CHECK(!strcmp("1.2.0.0,cafe:0000:0000:0000:0000:0000:0000:0000", sfipvar_test_buff));
+        print_var_list(var1->neg_head);
+        CHECK(!strcmp("!9.0.0.0,!dead:beef:0000:0000:0000:0000:0000:0000", sfipvar_test_buff));
+
+        /* Check lookups */
+        snort::SfIp* ip = (snort::SfIp *)snort_alloc(sizeof(snort::SfIp));
+        CHECK(ip->set("9.8.3.2") == SFIP_SUCCESS);
+        CHECK((sfvar_ip_in(var1, ip) == false));
+        snort_free(ip);
+
+        ip = (snort::SfIp *)snort_alloc(sizeof(snort::SfIp));
+        uint16_t srcBits;
+        CHECK(ip->set("1.2.3.4/24", &srcBits) == SFIP_SUCCESS);
+        CHECK((sfvar_ip_in(var1, ip) == true));
+        snort_free(ip);
+
+        ip = (snort::SfIp *)snort_alloc(sizeof(snort::SfIp));
+        CHECK(ip->set("dead:beef::0") == SFIP_SUCCESS);
+        CHECK((sfvar_ip_in(var1, ip) == false));
+        snort_free(ip);
+
+        ip = (snort::SfIp *)snort_alloc(sizeof(snort::SfIp));
+        CHECK(ip->set("cafe:abcd::9999") == SFIP_SUCCESS);
+        CHECK((sfvar_ip_in(var1, ip) == true));
+        snort_free(ip);
+
         sfvt_free_table(table);
     }
 }
