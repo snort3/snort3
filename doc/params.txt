@@ -32,6 +32,8 @@ information about the type and use of the parameter:
 * IPS rules may also have a wild card parameter, which is indicated by a
   *.  Used for unquoted, comma-separated lists such as service and metadata.
 * The snort module has command line options starting with a -.
+* $ denotes variable names, eg rule_state.$gid_sid which would be used
+  like rule_state["1:23456"] = { }.
 
 Some additional details to note:
 
@@ -47,4 +49,6 @@ Some additional details to note:
 * interval takes the form [operator]i, j<>k, or j<=>k where i,j,k are
   integers and operator is one of =, !, != (same as !), <, <=, >, >=.
   j<>k means j < int < k and j<=>k means j <= int <= k.
+* Ranges may use maxXX like { 1:max32 } since max32 is easier to read
+  than 4294967295.  To get the values of maxXX, use snort --help-limits.
 

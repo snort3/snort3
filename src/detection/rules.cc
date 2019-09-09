@@ -47,7 +47,7 @@ void RuleState::apply(SnortConfig* sc)
     OptTreeNode* otn = OtnLookup(sc->otn_map, gid, sid);
 
     if ( otn == nullptr )
-        ParseError("Rule state specified for invalid SID: %u GID: %u", sid, gid);
+        ParseError("Rule state specified for invalid rule %u:%u", gid, sid);
     else
     {
         if ( sc->global_rule_state )

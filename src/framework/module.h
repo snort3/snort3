@@ -92,6 +92,10 @@ public:
 
     virtual bool set(const char*, Value&, SnortConfig*);
 
+    // used to match parameters with $var names like <gid:sid> for rule_state
+    virtual bool matches(const char* /*param_name*/, std::string& /*lua_name*/)
+    { return false; }
+
     // ips events:
     virtual unsigned get_gid() const
     { return 0; }

@@ -29,7 +29,6 @@
 #include <cassert>
 #include <iostream>
 #include <mutex>
-#include <regex>
 #include <string>
 
 #include "framework/base_api.h"
@@ -345,7 +344,7 @@ static void dump_table(string& key, const char* pfx, const Parameter* p, bool li
 //-------------------------------------------------------------------------
 
 static const Parameter* get_params(
-    const string& sfx, const Parameter* p, int idx = 1)
+    const string& sfx, Module* m, const Parameter* p, int idx = 1)
 {
     size_t pos = sfx.find_first_of('.');
     std::string new_fqn;
@@ -363,9 +362,10 @@ static const Parameter* get_params(
     }
 
     string name = new_fqn.substr(0, new_fqn.find_first_of('.'));
+
     while ( p->name )
     {
-        if ( p->regex && regex_match(name, regex(p->name)) )
+        if ( *p->name == '$' and m->matches(p->name, name) )
             break;
 
         else if ( name == p->name )
@@ -396,7 +396,7 @@ static const Parameter* get_params(
     }
 
     p = (const Parameter*)p->range;
-    return get_params(new_fqn, p, idx);
+    return get_params(new_fqn, m, p, idx);
 }
 
 // FIXIT-M vars may have been defined on command line. that mechanism will
@@ -508,10 +508,10 @@ static bool set_value(const char* fqn, Value& v)
 
     // now we must traverse the mod params to get the leaf
     string s = fqn;
-    const Parameter* p = get_params(s, mod->get_parameters());
+    const Parameter* p = get_params(s, mod, mod->get_parameters());
 
     if ( !p )
-        p = get_params(s, mod->get_default_parameters());
+        p = get_params(s, mod, mod->get_default_parameters());
 
     if ( !p )
     {
@@ -729,10 +729,10 @@ SO_PUBLIC bool open_table(const char* s, int idx)
     if ( strcmp(m->get_name(), s) )
     {
         std::string sfqn = s;
-        p = get_params(sfqn, m->get_parameters(), idx);
+        p = get_params(sfqn, m, m->get_parameters(), idx);
 
         if ( !p )
-            p = get_params(sfqn, m->get_default_parameters(), idx);
+            p = get_params(sfqn, m, m->get_default_parameters(), idx);
 
         if ( !p )
         {

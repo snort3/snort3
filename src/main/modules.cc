@@ -24,7 +24,6 @@
 
 #include "modules.h"
 
-#include <regex>
 #include <sys/resource.h>
 
 #include "codecs/codec_module.h"
@@ -1841,11 +1840,10 @@ static const Parameter single_rule_state_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* rule_state_gid_sid_regex = "([0-9]+):([0-9]+)";
 static const Parameter rule_state_params[] =
 {
-    { rule_state_gid_sid_regex, Parameter::PT_LIST, single_rule_state_params, nullptr,
-      "defines rule state parameters for gid:sid", true },
+    { "$gid_sid", Parameter::PT_LIST, single_rule_state_params, nullptr,
+      "defines rule state parameters for gid:sid" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -1862,6 +1860,8 @@ public:
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
 
+    bool matches(const char*, std::string&) override;
+
     Usage get_usage() const override
     { return DETECT; }
 
@@ -1871,21 +1871,30 @@ private:
     IpsPolicy::Enable enable;
 };
 
-bool RuleStateModule::set(const char* fqn, Value& v, SnortConfig*)
+bool RuleStateModule::matches(const char* param, std::string& name)
 {
-    static regex gid_sid(rule_state_gid_sid_regex);
+    if ( strcmp(param, "$gid_sid") )
+        return false;
 
-    // the regex itself is passed as the fqn when declaring rule_state = { }
-    if ( strstr(fqn, rule_state_gid_sid_regex) )
+    std::stringstream ss(name);
+    char sep;
+
+    ss >> gid >> sep >> sid;
+
+    if ( gid and sid and sep == ':' )
         return true;
 
-    cmatch match;
+    return false;
+}
 
-    if ( regex_search(fqn, match, gid_sid) )
+bool RuleStateModule::set(const char* fqn, Value& v, SnortConfig*)
+{
+    // the name itself is passed as the fqn when declaring rule_state = { }
+    if ( !strcmp(fqn, "$gid_sid") )
+        return true;
+
+    if ( gid and sid )
     {
-        gid = strtoul(match[1].str().c_str(), nullptr, 10);
-        sid = strtoul(match[2].str().c_str(), nullptr, 10);
-
         if ( v.is("action") )
             action = IpsPolicy::Action(v.get_uint8());
 
@@ -1911,9 +1920,9 @@ bool RuleStateModule::begin(const char*, int, SnortConfig*)
 
 bool RuleStateModule::end(const char*, int, SnortConfig* sc)
 {
-    if ( gid )
+    if ( gid and sid )
         sc->rule_states.emplace_back(new RuleState(gid, sid, action, enable));
-    gid = 0;
+    gid = sid = 0;
     return true;
 }
 
