@@ -108,4 +108,13 @@ private:
     RnaPnd& pnd;
 };
 
+class RnaIdleEventHandler : public snort::DataHandler
+{
+public:
+    RnaIdleEventHandler(RnaPnd& nd) : DataHandler(RNA_NAME), pnd(nd) { }
+    void handle(snort::DataEvent&, snort::Flow*) override;
+private:
+    RnaPnd& pnd;
+};
+
 #endif

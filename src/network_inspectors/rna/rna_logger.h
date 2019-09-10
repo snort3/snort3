@@ -40,14 +40,16 @@ struct RnaLoggerEvent : public Event
     const RnaTracker* ht;
     const u_int8_t* mac;
     const struct in6_addr* ip;
+    void* cond_var = nullptr;
 };
 
 class RnaLogger
 {
 public:
     RnaLogger(const bool enable) : enabled(enable) { }
-    bool log(uint16_t type, uint16_t subtype, const snort::Packet* p, const RnaTracker* ht,
-        const struct in6_addr* src_ip, const u_int8_t* src_mac);
+    bool log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
+       const struct in6_addr* src_ip, const u_int8_t* src_mac,
+       uint32_t event_time = 0, void* cond_var = nullptr);
 
 private:
     const bool enabled;

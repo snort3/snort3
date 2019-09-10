@@ -23,6 +23,7 @@
 #include "helpers/discovery_filter.h"
 
 #include "rna_logger.h"
+#include "sfip/sf_ip.h"
 
 namespace snort
 {
@@ -37,14 +38,22 @@ enum class TcpPacketType
 class RnaPnd
 {
 public:
-    RnaPnd(const bool en, const std::string& conf)
-        : logger(RnaLogger(en)), filter(DiscoveryFilter(conf)) { }
+
+    RnaPnd(const bool en, const std::string& conf, time_t ut = 0)
+        : logger(RnaLogger(en)), filter(DiscoveryFilter(conf)), update_timeout(ut) { }
 
     void analyze_flow_icmp(const snort::Packet* p);
     void analyze_flow_ip(const snort::Packet* p);
     void analyze_flow_non_ip(const snort::Packet* p);
     void analyze_flow_tcp(const snort::Packet* p, TcpPacketType type);
     void analyze_flow_udp(const snort::Packet* p);
+
+    // generate change event for single host
+    void generate_change_host_update(RnaTracker* ht, const snort::Packet* p,
+        const snort::SfIp* src_ip, const uint8_t* src_mac, time_t sec);
+
+    // generate change event for all hosts in the ip cache
+    void generate_change_host_update();
 
 private:
     // General rna utilities not associated with flow
@@ -57,6 +66,7 @@ private:
 
     RnaLogger logger;
     DiscoveryFilter filter;
+    time_t update_timeout;
 };
 
 #endif

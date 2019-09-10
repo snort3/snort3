@@ -53,10 +53,11 @@ RnaInspector::RnaInspector(RnaModule* mod)
 {
     mod_conf = mod->get_config();
     load_rna_conf();
+    time_t update_timeout = rna_conf ? rna_conf->update_timeout : 0;
     if ( mod_conf )
-        pnd = new RnaPnd(mod_conf->enable_logger, mod_conf->rna_conf_path);
+        pnd = new RnaPnd(mod_conf->enable_logger, mod_conf->rna_conf_path, update_timeout);
     else
-        pnd = new RnaPnd(false, "");
+        pnd = new RnaPnd(false, "", update_timeout);
 }
 
 RnaInspector::~RnaInspector()
@@ -80,6 +81,8 @@ bool RnaInspector::configure(SnortConfig*)
     DataBus::subscribe( STREAM_TCP_SYN_EVENT, new RnaTcpSynEventHandler(*pnd) );
     DataBus::subscribe( STREAM_TCP_SYN_ACK_EVENT, new RnaTcpSynAckEventHandler(*pnd) );
     DataBus::subscribe( STREAM_TCP_MIDSTREAM_EVENT, new RnaTcpMidstreamEventHandler(*pnd) );
+    if (rna_conf && rna_conf->log_when_idle)
+        DataBus::subscribe( THREAD_IDLE_EVENT, new RnaIdleEventHandler(*pnd) );
 
     return true;
 }

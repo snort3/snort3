@@ -153,8 +153,39 @@ void RnaPnd::discover_network(const Packet* p, u_int8_t ttl)
     ht->add_mac(src_mac, ttl, 0);
 
     if ( new_host )
+    {
         logger.log(RNA_EVENT_NEW, NEW_HOST, p, &ht,
             (const struct in6_addr*) src_ip->get_ip6_ptr(), src_mac);
+    }
+    else if ( update_timeout )
+        generate_change_host_update(&ht, p, src_ip, src_mac, packet_time());
+
+}
+
+void RnaPnd::generate_change_host_update(RnaTracker* ht, const snort::Packet* p,
+    const SfIp* src_ip, const uint8_t* src_mac, time_t sec)
+{
+    if ( !ht || !update_timeout)
+        return;
+
+    uint32_t last_seen = (*ht)->get_last_seen();
+    uint32_t last_event = (*ht)->get_last_event();
+    time_t timestamp = sec - update_timeout;
+    if ( last_seen > last_event && (time_t) last_event + update_timeout <= sec )
+        logger.log(RNA_EVENT_CHANGE, CHANGE_HOST_UPDATE, p, ht,
+        (const struct in6_addr*) src_ip->get_ip6_ptr(), src_mac, last_seen, (void*) &timestamp);
+    // FIXIT-M: deal with host service hits.
+}
+
+void RnaPnd::generate_change_host_update()
+{
+    if ( !update_timeout )
+        return;
+
+    auto hosts = host_cache.get_all_data();
+    auto sec = time(nullptr);
+    for ( auto & h : hosts )
+        generate_change_host_update(&h.second, nullptr, &h.first, nullptr, sec);
 }
 
 #ifdef UNIT_TEST

@@ -40,6 +40,12 @@ void HostTracker::update_last_seen()
     last_seen = (uint32_t) packet_time();
 }
 
+void HostTracker::update_last_event(uint32_t time)
+{
+    std::lock_guard<std::mutex> lck(host_tracker_lock);
+    last_event = time ? time : last_seen;
+}
+
 bool HostTracker::add_mac(const u_int8_t* mac, u_int8_t ttl, u_int8_t primary)
 {
     if ( !mac or !memcmp(mac, zero_mac, MAC_SIZE) )

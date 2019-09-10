@@ -56,6 +56,9 @@ static const Parameter rna_params[] =
     { "enable_logger", Parameter::PT_BOOL, nullptr, "true",
       "enable or disable writing discovery events into logger" },
 
+    { "log_when_idle", Parameter::PT_BOOL, nullptr, "false",
+      "enable host update logging when snort is idle" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -71,6 +74,7 @@ static const PegInfo rna_pegs[] =
     { CountType::SUM, "tcp_syn_ack", "count of TCP SYN-ACK packets received" },
     { CountType::SUM, "tcp_midstream", "count of TCP midstream packets received" },
     { CountType::SUM, "other_packets", "count of packets received without session tracking" },
+    { CountType::SUM, "change_host_update", "count number of change host update events" },
     { CountType::END, nullptr, nullptr},
 };
 
@@ -107,6 +111,8 @@ bool RnaModule::set(const char*, Value& v, SnortConfig*)
         mod_conf->custom_fingerprint_dir = std::string(v.get_string());
     else if (v.is("enable_logger"))
         mod_conf->enable_logger = v.get_bool();
+    else if (v.is("log_when_idle"))
+        mod_conf->log_when_idle = v.get_bool();
     else
         return false;
 

@@ -28,6 +28,7 @@ struct RnaModuleConfig
     std::string fingerprint_dir;
     std::string custom_fingerprint_dir;
     bool enable_logger;
+    bool log_when_idle;
 };
 
 // Give default values so that RNA can work even if rna_conf_path is not provided
@@ -39,7 +40,7 @@ struct RnaConfig
     uint16_t max_host_services = 100;
     uint16_t max_host_service_info = 16;
     bool enable_banner_grab = 0;
+    bool log_when_idle = 0;
 };
 
 #endif
-

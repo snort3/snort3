@@ -88,3 +88,11 @@ void RnaUdpNewFlowEventHandler::handle(DataEvent& event, Flow*)
     ++rna_stats.udp_new;
     pnd.analyze_flow_udp(event.get_packet());
 }
+
+void RnaIdleEventHandler::handle(DataEvent& event, Flow*)
+{
+    UNUSED(event);
+    Profile profile(rna_perf_stats);
+    ++rna_stats.change_host_update;
+    pnd.generate_change_host_update();
+}

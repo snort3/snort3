@@ -27,6 +27,7 @@
 
 #include "managers/event_manager.h"
 #include "protocols/packet.h"
+#include "rna_logger_common.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -34,8 +35,9 @@
 
 using namespace snort;
 
-bool RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, const RnaTracker* ht,
-    const struct in6_addr* src_ip, const u_int8_t* src_mac)
+bool RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
+    const struct in6_addr* src_ip, const u_int8_t* src_mac, uint32_t event_time,
+    void* cond_var)
 {
     if ( !enabled )
         return false;
@@ -45,6 +47,13 @@ bool RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, const RnaT
         rle.ip = src_ip;
     else
         rle.ip = nullptr;
+
+    if (ht)
+    {
+        (*ht)->update_last_event(event_time);
+        if (type == RNA_EVENT_CHANGE && subtype == CHANGE_HOST_UPDATE)
+            rle.cond_var = cond_var;
+    }
 
     EventManager::call_loggers(nullptr, const_cast<Packet*>(p), "RNA", &rle);
     return true;

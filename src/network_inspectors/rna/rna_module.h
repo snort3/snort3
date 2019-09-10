@@ -41,6 +41,7 @@ struct RnaStats
     PegCount tcp_syn_ack;
     PegCount tcp_midstream;
     PegCount other_packets;
+    PegCount change_host_update;
 };
 
 extern THREAD_LOCAL RnaStats rna_stats;
@@ -68,4 +69,3 @@ private:
 };
 
 #endif
-

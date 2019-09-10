@@ -78,9 +78,24 @@ class SO_PUBLIC HostTracker
 {
 public:
     HostTracker() : hops(-1)
-    { last_seen = (uint32_t) packet_time(); }
+    {
+        last_seen = (uint32_t) packet_time();
+        last_event = -1;
+    }
 
     void update_last_seen();
+    uint32_t get_last_seen() const
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        return last_seen;
+    }
+
+    void update_last_event(uint32_t time = 0);
+    uint32_t get_last_event() const
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        return last_event;
+    }
 
     // Returns true if a new mac entry is added, false otherwise
     bool add_mac(const u_int8_t* mac, u_int8_t ttl, u_int8_t primary);
@@ -99,9 +114,10 @@ public:
     void stringify(std::string& str);
 
 private:
-    std::mutex host_tracker_lock; // ensure that updates to a shared object are safe
+    mutable std::mutex host_tracker_lock; // ensure that updates to a shared object are safe
     uint8_t hops;                 // hops from the snort inspector, e.g., zero for ARP
     uint32_t last_seen;           // the last time this host was seen
+    uint32_t last_event;          // the last time an event was generated
     std::list<HostMac, HostMacAllocator> macs;
     std::vector<HostApplication, HostAppAllocator> services;
 

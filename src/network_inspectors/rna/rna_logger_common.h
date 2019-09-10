@@ -24,4 +24,7 @@
 #define RNA_EVENT_NEW       1000
     #define NEW_HOST            1
 
+#define RNA_EVENT_CHANGE    1001
+    #define CHANGE_HOST_UPDATE         15
+
 #endif
