@@ -4,7 +4,7 @@ yet firm so feedback is welcome to get something we can live with.
 === General
 
 * Generally try to follow
-  http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml, 
+  https://google.github.io/styleguide/cppguide.html,
   but there are some differences documented here.
 
 * Each source directory should have a dev_notes.txt file summarizing the
