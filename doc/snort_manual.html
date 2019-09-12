@@ -782,7 +782,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0 (Build 260)
+o"  )~   Version 3.0.0 (Build 261)
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
@@ -1737,6 +1737,12 @@ IPS rules may also have a wild card parameter, which is indicated by a
 The snort module has command line options starting with a -.
 </p>
 </li>
+<li>
+<p>
+$ denotes variable names, eg rule_state.$gid_sid which would be used
+  like rule_state["1:23456"] = { }.
+</p>
+</li>
 </ul></div>
 <div class="paragraph"><p>Some additional details to note:</p></div>
 <div class="ulist"><ul>
@@ -1774,6 +1780,12 @@ bit_list is typically used to store a set of byte, port, or VLAN ID
 interval takes the form [operator]i, j&lt;&gt;k, or j&lt;&#8658;k where i,j,k are
   integers and operator is one of =, !, != (same as !), &lt;, &#8656;, &gt;, &gt;=.
   j&lt;&gt;k means j &lt; int &lt; k and j&lt;&#8658;k means j &#8656; int &#8656; k.
+</p>
+</li>
+<li>
+<p>
+Ranges may use maxXX like { 1:max32 } since max32 is easier to read
+  than 4294967295.  To get the values of maxXX, use snort --help-limits.
 </p>
 </li>
 </ul></div>
@@ -2158,7 +2170,7 @@ lzma &gt;= 5.1.2 from <a href="http://tukaani.org/xz/">http://tukaani.org/xz/</a
 </li>
 <li>
 <p>
-safec from <a href="https://github.com/rurban/safeclib/">https://github.com/rurban/safeclib/</a> for runtime bounds
+safec &gt;= 3.5 from <a href="https://github.com/rurban/safeclib/">https://github.com/rurban/safeclib/</a> for runtime bounds
   checks on certain legacy C-library calls
 </p>
 </li>
@@ -7272,6 +7284,26 @@ string <strong><code>daq.modules[].variables[].variable</code></strong>: DAQ mod
 <strong>daq.rx_bytes</strong>: total bytes received (sum)
 </p>
 </li>
+<li>
+<p>
+<strong>daq.retries_queued</strong>: messages queued for retry (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>daq.retries_dropped</strong>: messages dropped when overrunning the retry queue (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>daq.retries_processed</strong>: messages processed from the retry queue (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>daq.retries_discarded</strong>: messages discarded when purging the retry queue (sum)
+</p>
+</li>
 </ul></div>
 </div>
 <div class="sect2">
@@ -7393,7 +7425,7 @@ int <strong>detection.trace</strong>: mask for enabling debug traces in module {
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>detection.analyzed</strong>: packets sent to detection (now)
+<strong>detection.analyzed</strong>: total packets processed (now)
 </p>
 </li>
 <li>
@@ -8489,12 +8521,12 @@ string <strong><code>references[].url</code></strong>: where this reference is d
 <div class="ulist"><ul>
 <li>
 <p>
-enum <strong><code>rule_state.([0-9]+):([0-9]+)[].action</code></strong> = inherit: apply action if rule matches or inherit from rule definition { log | pass | alert | drop | block | reset | inherit }
+enum <strong><code>rule_state.$gid_sid[].action</code></strong> = inherit: apply action if rule matches or inherit from rule definition { log | pass | alert | drop | block | reset | inherit }
 </p>
 </li>
 <li>
 <p>
-enum <strong><code>rule_state.([0-9]+):([0-9]+)[].enable</code></strong> = inherit: enable or disable rule in current ips policy or use default defined by ips policy { no | yes | inherit }
+enum <strong><code>rule_state.$gid_sid[].enable</code></strong> = inherit: enable or disable rule in current ips policy or use default defined by ips policy { no | yes | inherit }
 </p>
 </li>
 </ul></div>
@@ -12831,17 +12863,27 @@ int <strong>gtp_inspect.trace</strong>: mask for enabling debug traces in module
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>121:1</strong> (http2_inspect) Error in HPACK integer value
+<strong>121:1</strong> (http2_inspect) error in HPACK integer value
 </p>
 </li>
 <li>
 <p>
-<strong>121:2</strong> (http2_inspect) Integer value has leading zeros
+<strong>121:2</strong> (http2_inspect) integer value has leading zeros
 </p>
 </li>
 <li>
 <p>
-<strong>121:3</strong> (http2_inspect) Error in HPACK string value
+<strong>121:3</strong> (http2_inspect) error in HPACK string value
+</p>
+</li>
+<li>
+<p>
+<strong>121:4</strong> (http2_inspect) missing continuation frame
+</p>
+</li>
+<li>
+<p>
+<strong>121:5</strong> (http2_inspect) unexpected continuation frame
 </p>
 </li>
 </ul></div>
@@ -15116,22 +15158,42 @@ string <strong>rna.custom_fingerprint_dir</strong>: directory to custom fingerpr
 bool <strong>rna.enable_logger</strong> = true: enable or disable writing discovery events into logger
 </p>
 </li>
+<li>
+<p>
+bool <strong>rna.log_when_idle</strong> = false: enable host update logging when snort is idle
+</p>
+</li>
 </ul></div>
 <div class="paragraph"><p>Peg counts:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>rna.icmp</strong>: count of ICMP packets received (sum)
+<strong>rna.icmp_bidirectional</strong>: count of bidirectional ICMP flows received (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>rna.ip</strong>: count of IP packets received (sum)
+<strong>rna.icmp_new</strong>: count of new ICMP flows received (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>rna.udp</strong>: count of UDP packets received (sum)
+<strong>rna.ip_bidirectional</strong>: count of bidirectional IP received (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rna.ip_new</strong>: count of new IP flows received (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rna.udp_bidirectional</strong>: count of bidirectional UDP flows received (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rna.udp_new</strong>: count of new UDP flows received (sum)
 </p>
 </li>
 <li>
@@ -15152,6 +15214,11 @@ bool <strong>rna.enable_logger</strong> = true: enable or disable writing discov
 <li>
 <p>
 <strong>rna.other_packets</strong>: count of packets received without session tracking (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rna.change_host_update</strong>: count number of change host update events (sum)
 </p>
 </li>
 </ul></div>
@@ -15239,7 +15306,12 @@ int <strong>rt_global.memcap</strong> = 2048: cap on amount of memory used
 <div class="ulist"><ul>
 <li>
 <p>
-bool <strong>rt_packet.test_daq_retry</strong> = true: test daq packet retry feature
+bool <strong>rt_packet.retry_targeted</strong> = false: request retry for packets whose data starts with <em>A</em>
+</p>
+</li>
+<li>
+<p>
+bool <strong>rt_packet.retry_all</strong> = false: request retry for all non-retry packets
 </p>
 </li>
 </ul></div>
@@ -18207,14 +18279,20 @@ int <strong>gtp_version.~</strong>: version to match { 0:2 }
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_http2_decoded_header">http2_decoded_header</h3>
+<div class="paragraph"><p>What: rule option to set detection cursor to the decoded HTTP/2 header</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Usage: detect</p></div>
+</div>
+<div class="sect2">
 <h3 id="_http2_frame_data">http2_frame_data</h3>
-<div class="paragraph"><p>What: rule option to see HTTP/2 frame body</p></div>
+<div class="paragraph"><p>What: rule option to set detection cursor to the HTTP/2 frame body</p></div>
 <div class="paragraph"><p>Type: ips_option</p></div>
 <div class="paragraph"><p>Usage: detect</p></div>
 </div>
 <div class="sect2">
 <h3 id="_http2_frame_header">http2_frame_header</h3>
-<div class="paragraph"><p>What: rule option to see 9-octet HTTP/2 frame header</p></div>
+<div class="paragraph"><p>What: rule option to set detection cursor to the 9-octet HTTP/2 frame header</p></div>
 <div class="paragraph"><p>Type: ips_option</p></div>
 <div class="paragraph"><p>Usage: detect</p></div>
 </div>
@@ -22832,7 +22910,7 @@ yet firm so feedback is welcome to get something we can live with.</p></div>
 <li>
 <p>
 Generally try to follow
-  <a href="http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml">http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml</a>,
+  <a href="https://google.github.io/styleguide/cppguide.html">https://google.github.io/styleguide/cppguide.html</a>,
   but there are some differences documented here.
 </p>
 </li>
@@ -27656,6 +27734,11 @@ string <strong>rna.fingerprint_dir</strong>: directory to fingerprint patterns
 </li>
 <li>
 <p>
+bool <strong>rna.log_when_idle</strong> = false: enable host update logging when snort is idle
+</p>
+</li>
+<li>
+<p>
 string <strong>rna.rna_conf_path</strong>: path to RNA configuration
 </p>
 </li>
@@ -27686,17 +27769,22 @@ int <strong>rt_global.memcap</strong> = 2048: cap on amount of memory used
 </li>
 <li>
 <p>
-bool <strong>rt_packet.test_daq_retry</strong> = true: test daq packet retry feature
+bool <strong>rt_packet.retry_all</strong> = false: request retry for all non-retry packets
 </p>
 </li>
 <li>
 <p>
-enum <strong><code>rule_state.([0-9]+):([0-9]+)[].action</code></strong> = inherit: apply action if rule matches or inherit from rule definition { log | pass | alert | drop | block | reset | inherit }
+bool <strong>rt_packet.retry_targeted</strong> = false: request retry for packets whose data starts with <em>A</em>
 </p>
 </li>
 <li>
 <p>
-enum <strong><code>rule_state.([0-9]+):([0-9]+)[].enable</code></strong> = inherit: enable or disable rule in current ips policy or use default defined by ips policy { no | yes | inherit }
+enum <strong><code>rule_state.$gid_sid[].action</code></strong> = inherit: apply action if rule matches or inherit from rule definition { log | pass | alert | drop | block | reset | inherit }
+</p>
+</li>
+<li>
+<p>
+enum <strong><code>rule_state.$gid_sid[].enable</code></strong> = inherit: enable or disable rule in current ips policy or use default defined by ips policy { no | yes | inherit }
 </p>
 </li>
 <li>
@@ -29421,6 +29509,26 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>daq.retries_discarded</strong>: messages discarded when purging the retry queue (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>daq.retries_dropped</strong>: messages dropped when overrunning the retry queue (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>daq.retries_processed</strong>: messages processed from the retry queue (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>daq.retries_queued</strong>: messages queued for retry (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>daq.retry</strong>: total retry verdicts (sum)
 </p>
 </li>
@@ -29976,7 +30084,7 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>detection.analyzed</strong>: packets sent to detection (now)
+<strong>detection.analyzed</strong>: total packets processed (now)
 </p>
 </li>
 <li>
@@ -31096,12 +31204,27 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>rna.icmp</strong>: count of ICMP packets received (sum)
+<strong>rna.change_host_update</strong>: count number of change host update events (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>rna.ip</strong>: count of IP packets received (sum)
+<strong>rna.icmp_bidirectional</strong>: count of bidirectional ICMP flows received (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rna.icmp_new</strong>: count of new ICMP flows received (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rna.ip_bidirectional</strong>: count of bidirectional IP received (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rna.ip_new</strong>: count of new IP flows received (sum)
 </p>
 </li>
 <li>
@@ -31126,7 +31249,12 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>rna.udp</strong>: count of UDP packets received (sum)
+<strong>rna.udp_bidirectional</strong>: count of bidirectional UDP flows received (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rna.udp_new</strong>: count of new UDP flows received (sum)
 </p>
 </li>
 <li>
@@ -33831,17 +33959,27 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>121:1</strong> (http2_inspect) Error in HPACK integer value
+<strong>121:1</strong> (http2_inspect) error in HPACK integer value
 </p>
 </li>
 <li>
 <p>
-<strong>121:2</strong> (http2_inspect) Integer value has leading zeros
+<strong>121:2</strong> (http2_inspect) integer value has leading zeros
 </p>
 </li>
 <li>
 <p>
-<strong>121:3</strong> (http2_inspect) Error in HPACK string value
+<strong>121:3</strong> (http2_inspect) error in HPACK string value
+</p>
+</li>
+<li>
+<p>
+<strong>121:4</strong> (http2_inspect) missing continuation frame
+</p>
+</li>
+<li>
+<p>
+<strong>121:5</strong> (http2_inspect) unexpected continuation frame
 </p>
 </li>
 <li>
@@ -35892,12 +36030,17 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
-<strong>http2_frame_data</strong> (ips_option): rule option to see HTTP/2 frame body
+<strong>http2_decoded_header</strong> (ips_option): rule option to set detection cursor to the decoded HTTP/2 header
 </p>
 </li>
 <li>
 <p>
-<strong>http2_frame_header</strong> (ips_option): rule option to see 9-octet HTTP/2 frame header
+<strong>http2_frame_data</strong> (ips_option): rule option to set detection cursor to the HTTP/2 frame body
+</p>
+</li>
+<li>
+<p>
+<strong>http2_frame_header</strong> (ips_option): rule option to set detection cursor to the 9-octet HTTP/2 frame header
 </p>
 </li>
 <li>
@@ -37267,12 +37410,17 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
-<strong>ips_option::http2_frame_data</strong>: rule option to see HTTP/2 frame body
+<strong>ips_option::http2_decoded_header</strong>: rule option to set detection cursor to the decoded HTTP/2 header
 </p>
 </li>
 <li>
 <p>
-<strong>ips_option::http2_frame_header</strong>: rule option to see 9-octet HTTP/2 frame header
+<strong>ips_option::http2_frame_data</strong>: rule option to set detection cursor to the HTTP/2 frame body
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::http2_frame_header</strong>: rule option to set detection cursor to the 9-octet HTTP/2 frame header
 </p>
 </li>
 <li>
@@ -37945,7 +38093,7 @@ Adding/removing stream_* inspectors if stream was already configured
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2019-08-28 09:32:47 EDT
+ 2019-09-12 19:44:55 EDT
 </div>
 </div>
 </body>

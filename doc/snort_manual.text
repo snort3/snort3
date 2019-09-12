@@ -234,75 +234,76 @@ Table of Contents
     11.32. gtp_info
     11.33. gtp_type
     11.34. gtp_version
-    11.35. http2_frame_data
-    11.36. http2_frame_header
-    11.37. http_client_body
-    11.38. http_cookie
-    11.39. http_header
-    11.40. http_method
-    11.41. http_raw_body
-    11.42. http_raw_cookie
-    11.43. http_raw_header
-    11.44. http_raw_request
-    11.45. http_raw_status
-    11.46. http_raw_trailer
-    11.47. http_raw_uri
-    11.48. http_stat_code
-    11.49. http_stat_msg
-    11.50. http_trailer
-    11.51. http_true_ip
-    11.52. http_uri
-    11.53. http_version
-    11.54. icmp_id
-    11.55. icmp_seq
-    11.56. icode
-    11.57. id
-    11.58. ip_proto
-    11.59. ipopts
-    11.60. isdataat
-    11.61. itype
-    11.62. md5
-    11.63. metadata
-    11.64. modbus_data
-    11.65. modbus_func
-    11.66. modbus_unit
-    11.67. msg
-    11.68. mss
-    11.69. pcre
-    11.70. pkt_data
-    11.71. pkt_num
-    11.72. priority
-    11.73. raw_data
-    11.74. reference
-    11.75. regex
-    11.76. rem
-    11.77. replace
-    11.78. rev
-    11.79. rpc
-    11.80. sd_pattern
-    11.81. seq
-    11.82. service
-    11.83. session
-    11.84. sha256
-    11.85. sha512
-    11.86. sid
-    11.87. sip_body
-    11.88. sip_header
-    11.89. sip_method
-    11.90. sip_stat_code
-    11.91. so
-    11.92. soid
-    11.93. ssl_state
-    11.94. ssl_version
-    11.95. stream_reassemble
-    11.96. stream_size
-    11.97. tag
-    11.98. target
-    11.99. tos
-    11.100. ttl
-    11.101. urg
-    11.102. window
-    11.103. wscale
+    11.35. http2_decoded_header
+    11.36. http2_frame_data
+    11.37. http2_frame_header
+    11.38. http_client_body
+    11.39. http_cookie
+    11.40. http_header
+    11.41. http_method
+    11.42. http_raw_body
+    11.43. http_raw_cookie
+    11.44. http_raw_header
+    11.45. http_raw_request
+    11.46. http_raw_status
+    11.47. http_raw_trailer
+    11.48. http_raw_uri
+    11.49. http_stat_code
+    11.50. http_stat_msg
+    11.51. http_trailer
+    11.52. http_true_ip
+    11.53. http_uri
+    11.54. http_version
+    11.55. icmp_id
+    11.56. icmp_seq
+    11.57. icode
+    11.58. id
+    11.59. ip_proto
+    11.60. ipopts
+    11.61. isdataat
+    11.62. itype
+    11.63. md5
+    11.64. metadata
+    11.65. modbus_data
+    11.66. modbus_func
+    11.67. modbus_unit
+    11.68. msg
+    11.69. mss
+    11.70. pcre
+    11.71. pkt_data
+    11.72. pkt_num
+    11.73. priority
+    11.74. raw_data
+    11.75. reference
+    11.76. regex
+    11.77. rem
+    11.78. replace
+    11.79. rev
+    11.80. rpc
+    11.81. sd_pattern
+    11.82. seq
+    11.83. service
+    11.84. session
+    11.85. sha256
+    11.86. sha512
+    11.87. sid
+    11.88. sip_body
+    11.89. sip_header
+    11.90. sip_method
+    11.91. sip_stat_code
+    11.92. so
+    11.93. soid
+    11.94. ssl_state
+    11.95. ssl_version
+    11.96. stream_reassemble
+    11.97. stream_size
+    11.98. tag
+    11.99. target
+    11.100. tos
+    11.101. ttl
+    11.102. urg
+    11.103. window
+    11.104. wscale
 
 12. Search Engine Modules
 13. SO Rule Modules
@@ -392,7 +393,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0 (Build 260)
+o"  )~   Version 3.0.0 (Build 261)
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
@@ -957,6 +958,8 @@ additional information about the type and use of the parameter:
     by a *. Used for unquoted, comma-separated lists such as service
     and metadata.
   * The snort module has command line options starting with a -.
+  * $ denotes variable names, eg rule_state.$gid_sid which would be
+    used like rule_state["1:23456"] = { }.
 
 Some additional details to note:
 
@@ -972,6 +975,9 @@ Some additional details to note:
   * interval takes the form [operator]i, j<>k, or j<⇒k where i,j,k
     are integers and operator is one of =, !, != (same as !), <, ⇐,
     >, >=. j<>k means j < int < k and j<⇒k means j ⇐ int ⇐ k.
+  * Ranges may use maxXX like { 1:max32 } since max32 is easier to
+    read than 4294967295. To get the values of maxXX, use snort
+    --help-limits.
 
 
 2.4. Plugins
@@ -1278,8 +1284,8 @@ Optional:
     UTF16-LE filenames to UTF8 (usually included in glibc)
   * lzma >= 5.1.2 from http://tukaani.org/xz/ for decompression of
     SWF and PDF files
-  * safec from https://github.com/rurban/safeclib/ for runtime bounds
-    checks on certain legacy C-library calls
+  * safec >= 3.5 from https://github.com/rurban/safeclib/ for runtime
+    bounds checks on certain legacy C-library calls
   * source-highlight from http://www.gnu.org/software/src-highlite/
     to generate the dev guide
   * w3m from http://sourceforge.net/projects/w3m/ to build the plain
@@ -5490,6 +5496,13 @@ Peg counts:
   * daq.idle: attempts to acquire from DAQ without available packets
     (sum)
   * daq.rx_bytes: total bytes received (sum)
+  * daq.retries_queued: messages queued for retry (sum)
+  * daq.retries_dropped: messages dropped when overrunning the retry
+    queue (sum)
+  * daq.retries_processed: messages processed from the retry queue
+    (sum)
+  * daq.retries_discarded: messages discarded when purging the retry
+    queue (sum)
 
 
 6.6. decode
@@ -5553,7 +5566,7 @@ Configuration:
 
 Peg counts:
 
-  * detection.analyzed: packets sent to detection (now)
+  * detection.analyzed: total packets processed (now)
   * detection.hard_evals: non-fast pattern rule evaluations (sum)
   * detection.raw_searches: fast pattern searches in raw packet data
     (sum)
@@ -6144,12 +6157,12 @@ Usage: detect
 
 Configuration:
 
-  * enum rule_state.([0-9]+):([0-9]+)[].action = inherit: apply
-    action if rule matches or inherit from rule definition { log |
-    pass | alert | drop | block | reset | inherit }
-  * enum rule_state.([0-9]+):([0-9]+)[].enable = inherit: enable or
-    disable rule in current ips policy or use default defined by ips
-    policy { no | yes | inherit }
+  * enum rule_state.$gid_sid[].action = inherit: apply action if rule
+    matches or inherit from rule definition { log | pass | alert |
+    drop | block | reset | inherit }
+  * enum rule_state.$gid_sid[].enable = inherit: enable or disable
+    rule in current ips policy or use default defined by ips policy {
+    no | yes | inherit }
 
 
 6.27. search_engine
@@ -8153,9 +8166,11 @@ Usage: inspect
 
 Rules:
 
-  * 121:1 (http2_inspect) Error in HPACK integer value
-  * 121:2 (http2_inspect) Integer value has leading zeros
-  * 121:3 (http2_inspect) Error in HPACK string value
+  * 121:1 (http2_inspect) error in HPACK integer value
+  * 121:2 (http2_inspect) integer value has leading zeros
+  * 121:3 (http2_inspect) error in HPACK string value
+  * 121:4 (http2_inspect) missing continuation frame
+  * 121:5 (http2_inspect) unexpected continuation frame
 
 Peg counts:
 
@@ -8974,17 +8989,26 @@ Configuration:
     fingerprint patterns
   * bool rna.enable_logger = true: enable or disable writing
     discovery events into logger
+  * bool rna.log_when_idle = false: enable host update logging when
+    snort is idle
 
 Peg counts:
 
-  * rna.icmp: count of ICMP packets received (sum)
-  * rna.ip: count of IP packets received (sum)
-  * rna.udp: count of UDP packets received (sum)
+  * rna.icmp_bidirectional: count of bidirectional ICMP flows
+    received (sum)
+  * rna.icmp_new: count of new ICMP flows received (sum)
+  * rna.ip_bidirectional: count of bidirectional IP received (sum)
+  * rna.ip_new: count of new IP flows received (sum)
+  * rna.udp_bidirectional: count of bidirectional UDP flows received
+    (sum)
+  * rna.udp_new: count of new UDP flows received (sum)
   * rna.tcp_syn: count of TCP SYN packets received (sum)
   * rna.tcp_syn_ack: count of TCP SYN-ACK packets received (sum)
   * rna.tcp_midstream: count of TCP midstream packets received (sum)
   * rna.other_packets: count of packets received without session
     tracking (sum)
+  * rna.change_host_update: count number of change host update events
+    (sum)
 
 
 9.34. rpc_decode
@@ -9047,8 +9071,10 @@ Usage: context
 
 Configuration:
 
-  * bool rt_packet.test_daq_retry = true: test daq packet retry
-    feature
+  * bool rt_packet.retry_targeted = false: request retry for packets
+    whose data starts with A
+  * bool rt_packet.retry_all = false: request retry for all non-retry
+    packets
 
 Peg counts:
 
@@ -10525,29 +10551,42 @@ Configuration:
   * int gtp_version.~: version to match { 0:2 }
 
 
-11.35. http2_frame_data
+11.35. http2_decoded_header
 
 --------------
 
-What: rule option to see HTTP/2 frame body
+What: rule option to set detection cursor to the decoded HTTP/2
+header
 
 Type: ips_option
 
 Usage: detect
 
 
-11.36. http2_frame_header
+11.36. http2_frame_data
 
 --------------
 
-What: rule option to see 9-octet HTTP/2 frame header
+What: rule option to set detection cursor to the HTTP/2 frame body
 
 Type: ips_option
 
 Usage: detect
 
 
-11.37. http_client_body
+11.37. http2_frame_header
+
+--------------
+
+What: rule option to set detection cursor to the 9-octet HTTP/2 frame
+header
+
+Type: ips_option
+
+Usage: detect
+
+
+11.38. http_client_body
 
 --------------
 
@@ -10558,7 +10597,7 @@ Type: ips_option
 Usage: detect
 
 
-11.38. http_cookie
+11.39. http_cookie
 
 --------------
 
@@ -10580,7 +10619,7 @@ Configuration:
     message trailers
 
 
-11.39. http_header
+11.40. http_header
 
 --------------
 
@@ -10605,7 +10644,7 @@ Configuration:
     message trailers
 
 
-11.40. http_method
+11.41. http_method
 
 --------------
 
@@ -10626,7 +10665,7 @@ Configuration:
     message trailers
 
 
-11.41. http_raw_body
+11.42. http_raw_body
 
 --------------
 
@@ -10638,7 +10677,7 @@ Type: ips_option
 Usage: detect
 
 
-11.42. http_raw_cookie
+11.43. http_raw_cookie
 
 --------------
 
@@ -10661,7 +10700,7 @@ Configuration:
     HTTP message trailers
 
 
-11.43. http_raw_header
+11.44. http_raw_header
 
 --------------
 
@@ -10684,7 +10723,7 @@ Configuration:
     HTTP message trailers
 
 
-11.44. http_raw_request
+11.45. http_raw_request
 
 --------------
 
@@ -10705,7 +10744,7 @@ Configuration:
     HTTP message trailers
 
 
-11.45. http_raw_status
+11.46. http_raw_status
 
 --------------
 
@@ -10724,7 +10763,7 @@ Configuration:
     HTTP message trailers
 
 
-11.46. http_raw_trailer
+11.47. http_raw_trailer
 
 --------------
 
@@ -10745,7 +10784,7 @@ Configuration:
     HTTP response message body (must be combined with request)
 
 
-11.47. http_raw_uri
+11.48. http_raw_uri
 
 --------------
 
@@ -10774,7 +10813,7 @@ Configuration:
     URI only
 
 
-11.48. http_stat_code
+11.49. http_stat_code
 
 --------------
 
@@ -10792,7 +10831,7 @@ Configuration:
     HTTP message trailers
 
 
-11.49. http_stat_msg
+11.50. http_stat_msg
 
 --------------
 
@@ -10811,7 +10850,7 @@ Configuration:
     HTTP message trailers
 
 
-11.50. http_trailer
+11.51. http_trailer
 
 --------------
 
@@ -10833,7 +10872,7 @@ Configuration:
     message body (must be combined with request)
 
 
-11.51. http_true_ip
+11.52. http_true_ip
 
 --------------
 
@@ -10854,7 +10893,7 @@ Configuration:
     HTTP message trailers
 
 
-11.52. http_uri
+11.53. http_uri
 
 --------------
 
@@ -10882,7 +10921,7 @@ Configuration:
     only
 
 
-11.53. http_version
+11.54. http_version
 
 --------------
 
@@ -10904,7 +10943,7 @@ Configuration:
     HTTP message trailers
 
 
-11.54. icmp_id
+11.55. icmp_id
 
 --------------
 
@@ -10920,7 +10959,7 @@ Configuration:
     0:65535 }
 
 
-11.55. icmp_seq
+11.56. icmp_seq
 
 --------------
 
@@ -10936,7 +10975,7 @@ Configuration:
     given range { 0:65535 }
 
 
-11.56. icode
+11.57. icode
 
 --------------
 
@@ -10952,7 +10991,7 @@ Configuration:
     0:255 }
 
 
-11.57. id
+11.58. id
 
 --------------
 
@@ -10968,7 +11007,7 @@ Configuration:
     }
 
 
-11.58. ip_proto
+11.59. ip_proto
 
 --------------
 
@@ -10983,7 +11022,7 @@ Configuration:
   * string ip_proto.~proto: [!|>|<] name or number
 
 
-11.59. ipopts
+11.60. ipopts
 
 --------------
 
@@ -10999,7 +11038,7 @@ Configuration:
     lsrre|ssrr|satid|any }
 
 
-11.60. isdataat
+11.61. isdataat
 
 --------------
 
@@ -11016,7 +11055,7 @@ Configuration:
     buffer
 
 
-11.61. itype
+11.62. itype
 
 --------------
 
@@ -11032,7 +11071,7 @@ Configuration:
     0:255 }
 
 
-11.62. md5
+11.63. md5
 
 --------------
 
@@ -11052,7 +11091,7 @@ Configuration:
     of buffer
 
 
-11.63. metadata
+11.64. metadata
 
 --------------
 
@@ -11069,7 +11108,7 @@ Configuration:
     pairs
 
 
-11.64. modbus_data
+11.65. modbus_data
 
 --------------
 
@@ -11080,7 +11119,7 @@ Type: ips_option
 Usage: detect
 
 
-11.65. modbus_func
+11.66. modbus_func
 
 --------------
 
@@ -11095,7 +11134,7 @@ Configuration:
   * string modbus_func.~: function code to match
 
 
-11.66. modbus_unit
+11.67. modbus_unit
 
 --------------
 
@@ -11110,7 +11149,7 @@ Configuration:
   * int modbus_unit.~: Modbus unit ID { 0:255 }
 
 
-11.67. msg
+11.68. msg
 
 --------------
 
@@ -11125,7 +11164,7 @@ Configuration:
   * string msg.~: message describing rule
 
 
-11.68. mss
+11.69. mss
 
 --------------
 
@@ -11141,7 +11180,7 @@ Configuration:
     }
 
 
-11.69. pcre
+11.70. pcre
 
 --------------
 
@@ -11156,7 +11195,7 @@ Configuration:
   * string pcre.~re: Snort regular expression
 
 
-11.70. pkt_data
+11.71. pkt_data
 
 --------------
 
@@ -11168,7 +11207,7 @@ Type: ips_option
 Usage: detect
 
 
-11.71. pkt_num
+11.72. pkt_num
 
 --------------
 
@@ -11184,7 +11223,7 @@ Configuration:
     { 1: }
 
 
-11.72. priority
+11.73. priority
 
 --------------
 
@@ -11200,7 +11239,7 @@ Configuration:
     1:max31 }
 
 
-11.73. raw_data
+11.74. raw_data
 
 --------------
 
@@ -11211,7 +11250,7 @@ Type: ips_option
 Usage: detect
 
 
-11.74. reference
+11.75. reference
 
 --------------
 
@@ -11227,7 +11266,7 @@ Configuration:
   * string reference.~id: reference id
 
 
-11.75. regex
+11.76. regex
 
 --------------
 
@@ -11250,7 +11289,7 @@ Configuration:
     instead of start of buffer
 
 
-11.76. rem
+11.77. rem
 
 --------------
 
@@ -11265,7 +11304,7 @@ Configuration:
   * string rem.~: comment
 
 
-11.77. replace
+11.78. replace
 
 --------------
 
@@ -11280,7 +11319,7 @@ Configuration:
   * string replace.~: byte code to replace with
 
 
-11.78. rev
+11.79. rev
 
 --------------
 
@@ -11295,7 +11334,7 @@ Configuration:
   * int rev.~: revision { 1:max32 }
 
 
-11.79. rpc
+11.80. rpc
 
 --------------
 
@@ -11312,7 +11351,7 @@ Configuration:
   * string rpc.~proc: procedure number or * for any
 
 
-11.80. sd_pattern
+11.81. sd_pattern
 
 --------------
 
@@ -11336,7 +11375,7 @@ Peg counts:
   * sd_pattern.terminated: hyperscan terminated (sum)
 
 
-11.81. seq
+11.82. seq
 
 --------------
 
@@ -11352,7 +11391,7 @@ Configuration:
     range { 0: }
 
 
-11.82. service
+11.83. service
 
 --------------
 
@@ -11367,7 +11406,7 @@ Configuration:
   * string service.*: one or more comma-separated service names
 
 
-11.83. session
+11.84. session
 
 --------------
 
@@ -11382,7 +11421,7 @@ Configuration:
   * enum session.~mode: output format { printable|binary|all }
 
 
-11.84. sha256
+11.85. sha256
 
 --------------
 
@@ -11402,7 +11441,7 @@ Configuration:
     start of buffer
 
 
-11.85. sha512
+11.86. sha512
 
 --------------
 
@@ -11422,7 +11461,7 @@ Configuration:
     start of buffer
 
 
-11.86. sid
+11.87. sid
 
 --------------
 
@@ -11437,7 +11476,7 @@ Configuration:
   * int sid.~: signature id { 1:max32 }
 
 
-11.87. sip_body
+11.88. sip_body
 
 --------------
 
@@ -11448,7 +11487,7 @@ Type: ips_option
 Usage: detect
 
 
-11.88. sip_header
+11.89. sip_header
 
 --------------
 
@@ -11460,7 +11499,7 @@ Type: ips_option
 Usage: detect
 
 
-11.89. sip_method
+11.90. sip_method
 
 --------------
 
@@ -11475,7 +11514,7 @@ Configuration:
   * string sip_method.*method: sip method
 
 
-11.90. sip_stat_code
+11.91. sip_stat_code
 
 --------------
 
@@ -11490,7 +11529,7 @@ Configuration:
   * int sip_stat_code.*code: status code { 1:999 }
 
 
-11.91. so
+11.92. so
 
 --------------
 
@@ -11507,7 +11546,7 @@ Configuration:
     buffer
 
 
-11.92. soid
+11.93. soid
 
 --------------
 
@@ -11523,7 +11562,7 @@ Configuration:
     like 3_45678_9
 
 
-11.93. ssl_state
+11.94. ssl_state
 
 --------------
 
@@ -11552,7 +11591,7 @@ Configuration:
     unknown
 
 
-11.94. ssl_version
+11.95. ssl_version
 
 --------------
 
@@ -11579,7 +11618,7 @@ Configuration:
     tls1.2
 
 
-11.95. stream_reassemble
+11.96. stream_reassemble
 
 --------------
 
@@ -11600,7 +11639,7 @@ Configuration:
     remainder of the session
 
 
-11.96. stream_size
+11.97. stream_size
 
 --------------
 
@@ -11618,7 +11657,7 @@ Configuration:
     direction(s) { either|to_server|to_client|both }
 
 
-11.97. tag
+11.98. tag
 
 --------------
 
@@ -11637,7 +11676,7 @@ Configuration:
   * int tag.bytes: tag for this many bytes { 1:max32 }
 
 
-11.98. target
+11.99. target
 
 --------------
 
@@ -11653,7 +11692,7 @@ Configuration:
     dst_ip }
 
 
-11.99. tos
+11.100. tos
 
 --------------
 
@@ -11668,7 +11707,7 @@ Configuration:
   * interval tos.~range: check if IP TOS is in given range { 0:255 }
 
 
-11.100. ttl
+11.101. ttl
 
 --------------
 
@@ -11684,7 +11723,7 @@ Configuration:
     0:255 }
 
 
-11.101. urg
+11.102. urg
 
 --------------
 
@@ -11700,7 +11739,7 @@ Configuration:
     { 0:65535 }
 
 
-11.102. window
+11.103. window
 
 --------------
 
@@ -11716,7 +11755,7 @@ Configuration:
     range { 0:65535 }
 
 
-11.103. wscale
+11.104. wscale
 
 --------------
 
@@ -13615,9 +13654,8 @@ with.
 
 --------------
 
-  * Generally try to follow http://google-styleguide.googlecode.com/
-    svn/trunk/cppguide.xml, but there are some differences documented
-    here.
+  * Generally try to follow https://google.github.io/styleguide/
+    cppguide.html, but there are some differences documented here.
   * Each source directory should have a dev_notes.txt file
     summarizing the key points and design decisions for the code in
     that directory. These are built into the developers guide.
@@ -15418,6 +15456,8 @@ these libraries see the Getting Started section of the manual.
   * bool rna.enable_logger = true: enable or disable writing
     discovery events into logger
   * string rna.fingerprint_dir: directory to fingerprint patterns
+  * bool rna.log_when_idle = false: enable host update logging when
+    snort is idle
   * string rna.rna_conf_path: path to RNA configuration
   * string rna.rna_util_lib_path: path to library for utilities such
     as fingerprint decoder
@@ -15425,14 +15465,16 @@ these libraries see the Getting Started section of the manual.
   * string rpc.~proc: procedure number or * for any
   * string rpc.~ver: version number or * for any
   * int rt_global.memcap = 2048: cap on amount of memory used
-  * bool rt_packet.test_daq_retry = true: test daq packet retry
-    feature
-  * enum rule_state.([0-9]+):([0-9]+)[].action = inherit: apply
-    action if rule matches or inherit from rule definition { log |
-    pass | alert | drop | block | reset | inherit }
-  * enum rule_state.([0-9]+):([0-9]+)[].enable = inherit: enable or
-    disable rule in current ips policy or use default defined by ips
-    policy { no | yes | inherit }
+  * bool rt_packet.retry_all = false: request retry for all non-retry
+    packets
+  * bool rt_packet.retry_targeted = false: request retry for packets
+    whose data starts with A
+  * enum rule_state.$gid_sid[].action = inherit: apply action if rule
+    matches or inherit from rule definition { log | pass | alert |
+    drop | block | reset | inherit }
+  * enum rule_state.$gid_sid[].enable = inherit: enable or disable
+    rule in current ips policy or use default defined by ips policy {
+    no | yes | inherit }
   * string sd_pattern.~pattern: The pattern to search for
   * int sd_pattern.threshold = 1: number of matches before alerting {
     1:max32 }
@@ -16015,6 +16057,13 @@ these libraries see the Getting Started section of the manual.
   * daq.pcaps: total files and interfaces processed (max)
   * daq.received: total packets received from DAQ (sum)
   * daq.replace: total replace verdicts (sum)
+  * daq.retries_discarded: messages discarded when purging the retry
+    queue (sum)
+  * daq.retries_dropped: messages dropped when overrunning the retry
+    queue (sum)
+  * daq.retries_processed: messages processed from the retry queue
+    (sum)
+  * daq.retries_queued: messages queued for retry (sum)
   * daq.retry: total retry verdicts (sum)
   * daq.rx_bytes: total bytes received (sum)
   * daq.skipped: packets skipped at startup (sum)
@@ -16178,7 +16227,7 @@ these libraries see the Getting Started section of the manual.
   * detection.alerts: alerts not including IP reputation (sum)
   * detection.alt_searches: alt fast pattern searches in packet data
     (sum)
-  * detection.analyzed: packets sent to detection (now)
+  * detection.analyzed: total packets processed (now)
   * detection.body_searches: fast pattern searches in body buffer
     (sum)
   * detection.context_stalls: times processing stalled to wait for an
@@ -16482,14 +16531,21 @@ these libraries see the Getting Started section of the manual.
   * reputation.monitored: number of packets monitored (sum)
   * reputation.packets: total packets processed (sum)
   * reputation.whitelisted: number of packets whitelisted (sum)
-  * rna.icmp: count of ICMP packets received (sum)
-  * rna.ip: count of IP packets received (sum)
+  * rna.change_host_update: count number of change host update events
+    (sum)
+  * rna.icmp_bidirectional: count of bidirectional ICMP flows
+    received (sum)
+  * rna.icmp_new: count of new ICMP flows received (sum)
+  * rna.ip_bidirectional: count of bidirectional IP received (sum)
+  * rna.ip_new: count of new IP flows received (sum)
   * rna.other_packets: count of packets received without session
     tracking (sum)
   * rna.tcp_midstream: count of TCP midstream packets received (sum)
   * rna.tcp_syn_ack: count of TCP SYN-ACK packets received (sum)
   * rna.tcp_syn: count of TCP SYN packets received (sum)
-  * rna.udp: count of UDP packets received (sum)
+  * rna.udp_bidirectional: count of bidirectional UDP flows received
+    (sum)
+  * rna.udp_new: count of new UDP flows received (sum)
   * rpc_decode.concurrent_sessions: total concurrent rpc sessions
     (now)
   * rpc_decode.max_concurrent_sessions: maximum concurrent rpc
@@ -17126,9 +17182,11 @@ these libraries see the Getting Started section of the manual.
     value
   * 119:248 (http_inspect) gzip compressed data followed by
     unexpected non-gzip data
-  * 121:1 (http2_inspect) Error in HPACK integer value
-  * 121:2 (http2_inspect) Integer value has leading zeros
-  * 121:3 (http2_inspect) Error in HPACK string value
+  * 121:1 (http2_inspect) error in HPACK integer value
+  * 121:2 (http2_inspect) integer value has leading zeros
+  * 121:3 (http2_inspect) error in HPACK string value
+  * 121:4 (http2_inspect) missing continuation frame
+  * 121:5 (http2_inspect) unexpected continuation frame
   * 122:1 (port_scan) TCP portscan
   * 122:2 (port_scan) TCP decoy portscan
   * 122:3 (port_scan) TCP portsweep
@@ -17930,10 +17988,12 @@ deleted -> unified2: 'vlan_event_types'
     hosts
   * host_tracker (basic): configure hosts
   * hosts (basic): configure hosts
-  * http2_frame_data (ips_option): rule option to see HTTP/2 frame
-    body
-  * http2_frame_header (ips_option): rule option to see 9-octet HTTP/
-    2 frame header
+  * http2_decoded_header (ips_option): rule option to set detection
+    cursor to the decoded HTTP/2 header
+  * http2_frame_data (ips_option): rule option to set detection
+    cursor to the HTTP/2 frame body
+  * http2_frame_header (ips_option): rule option to set detection
+    cursor to the 9-octet HTTP/2 frame header
   * http2_inspect (inspector): HTTP/2 inspector
   * http_client_body (ips_option): rule option to set the detection
     cursor to the request body
@@ -18306,10 +18366,12 @@ deleted -> unified2: 'vlan_event_types'
   * ips_option::gtp_info: rule option to check gtp info element
   * ips_option::gtp_type: rule option to check gtp types
   * ips_option::gtp_version: rule option to check GTP version
-  * ips_option::http2_frame_data: rule option to see HTTP/2 frame
-    body
-  * ips_option::http2_frame_header: rule option to see 9-octet HTTP/2
-    frame header
+  * ips_option::http2_decoded_header: rule option to set detection
+    cursor to the decoded HTTP/2 header
+  * ips_option::http2_frame_data: rule option to set detection cursor
+    to the HTTP/2 frame body
+  * ips_option::http2_frame_header: rule option to set detection
+    cursor to the 9-octet HTTP/2 frame header
   * ips_option::http_client_body: rule option to set the detection
     cursor to the request body
   * ips_option::http_cookie: rule option to set the detection cursor

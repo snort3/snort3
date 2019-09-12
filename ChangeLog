@@ -1,3 +1,25 @@
+19/09/12 - build 261
+
+-- analyzer: Process retry queue and onloads when no DAQ messages are received
+-- appid: Enabled API for SSL to lookup appid
+-- appid: Support FTP banners on multiple packets with split response code
+-- build: Address miscellaneous cppcheck warnings
+-- build: Const-ify reference arguments as suggested by cppcheck
+-- build: Update CMake logic for unversioned LibSafeC pkg-config name
+-- doc: add bullets for $var parameter names and maxXX limits.
+-- http_inspect: accelerated blocking for chunked message bodies
+-- http2_inspect: send raw encoded headers to detection
+-- managers: Make InspectorManager::thread_stop() a no-op if thread_init() was never called
+-- rna: generate an RNA_EVENT_CHANGE when a host is seen after the last log event and the current
+   time is past the update timeout.
+-- rna: support for bidirectional flow with UDP, IP, and ICMP traffic
+-- rna: Support for filtering rna events by host ip
+-- rule_state: switch from regex parameter names to simpler parsing
+-- snort2lua: only emit max_flows and pruning_timeout options in converted lua file if the option
+   is used in the snort2 conf file
+-- stream: fix problem with accelerated blocking partial inspection
+-- style: update link for google c++ style guide
+
 19/08/28 - build 260
 
 -- appid: handle 'change cipher spec' in 'server hello' to allow some app detection for tls 1.3
