@@ -58,6 +58,7 @@
 #include "packet_tracer/packet_tracer.h"
 #include "profiler/profiler.h"
 #include "pub_sub/finalize_packet_event.h"
+#include "pub_sub/other_message_event.h"
 #include "side_channel/side_channel.h"
 #include "stream/stream.h"
 #include "time/packet_time.h"
@@ -353,6 +354,7 @@ void Analyzer::process_daq_pkt_msg(DAQ_Msg_h msg, bool retry)
 
 void Analyzer::process_daq_msg(DAQ_Msg_h msg, bool retry)
 {
+    DAQ_Verdict verdict = DAQ_VERDICT_PASS;
     switch (daq_msg_get_type(msg))
     {
         case DAQ_MSG_TYPE_PACKET:
@@ -364,11 +366,17 @@ void Analyzer::process_daq_msg(DAQ_Msg_h msg, bool retry)
             process_daq_sof_eof_msg(msg);
             break;
         default:
+            {
+                OtherMessageEvent event(msg, verdict);
+                aux_counts.other_messages++;
+                // the verdict can be updated by event handler
+                DataBus::publish(OTHER_MESSAGE_EVENT, event);
+            }
             break;
     }
     {
         Profile profile(daqPerfStats);
-        daq_instance->finalize_message(msg, DAQ_VERDICT_PASS);
+        daq_instance->finalize_message(msg, verdict);
     }
 }
 

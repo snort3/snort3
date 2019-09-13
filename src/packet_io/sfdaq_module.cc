@@ -190,6 +190,7 @@ struct DAQStats
     PegCount retries_dropped;
     PegCount retries_processed;
     PegCount retries_discarded;
+    PegCount other_messages;
 };
 
 const PegInfo daq_names[] =
@@ -221,6 +222,7 @@ const PegInfo daq_names[] =
     { CountType::SUM, "retries_dropped", "messages dropped when overrunning the retry queue" },
     { CountType::SUM, "retries_processed", "messages processed from the retry queue" },
     { CountType::SUM, "retries_discarded", "messages discarded when purging the retry queue" },
+    { CountType::SUM, "other_messages", "messages received from DAQ with unrecognized message type" },
     { CountType::END, nullptr, nullptr }
 };
 
@@ -295,6 +297,7 @@ void SFDAQModule::prep_counts()
     stats.retries_dropped = aux_counts.retries_dropped;
     stats.retries_processed = aux_counts.retries_processed;
     stats.retries_discarded = aux_counts.retries_discarded;
+    stats.other_messages = aux_counts.other_messages;
 
     memset(&aux_counts, 0, sizeof(AuxCount));
 

@@ -89,6 +89,7 @@ struct AuxCount
     PegCount retries_dropped;
     PegCount retries_processed;
     PegCount retries_discarded;
+    PegCount other_messages;
 };
 
 extern ProcessCount proc_stats;
