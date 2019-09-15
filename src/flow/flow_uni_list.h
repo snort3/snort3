@@ -31,9 +31,10 @@ public:
     {
         head = new snort::Flow;
         tail = new snort::Flow;
-
         head->next = tail;
         tail->prev = head;
+        head->prev = nullptr;
+        tail->next = nullptr;
     }
 
     ~FlowUniList()
@@ -44,13 +45,10 @@ public:
 
     void link_uni(snort::Flow* flow)
     {
-
         flow->next = head->next;
         flow->prev = head;
-
         head->next->prev = flow;
         head->next = flow;
-
         ++count;
     }
 
@@ -59,16 +57,22 @@ public:
         if ( !flow->next )
             return;
 
-        --count;
-
         flow->next->prev = flow->prev;
         flow->prev->next = flow->next;
-
         flow->next = flow->prev = nullptr;
+        --count;
+
     }
 
     snort::Flow* get_oldest_uni()
-    { return tail->prev; }
+    {
+        return ( tail->prev != head ) ? tail->prev : nullptr;
+    }
+
+    snort::Flow* get_prev(snort::Flow* flow)
+    {
+        return ( flow->prev != head ) ? flow->prev : nullptr;
+    }
 
     unsigned get_count() const
     { return count; }
