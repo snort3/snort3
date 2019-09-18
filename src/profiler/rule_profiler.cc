@@ -76,7 +76,7 @@ static const StatsTable::Field fields[] =
     { "gid", 6, '\0', 0, std::ios_base::fmtflags() },
     { "sid", 6, '\0', 0, std::ios_base::fmtflags() },
     { "rev", 4, '\0', 0, std::ios_base::fmtflags() },
-    { "checks", 7, '\0', 0, std::ios_base::fmtflags() },
+    { "checks", 10, '\0', 0, std::ios_base::fmtflags() },
     { "matches", 8, '\0', 0, std::ios_base::fmtflags() },
     { "alerts", 7, '\0', 0, std::ios_base::fmtflags() },
     { "time (us)", 10, '\0', 0, std::ios_base::fmtflags() },
