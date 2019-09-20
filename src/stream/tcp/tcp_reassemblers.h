@@ -28,10 +28,11 @@ class TcpReassemblerFactory
 {
 public:
     static TcpReassembler* create(StreamPolicy);
+private:
+    TcpReassemblerFactory() = delete;
 };
 
 class TcpReassemblerPolicy
-
 {
 public:
     TcpReassemblerPolicy() = default;

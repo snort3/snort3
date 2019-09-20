@@ -37,16 +37,9 @@
 using namespace std;
 
 TcpStateHandler::TcpStateHandler(TcpStreamTracker::TcpState state, TcpStateMachine& tsm)
-    : tsm(&tsm), tcp_state(state)
 {
     tsm.register_state_handler(state, *this);
 }
-
-//TcpStateHandler::TcpStateHandler() :
-//    tsm(nullptr), tcp_state(TcpStreamTracker::TCP_CLOSED), session(*(new
-// TcpStreamSession(nullptr)))
-//{
-//}
 
 bool TcpStateHandler::do_pre_sm_packet_actions(TcpSegmentDescriptor&, TcpStreamTracker&)
 {

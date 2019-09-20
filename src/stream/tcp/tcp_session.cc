@@ -113,7 +113,8 @@ void TcpSession::restart(Packet* p)
     assert(p->flow == flow);
 
     DetectionEngine::onload(flow);
-    TcpStreamTracker* talker, * listener;
+    TcpStreamTracker* talker;
+    TcpStreamTracker* listener;
 
     if (p->is_from_server())
     {

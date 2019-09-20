@@ -36,21 +36,6 @@ public:
 
     virtual bool eval(TcpSegmentDescriptor&, TcpStreamTracker&);
 
-    TcpStreamTracker::TcpState get_tcp_state() const
-    {
-        return tcp_state;
-    }
-
-    const TcpStateMachine* get_tsm() const
-    {
-        return tsm;
-    }
-
-    void set_tsm(const TcpStateMachine* tsm)
-    {
-        this->tsm = tsm;
-    }
-
     virtual bool do_pre_sm_packet_actions(TcpSegmentDescriptor&, TcpStreamTracker&);
     virtual bool do_post_sm_packet_actions(TcpSegmentDescriptor&, TcpStreamTracker&);
 
@@ -67,9 +52,6 @@ protected:
     virtual bool fin_recv(TcpSegmentDescriptor&, TcpStreamTracker&) { return true; }
     virtual bool rst_sent(TcpSegmentDescriptor&, TcpStreamTracker&) { return true; }
     virtual bool rst_recv(TcpSegmentDescriptor&, TcpStreamTracker&) { return true; }
-
-    const TcpStateMachine* tsm;
-    TcpStreamTracker::TcpState tcp_state;
 };
 
 #endif

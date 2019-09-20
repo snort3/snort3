@@ -136,10 +136,10 @@ THREAD_LOCAL TcpStats tcpStats;
 static const Parameter stream_tcp_small_params[] =
 {
     { "count", Parameter::PT_INT, "0:2048", "0",
-      "limit number of small segments queued" },
+      "number of consecutive TCP small segments considered to be excessive (129:12)" },
 
     { "maximum_size", Parameter::PT_INT, "0:2048", "0",
-      "limit number of small segments queued" },
+      "minimum bytes for a TCP segment not to be considered small (129:12)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

@@ -167,10 +167,7 @@ bool TcpStateSynRecv::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     if ( trk.normalizer.validate_rst(tsd) )
     {
         Flow* flow = tsd.get_flow();
-
         flow->set_session_flags(SSNFLAG_RESET);
-        if ( trk.normalizer.is_tcp_ips_enabled() )
-            tcp_state = TcpStreamTracker::TCP_LISTEN;
     }
     else
     {

@@ -25,9 +25,6 @@
 #include "stream/stream.h"
 #include "stream/tcp/segment_overlap_editor.h"
 
-class TcpSession;
-class TcpStreamTracker;
-
 class TcpReassembler : public SegmentOverlapEditor
 {
 public:

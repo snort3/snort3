@@ -51,7 +51,6 @@ class TcpEventLogger
 public:
     TcpEventLogger() = default;
 
-
     void clear_tcp_events()
     {
         tcp_events = 0;

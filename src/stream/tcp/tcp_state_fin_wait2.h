@@ -24,8 +24,6 @@
 
 #include "stream/libtcp/tcp_state_handler.h"
 
-class TcpSession;
-
 class TcpStateFinWait2 : public TcpStateHandler
 {
 public:

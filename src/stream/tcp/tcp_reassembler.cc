@@ -202,16 +202,12 @@ int TcpReassembler::add_reassembly_segment(
     TcpReassemblerState& trs, TcpSegmentDescriptor& tsd, int16_t len, uint32_t slide,
     uint32_t trunc_len, uint32_t seq, TcpSegmentNode* left)
 {
-    TcpSegmentNode* tsn = nullptr;
-    int32_t newSize = len - slide - trunc_len;
+    const int32_t new_size = len - slide - trunc_len;
+    assert(new_size >= 0);
 
-    if ( newSize <= 0 )
+    if ( new_size <= 0 )
     {
-        // FIXIT-L ideally newSize would not go negative
-        //assert(newSize == 0);
-
-        // zero size data because of trimming.  Don't insert it
-
+        // Zero size data because of trimming. Don't insert it.
         inc_tcp_discards();
         trs.tracker->normalizer.trim_win_payload(tsd);
 
@@ -219,18 +215,18 @@ int TcpReassembler::add_reassembly_segment(
     }
 
     // FIXIT-L don't allocate overlapped part
-    tsn = TcpSegmentNode::init(tsd);
+    TcpSegmentNode* const tsn = TcpSegmentNode::init(tsd);
 
     tsn->offset = slide;
-    tsn->c_len = (uint16_t)newSize;
-    tsn->i_len = (uint16_t)newSize;
+    tsn->c_len = (uint16_t)new_size;
+    tsn->i_len = (uint16_t)new_size;
     tsn->i_seq = tsn->c_seq = seq;
     tsn->ts = tsd.get_ts();
 
     // FIXIT-M the urgent ptr handling is broken... urg_offset could be set here but currently
     // not actually referenced anywhere else.  In 2.9.7 the FlushStream function did reference
     // this field but that code has been lost... urg ptr handling needs to be reviewed and fixed
-    //tsn->urg_offset = trs.tracker->normalizer.set_urg_offset(tsd.get_tcph(), tsd.get_seg_len());
+    // tsn->urg_offset = trs.tracker->normalizer.set_urg_offset(tsd.get_tcph(), tsd.get_seg_len());
 
     queue_reassembly_segment(trs, left, tsn);
 
@@ -1287,6 +1283,9 @@ int TcpReassembler::insert_segment_in_seglist(
     {
         /* Adjust slide so that is correct relative to orig seq */
         trs.sos.slide = trs.sos.seq - tsd.get_seg_seq();
+        // FIXIT-L for some reason length - slide - trunc_len is sometimes negative
+        if (trs.sos.len - trs.sos.slide - trs.sos.trunc_len < 0)
+            return STREAM_INSERT_OK;
         rc = add_reassembly_segment(
             trs, tsd, trs.sos.len, trs.sos.slide, trs.sos.trunc_len, trs.sos.seq, trs.sos.left);
     }
@@ -1309,7 +1308,7 @@ int TcpReassembler::queue_packet_for_reassembly(
 
     if ( SEQ_GT(trs.tracker->r_win_base, tsd.get_seg_seq() ) )
     {
-        int32_t offset = trs.tracker->r_win_base - tsd.get_seg_seq();
+        const int32_t offset = trs.tracker->r_win_base - tsd.get_seg_seq();
 
         if ( offset < tsd.get_seg_len() )
         {
