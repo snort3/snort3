@@ -101,15 +101,15 @@ bool HostTracker::add_service(Port port, IpProtocol proto, AppId appid, bool inf
     return true;
 }
 
-AppId HostTracker::get_appid(Port port, IpProtocol proto, bool inferred_only)
+AppId HostTracker::get_appid(Port port, IpProtocol proto, bool inferred_only, bool allow_port_wildcard)
 {
     host_tracker_stats.service_finds++;
     std::lock_guard<std::mutex> lck(host_tracker_lock);
 
     for ( const auto& s : services )
     {
-        if ( s.port == port and s.proto == proto and
-            (!inferred_only or s.inferred_appid == inferred_only) )
+        bool matched = (s.port == port and s.proto == proto and (!inferred_only or s.inferred_appid == inferred_only));
+        if ( matched or ( allow_port_wildcard and s.inferred_appid ) )
             return s.appid;
     }
 

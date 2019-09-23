@@ -220,7 +220,7 @@ ServiceDiscovery& ServiceDiscovery::get_instance()
 }
 
 HostCacheIp host_cache(50);
-AppId HostTracker::get_appid(Port, IpProtocol, bool)
+AppId HostTracker::get_appid(Port, IpProtocol, bool, bool)
 {
     return APP_ID_NONE;
 }

@@ -917,7 +917,7 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
         auto ht = host_cache.find(*ip);
         if (ht)
         {
-            AppId appid = ht->get_appid(port, protocol, true);
+            AppId appid = ht->get_appid(port, protocol, true, asd.config->mod_config->allow_port_wildcard_host_cache);
             if (appid > APP_ID_NONE)
             {
                 // FIXIT-L: Make this more generic to support service and payload IDs
