@@ -553,16 +553,6 @@ Inspector* InspectorManager::get_inspector(const char* key, bool dflt_only, Snor
     return p->handler;
 }
 
-InspectorType InspectorManager::get_type(const char* key)
-{
-    Inspector* p = get_inspector(key);
-
-    if ( !p )
-        return IT_MAX;
-
-    return p->get_api()->type;
-}
-
 bool InspectorManager::delete_inspector(SnortConfig* sc, const char* iname)
 {
     bool ok = false;
