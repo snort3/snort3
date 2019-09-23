@@ -95,7 +95,7 @@ private:
     uint32_t pool_size = 0;
     uint32_t pool_available = 0;
     int dlt = -1;
-    DAQ_Stats_t daq_stats = { };
+    DAQ_Stats_t daq_instance_stats = { };
     uint8_t daq_tunnel_mask = 0;
 };
 }

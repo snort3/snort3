@@ -167,32 +167,6 @@ bool SFDAQModule::end(const char* fqn, int idx, SnortConfig* sc)
     return true;
 }
 
-/*
- * Module Counters
- */
-
-struct DAQStats
-{
-    PegCount pcaps;
-    PegCount received;
-    PegCount analyzed;
-    PegCount dropped;
-    PegCount filtered;
-    PegCount outstanding;
-    PegCount injected;
-    PegCount verdicts[MAX_DAQ_VERDICT];
-    PegCount internal_blacklist;
-    PegCount internal_whitelist;
-    PegCount skipped;
-    PegCount idle;
-    PegCount rx_bytes;
-    PegCount retries_queued;
-    PegCount retries_dropped;
-    PegCount retries_processed;
-    PegCount retries_discarded;
-    PegCount other_messages;
-};
-
 const PegInfo daq_names[] =
 {
     { CountType::MAX, "pcaps", "total files and interfaces processed" },
@@ -218,6 +192,7 @@ const PegInfo daq_names[] =
     { CountType::SUM, "skipped", "packets skipped at startup" },
     { CountType::SUM, "idle", "attempts to acquire from DAQ without available packets" },
     { CountType::SUM, "rx_bytes", "total bytes received" },
+    { CountType::SUM, "expected_flows", "expected flows created in DAQ" },
     { CountType::SUM, "retries_queued", "messages queued for retry" },
     { CountType::SUM, "retries_dropped", "messages dropped when overrunning the retry queue" },
     { CountType::SUM, "retries_processed", "messages processed from the retry queue" },
@@ -226,7 +201,7 @@ const PegInfo daq_names[] =
     { CountType::END, nullptr, nullptr }
 };
 
-static THREAD_LOCAL DAQStats stats;
+THREAD_LOCAL DAQStats daq_stats;
 
 const PegInfo* SFDAQModule::get_pegs() const
 {
@@ -235,7 +210,7 @@ const PegInfo* SFDAQModule::get_pegs() const
 
 PegCount* SFDAQModule::get_counts() const
 {
-    return (PegCount*) &stats;
+    return (PegCount*) &daq_stats;
 }
 
 static DAQ_Stats_t operator-(const DAQ_Stats_t& left, const DAQ_Stats_t& right)
@@ -277,29 +252,16 @@ void SFDAQModule::prep_counts()
                         new_sfdaq_stats.packets_filtered -
                         new_sfdaq_stats.packets_received;
 
-    stats.pcaps = Trough::get_file_count();
-    stats.received = sfdaq_stats_delta.hw_packets_received;
-    stats.analyzed = sfdaq_stats_delta.packets_received;
-    stats.dropped = sfdaq_stats_delta.hw_packets_dropped;
-    stats.filtered =  sfdaq_stats_delta.packets_filtered;
-    stats.outstanding =  pkts_out;
-    stats.injected =  sfdaq_stats_delta.packets_injected;
+    daq_stats.pcaps = Trough::get_file_count();
+    daq_stats.received = sfdaq_stats_delta.hw_packets_received;
+    daq_stats.analyzed = sfdaq_stats_delta.packets_received;
+    daq_stats.dropped = sfdaq_stats_delta.hw_packets_dropped;
+    daq_stats.filtered =  sfdaq_stats_delta.packets_filtered;
+    daq_stats.outstanding =  pkts_out;
+    daq_stats.injected =  sfdaq_stats_delta.packets_injected;
 
     for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )
-        stats.verdicts[i] = sfdaq_stats_delta.verdicts[i];
-
-    stats.internal_blacklist = aux_counts.internal_blacklist;
-    stats.internal_whitelist = aux_counts.internal_whitelist;
-    stats.skipped = aux_counts.skipped;
-    stats.idle = aux_counts.idle;
-    stats.rx_bytes = aux_counts.rx_bytes;
-    stats.retries_queued = aux_counts.retries_queued;
-    stats.retries_dropped = aux_counts.retries_dropped;
-    stats.retries_processed = aux_counts.retries_processed;
-    stats.retries_discarded = aux_counts.retries_discarded;
-    stats.other_messages = aux_counts.other_messages;
-
-    memset(&aux_counts, 0, sizeof(AuxCount));
+        daq_stats.verdicts[i] = sfdaq_stats_delta.verdicts[i];
 
     sfdaq_stats = new_sfdaq_stats;
     for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )

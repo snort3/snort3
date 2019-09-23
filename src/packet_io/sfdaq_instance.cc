@@ -32,6 +32,7 @@
 #include "protocols/vlan.h"
 
 #include "sfdaq_config.h"
+#include "sfdaq_module.h"
 
 using namespace snort;
 
@@ -275,17 +276,20 @@ const DAQ_Stats_t* SFDAQInstance::get_stats()
 {
     if (instance)
     {
-        int rval = daq_instance_get_stats(instance, &daq_stats);
+        int rval = daq_instance_get_stats(instance, &daq_instance_stats);
         if (rval != DAQ_SUCCESS)
             LogMessage("Couldn't query DAQ stats: %s (%d)\n", daq_instance_get_error(instance), rval);
 
         // Some DAQ modules don't provide hardware numbers, so we default HW RX to the SW equivalent
         // (this means outstanding packets = 0)
-        if (daq_stats.hw_packets_received == 0)
-            daq_stats.hw_packets_received = daq_stats.packets_received + daq_stats.packets_filtered;
+        if (daq_instance_stats.hw_packets_received == 0)
+        {
+            daq_instance_stats.hw_packets_received = daq_instance_stats.packets_received +
+                daq_instance_stats.packets_filtered;
+        }
     }
 
-    return &daq_stats;
+    return &daq_instance_stats;
 }
 
 int SFDAQInstance::ioctl(DAQ_IoctlCmd cmd, void *arg, size_t arglen)
@@ -374,6 +378,8 @@ int SFDAQInstance::add_expected(const Packet* ctrlPkt, const SfIp* cliIP, uint16
     // Opaque data blob for expected flows is currently unused/unimplemented
     d_cef.data = nullptr;
     d_cef.length = 0;
+
+    daq_stats.expected_flows++;
 
     return daq_instance_ioctl(instance, DIOCTL_CREATE_EXPECTED_FLOW, &d_cef, sizeof(d_cef));
 }

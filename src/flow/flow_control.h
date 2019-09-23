@@ -83,6 +83,9 @@ public:
         const snort::SfIp *dstIP, uint16_t dstPort,
         SnortProtocolId snort_protocol_id, snort::FlowData*);
 
+    class ExpectCache* get_exp_cache()
+    { return exp_cache; }
+
     PegCount get_flows()
     { return num_flows; }
 

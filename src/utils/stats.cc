@@ -43,7 +43,6 @@
 #define STATS_SEPARATOR \
     "--------------------------------------------------"
 
-THREAD_LOCAL AuxCount aux_counts;
 ProcessCount proc_stats;
 
 namespace snort

@@ -35,6 +35,7 @@
 
 #include "sfdaq.h"
 #include "sfdaq_instance.h"
+#include "sfdaq_module.h"
 
 using namespace snort;
 
@@ -431,7 +432,7 @@ bool Active::retry_packet(const Packet* p)
     {
         // Fall back on dropping the packet and relying on the host to retransmit
         active_action = ACT_DROP;
-        aux_counts.retries_dropped++;
+        daq_stats.retries_dropped++;
         return false;
     }
 

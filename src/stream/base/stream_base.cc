@@ -22,6 +22,7 @@
 
 #include <functional>
 
+#include "flow/expect_cache.h"
 #include "flow/flow_control.h"
 #include "flow/prune_stats.h"
 #include "framework/data_bus.h"
@@ -60,6 +61,10 @@ const PegInfo base_pegs[] =
     { CountType::SUM, "preemptive_prunes", "sessions pruned during preemptive pruning" },
     { CountType::SUM, "memcap_prunes", "sessions pruned due to memcap" },
     { CountType::SUM, "ha_prunes", "sessions pruned by high availability sync" },
+    { CountType::SUM, "expected_flows", "total expected flows created within snort" },
+    { CountType::SUM, "expected_realized", "number of expected flows realized" },
+    { CountType::SUM, "expected_pruned", "number of expected flows pruned" },
+    { CountType::SUM, "expected_overflows", "number of expected cache overflows" },
     { CountType::END, nullptr, nullptr }
 };
 
@@ -77,6 +82,16 @@ void base_sum()
     stream_base_stats.preemptive_prunes = flow_con->get_prunes(PruneReason::PREEMPTIVE);
     stream_base_stats.memcap_prunes = flow_con->get_prunes(PruneReason::MEMCAP);
     stream_base_stats.ha_prunes = flow_con->get_prunes(PruneReason::HA);
+
+    ExpectCache* exp_cache = flow_con->get_exp_cache();
+
+    if ( exp_cache )
+    {
+        stream_base_stats.expected_flows = exp_cache->get_expects();
+        stream_base_stats.expected_realized = exp_cache->get_realized();
+        stream_base_stats.expected_pruned = exp_cache->get_prunes();
+        stream_base_stats.expected_overflows = exp_cache->get_overflows();
+    }
 
     sum_stats((PegCount*)&g_stats, (PegCount*)&stream_base_stats,
         array_size(base_pegs)-1);
@@ -246,15 +261,6 @@ void StreamBase::eval(Packet* p)
         break;
     };
 }
-
-#if 0
-// FIXIT-L add method to get exp cache?
-LogMessage("            Expected Flows\n");
-LogMessage("                  Expected: %lu\n", exp_cache->get_expects());
-LogMessage("                  Realized: %lu\n", exp_cache->get_realized());
-LogMessage("                    Pruned: %lu\n", exp_cache->get_prunes());
-LogMessage("                 Overflows: %lu\n", exp_cache->get_overflows());
-#endif
 
 //-------------------------------------------------------------------------
 // api stuff

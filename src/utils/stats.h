@@ -78,22 +78,7 @@ struct ProcessCount
     PegCount attribute_table_hosts;
 };
 
-struct AuxCount
-{
-    PegCount internal_blacklist;
-    PegCount internal_whitelist;
-    PegCount idle;
-    PegCount rx_bytes;
-    PegCount skipped;
-    PegCount retries_queued;
-    PegCount retries_dropped;
-    PegCount retries_processed;
-    PegCount retries_discarded;
-    PegCount other_messages;
-};
-
 extern ProcessCount proc_stats;
-extern THREAD_LOCAL AuxCount aux_counts;
 
 extern const PegInfo daq_names[];
 extern const PegInfo pc_names[];

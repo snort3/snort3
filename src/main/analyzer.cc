@@ -55,6 +55,7 @@
 #include "packet_io/sfdaq.h"
 #include "packet_io/sfdaq_config.h"
 #include "packet_io/sfdaq_instance.h"
+#include "packet_io/sfdaq_module.h"
 #include "packet_tracer/packet_tracer.h"
 #include "profiler/profiler.h"
 #include "pub_sub/finalize_packet_event.h"
@@ -176,7 +177,7 @@ static bool process_packet(Packet* p)
 {
     assert(p->pkth && p->pkt);
 
-    aux_counts.rx_bytes += p->pktlen;
+    daq_stats.rx_bytes += p->pktlen;
 
     PacketTracer::activate(*p);
 
@@ -210,7 +211,7 @@ static DAQ_Verdict distill_verdict(Packet* p)
             verdict = DAQ_VERDICT_PASS;
         else if ( act->get_tunnel_bypass() )
         {
-            aux_counts.internal_blacklist++;
+            daq_stats.internal_blacklist++;
             verdict = DAQ_VERDICT_BLOCK;
         }
         else if ( SnortConfig::inline_mode() || act->packet_force_dropped() )
@@ -250,7 +251,7 @@ static DAQ_Verdict distill_verdict(Packet* p)
         else
         {
             verdict = DAQ_VERDICT_PASS;
-            aux_counts.internal_whitelist++;
+            daq_stats.internal_whitelist++;
         }
     }
     else if ( p->ptrs.decode_flags & DECODE_PKT_TRUST )
@@ -277,7 +278,7 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
     if (p->active->packet_retry_requested())
     {
         retry_queue->put(p->daq_msg);
-        aux_counts.retries_queued++;
+        daq_stats.retries_queued++;
     }
     else if (!p->active->is_packet_held())
         verdict = distill_verdict(p);
@@ -368,7 +369,7 @@ void Analyzer::process_daq_msg(DAQ_Msg_h msg, bool retry)
         default:
             {
                 OtherMessageEvent event(msg, verdict);
-                aux_counts.other_messages++;
+                daq_stats.other_messages++;
                 // the verdict can be updated by event handler
                 DataBus::publish(OTHER_MESSAGE_EVENT, event);
             }
@@ -390,7 +391,7 @@ void Analyzer::process_retry_queue()
         while ((msg = retry_queue->get(&now)) != nullptr)
         {
             process_daq_msg(msg, true);
-            aux_counts.retries_processed++;
+            daq_stats.retries_processed++;
         }
     }
 }
@@ -476,7 +477,7 @@ const char* Analyzer::get_state_string()
 void Analyzer::idle()
 {
     // FIXIT-L this whole thing could be pub-sub
-    aux_counts.idle++;
+    daq_stats.idle++;
 
     // This should only be called if the DAQ timeout elapsed, so increment the packet time
     // by the DAQ timeout.
@@ -564,7 +565,7 @@ void Analyzer::term()
     DAQ_Msg_h msg;
     while ((msg = retry_queue->get()) != nullptr)
     {
-        aux_counts.retries_discarded++;
+        daq_stats.retries_discarded++;
         Profile profile(daqPerfStats);
         daq_instance->finalize_message(msg, DAQ_VERDICT_BLOCK);
     }
@@ -761,7 +762,7 @@ DAQ_RecvStatus Analyzer::process_messages()
         if (skip_cnt > 0)
         {
             Profile profile(daqPerfStats);
-            aux_counts.skipped++;
+            daq_stats.skipped++;
             skip_cnt--;
             daq_instance->finalize_message(msg, DAQ_VERDICT_PASS);
             continue;

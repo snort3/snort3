@@ -401,7 +401,8 @@ int ExpectCache::add_flow(const Packet *ctrlPkt,
         node->count = 0;
         last = nullptr;
         /* Only add TCP and UDP expected flows for now via the DAQ module. */
-        if (ip_proto == IpProtocol::TCP || ip_proto == IpProtocol::UDP)
+        if ((ip_proto == IpProtocol::TCP || ip_proto == IpProtocol::UDP) 
+                && ctrlPkt->daq_instance)
             ctrlPkt->daq_instance->add_expected(ctrlPkt, cliIP, cliPort, srvIP, srvPort,
                     ip_proto, 1000, 0);
     }

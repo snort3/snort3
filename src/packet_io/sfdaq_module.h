@@ -54,4 +54,29 @@ private:
     SFDAQModuleConfig* module_config;
 };
 
+struct DAQStats
+{
+    PegCount pcaps;
+    PegCount received;
+    PegCount analyzed;
+    PegCount dropped;
+    PegCount filtered;
+    PegCount outstanding;
+    PegCount injected;
+    PegCount verdicts[MAX_DAQ_VERDICT];
+    PegCount internal_blacklist;
+    PegCount internal_whitelist;
+    PegCount skipped;
+    PegCount idle;
+    PegCount rx_bytes;
+    PegCount expected_flows;
+    PegCount retries_queued;
+    PegCount retries_dropped;
+    PegCount retries_processed;
+    PegCount retries_discarded;
+    PegCount other_messages;
+};
+
+extern THREAD_LOCAL DAQStats daq_stats;
+
 #endif

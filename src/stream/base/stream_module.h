@@ -49,6 +49,10 @@ struct BaseStats
      PegCount preemptive_prunes;
      PegCount memcap_prunes;
      PegCount ha_prunes;
+     PegCount expected_flows;
+     PegCount expected_realized;
+     PegCount expected_pruned;
+     PegCount expected_overflows;
 };
 
 extern const PegInfo base_pegs[];
