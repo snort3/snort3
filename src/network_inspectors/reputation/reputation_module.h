@@ -25,15 +25,7 @@
 
 #include "framework/module.h"
 #include "reputation_config.h"
-
-#define GID_REPUTATION 136
-
-#define REPUTATION_EVENT_BLACKLIST       1
-#define REPUTATION_EVENT_WHITELIST       2
-#define REPUTATION_EVENT_MONITOR         3
-
-#define REPUTATION_NAME "reputation"
-#define REPUTATION_HELP "reputation inspection"
+#include "reputation_common.h"
 
 namespace snort
 {

@@ -34,12 +34,20 @@
 using namespace snort;
 using namespace std;
 
-#define REPUTATION_EVENT_BLACKLIST_STR \
-    "packets blacklisted"
-#define REPUTATION_EVENT_WHITELIST_STR \
-    "packets whitelisted"
-#define REPUTATION_EVENT_MONITOR_STR \
-    "packets monitored"
+#define REPUTATION_EVENT_BLACKLIST_SRC_STR \
+    "packets blacklisted based on source"
+#define REPUTATION_EVENT_BLACKLIST_DST_STR \
+    "packets blacklisted based on destination"
+
+#define REPUTATION_EVENT_WHITELIST_SRC_STR \
+    "packets whitelisted based on source"
+#define REPUTATION_EVENT_WHITELIST_DST_STR \
+    "packets whitelisted based on destination"
+
+#define REPUTATION_EVENT_MONITOR_SRC_STR \
+    "packets monitored based on source"
+#define REPUTATION_EVENT_MONITOR_DST_STR \
+    "packets monitored based on destination"
 
 static const Parameter s_params[] =
 {
@@ -72,9 +80,13 @@ static const Parameter s_params[] =
 
 static const RuleMap reputation_rules[] =
 {
-    { REPUTATION_EVENT_BLACKLIST, REPUTATION_EVENT_BLACKLIST_STR },
-    { REPUTATION_EVENT_WHITELIST, REPUTATION_EVENT_WHITELIST_STR },
-    { REPUTATION_EVENT_MONITOR, REPUTATION_EVENT_MONITOR_STR },
+    { REPUTATION_EVENT_BLACKLIST_SRC, REPUTATION_EVENT_BLACKLIST_SRC_STR },
+    { REPUTATION_EVENT_WHITELIST_SRC, REPUTATION_EVENT_WHITELIST_SRC_STR },
+    { REPUTATION_EVENT_MONITOR_SRC, REPUTATION_EVENT_MONITOR_SRC_STR },
+    { REPUTATION_EVENT_BLACKLIST_DST, REPUTATION_EVENT_BLACKLIST_DST_STR },
+    { REPUTATION_EVENT_WHITELIST_DST, REPUTATION_EVENT_WHITELIST_DST_STR },
+    { REPUTATION_EVENT_MONITOR_DST, REPUTATION_EVENT_MONITOR_DST_STR },
+
 
     { 0, nullptr }
 };
