@@ -1048,14 +1048,23 @@ void ModuleManager::show_module(const char* name)
 
 void ModuleManager::reload_module(const char* name, snort::SnortConfig* sc)
 {
-    if ( ModHook* h = get_hook(name) )
+    ModHook* h = get_hook(name);
+
+    // FIXIT-L: we can check that h->api is not null here or inside instantiate.
+    // Both alternatives prevent crashing in instantiate(). However,
+    // checking it here might be too aggressive, because we are also saying it
+    // is an error. That makes the caller of this function
+    // (get_updated_module()) discard other legitimate reload operations, e.g.
+    // the newly read configuration. We should decide on this when proper
+    // reload functionality gets implemented.
+    if ( h and h->api and h->mod and sc )
     {
         PluginManager::instantiate(h->api, h->mod, sc);
 
     }
     else
     {
-        cout << "Module " << name <<" doesn't exist";
+        cout << "Module " << name <<" doesn't exist or reload not implemented.";
         cout << endl;
         ++s_errors;
     }
@@ -1454,4 +1463,3 @@ void ModuleManager::reset_stats(SnortConfig*)
         p->mod->reset_stats();
     }
 }
-
