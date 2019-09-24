@@ -1058,7 +1058,7 @@ void ModuleManager::reload_module(const char* name, snort::SnortConfig* sc)
     if ( h and h->api and h->mod and sc )
     {
         PluginManager::instantiate(h->api, h->mod, sc);
-
+        s_errors += get_parse_errors();
     }
     else
     {

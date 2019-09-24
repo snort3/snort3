@@ -152,6 +152,10 @@ bool ReputationModule::set(const char*, Value& v, SnortConfig*)
 
 ReputationConfig* ReputationModule::get_data()
 {
+
+    // FIXIT-M: this needs to be set to NULL prior to returning here.
+    // If we do that, though, reload module will error out, even when
+    // reputation has been properly configured (on startup) in lua.
     return conf;
 }
 

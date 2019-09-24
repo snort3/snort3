@@ -420,7 +420,8 @@ static void reputation_init()
 static Inspector* reputation_ctor(Module* m)
 {
     ReputationModule* mod = (ReputationModule*)m;
-    return new Reputation(mod->get_data());
+    ReputationConfig* conf = mod->get_data();
+    return conf ? new Reputation(conf) : nullptr;
 }
 
 static void reputation_dtor(Inspector* p)
@@ -465,4 +466,3 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* nin_reputation = &reputation_api.base;
 #endif
-

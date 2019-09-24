@@ -508,6 +508,7 @@ SnortConfig* Snort::get_reload_config(const char* fname)
 SnortConfig* Snort::get_updated_policy(SnortConfig* other_conf, const char* fname, const char* iname)
 {
     reloading = true;
+    reset_parse_errors();
 
     SnortConfig* sc = new SnortConfig(other_conf);
 
@@ -565,6 +566,7 @@ SnortConfig* Snort::get_updated_module(SnortConfig* other_conf, const char* name
 
     if ( name )
     {
+        reset_parse_errors();
         ModuleManager::reset_errors();
         ModuleManager::reload_module(name, sc);
         if ( ModuleManager::get_errors() || !sc->verify() )
