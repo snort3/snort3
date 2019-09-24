@@ -232,6 +232,14 @@ void RuleApi::add_suboption(const std::string& keyword,
         DataApi::developer_error("Add some header data before adding content!!");
 }
 
+void RuleApi::reset_sticky(void)
+{
+    if (curr_rule)
+        curr_rule->reset_sticky();
+    else
+        DataApi::developer_error("Add a rule before resetting the sticky buffer!!");
+}
+
 void RuleApi::set_curr_options_buffer(const std::string& buffer, bool add_option)
 {
     if (curr_rule)

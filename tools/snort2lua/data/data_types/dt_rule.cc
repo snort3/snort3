@@ -114,6 +114,11 @@ void Rule::add_suboption(const std::string& keyword)
 void Rule::add_suboption(const std::string& keyword, const std::string& val)
 { options.back()->add_suboption(keyword, val); }
 
+void Rule::reset_sticky()
+{
+    sticky_buffer.clear();
+}
+
 void Rule::set_curr_options_buffer(const std::string& new_buffer, bool add_option)
 {
     /* set the buffer if

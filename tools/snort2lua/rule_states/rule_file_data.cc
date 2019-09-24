@@ -44,6 +44,7 @@ bool FileData::convert(std::istringstream& data_stream)
     std::streamoff pos = data_stream.tellg();
 
     rule_api.add_option("file_data");
+    rule_api.reset_sticky();
     args = util::get_rule_option_args(data_stream);
 
     // if there are no arguments, the option had a colon before a semicolon.
