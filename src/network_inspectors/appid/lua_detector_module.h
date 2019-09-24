@@ -24,6 +24,7 @@
 
 #include <cstdint>
 #include <list>
+#include <map>
 #include <string>
 
 #include <lua.hpp>
@@ -31,6 +32,8 @@
 
 #include "main/thread.h"
 #include "protocols/protocol_ids.h"
+
+#include "application_ids.h"
 
 class AppIdConfig;
 class AppIdDetector;
@@ -52,6 +55,8 @@ public:
     static void free_detector_flows();
     // FIXIT-M: RELOAD - When reload is supported, move this variable to a separate location
     lua_State* L;
+    bool insert_cb_detector(AppId app_id, LuaObject* ud);
+    LuaObject* get_cb_detector(AppId app_id);
 
 private:
     void initialize_lua_detectors();
@@ -63,6 +68,7 @@ private:
     AppIdConfig& config;
     std::list<LuaObject*> allocated_objects;
     size_t num_odp_detectors = 0;
+    std::map<AppId, LuaObject*> cb_detectors;
 };
 
 extern THREAD_LOCAL LuaDetectorManager* lua_detector_mgr;

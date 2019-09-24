@@ -30,9 +30,16 @@
 
 #include <string>
 
+#include "protocols/packet.h"
+#include "pub_sub/appid_events.h"
+
 #include "app_info_table.h"
 #include "appid_module.h"
 #include "appid_peg_counts.h"
+#include "appid_types.h"
+
+class AppIdDetector;
+class AppIdSession;
 
 class ApplicationDescriptor
 {
@@ -47,10 +54,9 @@ public:
         my_version.clear();
     }
 
-    virtual void update(AppId id, char* vendor, char* version, AppidChangeBits& change_bits)
+    virtual void update(AppId id, AppidChangeBits& change_bits, char* version)
     {
         set_id(id);
-        set_vendor(vendor);
         set_version(version, change_bits);
     }
 
@@ -72,6 +78,8 @@ public:
                 appid_stats.appid_unknown++;
         }
     }
+
+    virtual void set_id(const snort::Packet& p, AppIdSession& asd, AppidSessionDirection dir, AppId app_id, AppidChangeBits& change_bits);
 
     const char* get_vendor() const
     {

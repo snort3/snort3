@@ -45,6 +45,7 @@
 
 using namespace snort;
 
+void ApplicationDescriptor::set_id(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 const char* AppInfoManager::get_app_name(AppId)
 {
     return "";
@@ -107,15 +108,15 @@ AppIdSession::~AppIdSession()
 {
 }
 
-void AppIdSession::set_client_appid_data(AppId, char*, AppidChangeBits&)
+void AppIdSession::set_client_appid_data(AppId, AppidChangeBits&, char*)
 {
 }
 
-void AppIdSession::set_service_appid_data(AppId, char*, char*, AppidChangeBits&)
+void AppIdSession::set_service_appid_data(AppId, AppidChangeBits&, char*)
 {
 }
 
-void AppIdSession::set_payload_appid_data(AppId, char*, AppidChangeBits&)
+void AppIdSession::set_payload_appid_data(AppId, AppidChangeBits&, char*)
 {
 }
 

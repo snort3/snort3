@@ -985,7 +985,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
         {
             dns_host_scan_hostname((const uint8_t*)dsession->get_host(), dsession->get_host_len(),
                 &client_id, &payload_id);
-            asd.set_client_appid_data(client_id, nullptr, change_bits);
+            asd.set_client_appid_data(client_id, change_bits);
         }
         else if (asd.service.get_id() == APP_ID_RTMP)
             asd.examine_rtmp_metadata(change_bits);

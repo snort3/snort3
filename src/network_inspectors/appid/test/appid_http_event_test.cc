@@ -40,10 +40,9 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
-// Stubs for AppIdDebug
 THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
 void AppIdDebug::activate(const Flow*, const AppIdSession*, bool) { active = true; }
-
+void ApplicationDescriptor::set_id(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 using namespace snort;
 
 namespace snort

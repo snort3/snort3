@@ -35,6 +35,7 @@
 
 #include "app_forecast.h"
 #include "app_info_table.h"
+#include "appid_debug.h"
 #include "appid_inspector.h"
 #include "client_plugins/client_discovery.h"
 #include "detector_plugins/detector_dns.h"
@@ -51,6 +52,7 @@
 #include "host_tracker/host_cache.h"
 
 using namespace snort;
+using namespace std;
 
 #define OVECCOUNT 30    /* should be a multiple of 3 */
 
@@ -1223,6 +1225,154 @@ static int detector_add_content_type_pattern(lua_State* L)
     return 0;
 }
 
+static int register_callback(lua_State* L, LuaObject& ud, AppInfoFlags flag)
+{
+    // Verify detector user data and that we are NOT in packet context
+    ud.validate_lua_state(false);
+
+    const char* callback = lua_tostring(L, 3);
+
+    if (!callback)
+    {
+        lua_pushnumber(L, -1);
+        return 1; // number of results
+    }
+
+    AppId app_id = lua_tonumber(L, 2);
+    if (init(L))
+    {
+        // in control thread, update app info table. app info table is shared across all threads
+        AppInfoTableEntry* entry = AppInfoManager::get_instance().get_app_info_entry(app_id);
+        if (entry)
+        {
+            if (entry->flags & flag)
+            {
+                ErrorMessage("AppId: detector callback already registered for app %d\n", app_id);
+                return 1;
+            }
+            entry->flags |= flag;
+        }
+        else
+        {
+            ErrorMessage("AppId: detector callback cannot be registered for invalid app %d\n",
+                app_id);
+            return 1;
+        }
+    }
+    else
+    {
+        // In packet thread, store Lua detectors objects with callback in a thread local list.
+        // Note that Lua detector objects are thread local
+        ud.set_cb_fn_name(callback);
+
+        assert(lua_detector_mgr);
+        if (!lua_detector_mgr->insert_cb_detector(app_id, &ud))
+        {
+            ErrorMessage("AppId: detector callback already registered for app %d\n", app_id);
+            return 1;
+        }
+    }
+
+    lua_pushnumber(L, 0);
+
+    return 1;
+}
+
+static int detector_register_client_callback(lua_State* L)
+{
+    auto& ud = *UserData<LuaClientObject>::check(L, DETECTOR, 1);
+
+    return register_callback(L, *ud, APPINFO_FLAG_CLIENT_DETECTOR_CALLBACK);
+}
+
+static int detector_register_service_callback(lua_State* L)
+{
+    auto& ud = *UserData<LuaServiceObject>::check(L, DETECTOR, 1);
+
+    return register_callback(L, *ud, APPINFO_FLAG_SERVICE_DETECTOR_CALLBACK);
+}
+
+static int detector_callback(const uint8_t* data, uint16_t size, AppidSessionDirection dir,
+    AppIdSession& asd, const Packet& p, LuaObject& ud, AppidChangeBits& change_bits)
+{
+    if (!data)
+    {
+        return -10;
+    }
+
+    auto my_lua_state = lua_detector_mgr->L;
+    const string& cb_fn_name = ud.get_cb_fn_name();
+    const char* detector_name = ud.get_detector()->get_name().c_str();
+
+    if ((cb_fn_name.empty()) || !(lua_checkstack(my_lua_state, 1)))
+    {
+        ErrorMessage("Detector %s: invalid LUA %s\n", detector_name, lua_tostring(my_lua_state, -1));
+        ud.lsd.ldp.pkt = nullptr;
+        return -10;
+    }
+
+    lua_getfield(my_lua_state, LUA_REGISTRYINDEX, ud.lsd.package_info.name.c_str());
+
+    ud.lsd.ldp.data = data;
+    ud.lsd.ldp.size = size;
+    ud.lsd.ldp.dir = dir;
+    ud.lsd.ldp.asd = &asd;
+    ud.lsd.ldp.pkt = &p;
+    ud.lsd.ldp.change_bits = &change_bits;
+
+    lua_getfield(my_lua_state, -1, cb_fn_name.c_str());
+    if (lua_pcall(my_lua_state, 0, 1, 0))
+    {
+        ErrorMessage("Detector %s: Error validating %s\n", detector_name, lua_tostring(my_lua_state, -1));
+        ud.lsd.ldp.pkt = nullptr;
+        return -10;
+    }
+
+    // detector flows must be destroyed after each packet is processed
+    LuaDetectorManager::free_detector_flows();
+
+    // retrieve result
+    if (!lua_isnumber(my_lua_state, -1))
+    {
+        ErrorMessage("Detector %s: Validator returned non-numeric value\n", detector_name);
+        ud.lsd.ldp.pkt = nullptr;
+        return -10;
+    }
+
+    int ret = lua_tonumber(my_lua_state, -1);
+    lua_pop(my_lua_state, 1);  // pop returned value
+    ud.lsd.ldp.pkt = nullptr;
+
+    return ret;
+}
+
+void check_detector_callback(const Packet& p, AppIdSession& asd, AppidSessionDirection dir, AppId app_id, AppidChangeBits& change_bits, AppInfoTableEntry* entry)
+{
+    if (!entry)
+        entry = AppInfoManager::get_instance().get_app_info_entry(app_id);
+    if (!entry)
+        return;
+
+    if (entry->flags & APPINFO_FLAG_CLIENT_DETECTOR_CALLBACK or
+        entry->flags & APPINFO_FLAG_SERVICE_DETECTOR_CALLBACK)
+    {
+        assert(lua_detector_mgr);
+        LuaObject* ud = lua_detector_mgr->get_cb_detector(app_id);
+        assert(ud);
+
+        if (ud->is_running())
+            return;
+
+        ud->set_running(true);
+
+        int ret = detector_callback(p.data, p.dsize, dir, asd, p, *ud, change_bits);
+        if (appidDebug->is_active())
+            LogMessage("AppIdDbg %s %s detector callback returned %d\n", appidDebug->get_debug_session(),
+                ud->get_detector()->get_name().empty() ? "UKNOWN" : ud->get_detector()->get_name().c_str(), ret);
+        ud->set_running(false);
+    }
+}
+
 static int create_chp_application(AppId appIdInstance, unsigned app_type_flags, int num_matches)
 {
     CHPApp* new_app = (CHPApp*)snort_calloc(sizeof(CHPApp));
@@ -2377,6 +2527,8 @@ static const luaL_Reg detector_methods[] =
     { "addHostPortApp",           detector_add_host_port_application },
     { "addHostPortAppDynamic",    detector_add_host_port_dynamic },
     { "addDNSHostPattern",        detector_add_dns_host_pattern },
+    { "registerClientDetectorCallback",   detector_register_client_callback },
+    { "registerServiceDetectorCallback",  detector_register_service_callback },
 
     /*Obsolete - new detectors should not use this API */
     { "init",                     service_init },

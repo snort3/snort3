@@ -58,6 +58,8 @@ static uint16_t my_length[NUM_HTTP_FIELDS] = { 0 };
 static CHPAction my_match;
 static void* my_chp_rewritten = nullptr;
 
+void ApplicationDescriptor::set_id(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
+
 TEST_GROUP(http_url_patterns_tests)
 {
     void setup() override

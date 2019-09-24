@@ -459,11 +459,11 @@ static inline void process_rtmp(AppIdSession& asd,
         http_matchers->identify_user_agent(field->c_str(), size, service_id, 
         client_id, &version);
         
-        asd.set_client_appid_data(client_id, version, change_bits);
+        asd.set_client_appid_data(client_id, change_bits, version);
         
         // do not overwrite a previously-set service
         if ( service_id <= APP_ID_NONE )
-            asd.set_service_appid_data(service_id, nullptr, nullptr, change_bits);
+            asd.set_service_appid_data(service_id, change_bits);
         
         asd.scan_flags |= ~SCAN_HTTP_USER_AGENT_FLAG;
         snort_free(version);
@@ -487,12 +487,12 @@ static inline void process_rtmp(AppIdSession& asd,
             {
                 // do not overwrite a previously-set client or service
                 if ( client_id <= APP_ID_NONE )
-                    asd.set_client_appid_data(client_id, nullptr, change_bits);
+                    asd.set_client_appid_data(client_id, change_bits);
                 if ( service_id <= APP_ID_NONE )
-                    asd.set_service_appid_data(service_id, nullptr, nullptr, change_bits);
+                    asd.set_service_appid_data(service_id, change_bits);
 
                 // DO overwrite a previously-set data
-                asd.set_payload_appid_data(payload_id, nullptr, change_bits);
+                asd.set_payload_appid_data(payload_id, change_bits);
                 asd.set_referred_payload_app_id_data(referred_payload_app_id, change_bits);
             }
         }
@@ -521,7 +521,7 @@ static inline void process_ssl(AppIdSession& asd,
         asd.tsession = (TlsSession*)snort_calloc(sizeof(TlsSession));
 
     if (!asd.client.get_id())
-        asd.set_client_appid_data(APP_ID_SSL_CLIENT, nullptr, change_bits);
+        asd.set_client_appid_data(APP_ID_SSL_CLIENT, change_bits);
 
     if ( (field=attribute_data.tls_host(false)) != nullptr )
     {
@@ -712,7 +712,7 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                     APPINFO_FLAG_TP_CLIENT | APPINFO_FLAG_IGNORE | APPINFO_FLAG_SSL_SQUELCH);
 
                 if ( app_info_flags & APPINFO_FLAG_TP_CLIENT )
-                    asd.client.set_id(tp_app_id);
+                    asd.client.set_id(*p, asd, direction, tp_app_id, change_bits);
 
                 process_third_party_results(asd, tp_confidence, tp_proto_list, tp_attribute_data,
                     change_bits);
@@ -762,16 +762,16 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                     snort_app_id = APP_ID_HTTP;
                     //data should never be APP_ID_HTTP
                     if (tp_app_id != APP_ID_HTTP)
-                        asd.set_tp_payload_app_id(tp_app_id);
+                        asd.set_tp_payload_app_id(*p, direction, tp_app_id, change_bits);
 
                     asd.set_tp_app_id(APP_ID_HTTP);
 
                     // Handle HTTP tunneling and SSL possibly then being used in that tunnel
                     if (tp_app_id == APP_ID_HTTP_TUNNEL)
-                        asd.set_payload_appid_data(APP_ID_HTTP_TUNNEL, NULL, change_bits);
+                        asd.set_payload_appid_data(APP_ID_HTTP_TUNNEL, change_bits);
                     else if ((asd.payload.get_id() == APP_ID_HTTP_TUNNEL) &&
                         (tp_app_id == APP_ID_SSL))
-                        asd.set_payload_appid_data(APP_ID_HTTP_SSL_TUNNEL, NULL, change_bits);
+                        asd.set_payload_appid_data(APP_ID_HTTP_SSL_TUNNEL, change_bits);
 
                     AppIdHttpSession* hsession = asd.get_http_session();
                     hsession->process_http_packet(direction, change_bits);
@@ -826,7 +826,7 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                     }
                     else
                     {
-                        asd.set_tp_payload_app_id(tp_app_id);
+                        asd.set_tp_payload_app_id(*p, direction, tp_app_id, change_bits);
                         tp_app_id = portAppId;
                         if (appidDebug->is_active())
                         {
@@ -843,7 +843,7 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                     snort_app_id = tp_app_id;
                 }
 
-                asd.set_tp_app_id(tp_app_id);
+                asd.set_tp_app_id(*p, direction, tp_app_id, change_bits);
                 asd.sync_with_snort_protocol_id(snort_app_id, p);
             }
             else

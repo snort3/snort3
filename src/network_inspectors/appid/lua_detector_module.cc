@@ -155,6 +155,7 @@ LuaDetectorManager::LuaDetectorManager(AppIdConfig& config, int is_control) :
 {
     sflist_init(&allocated_detector_flow_list);
     allocated_objects.clear();
+    cb_detectors.clear();
     L = create_lua_state(config.mod_config, is_control);
     if (is_control == 1)
         init_chp_glossary();
@@ -194,6 +195,7 @@ LuaDetectorManager::~LuaDetectorManager()
 
     sflist_static_free_all(&allocated_detector_flow_list, free_detector_flow);
     allocated_objects.clear();
+    cb_detectors.clear(); // do not free Lua objects in cb_detectors
 }
 
 void LuaDetectorManager::initialize(AppIdConfig& config, int is_control)
@@ -232,6 +234,26 @@ void LuaDetectorManager::add_detector_flow(DetectorFlow* df)
 void LuaDetectorManager::free_detector_flows()
 {
     sflist_static_free_all(&allocated_detector_flow_list, free_detector_flow);
+}
+
+bool LuaDetectorManager::insert_cb_detector(AppId app_id, LuaObject* cb_detector)
+{
+    if (cb_detectors.find(app_id) != cb_detectors.end())
+        return false;
+    else
+        cb_detectors[app_id] = cb_detector;
+
+    return true;
+}
+
+LuaObject* LuaDetectorManager::get_cb_detector(AppId app_id)
+{
+    auto it = cb_detectors.find(app_id);
+
+    if (it != cb_detectors.end())
+        return it->second;
+
+    return nullptr;
 }
 
 /**calculates Number of flow and host tracker entries for Lua detectors, given amount

@@ -45,6 +45,7 @@
 #include "appid_inspector.h"
 #include "appid_stats.h"
 #include "appid_utils/ip_funcs.h"
+#include "lua_detector_api.h"
 #include "service_plugins/service_ssl.h"
 #ifdef ENABLE_APPID_THIRD_PARTY
 #include "tp_lib_handler.h"
@@ -415,8 +416,8 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
         if ((ret = ssl_scan_hostname((const uint8_t*)tls_str, size,
                 client_id, payload_id)))
         {
-            set_client_appid_data(client_id, nullptr, change_bits);
-            set_payload_appid_data((AppId)payload_id, nullptr, change_bits);
+            set_client_appid_data(client_id, change_bits);
+            set_payload_appid_data(payload_id, change_bits);
             setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id));
         }
         scan_flags &= ~SCAN_SSL_HOST_FLAG;
@@ -427,8 +428,8 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
         if ((ret = ssl_scan_cname((const uint8_t*)tls_str, size,
                 client_id, payload_id)))
         {
-            set_client_appid_data(client_id, nullptr, change_bits);
-            set_payload_appid_data((AppId)payload_id, nullptr, change_bits);
+            set_client_appid_data(client_id, change_bits);
+            set_payload_appid_data(payload_id, change_bits);
             setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id));
         }
         tsession->set_tls_cname(nullptr, 0);
@@ -439,8 +440,8 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
         if ((ret = ssl_scan_cname((const uint8_t*)tls_str, size,
                 client_id, payload_id)))
         {
-            set_client_appid_data(client_id, nullptr, change_bits);
-            set_payload_appid_data((AppId)payload_id, nullptr, change_bits);
+            set_client_appid_data(client_id, change_bits);
+            set_payload_appid_data(payload_id, change_bits);
             setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id));
         }
         tsession->set_tls_org_unit(nullptr, 0);
@@ -472,18 +473,18 @@ void AppIdSession::examine_rtmp_metadata(AppidChangeBits& change_bits)
         {
             /* do not overwrite a previously-set client or service */
             if (client.get_id() <= APP_ID_NONE)
-                set_client_appid_data(payload_id, nullptr, change_bits);
+                set_client_appid_data(payload_id, change_bits);
             if (service.get_id() <= APP_ID_NONE)
-                set_service_appid_data(service_id, nullptr, nullptr, change_bits);
+                set_service_appid_data(service_id, change_bits);
 
             /* DO overwrite a previously-set data */
-            set_payload_appid_data((AppId)payload.get_id(), nullptr, change_bits);
+            set_payload_appid_data((AppId)payload.get_id(), change_bits);
             set_referred_payload_app_id_data(referred_payload_id, change_bits);
         }
     }
 }
 
-void AppIdSession::set_client_appid_data(AppId id, char* version, AppidChangeBits& change_bits)
+void AppIdSession::set_client_appid_data(AppId id, AppidChangeBits& change_bits, char* version)
 {
     if ( id <= APP_ID_NONE || id == APP_ID_HTTP )
         return;
@@ -513,7 +514,7 @@ void AppIdSession::set_referred_payload_app_id_data(AppId id, AppidChangeBits& c
     }
 }
 
-void AppIdSession::set_payload_appid_data(AppId id, char* version, AppidChangeBits& change_bits)
+void AppIdSession::set_payload_appid_data(AppId id, AppidChangeBits& change_bits, char* version)
 {
     if ( id <= APP_ID_NONE )
         return;
@@ -524,8 +525,7 @@ void AppIdSession::set_payload_appid_data(AppId id, char* version, AppidChangeBi
     payload.set_version(version, change_bits);
 }
 
-void AppIdSession::set_service_appid_data(AppId id, char* vendor, char* version,
-    AppidChangeBits& change_bits)
+void AppIdSession::set_service_appid_data(AppId id, AppidChangeBits& change_bits, char* version)
 {
     if (id <= APP_ID_NONE)
         return;
@@ -538,7 +538,7 @@ void AppIdSession::set_service_appid_data(AppId id, char* vendor, char* version,
         return;
     }
 
-    service.update(id, vendor, version, change_bits);
+    service.update(id, change_bits, version);
 }
 
 void AppIdSession::free_tls_session_data()
@@ -943,3 +943,30 @@ bool AppIdSession::is_tp_appid_available() const
     return true;
 }
 
+void AppIdSession::set_tp_app_id(Packet& p, AppidSessionDirection dir, AppId app_id, AppidChangeBits& change_bits)
+{
+    if (tp_app_id != app_id)
+    {
+        tp_app_id = app_id;
+        AppInfoTableEntry* entry = app_info_mgr->get_app_info_entry(tp_app_id);
+        if (entry)
+        {
+            tp_app_id_deferred = (entry->flags & APPINFO_FLAG_DEFER) ? true : false;
+            check_detector_callback(p, *this, dir, app_id, change_bits, entry);
+        }
+    }
+}
+
+void AppIdSession::set_tp_payload_app_id(Packet& p, AppidSessionDirection dir, AppId app_id, AppidChangeBits& change_bits)
+{
+    if (tp_payload_app_id != app_id)
+    {
+        tp_payload_app_id = app_id;
+        AppInfoTableEntry* entry = app_info_mgr->get_app_info_entry(tp_payload_app_id);
+        if (entry)
+        {
+            tp_payload_app_id_deferred = (entry->flags & APPINFO_FLAG_DEFER_PAYLOAD) ? true : false;
+            check_detector_callback(p, *this, dir, app_id, change_bits, entry);
+        }
+    }
+}

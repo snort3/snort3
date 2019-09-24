@@ -309,10 +309,10 @@ public:
 
     bool is_ssl_session_decrypted();
     void examine_ssl_metadata(snort::Packet*, AppidChangeBits& change_bits);
-    void set_client_appid_data(AppId, char*, AppidChangeBits& change_bits);
-    void set_service_appid_data(AppId, char*, char*, AppidChangeBits& change_bits);
+    void set_client_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
+    void set_service_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
     void set_referred_payload_app_id_data(AppId, AppidChangeBits& change_bits);
-    void set_payload_appid_data(AppId, char*, AppidChangeBits& change_bits);
+    void set_payload_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
     void check_app_detection_restart(AppidChangeBits& change_bits);
     void update_encrypted_app_id(AppId);
     void examine_rtmp_metadata(AppidChangeBits& change_bits);
@@ -330,6 +330,9 @@ public:
     bool is_tp_appid_done() const;
     bool is_tp_processing_done() const;
     bool is_tp_appid_available() const;
+
+    void set_tp_app_id(snort::Packet& p, AppidSessionDirection dir, AppId app_id, AppidChangeBits& change_bits);
+    void set_tp_payload_app_id(snort::Packet& p, AppidSessionDirection dir, AppId app_id, AppidChangeBits& change_bits);
 
     inline void set_tp_app_id(AppId app_id) {
         if(tp_app_id != app_id) {

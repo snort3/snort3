@@ -122,6 +122,8 @@ HttpPatternMatchers* HttpPatternMatchers::get_instance()
     return http_matchers;
 }
 
+void ApplicationDescriptor::set_id(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
+
 // Stubs for AppIdModule
 AppIdModule::AppIdModule(): snort::Module("appid_mock", "appid_mock_help") {}
 AppIdModule::~AppIdModule() {}
@@ -178,7 +180,7 @@ const char* AppInfoManager::get_app_name(int32_t)
 // Stubs for AppIdSession
 void AppIdSession::sync_with_snort_protocol_id(AppId, Packet*) {}
 void AppIdSession::check_app_detection_restart(AppidChangeBits&) {}
-void AppIdSession::set_client_appid_data(AppId, char*, AppidChangeBits&) {}
+void AppIdSession::set_client_appid_data(AppId, AppidChangeBits&, char*) {}
 void AppIdSession::examine_rtmp_metadata(AppidChangeBits&) {}
 void AppIdSession::examine_ssl_metadata(Packet*, AppidChangeBits&) {}
 void AppIdSession::update_encrypted_app_id(AppId) {}
