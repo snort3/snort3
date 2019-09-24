@@ -80,6 +80,17 @@ enum HttpFieldIds : uint8_t
 #define APP_TYPE_CLIENT     0x2
 #define APP_TYPE_PAYLOAD    0x4
 
+struct TunnelDest
+{
+    snort::SfIp ip;
+    uint16_t port;
+    TunnelDest(const char* string_srcip, uint16_t tun_port)
+    {
+        ip.set(string_srcip);
+        port = tun_port;
+    }
+};
+
 class AppIdHttpSession
 {
 public:
@@ -180,6 +191,14 @@ public:
     void set_chp_finished(bool chpFinished = false)
     { chp_finished = chpFinished; }
 
+    void set_tun_dest();
+
+    const TunnelDest* get_tun_dest()
+    { return tun_dest; }
+
+    void free_tun_dest()
+    { delete tun_dest; }
+
     void reset_ptype_scan_counts();
 
     int get_ptype_scan_count(enum HttpFieldIds type)
@@ -227,6 +246,7 @@ protected:
     unsigned numXffFields = 0;
     int ptype_req_counts[NUM_HTTP_FIELDS] = { 0 };
     int ptype_scan_counts[NUM_HTTP_FIELDS] = { 0 };
+    const TunnelDest* tun_dest = nullptr;
 #if RESPONSE_CODE_PACKET_THRESHHOLD
     unsigned response_code_packets = 0;
 #endif

@@ -50,7 +50,6 @@
 #include "tp_lib_handler.h"
 #include "tp_appid_utils.h"
 #endif
-
 using namespace snort;
 
 AppIdDiscovery::AppIdDiscovery()
@@ -868,18 +867,27 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
 
     uint16_t port;
     const SfIp* ip;
-
-    if (direction == APP_ID_FROM_INITIATOR)
+    AppIdHttpSession* hsession = asd.get_http_session();
+    
+    const TunnelDest* tun_dest = hsession->get_tun_dest();
+    if(tun_dest)
     {
-        ip = p->ptrs.ip_api.get_dst();
-        port = p->ptrs.dp;
+        ip = &(tun_dest->ip);
+        port = tun_dest->port;	
     }
     else
     {
-        ip = p->ptrs.ip_api.get_src();
-        port = p->ptrs.sp;
+        if (direction == APP_ID_FROM_INITIATOR)
+        {
+            ip = p->ptrs.ip_api.get_dst();
+            port = p->ptrs.dp;
+        }
+        else
+        {
+            ip = p->ptrs.ip_api.get_src();
+            port = p->ptrs.sp;
+        }
     }
-
     HostPortVal* hv = nullptr;
 
     if (check_static and
@@ -1035,9 +1043,21 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
     client_id = asd.pick_client_app_id();
     misc_id =  asd.pick_misc_app_id();;
 
-    if ((service_id == APP_ID_UNKNOWN_UI or service_id <= APP_ID_NONE ) and
-        (client_id <= APP_ID_NONE and payload_id <= APP_ID_NONE and misc_id <= APP_ID_NONE))
+    bool is_http_tunnel = ((asd.payload.get_id() == APP_ID_HTTP_TUNNEL) || (asd.payload.get_id() == APP_ID_HTTP_SSL_TUNNEL)) ? true:false;
+    if ((is_http_tunnel) or ((service_id == APP_ID_UNKNOWN_UI or service_id <= APP_ID_NONE ) and
+       (client_id <= APP_ID_NONE and payload_id <= APP_ID_NONE and misc_id <= APP_ID_NONE)))
     {
+        if(is_http_tunnel)
+        {
+            AppIdHttpSession* hsession = asd.get_http_session();
+            if(hsession and (asd.scan_flags & SCAN_HTTP_URI_FLAG))
+            {
+                if(hsession->get_tun_dest())
+                    hsession->free_tun_dest();
+                hsession->set_tun_dest();
+                asd.scan_flags &= ~SCAN_HTTP_URI_FLAG;
+            }
+        }
         if (do_host_port_based_discovery(p, asd, protocol, direction))
         {
             service_id = asd.pick_service_app_id();

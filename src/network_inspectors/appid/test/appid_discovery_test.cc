@@ -190,6 +190,7 @@ AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol,
 {
     return nullptr;
 }
+void AppIdHttpSession::set_tun_dest(){}
 
 // Stubs for ServiceDiscovery
 void ServiceDiscovery::initialize() {}
@@ -307,7 +308,6 @@ TEST_GROUP(appid_discovery_tests)
         AppIdPegCounts::cleanup_peg_info();
     }
 };
-
 TEST(appid_discovery_tests, event_published_when_ignoring_flow)
 {
     // Testing event from do_pre_discovery() path

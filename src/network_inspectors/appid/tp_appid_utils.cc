@@ -210,6 +210,7 @@ static inline void process_http_session(AppIdSession& asd,
             hsession->set_offset(REQ_URI_FID,
                 attribute_data.http_request_uri_begin(),
                 attribute_data.http_request_uri_end());
+            asd.scan_flags |= SCAN_HTTP_URI_FLAG; 
             if (appidDebug->is_active())
                 LogMessage("AppIdDbg %s URI (%u-%u) is %s\n", appidDebug->get_debug_session(),
                     attribute_data.http_request_uri_begin(),

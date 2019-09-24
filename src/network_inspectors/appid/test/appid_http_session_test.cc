@@ -42,7 +42,6 @@
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
-
 using namespace snort;
 
 void ApplicationDescriptor::set_id(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
@@ -265,6 +264,20 @@ TEST(appid_http_session, http_field_ids_enum_order)
     CHECK_EQUAL(change_bits.test(APPID_USERAGENT_BIT), true);
     CHECK_EQUAL(change_bits.test(APPID_RESPONSE_BIT), true);
     CHECK_EQUAL(change_bits.test(APPID_REFERER_BIT), true);
+}
+
+TEST(appid_http_session, set_tun_dest)
+{
+    const TunnelDest* tun_dest  = nullptr;
+    SfIp tun_des, ipv6;
+    ipv6.set("2001:db8:85a3::8a2e:370:7334");
+    AppidChangeBits change_bits;
+    hsession.set_field(REQ_URI_FID, new std::string("[2001:db8:85a3::8a2e:370:7334]:51413"), change_bits);
+    hsession.set_tun_dest();
+    tun_dest = hsession.get_tun_dest(); 
+    CHECK(tun_dest != nullptr);
+    CHECK_EQUAL(tun_dest->port, 51413);
+    CHECK_EQUAL((ipv6 == tun_dest->ip), true);
 }
 
 TEST(appid_http_session, change_bits_for_referred_appid)

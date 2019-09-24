@@ -36,6 +36,7 @@
 #ifdef ENABLE_APPID_THIRD_PARTY
 #include "tp_lib_handler.h"
 #endif
+#define PORT_MAX 65535
 
 using namespace snort;
 
@@ -70,6 +71,8 @@ AppIdHttpSession::~AppIdHttpSession()
 
     for ( int i = 0; i < NUM_METADATA_FIELDS; i++)
         delete meta_data[i];
+    if (tun_dest)
+        delete tun_dest;
 }
 
 void AppIdHttpSession::free_chp_matches(ChpMatchDescriptor& cmd, unsigned num_matches)
@@ -101,6 +104,74 @@ void AppIdHttpSession::set_http_change_bits(AppidChangeBits& change_bits, HttpFi
     default:
         break;
     }
+}
+
+void AppIdHttpSession::set_tun_dest()
+{
+    assert(meta_data[REQ_URI_FID]);
+    char *host = nullptr, *host_start, *host_end = nullptr, *url_end;
+    char *port_str = nullptr;
+    uint16_t port = 0;
+    int is_IPv6 = 0;
+    char* url = strdup(meta_data[REQ_URI_FID]->c_str());
+    url_end = url + strlen(url) - 1;
+    host_start = url;
+
+    if (url[0] == '[')
+    {
+        is_IPv6 = 1;
+        port_str = strchr(url, ']');
+        if (port_str && port_str < url_end)
+        {
+            if (*(++port_str) != ':')
+            {
+                port_str = nullptr;
+            }
+        }
+    }
+    else if(isdigit(url[0]))
+    {
+        port_str = strrchr(url, ':');
+    }
+
+    if (port_str && port_str < url_end )
+    {
+        host_end = port_str;
+        if (*(++port_str) != '\0')
+        {
+            char *end = NULL;
+            long ret = strtol(port_str, &end, 10);
+            if (end != port_str && *end == '\0' && ret >= 1 && ret <= PORT_MAX)
+            {
+                port = (uint16_t)ret;
+            }
+        }
+    }
+
+    if (port)
+    {
+        if (is_IPv6)
+        {
+            host_start++;
+            host_end--;
+        }
+
+        if (host_start <= host_end)
+        {
+            char tmp = *host_end;
+            *host_end = '\0';
+            host = strdup(host_start);
+            *host_end = tmp;
+        }
+    }
+    if (host)
+    {
+        if(tun_dest)
+            delete tun_dest;
+        tun_dest= new TunnelDest(host, port);
+        free(host);
+    }
+    free(url );
 }
 
 int AppIdHttpSession::initial_chp_sweep(ChpMatchDescriptor& cmd)
