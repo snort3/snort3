@@ -103,6 +103,12 @@ include::snort2lua_cmds.txt[]
    rejects in the main file.  The two numbers will eventually be combined
    into one output.
 
+*  If the original configuration contains a replace rule with alert action,
+   Snort2Lua won’t translate the rule from alert to rewrite action. It will
+   keep the action as alert, which does not actually replace the content in
+   Snort 3. To replace content, the rule action needs to be rewrite, which
+   can be added manually or by tooling.
+
 === Usage
 
 Snort2Lua is included in the Snort 3 distribution. The Snort2Lua source
