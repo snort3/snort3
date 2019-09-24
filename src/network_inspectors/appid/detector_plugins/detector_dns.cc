@@ -267,13 +267,14 @@ void DnsValidator::add_dns_query_info(AppIdSession& asd, uint16_t id, const uint
     dsession->set_id(id);
     dsession->set_record_type(record_type);
 
-    if (!dsession->get_host())
+    if (!dsession->get_host_len())
     {
         if ((host != nullptr) && (host_len > 0) && (host_offset > 0))
         {
             char* new_host = dns_parse_host(host, host_len);
             dsession->set_host(new_host);
             dsession->set_host_offset(host_offset);
+            snort_free(new_host);
        }
     }
 }
@@ -293,13 +294,14 @@ void DnsValidator::add_dns_response_info(AppIdSession& asd, uint16_t id, const u
     dsession->set_ttl(ttl);
     dsession->set_response_type(response_type);
 
-    if (!dsession->get_host())
+    if (!dsession->get_host_len())
     {
         if ((host != nullptr) && (host_len > 0) && (host_offset > 0))
         {
             char* new_host = dns_parse_host(host, host_len);
             dsession->set_host(new_host);
             dsession->set_host_offset(host_offset);
+            snort_free(new_host);
         }
     }
 }
