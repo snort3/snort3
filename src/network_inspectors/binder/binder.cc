@@ -398,15 +398,10 @@ bool Binding::check_all(const Flow* flow, Packet* p) const
 //-------------------------------------------------------------------------
 // helpers
 //-------------------------------------------------------------------------
-static bool is_global(const char* key)
-{
-    Module* m = ModuleManager::get_module(key);
-    return m ? m->get_usage() == Module::GLOBAL : false;
-}
 
 static void set_session(Flow* flow, const char* key)
 {
-    Inspector* pin = InspectorManager::get_inspector(key, is_global(key));
+    Inspector* pin = InspectorManager::get_inspector(key);
 
     if ( pin )
     {
@@ -436,7 +431,7 @@ static Inspector* get_gadget(Flow* flow)
 
     const char* s = SnortConfig::get_conf()->proto_ref->get_name(flow->ssn_state.snort_protocol_id);
 
-    return InspectorManager::get_inspector(s, is_global(s));
+    return InspectorManager::get_inspector(s);
 }
 
 //-------------------------------------------------------------------------
@@ -475,6 +470,7 @@ bool Stuff::update(Binding* pb)
         action = pb->use.action;
         return true;
     }
+
     switch ( pb->use.what )
     {
     case BindUse::BW_NONE:
@@ -842,7 +838,9 @@ void Binder::set_binding(SnortConfig*, Binding* pb)
     else
         key = pb->use.svc.c_str();
 
-    if ( (pb->use.object = InspectorManager::get_inspector(key, is_global(key))) )
+    Module* m = ModuleManager::get_module(key);
+    bool is_global = m ? m->get_usage() == Module::GLOBAL : false;
+    if ( (pb->use.object = InspectorManager::get_inspector(key, is_global)) )
     {
         switch ( ((Inspector*)pb->use.object)->get_api()->type )
         {

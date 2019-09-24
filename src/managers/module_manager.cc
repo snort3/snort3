@@ -68,7 +68,6 @@ struct ModHook
 
 typedef std::list<ModHook*> ModuleList;
 static ModuleList s_modules;
-static std::unordered_map<std::string, Module*> s_module_map;
 static unsigned s_errors = 0;
 
 std::set<uint32_t> ModuleManager::gids;
@@ -872,7 +871,6 @@ void ModuleManager::add_module(Module* m, const BaseApi* b)
 {
     ModHook* mh = new ModHook(m, b);
     s_modules.emplace_back(mh);
-    s_module_map[std::string(m->get_name())] = m;
 
     Profiler::register_module(m);
 
@@ -882,7 +880,11 @@ void ModuleManager::add_module(Module* m, const BaseApi* b)
 
 Module* ModuleManager::get_module(const char* s)
 {
-    return s_module_map[std::string(s)];
+    for ( auto p : s_modules )
+        if ( !strcmp(p->mod->get_name(), s) )
+            return p->mod;
+
+    return nullptr;
 }
 
 Module* ModuleManager::get_default_module(const char* s, SnortConfig* sc)
