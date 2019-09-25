@@ -310,8 +310,6 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
 
     HighAvailabilityManager::process_update(p->flow, p);
 
-    p->pkth = nullptr;  // no longer avail upon sig segv
-
     if (verdict != MAX_DAQ_VERDICT)
     {
         // Publish an event if something has indicated that it wants the
@@ -321,6 +319,9 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
             FinalizePacketEvent event(p, verdict);
             DataBus::publish(FINALIZE_PACKET_EVENT, event);
         }
+
+        p->pkth = nullptr;  // No longer avail after finalize_message.
+
         {
             Profile profile(daqPerfStats);
             p->daq_instance->finalize_message(p->daq_msg, verdict);
@@ -359,6 +360,7 @@ void Analyzer::process_daq_pkt_msg(DAQ_Msg_h msg, bool retry)
         switcher->stop();
     }
 
+    oops_handler->set_current_packet(nullptr);
     Stream::timeout_flows(packet_time());
     HighAvailabilityManager::process_receive();
 }
