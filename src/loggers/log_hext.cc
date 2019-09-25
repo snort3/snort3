@@ -27,6 +27,7 @@
 #include "framework/module.h"
 #include "log/text_log.h"
 #include "protocols/packet.h"
+#include "pub_sub/daq_message_event.h"
 
 using namespace snort;
 using namespace std;
@@ -40,27 +41,33 @@ static THREAD_LOCAL TextLog* hext_log = nullptr;
 static THREAD_LOCAL unsigned s_pkt_num = 0;
 
 
-class DaqMetaEventHandler : public DataHandler
+class DaqMessageEventHandler : public DataHandler
 {
 public:
-    DaqMetaEventHandler() : DataHandler(S_NAME) { }
+    DaqMessageEventHandler() : DataHandler(S_NAME) { }
     void handle(DataEvent&, Flow*) override;
 };
 
-void DaqMetaEventHandler::handle(DataEvent& event, Flow*)
+void DaqMessageEventHandler::handle(DataEvent& event, Flow*)
 {
-    if (!hext_log) return;
+    if (!hext_log)
+        return;
 
-    DaqMetaEvent* ev = (DaqMetaEvent*)&event;
+    DaqMessageEvent* dme = (DaqMessageEvent*) &event;
 
     const char* cmd;
-    switch (ev->get_type()) {
-        case DAQ_MSG_TYPE_SOF: cmd = "sof"; break;
-        case DAQ_MSG_TYPE_EOF: cmd = "eof"; break;
-        default: return;
+    switch (dme->get_type()) {
+        case DAQ_MSG_TYPE_SOF:
+            cmd = "sof";
+            break;
+        case DAQ_MSG_TYPE_EOF:
+            cmd = "eof";
+            break;
+        default:
+            return;
     }
 
-    const Flow_Stats_t* fs = (const Flow_Stats_t*)ev->get_data();
+    const Flow_Stats_t* fs = (const Flow_Stats_t*) dme->get_header();
 
     SfIp src, dst;
     char shost[INET6_ADDRSTRLEN];
@@ -251,7 +258,8 @@ HextLogger::HextLogger(HextModule* m)
     limit = m->limit;
     width = m->width;
     raw = m->raw;
-    DataBus::subscribe(DAQ_META_EVENT, new DaqMetaEventHandler());
+    DataBus::subscribe(DAQ_SOF_MSG_EVENT, new DaqMessageEventHandler());
+    DataBus::subscribe(DAQ_EOF_MSG_EVENT, new DaqMessageEventHandler());
 }
 
 void HextLogger::open()

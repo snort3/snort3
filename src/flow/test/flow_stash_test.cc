@@ -109,7 +109,6 @@ void DataBus::publish(const char* key, DataEvent& e, Flow* f)
 
 void DataBus::publish(const char*, const uint8_t*, unsigned, Flow*) {}
 void DataBus::publish(const char*, Packet*, Flow*) {}
-void DataBus::publish(const char*, void*, int, const uint8_t*) {}
 
 void DataBus::_subscribe(const char* key, DataHandler* h)
 {

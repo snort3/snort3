@@ -105,7 +105,6 @@ public:
     // convenience methods
     static void publish(const char* key, const uint8_t*, unsigned, Flow* = nullptr);
     static void publish(const char* key, Packet*, Flow* = nullptr);
-    static void publish(const char* key, void* user, int type, const uint8_t* data);
 
 private:
     void _subscribe(const char* key, DataHandler*);
@@ -116,28 +115,6 @@ private:
     DataMap map;
     DataModule mapped_module;
 };
-
-class SO_PUBLIC DaqMetaEvent : public DataEvent
-{
-public:
-    DaqMetaEvent(void* user, int type, const uint8_t *data) :
-        user(user), type(type), data(data)
-    { }
-
-    void* get_user_data()
-    { return user; }
-
-    int get_type()
-    { return type; }
-
-    const uint8_t* get_data() override
-    { return data; }
-
-private:
-    void* user;
-    int type;
-    const uint8_t* data;
-};
 }
 
 //
@@ -145,7 +122,6 @@ private:
 //
 
 #define PACKET_EVENT "detection.packet"
-#define DAQ_META_EVENT "daq.metapacket"
 #define FLOW_STATE_EVENT "flow.state_change"
 #define THREAD_IDLE_EVENT "thread.idle"
 #define THREAD_ROTATE_EVENT "thread.rotate"

@@ -197,6 +197,8 @@ const PegInfo daq_names[] =
     { CountType::SUM, "retries_dropped", "messages dropped when overrunning the retry queue" },
     { CountType::SUM, "retries_processed", "messages processed from the retry queue" },
     { CountType::SUM, "retries_discarded", "messages discarded when purging the retry queue" },
+    { CountType::SUM, "sof_messages", "start of flow messages received from DAQ" },
+    { CountType::SUM, "eof_messages", "end of flow messages received from DAQ" },
     { CountType::SUM, "other_messages", "messages received from DAQ with unrecognized message type" },
     { CountType::END, nullptr, nullptr }
 };

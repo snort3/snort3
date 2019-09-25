@@ -1,9 +1,9 @@
 set (PUB_SUB_INCLUDES
     appid_events.h
+    daq_message_event.h
     expect_events.h
     finalize_packet_event.h
     http_events.h
-    other_message_event.h
     sip_events.h
 )
 

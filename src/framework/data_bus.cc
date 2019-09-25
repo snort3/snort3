@@ -155,12 +155,6 @@ void DataBus::publish(const char* key, Packet* p, Flow* f)
     publish(key, e, f);
 }
 
-void DataBus::publish(const char* key, void* user, int type, const uint8_t* data)
-{
-    DaqMetaEvent e(user, type, data);
-    publish(key, e, nullptr);
-}
-
 //--------------------------------------------------------------------------
 // private methods
 //--------------------------------------------------------------------------

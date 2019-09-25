@@ -74,6 +74,8 @@ struct DAQStats
     PegCount retries_dropped;
     PegCount retries_processed;
     PegCount retries_discarded;
+    PegCount sof_messages;
+    PegCount eof_messages;
     PegCount other_messages;
 };
 

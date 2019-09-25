@@ -58,8 +58,8 @@
 #include "packet_io/sfdaq_module.h"
 #include "packet_tracer/packet_tracer.h"
 #include "profiler/profiler.h"
+#include "pub_sub/daq_message_event.h"
 #include "pub_sub/finalize_packet_event.h"
-#include "pub_sub/other_message_event.h"
 #include "side_channel/side_channel.h"
 #include "stream/stream.h"
 #include "time/packet_time.h"
@@ -161,16 +161,26 @@ void Analyzer::set_main_hook(MainHook_f f)
 // message processing
 //-------------------------------------------------------------------------
 
-static void process_daq_sof_eof_msg(DAQ_Msg_h msg)
+static void process_daq_sof_eof_msg(DAQ_Msg_h msg, DAQ_Verdict& verdict)
 {
     const Flow_Stats_t *stats = (const Flow_Stats_t *) daq_msg_get_hdr(msg);
+    const char* key;
 
-    if (msg->type == DAQ_MSG_TYPE_EOF)
+    if (daq_msg_get_type(msg) == DAQ_MSG_TYPE_EOF)
+    {
         packet_time_update(&stats->eof_timestamp);
+        daq_stats.eof_messages++;
+        key = DAQ_EOF_MSG_EVENT;
+    }
     else
+    {
         packet_time_update(&stats->sof_timestamp);
+        daq_stats.sof_messages++;
+        key = DAQ_SOF_MSG_EVENT;
+    }
 
-    DataBus::publish(DAQ_META_EVENT, nullptr, daq_msg_get_type(msg), (const uint8_t*) stats);
+    DaqMessageEvent event(msg, verdict);
+    DataBus::publish(key, event);
 }
 
 static bool process_packet(Packet* p)
@@ -364,14 +374,13 @@ void Analyzer::process_daq_msg(DAQ_Msg_h msg, bool retry)
             return;
         case DAQ_MSG_TYPE_SOF:
         case DAQ_MSG_TYPE_EOF:
-            process_daq_sof_eof_msg(msg);
+            process_daq_sof_eof_msg(msg, verdict);
             break;
         default:
             {
-                OtherMessageEvent event(msg, verdict);
                 daq_stats.other_messages++;
-                // the verdict can be updated by event handler
-                DataBus::publish(OTHER_MESSAGE_EVENT, event);
+                DaqMessageEvent event(msg, verdict);
+                DataBus::publish(DAQ_OTHER_MSG_EVENT, event);
             }
             break;
     }
