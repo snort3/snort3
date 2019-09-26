@@ -142,7 +142,8 @@ LuaJitOption::LuaJitOption(
     config += "}";
 
     unsigned max = ThreadConfig::get_instance_max();
-
+    states.reserve(max);
+ 
     for ( unsigned i = 0; i < max; ++i )
     {
         states.emplace_back(true);

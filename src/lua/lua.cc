@@ -41,8 +41,23 @@ State::State(bool openlibs)
         luaL_openlibs(state);
 }
 
-State::State(State&& o) :
-    state { std::move(o.state) } { }
+State& State::operator=(State&& o) 
+{
+    if (this != &o)
+    {
+        if (state)
+            lua_close(state);  
+        state = o.state; 
+        o.state = nullptr;
+    }
+    return *this; 
+}
+
+State::State(State&& o) noexcept 
+{
+    state = o.state; 
+    o.state = NULL; 
+}
 
 State::~State()
 {
