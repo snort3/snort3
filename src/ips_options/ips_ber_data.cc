@@ -89,7 +89,10 @@ IpsOption::EvalStatus BerDataOption::eval(Cursor& c, Packet*)
     if ( e.type != type )
         return NO_MATCH;
 
-    if ( !c.add_pos(e.total_length - e.length) )
+    if ( e.header_length > c.length() )
+        return NO_MATCH;
+
+    if ( !c.add_pos(e.header_length) )
         return NO_MATCH;
 
     return MATCH;

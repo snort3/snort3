@@ -98,6 +98,9 @@ IpsOption::EvalStatus BerSkipOption::eval(Cursor& c, Packet*)
             return NO_MATCH;
     }
 
+    if ( e.total_length > c.length() )
+        return NO_MATCH;
+
     if ( !c.add_pos(e.total_length) )
         return NO_MATCH;
 

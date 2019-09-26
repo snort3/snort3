@@ -38,7 +38,8 @@ struct BerElement
 {
     uint32_t type;
     uint32_t length;
-    uint32_t total_length;
+    uint64_t header_length;
+    uint64_t total_length;
     const uint8_t* data;
 };
 
@@ -48,6 +49,7 @@ public:
     BerReader(const Cursor& c)
     {
         beg = c.buffer();
+        cursor = c.start();
         end = c.endo();
     }
 

@@ -32,8 +32,12 @@ bool BerReader::read_int(uint32_t size, uint32_t& intval)
 
     intval = 0;
 
+    // cursor must be valid
+    if ( cursor < beg || cursor > end )
+        return false;
+
     // check if we can read int data
-    if ( cursor + size > end )
+    if ( size > end - cursor )
         return false;
 
     for ( unsigned i = 0; i < size; i++ )
@@ -63,7 +67,8 @@ bool BerReader::read_type(uint32_t& type)
 
     type = 0;
 
-    if ( cursor + 1 > end )
+    // cursor must be valid
+    if ( cursor < beg || cursor + 1 > end )
         return false;
 
     b = *cursor++;
@@ -110,7 +115,8 @@ bool BerReader::read_length(uint32_t& length)
 
     length = 0;
 
-    if ( cursor + 1 > end )
+    // cursor must be valid
+    if ( cursor < beg || cursor + 1 > end )
         return false;
 
     b = *cursor++;
@@ -138,9 +144,6 @@ bool BerReader::read(const uint8_t* c, BerElement& e)
 {
     const uint8_t* start = c;
 
-    if ( c < beg || c > end )
-        return false;
-
     cursor = c;
 
     if ( !read_type(e.type) )
@@ -152,15 +155,19 @@ bool BerReader::read(const uint8_t* c, BerElement& e)
     // set BER data pointer
     e.data = cursor;
 
-    // jump BER data
-    cursor += e.length;
-
-    // cursor must be > start
-    if ( cursor <= start )
+    // integer underflow check
+    if ( start > cursor )
         return false;
 
+    // calculate BER header length
+    e.header_length = cursor - start;
+
     // calculate total BER length
-    e.total_length = cursor - start;
+    e.total_length = e.header_length + e.length;
+
+    // integer overflow check
+    if ( e.total_length < e.header_length )
+        return false;
 
     return true;
 }
@@ -168,9 +175,6 @@ bool BerReader::read(const uint8_t* c, BerElement& e)
 bool BerReader::convert(const BerElement& e, uint32_t& intval)
 {
     if ( e.type != BerType::INTEGER )
-        return false;
-
-    if ( e.data < beg || e.data > end )
         return false;
 
     // set cursor to int data
@@ -189,11 +193,11 @@ bool BerReader::extract(const uint8_t*& c, uint32_t& intval)
     if ( !read(c, e) )
         return false;
 
-    // save end of element position
-    c = cursor;
-
     if ( !convert(e, intval) )
         return false;
+
+    // save end of element position
+    c = cursor;
 
     return true;
 }
@@ -208,6 +212,18 @@ bool BerReader::skip(const uint8_t*& c, uint32_t type)
     if ( e.type != type )
         return false;
 
+    // integer underflow check
+    if ( cursor > end )
+        return false;
+
+    // check if we can jump BER data
+    if ( e.length > end - cursor )
+        return false;
+
+    // jump BER data
+    cursor += e.length;
+
+    // save end of element position
     c = cursor;
 
     return true;
