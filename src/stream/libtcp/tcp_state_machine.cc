@@ -47,17 +47,17 @@ void TcpStateMachine::register_state_handler(TcpStreamTracker::TcpState state,
 bool TcpStateMachine::eval(TcpSegmentDescriptor& tsd, TcpStreamTracker& talker,
     TcpStreamTracker& listener)
 {
-    TcpStreamTracker::TcpState tcp_state = talker.get_tcp_state( );
+    const TcpStreamTracker::TcpState talker_state = talker.get_tcp_state( );
 
     talker.set_tcp_event(tsd);
-    if ( tcp_state_handlers[ tcp_state ]->do_pre_sm_packet_actions(tsd, talker) )
+    if ( tcp_state_handlers[ talker_state ]->do_pre_sm_packet_actions(tsd, talker) )
     {
-        if ( tcp_state_handlers[ tcp_state ]->eval(tsd, talker) )
+        if ( tcp_state_handlers[ talker_state ]->eval(tsd, talker) )
         {
-            tcp_state = listener.get_tcp_state( );
+            const TcpStreamTracker::TcpState listener_state = listener.get_tcp_state( );
             listener.set_tcp_event(tsd);
-            tcp_state_handlers[ tcp_state ]->eval(tsd, listener);
-            tcp_state_handlers[ tcp_state ]->do_post_sm_packet_actions(tsd, listener);
+            tcp_state_handlers[ listener_state ]->eval(tsd, listener);
+            tcp_state_handlers[ listener_state ]->do_post_sm_packet_actions(tsd, listener);
             return true;
         }
 

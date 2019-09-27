@@ -244,7 +244,7 @@ void TcpStreamSession::update_direction(char dir, const SfIp* ip, uint16_t port)
     flow->server_port = tmpPort;
 
     SwapPacketHeaderFoo( );
-    TcpStreamTracker& tracker = client;
+    TcpStreamTracker tracker = client;
     client = server;
     server = tracker;
 }

@@ -54,7 +54,7 @@ public:
 
     void set_seg_seq(uint32_t seq)
     {
-        this->seg_seq = seq;
+        seg_seq = seq;
     }
 
     void update_seg_seq(int32_t offset)
@@ -94,7 +94,7 @@ public:
 
     void scale_seg_wnd(uint16_t wscale)
     {
-        this->seg_wnd <<= wscale;
+        seg_wnd <<= wscale;
     }
 
     uint32_t get_seg_wnd() const
@@ -124,11 +124,13 @@ public:
 
     void set_seg_len(uint16_t seg_len)
     {
+        // Reset segment size to seg_len
         pkt->dsize = seg_len;
     }
 
     void update_seg_len(int32_t offset)
     {
+        // Increase segment size by offset
         pkt->dsize += offset;
     }
 
@@ -139,23 +141,24 @@ public:
 
     void slide_segment_in_rcv_window(int32_t offset)
     {
+        // This actually deletes the first offset bytes of the segment, no sliding involved
         seg_seq += offset;
         pkt->data += offset;
         pkt->dsize -= offset;
     }
 
 private:
-    snort::Flow* flow;
-    snort::Packet* pkt;
+    snort::Flow* const flow;
+    snort::Packet* const pkt;
 
-    const snort::tcp::TCPHdr* tcph;
-    uint16_t src_port;
-    uint16_t dst_port;
+    const snort::tcp::TCPHdr* const tcph;
+    const uint16_t src_port;
+    const uint16_t dst_port;
     uint32_t seg_seq;
-    uint32_t seg_ack;
+    const uint32_t seg_ack;
     uint32_t seg_wnd;
     uint32_t end_seq;
-    uint32_t ts;
+    uint32_t ts = 0;
 };
 
 #endif

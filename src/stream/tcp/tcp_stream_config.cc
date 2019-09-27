@@ -35,12 +35,12 @@ static const char* const reassembly_policy_names[] =
 
 TcpStreamConfig::TcpStreamConfig() = default;
 
-void TcpStreamConfig::show_config()
+void TcpStreamConfig::show_config() const
 {
     TcpStreamConfig::show_config(this);
 }
 
-void TcpStreamConfig::show_config(TcpStreamConfig* config)
+void TcpStreamConfig::show_config(const TcpStreamConfig* config)
 {
     LogMessage("Stream TCP Policy config:\n");
     LogMessage("    Reassembly Policy: %s\n",

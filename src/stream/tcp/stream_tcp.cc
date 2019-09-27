@@ -49,13 +49,10 @@ public:
     NORETURN_ASSERT void eval(Packet*) override;
 
 public:
-    TcpStreamConfig* config;
+    TcpStreamConfig* const config;
 };
 
-StreamTcp::StreamTcp (TcpStreamConfig* c)
-{
-    config = c;
-}
+StreamTcp::StreamTcp (TcpStreamConfig* c) : config(c) {}
 
 StreamTcp::~StreamTcp()
 {

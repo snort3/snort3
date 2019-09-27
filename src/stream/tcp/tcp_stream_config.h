@@ -50,8 +50,8 @@ public:
         return false;
     }
 
-    void show_config();
-    static void show_config(TcpStreamConfig*);
+    void show_config() const;
+    static void show_config(const TcpStreamConfig*);
 
     StreamPolicy policy = StreamPolicy::OS_DEFAULT;
     ReassemblyPolicy reassembly_policy = ReassemblyPolicy::OS_DEFAULT;

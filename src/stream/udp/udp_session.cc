@@ -152,7 +152,7 @@ void UdpSession::update_direction(
     {
         if ((dir == SSN_DIR_FROM_CLIENT) && (flow->ssn_state.direction == FROM_CLIENT))
         {
-            /* Direction already set as CLIENT */
+            // Direction already set as CLIENT
             return;
         }
     }
@@ -160,12 +160,12 @@ void UdpSession::update_direction(
     {
         if ((dir == SSN_DIR_FROM_SERVER) && (flow->ssn_state.direction == FROM_SERVER))
         {
-            /* Direction already set as SERVER */
+            // Direction already set as SERVER
             return;
         }
     }
 
-    /* Swap them -- leave flow->ssn_state.direction the same */
+    // Swap them -- leave flow->ssn_state.direction the same
     tmpIp = flow->client_ip;
     tmpPort = flow->client_port;
     flow->client_ip = flow->server_ip;

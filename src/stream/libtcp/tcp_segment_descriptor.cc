@@ -31,18 +31,17 @@
 
 using namespace snort;
 
-TcpSegmentDescriptor::TcpSegmentDescriptor(Flow* flow, Packet* pkt, TcpEventLogger& tel) :
-    flow(flow), pkt(pkt)
+TcpSegmentDescriptor::TcpSegmentDescriptor(Flow* flow_, Packet* pkt_, TcpEventLogger& tel) :
+    flow(flow_),
+    pkt(pkt_),
+    tcph(pkt->ptrs.tcph),
+    src_port(tcph->src_port()),
+    dst_port(tcph->dst_port()),
+    seg_seq(tcph->seq()),
+    seg_ack(tcph->ack()),
+    seg_wnd(tcph->win()),
+    end_seq(seg_seq + (uint32_t)pkt->dsize)
 {
-    tcph = pkt->ptrs.tcph;
-    src_port = tcph->src_port();
-    dst_port = tcph->dst_port();
-    seg_seq = tcph->seq();
-    seg_ack = tcph->ack();
-    seg_wnd = tcph->win();
-    end_seq = seg_seq + (uint32_t)pkt->dsize;
-    ts = 0;
-
     // don't bump end_seq for fin here we will bump if/when fin is processed
     if ( tcph->is_syn() )
     {

@@ -121,7 +121,7 @@ public:
     { return rcv_nxt; }
 
     void set_rcv_nxt(uint32_t rcv_nxt)
-    {  this->rcv_nxt = rcv_nxt; }
+    { this->rcv_nxt = rcv_nxt; }
 
     uint32_t get_rcv_wnd() const
     { return rcv_wnd; }
@@ -200,9 +200,8 @@ public:
 
     bool is_ack_valid(uint32_t cur)
     {
-        // FIXIT-H do we need this check? we've always seen something by the time we get here
         // If we haven't seen anything, ie, low & high are 0, return true
-        if ( ( snd_una == 0 ) && ( snd_una == snd_nxt ) )
+        if ( ( snd_una == 0 ) && ( snd_nxt == 0 ) )
             return true;
 
         return ( SEQ_GEQ(cur, snd_una) && SEQ_LEQ(cur, snd_nxt) );
