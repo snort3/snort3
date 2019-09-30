@@ -190,12 +190,12 @@ static bool decision_per_layer(ReputationConfig* config, Packet* p,
         decision = get_reputation(config, result, &p->iplist_id, ingressZone, egressZone);
 
         if (decision == BLACKLISTED)
-            *decision_final = BLACKLISTED_SRC; 
+            *decision_final = BLACKLISTED_SRC;
         else if (decision == MONITORED)
             *decision_final = MONITORED_SRC;
         else if (decision == WHITELISTED_TRUST)
-            *decision_final = WHITELISTED_TRUST_SRC; 
-        else 
+            *decision_final = WHITELISTED_TRUST_SRC;
+        else
             *decision_final = decision;
 
         if ( config->priority == decision)
@@ -209,13 +209,13 @@ static bool decision_per_layer(ReputationConfig* config, Packet* p,
         decision = get_reputation(config, result, &p->iplist_id, ingressZone, egressZone);
 
         if (decision == BLACKLISTED)
-            *decision_final = BLACKLISTED_DST; 
+            *decision_final = BLACKLISTED_DST;
         else if (decision == MONITORED)
             *decision_final = MONITORED_DST;
         else if (decision == WHITELISTED_TRUST)
-            *decision_final = WHITELISTED_TRUST_DST; 
+            *decision_final = WHITELISTED_TRUST_DST;
         else
-            *decision_final = decision; 
+            *decision_final = decision;
 
         if ( config->priority == decision)
             return true;
@@ -302,7 +302,7 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
 
     else if (BLACKLISTED_SRC == decision or BLACKLISTED_DST == decision)
     {
-        unsigned blacklist_event = (BLACKLISTED_SRC == decision) ? 
+        unsigned blacklist_event = (BLACKLISTED_SRC == decision) ?
             REPUTATION_EVENT_BLACKLIST_SRC : REPUTATION_EVENT_BLACKLIST_DST;
 
         DetectionEngine::queue_event(GID_REPUTATION, blacklist_event);
@@ -321,7 +321,7 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
 
     else if (MONITORED_SRC == decision or MONITORED_DST == decision)
     {
-        unsigned monitor_event = (MONITORED_SRC == decision) ? 
+        unsigned monitor_event = (MONITORED_SRC == decision) ?
             REPUTATION_EVENT_MONITOR_SRC : REPUTATION_EVENT_MONITOR_DST;
 
         p->packet_flags |= PKT_REP_MONITORED;
@@ -331,7 +331,7 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
 
     else if (WHITELISTED_TRUST_SRC == decision or WHITELISTED_TRUST_DST == decision)
     {
-        unsigned whitelist_event = (WHITELISTED_TRUST_SRC == decision) ? 
+        unsigned whitelist_event = (WHITELISTED_TRUST_SRC == decision) ?
             REPUTATION_EVENT_WHITELIST_SRC : REPUTATION_EVENT_WHITELIST_DST;
 
         DetectionEngine::queue_event(GID_REPUTATION, whitelist_event);

@@ -139,8 +139,8 @@ private:
 
 // A flow has been determined to be bidirectional
 #define STREAM_ICMP_BIDIRECTIONAL_EVENT "stream.icmp_bidirectional"
-#define STREAM_IP_BIDIRECTIONAL_EVENT "stream.ip.bidirectional" 
-#define STREAM_UDP_BIDIRECTIONAL_EVENT "stream.udp.bidirectional" 
+#define STREAM_IP_BIDIRECTIONAL_EVENT "stream.ip.bidirectional"
+#define STREAM_UDP_BIDIRECTIONAL_EVENT "stream.udp.bidirectional"
 
 // A TCP flow has the flag; a midstream flow may not publish other events
 #define STREAM_TCP_SYN_EVENT "stream.tcp_syn"

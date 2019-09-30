@@ -106,11 +106,11 @@ static inline void update_session(Packet* p, Flow* lws)
             lws->ssn_state.session_flags |= SSNFLAG_ESTABLISHED;
             lws->set_ttl(p, false);
 
-            if ( p->type() == PktType::ICMP and p->ptrs.icmph) 
+            if ( p->type() == PktType::ICMP and p->ptrs.icmph)
             {
                 DataBus::publish(STREAM_ICMP_BIDIRECTIONAL_EVENT, p);
-            } 
-            else 
+            }
+            else
             {
                 DataBus::publish(STREAM_IP_BIDIRECTIONAL_EVENT, p);
             }

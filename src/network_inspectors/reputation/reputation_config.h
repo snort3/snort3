@@ -36,7 +36,7 @@ enum NestedIP
 {
     INNER,
     OUTER,
-    ALL 
+    ALL
 };
 
 enum WhiteAction

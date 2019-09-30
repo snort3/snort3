@@ -36,12 +36,12 @@ public:
     State(bool openlibs = true);
     ~State();
 
-    State(State&) = delete; 
-    State& operator=(State&) = delete; 
+    State(State&) = delete;
+    State& operator=(State&) = delete;
 
     // Enable move constructor
     State(State&&) noexcept;
-    State& operator=(State&&); 
+    State& operator=(State&&);
 
     lua_State* get_ptr()
     { return state; }

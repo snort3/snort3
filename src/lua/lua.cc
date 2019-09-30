@@ -41,22 +41,22 @@ State::State(bool openlibs)
         luaL_openlibs(state);
 }
 
-State& State::operator=(State&& o) 
+State& State::operator=(State&& o)
 {
     if (this != &o)
     {
         if (state)
-            lua_close(state);  
-        state = o.state; 
+            lua_close(state);
+        state = o.state;
         o.state = nullptr;
     }
-    return *this; 
+    return *this;
 }
 
-State::State(State&& o) noexcept 
+State::State(State&& o) noexcept
 {
-    state = o.state; 
-    o.state = nullptr; 
+    state = o.state;
+    o.state = nullptr;
 }
 
 State::~State()
