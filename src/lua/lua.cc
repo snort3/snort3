@@ -56,7 +56,7 @@ State& State::operator=(State&& o)
 State::State(State&& o) noexcept 
 {
     state = o.state; 
-    o.state = NULL; 
+    o.state = nullptr; 
 }
 
 State::~State()
