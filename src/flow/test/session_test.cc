@@ -51,7 +51,6 @@ TEST(session_test, seesion_class_test)
     Session *ssn = new DummySession(nullptr);
     CHECK(true == ssn->setup(nullptr));
 
-    ssn->update_direction(1, nullptr, 1234);
     CHECK(0 == ssn->process(nullptr));
     ssn->restart(nullptr);
     ssn->flush_client(nullptr);

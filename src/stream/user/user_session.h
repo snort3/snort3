@@ -101,8 +101,6 @@ private:
     void update(snort::Packet*, snort::Flow*);
     void end(snort::Packet*, snort::Flow*);
 
-    void update_direction(char dir, const snort::SfIp*, uint16_t port) override;
-
     bool add_alert(snort::Packet*, uint32_t gid, uint32_t sid) override;
     bool check_alerted(snort::Packet*, uint32_t gid, uint32_t sid) override;
 

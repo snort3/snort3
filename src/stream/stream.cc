@@ -268,15 +268,6 @@ void Stream::resume_inspection(Flow* flow, char dir)
     }
 }
 
-void Stream::update_direction(
-    Flow* flow, char dir, const SfIp* ip, uint16_t port)
-{
-    if (!flow)
-        return;
-
-    flow->session->update_direction(dir, ip, port);
-}
-
 uint32_t Stream::get_packet_direction(Packet* p)
 {
     if (!p || !(p->flow))

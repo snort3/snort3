@@ -516,8 +516,6 @@ int UserSession::process(Packet* p)
 // some will be deleted, some refactored, some implemented
 //-------------------------------------------------------------------------
 
-void UserSession::update_direction(char /*dir*/, const SfIp*, uint16_t /*port*/) { }
-
 bool UserSession::add_alert(Packet*, uint32_t /*gid*/, uint32_t /*sid*/) { return true; }
 bool UserSession::check_alerted(Packet*, uint32_t /*gid*/, uint32_t /*sid*/) { return false; }
 

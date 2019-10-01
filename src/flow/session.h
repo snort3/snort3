@@ -40,7 +40,11 @@ public:
     virtual ~Session() = default;
 
     virtual bool setup(snort::Packet*) { return true; }
-    virtual void update_direction(char /*dir*/, const snort::SfIp*, uint16_t /*port*/) { }
+    virtual void update_direction(char /*dir*/, const snort::SfIp*, uint16_t /*port*/)
+    {
+        // UDP is currently the only stream that implements this. Others should not be calling.
+        assert(false);
+    }
     virtual int process(snort::Packet*) { return 0; }
 
     virtual void restart(snort::Packet*) { }

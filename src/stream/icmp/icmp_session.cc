@@ -230,31 +230,3 @@ int IcmpSession::process(Packet* p)
     return status;
 }
 
-#define icmp_sender_ip flow->client_ip
-#define icmp_responder_ip flow->server_ip
-
-void IcmpSession::update_direction(char dir, const SfIp* ip, uint16_t)
-{
-    if (icmp_sender_ip.equals(*ip))
-    {
-        if ((dir == SSN_DIR_FROM_CLIENT) && (flow->ssn_state.direction == FROM_CLIENT))
-        {
-            /* Direction already set as SENDER */
-            return;
-        }
-    }
-    else if (icmp_responder_ip.equals(*ip))
-    {
-        if ((dir == SSN_DIR_FROM_SERVER) && (flow->ssn_state.direction == FROM_SERVER))
-        {
-            /* Direction already set as RESPONDER */
-            return;
-        }
-    }
-
-    /* Swap them -- leave ssn->ssn_state.direction the same */
-    SfIp tmpIp = icmp_sender_ip;
-    icmp_sender_ip = icmp_responder_ip;
-    icmp_responder_ip = tmpIp;
-}
-

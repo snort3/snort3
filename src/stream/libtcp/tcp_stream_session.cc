@@ -213,42 +213,6 @@ bool TcpStreamSession::are_packets_missing(uint8_t dir)
     return false;
 }
 
-void TcpStreamSession::update_direction(char dir, const SfIp* ip, uint16_t port)
-{
-    SfIp tmpIp;
-    uint16_t tmpPort;
-
-    if (flow->client_ip.equals(*ip) && (flow->client_port == port))
-    {
-        if ((dir == SSN_DIR_FROM_CLIENT) && (flow->ssn_state.direction == FROM_CLIENT))
-        {
-            /* Direction already set as client */
-            return;
-        }
-    }
-    else if (flow->server_ip.equals(*ip) && (flow->server_port == port))
-    {
-        if ((dir == SSN_DIR_FROM_SERVER) && (flow->ssn_state.direction == FROM_SERVER))
-        {
-            /* Direction already set as server */
-            return;
-        }
-    }
-
-    /* Swap them -- leave flow->ssn_state.direction the same */
-    tmpIp = flow->client_ip;
-    tmpPort = flow->client_port;
-    flow->client_ip = flow->server_ip;
-    flow->client_port = flow->server_port;
-    flow->server_ip = tmpIp;
-    flow->server_port = tmpPort;
-
-    SwapPacketHeaderFoo( );
-    TcpStreamTracker tracker = client;
-    client = server;
-    server = tracker;
-}
-
 // FIXIT-H add alert and check alerted go away when we finish
 // packet / PDU split because PDU rules won't run on raw packets
 bool TcpStreamSession::add_alert(Packet* p, uint32_t gid, uint32_t sid)
