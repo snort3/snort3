@@ -53,46 +53,46 @@ THREAD_LOCAL bool Active::s_suspend = false;
 
 THREAD_LOCAL PacketTracer* snort::s_pkt_trace = nullptr;
 
-PacketTracer::PacketTracer() { }
-PacketTracer::~PacketTracer() { }
-void PacketTracer::log(const char* format, ...) { }
+PacketTracer::PacketTracer() = default;
+PacketTracer::~PacketTracer() = default;
+void PacketTracer::log(const char*, ...) { }
 void PacketTracer::open_file() { }
-void PacketTracer::dump_to_daq(Packet* p) { }
+void PacketTracer::dump_to_daq(Packet*) { }
 void PacketTracer::reset() { }
 Packet::Packet(bool) { }
-Packet::~Packet() { }
+Packet::~Packet() = default;
 FlowCache::FlowCache(const FlowCacheConfig& cfg) : config(cfg) { }
-FlowCache::~FlowCache() { }
+FlowCache::~FlowCache() = default;
 Flow::Flow() = default;
-Flow::~Flow() { }
-DetectionEngine::DetectionEngine() { }
-ExpectCache::~ExpectCache() { }
-DetectionEngine::~DetectionEngine() { }
+Flow::~Flow() = default;
+DetectionEngine::DetectionEngine() = default;
+DetectionEngine::~DetectionEngine() = default;
+ExpectCache::~ExpectCache() = default;
 unsigned FlowCache::purge() { return 1; }
-Flow* FlowCache::find(const FlowKey* key) { return nullptr; }
-Flow* FlowCache::get(const FlowKey* key) { return nullptr; }
-void FlowCache::push(Flow* flow) { }
-bool FlowCache::prune_one(PruneReason reason, bool do_cleanup) { return true; }
-unsigned FlowCache::timeout(unsigned num_flows, time_t thetime) { return 1; }
-void Flow::init(PktType type) { }
-void set_network_policy(SnortConfig* sc, unsigned i) { } 
-void DataBus::publish(const char* key, const uint8_t* buf, unsigned len, Flow* f) { }
-void DataBus::publish(const char* key, Packet* p, Flow* f) { }
+Flow* FlowCache::find(const FlowKey*) { return nullptr; }
+Flow* FlowCache::get(const FlowKey*) { return nullptr; }
+void FlowCache::push(Flow*) { }
+bool FlowCache::prune_one(PruneReason, bool) { return true; }
+unsigned FlowCache::timeout(unsigned, time_t) { return 1; }
+void Flow::init(PktType) { }
+void set_network_policy(SnortConfig*, unsigned) { }
+void DataBus::publish(const char*, const uint8_t*, unsigned, Flow*) { }
+void DataBus::publish(const char*, Packet*, Flow*) { }
 SnortConfig* SnortConfig::get_conf() { return nullptr; }
-void FlowCache::unlink_uni(Flow* flow) { }
-void Flow::set_direction(Packet* p) { }
-void set_inspection_policy(SnortConfig* sc, unsigned i) { }
-void set_ips_policy(SnortConfig* sc, unsigned i) { }
-void Flow::set_mpls_layer_per_dir(Packet* p) { }
-void DetectionEngine::disable_all(Packet* p) { }
-void Stream::drop_traffic(const Packet* p, char dir) { }
-bool Stream::blocked_flow(Packet* p) { return true; }
-ExpectCache::ExpectCache(uint32_t max) { }
-bool ExpectCache::check(Packet* p, Flow* lws) { return true; }
-bool ExpectCache::is_expected(Packet* p) { return true; }
-Flow* HighAvailabilityManager::import(Packet& p, FlowKey& key) { }
+void FlowCache::unlink_uni(Flow*) { }
+void Flow::set_direction(Packet*) { }
+void set_inspection_policy(SnortConfig*, unsigned) { }
+void set_ips_policy(SnortConfig*, unsigned) { }
+void Flow::set_mpls_layer_per_dir(Packet*) { }
+void DetectionEngine::disable_all(Packet*) { }
+void Stream::drop_traffic(const Packet*, char) { }
+bool Stream::blocked_flow(Packet*) { return true; }
+ExpectCache::ExpectCache(uint32_t) { }
+bool ExpectCache::check(Packet*, Flow*) { return true; }
+bool ExpectCache::is_expected(Packet*) { return true; }
+Flow* HighAvailabilityManager::import(Packet&, FlowKey&) { return nullptr; }
 
-namespace memory 
+namespace memory
 {
 bool MemoryCap::over_threshold() { return true; }
 }
@@ -101,7 +101,7 @@ namespace snort
 {
 namespace layer
 {
-const vlan::VlanTagHdr* get_vlan_layer(const Packet* const p) { return nullptr; }
+const vlan::VlanTagHdr* get_vlan_layer(const Packet* const) { return nullptr; }
 }
 }
 
@@ -114,40 +114,38 @@ uint32_t IpApi::id() const { return 0; }
 }
 
 bool FlowKey::init(
-    PktType type, IpProtocol ip_proto,
-    const SfIp *srcIP, uint16_t srcPort,
-    const SfIp *dstIP, uint16_t dstPort,
-    uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId)
+    PktType, IpProtocol,
+    const SfIp*, uint16_t,
+    const SfIp*, uint16_t,
+    uint16_t, uint32_t, uint16_t)
 {
    return true;
 }
 
 bool FlowKey::init(
-    PktType type, IpProtocol ip_proto,
-    const SfIp *srcIP, const SfIp *dstIP,
-    uint32_t id, uint16_t vlanId,
-    uint32_t mplsId, uint16_t addrSpaceId)
+    PktType, IpProtocol,
+    const SfIp*, const SfIp*,
+    uint32_t, uint16_t,
+    uint32_t, uint16_t)
 {
     return true;
 }
 
-void Stream::stop_inspection(
-    Flow* flow, Packet* p, char dir,
-    int32_t /*bytes*/, int /*response*/) { }
+void Stream::stop_inspection(Flow*, Packet*, char, int32_t, int) { }
 
 
-int ExpectCache::add_flow(const Packet *ctrlPkt,
-    PktType type, IpProtocol ip_proto,
-    const SfIp* cliIP, uint16_t cliPort,
-    const SfIp* srvIP, uint16_t srvPort,
-    char direction, FlowData* fd, SnortProtocolId snort_protocol_id)
-{ 
-    return 1; 
+int ExpectCache::add_flow(const Packet*,
+    PktType, IpProtocol,
+    const SfIp*, uint16_t,
+    const SfIp*, uint16_t,
+    char, FlowData*, SnortProtocolId)
+{
+    return 1;
 }
 
-int FlowCache::release(Flow* flow, PruneReason reason, bool do_cleanup) 
-{ 
-    return 1; 
+int FlowCache::release(Flow*, PruneReason, bool)
+{
+    return 1;
 }
 
 TEST_GROUP(stale_flow) { };
@@ -178,4 +176,4 @@ TEST(stale_flow, stale_flow)
 int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
-} 
+}

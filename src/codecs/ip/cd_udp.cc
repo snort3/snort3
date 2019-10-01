@@ -45,6 +45,7 @@ const PegInfo pegs[]
 {
     { CountType::SUM, "bad_udp4_checksum", "nonzero udp over ipv4 checksums" },
     { CountType::SUM, "bad_udp6_checksum", "nonzero udp over ipv6 checksums" },
+    { CountType::SUM, "checksum_bypassed", "checksum calculations bypassed" },
     { CountType::END, nullptr, nullptr }
 };
 
@@ -52,6 +53,7 @@ struct Stats
 {
     PegCount bad_ip4_cksum;
     PegCount bad_ip6_cksum;
+    PegCount cksum_bypassed;
 };
 
 static THREAD_LOCAL Stats stats;
@@ -150,9 +152,55 @@ public:
 
 private:
 
+    bool valid_checksum_from_daq(const RawData&);
+    bool valid_checksum4(const RawData&, const DecodeData&);
+    bool valid_checksum6(const RawData&, const CodecData&, const DecodeData&);
+
     void UDPMiscTests(const DecodeData&, const CodecData&, uint32_t pay_len);
 };
 } // anonymous namespace
+
+inline bool UdpCodec::valid_checksum_from_daq(const RawData& raw)
+{
+    const DAQ_PktDecodeData_t* pdd =
+        (const DAQ_PktDecodeData_t*) daq_msg_get_meta(raw.daq_msg, DAQ_PKT_META_DECODE_DATA);
+    if (!pdd || !pdd->flags.bits.l4_checksum || !pdd->flags.bits.udp || !pdd->flags.bits.l4)
+        return false;
+    // Sanity check to make sure we're talking about the same thing
+    const uint8_t* data = daq_msg_get_data(raw.daq_msg);
+    if (raw.data - data != pdd->l4_offset)
+        return false;
+    stats.cksum_bypassed++;
+    return true;
+}
+
+bool UdpCodec::valid_checksum4(const RawData& raw, const DecodeData& snort)
+{
+    const ip::IP4Hdr* const ip4h = snort.ip_api.get_ip4h();
+
+    checksum::Pseudoheader ph;
+    ph.sip = ip4h->get_src();
+    ph.dip = ip4h->get_dst();
+    ph.zero = 0;
+    ph.protocol = ip4h->proto();
+    ph.len = htons((uint16_t) raw.len);
+
+    return (checksum::udp_cksum((const uint16_t*) raw.data, raw.len, &ph) == 0);
+}
+
+bool UdpCodec::valid_checksum6(const RawData& raw, const CodecData& codec, const DecodeData& snort)
+{
+    const ip::IP6Hdr* const ip6h = snort.ip_api.get_ip6h();
+
+    checksum::Pseudoheader6 ph6;
+    COPY4(ph6.sip, ip6h->ip6_src.u6_addr32);
+    COPY4(ph6.dip, ip6h->ip6_dst.u6_addr32);
+    ph6.zero = 0;
+    ph6.protocol = codec.ip6_csum_proto;
+    ph6.len = htons((uint16_t) raw.len);
+
+    return (checksum::udp_cksum((const uint16_t*) raw.data, raw.len, &ph6) == 0);
+}
 
 void UdpCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
@@ -213,71 +261,46 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         return false;
     }
 
-    if (SnortConfig::udp_checksums())
+    if (SnortConfig::udp_checksums() && !valid_checksum_from_daq(raw))
     {
-        /* look at the UDP checksum to make sure we've got a good packet */
-        uint16_t csum;
         PegCount* bad_cksum_cnt;
+        bool valid;
 
+        /* look at the UDP checksum to make sure we've got a good packet */
         if (snort.ip_api.is_ip4())
         {
-            bad_cksum_cnt = &(stats.bad_ip4_cksum);
-
             /* Don't do checksum calculation if
              * 1) Fragmented, OR
              * 2) UDP header chksum value is 0.
              */
-            if ( !fragmented_udp_flag && udph->uh_chk )
-            {
-                checksum::Pseudoheader ph;
-                const ip::IP4Hdr* const ip4h = snort.ip_api.get_ip4h();
-                ph.sip = ip4h->get_src();
-                ph.dip = ip4h->get_dst();
-                ph.zero = 0;
-                ph.protocol = ip4h->proto();
-                ph.len = udph->uh_len;
-
-                csum = checksum::udp_cksum((const uint16_t*)(udph), uhlen, &ph);
-            }
+            if (!fragmented_udp_flag && udph->uh_chk)
+                valid = valid_checksum4(raw, snort);
             else
-            {
-                csum = 0;
-            }
+                valid = true;
+            bad_cksum_cnt = &stats.bad_ip4_cksum;
         }
         else
         {
-            bad_cksum_cnt = &(stats.bad_ip6_cksum);
-
             /* Alert on checksum value 0 for ipv6 packets */
             if (!udph->uh_chk)
             {
-                csum = 1;
+                valid = false;
                 codec_event(codec, DECODE_UDP_IPV6_ZERO_CHECKSUM);
             }
             /* Don't do checksum calculation if
              * 1) Fragmented
              * (UDP checksum is not optional in IP6)
              */
-            else if ( !fragmented_udp_flag )
-            {
-                checksum::Pseudoheader6 ph6;
-                const ip::IP6Hdr* const ip6h = snort.ip_api.get_ip6h();
-                COPY4(ph6.sip, ip6h->ip6_src.u6_addr32);
-                COPY4(ph6.dip, ip6h->ip6_dst.u6_addr32);
-                ph6.zero = 0;
-                ph6.protocol = codec.ip6_csum_proto;
-                ph6.len = htons((unsigned short)raw.len);
-
-                csum = checksum::udp_cksum((const uint16_t*)(udph), uhlen, &ph6);
-            }
+            else if (!fragmented_udp_flag)
+                valid = valid_checksum6(raw, codec, snort);
             else
-            {
-                csum = 0;
-            }
+                valid = true;
+            bad_cksum_cnt = &stats.bad_ip6_cksum;
         }
-        if (csum && !codec.is_cooked())
+
+        if (!valid && !codec.is_cooked())
         {
-            if ( !(codec.codec_flags & CODEC_UNSURE_ENCAP) )
+            if (!(codec.codec_flags & CODEC_UNSURE_ENCAP))
             {
                 (*bad_cksum_cnt)++;
                 snort.decode_flags |= DECODE_ERR_CKSUM_UDP;
@@ -285,6 +308,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             return false;
         }
     }
+
     uint16_t src_port;
     uint16_t dst_port;
 
@@ -297,7 +321,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     else
     {
         src_port = udph->src_port();
-        dst_port =  udph->dst_port();
+        dst_port = udph->dst_port();
     }
 
     /* fill in the printout data structs */

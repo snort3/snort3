@@ -627,7 +627,7 @@ static void set_hdr(
     pkth->ingress_group = phdr->ingress_group;
     pkth->egress_index = phdr->egress_index;
     pkth->egress_group = phdr->egress_group;
-    pkth->flags = phdr->flags & (~DAQ_PKT_FLAG_HW_TCP_CS_GOOD);
+    pkth->flags = phdr->flags;
     pkth->address_space_id = phdr->address_space_id;
     pkth->opaque = opaque;
 }

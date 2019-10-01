@@ -62,7 +62,6 @@ static void SetConstraints(IpProtocol protocol,    // use IpProtocol::PROTO_NOT_
                 const char* sipstr, uint16_t sport, const char* dipstr, uint16_t dport,
                 AppIdDebugSessionConstraints& constraints)
 {
-    SfIp sip, dip;
     if (sipstr)
     {
         constraints.sip.set(sipstr);

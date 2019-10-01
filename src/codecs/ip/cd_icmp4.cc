@@ -22,6 +22,8 @@
 #include "config.h"
 #endif
 
+#include <daq.h>
+
 #include "codecs/codec_module.h"
 #include "framework/codec.h"
 #include "log/text_log.h"
@@ -40,12 +42,14 @@ namespace
 const PegInfo pegs[]
 {
     { CountType::SUM, "bad_checksum", "non-zero icmp checksums" },
+    { CountType::SUM, "checksum_bypassed", "checksum calculations bypassed" },
     { CountType::END, nullptr, nullptr }
 };
 
 struct Stats
 {
     PegCount bad_ip4_cksum;
+    PegCount cksum_bypassed;
 };
 
 static THREAD_LOCAL Stats stats;
@@ -114,6 +118,7 @@ public:
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 
 private:
+    bool valid_checksum_from_daq(const RawData&);
     void ICMP4AddrTests(const DecodeData& snort, const CodecData& codec);
     void ICMP4MiscTests(const ICMPHdr* const, const CodecData&, const uint16_t);
 };
@@ -121,6 +126,20 @@ private:
 
 void Icmp4Codec::get_protocol_ids(std::vector<ProtocolId>& v)
 { v.emplace_back(ProtocolId::ICMPV4); }
+
+inline bool Icmp4Codec::valid_checksum_from_daq(const RawData& raw)
+{
+    const DAQ_PktDecodeData_t* pdd =
+        (const DAQ_PktDecodeData_t*) daq_msg_get_meta(raw.daq_msg, DAQ_PKT_META_DECODE_DATA);
+    if (!pdd || !pdd->flags.bits.l4_checksum || !pdd->flags.bits.icmp || !pdd->flags.bits.l4)
+        return false;
+    // Sanity check to make sure we're talking about the same thing
+    const uint8_t* data = daq_msg_get_data(raw.daq_msg);
+    if (raw.data - data != pdd->l4_offset)
+        return false;
+    stats.cksum_bypassed++;
+    return true;
+}
 
 bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
 {
@@ -134,7 +153,7 @@ bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
     const ICMPHdr* const icmph = reinterpret_cast<const ICMPHdr*>(raw.data);
     uint16_t len = 0;
 
-    if (SnortConfig::icmp_checksums())
+    if (SnortConfig::icmp_checksums() && !valid_checksum_from_daq(raw))
     {
         uint16_t csum = checksum::cksum_add((const uint16_t*)icmph, raw.len);
 

@@ -41,17 +41,17 @@
 using namespace snort;
 
 Packet::Packet(bool) { }
-Packet::~Packet() { }
+Packet::~Packet()  = default;
 
 void Inspector::rem_ref() {}
 
 void Inspector::add_ref() {}
 
-void memory::MemoryCap::update_allocations(size_t n) {}
+void memory::MemoryCap::update_allocations(size_t) {}
 
-void memory::MemoryCap::update_deallocations(size_t n) {}
+void memory::MemoryCap::update_deallocations(size_t) {}
 
-bool memory::MemoryCap::free_space(size_t n) { return false; }
+bool memory::MemoryCap::free_space(size_t) { return false; }
 
 bool HighAvailabilityManager::active() { return false; }
 
@@ -59,13 +59,13 @@ FlowHAState::FlowHAState() = default;
 
 void FlowHAState::reset() {}
 
-snort::FlowStash::~FlowStash() {}
+snort::FlowStash::~FlowStash() = default;
 
 void FlowStash::reset() {}
 
-void DetectionEngine::onload(Flow* flow) {}
+void DetectionEngine::onload(Flow*) {}
 
-Packet* DetectionEngine::set_next_packet(Packet* parent) { return nullptr; }
+Packet* DetectionEngine::set_next_packet(Packet*) { return nullptr; }
 
 IpsContext* DetectionEngine::get_context() { return nullptr; }
 
@@ -73,16 +73,14 @@ DetectionEngine::DetectionEngine() = default;
 
 DetectionEngine::~DetectionEngine() {}
 
-bool snort::layer::set_outer_ip_api(const Packet* const p,
-    ip::IpApi& api,
-    int8_t& curr_layer)
+bool snort::layer::set_outer_ip_api(const Packet* const, ip::IpApi&, int8_t&)
 { return false; }
 
 uint8_t ip::IpApi::ttl() const { return 0; }
 
-const Layer* snort::layer::get_mpls_layer(const Packet* const p) { return nullptr; }
+const Layer* snort::layer::get_mpls_layer(const Packet* const) { return nullptr; }
 
-void snort::DataBus::publish(const char* key, Packet* p, Flow* f) {}
+void snort::DataBus::publish(const char*, Packet*, Flow*) {}
 
 TEST_GROUP(nondefault_timeout)
 {

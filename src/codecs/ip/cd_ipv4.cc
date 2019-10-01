@@ -52,12 +52,14 @@ namespace
 const PegInfo pegs[]
 {
     { CountType::SUM, "bad_checksum", "nonzero ip checksums" },
+    { CountType::SUM, "checksum_bypassed", "checksum calculations bypassed" },
     { CountType::END, nullptr, nullptr }
 };
 
 struct Stats
 {
     PegCount bad_cksum;
+    PegCount cksum_bypassed;
 };
 
 static THREAD_LOCAL Stats stats;
@@ -120,11 +122,26 @@ public:
     void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
 
 private:
+    bool valid_checksum_from_daq(const RawData&);
     void IP4AddrTests(const ip::IP4Hdr*, const CodecData&, DecodeData&);
     void IPMiscTests(const ip::IP4Hdr* const ip4h, const CodecData& codec, uint16_t len);
     void DecodeIPOptions(const uint8_t* start, uint8_t& o_len, CodecData& data);
 };
 }  // namespace
+
+inline bool Ipv4Codec::valid_checksum_from_daq(const RawData& raw)
+{
+    const DAQ_PktDecodeData_t* pdd =
+        (const DAQ_PktDecodeData_t*) daq_msg_get_meta(raw.daq_msg, DAQ_PKT_META_DECODE_DATA);
+    if (!pdd || !pdd->flags.bits.l3_checksum || !pdd->flags.bits.ipv4 || !pdd->flags.bits.l3)
+        return false;
+    // Sanity check to make sure we're talking about the same thing
+    const uint8_t* data = daq_msg_get_data(raw.daq_msg);
+    if (raw.data - data != pdd->l3_offset)
+        return false;
+    stats.cksum_bypassed++;
+    return true;
+}
 
 void Ipv4Codec::get_data_link_type(std::vector<int>& v)
 {
@@ -236,14 +253,10 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
      */
     IP4AddrTests(iph, codec, snort);
 
-    if (snort::SnortConfig::ip_checksums())
+    if (snort::SnortConfig::ip_checksums() && !valid_checksum_from_daq(raw))
     {
-        /* routers drop packets with bad IP checksums, we don't really
-         * need to check them (should make this a command line/config
-         * option
-         */
+        // routers drop packets with bad IP checksums, we don't really need to check them...
         int16_t csum = checksum::ip_cksum((const uint16_t*)iph, hlen);
-
         if (csum && !codec.is_cooked())
         {
             if ( !(codec.codec_flags & CODEC_UNSURE_ENCAP) )
