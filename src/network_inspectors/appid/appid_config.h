@@ -103,6 +103,7 @@ public:
     uint32_t host_port_app_cache_lookup_range = 100000;
     uint32_t http_response_version_enabled = 0;
     bool allow_port_wildcard_host_cache = false;
+    bool recheck_for_portservice_appid = false;
 };
 
 typedef std::array<SF_LIST*, APP_ID_PORT_ARRAY_SIZE> AppIdPortExclusions;

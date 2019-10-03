@@ -373,6 +373,13 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* config, const char* pa
                     config->allow_port_wildcard_host_cache = true;
                 }
             }
+            else if (!(strcasecmp(conf_key, "recheck_for_portservice_appid")))
+            {
+                if (!(strcasecmp(conf_val, "enabled")))
+                {
+                    config->recheck_for_portservice_appid = true;
+                }
+            }
             else if (!(strcasecmp(conf_key, "bittorrent_aggressiveness")))
             {
                 int aggressiveness = atoi(conf_val);
@@ -380,10 +387,12 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* config, const char* pa
                 if (aggressiveness >= 50)
                 {
                     config->host_port_app_cache_lookup_interval = 5;
+                    config->recheck_for_portservice_appid = true;
                     set_app_info_flags(APP_ID_BITTORRENT, APPINFO_FLAG_DEFER);
                     set_app_info_flags(APP_ID_BITTORRENT, APPINFO_FLAG_DEFER_PAYLOAD);
                     config->max_tp_flow_depth = 25;
                     LogMessage("AppId: host_port_app_cache_lookup_interval %d\n", config->host_port_app_cache_lookup_interval);
+                    LogMessage("AppId: recheck_for_portservice_appid enabled\n");
                     LogMessage("AppId: defer_to_thirdparty %d\n", APP_ID_BITTORRENT);
                     LogMessage("AppId: defer_payload_to_thirdparty %d\n", APP_ID_BITTORRENT);
                     LogMessage("AppId: max_tp_flow_depth %d\n", config->max_tp_flow_depth);
