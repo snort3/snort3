@@ -237,6 +237,20 @@ void ParseIpVar(SnortConfig* sc, const char* var, const char* val)
 
 void add_service_to_otn(SnortConfig* sc, OptTreeNode* otn, const char* svc_name)
 {
+    if ( !strcmp(svc_name, "file") and !otn->sigInfo.num_services )
+    {
+        // well-known services supporting file_data
+        // applies to both alert file and service:file rules
+        add_service_to_otn(sc, otn, "ftp-data");
+        add_service_to_otn(sc, otn, "netbios-ssn");
+        add_service_to_otn(sc, otn, "http");
+        add_service_to_otn(sc, otn, "pop3");
+        add_service_to_otn(sc, otn, "imap");
+        add_service_to_otn(sc, otn, "smtp");
+        add_service_to_otn(sc, otn, "user");
+        return;
+    }
+
     if (otn->sigInfo.num_services >= sc->max_metadata_services)
     {
         ParseError("too many service's specified for rule, can't add %s", svc_name);

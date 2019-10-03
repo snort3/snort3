@@ -99,6 +99,7 @@ struct RuleTreeNode
     static constexpr Flag BIDIRECTIONAL = 0x10;
     static constexpr Flag ANY_SRC_IP    = 0x20;
     static constexpr Flag ANY_DST_IP    = 0x40;
+    static constexpr Flag USER_MODE     = 0x80;
 
     RuleFpList* rule_func = nullptr; /* match functions.. (Bidirectional etc.. ) */
 
@@ -127,7 +128,10 @@ struct RuleTreeNode
     { flags &= (~ENABLED); }
 
     bool enabled() const
-    { return flags & ENABLED; }
+    { return (flags & ENABLED) != 0; }
+
+    bool user_mode()
+    { return (flags & USER_MODE) != 0; }
 };
 
 // one of these for each rule

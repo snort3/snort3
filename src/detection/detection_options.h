@@ -110,7 +110,6 @@ struct detection_option_tree_root_t
 
 struct detection_option_eval_data_t
 {
-    void* pomd;
     void* pmd;
     snort::Packet* p;
     char flowbit_failed;
@@ -122,7 +121,7 @@ void* add_detection_option(struct snort::SnortConfig*, option_type_t, void*);
 void* add_detection_option_tree(struct snort::SnortConfig*, detection_option_tree_node_t*);
 
 int detection_option_node_evaluate(
-    detection_option_tree_node_t*, detection_option_eval_data_t*, const class Cursor&);
+    detection_option_tree_node_t*, detection_option_eval_data_t&, const class Cursor&);
 
 void DetectionHashTableFree(snort::XHash*);
 void DetectionTreeHashTableFree(snort::XHash*);

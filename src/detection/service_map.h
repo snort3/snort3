@@ -42,8 +42,8 @@ struct PortGroup;
 //  Service Rule Map Master Table
 struct srmm_table_t
 {
-    snort::GHash* to_srv[SNORT_PROTO_MAX];
-    snort::GHash* to_cli[SNORT_PROTO_MAX];
+    snort::GHash* to_srv;
+    snort::GHash* to_cli;
 };
 
 srmm_table_t* ServiceMapNew();
@@ -61,13 +61,10 @@ typedef std::vector<PortGroup*> PortGroupVector;
 struct sopg_table_t
 {
     sopg_table_t(unsigned size);
-    bool set_user_mode();
-    PortGroup* get_port_group(SnortProtocolId proto_id, bool c2s, SnortProtocolId snort_protocol_id);
+    PortGroup* get_port_group(bool c2s, SnortProtocolId svc);
 
-    PortGroupVector to_srv[SNORT_PROTO_MAX];
-    PortGroupVector to_cli[SNORT_PROTO_MAX];
-
-    bool user_mode;
+    PortGroupVector to_srv;
+    PortGroupVector to_cli;
 };
 
 

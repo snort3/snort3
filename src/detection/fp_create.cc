@@ -1420,15 +1420,11 @@ static void fpCreateServiceMapPortGroups(SnortConfig* sc)
     sc->spgmmTable = ServicePortGroupMapNew();
     sc->sopgTable = new sopg_table_t(sc->proto_ref->get_count());
 
-    for ( int i = SNORT_PROTO_IP; i < SNORT_PROTO_MAX; i++ )
-    {
-        fpBuildServicePortGroups(sc, sc->spgmmTable->to_srv[i],
-            sc->sopgTable->to_srv[i], sc->srmmTable->to_srv[i], fp);
+    fpBuildServicePortGroups(sc, sc->spgmmTable->to_srv,
+        sc->sopgTable->to_srv, sc->srmmTable->to_srv, fp);
 
-        fpBuildServicePortGroups(sc, sc->spgmmTable->to_cli[i],
-            sc->sopgTable->to_cli[i], sc->srmmTable->to_cli[i], fp);
-    }
-    sc->sopgTable->set_user_mode();
+    fpBuildServicePortGroups(sc, sc->spgmmTable->to_cli,
+        sc->sopgTable->to_cli, sc->srmmTable->to_cli, fp);
 }
 
 /*
@@ -1447,7 +1443,7 @@ static void fpPrintRuleList(SF_LIST* list)
     }
 }
 
-static void fpPrintServiceRuleMapTable(GHash* p, const char* proto, const char* dir)
+static void fpPrintServiceRuleMapTable(GHash* p, const char* dir)
 {
     GHashNode* n;
 
@@ -1455,8 +1451,6 @@ static void fpPrintServiceRuleMapTable(GHash* p, const char* proto, const char* 
         return;
 
     std::string label = "service rule counts - ";
-    label += proto;
-    label += " ";
     label += dir;
     LogLabel(label.c_str());
 
@@ -1481,23 +1475,16 @@ static void fpPrintServiceRuleMapTable(GHash* p, const char* proto, const char* 
 
 static void fpPrintServiceRuleMaps(SnortConfig* sc)
 {
-    for ( int i = SNORT_PROTO_IP; i < SNORT_PROTO_MAX; ++i )
-    {
-        const char* s = sc->proto_ref->get_name(i);
-        fpPrintServiceRuleMapTable(sc->srmmTable->to_srv[i], s, "to server");
-        fpPrintServiceRuleMapTable(sc->srmmTable->to_cli[i], s, "to client");
-    }
+    fpPrintServiceRuleMapTable(sc->srmmTable->to_srv, "to server");
+    fpPrintServiceRuleMapTable(sc->srmmTable->to_cli, "to client");
 }
 
-static void fp_print_service_rules(SnortConfig* sc, GHash* cli, GHash* srv, const char* msg)
+static void fp_print_service_rules(SnortConfig* sc, GHash* cli, GHash* srv)
 {
     if ( !cli->count and !srv->count )
         return;
 
-    std::string label = "service rule counts - ";
-    label += msg;
-    label += "    to-srv  to-cli";
-    LogLabel(label.c_str());
+    LogLabel("service rule counts          to-srv  to-cli");
 
     uint16_t idx = 0;
     unsigned ctot = 0, stot = 0;
@@ -1524,8 +1511,7 @@ static void fp_print_service_rules(SnortConfig* sc, GHash* cli, GHash* srv, cons
 
 static void fp_print_service_rules_by_proto(SnortConfig* sc)
 {
-    for ( int i = SNORT_PROTO_IP; i < SNORT_PROTO_MAX; ++i )
-        fp_print_service_rules(sc, sc->srmmTable->to_srv[i], sc->srmmTable->to_cli[i], sc->proto_ref->get_name(i));
+    fp_print_service_rules(sc, sc->srmmTable->to_srv, sc->srmmTable->to_cli);
 }
 
 static void fp_sum_port_groups(PortGroup* pg, unsigned c[PM_TYPE_MAX])
@@ -1554,11 +1540,8 @@ static void fp_print_service_groups(srmm_table_t* srmm)
     unsigned to_srv[PM_TYPE_MAX] = { 0 };
     unsigned to_cli[PM_TYPE_MAX] = { 0 };
 
-    for ( int i = SNORT_PROTO_IP; i < SNORT_PROTO_MAX; ++i )
-    {
-        fp_sum_service_groups(srmm->to_srv[i], to_srv);
-        fp_sum_service_groups(srmm->to_cli[i], to_cli);
-    }
+    fp_sum_service_groups(srmm->to_srv, to_srv);
+    fp_sum_service_groups(srmm->to_cli, to_cli);
 
     bool label = true;
 

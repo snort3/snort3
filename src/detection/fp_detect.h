@@ -85,16 +85,11 @@ struct MatchInfo
 */
 struct OtnxMatchData
 {
-    PortGroup* pg;
-    snort::Packet* p;
     MatchInfo* matchInfo;
-
-    int check_ports;
     bool have_match;
-    bool do_fp;
 };
 
-int fpAddMatch(OtnxMatchData*, int pLen, const OptTreeNode*);
+int fpAddMatch(OtnxMatchData*, const OptTreeNode*);
 
 void fp_set_context(snort::IpsContext&);
 void fp_clear_context(snort::IpsContext&);

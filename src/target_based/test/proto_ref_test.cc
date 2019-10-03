@@ -78,7 +78,7 @@ TEST(protocol_reference, service_protocols)
     CHECK( is_service_protocol(t3) );
 }
 
-// Builtin Protocols (ip, icmp, tcp, udp, user and file)
+// Builtin Protocols (ip, icmp, tcp, udp, user)
 //
 // Verify normal behaviour of the builtin protocols.
 //   1. Check the builtin protocols match the hardcoded ID's
@@ -125,12 +125,6 @@ TEST(protocol_reference, builtin_protocols)
     CHECK( !is_network_protocol(user) );
     CHECK( is_builtin_protocol(user) );
     CHECK( is_service_protocol(user) );
-
-    SnortProtocolId file = refs.add("file");
-    CHECK( file == SNORT_PROTO_FILE );
-    CHECK( !is_network_protocol(file) );
-    CHECK( is_builtin_protocol(file) );
-    CHECK( is_service_protocol(file) );
 }
 
 // Find none

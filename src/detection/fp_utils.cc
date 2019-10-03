@@ -358,13 +358,6 @@ PatternMatchVector get_fp_content(
     else
         exclude = false;
 
-    if ( best.pmd and otn->snort_protocol_id == SNORT_PROTO_FILE and best.cat != CAT_SET_FILE )
-    {
-        ParseWarning(WARN_RULES, "file rule %u:%u does not have file_data fast pattern",
-            otn->sigInfo.gid, otn->sigInfo.sid);
-        pmds.clear();
-    }
-
     if ( content && !best.pmd)
         ParseWarning(WARN_RULES, "content based rule %u:%u has no eligible fast pattern",
             otn->sigInfo.gid, otn->sigInfo.sid);

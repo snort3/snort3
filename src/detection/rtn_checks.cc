@@ -237,6 +237,22 @@ int CheckDstPortNotEq(Packet* p, RuleTreeNode* rtn_idx,
     return 0;
 }
 
+int CheckProto(Packet* p, RuleTreeNode* rtn_idx, RuleFpList*, int)
+{
+    assert(rtn_idx->snort_protocol_id < SNORT_PROTO_MAX);
+
+    const int proto_bits[SNORT_PROTO_MAX] =  // SNORT_PROTO_ to PROTO_BIT__*
+    {
+        /* n/a */  PROTO_BIT__NONE,
+        /* ip */   PROTO_BIT__IP | PROTO_BIT__TCP | PROTO_BIT__UDP,  // legacy
+        /* icmp */ PROTO_BIT__ICMP,
+        /* tcp */  PROTO_BIT__TCP | PROTO_BIT__PDU,
+        /* udp */  PROTO_BIT__UDP,
+        /* user */ PROTO_BIT__PDU
+    };
+    return proto_bits[rtn_idx->snort_protocol_id] & p->proto_bits;
+}
+
 int RuleListEnd(Packet*, RuleTreeNode*, RuleFpList*, int)
 {
     return 1;

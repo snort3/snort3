@@ -58,7 +58,7 @@ void clear_trace_cursor_info()
     cursor_pos = -1;
 }
 
-void print_pkt_info(Packet* p)
+void print_pkt_info(Packet* p, const char* task)
 {
     const char* dir;
     SfIpString src_addr, dst_addr;
@@ -83,8 +83,8 @@ void print_pkt_info(Packet* p)
         dst_port = p->ptrs.dp;
     }
 
-    trace_logf(detection, TRACE_RULE_EVAL,"packet %" PRIu64 " %s %s:%u %s:%u\n",
-        p->context->packet_number, dir, src_addr, src_port, dst_addr, dst_port);
+    trace_logf(detection, TRACE_RULE_EVAL,"packet %" PRIu64 " %s %s:%u %s:%u (%s)\n",
+        p->context->packet_number, dir, src_addr, src_port, dst_addr, dst_port, task);
 }
 
 void print_pattern(const PatternMatchData* pmd)
@@ -151,7 +151,7 @@ void clear_trace_cursor_info()
 {
 }
 
-void print_pkt_info(Packet*)
+void print_pkt_info(Packet*, const char*)
 {
 }
 

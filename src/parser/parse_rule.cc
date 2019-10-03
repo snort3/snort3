@@ -567,7 +567,7 @@ static int ParsePortList(
     PortObject* portobject;  /* src or dst */
 
     /* Get the protocol specific port object */
-    if ( rule_proto & (PROTO_BIT__TCP | PROTO_BIT__UDP) )
+    if ( rule_proto & (PROTO_BIT__TCP | PROTO_BIT__UDP | PROTO_BIT__PDU) )
     {
         portobject = ParsePortListTcpUdpPort(pvt, noname, port_str);
     }
@@ -789,9 +789,8 @@ static void PortToFunc(RuleTreeNode* rtn, int any_flag, int except_flag, int mod
 static void SetupRTNFuncList(RuleTreeNode* rtn)
 {
     if (rtn->flags & RuleTreeNode::BIDIRECTIONAL)
-    {
         AddRuleFuncToList(CheckBidirectional, rtn);
-    }
+
     else
     {
         PortToFunc(rtn, (rtn->flags & RuleTreeNode::ANY_DST_PORT) ? 1 : 0, 0, DST);
@@ -800,6 +799,9 @@ static void SetupRTNFuncList(RuleTreeNode* rtn)
         AddrToFunc(rtn, SRC);
         AddrToFunc(rtn, DST);
     }
+
+    if ( rtn->snort_protocol_id < SNORT_PROTO_MAX )
+        AddRuleFuncToList(CheckProto, rtn);
 
     AddRuleFuncToList(RuleListEnd, rtn);
 }
@@ -1019,7 +1021,7 @@ void parse_rule_proto(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
 
     else
         // this will allow other protocols like http to have ports
-        rule_proto = PROTO_BIT__TCP;
+        rule_proto = PROTO_BIT__PDU;
 
     rtn.snort_protocol_id = sc->proto_ref->add(s);
 

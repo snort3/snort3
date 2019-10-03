@@ -342,12 +342,10 @@ void* add_detection_option_tree(SnortConfig* sc, detection_option_tree_node_t* o
 }
 
 int detection_option_node_evaluate(
-    detection_option_tree_node_t* node, detection_option_eval_data_t* eval_data,
+    detection_option_tree_node_t* node, detection_option_eval_data_t& eval_data,
     const Cursor& orig_cursor)
 {
-    // need node->state to do perf profiling
-    if ( !node )
-        return 0;
+    assert(node and eval_data.p);
 
     auto& state = node->state[get_instance_id()];
     RuleContext profile(state);
@@ -360,16 +358,11 @@ int detection_option_node_evaluate(
     char flowbits_setoperation = 0;
     int loop_count = 0;
     uint32_t tmp_byte_extract_vars[NUM_IPS_OPTIONS_VARS];
+    uint64_t cur_eval_context_num = eval_data.p->context->context_num;
 
-    if ( !eval_data || !eval_data->p || !eval_data->pomd )
-        return 0;
+    node_eval_trace(node, cursor, eval_data.p);
 
-    uint64_t cur_eval_context_num = eval_data->p->context->context_num;
-
-    node_eval_trace(node, cursor, eval_data->p);
-
-    auto p = eval_data->p;
-    auto pomd = eval_data->pomd;
+    auto p = eval_data.p;
 
     // see if evaluated it before ...
     if ( !node->is_relative )
@@ -393,7 +386,7 @@ int detection_option_node_evaluate(
         }
     }
 
-    state.last_check.ts = eval_data->p->pkth->ts;
+    state.last_check.ts = eval_data.p->pkth->ts;
     state.last_check.run_num = get_run_num();
     state.last_check.context_num = cur_eval_context_num;
     state.last_check.flowbit_failed = 0;
@@ -423,7 +416,7 @@ int detection_option_node_evaluate(
             SnortProtocolId snort_protocol_id = p->get_snort_protocol_id();
             int check_ports = 1;
 
-            if ( snort_protocol_id != UNKNOWN_PROTOCOL_ID and ((OtnxMatchData*)(pomd))->check_ports != 2 )
+            if ( snort_protocol_id != UNKNOWN_PROTOCOL_ID )
             {
                 auto sig_info = otn->sigInfo;
 
@@ -436,7 +429,7 @@ int detection_option_node_evaluate(
                     }
                 }
 
-                if (sig_info.num_services && check_ports)
+                if ( sig_info.num_services and check_ports )
                 {
                     // none of the services match
                     trace_logf(detection, TRACE_RULE_EVAL,
@@ -471,17 +464,14 @@ int detection_option_node_evaluate(
                 {
                     otn->state[get_instance_id()].matches++;
 
-                    if ( !eval_data->flowbit_noalert )
+                    if ( !eval_data.flowbit_noalert )
                     {
-                        PatternMatchData* pmd = (PatternMatchData*)eval_data->pmd;
-                        int pattern_size = pmd ? pmd->pattern_size : 0;
 #ifdef DEBUG_MSGS
                         const SigInfo& si = otn->sigInfo;
                         trace_logf(detection, TRACE_RULE_EVAL,
                             "Matched rule gid:sid:rev %u:%u:%u\n", si.gid, si.sid, si.rev);
 #endif
-
-                        fpAddMatch((OtnxMatchData*)pomd, pattern_size, otn);
+                        fpAddMatch(p->context->otnx, otn);
                     }
                     result = rval = (int)IpsOption::MATCH;
                 }
@@ -528,7 +518,7 @@ int detection_option_node_evaluate(
                     rval = (int)IpsOption::MATCH;
 
                 else
-                    rval = node->evaluate(node->option_data, cursor, eval_data->p);
+                    rval = node->evaluate(node->option_data, cursor, eval_data.p);
             }
             break;
 
@@ -547,7 +537,7 @@ int detection_option_node_evaluate(
         else if ( rval == (int)IpsOption::FAILED_BIT )
         {
             trace_log(detection, TRACE_RULE_EVAL, "failed bit\n");
-            eval_data->flowbit_failed = 1;
+            eval_data.flowbit_failed = 1;
             // clear the timestamp so failed flowbit gets eval'd again
             state.last_check.flowbit_failed = 1;
             state.last_check.result = result;
@@ -557,8 +547,8 @@ int detection_option_node_evaluate(
         {
             // Cache the current flowbit_noalert flag, and set it
             // so nodes below this don't alert.
-            tmp_noalert_flag = eval_data->flowbit_noalert;
-            eval_data->flowbit_noalert = 1;
+            tmp_noalert_flag = eval_data.flowbit_noalert;
+            eval_data.flowbit_noalert = 1;
             trace_log(detection, TRACE_RULE_EVAL, "flowbit no alert\n");
         }
 
@@ -679,7 +669,7 @@ int detection_option_node_evaluate(
         if ( rval == (int)IpsOption::NO_ALERT )
         {
             // Reset the flowbit_noalert flag in eval data
-            eval_data->flowbit_noalert = tmp_noalert_flag;
+            eval_data.flowbit_noalert = tmp_noalert_flag;
         }
 
         if ( continue_loop && rval == (int)IpsOption::MATCH && node->relative_children )
@@ -708,7 +698,7 @@ int detection_option_node_evaluate(
             result = rval;
     }
 
-    if ( eval_data->flowbit_failed )
+    if ( eval_data.flowbit_failed )
     {
         // something deeper in the tree failed a flowbit test, we may need to
         // reeval this node

@@ -34,8 +34,11 @@ int OptListEnd(void* option_data, class Cursor&, snort::Packet*);
 
 // detection
 int CheckBidirectional(snort::Packet*, RuleTreeNode*, RuleFpList*, int);
+
+int CheckProto(snort::Packet*, RuleTreeNode*, RuleFpList*, int);
 int CheckSrcIP(snort::Packet*, RuleTreeNode*, RuleFpList*, int);
 int CheckDstIP(snort::Packet*, RuleTreeNode*, RuleFpList*, int);
+
 int CheckSrcPortEqual(snort::Packet*, RuleTreeNode*, RuleFpList*, int);
 int CheckDstPortEqual(snort::Packet*, RuleTreeNode*, RuleFpList*, int);
 int CheckSrcPortNotEq(snort::Packet*, RuleTreeNode*, RuleFpList*, int);
