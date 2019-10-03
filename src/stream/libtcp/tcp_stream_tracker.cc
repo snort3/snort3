@@ -477,11 +477,27 @@ void TcpStreamTracker::update_tracker_ack_recv(TcpSegmentDescriptor& tsd)
 // In no-ack policy, data is implicitly acked immediately.
 void TcpStreamTracker::update_tracker_no_ack_recv(TcpSegmentDescriptor& tsd)
 {
+    // No_ack mode requires that segments be provided in order. If we see
+    // a gap, don't advance the seq and turn off no-ack mode.
+    if(tsd.get_seg_len() != (tsd.get_end_seq() - snd_una))
+    {
+        Stream::set_no_ack_mode(tsd.get_flow(), false);
+        return;
+    }
+
     snd_una = snd_nxt = tsd.get_end_seq();
 }
 
 void TcpStreamTracker::update_tracker_no_ack_sent(TcpSegmentDescriptor& tsd)
 {
+    // No_ack mode requires that segments be provided in order. If we see
+    // a gap, don't advance the seq and turn off no-ack mode.
+    if(tsd.get_seg_len() != (tsd.get_end_seq() - r_win_base))
+    {
+        Stream::set_no_ack_mode(tsd.get_flow(), false);
+        return;
+    }
+
     r_win_base = tsd.get_end_seq();
     reassembler.flush_on_ack_policy(tsd.get_pkt());
 }
