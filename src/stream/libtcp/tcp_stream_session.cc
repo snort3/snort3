@@ -327,22 +327,6 @@ void TcpStreamSession::GetPacketHeaderFoo(DAQ_PktHdr_t* pkth, uint32_t dir)
     pkth->address_space_id = address_space_id;
 }
 
-void TcpStreamSession::SwapPacketHeaderFoo()
-{
-    if ( egress_index != DAQ_PKTHDR_UNKNOWN )
-    {
-        int32_t save_ingress_index;
-        int32_t save_ingress_group;
-
-        save_ingress_index = ingress_index;
-        save_ingress_group = ingress_group;
-        ingress_index = egress_index;
-        ingress_group = egress_group;
-        egress_index = save_ingress_index;
-        egress_group = save_ingress_group;
-    }
-}
-
 void TcpStreamSession::reset()
 {
     if (tcp_init)

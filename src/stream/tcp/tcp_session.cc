@@ -451,6 +451,7 @@ void TcpSession::set_os_policy()
 }
 
 // FIXIT-H this is no longer called (but should be)
+#if 0
 void TcpSession::swap_trackers()
 {
     uint32_t session_flags = flow->get_session_flags( );
@@ -486,6 +487,7 @@ void TcpSession::swap_trackers()
         flow->update_session_flags(session_flags);
     }
 }
+#endif
 
 void TcpSession::NewTcpSessionOnSyn(TcpSegmentDescriptor& tsd)
 {

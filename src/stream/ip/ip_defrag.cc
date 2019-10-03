@@ -1103,10 +1103,7 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
     if (p->is_ip6() && (net_frag_offset == 0))
     {
         const ip::IP6Frag* const fragHdr = layer::get_inner_ip6_frag();
-        if (ft->ip_proto != fragHdr->ip6f_nxt)
-        {
-            ft->ip_proto = fragHdr->ip6f_nxt;
-        }
+        ft->ip_proto = fragHdr->ip6f_nxt;
     }
 
     /*
@@ -1119,7 +1116,7 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
      * truncated.  Don't want to try to copy more than we actually
      * captured. Use dsize as the frag length since it is distance
      * between the last succesfully decoded layer (which is ip6_frag
-     *  or ipv4) and the end of packet, */
+     * or ipv4) and the end of packet, */
     len = fragLength = p->dsize;
     fragStart = p->data;
 

@@ -227,10 +227,7 @@ void Stream::stop_inspection(
     case SSN_DIR_BOTH:
     case SSN_DIR_FROM_CLIENT:
     case SSN_DIR_FROM_SERVER:
-        if (flow->ssn_state.ignore_direction != dir)
-        {
-            flow->ssn_state.ignore_direction = dir;
-        }
+        flow->ssn_state.ignore_direction = dir;
         break;
     }
 
@@ -413,10 +410,7 @@ void Stream::set_snort_protocol_id(
     }
 #endif
 
-    if (flow->ssn_state.snort_protocol_id != snort_protocol_id)
-    {
-        flow->ssn_state.snort_protocol_id = snort_protocol_id;
-    }
+    flow->ssn_state.snort_protocol_id = snort_protocol_id;
 }
 
 SnortProtocolId Stream::get_snort_protocol_id(Flow* flow)
@@ -464,10 +458,7 @@ SnortProtocolId Stream::set_snort_protocol_id(Flow* flow, SnortProtocolId id)
     if (!flow)
         return UNKNOWN_PROTOCOL_ID;
 
-    if (flow->ssn_state.snort_protocol_id != id)
-    {
-        flow->ssn_state.snort_protocol_id = id;
-    }
+    flow->ssn_state.snort_protocol_id = id;
 
     if (!flow->ssn_state.ipprotocol)
         set_ip_protocol(flow);
