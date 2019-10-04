@@ -21,9 +21,16 @@
 #ifndef DISCOVERY_FILTER_H
 #define DISCOVERY_FILTER_H
 
+#include <unordered_map>
+
 #include "protocols/packet.h"
 #include "sfip/sf_ipvar.h"
 #include "sfip/sf_vartable.h"
+
+enum FilterType { DF_APP, DF_HOST, DF_USER, DF_MAX };
+
+typedef int32_t ZoneType; // matching daq header
+#define DF_ANY_ZONE INT32_MAX
 
 // Holds configurations to filter traffic discovery based network address, port, and zone
 class DiscoveryFilter
@@ -38,13 +45,14 @@ public:
     bool is_user_monitored(const snort::Packet* p, uint8_t* flag = nullptr);
 
 private:
-    bool is_monitored(const snort::Packet* p, const char* type, uint8_t& flag,
+    bool is_monitored(const snort::Packet* p, FilterType type, uint8_t& flag,
         uint8_t checked, uint8_t monitored);
-    bool is_monitored(const snort::Packet* p, const char* type);
-    void add_ip(const char* name, std::string ip);
+    bool is_monitored(const snort::Packet* p, FilterType type);
+    void add_ip(FilterType type, ZoneType zone, std::string& ip);
+    sfip_var_t* get_list(FilterType type, ZoneType zone, bool exclude_empty = false);
 
+    std::unordered_map<ZoneType, sfip_var_t*> zone_list[DF_MAX];
     vartable_t* vartable = nullptr;
-    sfip_var_t* varip = nullptr;
 };
 
 #endif

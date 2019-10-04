@@ -418,8 +418,7 @@ static sfip_node_t* merge_lists(sfip_node_t* list1, sfip_node_t* list2, uint16_t
     return listHead;
 }
 
-/* Deep copy of src added to dst */
-static SfIpRet sfvar_add(sfip_var_t* dst, sfip_var_t* src)
+SfIpRet sfvar_add(sfip_var_t* dst, sfip_var_t* src)
 {
     sfip_var_t* copiedvar;
 
@@ -721,6 +720,9 @@ SfIpRet sfvar_parse_iplist(vartable_t* table, sfip_var_t* var,
             if ( *str == '!' )
                 neg_ip = !neg_ip;
         }
+
+        if (!*str)
+            return SFIP_ARG_ERR;
 
         /* Find end of this token */
         for (end = str+1;

@@ -1831,7 +1831,7 @@ bool RateFilterModule::end(const char*, int idx, SnortConfig* sc)
 static const Parameter single_rule_state_params[] =
 {
     { "action", Parameter::PT_ENUM,
-      "log | pass | alert | drop | block | reset | inherit", "inherit",
+      "log | pass | alert | drop | block | reset | react | reject | rewrite | inherit", "inherit",
       "apply action if rule matches or inherit from rule definition" },
 
     { "enable", Parameter::PT_ENUM, "no | yes | inherit", "inherit",

@@ -97,6 +97,9 @@ struct vartable_t
     uint32_t id;
 };
 
+/* Deep copy of src added to dst */
+SfIpRet sfvar_add(sfip_var_t* dst, sfip_var_t* src);
+
 /* Creates a new variable that is an alias of another variable
  * Does a "deep" copy so it owns it's own pointers */
 sfip_var_t* sfvar_deep_copy(const sfip_var_t*);
