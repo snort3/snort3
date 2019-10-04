@@ -39,7 +39,7 @@ bool implement_get_buf(unsigned id, Http2FlowData* session_data, SourceId source
         if (session_data->frame_header[source_id] == nullptr)
             return false;
         b.data = session_data->frame_header[source_id];
-        b.len = FRAME_HEADER_LENGTH;
+        b.len = session_data->frame_header_size[source_id];
         break;
     case HTTP2_BUFFER_FRAME_DATA:
         if (session_data->frame_data[source_id] == nullptr)

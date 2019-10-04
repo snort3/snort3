@@ -71,28 +71,10 @@ Http2FlowData::~Http2FlowData()
     for (int k=0; k <= 1; k++)
     {
         delete[] frame_header[k];
-        delete[] frame[k];
+        delete[] currently_processing_frame_header[k];
+        delete[] frame_data[k];
         delete[] http2_decoded_header[k];
-        delete[] header_frame_header[k];
         delete infractions[k];
         delete events[k];
     }
-}
-
-int Http2FlowData::get_frame_type(HttpCommon::SourceId source_id)
-{
-    const int frame_type_index = 3;
-    if (frame_header[source_id])
-        return frame_header[source_id][frame_type_index];
-    else
-       return STAT_NO_SOURCE;
-}
-
-int Http2FlowData::get_frame_flags(HttpCommon::SourceId source_id)
-{
-    const int frame_flags_index = 4;
-    if (frame_header[source_id])
-        return frame_header[source_id][frame_flags_index];
-    else
-        return STAT_NO_SOURCE;
 }

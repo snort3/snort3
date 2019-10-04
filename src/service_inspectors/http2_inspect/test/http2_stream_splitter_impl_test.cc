@@ -130,7 +130,7 @@ TEST(http2_scan_test, short_input)
     CHECK(result == StreamSplitter::FLUSH);
     CHECK(flush_offset == 19);
     CHECK(session_data->get_header_coming(SRC_SERVER));
-    CHECK(memcmp(session_data->get_frame_header(SRC_SERVER),
+    CHECK(memcmp(session_data->get_currently_processing_frame_header(SRC_SERVER),
         "\x00\x00\x10\x04\x05\x06\x07\x08\x09", 9) == 0);
 }
 
@@ -206,6 +206,7 @@ TEST_GROUP(http2_reassemble_test)
 TEST(http2_reassemble_test, basic_with_header)
 {
     session_data->set_header_coming(true, SRC_CLIENT);
+    session_data->set_aggregated_frames (1, SRC_CLIENT);
     implement_reassemble(session_data, 19, 0,
         (const uint8_t*)"\x00\x00\x0A\x02\x00\x00\x00\x00\x00" "0123456789",
         19, PKT_PDU_TAIL, SRC_CLIENT);
@@ -216,6 +217,7 @@ TEST(http2_reassemble_test, basic_with_header)
 TEST(http2_reassemble_test, basic_with_header_s2c)
 {
     session_data->set_header_coming(true, SRC_SERVER);
+    session_data->set_aggregated_frames (1, SRC_SERVER);
     implement_reassemble(session_data, 19, 0,
         (const uint8_t*)"\x00\x00\x0A\x02\x00\x00\x00\x00\x00" "0123456789",
         19, PKT_PDU_TAIL, SRC_SERVER);
@@ -236,16 +238,15 @@ TEST(http2_reassemble_test, basic_without_header)
 TEST(http2_reassemble_test, basic_three_pieces)
 {
     session_data->set_header_coming(true, SRC_CLIENT);
+    session_data->set_aggregated_frames (1, SRC_CLIENT);
     StreamBuffer buffer = implement_reassemble(session_data, 19, 0,
         (const uint8_t*)"\x00\x00\x0A\x02\x00\x00",
         6, 0, SRC_CLIENT);
     CHECK(buffer.length == 0);
     CHECK(session_data->get_frame_data_size(SRC_CLIENT) == 0);
-    CHECK(session_data->get_frame_data(SRC_CLIENT) == nullptr);
     implement_reassemble(session_data, 19, 6,
         (const uint8_t*)"\x00\x00\x00" "01234",
         8, 0, SRC_CLIENT);
-    CHECK(session_data->get_frame_data(SRC_CLIENT) == nullptr);
     buffer = implement_reassemble(session_data, 19, 14,
         (const uint8_t*)"56789",
         5, PKT_PDU_TAIL, SRC_CLIENT);
@@ -260,8 +261,8 @@ TEST(http2_reassemble_test, basic_without_header_two_pieces)
     implement_reassemble(session_data, 24, 0,
         (const uint8_t*)"P",
         1, 0, SRC_CLIENT);
-    CHECK(session_data->get_frame_data_size(SRC_CLIENT) == 0);
-    CHECK(session_data->get_frame_data(SRC_CLIENT) == nullptr);
+    CHECK(session_data->get_frame_data_size(SRC_CLIENT) == 1);
+    CHECK(memcmp(session_data->get_frame_data(SRC_CLIENT), "P", 1) == 0);
      implement_reassemble(session_data, 24, 1,
         (const uint8_t*)"RI * HTTP/2.0\r\n\r\nSM\r\n\r\n",
         23, PKT_PDU_TAIL, SRC_CLIENT);

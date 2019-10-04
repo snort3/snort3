@@ -66,7 +66,8 @@ TEST(http2_get_buf_test, frame_header)
 {
     uint8_t* head_buf = new uint8_t[9];
     memcpy(head_buf, "\x01\x02\x03\x04\x05\x06\x07\x08\x09", 9);
-    session_data->set_frame_header(head_buf, SRC_CLIENT);
+    session_data->set_frame_header(head_buf, 9, SRC_CLIENT);
+    session_data->set_aggregated_frames (1, SRC_CLIENT);
     const bool result = implement_get_buf(HTTP2_BUFFER_FRAME_HEADER, session_data, SRC_CLIENT, b);
     CHECK(result == true);
     CHECK(b.len == 9);
@@ -91,7 +92,6 @@ TEST(http2_get_buf_test, frame_data)
     CHECK(result == true);
     CHECK(b.len == 26);
     CHECK(memcmp(b.data, "zyxwvutsrqponmlkjihgfedcba", 26) == 0);
-    delete[] data_buf;
 }
 
 TEST(http2_get_buf_test, frame_data_absent)

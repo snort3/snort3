@@ -105,8 +105,8 @@ void Http2Inspect::eval(Packet* p)
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2))
     {
-        Field((session_data->frame_header[source_id] != nullptr) ? FRAME_HEADER_LENGTH :
-            HttpCommon::STAT_NOT_PRESENT,
+        Field((session_data->frame_header[source_id] != nullptr) ?
+            (int) session_data->frame_header_size[source_id]  : HttpCommon::STAT_NOT_PRESENT,
             session_data->frame_header[source_id]).print(HttpTestManager::get_output_file(),
             "Frame Header");
         Field((session_data->frame_data[source_id] != nullptr) ?
@@ -134,18 +134,14 @@ void Http2Inspect::clear(Packet* p)
 
     delete[] session_data->frame_header[source_id];
     session_data->frame_header[source_id] = nullptr;
-    delete[] session_data->frame[source_id];
-    session_data->frame[source_id] = nullptr;
+    delete[] session_data->frame_data[source_id];
     session_data->frame_data[source_id] = nullptr;
     session_data->frame_in_detection = false;
     delete[] session_data->http2_decoded_header[source_id];
     session_data->http2_decoded_header[source_id] = nullptr;
-    session_data->continuation_expected = false;
-    if (session_data->header_frame_header[source_id])
-    {
-        delete[] session_data->header_frame_header[source_id];
-        session_data->header_frame_header[source_id] = nullptr;
-    }
-    session_data->continuation_frame_lengths.clear();
+    session_data->continuation_expected[source_id] = false;
+    delete[] session_data->currently_processing_frame_header[source_id];
+    session_data->currently_processing_frame_header[source_id] = nullptr;
+    session_data->frames_aggregated[source_id] = 0;
 }
 

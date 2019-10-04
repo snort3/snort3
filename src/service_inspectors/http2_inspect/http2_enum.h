@@ -32,7 +32,7 @@ static const uint32_t HTTP2_GID = 121;
 
 // Frame type codes (fourth octet of frame header)
 enum FrameType { FT_DATA=0, FT_HEADERS=1, FT_PRIORITY=2, FT_RST_STREAM=3, FT_SETTINGS=4,
-    FT_PUSH_PROMISE=5, FT_PING=6, FT_GOAWAY=7, FT_WINDOW_UPDATE=8, FT_CONTINUATION=9 };
+    FT_PUSH_PROMISE=5, FT_PING=6, FT_GOAWAY=7, FT_WINDOW_UPDATE=8, FT_CONTINUATION=9, FT__NONE=255 };
 
 // Message buffers available to clients
 // This enum must remain synchronized with Http2Api::classic_buffer_names[]
@@ -81,6 +81,7 @@ enum HeaderFrameFlags
     END_HEADERS = 0x4,
     PADDED = 0x8,
     PRIORITY = 0x20,
+    NO_HEADER = 0x80, //No valid flags use this bit
 };
 
  

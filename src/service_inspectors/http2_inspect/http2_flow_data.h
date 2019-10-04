@@ -60,29 +60,34 @@ public:
 protected:
     // 0 element refers to client frame, 1 element refers to server frame
     bool preface[2] = { true, false };
-    bool header_coming[2]  = { false, false };
     uint8_t* frame_header[2] = { nullptr, nullptr };
-    uint8_t* frame[2] = { nullptr, nullptr };
-    uint32_t frame_size[2] = { 0, 0 };
+    uint32_t frame_header_size[2] = { 0, 0 };
     uint8_t* frame_data[2] = { nullptr, nullptr };
     uint32_t frame_data_size[2] = { 0, 0 };
     uint8_t* http2_decoded_header[2] = { nullptr, nullptr };
     uint32_t http2_decoded_header_size[2] = { 0, 0 };
-    uint32_t leftover_data[2] = { 0, 0 };
-    uint32_t octets_seen[2] = { 0, 0 };
-    uint32_t header_octets_seen[2] = { 0, 0 };
-    uint32_t inspection_section_length[2] = { 0, 0 };
     bool frame_in_detection = false;
-    
-    int32_t get_frame_type(HttpCommon::SourceId source_id);
-    int32_t get_frame_flags(HttpCommon::SourceId source_id);
 
-    bool continuation_expected = false;
-    //FIXIT-M Most of this will need to change when we handle multiple streams, so this vector is 
-    //not intended to be the best long-term solution
-    std::vector<uint32_t> continuation_frame_lengths;
-    uint8_t* header_frame_header[2] = { nullptr, nullptr };  
- 
+    // Internal to scan
+    bool continuation_expected[2] = { false, false };
+    uint8_t* currently_processing_frame_header[2] = { nullptr, nullptr };
+    uint32_t inspection_section_length[2] = { 0, 0 };
+    uint32_t leftover_data[2] = { 0, 0 };
+
+    // Used internally by scan and reassemble
+    uint32_t octets_seen[2] = { 0, 0 };
+    uint8_t header_octets_seen[2] = { 0, 0 };
+
+    // Scan signals to reassemble
+    bool header_coming[2]  = { false, false };
+    uint32_t frames_aggregated[2] = { 0, 0 };
+    
+    // Internal to reassemble
+    uint32_t remaining_octets_to_next_header[2] = { 0, 0 };
+    uint32_t remaining_frame_data_octets[2] = { 0, 0 };
+    uint32_t remaining_frame_data_offset[2] = { 0, 0 };
+    uint32_t frame_header_offset[2] = { 0, 0 };
+
     // These will eventually be moved over to the frame/stream object, as they are moved to the
     // transaction in NHI. Also as in NHI accessor methods will need to be added.
     Http2Infractions* infractions[2] = { new Http2Infractions, new Http2Infractions };

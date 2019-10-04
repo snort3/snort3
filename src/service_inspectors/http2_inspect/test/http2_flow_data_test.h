@@ -42,13 +42,12 @@ public:
     void set_header_coming(bool value, HttpCommon::SourceId source_id)
         { header_coming[source_id] = value; }
     uint8_t* get_frame_header(HttpCommon::SourceId source_id) { return frame_header[source_id]; }
-    void set_frame_header(uint8_t* value, HttpCommon::SourceId source_id)
-        { frame_header[source_id] = value; }
-    uint8_t* get_frame(HttpCommon::SourceId source_id) { return frame[source_id]; }
-    void set_frame(uint8_t* value, HttpCommon::SourceId source_id) { frame[source_id] = value; }
-    uint32_t get_frame_size(HttpCommon::SourceId source_id) { return frame_size[source_id]; }
-    void set_frame_size(uint32_t value, HttpCommon::SourceId source_id)
-        { frame_size[source_id] = value; }
+    void set_frame_header(uint8_t* value, uint32_t length, HttpCommon::SourceId source_id)
+        { frame_header[source_id] = value; frame_header_size[source_id] = length; }
+    uint8_t* get_currently_processing_frame_header(HttpCommon::SourceId source_id)
+        { return currently_processing_frame_header[source_id]; }
+    void set_aggregated_frames(uint32_t value, HttpCommon::SourceId source_id)
+        { frames_aggregated[source_id] = value; }
     uint8_t* get_frame_data(HttpCommon::SourceId source_id) { return frame_data[source_id]; }
     void set_frame_data(uint8_t* value, HttpCommon::SourceId source_id)
         { frame_data[source_id] = value; }
