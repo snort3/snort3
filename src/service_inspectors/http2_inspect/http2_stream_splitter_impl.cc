@@ -45,14 +45,22 @@ StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t
     if (session_data->preface[source_id])
     {
         // 24-byte preface, not a real frame, no frame header
-        const uint32_t preface_length = 24;
-        if (session_data->octets_seen[source_id] + length < preface_length)
+        // Verify preface is correct, else generate loss of sync event and abort
+        switch (validate_preface(data, length, session_data->octets_seen[source_id]))
         {
-            session_data->octets_seen[source_id] += length;
-            return status = StreamSplitter::SEARCH;
+            case V_GOOD:
+                break;
+            case V_BAD:
+                session_data->events[source_id]->create_event(EVENT_PREFACE_MATCH_FAILURE);
+                // FIXIT-H: Workaround till abort is implemented
+                if((session_data->octets_seen[source_id] + length) >= 24)
+                    break;
+                // Falls through
+            case V_TBD:
+                session_data->octets_seen[source_id] += length;
+                return StreamSplitter::SEARCH;
         }
 
-        //FIXIT-M verify preface is correct, else generate loss of sync event and abort
         *flush_offset = 24 - session_data->octets_seen[source_id];
         session_data->header_coming[source_id] = false;
         session_data->preface[source_id] = false;
@@ -324,3 +332,24 @@ const StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned to
     return frame_buf;
 }
 
+ValidationResult validate_preface(const uint8_t* data, const uint32_t length, 
+    const uint32_t octets_seen)
+{
+    const uint32_t preface_length = 24;
+
+    static const uint8_t connection_prefix[] = {'P', 'R', 'I', ' ', '*', ' ',
+      'H', 'T', 'T', 'P', '/', '2', '.', '0', '\r', '\n', '\r', '\n', 'S', 'M', 
+      '\r', '\n', '\r', '\n'};
+
+    assert(octets_seen < preface_length);
+
+    const uint32_t count = (octets_seen + length) < preface_length ? length : (preface_length - octets_seen); 
+
+    if (memcmp(data, connection_prefix + octets_seen, count))
+        return V_BAD;
+
+    if ((octets_seen + length) < preface_length)
+        return V_TBD;
+    
+    return V_GOOD;
+}

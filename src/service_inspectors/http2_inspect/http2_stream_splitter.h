@@ -54,5 +54,10 @@ const snort::StreamBuffer implement_reassemble(Http2FlowData* session_data, unsi
     unsigned offset, const uint8_t* data, unsigned len, uint32_t flags,
     HttpCommon::SourceId source_id);
 
+enum ValidationResult { V_GOOD, V_BAD, V_TBD };
+
+ValidationResult validate_preface(const uint8_t* data, const uint32_t length,
+    const uint32_t octets_seen);
+
 #endif
 

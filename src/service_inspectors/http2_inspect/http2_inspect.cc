@@ -113,6 +113,11 @@ void Http2Inspect::eval(Packet* p)
             (int) session_data->frame_data_size[source_id] : HttpCommon::STAT_NOT_PRESENT,
             session_data->frame_data[source_id]).print(HttpTestManager::get_output_file(),
             "Frame Data");
+		if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP2))
+        {
+            printf("Finished processing section from test %" PRIi64 "\n",
+                HttpTestManager::get_test_number());
+        }
     }
 #endif
 }
