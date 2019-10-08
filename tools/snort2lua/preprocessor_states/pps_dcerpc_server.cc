@@ -44,17 +44,17 @@ enum DceDetectListState
 
 std::string transport[5] = { "smb", "tcp", "udp", "http_proxy", "http_server" };
 
-std::map <std::string, std::vector<uint16_t> > default_ports
+std::map <std::string, std::string> default_bindings
 {
-    { "smb", { 139, 445 }
+    { "smb", "netbios-ssn"
     },
-    { "tcp", { 135 }
+    { "tcp", "dcerpc"
     },
-    { "udp", { 135 }
+    { "udp", "dcerpc"
     },
-    { "http_proxy", { 80 }
+    { "http_proxy", "dce_http_proxy"
     },
-    { "http_server", { 593 }
+    { "http_server", "dce_http_server"
     }
 };
 
@@ -112,7 +112,7 @@ DcerpcServer::DcerpcServer(Converter& c) : ConversionState(c)
 {
     for (const auto& type: transport)
     {
-        detect_ports_set[type] = false;
+        default_binding[type] = true;
     }
 }
 
@@ -222,12 +222,9 @@ bool DcerpcServer::parse_smb_file_inspection(std::istringstream& data_stream)
     return tmpval;
 }
 
-void DcerpcServer::add_default_ports(const std::string& type,  std::map<std::string,Binder*> bind)
+void DcerpcServer::add_default_binding(const std::string& type,  std::map<std::string,Binder*> bind)
 {
-    for (auto port : default_ports[type])
-    {
-        bind[type]->add_when_port(std::to_string(port));
-    }
+    bind[type]->set_when_service(default_bindings[type]);
 }
 
 // add single port / range
@@ -280,7 +277,7 @@ bool DcerpcServer::parse_and_add_ports(const std::string& ports, const std::stri
         }
     }
 
-    detect_ports_set[type] = true;
+    default_binding[type] = false;
 
     return true;
 }
@@ -344,7 +341,6 @@ bool DcerpcServer::parse_detect(std::istringstream& data_stream,
                 {
                     if (is_detect)
                     {
-                        detect_ports_set[transport_type] = true;
                         bind[transport_type]->print_binding(false);
                     }
                 }
@@ -442,16 +438,18 @@ bool DcerpcServer::parse_detect(std::istringstream& data_stream,
                 add_deleted_comment_to_table(table_api, table_name[type], "autodetect");
                 continue;
             }
-
-            // remove '[',']'
-            ports.erase(std::remove(ports.begin(), ports.end(), '['), ports.end());
-            ports.erase(std::remove(ports.begin(), ports.end(), ']'), ports.end());
-            // remove extra spaces
-            ports.erase(remove_if(ports.begin(), ports.end(), isspace), ports.end());
-
-            if (!parse_and_add_ports(ports, type, bind, bind_port_to_tcp))
+            if (cv.get_bind_port())
             {
-                return false;
+                // remove '[',']'
+                ports.erase(std::remove(ports.begin(), ports.end(), '['), ports.end());
+                ports.erase(std::remove(ports.begin(), ports.end(), ']'), ports.end());
+                // remove extra spaces
+                ports.erase(remove_if(ports.begin(), ports.end(), isspace), ports.end());
+
+                if (!parse_and_add_ports(ports, type, bind, bind_port_to_tcp))
+                {
+                    return false;
+                }
             }
         }
         break;
@@ -654,15 +652,20 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
     // FIXIT-M add when there is a way to make this play with http_inspect bindings
     // port 80 should not be added by default. If explicitly configured and conflicting
     // with other bindings, punt to wizard
-    bind["http_proxy"]->print_binding(false);
+    if ( cv.get_bind_port() )
+        bind["http_proxy"]->print_binding(false);
 
+    bool bind_port = cv.get_bind_port();
     for (const auto& type : transport)
     {
-        bind[type]->set_when_proto("tcp");
+        if ( bind_port )
+            bind[type]->set_when_proto("tcp");
         bind[type]->set_use_type("dce_" + type);
     }
     bind["udp"]->set_when_proto("udp");
-    bind["tcp"]->set_when_service("dce_tcp");
+    bind["tcp"]->set_when_proto("tcp");
+    if ( bind_port )
+        bind["tcp"]->set_when_service("dce_tcp");
 
     if (!(data_stream >> keyword))
         return false;
@@ -783,9 +786,9 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
 
     for (const auto& type : transport)
     {
-        if (!detect_ports_set[type])
+        if (default_binding[type])
         {
-            add_default_ports(type, bind);
+            add_default_binding(type, bind);
         }
     }
 

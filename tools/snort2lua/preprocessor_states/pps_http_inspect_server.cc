@@ -46,12 +46,11 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
-    bool ports_set = false;
+    bool default_binding = true;
     bool simplify = false;
     bool slash_dir_set = false;
     auto& bind = cv.make_binder();
 
-    bind.set_when_proto("tcp");
     bind.set_use_type("http_inspect");
 
     if (!(data_stream >> keyword) || keyword != "server")
@@ -278,21 +277,27 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
 
         else if (keyword == "ports")
         {
-            table_api.add_diff_option_comment("ports", "bindings");
-
-            if ((data_stream >> keyword) && keyword == "{")
-            {
-                while (data_stream >> keyword && keyword != "}")
-                {
-                    ports_set = true;
-                    bind.set_when_role("server");
-                    bind.add_when_port(keyword);
-                }
-            }
+            if (!cv.get_bind_port())
+                default_binding = parse_bracketed_unsupported_list("ports", data_stream);
             else
             {
-                data_api.failed_conversion(data_stream, "ports <bracketed_port_list>");
-                retval = false;
+                table_api.add_diff_option_comment("ports", "bindings");
+
+                if ((data_stream >> keyword) && keyword == "{")
+                {
+                    bind.set_when_proto("tcp");
+                    while (data_stream >> keyword && keyword != "}")
+                    {
+                        default_binding = false;
+                        bind.set_when_role("server");
+                        bind.add_when_port(keyword);
+                    }
+                }
+                else
+                {
+                    data_api.failed_conversion(data_stream, "ports <bracketed_port_list>");
+                    retval = false;
+                }
             }
         }
         else if (keyword == "small_chunk_length")
@@ -346,10 +351,9 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         }
     }
 
-    if (!ports_set)
+    if (default_binding)
     {
-        bind.set_when_role("server");
-        bind.add_when_port("80");
+        bind.set_when_service("http");
     }
     return retval;
 }

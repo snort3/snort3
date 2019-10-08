@@ -321,7 +321,7 @@ bool FtpServer::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
-    bool ports_set = false;
+    bool default_binding = true;
 
     // Set up ftp_data whenever we have ftp_server configured.
     if(!cv.added_ftp_data())
@@ -338,7 +338,6 @@ bool FtpServer::convert(std::istringstream& data_stream)
 
     auto& bind = cv.make_binder();
     bind.set_use_type("ftp_server");
-    bind.set_when_proto("tcp");
 
     if (data_stream >> keyword)
     {
@@ -469,20 +468,26 @@ bool FtpServer::convert(std::istringstream& data_stream)
         }
         else if (keyword == "ports")
         {
-            table_api.add_diff_option_comment("ports", "bindings");
-            table_api.add_comment("check bindings table for port information");
-
-            if ((data_stream >> keyword) && keyword == "{")
-            {
-                while (data_stream >> keyword && keyword != "}")
-                {
-                    bind.add_when_port(keyword);
-                    ports_set = true;
-                }
-            }
+            if (!cv.get_bind_port())
+                default_binding = parse_bracketed_unsupported_list("ports", data_stream);
             else
             {
-                tmpval = false;
+                table_api.add_diff_option_comment("ports", "bindings");
+                table_api.add_comment("check bindings table for port information");
+
+                if ((data_stream >> keyword) && keyword == "{")
+                {
+                    bind.set_when_proto("tcp");
+                    while (data_stream >> keyword && keyword != "}")
+                    {
+                        default_binding = false;
+                        bind.add_when_port(keyword);
+                    }
+                }
+                else
+                {
+                    tmpval = false;
+                }
             }
         }
         else
@@ -556,8 +561,8 @@ bool FtpServer::convert(std::istringstream& data_stream)
         table_api.close_table();
     }
 
-    if (!ports_set)
-        bind.add_when_port("21");
+    if (default_binding)
+        bind.set_when_service("ftp");
 
     return retval;
 }
@@ -715,11 +720,10 @@ public:
 bool Telnet::convert(std::istringstream& data_stream)
 {
     std::string keyword;
-    bool ports_set = false;
+    bool default_binding = true;
     bool retval = true;
     auto& bind = cv.make_binder();
 
-    bind.set_when_proto("tcp");
     bind.set_use_type("telnet");
     table_api.open_table("telnet");
 
@@ -744,22 +748,28 @@ bool Telnet::convert(std::istringstream& data_stream)
         }
         else if (keyword == "ports")
         {
-            table_api.add_diff_option_comment("ports", "bindings");
-            table_api.add_comment("check bindings table for port information");
-
-            // adding ports to the binding.
-            if ((data_stream >> keyword) && keyword == "{")
-            {
-                while (data_stream >> keyword && keyword != "}")
-                {
-                    ports_set = true;
-                    bind.add_when_port(keyword);
-                }
-            }
+            if (!cv.get_bind_port())
+                default_binding = parse_bracketed_unsupported_list("ports", data_stream);
             else
             {
-                data_api.failed_conversion(data_stream, "ports - invalid port list");
-                retval = false;
+                table_api.add_diff_option_comment("ports", "bindings");
+                table_api.add_comment("check bindings table for port information");
+
+                // adding ports to the binding.
+                if ((data_stream >> keyword) && keyword == "{")
+                {
+                    bind.set_when_proto("tcp");
+                    while (data_stream >> keyword && keyword != "}")
+                    {
+                        default_binding = false;
+                        bind.add_when_port(keyword);
+                    }
+                }
+                else
+                {
+                    data_api.failed_conversion(data_stream, "ports - invalid port list");
+                    retval = false;
+                }
             }
         }
         else
@@ -774,9 +784,9 @@ bool Telnet::convert(std::istringstream& data_stream)
         }
     }
 
-    // adding the default port.
-    if (!ports_set)
-        bind.add_when_port("23");
+    // adding the default service binding.
+    if (default_binding)
+        bind.set_when_service("telnet");
 
     return retval;
 }

@@ -41,7 +41,7 @@ bool Sip::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
-    bool ports_set = false;
+    bool default_binding = true;
     auto& bind = cv.make_binder();
 
     bind.set_use_type("sip");
@@ -120,20 +120,25 @@ bool Sip::convert(std::istringstream& data_stream)
 
         else if (keyword == "ports")
         {
-            table_api.add_diff_option_comment("ports", "bindings");
-
-            if ((arg_stream >> keyword) && keyword == "{")
-            {
-                while (arg_stream >> keyword && keyword != "}")
-                {
-                    ports_set = true;
-                    bind.add_when_port(keyword);
-                }
-            }
+            if (!cv.get_bind_port())
+                default_binding = parse_bracketed_unsupported_list("ports", arg_stream);
             else
             {
-                data_api.failed_conversion(arg_stream, "ports <bracketed_port_list>");
-                retval = false;
+                table_api.add_diff_option_comment("ports", "bindings");
+
+                if ((arg_stream >> keyword) && keyword == "{")
+                {
+                    while (arg_stream >> keyword && keyword != "}")
+                    {
+                        default_binding = false;
+                        bind.add_when_port(keyword);
+                    }
+                }
+                else
+                {
+                    data_api.failed_conversion(arg_stream, "ports <bracketed_port_list>");
+                    retval = false;
+                }
             }
         }
 
@@ -149,12 +154,8 @@ bool Sip::convert(std::istringstream& data_stream)
         }
     }
 
-    if (!ports_set)
-    {
-        bind.add_when_port("5060");
-        bind.add_when_port("5061");
-        bind.add_when_port("5600");
-    }
+    if (default_binding)
+        bind.set_when_service("sip");
 
     return retval;
 }

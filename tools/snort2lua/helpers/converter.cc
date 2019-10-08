@@ -56,7 +56,8 @@ bool Converter::parse_includes = true;
 bool Converter::empty_args = false;
 bool Converter::convert_rules_mult_files = true;
 bool Converter::convert_conf_mult_files = true;
-bool Converter::bind_wizard = false;
+bool Converter::bind_wizard = true;
+bool Converter::bind_port = false;
 bool Converter::convert_max_session = true;
 
 Converter::Converter() :
@@ -413,6 +414,13 @@ void Converter::add_bindings()
     // vector::clear()'s ordering isn't deterministic but this is
     // keep in place for stable regressions
     std::stable_sort(binders.rbegin(), binders.rend());
+    for (auto it = binders.begin(); it != binders.end();)
+    {
+        if ( (*it)->has_ports() )
+            it = binders.erase(it);
+        else
+            ++it;
+    }
     while ( !binders.empty() )
         binders.pop_back();
 }

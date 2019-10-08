@@ -73,6 +73,12 @@ public:
     inline static bool get_bind_wizard()
     { return bind_wizard; }
 
+    inline static void set_bind_port(bool val)
+    { bind_port = val; }
+
+    inline static bool get_bind_port()
+    { return bind_port; }
+
     static void unset_convert_max_session()
     { convert_max_session = false; }
 
@@ -130,6 +136,7 @@ private:
     static bool convert_conf_mult_files;
     static bool empty_args;
     static bool bind_wizard;
+    static bool bind_port;
     static bool convert_max_session;
 
     bool ftp_data_is_added = false;

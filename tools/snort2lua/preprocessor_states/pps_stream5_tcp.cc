@@ -170,6 +170,13 @@ bool StreamTcp::parse_ports(std::istringstream& arg_stream)
         }
     }
 
+    if (!cv.get_bind_port())
+    {
+        bind_any->print_binding(false);
+        bind_client->print_binding(false);
+        bind_server->print_binding(false);
+    }
+
     return true;
 }
 
@@ -248,6 +255,12 @@ bool StreamTcp::parse_protocol(std::istringstream& arg_stream)
             }
             while (arg_stream >> protocol);
         }
+    }
+    if (!cv.get_bind_port())
+    {
+        bind_any->print_binding(false);
+        bind_client->print_binding(false);
+        bind_server->print_binding(false);
     }
 
     return true;
@@ -480,14 +493,19 @@ bool StreamTcp::convert(std::istringstream& data_stream)
 
     if (!ports_set)
     {
-        const std::vector<std::string> default_ports = { "21", "23", "25", "42",
-                                                         "53", "80", "110", "111", "135", "136",
-                                                         "137", "139", "143", "445",
-                                                         "513", "514", "1433", "1521", "2401",
-                                                         "3306" };
+        if ( cv.get_bind_port() )
+        {
+            const std::vector<std::string> default_ports = { "21", "23", "25", "42",
+                                                             "53", "80", "110", "111", "135", "136",
+                                                             "137", "139", "143", "445",
+                                                             "513", "514", "1433", "1521", "2401",
+                                                             "3306" };
 
-        for (const std::string& s : default_ports)
-            bind_default->add_when_port(s);
+            for (const std::string& s : default_ports)
+                bind_default->add_when_port(s);
+        }
+        else
+            bind_default->print_binding(false);
     }
 
     //  Add the port bindings separately from the protocol bindings since 
@@ -502,7 +520,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
     cv.make_binder(any);
     any.clear_ports();
 
-    if (!protos_set)
+    if (!protos_set and cv.get_bind_port())
     {
         const std::vector<std::string> default_protos =
         { "ftp", "telnet", "smtp", "nameserver", "dns", "http",

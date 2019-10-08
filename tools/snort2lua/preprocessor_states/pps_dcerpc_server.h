@@ -44,7 +44,7 @@ private:
     bool parse_smb_file_inspection(std::istringstream& data_stream);
     bool parse_detect(std::istringstream& data_stream, std::map<std::string, Binder*> bind, bool
         is_detect);
-    void add_default_ports(const std::string& type, std::map<std::string, Binder*> bind);
+    void add_default_binding(const std::string& type, std::map<std::string, Binder*> bind);
     bool parse_and_add_ports(const std::string& ports, const std::string& type,  std::map<std::string,
         Binder*> bind, bool bind_port_to_tcp);
     bool init_net_created_table();
@@ -52,8 +52,7 @@ private:
     bool parse_nets(std::istringstream& data_stream, std::map<std::string,
         Binder*> bind);
     bool add_option_to_transports(const std::string& option, const std::string& value, bool co_only);
-    std::map<std::string, bool> detect_ports_set;
-    std::map<std::string, bool> autodetect_ports_set;
+    std::map<std::string, bool> default_binding;
     std::map<std::string, std::string> table_name;
     static int binding_id;
 };

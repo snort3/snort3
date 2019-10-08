@@ -254,6 +254,12 @@ static void add_remark(const char* /*key*/, const char* val)
 static void bind_wizard(const char* /*key*/, const char* /*val*/)
 { Converter::set_bind_wizard(true); }
 
+static void bind_port(const char* /*key*/, const char* /*val*/)
+{ 
+    Converter::set_bind_port(true);
+    Converter::set_bind_wizard(false);
+}
+
 static void print_all(const char* /*key*/, const char* /*val*/)
 { DataApi::set_default_print(); }
 
@@ -381,6 +387,9 @@ static ConfigFunc basic_opts[] =
 
     { "bind-wizard", bind_wizard, "",
       "Add default wizard to bindings" },
+
+    { "bind-port", bind_port, "",
+      "Convert port bindings" },
 
     { "conf-file", parse_config_file, "",
       "Same as '-c'. A Snort <snort_conf> file which will be converted" },

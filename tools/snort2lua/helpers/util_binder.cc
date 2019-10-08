@@ -45,52 +45,55 @@ void Binder::add_to_configuration()
     table_api.open_top_level_table("binder");
     table_api.open_table(true);
 
-    table_api.open_table("when", true);
+    if (use_type != "wizard")
+    {
+        table_api.open_table("when", true);
 
-    //FIXIT-M this needs to be split out into ips, network, and inspection
-    if ( has_ips_policy_id() )
-        table_api.add_option("ips_policy_id", when_ips_policy_id);
+        //FIXIT-M this needs to be split out into ips, network, and inspection
+        if ( has_ips_policy_id() )
+            table_api.add_option("ips_policy_id", when_ips_policy_id);
 
-    for ( const auto& s : vlans )
-        table_api.add_list("vlans", s);
+        for ( const auto& s : vlans )
+            table_api.add_list("vlans", s);
 
-    if ( has_service() )
-        table_api.add_option("service", when_service);
+        if ( has_service() )
+            table_api.add_option("service", when_service);
 
-    for ( const auto& n : src_nets )
-        table_api.add_list("src_nets", n);
+        for ( const auto& n : src_nets )
+            table_api.add_list("src_nets", n);
 
-    for ( const auto& n : dst_nets )
-        table_api.add_list("dst_nets", n);
+        for ( const auto& n : dst_nets )
+            table_api.add_list("dst_nets", n);
 
-    for ( const auto& n : nets )
-        table_api.add_list("nets", n);
+        for ( const auto& n : nets )
+            table_api.add_list("nets", n);
 
-    for ( const auto& p : src_ports )
-        table_api.add_list("src_ports", p);
+        for ( const auto& p : src_ports )
+            table_api.add_list("src_ports", p);
 
-    for ( const auto& p : dst_ports )
-        table_api.add_list("dst_ports", p);
+        for ( const auto& p : dst_ports )
+            table_api.add_list("dst_ports", p);
 
-    for ( const auto& p : ports )
-        table_api.add_list("ports", p);
+        for ( const auto& p : ports )
+            table_api.add_list("ports", p);
 
-    for ( const auto& p : when_src_zone )
-        table_api.add_list("src_zone", p);
+        for ( const auto& p : when_src_zone )
+            table_api.add_list("src_zone", p);
 
-    for ( const auto& p : when_dst_zone )
-        table_api.add_list("dst_zone", p);
+        for ( const auto& p : when_dst_zone )
+            table_api.add_list("dst_zone", p);
 
-    for ( const auto& p : zones )
-        table_api.add_list("zones", p);
+        for ( const auto& p : zones )
+            table_api.add_list("zones", p);
 
-    if ( has_proto() )
-        table_api.add_option("proto", when_proto);
+        if ( has_proto() )
+            table_api.add_option("proto", when_proto);
 
-    if ( has_role() )
-        table_api.add_option("role", when_role);
+        if ( has_role() )
+            table_api.add_option("role", when_role);
 
-    table_api.close_table(); // "when"
+        table_api.close_table(); // "when"
+    }
 
     table_api.open_table("use", true);
 

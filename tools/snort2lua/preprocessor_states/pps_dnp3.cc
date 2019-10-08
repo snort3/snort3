@@ -47,16 +47,25 @@ Dnp3::~Dnp3()
     if (converted_args)
         return;
 
-    auto& tcp_bind = cv.make_binder();
-    tcp_bind.set_when_proto("tcp");
-    tcp_bind.add_when_port("20000");
-    tcp_bind.set_use_type("dnp3");
+    if (!cv.get_bind_port())
+    {
+        auto& bind = cv.make_binder();
+        bind.set_when_service("dnp3");
+        bind.set_use_type("dnp3");
+    }
+    else
+    {
+        auto& tcp_bind = cv.make_binder();
+        tcp_bind.set_when_proto("tcp");
+        tcp_bind.add_when_port("20000");
+        tcp_bind.set_use_type("dnp3");
 
-    auto& udp_bind = cv.make_binder();
-    udp_bind.set_when_proto("udp");
-    udp_bind.add_when_port("20000");
-    udp_bind.set_use_type("dnp3");
+        auto& udp_bind = cv.make_binder();
+        udp_bind.set_when_proto("udp");
+        udp_bind.add_when_port("20000");
+        udp_bind.set_use_type("dnp3");
 
+    }
     table_api.open_table("dnp3");
     table_api.close_table();
 }
@@ -65,16 +74,9 @@ bool Dnp3::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
-    bool ports_set = false;
-    auto& tcp_bind = cv.make_binder();
-    auto& udp_bind = cv.make_binder();
+    bool default_binding = true;
 
     converted_args = true;
-
-    tcp_bind.set_when_proto("tcp");
-    tcp_bind.set_use_type("dnp3");
-    udp_bind.set_when_proto("udp");
-    udp_bind.set_use_type("dnp3");
 
     table_api.open_table("dnp3");
 
@@ -98,21 +100,32 @@ bool Dnp3::convert(std::istringstream& data_stream)
         }
         else if (keyword == "ports")
         {
-            table_api.add_diff_option_comment("ports", "bindings");
-
-            if ((data_stream >> keyword) && keyword == "{")
-            {
-                while (data_stream >> keyword && keyword != "}")
-                {
-                    ports_set = true;
-                    tcp_bind.add_when_port(keyword);
-                    udp_bind.add_when_port(keyword);
-                }
-            }
+            if (!cv.get_bind_port())
+                default_binding = parse_bracketed_unsupported_list("ports", data_stream);
             else
             {
-                data_api.failed_conversion(data_stream, "ports <bracketed_port_list>");
-                retval = false;
+                table_api.add_diff_option_comment("ports", "bindings");
+
+                if ((data_stream >> keyword) && keyword == "{")
+                {
+                    auto& tcp_bind = cv.make_binder();
+                    auto& udp_bind = cv.make_binder();
+                    tcp_bind.set_when_proto("tcp");
+                    tcp_bind.set_use_type("dnp3");
+                    udp_bind.set_when_proto("udp");
+                    udp_bind.set_use_type("dnp3");
+                    while (data_stream >> keyword && keyword != "}")
+                    {
+                        default_binding = false;
+                        tcp_bind.add_when_port(keyword);
+                        udp_bind.add_when_port(keyword);
+                    }
+                }
+                else
+                {
+                    data_api.failed_conversion(data_stream, "ports <bracketed_port_list>");
+                    retval = false;
+                }
             }
         }
         else
@@ -127,10 +140,11 @@ bool Dnp3::convert(std::istringstream& data_stream)
         }
     }
 
-    if (!ports_set)
+    if (default_binding)
     {
-        tcp_bind.add_when_port("20000");
-        udp_bind.add_when_port("20000");
+        auto& bind = cv.make_binder();
+        bind.set_when_service("dnp3");
+        bind.set_use_type("dnp3");
     }
 
     return retval;
