@@ -23,13 +23,15 @@
 #include "config.h"
 #endif
 
-#include "service_inspectors/http2_inspect/http2_stream_splitter.h"
 
 #include "protocols/packet.h"
 #include "service_inspectors/http_inspect/http_common.h"
 #include "service_inspectors/http_inspect/http_test_manager.h"
 #include "service_inspectors/http2_inspect/http2_enum.h"
 #include "service_inspectors/http2_inspect/http2_flow_data.h"
+#include "service_inspectors/http2_inspect/http2_hpack_int_decode.h"
+#include "service_inspectors/http2_inspect/http2_hpack_string_decode.h"
+#include "service_inspectors/http2_inspect/http2_stream_splitter.h"
 
 #include "http2_flow_data_test.h"
 
@@ -44,7 +46,9 @@ using namespace Http2Enums;
 // Stubs whose sole purpose is to make the test code link
 unsigned HttpTestManager::test_input = IN_NONE;
 unsigned HttpTestManager::test_output = IN_NONE;
+FILE* HttpTestManager::test_out = nullptr ;
 int DetectionEngine::queue_event(unsigned int, unsigned int, Actions::Type) { return 0; }
+void Field::print(_IO_FILE*, char const*) const {}
 
 TEST_GROUP(http2_scan_test)
 {

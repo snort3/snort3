@@ -71,7 +71,6 @@ Http2FlowData::~Http2FlowData()
     for (int k=0; k <= 1; k++)
     {
         delete[] frame_header[k];
-        delete[] currently_processing_frame_header[k];
         delete[] frame_data[k];
         delete[] http2_decoded_header[k];
         delete infractions[k];

@@ -30,15 +30,14 @@ using namespace Http2Enums;
 static const uint8_t VAL_MASK = 0x7F;
 static const uint8_t FLAG_BIT = 0x80;
 
-Http2HpackIntDecode::Http2HpackIntDecode(uint8_t prefix, Http2EventGen* events,
-    Http2Infractions* infractions) : prefix_mask(((uint16_t)1 << prefix) - 1), events(events),
-    infractions(infractions)
+Http2HpackIntDecode::Http2HpackIntDecode(uint8_t prefix) : prefix_mask(((uint16_t)1 << prefix) - 1)
 {
     assert ((0 < prefix) && (prefix < 9));
 }
 
 bool Http2HpackIntDecode::translate(const uint8_t* in_buff, const uint32_t in_len,
-    uint32_t& bytes_consumed, uint64_t& result)
+    uint32_t& bytes_consumed, uint64_t& result, Http2EventGen* events,
+    Http2Infractions* infractions) const
 {
     bytes_consumed = 0;
     result = 0;

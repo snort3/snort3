@@ -140,8 +140,7 @@ void Http2Inspect::clear(Packet* p)
     delete[] session_data->http2_decoded_header[source_id];
     session_data->http2_decoded_header[source_id] = nullptr;
     session_data->continuation_expected[source_id] = false;
-    delete[] session_data->currently_processing_frame_header[source_id];
-    session_data->currently_processing_frame_header[source_id] = nullptr;
     session_data->frames_aggregated[source_id] = 0;
+    session_data->header_octets_seen[source_id] = 0;
 }
 

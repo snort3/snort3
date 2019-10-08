@@ -27,6 +27,7 @@
 
 #include "protocols/packet.h"
 #include "service_inspectors/http_inspect/http_common.h"
+#include "service_inspectors/http_inspect/http_field.h"
 #include "service_inspectors/http_inspect/http_test_manager.h"
 #include "service_inspectors/http2_inspect/http2_enum.h"
 
@@ -36,6 +37,8 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
+#include <cstdio>
+
 using namespace snort;
 using namespace HttpCommon;
 using namespace Http2Enums;
@@ -44,6 +47,7 @@ using namespace Http2Enums;
 unsigned HttpTestManager::test_input = IN_NONE;
 unsigned HttpTestManager::test_output = IN_NONE;
 int DetectionEngine::queue_event(unsigned int, unsigned int, Actions::Type) { return 0; }
+void Field::print(FILE*, char const*) const {}
 
 TEST_GROUP(http2_get_buf_test)
 {

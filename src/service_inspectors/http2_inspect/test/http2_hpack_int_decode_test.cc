@@ -44,7 +44,7 @@ TEST_GROUP(http2_hpack_int_decode_success)
 {
     Http2EventGen events;
     Http2Infractions inf;
-    Http2HpackIntDecode* const decode = new Http2HpackIntDecode(5, &events, &inf);
+    Http2HpackIntDecode* const decode = new Http2HpackIntDecode(5);
 
     void teardown() override
     {
@@ -61,7 +61,7 @@ TEST(http2_hpack_int_decode_success, 10_using_5_bits)
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = decode->translate(&buf, 1, bytes_processed, res);
+    bool success = decode->translate(&buf, 1, bytes_processed, res, &events, &inf);
     // check results
     CHECK(success == true);
     CHECK(res == 10);
@@ -75,7 +75,7 @@ TEST(http2_hpack_int_decode_success, 10_using_5_bits_wtail)
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = decode->translate(buf, 2, bytes_processed, res);
+    bool success = decode->translate(buf, 2, bytes_processed, res, &events, &inf);
     // check results
     CHECK(success == true);
     CHECK(res == 10);
@@ -89,7 +89,7 @@ TEST(http2_hpack_int_decode_success, 1337_using_5_bits)
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = decode->translate(buf, 3, bytes_processed, res);
+    bool success = decode->translate(buf, 3, bytes_processed, res, &events, &inf);
     // check results
     CHECK(success == true);
     CHECK(res == 1337);
@@ -99,13 +99,13 @@ TEST(http2_hpack_int_decode_success, 1337_using_5_bits)
 TEST(http2_hpack_int_decode_success, 42_using_8_bits)
 {
     // prepare decode object
-    Http2HpackIntDecode decode_8(8, &events, &inf);
+    Http2HpackIntDecode decode_8(8);
     // prepare buf to decode - example from RFC 7541 c.1.3
     uint8_t buf = 42;
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = decode_8.translate(&buf, 1, bytes_processed, res);
+    bool success = decode_8.translate(&buf, 1, bytes_processed, res, &events, &inf);
     // check results
     CHECK(success == true);
     CHECK(res == 42);
@@ -119,7 +119,7 @@ TEST(http2_hpack_int_decode_success, max_val_using_5_bit)
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = decode->translate(buf, 11, bytes_processed, res);
+    bool success = decode->translate(buf, 11, bytes_processed, res, &events, &inf);
     // check results
     CHECK(success == true);
     CHECK(res == 0xFFFFFFFFFFFFFFFF);
@@ -133,7 +133,7 @@ TEST(http2_hpack_int_decode_success, 31_using_5_bits)
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = decode->translate(buf, 2, bytes_processed, res);
+    bool success = decode->translate(buf, 2, bytes_processed, res, &events, &inf);
     // check results
     CHECK(success == true);
     CHECK(res == 31);
@@ -147,7 +147,7 @@ TEST(http2_hpack_int_decode_success, 0_using_5_bits)
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = decode->translate(&buf, 1, bytes_processed, res);
+    bool success = decode->translate(&buf, 1, bytes_processed, res, &events, &inf);
     // check results
     CHECK(success == true);
     CHECK(res == 0);
@@ -166,13 +166,13 @@ TEST(http2_hpack_int_decode_failure, 0_len_field)
     // prepare decode object
     Http2EventGen local_events;
     Http2Infractions local_inf;
-    Http2HpackIntDecode decode_8(8, &local_events, &local_inf);
+    Http2HpackIntDecode decode_8(8);
     // prepare buf to decode - use buf length 0
     uint8_t buf = 42;
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = decode_8.translate(&buf, 0, bytes_processed, res);
+    bool success = decode_8.translate(&buf, 0, bytes_processed, res, &local_events, &local_inf);
     // check results
     CHECK(success == false);
     CHECK(bytes_processed == 0);
@@ -185,13 +185,13 @@ TEST(http2_hpack_int_decode_failure, too_short)
     // prepare decode object
     Http2EventGen local_events;
     Http2Infractions local_inf;
-    Http2HpackIntDecode local_decode(5, &local_events, &local_inf);
+    Http2HpackIntDecode local_decode(5);
     // prepare buf to decode - buffer ends before decode finished
     uint8_t buf[3] = { 31, 0x9a, 10 };
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = local_decode.translate(buf, 2, bytes_processed, res);
+    bool success = local_decode.translate(buf, 2, bytes_processed, res, &local_events, &local_inf);
     // check results
     CHECK(success == false);
     CHECK(bytes_processed == 2);
@@ -204,13 +204,13 @@ TEST(http2_hpack_int_decode_failure, multiplier_bigger_than_63)
     // prepare decode object
     Http2EventGen local_events;
     Http2Infractions local_inf;
-    Http2HpackIntDecode local_decode(5, &local_events, &local_inf);
+    Http2HpackIntDecode local_decode(5);
     // prepare buf to decode - multiplier > 63
     uint8_t buf[13] = { 31, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x81, 1 };
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = local_decode.translate(buf, 13, bytes_processed, res);
+    bool success = local_decode.translate(buf, 13, bytes_processed, res, &local_events, &local_inf);
     // check results
     CHECK(success == false);
     CHECK(bytes_processed == 11);
@@ -223,13 +223,13 @@ TEST(http2_hpack_int_decode_failure, add_val_overflow)
     // prepare decode object
     Http2EventGen local_events;
     Http2Infractions local_inf;
-    Http2HpackIntDecode local_decode(5, &local_events, &local_inf);
+    Http2HpackIntDecode local_decode(5);
     // prepare buf to decode - value to add itself is already creating overflow
     uint8_t buf[12] = { 31, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0xFF, 1 };
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = local_decode.translate(buf, 12, bytes_processed, res);
+    bool success = local_decode.translate(buf, 12, bytes_processed, res, &local_events, &local_inf);
     // check results
     CHECK(success == false);
     CHECK(bytes_processed == 11);
@@ -242,13 +242,13 @@ TEST(http2_hpack_int_decode_failure, add_val_overflow2)
     // prepare decode object
     Http2EventGen local_events;
     Http2Infractions local_inf;
-    Http2HpackIntDecode local_decode(5, &local_events, &local_inf);
+    Http2HpackIntDecode local_decode(5);
     // prepare buf to decode - adding value to result kept so far creates overflow
     uint8_t buf[11] = { 31, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 1 };
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = local_decode.translate(buf, 11, bytes_processed, res);
+    bool success = local_decode.translate(buf, 11, bytes_processed, res, &local_events, &local_inf);
     // check results
     CHECK(success == false);
     CHECK(bytes_processed == 11);
@@ -261,13 +261,13 @@ TEST(http2_hpack_int_decode_failure, 2_64_using_5_bit)
     // prepare decode object
     Http2EventGen local_events;
     Http2Infractions local_inf;
-    Http2HpackIntDecode local_decode(5, &local_events, &local_inf);
+    Http2HpackIntDecode local_decode(5);
     // prepare buf to decode - 2^64
     uint8_t buf[11] = { 31, 0xE1, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 1 };
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = local_decode.translate(buf, 11, bytes_processed, res);
+    bool success = local_decode.translate(buf, 11, bytes_processed, res, &local_events, &local_inf);
     // check results
     CHECK(success == false);
     CHECK(bytes_processed == 11);
@@ -288,13 +288,13 @@ TEST(http2_hpack_int_decode_leading_zeros, leading_zeros)
     // prepare decode object
     Http2EventGen local_events;
     Http2Infractions local_inf;
-    Http2HpackIntDecode local_decode(5, &local_events, &local_inf);
+    Http2HpackIntDecode local_decode(5);
     // prepare buf to decode - MSB is zero
     uint8_t buf[3] = { 31, 0x80, 0 };
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = local_decode.translate(buf, 3, bytes_processed, res);
+    bool success = local_decode.translate(buf, 3, bytes_processed, res, &local_events, &local_inf);
     // check results
     CHECK(success == true);
     CHECK(res == 31);
@@ -308,14 +308,14 @@ TEST(http2_hpack_int_decode_leading_zeros, leading_0_byte_11)
     // prepare decode object
     Http2EventGen local_events;
     Http2Infractions local_inf;
-    Http2HpackIntDecode local_decode(5, &local_events, &local_inf);
+    Http2HpackIntDecode local_decode(5);
     // prepare buf to decode - multiplier 63 doesn't create overflow, should alert on
     // leading 0
     uint8_t buf[11] = { 31, 0xE0, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0 };
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = local_decode.translate(buf, 11, bytes_processed, res);
+    bool success = local_decode.translate(buf, 11, bytes_processed, res, &local_events, &local_inf);
     // check results
     CHECK(success == true);
     CHECK(res == 0x7FFFFFFFFFFFFFFF);

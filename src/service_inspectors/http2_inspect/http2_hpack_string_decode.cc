@@ -36,13 +36,9 @@ static const uint8_t HUFFMAN_FLAG = 0x80;
 static const uint8_t min_decode_len[HUFFMAN_LOOKUP_MAX + 1] =
     {5, 2, 2, 3, 5, 1, 1, 2, 2, 2, 2, 3, 3, 3, 4};
 
-Http2HpackStringDecode::Http2HpackStringDecode(Http2EventGen* events,
-    Http2Infractions* infractions) : decode7(new Http2HpackIntDecode(7, events, infractions)),
-    events(events), infractions(infractions)
-{ }
-
 bool Http2HpackStringDecode::translate(const uint8_t* in_buff, const uint32_t in_len,
-    uint32_t& bytes_consumed, uint8_t* out_buff, const uint32_t out_len, uint32_t& bytes_written)
+    uint32_t& bytes_consumed, uint8_t* out_buff, const uint32_t out_len, uint32_t& bytes_written,
+    Http2EventGen* events, Http2Infractions* infractions) const
 {
     bytes_consumed = 0;
     bytes_written = 0;
@@ -58,7 +54,7 @@ bool Http2HpackStringDecode::translate(const uint8_t* in_buff, const uint32_t in
 
     // Get length
     uint64_t encoded_len;
-    if (!decode7->translate(in_buff, in_len, bytes_consumed, encoded_len))
+    if (!decode7.translate(in_buff, in_len, bytes_consumed, encoded_len, events, infractions))
         return false;
 
     if (encoded_len > (uint64_t)(in_len - bytes_consumed))
@@ -72,25 +68,21 @@ bool Http2HpackStringDecode::translate(const uint8_t* in_buff, const uint32_t in
         return true;
 
     if (!isHuffman)
-        return get_string(in_buff, encoded_len, bytes_consumed, out_buff, out_len, bytes_written);
+        return get_string(in_buff, encoded_len, bytes_consumed, out_buff, out_len, bytes_written, 
+                events, infractions);
 
     return get_huffman_string(in_buff, encoded_len, bytes_consumed, out_buff, out_len,
-        bytes_written);
-}
-
-Http2HpackStringDecode::~Http2HpackStringDecode()
-{
-    assert(decode7 != nullptr);
-    delete decode7;
+        bytes_written, events, infractions);
 }
 
 bool Http2HpackStringDecode::get_string(const uint8_t* in_buff, const uint32_t encoded_len,
-    uint32_t& bytes_consumed, uint8_t* out_buff, const uint32_t out_len, uint32_t& bytes_written)
+    uint32_t& bytes_consumed, uint8_t* out_buff, const uint32_t out_len, uint32_t& bytes_written,
+    Http2EventGen* events, Http2Infractions* infractions) const
 {
     if (encoded_len > out_len)
     {
-        *infractions += INF_OUT_BUFF_OUT_OF_SPACE;
-        events->create_event(EVENT_STRING_DECODE_FAILURE);
+        *infractions += INF_DECODED_HEADER_BUFF_OUT_OF_SPACE;
+        events->create_event(EVENT_MISFORMATTED_HTTP2);
         return false;
     }
 
@@ -103,7 +95,7 @@ bool Http2HpackStringDecode::get_string(const uint8_t* in_buff, const uint32_t e
 // return is tail/padding
 bool Http2HpackStringDecode::get_next_byte(const uint8_t* in_buff, const uint32_t last_byte,
     uint32_t& bytes_consumed, uint8_t& cur_bit, uint8_t match_len, uint8_t& byte,
-    bool& another_search)
+    bool& another_search) const
 {
     another_search = true;
     cur_bit += match_len;
@@ -148,7 +140,8 @@ bool Http2HpackStringDecode::get_next_byte(const uint8_t* in_buff, const uint32_
 }
 
 bool Http2HpackStringDecode::get_huffman_string(const uint8_t* in_buff, const uint32_t encoded_len,
-    uint32_t& bytes_consumed, uint8_t* out_buff, const uint32_t out_len, uint32_t& bytes_written)
+    uint32_t& bytes_consumed, uint8_t* out_buff, const uint32_t out_len, uint32_t& bytes_written,
+    Http2EventGen* events, Http2Infractions* infractions) const
 {
     const uint32_t last_encoded_byte = bytes_consumed + encoded_len;
     uint8_t byte;
@@ -161,7 +154,7 @@ bool Http2HpackStringDecode::get_huffman_string(const uint8_t* in_buff, const ui
     const uint32_t max_length = floor(encoded_len * 8.0/5.0);
     if (max_length > out_len)
     {
-        *infractions += INF_OUT_BUFF_OUT_OF_SPACE;
+        *infractions += INF_DECODED_HEADER_BUFF_OUT_OF_SPACE;
         events->create_event(EVENT_STRING_DECODE_FAILURE);
         return false;
     }

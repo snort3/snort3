@@ -31,6 +31,8 @@
 #include "stream/stream_splitter.h"
 
 #include "http2_enum.h"
+#include "http2_hpack_int_decode.h"
+#include "http2_hpack_string_decode.h"
 
 using Http2Infractions = Infractions<Http2Enums::INF__MAX_VALUE, Http2Enums::INF__NONE>;
 
@@ -53,6 +55,36 @@ public:
         uint32_t*, HttpCommon::SourceId);
     friend bool implement_get_buf(unsigned id, Http2FlowData*, HttpCommon::SourceId,
         snort::InspectionBuffer&);
+    friend bool decode_headers(Http2FlowData* session_data, HttpCommon::SourceId source_id,
+        const uint8_t* raw_header_buffer, const uint32_t header_length);
+    friend bool decode_header_line(Http2FlowData* session_data, HttpCommon::SourceId source_id,
+        const uint8_t* encoded_header_buffer, const uint32_t encoded_header_buffer_length,
+        uint32_t& bytes_consumed, uint8_t* decoded_header_buffer,
+        const uint32_t decoded_header_buffer_length, uint32_t& bytes_written);
+    friend bool handle_dynamic_size_update(Http2FlowData* session_data,
+        HttpCommon::SourceId source_id, const uint8_t* encoded_header_buffer,
+        const uint32_t encoded_header_length, const Http2HpackIntDecode &decode_int,
+        uint32_t &bytes_consumed, uint32_t &bytes_written);
+    friend bool decode_literal_header_line(Http2FlowData* session_data,
+         HttpCommon::SourceId source_id, const uint8_t* encoded_header_buffer,
+         const uint32_t encoded_header_buffer_length,
+        const uint8_t name_index_mask, const Http2HpackIntDecode &decode_int,
+        uint32_t &bytes_consumed, uint8_t* decoded_header_buffer,
+        const uint32_t decoded_header_buffer_length, uint32_t &bytes_written);
+    friend bool decode_index(Http2FlowData* session_data, HttpCommon::SourceId source_id,
+        const uint8_t* encoded_header_buffer, const uint32_t encoded_header_length,
+        const Http2HpackIntDecode &decode_int, uint32_t &bytes_consumed,
+        uint8_t* decoded_header_buffer, const uint32_t decoded_header_length,
+        uint32_t &bytes_written);
+    friend bool decode_string_literal(Http2FlowData* session_data, HttpCommon::SourceId source_id,
+        const uint8_t* encoded_header_buffer, const uint32_t encoded_header_length,
+        const Http2HpackStringDecode &decode_string, bool is_field_name, uint32_t &bytes_consumed,
+        uint8_t* decoded_header_buffer, const uint32_t decoded_header_buffer_length,
+        uint32_t &bytes_written);
+    friend bool write_decoded_headers(Http2FlowData* session_data, HttpCommon::SourceId source_id,
+        const uint8_t* in_buffer, const uint32_t in_length,
+        uint8_t* decoded_header_buffer, uint32_t decoded_header_buffer_length,
+        uint32_t &bytes_written);
 
     size_t size_of() override
     { return sizeof(*this); }
@@ -70,7 +102,7 @@ protected:
 
     // Internal to scan
     bool continuation_expected[2] = { false, false };
-    uint8_t* currently_processing_frame_header[2] = { nullptr, nullptr };
+    uint8_t currently_processing_frame_header[2][Http2Enums::FRAME_HEADER_LENGTH];
     uint32_t inspection_section_length[2] = { 0, 0 };
     uint32_t leftover_data[2] = { 0, 0 };
 
@@ -92,7 +124,6 @@ protected:
     // transaction in NHI. Also as in NHI accessor methods will need to be added.
     Http2Infractions* infractions[2] = { new Http2Infractions, new Http2Infractions };
     Http2EventGen* events[2] = { new Http2EventGen, new Http2EventGen };
-    
 
 #ifdef REG_TEST
     static uint64_t instance_count;

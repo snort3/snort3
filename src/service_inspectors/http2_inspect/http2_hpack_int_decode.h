@@ -33,16 +33,12 @@ using Http2EventGen = EventGen<Http2Enums::EVENT__MAX_VALUE, Http2Enums::EVENT__
 class Http2HpackIntDecode
 {
 public:
-    Http2HpackIntDecode(uint8_t prefix, Http2EventGen* events, Http2Infractions* infractions);
+    Http2HpackIntDecode(uint8_t prefix);
     bool translate(const uint8_t* in_buff, const uint32_t in_len, uint32_t& bytes_consumed,
-        uint64_t& result);
+        uint64_t& result, Http2EventGen* events, Http2Infractions* infractions) const;
 
 private:
     const uint8_t prefix_mask;
-    // FIXIT-M These will get merged into the corresponding frame/stream object infractions and
-    // events
-    Http2EventGen* const events;
-    Http2Infractions* const infractions;
 };
 
 #endif
