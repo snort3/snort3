@@ -45,14 +45,36 @@ public:
     bool is_user_monitored(const snort::Packet* p, uint8_t* flag = nullptr);
 
 private:
+
+    enum Direction { CLIENT, SERVER, NUM_DIRECTIONS };
+
     bool is_monitored(const snort::Packet* p, FilterType type, uint8_t& flag,
         uint8_t checked, uint8_t monitored);
     bool is_monitored(const snort::Packet* p, FilterType type);
     void add_ip(FilterType type, ZoneType zone, std::string& ip);
     sfip_var_t* get_list(FilterType type, ZoneType zone, bool exclude_empty = false);
 
-    std::unordered_map<ZoneType, sfip_var_t*> zone_list[DF_MAX];
+    // add ip for port exclusion
+    void add_ip(Direction dir, uint16_t proto, uint16_t port, const std::string& ip);
+    sfip_var_t* get_port_list(Direction dir, uint32_t key);
+
+    inline uint32_t proto_port_key(uint16_t proto, uint16_t port) const
+    {
+        return (proto << 16) | port;
+    }
+
+    bool is_port_excluded(const snort::Packet* p);
+
+    std::unordered_map<ZoneType, sfip_var_t*> zone_ip_list[DF_MAX];
     vartable_t* vartable = nullptr;
+
+    // Internal cache for sfip_var_t indexed by protocol x port, for port
+    // exclusion.
+    std::unordered_map<uint32_t, sfip_var_t*> port_ip_list[NUM_DIRECTIONS];
+
+#ifdef UNIT_TEST
+    friend bool is_port_excluded_test(DiscoveryFilter& df, snort::Packet* p);
+#endif
 };
 
 #endif

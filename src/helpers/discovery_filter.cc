@@ -25,10 +25,12 @@
 #include "discovery_filter.h"
 
 #include <fstream>
+#include <netdb.h>
 #include <sstream>
 #include <string>
 
 #include "log/messages.h"
+#include "protocols/protocol_ids.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -125,6 +127,50 @@ DiscoveryFilter::DiscoveryFilter(const string& conf_path)
                 add_ip(DF_USER, zone, config_value);
             }
         }
+        else if ( config_type == "portexclusion" )
+        {
+            string dir_str, proto_str, port_str, ip;
+            line_stream >> dir_str >> proto_str >> port_str >> ip;
+
+            uint16_t port = strtol(port_str.c_str(), NULL, 10);
+            if ( port == 0 )
+            {
+                WarningMessage("Discovery Filter: Invalid port at line %u from %s;",
+                    line_num, conf_path.c_str());
+                continue;
+            }
+
+            protoent* pt = getprotobyname(proto_str.c_str());
+            if ( pt == nullptr )
+            {
+                WarningMessage("Discovery Filter: Invalid protocol at line %u from %s;",
+                    line_num, conf_path.c_str());
+                continue;
+            }
+
+            // Port exclusion is done from a session standpoint rather than
+            // from a packet standpoint. An illustrative example is the
+            // "Discovery Filter Port Exclusion" test.
+
+            if ( dir_str == "dst" )
+                add_ip(Direction::SERVER, (uint16_t) pt->p_proto, port, ip);
+            else if ( dir_str == "src" )
+                add_ip(Direction::CLIENT, (uint16_t) pt->p_proto, port, ip);
+            else if ( dir_str == "both" )
+            {
+                add_ip(Direction::SERVER, (uint16_t) pt->p_proto, port, ip);
+                add_ip(Direction::CLIENT, (uint16_t) pt->p_proto, port, ip);
+            }
+            else
+            {
+                WarningMessage("Discovery Filter: Invalid direction %s at line %u from %s;"
+                   " supported values are src and dst\n", dir_str.c_str(),
+                   line_num, conf_path.c_str());
+                continue;
+            }
+
+        }
+
     }
 
     // Merge any-zone rules to zone-based rules
@@ -133,7 +179,7 @@ DiscoveryFilter::DiscoveryFilter(const string& conf_path)
         auto any_list = get_list((FilterType)type, DF_ANY_ZONE);
         if (!any_list)
             continue;
-        for (auto& zone_entry : zone_list[type])
+        for (auto& zone_entry : zone_ip_list[type])
         {
             if (zone_entry.second != any_list and
                 sfvar_add(zone_entry.second, any_list) != SFIP_SUCCESS)
@@ -194,11 +240,12 @@ bool DiscoveryFilter::is_monitored(const Packet* p, FilterType type)
     if ( !vartable )
         return true; // when not configured, 'any' ip/port/zone are monitored by default
 
-    // Do port-based filtering first, which is independent of application/host/user type.
-    // Keep an unordered map of <port, exclusion> where exclusion object holds pointers
-    // to ip-list from vartable for each direction (src/dst) and protocol (tcp/udp).
+    // port exclusion
+    if ( is_port_excluded(p) )
+        return false;
 
-    if (zone_list[type].empty())
+    // check zone
+    if (zone_ip_list[type].empty())
         return false; // the configuration did not have this type of rule
 
     auto zone = p->pkth->ingress_group;
@@ -209,6 +256,53 @@ bool DiscoveryFilter::is_monitored(const Packet* p, FilterType type)
         varip = get_list(type, DF_ANY_ZONE, true);
 
     return sfvar_ip_in(varip, p->ptrs.ip_api.get_src()); // source ip only
+}
+
+bool DiscoveryFilter::is_port_excluded(const snort::Packet* p)
+{
+    // Port exclusion: if the ip is in the port x protocol list, return true.
+    uint32_t key;
+    const SfIp* ip;
+    uint16_t port;
+    auto proto = p->ptrs.ip_api.proto();
+
+    if ( port_ip_list[Direction::CLIENT].empty() and port_ip_list[Direction::SERVER].empty() )
+        return false;
+
+    if ( !(proto == IpProtocol::TCP or proto == IpProtocol::UDP) or
+        p->ptrs.sp == 0 or p->ptrs.dp == 0 )
+        return false;
+
+    if ( p->is_from_client() )
+    {
+        port = p->ptrs.sp;
+        ip = p->ptrs.ip_api.get_src();
+        key = proto_port_key(to_utype(proto), port);
+        if ( sfvar_ip_in(get_port_list(Direction::CLIENT, key), ip) )
+            return true;
+
+        port = p->ptrs.dp;
+        ip = p->ptrs.ip_api.get_dst();
+        key = proto_port_key(to_utype(proto), port);
+        if ( sfvar_ip_in(get_port_list(Direction::SERVER, key), ip) )
+            return true;
+    }
+    else if ( p->is_from_server() )
+    {
+        port = p->ptrs.dp;
+        ip = p->ptrs.ip_api.get_dst();
+        key = proto_port_key(to_utype(proto), port);
+        if ( sfvar_ip_in(get_port_list(Direction::CLIENT, key), ip) )
+            return true;
+
+        port = p->ptrs.sp;
+        ip = p->ptrs.ip_api.get_src();
+        key = proto_port_key(to_utype(proto), port);
+        if ( sfvar_ip_in(get_port_list(Direction::SERVER, key), ip) )
+            return true;
+    }
+
+    return false;
 }
 
 void DiscoveryFilter::add_ip(FilterType type, ZoneType zone, string& ip)
@@ -225,13 +319,13 @@ void DiscoveryFilter::add_ip(FilterType type, ZoneType zone, string& ip)
         named_ip += ip;
 
         if ( sfvt_add_str(vartable, named_ip.c_str(), &varip) == SFIP_SUCCESS )
-            zone_list[type].emplace(zone, varip);
+            zone_ip_list[type].emplace(zone, varip);
     }
 }
 
 sfip_var_t* DiscoveryFilter::get_list(FilterType type, ZoneType zone, bool exclude_empty)
 {
-    auto& list = zone_list[type];
+    auto& list = zone_ip_list[type];
     auto entry = list.find(zone);
 
     // If head is empty and the boolean flag is true, treat every IP as excluded. The flag
@@ -241,7 +335,43 @@ sfip_var_t* DiscoveryFilter::get_list(FilterType type, ZoneType zone, bool exclu
     return entry->second;
 }
 
+void DiscoveryFilter::add_ip(Direction dir, uint16_t proto, uint16_t port, const string& ip)
+{
+    uint32_t key = proto_port_key(proto, port);
+
+    // find it in the local cache first:
+    auto varip = get_port_list(dir, key);
+    if ( varip )
+        sfvt_add_to_var(vartable, varip, ip.c_str());
+    else
+    {
+        string named_ip = to_string(dir);
+        named_ip += "_";
+        named_ip += to_string(proto);
+        named_ip += "_";
+        named_ip += to_string(port);
+        named_ip += " ";
+        named_ip += ip;
+
+        if ( sfvt_add_str(vartable, named_ip.c_str(), &varip) == SFIP_SUCCESS )
+            port_ip_list[dir].emplace(key, varip);
+    }
+}
+
+sfip_var_t* DiscoveryFilter::get_port_list(Direction dir, uint32_t key)
+{
+    auto& list = port_ip_list[dir];
+    auto entry = list.find(key);
+    return entry == list.end() ? nullptr : entry->second;
+}
+
 #ifdef UNIT_TEST
+
+bool is_port_excluded_test(DiscoveryFilter& df, Packet* p)
+{
+    return df.is_port_excluded(p);
+}
+
 TEST_CASE("Discovery Filter", "[is_monitored]")
 {
     string conf("test.txt");
@@ -366,4 +496,89 @@ TEST_CASE("Discovery Filter Zone", "[is_monitored_zone_vs_ip]")
 
     remove("test_zone_ip.txt");
 }
+
+TEST_CASE("Discovery Filter Port Exclusion", "[portexclusion]")
+{
+    uint16_t a_port = 1234;
+    uint16_t b_port = 80;
+
+    string a_ip_str = "10.0.0.1";
+    SfIp aip;
+    aip.set(a_ip_str.c_str());
+
+    string b_ip_str = "10.0.0.2";
+    SfIp bip;
+    bip.set(b_ip_str.c_str());
+
+    ip::IP4Hdr ab_hdr;                  // A -> B IPV4 header
+    ip::IP4Hdr ba_hdr;                  // B -> A IPV4 header
+
+    ab_hdr.ip_proto = IpProtocol::TCP;
+    ab_hdr.ip_src = aip.get_ip4_value();
+    ab_hdr.ip_dst = bip.get_ip4_value();
+
+    ba_hdr.ip_proto = IpProtocol::TCP;
+    ba_hdr.ip_src = bip.get_ip4_value();
+    ba_hdr.ip_dst = aip.get_ip4_value();
+
+    string conf("discovery_filter.conf");
+    ofstream out(conf.c_str());
+
+    // portexclusion dst tcp 80 10.0.0.2"
+    //
+    // Exclude traffic outgoing to or returning from 10.0.0.2:80, i.e. traffic
+    // in which 10.0.0.2 is the responder (server).
+    //
+    // This will not exclude traffic initiated by 10.0.0.2 from port 80 though.
+
+    out << "portexclusion dst tcp " << b_port << " " << b_ip_str << endl;
+    out.close();
+
+    DiscoveryFilter df(conf);
+
+    Packet p;
+    p.ptrs.type = PktType::TCP;
+
+    // Positive test: A = initiator (client), B = responder (server)
+    // exclude A <-> B:b_port traffic
+
+    // A -> B:b_port
+    p.ptrs.ip_api.set(&ab_hdr);
+    p.ptrs.sp = a_port;
+    p.ptrs.dp = b_port;
+    p.packet_flags = 0x0;
+    p.packet_flags |= PKT_FROM_CLIENT;
+    CHECK(is_port_excluded_test(df, &p) == true);
+
+    // A:any <- B:b_port
+    p.ptrs.ip_api.set(&ba_hdr);
+    p.ptrs.sp = b_port;
+    p.ptrs.dp = a_port;
+    p.packet_flags = 0x0;
+    p.packet_flags |= PKT_FROM_SERVER;
+    CHECK(is_port_excluded_test(df, &p) == true);
+
+
+    // Negative test: B = initiator (client), A = responder (server)
+    // do not exclude A <-> B:b_port
+
+    // A <- B:b_port
+    p.ptrs.ip_api.set(&ba_hdr);
+    p.ptrs.sp = b_port;
+    p.ptrs.dp = a_port;
+    p.packet_flags = 0x0;
+    p.packet_flags |= PKT_FROM_CLIENT;
+    CHECK(is_port_excluded_test(df, &p) == false);
+
+    // A -> B:b_port
+    p.ptrs.ip_api.set(&ab_hdr);
+    p.ptrs.sp = a_port;
+    p.ptrs.dp = b_port;
+    p.packet_flags = 0x0;
+    p.packet_flags |= PKT_FROM_SERVER;
+    CHECK(is_port_excluded_test(df, &p) == false);
+
+    remove(conf.c_str());
+}
+
 #endif
