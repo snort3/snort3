@@ -70,7 +70,7 @@ DetectionEngine::~DetectionEngine() = default;
 ExpectCache::~ExpectCache() = default;
 unsigned FlowCache::purge() { return 1; }
 Flow* FlowCache::find(const FlowKey*) { return nullptr; }
-Flow* FlowCache::get(const FlowKey*) { return nullptr; }
+Flow* FlowCache::allocate(const FlowKey*) { return nullptr; }
 void FlowCache::push(Flow*) { }
 bool FlowCache::prune_one(PruneReason, bool) { return true; }
 unsigned FlowCache::timeout(unsigned, time_t) { return 1; }

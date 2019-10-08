@@ -346,7 +346,6 @@ public:  // FIXIT-M privatize if possible
 
     // these fields are const after initialization
     const FlowKey* key;
-    Session* session;
     BitOp* bitop;
     FlowHAState* ha_state;
     FlowStash* stash;
@@ -356,6 +355,7 @@ public:  // FIXIT-M privatize if possible
 
     // these fields are always set; not zeroed
     Flow* prev, * next;
+    Session* session;
     Inspector* ssn_client;
     Inspector* ssn_server;
 

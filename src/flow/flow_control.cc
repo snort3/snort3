@@ -47,11 +47,6 @@ using namespace snort;
 FlowControl::FlowControl(const FlowCacheConfig& fc)
 {
     cache = new FlowCache(fc);
-
-    mem = (Flow*)snort_calloc(fc.max_flows, sizeof(Flow));
-
-    for ( unsigned i = 0; i < fc.max_flows; ++i )
-        cache->push(mem + i);
 }
 
 FlowControl::~FlowControl()
@@ -69,25 +64,18 @@ FlowControl::~FlowControl()
 
 PegCount FlowControl::get_total_prunes() const
 {
-    auto cache = get_cache();
-    return cache ? cache->get_total_prunes() : 0;
+    return cache->get_total_prunes();
 }
 
 PegCount FlowControl::get_prunes(PruneReason reason) const
 {
-    auto cache = get_cache();
-    return cache ? cache->get_prunes(reason) : 0;
+    return cache->get_prunes(reason);
 }
 
 void FlowControl::clear_counts()
 {
-    for ( int i = 0; i < to_utype(PktType::MAX); ++i )
-    {
-        if ( cache )
-            cache->reset_stats();
-
-        num_flows = 0;
-    }
+    cache->reset_stats();
+    num_flows = 0;
 }
 
 //-------------------------------------------------------------------------
@@ -96,65 +84,41 @@ void FlowControl::clear_counts()
 
 Flow* FlowControl::find_flow(const FlowKey* key)
 {
-    if ( auto cache = get_cache() )
-        return cache->find(key);
-
-    return nullptr;
+    return cache->find(key);
 }
 
 Flow* FlowControl::new_flow(const FlowKey* key)
 {
-    if ( auto cache = get_cache() )
-        return cache->get(key);
-
-    return nullptr;
+    return cache->allocate(key);
 }
 
-// FIXIT-L cache* can be put in flow so that lookups by
-// packet type are obviated for existing / initialized flows
 void FlowControl::delete_flow(const FlowKey* key)
 {
-    FlowCache* cache = get_cache();
-
-    if ( !cache )
-        return;
-
     if ( auto flow = cache->find(key) )
         cache->release(flow, PruneReason::HA);
 }
 
 void FlowControl::delete_flow(Flow* flow, PruneReason reason)
 {
-    if ( auto cache = get_cache() )
-        cache->release(flow, reason);
+    cache->release(flow, reason);
 }
 
 void FlowControl::purge_flows ()
 {
-    if ( auto cache = get_cache() )
-        cache->purge();
+    cache->purge();
 }
 
 // hole for memory manager/prune handler
 bool FlowControl::prune_one(PruneReason reason, bool do_cleanup)
 {
-    auto cache = get_cache();
-    return cache ? cache->prune_one(reason, do_cleanup) : false;
+    return cache->prune_one(reason, do_cleanup);
 }
 
 void FlowControl::timeout_flows(time_t cur_time)
 {
-    if ( types.empty() )
-        return;
-
     ActiveSuspendContext act_susp;
-    FlowCache* fc = get_cache();
 
-    if ( ++next >= types.size() )
-        next = 0;
-
-    if ( fc )
-        fc->timeout(1, cur_time);
+    cache->timeout(1, cur_time);
 }
 
 void FlowControl::preemptive_cleanup()
@@ -341,8 +305,7 @@ void FlowControl::init_proto(PktType type, InspectSsnFunc get_ssn)
 {
     assert(get_ssn);
 
-    proto[to_utype(type)].get_ssn = get_ssn;
-    types.emplace_back(type);
+    get_proto_session[to_utype(type)] = get_ssn;
 }
 
 // FIXIT-P apply more filtering logic here, eg require_3whs
@@ -367,7 +330,7 @@ static bool want_flow(PktType type, Packet* p)
 
 bool FlowControl::process(PktType type, Packet* p, bool* new_flow)
 {
-    if ( !proto[to_utype(type)].get_ssn )
+    if ( !get_proto_session[to_utype(type)] )
         return false;
 
     FlowKey key;
@@ -386,7 +349,7 @@ bool FlowControl::process(PktType type, Packet* p, bool* new_flow)
             if ( !want_flow(type, p) )
                 return true;
 
-            flow = cache->get(&key);
+            flow = cache->allocate(&key);
 
             if ( !flow )
                 return true;
@@ -399,7 +362,7 @@ bool FlowControl::process(PktType type, Packet* p, bool* new_flow)
     if ( !flow->session )
     {
         flow->init(type);
-        flow->session = proto[to_utype(type)].get_ssn(flow);
+        flow->session = get_proto_session[to_utype(type)](flow);
     }
 
     num_flows += process(flow, p);

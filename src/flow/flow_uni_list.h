@@ -61,7 +61,6 @@ public:
         flow->prev->next = flow->next;
         flow->next = flow->prev = nullptr;
         --count;
-
     }
 
     snort::Flow* get_oldest_uni()

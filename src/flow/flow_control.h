@@ -95,31 +95,17 @@ public:
     void clear_counts();
 
 private:
-    FlowCache* get_cache()
-    { return cache; }
-
-    const FlowCache* get_cache() const
-    { return cache; }
-
     void set_key(snort::FlowKey*, snort::Packet*);
-
     unsigned process(snort::Flow*, snort::Packet*);
     void preemptive_cleanup();
 
 private:
-    struct
-    {
-        snort::InspectSsnFunc get_ssn = nullptr;
-    } proto[to_utype(PktType::MAX)];
-
+    snort::InspectSsnFunc get_proto_session[to_utype(PktType::MAX)] = {};
     PegCount num_flows = 0;
     FlowCache* cache = nullptr;
     snort::Flow* mem = nullptr;
     class ExpectCache* exp_cache = nullptr;
     PktType last_pkt_type = PktType::NONE;
-
-    std::vector<PktType> types;
-    unsigned next = 0;
 };
 
 #endif

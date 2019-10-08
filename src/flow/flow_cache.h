@@ -48,13 +48,10 @@ public:
     FlowCache(const FlowCache&) = delete;
     FlowCache& operator=(const FlowCache&) = delete;
 
-    void push(snort::Flow*);
-
     snort::Flow* find(const snort::FlowKey*);
-    snort::Flow* get(const snort::FlowKey*);
+    snort::Flow* allocate(const snort::FlowKey*);
 
     int release(snort::Flow*, PruneReason = PruneReason::NONE, bool do_cleanup = true);
-
     unsigned prune_stale(uint32_t thetime, const snort::Flow* save_me);
     unsigned prune_excess(const snort::Flow* save_me);
     bool prune_one(PruneReason, bool do_cleanup);
@@ -78,9 +75,11 @@ public:
     void unlink_uni(snort::Flow*);
 
 private:
+    void push(snort::Flow*);
     void link_uni(snort::Flow*);
     int remove(snort::Flow*);
     int retire(snort::Flow*);
+    unsigned prune_unis(PktType);
 
 private:
     static const unsigned cleanup_flows = 1;
@@ -88,12 +87,11 @@ private:
     uint32_t flags;
 
     class ZHash* hash_table;
+    unsigned flows_allocated = 0;
     FlowUniList* uni_flows;
     FlowUniList* uni_ip_flows;
 
-    //snort::Flow* uni_head_ip, *uni_tail_ip, *uni_head_nonip, *uni_tail_nonip;
     PruneStats prune_stats;
-    unsigned prune_unis(PktType);
 };
 #endif
 

@@ -323,10 +323,8 @@ ExpectCache::~ExpectCache()
  * snort_protocol_id and associated data is not stored.
  *
  */
-int ExpectCache::add_flow(const Packet *ctrlPkt,
-    PktType type, IpProtocol ip_proto,
-    const SfIp* cliIP, uint16_t cliPort,
-    const SfIp* srvIP, uint16_t srvPort,
+int ExpectCache::add_flow(const Packet *ctrlPkt, PktType type, IpProtocol ip_proto,
+    const SfIp* cliIP, uint16_t cliPort, const SfIp* srvIP, uint16_t srvPort,
     char direction, FlowData* fd, SnortProtocolId snort_protocol_id)
 {
     /* Just pull the VLAN ID, MPLS ID, and Address Space ID from the
@@ -339,11 +337,8 @@ int ExpectCache::add_flow(const Packet *ctrlPkt,
     bool reversed_key = key.init(type, ip_proto, cliIP, cliPort, srvIP, srvPort,
             vlanId, mplsId, addressSpaceId);
 
-    ExpectNode* node;
-    ExpectFlow* last;
     bool new_node = false;
-
-    node = (ExpectNode*) hash_table->get(&key, &new_node);
+    ExpectNode* node = (ExpectNode*) hash_table->get(&key, &new_node);
     if (!node)
     {
         prune();
@@ -365,6 +360,7 @@ int ExpectCache::add_flow(const Packet *ctrlPkt,
         new_node = true;
     }
 
+    ExpectFlow* last = nullptr;
     if (!new_node)
     {
         // Requests will be rejected if the snort_protocol_id doesn't

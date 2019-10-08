@@ -70,6 +70,7 @@ void FlowCache::push(Flow* flow)
 {
     void* key = hash_table->push(flow);
     flow->key = (FlowKey*)key;
+    ++flows_allocated;
 }
 
 unsigned FlowCache::get_count()
@@ -110,14 +111,19 @@ void FlowCache::unlink_uni(Flow* flow)
         uni_flows->unlink_uni(flow);
 }
 
-Flow* FlowCache::get(const FlowKey* key)
+Flow* FlowCache::allocate(const FlowKey* key)
 {
     time_t timestamp = packet_time();
     Flow* flow = (Flow*)hash_table->get(key);
 
     if ( !flow )
     {
-        if ( !prune_stale(timestamp, nullptr) )
+        if ( flows_allocated < config.max_flows )
+        {
+            Flow* new_flow = new Flow;
+            push(new_flow);
+        }
+        else if ( !prune_stale(timestamp, nullptr) )
         {
             if ( !prune_unis(key->pkt_type) )
                 prune_excess(nullptr);
@@ -130,9 +136,9 @@ Flow* FlowCache::get(const FlowKey* key)
             flow->term();
         else
             flow->reset();
-        link_uni(flow);
     }
 
+    link_uni(flow);
     if ( flow->session && flow->pkt_type != key->pkt_type )
         flow->term();
 
@@ -369,7 +375,7 @@ unsigned FlowCache::purge()
     }
 
     while ( Flow* flow = (Flow*)hash_table->pop() )
-        flow->term();
+        delete flow;
 
     return retired;
 }
