@@ -113,9 +113,9 @@ namespace preprocessors
             else if (keyword == "fw_urlc_memcap")
                 tmpval = parse_int_option("url_cache_memcap", data_stream, false);
             else if (keyword == "fw_usrq_memcap")
-                tmpval = parse_int_option("user_queue_memcap", data_stream, false);
+                tmpval = parse_deleted_option("user_queue_memcap", data_stream);
             else if (keyword == "fw_usrc_memcap")
-                tmpval = parse_int_option("user_cache_memcap", data_stream, false);
+                tmpval = parse_deleted_option("user_cache_memcap", data_stream);
             else if (keyword == "fw_malwq_memcap")
                 tmpval = parse_int_option("malware_queue_memcap", data_stream, false);
             else if (keyword == "fw_malwc_memcap")
@@ -163,13 +163,13 @@ namespace preprocessors
             else if (keyword == "debug_future_date")
                 tmpval = table_api.add_option("future_date_debug_enabled", true);
             else if (keyword == "identity_rule_path")
-                identity_table = tmpval = parse_string_option("identity_rule_path", data_stream);
+                identity_table = tmpval = parse_deleted_option("identity_rule_path", data_stream);
             else if (keyword == "interface_ip_map_path")
-                tmpval = parse_string_option("intf_ip_map_path", data_stream);
+                tmpval = parse_deleted_option("intf_ip_map_path", data_stream);
             else if (keyword == "daqif_path")
-                tmpval = parse_string_option("daq_intf_path", data_stream);
+                tmpval = parse_deleted_option("daq_intf_path", data_stream);
             else if (keyword == "running_config_network_path")
-                tmpval = parse_string_option("running_network_config_path", data_stream);
+                tmpval = parse_deleted_option("running_network_config_path", data_stream);
             else
                 tmpval = false;
 
