@@ -100,9 +100,6 @@ inline uint16_t cksum_add(const uint16_t* buf, std::size_t len, uint32_t cksum)
             cksum += *sp++;
             len -= 2;
         }
-        // if len was odd, sum in the last byte...
-        if ( len )
-            cksum += (uint16_t) *(const uint8_t *)sp;
     }
     else if ( len > 1 )
     {
@@ -168,10 +165,11 @@ inline uint16_t cksum_add(const uint16_t* buf, std::size_t len, uint32_t cksum)
             cksum += sp[15];
             sp += 16;
         }
-        // if len is odd, sum in the last byte...
-        if ( len & 0x01)
-            cksum += (uint16_t) *(const uint8_t *)sp;
     }
+
+    // if len is odd, sum in the last byte...
+    if ( len & 0x01 )
+        cksum += *((const uint8_t*) sp);
 
     cksum  = (cksum >> 16) + (cksum & 0x0000ffff);
     cksum += (cksum >> 16);
