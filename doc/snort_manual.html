@@ -782,7 +782,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0 (Build 261)
+o"  )~   Version 3.0.0 (Build 262)
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
@@ -7286,6 +7286,11 @@ string <strong><code>daq.modules[].variables[].variable</code></strong>: DAQ mod
 </li>
 <li>
 <p>
+<strong>daq.expected_flows</strong>: expected flows created in DAQ (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>daq.retries_queued</strong>: messages queued for retry (sum)
 </p>
 </li>
@@ -7302,6 +7307,21 @@ string <strong><code>daq.modules[].variables[].variable</code></strong>: DAQ mod
 <li>
 <p>
 <strong>daq.retries_discarded</strong>: messages discarded when purging the retry queue (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>daq.sof_messages</strong>: start of flow messages received from DAQ (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>daq.eof_messages</strong>: end of flow messages received from DAQ (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>daq.other_messages</strong>: messages received from DAQ with unrecognized message type (sum)
 </p>
 </li>
 </ul></div>
@@ -8521,7 +8541,7 @@ string <strong><code>references[].url</code></strong>: where this reference is d
 <div class="ulist"><ul>
 <li>
 <p>
-enum <strong><code>rule_state.$gid_sid[].action</code></strong> = inherit: apply action if rule matches or inherit from rule definition { log | pass | alert | drop | block | reset | inherit }
+enum <strong><code>rule_state.$gid_sid[].action</code></strong> = inherit: apply action if rule matches or inherit from rule definition { log | pass | alert | drop | block | reset | react | reject | rewrite | inherit }
 </p>
 </li>
 <li>
@@ -9843,6 +9863,11 @@ bool <strong>esp.decode_esp</strong> = false: enable for inspection of esp traff
 <strong>icmp4.bad_checksum</strong>: non-zero icmp checksums (sum)
 </p>
 </li>
+<li>
+<p>
+<strong>icmp4.checksum_bypassed</strong>: checksum calculations bypassed (sum)
+</p>
+</li>
 </ul></div>
 </div>
 <div class="sect2">
@@ -9918,6 +9943,11 @@ bool <strong>esp.decode_esp</strong> = false: enable for inspection of esp traff
 <li>
 <p>
 <strong>icmp6.bad_icmp6_checksum</strong>: nonzero icmp6 checksums (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>icmp6.checksum_bypassed</strong>: checksum calculations bypassed (sum)
 </p>
 </li>
 </ul></div>
@@ -10054,6 +10084,11 @@ bool <strong>esp.decode_esp</strong> = false: enable for inspection of esp traff
 <li>
 <p>
 <strong>ipv4.bad_checksum</strong>: nonzero ip checksums (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>ipv4.checksum_bypassed</strong>: checksum calculations bypassed (sum)
 </p>
 </li>
 </ul></div>
@@ -10448,6 +10483,11 @@ enum <strong>mpls.mpls_payload_type</strong> = ip4: set encapsulated payload typ
 <strong>tcp.bad_tcp6_checksum</strong>: nonzero tcp over ipv6 checksums (sum)
 </p>
 </li>
+<li>
+<p>
+<strong>tcp.checksum_bypassed</strong>: checksum calculations bypassed (sum)
+</p>
+</li>
 </ul></div>
 </div>
 <div class="sect2">
@@ -10550,6 +10590,11 @@ bit_list <strong>udp.gtp_ports</strong> = 2152 3386: set GTP ports { 65535 }
 <li>
 <p>
 <strong>udp.bad_udp6_checksum</strong>: nonzero udp over ipv6 checksums (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>udp.checksum_bypassed</strong>: checksum calculations bypassed (sum)
 </p>
 </li>
 </ul></div>
@@ -12519,6 +12564,11 @@ bool <strong>finalize_packet.switch_to_wizard</strong> = false: switch to wizard
 <strong>finalize_packet.events</strong>: total events seen (sum)
 </p>
 </li>
+<li>
+<p>
+<strong>finalize_packet.other_messages</strong>: total other message seen (sum)
+</p>
+</li>
 </ul></div>
 </div>
 <div class="sect2">
@@ -12884,6 +12934,16 @@ int <strong>gtp_inspect.trace</strong>: mask for enabling debug traces in module
 <li>
 <p>
 <strong>121:5</strong> (http2_inspect) unexpected continuation frame
+</p>
+</li>
+<li>
+<p>
+<strong>121:6</strong> (http2_inspect) misformatted HTTP/2 traffic
+</p>
+</li>
+<li>
+<p>
+<strong>121:7</strong> (http2_inspect) HTTP/2 connection preface does not match
 </p>
 </li>
 </ul></div>
@@ -15083,17 +15143,32 @@ string <strong>reputation.whitelist</strong>: whitelist file name with IP lists
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>136:1</strong> (reputation) packets blacklisted
+<strong>136:1</strong> (reputation) packets blacklisted based on source
 </p>
 </li>
 <li>
 <p>
-<strong>136:2</strong> (reputation) packets whitelisted
+<strong>136:2</strong> (reputation) packets whitelisted based on source
 </p>
 </li>
 <li>
 <p>
-<strong>136:3</strong> (reputation) packets monitored
+<strong>136:3</strong> (reputation) packets monitored based on source
+</p>
+</li>
+<li>
+<p>
+<strong>136:4</strong> (reputation) packets blacklisted based on destination
+</p>
+</li>
+<li>
+<p>
+<strong>136:5</strong> (reputation) packets whitelisted based on destination
+</p>
+</li>
+<li>
+<p>
+<strong>136:6</strong> (reputation) packets monitored based on destination
 </p>
 </li>
 </ul></div>
@@ -16386,6 +16461,26 @@ int <strong>stream.trace</strong>: mask for enabling debug traces in module { 0:
 <strong>stream.ha_prunes</strong>: sessions pruned by high availability sync (sum)
 </p>
 </li>
+<li>
+<p>
+<strong>stream.expected_flows</strong>: total expected flows created within snort (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream.expected_realized</strong>: number of expected flows realized (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream.expected_pruned</strong>: number of expected flows pruned (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream.expected_overflows</strong>: number of expected cache overflows (sum)
+</p>
+</li>
 </ul></div>
 </div>
 <div class="sect2">
@@ -16738,12 +16833,12 @@ int <strong>stream_tcp.queue_limit.max_segments</strong> = 2621: don&#8217;t que
 </li>
 <li>
 <p>
-int <strong>stream_tcp.small_segments.count</strong> = 0: limit number of small segments queued { 0:2048 }
+int <strong>stream_tcp.small_segments.count</strong> = 0: number of consecutive TCP small segments considered to be excessive (129:12) { 0:2048 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream_tcp.small_segments.maximum_size</strong> = 0: limit number of small segments queued { 0:2048 }
+int <strong>stream_tcp.small_segments.maximum_size</strong> = 0: minimum bytes for a TCP segment not to be considered small (129:12) { 0:2048 }
 </p>
 </li>
 <li>
@@ -21377,6 +21472,11 @@ options into a Snort++ configuration file</p></div>
 </li>
 <li>
 <p>
+<strong>--bind-port</strong>       Convert port bindings
+</p>
+</li>
+<li>
+<p>
 <strong>--conf-file</strong>       Same as <em>-c</em>. A Snort &lt;snort_conf&gt; file which will be
                     converted
 </p>
@@ -21550,6 +21650,15 @@ If the original configuration contains a binding that points to another
    number of rejects for the binding file in addition to the number of
    rejects in the main file.  The two numbers will eventually be combined
    into one output.
+</p>
+</li>
+<li>
+<p>
+If the original configuration contains a replace rule with alert action,
+   Snort2Lua won’t translate the rule from alert to rewrite action. It will
+   keep the action as alert, which does not actually replace the content in
+   Snort 3. To replace content, the rule action needs to be rewrite, which
+   can be added manually or by tooling.
 </p>
 </li>
 </ul></div>
@@ -27779,7 +27888,7 @@ bool <strong>rt_packet.retry_targeted</strong> = false: request retry for packet
 </li>
 <li>
 <p>
-enum <strong><code>rule_state.$gid_sid[].action</code></strong> = inherit: apply action if rule matches or inherit from rule definition { log | pass | alert | drop | block | reset | inherit }
+enum <strong><code>rule_state.$gid_sid[].action</code></strong> = inherit: apply action if rule matches or inherit from rule definition { log | pass | alert | drop | block | reset | react | reject | rewrite | inherit }
 </p>
 </li>
 <li>
@@ -29114,12 +29223,12 @@ bool <strong>stream_tcp.show_rebuilt_packets</strong> = false: enable cmg like o
 </li>
 <li>
 <p>
-int <strong>stream_tcp.small_segments.count</strong> = 0: limit number of small segments queued { 0:2048 }
+int <strong>stream_tcp.small_segments.count</strong> = 0: number of consecutive TCP small segments considered to be excessive (129:12) { 0:2048 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream_tcp.small_segments.maximum_size</strong> = 0: limit number of small segments queued { 0:2048 }
+int <strong>stream_tcp.small_segments.maximum_size</strong> = 0: minimum bytes for a TCP segment not to be considered small (129:12) { 0:2048 }
 </p>
 </li>
 <li>
@@ -29459,6 +29568,16 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>daq.eof_messages</strong>: end of flow messages received from DAQ (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>daq.expected_flows</strong>: expected flows created in DAQ (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>daq.filtered</strong>: packets filtered out (sum)
 </p>
 </li>
@@ -29485,6 +29604,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>daq.internal_whitelist</strong>: packets whitelisted internally due to lack of DAQ support (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>daq.other_messages</strong>: messages received from DAQ with unrecognized message type (sum)
 </p>
 </li>
 <li>
@@ -29540,6 +29664,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>daq.skipped</strong>: packets skipped at startup (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>daq.sof_messages</strong>: start of flow messages received from DAQ (sum)
 </p>
 </li>
 <li>
@@ -30329,6 +30458,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>finalize_packet.other_messages</strong>: total other message seen (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>finalize_packet.pdus</strong>: total PDUs seen (sum)
 </p>
 </li>
@@ -30624,7 +30758,17 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>icmp4.checksum_bypassed</strong>: checksum calculations bypassed (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>icmp6.bad_icmp6_checksum</strong>: nonzero icmp6 checksums (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>icmp6.checksum_bypassed</strong>: checksum calculations bypassed (sum)
 </p>
 </li>
 <li>
@@ -30690,6 +30834,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>ipv4.bad_checksum</strong>: nonzero ip checksums (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>ipv4.checksum_bypassed</strong>: checksum calculations bypassed (sum)
 </p>
 </li>
 <li>
@@ -31759,6 +31908,26 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>stream.expected_flows</strong>: total expected flows created within snort (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream.expected_overflows</strong>: number of expected cache overflows (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream.expected_pruned</strong>: number of expected flows pruned (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream.expected_realized</strong>: number of expected flows realized (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>stream.flows</strong>: total sessions (sum)
 </p>
 </li>
@@ -32234,6 +32403,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>tcp.checksum_bypassed</strong>: checksum calculations bypassed (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>tcp_connector.messages</strong>: total messages (sum)
 </p>
 </li>
@@ -32260,6 +32434,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>udp.bad_udp6_checksum</strong>: nonzero udp over ipv6 checksums (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>udp.checksum_bypassed</strong>: checksum calculations bypassed (sum)
 </p>
 </li>
 <li>
@@ -33984,6 +34163,16 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>121:6</strong> (http2_inspect) misformatted HTTP/2 traffic
+</p>
+</li>
+<li>
+<p>
+<strong>121:7</strong> (http2_inspect) HTTP/2 connection preface does not match
+</p>
+</li>
+<li>
+<p>
 <strong>122:1</strong> (port_scan) TCP portscan
 </p>
 </li>
@@ -34764,17 +34953,32 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>136:1</strong> (reputation) packets blacklisted
+<strong>136:1</strong> (reputation) packets blacklisted based on source
 </p>
 </li>
 <li>
 <p>
-<strong>136:2</strong> (reputation) packets whitelisted
+<strong>136:2</strong> (reputation) packets whitelisted based on source
 </p>
 </li>
 <li>
 <p>
-<strong>136:3</strong> (reputation) packets monitored
+<strong>136:3</strong> (reputation) packets monitored based on source
+</p>
+</li>
+<li>
+<p>
+<strong>136:4</strong> (reputation) packets blacklisted based on destination
+</p>
+</li>
+<li>
+<p>
+<strong>136:5</strong> (reputation) packets whitelisted based on destination
+</p>
+</li>
+<li>
+<p>
+<strong>136:6</strong> (reputation) packets monitored based on destination
 </p>
 </li>
 <li>
@@ -38093,7 +38297,7 @@ Adding/removing stream_* inspectors if stream was already configured
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2019-09-12 19:44:55 EDT
+ 2019-10-09 08:46:08 EDT
 </div>
 </div>
 </body>

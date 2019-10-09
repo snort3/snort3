@@ -393,7 +393,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0 (Build 261)
+o"  )~   Version 3.0.0 (Build 262)
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
@@ -5496,6 +5496,7 @@ Peg counts:
   * daq.idle: attempts to acquire from DAQ without available packets
     (sum)
   * daq.rx_bytes: total bytes received (sum)
+  * daq.expected_flows: expected flows created in DAQ (sum)
   * daq.retries_queued: messages queued for retry (sum)
   * daq.retries_dropped: messages dropped when overrunning the retry
     queue (sum)
@@ -5503,6 +5504,10 @@ Peg counts:
     (sum)
   * daq.retries_discarded: messages discarded when purging the retry
     queue (sum)
+  * daq.sof_messages: start of flow messages received from DAQ (sum)
+  * daq.eof_messages: end of flow messages received from DAQ (sum)
+  * daq.other_messages: messages received from DAQ with unrecognized
+    message type (sum)
 
 
 6.6. decode
@@ -6159,7 +6164,7 @@ Configuration:
 
   * enum rule_state.$gid_sid[].action = inherit: apply action if rule
     matches or inherit from rule definition { log | pass | alert |
-    drop | block | reset | inherit }
+    drop | block | reset | react | reject | rewrite | inherit }
   * enum rule_state.$gid_sid[].enable = inherit: enable or disable
     rule in current ips policy or use default defined by ips policy {
     no | yes | inherit }
@@ -6767,6 +6772,7 @@ Rules:
 Peg counts:
 
   * icmp4.bad_checksum: non-zero icmp checksums (sum)
+  * icmp4.checksum_bypassed: checksum calculations bypassed (sum)
 
 
 7.13. icmp6
@@ -6805,6 +6811,7 @@ Rules:
 Peg counts:
 
   * icmp6.bad_icmp6_checksum: nonzero icmp6 checksums (sum)
+  * icmp6.checksum_bypassed: checksum calculations bypassed (sum)
 
 
 7.14. igmp
@@ -6860,6 +6867,7 @@ Rules:
 Peg counts:
 
   * ipv4.bad_checksum: nonzero ip checksums (sum)
+  * ipv4.checksum_bypassed: checksum calculations bypassed (sum)
 
 
 7.16. ipv6
@@ -7046,6 +7054,7 @@ Peg counts:
 
   * tcp.bad_tcp4_checksum: nonzero tcp over ip checksums (sum)
   * tcp.bad_tcp6_checksum: nonzero tcp over ipv6 checksums (sum)
+  * tcp.checksum_bypassed: checksum calculations bypassed (sum)
 
 
 7.23. token_ring
@@ -7097,6 +7106,7 @@ Peg counts:
 
   * udp.bad_udp4_checksum: nonzero udp over ipv4 checksums (sum)
   * udp.bad_udp6_checksum: nonzero udp over ipv6 checksums (sum)
+  * udp.checksum_bypassed: checksum calculations bypassed (sum)
 
 
 7.25. vlan
@@ -7994,6 +8004,7 @@ Peg counts:
 
   * finalize_packet.pdus: total PDUs seen (sum)
   * finalize_packet.events: total events seen (sum)
+  * finalize_packet.other_messages: total other message seen (sum)
 
 
 9.18. ftp_client
@@ -8171,6 +8182,8 @@ Rules:
   * 121:3 (http2_inspect) error in HPACK string value
   * 121:4 (http2_inspect) missing continuation frame
   * 121:5 (http2_inspect) unexpected continuation frame
+  * 121:6 (http2_inspect) misformatted HTTP/2 traffic
+  * 121:7 (http2_inspect) HTTP/2 connection preface does not match
 
 Peg counts:
 
@@ -8955,9 +8968,12 @@ Configuration:
 
 Rules:
 
-  * 136:1 (reputation) packets blacklisted
-  * 136:2 (reputation) packets whitelisted
-  * 136:3 (reputation) packets monitored
+  * 136:1 (reputation) packets blacklisted based on source
+  * 136:2 (reputation) packets whitelisted based on source
+  * 136:3 (reputation) packets monitored based on source
+  * 136:4 (reputation) packets blacklisted based on destination
+  * 136:5 (reputation) packets whitelisted based on destination
+  * 136:6 (reputation) packets monitored based on destination
 
 Peg counts:
 
@@ -9452,6 +9468,12 @@ Peg counts:
     pruning (sum)
   * stream.memcap_prunes: sessions pruned due to memcap (sum)
   * stream.ha_prunes: sessions pruned by high availability sync (sum)
+  * stream.expected_flows: total expected flows created within snort
+    (sum)
+  * stream.expected_realized: number of expected flows realized (sum)
+  * stream.expected_pruned: number of expected flows pruned (sum)
+  * stream.expected_overflows: number of expected cache overflows
+    (sum)
 
 
 9.43. stream_file
@@ -9603,10 +9625,10 @@ Configuration:
     than given bytes per session and direction { 0:max32 }
   * int stream_tcp.queue_limit.max_segments = 2621: don’t queue more
     than given segments per session and direction { 0:max32 }
-  * int stream_tcp.small_segments.count = 0: limit number of small
-    segments queued { 0:2048 }
-  * int stream_tcp.small_segments.maximum_size = 0: limit number of
-    small segments queued { 0:2048 }
+  * int stream_tcp.small_segments.count = 0: number of consecutive
+    TCP small segments considered to be excessive (129:12) { 0:2048 }
+  * int stream_tcp.small_segments.maximum_size = 0: minimum bytes for
+    a TCP segment not to be considered small (129:12) { 0:2048 }
   * int stream_tcp.session_timeout = 30: session tracking timeout {
     1:max31 }
   * bool stream_tcp.track_only = false: disable reassembly if true
@@ -12829,6 +12851,7 @@ Converts the Snort configuration file specified by the -c or
     provided
   * -V Print the current Snort2Lua version
   * --bind-wizard Add default wizard to bindings
+  * --bind-port Convert port bindings
   * --conf-file Same as -c. A Snort <snort_conf> file which will be
     converted
   * --dont-parse-includes Same as -p. if <snort_conf> file contains
@@ -12900,6 +12923,12 @@ Converts the Snort configuration file specified by the -c or
     will output the number of rejects for the binding file in
     addition to the number of rejects in the main file. The two
     numbers will eventually be combined into one output.
+  * If the original configuration contains a replace rule with alert
+    action, Snort2Lua won’t translate the rule from alert to rewrite
+    action. It will keep the action as alert, which does not actually
+    replace the content in Snort 3. To replace content, the rule
+    action needs to be rewrite, which can be added manually or by
+    tooling.
 
 
 17.3. Usage
@@ -15471,7 +15500,7 @@ these libraries see the Getting Started section of the manual.
     whose data starts with A
   * enum rule_state.$gid_sid[].action = inherit: apply action if rule
     matches or inherit from rule definition { log | pass | alert |
-    drop | block | reset | inherit }
+    drop | block | reset | react | reject | rewrite | inherit }
   * enum rule_state.$gid_sid[].enable = inherit: enable or disable
     rule in current ips policy or use default defined by ips policy {
     no | yes | inherit }
@@ -15937,10 +15966,10 @@ these libraries see the Getting Started section of the manual.
     1:max31 }
   * bool stream_tcp.show_rebuilt_packets = false: enable cmg like
     output of reassembled packets
-  * int stream_tcp.small_segments.count = 0: limit number of small
-    segments queued { 0:2048 }
-  * int stream_tcp.small_segments.maximum_size = 0: limit number of
-    small segments queued { 0:2048 }
+  * int stream_tcp.small_segments.count = 0: number of consecutive
+    TCP small segments considered to be excessive (129:12) { 0:2048 }
+  * int stream_tcp.small_segments.maximum_size = 0: minimum bytes for
+    a TCP segment not to be considered small (129:12) { 0:2048 }
   * bool stream_tcp.track_only = false: disable reassembly if true
   * int stream.trace: mask for enabling debug traces in module {
     0:max53 }
@@ -16044,6 +16073,8 @@ these libraries see the Getting Started section of the manual.
   * daq.blacklist: total blacklist verdicts (sum)
   * daq.block: total block verdicts (sum)
   * daq.dropped: packets dropped (sum)
+  * daq.eof_messages: end of flow messages received from DAQ (sum)
+  * daq.expected_flows: expected flows created in DAQ (sum)
   * daq.filtered: packets filtered out (sum)
   * daq.idle: attempts to acquire from DAQ without available packets
     (sum)
@@ -16053,6 +16084,8 @@ these libraries see the Getting Started section of the manual.
     lack of DAQ support (sum)
   * daq.internal_whitelist: packets whitelisted internally due to
     lack of DAQ support (sum)
+  * daq.other_messages: messages received from DAQ with unrecognized
+    message type (sum)
   * daq.outstanding: packets unprocessed (sum)
   * daq.pcaps: total files and interfaces processed (max)
   * daq.received: total packets received from DAQ (sum)
@@ -16067,6 +16100,7 @@ these libraries see the Getting Started section of the manual.
   * daq.retry: total retry verdicts (sum)
   * daq.rx_bytes: total bytes received (sum)
   * daq.skipped: packets skipped at startup (sum)
+  * daq.sof_messages: start of flow messages received from DAQ (sum)
   * daq.whitelist: total whitelist verdicts (sum)
   * data_log.packets: total packets (sum)
   * dce_http_proxy.http_proxy_session_failures: failed http proxy
@@ -16296,6 +16330,7 @@ these libraries see the Getting Started section of the manual.
   * file_id.total_files: number of files processed (sum)
   * file_log.total_events: total file events (sum)
   * finalize_packet.events: total events seen (sum)
+  * finalize_packet.other_messages: total other message seen (sum)
   * finalize_packet.pdus: total PDUs seen (sum)
   * ftp_data.packets: total packets (sum)
   * ftp_server.concurrent_sessions: total concurrent FTP sessions
@@ -16385,7 +16420,9 @@ these libraries see the Getting Started section of the manual.
     (sum)
   * http_inspect.uri_path: URIs with path problems (sum)
   * icmp4.bad_checksum: non-zero icmp checksums (sum)
+  * icmp4.checksum_bypassed: checksum calculations bypassed (sum)
   * icmp6.bad_icmp6_checksum: nonzero icmp6 checksums (sum)
+  * icmp6.checksum_bypassed: checksum calculations bypassed (sum)
   * imap.b64_attachments: total base64 attachments decoded (sum)
   * imap.b64_decoded_bytes: total base64 decoded bytes (sum)
   * imap.concurrent_sessions: total concurrent imap sessions (now)
@@ -16402,6 +16439,7 @@ these libraries see the Getting Started section of the manual.
   * imap.uu_attachments: total uu attachments decoded (sum)
   * imap.uu_decoded_bytes: total uu decoded bytes (sum)
   * ipv4.bad_checksum: nonzero ip checksums (sum)
+  * ipv4.checksum_bypassed: checksum calculations bypassed (sum)
   * latency.max_usecs: maximum usecs elapsed (sum)
   * latency.packet_timeouts: packets that timed out (sum)
   * latency.rule_eval_timeouts: rule evals that timed out (sum)
@@ -16663,6 +16701,12 @@ these libraries see the Getting Started section of the manual.
   * ssl.sessions_ignored: total sessions ignore (sum)
   * ssl.unrecognized_records: total unrecognized records (sum)
   * stream.excess_prunes: sessions pruned due to excess (sum)
+  * stream.expected_flows: total expected flows created within snort
+    (sum)
+  * stream.expected_overflows: number of expected cache overflows
+    (sum)
+  * stream.expected_pruned: number of expected flows pruned (sum)
+  * stream.expected_realized: number of expected flows realized (sum)
   * stream.flows: total sessions (sum)
   * stream.ha_prunes: sessions pruned by high availability sync (sum)
   * stream_icmp.created: icmp session trackers created (sum)
@@ -16778,6 +16822,7 @@ these libraries see the Getting Started section of the manual.
   * stream.uni_prunes: uni sessions pruned (sum)
   * tcp.bad_tcp4_checksum: nonzero tcp over ip checksums (sum)
   * tcp.bad_tcp6_checksum: nonzero tcp over ipv6 checksums (sum)
+  * tcp.checksum_bypassed: checksum calculations bypassed (sum)
   * tcp_connector.messages: total messages (sum)
   * telnet.concurrent_sessions: total concurrent Telnet sessions
     (now)
@@ -16786,6 +16831,7 @@ these libraries see the Getting Started section of the manual.
   * telnet.total_packets: total packets (sum)
   * udp.bad_udp4_checksum: nonzero udp over ipv4 checksums (sum)
   * udp.bad_udp6_checksum: nonzero udp over ipv6 checksums (sum)
+  * udp.checksum_bypassed: checksum calculations bypassed (sum)
   * wizard.tcp_hits: tcp identifications (sum)
   * wizard.tcp_scans: tcp payload scans (sum)
   * wizard.udp_hits: udp identifications (sum)
@@ -17187,6 +17233,8 @@ these libraries see the Getting Started section of the manual.
   * 121:3 (http2_inspect) error in HPACK string value
   * 121:4 (http2_inspect) missing continuation frame
   * 121:5 (http2_inspect) unexpected continuation frame
+  * 121:6 (http2_inspect) misformatted HTTP/2 traffic
+  * 121:7 (http2_inspect) HTTP/2 connection preface does not match
   * 122:1 (port_scan) TCP portscan
   * 122:2 (port_scan) TCP decoy portscan
   * 122:3 (port_scan) TCP portsweep
@@ -17388,9 +17436,12 @@ these libraries see the Getting Started section of the manual.
   * 135:1 (stream) TCP SYN received
   * 135:2 (stream) TCP session established
   * 135:3 (stream) TCP session cleared
-  * 136:1 (reputation) packets blacklisted
-  * 136:2 (reputation) packets whitelisted
-  * 136:3 (reputation) packets monitored
+  * 136:1 (reputation) packets blacklisted based on source
+  * 136:2 (reputation) packets whitelisted based on source
+  * 136:3 (reputation) packets monitored based on source
+  * 136:4 (reputation) packets blacklisted based on destination
+  * 136:5 (reputation) packets whitelisted based on destination
+  * 136:6 (reputation) packets monitored based on destination
   * 137:1 (ssl) invalid client HELLO after server HELLO detected
   * 137:2 (ssl) invalid server HELLO without client HELLO detected
   * 137:3 (ssl) heartbeat read overrun attempt detected

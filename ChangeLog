@@ -1,3 +1,60 @@
+19/10/09 - build 262
+
+-- analyzer: move setting pkth to nullptr to after publishing finalize event
+-- analyzer: publish other message event for unknown DAQ messages
+-- appid: add support for bittorrent detection over standard ports
+-- appid: add support for Lua detector callback mechanism
+-- appid: add support for wildcard ports in host tracker
+-- appid: extract forward ip from http tunneled traffic and use it for dynamic host cache lookup
+-- appid: fix populating dns_query for DNS traffic
+-- binder: allow binder to support global level service inspectors
+-- binder: remove global check for stream inspectors and revert module_map changes
+-- codecs: fix checksumming a single byte of unaligned data
+-- codecs: use checksum validation from DAQ packet decode data when available
+-- detection: consistently prefer service rules over port rules
+-- detection: do not split service groups by ip proto to avoid extra searches
+-- detection: map file rules to services
+-- detection: non-service rules must match on rule header proto
+-- detection: remove cruft from match accumulator
+-- detection: remove more cruft from match tracker
+-- detection: remove the inappropriate match tracker from mpse batch setup
+-- detection: remove unnecessary match data from eval context
+-- detection: support alert file rules w/o optional services
+-- detection: update trace to indicate eval task
+-- detection: use reference for signature eval data
+-- doc: add Snort2Lua note on ips rule action rewrite
+-- flow: check if control packet has a valid daq instance before setting up daq expected flow and
+   add pegcounts for expected flows
+-- flow: patch to allocate Flow objects individually on demand. Once allocated the Flow objects are
+   reused until snort exits or reload changes the max_flows setting
+-- flow: when walking uni_list stop before reaching head
+-- helpers: discovery filter support for zone matching
+-- helpers: implement port exclusion in discovery filter
+-- http2_inspect: cut headers from frame_data buffer
+-- http2_inspect: parse hpack header representations and decode string literals
+-- http2_inspect: validate connection preface
+-- ips_options: minor code style changes
+-- libtcp: turn off no-ack mode if packet is out of order
+-- lua: added move constructor and move assignment operator to Lua::State to fix segv
+-- lua: fixed whitespace to match style guidelines
+-- managers: add null check in reload_module to prevent crash when trying to reload module that has
+   not been configured
+-- profiler: increase width of checks and alloc fields so values don't run together
+-- protocols: remove reference to obsolete DAQ_PKT_FLAG_HW_TCP_CS_GOOD flag
+-- pub_sub: replace DaqMetaEvent and OtherMessageEvent with DaqMessageEvent
+-- reputation: prevent reload module crash when reputation is not configured in lua at startup
+-- reputation: SIDs for source and destination-triggered events added
+-- snort2lua: convert snort2 port bindings into snort3 service bindings for inspectors configured
+   in wizard and add --bind-port option to enable port bindings conversion
+-- snort2lua: remove identity related options from firewall
+-- snort2lua: reset the sticky buffer name while converting unchanged sticky rule options and
+   file_data
+-- stream: clean up cppcheck warnings
+-- stream: clean up update_direction
+-- stream: code cleanup and dead-code removal
+-- unit-tests: fix compiler warnings that snuck into CppUTest unit tests
+-- utils: prevent integer overflow/underflow when reading BER elements
+
 19/09/12 - build 261
 
 -- analyzer: Process retry queue and onloads when no DAQ messages are received
