@@ -613,11 +613,9 @@ const uint8_t* PacketManager::encode_reject(UnreachResponse type,
     }
 }
 
-static void set_hdr(
+static void init_daq_pkthdr(
     const Packet* p, Packet* c, const DAQ_PktHdr_t* phdr, uint32_t opaque)
 {
-    c->reset();
-
     if ( !phdr )
         phdr = p->pkth;
 
@@ -646,7 +644,7 @@ int PacketManager::format_tcp(
     const DAQ_PktHdr_t* phdr, uint32_t opaque)
 {
     c->reset();
-    set_hdr(p, c, phdr, opaque);
+    init_daq_pkthdr(p, c, phdr, opaque);
 
     c->packet_flags |= PKT_PSEUDO;
     c->pseudo_type = type;
@@ -679,7 +677,7 @@ int PacketManager::encode_format(
         return -1;
 
     c->reset();
-    set_hdr(p, c, phdr, opaque);
+    init_daq_pkthdr(p, c, phdr, opaque);
 
     if ( f & ENC_FLAG_NET )
     {

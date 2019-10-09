@@ -53,6 +53,7 @@ Packet::Packet(bool packet_data)
     obfuscator = nullptr;
     endianness = nullptr;
     active_inst = new Active;
+    action_inst = nullptr;
     reset();
 }
 
@@ -84,6 +85,12 @@ void Packet::reset()
 
     release_helpers();
     ptrs.reset();
+
+    iplist_id = 0;
+    user_inspection_policy_id = 0;
+    user_ips_policy_id = 0;
+    user_network_policy_id = 0;
+    vlan_idx = 0;
 }
 
 void Packet::release_helpers()
