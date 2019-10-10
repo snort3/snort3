@@ -112,6 +112,7 @@ protected:
 
     // Scan signals to reassemble
     bool header_coming[2]  = { false, false };
+    bool payload_discard[2] = { false, false };
     uint32_t frames_aggregated[2] = { 0, 0 };
     
     // Internal to reassemble

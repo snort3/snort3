@@ -107,39 +107,59 @@ const StreamBuffer Http2StreamSplitter::reassemble(Flow* flow, unsigned total, u
     assert(session_data != nullptr);
 
 #ifdef REG_TEST
+    if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP2))
+    {
+        snort::StreamBuffer http_buf { nullptr, 0 };
+        if (!(flags & PKT_PDU_TAIL))
+        {
+            return http_buf;
+        }
+        bool tcp_close;
+        bool partial_flush;
+        uint8_t* test_buffer;
+        HttpTestManager::get_test_input_source()->reassemble(&test_buffer, len, source_id,
+            tcp_close, partial_flush);
+        if (tcp_close)
+        {
+            finish(flow);
+        }
+        if (partial_flush)
+        {
+            init_partial_flush(flow);
+        }
+        if (test_buffer == nullptr)
+        {
+            // Source ID does not match test data, no test data was flushed, preparing for a
+            // partial flush, preparing for a TCP connection close, or there is no more test
+            // data
+            return http_buf;
+        }
+        data = test_buffer;
+        total = len;
+    }
+#endif
+
+    // FIXIT-P: scan uses this to discard bytes until StreamSplitter:DISCARD
+    // is implemented
+    if (session_data->payload_discard[source_id])
+    {
+        snort::StreamBuffer frame_buf { nullptr, 0 };
+        session_data->payload_discard[source_id] = false;
+
+#ifdef REG_TEST
+        if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2))
+        {
+            fprintf(HttpTestManager::get_output_file(), "Discarded %u octets\n\n", len);
+            fflush(HttpTestManager::get_output_file());
+        }
+#endif
+        return frame_buf;
+    }
+
+#ifdef REG_TEST
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2))
     {
-        if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP2))
-        {
-            snort::StreamBuffer http_buf { nullptr, 0 };
-            if (!(flags & PKT_PDU_TAIL))
-            {
-                return http_buf;
-            }
-            bool tcp_close;
-            bool partial_flush;
-            uint8_t* test_buffer;
-            HttpTestManager::get_test_input_source()->reassemble(&test_buffer, len, source_id,
-                tcp_close, partial_flush);
-            if (tcp_close)
-            {
-                finish(flow);
-            }
-            if (partial_flush)
-            {
-                init_partial_flush(flow);
-            }
-            if (test_buffer == nullptr)
-            {
-                // Source ID does not match test data, no test data was flushed, preparing for a
-                // partial flush, preparing for a TCP connection close, or there is no more test
-                // data
-                return http_buf;
-            }
-            data = test_buffer;
-            total = len;
-        }
-        else
+        if (!HttpTestManager::use_test_input(HttpTestManager::IN_HTTP2))
         {
             printf("HTTP/2 reassemble from flow data %" PRIu64
                 " direction %d total %u length %u\n", session_data->seq_num, source_id,

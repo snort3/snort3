@@ -100,6 +100,7 @@ StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t
         *flush_offset = 24 - session_data->octets_seen[source_id];
         session_data->header_coming[source_id] = false;
         session_data->preface[source_id] = false;
+        session_data->payload_discard[source_id] = true;
     }
     else if (session_data->leftover_data[source_id] > 0)
     {
