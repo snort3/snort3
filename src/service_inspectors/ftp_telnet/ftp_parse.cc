@@ -592,7 +592,7 @@ int ProcessFTPCmdValidity(
 
     iRet = DoNextFormat(HeadFmt, 0, ErrorString, ErrStrLen);
 
-    /* Need to check to be sure we got a complete command  */
+    /* Need to check to be sure we got a complete command */
     if (iRet)
     {
         return FTPP_FATAL_ERR;

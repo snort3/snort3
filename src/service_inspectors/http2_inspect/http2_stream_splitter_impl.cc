@@ -273,6 +273,7 @@ const StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned to
 
     if (offset == 0)
     {
+        // This is the first reassemble() for this frame and we need to allocate some buffers
         if (!session_data->header_coming[source_id])
             session_data->frame_data[source_id] = new uint8_t[total];
         else
@@ -299,8 +300,12 @@ const StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned to
         uint32_t data_pos = 0;
         do
         {
+            // Each pass through the loop handles one frame
+            // Multiple frames occur when a Headers frame and Continuation frame(s) are flushed
+            // together
             uint32_t remaining_len = len - data_pos;
 
+            // Process the frame header
             if (session_data->header_octets_seen[source_id] < FRAME_HEADER_LENGTH)
             {
                 uint8_t remaining_header = FRAME_HEADER_LENGTH -
@@ -347,7 +352,8 @@ const StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned to
                     frame_data_offset += 5;
                 }
                 session_data->remaining_octets_to_next_header[source_id] = frame_length;
-                session_data->remaining_frame_data_octets[source_id] = frame_length - pad_len - frame_data_offset;
+                session_data->remaining_frame_data_octets[source_id] =
+                    frame_length - pad_len - frame_data_offset;
                 session_data->remaining_frame_data_offset[source_id] = frame_data_offset;
             }
 
@@ -405,26 +411,19 @@ const StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned to
     {
         if (session_data->header_coming[source_id])
         {
-            const uint8_t type = get_frame_type(session_data->frame_header[source_id]);
-
-            if (type == FT_HEADERS || type == FT_CONTINUATION)
+            if (get_frame_type(session_data->frame_header[source_id]) == FT_HEADERS)
             {
                 assert(session_data->http2_decoded_header[source_id] == nullptr);
 
-                //FIXIT-H This will eventually be the decoded header buffer. For now just copy
-                //directly
-				if (!decode_headers(session_data, source_id, session_data->frame_data[source_id],
-                        session_data->frame_data_size[source_id]))
+                // FIXIT-H This will eventually be the decoded header buffer. Under development.
+                if (!decode_headers(session_data, source_id, session_data->frame_data[source_id],
+                    session_data->frame_data_size[source_id]))
                     return frame_buf;
             }
         }
         // Return 0-length non-null buffer to stream which signals detection required, but don't 
         // create pkt_data buffer
-        frame_buf.length = 0;
-        if (session_data->frame_data[source_id])
-            frame_buf.data = session_data->frame_data[source_id];
-        else
-            frame_buf.data = session_data->frame_header[source_id];
+        frame_buf.data = (const uint8_t*)"";
     }
     return frame_buf;
 }
@@ -434,9 +433,8 @@ ValidationResult validate_preface(const uint8_t* data, const uint32_t length,
 {
     const uint32_t preface_length = 24;
 
-    static const uint8_t connection_prefix[] = {'P', 'R', 'I', ' ', '*', ' ',
-      'H', 'T', 'T', 'P', '/', '2', '.', '0', '\r', '\n', '\r', '\n', 'S', 'M', 
-      '\r', '\n', '\r', '\n'};
+    static const uint8_t connection_prefix[] = {'P', 'R', 'I', ' ', '*', ' ', 'H', 'T', 'T', 'P',
+        '/', '2', '.', '0', '\r', '\n', '\r', '\n', 'S', 'M', '\r', '\n', '\r', '\n'};
 
     assert(octets_seen < preface_length);
 
@@ -681,8 +679,8 @@ bool decode_header_line(Http2FlowData* session_data, HttpCommon::SourceId source
             encoded_header_length, Http2StreamSplitter::decode_int5, bytes_consumed, bytes_written);
 }
 
-//FIXIT-H This will eventually be the decoded header buffer. For now only string literals are
-//decoded
+// FIXIT-H This will eventually be the decoded header buffer. For now only string literals are
+// decoded
 bool decode_headers(Http2FlowData* session_data, HttpCommon::SourceId source_id,
     const uint8_t* encoded_header_buffer, const uint32_t header_length)
 {
@@ -714,9 +712,8 @@ bool decode_headers(Http2FlowData* session_data, HttpCommon::SourceId source_id,
 #ifdef REG_TEST
         if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2))
         {
-            fprintf(HttpTestManager::get_output_file(),
-                    "Error decoding headers. ");
-            if(session_data->http2_decoded_header_size[source_id] > 0)
+            fprintf(HttpTestManager::get_output_file(), "Error decoding headers. ");
+            if (session_data->http2_decoded_header_size[source_id] > 0)
                 Field(session_data->http2_decoded_header_size[source_id],
                     session_data->http2_decoded_header[source_id]).print(
                     HttpTestManager::get_output_file(), "Partially Decoded Header");
@@ -725,7 +722,7 @@ bool decode_headers(Http2FlowData* session_data, HttpCommon::SourceId source_id,
     return false;
     }
 
-    // write the last crlf to end the header
+    // write the last CRLF to end the header
     if (!write_decoded_headers(session_data, source_id, (const uint8_t*)"\r\n", 2,
             session_data->http2_decoded_header[source_id] +
             session_data->http2_decoded_header_size[source_id], MAX_OCTETS -
@@ -734,12 +731,12 @@ bool decode_headers(Http2FlowData* session_data, HttpCommon::SourceId source_id,
     session_data->http2_decoded_header_size[source_id] += line_bytes_written;
 
 #ifdef REG_TEST
-	if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2))
-	{
-		Field(session_data->http2_decoded_header_size[source_id],
-			session_data->http2_decoded_header[source_id]).print(HttpTestManager::get_output_file(),
-            "Decoded Header");
-	}
+    if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2))
+    {
+        Field(session_data->http2_decoded_header_size[source_id],
+            session_data->http2_decoded_header[source_id]).
+            print(HttpTestManager::get_output_file(), "Decoded Header");
+    }
 #endif
 
     return success;

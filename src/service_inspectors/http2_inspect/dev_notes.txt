@@ -1,14 +1,16 @@
 The HTTP/2 inspector (H2I) will convert HTTP/2 frames into HTTP/1.1 message sections and feed them
 to the new HTTP inspector (NHI) for further processing.
 
-The current implementation is the very first step. It splits an HTTP/2 stream into frame sections and
-forwards them for inspection. It does not interface with NHI and does not address the multiplexed
-nature of HTTP/2.
+The current implementation is the very first step. It splits an HTTP/2 stream into frame sections
+and forwards them for inspection. It does not interface with NHI and does not address the
+multiplexed nature of HTTP/2.
 
 The Http2StreamSplitter strips the frame headers from the frame data and stores them in separate
-buffers. As in NHI, long data frames are split into 16kb chunks for inspection. If a header frame is
-followed by continuation frames, all the header frames are flushed together for inspection. The
+buffers. As in NHI, long data frames are split into 16kb chunks for inspection. If a header frame
+is followed by continuation frames, all the header frames are flushed together for inspection. The
 frame headers from each frame are stored contiguously in the frame_header buffer. After cutting out
 the frame headers, the frame data is stored as a single block, consisting of the HPACK encoded
 HTTP/2 headers. HPACK decoding is under ongoing development. Decoded headers will be stored in the
 http2_decoded_header buffer.
+
+H2I supports the NHI test tool. See ../http_inspect/dev_notes.txt for usage instructions.
