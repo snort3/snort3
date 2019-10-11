@@ -101,7 +101,7 @@ public:
 
     ~AppIdFlowData()
     {
-        if ( fd_data && fd_free )
+        if (fd_data && fd_free)
             fd_free(fd_data);
     }
 
@@ -135,6 +135,8 @@ struct TlsSession
 
     char* get_tls_org_unit() { return tls_org_unit; }
 
+    bool get_tls_handshake_done() { return tls_handshake_done; }
+
     // Duplicate only if len > 0, otherwise simply set (i.e., own the argument)
     void set_tls_host(const char* new_tls_host, uint32_t len, AppidChangeBits& change_bits)
     {
@@ -165,6 +167,8 @@ struct TlsSession
             const_cast<char*>(new_tls_org_unit);
     }
 
+    void set_tls_handshake_done() { tls_handshake_done = true; }
+
     void free_data()
     {
         if (tls_host)
@@ -174,12 +178,14 @@ struct TlsSession
         if (tls_org_unit)
             snort_free(tls_org_unit);
         tls_host = tls_cname = tls_org_unit = nullptr;
+        tls_handshake_done = false;
     }
 
 private:
     char* tls_host = nullptr;
     char* tls_cname = nullptr;
     char* tls_org_unit = nullptr;
+    bool tls_handshake_done = false;
 };
 
 class AppIdSession : public snort::FlowData
@@ -335,14 +341,16 @@ public:
     void set_tp_payload_app_id(snort::Packet& p, AppidSessionDirection dir, AppId app_id, AppidChangeBits& change_bits);
 
     inline void set_tp_app_id(AppId app_id) {
-        if(tp_app_id != app_id) {
+        if (tp_app_id != app_id)
+        {
             tp_app_id = app_id;
             tp_app_id_deferred = app_info_mgr->get_app_info_flags(tp_app_id, APPINFO_FLAG_DEFER);
         }
     }
 
     inline void set_tp_payload_app_id(AppId app_id) {
-        if(tp_payload_app_id != app_id) {
+        if (tp_payload_app_id != app_id)
+        {
             tp_payload_app_id = app_id;
             tp_payload_app_id_deferred = app_info_mgr->get_app_info_flags(tp_payload_app_id, APPINFO_FLAG_DEFER_PAYLOAD);
         }
@@ -373,5 +381,24 @@ private:
     AppId tp_payload_app_id = APP_ID_NONE;
 };
 
+static inline bool is_svc_http_type(AppId serviceId)
+{
+    switch(serviceId)
+    {
+        case APP_ID_HTTP:
+        case APP_ID_HTTPS:
+        case APP_ID_FTPS:
+        case APP_ID_IMAPS:
+        case APP_ID_IRCS:
+        case APP_ID_LDAPS:
+        case APP_ID_NNTPS:
+        case APP_ID_POP3S:
+        case APP_ID_SMTPS:
+        case APP_ID_SSHELL:
+        case APP_ID_SSL:
+            return true;
+    }
+    return false;
+}
 #endif
 

@@ -61,25 +61,25 @@ const char* AppIdApi::get_application_name(const Flow& flow, bool from_client)
     const char* app_name = nullptr;
     AppId appid = APP_ID_NONE;
     AppIdSession* asd = get_appid_session(flow);
-    if ( asd )
+    if (asd)
     {
         appid = asd->pick_payload_app_id();
-        if (  !appid )
+        if (appid <= APP_ID_NONE)
             appid = asd->pick_misc_app_id();
-        if (  !appid and from_client)
+        if (!appid and from_client)
         {
             appid = asd->pick_client_app_id();
-            if ( !appid)
+            if (!appid)
                 appid = asd->pick_service_app_id();
         }
-        else if ( !appid )
+        else if (!appid)
         {
             appid = asd->pick_service_app_id();
-            if ( !appid)
+            if (!appid)
                 appid = asd->pick_client_app_id();
         }
     }
-    if (appid  > APP_ID_NONE && appid < SF_APPID_MAX)
+    if (appid > APP_ID_NONE && appid < SF_APPID_MAX)
         app_name = AppInfoManager::get_instance().get_app_name(appid);
 
     return app_name;
@@ -100,14 +100,14 @@ uint32_t AppIdApi::produce_ha_state(const Flow& flow, uint8_t* buf)
     assert(buf);
     AppIdSessionHA* appHA = (AppIdSessionHA*)buf;
     AppIdSession* asd = get_appid_session(flow);
-    if ( asd and ( asd->common.flow_type == APPID_FLOW_TYPE_NORMAL ) )
+    if (asd and (asd->common.flow_type == APPID_FLOW_TYPE_NORMAL))
     {
         appHA->flags = APPID_HA_FLAGS_APP;
-        if ( asd->is_tp_appid_available() )
+        if (asd->is_tp_appid_available())
             appHA->flags |= APPID_HA_FLAGS_TP_DONE;
-        if ( asd->is_service_detected() )
+        if (asd->is_service_detected())
             appHA->flags |= APPID_HA_FLAGS_SVC_DONE;
-        if ( asd->get_session_flags(APPID_SESSION_HTTP_SESSION) )
+        if (asd->get_session_flags(APPID_SESSION_HTTP_SESSION))
             appHA->flags |= APPID_HA_FLAGS_HTTP;
         appHA->appId[0] = asd->get_tp_app_id();
         appHA->appId[1] = asd->service.get_id();
@@ -142,11 +142,11 @@ uint32_t AppIdApi::consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t, IpP
                 asd = new AppIdSession(proto, ip, port, *inspector);
                 flow.set_flow_data(asd);
                 asd->service.set_id(appHA->appId[1]);
-                if ( asd->service.get_id() == APP_ID_FTP_CONTROL )
+                if (asd->service.get_id() == APP_ID_FTP_CONTROL)
                 {
                     asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED |
                             APPID_SESSION_NOT_A_SERVICE | APPID_SESSION_SERVICE_DETECTED);
-                    if ( !ServiceDiscovery::add_ftp_service_state(*asd) )
+                    if (!ServiceDiscovery::add_ftp_service_state(*asd))
                         asd->set_session_flags(APPID_SESSION_CONTINUE);
 
                     asd->service_disco_state = APPID_DISCO_STATE_STATEFUL;
@@ -162,12 +162,12 @@ uint32_t AppIdApi::consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t, IpP
             }
         }
 
-        if ( !asd )
+        if (!asd)
         {
             return sizeof(*appHA);
         }
 
-        if( (appHA->flags & APPID_HA_FLAGS_TP_DONE) && asd->tpsession )
+        if((appHA->flags & APPID_HA_FLAGS_TP_DONE) && asd->tpsession)
         {
 #ifdef ENABLE_APPID_THIRD_PARTY
             asd->tpsession->set_state(TP_STATE_TERMINATED);

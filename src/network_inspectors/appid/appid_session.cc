@@ -79,7 +79,8 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto,
 
     const SfIp* ip = (direction == APP_ID_FROM_INITIATOR)
         ? p->ptrs.ip_api.get_src() : p->ptrs.ip_api.get_dst();
-    if ( ( proto == IpProtocol::TCP || proto == IpProtocol::UDP ) && ( p->ptrs.sp != p->ptrs.dp ) )
+    if ((proto == IpProtocol::TCP || proto == IpProtocol::UDP) &&
+        (p->ptrs.sp != p->ptrs.dp))
         port = (direction == APP_ID_FROM_INITIATOR) ? p->ptrs.sp : p->ptrs.dp;
 
     AppIdSession* asd = new AppIdSession(proto, ip, port, *inspector);
@@ -111,18 +112,19 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port,
 
 AppIdSession::~AppIdSession()
 {
-    if ( !in_expected_cache )
+    if (!in_expected_cache)
     {
-        if ( config->mod_config->stats_logging_enabled )
+        if (config->mod_config->stats_logging_enabled)
             AppIdStatistics::get_stats_manager()->update(*this);
 
         // fail any service detection that is in process for this flow
-        if (!get_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_UDP_REVERSED |
-            APPID_SESSION_MID | APPID_SESSION_OOO) and flow)
+        if (!get_session_flags(APPID_SESSION_SERVICE_DETECTED |
+            APPID_SESSION_UDP_REVERSED | APPID_SESSION_MID |
+            APPID_SESSION_OOO) and flow)
         {
             ServiceDiscoveryState* sds =
                 AppIdServiceState::get(&service_ip, protocol, service_port, is_decrypted());
-            if ( sds )
+            if (sds)
             {
                 if (flow->server_ip.fast_eq6(service_ip))
                     sds->set_service_id_failed(*this, &flow->client_ip,
@@ -187,8 +189,8 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
     AppIdSession* asd = new AppIdSession(proto, cliIp, 0, *inspector);
     asd->common.policyId = asd->config->appIdPolicyId;
 
-    if ( Stream::set_snort_protocol_id_expected(ctrlPkt, type, proto, cliIp, cliPort, srvIp,
-        srvPort, snort_protocol_id, asd) )
+    if (Stream::set_snort_protocol_id_expected(ctrlPkt, type, proto, cliIp,
+        cliPort, srvIp, srvPort, snort_protocol_id, asd))
     {
         if (appidDebug->is_active())
         {
@@ -222,17 +224,17 @@ void AppIdSession::reinit_session_data(AppidChangeBits& change_bits)
     misc_app_id = APP_ID_NONE;
 
     //data
-    if ( is_service_over_ssl(tp_app_id) )
+    if (is_service_over_ssl(tp_app_id))
     {
         payload.reset();
         referred_payload_app_id = tp_payload_app_id = APP_ID_NONE;
         clear_session_flags(APPID_SESSION_CONTINUE);
-        if ( hsession )
+        if (hsession)
             hsession->set_field(MISC_URL_FID, nullptr, change_bits);
     }
 
     //service
-    if ( !get_session_flags(APPID_SESSION_STICKY_SERVICE) )
+    if (!get_session_flags(APPID_SESSION_STICKY_SERVICE))
     {
         service.reset();
         tp_app_id = APP_ID_NONE;
@@ -259,8 +261,9 @@ void AppIdSession::reinit_session_data(AppidChangeBits& change_bits)
     resp_tpPackets = 0;
 
     scan_flags &= ~SCAN_HTTP_HOST_URL_FLAG;
-    clear_session_flags(APPID_SESSION_SERVICE_DETECTED |APPID_SESSION_CLIENT_DETECTED |
-        APPID_SESSION_SSL_SESSION|APPID_SESSION_HTTP_SESSION | APPID_SESSION_APP_REINSPECT);
+    clear_session_flags(APPID_SESSION_SERVICE_DETECTED |
+        APPID_SESSION_CLIENT_DETECTED | APPID_SESSION_SSL_SESSION |
+        APPID_SESSION_HTTP_SESSION | APPID_SESSION_APP_REINSPECT);
 }
 
 void AppIdSession::sync_with_snort_protocol_id(AppId newAppId, Packet* p)
@@ -299,19 +302,21 @@ void AppIdSession::sync_with_snort_protocol_id(AppId newAppId, Packet* p)
         }
 
         AppInfoTableEntry* entry = app_info_mgr->get_app_info_entry(newAppId);
-        if ( entry )
+        if (entry)
         {
             SnortProtocolId tmp_snort_protocol_id = entry->snort_protocol_id;
             // A particular APP_ID_xxx may not be assigned a service_snort_key value
             // in the rna_app.yaml file entry; so ignore the snort_protocol_id ==
             // UNKNOWN_PROTOCOL_ID case.
-            if ( tmp_snort_protocol_id == UNKNOWN_PROTOCOL_ID && (newAppId == APP_ID_HTTP2))
+            if (tmp_snort_protocol_id == UNKNOWN_PROTOCOL_ID &&
+                (newAppId == APP_ID_HTTP2))
                 tmp_snort_protocol_id = snortId_for_http2;
 
-            if ( tmp_snort_protocol_id != snort_protocol_id )
+            if (tmp_snort_protocol_id != snort_protocol_id)
             {
                 snort_protocol_id = tmp_snort_protocol_id;
-                if (appidDebug->is_active() && tmp_snort_protocol_id == snortId_for_http2)
+                if (appidDebug->is_active() &&
+                    tmp_snort_protocol_id == snortId_for_http2)
                     LogMessage("AppIdDbg %s Telling Snort that it's HTTP/2\n",
                         appidDebug->get_debug_session());
 
@@ -343,8 +348,7 @@ void AppIdSession::check_app_detection_restart(AppidChangeBits& change_bits)
         encrypted.referred_id = pick_referred_payload_app_id();
         reinit_session_data(change_bits);
         if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s SSL decryption is available, restarting app detection\n",
-                appidDebug->get_debug_session());
+            LogMessage("AppIdDbg %s SSL decryption is available, restarting app detection\n", appidDebug->get_debug_session());
 
         // APPID_SESSION_ENCRYPTED is set upon receiving a command which upgrades the session to
         // SSL. Next packet after the command will have encrypted traffic.  In the case of a
@@ -360,9 +364,10 @@ void AppIdSession::update_encrypted_app_id(AppId service_id)
     switch (service_id)
     {
     case APP_ID_HTTP:
-        if (misc_app_id == APP_ID_NSIIOPS || misc_app_id == APP_ID_DDM_SSL
-            || misc_app_id == APP_ID_MSFT_GC_SSL
-            || misc_app_id == APP_ID_SF_APPLIANCE_MGMT)
+        if (misc_app_id == APP_ID_NSIIOPS ||
+            misc_app_id == APP_ID_DDM_SSL ||
+            misc_app_id == APP_ID_MSFT_GC_SSL ||
+            misc_app_id == APP_ID_SF_APPLIANCE_MGMT)
         {
             break;
         }
@@ -446,6 +451,13 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
         }
         tsession->set_tls_org_unit(nullptr, 0);
     }
+    if (tsession->get_tls_handshake_done() and
+        payload.get_id() == APP_ID_NONE)
+    {
+        if (appidDebug->is_active())
+            LogMessage("AppIdDbg %s End of SSL/TLS handshake detected with no payloadAppId, so setting to unknown\n", appidDebug->get_debug_session());
+        payload.set_id(APP_ID_UNKNOWN);
+    }
 }
 
 void AppIdSession::examine_rtmp_metadata(AppidChangeBits& change_bits)
@@ -456,20 +468,19 @@ void AppIdSession::examine_rtmp_metadata(AppidChangeBits& change_bits)
     AppId referred_payload_id = APP_ID_NONE;
     char* version = nullptr;
 
-    if ( !hsession )
+    if (!hsession)
         hsession = new AppIdHttpSession(*this);
 
-    if ( const char* url = hsession->get_cfield(MISC_URL_FID) )
+    if (const char* url = hsession->get_cfield(MISC_URL_FID))
     {
         HttpPatternMatchers* http_matchers = HttpPatternMatchers::get_instance();
         const char* referer = hsession->get_cfield(REQ_REFERER_FID);
-        if ( ( ( http_matchers->get_appid_from_url(nullptr, url, &version,
-            referer, &client_id, &service_id,
-            &payload_id, &referred_payload_id, true) )
-            ||
-            ( http_matchers->get_appid_from_url(nullptr, url, &version,
-            referer, &client_id, &service_id,
-            &payload_id, &referred_payload_id, false) ) ) )
+        if (((http_matchers->get_appid_from_url(nullptr, url, &version,
+            referer, &client_id, &service_id, &payload_id,
+            &referred_payload_id, true)) ||
+            (http_matchers->get_appid_from_url(nullptr, url, &version,
+            referer, &client_id, &service_id, &payload_id,
+            &referred_payload_id, false))))
         {
             /* do not overwrite a previously-set client or service */
             if (client.get_id() <= APP_ID_NONE)
@@ -486,14 +497,14 @@ void AppIdSession::examine_rtmp_metadata(AppidChangeBits& change_bits)
 
 void AppIdSession::set_client_appid_data(AppId id, AppidChangeBits& change_bits, char* version)
 {
-    if ( id <= APP_ID_NONE || id == APP_ID_HTTP )
+    if (id <= APP_ID_NONE || id == APP_ID_HTTP)
         return;
 
     AppId cur_id = client.get_id();
-    if ( id != cur_id )
+    if (id != cur_id)
     {
-        if ( cur_id )
-            if ( app_info_mgr->get_priority(cur_id) > app_info_mgr->get_priority(id) )
+        if (cur_id)
+            if (app_info_mgr->get_priority(cur_id) > app_info_mgr->get_priority(id))
                 return;
 
         client.set_id(id);
@@ -516,10 +527,10 @@ void AppIdSession::set_referred_payload_app_id_data(AppId id, AppidChangeBits& c
 
 void AppIdSession::set_payload_appid_data(AppId id, AppidChangeBits& change_bits, char* version)
 {
-    if ( id <= APP_ID_NONE )
+    if (id <= APP_ID_NONE)
         return;
 
-    if ( app_info_mgr->get_priority(payload.get_id()) > app_info_mgr->get_priority(id) )
+    if (app_info_mgr->get_priority(payload.get_id()) > app_info_mgr->get_priority(id))
         return;
     payload.set_id(id);
     payload.set_version(version, change_bits);
@@ -543,7 +554,7 @@ void AppIdSession::set_service_appid_data(AppId id, AppidChangeBits& change_bits
 
 void AppIdSession::free_tls_session_data()
 {
-    if ( tsession )
+    if (tsession)
     {
         tsession->free_data();
         snort_free(tsession);
@@ -560,7 +571,7 @@ void AppIdSession::delete_session_data()
     snort_free(netbios_domain);
 
     AppIdServiceSubtype* rna_ss = subtype;
-    while ( rna_ss )
+    while (rna_ss)
     {
         subtype = rna_ss->next;
         snort_free(const_cast<char*>(rna_ss->service));
@@ -578,7 +589,7 @@ void AppIdSession::delete_session_data()
 int AppIdSession::add_flow_data(void* data, unsigned id, AppIdFreeFCN fcn)
 {
     AppIdFlowDataIter it = flow_data.find(id);
-    if ( it != flow_data.end() )
+    if (it != flow_data.end())
         return -1;
 
     AppIdFlowData* fd = new AppIdFlowData(data, id, fcn);
@@ -589,7 +600,7 @@ int AppIdSession::add_flow_data(void* data, unsigned id, AppIdFreeFCN fcn)
 void* AppIdSession::get_flow_data(unsigned id)
 {
     AppIdFlowDataIter it = flow_data.find(id);
-    if ( it != flow_data.end() )
+    if (it != flow_data.end())
         return it->second->fd_data;
     else
         return nullptr;
@@ -600,7 +611,7 @@ void* AppIdSession::remove_flow_data(unsigned id)
     void* data = nullptr;
 
     AppIdFlowDataIter it = flow_data.find(id);
-    if ( it != flow_data.end() )
+    if (it != flow_data.end())
     {
         data = it->second->fd_data;
         delete it->second;
@@ -612,7 +623,9 @@ void* AppIdSession::remove_flow_data(unsigned id)
 
 void AppIdSession::free_flow_data()
 {
-    for ( AppIdFlowDataIter it = flow_data.cbegin(); it != flow_data.cend(); ++it )
+    for (AppIdFlowDataIter it = flow_data.cbegin();
+         it != flow_data.cend();
+         ++it)
         delete it->second;
 
     flow_data.clear();
@@ -621,7 +634,7 @@ void AppIdSession::free_flow_data()
 void AppIdSession::free_flow_data_by_id(unsigned id)
 {
     AppIdFlowDataIter it = flow_data.find(id);
-    if ( it != flow_data.end() )
+    if (it != flow_data.end())
     {
         delete it->second;
         flow_data.erase(it);
@@ -630,8 +643,8 @@ void AppIdSession::free_flow_data_by_id(unsigned id)
 
 void AppIdSession::free_flow_data_by_mask(unsigned mask)
 {
-    for ( AppIdFlowDataIter it = flow_data.cbegin(); it != flow_data.cend(); )
-        if ( !mask || ( it->second->fd_id & mask ) )
+    for (AppIdFlowDataIter it = flow_data.cbegin(); it != flow_data.cend();)
+        if (!mask || (it->second->fd_id & mask))
         {
             delete it->second;
             it = flow_data.erase(it);
@@ -664,8 +677,8 @@ void AppIdSession::stop_rna_service_inspection(Packet* p, AppidSessionDirection 
 
     service_disco_state = APPID_DISCO_STATE_FINISHED;
 
-    if ( payload.get_id() == APP_ID_NONE and
-        ( is_tp_appid_available() or get_session_flags(APPID_SESSION_NO_TPI) ) )
+    if (payload.get_id() == APP_ID_NONE and
+        (is_tp_appid_available() or get_session_flags(APPID_SESSION_NO_TPI)))
         payload.set_id(APP_ID_UNKNOWN);
 
     set_session_flags(APPID_SESSION_SERVICE_DETECTED);
@@ -676,10 +689,10 @@ AppId AppIdSession::pick_service_app_id()
 {
     AppId rval = APP_ID_NONE;
 
-    if ( common.flow_type != APPID_FLOW_TYPE_NORMAL )
+    if (common.flow_type != APPID_FLOW_TYPE_NORMAL)
         return APP_ID_NONE;
 
-    if ( is_service_detected() )
+    if (is_service_detected())
     {
         bool deferred = service.get_deferred() || tp_app_id_deferred;
 
@@ -715,7 +728,7 @@ AppId AppIdSession::pick_service_app_id()
 
 AppId AppIdSession::pick_only_service_app_id()
 {
-    if ( common.flow_type != APPID_FLOW_TYPE_NORMAL )
+    if (common.flow_type != APPID_FLOW_TYPE_NORMAL)
         return APP_ID_NONE;
 
     bool deferred = service.get_deferred() || tp_app_id_deferred;
@@ -736,7 +749,7 @@ AppId AppIdSession::pick_only_service_app_id()
 
 AppId AppIdSession::pick_misc_app_id()
 {
-    if ( common.flow_type != APPID_FLOW_TYPE_NORMAL )
+    if (common.flow_type != APPID_FLOW_TYPE_NORMAL)
         return APP_ID_NONE;
     if (misc_app_id > APP_ID_NONE)
         return misc_app_id;
@@ -745,7 +758,7 @@ AppId AppIdSession::pick_misc_app_id()
 
 AppId AppIdSession::pick_client_app_id()
 {
-    if ( common.flow_type != APPID_FLOW_TYPE_NORMAL )
+    if (common.flow_type != APPID_FLOW_TYPE_NORMAL)
         return APP_ID_NONE;
     if (client.get_id() > APP_ID_NONE)
         return client.get_id();
@@ -754,23 +767,34 @@ AppId AppIdSession::pick_client_app_id()
 
 AppId AppIdSession::pick_payload_app_id()
 {
-    if ( common.flow_type != APPID_FLOW_TYPE_NORMAL )
+    if (common.flow_type != APPID_FLOW_TYPE_NORMAL)
         return APP_ID_NONE;
 
     if (tp_payload_app_id_deferred)
         return tp_payload_app_id;
-    else if (payload.get_id() > APP_ID_NONE)
+    
+    if (payload.get_id() > APP_ID_NONE)
         return payload.get_id();
-    else if (tp_payload_app_id > APP_ID_NONE)
+
+    if (tp_payload_app_id > APP_ID_NONE)
         return tp_payload_app_id;
-    return encrypted.payload_id;
+
+    if (encrypted.payload_id > APP_ID_NONE)
+        return encrypted.payload_id;
+
+    /* APP_ID_UNKNOWN is valid only for HTTP type services */
+    if (payload.get_id() == APP_ID_UNKNOWN and
+        is_svc_http_type(service.get_id()))
+        return APP_ID_UNKNOWN;
+
+    return APP_ID_NONE;
 }
 
 AppId AppIdSession::pick_referred_payload_app_id()
 {
-    if ( common.flow_type != APPID_FLOW_TYPE_NORMAL )
+    if (common.flow_type != APPID_FLOW_TYPE_NORMAL)
         return APP_ID_NONE;
-    if ( referred_payload_app_id > APP_ID_NONE )
+    if (referred_payload_app_id > APP_ID_NONE)
         return referred_payload_app_id;
     return encrypted.referred_id;
 }
@@ -860,7 +884,7 @@ void AppIdSession::reset_session_data()
 
 bool AppIdSession::is_payload_appid_set()
 {
-    return ( payload.get_id() || tp_payload_app_id );
+    return (payload.get_id() || tp_payload_app_id);
 }
 
 void AppIdSession::clear_http_flags()
@@ -884,14 +908,14 @@ void AppIdSession::clear_http_data()
 
 AppIdHttpSession* AppIdSession::get_http_session()
 {
-    if ( !hsession )
+    if (!hsession)
         hsession = new AppIdHttpSession(*this);
     return hsession;
 }
 
 AppIdDnsSession* AppIdSession::get_dns_session()
 {
-    if ( !dsession )
+    if (!dsession)
         dsession = new AppIdDnsSession();
     return dsession;
 }
@@ -899,14 +923,14 @@ AppIdDnsSession* AppIdSession::get_dns_session()
 bool AppIdSession::is_tp_appid_done() const
 {
 #ifdef ENABLE_APPID_THIRD_PARTY
-    if ( TPLibHandler::have_tp() )
+    if (TPLibHandler::have_tp())
     {
         if (!tpsession)
             return false;
 
         unsigned state = tpsession->get_state();
-        return (state  == TP_STATE_CLASSIFIED || state == TP_STATE_TERMINATED
-               || state == TP_STATE_HA);
+        return (state == TP_STATE_CLASSIFIED || state == TP_STATE_TERMINATED ||
+            state == TP_STATE_HA);
     }
 #endif
 
@@ -928,15 +952,15 @@ bool AppIdSession::is_tp_processing_done() const
 bool AppIdSession::is_tp_appid_available() const
 {
 #ifdef ENABLE_APPID_THIRD_PARTY
-    if ( TPLibHandler::have_tp() )
+    if (TPLibHandler::have_tp())
     {
         if (!tpsession)
             return false;
 
         unsigned state = tpsession->get_state();
 
-        return (state == TP_STATE_CLASSIFIED || state == TP_STATE_TERMINATED
-               || state == TP_STATE_MONITORING);
+        return (state == TP_STATE_CLASSIFIED || state == TP_STATE_TERMINATED ||
+            state == TP_STATE_MONITORING);
     }
 #endif
 
