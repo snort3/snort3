@@ -31,6 +31,7 @@
 #include "stream/stream_splitter.h"
 
 #include "http2_enum.h"
+#include "http2_hpack.h"
 #include "http2_hpack_int_decode.h"
 #include "http2_hpack_string_decode.h"
 
@@ -49,42 +50,13 @@ public:
 
     friend class Http2Inspect;
     friend class Http2StreamSplitter;
+    friend class Http2Hpack;
     friend const snort::StreamBuffer implement_reassemble(Http2FlowData*, unsigned, unsigned,
         const uint8_t*, unsigned, uint32_t, HttpCommon::SourceId);
     friend snort::StreamSplitter::Status implement_scan(Http2FlowData*, const uint8_t*, uint32_t,
         uint32_t*, HttpCommon::SourceId);
     friend bool implement_get_buf(unsigned id, Http2FlowData*, HttpCommon::SourceId,
         snort::InspectionBuffer&);
-    friend bool decode_headers(Http2FlowData* session_data, HttpCommon::SourceId source_id,
-        const uint8_t* raw_header_buffer, const uint32_t header_length);
-    friend bool decode_header_line(Http2FlowData* session_data, HttpCommon::SourceId source_id,
-        const uint8_t* encoded_header_buffer, const uint32_t encoded_header_buffer_length,
-        uint32_t& bytes_consumed, uint8_t* decoded_header_buffer,
-        const uint32_t decoded_header_buffer_length, uint32_t& bytes_written);
-    friend bool handle_dynamic_size_update(Http2FlowData* session_data,
-        HttpCommon::SourceId source_id, const uint8_t* encoded_header_buffer,
-        const uint32_t encoded_header_length, const Http2HpackIntDecode &decode_int,
-        uint32_t &bytes_consumed, uint32_t &bytes_written);
-    friend bool decode_literal_header_line(Http2FlowData* session_data,
-         HttpCommon::SourceId source_id, const uint8_t* encoded_header_buffer,
-         const uint32_t encoded_header_buffer_length,
-        const uint8_t name_index_mask, const Http2HpackIntDecode &decode_int,
-        uint32_t &bytes_consumed, uint8_t* decoded_header_buffer,
-        const uint32_t decoded_header_buffer_length, uint32_t &bytes_written);
-    friend bool decode_index(Http2FlowData* session_data, HttpCommon::SourceId source_id,
-        const uint8_t* encoded_header_buffer, const uint32_t encoded_header_length,
-        const Http2HpackIntDecode &decode_int, uint32_t &bytes_consumed,
-        uint8_t* decoded_header_buffer, const uint32_t decoded_header_length,
-        uint32_t &bytes_written);
-    friend bool decode_string_literal(Http2FlowData* session_data, HttpCommon::SourceId source_id,
-        const uint8_t* encoded_header_buffer, const uint32_t encoded_header_length,
-        const Http2HpackStringDecode &decode_string, bool is_field_name, uint32_t &bytes_consumed,
-        uint8_t* decoded_header_buffer, const uint32_t decoded_header_buffer_length,
-        uint32_t &bytes_written);
-    friend bool write_decoded_headers(Http2FlowData* session_data, HttpCommon::SourceId source_id,
-        const uint8_t* in_buffer, const uint32_t in_length,
-        uint8_t* decoded_header_buffer, uint32_t decoded_header_buffer_length,
-        uint32_t &bytes_written);
 
     size_t size_of() override
     { return sizeof(*this); }
@@ -100,22 +72,23 @@ protected:
     uint32_t http2_decoded_header_size[2] = { 0, 0 };
     bool frame_in_detection = false;
 
-    // Internal to scan
+    // Internal to scan()
     bool continuation_expected[2] = { false, false };
     uint8_t currently_processing_frame_header[2][Http2Enums::FRAME_HEADER_LENGTH];
     uint32_t inspection_section_length[2] = { 0, 0 };
     uint32_t leftover_data[2] = { 0, 0 };
 
-    // Used internally by scan and reassemble
+    // Used internally by scan() and reassemble()
     uint32_t octets_seen[2] = { 0, 0 };
     uint8_t header_octets_seen[2] = { 0, 0 };
 
-    // Scan signals to reassemble
+    // Scan signals to reassemble()
     bool header_coming[2]  = { false, false };
     bool payload_discard[2] = { false, false };
     uint32_t frames_aggregated[2] = { 0, 0 };
     
-    // Internal to reassemble
+    // Internal to reassemble()
+    Http2Hpack hpack[2];
     uint32_t remaining_octets_to_next_header[2] = { 0, 0 };
     uint32_t remaining_frame_data_octets[2] = { 0, 0 };
     uint32_t remaining_frame_data_offset[2] = { 0, 0 };

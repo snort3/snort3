@@ -212,6 +212,13 @@ Escape sequences begin with '\'. They may be used within a paragraph or to begin
 Data is separated into segments for presentation to the splitter whenever a paragraph ends (blank
 line).
 
+When the inspector aborts the connection (scan() returns StreamSplitter::ABORT) it does not expect
+to receive any more input from stream on that connection in that direction. Accordingly the test
+tool should not send it any more input. A paragraph of test input expected to result in an abort
+should be the last paragraph. The developer should either start a new test (@break, etc.) or at
+least reverse the direction and not send any more data in the orignal direction. Sending more data
+after an abort is likely to lead to confusing output that has no bearing on the test.
+
 This test tool does not implement the feature of being hardened against bad input. If you write a
 badly formatted or improper test case the program may assert or crash. The responsibility is on the
 developer to get it right.
