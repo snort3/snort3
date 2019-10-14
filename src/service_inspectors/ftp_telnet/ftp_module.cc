@@ -23,9 +23,11 @@
 #endif
 
 #include "ftp_module.h"
-
+#include "ftpp_return_codes.h"
+#include "ftp_cmd_lookup.h"
+#include "ftp_parse.h"
 #include "log/messages.h"
-
+#include "utils/util.h"
 #include "ft_main.h"
 #include "ftpp_si.h"
 
@@ -471,7 +473,108 @@ bool FtpServerModule::set(const char*, Value& v, SnortConfig*)
 
 //-------------------------------------------------------------------------
 
-bool FtpServerModule::begin(const char*, int, SnortConfig*)
+// Recursively sets nodes that allow strings to nodes that check
+// for a string format attack within the FTP parameter validation tree
+
+static void ResetStringFormat(FTP_PARAM_FMT* Fmt)
+{
+    int i;
+    if (!Fmt)
+        return;
+
+    if (Fmt->type == e_unrestricted)
+        Fmt->type = e_strformat;
+
+    ResetStringFormat(Fmt->optional_fmt);
+    for (i=0; i<Fmt->numChoices; i++)
+    {
+        ResetStringFormat(Fmt->choices[i]);
+    }
+    ResetStringFormat(Fmt->next_param_fmt);
+}
+
+int ProcessFTPDataChanCmdsList(
+    FTP_SERVER_PROTO_CONF* ServerConf, const FtpCmd* fc)
+{
+    const char* cmd = fc->name.c_str();
+    int iRet = 0;
+
+    FTP_CMD_CONF* FTPCmd =
+        ftp_cmd_lookup_find(ServerConf->cmd_lookup, cmd, strlen(cmd), &iRet);
+
+    if (FTPCmd == nullptr)
+    {
+        /* Add it to the list */
+        // note that struct includes 1 byte for null, so just add len
+        FTPCmd = (FTP_CMD_CONF*)snort_calloc(sizeof(FTP_CMD_CONF)+strlen(cmd));
+        strncpy(FTPCmd->cmd_name, cmd, strlen(cmd) + 1);
+
+        // FIXIT-L make sure pulled from server conf when used if not overridden
+        //FTPCmd->max_param_len = ServerConf->def_max_param_len;
+
+        ftp_cmd_lookup_add(ServerConf->cmd_lookup, cmd,
+            strlen(cmd), FTPCmd);
+        iRet = 0;
+    }
+    if ( fc->flags & CMD_DIR )
+        FTPCmd->dir_response = fc->number;
+
+    if ( fc->flags & CMD_LEN )
+    {
+        FTPCmd->max_param_len = fc->number;
+        FTPCmd->max_param_len_overridden = 1;
+    }
+    if ( fc->flags & CMD_DATA )
+        FTPCmd->data_chan_cmd = true;
+
+    if ( fc->flags & CMD_REST )
+        FTPCmd->data_rest_cmd = true;
+
+    if ( fc->flags & CMD_XFER )
+        FTPCmd->data_xfer_cmd = true;
+
+    if ( fc->flags & CMD_PUT )
+        FTPCmd->file_put_cmd = true;
+
+    if ( fc->flags & CMD_GET )
+        FTPCmd->file_get_cmd = true;
+
+    if ( fc->flags & CMD_CHECK )
+    {
+        FTP_PARAM_FMT* Fmt = FTPCmd->param_format;
+        if (Fmt)
+        {
+            ResetStringFormat(Fmt);
+        }
+        else
+        {
+            Fmt = (FTP_PARAM_FMT*)snort_calloc(sizeof(FTP_PARAM_FMT));
+            Fmt->type = e_head;
+            FTPCmd->param_format = Fmt;
+
+            Fmt = (FTP_PARAM_FMT*)snort_calloc(sizeof(FTP_PARAM_FMT));
+            Fmt->type = e_strformat;
+            FTPCmd->param_format->next_param_fmt = Fmt;
+            Fmt->prev_param_fmt = FTPCmd->param_format;
+        }
+        FTPCmd->check_validity = true;
+    }
+    if ( fc->flags & CMD_VALID && !fc->format.empty())
+    {
+        char err[1024];
+        iRet = ProcessFTPCmdValidity(
+            ServerConf, cmd, fc->format.c_str(), err, sizeof(err));
+    }
+    if ( fc->flags & CMD_ENCR )
+        FTPCmd->encr_cmd = true;
+
+    if ( fc->flags & CMD_LOGIN )
+        FTPCmd->login_cmd = true;
+
+    return iRet;
+}
+
+bool FtpServerModule::begin(const char* fqn, int, SnortConfig*)
 {
     names.clear();
     format.clear();
@@ -480,13 +583,28 @@ bool FtpServerModule::begin(const char*, int, SnortConfig*)
     if ( !conf )
         conf = new FTP_SERVER_PROTO_CONF;
 
+    if ( !strcmp(fqn, "ftp_server") )
+    {
+        for ( auto cmd : cmds )
+             delete cmd;
+
+        cmds.clear();
+    }
     return true;
 }
 
 bool FtpServerModule::end(const char* fqn, int idx, SnortConfig*)
 {
-    if ( !idx )
+
+    if ( !idx && !strcmp(fqn, "ftp_server") )
+    {
+        for( auto cmd : cmds)
+        {
+            if ( FTPP_SUCCESS !=  ProcessFTPDataChanCmdsList(conf, cmd) )
+                return false;
+        }
         return true;
+    }
 
     if ( !strcmp(fqn, "ftp_server.cmd_validity") )
         cmds.emplace_back(new FtpCmd(names, format, number));

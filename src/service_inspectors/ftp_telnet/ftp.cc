@@ -181,114 +181,6 @@ static int snort_ftp(Packet* p)
     return FTPP_INVALID_PROTO;
 }
 
-/*
- * Function: ResetStringFormat (FTP_PARAM_FMT *Fmt)
- *
- * Purpose: Recursively sets nodes that allow strings to nodes that check
- *          for a string format attack within the FTP parameter validation tree
- *
- * Arguments: Fmt       => pointer to the FTP Parameter configuration
- *
- * Returns: None
- *
- */
-static void ResetStringFormat(FTP_PARAM_FMT* Fmt)
-{
-    int i;
-    if (!Fmt)
-        return;
-
-    if (Fmt->type == e_unrestricted)
-        Fmt->type = e_strformat;
-
-    ResetStringFormat(Fmt->optional_fmt);
-    for (i=0; i<Fmt->numChoices; i++)
-    {
-        ResetStringFormat(Fmt->choices[i]);
-    }
-    ResetStringFormat(Fmt->next_param_fmt);
-}
-
-static int ProcessFTPDataChanCmdsList(
-    FTP_SERVER_PROTO_CONF* ServerConf, const FtpCmd* fc)
-{
-    const char* cmd = fc->name.c_str();
-    int iRet;
-
-    FTP_CMD_CONF* FTPCmd =
-        ftp_cmd_lookup_find(ServerConf->cmd_lookup, cmd, strlen(cmd), &iRet);
-
-    if (FTPCmd == nullptr)
-    {
-        /* Add it to the list */
-        // note that struct includes 1 byte for null, so just add len
-        FTPCmd = (FTP_CMD_CONF*)snort_calloc(sizeof(FTP_CMD_CONF)+strlen(cmd));
-        strncpy(FTPCmd->cmd_name, cmd, strlen(cmd) + 1);
-
-        // FIXIT-L make sure pulled from server conf when used if not overridden
-        //FTPCmd->max_param_len = ServerConf->def_max_param_len;
-
-        ftp_cmd_lookup_add(ServerConf->cmd_lookup, cmd,
-            strlen(cmd), FTPCmd);
-    }
-    if ( fc->flags & CMD_DIR )
-        FTPCmd->dir_response = fc->number;
-
-    if ( fc->flags & CMD_LEN )
-    {
-        FTPCmd->max_param_len = fc->number;
-        FTPCmd->max_param_len_overridden = 1;
-    }
-    if ( fc->flags & CMD_DATA )
-        FTPCmd->data_chan_cmd = true;
-
-    if ( fc->flags & CMD_REST )
-        FTPCmd->data_rest_cmd = true;
-
-    if ( fc->flags & CMD_XFER )
-        FTPCmd->data_xfer_cmd = true;
-
-    if ( fc->flags & CMD_PUT )
-        FTPCmd->file_put_cmd = true;
-
-    if ( fc->flags & CMD_GET )
-        FTPCmd->file_get_cmd = true;
-
-    if ( fc->flags & CMD_CHECK )
-    {
-        FTP_PARAM_FMT* Fmt = FTPCmd->param_format;
-        if (Fmt)
-        {
-            ResetStringFormat(Fmt);
-        }
-        else
-        {
-            Fmt = (FTP_PARAM_FMT*)snort_calloc(sizeof(FTP_PARAM_FMT));
-            Fmt->type = e_head;
-            FTPCmd->param_format = Fmt;
-
-            Fmt = (FTP_PARAM_FMT*)snort_calloc(sizeof(FTP_PARAM_FMT));
-            Fmt->type = e_strformat;
-            FTPCmd->param_format->next_param_fmt = Fmt;
-            Fmt->prev_param_fmt = FTPCmd->param_format;
-        }
-        FTPCmd->check_validity = true;
-    }
-    if ( fc->flags & CMD_VALID )
-    {
-        char err[1024];
-        ProcessFTPCmdValidity(
-            ServerConf, cmd, fc->format.c_str(), err, sizeof(err));
-    }
-    if ( fc->flags & CMD_ENCR )
-        FTPCmd->encr_cmd = true;
-
-    if ( fc->flags & CMD_LOGIN )
-        FTPCmd->login_cmd = true;
-
-    return 0;
-}
-
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
@@ -441,10 +333,6 @@ static Inspector* fs_ctor(Module* mod)
 {
     FtpServerModule* fsm = (FtpServerModule*)mod;
     FTP_SERVER_PROTO_CONF* conf = fsm->get_data();
-    unsigned i = 0;
-
-    while ( const FtpCmd* cmd = fsm->get_cmd(i++) )
-        ProcessFTPDataChanCmdsList(conf, cmd);
 
     return new FtpServer(conf);
 }

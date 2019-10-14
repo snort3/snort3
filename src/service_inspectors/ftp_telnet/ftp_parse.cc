@@ -595,6 +595,7 @@ int ProcessFTPCmdValidity(
     /* Need to check to be sure we got a complete command */
     if (iRet)
     {
+        ftpp_ui_config_reset_ftp_cmd_format(HeadFmt);
         return FTPP_FATAL_ERR;
     }
 
