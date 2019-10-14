@@ -88,10 +88,7 @@ StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t
                 break;
             case V_BAD:
                 session_data->events[source_id]->create_event(EVENT_PREFACE_MATCH_FAILURE);
-                // FIXIT-H: Workaround till abort is implemented
-                if((session_data->octets_seen[source_id] + length) >= 24)
-                    break;
-                // Falls through
+                return StreamSplitter::ABORT;
             case V_TBD:
                 session_data->octets_seen[source_id] += length;
                 return StreamSplitter::SEARCH;
