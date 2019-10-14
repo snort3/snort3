@@ -827,7 +827,7 @@ void Binder::handle_new_standby_flow( Flow* flow )
 // implementation stuff
 //-------------------------------------------------------------------------
 
-void Binder::set_binding(SnortConfig*, Binding* pb)
+void Binder::set_binding(SnortConfig* sc, Binding* pb)
 {
     if ( pb->use.action != BindUse::BA_INSPECT )
         return;
@@ -840,7 +840,7 @@ void Binder::set_binding(SnortConfig*, Binding* pb)
 
     Module* m = ModuleManager::get_module(key);
     bool is_global = m ? m->get_usage() == Module::GLOBAL : false;
-    if ( (pb->use.object = InspectorManager::get_inspector(key, is_global)) )
+    if ( (pb->use.object = InspectorManager::get_inspector(key, is_global, sc)) )
     {
         switch ( ((Inspector*)pb->use.object)->get_api()->type )
         {
