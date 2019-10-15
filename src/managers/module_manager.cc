@@ -417,7 +417,7 @@ static bool set_var(const char* fqn, Value& val)
     if ( val.get_type() != Value::VT_STR )
         return false;
 
-    if ( snort::get_ips_policy() == nullptr )
+    if ( get_ips_policy() == nullptr )
         return true;
 
     trace("var", fqn, val);
@@ -706,7 +706,7 @@ SO_PUBLIC bool open_table(const char* s, int idx)
         return false;
 
     // FIXIT-M only basic modules, inspectors and ips actions can be reloaded at present
-    if ( ( snort::Snort::is_reloading() ) and h->api
+    if ( ( Snort::is_reloading() ) and h->api
             and h->api->type != PT_INSPECTOR and h->api->type != PT_IPS_ACTION )
         return false;
 
@@ -1046,7 +1046,7 @@ void ModuleManager::show_module(const char* name)
         cout << "no match" << endl;
 }
 
-void ModuleManager::reload_module(const char* name, snort::SnortConfig* sc)
+void ModuleManager::reload_module(const char* name, SnortConfig* sc)
 {
     ModHook* h = get_hook(name);
 

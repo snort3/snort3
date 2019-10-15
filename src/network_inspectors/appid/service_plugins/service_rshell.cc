@@ -31,6 +31,8 @@
 #include "appid_debug.h"
 #include "appid_inspector.h"
 
+using namespace snort;
+
 #define RSHELL_PORT  514
 #define RSHELL_MAX_PORT_PACKET 6
 
@@ -115,7 +117,7 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
     if (appidDebug->is_active())
-        snort::LogMessage("AppIdDbg %s RSHELL state %d\n", appidDebug->get_debug_session(), rd->state);
+        LogMessage("AppIdDbg %s RSHELL state %d\n", appidDebug->get_debug_session(), rd->state);
 
     switch (rd->state)
     {
@@ -139,14 +141,14 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
         if (port)
         {
             if(rsh_error_snort_protocol_id == UNKNOWN_PROTOCOL_ID)
-                rsh_error_snort_protocol_id = snort::SnortConfig::get_conf()->proto_ref->find("rsh-error");
+                rsh_error_snort_protocol_id = SnortConfig::get_conf()->proto_ref->find("rsh-error");
 
             ServiceRSHELLData* tmp_rd = (ServiceRSHELLData*)snort_calloc(
                 sizeof(ServiceRSHELLData));
             tmp_rd->state = RSHELL_STATE_STDERR_CONNECT_SYN;
             tmp_rd->parent = rd;
-            const snort::SfIp* dip = args.pkt->ptrs.ip_api.get_dst();
-            const snort::SfIp* sip = args.pkt->ptrs.ip_api.get_src();
+            const SfIp* dip = args.pkt->ptrs.ip_api.get_dst();
+            const SfIp* sip = args.pkt->ptrs.ip_api.get_src();
             AppIdSession* pf = AppIdSession::create_future_session(args.pkt, dip, 0, sip,
                 (uint16_t)port, IpProtocol::TCP, rsh_error_snort_protocol_id, APPID_EARLY_SESSION_FLAG_FW_RULE);
             if (pf)

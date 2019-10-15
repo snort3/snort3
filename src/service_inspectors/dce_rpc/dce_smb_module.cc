@@ -340,7 +340,7 @@ static bool set_smb_invalid_shares(dce2SmbProtoConf& config, Value& v)
     return(true);
 }
 
-bool Dce2SmbModule::set(const char* fqn, snort::Value& v, snort::SnortConfig* c)
+bool Dce2SmbModule::set(const char* fqn, Value& v, SnortConfig* c)
 {
     if (dce2_set_co_config(v,config.common))
         return true;

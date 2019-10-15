@@ -32,6 +32,8 @@
 
 #include "smtp_module.h"
 
+using namespace snort;
+
 #define XLINK_OTHER  1
 #define XLINK_FIRST  2
 #define XLINK_CHUNK  3
@@ -175,7 +177,7 @@ static char get_xlink_keyword(const uint8_t* ptr, const uint8_t* end)
  * @retval  1           if alert raised
  * @retval  0           if no alert raised
  */
-int ParseXLink2State(SMTP_PROTO_CONF* config, snort::Packet* p, SMTPData* smtp_ssn, const uint8_t* ptr)
+int ParseXLink2State(SMTP_PROTO_CONF* config, Packet* p, SMTPData* smtp_ssn, const uint8_t* ptr)
 {
     const uint8_t* lf = nullptr;
     uint32_t len = 0;
@@ -245,7 +247,7 @@ int ParseXLink2State(SMTP_PROTO_CONF* config, snort::Packet* p, SMTPData* smtp_s
         if (config->xlink2state == DROP_XLINK2STATE)
             p->active->reset_session(p);
 
-        snort::DetectionEngine::queue_event(GID_SMTP, SMTP_XLINK2STATE_OVERFLOW);
+        DetectionEngine::queue_event(GID_SMTP, SMTP_XLINK2STATE_OVERFLOW);
         smtp_ssn->session_flags |= SMTP_FLAG_XLINK2STATE_ALERTED;
 
         return 1;

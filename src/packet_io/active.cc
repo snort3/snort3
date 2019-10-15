@@ -149,9 +149,9 @@ void Active::kill_session(Packet* p, EncodeFlags flags)
 
     default:
         if ( packet_force_dropped() )
-            send_unreach(p, snort::UnreachResponse::FWD);
+            send_unreach(p, UnreachResponse::FWD);
         else
-            send_unreach(p, snort::UnreachResponse::PORT);
+            send_unreach(p, UnreachResponse::PORT);
         break;
     }
 }
@@ -217,7 +217,7 @@ void Active::send_reset(Packet* p, EncodeFlags ef)
     }
 }
 
-void Active::send_unreach(Packet* p, snort::UnreachResponse type)
+void Active::send_unreach(Packet* p, UnreachResponse type)
 {
     uint32_t len;
     const uint8_t* rej;

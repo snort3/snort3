@@ -26,12 +26,14 @@
 
 #include "stream/stream.h"
 
+using namespace snort;
+
 namespace memory
 {
 
 void prune_handler()
 {
-    snort::Stream::prune_flows();
+    Stream::prune_flows();
 }
 
 } // namespace memory

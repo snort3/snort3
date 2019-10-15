@@ -30,6 +30,8 @@
 #include "app_info_table.h"
 #include "application_ids.h"
 
+using namespace snort;
+
 #define MAX_OPCODE     5
 #define INVALID_OPCODE 3
 
@@ -159,7 +161,7 @@ struct MatchedDNSPatterns
 struct ServiceDnsConfig
 {
     DetectorDNSHostPattern* DetectorDNSHostPatternList;
-    snort::SearchTool* dns_host_host_matcher;
+    SearchTool* dns_host_host_matcher;
 };
 static ServiceDnsConfig serviceDnsConfig;      // DNS service configuration
 
@@ -184,7 +186,7 @@ static int dns_host_detector_create_matcher(DetectorDNSHostPattern* list)
     if (serviceDnsConfig.dns_host_host_matcher)
         delete serviceDnsConfig.dns_host_host_matcher;
 
-    serviceDnsConfig.dns_host_host_matcher = new snort::SearchTool("ac_full", true);
+    serviceDnsConfig.dns_host_host_matcher = new SearchTool("ac_full", true);
     if (!serviceDnsConfig.dns_host_host_matcher)
         return 0;
 
@@ -741,7 +743,7 @@ inprocess:
     return APPID_INPROCESS;
 }
 
-static int dns_host_scan_patterns(snort::SearchTool* matcher, const uint8_t* pattern, size_t size,
+static int dns_host_scan_patterns(SearchTool* matcher, const uint8_t* pattern, size_t size,
     AppId* ClientAppId, AppId* payloadId)
 {
     MatchedDNSPatterns* mp = nullptr;

@@ -116,26 +116,26 @@ void DataBus::publish(const char*, DataEvent& event, Flow*)
 // Stubs for matchers
 static HttpPatternMatchers* http_matchers;
 HttpPatternMatchers::~HttpPatternMatchers() {}
-void HttpPatternMatchers::get_http_offsets(snort::Packet*, AppIdHttpSession*) {}
+void HttpPatternMatchers::get_http_offsets(Packet*, AppIdHttpSession*) {}
 HttpPatternMatchers* HttpPatternMatchers::get_instance()
 {
     return http_matchers;
 }
 
-void ApplicationDescriptor::set_id(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
+void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 
 // Stubs for AppIdModule
-AppIdModule::AppIdModule(): snort::Module("appid_mock", "appid_mock_help") {}
+AppIdModule::AppIdModule(): Module("appid_mock", "appid_mock_help") {}
 AppIdModule::~AppIdModule() {}
 void AppIdModule::sum_stats(bool) {}
 void AppIdModule::show_dynamic_stats() {}
-bool AppIdModule::begin(char const*, int, snort::SnortConfig*) { return true; }
-bool AppIdModule::end(char const*, int, snort::SnortConfig*) { return true; }
-bool AppIdModule::set(char const*, snort::Value&, snort::SnortConfig*) { return true; }
-const snort::Command* AppIdModule::get_commands() const { return nullptr; }
+bool AppIdModule::begin(char const*, int, SnortConfig*) { return true; }
+bool AppIdModule::end(char const*, int, SnortConfig*) { return true; }
+bool AppIdModule::set(char const*, Value&, SnortConfig*) { return true; }
+const Command* AppIdModule::get_commands() const { return nullptr; }
 const PegInfo* AppIdModule::get_pegs() const { return nullptr; }
 PegCount* AppIdModule::get_counts() const { return nullptr; }
-snort::ProfileStats* AppIdModule::get_profile() const { return nullptr; }
+ProfileStats* AppIdModule::get_profile() const { return nullptr; }
 
 // Stubs for config
 AppIdModuleConfig::~AppIdModuleConfig() {}
@@ -156,9 +156,9 @@ AppId AppIdConfig::get_protocol_service_id(IpProtocol)
 // Stubs for AppIdInspector
 AppIdInspector::AppIdInspector(AppIdModule&) {}
 AppIdInspector::~AppIdInspector() = default;
-void AppIdInspector::eval(snort::Packet*) { }
-bool AppIdInspector::configure(snort::SnortConfig*) { return true; }
-void AppIdInspector::show(snort::SnortConfig*) { }
+void AppIdInspector::eval(Packet*) { }
+bool AppIdInspector::configure(SnortConfig*) { return true; }
+void AppIdInspector::show(SnortConfig*) { }
 void AppIdInspector::tinit() { }
 void AppIdInspector::tterm() { }
 AppIdConfig* AppIdInspector::get_appid_config()

@@ -115,7 +115,7 @@ static KerberosClientDetector* krb_client_detector;
 static KerberosServiceDetector* krb_service_detector;
 
 static int krb_walk_server_packet(KRBState* krbs, const uint8_t* s, const uint8_t* end,
-    AppIdSession& asd, snort::Packet* pkt, const AppidSessionDirection dir,
+    AppIdSession& asd, Packet* pkt, const AppidSessionDirection dir,
     const char* reqCname, AppidChangeBits& change_bits)
 {
     static const uint8_t KRB_SERVER_VERSION[] = "\x0a0\x003\x002\x001";

@@ -127,8 +127,8 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
     int mode = 0;
     uint16_t block = 0;
     uint16_t tmp = 0;
-    const snort::SfIp* sip = nullptr;
-    const snort::SfIp* dip = nullptr;
+    const SfIp* sip = nullptr;
+    const SfIp* dip = nullptr;
     AppIdSession* pf = nullptr;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
@@ -184,7 +184,7 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto bail;
 
         if(tftp_snort_protocol_id == UNKNOWN_PROTOCOL_ID)
-            tftp_snort_protocol_id = snort::SnortConfig::get_conf()->proto_ref->find("tftp");
+            tftp_snort_protocol_id = SnortConfig::get_conf()->proto_ref->find("tftp");
 
         tmp_td = (ServiceTFTPData*)snort_calloc(sizeof(ServiceTFTPData));
         tmp_td->state = TFTP_STATE_TRANSFER;

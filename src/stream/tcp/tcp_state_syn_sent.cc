@@ -27,7 +27,7 @@
 
 #include "tcp_session.h"
 
-using namespace std;
+using namespace snort;
 
 TcpStateSynSent::TcpStateSynSent(TcpStateMachine& tsm) :
     TcpStateHandler(TcpStreamTracker::TCP_SYN_SENT, tsm)
@@ -64,7 +64,7 @@ bool TcpStateSynSent::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 
 bool TcpStateSynSent::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    snort::Flow* flow = tsd.get_flow();
+    Flow* flow = tsd.get_flow();
 
     // FIXIT-H verify ack being sent is valid...
     trk.update_tracker_ack_sent(tsd);
@@ -85,7 +85,7 @@ bool TcpStateSynSent::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateSynSent::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    snort::Flow* flow = tsd.get_flow();
+    Flow* flow = tsd.get_flow();
 
     // FIXIT-H verify ack being sent is valid...
     trk.update_tracker_ack_sent(tsd);

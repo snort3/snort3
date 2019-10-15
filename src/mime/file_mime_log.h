@@ -27,6 +27,8 @@
 #include <cstdint>
 #include "main/snort_types.h"
 
+namespace snort
+{
 enum EmailUserType
 {
     EMAIL_SENDER,
@@ -42,10 +44,7 @@ struct MailLogConfig
     uint32_t email_hdrs_log_depth = 0;
 };
 
-namespace snort
-{
 class Flow;
-}
 
 class SO_PUBLIC MailLogState
 {
@@ -82,6 +81,7 @@ private:
     uint16_t file_logged;
     uint16_t file_current;
 };
+}
 
 #endif
 

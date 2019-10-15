@@ -31,6 +31,8 @@
 #include "piglet_output.h"
 #include "piglet_runner.h"
 
+using namespace snort;
+
 namespace Piglet
 {
 int main()
@@ -43,5 +45,5 @@ int main()
 }
 
 bool piglet_mode()
-{ return snort::SnortConfig::get_conf()->run_flags & RUN_FLAG__PIGLET; }
+{ return SnortConfig::get_conf()->run_flags & RUN_FLAG__PIGLET; }
 } // namespace Piglet

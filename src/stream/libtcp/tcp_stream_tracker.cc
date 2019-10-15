@@ -669,7 +669,7 @@ bool TcpStreamTracker::is_segment_seq_valid(TcpSegmentDescriptor& tsd)
     return valid_seq;
 }
 
-bool TcpStreamTracker::set_held_packet(snort::Packet* p)
+bool TcpStreamTracker::set_held_packet(Packet* p)
 {
     // FIXIT-M - limit of packets held per packet thread should be determined based on runtime criteria
     //           such as # of DAQ Msg buffers, # of threads, etc... for now we use small number like 10
@@ -694,7 +694,7 @@ bool TcpStreamTracker::set_held_packet(snort::Packet* p)
     return false;
 }
 
-bool TcpStreamTracker::is_retransmit_of_held_packet(snort::Packet* cp)
+bool TcpStreamTracker::is_retransmit_of_held_packet(Packet* cp)
 {
     if ( !held_packet or ( cp->daq_msg == held_packet ) )
         return false;
@@ -709,7 +709,7 @@ bool TcpStreamTracker::is_retransmit_of_held_packet(snort::Packet* cp)
     return false;
 }
 
-void TcpStreamTracker::finalize_held_packet(snort::Packet* cp)
+void TcpStreamTracker::finalize_held_packet(Packet* cp)
 {
     if ( held_packet )
     {
@@ -730,7 +730,7 @@ void TcpStreamTracker::finalize_held_packet(snort::Packet* cp)
     }
 }
 
-void TcpStreamTracker::finalize_held_packet(snort::Flow* flow)
+void TcpStreamTracker::finalize_held_packet(Flow* flow)
 {
     if ( held_packet )
     {

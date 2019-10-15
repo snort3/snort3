@@ -53,7 +53,7 @@ class Inspector* InspectorManager::get_inspector(char const*, bool, SnortConfig*
 
 }
 
-void ApplicationDescriptor::set_id(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
+void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 const char* AppInfoManager::get_app_name(AppId)
 {
     return test_app_name;

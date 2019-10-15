@@ -379,7 +379,7 @@ static int pmx_create_tree_offload(SnortConfig* sc, void* id, void** existing_tr
 }
 
 static int fpFinishPortGroupRule(
-    SnortConfig* sc, snort::Mpse* mpse, OptTreeNode* otn, PatternMatchData* pmd,
+    SnortConfig* sc, Mpse* mpse, OptTreeNode* otn, PatternMatchData* pmd,
     FastPatternConfig* fp, Mpse::MpseType mpse_type, bool get_final_pat)
 {
     const char* pattern;
@@ -502,7 +502,7 @@ static int fpFinishPortGroup(
     return 0;
 }
 
-static void fpAddAlternatePatterns(SnortConfig* sc, snort::Mpse* mpse,
+static void fpAddAlternatePatterns(SnortConfig* sc, Mpse* mpse,
     OptTreeNode* otn, PatternMatchData* pmd, FastPatternConfig* fp, Mpse::MpseType mpse_type)
 {
     fpFinishPortGroupRule(sc, mpse, otn, pmd, fp, mpse_type, false);

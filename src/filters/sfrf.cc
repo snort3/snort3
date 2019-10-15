@@ -66,7 +66,7 @@ typedef struct
      * whether dos threshold is tracking by source or destination IP address. For tracking
      * by rule, it is cleared out (all 0s).
      */
-    snort::SfIp ip;
+    SfIp ip;
     uint16_t padding;
 } tSFRFTrackingNodeKey;
 PADDING_GUARD_END
@@ -115,7 +115,7 @@ static int _checkSamplingPeriod(
     );
 
 static tSFRFTrackingNode* _getSFRFTrackingNode(
-    const snort::SfIp*,
+    const SfIp*,
     unsigned tid,
     time_t curTime
     );
@@ -124,8 +124,8 @@ static void _updateDependentThresholds(
     RateFilterConfig* config,
     unsigned gid,
     unsigned sid,
-    const snort::SfIp* sip,
-    const snort::SfIp* dip,
+    const SfIp* sip,
+    const SfIp* dip,
     time_t curTime
     );
 
@@ -232,14 +232,14 @@ int SFRF_Alloc(unsigned int memcap)
  *
  * @return @retval  0 successfully added the thresholding object, !0 otherwise
 */
-int SFRF_ConfigAdd(snort::SnortConfig*, RateFilterConfig* rf_config, tSFRFConfigNode* cfgNode)
+int SFRF_ConfigAdd(SnortConfig*, RateFilterConfig* rf_config, tSFRFConfigNode* cfgNode)
 {
     GHash* genHash;
     tSFRFSidNode* pSidNode;
     tSFRFConfigNode* pNewConfigNode;
     tSFRFGenHashKey key = { 0,0 };
 
-    PolicyId policy_id = snort::get_ips_policy()->policy_id;
+    PolicyId policy_id = get_ips_policy()->policy_id;
 
     if ((rf_config == nullptr) || (cfgNode == nullptr))
         return -1;
@@ -361,7 +361,7 @@ int SFRF_ConfigAdd(snort::SnortConfig*, RateFilterConfig* rf_config, tSFRFConfig
  */
 static int SFRF_TestObject(
     tSFRFConfigNode* cfgNode,
-    const snort::SfIp* ip,
+    const SfIp* ip,
     time_t curTime,
     SFRF_COUNT_OPERATION op
     )
@@ -414,7 +414,7 @@ static int SFRF_TestObject(
     // if the count were not incremented in such cases, the
     // threshold would never be exceeded.
     if ( !cfgNode->seconds && dynNode->count > cfgNode->count )
-        if ( cfgNode->newAction == snort::Actions::DROP )
+        if ( cfgNode->newAction == Actions::DROP )
             dynNode->count--;
 
 #ifdef SFRF_DEBUG
@@ -427,7 +427,7 @@ static int SFRF_TestObject(
     return retValue;
 }
 
-static inline int SFRF_AppliesTo(tSFRFConfigNode* pCfg, const snort::SfIp* ip)
+static inline int SFRF_AppliesTo(tSFRFConfigNode* pCfg, const SfIp* ip)
 {
     return ( !pCfg->applyTo || sfvar_ip_in(pCfg->applyTo, ip) );
 }
@@ -451,8 +451,8 @@ int SFRF_TestThreshold(
     RateFilterConfig* config,
     unsigned gid,
     unsigned sid,
-    const snort::SfIp* sip,
-    const snort::SfIp* dip,
+    const SfIp* sip,
+    const SfIp* dip,
     time_t curTime,
     SFRF_COUNT_OPERATION op
     )
@@ -464,7 +464,7 @@ int SFRF_TestThreshold(
     int status = -1;
     tSFRFGenHashKey key;
 
-    PolicyId policy_id = snort::get_ips_policy()->policy_id;
+    PolicyId policy_id = get_ips_policy()->policy_id;
 
 #ifdef SFRF_DEBUG
     printf("--%d-%u-%u: %s() entering\n", 0, gid, sid, __func__);
@@ -546,7 +546,7 @@ int SFRF_TestThreshold(
 
         case SFRF_TRACK_BY_RULE:
         {
-            snort::SfIp cleared;
+            SfIp cleared;
             cleared.clear();
             newStatus = SFRF_TestObject(cfgNode, &cleared, curTime, op);
         }
@@ -753,15 +753,15 @@ static int _checkThreshold(
     fflush(stdout);
 #endif
 
-    return snort::Actions::MAX + cfgNode->newAction;
+    return Actions::MAX + cfgNode->newAction;
 }
 
 static void _updateDependentThresholds(
     RateFilterConfig* config,
     unsigned gid,
     unsigned sid,
-    const snort::SfIp* sip,
-    const snort::SfIp* dip,
+    const SfIp* sip,
+    const SfIp* dip,
     time_t curTime
     )
 {
@@ -781,7 +781,7 @@ static void _updateDependentThresholds(
     }
 }
 
-static tSFRFTrackingNode* _getSFRFTrackingNode(const snort::SfIp* ip, unsigned tid, time_t curTime)
+static tSFRFTrackingNode* _getSFRFTrackingNode(const SfIp* ip, unsigned tid, time_t curTime)
 {
     tSFRFTrackingNode* dynNode = nullptr;
     tSFRFTrackingNodeKey key;
@@ -789,7 +789,7 @@ static tSFRFTrackingNode* _getSFRFTrackingNode(const snort::SfIp* ip, unsigned t
     /* Setup key */
     key.ip = *(ip);
     key.tid = tid;
-    key.policyId = snort::get_ips_policy()->policy_id;
+    key.policyId = get_ips_policy()->policy_id;
     key.padding = 0;
 
     /*

@@ -275,7 +275,7 @@ int TcpStreamSession::update_alert(Packet* p, uint32_t gid, uint32_t sid,
     return -1;
 }
 
-bool TcpStreamSession::set_packet_action_to_hold(snort::Packet* p)
+bool TcpStreamSession::set_packet_action_to_hold(Packet* p)
 {
     return listener->set_held_packet(p);
 }

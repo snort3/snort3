@@ -33,7 +33,7 @@ using namespace snort;
 class DummySession : public Session
 {
     public:
-        DummySession(snort::Flow* f) : Session(f) { }
+        DummySession(Flow* f) : Session(f) { }
         void clear() override { }
         ~DummySession() { }
 };

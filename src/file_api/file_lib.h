@@ -33,12 +33,12 @@
 #define SNORT_FILE_TYPE_UNKNOWN          UINT16_MAX
 #define SNORT_FILE_TYPE_CONTINUE         0
 
-class FileCapture;
 class FileConfig;
 class FileSegments;
 
 namespace snort
 {
+class FileCapture;
 class FileInspect;
 class Flow;
 

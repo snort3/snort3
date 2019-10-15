@@ -127,7 +127,7 @@ int PortVarDefine(SnortConfig* sc, const char* name, const char* s)
     PortObject* po;
     POParser pop;
     int rstat;
-    PortVarTable* portVarTable = snort::get_ips_policy()->portVarTable;
+    PortVarTable* portVarTable = get_ips_policy()->portVarTable;
 
     DisallowCrossTableDuplicateVars(sc, name, VAR_TYPE__PORTVAR);
 
@@ -366,7 +366,7 @@ int VarIsIpList(vartable_t* ip_vartable, const char* value)
 void DisallowCrossTableDuplicateVars(
     SnortConfig*, const char* name, VarType var_type)
 {
-    IpsPolicy* dp = snort::get_ips_policy();
+    IpsPolicy* dp = get_ips_policy();
     VarEntry* var_table = dp->var_table;
     PortVarTable* portVarTable = dp->portVarTable;
     vartable_t* ip_vartable = dp->ip_vartable;
@@ -457,7 +457,7 @@ void DisallowCrossTableDuplicateVars(
 VarEntry* VarDefine(
     SnortConfig* sc, const char* name, const char* value)
 {
-    IpsPolicy* dp = snort::get_ips_policy();
+    IpsPolicy* dp = get_ips_policy();
     VarEntry* var_table = dp->var_table;
     vartable_t* ip_vartable = dp->ip_vartable;
     VarEntry* p;
@@ -644,7 +644,7 @@ void DeleteVars(VarEntry* var_table)
 
 const char* VarSearch(SnortConfig* sc, const char* name)
 {
-    IpsPolicy* dp = snort::get_ips_policy();
+    IpsPolicy* dp = get_ips_policy();
     VarEntry* var_table = dp->var_table;
     PortVarTable* portVarTable = dp->portVarTable;
     vartable_t* ip_vartable = dp->ip_vartable;

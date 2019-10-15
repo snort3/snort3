@@ -28,6 +28,8 @@
 
 #include "decode_buffer.h"
 
+using namespace snort;
+
 void B64Decode::reset_decode_state()
 {
     reset_decoded_bytes();
@@ -47,7 +49,7 @@ DecodeResult B64Decode::decode_data(const uint8_t* start, const uint8_t* end, ui
 
     uint32_t encode_avail = buffer->get_encode_avail() - buffer->get_prev_encoded_bytes();
 
-    if (snort::sf_strip_CRLF(start, (end-start), buffer->get_encode_buff() + buffer->get_prev_encoded_bytes(),
+    if (sf_strip_CRLF(start, (end-start), buffer->get_encode_buff() + buffer->get_prev_encoded_bytes(),
         encode_avail, &act_encode_size) != 0)
     {
         reset_decode_state();
@@ -68,7 +70,7 @@ DecodeResult B64Decode::decode_data(const uint8_t* start, const uint8_t* end, ui
     else
         buffer->reset_saved();
 
-    if (snort::sf_base64decode(buffer->get_encode_buff(), act_encode_size,
+    if (sf_base64decode(buffer->get_encode_buff(), act_encode_size,
         decode_buf, buffer->get_decode_avail(), &act_decode_size) != 0)
     {
         reset_decode_state();

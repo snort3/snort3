@@ -28,6 +28,8 @@
 #include "search_engines/search_tool.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 struct tPatternNode
 {
     tMlmpPattern pattern;
@@ -59,7 +61,7 @@ struct tPatternPrimaryNode
 /*Node for mlmp tree */
 struct tMlmpTree
 {
-    snort::SearchTool* patternTree;
+    SearchTool* patternTree;
     tPatternPrimaryNode* patternList;
     uint32_t level;
 };
@@ -198,12 +200,12 @@ static int compareMlmpPatterns(const void* p1, const void* p2)
    detroyTreesRecursively. */
 static int createTreesRecusively(tMlmpTree* rootNode)
 {
-    snort::SearchTool* patternMatcher;
+    SearchTool* patternMatcher;
     tPatternPrimaryNode* primaryPatternNode;
     tPatternNode* ddPatternNode;
 
     /* set up the MPSE for url patterns */
-    patternMatcher = rootNode->patternTree = new snort::SearchTool("ac_full", true);
+    patternMatcher = rootNode->patternTree = new SearchTool("ac_full", true);
 
     for (primaryPatternNode = rootNode->patternList;
         primaryPatternNode;

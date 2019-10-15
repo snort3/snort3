@@ -40,6 +40,8 @@
 
 #include "primetable.h"
 
+using namespace snort;
+
 HashFnc* hashfcn_new(int m)
 {
     HashFnc* p;
@@ -53,7 +55,7 @@ HashFnc* hashfcn_new(int m)
 
     p = (HashFnc*)snort_calloc(sizeof(*p));
 
-    if ( snort::SnortConfig::static_hash() )
+    if ( SnortConfig::static_hash() )
     {
         p->seed     = 3193;
         p->scale    = 719;

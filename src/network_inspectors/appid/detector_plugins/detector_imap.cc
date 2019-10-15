@@ -31,6 +31,8 @@
 #include "search_engines/search_tool.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 static const unsigned IMAP_USER_NAME_MAX_LEN = 32;
 static const unsigned IMAP_TAG_MAX_LEN = 6;
 static const unsigned MIN_CMDS = 3;
@@ -516,7 +518,7 @@ ImapClientDetector::~ImapClientDetector()
 
 void ImapClientDetector::do_custom_init()
 {
-    cmd_matcher = new snort::SearchTool("ac_full", true);
+    cmd_matcher = new SearchTool("ac_full", true);
 
     if ( !tcp_patterns.empty() )
     {

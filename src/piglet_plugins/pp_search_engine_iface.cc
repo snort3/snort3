@@ -25,12 +25,14 @@
 
 #include "framework/mpse.h"
 
+using namespace snort;
+
 static const luaL_Reg methods[] =
 {
     { nullptr, nullptr }
 };
 
-const struct Lua::InstanceInterface<snort::Mpse> SearchEngineIface =
+const struct Lua::InstanceInterface<Mpse> SearchEngineIface =
 {
     "SearchEngine",
     methods

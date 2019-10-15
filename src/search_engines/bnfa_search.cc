@@ -355,7 +355,7 @@ static int _bnfa_list_free_table(bnfa_struct_t* bnfa)
     return 0;
 }
 
-static void bnfaBuildMatchStateTrees(snort::SnortConfig* sc, bnfa_struct_t* bnfa)
+static void bnfaBuildMatchStateTrees(SnortConfig* sc, bnfa_struct_t* bnfa)
 {
     bnfa_match_node_t* mn;
     bnfa_match_node_t** MatchList = bnfa->bnfaMatchList;
@@ -1451,7 +1451,7 @@ static inline int _bnfaCompile(bnfa_struct_t* bnfa)
     return 0;
 }
 
-int bnfaCompile(snort::SnortConfig* sc, bnfa_struct_t* bnfa)
+int bnfaCompile(SnortConfig* sc, bnfa_struct_t* bnfa)
 {
     if ( int rval = _bnfaCompile (bnfa) )
         return rval;

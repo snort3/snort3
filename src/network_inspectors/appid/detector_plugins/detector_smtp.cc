@@ -27,6 +27,8 @@
 #include "app_info_table.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 enum SMTPClientState
 {
     SMTP_CLIENT_STATE_NONE,
@@ -207,7 +209,7 @@ int SmtpClientDetector::extract_version_and_add_client_app(
  *  Returns 0 if a recognized product is found.  Otherwise returns 1.
  */
 int SmtpClientDetector::identify_client_version(ClientSMTPData* const fd, const uint8_t* product,
-    const uint8_t* data_end, AppIdSession& asd, snort::Packet*, AppidChangeBits& change_bits)
+    const uint8_t* data_end, AppIdSession& asd, Packet*, AppidChangeBits& change_bits)
 {
     const uint8_t* p;
     AppId appId = APP_ID_SMTP;

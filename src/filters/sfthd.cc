@@ -289,14 +289,14 @@ the current event should be logged or dropped.
 
 */
 static int sfthd_create_threshold_local(
-    snort::SnortConfig*, ThresholdObjects* thd_objs, THD_NODE* config)
+    SnortConfig*, ThresholdObjects* thd_objs, THD_NODE* config)
 {
     GHash* sfthd_hash;
     THD_ITEM* sfthd_item;
     THD_NODE* sfthd_node;
     tThdItemKey key;
 
-    PolicyId policy_id = snort::get_network_policy()->policy_id;
+    PolicyId policy_id = get_network_policy()->policy_id;
 
     if (thd_objs == nullptr )
         return -1;
@@ -484,10 +484,10 @@ static int sfthd_create_threshold_local(
 /*
  */
 static int sfthd_create_threshold_global(
-    snort::SnortConfig*, ThresholdObjects* thd_objs, THD_NODE* config)
+    SnortConfig*, ThresholdObjects* thd_objs, THD_NODE* config)
 {
     THD_NODE* sfthd_node;
-    PolicyId policy_id = snort::get_network_policy()->policy_id;
+    PolicyId policy_id = get_network_policy()->policy_id;
 
     if (thd_objs == nullptr)
         return -1;
@@ -588,7 +588,7 @@ the current event should be logged or dropped.
 
 */
 int sfthd_create_threshold(
-    snort::SnortConfig* sc,
+    SnortConfig* sc,
     ThresholdObjects* thd_objs,
     unsigned gen_id,
     unsigned sig_id,
@@ -600,7 +600,7 @@ int sfthd_create_threshold(
     sfip_var_t* ip_address)
 {
     //allocate memory fpr sfthd_array if needed.
-    PolicyId policyId = snort::get_network_policy()->policy_id;
+    PolicyId policyId = get_network_policy()->policy_id;
     THD_NODE sfthd_node;
     memset(&sfthd_node, 0, sizeof(sfthd_node));
 
@@ -647,7 +647,7 @@ static char* printIP(unsigned u, char* buf, unsigned len)
 #endif
 
 int sfthd_test_rule(XHash* rule_hash, THD_NODE* sfthd_node,
-    const snort::SfIp* sip, const snort::SfIp* dip, long curtime)
+    const SfIp* sip, const SfIp* dip, long curtime)
 {
     if ((rule_hash == nullptr) || (sfthd_node == nullptr))
         return 0;
@@ -659,7 +659,7 @@ int sfthd_test_rule(XHash* rule_hash, THD_NODE* sfthd_node,
 
 static inline int sfthd_test_suppress(
     THD_NODE* sfthd_node,
-    const snort::SfIp* ip)
+    const SfIp* ip)
 {
     if ( !sfthd_node->ip_address ||
         sfvar_ip_in(sfthd_node->ip_address, ip) )
@@ -837,15 +837,15 @@ static inline int sfthd_test_non_suppress(
 int sfthd_test_local(
     XHash* local_hash,
     THD_NODE* sfthd_node,
-    const snort::SfIp* sip,
-    const snort::SfIp* dip,
+    const SfIp* sip,
+    const SfIp* dip,
     time_t curtime)
 {
     THD_IP_NODE_KEY key;
     THD_IP_NODE data,* sfthd_ip_node;
-    const snort::SfIp* ip;
+    const SfIp* ip;
 
-    PolicyId policy_id = snort::get_network_policy()->policy_id;
+    PolicyId policy_id = get_network_policy()->policy_id;
 
 #ifdef THD_DEBUG
     char buf[24];
@@ -939,16 +939,16 @@ static inline int sfthd_test_global(
     XHash* global_hash,
     THD_NODE* sfthd_node,
     unsigned sig_id,     /* from current event */
-    const snort::SfIp* sip,        /* " */
-    const snort::SfIp* dip,        /* " */
+    const SfIp* sip,        /* " */
+    const SfIp* dip,        /* " */
     time_t curtime)
 {
     THD_IP_GNODE_KEY key;
     THD_IP_NODE data;
     THD_IP_NODE* sfthd_ip_node;
-    const snort::SfIp* ip;
+    const SfIp* ip;
 
-    PolicyId policy_id = snort::get_network_policy()->policy_id;
+    PolicyId policy_id = get_network_policy()->policy_id;
 
 #ifdef THD_DEBUG
     char buf[24];
@@ -1053,8 +1053,8 @@ int sfthd_test_threshold(
     THD_STRUCT* thd,
     unsigned gen_id,
     unsigned sig_id,
-    const snort::SfIp* sip,
-    const snort::SfIp* dip,
+    const SfIp* sip,
+    const SfIp* dip,
     long curtime)
 {
     tThdItemKey key;
@@ -1066,7 +1066,7 @@ int sfthd_test_threshold(
     int cnt;
 #endif
 
-    PolicyId policy_id = snort::get_network_policy()->policy_id;
+    PolicyId policy_id = get_network_policy()->policy_id;
 
     if ((thd_objs == nullptr) || (thd == nullptr))
         return 0;

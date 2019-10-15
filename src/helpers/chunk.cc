@@ -30,6 +30,7 @@
 #include "catch/snort_catch.h"
 #endif
 
+using namespace snort;
 using namespace std;
 
 #define opt_init "init"
@@ -45,21 +46,21 @@ bool init_chunk(
 
     if ( luaL_loadbuffer(L, chunk.c_str(), chunk.size(), name) )
     {
-        snort::ParseError("%s luajit failed to load chunk %s", name, lua_tostring(L, -1));
+        ParseError("%s luajit failed to load chunk %s", name, lua_tostring(L, -1));
         return false;
     }
 
     // now exec the chunk to define functions etc in L
     if ( lua_pcall(L, 0, 0, 0) )
     {
-        snort::ParseError("%s luajit failed to init chunk %s", name, lua_tostring(L, -1));
+        ParseError("%s luajit failed to init chunk %s", name, lua_tostring(L, -1));
         return false;
     }
 
     // load the args table
     if ( luaL_dostring(L, args.c_str()) )
     {
-        snort::ParseError("%s luajit failed to init args %s", name, lua_tostring(L, -1));
+        ParseError("%s luajit failed to init args %s", name, lua_tostring(L, -1));
         return false;
     }
 
@@ -71,10 +72,10 @@ bool init_chunk(
         return true;
 
     if ( lua_pcall(L, 0, 1, 0) || lua_type(L, -1) == LUA_TSTRING )
-        snort::ParseError("%s %s", name, lua_tostring(L, -1));
+        ParseError("%s %s", name, lua_tostring(L, -1));
 
     else if ( !lua_toboolean(L, -1) )
-        snort::ParseError("%s init() returned false", name);
+        ParseError("%s init() returned false", name);
 
     else
         return true;

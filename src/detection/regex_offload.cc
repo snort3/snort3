@@ -48,7 +48,7 @@ using namespace snort;
 // FIXIT-L this could be offloader specific
 struct RegexRequest
 {
-    snort::Packet* packet = nullptr;
+    Packet* packet = nullptr;
 
     std::thread* thread;
     std::mutex mutex;
@@ -99,7 +99,7 @@ void RegexOffload::stop()
     assert(busy.empty());
 }
 
-bool RegexOffload::on_hold(snort::Flow* f) const
+bool RegexOffload::on_hold(Flow* f) const
 {
     for ( auto* req : busy )
     {
@@ -115,7 +115,7 @@ bool RegexOffload::on_hold(snort::Flow* f) const
 
 MpseRegexOffload::MpseRegexOffload(unsigned max) : RegexOffload(max) { }
 
-void MpseRegexOffload::put(snort::Packet* p)
+void MpseRegexOffload::put(Packet* p)
 {
     Profile profile(mpsePerfStats);
 
@@ -135,19 +135,19 @@ void MpseRegexOffload::put(snort::Packet* p)
     p->context->searches.offload_search();
 }
 
-bool MpseRegexOffload::get(snort::Packet*& p)
+bool MpseRegexOffload::get(Packet*& p)
 {
     Profile profile(mpsePerfStats);
     assert(!busy.empty());
 
-    snort::Mpse::MpseRespType resp_ret;
-    snort::MpseBatch* batch;
+    Mpse::MpseRespType resp_ret;
+    MpseBatch* batch;
 
-    resp_ret = snort::MpseBatch::poll_offload_responses(batch);
+    resp_ret = MpseBatch::poll_offload_responses(batch);
 
-    if (resp_ret != snort::Mpse::MPSE_RESP_NOT_COMPLETE)
+    if (resp_ret != Mpse::MPSE_RESP_NOT_COMPLETE)
     {
-        if (resp_ret == snort::Mpse::MPSE_RESP_COMPLETE_FAIL)
+        if (resp_ret == Mpse::MPSE_RESP_COMPLETE_FAIL)
         {
             if (batch->can_fallback())
             {
@@ -157,7 +157,7 @@ bool MpseRegexOffload::get(snort::Packet*& p)
             pc.offload_failures++;
         }
 
-        snort::IpsContext* c = (snort::IpsContext*)(batch->context);
+        IpsContext* c = (IpsContext*)(batch->context);
         p = c->packet;
 
         // Finished with items in batch so clear
@@ -184,7 +184,7 @@ ThreadRegexOffload::ThreadRegexOffload(unsigned max) : RegexOffload(max)
     unsigned i = ThreadConfig::get_instance_max();
 
     for ( auto* req : idle )
-        req->thread = new std::thread(worker, req, snort::SnortConfig::get_conf(), i++);
+        req->thread = new std::thread(worker, req, SnortConfig::get_conf(), i++);
 }
 
 ThreadRegexOffload::~ThreadRegexOffload()
@@ -208,7 +208,7 @@ void ThreadRegexOffload::stop()
     }
 }
 
-void ThreadRegexOffload::put(snort::Packet* p)
+void ThreadRegexOffload::put(Packet* p)
 {
     Profile profile(mpsePerfStats);
 
@@ -239,7 +239,7 @@ void ThreadRegexOffload::put(snort::Packet* p)
 #endif
 }
 
-bool ThreadRegexOffload::get(snort::Packet*& p)
+bool ThreadRegexOffload::get(Packet*& p)
 {
     Profile profile(mpsePerfStats);
     assert(!busy.empty());
@@ -266,10 +266,10 @@ bool ThreadRegexOffload::get(snort::Packet*& p)
 }
 
 void ThreadRegexOffload::worker(
-    RegexRequest* req, snort::SnortConfig* initial_config, unsigned id)
+    RegexRequest* req, SnortConfig* initial_config, unsigned id)
 {
     set_instance_id(id);
-    snort::SnortConfig::set_conf(initial_config);
+    SnortConfig::set_conf(initial_config);
 
     while ( true )
     {
@@ -288,9 +288,9 @@ void ThreadRegexOffload::worker(
         assert(req->packet->is_offloaded());
         assert(req->packet->context->searches.items.size() > 0);
 
-        snort::SnortConfig::set_conf(req->packet->context->conf);
-        snort::IpsContext* c = req->packet->context;
-        snort::Mpse::MpseRespType resp_ret;
+        SnortConfig::set_conf(req->packet->context->conf);
+        IpsContext* c = req->packet->context;
+        Mpse::MpseRespType resp_ret;
 
         c->searches.offload_search();
 
@@ -298,9 +298,9 @@ void ThreadRegexOffload::worker(
         {
             resp_ret = c->searches.receive_offload_responses();
         }
-        while (resp_ret == snort::Mpse::MPSE_RESP_NOT_COMPLETE);
+        while (resp_ret == Mpse::MPSE_RESP_NOT_COMPLETE);
 
-        if (resp_ret == snort::Mpse::MPSE_RESP_COMPLETE_FAIL)
+        if (resp_ret == Mpse::MPSE_RESP_COMPLETE_FAIL)
         {
             if (c->searches.can_fallback())
             {
@@ -320,8 +320,8 @@ void ThreadRegexOffload::worker(
         }
 #endif
     }
-    snort::ModuleManager::accumulate_offload("search_engine");
-    snort::ModuleManager::accumulate_offload("detection");
+    ModuleManager::accumulate_offload("search_engine");
+    ModuleManager::accumulate_offload("detection");
 
     // FIXIT-M break this over-coupling. In reality we shouldn't be evaluating latency in offload.
     PacketLatency::tterm();

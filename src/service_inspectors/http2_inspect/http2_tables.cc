@@ -27,8 +27,9 @@
 #include "http2_module.h"
 
 using namespace Http2Enums;
+using namespace snort;
 
-const snort::RuleMap Http2Module::http2_events[] =
+const RuleMap Http2Module::http2_events[] =
 {
     { EVENT_INT_DECODE_FAILURE, "error in HPACK integer value" },
     { EVENT_INT_LEADING_ZEROS, "integer value has leading zeros" },

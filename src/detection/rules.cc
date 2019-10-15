@@ -109,12 +109,12 @@ void RuleState::update_rtn(RuleTreeNode* rtn)
 {
     switch ( action )
     {
-        case IpsPolicy::LOG: rtn->action = snort::Actions::Type::LOG; break;
-        case IpsPolicy::PASS: rtn->action = snort::Actions::Type::PASS; break;
-        case IpsPolicy::ALERT: rtn->action = snort::Actions::Type::ALERT; break;
-        case IpsPolicy::DROP: rtn->action = snort::Actions::Type::DROP; break;
-        case IpsPolicy::BLOCK: rtn->action = snort::Actions::Type::BLOCK; break;
-        case IpsPolicy::RESET: rtn->action = snort::Actions::Type::RESET; break;
+        case IpsPolicy::LOG: rtn->action = Actions::Type::LOG; break;
+        case IpsPolicy::PASS: rtn->action = Actions::Type::PASS; break;
+        case IpsPolicy::ALERT: rtn->action = Actions::Type::ALERT; break;
+        case IpsPolicy::DROP: rtn->action = Actions::Type::DROP; break;
+        case IpsPolicy::BLOCK: rtn->action = Actions::Type::BLOCK; break;
+        case IpsPolicy::RESET: rtn->action = Actions::Type::RESET; break;
         case IpsPolicy::INHERIT_ACTION: break;
     }
     switch ( enable )

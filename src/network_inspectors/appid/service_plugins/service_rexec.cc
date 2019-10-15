@@ -29,6 +29,8 @@
 #include "app_info_table.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 #define REXEC_PORT  512
 #define REXEC_MAX_PORT_PACKET 6
 
@@ -120,7 +122,7 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
     {
     case REXEC_STATE_PORT:
         if(rexec_snort_protocol_id == UNKNOWN_PROTOCOL_ID)
-            rexec_snort_protocol_id = snort::SnortConfig::get_conf()->proto_ref->find("rexec");
+            rexec_snort_protocol_id = SnortConfig::get_conf()->proto_ref->find("rexec");
 
         if (args.dir != APP_ID_FROM_INITIATOR)
             goto bail;
@@ -140,8 +142,8 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto bail;
         if (port && args.pkt)
         {
-            const snort::SfIp* sip;
-            const snort::SfIp* dip;
+            const SfIp* sip;
+            const SfIp* dip;
 
             dip = args.pkt->ptrs.ip_api.get_dst();
             sip = args.pkt->ptrs.ip_api.get_src();

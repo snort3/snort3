@@ -41,7 +41,7 @@ using namespace Http2Enums;
 StreamSplitter::Status Http2StreamSplitter::scan(Packet* pkt, const uint8_t* data, uint32_t length,
     uint32_t, uint32_t* flush_offset)
 {
-    snort::Profile profile(Http2Module::get_profile_stats());
+    Profile profile(Http2Module::get_profile_stats());
 
     // This is the session state information we share with Http2Inspect and store with stream. A
     // session is defined by a TCP connection. Since scan() is the first to see a new TCP
@@ -99,7 +99,7 @@ StreamSplitter::Status Http2StreamSplitter::scan(Packet* pkt, const uint8_t* dat
 const StreamBuffer Http2StreamSplitter::reassemble(Flow* flow, unsigned total, unsigned offset,
     const uint8_t* data, unsigned len, uint32_t flags, unsigned& copied)
 {
-    snort::Profile profile(Http2Module::get_profile_stats());
+    Profile profile(Http2Module::get_profile_stats());
 
     copied = len;
 
@@ -109,7 +109,7 @@ const StreamBuffer Http2StreamSplitter::reassemble(Flow* flow, unsigned total, u
 #ifdef REG_TEST
     if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP2))
     {
-        snort::StreamBuffer http_buf { nullptr, 0 };
+        StreamBuffer http_buf { nullptr, 0 };
         if (!(flags & PKT_PDU_TAIL))
         {
             return http_buf;
@@ -143,7 +143,7 @@ const StreamBuffer Http2StreamSplitter::reassemble(Flow* flow, unsigned total, u
     // is implemented
     if (session_data->payload_discard[source_id])
     {
-        snort::StreamBuffer frame_buf { nullptr, 0 };
+        StreamBuffer frame_buf { nullptr, 0 };
         session_data->payload_discard[source_id] = false;
 
 #ifdef REG_TEST
@@ -175,7 +175,7 @@ const StreamBuffer Http2StreamSplitter::reassemble(Flow* flow, unsigned total, u
 // Eventually we will need to address unexpected connection closes
 bool Http2StreamSplitter::finish(Flow* flow)
 {
-    snort::Profile profile(Http2Module::get_profile_stats());
+    Profile profile(Http2Module::get_profile_stats());
 
     Http2FlowData* session_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
     // FIXIT-M - this assert has been changed to check for null session data and return false if so
@@ -201,9 +201,9 @@ bool Http2StreamSplitter::finish(Flow* flow)
     return false;
 }
 
-bool Http2StreamSplitter::init_partial_flush(snort::Flow* flow)
+bool Http2StreamSplitter::init_partial_flush(Flow* flow)
 {
-    snort::Profile profile(Http2Module::get_profile_stats());
+    Profile profile(Http2Module::get_profile_stats());
 
     if (source_id != SRC_SERVER)
     {

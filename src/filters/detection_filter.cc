@@ -53,7 +53,7 @@ void DetectionFilterConfigFree(DetectionFilterConfig* config)
     snort_free(config);
 }
 
-int detection_filter_test(void* pv, const snort::SfIp* sip, const snort::SfIp* dip, long curtime)
+int detection_filter_test(void* pv, const SfIp* sip, const SfIp* dip, long curtime)
 {
     if (pv == nullptr)
         return 0;
@@ -95,7 +95,7 @@ void detection_filter_term()
     if ( !detection_filter_hash )
         return;
 
-    snort::xhash_delete(detection_filter_hash);
+    xhash_delete(detection_filter_hash);
     detection_filter_hash = nullptr;
 }
 

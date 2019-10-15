@@ -35,6 +35,8 @@
 
 #include "file_flows.h"
 
+using namespace snort;
+
 bool FileConfig::process_file_magic(FileMagicData& magic)
 {
     bool negated = false;
@@ -72,7 +74,7 @@ FileMagicRule* FileConfig::get_rule_from_id(uint32_t id)
 }
 
 void FileConfig::get_magic_rule_ids_from_type(const std::string& type,
-    const std::string& version, snort::FileTypeBitSet& ids_set)
+    const std::string& version, FileTypeBitSet& ids_set)
 {
     return fileIdentifier.get_magic_rule_ids_from_type(type, version, ids_set);
 }
@@ -102,9 +104,9 @@ std::string file_type_name(uint32_t id)
         return "NA";
 }
 
-FileConfig* get_file_config(snort::SnortConfig* sc)
+FileConfig* get_file_config(SnortConfig* sc)
 {
-    snort::FileInspect* fi = (snort::FileInspect*)snort::InspectorManager::get_inspector(FILE_ID_NAME, true, sc);
+    FileInspect* fi = (FileInspect*)InspectorManager::get_inspector(FILE_ID_NAME, true, sc);
 
     if (fi)
         return (fi->config);
@@ -115,7 +117,7 @@ FileConfig* get_file_config(snort::SnortConfig* sc)
 namespace snort
 {
 void get_magic_rule_ids_from_type(const std::string& type, const std::string& version,
-    snort::FileTypeBitSet& ids_set, snort::SnortConfig* sc)
+    FileTypeBitSet& ids_set, SnortConfig* sc)
 {
     FileConfig* conf = get_file_config(sc);
     if (conf)

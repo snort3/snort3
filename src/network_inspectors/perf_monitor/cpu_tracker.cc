@@ -38,7 +38,7 @@
 
 #define TRACKER_NAME PERF_NAME "_cpu"
 
-using namespace std;
+using namespace snort;
 
 static inline uint64_t get_microseconds(struct timeval t)
 {
@@ -47,7 +47,7 @@ static inline uint64_t get_microseconds(struct timeval t)
 
 CPUTracker::CPUTracker(PerfConfig *perf) : PerfTracker(perf, TRACKER_NAME)
 {
-    formatter->register_section("thread_" + to_string(snort::get_instance_id()));
+    formatter->register_section("thread_" + std::to_string(get_instance_id()));
     formatter->register_field("cpu_user", &user_stat);
     formatter->register_field("cpu_system", &system_stat);
     formatter->register_field("cpu_wall", &wall_stat);

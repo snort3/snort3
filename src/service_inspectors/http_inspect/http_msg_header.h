@@ -54,7 +54,7 @@ private:
     void setup_file_decompression();
 
     // Dummy configurations to support MIME processing
-    MailLogConfig mime_conf;
+    snort::MailLogConfig mime_conf;
     snort::DecodeConfig decode_conf;
 
     Field true_ip;

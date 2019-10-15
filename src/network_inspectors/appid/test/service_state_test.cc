@@ -71,7 +71,7 @@ THREAD_LOCAL AppIdStats appid_stats;
 
 void AppIdDebug::activate(const Flow*, const AppIdSession*, bool) { active = true; }
 
-void ApplicationDescriptor::set_id(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
+void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector&)
     : FlowData(0) {}
 AppIdSession::~AppIdSession() = default;

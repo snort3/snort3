@@ -31,6 +31,8 @@
 
 #include "decode_buffer.h"
 
+using namespace snort;
+
 #define UU_DECODE_CHAR(c) (((c) - 0x20) & 0x3f)
 
 void UUDecode::reset_decode_state()
@@ -149,13 +151,13 @@ int sf_uudecode(uint8_t* src, uint32_t slen, uint8_t* dst, uint32_t dlen, uint32
         }
         else
         {
-            const uint8_t* sod = (const uint8_t*)snort::SnortStrnStr((const char*)src, 5, "begin");
+            const uint8_t* sod = (const uint8_t*)SnortStrnStr((const char*)src, 5, "begin");
 
             if (sod)
             {
                 *begin_found = true;
                 /*begin str found. Move to the actual data*/
-                ptr = (const uint8_t*)snort::SnortStrnStr((const char*)(sod), (end - sod), "\n");
+                ptr = (const uint8_t*)SnortStrnStr((const char*)(sod), (end - sod), "\n");
                 if ( !ptr )
                 {
                     *bytes_read = slen;

@@ -32,6 +32,8 @@
 #include "appid_debug.h"
 #include "appid_inspector.h"
 
+using namespace snort;
+
 #define SNMP_PORT   161
 
 #define SNMP_VERSION_1  0
@@ -423,7 +425,7 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
     if (snmp_verify_packet(&data, data+size, &pdu, &version))
     {
         if (appidDebug->is_active())
-            snort::LogMessage("AppIdDbg %s SNMP payload verify failed\n", appidDebug->get_debug_session());
+            LogMessage("AppIdDbg %s SNMP payload verify failed\n", appidDebug->get_debug_session());
         if (args.asd.get_session_flags(APPID_SESSION_UDP_REVERSED))
         {
             if (args.dir == APP_ID_FROM_RESPONDER)
@@ -441,7 +443,7 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
     if (appidDebug->is_active())
-        snort::LogMessage("AppIdDbg %s SNMP state %d\n", appidDebug->get_debug_session(), sd->state);
+        LogMessage("AppIdDbg %s SNMP state %d\n", appidDebug->get_debug_session(), sd->state);
 
     switch (sd->state)
     {
@@ -477,10 +479,10 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
 
         /*adding expected connection in case the server doesn't send from 161*/
         if(snmp_snort_protocol_id == UNKNOWN_PROTOCOL_ID)
-            snmp_snort_protocol_id = snort::SnortConfig::get_conf()->proto_ref->find("snmp");
+            snmp_snort_protocol_id = SnortConfig::get_conf()->proto_ref->find("snmp");
 
-        const snort::SfIp* dip = args.pkt->ptrs.ip_api.get_dst();
-        const snort::SfIp* sip = args.pkt->ptrs.ip_api.get_src();
+        const SfIp* dip = args.pkt->ptrs.ip_api.get_dst();
+        const SfIp* sip = args.pkt->ptrs.ip_api.get_src();
         AppIdSession* pf = AppIdSession::create_future_session(args.pkt, dip, 0, sip,
             args.pkt->ptrs.sp, args.asd.protocol, snmp_snort_protocol_id, 0);
         if (pf)

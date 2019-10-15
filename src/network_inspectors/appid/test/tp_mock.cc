@@ -36,6 +36,7 @@
 
 #define WhereMacro __FILE__ << ": " << __FUNCTION__ << ": " << __LINE__
 
+using namespace snort;
 using namespace std;
 
 class ThirdPartyAppIDModuleImpl : public ThirdPartyAppIDModule
@@ -78,7 +79,7 @@ class ThirdPartyAppIDSessionImpl : public ThirdPartyAppIDSession
 public:
 
     bool reset() override { return 1; }
-    TPState process(const snort::Packet&, AppidSessionDirection, vector<AppId>&,
+    TPState process(const Packet&, AppidSessionDirection, vector<AppId>&,
         ThirdPartyAppIDAttributeData&) override { return TP_STATE_INIT; }
 
     int disable_flags(uint32_t) override { return 0; }

@@ -11,7 +11,9 @@
 #include "appid_app_descriptor.h"
 #include "lua_detector_api.h"
 
-void ApplicationDescriptor::set_id(const snort::Packet& p, AppIdSession& asd,
+using namespace snort;
+
+void ApplicationDescriptor::set_id(const Packet& p, AppIdSession& asd,
     AppidSessionDirection dir, AppId app_id, AppidChangeBits& change_bits)
 {
     if ( my_id != app_id )

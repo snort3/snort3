@@ -38,11 +38,11 @@
 
 #include "file_api.h"
 
+class FileMemPool;
+
 namespace snort
 {
 class FileInfo;
-}
-class FileMemPool;
 
 struct FileCaptureBlock
 {
@@ -125,6 +125,7 @@ private:
     int64_t capture_min_size;
     int64_t capture_max_size;
 };
+}
 
 #endif
 

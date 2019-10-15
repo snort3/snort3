@@ -59,7 +59,7 @@ FlowHAState::FlowHAState() = default;
 
 void FlowHAState::reset() {}
 
-snort::FlowStash::~FlowStash() = default;
+FlowStash::~FlowStash() = default;
 
 void FlowStash::reset() {}
 
@@ -73,14 +73,14 @@ DetectionEngine::DetectionEngine() = default;
 
 DetectionEngine::~DetectionEngine() {}
 
-bool snort::layer::set_outer_ip_api(const Packet* const, ip::IpApi&, int8_t&)
+bool layer::set_outer_ip_api(const Packet* const, ip::IpApi&, int8_t&)
 { return false; }
 
 uint8_t ip::IpApi::ttl() const { return 0; }
 
-const Layer* snort::layer::get_mpls_layer(const Packet* const) { return nullptr; }
+const Layer* layer::get_mpls_layer(const Packet* const) { return nullptr; }
 
-void snort::DataBus::publish(const char*, Packet*, Flow*) {}
+void DataBus::publish(const char*, Packet*, Flow*) {}
 
 TEST_GROUP(nondefault_timeout)
 {

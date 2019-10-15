@@ -195,7 +195,7 @@ SfIpRet sfvt_define(vartable_t* table, const char* name, const char* value)
 
     len = strlen(name) + strlen(value) + 2;
     buf = (char*)snort_alloc(len);
-    snort::SnortSnprintf(buf, len, "%s %s", name, value);
+    SnortSnprintf(buf, len, "%s %s", name, value);
 
     ret = sfvt_add_str(table, buf, &ipret);
     if ((ret == SFIP_SUCCESS) || (ret == SFIP_DUPLICATE))
@@ -361,7 +361,7 @@ TEST_CASE("SfVarTable_Kitchen_Sink", "[SfVarTable]")
 {
     vartable_t* table;
     sfip_var_t* var;
-    snort::SfIp* ip;
+    SfIp* ip;
     SfIpRet status;
 
     table = sfvt_alloc_table();
@@ -388,7 +388,7 @@ TEST_CASE("SfVarTable_Kitchen_Sink", "[SfVarTable]")
 
     /* Containment tests */
     var = sfvt_lookup_var(table, "goo");
-    ip = (snort::SfIp *)snort_alloc(sizeof(snort::SfIp));
+    ip = (SfIp *)snort_alloc(sizeof(SfIp));
     status = ip->set("192.168.248.255");
     CHECK(SFIP_SUCCESS == status);
     CHECK((sfvar_ip_in(var, ip) == false));
@@ -404,12 +404,12 @@ TEST_CASE("SfVarTable_Kitchen_Sink", "[SfVarTable]")
     /* Check boundary cases */
     var = sfvt_lookup_var(table, "goo");
     snort_free(ip);
-    ip = (snort::SfIp *)snort_alloc(sizeof(snort::SfIp));
+    ip = (SfIp *)snort_alloc(sizeof(SfIp));
     status = ip->set("192.168.0.3");
     CHECK(SFIP_SUCCESS == status);
     CHECK((sfvar_ip_in(var, ip) == false));
     snort_free(ip);
-    ip = (snort::SfIp *)snort_alloc(sizeof(snort::SfIp));
+    ip = (SfIp *)snort_alloc(sizeof(SfIp));
     status = ip->set("192.168.0.2");
     CHECK(SFIP_SUCCESS == status);
     CHECK((sfvar_ip_in(var, ip) == true));

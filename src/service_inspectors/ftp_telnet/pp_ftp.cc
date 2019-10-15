@@ -1753,7 +1753,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                             char *file_name = strrchr(ftpssn->filename, '/');
                             if(!file_name)
                                 file_name = ftpssn->filename;
-                            ftpssn->path_hash = snort::str_to_hash((uint8_t *)file_name, strlen(file_name));
+                            ftpssn->path_hash = str_to_hash((uint8_t *)file_name, strlen(file_name));
 
                             // 0 for Download, 1 for Upload
                             ftpssn->data_xfer_dir = CmdConf->file_get_cmd ? false : true;

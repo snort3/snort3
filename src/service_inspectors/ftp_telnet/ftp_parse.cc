@@ -38,6 +38,8 @@
 #include "ftp_cmd_lookup.h"
 #include "ftpp_return_codes.h"
 
+using namespace snort;
+
 #define CONF_SEPARATORS " \n"
 
 #define ALLOW_BOUNCE      "bounce_to"
@@ -413,7 +415,7 @@ static int DoNextFormat(FTP_PARAM_FMT* ThisFmt, int allocated,
             {
                 /* explicit check that we have enough room for copy */
                 if (numChoices <= ThisFmt->numChoices)
-                    snort::ParseError("Can't do memcpy - index out of range ");
+                    ParseError("Can't do memcpy - index out of range ");
 
                 memcpy(tmpChoices, ThisFmt->choices,
                     sizeof(FTP_PARAM_FMT*) * ThisFmt->numChoices);
@@ -647,7 +649,7 @@ int ProcessFTPAllowBounce(
 
     if (iRet)
     {
-        snort::ParseError("Failed to add configuration for Bounce object '%s'.", ALLOW_BOUNCE);
+        ParseError("Failed to add configuration for Bounce object '%s'.", ALLOW_BOUNCE);
         snort_free(newBounce);
         return FTPP_FATAL_ERR;
     }

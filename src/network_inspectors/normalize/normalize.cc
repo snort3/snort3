@@ -70,7 +70,7 @@ static void Print_IP4(SnortConfig*, const NormalizerConfig* nc)
 
     if ( Norm_IsEnabled(nc, NORM_IP4_TTL) )
     {
-        NetworkPolicy* policy = snort::get_network_policy();
+        NetworkPolicy* policy = get_network_policy();
         LogMessage("%12s: %s (min=%d, new=%d)\n", "ip4.ttl", ON,
             policy->min_ttl, policy->new_ttl);
     }
@@ -92,7 +92,7 @@ static void Print_IP6(SnortConfig*, const NormalizerConfig* nc)
 
     if ( Norm_IsEnabled(nc, NORM_IP6_TTL) )
     {
-        NetworkPolicy* policy = snort::get_network_policy();
+        NetworkPolicy* policy = get_network_policy();
         LogMessage("%12s: %s (min=%d, new=%d)\n", "ip6.hops",
             ON, policy->min_ttl, policy->new_ttl);
     }
@@ -172,9 +172,9 @@ class Normalizer : public Inspector
 public:
     Normalizer(const NormalizerConfig&);
 
-    bool configure(snort::SnortConfig*) override;
-    void show(snort::SnortConfig*) override;
-    void eval(snort::Packet*) override;
+    bool configure(SnortConfig*) override;
+    void show(SnortConfig*) override;
+    void eval(Packet*) override;
 
 private:
     NormalizerConfig config;
@@ -189,11 +189,11 @@ Normalizer::Normalizer(const NormalizerConfig& nc)
 // but would be better if binder could select
 // in which case normal_mask must be moved to flow
 // from cwaxman - why can't normal_mask be applied directly from Normalizer?
-bool Normalizer::configure(snort::SnortConfig*)
+bool Normalizer::configure(SnortConfig*)
 {
     // FIXIT-M move entire config to network policy? Leaving split loads the currently selected
     // network policy with whichever instantiation of an inspection policy this normalize is in
-    NetworkPolicy* nap = snort::get_network_policy();
+    NetworkPolicy* nap = get_network_policy();
 
     nap->normal_mask = config.normalizer_flags;
 
@@ -211,10 +211,10 @@ bool Normalize_IsEnabled(NormFlags nf)
     if ( !(t_flags & nf) )
         return false;
 
-    if ( snort::get_inspection_policy()->policy_mode != POLICY_MODE__INLINE )
+    if ( get_inspection_policy()->policy_mode != POLICY_MODE__INLINE )
         return false;
 
-    NetworkPolicy* nap = snort::get_network_policy();
+    NetworkPolicy* nap = get_network_policy();
     return ( (nap->normal_mask & nf) != 0 );
 }
 
@@ -222,7 +222,7 @@ NormMode Normalize_GetMode(NormFlags nf)
 {
     if (Normalize_IsEnabled(nf))
     {
-        const PolicyMode mode = snort::get_inspection_policy()->policy_mode;
+        const PolicyMode mode = get_inspection_policy()->policy_mode;
 
         if ( mode == POLICY_MODE__INLINE )
             return NORM_MODE_ON;
@@ -230,7 +230,7 @@ NormMode Normalize_GetMode(NormFlags nf)
     return NORM_MODE_TEST;
 }
 
-void Normalizer::show(snort::SnortConfig* sc)
+void Normalizer::show(SnortConfig* sc)
 {
     LogMessage("Normalizer config:\n");
     Print_IP4(sc, &config);
@@ -240,7 +240,7 @@ void Normalizer::show(snort::SnortConfig* sc)
     Print_TCP(&config);
 }
 
-void Normalizer::eval(snort::Packet* p)
+void Normalizer::eval(Packet* p)
 {
     Profile profile(norm_perf_stats);
 

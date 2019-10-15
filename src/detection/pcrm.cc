@@ -42,6 +42,8 @@
 
 #include "fp_config.h"
 
+using namespace snort;
+
 PORT_RULE_MAP* prmNewMap()
 {
     PORT_RULE_MAP* p = (PORT_RULE_MAP*)snort_calloc(sizeof(PORT_RULE_MAP));
@@ -88,16 +90,16 @@ static int prmFindRuleGroup(
     assert(src and dst and gen);
     *src = *dst = *gen = nullptr;
 
-    if ( (dport != ANYPORT) and (dport < snort::MAX_PORTS) )
+    if ( (dport != ANYPORT) and (dport < MAX_PORTS) )
         *dst = p->prmDstPort[dport];
 
-    if ( (sport != ANYPORT) and (sport < snort::MAX_PORTS) )
+    if ( (sport != ANYPORT) and (sport < MAX_PORTS) )
         *src = p->prmSrcPort[sport];
 
     /* If no Src/Dst rules - use the generic set, if any exist  */
     if ( p->prmGeneric and (p->prmGeneric->rule_count > 0) )
     {
-        if ( snort::SnortConfig::get_conf()->fast_pattern_config->get_split_any_any() or (!*src and !*dst) )
+        if ( SnortConfig::get_conf()->fast_pattern_config->get_split_any_any() or (!*src and !*dst) )
         {
             *gen = p->prmGeneric;
         }

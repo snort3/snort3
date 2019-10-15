@@ -30,7 +30,6 @@
 #include "tcp_session.h"
 
 using namespace snort;
-using namespace std;
 
 TcpStateSynRecv::TcpStateSynRecv(TcpStateMachine& tsm) :
     TcpStateHandler(TcpStreamTracker::TCP_SYN_RECV, tsm)

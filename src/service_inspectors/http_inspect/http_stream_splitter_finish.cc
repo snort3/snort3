@@ -33,10 +33,11 @@
 
 using namespace HttpCommon;
 using namespace HttpEnums;
+using namespace snort;
 
-bool HttpStreamSplitter::finish(snort::Flow* flow)
+bool HttpStreamSplitter::finish(Flow* flow)
 {
-    snort::Profile profile(HttpModule::get_profile_stats());
+    Profile profile(HttpModule::get_profile_stats());
 
     HttpFlowData* session_data = (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
     // FIXIT-M - this assert has been changed to check for null session data and return false if so
@@ -123,10 +124,10 @@ bool HttpStreamSplitter::finish(snort::Flow* flow)
         (session_data->cutter[source_id] != nullptr)               &&
         (session_data->cutter[source_id]->get_octets_seen() == 0))
     {
-        snort::Packet* packet = snort::DetectionEngine::get_current_packet();
+        Packet* packet = DetectionEngine::get_current_packet();
         if (!session_data->mime_state[source_id])
         {
-            snort::FileFlows* file_flows = snort::FileFlows::get_file_flows(flow);
+            FileFlows* file_flows = FileFlows::get_file_flows(flow);
             const bool download = (source_id == SRC_SERVER);
 
             size_t file_index = 0;
@@ -155,9 +156,9 @@ bool HttpStreamSplitter::finish(snort::Flow* flow)
     return session_data->section_type[source_id] != SEC__NOT_COMPUTE;
 }
 
-bool HttpStreamSplitter::init_partial_flush(snort::Flow* flow)
+bool HttpStreamSplitter::init_partial_flush(Flow* flow)
 {
-    snort::Profile profile(HttpModule::get_profile_stats());
+    Profile profile(HttpModule::get_profile_stats());
 
     if (source_id != SRC_SERVER)
     {

@@ -82,8 +82,8 @@ void Swapper::apply(Analyzer& analyzer)
 {
     if ( new_conf )
     {
-        const bool reload = (snort::SnortConfig::get_conf() != nullptr);
-        snort::SnortConfig::set_conf(new_conf);
+        const bool reload = (SnortConfig::get_conf() != nullptr);
+        SnortConfig::set_conf(new_conf);
         // FIXIT-M Determine whether we really want to do this before or after the set_conf
         if (reload)
             analyzer.reinit(new_conf);

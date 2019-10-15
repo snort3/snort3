@@ -114,7 +114,7 @@ bool HostCacheModule::end(const char* fqn, int, SnortConfig*)
 //-------------------------------------------------------------------------
 
 HostCacheModule::HostCacheModule() :
-    snort::Module(HOST_CACHE_NAME, HOST_CACHE_HELP, host_cache_params) { }
+    Module(HOST_CACHE_NAME, HOST_CACHE_HELP, host_cache_params) { }
 
 HostCacheModule::~HostCacheModule()
 {

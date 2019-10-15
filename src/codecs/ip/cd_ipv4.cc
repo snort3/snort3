@@ -166,7 +166,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         return false;
     }
 
-    if ( snort::SnortConfig::get_conf()->hit_ip_maxlayers(codec.ip_layer_cnt) )
+    if ( SnortConfig::get_conf()->hit_ip_maxlayers(codec.ip_layer_cnt) )
     {
         codec_event(codec, DECODE_IP_MULTIPLE_ENCAPSULATION);
         return false;
@@ -223,7 +223,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         /* If the previous layer was not IP-in-IP, this is not a 4-in-6 tunnel */
         if ( codec.codec_flags & CODEC_NON_IP_TUNNEL )
             codec.codec_flags &= ~CODEC_NON_IP_TUNNEL;
-        else if ( snort::SnortConfig::tunnel_bypass_enabled(TUNNEL_4IN6) )
+        else if ( SnortConfig::tunnel_bypass_enabled(TUNNEL_4IN6) )
             codec.tunnel_bypass = true;
     }
     else if (snort.ip_api.is_ip4())
@@ -231,7 +231,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         /* If the previous layer was not IP-in-IP, this is not a 4-in-4 tunnel */
         if ( codec.codec_flags & CODEC_NON_IP_TUNNEL )
             codec.codec_flags &= ~CODEC_NON_IP_TUNNEL;
-        else if (snort::SnortConfig::tunnel_bypass_enabled(TUNNEL_4IN4))
+        else if (SnortConfig::tunnel_bypass_enabled(TUNNEL_4IN4))
             codec.tunnel_bypass = true;
     }
 
@@ -253,7 +253,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
      */
     IP4AddrTests(iph, codec, snort);
 
-    if (snort::SnortConfig::ip_checksums() && !valid_checksum_from_daq(raw))
+    if (SnortConfig::ip_checksums() && !valid_checksum_from_daq(raw))
     {
         // routers drop packets with bad IP checksums, we don't really need to check them...
         int16_t csum = checksum::ip_cksum((const uint16_t*)iph, hlen);
@@ -556,7 +556,7 @@ void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const ip::IP4Hdr* const ip4h = reinterpret_cast<const ip::IP4Hdr*>(raw_pkt);
 
     // FIXIT-RC this does NOT obfuscate correctly
-    if (snort::SnortConfig::obfuscate())
+    if (SnortConfig::obfuscate())
     {
         TextLog_Print(text_log, "xxx.xxx.xxx.xxx -> xxx.xxx.xxx.xxx");
     }

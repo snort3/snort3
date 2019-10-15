@@ -42,7 +42,7 @@ using namespace snort;
 static inline bool is_eligible_packet(const Packet* p)
 {
     if ( p->has_ip() or
-        memcmp(snort::layer::get_eth_layer(p)->ether_src, zero_mac, MAC_SIZE) )
+        memcmp(layer::get_eth_layer(p)->ether_src, zero_mac, MAC_SIZE) )
         return true;
     return false;
 }
@@ -68,8 +68,8 @@ static inline bool is_eligible_udp(const Packet* p)
         return false;
     if ( p->is_from_client() )
     {
-        const snort::SfIp* src = p->ptrs.ip_api.get_src();
-        const snort::SfIp* dst = p->ptrs.ip_api.get_dst();
+        const SfIp* src = p->ptrs.ip_api.get_src();
+        const SfIp* dst = p->ptrs.ip_api.get_dst();
         if ( !src->is_set() and IN6_IS_ADDR_MULTICAST(dst->get_ip6_ptr()) and
             p->ptrs.sp == 68 and p->ptrs.dp == 67 )
             return false; // skip BOOTP
@@ -162,7 +162,7 @@ void RnaPnd::discover_network(const Packet* p, u_int8_t ttl)
 
 }
 
-void RnaPnd::generate_change_host_update(RnaTracker* ht, const snort::Packet* p,
+void RnaPnd::generate_change_host_update(RnaTracker* ht, const Packet* p,
     const SfIp* src_ip, const uint8_t* src_mac, time_t sec)
 {
     if ( !ht || !update_timeout)

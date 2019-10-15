@@ -79,7 +79,7 @@ static inline void trace_vprintf(const char* name, Trace mask, const char* file,
 
     vsnprintf(buf_ptr, buf_len, fmt, ap);
 
-    if ( snort::SnortConfig::get_conf() and snort::SnortConfig::log_syslog() )
+    if ( SnortConfig::get_conf() and SnortConfig::log_syslog() )
         syslog(LOG_DAEMON | LOG_DEBUG, "%s", buf);
     else
         output(buf, stdout);

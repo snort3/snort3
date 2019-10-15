@@ -42,7 +42,7 @@
 
 THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
 void AppIdDebug::activate(const Flow*, const AppIdSession*, bool) { active = true; }
-void ApplicationDescriptor::set_id(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
+void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 using namespace snort;
 
 namespace snort
@@ -67,7 +67,7 @@ class FakeHttpMsgHeader
 };
 FakeHttpMsgHeader* fake_msg_header = nullptr;
 
-void AppIdDiscovery::publish_appid_event(AppidChangeBits&, snort::Flow*) {}
+void AppIdDiscovery::publish_appid_event(AppidChangeBits&, Flow*) {}
 
 void AppIdHttpSession::set_http_change_bits(AppidChangeBits&, HttpFieldIds) {}
 

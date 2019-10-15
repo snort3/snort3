@@ -549,14 +549,14 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* config, const char* pa
 }
 
 SnortProtocolId AppInfoManager::add_appid_protocol_reference(const char* protocol,
-    snort::SnortConfig* sc)
+    SnortConfig* sc)
 {
     SnortProtocolId snort_protocol_id = sc->proto_ref->add(protocol);
     return snort_protocol_id;
 }
 
 void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config,
-    snort::SnortConfig* sc)
+    SnortConfig* sc)
 {
     if ( !mod_config->app_detector_dir )
     {

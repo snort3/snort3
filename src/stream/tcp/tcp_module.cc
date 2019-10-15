@@ -29,7 +29,6 @@
 #include "stream/paf.h"
 
 using namespace snort;
-using namespace std;
 
 //-------------------------------------------------------------------------
 // stream_tcp module

@@ -28,7 +28,7 @@
 #include "tcp_normalizers.h"
 #include "tcp_session.h"
 
-using namespace std;
+using namespace snort;
 
 TcpStateFinWait2::TcpStateFinWait2(TcpStateMachine& tsm) :
     TcpStateHandler(TcpStreamTracker::TCP_FIN_WAIT2, tsm)
@@ -103,7 +103,7 @@ bool TcpStateFinWait2::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker
 
 bool TcpStateFinWait2::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    snort::Flow* flow = tsd.get_flow();
+    Flow* flow = tsd.get_flow();
 
     trk.update_tracker_ack_recv(tsd);
     if ( trk.update_on_fin_recv(tsd) )

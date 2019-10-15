@@ -36,7 +36,7 @@ using namespace HttpCommon;
 using namespace HttpEnums;
 
 HttpMsgBody::HttpMsgBody(const uint8_t* buffer, const uint16_t buf_size,
-    HttpFlowData* session_data_, SourceId source_id_, bool buf_owner, snort::Flow* flow_,
+    HttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_,
     const HttpParaList* params_) :
     HttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_),
     body_octets(session_data->body_octets[source_id]),
@@ -60,7 +60,7 @@ void HttpMsgBody::analyze()
         detect_data.set(detect_length, js_norm_body.start());
         if (!session_data->partial_flush[source_id])
             session_data->detect_depth_remaining[source_id] -= detect_length;
-        snort::set_file_data(const_cast<uint8_t*>(detect_data.start()),
+        set_file_data(const_cast<uint8_t*>(detect_data.start()),
             (unsigned)detect_data.length());
     }
 
@@ -223,7 +223,7 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
 
     if (!session_data->mime_state[source_id])
     {
-        snort::FileFlows* file_flows = snort::FileFlows::get_file_flows(flow);
+        FileFlows* file_flows = FileFlows::get_file_flows(flow);
         const bool download = (source_id == SRC_SERVER);
 
         size_t file_index = 0;

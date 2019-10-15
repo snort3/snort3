@@ -28,6 +28,8 @@
 
 #include "log/messages.h"
 
+using namespace snort;
+
 namespace Lua
 {
 State::State(bool openlibs)
@@ -35,7 +37,7 @@ State::State(bool openlibs)
     state = luaL_newstate();
 
     if ( !state )
-        snort::FatalError("Lua state instantiation failed\n");
+        FatalError("Lua state instantiation failed\n");
 
     if ( openlibs )
         luaL_openlibs(state);

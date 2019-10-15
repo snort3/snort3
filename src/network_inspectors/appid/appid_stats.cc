@@ -242,7 +242,7 @@ static void update_stats(const AppIdSession& asd, AppId app_id, StatsBucket* buc
         }
         else
         {
-            snort::WarningMessage("Error saving statistics record for app id: %d", app_id);
+            WarningMessage("Error saving statistics record for app id: %d", app_id);
             snort_free(record);
             record = nullptr;
         }

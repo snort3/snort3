@@ -28,6 +28,8 @@
 #include "port_object.h"
 #include "port_table.h"
 
+using namespace snort;
+
 #define DEFAULT_LARGE_RULE_GROUP 9
 
 PortProto::PortProto()
@@ -39,7 +41,7 @@ PortProto::PortProto()
     nfp = PortObjectNew();
 
     if ( !src or !dst or !any or !nfp )
-        snort::ParseAbort("can't allocate port structs");
+        ParseAbort("can't allocate port structs");
 
    // someday these could be read from snort.conf, something like...
    // 'config portlist: large-rule-count <val>'
@@ -70,7 +72,7 @@ RulePortTables* PortTablesNew()
     RulePortTables* rpt = new RulePortTables;
 
     if ( !(rpt->svc_any = PortObjectNew()) )
-        snort::ParseAbort("ParseRulesFile udp any-any PortObjectNew() failed");
+        ParseAbort("ParseRulesFile udp any-any PortObjectNew() failed");
 
     PortObjectAddPortAny(rpt->svc_any);
 

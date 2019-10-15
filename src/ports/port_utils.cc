@@ -213,5 +213,5 @@ int* RuleListToSortedArray(SF_LIST* rl)
 // printing
 //-------------------------------------------------------------------------
 
-char po_print_buf[snort::MAX_PORTS];
+char po_print_buf[MAX_PORTS];
 

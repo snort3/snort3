@@ -32,6 +32,8 @@
 #include "catch/snort_catch.h"
 #endif
 
+using namespace snort;
+
 static hwloc_topology_t topology = nullptr;
 static hwloc_cpuset_t process_cpuset = nullptr;
 static const struct hwloc_topology_support* topology_support = nullptr;
@@ -136,7 +138,7 @@ void ThreadConfig::set_thread_affinity(SThreadType type, unsigned id, CpuSet* cp
         thread_affinity[key] = cpuset;
     }
     else
-        snort::ParseWarning(WARN_CONF, "This platform does not support setting thread affinity.\n");
+        ParseWarning(WARN_CONF, "This platform does not support setting thread affinity.\n");
 }
 
 void ThreadConfig::implement_thread_affinity(SThreadType type, unsigned id)
@@ -158,13 +160,13 @@ void ThreadConfig::implement_thread_affinity(SThreadType type, unsigned id)
     current_cpuset = hwloc_bitmap_alloc();
     hwloc_get_cpubind(topology, current_cpuset, HWLOC_CPUBIND_THREAD);
     if (!hwloc_bitmap_isequal(current_cpuset, desired_cpuset))
-        snort::LogMessage("Binding thread %u (type %u) to %s.\n", id, type, s);
+        LogMessage("Binding thread %u (type %u) to %s.\n", id, type, s);
     hwloc_bitmap_free(current_cpuset);
 
     if (hwloc_set_cpubind(topology, desired_cpuset, HWLOC_CPUBIND_THREAD))
     {
-        snort::FatalError("Failed to pin thread %u (type %u) to %s: %s (%d)\n",
-                id, type, s, snort::get_error(errno), errno);
+        FatalError("Failed to pin thread %u (type %u) to %s: %s (%d)\n",
+                id, type, s, get_error(errno), errno);
     }
 
     free(s);

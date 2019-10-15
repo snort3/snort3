@@ -836,7 +836,7 @@ static int EventTest(EventData* p, THD_NODE* rule)
     long curtime = (long)p->now;
     int status;
 
-    snort::SfIp sip, dip;
+    SfIp sip, dip;
     sip.set(p->sip);
     dip.set(p->dip);
 

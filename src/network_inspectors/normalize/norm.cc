@@ -164,7 +164,7 @@ static inline NormMode get_norm_mode(const Packet * const p)
 {
     NormMode mode = NORM_MODE_ON;
 
-    if ( snort::get_inspection_policy()->policy_mode != POLICY_MODE__INLINE )
+    if ( get_inspection_policy()->policy_mode != POLICY_MODE__INLINE )
         mode = NORM_MODE_TEST;
 
     if ( !SFDAQ::forwarding_packet(p->pkth) )

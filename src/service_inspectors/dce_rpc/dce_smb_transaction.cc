@@ -217,7 +217,7 @@ static DCE2_Ret DCE2_SmbTransactionReq(DCE2_SmbSsnData* ssd,
         // Only two parameters but more seems okay
         if (param_len >= 2)
         {
-            if ((snort::alignedNtohs((const uint16_t*)param_ptr) & PIPE_STATE_MESSAGE_MODE))
+            if ((alignedNtohs((const uint16_t*)param_ptr) & PIPE_STATE_MESSAGE_MODE))
                 ttracker->pipe_byte_mode = false;
             else
                 ttracker->pipe_byte_mode = true;
@@ -1031,7 +1031,7 @@ static DCE2_Ret DCE2_SmbTrans2SetFileInfoReq(DCE2_SmbSsnData* ssd,
         || (ftracker->ff_bytes_processed != 0))
         return DCE2_RET__IGNORE;
 
-    ssd->cur_rtracker->file_size = snort::alignedNtohq((const uint64_t*)data_ptr);
+    ssd->cur_rtracker->file_size = alignedNtohq((const uint64_t*)data_ptr);
     ssd->cur_rtracker->ftracker = ftracker;
 
     return DCE2_RET__SUCCESS;
@@ -1138,7 +1138,7 @@ DCE2_Ret DCE2_SmbTransaction(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             {
                 const uint8_t* data_ptr = DCE2_BufferData(ttracker->dbuf);
                 uint32_t data_len = DCE2_BufferLength(ttracker->dbuf);
-                snort::Packet* rpkt = DCE2_SmbGetRpkt(ssd, &data_ptr,
+                Packet* rpkt = DCE2_SmbGetRpkt(ssd, &data_ptr,
                     &data_len, DCE2_RPKT_TYPE__SMB_TRANS);
 
                 if (rpkt == nullptr)
@@ -1592,7 +1592,7 @@ DCE2_Ret DCE2_SmbTransactionSecondary(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_
     {
         const uint8_t* data_ptr = DCE2_BufferData(ttracker->dbuf);
         uint32_t data_len = DCE2_BufferLength(ttracker->dbuf);
-        snort::Packet* rpkt = DCE2_SmbGetRpkt(ssd, &data_ptr, &data_len, DCE2_RPKT_TYPE__SMB_TRANS);
+        Packet* rpkt = DCE2_SmbGetRpkt(ssd, &data_ptr, &data_len, DCE2_RPKT_TYPE__SMB_TRANS);
 
         if (rpkt == nullptr)
             return DCE2_RET__ERROR;    

@@ -26,6 +26,7 @@
 #include "http_msg_request.h"
 
 using namespace HttpEnums;
+using namespace snort;
 
 const StrCode HttpMsgRequest::method_list[] =
 {
@@ -274,7 +275,7 @@ const HeaderNormalizer* const HttpMsgHeadShared::header_norms[HEAD__MAX_VALUE] =
     &NORMALIZER_BASIC,      // HEAD_PROXY_AGENT
 };
 
-const snort::RuleMap HttpModule::http_events[] =
+const RuleMap HttpModule::http_events[] =
 {
     { EVENT_ASCII,                      "ascii encoding" },
     { EVENT_DOUBLE_DECODE,              "double decoding attack" },

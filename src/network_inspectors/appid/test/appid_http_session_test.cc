@@ -44,7 +44,7 @@
 #include <CppUTest/TestHarness.h>
 using namespace snort;
 
-void ApplicationDescriptor::set_id(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
+void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 const char* AppInfoManager::get_app_name(AppId)
 {
     return "";
@@ -72,7 +72,7 @@ AppId HttpPatternMatchers::scan_chp(ChpMatchDescriptor&, char**, char**,
 }
 
 void HttpPatternMatchers::get_server_vendor_version(const char*, int, char**,
-    char**, snort::AppIdServiceSubtype**)
+    char**, AppIdServiceSubtype**)
 {
 }
 

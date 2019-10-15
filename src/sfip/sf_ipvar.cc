@@ -1321,23 +1321,23 @@ TEST_CASE("SfIpVarListMerge", "[SfIpVar]")
         CHECK(!strcmp("!9.0.0.0,!dead:beef:0000:0000:0000:0000:0000:0000", sfipvar_test_buff));
 
         /* Check lookups */
-        snort::SfIp* ip = (snort::SfIp *)snort_alloc(sizeof(snort::SfIp));
+        SfIp* ip = (SfIp *)snort_alloc(sizeof(SfIp));
         CHECK(ip->set("9.8.3.2") == SFIP_SUCCESS);
         CHECK((sfvar_ip_in(var1, ip) == false));
         snort_free(ip);
 
-        ip = (snort::SfIp *)snort_alloc(sizeof(snort::SfIp));
+        ip = (SfIp *)snort_alloc(sizeof(SfIp));
         uint16_t srcBits;
         CHECK(ip->set("1.2.3.4/24", &srcBits) == SFIP_SUCCESS);
         CHECK((sfvar_ip_in(var1, ip) == true));
         snort_free(ip);
 
-        ip = (snort::SfIp *)snort_alloc(sizeof(snort::SfIp));
+        ip = (SfIp *)snort_alloc(sizeof(SfIp));
         CHECK(ip->set("dead:beef::0") == SFIP_SUCCESS);
         CHECK((sfvar_ip_in(var1, ip) == false));
         snort_free(ip);
 
-        ip = (snort::SfIp *)snort_alloc(sizeof(snort::SfIp));
+        ip = (SfIp *)snort_alloc(sizeof(SfIp));
         CHECK(ip->set("cafe:abcd::9999") == SFIP_SUCCESS);
         CHECK((sfvar_ip_in(var1, ip) == true));
         snort_free(ip);

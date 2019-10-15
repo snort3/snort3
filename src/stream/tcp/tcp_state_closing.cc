@@ -32,7 +32,7 @@
 #include "catch/snort_catch.h"
 #endif
 
-using namespace std;
+using namespace snort;
 
 TcpStateClosing::TcpStateClosing(TcpStateMachine& tsm) :
     TcpStateHandler(TcpStreamTracker::TCP_CLOSING, tsm)
@@ -89,7 +89,7 @@ bool TcpStateClosing::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateClosing::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    snort::Flow* flow = tsd.get_flow();
+    Flow* flow = tsd.get_flow();
 
     trk.update_tracker_ack_recv(tsd);
     if ( SEQ_GT(tsd.get_seg_seq(), trk.get_fin_final_seq() ) )

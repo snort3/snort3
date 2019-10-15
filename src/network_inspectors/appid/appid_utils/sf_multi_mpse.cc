@@ -28,6 +28,8 @@
 #include "search_engines/search_tool.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 struct tPatternRootNode;
 struct tPatternList
 {
@@ -41,7 +43,7 @@ struct tPatternList
 /*Root node */
 struct tPatternRootNode
 {
-    snort::SearchTool* patternTree;
+    SearchTool* patternTree;
     tPatternList* patternList;
     tPatternList* lastPattern;
     unsigned int level;        /*some searches may be specific to levels. Increments from 1 at top
@@ -180,11 +182,11 @@ static int compareAppUrlPatterns(const void* p1, const void* p2)
 static int createTreesRecusively(void* root)
 {
     tPatternRootNode* rootNode = (tPatternRootNode*)root;
-    snort::SearchTool* patternMatcher;
+    SearchTool* patternMatcher;
     tPatternList* patternNode;
 
     /* set up the MPSE for url patterns */
-    if (!(patternMatcher = rootNode->patternTree = new snort::SearchTool("ac_full", true)))
+    if (!(patternMatcher = rootNode->patternTree = new SearchTool("ac_full", true)))
         return -1;
 
     for (patternNode = rootNode->patternList;

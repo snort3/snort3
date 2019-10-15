@@ -216,7 +216,7 @@ void MimeDecode::file_decomp_init()
     (void)File_Decomp_Init(fd_state);
 }
 
-MimeDecode::MimeDecode(snort::DecodeConfig* conf)
+MimeDecode::MimeDecode(DecodeConfig* conf)
 {
     config = conf;
     file_decomp_init();

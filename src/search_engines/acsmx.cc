@@ -60,6 +60,8 @@
 #include "main/thread.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 #define MEMASSERT(p,s) if (!(p)) { fprintf(stderr,"ACSM-No Memory: %s\n",s); exit(0); }
 
 static int max_memory = 0;
@@ -315,7 +317,7 @@ int acsmAddPattern(
     return 0;
 }
 
-static void acsmBuildMatchStateTrees(snort::SnortConfig* sc, ACSM_STRUCT* acsm)
+static void acsmBuildMatchStateTrees(SnortConfig* sc, ACSM_STRUCT* acsm)
 {
     ACSM_PATTERN* mlist;
 
@@ -402,7 +404,7 @@ static inline int _acsmCompile(ACSM_STRUCT* acsm)
     return 0;
 }
 
-int acsmCompile(snort::SnortConfig* sc, ACSM_STRUCT* acsm)
+int acsmCompile(SnortConfig* sc, ACSM_STRUCT* acsm)
 {
     if ( int rval = _acsmCompile (acsm) )
         return rval;

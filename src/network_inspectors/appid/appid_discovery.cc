@@ -158,7 +158,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
         misc_id, change_bits);
 }
 
-void AppIdDiscovery::publish_appid_event(AppidChangeBits& change_bits, snort::Flow* flow)
+void AppIdDiscovery::publish_appid_event(AppidChangeBits& change_bits, Flow* flow)
 {
     if (change_bits.none())
         return;

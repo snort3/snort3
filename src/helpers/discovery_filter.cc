@@ -258,7 +258,7 @@ bool DiscoveryFilter::is_monitored(const Packet* p, FilterType type)
     return sfvar_ip_in(varip, p->ptrs.ip_api.get_src()); // source ip only
 }
 
-bool DiscoveryFilter::is_port_excluded(const snort::Packet* p)
+bool DiscoveryFilter::is_port_excluded(const Packet* p)
 {
     // Port exclusion: if the ip is in the port x protocol list, return true.
     uint32_t key;

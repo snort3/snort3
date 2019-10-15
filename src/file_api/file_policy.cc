@@ -86,26 +86,26 @@ void FilePolicy::insert_file_rule(FileRule& rule)
     }
 
     // Enable file type for all other features
-    snort::FileService::enable_file_type();
+    FileService::enable_file_type();
     type_enabled = true;
 
     if (rule.use.signature_enabled)
-        snort::FileService::enable_file_signature();
+        FileService::enable_file_signature();
 
     if (rule.use.capture_enabled)
-        snort::FileService::enable_file_capture();
+        FileService::enable_file_capture();
 }
 
 void FilePolicy::load()
 {
     if (type_enabled)
-        snort::FileService::enable_file_type();
+        FileService::enable_file_type();
 
     if (signature_enabled)
-        snort::FileService::enable_file_signature();
+        FileService::enable_file_signature();
 
     if (capture_enabled)
-        snort::FileService::enable_file_capture();
+        FileService::enable_file_capture();
 
     // Use default global setting
     emptyRule.use.type_enabled = type_enabled;

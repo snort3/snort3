@@ -82,7 +82,7 @@ int ftp_bounce_lookup_cleanup(BOUNCE_LOOKUP** BounceLookup)
  * Returns: int => return code indicating error or success
  *
  */
-int ftp_bounce_lookup_add(BOUNCE_LOOKUP* BounceLookup, const snort::SfIp* Ip,
+int ftp_bounce_lookup_add(BOUNCE_LOOKUP* BounceLookup, const SfIp* Ip,
     FTP_BOUNCE_TO* BounceTo)
 {
     int iRet;
@@ -130,7 +130,7 @@ int ftp_bounce_lookup_add(BOUNCE_LOOKUP* BounceLookup, const snort::SfIp* Ip,
  *                            matching IP if found, NULL otherwise.
  *
  */
-FTP_BOUNCE_TO* ftp_bounce_lookup_find(BOUNCE_LOOKUP* BounceLookup, const snort::SfIp* Ip,
+FTP_BOUNCE_TO* ftp_bounce_lookup_find(BOUNCE_LOOKUP* BounceLookup, const SfIp* Ip,
     int* iError)
 {
     FTP_BOUNCE_TO* BounceTo = nullptr;

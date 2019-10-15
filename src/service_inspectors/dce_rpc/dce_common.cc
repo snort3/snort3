@@ -164,14 +164,14 @@ void DCE2_Detect(DCE2_SsnData* sd)
         DCE2_Detect(sd);
         return;
     }
-    snort::Packet* top_pkt = DetectionEngine::get_current_packet();
+    Packet* top_pkt = DetectionEngine::get_current_packet();
     DetectionEngine::detect(top_pkt);
     dce2_detected = 1;
     /* Always reset rule option data after detecting */
     DCE2_ResetRopts(sd , top_pkt);
 }
 
-DCE2_TransType get_dce2_trans_type(const snort::Packet* p)
+DCE2_TransType get_dce2_trans_type(const Packet* p)
 {
     DCE2_SmbSsnData* smb_data = get_dce2_smb_session_data(p->flow);
     DCE2_SsnData* sd = (smb_data != nullptr) ? &(smb_data->sd) : nullptr;
@@ -239,7 +239,7 @@ bool DceEndianness::get_offset_endianness(int32_t offset, uint8_t& endian)
 
 uint16_t DCE2_GetRpktMaxData(DCE2_RpktType rtype)
 {
-    snort::Packet* p = DetectionEngine::get_current_packet();
+    Packet* p = DetectionEngine::get_current_packet();
     uint16_t overhead = 0;
 
     switch (rtype)
@@ -275,10 +275,10 @@ uint16_t DCE2_GetRpktMaxData(DCE2_RpktType rtype)
         assert(false);
         return 0;
     }
-    return (snort::Packet::max_dsize - overhead);
+    return (Packet::max_dsize - overhead);
 }
 
-static void dce2_fill_rpkt_info(snort::Packet* rpkt, snort::Packet* p)
+static void dce2_fill_rpkt_info(Packet* rpkt, Packet* p)
 {
     rpkt->endianness = new DceEndianness();
     rpkt->pkth = p->pkth;
@@ -292,10 +292,10 @@ static void dce2_fill_rpkt_info(snort::Packet* rpkt, snort::Packet* p)
     rpkt->user_network_policy_id = p->user_network_policy_id;
 }
 
-snort::Packet* DCE2_GetRpkt(snort::Packet* p,DCE2_RpktType rpkt_type,
+Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
     const uint8_t* data, uint32_t data_len)
 {
-    snort::Packet* rpkt = DetectionEngine::set_next_packet(p);
+    Packet* rpkt = DetectionEngine::set_next_packet(p);
     uint8_t* wrdata = const_cast<uint8_t*>(rpkt->data);
     dce2_fill_rpkt_info(rpkt, p);
     uint16_t data_overhead = 0;
@@ -394,10 +394,10 @@ snort::Packet* DCE2_GetRpkt(snort::Packet* p,DCE2_RpktType rpkt_type,
         return nullptr;
     }
 
-    if ((data_overhead + data_len) > snort::Packet::max_dsize)
-        data_len -= (data_overhead + data_len) - snort::Packet::max_dsize;
+    if ((data_overhead + data_len) > Packet::max_dsize)
+        data_len -= (data_overhead + data_len) - Packet::max_dsize;
 
-    if (data_len > snort::Packet::max_dsize - data_overhead)
+    if (data_len > Packet::max_dsize - data_overhead)
     {
         delete rpkt->endianness;
         rpkt->endianness = nullptr;
@@ -405,14 +405,14 @@ snort::Packet* DCE2_GetRpkt(snort::Packet* p,DCE2_RpktType rpkt_type,
     }
 
     memcpy_s((void*)(rpkt->data + data_overhead),
-        snort::Packet::max_dsize - data_overhead, data, data_len);
+        Packet::max_dsize - data_overhead, data, data_len);
 
     rpkt->dsize = data_len + data_overhead;
     using_rpkt = true;
     return rpkt;
 }
 
-DCE2_Ret DCE2_AddDataToRpkt(snort::Packet* rpkt, const uint8_t* data, uint32_t data_len)
+DCE2_Ret DCE2_AddDataToRpkt(Packet* rpkt, const uint8_t* data, uint32_t data_len)
 {
     if ((rpkt == nullptr) || (data == nullptr) || (data_len == 0))
         return DCE2_RET__ERROR;
@@ -421,16 +421,16 @@ DCE2_Ret DCE2_AddDataToRpkt(snort::Packet* rpkt, const uint8_t* data, uint32_t d
         return DCE2_RET__ERROR;
 
     // FIXIT-L PORT_IF_NEEDED packet size and hdr check
-    const uint8_t* pkt_data_end = rpkt->data + snort::Packet::max_dsize;
+    const uint8_t* pkt_data_end = rpkt->data + Packet::max_dsize;
     const uint8_t* payload_end = rpkt->data + rpkt->dsize;
 
     if ((payload_end + data_len) > pkt_data_end)
         data_len = pkt_data_end - payload_end;
 
-    if (data_len > snort::Packet::max_dsize - rpkt->dsize)
+    if (data_len > Packet::max_dsize - rpkt->dsize)
         return DCE2_RET__ERROR;
 
-    memcpy_s((void*)(payload_end), snort::Packet::max_dsize - rpkt->dsize,
+    memcpy_s((void*)(payload_end), Packet::max_dsize - rpkt->dsize,
         data, data_len);
 
     rpkt->dsize += (uint16_t)data_len;

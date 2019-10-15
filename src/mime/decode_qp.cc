@@ -31,6 +31,8 @@
 
 #include "decode_buffer.h"
 
+using namespace snort;
+
 void QPDecode::reset_decode_state()
 {
     reset_decoded_bytes();
@@ -49,7 +51,7 @@ DecodeResult QPDecode::decode_data(const uint8_t* start, const uint8_t* end, uin
 
     uint32_t encode_avail = buffer->get_encode_avail() - buffer->get_prev_encoded_bytes();
 
-    if (snort::sf_strip_LWS(start, (end-start), buffer->get_encode_buff() + buffer->get_prev_encoded_bytes(),
+    if (sf_strip_LWS(start, (end-start), buffer->get_encode_buff() + buffer->get_prev_encoded_bytes(),
         encode_avail, &act_encode_size) != 0)
     {
         reset_decode_state();

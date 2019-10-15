@@ -1588,7 +1588,7 @@ TEST_CASE("handle_header_line", "[smtp]")
 {
     // Setup
     MailLogConfig log_config;
-    snort::DecodeConfig decode_conf;
+    DecodeConfig decode_conf;
     log_config.log_email_hdrs = 0;
     SmtpMime mime_ssn(&decode_conf, &log_config);
     smtp_normalizing = true;
@@ -1614,7 +1614,7 @@ TEST_CASE("normalize_data", "[smtp]")
 {
     // Setup
     MailLogConfig log_config;
-    snort::DecodeConfig decode_conf;
+    DecodeConfig decode_conf;
     SmtpMime mime_ssn(&decode_conf, &log_config);
     smtp_normalizing = true;
     SMTP_PROTO_CONF config;

@@ -45,7 +45,7 @@ FlowData::FlowData(unsigned, Inspector*) { }
 FlowData::~FlowData() = default;
 }
 
-void ApplicationDescriptor::set_id(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
+void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 class AppIdInspector
 {
 public:

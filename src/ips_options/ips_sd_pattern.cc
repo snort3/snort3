@@ -352,7 +352,7 @@ bool SdPatternModule::set(const char*, Value& v, SnortConfig*)
         return false;
 
     // Check if built-in pattern should be used.
-    IpsPolicy* p = snort::get_ips_policy();
+    IpsPolicy* p = get_ips_policy();
     if (config.pii == "credit_card")
     {
         config.pii = SD_CREDIT_PATTERN_ALL;

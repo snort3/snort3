@@ -117,7 +117,7 @@ int PortObjectAddItem(PortObject* po, PortObjectItem* poi, int* errflag)
         p=(PortObjectItem*)sflist_next(&pos) )
     {
         if ((p->lport == poi->lport) && (p->hport == poi->hport))
-            snort::ParseWarning(WARN_RULES, "duplicate ports in list");
+            ParseWarning(WARN_RULES, "duplicate ports in list");
     }
 
     sflist_add_tail(po->item_list, poi);
@@ -553,7 +553,7 @@ void PortObjectPrintPortsRaw(PortObject* po)
 
     SnortSnprintfAppend(buf, bufsize, " ]");
 
-    snort::LogMessage("%s", buf);
+    LogMessage("%s", buf);
 
     snort_free(buf);
 }
@@ -572,7 +572,7 @@ void PortObjectPrintEx(PortObject* po, po_print_f print_index_map)
     unsigned i;
 
     /* static for printing so we don't put so many bytes on the stack */
-    static char print_buf[snort::MAX_PORTS];  // FIXIT-L delete this; replace with local stringstream
+    static char print_buf[MAX_PORTS];  // FIXIT-L delete this; replace with local stringstream
 
     int bufsize = sizeof(print_buf);
     print_buf[0] = '\0';
@@ -640,7 +640,7 @@ void PortObjectPrintEx(PortObject* po, po_print_f print_index_map)
     }
     SnortSnprintfAppend(print_buf, bufsize, "  ]\n }\n");
 
-    snort::LogMessage("%s", print_buf);
+    LogMessage("%s", print_buf);
     snort_free(rlist);
 }
 

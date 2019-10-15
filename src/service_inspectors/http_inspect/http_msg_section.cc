@@ -37,9 +37,10 @@
 
 using namespace HttpCommon;
 using namespace HttpEnums;
+using namespace snort;
 
 HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
-       HttpFlowData* session_data_, SourceId source_id_, bool buf_owner, snort::Flow* flow_,
+       HttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_,
        const HttpParaList* params_) :
     msg_text(buf_size, buffer, buf_owner),
     session_data(session_data_),
@@ -88,14 +89,14 @@ void HttpMsgSection::update_depth() const
         else
         {
             // Just for file processing
-            session_data->section_size_target[source_id] = snort::SnortConfig::get_conf()->max_pdu;
+            session_data->section_size_target[source_id] = SnortConfig::get_conf()->max_pdu;
             session_data->stretch_section_to_packet[source_id] = true;
         }
         return;
     }
 
     const unsigned target_size = (session_data->compression[source_id] == CMP_NONE) ?
-        snort::SnortConfig::get_conf()->max_pdu : GZIP_BLOCK_SIZE;
+        SnortConfig::get_conf()->max_pdu : GZIP_BLOCK_SIZE;
 
     if (detect_depth_remaining <= target_size)
     {

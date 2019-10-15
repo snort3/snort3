@@ -29,6 +29,7 @@
 #include "log/messages.h"
 
 using namespace HttpEnums;
+using namespace snort;
 
 void UriNormalizer::normalize(const Field& input, Field& result, bool do_path, uint8_t* buffer,
     const HttpParaList::UriParam& uri_param, HttpInfractions* infractions, HttpEventGen* events)
@@ -634,21 +635,21 @@ void UriNormalizer::load_unicode_map(uint8_t map[65536], const char* filename, i
     FILE* file = fopen(filename, "r");
     if (file == nullptr)
     {
-        snort::ParseError("Cannot open unicode map file %s", filename);
+        ParseError("Cannot open unicode map file %s", filename);
         return;
     }
 
     // Advance file to the desired code page
     if (!advance_to_code_page(file, code_page))
     {
-        snort::ParseError("Did not find code page %d in unicode map file %s", code_page, filename);
+        ParseError("Did not find code page %d in unicode map file %s", code_page, filename);
         fclose(file);
         return;
     }
 
     if (!map_code_points(file, map))
     {
-        snort::ParseError("Error while reading code page %d in unicode map file %s", code_page, filename);
+        ParseError("Error while reading code page %d in unicode map file %s", code_page, filename);
         fclose(file);
         return;
     }

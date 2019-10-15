@@ -25,7 +25,10 @@
 #include "framework/module.h"
 #include "dce_list.h"
 
+namespace snort
+{
 struct SnortConfig;
+}
 
 #define DCE2_VALID_SMB_VERSION_FLAG_V1 1
 #define DCE2_VALID_SMB_VERSION_FLAG_V2 2

@@ -29,6 +29,7 @@
 #include "http_test_input.h"
 
 using namespace HttpEnums;
+using namespace snort;
 
 void HttpStreamSplitter::chunk_spray(HttpFlowData* session_data, uint8_t* buffer,
     const uint8_t* data, unsigned length) const
@@ -221,12 +222,12 @@ void HttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, cons
     offset += length;
 }
 
-const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow* flow, unsigned total,
+const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
     unsigned, const uint8_t* data, unsigned len, uint32_t flags, unsigned& copied)
 {
-    snort::Profile profile(HttpModule::get_profile_stats());
+    Profile profile(HttpModule::get_profile_stats());
 
-    snort::StreamBuffer http_buf { nullptr, 0 };
+    StreamBuffer http_buf { nullptr, 0 };
 
     copied = len;
 

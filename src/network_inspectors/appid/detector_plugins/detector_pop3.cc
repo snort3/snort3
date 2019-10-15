@@ -114,7 +114,7 @@ struct ServicePOP3Data
     unsigned count;
     const char* vendor;
     char version[MAX_VERSION_SIZE];
-    snort::AppIdServiceSubtype* subtype;
+    AppIdServiceSubtype* subtype;
     int error;
 };
 
@@ -211,7 +211,7 @@ Pop3ClientDetector::~Pop3ClientDetector()
 
 void Pop3ClientDetector::do_custom_init()
 {
-    cmd_matcher = new snort::SearchTool("ac_full", true);
+    cmd_matcher = new SearchTool("ac_full", true);
 
     if ( !tcp_patterns.empty() )
     {
@@ -246,7 +246,7 @@ static void pop3_free_state(void* data)
         ServicePOP3Data* sd = &dd->server;
         while (sd->subtype)
         {
-            snort::AppIdServiceSubtype* sub = sd->subtype;
+            AppIdServiceSubtype* sub = sd->subtype;
             sd->subtype = sub->next;
             if (sub->service)
                 snort_free((void*)sub->service);
@@ -416,7 +416,7 @@ static int pop3_server_validate(POP3DetectorData* dd, const uint8_t* data, uint1
                 pd->vendor = ven_im;
             else if ((p=service_strstr(begin, len, (const unsigned char*)ven_po, sizeof(ven_po)-1)))
             {
-                snort::AppIdServiceSubtype* sub;
+                AppIdServiceSubtype* sub;
 
                 pd->vendor = ven_po;
                 p += (sizeof(ven_po) - 1);
@@ -487,7 +487,7 @@ static int pop3_server_validate(POP3DetectorData* dd, const uint8_t* data, uint1
                     ;
                 if (p == s || p >= line_end || !(*p))
                     goto ven_ver_done;
-                sub = (snort::AppIdServiceSubtype*)snort_calloc(sizeof(snort::AppIdServiceSubtype));
+                sub = (AppIdServiceSubtype*)snort_calloc(sizeof(AppIdServiceSubtype));
                 unsigned sub_len;
 
                 sub_len = p - s;

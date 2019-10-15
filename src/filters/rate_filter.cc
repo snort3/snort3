@@ -69,7 +69,7 @@ void RateFilter_Cleanup()
  * Create and Add a Thresholding Event Object
  */
 int RateFilter_Create(
-    snort::SnortConfig* sc, RateFilterConfig* rf_config, tSFRFConfigNode* thdx)
+    SnortConfig* sc, RateFilterConfig* rf_config, tSFRFConfigNode* thdx)
 {
     int error;
 
@@ -103,14 +103,14 @@ int RateFilter_Create(
     returns 1 - rate threshold reached
             0 - rate threshold not reached
 */
-int RateFilter_Test(const OptTreeNode* otn, snort::Packet* p)
+int RateFilter_Test(const OptTreeNode* otn, Packet* p)
 {
     unsigned gid = otn->sigInfo.gid;
     unsigned sid = otn->sigInfo.sid;
 
-    const snort::SfIp* sip;
-    const snort::SfIp* dip;
-    snort::SfIp cleared;
+    const SfIp* sip;
+    const SfIp* dip;
+    SfIp cleared;
 
     if ( p->ptrs.ip_api.is_ip() )
     {
@@ -124,8 +124,8 @@ int RateFilter_Test(const OptTreeNode* otn, snort::Packet* p)
         dip = &cleared;
     }
 
-    if ((snort::SnortConfig::get_conf() == nullptr) ||
-        (snort::SnortConfig::get_conf()->rate_filter_config == nullptr))
+    if ((SnortConfig::get_conf() == nullptr) ||
+        (SnortConfig::get_conf()->rate_filter_config == nullptr))
     {
         /* this should not happen, see the create fcn */
         return -1;
@@ -137,12 +137,12 @@ int RateFilter_Test(const OptTreeNode* otn, snort::Packet* p)
         // events and these require: src -> client, dst -> server.
         if ( p->is_from_server() )
         {
-            return SFRF_TestThreshold(snort::SnortConfig::get_conf()->rate_filter_config, gid, sid,
+            return SFRF_TestThreshold(SnortConfig::get_conf()->rate_filter_config, gid, sid,
                 dip, sip, p->pkth->ts.tv_sec, SFRF_COUNT_INCREMENT);
         }
     }
 
-    return SFRF_TestThreshold(snort::SnortConfig::get_conf()->rate_filter_config, gid, sid,
+    return SFRF_TestThreshold(SnortConfig::get_conf()->rate_filter_config, gid, sid,
         sip, dip, p->pkth->ts.tv_sec, SFRF_COUNT_INCREMENT);
 }
 

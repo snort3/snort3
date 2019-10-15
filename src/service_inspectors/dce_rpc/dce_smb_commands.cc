@@ -422,7 +422,7 @@ static DCE2_Ret DCE2_SmbWriteAndXRawRequest(DCE2_SmbSsnData* ssd, const SmbNtHdr
             {
                 const uint8_t* data_ptr = DCE2_BufferData(ftracker->fp_writex_raw->buf);
                 uint32_t data_len = DCE2_BufferLength(ftracker->fp_writex_raw->buf);
-                snort::Packet* rpkt = DCE2_SmbGetRpkt(ssd,
+                Packet* rpkt = DCE2_SmbGetRpkt(ssd,
                     &data_ptr, &data_len, DCE2_RPKT_TYPE__SMB_TRANS);
 
                 if (rpkt == nullptr)
@@ -752,7 +752,7 @@ DCE2_Ret DCE2_SmbRead(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
         uint16_t byte_count = DCE2_ComInfoByteCount(com_info);
         uint16_t com_dcnt = SmbReadRespCount((const SmbReadResp*)nb_ptr);
         uint8_t fmt = *(nb_ptr + com_size);
-        uint16_t fmt_dcnt = snort::alignedNtohs((const uint16_t*)(nb_ptr + com_size + 1));
+        uint16_t fmt_dcnt = alignedNtohs((const uint16_t*)(nb_ptr + com_size + 1));
 
         dce2_move(nb_ptr, nb_len, (com_size + 3));
 
@@ -782,7 +782,7 @@ DCE2_Ret DCE2_SmbWrite(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
         uint16_t byte_count = DCE2_ComInfoByteCount(com_info);
         uint8_t fmt = *(nb_ptr + com_size);
         uint16_t com_dcnt = SmbWriteReqCount((const SmbWriteReq*)nb_ptr);
-        uint16_t fmt_dcnt = snort::alignedNtohs((const uint16_t*)(nb_ptr + com_size + 1));
+        uint16_t fmt_dcnt = alignedNtohs((const uint16_t*)(nb_ptr + com_size + 1));
         uint16_t fid = SmbWriteReqFid((const SmbWriteReq*)nb_ptr);
         uint32_t offset = SmbWriteReqOffset((const SmbWriteReq*)nb_ptr);
 
@@ -894,7 +894,7 @@ DCE2_Ret DCE2_SmbLockAndRead(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
         uint16_t byte_count = DCE2_ComInfoByteCount(com_info);
         uint8_t fmt = *(nb_ptr + com_size);
         uint16_t com_dcnt = SmbLockAndReadRespCount((const SmbLockAndReadResp*)nb_ptr);
-        uint16_t fmt_dcnt = snort::alignedNtohs((const uint16_t*)(nb_ptr + com_size + 1));
+        uint16_t fmt_dcnt = alignedNtohs((const uint16_t*)(nb_ptr + com_size + 1));
 
         dce2_move(nb_ptr, nb_len, (com_size + 3));
 
@@ -949,7 +949,7 @@ DCE2_Ret DCE2_SmbWriteAndUnlock(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         uint16_t byte_count = DCE2_ComInfoByteCount(com_info);
         uint8_t fmt = *(nb_ptr + com_size);
         uint16_t com_dcnt = SmbWriteAndUnlockReqCount((const SmbWriteAndUnlockReq*)nb_ptr);
-        uint16_t fmt_dcnt = snort::alignedNtohs((const uint16_t*)(nb_ptr + com_size + 1));
+        uint16_t fmt_dcnt = alignedNtohs((const uint16_t*)(nb_ptr + com_size + 1));
         uint16_t fid = SmbWriteAndUnlockReqFid((const SmbWriteAndUnlockReq*)nb_ptr);
         uint32_t offset = SmbWriteAndUnlockReqOffset((const SmbWriteAndUnlockReq*)nb_ptr);
 

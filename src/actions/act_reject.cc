@@ -139,16 +139,16 @@ void RejectAction::send(Packet* p)
         act->send_reset(p, ENC_FLAG_FWD);
 
     if ( flags & REJ_UNR_FWD )
-        act->send_unreach(p, snort::UnreachResponse::FWD);
+        act->send_unreach(p, UnreachResponse::FWD);
 
     if ( flags & REJ_UNR_NET )
-        act->send_unreach(p, snort::UnreachResponse::NET);
+        act->send_unreach(p, UnreachResponse::NET);
 
     if ( flags & REJ_UNR_HOST )
-        act->send_unreach(p, snort::UnreachResponse::HOST);
+        act->send_unreach(p, UnreachResponse::HOST);
 
     if ( flags & REJ_UNR_PORT )
-        act->send_unreach(p, snort::UnreachResponse::PORT);
+        act->send_unreach(p, UnreachResponse::PORT);
 }
 
 //-------------------------------------------------------------------------

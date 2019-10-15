@@ -32,6 +32,8 @@
 #include "protocols/packet.h"
 #include "log/messages.h"
 
+using namespace snort;
+
 static THREAD_LOCAL unsigned client_module_index = 0;
 
 ClientDetector::ClientDetector()
@@ -47,7 +49,7 @@ void ClientDetector::register_appid(AppId appId, unsigned extractsInfo)
     {
         if ( AppInfoManager::get_instance().configured() )
         {
-            snort::ParseWarning(WARN_RULES,
+            ParseWarning(WARN_RULES,
                 "appid: no entry for %d in appMapping.data; no rule support for this ID.",
                 appId);
         }

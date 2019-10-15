@@ -36,6 +36,8 @@
 #include "snort_config.h"
 #include "swapper.h"
 
+using namespace snort;
+
 bool ACStart::execute(Analyzer& analyzer, void**)
 {
     analyzer.start();
@@ -79,7 +81,7 @@ bool ACGetStats::execute(Analyzer&, void**)
     // FIXIT-P This incurs locking on all threads to retrieve stats.  It
     // could be reimplemented to optimize for large thread counts by
     // retrieving stats in the command and accumulating in the main thread.
-    snort::ModuleManager::accumulate(snort::SnortConfig::get_conf());
+    ModuleManager::accumulate(SnortConfig::get_conf());
     return true;
 }
 
@@ -103,18 +105,18 @@ bool ACSwap::execute(Analyzer& analyzer, void** ac_state)
     {
         ps->apply(analyzer);
 
-        snort::SnortConfig* sc = ps->get_new_conf();
+        SnortConfig* sc = ps->get_new_conf();
         if ( sc )
         {
-            std::list<snort::ReloadResourceTuner*>* reload_tuners;
+            std::list<ReloadResourceTuner*>* reload_tuners;
 
             if ( !*ac_state )
             {
-                reload_tuners = new std::list<snort::ReloadResourceTuner*>(sc->get_reload_resource_tuners());
+                reload_tuners = new std::list<ReloadResourceTuner*>(sc->get_reload_resource_tuners());
                 *ac_state = reload_tuners;
             }
             else
-                reload_tuners = (std::list<snort::ReloadResourceTuner*>*)*ac_state;
+                reload_tuners = (std::list<ReloadResourceTuner*>*)*ac_state;
 
             if ( !reload_tuners->empty() )
             {
@@ -141,13 +143,13 @@ ACSwap::~ACSwap()
 {
     if (ps)
     {
-        snort::SnortConfig* sc = ps->get_new_conf();
+        SnortConfig* sc = ps->get_new_conf();
         if ( sc )
             sc->clear_reload_resource_tuner_list();
     }
     delete ps;
     Swapper::set_reload_in_progress(false);
-    snort::LogMessage("== reload complete\n");
+    LogMessage("== reload complete\n");
     request->respond("== reload complete\n", from_shell, true);
 }
 
@@ -159,10 +161,10 @@ bool ACDAQSwap::execute(Analyzer& analyzer, void**)
 
 ACDAQSwap::~ACDAQSwap()
 {
-    snort::LogMessage("== daq module reload complete\n");
+    LogMessage("== daq module reload complete\n");
 }
 
-snort::SFDAQInstance* snort::AnalyzerCommand::get_daq_instance(Analyzer& analyzer) 
+SFDAQInstance* AnalyzerCommand::get_daq_instance(Analyzer& analyzer) 
 {
     return analyzer.get_daq_instance();
 }

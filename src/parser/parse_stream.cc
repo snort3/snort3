@@ -487,7 +487,7 @@ struct RuleParseState
 
 static bool exec(
     FsmAction act, string& tok,
-    RuleParseState& rps, snort::SnortConfig* sc)
+    RuleParseState& rps, SnortConfig* sc)
 {
     switch ( act )
     {
@@ -615,7 +615,7 @@ static int get_escape(const string& s)
     return 1;      // escape, option goes to "
 }
 
-void parse_stream(istream& is, snort::SnortConfig* sc)
+void parse_stream(istream& is, SnortConfig* sc)
 {
     string tok;
     TokenType type;

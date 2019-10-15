@@ -825,7 +825,7 @@ void AppIdHttpSession::update_http_xff_address(struct XffFieldValue* xff_fields,
                 // FIXIT_H: - this code is wrong. We can't have
                 // tmp-xff_fields[j].value when tmp=0.
 
-                // xff_addr = new snort::SfIp();
+                // xff_addr = new SfIp();
                 // char* xff_addr_str = nullptr;
                 // char* tmp = strchr(xff_fields[j].value, ',');
 

@@ -30,6 +30,7 @@
 #include "request.h"
 #include "shell.h"
 
+using namespace snort;
 using namespace std;
 
 //------------------------------------------------------------------------
@@ -56,7 +57,7 @@ ControlConn::~ControlConn()
 
 void ControlConn::configure() const
 {
-    snort::ModuleManager::load_commands(sh);
+    ModuleManager::load_commands(sh);
 }
 
 int ControlConn::shell_execute(int& current_fd, Request*& current_request)

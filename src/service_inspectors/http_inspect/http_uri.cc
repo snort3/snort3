@@ -29,6 +29,7 @@
 
 using namespace HttpCommon;
 using namespace HttpEnums;
+using namespace snort;
 
 void HttpUri::parse_uri()
 {
@@ -319,7 +320,7 @@ size_t HttpUri::get_file_proc_hash()
 
     if (abs_path.length() > 0 )
     {
-        abs_path_hash = snort::str_to_hash(abs_path.start(), abs_path.length());
+        abs_path_hash = str_to_hash(abs_path.start(), abs_path.length());
     }
 
     return abs_path_hash;

@@ -35,6 +35,8 @@
 #include "time/packet_time.h"
 #include "utils/util_cstring.h"
 
+using namespace snort;
+
 static int already_fatal = 0;
 
 static unsigned parse_errors = 0;
@@ -73,20 +75,20 @@ static void log_message(FILE* file, const char* type, const char* msg)
     get_parse_location(file_name, file_line);
 
     if ( file_line )
-        snort::LogMessage(file, "%s: %s:%d %s\n", type, file_name, file_line, msg);
+        LogMessage(file, "%s: %s:%d %s\n", type, file_name, file_line, msg);
 
     else if ( file_name )
-        snort::LogMessage(file, "%s: %s: %s\n", type, file_name, msg);
+        LogMessage(file, "%s: %s: %s\n", type, file_name, msg);
 
     else
-        snort::LogMessage(file, "%s: %s\n", type, msg);
+        LogMessage(file, "%s: %s\n", type, msg);
 }
 
 namespace snort
 {
 void ParseWarning(WarningGroup wg, const char* format, ...)
 {
-    if ( !(snort::SnortConfig::get_conf()->warning_flags & (1 << wg)) )
+    if ( !(SnortConfig::get_conf()->warning_flags & (1 << wg)) )
         return;
 
     char buf[STD_BUF+1];
@@ -155,12 +157,12 @@ void ReloadError(const char* format, ...)
 
 static void WriteLogMessage(FILE* fh, bool prefer_fh, const char* format, va_list& ap)
 {
-    if ( snort::SnortConfig::get_conf() && !prefer_fh )
+    if ( SnortConfig::get_conf() && !prefer_fh )
     {
-        if ( snort::SnortConfig::log_quiet() )
+        if ( SnortConfig::log_quiet() )
             return;
 
-        if ( snort::SnortConfig::log_syslog() )
+        if ( SnortConfig::log_syslog() )
         {
             char buf[STD_BUF+1];
             vsnprintf(buf, STD_BUF, format, ap);
@@ -216,12 +218,12 @@ void WarningMessage(const char* format,...)
 {
     va_list ap;
 
-    if ( snort::SnortConfig::get_conf() and snort::SnortConfig::log_quiet() )
+    if ( SnortConfig::get_conf() and SnortConfig::log_quiet() )
         return;
 
     va_start(ap, format);
 
-    if ( snort::SnortConfig::get_conf() and snort::SnortConfig::log_syslog() )
+    if ( SnortConfig::get_conf() and SnortConfig::log_syslog() )
     {
         char buf[STD_BUF+1];
         vsnprintf(buf, STD_BUF, format, ap);
@@ -252,7 +254,7 @@ void ErrorMessage(const char* format,...)
 
     va_start(ap, format);
 
-    if ( snort::SnortConfig::get_conf() and snort::SnortConfig::log_syslog() )
+    if ( SnortConfig::get_conf() and SnortConfig::log_syslog() )
     {
         char buf[STD_BUF+1];
         vsnprintf(buf, STD_BUF, format, ap);
@@ -296,7 +298,7 @@ void ErrorMessage(const char* format,...)
 
     buf[STD_BUF] = '\0';
 
-    if ( snort::SnortConfig::get_conf() and snort::SnortConfig::log_syslog() )
+    if ( SnortConfig::get_conf() and SnortConfig::log_syslog() )
     {
         syslog(LOG_CONS | LOG_DAEMON | LOG_ERR, "FATAL ERROR: %s", buf);
     }

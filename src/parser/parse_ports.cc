@@ -286,7 +286,7 @@ static PortObject* _POParsePort(POParser* pop)
             (c == ','))
         {
             /* Open ended range, highport is 65k */
-            hport = snort::MAX_PORTS - 1;
+            hport = MAX_PORTS - 1;
             PortObjectAddRange(po, lport, hport);
             return po;
         }

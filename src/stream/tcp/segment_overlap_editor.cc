@@ -32,12 +32,13 @@
 #include "tcp_normalizers.h"
 #include "tcp_session.h"
 
+using namespace snort;
 
-static void set_retransmit_flag(snort::Packet* p)
+static void set_retransmit_flag(Packet* p)
 {
-    if ( snort::PacketTracer::is_active() )
+    if ( PacketTracer::is_active() )
     {
-        snort::PacketTracer::log("Packet was retransmitted and %s from the retry queue.\n",
+        PacketTracer::log("Packet was retransmitted and %s from the retry queue.\n",
             p->is_retry() ? "is" : "is not");
     }
 
@@ -517,12 +518,12 @@ int SegmentOverlapEditor::full_right_overlap_os5(TcpReassemblerState& trs)
 
 void SegmentOverlapEditor::print(TcpReassemblerState& trs)
 {
-    snort::LogMessage("    seglist_base_seq:   %X\n", trs.sos.seglist_base_seq);
-    snort::LogMessage("    seglist head:       %p\n", (void*)trs.sos.seglist.head);
-    snort::LogMessage("    seglist tail:       %p\n", (void*)trs.sos.seglist.tail);
-    snort::LogMessage("    seglist current:    %p\n", (void*)trs.sos.seglist.cur_rseg);
-    snort::LogMessage("    seg_count:          %d\n", trs.sos.seg_count);
-    snort::LogMessage("    seg_bytes_total:    %d\n", trs.sos.seg_bytes_total);
-    snort::LogMessage("    seg_bytes_logical:  %d\n", trs.sos.seg_bytes_logical);
+    LogMessage("    seglist_base_seq:   %X\n", trs.sos.seglist_base_seq);
+    LogMessage("    seglist head:       %p\n", (void*)trs.sos.seglist.head);
+    LogMessage("    seglist tail:       %p\n", (void*)trs.sos.seglist.tail);
+    LogMessage("    seglist current:    %p\n", (void*)trs.sos.seglist.cur_rseg);
+    LogMessage("    seg_count:          %d\n", trs.sos.seg_count);
+    LogMessage("    seg_bytes_total:    %d\n", trs.sos.seg_bytes_total);
+    LogMessage("    seg_bytes_logical:  %d\n", trs.sos.seg_bytes_logical);
 }
 

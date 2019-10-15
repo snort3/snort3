@@ -30,7 +30,7 @@
 using namespace snort;
 
 static DataBus& get_data_bus()
-{ return snort::get_inspection_policy()->dbus; }
+{ return get_inspection_policy()->dbus; }
 
 class BufferEvent : public DataEvent
 {
@@ -130,11 +130,11 @@ void DataBus::unsubscribe_default(const char* key, DataHandler* h, SnortConfig* 
 // notify subscribers of event
 void DataBus::publish(const char* key, DataEvent& e, Flow* f)
 {
-    InspectionPolicy* pi = snort::get_inspection_policy();
+    InspectionPolicy* pi = get_inspection_policy();
     pi->dbus._publish(key, e, f);
 
     // also publish to default policy to notify control subscribers such as appid
-    InspectionPolicy* di = snort::get_default_inspection_policy(SnortConfig::get_conf());
+    InspectionPolicy* di = get_default_inspection_policy(SnortConfig::get_conf());
 
     // of course, only when current is not default
     if ( di != pi )

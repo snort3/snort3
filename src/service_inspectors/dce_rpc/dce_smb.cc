@@ -38,8 +38,10 @@
 #include "dce_smb_utils.h"
 #include "dce_smb2.h"
 
+using namespace snort;
+
 THREAD_LOCAL dce2SmbStats dce2_smb_stats;
-THREAD_LOCAL snort::ProfileStats dce2_smb_pstat_main;
+THREAD_LOCAL ProfileStats dce2_smb_pstat_main;
 
 //-------------------------------------------------------------------------
 // debug stuff
@@ -314,16 +316,16 @@ const char* get_smb_com_string(uint8_t b)
 // class stuff
 //-------------------------------------------------------------------------
 
-class Dce2Smb : public snort::Inspector
+class Dce2Smb : public Inspector
 {
 public:
     Dce2Smb(const dce2SmbProtoConf&);
     ~Dce2Smb() override;
 
-    void show(snort::SnortConfig*) override;
-    void eval(snort::Packet*) override;
-    void clear(snort::Packet*) override;
-    snort::StreamSplitter* get_splitter(bool c2s) override
+    void show(SnortConfig*) override;
+    void eval(Packet*) override;
+    void clear(Packet*) override;
+    StreamSplitter* get_splitter(bool c2s) override
     {
         return new Dce2SmbSplitter(c2s);
     }
@@ -338,7 +340,7 @@ Dce2Smb::Dce2Smb(const dce2SmbProtoConf& pc)
     if ((config.smb_file_inspection == DCE2_SMB_FILE_INSPECTION_ONLY)
         || (config.smb_file_inspection == DCE2_SMB_FILE_INSPECTION_ON))
     {
-        snort::Active::set_enabled();
+        Active::set_enabled();
     }
 }
 
@@ -350,15 +352,15 @@ Dce2Smb::~Dce2Smb()
     }
 }
 
-void Dce2Smb::show(snort::SnortConfig*)
+void Dce2Smb::show(SnortConfig*)
 {
     print_dce2_smb_conf(config);
 }
 
-void Dce2Smb::eval(snort::Packet* p)
+void Dce2Smb::eval(Packet* p)
 {
     DCE2_SmbSsnData* dce2_smb_sess;
-    snort::Profile profile(dce2_smb_pstat_main);
+    Profile profile(dce2_smb_pstat_main);
 
     assert(p->has_tcp_data());
     assert(p->flow);
@@ -385,7 +387,7 @@ void Dce2Smb::eval(snort::Packet* p)
     }
 }
 
-void Dce2Smb::clear(snort::Packet* p)
+void Dce2Smb::clear(Packet* p)
 {
     DCE2_SmbSsnData* dce2_smb_sess = get_dce2_smb_session_data(p->flow);
     if ( dce2_smb_sess )
@@ -398,12 +400,12 @@ void Dce2Smb::clear(snort::Packet* p)
 // api stuff
 //-------------------------------------------------------------------------
 
-static snort::Module* mod_ctor()
+static Module* mod_ctor()
 {
     return new Dce2SmbModule;
 }
 
-static void mod_dtor(snort::Module* m)
+static void mod_dtor(Module* m)
 {
     delete m;
 }
@@ -416,7 +418,7 @@ static void dce2_smb_init()
     DceContextData::init(DCE2_TRANS_TYPE__SMB);
 }
 
-static snort::Inspector* dce2_smb_ctor(snort::Module* m)
+static Inspector* dce2_smb_ctor(Module* m)
 {
     Dce2SmbModule* mod = (Dce2SmbModule*)m;
     dce2SmbProtoConf config;
@@ -424,16 +426,16 @@ static snort::Inspector* dce2_smb_ctor(snort::Module* m)
     return new Dce2Smb(config);
 }
 
-static void dce2_smb_dtor(snort::Inspector* p)
+static void dce2_smb_dtor(Inspector* p)
 {
     delete p;
 }
 
-const snort::InspectApi dce2_smb_api =
+const InspectApi dce2_smb_api =
 {
     {
         PT_INSPECTOR,
-        sizeof(snort::InspectApi),
+        sizeof(InspectApi),
         INSAPI_VERSION,
         0,
         API_RESERVED,
@@ -443,7 +445,7 @@ const snort::InspectApi dce2_smb_api =
         mod_ctor,
         mod_dtor
     },
-    snort::IT_SERVICE,
+    IT_SERVICE,
     PROTO_BIT__PDU,
     nullptr,  // buffers
     "netbios-ssn",

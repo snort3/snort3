@@ -125,7 +125,7 @@ void HttpStreamSplitter::detain_packet(Packet* pkt)
 StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data, uint32_t length,
     uint32_t, uint32_t* flush_offset)
 {
-    snort::Profile profile(HttpModule::get_profile_stats());
+    Profile profile(HttpModule::get_profile_stats());
 
     assert(length <= MAX_OCTETS);
 

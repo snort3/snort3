@@ -29,6 +29,8 @@
 #include "rate_filter.h"
 #include "sfrf.h"
 
+using namespace snort;
+
 //---------------------------------------------------------------
 
 #define IP_ANY   nullptr          // used to get "unset"
@@ -908,7 +910,7 @@ static void Init(unsigned cap)
         cfg.tracking = p->track;
         cfg.count = p->count;
         cfg.seconds = p->seconds;
-        cfg.newAction = (snort::Actions::Type)RULE_NEW;
+        cfg.newAction = (Actions::Type)RULE_NEW;
         cfg.timeout = p->timeout;
         cfg.applyTo = p->ip ? sfip_var_from_string(p->ip, "sfrf_test") : nullptr;
 
@@ -942,15 +944,15 @@ static int EventTest(EventData* p)
     // this is the only acceptable public value for op
     SFRF_COUNT_OPERATION op = SFRF_COUNT_INCREMENT;
 
-    snort::SfIp sip, dip;
+    SfIp sip, dip;
     sip.set(p->sip);
     dip.set(p->dip);
 
     status = SFRF_TestThreshold(
         rfc, p->gid, p->sid, &sip, &dip, curtime, op);
 
-    if ( status >= snort::Actions::MAX )
-        status -= snort::Actions::MAX;
+    if ( status >= Actions::MAX )
+        status -= Actions::MAX;
 
     return status;
 }

@@ -33,7 +33,7 @@
 #include "catch/snort_catch.h"
 #endif
 
-using namespace std;
+using namespace snort;
 
 TcpStateCloseWait::TcpStateCloseWait(TcpStateMachine& tsm) :
     TcpStateHandler(TcpStreamTracker::TCP_CLOSE_WAIT, tsm)
@@ -84,7 +84,7 @@ bool TcpStateCloseWait::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
 
 bool TcpStateCloseWait::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    snort::Flow* flow = tsd.get_flow();
+    Flow* flow = tsd.get_flow();
 
     trk.update_tracker_ack_recv(tsd);
 

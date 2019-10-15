@@ -68,7 +68,7 @@ void FileMagicRule::clear()
 
 void FileIdentifier::init_merge_hash()
 {
-    identifier_merge_hash = snort::ghash_new(1000, sizeof(MergeNode), 0, nullptr);
+    identifier_merge_hash = ghash_new(1000, sizeof(MergeNode), 0, nullptr);
     assert(identifier_merge_hash);
 }
 
@@ -374,7 +374,7 @@ FileMagicRule* FileIdentifier::get_rule_from_id(uint32_t id)
 }
 
 void FileIdentifier::get_magic_rule_ids_from_type(const std::string& type,
-    const std::string& version, snort::FileTypeBitSet& ids_set)
+    const std::string& version, FileTypeBitSet& ids_set)
 {
     ids_set.reset();
 

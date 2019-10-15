@@ -31,6 +31,8 @@
 #include "lua_detector_module.h"
 #include "lua_detector_util.h"
 
+using namespace snort;
+
 /* Lua flag bit/index to C flag value (0 for invalid). */
 static const uint64_t FLAGS_TABLE_LUA_TO_C[32]
 {
@@ -155,8 +157,8 @@ static inline uint64_t convert_flags_c_to_lua(uint64_t in)
  */
 static int create_detector_flow(lua_State* L)
 {
-    snort::SfIp saddr;
-    snort::SfIp daddr;
+    SfIp saddr;
+    SfIp daddr;
 
     AppIdDetector* ud = *UserData<AppIdDetector>::check(L, DETECTOR, 1);
     // Verify detector user data and that we are in packet context

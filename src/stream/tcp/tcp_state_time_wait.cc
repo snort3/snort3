@@ -28,7 +28,7 @@
 #include "tcp_normalizers.h"
 #include "tcp_session.h"
 
-using namespace std;
+using namespace snort;
 
 TcpStateTimeWait::TcpStateTimeWait(TcpStateMachine& tsm) :
     TcpStateHandler(TcpStreamTracker::TCP_TIME_WAIT, tsm)
@@ -113,7 +113,7 @@ bool TcpStateTimeWait::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpS
     if ( trk.get_tcp_event() != TcpStreamTracker::TCP_FIN_RECV_EVENT )
     {
         TcpStreamTracker::TcpState talker_state = trk.session->get_talker_state();
-        snort::Flow* flow = tsd.get_flow();
+        Flow* flow = tsd.get_flow();
 
         if ( ( talker_state == TcpStreamTracker::TCP_TIME_WAIT )
             || ( talker_state == TcpStreamTracker::TCP_CLOSED ) )

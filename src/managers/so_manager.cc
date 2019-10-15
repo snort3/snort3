@@ -36,6 +36,7 @@
 #include "log/messages.h"
 #include "parser/parse_so_rule.h"
 
+using namespace snort;
 using namespace std;
 
 static list<const SoApi*> s_rules;
@@ -56,7 +57,7 @@ void SoManager::release_plugins()
 
 void SoManager::dump_plugins()
 {
-    snort::Dumper d("SO Rules");
+    Dumper d("SO Rules");
 
     for ( auto* p : s_rules )
         d.dump(p->base.name, p->base.version);

@@ -26,7 +26,7 @@
 struct POP_PROTO_CONF
 {
     snort::DecodeConfig decode_conf;
-    MailLogConfig log_config;
+    snort::MailLogConfig log_config;
 };
 
 struct PopStats

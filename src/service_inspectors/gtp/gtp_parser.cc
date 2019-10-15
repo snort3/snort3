@@ -42,7 +42,7 @@ using namespace snort;
 #pragma pack(1)
 static inline void alert(int sid)
 {
-    snort::DetectionEngine::queue_event(GID_GTP, sid);
+    DetectionEngine::queue_event(GID_GTP, sid);
     gtp_stats.events++;
 }
 

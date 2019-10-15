@@ -26,6 +26,8 @@
 #include "main.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 //-------------------------------------------------------------------------
 // request foo
 //-------------------------------------------------------------------------
@@ -89,7 +91,7 @@ void Request::respond(const char* s, bool queue_response, bool remote_only)
     if ( fd < 1 )
     {
         if (!remote_only)
-            snort::LogMessage("%s", s);
+            LogMessage("%s", s);
         return;
     }
 

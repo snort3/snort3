@@ -516,16 +516,16 @@ const uint8_t* PacketManager::encode_reject(UnreachResponse type,
 
         switch (type)
         {
-        case snort::UnreachResponse::NET:
+        case UnreachResponse::NET:
             icmph->code = icmp::IcmpCode::NET_UNREACH;
             break;
-        case snort::UnreachResponse::HOST:
+        case UnreachResponse::HOST:
             icmph->code = icmp::IcmpCode::HOST_UNREACH;
             break;
-        case snort::UnreachResponse::PORT:
+        case UnreachResponse::PORT:
             icmph->code = icmp::IcmpCode::PORT_UNREACH;
             break;
-        case snort::UnreachResponse::FWD:
+        case UnreachResponse::FWD:
             icmph->code = icmp::IcmpCode::PKT_FILTERED;
             break;
         default:     // future proofing
@@ -572,16 +572,16 @@ const uint8_t* PacketManager::encode_reject(UnreachResponse type,
 
         switch (type)
         {
-        case snort::UnreachResponse::NET:
+        case UnreachResponse::NET:
             icmph->code = icmp::Icmp6Code::UNREACH_NET;
             break;
-        case snort::UnreachResponse::HOST:
+        case UnreachResponse::HOST:
             icmph->code = icmp::Icmp6Code::UNREACH_HOST;
             break;
-        case snort::UnreachResponse::PORT:
+        case UnreachResponse::PORT:
             icmph->code = icmp::Icmp6Code::UNREACH_PORT;
             break;
-        case snort::UnreachResponse::FWD:
+        case UnreachResponse::FWD:
             icmph->code = icmp::Icmp6Code::UNREACH_FILTER_PROHIB;
             break;
         default:     // future proofing
