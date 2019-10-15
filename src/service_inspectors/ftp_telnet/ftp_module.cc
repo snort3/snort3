@@ -493,7 +493,7 @@ static void ResetStringFormat(FTP_PARAM_FMT* Fmt)
     ResetStringFormat(Fmt->next_param_fmt);
 }
 
-int ProcessFTPDataChanCmdsList(
+static int ProcessFTPDataChanCmdsList(
     FTP_SERVER_PROTO_CONF* ServerConf, const FtpCmd* fc)
 {
     const char* cmd = fc->name.c_str();
