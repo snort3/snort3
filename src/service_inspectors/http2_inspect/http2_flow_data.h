@@ -77,10 +77,8 @@ protected:
     uint8_t currently_processing_frame_header[2][Http2Enums::FRAME_HEADER_LENGTH];
     uint32_t inspection_section_length[2] = { 0, 0 };
     uint32_t leftover_data[2] = { 0, 0 };
-
-    // Used internally by scan() and reassemble()
     uint32_t octets_seen[2] = { 0, 0 };
-    uint8_t header_octets_seen[2] = { 0, 0 };
+    uint8_t scan_header_octets_seen[2] = { 0, 0 };
 
     // Scan signals to reassemble()
     bool header_coming[2]  = { false, false };
@@ -93,6 +91,7 @@ protected:
     uint32_t remaining_frame_data_octets[2] = { 0, 0 };
     uint32_t remaining_frame_data_offset[2] = { 0, 0 };
     uint32_t frame_header_offset[2] = { 0, 0 };
+    uint8_t reassemble_header_octets_seen[2] = { 0, 0 };
 
     // These will eventually be moved over to the frame/stream object, as they are moved to the
     // transaction in NHI. Also as in NHI accessor methods will need to be added.

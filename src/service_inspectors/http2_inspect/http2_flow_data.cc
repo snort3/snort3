@@ -89,5 +89,5 @@ void Http2FlowData::clear_frame_data(HttpCommon::SourceId source_id)
     http2_decoded_header[source_id] = nullptr;
     continuation_expected[source_id] = false;
     frames_aggregated[source_id] = 0;
-    header_octets_seen[source_id] = 0;
+    scan_header_octets_seen[source_id] = 0;
 }
