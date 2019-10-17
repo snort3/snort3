@@ -37,6 +37,7 @@ Http2HpackIntDecode Http2Hpack::decode_int6(6);
 Http2HpackIntDecode Http2Hpack::decode_int5(5);
 Http2HpackIntDecode Http2Hpack::decode_int4(4);
 Http2HpackStringDecode Http2Hpack::decode_string;
+Http2HpackTable Http2Hpack::table;
 
 bool Http2Hpack::write_decoded_headers(Http2FlowData* session_data, HttpCommon::SourceId source_id,
     const uint8_t* in_buffer, const uint32_t in_length,
@@ -110,13 +111,61 @@ bool Http2Hpack::decode_string_literal(Http2FlowData* session_data, HttpCommon::
     return true;
 }
 
+bool Http2Hpack::decode_static_table_index(Http2FlowData* session_data,
+    HttpCommon::SourceId source_id, const uint64_t index, const bool decode_full_line,
+    uint8_t* decoded_header_buffer, const uint32_t decoded_header_length,
+    uint32_t& bytes_written)
+{
+    uint32_t local_bytes_written = 0;
+    const Http2HpackTable::TableEntry* const entry = table.lookup(index);
+    bytes_written = 0;
+
+    // FIXIT-H check if header is part of start-line, if so pass to start-line generating
+    // object and don't write to decoded header buffer
+
+    // Write header name + ': ' to decoded headers
+    // FIXIT-H For now pseudo-headers are also copied. Need to be converted to start-line
+    if (!write_decoded_headers(session_data, source_id, (const uint8_t*) entry->name,
+             strlen(entry->name), decoded_header_buffer, decoded_header_length,
+             local_bytes_written))
+        return false;
+    bytes_written += local_bytes_written;
+    if (!write_decoded_headers(session_data, source_id, (const uint8_t*)": ", 2,
+            decoded_header_buffer + bytes_written, decoded_header_length - bytes_written,
+            local_bytes_written))
+        return false;
+    bytes_written += local_bytes_written;
+
+    if (decode_full_line)
+    {
+        if (strlen(entry->value) == 0)
+        {
+            *session_data->infractions[source_id] += INF_STATIC_TABLE_LOOKUP_ERROR;
+            session_data->events[source_id]->create_event(EVENT_HPACK_INDEX_DECODE_FAILURE);
+            return false;
+        }
+        if (!write_decoded_headers(session_data, source_id, (const uint8_t*)entry->value,
+                 strlen(entry->value), decoded_header_buffer + bytes_written,
+                 decoded_header_length - bytes_written, local_bytes_written))
+            return false;
+        bytes_written += local_bytes_written;
+        if (!write_decoded_headers(session_data, source_id, (const uint8_t*)"\r\n", 2,
+                decoded_header_buffer + bytes_written, decoded_header_length -
+                bytes_written, local_bytes_written))
+            return false;
+        bytes_written += local_bytes_written;
+    }
+
+    return true;
+}
+
+
 // FIXIT-H Will be incrementally updated to actually decode indexes. For now just copies encoded
 // index directly to decoded_header_buffer
 bool Http2Hpack::decode_index(Http2FlowData* session_data, HttpCommon::SourceId source_id,
     const uint8_t* encoded_header_buffer, const uint32_t encoded_header_length,
-    const Http2HpackIntDecode &decode_int, uint32_t &bytes_consumed,
-    uint8_t* decoded_header_buffer, const uint32_t decoded_header_length,
-    uint32_t &bytes_written)
+    const Http2HpackIntDecode &decode_int, const bool decode_full_line, uint32_t &bytes_consumed,
+    uint8_t* decoded_header_buffer, const uint32_t decoded_header_length, uint32_t &bytes_written)
 {
     uint64_t index;
     bytes_written = 0;
@@ -130,15 +179,11 @@ bool Http2Hpack::decode_index(Http2FlowData* session_data, HttpCommon::SourceId 
     }
 
     if (index <= STATIC_TABLE_MAX_INDEX)
-        decode_static_table_index();
+        return decode_static_table_index(session_data, source_id, index, decode_full_line,
+            decoded_header_buffer, decoded_header_length, bytes_written);
     else
-        decode_dynamic_table_index();
-
-    if (!Http2Hpack::write_decoded_headers(session_data, source_id, encoded_header_buffer,
-        bytes_consumed, decoded_header_buffer, decoded_header_length, bytes_written))
-        return false;
-
-    return true;
+        return Http2Hpack::write_decoded_headers(session_data, source_id, encoded_header_buffer,
+            bytes_consumed, decoded_header_buffer, decoded_header_length, bytes_written);
 }
 
 bool Http2Hpack::decode_literal_header_line(Http2FlowData* session_data,
@@ -156,7 +201,7 @@ bool Http2Hpack::decode_literal_header_line(Http2FlowData* session_data,
     if (encoded_header_buffer[0] & name_index_mask)
     {
         if (!Http2Hpack::decode_index(session_data, source_id, encoded_header_buffer,
-                encoded_header_length, decode_int, partial_bytes_consumed,
+                encoded_header_length, decode_int, false, partial_bytes_consumed,
                 decoded_header_buffer, decoded_header_length, partial_bytes_written))
             return false;
     }
@@ -232,7 +277,7 @@ bool Http2Hpack::decode_header_line(Http2FlowData* session_data, HttpCommon::Sou
     // indexed header representation
     if (encoded_header_buffer[0] & index_mask)
         return Http2Hpack::decode_index(session_data, source_id, encoded_header_buffer,
-            encoded_header_length, decode_int7, bytes_consumed,
+            encoded_header_length, decode_int7, true, bytes_consumed,
             decoded_header_buffer, decoded_header_length, bytes_written);
 
     // literal header representation to be added to dynamic table

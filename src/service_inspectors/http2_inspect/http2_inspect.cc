@@ -113,7 +113,7 @@ void Http2Inspect::eval(Packet* p)
             (int) session_data->frame_data_size[source_id] : HttpCommon::STAT_NOT_PRESENT,
             session_data->frame_data[source_id]).print(HttpTestManager::get_output_file(),
             "Frame Data");
-		if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP2))
+        if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP2))
         {
             printf("Finished processing section from test %" PRIi64 "\n",
                 HttpTestManager::get_test_number());
@@ -132,15 +132,6 @@ void Http2Inspect::clear(Packet* p)
 
     const SourceId source_id = (p->is_from_client()) ? SRC_CLIENT : SRC_SERVER;
 
-    delete[] session_data->frame_header[source_id];
-    session_data->frame_header[source_id] = nullptr;
-    delete[] session_data->frame_data[source_id];
-    session_data->frame_data[source_id] = nullptr;
-    session_data->frame_in_detection = false;
-    delete[] session_data->http2_decoded_header[source_id];
-    session_data->http2_decoded_header[source_id] = nullptr;
-    session_data->continuation_expected[source_id] = false;
-    session_data->frames_aggregated[source_id] = 0;
-    session_data->header_octets_seen[source_id] = 0;
+    session_data->clear_frame_data(source_id);
 }
 

@@ -24,6 +24,7 @@
 
 #include "http2_hpack_int_decode.h"
 #include "http2_hpack_string_decode.h"
+#include "http2_hpack_table.h"
 
 class Http2FlowData;
 
@@ -55,15 +56,18 @@ public:
         uint32_t &bytes_written);
     static bool decode_index(Http2FlowData* session_data, HttpCommon::SourceId source_id,
         const uint8_t* encoded_header_buffer, const uint32_t encoded_header_length,
-        const Http2HpackIntDecode &decode_int, uint32_t &bytes_consumed,
+        const Http2HpackIntDecode &decode_int,const bool decode_full_line, uint32_t &bytes_consumed,
         uint8_t* decoded_header_buffer, const uint32_t decoded_header_length,
         uint32_t &bytes_written);
     static bool handle_dynamic_size_update(Http2FlowData* session_data,
         HttpCommon::SourceId source_id, const uint8_t* encoded_header_buffer,
         const uint32_t encoded_header_length, const Http2HpackIntDecode &decode_int,
         uint32_t &bytes_consumed, uint32_t &bytes_written);
-    static bool decode_static_table_index(void) { return false; }
-    static bool decode_dynamic_table_index(void) { return false; }
+    static bool decode_static_table_index(Http2FlowData* session_data,
+        HttpCommon::SourceId source_id, const uint64_t index, const bool decode_full_line,
+        uint8_t* decoded_header_buffer, const uint32_t decoded_header_length,
+        uint32_t& bytes_written);
+    static bool decode_dynamic_table_index(void) { return true; }
 
     static const int STATIC_TABLE_MAX_INDEX = 61;
 
@@ -75,6 +79,7 @@ private:
     static Http2HpackStringDecode decode_string;
 
 // FIXIT-H Dictionary class and object go here
+    static Http2HpackTable table; //static until dynamic table is implemented
 };
 
 #endif

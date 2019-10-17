@@ -399,7 +399,12 @@ const StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned to
                 // FIXIT-H This will eventually be the decoded header buffer. Under development.
                 if (!Http2Hpack::decode_headers(session_data, source_id,
                     session_data->frame_data[source_id], session_data->frame_data_size[source_id]))
+                {
+                    // Since this doesn't go to detection, clear() doesn't get called, so need to
+                    // clear frame data from flow data directly
+                    session_data->clear_frame_data(source_id);
                     return frame_buf;
+                }
             }
         }
         // Return 0-length non-null buffer to stream which signals detection required, but don't 
@@ -430,4 +435,3 @@ ValidationResult validate_preface(const uint8_t* data, const uint32_t length,
     
     return V_GOOD;
 }
-

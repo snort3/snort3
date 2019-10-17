@@ -30,6 +30,7 @@
 #include "service_inspectors/http2_inspect/http2_enum.h"
 #include "service_inspectors/http2_inspect/http2_flow_data.h"
 #include "service_inspectors/http2_inspect/http2_hpack_int_decode.h"
+#include "service_inspectors/http2_inspect/http2_hpack_table.h"
 #include "service_inspectors/http2_inspect/http2_hpack_string_decode.h"
 #include "service_inspectors/http2_inspect/http2_stream_splitter.h"
 

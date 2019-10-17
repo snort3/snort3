@@ -77,3 +77,17 @@ Http2FlowData::~Http2FlowData()
         delete events[k];
     }
 }
+
+void Http2FlowData::clear_frame_data(HttpCommon::SourceId source_id)
+{
+    delete[] frame_header[source_id];
+    frame_header[source_id] = nullptr;
+    delete[] frame_data[source_id];
+    frame_data[source_id] = nullptr;
+    frame_in_detection = false;
+    delete[] http2_decoded_header[source_id];
+    http2_decoded_header[source_id] = nullptr;
+    continuation_expected[source_id] = false;
+    frames_aggregated[source_id] = 0;
+    header_octets_seen[source_id] = 0;
+}

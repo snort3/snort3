@@ -473,9 +473,9 @@ const HuffmanEntry huffman_decode[HUFFMAN_LOOKUP_MAX+1] [UINT8_MAX+1] =
         {8, (char)236, HUFFMAN_MATCH}, {8, (char)237, HUFFMAN_MATCH},
         {8, 0, HUFFMAN_LOOKUP_6}, {8, 0, HUFFMAN_LOOKUP_7},
         {8, 0, HUFFMAN_LOOKUP_8}, {8, 0, HUFFMAN_LOOKUP_9},
-	{8, 0, HUFFMAN_LOOKUP_10}, {8, 0, HUFFMAN_LOOKUP_11},
+        {8, 0, HUFFMAN_LOOKUP_10}, {8, 0, HUFFMAN_LOOKUP_11},
         {8, 0, HUFFMAN_LOOKUP_12}, {8, 0, HUFFMAN_LOOKUP_13},
-	{8, 0, HUFFMAN_LOOKUP_14}, {8, 0, HUFFMAN_LOOKUP_15}
+        {8, 0, HUFFMAN_LOOKUP_14}, {8, 0, HUFFMAN_LOOKUP_15}
     },
     { // HUFFMAN_LOOKUP_6
         // 0
@@ -841,7 +841,7 @@ const HuffmanEntry huffman_decode[HUFFMAN_LOOKUP_MAX+1] [UINT8_MAX+1] =
         {2, (char)200, HUFFMAN_MATCH}, {2, (char)200, HUFFMAN_MATCH},
         {2, (char)200, HUFFMAN_MATCH}, {2, (char)200, HUFFMAN_MATCH},
         {2, (char)200, HUFFMAN_MATCH}, {2, (char)200, HUFFMAN_MATCH},
-        // 11	
+        // 11
         {2, (char)201, HUFFMAN_MATCH}, {2, (char)201, HUFFMAN_MATCH},
         {2, (char)201, HUFFMAN_MATCH}, {2, (char)201, HUFFMAN_MATCH},
         {2, (char)201, HUFFMAN_MATCH}, {2, (char)201, HUFFMAN_MATCH},
@@ -975,7 +975,7 @@ const HuffmanEntry huffman_decode[HUFFMAN_LOOKUP_MAX+1] [UINT8_MAX+1] =
         {2, (char)210, HUFFMAN_MATCH}, {2, (char)210, HUFFMAN_MATCH},
         {2, (char)210, HUFFMAN_MATCH}, {2, (char)210, HUFFMAN_MATCH},
         {2, (char)210, HUFFMAN_MATCH}, {2, (char)210, HUFFMAN_MATCH},
-        // 11	
+        // 11
         {2, (char)213, HUFFMAN_MATCH}, {2, (char)213, HUFFMAN_MATCH},
         {2, (char)213, HUFFMAN_MATCH}, {2, (char)213, HUFFMAN_MATCH},
         {2, (char)213, HUFFMAN_MATCH}, {2, (char)213, HUFFMAN_MATCH},
@@ -1109,7 +1109,7 @@ const HuffmanEntry huffman_decode[HUFFMAN_LOOKUP_MAX+1] [UINT8_MAX+1] =
         {2, (char)238, HUFFMAN_MATCH}, {2, (char)238, HUFFMAN_MATCH},
         {2, (char)238, HUFFMAN_MATCH}, {2, (char)238, HUFFMAN_MATCH},
         {2, (char)238, HUFFMAN_MATCH}, {2, (char)238, HUFFMAN_MATCH},
-        // 11	
+        // 11
         {2, (char)240, HUFFMAN_MATCH}, {2, (char)240, HUFFMAN_MATCH},
         {2, (char)240, HUFFMAN_MATCH}, {2, (char)240, HUFFMAN_MATCH},
         {2, (char)240, HUFFMAN_MATCH}, {2, (char)240, HUFFMAN_MATCH},

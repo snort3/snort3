@@ -99,6 +99,8 @@ protected:
     Http2Infractions* infractions[2] = { new Http2Infractions, new Http2Infractions };
     Http2EventGen* events[2] = { new Http2EventGen, new Http2EventGen };
 
+    void clear_frame_data(HttpCommon::SourceId source_id);
+
 #ifdef REG_TEST
     static uint64_t instance_count;
     uint64_t seq_num;
