@@ -27,6 +27,7 @@
 
 #include <climits>
 #include <string>
+#include <unistd.h>
 
 #include "appid_api.h"
 #include "appid_config.h"
@@ -660,6 +661,9 @@ void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config,
         load_appid_config (mod_config, filepath);
         snprintf(filepath, sizeof(filepath), "%s/custom/%s", mod_config->app_detector_dir,
             USR_CONFIG_FILE);
+        if (access (filepath, F_OK))
+            snprintf(filepath, sizeof(filepath), "%s/../%s", mod_config->app_detector_dir,
+                USR_CONFIG_FILE);
         load_appid_config (mod_config, filepath);
     }
 }
