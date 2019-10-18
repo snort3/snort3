@@ -428,7 +428,7 @@ bool Active::retry_packet(const Packet* p)
         return false;
 
     // FIXIT-L semi-arbitrary heuristic for preventing retry queue saturation - reevaluate later
-    if (p->daq_instance->get_pool_available() < p->daq_instance->get_batch_size())
+    if (!p->daq_instance || p->daq_instance->get_pool_available() < p->daq_instance->get_batch_size())
     {
         // Fall back on dropping the packet and relying on the host to retransmit
         active_action = ACT_DROP;
