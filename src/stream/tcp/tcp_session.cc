@@ -993,13 +993,24 @@ bool TcpSession::do_packet_analysis_pre_checks(Packet* p, TcpSegmentDescriptor& 
     pkt_action_mask = ACTION_NOTHING;
     tel.clear_tcp_events();
     // process thru state machine...talker first
-    if (p->is_from_client())
+    // When in no-ack mode, don't trust ACK numbers. Set the ACK value
+    // as if the last packet in the other direction was ACK'd.
+    // FIXIT-M: The snd_nxt and snd_una checks are only needed because
+    // the snd_nxt value isn't valid for SYN/ACK packet. Can remove those
+    // checks if that is fixed.
+    if ( p->is_from_client() )
     {
         update_session_on_client_packet(tsd);
+
+        if ( no_ack_mode_enabled() and (server.get_snd_nxt() or server.get_snd_una()) )
+            tsd.set_seg_ack(server.get_snd_nxt());
     }
     else
     {
         update_session_on_server_packet(tsd);
+
+        if ( no_ack_mode_enabled() and (client.get_snd_nxt() or client.get_snd_una()) )
+            tsd.set_seg_ack(client.get_snd_nxt());
     }
 
     update_ignored_session(tsd);

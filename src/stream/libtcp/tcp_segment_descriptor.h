@@ -72,6 +72,11 @@ public:
         return seg_ack;
     }
 
+    void set_seg_ack(uint32_t ack)
+    {
+        this->seg_ack = ack;
+    }
+
     void set_end_seq(uint32_t end_seq)
     {
         this->end_seq = end_seq;
@@ -155,7 +160,7 @@ private:
     const uint16_t src_port;
     const uint16_t dst_port;
     uint32_t seg_seq;
-    const uint32_t seg_ack;
+    uint32_t seg_ack;
     uint32_t seg_wnd;
     uint32_t end_seq;
     uint32_t ts = 0;
