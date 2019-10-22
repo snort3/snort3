@@ -24,6 +24,7 @@
 #include "piglet_manager.h"
 
 #include <cassert>
+#include <map>
 
 #include "log/messages.h"
 #include "main/snort_config.h"

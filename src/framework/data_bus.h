@@ -27,8 +27,8 @@
 // at arbitrary points, eg when service is identified, or when a URI is
 // available, or when a flow clears.
 
-#include <map>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -84,7 +84,7 @@ protected:
 
 // FIXIT-P evaluate perf; focus is on correctness
 typedef std::vector<DataHandler*> DataList;
-typedef std::map<std::string, DataList> DataMap;
+typedef std::unordered_map<std::string, DataList> DataMap;
 typedef std::unordered_set<const char*> DataModule;
 
 class SO_PUBLIC DataBus
@@ -97,9 +97,9 @@ public:
     void add_mapped_module(const char*);
 
     static void subscribe(const char* key, DataHandler*);
-    static void subscribe_default(const char* key, DataHandler*, SnortConfig* = nullptr);
+    static void subscribe_global(const char* key, DataHandler*, SnortConfig*);
     static void unsubscribe(const char* key, DataHandler*);
-    static void unsubscribe_default(const char* key, DataHandler*, SnortConfig* = nullptr);
+    static void unsubscribe_global(const char* key, DataHandler*, SnortConfig*);
     static void publish(const char* key, DataEvent&, Flow* = nullptr);
 
     // convenience methods

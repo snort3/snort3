@@ -106,12 +106,10 @@ void DataBus::subscribe(const char* key, DataHandler* h)
 }
 
 // for subscribers that need to receive events regardless of active inspection policy
-void DataBus::subscribe_default(const char* key, DataHandler* h, SnortConfig* sc)
+void DataBus::subscribe_global(const char* key, DataHandler* h, SnortConfig* sc)
 {
-    if (sc)
-        get_default_inspection_policy(sc)->dbus._subscribe(key, h);
-    else
-        get_default_inspection_policy(SnortConfig::get_conf())->dbus._subscribe(key, h);
+    assert(sc);
+    sc->global_dbus->_subscribe(key, h);
 }
 
 void DataBus::unsubscribe(const char* key, DataHandler* h)
@@ -119,12 +117,10 @@ void DataBus::unsubscribe(const char* key, DataHandler* h)
     get_data_bus()._unsubscribe(key, h);
 }
 
-void DataBus::unsubscribe_default(const char* key, DataHandler* h, SnortConfig* sc)
+void DataBus::unsubscribe_global(const char* key, DataHandler* h, SnortConfig* sc)
 {
-    if (sc)
-        get_default_inspection_policy(sc)->dbus._unsubscribe(key, h);
-    else
-        get_default_inspection_policy(SnortConfig::get_conf())->dbus._unsubscribe(key, h);
+    assert(sc);
+    sc->global_dbus->_unsubscribe(key, h);
 }
 
 // notify subscribers of event
@@ -133,12 +129,7 @@ void DataBus::publish(const char* key, DataEvent& e, Flow* f)
     InspectionPolicy* pi = get_inspection_policy();
     pi->dbus._publish(key, e, f);
 
-    // also publish to default policy to notify control subscribers such as appid
-    InspectionPolicy* di = get_default_inspection_policy(SnortConfig::get_conf());
-
-    // of course, only when current is not default
-    if ( di != pi )
-        di->dbus._publish(key, e, f);
+    SnortConfig::get_conf()->global_dbus->_publish(key, e, f);
 }
 
 void DataBus::publish(const char* key, const uint8_t* buf, unsigned len, Flow* f)

@@ -94,13 +94,13 @@ void DataBus::subscribe(const char* key, DataHandler* h)
 {
     DB->_subscribe(key, h);
 }
-void DataBus::subscribe_default(const char* key, DataHandler* h, SnortConfig*)
+void DataBus::subscribe_global(const char* key, DataHandler* h, SnortConfig*)
 {
     DB->_subscribe(key, h);
 }
 
 void DataBus::unsubscribe(const char*, DataHandler*) {}
-void DataBus::unsubscribe_default(const char*, DataHandler*, SnortConfig*) {}
+void DataBus::unsubscribe_global(const char*, DataHandler*, SnortConfig*) {}
 
 void DataBus::publish(const char* key, DataEvent& e, Flow* f)
 {

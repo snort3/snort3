@@ -111,7 +111,7 @@ bool AppIdInspector::configure(SnortConfig* sc)
     active_config = new AppIdConfig(const_cast<AppIdModuleConfig*>(config));
 
     my_seh = SipEventHandler::create();
-    my_seh->subscribe();
+    my_seh->subscribe(sc);
 
     active_config->init_appid(sc);
 
@@ -119,11 +119,11 @@ bool AppIdInspector::configure(SnortConfig* sc)
     if (!TPLibHandler::have_tp())
 #endif
     {
-        DataBus::subscribe(HTTP_REQUEST_HEADER_EVENT_KEY, new HttpEventHandler(
-            HttpEventHandler::REQUEST_EVENT));
+        DataBus::subscribe_global(HTTP_REQUEST_HEADER_EVENT_KEY, new HttpEventHandler(
+            HttpEventHandler::REQUEST_EVENT), sc);
 
-        DataBus::subscribe(HTTP_RESPONSE_HEADER_EVENT_KEY, new HttpEventHandler(
-            HttpEventHandler::RESPONSE_EVENT));
+        DataBus::subscribe_global(HTTP_RESPONSE_HEADER_EVENT_KEY, new HttpEventHandler(
+            HttpEventHandler::RESPONSE_EVENT), sc);
     }
 
     return true;

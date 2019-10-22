@@ -85,7 +85,7 @@ class PerfIdleHandler : public DataHandler
 {
 public:
     PerfIdleHandler(PerfMonitor& p, SnortConfig*& sc) : DataHandler(PERF_NAME), perf_monitor(p)
-    { DataBus::subscribe_default(THREAD_IDLE_EVENT, this, sc); }
+    { DataBus::subscribe_global(THREAD_IDLE_EVENT, this, sc); }
 
     void handle(DataEvent&, Flow*) override
     { perf_monitor.eval(nullptr); }
@@ -98,7 +98,7 @@ class PerfRotateHandler : public DataHandler
 {
 public:
     PerfRotateHandler(PerfMonitor& p, SnortConfig* sc) : DataHandler(PERF_NAME), perf_monitor(p)
-    { DataBus::subscribe_default(THREAD_ROTATE_EVENT, this, sc); }
+    { DataBus::subscribe_global(THREAD_ROTATE_EVENT, this, sc); }
 
     void handle(DataEvent&, Flow*) override
     { perf_monitor.rotate(); }
@@ -111,7 +111,7 @@ class FlowIPDataHandler : public DataHandler
 {
 public:
     FlowIPDataHandler(PerfMonitor& p, SnortConfig* sc) : DataHandler(PERF_NAME), perf_monitor(p)
-    { DataBus::subscribe_default(FLOW_STATE_EVENT, this, sc); }
+    { DataBus::subscribe_global(FLOW_STATE_EVENT, this, sc); }
 
     void handle(DataEvent&, Flow* flow) override
     {

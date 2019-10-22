@@ -553,6 +553,8 @@ SnortConfig* Snort::get_updated_policy(SnortConfig* other_conf, const char* fnam
 
     other_conf->cloned = true;
     sc->policy_map->get_inspection_policy()->clone_dbus(other_conf, iname);
+    sc->global_dbus->add_mapped_module(iname);
+    sc->global_dbus->clone(*other_conf->global_dbus);
     InspectorManager::update_policy(sc);
     reloading = false;
     return sc;
@@ -592,6 +594,8 @@ SnortConfig* Snort::get_updated_module(SnortConfig* other_conf, const char* name
 
     other_conf->cloned = true;
     sc->policy_map->get_inspection_policy()->clone_dbus(other_conf, name);
+    sc->global_dbus->add_mapped_module(name);
+    sc->global_dbus->clone(*other_conf->global_dbus);
     InspectorManager::update_policy(sc);
     reloading = false;
     return sc;

@@ -202,6 +202,7 @@ void SnortConfig::init(const SnortConfig* const other_conf, ProtocolReference* p
         memory = new MemoryConfig();
         policy_map = new PolicyMap;
         thread_config = new ThreadConfig();
+        global_dbus = new DataBus();
 
         memset(evalOrder, 0, sizeof(evalOrder));
         proto_ref = new ProtocolReference(protocol_reference);
@@ -300,6 +301,7 @@ SnortConfig::~SnortConfig()
     delete[] state;
     delete thread_config;
     delete ha_config;
+    delete global_dbus;
 
     if (gtp_ports)
         delete gtp_ports;

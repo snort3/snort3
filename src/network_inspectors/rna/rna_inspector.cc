@@ -67,22 +67,22 @@ RnaInspector::~RnaInspector()
     delete mod_conf;
 }
 
-bool RnaInspector::configure(SnortConfig*)
+bool RnaInspector::configure(SnortConfig* sc)
 {
-    DataBus::subscribe( STREAM_ICMP_NEW_FLOW_EVENT, new RnaIcmpNewFlowEventHandler(*pnd) );
-    DataBus::subscribe( STREAM_ICMP_BIDIRECTIONAL_EVENT, new RnaIcmpBidirectionalEventHandler(*pnd) );
+    DataBus::subscribe_global( STREAM_ICMP_NEW_FLOW_EVENT, new RnaIcmpNewFlowEventHandler(*pnd), sc );
+    DataBus::subscribe_global( STREAM_ICMP_BIDIRECTIONAL_EVENT, new RnaIcmpBidirectionalEventHandler(*pnd), sc );
 
-    DataBus::subscribe( STREAM_IP_NEW_FLOW_EVENT, new RnaIpNewFlowEventHandler(*pnd) );
-    DataBus::subscribe( STREAM_IP_BIDIRECTIONAL_EVENT, new RnaIpBidirectionalEventHandler(*pnd) );
+    DataBus::subscribe_global( STREAM_IP_NEW_FLOW_EVENT, new RnaIpNewFlowEventHandler(*pnd), sc );
+    DataBus::subscribe_global( STREAM_IP_BIDIRECTIONAL_EVENT, new RnaIpBidirectionalEventHandler(*pnd), sc );
 
-    DataBus::subscribe( STREAM_UDP_NEW_FLOW_EVENT, new RnaUdpNewFlowEventHandler(*pnd) );
-    DataBus::subscribe( STREAM_UDP_BIDIRECTIONAL_EVENT, new RnaUdpBidirectionalEventHandler(*pnd) );
+    DataBus::subscribe_global( STREAM_UDP_NEW_FLOW_EVENT, new RnaUdpNewFlowEventHandler(*pnd), sc );
+    DataBus::subscribe_global( STREAM_UDP_BIDIRECTIONAL_EVENT, new RnaUdpBidirectionalEventHandler(*pnd), sc );
 
-    DataBus::subscribe( STREAM_TCP_SYN_EVENT, new RnaTcpSynEventHandler(*pnd) );
-    DataBus::subscribe( STREAM_TCP_SYN_ACK_EVENT, new RnaTcpSynAckEventHandler(*pnd) );
-    DataBus::subscribe( STREAM_TCP_MIDSTREAM_EVENT, new RnaTcpMidstreamEventHandler(*pnd) );
+    DataBus::subscribe_global( STREAM_TCP_SYN_EVENT, new RnaTcpSynEventHandler(*pnd), sc );
+    DataBus::subscribe_global( STREAM_TCP_SYN_ACK_EVENT, new RnaTcpSynAckEventHandler(*pnd), sc );
+    DataBus::subscribe_global( STREAM_TCP_MIDSTREAM_EVENT, new RnaTcpMidstreamEventHandler(*pnd), sc );
     if (rna_conf && rna_conf->log_when_idle)
-        DataBus::subscribe( THREAD_IDLE_EVENT, new RnaIdleEventHandler(*pnd) );
+        DataBus::subscribe_global( THREAD_IDLE_EVENT, new RnaIdleEventHandler(*pnd), sc );
 
     return true;
 }

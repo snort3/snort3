@@ -373,6 +373,8 @@ public:
     VarNode* var_list = nullptr;
     std::string tweaks;
 
+    DataBus* global_dbus = nullptr;
+
     uint8_t tunnel_mask = 0;
 
     // FIXIT-L this is temporary for legacy paf_max required only for HI;
