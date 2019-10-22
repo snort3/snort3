@@ -61,8 +61,6 @@ static void snort_dns(Packet* p);
 
 unsigned DnsFlowData::inspector_id = 0;
 
-DNSData udpSessionData;
-
 DnsFlowData::DnsFlowData() : FlowData(inspector_id)
 {
     memset(&session, 0, sizeof(session));
@@ -90,7 +88,7 @@ static DNSData* SetNewDNSData(Packet* p)
     return &fd->session;
 }
 
-static DNSData* get_dns_session_data(Packet* p, bool from_server)
+static DNSData* get_dns_session_data(Packet* p, bool from_server, DNSData& udpSessionData)
 {
     DnsFlowData* fd;
 
@@ -976,9 +974,9 @@ static void snort_dns(Packet* p)
     // Get the direction of the packet.
     bool from_server = ( (p->is_from_server() ) ? true : false );
 
-
+    DNSData udp_session_data;
     // Attempt to get a previously allocated DNS block.
-    DNSData* dnsSessionData = get_dns_session_data(p, from_server);
+    DNSData* dnsSessionData = get_dns_session_data(p, from_server, udp_session_data);
 
     if (dnsSessionData == nullptr)
     {
