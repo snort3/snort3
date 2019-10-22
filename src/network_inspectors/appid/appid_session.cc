@@ -55,6 +55,8 @@ using namespace snort;
 
 unsigned AppIdSession::inspector_id = 0;
 THREAD_LOCAL uint32_t AppIdSession::appid_flow_data_id = 0;
+std::mutex AppIdSession::inferred_svcs_lock;
+uint16_t AppIdSession::inferred_svcs_ver = 0;
 
 const uint8_t* service_strstr(const uint8_t* haystack, unsigned haystack_len,
     const uint8_t* needle, unsigned needle_len)

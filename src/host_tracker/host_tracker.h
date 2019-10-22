@@ -106,7 +106,7 @@ public:
     // Appid may not be identified always. Inferred means dynamic/runtime
     // appid detected from one flow to another flow such as BitTorrent.
     bool add_service(Port port, IpProtocol proto,
-        AppId appid = APP_ID_NONE, bool inferred_appid = false);
+        AppId appid = APP_ID_NONE, bool inferred_appid = false, bool* added = nullptr);
 
     AppId get_appid(Port port, IpProtocol proto, bool inferred_only = false, bool allow_port_wildcard = false);
 

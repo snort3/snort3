@@ -23,6 +23,7 @@
 #define APPID_SESSION_H
 
 #include <map>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 
@@ -278,6 +279,8 @@ public:
     snort::SEARCH_SUPPORT_TYPE search_support_type = snort::UNKNOWN_SEARCH_ENGINE;
     bool in_expected_cache = false;
     static unsigned inspector_id;
+    static std::mutex inferred_svcs_lock;
+
     static void init() { inspector_id = FlowData::create_flow_data_id(); }
 
     void set_session_flags(uint64_t flags) { common.flags |= flags; }
@@ -364,6 +367,21 @@ public:
         return tp_payload_app_id;
     }
 
+    inline uint16_t is_inferred_svcs_ver_updated()
+    {
+        if (my_inferred_svcs_ver == inferred_svcs_ver)
+            return false;
+        my_inferred_svcs_ver = inferred_svcs_ver;
+        return true;
+    }
+
+    static inline void incr_inferred_svcs_ver()
+    {
+        inferred_svcs_ver++;
+        if (inferred_svcs_ver == 0)
+            inferred_svcs_ver++;
+    }
+
 private:
     AppIdHttpSession* hsession = nullptr;
     AppIdDnsSession* dsession = nullptr;
@@ -379,6 +397,9 @@ private:
     // appId determined by 3rd party library
     AppId tp_app_id = APP_ID_NONE;
     AppId tp_payload_app_id = APP_ID_NONE;
+
+    uint16_t my_inferred_svcs_ver = 0;
+    static uint16_t inferred_svcs_ver;
 };
 
 static inline bool is_svc_http_type(AppId serviceId)

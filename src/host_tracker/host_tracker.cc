@@ -79,7 +79,7 @@ void HostTracker::copy_data(uint8_t& p_hops, uint32_t& p_last_seen, list<HostMac
         p_macs = new list<HostMac>(macs.begin(), macs.end());
 }
 
-bool HostTracker::add_service(Port port, IpProtocol proto, AppId appid, bool inferred_appid)
+bool HostTracker::add_service(Port port, IpProtocol proto, AppId appid, bool inferred_appid, bool* added)
 {
     host_tracker_stats.service_adds++;
     std::lock_guard<std::mutex> lck(host_tracker_lock);
@@ -92,12 +92,17 @@ bool HostTracker::add_service(Port port, IpProtocol proto, AppId appid, bool inf
             {
                 s.appid = appid;
                 s.inferred_appid = inferred_appid;
+                if (added)
+                    *added = true;
             }
             return true;
         }
     }
 
     services.emplace_back( HostApplication{port, proto, appid, inferred_appid} );
+    if (added)
+        *added = true;
+
     return true;
 }
 

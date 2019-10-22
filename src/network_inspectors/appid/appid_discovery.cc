@@ -691,7 +691,7 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
         *p_asd = asd = AppIdSession::allocate_session(p, protocol, direction, &inspector);
         if (p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
         {
-            asd->set_session_flags(APPID_SESSION_MID);
+            flow_flags |= APPID_SESSION_MID;
             if (appidDebug->is_active())
                 LogMessage("AppIdDbg %s New AppId mid-stream session\n",
                     appidDebug->get_debug_session());
@@ -873,7 +873,7 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
     if(tun_dest)
     {
         ip = &(tun_dest->ip);
-        port = tun_dest->port;	
+        port = tun_dest->port;
     }
     else
     {
@@ -922,6 +922,10 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
 
     if (!hv and check_dynamic)
     {
+        std::lock_guard<std::mutex> lck(AppIdSession::inferred_svcs_lock);
+        if (!asd.is_inferred_svcs_ver_updated())
+            return false;
+
         auto ht = host_cache.find(*ip);
         if (ht)
         {

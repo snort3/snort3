@@ -54,6 +54,8 @@ AppIdServiceSubtype APPID_UT_SERVICE_SUBTYPE = { nullptr, APPID_UT_SERVICE,
                                                  APPID_UT_SERVICE_VERSION };
 
 unsigned AppIdSession::inspector_id = 0;
+std::mutex AppIdSession::inferred_svcs_lock;
+uint16_t AppIdSession::inferred_svcs_ver = 0;
 
 class MockAppIdDnsSession : public AppIdDnsSession
 {

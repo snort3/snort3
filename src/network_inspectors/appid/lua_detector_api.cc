@@ -1190,8 +1190,12 @@ static int detector_add_host_port_dynamic(lua_State* L)
         return 0;
     }
 
-    if ( !host_cache[ip_addr]->add_service(port, proto, appid, true) )
+    bool added = false;
+    std::lock_guard<std::mutex> lck(AppIdSession::inferred_svcs_lock);
+    if ( !host_cache[ip_addr]->add_service(port, proto, appid, true, &added) )
         ErrorMessage("%s:Failed to add host tracker service\n",__func__);
+    if (added)
+        AppIdSession::incr_inferred_svcs_ver();
 
     return 0;
 }
