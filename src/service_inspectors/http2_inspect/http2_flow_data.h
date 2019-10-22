@@ -84,6 +84,9 @@ protected:
     bool header_coming[2]  = { false, false };
     bool payload_discard[2] = { false, false };
     uint32_t frames_aggregated[2] = { 0, 0 };
+
+    // Used by scan, reassemble and eval to communicate
+    uint8_t frame_type[2] = { Http2Enums::FT__NONE, Http2Enums::FT__NONE };
     
     // Internal to reassemble()
     Http2Hpack hpack[2];

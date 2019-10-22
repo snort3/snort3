@@ -54,6 +54,13 @@ StreamSplitter::Status Http2StreamSplitter::scan(Packet* pkt, const uint8_t* dat
         Http2Module::increment_peg_counts(PEG_FLOW);
     }
 
+    // General mechanism to abort using scan
+    if (session_data->frame_type[source_id] == FT__ABORT)
+    {
+        session_data->frame_type[source_id] = FT__NONE;
+        return HttpStreamSplitter::status_value(StreamSplitter::ABORT, true);
+    }
+
 #ifdef REG_TEST
     uint32_t dummy_flush_offset;
 

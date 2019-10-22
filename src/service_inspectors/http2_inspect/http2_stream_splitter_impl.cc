@@ -402,6 +402,8 @@ const StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned to
                     // Since this doesn't go to detection, clear() doesn't get called, so need to
                     // clear frame data from flow data directly
                     session_data->clear_frame_data(source_id);
+
+                    session_data->frame_type[source_id] = FT__ABORT;
                     return frame_buf;
                 }
             }
@@ -410,6 +412,7 @@ const StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned to
         // create pkt_data buffer
         frame_buf.data = (const uint8_t*)"";
     }
+    session_data->frame_type[source_id] = get_frame_type(session_data->frame_header[source_id]);
     return frame_buf;
 }
 

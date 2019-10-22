@@ -98,6 +98,13 @@ void Http2Inspect::eval(Packet* p)
     Http2FlowData* const session_data =
         (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
 
+    // FIXIT-H Workaround for unexpected eval() calls
+    // Avoid eval if scan/reassemble aborts
+    if (session_data->frame_type[source_id] == FT__NONE)
+        return;
+
+    session_data->frame_type[source_id] = FT__NONE;
+    
     set_file_data(session_data->frame_data[source_id],
         session_data->frame_data_size[source_id]);
     session_data->frame_in_detection = true;
