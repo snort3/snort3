@@ -128,6 +128,8 @@ bool HttpMsgRequest::http_name_nocase_ok(const uint8_t* start)
 
 bool HttpMsgRequest::handle_zero_nine()
 {
+    // FIXIT-M The following test seems too permissive about what constitutes HTTP/0.9. Consider
+    // not accepting "URIs" with internal whitespace or nonprinting characters.
     // 0.9 request line is supposed to be "GET <URI>\r\n"
     if ((start_line.length() >= 3) &&
         !memcmp(start_line.start(), "GET", 3) &&

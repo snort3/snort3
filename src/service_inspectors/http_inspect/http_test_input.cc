@@ -86,14 +86,10 @@ void HttpTestInput::reset()
 // function is to read dev_notes.txt.
 void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, uint64_t seq_num)
 {
-    bool skip_to_break = false;
     if (seq_num != curr_seq_num)
     {
         assert(source_id == SRC_CLIENT);
         curr_seq_num = seq_num;
-        // If we have not yet found the break command we need to skim past everything and not
-        // return any data until we find it.
-        skip_to_break = !need_break;
         reset();
     }
 
@@ -189,28 +185,21 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
                     strlen("request")))
                 {
                     last_source_id = SRC_CLIENT;
-                    if (!skip_to_break)
-                    {
-                        length = 0;
-                        return;
-                    }
+                    length = 0;
+                    return;
                 }
                 else if ((command_length == strlen("response")) && !memcmp(command_value,
                     "response", strlen("response")))
                 {
                     last_source_id = SRC_SERVER;
-                    if (!skip_to_break)
-                    {
-                        length = 0;
-                        return;
-                    }
+                    length = 0;
+                    return;
                 }
                 else if ((command_length == strlen("break")) && !memcmp(command_value, "break",
                     strlen("break")))
                 {
                     reset();
-                    if (!skip_to_break)
-                        need_break = true;
+                    need_break = true;
                     length = 0;
                     return;
                 }
@@ -218,11 +207,8 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
                     "tcpclose", strlen("tcpclose")))
                 {
                     tcp_closed = true;
-                    if (!skip_to_break)
-                    {
-                        length = 0;
-                        return;
-                    }
+                    length = 0;
+                    return;
                 }
                 else if ((command_length > strlen("fill")) && !memcmp(command_value, "fill",
                     strlen("fill")))
@@ -235,13 +221,8 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
                         // auto-fill ABCDEFGHIJABCD ...
                         msg_buf[last_source_id][end_offset[last_source_id]++] = 'A' + k%10;
                     }
-                    if (skip_to_break)
-                        end_offset[last_source_id] = 0;
-                    else
-                    {
-                        length = end_offset[last_source_id] - previous_offset[last_source_id];
-                        return;
-                    }
+                    length = end_offset[last_source_id] - previous_offset[last_source_id];
+                    return;
                 }
                 else if ((command_length == strlen("partial")) && !memcmp(command_value,
                     "partial", strlen("partial")))
@@ -282,13 +263,8 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
                         assert(new_octet != EOF);
                         msg_buf[last_source_id][end_offset[last_source_id]++] = new_octet;
                     }
-                    if (skip_to_break)
-                        end_offset[last_source_id] = 0;
-                    else
-                    {
-                        length = end_offset[last_source_id] - previous_offset[last_source_id];
-                        return;
-                    }
+                    length = end_offset[last_source_id] - previous_offset[last_source_id];
+                    return;
                 }
                 else if ((command_length > strlen("fileskip")) && !memcmp(command_value,
                     "fileskip", strlen("fileskip")))
@@ -360,12 +336,6 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
                     ending = true;
                 }
                 // Found the second consecutive blank line that ends the paragraph.
-                else if (skip_to_break)
-                {
-                    end_offset[last_source_id] = 0;
-                    ending = false;
-                    state = WAITING;
-                }
                 else
                 {
                     length = end_offset[last_source_id] - previous_offset[last_source_id];
@@ -437,8 +407,6 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
         assert(end_offset[last_source_id] < sizeof(msg_buf[last_source_id]));
     }
     // End-of-file. Return everything we have so far.
-    if (skip_to_break)
-        end_offset[last_source_id] = 0;
     length = end_offset[last_source_id] - previous_offset[last_source_id];
 }
 

@@ -99,11 +99,8 @@ StreamSplitter::Status HttpStreamSplitter::status_value(StreamSplitter::Status r
     }
     if (HttpTestManager::use_test_input(type))
     {
-        if (ret_val == StreamSplitter::ABORT)
-            return StreamSplitter::ABORT;
         return StreamSplitter::FLUSH;
     }
-    else
 #endif
     return ret_val;
 }
@@ -144,9 +141,6 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
 
     SectionType type = session_data->type_expected[source_id];
 
-    if (type == SEC_ABORT)
-        return status_value(StreamSplitter::ABORT);
-
 #ifdef REG_TEST
     if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
     {
@@ -160,7 +154,14 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
             return StreamSplitter::FLUSH;
         data = test_data;
     }
-    else if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
+#endif
+
+    if (type == SEC_ABORT)
+        return status_value(StreamSplitter::ABORT);
+
+#ifdef REG_TEST
+    if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP) &&
+        !HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
     {
         printf("Scan from flow data %" PRIu64
             " direction %d length %u client port %hu server port %hu\n", session_data->seq_num,
