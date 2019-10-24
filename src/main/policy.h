@@ -210,10 +210,16 @@ public:
     { user_network[p->user_policy_id] = p; }
 
     IpsPolicy* get_user_ips(unsigned user_id)
-    { return user_ips[user_id]; }
+    {
+        auto it = user_ips.find(user_id);
+        return it == user_ips.end() ? nullptr : it->second;
+    }
 
     NetworkPolicy* get_user_network(unsigned user_id)
-    { return user_network[user_id]; }
+    {
+        auto it = user_network.find(user_id);
+        return it == user_network.end() ? nullptr : it->second;
+    }
 
     InspectionPolicy* get_inspection_policy(unsigned i = 0)
     { return i < inspection_policy.size() ? inspection_policy[i] : nullptr; }
