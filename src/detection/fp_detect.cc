@@ -720,20 +720,28 @@ static inline int fpFinalSelectEvent(OtnxMatchData* omd, Packet* p)
     return 0;
 }
 
+struct Node
+{
+    void* user;
+    void* tree;
+    void* list;
+    int index;
+};
+
+
 class MpseStash
 {
 public:
-    // FIXIT-H use max = n * k, at most k per group
-    // need n >= 4 for src+dst+gen+svc
-    static const unsigned max = 32;
-
-    MpseStash()
-    { enable = false; }
+    MpseStash(unsigned limit)
+    {
+        enable = false;
+        max = limit;
+    }
 
     void init()
     {
         if ( enable )
-            count = flushed = 0;
+            count = 0;
     }
 
     // this is done in the offload thread
@@ -751,42 +759,40 @@ public:
 private:
     bool enable;
     unsigned count;
-    unsigned flushed;
-
-    struct Node
-    {
-        void* user;
-        void* tree;
-        void* list;
-        int index;
-    } queue[max];
+    unsigned max;
+    std::vector<Node> queue;
 };
 
 // uniquely insert into q, should splay elements for performance
 // return true if maxed out to trigger a flush
 bool MpseStash::push(void* user, void* tree, int index, void* list)
 {
-    pmqs.tot_inq_inserts++;
 
-    for ( int i = (int)(count) - 1; i >= 0; --i )
+    for ( auto it = queue.rbegin(); it != queue.rend(); it++ )
     {
-        if ( tree == queue[i].tree )
+        if ( tree == (*it).tree )
+        {
+            pmqs.tot_inq_inserts++;
             return false;
+        }
     }
 
-    if ( count < max )
+    if ( !max or ( count < max ) )
     {
-        Node& node = queue[count++];
+        Node node;
         node.user = user;
         node.tree = tree;
         node.index = index;
         node.list = list;
+        queue.push_back(node);
         pmqs.tot_inq_uinserts++;
+        pmqs.tot_inq_inserts++;
+        count++;
     }
 
-    if ( count == max )
+    if ( max and ( count == max ) )
     {
-        flushed++;
+        pmqs.tot_inq_overruns++;
         return true;
     }
 
@@ -801,35 +807,39 @@ bool MpseStash::process(MpseMatch match, void* context)
     if ( count > pmqs.max_inq )
         pmqs.max_inq = count;
 
-    pmqs.tot_inq_flush += flushed;
 
 #ifdef DEBUG_MSGS
     if (count == 0)
         trace_log(detection, TRACE_RULE_EVAL, "Fast pattern processing - no matches found\n");
 #endif
-
-    for ( unsigned i = 0; i < count; ++i )
+    unsigned i = 0;
+    for ( auto it : queue )
     {
-        Node& node = queue[i];
-
+        Node& node = it;
+        i++;
         // process a pattern - case is handled by otn processing
-        trace_logf(detection, TRACE_RULE_EVAL,"Processing pattern match #%d\n", i+1);
+        trace_logf(detection, TRACE_RULE_EVAL,"Processing pattern match #%d\n", i);
         int res = match(node.user, node.tree, node.index, context, node.list);
 
         if ( res > 0 )
         {
             /* terminate matching */
+            pmqs.tot_inq_flush += count;
             count = 0;
+            queue.clear();
             return true;
         }
     }
+    pmqs.tot_inq_flush += count;
     count = 0;
+    queue.clear();
     return false;
 }
 
 void fp_set_context(IpsContext& c)
 {
-    c.stash = new MpseStash;
+    FastPatternConfig* fp = SnortConfig::get_conf()->fast_pattern_config;
+    c.stash = new MpseStash(fp->get_queue_limit());
     c.otnx = (OtnxMatchData*)snort_calloc(sizeof(OtnxMatchData));
     c.otnx->matchInfo = (MatchInfo*)snort_calloc(MAX_NUM_RULE_TYPES, sizeof(MatchInfo));
     c.context_num = 0;
@@ -848,11 +858,7 @@ static int rule_tree_queue(
 {
     MpseStash* stash = ((IpsContext*)context)->stash;
 
-    if ( stash->push(user, tree, index, list) )
-    {
-        if ( stash->process(rule_tree_match, context) )
-            return 1;
-    }
+    stash->push(user, tree, index, list);
     return 0;
 }
 

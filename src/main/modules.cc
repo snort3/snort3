@@ -319,6 +319,9 @@ static const Parameter search_engine_params[] =
     { "split_any_any", Parameter::PT_BOOL, nullptr, "true",
       "evaluate any-any rules separately to save memory" },
 
+    { "queue_limit", Parameter::PT_INT, "0:max32", "128",
+      "maximum number of fast pattern matches to queue per packet (0 means no maximum)" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -333,8 +336,9 @@ THREAD_LOCAL PatMatQStat pmqs;
 const PegInfo mpse_pegs[] =
 {
     { CountType::SUM, "max_queued", "maximum fast pattern matches queued for further evaluation" },
-    { CountType::SUM, "total_flushed", "fast pattern matches discarded due to overflow" },
+    { CountType::SUM, "total_flushed", "total fast pattern matches processed" },
     { CountType::SUM, "total_inserts", "total fast pattern hits" },
+    { CountType::SUM, "total_overruns", "fast pattern matches discarded due to overflow" },
     { CountType::SUM, "total_unique", "total unique fast pattern hits" },
     { CountType::SUM, "non_qualified_events", "total non-qualified events" },
     { CountType::SUM, "qualified_events", "total qualified events" },
@@ -427,6 +431,9 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("split_any_any") )
         fp->set_split_any_any(v.get_bool());
+
+    else if ( v.is("queue_limit") )
+        fp->set_queue_limit(v.get_uint32());
 
     else
         return false;

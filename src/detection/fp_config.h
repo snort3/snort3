@@ -130,6 +130,11 @@ public:
 
     void set_max_pattern_len(unsigned);
 
+    void set_queue_limit(unsigned);
+
+    unsigned get_queue_limit()
+    { return queue_limit; }
+
     const snort::MpseApi* get_search_api()
     { return search_api; }
 
@@ -164,6 +169,8 @@ private:
     unsigned max_queue_events = 5;
     unsigned bleedover_port_limit = 1024;
     unsigned max_pattern_len = 0;
+
+    unsigned queue_limit = 0;
 
     int portlists_flags = 0;
     int num_patterns_truncated = 0;  // due to max_pattern_len
