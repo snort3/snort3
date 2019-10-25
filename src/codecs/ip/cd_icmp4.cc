@@ -133,10 +133,13 @@ inline bool Icmp4Codec::valid_checksum_from_daq(const RawData& raw)
         (const DAQ_PktDecodeData_t*) daq_msg_get_meta(raw.daq_msg, DAQ_PKT_META_DECODE_DATA);
     if (!pdd || !pdd->flags.bits.l4_checksum || !pdd->flags.bits.icmp || !pdd->flags.bits.l4)
         return false;
-    // Sanity check to make sure we're talking about the same thing
-    const uint8_t* data = daq_msg_get_data(raw.daq_msg);
-    if (raw.data - data != pdd->l4_offset)
-        return false;
+    // Sanity check to make sure we're talking about the same thing if offset is available
+    if (pdd->l4_offset != DAQ_PKT_DECODE_OFFSET_INVALID)
+    {
+        const uint8_t* data = daq_msg_get_data(raw.daq_msg);
+        if (raw.data - data != pdd->l4_offset)
+            return false;
+    }
     stats.cksum_bypassed++;
     return true;
 }
