@@ -1,3 +1,4 @@
+add_subdirectory(test)
 
 set (FRAMEWORK_INCLUDES
     base_api.h
