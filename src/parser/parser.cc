@@ -29,6 +29,7 @@
 #include <iostream>
 
 #include "detection/fp_config.h"
+#include "detection/rules.h"
 #include "detection/sfrim.h"
 #include "filters/detection_filter.h"
 #include "filters/rate_filter.h"
@@ -242,15 +243,11 @@ void parser_init()
         ParseAbort("failed to create rule index map.");
 }
 
-void parser_term(SnortConfig* sc)
+void parser_term(SnortConfig*)
 {
     parse_rule_term();
     RuleIndexMapFree(ruleIndexMap);
     ruleIndexMap = nullptr;
-
-    for ( auto& r : sc->rule_states )
-        delete r;
-    sc->rule_states.clear();
 }
 
 SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname, bool is_fatal)
@@ -369,6 +366,13 @@ void ParseRules(SnortConfig* sc)
         {
             push_parse_location("C", file.c_str(), "ips.rules");
             ParseConfigString(sc, p->rules.c_str());
+            pop_parse_location();
+        }
+
+        if ( !p->states.empty() )
+        {
+            push_parse_location("C", file.c_str(), "ips.states");
+            ParseConfigString(sc, p->states.c_str());
             pop_parse_location();
         }
 

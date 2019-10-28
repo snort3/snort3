@@ -329,8 +329,12 @@ void SnortConfig::setup()
     ParseRules(this);
     OrderRuleLists(this);
 
-    for ( auto& state : rule_states )
-        state->apply(this);
+    if ( rule_states )
+    {
+        rule_states->apply(this);
+        delete rule_states;
+        rule_states = nullptr;
+    }
 
     /* Need to do this after dynamic detection stuff is initialized, too */
     IpsManager::verify(this);

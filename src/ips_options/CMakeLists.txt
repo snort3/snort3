@@ -15,6 +15,7 @@ SET( PLUGIN_LIST
     ips_byte_math.cc
     ips_byte_test.cc
     ips_cvs.cc
+    ips_enable.cc
     ips_file_type.cc
     ips_flags.cc
     ips_fragbits.cc

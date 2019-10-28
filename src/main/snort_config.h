@@ -26,6 +26,7 @@
 #include <sys/types.h>
 
 #include <list>
+#include <vector>
 
 #include "events/event_queue.h"
 #include "framework/bits.h"
@@ -120,7 +121,7 @@ enum TunnelFlags
 };
 
 class FastPatternConfig;
-class RuleState;
+class RuleStateMap;
 class ThreadConfig;
 
 struct srmm_table_t;
@@ -331,7 +332,7 @@ public:
 
     int thiszone = 0;
 
-    std::vector<RuleState*> rule_states;
+    RuleStateMap* rule_states = nullptr;
     ClassType* classifications = nullptr;
     ReferenceSystemNode* references = nullptr;
     GHash* otn_map = nullptr;

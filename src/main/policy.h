@@ -132,11 +132,9 @@ private:
 // detection stuff
 //-------------------------------------------------------------------------
 
-// this is the ips policy post ac-split
 struct IpsPolicy
 {
 public:
-    enum Action : uint8_t { LOG, PASS, ALERT, DROP, BLOCK, RESET, INHERIT_ACTION };
     enum Enable : uint8_t { DISABLED, ENABLED, INHERIT_ENABLE };
 
     IpsPolicy(PolicyId = 0);
@@ -152,7 +150,9 @@ public:
 
     std::string includer;
     std::string include;
+
     std::string rules;
+    std::string states;
 
     uint32_t var_id;
 

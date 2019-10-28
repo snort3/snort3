@@ -24,6 +24,8 @@
 // misc rule and rule list support
 // FIXIT-L refactor this header
 
+#include <map>
+
 #include "actions/actions.h"
 #include "main/policy.h"
 
@@ -62,28 +64,37 @@ struct RuleListNode
     RuleListNode* next;   /* the next RuleListNode */
 };
 
-class RuleState
+struct RuleKey
 {
-public:
-    RuleState(unsigned g, unsigned s, IpsPolicy::Action a, IpsPolicy::Enable e) :
-        gid(g), sid(s), action(a), enable(e)
-    { policy = snort::get_ips_policy()->policy_id; }
-
-    virtual ~RuleState() = default;
-
-    void apply(snort::SnortConfig*);
-    void update_rtn(RuleTreeNode*);
-
-private:
     unsigned gid;
     unsigned sid;
-    unsigned policy;
 
-    IpsPolicy::Action action;
+    friend bool operator< (const RuleKey& lhs, const RuleKey& rhs)
+    { return lhs.gid < rhs.gid ? true : (lhs.gid > rhs.gid ? false : (lhs.sid < rhs.sid)); }
+};
+
+struct RuleState
+{
+    unsigned policy_id;
+    snort::Actions::Type action;
     IpsPolicy::Enable enable;
+};
 
-    void apply(snort::SnortConfig*, OptTreeNode* otn, unsigned ips_num);
+class RuleStateMap
+{
+public:
+    void add(RuleKey& key, RuleState& state)
+    { map[key] = state; }
+
+    void apply(snort::SnortConfig*);
+
+private:
     RuleTreeNode* dup_rtn(RuleTreeNode*);
+    void update_rtn(RuleTreeNode*, RuleState&);
+    void apply(snort::SnortConfig*, OptTreeNode*, unsigned ips_num, RuleState&);
+
+private:
+    std::map<RuleKey, RuleState> map;
 };
 
 #endif

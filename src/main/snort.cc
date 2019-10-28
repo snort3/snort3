@@ -137,6 +137,7 @@ void Snort::init(int argc, char** argv)
     ModuleManager::init();
     ScriptManager::load_scripts(snort_cmd_line_conf->script_paths);
     PluginManager::load_plugins(snort_cmd_line_conf->plugin_path);
+    ModuleManager::load_params();
 
     if ( snort_cmd_line_conf->logging_flags & LOGGING_FLAG__SHOW_PLUGINS )
     {

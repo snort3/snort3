@@ -1127,11 +1127,44 @@ OptTreeNode* parse_rule_open(SnortConfig* sc, RuleTreeNode& rtn, bool stub)
     return otn;
 }
 
+static void parse_rule_state(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
+{
+    if ( !otn->sigInfo.gid )
+        otn->sigInfo.gid = GID_DEFAULT;
+
+    if ( otn->num_detection_opts )
+    {
+        ParseError("%u:%u rule state stubs do not support detection options",
+            otn->sigInfo.gid, otn->sigInfo.sid);
+    }
+    RuleKey key = { otn->sigInfo.gid, otn->sigInfo.sid };
+    RuleState state =
+    {
+        snort::get_ips_policy()->policy_id, // FIXIT-H need parsing policy for reload
+        rtn.action,
+        otn->enable
+    };
+    sc->rule_states->add(key, state);
+
+    if ( rtn.sip )
+        sfvar_free(rtn.sip);
+    if ( rtn.dip )
+        sfvar_free(rtn.dip);
+
+    OtnFree(otn);
+}
+
 void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
 {
     if ( s_ignore )
     {
         s_ignore = false;
+        return;
+    }
+
+    if ( otn->is_rule_state_stub() )
+    {
+        parse_rule_state(sc, rtn, otn);
         return;
     }
 

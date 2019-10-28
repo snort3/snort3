@@ -28,6 +28,7 @@
 
 #include "codecs/codec_module.h"
 #include "detection/fp_config.h"
+#include "detection/rules.h"
 #include "filters/detection_filter.h"
 #include "filters/rate_filter.h"
 #include "filters/sfrf.h"
@@ -1305,11 +1306,14 @@ static const Parameter ips_params[] =
     { "mode", Parameter::PT_ENUM, "tap | inline | inline-test", nullptr,
       "set policy mode" },
 
-    { "rules", Parameter::PT_STRING, nullptr, nullptr,
-      "snort rules and includes" },
-
     { "obfuscate_pii", Parameter::PT_BOOL, nullptr, "false",
       "mask all but the last 4 characters of credit card and social security numbers" },
+
+    { "rules", Parameter::PT_STRING, nullptr, nullptr,
+      "snort rules and includes (may contain states too)" },
+
+    { "states", Parameter::PT_STRING, nullptr, nullptr,
+      "snort rule states and includes (may contain rules too)" },
 
 #ifdef HAVE_UUID
     { "uuid", Parameter::PT_STRING, nullptr, "00000000-0000-0000-0000-000000000000",
@@ -1357,11 +1361,14 @@ bool IpsModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("mode") )
         p->policy_mode = (PolicyMode)v.get_uint8();
 
-    else if ( v.is("rules") )
-        p->rules = v.get_string();
-
     else if ( v.is("obfuscate_pii") )
         p->obfuscate_pii = v.get_bool();
+
+    else if ( v.is("rules") )
+        p->rules += v.get_string();
+
+    else if ( v.is("states") )
+        p->states += v.get_string();
 
 #ifdef HAVE_UUID
     else if ( v.is("uuid") )
@@ -1838,7 +1845,7 @@ bool RateFilterModule::end(const char*, int idx, SnortConfig* sc)
 static const Parameter single_rule_state_params[] =
 {
     { "action", Parameter::PT_ENUM,
-      "log | pass | alert | drop | block | reset | react | reject | rewrite | inherit", "inherit",
+      "log | pass | alert | drop | block | reset", "alert",
       "apply action if rule matches or inherit from rule definition" },
 
     { "enable", Parameter::PT_ENUM, "no | yes | inherit", "inherit",
@@ -1856,7 +1863,8 @@ static const Parameter rule_state_params[] =
 };
 
 #define rule_state_help \
-    "enable/disable and set actions for specific IPS rules"
+    "enable/disable and set actions for specific IPS rules; " \
+    "deprecated, use rule state stubs with enable instead"
 
 class RuleStateModule : public Module
 {
@@ -1873,9 +1881,8 @@ public:
     { return DETECT; }
 
 private:
-    unsigned gid, sid;
-    IpsPolicy::Action action;
-    IpsPolicy::Enable enable;
+    RuleKey key;
+    RuleState state;
 };
 
 bool RuleStateModule::matches(const char* param, std::string& name)
@@ -1886,9 +1893,9 @@ bool RuleStateModule::matches(const char* param, std::string& name)
     std::stringstream ss(name);
     char sep;
 
-    ss >> gid >> sep >> sid;
+    ss >> key.gid >> sep >> key.sid;
 
-    if ( gid and sid and sep == ':' )
+    if ( key.gid and key.sid and sep == ':' )
         return true;
 
     return false;
@@ -1900,16 +1907,13 @@ bool RuleStateModule::set(const char* fqn, Value& v, SnortConfig*)
     if ( !strcmp(fqn, "$gid_sid") )
         return true;
 
-    if ( gid and sid )
+    if ( key.gid and key.sid )
     {
         if ( v.is("action") )
-            action = IpsPolicy::Action(v.get_uint8());
+            state.action = snort::Actions::Type(v.get_uint8() + 1);
 
         else if ( v.is("enable") )
-            enable = IpsPolicy::Enable(v.get_uint8());
-
-        else
-            return false;
+            state.enable = IpsPolicy::Enable(v.get_uint8());
     }
     else
         return false;
@@ -1917,19 +1921,28 @@ bool RuleStateModule::set(const char* fqn, Value& v, SnortConfig*)
     return true;
 }
 
-bool RuleStateModule::begin(const char*, int, SnortConfig*)
+bool RuleStateModule::begin(const char*, int, SnortConfig* sc)
 {
-    gid = sid = 0;
-    action = IpsPolicy::Action::INHERIT_ACTION;
-    enable = IpsPolicy::Enable::INHERIT_ENABLE;
+    if ( !sc->rule_states )
+        sc->rule_states = new RuleStateMap;
+
+    else
+    {
+        key = { 0, 0 };
+        state.action = snort::Actions::Type::ALERT;
+        state.enable = IpsPolicy::Enable::INHERIT_ENABLE;
+    }
     return true;
 }
 
 bool RuleStateModule::end(const char*, int, SnortConfig* sc)
 {
-    if ( gid and sid )
-        sc->rule_states.emplace_back(new RuleState(gid, sid, action, enable));
-    gid = sid = 0;
+    if ( !key.gid or !key.sid )
+        return false;
+
+    state.policy_id = snort::get_ips_policy()->policy_id;
+    sc->rule_states->add(key, state);
+
     return true;
 }
 

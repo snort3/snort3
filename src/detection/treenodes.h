@@ -25,6 +25,7 @@
 #include "actions/actions.h"
 #include "detection/signature.h"
 #include "detection/rule_option_types.h"
+#include "main/policy.h"
 #include "main/snort_types.h"
 #include "time/clock_defs.h"
 
@@ -139,8 +140,9 @@ struct RuleTreeNode
 struct OptTreeNode
 {
     using Flag = uint8_t;
-    static constexpr Flag WARNED_FP = 0x01;
-    static constexpr Flag STATELESS = 0x02;
+    static constexpr Flag WARNED_FP  = 0x01;
+    static constexpr Flag STATELESS  = 0x02;
+    static constexpr Flag RULE_STATE = 0x04;
 
     /* metadata about signature */
     SigInfo sigInfo;
@@ -173,6 +175,7 @@ struct OptTreeNode
     unsigned short proto_node_num = 0;
     uint16_t longestPatternLen = 0;
 
+    IpsPolicy::Enable enable;
     Flag flags = 0;
 
     void set_warned_fp()
@@ -186,6 +189,12 @@ struct OptTreeNode
 
     bool stateless() const
     { return flags & STATELESS; }
+
+    void set_enabled(IpsPolicy::Enable e)
+    { enable = e; flags |= RULE_STATE; }
+
+    bool is_rule_state_stub()
+    { return flags & RULE_STATE; }
 
     bool enabled_somewhere() const
     {

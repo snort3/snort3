@@ -71,6 +71,9 @@ public:
     static void dump_rules(const char* = nullptr);
     static void dump_defaults(const char* = nullptr);
 
+    static void load_params();
+    static const struct Parameter* get_parameter(const char* table, const char* option);
+
     static void load_commands(Shell*);
     static void load_rules(SnortConfig*);
     static void set_config(SnortConfig*);

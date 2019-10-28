@@ -36,34 +36,35 @@
 
 #include "treenodes.h"
 
-#ifdef REG_TEST
-#define ParseError(...) ParseWarning(WARN_RULES, __VA_ARGS__)
-#endif
-
 using namespace snort;
 
-void RuleState::apply(SnortConfig* sc)
+void RuleStateMap::apply(SnortConfig* sc)
 {
-    OptTreeNode* otn = OtnLookup(sc->otn_map, gid, sid);
-
-    if ( otn == nullptr )
-        ParseError("Rule state specified for invalid rule %u:%u", gid, sid);
-    else
+    for ( auto it : map )
     {
-        if ( sc->global_rule_state )
-        {
-            for ( unsigned i = 0; i < sc->policy_map->ips_policy_count(); i++ )
-            {
-                if ( sc->policy_map->get_ips_policy(i) )
-                    apply(sc, otn, i);
-            }
-        }
+        const RuleKey& k = it.first;
+        OptTreeNode* otn = OtnLookup(sc->otn_map, k.gid, k.sid);
+
+        if ( !otn )
+            ParseWarning(WARN_RULES, "Rule state specified for unknown rule %u:%u", k.gid, k.sid);
         else
-            apply(sc, otn, policy);
+        {
+            if ( sc->global_rule_state )
+            {
+                for ( unsigned i = 0; i < sc->policy_map->ips_policy_count(); i++ )
+                {
+                    if ( sc->policy_map->get_ips_policy(i) )
+                        apply(sc, otn, i, it.second);
+                }
+            }
+            else
+                apply(sc, otn, it.second.policy_id, it.second);
+        }
     }
 }
 
-void RuleState::apply(SnortConfig* sc, OptTreeNode* otn, unsigned ips_num)
+void RuleStateMap::apply(
+    SnortConfig* sc, OptTreeNode* otn, unsigned ips_num, RuleState& s)
 {
     RuleTreeNode* rtn = getRtnFromOtn(otn, ips_num);
 
@@ -74,11 +75,11 @@ void RuleState::apply(SnortConfig* sc, OptTreeNode* otn, unsigned ips_num)
         return;
 
     rtn = dup_rtn(rtn);
-    update_rtn(rtn);
+    update_rtn(rtn, s);
     addRtnToOtn(sc, otn, rtn, ips_num);
 }
 
-RuleTreeNode* RuleState::dup_rtn(RuleTreeNode* rtn)
+RuleTreeNode* RuleStateMap::dup_rtn(RuleTreeNode* rtn)
 {
     RuleTreeNode* ret = new RuleTreeNode(*rtn);
 
@@ -105,23 +106,14 @@ RuleTreeNode* RuleState::dup_rtn(RuleTreeNode* rtn)
     return ret;
 }
 
-void RuleState::update_rtn(RuleTreeNode* rtn)
+void RuleStateMap::update_rtn(RuleTreeNode* rtn, RuleState& s)
 {
-    switch ( action )
+    switch ( s.enable )
     {
-        case IpsPolicy::LOG: rtn->action = Actions::Type::LOG; break;
-        case IpsPolicy::PASS: rtn->action = Actions::Type::PASS; break;
-        case IpsPolicy::ALERT: rtn->action = Actions::Type::ALERT; break;
-        case IpsPolicy::DROP: rtn->action = Actions::Type::DROP; break;
-        case IpsPolicy::BLOCK: rtn->action = Actions::Type::BLOCK; break;
-        case IpsPolicy::RESET: rtn->action = Actions::Type::RESET; break;
-        case IpsPolicy::INHERIT_ACTION: break;
+    case IpsPolicy::DISABLED: rtn->clear_enabled(); break;
+    case IpsPolicy::ENABLED: rtn->set_enabled(); break;
+    case IpsPolicy::INHERIT_ENABLE: break;
     }
-    switch ( enable )
-    {
-        case IpsPolicy::DISABLED: rtn->clear_enabled(); break;
-        case IpsPolicy::ENABLED: rtn->set_enabled(); break;
-        case IpsPolicy::INHERIT_ENABLE: break;
-    }
+    rtn->action = s.action;
 }
 
