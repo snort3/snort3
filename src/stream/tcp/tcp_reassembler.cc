@@ -199,7 +199,7 @@ bool TcpReassembler::is_segment_fasttrack(
 }
 
 int TcpReassembler::add_reassembly_segment(
-    TcpReassemblerState& trs, TcpSegmentDescriptor& tsd, int16_t len, uint32_t slide,
+    TcpReassemblerState& trs, TcpSegmentDescriptor& tsd, uint16_t len, uint32_t slide,
     uint32_t trunc_len, uint32_t seq, TcpSegmentNode* left)
 {
     const int32_t new_size = len - slide - trunc_len;
@@ -403,8 +403,7 @@ int TcpReassembler::flush_data_segments(
 
         if ( !tsn->next or (bytes_to_copy < tsn->c_len) or
             SEQ_EQ(tsn->c_seq + bytes_to_copy, to_seq) or
-            (total_flushed + tsn->c_len + tsn->next->c_len >
-                trs.tracker->splitter->get_max_pdu()) )
+            (total_flushed + tsn->c_len > trs.tracker->splitter->get_max_pdu()) )
         {
             flags |= PKT_PDU_TAIL;
         }
@@ -448,9 +447,7 @@ int TcpReassembler::flush_data_segments(
             break;
         }
 
-        if ( ( sb.data || !trs.sos.seglist.cur_rseg ) or
-             ( ( total_flushed + trs.sos.seglist.cur_rseg->c_len ) >
-                 trs.tracker->splitter->get_max_pdu() ) )
+        if ( sb.data || !trs.sos.seglist.cur_rseg )
             break;
     }
 
@@ -1322,4 +1319,3 @@ int TcpReassembler::queue_packet_for_reassembly(
 
     return rc;
 }
-

@@ -45,7 +45,7 @@ protected:
     TcpReassembler() = default;
 
     int add_reassembly_segment(
-        TcpReassemblerState&, TcpSegmentDescriptor&, int16_t len, uint32_t slide,
+        TcpReassemblerState&, TcpSegmentDescriptor&, uint16_t len, uint32_t slide,
         uint32_t trunc, uint32_t seq, TcpSegmentNode* left) override;
 
     int dup_reassembly_segment(
@@ -88,4 +88,3 @@ protected:
 };
 
 #endif
-

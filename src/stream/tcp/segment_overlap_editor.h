@@ -112,7 +112,7 @@ protected:
     virtual int insert_full_overlap(TcpReassemblerState&) = 0;
 
     virtual int add_reassembly_segment(
-        TcpReassemblerState&, TcpSegmentDescriptor&, int16_t, uint32_t,
+        TcpReassemblerState&, TcpSegmentDescriptor&, uint16_t, uint32_t,
         uint32_t, uint32_t, TcpSegmentNode*) = 0;
 
     virtual int dup_reassembly_segment(TcpReassemblerState&, TcpSegmentNode*, TcpSegmentNode**) = 0;
@@ -121,4 +121,3 @@ protected:
 };
 
 #endif
-
