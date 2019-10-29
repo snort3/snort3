@@ -1,6 +1,7 @@
 
 set( UTIL_INCLUDES
     bitop.h
+    boyer_moore.h
     cpp_macros.h
     endian.h
     event_gen.h
@@ -28,7 +29,6 @@ add_library ( utils OBJECT
     ${UTIL_INCLUDES}
     ${SNPRINTF_SOURCES}
     boyer_moore.cc 
-    boyer_moore.h
     dnet_header.h
     dyn_array.cc
     dyn_array.h
@@ -56,4 +56,6 @@ endif()
 install (FILES ${UTIL_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/utils"
 )
+
+add_subdirectory(test)
 

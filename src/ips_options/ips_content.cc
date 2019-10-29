@@ -44,39 +44,57 @@ using namespace snort;
 
 static THREAD_LOCAL ProfileStats contentPerfStats;
 
-static IpsOption::EvalStatus CheckANDPatternMatch(struct ContentData*, Cursor&);
+static IpsOption::EvalStatus CheckANDPatternMatch(class ContentData*, Cursor&);
 
 //-------------------------------------------------------------------------
 // instance data
 //-------------------------------------------------------------------------
 
-struct ContentData
+class ContentData
 {
-    PatternMatchData pmd;
+public:
+    ContentData();
+
+    ~ContentData();
+
+    void setup_bm();
+    void set_max_jump_size();
+
+    PatternMatchData pmd = {};
+
+    BoyerMoore* boyer_moore;
 
     int8_t offset_var;      /* byte_extract variable indices for offset, */
     int8_t depth_var;       /* depth, distance, within */
 
     unsigned match_delta;   /* Maximum distance we can jump to search for this pattern again. */
-
-    int* skip_stride;       /* B-M skip array */
-    int* shift_stride;      /* B-M shift array */
-
-    void init();
-    void setup_bm();
-    void set_max_jump_size();
 };
 
-void ContentData::init()
+ContentData::ContentData()
 {
+    boyer_moore = nullptr;
     offset_var = IPS_OPTIONS_NO_VAR;
     depth_var = IPS_OPTIONS_NO_VAR;
+    match_delta = 0;
+}
+
+ContentData::~ContentData()
+{
+    if ( boyer_moore )
+        delete boyer_moore;
+
+    if ( pmd.pattern_buf )
+        snort_free(const_cast<char*>(pmd.pattern_buf));
+
+    if ( pmd.last_check )
+        snort_free(pmd.last_check);
 }
 
 void ContentData::setup_bm()
 {
-    skip_stride = make_skip(pmd.pattern_buf, pmd.pattern_size);
-    shift_stride = make_shift(pmd.pattern_buf, pmd.pattern_size);
+    const uint8_t* pattern = (const uint8_t*)pmd.pattern_buf;
+
+    boyer_moore = new BoyerMoore(pattern, pmd.pattern_size);
 }
 
 // find the maximum number of characters we can jump ahead
@@ -113,7 +131,8 @@ public:
     ContentOption(ContentData* c) : IpsOption(s_name, RULE_OPTION_TYPE_CONTENT)
     { config = c; }
 
-    ~ContentOption() override;
+    ~ContentOption() override
+    { delete config; }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -141,28 +160,6 @@ public:
 protected:
     ContentData* config;
 };
-
-ContentOption::~ContentOption()
-{
-    ContentData* cd = config;
-
-    if ( !cd )
-        return;
-
-    if ( cd->pmd.pattern_buf )
-        snort_free(const_cast<char*>(cd->pmd.pattern_buf));
-
-    if ( cd->pmd.last_check )
-        snort_free(cd->pmd.last_check);
-
-    if ( cd->skip_stride )
-        snort_free(cd->skip_stride);
-
-    if ( cd->shift_stride )
-        snort_free(cd->shift_stride);
-
-    snort_free(cd);
-}
 
 bool ContentOption::retry(Cursor& c)
 {
@@ -352,15 +349,11 @@ static int uniSearchReal(ContentData* cd, Cursor& c)
 
     if ( cd->pmd.is_no_case() )
     {
-        found = mSearchCI(
-            (const char*)base, depth, cd->pmd.pattern_buf, cd->pmd.pattern_size,
-            cd->skip_stride, cd->shift_stride);
+        found = cd->boyer_moore->search_nocase(base, depth);
     }
     else
     {
-        found = mSearch(
-            (const char*)base, depth, cd->pmd.pattern_buf, cd->pmd.pattern_size,
-            cd->skip_stride, cd->shift_stride);
+        found = cd->boyer_moore->search(base, depth);
     }
 
     if ( found >= 0 )
@@ -671,8 +664,7 @@ ContentData* ContentModule::get_data()
 
 bool ContentModule::begin(const char*, int, SnortConfig*)
 {
-    cd = (ContentData*)snort_calloc(sizeof(ContentData));
-    cd->init();
+    cd = new ContentData();
     return true;
 }
 

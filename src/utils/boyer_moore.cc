@@ -1,7 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2002-2013 Sourcefire, Inc.
-// Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+// Copyright (C) 2019-2019 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -17,207 +15,75 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-
-// boyer_moore.cc was split out of mstring.cc which had these comments:
-
-/***************************************************************************
- *
- * File: MSTRING.C
- *
- * Purpose: Provide a variety of string functions not included in libc.  Makes
- *          up for the fact that the libstdc++ is hard to get reference
- *          material on and I don't want to write any more non-portable c++
- *          code until I have solid references and libraries to use.
- *
- * History:
- *
- * Date:      Author:  Notes:
- * ---------- ------- ----------------------------------------------
- *  08/19/98    MFR    Initial coding begun
- *  03/06/99    MFR    Added Boyer-Moore pattern match routine
- *  12/31/99	JGW    Added a full Boyer-Moore implementation to increase
- *                     performance. Added a case insensitive version of mSearch
- *  07/24/01    MFR    Fixed Regex pattern matcher introduced by Fyodor
- *
- **************************************************************************/
+// boyer_moore.cc author Brandon Stultz <brastult@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "boyer_moore.h"
+#include <cassert>
+#include <cctype>
 
-#include "util.h"
+#include "boyer_moore.h"
 
 namespace snort
 {
-/****************************************************************
- *
- *  Function: make_skip(char *, int)
- *
- *  Purpose: Create a Boyer-Moore skip table for a given pattern
- *
- *  Parameters:
- *      ptrn => pattern
- *      plen => length of the data in the pattern buffer
- *
- *  Returns:
- *      int * - the skip table
- *
- ****************************************************************/
-int* make_skip(const char* ptrn, int plen)
+
+BoyerMoore::BoyerMoore(const uint8_t* pattern, unsigned pattern_len)
+    : pattern(pattern), pattern_len(pattern_len)
 {
-    int i;
-    int* skip = (int*)snort_calloc(256, sizeof(int));
+    assert(pattern_len > 0);
 
-    for ( i = 0; i < 256; i++ )
-        skip[i] = plen + 1;
+    last = pattern_len - 1;
 
-    while (plen != 0)
-        skip[(unsigned char)*ptrn++] = plen--;
-
-    return skip;
+    make_skip();
 }
 
-/****************************************************************
- *
- *  Function: make_shift(char *, int)
- *
- *  Purpose: Create a Boyer-Moore shift table for a given pattern
- *
- *  Parameters:
- *      ptrn => pattern
- *      plen => length of the data in the pattern buffer
- *
- *  Returns:
- *      int * - the shift table
- *
- ****************************************************************/
-int* make_shift(const char* ptrn, int plen)
+// skip[c] is the distance between the last character of the
+// pattern and the rightmost occurrence of c in the pattern.
+// If c does not occur in the pattern then skip[c] = pattern_len.
+void BoyerMoore::make_skip()
 {
-    int* shift = (int*)snort_calloc(plen, sizeof(int));
-    int* sptr = shift + plen - 1;
-    const char* pptr = ptrn + plen - 1;
-    char c;
+    for ( unsigned i = 0; i < 256; i++ )
+        skip[i] = pattern_len;
 
-    c = ptrn[plen - 1];
-
-    *sptr = 1;
-
-    while (sptr-- != shift)
-    {
-        const char* p1 = ptrn + plen - 2, * p2, * p3;
-
-        do
-        {
-            while (p1 >= ptrn && *p1-- != c)
-                ;
-
-            p2 = ptrn + plen - 2;
-            p3 = p1;
-
-            while (p3 >= ptrn && *p3-- == *p2-- && p2 >= pptr)
-                ;
-        }
-        while (p3 >= ptrn && p2 >= pptr);
-
-        *sptr = shift + plen - sptr + p2 - p3;
-
-        pptr--;
-    }
-
-    return shift;
+    for ( unsigned i = 0; i < last; i++ )
+        skip[pattern[i]] = last - i;
 }
 
-/****************************************************************
- *
- *  Function: mSearch(char *, int, char *, int)
- *
- *  Purpose: Determines if a string contains a (non-regex)
- *           substring.
- *
- *  Parameters:
- *      buf => data buffer we want to find the data in
- *      blen => data buffer length
- *      ptrn => pattern to find
- *      plen => length of the data in the pattern buffer
- *      skip => the B-M skip array
- *      shift => the B-M shift array
- *
- *  Returns:
- *      -1 if not found or offset >= 0 if found
- *
- ****************************************************************/
-int mSearch(
-    const char* buf, int blen, const char* ptrn, int plen, const int* skip, const int* shift)
+int BoyerMoore::search(const uint8_t* buffer, unsigned buffer_len) const
 {
-    if (plen == 0)
-        return -1;
+    const uint8_t* start = buffer;
 
-    int b_idx = plen;
-
-    while (b_idx <= blen)
+    while ( buffer_len >= pattern_len )
     {
-        int p_idx = plen, skip_stride, shift_stride;
+        for ( unsigned pos = last; buffer[pos] == pattern[pos]; pos-- )
+            if ( pos == 0 )
+                return buffer - start;
 
-        while (buf[--b_idx] == ptrn[--p_idx])
-        {
-            if (p_idx == 0)
-                return b_idx;
-        }
-
-        skip_stride = skip[(unsigned char)buf[b_idx]];
-        shift_stride = shift[p_idx];
-
-        b_idx += (skip_stride > shift_stride) ? skip_stride : shift_stride;
+        buffer_len -= skip[buffer[last]];
+        buffer += skip[buffer[last]];
     }
 
     return -1;
 }
 
-/****************************************************************
- *
- *  Function: mSearchCI(char *, int, char *, int)
- *
- *  Purpose: Determines if a string contains a (non-regex)
- *           substring matching is case insensitive
- *
- *  Parameters:
- *      buf => data buffer we want to find the data in
- *      blen => data buffer length
- *      ptrn => pattern to find
- *      plen => length of the data in the pattern buffer
- *      skip => the B-M skip array
- *      shift => the B-M shift array
- *
- *  Returns:
- *      -1 if not found or offset >= 0 if found
- *
- ****************************************************************/
-int mSearchCI(
-    const char* buf, int blen, const char* ptrn, int plen, const int* skip, const int* shift)
+int BoyerMoore::search_nocase(const uint8_t* buffer, unsigned buffer_len) const
 {
-    int b_idx = plen;
+    const uint8_t* start = buffer;
 
-    if (plen == 0)
-        return -1;
-
-    while (b_idx <= blen)
+    while ( buffer_len >= pattern_len )
     {
-        int p_idx = plen, skip_stride, shift_stride;
+        for ( unsigned pos = last; toupper(buffer[pos]) == pattern[pos]; pos-- )
+            if ( pos == 0 )
+                return buffer - start;
 
-        while ((unsigned char)ptrn[--p_idx] == toupper((unsigned char)buf[--b_idx]))
-        {
-            if (p_idx == 0)
-                return b_idx;
-        }
-
-        skip_stride = skip[toupper((unsigned char)buf[b_idx])];
-        shift_stride = shift[p_idx];
-
-        b_idx += (skip_stride > shift_stride) ? skip_stride : shift_stride;
+        buffer_len -= skip[toupper(buffer[last])];
+        buffer += skip[toupper(buffer[last])];
     }
 
     return -1;
 }
+
 }
+
