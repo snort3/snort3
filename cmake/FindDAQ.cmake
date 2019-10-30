@@ -38,7 +38,7 @@ find_package_handle_standard_args(DAQ
 
 mark_as_advanced(
     DAQ_INCLUDE_DIR
-    DAQ_LIBRARIES 
+    DAQ_LIBRARIES
 )
 
 if (PKG_CONFIG_EXECUTABLE AND ENABLE_STATIC_DAQ)
@@ -63,8 +63,10 @@ if (PKG_CONFIG_EXECUTABLE AND ENABLE_STATIC_DAQ)
     endforeach()
     if (DAQ_STATIC_MODULE_LIBS)
         list(REMOVE_DUPLICATES DAQ_STATIC_MODULE_LIBS)
+        set(DAQ_STATIC_MODULE_LIBS ${DAQ_STATIC_MODULE_LIBS} CACHE INTERNAL "Static DAQ module libraries")
     endif()
     if (DAQ_STATIC_MODULES)
         list(SORT DAQ_STATIC_MODULES)
+        set(DAQ_STATIC_MODULES ${DAQ_STATIC_MODULES} CACHE INTERNAL "Static DAQ modules")
     endif()
 endif()
