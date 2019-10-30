@@ -10,7 +10,33 @@ buffers. As in NHI, long data frames are split into 16kb chunks for inspection. 
 is followed by continuation frames, all the header frames are flushed together for inspection. The
 frame headers from each frame are stored contiguously in the frame_header buffer. After cutting out
 the frame headers, the frame data is stored as a single block, consisting of the HPACK encoded
-HTTP/2 headers. HPACK decoding is under ongoing development. Decoded headers will be stored in the
-http2_decoded_header buffer.
+HTTP/2 headers.
+
+HPACK decoding is under ongoing development. In the current implementation, reassemble() makes a
+first copy of the encoded headers, which is stored in the frame_data buffer. The frame_data buffer
+is passed to the function decode_headers(), which is the main loop driving HPACK decoding. The
+function allocates a second buffer, raw_decoded_header, to which the decoding routine will
+progressively write. As part of decoding the pseudo-headers (described below), data that must not be
+sent to NHI may be written to the start of the buffer. In order to avoid making any extra copies,
+the decoding routine sets a pointer to the start of the regular headers inside raw_decoded_header
+that will be processed by NHI, called http2_decoded_header.
+
+The main loop in decode_headers() finds the cut point for a single header line. The line is is
+passed to decode_header_line(), which parses the line and calls the appropriate decoding function
+based on the header representation type. If the type is indexed, the full header line is looked up
+in the table and copied to the decoded header buffer. The index may belong to either the static or
+the dynamic table. The static table is 61-elements defined in the HPACK RFC. The dynamic table,
+which starts at index 62, is specific to each direction of each flow. For the second type, literal
+to be indexed, the header name may be indexed or a string literal, while the value is always a
+literal. The resulting header line will then be added to the dynamic table (not yet implemented).
+The third representation type is literal not to be indexed, which is the same as literal to be
+indexed, except the header line is not added to the dynamic table.
+
+HTTP/2 uses pseudo-headers to convey the information included in an HTTP/1.1 start-line.
+Pseudo-headers are not valid HTTP/1.1 headers, so must be translated into a start-line before the
+decoded headers can be passed to NHI. The two Http2StartLine subclasses, Http2RequestLine and
+Http2ResponseLine (not yet implemented) perform this translation and generate the start-line, which
+is stored in a new buffer inside the Http2StartLine object. The start-line buffer must be passed to
+NHI before the http2_decoded_header buffer, which contains the regular HTTP/1.1 headers.
 
 H2I supports the NHI test tool. See ../http_inspect/dev_notes.txt for usage instructions.

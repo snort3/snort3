@@ -38,7 +38,6 @@ const RuleMap Http2Module::http2_events[] =
     { EVENT_UNEXPECTED_CONTINUATION, "unexpected continuation frame"},
     { EVENT_MISFORMATTED_HTTP2, "misformatted HTTP/2 traffic"},
     { EVENT_PREFACE_MATCH_FAILURE, "HTTP/2 connection preface does not match"},
-    { EVENT_HPACK_INDEX_DECODE_FAILURE, "error in decoding HPACK indexed field"},
     { 0, nullptr }
 };
 

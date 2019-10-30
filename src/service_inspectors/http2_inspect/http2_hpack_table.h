@@ -20,9 +20,12 @@
 #ifndef HTTP2_HPACK_TABLE_H
 #define HTTP2_HPACK_TABLE_H
 
-#include <cstdint>
+#include "main/snort_types.h"
+
+#include "http2_enum.h"
 
 #define STATIC_MAX_INDEX 61
+#define PSEUDO_HEADER_MAX_INDEX 14
 
 // Only static table is implemented. lookup() will be extended to support dynamic table
 // lookups once dynamic table is implemented
@@ -31,8 +34,8 @@ class Http2HpackTable
 public:
     struct TableEntry
     {
-        const char *name;
-        const char *value;
+        const char* name;
+        const char* value;
     };
 
     const static TableEntry* lookup(uint64_t index);
@@ -40,5 +43,4 @@ public:
 private:
     const static TableEntry table[STATIC_MAX_INDEX + 1];
 };
-
 #endif

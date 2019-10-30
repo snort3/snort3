@@ -48,10 +48,11 @@ bool implement_get_buf(unsigned id, Http2FlowData* session_data, SourceId source
         b.len = session_data->frame_data_size[source_id];
         break;
     case HTTP2_BUFFER_DECODED_HEADER:
-        if (session_data->http2_decoded_header[source_id] == nullptr)
+        if (!session_data->http2_decoded_header[source_id] or
+                session_data->http2_decoded_header[source_id]->length() <= 0)
             return false;
-        b.data = session_data->http2_decoded_header[source_id];
-        b.len = session_data->http2_decoded_header_size[source_id];
+        b.data = session_data->http2_decoded_header[source_id]->start();
+        b.len = session_data->http2_decoded_header[source_id]->length();
         break;
     default:
         return false;

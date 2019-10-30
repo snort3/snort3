@@ -393,7 +393,7 @@ const StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned to
         {
             if (get_frame_type(session_data->frame_header[source_id]) == FT_HEADERS)
             {
-                assert(session_data->http2_decoded_header[source_id] == nullptr);
+                assert(session_data->raw_decoded_header[source_id] == nullptr);
 
                 // FIXIT-H This will eventually be the decoded header buffer. Under development.
                 if (!Http2Hpack::decode_headers(session_data, source_id,

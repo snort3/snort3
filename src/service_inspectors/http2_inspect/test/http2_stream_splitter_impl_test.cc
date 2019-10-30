@@ -50,6 +50,7 @@ unsigned HttpTestManager::test_output = IN_NONE;
 FILE* HttpTestManager::test_out = nullptr ;
 int DetectionEngine::queue_event(unsigned int, unsigned int, Actions::Type) { return 0; }
 void Field::print(_IO_FILE*, char const*) const {}
+void Field::set(int, unsigned char const*, bool) {}
 
 TEST_GROUP(http2_scan_test)
 {

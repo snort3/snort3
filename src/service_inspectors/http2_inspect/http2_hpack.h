@@ -67,7 +67,11 @@ public:
         HttpCommon::SourceId source_id, const uint64_t index, const bool decode_full_line,
         uint8_t* decoded_header_buffer, const uint32_t decoded_header_length,
         uint32_t& bytes_written);
-    static bool decode_dynamic_table_index(void) { return true; }
+    static bool decode_dynamic_table_index(Http2FlowData* session_data,
+        HttpCommon::SourceId source_id, const uint64_t index, const bool decode_full_line,
+        uint32_t &bytes_consumed, const uint8_t* encoded_header_buffer,
+        uint8_t* decoded_header_buffer, const uint32_t decoded_header_length,
+        uint32_t& bytes_written);
 
     static const int STATIC_TABLE_MAX_INDEX = 61;
 

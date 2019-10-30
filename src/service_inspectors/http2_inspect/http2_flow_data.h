@@ -51,6 +51,8 @@ public:
     friend class Http2Inspect;
     friend class Http2StreamSplitter;
     friend class Http2Hpack;
+    friend class Http2StartLine;
+    friend class Http2RequestLine;
     friend const snort::StreamBuffer implement_reassemble(Http2FlowData*, unsigned, unsigned,
         const uint8_t*, unsigned, uint32_t, HttpCommon::SourceId);
     friend snort::StreamSplitter::Status implement_scan(Http2FlowData*, const uint8_t*, uint32_t,
@@ -68,8 +70,10 @@ protected:
     uint32_t frame_header_size[2] = { 0, 0 };
     uint8_t* frame_data[2] = { nullptr, nullptr };
     uint32_t frame_data_size[2] = { 0, 0 };
-    uint8_t* http2_decoded_header[2] = { nullptr, nullptr };
-    uint32_t http2_decoded_header_size[2] = { 0, 0 };
+    uint8_t* raw_decoded_header[2] = { nullptr, nullptr };
+    uint32_t raw_decoded_header_size[2] = { 0, 0 };
+    uint32_t pseudo_header_fragment_size[2] = { 0, 0 };
+    Field* http2_decoded_header[2] = { nullptr, nullptr };
     bool frame_in_detection = false;
 
     // Internal to scan()
@@ -90,6 +94,7 @@ protected:
     
     // Internal to reassemble()
     Http2Hpack hpack[2];
+    class Http2StartLine* header_start_line[2] = { nullptr, nullptr };
     uint32_t remaining_octets_to_next_header[2] = { 0, 0 };
     uint32_t remaining_frame_data_octets[2] = { 0, 0 };
     uint32_t remaining_frame_data_offset[2] = { 0, 0 };

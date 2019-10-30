@@ -27,6 +27,7 @@
 
 #include "http2_enum.h"
 #include "http2_module.h"
+#include "http2_start_line.h"
 
 using namespace snort;
 using namespace Http2Enums;
@@ -72,9 +73,10 @@ Http2FlowData::~Http2FlowData()
     {
         delete[] frame_header[k];
         delete[] frame_data[k];
-        delete[] http2_decoded_header[k];
+        delete[] raw_decoded_header[k];
         delete infractions[k];
         delete events[k];
+        delete http2_decoded_header[k];
     }
 }
 
@@ -85,9 +87,13 @@ void Http2FlowData::clear_frame_data(HttpCommon::SourceId source_id)
     delete[] frame_data[source_id];
     frame_data[source_id] = nullptr;
     frame_in_detection = false;
-    delete[] http2_decoded_header[source_id];
-    http2_decoded_header[source_id] = nullptr;
+    delete[] raw_decoded_header[source_id];
+    raw_decoded_header[source_id] = nullptr;
     continuation_expected[source_id] = false;
     frames_aggregated[source_id] = 0;
     scan_header_octets_seen[source_id] = 0;
+    delete header_start_line[source_id];
+    header_start_line[source_id] = nullptr;
+    delete http2_decoded_header[source_id];
+    http2_decoded_header[source_id] = nullptr;
 }

@@ -20,6 +20,10 @@ set (FILE_LIST
     http2_inspect.h
     http2_module.cc
     http2_module.h
+    http2_request_line.cc
+    http2_request_line.h
+    http2_start_line.cc
+    http2_start_line.h
     http2_stream_splitter.cc
     http2_stream_splitter_impl.cc
     http2_stream_splitter.h

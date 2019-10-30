@@ -55,7 +55,6 @@ enum EventSid
     EVENT_UNEXPECTED_CONTINUATION = 5,
     EVENT_MISFORMATTED_HTTP2 = 6,
     EVENT_PREFACE_MATCH_FAILURE = 7,
-    EVENT_HPACK_INDEX_DECODE_FAILURE = 8,
     EVENT__MAX_VALUE
 };
 
@@ -75,7 +74,10 @@ enum Infraction
     INF_HUFFMAN_INCOMPLETE_CODE_PADDING = 9,
     INF_MISSING_CONTINUATION = 10,
     INF_UNEXPECTED_CONTINUATION = 11,
-    INF_STATIC_TABLE_LOOKUP_ERROR = 12,
+    INF_LOOKUP_EMPTY_VALUE = 12,
+    INF_INVALID_PSEUDO_HEADER = 13,
+    INF_PSEUDO_HEADER_AFTER_REGULAR_HEADER = 14,
+    INF_PSEUDO_HEADER_URI_FORM_MISMATCH = 15,
     INF__MAX_VALUE
 };
 
@@ -88,7 +90,16 @@ enum HeaderFrameFlags
     NO_HEADER = 0x80, //No valid flags use this bit
 };
 
- 
+enum PseudoHeaders
+{
+    HEADER_NONE = 0,
+    AUTHORITY = 1,
+    METHOD = 3,
+    PATH = 5,
+    SCHEME = 7,
+    STATUS = 14,
+};
+
 } // end namespace Http2Enums
 
 #endif

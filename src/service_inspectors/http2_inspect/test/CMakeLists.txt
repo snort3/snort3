@@ -16,6 +16,8 @@ add_cpputest( http2_stream_splitter_impl_test
         ../http2_stream_splitter_impl.cc
         ../http2_hpack.cc
         ../http2_module.cc
+        ../http2_request_line.cc
+        ../http2_start_line.cc
         ../http2_tables.cc
         ../../../framework/module.cc
 )

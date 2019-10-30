@@ -28,6 +28,7 @@
 
 #include "http2_enum.h"
 #include "http2_flow_data.h"
+#include "http2_request_line.h"
 
 using namespace HttpCommon;
 using namespace Http2Enums;
@@ -50,7 +51,7 @@ bool Http2Hpack::write_decoded_headers(Http2FlowData* session_data, HttpCommon::
 
     if (in_length > decoded_header_length)
     {
-        length = MAX_OCTETS - session_data->http2_decoded_header_size[source_id];
+        length = MAX_OCTETS - session_data->raw_decoded_header_size[source_id];
         *session_data->infractions[source_id] += INF_DECODED_HEADER_BUFF_OUT_OF_SPACE;
         session_data->events[source_id]->create_event(EVENT_MISFORMATTED_HTTP2);
         ret = false;
@@ -120,45 +121,97 @@ bool Http2Hpack::decode_static_table_index(Http2FlowData* session_data,
     const Http2HpackTable::TableEntry* const entry = table.lookup(index);
     bytes_written = 0;
 
-    // FIXIT-H check if header is part of start-line, if so pass to start-line generating
-    // object and don't write to decoded header buffer
+    // Index should never be 0 - zeroed index means string literal
+    assert(index > 0);
 
-    // Write header name + ': ' to decoded headers
-    // FIXIT-H For now pseudo-headers are also copied. Need to be converted to start-line
-    if (!write_decoded_headers(session_data, source_id, (const uint8_t*) entry->name,
-             strlen(entry->name), decoded_header_buffer, decoded_header_length,
-             local_bytes_written))
-        return false;
-    bytes_written += local_bytes_written;
-    if (!write_decoded_headers(session_data, source_id, (const uint8_t*)": ", 2,
-            decoded_header_buffer + bytes_written, decoded_header_length - bytes_written,
-            local_bytes_written))
-        return false;
-    bytes_written += local_bytes_written;
+    // If this is a pseudo-header, pass it to the start line
+    // Remove second condition after response start line implemented
+    if (index < PSEUDO_HEADER_MAX_INDEX and session_data->header_start_line[source_id])
+    {
+        if (!session_data->header_start_line[source_id]->process_pseudo_header_name(index))
+            return false;
+    }
+
+    // If this is a regular header, write header name + ': ' to decoded headers
+    else
+    {
+        if (session_data->header_start_line[source_id] and
+            !session_data->header_start_line[source_id]->is_finalized())
+        {
+            if (!session_data->header_start_line[source_id]->finalize())
+                return false;
+        }
+
+        if (!write_decoded_headers(session_data, source_id, (const uint8_t*) entry->name,
+                strlen(entry->name), decoded_header_buffer,
+                decoded_header_length, local_bytes_written))
+            return false;
+        bytes_written += local_bytes_written;
+        if (!write_decoded_headers(session_data, source_id, (const uint8_t*)": ", 2,
+                decoded_header_buffer + bytes_written,
+                decoded_header_length - bytes_written,
+                local_bytes_written))
+            return false;
+        bytes_written += local_bytes_written;
+    }
 
     if (decode_full_line)
     {
         if (strlen(entry->value) == 0)
         {
-            *session_data->infractions[source_id] += INF_STATIC_TABLE_LOOKUP_ERROR;
-            session_data->events[source_id]->create_event(EVENT_HPACK_INDEX_DECODE_FAILURE);
+            *session_data->infractions[source_id] += INF_LOOKUP_EMPTY_VALUE;
+            session_data->events[source_id]->create_event(EVENT_MISFORMATTED_HTTP2);
             return false;
         }
-        if (!write_decoded_headers(session_data, source_id, (const uint8_t*)entry->value,
-                 strlen(entry->value), decoded_header_buffer + bytes_written,
-                 decoded_header_length - bytes_written, local_bytes_written))
-            return false;
-        bytes_written += local_bytes_written;
-        if (!write_decoded_headers(session_data, source_id, (const uint8_t*)"\r\n", 2,
-                decoded_header_buffer + bytes_written, decoded_header_length -
-                bytes_written, local_bytes_written))
-            return false;
-        bytes_written += local_bytes_written;
+
+        // Remove second condition after response start line implemented
+        if (index < PSEUDO_HEADER_MAX_INDEX and session_data->header_start_line[source_id])
+        {
+            session_data->header_start_line[source_id]->process_pseudo_header_value(
+                (const uint8_t*)entry->value, strlen(entry->value));
+        }
+        else
+        {
+            if (!write_decoded_headers(session_data, source_id, (const uint8_t*)entry->value,
+                    strlen(entry->value), decoded_header_buffer + bytes_written,
+                    decoded_header_length - bytes_written, local_bytes_written))
+                return false;
+            bytes_written += local_bytes_written;
+            if (!write_decoded_headers(session_data, source_id, (const uint8_t*)"\r\n", 2,
+                    decoded_header_buffer + bytes_written, decoded_header_length -
+                    bytes_written, local_bytes_written))
+                return false;
+            bytes_written += local_bytes_written;
+        }
     }
 
     return true;
 }
 
+// FIXIT-H Implement dynamic table. Currently copies encoded index to decoded headers
+bool Http2Hpack::decode_dynamic_table_index(Http2FlowData* session_data,
+    HttpCommon::SourceId source_id, const uint64_t index, const bool decode_full_line,
+    uint32_t &bytes_consumed, const uint8_t* encoded_header_buffer,
+    uint8_t* decoded_header_buffer, const uint32_t decoded_header_length, uint32_t& bytes_written)
+{
+    UNUSED(index);
+    UNUSED(decode_full_line);
+
+    //FIXIT-H finalize header_start_line only for regular headers
+    if (session_data->header_start_line[source_id] and
+        !session_data->header_start_line[source_id]->is_finalized())
+    {
+        if (!session_data->header_start_line[source_id]->finalize())
+            return false;
+    }
+
+    if(!Http2Hpack::write_decoded_headers(session_data, source_id, encoded_header_buffer,
+            bytes_consumed, decoded_header_buffer + bytes_written, decoded_header_length,
+            bytes_written))
+        return false;
+    return true;
+
+}
 
 // FIXIT-H Will be incrementally updated to actually decode indexes. For now just copies encoded
 // index directly to decoded_header_buffer
@@ -182,8 +235,9 @@ bool Http2Hpack::decode_index(Http2FlowData* session_data, HttpCommon::SourceId 
         return decode_static_table_index(session_data, source_id, index, decode_full_line,
             decoded_header_buffer, decoded_header_length, bytes_written);
     else
-        return Http2Hpack::write_decoded_headers(session_data, source_id, encoded_header_buffer,
-            bytes_consumed, decoded_header_buffer, decoded_header_length, bytes_written);
+        return decode_dynamic_table_index(session_data, source_id, index, decode_full_line,
+            bytes_consumed, encoded_header_buffer, decoded_header_buffer,
+            decoded_header_length, bytes_written);
 }
 
 bool Http2Hpack::decode_literal_header_line(Http2FlowData* session_data,
@@ -213,21 +267,49 @@ bool Http2Hpack::decode_literal_header_line(Http2FlowData* session_data,
                 partial_bytes_consumed, decoded_header_buffer, decoded_header_length,
                 partial_bytes_written))
             return false;
-    }
 
-    bytes_consumed += partial_bytes_consumed;
+        // If this was a pseudo-header value, give it to the start-line.
+        if (session_data->header_start_line[source_id] and
+                session_data->header_start_line[source_id]->is_pseudo_name(
+                (const char*) decoded_header_buffer))
+        {
+            // don't include the ': ' that was written following the header name
+            if (!session_data->header_start_line[source_id]->process_pseudo_header_name(
+                    decoded_header_buffer, partial_bytes_written - 2))
+                return false;
+        }
+        // If not a pseudo-header value, keep it in the decoded headers
+        else
+        {
+            if (session_data->header_start_line[source_id] and
+                    !session_data->header_start_line[source_id]->is_finalized())
+            {
+                if (!session_data->header_start_line[source_id]->finalize())
+                    return false;
+            }
+        }
+    }
     bytes_written += partial_bytes_written;
+    bytes_consumed += partial_bytes_consumed;
 
     // value is always literal
     if (!Http2Hpack::decode_string_literal(session_data, source_id, encoded_header_buffer +
             partial_bytes_consumed, encoded_header_length - partial_bytes_consumed,
             false, partial_bytes_consumed,
-            decoded_header_buffer + partial_bytes_written, decoded_header_length -
-            partial_bytes_written, partial_bytes_written))
+            decoded_header_buffer + bytes_written, decoded_header_length -
+            bytes_written, partial_bytes_written))
         return false;
 
-    bytes_consumed += partial_bytes_consumed;
+    // If this was a pseudo-header value, give it to the start-line.
+    if (session_data->header_start_line[source_id] and
+            session_data->header_start_line[source_id]->is_pseudo_value())
+    {
+        // Subtract 2 from the length to remove the trailing CRLF before passing to the start line
+        session_data->header_start_line[source_id]->process_pseudo_header_value(
+            decoded_header_buffer + bytes_written, partial_bytes_written - 2);
+    }
     bytes_written += partial_bytes_written;
+    bytes_consumed += partial_bytes_consumed;
 
     return true;
 }
@@ -302,8 +384,9 @@ bool Http2Hpack::decode_header_line(Http2FlowData* session_data, HttpCommon::Sou
             encoded_header_length, decode_int5, bytes_consumed, bytes_written);
 }
 
-// FIXIT-H This will eventually be the decoded header buffer. For now only string literals are
-// decoded
+// FIXIT-H This will eventually be the decoded header buffer. String literals and static table
+// indexes are decoded. Dynamic table indexes are not yet decoded. Both the start-line and
+// http2_decoded_header need to be sent to NHI
 bool Http2Hpack::decode_headers(Http2FlowData* session_data, HttpCommon::SourceId source_id,
     const uint8_t* encoded_header_buffer, const uint32_t header_length)
 {
@@ -311,22 +394,26 @@ bool Http2Hpack::decode_headers(Http2FlowData* session_data, HttpCommon::SourceI
     uint32_t line_bytes_consumed = 0;
     uint32_t line_bytes_written = 0;
     bool success = true;
-    session_data->http2_decoded_header[source_id] = new uint8_t[MAX_OCTETS];
-    session_data->http2_decoded_header_size[source_id] = 0;
+    session_data->raw_decoded_header[source_id] = new uint8_t[MAX_OCTETS];
+    session_data->raw_decoded_header_size[source_id] = 0;
+
+    // FIXIT-H Implement response start line
+    if (source_id == SRC_CLIENT)
+        session_data->header_start_line[source_id] = new Http2RequestLine(session_data, source_id);
 
     while (total_bytes_consumed < header_length)
     {
         if (!Http2Hpack::decode_header_line(session_data, source_id,
             encoded_header_buffer + total_bytes_consumed, header_length - total_bytes_consumed,
-            line_bytes_consumed, session_data->http2_decoded_header[source_id] +
-            session_data->http2_decoded_header_size[source_id], MAX_OCTETS -
-            session_data->http2_decoded_header_size[source_id], line_bytes_written))
+            line_bytes_consumed, session_data->raw_decoded_header[source_id] +
+            session_data->raw_decoded_header_size[source_id], MAX_OCTETS -
+            session_data->raw_decoded_header_size[source_id], line_bytes_written))
         {
             success = false;
             break;
         }
         total_bytes_consumed  += line_bytes_consumed;
-        session_data->http2_decoded_header_size[source_id] += line_bytes_written;
+        session_data->raw_decoded_header_size[source_id] += line_bytes_written;
     }
 
     if (!success)
@@ -334,30 +421,51 @@ bool Http2Hpack::decode_headers(Http2FlowData* session_data, HttpCommon::SourceI
 #ifdef REG_TEST
         if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2))
         {
-            fprintf(HttpTestManager::get_output_file(), "Error decoding headers. ");
-            if (session_data->http2_decoded_header_size[source_id] > 0)
-                Field(session_data->http2_decoded_header_size[source_id],
-                    session_data->http2_decoded_header[source_id]).print(
-                    HttpTestManager::get_output_file(), "Partially Decoded Header");
+            fprintf(HttpTestManager::get_output_file(), "Error decoding headers.\n");
+            if (session_data->header_start_line[source_id] and
+                session_data->header_start_line[source_id]->get_start_line().length() > 0)
+                session_data->header_start_line[source_id]->get_start_line().
+                    print(HttpTestManager::get_output_file(), "Decoded start-line");
+            if (session_data->raw_decoded_header_size[source_id] > 0)
+                Field(session_data->raw_decoded_header_size[source_id],
+                    session_data->raw_decoded_header[source_id]).print(
+                    HttpTestManager::get_output_file(), "Partially decoded raw header");
         }
 #endif
     return false;
     }
 
+    // If there were only pseudo-headers, finalize never got called, so create the start-line
+    if (session_data->header_start_line[source_id] and
+        !session_data->header_start_line[source_id]->is_finalized())
+    {
+        if (!session_data->header_start_line[source_id]->finalize())
+            return false;
+    }
+
     // write the last CRLF to end the header
     if (!Http2Hpack::write_decoded_headers(session_data, source_id, (const uint8_t*)"\r\n", 2,
-        session_data->http2_decoded_header[source_id] +
-        session_data->http2_decoded_header_size[source_id], MAX_OCTETS -
-        session_data->http2_decoded_header_size[source_id], line_bytes_written))
+        session_data->raw_decoded_header[source_id] +
+        session_data->raw_decoded_header_size[source_id], MAX_OCTETS -
+        session_data->raw_decoded_header_size[source_id], line_bytes_written))
         return false;
-    session_data->http2_decoded_header_size[source_id] += line_bytes_written;
+    session_data->raw_decoded_header_size[source_id] += line_bytes_written;
+
+    // set http2_decoded_header to send to NHI
+    session_data->http2_decoded_header[source_id] = new Field(
+        session_data->raw_decoded_header_size[source_id] -
+        session_data->pseudo_header_fragment_size[source_id],
+        session_data->raw_decoded_header[source_id] +
+        session_data->pseudo_header_fragment_size[source_id], false);
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2))
     {
-        Field(session_data->http2_decoded_header_size[source_id],
-            session_data->http2_decoded_header[source_id]).
-            print(HttpTestManager::get_output_file(), "Decoded Header");
+        if (session_data->header_start_line[source_id])
+            session_data->header_start_line[source_id]->get_start_line().
+                print(HttpTestManager::get_output_file(), "Decoded start-line");
+        session_data->http2_decoded_header[source_id]->
+            print(HttpTestManager::get_output_file(), "Decoded header");
     }
 #endif
 
