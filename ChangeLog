@@ -1,3 +1,39 @@
+19/10/31 - build 263
+-- appid: for ssl sessions, set payload id to unknown after ssl handshake is done if the payload id was not not found
+-- appid: check inferred services in host cache only if there were updates
+-- appid: Updating the path to userappid.conf
+-- build: Clean up snort namespace usage
+-- build: generate and tag build 263
+-- binder: Use reloaded snort config when getting inspector.
+-- codecs: Relax requirement for DAQ packet decode data offsets when bypassing checksums
+-- content: rewrite boyer_moore for performance
+-- data_bus: add unit test cases
+-- detection: enhance fast pattern match queuing
+-- dns: made changes to make sure DNS parsing is thread safe
+-- doc: update default manuals
+-- file_api: Put FileCapture in the snort namespace
+-- ftp: fix for missing prototype warning
+-- ftp: catch invalid server command format
+-- http_inspect: test tool single-direction abort fix
+-- http_inspect: add more config initializers
+-- http2_inspect: generate request start line from pseudo-headers
+-- http2_inspect: abort on header decode error
+-- http2_inspect: stop sharing a variable between scan and reassemble
+-- http2_inspect: decode indexed header fields in the HPACK static table
+-- http2_inspect: Move HPACK decompression out of stream splitter into a separate class.
+-- http2_inspect: Abort on bad connection preface
+-- http2_inspect: cleanup
+-- http2_inspect: discard connection preface
+-- ips: add states member, similar to rules, by convention use for rule state stubs with enable
+-- mime: Put MailLogConfig in the snort namespace
+-- packet: fix reset issues
+-- packet_io: do not retry packets that do not have a daq instance.
+-- policy: Avoid unintended insertion of policy into map if it does not exist
+-- pub_subs: made default pub_subs policy-independent
+-- rule_state: deprecat, replace with ips option enable to avoid LuaJIT limitations
+-- stream_tcp: fix stability issues
+-- stream_tcp: If no-ack is on, rewrite ACK value to be the expected ACK.
+
 19/10/09 - build 262
 
 -- analyzer: move setting pkth to nullptr to after publishing finalize event

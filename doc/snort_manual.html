@@ -7343,21 +7343,6 @@ int <strong>decode.trace</strong>: mask for enabling debug traces in module { 0:
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>116:450</strong> (decode) bad IP protocol
-</p>
-</li>
-<li>
-<p>
-<strong>116:293</strong> (decode) two or more IP (v4 and/or v6) encapsulation layers present
-</p>
-</li>
-<li>
-<p>
-<strong>116:459</strong> (decode) fragment with zero length
-</p>
-</li>
-<li>
-<p>
 <strong>116:150</strong> (decode) loopback IP
 </p>
 </li>
@@ -7368,7 +7353,22 @@ int <strong>decode.trace</strong>: mask for enabling debug traces in module { 0:
 </li>
 <li>
 <p>
+<strong>116:293</strong> (decode) two or more IP (v4 and/or v6) encapsulation layers present
+</p>
+</li>
+<li>
+<p>
 <strong>116:449</strong> (decode) unassigned/reserved IP protocol
+</p>
+</li>
+<li>
+<p>
+<strong>116:450</strong> (decode) bad IP protocol
+</p>
+</li>
+<li>
+<p>
+<strong>116:459</strong> (decode) fragment with zero length
 </p>
 </li>
 <li>
@@ -7972,12 +7972,17 @@ enum <strong>ips.mode</strong>: set policy mode { tap | inline | inline-test }
 </li>
 <li>
 <p>
-string <strong>ips.rules</strong>: snort rules and includes
+bool <strong>ips.obfuscate_pii</strong> = false: mask all but the last 4 characters of credit card and social security numbers
 </p>
 </li>
 <li>
 <p>
-bool <strong>ips.obfuscate_pii</strong> = false: mask all but the last 4 characters of credit card and social security numbers
+string <strong>ips.rules</strong>: snort rules and includes (may contain states too)
+</p>
+</li>
+<li>
+<p>
+string <strong>ips.states</strong>: snort rule states and includes (may contain rules too)
 </p>
 </li>
 <li>
@@ -8267,7 +8272,7 @@ bool <strong>output.obfuscate</strong> = false: obfuscate the logged IP addresse
 </li>
 <li>
 <p>
-bool <strong>output.wide_hex_dump</strong> = false: output 20 bytes per lines instead of 16 when dumping buffers
+bool <strong>output.wide_hex_dump</strong> = true: output 20 bytes per lines instead of 16 when dumping buffers
 </p>
 </li>
 </ul></div>
@@ -8534,14 +8539,14 @@ string <strong><code>references[].url</code></strong>: where this reference is d
 </div>
 <div class="sect2">
 <h3 id="_rule_state">rule_state</h3>
-<div class="paragraph"><p>What: enable/disable and set actions for specific IPS rules</p></div>
+<div class="paragraph"><p>What: enable/disable and set actions for specific IPS rules; deprecated, use rule state stubs with enable instead</p></div>
 <div class="paragraph"><p>Type: basic</p></div>
 <div class="paragraph"><p>Usage: detect</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-enum <strong><code>rule_state.$gid_sid[].action</code></strong> = inherit: apply action if rule matches or inherit from rule definition { log | pass | alert | drop | block | reset | react | reject | rewrite | inherit }
+enum <strong><code>rule_state.$gid_sid[].action</code></strong> = alert: apply action if rule matches or inherit from rule definition { log | pass | alert | drop | block | reset }
 </p>
 </li>
 <li>
@@ -8638,6 +8643,11 @@ bool <strong>search_engine.show_fast_patterns</strong> = false: print fast patte
 bool <strong>search_engine.split_any_any</strong> = true: evaluate any-any rules separately to save memory
 </p>
 </li>
+<li>
+<p>
+int <strong>search_engine.queue_limit</strong> = 128: maximum number of fast pattern matches to queue per packet (0 means no maximum) { 0:max32 }
+</p>
+</li>
 </ul></div>
 <div class="paragraph"><p>Peg counts:</p></div>
 <div class="ulist"><ul>
@@ -8648,12 +8658,17 @@ bool <strong>search_engine.split_any_any</strong> = true: evaluate any-any rules
 </li>
 <li>
 <p>
-<strong>search_engine.total_flushed</strong>: fast pattern matches discarded due to overflow (sum)
+<strong>search_engine.total_flushed</strong>: total fast pattern matches processed (sum)
 </p>
 </li>
 <li>
 <p>
 <strong>search_engine.total_inserts</strong>: total fast pattern hits (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>search_engine.total_overruns</strong>: fast pattern matches discarded due to overflow (sum)
 </p>
 </li>
 <li>
@@ -9129,6 +9144,11 @@ implied <strong>snort.--pause</strong>: wait for resume/quit command before proc
 </li>
 <li>
 <p>
+int <strong>snort.--pause-after-n</strong>: &lt;count&gt; pause after count packets { 1:max53 }
+</p>
+</li>
+<li>
+<p>
 string <strong>snort.--pcap-file</strong>: &lt;file&gt; file that contains a list of pcaps to read - read mode is implied
 </p>
 </li>
@@ -9170,6 +9190,11 @@ implied <strong>snort.--pcap-show</strong>: print a line saying what pcap is cur
 <li>
 <p>
 implied <strong>snort.--pedantic</strong>: warnings are fatal
+</p>
+</li>
+<li>
+<p>
+implied <strong>snort.--piglet</strong>: enable piglet test harness mode
 </p>
 </li>
 <li>
@@ -9260,6 +9285,11 @@ implied <strong>snort.--treat-drop-as-ignore</strong>: use drop, block, and rese
 <li>
 <p>
 string <strong>snort.--tweaks</strong>: tune configuration
+</p>
+</li>
+<li>
+<p>
+string <strong>snort.--catch-test</strong>: comma separated list of cat unit test tags or <em>all</em>
 </p>
 </li>
 <li>
@@ -9792,6 +9822,11 @@ bool <strong>esp.decode_esp</strong> = false: enable for inspection of esp traff
 </li>
 <li>
 <p>
+<strong>116:426</strong> (icmp4) truncated ICMP4 header
+</p>
+</li>
+<li>
+<p>
 <strong>116:434</strong> (icmp4) ICMP ping Nmap
 </p>
 </li>
@@ -9850,11 +9885,6 @@ bool <strong>esp.decode_esp</strong> = false: enable for inspection of esp traff
 <strong>116:452</strong> (icmp4) Linux ICMP header DOS attempt
 </p>
 </li>
-<li>
-<p>
-<strong>116:426</strong> (icmp4) truncated ICMP4 header
-</p>
-</li>
 </ul></div>
 <div class="paragraph"><p>Peg counts:</p></div>
 <div class="ulist"><ul>
@@ -9877,21 +9907,6 @@ bool <strong>esp.decode_esp</strong> = false: enable for inspection of esp traff
 <div class="paragraph"><p>Usage: context</p></div>
 <div class="paragraph"><p>Rules:</p></div>
 <div class="ulist"><ul>
-<li>
-<p>
-<strong>116:427</strong> (icmp6) truncated ICMPv6 header
-</p>
-</li>
-<li>
-<p>
-<strong>116:431</strong> (icmp6) ICMPv6 type not decoded
-</p>
-</li>
-<li>
-<p>
-<strong>116:432</strong> (icmp6) ICMPv6 packet to multicast address
-</p>
-</li>
 <li>
 <p>
 <strong>116:285</strong> (icmp6) ICMPv6 packet of type 2 (message too big) with MTU field &lt; 1280
@@ -9920,6 +9935,21 @@ bool <strong>esp.decode_esp</strong> = false: enable for inspection of esp traff
 <li>
 <p>
 <strong>116:290</strong> (icmp6) ICMPv6 router advertisement packet with the reachable time field set &gt; 1 hour
+</p>
+</li>
+<li>
+<p>
+<strong>116:427</strong> (icmp6) truncated ICMPv6 header
+</p>
+</li>
+<li>
+<p>
+<strong>116:431</strong> (icmp6) ICMPv6 type not decoded
+</p>
+</li>
+<li>
+<p>
+<strong>116:432</strong> (icmp6) ICMPv6 packet to multicast address
 </p>
 </li>
 <li>
@@ -10055,6 +10085,11 @@ bool <strong>esp.decode_esp</strong> = false: enable for inspection of esp traff
 </li>
 <li>
 <p>
+<strong>116:425</strong> (ipv4) truncated IPv4 header
+</p>
+</li>
+<li>
+<p>
 <strong>116:428</strong> (ipv4) IPv4 packet below TTL limit
 </p>
 </li>
@@ -10065,17 +10100,12 @@ bool <strong>esp.decode_esp</strong> = false: enable for inspection of esp traff
 </li>
 <li>
 <p>
-<strong>116:448</strong> (ipv4) IPv4 reserved bit set
-</p>
-</li>
-<li>
-<p>
 <strong>116:444</strong> (ipv4) IPv4 option set
 </p>
 </li>
 <li>
 <p>
-<strong>116:425</strong> (ipv4) truncated IPv4 header
+<strong>116:448</strong> (ipv4) IPv4 reserved bit set
 </p>
 </li>
 </ul></div>
@@ -10172,12 +10202,12 @@ bool <strong>esp.decode_esp</strong> = false: enable for inspection of esp traff
 </li>
 <li>
 <p>
-<strong>116:292</strong> (ipv6) IPv6 header has destination options followed by a routing header
+<strong>116:291</strong> (ipv6) IPV6 tunneled over IPv4, IPv6 header truncated, possible Linux kernel attack
 </p>
 </li>
 <li>
 <p>
-<strong>116:291</strong> (ipv6) IPV6 tunneled over IPv4, IPv6 header truncated, possible Linux kernel attack
+<strong>116:292</strong> (ipv6) IPv6 header has destination options followed by a routing header
 </p>
 </li>
 <li>
@@ -10202,17 +10232,17 @@ bool <strong>esp.decode_esp</strong> = false: enable for inspection of esp traff
 </li>
 <li>
 <p>
+<strong>116:456</strong> (ipv6) too many IPv6 extension headers
+</p>
+</li>
+<li>
+<p>
 <strong>116:458</strong> (ipv6) bogus fragmentation packet, possible BSD attack
 </p>
 </li>
 <li>
 <p>
 <strong>116:461</strong> (ipv6) IPv6 routing type 0 extension header
-</p>
-</li>
-<li>
-<p>
-<strong>116:456</strong> (ipv6) too many IPv6 extension headers
 </p>
 </li>
 <li>
@@ -10427,6 +10457,16 @@ enum <strong>mpls.mpls_payload_type</strong> = ip4: set encapsulated payload typ
 </li>
 <li>
 <p>
+<strong>116:402</strong> (tcp) DOS NAPTHA vulnerability detected
+</p>
+</li>
+<li>
+<p>
+<strong>116:403</strong> (tcp) SYN to multicast address
+</p>
+</li>
+<li>
+<p>
 <strong>116:419</strong> (tcp) TCP urgent pointer exceeds payload length or no payload
 </p>
 </li>
@@ -10458,16 +10498,6 @@ enum <strong>mpls.mpls_payload_type</strong> = ip4: set encapsulated payload typ
 <li>
 <p>
 <strong>116:446</strong> (tcp) TCP port 0 traffic
-</p>
-</li>
-<li>
-<p>
-<strong>116:402</strong> (tcp) DOS NAPTHA vulnerability detected
-</p>
-</li>
-<li>
-<p>
-<strong>116:403</strong> (tcp) SYN to multicast address
 </p>
 </li>
 </ul></div>
@@ -10726,6 +10756,11 @@ protocols beyond basic decoding.</p></div>
 <div class="paragraph"><p>Usage: context</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
+<li>
+<p>
+int <strong>appid.first_decrypted_packet_debug</strong> = 0: the first packet of an already decrypted SSL flow (debug single session only) { 0:max32 }
+</p>
+</li>
 <li>
 <p>
 int <strong>appid.memcap</strong> = 1048576: max size of the service cache before we start pruning the cache { 1024:maxSZ }
@@ -12909,6 +12944,39 @@ int <strong>gtp_inspect.trace</strong>: mask for enabling debug traces in module
 <div class="paragraph"><p>What: HTTP/2 inspector</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
 <div class="paragraph"><p>Usage: inspect</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+bool <strong>http2_inspect.test_input</strong> = false: read HTTP/2 messages from text file
+</p>
+</li>
+<li>
+<p>
+bool <strong>http2_inspect.test_output</strong> = false: print out HTTP section data
+</p>
+</li>
+<li>
+<p>
+int <strong>http2_inspect.print_amount</strong> = 1200: number of characters to print from a Field { 1:max53 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>http2_inspect.print_hex</strong> = false: nonprinting characters printed in [HH] format instead of using an asterisk
+</p>
+</li>
+<li>
+<p>
+bool <strong>http2_inspect.show_pegs</strong> = true: display peg counts with test output
+</p>
+</li>
+<li>
+<p>
+bool <strong>http2_inspect.show_scan</strong> = false: display scanned segments
+</p>
+</li>
+</ul></div>
 <div class="paragraph"><p>Rules:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -13086,6 +13154,36 @@ bool <strong>http_inspect.plus_to_space</strong> = true: replace + with &lt;sp&g
 <li>
 <p>
 bool <strong>http_inspect.simplify_path</strong> = true: reduce URI directory path to simplest form
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.test_input</strong> = false: read HTTP messages from text file
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.test_output</strong> = false: print out HTTP section data
+</p>
+</li>
+<li>
+<p>
+int <strong>http_inspect.print_amount</strong> = 1200: number of characters to print from a Field { 1:max53 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.print_hex</strong> = false: nonprinting characters printed in [HH] format instead of using an asterisk
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.show_pegs</strong> = true: display peg counts with test output
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.show_scan</strong> = false: display scanned segments
 </p>
 </li>
 </ul></div>
@@ -18163,6 +18261,20 @@ interval <strong>dsize.~range</strong>: check if packet payload size is in the g
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_enable">enable</h3>
+<div class="paragraph"><p>What: stub rule option to enable or disable full rule</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Usage: detect</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+enum <strong>enable.~enable</strong> = yes: enable or disable rule in current ips policy or use default defined by ips policy { no | yes | inherit }
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_file_data">file_data</h3>
 <div class="paragraph"><p>What: rule option to set detection cursor to file data</p></div>
 <div class="paragraph"><p>Type: ips_option</p></div>
@@ -21532,6 +21644,12 @@ options into a Snort++ configuration file</p></div>
 </li>
 <li>
 <p>
+<strong>--print-binding-order</strong>
+                    Print sorting priority used when generating binder table
+</p>
+</li>
+<li>
+<p>
 <strong>--print-differences</strong>  Same as <em>-d</em>. output the differences, and only the
                     differences, between the Snort and Snort++ configurations to
                     the &lt;out_file&gt;
@@ -24178,6 +24296,11 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
+<strong>--pause-after-n</strong> &lt;count&gt; pause after count packets (1:max53)
+</p>
+</li>
+<li>
+<p>
 <strong>--pcap-file</strong> &lt;file&gt; file that contains a list of pcaps to read - read mode is implied
 </p>
 </li>
@@ -24219,6 +24342,11 @@ these libraries see the Getting Started section of the manual.</p></div>
 <li>
 <p>
 <strong>--pedantic</strong> warnings are fatal
+</p>
+</li>
+<li>
+<p>
+<strong>--piglet</strong> enable piglet test harness mode
 </p>
 </li>
 <li>
@@ -24309,6 +24437,11 @@ these libraries see the Getting Started section of the manual.</p></div>
 <li>
 <p>
 <strong>--tweaks</strong> tune configuration
+</p>
+</li>
+<li>
+<p>
+<strong>--catch-test</strong> comma separated list of cat unit test tags or <em>all</em>
 </p>
 </li>
 <li>
@@ -24589,6 +24722,11 @@ bool <strong>appid.debug</strong> = false: enable appid debug logging
 <li>
 <p>
 bool <strong>appid.dump_ports</strong> = false: enable dump of appid port information
+</p>
+</li>
+<li>
+<p>
+int <strong>appid.first_decrypted_packet_debug</strong> = 0: the first packet of an already decrypted SSL flow (debug single session only) { 0:max32 }
 </p>
 </li>
 <li>
@@ -25483,6 +25621,11 @@ interval <strong>dsize.~range</strong>: check if packet payload size is in the g
 </li>
 <li>
 <p>
+enum <strong>enable.~enable</strong> = yes: enable or disable rule in current ips policy or use default defined by ips policy { no | yes | inherit }
+</p>
+</li>
+<li>
+<p>
 bool <strong>esp.decode_esp</strong> = false: enable for inspection of esp traffic that has authentication but not encryption
 </p>
 </li>
@@ -26133,6 +26276,36 @@ enum <strong><code>host_tracker[].services[].proto</code></strong>: IP protocol 
 </li>
 <li>
 <p>
+int <strong>http2_inspect.print_amount</strong> = 1200: number of characters to print from a Field { 1:max53 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>http2_inspect.print_hex</strong> = false: nonprinting characters printed in [HH] format instead of using an asterisk
+</p>
+</li>
+<li>
+<p>
+bool <strong>http2_inspect.show_pegs</strong> = true: display peg counts with test output
+</p>
+</li>
+<li>
+<p>
+bool <strong>http2_inspect.show_scan</strong> = false: display scanned segments
+</p>
+</li>
+<li>
+<p>
+bool <strong>http2_inspect.test_input</strong> = false: read HTTP/2 messages from text file
+</p>
+</li>
+<li>
+<p>
+bool <strong>http2_inspect.test_output</strong> = false: print out HTTP section data
+</p>
+</li>
+<li>
+<p>
 implied <strong>http_cookie.request</strong>: match against the cookie from the request message even when examining the response
 </p>
 </li>
@@ -26263,6 +26436,16 @@ bool <strong>http_inspect.plus_to_space</strong> = true: replace + with &lt;sp&g
 </li>
 <li>
 <p>
+int <strong>http_inspect.print_amount</strong> = 1200: number of characters to print from a Field { 1:max53 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.print_hex</strong> = false: nonprinting characters printed in [HH] format instead of using an asterisk
+</p>
+</li>
+<li>
+<p>
 int <strong>http_inspect.request_depth</strong> = -1: maximum request message body bytes to examine (-1 no limit) { -1:max53 }
 </p>
 </li>
@@ -26273,7 +26456,27 @@ int <strong>http_inspect.response_depth</strong> = -1: maximum response message 
 </li>
 <li>
 <p>
+bool <strong>http_inspect.show_pegs</strong> = true: display peg counts with test output
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.show_scan</strong> = false: display scanned segments
+</p>
+</li>
+<li>
+<p>
 bool <strong>http_inspect.simplify_path</strong> = true: reduce URI directory path to simplest form
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.test_input</strong> = false: read HTTP messages from text file
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.test_output</strong> = false: print out HTTP section data
 </p>
 </li>
 <li>
@@ -26668,7 +26871,12 @@ bool <strong>ips.obfuscate_pii</strong> = false: mask all but the last 4 charact
 </li>
 <li>
 <p>
-string <strong>ips.rules</strong>: snort rules and includes
+string <strong>ips.rules</strong>: snort rules and includes (may contain states too)
+</p>
+</li>
+<li>
+<p>
+string <strong>ips.states</strong>: snort rule states and includes (may contain rules too)
 </p>
 </li>
 <li>
@@ -27068,7 +27276,7 @@ bool <strong>output.verbose</strong> = false: be verbose (same as -v)
 </li>
 <li>
 <p>
-bool <strong>output.wide_hex_dump</strong> = false: output 20 bytes per lines instead of 16 when dumping buffers
+bool <strong>output.wide_hex_dump</strong> = true: output 20 bytes per lines instead of 16 when dumping buffers
 </p>
 </li>
 <li>
@@ -27888,7 +28096,7 @@ bool <strong>rt_packet.retry_targeted</strong> = false: request retry for packet
 </li>
 <li>
 <p>
-enum <strong><code>rule_state.$gid_sid[].action</code></strong> = inherit: apply action if rule matches or inherit from rule definition { log | pass | alert | drop | block | reset | react | reject | rewrite | inherit }
+enum <strong><code>rule_state.$gid_sid[].action</code></strong> = alert: apply action if rule matches or inherit from rule definition { log | pass | alert | drop | block | reset }
 </p>
 </li>
 <li>
@@ -27964,6 +28172,11 @@ int <strong>search_engine.max_queue_events</strong> = 5: maximum number of match
 <li>
 <p>
 dynamic <strong>search_engine.offload_search_method</strong>: set fast pattern offload algorithm - choose available search engine { ac_banded | ac_bnfa | ac_full | ac_sparse | ac_sparse_bands | ac_std | hyperscan | lowmem }
+</p>
+</li>
+<li>
+<p>
+int <strong>search_engine.queue_limit</strong> = 128: maximum number of fast pattern matches to queue per packet (0 means no maximum) { 0:max32 }
 </p>
 </li>
 <li>
@@ -28293,6 +28506,11 @@ string <strong>snort.--c2x</strong>: output hex for given char (see also --x2c)
 </li>
 <li>
 <p>
+string <strong>snort.--catch-test</strong>: comma separated list of cat unit test tags or <em>all</em>
+</p>
+</li>
+<li>
+<p>
 string <strong>snort.-c</strong>: &lt;conf&gt; use this configuration
 </p>
 </li>
@@ -28593,6 +28811,11 @@ string <strong>snort.-?</strong>: &lt;option prefix&gt; output matching command 
 </li>
 <li>
 <p>
+int <strong>snort.--pause-after-n</strong>: &lt;count&gt; pause after count packets { 1:max53 }
+</p>
+</li>
+<li>
+<p>
 implied <strong>snort.--pause</strong>: wait for resume/quit command before processing packets/terminating
 </p>
 </li>
@@ -28639,6 +28862,11 @@ implied <strong>snort.--pcap-show</strong>: print a line saying what pcap is cur
 <li>
 <p>
 implied <strong>snort.--pedantic</strong>: warnings are fatal
+</p>
+</li>
+<li>
+<p>
+implied <strong>snort.--piglet</strong>: enable piglet test harness mode
 </p>
 </li>
 <li>
@@ -31498,12 +31726,17 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>search_engine.total_flushed</strong>: fast pattern matches discarded due to overflow (sum)
+<strong>search_engine.total_flushed</strong>: total fast pattern matches processed (sum)
 </p>
 </li>
 <li>
 <p>
 <strong>search_engine.total_inserts</strong>: total fast pattern hits (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>search_engine.total_overruns</strong>: fast pattern matches discarded due to overflow (sum)
 </p>
 </li>
 <li>
@@ -36074,6 +36307,11 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
+<strong>enable</strong> (ips_option): stub rule option to enable or disable full rule
+</p>
+</li>
+<li>
+<p>
 <strong>erspan2</strong> (codec): support for encapsulated remote switched port analyzer - type 2
 </p>
 </li>
@@ -36684,7 +36922,7 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
-<strong>rule_state</strong> (basic): enable/disable and set actions for specific IPS rules
+<strong>rule_state</strong> (basic): enable/disable and set actions for specific IPS rules; deprecated, use rule state stubs with enable instead
 </p>
 </li>
 <li>
@@ -37559,6 +37797,11 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
+<strong>ips_option::enable</strong>: stub rule option to enable or disable full rule
+</p>
+</li>
+<li>
+<p>
 <strong>ips_option::file_data</strong>: rule option to set detection cursor to file data
 </p>
 </li>
@@ -38034,6 +38277,46 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
+<strong>piglet::pp_codec</strong>: Codec piglet
+</p>
+</li>
+<li>
+<p>
+<strong>piglet::pp_inspector</strong>: Inspector piglet
+</p>
+</li>
+<li>
+<p>
+<strong>piglet::pp_ips_action</strong>: Ips action piglet
+</p>
+</li>
+<li>
+<p>
+<strong>piglet::pp_ips_option</strong>: Ips option piglet
+</p>
+</li>
+<li>
+<p>
+<strong>piglet::pp_logger</strong>: Logger piglet
+</p>
+</li>
+<li>
+<p>
+<strong>piglet::pp_search_engine</strong>: Search engine piglet
+</p>
+</li>
+<li>
+<p>
+<strong>piglet::pp_so_rule</strong>: SO rule piglet
+</p>
+</li>
+<li>
+<p>
+<strong>piglet::pp_test</strong>: Test piglet
+</p>
+</li>
+<li>
+<p>
 <strong>search_engine::ac_banded</strong>: Aho-Corasick Banded (high memory, moderate performance)
 </p>
 </li>
@@ -38297,7 +38580,7 @@ Adding/removing stream_* inspectors if stream was already configured
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2019-10-09 08:46:08 EDT
+ 2019-10-31 02:50:11 EDT
 </div>
 </div>
 </body>
