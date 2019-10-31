@@ -36,12 +36,12 @@ struct DNSHeader;
 class DnsValidator
 {
 public:
-    void add_dns_query_info(AppIdSession&, uint16_t id, const uint8_t* host, uint8_t host_len,
-        uint16_t host_offset, uint16_t record_type);
-    void add_dns_response_info(AppIdSession&, uint16_t id, const uint8_t* host,
+    APPID_STATUS_CODE add_dns_query_info(AppIdSession&, uint16_t id, const uint8_t* host,
+        uint8_t host_len, uint16_t host_offset, uint16_t record_type);
+    APPID_STATUS_CODE add_dns_response_info(AppIdSession&, uint16_t id, const uint8_t* host,
         uint8_t host_len, uint16_t host_offset, uint8_t response_type, uint32_t ttl);
-    int dns_validate_label(const uint8_t* data, uint16_t* offset, uint16_t size, uint8_t* len,
-        unsigned* len_valid);
+    APPID_STATUS_CODE dns_validate_label(const uint8_t* data, uint16_t& offset, uint16_t size,
+        uint8_t& len, bool& len_valid);
     int dns_validate_query(const uint8_t* data, uint16_t* offset, uint16_t size,
         uint16_t id, bool host_reporting, AppIdSession&);
     int dns_validate_answer(const uint8_t* data, uint16_t* offset, uint16_t size,

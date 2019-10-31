@@ -32,6 +32,8 @@
 
 using namespace snort;
 
+#define MAX_DNS_HOST_NAME_LEN 253
+
 #define MAX_OPCODE     5
 #define INVALID_OPCODE 3
 
@@ -255,15 +257,15 @@ DnsUdpServiceDetector::DnsUdpServiceDetector(ServiceDiscovery* sd)
 }
 
 
-void DnsValidator::add_dns_query_info(AppIdSession& asd, uint16_t id, const uint8_t* host, uint8_t
-    host_len, uint16_t host_offset, uint16_t record_type)
+APPID_STATUS_CODE DnsValidator::add_dns_query_info(AppIdSession& asd, uint16_t id,
+    const uint8_t* host, uint8_t host_len, uint16_t host_offset, uint16_t record_type)
 {
     AppIdDnsSession* dsession = asd.get_dns_session();
     if ( ( dsession->get_state() != 0 ) && ( dsession->get_id() != id ) )
         dsession->reset();
 
     if (dsession->get_state() & DNS_GOT_QUERY)
-        return;
+        return APPID_SUCCESS;
     dsession->set_state(dsession->get_state() | DNS_GOT_QUERY);
 
     dsession->set_id(id);
@@ -274,22 +276,26 @@ void DnsValidator::add_dns_query_info(AppIdSession& asd, uint16_t id, const uint
         if ((host != nullptr) && (host_len > 0) && (host_offset > 0))
         {
             char* new_host = dns_parse_host(host, host_len);
+            if (!new_host)
+                return APPID_NOMATCH;
             dsession->set_host(new_host);
             dsession->set_host_offset(host_offset);
             snort_free(new_host);
        }
     }
+
+    return APPID_SUCCESS;
 }
 
-void DnsValidator::add_dns_response_info(AppIdSession& asd, uint16_t id, const uint8_t* host,
-    uint8_t host_len, uint16_t host_offset, uint8_t response_type, uint32_t ttl)
+APPID_STATUS_CODE DnsValidator::add_dns_response_info(AppIdSession& asd, uint16_t id,
+    const uint8_t* host, uint8_t host_len, uint16_t host_offset, uint8_t response_type, uint32_t ttl)
 {
     AppIdDnsSession* dsession = asd.get_dns_session();
-        if ( ( dsession->get_state() != 0 ) && ( dsession->get_id() != id ) )
-            dsession->reset();
+    if ( ( dsession->get_state() != 0 ) && ( dsession->get_id() != id ) )
+        dsession->reset();
 
     if (dsession->get_state() & DNS_GOT_RESPONSE)
-        return;
+        return APPID_SUCCESS;
     dsession->set_state(dsession->get_state() | DNS_GOT_RESPONSE);
 
     dsession->set_id(id);
@@ -301,68 +307,77 @@ void DnsValidator::add_dns_response_info(AppIdSession& asd, uint16_t id, const u
         if ((host != nullptr) && (host_len > 0) && (host_offset > 0))
         {
             char* new_host = dns_parse_host(host, host_len);
+            if (!new_host)
+                return APPID_NOMATCH;
             dsession->set_host(new_host);
             dsession->set_host_offset(host_offset);
             snort_free(new_host);
         }
     }
+
+    return APPID_SUCCESS;
 }
 
-int DnsValidator::dns_validate_label(const uint8_t* data, uint16_t* offset, uint16_t size,
-    uint8_t* len, unsigned* len_valid)
+APPID_STATUS_CODE DnsValidator::dns_validate_label(const uint8_t* data, uint16_t& offset, uint16_t size,
+    uint8_t& len, bool& len_valid)
 {
     const DNSLabelPtr* lbl_ptr;
     const DNSLabelBitfield* lbl_bit;
     uint16_t tmp;
 
-    *len = 0;
-    *len_valid = 1;
+    len = 0;
+    len_valid = true;
 
-    while ((size > *offset) && (size-(*offset)) >= (int)offsetof(DNSLabel, name))
+    while ((size > offset) and (size - offset) >= (int)offsetof(DNSLabel, name))
     {
-        const DNSLabel* lbl = (const DNSLabel*)(data + (*offset));
+        const DNSLabel* lbl = (const DNSLabel*)(data + offset);
 
         switch (lbl->len & DNS_LENGTH_FLAGS)
         {
         case 0xC0:
-            *len_valid = 0;
+            len_valid = false;
             lbl_ptr = (const DNSLabelPtr*)lbl;
-            *offset += offsetof(DNSLabelPtr, data);
-            if (*offset >= size)
+            offset += offsetof(DNSLabelPtr, data);
+            if (offset >= size)
                 return APPID_NOMATCH;
             tmp = (uint16_t)(ntohs(lbl_ptr->position) & 0x3FFF);
             if (tmp > size - offsetof(DNSLabel, name))
                 return APPID_NOMATCH;
             return APPID_SUCCESS;
         case 0x00:
-            *offset += offsetof(DNSLabel, name);
+            offset += offsetof(DNSLabel, name);
             if (!lbl->len)
             {
-                (*len)--;    // take off the extra '.' at the end
+                len--;    // take off the extra '.' at the end
                 return APPID_SUCCESS;
             }
-            *offset += lbl->len;
-            *len += lbl->len + 1;    // add 1 for '.'
+            offset += lbl->len;
+            if ((len + lbl->len + 1) > MAX_DNS_HOST_NAME_LEN)
+            {
+                len_valid = false;
+                return APPID_NOMATCH;
+            }
+            len += lbl->len + 1;    // add 1 for '.'
             break;
         case 0x40:
-            *len_valid = 0;
+            len_valid = false;
             if (lbl->len != 0x41)
                 return APPID_NOMATCH;
-            *offset += offsetof(DNSLabelBitfield, data);
-            if (*offset >= size)
+            offset += offsetof(DNSLabelBitfield, data);
+            if (offset >= size)
                 return APPID_NOMATCH;
             lbl_bit = (const DNSLabelBitfield*)lbl;
             if (lbl_bit->len)
             {
-                *offset += ((lbl_bit->len - 1) / 8) + 1;
+                offset += ((lbl_bit->len - 1) / 8) + 1;
             }
             else
             {
-                *offset += 32;
+                offset += 32;
             }
             break;
         default:
-            *len_valid = 0;
+            len_valid = false;
             return APPID_NOMATCH;
         }
     }
@@ -375,12 +390,12 @@ int DnsValidator::dns_validate_query(const uint8_t* data, uint16_t* offset, uint
     int ret;
     const uint8_t* host;
     uint8_t host_len;
-    unsigned host_len_valid;
+    bool host_len_valid;
     uint16_t host_offset;
 
     host = data + *offset;
     host_offset = *offset;
-    ret = dns_validate_label(data, offset, size, &host_len, &host_len_valid);
+    ret = dns_validate_label(data, *offset, size, host_len, host_len_valid);
 
     if (ret == APPID_SUCCESS)
     {
@@ -407,10 +422,10 @@ int DnsValidator::dns_validate_query(const uint8_t* data, uint16_t* offset, uint
             case PATTERN_MX_REC:
             case PATTERN_SOA_REC:
             case PATTERN_NS_REC:
-                add_dns_query_info(asd, id, host, host_len, host_offset, record_type);
+                ret = add_dns_query_info(asd, id, host, host_len, host_offset, record_type);
                 break;
             case PATTERN_PTR_REC:
-                add_dns_query_info(asd, id, nullptr, 0, 0, record_type);
+                ret = add_dns_query_info(asd, id, nullptr, 0, 0, record_type);
                 break;
             default:
                 break;
@@ -425,17 +440,16 @@ int DnsValidator::dns_validate_answer(const uint8_t* data, uint16_t* offset, uin
 {
     int ret;
     uint8_t host_len;
-    unsigned host_len_valid;
-    uint16_t r_data_offset;
+    bool host_len_valid;
 
-    ret = dns_validate_label(data, offset, size, &host_len, &host_len_valid);
+    ret = dns_validate_label(data, *offset, size, host_len, host_len_valid);
     if (ret == APPID_SUCCESS)
     {
         const DNSAnswerData* ad = (const DNSAnswerData*)(data + (*offset));
         *offset += sizeof(DNSAnswerData);
         if (*offset > size)
             return APPID_NOMATCH;
-        r_data_offset = *offset;
+        uint16_t r_data_offset = *offset;
         *offset += ntohs(ad->r_len);
         if (*offset > size)
             return APPID_NOMATCH;
@@ -454,7 +468,7 @@ int DnsValidator::dns_validate_answer(const uint8_t* data, uint16_t* offset, uin
             case PATTERN_MX_REC:
             case PATTERN_SOA_REC:
             case PATTERN_NS_REC:
-                add_dns_response_info(asd, id, nullptr, 0, 0, rcode, ttl);
+                ret = add_dns_response_info(asd, id, nullptr, 0, 0, rcode, ttl);
                 break;
             case PATTERN_PTR_REC:
                 {
@@ -462,7 +476,10 @@ int DnsValidator::dns_validate_answer(const uint8_t* data, uint16_t* offset, uin
                     uint16_t host_offset = r_data_offset;
 
                     ret = dns_validate_label(
-                        data, &r_data_offset, size, &host_len, &host_len_valid);
+                        data, r_data_offset, size, host_len, host_len_valid);
+
+                    if (ret != APPID_SUCCESS)
+                        return ret;
 
                     if ((host_len == 0) || (!host_len_valid))
                     {
@@ -470,7 +487,7 @@ int DnsValidator::dns_validate_answer(const uint8_t* data, uint16_t* offset, uin
                         host_len = 0;
                         host_offset = 0;
                     }
-                    add_dns_response_info(
+                    ret = add_dns_response_info(
                         asd, id, host, host_len, host_offset, rcode, ttl);
                 }
                 break;
@@ -567,7 +584,7 @@ int DnsValidator::validate_packet(const uint8_t* data, uint16_t size, const int,
     }
 
     if (hdr->QR && (hdr->RCODE != 0))    // error response
-        add_dns_response_info(asd, ntohs(hdr->id), nullptr, 0, 0, hdr->RCODE, 0);
+        return add_dns_response_info(asd, ntohs(hdr->id), nullptr, 0, 0, hdr->RCODE, 0);
 
     return APPID_SUCCESS;
 }
