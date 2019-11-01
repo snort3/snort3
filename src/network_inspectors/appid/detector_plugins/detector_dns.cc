@@ -338,7 +338,7 @@ APPID_STATUS_CODE DnsValidator::dns_validate_label(const uint8_t* data, uint16_t
             len_valid = false;
             lbl_ptr = (const DNSLabelPtr*)lbl;
             offset += offsetof(DNSLabelPtr, data);
-            if (offset >= size)
+            if (offset > size)
                 return APPID_NOMATCH;
             tmp = (uint16_t)(ntohs(lbl_ptr->position) & 0x3FFF);
             if (tmp > size - offsetof(DNSLabel, name))
