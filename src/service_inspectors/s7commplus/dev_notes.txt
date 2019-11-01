@@ -1,0 +1,16 @@
+S7comm (S7 Communication)and S7commplus are Siemens proprietary protocols that
+runs between programmable logic controllers (PLCs) of the Siemens S7-300/400 
+and S7-1500/1200(v4.0) families, typically on TCP port 102.
+
+It is used for PLC programming, exchanging data between PLCs, accessing PLC 
+data from SCADA systems and diagnostic purposes. The S7CommPlus protocol is
+a new version of the original S7Comm protocol.
+
+The S7comm and S7commplus data comes as payload of COTP data packets. The first 
+byte is 0x32 for S7comm and 0x72 for S7commplus as protocol identifiers. The same 
+inspector will be used for both protocols, although currently only S7commplus is 
+supported.
+
+The S7Commplus inspector decodes the S7Commplus protocol and provides rule options
+to access certain protocol fields and Data content. This allows the user to write 
+rules for S7commplus packets without decoding the protocol.

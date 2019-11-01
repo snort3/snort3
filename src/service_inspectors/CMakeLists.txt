@@ -16,6 +16,7 @@ add_subdirectory(smtp)
 add_subdirectory(ssh)
 add_subdirectory(ssl)
 add_subdirectory(wizard)
+add_subdirectory(s7commplus)
 
 if (STATIC_INSPECTORS)
     set (STATIC_INSPECTOR_OBJS
@@ -32,6 +33,7 @@ if (STATIC_INSPECTORS)
         $<TARGET_OBJECTS:smtp>
         $<TARGET_OBJECTS:ssh>
         $<TARGET_OBJECTS:wizard>
+        $<TARGET_OBJECTS:s7commplus>
     )
 endif()
 
