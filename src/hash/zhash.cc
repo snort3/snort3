@@ -151,14 +151,14 @@ void ZHash::link_node(ZHashNode* node)
     if ( table[node->rindex] )  // UNINITUSE
     {
         node->prev = nullptr;
-        node->next=table[node->rindex];
+        node->next = table[node->rindex];
         table[node->rindex]->prev = node;
         table[node->rindex] = node;
     }
     else
     {
-        node->prev=nullptr;
-        node->next=nullptr;
+        node->prev = nullptr;
+        node->next = nullptr;
         table[node->rindex] = node;  // UNINITUSE
     }
 }
@@ -272,9 +272,9 @@ ZHash::~ZHash()
 
     if ( table )
     {
-        for ( unsigned i=0; i < nrows; ++i )
+        for ( unsigned i = 0; i < nrows; ++i )
         {
-            for ( ZHashNode* node=table[i]; node; )
+            for ( ZHashNode* node = table[i]; node; )
             {
                 ZHashNode* onode = node;
                 node = node->next;
@@ -386,32 +386,48 @@ bool ZHash::touch()
     return false;
 }
 
-bool ZHash::remove(ZHashNode* node)
+bool ZHash::move_to_free_list(ZHashNode* node)
 {
     if ( !node )
         return false;
 
     unlink_node(node);
     gunlink_node(node);
-
     count--;
     save_free_node(node);
 
     return true;
 }
 
-bool ZHash::remove()
+bool ZHash::release()
 {
     ZHashNode* node = cursor;
     cursor = nullptr;
-    return remove(node);
+    return move_to_free_list(node);
 }
 
-bool ZHash::remove(const void* key)
+bool ZHash::release(const void* key)
 {
     int row;
     ZHashNode* node = find_node_row(key, row);
-    return remove(node);
+    return move_to_free_list(node);
+}
+
+void* ZHash::remove(const void* key)
+{
+    void* pv = nullptr;
+    int row;
+    ZHashNode* node = find_node_row(key, row);
+    if ( node )
+    {
+        unlink_node(node);
+        gunlink_node(node);
+        count--;
+        pv = node->data;
+        s_node_free(node);
+    }
+
+    return pv;
 }
 
 int ZHash::set_keyops(
@@ -423,4 +439,3 @@ int ZHash::set_keyops(
 
     return -1;
 }
-

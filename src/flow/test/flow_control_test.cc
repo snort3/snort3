@@ -69,15 +69,16 @@ DetectionEngine::DetectionEngine() = default;
 DetectionEngine::~DetectionEngine() = default;
 ExpectCache::~ExpectCache() = default;
 unsigned FlowCache::purge() { return 1; }
-Flow* FlowCache::find(const FlowKey*) { return nullptr; }
+Flow* FlowCache::find(const FlowKey* key) { return nullptr; }
 Flow* FlowCache::allocate(const FlowKey*) { return nullptr; }
-void FlowCache::push(Flow*) { }
+void FlowCache::push(Flow* flow) { }
 bool FlowCache::prune_one(PruneReason, bool) { return true; }
-unsigned FlowCache::timeout(unsigned, time_t) { return 1; }
-void Flow::init(PktType) { }
-void set_network_policy(SnortConfig*, unsigned) { }
-void DataBus::publish(const char*, const uint8_t*, unsigned, Flow*) { }
-void DataBus::publish(const char*, Packet*, Flow*) { }
+unsigned FlowCache::delete_flows(unsigned) { return 0; } 
+unsigned FlowCache::timeout(unsigned num_flows, time_t thetime) { return 1; }
+void Flow::init(PktType type) { }
+void set_network_policy(SnortConfig* sc, unsigned i) { } 
+void DataBus::publish(const char* key, const uint8_t* buf, unsigned len, Flow* f) { }
+void DataBus::publish(const char* key, Packet* p, Flow* f) { }
 SnortConfig* SnortConfig::get_conf() { return nullptr; }
 void FlowCache::unlink_uni(Flow*) { }
 void Flow::set_direction(Packet*) { }
@@ -133,7 +134,6 @@ bool FlowKey::init(
 
 void Stream::stop_inspection(Flow*, Packet*, char, int32_t, int) { }
 
-
 int ExpectCache::add_flow(const Packet*,
     PktType, IpProtocol,
     const SfIp*, uint16_t,
@@ -143,10 +143,7 @@ int ExpectCache::add_flow(const Packet*,
     return 1;
 }
 
-int FlowCache::release(Flow*, PruneReason, bool)
-{
-    return 1;
-}
+void FlowCache::release(Flow*, PruneReason, bool) { }
 
 TEST_GROUP(stale_flow) { };
 

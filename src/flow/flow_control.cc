@@ -63,14 +63,16 @@ FlowControl::~FlowControl()
 //-------------------------------------------------------------------------
 
 PegCount FlowControl::get_total_prunes() const
-{
-    return cache->get_total_prunes();
-}
+{ return cache->get_total_prunes(); }
 
 PegCount FlowControl::get_prunes(PruneReason reason) const
-{
-    return cache->get_prunes(reason);
-}
+{ return cache->get_prunes(reason); }
+
+PegCount FlowControl::get_total_deletes() const
+{ return cache->get_total_deletes(); }
+
+PegCount FlowControl::get_deletes(FlowDeleteState state) const
+{ return cache->get_deletes(state); }
 
 void FlowControl::clear_counts()
 {
@@ -82,6 +84,9 @@ void FlowControl::clear_counts()
 // cache foo
 //-------------------------------------------------------------------------
 
+unsigned FlowControl::get_flows_allocated() const
+{ return cache->get_flows_allocated(); }
+
 Flow* FlowControl::find_flow(const FlowKey* key)
 {
     return cache->find(key);
@@ -92,13 +97,13 @@ Flow* FlowControl::new_flow(const FlowKey* key)
     return cache->allocate(key);
 }
 
-void FlowControl::delete_flow(const FlowKey* key)
+void FlowControl::release_flow(const FlowKey* key)
 {
     if ( auto flow = cache->find(key) )
         cache->release(flow, PruneReason::HA);
 }
 
-void FlowControl::delete_flow(Flow* flow, PruneReason reason)
+void FlowControl::release_flow(Flow* flow, PruneReason reason)
 {
     cache->release(flow, reason);
 }
@@ -106,6 +111,11 @@ void FlowControl::delete_flow(Flow* flow, PruneReason reason)
 void FlowControl::purge_flows ()
 {
     cache->purge();
+}
+
+unsigned FlowControl::delete_flows(unsigned num_to_delete)
+{
+    return cache->delete_flows(num_to_delete);
 }
 
 // hole for memory manager/prune handler
@@ -485,6 +495,11 @@ bool FlowControl::expected_flow(Flow* flow, Packet* p)
     }
 
     return ignore;
+}
+
+void FlowControl::update_flow_cache_cfg(FlowCacheConfig& cfg)
+{
+    cache->set_flow_cache_config(cfg);
 }
 
 int FlowControl::add_expected(

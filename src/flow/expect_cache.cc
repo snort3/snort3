@@ -140,7 +140,7 @@ void ExpectCache::prune()
             break;
 
         node->clear(free_list);
-        hash_table->remove();
+        hash_table->release();
         ++prunes;
     }
 }
@@ -206,7 +206,7 @@ ExpectNode* ExpectCache::find_node_by_packet(Packet* p, FlowKey &key)
     {
         if (node->head)
             node->clear(free_list);
-        hash_table->remove(&key);
+        hash_table->release(&key);
         return nullptr;
     }
     /* Make sure the packet direction is correct */
@@ -257,7 +257,7 @@ bool ExpectCache::process_expected(ExpectNode* node, FlowKey& key, Packet* p, Fl
         lws->ssn_state.snort_protocol_id = node->snort_protocol_id;
 
     if (!node->count)
-        hash_table->remove(&key);
+        hash_table->release(&key);
 
     return ignoring;
 }

@@ -42,6 +42,10 @@ using namespace snort;
 
 #define SESSION_CACHE_FLAG_PURGING  0x01
 
+static const unsigned ALLOWED_FLOWS_ONLY = 1;
+static const unsigned OFFLOADED_FLOWS_TOO = 2;
+static const unsigned ALL_FLOWS = 3;
+
 //-------------------------------------------------------------------------
 // FlowCache stuff
 //-------------------------------------------------------------------------
@@ -120,7 +124,7 @@ Flow* FlowCache::allocate(const FlowKey* key)
     {
         if ( flows_allocated < config.max_flows )
         {
-            Flow* new_flow = new Flow;
+            Flow* new_flow = new Flow();
             push(new_flow);
         }
         else if ( !prune_stale(timestamp, nullptr) )
@@ -148,35 +152,31 @@ Flow* FlowCache::allocate(const FlowKey* key)
     return flow;
 }
 
-int FlowCache::release(Flow* flow, PruneReason reason, bool do_cleanup)
-{
-    flow->reset(do_cleanup);
-    prune_stats.update(reason);
-    return remove(flow);
-}
-
-int FlowCache::remove(Flow* flow)
+void FlowCache::remove(Flow* flow)
 {
     if ( flow->next )
         unlink_uni(flow);
 
-    bool deleted = hash_table->remove(flow->key);
-
     // FIXIT-M This check is added for offload case where both Flow::reset
     // and Flow::retire try remove the flow from hash. Flow::reset should
     // just mark the flow as pending instead of trying to remove it.
-    if ( deleted )
+    if ( hash_table->release(flow->key) )
         memory::MemoryCap::update_deallocations(config.proto[to_utype(flow->key->pkt_type)].cap_weight);
-
-    return deleted;
 }
 
-int FlowCache::retire(Flow* flow)
+void FlowCache::release(Flow* flow, PruneReason reason, bool do_cleanup)
+{
+    flow->reset(do_cleanup);
+    prune_stats.update(reason);
+    remove(flow);
+}
+
+void FlowCache::retire(Flow* flow)
 {
     flow->reset(true);
     flow->term();
     prune_stats.update(PruneReason::NONE);
-    return remove(flow);
+    remove(flow);
 }
 
 unsigned FlowCache::prune_stale(uint32_t thetime, const Flow* save_me)
@@ -201,11 +201,7 @@ unsigned FlowCache::prune_stale(uint32_t thetime, const Flow* save_me)
 #else
         // Reached the current flow. This *should* be the newest flow
         if ( flow == save_me )
-        {
-            // assert( flow->last_data_seen + config.pruning_timeout >= thetime );
-            // bool rv = hash_table->touch(); assert( !rv );
             break;
-        }
 #endif
         if ( flow->is_suspended() )
             break;
@@ -307,7 +303,6 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
 
 bool FlowCache::prune_one(PruneReason reason, bool do_cleanup)
 {
-
     // so we don't prune the current flow (assume current == MRU)
     if ( hash_table->get_count() <= 1 )
         return false;
@@ -360,6 +355,70 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
     return retired;
 }
 
+unsigned FlowCache::delete_active_flows(unsigned mode, unsigned num_to_delete, unsigned &deleted)
+{
+    unsigned flows_to_check = hash_table->get_count();
+	while ( num_to_delete && flows_to_check-- )
+	{
+		auto flow = static_cast<Flow*>(hash_table->first());
+		assert(flow);
+		if ( (mode == ALLOWED_FLOWS_ONLY and (flow->was_blocked() || flow->is_suspended()))
+		    or (mode == OFFLOADED_FLOWS_TOO and flow->was_blocked()) )
+		{
+			if (!hash_table->touch())
+				break;
+
+			continue;
+		}
+
+		// we have a winner...
+		hash_table->remove(flow->key);
+		if ( flow->next )
+		    unlink_uni(flow);
+
+		if ( flow->was_blocked() )
+		    delete_stats.update(FlowDeleteState::BLOCKED);
+		else if ( flow->is_suspended() )
+            delete_stats.update(FlowDeleteState::OFFLOADED);
+		else
+            delete_stats.update(FlowDeleteState::ALLOWED);
+
+		delete flow;
+		--flows_allocated;
+		++deleted;
+		--num_to_delete;
+	}
+
+	return num_to_delete;
+}
+
+unsigned FlowCache::delete_flows(unsigned num_to_delete)
+{
+    ActiveSuspendContext act_susp;
+
+    unsigned deleted = 0;
+
+    // delete from the free list first...
+    while ( num_to_delete )
+    {
+        Flow* flow = (Flow*)hash_table->pop();
+        if ( !flow )
+            break;
+
+        delete flow;
+        delete_stats.update(FlowDeleteState::FREELIST);
+        --flows_allocated;
+        ++deleted;
+        --num_to_delete;
+    }
+
+    unsigned mode = ALLOWED_FLOWS_ONLY;
+    while ( num_to_delete && mode <= ALL_FLOWS )
+        num_to_delete = delete_active_flows(mode++, num_to_delete, deleted);
+
+    return deleted;
+}
+
 // Remove all flows from the hash table.
 unsigned FlowCache::purge()
 {
@@ -375,7 +434,10 @@ unsigned FlowCache::purge()
     }
 
     while ( Flow* flow = (Flow*)hash_table->pop() )
+    {
         delete flow;
+        --flows_allocated;
+    }
 
     return retired;
 }

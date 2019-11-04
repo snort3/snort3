@@ -65,6 +65,12 @@ const PegInfo base_pegs[] =
     { CountType::SUM, "expected_realized", "number of expected flows realized" },
     { CountType::SUM, "expected_pruned", "number of expected flows pruned" },
     { CountType::SUM, "expected_overflows", "number of expected cache overflows" },
+    { CountType::SUM, "reload_total_adds", "number of flows added by config reloads" },
+    { CountType::SUM, "reload_total_deletes", "number of flows deleted by config reloads" },
+    { CountType::SUM, "reload_freelist_deletes", "number of flows deleted from the free list by config reloads" },
+    { CountType::SUM, "reload_allowed_deletes", "number of allowed flows deleted by config reloads" },
+    { CountType::SUM, "reload_blocked_deletes", "number of blocked flows deleted by config reloads" },
+    { CountType::SUM, "reload_offloaded_deletes", "number of offloaded flows deleted by config reloads" },
     { CountType::END, nullptr, nullptr }
 };
 
@@ -82,7 +88,10 @@ void base_sum()
     stream_base_stats.preemptive_prunes = flow_con->get_prunes(PruneReason::PREEMPTIVE);
     stream_base_stats.memcap_prunes = flow_con->get_prunes(PruneReason::MEMCAP);
     stream_base_stats.ha_prunes = flow_con->get_prunes(PruneReason::HA);
-
+    stream_base_stats.reload_freelist_flow_deletes = flow_con->get_deletes(FlowDeleteState::FREELIST);
+    stream_base_stats.reload_allowed_flow_deletes = flow_con->get_deletes(FlowDeleteState::ALLOWED);
+    stream_base_stats.reload_offloaded_flow_deletes= flow_con->get_deletes(FlowDeleteState::OFFLOADED);
+    stream_base_stats.reload_blocked_flow_deletes= flow_con->get_deletes(FlowDeleteState::BLOCKED);
     ExpectCache* exp_cache = flow_con->get_exp_cache();
 
     if ( exp_cache )
@@ -127,6 +136,7 @@ static inline bool is_eligible(Packet* p)
     return true;
 }
 
+
 //-------------------------------------------------------------------------
 // inspector stuff
 //-------------------------------------------------------------------------
@@ -135,7 +145,6 @@ class StreamBase : public Inspector
 {
 public:
     StreamBase(const StreamModuleConfig*);
-
     void show(SnortConfig*) override;
 
     void tinit() override;
@@ -180,7 +189,7 @@ void StreamBase::tinit()
 
     if ( config.flow_cache_cfg.max_flows > 0 )
         flow_con->init_exp(config.flow_cache_cfg.max_flows);
-
+ 
     FlushBucket::set(config.footprint);
 }
 

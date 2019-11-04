@@ -21,10 +21,14 @@
 #ifndef STREAM_MODULE_H
 #define STREAM_MODULE_H
 
+#include "main/analyzer.h"
+#include "main/snort_config.h"
 #include "flow/flow_config.h"
+#include "flow/flow_control.h"
 #include "framework/module.h"
 
 extern THREAD_LOCAL snort::ProfileStats s5PerfStats;
+extern THREAD_LOCAL class FlowControl* flow_con;
 
 namespace snort
 {
@@ -53,6 +57,12 @@ struct BaseStats
      PegCount expected_realized;
      PegCount expected_pruned;
      PegCount expected_overflows;
+     PegCount reload_total_adds;
+     PegCount reload_total_deletes;
+     PegCount reload_freelist_flow_deletes;
+     PegCount reload_allowed_flow_deletes;
+     PegCount reload_blocked_flow_deletes;
+     PegCount reload_offloaded_flow_deletes;
 };
 
 extern const PegInfo base_pegs[];
@@ -63,6 +73,24 @@ struct StreamModuleConfig
 {
     FlowCacheConfig flow_cache_cfg;
     unsigned footprint;
+};
+
+class StreamReloadResourceManager : public snort::ReloadResourceTuner
+{
+public:
+	StreamReloadResourceManager() {}
+
+    void initialize(FlowCacheConfig&, int max_flows_change_);
+    void tinit() override;
+    bool tune_packet_context() override;
+    bool tune_idle_context() override;
+
+private:
+    bool tune_resources(unsigned work_limit) override;
+
+private:
+    FlowCacheConfig config;
+    int max_flows_change = 0;
 };
 
 class StreamModule : public snort::Module
@@ -91,6 +119,7 @@ public:
 
 private:
     StreamModuleConfig config;
+    StreamReloadResourceManager reload_resource_manager;
 };
 
 extern void base_sum();
@@ -98,4 +127,3 @@ extern void base_stats();
 extern void base_reset();
 
 #endif
-

@@ -152,6 +152,7 @@ SO_PUBLIC int xhash_free_node(XHash* t, XHashNode* node);
 
 typedef uint32_t (* hash_func)(HashFnc*, const unsigned char* d, int n);
 
+
 // return 0 for ==, 1 for != ; FIXIT-L convert to bool
 typedef int (* keycmp_func)(const void* s1, const void* s2, size_t n);
 

@@ -28,6 +28,8 @@
 #include <ctime>
 #include <type_traits>
 
+#include "framework/counts.h"
+
 #include "flow_config.h"
 #include "prune_stats.h"
 
@@ -51,11 +53,14 @@ public:
     snort::Flow* find(const snort::FlowKey*);
     snort::Flow* allocate(const snort::FlowKey*);
 
-    int release(snort::Flow*, PruneReason = PruneReason::NONE, bool do_cleanup = true);
+    void release(snort::Flow*, PruneReason = PruneReason::NONE, bool do_cleanup = true);
+
     unsigned prune_stale(uint32_t thetime, const snort::Flow* save_me);
     unsigned prune_excess(const snort::Flow* save_me);
     bool prune_one(PruneReason, bool do_cleanup);
     unsigned timeout(unsigned num_flows, time_t cur_time);
+
+    unsigned delete_flows(unsigned num_to_delete);
 
     unsigned purge();
     unsigned get_count();
@@ -69,21 +74,37 @@ public:
     PegCount get_prunes(PruneReason reason) const
     { return prune_stats.get(reason); }
 
+    PegCount get_total_deletes() const
+    { return delete_stats.get_total(); }
+
+    PegCount get_deletes(FlowDeleteState state) const
+    { return delete_stats.get(state); }
+
     void reset_stats()
-    { prune_stats = PruneStats(); }
+    {
+        prune_stats = PruneStats();
+        delete_stats = FlowDeleteStats();
+    }
 
     void unlink_uni(snort::Flow*);
+
+    void set_flow_cache_config(FlowCacheConfig& cfg) { config = cfg; }
+
+	unsigned get_flows_allocated() const
+	{ return flows_allocated; }
 
 private:
     void push(snort::Flow*);
     void link_uni(snort::Flow*);
-    int remove(snort::Flow*);
-    int retire(snort::Flow*);
+    void remove(snort::Flow*);
+    void retire(snort::Flow*);
     unsigned prune_unis(PktType);
+	unsigned delete_active_flows
+		(unsigned mode, unsigned num_to_delete, unsigned &deleted);
 
 private:
     static const unsigned cleanup_flows = 1;
-    const FlowCacheConfig config;
+    FlowCacheConfig config;
     uint32_t flags;
 
     class ZHash* hash_table;
@@ -92,6 +113,7 @@ private:
     FlowUniList* uni_ip_flows;
 
     PruneStats prune_stats;
+    FlowDeleteStats delete_stats;
 };
 #endif
 

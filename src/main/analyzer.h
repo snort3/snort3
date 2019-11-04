@@ -57,8 +57,8 @@ public:
     UncompletedAnalyzerCommand(snort::AnalyzerCommand* ac, void* acs) : command(ac), state(acs)
     { }
 
-    snort::AnalyzerCommand* command = nullptr;
-    void* state = nullptr;
+    snort::AnalyzerCommand* command;
+    void* state;
 };
 
 class Analyzer
@@ -134,14 +134,11 @@ public:
 
 private:
     std::atomic<State> state;
-
     unsigned id;
     bool exit_requested = false;
-
     uint64_t exit_after_cnt;
     uint64_t pause_after_cnt = 0;
     uint64_t skip_cnt = 0;
-
     std::string source;
     snort::SFDAQInstance* daq_instance;
     RetryQueue* retry_queue = nullptr;

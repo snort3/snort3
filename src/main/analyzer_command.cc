@@ -114,6 +114,9 @@ bool ACSwap::execute(Analyzer& analyzer, void** ac_state)
             {
                 reload_tuners = new std::list<ReloadResourceTuner*>(sc->get_reload_resource_tuners());
                 *ac_state = reload_tuners;
+                for (auto const& rtt : *reload_tuners)
+                	rtt->tinit();
+
             }
             else
                 reload_tuners = (std::list<ReloadResourceTuner*>*)*ac_state;
@@ -121,7 +124,7 @@ bool ACSwap::execute(Analyzer& analyzer, void** ac_state)
             if ( !reload_tuners->empty() )
             {
                 auto rrt = reload_tuners->front();
-                if (rrt->tune_resources())
+                if ( rrt->tune_packet_context() )
                     reload_tuners->pop_front();
             }
 

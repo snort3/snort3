@@ -115,9 +115,7 @@ const RuleMap* StreamModule::get_rules() const
 { return stream_rules; }
 
 const StreamModuleConfig* StreamModule::get_data()
-{
-    return &config;
-}
+{ return &config; }
 
 bool StreamModule::begin(const char* fqn, int, SnortConfig*)
 {
@@ -177,50 +175,21 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
     return true;
 }
 
-static int check_stream_config(const FlowCacheConfig& new_cfg, const FlowCacheConfig& saved_cfg)
-{
-    int ret = 0;
-
-    if ( saved_cfg.max_flows != new_cfg.max_flows
-            or saved_cfg.pruning_timeout != new_cfg.pruning_timeout )
-    {
-        ReloadError("Change of stream flow cache options requires a restart\n");
-        ret = 1;
-    }
-
-    return ret;
-}
-
-static int check_stream_proto_config(const FlowCacheConfig& new_cfg, const FlowCacheConfig& saved_cfg, PktType type)
-{
-    int ret = 0;
-
-    if ( saved_cfg.proto[to_utype(type)].nominal_timeout != new_cfg.proto[to_utype(type)].nominal_timeout )
-    {
-        ReloadError("Change of stream protocol configuration options requires a restart\n");
-        ret = 1;
-    }
-
-    return ret;
-}
-
 // FIXIT-L the detection of stream.xxx_cache changes below is a temporary workaround
 // remove this check when stream.xxx_cache params become reloadable
-bool StreamModule::end(const char* fqn, int, SnortConfig*)
+bool StreamModule::end(const char* fqn, int, SnortConfig* cfg)
 {
     static StreamModuleConfig saved_config = {};
-    static int issue_found = 0;
 
     if ( saved_config.flow_cache_cfg.max_flows )
     {
-        // FIXIT-H - stream reload story will change this to look for change to max_flows config option
-        issue_found += check_stream_config(config.flow_cache_cfg, saved_config.flow_cache_cfg);
-        issue_found += check_stream_proto_config(config.flow_cache_cfg, saved_config.flow_cache_cfg, PktType::IP);
-        issue_found += check_stream_proto_config(config.flow_cache_cfg, saved_config.flow_cache_cfg, PktType::UDP);
-        issue_found += check_stream_proto_config(config.flow_cache_cfg, saved_config.flow_cache_cfg, PktType::TCP);
-        issue_found += check_stream_proto_config(config.flow_cache_cfg, saved_config.flow_cache_cfg, PktType::ICMP);
-        issue_found += check_stream_proto_config(config.flow_cache_cfg, saved_config.flow_cache_cfg, PktType::PDU);
-        issue_found += check_stream_proto_config(config.flow_cache_cfg, saved_config.flow_cache_cfg, PktType::FILE);
+    	int max_flows_change = config.flow_cache_cfg.max_flows - saved_config.flow_cache_cfg.max_flows;
+        if ( max_flows_change )
+        {
+            // register handler
+            reload_resource_manager.initialize(config.flow_cache_cfg, max_flows_change);
+            cfg->register_reload_resource_tuner(reload_resource_manager);
+        }
     }
 
     if ( !strcmp(fqn, "stream") )
@@ -229,11 +198,9 @@ bool StreamModule::end(const char* fqn, int, SnortConfig*)
             and config.footprint != saved_config.footprint )
         {
             ReloadError("Changing of stream.footprint requires a restart\n");
-            issue_found++;
         }
-        if ( issue_found == 0 )
+        else
             saved_config = config;
-        issue_found = 0;
     }
 
     return true;
@@ -247,4 +214,45 @@ void StreamModule::show_stats()
 
 void StreamModule::reset_stats()
 { base_reset(); }
+
+// Stream handler to adjust allocated resources as needed on a config reload
+void StreamReloadResourceManager::initialize(FlowCacheConfig& config_, int max_flows_change_)
+{
+	config = config_;
+	max_flows_change = max_flows_change_;
+}
+
+void StreamReloadResourceManager::tinit()
+{
+    flow_con->update_flow_cache_cfg(config);
+    if ( max_flows_change < 0 )
+    	stream_base_stats.reload_total_deletes += abs(max_flows_change);
+    else
+    	stream_base_stats.reload_total_adds += max_flows_change;
+}
+
+bool StreamReloadResourceManager::tune_packet_context()
+{
+    return tune_resources(max_work);
+}
+
+bool StreamReloadResourceManager::tune_idle_context()
+{
+    return tune_resources(max_work_idle);
+}
+
+bool StreamReloadResourceManager::tune_resources(unsigned work_limit)
+{
+	// we are done if new max is > currently allocated flow objects
+	if ( flow_con->get_flows_allocated() <= config.max_flows )
+		return true;
+
+	unsigned flows_to_delete = flow_con->get_flows_allocated() - config.max_flows;
+	if ( flows_to_delete > work_limit )
+		flows_to_delete -= flow_con->delete_flows(work_limit);
+	else
+		flows_to_delete -= flow_con->delete_flows(flows_to_delete);
+
+	return ( flows_to_delete ) ? false : true;
+}
 

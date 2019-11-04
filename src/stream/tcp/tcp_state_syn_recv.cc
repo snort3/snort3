@@ -75,7 +75,7 @@ bool TcpStateSynRecv::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 
 bool TcpStateSynRecv::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.is_ack_valid(tsd.get_seg_ack() ) )
+    if ( trk.is_ack_valid(tsd.get_seg_ack()) )
     {
         Flow* flow = tsd.get_flow();
 
@@ -102,7 +102,7 @@ bool TcpStateSynRecv::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateSynRecv::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.is_ack_valid(tsd.get_seg_ack() ) )
+    if ( trk.is_ack_valid(tsd.get_seg_ack()) )
     {
         Flow* flow = tsd.get_flow();
 
@@ -123,7 +123,7 @@ bool TcpStateSynRecv::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateSynRecv::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.is_ack_valid(tsd.get_seg_ack() ) )
+    if ( trk.is_ack_valid(tsd.get_seg_ack()) )
     {
         trk.update_tracker_ack_recv(tsd);
         tsd.get_pkt()->packet_flags |= PKT_STREAM_TWH;

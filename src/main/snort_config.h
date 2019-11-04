@@ -147,7 +147,6 @@ struct VarNode;
 namespace snort
 {
 class ProtocolReference;
-class ReloadResourceTuner;
 struct ProfilerConfig;
 struct GHash;
 struct XHash;
@@ -163,11 +162,13 @@ public:
 
     virtual ~ReloadResourceTuner() = default;
 
-    virtual bool tune_resources() = 0;
-    virtual bool tune_resources_idle() = 0;
+    virtual void tinit() { }
+    virtual bool tune_packet_context() = 0;
+    virtual bool tune_idle_context() = 0;
 
 protected:
     ReloadResourceTuner() = default;
+    virtual bool tune_resources(unsigned work_limit) = 0;
 
     unsigned max_work = RELOAD_MAX_WORK_PER_PACKET;
     unsigned max_work_idle = RELOAD_MAX_WORK_WHEN_IDLE;

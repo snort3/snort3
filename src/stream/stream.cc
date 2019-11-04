@@ -74,11 +74,11 @@ Flow* Stream::new_flow(const FlowKey* key)
 { return flow_con->new_flow(key); }
 
 void Stream::delete_flow(const FlowKey* key)
-{ flow_con->delete_flow(key); }
+{ flow_con->release_flow(key); }
 
 void Stream::delete_flow(Flow* flow)
 {
-    flow_con->delete_flow(flow, PruneReason::NONE);
+    flow_con->release_flow(flow, PruneReason::NONE);
 }
 
 //-------------------------------------------------------------------------
@@ -167,7 +167,7 @@ void Stream::check_flow_closed(Packet* p)
         // this will get called on each onload
         // eventually all onloads will occur and delete will be called
         if ( not flow->is_suspended() )
-            flow_con->delete_flow(flow, PruneReason::NONE);
+            flow_con->release_flow(flow, PruneReason::NONE);
 
         p->flow = nullptr;
     }
@@ -335,32 +335,28 @@ void Stream::init_active_response(const Packet* p, Flow* flow)
 
 void Stream::purge_flows()
 {
-    if ( !flow_con )
-        return;
-
-    flow_con->purge_flows();
+    if ( flow_con )
+        flow_con->purge_flows();
 }
 
 void Stream::timeout_flows(time_t cur_time)
 {
-    if ( !flow_con )
-        return;
-
     // FIXIT-M batch here or loop vs looping over idle?
-    flow_con->timeout_flows(cur_time);
+    if ( flow_con )
+        flow_con->timeout_flows(cur_time);
 }
 
 void Stream::prune_flows()
 {
-    if ( !flow_con )
-        return;
-
-    flow_con->prune_one(PruneReason::MEMCAP, false);
+    if ( flow_con )
+        flow_con->prune_one(PruneReason::MEMCAP, false);
 }
 
 bool Stream::expected_flow(Flow* f, Packet* p)
 {
-    return flow_con->expected_flow(f, p) != SSN_DIR_NONE;
+    if ( flow_con )
+        return flow_con->expected_flow(f, p) != SSN_DIR_NONE;
+    return false;
 }
 
 //-------------------------------------------------------------------------

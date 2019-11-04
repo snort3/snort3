@@ -120,7 +120,8 @@ private:
 private:
     class ZHash* hash_table;
     ExpectNode* nodes;
-    snort::ExpectFlow* pool, * free_list;
+    snort::ExpectFlow* pool;
+    snort::ExpectFlow* free_list;
 
     unsigned long expects, realized;
     unsigned long prunes, overflows;

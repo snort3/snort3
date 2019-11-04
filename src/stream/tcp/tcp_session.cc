@@ -96,8 +96,8 @@ bool TcpSession::setup(Packet* p)
     TcpStreamSession::setup(p);
     splitter_init = false;
 
-    const TcpStreamConfig* pc = get_tcp_cfg(flow->ssn_server);
-    flow->set_default_session_timeout(pc->session_timeout, false);
+    const TcpStreamConfig* cfg = get_tcp_cfg(flow->ssn_server);
+    flow->set_default_session_timeout(cfg->session_timeout, false);
 
     SESSION_STATS_ADD(tcpStats);
     tcpStats.setups++;

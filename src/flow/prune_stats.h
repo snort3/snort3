@@ -45,7 +45,14 @@ struct PruneStats
 
     PegCount prunes[static_cast<reason_t>(PruneReason::MAX)] { };
 
-    PegCount get_total() const;
+    PegCount get_total() const
+    {
+        PegCount total = 0;
+        for ( reason_t i = 0; i < static_cast<reason_t>(PruneReason::NONE); ++i )
+            total += prunes[i];
+
+        return total;
+    }
 
     PegCount& get(PruneReason reason)
     { return prunes[static_cast<reason_t>(reason)]; }
@@ -57,14 +64,38 @@ struct PruneStats
     { ++get(reason); }
 };
 
-inline PegCount PruneStats::get_total() const
+enum class FlowDeleteState : uint8_t
 {
-    PegCount total = 0;
-    for ( reason_t i = 0; i < static_cast<reason_t>(PruneReason::NONE); ++i )
-        total += prunes[i];
+    FREELIST,
+    ALLOWED,
+    OFFLOADED,
+    BLOCKED,
+    MAX
+};
 
-    return total;
-}
+struct FlowDeleteStats
+{
+    using state_t = std::underlying_type<FlowDeleteState>::type;
+
+    PegCount deletes[static_cast<state_t>(FlowDeleteState::MAX)] { };
+
+    PegCount get_total() const
+    {
+        PegCount total = 0;
+        for ( state_t i = 0; i < static_cast<state_t>(PruneReason::MAX); ++i )
+            total += deletes[i];
+
+        return total;
+    }
+    PegCount& get(FlowDeleteState state)
+    { return deletes[static_cast<state_t>(state)]; }
+
+    const PegCount& get(FlowDeleteState state) const
+    { return deletes[static_cast<state_t>(state)]; }
+
+    void update(FlowDeleteState state)
+    { ++get(state); }
+};
 
 #endif
 
