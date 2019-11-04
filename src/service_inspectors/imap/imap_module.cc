@@ -33,10 +33,10 @@ using namespace std;
 
 static const Parameter s_params[] =
 {
-    { "b64_decode_depth", Parameter::PT_INT, "-1:65535", "1460",
+    { "b64_decode_depth", Parameter::PT_INT, "-1:65535", "-1",
       "base64 decoding depth (-1 no limit)" },
 
-    { "bitenc_decode_depth", Parameter::PT_INT, "-1:65535", "1460",
+    { "bitenc_decode_depth", Parameter::PT_INT, "-1:65535", "-1",
       "non-Encoded MIME attachment extraction depth (-1 no limit)" },
 
     { "decompress_pdf", Parameter::PT_BOOL, nullptr, "false",
@@ -48,10 +48,10 @@ static const Parameter s_params[] =
     { "decompress_zip", Parameter::PT_BOOL, nullptr, "false",
       "decompress zip files in MIME attachments" },
 
-    { "qp_decode_depth", Parameter::PT_INT, "-1:65535", "1460",
+    { "qp_decode_depth", Parameter::PT_INT, "-1:65535", "-1",
       "quoted Printable decoding depth (-1 no limit)" },
 
-    { "uu_decode_depth", Parameter::PT_INT, "-1:65535", "1460",
+    { "uu_decode_depth", Parameter::PT_INT, "-1:65535", "-1",
       "Unix-to-Unix decoding depth (-1 no limit)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }

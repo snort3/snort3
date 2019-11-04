@@ -777,6 +777,12 @@ bool MpseStash::push(void* user, void* tree, int index, void* list)
         }
     }
 
+    if ( max and ( count == max ) )
+    {
+        pmqs.tot_inq_overruns++;
+        return true;
+    }
+
     if ( !max or ( count < max ) )
     {
         Node node;
@@ -788,12 +794,6 @@ bool MpseStash::push(void* user, void* tree, int index, void* list)
         pmqs.tot_inq_uinserts++;
         pmqs.tot_inq_inserts++;
         count++;
-    }
-
-    if ( max and ( count == max ) )
-    {
-        pmqs.tot_inq_overruns++;
-        return true;
     }
 
     return false;
@@ -858,8 +858,7 @@ static int rule_tree_queue(
 {
     MpseStash* stash = ((IpsContext*)context)->stash;
 
-    stash->push(user, tree, index, list);
-    return 0;
+    return stash->push(user, tree, index, list) ? 1 : 0;
 }
 
 static inline int batch_search(

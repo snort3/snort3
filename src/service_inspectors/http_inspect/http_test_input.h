@@ -64,7 +64,7 @@ private:
     // TCP connection directional close
     bool tcp_closed = false;
 
-    // partial flush requested, useful for testing accelerated blocking
+    // partial flush requested, useful for testing detained inspection
     bool partial = false;
 
     // number of octets that have been flushed and must be sent by reassemble

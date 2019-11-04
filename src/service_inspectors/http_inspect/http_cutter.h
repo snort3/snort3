@@ -96,17 +96,17 @@ private:
 class HttpBodyCutter : public HttpCutter
 {
 public:
-    HttpBodyCutter(bool accelerated_blocking_) : accelerated_blocking(accelerated_blocking_) {}
+    HttpBodyCutter(bool detained_inspection_) : detained_inspection(detained_inspection_) {}
     void soft_reset() override { octets_seen = 0; packet_detained = false; }
     void detain_ended() { packet_detained = false; }
 
 protected:
-    bool need_accelerated_blocking(const uint8_t* data, uint32_t length);
+    bool need_detained_inspection(const uint8_t* data, uint32_t length);
 
 private:
     bool dangerous(const uint8_t* data, uint32_t length);
 
-    const bool accelerated_blocking;
+    const bool detained_inspection;
     bool packet_detained = false;
     uint8_t partial_match = 0;
     bool detention_required = false;
@@ -115,8 +115,8 @@ private:
 class HttpBodyClCutter : public HttpBodyCutter
 {
 public:
-    HttpBodyClCutter(int64_t expected_length, bool accelerated_blocking) :
-        HttpBodyCutter(accelerated_blocking), remaining(expected_length)
+    HttpBodyClCutter(int64_t expected_length, bool detained_inspection) :
+        HttpBodyCutter(detained_inspection), remaining(expected_length)
         { assert(remaining > 0); }
     HttpEnums::ScanResult cut(const uint8_t*, uint32_t length, HttpInfractions*, HttpEventGen*,
         uint32_t flow_target, bool stretch) override;
@@ -128,7 +128,7 @@ private:
 class HttpBodyOldCutter : public HttpBodyCutter
 {
 public:
-    explicit HttpBodyOldCutter(bool accelerated_blocking) : HttpBodyCutter(accelerated_blocking) {}
+    explicit HttpBodyOldCutter(bool detained_inspection) : HttpBodyCutter(detained_inspection) {}
     HttpEnums::ScanResult cut(const uint8_t*, uint32_t, HttpInfractions*, HttpEventGen*,
         uint32_t flow_target, bool stretch) override;
 };
@@ -136,7 +136,7 @@ public:
 class HttpBodyChunkCutter : public HttpBodyCutter
 {
 public:
-    explicit HttpBodyChunkCutter(bool accelerated_blocking) : HttpBodyCutter(accelerated_blocking)
+    explicit HttpBodyChunkCutter(bool detained_inspection) : HttpBodyCutter(detained_inspection)
         {}
     HttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
         HttpInfractions* infractions, HttpEventGen* events, uint32_t flow_target, bool stretch)

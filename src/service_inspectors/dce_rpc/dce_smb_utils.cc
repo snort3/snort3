@@ -834,20 +834,11 @@ void DCE2_SmbRemoveTid(DCE2_SmbSsnData* ssd, const uint16_t tid)
 void DCE2_SmbInsertTid(DCE2_SmbSsnData* ssd,
     const uint16_t tid, const bool is_ipc)
 {
-    if (!is_ipc && (!DCE2_ScSmbFileInspection((dce2SmbProtoConf*)ssd->sd.config)
-        || ((ssd->max_file_depth == -1) && DCE2_ScSmbFileDepth(
-        (dce2SmbProtoConf*)ssd->sd.config) == -1)))
+    if ( !is_ipc and
+        ssd->max_file_depth == -1 and DCE2_ScSmbFileDepth((dce2SmbProtoConf*)ssd->sd.config) == -1 )
     {
         trace_logf(dce_smb, "Not inserting TID (%hu) "
             "because it's not IPC and not inspecting normal file "
-            "data.\n", tid);
-        return;
-    }
-
-    if (is_ipc && DCE2_ScSmbFileInspectionOnly((dce2SmbProtoConf*)ssd->sd.config))
-    {
-        trace_logf(dce_smb, "Not inserting TID (%hu) "
-            "because it's IPC and only inspecting normal file "
             "data.\n", tid);
         return;
     }

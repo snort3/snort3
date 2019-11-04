@@ -55,8 +55,8 @@ const Parameter HttpModule::http_params[] =
     { "decompress_zip", Parameter::PT_BOOL, nullptr, "false",
       "decompress zip files in response bodies" },
 
-    { "accelerated_blocking", Parameter::PT_BOOL, nullptr, "false",
-      "inspect JavaScript in response messages as soon as possible" },
+    { "detained_inspection", Parameter::PT_BOOL, nullptr, "false",
+      "store-and-forward as necessary to effectively block alerting JavaScript" },
 
     { "normalize_javascript", Parameter::PT_BOOL, nullptr, "false",
       "normalize JavaScript in response bodies" },
@@ -171,9 +171,9 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     {
         params->decompress_zip = val.get_bool();
     }
-    else if (val.is("accelerated_blocking"))
+    else if (val.is("detained_inspection"))
     {
-        params->accelerated_blocking = val.get_bool();
+        params->detained_inspection = val.get_bool();
     }
     else if (val.is("normalize_javascript"))
     {

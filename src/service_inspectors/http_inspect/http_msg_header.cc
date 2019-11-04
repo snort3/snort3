@@ -301,8 +301,8 @@ void HttpMsgHeader::prepare_body()
     setup_utf_decoding();
     setup_file_decompression();
     update_depth();
-    // Limitations on accelerated blocking will be lifted as the feature is built out
-    session_data->accelerated_blocking[source_id] = params->accelerated_blocking &&
+    // Limitations on detained inspection will be lifted as the feature is built out
+    session_data->detained_inspection[source_id] = params->detained_inspection &&
         (source_id == SRC_SERVER) && (session_data->compression[source_id] == CMP_NONE) &&
         (params->request_depth == -1);
     if (source_id == SRC_CLIENT)

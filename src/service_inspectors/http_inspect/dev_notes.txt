@@ -7,7 +7,7 @@ It serves several specialized purposes in cases where the HTTP message is trunca
 unexpectedly).
 
 The nature of splitting allows packets to be forwarded before they are aggregated into a message
-section and inspected. Accelerated blocking is a feature that allows the splitter to designate
+section and inspected. Detained inspection is a feature that allows the splitter to designate
 to Stream packets that are too risky to forward without being inspected. These packets are detained
 until such time as inspection is completed. The design is based on the principle that detaining
 one packet in a TCP stream effectively blocks all subsequent packets from being reassembled and

@@ -1154,6 +1154,20 @@ static void parse_rule_state(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
     OtnFree(otn);
 }
 
+static bool is_builtin(uint32_t gid)
+{
+    if ( ModuleManager::gid_in_use(gid) )
+        return true;
+
+    // the builtin range prevents unloaded sids from firing on every packet
+    if ( gid < GID_BUILTIN_MIN or gid > GID_BUILTIN_MAX )
+        return false;
+
+    // not builtin but may get used and abused by snort2lua
+    // should be deleted at some point
+    return gid != GID_EXCEPTION_SDF;
+}
+
 void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
 {
     if ( s_ignore )
@@ -1226,7 +1240,7 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
         otn->sigInfo.builtin = false;
         so_rule_count++;
     }
-    else if ( ModuleManager::gid_in_use(otn->sigInfo.gid) )
+    else if ( is_builtin(otn->sigInfo.gid) )
     {
         if ( otn->num_detection_opts )
             ParseError("%u:%u builtin rules do not support detection options",

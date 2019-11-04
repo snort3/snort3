@@ -113,7 +113,7 @@ void HttpFlowData::half_reset(SourceId source_id)
     body_octets[source_id] = STAT_NOT_PRESENT;
     section_size_target[source_id] = 0;
     stretch_section_to_packet[source_id] = false;
-    accelerated_blocking[source_id] = false;
+    detained_inspection[source_id] = false;
     file_depth_remaining[source_id] = STAT_NOT_PRESENT;
     detect_depth_remaining[source_id] = STAT_NOT_PRESENT;
     detection_status[source_id] = DET_REACTIVATING;

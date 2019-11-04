@@ -116,7 +116,7 @@ static const Parameter norm_tcp_params[] =
     { "urp", Parameter::PT_BOOL, nullptr, "true",
       "adjust urgent pointer if beyond segment length" },
 
-    { "ips", Parameter::PT_BOOL, nullptr, "false",
+    { "ips", Parameter::PT_BOOL, nullptr, "true",
       "ensure consistency in retransmitted data" },
 
     { "ecn", Parameter::PT_SELECT, "off | packet | stream", "off",

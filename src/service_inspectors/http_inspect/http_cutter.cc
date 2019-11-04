@@ -282,7 +282,7 @@ ScanResult HttpBodyClCutter::cut(const uint8_t* buffer, uint32_t length, HttpInf
     if (octets_seen + length < flow_target)
     {
         octets_seen += length;
-        return need_accelerated_blocking(buffer, length) ? SCAN_NOT_FOUND_DETAIN : SCAN_NOT_FOUND;
+        return need_detained_inspection(buffer, length) ? SCAN_NOT_FOUND_DETAIN : SCAN_NOT_FOUND;
     }
 
     if (!stretch)
@@ -291,7 +291,7 @@ ScanResult HttpBodyClCutter::cut(const uint8_t* buffer, uint32_t length, HttpInf
         num_flush = flow_target - octets_seen;
         if (remaining > 0)
         {
-            need_accelerated_blocking(buffer, num_flush);
+            need_detained_inspection(buffer, num_flush);
             return SCAN_FOUND_PIECE;
         }
         else
@@ -307,7 +307,7 @@ ScanResult HttpBodyClCutter::cut(const uint8_t* buffer, uint32_t length, HttpInf
         else
             num_flush = flow_target - octets_seen;
         remaining -= octets_seen + num_flush;
-        need_accelerated_blocking(buffer, num_flush);
+        need_detained_inspection(buffer, num_flush);
         return SCAN_FOUND_PIECE;
     }
 
@@ -322,7 +322,7 @@ ScanResult HttpBodyClCutter::cut(const uint8_t* buffer, uint32_t length, HttpInf
     // Cannot stretch to the end of the message body. Cut at the original target.
     num_flush = flow_target - octets_seen;
     remaining -= flow_target;
-    need_accelerated_blocking(buffer, num_flush);
+    need_detained_inspection(buffer, num_flush);
     return SCAN_FOUND_PIECE;
 }
 
@@ -344,13 +344,13 @@ ScanResult HttpBodyOldCutter::cut(const uint8_t* buffer, uint32_t length, HttpIn
     {
         // Not enough data yet to create a message section
         octets_seen += length;
-        return need_accelerated_blocking(buffer, length) ? SCAN_NOT_FOUND_DETAIN : SCAN_NOT_FOUND;
+        return need_detained_inspection(buffer, length) ? SCAN_NOT_FOUND_DETAIN : SCAN_NOT_FOUND;
     }
     else if (stretch && (octets_seen + length <= flow_target + MAX_SECTION_STRETCH))
     {
         // Cut the section at the end of this TCP segment to avoid splitting a packet
         num_flush = length;
-        need_accelerated_blocking(buffer, num_flush);
+        need_detained_inspection(buffer, num_flush);
         return SCAN_FOUND_PIECE;
     }
     else
@@ -358,7 +358,7 @@ ScanResult HttpBodyOldCutter::cut(const uint8_t* buffer, uint32_t length, HttpIn
         // Cut the section at the target length. Either stretching is not allowed or the end of
         // the segment is too far away.
         num_flush = flow_target - octets_seen;
-        need_accelerated_blocking(buffer, num_flush);
+        need_detained_inspection(buffer, num_flush);
         return SCAN_FOUND_PIECE;
     }
 }
@@ -552,7 +552,7 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
             }
 
             if (!detain_this_packet)
-                detain_this_packet = need_accelerated_blocking(buffer+k, skip_amount);
+                detain_this_packet = need_detained_inspection(buffer+k, skip_amount);
 
             k += skip_amount - 1;
             if ((expected -= skip_amount) == 0)
@@ -627,7 +627,7 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
             skip_amount = (skip_amount <= adjusted_target-data_seen) ? skip_amount :
                 adjusted_target-data_seen;
             if (!detain_this_packet)
-                detain_this_packet = need_accelerated_blocking(buffer+k, skip_amount);
+                detain_this_packet = need_detained_inspection(buffer+k, skip_amount);
             k += skip_amount - 1;
             if ((data_seen += skip_amount) == adjusted_target)
             {
@@ -657,19 +657,19 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
 }
 
 // This method searches the input stream looking for the beginning of a script or other dangerous
-// content that requires accelerated blocking. Exactly what we are looking for is encapsulated in
+// content that requires detained inspection. Exactly what we are looking for is encapsulated in
 // dangerous().
 //
 // Return value true indicates a match and enables the packet that completes the matching sequence
 // to be detained.
 //
-// Once accelerated blocking is activated on a message body it never goes away. The first packet
+// Once detained inspection is activated on a message body it never goes away. The first packet
 // of every subsequent message section must be detained (detention_required). Supporting this
 // requirement requires that the calling routine submit all data including buffers that are about
 // to be flushed.
-bool HttpBodyCutter::need_accelerated_blocking(const uint8_t* data, uint32_t length)
+bool HttpBodyCutter::need_detained_inspection(const uint8_t* data, uint32_t length)
 {
-    if (!accelerated_blocking || packet_detained)
+    if (!detained_inspection || packet_detained)
         return false;
     if (detention_required || dangerous(data, length))
     {
@@ -680,7 +680,7 @@ bool HttpBodyCutter::need_accelerated_blocking(const uint8_t* data, uint32_t len
     return false;
 }
 
-// Currently we do accelerated blocking when we see a javascript starting
+// Currently we do detained inspection when we see a javascript starting
 bool HttpBodyCutter::dangerous(const uint8_t* data, uint32_t length)
 {
     static const uint8_t match_string[] = { '<', 's', 'c', 'r', 'i', 'p', 't' };

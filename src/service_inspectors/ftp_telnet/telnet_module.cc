@@ -51,7 +51,7 @@ static const Parameter s_params[] =
       "check for end of encryption" },
 
     { "encrypted_traffic", Parameter::PT_BOOL, nullptr, "false",
-      "check for encrypted Telnet and FTP" },
+      "check for encrypted Telnet" },
 
     { "normalize", Parameter::PT_BOOL, nullptr, "false",
       "eliminate escape sequences" },

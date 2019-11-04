@@ -148,11 +148,7 @@ binder =
 ---------------------------------------------------------------------------
 
 -- use latency to monitor / enforce packet and rule thresholds
-latency =
-{
-    packet = { max_time = 1500 },
-    rule = { max_time = 200 },
-}
+--latency = { }
 
 -- use these to capture perf data for analysis and tuning
 --profiler = { }

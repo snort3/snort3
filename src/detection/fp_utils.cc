@@ -289,6 +289,9 @@ bool FpSelector::is_better_than(
     if ( !pmd->is_negated() && rhs.pmd->is_negated() )
         return true;
 
+    if ( pmd->is_negated() && !rhs.pmd->is_negated() )
+        return false;
+
     if ( size > rhs.size )
         return true;
 

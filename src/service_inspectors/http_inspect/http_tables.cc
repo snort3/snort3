@@ -406,8 +406,8 @@ const PegInfo HttpModule::peg_names[PEG_COUNT_MAX+1] =
     { CountType::SUM, "uri_coding", "URIs with character coding problems" },
     { CountType::NOW, "concurrent_sessions", "total concurrent http sessions" },
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent http sessions" },
-    { CountType::SUM, "detained_packets", "TCP packets delayed by accelerated blocking" },
-    { CountType::SUM, "partial_inspections", "pre-inspections for accelerated blocking" },
+    { CountType::SUM, "detained_packets", "TCP packets delayed by detained inspection" },
+    { CountType::SUM, "partial_inspections", "pre-inspections for detained inspection" },
     { CountType::END, nullptr, nullptr }
 };
 

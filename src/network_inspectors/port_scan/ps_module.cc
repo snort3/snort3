@@ -59,7 +59,7 @@ static const Parameter scan_params[] =
 
 static const Parameter ps_params[] =
 {
-    { "memcap", Parameter::PT_INT, "1024:maxSZ", "1048576",
+    { "memcap", Parameter::PT_INT, "1024:maxSZ", "10485760",
       "maximum tracker memory in bytes" },
 
     { "protos", Parameter::PT_MULTI, protos, "all",

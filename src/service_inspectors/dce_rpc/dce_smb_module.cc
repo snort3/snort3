@@ -129,11 +129,11 @@ static const Parameter s_params[] =
     { "valid_smb_versions", Parameter::PT_MULTI, "v1 | v2 | all", "all",
       "valid SMB versions" },
 
-    { "smb_file_inspection", Parameter::PT_ENUM, "off | on | only", "off",
-      "SMB file inspection" },
+    { "smb_file_inspection", Parameter::PT_ENUM, "off | on | only", nullptr,
+      "deprecated (not used): file inspection controlled by smb_file_depth" },
 
     { "smb_file_depth", Parameter::PT_INT, "-1:32767", "16384",
-      "SMB file depth for file data" },
+      "SMB file depth for file data (-1 = disabled, 0 = unlimited)" },
 
     { "smb_invalid_shares", Parameter::PT_STRING, nullptr, nullptr,
       "SMB shares to alert on " },
@@ -358,7 +358,7 @@ bool Dce2SmbModule::set(const char* fqn, Value& v, SnortConfig* c)
         set_smb_versions_mask(config,v.get_string());
 
     else if ( v.is("smb_file_inspection") )
-        config.smb_file_inspection = (dce2SmbFileInspection)v.get_uint8();
+        ParseWarning(WARN_CONF, "smb_file_inspection is deprecated (not used): use smb_file_depth");
 
     else if ( v.is("smb_file_depth") )
         config.smb_file_depth = v.get_int16();
@@ -403,24 +403,12 @@ void print_dce2_smb_conf(dce2SmbProtoConf& config)
     else
         LogMessage("    Maximum SMB compounded requests: %u\n", config.smb_max_compound);
 
-    if (config.smb_file_inspection == DCE2_SMB_FILE_INSPECTION_OFF)
-    {
-        LogMessage("    SMB file inspection: Disabled\n");
-    }
+    if (config.smb_file_depth == -1)
+        LogMessage("    SMB file depth: Disabled\n");
+    else if (config.smb_file_depth == 0)
+        LogMessage("    SMB file depth: Unlimited\n");
     else
-    {
-        if (config.smb_file_inspection == DCE2_SMB_FILE_INSPECTION_ONLY)
-            LogMessage("    SMB file inspection: Only\n");
-        else
-            LogMessage("    SMB file inspection: Enabled\n");
-
-        if (config.smb_file_depth == -1)
-            LogMessage("    SMB file depth: Disabled\n");
-        else if (config.smb_file_depth == 0)
-            LogMessage("    SMB file depth: Unlimited\n");
-        else
-            LogMessage("    SMB file depth: %d\n",config.smb_file_depth);
-    }
+        LogMessage("    SMB file depth: %d\n",config.smb_file_depth);
 
     if (config.smb_valid_versions_mask  == DCE2_VALID_SMB_VERSION_FLAG_V1)
     {

@@ -70,13 +70,13 @@ static const Parameter s_params[] =
     { "auth_cmds", Parameter::PT_STRING, nullptr, nullptr,
       "commands that initiate an authentication exchange" },
 
-    { "b64_decode_depth", Parameter::PT_INT, "-1:65535", "1460",
+    { "b64_decode_depth", Parameter::PT_INT, "-1:65535", "-1",
       "depth used to decode the base64 encoded MIME attachments (-1 no limit)" },
 
     { "binary_data_cmds", Parameter::PT_STRING, nullptr, nullptr,
       "commands that initiate sending of data and use a length value after the command" },
 
-    { "bitenc_decode_depth", Parameter::PT_INT, "-1:65535", "1460",
+    { "bitenc_decode_depth", Parameter::PT_INT, "-1:65535", "-1",
       "depth used to extract the non-encoded MIME attachments (-1 no limit)" },
 
     { "data_cmds", Parameter::PT_STRING, nullptr, nullptr,
@@ -134,10 +134,10 @@ static const Parameter s_params[] =
     { "normalize_cmds", Parameter::PT_STRING, nullptr, nullptr,
       "list of commands to normalize" },
 
-    { "qp_decode_depth", Parameter::PT_INT, "-1:65535", "1460",
+    { "qp_decode_depth", Parameter::PT_INT, "-1:65535", "-1",
       "quoted-Printable decoding depth (-1 no limit)" },
 
-    { "uu_decode_depth", Parameter::PT_INT, "-1:65535", "1460",
+    { "uu_decode_depth", Parameter::PT_INT, "-1:65535", "-1",
       "Unix-to-Unix decoding depth (-1 no limit)" },
 
     { "valid_cmds", Parameter::PT_STRING, nullptr, nullptr,

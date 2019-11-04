@@ -186,7 +186,8 @@ bool DcerpcServer::parse_smb_file_inspection(std::istringstream& data_stream)
         {
             file_inspect.pop_back();
         }
-        tmpval = table_api.add_option("smb_file_inspection", file_inspect);
+        file_inspect = "smb_file_inspection: " + file_inspect;
+        tmpval = table_api.add_deleted_comment(file_inspect);
     }
     else
     {
@@ -207,7 +208,8 @@ bool DcerpcServer::parse_smb_file_inspection(std::istringstream& data_stream)
         std::string arg = file_inspect.substr(1, pos-1);
         // remove additional whitespaces
         arg.erase(remove_if(arg.begin(), arg.end(), isspace), arg.end());
-        tmpval = table_api.add_option("smb_file_inspection", arg);
+        arg = "smb_file_inspection: " + arg;
+        tmpval = table_api.add_deleted_comment(arg);
 
         pos = file_inspect.find("file-depth");
         if (pos == std::string::npos)

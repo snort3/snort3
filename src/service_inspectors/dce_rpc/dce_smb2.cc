@@ -65,9 +65,8 @@ static inline void DCE2_Smb2InsertTid(DCE2_SmbSsnData* ssd, const uint32_t tid,
 {
     bool is_ipc = (share_type != SMB2_SHARE_TYPE_DISK);
 
-    if (!is_ipc && (!DCE2_ScSmbFileInspection((dce2SmbProtoConf*)ssd->sd.config)
-        || ((ssd->max_file_depth == -1) && DCE2_ScSmbFileDepth(
-        (dce2SmbProtoConf*)ssd->sd.config) == -1)))
+    if ( !is_ipc and
+        ssd->max_file_depth == -1 and DCE2_ScSmbFileDepth((dce2SmbProtoConf*)ssd->sd.config) == -1 )
     {
         trace_logf(dce_smb, "Not inserting TID (%u) because it's "
             "not IPC and not inspecting normal file data.\n", tid);
@@ -303,7 +302,7 @@ static void DCE2_Smb2CreateRequest(DCE2_SmbSsnData* ssd, const Smb2Hdr*,
     const Smb2CreateRequestHdr* smb_create_hdr,const uint8_t* end)
 {
     uint16_t name_offset = alignedNtohs(&(smb_create_hdr->name_offset));
- 
+
     DCE2_Smb2InitFileTracker(&ssd->ftracker, false, 0);
 
     if (name_offset > SMB2_HEADER_LENGTH)
@@ -337,13 +336,13 @@ static void DCE2_Smb2CreateResponse(DCE2_SmbSsnData* ssd, const Smb2Hdr*,
 {
     uint64_t fileId_persistent;
     uint64_t file_size = UNKNOWN_FILE_SIZE;
-  
+
 
     fileId_persistent = alignedNtohq((const uint64_t*)(&(smb_create_hdr->fileId_persistent)));
     ssd->ftracker.fid_v2 = fileId_persistent;
     if (smb_create_hdr->end_of_file)
     {
-        file_size = alignedNtohq((const uint64_t*)(&(smb_create_hdr->end_of_file)));      
+        file_size = alignedNtohq((const uint64_t*)(&(smb_create_hdr->end_of_file)));
         ssd->ftracker.tracker.file.file_size = file_size;
     }
 
@@ -481,7 +480,7 @@ static void DCE2_Smb2ReadRequest(DCE2_SmbSsnData* ssd, const Smb2Hdr* smb_hdr,
 {
     uint64_t message_id, offset;
     uint64_t fileId_persistent;
-  
+
     message_id = alignedNtohq((const uint64_t*)(&(smb_hdr->message_id)));
     offset = alignedNtohq((const uint64_t*)(&(smb_read_hdr->offset)));
     fileId_persistent = alignedNtohq((const uint64_t*)(&(smb_read_hdr->fileId_persistent)));
@@ -566,7 +565,7 @@ static void DCE2_Smb2Read(DCE2_SmbSsnData* ssd, const Smb2Hdr* smb_hdr,
     {
         uint64_t message_id;
         Smb2Request* request;
-    
+
         message_id = alignedNtohq((const uint64_t*)(&(smb_hdr->message_id)));
         request = DCE2_Smb2GetRequest(ssd, message_id);
         if (!request)

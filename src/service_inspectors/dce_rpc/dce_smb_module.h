@@ -33,13 +33,6 @@ struct SnortConfig;
 #define DCE2_VALID_SMB_VERSION_FLAG_V1 1
 #define DCE2_VALID_SMB_VERSION_FLAG_V2 2
 
-enum dce2SmbFileInspection
-{
-    DCE2_SMB_FILE_INSPECTION_OFF = 0,
-    DCE2_SMB_FILE_INSPECTION_ON,
-    DCE2_SMB_FILE_INSPECTION_ONLY
-};
-
 enum dce2SmbFingerprintPolicy
 {
     DCE2_SMB_FINGERPRINT_POLICY_NONE = 0,
@@ -63,7 +56,6 @@ struct dce2SmbProtoConf
     uint8_t smb_max_chain;
     uint8_t smb_max_compound;
     uint16_t smb_valid_versions_mask;
-    dce2SmbFileInspection smb_file_inspection;
     int16_t smb_file_depth;
     DCE2_List* smb_invalid_shares;
     bool legacy_mode;
@@ -97,25 +89,8 @@ private:
 
 void print_dce2_smb_conf(dce2SmbProtoConf& config);
 
-inline bool DCE2_ScSmbFileInspection(const dce2SmbProtoConf* sc)
-{
-    if (sc == nullptr)
-        return false;
-    return ((sc->smb_file_inspection == DCE2_SMB_FILE_INSPECTION_ON)
-           || (sc->smb_file_inspection == DCE2_SMB_FILE_INSPECTION_ONLY));
-}
-
-inline bool DCE2_ScSmbFileInspectionOnly(const dce2SmbProtoConf* sc)
-{
-    if (sc == nullptr)
-        return false;
-    return sc->smb_file_inspection == DCE2_SMB_FILE_INSPECTION_ONLY;
-}
-
 inline int64_t DCE2_ScSmbFileDepth(const dce2SmbProtoConf* sc)
 {
-    if (!DCE2_ScSmbFileInspection(sc))
-        return -1;
     return sc->smb_file_depth;
 }
 

@@ -73,11 +73,11 @@ HttpCutter* HttpStreamSplitter::get_cutter(SectionType type,
         return (HttpCutter*)new HttpHeaderCutter;
     case SEC_BODY_CL:
         return (HttpCutter*)new HttpBodyClCutter(session_data->data_length[source_id],
-            session_data->accelerated_blocking[source_id]);
+            session_data->detained_inspection[source_id]);
     case SEC_BODY_CHUNK:
-        return (HttpCutter*)new HttpBodyChunkCutter(session_data->accelerated_blocking[source_id]);
+        return (HttpCutter*)new HttpBodyChunkCutter(session_data->detained_inspection[source_id]);
     case SEC_BODY_OLD:
-        return (HttpCutter*)new HttpBodyOldCutter(session_data->accelerated_blocking[source_id]);
+        return (HttpCutter*)new HttpBodyOldCutter(session_data->detained_inspection[source_id]);
     default:
         assert(false);
         return nullptr;

@@ -396,7 +396,7 @@ static int fpFinishPortGroupRule(
         pattern_length = pmd->pattern_size;
     }
 
-    if ( fp->get_debug_print_fast_patterns() )
+    if ( fp->get_debug_print_fast_patterns() and !otn->soid )
         print_fp_info(s_group, otn, pmd, pattern, pattern_length);
 
     PMX* pmx = (PMX*)snort_calloc(sizeof(PMX));

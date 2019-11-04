@@ -29,8 +29,6 @@ daq =
     snaplen = 65535
 }
 
-normalizer = { tcp = { ips = true } }
-
 snort = { }
 snort['-Q'] = true
 
