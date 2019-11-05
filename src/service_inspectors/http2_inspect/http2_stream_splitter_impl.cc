@@ -107,7 +107,8 @@ StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t
         } 
 
         // Have full inspection section, flush and update leftover
-        *flush_offset = session_data->inspection_section_length[source_id];
+        *flush_offset = session_data->inspection_section_length[source_id] -
+            session_data->octets_seen[source_id];
         session_data->leftover_data[source_id] -=
             session_data->inspection_section_length[source_id];
         session_data->octets_seen[source_id] = 0;
@@ -318,13 +319,22 @@ const StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned to
 
                 frame_length = get_frame_length(session_data->frame_header[source_id] +
                     session_data->frame_header_offset[source_id]);
+
+                if (frame_length == 0)
+                    break;
+                if (remaining_len == 0)
+                    return frame_buf;
+
+                // handle split long data frames
+                if (frame_length > total)
+                    frame_length = total - data_pos;
                 frame_flags = get_frame_flags(session_data->frame_header[source_id] +
                     session_data->frame_header_offset[source_id]);
 
                 if (frame_flags & PADDED)
                 {
                     frame_data_offset += 1;
-                    pad_len = session_data->frame_data[source_id][0];
+                    pad_len = *(data + data_pos);
                 }
                 //FIXIT-M handle stream dependency and weight. For now just skip over
                 if (frame_flags & PRIORITY)

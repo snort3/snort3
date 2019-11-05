@@ -51,7 +51,7 @@ bool Http2Hpack::write_decoded_headers(Http2FlowData* session_data, HttpCommon::
 
     if (in_length > decoded_header_length)
     {
-        length = MAX_OCTETS - session_data->raw_decoded_header_size[source_id];
+        length = decoded_header_length;
         *session_data->infractions[source_id] += INF_DECODED_HEADER_BUFF_OUT_OF_SPACE;
         session_data->events[source_id]->create_event(EVENT_MISFORMATTED_HTTP2);
         ret = false;
@@ -82,9 +82,9 @@ bool Http2Hpack::decode_string_literal(Http2FlowData* session_data, HttpCommon::
     }
 
     if (!decode_string.translate(encoded_header_buffer + encoded_header_offset,
-        encoded_header_length, encoded_bytes_consumed, decoded_header_buffer,
-        decoded_header_length, decoded_bytes_written, session_data->events[source_id],
-        session_data->infractions[source_id]))
+        encoded_header_length - encoded_header_offset, encoded_bytes_consumed,
+        decoded_header_buffer, decoded_header_length, decoded_bytes_written,
+        session_data->events[source_id], session_data->infractions[source_id]))
     {
         return false;
     }
@@ -257,7 +257,10 @@ bool Http2Hpack::decode_literal_header_line(Http2FlowData* session_data,
         if (!Http2Hpack::decode_index(session_data, source_id, encoded_header_buffer,
                 encoded_header_length, decode_int, false, partial_bytes_consumed,
                 decoded_header_buffer, decoded_header_length, partial_bytes_written))
+        {
+            bytes_written += partial_bytes_written;
             return false;
+        }
     }
     // literal field name
     else
@@ -266,8 +269,10 @@ bool Http2Hpack::decode_literal_header_line(Http2FlowData* session_data,
                 encoded_header_length, true,
                 partial_bytes_consumed, decoded_header_buffer, decoded_header_length,
                 partial_bytes_written))
+        {
+            bytes_written += partial_bytes_written;
             return false;
-
+        }
         // If this was a pseudo-header value, give it to the start-line.
         if (session_data->header_start_line[source_id] and
                 session_data->header_start_line[source_id]->is_pseudo_name(
@@ -298,7 +303,10 @@ bool Http2Hpack::decode_literal_header_line(Http2FlowData* session_data,
             false, partial_bytes_consumed,
             decoded_header_buffer + bytes_written, decoded_header_length -
             bytes_written, partial_bytes_written))
+    {
+        bytes_written += partial_bytes_written;
         return false;
+    }
 
     // If this was a pseudo-header value, give it to the start-line.
     if (session_data->header_start_line[source_id] and
@@ -401,25 +409,54 @@ bool Http2Hpack::decode_headers(Http2FlowData* session_data, HttpCommon::SourceI
     if (source_id == SRC_CLIENT)
         session_data->header_start_line[source_id] = new Http2RequestLine(session_data, source_id);
 
-    while (total_bytes_consumed < header_length)
+    while (success and total_bytes_consumed < header_length)
     {
-        if (!Http2Hpack::decode_header_line(session_data, source_id,
+        success = Http2Hpack::decode_header_line(session_data, source_id,
             encoded_header_buffer + total_bytes_consumed, header_length - total_bytes_consumed,
             line_bytes_consumed, session_data->raw_decoded_header[source_id] +
             session_data->raw_decoded_header_size[source_id], MAX_OCTETS -
-            session_data->raw_decoded_header_size[source_id], line_bytes_written))
-        {
-            success = false;
-            break;
-        }
+            session_data->raw_decoded_header_size[source_id], line_bytes_written);
         total_bytes_consumed  += line_bytes_consumed;
         session_data->raw_decoded_header_size[source_id] += line_bytes_written;
     }
 
-    if (!success)
+    // If there were only pseudo-headers, finalize never got called, so create the start-line
+    if (session_data->header_start_line[source_id] and
+        !session_data->header_start_line[source_id]->is_finalized())
     {
+        success &= session_data->header_start_line[source_id]->finalize();
+    }
+
+    // write the last CRLF to end the header
+    if (success)
+    {
+        success = Http2Hpack::write_decoded_headers(session_data, source_id,
+            (const uint8_t*)"\r\n", 2, session_data->raw_decoded_header[source_id] +
+            session_data->raw_decoded_header_size[source_id], MAX_OCTETS -
+            session_data->raw_decoded_header_size[source_id], line_bytes_written);
+        session_data->raw_decoded_header_size[source_id] += line_bytes_written;
+    }
+
+    // set http2_decoded_header to send to NHI
+    session_data->http2_decoded_header[source_id] = new Field(
+        session_data->raw_decoded_header_size[source_id] -
+        session_data->pseudo_header_fragment_size[source_id],
+        session_data->raw_decoded_header[source_id] +
+        session_data->pseudo_header_fragment_size[source_id], false);
+
+
 #ifdef REG_TEST
-        if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2))
+    if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2))
+    {
+        if (success)
+        {
+            if (session_data->header_start_line[source_id])
+                session_data->header_start_line[source_id]->get_start_line().
+                    print(HttpTestManager::get_output_file(), "Decoded start-line");
+            session_data->http2_decoded_header[source_id]->
+                print(HttpTestManager::get_output_file(), "Decoded header");
+        }
+        else
         {
             fprintf(HttpTestManager::get_output_file(), "Error decoding headers.\n");
             if (session_data->header_start_line[source_id] and
@@ -431,41 +468,6 @@ bool Http2Hpack::decode_headers(Http2FlowData* session_data, HttpCommon::SourceI
                     session_data->raw_decoded_header[source_id]).print(
                     HttpTestManager::get_output_file(), "Partially decoded raw header");
         }
-#endif
-    return false;
-    }
-
-    // If there were only pseudo-headers, finalize never got called, so create the start-line
-    if (session_data->header_start_line[source_id] and
-        !session_data->header_start_line[source_id]->is_finalized())
-    {
-        if (!session_data->header_start_line[source_id]->finalize())
-            return false;
-    }
-
-    // write the last CRLF to end the header
-    if (!Http2Hpack::write_decoded_headers(session_data, source_id, (const uint8_t*)"\r\n", 2,
-        session_data->raw_decoded_header[source_id] +
-        session_data->raw_decoded_header_size[source_id], MAX_OCTETS -
-        session_data->raw_decoded_header_size[source_id], line_bytes_written))
-        return false;
-    session_data->raw_decoded_header_size[source_id] += line_bytes_written;
-
-    // set http2_decoded_header to send to NHI
-    session_data->http2_decoded_header[source_id] = new Field(
-        session_data->raw_decoded_header_size[source_id] -
-        session_data->pseudo_header_fragment_size[source_id],
-        session_data->raw_decoded_header[source_id] +
-        session_data->pseudo_header_fragment_size[source_id], false);
-
-#ifdef REG_TEST
-    if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2))
-    {
-        if (session_data->header_start_line[source_id])
-            session_data->header_start_line[source_id]->get_start_line().
-                print(HttpTestManager::get_output_file(), "Decoded start-line");
-        session_data->http2_decoded_header[source_id]->
-            print(HttpTestManager::get_output_file(), "Decoded header");
     }
 #endif
 

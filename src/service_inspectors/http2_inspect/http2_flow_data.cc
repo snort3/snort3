@@ -82,8 +82,12 @@ Http2FlowData::~Http2FlowData()
 
 void Http2FlowData::clear_frame_data(HttpCommon::SourceId source_id)
 {
-    delete[] frame_header[source_id];
-    frame_header[source_id] = nullptr;
+    // If there is more data to be inspected in the frame, leave the frame_header
+    if (leftover_data[source_id] == 0)
+    {
+        delete[] frame_header[source_id];
+        frame_header[source_id] = nullptr;
+    }
     delete[] frame_data[source_id];
     frame_data[source_id] = nullptr;
     frame_in_detection = false;
