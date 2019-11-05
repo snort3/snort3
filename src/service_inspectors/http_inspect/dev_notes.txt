@@ -187,15 +187,13 @@ Commands:
   @partial causes a partial flush, simulating a retransmission of a detained packet
   @fileset <pathname> specifies a file from which the tool will read data into the message buffer.
      This may be used to include a zipped or other binary file into a message body. Data is read
-     beginning at the start of the file.
+     beginning at the start of the file. The file is closed automatically whenever a new file is
+     set or there is a break command.
   @fileread <decimal number> read the specified number of bytes from the included file into the
      message buffer. Each read corresponds to one TCP section.
   @fileskip <decimal number> skips over the specified number of bytes in the included file. This
      must be a positive number. To move backward do a new fileset and skip forward from the
      beginning.
-  @fileclose resets the current file to none. Closing is done automatically whenever a new file is
-     set or there is a break command. An explicit close is only necessary when you want to revert
-     to generated fill data (see below).
   @<decimal number> sets the test number and hence the test output file name. Applies to subsequent
      sections until changed. Don't reuse numbers.
 

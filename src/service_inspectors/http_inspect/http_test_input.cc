@@ -278,15 +278,6 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
                         getc(include_file[last_source_id]);
                     }
                 }
-                else if ((command_length == strlen("fileclose")) && !memcmp(command_value,
-                    "fileclose", strlen("fileclose")))
-                {
-                    if (include_file[last_source_id] != nullptr)
-                    {
-                        fclose(include_file[last_source_id]);
-                        include_file[last_source_id] = nullptr;
-                    }
-                }
                 else if (command_length > 0)
                 {
                     // Look for a test number
