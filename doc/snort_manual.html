@@ -782,7 +782,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0 (Build 262)
+o"  )~   Version 3.0.0 (Build 264)
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
@@ -8272,7 +8272,7 @@ bool <strong>output.obfuscate</strong> = false: obfuscate the logged IP addresse
 </li>
 <li>
 <p>
-bool <strong>output.wide_hex_dump</strong> = true: output 20 bytes per lines instead of 16 when dumping buffers
+bool <strong>output.wide_hex_dump</strong> = false: output 20 bytes per lines instead of 16 when dumping buffers
 </p>
 </li>
 </ul></div>
@@ -9144,11 +9144,6 @@ implied <strong>snort.--pause</strong>: wait for resume/quit command before proc
 </li>
 <li>
 <p>
-int <strong>snort.--pause-after-n</strong>: &lt;count&gt; pause after count packets { 1:max53 }
-</p>
-</li>
-<li>
-<p>
 string <strong>snort.--pcap-file</strong>: &lt;file&gt; file that contains a list of pcaps to read - read mode is implied
 </p>
 </li>
@@ -9190,11 +9185,6 @@ implied <strong>snort.--pcap-show</strong>: print a line saying what pcap is cur
 <li>
 <p>
 implied <strong>snort.--pedantic</strong>: warnings are fatal
-</p>
-</li>
-<li>
-<p>
-implied <strong>snort.--piglet</strong>: enable piglet test harness mode
 </p>
 </li>
 <li>
@@ -9285,11 +9275,6 @@ implied <strong>snort.--treat-drop-as-ignore</strong>: use drop, block, and rese
 <li>
 <p>
 string <strong>snort.--tweaks</strong>: tune configuration
-</p>
-</li>
-<li>
-<p>
-string <strong>snort.--catch-test</strong>: comma separated list of cat unit test tags or <em>all</em>
 </p>
 </li>
 <li>
@@ -10758,11 +10743,6 @@ protocols beyond basic decoding.</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>appid.first_decrypted_packet_debug</strong> = 0: the first packet of an already decrypted SSL flow (debug single session only) { 0:max32 }
-</p>
-</li>
-<li>
-<p>
 int <strong>appid.memcap</strong> = 1048576: max size of the service cache before we start pruning the cache { 1024:maxSZ }
 </p>
 </li>
@@ -11237,12 +11217,12 @@ multi <strong>dce_smb.valid_smb_versions</strong> = all: valid SMB versions { v1
 </li>
 <li>
 <p>
-enum <strong>dce_smb.smb_file_inspection</strong> = off: SMB file inspection { off | on | only }
+enum <strong>dce_smb.smb_file_inspection</strong>: deprecated (not used): file inspection controlled by smb_file_depth { off | on | only }
 </p>
 </li>
 <li>
 <p>
-int <strong>dce_smb.smb_file_depth</strong> = 16384: SMB file depth for file data { -1:32767 }
+int <strong>dce_smb.smb_file_depth</strong> = 16384: SMB file depth for file data (-1 = disabled, 0 = unlimited) { -1:32767 }
 </p>
 </li>
 <li>
@@ -12944,39 +12924,6 @@ int <strong>gtp_inspect.trace</strong>: mask for enabling debug traces in module
 <div class="paragraph"><p>What: HTTP/2 inspector</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
 <div class="paragraph"><p>Usage: inspect</p></div>
-<div class="paragraph"><p>Configuration:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-bool <strong>http2_inspect.test_input</strong> = false: read HTTP/2 messages from text file
-</p>
-</li>
-<li>
-<p>
-bool <strong>http2_inspect.test_output</strong> = false: print out HTTP section data
-</p>
-</li>
-<li>
-<p>
-int <strong>http2_inspect.print_amount</strong> = 1200: number of characters to print from a Field { 1:max53 }
-</p>
-</li>
-<li>
-<p>
-bool <strong>http2_inspect.print_hex</strong> = false: nonprinting characters printed in [HH] format instead of using an asterisk
-</p>
-</li>
-<li>
-<p>
-bool <strong>http2_inspect.show_pegs</strong> = true: display peg counts with test output
-</p>
-</li>
-<li>
-<p>
-bool <strong>http2_inspect.show_scan</strong> = false: display scanned segments
-</p>
-</li>
-</ul></div>
 <div class="paragraph"><p>Rules:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -13078,7 +13025,7 @@ bool <strong>http_inspect.decompress_zip</strong> = false: decompress zip files 
 </li>
 <li>
 <p>
-bool <strong>http_inspect.accelerated_blocking</strong> = false: inspect JavaScript in response messages as soon as possible
+bool <strong>http_inspect.detained_inspection</strong> = false: store-and-forward as necessary to effectively block alerting JavaScript
 </p>
 </li>
 <li>
@@ -13154,36 +13101,6 @@ bool <strong>http_inspect.plus_to_space</strong> = true: replace + with &lt;sp&g
 <li>
 <p>
 bool <strong>http_inspect.simplify_path</strong> = true: reduce URI directory path to simplest form
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.test_input</strong> = false: read HTTP messages from text file
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.test_output</strong> = false: print out HTTP section data
-</p>
-</li>
-<li>
-<p>
-int <strong>http_inspect.print_amount</strong> = 1200: number of characters to print from a Field { 1:max53 }
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.print_hex</strong> = false: nonprinting characters printed in [HH] format instead of using an asterisk
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.show_pegs</strong> = true: display peg counts with test output
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.show_scan</strong> = false: display scanned segments
 </p>
 </li>
 </ul></div>
@@ -13799,12 +13716,12 @@ bool <strong>http_inspect.show_scan</strong> = false: display scanned segments
 </li>
 <li>
 <p>
-<strong>http_inspect.detained_packets</strong>: TCP packets delayed by accelerated blocking (sum)
+<strong>http_inspect.detained_packets</strong>: TCP packets delayed by detained inspection (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>http_inspect.partial_inspections</strong>: pre-inspections for accelerated blocking (sum)
+<strong>http_inspect.partial_inspections</strong>: pre-inspections for detained inspection (sum)
 </p>
 </li>
 </ul></div>
@@ -13818,12 +13735,12 @@ bool <strong>http_inspect.show_scan</strong> = false: display scanned segments
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>imap.b64_decode_depth</strong> = 1460: base64 decoding depth (-1 no limit) { -1:65535 }
+int <strong>imap.b64_decode_depth</strong> = -1: base64 decoding depth (-1 no limit) { -1:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>imap.bitenc_decode_depth</strong> = 1460: non-Encoded MIME attachment extraction depth (-1 no limit) { -1:65535 }
+int <strong>imap.bitenc_decode_depth</strong> = -1: non-Encoded MIME attachment extraction depth (-1 no limit) { -1:65535 }
 </p>
 </li>
 <li>
@@ -13843,12 +13760,12 @@ bool <strong>imap.decompress_zip</strong> = false: decompress zip files in MIME 
 </li>
 <li>
 <p>
-int <strong>imap.qp_decode_depth</strong> = 1460: quoted Printable decoding depth (-1 no limit) { -1:65535 }
+int <strong>imap.qp_decode_depth</strong> = -1: quoted Printable decoding depth (-1 no limit) { -1:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>imap.uu_decode_depth</strong> = 1460: Unix-to-Unix decoding depth (-1 no limit) { -1:65535 }
+int <strong>imap.uu_decode_depth</strong> = -1: Unix-to-Unix decoding depth (-1 no limit) { -1:65535 }
 </p>
 </li>
 </ul></div>
@@ -14059,7 +13976,7 @@ bool <strong>normalizer.tcp.urp</strong> = true: adjust urgent pointer if beyond
 </li>
 <li>
 <p>
-bool <strong>normalizer.tcp.ips</strong> = false: ensure consistency in retransmitted data
+bool <strong>normalizer.tcp.ips</strong> = true: ensure consistency in retransmitted data
 </p>
 </li>
 <li>
@@ -14583,12 +14500,12 @@ bool <strong>perf_monitor.summary</strong> = false: output summary at shutdown
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>pop.b64_decode_depth</strong> = 1460: base64 decoding depth (-1 no limit) { -1:65535 }
+int <strong>pop.b64_decode_depth</strong> = -1: base64 decoding depth (-1 no limit) { -1:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>pop.bitenc_decode_depth</strong> = 1460: Non-Encoded MIME attachment extraction depth (-1 no limit) { -1:65535 }
+int <strong>pop.bitenc_decode_depth</strong> = -1: Non-Encoded MIME attachment extraction depth (-1 no limit) { -1:65535 }
 </p>
 </li>
 <li>
@@ -14608,12 +14525,12 @@ bool <strong>pop.decompress_zip</strong> = false: decompress zip files in MIME a
 </li>
 <li>
 <p>
-int <strong>pop.qp_decode_depth</strong> = 1460: Quoted Printable decoding depth (-1 no limit) { -1:65535 }
+int <strong>pop.qp_decode_depth</strong> = -1: Quoted Printable decoding depth (-1 no limit) { -1:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>pop.uu_decode_depth</strong> = 1460: Unix-to-Unix decoding depth (-1 no limit) { -1:65535 }
+int <strong>pop.uu_decode_depth</strong> = -1: Unix-to-Unix decoding depth (-1 no limit) { -1:65535 }
 </p>
 </li>
 </ul></div>
@@ -14723,7 +14640,7 @@ int <strong>pop.uu_decode_depth</strong> = 1460: Unix-to-Unix decoding depth (-1
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>port_scan.memcap</strong> = 1048576: maximum tracker memory in bytes { 1024:maxSZ }
+int <strong>port_scan.memcap</strong> = 10485760: maximum tracker memory in bytes { 1024:maxSZ }
 </p>
 </li>
 <li>
@@ -15537,6 +15454,53 @@ bool <strong>rt_packet.retry_all</strong> = false: request retry for all non-ret
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_s7commplus">s7commplus</h3>
+<div class="paragraph"><p>What: s7commplus inspection</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Usage: inspect</p></div>
+<div class="paragraph"><p>Rules:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>149:1</strong> (s7commplus) length in S7commplus MBAP header does not match the length needed for the given S7commplus function
+</p>
+</li>
+<li>
+<p>
+<strong>149:2</strong> (s7commplus) S7commplus protocol ID is non-zero
+</p>
+</li>
+<li>
+<p>
+<strong>149:3</strong> (s7commplus) reserved S7commplus function code in use
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>s7commplus.sessions</strong>: total sessions processed (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>s7commplus.frames</strong>: total S7commplus messages (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>s7commplus.concurrent_sessions</strong>: total concurrent s7commplus sessions (now)
+</p>
+</li>
+<li>
+<p>
+<strong>s7commplus.max_concurrent_sessions</strong>: maximum concurrent s7commplus sessions (max)
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_sip">sip</h3>
 <div class="paragraph"><p>What: sip inspection</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
@@ -15925,7 +15889,7 @@ string <strong>smtp.auth_cmds</strong>: commands that initiate an authentication
 </li>
 <li>
 <p>
-int <strong>smtp.b64_decode_depth</strong> = 1460: depth used to decode the base64 encoded MIME attachments (-1 no limit) { -1:65535 }
+int <strong>smtp.b64_decode_depth</strong> = -1: depth used to decode the base64 encoded MIME attachments (-1 no limit) { -1:65535 }
 </p>
 </li>
 <li>
@@ -15935,7 +15899,7 @@ string <strong>smtp.binary_data_cmds</strong>: commands that initiate sending of
 </li>
 <li>
 <p>
-int <strong>smtp.bitenc_decode_depth</strong> = 1460: depth used to extract the non-encoded MIME attachments (-1 no limit) { -1:65535 }
+int <strong>smtp.bitenc_decode_depth</strong> = -1: depth used to extract the non-encoded MIME attachments (-1 no limit) { -1:65535 }
 </p>
 </li>
 <li>
@@ -16030,12 +15994,12 @@ string <strong>smtp.normalize_cmds</strong>: list of commands to normalize
 </li>
 <li>
 <p>
-int <strong>smtp.qp_decode_depth</strong> = 1460: quoted-Printable decoding depth (-1 no limit) { -1:65535 }
+int <strong>smtp.qp_decode_depth</strong> = -1: quoted-Printable decoding depth (-1 no limit) { -1:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>smtp.uu_decode_depth</strong> = 1460: Unix-to-Unix decoding depth (-1 no limit) { -1:65535 }
+int <strong>smtp.uu_decode_depth</strong> = -1: Unix-to-Unix decoding depth (-1 no limit) { -1:65535 }
 </p>
 </li>
 <li>
@@ -16577,6 +16541,36 @@ int <strong>stream.trace</strong>: mask for enabling debug traces in module { 0:
 <li>
 <p>
 <strong>stream.expected_overflows</strong>: number of expected cache overflows (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream.reload_total_adds</strong>: number of flows added by config reloads (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream.reload_total_deletes</strong>: number of flows deleted by config reloads (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream.reload_freelist_deletes</strong>: number of flows deleted from the free list by config reloads (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream.reload_allowed_deletes</strong>: number of allowed flows deleted by config reloads (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream.reload_blocked_deletes</strong>: number of blocked flows deleted by config reloads (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream.reload_offloaded_deletes</strong>: number of offloaded flows deleted by config reloads (sum)
 </p>
 </li>
 </ul></div>
@@ -17392,7 +17386,7 @@ bool <strong>telnet.check_encrypted</strong> = false: check for end of encryptio
 </li>
 <li>
 <p>
-bool <strong>telnet.encrypted_traffic</strong> = false: check for encrypted Telnet and FTP
+bool <strong>telnet.encrypted_traffic</strong> = false: check for encrypted Telnet
 </p>
 </li>
 <li>
@@ -19351,6 +19345,40 @@ string <strong>rpc.~ver</strong>: version number or * for any
 <li>
 <p>
 string <strong>rpc.~proc</strong>: procedure number or * for any
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_s7commplus_content">s7commplus_content</h3>
+<div class="paragraph"><p>What: rule option to set cursor to s7commplus content</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Usage: detect</p></div>
+</div>
+<div class="sect2">
+<h3 id="_s7commplus_func">s7commplus_func</h3>
+<div class="paragraph"><p>What: rule option to check s7commplus function code</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Usage: detect</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+string <strong>s7commplus_func.~</strong>: function code to match
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_s7commplus_opcode">s7commplus_opcode</h3>
+<div class="paragraph"><p>What: rule option to check s7commplus opcode code</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Usage: detect</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+string <strong>s7commplus_opcode.~</strong>: opcode code to match
 </p>
 </li>
 </ul></div>
@@ -21640,12 +21668,6 @@ options into a Snort++ configuration file</p></div>
 <li>
 <p>
 <strong>--print-all</strong>       Same as <em>-a</em>. default option.  print all data
-</p>
-</li>
-<li>
-<p>
-<strong>--print-binding-order</strong>
-                    Print sorting priority used when generating binder table
 </p>
 </li>
 <li>
@@ -24296,11 +24318,6 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>--pause-after-n</strong> &lt;count&gt; pause after count packets (1:max53)
-</p>
-</li>
-<li>
-<p>
 <strong>--pcap-file</strong> &lt;file&gt; file that contains a list of pcaps to read - read mode is implied
 </p>
 </li>
@@ -24342,11 +24359,6 @@ these libraries see the Getting Started section of the manual.</p></div>
 <li>
 <p>
 <strong>--pedantic</strong> warnings are fatal
-</p>
-</li>
-<li>
-<p>
-<strong>--piglet</strong> enable piglet test harness mode
 </p>
 </li>
 <li>
@@ -24437,11 +24449,6 @@ these libraries see the Getting Started section of the manual.</p></div>
 <li>
 <p>
 <strong>--tweaks</strong> tune configuration
-</p>
-</li>
-<li>
-<p>
-<strong>--catch-test</strong> comma separated list of cat unit test tags or <em>all</em>
 </p>
 </li>
 <li>
@@ -24722,11 +24729,6 @@ bool <strong>appid.debug</strong> = false: enable appid debug logging
 <li>
 <p>
 bool <strong>appid.dump_ports</strong> = false: enable dump of appid port information
-</p>
-</li>
-<li>
-<p>
-int <strong>appid.first_decrypted_packet_debug</strong> = 0: the first packet of an already decrypted SSL flow (debug single session only) { 0:max32 }
 </p>
 </li>
 <li>
@@ -25411,12 +25413,12 @@ int <strong>dce_smb.reassemble_threshold</strong> = 0: minimum bytes received be
 </li>
 <li>
 <p>
-int <strong>dce_smb.smb_file_depth</strong> = 16384: SMB file depth for file data { -1:32767 }
+int <strong>dce_smb.smb_file_depth</strong> = 16384: SMB file depth for file data (-1 = disabled, 0 = unlimited) { -1:32767 }
 </p>
 </li>
 <li>
 <p>
-enum <strong>dce_smb.smb_file_inspection</strong> = off: SMB file inspection { off | on | only }
+enum <strong>dce_smb.smb_file_inspection</strong>: deprecated (not used): file inspection controlled by smb_file_depth { off | on | only }
 </p>
 </li>
 <li>
@@ -26276,36 +26278,6 @@ enum <strong><code>host_tracker[].services[].proto</code></strong>: IP protocol 
 </li>
 <li>
 <p>
-int <strong>http2_inspect.print_amount</strong> = 1200: number of characters to print from a Field { 1:max53 }
-</p>
-</li>
-<li>
-<p>
-bool <strong>http2_inspect.print_hex</strong> = false: nonprinting characters printed in [HH] format instead of using an asterisk
-</p>
-</li>
-<li>
-<p>
-bool <strong>http2_inspect.show_pegs</strong> = true: display peg counts with test output
-</p>
-</li>
-<li>
-<p>
-bool <strong>http2_inspect.show_scan</strong> = false: display scanned segments
-</p>
-</li>
-<li>
-<p>
-bool <strong>http2_inspect.test_input</strong> = false: read HTTP/2 messages from text file
-</p>
-</li>
-<li>
-<p>
-bool <strong>http2_inspect.test_output</strong> = false: print out HTTP section data
-</p>
-</li>
-<li>
-<p>
 implied <strong>http_cookie.request</strong>: match against the cookie from the request message even when examining the response
 </p>
 </li>
@@ -26351,11 +26323,6 @@ implied <strong>http_header.with_trailer</strong>: parts of this rule examine HT
 </li>
 <li>
 <p>
-bool <strong>http_inspect.accelerated_blocking</strong> = false: inspect JavaScript in response messages as soon as possible
-</p>
-</li>
-<li>
-<p>
 bool <strong>http_inspect.backslash_to_slash</strong> = false: replace \ with / when normalizing URIs
 </p>
 </li>
@@ -26377,6 +26344,11 @@ bool <strong>http_inspect.decompress_swf</strong> = false: decompress swf files 
 <li>
 <p>
 bool <strong>http_inspect.decompress_zip</strong> = false: decompress zip files in response bodies
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.detained_inspection</strong> = false: store-and-forward as necessary to effectively block alerting JavaScript
 </p>
 </li>
 <li>
@@ -26436,16 +26408,6 @@ bool <strong>http_inspect.plus_to_space</strong> = true: replace + with &lt;sp&g
 </li>
 <li>
 <p>
-int <strong>http_inspect.print_amount</strong> = 1200: number of characters to print from a Field { 1:max53 }
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.print_hex</strong> = false: nonprinting characters printed in [HH] format instead of using an asterisk
-</p>
-</li>
-<li>
-<p>
 int <strong>http_inspect.request_depth</strong> = -1: maximum request message body bytes to examine (-1 no limit) { -1:max53 }
 </p>
 </li>
@@ -26456,27 +26418,7 @@ int <strong>http_inspect.response_depth</strong> = -1: maximum response message 
 </li>
 <li>
 <p>
-bool <strong>http_inspect.show_pegs</strong> = true: display peg counts with test output
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.show_scan</strong> = false: display scanned segments
-</p>
-</li>
-<li>
-<p>
 bool <strong>http_inspect.simplify_path</strong> = true: reduce URI directory path to simplest form
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.test_input</strong> = false: read HTTP messages from text file
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.test_output</strong> = false: print out HTTP section data
 </p>
 </li>
 <li>
@@ -26776,12 +26718,12 @@ interval <strong>id.~range</strong>: check if the IP ID is in the given range { 
 </li>
 <li>
 <p>
-int <strong>imap.b64_decode_depth</strong> = 1460: base64 decoding depth (-1 no limit) { -1:65535 }
+int <strong>imap.b64_decode_depth</strong> = -1: base64 decoding depth (-1 no limit) { -1:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>imap.bitenc_decode_depth</strong> = 1460: non-Encoded MIME attachment extraction depth (-1 no limit) { -1:65535 }
+int <strong>imap.bitenc_decode_depth</strong> = -1: non-Encoded MIME attachment extraction depth (-1 no limit) { -1:65535 }
 </p>
 </li>
 <li>
@@ -26801,12 +26743,12 @@ bool <strong>imap.decompress_zip</strong> = false: decompress zip files in MIME 
 </li>
 <li>
 <p>
-int <strong>imap.qp_decode_depth</strong> = 1460: quoted Printable decoding depth (-1 no limit) { -1:65535 }
+int <strong>imap.qp_decode_depth</strong> = -1: quoted Printable decoding depth (-1 no limit) { -1:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>imap.uu_decode_depth</strong> = 1460: Unix-to-Unix decoding depth (-1 no limit) { -1:65535 }
+int <strong>imap.uu_decode_depth</strong> = -1: Unix-to-Unix decoding depth (-1 no limit) { -1:65535 }
 </p>
 </li>
 <li>
@@ -27161,7 +27103,7 @@ select <strong>normalizer.tcp.ecn</strong> = off: clear ecn for all packets | se
 </li>
 <li>
 <p>
-bool <strong>normalizer.tcp.ips</strong> = false: ensure consistency in retransmitted data
+bool <strong>normalizer.tcp.ips</strong> = true: ensure consistency in retransmitted data
 </p>
 </li>
 <li>
@@ -27276,7 +27218,7 @@ bool <strong>output.verbose</strong> = false: be verbose (same as -v)
 </li>
 <li>
 <p>
-bool <strong>output.wide_hex_dump</strong> = true: output 20 bytes per lines instead of 16 when dumping buffers
+bool <strong>output.wide_hex_dump</strong> = false: output 20 bytes per lines instead of 16 when dumping buffers
 </p>
 </li>
 <li>
@@ -27406,12 +27348,12 @@ interval <strong>pkt_num.~range</strong>: check if packet number is in given ran
 </li>
 <li>
 <p>
-int <strong>pop.b64_decode_depth</strong> = 1460: base64 decoding depth (-1 no limit) { -1:65535 }
+int <strong>pop.b64_decode_depth</strong> = -1: base64 decoding depth (-1 no limit) { -1:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>pop.bitenc_decode_depth</strong> = 1460: Non-Encoded MIME attachment extraction depth (-1 no limit) { -1:65535 }
+int <strong>pop.bitenc_decode_depth</strong> = -1: Non-Encoded MIME attachment extraction depth (-1 no limit) { -1:65535 }
 </p>
 </li>
 <li>
@@ -27431,12 +27373,12 @@ bool <strong>pop.decompress_zip</strong> = false: decompress zip files in MIME a
 </li>
 <li>
 <p>
-int <strong>pop.qp_decode_depth</strong> = 1460: Quoted Printable decoding depth (-1 no limit) { -1:65535 }
+int <strong>pop.qp_decode_depth</strong> = -1: Quoted Printable decoding depth (-1 no limit) { -1:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>pop.uu_decode_depth</strong> = 1460: Unix-to-Unix decoding depth (-1 no limit) { -1:65535 }
+int <strong>pop.uu_decode_depth</strong> = -1: Unix-to-Unix decoding depth (-1 no limit) { -1:65535 }
 </p>
 </li>
 <li>
@@ -27571,7 +27513,7 @@ int <strong>port_scan.ip_window</strong> = 0: detection interval for all IP scan
 </li>
 <li>
 <p>
-int <strong>port_scan.memcap</strong> = 1048576: maximum tracker memory in bytes { 1024:maxSZ }
+int <strong>port_scan.memcap</strong> = 10485760: maximum tracker memory in bytes { 1024:maxSZ }
 </p>
 </li>
 <li>
@@ -28106,6 +28048,16 @@ enum <strong><code>rule_state.$gid_sid[].enable</code></strong> = inherit: enabl
 </li>
 <li>
 <p>
+string <strong>s7commplus_func.~</strong>: function code to match
+</p>
+</li>
+<li>
+<p>
+string <strong>s7commplus_opcode.~</strong>: opcode code to match
+</p>
+</li>
+<li>
+<p>
 string <strong>sd_pattern.~pattern</strong>: The pattern to search for
 </p>
 </li>
@@ -28356,7 +28308,7 @@ string <strong>smtp.auth_cmds</strong>: commands that initiate an authentication
 </li>
 <li>
 <p>
-int <strong>smtp.b64_decode_depth</strong> = 1460: depth used to decode the base64 encoded MIME attachments (-1 no limit) { -1:65535 }
+int <strong>smtp.b64_decode_depth</strong> = -1: depth used to decode the base64 encoded MIME attachments (-1 no limit) { -1:65535 }
 </p>
 </li>
 <li>
@@ -28366,7 +28318,7 @@ string <strong>smtp.binary_data_cmds</strong>: commands that initiate sending of
 </li>
 <li>
 <p>
-int <strong>smtp.bitenc_decode_depth</strong> = 1460: depth used to extract the non-encoded MIME attachments (-1 no limit) { -1:65535 }
+int <strong>smtp.bitenc_decode_depth</strong> = -1: depth used to extract the non-encoded MIME attachments (-1 no limit) { -1:65535 }
 </p>
 </li>
 <li>
@@ -28461,12 +28413,12 @@ enum <strong>smtp.normalize</strong> = none: turns on/off normalization { none |
 </li>
 <li>
 <p>
-int <strong>smtp.qp_decode_depth</strong> = 1460: quoted-Printable decoding depth (-1 no limit) { -1:65535 }
+int <strong>smtp.qp_decode_depth</strong> = -1: quoted-Printable decoding depth (-1 no limit) { -1:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>smtp.uu_decode_depth</strong> = 1460: Unix-to-Unix decoding depth (-1 no limit) { -1:65535 }
+int <strong>smtp.uu_decode_depth</strong> = -1: Unix-to-Unix decoding depth (-1 no limit) { -1:65535 }
 </p>
 </li>
 <li>
@@ -28502,11 +28454,6 @@ string <strong>snort.--bpf</strong>: &lt;filter options&gt; are standard BPF opt
 <li>
 <p>
 string <strong>snort.--c2x</strong>: output hex for given char (see also --x2c)
-</p>
-</li>
-<li>
-<p>
-string <strong>snort.--catch-test</strong>: comma separated list of cat unit test tags or <em>all</em>
 </p>
 </li>
 <li>
@@ -28811,11 +28758,6 @@ string <strong>snort.-?</strong>: &lt;option prefix&gt; output matching command 
 </li>
 <li>
 <p>
-int <strong>snort.--pause-after-n</strong>: &lt;count&gt; pause after count packets { 1:max53 }
-</p>
-</li>
-<li>
-<p>
 implied <strong>snort.--pause</strong>: wait for resume/quit command before processing packets/terminating
 </p>
 </li>
@@ -28862,11 +28804,6 @@ implied <strong>snort.--pcap-show</strong>: print a line saying what pcap is cur
 <li>
 <p>
 implied <strong>snort.--pedantic</strong>: warnings are fatal
-</p>
-</li>
-<li>
-<p>
-implied <strong>snort.--piglet</strong>: enable piglet test harness mode
 </p>
 </li>
 <li>
@@ -29581,7 +29518,7 @@ bool <strong>telnet.check_encrypted</strong> = false: check for end of encryptio
 </li>
 <li>
 <p>
-bool <strong>telnet.encrypted_traffic</strong> = false: check for encrypted Telnet and FTP
+bool <strong>telnet.encrypted_traffic</strong> = false: check for encrypted Telnet
 </p>
 </li>
 <li>
@@ -30881,7 +30818,7 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>http_inspect.detained_packets</strong>: TCP packets delayed by accelerated blocking (sum)
+<strong>http_inspect.detained_packets</strong>: TCP packets delayed by detained inspection (sum)
 </p>
 </li>
 <li>
@@ -30921,7 +30858,7 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>http_inspect.partial_inspections</strong>: pre-inspections for accelerated blocking (sum)
+<strong>http_inspect.partial_inspections</strong>: pre-inspections for detained inspection (sum)
 </p>
 </li>
 <li>
@@ -31691,6 +31628,26 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>s7commplus.concurrent_sessions</strong>: total concurrent s7commplus sessions (now)
+</p>
+</li>
+<li>
+<p>
+<strong>s7commplus.frames</strong>: total S7commplus messages (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>s7commplus.max_concurrent_sessions</strong>: maximum concurrent s7commplus sessions (max)
+</p>
+</li>
+<li>
+<p>
+<strong>s7commplus.sessions</strong>: total sessions processed (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>sd_pattern.below_threshold</strong>: sd_pattern matched but missed threshold (sum)
 </p>
 </li>
@@ -32332,6 +32289,36 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>stream.preemptive_prunes</strong>: sessions pruned during preemptive pruning (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream.reload_allowed_deletes</strong>: number of allowed flows deleted by config reloads (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream.reload_blocked_deletes</strong>: number of blocked flows deleted by config reloads (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream.reload_freelist_deletes</strong>: number of flows deleted from the free list by config reloads (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream.reload_offloaded_deletes</strong>: number of offloaded flows deleted by config reloads (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream.reload_total_adds</strong>: number of flows added by config reloads (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream.reload_total_deletes</strong>: number of flows deleted by config reloads (sum)
 </p>
 </li>
 <li>
@@ -32987,6 +32974,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>146</strong>: file_id
+</p>
+</li>
+<li>
+<p>
+<strong>149</strong>: s7commplus
 </p>
 </li>
 <li>
@@ -35486,6 +35478,21 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>149:1</strong> (s7commplus) length in S7commplus MBAP header does not match the length needed for the given S7commplus function
+</p>
+</li>
+<li>
+<p>
+<strong>149:2</strong> (s7commplus) S7commplus protocol ID is non-zero
+</p>
+</li>
+<li>
+<p>
+<strong>149:3</strong> (s7commplus) reserved S7commplus function code in use
+</p>
+</li>
+<li>
+<p>
 <strong>175:1</strong> (domain_filter) configured domain detected
 </p>
 </li>
@@ -36927,6 +36934,26 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
+<strong>s7commplus</strong> (inspector): s7commplus inspection
+</p>
+</li>
+<li>
+<p>
+<strong>s7commplus_content</strong> (ips_option): rule option to set cursor to s7commplus content
+</p>
+</li>
+<li>
+<p>
+<strong>s7commplus_func</strong> (ips_option): rule option to check s7commplus function code
+</p>
+</li>
+<li>
+<p>
+<strong>s7commplus_opcode</strong> (ips_option): rule option to check s7commplus opcode code
+</p>
+</li>
+<li>
+<p>
 <strong>sd_pattern</strong> (ips_option): rule option for detecting sensitive data
 </p>
 </li>
@@ -37597,6 +37624,11 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
+<strong>inspector::s7commplus</strong>: s7commplus inspection
+</p>
+</li>
+<li>
+<p>
 <strong>inspector::sip</strong>: sip inspection
 </p>
 </li>
@@ -38087,6 +38119,21 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
+<strong>ips_option::s7commplus_content</strong>: rule option to set cursor to s7commplus content
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::s7commplus_func</strong>: rule option to check s7commplus function code
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::s7commplus_opcode</strong>: rule option to check s7commplus opcode code
+</p>
+</li>
+<li>
+<p>
 <strong>ips_option::sd_pattern</strong>: rule option for detecting sensitive data
 </p>
 </li>
@@ -38273,46 +38320,6 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 <li>
 <p>
 <strong>logger::unified2</strong>: output event and packet in unified2 format file
-</p>
-</li>
-<li>
-<p>
-<strong>piglet::pp_codec</strong>: Codec piglet
-</p>
-</li>
-<li>
-<p>
-<strong>piglet::pp_inspector</strong>: Inspector piglet
-</p>
-</li>
-<li>
-<p>
-<strong>piglet::pp_ips_action</strong>: Ips action piglet
-</p>
-</li>
-<li>
-<p>
-<strong>piglet::pp_ips_option</strong>: Ips option piglet
-</p>
-</li>
-<li>
-<p>
-<strong>piglet::pp_logger</strong>: Logger piglet
-</p>
-</li>
-<li>
-<p>
-<strong>piglet::pp_search_engine</strong>: Search engine piglet
-</p>
-</li>
-<li>
-<p>
-<strong>piglet::pp_so_rule</strong>: SO rule piglet
-</p>
-</li>
-<li>
-<p>
-<strong>piglet::pp_test</strong>: Test piglet
 </p>
 </li>
 <li>
@@ -38580,7 +38587,7 @@ Adding/removing stream_* inspectors if stream was already configured
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2019-10-31 02:50:11 EDT
+ 2019-11-06 08:35:24 EST
 </div>
 </div>
 </body>

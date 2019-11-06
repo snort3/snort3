@@ -178,19 +178,20 @@ Table of Contents
     9.35. rt_global
     9.36. rt_packet
     9.37. rt_service
-    9.38. sip
-    9.39. smtp
-    9.40. ssh
-    9.41. ssl
-    9.42. stream
-    9.43. stream_file
-    9.44. stream_icmp
-    9.45. stream_ip
-    9.46. stream_tcp
-    9.47. stream_udp
-    9.48. stream_user
-    9.49. telnet
-    9.50. wizard
+    9.38. s7commplus
+    9.39. sip
+    9.40. smtp
+    9.41. ssh
+    9.42. ssl
+    9.43. stream
+    9.44. stream_file
+    9.45. stream_icmp
+    9.46. stream_ip
+    9.47. stream_tcp
+    9.48. stream_udp
+    9.49. stream_user
+    9.50. telnet
+    9.51. wizard
 
 10. IPS Action Modules
 
@@ -281,30 +282,33 @@ Table of Contents
     11.79. replace
     11.80. rev
     11.81. rpc
-    11.82. sd_pattern
-    11.83. seq
-    11.84. service
-    11.85. session
-    11.86. sha256
-    11.87. sha512
-    11.88. sid
-    11.89. sip_body
-    11.90. sip_header
-    11.91. sip_method
-    11.92. sip_stat_code
-    11.93. so
-    11.94. soid
-    11.95. ssl_state
-    11.96. ssl_version
-    11.97. stream_reassemble
-    11.98. stream_size
-    11.99. tag
-    11.100. target
-    11.101. tos
-    11.102. ttl
-    11.103. urg
-    11.104. window
-    11.105. wscale
+    11.82. s7commplus_content
+    11.83. s7commplus_func
+    11.84. s7commplus_opcode
+    11.85. sd_pattern
+    11.86. seq
+    11.87. service
+    11.88. session
+    11.89. sha256
+    11.90. sha512
+    11.91. sid
+    11.92. sip_body
+    11.93. sip_header
+    11.94. sip_method
+    11.95. sip_stat_code
+    11.96. so
+    11.97. soid
+    11.98. ssl_state
+    11.99. ssl_version
+    11.100. stream_reassemble
+    11.101. stream_size
+    11.102. tag
+    11.103. target
+    11.104. tos
+    11.105. ttl
+    11.106. urg
+    11.107. window
+    11.108. wscale
 
 12. Search Engine Modules
 13. SO Rule Modules
@@ -394,7 +398,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0 (Build 262)
+o"  )~   Version 3.0.0 (Build 264)
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
@@ -5994,7 +5998,7 @@ Configuration:
   * bool output.verbose = false: be verbose (same as -v)
   * bool output.obfuscate = false: obfuscate the logged IP addresses
     (same as -O)
-  * bool output.wide_hex_dump = true: output 20 bytes per lines
+  * bool output.wide_hex_dump = false: output 20 bytes per lines
     instead of 16 when dumping buffers
 
 
@@ -6411,8 +6415,6 @@ Configuration:
   * implied snort.--nolock-pidfile: do not try to lock Snort PID file
   * implied snort.--pause: wait for resume/quit command before
     processing packets/terminating
-  * int snort.--pause-after-n: <count> pause after count packets {
-    1:max53 }
   * string snort.--pcap-file: <file> file that contains a list of
     pcaps to read - read mode is implied
   * string snort.--pcap-list: <list> a space separated list of pcaps
@@ -6430,7 +6432,6 @@ Configuration:
   * implied snort.--pcap-show: print a line saying what pcap is
     currently being read
   * implied snort.--pedantic: warnings are fatal
-  * implied snort.--piglet: enable piglet test harness mode
   * string snort.--plugin-path: <path> where to find plugins
   * implied snort.--process-all-events: process all action groups
   * string snort.--rule: <rules> to be added to configuration; may be
@@ -6461,8 +6462,6 @@ Configuration:
   * implied snort.--treat-drop-as-ignore: use drop, block, and reset
     rules to ignore session traffic when not inline
   * string snort.--tweaks: tune configuration
-  * string snort.--catch-test: comma separated list of cat unit test
-    tags or all
   * implied snort.--version: show version number (same as -V)
   * implied snort.--warn-all: enable all warnings
   * implied snort.--warn-conf: warn about configuration issues
@@ -7231,9 +7230,6 @@ Usage: context
 
 Configuration:
 
-  * int appid.first_decrypted_packet_debug = 0: the first packet of
-    an already decrypted SSL flow (debug single session only) {
-    0:max32 }
   * int appid.memcap = 1048576: max size of the service cache before
     we start pruning the cache { 1024:maxSZ }
   * bool appid.log_stats = false: enable logging of appid statistics
@@ -7469,10 +7465,10 @@ Configuration:
   * int dce_smb.smb_max_compound = 3: SMB max compound size { 0:255 }
   * multi dce_smb.valid_smb_versions = all: valid SMB versions { v1 |
     v2 | all }
-  * enum dce_smb.smb_file_inspection = off: SMB file inspection { off
-    | on | only }
+  * enum dce_smb.smb_file_inspection: deprecated (not used): file
+    inspection controlled by smb_file_depth { off | on | only }
   * int dce_smb.smb_file_depth = 16384: SMB file depth for file data
-    { -1:32767 }
+    (-1 = disabled, 0 = unlimited) { -1:32767 }
   * string dce_smb.smb_invalid_shares: SMB shares to alert on
   * bool dce_smb.smb_legacy_mode = false: inspect only SMBv1
   * int dce_smb.trace: mask for enabling debug traces in module {
@@ -8193,20 +8189,6 @@ Type: inspector
 
 Usage: inspect
 
-Configuration:
-
-  * bool http2_inspect.test_input = false: read HTTP/2 messages from
-    text file
-  * bool http2_inspect.test_output = false: print out HTTP section
-    data
-  * int http2_inspect.print_amount = 1200: number of characters to
-    print from a Field { 1:max53 }
-  * bool http2_inspect.print_hex = false: nonprinting characters
-    printed in [HH] format instead of using an asterisk
-  * bool http2_inspect.show_pegs = true: display peg counts with test
-    output
-  * bool http2_inspect.show_scan = false: display scanned segments
-
 Rules:
 
   * 121:1 (http2_inspect) error in HPACK integer value
@@ -8252,8 +8234,8 @@ Configuration:
     response bodies
   * bool http_inspect.decompress_zip = false: decompress zip files in
     response bodies
-  * bool http_inspect.accelerated_blocking = false: inspect
-    JavaScript in response messages as soon as possible
+  * bool http_inspect.detained_inspection = false: store-and-forward
+    as necessary to effectively block alerting JavaScript
   * bool http_inspect.normalize_javascript = false: normalize
     JavaScript in response bodies
   * int http_inspect.max_javascript_whitespaces = 200: maximum
@@ -8288,17 +8270,6 @@ Configuration:
     normalizing URIs
   * bool http_inspect.simplify_path = true: reduce URI directory path
     to simplest form
-  * bool http_inspect.test_input = false: read HTTP messages from
-    text file
-  * bool http_inspect.test_output = false: print out HTTP section
-    data
-  * int http_inspect.print_amount = 1200: number of characters to
-    print from a Field { 1:max53 }
-  * bool http_inspect.print_hex = false: nonprinting characters
-    printed in [HH] format instead of using an asterisk
-  * bool http_inspect.show_pegs = true: display peg counts with test
-    output
-  * bool http_inspect.show_scan = false: display scanned segments
 
 Rules:
 
@@ -8456,10 +8427,10 @@ Peg counts:
     (now)
   * http_inspect.max_concurrent_sessions: maximum concurrent http
     sessions (max)
-  * http_inspect.detained_packets: TCP packets delayed by accelerated
-    blocking (sum)
-  * http_inspect.partial_inspections: pre-inspections for accelerated
-    blocking (sum)
+  * http_inspect.detained_packets: TCP packets delayed by detained
+    inspection (sum)
+  * http_inspect.partial_inspections: pre-inspections for detained
+    inspection (sum)
 
 
 9.24. imap
@@ -8474,9 +8445,9 @@ Usage: inspect
 
 Configuration:
 
-  * int imap.b64_decode_depth = 1460: base64 decoding depth (-1 no
+  * int imap.b64_decode_depth = -1: base64 decoding depth (-1 no
     limit) { -1:65535 }
-  * int imap.bitenc_decode_depth = 1460: non-Encoded MIME attachment
+  * int imap.bitenc_decode_depth = -1: non-Encoded MIME attachment
     extraction depth (-1 no limit) { -1:65535 }
   * bool imap.decompress_pdf = false: decompress pdf files in MIME
     attachments
@@ -8484,10 +8455,10 @@ Configuration:
     attachments
   * bool imap.decompress_zip = false: decompress zip files in MIME
     attachments
-  * int imap.qp_decode_depth = 1460: quoted Printable decoding depth
+  * int imap.qp_decode_depth = -1: quoted Printable decoding depth
     (-1 no limit) { -1:65535 }
-  * int imap.uu_decode_depth = 1460: Unix-to-Unix decoding depth (-1
-    no limit) { -1:65535 }
+  * int imap.uu_decode_depth = -1: Unix-to-Unix decoding depth (-1 no
+    limit) { -1:65535 }
 
 Rules:
 
@@ -8584,7 +8555,7 @@ Configuration:
     normalization
   * bool normalizer.tcp.urp = true: adjust urgent pointer if beyond
     segment length
-  * bool normalizer.tcp.ips = false: ensure consistency in
+  * bool normalizer.tcp.ips = true: ensure consistency in
     retransmitted data
   * select normalizer.tcp.ecn = off: clear ecn for all packets |
     sessions w/o ecn setup { off | packet | stream }
@@ -8775,9 +8746,9 @@ Usage: inspect
 
 Configuration:
 
-  * int pop.b64_decode_depth = 1460: base64 decoding depth (-1 no
+  * int pop.b64_decode_depth = -1: base64 decoding depth (-1 no
     limit) { -1:65535 }
-  * int pop.bitenc_decode_depth = 1460: Non-Encoded MIME attachment
+  * int pop.bitenc_decode_depth = -1: Non-Encoded MIME attachment
     extraction depth (-1 no limit) { -1:65535 }
   * bool pop.decompress_pdf = false: decompress pdf files in MIME
     attachments
@@ -8785,10 +8756,10 @@ Configuration:
     attachments
   * bool pop.decompress_zip = false: decompress zip files in MIME
     attachments
-  * int pop.qp_decode_depth = 1460: Quoted Printable decoding depth
-    (-1 no limit) { -1:65535 }
-  * int pop.uu_decode_depth = 1460: Unix-to-Unix decoding depth (-1
+  * int pop.qp_decode_depth = -1: Quoted Printable decoding depth (-1
     no limit) { -1:65535 }
+  * int pop.uu_decode_depth = -1: Unix-to-Unix decoding depth (-1 no
+    limit) { -1:65535 }
 
 Rules:
 
@@ -8830,8 +8801,8 @@ Usage: global
 
 Configuration:
 
-  * int port_scan.memcap = 1048576: maximum tracker memory in bytes {
-    1024:maxSZ }
+  * int port_scan.memcap = 10485760: maximum tracker memory in bytes
+    { 1024:maxSZ }
   * multi port_scan.protos = all: choose the protocols to monitor {
     tcp | udp | icmp | ip | all }
   * multi port_scan.scan_types = all: choose type of scans to look
@@ -9161,7 +9132,34 @@ Peg counts:
   * rt_service.search_requests: total splitter search requests (sum)
 
 
-9.38. sip
+9.38. s7commplus
+
+--------------
+
+What: s7commplus inspection
+
+Type: inspector
+
+Usage: inspect
+
+Rules:
+
+  * 149:1 (s7commplus) length in S7commplus MBAP header does not
+    match the length needed for the given S7commplus function
+  * 149:2 (s7commplus) S7commplus protocol ID is non-zero
+  * 149:3 (s7commplus) reserved S7commplus function code in use
+
+Peg counts:
+
+  * s7commplus.sessions: total sessions processed (sum)
+  * s7commplus.frames: total S7commplus messages (sum)
+  * s7commplus.concurrent_sessions: total concurrent s7commplus
+    sessions (now)
+  * s7commplus.max_concurrent_sessions: maximum concurrent s7commplus
+    sessions (max)
+
+
+9.39. sip
 
 --------------
 
@@ -9260,7 +9258,7 @@ Peg counts:
   * sip.code_9xx: 9xx (sum)
 
 
-9.39. smtp
+9.40. smtp
 
 --------------
 
@@ -9277,11 +9275,11 @@ Configuration:
     non-default maximum for command { 0:max32 }
   * string smtp.auth_cmds: commands that initiate an authentication
     exchange
-  * int smtp.b64_decode_depth = 1460: depth used to decode the base64
+  * int smtp.b64_decode_depth = -1: depth used to decode the base64
     encoded MIME attachments (-1 no limit) { -1:65535 }
   * string smtp.binary_data_cmds: commands that initiate sending of
     data and use a length value after the command
-  * int smtp.bitenc_decode_depth = 1460: depth used to extract the
+  * int smtp.bitenc_decode_depth = -1: depth used to extract the
     non-encoded MIME attachments (-1 no limit) { -1:65535 }
   * string smtp.data_cmds: commands that initiate sending of data
     with an end of data delimiter
@@ -9318,10 +9316,10 @@ Configuration:
   * enum smtp.normalize = none: turns on/off normalization { none |
     cmds | all }
   * string smtp.normalize_cmds: list of commands to normalize
-  * int smtp.qp_decode_depth = 1460: quoted-Printable decoding depth
+  * int smtp.qp_decode_depth = -1: quoted-Printable decoding depth
     (-1 no limit) { -1:65535 }
-  * int smtp.uu_decode_depth = 1460: Unix-to-Unix decoding depth (-1
-    no limit) { -1:65535 }
+  * int smtp.uu_decode_depth = -1: Unix-to-Unix decoding depth (-1 no
+    limit) { -1:65535 }
   * string smtp.valid_cmds: list of valid commands
   * enum smtp.xlink2state = alert: enable/disable xlink2state alert {
     disable | alert | drop }
@@ -9362,7 +9360,7 @@ Peg counts:
   * smtp.non_encoded_bytes: total non-encoded extracted bytes (sum)
 
 
-9.40. ssh
+9.41. ssh
 
 --------------
 
@@ -9399,7 +9397,7 @@ Peg counts:
     (max)
 
 
-9.41. ssl
+9.42. ssl
 
 --------------
 
@@ -9448,7 +9446,7 @@ Peg counts:
     (max)
 
 
-9.42. stream
+9.43. stream
 
 --------------
 
@@ -9517,9 +9515,21 @@ Peg counts:
   * stream.expected_pruned: number of expected flows pruned (sum)
   * stream.expected_overflows: number of expected cache overflows
     (sum)
+  * stream.reload_total_adds: number of flows added by config reloads
+    (sum)
+  * stream.reload_total_deletes: number of flows deleted by config
+    reloads (sum)
+  * stream.reload_freelist_deletes: number of flows deleted from the
+    free list by config reloads (sum)
+  * stream.reload_allowed_deletes: number of allowed flows deleted by
+    config reloads (sum)
+  * stream.reload_blocked_deletes: number of blocked flows deleted by
+    config reloads (sum)
+  * stream.reload_offloaded_deletes: number of offloaded flows
+    deleted by config reloads (sum)
 
 
-9.43. stream_file
+9.44. stream_file
 
 --------------
 
@@ -9534,7 +9544,7 @@ Configuration:
   * bool stream_file.upload = false: indicate file transfer direction
 
 
-9.44. stream_icmp
+9.45. stream_icmp
 
 --------------
 
@@ -9559,7 +9569,7 @@ Peg counts:
   * stream_icmp.prunes: icmp session prunes (sum)
 
 
-9.45. stream_ip
+9.46. stream_ip
 
 --------------
 
@@ -9630,7 +9640,7 @@ Peg counts:
   * stream_ip.fragmented_bytes: total fragmented bytes (sum)
 
 
-9.46. stream_tcp
+9.47. stream_tcp
 
 --------------
 
@@ -9776,7 +9786,7 @@ Peg counts:
   * stream_tcp.partial_flush_bytes: partial flush total bytes (sum)
 
 
-9.47. stream_udp
+9.48. stream_udp
 
 --------------
 
@@ -9802,7 +9812,7 @@ Peg counts:
   * stream_udp.ignored: udp packets ignored (sum)
 
 
-9.48. stream_user
+9.49. stream_user
 
 --------------
 
@@ -9820,7 +9830,7 @@ Configuration:
     0:max53 }
 
 
-9.49. telnet
+9.50. telnet
 
 --------------
 
@@ -9836,7 +9846,6 @@ Configuration:
     consecutive Telnet AYT commands { -1:max31 }
   * bool telnet.check_encrypted = false: check for end of encryption
   * bool telnet.encrypted_traffic = false: check for encrypted Telnet
-    and FTP
   * bool telnet.normalize = false: eliminate escape sequences
 
 Rules:
@@ -9855,7 +9864,7 @@ Peg counts:
     sessions (max)
 
 
-9.50. wizard
+9.51. wizard
 
 --------------
 
@@ -11433,7 +11442,48 @@ Configuration:
   * string rpc.~proc: procedure number or * for any
 
 
-11.82. sd_pattern
+11.82. s7commplus_content
+
+--------------
+
+What: rule option to set cursor to s7commplus content
+
+Type: ips_option
+
+Usage: detect
+
+
+11.83. s7commplus_func
+
+--------------
+
+What: rule option to check s7commplus function code
+
+Type: ips_option
+
+Usage: detect
+
+Configuration:
+
+  * string s7commplus_func.~: function code to match
+
+
+11.84. s7commplus_opcode
+
+--------------
+
+What: rule option to check s7commplus opcode code
+
+Type: ips_option
+
+Usage: detect
+
+Configuration:
+
+  * string s7commplus_opcode.~: opcode code to match
+
+
+11.85. sd_pattern
 
 --------------
 
@@ -11457,7 +11507,7 @@ Peg counts:
   * sd_pattern.terminated: hyperscan terminated (sum)
 
 
-11.83. seq
+11.86. seq
 
 --------------
 
@@ -11473,7 +11523,7 @@ Configuration:
     range { 0: }
 
 
-11.84. service
+11.87. service
 
 --------------
 
@@ -11488,7 +11538,7 @@ Configuration:
   * string service.*: one or more comma-separated service names
 
 
-11.85. session
+11.88. session
 
 --------------
 
@@ -11503,7 +11553,7 @@ Configuration:
   * enum session.~mode: output format { printable|binary|all }
 
 
-11.86. sha256
+11.89. sha256
 
 --------------
 
@@ -11523,7 +11573,7 @@ Configuration:
     start of buffer
 
 
-11.87. sha512
+11.90. sha512
 
 --------------
 
@@ -11543,7 +11593,7 @@ Configuration:
     start of buffer
 
 
-11.88. sid
+11.91. sid
 
 --------------
 
@@ -11558,7 +11608,7 @@ Configuration:
   * int sid.~: signature id { 1:max32 }
 
 
-11.89. sip_body
+11.92. sip_body
 
 --------------
 
@@ -11569,7 +11619,7 @@ Type: ips_option
 Usage: detect
 
 
-11.90. sip_header
+11.93. sip_header
 
 --------------
 
@@ -11581,7 +11631,7 @@ Type: ips_option
 Usage: detect
 
 
-11.91. sip_method
+11.94. sip_method
 
 --------------
 
@@ -11596,7 +11646,7 @@ Configuration:
   * string sip_method.*method: sip method
 
 
-11.92. sip_stat_code
+11.95. sip_stat_code
 
 --------------
 
@@ -11611,7 +11661,7 @@ Configuration:
   * int sip_stat_code.*code: status code { 1:999 }
 
 
-11.93. so
+11.96. so
 
 --------------
 
@@ -11628,7 +11678,7 @@ Configuration:
     buffer
 
 
-11.94. soid
+11.97. soid
 
 --------------
 
@@ -11644,7 +11694,7 @@ Configuration:
     like 3_45678_9
 
 
-11.95. ssl_state
+11.98. ssl_state
 
 --------------
 
@@ -11673,7 +11723,7 @@ Configuration:
     unknown
 
 
-11.96. ssl_version
+11.99. ssl_version
 
 --------------
 
@@ -11700,7 +11750,7 @@ Configuration:
     tls1.2
 
 
-11.97. stream_reassemble
+11.100. stream_reassemble
 
 --------------
 
@@ -11721,7 +11771,7 @@ Configuration:
     remainder of the session
 
 
-11.98. stream_size
+11.101. stream_size
 
 --------------
 
@@ -11739,7 +11789,7 @@ Configuration:
     direction(s) { either|to_server|to_client|both }
 
 
-11.99. tag
+11.102. tag
 
 --------------
 
@@ -11758,7 +11808,7 @@ Configuration:
   * int tag.bytes: tag for this many bytes { 1:max32 }
 
 
-11.100. target
+11.103. target
 
 --------------
 
@@ -11774,7 +11824,7 @@ Configuration:
     dst_ip }
 
 
-11.101. tos
+11.104. tos
 
 --------------
 
@@ -11789,7 +11839,7 @@ Configuration:
   * interval tos.~range: check if IP TOS is in given range { 0:255 }
 
 
-11.102. ttl
+11.105. ttl
 
 --------------
 
@@ -11805,7 +11855,7 @@ Configuration:
     0:255 }
 
 
-11.103. urg
+11.106. urg
 
 --------------
 
@@ -11821,7 +11871,7 @@ Configuration:
     { 0:65535 }
 
 
-11.104. window
+11.107. window
 
 --------------
 
@@ -11837,7 +11887,7 @@ Configuration:
     range { 0:65535 }
 
 
-11.105. wscale
+11.108. wscale
 
 --------------
 
@@ -12928,8 +12978,6 @@ Converts the Snort configuration file specified by the -c or
   * --output-file=<out_file> Same as -o. output the new Snort++ lua
     configuration to <out_file>
   * --print-all Same as -a. default option. print all data
-  * --print-binding-order Print sorting priority used when generating
-    binder table
   * --print-differences Same as -d. output the differences, and only
     the differences, between the Snort and Snort++ configurations to
     the <out_file>
@@ -14271,7 +14319,6 @@ these libraries see the Getting Started section of the manual.
   * --nolock-pidfile do not try to lock Snort PID file
   * --pause wait for resume/quit command before processing packets/
     terminating
-  * --pause-after-n <count> pause after count packets (1:max53)
   * --pcap-file <file> file that contains a list of pcaps to read -
     read mode is implied
   * --pcap-list <list> a space separated list of pcaps to read - read
@@ -14288,7 +14335,6 @@ these libraries see the Getting Started section of the manual.
     between pcaps
   * --pcap-show print a line saying what pcap is currently being read
   * --pedantic warnings are fatal
-  * --piglet enable piglet test harness mode
   * --plugin-path <path> where to find plugins
   * --process-all-events process all action groups
   * --rule <rules> to be added to configuration; may be repeated
@@ -14316,7 +14362,6 @@ these libraries see the Getting Started section of the manual.
   * --treat-drop-as-ignore use drop, block, and reset rules to ignore
     session traffic when not inline
   * --tweaks tune configuration
-  * --catch-test comma separated list of cat unit test tags or all
   * --version show version number (same as -V)
   * --warn-all enable all warnings
   * --warn-conf warn about configuration issues
@@ -14436,9 +14481,6 @@ these libraries see the Getting Started section of the manual.
   * bool appid.debug = false: enable appid debug logging
   * bool appid.dump_ports = false: enable dump of appid port
     information
-  * int appid.first_decrypted_packet_debug = 0: the first packet of
-    an already decrypted SSL flow (debug single session only) {
-    0:max32 }
   * int appid.instance_id = 0: instance id - ignored { 0:max32 }
   * bool appid.log_all_sessions = false: enable logging of all appid
     sessions
@@ -14657,9 +14699,9 @@ these libraries see the Getting Started section of the manual.
   * int dce_smb.reassemble_threshold = 0: minimum bytes received
     before performing reassembly { 0:65535 }
   * int dce_smb.smb_file_depth = 16384: SMB file depth for file data
-    { -1:32767 }
-  * enum dce_smb.smb_file_inspection = off: SMB file inspection { off
-    | on | only }
+    (-1 = disabled, 0 = unlimited) { -1:32767 }
+  * enum dce_smb.smb_file_inspection: deprecated (not used): file
+    inspection controlled by smb_file_depth { off | on | only }
   * enum dce_smb.smb_fingerprint_policy = none: target based SMB
     policy to use { none | client | server | both }
   * string dce_smb.smb_invalid_shares: SMB shares to alert on
@@ -14941,17 +14983,6 @@ these libraries see the Getting Started section of the manual.
   * port host_tracker[].services[].port: port number
   * enum host_tracker[].services[].proto: IP protocol { ip | tcp |
     udp }
-  * int http2_inspect.print_amount = 1200: number of characters to
-    print from a Field { 1:max53 }
-  * bool http2_inspect.print_hex = false: nonprinting characters
-    printed in [HH] format instead of using an asterisk
-  * bool http2_inspect.show_pegs = true: display peg counts with test
-    output
-  * bool http2_inspect.show_scan = false: display scanned segments
-  * bool http2_inspect.test_input = false: read HTTP/2 messages from
-    text file
-  * bool http2_inspect.test_output = false: print out HTTP section
-    data
   * implied http_cookie.request: match against the cookie from the
     request message even when examining the response
   * implied http_cookie.with_body: parts of this rule examine HTTP
@@ -14970,8 +15001,6 @@ these libraries see the Getting Started section of the manual.
     examining HTTP message headers
   * implied http_header.with_trailer: parts of this rule examine HTTP
     message trailers
-  * bool http_inspect.accelerated_blocking = false: inspect
-    JavaScript in response messages as soon as possible
   * bool http_inspect.backslash_to_slash = false: replace \ with /
     when normalizing URIs
   * bit_list http_inspect.bad_characters: alert when any of specified
@@ -14982,6 +15011,8 @@ these libraries see the Getting Started section of the manual.
     response bodies
   * bool http_inspect.decompress_zip = false: decompress zip files in
     response bodies
+  * bool http_inspect.detained_inspection = false: store-and-forward
+    as necessary to effectively block alerting JavaScript
   * string http_inspect.ignore_unreserved: do not alert when the
     specified unreserved characters are percent-encoded in a
     URI.Unreserved characters are 0-9, a-z, A-Z, period, underscore,
@@ -15007,23 +15038,12 @@ these libraries see the Getting Started section of the manual.
     encodings
   * bool http_inspect.plus_to_space = true: replace + with <sp> when
     normalizing URIs
-  * int http_inspect.print_amount = 1200: number of characters to
-    print from a Field { 1:max53 }
-  * bool http_inspect.print_hex = false: nonprinting characters
-    printed in [HH] format instead of using an asterisk
   * int http_inspect.request_depth = -1: maximum request message body
     bytes to examine (-1 no limit) { -1:max53 }
   * int http_inspect.response_depth = -1: maximum response message
     body bytes to examine (-1 no limit) { -1:max53 }
-  * bool http_inspect.show_pegs = true: display peg counts with test
-    output
-  * bool http_inspect.show_scan = false: display scanned segments
   * bool http_inspect.simplify_path = true: reduce URI directory path
     to simplest form
-  * bool http_inspect.test_input = false: read HTTP messages from
-    text file
-  * bool http_inspect.test_output = false: print out HTTP section
-    data
   * bool http_inspect.unzip = true: decompress gzip and deflate
     message bodies
   * bool http_inspect.utf8_bare_byte = false: when doing UTF-8
@@ -15134,9 +15154,9 @@ these libraries see the Getting Started section of the manual.
     0:255 }
   * interval id.~range: check if the IP ID is in the given range { 0:
     }
-  * int imap.b64_decode_depth = 1460: base64 decoding depth (-1 no
+  * int imap.b64_decode_depth = -1: base64 decoding depth (-1 no
     limit) { -1:65535 }
-  * int imap.bitenc_decode_depth = 1460: non-Encoded MIME attachment
+  * int imap.bitenc_decode_depth = -1: non-Encoded MIME attachment
     extraction depth (-1 no limit) { -1:65535 }
   * bool imap.decompress_pdf = false: decompress pdf files in MIME
     attachments
@@ -15144,10 +15164,10 @@ these libraries see the Getting Started section of the manual.
     attachments
   * bool imap.decompress_zip = false: decompress zip files in MIME
     attachments
-  * int imap.qp_decode_depth = 1460: quoted Printable decoding depth
+  * int imap.qp_decode_depth = -1: quoted Printable decoding depth
     (-1 no limit) { -1:65535 }
-  * int imap.uu_decode_depth = 1460: Unix-to-Unix decoding depth (-1
-    no limit) { -1:65535 }
+  * int imap.uu_decode_depth = -1: Unix-to-Unix decoding depth (-1 no
+    limit) { -1:65535 }
   * int inspection.id = 0: correlate policy and events with other
     items in configuration { 0:65535 }
   * enum inspection.mode = inline-test: set policy mode { inline |
@@ -15275,7 +15295,7 @@ these libraries see the Getting Started section of the manual.
     normalization
   * select normalizer.tcp.ecn = off: clear ecn for all packets |
     sessions w/o ecn setup { off | packet | stream }
-  * bool normalizer.tcp.ips = false: ensure consistency in
+  * bool normalizer.tcp.ips = true: ensure consistency in
     retransmitted data
   * bool normalizer.tcp.opts = true: clear all options except mss,
     wscale, timestamp, and any explicitly allowed
@@ -15315,7 +15335,7 @@ these libraries see the Getting Started section of the manual.
   * int output.tagged_packet_limit = 256: maximum number of packets
     tagged for non-packet metrics { 0:max32 }
   * bool output.verbose = false: be verbose (same as -v)
-  * bool output.wide_hex_dump = true: output 20 bytes per lines
+  * bool output.wide_hex_dump = false: output 20 bytes per lines
     instead of 16 when dumping buffers
   * bool packet_capture.enable = false: initially enable packet
     dumping
@@ -15359,9 +15379,9 @@ these libraries see the Getting Started section of the manual.
   * bool perf_monitor.summary = false: output summary at shutdown
   * interval pkt_num.~range: check if packet number is in given range
     { 1: }
-  * int pop.b64_decode_depth = 1460: base64 decoding depth (-1 no
+  * int pop.b64_decode_depth = -1: base64 decoding depth (-1 no
     limit) { -1:65535 }
-  * int pop.bitenc_decode_depth = 1460: Non-Encoded MIME attachment
+  * int pop.bitenc_decode_depth = -1: Non-Encoded MIME attachment
     extraction depth (-1 no limit) { -1:65535 }
   * bool pop.decompress_pdf = false: decompress pdf files in MIME
     attachments
@@ -15369,10 +15389,10 @@ these libraries see the Getting Started section of the manual.
     attachments
   * bool pop.decompress_zip = false: decompress zip files in MIME
     attachments
-  * int pop.qp_decode_depth = 1460: Quoted Printable decoding depth
-    (-1 no limit) { -1:65535 }
-  * int pop.uu_decode_depth = 1460: Unix-to-Unix decoding depth (-1
+  * int pop.qp_decode_depth = -1: Quoted Printable decoding depth (-1
     no limit) { -1:65535 }
+  * int pop.uu_decode_depth = -1: Unix-to-Unix decoding depth (-1 no
+    limit) { -1:65535 }
   * bool port_scan.alert_all = false: alert on all events over
     threshold within window if true; else alert on first only
   * int port_scan.icmp_sweep.nets = 25: number of times address
@@ -15420,8 +15440,8 @@ these libraries see the Getting Started section of the manual.
   * int port_scan.ip_sweep.scans = 100: scan attempts { 0:65535 }
   * int port_scan.ip_window = 0: detection interval for all IP scans
     { 0:max32 }
-  * int port_scan.memcap = 1048576: maximum tracker memory in bytes {
-    1024:maxSZ }
+  * int port_scan.memcap = 10485760: maximum tracker memory in bytes
+    { 1024:maxSZ }
   * multi port_scan.protos = all: choose the protocols to monitor {
     tcp | udp | icmp | ip | all }
   * multi port_scan.scan_types = all: choose type of scans to look
@@ -15600,6 +15620,8 @@ these libraries see the Getting Started section of the manual.
   * enum rule_state.$gid_sid[].enable = inherit: enable or disable
     rule in current ips policy or use default defined by ips policy {
     no | yes | inherit }
+  * string s7commplus_func.~: function code to match
+  * string s7commplus_opcode.~: opcode code to match
   * string sd_pattern.~pattern: The pattern to search for
   * int sd_pattern.threshold = 1: number of matches before alerting {
     1:max32 }
@@ -15688,11 +15710,11 @@ these libraries see the Getting Started section of the manual.
     non-default maximum for command { 0:max32 }
   * string smtp.auth_cmds: commands that initiate an authentication
     exchange
-  * int smtp.b64_decode_depth = 1460: depth used to decode the base64
+  * int smtp.b64_decode_depth = -1: depth used to decode the base64
     encoded MIME attachments (-1 no limit) { -1:65535 }
   * string smtp.binary_data_cmds: commands that initiate sending of
     data and use a length value after the command
-  * int smtp.bitenc_decode_depth = 1460: depth used to extract the
+  * int smtp.bitenc_decode_depth = -1: depth used to extract the
     non-encoded MIME attachments (-1 no limit) { -1:65535 }
   * string smtp.data_cmds: commands that initiate sending of data
     with an end of data delimiter
@@ -15729,10 +15751,10 @@ these libraries see the Getting Started section of the manual.
   * string smtp.normalize_cmds: list of commands to normalize
   * enum smtp.normalize = none: turns on/off normalization { none |
     cmds | all }
-  * int smtp.qp_decode_depth = 1460: quoted-Printable decoding depth
+  * int smtp.qp_decode_depth = -1: quoted-Printable decoding depth
     (-1 no limit) { -1:65535 }
-  * int smtp.uu_decode_depth = 1460: Unix-to-Unix decoding depth (-1
-    no limit) { -1:65535 }
+  * int smtp.uu_decode_depth = -1: Unix-to-Unix decoding depth (-1 no
+    limit) { -1:65535 }
   * string smtp.valid_cmds: list of valid commands
   * enum smtp.xlink2state = alert: enable/disable xlink2state alert {
     disable | alert | drop }
@@ -15744,8 +15766,6 @@ these libraries see the Getting Started section of the manual.
   * string snort.--bpf: <filter options> are standard BPF options, as
     seen in TCPDump
   * string snort.--c2x: output hex for given char (see also --x2c)
-  * string snort.--catch-test: comma separated list of cat unit test
-    tags or all
   * string snort.-c: <conf> use this configuration
   * string snort.--control-socket: <file> to create unix socket
   * implied snort.-C: print out payloads with character data only (no
@@ -15845,8 +15865,6 @@ these libraries see the Getting Started section of the manual.
   * implied snort.-O: obfuscate the logged IP addresses
   * string snort.-?: <option prefix> output matching command line
     option quick help (same as --help-options) { (optional) }
-  * int snort.--pause-after-n: <count> pause after count packets {
-    1:max53 }
   * implied snort.--pause: wait for resume/quit command before
     processing packets/terminating
   * string snort.--pcap-dir: <dir> a directory to recurse to look for
@@ -15866,7 +15884,6 @@ these libraries see the Getting Started section of the manual.
   * implied snort.--pcap-show: print a line saying what pcap is
     currently being read
   * implied snort.--pedantic: warnings are fatal
-  * implied snort.--piglet: enable piglet test harness mode
   * string snort.--plugin-path: <path> where to find plugins
   * implied snort.--process-all-events: process all action groups
   * implied snort.-Q: enable inline mode operation
@@ -16112,7 +16129,6 @@ these libraries see the Getting Started section of the manual.
     consecutive Telnet AYT commands { -1:max31 }
   * bool telnet.check_encrypted = false: check for end of encryption
   * bool telnet.encrypted_traffic = false: check for encrypted Telnet
-    and FTP
   * bool telnet.normalize = false: eliminate escape sequences
   * interval tos.~range: check if IP TOS is in given range { 0:255 }
   * interval ttl.~range: check if IP TTL is in the given range {
@@ -16494,8 +16510,8 @@ these libraries see the Getting Started section of the manual.
     (now)
   * http_inspect.connect_requests: CONNECT requests inspected (sum)
   * http_inspect.delete_requests: DELETE requests inspected (sum)
-  * http_inspect.detained_packets: TCP packets delayed by accelerated
-    blocking (sum)
+  * http_inspect.detained_packets: TCP packets delayed by detained
+    inspection (sum)
   * http_inspect.flows: HTTP connections inspected (sum)
   * http_inspect.get_requests: GET requests inspected (sum)
   * http_inspect.head_requests: HEAD requests inspected (sum)
@@ -16505,8 +16521,8 @@ these libraries see the Getting Started section of the manual.
   * http_inspect.options_requests: OPTIONS requests inspected (sum)
   * http_inspect.other_requests: other request methods inspected
     (sum)
-  * http_inspect.partial_inspections: pre-inspections for accelerated
-    blocking (sum)
+  * http_inspect.partial_inspections: pre-inspections for detained
+    inspection (sum)
   * http_inspect.post_requests: POST requests inspected (sum)
   * http_inspect.put_requests: PUT requests inspected (sum)
   * http_inspect.reassembles: TCP segments combined into HTTP
@@ -16701,6 +16717,12 @@ these libraries see the Getting Started section of the manual.
   * rt_service.hold_requests: total splitter hold requests (sum)
   * rt_service.packets: total packets (sum)
   * rt_service.search_requests: total splitter search requests (sum)
+  * s7commplus.concurrent_sessions: total concurrent s7commplus
+    sessions (now)
+  * s7commplus.frames: total S7commplus messages (sum)
+  * s7commplus.max_concurrent_sessions: maximum concurrent s7commplus
+    sessions (max)
+  * s7commplus.sessions: total sessions processed (sum)
   * sd_pattern.below_threshold: sd_pattern matched but missed
     threshold (sum)
   * sd_pattern.pattern_not_found: sd_pattern did not not match (sum)
@@ -16849,6 +16871,18 @@ these libraries see the Getting Started section of the manual.
   * stream.memcap_prunes: sessions pruned due to memcap (sum)
   * stream.preemptive_prunes: sessions pruned during preemptive
     pruning (sum)
+  * stream.reload_allowed_deletes: number of allowed flows deleted by
+    config reloads (sum)
+  * stream.reload_blocked_deletes: number of blocked flows deleted by
+    config reloads (sum)
+  * stream.reload_freelist_deletes: number of flows deleted from the
+    free list by config reloads (sum)
+  * stream.reload_offloaded_deletes: number of offloaded flows
+    deleted by config reloads (sum)
+  * stream.reload_total_adds: number of flows added by config reloads
+    (sum)
+  * stream.reload_total_deletes: number of flows deleted by config
+    reloads (sum)
   * stream_tcp.client_cleanups: number of times data from server was
     flushed when session released (sum)
   * stream_tcp.closing: number of sessions currently closing (now)
@@ -17006,6 +17040,7 @@ these libraries see the Getting Started section of the manual.
   * 144: modbus
   * 145: dnp3
   * 146: file_id
+  * 149: s7commplus
   * 175: domain_filter
   * 256: dpx
 
@@ -17606,6 +17641,10 @@ these libraries see the Getting Started section of the manual.
   * 145:5 (dnp3) DNP3 link-layer frame uses a reserved address
   * 145:6 (dnp3) DNP3 application-layer fragment uses a reserved
     function code
+  * 149:1 (s7commplus) length in S7commplus MBAP header does not
+    match the length needed for the given S7commplus function
+  * 149:2 (s7commplus) S7commplus protocol ID is non-zero
+  * 149:3 (s7commplus) reserved S7commplus function code in use
   * 175:1 (domain_filter) configured domain detected
   * 256:1 (dpx) too much data sent to port
 
@@ -18282,6 +18321,13 @@ deleted -> unified2: 'vlan_event_types'
     support.
   * rule_state (basic): enable/disable and set actions for specific
     IPS rules; deprecated, use rule state stubs with enable instead
+  * s7commplus (inspector): s7commplus inspection
+  * s7commplus_content (ips_option): rule option to set cursor to
+    s7commplus content
+  * s7commplus_func (ips_option): rule option to check s7commplus
+    function code
+  * s7commplus_opcode (ips_option): rule option to check s7commplus
+    opcode code
   * sd_pattern (ips_option): rule option for detecting sensitive data
   * search_engine (basic): configure fast pattern matcher
   * seq (ips_option): rule option to check TCP sequence number
@@ -18450,6 +18496,7 @@ deleted -> unified2: 'vlan_event_types'
   * inspector::rt_service: The regression test service inspector is
     used by regression tests that require custom service inspector
     support.
+  * inspector::s7commplus: s7commplus inspection
   * inspector::sip: sip inspection
   * inspector::smtp: smtp inspection
   * inspector::ssh: ssh inspection
@@ -18604,6 +18651,12 @@ deleted -> unified2: 'vlan_event_types'
   * ips_option::rev: rule option to indicate current revision of
     signature
   * ips_option::rpc: rule option to check SUNRPC CALL parameters
+  * ips_option::s7commplus_content: rule option to set cursor to
+    s7commplus content
+  * ips_option::s7commplus_func: rule option to check s7commplus
+    function code
+  * ips_option::s7commplus_opcode: rule option to check s7commplus
+    opcode code
   * ips_option::sd_pattern: rule option for detecting sensitive data
   * ips_option::seq: rule option to check TCP sequence number
   * ips_option::service: rule option to specify list of services for
@@ -18648,14 +18701,6 @@ deleted -> unified2: 'vlan_event_types'
   * logger::log_null: disable logging of packets
   * logger::log_pcap: log packet in pcap format
   * logger::unified2: output event and packet in unified2 format file
-  * piglet::pp_codec: Codec piglet
-  * piglet::pp_inspector: Inspector piglet
-  * piglet::pp_ips_action: Ips action piglet
-  * piglet::pp_ips_option: Ips option piglet
-  * piglet::pp_logger: Logger piglet
-  * piglet::pp_search_engine: Search engine piglet
-  * piglet::pp_so_rule: SO rule piglet
-  * piglet::pp_test: Test piglet
   * search_engine::ac_banded: Aho-Corasick Banded (high memory,
     moderate performance)
   * search_engine::ac_bnfa: Aho-Corasick Binary NFA (low memory, high

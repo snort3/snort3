@@ -1,5 +1,25 @@
+19/11/06 - build 264
+-- appid: Handle DNS responses with compression pointers at last record
+-- dce_smb: deprecate config for smb_file_inspection, use smb_file_depth only
+-- detection: negated fast patterns are last choice
+-- http2_inspect: fix bugs in splitting long data frames and padding
+-- http_inspect: change accelerated_blocking to detained_inspection
+-- http_inspect: remove deprecated @fileclose command from test tool
+-- imap, pop, smtp: changed default decode depths to unlimited
+-- ips: define a builtin GID range to prevent unloaded SIDs from firing on all packets
+-- ips_option::enable: fix dynamic plugin build
+-- lua: tweak default conf and add tweaks for various scenarios
+-- normalizer: make tcp.ips defaults to true
+-- port_scan: increase default memcap to a more reasonable 10M
+-- s7commplus: Initial working version of s7commplus service inspector
+-- search_engine: stop searching if queue limit is reached
+-- stream: implement reload resource tuner for stream to adjust the number of flow objects as
+   needed when the stream 'max_flows' configuration option changes
+-- telnet: fix check_encrypted help string
+
 19/10/31 - build 263
--- appid: for ssl sessions, set payload id to unknown after ssl handshake is done if the payload id was not not found
+-- appid: for ssl sessions, set payload id to unknown after ssl handshake is done if the payload id
+   was not not found
 -- appid: check inferred services in host cache only if there were updates
 -- appid: Updating the path to userappid.conf
 -- build: Clean up snort namespace usage
