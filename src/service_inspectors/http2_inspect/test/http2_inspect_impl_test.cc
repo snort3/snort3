@@ -47,7 +47,10 @@ using namespace Http2Enums;
 unsigned HttpTestManager::test_input = IN_NONE;
 unsigned HttpTestManager::test_output = IN_NONE;
 int DetectionEngine::queue_event(unsigned int, unsigned int, Actions::Type) { return 0; }
+
+#ifdef REG_TEST
 void Field::print(FILE*, char const*) const {}
+#endif
 
 TEST_GROUP(http2_get_buf_test)
 {
