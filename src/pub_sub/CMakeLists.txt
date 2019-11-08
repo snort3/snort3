@@ -1,5 +1,6 @@
 set (PUB_SUB_INCLUDES
     appid_events.h
+    cip_events.h
     daq_message_event.h
     expect_events.h
     finalize_packet_event.h
@@ -9,6 +10,7 @@ set (PUB_SUB_INCLUDES
 
 add_library( pub_sub OBJECT
     ${PUB_SUB_INCLUDES}
+    cip_events.cc
     http_events.cc
     sip_events.cc
 )

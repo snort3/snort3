@@ -48,6 +48,7 @@ extern const BaseApi* sin_telnet;
 extern const BaseApi* sin_wizard;
 
 // these define multiple plugins
+extern const BaseApi* sin_cip[];
 extern const BaseApi* sin_dce[];
 extern const BaseApi* sin_dnp3[];
 extern const BaseApi* sin_gtp[];
@@ -86,6 +87,7 @@ void load_service_inspectors()
     PluginManager::load_plugins(sin_ssl);
 
 #ifdef STATIC_INSPECTORS
+    PluginManager::load_plugins(sin_cip);
     PluginManager::load_plugins(sin_dce);
     PluginManager::load_plugins(sin_dnp3);
     PluginManager::load_plugins(sin_gtp);

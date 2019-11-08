@@ -1,0 +1,12 @@
+CIP (Common Industrial Protocol) is a protocol used in SCADA networks. The
+standard is managed by ODVA (Open DeviceNet Vendor Association). 
+
+The CIP inspector decodes the CIP protocol and provides rule options to 
+access certain protocol fields. This allows a user to write rules for CIP 
+packets without decoding the protocol with a series of ”content” and ”byte 
+test” options.
+
+The preprocessor only evaluates PAF-flushed PDUs. If the rule options don't
+check for this, they'll fire on stale session data when the original packet
+goes through before flushing.
+

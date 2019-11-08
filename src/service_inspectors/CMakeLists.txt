@@ -1,5 +1,6 @@
 
 add_subdirectory(back_orifice)
+add_subdirectory(cip)
 add_subdirectory(dce_rpc)
 add_subdirectory(dnp3)
 add_subdirectory(dns)
@@ -21,6 +22,7 @@ add_subdirectory(s7commplus)
 if (STATIC_INSPECTORS)
     set (STATIC_INSPECTOR_OBJS
         $<TARGET_OBJECTS:back_orifice>
+        $<TARGET_OBJECTS:cip>
         $<TARGET_OBJECTS:dce_rpc>
         $<TARGET_OBJECTS:dnp3>
         $<TARGET_OBJECTS:dns>
