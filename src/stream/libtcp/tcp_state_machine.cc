@@ -40,7 +40,7 @@ TcpStateMachine::~TcpStateMachine()
 void TcpStateMachine::register_state_handler(TcpStreamTracker::TcpState state,
     TcpStateHandler& handler)
 {
-    delete tcp_state_handlers[ state ];
+    assert( !tcp_state_handlers[ state ]);
     tcp_state_handlers[ state ] = &handler;
 }
 

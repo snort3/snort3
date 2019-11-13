@@ -27,6 +27,7 @@
 #include "tcp_ha.h"
 #include "tcp_module.h"
 #include "tcp_session.h"
+#include "tcp_stream_state_machine.h"
 
 using namespace snort;
 
@@ -42,7 +43,6 @@ public:
 
     void show(SnortConfig*) override;
     bool configure(SnortConfig*) override;
-
     void tinit() override;
     void tterm() override;
 
@@ -55,14 +55,10 @@ public:
 StreamTcp::StreamTcp (TcpStreamConfig* c) : config(c) {}
 
 StreamTcp::~StreamTcp()
-{
-    delete config;
-}
+{ delete config; }
 
 void StreamTcp::show(SnortConfig*)
-{
-    TcpStreamConfig::show_config(config);
-}
+{ TcpStreamConfig::show_config(config); }
 
 bool StreamTcp::configure(SnortConfig* sc)
 {
@@ -111,14 +107,16 @@ static Inspector* tcp_ctor(Module* m)
 }
 
 static void tcp_dtor(Inspector* p)
-{
-    delete p;
-}
+{ delete p; }
+
+static void stream_tcp_pinit()
+{ TcpStreamStateMachine::initialize(); }
+
+static void stream_tcp_pterm()
+{ TcpStreamStateMachine::finalize(); }
 
 static Session* tcp_ssn(Flow* lws)
-{
-    return new TcpSession(lws);
-}
+{ return new TcpSession(lws); }
 
 static const InspectApi tcp_api =
 {
@@ -138,8 +136,8 @@ static const InspectApi tcp_api =
     PROTO_BIT__TCP,
     nullptr,  // buffers
     nullptr,  // service
-    nullptr,  // init
-    nullptr,  // term
+    stream_tcp_pinit,  // pinit
+    stream_tcp_pterm,  // pterm
     nullptr,  // tinit,
     nullptr,  // tterm,
     tcp_ctor,

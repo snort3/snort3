@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_stream_state_machine.cc author davis mcpherson <davmcphe@@cisco.com>
+// tcp_stream_state_machine.cc author davis mcpherson <davmcphe@cisco.com>
 // Created on: Apr 1, 2016
 
 #ifdef HAVE_CONFIG_H
@@ -38,6 +38,21 @@
 #include "tcp_state_last_ack.h"
 #include "tcp_state_time_wait.h"
 
+TcpStreamStateMachine* TcpStreamStateMachine::tsm = nullptr;
+
+TcpStateMachine* TcpStreamStateMachine::initialize()
+{
+    assert(!tsm);
+    TcpStreamStateMachine::tsm = new TcpStreamStateMachine();
+    return TcpStreamStateMachine::tsm;
+}
+
+void TcpStreamStateMachine::finalize()
+{
+    delete TcpStreamStateMachine::tsm;
+    TcpStreamStateMachine::tsm = nullptr;
+}
+
 TcpStreamStateMachine::TcpStreamStateMachine()
 {
     // initialize stream tracker state machine with handler for each state...
@@ -54,4 +69,3 @@ TcpStreamStateMachine::TcpStreamStateMachine()
     new TcpStateLastAck(*this);
     new TcpStateTimeWait(*this);
 }
-

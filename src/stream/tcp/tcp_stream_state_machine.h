@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_stream_state_machine.h author davis mcpherson <davmcphe@@cisco.com>
+// tcp_stream_state_machine.h author davis mcpherson <davmcphe@cisco.com>
 // Created on: Apr 1, 2016
 
 #ifndef TCP_STREAM_STATE_MACHINE_H
@@ -27,14 +27,17 @@
 class TcpStreamStateMachine: public TcpStateMachine
 {
 public:
-    static TcpStateMachine* get_instance( )
-    {
-        static TcpStreamStateMachine tsm;
-        return &tsm;
-    }
+    static TcpStateMachine* initialize();
+    static void finalize();
+
+    static TcpStateMachine* get_instance()
+    { return TcpStreamStateMachine::tsm; }
 
 private:
     TcpStreamStateMachine();
+
+    static TcpStreamStateMachine* tsm;
+
 };
 #endif
 
