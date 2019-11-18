@@ -425,6 +425,7 @@ public:
     //------------------------------------------------------
     // Non-static mutator methods
 
+    void add_plugin_path(const char*);
     void add_script_path(const char*);
     void enable_syslog();
     void set_alert_before_pass(bool);
@@ -445,7 +446,6 @@ public:
     void set_obfuscate(bool);
     void set_obfuscation_mask(const char*);
     void set_include_path(const char*);
-    void set_plugin_path(const char*);
     void set_process_all_events(bool);
     void set_quiet(bool);
     void set_show_year(bool);

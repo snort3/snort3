@@ -990,12 +990,15 @@ void SnortConfig::set_include_path(const char* path)
         include_path.clear();
 }
 
-void SnortConfig::set_plugin_path(const char* path)
+void SnortConfig::add_plugin_path(const char* path)
 {
-    if (path)
-        plugin_path = path;
+    if (!path)
+        return;
+
+    if (!plugin_path.empty())
+        plugin_path += ":" + std::string(path);
     else
-        plugin_path.clear();
+        plugin_path = path;
 }
 
 void SnortConfig::set_tweaks(const char* t)

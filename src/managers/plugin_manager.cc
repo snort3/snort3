@@ -24,10 +24,10 @@
 #include "plugin_manager.h"
 
 #include <dlfcn.h>
-#include <sys/stat.h>
-
 #include <iostream>
 #include <map>
+#include <sstream>
+#include <sys/stat.h>
 
 #include "framework/codec.h"
 #include "framework/connector.h"
@@ -339,21 +339,34 @@ static void add_plugin(Plugin& p)
 
 static void load_plugins(const std::string& paths)
 {
-    const char* t = paths.c_str();
-    vector<char> buf(t, t+strlen(t)+1);
-    char* last;
+    struct stat sb;
+    stringstream paths_stream(paths);
+    string segment;
+    vector<string> path_list;
 
-    char* s = strtok_r(&buf[0], ":", &last);
+    while ( getline(paths_stream, segment, ':') )
+        if ( segment.length() > 0 )
+            path_list.push_back(segment);
 
-    while ( s )
+    for ( auto& path : path_list )
     {
-        Directory d(s, lib_pattern);
-        const char* f;
+        if ( stat(path.c_str(), &sb) )
+            continue;
 
-        while ( (f = d.next()) )
-            load_lib(f);
+        if ( sb.st_mode & S_IFDIR )
+        {
+            Directory d(path.c_str(), lib_pattern);
 
-        s = strtok_r(nullptr, ":", &last);
+            while ( const char* f = d.next() )
+                load_lib(f);
+        }
+        else
+        {
+            if ( path.find("/") == string::npos )
+                path = "./" + path;
+
+            load_lib(path.c_str());
+        }
     }
 }
 

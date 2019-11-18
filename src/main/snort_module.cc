@@ -466,7 +466,7 @@ static const Parameter s_params[] =
 #endif
 
     { "--plugin-path", Parameter::PT_STRING, nullptr, nullptr,
-      "<path> where to find plugins" },
+      "<path> a colon separated list of directories or plugin libraries" },
 
     { "--process-all-events", Parameter::PT_IMPLIED, nullptr, nullptr,
       "process all action groups" },
@@ -946,7 +946,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 #endif
 
     else if ( v.is("--plugin-path") )
-        sc->set_plugin_path(v.get_string());
+        sc->add_plugin_path(v.get_string());
 
     else if ( v.is("--process-all-events") )
         sc->set_process_all_events(true);
