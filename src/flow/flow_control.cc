@@ -84,18 +84,20 @@ void FlowControl::clear_counts()
 // cache foo
 //-------------------------------------------------------------------------
 
+void FlowControl::set_flow_cache_config(FlowCacheConfig& cfg)
+{ cache->set_flow_cache_config(cfg); }
+
+const FlowCacheConfig& FlowControl::get_flow_cache_config() const
+{ return cache->get_flow_cache_config(); }
+
 unsigned FlowControl::get_flows_allocated() const
 { return cache->get_flows_allocated(); }
 
 Flow* FlowControl::find_flow(const FlowKey* key)
-{
-    return cache->find(key);
-}
+{ return cache->find(key); }
 
 Flow* FlowControl::new_flow(const FlowKey* key)
-{
-    return cache->allocate(key);
-}
+{ return cache->allocate(key); }
 
 void FlowControl::release_flow(const FlowKey* key)
 {
@@ -104,25 +106,17 @@ void FlowControl::release_flow(const FlowKey* key)
 }
 
 void FlowControl::release_flow(Flow* flow, PruneReason reason)
-{
-    cache->release(flow, reason);
-}
+{ cache->release(flow, reason); }
 
 void FlowControl::purge_flows ()
-{
-    cache->purge();
-}
+{ cache->purge(); }
 
 unsigned FlowControl::delete_flows(unsigned num_to_delete)
-{
-    return cache->delete_flows(num_to_delete);
-}
+{ return cache->delete_flows(num_to_delete); }
 
 // hole for memory manager/prune handler
 bool FlowControl::prune_one(PruneReason reason, bool do_cleanup)
-{
-    return cache->prune_one(reason, do_cleanup);
-}
+{ return cache->prune_one(reason, do_cleanup); }
 
 void FlowControl::timeout_flows(time_t cur_time)
 {
@@ -495,11 +489,6 @@ bool FlowControl::expected_flow(Flow* flow, Packet* p)
     }
 
     return ignore;
-}
-
-void FlowControl::update_flow_cache_cfg(FlowCacheConfig& cfg)
-{
-    cache->set_flow_cache_config(cfg);
 }
 
 int FlowControl::add_expected(

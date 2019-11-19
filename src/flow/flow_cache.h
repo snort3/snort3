@@ -88,10 +88,15 @@ public:
 
     void unlink_uni(snort::Flow*);
 
-    void set_flow_cache_config(FlowCacheConfig& cfg) { config = cfg; }
+    void set_flow_cache_config(FlowCacheConfig& cfg)
+    { config = cfg; }
+
+    const FlowCacheConfig& get_flow_cache_config() const
+    { return config; }
 
 	unsigned get_flows_allocated() const
 	{ return flows_allocated; }
+
 
 private:
     void push(snort::Flow*);

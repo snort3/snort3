@@ -52,24 +52,21 @@ public:
     FlowControl(const FlowCacheConfig& fc);
     ~FlowControl();
 
-public:
-    bool process(PktType, snort::Packet*, bool* new_flow = nullptr);
-
-    snort::Flow* find_flow(const snort::FlowKey*);
-    snort::Flow* new_flow(const snort::FlowKey*);
-	unsigned get_flows_allocated() const;
-
+    void set_flow_cache_config(FlowCacheConfig& cfg);
+    const FlowCacheConfig& get_flow_cache_config() const;
     void init_proto(PktType, snort::InspectSsnFunc);
     void init_exp(uint32_t max);
+    unsigned get_flows_allocated() const;
 
+    bool process(PktType, snort::Packet*, bool* new_flow = nullptr);
+    snort::Flow* find_flow(const snort::FlowKey*);
+    snort::Flow* new_flow(const snort::FlowKey*);
     void release_flow(const snort::FlowKey*);
     void release_flow(snort::Flow*, PruneReason);
     void purge_flows();
     unsigned delete_flows(unsigned num_to_delete);
     bool prune_one(PruneReason, bool do_cleanup);
     snort::Flow* stale_flow_cleanup(FlowCache*, snort::Flow*, snort::Packet*);
-
-    void update_flow_cache_cfg(FlowCacheConfig& cfg);
     void timeout_flows(time_t cur_time);
     bool expected_flow(snort::Flow*, snort::Packet*);
     bool is_expected(snort::Packet*);

@@ -113,10 +113,15 @@ bool ACSwap::execute(Analyzer& analyzer, void** ac_state)
             if ( !*ac_state )
             {
                 reload_tuners = new std::list<ReloadResourceTuner*>(sc->get_reload_resource_tuners());
+                std::list<ReloadResourceTuner*>::iterator rtt = reload_tuners->begin();
+                while ( rtt != reload_tuners->end() )
+                {
+                    if ( (*rtt)->tinit() )
+                        ++rtt;
+                    else
+                        rtt = reload_tuners->erase(rtt);
+                }
                 *ac_state = reload_tuners;
-                for (auto const& rtt : *reload_tuners)
-                	rtt->tinit();
-
             }
             else
                 reload_tuners = (std::list<ReloadResourceTuner*>*)*ac_state;

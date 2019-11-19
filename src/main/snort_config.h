@@ -162,13 +162,15 @@ public:
 
     virtual ~ReloadResourceTuner() = default;
 
-    virtual void tinit() { }
+    // returns true if resource tuning required, false otherwise
+    virtual bool tinit() = 0;
+
+    // each of these returns true if resource tuning is complete, false otherwise
     virtual bool tune_packet_context() = 0;
     virtual bool tune_idle_context() = 0;
 
 protected:
     ReloadResourceTuner() = default;
-    virtual bool tune_resources(unsigned work_limit) = 0;
 
     unsigned max_work = RELOAD_MAX_WORK_PER_PACKET;
     unsigned max_work_idle = RELOAD_MAX_WORK_WHEN_IDLE;

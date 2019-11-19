@@ -29,6 +29,7 @@
 #include "main/snort.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
+#include "stream/flush_bucket.h"
 
 using namespace snort;
 using namespace std;
@@ -177,31 +178,10 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
 
 // FIXIT-L the detection of stream.xxx_cache changes below is a temporary workaround
 // remove this check when stream.xxx_cache params become reloadable
-bool StreamModule::end(const char* fqn, int, SnortConfig* cfg)
+bool StreamModule::end(const char*, int, SnortConfig* sc)
 {
-    static StreamModuleConfig saved_config = {};
-
-    if ( saved_config.flow_cache_cfg.max_flows )
-    {
-    	int max_flows_change = config.flow_cache_cfg.max_flows - saved_config.flow_cache_cfg.max_flows;
-        if ( max_flows_change )
-        {
-            // register handler
-            reload_resource_manager.initialize(config.flow_cache_cfg, max_flows_change);
-            cfg->register_reload_resource_tuner(reload_resource_manager);
-        }
-    }
-
-    if ( !strcmp(fqn, "stream") )
-    {
-        if ( saved_config.flow_cache_cfg.max_flows   // saved config is valid
-            and config.footprint != saved_config.footprint )
-        {
-            ReloadError("Changing of stream.footprint requires a restart\n");
-        }
-        else
-            saved_config = config;
-    }
+    if ( reload_resource_manager.initialize(config) )
+        sc->register_reload_resource_tuner(reload_resource_manager);
 
     return true;
 }
@@ -216,19 +196,44 @@ void StreamModule::reset_stats()
 { base_reset(); }
 
 // Stream handler to adjust allocated resources as needed on a config reload
-void StreamReloadResourceManager::initialize(FlowCacheConfig& config_, int max_flows_change_)
+bool StreamReloadResourceManager::initialize(StreamModuleConfig& config_)
 {
+	// FIXIT-L - saving config here to check footprint change is a bit of a hack,
+	if ( Snort::is_reloading() )
+	{
+		if ( config.footprint != config_.footprint )
+		{
+            // FIXIT-M - reinit FlushBucket...
+            ReloadError("Changing of stream.footprint requires a restart\n");
+            return false;
+		}
+
+		config = config_;
+		return true;
+	}
+
 	config = config_;
-	max_flows_change = max_flows_change_;
+	return false;
 }
 
-void StreamReloadResourceManager::tinit()
+bool StreamReloadResourceManager::tinit()
 {
-    flow_con->update_flow_cache_cfg(config);
-    if ( max_flows_change < 0 )
-    	stream_base_stats.reload_total_deletes += abs(max_flows_change);
-    else
-    	stream_base_stats.reload_total_adds += max_flows_change;
+    bool must_tune = false;
+
+    max_flows_change =
+        config.flow_cache_cfg.max_flows - flow_con->get_flow_cache_config().max_flows;
+    if ( max_flows_change )
+    {
+        if ( max_flows_change < 0 )
+            stream_base_stats.reload_total_deletes += abs(max_flows_change);
+        else
+            stream_base_stats.reload_total_adds += max_flows_change;
+
+        flow_con->set_flow_cache_config(config.flow_cache_cfg);
+        must_tune = true;
+    }
+
+    return must_tune;
 }
 
 bool StreamReloadResourceManager::tune_packet_context()
@@ -244,14 +249,15 @@ bool StreamReloadResourceManager::tune_idle_context()
 bool StreamReloadResourceManager::tune_resources(unsigned work_limit)
 {
 	// we are done if new max is > currently allocated flow objects
-	if ( flow_con->get_flows_allocated() <= config.max_flows )
+	if ( flow_con->get_flows_allocated() <= config.flow_cache_cfg.max_flows )
 		return true;
 
-	unsigned flows_to_delete = flow_con->get_flows_allocated() - config.max_flows;
+	unsigned flows_to_delete =
+	    flow_con->get_flows_allocated() - config.flow_cache_cfg.max_flows;
 	if ( flows_to_delete > work_limit )
-		flows_to_delete -= flow_con->delete_flows(work_limit);
+	    flows_to_delete -= flow_con->delete_flows(work_limit);
 	else
-		flows_to_delete -= flow_con->delete_flows(flows_to_delete);
+	    flows_to_delete -= flow_con->delete_flows(flows_to_delete);
 
 	return ( flows_to_delete ) ? false : true;
 }

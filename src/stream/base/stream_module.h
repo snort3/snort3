@@ -72,7 +72,7 @@ extern THREAD_LOCAL BaseStats stream_base_stats;
 struct StreamModuleConfig
 {
     FlowCacheConfig flow_cache_cfg;
-    unsigned footprint;
+    unsigned footprint = 0;
 };
 
 class StreamReloadResourceManager : public snort::ReloadResourceTuner
@@ -80,16 +80,17 @@ class StreamReloadResourceManager : public snort::ReloadResourceTuner
 public:
 	StreamReloadResourceManager() {}
 
-    void initialize(FlowCacheConfig&, int max_flows_change_);
-    void tinit() override;
+    bool tinit() override;
     bool tune_packet_context() override;
     bool tune_idle_context() override;
 
-private:
-    bool tune_resources(unsigned work_limit) override;
+    bool initialize(StreamModuleConfig&);
 
 private:
-    FlowCacheConfig config;
+    bool tune_resources(unsigned work_limit);
+
+private:
+    StreamModuleConfig config;
     int max_flows_change = 0;
 };
 
