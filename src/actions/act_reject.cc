@@ -55,6 +55,7 @@
 
 using namespace snort;
 
+#define REJ_NONE     0x00
 #define REJ_RST_SRC  0x01
 #define REJ_RST_DST  0x02
 #define REJ_UNR_NET  0x04
@@ -75,15 +76,13 @@ static THREAD_LOCAL ProfileStats rejPerfStats;
 class RejectAction : public IpsAction
 {
 public:
-    RejectAction(uint32_t f) : IpsAction(s_name, ACT_RESET)
-    { mask = f; }
+    RejectAction(uint32_t f) : IpsAction(s_name, ACT_RESET), mask(f) { }
 
     void exec(Packet*) override;
 
 private:
     void send(Packet*);
 
-private:
     uint32_t mask;
 };
 
@@ -157,10 +156,10 @@ void RejectAction::send(Packet* p)
 
 static const Parameter s_params[] =
 {
-    { "reset", Parameter::PT_ENUM, "source|dest|both", nullptr,
+    { "reset", Parameter::PT_ENUM, "none|source|dest|both", "both",
       "send TCP reset to one or both ends" },
 
-    { "control", Parameter::PT_ENUM, "network|host|port|forward|all", nullptr,
+    { "control", Parameter::PT_ENUM, "none|network|host|port|forward|all", "none",
       "send ICMP unreachable(s)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -192,6 +191,7 @@ bool RejectModule::begin(const char*, int, SnortConfig*)
 
 static const int rst[] =
 {
+    REJ_NONE,
     REJ_RST_SRC,
     REJ_RST_DST,
     REJ_RST_BOTH
@@ -199,6 +199,7 @@ static const int rst[] =
 
 static const int unr[] =
 {
+    REJ_NONE,
     REJ_UNR_NET,
     REJ_UNR_HOST,
     REJ_UNR_PORT,
@@ -209,10 +210,16 @@ static const int unr[] =
 bool RejectModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("reset") )
+    {
+        flags &= ~REJ_RST_BOTH;
         flags |= rst[v.get_uint8()];
+    }
 
     else if ( v.is("control") )
+    {
+        flags &= ~REJ_UNR_ALL;
         flags |= unr[v.get_uint8()];
+    }
 
     else
         return false;
