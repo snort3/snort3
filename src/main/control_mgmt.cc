@@ -60,7 +60,7 @@ static struct sockaddr_un unix_addr;
 static int epoll_fd = -1;
 static unordered_map<int, ControlConn*> controls;
 
-#define MAX_EPOLL_EVENTS 65535
+#define MAX_EPOLL_EVENTS 16
 
 static void add_to_epoll(const int fd)
 {
@@ -71,8 +71,8 @@ static void add_to_epoll(const int fd)
             FatalError("Failed to create epoll file descriptor: %s\n", get_error(errno));
     }
 
-    static struct epoll_event event;
-    event.events = EPOLLIN | EPOLLET;
+    struct epoll_event event;
+    event.events = EPOLLIN;
     event.data.fd = fd;
 
     if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &event))
@@ -205,13 +205,11 @@ bool ControlMgmt::process_control_commands(int& current_fd, Request*& current_re
 bool ControlMgmt::service_users(int& current_fd, Request*& current_request)
 {
     bool ret = false;
-    vector<epoll_event> events(MAX_EPOLL_EVENTS);
+    struct epoll_event events[MAX_EPOLL_EVENTS];
 
-    int event_count = epoll_wait(epoll_fd, events.data(), MAX_EPOLL_EVENTS, 0);
+    int event_count = epoll_wait(epoll_fd, events, MAX_EPOLL_EVENTS, 0);
     for(int i = 0; i < event_count; i++)
     {
-        ret = process_control_commands(current_fd, current_request, events[i].data.fd);
-
         if (listener == events[i].data.fd)
         {
             // got a new connection request, accept it and store it in controls
@@ -220,10 +218,16 @@ bool ControlMgmt::service_users(int& current_fd, Request*& current_request)
                 ret = true;
             }
         }
-
-        if (!ret && (events[i].events & EPOLLHUP))
+        else
         {
-            delete_control(events[i].data.fd);
+            ret = process_control_commands(current_fd, current_request, events[i].data.fd);
+            if (!ret && (events[i].events & EPOLLHUP))
+            {
+                // FIXIT-L quick fix to emulate not poll()ing for events for blocked connections
+                ControlConn* control_conn = find_control(events[i].data.fd);
+                if (control_conn && !control_conn->is_blocked())
+                    delete_control(events[i].data.fd);
+            }
         }
     }
     return ret;
