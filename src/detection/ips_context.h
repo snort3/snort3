@@ -155,6 +155,7 @@ public:
     ActiveRules active_rules;
     State state; 
     bool check_tags;
+    bool clear_inspectors;
 
     static const unsigned buf_size = Codec::PKT_MAX;
 

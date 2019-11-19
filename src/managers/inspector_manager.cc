@@ -161,7 +161,6 @@ static PHList s_trash2;
 static bool s_sorted = false;
 
 static THREAD_LOCAL vector<PHGlobal>* s_tl_handlers = nullptr;
-static THREAD_LOCAL bool s_clear = false;
 
 struct FrameworkConfig
 {
@@ -1021,7 +1020,7 @@ void InspectorManager::full_inspection(Packet* p)
     else if ( flow->gadget && flow->gadget->likes(p) )
     {
         flow->gadget->eval(p);
-        s_clear = true;
+        p->context->clear_inspectors = true;
     }
 }
 
@@ -1098,12 +1097,12 @@ void InspectorManager::probe(Packet* p)
 
 void InspectorManager::clear(Packet* p)
 {
-    if ( !s_clear )
+    if ( !p->context->clear_inspectors )
         return;
 
     if ( p->flow and p->flow->gadget )
         p->flow->gadget->clear(p);
 
-    s_clear = false;
+    p->context->clear_inspectors = false;
 }
 

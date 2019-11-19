@@ -488,8 +488,9 @@ void DetectionEngine::complete(Packet* p)
 
     ContextSwitcher* sw = Analyzer::get_switcher();
     sw->resume(p->context);
-    
-    fp_complete(p);
+   
+    if ( p->is_detection_enabled(p->packet_flags & PKT_FROM_CLIENT) ) 
+        fp_complete(p);
 }
 
 void DetectionEngine::resume(Packet* p)

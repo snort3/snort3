@@ -65,6 +65,7 @@ IpsContext::IpsContext(unsigned size) :
 
     active_rules = CONTENT;
     check_tags = false;
+    clear_inspectors = false;
 }
 
 IpsContext::~IpsContext()

@@ -261,7 +261,8 @@ void TcpReassembler::purge_alerts(TcpReassemblerState& trs)
         StreamAlertInfo* ai = trs.tracker->alerts + i;
         Stream::log_extra_data(flow, trs.xtradata_mask, ai->event_id, ai->event_second);
     }
-    trs.tracker->alert_count = 0;
+    if ( !flow->is_suspended() )
+        trs.tracker->alert_count = 0;
 }
 
 void TcpReassembler::purge_to_seq(TcpReassemblerState& trs, uint32_t flush_seq)
