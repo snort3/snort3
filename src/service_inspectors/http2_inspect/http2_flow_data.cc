@@ -26,6 +26,7 @@
 #include "service_inspectors/http_inspect/http_test_manager.h"
 
 #include "http2_enum.h"
+#include "http2_frame.h"
 #include "http2_module.h"
 #include "http2_start_line.h"
 
@@ -71,33 +72,19 @@ Http2FlowData::~Http2FlowData()
 
     for (int k=0; k <= 1; k++)
     {
-        delete[] frame_header[k];
-        delete[] frame_data[k];
-        delete[] raw_decoded_header[k];
         delete infractions[k];
         delete events[k];
-        delete http2_decoded_header[k];
+        delete current_frame[k];
     }
 }
 
 void Http2FlowData::clear_frame_data(HttpCommon::SourceId source_id)
 {
-    // If there is more data to be inspected in the frame, leave the frame_header
-    if (leftover_data[source_id] == 0)
-    {
-        delete[] frame_header[source_id];
-        frame_header[source_id] = nullptr;
-    }
-    delete[] frame_data[source_id];
-    frame_data[source_id] = nullptr;
     frame_in_detection = false;
-    delete[] raw_decoded_header[source_id];
-    raw_decoded_header[source_id] = nullptr;
     continuation_expected[source_id] = false;
-    frames_aggregated[source_id] = 0;
-    scan_header_octets_seen[source_id] = 0;
-    delete header_start_line[source_id];
-    header_start_line[source_id] = nullptr;
-    delete http2_decoded_header[source_id];
-    http2_decoded_header[source_id] = nullptr;
+    num_frame_headers[source_id] = 0;
+    scan_octets_seen[source_id] = 0;
+    total_bytes_in_split[source_id] = 0;
+    delete current_frame[source_id];
+    current_frame[source_id] = nullptr;
 }

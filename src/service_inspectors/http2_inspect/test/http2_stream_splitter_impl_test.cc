@@ -29,9 +29,6 @@
 #include "service_inspectors/http_inspect/http_test_manager.h"
 #include "service_inspectors/http2_inspect/http2_enum.h"
 #include "service_inspectors/http2_inspect/http2_flow_data.h"
-#include "service_inspectors/http2_inspect/http2_hpack_int_decode.h"
-#include "service_inspectors/http2_inspect/http2_hpack_table.h"
-#include "service_inspectors/http2_inspect/http2_hpack_string_decode.h"
 #include "service_inspectors/http2_inspect/http2_stream_splitter.h"
 
 #include "http2_flow_data_test.h"
@@ -80,7 +77,7 @@ TEST(http2_scan_test, basic_with_header)
         26, &flush_offset, SRC_CLIENT);
     CHECK(result == StreamSplitter::FLUSH);
     CHECK(flush_offset == 19);
-    CHECK(session_data->get_header_coming(SRC_CLIENT));
+    CHECK(session_data->get_num_frame_headers(SRC_CLIENT) == 1);
 }
 
 TEST(http2_scan_test, basic_with_header_s2c)
@@ -90,7 +87,7 @@ TEST(http2_scan_test, basic_with_header_s2c)
         26, &flush_offset, SRC_SERVER);
     CHECK(result == StreamSplitter::FLUSH);
     CHECK(flush_offset == 19);
-    CHECK(session_data->get_header_coming(SRC_SERVER));
+    CHECK(session_data->get_num_frame_headers(SRC_SERVER) == 1);
 }
 
 TEST(http2_scan_test, header_without_data)
@@ -101,7 +98,7 @@ TEST(http2_scan_test, header_without_data)
         9, &flush_offset, SRC_CLIENT);
     CHECK(result == StreamSplitter::SEARCH);
     CHECK(flush_offset == 0);
-    CHECK(session_data->get_header_coming(SRC_CLIENT));
+    CHECK(session_data->get_num_frame_headers(SRC_CLIENT) == 1);
 }
 
 TEST(http2_scan_test, preface_and_more)
@@ -111,7 +108,7 @@ TEST(http2_scan_test, preface_and_more)
         50, &flush_offset, SRC_CLIENT);
     CHECK(result == StreamSplitter::FLUSH);
     CHECK(flush_offset == 24);
-    CHECK(!session_data->get_header_coming(SRC_CLIENT));
+    CHECK(session_data->get_num_frame_headers(SRC_CLIENT) == 0);
 }
 
 TEST(http2_scan_test, preface_exactly)
@@ -121,7 +118,7 @@ TEST(http2_scan_test, preface_exactly)
         24, &flush_offset, SRC_CLIENT);
     CHECK(result == StreamSplitter::FLUSH);
     CHECK(flush_offset == 24);
-    CHECK(!session_data->get_header_coming(SRC_CLIENT));
+    CHECK(session_data->get_num_frame_headers(SRC_CLIENT) == 0);
 }
 
 TEST(http2_scan_test, short_input)
@@ -138,8 +135,8 @@ TEST(http2_scan_test, short_input)
         SRC_SERVER);
     CHECK(result == StreamSplitter::FLUSH);
     CHECK(flush_offset == 19);
-    CHECK(session_data->get_header_coming(SRC_SERVER));
-    CHECK(memcmp(session_data->get_currently_processing_frame_header(SRC_SERVER),
+    CHECK(session_data->get_num_frame_headers(SRC_SERVER) == 1);
+    CHECK(memcmp(session_data->get_scan_frame_header(SRC_SERVER),
         "\x00\x00\x10\x04\x05\x06\x07\x08\x09", 9) == 0);
 }
 
@@ -160,7 +157,7 @@ TEST(http2_scan_test, maximum_frame)
         data, 63780, &flush_offset, SRC_SERVER);
     CHECK(result == StreamSplitter::FLUSH);
     CHECK(flush_offset == 63780);
-    CHECK(session_data->get_header_coming(SRC_SERVER));
+    CHECK(session_data->get_num_frame_headers(SRC_SERVER) == 1);
 }
 
 TEST(http2_scan_test, data_sections)
@@ -171,28 +168,28 @@ TEST(http2_scan_test, data_sections)
         data, DATA_SECTION_SIZE + 9, &flush_offset, SRC_SERVER);
     CHECK(result == StreamSplitter::FLUSH);
     CHECK(flush_offset == DATA_SECTION_SIZE + 9);
-    CHECK(session_data->get_header_coming(SRC_SERVER));
+    CHECK(session_data->get_num_frame_headers(SRC_SERVER) == 1);
     CHECK(session_data->get_leftover_data(SRC_SERVER) == 0xE13C);
     result = implement_scan(session_data,
         data, DATA_SECTION_SIZE, &flush_offset, SRC_SERVER);
     CHECK(result == StreamSplitter::FLUSH);
     CHECK(flush_offset == DATA_SECTION_SIZE);
-    CHECK(!session_data->get_header_coming(SRC_SERVER));
+    CHECK(session_data->get_num_frame_headers(SRC_SERVER) == 0);
     result = implement_scan(session_data,
         data, DATA_SECTION_SIZE, &flush_offset, SRC_SERVER);
     CHECK(result == StreamSplitter::FLUSH);
     CHECK(flush_offset == DATA_SECTION_SIZE);
-    CHECK(!session_data->get_header_coming(SRC_SERVER));
+    CHECK(session_data->get_num_frame_headers(SRC_SERVER) == 0);
     result = implement_scan(session_data,
         data, DATA_SECTION_SIZE, &flush_offset, SRC_SERVER);
     CHECK(result == StreamSplitter::FLUSH);
     CHECK(flush_offset == DATA_SECTION_SIZE);
-    CHECK(!session_data->get_header_coming(SRC_SERVER));
+    CHECK(session_data->get_num_frame_headers(SRC_SERVER) == 0);
     result = implement_scan(session_data,
         data, 8508, &flush_offset, SRC_SERVER);
     CHECK(result == StreamSplitter::FLUSH);
     CHECK(flush_offset == 8508);
-    CHECK(!session_data->get_header_coming(SRC_SERVER));
+    CHECK(session_data->get_num_frame_headers(SRC_SERVER) == 0);
     CHECK(session_data->get_leftover_data(SRC_SERVER) == 0);
 }
 
@@ -208,14 +205,15 @@ TEST_GROUP(http2_reassemble_test)
 
     void teardown() override
     {
+        session_data->cleanup();
         delete session_data;
     }
 };
 
 TEST(http2_reassemble_test, basic_with_header)
 {
-    session_data->set_header_coming(true, SRC_CLIENT);
-    session_data->set_aggregated_frames (1, SRC_CLIENT);
+    session_data->set_num_frame_headers(1, SRC_CLIENT);
+    session_data->set_total_bytes_in_split(19, SRC_CLIENT);
     implement_reassemble(session_data, 19, 0,
         (const uint8_t*)"\x00\x00\x0A\x02\x00\x00\x00\x00\x00" "0123456789",
         19, PKT_PDU_TAIL, SRC_CLIENT);
@@ -225,8 +223,8 @@ TEST(http2_reassemble_test, basic_with_header)
 
 TEST(http2_reassemble_test, basic_with_header_s2c)
 {
-    session_data->set_header_coming(true, SRC_SERVER);
-    session_data->set_aggregated_frames (1, SRC_SERVER);
+    session_data->set_num_frame_headers(1, SRC_SERVER);
+    session_data->set_total_bytes_in_split(19, SRC_SERVER);
     implement_reassemble(session_data, 19, 0,
         (const uint8_t*)"\x00\x00\x0A\x02\x00\x00\x00\x00\x00" "0123456789",
         19, PKT_PDU_TAIL, SRC_SERVER);
@@ -236,7 +234,9 @@ TEST(http2_reassemble_test, basic_with_header_s2c)
 
 TEST(http2_reassemble_test, basic_without_header)
 {
-    session_data->set_header_coming(false, SRC_CLIENT);
+    session_data->set_num_frame_headers(0, SRC_CLIENT);
+    session_data->set_octets_before_first_header(24, SRC_CLIENT);
+    session_data->set_total_bytes_in_split(24, SRC_CLIENT);
     implement_reassemble(session_data, 24, 0,
         (const uint8_t*)"PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n",
         24, PKT_PDU_TAIL, SRC_CLIENT);
@@ -246,8 +246,8 @@ TEST(http2_reassemble_test, basic_without_header)
 
 TEST(http2_reassemble_test, basic_three_pieces)
 {
-    session_data->set_header_coming(true, SRC_CLIENT);
-    session_data->set_aggregated_frames (1, SRC_CLIENT);
+    session_data->set_num_frame_headers(1, SRC_CLIENT);
+    session_data->set_total_bytes_in_split(19, SRC_CLIENT);
     StreamBuffer buffer = implement_reassemble(session_data, 19, 0,
         (const uint8_t*)"\x00\x00\x0A\x02\x00\x00",
         6, 0, SRC_CLIENT);
@@ -266,7 +266,9 @@ TEST(http2_reassemble_test, basic_three_pieces)
 
 TEST(http2_reassemble_test, basic_without_header_two_pieces)
 {
-    session_data->set_header_coming(false, SRC_CLIENT);
+    session_data->set_num_frame_headers(0, SRC_CLIENT);
+    session_data->set_octets_before_first_header(24, SRC_CLIENT);
+    session_data->set_total_bytes_in_split(24, SRC_CLIENT);
     implement_reassemble(session_data, 24, 0,
         (const uint8_t*)"P",
         1, 0, SRC_CLIENT);

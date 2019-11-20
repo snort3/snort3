@@ -42,13 +42,6 @@ const char* Http2RequestLine::SCHEME_NAME = ":scheme";
 const char* Http2RequestLine::OPTIONS = "OPTIONS";
 const char* Http2RequestLine::CONNECT = "CONNECT";
 
-Http2RequestLine::Http2RequestLine(Http2FlowData* _session_data, SourceId _source_id)
-    : Http2StartLine(_session_data, _source_id)
-{ }
-
-Http2RequestLine::~Http2RequestLine()
-{ }
-
 bool Http2RequestLine::process_pseudo_header_name(const uint64_t index)
 {
     if (!process_pseudo_header_precheck())
@@ -64,8 +57,8 @@ bool Http2RequestLine::process_pseudo_header_name(const uint64_t index)
         value_coming = SCHEME;
     else
     {
-        *session_data->infractions[source_id] += INF_INVALID_PSEUDO_HEADER;
-        session_data->events[source_id]->create_event(EVENT_MISFORMATTED_HTTP2);
+        infractions += INF_INVALID_PSEUDO_HEADER;
+        events->create_event(EVENT_MISFORMATTED_HTTP2);
         return false;
     }
     return true;
@@ -90,8 +83,8 @@ bool Http2RequestLine::process_pseudo_header_name(const uint8_t* const& name, ui
         value_coming = SCHEME;
     else
     {
-        *session_data->infractions[source_id] += INF_INVALID_PSEUDO_HEADER;
-        session_data->events[source_id]->create_event(EVENT_MISFORMATTED_HTTP2);
+        infractions += INF_INVALID_PSEUDO_HEADER;
+        events->create_event(EVENT_MISFORMATTED_HTTP2);
         return false;
     }
     return true;
@@ -124,7 +117,6 @@ void Http2RequestLine::process_pseudo_header_value(const uint8_t* const& value, 
 // provided pseudo-headers and generate the start line
 bool Http2RequestLine::generate_start_line()
 {
-    uint8_t *start_line_buffer;
     uint32_t bytes_written = 0;
 
     // Asterisk form - used for OPTIONS requests
@@ -132,8 +124,8 @@ bool Http2RequestLine::generate_start_line()
     {
         if (method.length() <= 0)
         {
-            *session_data->infractions[source_id] += INF_PSEUDO_HEADER_URI_FORM_MISMATCH;
-            session_data->events[source_id]->create_event(EVENT_MISFORMATTED_HTTP2);
+            infractions += INF_PSEUDO_HEADER_URI_FORM_MISMATCH;
+            events->create_event(EVENT_MISFORMATTED_HTTP2);
             return false;
         }
         start_line_length = method.length() + path.length() + http_version_length +
@@ -159,8 +151,8 @@ bool Http2RequestLine::generate_start_line()
         // FIXIT-L May want to be more lenient than RFC on generating start line
         if ( scheme.length() > 0 or path.length() > 0 or authority.length() <= 0)
         {
-            *session_data->infractions[source_id] += INF_PSEUDO_HEADER_URI_FORM_MISMATCH;
-            session_data->events[source_id]->create_event(EVENT_MISFORMATTED_HTTP2);
+            infractions += INF_PSEUDO_HEADER_URI_FORM_MISMATCH;
+            events->create_event(EVENT_MISFORMATTED_HTTP2);
             return false;
         }
         start_line_length = method.length() + authority.length() + http_version_length +
@@ -228,16 +220,14 @@ bool Http2RequestLine::generate_start_line()
     else
     {
         // FIXIT-L May want to be more lenient than RFC on generating start line
-        *session_data->infractions[source_id] += INF_PSEUDO_HEADER_URI_FORM_MISMATCH;
-        session_data->events[source_id]->create_event(EVENT_MISFORMATTED_HTTP2);
+        infractions += INF_PSEUDO_HEADER_URI_FORM_MISMATCH;
+        events->create_event(EVENT_MISFORMATTED_HTTP2);
         return false;
     }
 
     memcpy(start_line_buffer + bytes_written, "\r\n", 2);
     bytes_written += 2;
     assert(bytes_written == start_line_length);
-
-    start_line.set(start_line_length, start_line_buffer, true);
 
     return true;
 }

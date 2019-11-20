@@ -5,6 +5,10 @@ set (FILE_LIST
     http2_enum.h
     http2_flow_data.cc
     http2_flow_data.h
+    http2_frame.cc
+    http2_frame.h
+    http2_headers_frame.cc
+    http2_headers_frame.h
     http2_hpack.cc
     http2_hpack.h
     http2_hpack_int_decode.cc

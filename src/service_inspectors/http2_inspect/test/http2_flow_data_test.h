@@ -38,26 +38,36 @@ class Http2FlowDataTest : public Http2FlowData
 public:
     bool get_preface(HttpCommon::SourceId source_id) { return preface[source_id]; }
     void set_preface(bool value, HttpCommon::SourceId source_id) { preface[source_id] = value; }
-    bool get_header_coming(HttpCommon::SourceId source_id) { return header_coming[source_id]; }
-    void set_header_coming(bool value, HttpCommon::SourceId source_id)
-        { header_coming[source_id] = value; }
+    bool get_num_frame_headers(HttpCommon::SourceId source_id) { return num_frame_headers[source_id]; }
+    void set_num_frame_headers(bool value, HttpCommon::SourceId source_id)
+        { num_frame_headers[source_id] = value; }
     uint8_t* get_frame_header(HttpCommon::SourceId source_id) { return frame_header[source_id]; }
     void set_frame_header(uint8_t* value, uint32_t length, HttpCommon::SourceId source_id)
         { frame_header[source_id] = value; frame_header_size[source_id] = length; }
-    uint8_t* get_currently_processing_frame_header(HttpCommon::SourceId source_id)
-        { return currently_processing_frame_header[source_id]; }
-    void set_aggregated_frames(uint32_t value, HttpCommon::SourceId source_id)
-        { frames_aggregated[source_id] = value; }
+    uint8_t* get_scan_frame_header(HttpCommon::SourceId source_id)
+        { return scan_frame_header[source_id]; }
     uint8_t* get_frame_data(HttpCommon::SourceId source_id) { return frame_data[source_id]; }
     void set_frame_data(uint8_t* value, HttpCommon::SourceId source_id)
         { frame_data[source_id] = value; }
     uint32_t get_frame_data_size(HttpCommon::SourceId source_id)
-        { return frame_data_size[source_id]; }
+        { return frame_data_offset[source_id]; }
     void set_frame_data_size(uint32_t value, HttpCommon::SourceId source_id)
         { frame_data_size[source_id] = value; }
     uint32_t get_leftover_data(HttpCommon::SourceId source_id) { return leftover_data[source_id]; }
     void set_leftover_data(uint32_t value, HttpCommon::SourceId source_id)
         { leftover_data[source_id] = value; }
+    void set_total_bytes_in_split(uint32_t value, HttpCommon::SourceId source_id)
+        { total_bytes_in_split[source_id] = value; }
+    void set_octets_before_first_header(uint32_t value, HttpCommon::SourceId source_id)
+        { octets_before_first_header[source_id] = value; }
+    void cleanup()
+    {
+        for (int k = 0; k < 2; k++)
+        {
+            delete[] frame_header[k];
+            delete[] frame_data[k];
+        }
+    }
 };
 
 #endif

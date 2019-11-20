@@ -53,53 +53,56 @@ public:
     friend class Http2Hpack;
     friend class Http2StartLine;
     friend class Http2RequestLine;
+    friend class Http2Frame;
+    friend class Http2HeadersFrame;
     friend const snort::StreamBuffer implement_reassemble(Http2FlowData*, unsigned, unsigned,
         const uint8_t*, unsigned, uint32_t, HttpCommon::SourceId);
     friend snort::StreamSplitter::Status implement_scan(Http2FlowData*, const uint8_t*, uint32_t,
         uint32_t*, HttpCommon::SourceId);
     friend bool implement_get_buf(unsigned id, Http2FlowData*, HttpCommon::SourceId,
         snort::InspectionBuffer&);
+    friend void implement_eval(Http2FlowData* session_data, HttpCommon::SourceId source_id);
 
     size_t size_of() override
     { return sizeof(*this); }
 
 protected:
     // 0 element refers to client frame, 1 element refers to server frame
-    bool preface[2] = { true, false };
+
+    // Reassemble() signals to eval()
     uint8_t* frame_header[2] = { nullptr, nullptr };
     uint32_t frame_header_size[2] = { 0, 0 };
     uint8_t* frame_data[2] = { nullptr, nullptr };
     uint32_t frame_data_size[2] = { 0, 0 };
-    uint8_t* raw_decoded_header[2] = { nullptr, nullptr };
-    uint32_t raw_decoded_header_size[2] = { 0, 0 };
-    uint32_t pseudo_header_fragment_size[2] = { 0, 0 };
-    Field* http2_decoded_header[2] = { nullptr, nullptr };
+
+    // Used in eval()
     bool frame_in_detection = false;
+    class Http2Frame* current_frame[2] = { nullptr, nullptr };
+    Http2HpackDecoder hpack_decoder[2];
 
     // Internal to scan()
+    bool preface[2] = { true, false };
     bool continuation_expected[2] = { false, false };
-    uint8_t currently_processing_frame_header[2][Http2Enums::FRAME_HEADER_LENGTH];
-    uint32_t inspection_section_length[2] = { 0, 0 };
+    uint8_t scan_frame_header[2][Http2Enums::FRAME_HEADER_LENGTH];
+    uint32_t scan_remaining_frame_octets[2] = { 0, 0 };
+    uint32_t scan_octets_seen[2] = { 0, 0 };
     uint32_t leftover_data[2] = { 0, 0 };
-    uint32_t octets_seen[2] = { 0, 0 };
-    uint8_t scan_header_octets_seen[2] = { 0, 0 };
 
     // Scan signals to reassemble()
-    bool header_coming[2]  = { false, false };
     bool payload_discard[2] = { false, false };
-    uint32_t frames_aggregated[2] = { 0, 0 };
+    uint32_t num_frame_headers[2] = { 0, 0 };
+    uint32_t total_bytes_in_split[2] = { 0, 0 };
+    uint32_t octets_before_first_header[2] = { 0, 0 };
 
     // Used by scan, reassemble and eval to communicate
     uint8_t frame_type[2] = { Http2Enums::FT__NONE, Http2Enums::FT__NONE };
     
     // Internal to reassemble()
-    Http2Hpack hpack[2];
-    class Http2StartLine* header_start_line[2] = { nullptr, nullptr };
-    uint32_t remaining_octets_to_next_header[2] = { 0, 0 };
-    uint32_t remaining_frame_data_octets[2] = { 0, 0 };
-    uint32_t remaining_frame_data_offset[2] = { 0, 0 };
     uint32_t frame_header_offset[2] = { 0, 0 };
-    uint8_t reassemble_header_octets_seen[2] = { 0, 0 };
+    uint32_t frame_data_offset[2] = { 0, 0 };
+    uint32_t remaining_frame_octets[2] = { 0, 0 };
+    uint8_t padding_octets_in_frame[2] = { 0, 0 };
+    bool get_padding_len[2] = { false, false };
 
     // These will eventually be moved over to the frame/stream object, as they are moved to the
     // transaction in NHI. Also as in NHI accessor methods will need to be added.

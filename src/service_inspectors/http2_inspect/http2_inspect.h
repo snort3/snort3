@@ -28,11 +28,11 @@
 #include "service_inspectors/http_inspect/http_common.h"
 
 #include "http2_enum.h"
-#include "http2_flow_data.h"
 #include "http2_module.h"
 #include "http2_stream_splitter.h"
 
 class Http2Api;
+class Http2FlowData;
 
 class Http2Inspect : public snort::Inspector
 {
@@ -61,6 +61,7 @@ private:
 
 bool implement_get_buf(unsigned id, Http2FlowData* session_data, HttpCommon::SourceId source_id,
     snort::InspectionBuffer& b);
+void implement_eval(Http2FlowData* session_data, HttpCommon::SourceId source_id);
 
 #endif
 

@@ -29,8 +29,8 @@
 class Http2RequestLine : public Http2StartLine
 {
 public:
-    Http2RequestLine(Http2FlowData* session_data, HttpCommon::SourceId source_id);
-    ~Http2RequestLine() override;
+    Http2RequestLine(Http2EventGen* events, Http2Infractions* infractions) : Http2StartLine(events,
+        infractions) { }
 
     bool process_pseudo_header_name(const uint64_t index) override;
     bool process_pseudo_header_name(const uint8_t* const& name, uint32_t length) override;

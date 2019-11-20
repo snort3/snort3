@@ -34,16 +34,17 @@ using namespace Http2Enums;
 
 const char* Http2StartLine::http_version_string = "HTTP/1.1";
 
-Http2StartLine::Http2StartLine(Http2FlowData* _session_data, HttpCommon::SourceId _source_id) :
-   session_data(_session_data), source_id(_source_id)
-{ }
+Http2StartLine::~Http2StartLine()
+{
+    delete[] start_line_buffer;
+}
 
 bool Http2StartLine::process_pseudo_header_precheck()
 {
     if (finalized)
     {
-        *session_data->infractions[source_id] += INF_PSEUDO_HEADER_AFTER_REGULAR_HEADER;
-        session_data->events[source_id]->create_event(EVENT_MISFORMATTED_HTTP2);
+        infractions += INF_PSEUDO_HEADER_AFTER_REGULAR_HEADER;
+        events->create_event(EVENT_MISFORMATTED_HTTP2);
         return false;
     }
     return true;
@@ -52,11 +53,10 @@ bool Http2StartLine::process_pseudo_header_precheck()
 bool Http2StartLine::finalize()
 {
     finalized = true;
-
-    // Save the current position in the raw decoded buffer so we can set the pointer to the start
-    // of the regular headers
-    session_data->pseudo_header_fragment_size[source_id] =
-        session_data->raw_decoded_header_size[source_id];
-
     return generate_start_line();
+}
+
+const Field* Http2StartLine::get_start_line()
+{
+    return new Field(start_line_length, start_line_buffer, false);
 }

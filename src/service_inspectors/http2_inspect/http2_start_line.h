@@ -22,26 +22,33 @@
 
 #include "service_inspectors/http_inspect/http_common.h"
 #include "service_inspectors/http_inspect/http_field.h"
+#include "utils/event_gen.h"
+#include "utils/infractions.h"
 
 #include "http2_enum.h"
+
+using Http2Infractions = Infractions<Http2Enums::INF__MAX_VALUE, Http2Enums::INF__NONE>;
+using Http2EventGen = EventGen<Http2Enums::EVENT__MAX_VALUE, Http2Enums::EVENT__NONE,
+    Http2Enums::HTTP2_GID>;
 
 class Http2FlowData;
 
 class Http2StartLine
 {
 public:
-    Http2StartLine(Http2FlowData* _session_data, HttpCommon::SourceId _source_id);
-    virtual ~Http2StartLine() = default;
+    Http2StartLine(Http2EventGen* events, Http2Infractions* infractions) : events(events),
+        infractions(infractions) { }
+
+    virtual ~Http2StartLine();
 
     friend class Http2Hpack;
 
-    const Field& get_start_line() { return start_line; }
+    const Field* get_start_line();
     virtual bool process_pseudo_header_name(const uint64_t index) = 0;
     virtual bool process_pseudo_header_name(const uint8_t* const& name, uint32_t length) = 0;
     virtual void process_pseudo_header_value(const uint8_t* const& value, const uint32_t length) = 0;
     bool finalize();
     bool is_finalized() { return finalized; }
-    uint32_t get_start_line_length() { return start_line_length; }
     bool is_pseudo_value() { return value_coming != Http2Enums::HEADER_NONE; }
     bool is_pseudo_name(const char* const& name) { return name[0] == ':'; }
 
@@ -49,12 +56,13 @@ protected:
     bool process_pseudo_header_precheck();
     virtual bool generate_start_line() = 0;
 
-    Field start_line;
-    Http2FlowData* session_data;
-    HttpCommon::SourceId source_id;
+    Http2EventGen* events;
+    Http2Infractions* infractions;
     bool finalized = false;
     uint32_t start_line_length = 0;
+    uint8_t *start_line_buffer = nullptr;
     Http2Enums::PseudoHeaders value_coming = Http2Enums::HEADER_NONE;
+    uint32_t pseudo_header_fragment_size = 0;
 
     // Version string is HTTP/1.1
     static const char* http_version_string;

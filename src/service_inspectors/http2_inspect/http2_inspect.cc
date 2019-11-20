@@ -29,6 +29,8 @@
 #include "service_inspectors/http_inspect/http_test_manager.h"
 #include "stream/stream.h"
 
+#include "http2_frame.h"
+
 using namespace snort;
 using namespace HttpCommon;
 using namespace Http2Enums;
@@ -103,23 +105,14 @@ void Http2Inspect::eval(Packet* p)
     if (session_data->frame_type[source_id] == FT__NONE)
         return;
 
-    session_data->frame_type[source_id] = FT__NONE;
-    
-    set_file_data(session_data->frame_data[source_id],
-        session_data->frame_data_size[source_id]);
+    implement_eval(session_data, source_id);
+
     session_data->frame_in_detection = true;
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2))
     {
-        Field((session_data->frame_header[source_id] != nullptr) ?
-            (int) session_data->frame_header_size[source_id]  : HttpCommon::STAT_NOT_PRESENT,
-            session_data->frame_header[source_id]).print(HttpTestManager::get_output_file(),
-            "Frame Header");
-        Field((session_data->frame_data[source_id] != nullptr) ?
-            (int) session_data->frame_data_size[source_id] : HttpCommon::STAT_NOT_PRESENT,
-            session_data->frame_data[source_id]).print(HttpTestManager::get_output_file(),
-            "Frame Data");
+        session_data->current_frame[source_id]->print_frame(HttpTestManager::get_output_file());
         if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP2))
         {
             printf("Finished processing section from test %" PRIi64 "\n",
