@@ -781,19 +781,27 @@ SO_PUBLIC void close_table(const char* s, int idx)
     string key = fqn;
     set_top(key);
 
+    const bool top = !idx && key == s;
+
     if ( ModHook* h = get_hook(key.c_str()) )
     {
         if ( !end(h->mod, nullptr, s, idx) )
             ParseError("can't close %s", h->mod->get_name());
 
-        else if ( !s_name.empty() )
-            PluginManager::instantiate(h->api, h->mod, s_config, s_name.c_str());
-
-        else if ( !idx && h->api && (key == s) )
-            PluginManager::instantiate(h->api, h->mod, s_config);
+        else if (h->api && top)
+        {
+            if ( !s_name.empty() )
+                PluginManager::instantiate(h->api, h->mod, s_config, s_name.c_str());
+            else
+                PluginManager::instantiate(h->api, h->mod, s_config);
+        }
     }
-    s_name.clear();
-    s_type.clear();
+
+    if ( top )
+    {
+        s_name.clear();
+        s_type.clear();
+    }
 }
 
 SO_PUBLIC bool set_bool(const char* fqn, bool b)
