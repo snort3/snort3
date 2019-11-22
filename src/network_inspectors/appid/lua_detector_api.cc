@@ -2482,6 +2482,22 @@ static int create_future_flow(lua_State* L)
         return 0;
 }
 
+static int is_midstream_session(lua_State *L)
+{
+    auto& ud = *UserData<LuaClientObject>::check(L, DETECTOR, 1);
+    // Verify detector user data and that we are in packet context
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
+
+    if (lsd->ldp.pkt->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
+    {
+        lua_pushnumber(L, 1);
+        return 1;
+    }
+
+    lua_pushnumber(L, 0);
+    return 0;
+}
+
 static const luaL_Reg detector_methods[] =
 {
     /* Obsolete API names.  No longer use these!  They are here for backward
@@ -2608,6 +2624,7 @@ static const luaL_Reg detector_methods[] =
     { "addPortPatternService",    add_port_pattern_service },
 
     { "createFutureFlow",         create_future_flow },
+    { "isMidStreamSession",       is_midstream_session },
 
     { nullptr, nullptr }
 };
