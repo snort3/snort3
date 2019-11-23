@@ -1,3 +1,22 @@
+19/11/22 - build 265
+
+-- analyzer_command: support resource tuning on reload
+-- appid: Adding Lua-C API to handle midstream traffic
+-- cip: ips rule support for Common Industrial Protocol (CIP)
+-- ftp: handling multiple ftp server config validation
+-- detection: disable rule evaluation when detection is disabled for offload packets
+-- detection: fix post-inspection state clearing issue
+-- flow: check if there are offloaded packets in the flow before clearing out the alert count
+-- http2_inspect: add frame class and refactor stream splitter
+-- http2_inspect: fix unit tests to build without REGTEST defined
+-- main: Improve performance of control connection polling
+-- plugin_manager: allow loading individual plugin files in plugin-path
+-- reject: Setting defaults for reset and control options
+-- snort: update reload resource tuner to return status indicating if there is work to be done in the packet thread
+-- stream: register reload resource tuner unconditionally. move checks for config changes to the tuner tinit method
+-- stream_tcp: fix state machine instantiation
+-- wizard: handle NBSS startup in dce_smb_curse
+
 19/11/06 - build 264
 -- appid: Handle DNS responses with compression pointers at last record
 -- dce_smb: deprecate config for smb_file_inspection, use smb_file_depth only

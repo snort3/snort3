@@ -8272,7 +8272,7 @@ bool <strong>output.obfuscate</strong> = false: obfuscate the logged IP addresse
 </li>
 <li>
 <p>
-bool <strong>output.wide_hex_dump</strong> = false: output 20 bytes per lines instead of 16 when dumping buffers
+bool <strong>output.wide_hex_dump</strong> = true: output 20 bytes per lines instead of 16 when dumping buffers
 </p>
 </li>
 </ul></div>
@@ -9144,6 +9144,11 @@ implied <strong>snort.--pause</strong>: wait for resume/quit command before proc
 </li>
 <li>
 <p>
+int <strong>snort.--pause-after-n</strong>: &lt;count&gt; pause after count packets { 1:max53 }
+</p>
+</li>
+<li>
+<p>
 string <strong>snort.--pcap-file</strong>: &lt;file&gt; file that contains a list of pcaps to read - read mode is implied
 </p>
 </li>
@@ -9189,7 +9194,12 @@ implied <strong>snort.--pedantic</strong>: warnings are fatal
 </li>
 <li>
 <p>
-string <strong>snort.--plugin-path</strong>: &lt;path&gt; where to find plugins
+implied <strong>snort.--piglet</strong>: enable piglet test harness mode
+</p>
+</li>
+<li>
+<p>
+string <strong>snort.--plugin-path</strong>: &lt;path&gt; a colon separated list of directories or plugin libraries
 </p>
 </li>
 <li>
@@ -9275,6 +9285,11 @@ implied <strong>snort.--treat-drop-as-ignore</strong>: use drop, block, and rese
 <li>
 <p>
 string <strong>snort.--tweaks</strong>: tune configuration
+</p>
+</li>
+<li>
+<p>
+string <strong>snort.--catch-test</strong>: comma separated list of cat unit test tags or <em>all</em>
 </p>
 </li>
 <li>
@@ -10743,6 +10758,11 @@ protocols beyond basic decoding.</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
+int <strong>appid.first_decrypted_packet_debug</strong> = 0: the first packet of an already decrypted SSL flow (debug single session only) { 0:max32 }
+</p>
+</li>
+<li>
+<p>
 int <strong>appid.memcap</strong> = 1048576: max size of the service cache before we start pruning the cache { 1024:maxSZ }
 </p>
 </li>
@@ -11094,6 +11114,81 @@ string <strong><code>binder[].use.name</code></strong>: symbol name (defaults to
 <li>
 <p>
 <strong>binder.inspects</strong>: inspect bindings (sum)
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_cip">cip</h3>
+<div class="paragraph"><p>What: cip inspection</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Usage: inspect</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+string <strong>cip.embedded_cip_path</strong> = false: check embedded CIP path
+</p>
+</li>
+<li>
+<p>
+int <strong>cip.unconnected_timeout</strong> = 300: unconnected timeout in seconds { 0:360 }
+</p>
+</li>
+<li>
+<p>
+int <strong>cip.max_cip_connections</strong> = 100: max cip connections { 1:10000 }
+</p>
+</li>
+<li>
+<p>
+int <strong>cip.max_unconnected_messages</strong> = 100: max unconnected cip messages { 1:10000 }
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Rules:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>148:1</strong> (cip) CIP data is malformed.
+</p>
+</li>
+<li>
+<p>
+<strong>148:2</strong> (cip) CIP data is non-conforming to ODVA standard.
+</p>
+</li>
+<li>
+<p>
+<strong>148:3</strong> (cip) CIP connection limit exceeded. Least recently used connection removed.
+</p>
+</li>
+<li>
+<p>
+<strong>148:4</strong> (cip) CIP unconnected request limit exceeded. Oldest request removed.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>cip.packets</strong>: total packets (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>cip.session</strong>: total sessions (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>cip.concurrent_sessions</strong>: total concurrent SIP sessions (now)
+</p>
+</li>
+<li>
+<p>
+<strong>cip.max_concurrent_sessions</strong>: maximum concurrent SIP sessions (max)
 </p>
 </li>
 </ul></div>
@@ -12924,6 +13019,39 @@ int <strong>gtp_inspect.trace</strong>: mask for enabling debug traces in module
 <div class="paragraph"><p>What: HTTP/2 inspector</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
 <div class="paragraph"><p>Usage: inspect</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+bool <strong>http2_inspect.test_input</strong> = false: read HTTP/2 messages from text file
+</p>
+</li>
+<li>
+<p>
+bool <strong>http2_inspect.test_output</strong> = false: print out HTTP section data
+</p>
+</li>
+<li>
+<p>
+int <strong>http2_inspect.print_amount</strong> = 1200: number of characters to print from a Field { 1:max53 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>http2_inspect.print_hex</strong> = false: nonprinting characters printed in [HH] format instead of using an asterisk
+</p>
+</li>
+<li>
+<p>
+bool <strong>http2_inspect.show_pegs</strong> = true: display peg counts with test output
+</p>
+</li>
+<li>
+<p>
+bool <strong>http2_inspect.show_scan</strong> = false: display scanned segments
+</p>
+</li>
+</ul></div>
 <div class="paragraph"><p>Rules:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -13101,6 +13229,36 @@ bool <strong>http_inspect.plus_to_space</strong> = true: replace + with &lt;sp&g
 <li>
 <p>
 bool <strong>http_inspect.simplify_path</strong> = true: reduce URI directory path to simplest form
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.test_input</strong> = false: read HTTP messages from text file
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.test_output</strong> = false: print out HTTP section data
+</p>
+</li>
+<li>
+<p>
+int <strong>http_inspect.print_amount</strong> = 1200: number of characters to print from a Field { 1:max53 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.print_hex</strong> = false: nonprinting characters printed in [HH] format instead of using an asterisk
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.show_pegs</strong> = true: display peg counts with test output
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.show_scan</strong> = false: display scanned segments
 </p>
 </li>
 </ul></div>
@@ -17568,12 +17726,12 @@ string <strong>react.page</strong>: file containing HTTP response (headers and b
 <div class="ulist"><ul>
 <li>
 <p>
-enum <strong>reject.reset</strong>: send TCP reset to one or both ends { source|dest|both }
+enum <strong>reject.reset</strong> = both: send TCP reset to one or both ends { none|source|dest|both }
 </p>
 </li>
 <li>
 <p>
-enum <strong>reject.control</strong>: send ICMP unreachable(s) { network|host|port|forward|all }
+enum <strong>reject.control</strong> = none: send ICMP unreachable(s) { none|network|host|port|forward|all }
 </p>
 </li>
 </ul></div>
@@ -18038,6 +18196,102 @@ int <strong>byte_test.bitmask</strong>: applies as an AND prior to evaluation { 
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_cip_attribute">cip_attribute</h3>
+<div class="paragraph"><p>What: detection option to match CIP attribute</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Usage: detect</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+interval <strong>cip_attribute.~range</strong>: match CIP attribute { 0:65535 }
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_cip_class">cip_class</h3>
+<div class="paragraph"><p>What: detection option to match CIP class</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Usage: detect</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+interval <strong>cip_class.~range</strong>: match CIP class { 0:65535 }
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_cip_conn_path_class">cip_conn_path_class</h3>
+<div class="paragraph"><p>What: detection option to match CIP Connection Path Class</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Usage: detect</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+interval <strong>cip_conn_path_class.~range</strong>: match CIP Connection Path Class { 0:65535 }
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_cip_instance">cip_instance</h3>
+<div class="paragraph"><p>What: detection option to match CIP instance</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Usage: detect</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+interval <strong>cip_instance.~range</strong>: match CIP instance { 0:4294967295 }
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_cip_req">cip_req</h3>
+<div class="paragraph"><p>What: detection option to match CIP request</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Usage: detect</p></div>
+</div>
+<div class="sect2">
+<h3 id="_cip_rsp">cip_rsp</h3>
+<div class="paragraph"><p>What: detection option to match CIP response</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Usage: detect</p></div>
+</div>
+<div class="sect2">
+<h3 id="_cip_service">cip_service</h3>
+<div class="paragraph"><p>What: detection option to match CIP service</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Usage: detect</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+interval <strong>cip_service.~range</strong>: match CIP service { 0:127 }
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_cip_status">cip_status</h3>
+<div class="paragraph"><p>What: detection option to match CIP response status</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Usage: detect</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+interval <strong>cip_status.~range</strong>: match CIP response status { 0:255 }
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_classtype">classtype</h3>
 <div class="paragraph"><p>What: general rule option for rule classification</p></div>
 <div class="paragraph"><p>Type: ips_option</p></div>
@@ -18267,6 +18521,32 @@ enum <strong>enable.~enable</strong> = yes: enable or disable rule in current ip
 </p>
 </li>
 </ul></div>
+</div>
+<div class="sect2">
+<h3 id="_enip_command">enip_command</h3>
+<div class="paragraph"><p>What: detection option to match CIP Enip Command</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Usage: detect</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+interval <strong>enip_command.~range</strong>: match CIP Enip Command { 0:65535 }
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_enip_req">enip_req</h3>
+<div class="paragraph"><p>What: detection option to match ENIP Request</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Usage: detect</p></div>
+</div>
+<div class="sect2">
+<h3 id="_enip_rsp">enip_rsp</h3>
+<div class="paragraph"><p>What: detection option to match ENIP response</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Usage: detect</p></div>
 </div>
 <div class="sect2">
 <h3 id="_file_data">file_data</h3>
@@ -21672,6 +21952,12 @@ options into a Snort++ configuration file</p></div>
 </li>
 <li>
 <p>
+<strong>--print-binding-order</strong>
+                    Print sorting priority used when generating binder table
+</p>
+</li>
+<li>
+<p>
 <strong>--print-differences</strong>  Same as <em>-d</em>. output the differences, and only the
                     differences, between the Snort and Snort++ configurations to
                     the &lt;out_file&gt;
@@ -24318,6 +24604,11 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
+<strong>--pause-after-n</strong> &lt;count&gt; pause after count packets (1:max53)
+</p>
+</li>
+<li>
+<p>
 <strong>--pcap-file</strong> &lt;file&gt; file that contains a list of pcaps to read - read mode is implied
 </p>
 </li>
@@ -24363,7 +24654,12 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>--plugin-path</strong> &lt;path&gt; where to find plugins
+<strong>--piglet</strong> enable piglet test harness mode
+</p>
+</li>
+<li>
+<p>
+<strong>--plugin-path</strong> &lt;path&gt; a colon separated list of directories or plugin libraries
 </p>
 </li>
 <li>
@@ -24449,6 +24745,11 @@ these libraries see the Getting Started section of the manual.</p></div>
 <li>
 <p>
 <strong>--tweaks</strong> tune configuration
+</p>
+</li>
+<li>
+<p>
+<strong>--catch-test</strong> comma separated list of cat unit test tags or <em>all</em>
 </p>
 </li>
 <li>
@@ -24729,6 +25030,11 @@ bool <strong>appid.debug</strong> = false: enable appid debug logging
 <li>
 <p>
 bool <strong>appid.dump_ports</strong> = false: enable dump of appid port information
+</p>
+</li>
+<li>
+<p>
+int <strong>appid.first_decrypted_packet_debug</strong> = 0: the first packet of an already decrypted SSL flow (debug single session only) { 0:max32 }
 </p>
 </li>
 <li>
@@ -25253,6 +25559,56 @@ implied <strong>byte_test.string</strong>: convert from string
 </li>
 <li>
 <p>
+interval <strong>cip_attribute.~range</strong>: match CIP attribute { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+interval <strong>cip_class.~range</strong>: match CIP class { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+interval <strong>cip_conn_path_class.~range</strong>: match CIP Connection Path Class { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+string <strong>cip.embedded_cip_path</strong> = false: check embedded CIP path
+</p>
+</li>
+<li>
+<p>
+interval <strong>cip_instance.~range</strong>: match CIP instance { 0:4294967295 }
+</p>
+</li>
+<li>
+<p>
+int <strong>cip.max_cip_connections</strong> = 100: max cip connections { 1:10000 }
+</p>
+</li>
+<li>
+<p>
+int <strong>cip.max_unconnected_messages</strong> = 100: max unconnected cip messages { 1:10000 }
+</p>
+</li>
+<li>
+<p>
+interval <strong>cip_service.~range</strong>: match CIP service { 0:127 }
+</p>
+</li>
+<li>
+<p>
+interval <strong>cip_status.~range</strong>: match CIP response status { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>cip.unconnected_timeout</strong> = 300: unconnected timeout in seconds { 0:360 }
+</p>
+</li>
+<li>
+<p>
 string <strong><code>classifications[].name</code></strong>: name used with classtype rule option
 </p>
 </li>
@@ -25624,6 +25980,11 @@ interval <strong>dsize.~range</strong>: check if packet payload size is in the g
 <li>
 <p>
 enum <strong>enable.~enable</strong> = yes: enable or disable rule in current ips policy or use default defined by ips policy { no | yes | inherit }
+</p>
+</li>
+<li>
+<p>
+interval <strong>enip_command.~range</strong>: match CIP Enip Command { 0:65535 }
 </p>
 </li>
 <li>
@@ -26278,6 +26639,36 @@ enum <strong><code>host_tracker[].services[].proto</code></strong>: IP protocol 
 </li>
 <li>
 <p>
+int <strong>http2_inspect.print_amount</strong> = 1200: number of characters to print from a Field { 1:max53 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>http2_inspect.print_hex</strong> = false: nonprinting characters printed in [HH] format instead of using an asterisk
+</p>
+</li>
+<li>
+<p>
+bool <strong>http2_inspect.show_pegs</strong> = true: display peg counts with test output
+</p>
+</li>
+<li>
+<p>
+bool <strong>http2_inspect.show_scan</strong> = false: display scanned segments
+</p>
+</li>
+<li>
+<p>
+bool <strong>http2_inspect.test_input</strong> = false: read HTTP/2 messages from text file
+</p>
+</li>
+<li>
+<p>
+bool <strong>http2_inspect.test_output</strong> = false: print out HTTP section data
+</p>
+</li>
+<li>
+<p>
 implied <strong>http_cookie.request</strong>: match against the cookie from the request message even when examining the response
 </p>
 </li>
@@ -26408,6 +26799,16 @@ bool <strong>http_inspect.plus_to_space</strong> = true: replace + with &lt;sp&g
 </li>
 <li>
 <p>
+int <strong>http_inspect.print_amount</strong> = 1200: number of characters to print from a Field { 1:max53 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.print_hex</strong> = false: nonprinting characters printed in [HH] format instead of using an asterisk
+</p>
+</li>
+<li>
+<p>
 int <strong>http_inspect.request_depth</strong> = -1: maximum request message body bytes to examine (-1 no limit) { -1:max53 }
 </p>
 </li>
@@ -26418,7 +26819,27 @@ int <strong>http_inspect.response_depth</strong> = -1: maximum response message 
 </li>
 <li>
 <p>
+bool <strong>http_inspect.show_pegs</strong> = true: display peg counts with test output
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.show_scan</strong> = false: display scanned segments
+</p>
+</li>
+<li>
+<p>
 bool <strong>http_inspect.simplify_path</strong> = true: reduce URI directory path to simplest form
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.test_input</strong> = false: read HTTP messages from text file
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.test_output</strong> = false: print out HTTP section data
 </p>
 </li>
 <li>
@@ -27218,7 +27639,7 @@ bool <strong>output.verbose</strong> = false: be verbose (same as -v)
 </li>
 <li>
 <p>
-bool <strong>output.wide_hex_dump</strong> = false: output 20 bytes per lines instead of 16 when dumping buffers
+bool <strong>output.wide_hex_dump</strong> = true: output 20 bytes per lines instead of 16 when dumping buffers
 </p>
 </li>
 <li>
@@ -27908,12 +28329,12 @@ implied <strong>regex.relative</strong>: start search from end of last match ins
 </li>
 <li>
 <p>
-enum <strong>reject.control</strong>: send ICMP unreachable(s) { network|host|port|forward|all }
+enum <strong>reject.control</strong> = none: send ICMP unreachable(s) { none|network|host|port|forward|all }
 </p>
 </li>
 <li>
 <p>
-enum <strong>reject.reset</strong>: send TCP reset to one or both ends { source|dest|both }
+enum <strong>reject.reset</strong> = both: send TCP reset to one or both ends { none|source|dest|both }
 </p>
 </li>
 <li>
@@ -28458,6 +28879,11 @@ string <strong>snort.--c2x</strong>: output hex for given char (see also --x2c)
 </li>
 <li>
 <p>
+string <strong>snort.--catch-test</strong>: comma separated list of cat unit test tags or <em>all</em>
+</p>
+</li>
+<li>
+<p>
 string <strong>snort.-c</strong>: &lt;conf&gt; use this configuration
 </p>
 </li>
@@ -28758,6 +29184,11 @@ string <strong>snort.-?</strong>: &lt;option prefix&gt; output matching command 
 </li>
 <li>
 <p>
+int <strong>snort.--pause-after-n</strong>: &lt;count&gt; pause after count packets { 1:max53 }
+</p>
+</li>
+<li>
+<p>
 implied <strong>snort.--pause</strong>: wait for resume/quit command before processing packets/terminating
 </p>
 </li>
@@ -28808,7 +29239,12 @@ implied <strong>snort.--pedantic</strong>: warnings are fatal
 </li>
 <li>
 <p>
-string <strong>snort.--plugin-path</strong>: &lt;path&gt; where to find plugins
+implied <strong>snort.--piglet</strong>: enable piglet test harness mode
+</p>
+</li>
+<li>
+<p>
+string <strong>snort.--plugin-path</strong>: &lt;path&gt; a colon separated list of directories or plugin libraries
 </p>
 </li>
 <li>
@@ -29704,6 +30140,26 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>binder.resets</strong>: reset bindings (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>cip.concurrent_sessions</strong>: total concurrent SIP sessions (now)
+</p>
+</li>
+<li>
+<p>
+<strong>cip.max_concurrent_sessions</strong>: maximum concurrent SIP sessions (max)
+</p>
+</li>
+<li>
+<p>
+<strong>cip.packets</strong>: total packets (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>cip.session</strong>: total sessions (sum)
 </p>
 </li>
 <li>
@@ -32978,6 +33434,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>148</strong>: cip
+</p>
+</li>
+<li>
+<p>
 <strong>149</strong>: s7commplus
 </p>
 </li>
@@ -35478,6 +35939,26 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>148:1</strong> (cip) CIP data is malformed.
+</p>
+</li>
+<li>
+<p>
+<strong>148:2</strong> (cip) CIP data is non-conforming to ODVA standard.
+</p>
+</li>
+<li>
+<p>
+<strong>148:3</strong> (cip) CIP connection limit exceeded. Least recently used connection removed.
+</p>
+</li>
+<li>
+<p>
+<strong>148:4</strong> (cip) CIP unconnected request limit exceeded. Oldest request removed.
+</p>
+</li>
+<li>
+<p>
 <strong>149:1</strong> (s7commplus) length in S7commplus MBAP header does not match the length needed for the given S7commplus function
 </p>
 </li>
@@ -36174,6 +36655,51 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
+<strong>cip</strong> (inspector): cip inspection
+</p>
+</li>
+<li>
+<p>
+<strong>cip_attribute</strong> (ips_option): detection option to match CIP attribute
+</p>
+</li>
+<li>
+<p>
+<strong>cip_class</strong> (ips_option): detection option to match CIP class
+</p>
+</li>
+<li>
+<p>
+<strong>cip_conn_path_class</strong> (ips_option): detection option to match CIP Connection Path Class
+</p>
+</li>
+<li>
+<p>
+<strong>cip_instance</strong> (ips_option): detection option to match CIP instance
+</p>
+</li>
+<li>
+<p>
+<strong>cip_req</strong> (ips_option): detection option to match CIP request
+</p>
+</li>
+<li>
+<p>
+<strong>cip_rsp</strong> (ips_option): detection option to match CIP response
+</p>
+</li>
+<li>
+<p>
+<strong>cip_service</strong> (ips_option): detection option to match CIP service
+</p>
+</li>
+<li>
+<p>
+<strong>cip_status</strong> (ips_option): detection option to match CIP response status
+</p>
+</li>
+<li>
+<p>
 <strong>ciscometadata</strong> (codec): support for cisco metadata
 </p>
 </li>
@@ -36315,6 +36841,21 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 <li>
 <p>
 <strong>enable</strong> (ips_option): stub rule option to enable or disable full rule
+</p>
+</li>
+<li>
+<p>
+<strong>enip_command</strong> (ips_option): detection option to match CIP Enip Command
+</p>
+</li>
+<li>
+<p>
+<strong>enip_req</strong> (ips_option): detection option to match ENIP Request
+</p>
+</li>
+<li>
+<p>
+<strong>enip_rsp</strong> (ips_option): detection option to match ENIP response
 </p>
 </li>
 <li>
@@ -37459,6 +38000,11 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
+<strong>inspector::cip</strong>: cip inspection
+</p>
+</li>
+<li>
+<p>
 <strong>inspector::data_log</strong>: log selected published data to data.log
 </p>
 </li>
@@ -37769,6 +38315,46 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
+<strong>ips_option::cip_attribute</strong>: detection option to match CIP attribute
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::cip_class</strong>: detection option to match CIP class
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::cip_conn_path_class</strong>: detection option to match CIP Connection Path Class
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::cip_instance</strong>: detection option to match CIP instance
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::cip_req</strong>: detection option to match CIP request
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::cip_rsp</strong>: detection option to match CIP response
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::cip_service</strong>: detection option to match CIP service
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::cip_status</strong>: detection option to match CIP response status
+</p>
+</li>
+<li>
+<p>
 <strong>ips_option::classtype</strong>: general rule option for rule classification
 </p>
 </li>
@@ -37830,6 +38416,21 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 <li>
 <p>
 <strong>ips_option::enable</strong>: stub rule option to enable or disable full rule
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::enip_command</strong>: detection option to match CIP Enip Command
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::enip_req</strong>: detection option to match ENIP Request
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::enip_rsp</strong>: detection option to match ENIP response
 </p>
 </li>
 <li>
@@ -38324,6 +38925,46 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
+<strong>piglet::pp_codec</strong>: Codec piglet
+</p>
+</li>
+<li>
+<p>
+<strong>piglet::pp_inspector</strong>: Inspector piglet
+</p>
+</li>
+<li>
+<p>
+<strong>piglet::pp_ips_action</strong>: Ips action piglet
+</p>
+</li>
+<li>
+<p>
+<strong>piglet::pp_ips_option</strong>: Ips option piglet
+</p>
+</li>
+<li>
+<p>
+<strong>piglet::pp_logger</strong>: Logger piglet
+</p>
+</li>
+<li>
+<p>
+<strong>piglet::pp_search_engine</strong>: Search engine piglet
+</p>
+</li>
+<li>
+<p>
+<strong>piglet::pp_so_rule</strong>: SO rule piglet
+</p>
+</li>
+<li>
+<p>
+<strong>piglet::pp_test</strong>: Test piglet
+</p>
+</li>
+<li>
+<p>
 <strong>search_engine::ac_banded</strong>: Aho-Corasick Banded (high memory, moderate performance)
 </p>
 </li>
@@ -38587,7 +39228,7 @@ Adding/removing stream_* inspectors if stream was already configured
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2019-11-06 08:35:24 EST
+ 2019-11-21 02:51:52 EST
 </div>
 </div>
 </body>
