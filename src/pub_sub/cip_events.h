@@ -42,7 +42,7 @@ struct SfIp;
 
 struct CipEventData;
 
-class CipEvent : public snort::DataEvent
+class SO_PUBLIC CipEvent : public snort::DataEvent
 {
 public:
     CipEvent(const snort::Packet*, const CipEventData*);
