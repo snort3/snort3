@@ -269,7 +269,7 @@ TEST(appid_http_session, http_field_ids_enum_order)
 TEST(appid_http_session, set_tun_dest)
 {
     const TunnelDest* tun_dest  = nullptr;
-    SfIp tun_des, ipv6;
+    SfIp ipv6;
     ipv6.set("2001:db8:85a3::8a2e:370:7334");
     AppidChangeBits change_bits;
     hsession.set_field(REQ_URI_FID, new std::string("[2001:db8:85a3::8a2e:370:7334]:51413"), change_bits);

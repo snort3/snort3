@@ -129,13 +129,13 @@ static int enable(lua_State* L)
 
     if (sip.is_set())
     {
-        constraints.sip.set(sip);
+        constraints.sip = sip;
         constraints.sip_flag = true;
     }
 
     if (dip.is_set())
     {
-        constraints.dip.set(dip);
+        constraints.dip = dip;
         constraints.dip_flag = true;
     }
 

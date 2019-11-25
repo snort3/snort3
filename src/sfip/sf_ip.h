@@ -35,6 +35,7 @@ namespace snort
 using SfIpString = char[INET6_ADDRSTRLEN];
 
 struct SfCidr;
+
 struct SO_PUBLIC SfIp
 {
     /*
@@ -47,7 +48,6 @@ struct SO_PUBLIC SfIp
      * Modifiers
      */
     void clear();
-    void set(const SfIp& src);
     SfIpRet set(const char* src, uint16_t* srcBits = nullptr);
     /* Sets to a raw source IP (4 or 16 bytes, according to family) */
     SfIpRet set(const void* src, int fam);
@@ -120,17 +120,6 @@ inline void SfIp::clear()
 {
     family = 0;
     ip32[0] = ip32[1] = ip32[2] = ip32[3] = 0;
-}
-
-inline void SfIp::set(const SfIp& src)
-{
-    /* This is a simple structure, so is this really better than
-     *this = src?. */
-    family = src.family;
-    ip32[0] = src.ip32[0];
-    ip32[1] = src.ip32[1];
-    ip32[2] = src.ip32[2];
-    ip32[3] = src.ip32[3];
 }
 
 inline uint16_t SfIp::get_family() const

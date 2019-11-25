@@ -23,8 +23,11 @@
 #define APP_FORECAST_H
 
 #include <ctime>
+
 #include "flow/flow.h"
 #include "protocols/packet.h"
+#include "utils/cpp_macros.h"
+
 #include "appid_types.h"
 #include "application_ids.h"
 
@@ -48,6 +51,7 @@ struct AFElement
     AppId target;
 };
 
+PADDING_GUARD_BEGIN
 class AFActKey
 {
     public:
@@ -68,6 +72,7 @@ class AFActKey
         uint32_t ip[4];
         AppId forecast;
 };
+PADDING_GUARD_END
 
 struct AFActVal
 {

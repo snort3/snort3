@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// flow_control_test.cc author Shivakrishna Mulka <smulka@cisco.com>
+// flow_cache_test.cc author davis mcpherson <davmcphe@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -55,9 +55,9 @@ THREAD_LOCAL PacketTracer* snort::s_pkt_trace = nullptr;
 
 PacketTracer::PacketTracer() { }
 PacketTracer::~PacketTracer() { }
-void PacketTracer::log(const char* format, ...) { }
+void PacketTracer::log(const char*, ...) { }
 void PacketTracer::open_file() { }
-void PacketTracer::dump_to_daq(Packet* p) { }
+void PacketTracer::dump_to_daq(Packet*) { }
 void PacketTracer::reset() { }
 Packet::Packet(bool) { }
 Packet::~Packet() { }
@@ -66,30 +66,30 @@ Flow::~Flow() { }
 DetectionEngine::DetectionEngine() { }
 ExpectCache::~ExpectCache() { }
 DetectionEngine::~DetectionEngine() { }
-void Flow::init(PktType type) { }
+void Flow::init(PktType) { }
 void Flow::term() { }
 void Flow::reset(bool) { }
-void set_network_policy(SnortConfig* sc, unsigned i) { }
-void DataBus::publish(const char* key, const uint8_t* buf, unsigned len, Flow* f) { }
-void DataBus::publish(const char* key, Packet* p, Flow* f) { }
+void set_network_policy(SnortConfig*, unsigned) { }
+void DataBus::publish(const char*, const uint8_t*, unsigned, Flow*) { }
+void DataBus::publish(const char*, Packet*, Flow*) { }
 SnortConfig* SnortConfig::get_conf() { return nullptr; }
-void Flow::set_direction(Packet* p) { }
-void set_inspection_policy(SnortConfig* sc, unsigned i) { }
-void set_ips_policy(SnortConfig* sc, unsigned i) { }
-void Flow::set_mpls_layer_per_dir(Packet* p) { }
-void DetectionEngine::disable_all(Packet* p) { }
-void Stream::drop_traffic(const Packet* p, char dir) { }
-bool Stream::blocked_flow(Packet* p) { return true; }
-ExpectCache::ExpectCache(uint32_t max) { }
-bool ExpectCache::check(Packet* p, Flow* lws) { return true; }
-bool ExpectCache::is_expected(Packet* p) { return true; }
-Flow* HighAvailabilityManager::import(Packet& p, FlowKey& key) { return nullptr; }
-bool HighAvailabilityManager::in_standby(Flow* flow) { return true; }
-SfIpRet SfIp::set(void const*, int) { return SfIpRet::SFIP_SUCCESS; }
+void Flow::set_direction(Packet*) { }
+void set_inspection_policy(SnortConfig*, unsigned) { }
+void set_ips_policy(SnortConfig*, unsigned) { }
+void Flow::set_mpls_layer_per_dir(Packet*) { }
+void DetectionEngine::disable_all(Packet*) { }
+void Stream::drop_traffic(const Packet*, char) { }
+bool Stream::blocked_flow(Packet*) { return true; }
+ExpectCache::ExpectCache(uint32_t) { }
+bool ExpectCache::check(Packet*, Flow*) { return true; }
+bool ExpectCache::is_expected(Packet*) { return true; }
+Flow* HighAvailabilityManager::import(Packet&, FlowKey&) { return nullptr; }
+bool HighAvailabilityManager::in_standby(Flow*) { return true; }
+SfIpRet SfIp::set(void const*, int) { return SFIP_SUCCESS; }
 namespace memory
 {
-void MemoryCap::update_allocations(unsigned long m) { }
-void MemoryCap::update_deallocations(unsigned long m) { }
+void MemoryCap::update_allocations(unsigned long) { }
+void MemoryCap::update_deallocations(unsigned long) { }
 bool MemoryCap::over_threshold() { return true; }
 }
 
@@ -97,7 +97,7 @@ namespace snort
 {
 namespace layer
 {
-const vlan::VlanTagHdr* get_vlan_layer(const Packet* const p) { return nullptr; }
+const vlan::VlanTagHdr* get_vlan_layer(const Packet* const) { return nullptr; }
 }
 time_t packet_time() { return 0; }
 }
@@ -110,16 +110,11 @@ uint32_t IpApi::id() const { return 0; }
 }
 }
 
-void Stream::stop_inspection(
-    Flow* flow, Packet* p, char dir,
-    int32_t /*bytes*/, int /*response*/) { }
+void Stream::stop_inspection(Flow*, Packet*, char, int32_t, int) { }
 
 
-int ExpectCache::add_flow(const Packet *ctrlPkt,
-    PktType type, IpProtocol ip_proto,
-    const SfIp* cliIP, uint16_t cliPort,
-    const SfIp* srvIP, uint16_t srvPort,
-    char direction, FlowData* fd, SnortProtocolId snort_protocol_id)
+int ExpectCache::add_flow(const Packet*, PktType, IpProtocol, const SfIp*, uint16_t,
+    const SfIp*, uint16_t, char, FlowData*, SnortProtocolId)
 { 
     return 1; 
 }
@@ -146,7 +141,6 @@ TEST(flow_prune, blocked_flow_prune_flows)
     fcg.max_flows = 2;
     FlowCache *cache = new FlowCache(fcg);
 
-    Flow *list_flows[fcg.max_flows];
     int first_port = 1;
     int second_port = 2;
 
@@ -156,15 +150,15 @@ TEST(flow_prune, blocked_flow_prune_flows)
     flow_key.pkt_type = PktType::TCP;
     
     flow_key.port_l = first_port;
-    list_flows[0] = cache->allocate(&flow_key);
+    cache->allocate(&flow_key);
 
     flow_key.port_l = second_port;
-    list_flows[1] = cache->allocate(&flow_key);
+    Flow* flow = cache->allocate(&flow_key);
 
     CHECK(cache->get_count() == fcg.max_flows);
 
     // block the second flow
-    list_flows[1]->block();
+    flow->block();
 
     // Access the first flow
     // This will move it to the MRU
@@ -191,13 +185,12 @@ TEST(flow_prune, prune_flows)
     FlowCache *cache = new FlowCache(fcg);
     int port = 1;
 
-    Flow *list_flows[fcg.max_flows];
-    for ( int i = 0; i < fcg.max_flows; i++ )
+    for ( unsigned i = 0; i < fcg.max_flows; i++ )
     {
         FlowKey flow_key;
         flow_key.port_l = port++;
         flow_key.pkt_type = PktType::TCP;
-        list_flows[i] = cache->allocate(&flow_key);
+        cache->allocate(&flow_key);
     }
 
     CHECK(cache->get_count() == fcg.max_flows);
@@ -217,13 +210,12 @@ TEST(flow_prune, prune_all_flows)
     FlowCache *cache = new FlowCache(fcg);
     int port = 1;
 
-    Flow *list_flows[fcg.max_flows];
-    for ( int i = 0; i < fcg.max_flows; i++ )
+    for ( unsigned i = 0; i < fcg.max_flows; i++ )
     {
         FlowKey flow_key;
         flow_key.port_l = port++;
         flow_key.pkt_type = PktType::TCP;
-        list_flows[i] = cache->allocate(&flow_key);
+        cache->allocate(&flow_key);
     }
 
     CHECK(cache->get_count() == fcg.max_flows);
@@ -242,14 +234,13 @@ TEST(flow_prune, prune_all_blocked_flows)
     FlowCache *cache = new FlowCache(fcg);
     int port = 1;
 
-    Flow *list_flows[fcg.max_flows];
-    for ( int i = 0; i < fcg.max_flows; i++ )
+    for ( unsigned i = 0; i < fcg.max_flows; i++ )
     {
         FlowKey flow_key;
         flow_key.port_l = port++;
         flow_key.pkt_type = PktType::TCP;
-        list_flows[i] = cache->allocate(&flow_key);
-        list_flows[i]->block();
+        Flow* flow = cache->allocate(&flow_key);
+        flow->block();
     }
 
     CHECK(cache->get_count() == fcg.max_flows);

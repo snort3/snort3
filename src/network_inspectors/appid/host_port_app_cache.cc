@@ -79,7 +79,7 @@ HostPortVal* HostPortCache::find(const SfIp* ip, uint16_t port, IpProtocol proto
 {
     HostPortKey hk;
 
-    hk.ip.set(*ip);
+    hk.ip = *ip;
     hk.port = port;
     hk.proto = protocol;
 
@@ -97,7 +97,7 @@ bool HostPortCache::add(const SfIp* ip, uint16_t port, IpProtocol proto, unsigne
     HostPortKey hk;
     HostPortVal hv;
 
-    hk.ip.set(*ip);
+    hk.ip = *ip;
     hk.port = port;
     hk.proto = proto;
 

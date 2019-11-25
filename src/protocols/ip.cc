@@ -58,8 +58,8 @@ void IpApi::set(const ip::IP6Hdr* h6)
 void IpApi::set(const SfIp& sip, const SfIp& dip)
 {
     type = IAT_DATA;
-    src.set(sip);
-    dst.set(dip);
+    src = sip;
+    dst = dip;
     iph = nullptr;
 }
 
@@ -85,8 +85,8 @@ bool IpApi::set(const uint8_t* raw_ip_data)
 
 void IpApi::update(const SfIp& sip, const SfIp& dip)
 {
-    src.set(sip);
-    dst.set(dip);
+    src = sip;
+    dst = dip;
 }
 
 uint16_t IpApi::tos() const

@@ -1059,13 +1059,13 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                         if (iRet == FTPP_SUCCESS)
                         {
                             if (!ipAddr.is_set())
-                                session->serverIP.set(*p->ptrs.ip_api.get_src());
+                                session->serverIP = *p->ptrs.ip_api.get_src();
                             else
                             {
                                 session->serverIP = ipAddr;
                             }
                             session->serverPort = port;
-                            session->clientIP.set(*p->ptrs.ip_api.get_dst());
+                            session->clientIP = *p->ptrs.ip_api.get_dst();
                             session->clientPort = 0;
 
                             if ((FileService::get_max_file_depth() > 0) ||
@@ -1136,7 +1136,7 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                         /* Server is listening/sending from its own IP,
                          * FTP Port -1 */
                         /* Client IP, Port specified via PORT command */
-                        session->serverIP.set(*p->ptrs.ip_api.get_src());
+                        session->serverIP = *p->ptrs.ip_api.get_src();
 
                         /* Can't necessarily guarantee this, especially
                          * in the case of a proxy'd connection where the

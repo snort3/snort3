@@ -367,8 +367,8 @@ static void AddTagNode(Packet* p, TagData* tag, int mode, uint32_t now,
         return;
     }
 
-    idx->key.sip.set(*p->ptrs.ip_api.get_src());
-    idx->key.dip.set(*p->ptrs.ip_api.get_dst());
+    idx->key.sip = *p->ptrs.ip_api.get_src();
+    idx->key.dip = *p->ptrs.ip_api.get_dst();
     idx->key.sp = p->ptrs.sp;
     idx->key.dp = p->ptrs.dp;
     idx->metric = tag->tag_metric;
@@ -453,8 +453,8 @@ int CheckTagList(Packet* p, Event& event, void** log_list)
         return 0;
     }
 
-    idx.key.sip.set(*p->ptrs.ip_api.get_src());
-    idx.key.dip.set(*p->ptrs.ip_api.get_dst());
+    idx.key.sip = *p->ptrs.ip_api.get_src();
+    idx.key.dip = *p->ptrs.ip_api.get_dst();
     idx.key.sp = p->ptrs.sp;
     idx.key.dp = p->ptrs.dp;
 
@@ -463,8 +463,8 @@ int CheckTagList(Packet* p, Event& event, void** log_list)
 
     if (returned == nullptr)
     {
-        idx.key.dip.set(*p->ptrs.ip_api.get_src());
-        idx.key.sip.set(*p->ptrs.ip_api.get_dst());
+        idx.key.dip = *p->ptrs.ip_api.get_src();
+        idx.key.sip = *p->ptrs.ip_api.get_dst();
         idx.key.dp = p->ptrs.sp;
         idx.key.sp = p->ptrs.dp;
 
@@ -480,7 +480,7 @@ int CheckTagList(Packet* p, Event& event, void** log_list)
                 **  Only switch sip, because that's all we check for
                 **  the host tags.
                 */
-                idx.key.sip.set(*p->ptrs.ip_api.get_src());
+                idx.key.sip = *p->ptrs.ip_api.get_src();
 
                 returned = (TagNode*)xhash_find(host_tag_cache_ptr, &idx);
             }

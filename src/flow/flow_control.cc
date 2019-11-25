@@ -200,8 +200,8 @@ static bool is_bidirectional(const Flow* flow)
 static void init_roles_ip(const Packet* p, Flow* flow)
 {
     flow->ssn_state.direction = FROM_CLIENT;
-    flow->client_ip.set(*p->ptrs.ip_api.get_src());
-    flow->server_ip.set(*p->ptrs.ip_api.get_dst());
+    flow->client_ip = *p->ptrs.ip_api.get_src();
+    flow->server_ip = *p->ptrs.ip_api.get_dst();
 }
 
 static void init_roles_tcp(const Packet* p, Flow* flow)
@@ -209,33 +209,33 @@ static void init_roles_tcp(const Packet* p, Flow* flow)
     if ( p->ptrs.tcph->is_syn_only() )
     {
         flow->ssn_state.direction = FROM_CLIENT;
-        flow->client_ip.set(*p->ptrs.ip_api.get_src());
+        flow->client_ip = *p->ptrs.ip_api.get_src();
         flow->client_port = p->ptrs.sp;
-        flow->server_ip.set(*p->ptrs.ip_api.get_dst());
+        flow->server_ip = *p->ptrs.ip_api.get_dst();
         flow->server_port = p->ptrs.dp;
     }
     else if ( p->ptrs.tcph->is_syn_ack() )
     {
         flow->ssn_state.direction = FROM_SERVER;
-        flow->client_ip.set(*p->ptrs.ip_api.get_dst());
+        flow->client_ip = *p->ptrs.ip_api.get_dst();
         flow->client_port = p->ptrs.dp;
-        flow->server_ip.set(*p->ptrs.ip_api.get_src());
+        flow->server_ip = *p->ptrs.ip_api.get_src();
         flow->server_port = p->ptrs.sp;
     }
     else if (p->ptrs.sp > p->ptrs.dp)
     {
         flow->ssn_state.direction = FROM_CLIENT;
-        flow->client_ip.set(*p->ptrs.ip_api.get_src());
+        flow->client_ip = *p->ptrs.ip_api.get_src();
         flow->client_port = p->ptrs.sp;
-        flow->server_ip.set(*p->ptrs.ip_api.get_dst());
+        flow->server_ip = *p->ptrs.ip_api.get_dst();
         flow->server_port = p->ptrs.dp;
     }
     else
     {
         flow->ssn_state.direction = FROM_SERVER;
-        flow->client_ip.set(*p->ptrs.ip_api.get_dst());
+        flow->client_ip = *p->ptrs.ip_api.get_dst();
         flow->client_port = p->ptrs.dp;
-        flow->server_ip.set(*p->ptrs.ip_api.get_src());
+        flow->server_ip = *p->ptrs.ip_api.get_src();
         flow->server_port = p->ptrs.sp;
     }
 }
@@ -243,9 +243,9 @@ static void init_roles_tcp(const Packet* p, Flow* flow)
 static void init_roles_udp(const Packet* p, Flow* flow)
 {
     flow->ssn_state.direction = FROM_CLIENT;
-    flow->client_ip.set(*p->ptrs.ip_api.get_src());
+    flow->client_ip = *p->ptrs.ip_api.get_src();
     flow->client_port = p->ptrs.sp;
-    flow->server_ip.set(*p->ptrs.ip_api.get_dst());
+    flow->server_ip = *p->ptrs.ip_api.get_dst();
     flow->server_port = p->ptrs.dp;
 }
 
@@ -254,17 +254,17 @@ static void init_roles_user(const Packet* p, Flow* flow)
     if ( p->ptrs.decode_flags & DECODE_C2S )
     {
         flow->ssn_state.direction = FROM_CLIENT;
-        flow->client_ip.set(*p->ptrs.ip_api.get_src());
+        flow->client_ip = *p->ptrs.ip_api.get_src();
         flow->client_port = p->ptrs.sp;
-        flow->server_ip.set(*p->ptrs.ip_api.get_dst());
+        flow->server_ip = *p->ptrs.ip_api.get_dst();
         flow->server_port = p->ptrs.dp;
     }
     else
     {
         flow->ssn_state.direction = FROM_SERVER;
-        flow->client_ip.set(*p->ptrs.ip_api.get_dst());
+        flow->client_ip = *p->ptrs.ip_api.get_dst();
         flow->client_port = p->ptrs.dp;
-        flow->server_ip.set(*p->ptrs.ip_api.get_src());
+        flow->server_ip = *p->ptrs.ip_api.get_src();
         flow->server_port = p->ptrs.sp;
     }
 }

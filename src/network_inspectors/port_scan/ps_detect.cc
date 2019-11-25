@@ -314,9 +314,9 @@ bool PortScan::ps_tracker_lookup(
         key.scanner.clear();
 
         if (ps_pkt->reverse_pkt)
-            key.scanned.set(*p->ptrs.ip_api.get_src());
+            key.scanned = *p->ptrs.ip_api.get_src();
         else
-            key.scanned.set(*p->ptrs.ip_api.get_dst());
+            key.scanned = *p->ptrs.ip_api.get_dst();
 
         *scanned = ps_tracker_get(&key);
     }
@@ -327,9 +327,9 @@ bool PortScan::ps_tracker_lookup(
         key.scanned.clear();
 
         if (ps_pkt->reverse_pkt)
-            key.scanner.set(*p->ptrs.ip_api.get_dst());
+            key.scanner = *p->ptrs.ip_api.get_dst();
         else
-            key.scanner.set(*p->ptrs.ip_api.get_src());
+            key.scanner = *p->ptrs.ip_api.get_src();
 
         *scanner = ps_tracker_get(&key);
     }
@@ -470,7 +470,7 @@ int PortScan::ps_proto_update(PS_PROTO* proto, int ps_cnt, int pri_cnt,
     if (!proto->u_ips.equals(*ip, false))
     {
         proto->u_ip_count++;
-        proto->u_ips.set(*ip);
+        proto->u_ips = *ip;
     }
 
     /* we need to do the IP comparisons in host order */
@@ -478,21 +478,21 @@ int PortScan::ps_proto_update(PS_PROTO* proto, int ps_cnt, int pri_cnt,
     if (proto->low_ip.is_set())
     {
         if (proto->low_ip.greater_than(*ip))
-            proto->low_ip.set(*ip);
+            proto->low_ip = *ip;
     }
     else
     {
-        proto->low_ip.set(*ip);
+        proto->low_ip = *ip;
     }
 
     if (proto->high_ip.is_set())
     {
         if (proto->high_ip.less_than(*ip))
-            proto->high_ip.set(*ip);
+            proto->high_ip = *ip;
     }
     else
     {
-        proto->high_ip.set(*ip);
+        proto->high_ip = *ip;
     }
 
     if (proto->u_ports != port)
@@ -803,9 +803,6 @@ void PortScan::ps_tracker_update_icmp(
     Packet* p = (Packet*)ps_pkt->pkt;
     unsigned win = config->icmp_window;
 
-    SfIp cleared;
-    cleared.clear();
-
     if (p->ptrs.icmph)
     {
         switch (p->ptrs.icmph->type)
@@ -814,13 +811,22 @@ void PortScan::ps_tracker_update_icmp(
         case ICMP_TIMESTAMP:
         case ICMP_ADDRESS:
         case ICMP_INFO_REQUEST:
-            ps_proto_update(&scanner->proto, 1, 0, win,
-                p->ptrs.ip_api.get_dst(), 0, packet_time());
+            if (scanner)
+            {
+                ps_proto_update(&scanner->proto, 1, 0, win,
+                    p->ptrs.ip_api.get_dst(), 0, packet_time());
+            }
             break;
 
         case ICMP_DEST_UNREACH:
-            ps_proto_update(&scanner->proto, 0, 1, win, &cleared, 0, 0);
-            scanner->priority_node = 1;
+            if (scanner)
+            {
+                SfIp cleared;
+                cleared.clear();
+
+                ps_proto_update(&scanner->proto, 0, 1, win, &cleared, 0, 0);
+                scanner->priority_node = 1;
+            }
             break;
 
         default:

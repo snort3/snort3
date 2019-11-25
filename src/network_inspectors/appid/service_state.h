@@ -27,9 +27,10 @@
 
 #include "protocols/protocol_ids.h"
 #include "sfip/sf_ip.h"
+#include "utils/cpp_macros.h"
+#include "utils/util.h"
 
 #include "service_plugins/service_discovery.h"
-#include "utils/util.h"
 
 class ServiceDetector;
 
@@ -159,6 +160,7 @@ public:
 };
 
 
+PADDING_GUARD_BEGIN
 class AppIdServiceStateKey
 {
 public:
@@ -174,7 +176,7 @@ public:
     AppIdServiceStateKey(const snort::SfIp* ip_in,
         IpProtocol proto_in, uint16_t port_in, bool decrypted)
     {
-        ip.set(*ip_in);
+        ip = *ip_in;
         port = port_in;
         level = decrypted != 0;
         proto = proto_in;
@@ -191,8 +193,9 @@ private:
     uint16_t port;
     uint32_t level;
     IpProtocol proto;
-    char padding[3];
+    uint8_t padding[3];
 };
+PADDING_GUARD_END
 
 
 class MapList

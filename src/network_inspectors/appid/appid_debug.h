@@ -68,9 +68,9 @@ struct AppIdDebugSessionConstraints
 inline void AppIdDebugSessionConstraints::set(const AppIdDebugSessionConstraints& src)
 {
     if ((sip_flag = src.sip_flag))
-        sip.set(src.sip);
+        sip = src.sip;
     if ((dip_flag = src.dip_flag))
-        dip.set(src.dip);
+        dip = src.dip;
     sport = src.sport;
     dport = src.dport;
     protocol = src.protocol;

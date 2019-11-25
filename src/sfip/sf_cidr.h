@@ -33,6 +33,11 @@ namespace snort
 struct SO_PUBLIC SfCidr
 {
     /*
+     * Constructors
+     */
+    SfCidr() = default;
+
+    /*
      * Modifiers (incl. convenience ones that delegate to addr)
      */
     void clear();
@@ -74,13 +79,13 @@ inline void SfCidr::clear()
 
 inline void SfCidr::set(const SfCidr& src)
 {
-    addr.set(src.addr);
+    addr = src.addr;
     bits = src.bits;
 }
 
 inline void SfCidr::set(const SfIp& src)
 {
-    addr.set(src);
+    addr = src;
     bits = 128;
 }
 

@@ -44,12 +44,11 @@ char* ObfuscateIpToText(const SfIp* ip, const SfCidr& homenet, SfCidr& obfunet, 
     }
     else
     {
-        SfIp tmp;
-        tmp.set(*ip);
+        SfIp tmp(*ip);
 
         if ( homenet.is_set() )
         {
-            if ( homenet.contains(&tmp) == SFIP_CONTAINS )
+            if ( homenet.contains(ip) == SFIP_CONTAINS )
                 tmp.obfuscate(&obfunet);
         }
         else

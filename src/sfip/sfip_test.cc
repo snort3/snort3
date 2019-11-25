@@ -373,7 +373,7 @@ static int CopyCheck(int i)
     SfIp ip1, ip2;
 
     ip1.set(f->arg1);
-    ip2.set(ip1);
+    ip2 = ip1;
 
     return !memcmp(&ip1, &ip2, sizeof(ip1));
 }

@@ -45,14 +45,14 @@ FlowStateValue* FlowIPTracker::find_stats(const SfIp* src_addr, const SfIp* dst_
 
     if (src_addr->less_than(*dst_addr))
     {
-        key.ipA.set(*src_addr);
-        key.ipB.set(*dst_addr);
+        key.ipA = *src_addr;
+        key.ipB = *dst_addr;
         *swapped = 0;
     }
     else
     {
-        key.ipA.set(*dst_addr);
-        key.ipB.set(*src_addr);
+        key.ipA = *dst_addr;
+        key.ipB = *src_addr;
         *swapped = 1;
     }
 

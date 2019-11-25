@@ -201,8 +201,8 @@ FileContext* FileCache::get_file(Flow* flow, uint64_t file_id, bool to_create,
     int64_t timeout)
 {
     FileHashKey hashKey;
-    hashKey.dip.set(flow->client_ip);
-    hashKey.sip.set(flow->server_ip);
+    hashKey.dip = flow->client_ip;
+    hashKey.sip = flow->server_ip;
     hashKey.padding = 0;
     hashKey.file_id = file_id;
     FileContext* file = find(hashKey, timeout);

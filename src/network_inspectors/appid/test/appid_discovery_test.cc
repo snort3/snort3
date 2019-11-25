@@ -94,8 +94,8 @@ namespace ip
 void IpApi::set(const SfIp& sip, const SfIp& dip)
 {
     type = IAT_DATA;
-    src.set(sip);
-    dst.set(dip);
+    src = sip;
+    dst = dip;
     iph = nullptr;
 }
 } // namespace ip

@@ -519,8 +519,8 @@ int FTPsessionInspection(
  */
 int SetSiInput(FTPP_SI_INPUT* SiInput, Packet* p)
 {
-    SiInput->sip.set(*p->ptrs.ip_api.get_src());
-    SiInput->dip.set(*p->ptrs.ip_api.get_dst());
+    SiInput->sip = *p->ptrs.ip_api.get_src();
+    SiInput->dip = *p->ptrs.ip_api.get_dst();
     SiInput->sport = p->ptrs.sp;
     SiInput->dport = p->ptrs.dp;
 
