@@ -26,7 +26,6 @@
 #include "http2_enum.h"
 #include "http2_flow_data.h"
 #include "http2_hpack.h"
-#include "http2_request_line.h"
 #include "http2_start_line.h"
 
 using namespace HttpCommon;
@@ -50,10 +49,8 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t
     decoded_headers = new uint8_t[MAX_OCTETS];
     decoded_headers_size = 0;
     
-    // FIXIT-H Implement response start line
-    if (source_id == SRC_CLIENT)
-        start_line_generator = new Http2RequestLine(session_data->events[source_id],
-            session_data->infractions[source_id]);
+    start_line_generator = Http2StartLine::new_start_line_generator(source_id,
+        session_data->events[source_id], session_data->infractions[source_id]);
 
     // Decode headers
     if (!hpack_decoder->decode_headers((data.start() + hpack_headers_offset), data.length() -
@@ -63,9 +60,7 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t
         session_data->frame_type[source_id] = FT__ABORT;
         error_during_decode = true;
     }
-    //FIXIT-H remove condition once status lines implemented
-    if (source_id == SRC_CLIENT)
-        start_line = hpack_decoder->get_start_line();
+    start_line = hpack_decoder->get_start_line();
     http2_decoded_header = hpack_decoder->get_decoded_headers(decoded_headers);
 }
 

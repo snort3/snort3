@@ -36,24 +36,27 @@ class Http2FlowData;
 class Http2StartLine
 {
 public:
-    Http2StartLine(Http2EventGen* events, Http2Infractions* infractions) : events(events),
-        infractions(infractions) { }
+    static Http2StartLine* new_start_line_generator(HttpCommon::SourceId source_id,
+        Http2EventGen* events, Http2Infractions* infractions);
 
     virtual ~Http2StartLine();
 
     friend class Http2Hpack;
 
     const Field* get_start_line();
-    virtual bool process_pseudo_header_name(const uint64_t index) = 0;
-    virtual bool process_pseudo_header_name(const uint8_t* const& name, uint32_t length) = 0;
+    virtual void process_pseudo_header_name(const uint64_t index) = 0;
+    virtual void process_pseudo_header_name(const uint8_t* const& name, uint32_t length) = 0;
     virtual void process_pseudo_header_value(const uint8_t* const& value, const uint32_t length) = 0;
     bool finalize();
     bool is_finalized() { return finalized; }
-    bool is_pseudo_value() { return value_coming != Http2Enums::HEADER_NONE; }
+    bool is_pseudo_value() { return value_coming != Http2Enums::HEADER__NONE; }
     bool is_pseudo_name(const char* const& name) { return name[0] == ':'; }
 
 protected:
-    bool process_pseudo_header_precheck();
+    Http2StartLine(Http2EventGen* events, Http2Infractions* infractions)   : events(events),
+        infractions(infractions) { }
+
+    void process_pseudo_header_precheck();
     virtual bool generate_start_line() = 0;
 
     Http2EventGen* events;
@@ -61,14 +64,12 @@ protected:
     bool finalized = false;
     uint32_t start_line_length = 0;
     uint8_t *start_line_buffer = nullptr;
-    Http2Enums::PseudoHeaders value_coming = Http2Enums::HEADER_NONE;
+    Http2Enums::PseudoHeaders value_coming = Http2Enums::HEADER__NONE;
     uint32_t pseudo_header_fragment_size = 0;
 
     // Version string is HTTP/1.1
     static const char* http_version_string;
     static const uint8_t http_version_length = 8;
-    // Account for two spaces, and trailing crlf
-    static const uint8_t start_line_extra_chars = 4;
 };
 
 #endif

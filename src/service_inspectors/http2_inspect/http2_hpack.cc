@@ -27,7 +27,7 @@
 #include "service_inspectors/http_inspect/http_test_manager.h"
 
 #include "http2_enum.h"
-#include "http2_request_line.h"
+#include "http2_start_line.h"
 
 using namespace HttpCommon;
 using namespace Http2Enums;
@@ -119,17 +119,15 @@ bool Http2HpackDecoder::decode_static_table_index(const uint64_t index, const bo
     assert(index > 0);
 
     // If this is a pseudo-header, pass it to the start line
-    // Remove second condition after response start line implemented
-    if (index < PSEUDO_HEADER_MAX_INDEX and start_line)
+    if (index < PSEUDO_HEADER_MAX_INDEX)
     {
-        if (start_line and !start_line->process_pseudo_header_name(index))
-            return false;
+        start_line->process_pseudo_header_name(index);
     }
 
     // If this is a regular header, write header name + ': ' to decoded headers
     else
     {
-        if (start_line and !start_line->is_finalized())
+        if (!start_line->is_finalized())
         {
             if (!finalize_start_line())
                 return false;
@@ -157,8 +155,7 @@ bool Http2HpackDecoder::decode_static_table_index(const uint64_t index, const bo
             return false;
         }
 
-        // Remove second condition after response start line implemented
-        if (index < PSEUDO_HEADER_MAX_INDEX and start_line)
+        if (index < PSEUDO_HEADER_MAX_INDEX)
         {
             start_line->process_pseudo_header_value(
                 (const uint8_t*)entry->value, strlen(entry->value));
@@ -189,8 +186,8 @@ bool Http2HpackDecoder::decode_dynamic_table_index(const uint64_t index,
     UNUSED(index);
     UNUSED(decode_full_line);
 
-    //FIXIT-H finalize header_start_line only for regular headers
-    if (start_line and !start_line->is_finalized())
+    //FIXIT-H finalize start_line only for regular headers
+    if (!start_line->is_finalized())
     {
         if (!finalize_start_line())
             return false;
@@ -263,18 +260,17 @@ bool Http2HpackDecoder::decode_literal_header_line(const uint8_t* encoded_header
             return false;
         }
         // If this was a pseudo-header value, give it to the start-line.
-        if (start_line and start_line->is_pseudo_name(
+        if (start_line->is_pseudo_name(
                 (const char*) decoded_header_buffer))
         {
             // don't include the ': ' that was written following the header name
-            if (!start_line->process_pseudo_header_name(
-                    decoded_header_buffer, partial_bytes_written - 2))
-                return false;
+            start_line->process_pseudo_header_name(
+                decoded_header_buffer, partial_bytes_written - 2);
         }
         // If not a pseudo-header value, keep it in the decoded headers
         else
         {
-            if (start_line and !start_line->is_finalized())
+            if (!start_line->is_finalized())
             {
                 if (!finalize_start_line())
                     return false;
@@ -296,7 +292,7 @@ bool Http2HpackDecoder::decode_literal_header_line(const uint8_t* encoded_header
     }
 
     // If this was a pseudo-header value, give it to the start-line.
-    if (start_line and start_line->is_pseudo_value())
+    if (start_line->is_pseudo_value())
     {
         // Subtract 2 from the length to remove the trailing CRLF before passing to the start line
         start_line->process_pseudo_header_value(
@@ -397,7 +393,7 @@ bool Http2HpackDecoder::decode_headers(const uint8_t* encoded_headers,
     }
 
     // If there were only pseudo-headers, finalize never got called, so create the start-line
-    if (start_line and !start_line->is_finalized())
+    if (!start_line->is_finalized())
     {
         success &= finalize_start_line();
     }

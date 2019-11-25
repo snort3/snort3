@@ -48,20 +48,21 @@ public:
     static unsigned inspector_id;
     static void init() { inspector_id = snort::FlowData::create_flow_data_id(); }
 
-    friend class Http2Inspect;
-    friend class Http2StreamSplitter;
-    friend class Http2Hpack;
-    friend class Http2StartLine;
-    friend class Http2RequestLine;
     friend class Http2Frame;
     friend class Http2HeadersFrame;
+    friend class Http2Hpack;
+    friend class Http2Inspect;
+    friend class Http2RequestLine;
+    friend class Http2StartLine;
+    friend class Http2StatusLine;
+    friend class Http2StreamSplitter;
+    friend void implement_eval(Http2FlowData* session_data, HttpCommon::SourceId source_id);
+    friend bool implement_get_buf(unsigned id, Http2FlowData*, HttpCommon::SourceId,
+        snort::InspectionBuffer&);
     friend const snort::StreamBuffer implement_reassemble(Http2FlowData*, unsigned, unsigned,
         const uint8_t*, unsigned, uint32_t, HttpCommon::SourceId);
     friend snort::StreamSplitter::Status implement_scan(Http2FlowData*, const uint8_t*, uint32_t,
         uint32_t*, HttpCommon::SourceId);
-    friend bool implement_get_buf(unsigned id, Http2FlowData*, HttpCommon::SourceId,
-        snort::InspectionBuffer&);
-    friend void implement_eval(Http2FlowData* session_data, HttpCommon::SourceId source_id);
 
     size_t size_of() override
     { return sizeof(*this); }

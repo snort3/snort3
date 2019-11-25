@@ -35,8 +35,10 @@ indexed, except the header line is not added to the dynamic table.
 HTTP/2 uses pseudo-headers to convey the information included in an HTTP/1.1 start-line.
 Pseudo-headers are not valid HTTP/1.1 headers, so must be translated into a start-line before the
 decoded headers can be passed to NHI. The two Http2StartLine subclasses, Http2RequestLine and
-Http2ResponseLine (not yet implemented) perform this translation and generate the start-line, which
-is stored in a new buffer inside the Http2StartLine object. The start-line buffer must be passed to
-NHI before the http2_decoded_header buffer, which contains the regular HTTP/1.1 headers.
+Http2ResponseLine perform this translation and generate the start-line, which is stored in a new
+buffer inside the Http2StartLine object. The start-line buffer must be passed to NHI before the
+http2_decoded_header buffer, which contains the regular HTTP/1.1 headers. Note that HTTP/2 does not
+use status reason phrases, so the status line passed to NHI will not include one. It will include
+only the HTTP version and the status code. 
 
 H2I supports the NHI test tool. See ../http_inspect/dev_notes.txt for usage instructions.

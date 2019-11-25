@@ -28,6 +28,8 @@
 
 #include "http2_enum.h"
 #include "http2_flow_data.h"
+#include "http2_request_line.h"
+#include "http2_status_line.h"
 
 using namespace HttpCommon;
 using namespace Http2Enums;
@@ -39,15 +41,22 @@ Http2StartLine::~Http2StartLine()
     delete[] start_line_buffer;
 }
 
-bool Http2StartLine::process_pseudo_header_precheck()
+Http2StartLine* Http2StartLine::new_start_line_generator(SourceId source_id,
+        Http2EventGen* events, Http2Infractions* infractions)
+{
+    if (source_id == SRC_CLIENT)
+        return new Http2RequestLine(events, infractions);
+    else
+        return new Http2StatusLine(events, infractions);
+}
+
+void Http2StartLine::process_pseudo_header_precheck()
 {
     if (finalized)
     {
         infractions += INF_PSEUDO_HEADER_AFTER_REGULAR_HEADER;
-        events->create_event(EVENT_MISFORMATTED_HTTP2);
-        return false;
+        events->create_event(EVENT_INVALID_HEADER);
     }
-    return true;
 }
 
 bool Http2StartLine::finalize()

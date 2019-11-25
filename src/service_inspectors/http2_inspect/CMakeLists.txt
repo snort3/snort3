@@ -28,6 +28,8 @@ set (FILE_LIST
     http2_request_line.h
     http2_start_line.cc
     http2_start_line.h
+    http2_status_line.cc
+    http2_status_line.h
     http2_stream_splitter.cc
     http2_stream_splitter_impl.cc
     http2_stream_splitter.h

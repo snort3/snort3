@@ -32,12 +32,15 @@ using namespace snort;
 const RuleMap Http2Module::http2_events[] =
 {
     { EVENT_INT_DECODE_FAILURE, "error in HPACK integer value" },
-    { EVENT_INT_LEADING_ZEROS, "integer value has leading zeros" },
+    { EVENT_INT_LEADING_ZEROS, "HPACK integer value has leading zeros" },
     { EVENT_STRING_DECODE_FAILURE, "error in HPACK string value" },
-    { EVENT_MISSING_CONTINUATION, "missing continuation frame"},
-    { EVENT_UNEXPECTED_CONTINUATION, "unexpected continuation frame"},
-    { EVENT_MISFORMATTED_HTTP2, "misformatted HTTP/2 traffic"},
-    { EVENT_PREFACE_MATCH_FAILURE, "HTTP/2 connection preface does not match"},
+    { EVENT_MISSING_CONTINUATION, "missing HTTP/2 continuation frame" },
+    { EVENT_UNEXPECTED_CONTINUATION, "unexpected HTTP/2 continuation frame" },
+    { EVENT_MISFORMATTED_HTTP2, "misformatted HTTP/2 traffic" },
+    { EVENT_PREFACE_MATCH_FAILURE, "HTTP/2 connection preface does not match" },
+    { EVENT_REQUEST_WITHOUT_REQUIRED_FIELD, "HTTP/2 request missing required header field" },
+    { EVENT_RESPONSE_WITHOUT_STATUS, "HTTP/2 response has no status code" },
+    { EVENT_INVALID_HEADER, "invalid HTTP/2 header field" },
     { 0, nullptr }
 };
 

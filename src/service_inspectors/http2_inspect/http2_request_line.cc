@@ -42,10 +42,9 @@ const char* Http2RequestLine::SCHEME_NAME = ":scheme";
 const char* Http2RequestLine::OPTIONS = "OPTIONS";
 const char* Http2RequestLine::CONNECT = "CONNECT";
 
-bool Http2RequestLine::process_pseudo_header_name(const uint64_t index)
+void Http2RequestLine::process_pseudo_header_name(const uint64_t index)
 {
-    if (!process_pseudo_header_precheck())
-        return false;
+    process_pseudo_header_precheck();
 
     if (index <= AUTHORITY and authority.length() <= 0)
         value_coming = AUTHORITY;
@@ -58,16 +57,14 @@ bool Http2RequestLine::process_pseudo_header_name(const uint64_t index)
     else
     {
         infractions += INF_INVALID_PSEUDO_HEADER;
-        events->create_event(EVENT_MISFORMATTED_HTTP2);
-        return false;
+        events->create_event(EVENT_INVALID_HEADER);
+        value_coming = HEADER__INVALID;
     }
-    return true;
 }
 
-bool Http2RequestLine::process_pseudo_header_name(const uint8_t* const& name, uint32_t length)
+void Http2RequestLine::process_pseudo_header_name(const uint8_t* const& name, uint32_t length)
 {
-    if (!process_pseudo_header_precheck())
-        return false;
+    process_pseudo_header_precheck();
 
     if (length == AUTHORITY_NAME_LENGTH and memcmp(name, AUTHORITY_NAME, length) == 0 and
             authority.length() <= 0)
@@ -84,10 +81,9 @@ bool Http2RequestLine::process_pseudo_header_name(const uint8_t* const& name, ui
     else
     {
         infractions += INF_INVALID_PSEUDO_HEADER;
-        events->create_event(EVENT_MISFORMATTED_HTTP2);
-        return false;
+        events->create_event(EVENT_INVALID_HEADER);
+        value_coming = HEADER__INVALID;
     }
-    return true;
 }
 
 void Http2RequestLine::process_pseudo_header_value(const uint8_t* const& value, const uint32_t length)
@@ -107,10 +103,10 @@ void Http2RequestLine::process_pseudo_header_value(const uint8_t* const& value, 
             scheme.set(length, value);
             break;
         default:
-            // should never get here
-            assert(false);
+            // ignore invalid pseudo-header value - alert generated in process_pseudo_header_name
+            break;
     }
-    value_coming = HEADER_NONE;
+    value_coming = HEADER__NONE;
 }
 
 // This is called on the first non-pseudo-header. Select the appropriate URI form based on the
@@ -125,11 +121,11 @@ bool Http2RequestLine::generate_start_line()
         if (method.length() <= 0)
         {
             infractions += INF_PSEUDO_HEADER_URI_FORM_MISMATCH;
-            events->create_event(EVENT_MISFORMATTED_HTTP2);
+            events->create_event(EVENT_REQUEST_WITHOUT_REQUIRED_FIELD);
             return false;
         }
         start_line_length = method.length() + path.length() + http_version_length +
-            start_line_extra_chars;
+            NUM_REQUEST_LINE_EXTRA_CHARS;
         start_line_buffer = new uint8_t[start_line_length];
 
         memcpy(start_line_buffer, method.start(), method.length());
@@ -147,16 +143,22 @@ bool Http2RequestLine::generate_start_line()
     else if (method.length() == CONNECT_LENGTH and memcmp(method.start(),
         CONNECT, method.length()) == 0)
     {
-        // Must have an authority and not have a scheme or path
+        // Must have an authority
         // FIXIT-L May want to be more lenient than RFC on generating start line
-        if ( scheme.length() > 0 or path.length() > 0 or authority.length() <= 0)
+        if (authority.length() <= 0)
         {
             infractions += INF_PSEUDO_HEADER_URI_FORM_MISMATCH;
-            events->create_event(EVENT_MISFORMATTED_HTTP2);
+            events->create_event(EVENT_REQUEST_WITHOUT_REQUIRED_FIELD);
             return false;
         }
+        // Should not have a scheme or path
+        if ( scheme.length() > 0 or path.length() > 0)
+        {
+            infractions += INF_PSEUDO_HEADER_URI_FORM_MISMATCH;
+            events->create_event(EVENT_INVALID_HEADER);
+        }
         start_line_length = method.length() + authority.length() + http_version_length +
-            start_line_extra_chars;
+            NUM_REQUEST_LINE_EXTRA_CHARS;
         start_line_buffer = new uint8_t[start_line_length];
 
         memcpy(start_line_buffer, method.start(), method.length());
@@ -177,8 +179,8 @@ bool Http2RequestLine::generate_start_line()
         if (authority.length() > 0)
         {
             start_line_length = method.length() + scheme.length() + authority.length() +
-                path.length() + http_version_length + start_line_extra_chars +
-                absolute_form_extra_chars_num;
+                path.length() + http_version_length + NUM_REQUEST_LINE_EXTRA_CHARS +
+                NUM_ABSOLUTE_FORM_EXTRA_CHARS;
             start_line_buffer = new uint8_t[start_line_length];
 
             memcpy(start_line_buffer, method.start(), method.length());
@@ -202,7 +204,7 @@ bool Http2RequestLine::generate_start_line()
         else
         {
             start_line_length = method.length() + path.length() + http_version_length +
-                start_line_extra_chars;
+                NUM_REQUEST_LINE_EXTRA_CHARS;
             start_line_buffer = new uint8_t[start_line_length];
 
             memcpy(start_line_buffer, method.start(), method.length());

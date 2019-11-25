@@ -15,18 +15,17 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// http2_request_line.h author Katura Harvey <katharve@cisco.com>
+// http2_status_line.h author Katura Harvey <katharve@cisco.com>
 
-#ifndef HTTP2_REQUEST_LINE_H
-#define HTTP2_REQUEST_LINE_H
+#ifndef HTTP2_STATUS_LINE_H
+#define HTTP2_STATUS_LINE_H
 
 #include "service_inspectors/http_inspect/http_common.h"
 #include "service_inspectors/http_inspect/http_field.h"
 
-#include "http2_enum.h"
 #include "http2_start_line.h"
 
-class Http2RequestLine : public Http2StartLine
+class Http2StatusLine : public Http2StartLine
 {
 public:
     void process_pseudo_header_name(const uint64_t index) override;
@@ -38,33 +37,15 @@ public:
         Http2EventGen* events, Http2Infractions* infractions);
 
 private:
-    Http2RequestLine(Http2EventGen* events, Http2Infractions* infractions) : Http2StartLine(events,
+    Http2StatusLine(Http2EventGen* events, Http2Infractions* infractions) : Http2StartLine(events,
         infractions) { }
 
-    Field method;
-    Field path;
-    Field scheme;
-    Field authority;
+    Field status;
 
-    static const char* AUTHORITY_NAME;
-    static const uint32_t AUTHORITY_NAME_LENGTH = 10;
-    static const char* METHOD_NAME;
-    static const uint32_t METHOD_NAME_LENGTH = 7;
-    static const char* PATH_NAME;
-    static const uint32_t PATH_NAME_LENGTH = 5;
-    static const char* SCHEME_NAME;
-    static const uint32_t SCHEME_NAME_LENGTH = 7;
+    static const char* STATUS_NAME;
+    static const uint32_t STATUS_NAME_LENGTH = 7;
+    static const uint32_t RESPONSE_PSEUDO_MIN_INDEX = 8;
 
-    // Methods that have special URI forms. Subtract 1 from the sizeof for the terminating null byte
-    static const char* OPTIONS;
-    static const int32_t OPTIONS_LENGTH = 7;
-    static const char* CONNECT;
-    static const int32_t CONNECT_LENGTH = 7;
-
-    // Account for two spaces, and trailing crlf
-    static const uint8_t NUM_REQUEST_LINE_EXTRA_CHARS = 4;
-    // absolute form adds '://' between scheme and authority
-    static const uint32_t NUM_ABSOLUTE_FORM_EXTRA_CHARS = 3;
 };
 
 #endif
