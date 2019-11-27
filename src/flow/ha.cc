@@ -660,6 +660,12 @@ Flow* HighAvailability::process_daq_import(Packet& p, FlowKey& key)
             {
                 if (FlowKey::compare(&key, flow->key, 0) == 0)
                 {
+                    if (flow->flow_state == Flow::FlowState::BLOCK) 
+                    {   
+                        flow->disable_inspection();
+                        p.disable_inspect = true;
+                    }
+
                     // Clear the standby bit so that we don't immediately trigger a new data store
                     // FIXIT-L streamline the consume process so this doesn't have to be done here
                     flow->ha_state->clear(FlowHAState::STANDBY);
