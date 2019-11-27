@@ -990,19 +990,14 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
     if (asd.get_session_flags(APPID_SESSION_REXEC_STDERR))
     {
         ServiceDiscovery::get_instance().identify_service(asd, p, direction, change_bits);
-        AppIdDnsSession* dsession = asd.get_dns_session();
 
-        if (asd.service.get_id() == APP_ID_DNS &&
-            asd.config->mod_config->dns_host_reporting && dsession->get_host() )
+        if (asd.get_session_flags(APPID_SESSION_SERVICE_DETECTED |
+            APPID_SESSION_CONTINUE) == APPID_SESSION_SERVICE_DETECTED)
         {
-            dns_host_scan_hostname((const uint8_t*)dsession->get_host(), dsession->get_host_len(),
-                &client_id, &payload_id);
-            asd.set_client_appid_data(client_id, change_bits);
+            asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
+            if ( asd.payload.get_id() == APP_ID_NONE)
+                asd.payload.set_id(APP_ID_UNKNOWN);
         }
-        else if (asd.service.get_id() == APP_ID_RTMP)
-            asd.examine_rtmp_metadata(change_bits);
-        else if (asd.get_session_flags(APPID_SESSION_SSL_SESSION) && asd.tsession)
-            asd.examine_ssl_metadata(p, change_bits);
     }
     // FIXIT-M - snort 2.x has added a check for midstream pickup to this, do we need that?
     else if (protocol != IpProtocol::TCP || (p->packet_flags & PKT_STREAM_ORDER_OK))

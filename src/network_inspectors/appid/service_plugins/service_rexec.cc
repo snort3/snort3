@@ -25,6 +25,7 @@
 
 #include "service_rexec.h"
 
+#include "appid_debug.h"
 #include "appid_inspector.h"
 #include "app_info_table.h"
 #include "protocols/packet.h"
@@ -43,8 +44,11 @@ enum REXECState
     REXEC_STATE_COMMAND,
     REXEC_STATE_REPLY,
     REXEC_STATE_DONE,
+    REXEC_STATE_BAIL,
     REXEC_STATE_STDERR_CONNECT_SYN,
-    REXEC_STATE_STDERR_CONNECT_SYN_ACK
+    REXEC_STATE_STDERR_CONNECT_SYN_ACK,
+    REXEC_STATE_STDERR_WAIT,
+    REXEC_STATE_STDERR_DONE
 };
 
 struct ServiceREXECData
@@ -55,8 +59,8 @@ struct ServiceREXECData
 };
 
 static const uint64_t REXEC_EXPECTED_SESSION_FLAGS = APPID_SESSION_CONTINUE |
-    APPID_SESSION_REXEC_STDERR | APPID_SESSION_NO_TPI | APPID_SESSION_SERVICE_DETECTED |
-    APPID_SESSION_NOT_A_SERVICE | APPID_SESSION_PORT_SERVICE_DONE;
+    APPID_SESSION_REXEC_STDERR | APPID_SESSION_NO_TPI | APPID_SESSION_NOT_A_SERVICE |
+    APPID_SESSION_PORT_SERVICE_DONE;
 
 RexecServiceDetector::RexecServiceDetector(ServiceDiscovery* sd)
 {
@@ -99,6 +103,18 @@ static void rexec_free_state(void* data)
     }
 }
 
+void RexecServiceDetector::rexec_bail(ServiceREXECData* rd)
+{
+    if (!rd) 
+        return;
+    rd->state = REXEC_STATE_BAIL;
+    if(rd->child)
+        rd->child->state = REXEC_STATE_BAIL;
+
+    if(rd->parent)
+        rd->parent->state = REXEC_STATE_BAIL;
+}
+
 int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     int i = 0;
@@ -117,6 +133,8 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
         data_add(args.asd, rd, &rexec_free_state);
         rd->state = REXEC_STATE_PORT;
     }
+    if (appidDebug->is_active())
+        LogMessage("AppIdDbg %s rexec state %d\n", appidDebug->get_debug_session(), rd->state);
 
     switch (rd->state)
     {
@@ -164,12 +182,14 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
                     tmp_rd->parent = nullptr;
                     return APPID_ENULL;
                 }
-                rd->child = tmp_rd;
-                rd->state = REXEC_STATE_SERVER_CONNECT;
                 pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
                 pf->scan_flags |= SCAN_HOST_PORT_FLAG;
                 initialize_expected_session(args.asd, *pf, REXEC_EXPECTED_SESSION_FLAGS, APP_ID_FROM_RESPONDER);
                 pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
+                rd->child = tmp_rd;
+                rd->state = REXEC_STATE_SERVER_CONNECT;
+                args.asd.set_session_flags(APPID_SESSION_CONTINUE);
+                goto success;
             }
             else
                 rd->state = REXEC_STATE_USERNAME;
@@ -251,8 +271,15 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto fail;
         if (size != 1)
             goto fail;
+        if (rd->child)
+        {
+            if(rd->child->state == REXEC_STATE_STDERR_WAIT)
+                rd->child->state = REXEC_STATE_STDERR_DONE;
+            else
+                goto fail;
+        }
+        args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
         goto success;
-        break;
     case REXEC_STATE_STDERR_CONNECT_SYN:
         rd->state = REXEC_STATE_STDERR_CONNECT_SYN_ACK;
         break;
@@ -260,32 +287,40 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
         if (rd->parent && rd->parent->state == REXEC_STATE_SERVER_CONNECT)
         {
             rd->parent->state = REXEC_STATE_USERNAME;
-            args.asd.clear_session_flags(APPID_SESSION_REXEC_STDERR);
+            rd->state = REXEC_STATE_STDERR_WAIT;
+            break;
         }
         goto bail;
+    case REXEC_STATE_STDERR_WAIT:
+        if(!size) 
+            break;
+        goto bail;
+    case REXEC_STATE_STDERR_DONE:
+        args.asd.clear_session_flags(APPID_SESSION_REXEC_STDERR | APPID_SESSION_CONTINUE);
+        goto success;
+    case REXEC_STATE_BAIL:
     default:
         goto bail;
     }
 
 inprocess:
-    if (!args.asd.is_service_detected())
-        service_inprocess(args.asd, args.pkt, args.dir);
+    service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 
 success:
-    if (!args.asd.is_service_detected())
-        return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_EXEC);
+    return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_EXEC);
 
 bail:
-    if (!args.asd.is_service_detected())
-        incompatible_data(args.asd, args.pkt, args.dir);
-    args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
+    args.asd.clear_session_flags(APPID_SESSION_REXEC_STDERR);
+    rexec_bail(rd);
+    incompatible_data(args.asd, args.pkt, args.dir);
+    args.asd.clear_session_flags(APPID_SESSION_REXEC_STDERR);
     return APPID_NOT_COMPATIBLE;
 
 fail:
-    if (!args.asd.is_service_detected())
-        fail_service(args.asd, args.pkt, args.dir);
-    args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
+    args.asd.clear_session_flags(APPID_SESSION_REXEC_STDERR);
+    rexec_bail(rd);
+    fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
 

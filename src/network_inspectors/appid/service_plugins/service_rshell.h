@@ -25,6 +25,7 @@
 #include "service_detector.h"
 
 class ServiceDiscovery;
+struct ServiceRSHELLData;
 
 class RshellServiceDetector : public ServiceDetector
 {
@@ -32,6 +33,8 @@ public:
     RshellServiceDetector(ServiceDiscovery*);
 
     int validate(AppIdDiscoveryArgs&) override;
+private:
+    void rshell_bail(ServiceRSHELLData* rd);
 };
 #endif
 

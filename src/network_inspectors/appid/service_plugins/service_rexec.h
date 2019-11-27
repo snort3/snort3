@@ -25,6 +25,7 @@
 #include "service_detector.h"
 
 class ServiceDiscovery;
+struct ServiceREXECData;
 
 class RexecServiceDetector : public ServiceDetector
 {
@@ -32,6 +33,8 @@ public:
     RexecServiceDetector(ServiceDiscovery*);
 
     int validate(AppIdDiscoveryArgs&) override;
+private:
+    void rexec_bail(ServiceREXECData* rd);
 };
 
 #endif
