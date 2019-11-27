@@ -23,24 +23,29 @@
 #include "main/snort_types.h"
 
 #include "http2_enum.h"
+#include "http2_hpack_dynamic_table.h"
 
-#define STATIC_MAX_INDEX 61
-#define PSEUDO_HEADER_MAX_INDEX 14
+struct HpackTableEntry
+{
+    HpackTableEntry(uint32_t name_len, const uint8_t* _name, uint32_t value_len,
+        const uint8_t* _value) : name { static_cast<int32_t>(name_len), _name },
+        value { static_cast<int32_t>(value_len), _value } { }
+    HpackTableEntry(Field& copy_name, Field& copy_value);
+    Field name;
+    Field value;
+};
 
-// Only static table is implemented. lookup() will be extended to support dynamic table
-// lookups once dynamic table is implemented
-class Http2HpackTable
+class HpackIndexTable
 {
 public:
-    struct TableEntry
-    {
-        const char* name;
-        const char* value;
-    };
+    const HpackTableEntry* lookup(uint64_t index) const;
+    void add_index(Field name, Field value) { dynamic_table.add_entry(name, value); }
 
-    const static TableEntry* lookup(uint64_t index);
+    const static uint8_t STATIC_MAX_INDEX = 61;
+    const static uint8_t PSEUDO_HEADER_MAX_STATIC_INDEX = 14;
 
 private:
-    const static TableEntry table[STATIC_MAX_INDEX + 1];
+    const static HpackTableEntry static_table[STATIC_MAX_INDEX + 1];
+    HpackDynamicTable dynamic_table;
 };
 #endif

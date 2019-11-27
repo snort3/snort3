@@ -37,10 +37,9 @@ Http2HpackIntDecode Http2HpackDecoder::decode_int6(6);
 Http2HpackIntDecode Http2HpackDecoder::decode_int5(5);
 Http2HpackIntDecode Http2HpackDecoder::decode_int4(4);
 Http2HpackStringDecode Http2HpackDecoder::decode_string;
-Http2HpackTable Http2HpackDecoder::table;
 
 bool Http2HpackDecoder::write_decoded_headers(const uint8_t* in_buffer, const uint32_t in_length,
-    uint8_t* decoded_header_buffer, uint32_t decoded_header_length, uint32_t &bytes_written)
+    uint8_t* decoded_header_buffer, uint32_t decoded_header_length, uint32_t& bytes_written)
 {
     bool ret = true;
     uint32_t length = in_length;
@@ -60,71 +59,100 @@ bool Http2HpackDecoder::write_decoded_headers(const uint8_t* in_buffer, const ui
 }
 
 bool Http2HpackDecoder::decode_string_literal(const uint8_t* encoded_header_buffer,
-    const uint32_t encoded_header_length, bool is_field_name, uint32_t &bytes_consumed,
+    const uint32_t encoded_header_length, uint32_t& bytes_consumed,
     uint8_t* decoded_header_buffer, const uint32_t decoded_header_length,
-    uint32_t &bytes_written)
+    uint32_t& bytes_written, Field& field)
 {
-    uint32_t decoded_bytes_written;
-    uint32_t encoded_bytes_consumed;
-    uint32_t encoded_header_offset = 0;
     bytes_written = 0;
     bytes_consumed = 0;
 
-    if (is_field_name)
-    {
-        // skip over parsed pattern and zeroed index
-        encoded_header_offset++;
-        bytes_consumed++;
-    }
-
-    if (!decode_string.translate(encoded_header_buffer + encoded_header_offset,
-        encoded_header_length - encoded_header_offset, encoded_bytes_consumed,
-        decoded_header_buffer, decoded_header_length, decoded_bytes_written,
-        events, infractions))
+    if (!decode_string.translate(encoded_header_buffer, encoded_header_length, bytes_consumed,
+        decoded_header_buffer, decoded_header_length, bytes_written, events, infractions))
     {
         return false;
     }
 
-    bytes_consumed += encoded_bytes_consumed;
-    bytes_written += decoded_bytes_written;
-
-    if (is_field_name)
-    {
-        if (!write_decoded_headers((const uint8_t*)": ", 2,
-                decoded_header_buffer + bytes_written, decoded_header_length -
-                bytes_written, decoded_bytes_written))
-            return false;
-    }
-    else
-    {
-        if (!write_decoded_headers((const uint8_t*)"\r\n", 2,
-                decoded_header_buffer + bytes_written, decoded_header_length -
-                bytes_written, decoded_bytes_written))
-            return false;
-    }
-
-    bytes_written += decoded_bytes_written;
+    field.set(bytes_written, decoded_header_buffer, false);
 
     return true;
 }
 
-bool Http2HpackDecoder::decode_static_table_index(const uint64_t index, const bool decode_full_line,
-    uint8_t* decoded_header_buffer, const uint32_t decoded_header_length, uint32_t& bytes_written)
+bool Http2HpackDecoder::decode_indexed_name(const uint8_t* encoded_header_buffer,
+    const uint32_t encoded_header_length, const Http2HpackIntDecode& decode_int,
+    uint32_t& bytes_consumed, uint8_t* decoded_header_buffer, const uint32_t decoded_header_length,
+    uint32_t& bytes_written, Field& name)
 {
-    uint32_t local_bytes_written = 0;
-    const Http2HpackTable::TableEntry* const entry = table.lookup(index);
+    uint64_t index;
     bytes_written = 0;
+    bytes_consumed = 0;
 
-    // Index should never be 0 - zeroed index means string literal
-    assert(index > 0);
+    if (!decode_int.translate(encoded_header_buffer, encoded_header_length, bytes_consumed,
+            index, events, infractions))
+        return false;
 
-    // If this is a pseudo-header, pass it to the start line
-    if (index < PSEUDO_HEADER_MAX_INDEX)
+    const HpackTableEntry* const entry = decode_table.lookup(index);
+
+    if (!entry)
     {
-        start_line->process_pseudo_header_name(index);
+        infractions += INF_HPACK_INDEX_OUT_OF_BOUNDS;
+        events->create_event(EVENT_MISFORMATTED_HTTP2);
+        return false;
     }
 
-    // If this is a regular header, write header name + ': ' to decoded headers
+    // If not a pseudo-header, write to the decoded_header buffer
+    if (index > HpackIndexTable::PSEUDO_HEADER_MAX_STATIC_INDEX)
+    {
+        if (!write_decoded_headers(entry->name.start(), entry->name.length(), decoded_header_buffer,
+                decoded_header_length, bytes_written))
+            return false;
+    }
+
+    name.set(entry->name);
+    return true;
+}
+
+bool Http2HpackDecoder::decode_literal_header_line(const uint8_t* encoded_header_buffer,
+    const uint32_t encoded_header_length, const uint8_t name_index_mask,
+    const Http2HpackIntDecode& decode_int, bool with_indexing, uint32_t& bytes_consumed,
+    uint8_t* decoded_header_buffer, const uint32_t decoded_header_length, uint32_t& bytes_written)
+{
+    bytes_written = 0;
+    bytes_consumed = 0;
+    uint32_t partial_bytes_consumed;
+    uint32_t partial_bytes_written;
+    Field name, value;
+
+    // Indexed field name
+    if (encoded_header_buffer[0] & name_index_mask)
+    {
+        if (!decode_indexed_name(encoded_header_buffer, encoded_header_length, decode_int,
+                partial_bytes_consumed, decoded_header_buffer, decoded_header_length,
+                partial_bytes_written, name))
+            return false;
+    }
+
+    // Literal field name
+    else
+    {
+        // Skip over the byte wth the parsed pattern and zeroed index
+        bytes_consumed++;
+
+        if (!decode_string_literal(encoded_header_buffer + bytes_consumed, encoded_header_length -
+                bytes_consumed, partial_bytes_consumed, decoded_header_buffer,
+                decoded_header_length, partial_bytes_written, name))
+            return false;
+    }
+    bytes_consumed += partial_bytes_consumed;
+    bytes_written += partial_bytes_written;
+
+    // If this was a pseudo-header value, give it to the start-line.
+    if (start_line->is_pseudo_name(name.start()))
+    {
+        start_line->process_pseudo_header_name(name.start(), name.length());
+        // Pseudo_header after regular header not allowed
+        if (start_line->is_finalized())
+            bytes_written -= partial_bytes_written;
+    }
     else
     {
         if (!start_line->is_finalized())
@@ -133,174 +161,100 @@ bool Http2HpackDecoder::decode_static_table_index(const uint64_t index, const bo
                 return false;
         }
 
-        if (!write_decoded_headers((const uint8_t*) entry->name,
-                strlen(entry->name), decoded_header_buffer,
-                decoded_header_length, local_bytes_written))
+        if (!write_decoded_headers((const uint8_t*)": ", 2, decoded_header_buffer + bytes_written,
+                decoded_header_length - bytes_written, partial_bytes_written))
             return false;
-        bytes_written += local_bytes_written;
-        if (!write_decoded_headers((const uint8_t*)": ", 2,
-                decoded_header_buffer + bytes_written,
-                decoded_header_length - bytes_written,
-                local_bytes_written))
-            return false;
-        bytes_written += local_bytes_written;
+        bytes_written += partial_bytes_written;
     }
 
-    if (decode_full_line)
-    {
-        if (strlen(entry->value) == 0)
-        {
-            *infractions += INF_LOOKUP_EMPTY_VALUE;
-            events->create_event(EVENT_MISFORMATTED_HTTP2);
-            return false;
-        }
-
-        if (index < PSEUDO_HEADER_MAX_INDEX)
-        {
-            start_line->process_pseudo_header_value(
-                (const uint8_t*)entry->value, strlen(entry->value));
-        }
-        else
-        {
-            if (!write_decoded_headers((const uint8_t*)entry->value,
-                    strlen(entry->value), decoded_header_buffer + bytes_written,
-                    decoded_header_length - bytes_written, local_bytes_written))
-                return false;
-            bytes_written += local_bytes_written;
-            if (!write_decoded_headers((const uint8_t*)"\r\n", 2,
-                    decoded_header_buffer + bytes_written, decoded_header_length -
-                    bytes_written, local_bytes_written))
-                return false;
-            bytes_written += local_bytes_written;
-        }
-    }
-
-    return true;
-}
-
-// FIXIT-H Implement dynamic table. Currently copies encoded index to decoded headers
-bool Http2HpackDecoder::decode_dynamic_table_index(const uint64_t index,
-    const bool decode_full_line, uint32_t &bytes_consumed, const uint8_t* encoded_header_buffer,
-    uint8_t* decoded_header_buffer, const uint32_t decoded_header_length, uint32_t& bytes_written)
-{
-    UNUSED(index);
-    UNUSED(decode_full_line);
-
-    //FIXIT-H finalize start_line only for regular headers
-    if (!start_line->is_finalized())
-    {
-        if (!finalize_start_line())
-            return false;
-    }
-
-    if(!write_decoded_headers(encoded_header_buffer,
-            bytes_consumed, decoded_header_buffer + bytes_written, decoded_header_length,
-            bytes_written))
+    // Value is always a string literal
+    if (!decode_string_literal(encoded_header_buffer + bytes_consumed, encoded_header_length -
+            bytes_consumed, partial_bytes_consumed, decoded_header_buffer + bytes_written,
+            decoded_header_length - bytes_written, partial_bytes_written, value))
         return false;
-    return true;
+    bytes_written += partial_bytes_written;
+    bytes_consumed += partial_bytes_consumed;
 
+    // If this was a pseudo-header, give it to the start-line
+    if (start_line->is_pseudo_value())
+    {
+        start_line->process_pseudo_header_value(value.start(), value.length());
+        // Pseudo_header after regular header not allowed
+        if (start_line->is_finalized())
+            bytes_written -= partial_bytes_written;
+    }
+    else
+    {
+        if (!write_decoded_headers((const uint8_t*)"\r\n", 2, decoded_header_buffer + bytes_written,
+                decoded_header_length - bytes_written, partial_bytes_written))
+            return false;
+        bytes_written += partial_bytes_written;
+    }
+
+    if (with_indexing)
+        decode_table.add_index(name, value);
+
+    return true;
 }
 
-// FIXIT-H Will be incrementally updated to actually decode indexes. For now just copies encoded
-// index directly to decoded_header_buffer
-bool Http2HpackDecoder::decode_index(const uint8_t* encoded_header_buffer,
-    const uint32_t encoded_header_length, const Http2HpackIntDecode &decode_int,
-    const bool decode_full_line, uint32_t &bytes_consumed, uint8_t* decoded_header_buffer,
-    const uint32_t decoded_header_length, uint32_t &bytes_written)
+bool Http2HpackDecoder::decode_indexed_header(const uint8_t* encoded_header_buffer,
+    const uint32_t encoded_header_length, const Http2HpackIntDecode& decode_int,
+    uint32_t &bytes_consumed, uint8_t* decoded_header_buffer, const uint32_t decoded_header_length,
+    uint32_t& bytes_written)
 {
     uint64_t index;
     bytes_written = 0;
     bytes_consumed = 0;
 
-    if (!decode_int.translate(encoded_header_buffer, encoded_header_length,
-        bytes_consumed, index, events, infractions))
+    if (!decode_int.translate(encoded_header_buffer, encoded_header_length, bytes_consumed,
+            index, events, infractions))
+        return false;
+
+    const HpackTableEntry* const entry = decode_table.lookup(index);
+
+    if (!entry)
     {
+        infractions += INF_HPACK_INDEX_OUT_OF_BOUNDS;
+        events->create_event(EVENT_MISFORMATTED_HTTP2);
         return false;
     }
 
-    if (index <= STATIC_TABLE_MAX_INDEX)
-        return decode_static_table_index(index, decode_full_line,
-            decoded_header_buffer, decoded_header_length, bytes_written);
-    else
-        return decode_dynamic_table_index(index, decode_full_line,
-            bytes_consumed, encoded_header_buffer, decoded_header_buffer,
-            decoded_header_length, bytes_written);
-}
-
-bool Http2HpackDecoder::decode_literal_header_line(const uint8_t* encoded_header_buffer,
-    const uint32_t encoded_header_length, const uint8_t name_index_mask,
-    const Http2HpackIntDecode &decode_int, uint32_t &bytes_consumed,
-    uint8_t* decoded_header_buffer, const uint32_t decoded_header_length, uint32_t &bytes_written)
-{
-    bytes_written = 0;
-    bytes_consumed = 0;
-    uint32_t partial_bytes_consumed;
-    uint32_t partial_bytes_written;
- 
-    // indexed field name
-    if (encoded_header_buffer[0] & name_index_mask)
+    if (entry->value.length() <= 0)
     {
-        if (!Http2HpackDecoder::decode_index(encoded_header_buffer,
-                encoded_header_length, decode_int, false, partial_bytes_consumed,
-                decoded_header_buffer, decoded_header_length, partial_bytes_written))
-        {
-            bytes_written += partial_bytes_written;
-            return false;
-        }
-    }
-    // literal field name
-    else
-    {
-        if (!Http2HpackDecoder::decode_string_literal(encoded_header_buffer,
-                encoded_header_length, true,
-                partial_bytes_consumed, decoded_header_buffer, decoded_header_length,
-                partial_bytes_written))
-        {
-            bytes_written += partial_bytes_written;
-            return false;
-        }
-        // If this was a pseudo-header value, give it to the start-line.
-        if (start_line->is_pseudo_name(
-                (const char*) decoded_header_buffer))
-        {
-            // don't include the ': ' that was written following the header name
-            start_line->process_pseudo_header_name(
-                decoded_header_buffer, partial_bytes_written - 2);
-        }
-        // If not a pseudo-header value, keep it in the decoded headers
-        else
-        {
-            if (!start_line->is_finalized())
-            {
-                if (!finalize_start_line())
-                    return false;
-            }
-        }
-    }
-    bytes_written += partial_bytes_written;
-    bytes_consumed += partial_bytes_consumed;
-
-    // value is always literal
-    if (!Http2HpackDecoder::decode_string_literal(encoded_header_buffer +
-            partial_bytes_consumed, encoded_header_length - partial_bytes_consumed,
-            false, partial_bytes_consumed,
-            decoded_header_buffer + bytes_written, decoded_header_length -
-            bytes_written, partial_bytes_written))
-    {
-        bytes_written += partial_bytes_written;
-        return false;
+        infractions += INF_LOOKUP_EMPTY_VALUE;
+        events->create_event(EVENT_MISFORMATTED_HTTP2);
     }
 
     // If this was a pseudo-header value, give it to the start-line.
-    if (start_line->is_pseudo_value())
+    if (start_line->is_pseudo_name(entry->name.start()))
     {
-        // Subtract 2 from the length to remove the trailing CRLF before passing to the start line
-        start_line->process_pseudo_header_value(
-            decoded_header_buffer + bytes_written, partial_bytes_written - 2);
+        start_line->process_pseudo_header_name(entry->name.start(), entry->name.length());
+        start_line->process_pseudo_header_value(entry->value.start(), entry->value.length());
     }
-    bytes_written += partial_bytes_written;
-    bytes_consumed += partial_bytes_consumed;
-
+    else
+    {
+        uint32_t local_bytes_written = 0;
+        if (!start_line->is_finalized())
+            if (!finalize_start_line())
+                return false;
+        if (!write_decoded_headers(entry->name.start(), entry->name.length(), decoded_header_buffer,
+                decoded_header_length, local_bytes_written))
+            return false;
+        bytes_written += local_bytes_written;
+        if (!write_decoded_headers((const uint8_t*) ": ", 2, decoded_header_buffer + bytes_written,
+                decoded_header_length - bytes_written, local_bytes_written))
+            return false;
+        bytes_written += local_bytes_written;
+        if (!write_decoded_headers(entry->value.start(), entry->value.length(),
+                decoded_header_buffer + bytes_written, decoded_header_length - bytes_written,
+                local_bytes_written))
+            return false;
+        bytes_written += local_bytes_written;
+        if (!write_decoded_headers((const uint8_t*) "\r\n", 2, decoded_header_buffer +
+                bytes_written, decoded_header_length - bytes_written, local_bytes_written))
+            return false;
+        bytes_written += local_bytes_written;
+    }
     return true;
 }
 
@@ -336,37 +290,44 @@ bool Http2HpackDecoder::decode_header_line(const uint8_t* encoded_header_buffer,
     const uint32_t encoded_header_length, uint32_t& bytes_consumed, uint8_t* decoded_header_buffer,
     const uint32_t decoded_header_length, uint32_t& bytes_written)
 {
-    // indexed header representation
-    if (encoded_header_buffer[0] & index_mask)
-        return decode_index(encoded_header_buffer,
-            encoded_header_length, decode_int7, true, bytes_consumed,
+    const static uint8_t INDEX_MASK = 0x80;
+    const static uint8_t LITERAL_INDEX_MASK = 0x40;
+    const static uint8_t LITERAL_INDEX_NAME_INDEX_MASK = 0x3f;
+    const static uint8_t LITERAL_NO_INDEX_MASK = 0xf0;
+    const static uint8_t LITERAL_NEVER_INDEX_PATTERN = 0x10;
+    const static uint8_t LITERAL_NO_INDEX_NAME_INDEX_MASK = 0x0f;
+
+    // Indexed header representation
+    if (encoded_header_buffer[0] & INDEX_MASK)
+        return decode_indexed_header(encoded_header_buffer,
+            encoded_header_length, decode_int7, bytes_consumed,
             decoded_header_buffer, decoded_header_length, bytes_written);
 
-    // literal header representation to be added to dynamic table
-    else if (encoded_header_buffer[0] & literal_index_mask)
-        return decode_literal_header_line(
-            encoded_header_buffer, encoded_header_length, literal_index_name_index_mask,
-            decode_int6, bytes_consumed, decoded_header_buffer,
+    // Literal header representation to be added to dynamic table
+    else if (encoded_header_buffer[0] & LITERAL_INDEX_MASK)
+        return decode_literal_header_line(encoded_header_buffer, encoded_header_length,
+            LITERAL_INDEX_NAME_INDEX_MASK, decode_int6, true, bytes_consumed, decoded_header_buffer,
             decoded_header_length, bytes_written);
 
-    // literal header field representation not to be added to dynamic table
+    // Literal header field representation not to be added to dynamic table
     // Note that this includes two representation types from the RFC - literal without index and
     // literal never index. From a decoding standpoint these are identical.
-    else if ((encoded_header_buffer[0] & literal_no_index_mask) == 0 or
-            (encoded_header_buffer[0] & literal_no_index_mask) == literal_never_index_pattern)
-        return decode_literal_header_line(
-            encoded_header_buffer, encoded_header_length, literal_no_index_name_index_mask,
-            decode_int4, bytes_consumed, decoded_header_buffer,
-            decoded_header_length, bytes_written);
+    else if ((encoded_header_buffer[0] & LITERAL_NO_INDEX_MASK) == 0 or
+            (encoded_header_buffer[0] & LITERAL_NO_INDEX_MASK) == LITERAL_NEVER_INDEX_PATTERN)
+        return decode_literal_header_line(encoded_header_buffer, encoded_header_length,
+            LITERAL_NO_INDEX_NAME_INDEX_MASK, decode_int4, false, bytes_consumed,
+            decoded_header_buffer, decoded_header_length, bytes_written);
     else
         // FIXIT-M dynamic table size update not yet supported, just skip
         return handle_dynamic_size_update(encoded_header_buffer,
             encoded_header_length, decode_int5, bytes_consumed, bytes_written);
 }
 
-// FIXIT-H This will eventually be the decoded header buffer. String literals and static table
-// indexes are decoded. Dynamic table indexes are not yet decoded. Both the start-line and
-// http2_decoded_header need to be sent to NHI
+// Entry point to decode an HPACK-encoded header block. This function returns true on successful
+// decode and false on an unrecoverable decode error. Note that alerts may still be generated for
+// recoverable errors while the function returns true. This function performs all decoding, but does
+// not output the start line or decoded headers - this function must be followed by calls to
+// get_start_line() and get_decoded_headers() to generate and obtain these fields.
 bool Http2HpackDecoder::decode_headers(const uint8_t* encoded_headers,
     const uint32_t encoded_headers_length, uint8_t* decoded_headers, uint32_t* decoded_headers_len,
     Http2StartLine *start_line_generator, Http2EventGen* stream_events,
@@ -394,9 +355,7 @@ bool Http2HpackDecoder::decode_headers(const uint8_t* encoded_headers,
 
     // If there were only pseudo-headers, finalize never got called, so create the start-line
     if (!start_line->is_finalized())
-    {
         success &= finalize_start_line();
-    }
 
     // write the last CRLF to end the header
     if (success)
@@ -410,7 +369,7 @@ bool Http2HpackDecoder::decode_headers(const uint8_t* encoded_headers,
     return success;
 }
 
-bool Http2HpackDecoder::finalize_start_line()//const uint32_t decoded_headers_size)
+bool Http2HpackDecoder::finalize_start_line()
 {
     // Save the current position in the decoded buffer so we can set the pointer to the start
     // of the regular headers

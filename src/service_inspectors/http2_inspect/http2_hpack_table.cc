@@ -19,76 +19,92 @@
 
 #include "http2_hpack_table.h"
 
-#include <cassert>
+#include <string.h>
 
-const Http2HpackTable::TableEntry Http2HpackTable::table[STATIC_MAX_INDEX + 1] =
+#define MAKE_TABLE_ENTRY(name, value) \
+    HpackTableEntry(strlen(name), (const uint8_t*)name, strlen(value), (const uint8_t*)value)
+
+HpackTableEntry::HpackTableEntry(Field& copy_name, Field& copy_value)
 {
-    {"", ""},
-    {":authority", ""},
-    {":method", "GET"},
-    {":method", "POST"},
-    {":path", "/"},
-    {":path", "/index.html"},
-    {":scheme", "http"},
-    {":scheme", "https"},
-    {":status", "200"},
-    {":status", "204"},
-    {":status", "206"},
-    {":status", "304"},
-    {":status", "400"},
-    {":status", "404"},
-    {":status", "500"},
-    {"accept-charset", ""},
-    {"accept-encoding", "gzip, deflate"},
-    {"accept-language", ""},
-    {"accept-ranges", ""},
-    {"accept", ""},
-    {"access-control-allow-origin", ""},
-    {"age", ""},
-    {"allow", ""},
-    {"authorization", ""},
-    {"cache-control", ""},
-    {"content-disposition", ""},
-    {"content-encoding", ""},
-    {"content-language", ""},
-    {"content-length", ""},
-    {"content-location", ""},
-    {"content-range", ""},
-    {"content-type", ""},
-    {"cookie", ""},
-    {"date", ""},
-    {"etag", ""},
-    {"expect", ""},
-    {"expires", ""},
-    {"from", ""},
-    {"host", ""},
-    {"if-match", ""},
-    {"if-modified-since", ""},
-    {"if-none-match", ""},
-    {"if-range", ""},
-    {"if-unmodified-since", ""},
-    {"last-modified", ""},
-    {"link", ""},
-    {"location", ""},
-    {"max-forwards", ""},
-    {"proxy-authenticate", ""},
-    {"proxy-authorization", ""},
-    {"range", ""},
-    {"referer", ""},
-    {"refresh", ""},
-    {"retry-after", ""},
-    {"server", ""},
-    {"set-cookie", ""},
-    {"strict-transport-security", ""},
-    {"transfer-encoding", ""},
-    {"user-agent", ""},
-    {"vary", ""},
-    {"via", ""},
-    {"www-authenticate", ""},
+    uint8_t* new_name = new uint8_t[copy_name.length()];
+    uint8_t* new_value = new uint8_t[copy_value.length()];
+    memcpy(new_value, copy_value.start(), copy_value.length());
+    memcpy(new_name, copy_name.start(), copy_name.length());
+
+    name.set(copy_name.length(), new_name, true);
+    value.set(copy_value.length(), new_value, true);
+}
+
+const HpackTableEntry HpackIndexTable::static_table[STATIC_MAX_INDEX + 1] =
+{
+    MAKE_TABLE_ENTRY("", ""),
+    MAKE_TABLE_ENTRY(":authority", ""),
+    MAKE_TABLE_ENTRY(":method", "GET"),
+    MAKE_TABLE_ENTRY(":method", "POST"),
+    MAKE_TABLE_ENTRY(":path", "/"),
+    MAKE_TABLE_ENTRY(":path", "/index.html"),
+    MAKE_TABLE_ENTRY(":scheme", "http"),
+    MAKE_TABLE_ENTRY(":scheme", "https"),
+    MAKE_TABLE_ENTRY(":status", "200"),
+    MAKE_TABLE_ENTRY(":status", "204"),
+    MAKE_TABLE_ENTRY(":status", "206"),
+    MAKE_TABLE_ENTRY(":status", "304"),
+    MAKE_TABLE_ENTRY(":status", "400"),
+    MAKE_TABLE_ENTRY(":status", "404"),
+    MAKE_TABLE_ENTRY(":status", "500"),
+    MAKE_TABLE_ENTRY("accept-charset", ""),
+    MAKE_TABLE_ENTRY("accept-encoding", "gzip, deflate"),
+    MAKE_TABLE_ENTRY("accept-language", ""),
+    MAKE_TABLE_ENTRY("accept-ranges", ""),
+    MAKE_TABLE_ENTRY("accept", ""),
+    MAKE_TABLE_ENTRY("access-control-allow-origin", ""),
+    MAKE_TABLE_ENTRY("age", ""),
+    MAKE_TABLE_ENTRY("allow", ""),
+    MAKE_TABLE_ENTRY("authorization", ""),
+    MAKE_TABLE_ENTRY("cache-control", ""),
+    MAKE_TABLE_ENTRY("content-disposition", ""),
+    MAKE_TABLE_ENTRY("content-encoding", ""),
+    MAKE_TABLE_ENTRY("content-language", ""),
+    MAKE_TABLE_ENTRY("content-length", ""),
+    MAKE_TABLE_ENTRY("content-location", ""),
+    MAKE_TABLE_ENTRY("content-range", ""),
+    MAKE_TABLE_ENTRY("content-type", ""),
+    MAKE_TABLE_ENTRY("cookie", ""),
+    MAKE_TABLE_ENTRY("date", ""),
+    MAKE_TABLE_ENTRY("etag", ""),
+    MAKE_TABLE_ENTRY("expect", ""),
+    MAKE_TABLE_ENTRY("expires", ""),
+    MAKE_TABLE_ENTRY("from", ""),
+    MAKE_TABLE_ENTRY("host", ""),
+    MAKE_TABLE_ENTRY("if-match", ""),
+    MAKE_TABLE_ENTRY("if-modified-since", ""),
+    MAKE_TABLE_ENTRY("if-none-match", ""),
+    MAKE_TABLE_ENTRY("if-range", ""),
+    MAKE_TABLE_ENTRY("if-unmodified-since", ""),
+    MAKE_TABLE_ENTRY("last-modified", ""),
+    MAKE_TABLE_ENTRY("link", ""),
+    MAKE_TABLE_ENTRY("location", ""),
+    MAKE_TABLE_ENTRY("max-forwards", ""),
+    MAKE_TABLE_ENTRY("proxy-authenticate", ""),
+    MAKE_TABLE_ENTRY("proxy-authorization", ""),
+    MAKE_TABLE_ENTRY("range", ""),
+    MAKE_TABLE_ENTRY("referer", ""),
+    MAKE_TABLE_ENTRY("refresh", ""),
+    MAKE_TABLE_ENTRY("retry-after", ""),
+    MAKE_TABLE_ENTRY("server", ""),
+    MAKE_TABLE_ENTRY("set-cookie", ""),
+    MAKE_TABLE_ENTRY("strict-transport-security", ""),
+    MAKE_TABLE_ENTRY("transfer-encoding", ""),
+    MAKE_TABLE_ENTRY("user-agent", ""),
+    MAKE_TABLE_ENTRY("vary", ""),
+    MAKE_TABLE_ENTRY("via", ""),
+    MAKE_TABLE_ENTRY("www-authenticate", ""),
 };
 
-const Http2HpackTable::TableEntry* Http2HpackTable::lookup(uint64_t index)
+const HpackTableEntry* HpackIndexTable::lookup(uint64_t index) const
 { 
-    assert(index <= STATIC_MAX_INDEX);
-    return &table[index];
+    if (index <= STATIC_MAX_INDEX)
+        return &static_table[index];
+    else
+        return dynamic_table.get_entry(index);
 }

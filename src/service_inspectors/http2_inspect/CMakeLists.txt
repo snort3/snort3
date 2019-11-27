@@ -11,12 +11,14 @@ set (FILE_LIST
     http2_headers_frame.h
     http2_hpack.cc
     http2_hpack.h
+    http2_hpack_dynamic_table.cc
+    http2_hpack_dynamic_table.h
     http2_hpack_int_decode.cc
     http2_hpack_int_decode.h
-    http2_hpack_table.cc
-    http2_hpack_table.h
     http2_hpack_string_decode.cc
     http2_hpack_string_decode.h
+    http2_hpack_table.cc
+    http2_hpack_table.h
     http2_huffman_state_machine.cc
     http2_huffman_state_machine.h
     http2_inspect.cc

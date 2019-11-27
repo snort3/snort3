@@ -42,26 +42,6 @@ const char* Http2RequestLine::SCHEME_NAME = ":scheme";
 const char* Http2RequestLine::OPTIONS = "OPTIONS";
 const char* Http2RequestLine::CONNECT = "CONNECT";
 
-void Http2RequestLine::process_pseudo_header_name(const uint64_t index)
-{
-    process_pseudo_header_precheck();
-
-    if (index <= AUTHORITY and authority.length() <= 0)
-        value_coming = AUTHORITY;
-    else if (index <= METHOD and method.length() <= 0)
-        value_coming = METHOD;
-    else if (index <= PATH and path.length() <= 0)
-        value_coming = PATH;
-    else if (index <= SCHEME and scheme.length() <= 0)
-        value_coming = SCHEME;
-    else
-    {
-        infractions += INF_INVALID_PSEUDO_HEADER;
-        events->create_event(EVENT_INVALID_HEADER);
-        value_coming = HEADER__INVALID;
-    }
-}
-
 void Http2RequestLine::process_pseudo_header_name(const uint8_t* const& name, uint32_t length)
 {
     process_pseudo_header_precheck();

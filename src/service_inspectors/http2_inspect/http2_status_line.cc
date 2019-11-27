@@ -36,20 +36,6 @@ using namespace Http2Enums;
 
 const char* Http2StatusLine::STATUS_NAME = ":status";
 
-void Http2StatusLine::process_pseudo_header_name(const uint64_t index)
-{
-    process_pseudo_header_precheck();
-
-    if (index >= RESPONSE_PSEUDO_MIN_INDEX and index <= STATUS and status.length() <= 0)
-        value_coming = STATUS;
-    else
-    {
-        infractions += INF_INVALID_PSEUDO_HEADER;
-        events->create_event(EVENT_INVALID_HEADER);
-        value_coming = HEADER__INVALID;
-    }
-}
-
 void Http2StatusLine::process_pseudo_header_name(const uint8_t* const& name, uint32_t length)
 {
     process_pseudo_header_precheck();

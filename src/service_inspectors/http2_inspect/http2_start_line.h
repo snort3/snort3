@@ -44,13 +44,12 @@ public:
     friend class Http2Hpack;
 
     const Field* get_start_line();
-    virtual void process_pseudo_header_name(const uint64_t index) = 0;
     virtual void process_pseudo_header_name(const uint8_t* const& name, uint32_t length) = 0;
     virtual void process_pseudo_header_value(const uint8_t* const& value, const uint32_t length) = 0;
     bool finalize();
     bool is_finalized() { return finalized; }
     bool is_pseudo_value() { return value_coming != Http2Enums::HEADER__NONE; }
-    bool is_pseudo_name(const char* const& name) { return name[0] == ':'; }
+    bool is_pseudo_name(const uint8_t* const& name) { return name[0] == ':'; }
 
 protected:
     Http2StartLine(Http2EventGen* events, Http2Infractions* infractions)   : events(events),

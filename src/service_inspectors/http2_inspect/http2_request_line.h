@@ -29,7 +29,6 @@
 class Http2RequestLine : public Http2StartLine
 {
 public:
-    void process_pseudo_header_name(const uint64_t index) override;
     void process_pseudo_header_name(const uint8_t* const& name, uint32_t length) override;
     void process_pseudo_header_value(const uint8_t* const& value, const uint32_t length) override;
     bool generate_start_line() override;
