@@ -35,7 +35,10 @@ public:
     static void register_module(snort::Module*);
     static void register_module(const char*, const char*, snort::Module*);
 
-    static void consolidate_stats(uint64_t pkts = 0, uint64_t usecs = 0);
+    static void start();
+    static void stop(uint64_t);
+
+    static void consolidate_stats();
 
     static void reset_stats();
     static void show_stats();

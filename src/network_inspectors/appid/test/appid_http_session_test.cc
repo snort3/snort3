@@ -155,33 +155,14 @@ void AppIdDebug::set_constraints(const char*, const AppIdDebugSessionConstraints
 }
 
 // Profiler mock functions
-void Profiler::register_module(Module*)
-{
-}
+void Profiler::register_module(Module*) { }
+void Profiler::register_module(const char*, const char*, Module*) { }
+void Profiler::consolidate_stats() { }
+void Profiler::reset_stats() { }
+void Profiler::show_stats() { }
 
-void Profiler::register_module(const char*, const char*, Module*)
-{
-}
-
-void Profiler::consolidate_stats(uint64_t, uint64_t)
-{
-}
-
-void Profiler::reset_stats()
-{
-}
-
-void Profiler::show_stats()
-{
-}
-
-MemoryContext::MemoryContext(MemoryTracker&)
-{
-}
-
-MemoryContext::~MemoryContext()
-{
-}
+MemoryContext::MemoryContext(MemoryTracker&) { }
+MemoryContext::~MemoryContext() { }
 
 unsigned AppIdSession::inspector_id = 0;
 THREAD_LOCAL AppIdDebug* appidDebug = nullptr;

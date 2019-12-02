@@ -28,6 +28,8 @@
 
 #include "framework/module.h"
 #include "main/snort_config.h"
+#include "main/thread_config.h"
+#include "time/stopwatch.h"
 
 #include "memory_context.h"
 #include "memory_profiler.h"
@@ -45,6 +47,7 @@ THREAD_LOCAL ProfileStats totalPerfStats;
 THREAD_LOCAL ProfileStats otherPerfStats;
 
 THREAD_LOCAL TimeContext* ProfileContext::curr_time = nullptr;
+THREAD_LOCAL Stopwatch<SnortClock>* run_timer = nullptr;
 
 static ProfilerNodeMap s_profiler_nodes;
 
@@ -70,23 +73,24 @@ void Profiler::register_module(const char* n, const char* pn, Module* m)
     s_profiler_nodes.register_node(n, pn, m);
 }
 
-void Profiler::consolidate_stats(uint64_t num_pkts, uint64_t usecs)
+void Profiler::start()
 {
-    totalPerfStats.time.checks = otherPerfStats.time.checks = num_pkts;
+    run_timer = new Stopwatch<SnortClock>;
+    run_timer->start();
+}
 
-#ifdef USE_TSC_CLOCK
-    totalPerfStats.time.elapsed = otherPerfStats.time.elapsed = clock_ticks(usecs);
-#else
-    hr_duration dt = TO_DURATION(dt, usecs);
-    totalPerfStats.time.elapsed = otherPerfStats.time.elapsed = dt;
-#endif
+void Profiler::stop(uint64_t checks)
+{
+    run_timer->stop();
+    totalPerfStats.time.elapsed = run_timer->get();
+    totalPerfStats.time.checks = checks;
 
-    const ProfilerNode& root = s_profiler_nodes.get_root();
-    auto children = root.get_children();
+    delete run_timer;
+    run_timer = nullptr;
+}
 
-    for ( auto pn : children )
-        otherPerfStats.time.elapsed -= pn->get_stats().time.elapsed;
-
+void Profiler::consolidate_stats()
+{
     s_profiler_nodes.accumulate_nodes();
     MemoryProfiler::consolidate_fallthrough_stats();
 }
@@ -99,6 +103,20 @@ void Profiler::reset_stats()
 
 void Profiler::show_stats()
 {
+    const ProfilerNode& root = s_profiler_nodes.get_root();
+    auto children = root.get_children();
+
+    hr_duration runtime = root.get_stats().time.elapsed;
+    hr_duration sum = 0_ticks;
+
+    for ( auto pn : children )
+        sum += pn->get_stats().time.elapsed;
+
+    otherPerfStats.time.checks = root.get_stats().time.checks;
+    otherPerfStats.time.elapsed = (runtime > sum) ?  (runtime - sum) : 0_ticks;
+
+    s_profiler_nodes.accumulate_flex();
+
     const auto* config = SnortConfig::get_profiler();
     assert(config);
 

@@ -38,7 +38,9 @@
 #include "framework/mpse_batch.h"
 #include "hash/ghash.h"
 #include "log/messages.h"
+#include "main/snort.h"
 #include "main/snort_config.h"
+#include "main/thread_config.h"
 #include "managers/mpse_manager.h"
 #include "parser/parse_rule.h"
 #include "parser/parser.h"
@@ -428,15 +430,11 @@ static int fpFinishPortGroup(
             {
                 if (pg->mpsegrp[i]->normal_mpse->get_pattern_count() != 0)
                 {
-                    if ( !sc->test_mode() or sc->mem_check() )
-                    {
-                        if ( pg->mpsegrp[i]->normal_mpse->prep_patterns(sc) != 0 )
-                            FatalError("Failed to compile port group patterns for normal "
-                                    "search engine.\n");
-                    }
+                    queue_mpse(pg->mpsegrp[i]->normal_mpse);
 
                     if (fp->get_debug_mode())
                         pg->mpsegrp[i]->normal_mpse->print_info();
+
                     rules = 1;
                 }
                 else
@@ -449,15 +447,11 @@ static int fpFinishPortGroup(
             {
                 if (pg->mpsegrp[i]->offload_mpse->get_pattern_count() != 0)
                 {
-                    if ( !sc->test_mode() or sc->mem_check() )
-                    {
-                        if ( pg->mpsegrp[i]->offload_mpse->prep_patterns(sc) != 0 )
-                            FatalError("Failed to compile port group patterns for offload "
-                                    "search engine.\n");
-                    }
+                    queue_mpse(pg->mpsegrp[i]->offload_mpse);
 
                     if (fp->get_debug_mode())
                         pg->mpsegrp[i]->offload_mpse->print_info();
+
                     rules = 1;
                 }
                 else
@@ -1649,6 +1643,25 @@ static int fpCreateServicePortGroups(SnortConfig* sc)
     return 0;
 }
 
+static unsigned can_build_mt(FastPatternConfig* fp)
+{
+    if ( Snort::is_reloading() )
+        return false;
+
+    const MpseApi* search_api = fp->get_search_api();
+    assert(search_api);
+
+    if ( !MpseManager::parallel_compiles(search_api) )
+        return false;
+
+    const MpseApi* offload_search_api = fp->get_offload_search_api();
+
+    if ( offload_search_api and !MpseManager::parallel_compiles(offload_search_api) )
+        return false;
+
+    return true;
+}
+
 /*
 *  Port list version
 *
@@ -1711,6 +1724,14 @@ int fpCreateFastPacketDetection(SnortConfig* sc)
 
     if (fp->get_debug_print_rule_group_build_details())
         LogMessage("Service Based Rule Maps Done....\n");
+
+    if ( !sc->test_mode() or sc->mem_check() )
+    {
+        unsigned c = compile_mpses(sc, can_build_mt(fp));
+
+        if ( c != mpse_count )
+            ParseError("Failed to compile %u search engines", mpse_count - c);
+    }
 
     fp_print_port_groups(port_tables);
     fp_print_service_groups(sc->spgmmTable);

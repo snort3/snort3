@@ -190,7 +190,7 @@ TEST(mpse_hs_base, base)
 TEST(mpse_hs_base, mpse)
 {
     const MpseApi* mpse_api = (MpseApi*)se_hyperscan;
-    CHECK(mpse_api->flags == MPSE_REGEX);
+    CHECK(mpse_api->flags == (MPSE_REGEX | MPSE_MTBLD));
 
     CHECK(mpse_api->ctor);
     CHECK(mpse_api->dtor);

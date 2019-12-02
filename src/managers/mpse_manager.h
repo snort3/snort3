@@ -78,6 +78,7 @@ public:
     static bool search_engine_trim(const snort::MpseApi*);
     static bool is_async_capable(const snort::MpseApi*);
     static bool is_regex_capable(const snort::MpseApi*);
+    static bool parallel_compiles(const snort::MpseApi*);
     static bool is_poll_capable(const snort::MpseApi* api);
     static void print_mpse_summary(const snort::MpseApi*);
     static void print_search_engine_stats();

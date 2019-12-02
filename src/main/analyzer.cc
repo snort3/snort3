@@ -661,9 +661,12 @@ void Analyzer::operator()(Swapper* ps, uint16_t run_num)
     SFDAQ::set_local_instance(daq_instance);
     set_state(State::INITIALIZED);
 
+    Profiler::start();
+
     // Start the main loop
     analyze();
 
+    Profiler::stop(pc.analyzed_pkts);
     term();
 
     set_state(State::STOPPED);

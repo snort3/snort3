@@ -23,6 +23,8 @@
 
 #include "http_inspect.h"
 
+#include <cassert>
+
 #include "detection/detection_engine.h"
 #include "detection/detection_util.h"
 #include "log/unified2.h"
@@ -84,6 +86,43 @@ bool HttpInspect::configure(SnortConfig* )
     xtra_jsnorm_id = Stream::reg_xtra_data_cb(get_xtra_jsnorm);
 
     return true;
+}
+
+void HttpInspect::show(snort::SnortConfig*)
+{
+    assert(params);
+    LogMessage("http_inspect\n");
+
+    if ( params->request_depth == -1 )
+        LogMessage("    request_depth: " "%s" "\n", "unlimited");
+    else
+        LogMessage("    request_depth: " STDi64 "\n", params->request_depth);
+
+    if ( params->response_depth == -1 )
+        LogMessage("    response_depth: " "%s" "\n", "unlimited");
+    else
+        LogMessage("    response_depth: " STDi64 "\n", params->response_depth);
+
+    LogMessage("    unzip: %s\n", params->unzip ? "yes" : "no");
+    LogMessage("    normalize_utf: %s\n", params->normalize_utf ? "yes" : "no");
+    LogMessage("    decompress_pdf: %s\n", params->decompress_pdf ? "yes" : "no");
+    LogMessage("    decompress_swf: %s\n", params->decompress_swf ? "yes" : "no");
+    LogMessage("    decompress_zip: %s\n", params->decompress_zip ? "yes" : "no");
+    LogMessage("    detained_inspection: %s\n", params->detained_inspection ? "yes" : "no");
+
+    LogMessage("    normalize_javascript: %s\n", params->js_norm_param.normalize_javascript ? "yes" : "no");
+    LogMessage("    max_javascript_whitespaces: %d\n", params->js_norm_param.max_javascript_whitespaces);
+
+    LogMessage("    percent_u: %s\n", params->uri_param.percent_u ? "yes" : "no");
+    LogMessage("    utf8: %s\n", params->uri_param.utf8 ? "yes" : "no");
+    LogMessage("    utf8_bare_byte: %s\n", params->uri_param.utf8_bare_byte ? "yes" : "no");
+    LogMessage("    oversize_dir_length: %d\n", params->uri_param.oversize_dir_length);
+    LogMessage("    iis_unicode: %s\n", params->uri_param.iis_unicode ? "yes" : "no");
+    LogMessage("    iis_unicode_map_file: %s\n", params->uri_param.iis_unicode_map_file.c_str());
+    LogMessage("    iis_double_decode: %s\n", params->uri_param.iis_double_decode ? "yes" : "no");
+    LogMessage("    backslash_to_slash: %s\n", params->uri_param.backslash_to_slash ? "yes" : "no");
+    LogMessage("    plus_to_space: %s\n", params->uri_param.plus_to_space ? "yes" : "no");
+    LogMessage("    simplify_path: %s\n", params->uri_param.simplify_path ? "yes" : "no");
 }
 
 InspectSection HttpInspect::get_latest_is(const Packet* p)

@@ -761,6 +761,13 @@ private:
     unsigned count;
     unsigned max;
     std::vector<Node> queue;
+
+    // perf trade-off, same as Snort 2
+    // queue to keep mpse search cache warm
+    // but limit to avoid the O(n**2) effect of inserts
+    // and to get any rule hits before exhaustive searching
+    // consider a map in lieu of vector
+    const unsigned queue_limit = 32;
 };
 
 // uniquely insert into q, should splay elements for performance
@@ -780,21 +787,21 @@ bool MpseStash::push(void* user, void* tree, int index, void* list)
     if ( max and ( count == max ) )
     {
         pmqs.tot_inq_overruns++;
-        return true;
+        return false;
     }
 
-    if ( !max or ( count < max ) )
-    {
-        Node node;
-        node.user = user;
-        node.tree = tree;
-        node.index = index;
-        node.list = list;
-        queue.push_back(node);
-        pmqs.tot_inq_uinserts++;
-        pmqs.tot_inq_inserts++;
-        count++;
-    }
+    Node node;
+    node.user = user;
+    node.tree = tree;
+    node.index = index;
+    node.list = list;
+    queue.push_back(node);
+    pmqs.tot_inq_uinserts++;
+    pmqs.tot_inq_inserts++;
+    count++;
+
+    if ( queue.size() == queue_limit )
+        return true;  // process now
 
     return false;
 }
@@ -824,14 +831,12 @@ bool MpseStash::process(MpseMatch match, void* context)
         if ( res > 0 )
         {
             /* terminate matching */
-            pmqs.tot_inq_flush += count;
-            count = 0;
+            pmqs.tot_inq_flush += i;
             queue.clear();
             return true;
         }
     }
-    pmqs.tot_inq_flush += count;
-    count = 0;
+    pmqs.tot_inq_flush += i;
     queue.clear();
     return false;
 }
@@ -858,7 +863,12 @@ static int rule_tree_queue(
 {
     MpseStash* stash = ((IpsContext*)context)->stash;
 
-    return stash->push(user, tree, index, list) ? 1 : 0;
+    if ( stash->push(user, tree, index, list) )
+    {
+        if ( stash->process(rule_tree_match, context) )
+            return 1;
+    }
+    return 0;
 }
 
 static inline int batch_search(

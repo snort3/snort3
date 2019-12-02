@@ -129,10 +129,11 @@ typedef void (* MpseDelFunc)(Mpse*);
 
 typedef Mpse::MpseRespType (* MpsePollFunc)(MpseBatch*&, Mpse::MpseType);
 
-#define MPSE_BASE   0x00
-#define MPSE_TRIM   0x01
-#define MPSE_REGEX  0x02
-#define MPSE_ASYNC  0x04
+#define MPSE_BASE   0x00  // no optional features
+#define MPSE_TRIM   0x01  // should trim leading zero bytes from patterns
+#define MPSE_REGEX  0x02  // supports regex patterns
+#define MPSE_ASYNC  0x04  // does asynchronous (lookaside) searches
+#define MPSE_MTBLD  0x08  // support multithreaded / parallel compilation
 
 struct MpseApi
 {

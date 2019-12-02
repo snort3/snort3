@@ -134,6 +134,14 @@ void ProfilerNodeMap::accumulate_nodes()
         it->second.accumulate();
 }
 
+void ProfilerNodeMap::accumulate_flex()
+{
+    auto it = nodes.find(FLEX_NODE);
+
+    if ( it != nodes.end() )
+        it->second.accumulate();
+}
+
 void ProfilerNodeMap::reset_nodes()
 {
     for ( auto it = nodes.begin(); it != nodes.end(); ++it )

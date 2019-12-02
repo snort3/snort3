@@ -102,10 +102,10 @@ bool MpseGroup::create_normal_mpse(SnortConfig* sc, const MpseAgent* agent)
     }
 }
 
-bool MpseGroup::create_normal_mpse(const char* type)
+bool MpseGroup::create_normal_mpse(SnortConfig* sc, const char* type)
 {
-    if ( !type and SnortConfig::get_conf()->fast_pattern_config )
-        type = SnortConfig::get_conf()->fast_pattern_config->get_search_method();
+    if ( !type and sc->fast_pattern_config )
+        type = sc->fast_pattern_config->get_search_method();
 
     if ( !type )
         type = "ac_bnfa";
@@ -115,7 +115,7 @@ bool MpseGroup::create_normal_mpse(const char* type)
     if (search_api)
     {
         Module* mod = ModuleManager::get_module(search_api->base.name);
-        normal_mpse = search_api->ctor(nullptr, mod, nullptr);
+        normal_mpse = search_api->ctor(sc, mod, nullptr);
         normal_mpse->set_api(search_api);
         return true;
     }
@@ -150,21 +150,21 @@ bool MpseGroup::create_offload_mpse(SnortConfig* sc, const MpseAgent* agent)
     }
 }
 
-bool MpseGroup::create_offload_mpse()
+bool MpseGroup::create_offload_mpse(SnortConfig* sc)
 {
     const MpseApi* search_api = nullptr;
     const MpseApi* offload_search_api = nullptr;
 
-    if (SnortConfig::get_conf()->fast_pattern_config )
+    if (sc->fast_pattern_config )
     {
-        search_api = SnortConfig::get_conf()->fast_pattern_config->get_search_api();
-        offload_search_api = SnortConfig::get_conf()->fast_pattern_config->get_offload_search_api();
+        search_api = sc->fast_pattern_config->get_search_api();
+        offload_search_api = sc->fast_pattern_config->get_offload_search_api();
     }
 
     if (offload_search_api and (offload_search_api != search_api))
     {
         Module* mod = ModuleManager::get_module(offload_search_api->base.name);
-        offload_mpse = offload_search_api->ctor(nullptr, mod, nullptr);
+        offload_mpse = offload_search_api->ctor(sc, mod, nullptr);
         offload_mpse->set_api(offload_search_api);
         return true;
     }

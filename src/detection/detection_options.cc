@@ -32,6 +32,7 @@
 
 #include "detection_options.h"
 
+#include <mutex>
 #include <string>
 
 #include "filters/detection_filter.h"
@@ -327,6 +328,9 @@ void print_option_tree(detection_option_tree_node_t* node, int level)
 
 void* add_detection_option_tree(SnortConfig* sc, detection_option_tree_node_t* option_tree)
 {
+    static std::mutex build_mutex;
+    std::lock_guard<std::mutex> lock(build_mutex);
+
     if ( !sc->detection_option_tree_hash_table )
         sc->detection_option_tree_hash_table = DetectionTreeHashTableNew();
 

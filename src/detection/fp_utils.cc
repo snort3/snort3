@@ -24,20 +24,23 @@
 
 #include <cassert>
 #include <cstring>
+#include <list>
+#include <mutex>
+#include <thread>
 
 #include "ips_options/ips_flow.h"
 #include "log/messages.h"
+#include "main/snort_config.h"
 #include "main/thread_config.h"
+#include "pattern_match_data.h"
 #include "ports/port_group.h"
 #include "target_based/snort_protocols.h"
+#include "treenodes.h"
 #include "utils/util.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
 #endif
-
-#include "pattern_match_data.h"
-#include "treenodes.h"
 
 using namespace snort;
 
@@ -366,6 +369,68 @@ PatternMatchVector get_fp_content(
             otn->sigInfo.gid, otn->sigInfo.sid);
 
     return pmds;
+}
+
+//--------------------------------------------------------------------------
+// mpse compile threads
+//--------------------------------------------------------------------------
+
+static std::list<Mpse*> s_tbd;
+static std::mutex s_mutex;
+
+static Mpse* get_mpse()
+{
+    std::lock_guard<std::mutex> lock(s_mutex);
+
+    if ( s_tbd.empty() )
+        return nullptr;
+
+    Mpse* m = s_tbd.front();
+    s_tbd.pop_front();
+
+    return m;
+}
+
+static void compile_mpse(SnortConfig* sc, unsigned id, unsigned* count)
+{
+    set_instance_id(id);
+    unsigned c = 0;
+
+    while ( Mpse* m = get_mpse() )
+    {
+        if ( !m->prep_patterns(sc) )
+            c++;
+    }
+    std::lock_guard<std::mutex> lock(s_mutex);
+    *count += c;
+}
+
+void queue_mpse(Mpse* m)
+{
+    s_tbd.push_back(m);
+}
+
+unsigned compile_mpses(struct SnortConfig* sc, bool parallel)
+{
+    std::list<std::thread*> workers;
+    unsigned max = parallel ? sc->num_slots : 1;
+    unsigned count = 0;
+
+    if ( max == 1 )
+    {
+        compile_mpse(sc, get_instance_id(), &count);
+        return count;
+    }
+
+    for ( unsigned i = 0; i < max; ++i )
+        workers.push_back(new std::thread(compile_mpse, sc, i, &count));
+
+    for ( auto* w : workers )
+    {
+        w->join();
+        delete w;
+    }
+    return count;
 }
 
 //--------------------------------------------------------------------------

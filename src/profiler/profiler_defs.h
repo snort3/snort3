@@ -31,6 +31,7 @@
 namespace snort
 {
 #define ROOT_NODE "total"
+#define FLEX_NODE "other"
 
 struct ProfilerConfig
 {

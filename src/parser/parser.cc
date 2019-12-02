@@ -253,6 +253,7 @@ void parser_term(SnortConfig*)
 SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname, bool is_fatal)
 {
     SnortConfig* sc = new SnortConfig(SnortConfig::get_conf()->proto_ref);
+    SnortConfig::set_parser_conf(sc);
 
     sc->logging_flags = boot_conf->logging_flags;
     sc->tweaks = boot_conf->tweaks;

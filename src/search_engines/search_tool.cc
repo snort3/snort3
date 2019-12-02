@@ -42,7 +42,10 @@ SearchTool::SearchTool(const char* method, bool dfa)
     // pattern offload search method.  If a method is passed in then an offload
     // search engine will not be created
 
-    if (mpsegrp->create_normal_mpse(method))
+    SnortConfig* sc = SnortConfig::get_parser_conf();
+    assert(sc);
+
+    if (mpsegrp->create_normal_mpse(sc, method))
     {
         if( dfa )
             mpsegrp->normal_mpse->set_opt(1);
@@ -50,7 +53,7 @@ SearchTool::SearchTool(const char* method, bool dfa)
 
     if (method == nullptr)
     {
-        if (mpsegrp->create_offload_mpse())
+        if (mpsegrp->create_offload_mpse(sc))
         {
             if ( dfa )
                 mpsegrp->offload_mpse->set_opt(1);

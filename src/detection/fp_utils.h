@@ -40,5 +40,8 @@ bool set_fp_content(OptTreeNode*);
 std::vector <PatternMatchData*> get_fp_content(
     OptTreeNode*, OptFpList*&, bool srvc, bool only_literals, bool& exclude);
 
+void queue_mpse(snort::Mpse*);
+unsigned compile_mpses(struct snort::SnortConfig*, bool parallel = false);
+
 #endif
 

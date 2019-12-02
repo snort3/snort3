@@ -652,7 +652,7 @@ static int http_pattern_match(void* id, void*, int match_end_pos, void* data, vo
         return 0;
 }
 
-int HttpPatternMatchers::process_host_patterns(DetectorHTTPPatterns patterns)
+int HttpPatternMatchers::process_host_patterns(DetectorHTTPPatterns& patterns)
 {
     if (!host_url_matcher)
         host_url_matcher = mlmpCreate();

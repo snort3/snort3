@@ -518,8 +518,7 @@ static IpsOption* byte_math_ctor(Module* p, OptTreeNode*)
     data.result_var = AddVarNameToList(data.result_name);
     if (data.result_var == IPS_OPTIONS_NO_VAR)
     {
-        ParseError("Rule has more than %d variables.",
-            NUM_IPS_OPTIONS_VARS);
+        ParseError("Rule has more than %d variables.", NUM_IPS_OPTIONS_VARS);
         return nullptr;
     }
     return new ByteMathOption(m->data);

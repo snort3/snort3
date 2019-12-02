@@ -778,14 +778,10 @@ void MimeSession::init()
 
     MimeDecode::init();
 
-    /* Header search */
     mime_hdr_search_mpse = new SearchTool;
+
     if (mime_hdr_search_mpse == nullptr)
-    {
-        // FIXIT-M make configurable or at least fall back to any
-        // available search engine
-        FatalError("Could not instantiate ac_bnfa search engine.\n");
-    }
+        FatalError("Could not instantiate search engine.\n");
 
     for (tmp = &mime_hdrs[0]; tmp->name != nullptr; tmp++)
     {

@@ -714,8 +714,10 @@ public:
 
     // Use this to access current thread's conf from other units
     static void set_conf(SnortConfig*);
+    static void set_parser_conf(SnortConfig*);
 
     SO_PUBLIC static SnortConfig* get_conf();
+    SO_PUBLIC static SnortConfig* get_parser_conf();  // main thread only!
 
     SO_PUBLIC void register_reload_resource_tuner(ReloadResourceTuner& rrt)
     { reload_tuners.push_back(&rrt); }

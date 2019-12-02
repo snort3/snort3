@@ -65,6 +65,9 @@ SnortConfig::~SnortConfig() = default;
 SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
 
+SnortConfig* SnortConfig::get_parser_conf()
+{ return snort_conf; }
+
 unsigned get_instance_id()
 { return 0; }
 
@@ -196,14 +199,14 @@ MpseGroup::~MpseGroup()
     }
 }
 
-bool MpseGroup::create_normal_mpse(const char* type)
+bool MpseGroup::create_normal_mpse(SnortConfig*, const char* type)
 {
     normal_mpse = MpseManager::get_search_engine(type);
 
     return true;
 }
 
-bool MpseGroup::create_offload_mpse()
+bool MpseGroup::create_offload_mpse(SnortConfig*)
 {
     offload_mpse = nullptr;
     return false;

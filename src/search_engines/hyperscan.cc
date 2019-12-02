@@ -31,6 +31,7 @@
 #include "framework/mpse.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
+#include "main/thread.h"
 #include "utils/stats.h"
 
 using namespace snort;
@@ -93,11 +94,11 @@ void Pattern::escape(const uint8_t* s, unsigned n, bool literal)
 
 typedef std::vector<Pattern> PatternVector;
 
-// we need to update scratch in the main thread as each pattern is processed
-// and then clone to thread specific after all rules are loaded.  s_scratch is
-// a prototype that is large enough for all uses.
+// we need to update scratch in each compiler thread as each pattern is processed
+// and then select the largest to clone to packet thread specific after all rules
+// are loaded.  s_scratch is a prototype that is large enough for all uses.
 
-static hs_scratch_t* s_scratch = nullptr;
+static std::vector<hs_scratch_t*> s_scratch;
 static unsigned int scratch_index;
 static bool scratch_registered = false;
 
@@ -243,7 +244,7 @@ int HyperscanMpse::prep_patterns(SnortConfig* sc)
         return -2;
     }
 
-    if ( hs_error_t err = hs_alloc_scratch(hs_db, &s_scratch) )
+    if ( hs_error_t err = hs_alloc_scratch(hs_db, &s_scratch[get_instance_id()]) )
     {
         ParseError("can't allocate search scratch space (%d)", err);
         return -3;
@@ -294,20 +295,46 @@ int HyperscanMpse::_search(
 
 static void scratch_setup(SnortConfig* sc)
 {
+    // find the largest scratch and clone for all slots
+    hs_scratch_t* max = nullptr;
+
+    for ( unsigned i = 0; i < sc->num_slots; ++i )
+    {
+        if ( !s_scratch[i] )
+            continue;
+
+        if ( !max )
+        {
+            max = s_scratch[i];
+            s_scratch[i] = nullptr;
+            continue;
+        }
+        size_t max_sz, idx_sz;
+        hs_scratch_size(max, &max_sz);
+        hs_scratch_size(s_scratch[i], &idx_sz);
+
+        if ( idx_sz > max_sz )
+        {
+            hs_free_scratch(max);
+            max = s_scratch[i];
+        }
+        else
+        {
+            hs_free_scratch(s_scratch[i]);
+        }
+        s_scratch[i] = nullptr;
+    }
     for ( unsigned i = 0; i < sc->num_slots; ++i )
     {
         hs_scratch_t** ss = (hs_scratch_t**) &sc->state[i][scratch_index];
 
-        if ( s_scratch )
-            hs_clone_scratch(s_scratch, ss);
+        if ( max )
+            hs_clone_scratch(max, ss);
         else
-            ss = nullptr;
+            *ss = nullptr;
     }
-    if ( s_scratch )
-    {
-        hs_free_scratch(s_scratch);
-        s_scratch = nullptr;
-    }
+    if ( max )
+        hs_free_scratch(max);
 }
 
 static void scratch_cleanup(SnortConfig* sc)
@@ -319,7 +346,7 @@ static void scratch_cleanup(SnortConfig* sc)
         if ( ss )
         {
             hs_free_scratch(ss);
-            ss = nullptr;
+            sc->state[i][scratch_index] = nullptr;
         }
     }
 }
@@ -333,6 +360,7 @@ static Mpse* hs_ctor(
 {
     if ( !scratch_registered )
     {
+        s_scratch.resize(sc->num_slots);
         scratch_index = SnortConfig::request_scratch(scratch_setup, scratch_cleanup);
         scratch_registered = true;
     }
@@ -370,7 +398,7 @@ static const MpseApi hs_api =
         nullptr,
         nullptr
     },
-    MPSE_REGEX,
+    MPSE_REGEX | MPSE_MTBLD,
     nullptr,  // activate
     nullptr,  // setup
     nullptr,  // start

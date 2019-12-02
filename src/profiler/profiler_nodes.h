@@ -92,6 +92,7 @@ public:
     void register_node(const std::string&, const char*, snort::Module*);
 
     void accumulate_nodes();
+    void accumulate_flex();
     void reset_nodes();
 
     const ProfilerNode& get_root();

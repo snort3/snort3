@@ -329,7 +329,7 @@ TEST_CASE("ips options vars")
     int8_t ind2 = AddVarNameToList("VALUE");
     REQUIRE((ind2 == 1));
     int8_t ind3 = AddVarNameToList("VAR3");
-    REQUIRE((ind3 == 2));
+    REQUIRE((ind3 == IPS_OPTIONS_NO_VAR));
 
     // Insert same name twice
     REQUIRE((AddVarNameToList("VALUE") == 1));

@@ -297,7 +297,7 @@ public:
     void insert_rtmp_url_pattern(DetectorAppUrlPattern*);
     void insert_app_url_pattern(DetectorAppUrlPattern*);
     int process_chp_list(CHPListElement*);
-    int process_host_patterns(DetectorHTTPPatterns);
+    int process_host_patterns(DetectorHTTPPatterns&);
     int process_mlmp_patterns();
 
     void scan_key_chp(ChpMatchDescriptor&);

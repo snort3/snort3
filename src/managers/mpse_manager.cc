@@ -190,6 +190,12 @@ bool MpseManager::is_poll_capable(const MpseApi* api)
     return (api->poll);
 }
 
+bool MpseManager::parallel_compiles(const MpseApi* api)
+{
+    assert(api);
+    return (api->flags & MPSE_MTBLD) != 0;
+}
+
 // was called during drop stats but actually commented out
 // FIXIT-M this one has to accumulate across threads
 #if 0

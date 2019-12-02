@@ -81,6 +81,7 @@ using namespace snort;
 #define OUTPUT_U2   "unified2"
 #define OUTPUT_FAST "alert_fast"
 
+SnortConfig* parser_conf = nullptr;
 THREAD_LOCAL SnortConfig* snort_conf = nullptr;
 
 uint32_t SnortConfig::warning_flags = 0;
@@ -1079,6 +1080,12 @@ SO_PUBLIC int SnortConfig::request_scratch(ScScratchFunc setup, ScScratchFunc cl
     // scratch space
     return scratch_handlers.size() - 1;
 }
+
+SO_PUBLIC SnortConfig* SnortConfig::get_parser_conf()
+{ return parser_conf; }
+
+void SnortConfig::set_parser_conf(SnortConfig* sc)
+{ parser_conf = sc; }
 
 SO_PUBLIC SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }

@@ -48,10 +48,10 @@ public:
     { return offload_mpse ? offload_mpse : normal_mpse; }
 
     bool create_normal_mpse(SnortConfig*, const MpseAgent* agent);
-    bool create_normal_mpse(const char*);
+    bool create_normal_mpse(SnortConfig*, const char*);
 
     bool create_offload_mpse(SnortConfig*, const MpseAgent* agent);
-    bool create_offload_mpse();
+    bool create_offload_mpse(SnortConfig*);
 
     inline bool can_fallback() const
     { return get_offload_mpse() != normal_mpse; }

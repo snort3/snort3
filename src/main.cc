@@ -346,6 +346,8 @@ int main_reload_config(lua_State* L)
     	  current_request->respond("== reload failed - restart required\n");
         else
           current_request->respond("== reload failed - bad config\n");
+
+        SnortConfig::set_parser_conf(nullptr);
         return 0;
     }
 
@@ -355,6 +357,7 @@ int main_reload_config(lua_State* L)
     if ( !tc )
     {
         current_request->respond("== reload failed - bad config\n");
+        SnortConfig::set_parser_conf(nullptr);
         return 0;
     }
     SnortConfig::set_conf(sc);
@@ -364,6 +367,7 @@ int main_reload_config(lua_State* L)
     current_request->respond(".. swapping configuration\n", from_shell);
     main_broadcast_command(new ACSwap(new Swapper(old, sc, old_tc, tc), current_request, from_shell), from_shell);
 
+    SnortConfig::set_parser_conf(nullptr);
     return 0;
 }
 
