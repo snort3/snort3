@@ -464,6 +464,19 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
         }
 
         finish_signature_lookup(p, ( file_state.sig_state != FILE_SIG_FLUSH ), policy);
+
+        if (file_state.sig_state == FILE_SIG_DEPTH_FAIL)
+        {
+            verdict = policy->signature_lookup(p, this);
+            if ( verdict != FILE_VERDICT_UNKNOWN )
+            {
+                FileCache* file_cache = FileService::get_file_cache();
+                if (file_cache)
+                    file_cache->apply_verdict(p, this , verdict, false, policy);
+
+                log_file_event(flow, policy);
+            }
+        }
     }
     else
     {

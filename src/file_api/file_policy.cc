@@ -179,6 +179,10 @@ FileVerdict FilePolicy::signature_lookup(Packet*, FileInfo* file)
             captured->store_file_async();
         else
             delete captured;
+
+        FileState state = file->get_file_state();
+        if (state.sig_state == FILE_SIG_DEPTH_FAIL)
+            return FILE_VERDICT_LOG;
     }
 
     return match_file_signature(nullptr, file);
