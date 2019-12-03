@@ -518,6 +518,8 @@ ImapClientDetector::~ImapClientDetector()
 
 void ImapClientDetector::do_custom_init()
 {
+    if (cmd_matcher)
+        delete cmd_matcher;
     cmd_matcher = new SearchTool("ac_full", true);
 
     if ( !tcp_patterns.empty() )

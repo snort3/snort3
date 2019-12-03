@@ -423,7 +423,8 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
         if ((ret = ssl_scan_hostname((const uint8_t*)tls_str, size,
                 client_id, payload_id)))
         {
-            set_client_appid_data(client_id, change_bits);
+            if (client.get_id() == APP_ID_NONE or client.get_id() == APP_ID_SSL_CLIENT)
+                set_client_appid_data(client_id, change_bits);
             set_payload_appid_data(payload_id, change_bits);
             setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id));
         }
@@ -435,7 +436,8 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
         if ((ret = ssl_scan_cname((const uint8_t*)tls_str, size,
                 client_id, payload_id)))
         {
-            set_client_appid_data(client_id, change_bits);
+            if (client.get_id() == APP_ID_NONE or client.get_id() == APP_ID_SSL_CLIENT)
+                set_client_appid_data(client_id, change_bits);
             set_payload_appid_data(payload_id, change_bits);
             setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id));
         }

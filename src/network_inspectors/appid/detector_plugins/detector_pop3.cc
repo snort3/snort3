@@ -76,6 +76,8 @@ static const uint8_t AUTHEOC3[] = "AUTH \x00d\x00a";
 static const uint8_t AUTHEOC4[] = "AUTH \x00a";
 static const uint8_t STLSEOC[] = "STLS\x00d\x00a";
 static const uint8_t STLSEOC2[] = "STLS\x00a";
+static const uint8_t STLSEOC3[] = "STLS \x00d\x00a";
+static const uint8_t STLSEOC4[] = "STLS \x00a";
 
 enum Client_App_Pattern_Index
 {
@@ -90,6 +92,8 @@ enum Client_App_Pattern_Index
     PATTERN_AUTHEOC4,
     PATTERN_STLSEOC,
     PATTERN_STLSEOC2,
+    PATTERN_STLSEOC3,
+    PATTERN_STLSEOC4,
     PATTERN_POP3_OTHER // always last
 };
 
@@ -140,6 +144,8 @@ static AppIdFlowContentPattern pop3_client_patterns[] =
     { AUTHEOC4, sizeof(AUTHEOC4)-1, 0, 1, 0 },
     { STLSEOC, sizeof(STLSEOC)-1,   0, 1, 0 },
     { STLSEOC2, sizeof(STLSEOC2)-1, 0, 1, 0 },
+    { STLSEOC3, sizeof(STLSEOC3)-1, 0, 1, 0 },
+    { STLSEOC4, sizeof(STLSEOC4)-1, 0, 1, 0 },
     /* These are represented by index >= PATTERN_POP3_OTHER */
     { DELE, sizeof(DELE)-1,         0, 1, 0 },
     { LISTC, sizeof(LISTC)-1,       0, 1, 0 },
@@ -211,6 +217,8 @@ Pop3ClientDetector::~Pop3ClientDetector()
 
 void Pop3ClientDetector::do_custom_init()
 {
+    if (cmd_matcher)
+        delete cmd_matcher;
     cmd_matcher = new SearchTool("ac_full", true);
 
     if ( !tcp_patterns.empty() )
@@ -608,6 +616,8 @@ int Pop3ClientDetector::validate(AppIdDiscoveryArgs& args)
             {
             case PATTERN_STLSEOC:
             case PATTERN_STLSEOC2:
+            case PATTERN_STLSEOC3:
+            case PATTERN_STLSEOC4:
             {
                 /* If the STLS command succeeds we will be in a TLS negotiation state.
                    Wait for the "+OK" from the server using this STLS hybrid state. */

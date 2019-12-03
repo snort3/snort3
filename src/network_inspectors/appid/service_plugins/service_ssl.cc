@@ -32,7 +32,7 @@
 
 using namespace snort;
 
-#define SSL_PORT    443
+#define SSL_PORT 443
 
 enum SSLContentType
 {
@@ -53,7 +53,7 @@ enum SSLContentType
 
 #define FIELD_SEPARATOR "/"
 #define COMMON_NAME_STR "/CN="
-#define ORG_NAME_STR    "/O="
+#define ORG_NAME_STR "/O="
 
 /* Extension types. */
 #define SSL_EXT_SERVER_NAME 0
@@ -105,17 +105,6 @@ struct ServiceSSLData
     int common_name_strlen;
     char* org_name;
     int org_name_strlen;
-};
-
-struct ServiceSSLCertificate
-{
-    X509* cert;
-    char* cert_name;
-    uint8_t* common_name_ptr;
-    int common_name_len;
-    uint8_t* org_name_ptr;
-    int org_name_len;
-    struct ServiceSSLCertificate* next;
 };
 
 #pragma pack(1)
@@ -212,9 +201,9 @@ static ServiceSslConfig service_ssl_config;
 
 /* Convert 3-byte lengths in TLS headers to integers. */
 #define ntoh3(msb_ptr) \
-    ((uint32_t)(   (uint32_t)(((const uint8_t*)(msb_ptr))[0] << 16)    \
-    + (uint32_t)(((const uint8_t*)(msb_ptr))[1] <<  8)    \
-    + (uint32_t)(((const uint8_t*)(msb_ptr))[2]      ) ))
+    ((uint32_t)((uint32_t)(((const uint8_t*)(msb_ptr))[0] << 16) \
+    + (uint32_t)(((const uint8_t*)(msb_ptr))[1] << 8) \
+    + (uint32_t)(((const uint8_t*)(msb_ptr))[2])))
 
 static int ssl_cert_pattern_match(void* id, void*, int match_end_pos, void* data, void*)
 {
@@ -249,9 +238,7 @@ static int ssl_detector_create_matcher(SearchTool** matcher, DetectorSSLCertPatt
     for (element = list; element; element = element->next)
     {
         (*matcher)->add(element->dpattern->pattern,
-            element->dpattern->pattern_size,
-            element->dpattern,
-            true);
+            element->dpattern->pattern_size, element->dpattern, true);
         (*patternIndex)++;
     }
 
@@ -355,10 +342,7 @@ static void parse_client_initiation(const uint8_t* data, uint16_t size, ServiceS
         return;
     hdr3 = (const ServiceSSLV3Hdr*)data;
     ver = ntohs(hdr3->version);
-    if (hdr3->type != SSL_HANDSHAKE ||
-        (ver != 0x0300 &&
-        ver != 0x0301 &&
-        ver != 0x0302 &&
+    if (hdr3->type != SSL_HANDSHAKE || (ver != 0x0300 && ver != 0x0301 && ver != 0x0302 &&
         ver != 0x0303))
     {
         return;
@@ -370,12 +354,8 @@ static void parse_client_initiation(const uint8_t* data, uint16_t size, ServiceS
         return;
     rec = (const ServiceSSLV3Record*)data;
     ver = ntohs(rec->version);
-    if (rec->type != SSL_CLIENT_HELLO ||
-        (ver != 0x0300 &&
-        ver != 0x0301 &&
-        ver != 0x0302 &&
-        ver != 0x0303) ||
-        rec->length_msb)
+    if (rec->type != SSL_CLIENT_HELLO || (ver != 0x0300 && ver != 0x0301 && ver != 0x0302 &&
+        ver != 0x0303) || rec->length_msb)
     {
         return;
     }
@@ -435,9 +415,8 @@ static void parse_client_initiation(const uint8_t* data, uint16_t size, ServiceS
             if ((length - sizeof(ServiceSSLV3ExtensionServerName)) < len)
                 return;
 
-            const uint8_t* str = data
-                + offsetof(ServiceSSLV3ExtensionServerName, string_length)
-                + sizeof(ext->string_length);
+            const uint8_t* str = data + offsetof(ServiceSSLV3ExtensionServerName, string_length) +
+                sizeof(ext->string_length);
             ss->host_name = (char*)snort_alloc(len + 1);  //Plus nullptr term.
             memcpy(ss->host_name, str, len);
             ss->host_name[len] = '\0';
@@ -457,30 +436,32 @@ static void parse_client_initiation(const uint8_t* data, uint16_t size, ServiceS
 static bool parse_certificates(ServiceSSLData* ss)
 {
     bool success = false;
-    if (ss->certs_data && ss->certs_len)
+    if (ss->certs_data and ss->certs_len)
     {
-        /* Pull out certificates from block of data. */
+        char* common_name = nullptr;
+        char* org_name = nullptr;
         const uint8_t* data = ss->certs_data;
-        int len  = ss->certs_len;
-        ServiceSSLCertificate* certs_head = nullptr;
-        ServiceSSLCertificate* certs_curr = nullptr;
+        int len = ss->certs_len;
         int common_name_tot_len = 0;
-        int org_name_tot_len    = 0;
-        int num_certs = 0;
+        int org_name_tot_len  = 0;
         success = true;
 
-        while (len > 0)
+        while (len > 0 and !(common_name and org_name))
         {
+            X509* cert = nullptr;
+            char* cert_name = nullptr;
+            char* start = nullptr;
+
             int cert_len = ntoh3(data);
             data += 3;
-            len  -= 3;
+            len -= 3;
             if (len < cert_len)
             {
                 success = false;
                 break;
             }
             /* d2i_X509() increments the data ptr for us. */
-            X509* cert = d2i_X509(nullptr, (const unsigned char**)&data, cert_len);
+            cert = d2i_X509(nullptr, (const unsigned char**)&data, cert_len);
             len -= cert_len;
             if (!cert)
             {
@@ -488,123 +469,68 @@ static bool parse_certificates(ServiceSSLData* ss)
                 break;
             }
 
-            /* Insert certificate entry into list. */
-            certs_curr = (ServiceSSLCertificate*)snort_calloc(sizeof(ServiceSSLCertificate));
-            certs_curr->cert = cert;
-            certs_curr->next = certs_head;
-            certs_head       = certs_curr;
-            num_certs++;
-
-            certs_curr->cert_name = X509_NAME_oneline(X509_get_subject_name(cert), nullptr, 0);
-            char* start = strstr(certs_curr->cert_name, COMMON_NAME_STR);
-            if (start)
+            /* only look for common name or org name if we don't already have one */
+            if (!common_name or !org_name)
             {
-                int length;
-
-                start += strlen(COMMON_NAME_STR);
-                certs_curr->common_name_ptr = (uint8_t*)start;
-                char* end = strstr(start, FIELD_SEPARATOR);
-                if (end)
-                    length = end - start;
-                else
-                    length = strlen(start);
-
-                certs_curr->common_name_len = length;
-                common_name_tot_len += length;
+                if ((cert_name = X509_NAME_oneline(X509_get_subject_name(cert), nullptr, 0)))
+                {
+                    if (!common_name)
+                    {
+                        if ((start = strstr(cert_name, COMMON_NAME_STR)))
+                        {
+                            int length = 0;
+                            start += strlen(COMMON_NAME_STR);
+                            length = strlen(start);
+                            if (length > 2 and *start == '*' and *(start+1) == '.')
+                            {
+                                start += 2; // remove leading *.
+                                length -= 2;
+                            }
+                            common_name = snort_strndup(start, length);
+                            common_name_tot_len += length;
+                            start = nullptr;
+                        }
+                    }
+                    if (!org_name)
+                    {
+                        if ((start = strstr(cert_name, COMMON_NAME_STR)))
+                        {
+							int length;
+                            start += strlen(COMMON_NAME_STR);
+                            length = strlen(start);
+                            if (length > 2 and *start == '*' and *(start+1) == '.')
+                            {
+                                start += 2; // remove leading *.
+                                length -= 2;
+                            }
+                            org_name = snort_strndup(start, length);
+                            org_name_tot_len += length;
+                            start = nullptr;
+                        }
+                    }
+                    free(cert_name);
+                    cert_name = nullptr;
+                }
             }
-
-            start = strstr(certs_curr->cert_name, ORG_NAME_STR);
-            if (start)
-            {
-                int length;
-
-                start += strlen(ORG_NAME_STR);
-                certs_curr->org_name_ptr = (uint8_t*)start;
-                char* end = strstr(start, FIELD_SEPARATOR);
-                if (end)
-                    length = end - start;
-                else
-                    length = strlen(start);
-
-                certs_curr->org_name_len = length;
-                org_name_tot_len += length;
-            }
+            X509_free(cert);
         }
 
-        if (success)
+        if (common_name)
         {
-            char* common_name = nullptr;
-            if (common_name_tot_len)
-            {
-                /* Add a space for each and the terminator at the end. */
-                common_name_tot_len += num_certs;
-                common_name = (char*)snort_calloc(common_name_tot_len);
-            }
-
-            char* org_name = nullptr;
-            if (org_name_tot_len)
-            {
-                /* Add a space for each and the terminator at the end. */
-                org_name_tot_len += num_certs;
-                org_name = (char*)snort_calloc(org_name_tot_len);
-            }
-
-            char* common_name_ptr = common_name;
-            char* org_name_ptr = org_name;
-            certs_curr = certs_head;
-            while (certs_curr)
-            {
-                /* Grab this common name. */
-                if (common_name_ptr && certs_curr->common_name_ptr && certs_curr->common_name_len)
-                {
-                    memcpy(common_name_ptr, certs_curr->common_name_ptr,
-                        certs_curr->common_name_len);
-                    common_name_ptr += certs_curr->common_name_len;
-                    *common_name_ptr = ' ';
-                    common_name_ptr += 1;
-                }
-
-                /* Grab this org name. */
-                if (org_name_ptr && certs_curr->org_name_ptr && certs_curr->org_name_len)
-                {
-                    memcpy(org_name_ptr, certs_curr->org_name_ptr, certs_curr->org_name_len);
-                    org_name_ptr += certs_curr->org_name_len;
-                    *org_name_ptr = ' ';
-                    org_name_ptr += 1;
-                }
-
-                certs_curr = certs_curr->next;
-            }
-
-            if (common_name_tot_len)
-            {
-                common_name_ptr  -= 1;
-                *common_name_ptr  = '\0';
-            }
-            if (org_name_tot_len)
-            {
-                org_name_ptr     -= 1;
-                *org_name_ptr     = '\0';
-            }
-            ss->common_name        = common_name;
-            ss->common_name_strlen = common_name_tot_len - 1;  // Minus terminator.
-            ss->org_name           = org_name;
-            ss->org_name_strlen    = org_name_tot_len - 1;  // Minus terminator.
+            ss->common_name = common_name;
+            ss->common_name_strlen = common_name_tot_len;
         }
 
-        while (certs_head)
+        if (org_name)
         {
-            certs_curr = certs_head;
-            certs_head = certs_head->next;
-            X509_free(certs_curr->cert);
-            OPENSSL_free(certs_curr->cert_name);
-            snort_free(certs_curr);
+            ss->org_name = org_name;
+            ss->org_name_strlen = org_name_tot_len;
         }
 
         /* No longer need entire certificates. We have what we came for. */
         snort_free(ss->certs_data);
         ss->certs_data = nullptr;
-        ss->certs_len  = 0;
+        ss->certs_len = 0;
     }
 
     return success;
@@ -664,15 +590,12 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
         }
 
         /* SSL v2 header? */
-        if (size >= sizeof(ServiceSSLV2Hdr) &&
-            hdr2->len >= 0x80 &&
-            hdr2->type == SSL2_SERVER_HELLO &&
-            !(hdr2->cert & 0xFE))
+        if (size >= sizeof(ServiceSSLV2Hdr) && hdr2->len >= 0x80 &&
+            hdr2->type == SSL2_SERVER_HELLO && !(hdr2->cert & 0xFE))
         {
             uint16_t h2v = ntohs(hdr2->version);
-            if ((h2v == 0x0002 || h2v == 0x0300 ||
-                h2v == 0x0301 || h2v == 0x0303) &&
-                !(hdr2->cipher_len % 3))
+            if ((h2v == 0x0002 || h2v == 0x0300 || h2v == 0x0301 ||
+                h2v == 0x0303) && !(hdr2->cipher_len % 3))
             {
                 goto success;
             }
@@ -680,24 +603,18 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
 
         /* Its probably an SSLv3, TLS 1.2, or TLS 1.3 header.
            First record must be a handshake (type 22). */
-        if (size < sizeof(ServiceSSLV3Hdr) ||
-            hdr3->type != SSL_HANDSHAKE ||
-            (ntohs(hdr3->version) != 0x0300 &&
-            ntohs(hdr3->version) != 0x0301 &&
-            ntohs(hdr3->version) != 0x0302 &&
-            ntohs(hdr3->version) != 0x0303))
+        if (size < sizeof(ServiceSSLV3Hdr) || hdr3->type != SSL_HANDSHAKE ||
+            (ntohs(hdr3->version) != 0x0300 && ntohs(hdr3->version) != 0x0301 &&
+            ntohs(hdr3->version) != 0x0302 && ntohs(hdr3->version) != 0x0303))
         {
             goto fail;
         }
         data += sizeof(ServiceSSLV3Hdr);
         size -= sizeof(ServiceSSLV3Hdr);
         rec = (const ServiceSSLV3Record*)data;
-        if (size < sizeof(ServiceSSLV3Record) ||
-            rec->type != SSL_SERVER_HELLO ||
-            (ntohs(rec->version) != 0x0300 &&
-            ntohs(rec->version) != 0x0301 &&
-            ntohs(rec->version) != 0x0302 &&
-            ntohs(rec->version) != 0x0303) ||
+        if (size < sizeof(ServiceSSLV3Record) || rec->type != SSL_SERVER_HELLO ||
+            (ntohs(rec->version) != 0x0300 && ntohs(rec->version) != 0x0301 &&
+            ntohs(rec->version) != 0x0302 && ntohs(rec->version) != 0x0303) ||
             rec->length_msb)
         {
             goto fail;
@@ -726,14 +643,9 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
                 {
                     hdr3 = (const ServiceSSLV3Hdr*)data;
                     ver = ntohs(hdr3->version);
-                    if (size < sizeof(ServiceSSLV3Hdr) ||
-                        (hdr3->type != SSL_HANDSHAKE &&
-                         hdr3->type != SSL_CHANGE_CIPHER &&
-                         hdr3->type != SSL_APPLICATION_DATA) ||
-                        (ver != 0x0300 &&
-                         ver != 0x0301 &&
-                         ver != 0x0302 &&
-                         ver != 0x0303))
+                    if (size < sizeof(ServiceSSLV3Hdr) || (hdr3->type != SSL_HANDSHAKE &&
+                        hdr3->type != SSL_CHANGE_CIPHER && hdr3->type != SSL_APPLICATION_DATA) ||
+                        (ver != 0x0300 && ver != 0x0301 && ver != 0x0302 && ver != 0x0303))
                     {
                         goto fail;
                     }
@@ -785,8 +697,7 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
                 /* fall through */
                 case SSL_SERVER_KEY_XCHG:
                 case SSL_SERVER_CERT_REQ:
-                    ss->length = ntohs(rec->length) +
-                        offsetof(ServiceSSLV3Record, version);
+                    ss->length = ntohs(rec->length) + offsetof(ServiceSSLV3Record, version);
                     if (ss->tot_length < ss->length)
                         goto fail;
                     ss->tot_length -= ss->length;
@@ -820,16 +731,15 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
                     if (size < (ss->certs_len - ss->certs_curr_len))
                     {
                         /* Will have to get more next time around. */
-                        memcpy(ss->certs_data + ss->certs_curr_len,
-                               data, size);
+                        memcpy(ss->certs_data + ss->certs_curr_len, data, size);
                         ss->in_certs = 1;
                         ss->certs_curr_len += size;
                     }
                     else
                     {
                         /* Can get it all this time. */
-                        memcpy(ss->certs_data + ss->certs_curr_len,
-                               data, ss->certs_len - ss->certs_curr_len);
+                        memcpy(ss->certs_data + ss->certs_curr_len, data,
+                            ss->certs_len - ss->certs_curr_len);
                         ss->in_certs = 0;
                         ss->certs_curr_len = ss->certs_len;
                     }
@@ -1035,13 +945,13 @@ static int ssl_scan_patterns(SearchTool* matcher, const uint8_t* data, size_t si
 int ssl_scan_hostname(const uint8_t* hostname, size_t size, AppId& client_id, AppId& payload_id)
 {
     return ssl_scan_patterns(service_ssl_config.ssl_host_matcher,
-                             hostname, size, client_id, payload_id);
+        hostname, size, client_id, payload_id);
 }
 
 int ssl_scan_cname(const uint8_t* common_name, size_t size, AppId& client_id, AppId& payload_id)
 {
     return ssl_scan_patterns(service_ssl_config.ssl_cname_matcher,
-                             common_name, size, client_id, payload_id);
+        common_name, size, client_id, payload_id);
 }
 
 void service_ssl_clean()
@@ -1081,13 +991,13 @@ static int ssl_add_pattern(DetectorSSLCertPattern** list, uint8_t* pattern_str, 
 int ssl_add_cert_pattern(uint8_t* pattern_str, size_t pattern_size, uint8_t type, AppId app_id)
 {
     return ssl_add_pattern(&service_ssl_config.DetectorSSLCertPatternList,
-                           pattern_str, pattern_size, type, app_id);
+        pattern_str, pattern_size, type, app_id);
 }
 
 int ssl_add_cname_pattern(uint8_t* pattern_str, size_t pattern_size, uint8_t type, AppId app_id)
 {
     return ssl_add_pattern(&service_ssl_config.DetectorSSLCnamePatternList,
-                           pattern_str, pattern_size, type, app_id);
+        pattern_str, pattern_size, type, app_id);
 }
 
 static void ssl_patterns_free(DetectorSSLCertPattern** list)
@@ -1123,10 +1033,10 @@ bool setSSLSquelch(Packet* p, int type, AppId appId)
 
     /* FIXIT-H: Passing appId to create_future_session() is incorrect. We
        need to pass the snort_protocol_id associated with appId. */
-    AppIdSession* asd = AppIdSession::create_future_session(
-        p, sip, 0, dip, p->ptrs.dp, IpProtocol::TCP, appId, 0);
+    AppIdSession* asd = AppIdSession::create_future_session(p, sip, 0, dip, p->ptrs.dp,
+        IpProtocol::TCP, appId, 0);
 
-    if ( asd )
+    if (asd)
     {
         switch (type)
         {
