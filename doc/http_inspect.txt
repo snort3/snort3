@@ -99,18 +99,17 @@ depth parameter entirely because that is the default.
 These limits have no effect on how much data is forwarded to file
 processing.
 
-===== accelerated_blocking
+===== detained_inspection
 
-Accelerated blocking is an experimental feature currently under
-development. It enables Snort to more quickly detect and block response
-messages containing malicious JavaScript. As this feature involves
-actively blocking traffic it is designed for use with inline mode
-operation (-Q).
+Detained inspection is an experimental feature currently under development.
+It enables Snort to more quickly detect and block response messages
+containing malicious JavaScript. As this feature involves actively blocking
+traffic it is designed for use with inline mode operation (-Q).
 
 This feature only functions with response_depth = -1 (unlimited). This
 limitation will be removed in a future version.
 
-This feature is off by default. accelerated_blocking = true will activate
+This feature is off by default. detained_inspection = true will activate
 it.
 
 ===== gzip
