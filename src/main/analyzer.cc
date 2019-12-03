@@ -208,6 +208,52 @@ static bool process_packet(Packet* p)
     return true;
 }
 
+// If necessary, defer returning a WHITELIST until it's safe to do so.
+// While deferring, keep inspection turned on.
+static void handle_deferred_whitelist(Packet* pkt, DAQ_Verdict& verdict)
+{
+    if ( !pkt->flow or pkt->flow->deferred_whitelist == WHITELIST_DEFER_OFF )
+        return;
+
+    if (verdict == DAQ_VERDICT_BLOCK or verdict == DAQ_VERDICT_BLACKLIST )
+    {
+        // A block/blacklist verdict overrides any earlier whitelist.
+        pkt->flow->deferred_whitelist = WHITELIST_DEFER_OFF;
+        return;
+    }
+
+    if ( pkt->flow->deferred_whitelist == WHITELIST_DEFER_ON )
+    {
+        if ( verdict == DAQ_VERDICT_WHITELIST )
+        {
+            verdict = DAQ_VERDICT_PASS;
+            pkt->flow->deferred_whitelist = WHITELIST_DEFER_STARTED;
+            pkt->flow->set_state(Flow::FlowState::INSPECT);
+            pkt->flow->disable_inspect = false;
+        }
+        return;
+    }
+
+    if ( pkt->flow->deferred_whitelist == WHITELIST_DEFER_STARTED)
+    {
+        verdict = DAQ_VERDICT_PASS;
+        pkt->flow->set_state(Flow::FlowState::INSPECT);
+        pkt->flow->disable_inspect = false;
+        return;
+    }
+
+    if ( pkt->flow->deferred_whitelist == WHITELIST_DEFER_DONE )
+    {
+        // Now that we're done deferring, return the WHITELIST that would
+        // have happened earlier.
+        verdict = DAQ_VERDICT_WHITELIST;
+
+        // Turn inspection back off and allow the flow.
+        pkt->flow->set_state(Flow::FlowState::ALLOW);
+        pkt->flow->disable_inspect = true;
+    }
+}
+
 // Finalize DAQ message verdict
 static DAQ_Verdict distill_verdict(Packet* p)
 {
@@ -272,6 +318,8 @@ static DAQ_Verdict distill_verdict(Packet* p)
     }
     else
         verdict = DAQ_VERDICT_PASS;
+
+    handle_deferred_whitelist(p, verdict);
 
     return verdict;
 }

@@ -153,6 +153,13 @@ struct LwState
     char ignore_direction;
 };
 
+enum DeferredWhitelist {
+    WHITELIST_DEFER_OFF = 0,
+    WHITELIST_DEFER_ON,
+    WHITELIST_DEFER_STARTED,
+    WHITELIST_DEFER_DONE,
+};
+
 // this struct is organized by member size for compactness
 class SO_PUBLIC Flow
 {
@@ -340,6 +347,16 @@ public:
     bool is_hard_expiration()
     { return (ssn_state.session_flags & SSNFLAG_HARD_EXPIRATION) != 0; }
 
+    void set_deferred_whitelist(DeferredWhitelist defer_state)
+    {
+        deferred_whitelist = defer_state;
+    }
+
+    DeferredWhitelist get_deferred_whitelist_state()
+    {
+        return deferred_whitelist;
+    }
+
 public:  // FIXIT-M privatize if possible
     // fields are organized by initialization and size to minimize
     // void space and allow for memset of tail end of struct
@@ -398,6 +415,8 @@ public:  // FIXIT-M privatize if possible
 
     bool disable_inspect;
     bool trigger_finalize_event;
+
+    DeferredWhitelist deferred_whitelist = WHITELIST_DEFER_OFF;
 
 private:
     void clean();
