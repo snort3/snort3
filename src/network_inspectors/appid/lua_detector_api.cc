@@ -914,7 +914,7 @@ static int client_add_application(lua_State* L)
     unsigned int service_id = lua_tonumber(L, 2);
     unsigned int productId = lua_tonumber(L, 4);
     const char* version = lua_tostring(L, 5);
-    ud->cd->add_app(*lsd->ldp.asd,
+    ud->cd->add_app(*lsd->ldp.pkt, *lsd->ldp.asd, lsd->ldp.dir,
         AppInfoManager::get_instance().get_appid_by_service_id(service_id),
         AppInfoManager::get_instance().get_appid_by_client_id(productId), version,
         *lsd->ldp.change_bits);

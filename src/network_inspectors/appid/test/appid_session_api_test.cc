@@ -49,6 +49,13 @@ void NbdgmServiceDetector::AppIdFreeSMBData(FpSMBData* data)
 AppIdSession* mock_session = nullptr;
 AppIdSessionApi* appid_session_api = nullptr;
 
+//Stub for config
+AppIdConfig::AppIdConfig(AppIdModuleConfig* mod)
+{
+    this->mod_config = mod;
+    this->mod_config->check_host_port_app_cache = false;
+}
+
 TEST_GROUP(appid_session_api)
 {
     void setup() override
@@ -216,6 +223,12 @@ TEST(appid_session_api, is_appid_inspecting_session)
     mock_session->set_tp_app_id(APP_ID_SSH);
     val = appid_session_api->is_appid_inspecting_session();
     CHECK_TRUE(val);
+
+    // 4th if in is_appid_inspecting_session
+    mock_session->set_tp_app_id(APP_ID_NONE);
+    mock_session->config->mod_config->check_host_port_app_cache = true;
+    val = appid_session_api->is_appid_inspecting_session();
+    CHECK_TRUE(val);
 }
 
 TEST(appid_session_api, get_user_name)
@@ -360,6 +373,8 @@ int main(int argc, char** argv)
 {
     mock_init_appid_pegs();
     mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
+    AppIdModuleConfig *mod_config = new AppIdModuleConfig();
+    mock_session->config = new AppIdConfig(mod_config);
     int rc = CommandLineTestRunner::RunAllTests(argc, argv);
     mock_cleanup_appid_pegs();
     return rc;

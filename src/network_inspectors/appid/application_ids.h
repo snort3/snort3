@@ -1013,6 +1013,7 @@ enum ApplicationIds : AppId
     APP_ID_HTTP_SSL_TUNNEL                = 3860,
     APP_ID_FTP_ACTIVE                     = 4002,
     APP_ID_FTP_PASSIVE                    = 4003,
+    APP_ID_PSIPHON                        = 4075,
 #ifdef REG_TEST
     APP_ID_REGTEST                        = 10000,
     APP_ID_REGTEST1                       = 10001,

@@ -367,6 +367,20 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* config, const char* pa
                     config->is_host_port_app_cache_runtime = true;
                 }
             }
+            else if (!(strcasecmp(conf_key, "check_host_port_app_cache")))
+            {
+                if (!(strcasecmp(conf_val, "enabled")))
+                {
+                    config->check_host_port_app_cache = true;
+                }
+            }
+            else if (!(strcasecmp(conf_key, "check_host_cache_unknown_ssl")))
+            {
+                if (!(strcasecmp(conf_val, "enabled")))
+                {
+                    config->check_host_cache_unknown_ssl = true;
+                }
+            }
             else if (!(strcasecmp(conf_key, "allow_port_wildcard_host_cache")))
             {
                 if (!(strcasecmp(conf_val, "enabled")))
@@ -396,6 +410,48 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* config, const char* pa
                     LogMessage("AppId: recheck_for_portservice_appid enabled\n");
                     LogMessage("AppId: defer_to_thirdparty %d\n", APP_ID_BITTORRENT);
                     LogMessage("AppId: defer_payload_to_thirdparty %d\n", APP_ID_BITTORRENT);
+                    LogMessage("AppId: max_tp_flow_depth %d\n", config->max_tp_flow_depth);
+                }
+                if (aggressiveness >= 80)
+                {
+                    config->allow_port_wildcard_host_cache = true;
+                    LogMessage("AppId: allow_port_wildcard_host_cache enabled\n");
+                }
+            }
+            else if (!(strcasecmp(conf_key, "ultrasurf_aggressiveness")))
+            {
+                int aggressiveness = atoi(conf_val);
+                LogMessage("AppId: ultrasurf_aggressiveness %d\n", aggressiveness);
+                if (aggressiveness >= 50)
+                {
+                    config->check_host_cache_unknown_ssl = true;
+                    set_app_info_flags(APP_ID_ULTRASURF, APPINFO_FLAG_DEFER);
+                    set_app_info_flags(APP_ID_ULTRASURF, APPINFO_FLAG_DEFER_PAYLOAD);
+                    config->max_tp_flow_depth = 25;
+                    LogMessage("AppId: check_host_cache_unknown_ssl enabled\n");
+                    LogMessage("AppId: defer_to_thirdparty %d\n", APP_ID_ULTRASURF);
+                    LogMessage("AppId: defer_payload_to_thirdparty %d\n", APP_ID_ULTRASURF);
+                    LogMessage("AppId: max_tp_flow_depth %d\n", config->max_tp_flow_depth);
+                }
+                if (aggressiveness >= 80)
+                {
+                    config->allow_port_wildcard_host_cache = true;
+                    LogMessage("AppId: allow_port_wildcard_host_cache enabled\n");
+                }
+            }
+            else if (!(strcasecmp(conf_key, "psiphon_aggressiveness")))
+            {
+                int aggressiveness = atoi(conf_val);
+                LogMessage("AppId: psiphon_aggressiveness %d\n", aggressiveness);
+                if (aggressiveness >= 50)
+                {
+                    config->check_host_cache_unknown_ssl = true;
+                    set_app_info_flags(APP_ID_PSIPHON, APPINFO_FLAG_DEFER);
+                    set_app_info_flags(APP_ID_PSIPHON, APPINFO_FLAG_DEFER_PAYLOAD);
+                    config->max_tp_flow_depth = 25;
+                    LogMessage("AppId: check_host_cache_unknown_ssl enabled\n");
+                    LogMessage("AppId: defer_to_thirdparty %d\n", APP_ID_PSIPHON);
+                    LogMessage("AppId: defer_payload_to_thirdparty %d\n", APP_ID_PSIPHON);
                     LogMessage("AppId: max_tp_flow_depth %d\n", config->max_tp_flow_depth);
                 }
                 if (aggressiveness >= 80)

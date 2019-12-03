@@ -945,6 +945,18 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
     return false;
 }
 
+static inline bool is_check_host_cache_valid(AppIdSession& asd, AppId service_id, AppId client_id, AppId payload_id, AppId misc_id)
+{
+    bool is_payload_client_misc_none = (payload_id <= APP_ID_NONE and client_id <= APP_ID_NONE and misc_id <= APP_ID_NONE);
+    bool is_appid_none = is_payload_client_misc_none and (service_id <= APP_ID_NONE or service_id == APP_ID_UNKNOWN_UI or
+        (asd.config->mod_config->recheck_for_portservice_appid and service_id == asd.service.get_port_service_id()));
+    bool is_ssl_none = asd.config->mod_config->check_host_cache_unknown_ssl and asd.get_session_flags(APPID_SESSION_SSL_SESSION) and
+                          (not(asd.tsession and asd.tsession->get_tls_host() and asd.tsession->get_tls_cname()));
+    if (is_appid_none or is_ssl_none or asd.config->mod_config->check_host_port_app_cache)
+        return true;
+    return false;
+}
+
 bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol protocol,
     AppidSessionDirection direction, AppId& service_id, AppId& client_id, AppId& payload_id,
     AppId& misc_id, AppidChangeBits& change_bits)
@@ -1043,10 +1055,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
     misc_id =  asd.pick_misc_app_id();;
 
     bool is_http_tunnel = ((asd.payload.get_id() == APP_ID_HTTP_TUNNEL) || (asd.payload.get_id() == APP_ID_HTTP_SSL_TUNNEL)) ? true:false;
-    bool is_appid_none = (client_id <= APP_ID_NONE and payload_id <= APP_ID_NONE and misc_id <= APP_ID_NONE);
-    if ((is_appid_none and (service_id == APP_ID_UNKNOWN_UI or service_id <= APP_ID_NONE or
-        (asd.config->mod_config->recheck_for_portservice_appid and service_id == asd.service.get_port_service_id())))
-        or (is_http_tunnel))
+    if (is_check_host_cache_valid(asd, service_id, client_id, payload_id, misc_id) or (is_http_tunnel))
     {
         if(is_http_tunnel)
         {

@@ -49,6 +49,7 @@ struct Packet;
 #define SCAN_HTTP_VIA_FLAG          (1<<0)
 #define SCAN_HTTP_USER_AGENT_FLAG   (1<<1)
 #define SCAN_HTTP_HOST_URL_FLAG     (1<<2)
+#define SCAN_SSL_CERTIFICATE_FLAG   (1<<3)
 #define SCAN_SSL_HOST_FLAG          (1<<4)
 #define SCAN_HOST_PORT_FLAG         (1<<5)
 #define SCAN_HTTP_VENDOR_FLAG       (1<<6)

@@ -430,7 +430,7 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
         }
         scan_flags &= ~SCAN_SSL_HOST_FLAG;
     }
-    if ((tls_str = tsession->get_tls_cname()))
+    if ((scan_flags & SCAN_SSL_CERTIFICATE_FLAG) and (tls_str = tsession->get_tls_cname()))
     {
         size_t size = strlen(tls_str);
         if ((ret = ssl_scan_cname((const uint8_t*)tls_str, size,
@@ -441,7 +441,7 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
             set_payload_appid_data(payload_id, change_bits);
             setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id));
         }
-        tsession->set_tls_cname(nullptr, 0);
+        scan_flags &= ~SCAN_SSL_CERTIFICATE_FLAG;
     }
     if ((tls_str = tsession->get_tls_org_unit()))
     {

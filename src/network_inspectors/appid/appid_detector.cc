@@ -88,15 +88,15 @@ void AppIdDetector::add_payload(AppIdSession& asd, AppId payload_id)
     asd.payload.set_id(payload_id);
 }
 
-void AppIdDetector::add_app(AppIdSession& asd, AppId service_id, AppId client_id,
-    const char* version, AppidChangeBits& change_bits)
+void AppIdDetector::add_app(const Packet& p, AppIdSession& asd, AppidSessionDirection dir, AppId service_id,
+    AppId client_id, const char* version, AppidChangeBits& change_bits)
 {
     if ( version )
         asd.client.set_version(version, change_bits);
 
     asd.set_client_detected();
     asd.client_inferred_service_id = service_id;
-    asd.client.set_id(client_id);
+    asd.client.set_id(p, asd, dir, client_id, change_bits);
 }
 
 const char* AppIdDetector::get_code_string(APPID_STATUS_CODE code) const

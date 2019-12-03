@@ -93,6 +93,8 @@ public:
     bool chp_userid_disabled = false;
     bool http2_detection_enabled = false;
     bool is_host_port_app_cache_runtime = false;
+    bool check_host_port_app_cache = false;
+    bool check_host_cache_unknown_ssl = false;
     uint32_t ftp_userid_disabled = 0;
     uint32_t chp_body_collection_disabled = 0;
     uint32_t chp_body_collection_max = 0;

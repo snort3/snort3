@@ -807,8 +807,10 @@ success:
 
         /* TLS Common Name */
         if (ss->common_name)
+        {
             args.asd.tsession->set_tls_cname(ss->common_name, 0);
-
+            args.asd.scan_flags |= SCAN_SSL_CERTIFICATE_FLAG;
+        }
         /* TLS Org Unit */
         if (ss->org_name)
             args.asd.tsession->set_tls_org_unit(ss->org_name, 0);

@@ -512,6 +512,7 @@ static inline void process_ssl(AppIdSession& asd,
     AppId tmpAppId = APP_ID_NONE;
     int tmpConfidence = 0;
     const string* field = 0;
+    int reinspect_ssl_appid = 0;
 
     // if (tp_appid_module && asd.tpsession)
     tmpAppId = asd.tpsession->get_appid(tmpConfidence);
@@ -524,21 +525,25 @@ static inline void process_ssl(AppIdSession& asd,
     if (!asd.client.get_id())
         asd.set_client_appid_data(APP_ID_SSL_CLIENT, change_bits);
 
-    if ( (field=attribute_data.tls_host(false)) != nullptr )
+    reinspect_ssl_appid = check_ssl_appid_for_reinspect(tmpAppId);
+
+    if ((field=attribute_data.tls_host(false)) != nullptr)
     {
         asd.tsession->set_tls_host(field->c_str(), field->size(), change_bits);
-        if (check_ssl_appid_for_reinspect(tmpAppId))
+        if (reinspect_ssl_appid)
             asd.scan_flags |= SCAN_SSL_HOST_FLAG;
     }
 
-    if (check_ssl_appid_for_reinspect(tmpAppId))
+    if ((field=attribute_data.tls_cname()) != nullptr)
     {
-        if ( (field=attribute_data.tls_cname()) != nullptr )
-        {
-            asd.tsession->set_tls_cname(field->c_str(), field->size());
-        }
+        asd.tsession->set_tls_cname(field->c_str(), field->size());
+        if (reinspect_ssl_appid)
+            asd.scan_flags |= SCAN_SSL_CERTIFICATE_FLAG;
+    }
 
-        if ( (field=attribute_data.tls_org_unit()) != nullptr )
+    if (reinspect_ssl_appid)
+    {
+        if ((field=attribute_data.tls_org_unit()) != nullptr)
         {
             asd.tsession->set_tls_org_unit(field->c_str(), field->size());
         }
