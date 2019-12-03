@@ -25,10 +25,52 @@
 
 #include "tcp_state_machine.h"
 
+#include "tcp_state_none.h"
+#include "tcp_state_closed.h"
+#include "tcp_state_listen.h"
+#include "tcp_state_syn_sent.h"
+#include "tcp_state_syn_recv.h"
+#include "tcp_state_established.h"
+#include "tcp_state_close_wait.h"
+#include "tcp_state_closing.h"
+#include "tcp_state_fin_wait1.h"
+#include "tcp_state_fin_wait2.h"
+#include "tcp_state_last_ack.h"
+#include "tcp_state_time_wait.h"
+
+TcpStateMachine* TcpStateMachine::tsm = nullptr;
+
+TcpStateMachine* TcpStateMachine::initialize()
+{
+    assert(!tsm);
+    TcpStateMachine::tsm = new TcpStateMachine();
+    return TcpStateMachine::tsm;
+}
+
+void TcpStateMachine::term()
+{
+    delete TcpStateMachine::tsm;
+    TcpStateMachine::tsm = nullptr;
+}
+
 TcpStateMachine::TcpStateMachine()
 {
     for ( auto s = TcpStreamTracker::TCP_LISTEN; s < TcpStreamTracker::TCP_MAX_STATES; s++ )
         tcp_state_handlers[ s ] = nullptr;
+
+    // initialize stream tracker state machine with handler for each state...
+    new TcpStateNone(*this);
+    new TcpStateClosed(*this);
+    new TcpStateListen(*this);
+    new TcpStateSynSent(*this);
+    new TcpStateSynRecv(*this);
+    new TcpStateEstablished(*this);
+    new TcpStateFinWait1(*this);
+    new TcpStateFinWait2(*this);
+    new TcpStateClosing(*this);
+    new TcpStateCloseWait(*this);
+    new TcpStateLastAck(*this);
+    new TcpStateTimeWait(*this);
 }
 
 TcpStateMachine::~TcpStateMachine()

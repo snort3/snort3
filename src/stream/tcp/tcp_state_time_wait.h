@@ -22,7 +22,7 @@
 #ifndef TCP_STATE_TIME_WAIT_H
 #define TCP_STATE_TIME_WAIT_H
 
-#include "stream/libtcp/tcp_state_handler.h"
+#include "tcp_state_handler.h"
 
 class TcpStateTimeWait : public TcpStateHandler
 {

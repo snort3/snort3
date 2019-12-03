@@ -26,9 +26,9 @@
 #include "tcp_normalizers.h"
 
 #include "tcp_module.h"
-#include "stream/libtcp/tcp_segment_descriptor.h"
-#include "stream/libtcp/tcp_stream_session.h"
-#include "stream/libtcp/tcp_stream_tracker.h"
+#include "tcp_segment_descriptor.h"
+#include "tcp_stream_session.h"
+#include "tcp_stream_tracker.h"
 
 using namespace snort;
 

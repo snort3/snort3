@@ -20,9 +20,9 @@
 #ifndef TCP_SESSION_H
 #define TCP_SESSION_H
 
-#include "stream/libtcp/tcp_state_machine.h"
-#include "stream/libtcp/tcp_stream_session.h"
-#include "stream/libtcp/tcp_stream_tracker.h"
+#include "tcp_state_machine.h"
+#include "tcp_stream_session.h"
+#include "tcp_stream_tracker.h"
 
 namespace snort
 {

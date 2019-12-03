@@ -161,7 +161,6 @@ add_executable( snort
     $<TARGET_OBJECTS:stream_base>
     $<TARGET_OBJECTS:stream_ip>
     $<TARGET_OBJECTS:stream_icmp>
-    $<TARGET_OBJECTS:stream_libtcp>
     $<TARGET_OBJECTS:stream_tcp>
     $<TARGET_OBJECTS:stream_udp>
     $<TARGET_OBJECTS:stream_user>

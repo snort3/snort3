@@ -24,7 +24,7 @@
 #endif
 
 #include "tcp_reassemblers.h"
-#include "stream/libtcp/tcp_stream_tracker.h"
+#include "tcp_stream_tracker.h"
 
 class TcpReassemblerFirst : public TcpReassembler
 {

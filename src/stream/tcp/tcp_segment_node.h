@@ -23,8 +23,9 @@
 #define TCP_SEGMENT_H
 
 #include "main/snort_debug.h"
-#include "stream/libtcp/tcp_segment_descriptor.h"
-#include "stream/tcp/tcp_defs.h"
+
+#include "tcp_segment_descriptor.h"
+#include "tcp_defs.h"
 
 class TcpSegmentDescriptor;
 

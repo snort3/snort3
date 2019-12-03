@@ -16,24 +16,20 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// stream_libtcp_unit_test.h author davis mcpherson <davmcphe@@cisco.com>
+// stream_tcp_test_utils.cc author davis mcpherson <davmcphe@cisco.com>
 // Created on: Jul 30, 2015
-
-#include "stream_tcp_unit_test.h"
-
-#ifndef STREAM_LIBTCP_UNIT_TEST
-#define STREAM_LIBTCP_UNIT_TEST
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "stream_tcp_unit_test.h"
+#include "stream_tcp_test_utils.h"
 
 #include "detection/ips_context.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
-#include "stream/tcp/tcp_session.h"
+
+#include "../tcp_session.h"
 
 using namespace snort;
 
@@ -163,6 +159,4 @@ Packet* get_data_packet(Flow* flow)
 
     return pkt;
 }
-
-#endif
 

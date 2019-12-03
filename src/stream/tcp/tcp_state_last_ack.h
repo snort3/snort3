@@ -22,7 +22,7 @@
 #ifndef TCP_STATE_LAST_ACK_H
 #define TCP_STATE_LAST_ACK_H
 
-#include "stream/libtcp/tcp_state_handler.h"
+#include "tcp_state_handler.h"
 
 class TcpStateLastAck : public TcpStateHandler
 {

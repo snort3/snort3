@@ -11,6 +11,20 @@ functions for loading stream TCP configuration and packet evaluation.  The
 packet eval method is not used as the base Stream Inspector delegates
 packets directly to the TCP session packet processing method.
 
+* TCP Segment Descriptor - this class provides access to the various fields of the TCP
+  header and payload
+
+* TCP Stream Tracker - this class encapsulates all the state information required for
+  tracking one side of the TCP connection.  For each flow that is tracked there will be
+  two instances of this tracker, one for each direction.
+
+* TCP State Handler - abstract class interface that defines a method for handling each
+  possible TCP event.  For each TCP state a subclass of this class is created with a
+  state specific implementation for each event handling method.
+
+* TCP State Machine - this class is the engine that dispatches processing to the correct
+  event handling method of the handler for the current TCP state of the flow.
+  
 The TCP session module implements the following functions:
 
 * TCP segment normalization. Variations in handling normalization are
@@ -62,3 +76,10 @@ TcpHA::deactivate_session() is called from the stream & flow HA logic to
 place a session into standby mode.  Upon receiving an HA Update message, 
 the flow is first created if necessary, and is then placed into Standby
 state.  deactivate_session() sets the TCP specific state for Standy mode.
+
+One HA state transition is implemented within this TCP library.  In
+TcpStreamSession::clear(), TcpHAManager::process_deletion() is invoked to
+cause HA to generate a Deletion message for the target flow.  This handles
+the case where a TCP session is being removed from from the flow cache due
+to a timeout or pruning function.  Other normal TCP stream closure actions
+are handled in the ../tcp/tcp_session.cc module.

@@ -30,11 +30,6 @@
 
 #include "tcp_session.h"
 
-#ifdef UNIT_TEST
-#include "catch/snort_catch.h"
-#include "stream/libtcp/stream_tcp_unit_test.h"
-#endif
-
 using namespace snort;
 
 //-------------------------------------------------------------------------
@@ -288,7 +283,9 @@ const BaseApi* ips_stream_reassemble = &reassemble_api.base;
 
 #ifdef UNIT_TEST
 
+#include "catch/snort_catch.h"
 #include "framework/cursor.h"
+#include "test/stream_tcp_test_utils.h"
 
 // FIXIT-L these tests need some TLC
 TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")

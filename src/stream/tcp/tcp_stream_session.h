@@ -26,8 +26,8 @@
 #include "flow/session.h"
 #include "protocols/ipv6.h"
 
-#include "stream/libtcp/tcp_stream_tracker.h"
-#include "stream/tcp/tcp_stream_config.h"
+#include "tcp_stream_config.h"
+#include "tcp_stream_tracker.h"
 
 #ifdef DEBUG_MSGS
 extern const char* const flush_policy_names[];

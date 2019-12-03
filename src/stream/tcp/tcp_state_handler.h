@@ -23,7 +23,8 @@
 #define TCP_STATE_HANDLER_H
 
 #include "protocols/tcp.h"
-#include "stream/libtcp/tcp_stream_tracker.h"
+
+#include "tcp_stream_tracker.h"
 
 class TcpSegmentDescriptor;
 class TcpStateMachine;

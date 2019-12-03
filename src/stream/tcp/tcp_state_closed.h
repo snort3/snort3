@@ -22,7 +22,7 @@
 #ifndef TCP_STATE_CLOSED_H
 #define TCP_STATE_CLOSED_H
 
-#include "stream/libtcp/tcp_state_handler.h"
+#include "tcp_state_handler.h"
 
 class TcpStateClosed : public TcpStateHandler
 {

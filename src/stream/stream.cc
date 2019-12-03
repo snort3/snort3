@@ -40,12 +40,7 @@
 #include "utils/util.h"
 
 #include "tcp/tcp_session.h"
-#include "libtcp/tcp_stream_session.h"
-
-#ifdef UNIT_TEST
-#include "catch/snort_catch.h"
-#include "libtcp/stream_tcp_unit_test.h"
-#endif
+#include "tcp/tcp_stream_session.h"
 
 using namespace snort;
 
@@ -792,6 +787,9 @@ void Stream::set_no_ack_mode(Flow* flow, bool on_off)
 }
 
 #ifdef UNIT_TEST
+
+#include "catch/snort_catch.h"
+#include "tcp/test/stream_tcp_test_utils.h"
 
 TEST_CASE("Stream API", "[stream_api][stream]")
 {

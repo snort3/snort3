@@ -22,7 +22,7 @@
 #ifndef TCP_STATE_FIN_WAIT1_H
 #define TCP_STATE_FIN_WAIT1_H
 
-#include "stream/libtcp/tcp_state_handler.h"
+#include "tcp_state_handler.h"
 
 class TcpStateFinWait1 : public TcpStateHandler
 {

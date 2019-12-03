@@ -25,11 +25,11 @@
 #include <daq_common.h>
 
 #include "stream/paf.h"
-#include "stream/tcp/segment_overlap_editor.h"
-#include "stream/tcp/tcp_defs.h"
-#include "stream/tcp/tcp_normalizers.h"
-#include "stream/tcp/tcp_reassemblers.h"
-#include "stream/libtcp/tcp_segment_descriptor.h"
+#include "segment_overlap_editor.h"
+#include "tcp_defs.h"
+#include "tcp_normalizers.h"
+#include "tcp_reassemblers.h"
+#include "tcp_segment_descriptor.h"
 
 /* Only track a maximum number of alerts per session */
 #define MAX_SESSION_ALERTS 8

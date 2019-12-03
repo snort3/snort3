@@ -27,7 +27,7 @@
 #include "tcp_ha.h"
 #include "tcp_module.h"
 #include "tcp_session.h"
-#include "tcp_stream_state_machine.h"
+#include "tcp_state_machine.h"
 
 using namespace snort;
 
@@ -110,10 +110,10 @@ static void tcp_dtor(Inspector* p)
 { delete p; }
 
 static void stream_tcp_pinit()
-{ TcpStreamStateMachine::initialize(); }
+{ TcpStateMachine::initialize(); }
 
 static void stream_tcp_pterm()
-{ TcpStreamStateMachine::finalize(); }
+{ TcpStateMachine::term(); }
 
 static Session* tcp_ssn(Flow* lws)
 { return new TcpSession(lws); }

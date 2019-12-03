@@ -25,10 +25,11 @@
 
 #include "tcp_normalizer.h"
 
-#include "stream/libtcp/tcp_stream_session.h"
-#include "stream/libtcp/tcp_stream_tracker.h"
-
 #include "packet_io/active.h"
+
+#include "tcp_stream_session.h"
+#include "tcp_stream_tracker.h"
+
 
 using namespace snort;
 

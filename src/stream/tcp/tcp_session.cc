@@ -62,7 +62,7 @@
 #include "tcp_normalizers.h"
 #include "tcp_reassemblers.h"
 #include "tcp_segment_node.h"
-#include "tcp_stream_state_machine.h"
+#include "tcp_state_machine.h"
 
 using namespace snort;
 
@@ -75,7 +75,7 @@ void TcpSession::sterm()
 TcpSession::TcpSession(Flow* flow)
     : TcpStreamSession(flow)
 {
-    tsm = TcpStreamStateMachine::get_instance();
+    tsm = TcpStateMachine::get_instance();
     splitter_init = false;
 
     client.session = this;

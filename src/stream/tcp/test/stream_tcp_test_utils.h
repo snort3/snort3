@@ -16,29 +16,26 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_state_machine.h author davis mcpherson <davmcphe@cisco.com>
-// Created on: Jul 29, 2015
+// stream_tcp_test_utils.h author davis mcpherson <davmcphe@cisco.com>
+// Created on: Jul 30, 2015
 
-#ifndef TCP_STATE_MACHINE_H
-#define TCP_STATE_MACHINE_H
+#ifndef STREAM_TCP_TEST_UTILS_H
+#define STREAM_TCP_TEST_UTILS_H
 
-#include "stream/libtcp/tcp_state_handler.h"
-#include "stream/libtcp/tcp_stream_tracker.h"
-#include "stream/libtcp/tcp_segment_descriptor.h"
-
-class TcpStateMachine
+namespace snort
 {
-public:
-    virtual ~TcpStateMachine();
+class Flow;
+struct Packet;
+}
 
-    virtual void register_state_handler(TcpStreamTracker::TcpState, TcpStateHandler&);
-    virtual bool eval(TcpSegmentDescriptor&, TcpStreamTracker&, TcpStreamTracker&);
+snort::Packet* get_syn_packet(snort::Flow*);
+snort::Packet* get_syn_ack_packet(snort::Flow*);
+snort::Packet* get_ack_packet(snort::Flow*);
+snort::Packet* get_fin_packet(snort::Flow*);
+snort::Packet* get_rst_packet(snort::Flow*);
+snort::Packet* get_data_packet(snort::Flow*);
 
-protected:
-    TcpStateMachine();
-
-    TcpStateHandler* tcp_state_handlers[ TcpStreamTracker::TCP_MAX_STATES ];
-};
+void release_packet(snort::Packet*);
 
 #endif
 
