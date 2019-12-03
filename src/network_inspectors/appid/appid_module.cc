@@ -30,12 +30,14 @@
 
 #include "log/messages.h"
 #include "main/analyzer_command.h"
+#include "main/snort.h"
 #include "profiler/profiler.h"
 #include "utils/util.h"
 
 #include "app_info_table.h"
 #include "appid_debug.h"
 #include "appid_peg_counts.h"
+#include "service_state.h"
 
 using namespace snort;
 using namespace std;
@@ -193,7 +195,10 @@ static const PegInfo appid_pegs[] =
     { CountType::SUM, "ignored_packets", "count of packets ignored" },
     { CountType::SUM, "total_sessions", "count of sessions created" },
     { CountType::SUM, "appid_unknown", "count of sessions where appid could not be determined" },
-    { CountType::END, nullptr, nullptr},
+    { CountType::SUM, "service_cache_prunes", "number of times the service cache was pruned" },
+    { CountType::SUM, "service_cache_adds", "number of times an entry was added to the service cache" },
+    { CountType::SUM, "service_cache_removes", "number of times an item was removed from the service cache" },
+    { CountType::END, nullptr, nullptr },
 };
 
 AppIdModule::AppIdModule() :
@@ -275,9 +280,13 @@ bool AppIdModule::begin(const char* /*fqn*/, int, SnortConfig*)
     return true;
 }
 
-bool AppIdModule::end(const char*, int, SnortConfig*)
+bool AppIdModule::end(const char*, int, SnortConfig* sc)
 {
     assert(config);
+
+    appid_rrt.memcap = config->memcap;
+    if ( Snort::is_reloading() )
+        sc->register_reload_resource_tuner(appid_rrt);
 
     if ( !config->app_detector_dir )
     {
@@ -311,4 +320,14 @@ void AppIdModule::sum_stats(bool accumulate_now_stats)
 void AppIdModule::show_dynamic_stats()
 {
     AppIdPegCounts::print();
+}
+
+bool AppIdReloadTuner::tinit()
+{
+    return AppIdServiceState::initialize(memcap);
+}
+
+bool AppIdReloadTuner::tune_resources(unsigned work_limit)
+{
+    return AppIdServiceState::prune(memcap, work_limit);
 }

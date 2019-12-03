@@ -277,6 +277,13 @@ AppId check_session_for_AF_forecast(AppIdSession&, Packet*, AppidSessionDirectio
     return APP_ID_UNKNOWN;
 }
 
+bool AppIdReloadTuner::tinit() { return false; }
+
+bool AppIdReloadTuner::tune_resources(unsigned int)
+{
+    return true;
+}
+
 TEST_GROUP(appid_discovery_tests)
 {
     void setup() override

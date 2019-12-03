@@ -30,6 +30,7 @@
 #include "utils/cpp_macros.h"
 #include "utils/util.h"
 
+#include "appid_pegs.h"
 #include "service_plugins/service_discovery.h"
 
 class ServiceDetector;
@@ -149,7 +150,7 @@ private:
 class AppIdServiceState
 {
 public:
-    static void initialize(size_t memcap = 0);
+    static bool initialize(size_t memcap);
     static void clean();
     static ServiceDiscoveryState* add(const snort::SfIp*, IpProtocol, uint16_t port, bool decrypted, bool do_touch = false);
     static ServiceDiscoveryState* get(const snort::SfIp*, IpProtocol, uint16_t port, bool decrypted, bool do_touch = false);
@@ -157,6 +158,8 @@ public:
     static void check_reset(AppIdSession& asd, const snort::SfIp* ip, uint16_t port);
 
     static void dump_stats();
+
+    static bool prune(size_t max_memory = 0, size_t num_items = -1u);
 };
 
 
@@ -198,6 +201,8 @@ private:
 PADDING_GUARD_END
 
 
+extern THREAD_LOCAL AppIdStats appid_stats;
+
 class MapList
 {
 public:
@@ -225,6 +230,7 @@ public:
             q.emplace_back(it);
             mem_used += sz;
             ss->qptr = --q.end(); // remember our place in the queue
+            appid_stats.service_cache_adds++;
 
             if ( mem_used > memcap )
                 remove( q.front() );
@@ -252,15 +258,32 @@ public:
 
     bool remove(Map_t::iterator it)
     {
-        if ( it != m.end() )
+        if ( it != m.end() && !m.empty() )
         {
+            assert( mem_used >= sz );
             mem_used -= sz;
             q.erase(it->second->qptr);  // remove from queue
             delete it->second;
             m.erase(it);                // then from cache
+            appid_stats.service_cache_removes++;
+
             return true;
         }
         return false;
+    }
+
+    bool prune(size_t max_memory = 0, size_t num_items = -1u)
+    {
+        if ( max_memory == 0 )
+            max_memory = memcap;
+
+        size_t i=0;
+        while ( mem_used > max_memory && i++ < num_items )
+            remove( q.front() );
+
+        appid_stats.service_cache_prunes++;
+
+        return mem_used <= max_memory;
     }
 
     Map_t::iterator find(const Key_t& k)
@@ -287,6 +310,8 @@ public:
 
     // how much memory we add when we put an SDS in the cache:
     static const size_t sz;
+
+    friend class AppIdServiceState;
 
 private:
     Map_t m;

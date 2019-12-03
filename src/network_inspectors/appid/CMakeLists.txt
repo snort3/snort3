@@ -193,6 +193,7 @@ set ( APPID_SOURCES
     appid_inspector.h
     appid_module.cc
     appid_module.h
+    appid_pegs.h
     appid_stats.cc
     appid_stats.h
     app_info_table.cc

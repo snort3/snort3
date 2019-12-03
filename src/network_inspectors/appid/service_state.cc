@@ -194,9 +194,17 @@ void ServiceDiscoveryState::update_service_incompatiable(const SfIp* ip)
 }
 
 
-void AppIdServiceState::initialize(size_t memcap)
+bool AppIdServiceState::initialize(size_t memcap)
 {
-    service_state_cache = new MapList(memcap);
+    if ( !service_state_cache )
+        service_state_cache = new MapList(memcap);
+    else
+    {
+        bool have_work = memcap < service_state_cache->memcap;
+        service_state_cache->memcap = memcap;
+        return have_work;
+    }
+    return false;
 }
 
 void AppIdServiceState::clean()
@@ -266,4 +274,12 @@ void AppIdServiceState::dump_stats()
         LogMessage("     IPv6 Memory Used: %lu\n", serviceStateCache6->mc.memused);
     }
 #endif
+}
+
+bool AppIdServiceState::prune(size_t max_memory, size_t num_items)
+{
+    bool done = false;
+    if ( service_state_cache )
+        done = service_state_cache->prune(max_memory, num_items);
+    return done;
 }

@@ -197,5 +197,11 @@ AppInfoTableEntry* AppInfoManager::get_app_info_entry(AppId, const AppInfoTable&
     return nullptr;
 }
 
-#endif
+bool AppIdReloadTuner::tinit() { return false; }
 
+bool AppIdReloadTuner::tune_resources(unsigned int)
+{
+    return true;
+}
+
+#endif

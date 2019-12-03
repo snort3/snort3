@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "appid_config.h"
+#include "appid_pegs.h"
 #include "framework/module.h"
 
 extern THREAD_LOCAL snort::ProfileStats appid_perf_stats;
@@ -35,13 +36,28 @@ extern Trace TRACE_NAME(appid_module);
 #define MOD_NAME "appid"
 #define MOD_HELP "application and service identification"
 
-struct AppIdStats
+
+class AppIdReloadTuner : public snort::ReloadResourceTuner
 {
-    PegCount packets;
-    PegCount processed_packets;
-    PegCount ignored_packets;
-    PegCount total_sessions;
-    PegCount appid_unknown;  
+public:
+    AppIdReloadTuner() = default;
+
+    bool tinit() override;
+    bool tune_packet_context() override
+    {
+        return tune_resources( max_work );
+    }
+    bool tune_idle_context() override
+    {
+        return tune_resources( max_work_idle );
+    }
+
+    friend class AppIdModule;
+
+private:
+    size_t memcap = 0;
+
+    bool tune_resources(unsigned work_limit);
 };
 
 extern THREAD_LOCAL AppIdStats appid_stats;
@@ -70,7 +86,7 @@ public:
 
 private:
     AppIdModuleConfig* config;
+    AppIdReloadTuner appid_rrt;
 };
 
 #endif
-

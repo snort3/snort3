@@ -88,6 +88,18 @@ ServiceDiscoveryState* AppIdServiceState::add(SfIp const*, IpProtocol, unsigned 
   return nullptr;
 }
 
+bool AppIdServiceState::prune(size_t, size_t)
+{
+    return true;
+}
+
+bool AppIdReloadTuner::tinit() { return false; }
+
+bool AppIdReloadTuner::tune_resources(unsigned int)
+{
+    return true;
+}
+
 void ServiceDiscoveryState::set_service_id_valid(ServiceDetector*) { }
 
 // Stubs for service_plugins/service_discovery.h
