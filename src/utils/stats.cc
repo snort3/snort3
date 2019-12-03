@@ -228,8 +228,6 @@ void DropStats()
     LogLabel("Summary Statistics");
     show_stats((PegCount*)&proc_stats, proc_names, array_size(proc_names)-1, "process");
 
-    if ( SnortConfig::log_verbose() )
-        log_malloc_info();
 }
 
 //-------------------------------------------------------------------------

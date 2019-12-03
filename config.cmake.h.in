@@ -136,9 +136,6 @@
 
 /*  Availability of specific library functions */
 
-/* Define to 1 if you have the `mallinfo' function. */
-#cmakedefine HAVE_MALLINFO 1
-
 /* Define to 1 if you have the `malloc_trim' function. */
 #cmakedefine HAVE_MALLOC_TRIM 1
 

@@ -24,7 +24,7 @@
 
 #include <fcntl.h>
 
-#if defined(HAVE_MALLINFO) || defined(HAVE_MALLOC_TRIM)
+#if defined(HAVE_MALLOC_TRIM)
 #include <malloc.h>
 #endif
 
@@ -376,26 +376,3 @@ void trim_heap()
     malloc_trim(0);
 #endif
 }
-
-void log_malloc_info()
-{
-#ifdef HAVE_MALLINFO
-    struct mallinfo mi = mallinfo();
-
-    LogLabel("heap usage");
-    LogCount("total non-mmapped bytes", mi.arena);
-    LogCount("bytes in mapped regions", mi.hblkhd);
-    LogCount("total allocated space", mi.uordblks);
-    LogCount("total free space", mi.fordblks);
-    LogCount("topmost releasable block", mi.keepcost);
-
-#ifdef DEBUG
-    LogCount("free chunks", mi.ordblks);
-    LogCount("free fastbin blocks", mi.smblks);
-    LogCount("mapped regions", mi.hblks);
-    LogCount("max total alloc space", mi.usmblks);
-    LogCount("free bytes in fastbins", mi.fsmblks);
-#endif
-#endif
-}
-

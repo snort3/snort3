@@ -46,7 +46,6 @@ void set_quick_exit(bool);
 void set_main_thread();
 
 void trim_heap();
-void log_malloc_info();
 
 #endif
 
