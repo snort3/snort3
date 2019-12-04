@@ -1,3 +1,37 @@
+19/12/04 - build 266
+
+-- appid: Add new pattern to pop3, don't concatenate ssl certs, use openssl-1.1 compliant APIs
+-- appid: Enabling host cache for unknown SSL flows
+-- appid: Fix for better classification on pinholed data session and control session for
+   rshell/rexec
+-- appid: Format detected apps stats in columns akin to file stats
+-- appid: Handle memcap during reload_config using RRT
+-- appid: Minor cleanup
+-- cmake: Cache static DAQ module info in FindDAQ
+-- file_api: Fixed eventing when FILE_SIG_DEPTH failed when store files enabled
+-- flow: Add ability to defer whitelist verdict
+-- flow: Clean up unit test compiler warnings
+-- flow: Disabling the inspection if the Flow state is BLOCK
+-- http2_inspect: Generate status lines for responses and be more lenient on RFC violations
+-- http2_inspect: Implement hpack dynamic index lookups
+-- http_inspect: Implement show method for verbose config output
+-- http_inspect: Update user manual for detained inspection
+-- hyperscan: Select max scratch from among all compiler threads
+-- ips: Add support for parallel fast-pattern MPSE FSM compilation
+-- ips: Only use multiple threads for rule group compilation at startup
+-- ips: Support 2 rule vars same as Snort 2
+-- mpse: Only hyperscan currently supports parallel compilation
+-- port_scan: Only update scanner for ICMP if we have one
+-- profiler: Fix module profile for multithreaded runs
+-- search_engine: Ensure configured search_method is applied to search tools
+-- search_engine: Process intermediate fast-pattern matches in batches of 32 same as Snort 2
+-- search_engine: Raise an error if any MPSE compilation fails
+-- sfip: Replace copy setter with implicit copy constructor
+-- stats: Removal of mallinfo as it only support 32bit
+-- stream_tcp: Move and update the libtcp source files to the tcp source directory to consolidate
+   the stream tcp code into one component (libtcp goes away)
+-- stream_tcp: Updates from PR review comments
+
 19/11/22 - build 265
 
 -- analyzer_command: support resource tuning on reload
@@ -12,12 +46,15 @@
 -- main: Improve performance of control connection polling
 -- plugin_manager: allow loading individual plugin files in plugin-path
 -- reject: Setting defaults for reset and control options
--- snort: update reload resource tuner to return status indicating if there is work to be done in the packet thread
--- stream: register reload resource tuner unconditionally. move checks for config changes to the tuner tinit method
+-- snort: update reload resource tuner to return status indicating if there is work to be done in
+   the packet thread
+-- stream: register reload resource tuner unconditionally. move checks for config changes to the
+   tuner tinit method
 -- stream_tcp: fix state machine instantiation
 -- wizard: handle NBSS startup in dce_smb_curse
 
 19/11/06 - build 264
+
 -- appid: Handle DNS responses with compression pointers at last record
 -- dce_smb: deprecate config for smb_file_inspection, use smb_file_depth only
 -- detection: negated fast patterns are last choice
@@ -37,6 +74,7 @@
 -- telnet: fix check_encrypted help string
 
 19/10/31 - build 263
+
 -- appid: for ssl sessions, set payload id to unknown after ssl handshake is done if the payload id
    was not not found
 -- appid: check inferred services in host cache only if there were updates
