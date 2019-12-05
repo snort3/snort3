@@ -51,6 +51,7 @@ protected:
         const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* session_data,
         HttpCommon::SourceId source_id);
     uint8_t get_flags();
+    uint32_t get_stream_id();
 
     Field header;
     Field data;
@@ -58,5 +59,7 @@ protected:
     HttpCommon::SourceId source_id;
 
     const static uint8_t flags_index = 4;
+    const static uint8_t stream_id_index = 5; 
+    const static uint32_t INVALID_STREAM_ID = 0xFFFFFFFF;
 };
 #endif

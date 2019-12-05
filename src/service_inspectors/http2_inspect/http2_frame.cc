@@ -27,6 +27,7 @@
 #include "http2_enum.h"
 #include "http2_flow_data.h"
 #include "http2_headers_frame.h"
+#include "http2_settings_frame.h"
 #include "service_inspectors/http_inspect/http_field.h"
 
 using namespace HttpCommon;
@@ -56,6 +57,10 @@ Http2Frame* Http2Frame::new_frame(const uint8_t* header, const int32_t header_le
             return new Http2HeadersFrame(header, header_len, data, data_len, session_data,
                 source_id);
             break;
+        case FT_SETTINGS:
+            return new Http2SettingsFrame(header, header_len, data, data_len, session_data,
+                source_id);
+            break;
         default:
             return new Http2Frame(header, header_len, data, data_len, session_data, source_id);
             break;
@@ -81,6 +86,18 @@ uint8_t Http2Frame::get_flags()
         return header.start()[flags_index];
     else
         return 0;
+}
+
+uint32_t Http2Frame::get_stream_id()
+{
+    if (header.length() <= 0)
+        return INVALID_STREAM_ID;
+
+    const uint8_t* header_start = header.start();
+    return ((header_start[stream_id_index] & 0x7f) << 24) +
+        (header_start[stream_id_index + 1] << 16) + 
+        (header_start[stream_id_index + 2] << 8) +
+        header_start[stream_id_index + 3];
 }
 
 #ifdef REG_TEST

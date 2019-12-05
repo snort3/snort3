@@ -1,0 +1,135 @@
+//--------------------------------------------------------------------------
+// Copyright (C) 2019-2019 Cisco and/or its affiliates. All rights reserved.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
+// http2_settings_frame.cc author Deepak Ramadass <deramada@cisco.com>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "http2_settings_frame.h"
+
+#include "service_inspectors/http_inspect/http_test_manager.h"
+
+#include "http2_enum.h"
+#include "http2_flow_data.h"
+
+using namespace Http2Enums;
+
+static const uint8_t SfSize = 6;
+
+static uint16_t get_parameter_id(const uint8_t* data_buffer)
+{
+    return (data_buffer[0] << 8) + data_buffer[1];
+}
+
+static uint32_t get_parameter_value(const uint8_t* data_buffer)
+{	
+    static const uint8_t frame_value_index = 2;
+    return (data_buffer[frame_value_index]  << 24) +
+        (data_buffer[frame_value_index + 1] << 16) +
+        (data_buffer[frame_value_index + 2] << 8) +
+        data_buffer[frame_value_index + 3];
+}
+
+Http2SettingsFrame::Http2SettingsFrame(const uint8_t* header_buffer, const int32_t header_len,
+	const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* session_data,
+    HttpCommon::SourceId source_id) : Http2Frame(header_buffer, header_len, data_buffer, data_len,
+    session_data, source_id)
+{
+    if (!sanity_check())
+    {
+        session_data->events[source_id]->create_event(EVENT_SETTINGS_FRAME_ERROR);
+        *session_data->infractions[source_id] += INF_INVALID_SETTINGS_FRAME;
+        return;
+    }
+
+    if (SfAck & get_flags())
+        return;
+    
+    parse_settings_frame();
+}
+
+void Http2SettingsFrame::parse_settings_frame()
+{
+	int32_t data_pos = 0;
+
+    while (data_pos < data.length())
+    {
+        uint16_t parameter_id = get_parameter_id(data.start() + data_pos);
+        uint32_t parameter_value = get_parameter_value(data.start() + data_pos);
+
+        data_pos += SfSize;
+
+        if (parameter_id < HEADER_TABLE_SIZE or parameter_id > MAX_HEADER_LIST_SIZE)
+        {
+            session_data->events[source_id]->create_event(EVENT_SETTINGS_FRAME_UNKN_PARAM);
+            *session_data->infractions[source_id] += INF_SETTINGS_FRAME_UNKN_PARAM;
+            continue;
+        }
+
+        session_data->connection_settings[source_id].set_param(parameter_id, parameter_value);  
+    }
+}
+
+bool Http2SettingsFrame::sanity_check()
+{
+    const bool ack = SfAck & get_flags();
+
+    if (get_stream_id() != 0)
+        bad_frame = true;
+    else if (!ack and ((data.length() % 6) != 0))
+        bad_frame = true;
+    else if (ack and data.length() > 0)
+        bad_frame = true;
+    
+    return !(bad_frame);
+}
+
+#ifdef REG_TEST
+void Http2SettingsFrame::print_frame(FILE* output)
+{
+    fprintf(output, "SETTINGS frame:");
+
+    if (bad_frame)
+        fprintf(output, " Error in settings frame.");
+    else if (SfAck & get_flags())
+        fprintf(output, " ACK");
+    else
+        fprintf(output, " Parameters in current frame - %d.", (data.length()/6)) ;
+
+    fprintf(output, "\n");
+    Http2Frame::print_frame(output);
+    fprintf(output, "\n");
+}
+#endif
+
+uint32_t Http2ConnectionSettings::get_param(uint16_t id) 
+{ 
+    assert(id >= HEADER_TABLE_SIZE);
+    assert(id <= MAX_HEADER_LIST_SIZE);
+
+    return parameters[id - 1]; 
+}
+
+void Http2ConnectionSettings::set_param(uint16_t id, uint32_t value) 
+{ 
+    assert(id >= HEADER_TABLE_SIZE);
+    assert(id <= MAX_HEADER_LIST_SIZE);
+
+    parameters[id - 1] = value; 
+}

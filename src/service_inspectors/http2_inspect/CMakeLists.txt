@@ -28,6 +28,8 @@ set (FILE_LIST
     http2_module.h
     http2_request_line.cc
     http2_request_line.h
+    http2_settings_frame.cc
+    http2_settings_frame.h
     http2_start_line.cc
     http2_start_line.h
     http2_status_line.cc

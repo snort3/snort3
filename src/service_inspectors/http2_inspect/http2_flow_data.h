@@ -34,6 +34,7 @@
 #include "http2_hpack.h"
 #include "http2_hpack_int_decode.h"
 #include "http2_hpack_string_decode.h"
+#include "http2_settings_frame.h"
 
 using Http2Infractions = Infractions<Http2Enums::INF__MAX_VALUE, Http2Enums::INF__NONE>;
 
@@ -53,6 +54,7 @@ public:
     friend class Http2Hpack;
     friend class Http2Inspect;
     friend class Http2RequestLine;
+    friend class Http2SettingsFrame;
     friend class Http2StartLine;
     friend class Http2StatusLine;
     friend class Http2StreamSplitter;
@@ -79,6 +81,7 @@ protected:
     // Used in eval()
     bool frame_in_detection = false;
     class Http2Frame* current_frame[2] = { nullptr, nullptr };
+    Http2ConnectionSettings connection_settings[2];
     Http2HpackDecoder hpack_decoder[2];
 
     // Internal to scan()
