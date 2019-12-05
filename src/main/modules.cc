@@ -1935,8 +1935,11 @@ bool RuleStateModule::begin(const char*, int, SnortConfig* sc)
     return true;
 }
 
-bool RuleStateModule::end(const char*, int, SnortConfig* sc)
+bool RuleStateModule::end(const char* fqn, int, SnortConfig* sc)
 {
+    if ( !strcmp(fqn, "rule_state") )
+        return true;
+
     if ( !key.gid or !key.sid )
         return false;
 
