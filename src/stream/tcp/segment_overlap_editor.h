@@ -39,7 +39,7 @@ struct SegmentOverlapState
     const uint8_t* rdata;
 
     TcpSegmentList seglist;
-    ReassemblyPolicy reassembly_policy;
+    StreamPolicy reassembly_policy;
 
     uint32_t seglist_base_seq;      /* seq of first queued segment */
     uint32_t seg_count;             /* number of current queued segments */
@@ -68,7 +68,7 @@ struct SegmentOverlapState
         seglist.reset();
     }
 
-    void init_sos(TcpSession*, ReassemblyPolicy);
+    void init_sos(TcpSession*, StreamPolicy);
     void init_soe(TcpSegmentDescriptor& tsd, TcpSegmentNode* left, TcpSegmentNode* right);
 };
 

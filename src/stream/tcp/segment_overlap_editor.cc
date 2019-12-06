@@ -49,9 +49,8 @@ static void set_retransmit_flag(Packet* p)
         p->packet_flags |= PKT_RETRANSMIT;
 }
 
-void SegmentOverlapState::init_sos(TcpSession* ssn, ReassemblyPolicy pol)
+void SegmentOverlapState::init_sos(TcpSession* ssn, StreamPolicy pol)
 {
-
     session = ssn;
     reassembly_policy = pol;
 
@@ -346,7 +345,7 @@ int SegmentOverlapEditor::left_overlap_keep_last(TcpReassemblerState& trs)
 void SegmentOverlapEditor::right_overlap_truncate_existing(TcpReassemblerState& trs)
 {
     if ( SEQ_EQ(trs.sos.right->i_seq, trs.sos.seq) &&
-        ( trs.sos.reassembly_policy != ReassemblyPolicy::OS_LAST ) )
+        ( trs.sos.reassembly_policy != StreamPolicy::OS_LAST ) )
     {
         trs.sos.slide = ( trs.sos.right->i_seq + trs.sos.right->i_len - trs.sos.seq );
         trs.sos.seq += trs.sos.slide;

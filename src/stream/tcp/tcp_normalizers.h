@@ -30,7 +30,14 @@ class TcpStreamSession;
 class TcpNormalizerFactory
 {
 public:
-    static TcpNormalizer* create(StreamPolicy);
+    static void initialize();
+    static void term();
+    static TcpNormalizer* get_instance(StreamPolicy);
+
+private:
+    TcpNormalizerFactory() = delete;
+
+    static TcpNormalizer* normalizers[StreamPolicy::OS_END_OF_LIST];
 };
 
 class TcpNormalizerPolicy
@@ -41,7 +48,7 @@ public:
 
     void init(StreamPolicy os, TcpStreamSession* ssn, TcpStreamTracker* trk, TcpStreamTracker* peer);
     void reset()
-    { init(StreamPolicy::OS_INVALID, nullptr, nullptr, nullptr); }
+    { init(StreamPolicy::OS_DEFAULT, nullptr, nullptr, nullptr); }
 
     bool packet_dropper(TcpSegmentDescriptor& tsd, NormFlags nflags)
     { return norm->packet_dropper(tns, tsd, nflags); }

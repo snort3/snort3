@@ -463,48 +463,39 @@ void TcpNormalizerPolicy::init(StreamPolicy os, TcpStreamSession* ssn, TcpStream
     tns.tcp_block = Normalize_GetMode(NORM_TCP_BLOCK);
     tns.opt_block = Normalize_GetMode(NORM_TCP_OPT);
 
-    norm = TcpNormalizerFactory::create(os);
+    norm = TcpNormalizerFactory::get_instance(os);
     norm->init(tns);
 }
 
-TcpNormalizer* TcpNormalizerFactory::create(StreamPolicy os_policy)
+TcpNormalizer* TcpNormalizerFactory::normalizers[StreamPolicy::OS_END_OF_LIST];
+
+void TcpNormalizerFactory::initialize()
 {
-    static TcpNormalizerFirst first;
-    static TcpNormalizerLast last;
-    static TcpNormalizerLinux new_linux;
-    static TcpNormalizerOldLinux old_linux;
-    static TcpNormalizerBSD bsd;
-    static TcpNormalizerMacOS mac_os;
-    static TcpNormalizerSolaris solaris;
-    static TcpNormalizerIrix irix;
-    static TcpNormalizerHpux11 hpux11;
-    static TcpNormalizerHpux10 hpux10;
-    static TcpNormalizerWindows windows;
-    static TcpNormalizerWindows2K3 windows_2K3;
-    static TcpNormalizerVista vista;
-    static TcpNormalizerProxy proxy;
+    normalizers[StreamPolicy::OS_FIRST] = new TcpNormalizerFirst;
+    normalizers[StreamPolicy::OS_LAST] = new TcpNormalizerLast;
+    normalizers[StreamPolicy::OS_LINUX] = new TcpNormalizerLinux;
+    normalizers[StreamPolicy::OS_OLD_LINUX] = new TcpNormalizerOldLinux;
+    normalizers[StreamPolicy::OS_BSD] = new TcpNormalizerBSD;
+    normalizers[StreamPolicy::OS_MACOS] = new TcpNormalizerMacOS;
+    normalizers[StreamPolicy::OS_SOLARIS] = new TcpNormalizerSolaris;
+    normalizers[StreamPolicy::OS_IRIX] = new TcpNormalizerIrix;
+    normalizers[StreamPolicy::OS_HPUX11] = new TcpNormalizerHpux11;
+    normalizers[StreamPolicy::OS_HPUX10] = new TcpNormalizerHpux10;
+    normalizers[StreamPolicy::OS_WINDOWS] = new TcpNormalizerWindows;
+    normalizers[StreamPolicy::OS_WINDOWS2K3] = new TcpNormalizerWindows2K3;
+    normalizers[StreamPolicy::OS_VISTA] = new TcpNormalizerVista;
+    normalizers[StreamPolicy::OS_PROXY] = new TcpNormalizerProxy;
+}
 
-    TcpNormalizer* normalizer;
+void TcpNormalizerFactory::term()
+{
+    for ( auto sp = StreamPolicy::OS_FIRST; sp <= StreamPolicy::OS_PROXY; sp++ )
+        delete normalizers[sp];
+}
 
-    switch (os_policy)
-    {
-    case StreamPolicy::OS_FIRST: normalizer = &first; break;
-    case StreamPolicy::OS_LAST: normalizer = &last; break;
-    case StreamPolicy::OS_LINUX: normalizer = &new_linux; break;
-    case StreamPolicy::OS_OLD_LINUX: normalizer = &old_linux; break;
-    case StreamPolicy::OS_BSD: normalizer = &bsd; break;
-    case StreamPolicy::OS_MACOS: normalizer = &mac_os; break;
-    case StreamPolicy::OS_SOLARIS: normalizer = &solaris; break;
-    case StreamPolicy::OS_IRIX: normalizer = &irix; break;
-    case StreamPolicy::OS_HPUX11: normalizer = &hpux11; break;
-    case StreamPolicy::OS_HPUX10: normalizer = &hpux10; break;
-    case StreamPolicy::OS_WINDOWS: normalizer = &windows; break;
-    case StreamPolicy::OS_WINDOWS2K3: normalizer = &windows_2K3; break;
-    case StreamPolicy::OS_VISTA: normalizer = &vista; break;
-    case StreamPolicy::OS_PROXY: normalizer = &proxy; break;
-    default: normalizer = &bsd; break;
-    }
-
-    return normalizer;
+TcpNormalizer* TcpNormalizerFactory::get_instance(StreamPolicy sp)
+{
+    assert( sp <= StreamPolicy::OS_PROXY );
+    return normalizers[sp];
 }
 

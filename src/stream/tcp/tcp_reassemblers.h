@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_reassemblers.h author davis mcpherson <davmcphe@@cisco.com>
+// tcp_reassemblers.h author davis mcpherson <davmcphe@cisco.com>
 // Created on: Oct 9, 2015
 
 #ifndef TCP_REASSEMBLERS_H
@@ -27,9 +27,14 @@
 class TcpReassemblerFactory
 {
 public:
-    static TcpReassembler* create(StreamPolicy);
+    static void initialize();
+    static void term();
+    static TcpReassembler* get_instance(StreamPolicy);
+
 private:
     TcpReassemblerFactory() = delete;
+
+    static TcpReassembler* reassemblers[StreamPolicy::OS_END_OF_LIST];
 };
 
 class TcpReassemblerPolicy
@@ -101,7 +106,7 @@ public:
     uint32_t get_seg_bytes_logical() const
     { return trs.sos.seg_bytes_logical; }
 
-    ReassemblyPolicy get_reassembly_policy() const
+    StreamPolicy get_reassembly_policy() const
     { return trs.sos.reassembly_policy; }
 
     void set_norm_mode_test()

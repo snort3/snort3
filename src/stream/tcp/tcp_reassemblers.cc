@@ -24,6 +24,8 @@
 #endif
 
 #include "tcp_reassemblers.h"
+
+#include "tcp_defs.h"
 #include "tcp_stream_tracker.h"
 
 class TcpReassemblerFirst : public TcpReassembler
@@ -250,29 +252,9 @@ private:
     { return full_right_overlap_os5(trs); }
 };
 
-static ReassemblyPolicy stream_reassembly_policy_map[] =
-{
-    ReassemblyPolicy::OS_INVALID,
-    ReassemblyPolicy::OS_FIRST,
-    ReassemblyPolicy::OS_LAST,
-    ReassemblyPolicy::OS_LINUX,
-    ReassemblyPolicy::OS_OLD_LINUX,
-    ReassemblyPolicy::OS_BSD,
-    ReassemblyPolicy::OS_MACOS,
-    ReassemblyPolicy::OS_SOLARIS,
-    ReassemblyPolicy::OS_IRIX,
-    ReassemblyPolicy::OS_HPUX11,
-    ReassemblyPolicy::OS_HPUX10,
-    ReassemblyPolicy::OS_WINDOWS,
-    ReassemblyPolicy::OS_WINDOWS2K3,
-    ReassemblyPolicy::OS_VISTA,
-    ReassemblyPolicy::OS_PROXY,
-    ReassemblyPolicy::OS_DEFAULT
-};
-
 void TcpReassemblerPolicy::init(TcpSession* ssn, TcpStreamTracker* trk, StreamPolicy pol, bool server)
 {
-    trs.sos.init_sos(ssn, stream_reassembly_policy_map[ static_cast<int>(pol) ]);
+    trs.sos.init_sos(ssn, pol);
     trs.server_side = server;
     trs.tracker = trk;
 
@@ -290,54 +272,45 @@ void TcpReassemblerPolicy::init(TcpSession* ssn, TcpStreamTracker* trk, StreamPo
     trs.flush_count = 0;
     trs.xtradata_mask = 0;
 
-    reassembler = TcpReassemblerFactory::create(pol);
+    reassembler = TcpReassemblerFactory::get_instance(pol);
 }
 
 void TcpReassemblerPolicy::reset()
 {
-    init(nullptr, nullptr, StreamPolicy::OS_INVALID, false);
+    init(nullptr, nullptr, StreamPolicy::OS_DEFAULT, false);
 }
 
-TcpReassembler* TcpReassemblerFactory::create(StreamPolicy os_policy)
+TcpReassembler* TcpReassemblerFactory::reassemblers[StreamPolicy::OS_END_OF_LIST];
+
+void TcpReassemblerFactory::initialize()
 {
-    static TcpReassemblerFirst first;
-    static TcpReassemblerLast last;
-    static TcpReassemblerLinux new_linux;
-    static TcpReassemblerOldLinux old_linux;
-    static TcpReassemblerBSD bsd;
-    static TcpReassemblerMacOS mac_os;
-    static TcpReassemblerSolaris solaris;
-    static TcpReassemblerIrix irix;
-    static TcpReassemblerHpux11 hpux11;
-    static TcpReassemblerHpux10 hpux10;
-    static TcpReassemblerWindows windows;
-    static TcpReassemblerWindows2K3 windows_2K3;
-    static TcpReassemblerVista vista;
-    static TcpReassemblerProxy proxy;
-
-    NormMode tcp_ips_data = Normalize_GetMode(NORM_TCP_IPS);
-    StreamPolicy actual = (tcp_ips_data == NORM_MODE_ON) ? StreamPolicy::OS_FIRST : os_policy;
-    TcpReassembler* reassembler;
-
-    switch (actual)
-    {
-    case StreamPolicy::OS_FIRST: reassembler = &first; break;
-    case StreamPolicy::OS_LAST: reassembler = &last; break;
-    case StreamPolicy::OS_LINUX: reassembler = &new_linux; break;
-    case StreamPolicy::OS_OLD_LINUX: reassembler = &old_linux; break;
-    case StreamPolicy::OS_BSD: reassembler = &bsd; break;
-    case StreamPolicy::OS_MACOS: reassembler = &mac_os; break;
-    case StreamPolicy::OS_SOLARIS: reassembler = &solaris; break;
-    case StreamPolicy::OS_IRIX: reassembler = &irix; break;
-    case StreamPolicy::OS_HPUX11: reassembler = &hpux11; break;
-    case StreamPolicy::OS_HPUX10: reassembler = &hpux10; break;
-    case StreamPolicy::OS_WINDOWS: reassembler = &windows; break;
-    case StreamPolicy::OS_WINDOWS2K3: reassembler = &windows_2K3; break;
-    case StreamPolicy::OS_VISTA: reassembler = &vista; break;
-    case StreamPolicy::OS_PROXY: reassembler = &proxy; break;
-    default: reassembler = &bsd; break;
-    }
-
-    return reassembler;
+    reassemblers[StreamPolicy::OS_FIRST] = new TcpReassemblerFirst;
+    reassemblers[StreamPolicy::OS_LAST] = new TcpReassemblerLast;
+    reassemblers[StreamPolicy::OS_LINUX] = new TcpReassemblerLinux;
+    reassemblers[StreamPolicy::OS_OLD_LINUX] = new TcpReassemblerOldLinux;
+    reassemblers[StreamPolicy::OS_BSD] = new TcpReassemblerBSD;
+    reassemblers[StreamPolicy::OS_MACOS] = new TcpReassemblerMacOS;
+    reassemblers[StreamPolicy::OS_SOLARIS] = new TcpReassemblerSolaris;
+    reassemblers[StreamPolicy::OS_IRIX] = new TcpReassemblerIrix;
+    reassemblers[StreamPolicy::OS_HPUX11] = new TcpReassemblerHpux11;
+    reassemblers[StreamPolicy::OS_HPUX10] = new TcpReassemblerHpux10;
+    reassemblers[StreamPolicy::OS_WINDOWS] = new TcpReassemblerWindows;
+    reassemblers[StreamPolicy::OS_WINDOWS2K3] = new TcpReassemblerWindows2K3;
+    reassemblers[StreamPolicy::OS_VISTA] = new TcpReassemblerVista;
+    reassemblers[StreamPolicy::OS_PROXY] = new TcpReassemblerProxy;
 }
 
+void TcpReassemblerFactory::term()
+{
+    for ( auto sp = StreamPolicy::OS_FIRST; sp <= StreamPolicy::OS_PROXY; sp++ )
+        delete reassemblers[sp];
+}
+
+TcpReassembler* TcpReassemblerFactory::get_instance(StreamPolicy os_policy)
+{
+    NormMode tcp_ips_data = Normalize_GetMode(NORM_TCP_IPS);
+    StreamPolicy sp = (tcp_ips_data == NORM_MODE_ON) ? StreamPolicy::OS_FIRST : os_policy;
+
+    assert( sp <= StreamPolicy::OS_PROXY );
+    return reassemblers[sp];
+}

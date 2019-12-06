@@ -1047,7 +1047,7 @@ int TcpSession::process(Packet* p)
     }
 
     if( !tcp_init )
-        set_os_policy( );
+        set_os_policy();
 
     TcpSegmentDescriptor tsd(flow, p, tel);
 

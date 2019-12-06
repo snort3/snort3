@@ -2015,7 +2015,7 @@ bool HostsModule::set(const char*, Value& v, SnortConfig* sc)
         host->hostInfo.fragPolicy = v.get_uint8() + 1;
 
     else if ( host and v.is("tcp_policy") )
-        host->hostInfo.streamPolicy = v.get_uint8() + 1;
+        host->hostInfo.streamPolicy = v.get_uint8();
 
     else if ( app and v.is("name") )
         app->snort_protocol_id = sc->proto_ref->add(v.get_string());

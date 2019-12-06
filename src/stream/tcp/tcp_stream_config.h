@@ -54,7 +54,7 @@ public:
     static void show_config(const TcpStreamConfig*);
 
     StreamPolicy policy = StreamPolicy::OS_DEFAULT;
-    ReassemblyPolicy reassembly_policy = ReassemblyPolicy::OS_DEFAULT;
+    StreamPolicy reassembly_policy = StreamPolicy::OS_DEFAULT;
 
     uint16_t flags = 0;
     uint16_t flush_factor = 0;

@@ -134,7 +134,7 @@ bool Http2HpackDecoder::decode_literal_header_line(const uint8_t* encoded_header
     // Literal field name
     else
     {
-        // Skip over the byte wth the parsed pattern and zeroed index
+        // Skip over the byte with the parsed pattern and zeroed index
         bytes_consumed++;
 
         if (!decode_string_literal(encoded_header_buffer + bytes_consumed, encoded_header_length -

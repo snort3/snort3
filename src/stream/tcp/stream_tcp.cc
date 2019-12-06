@@ -27,6 +27,7 @@
 #include "tcp_ha.h"
 #include "tcp_module.h"
 #include "tcp_session.h"
+#include "tcp_reassemblers.h"
 #include "tcp_state_machine.h"
 
 using namespace snort;
@@ -110,10 +111,18 @@ static void tcp_dtor(Inspector* p)
 { delete p; }
 
 static void stream_tcp_pinit()
-{ TcpStateMachine::initialize(); }
+{
+    TcpStateMachine::initialize();
+    TcpReassemblerFactory::initialize();
+    TcpNormalizerFactory::initialize();
+}
 
 static void stream_tcp_pterm()
-{ TcpStateMachine::term(); }
+{
+    TcpStateMachine::term();
+    TcpReassemblerFactory::term();
+    TcpNormalizerFactory::term();
+}
 
 static Session* tcp_ssn(Flow* lws)
 { return new TcpSession(lws); }

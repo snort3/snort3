@@ -77,10 +77,9 @@ struct Packet;
 #define SLAM_MAX 4
 
 // target-based policy types - changes to this enum require changes to stream.h::TCP_POLICIES
-enum class StreamPolicy
+enum StreamPolicy : uint8_t
 {
-    OS_INVALID = 0,
-    OS_FIRST,
+    OS_FIRST = 0,
     OS_LAST,
     OS_LINUX,
     OS_OLD_LINUX,
@@ -99,44 +98,12 @@ enum class StreamPolicy
 };
 
 // increment operator...
-inline StreamPolicy& operator++(StreamPolicy& c)
+inline StreamPolicy& operator++(StreamPolicy& c, int)
 {
     if ( c < StreamPolicy::OS_END_OF_LIST )
         c = static_cast<StreamPolicy>( static_cast<int>(c) + 1 );
     else
         c = StreamPolicy::OS_END_OF_LIST;
-
-    return c;
-}
-
-enum class ReassemblyPolicy
-{
-    OS_INVALID = 0,
-    OS_FIRST,
-    OS_LAST,
-    OS_LINUX,
-    OS_OLD_LINUX,
-    OS_BSD,
-    OS_MACOS,
-    OS_SOLARIS,
-    OS_IRIX,
-    OS_HPUX11,
-    OS_HPUX10,
-    OS_WINDOWS,
-    OS_WINDOWS2K3,
-    OS_VISTA,
-    OS_PROXY,
-    OS_END_OF_LIST,
-    OS_DEFAULT = OS_BSD
-};
-
-// increment operator...
-inline ReassemblyPolicy& operator++(ReassemblyPolicy& c)
-{
-    if ( c < ReassemblyPolicy::OS_END_OF_LIST )
-        c = static_cast<ReassemblyPolicy>( static_cast<int>(c) + 1 );
-    else
-        c = ReassemblyPolicy::OS_END_OF_LIST;
 
     return c;
 }

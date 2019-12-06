@@ -53,7 +53,7 @@ struct TcpNormalizerState
     TcpStreamTracker* tracker = nullptr;
     TcpStreamTracker* peer_tracker = nullptr;
 
-    StreamPolicy os_policy = StreamPolicy::OS_INVALID;
+    StreamPolicy os_policy = StreamPolicy::OS_DEFAULT;
 
     int32_t paws_ts_fudge = 0;
     int tcp_ts_flags = 0;

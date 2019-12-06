@@ -361,9 +361,11 @@ protected:
 // <--- note -- the 'state' parameter must be a reference
 inline TcpStreamTracker::TcpState& operator++(TcpStreamTracker::TcpState& state, int)
 {
-    const int i = static_cast<int>(state);
-    state = static_cast<TcpStreamTracker::TcpState>((i + 1) % ( TcpStreamTracker::TCP_MAX_EVENTS +
-        1 ) );
+    if ( state < TcpStreamTracker::TCP_MAX_STATES )
+        state = static_cast<TcpStreamTracker::TcpState>( static_cast<int>(state) + 1 );
+    else
+        state = TcpStreamTracker::TCP_MAX_STATES;
+
     return state;
 }
 

@@ -288,7 +288,7 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
         config->no_ack = v.get_bool();
 
     else if ( v.is("policy") )
-        config->policy = static_cast< StreamPolicy >( v.get_uint8() + 1 );
+        config->policy = static_cast< StreamPolicy >( v.get_uint8() );
 
     else if ( v.is("overlap_limit") )
         config->overlap_limit = v.get_uint32();
