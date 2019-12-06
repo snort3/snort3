@@ -27,6 +27,7 @@
 #include "log/text_log.h"
 #include "main/snort_config.h"
 #include "protocols/gre.h"
+#include "log/messages.h"
 
 using namespace snort;
 
@@ -63,6 +64,8 @@ public:
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
+    bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
+        EncState&, Buffer&, Flow*) override;
 };
 
 static const uint32_t GRE_HEADER_LEN = 4;
@@ -93,6 +96,30 @@ void GreCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 /*
  * see RFCs 1701, 2784 and 2637
  */
+
+bool GreCodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
+    EncState& enc, Buffer& buf, Flow*)
+
+{
+    if (raw_len > GRE_HEADER_LEN)
+    {
+        ErrorMessage("Invalid GRE header length: %u",raw_len);
+        return false;
+    }
+
+    if (!buf.allocate(raw_len))
+        return false;
+
+    gre::GREHdr* const greh_out = reinterpret_cast<gre::GREHdr*>(buf.data());
+    memcpy(buf.data(), raw_in, raw_len);
+    enc.next_proto = IpProtocol::GRE;
+    enc.next_ethertype = greh_out->proto();
+
+    GRE_CHKSUM(greh_out);
+
+    return true;
+}
+
 bool GreCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     if (raw.len < GRE_HEADER_LEN)
