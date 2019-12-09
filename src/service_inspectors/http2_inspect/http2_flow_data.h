@@ -57,10 +57,8 @@ public:
     friend class Http2SettingsFrame;
     friend class Http2StartLine;
     friend class Http2StatusLine;
+    friend class Http2Stream;
     friend class Http2StreamSplitter;
-    friend void implement_eval(Http2FlowData* session_data, HttpCommon::SourceId source_id);
-    friend bool implement_get_buf(unsigned id, Http2FlowData*, HttpCommon::SourceId,
-        snort::InspectionBuffer&);
     friend const snort::StreamBuffer implement_reassemble(Http2FlowData*, unsigned, unsigned,
         const uint8_t*, unsigned, uint32_t, HttpCommon::SourceId);
     friend snort::StreamSplitter::Status implement_scan(Http2FlowData*, const uint8_t*, uint32_t,
@@ -72,7 +70,7 @@ public:
 protected:
     // 0 element refers to client frame, 1 element refers to server frame
 
-    // Reassemble() signals to eval()
+    // Reassemble() data to eval()
     uint8_t* frame_header[2] = { nullptr, nullptr };
     uint32_t frame_header_size[2] = { 0, 0 };
     uint8_t* frame_data[2] = { nullptr, nullptr };
@@ -80,9 +78,9 @@ protected:
 
     // Used in eval()
     bool frame_in_detection = false;
-    class Http2Frame* current_frame[2] = { nullptr, nullptr };
     Http2ConnectionSettings connection_settings[2];
     Http2HpackDecoder hpack_decoder[2];
+    class Http2Stream* stream;
 
     // Internal to scan()
     bool preface[2] = { true, false };
@@ -112,8 +110,6 @@ protected:
     // transaction in NHI. Also as in NHI accessor methods will need to be added.
     Http2Infractions* infractions[2] = { new Http2Infractions, new Http2Infractions };
     Http2EventGen* events[2] = { new Http2EventGen, new Http2EventGen };
-
-    void clear_frame_data(HttpCommon::SourceId source_id);
 
 #ifdef REG_TEST
     static uint64_t instance_count;

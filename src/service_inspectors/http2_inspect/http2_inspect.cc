@@ -22,6 +22,7 @@
 #endif
 
 #include "http2_inspect.h"
+
 #include "detection/detection_engine.h"
 #include "protocols/packet.h"
 #include "service_inspectors/http_inspect/http_common.h"
@@ -30,6 +31,7 @@
 #include "stream/stream.h"
 
 #include "http2_frame.h"
+#include "http2_stream.h"
 
 using namespace snort;
 using namespace HttpCommon;
@@ -79,9 +81,13 @@ bool Http2Inspect::get_buf(unsigned id, Packet* p, InspectionBuffer& b)
     if (!session_data->frame_in_detection)
         return false;
 
-    const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;
+    const Field& buffer = session_data->stream->get_buf(id);
+    if (buffer.length() <= 0)
+        return false;
 
-    return implement_get_buf(id, session_data, source_id, b);
+    b.data = buffer.start();
+    b.len = buffer.length();
+    return true;
 }
 
 bool Http2Inspect::get_fp_buf(InspectionBuffer::Type /*ibt*/, Packet* /*p*/,
@@ -105,14 +111,20 @@ void Http2Inspect::eval(Packet* p)
     if (session_data->frame_type[source_id] == FT__NONE)
         return;
 
-    implement_eval(session_data, source_id);
+    session_data->stream->eval_frame(session_data->frame_header[source_id],
+        session_data->frame_header_size[source_id], session_data->frame_data[source_id],
+        session_data->frame_data_size[source_id], source_id);
+
+    // The current frame now owns these buffers, clear them from the flow data
+    session_data->frame_header[source_id] = nullptr;
+    session_data->frame_data[source_id] = nullptr;
 
     session_data->frame_in_detection = true;
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2))
     {
-        session_data->current_frame[source_id]->print_frame(HttpTestManager::get_output_file());
+        session_data->stream->print_frame(HttpTestManager::get_output_file());
         if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP2))
         {
             printf("Finished processing section from test %" PRIi64 "\n",
@@ -130,8 +142,7 @@ void Http2Inspect::clear(Packet* p)
     if (session_data == nullptr)
         return;
 
-    const SourceId source_id = (p->is_from_client()) ? SRC_CLIENT : SRC_SERVER;
-
-    session_data->clear_frame_data(source_id);
+    session_data->frame_in_detection = false;
+    session_data->stream->clear_frame();
 }
 

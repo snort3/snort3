@@ -220,8 +220,8 @@ StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t
                     }
                     else
                     {
-                        // FIXIT-M CONTINUATION frames can also follow PUSH_PROMISE frames, which is
-                        // not currently supported
+                        // FIXIT-M CONTINUATION frames can also follow PUSH_PROMISE frames, which
+                        // are not currently supported
                         *session_data->infractions[source_id] += INF_UNEXPECTED_CONTINUATION;
                         session_data->events[source_id]->create_event(
                             EVENT_UNEXPECTED_CONTINUATION);
@@ -352,11 +352,16 @@ const StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned to
 
     if (flags & PKT_PDU_TAIL)
     {
+        session_data->total_bytes_in_split[source_id] = 0;
+        session_data->num_frame_headers[source_id] = 0;
+        session_data->scan_octets_seen[source_id] = 0;
+
         // Return 0-length non-null buffer to stream which signals detection required, but don't 
         // create pkt_data buffer
         frame_buf.data = (const uint8_t*)"";
     }
     session_data->frame_type[source_id] = get_frame_type(session_data->frame_header[source_id]);
+
     return frame_buf;
 }
 

@@ -22,7 +22,6 @@ set (FILE_LIST
     http2_huffman_state_machine.cc
     http2_huffman_state_machine.h
     http2_inspect.cc
-    http2_inspect_impl.cc
     http2_inspect.h
     http2_module.cc
     http2_module.h
@@ -34,6 +33,8 @@ set (FILE_LIST
     http2_start_line.h
     http2_status_line.cc
     http2_status_line.h
+    http2_stream.cc
+    http2_stream.h
     http2_stream_splitter.cc
     http2_stream_splitter_impl.cc
     http2_stream_splitter.h

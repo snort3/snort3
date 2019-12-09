@@ -29,6 +29,7 @@
 #include "http2_frame.h"
 #include "http2_module.h"
 #include "http2_start_line.h"
+#include "http2_stream.h"
 
 using namespace snort;
 using namespace Http2Enums;
@@ -40,7 +41,7 @@ unsigned Http2FlowData::inspector_id = 0;
 uint64_t Http2FlowData::instance_count = 0;
 #endif
 
-Http2FlowData::Http2FlowData() : FlowData(inspector_id)
+Http2FlowData::Http2FlowData() : FlowData(inspector_id), stream(new Http2Stream(this))
 {
 #ifdef REG_TEST
     seq_num = ++instance_count;
@@ -74,17 +75,8 @@ Http2FlowData::~Http2FlowData()
     {
         delete infractions[k];
         delete events[k];
-        delete current_frame[k];
     }
+
+    delete stream;
 }
 
-void Http2FlowData::clear_frame_data(HttpCommon::SourceId source_id)
-{
-    frame_in_detection = false;
-    continuation_expected[source_id] = false;
-    num_frame_headers[source_id] = 0;
-    scan_octets_seen[source_id] = 0;
-    total_bytes_in_split[source_id] = 0;
-    delete current_frame[source_id];
-    current_frame[source_id] = nullptr;
-}
