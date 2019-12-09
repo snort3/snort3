@@ -82,7 +82,7 @@ struct FlowDeleteStats
     PegCount get_total() const
     {
         PegCount total = 0;
-        for ( state_t i = 0; i < static_cast<state_t>(PruneReason::MAX); ++i )
+        for ( state_t i = 0; i < static_cast<state_t>(FlowDeleteState::MAX); ++i )
             total += deletes[i];
 
         return total;

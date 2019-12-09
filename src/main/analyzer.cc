@@ -535,6 +535,8 @@ const char* Analyzer::get_state_string()
 
 void Analyzer::idle()
 {
+    idling = true;
+
     // FIXIT-L this whole thing could be pub-sub
     daq_stats.idle++;
 
@@ -555,6 +557,10 @@ void Analyzer::idle()
     Stream::timeout_flows(packet_time());
 
     HighAvailabilityManager::process_receive();
+
+    handle_uncompleted_commands();
+
+    idling = false;
 }
 
 /*

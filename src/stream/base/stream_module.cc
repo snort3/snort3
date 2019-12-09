@@ -238,11 +238,13 @@ bool StreamReloadResourceManager::tinit()
 
 bool StreamReloadResourceManager::tune_packet_context()
 {
+    ++stream_base_stats.reload_tuning_packets;
     return tune_resources(max_work);
 }
 
 bool StreamReloadResourceManager::tune_idle_context()
 {
+    ++stream_base_stats.reload_tuning_idle;
     return tune_resources(max_work_idle);
 }
 

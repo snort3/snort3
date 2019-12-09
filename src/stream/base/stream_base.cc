@@ -65,6 +65,8 @@ const PegInfo base_pegs[] =
     { CountType::SUM, "expected_realized", "number of expected flows realized" },
     { CountType::SUM, "expected_pruned", "number of expected flows pruned" },
     { CountType::SUM, "expected_overflows", "number of expected cache overflows" },
+    { CountType::SUM, "reload_tuning_idle", "number of times stream resource tuner called while idle" },
+    { CountType::SUM, "reload_tuning_packets", "number of times stream resource tuner called while processing packets" },
     { CountType::SUM, "reload_total_adds", "number of flows added by config reloads" },
     { CountType::SUM, "reload_total_deletes", "number of flows deleted by config reloads" },
     { CountType::SUM, "reload_freelist_deletes", "number of flows deleted from the free list by config reloads" },
@@ -103,13 +105,13 @@ void base_sum()
     }
 
     sum_stats((PegCount*)&g_stats, (PegCount*)&stream_base_stats,
-        array_size(base_pegs)-1);
+        array_size(base_pegs) - 1);
     base_reset();
 }
 
 void base_stats()
 {
-    show_stats((PegCount*)&g_stats, base_pegs, array_size(base_pegs)-1, MOD_NAME);
+    show_stats((PegCount*)&g_stats, base_pegs, array_size(base_pegs) - 1, MOD_NAME);
 }
 
 void base_reset()

@@ -57,6 +57,8 @@ struct BaseStats
      PegCount expected_realized;
      PegCount expected_pruned;
      PegCount expected_overflows;
+     PegCount reload_tuning_idle;
+     PegCount reload_tuning_packets;
      PegCount reload_total_adds;
      PegCount reload_total_deletes;
      PegCount reload_freelist_flow_deletes;

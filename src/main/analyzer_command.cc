@@ -129,8 +129,16 @@ bool ACSwap::execute(Analyzer& analyzer, void** ac_state)
             if ( !reload_tuners->empty() )
             {
                 auto rrt = reload_tuners->front();
-                if ( rrt->tune_packet_context() )
-                    reload_tuners->pop_front();
+                if ( analyzer.is_idling() )
+                {
+                    if ( rrt->tune_idle_context() )
+                        reload_tuners->pop_front();
+                }
+                else
+                {
+                    if ( rrt->tune_packet_context() )
+                        reload_tuners->pop_front();
+                }
             }
 
             // check for empty again and free list instance if we are done

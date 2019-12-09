@@ -108,6 +108,9 @@ public:
     void rotate();
     snort::SFDAQInstance* get_daq_instance() { return daq_instance; }
 
+    bool is_idling() const
+    { return idling; }
+
 private:
     void analyze();
     bool handle_command();
@@ -136,6 +139,7 @@ private:
     std::atomic<State> state;
     unsigned id;
     bool exit_requested = false;
+    bool idling = false;
     uint64_t exit_after_cnt;
     uint64_t pause_after_cnt = 0;
     uint64_t skip_cnt = 0;
