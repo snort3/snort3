@@ -73,6 +73,9 @@ public:
     // Same as operator[]; additionally, sets the boolean if a new entry is created.
     Data find_else_create(const Key& key, bool* new_data);
 
+    // Returns true if found, takes a ref to a user managed entry
+    bool find_else_insert(const Key& key, std::shared_ptr<Value>& data);
+
     // Return all data from the LruCache in order (most recently used to least)
     std::vector<std::pair<Key, Data> > get_all_data();
 
@@ -262,6 +265,38 @@ find_else_create(const Key& key, bool* new_data)
     prune(tmp_data);
 
     return data;
+}
+
+template<typename Key, typename Value, typename Hash>
+bool LruCacheShared<Key, Value, Hash>::
+find_else_insert(const Key& key, std::shared_ptr<Value>& data)
+{
+    LruMapIter map_iter;
+
+    std::list<Data> tmp_data;
+    std::lock_guard<std::mutex> cache_lock(cache_mutex);
+
+    map_iter = map.find(key);
+    if (map_iter != map.end())
+    {
+        stats.find_hits++;
+        list.splice(list.begin(), list, map_iter->second); // update LRU
+        return true;
+    }
+
+    stats.find_misses++;
+    stats.adds++;
+
+    //  Add key/data pair to front of list.
+    list.emplace_front(std::make_pair(key, data));
+    increase_size();
+
+    //  Add list iterator for the new entry to map.
+    map[key] = list.begin();
+
+    prune(tmp_data);
+
+    return false;
 }
 
 template<typename Key, typename Value, typename Hash>

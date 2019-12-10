@@ -144,6 +144,18 @@ TEST(lru_cache_shared, remove_test)
     CHECK(vec[1].first == 1 and *vec[1].second == "one");
 }
 
+TEST(lru_cache_shared, find_else_insert)
+{
+    std::shared_ptr<std::string> data(new std::string("12345"));
+    LruCacheShared<int, std::string, std::hash<int> > lru_cache(1);
+
+    CHECK(false == lru_cache.find_else_insert(1,data)); 
+    CHECK(1 == lru_cache.size());
+
+    CHECK(true == lru_cache.find_else_insert(1,data)); 
+    CHECK(1 == lru_cache.size());
+}
+
 //  Test statistics counters.
 TEST(lru_cache_shared, stats_test)
 {
