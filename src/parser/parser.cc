@@ -189,7 +189,7 @@ static void OtnInit(SnortConfig* sc)
     /* Init sid-gid -> otn map */
     sc->otn_map = OtnLookupNew();
     if (sc->otn_map == nullptr)
-        ParseAbort("ParseRulesFile otn_map ghash_new failed.");
+        ParseAbort("otn_map ghash_new failed.");
 }
 
 static RuleListNode* addNodeToOrderedList(RuleListNode* ordered_list,
@@ -352,28 +352,27 @@ void ParseRules(SnortConfig* sc)
         if ( p->enable_builtin_rules )
             ModuleManager::load_rules(sc);
 
-        const char* fname = p->include.c_str();
-        std::string file = p->includer;
-
-        if ( fname && *fname )
+        if ( !p->include.empty() )
         {
-            const char* code = get_config_file(fname, file);
-            push_parse_location(code, file.c_str(), fname);
-            ParseConfigFile(sc, file.c_str());
+            std::string path = p->includer;
+            const char* file = p->include.c_str();
+            const char* code = get_config_file(file, path);
+            push_parse_location(code, path.c_str(), file);
+            parse_rules_file(sc, path.c_str());
             pop_parse_location();
         }
 
         if ( !p->rules.empty() )
         {
-            push_parse_location("C", file.c_str(), "ips.rules");
-            ParseConfigString(sc, p->rules.c_str());
+            push_parse_location("C", p->includer.c_str(), "ips.rules");
+            parse_rules_string(sc, p->rules.c_str());
             pop_parse_location();
         }
 
         if ( !p->states.empty() )
         {
-            push_parse_location("C", file.c_str(), "ips.states");
-            ParseConfigString(sc, p->states.c_str());
+            push_parse_location("C", p->includer.c_str(), "ips.states");
+            parse_rules_string(sc, p->states.c_str());
             pop_parse_location();
         }
 
@@ -381,7 +380,7 @@ void ParseRules(SnortConfig* sc)
         {
             p->includer.clear();
             push_parse_location("W", "./", "rule args");
-            ParseConfigString(sc, s_aux_rules.c_str());
+            parse_rules_string(sc, s_aux_rules.c_str());
             pop_parse_location();
         }
 

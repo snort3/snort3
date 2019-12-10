@@ -38,8 +38,8 @@ const char* get_parse_file();
 // file may hold original parse path on entry
 const char* get_config_file(const char* arg, std::string& file);
 
-void ParseConfigFile(snort::SnortConfig*, const char* fname);
-void ParseConfigString(snort::SnortConfig*, const char* str);
+void parse_rules_file(snort::SnortConfig*, const char* fname);
+void parse_rules_string(snort::SnortConfig*, const char* str);
 
 void ParseIpVar(snort::SnortConfig*, const char* name, const char* s);
 void parse_include(snort::SnortConfig*, const char*);

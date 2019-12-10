@@ -1206,7 +1206,7 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
         else
         {
             entered = true;
-            ParseConfigString(sc, rule);
+            parse_rules_string(sc, rule);
         }
         OtnFree(otn);
         return;

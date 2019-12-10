@@ -59,6 +59,7 @@ struct Location
 };
 
 static std::stack<Location> files;
+static int rules_file_depth = 0;
 
 const char* get_parse_file()
 {
@@ -186,7 +187,7 @@ void parse_include(SnortConfig* sc, const char* arg)
 {
     assert(arg);
     arg = ExpandVars(sc, arg);
-    std::string file = get_ips_policy()->includer;
+    std::string file = !rules_file_depth ? get_ips_policy()->includer : get_parse_file();
 
     const char* code = get_config_file(arg, file);
 
@@ -196,7 +197,7 @@ void parse_include(SnortConfig* sc, const char* arg)
         return;
     }
     push_parse_location(code, file.c_str(), arg);
-    ParseConfigFile(sc, file.c_str());
+    parse_rules_file(sc, file.c_str());
     pop_parse_location();
 }
 
@@ -327,7 +328,7 @@ ListHead* get_rule_list(SnortConfig* sc, const char* s)
     return p ? p->RuleList : nullptr;
 }
 
-void ParseConfigFile(SnortConfig* sc, const char* fname)
+void parse_rules_file(SnortConfig* sc, const char* fname)
 {
     if ( !fname )
         return;
@@ -340,10 +341,12 @@ void ParseConfigFile(SnortConfig* sc, const char* fname)
             fname, get_error(errno));
         return;
     }
+    ++rules_file_depth;
     parse_stream(fs, sc);
+    --rules_file_depth;
 }
 
-void ParseConfigString(SnortConfig* sc, const char* s)
+void parse_rules_string(SnortConfig* sc, const char* s)
 {
     std::string rules = s;
     std::stringstream ss(rules);

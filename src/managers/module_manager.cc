@@ -1342,7 +1342,7 @@ void ModuleManager::load_rules(SnortConfig* sc)
 
             // note:  you can NOT do ss.str().c_str() here
             const string& rule = ss.str();
-            ParseConfigString(sc, rule.c_str());
+            parse_rules_string(sc, rule.c_str());
 
             r++;
         }

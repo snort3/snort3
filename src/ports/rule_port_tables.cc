@@ -72,7 +72,7 @@ RulePortTables* PortTablesNew()
     RulePortTables* rpt = new RulePortTables;
 
     if ( !(rpt->svc_any = PortObjectNew()) )
-        ParseAbort("ParseRulesFile udp any-any PortObjectNew() failed");
+        ParseAbort("udp any-any PortObjectNew() failed");
 
     PortObjectAddPortAny(rpt->svc_any);
 
