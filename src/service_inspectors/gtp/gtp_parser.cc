@@ -54,14 +54,6 @@ struct GTP_C_Hdr
     uint16_t length;            /* length */
 };
 
-struct GTP_C_Hdr_v0
-{
-    GTP_C_Hdr hdr;
-    uint16_t sequence_num;
-    uint16_t flow_lable;
-    uint64_t tid;
-};
-
 /* GTP Information element Header  */
 struct GTP_IE_Hdr
 {
@@ -280,8 +272,16 @@ static int gtp_parse_v0(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
 static int gtp_parse_v1(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
 {
     const GTP_C_Hdr* hdr;
+    const uint32_t* teid;
 
     hdr = (const GTP_C_Hdr*)buff;
+    /*TEID value at 5-8 octets*/
+    teid = (const uint32_t*)(buff + 4);
+
+    if ((msg->msg_type > 3) && (*teid == 0))
+    {
+        alert(GTP_EVENT_MISSING_TEID);
+    }
 
     /*Check the length based on optional fields and extension header*/
     if (hdr->flag & 0x07)
@@ -368,8 +368,16 @@ static int gtp_parse_v1(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
 static int gtp_parse_v2(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
 {
     const GTP_C_Hdr* hdr;
+    const uint32_t* teid;
 
     hdr = (const GTP_C_Hdr*)buff;
+    /*TEID value at 5-8 octet*/
+    teid = (const uint32_t*)(buff + 4);
+
+    if ((msg->msg_type > 3) && (hdr->flag & 0x08) && (*teid == 0))
+    {
+        alert(GTP_EVENT_MISSING_TEID);
+    }
 
     if (hdr->flag & 0x8)
         msg->header_len = GTP_HEADER_LEN_EPC_V2;

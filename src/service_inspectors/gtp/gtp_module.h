@@ -29,6 +29,7 @@
 #define GTP_EVENT_BAD_MSG_LEN        (1)
 #define GTP_EVENT_BAD_IE_LEN         (2)
 #define GTP_EVENT_OUT_OF_ORDER_IE    (3)
+#define GTP_EVENT_MISSING_TEID       (4)
 
 #define GTP_NAME "gtp_inspect"
 #define GTP_HELP "gtp control channel inspection"

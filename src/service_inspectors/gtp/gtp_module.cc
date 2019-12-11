@@ -38,6 +38,7 @@ THREAD_LOCAL ProfileStats gtp_inspect_prof;
 #define GTP_EVENT_BAD_MSG_LEN_STR        "message length is invalid"
 #define GTP_EVENT_BAD_IE_LEN_STR         "information element length is invalid"
 #define GTP_EVENT_OUT_OF_ORDER_IE_STR    "information elements are out of order"
+#define GTP_EVENT_MISSING_TEID_STR       "TEID is missing"
 
 //-------------------------------------------------------------------------
 // stats
@@ -70,6 +71,7 @@ static const RuleMap gtp_rules[] =
     { GTP_EVENT_BAD_MSG_LEN, GTP_EVENT_BAD_MSG_LEN_STR },
     { GTP_EVENT_BAD_IE_LEN, GTP_EVENT_BAD_IE_LEN_STR },
     { GTP_EVENT_OUT_OF_ORDER_IE, GTP_EVENT_OUT_OF_ORDER_IE_STR },
+    { GTP_EVENT_MISSING_TEID, GTP_EVENT_MISSING_TEID_STR },
 
     { 0, nullptr }
 };
