@@ -25,3 +25,8 @@ install (FILES ${HELPERS_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/helpers"
 )
 
+add_catch_test( base64_encoder_test
+    NO_TEST_SOURCE
+    SOURCES
+        base64_encoder.cc
+)

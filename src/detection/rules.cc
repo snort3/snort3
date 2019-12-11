@@ -106,7 +106,7 @@ RuleTreeNode* RuleStateMap::dup_rtn(RuleTreeNode* rtn)
     return ret;
 }
 
-void RuleStateMap::update_rtn(RuleTreeNode* rtn, RuleState& s)
+void RuleStateMap::update_rtn(RuleTreeNode* rtn, const RuleState& s)
 {
     switch ( s.enable )
     {

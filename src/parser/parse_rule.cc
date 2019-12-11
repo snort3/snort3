@@ -1127,7 +1127,7 @@ OptTreeNode* parse_rule_open(SnortConfig* sc, RuleTreeNode& rtn, bool stub)
     return otn;
 }
 
-static void parse_rule_state(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
+static void parse_rule_state(SnortConfig* sc, const RuleTreeNode& rtn, OptTreeNode* otn)
 {
     if ( !otn->sigInfo.gid )
         otn->sigInfo.gid = GID_DEFAULT;

@@ -26,23 +26,13 @@
 
 #include <sstream>
 
-#ifdef UNIT_TEST
-#include <cstdio>
-#include <cstring>
-
-#include "catch/snort_catch.h"
-#include "utils/util.h"
-#endif
-
-using namespace std;
-
 void CSVFormatter::finalize_fields()
 {
     header = "#timestamp";
 
     for( unsigned i = 0; i < section_names.size(); i++ )
     {
-        string section = section_names[i];
+        std::string section = section_names[i];
 
         for( auto& field : field_names[i] )
         {
@@ -105,7 +95,11 @@ void CSVFormatter::write(FILE* fh, time_t timestamp)
     fflush(fh);
 }
 
-#ifdef UNIT_TEST
+#ifdef CATCH_TEST_BUILD
+
+#include <cstring>
+
+#include "catch/catch.hpp"
 
 TEST_CASE("csv output", "[CSVFormatter]")
 {
@@ -144,7 +138,7 @@ TEST_CASE("csv output", "[CSVFormatter]")
     f.write(fh, (time_t)2345678901);
 
     auto size = ftell(fh);
-    char* fake_file = (char*)snort_alloc(size + 1);
+    char* fake_file = new char[size + 1];
 
     rewind(fh);
     fread(fake_file, size, 1, fh);
@@ -152,7 +146,7 @@ TEST_CASE("csv output", "[CSVFormatter]")
 
     CHECK( !strcmp(cooked, fake_file) );
 
-    snort_free(fake_file);
+    delete[] fake_file;
     fclose(fh);
 }
 

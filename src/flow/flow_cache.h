@@ -88,7 +88,7 @@ public:
 
     void unlink_uni(snort::Flow*);
 
-    void set_flow_cache_config(FlowCacheConfig& cfg)
+    void set_flow_cache_config(const FlowCacheConfig& cfg)
     { config = cfg; }
 
     const FlowCacheConfig& get_flow_cache_config() const

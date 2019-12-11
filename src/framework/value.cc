@@ -34,12 +34,6 @@
 using namespace snort;
 using namespace std;
 
-Value::~Value()
-{
-    if ( ss )
-        delete ss;
-}
-
 void Value::get_mac(uint8_t (&mac)[6]) const
 {
     if ( str.size() == sizeof(mac) )

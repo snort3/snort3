@@ -52,7 +52,7 @@ public:
     FlowControl(const FlowCacheConfig& fc);
     ~FlowControl();
 
-    void set_flow_cache_config(FlowCacheConfig& cfg);
+    void set_flow_cache_config(const FlowCacheConfig& cfg);
     const FlowCacheConfig& get_flow_cache_config() const;
     void init_proto(PktType, snort::InspectSsnFunc);
     void init_exp(uint32_t max);

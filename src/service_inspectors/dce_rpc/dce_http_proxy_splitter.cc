@@ -27,10 +27,6 @@
 
 #include "dce_http_proxy_module.h"
 
-#ifdef UNIT_TEST
-#include "catch/snort_catch.h"
-#endif
-
 using namespace snort;
 
 // NOTE:  These strings must have a length of at least one character
@@ -159,11 +155,26 @@ DceHttpProxySplitter::DceHttpProxySplitter(bool c2s) : StreamSplitter(c2s)
     match_state = HTTP_PROXY_INIT;
 }
 
+#ifdef CATCH_TEST_BUILD
+
+#include "catch/catch.hpp"
+
+//--------------------------------------------------------------------------
+// mocks
+//--------------------------------------------------------------------------
+
+unsigned StreamSplitter::max(Flow*) { return 16384; }
+
+const StreamBuffer StreamSplitter::reassemble(
+    Flow*, unsigned, unsigned, const uint8_t*,
+    unsigned, uint32_t, unsigned&)
+{
+    return { nullptr, 0 };
+}
+
 //--------------------------------------------------------------------------
 // unit tests
 //--------------------------------------------------------------------------
-
-#ifdef UNIT_TEST
 
 TEST_CASE("DceHttpProxySplitter-scan - first_proxy_request", "[http_proxy_splitter]")
 {

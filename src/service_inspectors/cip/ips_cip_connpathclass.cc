@@ -49,7 +49,7 @@ static THREAD_LOCAL ProfileStats cip_connpathclass_perf_stats;
 class CipConnpathclassOption : public IpsOption
 {
 public:
-    CipConnpathclassOption(RangeCheck& v) : IpsOption(s_name)
+    CipConnpathclassOption(const RangeCheck& v) : IpsOption(s_name)
     { cip_cpc = v; }
 
     uint32_t hash() const override;

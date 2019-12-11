@@ -24,6 +24,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <sstream>
 
 #include "framework/bits.h"
 #include "framework/parameter.h"
@@ -52,7 +53,11 @@ public:
     ValueType get_type()
     { return type; }
 
-    ~Value();
+    ~Value()
+    {
+        if ( ss )
+            delete ss;
+    }
 
     void set(bool b)
     { type = VT_BOOL; num = b ? 1 : 0; str.clear(); }

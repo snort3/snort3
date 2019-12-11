@@ -29,11 +29,6 @@
 
 #include <cassert>
 
-#ifdef UNIT_TEST
-#include <cstring>
-#include "catch/snort_catch.h"
-#endif
-
 using namespace snort;
 
 static inline char b64(uint8_t idx)
@@ -123,7 +118,12 @@ unsigned Base64Encoder::finish(char* buf)
 // which adds a \n to the input.
 //--------------------------------------------------------------------------
 
-#ifdef UNIT_TEST
+#ifdef CATCH_TEST_BUILD
+
+#include <cstring>
+
+#include "catch/catch.hpp"
+
 TEST_CASE("b64 decode", "[Base64Encoder]")
 {
     Base64Encoder b64e;
@@ -202,5 +202,6 @@ TEST_CASE("b64 decode", "[Base64Encoder]")
         }
     }
 }
+
 #endif
 

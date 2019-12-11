@@ -86,7 +86,7 @@ public:
     bool tune_packet_context() override;
     bool tune_idle_context() override;
 
-    bool initialize(StreamModuleConfig&);
+    bool initialize(const StreamModuleConfig&);
 
 private:
     bool tune_resources(unsigned work_limit);

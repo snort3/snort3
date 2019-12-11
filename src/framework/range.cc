@@ -28,10 +28,6 @@
 #include <cstring>
 #include <string>
 
-#ifdef UNIT_TEST
-#include "catch/snort_catch.h"
-#endif
-
 using namespace snort;
 using namespace std;
 
@@ -316,7 +312,10 @@ bool RangeCheck::validate(const char* s, const char* r)
 // unit tests: EQ, NOT, LT, LE, GT, GE, LG, LEG
 //--------------------------------------------------------------------------
 
-#ifdef UNIT_TEST
+#ifdef CATCH_TEST_BUILD
+
+#include "catch/catch.hpp"
+
 TEST_CASE("dflt op", "[RangeCheck]")
 {
     RangeCheck rc;
@@ -620,5 +619,6 @@ TEST_CASE("validate", "[RangeCheck]")
     // invalid low and hi
     CHECK(!rc.validate("200<>400", "3:10"));
 }
+
 #endif
 

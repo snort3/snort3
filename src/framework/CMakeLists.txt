@@ -57,3 +57,16 @@ set_property(
     ADDITIONAL_MAKE_CLEAN_FILES api_options.h
 )
 
+add_catch_test( parameter_test
+    NO_TEST_SOURCE
+    SOURCES
+        parameter.cc
+    LIBS
+        ${DNET_LIBRARIES}
+)
+
+add_catch_test( range_test
+    NO_TEST_SOURCE
+    SOURCES
+        range.cc
+)

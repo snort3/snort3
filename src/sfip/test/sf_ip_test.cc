@@ -24,11 +24,23 @@
 
 #include <cstring>
 
-#include "catch/snort_catch.h"
+#include "catch/catch.hpp"
 
-#include "sf_cidr.h"
+#include "../sf_cidr.h"
 
 using namespace snort;
+
+namespace snort
+{
+char* snort_strdup(const char* str)
+{
+    assert(str);
+    size_t n = strlen(str) + 1;
+    char* p = new char[n];
+    memcpy(p, str, n);
+    return p;
+}
+}
 
 //---------------------------------------------------------------
 

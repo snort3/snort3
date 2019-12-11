@@ -49,7 +49,7 @@ static THREAD_LOCAL ProfileStats cip_service_perf_stats;
 class CipServiceOption : public IpsOption
 {
 public:
-    CipServiceOption(RangeCheck& v) : IpsOption(s_name)
+    CipServiceOption(const RangeCheck& v) : IpsOption(s_name)
     { cip_serv = v; }
 
     uint32_t hash() const override;

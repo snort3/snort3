@@ -89,14 +89,14 @@ struct RuleState
 class RuleStateMap
 {
 public:
-    void add(RuleKey& key, RuleState& state)
+    void add(const RuleKey& key, const RuleState& state)
     { map[key] = state; }
 
     void apply(snort::SnortConfig*);
 
 private:
     RuleTreeNode* dup_rtn(RuleTreeNode*);
-    void update_rtn(RuleTreeNode*, RuleState&);
+    void update_rtn(RuleTreeNode*, const RuleState&);
     void apply(snort::SnortConfig*, OptTreeNode*, unsigned ips_num, RuleState&);
 
 private:

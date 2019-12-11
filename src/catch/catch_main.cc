@@ -15,37 +15,6 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// http2_hpack_table.h author Katura Harvey <katharve@cisco.com>
 
-#ifndef HTTP2_HPACK_TABLE_H
-#define HTTP2_HPACK_TABLE_H
-
-#include "main/snort_types.h"
-
-#include "http2_enum.h"
-#include "http2_hpack_dynamic_table.h"
-
-struct HpackTableEntry
-{
-    HpackTableEntry(uint32_t name_len, const uint8_t* _name, uint32_t value_len,
-        const uint8_t* _value) : name { static_cast<int32_t>(name_len), _name },
-        value { static_cast<int32_t>(value_len), _value } { }
-    HpackTableEntry(const Field& copy_name, const Field& copy_value);
-    Field name;
-    Field value;
-};
-
-class HpackIndexTable
-{
-public:
-    const HpackTableEntry* lookup(uint64_t index) const;
-    void add_index(Field name, Field value) { dynamic_table.add_entry(name, value); }
-
-    const static uint8_t STATIC_MAX_INDEX = 61;
-    const static uint8_t PSEUDO_HEADER_MAX_STATIC_INDEX = 14;
-
-private:
-    const static HpackTableEntry static_table[STATIC_MAX_INDEX + 1];
-    HpackDynamicTable dynamic_table;
-};
-#endif
+#define CATCH_CONFIG_MAIN
+#include "catch.hpp"

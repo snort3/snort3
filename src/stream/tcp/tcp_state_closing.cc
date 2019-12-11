@@ -28,10 +28,6 @@
 #include "tcp_normalizers.h"
 #include "tcp_session.h"
 
-#ifdef UNIT_TEST
-#include "catch/snort_catch.h"
-#endif
-
 using namespace snort;
 
 TcpStateClosing::TcpStateClosing(TcpStateMachine& tsm) :

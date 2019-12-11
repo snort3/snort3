@@ -33,10 +33,6 @@
 
 #include "value.h"
 
-#ifdef UNIT_TEST
-#include "catch/snort_catch.h"
-#endif
-
 using namespace snort;
 using namespace std;
 
@@ -551,7 +547,10 @@ int Parameter::index(const char* r, const char* s)
 // side effects applied to value are tested elsewhere
 //--------------------------------------------------------------------------
 
-#ifdef UNIT_TEST
+#ifdef CATCH_TEST_BUILD
+
+#include "catch/catch.hpp"
+
 TEST_CASE("bool", "[Parameter]")
 {
     Value v(true);
@@ -706,5 +705,6 @@ TEST_CASE("max", "[Parameter]")
     else
         CHECK(get_int("maxSZ") == 9007199254740992);
 }
+
 #endif
 

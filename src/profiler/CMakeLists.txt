@@ -34,3 +34,15 @@ add_library ( profiler OBJECT
 install (FILES ${PROFILER_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/profiler"
 )
+
+add_catch_test( memory_context_test
+    NO_TEST_SOURCE
+    SOURCES
+        memory_context.cc
+)
+
+add_catch_test( profiler_stats_table_test
+    NO_TEST_SOURCE
+    SOURCES
+        profiler_stats_table.cc
+)

@@ -49,7 +49,7 @@ static THREAD_LOCAL ProfileStats cip_enipcommand_perf_stats;
 class CipEnipCommandOption : public IpsOption
 {
 public:
-    CipEnipCommandOption(RangeCheck& v) : IpsOption(s_name)
+    CipEnipCommandOption(const RangeCheck& v) : IpsOption(s_name)
     { cip_enip_cmd = v; }
 
     uint32_t hash() const override;

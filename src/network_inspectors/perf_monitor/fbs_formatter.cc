@@ -31,14 +31,6 @@
 
 #include "utils/endian.h"
 
-#ifdef UNIT_TEST
-#include <cstdio>
-#include <cstring>
-
-#include "catch/snort_catch.h"
-#include "utils/util.h"
-#endif
-
 using namespace std;
 
 typedef flatbuffers::Offset<flatbuffers::Table> TableOffset;
@@ -50,13 +42,13 @@ static string lowercase(string s)
     return s;
 }
 
-void FbsFormatter::register_field(const std::string& name, PegCount* value)
+void FbsFormatter::register_field(const string& name, PegCount* value)
 {
     non_offset_names.emplace_back(name);
     non_offset_values.emplace_back(value);
 }
 
-void FbsFormatter::register_field(const std::string& name, const char* value)
+void FbsFormatter::register_field(const string& name, const char* value)
 {
     FormatterValue fv;
     fv.s = value;
@@ -66,7 +58,7 @@ void FbsFormatter::register_field(const std::string& name, const char* value)
     offset_values.emplace_back(fv);
 }
 
-void FbsFormatter::register_field(const std::string& name, std::vector<PegCount>* value)
+void FbsFormatter::register_field(const string& name, vector<PegCount>* value)
 {
     FormatterValue fv;
     fv.ipc = value;
@@ -104,7 +96,7 @@ void FbsFormatter::commit_field_reorder()
     non_offset_values.clear();
 }
 
-void FbsFormatter::register_section(const std::string& section)
+void FbsFormatter::register_section(const string& section)
 {
     commit_field_reorder();
     PerfFormatter::register_section(section);
@@ -317,13 +309,15 @@ void FbsFormatter::write(FILE* fh, time_t timestamp)
     fflush(fh);
 }
 
-#ifdef UNIT_TEST
+#ifdef CATCH_TEST_BUILD
+
+#include "catch/catch.hpp"
 
 static uint8_t* make_prefixed_schema(const char* schema)
 {
     size_t len = strlen(schema);
     uint32_t slen = htonl(len);
-    uint8_t* cooked = (uint8_t*)snort_alloc(slen + 8);
+    uint8_t* cooked = new uint8_t[slen + 8];
 
     memcpy(cooked, "FLTI", 4);
     memcpy(cooked + 4, &slen, 4);
@@ -335,14 +329,14 @@ static uint8_t* make_prefixed_schema(const char* schema)
 static bool test_file(FILE* fh, const uint8_t* cooked)
 {
     auto size = ftell(fh);
-    char* fake_file = (char*)snort_alloc(size + 1);
+    char* fake_file = new char[size + 1];
 
     rewind(fh);
     fread(fake_file, size, 1, fh);
 
     bool ret = memcmp(cooked, fake_file, size);
 
-    snort_free(fake_file);
+    delete[] fake_file;
 
     return ret;
 }
@@ -370,7 +364,7 @@ TEST_CASE("peg schema", "[FbsFormatter]")
     CHECK((test_file(fh, cooked) == true));
 
     fclose(fh);
-    snort_free(cooked);
+    delete[] cooked;
 }
 
 TEST_CASE("string schema", "[FbsFormatter]")
@@ -396,7 +390,7 @@ TEST_CASE("string schema", "[FbsFormatter]")
     CHECK((test_file(fh, cooked) == true));
 
     fclose(fh);
-    snort_free(cooked);
+    delete[] cooked;
 }
 
 TEST_CASE("vector schema", "[FbsFormatter]")
@@ -421,7 +415,7 @@ TEST_CASE("vector schema", "[FbsFormatter]")
     CHECK((test_file(fh, cooked) == true));
 
     fclose(fh);
-    snort_free(cooked);
+    delete[] cooked;
 }
 
 TEST_CASE("mixed schema", "[FbsFormatter]")
@@ -450,7 +444,7 @@ TEST_CASE("mixed schema", "[FbsFormatter]")
     CHECK((test_file(fh, cooked) == true));
 
     fclose(fh);
-    snort_free(cooked);
+    delete[] cooked;
 }
 
 #endif

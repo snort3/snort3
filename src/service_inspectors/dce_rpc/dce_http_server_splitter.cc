@@ -27,10 +27,6 @@
 
 #include "dce_http_server_module.h"
 
-#ifdef UNIT_TEST
-#include "catch/snort_catch.h"
-#endif
-
 using namespace snort;
 
 // NOTE:  These strings must have a length of at least one character
@@ -75,11 +71,26 @@ DceHttpServerSplitter::DceHttpServerSplitter(bool c2s) : StreamSplitter(c2s)
     cutover = false;
 }
 
+#ifdef CATCH_TEST_BUILD
+
+#include "catch/catch.hpp"
+
 //--------------------------------------------------------------------------
-// unit tests 
+// mocks
 //--------------------------------------------------------------------------
 
-#ifdef UNIT_TEST
+unsigned StreamSplitter::max(Flow*) { return 16384; }
+
+const StreamBuffer StreamSplitter::reassemble(
+    Flow*, unsigned, unsigned, const uint8_t*,
+    unsigned, uint32_t, unsigned&)
+{
+    return { nullptr, 0 };
+}
+
+//--------------------------------------------------------------------------
+// unit tests
+//--------------------------------------------------------------------------
 
 TEST_CASE("DceHttpServerSplitter-scan - first_server", "[http_server_splitter]")
 {
@@ -158,19 +169,14 @@ TEST_CASE("DceHttpServerSplitter-scan - full_server", "[http_server_splitter]")
 TEST_CASE("DceHttpServerSplitter-scan - extra_server", "[http_server_splitter]")
 {
     DceHttpServerSplitter* splitter = new DceHttpServerSplitter(false);
-    const char* extra = "ignore";
-    char* string = new char[strlen(HTTP_SERVER_MARKER)+strlen(extra)+1];
+    const char* string = HTTP_SERVER_MARKER "ignore";
     uint32_t fp;
-    strncpy(string,(const char*)HTTP_SERVER_MARKER,strlen(HTTP_SERVER_MARKER)+1);
-    strncpy(string+strlen(HTTP_SERVER_MARKER),extra,strlen(extra)+1);
 
     REQUIRE(splitter->scan(nullptr, (const uint8_t*)string,
-        (strlen(HTTP_SERVER_MARKER)+strlen(extra)), PKT_FROM_SERVER, &fp) ==
-        StreamSplitter::FLUSH);
+        strlen(string), PKT_FROM_SERVER, &fp) == StreamSplitter::FLUSH);
     REQUIRE(fp == strlen(HTTP_SERVER_MARKER));
     REQUIRE(splitter->cutover_inspector() == true);
     delete splitter;
-    delete[] string;
 }
 
 #endif

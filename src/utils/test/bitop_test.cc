@@ -21,9 +21,9 @@
 #include "config.h"
 #endif
 
-#include "catch/snort_catch.h"
+#include "catch/catch.hpp"
 
-#include "bitop.h"
+#include "../bitop.h"
 
 static bool t_bitop_buffer_zero(BitOp& bitop)
 {

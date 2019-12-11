@@ -30,10 +30,6 @@
 
 #include <vector>
 
-#ifdef UNIT_TEST
-#include "catch/snort_catch.h"
-#endif
-
 static std::vector<IdleHook> s_idle_handlers;
 
 void IdleProcessing::register_handler(IdleHook f)
@@ -52,7 +48,10 @@ void IdleProcessing::unregister_all()
 // tests
 //--------------------------------------------------------------------------
 
-#ifdef UNIT_TEST
+#ifdef CATCH_TEST_BUILD
+
+#include "catch/catch.hpp"
+
 static unsigned s_niph1 = 0;
 static unsigned s_niph2 = 0;
 
@@ -78,5 +77,6 @@ TEST_CASE("idle callback", "[control]")
     CHECK((s_niph1 == 2));
     CHECK((s_niph2 == 2));
 }
+
 #endif
 

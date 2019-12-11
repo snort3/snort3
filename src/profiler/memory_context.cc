@@ -31,10 +31,6 @@
 #include "memory_profiler_defs.h"
 #include "memory_profiler_active_context.h"
 
-#ifdef UNIT_TEST
-#include "catch/snort_catch.h"
-#endif
-
 using namespace snort;
 
 // -----------------------------------------------------------------------------
@@ -83,7 +79,9 @@ MemoryExclude::~MemoryExclude()
 { mp_active_context.set(saved); }
 
 
-#ifdef UNIT_TEST
+#ifdef CATCH_TEST_BUILD
+
+#include "catch/catch.hpp"
 
 namespace
 {

@@ -1,8 +1,4 @@
 
-if ( ENABLE_UNIT_TESTS )
-    set(TEST_FILES lua_stack_test.cc)
-endif()
-
 add_library (lua OBJECT
     lua.cc
     lua.h
@@ -14,8 +10,8 @@ add_library (lua OBJECT
     lua_table.h
     lua_stack.h
     lua_arg.h
-    ${TEST_FILES}
 )
 
 target_include_directories(lua PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
+add_subdirectory(test)

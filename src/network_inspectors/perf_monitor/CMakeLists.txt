@@ -41,3 +41,28 @@ if ( FLATBUFFERS_FOUND )
     target_include_directories( perf_monitor PRIVATE ${FLATBUFFERS_INCLUDE_DIR} )
 endif()
 
+add_catch_test( csv_formatter_test
+    NO_TEST_SOURCE
+    SOURCES
+        csv_formatter.cc
+        perf_formatter.cc
+)
+
+add_catch_test( json_formatter_test
+    NO_TEST_SOURCE
+    SOURCES
+        json_formatter.cc
+        perf_formatter.cc
+)
+
+if ( FLATBUFFERS_FOUND )
+    add_catch_test( fbs_formatter_test
+        NO_TEST_SOURCE
+        SOURCES
+            fbs_formatter.cc
+            perf_formatter.cc
+        LIBS
+            ${FLATBUFFERS_LIBRARIES}
+    )
+endif()
+

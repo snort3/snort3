@@ -21,10 +21,6 @@ set( UTIL_INCLUDES
     util_utf.h
 )
 
-if ( ENABLE_UNIT_TESTS )
-    set(TEST_FILES bitop_test.cc)
-endif()
-
 add_library ( utils OBJECT
     ${UTIL_INCLUDES}
     ${SNPRINTF_SOURCES}

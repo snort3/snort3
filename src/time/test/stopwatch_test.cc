@@ -22,10 +22,10 @@
 #include "config.h"
 #endif
 
-#include "catch/snort_catch.h"
+#include "catch/catch.hpp"
 
-#include "clock_defs.h"
-#include "stopwatch.h"
+#include "../clock_defs.h"
+#include "../stopwatch.h"
 
 namespace t_stopwatch
 {

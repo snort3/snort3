@@ -16,4 +16,9 @@ if ( ENABLE_UNIT_TESTS )
         unit_test.h
     )
 
+    add_library(catch_main OBJECT
+        EXCLUDE_FROM_ALL
+        catch_main.cc
+    )
+
 endif()

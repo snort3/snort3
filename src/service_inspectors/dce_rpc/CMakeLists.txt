@@ -63,3 +63,15 @@ else (STATIC_INSPECTORS)
     add_dynamic_module(dce_rpc inspectors ${FILE_LIST})
 
 endif (STATIC_INSPECTORS)
+
+add_catch_test( dce_http_proxy_splitter_test
+    NO_TEST_SOURCE
+    SOURCES
+        dce_http_proxy_splitter.cc
+)
+
+add_catch_test( dce_http_server_splitter_test
+    NO_TEST_SOURCE
+    SOURCES
+        dce_http_server_splitter.cc
+)

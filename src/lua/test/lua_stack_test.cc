@@ -24,10 +24,10 @@
 #include <cstring>
 #include <string>
 
-#include "catch/snort_catch.h"
+#include "catch/catch.hpp"
 
+#include "../lua_stack.h"
 #include "lua_test_common.h"
-#include "lua/lua_stack.h"
 
 static lua_State* L = nullptr;
 

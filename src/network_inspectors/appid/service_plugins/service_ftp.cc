@@ -335,7 +335,7 @@ static FtpEolReturn ftp_parse_response(const uint8_t* data, uint16_t& offset,
     return FTP_NOT_FOUND_EOL;
 }
 
-static bool check_ret_digit_code(const uint8_t* code_raw, int start_digit_place, int end_digit_place, int& code, ServiceFTPData& fd)
+static bool check_ret_digit_code(const uint8_t* code_raw, int start_digit_place, int end_digit_place, int& code, const ServiceFTPData& fd)
 {
     bool ret = true;
     for (int index = 0; start_digit_place >= end_digit_place; start_digit_place--, index++)

@@ -40,3 +40,25 @@ function (add_cpputest testname)
         add_dependencies(check ${testname})
     endif ( ENABLE_UNIT_TESTS )
 endfunction (add_cpputest)
+
+
+function (add_catch_test testname)
+    if ( ENABLE_UNIT_TESTS )
+        set(options NO_TEST_SOURCE)
+        set(multiValueArgs SOURCES LIBS)
+        cmake_parse_arguments(Catch "${options}" "" "${multiValueArgs}" ${ARGN})
+        if ( NOT Catch_NO_TEST_SOURCE )
+            set(Test_SOURCE ${testname}.cc)
+        endif()
+        add_executable(${testname}
+            EXCLUDE_FROM_ALL
+            ${Test_SOURCE}
+            ${Catch_SOURCES}
+            $<TARGET_OBJECTS:catch_main>
+        )
+        target_compile_options(${testname} PRIVATE "-DCATCH_TEST_BUILD")
+        target_link_libraries(${testname} PRIVATE ${Catch_LIBS})
+        add_test(${testname} ${testname})
+        add_dependencies(check ${testname})
+    endif ( ENABLE_UNIT_TESTS )
+endfunction (add_catch_test)

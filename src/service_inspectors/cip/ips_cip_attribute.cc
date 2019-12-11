@@ -49,7 +49,7 @@ static THREAD_LOCAL ProfileStats cip_attribute_perf_stats;
 class CipAttributeOption : public IpsOption
 {
 public:
-    CipAttributeOption(RangeCheck& v) : IpsOption(s_name)
+    CipAttributeOption(const RangeCheck& v) : IpsOption(s_name)
     { cip_attr = v; }
 
     uint32_t hash() const override;

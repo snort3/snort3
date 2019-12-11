@@ -196,7 +196,7 @@ void StreamModule::reset_stats()
 { base_reset(); }
 
 // Stream handler to adjust allocated resources as needed on a config reload
-bool StreamReloadResourceManager::initialize(StreamModuleConfig& config_)
+bool StreamReloadResourceManager::initialize(const StreamModuleConfig& config_)
 {
 	// FIXIT-L - saving config here to check footprint change is a bit of a hack,
 	if ( Snort::is_reloading() )

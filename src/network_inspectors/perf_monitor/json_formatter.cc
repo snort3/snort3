@@ -28,16 +28,6 @@
 #include "config.h"
 #endif
 
-#ifdef UNIT_TEST
-#include <cstdio>
-#include <cstring>
-
-#include "catch/snort_catch.h"
-#include "utils/util.h"
-#endif
-
-using namespace std;
-
 void JSONFormatter::init_output(FILE* fh)
 {
     fwrite("[", 1, 1, fh);
@@ -95,7 +85,7 @@ void JSONFormatter::write(FILE* fh, time_t cur_time)
                 {
                     bool vec_head = false;
 
-                    vector<PegCount>* vals = values[i][j].ipc;
+                    std::vector<PegCount>* vals = values[i][j].ipc;
                     for( unsigned k = 0; k < vals->size(); k++ )
                     {
                         if( !vals->at(k) )
@@ -138,16 +128,18 @@ void JSONFormatter::write(FILE* fh, time_t cur_time)
 void JSONFormatter::finalize_output(FILE* fh)
 { fwrite("]\n", 2, 1, fh); }
 
-#ifdef UNIT_TEST
+#ifdef CATCH_TEST_BUILD
 
-string cooked = R"g([{"timestamp":1234567890,"name":{"one":1},"str":{"five":"hellothere"},)g"
+#include "catch/catch.hpp"
+
+std::string cooked = R"g([{"timestamp":1234567890,"name":{"one":1},"str":{"five":"hellothere"},)g"
                 R"g("vec":{"vector":{"0":50,"2":70}}},{"timestamp":2345678901}])g" "\n";
 
 TEST_CASE("json output", "[JSONFormatter]")
 {
     PegCount one = 1, two = 0, three = 0;
     char five[32] = "hellothere";
-    vector<PegCount> kvp;
+    std::vector<PegCount> kvp;
 
     FILE* fh = tmpfile();
     JSONFormatter f("test");
@@ -177,7 +169,7 @@ TEST_CASE("json output", "[JSONFormatter]")
     f.finalize_output(fh);
 
     auto size = ftell(fh);
-    char* fake_file = (char*)snort_alloc(size + 1);
+    char* fake_file = new char[size + 1];
 
     rewind(fh);
     fread(fake_file, size, 1, fh);
@@ -185,7 +177,7 @@ TEST_CASE("json output", "[JSONFormatter]")
 
     CHECK( cooked == fake_file );
 
-    snort_free(fake_file);
+    delete[] fake_file;
     fclose(fh);
 }
 

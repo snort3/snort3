@@ -24,7 +24,7 @@
 #define MAKE_TABLE_ENTRY(name, value) \
     HpackTableEntry(strlen(name), (const uint8_t*)name, strlen(value), (const uint8_t*)value)
 
-HpackTableEntry::HpackTableEntry(Field& copy_name, Field& copy_value)
+HpackTableEntry::HpackTableEntry(const Field& copy_name, const Field& copy_value)
 {
     uint8_t* new_name = new uint8_t[copy_name.length()];
     uint8_t* new_value = new uint8_t[copy_value.length()];

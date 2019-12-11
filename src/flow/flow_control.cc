@@ -84,7 +84,7 @@ void FlowControl::clear_counts()
 // cache foo
 //-------------------------------------------------------------------------
 
-void FlowControl::set_flow_cache_config(FlowCacheConfig& cfg)
+void FlowControl::set_flow_cache_config(const FlowCacheConfig& cfg)
 { cache->set_flow_cache_config(cfg); }
 
 const FlowCacheConfig& FlowControl::get_flow_cache_config() const
