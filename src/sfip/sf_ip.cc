@@ -424,7 +424,7 @@ const char* snort_inet_ntop(int family, const void* ip_raw, char* buf, int bufsi
         return buf;
     }
 
-#ifndef REG_TEST
+#if !defined(REG_TEST) && !defined(CATCH_TEST_BUILD)
     if (!inet_ntop(family, ip_raw, buf, bufsize))
         snprintf(buf, bufsize, "ERROR");
 #else
