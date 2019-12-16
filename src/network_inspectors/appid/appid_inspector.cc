@@ -127,11 +127,6 @@ bool AppIdInspector::configure(SnortConfig* sc)
     }
 
     return true;
-
-    // FIXIT-M some of this stuff may be needed in some fashion...
-#ifdef REMOVED_WHILE_NOT_IN_USE
-    _dpd.registerSslAppIdLookup(sslAppGroupIdLookup);
-#endif
 }
 
 void AppIdInspector::show(SnortConfig*)

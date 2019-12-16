@@ -139,8 +139,6 @@ ProfileStats* AppIdModule::get_profile() const { return nullptr; }
 
 // Stubs for config
 AppIdModuleConfig::~AppIdModuleConfig() {}
-AppIdConfig::AppIdConfig(AppIdModuleConfig*) {}
-AppIdConfig::~AppIdConfig() {}
 static AppIdModuleConfig app_config;
 static AppIdConfig my_app_config(&app_config);
 AppId AppIdConfig::get_port_service_id(IpProtocol, uint16_t)

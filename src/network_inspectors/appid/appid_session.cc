@@ -44,7 +44,6 @@
 #include "appid_http_session.h"
 #include "appid_inspector.h"
 #include "appid_stats.h"
-#include "appid_utils/ip_funcs.h"
 #include "lua_detector_api.h"
 #include "service_plugins/service_ssl.h"
 #ifdef ENABLE_APPID_THIRD_PARTY

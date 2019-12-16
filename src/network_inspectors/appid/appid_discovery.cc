@@ -40,7 +40,6 @@
 #include "appid_inspector.h"
 #include "appid_session.h"
 #include "appid_utils/ip_funcs.h"
-#include "appid_utils/network_set.h"
 #include "client_plugins/client_discovery.h"
 #include "detector_plugins/detector_dns.h"
 #include "detector_plugins/http_url_patterns.h"
@@ -174,129 +173,28 @@ void AppIdDiscovery::publish_appid_event(AppidChangeBits& change_bits, Flow* flo
     }
 }
 
-static inline int match_pe_network(const SfIp* pktAddr, const PortExclusion* pe)
-{
-    const uint32_t* pkt = pktAddr->get_ip6_ptr();
-    const uint32_t* nm = pe->netmask.u6_addr32;
-    const uint32_t* peIP = pe->ip.u6_addr32;
-    return (((pkt[0] & nm[0]) == peIP[0])
-           && ((pkt[1] & nm[1]) == peIP[1])
-           && ((pkt[2] & nm[2]) == peIP[2])
-           && ((pkt[3] & nm[3]) == peIP[3]));
-}
-
-static inline int check_port_exclusion(const Packet* pkt, bool reversed, AppIdInspector& inspector)
-{
-    AppIdPortExclusions* src_port_exclusions;
-    AppIdPortExclusions* dst_port_exclusions;
-    SF_LIST* pe_list;
-    PortExclusion* pe;
-    const SfIp* s_ip;
-    AppIdConfig* config = inspector.get_appid_config();
-
-    if ( pkt->is_tcp() )
-    {
-        src_port_exclusions = &config->tcp_port_exclusions_src;
-        dst_port_exclusions = &config->tcp_port_exclusions_dst;
-    }
-    else if ( pkt->is_udp() )
-    {
-        src_port_exclusions = &config->udp_port_exclusions_src;
-        dst_port_exclusions = &config->udp_port_exclusions_dst;
-    }
-    else
-        return 0;
-
-    /* check the source port */
-    uint16_t port = reversed ? pkt->ptrs.dp : pkt->ptrs.sp;
-    if ( port && (pe_list = (*src_port_exclusions)[port]) != nullptr )
-    {
-        s_ip = reversed ? pkt->ptrs.ip_api.get_dst() : pkt->ptrs.ip_api.get_src();
-
-        SF_LNODE* node;
-
-        /* walk through the list of port exclusions for this port */
-        for ( pe = (PortExclusion*)sflist_first(pe_list, &node);
-            pe;
-            pe = (PortExclusion*)sflist_next(&node) )
-        {
-            if ( match_pe_network(s_ip, pe))
-                return 1;
-        }
-    }
-
-    /* check the dest port */
-    port = reversed ? pkt->ptrs.sp : pkt->ptrs.dp;
-    if ( port && (pe_list = (*dst_port_exclusions)[port]) != nullptr )
-    {
-        s_ip = reversed ? pkt->ptrs.ip_api.get_src() : pkt->ptrs.ip_api.get_dst();
-
-        SF_LNODE* node;
-        /* walk through the list of port exclusions for this port */
-        for ( pe = (PortExclusion*)sflist_first(pe_list, &node);
-            pe;
-            pe = (PortExclusion*)sflist_next(&node) )
-        {
-            if ( match_pe_network(s_ip, pe))
-                return 1;
-        }
-    }
-
-    return 0;
-}
-
 static inline unsigned get_ipfuncs_flags(const Packet* p, bool dst)
 {
     const SfIp* sf_ip;
-    unsigned flags;
-    int32_t zone;
-#ifdef USE_RNA_CONFIG
-    NSIPv6Addr ip6;
-    NetworkSet* net_list;
-    AppIdConfig* config = AppIdInspector::get_inspector()->get_appid_config();
-#endif
 
     if (!dst)
     {
-        zone = p->pkth->ingress_group;
         sf_ip = p->ptrs.ip_api.get_src();
     }
     else
     {
-        zone = (p->pkth->egress_index == DAQ_PKTHDR_UNKNOWN) ?
+        int32_t zone = (p->pkth->egress_index == DAQ_PKTHDR_UNKNOWN) ?
             p->pkth->ingress_group : p->pkth->egress_group;
         if (zone == DAQ_PKTHDR_FLOOD)
             return 0;
         sf_ip = p->ptrs.ip_api.get_dst();
     }
 
-#ifdef USE_RNA_CONFIG
-    if (zone >= 0 && zone < MAX_ZONES && config->net_list_by_zone[zone])
-        net_list = config->net_list_by_zone[zone];
-    else
-        net_list = config->net_list;
-
-    if ( sf_ip->is_ip4() )
-    {
-        if (sf_ip->get_ip4_value() == 0xFFFFFFFF)
-            return IPFUNCS_CHECKED;
-        NetworkSetManager::contains_ex(net_list, ntohl(sf_ip->get_ip4_value()), &flags);
-    }
-    else
-    {
-        memcpy(&ip6, sf_ip->get_ip6_ptr(), sizeof(ip6));
-        NetworkSetManager::ntoh_ipv6(&ip6);
-        NetworkSetManager::contains6_ex(net_list, &ip6, &flags);
-    }
-#else
-    UNUSED(zone);
     if (sf_ip->is_ip4() && sf_ip->get_ip4_value() == 0xFFFFFFFF)
         return IPFUNCS_CHECKED;
-    // FIXIT-M Defaulting to checking everything everywhere until RNA config is reimplemented
-    flags = IPFUNCS_HOSTS_IP | IPFUNCS_USER_IP | IPFUNCS_APPLICATION;
-#endif
 
-    return flags | IPFUNCS_CHECKED;
+    // FIXIT-M Defaulting to checking everything everywhere until RNA config is reimplemented
+    return IPFUNCS_HOSTS_IP | IPFUNCS_USER_IP | IPFUNCS_APPLICATION | IPFUNCS_CHECKED;
 }
 
 static inline bool is_special_session_monitored(const Packet* p)
@@ -362,22 +260,6 @@ static bool set_network_attributes(AppIdSession* asd, Packet* p, IpProtocol& pro
 
 static bool is_packet_ignored(AppIdSession* asd, Packet* p, AppidSessionDirection direction)
 {
-#ifdef REMOVED_WHILE_NOT_IN_USE
-    bool is_http2 = false;  // FIXIT-M _dpd.streamAPI->is_session_http2(p->flow);
-
-    if (is_http2)
-    {
-        if (asd)
-            asd->is_http2 = true;
-        if ( !p->is_rebuilt() )
-        {
-            // For HTTP/2, only examine packets that have been rebuilt as HTTP/1 packets.
-            appid_stats.ignored_packets++;
-            return true;
-        }
-    }
-    else
-#endif
     if ( p->is_rebuilt() && !p->flow->is_proxied() )
     {
         // FIXIT-M: In snort2x, a rebuilt packet was ignored whether it had a session or not.
@@ -407,8 +289,7 @@ static bool is_packet_ignored(AppIdSession* asd, Packet* p, AppidSessionDirectio
     return false;
 }
 
-static uint64_t is_session_monitored(const AppIdSession& asd, const Packet* p, AppidSessionDirection dir,
-    AppIdInspector& inspector)
+static uint64_t is_session_monitored(const AppIdSession& asd, const Packet* p, AppidSessionDirection dir)
 {
     uint64_t flags;
     uint64_t flow_flags = APPID_SESSION_DISCOVER_APP;
@@ -420,13 +301,6 @@ static uint64_t is_session_monitored(const AppIdSession& asd, const Packet* p, A
     //           accordingly
     if ( asd.common.policyId != asd.config->appIdPolicyId )
     {
-        if ( check_port_exclusion(p, dir == APP_ID_FROM_RESPONDER, inspector) )
-        {
-            flow_flags |= APPID_SESSION_INITIATOR_CHECKED | APPID_SESSION_RESPONDER_CHECKED;
-            flow_flags &= ~(APPID_SESSION_INITIATOR_MONITORED |
-                APPID_SESSION_RESPONDER_MONITORED);
-            return flow_flags;
-        }
         if (dir == APP_ID_FROM_INITIATOR)
         {
             if (asd.get_session_flags(APPID_SESSION_INITIATOR_CHECKED))
@@ -537,17 +411,12 @@ static uint64_t is_session_monitored(const AppIdSession& asd, const Packet* p, A
     return flow_flags;
 }
 
-static uint64_t is_session_monitored(const Packet* p, AppidSessionDirection dir,
-    AppIdInspector& inspector)
+static uint64_t is_session_monitored(const Packet* p, AppidSessionDirection dir)
 {
     uint64_t flags;
     uint64_t flow_flags = APPID_SESSION_DISCOVER_APP;
 
-    if ( check_port_exclusion(p, false, inspector) )
-    {
-        flow_flags |= APPID_SESSION_INITIATOR_CHECKED | APPID_SESSION_RESPONDER_CHECKED;
-    }
-    else if (dir == APP_ID_FROM_INITIATOR)
+    if (dir == APP_ID_FROM_INITIATOR)
     {
         flags = get_ipfuncs_flags(p, false);
         flow_flags |= APPID_SESSION_INITIATOR_CHECKED;
@@ -603,9 +472,9 @@ bool AppIdDiscovery::handle_unmonitored_session(AppIdSession* asd, const Packet*
     uint64_t& flow_flags)
 {
     if (asd)
-        flow_flags = is_session_monitored(*asd, p, dir, inspector);
+        flow_flags = is_session_monitored(*asd, p, dir);
     else
-        flow_flags = is_session_monitored(p, dir, inspector);
+        flow_flags = is_session_monitored(p, dir);
 
     if ( flow_flags & (APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED) )
         return false;

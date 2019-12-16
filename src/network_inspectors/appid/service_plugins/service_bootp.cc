@@ -362,30 +362,11 @@ int BootpServiceDetector::add_dhcp_info(AppIdSession& asd, unsigned op55_len, co
     return 0;
 }
 
-#ifdef USE_RNA_CONFIG
-static unsigned isIPv4HostMonitored(uint32_t ip4, int32_t zone)
-{
-    NetworkSet* net_list;
-    unsigned flags;
-    AppIdConfig* config = AppIdInspector::get_inspector()->get_appid_config();
-
-    if (zone >= 0 && zone < MAX_ZONES && config->net_list_by_zone[zone])
-        net_list = config->net_list_by_zone[zone];
-    else
-        net_list = config->net_list;
-
-    NetworkSetManager::contains_ex(net_list, ip4, &flags);
-    return flags;
-}
-
-#else
 static unsigned isIPv4HostMonitored(uint32_t, int32_t)
 {
     // FIXIT-M Defaulting to checking everything everywhere until RNA config is reimplemented
     return IPFUNCS_HOSTS_IP | IPFUNCS_USER_IP | IPFUNCS_APPLICATION;
 }
-
-#endif
 
 void BootpServiceDetector::add_new_dhcp_lease(AppIdSession& asd, const uint8_t* mac, uint32_t ip,
     int32_t zone,

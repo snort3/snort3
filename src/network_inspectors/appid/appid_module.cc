@@ -55,10 +55,6 @@ THREAD_LOCAL AppIdStats appid_stats;
 
 static const Parameter s_params[] =
 {
-#ifdef USE_RNA_CONFIG
-    { "conf", Parameter::PT_STRING, nullptr, nullptr,
-      "RNA configuration file" },  // FIXIT-L eliminate reference to "RNA"
-#endif
     // FIXIT-L: DECRYPT_DEBUG - Move this to ssl-module
 #ifdef REG_TEST
     { "first_decrypted_packet_debug", Parameter::PT_INT, "0:max32", "0",
@@ -249,11 +245,6 @@ const AppIdModuleConfig* AppIdModule::get_data()
 
 bool AppIdModule::set(const char* fqn, Value& v, SnortConfig* c)
 {
-#ifdef USE_RNA_CONFIG
-    if ( v.is("conf") )
-        config->conf_file = snort_strdup(v.get_string());
-    else
-#endif
     // FIXIT-L: DECRYPT_DEBUG - Move this to ssl-module
 #ifdef REG_TEST
     if ( v.is("first_decrypted_packet_debug") )

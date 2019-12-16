@@ -145,10 +145,7 @@ set ( DP_APPID_SOURCES
 set ( UTIL_APPID_SOURCES
     appid_utils/fw_avltree.cc
     appid_utils/fw_avltree.h
-    appid_utils/ip_funcs.cc
     appid_utils/ip_funcs.h
-    appid_utils/network_set.cc
-    appid_utils/network_set.h
     appid_utils/sf_mlmp.cc
     appid_utils/sf_mlmp.h
     appid_utils/sf_multi_mpse.cc

@@ -61,9 +61,6 @@ public:
     AppIdModuleConfig() = default;
     ~AppIdModuleConfig();
 
-#ifdef USE_RNA_CONFIG
-    const char* conf_file = nullptr;
-#endif
     // FIXIT-L: DECRYPT_DEBUG - Move this to ssl-module
 #ifdef REG_TEST
     // To manually restart appid detection for an SSL-decrypted flow (single session only),
@@ -113,24 +110,16 @@ typedef std::array<SF_LIST*, APP_ID_PORT_ARRAY_SIZE> AppIdPortExclusions;
 class AppIdConfig
 {
 public:
-    AppIdConfig(AppIdModuleConfig*);
-    ~AppIdConfig();
+    AppIdConfig(AppIdModuleConfig* config) : mod_config(config)
+    { }
 
     bool init_appid(snort::SnortConfig*);
     static void pterm();
-    void cleanup();
     void show();
-    void set_safe_search_enforcement(bool enabled);
     AppId get_port_service_id(IpProtocol, uint16_t port);
     AppId get_protocol_service_id(IpProtocol);
 
     unsigned max_service_info = 0;
-#ifdef USE_RNA_CONFIG
-    unsigned net_list_count = 0;
-    NetworkSet* net_list_list = nullptr;
-    NetworkSet* net_list = nullptr;
-    std::array<NetworkSet*, MAX_ZONES> net_list_by_zone;
-#endif
 
     //FIXIT-L remove static when reload is supported (once flag removed)
     static std::array<AppId, APP_ID_PORT_ARRAY_SIZE> tcp_port_only;     // port-only TCP services
@@ -139,21 +128,11 @@ public:
 
     SF_LIST client_app_args;                    // List of Client App arguments
     // for each potential port, an sflist of PortExclusion structs
-    AppIdPortExclusions tcp_port_exclusions_src;
-    AppIdPortExclusions udp_port_exclusions_src;
-    AppIdPortExclusions tcp_port_exclusions_dst;
-    AppIdPortExclusions udp_port_exclusions_dst;
     AppIdModuleConfig* mod_config = nullptr;
     unsigned appIdPolicyId = 53;
 
 private:
     void read_port_detectors(const char* files);
-    void configure_analysis_networks(char* toklist[], uint32_t flag);
-    int add_port_exclusion(AppIdPortExclusions&, const snort::ip::snort_in6_addr* ip,
-        const snort::ip::snort_in6_addr* netmask, int family, uint16_t port);
-    void process_port_exclusion(char* toklist[]);
-    void process_config_directive(char* toklist[], int /* reload */);
-    int load_analysis_config(const char* config_file, int reload, int instance_id);
     void display_port_config();
     // FIXIT-M: RELOAD - Remove static, once app_info_mgr cleanup is
     // removed from AppIdConfig::pterm

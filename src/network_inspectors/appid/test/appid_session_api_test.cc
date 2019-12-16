@@ -49,13 +49,6 @@ void NbdgmServiceDetector::AppIdFreeSMBData(FpSMBData* data)
 AppIdSession* mock_session = nullptr;
 AppIdSessionApi* appid_session_api = nullptr;
 
-//Stub for config
-AppIdConfig::AppIdConfig(AppIdModuleConfig* mod)
-{
-    this->mod_config = mod;
-    this->mod_config->check_host_port_app_cache = false;
-}
-
 TEST_GROUP(appid_session_api)
 {
     void setup() override
