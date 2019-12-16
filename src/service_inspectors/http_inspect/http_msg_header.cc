@@ -303,8 +303,7 @@ void HttpMsgHeader::prepare_body()
     update_depth();
     // Limitations on detained inspection will be lifted as the feature is built out
     session_data->detained_inspection[source_id] = params->detained_inspection &&
-        (source_id == SRC_SERVER) && (session_data->compression[source_id] == CMP_NONE) &&
-        (params->request_depth == -1);
+        (source_id == SRC_SERVER) && (session_data->compression[source_id] == CMP_NONE);
     if (source_id == SRC_CLIENT)
     {
         HttpModule::increment_peg_counts(PEG_REQUEST_BODY);

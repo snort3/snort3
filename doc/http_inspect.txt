@@ -106,9 +106,6 @@ It enables Snort to more quickly detect and block response messages
 containing malicious JavaScript. As this feature involves actively blocking
 traffic it is designed for use with inline mode operation (-Q).
 
-This feature only functions with response_depth = -1 (unlimited). This
-limitation will be removed in a future version.
-
 This feature is off by default. detained_inspection = true will activate
 it.
 
