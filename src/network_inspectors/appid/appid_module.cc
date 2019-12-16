@@ -31,6 +31,8 @@
 #include "log/messages.h"
 #include "main/analyzer_command.h"
 #include "main/snort.h"
+#include "main/swapper.h"
+#include "main/thread_config.h"
 #include "profiler/profiler.h"
 #include "utils/util.h"
 
@@ -170,6 +172,26 @@ static int disable_debug(lua_State*)
     return 0;
 }
 
+static int reload_third_party(lua_State*)
+{
+    if (Swapper::get_reload_in_progress())
+    {
+        LogMessage("== reload pending; retry\n");
+        return 0;
+    }
+
+    if (ThreadConfig::get_instance_max() != 1)
+        LogMessage("Third-party reload not supported with more than one packet thread.");
+    else
+    {
+        Swapper::set_reload_in_progress(true);
+        LogMessage(".. reloading third-party");
+        Swapper::set_reload_in_progress(false);
+    }
+
+    return 0;
+}
+
 static const Parameter enable_debug_params[] =
 {
     { "proto", Parameter::PT_INT, nullptr, nullptr, "numerical IP protocol ID filter" },
@@ -185,6 +207,7 @@ static const Command appid_cmds[] =
 {
     { "enable_debug", enable_debug, enable_debug_params, "enable appid debugging"},
     { "disable_debug", disable_debug, nullptr, "disable appid debugging"},
+    { "reload_third_party", reload_third_party, nullptr, "reload appid third-party module" },
     { nullptr, nullptr, nullptr, nullptr }
 };
 
