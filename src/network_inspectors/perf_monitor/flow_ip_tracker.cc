@@ -27,8 +27,12 @@
 #include "log/messages.h"
 #include "protocols/packet.h"
 
+#include "perf_pegs.h"
+
 using namespace snort;
 
+// The default number of rows used for the xhash ip_map
+#define DEFAULT_XHASH_NROWS 1021
 #define TRACKER_NAME PERF_NAME "_flow_ip"
 
 struct FlowStateKey
@@ -42,6 +46,7 @@ FlowStateValue* FlowIPTracker::find_stats(const SfIp* src_addr, const SfIp* dst_
 {
     FlowStateKey key;
     FlowStateValue* value = nullptr;
+    bool prune_required = false;
 
     if (src_addr->less_than(*dst_addr))
     {
@@ -59,12 +64,19 @@ FlowStateValue* FlowIPTracker::find_stats(const SfIp* src_addr, const SfIp* dst_
     value = (FlowStateValue*)xhash_find(ip_map, &key);
     if (!value)
     {
-        XHashNode* node = xhash_get_node(ip_map, &key);
+        XHashNode* node = xhash_get_node_with_prune(ip_map, &key, &prune_required);
 
         if (!node)
         {
             return nullptr;
         }
+
+        if (prune_required)
+        {
+            ++pmstats.total_frees;
+            ++pmstats.alloc_prunes;
+        }
+
         memset(node->data, 0, sizeof(FlowStateValue));
         value = (FlowStateValue*)node->data;
     }
@@ -72,8 +84,27 @@ FlowStateValue* FlowIPTracker::find_stats(const SfIp* src_addr, const SfIp* dst_
     return value;
 }
 
+bool FlowIPTracker::initialize(size_t new_memcap)
+{
+    bool need_pruning = false;
+
+    if (!ip_map)
+    {
+        ip_map = xhash_new(DEFAULT_XHASH_NROWS, sizeof(FlowStateKey), sizeof(FlowStateValue),
+            new_memcap, 1, nullptr, nullptr, 1);
+    }
+    else
+    {
+        need_pruning = (new_memcap < memcap);
+        memcap = new_memcap;
+        ip_map->mc.memcap = memcap;
+    }
+
+    return need_pruning;
+}
+
 FlowIPTracker::FlowIPTracker(PerfConfig* perf) : PerfTracker(perf, TRACKER_NAME),
-    perf_flags(perf->perf_flags)
+    perf_flags(perf->perf_flags), perf_conf(perf)
 {
     formatter->register_section("flow_ip");
     formatter->register_field("ip_a", ip_a);
@@ -110,8 +141,10 @@ FlowIPTracker::FlowIPTracker(PerfConfig* perf) : PerfTracker(perf, TRACKER_NAME)
         &stats.state_changes[SFS_STATE_UDP_CREATED]);
     formatter->finalize_fields();
 
-    ip_map = xhash_new(1021, sizeof(FlowStateKey), sizeof(FlowStateValue),
-        perf->flowip_memcap, 1, nullptr, nullptr, 1);
+    memcap = perf->flowip_memcap;
+
+    ip_map = xhash_new(DEFAULT_XHASH_NROWS, sizeof(FlowStateKey), sizeof(FlowStateValue),
+        memcap, 1, nullptr, nullptr, 1);
 
     if (!ip_map)
         FatalError("Unable to allocate memory for FlowIP stats\n");

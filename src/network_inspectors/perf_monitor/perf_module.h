@@ -25,6 +25,9 @@
 
 #include "framework/module.h"
 
+#include "perf_pegs.h"
+#include "perf_reload_tuner.h"
+
 #define PERF_NAME "perf_monitor"
 #define PERF_HELP "performance monitoring and flow statistics collection"
 
@@ -114,9 +117,10 @@ public:
 
 private:
     PerfConfig* config = nullptr;
+    PerfMonReloadTuner perfmon_rrt;
 };
 
-extern THREAD_LOCAL SimpleStats pmstats;
+extern THREAD_LOCAL PerfPegStats pmstats;
 extern THREAD_LOCAL snort::ProfileStats perfmonStats;
 
 #endif

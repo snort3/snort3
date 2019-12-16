@@ -261,7 +261,7 @@ static void xhash_delete_free_list(XHash* t)
 }
 
 /*!
- * Try to change the memcap
+ *  Try to change the memcap
  *  Behavior is undefined when t->usrfree is set
  *
  * t             SFXHASH table pointer
@@ -309,11 +309,10 @@ int xhash_change_memcap(XHash *t, unsigned long new_memcap, unsigned *max_work)
     return XHASH_OK;
 }
 
-
 /*!
  *  Delete the hash Table
  *
- *  free key's, free node's, and free the users data.
+ *  free keys, free nodes, and free the users data.
  *
  * h XHash table pointer
  *
@@ -548,7 +547,7 @@ static void movetofront(XHash* t, XHashNode* n)
 }
 
 /*
- * Allocat a new hash node, uses Auto Node Recovery if needed and enabled.
+ * Allocate a new hash node, uses Auto Node Recovery if needed and enabled.
  *
  * The oldest node is the one with the longest time since it was last touched,
  * and does not have any direct indication of how long the node has been around.
@@ -747,10 +746,8 @@ int xhash_add(XHash* t, void* key, void* data)
  * t XHash table pointer
  * key  users key pointer
  *
- * return integer
- * retval XHASH_OK      success
- * retval XHASH_INTABLE already in the table, t->cnode points to the node
- * retval XHASH_NOMEM   not enough memory
+ * return XHashNode*
+ * retval nullptr      failed to add node
  */
 XHashNode* xhash_get_node(XHash* t, const void* key)
 {
@@ -802,6 +799,38 @@ XHashNode* xhash_get_node(XHash* t, const void* key)
 
     /* Track # active nodes */
     t->count++;
+
+    return hnode;
+}
+
+/*!
+ * Add a key to the hash table, return the hash node
+ * If space is not available, it will remove a single
+ * node (the LRU) and replace it with a new node.
+ *
+ * This function handles the scenario that we don't
+ * have enough room to allocate a new node - if this is the
+ * case, additional pruning should be done
+ *
+ * t XHash table pointer
+ * key  users key pointer
+ * prune_performed  bool pointer, 1 = successful prune, 0 = no/failed prune
+ *
+ * return XHashNode*
+ * retval XhashNode*    successfully allocated
+ * retval nullptr       failed to allocate
+ */
+XHashNode* xhash_get_node_with_prune(XHash* t, const void* key, bool* prune_performed)
+{
+    size_t mem_after_alloc = t->mc.memused + xhash_required_mem(t);
+    bool over_capacity = (t->mc.memcap < mem_after_alloc);
+    XHashNode* hnode = nullptr;
+
+    if (over_capacity)
+        *prune_performed = (xhash_free_anr_lru(t) == XHASH_OK);
+
+    if (*prune_performed or !over_capacity)
+        hnode = xhash_get_node(t, key);
 
     return hnode;
 }
@@ -1063,6 +1092,33 @@ int xhash_free_anr_lru(XHash *t)
         }
     }
     return XHASH_ERR;
+}
+
+/*!
+ * Unlink and free nodes if the xhash is exceeding the
+ * specified memcap
+ *
+ * t            XHash table pointer
+ * num_freed    set to the number of nodes freed
+ * work_limit   the max amount of work to do
+ *
+ * returns
+ * XHASH_ERR if error occurs
+ * XHASH_OK  if node(s) freed and memused is within memcap
+ * XHASH_PENDING if additional pending is required
+ */
+int xhash_free_overallocations(XHash* t, unsigned work_limit, unsigned* num_freed)
+{
+
+    while (t->mc.memcap < t->mc.memused and work_limit--)
+    {
+        if (xhash_free_anr_lru(t) != XHASH_OK)
+            return XHASH_ERR;
+
+        ++*num_freed;
+    }
+
+    return (t->mc.memcap > t->mc.memused) ? XHASH_OK : XHASH_PENDING;
 }
 
 /*!

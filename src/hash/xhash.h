@@ -101,11 +101,13 @@ SO_PUBLIC XHash* xhash_new(int nrows, int keysize, int datasize, unsigned long m
 
 SO_PUBLIC void xhash_set_max_nodes(XHash* h, int max_nodes);
 SO_PUBLIC int xhash_change_memcap(XHash *t, unsigned long new_memcap, unsigned *max_work);
+SO_PUBLIC int xhash_free_overallocations(XHash* t, unsigned work_limit, unsigned* num_freed);
 SO_PUBLIC void xhash_delete(XHash* h);
 SO_PUBLIC int xhash_make_empty(XHash*);
 
 SO_PUBLIC int xhash_add(XHash* h, void* key, void* data);
 SO_PUBLIC XHashNode* xhash_get_node(XHash* t, const void* key);
+SO_PUBLIC XHashNode* xhash_get_node_with_prune(XHash* t, const void* key, bool* prune_performed);
 SO_PUBLIC int xhash_remove(XHash* h, void* key);
 
 //  Get the # of Nodes in HASH the table
@@ -135,6 +137,10 @@ inline unsigned xhash_overhead_bytes(XHash* t)
 // Get the # of overhead blocks
 inline unsigned xhash_overhead_blocks(XHash* t)
 { return t->overhead_blocks; }
+
+// Get the amount of space required to allocate a new node in the xhash t.
+inline size_t xhash_required_mem(XHash *t)
+{ return sizeof(XHashNode) + t->pad + t->keysize + t->datasize; }
 
 SO_PUBLIC int xhash_free_anr_lru(XHash* t);
 SO_PUBLIC void* xhash_mru(XHash* t);

@@ -29,6 +29,7 @@
 #endif
 
 #include "framework/data_bus.h"
+#include "hash/xhash.h"
 #include "log/messages.h"
 #include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
@@ -40,17 +41,19 @@
 #include "flow_tracker.h"
 #include "perf_module.h"
 
+
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
 #endif
 
 using namespace snort;
 
-THREAD_LOCAL SimpleStats pmstats;
+THREAD_LOCAL PerfPegStats pmstats;
 THREAD_LOCAL ProfileStats perfmonStats;
 
 static THREAD_LOCAL std::vector<PerfTracker*>* trackers;
 static THREAD_LOCAL FlowIPTracker* flow_ip_tracker = nullptr;
+
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
@@ -77,7 +80,6 @@ public:
 
 private:
     PerfConfig* const config;
-
     void disable_tracker(size_t);
 };
 
@@ -256,6 +258,30 @@ void PerfMonitor::tinit()
         tracker->reset();
 }
 
+bool PerfMonReloadTuner::tinit()
+{
+    if (flow_ip_tracker)
+        return flow_ip_tracker->initialize(memcap);
+    else
+        return false;
+}
+
+bool PerfMonReloadTuner::tune_resources(unsigned work_limit)
+{
+    if (flow_ip_tracker)
+    {
+        unsigned num_freed = 0;
+        int result = xhash_free_overallocations(flow_ip_tracker->get_ip_map(), work_limit, &num_freed);
+        pmstats.total_frees += num_freed;
+        pmstats.reload_frees += num_freed;
+        return (result == XHASH_OK);
+    }
+    else
+    {
+        return false;
+    }
+}
+
 void PerfMonitor::tterm()
 {
     if (trackers)
@@ -408,7 +434,7 @@ const BaseApi* nin_perf_monitor[] =
 #ifdef UNIT_TEST
 TEST_CASE("Process timing logic", "[perfmon]")
 {
-    PerfMonModule mod; 
+    PerfMonModule mod;
     PerfConfig* config = new PerfConfig;
     mod.set_config(config);
     PerfMonitor perfmon(mod.get_config());

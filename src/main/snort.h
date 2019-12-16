@@ -47,8 +47,8 @@ public:
     static void cleanup();
 
     static bool is_starting();
-    static bool is_reloading();
     static bool has_dropped_privileges();
+    SO_PUBLIC static bool is_reloading();
 
 private:
     static void init(int, char**);

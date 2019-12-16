@@ -21,6 +21,8 @@ set ( FILE_LIST
     perf_module.cc
     perf_module.h
     perf_monitor.cc
+    perf_pegs.h
+    perf_reload_tuner.h
     perf_tracker.cc
     perf_tracker.h
     text_formatter.cc

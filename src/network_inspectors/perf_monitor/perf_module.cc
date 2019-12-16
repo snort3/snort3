@@ -31,7 +31,11 @@
 #include "perf_module.h"
 
 #include "log/messages.h"
+#include "main/snort.h"
 #include "managers/module_manager.h"
+
+#include "perf_pegs.h"
+#include "perf_reload_tuner.h"
 
 using namespace snort;
 
@@ -201,8 +205,16 @@ bool PerfMonModule::begin(const char* fqn, int idx, SnortConfig*)
     return true;
 }
 
-bool PerfMonModule::end(const char* fqn, int idx, SnortConfig*)
+bool PerfMonModule::end(const char* fqn, int idx, SnortConfig* sc)
 {
+
+    perfmon_rrt.set_memcap(config->flowip_memcap);
+
+    if ( Snort::is_reloading() )
+    {
+        sc->register_reload_resource_tuner(perfmon_rrt);
+    }
+
     if ( idx != 0 && strcmp(fqn, "perf_monitor.modules") == 0 )
         return config->modules.back().confirm_parse();
 
@@ -210,14 +222,14 @@ bool PerfMonModule::end(const char* fqn, int idx, SnortConfig*)
 }
 
 PerfConfig* PerfMonModule::get_config()
-{ 
+{
     PerfConfig* tmp = config;
     config = nullptr;
-    return tmp; 
+    return tmp;
 }
 
 const PegInfo* PerfMonModule::get_pegs() const
-{ return simple_pegs; }
+{ return perf_module_pegs; }
 
 PegCount* PerfMonModule::get_counts() const
 { return (PegCount*)&pmstats; }
@@ -291,7 +303,7 @@ bool PerfConfig::resolve()
 {
     if ( modules.empty() )
     {
-        auto all_modules = ModuleManager::get_all_modules();       
+        auto all_modules = ModuleManager::get_all_modules();
         for ( auto& mod : all_modules )
         {
             ModuleConfig cfg;
