@@ -29,6 +29,7 @@
 
 #include "file_flows.h"
 
+#include "detection/detection_engine.h"
 #include "main/snort_config.h"
 #include "managers/inspector_manager.h"
 #include "protocols/packet.h"
@@ -36,7 +37,9 @@
 #include "file_cache.h"
 #include "file_config.h"
 #include "file_lib.h"
+#include "file_module.h"
 #include "file_service.h"
+#include "file_stats.h"
 
 using namespace snort;
 
@@ -139,6 +142,12 @@ uint64_t FileFlows::get_new_file_instance()
 FileFlows::~FileFlows()
 {
     delete(main_context);
+
+    // Delete any remaining FileContexts stored on the flow
+    for (auto const& elem : flow_file_contexts)
+    {
+        delete elem.second;
+    }
 }
 
 FileContext* FileFlows::find_main_file_context(FilePosition pos, FileDirection dir, size_t index)
@@ -168,13 +177,51 @@ FileContext* FileFlows::find_main_file_context(FilePosition pos, FileDirection d
 
 FileContext* FileFlows::get_file_context(uint64_t file_id, bool to_create)
 {
-    // search for file based on id to support multiple files
-    FileCache* file_cache = FileService::get_file_cache();
-    assert(file_cache);
+    FileContext *context = nullptr;
 
-    FileContext* context = file_cache->get_file(flow, file_id, to_create);
+    // First check if this file is currently being processed and is stored on the file flows object
+    auto elem = flow_file_contexts.find(file_id);
+    if (elem != flow_file_contexts.end())
+        context = elem->second;
+    // Otherwise check if it has been fully processed and is in the file cache. If the file is not
+    // in the cache, don't add it.
+    else
+    {
+        FileCache* file_cache = FileService::get_file_cache();
+        assert(file_cache);
+        context = file_cache->get_file(flow, file_id, false);
+    }
+
+    // If we haven't found the context, create it and store it on the file flows object
+    if (!context and to_create)
+    {
+        // If we have reached the max file per flow limit, alert and increment the peg count
+        FileConfig* fc = get_file_config(SnortConfig::get_conf());
+        if (flow_file_contexts.size() == fc->max_files_per_flow)
+        {
+            file_counts.files_over_flow_limit_not_processed++;
+            events.create_event(EVENT_FILE_DROPPED_OVER_LIMIT);
+        }
+        else
+        {
+            context = new FileContext;
+            flow_file_contexts[file_id] = context;
+            if (flow_file_contexts.size() > file_counts.max_concurrent_files_per_flow)
+                file_counts.max_concurrent_files_per_flow = flow_file_contexts.size();
+        }
+    }
+
     current_file_id = file_id;
     return context;
+}
+
+void FileFlows::remove_file_context(uint64_t file_id)
+{
+    auto elem = flow_file_contexts.find(file_id);
+    if (elem == flow_file_contexts.end())
+        return;
+    delete elem->second;
+    flow_file_contexts.erase(file_id);
 }
 
 /* This function is used to process file that is sent in pieces
@@ -187,8 +234,9 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
     int data_size, uint64_t offset, FileDirection dir)
 {
     int64_t file_depth = FileService::get_max_file_depth();
+    bool continue_processing;
 
-    if ((file_depth < 0)or (offset > (uint64_t)file_depth))
+    if ((file_depth < 0) or (offset > (uint64_t)file_depth))
     {
         return false;
     }
@@ -204,21 +252,27 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
         context->set_file_id(file_id);
     }
 
-    if (context->verdict != FILE_VERDICT_UNKNOWN)
+    if (context->processing_complete and context->verdict != FILE_VERDICT_UNKNOWN)
     {
         /*A new file session, but policy might be different*/
         context->check_policy(flow, dir, file_policy);
 
-        if ((context->get_file_sig_sha256())
-            || !context->is_file_signature_enabled())
+        if ((context->get_file_sig_sha256()) || !context->is_file_signature_enabled())
         {
             /* Just check file type and signature */
             FilePosition position = SNORT_FILE_FULL;
-            return context->process(p, file_data, data_size, position, file_policy);
+            continue_processing = context->process(p, file_data, data_size, position,
+                    file_policy);
+            if (context->processing_complete)
+                remove_file_context(file_id);
+            return continue_processing;
         }
     }
 
-    return context->process(p, file_data, data_size, offset, file_policy);
+    continue_processing = context->process(p, file_data, data_size, offset, file_policy);
+    if (context->processing_complete)
+        remove_file_context(file_id);
+    return continue_processing;
 }
 
 /*

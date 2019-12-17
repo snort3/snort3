@@ -422,6 +422,7 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
             config_file_type(false);
             config_file_signature(false);
             update_file_size(data_size, position);
+            processing_complete = true;
             stop_file_capture();
             return false;
         }
@@ -631,6 +632,7 @@ void FileContext::update_file_size(int data_size, FilePosition position)
     {
         file_size = processed_bytes;
         processed_bytes = 0;
+        processing_complete = true;
     }
 }
 

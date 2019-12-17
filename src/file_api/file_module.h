@@ -32,6 +32,8 @@
 // file_id module
 //-------------------------------------------------------------------------
 
+static const uint32_t FILE_ID_GID = 150;
+
 class FileIdModule : public snort::Module
 {
 public:
@@ -54,16 +56,23 @@ public:
 
     void show_dynamic_stats() override;
 
-    // FIXIT-L delete file_id gid when bogus rules are eliminated
-    // (this ensures those rules don't fire on every packet)
     unsigned get_gid() const override
-    { return 146; }
+    { return FILE_ID_GID; }
+
+    const snort::RuleMap* get_rules() const override;
 
 private:
     FileMagicRule rule;
     FileMagicData magic;
     FileRule file_rule;
     FileConfig *fc = nullptr;
+};
+
+enum FileSid
+{
+    EVENT__NONE = -1,
+    EVENT_FILE_DROPPED_OVER_LIMIT = 1,
+    EVENT__MAX_VALUE
 };
 
 #endif

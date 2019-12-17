@@ -218,6 +218,7 @@ int FileSegments::process(Packet* p, const uint8_t* file_data, uint64_t data_siz
     else if ((current_offset < context->get_file_size()) && (current_offset < offset))
     {
         add(file_data, data_size, offset);
+        return 1;
     }
 
     return ret;

@@ -37,6 +37,7 @@
 #define DEFAULT_FILE_CAPTURE_MIN_SIZE       0           // 0
 #define DEFAULT_FILE_CAPTURE_BLOCK_SIZE     32768       // 32 KiB
 #define DEFAULT_MAX_FILES_CACHED            65536
+#define DEFAULT_MAX_FILES_PER_FLOW          32
 
 #define FILE_ID_NAME "file_id"
 #define FILE_ID_HELP "configure file identification"
@@ -65,6 +66,7 @@ public:
     int64_t capture_block_size = DEFAULT_FILE_CAPTURE_BLOCK_SIZE;
     int64_t file_depth =  0;
     int64_t max_files_cached = DEFAULT_MAX_FILES_CACHED;
+    uint64_t max_files_per_flow = DEFAULT_MAX_FILES_PER_FLOW;
 
     int64_t show_data_depth = DEFAULT_FILE_SHOW_DATA_DEPTH;
     bool trace_type = false;

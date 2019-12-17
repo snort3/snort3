@@ -207,7 +207,7 @@ FileContext* FileCache::get_file(Flow* flow, uint64_t file_id, bool to_create,
     hashKey.file_id = file_id;
     FileContext* file = find(hashKey, timeout);
     if (to_create and !file)
-       file = add(hashKey, timeout);
+        file = add(hashKey, timeout);
 
     return file;
 }
@@ -225,14 +225,12 @@ FileVerdict FileCache::check_verdict(Packet* p, FileInfo* file,
     FileVerdict verdict = policy->type_lookup(p, file);
 
     if ( file->get_file_sig_sha256() and
-        ((verdict == FILE_VERDICT_UNKNOWN) ||
-        (verdict == FILE_VERDICT_STOP_CAPTURE)))
+        ((verdict == FILE_VERDICT_UNKNOWN) or (verdict == FILE_VERDICT_STOP_CAPTURE)))
     {
         verdict = policy->signature_lookup(p, file);
     }
 
-    if ((verdict == FILE_VERDICT_UNKNOWN) ||
-        (verdict == FILE_VERDICT_STOP_CAPTURE))
+    if ((verdict == FILE_VERDICT_UNKNOWN) or (verdict == FILE_VERDICT_STOP_CAPTURE))
     {
         verdict = file->verdict;
     }
@@ -286,6 +284,9 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
         // can't reset session inside a session
         act->set_delayed_action(Active::ACT_RESET, true);
         break;
+    case FILE_VERDICT_STOP_CAPTURE:
+        file_ctx->stop_file_capture();
+        return false;
     case FILE_VERDICT_PENDING:
         packet_gettimeofday(&now);
 

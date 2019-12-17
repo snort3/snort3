@@ -433,6 +433,7 @@ static void DCE2_Smb2CloseCmd(DCE2_SmbSsnData* ssd, const Smb2Hdr*,
 
         DCE2_Smb2ProcessFileData(ssd, nullptr, 0, dir);
     }
+    // FIXIT-L Close should probably remove file contexts from FileFlows
 }
 
 /********************************************************************

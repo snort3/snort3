@@ -35,6 +35,8 @@ struct FileCounts
     PegCount files_total;
     PegCount file_data_total;
     PegCount cache_add_fails;
+    PegCount files_over_flow_limit_not_processed;
+    PegCount max_concurrent_files_per_flow;
     PegCount files_buffered_total;
     PegCount files_released_total;
     PegCount files_freed_total;

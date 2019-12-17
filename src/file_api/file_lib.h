@@ -80,6 +80,7 @@ public:
     FileState get_file_state() { return file_state; }
 
     FileVerdict verdict = FILE_VERDICT_UNKNOWN;
+    bool processing_complete = false;
     struct timeval pending_expire_time = {0, 0};
 
 protected:

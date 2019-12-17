@@ -152,6 +152,9 @@ static const Parameter file_id_params[] =
     { "max_files_cached", Parameter::PT_INT, "8:max53", "65536",
       "maximal number of files cached in memory" },
 
+    { "max_files_per_flow", Parameter::PT_INT, "1:max53", "32",
+      "maximal number of files able to be concurrently processed per flow" },
+
     { "enable_type", Parameter::PT_BOOL, nullptr, "true",
       "enable type ID" },
 
@@ -190,6 +193,8 @@ static const PegInfo file_pegs[] =
     { CountType::SUM, "total_files", "number of files processed" },
     { CountType::SUM, "total_file_data", "number of file data bytes processed" },
     { CountType::SUM, "cache_failures", "number of file cache add failures" },
+    { CountType::SUM, "files_not_processed", "number of files not processed due to per-flow limit" },
+    { CountType::MAX, "max_concurrent_files", "maximum files processed concurrently on a flow" },
     { CountType::END, nullptr, nullptr }
 };
 
@@ -206,6 +211,17 @@ const PegInfo* FileIdModule::get_pegs() const
 
 PegCount* FileIdModule::get_counts() const
 { return (PegCount*)&file_counts; }
+
+static const RuleMap file_id_rules[] =
+{
+    { EVENT_FILE_DROPPED_OVER_LIMIT, "file not processed due to per flow limit" },
+    { 0, nullptr }
+};
+
+const RuleMap* FileIdModule::get_rules() const
+{
+    return file_id_rules;
+}
 
 void FileIdModule::sum_stats(bool accumulate_now_stats)
 {
@@ -249,6 +265,9 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("max_files_cached") )
         fc->max_files_cached = v.get_int64();
+
+    else if ( v.is("max_files_per_flow") )
+        fc->max_files_per_flow = v.get_uint64();
 
     else if ( v.is("enable_type") )
     {

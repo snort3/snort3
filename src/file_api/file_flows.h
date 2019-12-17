@@ -25,11 +25,15 @@
 
 #include "flow/flow.h"
 #include "main/snort_types.h"
+#include "utils/event_gen.h"
 
 #include "file_api.h"
 #include "file_module.h"
 #include "file_policy.h"
 
+#include <map>
+
+using FileEventGen = EventGen<EVENT__MAX_VALUE, EVENT__NONE, FILE_ID_GID>;
 
 namespace snort
 {
@@ -95,6 +99,8 @@ public:
     size_t size_of() override
     { return sizeof(*this); }
 
+    void remove_file_context(uint64_t file_id);
+
 private:
     void init_file_context(FileDirection, FileContext*);
     FileContext* find_main_file_context(FilePosition, FileDirection, size_t id = 0);
@@ -105,6 +111,9 @@ private:
     bool gen_signature = false;
     Flow* flow = nullptr;
     FilePolicyBase* file_policy = nullptr;
+
+    std::unordered_map<uint64_t, FileContext*> flow_file_contexts;
+    FileEventGen events;
 };
 }
 #endif
