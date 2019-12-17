@@ -143,7 +143,7 @@ void packet_capture_enable(const string& f)
                 return;
             }
         }
-        else 
+        else
         {
             WarningMessage("Failed to enable Packet capture\n");
             packet_capture_disable();
@@ -198,11 +198,15 @@ bool PacketCapture::capture_init()
 
 void PacketCapture::eval(Packet* p)
 {
+
     if ( config.enabled )
     {
         if ( !capture_initialized() )
-            if ( !capture_init() )  
+            if ( !capture_init() )
                 return;
+                
+        if ( p->is_cooked() )
+            return;
 
         if ( !bpf.bf_insns || bpf_filter(bpf.bf_insns, p->pkt,
                 p->pktlen, p->pkth->pktlen) )
@@ -258,7 +262,7 @@ static const InspectApi pc_api =
         mod_dtor
     },
     IT_PROBE,
-    PROTO_BIT__ANY_TYPE,
+    PROTO_BIT__ANY_IP | PROTO_BIT__ETH,
     nullptr, // buffers
     nullptr, // service
     nullptr, // pinit
