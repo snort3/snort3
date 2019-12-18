@@ -137,6 +137,9 @@ void Flow::term()
     if ( gadget )
         gadget->rem_ref();
 
+    if (assistant_gadget)
+        assistant_gadget->rem_ref();
+    
     if ( ha_state )
         delete ha_state;
 

@@ -32,6 +32,7 @@
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 #include "protocols/udp.h"
+#include "pub_sub/assistant_gadget_event.h"
 #include "stream/stream.h"
 #include "stream/stream_splitter.h"
 #include "target_based/sftarget_reader.h"
@@ -202,6 +203,14 @@ inline bool Binding::check_service(const Flow* flow) const
     return false;
 }
 
+inline bool Binding::check_service(const char* service) const
+{
+    if ( when.svc == service )
+        return true;
+
+    return false;
+}
+
 // we want to correlate src_zone to src_nets and src_ports, and dst_zone to dst_nets and
 // dst_ports. it doesn't matter if the packet is actually moving in the opposite direction as
 // binder is only evaluated once per flow and we need to capture the correct binding from
@@ -234,7 +243,7 @@ static Binding::DirResult directional_match(const When& when_src, const When& wh
 
             if ( forward_match )
                 return Binding::DR_FORWARD;
-            
+
             if ( reverse_match )
                 return Binding::DR_REVERSE;
 
@@ -351,7 +360,7 @@ inline Binding::DirResult Binding::check_split_zone(const Packet* p, const Bindi
         { return traffic_val == DAQ_PKTHDR_UNKNOWN ? true : when_val.test(traffic_val); });
 }
 
-bool Binding::check_all(const Flow* flow, Packet* p) const
+bool Binding::check_all(const Flow* flow, Packet* p, const char* service) const
 {
     Binding::DirResult dir = Binding::DR_ANY_MATCH;
 
@@ -386,7 +395,12 @@ bool Binding::check_all(const Flow* flow, Packet* p) const
     if ( dir == Binding::DR_NO_MATCH )
         return false;
 
-    if ( !check_service(flow) )
+    if (service)
+    {
+        if (!check_service(service))
+            return false;
+    } 
+    else if ( !check_service(flow) )
         return false;
 
     if ( !check_zone(p) )
@@ -434,6 +448,13 @@ static Inspector* get_gadget(Flow* flow)
     return InspectorManager::get_inspector(s);
 }
 
+static Inspector* get_gadget_by_id(const char* service)
+{
+    const SnortProtocolId id = SnortConfig::get_conf()->proto_ref->find(service);
+    const char* s = SnortConfig::get_conf()->proto_ref->get_name(id);
+    return InspectorManager::get_inspector(s);
+}
+
 //-------------------------------------------------------------------------
 // stuff stuff
 //-------------------------------------------------------------------------
@@ -461,6 +482,7 @@ struct Stuff
     bool apply_action(Flow*);
     void apply_session(Flow*, const HostAttributeEntry*);
     void apply_service(Flow*, const HostAttributeEntry*);
+    void apply_assistant(Flow*, const char*);
 };
 
 bool Stuff::update(Binding* pb)
@@ -592,6 +614,15 @@ void Stuff::apply_service(Flow* flow, const HostAttributeEntry* host)
         flow->set_clouseau(wizard);
 }
 
+void Stuff::apply_assistant(Flow* flow, const char* service)
+{
+    if ( !gadget )
+        gadget = get_gadget_by_id(service);
+
+    if ( gadget )
+        flow->set_assistant_gadget(gadget);
+}
+
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
@@ -617,11 +648,13 @@ public:
     void handle_flow_setup(Packet*);
     void handle_flow_service_change(Flow*);
     void handle_new_standby_flow(Flow*);
+    void handle_assistant_gadget(const char* service, Packet*);
 
 private:
     void set_binding(SnortConfig*, Binding*);
-    void get_bindings(Flow*, Stuff&, Packet* = nullptr); // may be null when dealing with HA flows
+    void get_bindings(Flow*, Stuff&, Packet* = nullptr, const char* = nullptr); // may be null when dealing with HA flows
     void apply(Flow*, Stuff&);
+    void apply_assistant(Flow*, Stuff&, const char*);
     Inspector* find_gadget(Flow*);
 
 private:
@@ -668,6 +701,22 @@ public:
     }
 };
 
+class AssistantGadgetHandler : public DataHandler
+{
+public:
+    AssistantGadgetHandler() : DataHandler(BIND_NAME) { }
+
+    void handle(DataEvent& event, Flow*) override
+    {
+        Binder* binder = InspectorManager::get_binder();
+        AssistantGadgetEvent* assistant_event = (AssistantGadgetEvent*)&event;
+	
+        if (binder)
+            binder->handle_assistant_gadget(assistant_event->get_service(),
+                assistant_event->get_packet());
+    }
+};
+
 Binder::Binder(vector<Binding*>& v)
 {
     bindings = std::move(v);
@@ -704,6 +753,7 @@ bool Binder::configure(SnortConfig* sc)
     DataBus::subscribe(FLOW_STATE_SETUP_EVENT, new FlowStateSetupHandler());
     DataBus::subscribe(FLOW_SERVICE_CHANGE_EVENT, new FlowServiceChangeHandler());
     DataBus::subscribe(STREAM_HA_NEW_FLOW_EVENT, new StreamHANewFlowHandler());
+    DataBus::subscribe(FLOW_ASSISTANT_GADGET_EVENT, new AssistantGadgetHandler());
 
     return true;
 }
@@ -823,6 +873,16 @@ void Binder::handle_new_standby_flow( Flow* flow )
     ++bstats.verdicts[stuff.action];
 }
 
+void Binder::handle_assistant_gadget(const char* service, Packet* p)
+{
+    Profile profile(bindPerfStats);
+    Stuff stuff;
+    Flow* flow = p->flow;
+    
+    get_bindings(flow, stuff, p, service);
+    apply_assistant(flow, stuff, service);
+}
+
 //-------------------------------------------------------------------------
 // implementation stuff
 //-------------------------------------------------------------------------
@@ -860,7 +920,7 @@ void Binder::set_binding(SnortConfig* sc, Binding* pb)
 
 // FIXIT-P this is a simple linear search until functionality is nailed
 // down.  performance should be the focus of the next iteration.
-void Binder::get_bindings(Flow* flow, Stuff& stuff, Packet* p)
+void Binder::get_bindings(Flow* flow, Stuff& stuff, Packet* p, const char* service)
 {
     unsigned sz = bindings.size();
 
@@ -881,27 +941,30 @@ void Binder::get_bindings(Flow* flow, Stuff& stuff, Packet* p)
              (!pb->use.network_index or network_set) )
             continue;
 
-        if ( !pb->check_all(flow, p) )
+        if ( !pb->check_all(flow, p, service) )
             continue;
 
         if ( pb->use.inspection_index and !inspection_set )
         {
             set_inspection_policy(SnortConfig::get_conf(), pb->use.inspection_index - 1);
-            flow->inspection_policy_id = pb->use.inspection_index - 1;
+            if (!service)
+                flow->inspection_policy_id = pb->use.inspection_index - 1;
             inspection_set = true;
         }
 
         if ( pb->use.ips_index and !ips_set )
         {
             set_ips_policy(SnortConfig::get_conf(), pb->use.ips_index - 1);
-            flow->ips_policy_id = pb->use.ips_index - 1;
+            if (!service)
+                flow->ips_policy_id = pb->use.ips_index - 1;
             ips_set = true;
         }
 
         if ( pb->use.network_index and !network_set )
         {
             set_network_policy(SnortConfig::get_conf(), pb->use.network_index - 1);
-            flow->network_policy_id = pb->use.network_index - 1;
+            if (!service)
+                flow->network_policy_id = pb->use.network_index - 1;
             network_set = true;
         }
     }
@@ -924,7 +987,7 @@ void Binder::get_bindings(Flow* flow, Stuff& stuff, Packet* p)
         if ( pb->use.ips_index or pb->use.inspection_index or pb->use.network_index )
             continue;
 
-        if ( !pb->check_all(flow, p) )
+        if ( !pb->check_all(flow, p, service) )
             continue;
 
         if ( stuff.update(pb) )
@@ -952,6 +1015,11 @@ void Binder::apply(Flow* flow, Stuff& stuff)
 
     // setup service
     stuff.apply_service(flow, host);
+}
+
+void Binder::apply_assistant(Flow* flow, Stuff& stuff, const char* service)
+{
+    stuff.apply_assistant(flow, service);
 }
 
 //-------------------------------------------------------------------------

@@ -23,7 +23,9 @@
 
 #include <cassert>
 
+#include "framework/data_bus.h"
 #include "protocols/packet.h"
+#include "pub_sub/assistant_gadget_event.h"
 #include "service_inspectors/http_inspect/http_common.h"
 #include "service_inspectors/http_inspect/http_field.h"
 #include "service_inspectors/http_inspect/http_stream_splitter.h"
@@ -52,6 +54,8 @@ StreamSplitter::Status Http2StreamSplitter::scan(Packet* pkt, const uint8_t* dat
     {
         pkt->flow->set_flow_data(session_data = new Http2FlowData);
         Http2Module::increment_peg_counts(PEG_FLOW);
+        AssistantGadgetEvent event(pkt, "http");
+        DataBus::publish(FLOW_ASSISTANT_GADGET_EVENT, event);
     }
 
     // General mechanism to abort using scan
@@ -189,7 +193,7 @@ bool Http2StreamSplitter::finish(Flow* flow)
     //           due to lack of reliable feedback to stream that scan has been called...if that is
     //           addressed in stream reassembly rewrite this can be reverted to an assert
     //assert(session_data != nullptr);
-    if(!session_data)
+    if (!session_data)
         return false;
 
 #ifdef REG_TEST

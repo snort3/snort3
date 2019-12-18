@@ -120,7 +120,7 @@ public:
 
     void update_allocations(size_t);
     void update_deallocations(size_t);
-    Inspector* get_handler() {return handler;}
+    Inspector* get_handler() { return handler; }
 
     // return fixed size (could be an approx avg)
     // this must be fixed for life of flow data instance
@@ -153,7 +153,8 @@ struct LwState
     char ignore_direction;
 };
 
-enum DeferredWhitelist {
+enum DeferredWhitelist
+{
     WHITELIST_DEFER_OFF = 0,
     WHITELIST_DEFER_ON,
     WHITELIST_DEFER_STARTED,
@@ -246,9 +247,7 @@ public:
 
     int set_ignore_direction(char ignore_direction)
     {
-        if (ssn_state.ignore_direction != ignore_direction)
-            ssn_state.ignore_direction = ignore_direction;
-
+        ssn_state.ignore_direction = ignore_direction;
         return ssn_state.ignore_direction;
     }
 
@@ -312,6 +311,20 @@ public:
     {
         gadget->rem_ref();
         gadget = nullptr;
+        if (assistant_gadget != nullptr)
+            clear_assistant_gadget();
+    }
+
+    void set_assistant_gadget(Inspector* ins)
+    {
+        assistant_gadget = ins;
+        assistant_gadget->add_ref();
+    }
+
+    void clear_assistant_gadget()
+    {
+        assistant_gadget->rem_ref();
+        assistant_gadget = nullptr;
     }
 
     void set_data(Inspector* pd)
@@ -336,9 +349,9 @@ public:
     { return context_chain.front(); }
 
     void set_default_session_timeout(uint32_t dst, bool force)
-    { 
+    {
         if (force || (default_session_timeout == 0))
-            default_session_timeout = dst; 
+            default_session_timeout = dst;
     }
 
     void set_hard_expiration()
@@ -384,6 +397,7 @@ public:  // FIXIT-M privatize if possible
     FlowData* flow_data;
     Inspector* clouseau;  // service identifier
     Inspector* gadget;    // service handler
+    Inspector* assistant_gadget;
     Inspector* data;
     const char* service;
 
@@ -437,7 +451,6 @@ inline void Flow::set_to_server_detection(bool enable)
     else
         ssn_state.session_flags |= SSNFLAG_NO_DETECT_TO_SERVER;
 }
-
 }
 
 #endif

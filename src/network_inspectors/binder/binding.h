@@ -104,7 +104,7 @@ struct Binding
     Binding();
     ~Binding();
 
-    bool check_all(const snort::Flow*, snort::Packet*) const;
+    bool check_all(const snort::Flow*, snort::Packet*, const char* = nullptr) const;
     bool check_ips_policy(const snort::Flow*) const;
     bool check_iface(const snort::Packet*) const;
     bool check_vlan(const snort::Flow*) const;
@@ -116,6 +116,7 @@ struct Binding
     bool check_zone(const snort::Packet*) const;
     DirResult check_split_zone(const snort::Packet*, const DirResult) const;
     bool check_service(const snort::Flow*) const;
+    bool check_service(const char* service) const;
 };
 
 #endif
