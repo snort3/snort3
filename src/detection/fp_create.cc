@@ -1728,9 +1728,10 @@ int fpCreateFastPacketDetection(SnortConfig* sc)
     if ( !sc->test_mode() or sc->mem_check() )
     {
         unsigned c = compile_mpses(sc, can_build_mt(fp));
+        unsigned expected = mpse_count + offload_mpse_count;
 
-        if ( c != mpse_count )
-            ParseError("Failed to compile %u search engines", mpse_count - c);
+        if ( c != expected )
+            ParseError("Failed to compile %u search engines", expected - c);
     }
 
     fp_print_port_groups(port_tables);
