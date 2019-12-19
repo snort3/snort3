@@ -24,10 +24,14 @@
 
 #include "codecs/codec_module.h"
 #include "framework/codec.h"
+#include "log/messages.h"
 #include "log/text_log.h"
 #include "main/snort_config.h"
 #include "protocols/gre.h"
-#include "log/messages.h"
+
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+#endif
 
 using namespace snort;
 
@@ -298,3 +302,23 @@ const BaseApi* cd_gre[] =
     nullptr
 };
 
+//--------------------------------------------------------------------------
+// unit tests
+//--------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+TEST_CASE ("Validate error check for raw_len greater than GRE_HEADER_LEN", "[cd_gre]")
+{
+    GreCodec grecodec;
+    const uint8_t raw_in = 0;
+    uint8_t raw_len = GRE_HEADER_LEN + 1;
+    ip::IpApi ip_api;
+    EncState enc(ip_api, ENC_FLAG_VAL, IpProtocol::GRE, 0, 0);
+    uint16_t size = 1;
+    uint8_t t = 0;
+    Buffer buf(&t, size);
+    Flow *flow = NULL;
+
+    CHECK (grecodec.encode(&raw_in,raw_len,enc,buf,flow) == false);
+}
+#endif
