@@ -410,7 +410,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0 (Build 266)
+o"  )~   Version 3.0.0 (Build 267)
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
@@ -3798,9 +3798,6 @@ development. It enables Snort to more quickly detect and block
 response messages containing malicious JavaScript. As this feature
 involves actively blocking traffic it is designed for use with inline
 mode operation (-Q).
-
-This feature only functions with response_depth = -1 (unlimited).
-This limitation will be removed in a future version.
 
 This feature is off by default. detained_inspection = true will
 activate it.
@@ -7277,6 +7274,7 @@ Commands:
   * appid.enable_debug(proto, src_ip, src_port, dst_ip, dst_port):
     enable appid debugging
   * appid.disable_debug(): disable appid debugging
+  * appid.reload_third_party(): reload appid third-party module
 
 Peg counts:
 
@@ -7982,6 +7980,8 @@ Configuration:
     in bytes { 8:max53 }
   * int file_id.max_files_cached = 65536: maximal number of files
     cached in memory { 8:max53 }
+  * int file_id.max_files_per_flow = 32: maximal number of files able
+    to be concurrently processed per flow { 1:max53 }
   * bool file_id.enable_type = true: enable type ID
   * bool file_id.enable_signature = true: enable signature
     calculation
@@ -8018,12 +8018,20 @@ Configuration:
   * int file_id.verdict_delay = 0: number of queries to return final
     verdict { 0:max53 }
 
+Rules:
+
+  * 150:1 (file_id) file not processed due to per flow limit
+
 Peg counts:
 
   * file_id.total_files: number of files processed (sum)
   * file_id.total_file_data: number of file data bytes processed
     (sum)
   * file_id.cache_failures: number of file cache add failures (sum)
+  * file_id.files_not_processed: number of files not processed due to
+    per-flow limit (sum)
+  * file_id.max_concurrent_files: maximum files processed
+    concurrently on a flow (max)
 
 
 9.17. file_log
@@ -8223,6 +8231,7 @@ Rules:
   * 143:1 (gtp_inspect) message length is invalid
   * 143:2 (gtp_inspect) information element length is invalid
   * 143:3 (gtp_inspect) information elements are out of order
+  * 143:4 (gtp_inspect) TEID is missing
 
 Peg counts:
 
@@ -8255,10 +8264,12 @@ Rules:
   * 121:5 (http2_inspect) unexpected HTTP/2 continuation frame
   * 121:6 (http2_inspect) misformatted HTTP/2 traffic
   * 121:7 (http2_inspect) HTTP/2 connection preface does not match
-  * 121:9 (http2_inspect) HTTP/2 request missing required header
+  * 121:8 (http2_inspect) HTTP/2 request missing required header
     field
-  * 121:10 (http2_inspect) HTTP/2 response has no status code
-  * 121:11 (http2_inspect) invalid HTTP/2 header field
+  * 121:9 (http2_inspect) HTTP/2 response has no status code
+  * 121:10 (http2_inspect) invalid HTTP/2 header field
+  * 121:11 (http2_inspect) error in HTTP/2 settings frame
+  * 121:12 (http2_inspect) unknown parameter in HTTP/2 settings frame
 
 Peg counts:
 
@@ -8792,7 +8803,14 @@ Configuration:
 
 Peg counts:
 
-  * perf_monitor.packets: total packets (sum)
+  * perf_monitor.packets: total packets processed by performance
+    monitor (sum)
+  * perf_monitor.total_frees: total flows pruned or freed by
+    performance monitor (sum)
+  * perf_monitor.reload_frees: flows freed on reload with changed
+    memcap (sum)
+  * perf_monitor.alloc_prunes: flows pruned on allocation of IP flows
+    (sum)
 
 
 9.31. pop
@@ -9576,6 +9594,10 @@ Peg counts:
   * stream.expected_pruned: number of expected flows pruned (sum)
   * stream.expected_overflows: number of expected cache overflows
     (sum)
+  * stream.reload_tuning_idle: number of times stream resource tuner
+    called while idle (sum)
+  * stream.reload_tuning_packets: number of times stream resource
+    tuner called while processing packets (sum)
   * stream.reload_total_adds: number of flows added by config reloads
     (sum)
   * stream.reload_total_deletes: number of flows deleted by config
@@ -15070,6 +15092,8 @@ these libraries see the Getting Started section of the manual.
     seconds { 0:max31 }
   * int file_id.max_files_cached = 65536: maximal number of files
     cached in memory { 8:max53 }
+  * int file_id.max_files_per_flow = 32: maximal number of files able
+    to be concurrently processed per flow { 1:max53 }
   * int file_id.show_data_depth = 100: print this many octets {
     0:max53 }
   * int file_id.signature_depth = 10485760: stop signature at this
@@ -16684,6 +16708,10 @@ these libraries see the Getting Started section of the manual.
     out of local memory (sum)
   * file_connector.messages: total messages (sum)
   * file_id.cache_failures: number of file cache add failures (sum)
+  * file_id.files_not_processed: number of files not processed due to
+    per-flow limit (sum)
+  * file_id.max_concurrent_files: maximum files processed
+    concurrently on a flow (max)
   * file_id.total_file_data: number of file data bytes processed
     (sum)
   * file_id.total_files: number of files processed (sum)
@@ -16904,7 +16932,14 @@ these libraries see the Getting Started section of the manual.
   * packet_capture.captured: packets matching dumped after matching
     filter (sum)
   * packet_capture.processed: packets processed against filter (sum)
-  * perf_monitor.packets: total packets (sum)
+  * perf_monitor.alloc_prunes: flows pruned on allocation of IP flows
+    (sum)
+  * perf_monitor.packets: total packets processed by performance
+    monitor (sum)
+  * perf_monitor.reload_frees: flows freed on reload with changed
+    memcap (sum)
+  * perf_monitor.total_frees: total flows pruned or freed by
+    performance monitor (sum)
   * pop.b64_attachments: total base64 attachments decoded (sum)
   * pop.b64_decoded_bytes: total base64 decoded bytes (sum)
   * pop.concurrent_sessions: total concurrent pop sessions (now)
@@ -17122,6 +17157,10 @@ these libraries see the Getting Started section of the manual.
     (sum)
   * stream.reload_total_deletes: number of flows deleted by config
     reloads (sum)
+  * stream.reload_tuning_idle: number of times stream resource tuner
+    called while idle (sum)
+  * stream.reload_tuning_packets: number of times stream resource
+    tuner called while processing packets (sum)
   * stream_tcp.client_cleanups: number of times data from server was
     flushed when session released (sum)
   * stream_tcp.closing: number of sessions currently closing (now)
@@ -17278,9 +17317,9 @@ these libraries see the Getting Started section of the manual.
   * 143: gtp_inspect
   * 144: modbus
   * 145: dnp3
-  * 146: file_id
   * 148: cip
   * 149: s7commplus
+  * 150: file_id
   * 175: domain_filter
   * 256: dpx
 
@@ -17616,10 +17655,12 @@ these libraries see the Getting Started section of the manual.
   * 121:5 (http2_inspect) unexpected HTTP/2 continuation frame
   * 121:6 (http2_inspect) misformatted HTTP/2 traffic
   * 121:7 (http2_inspect) HTTP/2 connection preface does not match
-  * 121:9 (http2_inspect) HTTP/2 request missing required header
+  * 121:8 (http2_inspect) HTTP/2 request missing required header
     field
-  * 121:10 (http2_inspect) HTTP/2 response has no status code
-  * 121:11 (http2_inspect) invalid HTTP/2 header field
+  * 121:9 (http2_inspect) HTTP/2 response has no status code
+  * 121:10 (http2_inspect) invalid HTTP/2 header field
+  * 121:11 (http2_inspect) error in HTTP/2 settings frame
+  * 121:12 (http2_inspect) unknown parameter in HTTP/2 settings frame
   * 122:1 (port_scan) TCP portscan
   * 122:2 (port_scan) TCP decoy portscan
   * 122:3 (port_scan) TCP portsweep
@@ -17872,6 +17913,7 @@ these libraries see the Getting Started section of the manual.
   * 143:1 (gtp_inspect) message length is invalid
   * 143:2 (gtp_inspect) information element length is invalid
   * 143:3 (gtp_inspect) information elements are out of order
+  * 143:4 (gtp_inspect) TEID is missing
   * 144:1 (modbus) length in Modbus MBAP header does not match the
     length needed for the given function
   * 144:2 (modbus) Modbus protocol ID is non-zero
@@ -17895,6 +17937,7 @@ these libraries see the Getting Started section of the manual.
     match the length needed for the given S7commplus function
   * 149:2 (s7commplus) S7commplus protocol ID is non-zero
   * 149:3 (s7commplus) reserved S7commplus function code in use
+  * 150:1 (file_id) file not processed due to per flow limit
   * 175:1 (domain_filter) configured domain detected
   * 256:1 (dpx) too much data sent to port
 
@@ -17906,6 +17949,7 @@ these libraries see the Getting Started section of the manual.
   * appid.enable_debug(proto, src_ip, src_port, dst_ip, dst_port):
     enable appid debugging
   * appid.disable_debug(): disable appid debugging
+  * appid.reload_third_party(): reload appid third-party module
   * host_cache.dump(file_name): dump host cache
   * packet_capture.enable(filter): dump raw packets
   * packet_capture.disable(): stop packet dump

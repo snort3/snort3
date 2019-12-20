@@ -1,3 +1,45 @@
+19/12/20 - build 267
+
+-- appid: Adding command for third-party reload
+-- appid: cleanup unused code
+-- binder: assitant gadget support.
+-- build: Const-ify reference arguments as suggested by cppcheck
+-- catch: Add infrastructure for standalone Catch unit tests
+-- catch: Update to Catch v2.11.0
+-- codec: Added GRE::encode method
+-- control: Convert IdleProcessing unit tests to standalone Catch
+-- dce_rpc: Convert HTTP proxy and server splitter unit tests to standalone Catch
+-- file_api: When multiple files are processed simultaneously per flow, store the files on the
+   flow, not in the cache. Don't cache files until the signature has been computed
+-- file_magic: add file magic for .jar, .rar, .alz, .egg, .hwp and .swf files
+-- framework: Convert parameter and range unit tests to standalone Catch
+-- gtp: alerts should be raised for missing TEID in gtp msg
+-- helpers: Convert Base64Encoder unit tests to standalone Catch
+-- http2_inspect: add Stream class
+-- http2_inspect: parse settings frames
+-- http_inspect: support limited response depth
+-- ips: do not use includer for any rules file includes
+-- ips: fix --show-file-codes for inclusion from -c file
+-- lru_cache_shared: added find_else_insert to add user managed objects to the cache
+-- lua: Convert LuaStack unit tests to standalone Catch
+-- lua: Link lua_stack_test against libdl to handle the static luajit case
+-- packet_capture: ignore PDUs and defragged packets, include non-IP packets
+-- perf_monitor: Convert CSV, FBS, and JSON formatter unit tests to standalone Catch
+-- perf_monitor: tuning for flow_ip_memcap on reload
+-- profiler: Convert MemoryContext and ProfilerStatsTable unit tests to standalone Catch
+-- reload: fix issue where resource tuning was not being called when in idle context
+-- rule_state: allow empty tables
+-- search_engine: fix expected count of MPSEs when offloading
+-- sfip: Convert SfIp unit tests to standalone Catch
+-- sfip: Use REG_TEST-style IP stringification for standalone Catch tests
+-- stream_tcp: fix TcpState post increment operator to stop increment at max value (and use
+   correct max value)
+-- stream_tcp: refactor stream_tcp initialization to create reassemblers during plugin init
+-- stream_tcp: refactor to initialize tcp normalizers during plugin init
+-- stream/tcp: Remove some unused Catch includes
+-- time: Convert periodic and stopwatch unit tests to standalone Catch
+-- utils: Convert bitop unit tests to standalone Catch
+
 19/12/04 - build 266
 
 -- appid: Add new pattern to pop3, don't concatenate ssl certs, use openssl-1.1 compliant APIs

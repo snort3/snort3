@@ -782,7 +782,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0 (Build 266)
+o"  )~   Version 3.0.0 (Build 267)
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
@@ -5267,8 +5267,6 @@ processing.</p></div>
 It enables Snort to more quickly detect and block response messages
 containing malicious JavaScript. As this feature involves actively blocking
 traffic it is designed for use with inline mode operation (-Q).</p></div>
-<div class="paragraph"><p>This feature only functions with response_depth = -1 (unlimited). This
-limitation will be removed in a future version.</p></div>
 <div class="paragraph"><p>This feature is off by default. detained_inspection = true will activate
 it.</p></div>
 </div>
@@ -10828,6 +10826,11 @@ int <strong>appid.trace</strong>: mask for enabling debug traces in module { 0:m
 <strong>appid.disable_debug</strong>(): disable appid debugging
 </p>
 </li>
+<li>
+<p>
+<strong>appid.reload_third_party</strong>(): reload appid third-party module
+</p>
+</li>
 </ul></div>
 <div class="paragraph"><p>Peg counts:</p></div>
 <div class="ulist"><ul>
@@ -12463,6 +12466,11 @@ int <strong>file_id.max_files_cached</strong> = 65536: maximal number of files c
 </li>
 <li>
 <p>
+int <strong>file_id.max_files_per_flow</strong> = 32: maximal number of files able to be concurrently processed per flow { 1:max53 }
+</p>
+</li>
+<li>
+<p>
 bool <strong>file_id.enable_type</strong> = true: enable type ID
 </p>
 </li>
@@ -12577,6 +12585,14 @@ int <strong>file_id.verdict_delay</strong> = 0: number of queries to return fina
 </p>
 </li>
 </ul></div>
+<div class="paragraph"><p>Rules:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>150:1</strong> (file_id) file not processed due to per flow limit
+</p>
+</li>
+</ul></div>
 <div class="paragraph"><p>Peg counts:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -12592,6 +12608,16 @@ int <strong>file_id.verdict_delay</strong> = 0: number of queries to return fina
 <li>
 <p>
 <strong>file_id.cache_failures</strong>: number of file cache add failures (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>file_id.files_not_processed</strong>: number of files not processed due to per-flow limit (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>file_id.max_concurrent_files</strong>: maximum files processed concurrently on a flow (max)
 </p>
 </li>
 </ul></div>
@@ -12973,6 +12999,11 @@ int <strong>gtp_inspect.trace</strong>: mask for enabling debug traces in module
 <strong>143:3</strong> (gtp_inspect) information elements are out of order
 </p>
 </li>
+<li>
+<p>
+<strong>143:4</strong> (gtp_inspect) TEID is missing
+</p>
+</li>
 </ul></div>
 <div class="paragraph"><p>Peg counts:</p></div>
 <div class="ulist"><ul>
@@ -13052,17 +13083,27 @@ int <strong>gtp_inspect.trace</strong>: mask for enabling debug traces in module
 </li>
 <li>
 <p>
-<strong>121:9</strong> (http2_inspect) HTTP/2 request missing required header field
+<strong>121:8</strong> (http2_inspect) HTTP/2 request missing required header field
 </p>
 </li>
 <li>
 <p>
-<strong>121:10</strong> (http2_inspect) HTTP/2 response has no status code
+<strong>121:9</strong> (http2_inspect) HTTP/2 response has no status code
 </p>
 </li>
 <li>
 <p>
-<strong>121:11</strong> (http2_inspect) invalid HTTP/2 header field
+<strong>121:10</strong> (http2_inspect) invalid HTTP/2 header field
+</p>
+</li>
+<li>
+<p>
+<strong>121:11</strong> (http2_inspect) error in HTTP/2 settings frame
+</p>
+</li>
+<li>
+<p>
+<strong>121:12</strong> (http2_inspect) unknown parameter in HTTP/2 settings frame
 </p>
 </li>
 </ul></div>
@@ -14590,7 +14631,22 @@ bool <strong>perf_monitor.summary</strong> = false: output summary at shutdown
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>perf_monitor.packets</strong>: total packets (sum)
+<strong>perf_monitor.packets</strong>: total packets processed by performance monitor (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>perf_monitor.total_frees</strong>: total flows pruned or freed by performance monitor (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>perf_monitor.reload_frees</strong>: flows freed on reload with changed memcap (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>perf_monitor.alloc_prunes</strong>: flows pruned on allocation of IP flows (sum)
 </p>
 </li>
 </ul></div>
@@ -16645,6 +16701,16 @@ int <strong>stream.trace</strong>: mask for enabling debug traces in module { 0:
 <li>
 <p>
 <strong>stream.expected_overflows</strong>: number of expected cache overflows (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream.reload_tuning_idle</strong>: number of times stream resource tuner called while idle (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream.reload_tuning_packets</strong>: number of times stream resource tuner called while processing packets (sum)
 </p>
 </li>
 <li>
@@ -26119,6 +26185,11 @@ int <strong>file_id.max_files_cached</strong> = 65536: maximal number of files c
 </li>
 <li>
 <p>
+int <strong>file_id.max_files_per_flow</strong> = 32: maximal number of files able to be concurrently processed per flow { 1:max53 }
+</p>
+</li>
+<li>
+<p>
 int <strong>file_id.show_data_depth</strong> = 100: print this many octets { 0:max53 }
 </p>
 </li>
@@ -30919,6 +30990,16 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>file_id.files_not_processed</strong>: number of files not processed due to per-flow limit (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>file_id.max_concurrent_files</strong>: maximum files processed concurrently on a flow (max)
+</p>
+</li>
+<li>
+<p>
 <strong>file_id.total_file_data</strong>: number of file data bytes processed (sum)
 </p>
 </li>
@@ -31734,7 +31815,22 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>perf_monitor.packets</strong>: total packets (sum)
+<strong>perf_monitor.alloc_prunes</strong>: flows pruned on allocation of IP flows (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>perf_monitor.packets</strong>: total packets processed by performance monitor (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>perf_monitor.reload_frees</strong>: flows freed on reload with changed memcap (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>perf_monitor.total_frees</strong>: total flows pruned or freed by performance monitor (sum)
 </p>
 </li>
 <li>
@@ -32639,6 +32735,16 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>stream.reload_tuning_idle</strong>: number of times stream resource tuner called while idle (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream.reload_tuning_packets</strong>: number of times stream resource tuner called while processing packets (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>stream_tcp.client_cleanups</strong>: number of times data from server was flushed when session released (sum)
 </p>
 </li>
@@ -33289,17 +33395,17 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>146</strong>: file_id
-</p>
-</li>
-<li>
-<p>
 <strong>148</strong>: cip
 </p>
 </li>
 <li>
 <p>
 <strong>149</strong>: s7commplus
+</p>
+</li>
+<li>
+<p>
+<strong>150</strong>: file_id
 </p>
 </li>
 <li>
@@ -34719,17 +34825,27 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>121:9</strong> (http2_inspect) HTTP/2 request missing required header field
+<strong>121:8</strong> (http2_inspect) HTTP/2 request missing required header field
 </p>
 </li>
 <li>
 <p>
-<strong>121:10</strong> (http2_inspect) HTTP/2 response has no status code
+<strong>121:9</strong> (http2_inspect) HTTP/2 response has no status code
 </p>
 </li>
 <li>
 <p>
-<strong>121:11</strong> (http2_inspect) invalid HTTP/2 header field
+<strong>121:10</strong> (http2_inspect) invalid HTTP/2 header field
+</p>
+</li>
+<li>
+<p>
+<strong>121:11</strong> (http2_inspect) error in HTTP/2 settings frame
+</p>
+</li>
+<li>
+<p>
+<strong>121:12</strong> (http2_inspect) unknown parameter in HTTP/2 settings frame
 </p>
 </li>
 <li>
@@ -35769,6 +35885,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>143:4</strong> (gtp_inspect) TEID is missing
+</p>
+</li>
+<li>
+<p>
 <strong>144:1</strong> (modbus) length in Modbus MBAP header does not match the length needed for the given function
 </p>
 </li>
@@ -35849,6 +35970,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>150:1</strong> (file_id) file not processed due to per flow limit
+</p>
+</li>
+<li>
+<p>
 <strong>175:1</strong> (domain_filter) configured domain detected
 </p>
 </li>
@@ -35870,6 +35996,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>appid.disable_debug</strong>(): disable appid debugging
+</p>
+</li>
+<li>
+<p>
+<strong>appid.reload_third_party</strong>(): reload appid third-party module
 </p>
 </li>
 <li>
@@ -39063,7 +39194,7 @@ Adding/removing stream_* inspectors if stream was already configured
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2019-12-04 10:58:36 EST
+ 2019-12-20 13:13:48 EST
 </div>
 </div>
 </body>
