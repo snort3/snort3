@@ -23,7 +23,6 @@
 
 #include "http2_frame.h"
 
-#include "detection/detection_engine.h"
 #include "http2_enum.h"
 #include "http2_flow_data.h"
 #include "http2_headers_frame.h"
@@ -43,7 +42,6 @@ Http2Frame::Http2Frame(const uint8_t* header_buffer, const int32_t header_len,
     if (data_len > 0)
     {
         data.set(data_len, data_buffer, true);
-        set_file_data(data.start(), data.length());
     }
 }
 
