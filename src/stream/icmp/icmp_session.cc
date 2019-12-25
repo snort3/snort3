@@ -177,7 +177,7 @@ static int ProcessIcmpUnreach(Packet* p)
 // IcmpSession methods
 //-------------------------------------------------------------------------
 
-IcmpSession::IcmpSession(Flow* flow) : Session(flow)
+IcmpSession::IcmpSession(Flow* f) : Session(f)
 { memory::MemoryCap::update_allocations(sizeof(*this)); }
 
 IcmpSession::~IcmpSession()
@@ -189,8 +189,8 @@ bool IcmpSession::setup(Packet*)
     ssn_time.tv_sec = 0;
     ssn_time.tv_usec = 0;
     flow->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
-    SESSION_STATS_ADD(icmpStats);
-    
+    SESSION_STATS_ADD(icmpStats)
+
     StreamIcmpConfig* pc = get_icmp_cfg(flow->ssn_server);
     flow->set_default_session_timeout(pc->session_timeout, false);
 
@@ -206,7 +206,7 @@ void IcmpSession::clear()
 int IcmpSession::process(Packet* p)
 {
     int status;
-    
+
     flow->set_expire(p, flow->default_session_timeout);
 
     if (!(flow->ssn_state.session_flags & SSNFLAG_ESTABLISHED) and !(p->is_from_client()))

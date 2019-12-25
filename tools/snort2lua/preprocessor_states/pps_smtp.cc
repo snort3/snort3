@@ -312,7 +312,7 @@ bool Smtp::convert(std::istringstream& data_stream)
                     bind.set_when_proto("tcp");
                     while (data_stream >> keyword && keyword != "}")
                     {
-                        default_binding = false; 
+                        default_binding = false;
                         bind.add_when_port(keyword);
                     }
                 }

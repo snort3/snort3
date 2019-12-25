@@ -80,7 +80,7 @@ struct StreamModuleConfig
 class StreamReloadResourceManager : public snort::ReloadResourceTuner
 {
 public:
-	StreamReloadResourceManager() {}
+    StreamReloadResourceManager() {}
 
     bool tinit() override;
     bool tune_packet_context() override;

@@ -32,9 +32,9 @@ using namespace HttpCommon;
 using namespace Http2Enums;
 
 Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t header_len,
-    const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* session_data,
-    HttpCommon::SourceId source_id) : Http2Frame(header_buffer, header_len, data_buffer, data_len,
-    session_data, source_id)
+    const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* ssn_data,
+    HttpCommon::SourceId src_id) : Http2Frame(header_buffer, header_len, data_buffer, data_len,
+    ssn_data, src_id)
 {
     uint8_t hpack_headers_offset = 0;
 
@@ -48,7 +48,7 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t
     // Allocate stuff
     decoded_headers = new uint8_t[MAX_OCTETS];
     decoded_headers_size = 0;
-    
+
     start_line_generator = Http2StartLine::new_start_line_generator(source_id,
         session_data->events[source_id], session_data->infractions[source_id]);
 

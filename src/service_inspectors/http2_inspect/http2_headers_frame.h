@@ -31,7 +31,7 @@ class Http2HeadersFrame : public Http2Frame
 {
 public:
     ~Http2HeadersFrame() override;
-    
+
     const Field& get_buf(unsigned id) override;
 
     friend Http2Frame* Http2Frame::new_frame(const uint8_t* header_buffer, const int32_t header_len,
@@ -44,8 +44,8 @@ public:
 
 private:
     Http2HeadersFrame(const uint8_t* header_buffer, const int32_t header_len,
-        const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* session_data,
-        HttpCommon::SourceId source_id);
+        const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* ssn_data,
+        HttpCommon::SourceId src_id);
 
     Http2StartLine* start_line_generator = nullptr;
     uint8_t* decoded_headers = nullptr; // working buffer to store decoded headers

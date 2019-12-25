@@ -141,7 +141,7 @@ private:
                           // by either the destructor or user
 
     unsigned priority = PRIORITY_LAST;
-    
+
     int when_ips_policy_id = -1;
     std::string when_service;
     std::string when_role;
@@ -155,7 +155,7 @@ private:
     std::vector<std::string> dst_ports;
     std::vector<std::string> when_src_zone;
     std::vector<std::string> when_dst_zone;
-    std::vector<std::string> zones; 
+    std::vector<std::string> zones;
 
     std::string use_type;
     std::string use_name;

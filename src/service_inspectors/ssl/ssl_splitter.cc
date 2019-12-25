@@ -58,7 +58,7 @@ StreamSplitter::Status SslSplitter::scan(
                 is_sslv2 = true;
                 paf_state = SSL_PAF_STATES_LEN2_V2;
             }
-            else 
+            else
             {
                 // unknown
                 if (last_fp > 0)

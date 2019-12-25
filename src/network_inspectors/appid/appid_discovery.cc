@@ -737,7 +737,7 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
     uint16_t port;
     const SfIp* ip;
     AppIdHttpSession* hsession = asd.get_http_session();
-    
+
     const TunnelDest* tun_dest = hsession->get_tun_dest();
     if(tun_dest)
     {
@@ -921,7 +921,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
 
     payload_id = asd.pick_payload_app_id();
     client_id = asd.pick_client_app_id();
-    misc_id =  asd.pick_misc_app_id();;
+    misc_id =  asd.pick_misc_app_id();
 
     bool is_http_tunnel = ((asd.payload.get_id() == APP_ID_HTTP_TUNNEL) || (asd.payload.get_id() == APP_ID_HTTP_SSL_TUNNEL)) ? true:false;
     if (is_check_host_cache_valid(asd, service_id, client_id, payload_id, misc_id) or (is_http_tunnel))

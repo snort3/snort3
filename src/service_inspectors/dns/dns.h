@@ -83,7 +83,7 @@ struct DNSNameState
 #define DNS_RR_TYPE_A                       0x0001
 #define DNS_RR_TYPE_NS                      0x0002
 #define DNS_RR_TYPE_MD                      0x0003 // obsolete
-#define DNS_RR_TYPE_MF                      0x0004 // obsolete 
+#define DNS_RR_TYPE_MF                      0x0004 // obsolete
 #define DNS_RR_TYPE_CNAME                   0x0005
 #define DNS_RR_TYPE_SOA                     0x0006
 #define DNS_RR_TYPE_MB                      0x0007 // experimental

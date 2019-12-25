@@ -38,7 +38,7 @@ static uint16_t get_parameter_id(const uint8_t* data_buffer)
 }
 
 static uint32_t get_parameter_value(const uint8_t* data_buffer)
-{	
+{
     static const uint8_t frame_value_index = 2;
     return (data_buffer[frame_value_index]  << 24) +
         (data_buffer[frame_value_index + 1] << 16) +
@@ -47,9 +47,9 @@ static uint32_t get_parameter_value(const uint8_t* data_buffer)
 }
 
 Http2SettingsFrame::Http2SettingsFrame(const uint8_t* header_buffer, const int32_t header_len,
-	const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* session_data,
-    HttpCommon::SourceId source_id) : Http2Frame(header_buffer, header_len, data_buffer, data_len,
-    session_data, source_id)
+    const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* ssn_data,
+    HttpCommon::SourceId src_id) : Http2Frame(header_buffer, header_len, data_buffer, data_len,
+    ssn_data, src_id)
 {
     if (!sanity_check())
     {
@@ -60,13 +60,13 @@ Http2SettingsFrame::Http2SettingsFrame(const uint8_t* header_buffer, const int32
 
     if (SfAck & get_flags())
         return;
-    
+
     parse_settings_frame();
 }
 
 void Http2SettingsFrame::parse_settings_frame()
 {
-	int32_t data_pos = 0;
+    int32_t data_pos = 0;
 
     while (data_pos < data.length())
     {
@@ -82,7 +82,7 @@ void Http2SettingsFrame::parse_settings_frame()
             continue;
         }
 
-        session_data->connection_settings[source_id].set_param(parameter_id, parameter_value);  
+        session_data->connection_settings[source_id].set_param(parameter_id, parameter_value);
     }
 }
 
@@ -96,7 +96,7 @@ bool Http2SettingsFrame::sanity_check()
         bad_frame = true;
     else if (ack and data.length() > 0)
         bad_frame = true;
-    
+
     return !(bad_frame);
 }
 
@@ -118,18 +118,18 @@ void Http2SettingsFrame::print_frame(FILE* output)
 }
 #endif
 
-uint32_t Http2ConnectionSettings::get_param(uint16_t id) 
-{ 
+uint32_t Http2ConnectionSettings::get_param(uint16_t id)
+{
     assert(id >= HEADER_TABLE_SIZE);
     assert(id <= MAX_HEADER_LIST_SIZE);
 
-    return parameters[id - 1]; 
+    return parameters[id - 1];
 }
 
-void Http2ConnectionSettings::set_param(uint16_t id, uint32_t value) 
-{ 
+void Http2ConnectionSettings::set_param(uint16_t id, uint32_t value)
+{
     assert(id >= HEADER_TABLE_SIZE);
     assert(id <= MAX_HEADER_LIST_SIZE);
 
-    parameters[id - 1] = value; 
+    parameters[id - 1] = value;
 }

@@ -72,8 +72,7 @@ void TcpSession::sinit()
 void TcpSession::sterm()
 { TcpSegmentNode::clear(); }
 
-TcpSession::TcpSession(Flow* flow)
-    : TcpStreamSession(flow)
+TcpSession::TcpSession(Flow* f) : TcpStreamSession(f)
 {
     tsm = TcpStateMachine::get_instance();
     splitter_init = false;
@@ -99,7 +98,7 @@ bool TcpSession::setup(Packet* p)
     const TcpStreamConfig* cfg = get_tcp_cfg(flow->ssn_server);
     flow->set_default_session_timeout(cfg->session_timeout, false);
 
-    SESSION_STATS_ADD(tcpStats);
+    SESSION_STATS_ADD(tcpStats)
     tcpStats.setups++;
     return true;
 }

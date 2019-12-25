@@ -128,7 +128,7 @@ static inline void update_session(Packet* p, Flow* lws)
 // IpSession methods
 //-------------------------------------------------------------------------
 
-IpSession::IpSession(Flow* flow) : Session(flow)
+IpSession::IpSession(Flow* f) : Session(f)
 { memory::MemoryCap::update_allocations(sizeof(*this)); }
 
 IpSession::~IpSession()
@@ -149,7 +149,7 @@ void IpSession::clear()
 
 bool IpSession::setup(Packet* p)
 {
-    SESSION_STATS_ADD(ip_stats);
+    SESSION_STATS_ADD(ip_stats)
     memset(&tracker, 0, sizeof(tracker));
 
     StreamIpConfig* pc = get_ip_cfg(flow->ssn_server);

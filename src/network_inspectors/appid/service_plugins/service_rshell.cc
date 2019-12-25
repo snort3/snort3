@@ -267,7 +267,7 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto fail;
         if (size == 1 || *data == 0x01)
         {
-            if(size !=1) 
+            if(size !=1)
             {
                 data++;
                 size--;
@@ -278,12 +278,12 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
                 }
             }
             if(rd->child)
-            { 
+            {
                 if(rd->child->state == RSHELL_STATE_STDERR_WAIT)
                     rd->child->state = RSHELL_STATE_STDERR_DONE;
                 else
                     goto fail;
-            } 
+            }
             args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
             goto success;
         }

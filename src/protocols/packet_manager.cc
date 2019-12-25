@@ -590,13 +590,13 @@ const uint8_t* PacketManager::encode_reject(UnreachResponse type,
 
         checksum::Pseudoheader6 ps6;
         const int ip_len = buf.size();
-        memcpy(ps6.sip, ip6h->get_src()->u6_addr8, sizeof(ps6.sip));
-        memcpy(ps6.dip, ip6h->get_dst()->u6_addr8, sizeof(ps6.dip));
-        ps6.zero = 0;
-        ps6.protocol = IpProtocol::ICMPV6;
-        ps6.len = htons((uint16_t)(ip_len));
+        memcpy(ps6.hdr.sip, ip6h->get_src()->u6_addr8, sizeof(ps6.hdr.sip));
+        memcpy(ps6.hdr.dip, ip6h->get_dst()->u6_addr8, sizeof(ps6.hdr.dip));
+        ps6.hdr.zero = 0;
+        ps6.hdr.protocol = IpProtocol::ICMPV6;
+        ps6.hdr.len = htons((uint16_t)(ip_len));
 
-        icmph->csum = checksum::icmp_cksum((uint16_t*)buf.data(), ip_len, &ps6);
+        icmph->csum = checksum::icmp_cksum((uint16_t*)buf.data(), ip_len, ps6);
 
         if (encode(p, flags, inner_ip_index, IpProtocol::ICMPV6, buf))
         {

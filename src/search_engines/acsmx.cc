@@ -62,8 +62,6 @@
 
 using namespace snort;
 
-#define MEMASSERT(p,s) if (!(p)) { fprintf(stderr,"ACSM-No Memory: %s\n",s); exit(0); }
-
 static int max_memory = 0;
 
 static void* AC_MALLOC(int n)
@@ -115,7 +113,6 @@ static ACSM_PATTERN* CopyMatchListEntry(ACSM_PATTERN* px)
 {
     ACSM_PATTERN* p;
     p = (ACSM_PATTERN*)AC_MALLOC(sizeof(ACSM_PATTERN));
-    MEMASSERT(p, "CopyMatchListEntry");
     memcpy(p, px, sizeof (ACSM_PATTERN));
     px->udata->ref_count++;
     p->next = nullptr;
@@ -130,7 +127,6 @@ static void AddMatchListEntry(ACSM_STRUCT* acsm, int state, ACSM_PATTERN* px)
 {
     ACSM_PATTERN* p;
     p = (ACSM_PATTERN*)AC_MALLOC(sizeof(ACSM_PATTERN));
-    MEMASSERT(p, "AddMatchListEntry");
     memcpy(p, px, sizeof (ACSM_PATTERN));
     p->next = acsm->acsmStateTable[state].MatchList;
     acsm->acsmStateTable[state].MatchList = p;
@@ -279,7 +275,6 @@ static void Convert_NFA_To_DFA(ACSM_STRUCT* acsm)
 ACSM_STRUCT* acsmNew(const MpseAgent* agent)
 {
     ACSM_STRUCT* p = (ACSM_STRUCT*)AC_MALLOC (sizeof (ACSM_STRUCT));
-    MEMASSERT(p, "acsmNew");
 
     if (p)
     {
@@ -297,14 +292,12 @@ int acsmAddPattern(
 {
     ACSM_PATTERN* plist;
     plist = (ACSM_PATTERN*)AC_MALLOC (sizeof (ACSM_PATTERN));
-    MEMASSERT(plist, "acsmAddPattern");
     plist->patrn = (uint8_t*)AC_MALLOC (n);
     ConvertCaseEx (plist->patrn, pat, n);
     plist->casepatrn = (uint8_t*)AC_MALLOC (n);
     memcpy(plist->casepatrn, pat, n);
 
     plist->udata = (ACSM_USERDATA*)AC_MALLOC(sizeof(ACSM_USERDATA));
-    MEMASSERT(plist->udata, "acsmAddPattern");
     plist->udata->ref_count = 1;
     plist->udata->id = user;
 
@@ -366,7 +359,6 @@ static inline int _acsmCompile(ACSM_STRUCT* acsm)
     }
     acsm->acsmStateTable =
         (ACSM_STATETABLE*)AC_MALLOC (sizeof (ACSM_STATETABLE) * acsm->acsmMaxStates);
-    MEMASSERT(acsm->acsmStateTable, "_acsmCompile");
 
     /* Initialize state zero as a branch */
     acsm->acsmNumStates = 0;

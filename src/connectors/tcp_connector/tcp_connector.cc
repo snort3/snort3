@@ -167,7 +167,7 @@ void TcpConnector::process_receive()
     {
         if (errno != EINTR)
         {
-            
+
             char error_msg[1024] = {0};
             if (strerror_r(errno, error_msg, sizeof(error_msg)) == 0)
                 ErrorMessage("TcpC Input Thread: Error polling on socket %d: %s\n", pfds[0].fd, error_msg);
@@ -413,7 +413,7 @@ static TcpConnector* tcp_connector_tinit_answer(TcpConnectorConfig* cfg, const c
         if (strerror_r(errno, error_msg, sizeof(error_msg)) == 0)
             ErrorMessage("accept() failure: %s\n", error_msg);
         else
-            ErrorMessage("accept() failure: %d\n", errno); 
+            ErrorMessage("accept() failure: %d\n", errno);
         return nullptr;
     }
 

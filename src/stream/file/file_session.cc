@@ -43,7 +43,7 @@ static THREAD_LOCAL ProfileStats file_ssn_stats;
 // FileSession methods
 //-------------------------------------------------------------------------
 
-FileSession::FileSession(Flow* flow) : Session(flow)
+FileSession::FileSession(Flow* f) : Session(f)
 { memory::MemoryCap::update_allocations(sizeof(*this)); }
 
 FileSession::~FileSession()

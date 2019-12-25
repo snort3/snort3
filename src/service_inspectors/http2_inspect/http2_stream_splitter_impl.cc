@@ -89,7 +89,7 @@ StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t
     {
         // Continuation of ongoing data frame
         session_data->num_frame_headers[source_id] = 0;
- 
+
         // If this is a new frame section, update next frame section length
         if (session_data->scan_remaining_frame_octets[source_id] == 0)
         {
@@ -107,7 +107,7 @@ StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t
             session_data->scan_remaining_frame_octets[source_id] -= length;
             session_data->total_bytes_in_split[source_id] += length;
             return status = StreamSplitter::SEARCH;
-        } 
+        }
 
         // Have full frame section, flush and update leftover
         session_data->total_bytes_in_split[source_id] +=
@@ -244,7 +244,7 @@ StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t
     return status;
 }
 
-// FIXIT-M If there are any errors in header decoding, this currently tells stream not to send 
+// FIXIT-M If there are any errors in header decoding, this currently tells stream not to send
 // headers to detection. This behavior may need to be changed.
 const StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned total,
     unsigned offset, const uint8_t* data, unsigned len, uint32_t flags,
@@ -356,7 +356,7 @@ const StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned to
         session_data->num_frame_headers[source_id] = 0;
         session_data->scan_octets_seen[source_id] = 0;
 
-        // Return 0-length non-null buffer to stream which signals detection required, but don't 
+        // Return 0-length non-null buffer to stream which signals detection required, but don't
         // create pkt_data buffer
         frame_buf.data = (const uint8_t*)"";
     }
@@ -365,7 +365,7 @@ const StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned to
     return frame_buf;
 }
 
-ValidationResult validate_preface(const uint8_t* data, const uint32_t length, 
+ValidationResult validate_preface(const uint8_t* data, const uint32_t length,
     const uint32_t octets_seen)
 {
     const uint32_t preface_length = 24;
@@ -383,6 +383,6 @@ ValidationResult validate_preface(const uint8_t* data, const uint32_t length,
 
     if ((octets_seen + length) < preface_length)
         return V_TBD;
-    
+
     return V_GOOD;
 }

@@ -495,7 +495,7 @@ static bool parse_certificates(ServiceSSLData* ss)
                     {
                         if ((start = strstr(cert_name, COMMON_NAME_STR)))
                         {
-							int length;
+                            int length;
                             start += strlen(COMMON_NAME_STR);
                             length = strlen(start);
                             if (length > 2 and *start == '*' and *(start+1) == '.')

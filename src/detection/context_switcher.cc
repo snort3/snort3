@@ -70,7 +70,7 @@ void ContextSwitcher::start()
     IpsContext* c = idle.back();
     assert(c->state == IpsContext::IDLE);
     assert(!c->has_callbacks());
-    
+
     c->context_num = ++global_context_num;
     trace_logf(detection, TRACE_DETECTION_ENGINE, "(wire) %" PRIu64 " cs::start %" PRIu64 " (i=%zu, b=%zu)\n",
         get_packet_number(), c->context_num, idle.size(), busy.size());
@@ -79,7 +79,7 @@ void ContextSwitcher::start()
 
     c->packet->active = c->packet->active_inst;
     c->packet->active->reset();
-    c->packet->action = &c->packet->action_inst; 
+    c->packet->action = &c->packet->action_inst;
     c->state = IpsContext::BUSY;
 
     busy.emplace_back(c);
@@ -130,7 +130,7 @@ void ContextSwitcher::abort()
 
         if ( c->packet->flow )
             c->packet->flow->context_chain.abort();
-        
+
         c->abort();
         c->state = IpsContext::IDLE;
         c->clear_callbacks();
@@ -176,7 +176,7 @@ IpsContext* ContextSwitcher::complete()
     c->clear_context_data();
     c->state = IpsContext::IDLE;
     idle.emplace_back(c);
-    
+
     if ( busy.empty() )
         return nullptr;
 
@@ -189,7 +189,7 @@ void ContextSwitcher::suspend()
 
     IpsContext* c = busy.back();
     assert(c->state == IpsContext::BUSY);
-    
+
     trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::suspend %" PRIu64 " (i=%zu, b=%zu, wh=%zu)\n",
         c->packet_number, c->context_num, idle.size(), busy.size(), contexts.size() - idle.size() - busy.size());
 
@@ -271,7 +271,7 @@ TEST_CASE("ContextSwitcher single wire", "[ContextSwitcher]")
         _2_   _3_
        / | \ / | \
       *4*5 6 7 8 9
-      
+
        6 2 7 8 9 3 1
     */
 
@@ -291,7 +291,7 @@ TEST_CASE("ContextSwitcher single wire", "[ContextSwitcher]")
     CHECK(c5->state == IpsContext::BUSY);
     mgr.complete();
     CHECK(c5->state == IpsContext::IDLE);
-    
+
     c6 = mgr.interrupt();
     CHECK(c6->state == IpsContext::BUSY);
     c6->packet->set_offloaded();
@@ -333,7 +333,7 @@ TEST_CASE("ContextSwitcher single wire", "[ContextSwitcher]")
     CHECK(c1->state == IpsContext::SUSPENDED);
 
     std::vector<IpsContext*> expected = { c6, c2, c7, c8, c9, c3, c1 };
-    
+
     for ( auto& e : expected )
     {
         mgr.resume(e);
@@ -361,7 +361,7 @@ TEST_CASE("ContextSwitcher multi wire", "[ContextSwitcher]")
         c->packet->flow = new Flow;
         mgr.push(c);
     }
-    
+
     mgr.start();
     c1 = mgr.get_context();
     mgr.suspend();

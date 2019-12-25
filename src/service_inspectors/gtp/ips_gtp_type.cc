@@ -57,7 +57,7 @@ public:
     EvalStatus eval(Cursor&, Packet*) override;
 
 public:
-    // set n is for version n (named types can have 
+    // set n is for version n (named types can have
     // different codes in different versions)
     ByteBitSet types[MAX_GTP_VERSION_CODE + 1];
 };

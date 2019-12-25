@@ -73,10 +73,10 @@ Flow* FlowCache::find(const FlowKey*) { return nullptr; }
 Flow* FlowCache::allocate(const FlowKey*) { return nullptr; }
 void FlowCache::push(Flow*) { }
 bool FlowCache::prune_one(PruneReason, bool) { return true; }
-unsigned FlowCache::delete_flows(unsigned) { return 0; } 
+unsigned FlowCache::delete_flows(unsigned) { return 0; }
 unsigned FlowCache::timeout(unsigned, time_t) { return 1; }
 void Flow::init(PktType) { }
-void set_network_policy(SnortConfig*, unsigned) { } 
+void set_network_policy(SnortConfig*, unsigned) { }
 void DataBus::publish(const char*, const uint8_t*, unsigned, Flow*) { }
 void DataBus::publish(const char*, Packet*, Flow*) { }
 SnortConfig* SnortConfig::get_conf() { return nullptr; }

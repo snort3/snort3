@@ -102,7 +102,7 @@ bool Dns::convert(std::istringstream& data_stream)
         }
     }
 
-    if (!ports_set) 
+    if (!ports_set)
     {
         tcp_bind.set_when_role("server");
         tcp_bind.add_when_port("53");

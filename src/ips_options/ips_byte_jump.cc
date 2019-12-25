@@ -523,7 +523,7 @@ bool ByteJumpModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("bitmask") )
         data.bitmask_val = v.get_uint32();
-    
+
     else
         return false;
 

@@ -2044,7 +2044,7 @@ static void DCE2_CoSegDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoSeg* 
     uint16_t frag_len = 0;
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
     int smb_hdr_len;
-    
+
     if ( DetectionEngine::get_current_packet()->is_from_client() )
     {
         smb_hdr_len = DCE2_MOCK_HDR_LEN__SMB_CLI;

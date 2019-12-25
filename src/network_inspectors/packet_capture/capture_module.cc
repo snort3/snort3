@@ -104,7 +104,7 @@ PacketCaptureDebug::PacketCaptureDebug(const char* f)
     {
         filter = f;
         enable = true;
-    } 
+    }
 }
 
 bool PacketCaptureDebug::execute(Analyzer&, void**)

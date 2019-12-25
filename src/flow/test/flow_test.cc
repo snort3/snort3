@@ -106,10 +106,10 @@ TEST(nondefault_timeout, hard_expiration)
     flow->set_default_session_timeout(validate, true);
     flow->set_hard_expiration();
     flow->set_expire(&pkt, validate);
-    
+
     CHECK( flow->is_hard_expiration() == true);
     CHECK( flow->expire_time == validate );
-    
+
     delete flow;
 }
 

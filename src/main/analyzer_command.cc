@@ -180,7 +180,7 @@ ACDAQSwap::~ACDAQSwap()
     LogMessage("== daq module reload complete\n");
 }
 
-SFDAQInstance* AnalyzerCommand::get_daq_instance(Analyzer& analyzer) 
+SFDAQInstance* AnalyzerCommand::get_daq_instance(Analyzer& analyzer)
 {
     return analyzer.get_daq_instance();
 }

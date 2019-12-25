@@ -485,7 +485,7 @@ std::string read_infile(const char* key, const char* fname)
     {
         ParseError("can't open file %s = %s: %s", key, fname, get_error(errno));
         close(fd);
-        return "";  
+        return "";
     }
     close(fd);
     return line;

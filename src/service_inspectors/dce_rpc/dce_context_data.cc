@@ -43,7 +43,7 @@ unsigned DceContextData::get_ips_id(DCE2_TransType trans)
 {
     switch(trans)
     {
-        case DCE2_TRANS_TYPE__SMB: 
+        case DCE2_TRANS_TYPE__SMB:
             return DceContextData::smb_ips_id;
         case DCE2_TRANS_TYPE__TCP:
             return DceContextData::tcp_ips_id;
@@ -59,7 +59,7 @@ void DceContextData::set_ips_id(DCE2_TransType trans, unsigned id)
 {
     switch(trans)
     {
-        case DCE2_TRANS_TYPE__SMB: 
+        case DCE2_TRANS_TYPE__SMB:
             DceContextData::smb_ips_id = id;
             break;
         case DCE2_TRANS_TYPE__TCP:

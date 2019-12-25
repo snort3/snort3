@@ -86,7 +86,7 @@ TEST(protocol_reference, service_protocols)
 //     * is_network_protocol()
 //     * is_builtin_protocol()
 //     * is_service_protocol()
-TEST(protocol_reference, builtin_protocols) 
+TEST(protocol_reference, builtin_protocols)
 {
     ProtocolReference refs;
 

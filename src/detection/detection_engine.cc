@@ -176,7 +176,7 @@ Packet* DetectionEngine::set_next_packet(Packet* parent)
         p->active = parent->active;
         p->action = parent->action;
     }
-    
+
     // processing but parent is already gone (flow cache flush etc..)
     else if ( Analyzer::get_switcher()->get_context() )
     {
@@ -185,7 +185,7 @@ Packet* DetectionEngine::set_next_packet(Packet* parent)
         p->active = get_current_packet()->active;
         p->action = get_current_packet()->action;
     }
-    
+
     // shutdown, so use a dummy so null checking is not needed everywhere
     else
     {
@@ -227,7 +227,7 @@ void DetectionEngine::finish_inspect(Packet* p, bool inspected)
     // this also handles block pending state
     Stream::check_flow_closed(p);
 
-    if ( inspected and !p->context->next() ) 
+    if ( inspected and !p->context->next() )
         InspectorManager::clear(p);
 
     clear_events(p);
@@ -296,16 +296,16 @@ IpsContextData* DetectionEngine::get_data(unsigned id, IpsContext* context)
 }
 
 void DetectionEngine::add_replacement(const std::string& s, unsigned off)
-{ 
+{
     Replacement r;
 
     r.data = s;
     r.offset = off;
-    Analyzer::get_switcher()->get_context()->rpl.emplace_back(r); 
+    Analyzer::get_switcher()->get_context()->rpl.emplace_back(r);
 }
 
 bool DetectionEngine::get_replacement(std::string& s, unsigned& off)
-{ 
+{
     if ( Analyzer::get_switcher()->get_context()->rpl.empty() )
         return false;
 
@@ -459,12 +459,12 @@ void DetectionEngine::onload()
         trace_logf(detection, TRACE_DETECTION_ENGINE,
             "%" PRIu64 " de::onload %" PRIu64 " (r=%d)\n",
             p->context->packet_number, p->context->context_num, offloader->count());
-        
+
         p->clear_offloaded();
-        
+
         IpsContextChain& chain = p->flow ? p->flow->context_chain :
             Analyzer::get_switcher()->non_flow_chain;
-        
+
         resume_ready_suspends(chain);
     }
 }
@@ -488,8 +488,8 @@ void DetectionEngine::complete(Packet* p)
 
     ContextSwitcher* sw = Analyzer::get_switcher();
     sw->resume(p->context);
-   
-    if ( p->is_detection_enabled(p->packet_flags & PKT_FROM_CLIENT) ) 
+
+    if ( p->is_detection_enabled(p->packet_flags & PKT_FROM_CLIENT) )
         fp_complete(p);
 }
 

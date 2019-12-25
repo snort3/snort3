@@ -27,6 +27,15 @@
 
 #include "dce_smb.h"
 
+namespace
+{
+inline void DCE2_SMB_PAF_SHIFT(uint64_t& x64, const uint8_t& x8)
+{
+    x64 <<= 8;
+    x64 |= (uint64_t) x8;
+}
+}
+
 using namespace snort;
 
 /*********************************************************************
@@ -115,7 +124,7 @@ static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, cons
                 ss->paf_state = DCE2_PAF_SMB_STATES__0;
                 return StreamSplitter::FLUSH;
             }
-          
+
             ss->paf_state = (DCE2_PafSmbStates)(((int)ss->paf_state) + 1);
             break;
         case DCE2_PAF_SMB_STATES__7:
@@ -135,7 +144,7 @@ static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, cons
             nb_len = NbssLen((const NbssHdr*)&nb_hdr);
             *fp = (nb_len + sizeof(NbssHdr) + n) - ss->paf_state;
             ss->paf_state = DCE2_PAF_SMB_STATES__0;
-   
+
             return StreamSplitter::FLUSH;
         default:
             DCE2_SMB_PAF_SHIFT(ss->nb_hdr, data[n]);

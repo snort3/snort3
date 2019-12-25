@@ -329,14 +329,14 @@ static int get_sip_client_app(void* patternMatcher, const char* pattern, uint32_
 }
 
 void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, const SfIp* cliIp,
-    uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol proto, int16_t app_id)
+    uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol protocol, int16_t app_id)
 {
     //  FIXIT-RC: Passing app_id instead of SnortProtocolId to
     //  create_future_session is incorrect. We need to look up
     //  snort_protocol_id.
 
     AppIdSession* fp = AppIdSession::create_future_session(
-        pkt, cliIp, cliPort, srvIp, srvPort, proto, app_id,
+        pkt, cliIp, cliPort, srvIp, srvPort, protocol, app_id,
         APPID_EARLY_SESSION_FLAG_FW_RULE);
 
     if ( fp )
@@ -356,7 +356,7 @@ void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, con
     // create an RTCP flow as well
 
     AppIdSession* fp2 = AppIdSession::create_future_session(
-        pkt, cliIp, cliPort + 1, srvIp, srvPort + 1, proto, app_id,
+        pkt, cliIp, cliPort + 1, srvIp, srvPort + 1, protocol, app_id,
         APPID_EARLY_SESSION_FLAG_FW_RULE);
 
     if ( fp2 )

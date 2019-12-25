@@ -594,7 +594,7 @@ done:
     if(args.asd.get_session_flags(APPID_SESSION_SERVICE_DETECTED))
         args.asd.clear_session_flags(APPID_SESSION_CONTINUE | APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     else
-        args.asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS); 
+        args.asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     args.asd.set_client_detected();
     return APPID_SUCCESS;
 }

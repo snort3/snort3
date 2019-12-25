@@ -422,7 +422,7 @@ int gtp_parse(const GTPConfig& config, GTPMsg* msg, const uint8_t* buff, uint16_
 
     if (msg->version > MAX_GTP_VERSION_CODE)
         return false;
-    
+
     /*Check whether this is GTP or GTP', Exit if GTP'*/
     if (!(hdr->flag & 0x10))
         return false;

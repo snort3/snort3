@@ -464,7 +464,7 @@ static void SIP_updateMedias(SIP_MediaSession* mSession, SIP_MediaList* dList)
 
     if (nullptr == mSession)
         return;
-  
+
     mSession->savedFlag = SIP_SESSION_SAVED;
     // Find out the media session based on session id
     currSession = *dList;
@@ -472,7 +472,7 @@ static void SIP_updateMedias(SIP_MediaSession* mSession, SIP_MediaList* dList)
     {
         if (currSession->sessionID == mSession->sessionID)
             break;
-        
+
         preSession = currSession;
         currSession = currSession->nextS;
     }
@@ -621,7 +621,7 @@ int SIP_updateDialog(SIPMsg* sipMsg, SIP_DialogList* dList, Packet* p, SIP_PROTO
     {
         if (sipMsg->dlgID.callIdHash == dialog->dlgID.callIdHash)
             break;
-        
+
         oldDialog = dialog;
         dialog = dialog->nextD;
     }

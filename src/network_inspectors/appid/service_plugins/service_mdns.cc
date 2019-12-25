@@ -121,7 +121,7 @@ MdnsServiceDetector::~MdnsServiceDetector()
 }
 
 void MdnsServiceDetector::release_thread_resources()
-{   
+{
     MatchedPatterns* node;
 
     destroy_match_list();

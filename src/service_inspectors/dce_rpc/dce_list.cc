@@ -143,7 +143,7 @@ static void DCE2_ListInsertTail(DCE2_List* list, DCE2_ListNode* n)
 static void DCE2_ListInsertHead(DCE2_List* list, DCE2_ListNode* n)
 {
     if ((list == nullptr) || (n == nullptr))
-        return;   
+        return;
 
     if (list->head == nullptr)
     {

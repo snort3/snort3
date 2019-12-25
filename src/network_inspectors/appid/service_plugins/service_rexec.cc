@@ -105,7 +105,7 @@ static void rexec_free_state(void* data)
 
 void RexecServiceDetector::rexec_bail(ServiceREXECData* rd)
 {
-    if (!rd) 
+    if (!rd)
         return;
     rd->state = REXEC_STATE_BAIL;
     if(rd->child)
@@ -292,7 +292,7 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
         }
         goto bail;
     case REXEC_STATE_STDERR_WAIT:
-        if(!size) 
+        if(!size)
             break;
         goto bail;
     case REXEC_STATE_STDERR_DONE:

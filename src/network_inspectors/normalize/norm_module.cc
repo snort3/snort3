@@ -191,7 +191,7 @@ static const Parameter s_params[] =
 //-------------------------------------------------------------------------
 
 // using string* instead of string because clang++ 5.1
-// vector::back() does not seem to return a reference 
+// vector::back() does not seem to return a reference
 //
 // FIXIT-L these are static since get_pegs() is const
 // consider making that non-const

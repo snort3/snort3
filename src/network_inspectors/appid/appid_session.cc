@@ -775,7 +775,7 @@ AppId AppIdSession::pick_payload_app_id()
 
     if (tp_payload_app_id_deferred)
         return tp_payload_app_id;
-    
+
     if (payload.get_id() > APP_ID_NONE)
         return payload.get_id();
 

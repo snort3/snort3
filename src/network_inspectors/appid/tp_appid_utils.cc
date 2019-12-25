@@ -210,7 +210,7 @@ static inline void process_http_session(AppIdSession& asd,
             hsession->set_offset(REQ_URI_FID,
                 attribute_data.http_request_uri_begin(),
                 attribute_data.http_request_uri_end());
-            asd.scan_flags |= SCAN_HTTP_URI_FLAG; 
+            asd.scan_flags |= SCAN_HTTP_URI_FLAG;
             if (appidDebug->is_active())
                 LogMessage("AppIdDbg %s URI (%u-%u) is %s\n", appidDebug->get_debug_session(),
                     attribute_data.http_request_uri_begin(),
@@ -447,28 +447,28 @@ static inline void process_rtmp(AppIdSession& asd,
             asd.scan_flags |= SCAN_HTTP_USER_AGENT_FLAG;
         }
     }
-    
-    if ( ( asd.scan_flags & SCAN_HTTP_USER_AGENT_FLAG ) and 
+
+    if ( ( asd.scan_flags & SCAN_HTTP_USER_AGENT_FLAG ) and
          asd.client.get_id() <= APP_ID_NONE and
-         ( field = hsession->get_field(REQ_AGENT_FID) ) and 
+         ( field = hsession->get_field(REQ_AGENT_FID) ) and
          ( size = attribute_data.http_request_user_agent_end() -
            attribute_data.http_request_user_agent_begin() ) > 0 )
     {
         char *version = nullptr;
         HttpPatternMatchers* http_matchers = HttpPatternMatchers::get_instance();
-       
-        http_matchers->identify_user_agent(field->c_str(), size, service_id, 
+
+        http_matchers->identify_user_agent(field->c_str(), size, service_id,
         client_id, &version);
-        
+
         asd.set_client_appid_data(client_id, change_bits, version);
-        
+
         // do not overwrite a previously-set service
         if ( service_id <= APP_ID_NONE )
             asd.set_service_appid_data(service_id, change_bits);
-        
+
         asd.scan_flags |= ~SCAN_HTTP_USER_AGENT_FLAG;
         snort_free(version);
-    }     
+    }
 
     if ( hsession->get_field(MISC_URL_FID) || (confidence == 100 &&
         asd.session_packet_count > asd.config->mod_config->rtmp_max_packets) )

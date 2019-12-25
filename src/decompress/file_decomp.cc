@@ -420,7 +420,7 @@ void File_Decomp_Alert(fd_session_t* SessionPtr, int Event)
 } // namespace snort
 
 //--------------------------------------------------------------------------
-// unit tests 
+// unit tests
 //--------------------------------------------------------------------------
 
 #ifdef UNIT_TEST

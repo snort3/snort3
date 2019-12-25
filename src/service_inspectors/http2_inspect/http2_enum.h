@@ -37,7 +37,7 @@ enum FrameType : uint8_t { FT_DATA=0, FT_HEADERS=1, FT_PRIORITY=2, FT_RST_STREAM
 
 // Message buffers available to clients
 // This enum must remain synchronized with Http2Api::classic_buffer_names[]
-enum HTTP2_BUFFER { HTTP2_BUFFER_FRAME_HEADER = 1, HTTP2_BUFFER_FRAME_DATA, HTTP2_BUFFER_DECODED_HEADER, 
+enum HTTP2_BUFFER { HTTP2_BUFFER_FRAME_HEADER = 1, HTTP2_BUFFER_FRAME_DATA, HTTP2_BUFFER_DECODED_HEADER,
     HTTP2_BUFFER_MAX };
 
 // Peg counts
@@ -90,7 +90,7 @@ enum Infraction
     INF__MAX_VALUE
 };
 
-enum HeaderFrameFlags 
+enum HeaderFrameFlags
 {
     END_STREAM = 0x1,
     END_HEADERS = 0x4,
@@ -113,7 +113,7 @@ enum PseudoHeaders
 enum SettingsFrameIds
 {
     HEADER_TABLE_SIZE = 1,
-    ENABLE_PUSH, 
+    ENABLE_PUSH,
     MAX_CONCURRENT_STREAMS,
     INITIAL_WINDOW_SIZE,
     MAX_FRAME_SIZE,

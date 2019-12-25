@@ -152,13 +152,13 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     if ( SnortConfig::icmp_checksums() && !valid_checksum_from_daq(raw))
     {
         checksum::Pseudoheader6 ph6;
-        COPY4(ph6.sip, snort.ip_api.get_src()->get_ip6_ptr());
-        COPY4(ph6.dip, snort.ip_api.get_dst()->get_ip6_ptr());
-        ph6.zero = 0;
-        ph6.protocol = codec.ip6_csum_proto;
-        ph6.len = htons((unsigned short)raw.len);
+        COPY4(ph6.hdr.sip, snort.ip_api.get_src()->get_ip6_ptr());
+        COPY4(ph6.hdr.dip, snort.ip_api.get_dst()->get_ip6_ptr());
+        ph6.hdr.zero = 0;
+        ph6.hdr.protocol = codec.ip6_csum_proto;
+        ph6.hdr.len = htons((uint16_t)raw.len);
 
-        uint16_t csum = checksum::icmp_cksum((const uint16_t*)(icmp6h), raw.len, &ph6);
+        uint16_t csum = checksum::icmp_cksum((const uint16_t*)(icmp6h), raw.len, ph6);
 
         if (csum && !codec.is_cooked())
         {
@@ -365,12 +365,12 @@ void Icmp6Codec::update(const ip::IpApi& api, const EncodeFlags flags,
         checksum::Pseudoheader6 ps6;
         h->cksum = 0;
 
-        memcpy(ps6.sip, api.get_src()->get_ip6_ptr(), sizeof(ps6.sip));
-        memcpy(ps6.dip, api.get_dst()->get_ip6_ptr(), sizeof(ps6.dip));
-        ps6.zero = 0;
-        ps6.protocol = IpProtocol::ICMPV6;
-        ps6.len = htons((uint16_t)updated_len);
-        h->cksum = checksum::icmp_cksum((uint16_t*)h, updated_len, &ps6);
+        memcpy(ps6.hdr.sip, api.get_src()->get_ip6_ptr(), sizeof(ps6.hdr.sip));
+        memcpy(ps6.hdr.dip, api.get_dst()->get_ip6_ptr(), sizeof(ps6.hdr.dip));
+        ps6.hdr.zero = 0;
+        ps6.hdr.protocol = IpProtocol::ICMPV6;
+        ps6.hdr.len = htons((uint16_t)updated_len);
+        h->cksum = checksum::icmp_cksum((uint16_t*)h, updated_len, ps6);
     }
 }
 

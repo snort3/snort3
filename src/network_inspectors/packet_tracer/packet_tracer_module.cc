@@ -92,7 +92,7 @@ bool PacketTracerDebug::execute(Analyzer&, void**)
 {
     if (enable)
         PacketTracer::set_constraints(&constraints);
-    else 
+    else
         PacketTracer::set_constraints(nullptr);
 
     return true;
@@ -196,7 +196,7 @@ bool PacketTracerModule::begin(const char*, int, SnortConfig*)
 }
 bool PacketTracerModule::end(const char*, int, SnortConfig*)
 {
-    if (config != nullptr) 
+    if (config != nullptr)
     {
         PacketTracer::configure(config->enabled, config->file);
         delete config;

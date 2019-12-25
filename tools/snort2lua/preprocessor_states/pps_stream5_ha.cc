@@ -82,7 +82,7 @@ bool StreamHa::convert(std::istringstream& data_stream)
         if (!tmpval)
         {
             data_api.failed_conversion(data_stream, arg_stream.str());
-            retval = false;;
+            retval = false;
         }
     }
     table_api.close_table(); // ha stream

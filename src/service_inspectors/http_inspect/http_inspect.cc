@@ -471,7 +471,7 @@ void HttpInspect::clear(Packet* p)
     const SourceId source_id = current_section->get_source_id();
 
     //FIXIT-M This check may not apply to the transaction attached to the packet
-    //in case of offload. 
+    //in case of offload.
     if (session_data->detection_status[source_id] == DET_DEACTIVATING)
     {
         if (source_id == SRC_CLIENT)

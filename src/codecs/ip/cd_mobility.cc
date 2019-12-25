@@ -85,7 +85,7 @@ bool MobilityCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     // must be called AFTER setting next_prot_id
     // Mobility Header must always be the last header in the header chain of an IPv6 packet
     CheckIPv6ExtensionOrder(codec, IpProtocol::MOBILITY_IPV6);
-    
+
     return true;
 }
 

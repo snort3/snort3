@@ -39,8 +39,8 @@ public:
 
 private:
     Http2SettingsFrame(const uint8_t* header_buffer, const int32_t header_len,
-        const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* session_data,
-        HttpCommon::SourceId source_id);
+        const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* ssn_data,
+        HttpCommon::SourceId src_id);
 
     void parse_settings_frame();
     bool sanity_check();
@@ -52,13 +52,13 @@ private:
 class Http2ConnectionSettings
 {
 public:
-	uint32_t get_param(uint16_t id);
-	void set_param(uint16_t id, uint32_t value);
+    uint32_t get_param(uint16_t id);
+    void set_param(uint16_t id, uint32_t value);
 
 private:
     void validate_param_id(uint16_t id);
 
-    static const uint16_t PARAMETER_COUNT = 6; 
+    static const uint16_t PARAMETER_COUNT = 6;
     uint32_t parameters[PARAMETER_COUNT] = {
              4096, // Header table size
                 1, // Push promise

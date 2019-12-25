@@ -77,9 +77,7 @@ HashFnc* hashfcn_new(int m)
 void hashfcn_free(HashFnc* p)
 {
     if ( p )
-    {
         snort_free(p);
-    }
 }
 
 unsigned hashfcn_hash(HashFnc* p, const unsigned char* d, int n)
@@ -167,22 +165,20 @@ void mix_str(
     }
 }
 
-size_t str_to_hash(const uint8_t *str, int length )
+uint32_t str_to_hash(const uint8_t *str, size_t length)
 {
-    size_t a = 0, b = 0, c = 0;
+    uint32_t a = 0, b = 0, c = 0;
 
-    for (int i = 0, j = 0; i < length; i += 4)
+    for (size_t i = 0, j = 0; i < length; i += 4)
     {
-        size_t tmp = 0;
-        int k = length - i;
+        uint32_t tmp = 0;
+        size_t k = length - i;
 
         if (k > 4)
-            k=4;
+            k = 4;
 
-        for (int m = 0; m < k; m++)
-        {
-            tmp |= *(str + i + m) << m*8;
-        }
+        for (size_t m = 0; m < k; m++)
+            tmp |= *(str + i + m) << m * 8;
 
         switch (j)
         {
@@ -200,12 +196,12 @@ size_t str_to_hash(const uint8_t *str, int length )
 
         if (j == 3)
         {
-            mix(a,b,c);
+            mix(a, b, c);
             j = 0;
         }
     }
 
-    finalize(a,b,c);
+    finalize(a, b, c);
     return c;
 }
 } //namespace snort

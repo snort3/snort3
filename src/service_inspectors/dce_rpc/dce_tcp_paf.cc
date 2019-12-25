@@ -121,7 +121,7 @@ static StreamSplitter::Status dce2_tcp_paf(DCE2_PafTcpData* ds, Flow* flow, cons
              * flush just before it */
             if ((num_requests == 1) || (n <= len))
                 tmp_fp += ds->frag_len;
-          
+
             ds->paf_state = DCE2_PAF_TCP_STATES__0;
             continue;      // we incremented n already
         default:

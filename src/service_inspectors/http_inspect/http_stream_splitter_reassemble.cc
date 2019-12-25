@@ -311,10 +311,10 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
         else
         {
 #ifdef REG_TEST
-	    // FIXIT-M: known case: if session clears w/o a flush point,
-	    // stream_tcp will flush to paf max which could be well below what
-	    // has been scanned so far.  since no flush point was specified,
-	    // NHI should just deal with what it gets.
+            // FIXIT-M: known case: if session clears w/o a flush point,
+            // stream_tcp will flush to paf max which could be well below what
+            // has been scanned so far.  since no flush point was specified,
+            // NHI should just deal with what it gets.
             //assert(false);
 #endif
             return http_buf;

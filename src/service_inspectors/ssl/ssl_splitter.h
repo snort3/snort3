@@ -23,8 +23,8 @@
 
 // Protocol aware flushing for SSL
 // TLSPlaintext records are flushed when end-of-record meets end-of segment
-// The splitter supports both sslv2 and sslv3 record format, 
-// it starts by checking the first byte, if it is a valid sslv3 content type, 
+// The splitter supports both sslv2 and sslv3 record format,
+// it starts by checking the first byte, if it is a valid sslv3 content type,
 // mark the session as sslv3; else if the MSB bit was set, marks it as sslv2,
 // if this bit is not set, yet the session was marked sslv2 from prior detection,
 // continue as sslv2
@@ -41,7 +41,7 @@ enum SslPafStates
     SSL_PAF_STATES_LEN2,    // length byte-1
     SSL_PAF_STATES_DATA,    // fragment
     SSL_PAF_STATES_LEN2_V2, // sslv2, length byte-1
-    SSL_PAF_STATES_PAD_V2,  // sslv2, padding byte if needed 
+    SSL_PAF_STATES_PAD_V2,  // sslv2, padding byte if needed
 };
 
 class SslSplitter : public snort::StreamSplitter

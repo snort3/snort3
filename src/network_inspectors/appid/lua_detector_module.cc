@@ -90,7 +90,7 @@ bool get_lua_field(lua_State* L, int table, const char* field, IpProtocol& out)
 
 inline void set_control(lua_State* L, int is_control)
 {
-    lua_pushboolean (L, is_control); // push flag to stack 
+    lua_pushboolean (L, is_control); // push flag to stack
     lua_setglobal(L, "is_control"); // create global key to store value
     lua_pop(L, 1);
 }

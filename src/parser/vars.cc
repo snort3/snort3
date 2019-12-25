@@ -819,7 +819,7 @@ void AddVarToTable(SnortConfig* sc, const char* name, const char* value)
 }
 
 //--------------------------------------------------------------------------
-// unit tests 
+// unit tests
 //--------------------------------------------------------------------------
 
 #ifdef UNIT_TEST

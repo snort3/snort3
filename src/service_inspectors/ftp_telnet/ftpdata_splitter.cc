@@ -114,7 +114,7 @@ bool FtpDataSplitter::finish(Flow* flow)
             FileFlows* file_flows = FileFlows::get_file_flows(flow);
             if ( file_flows )
             {
-                file_flows->file_process(DetectionEngine::get_current_packet(), 
+                file_flows->file_process(DetectionEngine::get_current_packet(),
                     nullptr, 0, SNORT_FILE_END, to_server(), fdfd->session.path_hash);
             }
         }

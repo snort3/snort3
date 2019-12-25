@@ -47,9 +47,9 @@ bool Request::read(const int& f)
     fd = f;
     while ( (bytes_read < sizeof(read_buf)) and ((n = ::read(fd, &buf, 1)) > 0) )
     {
-        read_buf[bytes_read++] = buf; 
+        read_buf[bytes_read++] = buf;
 
-        if (buf == '\n') 
+        if (buf == '\n')
         {
             newline_found = true;
             break;
@@ -87,7 +87,7 @@ void Request::respond(const char* s, bool queue_response, bool remote_only)
 {
     if (remote_only && (fd == STDOUT_FILENO))
         return;
- 
+
     if ( fd < 1 )
     {
         if (!remote_only)

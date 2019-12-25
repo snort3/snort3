@@ -158,7 +158,7 @@ void Stream::check_flow_closed(Packet* p)
     if (flow->session_state & STREAM_STATE_CLOSED)
     {
         assert(flow_con);
-        
+
         // this will get called on each onload
         // eventually all onloads will occur and delete will be called
         if ( not flow->is_suspended() )
@@ -214,8 +214,8 @@ void Stream::stop_inspection(
     assert(flow && flow->session);
 
     trace_logf(stream, "stop inspection on flow, dir %s \n",
-	       dir == SSN_DIR_BOTH ? "BOTH": 
-	       ((dir == SSN_DIR_FROM_CLIENT) ? "FROM_CLIENT" : "FROM_SERVER"));
+        dir == SSN_DIR_BOTH ? "BOTH" :
+        ((dir == SSN_DIR_FROM_CLIENT) ? "FROM_CLIENT" : "FROM_SERVER"));
 
     switch (dir)
     {

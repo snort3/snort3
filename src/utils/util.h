@@ -42,15 +42,6 @@
 #define SECONDS_PER_HOUR  3600  /* number of seconds in a hour */
 #define SECONDS_PER_MIN     60     /* number of seconds in a minute */
 
-#define COPY4(x, y) \
-    x[0] = (y)[0]; (x)[1] = (y)[1]; (x)[2] = (y)[2]; (x)[3] = (y)[3];
-
-#define COPY16(x,y) \
-    x[0] = (y)[0]; (x)[1] = (y)[1]; (x)[2] = (y)[2]; (x)[3] = (y)[3]; \
-    (x)[4] = (y)[4]; (x)[5] = (y)[5]; (x)[6] = (y)[6]; (x)[7] = (y)[7]; \
-    (x)[8] = (y)[8]; (x)[9] = (y)[9]; (x)[10] = (y)[10]; (x)[11] = (y)[11]; \
-    (x)[12] = (y)[12]; (x)[13] = (y)[13]; (x)[14] = (y)[14]; (x)[15] = (y)[15];
-
 void StoreSnortInfoStrings();
 int DisplayBanner();
 int gmt2local(time_t);
@@ -67,6 +58,17 @@ void InitProtoNames();
 #if defined(NOCOREFILE)
 void SetNoCores();
 #endif
+
+namespace
+{
+inline void COPY4(uint32_t* dst, const uint32_t* src)
+{
+    dst[0] = src[0];
+    dst[1] = src[1];
+    dst[2] = src[2];
+    dst[3] = src[3];
+}
+}
 
 inline void* snort_alloc(size_t sz)
 { return new uint8_t[sz]; }

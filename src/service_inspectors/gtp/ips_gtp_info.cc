@@ -58,7 +58,7 @@ public:
     EvalStatus eval(Cursor&, Packet*) override;
 
 public:
-    // byte n is for version n (named types can have 
+    // byte n is for version n (named types can have
     // different codes in different versions)
     uint8_t types[MAX_GTP_VERSION_CODE + 1];
 };

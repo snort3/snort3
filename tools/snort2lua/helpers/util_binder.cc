@@ -121,7 +121,7 @@ void Binder::add_to_configuration()
             case IT_NETWORK:
                 opt_name = "network_policy";
                 break;
-            
+
             default:
                 // This should always be set explicitly if a file name exists.
                 assert(false);
@@ -250,27 +250,27 @@ bool operator<(const shared_ptr<Binder>& left, const shared_ptr<Binder>& right)
     }
 
     // By predetermined order
-    FIRST_IF_LT(left->get_priority(), right->get_priority());
+    FIRST_IF_LT(left->get_priority(), right->get_priority())
 
     // By priorities of options
     FIRST_IF_GT(left->has_ips_policy_id(), right->has_ips_policy_id())
-    
+
     auto left_zone_specs = left->has_src_zone() + left->has_dst_zone();
     auto right_zone_specs = right->has_src_zone() + right->has_dst_zone();
-    FIRST_IF_GT(left_zone_specs, right_zone_specs);
+    FIRST_IF_GT(left_zone_specs, right_zone_specs)
 
     FIRST_IF_GT(left->has_vlans(), right->has_vlans())
     FIRST_IF_GT(left->has_service(), right->has_service())
 
     auto left_net_specs = left->has_src_nets() + left->has_dst_nets();
     auto right_net_specs = right->has_src_nets() + right->has_dst_nets();
-    FIRST_IF_GT(left_net_specs, right_net_specs);
+    FIRST_IF_GT(left_net_specs, right_net_specs)
 
     FIRST_IF_GT(left->has_nets(), right->has_nets())
 
     auto left_port_specs = left->has_src_ports() + left->has_dst_ports();
     auto right_port_specs = right->has_src_ports() + right->has_dst_ports();
-    FIRST_IF_GT(left_port_specs, right_port_specs);
+    FIRST_IF_GT(left_port_specs, right_port_specs)
 
     FIRST_IF_GT(left->has_ports(), right->has_ports())
     FIRST_IF_GT(left->has_proto(), right->has_proto())
@@ -310,7 +310,7 @@ bool operator<(const shared_ptr<Binder>& left, const shared_ptr<Binder>& right)
 
 void print_binder_priorities()
 {
-    static unsigned const num_combos = 2 << 12; 
+    static unsigned const num_combos = 2 << 12;
     vector<shared_ptr<Binder>> binders;
     TableApi t;
 

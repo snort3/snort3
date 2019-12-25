@@ -48,7 +48,7 @@ void JSONFormatter::write(FILE* fh, time_t cur_time)
     for( unsigned i = 0; i < values.size(); i++ )
     {
         bool head = false;
-        
+
         for( unsigned j = 0; j < values[i].size(); j++ )
         {
             switch( types[i][j] )
@@ -56,7 +56,7 @@ void JSONFormatter::write(FILE* fh, time_t cur_time)
                 case FT_PEG_COUNT:
                     if( *values[i][j].pc != 0 )
                     {
-                        if( !head ) 
+                        if( !head )
                         {
                             ss << ",\"" << section_names[i] << "\":{";
                             head = true;
@@ -159,7 +159,7 @@ TEST_CASE("json output", "[JSONFormatter]")
     kvp.emplace_back(50);
     kvp.emplace_back(0);
     kvp.emplace_back(70);
-    
+
     f.write(fh, (time_t)1234567890);
 
     one = 0;

@@ -40,10 +40,10 @@ using namespace snort;
 unsigned IpsContextData::ips_id = 0;
 
 unsigned IpsContextData::get_ips_id()
-{ 
+{
     ++ips_id;
     assert(ips_id < IpsContext::max_ips_id);
-    return ips_id; 
+    return ips_id;
 }
 
 void IpsContextData::clear_ips_id()

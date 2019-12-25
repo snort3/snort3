@@ -126,7 +126,7 @@ public:
             next_to_process->depends_on = depends_on;
 
         if ( depends_on )
-            depends_on->next_to_process = next_to_process; 
+            depends_on->next_to_process = next_to_process;
 
         depends_on = next_to_process = nullptr;
     }
@@ -153,7 +153,7 @@ public:
     uint64_t context_num;
     uint64_t packet_number;
     ActiveRules active_rules;
-    State state; 
+    State state;
     bool check_tags;
     bool clear_inspectors;
 

@@ -191,7 +191,7 @@ void StreamBase::tinit()
 
     if ( config.flow_cache_cfg.max_flows > 0 )
         flow_con->init_exp(config.flow_cache_cfg.max_flows);
- 
+
     FlushBucket::set(config.footprint);
 }
 
@@ -270,7 +270,7 @@ void StreamBase::eval(Packet* p)
 
     case PktType::MAX:
         break;
-    };
+    }
 }
 
 //-------------------------------------------------------------------------

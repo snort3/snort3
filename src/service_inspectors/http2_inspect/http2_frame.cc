@@ -93,7 +93,7 @@ uint32_t Http2Frame::get_stream_id()
 
     const uint8_t* header_start = header.start();
     return ((header_start[stream_id_index] & 0x7f) << 24) +
-        (header_start[stream_id_index + 1] << 16) + 
+        (header_start[stream_id_index + 1] << 16) +
         (header_start[stream_id_index + 2] << 8) +
         header_start[stream_id_index + 3];
 }

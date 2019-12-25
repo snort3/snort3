@@ -16,9 +16,9 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-                                                                            
-// http_xff_fields.h author Sourcefire Inc.                                
- 
+
+// http_xff_fields.h author Sourcefire Inc.
+
 #ifndef HTTP_XFF_FIELDS_H
 #define HTTP_XFF_FIELDS_H
 

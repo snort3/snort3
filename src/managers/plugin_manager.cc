@@ -294,7 +294,7 @@ static void add_plugin(Plugin& p)
 
     case PT_INSPECTOR:
         // probes must always be global. they run regardless of selected policy.
-        assert( (m && ((const InspectApi*)p.api)->type == IT_PROBE) ? 
+        assert( (m && ((const InspectApi*)p.api)->type == IT_PROBE) ?
                 m->get_usage() == Module::GLOBAL :
                 true );
 

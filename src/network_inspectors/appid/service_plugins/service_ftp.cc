@@ -81,7 +81,7 @@ struct ServiceFTPData
     uint16_t port;
     int part_code_resp = 0;
     int part_code_len;
-    
+
 };
 
 #pragma pack(1)
@@ -307,7 +307,7 @@ static int CheckVendorVersion(const uint8_t* data, uint16_t init_offset,
     return 0;
 }
 
-static FtpEolReturn ftp_parse_response(const uint8_t* data, uint16_t& offset, 
+static FtpEolReturn ftp_parse_response(const uint8_t* data, uint16_t& offset,
     uint16_t size, ServiceFTPData& fd, FTPReplyState rstate)
 {
     for (; offset < size; ++offset)
@@ -347,26 +347,26 @@ static bool check_ret_digit_code(const uint8_t* code_raw, int start_digit_place,
                 code += (code_raw[index] - '0') * 100;
             else
                 ret = false;
-            break;    
+            break;
         case 2:
             if (ret and fd.rstate == FTP_REPLY_BEGIN and  code_raw[index ] >='0' and code_raw[index] <= '5')
                 code += (code_raw[index] - '0') * 10;
             else if (ret and fd.rstate != FTP_REPLY_BEGIN and  code_raw[index ] >='1' and code_raw[index] <= '5')
                 code += (code_raw[index] - '0') * 10;
-            else 
+            else
                 ret = false;
-            break;  
-        case 1:     
+            break;
+        case 1:
             if (ret and isdigit(code_raw[index ]))
                 code += (code_raw[index] - '0') ;
-            else 
+            else
                 ret = false;
             break;
         default:
             break;
         }
     }
-    
+
     return ret;
 }
 
@@ -397,9 +397,9 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset,
 
             fd.code = 0;
             ret_code = check_ret_digit_code(code_hdr->code, 3,1, fd.code, fd );
-            
+
             if(!ret_code)
-                return -1; 
+                return -1;
 
             if (code_hdr->sp == '-')
                 fd.rstate = FTP_REPLY_MULTI;
@@ -465,12 +465,12 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset,
             }
 
             fd.rstate = FTP_REPLY_MID;
-            
+
             if ( ftp_parse_response(data, offset, size, fd, tmp_state ) == FTP_INCORRECT_EOL)
                 return -1;
             if (fd.rstate == FTP_REPLY_MID)
                 fd.rstate = FTP_REPLY_LONG;
-                 
+
             break;
         case FTP_REPLY_MULTI:
             if (size - offset < (int)sizeof(ServiceFTPCode))
@@ -491,7 +491,7 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset,
 
                 if (fd.rstate == FTP_REPLY_MID)
                     fd.rstate = FTP_REPLY_LONG;
-                    
+
             }
             else
             {
@@ -551,7 +551,7 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset,
                     if(!ret_code)
                         return -1;
                     fd.code = tmp + fd.part_code_resp;
-                    fd.part_code_resp = 0; 
+                    fd.part_code_resp = 0;
                     if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_LONG)  == FTP_INCORRECT_EOL)
                         return -1;
 
@@ -877,7 +877,7 @@ static inline void WatchForCommandResult(ServiceFTPData* fd, AppIdSession& asd, 
 }
 
 void FtpServiceDetector::create_expected_session(AppIdSession& asd, const Packet* pkt, const SfIp* cliIp,
-    uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol proto,
+    uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol protocol,
     int flags, AppidSessionDirection dir)
 {
     // FIXIT-M - Avoid thread locals
@@ -886,7 +886,7 @@ void FtpServiceDetector::create_expected_session(AppIdSession& asd, const Packet
         ftp_data_snort_protocol_id = SnortConfig::get_conf()->proto_ref->find("ftp-data");
 
     AppIdSession* fp = AppIdSession::create_future_session(pkt, cliIp, cliPort, srvIp, srvPort,
-        proto, ftp_data_snort_protocol_id, flags);
+        protocol, ftp_data_snort_protocol_id, flags);
 
     if (fp) // initialize data session
     {

@@ -255,7 +255,7 @@ static void bind_wizard(const char* /*key*/, const char* /*val*/)
 { Converter::set_bind_wizard(true); }
 
 static void bind_port(const char* /*key*/, const char* /*val*/)
-{ 
+{
     Converter::set_bind_port(true);
     Converter::set_bind_wizard(false);
 }

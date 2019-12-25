@@ -305,12 +305,12 @@ void UserTracker::add_data(Packet* p)
 // may need additional refactoring
 //-------------------------------------------------------------------------
 
-void UserSession::start(Packet* p, Flow* flow)
+void UserSession::start(Packet* p, Flow* f)
 {
-    Inspector* ins = flow->gadget;
+    Inspector* ins = f->gadget;
 
     if ( !ins )
-        ins = flow->clouseau;
+        ins = f->clouseau;
 
     if ( ins )
     {
@@ -324,46 +324,46 @@ void UserSession::start(Packet* p, Flow* flow)
     }
 
     {
-        flow->pkt_type = p->type();
-        flow->ip_proto = (uint8_t)p->get_ip_proto_next();
+        f->pkt_type = p->type();
+        f->ip_proto = (uint8_t)p->get_ip_proto_next();
 
-        if (flow->ssn_state.session_flags & SSNFLAG_RESET)
-            flow->ssn_state.session_flags &= ~SSNFLAG_RESET;
+        if (f->ssn_state.session_flags & SSNFLAG_RESET)
+            f->ssn_state.session_flags &= ~SSNFLAG_RESET;
 
-        if ( (flow->ssn_state.session_flags & SSNFLAG_CLIENT_SWAP) &&
-            !(flow->ssn_state.session_flags & SSNFLAG_CLIENT_SWAPPED) )
+        if ( (f->ssn_state.session_flags & SSNFLAG_CLIENT_SWAP) &&
+            !(f->ssn_state.session_flags & SSNFLAG_CLIENT_SWAPPED) )
         {
-            SfIp ip = flow->client_ip;
-            uint16_t port = flow->client_port;
+            SfIp ip = f->client_ip;
+            uint16_t port = f->client_port;
 
-            flow->client_ip = flow->server_ip;
-            flow->server_ip = ip;
+            f->client_ip = f->server_ip;
+            f->server_ip = ip;
 
-            flow->client_port = flow->server_port;
-            flow->server_port = port;
+            f->client_port = f->server_port;
+            f->server_port = port;
 
-            if ( !flow->two_way_traffic() )
+            if ( !f->two_way_traffic() )
             {
-                if ( flow->ssn_state.session_flags & SSNFLAG_SEEN_CLIENT )
+                if ( f->ssn_state.session_flags & SSNFLAG_SEEN_CLIENT )
                 {
-                    flow->ssn_state.session_flags ^= SSNFLAG_SEEN_CLIENT;
-                    flow->ssn_state.session_flags |= SSNFLAG_SEEN_SERVER;
+                    f->ssn_state.session_flags ^= SSNFLAG_SEEN_CLIENT;
+                    f->ssn_state.session_flags |= SSNFLAG_SEEN_SERVER;
                 }
-                else if ( flow->ssn_state.session_flags & SSNFLAG_SEEN_SERVER )
+                else if ( f->ssn_state.session_flags & SSNFLAG_SEEN_SERVER )
                 {
-                    flow->ssn_state.session_flags ^= SSNFLAG_SEEN_SERVER;
-                    flow->ssn_state.session_flags |= SSNFLAG_SEEN_CLIENT;
+                    f->ssn_state.session_flags ^= SSNFLAG_SEEN_SERVER;
+                    f->ssn_state.session_flags |= SSNFLAG_SEEN_CLIENT;
                 }
             }
-            flow->ssn_state.session_flags |= SSNFLAG_CLIENT_SWAPPED;
+            f->ssn_state.session_flags |= SSNFLAG_CLIENT_SWAPPED;
         }
 #if 0
         // FIXIT-M implement stream_user perf stats
-        //flow->set_expire(p, dstPolicy->session_timeout);
+        //f->set_expire(p, dstPolicy->session_timeout);
 
         // add user flavor to perf stats?
         AddStreamSession(
-            &sfBase, flow->session_state & STREAM_STATE_MIDSTREAM ? SSNFLAG_MIDSTREAM : 0);
+            &sfBase, f->session_state & STREAM_STATE_MIDSTREAM ? SSNFLAG_MIDSTREAM : 0);
 
         StreamUpdatePerfBaseState(&sfBase, tmp->flow, TCP_STATE_SYN_SENT);
 
@@ -381,30 +381,30 @@ void UserSession::end(Packet*, Flow*)
     server.splitter = nullptr;
 }
 
-void UserSession::update(Packet* p, Flow* flow)
+void UserSession::update(Packet* p, Flow* f)
 {
     if ( p->ptrs.sp and p->ptrs.dp )
         p->packet_flags |= PKT_STREAM_EST;
     else
         p->packet_flags |= PKT_STREAM_UNEST_UNI;
 
-    if ( !(flow->ssn_state.session_flags & SSNFLAG_ESTABLISHED) )
+    if ( !(f->ssn_state.session_flags & SSNFLAG_ESTABLISHED) )
     {
         if ( p->is_from_client() )
-            flow->ssn_state.session_flags |= SSNFLAG_SEEN_CLIENT;
+            f->ssn_state.session_flags |= SSNFLAG_SEEN_CLIENT;
         else
-            flow->ssn_state.session_flags |= SSNFLAG_SEEN_SERVER;
+            f->ssn_state.session_flags |= SSNFLAG_SEEN_SERVER;
 
-        if ( (flow->ssn_state.session_flags & SSNFLAG_SEEN_CLIENT) &&
-            (flow->ssn_state.session_flags & SSNFLAG_SEEN_SERVER) )
+        if ( (f->ssn_state.session_flags & SSNFLAG_SEEN_CLIENT) &&
+            (f->ssn_state.session_flags & SSNFLAG_SEEN_SERVER) )
         {
-            flow->ssn_state.session_flags |= SSNFLAG_ESTABLISHED;
+            f->ssn_state.session_flags |= SSNFLAG_ESTABLISHED;
 
-            flow->set_ttl(p, false);
+            f->set_ttl(p, false);
         }
     }
 
-    flow->set_expire(p, flow->default_session_timeout);
+    f->set_expire(p, f->default_session_timeout);
 }
 
 void UserSession::restart(Packet* p)
@@ -428,7 +428,7 @@ void UserSession::restart(Packet* p)
 // UserSession methods
 //-------------------------------------------------------------------------
 
-UserSession::UserSession(Flow* flow) : Session(flow)
+UserSession::UserSession(Flow* f) : Session(f)
 { memory::MemoryCap::update_allocations(sizeof(*this)); }
 
 UserSession::~UserSession()

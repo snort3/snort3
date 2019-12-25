@@ -59,7 +59,7 @@ protected:
     HttpCommon::SourceId source_id;
 
     const static uint8_t flags_index = 4;
-    const static uint8_t stream_id_index = 5; 
+    const static uint8_t stream_id_index = 5;
     const static uint32_t INVALID_STREAM_ID = 0xFFFFFFFF;
 };
 #endif

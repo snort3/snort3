@@ -210,7 +210,7 @@ bool SizeModule::set(const char*, Value& v, SnortConfig*)
 
     else
         return false;
-    
+
     return true;
 }
 

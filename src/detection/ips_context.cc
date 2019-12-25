@@ -204,7 +204,7 @@ TEST_CASE("IpsContext post detection", "[IpsContext]")
 TEST_CASE("IpsContext Link", "[IpsContext]")
 {
     IpsContext c0, c1, c2;
-    
+
     CHECK(c0.dependencies() == nullptr);
     CHECK(c0.next() == nullptr);
 
@@ -256,7 +256,7 @@ TEST_CASE("IpsContext Abort, [IpsContext]")
     c0.link(&c1);
     c1.link(&c2);
     c2.link(&c3);
-    
+
     // mid list
     // c0 <- c1 <- c2 <- c3
     // c0 <- c2 <- c3
@@ -289,7 +289,7 @@ TEST_CASE("IpsContext Abort, [IpsContext]")
     CHECK(c2.next() == nullptr);
     CHECK(c3.dependencies() == nullptr);
     CHECK(c3.next() == nullptr);
-    
+
     // only
     c2.abort();
     CHECK(c2.dependencies() == nullptr);

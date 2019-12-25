@@ -64,7 +64,7 @@ void Http2StatusLine::process_pseudo_header_value(const uint8_t* const& value, c
 bool Http2StatusLine::generate_start_line()
 {
     uint32_t bytes_written = 0;
-    
+
     // Account for one space and trailing crlf
     static const uint8_t NUM_RESPONSE_LINE_EXTRA_CHARS = 3;
 

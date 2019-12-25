@@ -100,7 +100,7 @@ public:
 
     static void set_client(SipUdpClientDetector* cd) { SipEventHandler::client = cd; }
     static void set_service(SipServiceDetector* sd) { SipEventHandler::service = sd; }
-  
+
     void subscribe(snort::SnortConfig* sc)
     { snort::DataBus::subscribe_global(SIP_EVENT_TYPE_SIP_DIALOG_KEY, this, sc); }
 

@@ -115,7 +115,7 @@ static inline void fpLogOther(
             otn->sigInfo.gid, otn->sigInfo.sid,
             otn->sigInfo.rev, Actions::get_string((Actions::Type)action));
     }
-    
+
     // rule option actions are queued here (eg replace)
     otn_trigger_actions(otn, p);
 

@@ -611,7 +611,7 @@ TEST_CASE("validate", "[RangeCheck]")
     CHECK(rc.validate("2<>4", ":8"));
     // in hex
     CHECK(rc.validate("2<>4", "0x1:0x0A"));
-    
+
     // invalid low
     CHECK(!rc.validate("2<>4", "3:"));
     // invalid hi

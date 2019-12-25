@@ -107,7 +107,7 @@ TEST(sip_splitter_scan_test, scan_search_body_test)
     CHECK_EQUAL(ret, StreamSplitter::SEARCH);
     CHECK_EQUAL(ssut.splitter_get_paf_state(), SIP_PAF_FLUSH_STATE);
     CHECK_EQUAL(fp, 0);
-    
+
     ssut.splitter_reset_states();
 
     ssut.splitter_set_paf_state(SIP_PAF_BODY_SEARCH);
@@ -129,7 +129,7 @@ TEST(sip_splitter_scan_test, scan_flush_test)
     CHECK_EQUAL(ret, StreamSplitter::FLUSH);
     CHECK_TRUE(ssut.is_init());
     CHECK_EQUAL(fp, 7);
-    
+
     ssut.splitter_reset_states();
     // Whole Sip body is not in one buffer
     fp = 0;

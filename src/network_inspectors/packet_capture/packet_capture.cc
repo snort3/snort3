@@ -204,7 +204,7 @@ void PacketCapture::eval(Packet* p)
         if ( !capture_initialized() )
             if ( !capture_init() )
                 return;
-                
+
         if ( p->is_cooked() )
             return;
 

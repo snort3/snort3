@@ -103,7 +103,7 @@ static int ProcessUdp(
 // UdpSession methods
 //-------------------------------------------------------------------------
 
-UdpSession::UdpSession(Flow* flow) : Session(flow)
+UdpSession::UdpSession(Flow* f) : Session(f)
 { memory::MemoryCap::update_allocations(sizeof(*this)); }
 
 UdpSession::~UdpSession()
@@ -122,7 +122,7 @@ bool UdpSession::setup(Packet* p)
     StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);
     flow->set_default_session_timeout(pc->session_timeout, false);
 
-    SESSION_STATS_ADD(udpStats);
+    SESSION_STATS_ADD(udpStats)
 
     DataBus::publish(FLOW_STATE_EVENT, p);
 
@@ -193,7 +193,7 @@ int UdpSession::process(Packet* p)
 
     ProcessUdp(flow, p, pc, nullptr);
     flow->markup_packet_flags(p);
-    
+
     flow->set_expire(p, flow->default_session_timeout);
 
     return 0;

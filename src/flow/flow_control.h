@@ -74,7 +74,7 @@ public:
     int add_expected(
         const snort::Packet* ctrlPkt, PktType, IpProtocol,
         const snort::SfIp *srcIP, uint16_t srcPort,
-		const snort::SfIp *dstIP, uint16_t dstPort,
+        const snort::SfIp *dstIP, uint16_t dstPort,
         char direction, snort::FlowData*);
 
     int add_expected(

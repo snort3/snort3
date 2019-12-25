@@ -83,7 +83,7 @@ public:
     static unsigned get_errors();
 
     static void dump_stats(SnortConfig*, const char* skip = nullptr, bool dynamic = false);
- 
+
     static void accumulate(SnortConfig*);
     static void accumulate_offload(const char* name);
     static void reset_stats(SnortConfig*);

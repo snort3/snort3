@@ -107,7 +107,7 @@ public:
 
 // FIXIT-M: RELOAD - Don't use this class, required now to store LSD objects
 class LuaObject {
-   
+
 public:
     LuaObject() = default;
     virtual ~LuaObject() = default;
@@ -136,7 +136,7 @@ private:
 };
 
 class LuaServiceObject: public LuaObject
-{ 
+{
 public:
     ServiceDetector* sd;
     LuaServiceObject(AppIdDiscovery* sdm, const std::string& detector_name,
@@ -146,7 +146,7 @@ public:
 };
 
 class LuaClientObject : public LuaObject
-{ 
+{
 public:
     ClientDetector* cd;
     LuaClientObject(AppIdDiscovery* cdm, const std::string& detector_name,

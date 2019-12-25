@@ -107,7 +107,7 @@ bool Gid::convert(std::istringstream& data_stream)
 // Sid
 //
 
-void Sid::convert_sid(std::string& sid, std::istringstream& data_stream, RuleApi& rule_api)
+void Sid::convert_sid(std::string& sid, std::istringstream& data_stream, RuleApi& r_api)
 {
     int sid_num;
     try
@@ -116,7 +116,7 @@ void Sid::convert_sid(std::string& sid, std::istringstream& data_stream, RuleApi
     }
     catch (...)
     {
-        rule_api.bad_rule(data_stream, "sid - invalid input, expecting int type");
+        r_api.bad_rule(data_stream, "sid - invalid input, expecting int type");
         return;
     }
     const int sid_offset = 100;

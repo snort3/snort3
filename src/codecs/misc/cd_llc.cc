@@ -119,7 +119,7 @@ bool LlcCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
         const EthLlcOther* ehllcother = reinterpret_cast<const EthLlcOther*>(raw.data +
             sizeof(EthLlc));
-        
+
         if (ehllcother->org_code[0] == 0 &&
             ehllcother->org_code[1] == 0 &&
             ehllcother->org_code[2] == 0)

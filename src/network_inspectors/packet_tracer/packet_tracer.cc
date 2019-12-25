@@ -173,7 +173,7 @@ void PacketTracer::set_constraints(const PTSessionConstraints* constraints)
         LogMessage("Debugging packet tracer disabled\n");
         s_pkt_trace->shell_enabled = false;
     }
-    else 
+    else
         s_pkt_trace->update_constraints(constraints);
 }
 
@@ -210,7 +210,7 @@ void PacketTracer::activate(const Packet& p)
 
     if ( p.pkth->flags &  DAQ_PKT_FLAG_TRACE_ENABLED )
         s_pkt_trace->daq_activated = true;
-    else 
+    else
         s_pkt_trace->daq_activated = false;
 
     if (s_pkt_trace->daq_activated or s_pkt_trace->user_enabled or s_pkt_trace->shell_enabled)
@@ -270,12 +270,12 @@ PacketTracer::~PacketTracer()
 }
 
 void PacketTracer::log(const char* format, va_list ap)
-{       
+{
     // FIXIT-L Need to find way to add 'PktTracerDbg' string as part of format string.
     std::string dbg_str;
     if (shell_enabled) // only add debug string during shell execution
     {
-        dbg_str = "PktTracerDbg "; 
+        dbg_str = "PktTracerDbg ";
         if (strcmp(format, "\n") != 0)
             dbg_str += get_debug_session();
         dbg_str += format;
@@ -301,7 +301,7 @@ void PacketTracer::add_ip_header_info(const Packet& p)
 
     const SfIp* actual_sip = p.ptrs.ip_api.get_src();
     const SfIp* actual_dip = p.ptrs.ip_api.get_dst();
-    
+
     IpProtocol proto = p.get_ip_proto_next();
 
     actual_sip->ntop(sipstr, sizeof(sipstr));
@@ -570,7 +570,7 @@ TEST_CASE("enable", "[PacketTracer]")
     CHECK(!TestPacketTracer::is_daq_enabled());
     // user configuration remain enabled
     CHECK(TestPacketTracer::is_user_enabled());
-    
+
     TestPacketTracer::thread_term();
 }
 
@@ -617,14 +617,14 @@ TEST_CASE("reasons", "[PacketTracer]")
     TestPacketTracer::register_verdict_reason(low1, PacketTracer::PRIORITY_LOW);
     TestPacketTracer::register_verdict_reason(low2, PacketTracer::PRIORITY_LOW);
     TestPacketTracer::register_verdict_reason(high, PacketTracer::PRIORITY_HIGH);
-    
+
     // Init
     CHECK((TestPacketTracer::get_reason() == VERDICT_REASON_NO_BLOCK));
-    
+
     // Update
     TestPacketTracer::set_reason(low1);
     CHECK((TestPacketTracer::get_reason() == low1));
-    
+
     // Don't update if already set
     TestPacketTracer::set_reason(VERDICT_REASON_NO_BLOCK);
     CHECK((TestPacketTracer::get_reason() == low1));
@@ -669,7 +669,7 @@ TEST_CASE("verbosity", "[PacketTracer]")
     TestPacketTracer::log(mute_2, "this should also log\n");
     val = TestPacketTracer::get_buff();
     CHECK((val == expected));
-       
+
     TestPacketTracer::thread_term();
 }
 

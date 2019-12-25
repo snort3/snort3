@@ -108,7 +108,7 @@ TEST(sip_splitter_test, get_length_overflow_test)
 }
 
 TEST(sip_splitter_test, get_length_finish_test)
-{   
+{
     for(auto ch : spaces)
     {
         ssut.splitter_set_content_length(201);
@@ -123,7 +123,7 @@ TEST(sip_splitter_test, process_command_skip_leading_spaces_test)
     for(auto ch : spaces)
     {
         ssut.splitter_process_command(ch);
-        CHECK_TRUE(ssut.is_init());        
+        CHECK_TRUE(ssut.is_init());
     }
 }
 
@@ -137,7 +137,6 @@ TEST(sip_splitter_test, process_command_set_next_test)
     ssut.splitter_process_command('l');
     CHECK_EQUAL(*ssut.splitter_get_next_letter(), '\0');
 
-        
     ssut.splitter_reset_states();
     for(int i = 0; content_len_key[i] != '\0'; i++) {
         ssut.splitter_process_command(content_len_key[i]);
@@ -148,7 +147,7 @@ TEST(sip_splitter_test, process_command_set_next_test)
 TEST(sip_splitter_test, process_command_invalid_input_test)
 {
     ssut.splitter_process_command('O');
-    CHECK_TRUE(ssut.is_init());        
+    CHECK_TRUE(ssut.is_init());
 }
 
 TEST(sip_splitter_test, process_command_len_convert_test)
@@ -164,7 +163,7 @@ TEST(sip_splitter_test, process_command_skip_blanks_len_convert_test)
     for(auto ch : blanks)
     {
         ssut.splitter_process_command(ch);
-        CHECK_FALSE(ssut.is_init()); 
+        CHECK_FALSE(ssut.is_init());
     }
 }
 
@@ -172,7 +171,7 @@ TEST(sip_splitter_test, process_command_invalid_blanks_len_convert_test)
 {
     ssut.splitter_set_next_letter_last();
     ssut.splitter_process_command('\r');
-    CHECK_TRUE(ssut.is_init()); 
+    CHECK_TRUE(ssut.is_init());
 }
 
 int main(int argc, char** argv)

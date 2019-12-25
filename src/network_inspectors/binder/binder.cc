@@ -274,7 +274,7 @@ inline Binding::DirResult Binding::check_split_addr(
 
     if ( !when.src_nets && !when.dst_nets )
         return dr;
-    
+
     const SfIp* src_ip;
     const SfIp* dst_ip;
 
@@ -299,14 +299,14 @@ inline Binding::DirResult Binding::check_split_port(
 {
     if ( !when.split_ports )
         return dr;
-    
+
     uint16_t src_port;
     uint16_t dst_port;
 
     if ( !p )
     {
-        src_port = flow->client_port; 
-        dst_port = flow->server_port; 
+        src_port = flow->client_port;
+        dst_port = flow->server_port;
     }
     else if ( p->is_tcp() or p->is_udp() )
     {
@@ -399,7 +399,7 @@ bool Binding::check_all(const Flow* flow, Packet* p, const char* service) const
     {
         if (!check_service(service))
             return false;
-    } 
+    }
     else if ( !check_service(flow) )
         return false;
 
@@ -710,7 +710,7 @@ public:
     {
         Binder* binder = InspectorManager::get_binder();
         AssistantGadgetEvent* assistant_event = (AssistantGadgetEvent*)&event;
-	
+
         if (binder)
             binder->handle_assistant_gadget(assistant_event->get_service(),
                 assistant_event->get_packet());
@@ -878,7 +878,7 @@ void Binder::handle_assistant_gadget(const char* service, Packet* p)
     Profile profile(bindPerfStats);
     Stuff stuff;
     Flow* flow = p->flow;
-    
+
     get_bindings(flow, stuff, p, service);
     apply_assistant(flow, stuff, service);
 }

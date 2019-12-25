@@ -128,8 +128,6 @@ using namespace snort;
 
 #define printf LogMessage
 
-#define MEMASSERT(p,s) if (!(p)) { FatalError("ACSM-No Memory: %s\n",s); }
-
 static int acsm2_total_memory = 0;
 static int acsm2_pattern_memory = 0;
 static int acsm2_matchlist_memory = 0;
@@ -550,7 +548,6 @@ static ACSM_PATTERN2* CopyMatchListEntry(ACSM_PATTERN2* px)
     ACSM_PATTERN2* p;
 
     p = (ACSM_PATTERN2*)AC_MALLOC(sizeof (ACSM_PATTERN2), ACSM2_MEMORY_TYPE__MATCHLIST);
-    MEMASSERT(p, "CopyMatchListEntry");
 
     memcpy(p, px, sizeof (ACSM_PATTERN2));
 
@@ -587,7 +584,6 @@ static void AddMatchListEntry(ACSM_STRUCT2* acsm, int state, ACSM_PATTERN2* px)
     ACSM_PATTERN2* p;
 
     p = (ACSM_PATTERN2*)AC_MALLOC(sizeof (ACSM_PATTERN2), ACSM2_MEMORY_TYPE__MATCHLIST);
-    MEMASSERT(p, "AddMatchListEntry");
 
     memcpy(p, px, sizeof (ACSM_PATTERN2));
     p->next = acsm->acsmMatchList[state];
@@ -1104,7 +1100,6 @@ static int Conv_Full_DFA_To_SparseBands(ACSM_STRUCT2* acsm)
 ACSM_STRUCT2* acsmNew2(const MpseAgent* agent, int format)
 {
     ACSM_STRUCT2* p = (ACSM_STRUCT2*)AC_MALLOC(sizeof (ACSM_STRUCT2), ACSM2_MEMORY_TYPE__NONE);
-    MEMASSERT(p, "acsmNew");
 
     if (p)
     {
@@ -1133,17 +1128,14 @@ int acsmAddPattern2(
 
     plist = (ACSM_PATTERN2*)
         AC_MALLOC(sizeof (ACSM_PATTERN2), ACSM2_MEMORY_TYPE__PATTERN);
-    MEMASSERT(plist, "acsmAddPattern");
 
     plist->patrn =
         (uint8_t*)AC_MALLOC(n, ACSM2_MEMORY_TYPE__PATTERN);
-    MEMASSERT(plist->patrn, "acsmAddPattern");
 
     ConvertCaseEx(plist->patrn, pat, n);
 
     plist->casepatrn =
         (uint8_t*)AC_MALLOC(n, ACSM2_MEMORY_TYPE__PATTERN);
-    MEMASSERT(plist->casepatrn, "acsmAddPattern");
 
     memcpy(plist->casepatrn, pat, n);
 
@@ -1250,13 +1242,11 @@ static inline int _acsmCompile2(ACSM_STRUCT2* acsm)
     acsm->acsmTransTable =
         (trans_node_t**)AC_MALLOC(sizeof(trans_node_t*) * acsm->acsmMaxStates,
             ACSM2_MEMORY_TYPE__TRANSTABLE);
-    MEMASSERT(acsm->acsmTransTable, "_acsmCompile2");
 
     /* Alloc a MatchList table - this has a list of pattern matches for each state, if any */
     acsm->acsmMatchList =
         (ACSM_PATTERN2**)AC_MALLOC(sizeof(ACSM_PATTERN2*) * acsm->acsmMaxStates,
             ACSM2_MEMORY_TYPE__MATCHLIST);
-    MEMASSERT(acsm->acsmMatchList, "_acsmCompile2");
 
     /* Initialize state zero as a branch */
     acsm->acsmNumStates = 0;
@@ -1300,14 +1290,10 @@ static inline int _acsmCompile2(ACSM_STRUCT2* acsm)
         (acstate_t*)AC_MALLOC(sizeof(acstate_t) * acsm->acsmNumStates,
             ACSM2_MEMORY_TYPE__FAILSTATE);
 
-    MEMASSERT(acsm->acsmFailState, "_acsmCompile2");
-
     /* Alloc a separate state transition table == in state 's' due to event 'k', transition to
       'next' state */
     acsm->acsmNextState =
         (acstate_t**)AC_MALLOC_DFA(acsm->acsmNumStates * sizeof(acstate_t*), acsm->sizeofstate);
-
-    MEMASSERT(acsm->acsmNextState, "_acsmCompile2-NextState");
 
     /* Build the NFA */
     Build_NFA(acsm);
@@ -1690,21 +1676,21 @@ int acsm_search_dfa_full(
     {
         uint8_t* ps;
         uint8_t** NextState = (uint8_t**)acsm->acsmNextState;
-        AC_SEARCH;
+        AC_SEARCH
     }
     break;
     case 2:
     {
         uint16_t* ps;
         uint16_t** NextState = (uint16_t**)acsm->acsmNextState;
-        AC_SEARCH;
+        AC_SEARCH
     }
     break;
     default:
     {
         acstate_t* ps;
         acstate_t** NextState = acsm->acsmNextState;
-        AC_SEARCH;
+        AC_SEARCH
     }
     break;
     }
@@ -1790,21 +1776,21 @@ int acsm_search_dfa_full_all(
     {
         uint8_t* ps;
         uint8_t** NextState = (uint8_t**)acsm->acsmNextState;
-        AC_SEARCH_ALL;
+        AC_SEARCH_ALL
     }
     break;
     case 2:
     {
         uint16_t* ps;
         uint16_t** NextState = (uint16_t**)acsm->acsmNextState;
-        AC_SEARCH_ALL;
+        AC_SEARCH_ALL
     }
     break;
     default:
     {
         acstate_t* ps;
         acstate_t** NextState = acsm->acsmNextState;
-        AC_SEARCH_ALL;
+        AC_SEARCH_ALL
     }
     break;
     }

@@ -178,7 +178,7 @@ void AppIdInspector::eval(Packet* p)
 {
     Profile profile(appid_perf_stats);
     appid_stats.packets++;
-    
+
     if (p->flow)
     {
         AppIdDiscovery::do_application_discovery(p, *this);

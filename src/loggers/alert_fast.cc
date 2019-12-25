@@ -183,7 +183,7 @@ FastLogger::FastLogger(FastModule* m)
     // could be configurable; and should be should be shared with u2
 
     Inspector* ins = InspectorManager::get_inspector("http_inspect");
-    
+
     if ( !ins )
         return;
 

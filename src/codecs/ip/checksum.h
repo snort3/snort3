@@ -26,31 +26,41 @@
 
 namespace checksum
 {
-struct Pseudoheader6
+union Pseudoheader
 {
-    uint32_t sip[4];
-    uint32_t dip[4];
-    uint8_t zero;
-    IpProtocol protocol;
-    uint16_t len;
+    struct
+    {
+        uint32_t sip;
+        uint32_t dip;
+        uint8_t zero;
+        IpProtocol protocol;
+        uint16_t len;
+    } hdr;
+    uint16_t arr[6];
+    static_assert(sizeof(hdr) == sizeof(arr), "IPv4 pseudoheader must be 12 bytes");
 };
 
-struct Pseudoheader
+union Pseudoheader6
 {
-    uint32_t sip;
-    uint32_t dip;
-    uint8_t zero;
-    IpProtocol protocol;
-    uint16_t len;
+    struct
+    {
+        uint32_t sip[4];
+        uint32_t dip[4];
+        uint8_t zero;
+        IpProtocol protocol;
+        uint16_t len;
+    } hdr;
+    uint16_t arr[18];
+    static_assert(sizeof(hdr) == sizeof(arr), "IPv6 pseudoheader must be 36 bytes");
 };
 
 //  calculate the checksum for this general case.
 static uint16_t cksum_add(const uint16_t* buf, std::size_t buf_len);
-inline uint16_t tcp_cksum(const uint16_t* buf, std::size_t len, const Pseudoheader* const);
-inline uint16_t tcp_cksum(const uint16_t* buf, std::size_t len, const Pseudoheader6* const);
-inline uint16_t udp_cksum(const uint16_t* buf, std::size_t len, const Pseudoheader* const);
-inline uint16_t udp_cksum(const uint16_t* buf, std::size_t len, const Pseudoheader6* const);
-inline uint16_t icmp_cksum(const uint16_t* buf, std::size_t len, const Pseudoheader6* const);
+inline uint16_t tcp_cksum(const uint16_t* buf, std::size_t len, const Pseudoheader&);
+inline uint16_t tcp_cksum(const uint16_t* buf, std::size_t len, const Pseudoheader6&);
+inline uint16_t udp_cksum(const uint16_t* buf, std::size_t len, const Pseudoheader&);
+inline uint16_t udp_cksum(const uint16_t* buf, std::size_t len, const Pseudoheader6&);
+inline uint16_t icmp_cksum(const uint16_t* buf, std::size_t len, const Pseudoheader6&);
 inline uint16_t icmp_cksum(const uint16_t* buf, std::size_t len);
 inline uint16_t ip_cksum(const uint16_t* buf, std::size_t len);
 
@@ -69,24 +79,6 @@ inline uint16_t ip_cksum(const uint16_t* buf, std::size_t len);
  */
 namespace detail
 {
-struct PsuedoheaderUnion
-{
-    union
-    {
-        Pseudoheader ph4;
-        uint16_t ph4_arr[12];
-    };
-};
-
-struct Psuedoheader6Union
-{
-    union
-    {
-        Pseudoheader ph6;
-        uint16_t ph6_arr[18];
-    };
-};
-
 inline uint16_t cksum_add(const uint16_t* buf, std::size_t len, uint32_t cksum)
 {
     const uint16_t* sp = buf;
@@ -177,16 +169,9 @@ inline uint16_t cksum_add(const uint16_t* buf, std::size_t len, uint32_t cksum)
     return (uint16_t)(~cksum);
 }
 
-inline void add_ipv4_pseudoheader(const Pseudoheader* const ph4,
-    uint32_t& cksum)
+inline void add_ipv4_pseudoheader(const Pseudoheader& ph4, uint32_t& cksum)
 {
-    /*
-     * This mess is necessary to make static analyzers happy.
-     * Otherwise they assume we are reading garbage values
-     */
-    const PsuedoheaderUnion* const ph4_u = reinterpret_cast
-        <const PsuedoheaderUnion*>(ph4);
-    const uint16_t* const h = ph4_u->ph4_arr;
+    const uint16_t* h = ph4.arr;
 
     /* ipv4 pseudo header must have 12 bytes */
     cksum += h[0];
@@ -197,16 +182,9 @@ inline void add_ipv4_pseudoheader(const Pseudoheader* const ph4,
     cksum += h[5];
 }
 
-inline void add_ipv6_pseudoheader(const Pseudoheader6* const ph6,
-    uint32_t& cksum)
+inline void add_ipv6_pseudoheader(const Pseudoheader6& ph6, uint32_t& cksum)
 {
-    /*
-     * This mess is necessary to make static analyzers happy.
-     * Otherwise they assume we are reading garbage values
-     */
-    const Psuedoheader6Union* const ph6_u = reinterpret_cast
-        <const Psuedoheader6Union*>(ph6);
-    const uint16_t* const h = ph6_u->ph6_arr;
+    const uint16_t* h = ph6.arr;
 
     /* PseudoHeader must have 36 bytes */
     cksum += h[0];
@@ -283,7 +261,7 @@ inline void add_ip_header(const uint16_t*& d,
 
 inline uint16_t icmp_cksum(const uint16_t* buf,
     std::size_t len,
-    const Pseudoheader6* const ph)
+    const Pseudoheader6& ph)
 {
     uint32_t cksum = 0;
 
@@ -298,7 +276,7 @@ inline uint16_t icmp_cksum(const uint16_t* buf, size_t len)
 
 inline uint16_t tcp_cksum(const uint16_t* h,
     std::size_t len,
-    const Pseudoheader* const ph)
+    const Pseudoheader& ph)
 {
     uint32_t cksum = 0;
 
@@ -309,7 +287,7 @@ inline uint16_t tcp_cksum(const uint16_t* h,
 
 inline uint16_t tcp_cksum(const uint16_t* buf,
     std::size_t len,
-    const Pseudoheader6* const ph)
+    const Pseudoheader6& ph)
 {
     uint32_t cksum = 0;
 
@@ -320,7 +298,7 @@ inline uint16_t tcp_cksum(const uint16_t* buf,
 
 inline uint16_t udp_cksum(const uint16_t* buf,
     std::size_t len,
-    const Pseudoheader* const ph)
+    const Pseudoheader& ph)
 {
     uint32_t cksum = 0;
 
@@ -331,7 +309,7 @@ inline uint16_t udp_cksum(const uint16_t* buf,
 
 inline uint16_t udp_cksum(const uint16_t* buf,
     std::size_t len,
-    const Pseudoheader6* const ph)
+    const Pseudoheader6& ph)
 {
     uint32_t cksum = 0;
 

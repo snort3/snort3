@@ -198,22 +198,22 @@ void StreamModule::reset_stats()
 // Stream handler to adjust allocated resources as needed on a config reload
 bool StreamReloadResourceManager::initialize(const StreamModuleConfig& config_)
 {
-	// FIXIT-L - saving config here to check footprint change is a bit of a hack,
-	if ( Snort::is_reloading() )
-	{
-		if ( config.footprint != config_.footprint )
-		{
+    // FIXIT-L - saving config here to check footprint change is a bit of a hack,
+    if ( Snort::is_reloading() )
+    {
+        if ( config.footprint != config_.footprint )
+        {
             // FIXIT-M - reinit FlushBucket...
             ReloadError("Changing of stream.footprint requires a restart\n");
             return false;
-		}
+        }
 
-		config = config_;
-		return true;
-	}
+        config = config_;
+        return true;
+    }
 
-	config = config_;
-	return false;
+    config = config_;
+    return false;
 }
 
 bool StreamReloadResourceManager::tinit()
@@ -250,17 +250,17 @@ bool StreamReloadResourceManager::tune_idle_context()
 
 bool StreamReloadResourceManager::tune_resources(unsigned work_limit)
 {
-	// we are done if new max is > currently allocated flow objects
-	if ( flow_con->get_flows_allocated() <= config.flow_cache_cfg.max_flows )
-		return true;
+    // we are done if new max is > currently allocated flow objects
+    if ( flow_con->get_flows_allocated() <= config.flow_cache_cfg.max_flows )
+        return true;
 
-	unsigned flows_to_delete =
-	    flow_con->get_flows_allocated() - config.flow_cache_cfg.max_flows;
-	if ( flows_to_delete > work_limit )
-	    flows_to_delete -= flow_con->delete_flows(work_limit);
-	else
-	    flows_to_delete -= flow_con->delete_flows(flows_to_delete);
+    unsigned flows_to_delete =
+        flow_con->get_flows_allocated() - config.flow_cache_cfg.max_flows;
+    if ( flows_to_delete > work_limit )
+        flows_to_delete -= flow_con->delete_flows(work_limit);
+    else
+        flows_to_delete -= flow_con->delete_flows(flows_to_delete);
 
-	return ( flows_to_delete ) ? false : true;
+    return ( flows_to_delete ) ? false : true;
 }
 

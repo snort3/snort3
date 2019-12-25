@@ -724,7 +724,7 @@ void DCE2_Smb2Process(DCE2_SmbSsnData* ssd)
         uint32_t next_command_offset;
         /* SMB protocol allows multiple smb commands to be grouped in a single packet.
            So loop through to parse all the smb commands.
-		   Reference: https://msdn.microsoft.com/en-us/library/cc246614.aspx
+           Reference: https://msdn.microsoft.com/en-us/library/cc246614.aspx
            "A nonzero value for the NextCommand field in the SMB2 header indicates a compound
            request. NextCommand in the SMB2 header of a request specifies an offset, in bytes,
            from the beginning of the SMB2 header under consideration to the start of the 8-byte

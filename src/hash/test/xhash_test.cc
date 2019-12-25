@@ -66,10 +66,10 @@ TEST(xhash, create_xhash_test)
 TEST(xhash, free_anr_lru_invalid_test)
 {
     int ret = xhash_free_anr_lru(nullptr);
-    CHECK(ret == XHASH_ERR); 
+    CHECK(ret == XHASH_ERR);
 }
 
-// Create a free node in xhash and verifies if xhash_free_anr_lru() deletes it 
+// Create a free node in xhash and verifies if xhash_free_anr_lru() deletes it
 TEST(xhash, free_anr_lru_delete_free_node_test)
 {
     XHash* test_table = xhash_new(3, sizeof(struct xhash_test_key),
@@ -86,7 +86,7 @@ TEST(xhash, free_anr_lru_delete_free_node_test)
     CHECK(ret == XHASH_OK);
 
     ret = xhash_free_anr_lru(test_table);
-    CHECK(ret == XHASH_OK); 
+    CHECK(ret == XHASH_OK);
 
     XHashNode* xhnode = xhash_find_node(test_table, &xtk);
     CHECK(xhnode == nullptr);
@@ -179,7 +179,7 @@ TEST(xhash, xhash_change_memcap_less_than_used_test)
 
     unsigned max_work = 0;
     unsigned new_memcap = test_table->mc.memused-1;
-    ret = xhash_change_memcap(test_table, new_memcap, &max_work);  
+    ret = xhash_change_memcap(test_table, new_memcap, &max_work);
     CHECK(ret == XHASH_OK);
     CHECK(test_table->mc.memcap == new_memcap);
     xhash_delete(test_table);

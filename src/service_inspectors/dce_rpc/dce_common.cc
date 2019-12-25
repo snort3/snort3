@@ -233,7 +233,7 @@ bool DceEndianness::get_offset_endianness(int32_t offset, uint8_t& endian)
     }
 
     endian = (byte_order == DCERPC_BO_FLAG__BIG_ENDIAN) ? ENDIAN_BIG : ENDIAN_LITTLE;
- 
+
     return true;
 }
 

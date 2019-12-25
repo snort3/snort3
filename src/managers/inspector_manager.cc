@@ -518,7 +518,7 @@ bool InspectorManager::inspector_exists_in_any_policy(const char* key, SnortConf
         const InspectionPolicy* const pi = pm->get_inspection_policy(i);
 
         if ( !pi || !pi->framework_policy )
-            continue; 
+            continue;
 
         const PHInstance* const p = get_instance(pi->framework_policy, key);
 

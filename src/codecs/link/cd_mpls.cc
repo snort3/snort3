@@ -290,13 +290,13 @@ int MplsCodec::checkMplsHdr(const CodecData& codec, uint32_t label, uint8_t bos)
             break;
         }
         //if bos is false we are believed to NOT be at the bottom of the stack
-        //and if we arent at the bottom of the stack then we should NOT see 
+        //and if we arent at the bottom of the stack then we should NOT see
         //label 0 or 2 (according to RFC 3032)
-        else 
+        else
         {
              if ( label == 0 )
                     codec_event(codec, DECODE_BAD_MPLS_LABEL0);
-            //it MUST be label 2 
+            //it MUST be label 2
              else
                     codec_event(codec, DECODE_BAD_MPLS_LABEL2);
         }

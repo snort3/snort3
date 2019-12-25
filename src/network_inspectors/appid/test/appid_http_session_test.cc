@@ -255,7 +255,7 @@ TEST(appid_http_session, set_tun_dest)
     AppidChangeBits change_bits;
     hsession.set_field(REQ_URI_FID, new std::string("[2001:db8:85a3::8a2e:370:7334]:51413"), change_bits);
     hsession.set_tun_dest();
-    tun_dest = hsession.get_tun_dest(); 
+    tun_dest = hsession.get_tun_dest();
     CHECK(tun_dest != nullptr);
     CHECK_EQUAL(tun_dest->port, 51413);
     CHECK_EQUAL((ipv6 == tun_dest->ip), true);

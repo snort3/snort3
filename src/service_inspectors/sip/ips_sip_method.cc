@@ -127,7 +127,7 @@ IpsOption::EvalStatus SipMethodOption::eval(Cursor&, Packet* p)
         std::transform(method.begin(), method.end(), method.begin(), ::toupper);
 
         bool negated = methods.begin()->second;
-        bool match = methods.find(method) != methods.cend(); 
+        bool match = methods.find(method) != methods.cend();
 
         if ( negated ^ match )
             return MATCH;

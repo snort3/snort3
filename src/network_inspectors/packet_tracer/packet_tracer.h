@@ -95,7 +95,7 @@ public:
     typedef uint8_t TracerMute;
     static const int max_buff_size = 2048;
 
-    // static functions 
+    // static functions
     static void set_log_file(const std::string&);
     static void thread_init();
     static void thread_term();
@@ -106,12 +106,12 @@ public:
     static void configure(bool status, const std::string& file_name);
     static void set_constraints(const PTSessionConstraints* constraints);
     static void activate(const snort::Packet&);
-    
+
     static SO_PUBLIC void pause();
     static SO_PUBLIC void unpause();
     static SO_PUBLIC bool is_paused();
     static SO_PUBLIC bool is_active();
-    
+
     static SO_PUBLIC TracerMute get_mute();
 
     static SO_PUBLIC void register_verdict_reason(uint8_t reason_code, uint8_t priority);
@@ -137,7 +137,7 @@ protected:
 
     char debug_session[PT_DEBUG_SESSION_ID_SIZE];
     PTSessionConstraints info;
-    
+
     // static functions
     template<typename T = PacketTracer> static void _thread_init();
 
@@ -157,9 +157,9 @@ protected:
 
 SO_PUBLIC extern THREAD_LOCAL PacketTracer* s_pkt_trace;
 
-inline bool PacketTracer::is_active() 
+inline bool PacketTracer::is_active()
 { return s_pkt_trace ? s_pkt_trace->active : false; }
 
 }
-  
+
 #endif

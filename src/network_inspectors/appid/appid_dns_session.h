@@ -34,7 +34,7 @@ public:
 
     void reset()
     {
-        host.clear();;
+        host.clear();
         state = 0;
         response_type = 0;
         id = 0;

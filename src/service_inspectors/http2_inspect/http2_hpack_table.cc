@@ -102,7 +102,7 @@ const HpackTableEntry HpackIndexTable::static_table[STATIC_MAX_INDEX + 1] =
 };
 
 const HpackTableEntry* HpackIndexTable::lookup(uint64_t index) const
-{ 
+{
     if (index <= STATIC_MAX_INDEX)
         return &static_table[index];
     else

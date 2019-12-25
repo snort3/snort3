@@ -264,7 +264,7 @@ std::ostream& operator<<(std::ostream& out, const Table& t)
 
         if ( !t.key.empty() )
             out << "[\"" << t.key << "\"]";
-        
+
         out << (t.one_line ? " = " : " =\n");
     }
 

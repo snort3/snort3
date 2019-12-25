@@ -1546,7 +1546,7 @@ DCE2_Ret DCE2_SmbNtTransact(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         if (ftracker == nullptr)
             return DCE2_RET__ERROR;
 
-		DCE2_Update_Ftracker_from_ReqTracker(ftracker, ssd->cur_rtracker);
+        DCE2_Update_Ftracker_from_ReqTracker(ftracker, ssd->cur_rtracker);
 
         if (!ftracker->is_ipc)
         {
@@ -1595,7 +1595,7 @@ DCE2_Ret DCE2_SmbTransactionSecondary(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_
         Packet* rpkt = DCE2_SmbGetRpkt(ssd, &data_ptr, &data_len, DCE2_RPKT_TYPE__SMB_TRANS);
 
         if (rpkt == nullptr)
-            return DCE2_RET__ERROR;    
+            return DCE2_RET__ERROR;
 
         status = DCE2_SmbTransactionReq(ssd, ttracker, data_ptr, data_len,
             DCE2_BufferData(ttracker->pbuf), DCE2_BufferLength(ttracker->pbuf));

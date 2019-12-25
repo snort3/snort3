@@ -45,22 +45,22 @@ public:
     SipSplitterUT(const SipSplitter& ss) : ss(ss) { };
 
     bool splitter_is_paf()
-    { 
+    {
         return ss.is_paf();
     }
 
     void splitter_reset_states()
-    { 
+    {
         ss.reset_states();
     }
 
     SipPafStates splitter_get_paf_state()
-    { 
-        return ss.paf_state; 
+    {
+        return ss.paf_state;
     }
 
     SipPafBodyStatus splitter_get_body_state()
-    { 
+    {
         return ss.body_state;
     }
 

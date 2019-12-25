@@ -1824,7 +1824,7 @@ void DCE2_SmbProcessFileData(DCE2_SmbSsnData* ssd,
             || ((file_data_depth != 0)
             && (ftracker->ff_bytes_processed >= (uint64_t)file_data_depth)))
         {
-	    // Bytes processed is at or beyond file data depth - finished.
+            // Bytes processed is at or beyond file data depth - finished.
             DCE2_SmbRemoveFileTracker(ssd, ftracker);
             return;
         }

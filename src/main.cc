@@ -343,9 +343,9 @@ int main_reload_config(lua_State* L)
     if ( !sc )
     {
         if (get_reload_errors())
-    	  current_request->respond("== reload failed - restart required\n");
+            current_request->respond("== reload failed - restart required\n");
         else
-          current_request->respond("== reload failed - bad config\n");
+            current_request->respond("== reload failed - bad config\n");
 
         SnortConfig::set_parser_conf(nullptr);
         return 0;

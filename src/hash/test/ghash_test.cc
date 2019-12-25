@@ -190,7 +190,7 @@ TEST(ghash, userfree_test)
 
     // it should not be found
     CHECK(ghash_find(t, str) == nullptr);
-    
+
     // try to remove a node that is not in the table
     CHECK(ghash_remove(t, str) == GHASH_ERR);
 

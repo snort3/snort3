@@ -54,7 +54,7 @@ static inline void trace_vprintf(const char* name, Trace mask, const char* file,
     int size;
 
     if (name)
-    {   
+    {
         size = snprintf(buf, buf_len, "%s: ", name);
         if ( size >= buf_len )
             size = buf_len - 1;

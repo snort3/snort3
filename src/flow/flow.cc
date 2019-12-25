@@ -139,7 +139,7 @@ void Flow::term()
 
     if (assistant_gadget)
         assistant_gadget->rem_ref();
-    
+
     if ( ha_state )
         delete ha_state;
 
@@ -530,7 +530,7 @@ bool Flow::is_pdu_inorder(uint8_t dir)
 }
 
 void Flow::set_service(Packet* pkt, const char* new_service)
-{   
+{
     service = new_service;
     DataBus::publish(FLOW_SERVICE_CHANGE_EVENT, pkt);
-}   
+}

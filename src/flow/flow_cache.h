@@ -94,9 +94,8 @@ public:
     const FlowCacheConfig& get_flow_cache_config() const
     { return config; }
 
-	unsigned get_flows_allocated() const
-	{ return flows_allocated; }
-
+    unsigned get_flows_allocated() const
+    { return flows_allocated; }
 
 private:
     void push(snort::Flow*);
@@ -104,8 +103,8 @@ private:
     void remove(snort::Flow*);
     void retire(snort::Flow*);
     unsigned prune_unis(PktType);
-	unsigned delete_active_flows
-		(unsigned mode, unsigned num_to_delete, unsigned &deleted);
+    unsigned delete_active_flows
+        (unsigned mode, unsigned num_to_delete, unsigned &deleted);
 
 private:
     static const unsigned cleanup_flows = 1;

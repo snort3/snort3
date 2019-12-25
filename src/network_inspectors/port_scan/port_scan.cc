@@ -102,7 +102,7 @@ static void make_open_port_info(Packet* p, PS_PROTO* proto)
 static void make_open_port_info(Packet* p, uint16_t port)
 {
     DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
-    
+
     SfIpString ip_str;
 
     buf.len = safe_snprintf((char*)buf.data, sizeof(buf.data),

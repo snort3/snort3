@@ -205,7 +205,7 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
         {
             offset = ProcessSSHProtocolVersionExchange(config, sessp, p, direction);
             if (!offset)
-                // Error processing protovers exchange msg 
+                // Error processing protovers exchange msg
                 return;
 
             // found protocol version.
@@ -357,11 +357,11 @@ static unsigned int ProcessSSHProtocolVersionExchange(SSH_PROTO_CONF* config, SS
     }
     else
     {
-        /* unknown version */ 
+        /* unknown version */
         sessionp->version =  SSH_VERSION_UNKNOWN;
 
         DetectionEngine::queue_event(GID_SSH, SSH_EVENT_VERSION);
-        
+
         return 0;
     }
 

@@ -246,7 +246,7 @@ bool AppIdConfig::init_appid(SnortConfig* sc)
     // Handle the if condition in AppIdConfig::init_appid
     static bool once = false;
     if (!once)
-    {   
+    {
         AppIdConfig::app_info_mgr.init_appid_info_table(mod_config, sc);
         HostPortCache::initialize();
         HttpPatternMatchers* http_matchers = HttpPatternMatchers::get_instance();

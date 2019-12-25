@@ -217,7 +217,7 @@ TEST_CASE("clear", "[buffer]")
     Buffer buf(raw_buf, 1);
     buf.allocate(1);
     buf.clear();
-    
+
     CHECK( buf.data() == &raw_buf[1] ); // 1 past the "known" buffer
     CHECK( buf.size() == 0 );
 }

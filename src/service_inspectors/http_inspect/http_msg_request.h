@@ -47,7 +47,7 @@ public:
 
     static bool is_webdav(HttpEnums::MethodId method)
     {
-        if(method > HttpEnums::MethodId::METH__WEBDAV_LOW and 
+        if(method > HttpEnums::MethodId::METH__WEBDAV_LOW and
            method < HttpEnums::MethodId::METH__WEBDAV_HIGH)
         {
             return true;

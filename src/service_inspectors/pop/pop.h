@@ -32,7 +32,7 @@
 #define POP_PKT_FROM_CLIENT   1
 #define POP_PKT_FROM_SERVER   2
 
-#define STATE_DATA             0    // Data state 
+#define STATE_DATA             0    // Data state
 #define STATE_TLS_CLIENT_PEND  1    // Got STARTTLS
 #define STATE_TLS_SERVER_PEND  2    // Got STARTTLS
 #define STATE_TLS_DATA         3    // Successful handshake, TLS encrypted data

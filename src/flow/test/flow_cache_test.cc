@@ -115,8 +115,8 @@ void Stream::stop_inspection(Flow*, Packet*, char, int32_t, int) { }
 
 int ExpectCache::add_flow(const Packet*, PktType, IpProtocol, const SfIp*, uint16_t,
     const SfIp*, uint16_t, char, FlowData*, SnortProtocolId)
-{ 
-    return 1; 
+{
+    return 1;
 }
 
 TEST_GROUP(flow_prune) { };
@@ -136,7 +136,7 @@ TEST(flow_prune, empty_cache_prune_flows)
 
 // Do not delete blocked flow
 TEST(flow_prune, blocked_flow_prune_flows)
-{   
+{
     FlowCacheConfig fcg;
     fcg.max_flows = 2;
     FlowCache *cache = new FlowCache(fcg);
@@ -148,7 +148,7 @@ TEST(flow_prune, blocked_flow_prune_flows)
     FlowKey flow_key;
     memset(&flow_key, 0, sizeof(FlowKey));
     flow_key.pkt_type = PktType::TCP;
-    
+
     flow_key.port_l = first_port;
     cache->allocate(&flow_key);
 
@@ -165,7 +165,7 @@ TEST(flow_prune, blocked_flow_prune_flows)
     flow_key.port_l = first_port;
     CHECK(cache->find(&flow_key) != nullptr);
 
-    // Prune one flow. This should delete the MRU flow, since 
+    // Prune one flow. This should delete the MRU flow, since
     // LRU flow is blocked
     CHECK(cache->delete_flows(1) == 1);
 
@@ -255,4 +255,4 @@ TEST(flow_prune, prune_all_blocked_flows)
 int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
-} 
+}

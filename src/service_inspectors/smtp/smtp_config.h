@@ -102,7 +102,7 @@ enum SMTPCmdTypeEnum
 struct SMTPCmdConfig
 {
     bool alert;
-    bool normalize;     //  1 if we should normalize this command 
+    bool normalize;     //  1 if we should normalize this command
     int max_line_len;   //  Max length of this particular command
 };
 

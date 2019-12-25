@@ -78,7 +78,7 @@
  *      msg: "got DEADBEEF!";)
  *
  * alert tcp any any -> any any \
- *      (byte_test:2, =, 568, 0, bitmask 0x3FF0;	  \
+ *      (byte_test:2, =, 568, 0, bitmask 0x3FF0;      \
  *      msg:"got 568 after applying bitmask 0x3FF0 on 2 bytes extracted";)
  *
  * Effect:

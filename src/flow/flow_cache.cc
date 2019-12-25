@@ -358,38 +358,38 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
 unsigned FlowCache::delete_active_flows(unsigned mode, unsigned num_to_delete, unsigned &deleted)
 {
     unsigned flows_to_check = hash_table->get_count();
-	while ( num_to_delete && flows_to_check-- )
-	{
-		auto flow = static_cast<Flow*>(hash_table->first());
-		assert(flow);
-		if ( (mode == ALLOWED_FLOWS_ONLY and (flow->was_blocked() || flow->is_suspended()))
-		    or (mode == OFFLOADED_FLOWS_TOO and flow->was_blocked()) )
-		{
-			if (!hash_table->touch())
-				break;
+    while ( num_to_delete && flows_to_check-- )
+    {
+        auto flow = static_cast<Flow*>(hash_table->first());
+        assert(flow);
+        if ( (mode == ALLOWED_FLOWS_ONLY and (flow->was_blocked() || flow->is_suspended()))
+            or (mode == OFFLOADED_FLOWS_TOO and flow->was_blocked()) )
+        {
+            if (!hash_table->touch())
+                break;
 
-			continue;
-		}
+            continue;
+        }
 
-		// we have a winner...
-		hash_table->remove(flow->key);
-		if ( flow->next )
-		    unlink_uni(flow);
+        // we have a winner...
+        hash_table->remove(flow->key);
+        if ( flow->next )
+            unlink_uni(flow);
 
-		if ( flow->was_blocked() )
-		    delete_stats.update(FlowDeleteState::BLOCKED);
-		else if ( flow->is_suspended() )
+        if ( flow->was_blocked() )
+            delete_stats.update(FlowDeleteState::BLOCKED);
+        else if ( flow->is_suspended() )
             delete_stats.update(FlowDeleteState::OFFLOADED);
-		else
+        else
             delete_stats.update(FlowDeleteState::ALLOWED);
 
-		delete flow;
-		--flows_allocated;
-		++deleted;
-		--num_to_delete;
-	}
+        delete flow;
+        --flows_allocated;
+        ++deleted;
+        --num_to_delete;
+    }
 
-	return num_to_delete;
+    return num_to_delete;
 }
 
 unsigned FlowCache::delete_flows(unsigned num_to_delete)

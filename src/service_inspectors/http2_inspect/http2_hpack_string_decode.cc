@@ -68,7 +68,7 @@ bool Http2HpackStringDecode::translate(const uint8_t* in_buff, const uint32_t in
         return true;
 
     if (!isHuffman)
-        return get_string(in_buff, encoded_len, bytes_consumed, out_buff, out_len, bytes_written, 
+        return get_string(in_buff, encoded_len, bytes_consumed, out_buff, out_len, bytes_written,
                 events, infractions);
 
     return get_huffman_string(in_buff, encoded_len, bytes_consumed, out_buff, out_len,
@@ -195,7 +195,7 @@ bool Http2HpackStringDecode::get_huffman_string(const uint8_t* in_buff, const ui
             break;
 
         default:
-            break;	    
+            break;
         }
     }
 

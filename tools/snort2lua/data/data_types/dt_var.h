@@ -36,7 +36,7 @@ public:
     std::string get_value(DataApi*);
     bool add_value(std::string);
     void set_value(const std::string&, bool quoted);
-    
+
     void set_print_whitespace(bool w)
     { print_whitespace = w; }
 

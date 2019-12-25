@@ -172,13 +172,13 @@ bool TcpCodec::valid_checksum4(const RawData& raw, DecodeData& snort)
     const ip::IP4Hdr* ip4h = snort.ip_api.get_ip4h();
 
     checksum::Pseudoheader ph;
-    ph.sip = ip4h->get_src();
-    ph.dip = ip4h->get_dst();
-    ph.zero = 0;
-    ph.protocol = ip4h->proto();
-    ph.len = htons((uint16_t) raw.len);
+    ph.hdr.sip = ip4h->get_src();
+    ph.hdr.dip = ip4h->get_dst();
+    ph.hdr.zero = 0;
+    ph.hdr.protocol = ip4h->proto();
+    ph.hdr.len = htons((uint16_t) raw.len);
 
-    return (checksum::tcp_cksum((const uint16_t*) raw.data, raw.len, &ph) == 0);
+    return (checksum::tcp_cksum((const uint16_t*) raw.data, raw.len, ph) == 0);
 }
 
 bool TcpCodec::valid_checksum6(const RawData& raw, const CodecData& codec, DecodeData& snort)
@@ -186,13 +186,13 @@ bool TcpCodec::valid_checksum6(const RawData& raw, const CodecData& codec, Decod
     const ip::IP6Hdr* const ip6h = snort.ip_api.get_ip6h();
 
     checksum::Pseudoheader6 ph6;
-    COPY4(ph6.sip, ip6h->get_src()->u6_addr32);
-    COPY4(ph6.dip, ip6h->get_dst()->u6_addr32);
-    ph6.zero = 0;
-    ph6.protocol = codec.ip6_csum_proto;
-    ph6.len = htons((uint16_t) raw.len);
+    COPY4(ph6.hdr.sip, ip6h->get_src()->u6_addr32);
+    COPY4(ph6.hdr.dip, ip6h->get_dst()->u6_addr32);
+    ph6.hdr.zero = 0;
+    ph6.hdr.protocol = codec.ip6_csum_proto;
+    ph6.hdr.len = htons((uint16_t) raw.len);
 
-    return (checksum::tcp_cksum((const uint16_t*) raw.data, raw.len, &ph6) == 0);
+    return (checksum::tcp_cksum((const uint16_t*) raw.data, raw.len, ph6) == 0);
 }
 
 bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
@@ -675,12 +675,12 @@ bool TcpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         int len = buf.size();
 
         const ip::IP4Hdr* const ip4h = ip_api.get_ip4h();
-        ps.sip = ip4h->get_src();
-        ps.dip = ip4h->get_dst();
-        ps.zero = 0;
-        ps.protocol = IpProtocol::TCP;
-        ps.len = htons((uint16_t)len);
-        tcph_out->th_sum = checksum::tcp_cksum((uint16_t*)tcph_out, len, &ps);
+        ps.hdr.sip = ip4h->get_src();
+        ps.hdr.dip = ip4h->get_dst();
+        ps.hdr.zero = 0;
+        ps.hdr.protocol = IpProtocol::TCP;
+        ps.hdr.len = htons((uint16_t)len);
+        tcph_out->th_sum = checksum::tcp_cksum((uint16_t*)tcph_out, len, ps);
     }
     else if (ip_api.is_ip6())
     {
@@ -688,12 +688,12 @@ bool TcpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         int len = buf.size();
 
         const ip::IP6Hdr* const ip6h = ip_api.get_ip6h();
-        memcpy(&ps6.sip, ip6h->get_src()->u6_addr8, sizeof(ps6.sip));
-        memcpy(&ps6.dip, ip6h->get_dst()->u6_addr8, sizeof(ps6.dip));
-        ps6.zero = 0;
-        ps6.protocol = IpProtocol::TCP;
-        ps6.len = htons((uint16_t)len);
-        tcph_out->th_sum = checksum::tcp_cksum((uint16_t*)tcph_out, len, &ps6);
+        memcpy(&ps6.hdr.sip, ip6h->get_src()->u6_addr8, sizeof(ps6.hdr.sip));
+        memcpy(&ps6.hdr.dip, ip6h->get_dst()->u6_addr8, sizeof(ps6.hdr.dip));
+        ps6.hdr.zero = 0;
+        ps6.hdr.protocol = IpProtocol::TCP;
+        ps6.hdr.len = htons((uint16_t)len);
+        tcph_out->th_sum = checksum::tcp_cksum((uint16_t*)tcph_out, len, ps6);
     }
 
     return true;
@@ -714,23 +714,23 @@ void TcpCodec::update(const ip::IpApi& api, const EncodeFlags flags, uint8_t* ra
         {
             checksum::Pseudoheader ps;
             const ip::IP4Hdr* const ip4h = api.get_ip4h();
-            ps.sip = ip4h->get_src();
-            ps.dip = ip4h->get_dst();
-            ps.zero = 0;
-            ps.protocol = IpProtocol::TCP;
-            ps.len = htons((uint16_t)updated_len);
-            h->th_sum = checksum::tcp_cksum((uint16_t*)h, updated_len, &ps);
+            ps.hdr.sip = ip4h->get_src();
+            ps.hdr.dip = ip4h->get_dst();
+            ps.hdr.zero = 0;
+            ps.hdr.protocol = IpProtocol::TCP;
+            ps.hdr.len = htons((uint16_t)updated_len);
+            h->th_sum = checksum::tcp_cksum((uint16_t*)h, updated_len, ps);
         }
         else
         {
             checksum::Pseudoheader6 ps6;
             const ip::IP6Hdr* const ip6h = api.get_ip6h();
-            memcpy(ps6.sip, ip6h->get_src()->u6_addr32, sizeof(ps6.sip));
-            memcpy(ps6.dip, ip6h->get_dst()->u6_addr32, sizeof(ps6.dip));
-            ps6.zero = 0;
-            ps6.protocol = IpProtocol::TCP;
-            ps6.len = htons((uint16_t)updated_len);
-            h->th_sum = checksum::tcp_cksum((uint16_t*)h, updated_len, &ps6);
+            memcpy(ps6.hdr.sip, ip6h->get_src()->u6_addr32, sizeof(ps6.hdr.sip));
+            memcpy(ps6.hdr.dip, ip6h->get_dst()->u6_addr32, sizeof(ps6.hdr.dip));
+            ps6.hdr.zero = 0;
+            ps6.hdr.protocol = IpProtocol::TCP;
+            ps6.hdr.len = htons((uint16_t)updated_len);
+            h->th_sum = checksum::tcp_cksum((uint16_t*)h, updated_len, ps6);
         }
     }
 }

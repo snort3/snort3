@@ -37,8 +37,7 @@ public:
         Http2EventGen* events, Http2Infractions* infractions);
 
 private:
-    Http2RequestLine(Http2EventGen* events, Http2Infractions* infractions) : Http2StartLine(events,
-        infractions) { }
+    Http2RequestLine(Http2EventGen* evs, Http2Infractions* infrs) : Http2StartLine(evs, infrs) { }
 
     Field method;
     Field path;

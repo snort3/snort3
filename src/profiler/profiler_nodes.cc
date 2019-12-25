@@ -53,8 +53,8 @@ struct GetProfileFunctor
 
 struct GetProfileFromModule : public GetProfileFunctor
 {
-    GetProfileFromModule(const std::string& name, Module* m) :
-        GetProfileFunctor(name), m(m) { }
+    GetProfileFromModule(const std::string& pn, Module* m) :
+        GetProfileFunctor(pn), m(m) { }
 
     const ProfileStats* operator()() override
     {
@@ -76,8 +76,8 @@ struct GetProfileFromModule : public GetProfileFunctor
 
 struct GetProfileFromFunction : public GetProfileFunctor
 {
-    GetProfileFromFunction(const std::string& name, get_profile_stats_fn fn) :
-        GetProfileFunctor(name), fn(fn) { }
+    GetProfileFromFunction(const std::string& pn, get_profile_stats_fn fn) :
+        GetProfileFunctor(pn), fn(fn) { }
 
     const ProfileStats* operator()() override
     { return fn(name.c_str()); }
