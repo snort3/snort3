@@ -256,7 +256,7 @@ int dns_host_scan_hostname(const uint8_t*, size_t, AppId*, AppId*)
 {
     return 0;
 }
-bool do_tp_discovery(AppIdSession&, IpProtocol,
+bool do_tp_discovery(ThirdPartyAppIDModule& , AppIdSession&, IpProtocol,
     Packet*, AppidSessionDirection&, AppidChangeBits&)
 {
     return true;
@@ -335,7 +335,11 @@ TEST(appid_discovery_tests, event_published_when_ignoring_flow)
     asd->common.initiator_ip.set("1.2.3.4");
     asd->set_session_flags(APPID_SESSION_IGNORE_FLOW);
 
+#ifdef ENABLE_APPID_THIRD_PARTY
+    AppIdDiscovery::do_application_discovery(&p, ins, nullptr);
+#else
     AppIdDiscovery::do_application_discovery(&p, ins);
+#endif
 
     // Detect changes in service, client, payload, and misc appid
     CHECK_EQUAL(databus_publish_called, true);
@@ -366,7 +370,11 @@ TEST(appid_discovery_tests, event_published_when_processing_flow)
     asd->common.initiator_port = 21;
     asd->common.initiator_ip.set("1.2.3.4");
 
+#ifdef ENABLE_APPID_THIRD_PARTY
+    AppIdDiscovery::do_application_discovery(&p, ins, nullptr);
+#else
     AppIdDiscovery::do_application_discovery(&p, ins);
+#endif
 
     // Detect changes in service, client, payload, and misc appid
     CHECK_EQUAL(databus_publish_called, true);
@@ -427,7 +435,11 @@ TEST(appid_discovery_tests, change_bits_for_non_http_appid)
     asd->client.set_id(APP_ID_CURL);
     asd->service.set_id(APP_ID_FTP);
 
+#ifdef ENABLE_APPID_THIRD_PARTY
+    AppIdDiscovery::do_application_discovery(&p, ins, nullptr);
+#else
     AppIdDiscovery::do_application_discovery(&p, ins);
+#endif
 
     // Detect event for FTP service and CURL client
     CHECK_EQUAL(databus_publish_called, true);
@@ -440,7 +452,11 @@ TEST(appid_discovery_tests, change_bits_for_non_http_appid)
     asd->payload.set_id(APP_ID_NONE);
     asd->client.set_id(APP_ID_NONE);
     asd->service.set_id(APP_ID_DNS);
+#ifdef ENABLE_APPID_THIRD_PARTY
+    AppIdDiscovery::do_application_discovery(&p, ins, nullptr);
+#else
     AppIdDiscovery::do_application_discovery(&p, ins);
+#endif
 
     // Detect event for DNS service
     CHECK_EQUAL(databus_publish_called, true);

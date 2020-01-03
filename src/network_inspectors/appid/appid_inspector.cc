@@ -50,10 +50,14 @@
 #include "service_plugins/service_discovery.h"
 #include "service_plugins/service_ssl.h"
 #ifdef ENABLE_APPID_THIRD_PARTY
+#include "tp_appid_module_api.h"
 #include "tp_lib_handler.h"
 #endif
 
 using namespace snort;
+#ifdef ENABLE_APPID_THIRD_PARTY
+THREAD_LOCAL ThirdPartyAppIDModule* tp_appid_thread_ctxt = nullptr;
+#endif
 static THREAD_LOCAL PacketTracer::TracerMute appid_mute;
 
 // FIXIT-L - appid cleans up openssl now as it is the primary (only) user... eventually this
@@ -116,7 +120,7 @@ bool AppIdInspector::configure(SnortConfig* sc)
     active_config->init_appid(sc);
 
 #ifdef ENABLE_APPID_THIRD_PARTY
-    if (!TPLibHandler::have_tp())
+    if (!active_config->get_tp_appid_ctxt())
 #endif
     {
         DataBus::subscribe_global(HTTP_REQUEST_HEADER_EVENT_KEY, new HttpEventHandler(
@@ -155,9 +159,6 @@ void AppIdInspector::tinit()
     appidDebug = new AppIdDebug();
     if (active_config->mod_config and active_config->mod_config->log_all_sessions)
         appidDebug->set_enabled(true);
-#ifdef ENABLE_APPID_THIRD_PARTY
-    TPLibHandler::tinit();
-#endif
 }
 
 void AppIdInspector::tterm()
@@ -170,7 +171,9 @@ void AppIdInspector::tterm()
     delete appidDebug;
     appidDebug = nullptr;
 #ifdef ENABLE_APPID_THIRD_PARTY
-    TPLibHandler::tterm();
+    ThirdPartyAppIDModule* tp_appid_ctxt = active_config->get_tp_appid_ctxt();
+    if (tp_appid_ctxt)
+        tp_appid_ctxt->tfini();
 #endif
 }
 
@@ -179,9 +182,29 @@ void AppIdInspector::eval(Packet* p)
     Profile profile(appid_perf_stats);
     appid_stats.packets++;
 
+#ifdef ENABLE_APPID_THIRD_PARTY
+    ThirdPartyAppIDModule* tp_appid_ctxt = active_config->get_tp_appid_ctxt();
+    if (tp_appid_thread_ctxt != tp_appid_ctxt)
+    {
+        if (tp_appid_thread_ctxt)
+        {
+            tp_appid_thread_ctxt->tfini();
+
+            // FIXIT-H: Assuming one packet thread
+            delete tp_appid_thread_ctxt;
+        }
+        tp_appid_ctxt->tinit();
+        tp_appid_thread_ctxt = tp_appid_ctxt;
+    }
+#endif
+
     if (p->flow)
     {
+#ifdef ENABLE_APPID_THIRD_PARTY
+        AppIdDiscovery::do_application_discovery(p, *this, tp_appid_thread_ctxt);
+#else
         AppIdDiscovery::do_application_discovery(p, *this);
+#endif
         // FIXIT-L tag verdict reason as appid for daq
         if (PacketTracer::is_active())
             add_appid_to_packet_trace(*p->flow);
@@ -238,6 +261,9 @@ static void appid_inspector_tinit()
 
 static void appid_inspector_tterm()
 {
+#ifdef ENABLE_APPID_THIRD_PARTY
+    TPLibHandler::tfini();
+#endif
     AppIdPegCounts::cleanup_pegs();
 }
 

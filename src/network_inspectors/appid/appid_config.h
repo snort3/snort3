@@ -32,6 +32,9 @@
 #include "sfip/sf_ip.h"
 #include "target_based/snort_protocols.h"
 #include "utils/sflsq.h"
+#ifdef ENABLE_APPID_THIRD_PARTY
+#include "tp_appid_module_api.h"
+#endif
 
 #define APP_ID_MAX_DIRS         16
 #define APP_ID_PORT_ARRAY_SIZE  65536
@@ -113,6 +116,20 @@ public:
     AppIdConfig(AppIdModuleConfig* config) : mod_config(config)
     { }
 
+    ~AppIdConfig()
+    {
+#ifdef ENABLE_APPID_THIRD_PARTY
+        delete tp_appid_ctxt;
+#endif
+    }
+
+#ifdef ENABLE_APPID_THIRD_PARTY
+    ThirdPartyAppIDModule* get_tp_appid_ctxt() const
+    { return tp_appid_ctxt; }
+
+    void create_tp_appid_ctxt();
+#endif
+
     bool init_appid(snort::SnortConfig*);
     static void pterm();
     void show();
@@ -137,6 +154,9 @@ private:
     // FIXIT-M: RELOAD - Remove static, once app_info_mgr cleanup is
     // removed from AppIdConfig::pterm
     static AppInfoManager& app_info_mgr;
+#ifdef ENABLE_APPID_THIRD_PARTY
+    ThirdPartyAppIDModule* tp_appid_ctxt = nullptr;
+#endif
 };
 
 #endif

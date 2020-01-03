@@ -140,8 +140,10 @@ AppIdSession::~AppIdSession()
 #ifdef ENABLE_APPID_THIRD_PARTY
     if (tpsession)
     {
-        delete tpsession;
-        tpsession = nullptr;
+        if (tpsession->get_ctxt() == tp_appid_thread_ctxt)
+            tpsession->delete_with_ctxt();
+        else
+            delete tpsession;
     }
 #endif
 
@@ -926,7 +928,7 @@ AppIdDnsSession* AppIdSession::get_dns_session()
 bool AppIdSession::is_tp_appid_done() const
 {
 #ifdef ENABLE_APPID_THIRD_PARTY
-    if (TPLibHandler::have_tp())
+    if (config->get_tp_appid_ctxt())
     {
         if (!tpsession)
             return false;
@@ -955,7 +957,7 @@ bool AppIdSession::is_tp_processing_done() const
 bool AppIdSession::is_tp_appid_available() const
 {
 #ifdef ENABLE_APPID_THIRD_PARTY
-    if (TPLibHandler::have_tp())
+    if (config->get_tp_appid_ctxt())
     {
         if (!tpsession)
             return false;

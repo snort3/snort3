@@ -27,9 +27,6 @@
 // FIXIT-L refactor
 #define HTTP_XFF_FIELD_X_FORWARDED_FOR  "X-Forwarded-For"
 #define HTTP_XFF_FIELD_TRUE_CLIENT_IP   "True-Client-IP"
-/* #define HTTP_MAX_XFF_FIELDS             8 */
-/* #define HTTP_XFF_FIELD_X_FORWARDED_FOR "" */
-/* #define HTTP_XFF_FIELD_TRUE_CLIENT_IP "" */
 
 #define HTTP_MAX_XFF_FIELDS 8
 
@@ -38,6 +35,5 @@ struct XffFieldValue
     std::string field;
     std::string value;
 };
-
 
 #endif

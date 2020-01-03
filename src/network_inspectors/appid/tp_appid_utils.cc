@@ -621,7 +621,7 @@ static inline void check_terminate_tp_module(AppIdSession& asd, uint16_t tpPktCo
     }
 }
 
-bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
+bool do_tp_discovery(ThirdPartyAppIDModule& tp_module, AppIdSession& asd, IpProtocol protocol,
     Packet* p, AppidSessionDirection& direction, AppidChangeBits& change_bits)
 {
     AppId tp_app_id = asd.get_tp_app_id();
@@ -668,10 +668,10 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                 if (!asd.tpsession)
                 {
                     const TPLibHandler* tph = TPLibHandler::get();
-                    CreateThirdPartyAppIDSession_t tpsf = tph->tpsession_factory();
-                    if ( !(asd.tpsession = tpsf()) )
-                        FatalError("Could not allocate asd.tpsession data");
-                }      // debug output of packet content
+                    TpAppIdCreateSession tpsf = tph->tpsession_factory();
+                    if ( !(asd.tpsession = tpsf(tp_module)) )
+                        ErrorMessage("Could not allocate asd.tpsession data");
+                }
 
                 TPState current_tp_state = asd.tpsession->process(*p, direction,
                     tp_proto_list, tp_attribute_data);

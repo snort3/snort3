@@ -33,11 +33,13 @@
 #include "main/snort.h"
 #include "main/swapper.h"
 #include "main/thread_config.h"
+#include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
 #include "utils/util.h"
 
 #include "app_info_table.h"
 #include "appid_debug.h"
+#include "appid_inspector.h"
 #include "appid_peg_counts.h"
 #include "service_state.h"
 
@@ -170,6 +172,7 @@ static int disable_debug(lua_State*)
 
 static int reload_third_party(lua_State*)
 {
+#ifdef ENABLE_APPID_THIRD_PARTY
     if (Swapper::get_reload_in_progress())
     {
         LogMessage("== reload pending; retry\n");
@@ -182,8 +185,14 @@ static int reload_third_party(lua_State*)
     {
         Swapper::set_reload_in_progress(true);
         LogMessage(".. reloading third-party");
+        AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
+        AppIdConfig* config = inspector->get_appid_config();
+        config->create_tp_appid_ctxt();
         Swapper::set_reload_in_progress(false);
     }
+#else
+    LogMessage("== third party is not enabled\n");
+#endif
 
     return 0;
 }

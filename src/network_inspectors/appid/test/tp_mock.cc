@@ -42,8 +42,8 @@ using namespace std;
 class ThirdPartyAppIDModuleImpl : public ThirdPartyAppIDModule
 {
 public:
-    ThirdPartyAppIDModuleImpl(uint32_t ver, const char* mname)
-        : ThirdPartyAppIDModule(ver, mname)
+    ThirdPartyAppIDModuleImpl(uint32_t ver, const char* mname, ThirdPartyConfig& config)
+        : ThirdPartyAppIDModule(ver, mname, config)
     {
         cerr << WhereMacro << endl;
     }
@@ -53,32 +53,18 @@ public:
         cerr << WhereMacro << endl;
     }
 
-    // Hack: use cfg to manipulate pinit to return 1, so we can hit the
-    // if (ret != 0) case in tp_lib_handler.cc.
-    int pinit(ThirdPartyConfig& cfg) override
-    {
-        cerr << WhereMacro << endl;
-        return cfg.tp_appid_config.empty() ? 1 : 0;
-    }
-
     int tinit() override { return 0; }
-    int reconfigure(const ThirdPartyConfig&) override { return 0; }
-    int pfini() override
-    {
-        cerr << WhereMacro << endl;
-        return 0;
-    }
-
     int tfini() override { return 0; }
-    int print_stats() override { return 0; }
-    int reset_stats() override { return 0; }
 };
 
 class ThirdPartyAppIDSessionImpl : public ThirdPartyAppIDSession
 {
 public:
-
+    ThirdPartyAppIDSessionImpl(ThirdPartyAppIDModule& ctxt)
+      : ThirdPartyAppIDSession(ctxt)
+    { }
     bool reset() override { return 1; }
+    void delete_with_ctxt() override { delete this; }
     TPState process(const Packet&, AppidSessionDirection, vector<AppId>&,
         ThirdPartyAppIDAttributeData&) override { return TP_STATE_INIT; }
 
@@ -98,17 +84,24 @@ private:
 // once the .so has been loaded.
 extern "C"
 {
-    SO_PUBLIC ThirdPartyAppIDModuleImpl* create_third_party_appid_module();
-    SO_PUBLIC ThirdPartyAppIDSessionImpl* create_third_party_appid_session();
-
-    SO_PUBLIC ThirdPartyAppIDModuleImpl* create_third_party_appid_module()
+    SO_PUBLIC ThirdPartyAppIDModuleImpl* tp_appid_create_ctxt(ThirdPartyConfig& config)
     {
-        return new ThirdPartyAppIDModuleImpl(1,"foobar");
+        return new ThirdPartyAppIDModuleImpl(2,"foobar", config);
     }
 
-    SO_PUBLIC ThirdPartyAppIDSessionImpl* create_third_party_appid_session()
+    SO_PUBLIC ThirdPartyAppIDSessionImpl* tp_appid_create_session(ThirdPartyAppIDModule& ctxt)
     {
-        return new ThirdPartyAppIDSessionImpl;
+        return new ThirdPartyAppIDSessionImpl(ctxt);
+    }
+
+    SO_PUBLIC int tp_appid_pfini()
+    {
+        return 0;
+    }
+
+    SO_PUBLIC int tp_appid_tfini()
+    {
+        return 0;
     }
 }
 

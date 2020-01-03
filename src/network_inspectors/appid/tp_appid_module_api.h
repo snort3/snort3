@@ -25,7 +25,7 @@
 #include <string>
 #include "tp_appid_types.h"
 
-#define THIRD_PARTY_APP_ID_API_VERSION 1
+#define THIRD_PARTY_APP_ID_API_VERSION 2
 
 class ThirdPartyConfig
 {
@@ -38,16 +38,10 @@ public:
     unsigned http_response_version_enabled : 1;
     std::string tp_appid_config;
     std::vector<std::string> xff_fields;
-    std::vector<std::string> old_xff_fields;
     bool tp_appid_stats_enable = false;
     bool tp_appid_config_dump = false;
 
     ThirdPartyConfig()
-    {
-        getXffFields();
-    }
-
-    void getXffFields()
     {
         xff_fields.clear();
         xff_fields.emplace_back(HTTP_XFF_FIELD_X_FORWARDED_FOR);
@@ -58,41 +52,28 @@ public:
 class ThirdPartyAppIDModule
 {
 public:
-
-    /* ThirdPartyAppIdConfig tpac; */
-
-    ThirdPartyAppIDModule(uint32_t ver, const char* mname)
-        : version(ver), name(mname) { }
+    ThirdPartyAppIDModule(uint32_t ver, const char* mname, ThirdPartyConfig& config)
+        : version(ver), name(mname), cfg(config) { }
 
     virtual ~ThirdPartyAppIDModule() { }
 
     uint32_t api_version() const { return version; }
     const std::string& module_name() const { return name; }
 
-    virtual int pinit(ThirdPartyConfig&) = 0;
-    virtual int pfini() = 0;
-
     virtual int tinit() = 0;
     virtual int tfini() = 0;
 
-    virtual int reconfigure(const ThirdPartyConfig&) = 0;
-    virtual int print_stats() = 0;
-    virtual int reset_stats() = 0;
+    virtual const ThirdPartyConfig& get_config() const { return cfg; }
+
+protected:
+    const uint32_t version;
+    const std::string name;
+    ThirdPartyConfig cfg;
 
 private:
-
     // No implicit constructor as derived classes need to provide
     // version and name.
     ThirdPartyAppIDModule() : version(0), name("") { }
-
-    const uint32_t version;
-    const std::string name;
 };
-
-// Function pointer to object factory that returns a pointer to a newly
-// created object of a derived class.
-// This needs to be exported (SO_PUBLIC) by any third party .so library.
-// Must return NULL if it fails to create the object.
-typedef ThirdPartyAppIDModule* (* CreateThirdPartyAppIDModule_t)();
 
 #endif

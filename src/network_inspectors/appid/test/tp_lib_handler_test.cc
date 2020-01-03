@@ -52,24 +52,25 @@ TEST(tp_lib_handler, load_unload)
     config.tp_appid_config="./tp.config";
 
     tph = TPLibHandler::get();
-    tph->pinit(&config);
-    CHECK_TRUE(tph->have_tp());
+    ThirdPartyAppIDModule* tpm = TPLibHandler::create_tp_appid_ctxt(config);
+    CHECK_TRUE(tpm != nullptr);
 
-    CreateThirdPartyAppIDSession_t asf = tph->tpsession_factory();
-    ThirdPartyAppIDSession* tpsession = asf();
+    TpAppIdCreateSession asf = tph->tpsession_factory();
+    ThirdPartyAppIDSession* tpsession = asf(*tpm);
 
     CHECK_TRUE(tpsession != nullptr);
 
     delete tpsession;
+    delete tpm;
 
-    tph->pfini();
+    TPLibHandler::pfini();
 }
 
 TEST(tp_lib_handler, tp_lib_handler_get)
 {
-    tph=TPLibHandler::get();
-    TPLibHandler* tph2=TPLibHandler::get();
-    CHECK_EQUAL(tph,tph2);
+    tph = TPLibHandler::get();
+    TPLibHandler* tph2 = TPLibHandler::get();
+    CHECK_EQUAL(tph, tph2);
     TPLibHandler::pfini();
 }
 
@@ -79,21 +80,9 @@ TEST(tp_lib_handler, load_error)
     AppIdModuleConfig config;
     config.tp_appid_path="nonexistent.so";
     TPLibHandler::get();
-    TPLibHandler::pinit(&config);
-    CHECK_FALSE(TPLibHandler::have_tp());
+    ThirdPartyAppIDModule* tpm = TPLibHandler::create_tp_appid_ctxt(config);
+    CHECK_TRUE(tpm == nullptr);
     TPLibHandler::pfini();
-}
-
-TEST(tp_lib_handler, tp_appid_module_pinit_error)
-{
-    // Trigger MODULE pinit error:
-    AppIdModuleConfig config;
-    config.tp_appid_path="./libtp_mock.so";
-    config.tp_appid_config="";  // forces MODULE::pinit() to return 1.
-    tph=TPLibHandler::get();
-    tph->pinit(&config);
-    CHECK_FALSE(tph->have_tp());
-    tph->pfini(1);                      // print stats too.
 }
 
 int main(int argc, char** argv)

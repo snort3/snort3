@@ -34,143 +34,131 @@
 using namespace std;
 using namespace snort;
 
-#define TP_APPID_MODULE_SYMBOL "create_third_party_appid_module"
-#define TP_APPID_SESSION_SYMBOL "create_third_party_appid_session"
-
 TPLibHandler* TPLibHandler::self = nullptr;
 
-int TPLibHandler::LoadCallback(const char* const path, int /* indent */)
+bool TPLibHandler::load_callback(const char* const path)
 {
-    void* handle = 0;
-    ThirdPartyAppIDModule* tp_module = 0;
-    const char* error = nullptr;
-
-    if (tp_appid_module != nullptr)
-    {
-        ErrorMessage("Ignoring additional 3rd party AppID module (%s)!\n", path);
-        return 0;
-    }
-
-    // Load the tp library and get function pointers to the module and
-    // session object factories.
     dlerror();
-    handle = dlopen(path, RTLD_NOW | RTLD_LOCAL);
-    if (handle == nullptr)
+    self->tp_so_handle = dlopen(path, RTLD_NOW | RTLD_LOCAL);
+    if (self->tp_so_handle == nullptr)
     {
         ErrorMessage("Failed to load 3rd party AppID library: %s - %s\n", path, dlerror());
-        return 0;
+        return false;
     }
 
-    CreateThirdPartyAppIDModule_t createThirdPartyAppIDModule=
-        (CreateThirdPartyAppIDModule_t)dlsym(handle, TP_APPID_MODULE_SYMBOL);
-    if ((error=dlerror()) != nullptr)
+    typedef void (*dummyFunc)();
+    struct funcBinding
     {
-        ErrorMessage(
-            "Failed to get 3rd party AppID module object factory: %s - %s\n",
-            TP_APPID_MODULE_SYMBOL, error);
-        dlclose(handle);
-        return 0;
-    }
-
-    createThirdPartyAppIDSession=(CreateThirdPartyAppIDSession_t)dlsym(
-        handle,TP_APPID_SESSION_SYMBOL);
-    if ((error=dlerror()) != nullptr)
+        const char* lib_sym;
+        dummyFunc* local_sym;
+    } bindings[] =
     {
-        ErrorMessage(
-            "Failed to get 3rd party AppID session object factory: %s - %s\n",
-            TP_APPID_SESSION_SYMBOL, error);
-        dlclose(handle);
-        return 0;
-    }
+        { "tp_appid_create_ctxt", (dummyFunc*)&tp_appid_create_ctxt },
+        { "tp_appid_create_session", (dummyFunc*)&tp_appid_create_session },
+        { "tp_appid_pfini", (dummyFunc*)&tp_appid_pfini },
+        { "tp_appid_tfini", (dummyFunc*)&tp_appid_tfini },
+        { nullptr, nullptr }
+    };
 
-    // The tp module object is a singleton and gets created here in main thread.
-    // TP session objects get created per worker thread.
-    tp_module=createThirdPartyAppIDModule();
-    if (tp_module == nullptr)
+    funcBinding* index;
+
+    for (index = bindings; index->lib_sym; index++)
     {
-        ErrorMessage("Failed to create third party appId module.\n");
-        dlclose(handle);
-        return 0;
+        *(void**)index->local_sym  = dlsym(self->tp_so_handle, index->lib_sym);
+        if (*(index->local_sym) == nullptr)
+        {
+            char* error;
+            ErrorMessage("AppId: Failed to resolve symbol: %s %s\n", index->lib_sym,
+                (error = dlerror()) ? error : "");
+            dlclose(self->tp_so_handle);
+            self->tp_so_handle = nullptr;
+            return false;
+        }
     }
 
-    if ( (tp_module->api_version() != THIRD_PARTY_APP_ID_API_VERSION)
-        || (tp_module->module_name().empty()) )
-    {
-        ErrorMessage("Ignoring incomplete 3rd party AppID module (%s, %u, %s)!\n",
-            path, tp_module->api_version(),
-            tp_module->module_name().empty() ? "empty" : tp_module->module_name().c_str());
-
-        dlclose(handle);
-        delete tp_module;
-        return 0;
-    }
-
-    this->tp_so_handle = handle;
-    tp_appid_module = tp_module;
-    return 0;
+    return true;
 }
 
-void TPLibHandler::pinit(const AppIdModuleConfig* config)
+ThirdPartyAppIDModule* TPLibHandler::create_tp_appid_ctxt(const AppIdModuleConfig& config)
 {
-    int ret;
+    assert(self != nullptr);
 
-    if (self->tp_so_handle or config->tp_appid_path.empty())
-        return;
-
-    self->tp_config.tp_appid_config = config->tp_appid_config;
-    self->tp_config.tp_appid_stats_enable = config->tp_appid_stats_enable;
-    self->tp_config.tp_appid_config_dump = config->tp_appid_config_dump;
-
-    self->LoadCallback(config->tp_appid_path.c_str(),1);
-
-    if (self->tp_appid_module == nullptr)
+    if (!self->tp_so_handle)
     {
-        ErrorMessage("Ignoring third party AppId library\n");
-        return;
+        if (config.tp_appid_path.empty())
+            return nullptr;
+
+        if (!self->load_callback(config.tp_appid_path.c_str()))
+            return nullptr;
     }
 
-    self->tp_config.chp_body_collection_max = config->chp_body_collection_max;
-    self->tp_config.ftp_userid_disabled = config->ftp_userid_disabled;
-    self->tp_config.chp_body_collection_disabled =
-        config->chp_body_collection_disabled;
-    self->tp_config.tp_allow_probes = config->tp_allow_probes;
-    if (config->http2_detection_enabled)
-        self->tp_config.http_upgrade_reporting_enabled = 1;
+    ThirdPartyConfig tp_config;
+    tp_config.tp_appid_config = config.tp_appid_config;
+    tp_config.tp_appid_stats_enable = config.tp_appid_stats_enable;
+    tp_config.tp_appid_config_dump = config.tp_appid_config_dump;
+    tp_config.chp_body_collection_max = config.chp_body_collection_max;
+    tp_config.ftp_userid_disabled = config.ftp_userid_disabled;
+    tp_config.chp_body_collection_disabled =
+        config.chp_body_collection_disabled;
+    tp_config.tp_allow_probes = config.tp_allow_probes;
+    if (config.http2_detection_enabled)
+        tp_config.http_upgrade_reporting_enabled = 1;
     else
-        self->tp_config.http_upgrade_reporting_enabled = 0;
+        tp_config.http_upgrade_reporting_enabled = 0;
+    tp_config.http_response_version_enabled = config.http_response_version_enabled;
 
-    self->tp_config.http_response_version_enabled = config->http_response_version_enabled;
-
-    ret = self->tp_appid_module->pinit(self->tp_config);
-    if (ret != 0)
+    ThirdPartyAppIDModule* tp_appid_ctxt = self->tp_appid_create_ctxt(tp_config);
+    if (tp_appid_ctxt == nullptr)
     {
-        ErrorMessage("Unable to initialize 3rd party AppID module (%d)!\n", ret);
-        delete self->tp_appid_module;
+        ErrorMessage("Failed to create third party appId context.\n");
         dlclose(self->tp_so_handle);
         self->tp_so_handle = nullptr;
-        self->tp_appid_module = nullptr;
-        return;
+        return nullptr;
     }
+
+    if ( (tp_appid_ctxt->api_version() != THIRD_PARTY_APP_ID_API_VERSION)
+        || (tp_appid_ctxt->module_name().empty()) )
+    {
+        ErrorMessage("Ignoring incomplete 3rd party AppID module (%s, %u, %s)!\n",
+            config.tp_appid_path.c_str(), tp_appid_ctxt->api_version(),
+            tp_appid_ctxt->module_name().empty() ? "empty" : tp_appid_ctxt->module_name().c_str());
+
+        delete tp_appid_ctxt;
+        dlclose(self->tp_so_handle);
+        self->tp_so_handle = nullptr;
+        return nullptr;
+    }
+
+    return tp_appid_ctxt;
 }
 
-void TPLibHandler::pfini(bool print_stats_flag)
+void TPLibHandler::tfini()
 {
-    if (self and self->tp_appid_module != nullptr)
-    {
-        if (print_stats_flag)
-            self->tp_appid_module->print_stats();
+    assert(self != nullptr);
 
-        int ret = self->tp_appid_module->pfini();
+    int ret = 0;
 
-        if (ret != 0)
-            ErrorMessage("Could not finalize 3rd party AppID module (%d)!\n", ret);
+    if (self->tp_appid_tfini)
+        ret = self->tp_appid_tfini();
 
-        delete self->tp_appid_module;
-        self->tp_appid_module = nullptr;
+    if (ret != 0)
+        ErrorMessage("Could not terminate packet thread in 3rd party AppID module (%d)!\n", ret);
+}
 
-        dlclose(self->tp_so_handle); // after delete, otherwise tpam will be dangling
-        self->tp_so_handle = nullptr;
-    }
+void TPLibHandler::pfini()
+{
+    assert(self != nullptr);
+
+    int ret = 0;
+
+    if (self->tp_appid_pfini)
+        ret = self->tp_appid_pfini();
+
+    if (ret != 0)
+        ErrorMessage("Could not terminate 3rd party AppID module (%d)!\n", ret);
+
+    // FIXIT-L: Find the right place to dlclose self->tp_so_handle. dlclose here was causing
+    // segfault
 
     if ( self ) {
         delete self;

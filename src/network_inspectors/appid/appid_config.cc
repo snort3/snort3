@@ -265,11 +265,20 @@ bool AppIdConfig::init_appid(SnortConfig* sc)
     }
 
 #ifdef ENABLE_APPID_THIRD_PARTY
-    TPLibHandler::pinit(mod_config);
+    // do not reload third party on reload_config()
+    if (!tp_appid_ctxt)
+        tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(*mod_config);
 #endif
     map_app_names_to_snort_ids(sc);
     return true;
 }
+
+#ifdef ENABLE_APPID_THIRD_PARTY
+void AppIdConfig::create_tp_appid_ctxt()
+{
+    tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(*mod_config);
+}
+#endif
 
 AppId AppIdConfig::get_port_service_id(IpProtocol proto, uint16_t port)
 {
