@@ -277,9 +277,7 @@ bool PerfMonReloadTuner::tune_resources(unsigned work_limit)
         return (result == XHASH_OK);
     }
     else
-    {
-        return false;
-    }
+        return true;
 }
 
 void PerfMonitor::tterm()

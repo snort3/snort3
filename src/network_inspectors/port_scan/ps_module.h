@@ -22,7 +22,9 @@
 #define PS_MODULE_H
 
 #include "framework/module.h"
+#include "main/snort_config.h"
 #include "ps_detect.h"
+#include "ps_pegs.h"
 
 #define PS_NAME "port_scan"
 #define PS_HELP "detect various ip, icmp, tcp, and udp port or protocol scans"
@@ -129,8 +131,27 @@
     "open port"
 
 //-------------------------------------------------------------------------
+// Reload resource tuning
+//-------------------------------------------------------------------------
 
-extern THREAD_LOCAL SimpleStats spstats;
+class PortScanReloadTuner : public snort::ReloadResourceTuner
+{
+public:
+    bool tinit() override
+    { return ps_init_hash(memcap); }
+
+    bool tune_idle_context() override
+    { return ps_prune_hash(max_work_idle); }
+
+    bool tune_packet_context() override
+    { return ps_prune_hash(max_work); }
+
+    size_t memcap = 0;
+};
+
+//-------------------------------------------------------------------------
+
+extern THREAD_LOCAL PsPegStats spstats;
 extern THREAD_LOCAL snort::ProfileStats psPerfStats;
 
 struct PortscanConfig;
@@ -162,9 +183,8 @@ public:
 
 private:
     PS_ALERT_CONF* get_alert_conf(const char* fqn);
-
-private:
     PortscanConfig* config;
+    PortScanReloadTuner ps_rrt;
 };
 
 #endif

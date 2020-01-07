@@ -44,6 +44,7 @@
 #include "utils/stats.h"
 
 #include "ps_inspect.h"
+#include "ps_pegs.h"
 
 using namespace snort;
 
@@ -57,6 +58,7 @@ struct PS_HASH_KEY
 PADDING_GUARD_END
 
 static THREAD_LOCAL XHash* portscan_hash = nullptr;
+extern THREAD_LOCAL PsPegStats spstats;
 
 PS_PKT::PS_PKT(Packet* p)
 {
@@ -120,10 +122,14 @@ void ps_cleanup()
 unsigned ps_node_size()
 { return sizeof(PS_HASH_KEY) + sizeof(PS_TRACKER); }
 
-void ps_init_hash(unsigned long memcap)
+bool ps_init_hash(unsigned long memcap)
 {
     if ( portscan_hash )
-        return;
+    {
+        bool need_pruning = (memcap < portscan_hash->mc.memused);
+        portscan_hash->mc.memcap = memcap;
+        return need_pruning;
+    }
 
     int rows = memcap / ps_node_size();
 
@@ -132,6 +138,19 @@ void ps_init_hash(unsigned long memcap)
 
     if ( !portscan_hash )
         FatalError("Failed to initialize portscan hash table.\n");
+
+    return false;
+}
+
+bool ps_prune_hash(unsigned work_limit)
+{
+    if ( !portscan_hash )
+        return true;
+
+    unsigned num_pruned = 0;
+    int result = xhash_free_overallocations(portscan_hash, work_limit, &num_pruned);
+    spstats.reload_prunes += num_pruned;
+    return result != XHASH_PENDING;
 }
 
 void ps_reset()
@@ -282,8 +301,13 @@ static PS_TRACKER* ps_tracker_get(PS_HASH_KEY* key)
     if ( ht )
         return ht;
 
+    auto prev_count = portscan_hash->count;
     if ( xhash_add(portscan_hash, (void*)key, nullptr) != XHASH_OK )
         return nullptr;
+
+    ++spstats.trackers;
+    if ( prev_count == portscan_hash->count )
+        ++spstats.alloc_prunes;
 
     ht = (PS_TRACKER*)xhash_mru(portscan_hash);
 

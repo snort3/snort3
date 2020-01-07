@@ -24,6 +24,7 @@
 
 #include "ps_module.h"
 #include "log/messages.h"
+#include "main/snort.h"
 
 #include <cassert>
 
@@ -199,7 +200,7 @@ ProfileStats* PortScanModule::get_profile() const
 { return &psPerfStats; }
 
 const PegInfo* PortScanModule::get_pegs() const
-{ return simple_pegs; }
+{ return ps_module_pegs; }
 
 PegCount* PortScanModule::get_counts() const
 { return (PegCount*)&spstats; }
@@ -325,25 +326,14 @@ bool PortScanModule::set(const char* fqn, Value& v, SnortConfig*)
     return true;
 }
 
-bool PortScanModule::end(const char* fqn, int, SnortConfig*)
+bool PortScanModule::end(const char* fqn, int, SnortConfig* sc)
 {
-    if (strcmp(fqn, "port_scan") == 0)
+    if ( strcmp(fqn, "port_scan") == 0 )
     {
-        static size_t saved_memcap = 0;
-
-        if (saved_memcap != 0  )
-        {
-            if (config->memcap != saved_memcap)
-            {
-                ReloadError("Changing port_scan.memcap requires a restart\n");
-            }
-        }
-        else
-        {
-            saved_memcap = config->memcap;
-        }
+        ps_rrt.memcap = config->memcap;
+        if ( Snort::is_reloading() )
+            sc->register_reload_resource_tuner(ps_rrt);
     }
-
     return true;
 }
 
@@ -397,4 +387,3 @@ PortscanConfig* PortScanModule::get_data()
     config = nullptr;
     return tmp;
 }
-

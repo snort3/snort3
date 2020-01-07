@@ -36,7 +36,7 @@
 
 using namespace snort;
 
-THREAD_LOCAL SimpleStats spstats;
+THREAD_LOCAL PsPegStats spstats;
 THREAD_LOCAL ProfileStats psPerfStats;
 
 static void make_port_scan_info(Packet* p, PS_PROTO* proto)
@@ -441,7 +441,7 @@ void PortScan::eval(Packet* p)
     if ( p->packet_flags & PKT_REBUILT_STREAM )
         return;
 
-    ++spstats.total_packets;
+    ++spstats.packets;
     PS_PKT ps_pkt(p);
 
     ps_detect(&ps_pkt);

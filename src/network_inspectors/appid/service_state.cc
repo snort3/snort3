@@ -278,8 +278,7 @@ void AppIdServiceState::dump_stats()
 
 bool AppIdServiceState::prune(size_t max_memory, size_t num_items)
 {
-    bool done = false;
     if ( service_state_cache )
-        done = service_state_cache->prune(max_memory, num_items);
-    return done;
+        return service_state_cache->prune(max_memory, num_items);
+    return true;
 }

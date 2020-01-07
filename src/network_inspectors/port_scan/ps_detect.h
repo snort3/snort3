@@ -164,7 +164,8 @@ void ps_cleanup();
 void ps_reset();
 
 unsigned ps_node_size();
-void ps_init_hash(unsigned long);
+bool ps_init_hash(unsigned long);
+bool ps_prune_hash(unsigned);
 int ps_detect(PS_PKT*);
 
 #endif

@@ -139,8 +139,8 @@ inline unsigned xhash_overhead_blocks(XHash* t)
 { return t->overhead_blocks; }
 
 // Get the amount of space required to allocate a new node in the xhash t.
-inline size_t xhash_required_mem(XHash *t)
-{ return sizeof(XHashNode) + t->pad + t->keysize + t->datasize; }
+constexpr size_t xhash_required_mem(XHash *t)
+{ return sizeof(XHashNode) + t->pad + t->keysize + t->datasize + sizeof(long); }
 
 SO_PUBLIC int xhash_free_anr_lru(XHash* t);
 SO_PUBLIC void* xhash_mru(XHash* t);

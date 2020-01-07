@@ -1057,7 +1057,7 @@ static inline int xhash_delete_free_node(XHash *t)
 
 /*!
  * Unlink and free an ANR node or the oldest node, if ANR is empty
- * behavior is undefined if t->usrfree is set
+ * behavior is undefined if either t->anrfree or t->usrfree is set
  *
  * t XHash table pointer
  *
@@ -1118,7 +1118,7 @@ int xhash_free_overallocations(XHash* t, unsigned work_limit, unsigned* num_free
         ++*num_freed;
     }
 
-    return (t->mc.memcap > t->mc.memused) ? XHASH_OK : XHASH_PENDING;
+    return (t->mc.memcap >= t->mc.memused) ? XHASH_OK : XHASH_PENDING;
 }
 
 /*!
