@@ -45,8 +45,8 @@ private:
 };
 
 IpsOptionPiglet::IpsOptionPiglet(
-    Lua::State& state, const std::string& target, Module* m) :
-    BasePlugin(state, target, m)
+    Lua::State& state, const std::string& tgt, Module* m) :
+    BasePlugin(state, tgt, m)
 {
     if ( !module )
         return;
@@ -56,7 +56,7 @@ IpsOptionPiglet::IpsOptionPiglet(
     if ( !otn )
         return;
 
-    wrapper = IpsManager::instantiate(target.c_str(), m, otn);
+    wrapper = IpsManager::instantiate(tgt.c_str(), m, otn);
 }
 
 IpsOptionPiglet::~IpsOptionPiglet()

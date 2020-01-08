@@ -40,8 +40,8 @@ using namespace snort;
 class TestPiglet : public Piglet::BasePlugin
 {
 public:
-    TestPiglet(Lua::State& state, const std::string& target) :
-        BasePlugin(state, target) { }
+    TestPiglet(Lua::State& state, const std::string& tgt) :
+        BasePlugin(state, tgt) { }
 
     bool setup() override;
 };

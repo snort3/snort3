@@ -46,9 +46,9 @@ private:
 };
 
 CodecPiglet::CodecPiglet(
-    Lua::State& state, const std::string& target, Module* m, SnortConfig* sc) :
-    BasePlugin(state, target, m, sc)
-{ wrapper = CodecManager::instantiate(target.c_str(), module, snort_conf); }
+    Lua::State& state, const std::string& tgt, Module* m, SnortConfig* sc) :
+    BasePlugin(state, tgt, m, sc)
+{ wrapper = CodecManager::instantiate(tgt.c_str(), module, snort_conf); }
 
 CodecPiglet::~CodecPiglet()
 {

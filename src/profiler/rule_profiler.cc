@@ -524,21 +524,21 @@ TEST_CASE( "rule entry", "[profiler][rule_profiler]" )
     SECTION( "avg_match" )
     {
         auto ticks = entry.avg_match();
-        INFO( ticks.count() << " == " << (1_ticks).count() );
+        INFO( ticks.count() << " == " << (1_ticks).count() )
         CHECK( (ticks == 1_ticks) );
     }
 
     SECTION( "avg_no_match" )
     {
         auto ticks = entry.avg_no_match();
-        INFO( ticks.count() << " == " << (1_ticks).count() );
+        INFO( ticks.count() << " == " << (1_ticks).count() )
         CHECK( (ticks == 1_ticks) );
     }
 
     SECTION( "avg_check" )
     {
         auto ticks = entry.avg_check();
-        INFO( ticks.count() << " == " << (1_ticks).count() );
+        INFO( ticks.count() << " == " << (1_ticks).count() )
         CHECK( (ticks == 1_ticks) );
     }
 }
@@ -697,10 +697,10 @@ TEST_CASE( "rule profiler time context", "[profiler][rule_profiler]" )
             avoid_optimization();
         }
 
-        INFO( "elapsed: " << stats.elapsed.count() );
+        INFO( "elapsed: " << stats.elapsed.count() )
         CHECK( (stats.elapsed > 0_ticks) );
         CHECK( stats.checks == 1 );
-        INFO( "elapsed_match: " << stats.elapsed_match.count() );
+        INFO( "elapsed_match: " << stats.elapsed_match.count() )
         CHECK( (stats.elapsed_match == 0_ticks) );
     }
 
@@ -715,7 +715,7 @@ TEST_CASE( "rule profiler time context", "[profiler][rule_profiler]" )
                 avoid_optimization();
                 ctx.stop(true);
 
-                INFO( "elapsed: " << stats.elapsed.count() );
+                INFO( "elapsed: " << stats.elapsed.count() )
                 CHECK( (stats.elapsed > 0_ticks) );
                 CHECK( stats.checks == 1 );
                 CHECK( stats.elapsed_match == stats.elapsed );
@@ -730,7 +730,7 @@ TEST_CASE( "rule profiler time context", "[profiler][rule_profiler]" )
                 avoid_optimization();
                 ctx.stop(false);
 
-                INFO( "elapsed: " << stats.elapsed.count() );
+                INFO( "elapsed: " << stats.elapsed.count() )
                 CHECK( (stats.elapsed > 0_ticks) );
                 CHECK( stats.checks == 1 );
                 CHECK( (stats.elapsed_match == 0_ticks) );
@@ -738,7 +738,7 @@ TEST_CASE( "rule profiler time context", "[profiler][rule_profiler]" )
             }
         }
 
-        INFO( "elapsed: " << stats.elapsed.count() );
+        INFO( "elapsed: " << stats.elapsed.count() )
         CHECK( stats.elapsed == save.elapsed );
         CHECK( stats.elapsed_match == save.elapsed_match );
         CHECK( stats.checks == save.checks );

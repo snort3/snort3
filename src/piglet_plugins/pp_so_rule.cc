@@ -38,8 +38,8 @@ public:
 };
 
 SoRulePiglet::SoRulePiglet(
-    Lua::State& state, const std::string& target, Module* m, SnortConfig* sc) :
-    BasePlugin(state, target, m, sc) { }
+    Lua::State& state, const std::string& tgt, Module* m, SnortConfig* sc) :
+    BasePlugin(state, tgt, m, sc) { }
 
 
 bool SoRulePiglet::setup()

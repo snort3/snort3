@@ -679,7 +679,7 @@ static void load_list_file(ListFile* list_info, ReputationConfig* config)
 static int num_lines_in_file(char* fname)
 {
     FILE* fp;
-    uint32_t numlines = 0;
+    int numlines = 0;
     char buf[MAX_ADDR_LINE_LENGTH];
 
     fp = fopen(fname, "rb");

@@ -181,8 +181,8 @@ TEST_CASE("IpsContext basic", "[IpsContext]")
     CHECK(TestData::count == num_data);
 }
 
-IpsContext* post_val;
-void test_post(IpsContext* c)
+static IpsContext* post_val;
+static void test_post(IpsContext* c)
 { post_val = c; }
 
 TEST_CASE("IpsContext post detection", "[IpsContext]")

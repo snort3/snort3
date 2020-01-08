@@ -40,9 +40,9 @@ private:
 };
 
 SearchEnginePiglet::SearchEnginePiglet(
-    Lua::State& state, const std::string& target, Module* m, SnortConfig* sc) :
-    BasePlugin(state, target, m, sc)
-{ wrapper = MpseManager::instantiate(target.c_str(), module, snort_conf); }
+    Lua::State& state, const std::string& tgt, Module* m, SnortConfig* sc) :
+    BasePlugin(state, tgt, m, sc)
+{ wrapper = MpseManager::instantiate(tgt.c_str(), module, snort_conf); }
 
 SearchEnginePiglet::~SearchEnginePiglet()
 {

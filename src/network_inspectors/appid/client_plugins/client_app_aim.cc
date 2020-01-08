@@ -110,7 +110,6 @@ static inline bool check_username(
 {
     const uint8_t* const end = data + tlv->len;
     char* ptr = buf;
-    *buf_end = '\0';
 
     for ( const uint8_t* cur = data; cur < end; ++cur )
     {
@@ -122,6 +121,8 @@ static inline bool check_username(
         else
             return false;
     }
+
+    *ptr = '\0';
 
     return true;
 }
@@ -196,7 +197,7 @@ int AimClientDetector::validate(AppIdDiscoveryArgs& args)
                         constexpr auto USERNAME_LEN = 256;
                         char username[USERNAME_LEN];
 
-                        if ( check_username(cur, tlv, username, username + USERNAME_LEN) )
+                        if ( check_username(cur, tlv, username, username + USERNAME_LEN - 1) )
                             add_user(args.asd, username, APP_ID_AOL_INSTANT_MESSENGER, true);
                     }
                     break;

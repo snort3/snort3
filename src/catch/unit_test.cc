@@ -65,7 +65,7 @@ int catch_test()
 // This isn't in snort_catch.cc because the linker may exclude the file if no static components
 // reference TestCaseInstaller
 SO_PUBLIC TestCaseInstaller::TestCaseInstaller(void(*fun)(), const char* name)
-{ REGISTER_TEST_CASE(fun, name); }
+{ REGISTER_TEST_CASE(fun, name) }
 
 SO_PUBLIC TestCaseInstaller::TestCaseInstaller(void(*fun)(), const char* name, const char* group)
-{ REGISTER_TEST_CASE(fun, name, group); }
+{ REGISTER_TEST_CASE(fun, name, group) }
