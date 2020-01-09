@@ -75,6 +75,8 @@ public:
     void clear();
     bool is_clear() { return cleared; }
 
+    uint64_t get_transaction_id() { return trans_num; }
+
     HttpMsgSection* next = nullptr;
 
 #ifdef REG_TEST

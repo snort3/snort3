@@ -121,7 +121,15 @@ FilePolicyBase* FileFlows::get_file_policy(Flow* flow)
 
 void FileFlows::set_current_file_context(FileContext* ctx)
 {
+    // If we finished processing a file context object last time, delete it
+    if (current_context_delete_pending)
+    {
+        delete current_context;
+        current_context_delete_pending = false;
+    }
     current_context = ctx;
+    // Not using current_file_id so clear it
+    current_file_id = 0;
 }
 
 FileContext* FileFlows::get_current_file_context()
@@ -142,9 +150,11 @@ uint64_t FileFlows::get_new_file_instance()
 FileFlows::~FileFlows()
 {
     delete(main_context);
+    if (current_context_delete_pending)
+        delete(current_context);
 
     // Delete any remaining FileContexts stored on the flow
-    for (auto const& elem : flow_file_contexts)
+    for (auto const& elem : partially_processed_contexts)
     {
         delete elem.second;
     }
@@ -175,17 +185,25 @@ FileContext* FileFlows::find_main_file_context(FilePosition pos, FileDirection d
     return context;
 }
 
-FileContext* FileFlows::get_file_context(uint64_t file_id, bool to_create)
+FileContext* FileFlows::get_partially_processed_context(uint64_t file_id)
 {
-    FileContext *context = nullptr;
+    auto elem = partially_processed_contexts.find(file_id);
+    if (elem != partially_processed_contexts.end())
+        return elem->second;
+    return nullptr;
+}
 
-    // First check if this file is currently being processed and is stored on the file flows object
-    auto elem = flow_file_contexts.find(file_id);
-    if (elem != flow_file_contexts.end())
-        context = elem->second;
+FileContext* FileFlows::get_file_context(uint64_t file_id, bool to_create,
+    uint64_t multi_file_processing_id)
+{
+    // First check if this file is currently being processed
+    if (!multi_file_processing_id)
+        multi_file_processing_id = file_id;
+    FileContext *context = get_partially_processed_context(multi_file_processing_id);
+
     // Otherwise check if it has been fully processed and is in the file cache. If the file is not
     // in the cache, don't add it.
-    else
+    if (!context)
     {
         FileCache* file_cache = FileService::get_file_cache();
         assert(file_cache);
@@ -197,7 +215,7 @@ FileContext* FileFlows::get_file_context(uint64_t file_id, bool to_create)
     {
         // If we have reached the max file per flow limit, alert and increment the peg count
         FileConfig* fc = get_file_config(SnortConfig::get_conf());
-        if (flow_file_contexts.size() == fc->max_files_per_flow)
+        if (partially_processed_contexts.size() == fc->max_files_per_flow)
         {
             file_counts.files_over_flow_limit_not_processed++;
             events.create_event(EVENT_FILE_DROPPED_OVER_LIMIT);
@@ -205,23 +223,24 @@ FileContext* FileFlows::get_file_context(uint64_t file_id, bool to_create)
         else
         {
             context = new FileContext;
-            flow_file_contexts[file_id] = context;
-            if (flow_file_contexts.size() > file_counts.max_concurrent_files_per_flow)
-                file_counts.max_concurrent_files_per_flow = flow_file_contexts.size();
+            partially_processed_contexts[multi_file_processing_id] = context;
+            if (partially_processed_contexts.size() > file_counts.max_concurrent_files_per_flow)
+                file_counts.max_concurrent_files_per_flow = partially_processed_contexts.size();
         }
     }
 
-    current_file_id = file_id;
     return context;
 }
 
-void FileFlows::remove_file_context(uint64_t file_id)
+// Remove a file context from the flow's partially processed store. Don't delete the context
+// yet because detection needs access; pointer is stored in current_context. The file context will
+// be deleted when the next file is processed
+void FileFlows::remove_processed_file_context(uint64_t file_id)
 {
-    auto elem = flow_file_contexts.find(file_id);
-    if (elem == flow_file_contexts.end())
-        return;
-    delete elem->second;
-    flow_file_contexts.erase(file_id);
+    FileContext *context = get_partially_processed_context(file_id);
+    partially_processed_contexts.erase(file_id);
+    if (context)
+        current_context_delete_pending = true;
 }
 
 /* This function is used to process file that is sent in pieces
@@ -231,20 +250,25 @@ void FileFlows::remove_file_context(uint64_t file_id)
  *    false: ignore this file
  */
 bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_data,
-    int data_size, uint64_t offset, FileDirection dir)
+    int data_size, uint64_t offset, FileDirection dir, uint64_t multi_file_processing_id,
+    FilePosition position)
 {
     int64_t file_depth = FileService::get_max_file_depth();
     bool continue_processing;
+    if (!multi_file_processing_id)
+        multi_file_processing_id = file_id;
 
     if ((file_depth < 0) or (offset > (uint64_t)file_depth))
     {
         return false;
     }
 
-    FileContext* context = get_file_context(file_id, true);
+    FileContext* context = get_file_context(file_id, true, multi_file_processing_id);
 
     if (!context)
         return false;
+
+    set_current_file_context(context);
 
     if (!context->get_processed_bytes())
     {
@@ -264,14 +288,14 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
             continue_processing = context->process(p, file_data, data_size, position,
                     file_policy);
             if (context->processing_complete)
-                remove_file_context(file_id);
+                remove_processed_file_context(multi_file_processing_id);
             return continue_processing;
         }
     }
 
-    continue_processing = context->process(p, file_data, data_size, offset, file_policy);
+    continue_processing = context->process(p, file_data, data_size, offset, file_policy, position);
     if (context->processing_complete)
-        remove_file_context(file_id);
+        remove_processed_file_context(multi_file_processing_id);
     return continue_processing;
 }
 
@@ -300,9 +324,13 @@ bool FileFlows::file_process(Packet* p, const uint8_t* file_data, int data_size,
     return context->process(p, file_data, data_size, position, file_policy);
 }
 
-void FileFlows::set_file_name(const uint8_t* fname, uint32_t name_size)
+void FileFlows::set_file_name(const uint8_t* fname, uint32_t name_size, uint64_t file_id)
 {
-    FileContext* context = get_current_file_context();
+    FileContext* context;
+    if (file_id)
+        context = get_file_context(file_id, false);
+    else
+        context = get_current_file_context();
     if ( !context )
         return;
 

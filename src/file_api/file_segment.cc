@@ -153,9 +153,10 @@ FilePosition FileSegments::get_file_position(uint64_t data_size, uint64_t file_s
 }
 
 int FileSegments::process_one(Packet* p, const uint8_t* file_data, int data_size,
-    FilePolicyBase* policy)
+    FilePolicyBase* policy, FilePosition position)
 {
-    FilePosition position = get_file_position(data_size, context->get_file_size());
+    if (position == SNORT_FILE_POSITION_UNKNOWN)
+        position = get_file_position(data_size, context->get_file_size());
 
     return context->process(p, file_data, data_size, position, policy);
 }
@@ -193,7 +194,7 @@ int FileSegments::process_all(Packet* p, FilePolicyBase* policy)
  *    0: ignore this file
  */
 int FileSegments::process(Packet* p, const uint8_t* file_data, uint64_t data_size,
-    uint64_t offset, FilePolicyBase* policy)
+    uint64_t offset, FilePolicyBase* policy, FilePosition position)
 {
     int ret = 0;
 
@@ -205,7 +206,7 @@ int FileSegments::process(Packet* p, const uint8_t* file_data, uint64_t data_siz
     // Walk through the segments that can be flushed
     if (current_offset == offset)
     {
-        ret =  process_one(p, file_data, data_size, policy);
+        ret =  process_one(p, file_data, data_size, policy, position);
         current_offset += data_size;
         if (!ret)
         {

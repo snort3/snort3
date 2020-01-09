@@ -488,11 +488,11 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
 }
 
 bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
-    uint64_t offset, FilePolicyBase* policy)
+    uint64_t offset, FilePolicyBase* policy, FilePosition position)
 {
     if (!file_segments)
         file_segments = new FileSegments(this);
-    return file_segments->process(p, file_data, data_size, offset, policy);
+    return file_segments->process(p, file_data, data_size, offset, policy, position);
 }
 
 /*

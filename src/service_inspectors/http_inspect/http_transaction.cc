@@ -32,8 +32,11 @@
 #include "http_msg_status.h"
 #include "http_msg_trailer.h"
 
+#include "hash/hashfcn.h"
+
 using namespace HttpCommon;
 using namespace HttpEnums;
+using namespace snort;
 
 static void delete_section_list(HttpMsgSection* section_list)
 {
@@ -265,3 +268,14 @@ void HttpTransaction::set_one_hundred_response()
     second_response_expected = true;
 }
 
+void HttpTransaction::set_file_processing_id(const SourceId source_id,
+    const uint64_t transaction_id)
+{
+    const int data_len = sizeof(source_id) + sizeof(transaction_id);
+    uint8_t data[data_len];
+    memcpy(data, (void*)&source_id, sizeof(source_id));
+    uint32_t offset = sizeof(source_id);
+    memcpy(data + offset, (void*)&transaction_id, sizeof(transaction_id));
+
+    file_processing_id[source_id] = str_to_hash(data, data_len);
+}

@@ -224,7 +224,7 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
     if (!session_data->mime_state[source_id])
     {
         FileFlows* file_flows = FileFlows::get_file_flows(flow);
-        const bool download = (source_id == SRC_SERVER);
+        const FileDirection dir = source_id == SRC_SERVER ? FILE_DOWNLOAD : FILE_UPLOAD;
 
         size_t file_index = 0;
 
@@ -233,8 +233,8 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
             file_index = request->get_http_uri()->get_file_proc_hash();
         }
 
-        if (file_flows->file_process(p, file_data.start(), fp_length,
-            file_position, !download, file_index))
+        if (file_flows->file_process(p, file_index, file_data.start(), fp_length, body_octets, dir,
+            transaction->get_file_processing_id(source_id), file_position))
         {
             session_data->file_depth_remaining[source_id] -= fp_length;
 

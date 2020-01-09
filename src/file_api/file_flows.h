@@ -69,12 +69,17 @@ public:
 
     void set_current_file_context(FileContext*);
 
-    // Get file context based on file id, create it if not existed
-    FileContext* get_file_context(uint64_t file_id, bool to_create);
+    // Get file context based on file id, create it if does not exist
+    FileContext* get_file_context(uint64_t file_id, bool to_create,
+        uint64_t multi_file_processing_id=0);
+    // Get a partially processed file context from the flow object
+    FileContext* get_partially_processed_context(uint64_t file_id);
+    // Remove a file from the flow object when processing is complete
+    void remove_processed_file_context(uint64_t file_id);
 
     uint64_t get_new_file_instance();
 
-    void set_file_name(const uint8_t* fname, uint32_t name_size);
+    void set_file_name(const uint8_t* fname, uint32_t name_size, uint64_t file_id=0);
 
     void set_sig_gen_state( bool enable )
     {
@@ -89,7 +94,8 @@ public:
 
     // This is used for each file context. Support multiple files per session
     bool file_process(Packet* p, uint64_t file_id, const uint8_t* file_data,
-        int data_size, uint64_t offset, FileDirection);
+        int data_size, uint64_t offset, FileDirection, uint64_t multi_file_processing_id=0,
+        FilePosition=SNORT_FILE_POSITION_UNKNOWN);
 
     static unsigned file_flow_data_id;
 
@@ -98,8 +104,6 @@ public:
 
     size_t size_of() override
     { return sizeof(*this); }
-
-    void remove_file_context(uint64_t file_id);
 
 private:
     void init_file_context(FileDirection, FileContext*);
@@ -112,7 +116,8 @@ private:
     Flow* flow = nullptr;
     FilePolicyBase* file_policy = nullptr;
 
-    std::unordered_map<uint64_t, FileContext*> flow_file_contexts;
+    std::unordered_map<uint64_t, FileContext*> partially_processed_contexts;
+    bool current_context_delete_pending = false;
     FileEventGen events;
 };
 }
