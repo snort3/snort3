@@ -23,6 +23,9 @@
 
 #include "codecs/codec_module.h"
 #include "framework/codec.h"
+#include "log/messages.h"
+#include "protocols/cisco_meta_data.h"
+#include "protocols/layer.h"
 
 using namespace snort;
 
@@ -58,21 +61,11 @@ public:
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
-struct CiscoMetaDataHdr
-{
-    uint8_t version; // This must be 1
-    uint8_t length; //This is the header size in bytes / 8
-};
-
-struct CiscoMetaDataOpt
-{
-    uint16_t opt_len_type;  // 3-bit length + 13-bit type. Length of 0 = 4. Type must be 1.
-    uint16_t sgt;           // Can be any value except 0xFFFF
-};
-
 constexpr uint8_t CISCO_META_OPT_LEN_SHIFT = 4;
 constexpr uint16_t CISCO_META_OPT_TYPE_SGT = 1;
 constexpr uint16_t CISCO_META_OPT_TYPE_MASK = 0x1FFF; //mask opt_len_type to get option type
+// Currently we only support one CiscoMetaDataHdr which is size of 1 byte.
+constexpr uint8_t SUPPORTED_HDR_LEN = 1;
 } // namespace
 
 void CiscoMetaDataCodec::get_protocol_ids(std::vector<ProtocolId>& v)
@@ -80,66 +73,73 @@ void CiscoMetaDataCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 
 bool CiscoMetaDataCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
-    if (raw.len < sizeof(CiscoMetaDataHdr))
+    uint16_t len;
+    uint16_t type;
+
+    /* 2 octets for ethertype + 2 octets for CiscoMetaDataHdr
+     * + 4 octets for CiscoMetaDataOpt 
+     */
+    uint32_t total_len = (sizeof(uint16_t)
+                        + sizeof(cisco_meta_data::CiscoMetaDataHdr)
+                        + sizeof(cisco_meta_data::CiscoMetaDataOpt));
+
+    if (raw.len < total_len)
     {
         codec_event(codec, DECODE_CISCO_META_HDR_TRUNC);
         return false;
     }
 
-    const CiscoMetaDataHdr* const cmdh =
-        reinterpret_cast<const CiscoMetaDataHdr*>(raw.data);
-    uint32_t cmdh_rem_len = cmdh->length << 3;
+    const cisco_meta_data::CiscoMetaDataHdr* const cmdh =
+        reinterpret_cast<const cisco_meta_data::CiscoMetaDataHdr*>(raw.data);
 
-    if ( (raw.len < cmdh_rem_len) || (cmdh_rem_len == 0) )
+    if (SUPPORTED_HDR_LEN != cmdh->length)
     {
         codec_event(codec, DECODE_CISCO_META_HDR_TRUNC);
         return false;
     }
 
-    const CiscoMetaDataOpt* cmd_options =
-        reinterpret_cast<const CiscoMetaDataOpt*>(raw.data + sizeof(CiscoMetaDataHdr));
-    // validate options, lengths, and SGTs
-    cmdh_rem_len -= sizeof(CiscoMetaDataHdr) + sizeof(uint16_t); //2 octets for ethertype
-    if(cmdh_rem_len == 0)
-        cmd_options = nullptr;
+    const cisco_meta_data::CiscoMetaDataOpt* cmd_option =
+        reinterpret_cast<const cisco_meta_data::CiscoMetaDataOpt*>(raw.data
+        + sizeof(cisco_meta_data::CiscoMetaDataHdr));
 
-    for(int i = 0; cmdh_rem_len > 0; i++)
+    // Top 3 bits (length) must be equal to 0
+    // Bottom 13 bits (type) must be 1 to indicate SGT
+    len = ntohs(cmd_option->opt_len_type) >> CISCO_META_OPT_LEN_SHIFT;
+    type = ntohs(cmd_option->opt_len_type) & CISCO_META_OPT_TYPE_MASK;
+
+    // 0 indicates 4 octets which is sizeof(CiscoMetaDataOpt)
+    if (len != 0)
     {
-        // Top 3 bits (length) must be equal to 0 or 4
-        // Bottom 13 bits (type) must be 1 to indicate SGT
-        const CiscoMetaDataOpt* opt = &cmd_options[i];
-        uint16_t len = ntohs(opt->opt_len_type) >> CISCO_META_OPT_LEN_SHIFT;
-        uint16_t type = ntohs(opt->opt_len_type) & CISCO_META_OPT_TYPE_MASK;
-
-        // 0 indicates 4 octets
-        if(len != 0 && len != 4)
-        {
-            codec_event(codec, DECODE_CISCO_META_HDR_OPT_LEN);
-            return false;
-        }
-
-        if(type != CISCO_META_OPT_TYPE_SGT)
-        {
-            codec_event(codec, DECODE_CISCO_META_HDR_OPT_TYPE);
-            return false;
-        }
-
-        /* Tag value 0xFFFF is invalid */
-        if(opt->sgt == 0xFFFF)
-        {
-            codec_event(codec, DECODE_CISCO_META_HDR_SGT);
-            return false;
-        }
-        cmdh_rem_len -= sizeof(CiscoMetaDataOpt);
+        codec_event(codec, DECODE_CISCO_META_HDR_OPT_LEN);
+        return false;
     }
 
-    codec.lyr_len = cmdh->length << 3;
+    if (type != CISCO_META_OPT_TYPE_SGT)
+    {
+        codec_event(codec, DECODE_CISCO_META_HDR_OPT_TYPE);
+        return false;
+    }
+
+    /* Tag value 0xFFFF is invalid */
+    if (cmd_option->sgt == 0xFFFF)
+    {
+        codec_event(codec, DECODE_CISCO_META_HDR_SGT);
+        return false;
+    }
+
+#ifdef REG_TEST
+    LogMessage("Value of sgt %d\n", ntohs(cmd_option->sgt));
+#endif
+
+    codec.lyr_len = total_len;
 
     //The last 2 octets of the header will be the real ethtype
     codec.next_prot_id = static_cast<ProtocolId>
         (ntohs(*((const uint16_t*)(raw.data + codec.lyr_len - sizeof(uint16_t)))));
 
     codec.codec_flags |= CODEC_ETHER_NEXT;
+    codec.proto_bits  |= PROTO_BIT__CISCO_META_DATA;
+
     return true;
 }
 

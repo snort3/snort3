@@ -1,6 +1,7 @@
 
 set (PROTOCOL_HEADERS
     arp.h
+    cisco_meta_data.h
     eapol.h
     eth.h
     icmp4.h

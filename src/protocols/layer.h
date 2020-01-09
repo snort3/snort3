@@ -21,6 +21,7 @@
 #define PROTOCOLS_LAYER_H
 
 #include "main/snort_types.h"
+#include "protocols/cisco_meta_data.h"
 #include "protocols/protocol_ids.h"
 
 namespace snort
@@ -180,6 +181,9 @@ SO_PUBLIC bool set_inner_ip_api(const Packet* const, ip::IpApi&,
 SO_PUBLIC bool set_outer_ip_api(const Packet* const, ip::IpApi&, int8_t& curr_layer);
 SO_PUBLIC bool set_outer_ip_api(const Packet* const, ip::IpApi&,
     IpProtocol& next_ip_proto, int8_t& curr_layer);
+
+/* This is the api to get CiscoMetaData layer to fetch SGT value from it */
+SO_PUBLIC const cisco_meta_data::CiscoMetaDataOpt* get_cisco_meta_data_layer(const Packet* const p);
 } // namespace layer
 } // namespace snort
 #endif

@@ -67,8 +67,9 @@ enum class PktType : std::uint8_t
 #define PROTO_BIT__ICMP_EMBED_ICMP  0x04000
 #define PROTO_BIT__ICMP_EMBED_OTHER 0x08000
 #define PROTO_BIT__IP6_EXT          0x10000
-#define PROTO_BIT__OTHER            0x20000
-#define PROTO_BIT__ALL              0x3FFFF
+#define PROTO_BIT__CISCO_META_DATA  0x20000
+#define PROTO_BIT__OTHER            0x40000
+#define PROTO_BIT__ALL              0x7FFFF
 
 #define PROTO_BIT__ICMP_EMBED \
     (PROTO_BIT__TCP_EMBED_ICMP | PROTO_BIT__UDP_EMBED_ICMP | \

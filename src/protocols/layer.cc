@@ -150,6 +150,20 @@ const vlan::VlanTagHdr* get_vlan_layer(const Packet* const p)
     return reinterpret_cast<const vlan::VlanTagHdr*>(lyr->start);
 }
 
+const cisco_meta_data::CiscoMetaDataOpt* get_cisco_meta_data_layer(const Packet* const p)
+{
+    assert( p->proto_bits & PROTO_BIT__CISCO_META_DATA );
+    uint8_t num_layers = p->num_layers;
+    const Layer* lyr = p->layers;
+    const Layer* cmd_lyr;
+
+    cmd_lyr = find_layer(lyr, num_layers, ProtocolId::ETHERTYPE_CISCO_META,
+        ProtocolId::ETHERTYPE_CISCO_META);
+
+    return reinterpret_cast<const snort::cisco_meta_data::CiscoMetaDataOpt*>(cmd_lyr->start
+        + sizeof(snort::cisco_meta_data::CiscoMetaDataHdr));
+}
+
 const eth::EtherHdr* get_eth_layer(const Packet* const p)
 {
     uint8_t num_layers = p->num_layers;
