@@ -138,7 +138,7 @@ int AppIdDiscovery::add_service_port(AppIdDetector*, const ServiceDetectorPort&)
 
 #ifdef ENABLE_APPID_THIRD_PARTY
 void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspector,
-    ThirdPartyAppIDModule* tp_appid_ctxt)
+    ThirdPartyAppIdContext* tp_appid_ctxt)
 #else
   void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspector)
 #endif
@@ -305,54 +305,8 @@ static uint64_t is_session_monitored(const AppIdSession& asd, const Packet* p, A
     uint64_t flow_flags = APPID_SESSION_DISCOVER_APP;
 
     flow_flags |= asd.common.flags;
-    // FIXIT-M - the 2.x purpose of this check is to stop monitoring a flow after a
-    //           reload if the flow ip addresses are no longer configured to be
-    //           monitored... this may not apply in snort++, find out and fix
-    //           accordingly
-    if ( asd.common.policyId != asd.config->appIdPolicyId )
-    {
-        if (dir == APP_ID_FROM_INITIATOR)
-        {
-            if (asd.get_session_flags(APPID_SESSION_INITIATOR_CHECKED))
-            {
-                flags = get_ipfuncs_flags(p, false);
-                if (flags & IPFUNCS_HOSTS_IP)
-                    flow_flags |= APPID_SESSION_INITIATOR_MONITORED;
-                else
-                    flow_flags &= ~APPID_SESSION_INITIATOR_MONITORED;
-            }
 
-            if (asd.get_session_flags(APPID_SESSION_RESPONDER_CHECKED))
-            {
-                flags = get_ipfuncs_flags(p, true);
-                if (flags & IPFUNCS_HOSTS_IP)
-                    flow_flags |= APPID_SESSION_RESPONDER_MONITORED;
-                else
-                    flow_flags &= ~APPID_SESSION_RESPONDER_MONITORED;
-            }
-        }
-        else
-        {
-            if (asd.get_session_flags(APPID_SESSION_RESPONDER_CHECKED))
-            {
-                flags = get_ipfuncs_flags(p, false);
-                if (flags & IPFUNCS_HOSTS_IP)
-                    flow_flags |= APPID_SESSION_RESPONDER_MONITORED;
-                else
-                    flow_flags &= ~APPID_SESSION_RESPONDER_MONITORED;
-            }
-
-            if (asd.get_session_flags(APPID_SESSION_INITIATOR_CHECKED))
-            {
-                flags = get_ipfuncs_flags(p, true);
-                if (flags & IPFUNCS_HOSTS_IP)
-                    flow_flags |= APPID_SESSION_INITIATOR_MONITORED;
-                else
-                    flow_flags &= ~APPID_SESSION_INITIATOR_MONITORED;
-            }
-        }
-    }
-
+    // FIXIT-M - Re-check a flow after snort is reloaded. RNA policy might have changed
     if (asd.get_session_flags(APPID_SESSION_BIDIRECTIONAL_CHECKED) ==
         APPID_SESSION_BIDIRECTIONAL_CHECKED)
         return flow_flags;
@@ -523,7 +477,6 @@ bool AppIdDiscovery::handle_unmonitored_session(AppIdSession* asd, const Packet*
                 LogMessage("AppIdDbg %s Unknown monitoring\n", appidDebug->get_debug_session());
         }
         tmp_session->common.flags = flow_flags;
-        tmp_session->common.policyId = inspector.get_appid_config()->appIdPolicyId;
         p->flow->set_flow_data(tmp_session);
     }
     else
@@ -532,7 +485,6 @@ bool AppIdDiscovery::handle_unmonitored_session(AppIdSession* asd, const Packet*
         if ( ( flow_flags & APPID_SESSION_BIDIRECTIONAL_CHECKED) ==
             APPID_SESSION_BIDIRECTIONAL_CHECKED )
             asd->common.flow_type = APPID_FLOW_TYPE_IGNORE;
-        asd->common.policyId = asd->config->appIdPolicyId;
         if (appidDebug->is_active())
             LogMessage("AppIdDbg %s Not monitored\n", appidDebug->get_debug_session());
     }
@@ -554,7 +506,7 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
 
     if ( appidDebug->is_enabled() )
         appidDebug->activate(p->flow, asd,
-            inspector.get_appid_config()->mod_config->log_all_sessions);
+            inspector.get_ctxt()->config->log_all_sessions);
 
     if ( is_packet_ignored(asd, p, direction) )
         return false;
@@ -590,7 +542,6 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
         asd->stats.responder_bytes += p->pkth->pktlen;
 
     asd->common.flags = flow_flags;
-    asd->common.policyId = asd->config->appIdPolicyId;
     if (!asd->get_session_flags(APPID_SESSION_PAYLOAD_SEEN) and p->dsize)
         asd->set_session_flags(APPID_SESSION_PAYLOAD_SEEN);
 
@@ -674,7 +625,7 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
     // FIXIT-L: DECRYPT_DEBUG - Move set_proxied and first_decrypted_packet_debug to ssl-module
     // after ssl-module's decryption capability is implemented
 #ifdef REG_TEST
-    uint32_t fdpd = inspector.get_appid_config()->mod_config->first_decrypted_packet_debug;
+    uint32_t fdpd = inspector.get_ctxt()->config->first_decrypted_packet_debug;
     if (fdpd and (fdpd == asd->session_packet_count))
     {
         p->flow->set_proxied();
@@ -708,7 +659,7 @@ void AppIdDiscovery::do_port_based_discovery(Packet* p, AppIdSession& asd, IpPro
             return;
     }
 
-    AppId id = asd.config->get_port_service_id(protocol, p->ptrs.sp);
+    AppId id = asd.ctxt->get_port_service_id(protocol, p->ptrs.sp);
     if (id > APP_ID_NONE)
     {
         asd.service.set_port_service_id(id);
@@ -736,9 +687,9 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
     if (!(asd.scan_flags & SCAN_HOST_PORT_FLAG))
         check_static = true;
 
-    if ((asd.session_packet_count % asd.config->mod_config->host_port_app_cache_lookup_interval == 0) and
-        (asd.session_packet_count <= asd.config->mod_config->host_port_app_cache_lookup_range) and
-        asd.config->mod_config->is_host_port_app_cache_runtime )
+    if ((asd.session_packet_count % asd.ctxt->config->host_port_app_cache_lookup_interval == 0) and
+        (asd.session_packet_count <= asd.ctxt->config->host_port_app_cache_lookup_range) and
+        asd.ctxt->config->is_host_port_app_cache_runtime )
         check_dynamic = true;
 
     if (!(check_static || check_dynamic))
@@ -808,7 +759,7 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
         auto ht = host_cache.find(*ip);
         if (ht)
         {
-            AppId appid = ht->get_appid(port, protocol, true, asd.config->mod_config->allow_port_wildcard_host_cache);
+            AppId appid = ht->get_appid(port, protocol, true, asd.ctxt->config->allow_port_wildcard_host_cache);
             if (appid > APP_ID_NONE)
             {
                 // FIXIT-L: Make this more generic to support service and payload IDs
@@ -828,10 +779,10 @@ static inline bool is_check_host_cache_valid(AppIdSession& asd, AppId service_id
 {
     bool is_payload_client_misc_none = (payload_id <= APP_ID_NONE and client_id <= APP_ID_NONE and misc_id <= APP_ID_NONE);
     bool is_appid_none = is_payload_client_misc_none and (service_id <= APP_ID_NONE or service_id == APP_ID_UNKNOWN_UI or
-        (asd.config->mod_config->recheck_for_portservice_appid and service_id == asd.service.get_port_service_id()));
-    bool is_ssl_none = asd.config->mod_config->check_host_cache_unknown_ssl and asd.get_session_flags(APPID_SESSION_SSL_SESSION) and
+        (asd.ctxt->config->recheck_for_portservice_appid and service_id == asd.service.get_port_service_id()));
+    bool is_ssl_none = asd.ctxt->config->check_host_cache_unknown_ssl and asd.get_session_flags(APPID_SESSION_SSL_SESSION) and
                           (not(asd.tsession and asd.tsession->get_tls_host() and asd.tsession->get_tls_cname()));
-    if (is_appid_none or is_ssl_none or asd.config->mod_config->check_host_port_app_cache)
+    if (is_appid_none or is_ssl_none or asd.ctxt->config->check_host_port_app_cache)
         return true;
     return false;
 }
@@ -840,7 +791,7 @@ static inline bool is_check_host_cache_valid(AppIdSession& asd, AppId service_id
 bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd,
     IpProtocol protocol, AppidSessionDirection direction, AppId& service_id, AppId& client_id,
     AppId& payload_id, AppId& misc_id, AppidChangeBits& change_bits,
-    ThirdPartyAppIDModule* tp_appid_ctxt)
+    ThirdPartyAppIdContext* tp_appid_ctxt)
 #else
 bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd,
     IpProtocol protocol, AppidSessionDirection direction, AppId& service_id, AppId& client_id,
@@ -855,7 +806,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd,
     {
         if ( !asd.get_session_flags(APPID_SESSION_PORT_SERVICE_DONE) )
         {
-            AppId id = asd.config->get_protocol_service_id(protocol);
+            AppId id = asd.ctxt->get_protocol_service_id(protocol);
             if (id > APP_ID_NONE)
             {
                 asd.service.set_port_service_id(id);

@@ -176,7 +176,7 @@ void AppIdStatistics::dump_statistics()
     }
 }
 
-AppIdStatistics::AppIdStatistics(const AppIdModuleConfig& config)
+AppIdStatistics::AppIdStatistics(const AppIdConfig& config)
 {
     enabled = true;
 
@@ -214,7 +214,7 @@ AppIdStatistics::~AppIdStatistics()
     }
 }
 
-AppIdStatistics* AppIdStatistics::initialize_manager(const AppIdModuleConfig& config)
+AppIdStatistics* AppIdStatistics::initialize_manager(const AppIdConfig& config)
 {
     if ( !config.stats_logging_enabled )
         return nullptr;

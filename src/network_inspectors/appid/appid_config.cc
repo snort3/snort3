@@ -56,13 +56,6 @@ using namespace snort;
 
 using namespace snort;
 
-uint32_t app_id_netmasks[33] =
-{ 0x00000000, 0x80000000, 0xC0000000, 0xE0000000, 0xF0000000, 0xF8000000, 0xFC000000,
-  0xFE000000, 0xFF000000, 0xFF800000, 0xFFC00000, 0xFFE00000, 0xFFF00000, 0xFFF80000,
-  0xFFFC0000, 0xFFFE0000, 0xFFFF0000, 0xFFFF8000, 0xFFFFC000, 0xFFFFE000, 0xFFFFF000,
-  0xFFFFF800, 0xFFFFFC00, 0xFFFFFE00, 0xFFFFFF00, 0xFFFFFF80, 0xFFFFFFC0, 0xFFFFFFE0,
-  0xFFFFFFF0, 0xFFFFFFF8, 0xFFFFFFFC, 0xFFFFFFFE, 0xFFFFFFFF };
-
 struct PortList
 {
     PortList* next;
@@ -88,31 +81,31 @@ static void map_app_names_to_snort_ids(SnortConfig* sc)
     sc->proto_ref->add("tftp");
 }
 
-AppIdModuleConfig::~AppIdModuleConfig()
+AppIdConfig::~AppIdConfig()
 {
     snort_free((void*)app_detector_dir);
 }
 
-// FIXIT-M: RELOAD - move initialization back to AppIdConfig class constructor
-AppInfoManager& AppIdConfig::app_info_mgr = AppInfoManager::get_instance();
-std::array<AppId, APP_ID_PORT_ARRAY_SIZE> AppIdConfig::tcp_port_only = {APP_ID_NONE};
-std::array<AppId, APP_ID_PORT_ARRAY_SIZE> AppIdConfig::udp_port_only = {APP_ID_NONE};
-std::array<AppId, 256> AppIdConfig::ip_protocol = {APP_ID_NONE};
+// FIXIT-M: RELOAD - move initialization back to AppIdContext class constructor
+AppInfoManager& AppIdContext::app_info_mgr = AppInfoManager::get_instance();
+std::array<AppId, APP_ID_PORT_ARRAY_SIZE> AppIdContext::tcp_port_only = {APP_ID_NONE};
+std::array<AppId, APP_ID_PORT_ARRAY_SIZE> AppIdContext::udp_port_only = {APP_ID_NONE};
+std::array<AppId, 256> AppIdContext::ip_protocol = {APP_ID_NONE};
 
 // FIXIT-M: RELOAD - Move app info table cleanup back to AppId config destructor - cleanup()
-void AppIdConfig::pterm()
+void AppIdContext::pterm()
 {
-    AppIdConfig::app_info_mgr.cleanup_appid_info_table();
+    AppIdContext::app_info_mgr.cleanup_appid_info_table();
 }
 
-void AppIdConfig::read_port_detectors(const char* files)
+void AppIdContext::read_port_detectors(const char* files)
 {
     int rval;
     glob_t globs;
     char pattern[PATH_MAX];
     uint32_t n;
 
-    snprintf(pattern, sizeof(pattern), "%s/%s", mod_config->app_detector_dir, files);
+    snprintf(pattern, sizeof(pattern), "%s/%s", config->app_detector_dir, files);
 
     memset(&globs, 0, sizeof(globs));
     rval = glob(pattern, 0, nullptr, &globs);
@@ -221,9 +214,9 @@ void AppIdConfig::read_port_detectors(const char* files)
                     udp_port_only[tmp_port->port] = appId;
 
                 snort_free(tmp_port);
-                AppIdConfig::app_info_mgr.set_app_info_active(appId);
+                AppIdContext::app_info_mgr.set_app_info_active(appId);
             }
-            AppIdConfig::app_info_mgr.set_app_info_active(appId);
+            AppIdContext::app_info_mgr.set_app_info_active(appId);
         }
         else
             ErrorMessage("Missing parameter(s) in port service '%s'\n",globs.gl_pathv[n]);
@@ -240,14 +233,14 @@ next:   ;
     globfree(&globs);
 }
 
-bool AppIdConfig::init_appid(SnortConfig* sc)
+bool AppIdContext::init_appid(SnortConfig* sc)
 {
     // FIXIT-M: RELOAD - Get rid of "once" flag
-    // Handle the if condition in AppIdConfig::init_appid
+    // Handle the if condition in AppIdContext::init_appid
     static bool once = false;
     if (!once)
     {
-        AppIdConfig::app_info_mgr.init_appid_info_table(mod_config, sc);
+        AppIdContext::app_info_mgr.init_appid_info_table(config, sc);
         HostPortCache::initialize();
         HttpPatternMatchers* http_matchers = HttpPatternMatchers::get_instance();
         AppIdDiscovery::initialize_plugins();
@@ -267,20 +260,20 @@ bool AppIdConfig::init_appid(SnortConfig* sc)
 #ifdef ENABLE_APPID_THIRD_PARTY
     // do not reload third party on reload_config()
     if (!tp_appid_ctxt)
-        tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(*mod_config);
+        tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(*config);
 #endif
     map_app_names_to_snort_ids(sc);
     return true;
 }
 
 #ifdef ENABLE_APPID_THIRD_PARTY
-void AppIdConfig::create_tp_appid_ctxt()
+void AppIdContext::create_tp_appid_ctxt()
 {
-    tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(*mod_config);
+    tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(*config);
 }
 #endif
 
-AppId AppIdConfig::get_port_service_id(IpProtocol proto, uint16_t port)
+AppId AppIdContext::get_port_service_id(IpProtocol proto, uint16_t port)
 {
     AppId appId;
 
@@ -292,18 +285,18 @@ AppId AppIdConfig::get_port_service_id(IpProtocol proto, uint16_t port)
     return appId;
 }
 
-AppId AppIdConfig::get_protocol_service_id(IpProtocol proto)
+AppId AppIdContext::get_protocol_service_id(IpProtocol proto)
 {
     return ip_protocol[(uint16_t)proto];
 }
 
-void AppIdConfig::show()
+void AppIdContext::show()
 {
-    if (!mod_config->tp_appid_path.empty())
-        LogMessage("    3rd Party Dir: %s\n", mod_config->tp_appid_path.c_str());
+    if (!config->tp_appid_path.empty())
+        LogMessage("    3rd Party Dir: %s\n", config->tp_appid_path.c_str());
 }
 
-void AppIdConfig::display_port_config()
+void AppIdContext::display_port_config()
 {
     bool first = true;
 

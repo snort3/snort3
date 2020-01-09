@@ -77,7 +77,7 @@ public:
     PegCount* get_counts() const override;
     snort::ProfileStats* get_profile() const override;
 
-    const AppIdModuleConfig* get_data();
+    const AppIdConfig* get_data();
 
     Usage get_usage() const override
     { return CONTEXT; }
@@ -85,7 +85,7 @@ public:
     void show_dynamic_stats() override;
 
 private:
-    AppIdModuleConfig* config;
+    AppIdConfig* config;
     AppIdReloadTuner appid_rrt;
 };
 

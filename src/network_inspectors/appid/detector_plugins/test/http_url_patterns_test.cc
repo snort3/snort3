@@ -49,7 +49,7 @@ static char* user = nullptr;
 static char* my_action_data = (char*)"0";
 static const char* my_chp_data = (const char*)"chp_data";
 static int total_found;
-static AppIdModuleConfig mod_config;
+static AppIdConfig config;
 static AppId service_id = APP_ID_NONE;
 static AppId client_id = APP_ID_NONE;
 static DetectorHTTPPattern mpattern;
@@ -266,9 +266,9 @@ TEST(http_url_patterns_tests, scan_chp_defer)
     mchp.mpattern = &chpa_test;
     cmd_test.chp_matches[RSP_BODY_FID].emplace_back(mchp);
     cmd_test.cur_ptype = RSP_BODY_FID;
-    mod_config.safe_search_enabled = false;
+    config.safe_search_enabled = false;
     CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &hsession, (const
-        AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
+        AppIdConfig*)&config) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
 }
 
@@ -282,9 +282,9 @@ TEST(http_url_patterns_tests, scan_chp_alt_appid)
     mchp.mpattern = &chpa_test;
     cmd_test.chp_matches[RSP_BODY_FID].emplace_back(mchp);
     cmd_test.cur_ptype = RSP_BODY_FID;
-    mod_config.safe_search_enabled = false;
+    config.safe_search_enabled = false;
     CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &hsession, (const
-        AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
+        AppIdConfig*)&config) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
 }
 
@@ -299,12 +299,12 @@ TEST(http_url_patterns_tests, scan_chp_extract_user)
     mchp.mpattern = &chpa_test;
     mchp.start_match_pos = 0;
     cmd_test.cur_ptype = RSP_BODY_FID;
-    mod_config.safe_search_enabled = false;
+    config.safe_search_enabled = false;
     cmd_test.chp_matches[RSP_BODY_FID].emplace_back(mchp);
     cmd_test.buffer[RSP_BODY_FID] = (const char*)"userid\n\rpassword";
     cmd_test.length[RSP_BODY_FID] = strlen(cmd_test.buffer[RSP_BODY_FID]);
     CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &hsession, (const
-        AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
+        AppIdConfig*)&config) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
     snort_free(user);
     user = nullptr;
@@ -315,7 +315,7 @@ TEST(http_url_patterns_tests, scan_chp_rewrite_field)
     // testing REWRITE_FIELD
     test_find_all_done = false;
     cmd_test.cur_ptype = RSP_BODY_FID;
-    mod_config.safe_search_enabled = false;
+    config.safe_search_enabled = false;
     chpa_test.action_data = my_action_data;
     chpa_test.appIdInstance = APP_ID_NONE;
     chpa_test.action = REWRITE_FIELD;
@@ -326,7 +326,7 @@ TEST(http_url_patterns_tests, scan_chp_rewrite_field)
     cmd_test.buffer[RSP_BODY_FID] = my_chp_data;
     cmd_test.length[RSP_BODY_FID] = strlen(cmd_test.buffer[RSP_BODY_FID]);
     CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &hsession, (const
-        AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
+        AppIdConfig*)&config) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
     snort_free(const_cast<char*>(cmd_test.chp_rewritten[RSP_BODY_FID]));
     cmd_test.chp_rewritten[RSP_BODY_FID] = nullptr;
@@ -337,7 +337,7 @@ TEST(http_url_patterns_tests, scan_chp_insert_without_action)
     // testing INSERT_FIELD without action_data
     test_find_all_done = false;
     cmd_test.cur_ptype = RSP_BODY_FID;
-    mod_config.safe_search_enabled = false;
+    config.safe_search_enabled = false;
     chpa_test.action_data = nullptr;
     chpa_test.appIdInstance = APP_ID_NONE;
     chpa_test.action = INSERT_FIELD;
@@ -348,7 +348,7 @@ TEST(http_url_patterns_tests, scan_chp_insert_without_action)
     cmd_test.buffer[RSP_BODY_FID] = my_chp_data;
     cmd_test.length[RSP_BODY_FID] = strlen(cmd_test.buffer[RSP_BODY_FID]);
     CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &hsession, (const
-        AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
+        AppIdConfig*)&config) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
     snort_free(const_cast<char*>(cmd_test.chp_rewritten[RSP_BODY_FID]));
     cmd_test.chp_rewritten[RSP_BODY_FID] = nullptr;
@@ -359,7 +359,7 @@ TEST(http_url_patterns_tests, scan_chp_insert_with_action)
     // testing INSERT_FIELD with action_data
     test_find_all_done = false;
     cmd_test.cur_ptype = RSP_BODY_FID;
-    mod_config.safe_search_enabled = false;
+    config.safe_search_enabled = false;
     chpa_test.action_data = my_action_data;
     chpa_test.appIdInstance = APP_ID_NONE;
     chpa_test.action = INSERT_FIELD;
@@ -370,7 +370,7 @@ TEST(http_url_patterns_tests, scan_chp_insert_with_action)
     cmd_test.buffer[RSP_BODY_FID] = my_chp_data;
     cmd_test.length[RSP_BODY_FID] = strlen(cmd_test.buffer[RSP_BODY_FID]);
     CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &hsession, (const
-        AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
+        AppIdConfig*)&config) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
     snort_free(const_cast<char*>(cmd_test.chp_rewritten[RSP_BODY_FID]));
     cmd_test.chp_rewritten[RSP_BODY_FID] = nullptr;
@@ -386,13 +386,13 @@ TEST(http_url_patterns_tests, scan_chp_hold_and_default)
     mchp.mpattern = &chpa_test;
     cmd_test.chp_matches[RSP_BODY_FID].emplace_back(mchp);
     cmd_test.cur_ptype = RSP_BODY_FID;
-    mod_config.safe_search_enabled = false;
+    config.safe_search_enabled = false;
     chpa_test.psize = 1;
     mchp.start_match_pos = 0;
     cmd_test.buffer[RSP_BODY_FID] = my_chp_data;
     cmd_test.length[RSP_BODY_FID] = strlen(cmd_test.buffer[RSP_BODY_FID]);
     CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &hsession, (const
-        AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
+        AppIdConfig*)&config) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
 
     // testing FUTURE_APPID_SESSION_SIP (default action)
@@ -403,7 +403,7 @@ TEST(http_url_patterns_tests, scan_chp_hold_and_default)
     mchp.mpattern = &chpa_test;
     cmd_test.chp_matches[RSP_BODY_FID].emplace_back(mchp);
     CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &hsession, (const
-        AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
+        AppIdConfig*)&config) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
 }
 

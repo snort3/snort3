@@ -32,14 +32,14 @@ namespace snort
 struct Packet;
 }
 
-class ThirdPartyAppIDModule;
+class ThirdPartyAppIdContext;
 
-class ThirdPartyAppIDSession
+class ThirdPartyAppIdSession
 {
 public:
-    ThirdPartyAppIDSession(ThirdPartyAppIDModule& ctxt)
+    ThirdPartyAppIdSession(ThirdPartyAppIdContext& ctxt)
         : appid(APP_ID_NONE), confidence(100), state(TP_STATE_INIT), ctxt(ctxt) { }
-    virtual ~ThirdPartyAppIDSession() { }
+    virtual ~ThirdPartyAppIdSession() { }
 
     virtual bool reset() = 0;            // just reset state
     virtual void delete_with_ctxt() = 0;
@@ -55,14 +55,14 @@ public:
     virtual void set_attr(TPSessionAttr) = 0;
     virtual unsigned get_attr(TPSessionAttr) = 0;
     virtual AppId get_appid(int& conf) { conf=confidence; return appid; }
-    virtual const ThirdPartyAppIDModule* get_ctxt() const
+    virtual const ThirdPartyAppIdContext* get_ctxt() const
     { return &ctxt; }
 
 protected:
     AppId appid;
     int confidence;
     TPState state;
-    const ThirdPartyAppIDModule& ctxt;
+    const ThirdPartyAppIdContext& ctxt;
 };
 
 #endif

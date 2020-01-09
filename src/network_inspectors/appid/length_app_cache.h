@@ -30,7 +30,6 @@
 
 #pragma pack(1)
 
-class AppIdConfig;
 enum class IpProtocol : uint8_t;
 
 struct LengthSequenceEntry

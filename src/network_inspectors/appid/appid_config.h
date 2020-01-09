@@ -36,33 +36,20 @@
 #include "tp_appid_module_api.h"
 #endif
 
-#define APP_ID_MAX_DIRS         16
 #define APP_ID_PORT_ARRAY_SIZE  65536
-#define MAX_ZONES               1024
 
-struct NetworkSet;
 class AppIdInspector;
 class AppInfoManager;
-
-extern unsigned appIdPolicyId;
-extern uint32_t app_id_netmasks[];
 
 extern SnortProtocolId snortId_for_unsynchronized;
 extern SnortProtocolId snortId_for_ftp_data;
 extern SnortProtocolId snortId_for_http2;
 
-struct PortExclusion
-{
-    int family;
-    snort::ip::snort_in6_addr ip;
-    snort::ip::snort_in6_addr netmask;
-};
-
-class AppIdModuleConfig
+class AppIdConfig
 {
 public:
-    AppIdModuleConfig() = default;
-    ~AppIdModuleConfig();
+    AppIdConfig() = default;
+    ~AppIdConfig();
 
     // FIXIT-L: DECRYPT_DEBUG - Move this to ssl-module
 #ifdef REG_TEST
@@ -108,15 +95,13 @@ public:
     bool recheck_for_portservice_appid = false;
 };
 
-typedef std::array<SF_LIST*, APP_ID_PORT_ARRAY_SIZE> AppIdPortExclusions;
-
-class AppIdConfig
+class AppIdContext
 {
 public:
-    AppIdConfig(AppIdModuleConfig* config) : mod_config(config)
+    AppIdContext(AppIdConfig* config) : config(config)
     { }
 
-    ~AppIdConfig()
+    ~AppIdContext()
     {
 #ifdef ENABLE_APPID_THIRD_PARTY
         delete tp_appid_ctxt;
@@ -124,7 +109,7 @@ public:
     }
 
 #ifdef ENABLE_APPID_THIRD_PARTY
-    ThirdPartyAppIDModule* get_tp_appid_ctxt() const
+    ThirdPartyAppIdContext* get_tp_appid_ctxt() const
     { return tp_appid_ctxt; }
 
     void create_tp_appid_ctxt();
@@ -143,19 +128,16 @@ public:
     static std::array<AppId, APP_ID_PORT_ARRAY_SIZE> udp_port_only;     // port-only UDP services
     static std::array<AppId, 256> ip_protocol;         // non-TCP / UDP protocol services
 
-    SF_LIST client_app_args;                    // List of Client App arguments
-    // for each potential port, an sflist of PortExclusion structs
-    AppIdModuleConfig* mod_config = nullptr;
-    unsigned appIdPolicyId = 53;
+    AppIdConfig* config = nullptr;
 
 private:
     void read_port_detectors(const char* files);
     void display_port_config();
     // FIXIT-M: RELOAD - Remove static, once app_info_mgr cleanup is
-    // removed from AppIdConfig::pterm
+    // removed from AppIdContext::pterm
     static AppInfoManager& app_info_mgr;
 #ifdef ENABLE_APPID_THIRD_PARTY
-    ThirdPartyAppIDModule* tp_appid_ctxt = nullptr;
+    ThirdPartyAppIdContext* tp_appid_ctxt = nullptr;
 #endif
 };
 

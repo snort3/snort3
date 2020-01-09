@@ -700,7 +700,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
         }
 
         AppIdDnsSession* dsession = asd.get_dns_session();
-        if (asd.service.get_id() == APP_ID_DNS && asd.config->mod_config->dns_host_reporting
+        if (asd.service.get_id() == APP_ID_DNS && asd.ctxt->config->dns_host_reporting
             && dsession->get_host())
         {
             AppId client_id = APP_ID_NONE;

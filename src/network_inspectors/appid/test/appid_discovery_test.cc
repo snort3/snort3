@@ -138,15 +138,15 @@ PegCount* AppIdModule::get_counts() const { return nullptr; }
 ProfileStats* AppIdModule::get_profile() const { return nullptr; }
 
 // Stubs for config
-AppIdModuleConfig::~AppIdModuleConfig() {}
-static AppIdModuleConfig app_config;
-static AppIdConfig my_app_config(&app_config);
-AppId AppIdConfig::get_port_service_id(IpProtocol, uint16_t)
+AppIdConfig::~AppIdConfig() {}
+static AppIdConfig app_config;
+static AppIdContext app_ctxt(&app_config);
+AppId AppIdContext::get_port_service_id(IpProtocol, uint16_t)
 {
     return APP_ID_NONE;
 }
 
-AppId AppIdConfig::get_protocol_service_id(IpProtocol)
+AppId AppIdContext::get_protocol_service_id(IpProtocol)
 {
     return APP_ID_NONE;
 }
@@ -159,10 +159,10 @@ bool AppIdInspector::configure(SnortConfig*) { return true; }
 void AppIdInspector::show(SnortConfig*) { }
 void AppIdInspector::tinit() { }
 void AppIdInspector::tterm() { }
-AppIdConfig* AppIdInspector::get_appid_config()
+AppIdContext* AppIdInspector::get_ctxt()
 {
-    my_app_config.mod_config = &app_config;
-    return &my_app_config;
+    app_ctxt.config = &app_config;
+    return &app_ctxt;
 }
 
 // Stubs for AppInfoManager
@@ -256,7 +256,7 @@ int dns_host_scan_hostname(const uint8_t*, size_t, AppId*, AppId*)
 {
     return 0;
 }
-bool do_tp_discovery(ThirdPartyAppIDModule& , AppIdSession&, IpProtocol,
+bool do_tp_discovery(ThirdPartyAppIdContext& , AppIdSession&, IpProtocol,
     Packet*, AppidSessionDirection&, AppidChangeBits&)
 {
     return true;
@@ -330,7 +330,7 @@ TEST(appid_discovery_tests, event_published_when_ignoring_flow)
     Flow* flow = new Flow;
     flow->set_flow_data(asd);
     p.flow = flow;
-    asd->config = &my_app_config;
+    asd->ctxt = &app_ctxt;
     asd->common.initiator_port = 21;
     asd->common.initiator_ip.set("1.2.3.4");
     asd->set_session_flags(APPID_SESSION_IGNORE_FLOW);
@@ -366,7 +366,7 @@ TEST(appid_discovery_tests, event_published_when_processing_flow)
     Flow* flow = new Flow;
     flow->set_flow_data(asd);
     p.flow = flow;
-    asd->config = &my_app_config;
+    asd->ctxt = &app_ctxt;
     asd->common.initiator_port = 21;
     asd->common.initiator_ip.set("1.2.3.4");
 
@@ -427,7 +427,7 @@ TEST(appid_discovery_tests, change_bits_for_non_http_appid)
     flow->set_flow_data(asd);
     p.flow = flow;
     p.ptrs.tcph = nullptr;
-    asd->config = &my_app_config;
+    asd->ctxt = &app_ctxt;
     asd->common.initiator_port = 21;
     asd->common.initiator_ip.set("1.2.3.4");
     asd->misc_app_id = APP_ID_NONE;

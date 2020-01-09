@@ -133,7 +133,7 @@ bool AppIdSessionApi::is_appid_inspecting_session()
         return true;
     }
 
-    if (asd->config->mod_config->check_host_port_app_cache)
+    if (asd->ctxt->config->check_host_port_app_cache)
         return true;
 
     return false;

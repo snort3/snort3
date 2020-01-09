@@ -94,7 +94,7 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto,
 
 AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port,
     AppIdInspector& inspector)
-    : FlowData(inspector_id, &inspector), config(inspector.get_appid_config()),
+    : FlowData(inspector_id, &inspector), ctxt(inspector.get_ctxt()),
     protocol(proto)
 {
     service_ip.clear();
@@ -115,7 +115,7 @@ AppIdSession::~AppIdSession()
 {
     if (!in_expected_cache)
     {
-        if (config->mod_config->stats_logging_enabled)
+        if (ctxt->config->stats_logging_enabled)
             AppIdStatistics::get_stats_manager()->update(*this);
 
         // fail any service detection that is in process for this flow
@@ -190,7 +190,6 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
     // FIXIT-RC - port parameter passed in as 0 since we may not know client port, verify
 
     AppIdSession* asd = new AppIdSession(proto, cliIp, 0, *inspector);
-    asd->common.policyId = asd->config->appIdPolicyId;
 
     if (Stream::set_snort_protocol_id_expected(ctrlPkt, type, proto, cliIp,
         cliPort, srvIp, srvPort, snort_protocol_id, asd))
@@ -928,7 +927,7 @@ AppIdDnsSession* AppIdSession::get_dns_session()
 bool AppIdSession::is_tp_appid_done() const
 {
 #ifdef ENABLE_APPID_THIRD_PARTY
-    if (config->get_tp_appid_ctxt())
+    if (ctxt->get_tp_appid_ctxt())
     {
         if (!tpsession)
             return false;
@@ -957,7 +956,7 @@ bool AppIdSession::is_tp_processing_done() const
 bool AppIdSession::is_tp_appid_available() const
 {
 #ifdef ENABLE_APPID_THIRD_PARTY
-    if (config->get_tp_appid_ctxt())
+    if (ctxt->get_tp_appid_ctxt())
     {
         if (!tpsession)
             return false;

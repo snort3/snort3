@@ -24,10 +24,9 @@
 #include "service_inspectors/http_inspect/http_msg_header.h"
 
 class Inspector;
-struct ThirdPartyAppIDModule;
+struct ThirdPartyAppIdContext;
 
-AppIdConfig* pAppidActiveConfig = nullptr;
-ThirdPartyAppIDModule* tp_appid_module = nullptr;
+ThirdPartyAppIdContext* tp_appid_ctxt = nullptr;
 
 namespace snort
 {

@@ -29,7 +29,7 @@
 #include "utils/sflsq.h"
 
 class AppIdSession;
-class AppIdModuleConfig;
+class AppIdConfig;
 
 struct StatsBucket
 {
@@ -48,14 +48,14 @@ class AppIdStatistics
 public:
     ~AppIdStatistics();
 
-    static AppIdStatistics* initialize_manager(const AppIdModuleConfig&);
+    static AppIdStatistics* initialize_manager(const AppIdConfig&);
     static AppIdStatistics* get_stats_manager();
     static void cleanup();
     void update(AppIdSession&);
     void flush();
 
 private:
-    AppIdStatistics(const AppIdModuleConfig&);
+    AppIdStatistics(const AppIdConfig&);
 
     time_t get_time()
     {

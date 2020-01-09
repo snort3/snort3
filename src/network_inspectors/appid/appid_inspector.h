@@ -46,7 +46,7 @@ public:
     void tinit() override;
     void tterm() override;
     void eval(snort::Packet*) override;
-    AppIdConfig* get_appid_config();
+    AppIdContext* get_ctxt();
 
     SipEventHandler& get_sip_event_handler()
     {
@@ -54,14 +54,14 @@ public:
     }
 
 private:
-    const AppIdModuleConfig* config = nullptr;
-    AppIdConfig* active_config = nullptr;
+    const AppIdConfig* config = nullptr;
+    AppIdContext* ctxt = nullptr;
     SipEventHandler* my_seh = nullptr;
 
 };
 
 #ifdef ENABLE_APPID_THIRD_PARTY
-extern THREAD_LOCAL ThirdPartyAppIDModule* tp_appid_thread_ctxt;
+extern THREAD_LOCAL ThirdPartyAppIdContext* tp_appid_thread_ctxt;
 #endif
 
 #endif

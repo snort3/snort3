@@ -186,8 +186,8 @@ static int reload_third_party(lua_State*)
         Swapper::set_reload_in_progress(true);
         LogMessage(".. reloading third-party");
         AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
-        AppIdConfig* config = inspector->get_appid_config();
-        config->create_tp_appid_ctxt();
+        AppIdContext* ctxt = inspector->get_ctxt();
+        ctxt->create_tp_appid_ctxt();
         Swapper::set_reload_in_progress(false);
     }
 #else
@@ -245,9 +245,9 @@ ProfileStats* AppIdModule::get_profile() const
     return &appid_perf_stats;
 }
 
-const AppIdModuleConfig* AppIdModule::get_data()
+const AppIdConfig* AppIdModule::get_data()
 {
-    AppIdModuleConfig* temp = config;
+    AppIdConfig* temp = config;
     config = nullptr;
     return temp;
 }
@@ -299,7 +299,7 @@ bool AppIdModule::begin(const char* /*fqn*/, int, SnortConfig*)
     if ( config )
         return false;
 
-    config = new AppIdModuleConfig;
+    config = new AppIdConfig;
     return true;
 }
 

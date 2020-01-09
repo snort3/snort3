@@ -24,12 +24,12 @@
 #include "tp_appid_module_api.h"
 #include "tp_appid_session_api.h"
 
-class AppIdModuleConfig;
+class AppIdConfig;
 
 // This needs to be exported by any third party .so library.
 // Must return NULL if it fails to create the object.
-typedef ThirdPartyAppIDModule* (* TpAppIdCreateCtxt)(ThirdPartyConfig& );
-typedef ThirdPartyAppIDSession* (* TpAppIdCreateSession)(ThirdPartyAppIDModule& ctxt);
+typedef ThirdPartyAppIdContext* (* TpAppIdCreateCtxt)(ThirdPartyConfig& );
+typedef ThirdPartyAppIdSession* (* TpAppIdCreateSession)(ThirdPartyAppIdContext& ctxt);
 typedef int (* TpAppIdPfini)();
 typedef int (* TpAppIdTfini)();
 
@@ -45,7 +45,7 @@ public:
             return (self = new TPLibHandler());
     }
 
-    static ThirdPartyAppIDModule* create_tp_appid_ctxt(const AppIdModuleConfig& config);
+    static ThirdPartyAppIdContext* create_tp_appid_ctxt(const AppIdConfig& config);
     static void tfini();
     static void pfini();
 

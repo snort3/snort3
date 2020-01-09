@@ -33,7 +33,6 @@
 
 #include "appid_types.h"
 
-class AppIdConfig;
 class AppIdSession;
 class ServiceDetector;
 class ServiceDiscoveryState;

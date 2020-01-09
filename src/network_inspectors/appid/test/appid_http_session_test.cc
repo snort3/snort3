@@ -66,7 +66,7 @@ AppId HttpPatternMatchers::scan_header_x_working_with(const char*, uint32_t, cha
 }
 
 AppId HttpPatternMatchers::scan_chp(ChpMatchDescriptor&, char**, char**,
-    int*, AppIdHttpSession*, const AppIdModuleConfig*)
+    int*, AppIdHttpSession*, const AppIdConfig*)
 {
     return 0;
 }

@@ -1726,11 +1726,11 @@ static int detector_port_only_service(lua_State* L)
     uint8_t protocol = lua_tointeger(L, ++index);
 
     if (port == 0)
-        AppIdConfig::ip_protocol[protocol] = appId;
+        AppIdContext::ip_protocol[protocol] = appId;
     else if (protocol == 6)
-        AppIdConfig::tcp_port_only[port] = appId;
+        AppIdContext::tcp_port_only[port] = appId;
     else if (protocol == 17)
-        AppIdConfig::udp_port_only[port] = appId;
+        AppIdContext::udp_port_only[port] = appId;
 
     AppInfoManager::get_instance().set_app_info_active(appId);
 

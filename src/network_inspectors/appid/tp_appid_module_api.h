@@ -25,7 +25,7 @@
 #include <string>
 #include "tp_appid_types.h"
 
-#define THIRD_PARTY_APP_ID_API_VERSION 2
+#define THIRD_PARTY_APP_ID_API_VERSION 3
 
 class ThirdPartyConfig
 {
@@ -49,13 +49,13 @@ public:
     }
 };
 
-class ThirdPartyAppIDModule
+class ThirdPartyAppIdContext
 {
 public:
-    ThirdPartyAppIDModule(uint32_t ver, const char* mname, ThirdPartyConfig& config)
+    ThirdPartyAppIdContext(uint32_t ver, const char* mname, ThirdPartyConfig& config)
         : version(ver), name(mname), cfg(config) { }
 
-    virtual ~ThirdPartyAppIDModule() { }
+    virtual ~ThirdPartyAppIdContext() { }
 
     uint32_t api_version() const { return version; }
     const std::string& module_name() const { return name; }
@@ -73,7 +73,7 @@ protected:
 private:
     // No implicit constructor as derived classes need to provide
     // version and name.
-    ThirdPartyAppIDModule() : version(0), name("") { }
+    ThirdPartyAppIdContext() : version(0), name("") { }
 };
 
 #endif

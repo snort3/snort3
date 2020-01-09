@@ -306,7 +306,7 @@ void AppIdHttpSession::process_chp_buffers(AppidChangeBits& change_bits)
                 int num_found = 0;
                 cmd.cur_ptype = (HttpFieldIds)i;
                 AppId ret = http_matchers->scan_chp(cmd, &version, &user, &num_found, this,
-                    asd.config->mod_config);
+                    asd.ctxt->config);
                 total_found += num_found;
                 if (!ret || num_found < ptype_req_counts[i])
                 {

@@ -95,7 +95,7 @@ inline void set_control(lua_State* L, int is_control)
     lua_pop(L, 1);
 }
 
-static lua_State* create_lua_state(const AppIdModuleConfig* mod_config, int is_control)
+static lua_State* create_lua_state(const AppIdConfig* config, int is_control)
 {
     auto L = luaL_newstate();
 
@@ -134,12 +134,12 @@ static lua_State* create_lua_state(const AppIdModuleConfig* mod_config, int is_c
     {
         snprintf(new_lua_path, sizeof(new_lua_path) - 1,
             "%s;%s/odp/libs/?.lua;%s/custom/libs/?.lua",
-            cur_lua_path, mod_config->app_detector_dir, mod_config->app_detector_dir);
+            cur_lua_path, config->app_detector_dir, config->app_detector_dir);
     }
     else
     {
         snprintf(new_lua_path, sizeof(new_lua_path) - 1, "%s/odp/libs/?.lua;%s/custom/libs/?.lua",
-            mod_config->app_detector_dir, mod_config->app_detector_dir);
+            config->app_detector_dir, config->app_detector_dir);
     }
 
     lua_pop(L, 1);
@@ -150,13 +150,13 @@ static lua_State* create_lua_state(const AppIdModuleConfig* mod_config, int is_c
     return L;
 }
 
-LuaDetectorManager::LuaDetectorManager(AppIdConfig& config, int is_control) :
-    config(config)
+LuaDetectorManager::LuaDetectorManager(AppIdContext& ctxt, int is_control) :
+    ctxt(ctxt)
 {
     sflist_init(&allocated_detector_flow_list);
     allocated_objects.clear();
     cb_detectors.clear();
-    L = create_lua_state(config.mod_config, is_control);
+    L = create_lua_state(ctxt.config, is_control);
     if (is_control == 1)
         init_chp_glossary();
 }
@@ -198,13 +198,13 @@ LuaDetectorManager::~LuaDetectorManager()
     cb_detectors.clear(); // do not free Lua objects in cb_detectors
 }
 
-void LuaDetectorManager::initialize(AppIdConfig& config, int is_control)
+void LuaDetectorManager::initialize(AppIdContext& ctxt, int is_control)
 {
     // FIXIT-M: RELOAD - When reload is supported, remove this line which prevents re-initialize
     if (lua_detector_mgr)
         return;
 
-    lua_detector_mgr = new LuaDetectorManager(config, is_control);
+    lua_detector_mgr = new LuaDetectorManager(ctxt, is_control);
 
     if (!lua_detector_mgr->L)
         FatalError("Error - appid: can not create new luaState, instance=%u\n",
@@ -213,7 +213,7 @@ void LuaDetectorManager::initialize(AppIdConfig& config, int is_control)
     lua_detector_mgr->initialize_lua_detectors();
     lua_detector_mgr->activate_lua_detectors();
 
-    if (config.mod_config->debug)
+    if (ctxt.config->debug)
         lua_detector_mgr->list_lua_detectors();
 }
 
@@ -458,7 +458,7 @@ void LuaDetectorManager::load_lua_detectors(const char* path, bool isCustom)
 void LuaDetectorManager::initialize_lua_detectors()
 {
     char path[PATH_MAX];
-    const char* dir = config.mod_config->app_detector_dir;
+    const char* dir = ctxt.config->app_detector_dir;
 
     if ( !dir )
         return;

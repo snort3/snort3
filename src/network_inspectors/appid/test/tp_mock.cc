@@ -39,16 +39,16 @@
 using namespace snort;
 using namespace std;
 
-class ThirdPartyAppIDModuleImpl : public ThirdPartyAppIDModule
+class ThirdPartyAppIdContextImpl : public ThirdPartyAppIdContext
 {
 public:
-    ThirdPartyAppIDModuleImpl(uint32_t ver, const char* mname, ThirdPartyConfig& config)
-        : ThirdPartyAppIDModule(ver, mname, config)
+    ThirdPartyAppIdContextImpl(uint32_t ver, const char* mname, ThirdPartyConfig& config)
+        : ThirdPartyAppIdContext(ver, mname, config)
     {
         cerr << WhereMacro << endl;
     }
 
-    ~ThirdPartyAppIDModuleImpl()
+    ~ThirdPartyAppIdContextImpl()
     {
         cerr << WhereMacro << endl;
     }
@@ -57,11 +57,11 @@ public:
     int tfini() override { return 0; }
 };
 
-class ThirdPartyAppIDSessionImpl : public ThirdPartyAppIDSession
+class ThirdPartyAppIdSessionImpl : public ThirdPartyAppIdSession
 {
 public:
-    ThirdPartyAppIDSessionImpl(ThirdPartyAppIDModule& ctxt)
-      : ThirdPartyAppIDSession(ctxt)
+    ThirdPartyAppIdSessionImpl(ThirdPartyAppIdContext& ctxt)
+      : ThirdPartyAppIdSession(ctxt)
     { }
     bool reset() override { return 1; }
     void delete_with_ctxt() override { delete this; }
@@ -84,14 +84,14 @@ private:
 // once the .so has been loaded.
 extern "C"
 {
-    SO_PUBLIC ThirdPartyAppIDModuleImpl* tp_appid_create_ctxt(ThirdPartyConfig& config)
+    SO_PUBLIC ThirdPartyAppIdContextImpl* tp_appid_create_ctxt(ThirdPartyConfig& config)
     {
-        return new ThirdPartyAppIDModuleImpl(2,"foobar", config);
+        return new ThirdPartyAppIdContextImpl(3,"foobar", config);
     }
 
-    SO_PUBLIC ThirdPartyAppIDSessionImpl* tp_appid_create_session(ThirdPartyAppIDModule& ctxt)
+    SO_PUBLIC ThirdPartyAppIdSessionImpl* tp_appid_create_session(ThirdPartyAppIdContext& ctxt)
     {
-        return new ThirdPartyAppIDSessionImpl(ctxt);
+        return new ThirdPartyAppIdSessionImpl(ctxt);
     }
 
     SO_PUBLIC int tp_appid_pfini()

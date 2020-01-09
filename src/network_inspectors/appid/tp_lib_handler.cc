@@ -79,7 +79,7 @@ bool TPLibHandler::load_callback(const char* const path)
     return true;
 }
 
-ThirdPartyAppIDModule* TPLibHandler::create_tp_appid_ctxt(const AppIdModuleConfig& config)
+ThirdPartyAppIdContext* TPLibHandler::create_tp_appid_ctxt(const AppIdConfig& config)
 {
     assert(self != nullptr);
 
@@ -107,7 +107,7 @@ ThirdPartyAppIDModule* TPLibHandler::create_tp_appid_ctxt(const AppIdModuleConfi
         tp_config.http_upgrade_reporting_enabled = 0;
     tp_config.http_response_version_enabled = config.http_response_version_enabled;
 
-    ThirdPartyAppIDModule* tp_appid_ctxt = self->tp_appid_create_ctxt(tp_config);
+    ThirdPartyAppIdContext* tp_appid_ctxt = self->tp_appid_create_ctxt(tp_config);
     if (tp_appid_ctxt == nullptr)
     {
         ErrorMessage("Failed to create third party appId context.\n");

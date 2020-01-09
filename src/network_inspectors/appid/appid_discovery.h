@@ -40,7 +40,7 @@ class AppIdSession;
 class AppIdDetector;
 class ServiceDetector;
 struct ServiceDetectorPort;
-class ThirdPartyAppIDModule;
+class ThirdPartyAppIdContext;
 
 namespace snort
 {
@@ -114,7 +114,7 @@ public:
 
 #ifdef ENABLE_APPID_THIRD_PARTY
     static void do_application_discovery(snort::Packet* p, AppIdInspector&,
-        ThirdPartyAppIDModule*);
+        ThirdPartyAppIdContext*);
 #else
     static void do_application_discovery(snort::Packet* p, AppIdInspector&);
 #endif
@@ -146,7 +146,7 @@ private:
     static bool do_discovery(snort::Packet* p, AppIdSession& asd,
         IpProtocol protocol, AppidSessionDirection direction, AppId& service_id, AppId& client_id,
         AppId& payload_id, AppId& misc_id, AppidChangeBits& change_bits,
-        ThirdPartyAppIDModule* tp_appid_ctxt);
+        ThirdPartyAppIdContext* tp_appid_ctxt);
 #else
     static bool do_discovery(snort::Packet* p, AppIdSession& asd,
         IpProtocol protocol, AppidSessionDirection direction, AppId& service_id, AppId& client_id,

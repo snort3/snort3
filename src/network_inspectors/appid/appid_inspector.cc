@@ -56,7 +56,7 @@
 
 using namespace snort;
 #ifdef ENABLE_APPID_THIRD_PARTY
-THREAD_LOCAL ThirdPartyAppIDModule* tp_appid_thread_ctxt = nullptr;
+THREAD_LOCAL ThirdPartyAppIdContext* tp_appid_thread_ctxt = nullptr;
 #endif
 static THREAD_LOCAL PacketTracer::TracerMute appid_mute;
 
@@ -99,28 +99,28 @@ AppIdInspector::AppIdInspector(AppIdModule& mod)
 
 AppIdInspector::~AppIdInspector()
 {
-    delete active_config;
+    delete ctxt;
     delete config;
 }
 
-AppIdConfig* AppIdInspector::get_appid_config()
+AppIdContext* AppIdInspector::get_ctxt()
 {
-    return active_config;
+    return ctxt;
 }
 
 bool AppIdInspector::configure(SnortConfig* sc)
 {
-    assert(!active_config);
+    assert(!ctxt);
 
-    active_config = new AppIdConfig(const_cast<AppIdModuleConfig*>(config));
+    ctxt = new AppIdContext(const_cast<AppIdConfig*>(config));
 
     my_seh = SipEventHandler::create();
     my_seh->subscribe(sc);
 
-    active_config->init_appid(sc);
+    ctxt->init_appid(sc);
 
 #ifdef ENABLE_APPID_THIRD_PARTY
-    if (!active_config->get_tp_appid_ctxt())
+    if (!ctxt->get_tp_appid_ctxt())
 #endif
     {
         DataBus::subscribe_global(HTTP_REQUEST_HEADER_EVENT_KEY, new HttpEventHandler(
@@ -154,10 +154,10 @@ void AppIdInspector::tinit()
 
     AppIdStatistics::initialize_manager(*config);
     appid_forecast_tinit();
-    LuaDetectorManager::initialize(*active_config);
+    LuaDetectorManager::initialize(*ctxt);
     AppIdServiceState::initialize(config->memcap);
     appidDebug = new AppIdDebug();
-    if (active_config->mod_config and active_config->mod_config->log_all_sessions)
+    if (ctxt->config and ctxt->config->log_all_sessions)
         appidDebug->set_enabled(true);
 }
 
@@ -171,7 +171,7 @@ void AppIdInspector::tterm()
     delete appidDebug;
     appidDebug = nullptr;
 #ifdef ENABLE_APPID_THIRD_PARTY
-    ThirdPartyAppIDModule* tp_appid_ctxt = active_config->get_tp_appid_ctxt();
+    ThirdPartyAppIdContext* tp_appid_ctxt = ctxt->get_tp_appid_ctxt();
     if (tp_appid_ctxt)
         tp_appid_ctxt->tfini();
 #endif
@@ -183,7 +183,7 @@ void AppIdInspector::eval(Packet* p)
     appid_stats.packets++;
 
 #ifdef ENABLE_APPID_THIRD_PARTY
-    ThirdPartyAppIDModule* tp_appid_ctxt = active_config->get_tp_appid_ctxt();
+    ThirdPartyAppIdContext* tp_appid_ctxt = ctxt->get_tp_appid_ctxt();
     if (tp_appid_thread_ctxt != tp_appid_ctxt)
     {
         if (tp_appid_thread_ctxt)
@@ -246,7 +246,7 @@ static void appid_inspector_pterm()
     delete HttpPatternMatchers::get_instance();
     service_dns_host_clean();
     service_ssl_clean();
-    AppIdConfig::pterm();
+    AppIdContext::pterm();
 //end of 'FIXIT-M: RELOAD' comment above
     openssl_cleanup();
 #ifdef ENABLE_APPID_THIRD_PARTY

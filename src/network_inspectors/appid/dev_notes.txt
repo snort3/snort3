@@ -36,7 +36,7 @@ to the application name.
 The set of Lua detectors that AppId loads are located in the odp/lua subdirectory of the directory that
 contains the mapping configuration file.
 
-The legacy 'RNA' configuration is processed by the AppIdConfig class.  This is currently not supported so
+The legacy 'RNA' configuration is processed by the AppIdContext class.  This is currently not supported so
 no additional details provided here at this time.  This section should be updated once this feature is
 supported.
 

@@ -26,7 +26,7 @@
 
 class AppIdSession;
 
-bool do_tp_discovery(ThirdPartyAppIDModule& tp_module, AppIdSession&, IpProtocol, snort::Packet*,
+bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession&, IpProtocol, snort::Packet*,
     AppidSessionDirection&, AppidChangeBits&);
 
 #endif

@@ -274,7 +274,7 @@ void AppInfoManager::set_app_info_active(AppId appId)
         ParseWarning(WARN_PLUGINS, "appid: no entry in %s for %d", APP_MAPPING_FILE, appId);
 }
 
-void AppInfoManager::load_appid_config(AppIdModuleConfig* config, const char* path)
+void AppInfoManager::load_appid_config(AppIdConfig* config, const char* path)
 {
     char buf[MAX_TABLE_LINE_LEN];
     unsigned line = 0;
@@ -612,16 +612,16 @@ SnortProtocolId AppInfoManager::add_appid_protocol_reference(const char* protoco
     return snort_protocol_id;
 }
 
-void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config,
+void AppInfoManager::init_appid_info_table(AppIdConfig* config,
     SnortConfig* sc)
 {
-    if ( !mod_config->app_detector_dir )
+    if ( !config->app_detector_dir )
     {
         return;  // no lua detectors, no rule support, already warned
     }
 
     char filepath[PATH_MAX];
-    snprintf(filepath, sizeof(filepath), "%s/odp/%s", mod_config->app_detector_dir,
+    snprintf(filepath, sizeof(filepath), "%s/odp/%s", config->app_detector_dir,
         APP_MAPPING_FILE);
 
     FILE* tableFile = fopen(filepath, "r");
@@ -712,15 +712,15 @@ void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config,
         }
         fclose(tableFile);
 
-        snprintf(filepath, sizeof(filepath), "%s/odp/%s", mod_config->app_detector_dir,
+        snprintf(filepath, sizeof(filepath), "%s/odp/%s", config->app_detector_dir,
             APP_CONFIG_FILE);
-        load_appid_config (mod_config, filepath);
-        snprintf(filepath, sizeof(filepath), "%s/custom/%s", mod_config->app_detector_dir,
+        load_appid_config (config, filepath);
+        snprintf(filepath, sizeof(filepath), "%s/custom/%s", config->app_detector_dir,
             USR_CONFIG_FILE);
         if (access (filepath, F_OK))
-            snprintf(filepath, sizeof(filepath), "%s/../%s", mod_config->app_detector_dir,
+            snprintf(filepath, sizeof(filepath), "%s/../%s", config->app_detector_dir,
                 USR_CONFIG_FILE);
-        load_appid_config (mod_config, filepath);
+        load_appid_config (config, filepath);
     }
 }
 

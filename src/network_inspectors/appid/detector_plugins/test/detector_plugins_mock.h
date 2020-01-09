@@ -99,7 +99,7 @@ public:
 };
 
 // Stubs for modules, config
-AppIdModuleConfig::~AppIdModuleConfig() = default;
+AppIdConfig::~AppIdConfig() = default;
 AppIdModule::AppIdModule()
     : Module("a", "b") { }
 AppIdModule::~AppIdModule() = default;

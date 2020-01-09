@@ -39,7 +39,7 @@
 #define SF_APPID_CSD_MIN        1000000
 #define SF_APPID_DYNAMIC_MIN    2000000
 
-class AppIdModuleConfig;
+class AppIdConfig;
 class ClientDetector;
 class ServiceDetector;
 
@@ -142,14 +142,14 @@ public:
         return entry ? entry->priority : 0;
     }
 
-    void init_appid_info_table(AppIdModuleConfig*, snort::SnortConfig*);
+    void init_appid_info_table(AppIdConfig*, snort::SnortConfig*);
     void cleanup_appid_info_table();
     void dump_app_info_table();
     SnortProtocolId add_appid_protocol_reference(const char* protocol, snort::SnortConfig*);
 
 private:
     inline AppInfoManager() = default;
-    void load_appid_config(AppIdModuleConfig*, const char* path);
+    void load_appid_config(AppIdConfig*, const char* path);
     AppInfoTableEntry* get_app_info_entry(AppId appId, const AppInfoTable&);
 };
 

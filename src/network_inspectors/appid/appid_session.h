@@ -42,7 +42,7 @@ class ClientDetector;
 class ServiceDetector;
 class AppIdDnsSession;
 class AppIdHttpSession;
-class ThirdPartyAppIDSession;
+class ThirdPartyAppIdSession;
 
 using AppIdFreeFCN = void (*)(void*);
 
@@ -206,7 +206,7 @@ public:
 
     uint32_t session_id = 0;
     snort::Flow* flow = nullptr;
-    AppIdConfig* config;
+    AppIdContext* ctxt;
     std::unordered_map<unsigned, AppIdFlowData*> flow_data;
     AppInfoManager* app_info_mgr = nullptr;
     CommonAppIdData common;
@@ -244,7 +244,7 @@ public:
 
     TlsSession* tsession = nullptr;
     unsigned scan_flags = 0;
-    ThirdPartyAppIDSession* tpsession = nullptr;
+    ThirdPartyAppIdSession* tpsession = nullptr;
     uint16_t init_tpPackets = 0;
     uint16_t resp_tpPackets = 0;
     bool tp_reinspect_by_initiator = false;
