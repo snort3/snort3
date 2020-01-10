@@ -247,7 +247,7 @@ bool ClientDiscovery::do_client_discovery(AppIdSession&, Packet*,
 }
 
 // Stubs for misc items
-HostPortVal* HostPortCache::find(const SfIp*, uint16_t, IpProtocol)
+HostPortVal* HostPortCache::find(const SfIp*, uint16_t, IpProtocol, AppIdContext&)
 {
     return nullptr;
 }

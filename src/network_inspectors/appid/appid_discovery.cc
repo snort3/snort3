@@ -721,7 +721,7 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
     HostPortVal* hv = nullptr;
 
     if (check_static and
-        (hv = HostPortCache::find(ip, port, protocol)))
+        (hv = HostPortCache::find(ip, port, protocol, *(asd.ctxt))))
     {
         asd.scan_flags |= SCAN_HOST_PORT_FLAG;
         switch (hv->type)

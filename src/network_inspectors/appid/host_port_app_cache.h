@@ -24,6 +24,7 @@
 
 #include "application_ids.h"
 #include "protocols/protocol_ids.h"
+#include "appid_config.h"
 
 namespace snort
 {
@@ -41,7 +42,7 @@ class HostPortCache
 public:
     static void initialize();
     static void terminate();
-    static HostPortVal* find(const snort::SfIp*, uint16_t port, IpProtocol);
+    static HostPortVal* find(const snort::SfIp*, uint16_t port, IpProtocol, AppIdContext&);
     static bool add(const snort::SfIp*, uint16_t port, IpProtocol, unsigned type, AppId);
     static void dump();
 };

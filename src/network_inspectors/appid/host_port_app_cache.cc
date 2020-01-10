@@ -24,6 +24,9 @@
 #endif
 
 #include "host_port_app_cache.h"
+#include "managers/inspector_manager.h"
+#include "appid_inspector.h"
+#include "appid_config.h"
 
 #include <map>
 #include <cstring>
@@ -75,12 +78,12 @@ void HostPortCache::terminate()
     }
 }
 
-HostPortVal* HostPortCache::find(const SfIp* ip, uint16_t port, IpProtocol protocol)
+HostPortVal* HostPortCache::find(const SfIp* ip, uint16_t port, IpProtocol protocol, AppIdContext& ctxt)
 {
     HostPortKey hk;
 
     hk.ip = *ip;
-    hk.port = port;
+    hk.port = (ctxt.config->allow_port_wildcard_host_cache)? 0 : port;
     hk.proto = protocol;
 
     std::map<HostPortKey, HostPortVal>::iterator it;
@@ -98,7 +101,9 @@ bool HostPortCache::add(const SfIp* ip, uint16_t port, IpProtocol proto, unsigne
     HostPortVal hv;
 
     hk.ip = *ip;
-    hk.port = port;
+    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
+    AppIdContext* ctxt = inspector->get_ctxt();
+    hk.port = (ctxt->config->allow_port_wildcard_host_cache)? 0 : port;
     hk.proto = proto;
 
     hv.appId = appId;
