@@ -27,6 +27,7 @@
 #include "hash/hashfcn.h"
 #include "log/messages.h"
 #include "protocols/packet.h"
+#include "service_inspectors/http2_inspect/http2_flow_data.h"
 
 #include "http_common.h"
 #include "http_enum.h"
@@ -223,10 +224,15 @@ IpsOption::EvalStatus HttpIpsOption::eval(Cursor& c, Packet* p)
     if (!section_match)
         return NO_MATCH;
 
+    const Http2FlowData* const h2i_flow_data =
+       (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
+
+    HttpInspect* const hi = (h2i_flow_data != nullptr) ?
+        (HttpInspect*)(p->flow->assistant_gadget) : (HttpInspect*)(p->flow->gadget);
+
     InspectionBuffer hb;
 
-    if (! ((HttpInspect*)(p->flow->gadget))->
-           http_get_buf((unsigned)buffer_index, sub_id, form, p, hb))
+    if (! (hi->http_get_buf((unsigned)buffer_index, sub_id, form, p, hb)))
         return NO_MATCH;
 
     c.set(key, hb.data, hb.len);

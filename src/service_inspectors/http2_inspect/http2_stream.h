@@ -23,25 +23,37 @@
 #include "service_inspectors/http_inspect/http_common.h"
 #include "service_inspectors/http_inspect/http_field.h"
 
-#include "http2_flow_data.h"
 #include "http2_frame.h"
+
+class HttpFlowData;
+class Http2FlowData;
+class HttpMsgSection;
 
 class Http2Stream
 {
 public:
-    Http2Stream(Http2FlowData* session_data_);
+    Http2Stream(uint32_t stream_id, Http2FlowData* session_data_);
     ~Http2Stream();
+    uint32_t get_stream_id() { return stream_id; }
     void eval_frame(const uint8_t* header_buffer, int32_t header_len, const uint8_t* data_buffer,
         int32_t data_len, HttpCommon::SourceId source_id);
     void clear_frame();
     const Field& get_buf(unsigned id);
+    HttpFlowData* get_hi_flow_data() const { return hi_flow_data; }
+    void set_hi_flow_data(HttpFlowData* flow_data)
+        { assert(hi_flow_data == nullptr); hi_flow_data = flow_data; }
+    HttpMsgSection* get_hi_msg_section() const { return hi_msg_section; }
+    void set_hi_msg_section(HttpMsgSection* section) { hi_msg_section = section; }
 #ifdef REG_TEST
     void print_frame(FILE* output);
 #endif
 
 private:
+    const uint32_t stream_id;
     Http2FlowData* const session_data;
     Http2Frame* current_frame = nullptr;
+    HttpFlowData* hi_flow_data = nullptr;
+    HttpMsgSection* hi_msg_section = nullptr;
 };
 
 #endif

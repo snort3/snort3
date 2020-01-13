@@ -131,11 +131,11 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
     // This is the session state information we share with HttpInspect and store with stream. A
     // session is defined by a TCP connection. Since scan() is the first to see a new TCP
     // connection the new flow data object is created here.
-    HttpFlowData* session_data = (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
+    HttpFlowData* session_data = HttpInspect::http_get_flow_data(flow);
 
     if (session_data == nullptr)
     {
-        flow->set_flow_data(session_data = new HttpFlowData);
+        HttpInspect::http_set_flow_data(flow, session_data = new HttpFlowData);
         HttpModule::increment_peg_counts(PEG_FLOW);
     }
 
@@ -163,13 +163,13 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP) &&
         !HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
     {
-        printf("Scan from flow data %" PRIu64
+        fprintf(HttpTestManager::get_output_file(), "Scan from flow data %" PRIu64
             " direction %d length %u client port %hu server port %hu\n", session_data->seq_num,
             source_id, length, flow->client_port, flow->server_port);
-        fflush(stdout);
+        fflush(HttpTestManager::get_output_file());
         if (HttpTestManager::get_show_scan())
         {
-            Field(length, data).print(stdout, "Scan segment");
+            Field(length, data).print(HttpTestManager::get_output_file(), "Scan segment");
         }
     }
 #endif

@@ -27,6 +27,7 @@ namespace Http2Enums
 static const int MAX_OCTETS = 63780;
 static const int DATA_SECTION_SIZE = 16384;
 static const int FRAME_HEADER_LENGTH = 9;
+static const uint32_t NO_STREAM_ID = 0xFFFFFFFF;
 
 static const uint32_t HTTP2_GID = 121;
 

@@ -52,10 +52,10 @@ StreamSplitter::Status Http2StreamSplitter::scan(Packet* pkt, const uint8_t* dat
 
     if (session_data == nullptr)
     {
-        pkt->flow->set_flow_data(session_data = new Http2FlowData);
-        Http2Module::increment_peg_counts(PEG_FLOW);
         AssistantGadgetEvent event(pkt, "http");
         DataBus::publish(FLOW_ASSISTANT_GADGET_EVENT, event);
+        pkt->flow->set_flow_data(session_data = new Http2FlowData(pkt->flow));
+        Http2Module::increment_peg_counts(PEG_FLOW);
     }
 
     // General mechanism to abort using scan

@@ -58,7 +58,7 @@ Http2Inspect::Http2Inspect(const Http2ParaList* params_) : params(params_)
 #endif
 }
 
-bool Http2Inspect::configure(SnortConfig* )
+bool Http2Inspect::configure(SnortConfig*)
 {
     return true;
 }
@@ -81,7 +81,9 @@ bool Http2Inspect::get_buf(unsigned id, Packet* p, InspectionBuffer& b)
     if (!session_data->frame_in_detection)
         return false;
 
-    const Field& buffer = session_data->stream->get_buf(id);
+    const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;
+    Http2Stream* const stream = session_data->get_current_stream(source_id);
+    const Field& buffer = stream->get_buf(id);
     if (buffer.length() <= 0)
         return false;
 
@@ -111,7 +113,9 @@ void Http2Inspect::eval(Packet* p)
     if (session_data->frame_type[source_id] == FT__NONE)
         return;
 
-    session_data->stream->eval_frame(session_data->frame_header[source_id],
+    Http2Stream* stream = session_data->get_current_stream(source_id);
+
+    stream->eval_frame(session_data->frame_header[source_id],
         session_data->frame_header_size[source_id], session_data->frame_data[source_id],
         session_data->frame_data_size[source_id], source_id);
 
@@ -124,7 +128,7 @@ void Http2Inspect::eval(Packet* p)
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2))
     {
-        session_data->stream->print_frame(HttpTestManager::get_output_file());
+        stream->print_frame(HttpTestManager::get_output_file());
         if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP2))
         {
             printf("Finished processing section from test %" PRIi64 "\n",
@@ -143,6 +147,9 @@ void Http2Inspect::clear(Packet* p)
         return;
 
     session_data->frame_in_detection = false;
-    session_data->stream->clear_frame();
+
+    const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;
+    Http2Stream* stream = session_data->get_current_stream(source_id);
+    stream->clear_frame();
 }
 

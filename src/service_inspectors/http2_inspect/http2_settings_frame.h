@@ -29,9 +29,8 @@ class Http2Frame;
 class Http2SettingsFrame : public Http2Frame
 {
 public:
-    friend Http2Frame* Http2Frame::new_frame(const uint8_t* header_buffer, const int32_t header_len,
-        const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* session_data,
-        HttpCommon::SourceId source_id);
+    friend Http2Frame* Http2Frame::new_frame(const uint8_t*, const int32_t, const uint8_t*,
+        const int32_t, Http2FlowData*, HttpCommon::SourceId);
 
 #ifdef REG_TEST
     void print_frame(FILE* output) override;
@@ -65,7 +64,7 @@ private:
               100, // Max concurrent Streams
             65535, // Window size
             16384, // Max frame size
-       4294967295 // Max header list size
+       4294967295  // Max header list size
     };
 };
 #endif

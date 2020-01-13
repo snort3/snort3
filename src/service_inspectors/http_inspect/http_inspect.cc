@@ -27,6 +27,7 @@
 
 #include "detection/detection_engine.h"
 #include "detection/detection_util.h"
+#include "service_inspectors/http2_inspect/http2_flow_data.h"
 #include "log/unified2.h"
 #include "protocols/packet.h"
 #include "stream/stream.h"
@@ -310,14 +311,38 @@ int HttpInspect::get_xtra_jsnorm(Flow*, uint8_t** buf, uint32_t* len, uint32_t* 
     return 1;
 }
 
+HttpFlowData* HttpInspect::http_get_flow_data(const Flow* flow)
+{
+    Http2FlowData* h2i_flow_data = nullptr;
+    if (Http2FlowData::inspector_id != 0)
+        h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    if (h2i_flow_data == nullptr)
+        return (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
+    else
+        return h2i_flow_data->get_hi_flow_data();
+}
+
+void HttpInspect::http_set_flow_data(Flow* flow, HttpFlowData* flow_data)
+{
+    Http2FlowData* h2i_flow_data = nullptr;
+    if (Http2FlowData::inspector_id != 0)
+        h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    if (h2i_flow_data == nullptr)
+        flow->set_flow_data(flow_data);
+    else
+    {
+        flow_data->for_http2 = true;
+        h2i_flow_data->set_hi_flow_data(flow_data);
+    }
+}
+
 void HttpInspect::eval(Packet* p)
 {
     Profile profile(HttpModule::get_profile_stats());
 
     const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;
 
-    HttpFlowData* session_data =
-        (HttpFlowData*)p->flow->get_flow_data(HttpFlowData::inspector_id);
+    HttpFlowData* session_data = http_get_flow_data(p->flow);
 
     // FIXIT-H Workaround for unexpected eval() calls
     if (session_data->section_type[source_id] == SEC__NOT_COMPUTE)
@@ -340,7 +365,8 @@ void HttpInspect::eval(Packet* p)
     const bool buf_owner = !session_data->partial_flush[source_id];
     if (!process(p->data, p->dsize, p->flow, source_id, buf_owner))
     {
-        DetectionEngine::disable_content(p);
+        if (!session_data->for_http2)
+            DetectionEngine::disable_content(p);
     }
 
 #ifdef REG_TEST
@@ -376,7 +402,7 @@ bool HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
     SourceId source_id, bool buf_owner) const
 {
     HttpMsgSection* current_section;
-    HttpFlowData* session_data = (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
+    HttpFlowData* session_data = http_get_flow_data(flow);
     assert(session_data != nullptr);
 
     if (!session_data->partial_flush[source_id])
@@ -452,13 +478,25 @@ void HttpInspect::clear(Packet* p)
 {
     Profile profile(HttpModule::get_profile_stats());
 
-    HttpFlowData* const session_data =
-        (HttpFlowData*)p->flow->get_flow_data(HttpFlowData::inspector_id);
+    HttpFlowData* const session_data = http_get_flow_data(p->flow);
 
     if ( session_data == nullptr )
         return;
 
-    HttpMsgSection* current_section = HttpContextData::clear_snapshot(p->context);
+    Http2FlowData* h2i_flow_data = nullptr;
+    if (Http2FlowData::inspector_id != 0)
+    {
+        h2i_flow_data = (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
+    }
+
+    HttpMsgSection* current_section = nullptr;
+    if (h2i_flow_data != nullptr)
+    {
+        current_section = h2i_flow_data->get_hi_msg_section();
+        h2i_flow_data->set_hi_msg_section(nullptr);
+    }
+    else
+        current_section = HttpContextData::clear_snapshot(p->context);
 
     // FIXIT-M This test is necessary because sometimes we get extra clears
     // Convert to assert when that gets fixed.

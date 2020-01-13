@@ -231,7 +231,7 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
 
     copied = len;
 
-    HttpFlowData* session_data = (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
+    HttpFlowData* session_data = HttpInspect::http_get_flow_data(flow);
     assert(session_data != nullptr);
 
 #ifdef REG_TEST
@@ -268,10 +268,10 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
         }
         else
         {
-            printf("Reassemble from flow data %" PRIu64
+            fprintf(HttpTestManager::get_output_file(), "Reassemble from flow data %" PRIu64
                 " direction %d total %u length %u partial %d\n", session_data->seq_num, source_id,
                 total, len, session_data->partial_flush[source_id]);
-            fflush(stdout);
+            fflush(HttpTestManager::get_output_file());
         }
     }
 #endif

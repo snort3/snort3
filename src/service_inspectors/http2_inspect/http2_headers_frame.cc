@@ -23,18 +23,24 @@
 
 #include "http2_headers_frame.h"
 
+#include "protocols/packet.h"
+
+#include "service_inspectors/http_inspect/http_inspect.h"
+#include "service_inspectors/http_inspect/http_stream_splitter.h"
+
 #include "http2_enum.h"
 #include "http2_flow_data.h"
 #include "http2_hpack.h"
 #include "http2_start_line.h"
 
+using namespace snort;
 using namespace HttpCommon;
 using namespace Http2Enums;
 
 Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t header_len,
-    const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* ssn_data,
-    HttpCommon::SourceId src_id) : Http2Frame(header_buffer, header_len, data_buffer, data_len,
-    ssn_data, src_id)
+    const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* session_data_,
+    HttpCommon::SourceId source_id_) :
+    Http2Frame(header_buffer, header_len, data_buffer, data_len, session_data_, source_id_)
 {
     uint8_t hpack_headers_offset = 0;
 
@@ -43,41 +49,130 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t
         hpack_headers_offset = 5;
 
     // Set up the decoding context
-    hpack_decoder = &session_data->hpack_decoder[source_id];
+    Http2HpackDecoder& hpack_decoder = session_data->hpack_decoder[source_id];
 
     // Allocate stuff
     decoded_headers = new uint8_t[MAX_OCTETS];
-    decoded_headers_size = 0;
 
     start_line_generator = Http2StartLine::new_start_line_generator(source_id,
         session_data->events[source_id], session_data->infractions[source_id]);
 
     // Decode headers
-    if (!hpack_decoder->decode_headers((data.start() + hpack_headers_offset), data.length() -
-            hpack_headers_offset, decoded_headers, &decoded_headers_size, start_line_generator,
-            session_data->events[source_id], session_data->infractions[source_id]))
+    if (!hpack_decoder.decode_headers((data.start() + hpack_headers_offset), data.length() -
+        hpack_headers_offset, decoded_headers,
+        start_line_generator, session_data->events[source_id],
+        session_data->infractions[source_id]))
     {
         session_data->frame_type[source_id] = FT__ABORT;
         error_during_decode = true;
     }
-    start_line = hpack_decoder->get_start_line();
-    http2_decoded_header = hpack_decoder->get_decoded_headers(decoded_headers);
+    start_line = hpack_decoder.get_start_line();
+    http1_header = hpack_decoder.get_decoded_headers(decoded_headers);
+
+    if ((error_during_decode) || (session_data->hi_ss[source_id] == nullptr))
+        return;
+
+    // http_inspect scan() of start line
+    session_data->stream_in_hi = session_data->current_stream[source_id];
+    {
+        uint32_t flush_offset;
+        Packet dummy_pkt(false);
+        dummy_pkt.flow = session_data->flow;
+        const uint32_t unused = 0;
+        const StreamSplitter::Status start_scan_result =
+            session_data->hi_ss[source_id]->scan(&dummy_pkt, start_line->start(),
+            start_line->length(), unused, &flush_offset);
+        assert(start_scan_result == StreamSplitter::FLUSH);
+        UNUSED(start_scan_result);
+        assert((int64_t)flush_offset == start_line->length());
+    }
+
+    StreamBuffer stream_buf;
+    // http_inspect reassemble() of start line
+    {
+        unsigned copied;
+        stream_buf = session_data->hi_ss[source_id]->reassemble(session_data->flow,
+            start_line->length(), 0, start_line->start(), start_line->length(), PKT_PDU_TAIL,
+            copied);
+        assert(stream_buf.data != nullptr);
+        assert(copied == (unsigned)start_line->length());
+    }
+
+    // http_inspect eval() and clear() of start line
+    {
+        Packet dummy_pkt(false);
+        dummy_pkt.flow = session_data->flow;
+        dummy_pkt.packet_flags = (source_id == SRC_CLIENT) ? PKT_FROM_CLIENT : PKT_FROM_SERVER;
+        dummy_pkt.dsize = stream_buf.length;
+        dummy_pkt.data = stream_buf.data;
+        session_data->hi->eval(&dummy_pkt);
+        session_data->hi->clear(&dummy_pkt);
+    }
+
+    // http_inspect scan() of headers
+    {
+        uint32_t flush_offset;
+        Packet dummy_pkt(false);
+        dummy_pkt.flow = session_data->flow;
+        const uint32_t unused = 0;
+        const StreamSplitter::Status header_scan_result =
+            session_data->hi_ss[source_id]->scan(&dummy_pkt, http1_header->start(),
+            http1_header->length(), unused, &flush_offset);
+        if (header_scan_result == StreamSplitter::ABORT)
+        {
+            // eval() aborted the start line?
+            hi_abort = true;
+            return;
+        }
+        assert(header_scan_result == StreamSplitter::FLUSH);
+        assert((int64_t)flush_offset == http1_header->length());
+    }
+
+    // http_inspect reassemble() of headers
+    {
+        unsigned copied;
+        stream_buf = session_data->hi_ss[source_id]->reassemble(session_data->flow,
+            http1_header->length(), 0, http1_header->start(), http1_header->length(), PKT_PDU_TAIL,
+            copied);
+        assert(stream_buf.data != nullptr);
+        assert(copied == (unsigned)http1_header->length());
+    }
+
+    // http_inspect eval() of headers
+    {
+        Packet dummy_pkt(false);
+        dummy_pkt.flow = session_data->flow;
+        dummy_pkt.packet_flags = (source_id == SRC_CLIENT) ? PKT_FROM_CLIENT : PKT_FROM_SERVER;
+        dummy_pkt.dsize = stream_buf.length;
+        dummy_pkt.data = stream_buf.data;
+        session_data->hi->eval(&dummy_pkt);
+    }
 }
 
 Http2HeadersFrame::~Http2HeadersFrame()
 {
     delete start_line;
     delete start_line_generator;
-    delete http2_decoded_header;
+    delete http1_header;
     delete[] decoded_headers;
+}
+
+void Http2HeadersFrame::clear()
+{
+    if (error_during_decode || hi_abort || (session_data->hi == nullptr))
+        return;
+    Packet dummy_pkt(false);
+    dummy_pkt.flow = session_data->flow;
+    session_data->hi->clear(&dummy_pkt);
 }
 
 const Field& Http2HeadersFrame::get_buf(unsigned id)
 {
     switch (id)
     {
+    // FIXIT-M need to add a buffer for the decoded start line
     case HTTP2_BUFFER_DECODED_HEADER:
-        return *http2_decoded_header;
+        return *http1_header;
     default:
         return Http2Frame::get_buf(id);
     }
@@ -86,12 +181,12 @@ const Field& Http2HeadersFrame::get_buf(unsigned id)
 #ifdef REG_TEST
 void Http2HeadersFrame::print_frame(FILE* output)
 {
-    fprintf(output, "\nHEADERS frame\n");
+    fprintf(output, "\nHeaders frame\n");
     if (error_during_decode)
         fprintf(output, "Error decoding headers.\n");
     if (start_line)
         start_line->print(output, "Decoded start-line");
-    http2_decoded_header->print(output, "Decoded header");
+    http1_header->print(output, "Decoded header");
     Http2Frame::print_frame(output);
 }
 #endif

@@ -40,7 +40,7 @@ public:
     static Http2Frame* new_frame(const uint8_t* header_buffer, const int32_t header_len,
         const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* session_data,
         HttpCommon::SourceId source_id);
-
+    virtual void clear() { }
     virtual const Field& get_buf(unsigned id);
 #ifdef REG_TEST
     virtual void print_frame(FILE* output);

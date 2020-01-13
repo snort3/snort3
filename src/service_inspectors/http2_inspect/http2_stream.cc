@@ -23,15 +23,20 @@
 
 #include "http2_stream.h"
 
+#include "service_inspectors/http_inspect/http_flow_data.h"
+
 using namespace HttpCommon;
 
-Http2Stream::Http2Stream(Http2FlowData* session_data_) : session_data(session_data_)
+Http2Stream::Http2Stream(uint32_t stream_id_, Http2FlowData* session_data_) :
+    stream_id(stream_id_),
+    session_data(session_data_)
 {
 }
 
 Http2Stream::~Http2Stream()
 {
     delete current_frame;
+    delete hi_flow_data;
 }
 
 void Http2Stream::eval_frame(const uint8_t* header_buffer, int32_t header_len,
@@ -44,6 +49,8 @@ void Http2Stream::eval_frame(const uint8_t* header_buffer, int32_t header_len,
 
 void Http2Stream::clear_frame()
 {
+    if (current_frame != nullptr) // FIXIT-M why is this needed?
+        current_frame->clear();
     delete current_frame;
     current_frame = nullptr;
 }

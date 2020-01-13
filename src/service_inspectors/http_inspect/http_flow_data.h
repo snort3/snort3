@@ -66,6 +66,8 @@ public:
 #endif
 
 private:
+    bool for_http2 = false;
+
     // Convenience routines
     void half_reset(HttpCommon::SourceId source_id);
     void trailer_prep(HttpCommon::SourceId source_id);

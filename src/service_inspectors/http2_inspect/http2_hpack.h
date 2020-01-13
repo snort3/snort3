@@ -37,7 +37,7 @@ class Http2HpackDecoder
 public:
     Http2HpackDecoder() { }
     bool decode_headers(const uint8_t* encoded_headers, const uint32_t encoded_headers_length,
-        uint8_t* decoded_headers, uint32_t* decoded_headers_size, Http2StartLine* start_line,
+        uint8_t* decoded_headers, Http2StartLine* start_line,
         Http2EventGen* stream_events, Http2Infractions* stream_infractions);
     bool write_decoded_headers(const uint8_t* in_buffer, const uint32_t in_length,
         uint8_t* decoded_header_buffer, uint32_t decoded_header_length, uint32_t& bytes_written);
@@ -71,7 +71,7 @@ public:
 
 private:
     Http2StartLine* start_line = nullptr;
-    uint32_t* decoded_headers_size;
+    uint32_t decoded_headers_size;
     uint32_t pseudo_headers_fragment_size = 0;
     bool decode_error = false;
     Http2EventGen* events;

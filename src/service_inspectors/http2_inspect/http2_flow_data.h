@@ -35,19 +35,31 @@
 #include "http2_hpack_int_decode.h"
 #include "http2_hpack_string_decode.h"
 #include "http2_settings_frame.h"
+#include "http2_stream.h"
 
 using Http2Infractions = Infractions<Http2Enums::INF__MAX_VALUE, Http2Enums::INF__NONE>;
 
 using Http2EventGen = EventGen<Http2Enums::EVENT__MAX_VALUE, Http2Enums::EVENT__NONE,
     Http2Enums::HTTP2_GID>;
 
+class HttpFlowData;
+class HttpMsgSection;
+class HttpInspect;
+class HttpStreamSplitter;
+
 class Http2FlowData : public snort::FlowData
 {
 public:
-    Http2FlowData();
+    Http2FlowData(snort::Flow* flow_);
     ~Http2FlowData() override;
     static unsigned inspector_id;
     static void init() { inspector_id = snort::FlowData::create_flow_data_id(); }
+
+    // Used by http_inspect to store its stuff
+    HttpFlowData* get_hi_flow_data() const;
+    void set_hi_flow_data(HttpFlowData* flow);
+    HttpMsgSection* get_hi_msg_section() const;
+    void set_hi_msg_section(HttpMsgSection* section);
 
     friend class Http2Frame;
     friend class Http2HeadersFrame;
@@ -67,8 +79,30 @@ public:
     size_t size_of() override
     { return sizeof(*this); }
 
+    // Stream access
+    class StreamInfo
+    {
+    public:
+        const uint32_t id;
+        class Http2Stream* stream;
+
+        StreamInfo(uint32_t _id, class Http2Stream* ptr) : id(_id), stream(ptr) { assert(ptr); }
+        ~StreamInfo() { delete stream; }
+    };
+    class Http2Stream* get_current_stream(const HttpCommon::SourceId source_id);
+
 protected:
+    snort::Flow* flow;
+    HttpInspect* const hi;
+    HttpStreamSplitter* hi_ss[2] = { nullptr, nullptr };
+
     // 0 element refers to client frame, 1 element refers to server frame
+
+    // Stream ID of the frame currently being read in and processed
+    uint32_t current_stream[2] = { Http2Enums::NO_STREAM_ID, Http2Enums::NO_STREAM_ID };
+    // At any given time there may be different streams going in each direction. But only one of
+    // them is the stream that http_inspect is actually processing at the moment.
+    uint32_t stream_in_hi = Http2Enums::NO_STREAM_ID;
 
     // Reassemble() data to eval()
     uint8_t* frame_header[2] = { nullptr, nullptr };
@@ -80,7 +114,7 @@ protected:
     bool frame_in_detection = false;
     Http2ConnectionSettings connection_settings[2];
     Http2HpackDecoder hpack_decoder[2];
-    class Http2Stream* stream;
+    std::list<class StreamInfo> streams;
 
     // Internal to scan()
     bool preface[2] = { true, false };
@@ -115,6 +149,11 @@ protected:
     static uint64_t instance_count;
     uint64_t seq_num;
 #endif
+
+private:
+    class Http2Stream* find_stream(uint32_t key) const;
+    class Http2Stream* get_stream(uint32_t key);
+    class Http2Stream* get_hi_stream() const;
 };
 
 #endif

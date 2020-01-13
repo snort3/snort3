@@ -103,7 +103,7 @@ bool Http2SettingsFrame::sanity_check()
 #ifdef REG_TEST
 void Http2SettingsFrame::print_frame(FILE* output)
 {
-    fprintf(output, "SETTINGS frame:");
+    fprintf(output, "Settings frame:");
 
     if (bad_frame)
         fprintf(output, " Error in settings frame.");

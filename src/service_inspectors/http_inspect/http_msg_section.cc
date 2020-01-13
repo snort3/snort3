@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include "service_inspectors/http2_inspect/http2_flow_data.h"
+
 #include "http_msg_section.h"
 
 #include "http_context_data.h"
@@ -55,6 +57,17 @@ HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
     tcp_close(session_data->tcp_close[source_id])
 {
     assert((source_id == SRC_CLIENT) || (source_id == SRC_SERVER));
+
+    if (Http2FlowData::inspector_id != 0)
+    {
+        Http2FlowData* const h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+        if (h2i_flow_data != nullptr)
+        {
+            h2i_flow_data->set_hi_msg_section(this);
+            return;
+        }
+    }
+
     HttpContextData::save_snapshot(this);
 }
 

@@ -31,12 +31,12 @@ class Http2HeadersFrame : public Http2Frame
 {
 public:
     ~Http2HeadersFrame() override;
+    void clear() override;    
 
     const Field& get_buf(unsigned id) override;
 
-    friend Http2Frame* Http2Frame::new_frame(const uint8_t* header_buffer, const int32_t header_len,
-        const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* session_data,
-        HttpCommon::SourceId source_id);
+    friend Http2Frame* Http2Frame::new_frame(const uint8_t*, const int32_t, const uint8_t*,
+        const int32_t, Http2FlowData*, HttpCommon::SourceId);
 
 #ifdef REG_TEST
     void print_frame(FILE* output) override;
@@ -50,9 +50,9 @@ private:
     Http2StartLine* start_line_generator = nullptr;
     uint8_t* decoded_headers = nullptr; // working buffer to store decoded headers
     uint32_t decoded_headers_size = 0;
-    const Field* http2_decoded_header = nullptr; // finalized headers to be passed to NHI
+    const Field* http1_header = nullptr; // finalized headers to be passed to NHI
     const Field* start_line = nullptr;
     bool error_during_decode = false;
-    Http2HpackDecoder* hpack_decoder= nullptr;
+    bool hi_abort = false;
 };
 #endif

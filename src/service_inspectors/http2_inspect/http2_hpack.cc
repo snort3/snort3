@@ -329,7 +329,7 @@ bool Http2HpackDecoder::decode_header_line(const uint8_t* encoded_header_buffer,
 // not output the start line or decoded headers - this function must be followed by calls to
 // get_start_line() and get_decoded_headers() to generate and obtain these fields.
 bool Http2HpackDecoder::decode_headers(const uint8_t* encoded_headers,
-    const uint32_t encoded_headers_length, uint8_t* decoded_headers, uint32_t* decoded_headers_len,
+    const uint32_t encoded_headers_length, uint8_t* decoded_headers,
     Http2StartLine *start_line_generator, Http2EventGen* stream_events,
     Http2Infractions* stream_infractions)
 {
@@ -338,7 +338,7 @@ bool Http2HpackDecoder::decode_headers(const uint8_t* encoded_headers,
     uint32_t line_bytes_written = 0;
     bool success = true;
     start_line = start_line_generator;
-    decoded_headers_size = decoded_headers_len;
+    decoded_headers_size = 0;
     events = stream_events;
     infractions = stream_infractions;
     pseudo_headers_fragment_size = 0;
@@ -347,10 +347,10 @@ bool Http2HpackDecoder::decode_headers(const uint8_t* encoded_headers,
     {
         success = decode_header_line(encoded_headers + total_bytes_consumed,
             encoded_headers_length - total_bytes_consumed, line_bytes_consumed,
-            decoded_headers + *decoded_headers_size, MAX_OCTETS - *decoded_headers_size,
+            decoded_headers + decoded_headers_size, MAX_OCTETS - decoded_headers_size,
             line_bytes_written);
         total_bytes_consumed  += line_bytes_consumed;
-        *decoded_headers_size += line_bytes_written;
+        decoded_headers_size += line_bytes_written;
     }
 
     // If there were only pseudo-headers, finalize never got called, so create the start-line
@@ -361,8 +361,8 @@ bool Http2HpackDecoder::decode_headers(const uint8_t* encoded_headers,
     if (success)
     {
         success = write_decoded_headers((const uint8_t*)"\r\n", 2, decoded_headers +
-            *decoded_headers_size, MAX_OCTETS - *decoded_headers_size, line_bytes_written);
-        *decoded_headers_size += line_bytes_written;
+            decoded_headers_size, MAX_OCTETS - decoded_headers_size, line_bytes_written);
+        decoded_headers_size += line_bytes_written;
     }
     else
         decode_error = true;
@@ -373,7 +373,7 @@ bool Http2HpackDecoder::finalize_start_line()
 {
     // Save the current position in the decoded buffer so we can set the pointer to the start
     // of the regular headers
-    pseudo_headers_fragment_size = *decoded_headers_size;
+    pseudo_headers_fragment_size = decoded_headers_size;
 
     return start_line->finalize();
 }
@@ -388,6 +388,6 @@ const Field* Http2HpackDecoder::get_decoded_headers(const uint8_t* const decoded
     if (decode_error)
         return new Field(STAT_NO_SOURCE);
     else
-        return new Field(*decoded_headers_size - pseudo_headers_fragment_size, decoded_headers +
+        return new Field(decoded_headers_size - pseudo_headers_fragment_size, decoded_headers +
             pseudo_headers_fragment_size, false);
 }

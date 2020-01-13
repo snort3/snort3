@@ -49,8 +49,8 @@ HttpFlowData::HttpFlowData() : FlowData(inspector_id)
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP) &&
         !HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
     {
-        printf("Flow Data construct %" PRIu64 "\n", seq_num);
-        fflush(nullptr);
+        fprintf(HttpTestManager::get_output_file(), "Flow Data construct %" PRIu64 "\n", seq_num);
+        fflush(HttpTestManager::get_output_file());
     }
 #endif
     HttpModule::increment_peg_counts(PEG_CONCURRENT_SESSIONS);
@@ -65,8 +65,8 @@ HttpFlowData::~HttpFlowData()
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP) &&
         !HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
     {
-        printf("Flow Data destruct %" PRIu64 "\n", seq_num);
-        fflush(nullptr);
+        fprintf(HttpTestManager::get_output_file(), "Flow Data destruct %" PRIu64 "\n", seq_num);
+        fflush(HttpTestManager::get_output_file());
     }
 #endif
     if (HttpModule::get_peg_counts(PEG_CONCURRENT_SESSIONS) > 0)

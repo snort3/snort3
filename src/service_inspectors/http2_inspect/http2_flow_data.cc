@@ -23,6 +23,7 @@
 
 #include "http2_flow_data.h"
 
+#include "service_inspectors/http_inspect/http_inspect.h"
 #include "service_inspectors/http_inspect/http_test_manager.h"
 
 #include "http2_enum.h"
@@ -41,8 +42,17 @@ unsigned Http2FlowData::inspector_id = 0;
 uint64_t Http2FlowData::instance_count = 0;
 #endif
 
-Http2FlowData::Http2FlowData() : FlowData(inspector_id), stream(new Http2Stream(this))
+Http2FlowData::Http2FlowData(Flow* flow_) :
+    FlowData(inspector_id),
+    flow(flow_),
+    hi((HttpInspect*)(flow->assistant_gadget))
 {
+    if (hi != nullptr)
+    {
+        hi_ss[SRC_CLIENT] = hi->get_splitter(true);
+        hi_ss[SRC_SERVER] = hi->get_splitter(false);
+    }
+
 #ifdef REG_TEST
     seq_num = ++instance_count;
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2) &&
@@ -75,8 +85,68 @@ Http2FlowData::~Http2FlowData()
     {
         delete infractions[k];
         delete events[k];
+        delete hi_ss[k];
+    }
+}
+
+HttpFlowData* Http2FlowData::get_hi_flow_data() const
+{
+    assert(stream_in_hi != Http2Enums::NO_STREAM_ID);
+    Http2Stream* stream = get_hi_stream();
+    return stream->get_hi_flow_data();
+}
+
+void Http2FlowData::set_hi_flow_data(HttpFlowData* flow)
+{
+    assert(stream_in_hi != Http2Enums::NO_STREAM_ID);
+    Http2Stream* stream = get_hi_stream();
+    stream->set_hi_flow_data(flow);
+}
+
+HttpMsgSection* Http2FlowData::get_hi_msg_section() const
+{
+    Http2Stream* stream = get_hi_stream();
+    if (stream == nullptr)
+        return nullptr;
+    return stream->get_hi_msg_section();
+}
+
+void Http2FlowData::set_hi_msg_section(HttpMsgSection* section)
+{
+    assert(stream_in_hi != Http2Enums::NO_STREAM_ID);
+    Http2Stream* stream = get_hi_stream();
+    stream->set_hi_msg_section(section);
+}
+
+class Http2Stream* Http2FlowData::find_stream(uint32_t key) const
+{
+    for (const StreamInfo& stream_info : streams)
+    {
+        if (stream_info.id == key)
+            return stream_info.stream;
     }
 
-    delete stream;
+    return nullptr;
+}
+
+class Http2Stream* Http2FlowData::get_stream(uint32_t key)
+{
+    class Http2Stream* stream = find_stream(key);
+    if (!stream)
+    {
+        stream = new Http2Stream(key, this);
+        streams.emplace_front(key, stream);
+    }
+    return stream;
+}
+
+class Http2Stream* Http2FlowData::get_hi_stream() const
+{
+    return find_stream(stream_in_hi);
+}
+
+class Http2Stream* Http2FlowData::get_current_stream(const HttpCommon::SourceId source_id)
+{
+    return get_stream(current_stream[source_id]);
 }
 

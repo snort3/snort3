@@ -59,6 +59,16 @@ static uint8_t get_frame_flags(const uint8_t* frame_buffer)
         return NO_HEADER;
 }
 
+static uint8_t get_stream_id(const uint8_t* frame_buffer)
+{
+    const uint8_t stream_id_index = 5;
+    assert(frame_buffer != nullptr);
+    return ((frame_buffer[stream_id_index] & 0x7f) << 24) +
+            (frame_buffer[stream_id_index + 1] << 16) + 
+            (frame_buffer[stream_id_index + 2] << 8) +
+             frame_buffer[stream_id_index + 3];
+}
+
 StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t* data,
     uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id)
 {
@@ -135,9 +145,9 @@ StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t
 
             // The first nine bytes are the frame header. But all nine might not all be present in
             // the first TCP segment we receive.
-            uint32_t remaining_header = FRAME_HEADER_LENGTH -
+            const uint32_t remaining_header = FRAME_HEADER_LENGTH -
                 session_data->scan_octets_seen[source_id];
-            uint32_t remaining_header_in_data = remaining_header > length - data_offset ?
+            const uint32_t remaining_header_in_data = remaining_header > length - data_offset ?
                 length - data_offset : remaining_header;
             memcpy(session_data->scan_frame_header[source_id] +
                 session_data->scan_octets_seen[source_id], data + data_offset,
@@ -154,7 +164,9 @@ StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t
             // We have the full frame header, compute some variables
             const uint32_t frame_length = get_frame_length(session_data->
                 scan_frame_header[source_id]);
-            uint8_t type = get_frame_type(session_data->scan_frame_header[source_id]);
+            const uint8_t type = get_frame_type(session_data->scan_frame_header[source_id]);
+            session_data->current_stream[source_id] =
+                get_stream_id(session_data->scan_frame_header[source_id]);
 
             // Compute frame section length once per frame
             if (session_data->scan_remaining_frame_octets[source_id] == 0)

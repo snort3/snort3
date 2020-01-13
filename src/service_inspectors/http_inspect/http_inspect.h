@@ -69,6 +69,8 @@ private:
 
     bool process(const uint8_t* data, const uint16_t dsize, snort::Flow* const flow,
         HttpCommon::SourceId source_id_, bool buf_owner) const;
+    static HttpFlowData* http_get_flow_data(const snort::Flow* flow);
+    static void http_set_flow_data(snort::Flow* flow, HttpFlowData* flow_data);
 
     const HttpParaList* const params;
 

@@ -26,6 +26,7 @@
 #include "http_common.h"
 #include "http_cutter.h"
 #include "http_enum.h"
+#include "http_inspect.h"
 #include "http_module.h"
 #include "http_msg_request.h"
 #include "http_stream_splitter.h"
@@ -39,7 +40,7 @@ bool HttpStreamSplitter::finish(Flow* flow)
 {
     Profile profile(HttpModule::get_profile_stats());
 
-    HttpFlowData* session_data = (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
+    HttpFlowData* session_data = HttpInspect::http_get_flow_data(flow);
     // FIXIT-M - this assert has been changed to check for null session data and return false if so
     //           due to lack of reliable feedback to stream that scan has been called...if that is
     //           addressed in stream reassembly rewrite this can be reverted to an assert
@@ -57,9 +58,10 @@ bool HttpStreamSplitter::finish(Flow* flow)
         }
         else
         {
-            printf("Finish from flow data %" PRIu64 " direction %d\n", session_data->seq_num,
+            fprintf(HttpTestManager::get_output_file(),
+                "Finish from flow data %" PRIu64 " direction %d\n", session_data->seq_num,
                 source_id);
-            fflush(stdout);
+            fflush(HttpTestManager::get_output_file());
         }
     }
 #endif
@@ -166,7 +168,7 @@ bool HttpStreamSplitter::init_partial_flush(Flow* flow)
         return false;
     }
 
-    HttpFlowData* session_data = (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
+    HttpFlowData* session_data = HttpInspect::http_get_flow_data(flow);
     assert(session_data != nullptr);
     if ((session_data->type_expected[source_id] != SEC_BODY_CL)      &&
         (session_data->type_expected[source_id] != SEC_BODY_OLD)     &&
@@ -180,8 +182,9 @@ bool HttpStreamSplitter::init_partial_flush(Flow* flow)
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP) &&
         !HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
     {
-        printf("Partial flush from flow data %" PRIu64 "\n", session_data->seq_num);
-        fflush(stdout);
+        fprintf(HttpTestManager::get_output_file(), "Partial flush from flow data %" PRIu64 "\n",
+            session_data->seq_num);
+        fflush(HttpTestManager::get_output_file());
     }
 #endif
 
