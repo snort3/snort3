@@ -331,7 +331,7 @@ bool Http2HpackDecoder::decode_header_line(const uint8_t* encoded_header_buffer,
 bool Http2HpackDecoder::decode_headers(const uint8_t* encoded_headers,
     const uint32_t encoded_headers_length, uint8_t* decoded_headers,
     Http2StartLine *start_line_generator, Http2EventGen* stream_events,
-    Http2Infractions* stream_infractions)
+    Http2Infractions* stream_infractions, bool no_message_body)
 {
     uint32_t total_bytes_consumed = 0;
     uint32_t line_bytes_consumed = 0;
@@ -357,11 +357,21 @@ bool Http2HpackDecoder::decode_headers(const uint8_t* encoded_headers,
     if (!start_line->is_finalized())
         success &= finalize_start_line();
 
-    // write the last CRLF to end the header
+    /* Write the last CRLF to end the header
+
+       Adding artificial chunked header to end of HTTP/1.1 decoded header block for H2I to communicate
+       frame boundaries to http_inspect and http_inspect can expect chunked data during inspection */
     if (success)
     {
-        success = write_decoded_headers((const uint8_t*)"\r\n", 2, decoded_headers +
-            decoded_headers_size, MAX_OCTETS - decoded_headers_size, line_bytes_written);
+        if (no_message_body)
+            success = write_decoded_headers((const uint8_t*)"\r\n", 2, decoded_headers +
+                decoded_headers_size, MAX_OCTETS - decoded_headers_size, line_bytes_written);
+        else
+        {
+            const uint8_t chunk_hdr[] = "transfer-encoding: chunked\r\n\r\n";
+            success = write_decoded_headers(chunk_hdr, sizeof(chunk_hdr) - 1, decoded_headers +
+                decoded_headers_size, MAX_OCTETS - decoded_headers_size, line_bytes_written);
+        }
         decoded_headers_size += line_bytes_written;
     }
     else
