@@ -132,8 +132,6 @@ void HttpFlowData::half_reset(SourceId source_id)
     }
     delete infractions[source_id];
     infractions[source_id] = new HttpInfractions;
-    delete events[source_id];
-    events[source_id] = new HttpEventGen;
     section_offset[source_id] = 0;
     chunk_state[source_id] = CHUNK_NEWLINES;
     chunk_expected_length[source_id] = 0;
@@ -235,15 +233,6 @@ HttpInfractions* HttpFlowData::get_infractions(SourceId source_id)
     assert(transaction[source_id] != nullptr);
     assert(transaction[source_id]->get_infractions(source_id) != nullptr);
     return transaction[source_id]->get_infractions(source_id);
-}
-
-HttpEventGen* HttpFlowData::get_events(SourceId source_id)
-{
-    if (events[source_id] != nullptr)
-        return events[source_id];
-    assert(transaction[source_id] != nullptr);
-    assert(transaction[source_id]->get_events(source_id) != nullptr);
-    return transaction[source_id]->get_events(source_id);
 }
 
 #ifdef REG_TEST

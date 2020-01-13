@@ -78,7 +78,7 @@ void HttpMsgSection::add_infraction(int infraction)
 
 void HttpMsgSection::create_event(int sid)
 {
-    transaction->get_events(source_id)->create_event(sid);
+    session_data->events[source_id]->create_event(sid);
 }
 
 void HttpMsgSection::update_depth() const
@@ -284,13 +284,13 @@ void HttpMsgSection::print_section_title(FILE* output, const char* title) const
 
 void HttpMsgSection::print_section_wrapup(FILE* output) const
 {
-    fprintf(output, "Infractions: %016" PRIx64 " %016" PRIx64 ", Events: %016" PRIx64 " %016" PRIx64 " %016"
-        PRIx64 ", TCP Close: %s\n\n",
+    fprintf(output, "Infractions: %016" PRIx64 " %016" PRIx64 ", Events: %016" PRIx64 " %016"
+        PRIx64 " %016" PRIx64 ", TCP Close: %s\n\n",
         transaction->get_infractions(source_id)->get_raw2(),
         transaction->get_infractions(source_id)->get_raw(),
-        transaction->get_events(source_id)->get_raw3(),
-        transaction->get_events(source_id)->get_raw2(),
-        transaction->get_events(source_id)->get_raw(),
+        session_data->events[source_id]->get_raw3(),
+        session_data->events[source_id]->get_raw2(),
+        session_data->events[source_id]->get_raw(),
         tcp_close ? "True" : "False");
     if (HttpTestManager::get_show_pegs())
     {

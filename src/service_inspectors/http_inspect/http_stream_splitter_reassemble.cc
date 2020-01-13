@@ -101,7 +101,7 @@ void HttpStreamSplitter::chunk_spray(HttpFlowData* session_data, uint8_t* buffer
             decompress_copy(buffer, session_data->section_offset[source_id], data+k, skip_amount,
                 session_data->compression[source_id], session_data->compress_stream[source_id],
                 at_start, session_data->get_infractions(source_id),
-                session_data->get_events(source_id));
+                session_data->events[source_id]);
             if ((expected -= skip_amount) == 0)
                 curr_state = CHUNK_DCRLF1;
             k += skip_amount-1;
@@ -131,7 +131,7 @@ void HttpStreamSplitter::chunk_spray(HttpFlowData* session_data, uint8_t* buffer
             decompress_copy(buffer, session_data->section_offset[source_id], data+k, skip_amount,
                 session_data->compression[source_id], session_data->compress_stream[source_id],
                 at_start, session_data->get_infractions(source_id),
-                session_data->get_events(source_id));
+                session_data->events[source_id]);
             k += skip_amount-1;
             break;
           }
@@ -397,7 +397,7 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
         decompress_copy(buffer, session_data->section_offset[source_id], data, len,
             session_data->compression[source_id], session_data->compress_stream[source_id],
             at_start, session_data->get_infractions(source_id),
-            session_data->get_events(source_id));
+            session_data->events[source_id]);
     }
     else
     {

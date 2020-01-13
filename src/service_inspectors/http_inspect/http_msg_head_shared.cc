@@ -332,7 +332,7 @@ const Field& HttpMsgHeadShared::get_header_value_norm(HeaderId header_id)
     if (node == nullptr)
         return Field::FIELD_NULL;
     header_norms[header_id]->normalize(header_id, node->count,
-        transaction->get_infractions(source_id), transaction->get_events(source_id),
+        transaction->get_infractions(source_id), session_data->events[source_id],
         header_name_id, header_value, num_headers, node->norm);
     return node->norm;
 }

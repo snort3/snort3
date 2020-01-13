@@ -214,7 +214,7 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
     }
     const uint32_t max_length = MAX_OCTETS - cutter->get_octets_seen();
     const ScanResult cut_result = cutter->cut(data, (length <= max_length) ? length :
-        max_length, session_data->get_infractions(source_id), session_data->get_events(source_id),
+        max_length, session_data->get_infractions(source_id), session_data->events[source_id],
         session_data->section_size_target[source_id],
         session_data->stretch_section_to_packet[source_id]);
     switch (cut_result)
@@ -226,7 +226,7 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
             *session_data->get_infractions(source_id) += INF_ENDLESS_HEADER;
             // FIXIT-L the following call seems inappropriate for headers and trailers. Those cases
             // should be an unconditional EVENT_LOSS_OF_SYNC.
-            session_data->get_events(source_id)->generate_misformatted_http(data, length);
+            session_data->events[source_id]->generate_misformatted_http(data, length);
             // FIXIT-H need to process this data not just discard it.
             session_data->type_expected[source_id] = SEC_ABORT;
             delete cutter;

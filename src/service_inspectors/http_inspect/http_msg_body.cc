@@ -121,7 +121,7 @@ void HttpMsgBody::do_file_decompression(const Field& input, Field& output)
     }
     uint8_t* buffer = new uint8_t[MAX_OCTETS];
     session_data->fd_alert_context.infractions = transaction->get_infractions(source_id);
-    session_data->fd_alert_context.events = transaction->get_events(source_id);
+    session_data->fd_alert_context.events = session_data->events[source_id];
     session_data->fd_state->Next_In = input.start();
     session_data->fd_state->Avail_In = (uint32_t)input.length();
     session_data->fd_state->Next_Out = buffer;
@@ -196,7 +196,7 @@ void HttpMsgBody::do_js_normalization(const Field& input, Field& output)
     }
 
     params->js_norm_param.js_norm->normalize(input, output,
-        transaction->get_infractions(source_id), transaction->get_events(source_id));
+        transaction->get_infractions(source_id), session_data->events[source_id]);
 }
 
 void HttpMsgBody::do_file_processing(const Field& file_data)

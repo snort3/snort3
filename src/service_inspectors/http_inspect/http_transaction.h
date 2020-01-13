@@ -22,6 +22,7 @@
 
 #include "http_common.h"
 #include "http_enum.h"
+#include "http_event.h"
 #include "http_flow_data.h"
 
 class HttpMsgRequest;
@@ -31,9 +32,6 @@ class HttpMsgTrailer;
 class HttpMsgSection;
 class HttpMsgBody;
 class HttpMsgHeadShared;
-class HttpEventGen;
-template <int MAX, int NONE> class Infractions;
-using HttpInfractions = Infractions<HttpEnums::INF__MAX_VALUE, HttpEnums::INF__NONE>;
 
 class HttpTransaction
 {
@@ -60,7 +58,6 @@ public:
     void set_body(HttpMsgBody* latest_body);
 
     HttpInfractions* get_infractions(HttpCommon::SourceId source_id);
-    HttpEventGen* get_events(HttpCommon::SourceId source_id);
 
     void set_one_hundred_response();
     bool final_response() const { return !second_response_expected; }
@@ -78,8 +75,14 @@ public:
         { return file_processing_id[source_id]; }
 
 private:
-    HttpTransaction() = default;
+    HttpTransaction(HttpFlowData* session_data_) : session_data(session_data_)
+    {
+        infractions[0] = nullptr;
+        infractions[1] = nullptr;
+    }
     void discard_section(HttpMsgSection* section);
+
+    HttpFlowData* const session_data;
 
     uint64_t active_sections = 0;
 
@@ -89,8 +92,7 @@ private:
     HttpMsgTrailer* trailer[2] = { nullptr, nullptr };
     HttpMsgBody* body_list = nullptr;
     HttpMsgSection* discard_list = nullptr;
-    HttpInfractions* infractions[2] = { nullptr, nullptr };
-    HttpEventGen* events[2] = { nullptr, nullptr };
+    HttpInfractions* infractions[2];
 
     uint64_t file_processing_id[2] = { 0, 0 };
 

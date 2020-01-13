@@ -102,16 +102,15 @@ private:
     bool tcp_close[2] = { false, false };
     bool partial_flush[2] = { false, false };
 
-    // Infractions and events are associated with a specific message and are stored in the
-    // transaction for that message. But StreamSplitter splits the start line before there is
-    // a transaction and needs a place to put the problems it finds. Hence infractions and events
-    // are created before there is a transaction to associate them with and stored here until
-    // attach_my_transaction() takes them away and resets these to nullptr. The accessor methods
-    // hide this from StreamSplitter.
     HttpInfractions* infractions[2] = { new HttpInfractions, new HttpInfractions };
     HttpEventGen* events[2] = { new HttpEventGen, new HttpEventGen };
+
+    // Infractions are associated with a specific message and are stored in the transaction for
+    // that message. But StreamSplitter splits the start line before there is a transaction and
+    // needs a place to put the problems it finds. Hence infractions are created before there is a
+    // transaction to associate them with and stored here until attach_my_transaction() takes them
+    // away and resets these to nullptr. The accessor method hides this from StreamSplitter.
     HttpInfractions* get_infractions(HttpCommon::SourceId source_id);
-    HttpEventGen* get_events(HttpCommon::SourceId source_id);
 
     // *** Inspector => StreamSplitter (facts about the message section that is coming next)
     HttpEnums::SectionType type_expected[2] = { HttpEnums::SEC_REQUEST, HttpEnums::SEC_STATUS };

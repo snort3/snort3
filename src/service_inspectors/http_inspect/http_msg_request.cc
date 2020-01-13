@@ -62,7 +62,7 @@ void HttpMsgRequest::parse_start_line()
         else
         {
             add_infraction(INF_BAD_REQ_LINE);
-            transaction->get_events(source_id)->generate_misformatted_http(start_line.start(),
+            session_data->events[source_id]->generate_misformatted_http(start_line.start(),
                 start_line.length());
             return;
         }
@@ -108,7 +108,7 @@ void HttpMsgRequest::parse_start_line()
     {
         uri = new HttpUri(start_line.start() + first_end + 1, last_begin - first_end - 1,
             method_id, params->uri_param, transaction->get_infractions(source_id),
-            transaction->get_events(source_id));
+            session_data->events[source_id]);
     }
     else
     {
@@ -153,7 +153,7 @@ bool HttpMsgRequest::handle_zero_nine()
                 uri_end--);
             uri = new HttpUri(start_line.start() + uri_begin, uri_end - uri_begin + 1, method_id,
                 params->uri_param, transaction->get_infractions(source_id),
-                transaction->get_events(source_id));
+                session_data->events[source_id]);
         }
         else
         {
