@@ -47,6 +47,7 @@ public:
     ~FileInspect() override;
     void eval(Packet*) override { }
     bool configure(SnortConfig*) override;
+    void show(SnortConfig*) override;
     FileConfig* config;
 };
 

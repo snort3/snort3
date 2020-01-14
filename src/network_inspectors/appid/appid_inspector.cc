@@ -135,7 +135,7 @@ bool AppIdInspector::configure(SnortConfig* sc)
 
 void AppIdInspector::show(SnortConfig*)
 {
-    LogMessage("AppId Configuration\n");
+    LogMessage("%s\n", MOD_NAME);
 
     LogMessage("    Detector Path:          %s\n", config->app_detector_dir);
     LogMessage("    appStats Logging:       %s\n", config->stats_logging_enabled ? "enabled" :
@@ -145,6 +145,7 @@ void AppIdInspector::show(SnortConfig*)
         config->app_stats_rollover_size);
     LogMessage("    appStats Rollover time: %lu secs\n",
         config->app_stats_rollover_time);
+    LogMessage("    memcap:                 %zu bytes\n", config->memcap);
     LogMessage("\n");
 }
 

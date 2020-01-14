@@ -30,6 +30,7 @@
 #include "file_flows.h"
 
 #include "detection/detection_engine.h"
+#include "log/messages.h"
 #include "main/snort_config.h"
 #include "managers/inspector_manager.h"
 #include "protocols/packet.h"
@@ -371,6 +372,19 @@ bool FileInspect::configure(SnortConfig*)
     }
 
     return true;
+}
+
+void FileInspect::show(SnortConfig*)
+{
+    if (!config)
+        return;
+
+    LogMessage("%s\n", FILE_ID_NAME);
+    LogMessage("    capture_memcap: %zu MB\n", config->capture_memcap);
+    LogMessage("    capture_max_size: %zu bytes\n", config->capture_max_size);
+    LogMessage("    capture_min_size: %zu bytes\n", config->capture_min_size);
+    LogMessage("    lookup_timeout: %zu secs\n", config->file_lookup_timeout);
+    LogMessage("\n");
 }
 
 static Module* mod_ctor()
