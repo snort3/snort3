@@ -774,9 +774,13 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
                     // Handle HTTP tunneling and SSL possibly then being used in that tunnel
                     if (tp_app_id == APP_ID_HTTP_TUNNEL)
                         asd.set_payload_appid_data(APP_ID_HTTP_TUNNEL, change_bits);
-                    else if ((asd.payload.get_id() == APP_ID_HTTP_TUNNEL) &&
-                        (tp_app_id == APP_ID_SSL))
-                        asd.set_payload_appid_data(APP_ID_HTTP_SSL_TUNNEL, change_bits);
+                    else if (asd.payload.get_id() == APP_ID_HTTP_TUNNEL)
+                    {
+                        if (tp_app_id == APP_ID_SSL)
+                            asd.set_payload_appid_data(APP_ID_HTTP_SSL_TUNNEL, change_bits);
+                        else
+                            asd.set_payload_appid_data(tp_app_id, change_bits);
+                    }
 
                     AppIdHttpSession* hsession = asd.get_http_session();
                     hsession->process_http_packet(direction, change_bits);
