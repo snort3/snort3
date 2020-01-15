@@ -39,6 +39,10 @@ using namespace std;
 
 TPLibHandler* tph = nullptr;
 
+#ifdef ENABLE_APPID_THIRD_PARTY
+ThirdPartyAppIdContext* AppIdContext::tp_appid_ctxt = nullptr;
+#endif
+
 AppIdConfig::~AppIdConfig() { }
 
 TEST_GROUP(tp_lib_handler)

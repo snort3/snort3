@@ -101,16 +101,14 @@ public:
     AppIdContext(AppIdConfig* config) : config(config)
     { }
 
-    ~AppIdContext()
-    {
-#ifdef ENABLE_APPID_THIRD_PARTY
-        delete tp_appid_ctxt;
-#endif
-    }
+    ~AppIdContext() { }
 
 #ifdef ENABLE_APPID_THIRD_PARTY
     ThirdPartyAppIdContext* get_tp_appid_ctxt() const
     { return tp_appid_ctxt; }
+
+    static void delete_tp_appid_ctxt()
+    { delete tp_appid_ctxt; }
 
     void create_tp_appid_ctxt();
 #endif
@@ -137,7 +135,7 @@ private:
     // removed from AppIdContext::pterm
     static AppInfoManager& app_info_mgr;
 #ifdef ENABLE_APPID_THIRD_PARTY
-    ThirdPartyAppIdContext* tp_appid_ctxt = nullptr;
+    static ThirdPartyAppIdContext* tp_appid_ctxt;
 #endif
 };
 

@@ -184,11 +184,12 @@ static int reload_third_party(lua_State*)
     else
     {
         Swapper::set_reload_in_progress(true);
-        LogMessage(".. reloading third-party");
+        LogMessage(".. reloading third-party\n");
         AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
         AppIdContext* ctxt = inspector->get_ctxt();
         ctxt->create_tp_appid_ctxt();
         Swapper::set_reload_in_progress(false);
+        LogMessage("== reload third-party complete\n");
     }
 #else
     LogMessage("== third party is not enabled\n");

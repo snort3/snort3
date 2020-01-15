@@ -157,6 +157,8 @@ void TPLibHandler::pfini()
     if (ret != 0)
         ErrorMessage("Could not terminate 3rd party AppID module (%d)!\n", ret);
 
+    AppIdContext::delete_tp_appid_ctxt();
+
     // FIXIT-L: Find the right place to dlclose self->tp_so_handle. dlclose here was causing
     // segfault
 

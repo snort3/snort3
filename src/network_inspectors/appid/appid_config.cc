@@ -66,6 +66,10 @@ SnortProtocolId snortId_for_unsynchronized;
 SnortProtocolId snortId_for_ftp_data;
 SnortProtocolId snortId_for_http2;
 
+#ifdef ENABLE_APPID_THIRD_PARTY
+ThirdPartyAppIdContext* AppIdContext::tp_appid_ctxt = nullptr;
+#endif
+
 static void map_app_names_to_snort_ids(SnortConfig* sc)
 {
     /* init globals for snortId compares */
