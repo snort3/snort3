@@ -102,6 +102,8 @@ bool HttpStreamSplitter::finish(Flow* flow)
         return true;
     }
 
+    // FIXIT-M No longer necessary to send an empty body section because the header section is
+    // always forwarded to detection.
     // If the message has been truncated immediately following the start line or immediately
     // following the headers (a body was expected) then we need to process an empty section to
     // provide an inspection section. Otherwise the start line and headers won't go through
@@ -130,10 +132,12 @@ bool HttpStreamSplitter::finish(Flow* flow)
         if (!session_data->mime_state[source_id])
         {
             FileFlows* file_flows = FileFlows::get_file_flows(flow);
-            const bool download = (source_id == SRC_SERVER);
+            const FileDirection dir = source_id == SRC_SERVER ? FILE_DOWNLOAD : FILE_UPLOAD;
 
             size_t file_index = 0;
+            uint64_t file_processing_id = 0;
 
+            // FIXIT-L How can there be a file in progress and no transaction in this direction?
             if (session_data->transaction[source_id] != nullptr)
             {
                 HttpMsgRequest* request = session_data->transaction[source_id]->get_request();
@@ -141,9 +145,11 @@ bool HttpStreamSplitter::finish(Flow* flow)
                 {
                     file_index = request->get_http_uri()->get_file_proc_hash();
                 }
+                file_processing_id =
+                    session_data->transaction[source_id]->get_file_processing_id(source_id);
             }
-
-            file_flows->file_process(packet, nullptr, 0, SNORT_FILE_END, !download, file_index);
+            file_flows->file_process(packet, file_index, nullptr, 0, 0, dir, file_processing_id,
+                SNORT_FILE_END);
         }
         else
         {

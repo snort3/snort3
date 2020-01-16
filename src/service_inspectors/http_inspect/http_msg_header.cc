@@ -329,7 +329,8 @@ void HttpMsgHeader::setup_file_processing()
         {
             if (boundary_present(content_type))
             {
-                session_data->mime_state[source_id] = new MimeSession(&decode_conf, &mime_conf);
+                session_data->mime_state[source_id] = new MimeSession(&decode_conf, &mime_conf,
+                    transaction->get_file_processing_id(source_id));
                 // Show file processing the Content-Type header as if it were regular data.
                 // This will enable it to find the boundary string.
                 // FIXIT-L develop a proper interface for passing the boundary string.

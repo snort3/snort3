@@ -55,7 +55,7 @@ namespace snort
 class SO_PUBLIC MimeSession
 {
 public:
-    MimeSession(DecodeConfig*, MailLogConfig*);
+    MimeSession(DecodeConfig*, MailLogConfig*, uint64_t base_file_id=0);
     virtual ~MimeSession();
 
     MimeSession(const MimeSession&) = delete;
@@ -84,6 +84,16 @@ private:
     MailLogState* log_state = nullptr;
     MimeStats* mime_stats = nullptr;
     std::string filename;
+    bool continue_inspecting_file = true;
+    // This counter is not an accurate count of files; used only for creating a unique mime_file_id
+    uint32_t file_counter = 0;
+    uint32_t file_process_offset = 0;
+    uint64_t session_base_file_id = 0;
+    uint64_t current_mime_file_id = 0;
+    uint64_t get_mime_file_id();
+    void mime_file_process(Packet* p, const uint8_t* data, int data_size,
+        FilePosition position, bool upload);
+    void reset_file_data();
 
     // SMTP, IMAP, POP might have different implementation for this
     virtual int handle_header_line(const uint8_t*, const uint8_t*, int, Packet*) { return 0; }

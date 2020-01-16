@@ -28,6 +28,7 @@
 
 #include "detection/detection_engine.h"
 #include "file_api/file_flows.h"
+#include "hash/hashfcn.h"
 #include "log/messages.h"
 #include "search_engines/search_tool.h"
 #include "utils/util_cstring.h"
@@ -597,13 +598,8 @@ const uint8_t* MimeSession::process_mime_data_paf(
         }
 
         /*Process file type/file signature*/
-        FileFlows* file_flows = FileFlows::get_file_flows(flow);
-        if (file_flows && file_flows->file_process(p, buffer, buf_size, position, upload)
-            && (isFileStart(position)) && log_state)
-        {
-            file_flows->set_file_name((const uint8_t*)filename.c_str(), filename.length());
-            filename.clear();
-        }
+        mime_file_process(p, buffer, buf_size, position, upload);
+
         if (mime_stats)
         {
             switch (decode_state->get_decode_type())
@@ -639,12 +635,20 @@ const uint8_t* MimeSession::process_mime_data_paf(
     return end;
 }
 
+void MimeSession::reset_file_data()
+{
+    // Clear MIME's file data to prepare for next file
+    file_counter++;
+    file_process_offset = 0;
+    current_mime_file_id = 0;
+    continue_inspecting_file = true;
+}
+
 // Main function for mime processing
 // This should be called when mime data is available
 const uint8_t* MimeSession::process_mime_data(Packet* p, const uint8_t* start,
     int data_size, bool upload, FilePosition position)
 {
-    Flow* flow = p->flow;
     const uint8_t* attach_start = start;
     const uint8_t* attach_end;
 
@@ -652,12 +656,14 @@ const uint8_t* MimeSession::process_mime_data(Packet* p, const uint8_t* start,
 
     if (position != SNORT_FILE_POSITION_UNKNOWN)
     {
+        if (position == SNORT_FILE_START or position == SNORT_FILE_FULL)
+            reset_file_data();
         process_mime_data_paf(p, attach_start, data_end_marker,
             upload, position);
         return data_end_marker;
     }
 
-    initFilePosition(&position, get_file_processed_size(flow));
+    initFilePosition(&position, file_process_offset);
     /* look for boundary */
     while (start < data_end_marker)
     {
@@ -668,6 +674,7 @@ const uint8_t* MimeSession::process_mime_data(Packet* p, const uint8_t* start,
             finalFilePosition(&position);
             process_mime_data_paf(p, attach_start, attach_end,
                 upload, position);
+            reset_file_data();
             data_state = STATE_MIME_HEADER;
             position = SNORT_FILE_START;
             attach_start = start + 1;
@@ -678,7 +685,7 @@ const uint8_t* MimeSession::process_mime_data(Packet* p, const uint8_t* start,
 
     if ((start == data_end_marker) && (attach_start < data_end_marker))
     {
-        updateFilePosition(&position, get_file_processed_size(flow));
+        updateFilePosition(&position, file_process_offset);
         process_mime_data_paf(p, attach_start, data_end_marker,
             upload, position);
     }
@@ -800,11 +807,12 @@ void MimeSession::exit()
         delete mime_hdr_search_mpse;
 }
 
-MimeSession::MimeSession(DecodeConfig* dconf, MailLogConfig* lconf)
+MimeSession::MimeSession(DecodeConfig* dconf, MailLogConfig* lconf, uint64_t base_file_id)
 {
     decode_conf = dconf;
     log_config =  lconf;
     log_state = new MailLogState(log_config);
+    session_base_file_id = base_file_id;
     reset_mime_paf_state(&mime_boundary);
 }
 
@@ -817,3 +825,53 @@ MimeSession::~MimeSession()
         delete(log_state);
 }
 
+uint64_t MimeSession::get_mime_file_id()
+{
+    if (!current_mime_file_id)
+    {
+        const int data_len = sizeof(session_base_file_id) + sizeof(file_counter);
+        uint8_t data[data_len];
+        memcpy(data, (void*)&session_base_file_id, sizeof(session_base_file_id));
+        memcpy(data + sizeof(session_base_file_id), (void*)&file_counter, sizeof(file_counter));
+        current_mime_file_id = str_to_hash(data, data_len);
+    }
+    return current_mime_file_id;
+}
+
+void MimeSession::mime_file_process(Packet* p, const uint8_t* data, int data_size,
+    FilePosition position, bool upload)
+{
+    Flow* flow = p->flow;
+    FileFlows* file_flows = FileFlows::get_file_flows(flow);
+    if(!file_flows)
+        return;
+
+    if (continue_inspecting_file or position == SNORT_FILE_END)
+    {
+        if (session_base_file_id)
+        {
+            const FileDirection dir = upload? FILE_UPLOAD : FILE_DOWNLOAD;
+            uint64_t offset = file_process_offset;
+            // MIME has found the end of a file that file processing didn't want - tell file
+            // processing it can clear this file's data
+            if (!continue_inspecting_file)
+                offset = 0;
+            uint64_t file_id = get_mime_file_id();
+            continue_inspecting_file = file_flows->file_process(p, file_id, data, data_size, offset,
+                dir, file_id, position);
+        }
+        else
+        {
+            continue_inspecting_file = file_flows->file_process(p, data, data_size, position,
+                upload);
+        }
+        file_process_offset += data_size;
+        if (continue_inspecting_file and (isFileStart(position)) && log_state)
+        {
+            file_flows->set_file_name((const uint8_t*)filename.c_str(), filename.length());
+            filename.clear();
+        }
+    }
+    if (position == SNORT_FILE_FULL or position == SNORT_FILE_END)
+        reset_file_data();
+}
