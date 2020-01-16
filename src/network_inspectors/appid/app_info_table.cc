@@ -274,7 +274,7 @@ void AppInfoManager::set_app_info_active(AppId appId)
         ParseWarning(WARN_PLUGINS, "appid: no entry in %s for %d", APP_MAPPING_FILE, appId);
 }
 
-void AppInfoManager::load_appid_config(AppIdConfig* config, const char* path)
+void AppInfoManager::load_appid_config(OdpContext& odp_ctxt, const char* path)
 {
     char buf[MAX_TABLE_LINE_LEN];
     unsigned line = 0;
@@ -327,7 +327,7 @@ void AppInfoManager::load_appid_config(AppIdConfig* config, const char* path)
                 }
                 else
                 {
-                    config->max_tp_flow_depth = max_tp_flow_depth;
+                    odp_ctxt.max_tp_flow_depth = max_tp_flow_depth;
                 }
             }
             else if (!(strcasecmp(conf_key, "host_port_app_cache_lookup_interval")))
@@ -342,7 +342,7 @@ void AppInfoManager::load_appid_config(AppIdConfig* config, const char* path)
                 }
                 else
                 {
-                     config->host_port_app_cache_lookup_interval = host_port_app_cache_lookup_interval;
+                     odp_ctxt.host_port_app_cache_lookup_interval = host_port_app_cache_lookup_interval;
                 }
             }
             else if (!(strcasecmp(conf_key, "host_port_app_cache_lookup_range")))
@@ -357,42 +357,42 @@ void AppInfoManager::load_appid_config(AppIdConfig* config, const char* path)
                 }
                 else
                 {
-                     config->host_port_app_cache_lookup_range = host_port_app_cache_lookup_range;
+                     odp_ctxt.host_port_app_cache_lookup_range = host_port_app_cache_lookup_range;
                 }
             }
             else if (!(strcasecmp(conf_key, "is_host_port_app_cache_runtime")))
             {
                 if (!(strcasecmp(conf_val, "enabled")))
                 {
-                    config->is_host_port_app_cache_runtime = true;
+                    odp_ctxt.is_host_port_app_cache_runtime = true;
                 }
             }
             else if (!(strcasecmp(conf_key, "check_host_port_app_cache")))
             {
                 if (!(strcasecmp(conf_val, "enabled")))
                 {
-                    config->check_host_port_app_cache = true;
+                    odp_ctxt.check_host_port_app_cache = true;
                 }
             }
             else if (!(strcasecmp(conf_key, "check_host_cache_unknown_ssl")))
             {
                 if (!(strcasecmp(conf_val, "enabled")))
                 {
-                    config->check_host_cache_unknown_ssl = true;
+                    odp_ctxt.check_host_cache_unknown_ssl = true;
                 }
             }
             else if (!(strcasecmp(conf_key, "allow_port_wildcard_host_cache")))
             {
                 if (!(strcasecmp(conf_val, "enabled")))
                 {
-                    config->allow_port_wildcard_host_cache = true;
+                    odp_ctxt.allow_port_wildcard_host_cache = true;
                 }
             }
             else if (!(strcasecmp(conf_key, "recheck_for_portservice_appid")))
             {
                 if (!(strcasecmp(conf_val, "enabled")))
                 {
-                    config->recheck_for_portservice_appid = true;
+                    odp_ctxt.recheck_for_portservice_appid = true;
                 }
             }
             else if (!(strcasecmp(conf_key, "bittorrent_aggressiveness")))
@@ -401,20 +401,20 @@ void AppInfoManager::load_appid_config(AppIdConfig* config, const char* path)
                 LogMessage("AppId: bittorrent_aggressiveness %d\n", aggressiveness);
                 if (aggressiveness >= 50)
                 {
-                    config->host_port_app_cache_lookup_interval = 5;
-                    config->recheck_for_portservice_appid = true;
+                    odp_ctxt.host_port_app_cache_lookup_interval = 5;
+                    odp_ctxt.recheck_for_portservice_appid = true;
                     set_app_info_flags(APP_ID_BITTORRENT, APPINFO_FLAG_DEFER);
                     set_app_info_flags(APP_ID_BITTORRENT, APPINFO_FLAG_DEFER_PAYLOAD);
-                    config->max_tp_flow_depth = 25;
-                    LogMessage("AppId: host_port_app_cache_lookup_interval %d\n", config->host_port_app_cache_lookup_interval);
+                    odp_ctxt.max_tp_flow_depth = 25;
+                    LogMessage("AppId: host_port_app_cache_lookup_interval %d\n", odp_ctxt.host_port_app_cache_lookup_interval);
                     LogMessage("AppId: recheck_for_portservice_appid enabled\n");
                     LogMessage("AppId: defer_to_thirdparty %d\n", APP_ID_BITTORRENT);
                     LogMessage("AppId: defer_payload_to_thirdparty %d\n", APP_ID_BITTORRENT);
-                    LogMessage("AppId: max_tp_flow_depth %d\n", config->max_tp_flow_depth);
+                    LogMessage("AppId: max_tp_flow_depth %d\n", odp_ctxt.max_tp_flow_depth);
                 }
                 if (aggressiveness >= 80)
                 {
-                    config->allow_port_wildcard_host_cache = true;
+                    odp_ctxt.allow_port_wildcard_host_cache = true;
                     LogMessage("AppId: allow_port_wildcard_host_cache enabled\n");
                 }
             }
@@ -424,18 +424,18 @@ void AppInfoManager::load_appid_config(AppIdConfig* config, const char* path)
                 LogMessage("AppId: ultrasurf_aggressiveness %d\n", aggressiveness);
                 if (aggressiveness >= 50)
                 {
-                    config->check_host_cache_unknown_ssl = true;
+                    odp_ctxt.check_host_cache_unknown_ssl = true;
                     set_app_info_flags(APP_ID_ULTRASURF, APPINFO_FLAG_DEFER);
                     set_app_info_flags(APP_ID_ULTRASURF, APPINFO_FLAG_DEFER_PAYLOAD);
-                    config->max_tp_flow_depth = 25;
+                    odp_ctxt.max_tp_flow_depth = 25;
                     LogMessage("AppId: check_host_cache_unknown_ssl enabled\n");
                     LogMessage("AppId: defer_to_thirdparty %d\n", APP_ID_ULTRASURF);
                     LogMessage("AppId: defer_payload_to_thirdparty %d\n", APP_ID_ULTRASURF);
-                    LogMessage("AppId: max_tp_flow_depth %d\n", config->max_tp_flow_depth);
+                    LogMessage("AppId: max_tp_flow_depth %d\n", odp_ctxt.max_tp_flow_depth);
                 }
                 if (aggressiveness >= 80)
                 {
-                    config->allow_port_wildcard_host_cache = true;
+                    odp_ctxt.allow_port_wildcard_host_cache = true;
                     LogMessage("AppId: allow_port_wildcard_host_cache enabled\n");
                 }
             }
@@ -445,18 +445,18 @@ void AppInfoManager::load_appid_config(AppIdConfig* config, const char* path)
                 LogMessage("AppId: psiphon_aggressiveness %d\n", aggressiveness);
                 if (aggressiveness >= 50)
                 {
-                    config->check_host_cache_unknown_ssl = true;
+                    odp_ctxt.check_host_cache_unknown_ssl = true;
                     set_app_info_flags(APP_ID_PSIPHON, APPINFO_FLAG_DEFER);
                     set_app_info_flags(APP_ID_PSIPHON, APPINFO_FLAG_DEFER_PAYLOAD);
-                    config->max_tp_flow_depth = 25;
+                    odp_ctxt.max_tp_flow_depth = 25;
                     LogMessage("AppId: check_host_cache_unknown_ssl enabled\n");
                     LogMessage("AppId: defer_to_thirdparty %d\n", APP_ID_PSIPHON);
                     LogMessage("AppId: defer_payload_to_thirdparty %d\n", APP_ID_PSIPHON);
-                    LogMessage("AppId: max_tp_flow_depth %d\n", config->max_tp_flow_depth);
+                    LogMessage("AppId: max_tp_flow_depth %d\n", odp_ctxt.max_tp_flow_depth);
                 }
                 if (aggressiveness >= 80)
                 {
-                    config->allow_port_wildcard_host_cache = true;
+                    odp_ctxt.allow_port_wildcard_host_cache = true;
                     LogMessage("AppId: allow_port_wildcard_host_cache enabled\n");
                 }
             }
@@ -464,7 +464,7 @@ void AppInfoManager::load_appid_config(AppIdConfig* config, const char* path)
             {
                 if (!(strcasecmp(conf_val, "enabled")))
                 {
-                    config->tp_allow_probes = 1;
+                    odp_ctxt.tp_allow_probes = 1;
                 }
             }
             else if (!(strcasecmp(conf_key, "tp_client_app")))
@@ -474,13 +474,6 @@ void AppInfoManager::load_appid_config(AppIdConfig* config, const char* path)
             else if (!(strcasecmp(conf_key, "ssl_reinspect")))
             {
                 set_app_info_flags(atoi(conf_val), APPINFO_FLAG_SSL_INSPECT);
-            }
-            else if (!(strcasecmp(conf_key, "disable_safe_search")))
-            {
-                if (!(strcasecmp(conf_val, "disabled")))
-                {
-                    config->safe_search_enabled = false;
-                }
             }
             else if (!(strcasecmp(conf_key, "ssl_squelch")))
             {
@@ -498,7 +491,7 @@ void AppInfoManager::load_appid_config(AppIdConfig* config, const char* path)
             {
                 if (!(strcasecmp(conf_val, "disabled")))
                 {
-                    config->chp_userid_disabled = true;
+                    odp_ctxt.chp_userid_disabled = true;
                     continue;
                 }
             }
@@ -506,7 +499,7 @@ void AppInfoManager::load_appid_config(AppIdConfig* config, const char* path)
             {
                 if (!(strcasecmp(conf_val, "disabled")))
                 {
-                    config->chp_body_collection_disabled = 1;
+                    odp_ctxt.chp_body_collection_disabled = 1;
                     continue;
                 }
             }
@@ -514,7 +507,7 @@ void AppInfoManager::load_appid_config(AppIdConfig* config, const char* path)
             {
                 if (!(strcasecmp(conf_val, "disabled")))
                 {
-                    config->ftp_userid_disabled = 1;
+                    odp_ctxt.ftp_userid_disabled = 1;
                     continue;
                 }
             }
@@ -538,10 +531,10 @@ void AppInfoManager::load_appid_config(AppIdConfig* config, const char* path)
             {
                 if (!(strcasecmp(conf_val, "disabled")))
                 {
-                    config->referred_appId_disabled = true;
+                    odp_ctxt.referred_appId_disabled = true;
                     continue;
                 }
-                else if (!config->referred_appId_disabled)
+                else if (!odp_ctxt.referred_appId_disabled)
                 {
                     char referred_app_list[4096];
                     int referred_app_index = safe_snprintf(referred_app_list, 4096, "%d ",
@@ -559,19 +552,19 @@ void AppInfoManager::load_appid_config(AppIdConfig* config, const char* path)
             }
             else if (!(strcasecmp(conf_key, "rtmp_max_packets")))
             {
-                config->rtmp_max_packets = atoi(conf_val);
+                odp_ctxt.rtmp_max_packets = atoi(conf_val);
             }
             else if (!(strcasecmp(conf_key, "mdns_user_report")))
             {
-                config->mdns_user_reporting = atoi(conf_val) ? true : false;
+                odp_ctxt.mdns_user_reporting = atoi(conf_val) ? true : false;
             }
             else if (!(strcasecmp(conf_key, "dns_host_report")))
             {
-                config->dns_host_reporting = atoi(conf_val) ? true : false;
+                odp_ctxt.dns_host_reporting = atoi(conf_val) ? true : false;
             }
             else if (!(strcasecmp(conf_key, "chp_body_max_bytes")))
             {
-                config->chp_body_collection_max = atoi(conf_val);
+                odp_ctxt.chp_body_collection_max = atoi(conf_val);
             }
             else if (!(strcasecmp(conf_key, "ignore_thirdparty_appid")))
             {
@@ -586,11 +579,11 @@ void AppInfoManager::load_appid_config(AppIdConfig* config, const char* path)
                 // ports.
                 if (!(strcasecmp(conf_val, "disabled")))
                 {
-                    config->http2_detection_enabled = false;
+                    odp_ctxt.http2_detection_enabled = false;
                 }
                 else if (!(strcasecmp(conf_val, "enabled")))
                 {
-                    config->http2_detection_enabled = true;
+                    odp_ctxt.http2_detection_enabled = true;
                 }
                 else
                 {
@@ -599,6 +592,8 @@ void AppInfoManager::load_appid_config(AppIdConfig* config, const char* path)
                         conf_val);
                 }
             }
+            else
+                ParseWarning(WARN_CONF, "AppId: unsupported configuration: %s\n", conf_key);
         }
     }
 
@@ -613,7 +608,7 @@ SnortProtocolId AppInfoManager::add_appid_protocol_reference(const char* protoco
 }
 
 void AppInfoManager::init_appid_info_table(AppIdConfig* config,
-    SnortConfig* sc)
+    SnortConfig* sc, OdpContext& odp_ctxt)
 {
     if ( !config->app_detector_dir )
     {
@@ -714,13 +709,13 @@ void AppInfoManager::init_appid_info_table(AppIdConfig* config,
 
         snprintf(filepath, sizeof(filepath), "%s/odp/%s", config->app_detector_dir,
             APP_CONFIG_FILE);
-        load_appid_config (config, filepath);
+        load_appid_config (odp_ctxt, filepath);
         snprintf(filepath, sizeof(filepath), "%s/custom/%s", config->app_detector_dir,
             USR_CONFIG_FILE);
         if (access (filepath, F_OK))
             snprintf(filepath, sizeof(filepath), "%s/../%s", config->app_detector_dir,
                 USR_CONFIG_FILE);
-        load_appid_config (config, filepath);
+        load_appid_config (odp_ctxt, filepath);
     }
 }
 

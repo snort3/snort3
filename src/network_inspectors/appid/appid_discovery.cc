@@ -687,9 +687,9 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
     if (!(asd.scan_flags & SCAN_HOST_PORT_FLAG))
         check_static = true;
 
-    if ((asd.session_packet_count % asd.ctxt->config->host_port_app_cache_lookup_interval == 0) and
-        (asd.session_packet_count <= asd.ctxt->config->host_port_app_cache_lookup_range) and
-        asd.ctxt->config->is_host_port_app_cache_runtime )
+    if ((asd.session_packet_count % asd.ctxt->get_odp_ctxt().host_port_app_cache_lookup_interval == 0) and
+        (asd.session_packet_count <= asd.ctxt->get_odp_ctxt().host_port_app_cache_lookup_range) and
+        asd.ctxt->get_odp_ctxt().is_host_port_app_cache_runtime )
         check_dynamic = true;
 
     if (!(check_static || check_dynamic))
@@ -721,7 +721,7 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
     HostPortVal* hv = nullptr;
 
     if (check_static and
-        (hv = HostPortCache::find(ip, port, protocol, *(asd.ctxt))))
+        (hv = asd.ctxt->get_odp_ctxt().host_port_cache_find(ip, port, protocol)))
     {
         asd.scan_flags |= SCAN_HOST_PORT_FLAG;
         switch (hv->type)
@@ -759,7 +759,7 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
         auto ht = host_cache.find(*ip);
         if (ht)
         {
-            AppId appid = ht->get_appid(port, protocol, true, asd.ctxt->config->allow_port_wildcard_host_cache);
+	  AppId appid = ht->get_appid(port, protocol, true, asd.ctxt->get_odp_ctxt().allow_port_wildcard_host_cache);
             if (appid > APP_ID_NONE)
             {
                 // FIXIT-L: Make this more generic to support service and payload IDs
@@ -779,10 +779,10 @@ static inline bool is_check_host_cache_valid(AppIdSession& asd, AppId service_id
 {
     bool is_payload_client_misc_none = (payload_id <= APP_ID_NONE and client_id <= APP_ID_NONE and misc_id <= APP_ID_NONE);
     bool is_appid_none = is_payload_client_misc_none and (service_id <= APP_ID_NONE or service_id == APP_ID_UNKNOWN_UI or
-        (asd.ctxt->config->recheck_for_portservice_appid and service_id == asd.service.get_port_service_id()));
-    bool is_ssl_none = asd.ctxt->config->check_host_cache_unknown_ssl and asd.get_session_flags(APPID_SESSION_SSL_SESSION) and
+        (asd.ctxt->get_odp_ctxt().recheck_for_portservice_appid and service_id == asd.service.get_port_service_id()));
+    bool is_ssl_none = asd.ctxt->get_odp_ctxt().check_host_cache_unknown_ssl and asd.get_session_flags(APPID_SESSION_SSL_SESSION) and
                           (not(asd.tsession and asd.tsession->get_tls_host() and asd.tsession->get_tls_cname()));
-    if (is_appid_none or is_ssl_none or asd.ctxt->config->check_host_port_app_cache)
+    if (is_appid_none or is_ssl_none or asd.ctxt->get_odp_ctxt().check_host_port_app_cache)
         return true;
     return false;
 }
@@ -877,7 +877,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd,
         asd.length_sequence.sequence_cnt++;
         asd.length_sequence.sequence[index].direction = direction;
         asd.length_sequence.sequence[index].length = p->dsize;
-        AppId id = find_length_app_cache(asd.length_sequence);
+        AppId id = asd.ctxt->get_odp_ctxt().length_cache_find(asd.length_sequence);
         if (id > APP_ID_NONE)
         {
             service_id = id;

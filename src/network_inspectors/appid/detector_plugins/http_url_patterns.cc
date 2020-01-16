@@ -981,7 +981,7 @@ void HttpPatternMatchers::scan_key_chp(ChpMatchDescriptor& cmd)
 }
 
 AppId HttpPatternMatchers::scan_chp(ChpMatchDescriptor& cmd, char** version, char** user,
-    int* total_found, AppIdHttpSession* hsession, const AppIdConfig* config)
+    int* total_found, AppIdHttpSession* hsession, const AppIdContext& ctxt)
 {
     MatchedCHPAction* insert_sweep2 = nullptr;
     bool inhibit_modify = false;
@@ -999,9 +999,6 @@ AppId HttpPatternMatchers::scan_chp(ChpMatchDescriptor& cmd, char** version, cha
         return APP_ID_NONE;
     else
         cmd.sort_chp_matches();
-
-    if (!config->safe_search_enabled)
-        cmd.chp_rewritten[pt] = nullptr;
 
     for ( auto& tmp: cmd.chp_matches[pt] )
     {
@@ -1044,7 +1041,7 @@ AppId HttpPatternMatchers::scan_chp(ChpMatchDescriptor& cmd, char** version, cha
             hsession->set_skip_simple_detect(true);
             break;
         case EXTRACT_USER:
-            if ( !*user && !config->chp_userid_disabled )
+            if ( !*user && !ctxt.get_odp_ctxt().chp_userid_disabled )
             {
                 extract_chp(cmd.buffer[pt], cmd.length[pt], tmp.start_match_pos, match->psize,
                     match->action_data, user);

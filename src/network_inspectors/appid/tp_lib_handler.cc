@@ -79,7 +79,8 @@ bool TPLibHandler::load_callback(const char* const path)
     return true;
 }
 
-ThirdPartyAppIdContext* TPLibHandler::create_tp_appid_ctxt(const AppIdConfig& config)
+ThirdPartyAppIdContext* TPLibHandler::create_tp_appid_ctxt(const AppIdConfig& config,
+    const OdpContext& odp_ctxt)
 {
     assert(self != nullptr);
 
@@ -96,16 +97,16 @@ ThirdPartyAppIdContext* TPLibHandler::create_tp_appid_ctxt(const AppIdConfig& co
     tp_config.tp_appid_config = config.tp_appid_config;
     tp_config.tp_appid_stats_enable = config.tp_appid_stats_enable;
     tp_config.tp_appid_config_dump = config.tp_appid_config_dump;
-    tp_config.chp_body_collection_max = config.chp_body_collection_max;
-    tp_config.ftp_userid_disabled = config.ftp_userid_disabled;
+    tp_config.chp_body_collection_max = odp_ctxt.chp_body_collection_max;
+    tp_config.ftp_userid_disabled = odp_ctxt.ftp_userid_disabled;
     tp_config.chp_body_collection_disabled =
-        config.chp_body_collection_disabled;
-    tp_config.tp_allow_probes = config.tp_allow_probes;
-    if (config.http2_detection_enabled)
+        odp_ctxt.chp_body_collection_disabled;
+    tp_config.tp_allow_probes = odp_ctxt.tp_allow_probes;
+    if (odp_ctxt.http2_detection_enabled)
         tp_config.http_upgrade_reporting_enabled = 1;
     else
         tp_config.http_upgrade_reporting_enabled = 0;
-    tp_config.http_response_version_enabled = config.http_response_version_enabled;
+    tp_config.http_response_version_enabled = odp_ctxt.http_response_version_enabled;
 
     ThirdPartyAppIdContext* tp_appid_ctxt = self->tp_appid_create_ctxt(tp_config);
     if (tp_appid_ctxt == nullptr)

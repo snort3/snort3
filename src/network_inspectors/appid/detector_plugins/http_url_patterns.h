@@ -41,7 +41,7 @@ struct AppIdServiceSubtype;
 struct Packet;
 }
 class AppIdHttpSession;
-class AppIdConfig;
+class AppIdContext;
 
 enum httpPatternType
 {
@@ -302,7 +302,7 @@ public:
 
     void scan_key_chp(ChpMatchDescriptor&);
     AppId scan_chp(ChpMatchDescriptor&, char**, char**, int*, AppIdHttpSession*,
-           const AppIdConfig*);
+           const AppIdContext&);
     AppId scan_header_x_working_with(const char*, uint32_t, char**);
     int get_appid_by_pattern(const char*, unsigned, char**);
     bool get_appid_from_url(char*, const char*, char**, const char*, AppId*, AppId*,

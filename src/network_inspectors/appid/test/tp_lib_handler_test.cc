@@ -37,7 +37,11 @@
 
 using namespace std;
 
-TPLibHandler* tph = nullptr;
+static TPLibHandler* tph = nullptr;
+static AppIdConfig config;
+static AppIdContext ctxt(&config);
+static OdpContext odpctxt;
+OdpContext* AppIdContext::odp_ctxt = &odpctxt;
 
 #ifdef ENABLE_APPID_THIRD_PARTY
 ThirdPartyAppIdContext* AppIdContext::tp_appid_ctxt = nullptr;
@@ -51,21 +55,20 @@ TEST_GROUP(tp_lib_handler)
 
 TEST(tp_lib_handler, load_unload)
 {
-    AppIdConfig config;
     config.tp_appid_path="./libtp_mock.so";
     config.tp_appid_config="./tp.config";
 
     tph = TPLibHandler::get();
-    ThirdPartyAppIdContext* ctxt = TPLibHandler::create_tp_appid_ctxt(config);
-    CHECK_TRUE(ctxt != nullptr);
+    ThirdPartyAppIdContext* tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(config, ctxt.get_odp_ctxt());
+    CHECK_TRUE(tp_appid_ctxt != nullptr);
 
     TpAppIdCreateSession asf = tph->tpsession_factory();
-    ThirdPartyAppIdSession* tpsession = asf(*ctxt);
+    ThirdPartyAppIdSession* tpsession = asf(*tp_appid_ctxt);
 
     CHECK_TRUE(tpsession != nullptr);
 
     delete tpsession;
-    delete ctxt;
+    delete tp_appid_ctxt;
 
     TPLibHandler::pfini();
 }
@@ -81,11 +84,10 @@ TEST(tp_lib_handler, tp_lib_handler_get)
 TEST(tp_lib_handler, load_error)
 {
     // Trigger load error:
-    AppIdConfig config;
     config.tp_appid_path="nonexistent.so";
     TPLibHandler::get();
-    ThirdPartyAppIdContext* ctxt = TPLibHandler::create_tp_appid_ctxt(config);
-    CHECK_TRUE(ctxt == nullptr);
+    ThirdPartyAppIdContext* tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(config, ctxt.get_odp_ctxt());
+    CHECK_TRUE(tp_appid_ctxt == nullptr);
     TPLibHandler::pfini();
 }
 

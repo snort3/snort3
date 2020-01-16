@@ -1153,7 +1153,7 @@ static int detector_add_host_port_application(lua_State* L)
         return 0;
     }
 
-    if (!HostPortCache::add(&ip_addr, (uint16_t)port, (IpProtocol)proto, type, app_id))
+    if (!ud->get_odp_ctxt().host_port_cache_add(&ip_addr, (uint16_t)port, (IpProtocol)proto, type, app_id))
         ErrorMessage("%s:Failed to backend call\n",__func__);
 
     return 0;
@@ -1842,7 +1842,7 @@ static int detector_add_length_app_cache(lua_State* L)
         str_ptr++;
     }
 
-    if ( !add_length_app_cache(length_sequence, appId) )
+    if ( !ud->get_odp_ctxt().length_cache_add(length_sequence, appId) )
     {
         ErrorMessage("LuaDetectorApi:Could not add entry to cache!");
         lua_pushnumber(L, -1);
@@ -2785,7 +2785,8 @@ LuaServiceDetector::LuaServiceDetector(AppIdDiscovery* sdm, const std::string& d
 
 
 LuaServiceObject::LuaServiceObject(AppIdDiscovery* sdm, const std::string& detector_name,
-    const std::string& log_name, bool is_custom, IpProtocol protocol, lua_State* L)
+    const std::string& log_name, bool is_custom, IpProtocol protocol, lua_State* L,
+    OdpContext& odp_ctxt) : LuaObject(odp_ctxt)
 {
     init_lsd(&lsd, detector_name, L);
 
@@ -2855,7 +2856,8 @@ LuaClientDetector::LuaClientDetector(AppIdDiscovery* cdm, const std::string& det
 }
 
 LuaClientObject::LuaClientObject(AppIdDiscovery* cdm, const std::string& detector_name,
-    const std::string& log_name, bool is_custom, IpProtocol protocol, lua_State* L)
+    const std::string& log_name, bool is_custom, IpProtocol protocol, lua_State* L,
+    OdpContext& odp_ctxt) : LuaObject(odp_ctxt)
 {
     init_lsd(&lsd, detector_name, L);
 

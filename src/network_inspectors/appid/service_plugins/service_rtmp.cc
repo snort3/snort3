@@ -615,7 +615,7 @@ int RtmpServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
     /* Give up if it's taking us too long to figure out this thing. */
-    if (args.asd.session_packet_count >= args.asd.ctxt->config->rtmp_max_packets)
+    if (args.asd.session_packet_count >= args.asd.ctxt->get_odp_ctxt().rtmp_max_packets)
     {
         goto fail;
     }
@@ -648,7 +648,7 @@ success:
     if ( ss->pageUrl )
     {
         if ( !hsession->get_field(REQ_REFERER_FID) &&
-            !args.asd.ctxt->config->referred_appId_disabled )
+            !args.asd.ctxt->get_odp_ctxt().referred_appId_disabled )
             hsession->set_field(REQ_REFERER_FID, new std::string(ss->pageUrl), args.change_bits);
 
         snort_free(ss->pageUrl);

@@ -141,6 +141,8 @@ ProfileStats* AppIdModule::get_profile() const { return nullptr; }
 AppIdConfig::~AppIdConfig() {}
 static AppIdConfig app_config;
 static AppIdContext app_ctxt(&app_config);
+static OdpContext odpctxt;
+OdpContext* AppIdContext::odp_ctxt = &odpctxt;
 AppId AppIdContext::get_port_service_id(IpProtocol, uint16_t)
 {
     return APP_ID_NONE;
@@ -247,7 +249,7 @@ bool ClientDiscovery::do_client_discovery(AppIdSession&, Packet*,
 }
 
 // Stubs for misc items
-HostPortVal* HostPortCache::find(const SfIp*, uint16_t, IpProtocol, AppIdContext&)
+HostPortVal* HostPortCache::find(const SfIp*, uint16_t, IpProtocol, OdpContext&)
 {
     return nullptr;
 }

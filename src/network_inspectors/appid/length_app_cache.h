@@ -76,10 +76,26 @@ struct LengthKey
 
 #pragma pack()
 
-void init_length_app_cache();
-void free_length_app_cache();
-AppId find_length_app_cache(const LengthKey&);
-bool add_length_app_cache(const LengthKey&, AppId);
+class LengthCache
+{
+public:
+    AppId find(const LengthKey& key)
+    {
+        auto entry = cache.find(key);
+        if (entry == cache.end())
+            return APP_ID_NONE;
+        else
+            return entry->second;
+    }
+
+    bool add(const LengthKey& key, AppId val)
+    {
+        return (cache.emplace(key, val)).second == true;
+    }
+
+private:
+    std::map<LengthKey, AppId>cache;
+};
 
 #endif
 

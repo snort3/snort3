@@ -109,7 +109,7 @@ public:
 class LuaObject {
 
 public:
-    LuaObject() = default;
+    LuaObject(OdpContext& odp_ctxt) : odp_ctxt(odp_ctxt) { }
     virtual ~LuaObject() = default;
     LuaObject(const LuaObject&) = delete;
     LuaObject& operator=(const LuaObject&) = delete;
@@ -130,9 +130,13 @@ public:
     void set_running(bool is_running)
     { running = is_running; }
 
+    OdpContext& get_odp_ctxt() const
+    { return odp_ctxt; }
+
 private:
     std::string cb_fn_name;
     bool running = false;
+    OdpContext& odp_ctxt;
 };
 
 class LuaServiceObject: public LuaObject
@@ -140,7 +144,8 @@ class LuaServiceObject: public LuaObject
 public:
     ServiceDetector* sd;
     LuaServiceObject(AppIdDiscovery* sdm, const std::string& detector_name,
-        const std::string& log_name, bool is_custom, IpProtocol protocol, lua_State* L);
+        const std::string& log_name, bool is_custom, IpProtocol protocol, lua_State* L,
+        OdpContext& odp_ctxt);
     ServiceDetector* get_detector()
     { return sd; }
 };
@@ -150,7 +155,8 @@ class LuaClientObject : public LuaObject
 public:
     ClientDetector* cd;
     LuaClientObject(AppIdDiscovery* cdm, const std::string& detector_name,
-        const std::string& log_name, bool is_custom, IpProtocol protocol, lua_State* L);
+        const std::string& log_name, bool is_custom, IpProtocol protocol, lua_State* L,
+        OdpContext& odp_ctxt);
     ClientDetector* get_detector()
     { return cd; }
 };

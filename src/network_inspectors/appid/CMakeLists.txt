@@ -201,7 +201,6 @@ set ( APPID_SOURCES
     appid_http_event_handler.cc
     appid_http_event_handler.h
     ips_appid_option.cc
-    length_app_cache.cc
     length_app_cache.h
     lua_detector_api.cc
     lua_detector_api.h

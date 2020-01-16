@@ -49,19 +49,6 @@
 
 using namespace snort;
 
-#define ODP_PORT_DETECTORS "odp/port/*"
-#define CUSTOM_PORT_DETECTORS "custom/port/*"
-#define MAX_DISPLAY_SIZE   65536
-#define MAX_LINE    2048
-
-using namespace snort;
-
-struct PortList
-{
-    PortList* next;
-    uint16_t port;
-};
-
 SnortProtocolId snortId_for_unsynchronized;
 SnortProtocolId snortId_for_ftp_data;
 SnortProtocolId snortId_for_http2;
@@ -69,6 +56,7 @@ SnortProtocolId snortId_for_http2;
 #ifdef ENABLE_APPID_THIRD_PARTY
 ThirdPartyAppIdContext* AppIdContext::tp_appid_ctxt = nullptr;
 #endif
+OdpContext* AppIdContext::odp_ctxt = nullptr;
 
 static void map_app_names_to_snort_ids(SnortConfig* sc)
 {
@@ -102,153 +90,20 @@ void AppIdContext::pterm()
     AppIdContext::app_info_mgr.cleanup_appid_info_table();
 }
 
-void AppIdContext::read_port_detectors(const char* files)
-{
-    int rval;
-    glob_t globs;
-    char pattern[PATH_MAX];
-    uint32_t n;
-
-    snprintf(pattern, sizeof(pattern), "%s/%s", config->app_detector_dir, files);
-
-    memset(&globs, 0, sizeof(globs));
-    rval = glob(pattern, 0, nullptr, &globs);
-    if (rval != 0 && rval != GLOB_NOMATCH)
-    {
-        ErrorMessage("Unable to read directory '%s'\n",pattern);
-        return;
-    }
-
-    for (n = 0; n < globs.gl_pathc; n++)
-    {
-        FILE* file;
-        unsigned proto = 0;
-        AppId appId = APP_ID_NONE;
-        char line[1024];
-        PortList* port = nullptr;
-        PortList* tmp_port;
-
-        if ((file = fopen(globs.gl_pathv[n], "r")) == nullptr)
-        {
-            ErrorMessage("Unable to read port service '%s'\n",globs.gl_pathv[n]);
-            continue;
-        }
-
-        while (fgets(line, sizeof(line), file))
-        {
-            char* key, * value, * p;
-            size_t len;
-
-            len = strlen(line);
-            for (; len && (line[len - 1] == '\n' || line[len - 1] == '\r'); len--)
-                line[len - 1] = 0;
-
-            /* find key/value for lines of the format "key: value\n" */
-            if ((value = strchr(line, ':')))
-            {
-                key = line;
-                *value = '\0';
-                value++;
-                while (*value == ' ')
-                    value++;
-
-                if (strcasecmp(key, "ports") == 0)
-                {
-                    char* context = nullptr;
-                    char* ptr;
-                    unsigned long tmp;
-
-                    for (ptr = strtok_r(value, ",", &context); ptr; ptr = strtok_r(nullptr, ",",
-                            &context))
-                    {
-                        while (*ptr == ' ')
-                            ptr++;
-                        len = strlen(ptr);
-                        for (; len && ptr[len - 1] == ' '; len--)
-                            ptr[len - 1] = 0;
-                        tmp = strtoul(ptr, &p, 10);
-                        if (!*ptr || *p || !tmp || tmp > 65535)
-                        {
-                            ErrorMessage("Invalid port, '%s', in lua detector '%s'\n",ptr,
-                                globs.gl_pathv[n]);
-                            goto next;
-                        }
-                        tmp_port = (PortList*)snort_calloc(sizeof(PortList));
-                        tmp_port->port = (uint16_t)tmp;
-                        tmp_port->next = port;
-                        port = tmp_port;
-                    }
-                }
-                else if (strcasecmp(key, "protocol") == 0)
-                {
-                    if (strcasecmp(value, "tcp") == 0)
-                        proto = 1;
-                    else if (strcasecmp(value, "udp") == 0)
-                        proto = 2;
-                    else if (strcasecmp(value, "tcp/udp") == 0)
-                        proto = 3;
-                    else
-                    {
-                        ErrorMessage("Invalid protocol, '%s', in port service '%s'\n",value,
-                            globs.gl_pathv[n]);
-                        goto next;
-                    }
-                }
-                else if (strcasecmp(key, "appId") == 0)
-                {
-                    appId = (AppId)strtoul(value, &p, 10);
-                    if (!*value || *p || appId <= APP_ID_NONE)
-                    {
-                        ErrorMessage("Invalid app ID, '%s', in port service '%s'\n",value,
-                            globs.gl_pathv[n]);
-                        goto next;
-                    }
-                }
-            }
-        }
-
-        if (port && proto && appId > APP_ID_NONE)
-        {
-            while ((tmp_port = port))
-            {
-                port = tmp_port->next;
-                if (proto & 1)
-                    tcp_port_only[tmp_port->port] = appId;
-                if (proto & 2)
-                    udp_port_only[tmp_port->port] = appId;
-
-                snort_free(tmp_port);
-                AppIdContext::app_info_mgr.set_app_info_active(appId);
-            }
-            AppIdContext::app_info_mgr.set_app_info_active(appId);
-        }
-        else
-            ErrorMessage("Missing parameter(s) in port service '%s'\n",globs.gl_pathv[n]);
-
-next:   ;
-        while ((tmp_port = port))
-        {
-            port = tmp_port->next;
-            snort_free(tmp_port);
-        }
-        fclose(file);
-    }
-
-    globfree(&globs);
-}
-
 bool AppIdContext::init_appid(SnortConfig* sc)
 {
+    // do not reload ODP on reload_config()
+    if (!odp_ctxt)
+        odp_ctxt = new OdpContext();
+
     // FIXIT-M: RELOAD - Get rid of "once" flag
     // Handle the if condition in AppIdContext::init_appid
     static bool once = false;
     if (!once)
     {
-        AppIdContext::app_info_mgr.init_appid_info_table(config, sc);
-        HostPortCache::initialize();
+        AppIdContext::app_info_mgr.init_appid_info_table(config, sc, *odp_ctxt);
         HttpPatternMatchers* http_matchers = HttpPatternMatchers::get_instance();
         AppIdDiscovery::initialize_plugins();
-        init_length_app_cache();
         LuaDetectorManager::initialize(*this, 1);
         PatternServiceDetector::finalize_service_port_patterns();
         PatternClientDetector::finalize_client_port_patterns();
@@ -256,15 +111,13 @@ bool AppIdContext::init_appid(SnortConfig* sc)
         http_matchers->finalize_patterns();
         ssl_detector_process_patterns();
         dns_host_detector_process_patterns();
-        read_port_detectors(ODP_PORT_DETECTORS);
-        read_port_detectors(CUSTOM_PORT_DETECTORS);
         once = true;
     }
 
 #ifdef ENABLE_APPID_THIRD_PARTY
     // do not reload third party on reload_config()
     if (!tp_appid_ctxt)
-        tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(*config);
+        tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(*config, *odp_ctxt);
 #endif
     map_app_names_to_snort_ids(sc);
     return true;
@@ -273,7 +126,7 @@ bool AppIdContext::init_appid(SnortConfig* sc)
 #ifdef ENABLE_APPID_THIRD_PARTY
 void AppIdContext::create_tp_appid_ctxt()
 {
-    tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(*config);
+    tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(*config, *odp_ctxt);
 }
 #endif
 

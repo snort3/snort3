@@ -22,14 +22,37 @@
 #ifndef HOST_PORT_APP_CACHE_H
 #define HOST_PORT_APP_CACHE_H
 
+#include <cstring>
+
 #include "application_ids.h"
 #include "protocols/protocol_ids.h"
-#include "appid_config.h"
+#include "sfip/sf_ip.h"
+#include "utils/cpp_macros.h"
 
-namespace snort
+class OdpContext;
+
+PADDING_GUARD_BEGIN
+struct HostPortKey
 {
-struct SfIp;
-}
+    HostPortKey()
+    {
+        ip.clear();
+        port = 0;
+        proto = IpProtocol::PROTO_NOT_SET;
+        padding = 0;
+    }
+
+    bool operator<(const HostPortKey& right) const
+    {
+        return memcmp((const uint8_t*) this, (const uint8_t*) &right, sizeof(*this)) < 0;
+    }
+
+    snort::SfIp ip;
+    uint16_t port;
+    IpProtocol proto;
+    char padding;
+};
+PADDING_GUARD_END
 
 struct HostPortVal
 {
@@ -40,11 +63,17 @@ struct HostPortVal
 class HostPortCache
 {
 public:
-    static void initialize();
-    static void terminate();
-    static HostPortVal* find(const snort::SfIp*, uint16_t port, IpProtocol, AppIdContext&);
-    static bool add(const snort::SfIp*, uint16_t port, IpProtocol, unsigned type, AppId);
-    static void dump();
+    HostPortVal* find(const snort::SfIp*, uint16_t port, IpProtocol, OdpContext&);
+    bool add(const snort::SfIp*, uint16_t port, IpProtocol, unsigned type, AppId);
+    void dump();
+
+    ~HostPortCache()
+    {
+        cache.clear();
+    }
+
+private:
+    std::map<HostPortKey, HostPortVal> cache;
 };
 
 #endif

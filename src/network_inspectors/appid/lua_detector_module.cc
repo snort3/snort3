@@ -311,7 +311,8 @@ static inline uint32_t compute_lua_tracker_size(uint64_t rnaMemory, uint32_t num
 }
 
 // Leaves 1 value (the Detector userdata) at the top of the stack when succeeds
-static LuaObject* create_lua_detector(lua_State* L, const char* detector_name, bool is_custom, const char* detector_filename)
+LuaObject* LuaDetectorManager::create_lua_detector(const char* detector_name,
+    bool is_custom, const char* detector_filename)
 {
     std::string log_name;
     IpProtocol proto = IpProtocol::PROTO_NOT_SET;
@@ -362,7 +363,7 @@ static LuaObject* create_lua_detector(lua_State* L, const char* detector_name, b
     if ( lua_istable(L, -1) )
     {
         return new LuaClientObject(&ClientDiscovery::get_instance(),
-            detector_name, log_name, is_custom, proto, L);
+            detector_name, log_name, is_custom, proto, L, ctxt.get_odp_ctxt());
     }
     else
     {
@@ -372,7 +373,7 @@ static LuaObject* create_lua_detector(lua_State* L, const char* detector_name, b
         if ( lua_istable(L, -1) )
         {
             return new LuaServiceObject(&ServiceDiscovery::get_instance(),
-                detector_name, log_name, is_custom, proto, L);
+                detector_name, log_name, is_custom, proto, L, ctxt.get_odp_ctxt());
         }
         else if (init(L))
             ErrorMessage("Error - appid: can not read DetectorPackageInfo field"
@@ -427,7 +428,7 @@ void LuaDetectorManager::load_detector(char* detector_filename, bool isCustom)
         return;
     }
 
-    LuaObject* lua_object = create_lua_detector(L, detectorName, isCustom, detector_filename);
+    LuaObject* lua_object = create_lua_detector(detectorName, isCustom, detector_filename);
     if (lua_object)
         allocated_objects.push_front(lua_object);
 }

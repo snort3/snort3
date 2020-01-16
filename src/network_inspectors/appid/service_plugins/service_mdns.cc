@@ -150,7 +150,7 @@ int MdnsServiceDetector::validate(AppIdDiscoveryArgs& args)
         ret_val = validate_reply(args.data, args.size);
         if (ret_val == 1)
         {
-            if (args.ctxt->config->mdns_user_reporting)
+            if (args.ctxt->get_odp_ctxt().mdns_user_reporting)
             {
                 analyze_user(args.asd, args.pkt, args.size);
                 destroy_match_list();

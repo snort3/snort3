@@ -25,6 +25,7 @@
 #include "tp_appid_session_api.h"
 
 class AppIdConfig;
+class OdpContext;
 
 // This needs to be exported by any third party .so library.
 // Must return NULL if it fails to create the object.
@@ -45,7 +46,8 @@ public:
             return (self = new TPLibHandler());
     }
 
-    static ThirdPartyAppIdContext* create_tp_appid_ctxt(const AppIdConfig& config);
+    static ThirdPartyAppIdContext* create_tp_appid_ctxt(const AppIdConfig& config,
+        const OdpContext& odp_ctxt);
     static void tfini();
     static void pfini();
 

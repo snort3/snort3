@@ -23,9 +23,9 @@
 #define APP_ID_CONFIG_H
 
 #include <array>
+#include <map>
 #include <string>
 
-#include "application_ids.h"
 #include "framework/decode_data.h"
 #include "main/snort_config.h"
 #include "protocols/ipv6.h"
@@ -35,6 +35,10 @@
 #ifdef ENABLE_APPID_THIRD_PARTY
 #include "tp_appid_module_api.h"
 #endif
+
+#include "application_ids.h"
+#include "host_port_app_cache.h"
+#include "length_app_cache.h"
 
 #define APP_ID_PORT_ARRAY_SIZE  65536
 
@@ -72,8 +76,11 @@ public:
     bool debug = false;
     bool dump_ports = false;
     bool log_all_sessions = false;
+};
 
-    bool safe_search_enabled = true;
+class OdpContext
+{
+public:
     bool dns_host_reporting = true;
     bool referred_appId_disabled = false;
     bool mdns_user_reporting = true;
@@ -93,6 +100,30 @@ public:
     uint32_t http_response_version_enabled = 0;
     bool allow_port_wildcard_host_cache = false;
     bool recheck_for_portservice_appid = false;
+
+    HostPortVal* host_port_cache_find(const snort::SfIp* ip, uint16_t port, IpProtocol proto)
+    {
+        return host_port_cache.find(ip, port, proto, *this);
+    }
+
+    bool host_port_cache_add(const snort::SfIp* ip, uint16_t port, IpProtocol proto, unsigned type, AppId appid)
+    {
+        return host_port_cache.add(ip, port, proto, type, appid);
+    }
+
+    AppId length_cache_find(const LengthKey& key)
+    {
+        return length_cache.find(key);
+    }
+
+    bool length_cache_add(const LengthKey& key, AppId val)
+    {
+        return length_cache.add(key, val);
+    }
+
+private:
+    HostPortCache host_port_cache;
+    LengthCache length_cache;
 };
 
 class AppIdContext
@@ -102,6 +133,11 @@ public:
     { }
 
     ~AppIdContext() { }
+
+    OdpContext& get_odp_ctxt() const
+    {
+        return *odp_ctxt;
+    }
 
 #ifdef ENABLE_APPID_THIRD_PARTY
     ThirdPartyAppIdContext* get_tp_appid_ctxt() const
@@ -129,11 +165,11 @@ public:
     AppIdConfig* config = nullptr;
 
 private:
-    void read_port_detectors(const char* files);
     void display_port_config();
     // FIXIT-M: RELOAD - Remove static, once app_info_mgr cleanup is
     // removed from AppIdContext::pterm
     static AppInfoManager& app_info_mgr;
+    static OdpContext* odp_ctxt;
 #ifdef ENABLE_APPID_THIRD_PARTY
     static ThirdPartyAppIdContext* tp_appid_ctxt;
 #endif

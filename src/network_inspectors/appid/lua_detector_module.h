@@ -64,6 +64,8 @@ private:
     void list_lua_detectors();
     void load_detector(char* detectorName, bool isCustom);
     void load_lua_detectors(const char* path, bool isCustom);
+    LuaObject* create_lua_detector(const char* detector_name, bool is_custom,
+        const char* detector_filename);
 
     AppIdContext& ctxt;
     std::list<LuaObject*> allocated_objects;

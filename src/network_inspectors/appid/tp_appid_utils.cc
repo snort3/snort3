@@ -294,7 +294,7 @@ static inline void process_http_session(AppIdSession& asd,
             LogMessage("AppIdDbg %s HTTP response upgrade is %s\n",
                 appidDebug->get_debug_session(),field->c_str());
 
-        if (asd.ctxt->config->http2_detection_enabled)
+        if (asd.ctxt->get_odp_ctxt().http2_detection_enabled)
         {
             const std::string* rc = hsession->get_field(MISC_RESP_CODE_FID);
             if ( rc && *rc == "101" )
@@ -426,7 +426,7 @@ static inline void process_rtmp(AppIdSession& asd,
         }
     }
 
-    if ( !asd.ctxt->config->referred_appId_disabled &&
+    if ( !asd.ctxt->get_odp_ctxt().referred_appId_disabled &&
         !hsession->get_field(REQ_REFERER_FID) )
     {
         if ( ( field=attribute_data.http_request_referer(own) ) != nullptr )
@@ -471,7 +471,7 @@ static inline void process_rtmp(AppIdSession& asd,
     }
 
     if ( hsession->get_field(MISC_URL_FID) || (confidence == 100 &&
-        asd.session_packet_count > asd.ctxt->config->rtmp_max_packets) )
+        asd.session_packet_count > asd.ctxt->get_odp_ctxt().rtmp_max_packets) )
     {
         const std::string* url;
         if ( ( url = hsession->get_field(MISC_URL_FID) ) != nullptr )
@@ -553,7 +553,7 @@ static inline void process_ftp_control(AppIdSession& asd,
     ThirdPartyAppIDAttributeData& attribute_data)
 {
     const string* field=0;
-    if (!asd.ctxt->config->ftp_userid_disabled &&
+    if (!asd.ctxt->get_odp_ctxt().ftp_userid_disabled &&
         (field=attribute_data.ftp_command_user()) != nullptr)
     {
         asd.client.update_user(APP_ID_FTP_CONTROL, field->c_str());
@@ -602,7 +602,7 @@ static inline void check_terminate_tp_module(AppIdSession& asd, uint16_t tpPktCo
 {
     AppIdHttpSession* hsession = asd.get_http_session();
 
-    if ((tpPktCount >= asd.ctxt->config->max_tp_flow_depth) ||
+    if ((tpPktCount >= asd.ctxt->get_odp_ctxt().max_tp_flow_depth) ||
         (asd.get_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_APP_REINSPECT) ==
         (APPID_SESSION_HTTP_SESSION | APPID_SESSION_APP_REINSPECT) &&
         hsession->get_field(REQ_URI_FID) &&
@@ -640,7 +640,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
     /*** Start of third-party processing. ***/
     bool isTpAppidDiscoveryDone = false;
 
-    if (p->dsize || asd.ctxt->config->tp_allow_probes)
+    if (p->dsize || asd.ctxt->get_odp_ctxt().tp_allow_probes)
     {
         //restart inspection by 3rd party
         if (!asd.tp_reinspect_by_initiator && (direction == APP_ID_FROM_INITIATOR) &&
@@ -658,7 +658,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
         if (!asd.is_tp_processing_done())
         {
             if (protocol != IpProtocol::TCP || (p->packet_flags & PKT_STREAM_ORDER_OK)
-                || asd.ctxt->config->tp_allow_probes)
+                || asd.ctxt->get_odp_ctxt().tp_allow_probes)
             {
                 int tp_confidence;
                 ThirdPartyAppIDAttributeData tp_attribute_data;
