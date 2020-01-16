@@ -27,6 +27,7 @@
 #include <dlfcn.h>
 
 #include "log/messages.h"
+#include "main/snort_debug.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "stream/stream.h"
@@ -38,15 +39,8 @@
 #include "appid_inspector.h"
 #include "detector_plugins/http_url_patterns.h"
 #include "service_plugins/service_ssl.h"
-#include "protocols/packet.h"
-#include "main/snort_debug.h"
-#include "log/messages.h"
-#include "profiler/profiler.h"
-#include "stream/stream.h"
-#ifdef ENABLE_APPID_THIRD_PARTY
-#include "tp_lib_handler.h"
 #include "tp_appid_utils.h"
-#endif
+#include "tp_lib_handler.h"
 
 using namespace std;
 using namespace snort;
@@ -669,7 +663,10 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
                     const TPLibHandler* tph = TPLibHandler::get();
                     TpAppIdCreateSession tpsf = tph->tpsession_factory();
                     if ( !(asd.tpsession = tpsf(tp_appid_ctxt)) )
+                    {
                         ErrorMessage("Could not allocate asd.tpsession data");
+                        return false;
+                    }
                 }
 
                 TPState current_tp_state = asd.tpsession->process(*p, direction,

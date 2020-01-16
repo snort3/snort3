@@ -1,13 +1,3 @@
-if ( ENABLE_APPID_THIRD_PARTY )
-  set (APPID_TP_INCLUDES
-    tp_appid_module_api.h
-    tp_appid_session_api.h
-    tp_appid_types.h
-    http_xff_fields.h
-    )
-endif()
-
-
 set (APPID_INCLUDES
     appid_api.h
     appid_dns_session.h
@@ -16,7 +6,9 @@ set (APPID_INCLUDES
     appid_types.h
     application_ids.h
     http_xff_fields.h
-    ${APPID_TP_INCLUDES}
+    tp_appid_module_api.h
+    tp_appid_session_api.h
+    tp_appid_types.h
 )
 
 set ( APPID_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR} )
@@ -152,15 +144,6 @@ set ( UTIL_APPID_SOURCES
     appid_utils/sf_multi_mpse.h
 )
 
-if ( ENABLE_APPID_THIRD_PARTY )
-  set( APPID_TP_SOURCES
-    tp_lib_handler.cc
-    tp_appid_utils.cc
-    tp_lib_handler.h
-    tp_appid_types.h
-    )
-endif()
-
 set ( APPID_SOURCES
     app_forecast.cc
     app_forecast.h
@@ -212,7 +195,10 @@ set ( APPID_SOURCES
     service_state.cc
     service_state.h
     http_xff_fields.h
-    ${APPID_TP_SOURCES}
+    tp_appid_utils.cc
+    tp_lib_handler.cc
+    tp_lib_handler.h
+    tp_appid_types.h
 )
 
 #if (STATIC_INSPECTORS)

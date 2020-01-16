@@ -49,15 +49,11 @@
 #include "lua_detector_module.h"
 #include "service_plugins/service_discovery.h"
 #include "service_plugins/service_ssl.h"
-#ifdef ENABLE_APPID_THIRD_PARTY
 #include "tp_appid_module_api.h"
 #include "tp_lib_handler.h"
-#endif
 
 using namespace snort;
-#ifdef ENABLE_APPID_THIRD_PARTY
 THREAD_LOCAL ThirdPartyAppIdContext* tp_appid_thread_ctxt = nullptr;
-#endif
 static THREAD_LOCAL PacketTracer::TracerMute appid_mute;
 
 // FIXIT-L - appid cleans up openssl now as it is the primary (only) user... eventually this
@@ -119,9 +115,7 @@ bool AppIdInspector::configure(SnortConfig* sc)
 
     ctxt->init_appid(sc);
 
-#ifdef ENABLE_APPID_THIRD_PARTY
     if (!ctxt->get_tp_appid_ctxt())
-#endif
     {
         DataBus::subscribe_global(HTTP_REQUEST_HEADER_EVENT_KEY, new HttpEventHandler(
             HttpEventHandler::REQUEST_EVENT), sc);
@@ -171,11 +165,9 @@ void AppIdInspector::tterm()
     AppIdServiceState::clean();
     delete appidDebug;
     appidDebug = nullptr;
-#ifdef ENABLE_APPID_THIRD_PARTY
     ThirdPartyAppIdContext* tp_appid_ctxt = ctxt->get_tp_appid_ctxt();
     if (tp_appid_ctxt)
         tp_appid_ctxt->tfini();
-#endif
 }
 
 void AppIdInspector::eval(Packet* p)
@@ -183,7 +175,6 @@ void AppIdInspector::eval(Packet* p)
     Profile profile(appid_perf_stats);
     appid_stats.packets++;
 
-#ifdef ENABLE_APPID_THIRD_PARTY
     ThirdPartyAppIdContext* tp_appid_ctxt = ctxt->get_tp_appid_ctxt();
     if (tp_appid_thread_ctxt != tp_appid_ctxt)
     {
@@ -197,15 +188,10 @@ void AppIdInspector::eval(Packet* p)
         tp_appid_ctxt->tinit();
         tp_appid_thread_ctxt = tp_appid_ctxt;
     }
-#endif
 
     if (p->flow)
     {
-#ifdef ENABLE_APPID_THIRD_PARTY
         AppIdDiscovery::do_application_discovery(p, *this, tp_appid_thread_ctxt);
-#else
-        AppIdDiscovery::do_application_discovery(p, *this);
-#endif
         // FIXIT-L tag verdict reason as appid for daq
         if (PacketTracer::is_active())
             add_appid_to_packet_trace(*p->flow);
@@ -231,9 +217,7 @@ static void mod_dtor(Module* m)
 static void appid_inspector_pinit()
 {
     AppIdSession::init();
-#ifdef ENABLE_APPID_THIRD_PARTY
     TPLibHandler::get();
-#endif
 }
 
 static void appid_inspector_pterm()
@@ -248,9 +232,7 @@ static void appid_inspector_pterm()
     AppIdContext::pterm();
 //end of 'FIXIT-M: RELOAD' comment above
     openssl_cleanup();
-#ifdef ENABLE_APPID_THIRD_PARTY
     TPLibHandler::pfini();
-#endif
 }
 
 static void appid_inspector_tinit()
@@ -260,9 +242,7 @@ static void appid_inspector_tinit()
 
 static void appid_inspector_tterm()
 {
-#ifdef ENABLE_APPID_THIRD_PARTY
     TPLibHandler::tfini();
-#endif
     AppIdPegCounts::cleanup_pegs();
 }
 

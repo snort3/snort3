@@ -45,25 +45,22 @@ add_cpputest( appid_http_session_test
     SOURCES $<TARGET_OBJECTS:appid_cpputest_deps>
 )
 
-if ( ENABLE_APPID_THIRD_PARTY )
+add_cpputest( tp_lib_handler_test
+    SOURCES
+        tp_lib_handler_test.cc
+        ../tp_lib_handler.cc
+    LIBS
+        dl
+)
 
-    add_cpputest( tp_lib_handler_test
-        SOURCES
-            tp_lib_handler_test.cc
-            ../tp_lib_handler.cc
-        LIBS
-            dl
-    )
+if ( ENABLE_UNIT_TESTS )
+    add_library(tp_mock MODULE EXCLUDE_FROM_ALL tp_mock.cc)
+    set_property(TARGET tp_mock PROPERTY ENABLE_EXPORTS 1)
+    add_dependencies(tp_lib_handler_test tp_mock)
+endif ( ENABLE_UNIT_TESTS )
 
-    if ( ENABLE_UNIT_TESTS )
-        add_library(tp_mock MODULE EXCLUDE_FROM_ALL tp_mock.cc)
-        set_property(TARGET tp_mock PROPERTY ENABLE_EXPORTS 1)
-        add_dependencies(tp_lib_handler_test tp_mock)
-    endif ( ENABLE_UNIT_TESTS )
+add_cpputest( tp_appid_types_test
+    SOURCES tp_appid_types_test.cc
+)
 
-    add_cpputest( tp_appid_types_test
-        SOURCES tp_appid_types_test.cc
-    )
-
-endif()
 

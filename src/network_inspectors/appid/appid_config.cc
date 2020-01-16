@@ -42,10 +42,8 @@
 #include "service_plugins/service_ssl.h"
 #include "detector_plugins/detector_dns.h"
 #include "target_based/snort_protocols.h"
-#ifdef ENABLE_APPID_THIRD_PARTY
 #include "tp_appid_utils.h"
 #include "tp_lib_handler.h"
-#endif
 
 using namespace snort;
 
@@ -53,9 +51,7 @@ SnortProtocolId snortId_for_unsynchronized;
 SnortProtocolId snortId_for_ftp_data;
 SnortProtocolId snortId_for_http2;
 
-#ifdef ENABLE_APPID_THIRD_PARTY
 ThirdPartyAppIdContext* AppIdContext::tp_appid_ctxt = nullptr;
-#endif
 OdpContext* AppIdContext::odp_ctxt = nullptr;
 
 static void map_app_names_to_snort_ids(SnortConfig* sc)
@@ -114,21 +110,18 @@ bool AppIdContext::init_appid(SnortConfig* sc)
         once = true;
     }
 
-#ifdef ENABLE_APPID_THIRD_PARTY
     // do not reload third party on reload_config()
     if (!tp_appid_ctxt)
         tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(*config, *odp_ctxt);
-#endif
+
     map_app_names_to_snort_ids(sc);
     return true;
 }
 
-#ifdef ENABLE_APPID_THIRD_PARTY
 void AppIdContext::create_tp_appid_ctxt()
 {
     tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(*config, *odp_ctxt);
 }
-#endif
 
 AppId AppIdContext::get_port_service_id(IpProtocol proto, uint16_t port)
 {

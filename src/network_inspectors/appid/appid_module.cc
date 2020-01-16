@@ -172,7 +172,6 @@ static int disable_debug(lua_State*)
 
 static int reload_third_party(lua_State*)
 {
-#ifdef ENABLE_APPID_THIRD_PARTY
     if (Swapper::get_reload_in_progress())
     {
         LogMessage("== reload pending; retry\n");
@@ -191,9 +190,6 @@ static int reload_third_party(lua_State*)
         Swapper::set_reload_in_progress(false);
         LogMessage("== reload third-party complete\n");
     }
-#else
-    LogMessage("== third party is not enabled\n");
-#endif
 
     return 0;
 }

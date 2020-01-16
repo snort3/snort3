@@ -112,12 +112,8 @@ public:
         int position, unsigned nocase);
     virtual int add_service_port(AppIdDetector*, const ServiceDetectorPort&);
 
-#ifdef ENABLE_APPID_THIRD_PARTY
     static void do_application_discovery(snort::Packet* p, AppIdInspector&,
         ThirdPartyAppIdContext*);
-#else
-    static void do_application_discovery(snort::Packet* p, AppIdInspector&);
-#endif
     static void publish_appid_event(AppidChangeBits&, snort::Flow*);
 
     AppIdDetectors* get_tcp_detectors()
@@ -142,16 +138,10 @@ protected:
 private:
     static bool do_pre_discovery(snort::Packet* p, AppIdSession** p_asd, AppIdInspector& inspector,
         IpProtocol& protocol, AppidSessionDirection& direction);
-#ifdef ENABLE_APPID_THIRD_PARTY
     static bool do_discovery(snort::Packet* p, AppIdSession& asd,
         IpProtocol protocol, AppidSessionDirection direction, AppId& service_id, AppId& client_id,
         AppId& payload_id, AppId& misc_id, AppidChangeBits& change_bits,
         ThirdPartyAppIdContext* tp_appid_ctxt);
-#else
-    static bool do_discovery(snort::Packet* p, AppIdSession& asd,
-        IpProtocol protocol, AppidSessionDirection direction, AppId& service_id, AppId& client_id,
-        AppId& payload_id, AppId& misc_id, AppidChangeBits& change_bits);
-#endif
     static void do_post_discovery(snort::Packet* p, AppIdSession& asd,
         AppidSessionDirection direction, bool is_discovery_done, AppId service_id, AppId client_id,
         AppId payload_id, AppId misc_id, AppidChangeBits& change_bits);

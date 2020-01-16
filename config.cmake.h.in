@@ -61,9 +61,6 @@
 /* include internal inspectors in binary */
 #cmakedefine STATIC_SEARCH_ENGINES 1
 
-/* enable third party appid */
-#cmakedefine ENABLE_APPID_THIRD_PARTY 1
-
 /* enable unit tests */
 #cmakedefine UNIT_TEST 1
 

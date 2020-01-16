@@ -60,9 +60,7 @@ private:
 
 };
 
-#ifdef ENABLE_APPID_THIRD_PARTY
 extern THREAD_LOCAL ThirdPartyAppIdContext* tp_appid_thread_ctxt;
-#endif
 
 #endif
 

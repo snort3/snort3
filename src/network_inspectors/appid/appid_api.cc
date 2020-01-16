@@ -33,9 +33,7 @@
 #include "appid_session_api.h"
 #include "app_info_table.h"
 #include "service_plugins/service_ssl.h"
-#ifdef ENABLE_APPID_THIRD_PARTY
 #include "tp_appid_session_api.h"
-#endif
 
 using namespace snort;
 
@@ -155,10 +153,8 @@ uint32_t AppIdApi::consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t, IpP
                     asd->service_disco_state = APPID_DISCO_STATE_FINISHED;
 
                 asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
-#ifdef ENABLE_APPID_THIRD_PARTY
                 if (asd->tpsession)
                     asd->tpsession->set_state(TP_STATE_HA);
-#endif
             }
         }
 
@@ -169,9 +165,7 @@ uint32_t AppIdApi::consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t, IpP
 
         if((appHA->flags & APPID_HA_FLAGS_TP_DONE) && asd->tpsession)
         {
-#ifdef ENABLE_APPID_THIRD_PARTY
             asd->tpsession->set_state(TP_STATE_TERMINATED);
-#endif
             asd->set_session_flags(APPID_SESSION_NO_TPI);
         }
 

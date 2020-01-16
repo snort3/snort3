@@ -45,10 +45,8 @@
 #include "detector_plugins/http_url_patterns.h"
 #include "host_port_app_cache.h"
 #include "service_plugins/service_discovery.h"
-#ifdef ENABLE_APPID_THIRD_PARTY
 #include "tp_lib_handler.h"
 #include "tp_appid_utils.h"
-#endif
 using namespace snort;
 
 AppIdDiscovery::AppIdDiscovery()
@@ -136,12 +134,8 @@ int AppIdDiscovery::add_service_port(AppIdDetector*, const ServiceDetectorPort&)
     return APPID_EINVALID;
 }
 
-#ifdef ENABLE_APPID_THIRD_PARTY
 void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspector,
     ThirdPartyAppIdContext* tp_appid_ctxt)
-#else
-  void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspector)
-#endif
 {
     IpProtocol protocol = IpProtocol::PROTO_NOT_SET;
     AppidSessionDirection direction = APP_ID_FROM_INITIATOR;
@@ -155,13 +149,8 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
     AppId payload_id = APP_ID_NONE;
     AppId misc_id = APP_ID_NONE;
     AppidChangeBits change_bits;
-#ifdef ENABLE_APPID_THIRD_PARTY
     bool is_discovery_done = do_discovery(p, *asd, protocol, direction, service_id,
         client_id, payload_id, misc_id, change_bits, tp_appid_ctxt);
-#else
-    bool is_discovery_done = do_discovery(p, *asd, protocol, direction, service_id,
-        client_id, payload_id, misc_id, change_bits);
-#endif
 
     do_post_discovery(p, *asd, direction, is_discovery_done, service_id, client_id, payload_id,
         misc_id, change_bits);
@@ -739,10 +728,8 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
             asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
             asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
-#ifdef ENABLE_APPID_THIRD_PARTY
             if (asd.tpsession)
                 asd.tpsession->reset();
-#endif
             if ( asd.payload.get_id() == APP_ID_NONE)
                 asd.payload.set_id(APP_ID_UNKNOWN);
         }
@@ -787,16 +774,10 @@ static inline bool is_check_host_cache_valid(AppIdSession& asd, AppId service_id
     return false;
 }
 
-#ifdef ENABLE_APPID_THIRD_PARTY
 bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd,
     IpProtocol protocol, AppidSessionDirection direction, AppId& service_id, AppId& client_id,
     AppId& payload_id, AppId& misc_id, AppidChangeBits& change_bits,
     ThirdPartyAppIdContext* tp_appid_ctxt)
-#else
-bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd,
-    IpProtocol protocol, AppidSessionDirection direction, AppId& service_id, AppId& client_id,
-    AppId& payload_id, AppId& misc_id, AppidChangeBits& change_bits)
-#endif
 {
     bool is_discovery_done = false;
 
@@ -827,7 +808,6 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd,
     }
 
     // Third party detection
-#ifdef ENABLE_APPID_THIRD_PARTY
     if (tp_appid_ctxt)
     {
         // Skip third-party inspection for sessions using old config
@@ -835,7 +815,6 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd,
             is_discovery_done = do_tp_discovery(*tp_appid_ctxt, asd, protocol, p,
                 direction, change_bits);
     }
-#endif
 
     // Port-based service detection
     do_port_based_discovery(p, asd, protocol, direction);
@@ -986,7 +965,6 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
         }
     }
 
-#ifdef ENABLE_APPID_THIRD_PARTY
     if (asd.get_session_flags(APPID_SESSION_OOO_CHECK_TP) and asd.tpsession and
         (asd.scan_flags & SCAN_HOST_PORT_FLAG) and (service_id or payload_id))
     {
@@ -999,7 +977,6 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
                     appidDebug->get_debug_session());
         }
     }
-#endif
 
     asd.set_application_ids(service_id, client_id, payload_id, misc_id, change_bits);
     publish_appid_event(change_bits, p->flow);

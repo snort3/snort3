@@ -46,9 +46,7 @@
 #include "appid_stats.h"
 #include "lua_detector_api.h"
 #include "service_plugins/service_ssl.h"
-#ifdef ENABLE_APPID_THIRD_PARTY
 #include "tp_lib_handler.h"
-#endif
 
 using namespace snort;
 
@@ -137,7 +135,6 @@ AppIdSession::~AppIdSession()
         }
     }
 
-#ifdef ENABLE_APPID_THIRD_PARTY
     if (tpsession)
     {
         if (tpsession->get_ctxt() == tp_appid_thread_ctxt)
@@ -145,7 +142,6 @@ AppIdSession::~AppIdSession()
         else
             delete tpsession;
     }
-#endif
 
     delete_session_data();
     free_flow_data();
@@ -253,11 +249,9 @@ void AppIdSession::reinit_session_data(AppidChangeBits& change_bits)
     client_disco_state = APPID_DISCO_STATE_NONE;
     free_flow_data_by_mask(APPID_SESSION_DATA_CLIENT_MODSTATE_BIT);
 
-#ifdef ENABLE_APPID_THIRD_PARTY
     //3rd party cleaning
     if (tpsession)
         tpsession->reset();
-#endif
 
     init_tpPackets = 0;
     resp_tpPackets = 0;
@@ -880,10 +874,8 @@ void AppIdSession::reset_session_data()
     tp_payload_app_id = APP_ID_UNKNOWN;
     tp_app_id = APP_ID_UNKNOWN;
 
-#ifdef ENABLE_APPID_THIRD_PARTY
     if (this->tpsession)
         this->tpsession->reset();
-#endif
 }
 
 bool AppIdSession::is_payload_appid_set()
@@ -896,10 +888,8 @@ void AppIdSession::clear_http_flags()
     if (!get_session_flags(APPID_SESSION_SPDY_SESSION))
     {
         clear_session_flags(APPID_SESSION_CHP_INSPECTING);
-#ifdef ENABLE_APPID_THIRD_PARTY
         if (this->tpsession)
             this->tpsession->clear_attr(TP_ATTR_CONTINUE_MONITORING);
-#endif
     }
 }
 
@@ -926,7 +916,6 @@ AppIdDnsSession* AppIdSession::get_dns_session()
 
 bool AppIdSession::is_tp_appid_done() const
 {
-#ifdef ENABLE_APPID_THIRD_PARTY
     if (ctxt->get_tp_appid_ctxt())
     {
         if (!tpsession)
@@ -936,26 +925,22 @@ bool AppIdSession::is_tp_appid_done() const
         return (state == TP_STATE_CLASSIFIED || state == TP_STATE_TERMINATED ||
             state == TP_STATE_HA);
     }
-#endif
 
     return true;
 }
 
 bool AppIdSession::is_tp_processing_done() const
 {
-#ifdef ENABLE_APPID_THIRD_PARTY
     if (!get_session_flags(APPID_SESSION_NO_TPI) &&
         (!is_tp_appid_done() ||
         get_session_flags(APPID_SESSION_APP_REINSPECT | APPID_SESSION_APP_REINSPECT_SSL)))
         return false;
-#endif
 
     return true;
 }
 
 bool AppIdSession::is_tp_appid_available() const
 {
-#ifdef ENABLE_APPID_THIRD_PARTY
     if (ctxt->get_tp_appid_ctxt())
     {
         if (!tpsession)
@@ -966,7 +951,6 @@ bool AppIdSession::is_tp_appid_available() const
         return (state == TP_STATE_CLASSIFIED || state == TP_STATE_TERMINATED ||
             state == TP_STATE_MONITORING);
     }
-#endif
 
     return true;
 }

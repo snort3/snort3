@@ -42,10 +42,7 @@ static AppIdConfig config;
 static AppIdContext ctxt(&config);
 static OdpContext odpctxt;
 OdpContext* AppIdContext::odp_ctxt = &odpctxt;
-
-#ifdef ENABLE_APPID_THIRD_PARTY
 ThirdPartyAppIdContext* AppIdContext::tp_appid_ctxt = nullptr;
-#endif
 
 AppIdConfig::~AppIdConfig() { }
 

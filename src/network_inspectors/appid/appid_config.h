@@ -32,9 +32,7 @@
 #include "sfip/sf_ip.h"
 #include "target_based/snort_protocols.h"
 #include "utils/sflsq.h"
-#ifdef ENABLE_APPID_THIRD_PARTY
 #include "tp_appid_module_api.h"
-#endif
 
 #include "application_ids.h"
 #include "host_port_app_cache.h"
@@ -135,11 +133,8 @@ public:
     ~AppIdContext() { }
 
     OdpContext& get_odp_ctxt() const
-    {
-        return *odp_ctxt;
-    }
+    { return *odp_ctxt; }
 
-#ifdef ENABLE_APPID_THIRD_PARTY
     ThirdPartyAppIdContext* get_tp_appid_ctxt() const
     { return tp_appid_ctxt; }
 
@@ -147,8 +142,6 @@ public:
     { delete tp_appid_ctxt; }
 
     void create_tp_appid_ctxt();
-#endif
-
     bool init_appid(snort::SnortConfig*);
     static void pterm();
     void show();
@@ -170,9 +163,7 @@ private:
     // removed from AppIdContext::pterm
     static AppInfoManager& app_info_mgr;
     static OdpContext* odp_ctxt;
-#ifdef ENABLE_APPID_THIRD_PARTY
     static ThirdPartyAppIdContext* tp_appid_ctxt;
-#endif
 };
 
 #endif

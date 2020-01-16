@@ -80,9 +80,7 @@
 #include "service_regtest.h"
 #endif
 
-#ifdef ENABLE_APPID_THIRD_PARTY
 #include "tp_appid_session_api.h"
-#endif
 
 using namespace snort;
 
@@ -674,9 +672,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
             //  - Shut down TP.
 
-#ifdef ENABLE_APPID_THIRD_PARTY
             asd.tpsession->set_state(TP_STATE_TERMINATED);
-#endif
             //  - Just ignore everything from now on.
             asd.set_session_flags(APPID_SESSION_IGNORE_FLOW);
         }

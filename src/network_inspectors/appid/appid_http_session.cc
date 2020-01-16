@@ -33,9 +33,7 @@
 #include "appid_session.h"
 #include "detector_plugins/http_url_patterns.h"
 #include "http_xff_fields.h"
-#ifdef ENABLE_APPID_THIRD_PARTY
 #include "tp_lib_handler.h"
-#endif
 #define PORT_MAX 65535
 
 using namespace snort;
@@ -225,10 +223,8 @@ int AppIdHttpSession::initial_chp_sweep(ChpMatchDescriptor& cmd)
             && !asd.get_session_flags(APPID_SESSION_SPDY_SESSION))
         {
             asd.clear_session_flags(APPID_SESSION_CHP_INSPECTING);
-#ifdef ENABLE_APPID_THIRD_PARTY
             if (asd.tpsession)
                 asd.tpsession->clear_attr(TP_ATTR_CONTINUE_MONITORING);
-#endif
         }
     }
     chp_candidate = cah->appIdInstance;
@@ -236,7 +232,6 @@ int AppIdHttpSession::initial_chp_sweep(ChpMatchDescriptor& cmd)
     num_matches = cah->num_matches;
     num_scans = cah->num_scans;
 
-#ifdef ENABLE_APPID_THIRD_PARTY
     if (asd.tpsession)
     {
         if ((ptype_scan_counts[RSP_CONTENT_TYPE_FID]))
@@ -254,7 +249,6 @@ int AppIdHttpSession::initial_chp_sweep(ChpMatchDescriptor& cmd)
         else
             asd.tpsession->clear_attr(TP_ATTR_COPY_RESPONSE_BODY);
     }
-#endif
 
     return 1;
 }
