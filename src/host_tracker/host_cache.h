@@ -60,7 +60,6 @@ public:
 
     size_t mem_size() override
     {
-        std::lock_guard<std::mutex> cache_lock(cache_mutex);
         return current_size;
     }
 
@@ -105,24 +104,25 @@ private:
     // In concrete terms, never have a standalone HostTracker object outside
     // the host cache add or remove stuff to itself, as that will incorrectly
     // change the current_size of the cache.
+
     void update(int size) override
     {
-        // Same idea as in LruCacheShared::remove(), use shared pointers
-        // to hold the pruned data until after the cache is unlocked.
-        // Do not change the order of data and cache_lock, as the data must
-        // self destruct after cache_lock.
-        std::list<Data> data;
-
-        std::lock_guard<std::mutex> cache_lock(cache_mutex);
-
-        if (size < 0)
-            assert( current_size >= (size_t) -size );
-        current_size += size;
-        if (current_size > max_size)
+        if ( size < 0 )
+        {
+            assert( current_size >= (size_t) -size);
+        }
+        if ( (current_size += size) > max_size )
+        {
+            // Same idea as in LruCacheShared::remove(), use shared pointers
+            // to hold the pruned data until after the cache is unlocked.
+            // Do not change the order of data and cache_lock, as the data must
+            // self destruct after cache_lock.
+            std::list<Data> data;
+            std::lock_guard<std::mutex> cache_lock(cache_mutex);
             LruBase::prune(data);
+        }
     }
 
-    // These get called only from within the LRU and assume the LRU is locked.
     void increase_size() override
     {
         current_size += mem_chunk;

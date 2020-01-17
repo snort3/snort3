@@ -24,6 +24,7 @@
 // LruCacheShared -- Implements a thread-safe unordered map where the
 // least-recently-used (LRU) entries are removed once a fixed size is hit.
 
+#include <atomic>
 #include <cassert>
 #include <list>
 #include <memory>
@@ -142,7 +143,7 @@ protected:
     size_t max_size;   // Once max_size elements are in the cache, start to
                        // remove the least-recently-used elements.
 
-    size_t current_size;    // Number of entries currently in the cache.
+    std::atomic<size_t> current_size;// Number of entries currently in the cache.
 
     std::mutex cache_mutex;
     LruList list;  //  Contains key/data pairs. Maintains LRU order with
@@ -151,7 +152,11 @@ protected:
 
     struct LruCacheSharedStats stats;
 
-    // These get called only from within the LRU and assume the LRU is locked.
+    // The reason for these functions is to allow derived classes to do their
+    // size book keeping differently (e.g. host_cache). This effectively
+    // decouples the current_size variable from the actual size in memory,
+    // so these functions should only be called when something is actually
+    // added or removed from memory (e.g. in find_else_insert, remove, etc).
     virtual void increase_size()
     {
         current_size++;
