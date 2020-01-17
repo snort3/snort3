@@ -582,6 +582,21 @@ TEST(http2_hpack_string_decode_success, huffman_decoding_all_possible_symbols_he
     CHECK(memcmp(res, expected, 16) == 0);
 }
 
+TEST(http2_hpack_string_decode_success, huffman_decoding_tail_lookup_unsucessful)
+{
+    // tail lookup unsuccessful after successful previous match
+    // decodes to 9D
+    uint8_t buf[3] = {0x82, 0x7E, 0xFF};
+    // decode
+    uint32_t bytes_processed = 0, bytes_written = 0;
+    uint8_t res[3];
+    bool success = decode->translate(buf, 3, bytes_processed, res, 3, bytes_written, &events, &inf);
+    // check results
+    CHECK(success == true);
+    CHECK(bytes_processed == 3);
+    CHECK(bytes_written == 2);
+}
+
 //
 // The following tests should trigger infractions/events
 //

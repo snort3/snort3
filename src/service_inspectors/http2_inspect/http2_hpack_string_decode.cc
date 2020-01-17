@@ -202,7 +202,9 @@ bool Http2HpackStringDecode::get_huffman_string(const uint8_t* in_buff, const ui
     // Tail needs 1 last lookup in case the leftover is big enough for a match.
     // Make sure match length <= available length
     uint8_t leftover_len = 8 - cur_bit;
-    uint8_t old_result = result.len;
+    uint8_t old_result_len = result.len;
+    HuffmanState old_result_state = result.state;
+
     if (another_search && (leftover_len >= min_decode_len[state]))
     {
         result = huffman_decode[state][byte];
@@ -212,7 +214,13 @@ bool Http2HpackStringDecode::get_huffman_string(const uint8_t* in_buff, const ui
             byte = (byte << result.len) | (((uint16_t)1 << result.len) - 1);
         }
         else
-            result.len = old_result;
+        {
+            // Use leftover bits for padding check if previous lookup was a match
+            if (old_result_state == HUFFMAN_MATCH)
+                result.len = leftover_len;
+            else
+                result.len = old_result_len;
+        }
     }
 
     // Padding check
