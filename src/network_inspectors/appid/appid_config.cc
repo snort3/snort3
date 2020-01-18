@@ -84,6 +84,7 @@ std::array<AppId, 256> AppIdContext::ip_protocol = {APP_ID_NONE};
 void AppIdContext::pterm()
 {
     AppIdContext::app_info_mgr.cleanup_appid_info_table();
+    delete odp_ctxt;
 }
 
 bool AppIdContext::init_appid(SnortConfig* sc)
