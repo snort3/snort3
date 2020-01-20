@@ -251,13 +251,6 @@ TEST(hyper_search_test_group, not_found4)
     CHECK(t.run(handle));
 }
 
-TEST(hyper_search_test_group, compiler_error)
-{
-    HyperSearch hs(handle, nullptr, 1);
-    CHECK(s_parse_errors == 1);
-    s_parse_errors = 0;
-}
-
 int main(int argc, char** argv)
 {
     MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
