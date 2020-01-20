@@ -28,13 +28,18 @@
 #include <cassert>
 #include <cstring>
 
+#include "framework/module.h"
 #include "framework/mpse.h"
+#include "helpers/scratch_allocator.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/thread.h"
 #include "utils/stats.h"
 
 using namespace snort;
+
+static const char* s_name = "hyperscan";
+static const char* s_help = "intel hyperscan-based mpse with regex support";
 
 struct Pattern
 {
@@ -101,6 +106,19 @@ typedef std::vector<Pattern> PatternVector;
 static std::vector<hs_scratch_t*> s_scratch;
 static unsigned int scratch_index;
 static bool scratch_registered = false;
+static ScratchAllocator* scratcher = nullptr;
+
+struct ScanContext
+{
+    class HyperscanMpse* mpse;
+    MpseMatch match_cb;
+    void* match_ctx;
+    int nfound = 0;
+
+    ScanContext(HyperscanMpse* m, MpseMatch cb, void* ctx)
+    { mpse = m; match_cb = cb; match_ctx = ctx; }
+
+};
 
 //-------------------------------------------------------------------------
 // mpse
@@ -142,7 +160,7 @@ public:
     int get_pattern_count() const override
     { return pvector.size(); }
 
-    int match(unsigned id, unsigned long long to);
+    int match(unsigned id, unsigned long long to, MpseMatch match_cb, void* match_ctx);
 
     static int match(
         unsigned id, unsigned long long from, unsigned long long to,
@@ -157,18 +175,10 @@ private:
 
     hs_database_t* hs_db = nullptr;
 
-    static THREAD_LOCAL MpseMatch match_cb;
-    static THREAD_LOCAL void* match_ctx;
-    static THREAD_LOCAL int nfound;
-
 public:
     static uint64_t instances;
     static uint64_t patterns;
 };
-
-THREAD_LOCAL MpseMatch HyperscanMpse::match_cb = nullptr;
-THREAD_LOCAL void* HyperscanMpse::match_ctx = nullptr;
-THREAD_LOCAL int HyperscanMpse::nfound = 0;
 
 uint64_t HyperscanMpse::instances = 0;
 uint64_t HyperscanMpse::patterns = 0;
@@ -256,11 +266,10 @@ int HyperscanMpse::prep_patterns(SnortConfig* sc)
     return 0;
 }
 
-int HyperscanMpse::match(unsigned id, unsigned long long to)
+int HyperscanMpse::match(unsigned id, unsigned long long to, MpseMatch match_cb, void* match_ctx)
 {
     assert(id < pvector.size());
     Pattern& p = pvector[id];
-    nfound++;
     return match_cb(p.user, p.user_tree, (int)to, match_ctx, p.user_list);
 }
 
@@ -268,18 +277,16 @@ int HyperscanMpse::match(
     unsigned id, unsigned long long /*from*/, unsigned long long to,
     unsigned /*flags*/, void* pv)
 {
-    HyperscanMpse* h = (HyperscanMpse*)pv;
-    return  h->match(id, to);
+    ScanContext* scan = (ScanContext*)pv;
+    scan->nfound++;
+    return  scan->mpse->match(id, to, scan->match_cb, scan->match_ctx);
 }
 
 int HyperscanMpse::_search(
     const uint8_t* buf, int n, MpseMatch mf, void* pv, int* current_state)
 {
     *current_state = 0;
-    nfound = 0;
-
-    match_cb = mf;
-    match_ctx = pv;
+    ScanContext scan(this, mf, pv);
 
     hs_scratch_t* ss =
         (hs_scratch_t*)SnortConfig::get_conf()->state[get_instance_id()][scratch_index];
@@ -287,16 +294,18 @@ int HyperscanMpse::_search(
     // scratch is null for the degenerate case w/o patterns
     assert(!hs_db or ss);
 
-    hs_scan(hs_db, (const char*)buf, n, 0, ss,
-        HyperscanMpse::match, this);
+    hs_scan(hs_db, (const char*)buf, n, 0, ss, HyperscanMpse::match, &scan);
 
-    return nfound;
+    return scan.nfound;
 }
 
-static void scratch_setup(SnortConfig* sc)
+static bool scratch_setup(SnortConfig* sc)
 {
     // find the largest scratch and clone for all slots
     hs_scratch_t* max = nullptr;
+
+    if ( !s_scratch.size() )
+        return false;
 
     for ( unsigned i = 0; i < sc->num_slots; ++i )
     {
@@ -324,36 +333,50 @@ static void scratch_setup(SnortConfig* sc)
         }
         s_scratch[i] = nullptr;
     }
+    if ( !max )
+        return false;
+
     for ( unsigned i = 0; i < sc->num_slots; ++i )
     {
         hs_scratch_t** ss = (hs_scratch_t**) &sc->state[i][scratch_index];
-
-        if ( max )
-            hs_clone_scratch(max, ss);
-        else
-            *ss = nullptr;
+        hs_clone_scratch(max, ss);
     }
-    if ( max )
-        hs_free_scratch(max);
+    hs_free_scratch(max);
+    return true;
 }
 
 static void scratch_cleanup(SnortConfig* sc)
 {
     for ( unsigned i = 0; i < sc->num_slots; ++i )
     {
-        hs_scratch_t* ss = (hs_scratch_t*) sc->state[i][scratch_index];
-
-        if ( ss )
-        {
-            hs_free_scratch(ss);
-            sc->state[i][scratch_index] = nullptr;
-        }
+        hs_scratch_t* ss = (hs_scratch_t*)sc->state[i][scratch_index];
+        hs_free_scratch(ss);
+        sc->state[i][scratch_index] = nullptr;
     }
 }
+
+class HyperscanModule : public Module
+{
+public:
+    HyperscanModule() : Module(s_name, s_help)
+    {
+        scratcher = new SimpleScratchAllocator(scratch_setup, scratch_cleanup);
+        scratch_index = scratcher->get_id();
+    }
+
+    ~HyperscanModule() override
+    { delete scratcher; }
+};
 
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
+
+static Module* mod_ctor()
+{ return new HyperscanModule; }
+
+static void mod_dtor(Module* p)
+{ delete p; }
 
 static Mpse* hs_ctor(
     SnortConfig* sc, class Module*, const MpseAgent* a)
@@ -361,7 +384,7 @@ static Mpse* hs_ctor(
     if ( !scratch_registered )
     {
         s_scratch.resize(sc->num_slots);
-        scratch_index = SnortConfig::request_scratch(scratch_setup, scratch_cleanup);
+        scratch_index = scratcher->get_id();
         scratch_registered = true;
     }
     return new HyperscanMpse(sc, a);
@@ -393,10 +416,10 @@ static const MpseApi hs_api =
         0,
         API_RESERVED,
         API_OPTIONS,
-        "hyperscan",
-        "intel hyperscan-based mpse with regex support",
-        nullptr,
-        nullptr
+        s_name,
+        s_help,
+        mod_ctor,
+        mod_dtor
     },
     MPSE_REGEX | MPSE_MTBLD,
     nullptr,  // activate

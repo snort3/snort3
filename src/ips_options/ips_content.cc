@@ -27,10 +27,10 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/hashfcn.h"
+#include "helpers/literal_search.h"
 #include "log/messages.h"
 #include "parser/parse_utils.h"
 #include "profiler/profiler.h"
-#include "utils/boyer_moore.h"
 #include "utils/util.h"
 #include "utils/stats.h"
 
@@ -43,6 +43,7 @@ using namespace snort;
 #define s_name "content"
 
 static THREAD_LOCAL ProfileStats contentPerfStats;
+static LiteralSearch::Handle* search_handle = nullptr;
 
 static IpsOption::EvalStatus CheckANDPatternMatch(class ContentData*, Cursor&);
 
@@ -54,7 +55,6 @@ class ContentData
 {
 public:
     ContentData();
-
     ~ContentData();
 
     void setup_bm();
@@ -62,7 +62,7 @@ public:
 
     PatternMatchData pmd = {};
 
-    BoyerMoore* boyer_moore;
+    LiteralSearch* searcher;
 
     int8_t offset_var;      /* byte_extract variable indices for offset, */
     int8_t depth_var;       /* depth, distance, within */
@@ -72,7 +72,7 @@ public:
 
 ContentData::ContentData()
 {
-    boyer_moore = nullptr;
+    searcher = nullptr;
     offset_var = IPS_OPTIONS_NO_VAR;
     depth_var = IPS_OPTIONS_NO_VAR;
     match_delta = 0;
@@ -80,8 +80,8 @@ ContentData::ContentData()
 
 ContentData::~ContentData()
 {
-    if ( boyer_moore )
-        delete boyer_moore;
+    if ( searcher )
+        delete searcher;
 
     if ( pmd.pattern_buf )
         snort_free(const_cast<char*>(pmd.pattern_buf));
@@ -93,8 +93,7 @@ ContentData::~ContentData()
 void ContentData::setup_bm()
 {
     const uint8_t* pattern = (const uint8_t*)pmd.pattern_buf;
-
-    boyer_moore = new BoyerMoore(pattern, pmd.pattern_size);
+    searcher = LiteralSearch::instantiate(search_handle, pattern, pmd.pattern_size, pmd.is_no_case());
 }
 
 // find the maximum number of characters we can jump ahead
@@ -345,16 +344,7 @@ static int uniSearchReal(ContentData* cd, Cursor& c)
     }
 
     const uint8_t* base = c.buffer() + pos;
-    int found;
-
-    if ( cd->pmd.is_no_case() )
-    {
-        found = cd->boyer_moore->search_nocase(base, depth);
-    }
-    else
-    {
-        found = cd->boyer_moore->search(base, depth);
-    }
+    int found = cd->searcher->search(search_handle, base, depth);
 
     if ( found >= 0 )
     {
@@ -634,10 +624,16 @@ class ContentModule : public Module
 {
 public:
     ContentModule() : Module(s_name, s_help, s_params)
-    { cd = nullptr; }
+    {
+        cd = nullptr;
+        search_handle = LiteralSearch::setup();
+    }
 
     ~ContentModule() override
-    { delete cd; }
+    {
+        delete cd;
+        LiteralSearch::cleanup(search_handle);
+    }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;

@@ -33,6 +33,7 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/hashfcn.h"
+#include "helpers/hyper_scratch_allocator.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "profiler/profiler.h"
@@ -61,19 +62,7 @@ struct RegexConfig
     }
 };
 
-// we need to update scratch in the main thread as each pattern is processed
-// and then clone to thread specific after all rules are loaded.  s_scratch is
-// a prototype that is large enough for all uses.
-
-// FIXIT-L s_scratch persists for the lifetime of the program.  it is
-// modeled off 2X where, due to so rule processing at startup, it is necessary
-// to monotonically grow the ovector.  however, we should be able to free
-// s_scratch after cloning since so rules are now parsed the same as text
-// rules.
-
-static hs_scratch_t* s_scratch = nullptr;
-static unsigned scratch_index;
-static THREAD_LOCAL unsigned s_to = 0;
+static HyperScratchAllocator* scratcher = nullptr;
 static THREAD_LOCAL ProfileStats regex_perf_stats;
 
 //-------------------------------------------------------------------------
@@ -111,12 +100,9 @@ RegexOption::RegexOption(const RegexConfig& c) :
 {
     config = c;
 
-    if ( /*hs_error_t err =*/ hs_alloc_scratch(config.db, &s_scratch) )
-    {
-        // FIXIT-RC why is this failing but everything is working?
-        //ParseError("can't initialize regex for '%s' (%d) %p",
-        //    config.re.c_str(), err, s_scratch);
-    }
+    if ( !scratcher->allocate(config.db) )
+        ParseError("can't allocate scratch for regex '%s'", config.re.c_str());
+
     config.pmd.pattern_buf = config.re.c_str();
     config.pmd.pattern_size = config.re.size();
 
@@ -156,12 +142,20 @@ bool RegexOption::operator==(const IpsOption& ips) const
     return this == &ips;
 }
 
+struct ScanContext
+{
+    unsigned index;
+    bool found = false;
+};
+
 static int hs_match(
     unsigned int /*id*/, unsigned long long /*from*/, unsigned long long to,
-    unsigned int /*flags*/, void* /*context*/)
+    unsigned int /*flags*/, void* context)
 {
-    s_to = (unsigned)to;
-    return 1;  // stop search
+    ScanContext* scan = (ScanContext*)context;
+    scan->index = (unsigned)to;
+    scan->found = true;
+    return 1;
 }
 
 IpsOption::EvalStatus RegexOption::eval(Cursor& c, Packet*)
@@ -176,20 +170,17 @@ IpsOption::EvalStatus RegexOption::eval(Cursor& c, Packet*)
     if ( pos > c.size() )
         return NO_MATCH;
 
-    hs_scratch_t* ss =
-        (hs_scratch_t*)SnortConfig::get_conf()->state[get_instance_id()][scratch_index];
-
-    s_to = 0;
+    ScanContext scan;
 
     hs_error_t stat = hs_scan(
         config.db, (const char*)c.buffer()+pos, c.size()-pos, 0,
-        ss, hs_match, nullptr);
+        scratcher->get(), hs_match, &scan);
 
-    if ( s_to and stat == HS_SCAN_TERMINATED )
+    if ( scan.found and stat == HS_SCAN_TERMINATED )
     {
-        s_to += pos;
-        c.set_pos(s_to);
-        c.set_delta(s_to);
+        scan.index += pos;
+        c.set_pos(scan.index);
+        c.set_delta(scan.index);
         return MATCH;
     }
     return NO_MATCH;
@@ -231,10 +222,8 @@ class RegexModule : public Module
 {
 public:
     RegexModule() : Module(s_name, s_help, s_params)
-    {
-        scratch_index = SnortConfig::request_scratch(
-            RegexModule::scratch_setup, RegexModule::scratch_cleanup);
-    }
+    { scratcher = new HyperScratchAllocator; }
+
     ~RegexModule() override;
 
     bool begin(const char*, int, SnortConfig*) override;
@@ -255,14 +244,14 @@ public:
 
 private:
     RegexConfig config;
-    static void scratch_setup(SnortConfig* sc);
-    static void scratch_cleanup(SnortConfig* sc);
 };
 
 RegexModule::~RegexModule()
 {
     if ( config.db )
         hs_free_database(config.db);
+
+    delete scratcher;
 }
 
 bool RegexModule::begin(const char*, int, SnortConfig*)
@@ -327,33 +316,6 @@ bool RegexModule::end(const char*, int, SnortConfig*)
     return true;
 }
 
-void RegexModule::scratch_setup(SnortConfig* sc)
-{
-    for ( unsigned i = 0; i < sc->num_slots; ++i )
-    {
-        hs_scratch_t** ss = (hs_scratch_t**) &sc->state[i][scratch_index];
-
-        if ( s_scratch )
-            hs_clone_scratch(s_scratch, ss);
-        else
-            ss = nullptr;
-    }
-}
-
-void RegexModule::scratch_cleanup(SnortConfig* sc)
-{
-    for ( unsigned i = 0; i < sc->num_slots; ++i )
-    {
-        hs_scratch_t* ss = (hs_scratch_t*) sc->state[i][scratch_index];
-
-        if ( ss )
-        {
-            hs_free_scratch(ss);
-            ss = nullptr;
-        }
-    }
-}
-
 //-------------------------------------------------------------------------
 // api methods
 //-------------------------------------------------------------------------
@@ -375,14 +337,6 @@ static IpsOption* regex_ctor(Module* m, OptTreeNode*)
 static void regex_dtor(IpsOption* p)
 { delete p; }
 
-static void regex_pterm(SnortConfig*)
-{
-    if ( s_scratch )
-        hs_free_scratch(s_scratch);
-
-    s_scratch = nullptr;
-}
-
 static const IpsApi regex_api =
 {
     {
@@ -400,7 +354,7 @@ static const IpsApi regex_api =
     OPT_TYPE_DETECTION,
     0, 0,
     nullptr,
-    regex_pterm,
+    nullptr,
     nullptr,
     nullptr,
     regex_ctor,

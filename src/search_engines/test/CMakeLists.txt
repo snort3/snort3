@@ -10,7 +10,11 @@ add_cpputest( search_tool_test
 
 if ( HAVE_HYPERSCAN )
     add_cpputest( hyperscan_test
-        SOURCES ../hyperscan.cc
+        SOURCES
+            ../hyperscan.cc
+            ../../framework/module.cc
+            ../../helpers/scratch_allocator.cc
+            ../../helpers/hyper_scratch_allocator.cc
         LIBS ${HS_LIBRARIES}
     )
 endif()

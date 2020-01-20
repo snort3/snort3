@@ -6,6 +6,8 @@ if ( HAVE_HYPERSCAN )
             ../../framework/module.cc
             ../../framework/ips_option.cc
             ../../framework/value.cc
+            ../../helpers/scratch_allocator.cc
+            ../../helpers/hyper_scratch_allocator.cc
             ../../sfip/sf_ip.cc
             $<TARGET_OBJECTS:catch_tests>
         LIBS

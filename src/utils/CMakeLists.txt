@@ -24,24 +24,24 @@ set( UTIL_INCLUDES
 add_library ( utils OBJECT
     ${UTIL_INCLUDES}
     ${SNPRINTF_SOURCES}
-    boyer_moore.cc 
+    boyer_moore.cc
     dnet_header.h
     dyn_array.cc
     dyn_array.h
     kmap.cc
-    segment_mem.cc 
-    sflsq.cc 
-    sfmemcap.cc 
+    segment_mem.cc
+    sflsq.cc
+    sfmemcap.cc
     snort_bounds.h
     stats.cc
     util.cc
     util_ber.cc
     util_cstring.cc
-    util_jsnorm.cc 
-    util_net.cc 
+    util_jsnorm.cc
+    util_net.cc
     util_net.h
-    util_unfold.cc 
-    util_utf.cc 
+    util_unfold.cc
+    util_utf.cc
     ${TEST_FILES}
 )
 

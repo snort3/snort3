@@ -30,6 +30,7 @@
 
 #include "events/event_queue.h"
 #include "framework/bits.h"
+#include "helpers/scratch_allocator.h"
 #include "main/policy.h"
 #include "main/thread.h"
 #include "sfip/sf_cidr.h"
@@ -152,8 +153,6 @@ struct GHash;
 struct XHash;
 struct SnortConfig;
 
-typedef void (* ScScratchFunc)(SnortConfig* sc);
-
 class ReloadResourceTuner
 {
 public:
@@ -233,13 +232,19 @@ public:
     // somehow a packet thread needs a much lower setting
     long int pcre_match_limit = 1500;
     long int pcre_match_limit_recursion = 1500;
+
     int pcre_ovector_size = 0;
+    bool pcre_override = true;
 
     int asn1_mem = 0;
     uint32_t run_flags = 0;
 
     unsigned offload_limit = 99999;  // disabled
     unsigned offload_threads = 0;    // disabled
+
+#ifdef HAVE_HYPERSCAN
+    bool hyperscan_literals = false;
+#endif
 
     bool global_rule_state = false;
     bool global_default_rule_state = true;
@@ -396,6 +401,7 @@ public:
     MemoryConfig* memory = nullptr;
     //------------------------------------------------------
 
+    std::vector<ScratchAllocator*> scratchers;
     std::vector<void *>* state = nullptr;
     unsigned num_slots = 0;
 
@@ -710,7 +716,8 @@ public:
 
     // This requests an entry in the scratch space vector and calls setup /
     // cleanup as appropriate
-    SO_PUBLIC static int request_scratch(ScScratchFunc setup, ScScratchFunc cleanup);
+    SO_PUBLIC static int request_scratch(ScratchAllocator*);
+    SO_PUBLIC static void release_scratch(int);
 
     // Use this to access current thread's conf from other units
     static void set_conf(SnortConfig*);

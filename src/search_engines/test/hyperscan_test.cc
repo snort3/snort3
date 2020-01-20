@@ -25,9 +25,11 @@
 #include <string.h>
 
 #include "framework/base_api.h"
+#include "framework/counts.h"
 #include "framework/mpse.h"
 #include "framework/mpse_batch.h"
 #include "main/snort_config.h"
+#include "utils/stats.h"
 
 // must appear after snort_config.h to avoid broken c++ map include
 #include <CppUTest/CommandLineTestRunner.h>
@@ -38,6 +40,7 @@ using namespace snort;
 //-------------------------------------------------------------------------
 // base stuff
 //-------------------------------------------------------------------------
+
 namespace snort
 {
 Mpse::Mpse(const char*) { }
@@ -96,9 +99,7 @@ SnortConfig s_conf;
 THREAD_LOCAL SnortConfig* snort_conf = &s_conf;
 
 static std::vector<void *> s_state;
-
-ScScratchFunc scratch_setup;
-ScScratchFunc scratch_cleanup;
+static ScratchAllocator* scratcher = nullptr;
 
 SnortConfig::SnortConfig(const SnortConfig* const)
 {
@@ -108,14 +109,14 @@ SnortConfig::SnortConfig(const SnortConfig* const)
 
 SnortConfig::~SnortConfig() = default;
 
-int SnortConfig::request_scratch(ScScratchFunc setup, ScScratchFunc cleanup)
+int SnortConfig::request_scratch(ScratchAllocator* s)
 {
-    scratch_setup = setup;
-    scratch_cleanup = cleanup;
+    scratcher = s;
     s_state.resize(1);
-
     return 0;
 }
+
+void SnortConfig::release_scratch(int) { }
 
 SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
@@ -131,6 +132,9 @@ unsigned get_instance_id()
 { return 0; }
 
 }
+void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
+void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
+
 //-------------------------------------------------------------------------
 // stubs, spies, etc.
 //-------------------------------------------------------------------------
@@ -212,7 +216,9 @@ TEST(mpse_hs_base, mpse)
 
 TEST_GROUP(mpse_hs_match)
 {
+    Module* mod = nullptr;
     Mpse* hs = nullptr;
+    bool do_cleanup = false;
     const MpseApi* mpse_api = (MpseApi*)se_hyperscan;
 
     void setup() override
@@ -220,6 +226,7 @@ TEST_GROUP(mpse_hs_match)
         // FIXIT-L cpputest hangs or crashes in the leak detector
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         CHECK(se_hyperscan);
+        mod = mpse_api->base.mod_ctor();
         hs = mpse_api->ctor(snort_conf, nullptr, &s_agent);
         CHECK(hs);
         hits = 0;
@@ -228,7 +235,9 @@ TEST_GROUP(mpse_hs_match)
     void teardown() override
     {
         mpse_api->dtor(hs);
-        scratch_cleanup(snort_conf);
+        if ( do_cleanup )
+            scratcher->cleanup(snort_conf);
+        mpse_api->base.mod_dtor(mod);
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
@@ -238,6 +247,8 @@ TEST(mpse_hs_match, empty)
     CHECK(hs->prep_patterns(snort_conf) != 0);
     CHECK(parse_errors == 0);
     CHECK(hs->get_pattern_count() == 0);
+
+    do_cleanup = scratcher->setup(snort_conf);
 
     int state = 0;
     CHECK(hs->search((uint8_t*)"foo", 3, match, nullptr, &state) == 0);
@@ -252,7 +263,7 @@ TEST(mpse_hs_match, single)
     CHECK(hs->prep_patterns(snort_conf) == 0);
     CHECK(hs->get_pattern_count() == 1);
 
-    scratch_setup(snort_conf);
+    do_cleanup = scratcher->setup(snort_conf);
 
     int state = 0;
     CHECK(hs->search((uint8_t*)"foo", 3, match, nullptr, &state) == 1);
@@ -267,7 +278,7 @@ TEST(mpse_hs_match, nocase)
     CHECK(hs->prep_patterns(snort_conf) == 0);
     CHECK(hs->get_pattern_count() == 1);
 
-    scratch_setup(snort_conf);
+    do_cleanup = scratcher->setup(snort_conf);
 
     int state = 0;
     CHECK(hs->search((uint8_t*)"foo", 3, match, nullptr, &state) == 1);
@@ -283,7 +294,7 @@ TEST(mpse_hs_match, other)
     CHECK(hs->prep_patterns(snort_conf) == 0);
     CHECK(hs->get_pattern_count() == 1);
 
-    scratch_setup(snort_conf);
+    do_cleanup = scratcher->setup(snort_conf);
 
     int state = 0;
     CHECK(hs->search((uint8_t*)"foo", 3, match, nullptr, &state) == 1);
@@ -301,7 +312,8 @@ TEST(mpse_hs_match, multi)
 
     CHECK(hs->prep_patterns(snort_conf) == 0);
     CHECK(hs->get_pattern_count() == 3);
-    scratch_setup(snort_conf);
+
+    do_cleanup = scratcher->setup(snort_conf);
 
     int state = 0;
     CHECK(hs->search((uint8_t*)"foo bar baz", 11, match, nullptr, &state) == 3);
@@ -318,7 +330,8 @@ TEST(mpse_hs_match, regex)
 
     CHECK(hs->prep_patterns(snort_conf) == 0);
     CHECK(hs->get_pattern_count() == 1);
-    scratch_setup(snort_conf);
+
+    do_cleanup = scratcher->setup(snort_conf);
 
     int state = 0;
     CHECK(hs->search((uint8_t*)"foo bar baz", 11, match, nullptr, &state) == 0);
@@ -335,7 +348,8 @@ TEST(mpse_hs_match, pcre)
 
     CHECK(hs->prep_patterns(snort_conf) == 0);
     CHECK(hs->get_pattern_count() == 1);
-    scratch_setup(snort_conf);
+
+    do_cleanup = scratcher->setup(snort_conf);
 
     int state = 0;
     CHECK(hs->search((uint8_t*)":definition(", 12, match, nullptr, &state) == 0);
@@ -352,8 +366,10 @@ TEST(mpse_hs_match, pcre)
 
 TEST_GROUP(mpse_hs_multi)
 {
+    Module* mod = nullptr;
     Mpse* hs1 = nullptr;
     Mpse* hs2 = nullptr;
+    bool do_cleanup = false;
     const MpseApi* mpse_api = (MpseApi*)se_hyperscan;
 
     void setup() override
@@ -361,6 +377,8 @@ TEST_GROUP(mpse_hs_multi)
         // FIXIT-L cpputest hangs or crashes in the leak detector
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         CHECK(se_hyperscan);
+
+        mod = mpse_api->base.mod_ctor();
 
         hs1 = mpse_api->ctor(snort_conf, nullptr, &s_agent);
         CHECK(hs1);
@@ -375,7 +393,9 @@ TEST_GROUP(mpse_hs_multi)
     {
         mpse_api->dtor(hs1);
         mpse_api->dtor(hs2);
-        scratch_cleanup(snort_conf);
+        if ( do_cleanup )
+            scratcher->cleanup(snort_conf);
+        mpse_api->base.mod_dtor(mod);
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
@@ -393,7 +413,7 @@ TEST(mpse_hs_multi, single)
     CHECK(hs1->get_pattern_count() == 1);
     CHECK(hs2->get_pattern_count() == 1);
 
-    scratch_setup(snort_conf);
+    do_cleanup = scratcher->setup(snort_conf);
 
     int state = 0;
     CHECK(hs1->search((uint8_t*)"fubar", 5, match, nullptr, &state) == 1 );

@@ -130,8 +130,7 @@ int SearchTool::find(
         num = mpsegrp->get_offload_mpse()->search((const uint8_t*)str, len, mf, user_data, &state);
 
         if ( num < 0 )
-            num = mpsegrp->get_normal_mpse()->search((const uint8_t*)str, len, mf, user_data,
-                    &state);
+            num = mpsegrp->get_normal_mpse()->search((const uint8_t*)str, len, mf, user_data, &state);
     }
     else
         num = mpsegrp->get_normal_mpse()->search((const uint8_t*)str, len, mf, user_data, &state);

@@ -132,6 +132,13 @@ endif()
 # set library variables
 if (HS_FOUND)
     check_library_exists (${HS_LIBRARIES} hs_scan "" HAVE_HYPERSCAN)
+    if (HAVE_HYPERSCAN)
+        cmake_push_check_state(RESET)
+        set(CMAKE_REQUIRED_INCLUDES ${HS_INCLUDE_DIRS})
+        set(CMAKE_REQUIRED_LIBRARIES ${HS_LIBRARIES})
+        check_function_exists(hs_compile_lit HAVE_HS_COMPILE_LIT)
+        cmake_pop_check_state()
+    endif()
 endif()
 
 if (DEFINED LIBLZMA_LIBRARIES)

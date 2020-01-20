@@ -404,7 +404,7 @@ int detection_option_node_evaluate(
         IpsOption* opt = (IpsOption*)node->option_data;
         PatternMatchData* pmd = opt->get_pattern(0, RULE_WO_DIR);
 
-        if ( pmd and pmd->last_check )
+        if ( pmd and pmd->is_literal() and pmd->last_check )
             content_last = pmd->last_check + get_instance_id();
     }
 
@@ -610,7 +610,7 @@ int detection_option_node_evaluate(
                                     IpsOption* opt = (IpsOption*)child_node->option_data;
                                     PatternMatchData* pmd = opt->get_pattern(0, RULE_WO_DIR);
 
-                                    if ( pmd and pmd->is_unbounded() )
+                                    if ( pmd and pmd->is_literal() and pmd->is_unbounded() )
                                     {
                                         // Only increment result once. Should hit this
                                         // condition on first loop iteration

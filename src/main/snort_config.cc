@@ -85,7 +85,8 @@ SnortConfig* parser_conf = nullptr;
 THREAD_LOCAL SnortConfig* snort_conf = nullptr;
 
 uint32_t SnortConfig::warning_flags = 0;
-static std::vector <std::pair<ScScratchFunc,ScScratchFunc>> scratch_handlers;
+
+static std::vector<ScratchAllocator*> scratch_handlers;
 
 //-------------------------------------------------------------------------
 // private implementation
@@ -251,16 +252,8 @@ SnortConfig::~SnortConfig()
     FreeClassifications(classifications);
     FreeReferences(references);
 
-    // Only call scratch cleanup if we actually called scratch setup
-    if ( state and state[0].size() > 0 )
-    {
-        for ( unsigned i = scratch_handlers.size(); i > 0; i-- )
-        {
-            if ( scratch_handlers[i - 1].second )
-                scratch_handlers[i - 1].second(this);
-        }
-        // FIXIT-L: Do we need to shrink_to_fit() state->scratch at this point?
-    }
+    for ( auto* s : scratchers )
+        s->cleanup(this);
 
     FreeRuleLists(this);
     PortTablesFree(port_tables);
@@ -346,19 +339,16 @@ void SnortConfig::setup()
 
 void SnortConfig::post_setup()
 {
-    unsigned i;
     unsigned int handler_count = scratch_handlers.size();
 
     // Ensure we have allocated the scratch space vector for each thread
-    for ( i = 0; i < num_slots; ++i )
-    {
+    for ( unsigned i = 0; i < num_slots; ++i )
         state[i].resize(handler_count);
-    }
 
-    for ( i = 0; i < handler_count; ++i )
+    for ( auto* s : scratch_handlers )
     {
-        if ( scratch_handlers[i].first )
-            scratch_handlers[i].first(this);
+        if ( s and s->setup(this) )
+            scratchers.push_back(s);
     }
 }
 
@@ -1072,13 +1062,19 @@ bool SnortConfig::tunnel_bypass_enabled(uint8_t proto)
     return (!((get_conf()->tunnel_mask & proto) or SFDAQ::get_tunnel_bypass(proto)));
 }
 
-SO_PUBLIC int SnortConfig::request_scratch(ScScratchFunc setup, ScScratchFunc cleanup)
+SO_PUBLIC int SnortConfig::request_scratch(ScratchAllocator* s)
 {
-    scratch_handlers.emplace_back(std::make_pair(setup, cleanup));
+    scratch_handlers.emplace_back(s);
 
     // We return an index that the caller uses to reference their per thread
     // scratch space
     return scratch_handlers.size() - 1;
+}
+
+SO_PUBLIC void SnortConfig::release_scratch(int id)
+{
+    assert((unsigned)id < scratch_handlers.size());
+    scratch_handlers[id] = nullptr;
 }
 
 SO_PUBLIC SnortConfig* SnortConfig::get_parser_conf()

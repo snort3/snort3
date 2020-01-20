@@ -31,6 +31,7 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/hashfcn.h"
+#include "helpers/scratch_allocator.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "profiler/profiler.h"
@@ -68,25 +69,17 @@ struct PcreData
     char* expression;
 };
 
-/*
- * we need to specify the vector length for our pcre_exec call.  we only care
- * about the first vector, which if the match is successful will include the
- * offset to the end of the full pattern match.  If we decide to store other
- * matches, make *SURE* that this is a multiple of 3 as pcre requires it.
- */
-// the wrong size caused the pcre lib to segfault but that has since been
-// fixed.  it may be that with the updated lib, the need to get the size
-// exactly correct is obviated and thus the need to reload as well.
-
-/* Since SO rules are loaded 1 time at startup, regardless of
- * configuration, we won't pcre_capture count again, so save the max.  */
-static int s_ovector_max = 0;
+// we need to specify the vector length for our pcre_exec call.  we only care
+// about the first vector, which if the match is successful will include the
+// offset to the end of the full pattern match.  if we decide to store other
+// matches, make *SURE* that this is a multiple of 3 as pcre requires it.
 
 // this is a temporary value used during parsing and set in snort conf
 // by verify; search uses the value in snort conf
-static int s_ovector_size = 0;
+static int s_ovector_max = -1;
 
 static unsigned scratch_index;
+static ScratchAllocator* scratcher = nullptr;
 
 static THREAD_LOCAL ProfileStats pcrePerfStats;
 
@@ -102,8 +95,8 @@ static void pcre_capture(
     pcre_fullinfo((const pcre*)code, (const pcre_extra*)extra,
         PCRE_INFO_CAPTURECOUNT, &tmp_ovector_size);
 
-    if (tmp_ovector_size > s_ovector_size)
-        s_ovector_size = tmp_ovector_size;
+    if (tmp_ovector_size > s_ovector_max)
+        s_ovector_max = tmp_ovector_size;
 }
 
 static void pcre_check_anchored(PcreData* pcre_data)
@@ -156,7 +149,7 @@ static void pcre_check_anchored(PcreData* pcre_data)
     }
 }
 
-static void pcre_parse(const char* data, PcreData* pcre_data)
+static void pcre_parse(const SnortConfig* sc, const char* data, PcreData* pcre_data)
 {
     const char* error;
     char* re, * free_me;
@@ -248,7 +241,10 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
          * these are snort specific don't work with pcre or perl
          */
         case 'R':  pcre_data->options |= SNORT_PCRE_RELATIVE; break;
-        case 'O':  pcre_data->options |= SNORT_OVERRIDE_MATCH_LIMIT; break;
+        case 'O':
+            if ( sc->pcre_override )
+                pcre_data->options |= SNORT_OVERRIDE_MATCH_LIMIT;
+            break;
 
         default:
             ParseError("unknown/extra pcre option encountered");
@@ -619,12 +615,15 @@ public:
     PcreModule() : Module(s_name, s_help, s_params)
     {
         data = nullptr;
-        scratch_index = SnortConfig::request_scratch(
-            PcreModule::scratch_setup, PcreModule::scratch_cleanup);
+        scratcher = new SimpleScratchAllocator(scratch_setup, scratch_cleanup);
+        scratch_index = scratcher->get_id();
     }
 
     ~PcreModule() override
-    { delete data; }
+    {
+        delete data;
+        delete scratcher;
+    }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
@@ -639,7 +638,7 @@ public:
 
 private:
     PcreData* data;
-    static void scratch_setup(SnortConfig* sc);
+    static bool scratch_setup(SnortConfig* sc);
     static void scratch_cleanup(SnortConfig* sc);
 };
 
@@ -656,10 +655,10 @@ bool PcreModule::begin(const char*, int, SnortConfig*)
     return true;
 }
 
-bool PcreModule::set(const char*, Value& v, SnortConfig*)
+bool PcreModule::set(const char*, Value& v, SnortConfig* sc)
 {
     if ( v.is("~re") )
-        pcre_parse(v.get_string(), data);
+        pcre_parse(sc, v.get_string(), data);
 
     else
         return false;
@@ -667,13 +666,26 @@ bool PcreModule::set(const char*, Value& v, SnortConfig*)
     return true;
 }
 
-void PcreModule::scratch_setup(SnortConfig* sc)
+bool PcreModule::scratch_setup(SnortConfig* sc)
 {
+    if ( s_ovector_max < 0 )
+        return false;
+
+    // The pcre_fullinfo() function can be used to find out how many
+    // capturing subpatterns there are in a compiled pattern. The
+    // smallest size for ovector that will allow for n captured
+    // substrings, in addition to the offsets of the substring matched
+    // by the whole pattern is 3(n+1).
+
+    sc->pcre_ovector_size = 3 * (s_ovector_max + 1);
+    s_ovector_max = -1;
+
     for ( unsigned i = 0; i < sc->num_slots; ++i )
     {
         std::vector<void *>& ss = sc->state[i];
-        ss[scratch_index] = snort_calloc(s_ovector_max, sizeof(int));
+        ss[scratch_index] = snort_calloc(sc->pcre_ovector_size, sizeof(int));
     }
+    return true;
 }
 
 void PcreModule::scratch_cleanup(SnortConfig* sc)
@@ -681,10 +693,7 @@ void PcreModule::scratch_cleanup(SnortConfig* sc)
     for ( unsigned i = 0; i < sc->num_slots; ++i )
     {
         std::vector<void *>& ss = sc->state[i];
-
-        if ( ss[scratch_index] )
-            snort_free(ss[scratch_index]);
-
+        snort_free(ss[scratch_index]);
         ss[scratch_index] = nullptr;
     }
 }
@@ -715,23 +724,6 @@ static void pcre_dtor(IpsOption* p)
     delete p;
 }
 
-static void pcre_verify(SnortConfig* sc)
-{
-    /* The pcre_fullinfo() function can be used to find out how many
-     * capturing subpatterns there are in a compiled pattern. The
-     * smallest size for ovector that will allow for n captured
-     * substrings, in addition to the offsets of the substring matched
-     * by the whole pattern, is (n+1)*3.  */
-    s_ovector_size += 1;
-    s_ovector_size *= 3;
-
-    if (s_ovector_size > s_ovector_max)
-        s_ovector_max = s_ovector_size;
-
-    sc->pcre_ovector_size = s_ovector_size;
-    s_ovector_size = 0;
-}
-
 static const IpsApi pcre_api =
 {
     {
@@ -754,7 +746,7 @@ static const IpsApi pcre_api =
     nullptr,
     pcre_ctor,
     pcre_dtor,
-    pcre_verify
+    nullptr
 };
 
 #ifdef BUILDING_SO

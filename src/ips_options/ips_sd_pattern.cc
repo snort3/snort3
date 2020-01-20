@@ -32,6 +32,7 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/hashfcn.h"
+#include "helpers/hyper_scratch_allocator.h"
 #include "log/messages.h"
 #include "log/obfuscator.h"
 #include "main/snort_config.h"
@@ -49,12 +50,7 @@ using namespace snort;
 #define SD_SOCIAL_NODASHES_PATTERN R"(\d{9})"
 #define SD_CREDIT_PATTERN_ALL      R"(\d{4}\D?\d{4}\D?\d{2}\D?\d{2}\D?\d{3,4})"
 
-// we need to update scratch in the main thread as each pattern is processed
-// and then clone to thread specific after all rules are loaded.  s_scratch is
-// a prototype that is large enough for all uses.
-
-static hs_scratch_t* s_scratch = nullptr;
-static unsigned scratch_index;
+static HyperScratchAllocator* scratcher = nullptr;
 
 struct SdStats
 {
@@ -133,12 +129,8 @@ private:
 SdPatternOption::SdPatternOption(const SdPatternConfig& c) :
     IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE), config(c)
 {
-    if ( hs_error_t err = hs_alloc_scratch(config.db, &s_scratch) )
-    {
-        // FIXIT-L why is this failing but everything is working?
-        ParseError("can't initialize sd_pattern for %s (%d) %p",
-            config.pii.c_str(), err, (void*)s_scratch);
-    }
+    if ( !scratcher->allocate(config.db) )
+        ParseError("can't allocate scratch for sd_pattern '%s'", config.pii.c_str());
 
     config.pmd.pattern_buf = config.pii.c_str();
     config.pmd.pattern_size = config.pii.size();
@@ -249,13 +241,10 @@ unsigned SdPatternOption::SdSearch(const Cursor& c, Packet* p)
     const uint8_t* buf = c.start();
     unsigned int buflen = c.length();
 
-    std::vector<void *> ss = SnortConfig::get_conf()->state[get_instance_id()];
-    assert(ss[scratch_index]);
-
     hsContext ctx(config, p, start, buf, buflen);
 
     hs_error_t stat = hs_scan(config.db, (const char*)buf, buflen, 0,
-        (hs_scratch_t*)ss[scratch_index], hs_match, (void*)&ctx);
+        scratcher->get(), hs_match, (void*)&ctx);
 
     if ( stat == HS_SCAN_TERMINATED )
         ++s_stats.terminated;
@@ -300,10 +289,10 @@ class SdPatternModule : public Module
 {
 public:
     SdPatternModule() : Module(s_name, s_help, s_params)
-    {
-        scratch_index = SnortConfig::request_scratch(
-            SdPatternModule::scratch_setup, SdPatternModule::scratch_cleanup);
-    }
+    { scratcher = new HyperScratchAllocator; }
+
+    ~SdPatternModule() override
+    { delete scratcher; }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value& v, SnortConfig*) override;
@@ -326,9 +315,6 @@ public:
 
 private:
     SdPatternConfig config;
-
-    static void scratch_setup(SnortConfig*);
-    static void scratch_cleanup(SnortConfig*);
 };
 
 bool SdPatternModule::begin(const char*, int, SnortConfig*)
@@ -395,37 +381,6 @@ bool SdPatternModule::end(const char*, int, SnortConfig*)
         return false;
     }
     return true;
-}
-
-//-------------------------------------------------------------------------
-// public methods
-//-------------------------------------------------------------------------
-
-void SdPatternModule::scratch_setup(SnortConfig* sc)
-{
-    for ( unsigned i = 0; i < sc->num_slots; ++i )
-    {
-        std::vector<void *>& ss = sc->state[i];
-
-        if ( s_scratch )
-            hs_clone_scratch(s_scratch, (hs_scratch_t**)&ss[scratch_index]);
-        else
-            ss[scratch_index] = nullptr;
-    }
-}
-
-void SdPatternModule::scratch_cleanup(SnortConfig* sc)
-{
-    for ( unsigned i = 0; i < sc->num_slots; ++i )
-    {
-        std::vector<void *>& ss = sc->state[i];
-
-        if ( ss[scratch_index] )
-        {
-            hs_free_scratch((hs_scratch_t*)ss[scratch_index]);
-            ss[scratch_index] = nullptr;
-        }
-    }
 }
 
 //-------------------------------------------------------------------------

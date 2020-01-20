@@ -81,6 +81,11 @@ static const Parameter detection_params[] =
     { "global_rule_state", Parameter::PT_BOOL, nullptr, "false",
       "apply rule_state against all policies" },
 
+#ifdef HAVE_HYPERSCAN
+    { "hyperscan_literals", Parameter::PT_BOOL, nullptr, "false",
+      "use hyperscan for content literal searches instead of boyer-moore" },
+#endif
+
     { "offload_limit", Parameter::PT_INT, "0:max32", "99999",
       "minimum sizeof PDU to offload fast pattern search (defaults to disabled)" },
 
@@ -88,13 +93,16 @@ static const Parameter detection_params[] =
       "maximum number of simultaneous offloads (defaults to disabled)" },
 
     { "pcre_enable", Parameter::PT_BOOL, nullptr, "true",
-      "disable pcre pattern matching" },
+      "enable pcre pattern matching" },
 
     { "pcre_match_limit", Parameter::PT_INT, "0:max32", "1500",
       "limit pcre backtracking, 0 = off" },
 
     { "pcre_match_limit_recursion", Parameter::PT_INT, "0:max32", "1500",
       "limit pcre stack consumption, 0 = off" },
+
+    { "pcre_override", Parameter::PT_BOOL, nullptr, "true",
+      "enable pcre match limit overrides when pattern matching (ie ignore /O)" },
 
     { "enable_address_anomaly_checks", Parameter::PT_BOOL, nullptr, "false",
       "enable check and alerting of address anomalies" },
@@ -144,6 +152,11 @@ bool DetectionModule::set(const char* fqn, Value& v, SnortConfig* sc)
     else if ( v.is("global_rule_state") )
         sc->global_rule_state = v.get_bool();
 
+#ifdef HAVE_HYPERSCAN
+    else if ( v.is("hyperscan_literals") )
+        sc->hyperscan_literals = v.get_bool();
+#endif
+
     else if ( v.is("offload_limit") )
         sc->offload_limit = v.get_uint32();
 
@@ -189,6 +202,9 @@ bool DetectionModule::set(const char* fqn, Value& v, SnortConfig* sc)
                 sc->pcre_match_limit_recursion, thread_stack_size);
         }
     }
+
+    else if ( v.is("pcre_override") )
+        sc->pcre_override = v.get_bool();
 
     else if ( v.is("enable_address_anomaly_checks") )
         sc->address_anomaly_check_enabled = v.get_bool();
