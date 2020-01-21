@@ -305,7 +305,6 @@ while [ $# -ne 0 ]; do
             append_cache_entry ENABLE_TCMALLOC          BOOL false
             ;;
         --enable-appid-third-party)
-            append_cache_entry ENABLE_APPID_THIRD_PARTY BOOL true
             ;;
         --enable-unit-tests)
             append_cache_entry ENABLE_UNIT_TESTS        BOOL true
