@@ -34,11 +34,11 @@ using RnaTracker = std::shared_ptr<snort::HostTracker>;
 struct RnaLoggerEvent : public Event
 {
     RnaLoggerEvent(uint16_t p_type, uint16_t p_subtype, const RnaTracker* p_ht,
-        const u_int8_t* p_mac) : type(p_type), subtype(p_subtype), ht(p_ht), mac(p_mac) { }
+        const uint8_t* p_mac) : type(p_type), subtype(p_subtype), ht(p_ht), mac(p_mac) { }
     uint16_t type;
     uint16_t subtype;
     const RnaTracker* ht;
-    const u_int8_t* mac;
+    const uint8_t* mac;
     const struct in6_addr* ip;
     void* cond_var = nullptr;
 };
@@ -48,7 +48,7 @@ class RnaLogger
 public:
     RnaLogger(const bool enable) : enabled(enable) { }
     bool log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
-       const struct in6_addr* src_ip, const u_int8_t* src_mac,
+       const struct in6_addr* src_ip, const uint8_t* src_mac,
        uint32_t event_time = 0, void* cond_var = nullptr);
 
 private:
