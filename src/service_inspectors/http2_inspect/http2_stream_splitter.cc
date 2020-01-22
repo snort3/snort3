@@ -39,7 +39,6 @@ using namespace snort;
 using namespace HttpCommon;
 using namespace Http2Enums;
 
-// Mindless scan() that just flushes whatever it is given
 StreamSplitter::Status Http2StreamSplitter::scan(Packet* pkt, const uint8_t* data, uint32_t length,
     uint32_t, uint32_t* flush_offset)
 {

@@ -27,6 +27,7 @@
 #include "protocols/packet.h"
 #include "service_inspectors/http_inspect/http_common.h"
 #include "service_inspectors/http_inspect/http_field.h"
+#include "service_inspectors/http_inspect/http_inspect.h"
 #include "service_inspectors/http_inspect/http_test_manager.h"
 #include "stream/stream.h"
 
@@ -92,11 +93,17 @@ bool Http2Inspect::get_buf(unsigned id, Packet* p, InspectionBuffer& b)
     return true;
 }
 
-bool Http2Inspect::get_fp_buf(InspectionBuffer::Type /*ibt*/, Packet* /*p*/,
-    InspectionBuffer& /*b*/)
+bool Http2Inspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
 {
-    // No fast pattern buffers have been defined for HTTP/2
-    return false;
+    // All current HTTP/2 fast pattern buffers are inherited from http_inspect. Just pass the
+    // request on.
+    Http2FlowData* const session_data =
+        (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
+
+    if ((session_data == nullptr) || (session_data->hi == nullptr))
+        return false;
+
+    return session_data->hi->get_fp_buf(ibt, p, b);
 }
 
 void Http2Inspect::eval(Packet* p)
