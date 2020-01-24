@@ -419,18 +419,7 @@ static void ff_udp_len(const Args& a)
 
 static void ff_vlan(const Args& a)
 {
-    uint16_t vid;
-
-    if (a.pkt->flow)
-        vid = a.pkt->flow->key->vlan_tag;
-
-    else if ( a.pkt->proto_bits & PROTO_BIT__VLAN )
-        vid = layer::get_vlan_layer(a.pkt)->vid();
-
-    else
-        return;
-
-    TextLog_Print(csv_log, "%hu", vid);
+    TextLog_Print(csv_log, "%hu", a.pkt->get_flow_vlan_id());
 }
 
 //-------------------------------------------------------------------------

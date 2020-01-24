@@ -31,6 +31,7 @@
 #include "managers/codec_manager.h"
 
 #include "packet_manager.h"
+#include "vlan.h"
 
 namespace snort
 {
@@ -248,6 +249,18 @@ SnortProtocolId Packet::get_snort_protocol_id()
         return context->get_snort_protocol_id();
 
     return flow ? flow->ssn_state.snort_protocol_id : UNKNOWN_PROTOCOL_ID;
+}
+
+uint16_t Packet::get_flow_vlan_id() const
+{
+    uint16_t vid = 0;
+
+    if (flow)
+        vid = flow->key->vlan_tag;
+    else if ( !SnortConfig::get_vlan_agnostic() and (proto_bits & PROTO_BIT__VLAN) )
+        vid = layer::get_vlan_layer(this)->vid();
+
+    return vid;
 }
 
 } // namespace snort

@@ -305,6 +305,8 @@ struct SO_PUBLIC Packet
             flow->ssn_state.snort_protocol_id = proto_id;
     }
 
+    uint16_t get_flow_vlan_id() const;
+
 private:
     bool allocated;
 };

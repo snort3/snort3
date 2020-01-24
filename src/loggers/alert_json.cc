@@ -581,19 +581,8 @@ static bool ff_udp_len(const Args& a)
 
 static bool ff_vlan(const Args& a)
 {
-    uint16_t vid;
-
-    if (a.pkt->flow)
-        vid = a.pkt->flow->key->vlan_tag;
-
-    else if ( a.pkt->proto_bits & PROTO_BIT__VLAN )
-        vid = layer::get_vlan_layer(a.pkt)->vid();
-
-    else
-        return false;
-
     print_label(a, "vlan");
-    TextLog_Print(json_log, "%hu", vid);
+    TextLog_Print(json_log, "%hu", a.pkt->get_flow_vlan_id());
     return true;
 }
 
