@@ -33,7 +33,9 @@ unsigned HttpContextData::ips_id = 0;
 
 HttpMsgSection* HttpContextData::get_snapshot(const Packet* p)
 {
-    if (Http2FlowData::inspector_id != 0)
+    // FIXIT-H checking for nullptr prevents a crash but it doesn't solve the problem of making
+    // xtra data work with H2I
+    if ((p != nullptr) && (Http2FlowData::inspector_id != 0))
     {
         const Http2FlowData* const h2i_flow_data =
                (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
