@@ -50,6 +50,7 @@ struct RegexConfig
     hs_database_t* db;
     std::string re;
     PatternMatchData pmd;
+    bool pcre_conversion;
 
     RegexConfig()
     { reset(); }
@@ -59,6 +60,7 @@ struct RegexConfig
         memset(&pmd, 0, sizeof(pmd));
         re.clear();
         db = nullptr;
+        pcre_conversion = false;
     }
 };
 
@@ -128,18 +130,18 @@ uint32_t RegexOption::hash() const
 // see ContentOption::operator==()
 bool RegexOption::operator==(const IpsOption& ips) const
 {
-#if 0
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    RegexOption& rhs = (RegexOption&)ips;
+    const RegexOption& rhs = (const RegexOption&)ips;
 
-    if ( config.re == rhs.config.re and
-        config.pmd.flags == rhs.config.pmd.flags and
-        config.pmd.mpse_flags == rhs.config.pmd.mpse_flags )
-        return true;
-#endif
-    return this == &ips;
+    if ( config.pcre_conversion && rhs.config.pcre_conversion )
+        if ( config.re == rhs.config.re and
+             config.pmd.flags == rhs.config.pmd.flags and
+             config.pmd.mpse_flags == rhs.config.pmd.mpse_flags )
+            return true;
+
+    return false;
 }
 
 struct ScanContext
@@ -187,9 +189,7 @@ IpsOption::EvalStatus RegexOption::eval(Cursor& c, Packet*)
 }
 
 bool RegexOption::retry(Cursor&)
-{
-    return !is_relative();
-}
+{ return !is_relative(); }
 
 //-------------------------------------------------------------------------
 // module
@@ -244,6 +244,7 @@ public:
 
 private:
     RegexConfig config;
+    bool convert_pcre_to_regex_form();
 };
 
 RegexModule::~RegexModule()
@@ -254,26 +255,96 @@ RegexModule::~RegexModule()
     delete scratcher;
 }
 
-bool RegexModule::begin(const char*, int, SnortConfig*)
+bool RegexModule::begin(const char* name, int, SnortConfig*)
 {
     config.reset();
     config.pmd.flags |= PatternMatchData::NO_FP;
     config.pmd.mpse_flags |= HS_FLAG_SINGLEMATCH;
+
+    // if regex is in pcre syntax set conversion mode
+    if ( strcmp(name, "pcre") == 0 )
+        config.pcre_conversion = true;
+
     return true;
+}
+
+// The regex string received from the ips_pcre plugin must be scrubbed to remove
+// two characters from  the front; an extra '"' and the '/' and also the same
+// two characters from the end of the string as well as any pcre modifier flags
+// included in the expression.  The modifier flags are checked to set the
+// corresponding hyperscan regex engine flags.
+// Hyperscan regex also does not support negated pcre expression so negated expression
+// are not converted and will be compiled by the pcre engine.
+bool RegexModule::convert_pcre_to_regex_form()
+{
+    size_t pos = config.re.find_first_of("\"!");
+    if (config.re[pos] == '!')
+        return false;
+
+    config.re.erase(0,2);
+    std::size_t re_end = config.re.rfind("/");
+    if ( re_end != std::string::npos )
+    {
+        std::size_t mod_len = (config.re.length() - 2) - re_end;
+        std::string modifiers = config.re.substr(re_end + 1, mod_len);
+        std::size_t erase_len = config.re.length() - re_end;
+        config.re.erase(re_end, erase_len);
+
+        for( char& c : modifiers )
+        {
+            switch (c)
+            {
+            case 'i':
+                config.pmd.mpse_flags |= HS_FLAG_CASELESS;
+                config.pmd.set_no_case();
+                break;
+
+            case 'm':
+                config.pmd.mpse_flags |= HS_FLAG_MULTILINE;
+                break;
+
+            case 's':
+                config.pmd.mpse_flags |= HS_FLAG_DOTALL;
+                break;
+
+            case 'O':
+                break;
+
+            case 'R':
+                config.pmd.set_relative();
+                break;
+
+            default:
+                return false;
+                break;
+            }
+        }
+
+        return true;
+    }
+
+    return false;
 }
 
 bool RegexModule::set(const char*, Value& v, SnortConfig*)
 {
+    bool valid_opt = true;
+
     if ( v.is("~re") )
     {
         config.re = v.get_string();
-        // remove quotes
-        config.re.erase(0, 1);
-        config.re.erase(config.re.length()-1, 1);
+
+        if ( config.pcre_conversion )
+            valid_opt = convert_pcre_to_regex_form();
+        else
+        {
+            // remove quotes
+            config.re.erase(0, 1);
+            config.re.erase(config.re.length() - 1, 1);
+        }
     }
     else if ( v.is("dotall") )
         config.pmd.mpse_flags |= HS_FLAG_DOTALL;
-
     else if ( v.is("fast_pattern") )
     {
         config.pmd.flags &= ~PatternMatchData::NO_FP;
@@ -281,7 +352,6 @@ bool RegexModule::set(const char*, Value& v, SnortConfig*)
     }
     else if ( v.is("multiline") )
         config.pmd.mpse_flags |= HS_FLAG_MULTILINE;
-
     else if ( v.is("nocase") )
     {
         config.pmd.mpse_flags |= HS_FLAG_CASELESS;
@@ -289,11 +359,10 @@ bool RegexModule::set(const char*, Value& v, SnortConfig*)
     }
     else if ( v.is("relative") )
         config.pmd.set_relative();
-
     else
-        return false;
+        valid_opt = false;
 
-    return true;
+    return valid_opt;
 }
 
 bool RegexModule::end(const char*, int, SnortConfig*)
@@ -309,7 +378,8 @@ bool RegexModule::end(const char*, int, SnortConfig*)
     if ( hs_compile(config.re.c_str(), config.pmd.mpse_flags, HS_MODE_BLOCK,
         nullptr, &config.db, &err) or !config.db )
     {
-        ParseError("can't compile regex '%s'", config.re.c_str());
+        if ( !config.pcre_conversion )
+            ParseError("can't compile regex '%s'", config.re.c_str());
         hs_free_compile_error(err);
         return false;
     }

@@ -104,6 +104,9 @@ static const Parameter detection_params[] =
     { "pcre_override", Parameter::PT_BOOL, nullptr, "true",
       "enable pcre match limit overrides when pattern matching (ie ignore /O)" },
 
+    { "pcre_to_regex", Parameter::PT_BOOL, nullptr, "false",
+      "disable pcre pattern matching" },
+
     { "enable_address_anomaly_checks", Parameter::PT_BOOL, nullptr, "false",
       "enable check and alerting of address anomalies" },
 
@@ -205,6 +208,9 @@ bool DetectionModule::set(const char* fqn, Value& v, SnortConfig* sc)
 
     else if ( v.is("pcre_override") )
         sc->pcre_override = v.get_bool();
+    
+    else if ( v.is("pcre_to_regex") )
+        sc->pcre_to_regex = v.get_bool();
 
     else if ( v.is("enable_address_anomaly_checks") )
         sc->address_anomaly_check_enabled = v.get_bool();

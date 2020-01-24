@@ -30,10 +30,13 @@
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
+#include "framework/parameter.h"
 #include "hash/hashfcn.h"
 #include "helpers/scratch_allocator.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
+#include "managers/ips_manager.h"
+#include "managers/module_manager.h"
 #include "profiler/profiler.h"
 #include "utils/util.h"
 
@@ -59,6 +62,7 @@ using namespace snort;
 #define SNORT_OVERRIDE_MATCH_LIMIT  0x00080 // Override default limits on match & match recursion
 
 #define s_name "pcre"
+#define mod_regex_name "regex"
 
 struct PcreData
 {
@@ -571,6 +575,7 @@ IpsOption::EvalStatus PcreOption::eval(Cursor& c, Packet*)
         }
         return MATCH;
     }
+
     return NO_MATCH;
 }
 
@@ -606,6 +611,25 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+struct PcreStats
+{
+    PegCount pcre_rules;
+    PegCount pcre_to_hyper;
+    PegCount pcre_native;
+    PegCount pcre_negated;
+};
+
+const PegInfo pcre_pegs[] =
+{
+    { CountType::SUM, "pcre_rules", "total rules processed with pcre option" },
+    { CountType::SUM, "pcre_to_hyper", "total pcre rules by hyperscan engine" },
+    { CountType::SUM, "pcre_native", "total pcre rules compiled by pcre engine" },
+    { CountType::SUM, "pcre_negated", "total pcre rules using negation syntax" },
+    { CountType::END, nullptr, nullptr }
+};
+
+PcreStats pcre_stats;
+
 #define s_help \
     "rule option for matching payload data with pcre"
 
@@ -627,17 +651,28 @@ public:
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
     { return &pcrePerfStats; }
+
+    const PegInfo* get_pegs() const override;
+    PegCount* get_counts() const override;
 
     PcreData* get_data();
 
     Usage get_usage() const override
     { return DETECT; }
 
+    void get_mod_regex_instance(const char* name, int v, SnortConfig* sc);
+    Module* get_mod_regex() const
+    { return mod_regex; }
+
 private:
     PcreData* data;
+    Module* mod_regex = nullptr;
+    std::string re;
+
     static bool scratch_setup(SnortConfig* sc);
     static void scratch_cleanup(SnortConfig* sc);
 };
@@ -649,19 +684,55 @@ PcreData* PcreModule::get_data()
     return tmp;
 }
 
-bool PcreModule::begin(const char*, int, SnortConfig*)
+const PegInfo* PcreModule::get_pegs() const
+{ return pcre_pegs; }
+
+PegCount* PcreModule::get_counts() const
+{ return (PegCount*)&pcre_stats; }
+
+void PcreModule::get_mod_regex_instance(const char* name, int v, SnortConfig* sc)
 {
-    data = (PcreData*)snort_calloc(sizeof(*data));
+    if ( sc->pcre_to_regex )
+    {
+        if ( !mod_regex )
+            mod_regex = ModuleManager::get_module(mod_regex_name);
+
+        if( mod_regex )
+            mod_regex = mod_regex->begin(name, v, sc) ? mod_regex : nullptr;
+    }
+}
+
+bool PcreModule::begin(const char* name, int v, SnortConfig* sc)
+{
+    get_mod_regex_instance(name, v, sc);
     return true;
 }
 
-bool PcreModule::set(const char*, Value& v, SnortConfig* sc)
+bool PcreModule::set(const char* name, Value& v, SnortConfig* sc)
 {
     if ( v.is("~re") )
-        pcre_parse(sc, v.get_string(), data);
+    {
+        re = v.get_string();
 
+        if( mod_regex )
+            mod_regex = mod_regex->set(name, v, sc) ? mod_regex : nullptr;
+    }
     else
         return false;
+
+    return true;
+}
+
+bool PcreModule::end(const char* name, int v, SnortConfig* sc)
+{
+    if( mod_regex )
+        mod_regex = mod_regex->end(name, v, sc) ? mod_regex : nullptr;
+
+    if ( !mod_regex )
+    {
+        data = (PcreData*)snort_calloc(sizeof(*data));
+        pcre_parse(sc, re.c_str(), data);
+    }
 
     return true;
 }
@@ -703,26 +774,33 @@ void PcreModule::scratch_cleanup(SnortConfig* sc)
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new PcreModule;
-}
+{ return new PcreModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
-static IpsOption* pcre_ctor(Module* p, OptTreeNode*)
+static IpsOption* pcre_ctor(Module* p, OptTreeNode* otn)
 {
+    pcre_stats.pcre_rules++;
     PcreModule* m = (PcreModule*)p;
-    PcreData* d = m->get_data();
-    return new PcreOption(d);
+
+    Module* mod_regex = m->get_mod_regex();
+    if ( mod_regex )
+    {
+        pcre_stats.pcre_to_hyper++;
+        const IpsApi* opt_api = IpsManager::get_option_api(mod_regex_name);
+        return opt_api->ctor(mod_regex, otn);
+    }
+    else
+    {
+        pcre_stats.pcre_native++;
+        PcreData* d = m->get_data();
+        return new PcreOption(d);
+    }
 }
 
 static void pcre_dtor(IpsOption* p)
-{
-    delete p;
-}
+{ delete p; }
 
 static const IpsApi pcre_api =
 {

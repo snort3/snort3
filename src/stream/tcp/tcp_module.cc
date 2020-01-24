@@ -232,7 +232,6 @@ StreamTcpModule::StreamTcpModule() :
     config = nullptr;
 }
 
-
 const RuleMap* StreamTcpModule::get_rules() const
 { return stream_tcp_rules; }
 

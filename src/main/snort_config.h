@@ -248,6 +248,7 @@ public:
 
     bool global_rule_state = false;
     bool global_default_rule_state = true;
+    bool pcre_to_regex = false;
 
     //------------------------------------------------------
     // process stuff

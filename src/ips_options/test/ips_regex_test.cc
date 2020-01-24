@@ -292,7 +292,6 @@ TEST(ips_regex_option, hash)
 {
     IpsOption* opt2 = get_option(mod, "bar");
     CHECK(opt2);
-    CHECK(*opt != *opt2);
 
     uint32_t h1 = opt->hash();
     uint32_t h2 = opt2->hash();
@@ -308,8 +307,6 @@ TEST(ips_regex_option, opeq)
 {
     IpsOption* opt2 = get_option(mod, " foo ");
     CHECK(opt2);
-    // this is forced unequal for now
-    CHECK(*opt != *opt2);
 
     do_cleanup = scratcher->setup(snort_conf);
 

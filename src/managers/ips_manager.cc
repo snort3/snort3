@@ -176,6 +176,15 @@ const char* IpsManager::get_option_keyword()
     return current_keyword.c_str();
 }
 
+const IpsApi* IpsManager::get_option_api(const char* keyword)
+{
+    Option* opt = get_opt(keyword);
+    if ( opt )
+        return opt->api;
+    else
+        return nullptr;
+}
+
 bool IpsManager::option_begin(
     SnortConfig* sc, const char* key, SnortProtocolId)
 {
