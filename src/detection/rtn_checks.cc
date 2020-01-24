@@ -248,7 +248,7 @@ int CheckProto(Packet* p, RuleTreeNode* rtn_idx, RuleFpList*, int)
         /* icmp */ PROTO_BIT__ICMP,
         /* tcp */  PROTO_BIT__TCP | PROTO_BIT__PDU,
         /* udp */  PROTO_BIT__UDP,
-        /* user */ PROTO_BIT__PDU
+        /* file */ PROTO_BIT__FILE | PROTO_BIT__PDU
     };
     return proto_bits[rtn_idx->snort_protocol_id] & p->proto_bits;
 }

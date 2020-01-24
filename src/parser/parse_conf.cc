@@ -248,7 +248,7 @@ void add_service_to_otn(SnortConfig* sc, OptTreeNode* otn, const char* svc_name)
         add_service_to_otn(sc, otn, "pop3");
         add_service_to_otn(sc, otn, "imap");
         add_service_to_otn(sc, otn, "smtp");
-        add_service_to_otn(sc, otn, "user");
+        add_service_to_otn(sc, otn, "file");
         return;
     }
 

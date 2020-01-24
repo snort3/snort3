@@ -131,8 +131,17 @@ struct RuleTreeNode
     bool enabled() const
     { return (flags & ENABLED) != 0; }
 
-    bool user_mode()
+    bool user_mode() const
     { return (flags & USER_MODE) != 0; }
+
+    bool any_src_port() const
+    { return (flags & ANY_SRC_PORT) != 0; }
+
+    bool any_dst_port() const
+    { return (flags & ANY_DST_PORT) != 0; }
+
+    bool any_any_port() const
+    { return any_src_port() and any_dst_port(); }
 };
 
 // one of these for each rule

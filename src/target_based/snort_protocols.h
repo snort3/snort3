@@ -40,7 +40,7 @@ enum SnortProtocols : SnortProtocolId
     SNORT_PROTO_ICMP,
     SNORT_PROTO_TCP,
     SNORT_PROTO_UDP,
-    SNORT_PROTO_USER,
+    SNORT_PROTO_FILE,
     SNORT_PROTO_MAX
 };
 

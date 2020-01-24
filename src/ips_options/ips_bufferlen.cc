@@ -40,9 +40,9 @@ static THREAD_LOCAL ProfileStats lenCheckPerfStats;
 class LenOption : public IpsOption
 {
 public:
-    LenOption(const RangeCheck& c) :
+    LenOption(const RangeCheck& c, bool r) :
         IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE)
-    { config = c; }
+    { config = c; relative = r; }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -51,6 +51,7 @@ public:
 
 private:
     RangeCheck config;
+    bool relative;
 };
 
 //-------------------------------------------------------------------------
@@ -77,14 +78,15 @@ bool LenOption::operator==(const IpsOption& ips) const
         return false;
 
     const LenOption& rhs = (const LenOption&)ips;
-    return ( config == rhs.config );
+    return ( config == rhs.config and relative == rhs.relative );
 }
 
 IpsOption::EvalStatus LenOption::eval(Cursor& c, Packet*)
 {
     RuleProfile profile(lenCheckPerfStats);
+    unsigned n = relative ? c.length() : c.size();
 
-    if ( config.eval(c.length()) )
+    if ( config.eval(n) )
         return MATCH;
 
     return NO_MATCH;
@@ -99,7 +101,10 @@ IpsOption::EvalStatus LenOption::eval(Cursor& c, Packet*)
 static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_INTERVAL, RANGE, nullptr,
-      "check that length of current buffer is in given range" },
+      "check that total length of current buffer is in given range" },
+
+    { "relative", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "use remaining length (from current position) instead of total length" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -120,6 +125,7 @@ public:
 
 public:
     RangeCheck data;
+    bool relative = false;
 };
 
 bool LenModule::begin(const char*, int, SnortConfig*)
@@ -130,10 +136,16 @@ bool LenModule::begin(const char*, int, SnortConfig*)
 
 bool LenModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~range") )
+    if ( v.is("~range") )
+        return data.validate(v.get_string(), RANGE);
+
+    if ( v.is("relative") )
+        relative = true;
+
+    else
         return false;
 
-    return data.validate(v.get_string(), RANGE);
+    return true;
 }
 
 //-------------------------------------------------------------------------
@@ -153,7 +165,7 @@ static void mod_dtor(Module* m)
 static IpsOption* len_ctor(Module* p, OptTreeNode*)
 {
     LenModule* m = (LenModule*)p;
-    return new LenOption(m->data);
+    return new LenOption(m->data, m->relative);
 }
 
 static void len_dtor(IpsOption* p)

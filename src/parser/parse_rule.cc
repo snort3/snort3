@@ -148,28 +148,24 @@ static int FinishPortListRule(
         prc = &svcCnt;
     }
 
-    /* Count rules with both src and dst specific ports */
-    if (!(rtn->flags & RuleTreeNode::ANY_DST_PORT) && !(rtn->flags & RuleTreeNode::ANY_SRC_PORT))
-    {
+    if ( !rtn->any_src_port() and !rtn->any_dst_port() )
         prc->both++;
-    }
 
     /* If not an any-any rule test for port bleedover, if we are using a
      * single rule group, don't bother */
-    if (!fp->get_single_rule_group() &&
-        (rtn->flags & (RuleTreeNode::ANY_DST_PORT|RuleTreeNode::ANY_SRC_PORT)) != (RuleTreeNode::ANY_DST_PORT|RuleTreeNode::ANY_SRC_PORT))
+    if ( !fp->get_single_rule_group() and !rtn->any_any_port() )
     {
         int dst_cnt = 0;
         int src_cnt = 0;
 
-        if (!(rtn->flags & RuleTreeNode::ANY_SRC_PORT))
+        if ( !rtn->any_src_port() )
         {
             src_cnt = PortObjectPortCount(rtn->src_portobject);
             if (src_cnt >= fp->get_bleed_over_port_limit())
                 large_port_group = 1;
         }
 
-        if (!(rtn->flags & RuleTreeNode::ANY_DST_PORT))
+        if ( !rtn->any_dst_port() )
         {
             dst_cnt = PortObjectPortCount(rtn->dst_portobject);
             if (dst_cnt >= fp->get_bleed_over_port_limit())
@@ -198,46 +194,18 @@ static int FinishPortListRule(
      * any-any port rules...
      * If we have an any-any rule or a large port group or
      * were using a single rule group we make it an any-any rule. */
-    if (((rtn->flags & (RuleTreeNode::ANY_DST_PORT|RuleTreeNode::ANY_SRC_PORT)) == (RuleTreeNode::ANY_DST_PORT|RuleTreeNode::ANY_SRC_PORT)) ||
-        large_port_group || fp->get_single_rule_group())
+    if ( rtn->any_any_port() or large_port_group or fp->get_single_rule_group() )
     {
         if (snort_protocol_id == SNORT_PROTO_IP)
         {
-            /* Add the IP rules to the higher level app protocol groups, if they apply
-             * to those protocols.  All IP rules should have any-any port descriptors
-             * and fall into this test.  IP rules that are not tcp/udp/icmp go only into the
-             * IP table */
-            switch ( otn->snort_protocol_id )
-            {
-            case SNORT_PROTO_IP:    /* Add to all ip proto any port tables */
-                PortObjectAddRule(port_tables->icmp.any, otn->ruleIndex);
-                icmpCnt.any++;
+            PortObjectAddRule(port_tables->icmp.any, otn->ruleIndex);
+            icmpCnt.any++;
 
-                PortObjectAddRule(port_tables->tcp.any, otn->ruleIndex);
-                tcpCnt.any++;
+            PortObjectAddRule(port_tables->tcp.any, otn->ruleIndex);
+            tcpCnt.any++;
 
-                PortObjectAddRule(port_tables->udp.any, otn->ruleIndex);
-                udpCnt.any++;
-                break;
-
-            case SNORT_PROTO_ICMP:
-                PortObjectAddRule(port_tables->icmp.any, otn->ruleIndex);
-                icmpCnt.any++;
-                break;
-
-            case SNORT_PROTO_TCP:
-                PortObjectAddRule(port_tables->tcp.any, otn->ruleIndex);
-                tcpCnt.any++;
-                break;
-
-            case SNORT_PROTO_UDP:
-                PortObjectAddRule(port_tables->udp.any, otn->ruleIndex);
-                udpCnt.any++;
-                break;
-
-            default:
-                break;
-            }
+            PortObjectAddRule(port_tables->udp.any, otn->ruleIndex);
+            udpCnt.any++;
         }
         /* For all protocols-add to the any any group */
         PortObjectAddRule(aaObject, otn->ruleIndex);
@@ -247,7 +215,7 @@ static int FinishPortListRule(
     }
 
     /* add rule index to dst table if we have a specific dst port or port list */
-    if (!(rtn->flags & RuleTreeNode::ANY_DST_PORT))
+    if ( !rtn->any_dst_port() )
     {
         prc->dst++;
 
@@ -290,7 +258,7 @@ static int FinishPortListRule(
     }
 
     /* add rule index to src table if we have a specific src port or port list */
-    if (!(rtn->flags & RuleTreeNode::ANY_SRC_PORT))
+    if ( !rtn->any_src_port() )
     {
         prc->src++;
         PortObject* pox = PortTableFindInputPortObjectPorts(srcTable, rtn->src_portobject);
@@ -793,15 +761,17 @@ static void SetupRTNFuncList(RuleTreeNode* rtn)
 
     else
     {
-        PortToFunc(rtn, (rtn->flags & RuleTreeNode::ANY_DST_PORT) ? 1 : 0, 0, DST);
-        PortToFunc(rtn, (rtn->flags & RuleTreeNode::ANY_SRC_PORT) ? 1 : 0, 0, SRC);
+        PortToFunc(rtn, (rtn->any_dst_port() ? 1 : 0), 0, DST);
+        PortToFunc(rtn, (rtn->any_src_port() ? 1 : 0), 0, SRC);
 
         AddrToFunc(rtn, SRC);
         AddrToFunc(rtn, DST);
     }
 
-    if ( rtn->snort_protocol_id < SNORT_PROTO_MAX )
+    if ( rtn->snort_protocol_id < SNORT_PROTO_FILE )
         AddRuleFuncToList(CheckProto, rtn);
+    else
+        rtn->flags |= RuleTreeNode::USER_MODE;
 
     AddRuleFuncToList(RuleListEnd, rtn);
 }
