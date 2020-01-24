@@ -62,7 +62,7 @@ private:
     void discover_network_non_ip(const snort::Packet* p);
     void discover_network_tcp(const snort::Packet* p);
     void discover_network_udp(const snort::Packet* p);
-    void discover_network(const snort::Packet* p, u_int8_t ttl);
+    void discover_network(const snort::Packet* p, uint8_t ttl);
 
     RnaLogger logger;
     DiscoveryFilter filter;

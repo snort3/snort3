@@ -36,7 +36,7 @@
 using namespace snort;
 
 bool RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
-    const struct in6_addr* src_ip, const u_int8_t* src_mac, uint32_t event_time,
+    const struct in6_addr* src_ip, const uint8_t* src_mac, uint32_t event_time,
     void* cond_var)
 {
     if ( !enabled )

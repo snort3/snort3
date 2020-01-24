@@ -81,7 +81,7 @@ TEST(host_tracker, copy_data_test)
 {
     test_time = 1562198400;
     HostTracker ht;
-    u_int8_t mac[6] = {254, 237, 222, 173, 190, 239};
+    uint8_t mac[6] = {254, 237, 222, 173, 190, 239};
     ht.add_mac(mac, 50, 1);
 
     uint8_t p_hops = 0;
@@ -107,8 +107,8 @@ TEST(host_tracker, stringify)
     test_time = 1562198400; // this time will be updated and should not be seen in stringify
     HostTracker ht;
 
-    u_int8_t mac1[6] = {254, 237, 222, 173, 190, 239};
-    u_int8_t mac2[6] = {202, 254, 192, 255, 238, 0};
+    uint8_t mac1[6] = {254, 237, 222, 173, 190, 239};
+    uint8_t mac2[6] = {202, 254, 192, 255, 238, 0};
     test_time = 1562198404; // this time should be the time of the first mac address
     ht.update_last_seen();
     ht.add_mac(mac1, 9, 0);

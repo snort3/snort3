@@ -141,7 +141,7 @@ void RnaPnd::discover_network_udp(const Packet* p)
         discover_network(p, ip_api.ttl());
 }
 
-void RnaPnd::discover_network(const Packet* p, u_int8_t ttl)
+void RnaPnd::discover_network(const Packet* p, uint8_t ttl)
 {
     bool new_host = false;
     const auto& src_ip = p->ptrs.ip_api.get_src();

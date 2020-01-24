@@ -46,7 +46,7 @@ void HostTracker::update_last_event(uint32_t time)
     last_event = time ? time : last_seen;
 }
 
-bool HostTracker::add_mac(const u_int8_t* mac, u_int8_t ttl, u_int8_t primary)
+bool HostTracker::add_mac(const uint8_t* mac, uint8_t ttl, uint8_t primary)
 {
     if ( !mac or !memcmp(mac, zero_mac, MAC_SIZE) )
         return false;
@@ -130,7 +130,7 @@ static inline string to_time_string(uint32_t p_time)
     return buffer;
 }
 
-static inline string to_mac_string(const u_int8_t* mac)
+static inline string to_mac_string(const uint8_t* mac)
 {
     char mac_addr[18];
     snprintf(mac_addr, 18, "%02X:%02X:%02X:%02X:%02X:%02X",
