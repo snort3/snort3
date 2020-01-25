@@ -23,6 +23,8 @@
 #ifndef CIP_DEFINITIONS_H
 #define CIP_DEFINITIONS_H
 
+#include <sys/time.h>
+
 namespace snort
 {
 struct Packet;
