@@ -383,8 +383,6 @@ void Dce2SmbModule::get_data(dce2SmbProtoConf& dce2_smb_config)
 
 void print_dce2_smb_conf(dce2SmbProtoConf& config)
 {
-    LogMessage("DCE SMB config: \n");
-
     print_dce2_co_config(config.common);
     LogMessage("    SMB fingerprint policy : %s\n",
         dce2SmbFingerprintPolicyStrings[config.smb_fingerprint_policy]);

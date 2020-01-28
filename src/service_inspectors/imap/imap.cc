@@ -266,8 +266,6 @@ static void PrintImapConf(IMAP_PROTO_CONF* config)
     if (config == nullptr)
         return;
 
-    LogMessage("IMAP config: \n");
-
     config->decode_conf.print_decode_conf();
 
     LogMessage("\n");

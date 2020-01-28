@@ -129,8 +129,6 @@ bool AppIdInspector::configure(SnortConfig* sc)
 
 void AppIdInspector::show(SnortConfig*)
 {
-    LogMessage("%s\n", MOD_NAME);
-
     LogMessage("    Detector Path:          %s\n", config->app_detector_dir);
     LogMessage("    appStats Logging:       %s\n", config->stats_logging_enabled ? "enabled" :
         "disabled");

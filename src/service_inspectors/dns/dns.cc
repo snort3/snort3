@@ -1011,17 +1011,11 @@ class Dns : public Inspector
 public:
     Dns(DnsModule*);
 
-    void show(SnortConfig*) override;
     void eval(Packet*) override;
 };
 
 Dns::Dns(DnsModule*)
 { }
-
-void Dns::show(SnortConfig*)
-{
-    LogMessage("DNS\n");
-}
 
 void Dns::eval(Packet* p)
 {

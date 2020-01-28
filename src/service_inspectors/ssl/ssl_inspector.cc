@@ -103,7 +103,6 @@ static void PrintSslConf(SSL_PROTO_CONF* config)
 {
     if (config == nullptr)
         return;
-    LogMessage("SSL config:\n");
     if ( config->trustservers )
     {
         LogMessage("    Server side data is trusted\n");

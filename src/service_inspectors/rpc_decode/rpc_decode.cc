@@ -803,8 +803,6 @@ class RpcDecode : public Inspector
 public:
     RpcDecode(RpcDecodeModule*);
 
-    void show(SnortConfig*) override;
-
     void eval(Packet*) override;
     void clear(Packet*) override;
 
@@ -819,11 +817,6 @@ private:
 
 RpcDecode::RpcDecode(RpcDecodeModule*)
 {
-}
-
-void RpcDecode::show(SnortConfig*)
-{
-    LogMessage("rpc_decode\n");
 }
 
 /*

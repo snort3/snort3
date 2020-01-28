@@ -954,7 +954,15 @@ void InspectorManager::print_config(SnortConfig* sc)
         return;
 
     for ( auto* p : pi->framework_policy->ilist )
+    {
+        std::string inspector_name(p->pp_class.api.base.name);
+        if ( !p->name.empty() )
+            inspector_name += " (" + p->name + "):";
+        else
+            inspector_name += ":";
+        LogLabel(inspector_name.c_str());
         p->handler->show(sc);
+    }
 }
 
 //-------------------------------------------------------------------------

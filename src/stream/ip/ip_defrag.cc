@@ -185,7 +185,6 @@ static const char* const frag_policy_names[] =
 
 static void FragPrintEngineConfig(FragEngine* engine)
 {
-    LogMessage("Defrag engine config:\n");
     LogMessage("    engine-based policy: %s\n",
         frag_policy_names[engine->frag_policy]);
     LogMessage("    Fragment timeout: %d seconds\n",

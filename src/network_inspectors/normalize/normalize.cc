@@ -232,7 +232,6 @@ NormMode Normalize_GetMode(NormFlags nf)
 
 void Normalizer::show(SnortConfig* sc)
 {
-    LogMessage("Normalizer config:\n");
     Print_IP4(sc, &config);
     Print_IP6(sc, &config);
     Print_ICMP4(&config);

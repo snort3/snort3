@@ -92,7 +92,6 @@ bool HttpInspect::configure(SnortConfig* )
 void HttpInspect::show(snort::SnortConfig*)
 {
     assert(params);
-    LogMessage("http_inspect\n");
 
     if ( params->request_depth == -1 )
         LogMessage("    request_depth: " "%s" "\n", "unlimited");

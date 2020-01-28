@@ -201,10 +201,9 @@ public:
     FTP_SERVER_PROTO_CONF* ftp_server;
 };
 
-FtpServer::FtpServer(FTP_SERVER_PROTO_CONF* server)
-{
-    ftp_server = server;
-}
+FtpServer::FtpServer(FTP_SERVER_PROTO_CONF* server) :
+    ftp_server(server)
+{}
 
 FtpServer::~FtpServer ()
 {

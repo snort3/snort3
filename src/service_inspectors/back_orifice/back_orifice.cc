@@ -429,15 +429,9 @@ class BackOrifice : public Inspector
 {
 public:
     BackOrifice() = default;
-
-    void show(SnortConfig*) override;
+    
     void eval(Packet*) override;
 };
-
-void BackOrifice::show(SnortConfig*)
-{
-    LogMessage("%s\n", s_name);
-}
 
 void BackOrifice::eval(Packet* p)
 {

@@ -123,7 +123,6 @@ void Dce2UdpModule::get_data(dce2UdpProtoConf& dce2_udp_config)
 
 void print_dce2_udp_conf(dce2UdpProtoConf& config)
 {
-    LogMessage("DCE UDP config: \n");
     print_dce2_common_config(config.common);
 }
 

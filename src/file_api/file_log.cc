@@ -221,7 +221,6 @@ private:
 
 void FileLog::show(SnortConfig*)
 {
-    LogMessage("%s config:\n", s_name);
     LogMessage("    Log system time: %s\n", config.log_sys_time ? "true" : "false");
     LogMessage("    Log packet time: %s\n", config.log_pkt_time ? "true" : "false");
 }

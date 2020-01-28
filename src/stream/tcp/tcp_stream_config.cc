@@ -42,7 +42,6 @@ void TcpStreamConfig::show_config() const
 
 void TcpStreamConfig::show_config(const TcpStreamConfig* config)
 {
-    LogMessage("Stream TCP Policy config:\n");
     LogMessage("    Reassembly Policy: %s\n",
         reassembly_policy_names[ static_cast<int>( config->reassembly_policy ) ]);
     LogMessage("    Timeout: %d seconds\n", config->session_timeout);

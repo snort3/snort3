@@ -117,9 +117,6 @@ public:
     Wizard(WizardModule*);
     ~Wizard() override;
 
-    void show(SnortConfig*) override
-    { LogMessage("Wizard\n"); }
-
     void eval(Packet*) override;
 
     StreamSplitter* get_splitter(bool) override;

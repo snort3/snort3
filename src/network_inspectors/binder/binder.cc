@@ -633,9 +633,6 @@ public:
     Binder(vector<Binding*>&);
     ~Binder() override;
 
-    void show(SnortConfig*) override
-    { LogMessage("Binder\n"); }
-
     void remove_inspector_binding(SnortConfig*, const char*) override;
 
     bool configure(SnortConfig*) override;

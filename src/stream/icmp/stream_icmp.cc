@@ -42,7 +42,6 @@ StreamIcmpConfig::StreamIcmpConfig()
 
 static void icmp_show(StreamIcmpConfig* pc)
 {
-    LogMessage("Stream ICMP config:\n");
     LogMessage("    Timeout: %d seconds\n", pc->session_timeout);
 }
 

@@ -157,7 +157,6 @@ void Dce2TcpModule::get_data(dce2TcpProtoConf& dce2_tcp_config)
 
 void print_dce2_tcp_conf(dce2TcpProtoConf& config)
 {
-    LogMessage("DCE TCP config: \n");
     print_dce2_co_config(config.common);
 }
 

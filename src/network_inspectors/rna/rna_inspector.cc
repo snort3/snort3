@@ -102,8 +102,6 @@ void RnaInspector::eval(Packet* p)
 
 void RnaInspector::show(SnortConfig*)
 {
-    LogMessage("RNA Configuration\n");
-
     if (mod_conf)
     {
         if (!mod_conf->rna_conf_path.empty())

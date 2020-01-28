@@ -61,7 +61,6 @@ StreamIpConfig::StreamIpConfig()
 
 static void ip_show(StreamIpConfig* pc)
 {
-    LogMessage("Stream IP config:\n");
     LogMessage("    Timeout: %d seconds\n", pc->session_timeout);
 }
 

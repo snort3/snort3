@@ -86,7 +86,6 @@ static void PrintSipConf(SIP_PROTO_CONF* config)
     SIPMethodNode* method;
     if (config == nullptr)
         return;
-    LogMessage("SIP config: \n");
     LogMessage("    Max number of dialogs in a session: %d %s \n",
         config->maxNumDialogsInSession,
         config->maxNumDialogsInSession

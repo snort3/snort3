@@ -104,7 +104,6 @@ void Dnp3Module::get_data(dnp3ProtoConf& dnp3_config)
 
 void print_dnp3_conf(const dnp3ProtoConf& config)
 {
-    LogMessage("DNP3 config: \n");
     LogMessage("    Check CRC: %s\n",
         config.check_crc ?
         "ENABLED" : "DISABLED");

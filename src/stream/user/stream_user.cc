@@ -41,7 +41,6 @@ StreamUserConfig::StreamUserConfig()
 
 static void user_show (StreamUserConfig* pc)
 {
-    LogMessage("Stream user config:\n");
     LogMessage("    Timeout: %d seconds\n", pc->session_timeout);
 }
 

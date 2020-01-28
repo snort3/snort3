@@ -237,8 +237,6 @@ int PrintFTPServerConf(FTP_SERVER_PROTO_CONF* ServerConf)
         return FTPP_INVALID_ARG;
     }
 
-    LogMessage(FTP_SERVER_NAME ":\n");
-
     PrintConfOpt(ServerConf->telnet_cmds, "Check for Telnet Cmds");
     PrintConfOpt(ServerConf->ignore_telnet_erase_cmds, "Ignore Telnet Cmd Operations");
     LogMessage("    Ignore open data channels: %s\n",

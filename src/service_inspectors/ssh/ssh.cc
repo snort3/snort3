@@ -85,8 +85,6 @@ static void PrintSshConf(SSH_PROTO_CONF* config)
     if ( !config )
         return;
 
-    LogMessage("SSH config: \n");
-
     LogMessage("    Max Encrypted Packets: %d\n", config->MaxEncryptedPackets);
     LogMessage("    Max Server Version String Length: %d\n", config->MaxServerVersionLen);
     LogMessage("    MaxClientBytes: %d\n", config->MaxClientBytes);

@@ -89,7 +89,6 @@ static void print_reputation_conf(ReputationConfig* config)
 {
     assert(config);
 
-    LogMessage("%s\n", REPUTATION_NAME);
     print_iplist_stats(config);
 
     LogMessage("    Memcap: %d %s \n",

@@ -113,7 +113,6 @@ public:
     ArpSpoof(ArpSpoofModule*);
     ~ArpSpoof() override;
 
-    void show(SnortConfig*) override;
     void eval(Packet*) override;
 
 private:
@@ -128,12 +127,6 @@ ArpSpoof::ArpSpoof(ArpSpoofModule* mod)
 ArpSpoof::~ArpSpoof ()
 {
     delete config;
-}
-
-void ArpSpoof::show(SnortConfig*)
-{
-    LogMessage("arpspoof configured\n");
-
 }
 
 void ArpSpoof::eval(Packet* p)

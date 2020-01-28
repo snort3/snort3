@@ -225,8 +225,6 @@ static void PrintPopConf(POP_PROTO_CONF* config)
     if (config == nullptr)
         return;
 
-    LogMessage("POP config: \n");
-
     config->decode_conf.print_decode_conf();
 
     LogMessage("\n");

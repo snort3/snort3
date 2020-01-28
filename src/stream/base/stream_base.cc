@@ -203,7 +203,6 @@ void StreamBase::tterm()
 
 void StreamBase::show(SnortConfig*)
 {
-    LogMessage("Stream Base config:\n");
     LogMessage("    Max flows: %d\n", config.flow_cache_cfg.max_flows);
     LogMessage("    Pruning timeout: %d\n", config.flow_cache_cfg.pruning_timeout);
 }

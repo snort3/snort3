@@ -332,7 +332,6 @@ static void PrintPortscanConf(PortscanConfig* config)
 {
     char buf[STD_BUF + 1];
 
-    LogMessage("Portscan Detection Config:\n");
     SnortSnprintf(buf, sizeof(buf), "    Detect Protocols:  ");
 
     if ( config->detect_scans & PS_PROTO_TCP )

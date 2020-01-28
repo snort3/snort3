@@ -193,7 +193,6 @@ static int PrintTelnetConf(TELNET_PROTO_CONF* TelnetConf)
         return FTPP_INVALID_ARG;
     }
 
-    LogMessage("    TELNET CONFIG:\n");
     LogMessage("      Are You There Threshold: %d\n",
         TelnetConf->ayt_threshold);
     LogMessage("      Normalize: %s\n", TelnetConf->normalize ? "YES" : "NO");

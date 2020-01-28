@@ -148,7 +148,6 @@ PerfMonitor::PerfMonitor(PerfConfig* pcfg) : config(pcfg)
 
 void PerfMonitor::show(SnortConfig*)
 {
-    LogMessage("PerfMonitor config:\n");
     LogMessage("  Sample Time:      %d seconds\n", config->sample_interval);
     LogMessage("  Packet Count:     %d\n", config->pkt_cnt);
     LogMessage("  Max File Size:    " STDu64 "\n", config->max_file_size);

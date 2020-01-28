@@ -379,7 +379,6 @@ void FileInspect::show(SnortConfig*)
     if (!config)
         return;
 
-    LogMessage("%s\n", FILE_ID_NAME);
     LogMessage("    capture_memcap: %zu MB\n", config->capture_memcap);
     LogMessage("    capture_max_size: %zu bytes\n", config->capture_max_size);
     LogMessage("    capture_min_size: %zu bytes\n", config->capture_min_size);

@@ -41,7 +41,6 @@ StreamUdpConfig::StreamUdpConfig()
 
 static void udp_show(StreamUdpConfig* pc)
 {
-    LogMessage("Stream UDP config:\n");
     LogMessage("    Timeout: %d seconds\n", pc->session_timeout);
 
 #ifdef REG_TEST

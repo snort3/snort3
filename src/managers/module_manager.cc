@@ -754,13 +754,17 @@ SO_PUBLIC bool open_table(const char* s, int idx)
         }
     }
 
-    if ( s_current != key )
+    string unique_key = key;
+    if ( !s_name.empty() )
+        unique_key = s_name;
+
+    if ( s_current != unique_key )
     {
         if ( fqn != orig )
             LogMessage("\t%s (%s)\n", key.c_str(), orig);
         else
             LogMessage("\t%s\n", key.c_str());
-        s_current = key;
+        s_current = unique_key;
     }
 
     if ( !begin(m, p, s, idx, 0) )

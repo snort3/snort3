@@ -115,7 +115,6 @@ static void print_cip_conf(CipProtoConf* config)
 {
     if (config == nullptr)
         return;
-    LogMessage("CIP config: \n");
     LogMessage("    Embedded Enabled: %s\n",
         config->embedded_cip_enabled ? "ENABLED" : "DISABLED");
     if (config->embedded_cip_enabled)

@@ -378,7 +378,6 @@ static void SMTP_PrintConfig(SMTP_PROTO_CONF* config)
     char buf[8192];
     int alert_count = 0;
 
-    LogMessage("SMTP Config:\n");
     snprintf(buf, sizeof(buf) - 1, "    Normalize: ");
 
     if (config->normalize == NORMALIZE_ALL)
