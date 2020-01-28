@@ -1098,7 +1098,7 @@ static const Parameter attribute_table_params[] =
     { "max_services_per_host", Parameter::PT_INT, "1:65535", "8",
       "maximum number of services per host entry in attribute table" },
 
-    { "max_metadata_services", Parameter::PT_INT, "1:255", "8",
+    { "max_metadata_services", Parameter::PT_INT, "1:255", "9",
       "maximum number of services in rule" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
