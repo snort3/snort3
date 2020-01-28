@@ -76,6 +76,8 @@ private:
     // number of characters in the buffer
     uint32_t end_offset[2] = { 0, 0 };
 
+    void generate_h2_frame_header(const char command_value[], const unsigned command_length);
+
     void reset();
 };
 
