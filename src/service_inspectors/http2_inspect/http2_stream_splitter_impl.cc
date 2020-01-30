@@ -26,6 +26,7 @@
 #include <cassert>
 
 #include "service_inspectors/http_inspect/http_common.h"
+#include "service_inspectors/http_inspect/http_flow_data.h"
 #include "service_inspectors/http_inspect/http_test_input.h"
 #include "service_inspectors/http_inspect/http_test_manager.h"
 
@@ -167,6 +168,22 @@ StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t
             const uint8_t type = get_frame_type(session_data->scan_frame_header[source_id]);
             session_data->current_stream[source_id] =
                 get_stream_id(session_data->scan_frame_header[source_id]);
+
+            if (type == FT_DATA)
+            {
+                Http2Stream* const stream = session_data->find_stream(session_data->current_stream[source_id]);
+                HttpFlowData* http_flow = nullptr;
+                if (stream)
+                    http_flow = (HttpFlowData*)stream->get_hi_flow_data();
+
+                if (!stream || !http_flow ||
+                    (http_flow->get_type_expected(source_id) != HttpEnums::SEC_BODY_CHUNK))
+                {
+                     *session_data->infractions[source_id] += INF_FRAME_SEQUENCE;
+                     session_data->events[source_id]->create_event(EVENT_FRAME_SEQUENCE);
+                     status = StreamSplitter::ABORT;
+                }
+            }
 
             // Compute frame section length once per frame
             if (session_data->scan_remaining_frame_octets[source_id] == 0)

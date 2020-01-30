@@ -43,6 +43,7 @@ const RuleMap Http2Module::http2_events[] =
     { EVENT_INVALID_HEADER, "invalid HTTP/2 header field" },
     { EVENT_SETTINGS_FRAME_ERROR, "error in HTTP/2 settings frame" },
     { EVENT_SETTINGS_FRAME_UNKN_PARAM, "unknown parameter in HTTP/2 settings frame" },
+    { EVENT_FRAME_SEQUENCE, "invalid HTTP/2 frame sequence" },
     { 0, nullptr }
 };
 

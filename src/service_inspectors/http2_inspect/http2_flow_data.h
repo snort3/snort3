@@ -151,9 +151,9 @@ protected:
 #endif
 
 private:
-    class Http2Stream* find_stream(uint32_t key) const;
     class Http2Stream* get_stream(uint32_t key);
     class Http2Stream* get_hi_stream() const;
+    class Http2Stream* find_stream(uint32_t key) const;
 };
 
 #endif

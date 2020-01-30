@@ -53,6 +53,8 @@ StreamSplitter::Status Http2StreamSplitter::scan(Packet* pkt, const uint8_t* dat
     {
         AssistantGadgetEvent event(pkt, "http");
         DataBus::publish(FLOW_ASSISTANT_GADGET_EVENT, event);
+        if (pkt->flow->assistant_gadget == nullptr)
+            return HttpStreamSplitter::status_value(StreamSplitter::ABORT, true);
         pkt->flow->set_flow_data(session_data = new Http2FlowData(pkt->flow));
         Http2Module::increment_peg_counts(PEG_FLOW);
     }
