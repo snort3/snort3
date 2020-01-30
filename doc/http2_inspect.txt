@@ -37,6 +37,30 @@ These can be combined:
 Frame type 0 is DATA which carries the HTTP message body. This rule will
 search for MaLwArE inside an HTTP message body.
 
+To smooth the transition to inspecting HTTP/2, rules that specify 
+service:http will be treated as if they also specify service:http2. 
+Thus:
+
+    alert tcp any any -> any any (flow:established, to_server;
+    http_uri; content:"/foo"; 
+    service: http; sid:10; rev:1;)
+
+is understood to mean:
+
+    alert tcp any any -> any any (flow:established, to_server; 
+    http_uri; content:"/foo"; 
+    service: http,http2; sid:10; rev:1;)
+
+Thus it will alert on "/foo" in the URI for both HTTP/1 and HTTP/2 traffic.
+
+The reverse is not true. "service: http2" without http will match on HTTP/2 
+flows but not HTTP/1 flows.
+
+This feature makes it easy to add HTTP/2 inspection without modifying 
+large numbers of existing rules. New rules should explicitly specify 
+"service http,http2;" if that is the desired behavior. Eventually 
+support for http implies http2 may be deprecated and removed.
+
 In the future, http2_inspect will support HPACK header decompression and
 be fully integrated with http_inspect to provide full inspection of the
 individual HTTP/1.1 streams.
