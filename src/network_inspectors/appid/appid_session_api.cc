@@ -260,7 +260,10 @@ AppIdHttpSession* AppIdSessionApi::get_http_session()
 
 bool AppIdSessionApi::is_http_inspection_done()
 {
-    return asd->is_tp_appid_done();
+    return (asd->is_tp_appid_done() and
+           !(asd->get_session_flags(APPID_SESSION_SSL_SESSION) and
+               !get_tls_host() and
+               (asd->service_disco_state!= APPID_DISCO_STATE_FINISHED)));
 }
 
 

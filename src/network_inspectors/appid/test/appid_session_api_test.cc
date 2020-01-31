@@ -362,6 +362,24 @@ TEST(appid_session_api, is_http_inspection_done)
     bool val;
     val = appid_session_api->is_http_inspection_done();
     CHECK_TRUE(val);
+    mock_session->service_disco_state = APPID_DISCO_STATE_FINISHED;
+    mock_session->set_session_flags(APPID_SESSION_SSL_SESSION);
+    val = appid_session_api->is_http_inspection_done();
+    CHECK_TRUE(val);
+    AppidChangeBits change_bits;
+    mock_session->service_disco_state = APPID_DISCO_STATE_STATEFUL;
+    mock_session->set_session_flags(APPID_SESSION_SSL_SESSION);
+    val = appid_session_api->is_http_inspection_done();
+    CHECK_FALSE(val);
+    mock_session->service_disco_state = APPID_DISCO_STATE_STATEFUL;
+    mock_session->set_session_flags(APPID_SESSION_SSL_SESSION);
+    mock_session->tsession->set_tls_host("www.cisco.com", 13, change_bits);
+    val = appid_session_api->is_http_inspection_done();
+    CHECK_TRUE(val);
+    mock_session->service_disco_state = APPID_DISCO_STATE_FINISHED;
+    mock_session->set_session_flags(APPID_SESSION_SSL_SESSION);
+    val = appid_session_api->is_http_inspection_done();
+    CHECK_TRUE(val);
 }
 
 int main(int argc, char** argv)
