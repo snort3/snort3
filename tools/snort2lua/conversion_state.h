@@ -75,6 +75,50 @@ protected:
         return false;
     }
 
+    inline bool parse_path_option(const std::string& opt_name,
+        std::istringstream& stream)
+    {
+        std::string val;
+
+        if (stream >> val)
+        {
+            std::size_t prev_pos = 0;
+            while (true)
+            {
+                auto env_start = val.find('$', prev_pos);
+                if (env_start == std::string::npos)
+                {
+                    if (prev_pos)
+                        val.push_back('\'');
+                    break;
+                }
+
+                if (env_start)
+                {
+                    if (!prev_pos)
+                    {
+                        val.insert(prev_pos, "$\'");
+                        env_start += 2;
+                    }
+                    val.replace(env_start, 1, "\' .. ");
+                }
+
+                auto env_end = val.find('/', env_start + 1);
+                if (env_end == std::string::npos)
+                    break;
+
+                val.replace(env_end, 1, " .. \'/");
+                prev_pos = env_end + 5;
+            }
+
+            table_api.add_option(opt_name, val);
+            return true;
+        }
+
+        table_api.add_comment("snort.conf missing argument for: " + opt_name + " <string>");
+        return false;
+    }
+
     inline bool parse_int_option(const std::string& opt_name,
         std::istringstream& stream, bool append)
     {
