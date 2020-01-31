@@ -148,7 +148,9 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t
         dummy_pkt.packet_flags = (source_id == SRC_CLIENT) ? PKT_FROM_CLIENT : PKT_FROM_SERVER;
         dummy_pkt.dsize = stream_buf.length;
         dummy_pkt.data = stream_buf.data;
+        dummy_pkt.xtradata_mask = 0;
         session_data->hi->eval(&dummy_pkt);
+        xtradata_mask = dummy_pkt.xtradata_mask;
     }
 }
 

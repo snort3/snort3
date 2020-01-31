@@ -42,6 +42,7 @@ public:
         HttpCommon::SourceId source_id);
     virtual void clear() { }
     virtual const Field& get_buf(unsigned id);
+    virtual uint32_t get_xtradata_mask() { return 0; }
 #ifdef REG_TEST
     virtual void print_frame(FILE* output);
 #endif

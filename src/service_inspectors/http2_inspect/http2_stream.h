@@ -44,6 +44,8 @@ public:
         { assert(hi_flow_data == nullptr); hi_flow_data = flow_data; }
     HttpMsgSection* get_hi_msg_section() const { return hi_msg_section; }
     void set_hi_msg_section(HttpMsgSection* section) { hi_msg_section = section; }
+    uint32_t get_xtradata_mask() { return (current_frame != nullptr) ? 
+        current_frame->get_xtradata_mask() : 0; }
 #ifdef REG_TEST
     void print_frame(FILE* output);
 #endif

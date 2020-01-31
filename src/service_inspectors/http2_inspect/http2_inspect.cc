@@ -129,6 +129,8 @@ void Http2Inspect::eval(Packet* p)
         session_data->frame_header_size[source_id], session_data->frame_data[source_id],
         session_data->frame_data_size[source_id], source_id);
 
+    p->xtradata_mask |= stream->get_xtradata_mask();
+
     // The current frame now owns these buffers, clear them from the flow data
     session_data->frame_header[source_id] = nullptr;
     session_data->frame_data[source_id] = nullptr;

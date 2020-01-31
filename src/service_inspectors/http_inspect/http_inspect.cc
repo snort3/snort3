@@ -221,9 +221,9 @@ bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBu
     return get_buf(ibt, p, b);
 }
 
-int HttpInspect::get_xtra_trueip(Flow*, uint8_t** buf, uint32_t* len, uint32_t* type)
+int HttpInspect::get_xtra_trueip(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
-    HttpMsgSection* current_section = HttpContextData::get_snapshot(nullptr);
+    HttpMsgSection* current_section = HttpContextData::get_snapshot(flow);
 
     if (current_section == nullptr)
         return 0;
@@ -241,9 +241,9 @@ int HttpInspect::get_xtra_trueip(Flow*, uint8_t** buf, uint32_t* len, uint32_t* 
     return 1;
 }
 
-int HttpInspect::get_xtra_uri(Flow*, uint8_t** buf, uint32_t* len, uint32_t* type)
+int HttpInspect::get_xtra_uri(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
-    HttpMsgSection* current_section = HttpContextData::get_snapshot(nullptr);
+    HttpMsgSection* current_section = HttpContextData::get_snapshot(flow);
 
     if (current_section == nullptr)
         return 0;
@@ -262,9 +262,9 @@ int HttpInspect::get_xtra_uri(Flow*, uint8_t** buf, uint32_t* len, uint32_t* typ
     return 1;
 }
 
-int HttpInspect::get_xtra_host(Flow*, uint8_t** buf, uint32_t* len, uint32_t* type)
+int HttpInspect::get_xtra_host(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
-    HttpMsgSection* current_section = HttpContextData::get_snapshot(nullptr);
+    HttpMsgSection* current_section = HttpContextData::get_snapshot(flow);
 
     if (current_section == nullptr)
         return 0;
@@ -286,9 +286,9 @@ int HttpInspect::get_xtra_host(Flow*, uint8_t** buf, uint32_t* len, uint32_t* ty
 // The name of this method reflects its legacy purpose. We actually return the normalized data
 // from a response message body which may include other forms of normalization in addition to
 // JavaScript normalization. But if you don't turn JavaScript normalization on you get nothing.
-int HttpInspect::get_xtra_jsnorm(Flow*, uint8_t** buf, uint32_t* len, uint32_t* type)
+int HttpInspect::get_xtra_jsnorm(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
-    HttpMsgSection* current_section = HttpContextData::get_snapshot(nullptr);
+    HttpMsgSection* current_section = HttpContextData::get_snapshot(flow);
 
     if ((current_section == nullptr) ||
         (current_section->get_source_id() != SRC_SERVER) ||

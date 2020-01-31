@@ -33,19 +33,39 @@ unsigned HttpContextData::ips_id = 0;
 
 HttpMsgSection* HttpContextData::get_snapshot(const Packet* p)
 {
-    // FIXIT-H checking for nullptr prevents a crash but it doesn't solve the problem of making
-    // xtra data work with H2I
-    if ((p != nullptr) && (Http2FlowData::inspector_id != 0))
+    assert(p != nullptr);
+
+    if (Http2FlowData::inspector_id != 0)
     {
         const Http2FlowData* const h2i_flow_data =
-               (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
+            (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
         if (h2i_flow_data != nullptr)
             return h2i_flow_data->get_hi_msg_section();
     }
 
-    IpsContext* context = p ? p->context : nullptr;
     HttpContextData* hcd = (HttpContextData*)DetectionEngine::get_data(HttpContextData::ips_id,
-            context);
+        p->context);
+
+    if ( !hcd )
+        return nullptr;
+
+    return hcd->current_section;
+}
+
+HttpMsgSection* HttpContextData::get_snapshot(const Flow* flow)
+{
+    assert(flow != nullptr);
+
+    if (Http2FlowData::inspector_id != 0)
+    {
+        const Http2FlowData* const h2i_flow_data =
+            (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+        if (h2i_flow_data != nullptr)
+            return h2i_flow_data->get_hi_msg_section();
+    }
+
+    HttpContextData* hcd = (HttpContextData*)DetectionEngine::get_data(HttpContextData::ips_id,
+        nullptr);
 
     if ( !hcd )
         return nullptr;
