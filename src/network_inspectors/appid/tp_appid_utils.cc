@@ -646,6 +646,8 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
             if (appidDebug->is_active())
                 LogMessage("AppIdDbg %s 3rd party allow reinspect http\n",
                     appidDebug->get_debug_session());
+            asd.init_tpPackets = 0;
+            asd.resp_tpPackets = 0;
             asd.clear_http_data();
         }
 
