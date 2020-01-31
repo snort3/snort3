@@ -893,12 +893,12 @@ void FtpServiceDetector::create_expected_session(AppIdSession& asd, const Packet
         uint64_t encrypted_flags = asd.get_session_flags(APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED);
         if (encrypted_flags == APPID_SESSION_ENCRYPTED)
         {
-            fp->service.set_id(APP_ID_FTPSDATA);
+            fp->service.set_id(APP_ID_FTPSDATA, asd.ctxt.get_odp_ctxt());
         }
         else
         {
             encrypted_flags = 0; // reset (APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED) bits
-            fp->service.set_id(APP_ID_FTP_DATA);
+            fp->service.set_id(APP_ID_FTP_DATA, asd.ctxt.get_odp_ctxt());
         }
 
         initialize_expected_session(asd, *fp, APPID_SESSION_IGNORE_ID_FLAGS | encrypted_flags, dir);

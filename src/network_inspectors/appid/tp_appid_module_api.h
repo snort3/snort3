@@ -25,7 +25,7 @@
 #include <string>
 #include "tp_appid_types.h"
 
-#define THIRD_PARTY_APP_ID_API_VERSION 3
+#define THIRD_PARTY_APPID_API_VERSION 4
 
 class ThirdPartyConfig
 {

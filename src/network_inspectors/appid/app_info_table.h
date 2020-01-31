@@ -92,12 +92,6 @@ typedef std::unordered_map<std::string, AppInfoTableEntry*> AppInfoNameTable;
 class AppInfoManager
 {
 public:
-    static inline AppInfoManager& get_instance()
-    {
-        static AppInfoManager instance;
-        return instance;
-    }
-
     AppInfoTableEntry* get_app_info_entry(AppId);
     AppInfoTableEntry* add_dynamic_app_entry(const char* app_name);
     AppId get_appid_by_service_id(uint32_t);
@@ -143,15 +137,26 @@ public:
         return entry ? entry->priority : 0;
     }
 
-    void init_appid_info_table(AppIdConfig*, snort::SnortConfig*, OdpContext& odp_ctxt);
+    void init_appid_info_table(AppIdConfig&, snort::SnortConfig*, OdpContext& odp_ctxt);
     void cleanup_appid_info_table();
     void dump_app_info_table();
     SnortProtocolId add_appid_protocol_reference(const char* protocol, snort::SnortConfig*);
 
 private:
-    inline AppInfoManager() = default;
-    void load_appid_config(OdpContext&, const char* path);
+    void load_odp_config(OdpContext&, const char* path);
     AppInfoTableEntry* get_app_info_entry(AppId appId, const AppInfoTable&);
+    bool is_existing_entry(AppInfoTableEntry* entry);
+    AppInfoTableEntry* find_app_info_by_name(const char* app_name);
+    bool add_entry_to_app_info_name_table(const char* app_name, AppInfoTableEntry* entry);
+    AppId get_static_app_info_entry(AppId appid);
+
+    AppInfoTable app_info_table;
+    AppInfoTable app_info_service_table;
+    AppInfoTable app_info_client_table;
+    AppInfoTable app_info_payload_table;
+    AppInfoNameTable app_info_name_table;
+    AppId next_custom_appid = SF_APPID_DYNAMIC_MIN;
+    AppInfoTable custom_app_info_table;
 };
 
 #endif

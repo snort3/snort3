@@ -343,7 +343,7 @@ void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, con
     {
         fp->client.set_id(asd.client.get_id());
         fp->payload.set_id(asd.payload.get_id());
-        fp->service.set_id(APP_ID_RTP);
+        fp->service.set_id(APP_ID_RTP, asd.ctxt.get_odp_ctxt());
 
         // FIXIT-H : snort 2.9.x updated the flag to APPID_SESSION_EXPECTED_EVALUATE.
         // Check if it is needed here as well.
@@ -363,7 +363,7 @@ void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, con
     {
         fp2->client.set_id(asd.client.get_id());
         fp2->payload.set_id(asd.payload.get_id());
-        fp2->service.set_id(APP_ID_RTCP);
+        fp2->service.set_id(APP_ID_RTCP, asd.ctxt.get_odp_ctxt());
 
         // FIXIT-H : same comment as above
         //initialize_expected_session(asd, fp2, APPID_SESSION_EXPECTED_EVALUATE);

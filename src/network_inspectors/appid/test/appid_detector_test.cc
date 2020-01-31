@@ -36,6 +36,7 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
+snort::Inspector* snort::InspectorManager::get_inspector(char const*, bool, snort::SnortConfig*) { }
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 void AppIdHttpSession::set_http_change_bits(AppidChangeBits&, HttpFieldIds) {}
 
@@ -46,7 +47,7 @@ public:
 
     void do_custom_init() override { }
     int validate(AppIdDiscoveryArgs&) override { return 0; }
-    void register_appid(AppId, unsigned) override { }
+    void register_appid(AppId, unsigned, OdpContext&) override { }
     void release_thread_resources() override { }
 };
 

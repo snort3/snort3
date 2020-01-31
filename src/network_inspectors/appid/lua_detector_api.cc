@@ -238,11 +238,11 @@ static int common_register_application_id(lua_State* L)
     AppId appId = lua_tonumber(L, ++index);
 
     if ( ad->is_client() )
-        ad->register_appid(appId, APPINFO_FLAG_CLIENT_ADDITIONAL);
+        ad->register_appid(appId, APPINFO_FLAG_CLIENT_ADDITIONAL, ud->get_odp_ctxt());
     else
-        ad->register_appid(appId, APPINFO_FLAG_SERVICE_ADDITIONAL);
+        ad->register_appid(appId, APPINFO_FLAG_SERVICE_ADDITIONAL, ud->get_odp_ctxt());
 
-    AppInfoManager::get_instance().set_app_info_active(appId);
+    ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(appId);
 
     lua_pushnumber(L, 0);
     return 1;
@@ -517,7 +517,7 @@ static int service_add_service(lua_State* L)
     /*Phase2 - discuss AppIdServiceSubtype will be maintained on lua side therefore the last
       parameter on the following call is nullptr. Subtype is not displayed on DC at present. */
     unsigned int retValue = ud->sd->add_service(*lsd->ldp.change_bits, *lsd->ldp.asd, lsd->ldp.pkt,
-        lsd->ldp.dir, AppInfoManager::get_instance().get_appid_by_service_id(service_id),
+        lsd->ldp.dir, ud->get_odp_ctxt().get_app_info_mgr().get_appid_by_service_id(service_id),
         vendor, version, nullptr);
 
     lua_pushnumber(L, retValue);
@@ -915,8 +915,8 @@ static int client_add_application(lua_State* L)
     unsigned int productId = lua_tonumber(L, 4);
     const char* version = lua_tostring(L, 5);
     ud->cd->add_app(*lsd->ldp.pkt, *lsd->ldp.asd, lsd->ldp.dir,
-        AppInfoManager::get_instance().get_appid_by_service_id(service_id),
-        AppInfoManager::get_instance().get_appid_by_client_id(productId), version,
+        ud->get_odp_ctxt().get_app_info_mgr().get_appid_by_service_id(service_id),
+        ud->get_odp_ctxt().get_app_info_mgr().get_appid_by_client_id(productId), version,
         *lsd->ldp.change_bits);
 
     lua_pushnumber(L, 0);
@@ -944,7 +944,7 @@ static int client_add_user(lua_State* L)
     const char* userName = lua_tostring(L, 2);
     unsigned int service_id = lua_tonumber(L, 3);
     ud->cd->add_user(*lsd->ldp.asd, userName,
-        AppInfoManager::get_instance().get_appid_by_service_id(service_id), true);
+        ud->get_odp_ctxt().get_app_info_mgr().get_appid_by_service_id(service_id), true);
     lua_pushnumber(L, 0);
     return 1;
 }
@@ -957,7 +957,7 @@ static int client_add_payload(lua_State* L)
 
     unsigned int payloadId = lua_tonumber(L, 2);
     ud->cd->add_payload(*lsd->ldp.asd,
-        AppInfoManager::get_instance().get_appid_by_payload_id(payloadId));
+        ud->get_odp_ctxt().get_app_info_mgr().get_appid_by_payload_id(payloadId));
 
     lua_pushnumber(L, 0);
     return 1;
@@ -1006,7 +1006,7 @@ static int detector_add_http_pattern(lua_State* L)
     }
 
     DHPSequence seq  = (DHPSequence)lua_tointeger(L, ++index);
-    AppInfoManager& aim = AppInfoManager::get_instance();
+    AppInfoManager& aim = ud->get_odp_ctxt().get_app_info_mgr();
     uint32_t service_id = aim.get_appid_by_service_id((uint32_t)lua_tointeger(L, ++index));
     uint32_t client_id = aim.get_appid_by_client_id((uint32_t)lua_tointeger(L, ++index));
     /*uint32_t client_app_type =*/ lua_tointeger(L, ++index);
@@ -1058,7 +1058,7 @@ static int detector_add_ssl_cert_pattern(lua_State* L)
         return 0;
     }
 
-    AppInfoManager::get_instance().set_app_info_active(app_id);
+    ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(app_id);
     return 0;
 }
 
@@ -1121,7 +1121,7 @@ static int detector_add_ssl_cname_pattern(lua_State* L)
         return 0;
     }
 
-    AppInfoManager::get_instance().set_app_info_active(app_id);
+    ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(app_id);
     return 0;
 }
 
@@ -1224,7 +1224,7 @@ static int detector_add_content_type_pattern(lua_State* L)
     detector.pattern_size = strlen((char*)pattern);
     detector.app_id = appId;
     HttpPatternMatchers::get_instance()->insert_content_type_pattern(detector);
-    AppInfoManager::get_instance().set_app_info_active(appId);
+    ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(appId);
 
     return 0;
 }
@@ -1246,7 +1246,7 @@ static int register_callback(lua_State* L, LuaObject& ud, AppInfoFlags flag)
     if (init(L))
     {
         // in control thread, update app info table. app info table is shared across all threads
-        AppInfoTableEntry* entry = AppInfoManager::get_instance().get_app_info_entry(app_id);
+        AppInfoTableEntry* entry = ud.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(app_id);
         if (entry)
         {
             if (entry->flags & flag)
@@ -1350,10 +1350,11 @@ static int detector_callback(const uint8_t* data, uint16_t size, AppidSessionDir
     return ret;
 }
 
-void check_detector_callback(const Packet& p, AppIdSession& asd, AppidSessionDirection dir, AppId app_id, AppidChangeBits& change_bits, AppInfoTableEntry* entry)
+void check_detector_callback(const Packet& p, AppIdSession& asd, AppidSessionDirection dir,
+    AppId app_id, AppidChangeBits& change_bits, AppInfoTableEntry* entry)
 {
     if (!entry)
-        entry = AppInfoManager::get_instance().get_app_info_entry(app_id);
+        entry = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(app_id);
     if (!entry)
         return;
 
@@ -1482,7 +1483,8 @@ static inline int get_chp_action_data(lua_State* L, int index, char** action_dat
 }
 
 static int add_chp_pattern_action(AppId appIdInstance, int isKeyPattern, HttpFieldIds patternType,
-    size_t patternSize, char* patternData, ActionType actionType, char* optionalActionData)
+    size_t patternSize, char* patternData, ActionType actionType, char* optionalActionData,
+    AppInfoManager& app_info_mgr)
 {
     //find the CHP App for this
     auto chp_entry = CHP_glossary->find(appIdInstance);
@@ -1499,7 +1501,6 @@ static int add_chp_pattern_action(AppId appIdInstance, int isKeyPattern, HttpFie
     }
 
     CHPApp* chpapp = chp_entry->second;
-    AppInfoManager& app_info_mgr = AppInfoManager::get_instance();
 
     if (isKeyPattern)
     {
@@ -1619,7 +1620,7 @@ static int detector_add_chp_action(lua_State* L)
     }
 
     return add_chp_pattern_action(appIdInstance, key_pattern, ptype, psize, pattern,
-        action, action_data);
+        action, action_data, ud->get_odp_ctxt().get_app_info_mgr());
 }
 
 static int detector_create_chp_multi_application(lua_State* L)
@@ -1709,7 +1710,7 @@ static int detector_add_chp_multi_action(lua_State* L)
     }
 
     return add_chp_pattern_action(appIdInstance, key_pattern, ptype, psize, pattern,
-        action, action_data);
+        action, action_data, ud->get_odp_ctxt().get_app_info_mgr());
 }
 
 static int detector_port_only_service(lua_State* L)
@@ -1732,7 +1733,7 @@ static int detector_port_only_service(lua_State* L)
     else if (protocol == 17)
         AppIdContext::udp_port_only[port] = appId;
 
-    AppInfoManager::get_instance().set_app_info_active(appId);
+    ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(appId);
 
     return 0;
 }
@@ -1932,7 +1933,7 @@ static int detector_add_url_application(lua_State* L)
         query_pattern = (uint8_t*)snort_strdup(tmp_string);
 
     uint32_t appId = lua_tointeger(L, ++index);
-    AppInfoManager& app_info_manager = AppInfoManager::get_instance();
+    AppInfoManager& app_info_manager = ud->get_odp_ctxt().get_app_info_mgr();
     DetectorAppUrlPattern* pattern =
         (DetectorAppUrlPattern*)snort_calloc(sizeof(DetectorAppUrlPattern));
     pattern->userData.service_id        = app_info_manager.get_appid_by_service_id(service_id);
@@ -2034,7 +2035,7 @@ static int detector_add_rtmp_url(lua_State* L)
     pattern->patterns.scheme.patternSize = (int)schemePatternSize;
     HttpPatternMatchers::get_instance()->insert_rtmp_url_pattern(pattern);
 
-    AppInfoManager& app_info_manager = AppInfoManager::get_instance();
+    AppInfoManager& app_info_manager = ud->get_odp_ctxt().get_app_info_mgr();
     app_info_manager.set_app_info_active(pattern->userData.service_id);
     app_info_manager.set_app_info_active(pattern->userData.client_id);
     app_info_manager.set_app_info_active(pattern->userData.payload_id);
@@ -2071,7 +2072,7 @@ static int detector_add_sip_user_agent(lua_State* L)
 
     SipUdpClientDetector::sipUaPatternAdd(client_app, clientVersion, uaPattern);
 
-    AppInfoManager::get_instance().set_app_info_active(client_app);
+    ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(client_app);
 
     return 0;
 }
@@ -2098,12 +2099,12 @@ static int create_custom_application(lua_State* L)
 
     if (control)
     {
-        AppInfoTableEntry* entry = AppInfoManager::get_instance().add_dynamic_app_entry(tmp_string);
+        AppInfoTableEntry* entry = ud->get_odp_ctxt().get_app_info_mgr().add_dynamic_app_entry(tmp_string);
         appId = entry->appId;
         AppIdPegCounts::add_app_peg_info(tmp_string, appId);
     }
     else
-        appId  = AppInfoManager::get_instance().get_appid_by_name(tmp_string);
+        appId  = ud->get_odp_ctxt().get_app_info_mgr().get_appid_by_name(tmp_string);
 
     lua_pushnumber(L, appId);
     return 1;   /*number of results */
@@ -2193,7 +2194,7 @@ static int add_http_pattern(lua_State* L)
         payload_id, APP_ID_NONE) )
     {
         HttpPatternMatchers::get_instance()->insert_http_pattern(pat_type, pattern);
-        AppInfoManager& app_info_manager = AppInfoManager::get_instance();
+        AppInfoManager& app_info_manager = ud->get_odp_ctxt().get_app_info_mgr();
         app_info_manager.set_app_info_active(service_id);
         app_info_manager.set_app_info_active(client_id);
         app_info_manager.set_app_info_active(payload_id);
@@ -2268,7 +2269,7 @@ static int add_url_pattern(lua_State* L)
     pattern->patterns.scheme.patternSize = (int)schemePatternSize;
     HttpPatternMatchers::get_instance()->insert_app_url_pattern(pattern);
 
-    AppInfoManager& app_info_manager = AppInfoManager::get_instance();
+    AppInfoManager& app_info_manager = ud->get_odp_ctxt().get_app_info_mgr();
     app_info_manager.set_app_info_active(service_id);
     app_info_manager.set_app_info_active(clientAppId);
     app_info_manager.set_app_info_active(payload_id);
@@ -2322,7 +2323,7 @@ static int add_port_pattern_client(lua_State* L)
     pPattern->detectorName = snort_strdup(ud->get_detector()->get_name().c_str());
     PatternClientDetector::insert_client_port_pattern(pPattern);
 
-    AppInfoManager::get_instance().set_app_info_active(appId);
+    ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(appId);
 
     return 0;
 }
@@ -2366,7 +2367,7 @@ static int add_port_pattern_service(lua_State* L)
     pPattern->offset = position;
     pPattern->detectorName = snort_strdup(ud->get_detector()->get_name().c_str());
     PatternServiceDetector::insert_service_port_pattern(pPattern);
-    AppInfoManager::get_instance().set_app_info_active(appId);
+    ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(appId);
 
     return 0;
 }
@@ -2398,7 +2399,7 @@ static int detector_add_sip_server(lua_State* L)
     }
 
     SipUdpClientDetector::sipServerPatternAdd(client_app, clientVersion, uaPattern);
-    AppInfoManager::get_instance().set_app_info_active(client_app);
+    ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(client_app);
 
     return 0;
 }
@@ -2456,7 +2457,7 @@ static int create_future_flow(lua_State* L)
     AppId app_id_to_snort = lua_tointeger(L, 10);
     if (app_id_to_snort > APP_ID_NONE)
     {
-        AppInfoTableEntry* entry = AppInfoManager::get_instance().get_app_info_entry(
+        AppInfoTableEntry* entry = ud->get_odp_ctxt().get_app_info_mgr().get_app_info_entry(
             app_id_to_snort);
         if (!entry)
             return 0;
@@ -2468,7 +2469,7 @@ static int create_future_flow(lua_State* L)
         APPID_EARLY_SESSION_FLAG_FW_RULE);
     if (fp)
     {
-        fp->service.set_id(service_id);
+        fp->service.set_id(service_id, ud->get_odp_ctxt());
         fp->client.set_id(client_id);
         fp->payload.set_id(payload_id);
         fp->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE |

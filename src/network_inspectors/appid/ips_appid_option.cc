@@ -71,7 +71,7 @@ public:
     EvalStatus eval(Cursor&, Packet*) override;
 
 private:
-    bool match_id_against_rule(int32_t id);
+    bool match_id_against_rule(OdpContext& odp_ctxt, int32_t id);
     set<string> appid_table;
 };
 
@@ -102,9 +102,9 @@ bool AppIdIpsOption::operator==(const IpsOption& ips) const
     return ( appid_table == ((const AppIdIpsOption&)ips).appid_table );
 }
 
-bool AppIdIpsOption::match_id_against_rule(int32_t id)
+bool AppIdIpsOption::match_id_against_rule(OdpContext& odp_ctxt, int32_t id)
 {
-    const char *app_name_key = AppInfoManager::get_instance().get_app_name_key(id);
+    const char *app_name_key = odp_ctxt.get_app_info_mgr().get_app_name_key(id);
     if ( nullptr != app_name_key )
     {
         string app_name(app_name_key);
@@ -140,7 +140,8 @@ IpsOption::EvalStatus AppIdIpsOption::eval(Cursor&, Packet* p)
             app_ids[PAYLOAD], app_ids[MISC]);
 
     for ( unsigned i = 0; i < NUM_ID_TYPES; i++ )
-        if ( (app_ids[i] > APP_ID_NONE) && match_id_against_rule(app_ids[i]) )
+        if ( (app_ids[i] > APP_ID_NONE) and
+            match_id_against_rule(session->ctxt.get_odp_ctxt(), app_ids[i]) )
             return MATCH;
 
     return NO_MATCH;

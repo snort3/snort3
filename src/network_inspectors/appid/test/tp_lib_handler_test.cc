@@ -39,12 +39,13 @@ using namespace std;
 
 static TPLibHandler* tph = nullptr;
 static AppIdConfig config;
-static AppIdContext ctxt(&config);
-static OdpContext odpctxt;
-OdpContext* AppIdContext::odp_ctxt = &odpctxt;
+static AppIdContext ctxt(config);
+static OdpContext stub_odp_ctxt(config, nullptr);
+OdpContext* AppIdContext::odp_ctxt = &stub_odp_ctxt;
 ThirdPartyAppIdContext* AppIdContext::tp_appid_ctxt = nullptr;
 
 AppIdConfig::~AppIdConfig() { }
+OdpContext::OdpContext(AppIdConfig&, snort::SnortConfig*) { }
 
 TEST_GROUP(tp_lib_handler)
 {

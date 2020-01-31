@@ -21,6 +21,8 @@
 #ifndef APPID_MOCK_INSPECTOR_H
 #define APPID_MOCK_INSPECTOR_H
 
+#include "appid_inspector.h"
+
 typedef uint64_t Trace;
 class Value;
 
@@ -58,17 +60,14 @@ const PegInfo* AppIdModule::get_pegs() const { return nullptr; }
 PegCount* AppIdModule::get_counts() const { return nullptr; }
 snort::ProfileStats* AppIdModule::get_profile() const { return nullptr; }
 
-class AppIdInspector : public snort::Inspector
-{
-public:
-    AppIdInspector(AppIdModule& ) { }
-    ~AppIdInspector() override = default;
-    void eval(snort::Packet*) override { }
-    bool configure(snort::SnortConfig*) override { return true; }
-    void show(snort::SnortConfig*) override { }
-    void tinit() override { }
-    void tterm() override { }
-};
+AppIdInspector::AppIdInspector(AppIdModule& ) { }
+AppIdInspector::~AppIdInspector() { }
+void AppIdInspector::eval(snort::Packet*) { }
+bool AppIdInspector::configure(snort::SnortConfig*) { return true; }
+void AppIdInspector::show(snort::SnortConfig*) { }
+void AppIdInspector::tinit() { }
+void AppIdInspector::tterm() { }
+AppIdContext& AppIdInspector::get_ctxt() const { return *ctxt; }
 
 AppIdModule appid_mod;
 AppIdInspector appid_inspector( appid_mod );

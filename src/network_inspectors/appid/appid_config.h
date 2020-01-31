@@ -35,6 +35,7 @@
 #include "tp_appid_module_api.h"
 
 #include "application_ids.h"
+#include "app_info_table.h"
 #include "host_port_app_cache.h"
 #include "length_app_cache.h"
 
@@ -99,6 +100,8 @@ public:
     bool allow_port_wildcard_host_cache = false;
     bool recheck_for_portservice_appid = false;
 
+    OdpContext(AppIdConfig&, snort::SnortConfig*);
+
     HostPortVal* host_port_cache_find(const snort::SfIp* ip, uint16_t port, IpProtocol proto)
     {
         return host_port_cache.find(ip, port, proto, *this);
@@ -119,21 +122,30 @@ public:
         return length_cache.add(key, val);
     }
 
+    AppInfoManager& get_app_info_mgr()
+    {
+        return app_info_mgr;
+    }
+
 private:
     HostPortCache host_port_cache;
     LengthCache length_cache;
+    AppInfoManager app_info_mgr;
 };
 
 class AppIdContext
 {
 public:
-    AppIdContext(AppIdConfig* config) : config(config)
+    AppIdContext(AppIdConfig& config) : config(config)
     { }
 
     ~AppIdContext() { }
 
     OdpContext& get_odp_ctxt() const
-    { return *odp_ctxt; }
+    {
+        assert(odp_ctxt);
+        return *odp_ctxt;
+    }
 
     ThirdPartyAppIdContext* get_tp_appid_ctxt() const
     { return tp_appid_ctxt; }
@@ -155,13 +167,10 @@ public:
     static std::array<AppId, APP_ID_PORT_ARRAY_SIZE> udp_port_only;     // port-only UDP services
     static std::array<AppId, 256> ip_protocol;         // non-TCP / UDP protocol services
 
-    AppIdConfig* config = nullptr;
+    AppIdConfig& config;
 
 private:
     void display_port_config();
-    // FIXIT-M: RELOAD - Remove static, once app_info_mgr cleanup is
-    // removed from AppIdContext::pterm
-    static AppInfoManager& app_info_mgr;
     static OdpContext* odp_ctxt;
     static ThirdPartyAppIdContext* tp_appid_ctxt;
 };

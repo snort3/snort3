@@ -206,9 +206,8 @@ public:
 
     uint32_t session_id = 0;
     snort::Flow* flow = nullptr;
-    AppIdContext* ctxt;
+    AppIdContext& ctxt;
     std::unordered_map<unsigned, AppIdFlowData*> flow_data;
-    AppInfoManager* app_info_mgr = nullptr;
     CommonAppIdData common;
     uint16_t session_packet_count = 0;
 
@@ -347,7 +346,8 @@ public:
         if (tp_app_id != app_id)
         {
             tp_app_id = app_id;
-            tp_app_id_deferred = app_info_mgr->get_app_info_flags(tp_app_id, APPINFO_FLAG_DEFER);
+            tp_app_id_deferred = ctxt.get_odp_ctxt().get_app_info_mgr().get_app_info_flags
+                (tp_app_id, APPINFO_FLAG_DEFER);
         }
     }
 
@@ -355,7 +355,8 @@ public:
         if (tp_payload_app_id != app_id)
         {
             tp_payload_app_id = app_id;
-            tp_payload_app_id_deferred = app_info_mgr->get_app_info_flags(tp_payload_app_id, APPINFO_FLAG_DEFER_PAYLOAD);
+            tp_payload_app_id_deferred = ctxt.get_odp_ctxt().get_app_info_mgr().get_app_info_flags
+                (tp_payload_app_id, APPINFO_FLAG_DEFER_PAYLOAD);
         }
     }
 

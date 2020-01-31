@@ -59,8 +59,8 @@ bool HostPortCache::add(const SfIp* ip, uint16_t port, IpProtocol proto, unsigne
 
     hk.ip = *ip;
     AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
-    AppIdContext* ctxt = inspector->get_ctxt();
-    hk.port = (ctxt->get_odp_ctxt().allow_port_wildcard_host_cache)? 0 : port;
+    AppIdContext& ctxt = inspector->get_ctxt();
+    hk.port = (ctxt.get_odp_ctxt().allow_port_wildcard_host_cache)? 0 : port;
     hk.proto = proto;
 
     hv.appId = appId;

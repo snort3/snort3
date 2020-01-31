@@ -117,7 +117,7 @@ ThirdPartyAppIdContext* TPLibHandler::create_tp_appid_ctxt(const AppIdConfig& co
         return nullptr;
     }
 
-    if ( (tp_appid_ctxt->api_version() != THIRD_PARTY_APP_ID_API_VERSION)
+    if ( (tp_appid_ctxt->api_version() != THIRD_PARTY_APPID_API_VERSION)
         || (tp_appid_ctxt->module_name().empty()) )
     {
         ErrorMessage("Ignoring incomplete 3rd party AppID module (%s, %u, %s)!\n",

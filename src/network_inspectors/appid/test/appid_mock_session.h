@@ -70,8 +70,15 @@ public:
     }
 };
 
+AppIdConfig::~AppIdConfig() { }
+OdpContext::OdpContext(AppIdConfig&, snort::SnortConfig*) { }
+
+static AppIdConfig stub_config;
+static AppIdContext stub_ctxt(stub_config);
+static OdpContext stub_odp_ctxt(stub_config, nullptr);
+OdpContext* AppIdContext::odp_ctxt = &stub_odp_ctxt;
 AppIdSession::AppIdSession(IpProtocol proto, const SfIp*, uint16_t, AppIdInspector& inspector)
-    : FlowData(inspector_id, &inspector), protocol(proto)
+    : FlowData(inspector_id, &inspector), ctxt(stub_ctxt), protocol(proto)
 {
     common.flow_type = APPID_FLOW_TYPE_NORMAL;
     service_port = APPID_UT_SERVICE_PORT;
@@ -96,7 +103,7 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp*, uint16_t, AppIdInspect
 
     dsession = new MockAppIdDnsSession;
     tp_app_id = APPID_UT_ID;
-    service.set_id(APPID_UT_ID + 1);
+    service.set_id(APPID_UT_ID + 1, ctxt.get_odp_ctxt());
     client_inferred_service_id = APPID_UT_ID + 2;
     service.set_port_service_id(APPID_UT_ID + 3);
     payload.set_id(APPID_UT_ID + 4);

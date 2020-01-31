@@ -75,15 +75,14 @@ AppIdConfig::~AppIdConfig()
 }
 
 // FIXIT-M: RELOAD - move initialization back to AppIdContext class constructor
-AppInfoManager& AppIdContext::app_info_mgr = AppInfoManager::get_instance();
 std::array<AppId, APP_ID_PORT_ARRAY_SIZE> AppIdContext::tcp_port_only = {APP_ID_NONE};
 std::array<AppId, APP_ID_PORT_ARRAY_SIZE> AppIdContext::udp_port_only = {APP_ID_NONE};
 std::array<AppId, 256> AppIdContext::ip_protocol = {APP_ID_NONE};
 
-// FIXIT-M: RELOAD - Move app info table cleanup back to AppId config destructor - cleanup()
 void AppIdContext::pterm()
 {
-    AppIdContext::app_info_mgr.cleanup_appid_info_table();
+    assert(odp_ctxt);
+    odp_ctxt->get_app_info_mgr().cleanup_appid_info_table();
     delete odp_ctxt;
 }
 
@@ -91,14 +90,13 @@ bool AppIdContext::init_appid(SnortConfig* sc)
 {
     // do not reload ODP on reload_config()
     if (!odp_ctxt)
-        odp_ctxt = new OdpContext();
+        odp_ctxt = new OdpContext(config, sc);
 
     // FIXIT-M: RELOAD - Get rid of "once" flag
     // Handle the if condition in AppIdContext::init_appid
     static bool once = false;
     if (!once)
     {
-        AppIdContext::app_info_mgr.init_appid_info_table(config, sc, *odp_ctxt);
         HttpPatternMatchers* http_matchers = HttpPatternMatchers::get_instance();
         AppIdDiscovery::initialize_plugins();
         LuaDetectorManager::initialize(*this, 1);
@@ -113,7 +111,7 @@ bool AppIdContext::init_appid(SnortConfig* sc)
 
     // do not reload third party on reload_config()
     if (!tp_appid_ctxt)
-        tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(*config, *odp_ctxt);
+        tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(config, *odp_ctxt);
 
     map_app_names_to_snort_ids(sc);
     return true;
@@ -121,7 +119,7 @@ bool AppIdContext::init_appid(SnortConfig* sc)
 
 void AppIdContext::create_tp_appid_ctxt()
 {
-    tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(*config, *odp_ctxt);
+    tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(config, *odp_ctxt);
 }
 
 AppId AppIdContext::get_port_service_id(IpProtocol proto, uint16_t port)
@@ -143,8 +141,8 @@ AppId AppIdContext::get_protocol_service_id(IpProtocol proto)
 
 void AppIdContext::show()
 {
-    if (!config->tp_appid_path.empty())
-        LogMessage("    3rd Party Dir: %s\n", config->tp_appid_path.c_str());
+    if (!config.tp_appid_path.empty())
+        LogMessage("    3rd Party Dir: %s\n", config.tp_appid_path.c_str());
 }
 
 void AppIdContext::display_port_config()
@@ -175,3 +173,7 @@ void AppIdContext::display_port_config()
         }
 }
 
+OdpContext::OdpContext(AppIdConfig& config, SnortConfig* sc)
+{
+    app_info_mgr.init_appid_info_table(config, sc, *this);
+}

@@ -85,13 +85,17 @@ TEST_GROUP(appid_api)
 
 TEST(appid_api, get_application_name)
 {
-    const char* app_name = appid_api.get_application_name(1066);
+    AppIdConfig config;
+    AppIdContext ctxt(config);
+    const char* app_name = appid_api.get_application_name(1066, ctxt);
     STRCMP_EQUAL(app_name, test_app_name);
 }
 
 TEST(appid_api, get_application_id)
 {
-    AppId id = appid_api.get_application_id(test_app_name);
+    AppIdConfig config;
+    AppIdContext ctxt(config);
+    AppId id = appid_api.get_application_id(test_app_name, ctxt);
     CHECK_EQUAL(id, 1492);
 }
 

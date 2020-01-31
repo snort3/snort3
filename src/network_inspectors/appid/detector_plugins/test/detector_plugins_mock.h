@@ -140,8 +140,10 @@ snort::ProfileStats* AppIdModule::get_profile() const
 
 // Stubs for inspectors
 unsigned AppIdSession::inspector_id = 0;
+AppIdConfig stub_config;
+AppIdContext stub_ctxt(stub_config);
 AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector& inspector)
-    : snort::FlowData(inspector_id, (snort::Inspector*)&inspector) { }
+    : snort::FlowData(inspector_id, (snort::Inspector*)&inspector), ctxt(stub_ctxt) { }
 AppIdSession::~AppIdSession() = default;
 AppIdHttpSession::AppIdHttpSession(AppIdSession& asd)
     : asd(asd)
@@ -203,5 +205,8 @@ bool AppIdReloadTuner::tune_resources(unsigned int)
 {
     return true;
 }
+
+OdpContext::OdpContext(AppIdConfig&, snort::SnortConfig*)
+{ }
 
 #endif

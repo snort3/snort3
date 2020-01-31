@@ -31,6 +31,7 @@
 #include <CppUTest/TestHarness.h>
 
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
+
 void BootpServiceDetector::AppIdFreeDhcpData(DHCPData* data)
 {
     delete data;
@@ -48,8 +49,8 @@ void NbdgmServiceDetector::AppIdFreeSMBData(FpSMBData* data)
 
 AppIdSession* mock_session = nullptr;
 AppIdSessionApi* appid_session_api = nullptr;
-static OdpContext odpctxt;
-OdpContext* AppIdContext::odp_ctxt = &odpctxt;
+static AppIdConfig config;
+static OdpContext odpctxt(config, nullptr);
 
 TEST_GROUP(appid_session_api)
 {
@@ -221,7 +222,7 @@ TEST(appid_session_api, is_appid_inspecting_session)
 
     // 4th if in is_appid_inspecting_session
     mock_session->set_tp_app_id(APP_ID_NONE);
-    mock_session->ctxt->get_odp_ctxt().check_host_port_app_cache = true;
+    mock_session->ctxt.get_odp_ctxt().check_host_port_app_cache = true;
     val = appid_session_api->is_appid_inspecting_session();
     CHECK_TRUE(val);
 }
@@ -386,8 +387,6 @@ int main(int argc, char** argv)
 {
     mock_init_appid_pegs();
     mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
-    AppIdConfig *config = new AppIdConfig();
-    mock_session->ctxt = new AppIdContext(config);
     int rc = CommandLineTestRunner::RunAllTests(argc, argv);
     mock_cleanup_appid_pegs();
     return rc;

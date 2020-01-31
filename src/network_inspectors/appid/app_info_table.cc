@@ -29,24 +29,16 @@
 #include <string>
 #include <unistd.h>
 
-#include "appid_api.h"
-#include "appid_config.h"
-#include "appid_inspector.h"
-#include "appid_peg_counts.h"
 #include "log/unified2.h"
 #include "main/snort_config.h"
 #include "target_based/snort_protocols.h"
 #include "utils/util_cstring.h"
+#include "appid_api.h"
+#include "appid_config.h"
+#include "appid_inspector.h"
+#include "appid_peg_counts.h"
 
 using namespace snort;
-
-static AppInfoTable app_info_table;
-static AppInfoTable app_info_service_table;
-static AppInfoTable app_info_client_table;
-static AppInfoTable app_info_payload_table;
-static AppInfoNameTable app_info_name_table;
-static AppId next_custom_appid = SF_APPID_DYNAMIC_MIN;
-static AppInfoTable custom_app_info_table;
 
 #define MAX_TABLE_LINE_LEN      1024
 static const char* CONF_SEPARATORS = "\t\n\r";
@@ -80,7 +72,7 @@ AppInfoTableEntry::~AppInfoTableEntry()
         snort_free(app_name_key);
 }
 
-static bool is_existing_entry(AppInfoTableEntry* entry)
+bool AppInfoManager::is_existing_entry(AppInfoTableEntry* entry)
 {
     AppInfoNameTable::iterator app;
 
@@ -88,7 +80,7 @@ static bool is_existing_entry(AppInfoTableEntry* entry)
     return app != app_info_name_table.end();
 }
 
-static AppInfoTableEntry* find_app_info_by_name(const char* app_name)
+AppInfoTableEntry* AppInfoManager::find_app_info_by_name(const char* app_name)
 {
     AppInfoTableEntry* entry = nullptr;
     AppInfoNameTable::iterator app;
@@ -102,7 +94,7 @@ static AppInfoTableEntry* find_app_info_by_name(const char* app_name)
     return entry;
 }
 
-static bool add_entry_to_app_info_name_table(const char* app_name, AppInfoTableEntry* entry)
+bool AppInfoManager::add_entry_to_app_info_name_table(const char* app_name, AppInfoTableEntry* entry)
 {
     bool added = true;
 
@@ -119,7 +111,7 @@ static bool add_entry_to_app_info_name_table(const char* app_name, AppInfoTableE
     return added;
 }
 
-static AppId get_static_app_info_entry(AppId appid)
+AppId AppInfoManager::get_static_app_info_entry(AppId appid)
 {
     if (appid > 0 && appid < SF_APPID_BUILDIN_MAX)
         return appid;
@@ -274,7 +266,7 @@ void AppInfoManager::set_app_info_active(AppId appId)
         ParseWarning(WARN_PLUGINS, "appid: no entry in %s for %d", APP_MAPPING_FILE, appId);
 }
 
-void AppInfoManager::load_appid_config(OdpContext& odp_ctxt, const char* path)
+void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
 {
     char buf[MAX_TABLE_LINE_LEN];
     unsigned line = 0;
@@ -607,16 +599,16 @@ SnortProtocolId AppInfoManager::add_appid_protocol_reference(const char* protoco
     return snort_protocol_id;
 }
 
-void AppInfoManager::init_appid_info_table(AppIdConfig* config,
+void AppInfoManager::init_appid_info_table(AppIdConfig& config,
     SnortConfig* sc, OdpContext& odp_ctxt)
 {
-    if ( !config->app_detector_dir )
+    if ( !config.app_detector_dir )
     {
         return;  // no lua detectors, no rule support, already warned
     }
 
     char filepath[PATH_MAX];
-    snprintf(filepath, sizeof(filepath), "%s/odp/%s", config->app_detector_dir,
+    snprintf(filepath, sizeof(filepath), "%s/odp/%s", config.app_detector_dir,
         APP_MAPPING_FILE);
 
     FILE* tableFile = fopen(filepath, "r");
@@ -707,15 +699,15 @@ void AppInfoManager::init_appid_info_table(AppIdConfig* config,
         }
         fclose(tableFile);
 
-        snprintf(filepath, sizeof(filepath), "%s/odp/%s", config->app_detector_dir,
+        snprintf(filepath, sizeof(filepath), "%s/odp/%s", config.app_detector_dir,
             APP_CONFIG_FILE);
-        load_appid_config (odp_ctxt, filepath);
-        snprintf(filepath, sizeof(filepath), "%s/custom/%s", config->app_detector_dir,
+        load_odp_config(odp_ctxt, filepath);
+        snprintf(filepath, sizeof(filepath), "%s/custom/%s", config.app_detector_dir,
             USR_CONFIG_FILE);
         if (access (filepath, F_OK))
-            snprintf(filepath, sizeof(filepath), "%s/../%s", config->app_detector_dir,
+            snprintf(filepath, sizeof(filepath), "%s/../%s", config.app_detector_dir,
                 USR_CONFIG_FILE);
-        load_appid_config (odp_ctxt, filepath);
+        load_odp_config(odp_ctxt, filepath);
     }
 }
 

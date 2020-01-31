@@ -31,6 +31,7 @@
 #include "service_inspectors/http_inspect/http_msg_header.h"
 #include "tp_appid_module_api.h"
 #include "tp_appid_session_api.h"
+#include "appid_config.h"
 #include "appid_http_session.h"
 #include "appid_module.h"
 
@@ -91,15 +92,20 @@ AppId HttpPatternMatchers::get_appid_by_content_type(const char*, int)
 }
 
 bool HttpPatternMatchers::get_appid_from_url(char*, const char*, char**,
-    const char*, AppId*, AppId*, AppId*, AppId* referredPayloadAppId, bool)
+    const char*, AppId*, AppId*, AppId*, AppId* referredPayloadAppId, bool, OdpContext&)
 {
     *referredPayloadAppId = APP_ID_FACEBOOK;
     return true;
 }
 
+static AppIdConfig stub_config;
+static AppIdContext stub_ctxt(stub_config);
+static OdpContext stub_odp_ctxt(stub_config, nullptr);
+OdpContext* AppIdContext::odp_ctxt = &stub_odp_ctxt;
+
 // AppIdSession mock functions
 AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector& inspector)
-    : FlowData(inspector_id, &inspector)
+    : FlowData(inspector_id, &inspector), ctxt(stub_ctxt)
 {
 }
 
@@ -163,6 +169,9 @@ void Profiler::show_stats() { }
 
 MemoryContext::MemoryContext(MemoryTracker&) { }
 MemoryContext::~MemoryContext() { }
+
+OdpContext::OdpContext(AppIdConfig&, snort::SnortConfig*) { }
+AppIdConfig::~AppIdConfig() { }
 
 unsigned AppIdSession::inspector_id = 0;
 THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
@@ -266,7 +275,9 @@ TEST(appid_http_session, change_bits_for_referred_appid)
     // Testing set_referred_payload_app_id_data
     AppidChangeBits change_bits;
     AppIdPegCounts::init_pegs();
-    session.service.set_id(APP_ID_HTTP);
+    AppIdConfig config;
+    OdpContext odp_ctxt(config, nullptr);
+    session.service.set_id(APP_ID_HTTP, odp_ctxt);
     session.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
     hsession.set_skip_simple_detect(false);
     hsession.set_field( (HttpFieldIds)2, new std::string("referer"), change_bits );

@@ -25,10 +25,13 @@
 
 #include "detector_pattern.h"
 
-#include "app_info_table.h"
 #include "log/messages.h"
+#include "managers/inspector_manager.h"
 #include "protocols/packet.h"
 #include "search_engines/search_tool.h"
+
+#include "app_info_table.h"
+#include "appid_inspector.h"
 
 using namespace snort;
 
@@ -115,7 +118,12 @@ static void read_patterns(PortPatternNode* portPatternList, PatternService** ser
         pattern->offset = pNode->offset;
         pattern->next = ps->pattern;
         ps->pattern = pattern;
-        AppInfoManager::get_instance().set_app_info_active(ps->id);
+
+        // FIXIT-M: Tp support ODP reload, store ODP context in PatternService
+        AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
+        AppIdContext& ctxt = inspector->get_ctxt();
+
+        ctxt.get_odp_ctxt().get_app_info_mgr().set_app_info_active(ps->id);
     }
 }
 

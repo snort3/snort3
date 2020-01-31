@@ -34,6 +34,7 @@
 #include "pub_sub/appid_events.h"
 
 #include "app_info_table.h"
+#include "appid_config.h"
 #include "appid_module.h"
 #include "appid_peg_counts.h"
 #include "appid_types.h"
@@ -117,13 +118,12 @@ class ServiceAppDescriptor : public ApplicationDescriptor
 public:
     ServiceAppDescriptor() = default;
 
-    void set_id(AppId app_id) override
+    void set_id(AppId app_id, OdpContext& odp_ctxt)
     {
         if (get_id() != app_id)
         {
             ApplicationDescriptor::set_id(app_id);
-            AppInfoManager* app_info_mgr = &AppInfoManager::get_instance();
-            deferred = app_info_mgr->get_app_info_flags(app_id, APPINFO_FLAG_DEFER);
+            deferred = odp_ctxt.get_app_info_mgr().get_app_info_flags(app_id, APPINFO_FLAG_DEFER);
         }
     }
 
@@ -161,6 +161,7 @@ public:
 private:
     AppId port_service_id = APP_ID_NONE;
     bool deferred = false;
+    using ApplicationDescriptor::set_id;
 };
 
 class ClientAppDescriptor : public ApplicationDescriptor

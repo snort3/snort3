@@ -71,10 +71,10 @@ static void add_appid_to_packet_trace(Flow& flow)
         AppId service_id, client_id, payload_id, misc_id;
         const char* service_app_name, * client_app_name, * payload_app_name, * misc_name;
         session->get_application_ids(service_id, client_id, payload_id, misc_id);
-        service_app_name = appid_api.get_application_name(service_id);
-        client_app_name = appid_api.get_application_name(client_id);
-        payload_app_name = appid_api.get_application_name(payload_id);
-        misc_name = appid_api.get_application_name(misc_id);
+        service_app_name = appid_api.get_application_name(service_id, session->ctxt);
+        client_app_name = appid_api.get_application_name(client_id, session->ctxt);
+        payload_app_name = appid_api.get_application_name(payload_id, session->ctxt);
+        misc_name = appid_api.get_application_name(misc_id, session->ctxt);
 
         if (PacketTracer::is_active())
         {
@@ -91,24 +91,27 @@ static void add_appid_to_packet_trace(Flow& flow)
 AppIdInspector::AppIdInspector(AppIdModule& mod)
 {
     config = mod.get_data();
+    assert(config);
 }
 
 AppIdInspector::~AppIdInspector()
 {
-    delete ctxt;
+    if (ctxt)
+        delete ctxt;
     delete config;
 }
 
-AppIdContext* AppIdInspector::get_ctxt()
+AppIdContext& AppIdInspector::get_ctxt() const
 {
-    return ctxt;
+    assert(ctxt);
+    return *ctxt;
 }
 
 bool AppIdInspector::configure(SnortConfig* sc)
 {
     assert(!ctxt);
 
-    ctxt = new AppIdContext(const_cast<AppIdConfig*>(config));
+    ctxt = new AppIdContext(const_cast<AppIdConfig&>(*config));
 
     my_seh = SipEventHandler::create();
     my_seh->subscribe(sc);
@@ -150,7 +153,7 @@ void AppIdInspector::tinit()
     LuaDetectorManager::initialize(*ctxt);
     AppIdServiceState::initialize(config->memcap);
     appidDebug = new AppIdDebug();
-    if (ctxt->config and ctxt->config->log_all_sessions)
+    if (ctxt->config.log_all_sessions)
         appidDebug->set_enabled(true);
 }
 

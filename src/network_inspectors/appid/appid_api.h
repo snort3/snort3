@@ -29,6 +29,7 @@
 
 enum class IpProtocol : uint8_t;
 
+class AppIdContext;
 class AppIdSession;
 
 namespace snort
@@ -52,9 +53,9 @@ public:
     SO_PRIVATE AppIdApi() = default;
 
     AppIdSession* get_appid_session(const Flow& flow);
-    const char* get_application_name(AppId app_id);
+    const char* get_application_name(AppId app_id, AppIdContext& ctxt);
     const char* get_application_name(const Flow& flow, bool from_client);
-    AppId get_application_id(const char* appName);
+    AppId get_application_id(const char* appName, AppIdContext& ctxt);
     uint32_t produce_ha_state(const Flow& flow, uint8_t* buf);
     uint32_t consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t length, IpProtocol,
         SfIp*, uint16_t initiatorPort);

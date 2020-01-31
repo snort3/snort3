@@ -1567,7 +1567,7 @@ AppId HttpPatternMatchers::get_appid_by_content_type(const char* data, int size)
 
 bool HttpPatternMatchers::get_appid_from_url(char* host, const char* url, char** version,
     const char* referer, AppId* ClientAppId, AppId* serviceAppId, AppId* payloadAppId,
-    AppId* referredPayloadAppId, bool from_rtmp)
+    AppId* referredPayloadAppId, bool from_rtmp, OdpContext& odp_ctxt)
 {
     char* temp_host = nullptr;
     tMlmpPattern patterns[3];
@@ -1667,7 +1667,7 @@ bool HttpPatternMatchers::get_appid_from_url(char* host, const char* url, char**
 
     /* if referred_id feature id disabled, referer will be null */
     if ( referer and (referer[0] != '\0') and (!payload_found or
-        AppInfoManager::get_instance().get_app_info_flags(data->payload_id,
+        odp_ctxt.get_app_info_mgr().get_app_info_flags(data->payload_id,
         APPINFO_FLAG_REFERRED)) )
     {
         const char* referer_start = referer;

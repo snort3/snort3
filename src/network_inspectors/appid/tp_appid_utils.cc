@@ -61,12 +61,12 @@ static inline bool check_reinspect(const Packet* p, const AppIdSession& asd)
            !asd.get_session_flags(APPID_SESSION_NO_TPI) and asd.is_tp_appid_done() and p->dsize;
 }
 
-static inline int check_ssl_appid_for_reinspect(AppId app_id)
+static inline int check_ssl_appid_for_reinspect(AppId app_id, OdpContext& odp_ctxt)
 {
     if (app_id <= SF_APPID_MAX &&
         (app_id == APP_ID_SSL ||
-        AppInfoManager::get_instance().get_app_info_flags(app_id,
-        APPINFO_FLAG_SSL_INSPECT)))
+        odp_ctxt.get_app_info_mgr().get_app_info_flags(app_id,
+            APPINFO_FLAG_SSL_INSPECT)))
         return 1;
     else
         return 0;
@@ -288,7 +288,7 @@ static inline void process_http_session(AppIdSession& asd,
             LogMessage("AppIdDbg %s HTTP response upgrade is %s\n",
                 appidDebug->get_debug_session(),field->c_str());
 
-        if (asd.ctxt->get_odp_ctxt().http2_detection_enabled)
+        if (asd.ctxt.get_odp_ctxt().http2_detection_enabled)
         {
             const std::string* rc = hsession->get_field(MISC_RESP_CODE_FID);
             if ( rc && *rc == "101" )
@@ -420,7 +420,7 @@ static inline void process_rtmp(AppIdSession& asd,
         }
     }
 
-    if ( !asd.ctxt->get_odp_ctxt().referred_appId_disabled &&
+    if ( !asd.ctxt.get_odp_ctxt().referred_appId_disabled &&
         !hsession->get_field(REQ_REFERER_FID) )
     {
         if ( ( field=attribute_data.http_request_referer(own) ) != nullptr )
@@ -465,7 +465,7 @@ static inline void process_rtmp(AppIdSession& asd,
     }
 
     if ( hsession->get_field(MISC_URL_FID) || (confidence == 100 &&
-        asd.session_packet_count > asd.ctxt->get_odp_ctxt().rtmp_max_packets) )
+        asd.session_packet_count > asd.ctxt.get_odp_ctxt().rtmp_max_packets) )
     {
         const std::string* url;
         if ( ( url = hsession->get_field(MISC_URL_FID) ) != nullptr )
@@ -474,11 +474,11 @@ static inline void process_rtmp(AppIdSession& asd,
             const char* referer = hsession->get_cfield(REQ_REFERER_FID);
             if ( ( ( http_matchers->get_appid_from_url(nullptr, url->c_str(),
                 nullptr, referer, &client_id, &service_id,
-                &payload_id, &referred_payload_app_id, 1) )
+                &payload_id, &referred_payload_app_id, true, asd.ctxt.get_odp_ctxt()) )
                 ||
                 ( http_matchers->get_appid_from_url(nullptr, url->c_str(),
                 nullptr, referer, &client_id, &service_id,
-                &payload_id, &referred_payload_app_id, 0) ) ) == 1 )
+                &payload_id, &referred_payload_app_id, false, asd.ctxt.get_odp_ctxt()) ) ) == 1 )
             {
                 // do not overwrite a previously-set client or service
                 if ( client_id <= APP_ID_NONE )
@@ -518,7 +518,7 @@ static inline void process_ssl(AppIdSession& asd,
     if (!asd.client.get_id())
         asd.set_client_appid_data(APP_ID_SSL_CLIENT, change_bits);
 
-    reinspect_ssl_appid = check_ssl_appid_for_reinspect(tmpAppId);
+    reinspect_ssl_appid = check_ssl_appid_for_reinspect(tmpAppId, asd.ctxt.get_odp_ctxt());
 
     if ((field=attribute_data.tls_host(false)) != nullptr)
     {
@@ -547,7 +547,7 @@ static inline void process_ftp_control(AppIdSession& asd,
     ThirdPartyAppIDAttributeData& attribute_data)
 {
     const string* field=0;
-    if (!asd.ctxt->get_odp_ctxt().ftp_userid_disabled &&
+    if (!asd.ctxt.get_odp_ctxt().ftp_userid_disabled &&
         (field=attribute_data.ftp_command_user()) != nullptr)
     {
         asd.client.update_user(APP_ID_FTP_CONTROL, field->c_str());
@@ -596,7 +596,7 @@ static inline void check_terminate_tp_module(AppIdSession& asd, uint16_t tpPktCo
 {
     AppIdHttpSession* hsession = asd.get_http_session();
 
-    if ((tpPktCount >= asd.ctxt->get_odp_ctxt().max_tp_flow_depth) ||
+    if ((tpPktCount >= asd.ctxt.get_odp_ctxt().max_tp_flow_depth) ||
         (asd.get_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_APP_REINSPECT) ==
         (APPID_SESSION_HTTP_SESSION | APPID_SESSION_APP_REINSPECT) &&
         hsession->get_field(REQ_URI_FID) &&
@@ -634,7 +634,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
     /*** Start of third-party processing. ***/
     bool isTpAppidDiscoveryDone = false;
 
-    if (p->dsize || asd.ctxt->get_odp_ctxt().tp_allow_probes)
+    if (p->dsize || asd.ctxt.get_odp_ctxt().tp_allow_probes)
     {
         //restart inspection by 3rd party
         if (!asd.tp_reinspect_by_initiator && (direction == APP_ID_FROM_INITIATOR) &&
@@ -654,7 +654,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
         if (!asd.is_tp_processing_done())
         {
             if (protocol != IpProtocol::TCP || (p->packet_flags & PKT_STREAM_ORDER_OK)
-                || asd.ctxt->get_odp_ctxt().tp_allow_probes)
+                || asd.ctxt.get_odp_ctxt().tp_allow_probes)
             {
                 int tp_confidence;
                 ThirdPartyAppIDAttributeData tp_attribute_data;
@@ -693,7 +693,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
 
                 if (appidDebug->is_active())
                 {
-                    const char *app_name = AppInfoManager::get_instance().get_app_name(tp_app_id);
+                    const char *app_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(tp_app_id);
                     LogMessage("AppIdDbg %s 3rd party returned %s (%d)\n",
                         appidDebug->get_debug_session(),
                         app_name ? app_name : "unknown",
@@ -712,7 +712,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
                     asd.is_http2 = true;
                 }
                 // if the third-party appId must be treated as a client, do it now
-                unsigned app_info_flags = asd.app_info_mgr->get_app_info_flags(tp_app_id,
+                unsigned app_info_flags = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_info_flags(tp_app_id,
                     APPINFO_FLAG_TP_CLIENT | APPINFO_FLAG_IGNORE | APPINFO_FLAG_SSL_SQUELCH);
 
                 if ( app_info_flags & APPINFO_FLAG_TP_CLIENT )
@@ -725,7 +725,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
                     asd.get_session_flags(APPID_SESSION_SSL_SESSION) and
                     !(asd.scan_flags & SCAN_SSL_HOST_FLAG))
                 {
-                    setSSLSquelch(p, 1, tp_app_id);
+                    setSSLSquelch(p, 1, tp_app_id, asd.ctxt.get_odp_ctxt());
                 }
 
                 if ( app_info_flags & APPINFO_FLAG_IGNORE )
@@ -824,8 +824,8 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
                         asd.service.set_port_service_id(portAppId);
                         if (appidDebug->is_active())
                         {
-                            const char *service_name = AppInfoManager::get_instance().get_app_name(tp_app_id);
-                            const char *port_service_name = AppInfoManager::get_instance().get_app_name(asd.service.get_port_service_id());
+                            const char *service_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(tp_app_id);
+                            const char *port_service_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(asd.service.get_port_service_id());
                             LogMessage("AppIdDbg %s SSL is service %s (%d), portServiceAppId %s (%d)\n",
                                 appidDebug->get_debug_session(),
                                 service_name ? service_name : "unknown", tp_app_id,
@@ -838,7 +838,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
                         tp_app_id = portAppId;
                         if (appidDebug->is_active())
                         {
-                            const char *app_name = AppInfoManager::get_instance().get_app_name(tp_app_id);
+                            const char *app_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(tp_app_id);
                             LogMessage("AppIdDbg %s SSL is %s (%d)\n", appidDebug->get_debug_session(),
                                 app_name ? app_name : "unknown", tp_app_id);
                         }

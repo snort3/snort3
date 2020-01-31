@@ -1025,9 +1025,9 @@ void ssl_detector_free_patterns()
     ssl_patterns_free(&service_ssl_config.DetectorSSLCnamePatternList);
 }
 
-bool setSSLSquelch(Packet* p, int type, AppId appId)
+bool setSSLSquelch(Packet* p, int type, AppId appId, OdpContext& odp_ctxt)
 {
-    if (!AppInfoManager::get_instance().get_app_info_flags(appId, APPINFO_FLAG_SSL_SQUELCH))
+    if (!odp_ctxt.get_app_info_mgr().get_app_info_flags(appId, APPINFO_FLAG_SSL_SQUELCH))
         return false;
 
     const SfIp* dip = p->ptrs.ip_api.get_dst();

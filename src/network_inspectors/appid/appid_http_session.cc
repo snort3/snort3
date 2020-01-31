@@ -300,7 +300,7 @@ void AppIdHttpSession::process_chp_buffers(AppidChangeBits& change_bits)
                 int num_found = 0;
                 cmd.cur_ptype = (HttpFieldIds)i;
                 AppId ret = http_matchers->scan_chp(cmd, &version, &user, &num_found, this,
-                    *asd.ctxt);
+                    asd.ctxt);
                 total_found += num_found;
                 if (!ret || num_found < ptype_req_counts[i])
                 {
@@ -493,7 +493,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
 
     if (asd.service.get_id() == APP_ID_NONE)
     {
-        asd.service.set_id(APP_ID_HTTP);
+        asd.service.set_id(APP_ID_HTTP, asd.ctxt.get_odp_ctxt());
         asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_HTTP_SESSION);
         asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
     }
@@ -564,14 +564,14 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
                     if (service_id > APP_ID_NONE and service_id != APP_ID_HTTP and
                         asd.service.get_id() != service_id)
                     {
-                        const char *app_name = AppInfoManager::get_instance().get_app_name(service_id);
+                        const char *app_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(service_id);
                         LogMessage("AppIdDbg %s User Agent is service %s (%d)\n",
                             appidDebug->get_debug_session(), app_name ? app_name : "unknown", service_id);
                     }
                     if (client_id > APP_ID_NONE and client_id != APP_ID_HTTP and
                         asd.client.get_id() != client_id)
                     {
-                        const char *app_name = AppInfoManager::get_instance().get_app_name(client_id);
+                        const char *app_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(client_id);
                         LogMessage("AppIdDbg %s User Agent is client %s (%d)\n",
                             appidDebug->get_debug_session(), app_name ? app_name : "unknown", client_id);
                     }
@@ -591,7 +591,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
                 if (appidDebug->is_active() && payload_id > APP_ID_NONE &&
                     asd.payload.get_id() != payload_id)
                 {
-                    const char *app_name = AppInfoManager::get_instance().get_app_name(payload_id);
+                    const char *app_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(payload_id);
                     LogMessage("AppIdDbg %s VIA is payload %s (%d)\n", appidDebug->get_debug_session(),
                         app_name ? app_name : "unknown",
                         payload_id);
@@ -620,7 +620,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
                     if (appidDebug->is_active() && client_id > APP_ID_NONE && client_id !=
                         APP_ID_HTTP && asd.client.get_id() != client_id)
                     {
-                        const char *app_name = AppInfoManager::get_instance().get_app_name(appId);
+                        const char *app_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(appId);
                         LogMessage("AppIdDbg %s X is client %s (%d)\n", appidDebug->get_debug_session(),
                         app_name ? app_name : "unknown", appId);
                     }
@@ -631,7 +631,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
                     if (appidDebug->is_active() && service_id > APP_ID_NONE && service_id !=
                         APP_ID_HTTP && asd.service.get_id() != service_id)
                     {
-                        const char *app_name = AppInfoManager::get_instance().get_app_name(appId);
+                        const char *app_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(appId);
                         LogMessage("AppIdDbg %s X service %s (%d)\n", appidDebug->get_debug_session(),
                             app_name ? app_name : "unknown", appId);
                     }
@@ -656,7 +656,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             if (appidDebug->is_active() && payload_id > APP_ID_NONE
                 && asd.payload.get_id() != payload_id)
             {
-                const char *app_name = AppInfoManager::get_instance().get_app_name(payload_id);
+                const char *app_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(payload_id);
                 LogMessage("AppIdDbg %s Content-Type is payload %s (%d)\n",
                     appidDebug->get_debug_session(),
                     app_name ? app_name : "unknown",
@@ -676,7 +676,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             const char* urlStr = url ? url->c_str() : nullptr;
             if ( http_matchers->get_appid_from_url(my_host, urlStr, &version,
                 refStr, &client_id, &service_id, &payload_id,
-                &referredPayloadAppId, false) )
+                &referredPayloadAppId, false, asd.ctxt.get_odp_ctxt()) )
             {
                 // do not overwrite a previously-set client or service
                 if (asd.client.get_id() <= APP_ID_NONE)
@@ -684,7 +684,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
                     if (appidDebug->is_active() && client_id > APP_ID_NONE && client_id !=
                         APP_ID_HTTP && asd.client.get_id() != client_id)
                     {
-                        const char *app_name = AppInfoManager::get_instance().get_app_name(client_id);
+                        const char *app_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(client_id);
                         LogMessage("AppIdDbg %s URL is client %s (%d)\n",
                             appidDebug->get_debug_session(),
                             app_name ? app_name : "unknown",
@@ -698,7 +698,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
                     if (appidDebug->is_active() && service_id > APP_ID_NONE && service_id !=
                         APP_ID_HTTP && asd.service.get_id() != service_id)
                     {
-                        const char *app_name = AppInfoManager::get_instance().get_app_name(service_id);
+                        const char *app_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(service_id);
                         LogMessage("AppIdDbg %s URL is service %s (%d)\n",
                             appidDebug->get_debug_session(),
                             app_name ? app_name : "unknown",
@@ -711,7 +711,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
                 if (appidDebug->is_active() && payload_id > APP_ID_NONE &&
                     asd.payload.get_id() != payload_id)
                 {
-                    const char *app_name = AppInfoManager::get_instance().get_app_name(payload_id);
+                    const char *app_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(payload_id);
                     LogMessage("AppIdDbg %s URL is payload %s (%d)\n", appidDebug->get_debug_session(),
                         app_name ? app_name : "unknown",
                         payload_id);
@@ -733,7 +733,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             AppId tp_payload_app_id = asd.get_tp_payload_app_id();
             if (tp_payload_app_id > APP_ID_NONE)
             {
-                entry = asd.app_info_mgr->get_app_info_entry(tp_payload_app_id);
+                entry = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(tp_payload_app_id);
                 // only move tpPayloadAppId to client if client app id is valid
                 if (entry && entry->clientId > APP_ID_NONE)
                 {
@@ -743,7 +743,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             }
             else if (asd.payload.get_id() > APP_ID_NONE)
             {
-                entry =  asd.app_info_mgr->get_app_info_entry(asd.payload.get_id());
+                entry =  asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(asd.payload.get_id());
                 // only move payload_app_id to client if it has a ClientAppid
                 if (entry && entry->clientId > APP_ID_NONE)
                 {

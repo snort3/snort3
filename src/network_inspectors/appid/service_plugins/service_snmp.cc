@@ -472,7 +472,7 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
         {
             args.asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE);
             args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
-            args.asd.service.set_id(APP_ID_SNMP);
+            args.asd.service.set_id(APP_ID_SNMP, args.asd.ctxt.get_odp_ctxt());
             break;
         }
         sd->state = SNMP_STATE_RESPONSE;

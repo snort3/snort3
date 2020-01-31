@@ -17,7 +17,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// client_detector.cc author davis mcpherson
+// appid_detector.cc author davis mcpherson
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -25,11 +25,13 @@
 
 #include "appid_detector.h"
 
+#include "managers/inspector_manager.h"
 #include "protocols/packet.h"
 
 #include "app_info_table.h"
 #include "appid_config.h"
 #include "appid_http_session.h"
+#include "appid_inspector.h"
 #include "lua_detector_api.h"
 
 using namespace snort;
@@ -45,8 +47,13 @@ int AppIdDetector::initialize()
             handler->register_udp_pattern(this, pat.pattern, pat.length, pat.index, pat.nocase);
 
     if (!appid_registry.empty())
+    {
+        // FIXIT-M: RELOAD - to support ODP reload, store ODP context in AppIdDetector
+        AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
+        AppIdContext& ctxt = inspector->get_ctxt();
         for (auto& id : appid_registry)
-            register_appid(id.appId, id.additionalInfo);
+	  register_appid(id.appId, id.additionalInfo, ctxt.get_odp_ctxt());
+      }
 
     if (!service_ports.empty())
         for (auto& port: service_ports)

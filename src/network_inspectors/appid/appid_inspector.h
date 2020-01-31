@@ -46,7 +46,7 @@ public:
     void tinit() override;
     void tterm() override;
     void eval(snort::Packet*) override;
-    AppIdContext* get_ctxt();
+    AppIdContext& get_ctxt() const;
 
     SipEventHandler& get_sip_event_handler()
     {

@@ -613,7 +613,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
         {
             // Third party has positively identified appId; Dig deeper only if our
             // detector identifies additional information or flow is UDP reversed.
-            AppInfoTableEntry* entry = asd.app_info_mgr->get_app_info_entry(tp_app_id);
+            AppInfoTableEntry* entry = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(tp_app_id);
             if ( entry && entry->service_detector &&
                 ( ( entry->flags & APPINFO_FLAG_SERVICE_ADDITIONAL ) ||
                 ( ( entry->flags & APPINFO_FLAG_SERVICE_UDP_REVERSED ) &&
@@ -639,7 +639,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
          !asd.get_session_flags(APPID_SESSION_NO_TPI) and
          asd.is_tp_appid_available() )
     {
-        AppInfoTableEntry* entry = asd.app_info_mgr->get_app_info_entry(tp_app_id);
+        AppInfoTableEntry* entry = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(tp_app_id);
         if ( entry && entry->service_detector &&
             !(entry->flags & APPINFO_FLAG_SERVICE_ADDITIONAL) )
         {
@@ -658,7 +658,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
             // job of it than we do, so stay out of its way, and don't
             // waste time (but we will still get the Snort callbacks
             // for any of our own future flows). Shut down our detectors.
-            asd.service.set_id(APP_ID_SIP);
+            asd.service.set_id(APP_ID_SIP, asd.ctxt.get_odp_ctxt());
             asd.stop_rna_service_inspection(p, direction);
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
         }
@@ -667,7 +667,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
         {
             // No need for anybody to keep wasting time once we've
             // found RTP - Shut down our detectors.
-            asd.service.set_id(tp_app_id);
+            asd.service.set_id(tp_app_id, asd.ctxt.get_odp_ctxt());
             asd.stop_rna_service_inspection(p, direction);
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
             //  - Shut down TP.
@@ -696,7 +696,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
         }
 
         AppIdDnsSession* dsession = asd.get_dns_session();
-        if (asd.service.get_id() == APP_ID_DNS && asd.ctxt->get_odp_ctxt().dns_host_reporting
+        if (asd.service.get_id() == APP_ID_DNS && asd.ctxt.get_odp_ctxt().dns_host_reporting
             && dsession->get_host())
         {
             AppId client_id = APP_ID_NONE;
@@ -739,7 +739,7 @@ int ServiceDiscovery::incompatible_data(AppIdSession& asd, const Packet* pkt, Ap
 
     asd.set_service_detected();
     asd.clear_session_flags(APPID_SESSION_CONTINUE);
-    asd.service.set_id(APP_ID_NONE);
+    asd.service.set_id(APP_ID_NONE, asd.ctxt.get_odp_ctxt());
 
     if ( asd.get_session_flags(APPID_SESSION_IGNORE_HOST | APPID_SESSION_UDP_REVERSED) )
         return APPID_SUCCESS;
@@ -775,7 +775,7 @@ int ServiceDiscovery::fail_service(AppIdSession& asd, const Packet* pkt, AppidSe
     if ( !asd.service_detector && !asd.service_candidates.empty() )
         return APPID_SUCCESS;
 
-    asd.service.set_id(APP_ID_NONE);
+    asd.service.set_id(APP_ID_NONE, asd.ctxt.get_odp_ctxt());
     asd.set_service_detected();
     asd.clear_session_flags(APPID_SESSION_CONTINUE);
 

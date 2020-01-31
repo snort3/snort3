@@ -42,12 +42,12 @@ ClientDetector::ClientDetector()
     client = true;
 }
 
-void ClientDetector::register_appid(AppId appId, unsigned extractsInfo)
+void ClientDetector::register_appid(AppId appId, unsigned extractsInfo, OdpContext& odp_ctxt)
 {
-    AppInfoTableEntry* pEntry = AppInfoManager::get_instance().get_app_info_entry(appId);
+    AppInfoTableEntry* pEntry = odp_ctxt.get_app_info_mgr().get_app_info_entry(appId);
     if (!pEntry)
     {
-        if ( AppInfoManager::get_instance().configured() )
+        if ( odp_ctxt.get_app_info_mgr().configured() )
         {
             ParseWarning(WARN_RULES,
                 "appid: no entry for %d in appMapping.data; no rule support for this ID.",

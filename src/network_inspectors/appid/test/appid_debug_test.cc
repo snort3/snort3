@@ -52,8 +52,12 @@ public:
     AppIdInspector() = default;
 };
 
+AppIdConfig::~AppIdConfig() { }
+
+AppIdConfig stub_config;
+AppIdContext stub_ctxt(stub_config);
 AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector&)
-    : FlowData(0) { }
+    : FlowData(0), ctxt(stub_ctxt) { }
 AppIdSession::~AppIdSession() = default;
 
 // Utility functions

@@ -100,7 +100,6 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port,
     common.flow_type = APPID_FLOW_TYPE_NORMAL;
     common.initiator_ip = *ip;
     common.initiator_port = port;
-    app_info_mgr = &AppInfoManager::get_instance();
 
     length_sequence.proto = IpProtocol::PROTO_NOT_SET;
     length_sequence.sequence_cnt = 0;
@@ -113,7 +112,7 @@ AppIdSession::~AppIdSession()
 {
     if (!in_expected_cache)
     {
-        if (ctxt->config->stats_logging_enabled)
+        if (ctxt.config.stats_logging_enabled)
             AppIdStatistics::get_stats_manager()->update(*this);
 
         // fail any service detection that is in process for this flow
@@ -137,7 +136,7 @@ AppIdSession::~AppIdSession()
 
     if (tpsession)
     {
-        if (tpsession->get_ctxt() == tp_appid_thread_ctxt)
+        if (&(tpsession->get_ctxt()) == tp_appid_thread_ctxt)
             tpsession->delete_with_ctxt();
         else
             delete tpsession;
@@ -297,7 +296,7 @@ void AppIdSession::sync_with_snort_protocol_id(AppId newAppId, Packet* p)
             break;
         }
 
-        AppInfoTableEntry* entry = app_info_mgr->get_app_info_entry(newAppId);
+        AppInfoTableEntry* entry = ctxt.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(newAppId);
         if (entry)
         {
             SnortProtocolId tmp_snort_protocol_id = entry->snort_protocol_id;
@@ -420,7 +419,7 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
             if (client.get_id() == APP_ID_NONE or client.get_id() == APP_ID_SSL_CLIENT)
                 set_client_appid_data(client_id, change_bits);
             set_payload_appid_data(payload_id, change_bits);
-            setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id));
+            setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id), ctxt.get_odp_ctxt());
         }
         scan_flags &= ~SCAN_SSL_HOST_FLAG;
     }
@@ -433,7 +432,7 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
             if (client.get_id() == APP_ID_NONE or client.get_id() == APP_ID_SSL_CLIENT)
                 set_client_appid_data(client_id, change_bits);
             set_payload_appid_data(payload_id, change_bits);
-            setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id));
+            setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id), ctxt.get_odp_ctxt());
         }
         scan_flags &= ~SCAN_SSL_CERTIFICATE_FLAG;
     }
@@ -445,7 +444,7 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
         {
             set_client_appid_data(client_id, change_bits);
             set_payload_appid_data(payload_id, change_bits);
-            setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id));
+            setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id), ctxt.get_odp_ctxt());
         }
         tsession->set_tls_org_unit(nullptr, 0);
     }
@@ -475,10 +474,10 @@ void AppIdSession::examine_rtmp_metadata(AppidChangeBits& change_bits)
         const char* referer = hsession->get_cfield(REQ_REFERER_FID);
         if (((http_matchers->get_appid_from_url(nullptr, url, &version,
             referer, &client_id, &service_id, &payload_id,
-            &referred_payload_id, true)) ||
+            &referred_payload_id, true, ctxt.get_odp_ctxt())) ||
             (http_matchers->get_appid_from_url(nullptr, url, &version,
             referer, &client_id, &service_id, &payload_id,
-            &referred_payload_id, false))))
+            &referred_payload_id, false, ctxt.get_odp_ctxt()))))
         {
             /* do not overwrite a previously-set client or service */
             if (client.get_id() <= APP_ID_NONE)
@@ -502,7 +501,7 @@ void AppIdSession::set_client_appid_data(AppId id, AppidChangeBits& change_bits,
     if (id != cur_id)
     {
         if (cur_id)
-            if (app_info_mgr->get_priority(cur_id) > app_info_mgr->get_priority(id))
+            if (ctxt.get_odp_ctxt().get_app_info_mgr().get_priority(cur_id) > ctxt.get_odp_ctxt().get_app_info_mgr().get_priority(id))
                 return;
 
         client.set_id(id);
@@ -528,7 +527,7 @@ void AppIdSession::set_payload_appid_data(AppId id, AppidChangeBits& change_bits
     if (id <= APP_ID_NONE)
         return;
 
-    if (app_info_mgr->get_priority(payload.get_id()) > app_info_mgr->get_priority(id))
+    if (ctxt.get_odp_ctxt().get_app_info_mgr().get_priority(payload.get_id()) > ctxt.get_odp_ctxt().get_app_info_mgr().get_priority(id))
         return;
     payload.set_id(id);
     payload.set_version(version, change_bits);
@@ -916,7 +915,7 @@ AppIdDnsSession* AppIdSession::get_dns_session()
 
 bool AppIdSession::is_tp_appid_done() const
 {
-    if (ctxt->get_tp_appid_ctxt())
+    if (ctxt.get_tp_appid_ctxt())
     {
         if (!tpsession)
             return false;
@@ -941,7 +940,7 @@ bool AppIdSession::is_tp_processing_done() const
 
 bool AppIdSession::is_tp_appid_available() const
 {
-    if (ctxt->get_tp_appid_ctxt())
+    if (ctxt.get_tp_appid_ctxt())
     {
         if (!tpsession)
             return false;
@@ -960,7 +959,7 @@ void AppIdSession::set_tp_app_id(Packet& p, AppidSessionDirection dir, AppId app
     if (tp_app_id != app_id)
     {
         tp_app_id = app_id;
-        AppInfoTableEntry* entry = app_info_mgr->get_app_info_entry(tp_app_id);
+        AppInfoTableEntry* entry = ctxt.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(tp_app_id);
         if (entry)
         {
             tp_app_id_deferred = (entry->flags & APPINFO_FLAG_DEFER) ? true : false;
@@ -974,7 +973,7 @@ void AppIdSession::set_tp_payload_app_id(Packet& p, AppidSessionDirection dir, A
     if (tp_payload_app_id != app_id)
     {
         tp_payload_app_id = app_id;
-        AppInfoTableEntry* entry = app_info_mgr->get_app_info_entry(tp_payload_app_id);
+        AppInfoTableEntry* entry = ctxt.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(tp_payload_app_id);
         if (entry)
         {
             tp_payload_app_id_deferred = (entry->flags & APPINFO_FLAG_DEFER_PAYLOAD) ? true : false;

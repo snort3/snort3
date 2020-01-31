@@ -138,11 +138,8 @@ PegCount* AppIdModule::get_counts() const { return nullptr; }
 ProfileStats* AppIdModule::get_profile() const { return nullptr; }
 
 // Stubs for config
-AppIdConfig::~AppIdConfig() {}
 static AppIdConfig app_config;
-static AppIdContext app_ctxt(&app_config);
-static OdpContext odpctxt;
-OdpContext* AppIdContext::odp_ctxt = &odpctxt;
+static AppIdContext app_ctxt(app_config);
 AppId AppIdContext::get_port_service_id(IpProtocol, uint16_t)
 {
     return APP_ID_NONE;
@@ -154,17 +151,17 @@ AppId AppIdContext::get_protocol_service_id(IpProtocol)
 }
 
 // Stubs for AppIdInspector
-AppIdInspector::AppIdInspector(AppIdModule&) {}
+AppIdInspector::AppIdInspector(AppIdModule&) { ctxt = &stub_ctxt; }
 AppIdInspector::~AppIdInspector() = default;
 void AppIdInspector::eval(Packet*) { }
 bool AppIdInspector::configure(SnortConfig*) { return true; }
 void AppIdInspector::show(SnortConfig*) { }
 void AppIdInspector::tinit() { }
 void AppIdInspector::tterm() { }
-AppIdContext* AppIdInspector::get_ctxt()
+AppIdContext& AppIdInspector::get_ctxt() const
 {
-    app_ctxt.config = &app_config;
-    return &app_ctxt;
+    assert(ctxt);
+    return *ctxt;
 }
 
 // Stubs for AppInfoManager
@@ -332,7 +329,6 @@ TEST(appid_discovery_tests, event_published_when_ignoring_flow)
     Flow* flow = new Flow;
     flow->set_flow_data(asd);
     p.flow = flow;
-    asd->ctxt = &app_ctxt;
     asd->common.initiator_port = 21;
     asd->common.initiator_ip.set("1.2.3.4");
     asd->set_session_flags(APPID_SESSION_IGNORE_FLOW);
@@ -364,7 +360,6 @@ TEST(appid_discovery_tests, event_published_when_processing_flow)
     Flow* flow = new Flow;
     flow->set_flow_data(asd);
     p.flow = flow;
-    asd->ctxt = &app_ctxt;
     asd->common.initiator_port = 21;
     asd->common.initiator_ip.set("1.2.3.4");
 
@@ -421,13 +416,12 @@ TEST(appid_discovery_tests, change_bits_for_non_http_appid)
     flow->set_flow_data(asd);
     p.flow = flow;
     p.ptrs.tcph = nullptr;
-    asd->ctxt = &app_ctxt;
     asd->common.initiator_port = 21;
     asd->common.initiator_ip.set("1.2.3.4");
     asd->misc_app_id = APP_ID_NONE;
     asd->payload.set_id(APP_ID_NONE);
     asd->client.set_id(APP_ID_CURL);
-    asd->service.set_id(APP_ID_FTP);
+    asd->service.set_id(APP_ID_FTP, app_ctxt.get_odp_ctxt());
 
     AppIdDiscovery::do_application_discovery(&p, ins, nullptr);
 
@@ -441,7 +435,7 @@ TEST(appid_discovery_tests, change_bits_for_non_http_appid)
     asd->misc_app_id = APP_ID_NONE;
     asd->payload.set_id(APP_ID_NONE);
     asd->client.set_id(APP_ID_NONE);
-    asd->service.set_id(APP_ID_DNS);
+    asd->service.set_id(APP_ID_DNS, app_ctxt.get_odp_ctxt());
     AppIdDiscovery::do_application_discovery(&p, ins, nullptr);
 
     // Detect event for DNS service

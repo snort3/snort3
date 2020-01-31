@@ -42,6 +42,7 @@ struct Packet;
 }
 class AppIdHttpSession;
 class AppIdContext;
+class OdpContext;
 
 enum httpPatternType
 {
@@ -306,7 +307,7 @@ public:
     AppId scan_header_x_working_with(const char*, uint32_t, char**);
     int get_appid_by_pattern(const char*, unsigned, char**);
     bool get_appid_from_url(char*, const char*, char**, const char*, AppId*, AppId*,
-        AppId*, AppId*, bool);
+        AppId*, AppId*, bool, OdpContext&);
     AppId get_appid_by_content_type(const char*, int);
     void get_server_vendor_version(const char*, int, char**, char**, snort::AppIdServiceSubtype**);
     void identify_user_agent(const char*, int, AppId&, AppId&, char**);

@@ -49,19 +49,18 @@ AppIdSession* AppIdApi::get_appid_session(const Flow& flow)
     return (asd && asd->common.flow_type == APPID_FLOW_TYPE_NORMAL) ? asd : nullptr;
 }
 
-const char* AppIdApi::get_application_name(AppId app_id)
+const char* AppIdApi::get_application_name(AppId app_id, AppIdContext& ctxt)
 {
-    return AppInfoManager::get_instance().get_app_name(app_id);
+    return ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(app_id);
 }
 
 const char* AppIdApi::get_application_name(const Flow& flow, bool from_client)
 {
     const char* app_name = nullptr;
-    AppId appid = APP_ID_NONE;
     AppIdSession* asd = get_appid_session(flow);
     if (asd)
     {
-        appid = asd->pick_payload_app_id();
+        AppId appid = asd->pick_payload_app_id();
         if (appid <= APP_ID_NONE)
             appid = asd->pick_misc_app_id();
         if (!appid and from_client)
@@ -76,16 +75,17 @@ const char* AppIdApi::get_application_name(const Flow& flow, bool from_client)
             if (!appid)
                 appid = asd->pick_client_app_id();
         }
+        if (appid > APP_ID_NONE && appid < SF_APPID_MAX)
+            app_name = asd->ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(appid);
+
     }
-    if (appid > APP_ID_NONE && appid < SF_APPID_MAX)
-        app_name = AppInfoManager::get_instance().get_app_name(appid);
 
     return app_name;
 }
 
-AppId AppIdApi::get_application_id(const char* appName)
+AppId AppIdApi::get_application_id(const char* appName, AppIdContext& ctxt)
 {
-    return AppInfoManager::get_instance().get_appid_by_name(appName);
+    return ctxt.get_odp_ctxt().get_app_info_mgr().get_appid_by_name(appName);
 }
 
 #define APPID_HA_FLAGS_APP ( 1 << 0 )
@@ -139,7 +139,7 @@ uint32_t AppIdApi::consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t, IpP
 
                 asd = new AppIdSession(proto, ip, port, *inspector);
                 flow.set_flow_data(asd);
-                asd->service.set_id(appHA->appId[1]);
+                asd->service.set_id(appHA->appId[1], asd->ctxt.get_odp_ctxt());
                 if (asd->service.get_id() == APP_ID_FTP_CONTROL)
                 {
                     asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED |
@@ -176,7 +176,7 @@ uint32_t AppIdApi::consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t, IpP
             asd->set_session_flags(APPID_SESSION_HTTP_SESSION);
 
         asd->set_tp_app_id(appHA->appId[0]);
-        asd->service.set_id(appHA->appId[1]);
+        asd->service.set_id(appHA->appId[1], asd->ctxt.get_odp_ctxt());
         asd->client_inferred_service_id = appHA->appId[2];
         asd->service.set_port_service_id(appHA->appId[3]);
         asd->payload.set_id(appHA->appId[4]);

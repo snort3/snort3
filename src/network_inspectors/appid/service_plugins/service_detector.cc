@@ -44,12 +44,12 @@ ServiceDetector::ServiceDetector()
     client = false;
 }
 
-void ServiceDetector::register_appid(AppId appId, unsigned extractsInfo)
+void ServiceDetector::register_appid(AppId appId, unsigned extractsInfo, OdpContext& odp_ctxt)
 {
-    AppInfoTableEntry* pEntry = AppInfoManager::get_instance().get_app_info_entry(appId);
+    AppInfoTableEntry* pEntry = odp_ctxt.get_app_info_mgr().get_app_info_entry(appId);
     if (!pEntry)
     {
-        if ( AppInfoManager::get_instance().configured() )
+        if ( odp_ctxt.get_app_info_mgr().configured() )
         {
             ParseWarning(WARN_RULES,
                 "appid: no entry for %d in appMapping.data; no rule support for this ID.",
@@ -90,7 +90,7 @@ int ServiceDetector::update_service_data(AppIdSession& asd, const Packet* pkt, A
     asd.service.set_vendor(vendor);
     asd.service.set_version(version, change_bits);
     asd.set_service_detected();
-    asd.service.set_id(appId);
+    asd.service.set_id(appId, asd.ctxt.get_odp_ctxt());
 
     if (asd.get_session_flags(APPID_SESSION_IGNORE_HOST))
         return APPID_SUCCESS;

@@ -95,7 +95,7 @@ inline void set_control(lua_State* L, int is_control)
     lua_pop(L, 1);
 }
 
-static lua_State* create_lua_state(const AppIdConfig* config, int is_control)
+static lua_State* create_lua_state(const AppIdConfig& config, int is_control)
 {
     auto L = luaL_newstate();
 
@@ -134,12 +134,12 @@ static lua_State* create_lua_state(const AppIdConfig* config, int is_control)
     {
         snprintf(new_lua_path, sizeof(new_lua_path) - 1,
             "%s;%s/odp/libs/?.lua;%s/custom/libs/?.lua",
-            cur_lua_path, config->app_detector_dir, config->app_detector_dir);
+            cur_lua_path, config.app_detector_dir, config.app_detector_dir);
     }
     else
     {
         snprintf(new_lua_path, sizeof(new_lua_path) - 1, "%s/odp/libs/?.lua;%s/custom/libs/?.lua",
-            config->app_detector_dir, config->app_detector_dir);
+            config.app_detector_dir, config.app_detector_dir);
     }
 
     lua_pop(L, 1);
@@ -213,7 +213,7 @@ void LuaDetectorManager::initialize(AppIdContext& ctxt, int is_control)
     lua_detector_mgr->initialize_lua_detectors();
     lua_detector_mgr->activate_lua_detectors();
 
-    if (ctxt.config->debug)
+    if (ctxt.config.debug)
         lua_detector_mgr->list_lua_detectors();
 }
 
@@ -459,7 +459,7 @@ void LuaDetectorManager::load_lua_detectors(const char* path, bool isCustom)
 void LuaDetectorManager::initialize_lua_detectors()
 {
     char path[PATH_MAX];
-    const char* dir = ctxt.config->app_detector_dir;
+    const char* dir = ctxt.config.app_detector_dir;
 
     if ( !dir )
         return;

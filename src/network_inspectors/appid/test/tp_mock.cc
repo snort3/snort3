@@ -86,7 +86,7 @@ extern "C"
 {
     SO_PUBLIC ThirdPartyAppIdContextImpl* tp_appid_create_ctxt(ThirdPartyConfig& config)
     {
-        return new ThirdPartyAppIdContextImpl(3,"foobar", config);
+        return new ThirdPartyAppIdContextImpl(THIRD_PARTY_APPID_API_VERSION,"foobar", config);
     }
 
     SO_PUBLIC ThirdPartyAppIdSessionImpl* tp_appid_create_session(ThirdPartyAppIdContext& ctxt)

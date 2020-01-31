@@ -55,8 +55,8 @@ public:
     virtual void set_attr(TPSessionAttr) = 0;
     virtual unsigned get_attr(TPSessionAttr) = 0;
     virtual AppId get_appid(int& conf) { conf=confidence; return appid; }
-    virtual const ThirdPartyAppIdContext* get_ctxt() const
-    { return &ctxt; }
+    virtual const ThirdPartyAppIdContext& get_ctxt() const
+    { return ctxt; }
 
 protected:
     AppId appid;

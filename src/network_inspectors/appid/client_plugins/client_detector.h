@@ -34,7 +34,7 @@ public:
 
     void do_custom_init() override { }
     void release_thread_resources() override { }
-    void register_appid(AppId, unsigned extractsInfo) override;
+    void register_appid(AppId, unsigned extractsInfo, OdpContext& odp_ctxt) override;
 };
 #endif
 
