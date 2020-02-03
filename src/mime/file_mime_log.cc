@@ -133,7 +133,7 @@ int MailLogState::log_email_id(const uint8_t* start, int length, EmailUserType t
     if (length <= 0)
         return -1;
 
-    tmp_eol = (uint8_t*)memchr(start, ':', length);
+    tmp_eol = (const uint8_t*)memchr(start, ':', length);
     if (tmp_eol == nullptr)
         return -1;
 

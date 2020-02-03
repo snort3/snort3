@@ -43,7 +43,7 @@ StreamSplitter::Status FtpSplitter::scan(
         return FLUSH;
     }
 #ifdef HAVE_MEMRCHR
-    uint8_t* lf =  (uint8_t*)memrchr(data, '\n', len);
+    const uint8_t* lf =  (const uint8_t*)memrchr(data, '\n', len);
 #else
     uint32_t n = len;
     const uint8_t* lf = nullptr, * tmp = data;

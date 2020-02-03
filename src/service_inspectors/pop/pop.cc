@@ -193,7 +193,7 @@ static void POP_GetEOL(const uint8_t* ptr, const uint8_t* end,
     const uint8_t* tmp_eol;
     const uint8_t* tmp_eolm;
 
-    tmp_eol = (uint8_t*)memchr(ptr, '\n', end - ptr);
+    tmp_eol = (const uint8_t*)memchr(ptr, '\n', end - ptr);
     if (tmp_eol == nullptr)
     {
         tmp_eol = end;

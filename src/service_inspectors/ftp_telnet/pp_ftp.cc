@@ -1611,7 +1611,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                 /* Now grab the command parameters/response message
                  * read_ptr < end already checked */
                 req->param_begin = (const char*)read_ptr;
-                if ((read_ptr = (unsigned char*)memchr(read_ptr, CR, end - read_ptr)) == nullptr)
+                if ((read_ptr = (const unsigned char*)memchr(read_ptr, CR, end - read_ptr)) == nullptr)
                     read_ptr = end;
                 req->param_end = (const char*)read_ptr;
                 req->param_size = req->param_end - req->param_begin;

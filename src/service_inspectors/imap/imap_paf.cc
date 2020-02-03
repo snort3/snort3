@@ -455,7 +455,7 @@ static StreamSplitter::Status imap_paf_client(const uint8_t* data, uint32_t len,
 {
     const char* pch;
 
-    pch = (char *)memchr (data, '\n', len);
+    pch = (const char *)memchr (data, '\n', len);
 
     if (pch != nullptr)
     {

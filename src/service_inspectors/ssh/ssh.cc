@@ -376,7 +376,7 @@ static unsigned int ProcessSSHProtocolVersionExchange(SSH_PROTO_CONF* config, SS
         break;
     }
 
-    version_end = (char*)memchr(version_stringp, '\n', p->dsize);
+    version_end = (const char*)memchr(version_stringp, '\n', p->dsize);
     if (version_end)
         return ((version_end - version_stringp) + 1);
     /* incomplete version string, should end with \n or \r\n for sshv2 */

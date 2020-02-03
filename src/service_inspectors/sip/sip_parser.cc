@@ -141,10 +141,9 @@ SIPbodyField bodyFields[] =
 static int sip_process_headField(SIPMsg* msg, const char* start, const char* end,
     int* lastFieldIndex, SIP_PROTO_CONF* config)
 {
-    int findex =0;
+    int findex = 0;
     int length = end -start;
-    char* colonIndex;
-    const char* newStart, * newEnd;
+    const char* colonIndex, * newStart, * newEnd;
     char newLength;
 
     // If this is folding
@@ -157,7 +156,7 @@ static int sip_process_headField(SIPMsg* msg, const char* start, const char* end
         }
     }
     // Otherwise, continue normal processing
-    colonIndex = (char*)memchr(start, ':', length);
+    colonIndex = (const char*)memchr(start, ':', length);
 
     if (!colonIndex || (colonIndex < start + 1))
         return SIP_PARSE_ERROR;
@@ -165,7 +164,7 @@ static int sip_process_headField(SIPMsg* msg, const char* start, const char* end
     if (!SIP_TrimSP(start, colonIndex, &newStart, &newEnd))
         return SIP_PARSE_ERROR;
 
-    newLength =  newEnd - newStart;
+    newLength = newEnd - newStart;
 
     /*Find out whether the field name needs to process*/
     while (nullptr != headerFields[findex].fname)
@@ -341,9 +340,9 @@ static bool sip_startline_parse(SIPMsg* msg, const char* buff, const char* end, 
 
     *lineEnd = next;
     // This is a response
-    if (0 == strncmp((const char*)buff, (const char*)SIP_KEYWORD, SIP_KEYWORD_LEN))
+    if (0 == strncmp(buff, SIP_KEYWORD, SIP_KEYWORD_LEN))
     {
-        char* space;
+        const char* space;
         unsigned long statusCode;
 
         /*Process response*/
@@ -356,7 +355,7 @@ static bool sip_startline_parse(SIPMsg* msg, const char* buff, const char* end, 
             DetectionEngine::queue_event(GID_SIP, SIP_EVENT_INVALID_VERSION);
         }
 
-        space = (char*)strchr(buff, ' ');
+        space = strchr(buff, ' ');
         if (space == nullptr)
             return false;
         statusCode = SnortStrtoul(space + 1, nullptr, 10);
@@ -370,15 +369,14 @@ static bool sip_startline_parse(SIPMsg* msg, const char* buff, const char* end, 
     }
     else  /* This might be a request*/
     {
-        char* space;
-        char* version;
+        const char* space, * version;
         SIPMethodNode* method;
 
         /*Process request*/
         msg->status_code = 0;
 
         // Parse the method
-        space = (char*)memchr(buff, ' ', end - buff);
+        space = (const char*)memchr(buff, ' ', end - buff);
         if (space == nullptr)
             return false;
         msg->method = buff;
@@ -394,7 +392,7 @@ static bool sip_startline_parse(SIPMsg* msg, const char* buff, const char* end, 
         if (space + 1 > end)
             return false;
         msg->uri = space + 1;
-        space = (char*)memchr(space + 1, ' ', end - msg->uri);
+        space = (const char*)memchr(space + 1, ' ', end - msg->uri);
         if (space == nullptr)
             return false;
         msg->uriLen = space - msg->uri;
@@ -407,7 +405,7 @@ static bool sip_startline_parse(SIPMsg* msg, const char* buff, const char* end, 
         version = space + 1;
         if (version + SIP_VERSION_LEN > end)
             return false;
-        if (0 != strncmp((const char*)version, (const char*)SIP_KEYWORD, SIP_KEYWORD_LEN))
+        if (0 != strncmp(version, SIP_KEYWORD, SIP_KEYWORD_LEN))
             return false;
         /*Check SIP version number, end with CRLF*/
         if (!sip_is_valid_version(*lineEnd - SIP_VERSION_NUM_LEN - numOfLineBreaks))
@@ -662,9 +660,9 @@ static int sip_parse_via(SIPMsg* msg, const char* start, const char* end, SIP_PR
 
 static int sip_parse_from(SIPMsg* msg, const char* start, const char* end, SIP_PROTO_CONF*)
 {
-    char* buff;
-    char* userEnd;
-    char* userStart;
+    const char* buff;
+    const char* userEnd;
+    const char* userStart;
 
     msg->from = start;
     msg->fromLen = end - start;
@@ -672,7 +670,7 @@ static int sip_parse_from(SIPMsg* msg, const char* start, const char* end, SIP_P
     /*Get the from tag*/
     msg->fromTagLen = 0;
 
-    buff = (char*)memchr(start, ';', msg->fromLen);
+    buff = (const char*)memchr(start, ';', msg->fromLen);
     while ((nullptr != buff)&& (buff < end))
     {
         if (0 == strncmp(buff + 1, SIP_TAG_KEYWORD, SIP_TAG_KEYWORD_LEN))
@@ -682,11 +680,11 @@ static int sip_parse_from(SIPMsg* msg, const char* start, const char* end, SIP_P
             msg->dlgID.fromTagHash = strToHash(msg->from_tag,msg->fromTagLen);
             break;
         }
-        buff = (char*)memchr(buff + 1, ';', msg->fromLen);
+        buff = (const char*)memchr(buff + 1, ';', msg->fromLen);
     }
 
-    userStart = (char*)memchr(msg->from, ':', msg->fromLen);
-    userEnd = (char*)memchr(msg->from, '>', msg->fromLen);
+    userStart = (const char*)memchr(msg->from, ':', msg->fromLen);
+    userEnd = (const char*)memchr(msg->from, '>', msg->fromLen);
 
     if (userStart && userEnd && (userEnd > userStart))
     {
@@ -719,14 +717,14 @@ static int sip_parse_from(SIPMsg* msg, const char* start, const char* end, SIP_P
 
 static int sip_parse_to(SIPMsg* msg, const char* start, const char* end, SIP_PROTO_CONF*)
 {
-    char* buff;
+    const char* buff;
     msg->to = start;
     msg->toLen = end - start;
 
     /*Processing tag information*/
     msg->toTagLen = 0;
 
-    buff = (char*)memchr(start, ';', msg->toLen);
+    buff = (const char*)memchr(start, ';', msg->toLen);
     while ((nullptr != buff)&& (buff < end))
     {
         if (0 == strncmp(buff + 1, SIP_TAG_KEYWORD, SIP_TAG_KEYWORD_LEN))
@@ -736,7 +734,7 @@ static int sip_parse_to(SIPMsg* msg, const char* start, const char* end, SIP_PRO
             msg->dlgID.toTagHash = strToHash(msg->to_tag,msg->toTagLen);
             break;
         }
-        buff = (char*)memchr(buff + 1, ';', msg->toLen);
+        buff = (const char*)memchr(buff + 1, ';', msg->toLen);
     }
 
     return SIP_PARSE_SUCCESS;
@@ -781,7 +779,7 @@ static int sip_parse_call_id(SIPMsg* msg, const char* start, const char* end, SI
     int length = end -start;
     msg->call_id = start;
     /*ignore ip address in call id by adjusting length*/
-    char* at = (char*)memchr(start, '@', length);
+    const char* at = (const char*)memchr(start, '@', length);
     if (at && (at < end) && is_valid_ip(at+1, (end-at-1)))
     {
         length = at - start;
@@ -1017,20 +1015,20 @@ static int sip_parse_content_encode(
 static int sip_parse_sdp_o(SIPMsg* msg, const char* start, const char* end)
 {
     int length;
-    char* spaceIndex = nullptr;
-    char* spaceIndex2 = nullptr;
+    const char* spaceIndex;
+    const char* spaceIndex2;
 
     if (nullptr == msg->mediaSession)
         return SIP_PARSE_ERROR;
     length = end - start;
     // Get username and session ID information (before second space)
-    spaceIndex = (char*)memchr(start, ' ', length);  // first space
+    spaceIndex = (const char*)memchr(start, ' ', length);  // first space
     if ((nullptr == spaceIndex)||(spaceIndex == end))
         return SIP_PARSE_ERROR;
-    spaceIndex = (char*)memchr(spaceIndex + 1, ' ', end - spaceIndex -1);   // second space
+    spaceIndex = (const char*)memchr(spaceIndex + 1, ' ', end - spaceIndex -1);   // second space
     if (nullptr == spaceIndex)
         return SIP_PARSE_ERROR;
-    spaceIndex2 = (char*)memchr(spaceIndex + 1, ' ', end - spaceIndex -1);   // third space
+    spaceIndex2 = (const char*)memchr(spaceIndex + 1, ' ', end - spaceIndex -1);   // third space
     if (nullptr == spaceIndex2)
         return SIP_PARSE_ERROR;
 
@@ -1060,17 +1058,17 @@ static int sip_parse_sdp_c(SIPMsg* msg, const char* start, const char* end)
     SfIp* ip;
     char ipStr[INET6_ADDRSTRLEN + 5];     /* Enough for IPv4 plus netmask or
                                                        full IPv6 plus prefix */
-    char* spaceIndex = nullptr;
+    const char* spaceIndex;
 
     if (nullptr == msg->mediaSession)
         return SIP_PARSE_ERROR;
     length = end - start;
 
     /*Get the IP address*/
-    spaceIndex = (char*)memchr(start, ' ', length);  // first space
+    spaceIndex = (const char*)memchr(start, ' ', length);  // first space
     if ((nullptr == spaceIndex)||(spaceIndex == end))
         return SIP_PARSE_ERROR;
-    spaceIndex = (char*)memchr(spaceIndex + 1, ' ', end - spaceIndex -1);   // second space
+    spaceIndex = (const char*)memchr(spaceIndex + 1, ' ', end - spaceIndex -1);   // second space
     if (nullptr == spaceIndex)
         return SIP_PARSE_ERROR;
     length = end - spaceIndex;
@@ -1116,7 +1114,7 @@ static int sip_parse_sdp_c(SIPMsg* msg, const char* start, const char* end)
 static int sip_parse_sdp_m(SIPMsg* msg, const char* start, const char* end)
 {
     int length;
-    char* spaceIndex = nullptr;
+    const char* spaceIndex;
     char* next;
     SIP_MediaData* mdata;
 
@@ -1124,7 +1122,7 @@ static int sip_parse_sdp_m(SIPMsg* msg, const char* start, const char* end)
         return SIP_PARSE_ERROR;
     length = end - start;
 
-    spaceIndex = (char*)memchr(start, ' ', length);  // first space
+    spaceIndex = (const char*)memchr(start, ' ', length);  // first space
 
     if ((nullptr == spaceIndex)||(spaceIndex == end))
         return SIP_PARSE_ERROR;

@@ -332,7 +332,7 @@ static int CvsValidateEntry(const uint8_t* entry_arg, const uint8_t* end_arg)
         }
         if (*entry_arg != '/')
         {
-            entry_arg = (uint8_t*)memchr(entry_arg, '/', end_arg - entry_arg);
+            entry_arg = (const uint8_t*)memchr(entry_arg, '/', end_arg - entry_arg);
             if (entry_arg == nullptr)
                 break;
         }
@@ -359,7 +359,7 @@ static int CvsValidateEntry(const uint8_t* entry_arg, const uint8_t* end_arg)
 static void CvsGetEOL(const uint8_t* ptr, const uint8_t* end,
     const uint8_t** eol, const uint8_t** eolm)
 {
-    *eolm = (uint8_t*)memchr(ptr, CVS_COMMAND_DELIMITER, end - ptr);
+    *eolm = (const uint8_t*)memchr(ptr, CVS_COMMAND_DELIMITER, end - ptr);
     if (*eolm == nullptr)
     {
         *eolm = end;

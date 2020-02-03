@@ -339,7 +339,7 @@ int MdnsServiceDetector::analyze_user(AppIdSession& asd, const Packet* pkt, uint
                         start_index =0;
 
                     srv_original = resp_endptr  + NEXT_MESSAGE_OFFSET;
-                    user_original = (char*)memchr((const uint8_t*)srv_original, PATTERN_USERNAME_1,
+                    user_original = (const char*)memchr((const uint8_t*)srv_original, PATTERN_USERNAME_1,
                         data_len);
 
                     if (user_original )
