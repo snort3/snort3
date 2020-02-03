@@ -253,10 +253,7 @@ void add_service_to_otn(SnortConfig* sc, OptTreeNode* otn, const char* svc_name)
     }
 
     if ( !strcmp(svc_name, "http") )
-    {
         add_service_to_otn(sc, otn, "http2");
-        svc_name = "http";
-    }
 
     if (otn->sigInfo.num_services >= sc->max_metadata_services)
     {
