@@ -10,33 +10,14 @@ The following parameters can't be changed during reload, and require a restart:
 * attribute_table.max_hosts
 * attribute_table.max_services_per_host
 * daq.snaplen
-* daq.no_promisc
 * detection.asn1
 * file_id.max_files_cached
-* port_scan.memcap
 * process.chroot
 * process.daemon
 * process.set_gid
 * process.set_uid
-* stream.footprint
-* stream.ip_cache.max_sessions
-* stream.ip_cache.pruning_timeout
-* stream.ip_cache.idle_timeout
-* stream.icmp_cache.max_sessions
-* stream.icmp_cache.pruning_timeout
-* stream.icmp_cache.idle_timeout 
-* stream.tcp_cache.max_sessions
-* stream.tcp_cache.pruning_timeout 
-* stream.tcp_cache.idle_timeout 
-* stream.udp_cache.max_sessions 
-* stream.udp_cache.pruning_timeout
-* stream.udp_cache.idle_timeout 
-* stream.user_cache.max_sessions
-* stream.user_cache.pruning_timeout
-* stream.user_cache.idle_timeout 
-* stream.file_cache.max_sessions
-* stream.file_cache.pruning_timeout 
-* stream.file_cache.idle_timeout
+* snort.--bpf
+* snort.-l
 
 In addition, the following scenarios require a restart:
 
@@ -49,4 +30,3 @@ In addition, the following scenarios require a restart:
 
 In all of these cases reload will fail with the following message: "reload
  failed - restart required". The original config will remain in use.
-
