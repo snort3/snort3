@@ -33,7 +33,8 @@ public:
     static void init()
     { ips_id = IpsContextData::get_ips_id(); }
     static HttpMsgSection* get_snapshot(const snort::Packet* p);
-    static HttpMsgSection* get_snapshot(const snort::Flow* flow);
+    static HttpMsgSection* get_snapshot(const snort::Flow* flow,
+        snort::IpsContext* context = nullptr);
     static void save_snapshot(HttpMsgSection* section);
     static HttpMsgSection* clear_snapshot(snort::IpsContext* context);
     static unsigned ips_id;

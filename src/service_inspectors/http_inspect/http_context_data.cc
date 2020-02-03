@@ -34,25 +34,10 @@ unsigned HttpContextData::ips_id = 0;
 HttpMsgSection* HttpContextData::get_snapshot(const Packet* p)
 {
     assert(p != nullptr);
-
-    if (Http2FlowData::inspector_id != 0)
-    {
-        const Http2FlowData* const h2i_flow_data =
-            (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
-        if (h2i_flow_data != nullptr)
-            return h2i_flow_data->get_hi_msg_section();
-    }
-
-    HttpContextData* hcd = (HttpContextData*)DetectionEngine::get_data(HttpContextData::ips_id,
-        p->context);
-
-    if ( !hcd )
-        return nullptr;
-
-    return hcd->current_section;
+    return get_snapshot(p->flow, p->context);
 }
 
-HttpMsgSection* HttpContextData::get_snapshot(const Flow* flow)
+HttpMsgSection* HttpContextData::get_snapshot(const Flow* flow, IpsContext* context)
 {
     assert(flow != nullptr);
 
@@ -65,7 +50,7 @@ HttpMsgSection* HttpContextData::get_snapshot(const Flow* flow)
     }
 
     HttpContextData* hcd = (HttpContextData*)DetectionEngine::get_data(HttpContextData::ips_id,
-        nullptr);
+        context);
 
     if ( !hcd )
         return nullptr;
