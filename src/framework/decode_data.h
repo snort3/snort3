@@ -102,7 +102,9 @@ enum DecodeFlags : std::uint16_t
     DECODE_EOF =            0x0400,  // user - end of flow
     DECODE_GTP =            0x0800,
 
-    DECODE_WSCALE =         0x1000,
+    DECODE_TCP_MSS =        0x1000,
+    DECODE_TCP_TS =         0x2000,
+    DECODE_TCP_WS =         0x4000,
 };
 
 struct DecodeData

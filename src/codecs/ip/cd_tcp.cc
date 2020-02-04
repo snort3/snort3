@@ -359,6 +359,8 @@ void TcpCodec::decode_options(
 
         case tcp::TcpOptCode::MAXSEG:
             code = validate_option(opt, end_ptr, TCPOLEN_MAXSEG);
+            if (code == 0)
+                snort.decode_flags |= DECODE_TCP_MSS;
             break;
 
         case tcp::TcpOptCode::SACKOK:
@@ -374,7 +376,7 @@ void TcpCodec::decode_options(
                     /* LOG INVALID WINDOWSCALE alert */
                     codec_event(codec, DECODE_TCPOPT_WSCALE_INVALID);
                 }
-                snort.decode_flags |= DECODE_WSCALE;
+                snort.decode_flags |= DECODE_TCP_WS;
             }
             break;
 
@@ -420,6 +422,8 @@ void TcpCodec::decode_options(
 
         case tcp::TcpOptCode::TIMESTAMP:
             code = validate_option(opt, end_ptr, TCPOLEN_TIMESTAMP);
+            if (code == 0)
+                snort.decode_flags |= DECODE_TCP_TS;
             break;
 
         case tcp::TcpOptCode::SKEETER:

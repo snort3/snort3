@@ -76,13 +76,17 @@ void DceContextData::set_ips_id(DCE2_TransType trans, unsigned id)
 
 DceContextData* DceContextData::get_current_data(const Packet* p)
 {
-    IpsContext* context = p ? p->context : nullptr;
+    assert(p);
+
+    if ( !p->flow )
+        return nullptr;
+
     unsigned ips_id = get_ips_id(get_dce2_trans_type(p));
 
     if ( !ips_id )
         return nullptr;
 
-    DceContextData* dcd = (DceContextData*)DetectionEngine::get_data(ips_id, context);
+    DceContextData* dcd = (DceContextData*)DetectionEngine::get_data(ips_id, p->context);
 
     if ( !dcd )
         return nullptr;

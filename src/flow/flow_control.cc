@@ -324,8 +324,12 @@ static bool want_flow(PktType type, Packet* p)
         // guessing direction based on ports is misleading
         return false;
 
-    if ( !p->ptrs.tcph->is_syn_only() or SnortConfig::get_conf()->track_on_syn() or
-        (p->ptrs.decode_flags & DECODE_WSCALE) )
+    if ( !p->ptrs.tcph->is_syn_only() or SnortConfig::get_conf()->track_on_syn() )
+        return true;
+
+    const unsigned DECODE_TCP_HS = DECODE_TCP_MSS | DECODE_TCP_TS | DECODE_TCP_WS;
+
+    if ( (p->ptrs.decode_flags & DECODE_TCP_HS) or p->dsize )
         return true;
 
     p->packet_flags |= PKT_FROM_CLIENT;

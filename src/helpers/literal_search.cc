@@ -50,6 +50,8 @@ void LiteralSearch::cleanup(LiteralSearch::Handle* h)
 {
 #ifdef HAVE_HYPERSCAN
     HyperSearch::cleanup(h);
+#else
+    UNUSED(h);
 #endif
 }
 

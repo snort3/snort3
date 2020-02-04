@@ -4,7 +4,15 @@
 -- use with -c snort.lua --tweaks max_detect
 ---------------------------------------------------------------------------
 
+arp_spoof = nil
+
 ftp_server.check_encrypted = true
+
+detection =
+{
+    pcre_match_limit = 3500,
+    pcre_match_limit_recursion = 3500
+}
 
 http_inspect.detained_inspection = true
 http_inspect.decompress_pdf = true
@@ -29,6 +37,8 @@ search_engine.queue_limit = 0
 smtp.decompress_pdf = true
 smtp.decompress_swf = true
 smtp.decompress_zip = true
+
+stream_ip.min_frag_length = 100
 
 stream_tcp.require_3whs = 0
 

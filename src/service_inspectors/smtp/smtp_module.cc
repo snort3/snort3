@@ -119,13 +119,13 @@ static const Parameter s_params[] =
     { "max_auth_command_line_len", Parameter::PT_INT, "0:65535", "1000",
       "max auth command Line Length" },
 
-    { "max_command_line_len", Parameter::PT_INT, "0:65535", "0",
+    { "max_command_line_len", Parameter::PT_INT, "0:65535", "512",
       "max Command Line Length" },
 
-    { "max_header_line_len", Parameter::PT_INT, "0:65535", "0",
+    { "max_header_line_len", Parameter::PT_INT, "0:65535", "1000",
       "max SMTP DATA header line" },
 
-    { "max_response_line_len", Parameter::PT_INT, "0:65535", "0",
+    { "max_response_line_len", Parameter::PT_INT, "0:65535", "512",
       "max SMTP response line" },
 
     { "normalize", Parameter::PT_ENUM, "none | cmds | all", "none",

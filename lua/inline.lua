@@ -18,5 +18,3 @@ daq =
     },
 }
 
-normalizer = { tcp = { ips = true } }
-

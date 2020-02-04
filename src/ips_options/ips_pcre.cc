@@ -614,7 +614,9 @@ static const Parameter s_params[] =
 struct PcreStats
 {
     PegCount pcre_rules;
+#ifdef HAVE_HYPERSCAN
     PegCount pcre_to_hyper;
+#endif
     PegCount pcre_native;
     PegCount pcre_negated;
 };
@@ -622,7 +624,9 @@ struct PcreStats
 const PegInfo pcre_pegs[] =
 {
     { CountType::SUM, "pcre_rules", "total rules processed with pcre option" },
+#ifdef HAVE_HYPERSCAN
     { CountType::SUM, "pcre_to_hyper", "total pcre rules by hyperscan engine" },
+#endif
     { CountType::SUM, "pcre_native", "total pcre rules compiled by pcre engine" },
     { CountType::SUM, "pcre_negated", "total pcre rules using negation syntax" },
     { CountType::END, nullptr, nullptr }
@@ -649,7 +653,9 @@ public:
         delete scratcher;
     }
 
+#ifdef HAVE_HYPERSCAN
     bool begin(const char*, int, SnortConfig*) override;
+#endif
     bool set(const char*, Value&, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
 
@@ -664,7 +670,6 @@ public:
     Usage get_usage() const override
     { return DETECT; }
 
-    void get_mod_regex_instance(const char* name, int v, SnortConfig* sc);
     Module* get_mod_regex() const
     { return mod_regex; }
 
@@ -690,7 +695,8 @@ const PegInfo* PcreModule::get_pegs() const
 PegCount* PcreModule::get_counts() const
 { return (PegCount*)&pcre_stats; }
 
-void PcreModule::get_mod_regex_instance(const char* name, int v, SnortConfig* sc)
+#ifdef HAVE_HYPERSCAN
+bool PcreModule::begin(const char* name, int v, SnortConfig* sc)
 {
     if ( sc->pcre_to_regex )
     {
@@ -700,13 +706,9 @@ void PcreModule::get_mod_regex_instance(const char* name, int v, SnortConfig* sc
         if( mod_regex )
             mod_regex = mod_regex->begin(name, v, sc) ? mod_regex : nullptr;
     }
-}
-
-bool PcreModule::begin(const char* name, int v, SnortConfig* sc)
-{
-    get_mod_regex_instance(name, v, sc);
     return true;
 }
+#endif
 
 bool PcreModule::set(const char* name, Value& v, SnortConfig* sc)
 {
@@ -784,6 +786,7 @@ static IpsOption* pcre_ctor(Module* p, OptTreeNode* otn)
     pcre_stats.pcre_rules++;
     PcreModule* m = (PcreModule*)p;
 
+#ifdef HAVE_HYPERSCAN
     Module* mod_regex = m->get_mod_regex();
     if ( mod_regex )
     {
@@ -792,6 +795,9 @@ static IpsOption* pcre_ctor(Module* p, OptTreeNode* otn)
         return opt_api->ctor(mod_regex, otn);
     }
     else
+#else
+    UNUSED(otn);
+#endif
     {
         pcre_stats.pcre_native++;
         PcreData* d = m->get_data();

@@ -190,27 +190,29 @@ uint32_t TcpNormalizer::get_stream_window(
 uint32_t TcpNormalizer::get_tcp_timestamp(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd, bool strip)
 {
-    tcp::TcpOptIterator iter(tsd.get_tcph(), tsd.get_pkt() );
-
-    // using const because non-const is not supported
-    for ( const tcp::TcpOption& opt : iter )
+    if ( tsd.get_pkt()->ptrs.decode_flags & DECODE_TCP_TS )
     {
-        if ( opt.code == tcp::TcpOptCode::TIMESTAMP )
+        tcp::TcpOptIterator iter(tsd.get_tcph(), tsd.get_pkt() );
+
+        // using const because non-const is not supported
+        for ( const tcp::TcpOption& opt : iter )
         {
-            bool stripped = false;
-
-            if (strip)
-                stripped = strip_tcp_timestamp(tns, tsd, &opt, (NormMode)tns.opt_block);
-
-            if (!stripped)
+            if ( opt.code == tcp::TcpOptCode::TIMESTAMP )
             {
-                tsd.set_ts(extract_32bits(opt.data) );
-                return TF_TSTAMP;
+                bool stripped = false;
+
+                if (strip)
+                    stripped = strip_tcp_timestamp(tns, tsd, &opt, (NormMode)tns.opt_block);
+
+                if (!stripped)
+                {
+                    tsd.set_ts(extract_32bits(opt.data) );
+                    return TF_TSTAMP;
+                }
             }
         }
     }
     tsd.set_ts(0);
-
     return TF_NONE;
 }
 
