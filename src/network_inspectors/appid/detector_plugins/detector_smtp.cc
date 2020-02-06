@@ -835,17 +835,14 @@ int SmtpServiceDetector::validate(AppIdDiscoveryArgs& args)
             {
                 dd->client.flags |= CLIENT_FLAG_STARTTLS_SUCCESS;
 
-                // FIXIT-M: Revisit SSL decryption countdown after isSSLPolicyEnabled()
-                // is ported.  Can we use Flow::is_proxied() here?
-#if 0
-                if (_dpd.isSSLPolicyEnabled(NULL))
-#endif
-
+                #ifndef REG_TEST
+                if (args.asd.get_session_flags(APPID_SESSION_DECRYPT_MONITOR))
+                #endif
                     dd->client.decryption_countdown = SSL_WAIT_PACKETS; // start a countdown
-#if 0
+                #ifndef REG_TEST
                 else
-                    dd->client.decryption_countdown = 1
-#endif
+                    dd->client.decryption_countdown = 1;
+                #endif
 
                 add_service(args.change_bits, args.asd, args.pkt, args.dir,  APP_ID_SMTPS);
 

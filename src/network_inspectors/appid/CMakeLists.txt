@@ -153,6 +153,7 @@ set ( APPID_SOURCES
     appid_app_descriptor.h
     appid_config.cc
     appid_config.h
+    appid_data_decrypt_event_handler.h
     appid_debug.cc
     appid_debug.h
     appid_detector.cc

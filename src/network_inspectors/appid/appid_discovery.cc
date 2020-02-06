@@ -259,7 +259,7 @@ static bool set_network_attributes(AppIdSession* asd, Packet* p, IpProtocol& pro
 
 static bool is_packet_ignored(AppIdSession* asd, Packet* p, AppidSessionDirection direction)
 {
-    if ( p->is_rebuilt() && !p->flow->is_proxied() )
+    if ( p->is_rebuilt() and !p->flow->is_proxied())
     {
         // FIXIT-M: In snort2x, a rebuilt packet was ignored whether it had a session or not.
         // Here, we are ignoring rebuilt packet only if it has a session. Why?
@@ -912,14 +912,8 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
             if (asd.misc_app_id == APP_ID_NONE)
                 asd.update_encrypted_app_id(service_id);
         }
-// FIXIT-M Need to determine what api to use for this _dpd function
-#if 1
-        UNUSED(is_discovery_done);
-#else
-        else if (is_discovery_done && isSslServiceAppId(service_id) &&
-            _dpd.isSSLPolicyEnabled(nullptr))
+        else if (is_discovery_done and asd.get_session_flags(APPID_SESSION_DECRYPT_MONITOR))
             asd.set_session_flags(APPID_SESSION_CONTINUE);
-#endif
     }
 
     // Set the field that the Firewall queries to see if we have a search engine

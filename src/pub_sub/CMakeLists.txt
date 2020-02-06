@@ -1,6 +1,7 @@
 set (PUB_SUB_INCLUDES
     appid_events.h
     cip_events.h
+    data_decrypt_event.h
     daq_message_event.h
     expect_events.h
     finalize_packet_event.h

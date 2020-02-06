@@ -323,7 +323,7 @@ void AppIdSession::sync_with_snort_protocol_id(AppId newAppId, Packet* p)
 
 void AppIdSession::check_app_detection_restart(AppidChangeBits& change_bits)
 {
-    if (get_session_flags(APPID_SESSION_DECRYPTED) || !flow->is_proxied())
+    if (get_session_flags(APPID_SESSION_DECRYPTED) or !flow->is_proxied())
         return;
 
     AppId service_id = pick_service_app_id();

@@ -35,6 +35,7 @@
 #include "profiler/profiler.h"
 
 #include "app_forecast.h"
+#include "appid_data_decrypt_event_handler.h"
 #include "appid_debug.h"
 #include "appid_discovery.h"
 #include "appid_http_event_handler.h"
@@ -126,6 +127,7 @@ bool AppIdInspector::configure(SnortConfig* sc)
         DataBus::subscribe_global(HTTP_RESPONSE_HEADER_EVENT_KEY, new HttpEventHandler(
             HttpEventHandler::RESPONSE_EVENT), sc);
     }
+    DataBus::subscribe_global(DATA_DECRYPT_EVENT, new DataDecryptEventHandler(), sc);
 
     return true;
 }
