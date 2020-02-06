@@ -397,7 +397,7 @@ void Snort::setup(int argc, char* argv[])
 
     set_quick_exit(false);
 
-    memory::MemoryCap::calculate(ThreadConfig::get_instance_max());
+    memory::MemoryCap::calculate();
     memory::MemoryCap::print();
     host_cache.print_config();
 

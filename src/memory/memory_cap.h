@@ -38,7 +38,7 @@ public:
     static bool over_threshold();
 
     // call from main thread
-    static void calculate(unsigned num_threads);
+    static void calculate();
 
     // call from main thread
     static void print();
