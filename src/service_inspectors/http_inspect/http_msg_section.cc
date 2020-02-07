@@ -101,8 +101,8 @@ void HttpMsgSection::update_depth() const
         }
         else
         {
-            // Just for file processing
-            session_data->section_size_target[source_id] = SnortConfig::get_conf()->max_pdu;
+            // Just for file processing. Split on packet boundaries.
+            session_data->section_size_target[source_id] = MIN_FILE_BLOCK_SIZE;
             session_data->stretch_section_to_packet[source_id] = true;
         }
         return;
