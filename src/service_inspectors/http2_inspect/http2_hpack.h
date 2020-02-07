@@ -35,7 +35,8 @@ class Http2StartLine;
 class Http2HpackDecoder
 {
 public:
-    Http2HpackDecoder() { }
+    Http2HpackDecoder(Http2FlowData* flow_data, HttpCommon::SourceId src_id) :
+        decode_table(flow_data, src_id) { }
     bool decode_headers(const uint8_t* encoded_headers, const uint32_t encoded_headers_length,
         uint8_t* decoded_headers, Http2StartLine* start_line,
         Http2EventGen* stream_events, Http2Infractions* stream_infractions, bool no_message_body);
@@ -68,6 +69,7 @@ public:
     bool finalize_start_line();
     const Field* get_start_line();
     const Field* get_decoded_headers(const uint8_t* const decoded_headers);
+    HpackIndexTable* get_decode_table() { return &decode_table; }
 
 private:
     Http2StartLine* start_line = nullptr;
@@ -84,6 +86,8 @@ private:
     static Http2HpackStringDecode decode_string;
 
     HpackIndexTable decode_table;
+    bool table_size_update_allowed = true;
+    uint8_t num_table_size_updates = 0;
 };
 
 #endif

@@ -22,29 +22,27 @@
 #endif
 
 #include "http2_hpack_dynamic_table.h"
+#include "http2_module.h"
 
 #include <string.h>
 
 #include "http2_hpack_table.h"
 
+using namespace Http2Enums;
+
 HpackDynamicTable::~HpackDynamicTable()
 {
-    assert(num_entries <= array_capacity);
-    const uint32_t end_index = (start + num_entries) % array_capacity;
-    for (uint32_t i = 0; i < array_capacity; i++)
-    {
-        if ((start <= end_index and (i >= start and i < end_index)) or
-            (start > end_index and (i >= start or i < end_index)))
-        {
-            delete circular_array[i];
-            circular_array[i] = nullptr;
-        }
-    }
+    for (unsigned i = 0; i < ARRAY_CAPACITY; i++)
+        delete circular_array[i];
     delete[] circular_array;
 }
 
-void HpackDynamicTable::add_entry(Field name, Field value)
+bool HpackDynamicTable::add_entry(const Field& name, const Field& value)
 {
+    // The add only fails if the underlying circular array is out of space
+    if (num_entries >= ARRAY_CAPACITY)
+        return false;
+
     const uint32_t new_entry_size = name.length() + value.length() + RFC_ENTRY_OVERHEAD;
 
     // As per the RFC, attempting to add an entry that is larger than the max size of the table is
@@ -52,34 +50,36 @@ void HpackDynamicTable::add_entry(Field name, Field value)
     if (new_entry_size > max_size)
     {
         prune_to_size(0);
-        return;
+        return true;
     }
+
+    // Create new entry. This is done before pruning because the entry referenced by the new name
+    // may be pruned.
+    HpackTableEntry *new_entry = new HpackTableEntry(name, value);
 
     // If add entry would exceed max table size, evict old entries
     prune_to_size(max_size - new_entry_size);
 
     // Add new entry to the front of the table (newest entry = lowest index)
-    HpackTableEntry *new_entry = new HpackTableEntry(name, value);
-
-    start = (start + array_capacity - 1) % array_capacity;
-
-    // FIXIT-P May want to initially allocate small circular array and expand as needed. For now
-    // array big enough to support hardcoded max table size of 4096 bytes
-    assert(num_entries < array_capacity);
+    start = (start + ARRAY_CAPACITY - 1) % ARRAY_CAPACITY;
     circular_array[start] = new_entry;
 
     num_entries++;
+    if (num_entries > Http2Module::get_peg_counts(PEG_MAX_ENTRIES))
+        Http2Module::increment_peg_counts(PEG_MAX_ENTRIES);
+
     rfc_table_size += new_entry_size;
+    return true;
 }
 
 const HpackTableEntry* HpackDynamicTable::get_entry(uint32_t virtual_index) const
 {
     const uint32_t dyn_index = virtual_index - HpackIndexTable::STATIC_MAX_INDEX - 1;
 
-    if (num_entries == 0 or dyn_index > num_entries - 1)
+    if (dyn_index + 1 > num_entries)
         return nullptr;
 
-    const uint32_t arr_index = (start + dyn_index) % array_capacity;
+    const uint32_t arr_index = (start + dyn_index) % ARRAY_CAPACITY;
     return circular_array[arr_index];
 }
 
@@ -88,18 +88,25 @@ const HpackTableEntry* HpackDynamicTable::get_entry(uint32_t virtual_index) cons
  * until the new entry fits. If the dynamic size update is smaller than the current table size,
  * entries are pruned until the table is no larger than the max size. Entries are pruned least
  * recently added first.
- * Note: dynamic size updates not yet implemented
  */
 void HpackDynamicTable::prune_to_size(uint32_t new_max_size)
 {
     while (rfc_table_size > new_max_size)
     {
-        const uint32_t last_index = (start + num_entries - 1 + array_capacity) % array_capacity;
-        HpackTableEntry *last_entry = circular_array[last_index];
+        const uint32_t last_index = (start + num_entries - 1 + ARRAY_CAPACITY) % ARRAY_CAPACITY;
         num_entries--;
-        rfc_table_size -= last_entry->name.length() + last_entry->value.length() +
-            RFC_ENTRY_OVERHEAD;
-        delete last_entry;
+        rfc_table_size -= circular_array[last_index]->name.length() +
+            circular_array[last_index]->value.length() + RFC_ENTRY_OVERHEAD;
+        delete circular_array[last_index];
         circular_array[last_index] = nullptr;
     }
+}
+
+void HpackDynamicTable::update_size(uint32_t new_size)
+{
+    if (new_size < rfc_table_size)
+    {
+        prune_to_size(new_size);
+    }
+    max_size = new_size;
 }

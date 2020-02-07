@@ -30,25 +30,28 @@ struct HpackTableEntry;
 class HpackDynamicTable
 {
 public:
-    // FIXIT-M allocate array based on actual max_size from settings
-    HpackDynamicTable() : circular_array(new HpackTableEntry*[DEFAULT_NUM_ENTRIES]()) { }
+    // FIXIT-P This array can be optimized to start smaller and grow on demand 
+    HpackDynamicTable() : circular_array(new HpackTableEntry*[ARRAY_CAPACITY]()) { }
     ~HpackDynamicTable();
     const HpackTableEntry* get_entry(uint32_t index) const;
-    void add_entry(Field name, Field value);
-    void prune_to_size(uint32_t new_max_size);
-    // FIXIT-M implement handle_dynamic_size_update function
+    bool add_entry(const Field& name, const Field& value);
+    void update_size(uint32_t new_size);
+    uint32_t get_max_size() { return max_size; }
+
 private:
+    void expand_array();
+
     const static uint32_t RFC_ENTRY_OVERHEAD = 32;
 
-    // FIXIT-H set/update these parameters dynamically. For now hardcoded
     const static uint32_t DEFAULT_MAX_SIZE = 4096;
-    const static uint32_t DEFAULT_NUM_ENTRIES = DEFAULT_MAX_SIZE / RFC_ENTRY_OVERHEAD;
-    uint32_t array_capacity = DEFAULT_NUM_ENTRIES;
+    const static uint32_t ARRAY_CAPACITY = 512;
     uint32_t max_size = DEFAULT_MAX_SIZE;
 
     uint32_t start = 0;
     uint32_t num_entries = 0;
     uint32_t rfc_table_size = 0;
     HpackTableEntry** circular_array;
+
+    void prune_to_size(uint32_t new_max_size);
 };
 #endif

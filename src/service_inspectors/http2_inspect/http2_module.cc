@@ -56,7 +56,7 @@ THREAD_LOCAL ProfileStats Http2Module::http2_profile;
 ProfileStats* Http2Module::get_profile() const
 { return &http2_profile; }
 
-THREAD_LOCAL PegCount Http2Module::peg_counts[PEG_COUNT_MAX] = { 0 };
+THREAD_LOCAL PegCount Http2Module::peg_counts[PEG_COUNT__MAX] = { 0 };
 
 bool Http2Module::begin(const char*, int, SnortConfig*)
 {

@@ -82,6 +82,7 @@ void Http2SettingsFrame::parse_settings_frame()
             continue;
         }
 
+        handle_update(parameter_id, parameter_value);
         session_data->connection_settings[source_id].set_param(parameter_id, parameter_value);
     }
 }
@@ -98,6 +99,21 @@ bool Http2SettingsFrame::sanity_check()
         bad_frame = true;
 
     return !(bad_frame);
+}
+
+void Http2SettingsFrame::handle_update(uint16_t id, uint32_t value)
+{
+    switch (id)
+    {
+        case HEADER_TABLE_SIZE:
+            // Sending a table size parameter informs the receiver the maximum hpack dynamic
+            // table size they may use.
+            session_data->get_hpack_decoder((HttpCommon::SourceId) (1 - source_id))->
+                get_decode_table()->settings_table_size_update(value);
+            break;
+        default:
+            break;
+    }
 }
 
 #ifdef REG_TEST

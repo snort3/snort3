@@ -43,6 +43,7 @@ private:
 
     void parse_settings_frame();
     bool sanity_check();
+    void handle_update(uint16_t id, uint32_t value);
 
     bool bad_frame = false;
     static const uint8_t SfAck = 0x01;

@@ -133,7 +133,9 @@ void Http2Inspect::eval(Packet* p)
 
     // The current frame now owns these buffers, clear them from the flow data
     session_data->frame_header[source_id] = nullptr;
+    session_data->frame_header_size[source_id] = 0;
     session_data->frame_data[source_id] = nullptr;
+    session_data->frame_data_size[source_id] = 0;
 
     session_data->frame_in_detection = true;
 

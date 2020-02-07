@@ -176,8 +176,8 @@ StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t
                 if (stream)
                     http_flow = (HttpFlowData*)stream->get_hi_flow_data();
 
-                if (!stream || !http_flow ||
-                    (http_flow->get_type_expected(source_id) != HttpEnums::SEC_BODY_CHUNK))
+                if (!stream || !http_flow || (frame_length > 0 and
+                    (http_flow->get_type_expected(source_id) != HttpEnums::SEC_BODY_CHUNK)))
                 {
                      *session_data->infractions[source_id] += INF_FRAME_SEQUENCE;
                      session_data->events[source_id]->create_event(EVENT_FRAME_SEQUENCE);

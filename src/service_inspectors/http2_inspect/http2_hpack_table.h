@@ -25,6 +25,8 @@
 #include "http2_enum.h"
 #include "http2_hpack_dynamic_table.h"
 
+class Http2FlowData;
+
 struct HpackTableEntry
 {
     HpackTableEntry(uint32_t name_len, const uint8_t* _name, uint32_t value_len,
@@ -38,8 +40,12 @@ struct HpackTableEntry
 class HpackIndexTable
 {
 public:
+    HpackIndexTable(Http2FlowData* flow_data, HttpCommon::SourceId src_id) :
+        session_data(flow_data), source_id(src_id) { }
     const HpackTableEntry* lookup(uint64_t index) const;
-    void add_index(Field name, Field value) { dynamic_table.add_entry(name, value); }
+    bool add_index(const Field& name, const Field& value);
+    bool hpack_table_size_update(const uint32_t size);
+    void settings_table_size_update(const uint32_t size);
 
     const static uint8_t STATIC_MAX_INDEX = 61;
     const static uint8_t PSEUDO_HEADER_MAX_STATIC_INDEX = 14;
@@ -47,5 +53,8 @@ public:
 private:
     const static HpackTableEntry static_table[STATIC_MAX_INDEX + 1];
     HpackDynamicTable dynamic_table;
+    Http2FlowData* session_data;
+    HttpCommon::SourceId source_id;
+    bool encoder_set_max_size = false;
 };
 #endif

@@ -122,6 +122,8 @@ bool Http2HpackDecoder::decode_literal_header_line(const uint8_t* encoded_header
     uint32_t partial_bytes_written;
     Field name, value;
 
+    table_size_update_allowed = false;
+
     // Indexed field name
     if (encoded_header_buffer[0] & name_index_mask)
     {
@@ -192,8 +194,16 @@ bool Http2HpackDecoder::decode_literal_header_line(const uint8_t* encoded_header
     }
 
     if (with_indexing)
-        decode_table.add_index(name, value);
-
+    {
+        // Adding the entry to the dynamic table fails if the number of entries in the dynamic
+        // table exceeds the Snort hard-coded limit of 512
+        if (!decode_table.add_index(name, value))
+        {
+            infractions += INF_DYNAMIC_TABLE_OVERFLOW;
+            events->create_event(EVENT_DYNAMIC_TABLE_OVERFLOW);
+            return false;
+        }
+    }
     return true;
 }
 
@@ -205,6 +215,8 @@ bool Http2HpackDecoder::decode_indexed_header(const uint8_t* encoded_header_buff
     uint64_t index;
     bytes_written = 0;
     bytes_consumed = 0;
+
+    table_size_update_allowed = false;
 
     if (!decode_int.translate(encoded_header_buffer, encoded_header_length, bytes_consumed,
             index, events, infractions))
@@ -258,7 +270,6 @@ bool Http2HpackDecoder::decode_indexed_header(const uint8_t* encoded_header_buff
     return true;
 }
 
-// FIXIT-M Will be updated to actually update dynamic table size. For now just skips over
 bool Http2HpackDecoder::handle_dynamic_size_update(const uint8_t* encoded_header_buffer,
     const uint32_t encoded_header_length, const Http2HpackIntDecode &decode_int,
     uint32_t &bytes_consumed, uint32_t &bytes_written)
@@ -273,15 +284,28 @@ bool Http2HpackDecoder::handle_dynamic_size_update(const uint8_t* encoded_header
     {
         return false;
     }
-#ifdef REG_TEST
-    //FIXIT-M remove when dynamic size updates are handled
-    if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2))
-    {
-            fprintf(HttpTestManager::get_output_file(),
-                "Skipping HPACK dynamic size update: %lu\n", decoded_int);
-    }
-#endif
     bytes_consumed += encoded_bytes_consumed;
+
+    if (!table_size_update_allowed)
+    {
+        *infractions += INF_TABLE_SIZE_UPDATE_WITHIN_HEADER;
+        events->create_event(EVENT_MISFORMATTED_HTTP2);
+        return true;
+    }
+    if (num_table_size_updates >= 2)
+    {
+        *infractions += INF_TOO_MANY_TABLE_SIZE_UPDATES;
+        events->create_event(EVENT_MISFORMATTED_HTTP2);
+        return true;
+    }
+
+    if (!decode_table.hpack_table_size_update(decoded_int))
+    {
+        *infractions += INF_INVALID_TABLE_SIZE_UPDATE;
+        events->create_event(EVENT_MISFORMATTED_HTTP2);
+    }
+
+    num_table_size_updates++;
 
     return true;
 }
@@ -318,7 +342,6 @@ bool Http2HpackDecoder::decode_header_line(const uint8_t* encoded_header_buffer,
             LITERAL_NO_INDEX_NAME_INDEX_MASK, decode_int4, false, bytes_consumed,
             decoded_header_buffer, decoded_header_length, bytes_written);
     else
-        // FIXIT-M dynamic table size update not yet supported, just skip
         return handle_dynamic_size_update(encoded_header_buffer,
             encoded_header_length, decode_int5, bytes_consumed, bytes_written);
 }
@@ -342,6 +365,10 @@ bool Http2HpackDecoder::decode_headers(const uint8_t* encoded_headers,
     events = stream_events;
     infractions = stream_infractions;
     pseudo_headers_fragment_size = 0;
+
+    // A maximum of two table size updates are allowed, and must be at the start of the header block
+    table_size_update_allowed = true;
+    num_table_size_updates = 0;
 
     while (success and total_bytes_consumed < encoded_headers_length)
     {

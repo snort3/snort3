@@ -91,6 +91,10 @@ public:
     };
     class Http2Stream* get_current_stream(const HttpCommon::SourceId source_id);
 
+    Http2HpackDecoder* get_hpack_decoder(const HttpCommon::SourceId source_id)
+        { return &hpack_decoder[source_id]; }
+    Http2ConnectionSettings* get_connection_settings(const HttpCommon::SourceId source_id)
+        { return &connection_settings[source_id]; }
 protected:
     snort::Flow* flow;
     HttpInspect* const hi;

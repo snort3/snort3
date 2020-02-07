@@ -44,14 +44,16 @@ const RuleMap Http2Module::http2_events[] =
     { EVENT_SETTINGS_FRAME_ERROR, "error in HTTP/2 settings frame" },
     { EVENT_SETTINGS_FRAME_UNKN_PARAM, "unknown parameter in HTTP/2 settings frame" },
     { EVENT_FRAME_SEQUENCE, "invalid HTTP/2 frame sequence" },
+    { EVENT_DYNAMIC_TABLE_OVERFLOW, "HTTP/2 dynamic table size limit exceeded" },
     { 0, nullptr }
 };
 
-const PegInfo Http2Module::peg_names[PEG_COUNT_MAX+1] =
+const PegInfo Http2Module::peg_names[PEG_COUNT__MAX+1] =
 {
     { CountType::SUM, "flows", "HTTP connections inspected" },
     { CountType::NOW, "concurrent_sessions", "total concurrent HTTP/2 sessions" },
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent HTTP/2 sessions" },
+    { CountType::MAX, "max_table_entries", "maximum entries in an HTTP/2 dynamic table" },
     { CountType::END, nullptr, nullptr }
 };
 
