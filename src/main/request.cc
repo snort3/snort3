@@ -32,12 +32,6 @@ using namespace snort;
 // request foo
 //-------------------------------------------------------------------------
 
-Request::Request(int f)
-{
-    fd = f;
-    bytes_read = 0;
-}
-
 bool Request::read(const int& f)
 {
     bool newline_found = false;
@@ -106,9 +100,10 @@ void Request::respond(const char* s, bool queue_response, bool remote_only)
 #ifdef SHELL
 void Request::send_queued_response()
 {
-    if ( queued_response )
+    const char* qr = queued_response;
+    if ( qr )
     {
-        write_response(queued_response);
+        write_response(qr);
         queued_response = nullptr;
     }
 }

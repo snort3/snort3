@@ -51,6 +51,16 @@ class LruCacheSharedMemcap : public LruCacheShared<Key, Value, Hash>, public Hos
 {
 public:
     using LruBase = LruCacheShared<Key, Value, Hash>;
+    using LruBase::cache_mutex;
+    using LruBase::current_size;
+    using LruBase::list;
+    using LruBase::map;
+    using LruBase::max_size;
+    using LruBase::mem_chunk;
+    using LruBase::stats;
+    using Data = typename LruBase::Data;
+    using LruListIter = typename LruBase::LruListIter;
+    using ValueType = typename LruBase::ValueType;
 
     LruCacheSharedMemcap() = delete;
     LruCacheSharedMemcap(const LruCacheSharedMemcap& arg) = delete;
@@ -75,13 +85,60 @@ public:
 
     }
 
-    using Data = typename LruBase::Data;
-    using ValueType = typename LruBase::ValueType;
+    // If the new memcap causes pruning, don't modify max_size and return true signifying that
+    // a gradual pruning/resizing is needed. Otherwise, modify max_size and return false.
+    bool reload_resize(size_t new_size)
+    {
+        if ( current_size > new_size )
+            return true;
 
-    using LruBase::current_size;
-    using LruBase::max_size;
-    using LruBase::mem_chunk;
-    using LruBase::cache_mutex;
+        std::lock_guard<std::mutex> cache_lock(cache_mutex);
+        max_size = new_size;
+        return false;
+    }
+
+    // Prune a few entries at each call and set the max_size to the current watermark.
+    // Return true when the desired memcap is reached.
+    bool reload_prune(size_t new_size, unsigned max_prune)
+    {
+        std::unique_lock<std::mutex> reload_lock(reload_mutex, std::try_to_lock);
+        if ( !reload_lock.owns_lock() )
+            return false; // some other thread wins this round
+
+        // Since decrease_size() does not account associated objects in host_tracker,
+        // we may over-prune if we remove max_prune entries in a single attempt. Instead,
+        // we acquire lock, hold data, release lock, and delete data in each iteration.
+        while ( max_prune-- > 0 )
+        {
+            // Get a local temporary reference of data being deleted (as if a trash can).
+            // To avoid race condition, data needs to self-destruct after the cache_lock does.
+            Data data;
+            std::lock_guard<std::mutex> cache_lock(cache_mutex);
+
+            if ( !list.empty() )
+            {
+                max_size = current_size;
+                if ( max_size > new_size )
+                {
+                    LruListIter list_iter = --list.end();
+                    data = list_iter->second; // increase reference count
+                    decrease_size();
+                    max_size -= mem_chunk; // in sync with current_size
+                    map.erase(list_iter->first);
+                    list.erase(list_iter);
+                    ++stats.reload_prunes;
+                }
+            }
+
+            if ( max_size <= new_size or list.empty() )
+            {
+                max_size = new_size;
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     template <class T>
     friend class HostCacheAllocIp;
@@ -117,7 +174,7 @@ private:
             // to hold the pruned data until after the cache is unlocked.
             // Do not change the order of data and cache_lock, as the data must
             // self destruct after cache_lock.
-            std::list<Data> data;
+            std::vector<Data> data;
             std::lock_guard<std::mutex> cache_lock(cache_mutex);
             LruBase::prune(data);
         }
@@ -134,6 +191,8 @@ private:
         current_size -= mem_chunk;
     }
 
+    std::mutex reload_mutex;
+    friend class TEST_host_cache_module_misc_Test; // for unit test
 };
 
 typedef LruCacheSharedMemcap<snort::SfIp, snort::HostTracker, HashIp> HostCacheIp;

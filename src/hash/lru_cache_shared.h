@@ -39,12 +39,12 @@ extern const PegInfo lru_cache_shared_peg_names[];
 
 struct LruCacheSharedStats
 {
-    PegCount adds = 0;       //  An insert that added new entry.
-    PegCount prunes = 0;     //  When an old entry is removed to make
-                             //  room for a new entry.
-    PegCount find_hits = 0;  //  Found entry in cache.
-    PegCount find_misses = 0; //  Did not find entry in cache.
-    PegCount removes = 0;    //  Found entry and removed it.
+    PegCount adds = 0;          // an insert that added new entry
+    PegCount alloc_prunes = 0;  // when an old entry is removed to make room for a new entry
+    PegCount find_hits = 0;     // found entry in cache
+    PegCount find_misses = 0;   // did not find entry in cache
+    PegCount reload_prunes = 0; // when an old entry is removed due to lower memcap during reload
+    PegCount removes = 0;       // found entry and removed it
 };
 
 template<typename Key, typename Value, typename Hash>
@@ -99,8 +99,8 @@ public:
         return max_size;
     }
 
-    //  Modify the maximum number of entries allowed in the cache.
-    //  If the size is reduced, the oldest entries are removed.
+    //  Modify the maximum number of entries allowed in the cache. If the size is reduced,
+    //  the oldest entries are removed. This pruning doesn't utilize reload resource tuner.
     bool set_max_size(size_t newsize);
 
     //  Remove entry associated with Key.
@@ -167,19 +167,20 @@ protected:
         current_size--;
     }
 
-    // Caller must lock and unlock.
-    void prune(std::list<Data>& data)
+    // Caller must lock and unlock. Don't use this during snort reload for which
+    // we need gradual pruning and size reduction via reload resource tuner.
+    void prune(std::vector<Data>& data)
     {
         LruListIter list_iter;
         assert(data.empty());
         while (current_size > max_size && !list.empty())
         {
             list_iter = --list.end();
-            data.push_back(list_iter->second); // increase reference count
+            data.emplace_back(list_iter->second); // increase reference count
             decrease_size();
             map.erase(list_iter->first);
             list.erase(list_iter);
-            stats.prunes++;
+            ++stats.alloc_prunes;
         }
     }
 };
@@ -191,9 +192,9 @@ bool LruCacheShared<Key, Value, Hash>::set_max_size(size_t newsize)
         return false;   //  Not allowed to set size to zero.
 
     // Like with remove(), we need local temporary references to data being
-    // deleted, to avoid race condition. This data list needs to self-destruct
+    // deleted, to avoid race condition. This data needs to self-destruct
     // after the cache_lock does.
-    std::list<Data> data;
+    std::vector<Data> data;
 
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
 
@@ -242,7 +243,7 @@ find_else_create(const Key& key, bool* new_data)
     // unlocking the cache_mutex, because the cache must be locked when we
     // return the data pointer (below), or else, some other thread might
     // delete it before we got a chance to return it.
-    std::list<Data> tmp_data;
+    std::vector<Data> tmp_data;
 
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
 
@@ -278,7 +279,7 @@ find_else_insert(const Key& key, std::shared_ptr<Value>& data)
 {
     LruMapIter map_iter;
 
-    std::list<Data> tmp_data;
+    std::vector<Data> tmp_data;
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
 
     map_iter = map.find(key);

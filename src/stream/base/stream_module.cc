@@ -218,9 +218,7 @@ bool StreamReloadResourceManager::initialize(const StreamModuleConfig& config_)
 
 bool StreamReloadResourceManager::tinit()
 {
-    bool must_tune = false;
-
-    max_flows_change =
+    int max_flows_change =
         config.flow_cache_cfg.max_flows - flow_con->get_flow_cache_config().max_flows;
     if ( max_flows_change )
     {
@@ -230,10 +228,10 @@ bool StreamReloadResourceManager::tinit()
             stream_base_stats.reload_total_adds += max_flows_change;
 
         flow_con->set_flow_cache_config(config.flow_cache_cfg);
-        must_tune = true;
+        return true;
     }
 
-    return must_tune;
+    return false;
 }
 
 bool StreamReloadResourceManager::tune_packet_context()

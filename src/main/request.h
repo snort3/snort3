@@ -22,12 +22,14 @@
 #ifndef REQUEST_H
 #define REQUEST_H
 
+#include <atomic>
+
 #include "main/snort_types.h"
 
 class Request
 {
 public:
-    Request(int f = -1);
+    Request(int f = -1) : fd(f), bytes_read(0), queued_response(nullptr) { }
 
     bool read(const int&);
     const char* get() { return read_buf; }
@@ -41,6 +43,6 @@ private:
     int fd;
     char read_buf[1024];
     size_t bytes_read;
-    const char* queued_response = nullptr;
+    std::atomic<const char*> queued_response;
 };
 #endif

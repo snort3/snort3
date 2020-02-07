@@ -93,7 +93,6 @@ private:
 
 private:
     StreamModuleConfig config;
-    int max_flows_change = 0;
 };
 
 class StreamModule : public snort::Module

@@ -32,8 +32,6 @@
 #include "managers/module_manager.h"
 #include "utils/util.h"
 
-#include "host_cache.h"
-
 using namespace snort;
 using namespace std;
 
@@ -84,9 +82,13 @@ static const Parameter host_cache_params[] =
 bool HostCacheModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("dump_file") )
+    {
+        if ( dump_file )
+            snort_free((void*)dump_file);
         dump_file = snort_strdup(v.get_string());
+    }
     else if ( v.is("memcap") )
-        host_cache_size = v.get_uint32();
+        hc_rrt.memcap = v.get_uint32();
     else
         return false;
 
@@ -95,15 +97,18 @@ bool HostCacheModule::set(const char*, Value& v, SnortConfig*)
 
 bool HostCacheModule::begin(const char*, int, SnortConfig*)
 {
-    host_cache_size = 0;
+    hc_rrt.memcap = 0;
     return true;
 }
 
-bool HostCacheModule::end(const char* fqn, int, SnortConfig*)
+bool HostCacheModule::end(const char* fqn, int, SnortConfig* sc)
 {
-    if ( host_cache_size && !strcmp(fqn, HOST_CACHE_NAME) )
+    if ( hc_rrt.memcap && !strcmp(fqn, HOST_CACHE_NAME) )
     {
-        host_cache.set_max_size(host_cache_size);
+        if ( Snort::is_reloading() )
+            sc->register_reload_resource_tuner(hc_rrt);
+        else
+            host_cache.set_max_size(hc_rrt.memcap);
     }
 
     return true;
@@ -154,6 +159,10 @@ void HostCacheModule::log_host_cache(const char* file_name, bool verbose)
     string str;
     SfIpString ip_str;
     const auto&& lru_data = host_cache.get_all_data();
+    // The current size may not exactly correspond to the number of trackers seen here
+    // as packet threads may continue to update cache, except when dumping upon exit or pause
+    out_stream << "Current host cache size: " << host_cache.mem_size() << " bytes, "
+        << lru_data.size() << " trackers" << endl << endl;
     for ( const auto& elem : lru_data )
     {
         str = "IP: ";
@@ -164,7 +173,7 @@ void HostCacheModule::log_host_cache(const char* file_name, bool verbose)
     out_stream.close();
 
     if ( verbose )
-        LogMessage("Dumped host cache of size = %lu to %s\n", lru_data.size(), file_name);
+        LogMessage("Dumped host cache to %s\n", file_name);
 }
 
 const PegInfo* HostCacheModule::get_pegs() const

@@ -58,7 +58,8 @@ void LogMessage(const char* format,...)
     logged_message[LOG_MAX] = '\0';
 }
 time_t packet_time() { return 0; }
-}
+bool Snort::is_reloading() { return false; }
+} // end of namespace snort
 
 extern "C"
 {
@@ -67,6 +68,12 @@ const char* luaL_optlstring(lua_State*, int, const char*, size_t*) { return null
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
+
+template <class T>
+HostCacheAllocIp<T>::HostCacheAllocIp()
+{
+    lru = &host_cache;
+}
 
 TEST_GROUP(host_cache_module)
 {
@@ -81,26 +88,60 @@ TEST_GROUP(host_cache_module)
     }
 };
 
-//  Test that HostCacheModule sets up host_cache size based on config.
-TEST(host_cache_module, host_cache_module_test_values)
+// Test stats when HostCacheModule sets/changes host_cache size.
+// This method is a friend of LruCacheSharedMemcap class.
+TEST(host_cache_module, misc)
 {
     Value size_val((double)2112);
     Parameter size_param = { "size", Parameter::PT_INT, nullptr, nullptr, "cache size" };
     const PegInfo* ht_pegs = module.get_pegs();
     const PegCount* ht_stats = module.get_counts();
 
-    CHECK(!strcmp(ht_pegs[0].name, "lru_cache_adds"));
-    CHECK(!strcmp(ht_pegs[1].name, "lru_cache_prunes"));
-    CHECK(!strcmp(ht_pegs[2].name, "lru_cache_find_hits"));
-    CHECK(!strcmp(ht_pegs[3].name, "lru_cache_find_misses"));
-    CHECK(!strcmp(ht_pegs[4].name, "lru_cache_removes"));
-    CHECK(!ht_pegs[5].name);
+    CHECK(!strcmp(ht_pegs[0].name, "adds"));
+    CHECK(!strcmp(ht_pegs[1].name, "alloc_prunes"));
+    CHECK(!strcmp(ht_pegs[2].name, "find_hits"));
+    CHECK(!strcmp(ht_pegs[3].name, "find_misses"));
+    CHECK(!strcmp(ht_pegs[4].name, "reload_prunes"));
+    CHECK(!strcmp(ht_pegs[5].name, "removes"));
+    CHECK(!ht_pegs[6].name);
 
-    CHECK(ht_stats[0] == 0);
-    CHECK(ht_stats[1] == 0);
-    CHECK(ht_stats[2] == 0);
-    CHECK(ht_stats[3] == 0);
-    CHECK(ht_stats[4] == 0);
+    // add 3 entries
+    SfIp ip1, ip2, ip3;
+    ip1.set("1.1.1.1");
+    ip2.set("2.2.2.2");
+    ip3.set("3.3.3.3");
+    host_cache.find_else_create(ip1, nullptr);
+    host_cache.find_else_create(ip2, nullptr);
+    host_cache.find_else_create(ip3, nullptr);
+    CHECK(ht_stats[0] == 3);
+
+    // no pruning needed for resizing higher than current size
+    CHECK(host_cache.reload_resize(2048) == false);
+
+    // pruning needed for resizing lower than current size
+    CHECK(host_cache.reload_resize(256) == true);
+
+    // pruning is not done when when reload_mutex is already locked
+    host_cache.reload_mutex.lock();
+    CHECK(host_cache.reload_prune(256, 2) == false);
+    host_cache.reload_mutex.unlock();
+
+    // prune 2 entries when reload_mutex is not locked
+    CHECK(host_cache.reload_prune(256, 2) == true);
+
+    // alloc_prune 1 entry
+    host_cache.find_else_create(ip1, nullptr);
+
+    // 1 hit, 1 remove
+    host_cache.find_else_create(ip1, nullptr);
+    host_cache.remove(ip1);
+
+    CHECK(ht_stats[0] == 4); // 4 adds
+    CHECK(ht_stats[1] == 1); // 1 alloc_prunes
+    CHECK(ht_stats[2] == 1); // 1 hit
+    CHECK(ht_stats[3] == 4); // 4 misses
+    CHECK(ht_stats[4] == 2); // 2 reload_prunes
+    CHECK(ht_stats[5] == 1); // 1 remove
 
     size_val.set(&size_param);
 
@@ -110,7 +151,7 @@ TEST(host_cache_module, host_cache_module_test_values)
     module.end("host_cache", 0, nullptr);
 
     ht_stats = module.get_counts();
-    CHECK(ht_stats[0] == 0);
+    CHECK(ht_stats[0] == 4);
 }
 
 TEST(host_cache_module, log_host_cache_messages)
@@ -122,7 +163,7 @@ TEST(host_cache_module, log_host_cache_messages)
     STRCMP_EQUAL(logged_message, "Couldn't open nowhere/host_cache.dump to write!\n");
 
     module.log_host_cache("host_cache.dump", true);
-    STRCMP_EQUAL(logged_message, "Dumped host cache of size = 0 to host_cache.dump\n");
+    STRCMP_EQUAL(logged_message, "Dumped host cache to host_cache.dump\n");
 
     module.log_host_cache("host_cache.dump", true);
     STRCMP_EQUAL(logged_message, "File host_cache.dump already exists!\n");
