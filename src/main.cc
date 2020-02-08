@@ -48,8 +48,9 @@
 #include "packet_io/trough.h"
 #include "target_based/sftarget_reader.h"
 #include "time/periodic.h"
-#include "utils/util.h"
 #include "utils/safec.h"
+#include "utils/util.h"
+
 
 #ifdef UNIT_TEST
 #include "catch/unit_test.h"
@@ -916,7 +917,7 @@ static void main_loop()
             ++swine;
             continue;
         }
-        service_check();
+            service_check();
     }
 }
 
