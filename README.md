@@ -114,6 +114,10 @@ Follow these steps:
     cd build
     make -j $(nproc) install
     ```
+   * To build a release image, you can configure it using the --build-type parameter as shown below.
+   ```shell
+   ./configure_cmake.sh --build-type=RelWithDebInfo --disable-memory-manager --disable-snort-profiler --disable-gdb
+   ```
 
 **_Note_**:
 

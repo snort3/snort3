@@ -20,6 +20,7 @@ Usage: $0 [OPTION]... [VAR=VALUE]...
         --builddir=   The build directory
         --generator=  run cmake --help for a list of generators
         --prefix=     Snort++ installation prefix
+        --build-type= Build type e.g. Debug, Release, RelWithDebInfo
 
 Optional Features:
     --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
@@ -161,6 +162,9 @@ while [ $# -ne 0 ]; do
             ;;
         --generator=*)
             CMakeGenerator="$optarg"
+            ;;
+        --build-type=*)
+            CMakeBuildType="$optarg"
             ;;
         --prefix=*)
             prefix=$optarg
@@ -438,19 +442,26 @@ else
     mkdir -p $builddir
 fi
 
+if [ -z "$CMakeBuildType" ]; then
+    CMakeBuildType="Debug"
+fi
+
 echo "Build Directory : $builddir"
 echo "Source Directory: $sourcedir"
+echo "Building $CMakeBuildType Image"
 cd $builddir
 
-[ "$CMakeGenerator" ] && gen="-G $CMakeGenerator"
+"$CMakeGenerator" ] && gen="-G $CMakeGenerator"
 
 cmake "$gen" \
     -DCMAKE_CXX_FLAGS:STRING="$CXXFLAGS $CPPFLAGS" \
     -DCMAKE_C_FLAGS:STRING="$CFLAGS $CPPFLAGS" \
     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+    -DCMAKE_BUILD_TYPE=$CMakeBuildType \
     $CMakeCacheEntries $sourcedir
 
 echo "# This is the command used to configure this build" > config.status
 echo $command >> config.status
 chmod u+x config.status
+
 
