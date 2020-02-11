@@ -451,7 +451,7 @@ echo "Source Directory: $sourcedir"
 echo "Building $CMakeBuildType Image"
 cd $builddir
 
-"$CMakeGenerator" ] && gen="-G $CMakeGenerator"
+[ "$CMakeGenerator" ] && gen="-G $CMakeGenerator"
 
 cmake "$gen" \
     -DCMAKE_CXX_FLAGS:STRING="$CXXFLAGS $CPPFLAGS" \
