@@ -24,6 +24,7 @@
 #endif
 
 #include <cstdarg>
+#include <thread>
 
 #include "host_tracker/host_cache_module.h"
 #include "host_tracker/host_cache.h"
@@ -88,6 +89,18 @@ TEST_GROUP(host_cache_module)
     }
 };
 
+void try_reload_prune(bool is_not_locked)
+{
+    if ( is_not_locked )
+    {
+        CHECK(host_cache.reload_prune(256, 2) == true);
+    }
+    else
+    {
+        CHECK(host_cache.reload_prune(256, 2) == false);
+    }
+}
+
 // Test stats when HostCacheModule sets/changes host_cache size.
 // This method is a friend of LruCacheSharedMemcap class.
 TEST(host_cache_module, misc)
@@ -121,13 +134,15 @@ TEST(host_cache_module, misc)
     // pruning needed for resizing lower than current size
     CHECK(host_cache.reload_resize(256) == true);
 
-    // pruning is not done when when reload_mutex is already locked
+    // pruning in thread is not done when reload_mutex is already locked
     host_cache.reload_mutex.lock();
-    CHECK(host_cache.reload_prune(256, 2) == false);
+    std::thread test_negative(try_reload_prune, false);
+    test_negative.join();
     host_cache.reload_mutex.unlock();
 
-    // prune 2 entries when reload_mutex is not locked
-    CHECK(host_cache.reload_prune(256, 2) == true);
+    // prune 2 entries in thread when reload_mutex is not locked
+    std::thread test_positive(try_reload_prune, true);
+    test_positive.join();
 
     // alloc_prune 1 entry
     host_cache.find_else_create(ip1, nullptr);

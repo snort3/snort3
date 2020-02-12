@@ -16,6 +16,8 @@ add_cpputest( host_cache_module_test
         ../../hash/lru_cache_shared.cc
         ../../sfip/sf_ip.cc
         $<TARGET_OBJECTS:catch_tests>
+    LIBS
+        ${CMAKE_THREAD_LIBS_INIT}
 )
 
 add_cpputest( host_tracker_test
