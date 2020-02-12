@@ -148,8 +148,6 @@ AppIdSession::~AppIdSession() = default;
 AppIdHttpSession::AppIdHttpSession(AppIdSession& asd)
     : asd(asd)
 {
-    http_matchers = HttpPatternMatchers::get_instance();
-
     for ( int i = 0; i < NUM_METADATA_FIELDS; i++)
         meta_data[i] = nullptr;
 }

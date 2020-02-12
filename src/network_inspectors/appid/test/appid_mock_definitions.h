@@ -50,7 +50,23 @@ void LogMessage(const char*,...) { }
 void ParseWarning(WarningGroup, const char*, ...) { }
 
 void LogLabel(const char*, FILE*) {}
+SearchTool::SearchTool(char const*, bool) { }
+SearchTool::~SearchTool() { }
 }
+
+AppIdDiscovery::AppIdDiscovery() { }
+AppIdDiscovery::~AppIdDiscovery() { }
+ClientDiscovery::~ClientDiscovery() { }
+void ClientDiscovery::initialize() { }
+void AppIdDiscovery::register_detector(const string&, AppIdDetector*, IpProtocol) { }
+void AppIdDiscovery::add_pattern_data(AppIdDetector*, snort::SearchTool*, int, unsigned char const*, unsigned int, unsigned int) { }
+void AppIdDiscovery::register_tcp_pattern(AppIdDetector*, unsigned char const*, unsigned int, int, unsigned int) { }
+void AppIdDiscovery::register_udp_pattern(AppIdDetector*, unsigned char const*, unsigned int, int, unsigned int) { }
+int AppIdDiscovery::add_service_port(AppIdDetector*, ServiceDetectorPort const&) { return 0; }
+DnsPatternMatchers::~DnsPatternMatchers() { }
+HttpPatternMatchers::~HttpPatternMatchers() { }
+SipPatternMatchers::~SipPatternMatchers() { }
+SslPatternMatchers::~SslPatternMatchers() { }
 
 void Field::set(int32_t length, const uint8_t* start, bool own_the_buffer_)
 {

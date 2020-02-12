@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2020 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2005-2013 Sourcefire, Inc.
+// Copyright (C) 2020-2020 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -17,27 +16,45 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// service_ssl.h author Sourcefire Inc.
+// dns_patterns.h author Shravan Rangaraju <shrarang@cisco.com>
 
-#ifndef SERVICE_SSL_H
-#define SERVICE_SSL_H
+#ifndef DNS_PATTERNS_H
+#define DNS_PATTERNS_H
 
-#include "service_detector.h"
+#include "search_engines/search_tool.h"
+#include "application_ids.h"
 
-class OdpContext;
-class ServiceDiscovery;
-
-class SslServiceDetector : public ServiceDetector
+struct DnsHostPattern
 {
-public:
-    SslServiceDetector(ServiceDiscovery*);
-
-    int validate(AppIdDiscoveryArgs&) override;
+    uint8_t type;
+    AppId app_id;
+    uint8_t* pattern;
+    int pattern_size;
 };
 
-AppId getSslServiceAppId(short srcPort);
-bool is_service_over_ssl(AppId);
-bool setSSLSquelch(snort::Packet*, int type, AppId, OdpContext&);
+struct DnsHostPatternList
+{
+    DnsHostPattern* dpattern;
+    DnsHostPatternList* next;
+};
+
+struct MatchedDnsPatterns
+{
+    DnsHostPattern* mpattern;
+    MatchedDnsPatterns* next;
+};
+
+class DnsPatternMatchers
+{
+public:
+    ~DnsPatternMatchers();
+    void add_host_pattern(uint8_t*, size_t, uint8_t, AppId);
+    void finalize_patterns();
+    int scan_hostname(const uint8_t*, size_t, AppId&, AppId&);
+
+private:
+    DnsHostPatternList* dns_host_pattern_list = nullptr;
+    snort::SearchTool dns_host_matcher = snort::SearchTool("ac_full", true);
+};
 
 #endif
-

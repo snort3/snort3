@@ -127,7 +127,8 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
         asd->scan_flags |= SCAN_HTTP_VIA_FLAG;
     }
 
-    hsession->process_http_packet(direction, change_bits);
+    hsession->process_http_packet(direction, change_bits,
+        asd->ctxt.get_odp_ctxt().get_http_matchers());
 
     if (asd->service.get_id() == APP_ID_HTTP)
     {

@@ -34,38 +34,15 @@ namespace snort
 class Flow;
 }
 
-struct SipUaUserData
-{
-    AppId ClientAppId;
-    char* clientVersion;
-};
-
-struct DetectorAppSipPattern
-{
-    tMlpPattern pattern;
-    SipUaUserData userData;
-    DetectorAppSipPattern* next;
-};
-
 class SipEventHandler;
 
 class SipUdpClientDetector : public ClientDetector
 {
 public:
     SipUdpClientDetector(ClientDiscovery*);
-    ~SipUdpClientDetector() override;
+    ~SipUdpClientDetector() override { }
 
     int validate(AppIdDiscoveryArgs&) override;
-
-    void finalize_patterns() override;
-
-    // FIXIT-L revisit init so it's not split between static methods and constructor
-    static int sipUaPatternAdd(AppId, const char* clientVersion, const char* uaPattern);
-    static int sipServerPatternAdd(AppId, const char* clientVersion, const char* uaPattern);
-
-private:
-    static const int PATTERN_PART_MAX = 10;
-    tMlmpPattern patterns[PATTERN_PART_MAX];
 };
 
 class SipTcpClientDetector : public ClientDetector

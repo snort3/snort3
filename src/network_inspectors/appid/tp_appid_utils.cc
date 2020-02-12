@@ -449,9 +449,9 @@ static inline void process_rtmp(AppIdSession& asd,
            attribute_data.http_request_user_agent_begin() ) > 0 )
     {
         char *version = nullptr;
-        HttpPatternMatchers* http_matchers = HttpPatternMatchers::get_instance();
+        HttpPatternMatchers& http_matchers = asd.ctxt.get_odp_ctxt().get_http_matchers();
 
-        http_matchers->identify_user_agent(field->c_str(), size, service_id,
+        http_matchers.identify_user_agent(field->c_str(), size, service_id,
         client_id, &version);
 
         asd.set_client_appid_data(client_id, change_bits, version);
@@ -470,13 +470,13 @@ static inline void process_rtmp(AppIdSession& asd,
         const std::string* url;
         if ( ( url = hsession->get_field(MISC_URL_FID) ) != nullptr )
         {
-            HttpPatternMatchers* http_matchers = HttpPatternMatchers::get_instance();
+            HttpPatternMatchers& http_matchers = asd.ctxt.get_odp_ctxt().get_http_matchers();
             const char* referer = hsession->get_cfield(REQ_REFERER_FID);
-            if ( ( ( http_matchers->get_appid_from_url(nullptr, url->c_str(),
+            if ( ( ( http_matchers.get_appid_from_url(nullptr, url->c_str(),
                 nullptr, referer, &client_id, &service_id,
                 &payload_id, &referred_payload_app_id, true, asd.ctxt.get_odp_ctxt()) )
                 ||
-                ( http_matchers->get_appid_from_url(nullptr, url->c_str(),
+                ( http_matchers.get_appid_from_url(nullptr, url->c_str(),
                 nullptr, referer, &client_id, &service_id,
                 &payload_id, &referred_payload_app_id, false, asd.ctxt.get_odp_ctxt()) ) ) == 1 )
             {
@@ -782,7 +782,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
                     }
 
                     AppIdHttpSession* hsession = asd.get_http_session();
-                    hsession->process_http_packet(direction, change_bits);
+                    hsession->process_http_packet(direction, change_bits, asd.ctxt.get_odp_ctxt().get_http_matchers());
 
                     // If SSL over HTTP tunnel, make sure Snort knows that it's encrypted.
                     if (asd.payload.get_id() == APP_ID_HTTP_SSL_TUNNEL)

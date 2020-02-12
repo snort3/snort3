@@ -44,6 +44,22 @@ static OdpContext stub_odp_ctxt(config, nullptr);
 OdpContext* AppIdContext::odp_ctxt = &stub_odp_ctxt;
 ThirdPartyAppIdContext* AppIdContext::tp_appid_ctxt = nullptr;
 
+snort::SearchTool::SearchTool(char const*, bool) { }
+snort::SearchTool::~SearchTool() { }
+
+AppIdDiscovery::AppIdDiscovery() { }
+AppIdDiscovery::~AppIdDiscovery() { }
+ClientDiscovery::~ClientDiscovery() { }
+void ClientDiscovery::initialize() { }
+void AppIdDiscovery::register_detector(const string&, AppIdDetector*, IpProtocol) { }
+void AppIdDiscovery::add_pattern_data(AppIdDetector*, snort::SearchTool*, int, unsigned char const*, unsigned int, unsigned int) { }
+void AppIdDiscovery::register_tcp_pattern(AppIdDetector*, unsigned char const*, unsigned int, int, unsigned int) { }
+void AppIdDiscovery::register_udp_pattern(AppIdDetector*, unsigned char const*, unsigned int, int, unsigned int) { }
+int AppIdDiscovery::add_service_port(AppIdDetector*, ServiceDetectorPort const&) { return 0; }
+DnsPatternMatchers::~DnsPatternMatchers() { }
+HttpPatternMatchers::~HttpPatternMatchers() { }
+SipPatternMatchers::~SipPatternMatchers() { }
+SslPatternMatchers::~SslPatternMatchers() { }
 AppIdConfig::~AppIdConfig() { }
 OdpContext::OdpContext(AppIdConfig&, snort::SnortConfig*) { }
 

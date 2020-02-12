@@ -42,14 +42,11 @@
 #include "appid_session.h"
 #include "appid_stats.h"
 #include "client_plugins/client_discovery.h"
-#include "detector_plugins/detector_dns.h"
 #include "detector_plugins/detector_pattern.h"
 #include "detector_plugins/detector_sip.h"
-#include "detector_plugins/http_url_patterns.h"
 #include "host_port_app_cache.h"
 #include "lua_detector_module.h"
 #include "service_plugins/service_discovery.h"
-#include "service_plugins/service_ssl.h"
 #include "tp_appid_module_api.h"
 #include "tp_lib_handler.h"
 
@@ -229,9 +226,6 @@ static void appid_inspector_pterm()
     appid_forecast_pterm();
     LuaDetectorManager::terminate();
     AppIdDiscovery::release_plugins();
-    delete HttpPatternMatchers::get_instance();
-    service_dns_host_clean();
-    service_ssl_clean();
     AppIdContext::pterm();
 //end of 'FIXIT-M: RELOAD' comment above
     openssl_cleanup();

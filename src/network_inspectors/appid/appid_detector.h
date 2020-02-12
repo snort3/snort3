@@ -132,7 +132,6 @@ public:
         asd.client.set_id(client_id);
     }
     virtual void add_app(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppId, const char*, AppidChangeBits&);
-    virtual void finalize_patterns() {}
     const char* get_code_string(APPID_STATUS_CODE) const;
 
     const std::string& get_name() const

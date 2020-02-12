@@ -45,23 +45,20 @@ class ClientDiscovery : public AppIdDiscovery
 {
 public:
     ~ClientDiscovery() override;
-    static ClientDiscovery& get_instance();
+    void initialize() override;
     static void release_instance();
 
     void finalize_client_plugins();
-    void release_thread_resources();
+    static void release_thread_resources();
     bool do_client_discovery(AppIdSession&, snort::Packet*,
         AppidSessionDirection direction, AppidChangeBits& change_bits);
 
 private:
-    ClientDiscovery();
-    void initialize() override;
     void exec_client_detectors(AppIdSession&, snort::Packet*,
         AppidSessionDirection direction, AppidChangeBits& change_bits);
-    ClientAppMatch* find_detector_candidates(const snort::Packet* pkt, IpProtocol);
+    ClientAppMatch* find_detector_candidates(const snort::Packet* pkt, AppIdSession&);
     void create_detector_candidates_list(AppIdSession&, snort::Packet*);
     int get_detector_candidates_list(AppIdSession&, snort::Packet*, AppidSessionDirection direction);
-    static ClientDiscovery* discovery_manager;
 };
 
 #endif

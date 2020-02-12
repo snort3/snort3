@@ -313,14 +313,6 @@ static int match_query_elements(tMlpPattern* packetData, tMlpPattern* userPatter
     return copySize;
 }
 
-HttpPatternMatchers* HttpPatternMatchers::get_instance()
-{
-    static HttpPatternMatchers* http_matchers;
-    if (!http_matchers)
-        http_matchers = new HttpPatternMatchers;
-    return http_matchers;
-}
-
 static void free_app_url_patterns(std::vector<DetectorAppUrlPattern*>& url_patterns)
 {
     for (auto* pattern: url_patterns)
@@ -1565,7 +1557,7 @@ AppId HttpPatternMatchers::get_appid_by_content_type(const char* data, int size)
 #define URL_SCHEME_END_PATTERN "://"
 #define URL_SCHEME_MAX_LEN     (sizeof("https://")-1)
 
-bool HttpPatternMatchers::get_appid_from_url(char* host, const char* url, char** version,
+bool HttpPatternMatchers::get_appid_from_url(const char* host, const char* url, char** version,
     const char* referer, AppId* ClientAppId, AppId* serviceAppId, AppId* payloadAppId,
     AppId* referredPayloadAppId, bool from_rtmp, OdpContext& odp_ctxt)
 {
@@ -1597,7 +1589,7 @@ bool HttpPatternMatchers::get_appid_from_url(char* host, const char* url, char**
     int host_len;
     if (!host)
     {
-        host = (char*)strchr(url, '/');
+        host = strchr(url, '/');
         if (host != nullptr)
             host_len = host - url;
         else

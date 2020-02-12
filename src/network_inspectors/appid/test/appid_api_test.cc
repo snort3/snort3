@@ -50,7 +50,18 @@ namespace snort
 
 class Inspector* InspectorManager::get_inspector(char const*, bool, SnortConfig*)
 { return nullptr; }
+}
 
+bool SslPatternMatchers::scan_hostname(unsigned char const*, unsigned long, AppId& client_id, AppId&)
+{
+    client_id = APPID_UT_ID + 1;
+    return true;
+}
+
+bool SslPatternMatchers::scan_cname(unsigned char const*, unsigned long, AppId&, AppId& payload_id)
+{
+    payload_id = APPID_UT_ID + 1;
+    return true;
 }
 
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }

@@ -115,12 +115,11 @@ void DataBus::publish(const char*, DataEvent& event, Flow*)
 
 // Stubs for matchers
 static HttpPatternMatchers* http_matchers;
+DnsPatternMatchers::~DnsPatternMatchers() { }
 HttpPatternMatchers::~HttpPatternMatchers() {}
 void HttpPatternMatchers::get_http_offsets(Packet*, AppIdHttpSession*) {}
-HttpPatternMatchers* HttpPatternMatchers::get_instance()
-{
-    return http_matchers;
-}
+SipPatternMatchers::~SipPatternMatchers() { }
+SslPatternMatchers::~SslPatternMatchers() { }
 
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 
@@ -140,12 +139,12 @@ ProfileStats* AppIdModule::get_profile() const { return nullptr; }
 // Stubs for config
 static AppIdConfig app_config;
 static AppIdContext app_ctxt(app_config);
-AppId AppIdContext::get_port_service_id(IpProtocol, uint16_t)
+AppId OdpContext::get_port_service_id(IpProtocol, uint16_t)
 {
     return APP_ID_NONE;
 }
 
-AppId AppIdContext::get_protocol_service_id(IpProtocol)
+AppId OdpContext::get_protocol_service_id(IpProtocol)
 {
     return APP_ID_NONE;
 }
@@ -226,19 +225,12 @@ AppId HostTracker::get_appid(Port, IpProtocol, bool, bool)
 }
 
 // Stubs for ClientDiscovery
-ClientDiscovery::ClientDiscovery(){}
 ClientDiscovery::~ClientDiscovery() {}
 void ClientDiscovery::initialize() {}
 void ClientDiscovery::finalize_client_plugins() {}
 void ClientDiscovery::release_instance() {}
 void ClientDiscovery::release_thread_resources() {}
-static ClientDiscovery* c_discovery_manager = nullptr;
-ClientDiscovery& ClientDiscovery::get_instance()
-{
-    if (!c_discovery_manager)
-        c_discovery_manager = new ClientDiscovery();
-    return *c_discovery_manager;
-}
+static ClientDiscovery* c_discovery_manager = new ClientDiscovery();
 bool ClientDiscovery::do_client_discovery(AppIdSession&, Packet*,
     AppidSessionDirection, AppidChangeBits&)
 {

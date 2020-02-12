@@ -52,11 +52,6 @@ const char* AppInfoManager::get_app_name(AppId)
 }
 
 // HttpPatternMatchers mock functions
-HttpPatternMatchers* HttpPatternMatchers::get_instance()
-{
-    return nullptr;
-}
-
 void HttpPatternMatchers::scan_key_chp(ChpMatchDescriptor&)
 {
 }
@@ -91,7 +86,7 @@ AppId HttpPatternMatchers::get_appid_by_content_type(const char*, int)
     return 0;
 }
 
-bool HttpPatternMatchers::get_appid_from_url(char*, const char*, char**,
+bool HttpPatternMatchers::get_appid_from_url(const char*, const char*, char**,
     const char*, AppId*, AppId*, AppId*, AppId* referredPayloadAppId, bool, OdpContext&)
 {
     *referredPayloadAppId = APP_ID_FACEBOOK;
@@ -281,7 +276,7 @@ TEST(appid_http_session, change_bits_for_referred_appid)
     session.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
     hsession.set_skip_simple_detect(false);
     hsession.set_field( (HttpFieldIds)2, new std::string("referer"), change_bits );
-    hsession.process_http_packet(APP_ID_FROM_INITIATOR, change_bits);
+    hsession.process_http_packet(APP_ID_FROM_INITIATOR, change_bits, odp_ctxt.get_http_matchers());
 
     // Detect changes in referred appid
     CHECK_EQUAL(change_bits.test(APPID_REFERRED_BIT), true);

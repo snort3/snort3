@@ -24,11 +24,6 @@
 
 #include "service_plugins/service_detector.h"
 
-int dns_host_scan_hostname(const uint8_t*, size_t, AppId*, AppId*);
-void service_dns_host_clean();
-int dns_host_detector_process_patterns();
-int dns_add_host_pattern(uint8_t*, size_t, uint8_t, AppId);
-void dns_detector_free_patterns();
 char* dns_parse_host(const uint8_t* host, uint8_t host_len);
 
 struct DNSHeader;

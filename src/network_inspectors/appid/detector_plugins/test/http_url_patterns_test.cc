@@ -62,6 +62,18 @@ static CHPAction my_match;
 static void* my_chp_rewritten = nullptr;
 
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
+AppIdDiscovery::AppIdDiscovery() { }
+AppIdDiscovery::~AppIdDiscovery() { }
+ClientDiscovery::~ClientDiscovery() { }
+void ClientDiscovery::initialize() { }
+void AppIdDiscovery::register_detector(const string&, AppIdDetector*, IpProtocol) { }
+void AppIdDiscovery::add_pattern_data(AppIdDetector*, snort::SearchTool*, int, unsigned char const*, unsigned int, unsigned int) { }
+void AppIdDiscovery::register_tcp_pattern(AppIdDetector*, unsigned char const*, unsigned int, int, unsigned int) { }
+void AppIdDiscovery::register_udp_pattern(AppIdDetector*, unsigned char const*, unsigned int, int, unsigned int) { }
+int AppIdDiscovery::add_service_port(AppIdDetector*, ServiceDetectorPort const&) { return 0; }
+DnsPatternMatchers::~DnsPatternMatchers() { }
+SipPatternMatchers::~SipPatternMatchers() { }
+SslPatternMatchers::~SslPatternMatchers() { }
 
 TEST_GROUP(http_url_patterns_tests)
 {

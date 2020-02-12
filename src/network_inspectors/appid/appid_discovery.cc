@@ -75,24 +75,21 @@ AppIdDiscovery::~AppIdDiscovery()
 void AppIdDiscovery::initialize_plugins()
 {
     ServiceDiscovery::get_instance();
-    ClientDiscovery::get_instance();
 }
 
 void AppIdDiscovery::finalize_plugins()
 {
     ServiceDiscovery::get_instance().finalize_service_patterns();
-    ClientDiscovery::get_instance().finalize_client_plugins();
 }
 
 void AppIdDiscovery::release_plugins()
 {
     ServiceDiscovery::release_instance();
-    ClientDiscovery::release_instance();
 }
 
 void AppIdDiscovery::tterm()
 {
-    ClientDiscovery::get_instance().release_thread_resources();
+    ClientDiscovery::release_thread_resources();
     ServiceDiscovery::get_instance().release_thread_resources();
 }
 
@@ -268,7 +265,7 @@ static bool is_packet_ignored(AppIdSession* asd, Packet* p, AppidSessionDirectio
             AppIdHttpSession* hsession = asd->get_http_session();
             if ( direction == APP_ID_FROM_INITIATOR && hsession && hsession->is_rebuilt_offsets() )
             {
-                HttpPatternMatchers::get_instance()->get_http_offsets(p, hsession);
+                asd->ctxt.get_odp_ctxt().get_http_matchers().get_http_offsets(p, hsession);
                 if (appidDebug->is_active())
                 {
                     uint16_t uri_start, uri_end, cookie_start, cookie_end;
@@ -648,7 +645,7 @@ void AppIdDiscovery::do_port_based_discovery(Packet* p, AppIdSession& asd, IpPro
             return;
     }
 
-    AppId id = asd.ctxt.get_port_service_id(protocol, p->ptrs.sp);
+    AppId id = asd.ctxt.get_odp_ctxt().get_port_service_id(protocol, p->ptrs.sp);
     if (id > APP_ID_NONE)
     {
         asd.service.set_port_service_id(id);
@@ -746,7 +743,7 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
         auto ht = host_cache.find(*ip);
         if (ht)
         {
-	  AppId appid = ht->get_appid(port, protocol, true, asd.ctxt.get_odp_ctxt().allow_port_wildcard_host_cache);
+          AppId appid = ht->get_appid(port, protocol, true, asd.ctxt.get_odp_ctxt().allow_port_wildcard_host_cache);
             if (appid > APP_ID_NONE)
             {
                 // FIXIT-L: Make this more generic to support service and payload IDs
@@ -787,7 +784,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd,
     {
         if ( !asd.get_session_flags(APPID_SESSION_PORT_SERVICE_DONE) )
         {
-            AppId id = asd.ctxt.get_protocol_service_id(protocol);
+            AppId id = asd.ctxt.get_odp_ctxt().get_protocol_service_id(protocol);
             if (id > APP_ID_NONE)
             {
                 asd.service.set_port_service_id(id);
@@ -839,8 +836,8 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd,
             is_discovery_done = ServiceDiscovery::get_instance().do_service_discovery(asd, p,
                 direction, change_bits);
         if (asd.client_disco_state != APPID_DISCO_STATE_FINISHED)
-            is_discovery_done = ClientDiscovery::get_instance().do_client_discovery(asd, p,
-                direction, change_bits);
+            is_discovery_done = asd.ctxt.get_odp_ctxt().get_client_disco_mgr().do_client_discovery(
+                asd, p, direction, change_bits);
         asd.set_session_flags(APPID_SESSION_ADDITIONAL_PACKET);
     }
 

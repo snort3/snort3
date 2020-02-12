@@ -28,6 +28,7 @@
 #include "managers/inspector_manager.h"
 #include "utils/util.h"
 
+#include "appid_inspector.h"
 #include "appid_module.h"
 #include "appid_session.h"
 #include "appid_session_api.h"
@@ -187,26 +188,48 @@ uint32_t AppIdApi::consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t, IpP
     return sizeof(*appHA);
 }
 
-bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name, const char* common_name, AppId& service_id, AppId& client_id, AppId& payload_id)
+bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name, const char* common_name,
+    AppId& service_id, AppId& client_id, AppId& payload_id)
 {
-    AppIdSession* asd;
+    AppIdSession* asd = nullptr;
     service_id = APP_ID_NONE;
     client_id = APP_ID_NONE;
     payload_id = APP_ID_NONE;
 
-    if (common_name)
-        ssl_scan_cname((const uint8_t*)common_name, strlen(common_name), client_id, payload_id);
+    if (flow)
+        asd = get_appid_session(*flow);
 
-    if (server_name)
-        ssl_scan_hostname((const uint8_t*)server_name, strlen(server_name), client_id, payload_id);
-
-    if (flow and (asd = get_appid_session(*flow)))
+    if (asd)
     {
+        SslPatternMatchers& ssl_matchers = asd->ctxt.get_odp_ctxt().get_ssl_matchers();
+        if (common_name)
+            ssl_matchers.scan_cname((const uint8_t*)common_name, strlen(common_name), client_id,
+                payload_id);
+
+        if (server_name)
+            ssl_matchers.scan_hostname((const uint8_t*)server_name, strlen(server_name), client_id,
+                payload_id);
+
         service_id = asd->get_application_ids_service();
         if (client_id == APP_ID_NONE)
             client_id = asd->get_application_ids_client();
         if (payload_id == APP_ID_NONE)
             payload_id = asd->get_application_ids_payload();
+    }
+    else
+    {
+        AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
+        if (inspector)
+        {
+            SslPatternMatchers& ssl_matchers = inspector->get_ctxt().get_odp_ctxt().get_ssl_matchers();
+            if (common_name)
+                ssl_matchers.scan_cname((const uint8_t*)common_name, strlen(common_name), client_id,
+                    payload_id);
+
+            if (server_name)
+                ssl_matchers.scan_hostname((const uint8_t*)server_name, strlen(server_name),
+                    client_id, payload_id);
+        }
     }
 
     if (service_id != APP_ID_NONE or client_id != APP_ID_NONE or payload_id != APP_ID_NONE)

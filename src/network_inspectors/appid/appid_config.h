@@ -36,13 +36,17 @@
 
 #include "application_ids.h"
 #include "app_info_table.h"
+#include "client_plugins/client_discovery.h"
+#include "detector_plugins/dns_patterns.h"
+#include "detector_plugins/http_url_patterns.h"
+#include "detector_plugins/sip_patterns.h"
+#include "detector_plugins/ssl_patterns.h"
 #include "host_port_app_cache.h"
 #include "length_app_cache.h"
 
 #define APP_ID_PORT_ARRAY_SIZE  65536
 
 class AppIdInspector;
-class AppInfoManager;
 
 extern SnortProtocolId snortId_for_unsynchronized;
 extern SnortProtocolId snortId_for_ftp_data;
@@ -102,6 +106,16 @@ public:
 
     OdpContext(AppIdConfig&, snort::SnortConfig*);
 
+    AppInfoManager& get_app_info_mgr()
+    {
+        return app_info_mgr;
+    }
+
+    ClientDiscovery& get_client_disco_mgr()
+    {
+        return client_disco_mgr;
+    }
+
     HostPortVal* host_port_cache_find(const snort::SfIp* ip, uint16_t port, IpProtocol proto)
     {
         return host_port_cache.find(ip, port, proto, *this);
@@ -122,15 +136,45 @@ public:
         return length_cache.add(key, val);
     }
 
-    AppInfoManager& get_app_info_mgr()
+    DnsPatternMatchers& get_dns_matchers()
     {
-        return app_info_mgr;
+        return dns_matchers;
     }
 
+    HttpPatternMatchers& get_http_matchers()
+    {
+        return http_matchers;
+    }
+
+    SipPatternMatchers& get_sip_matchers()
+    {
+        return sip_matchers;
+    }
+
+    SslPatternMatchers& get_ssl_matchers()
+    {
+        return ssl_matchers;
+    }
+
+    void add_port_service_id(IpProtocol, uint16_t, AppId);
+    void add_protocol_service_id(IpProtocol, AppId);
+    AppId get_port_service_id(IpProtocol, uint16_t);
+    AppId get_protocol_service_id(IpProtocol);
+    void display_port_config();
+
 private:
+    AppInfoManager app_info_mgr;
+    ClientDiscovery client_disco_mgr;
     HostPortCache host_port_cache;
     LengthCache length_cache;
-    AppInfoManager app_info_mgr;
+    DnsPatternMatchers dns_matchers;
+    HttpPatternMatchers http_matchers;
+    SipPatternMatchers sip_matchers;
+    SslPatternMatchers ssl_matchers;
+
+    std::array<AppId, APP_ID_PORT_ARRAY_SIZE> tcp_port_only = {APP_ID_NONE}; // port-only TCP services
+    std::array<AppId, APP_ID_PORT_ARRAY_SIZE> udp_port_only = {APP_ID_NONE}; // port-only UDP services
+    std::array<AppId, 256> ip_protocol = {APP_ID_NONE}; // non-TCP / UDP protocol services
 };
 
 class AppIdContext
@@ -157,20 +201,10 @@ public:
     bool init_appid(snort::SnortConfig*);
     static void pterm();
     void show();
-    AppId get_port_service_id(IpProtocol, uint16_t port);
-    AppId get_protocol_service_id(IpProtocol);
-
-    unsigned max_service_info = 0;
-
-    //FIXIT-L remove static when reload is supported (once flag removed)
-    static std::array<AppId, APP_ID_PORT_ARRAY_SIZE> tcp_port_only;     // port-only TCP services
-    static std::array<AppId, APP_ID_PORT_ARRAY_SIZE> udp_port_only;     // port-only UDP services
-    static std::array<AppId, 256> ip_protocol;         // non-TCP / UDP protocol services
 
     AppIdConfig& config;
 
 private:
-    void display_port_config();
     static OdpContext* odp_ctxt;
     static ThirdPartyAppIdContext* tp_appid_ctxt;
 };

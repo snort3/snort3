@@ -43,7 +43,7 @@ AppIdHttpSession::~AppIdHttpSession()
     }
 }
 
-int AppIdHttpSession::process_http_packet(AppidSessionDirection, AppidChangeBits&) { return 0; }
+int AppIdHttpSession::process_http_packet(AppidSessionDirection, AppidChangeBits&, HttpPatternMatchers&) { return 0; }
 
 char const* APPID_UT_XFF_IP_ADDR = "192.168.0.1";
 char const* CONTENT_TYPE = "html/text";

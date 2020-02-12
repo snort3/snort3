@@ -54,8 +54,6 @@ static const char* httpFieldName[ NUM_HTTP_FIELDS ] = // for use in debug messag
 AppIdHttpSession::AppIdHttpSession(AppIdSession& asd)
     : asd(asd)
 {
-    http_matchers = HttpPatternMatchers::get_instance();
-
     for ( int i = 0; i < NUM_HTTP_FIELDS; i++)
     {
         meta_offset[i].first = 0;
@@ -172,7 +170,7 @@ void AppIdHttpSession::set_tun_dest()
     free(url );
 }
 
-int AppIdHttpSession::initial_chp_sweep(ChpMatchDescriptor& cmd)
+int AppIdHttpSession::initial_chp_sweep(ChpMatchDescriptor& cmd, HttpPatternMatchers& http_matchers)
 {
     CHPApp* cah = nullptr;
 
@@ -181,7 +179,7 @@ int AppIdHttpSession::initial_chp_sweep(ChpMatchDescriptor& cmd)
         if (cmd.buffer[i] && cmd.length[i])
         {
             cmd.cur_ptype = (HttpFieldIds)i;
-            http_matchers->scan_key_chp(cmd);
+            http_matchers.scan_key_chp(cmd);
         }
     }
 
@@ -271,7 +269,7 @@ void AppIdHttpSession::init_chp_match_descriptor(ChpMatchDescriptor& cmd)
     }
 }
 
-void AppIdHttpSession::process_chp_buffers(AppidChangeBits& change_bits)
+void AppIdHttpSession::process_chp_buffers(AppidChangeBits& change_bits, HttpPatternMatchers& http_matchers)
 {
     ChpMatchDescriptor cmd;
 
@@ -281,7 +279,7 @@ void AppIdHttpSession::process_chp_buffers(AppidChangeBits& change_bits)
 
     if ( !chp_candidate )
     {
-        if ( !initial_chp_sweep(cmd) )
+        if ( !initial_chp_sweep(cmd, http_matchers) )
             chp_finished = true; // this is a failure case.
     }
 
@@ -299,7 +297,7 @@ void AppIdHttpSession::process_chp_buffers(AppidChangeBits& change_bits)
             {
                 int num_found = 0;
                 cmd.cur_ptype = (HttpFieldIds)i;
-                AppId ret = http_matchers->scan_chp(cmd, &version, &user, &num_found, this,
+                AppId ret = http_matchers.scan_chp(cmd, &version, &user, &num_found, this,
                     asd.ctxt);
                 total_found += num_found;
                 if (!ret || num_found < ptype_req_counts[i])
@@ -438,7 +436,7 @@ void AppIdHttpSession::process_chp_buffers(AppidChangeBits& change_bits)
 }
 
 int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
-    AppidChangeBits& change_bits)
+    AppidChangeBits& change_bits, HttpPatternMatchers& http_matchers)
 {
     AppId service_id = APP_ID_NONE;
     AppId client_id = APP_ID_NONE;
@@ -499,7 +497,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
     }
 
     if (!chp_finished || chp_hold_flow)
-        process_chp_buffers(change_bits);
+        process_chp_buffers(change_bits, http_matchers);
 
     if (!skip_simple_detect)  // true if processCHP found match
     {
@@ -518,7 +516,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
                     char* vendorVersion = nullptr;
                     char* vendor = nullptr;
 
-                    http_matchers->get_server_vendor_version(server->c_str(), server->size(),
+                    http_matchers.get_server_vendor_version(server->c_str(), server->size(),
                         &vendorVersion, &vendor, &asd.subtype);
                     if (vendor || vendorVersion)
                     {
@@ -557,7 +555,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             {
                 char* version = nullptr;
 
-                http_matchers->identify_user_agent(useragent->c_str(), useragent->size(),
+                http_matchers.identify_user_agent(useragent->c_str(), useragent->size(),
                     service_id, client_id, &version);
                 if (appidDebug->is_active())
                 {
@@ -586,7 +584,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             const std::string* via = meta_data[MISC_VIA_FID];
             if ( !asd.is_payload_appid_set() && (asd.scan_flags & SCAN_HTTP_VIA_FLAG) && via )
             {
-                payload_id = http_matchers->get_appid_by_pattern(via->c_str(), via->size(),
+                payload_id = http_matchers.get_appid_by_pattern(via->c_str(), via->size(),
                     nullptr);
                 if (appidDebug->is_active() && payload_id > APP_ID_NONE &&
                     asd.payload.get_id() != payload_id)
@@ -611,7 +609,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             AppId appId;
             char* version = nullptr;
 
-            appId = http_matchers->scan_header_x_working_with(x_working_with->c_str(),
+            appId = http_matchers.scan_header_x_working_with(x_working_with->c_str(),
                 x_working_with->size(), &version);
             if ( appId )
             {
@@ -651,7 +649,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             && content_type && !asd.is_payload_appid_set())
             || (!have_tp && !asd.is_payload_appid_set() && content_type) )
         {
-            payload_id = http_matchers->get_appid_by_content_type(content_type->c_str(),
+            payload_id = http_matchers.get_appid_by_content_type(content_type->c_str(),
                 content_type->size());
             if (appidDebug->is_active() && payload_id > APP_ID_NONE
                 && asd.payload.get_id() != payload_id)
@@ -674,7 +672,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             const char* refStr = referer ? referer->c_str() : nullptr;
             const std::string* url = meta_data[MISC_URL_FID];
             const char* urlStr = url ? url->c_str() : nullptr;
-            if ( http_matchers->get_appid_from_url(my_host, urlStr, &version,
+            if ( http_matchers.get_appid_from_url(my_host, urlStr, &version,
                 refStr, &client_id, &service_id, &payload_id,
                 &referredPayloadAppId, false, asd.ctxt.get_odp_ctxt()) )
             {

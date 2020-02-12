@@ -272,17 +272,5 @@ bool AppIdSession::is_tp_appid_available() const
     return true;
 }
 
-int ssl_scan_hostname(const uint8_t*, size_t, AppId& client_id, AppId&)
-{
-    client_id = APPID_UT_ID + 1;
-    return 1;
-}
-
-int ssl_scan_cname(const uint8_t*, size_t, AppId&, AppId& payload_id)
-{
-    payload_id = APPID_UT_ID + 1;
-    return 1;
-}
-
 #endif
 

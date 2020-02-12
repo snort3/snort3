@@ -58,27 +58,6 @@ enum SSLContentType
 /* Extension types. */
 #define SSL_EXT_SERVER_NAME 0
 
-struct SSLCertPattern
-{
-    uint8_t type;
-    AppId appId;
-    uint8_t* pattern;
-    int pattern_size;
-};
-
-struct DetectorSSLCertPattern
-{
-    SSLCertPattern* dpattern;
-    DetectorSSLCertPattern* next;
-};
-
-struct MatchedSSLPatterns
-{
-    SSLCertPattern* mpattern;
-    int match_start_pos;
-    struct MatchedSSLPatterns* next;
-};
-
 enum SSLState
 {
     SSL_STATE_INITIATE,    // Client initiates.
@@ -187,16 +166,6 @@ struct ServiceSSLV2Hdr
     uint16_t conn_len;
 };
 
-struct ServiceSslConfig
-{
-    DetectorSSLCertPattern* DetectorSSLCertPatternList;
-    DetectorSSLCertPattern* DetectorSSLCnamePatternList;
-    SearchTool* ssl_host_matcher;
-    SearchTool* ssl_cname_matcher;
-};
-
-static ServiceSslConfig service_ssl_config;
-
 #pragma pack()
 
 /* Convert 3-byte lengths in TLS headers to integers. */
@@ -204,60 +173,6 @@ static ServiceSslConfig service_ssl_config;
     ((uint32_t)((uint32_t)(((const uint8_t*)(msb_ptr))[0] << 16) \
     + (uint32_t)(((const uint8_t*)(msb_ptr))[1] << 8) \
     + (uint32_t)(((const uint8_t*)(msb_ptr))[2])))
-
-static int ssl_cert_pattern_match(void* id, void*, int match_end_pos, void* data, void*)
-{
-    MatchedSSLPatterns* cm;
-    MatchedSSLPatterns** matches = (MatchedSSLPatterns**)data;
-    SSLCertPattern* target = (SSLCertPattern*)id;
-
-    cm = (MatchedSSLPatterns*)snort_alloc(sizeof(MatchedSSLPatterns));
-    cm->mpattern = target;
-    cm->match_start_pos = match_end_pos - target->pattern_size;
-    cm->next = *matches;
-    *matches = cm;
-
-    return 0;
-}
-
-static int ssl_detector_create_matcher(SearchTool** matcher, DetectorSSLCertPattern* list)
-{
-    size_t* patternIndex;
-    size_t size = 0;
-    DetectorSSLCertPattern* element = nullptr;
-
-    if (*matcher)
-        delete *matcher;
-
-    if (!(*matcher = new SearchTool("ac_full", true)))
-        return 0;
-
-    patternIndex = &size;
-
-    /* Add patterns from Lua API. */
-    for (element = list; element; element = element->next)
-    {
-        (*matcher)->add(element->dpattern->pattern,
-            element->dpattern->pattern_size, element->dpattern, true);
-        (*patternIndex)++;
-    }
-
-    (*matcher)->prep();
-
-    return 1;
-}
-
-int ssl_detector_process_patterns()
-{
-    int retVal = 1;
-    if (!ssl_detector_create_matcher(&service_ssl_config.ssl_host_matcher,
-        service_ssl_config.DetectorSSLCertPatternList))
-        retVal = 0;
-    if (!ssl_detector_create_matcher(&service_ssl_config.ssl_cname_matcher,
-        service_ssl_config.DetectorSSLCnamePatternList))
-        retVal = 0;
-    return retVal;
-}
 
 static const uint8_t SSL_PATTERN_PCT[] = { 0x02, 0x00, 0x80, 0x01 };
 static const uint8_t SSL_PATTERN3_0[] = { 0x16, 0x03, 0x00 };
@@ -319,7 +234,6 @@ SslServiceDetector::SslServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-/* AppIdFreeFCN */
 static void ssl_free(void* ss)
 {
     ServiceSSLData* ss_tmp = (ServiceSSLData*)ss;
@@ -886,143 +800,6 @@ bool is_service_over_ssl(AppId appId)
     }
 
     return false;
-}
-
-static int ssl_scan_patterns(SearchTool* matcher, const uint8_t* data, size_t size,
-    AppId& client_id, AppId& payload_id)
-{
-    MatchedSSLPatterns* mp = nullptr;
-    SSLCertPattern* best_match;
-
-    if (!matcher)
-        return 0;
-
-    matcher->find_all((const char*)data, size, ssl_cert_pattern_match, false, &mp);
-
-    if (!mp)
-        return 0;
-
-    best_match = nullptr;
-    while (mp)
-    {
-        /*  Only patterns that match start of payload,
-            or patterns starting with '.'
-            or patterns following '.' in payload are considered a match. */
-        if (mp->match_start_pos == 0 ||
-            *mp->mpattern->pattern == '.' ||
-            data[mp->match_start_pos-1] == '.')
-        {
-            if (!best_match ||
-                mp->mpattern->pattern_size > best_match->pattern_size)
-            {
-                best_match = mp->mpattern;
-            }
-        }
-        MatchedSSLPatterns* tmpMp = mp;
-        mp = mp->next;
-        snort_free(tmpMp);
-    }
-    if (!best_match)
-        return 0;
-
-    switch (best_match->type)
-    {
-    /* type 0 means WEB APP */
-    case 0:
-        client_id = APP_ID_SSL_CLIENT;
-        payload_id = best_match->appId;
-        break;
-    /* type 1 means CLIENT */
-    case 1:
-        client_id = best_match->appId;
-        payload_id = 0;
-        break;
-    default:
-        return 0;
-    }
-
-    return 1;
-}
-
-int ssl_scan_hostname(const uint8_t* hostname, size_t size, AppId& client_id, AppId& payload_id)
-{
-    return ssl_scan_patterns(service_ssl_config.ssl_host_matcher,
-        hostname, size, client_id, payload_id);
-}
-
-int ssl_scan_cname(const uint8_t* common_name, size_t size, AppId& client_id, AppId& payload_id)
-{
-    return ssl_scan_patterns(service_ssl_config.ssl_cname_matcher,
-        common_name, size, client_id, payload_id);
-}
-
-void service_ssl_clean()
-{
-    ssl_detector_free_patterns();
-
-    if (service_ssl_config.ssl_host_matcher)
-    {
-        delete service_ssl_config.ssl_host_matcher;
-        service_ssl_config.ssl_host_matcher = nullptr;
-    }
-    if (service_ssl_config.ssl_cname_matcher)
-    {
-        delete service_ssl_config.ssl_cname_matcher;
-        service_ssl_config.ssl_cname_matcher = nullptr;
-    }
-}
-
-static int ssl_add_pattern(DetectorSSLCertPattern** list, uint8_t* pattern_str, size_t
-    pattern_size, uint8_t type, AppId app_id)
-{
-    DetectorSSLCertPattern* new_ssl_pattern;
-
-    new_ssl_pattern = (DetectorSSLCertPattern*)snort_calloc(sizeof(DetectorSSLCertPattern));
-    new_ssl_pattern->dpattern = (SSLCertPattern*)snort_calloc(sizeof(SSLCertPattern));
-    new_ssl_pattern->dpattern->type = type;
-    new_ssl_pattern->dpattern->appId = app_id;
-    new_ssl_pattern->dpattern->pattern = pattern_str;
-    new_ssl_pattern->dpattern->pattern_size = pattern_size;
-
-    new_ssl_pattern->next = *list;
-    *list = new_ssl_pattern;
-
-    return 1;
-}
-
-int ssl_add_cert_pattern(uint8_t* pattern_str, size_t pattern_size, uint8_t type, AppId app_id)
-{
-    return ssl_add_pattern(&service_ssl_config.DetectorSSLCertPatternList,
-        pattern_str, pattern_size, type, app_id);
-}
-
-int ssl_add_cname_pattern(uint8_t* pattern_str, size_t pattern_size, uint8_t type, AppId app_id)
-{
-    return ssl_add_pattern(&service_ssl_config.DetectorSSLCnamePatternList,
-        pattern_str, pattern_size, type, app_id);
-}
-
-static void ssl_patterns_free(DetectorSSLCertPattern** list)
-{
-    DetectorSSLCertPattern* tmp_pattern;
-
-    while ((tmp_pattern = *list))
-    {
-        *list = tmp_pattern->next;
-        if (tmp_pattern->dpattern)
-        {
-            if (tmp_pattern->dpattern->pattern)
-                snort_free(tmp_pattern->dpattern->pattern);
-            snort_free(tmp_pattern->dpattern);
-        }
-        snort_free(tmp_pattern);
-    }
-}
-
-void ssl_detector_free_patterns()
-{
-    ssl_patterns_free(&service_ssl_config.DetectorSSLCertPatternList);
-    ssl_patterns_free(&service_ssl_config.DetectorSSLCnamePatternList);
 }
 
 bool setSSLSquelch(Packet* p, int type, AppId appId, OdpContext& odp_ctxt)

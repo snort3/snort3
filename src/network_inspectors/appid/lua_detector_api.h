@@ -154,7 +154,7 @@ class LuaClientObject : public LuaObject
 {
 public:
     ClientDetector* cd;
-    LuaClientObject(AppIdDiscovery* cdm, const std::string& detector_name,
+    LuaClientObject(const std::string& detector_name,
         const std::string& log_name, bool is_custom, IpProtocol protocol, lua_State* L,
         OdpContext& odp_ctxt);
     ClientDetector* get_detector()

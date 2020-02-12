@@ -52,7 +52,7 @@ int AppIdDetector::initialize()
         AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
         AppIdContext& ctxt = inspector->get_ctxt();
         for (auto& id : appid_registry)
-	  register_appid(id.appId, id.additionalInfo, ctxt.get_odp_ctxt());
+            register_appid(id.appId, id.additionalInfo, ctxt.get_odp_ctxt());
       }
 
     if (!service_ports.empty())

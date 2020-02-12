@@ -52,13 +52,7 @@ using namespace snort;
 
 #define MAX_CANDIDATE_CLIENTS 10
 
-ClientDiscovery* ClientDiscovery::discovery_manager = nullptr;
 THREAD_LOCAL ClientAppMatch* match_free_list = nullptr;
-
-ClientDiscovery::ClientDiscovery()
-{
-    initialize();
-}
 
 ClientDiscovery::~ClientDiscovery()
 {
@@ -75,23 +69,6 @@ void ClientDiscovery::release_thread_resources()
     }
 }
 
-ClientDiscovery& ClientDiscovery::get_instance()
-{
-    if (!discovery_manager)
-    {
-        discovery_manager = new ClientDiscovery();
-    }
-
-    return *discovery_manager;
-}
-
-void ClientDiscovery::release_instance()
-{
-    assert(discovery_manager);
-    delete discovery_manager;
-    discovery_manager = nullptr;
-
-}
 void ClientDiscovery::initialize()
 {
     new AimClientDetector(this);
@@ -121,12 +98,6 @@ void ClientDiscovery::initialize()
 
 void ClientDiscovery::finalize_client_plugins()
 {
-    for ( auto kv : tcp_detectors )
-        kv.second->finalize_patterns();
-
-    for ( auto kv : udp_detectors )
-        kv.second->finalize_patterns();
-
     if ( tcp_patterns )
         tcp_patterns->prep();
 
@@ -239,15 +210,15 @@ static void free_matched_list(ClientAppMatch** match_list)
     *match_list = nullptr;
 }
 
-ClientAppMatch* ClientDiscovery::find_detector_candidates(const Packet* pkt, IpProtocol protocol)
+ClientAppMatch* ClientDiscovery::find_detector_candidates(const Packet* pkt, AppIdSession& asd)
 {
     ClientAppMatch* match_list = nullptr;
     SearchTool* patterns;
 
-    if (protocol == IpProtocol::TCP)
-        patterns = ClientDiscovery::get_instance().tcp_patterns;
+    if (asd.protocol == IpProtocol::TCP)
+        patterns = asd.ctxt.get_odp_ctxt().get_client_disco_mgr().tcp_patterns;
     else
-        patterns = ClientDiscovery::get_instance().udp_patterns;
+        patterns = asd.ctxt.get_odp_ctxt().get_client_disco_mgr().udp_patterns;
 
     if ( patterns )
         patterns->find_all((const char*)pkt->data, pkt->dsize, &pattern_match, false, (void*)&match_list);
@@ -262,7 +233,7 @@ void ClientDiscovery::create_detector_candidates_list(AppIdSession& asd, Packet*
     if ( !p->dsize || asd.client_detector != nullptr || !asd.client_candidates.empty() )
         return;
 
-    match_list = find_detector_candidates(p, asd.protocol);
+    match_list = find_detector_candidates(p, asd);
     while ( asd.client_candidates.size() < MAX_CANDIDATE_CLIENTS )
     {
         ClientDetector* cd = const_cast<ClientDetector*>(get_next_detector(&match_list));

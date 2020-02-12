@@ -74,11 +74,6 @@ AppIdConfig::~AppIdConfig()
     snort_free((void*)app_detector_dir);
 }
 
-// FIXIT-M: RELOAD - move initialization back to AppIdContext class constructor
-std::array<AppId, APP_ID_PORT_ARRAY_SIZE> AppIdContext::tcp_port_only = {APP_ID_NONE};
-std::array<AppId, APP_ID_PORT_ARRAY_SIZE> AppIdContext::udp_port_only = {APP_ID_NONE};
-std::array<AppId, 256> AppIdContext::ip_protocol = {APP_ID_NONE};
-
 void AppIdContext::pterm()
 {
     assert(odp_ctxt);
@@ -97,15 +92,19 @@ bool AppIdContext::init_appid(SnortConfig* sc)
     static bool once = false;
     if (!once)
     {
-        HttpPatternMatchers* http_matchers = HttpPatternMatchers::get_instance();
         AppIdDiscovery::initialize_plugins();
+        odp_ctxt->get_client_disco_mgr().initialize();
         LuaDetectorManager::initialize(*this, 1);
         PatternServiceDetector::finalize_service_port_patterns();
         PatternClientDetector::finalize_client_port_patterns();
         AppIdDiscovery::finalize_plugins();
-        http_matchers->finalize_patterns();
-        ssl_detector_process_patterns();
-        dns_host_detector_process_patterns();
+        odp_ctxt->get_client_disco_mgr().finalize_client_plugins();
+        odp_ctxt->get_http_matchers().finalize_patterns();
+        // sip patterns need to be finalized after http patterns because they
+        // are dependent on http patterns
+        odp_ctxt->get_sip_matchers().finalize_patterns(*odp_ctxt);
+        odp_ctxt->get_ssl_matchers().finalize_patterns();
+        odp_ctxt->get_dns_matchers().finalize_patterns();
         once = true;
     }
 
@@ -122,30 +121,51 @@ void AppIdContext::create_tp_appid_ctxt()
     tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(config, *odp_ctxt);
 }
 
-AppId AppIdContext::get_port_service_id(IpProtocol proto, uint16_t port)
-{
-    AppId appId;
-
-    if (proto == IpProtocol::TCP)
-        appId = tcp_port_only[port];
-    else
-        appId = udp_port_only[port];
-
-    return appId;
-}
-
-AppId AppIdContext::get_protocol_service_id(IpProtocol proto)
-{
-    return ip_protocol[(uint16_t)proto];
-}
-
 void AppIdContext::show()
 {
     if (!config.tp_appid_path.empty())
         LogMessage("    3rd Party Dir: %s\n", config.tp_appid_path.c_str());
 }
 
-void AppIdContext::display_port_config()
+OdpContext::OdpContext(AppIdConfig& config, SnortConfig* sc)
+{
+    app_info_mgr.init_appid_info_table(config, sc, *this);
+}
+
+void OdpContext::add_port_service_id(IpProtocol proto, uint16_t port, AppId appid)
+{
+    if (proto == IpProtocol::TCP)
+        tcp_port_only[port] = appid;
+    else if (proto == IpProtocol::UDP)
+        udp_port_only[port] = appid;
+    else
+        ErrorMessage("appid: invalid port service for proto %d port %d app %d\n",
+            static_cast<int>(proto), port, appid);
+}
+
+void OdpContext::add_protocol_service_id(IpProtocol proto, AppId appid)
+{
+    ip_protocol[static_cast<uint16_t>(proto)] = appid;
+}
+
+AppId OdpContext::get_port_service_id(IpProtocol proto, uint16_t port)
+{
+    AppId appId;
+
+    if (proto == IpProtocol::TCP)
+      appId = tcp_port_only[port];
+    else
+        appId = udp_port_only[port];
+
+    return appId;
+}
+
+AppId OdpContext::get_protocol_service_id(IpProtocol proto)
+{
+    return ip_protocol[(uint16_t)proto];
+}
+
+void OdpContext::display_port_config()
 {
     bool first = true;
 
@@ -171,9 +191,4 @@ void AppIdContext::display_port_config()
             }
             LogMessage("        %5u - %u\n", i, udp_port_only[i]);
         }
-}
-
-OdpContext::OdpContext(AppIdConfig& config, SnortConfig* sc)
-{
-    app_info_mgr.init_appid_info_table(config, sc, *this);
 }

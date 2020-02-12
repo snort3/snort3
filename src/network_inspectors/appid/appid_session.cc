@@ -413,7 +413,7 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
     if ((scan_flags & SCAN_SSL_HOST_FLAG) and tls_str)
     {
         size_t size = strlen(tls_str);
-        if ((ret = ssl_scan_hostname((const uint8_t*)tls_str, size,
+        if ((ret = ctxt.get_odp_ctxt().get_ssl_matchers().scan_hostname((const uint8_t*)tls_str, size,
                 client_id, payload_id)))
         {
             if (client.get_id() == APP_ID_NONE or client.get_id() == APP_ID_SSL_CLIENT)
@@ -426,7 +426,7 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
     if ((scan_flags & SCAN_SSL_CERTIFICATE_FLAG) and (tls_str = tsession->get_tls_cname()))
     {
         size_t size = strlen(tls_str);
-        if ((ret = ssl_scan_cname((const uint8_t*)tls_str, size,
+        if ((ret = ctxt.get_odp_ctxt().get_ssl_matchers().scan_cname((const uint8_t*)tls_str, size,
                 client_id, payload_id)))
         {
             if (client.get_id() == APP_ID_NONE or client.get_id() == APP_ID_SSL_CLIENT)
@@ -439,7 +439,7 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
     if ((tls_str = tsession->get_tls_org_unit()))
     {
         size_t size = strlen(tls_str);
-        if ((ret = ssl_scan_cname((const uint8_t*)tls_str, size,
+        if ((ret = ctxt.get_odp_ctxt().get_ssl_matchers().scan_cname((const uint8_t*)tls_str, size,
                 client_id, payload_id)))
         {
             set_client_appid_data(client_id, change_bits);
@@ -470,12 +470,12 @@ void AppIdSession::examine_rtmp_metadata(AppidChangeBits& change_bits)
 
     if (const char* url = hsession->get_cfield(MISC_URL_FID))
     {
-        HttpPatternMatchers* http_matchers = HttpPatternMatchers::get_instance();
+        HttpPatternMatchers& http_matchers = ctxt.get_odp_ctxt().get_http_matchers();
         const char* referer = hsession->get_cfield(REQ_REFERER_FID);
-        if (((http_matchers->get_appid_from_url(nullptr, url, &version,
+        if (((http_matchers.get_appid_from_url(nullptr, url, &version,
             referer, &client_id, &service_id, &payload_id,
             &referred_payload_id, true, ctxt.get_odp_ctxt())) ||
-            (http_matchers->get_appid_from_url(nullptr, url, &version,
+            (http_matchers.get_appid_from_url(nullptr, url, &version,
             referer, &client_id, &service_id, &payload_id,
             &referred_payload_id, false, ctxt.get_odp_ctxt()))))
         {

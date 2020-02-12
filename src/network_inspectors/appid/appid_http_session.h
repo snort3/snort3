@@ -99,7 +99,8 @@ public:
     AppIdHttpSession(AppIdSession&);
     virtual ~AppIdHttpSession();
 
-    int process_http_packet(AppidSessionDirection direction, AppidChangeBits& change_bits);
+    int process_http_packet(AppidSessionDirection direction, AppidChangeBits& change_bits,
+        HttpPatternMatchers& http_matchers);
     void update_http_xff_address(struct XffFieldValue*, uint32_t, AppidChangeBits&);
 
     void update_url(AppidChangeBits& change_bits);
@@ -211,12 +212,10 @@ public:
 protected:
 
     void init_chp_match_descriptor(ChpMatchDescriptor& cmd);
-    int initial_chp_sweep(ChpMatchDescriptor&);
-    void process_chp_buffers(AppidChangeBits&);
+    int initial_chp_sweep(ChpMatchDescriptor&, HttpPatternMatchers&);
+    void process_chp_buffers(AppidChangeBits&, HttpPatternMatchers&);
     void free_chp_matches(ChpMatchDescriptor& cmd, unsigned max_matches);
     void set_http_change_bits(AppidChangeBits& change_bits, HttpFieldIds id);
-
-    HttpPatternMatchers* http_matchers = nullptr;
 
     AppIdSession& asd;
 

@@ -362,8 +362,7 @@ LuaObject* LuaDetectorManager::create_lua_detector(const char* detector_name,
     lua_getfield(L, -1, "client");
     if ( lua_istable(L, -1) )
     {
-        return new LuaClientObject(&ClientDiscovery::get_instance(),
-            detector_name, log_name, is_custom, proto, L, ctxt.get_odp_ctxt());
+        return new LuaClientObject(detector_name, log_name, is_custom, proto, L, ctxt.get_odp_ctxt());
     }
     else
     {

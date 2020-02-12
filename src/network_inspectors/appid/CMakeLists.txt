@@ -130,8 +130,14 @@ set ( DP_APPID_SOURCES
     detector_plugins/detector_sip.h
     detector_plugins/detector_smtp.cc
     detector_plugins/detector_smtp.h
+    detector_plugins/dns_patterns.cc
+    detector_plugins/dns_patterns.h
     detector_plugins/http_url_patterns.cc
     detector_plugins/http_url_patterns.h
+    detector_plugins/sip_patterns.cc
+    detector_plugins/sip_patterns.h
+    detector_plugins/ssl_patterns.cc
+    detector_plugins/ssl_patterns.h
 )
 
 set ( UTIL_APPID_SOURCES
