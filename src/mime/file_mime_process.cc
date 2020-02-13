@@ -781,20 +781,13 @@ int MimeSession::extract_file_name(const char*& start, int length, bool* disp_co
  */
 void MimeSession::init()
 {
-    const MimeToken* tmp;
-
     MimeDecode::init();
 
     mime_hdr_search_mpse = new SearchTool;
-
-    if (mime_hdr_search_mpse == nullptr)
-        FatalError("Could not instantiate search engine.\n");
-
-    for (tmp = &mime_hdrs[0]; tmp->name != nullptr; tmp++)
+    for (const MimeToken* tmp = &mime_hdrs[0]; tmp->name != nullptr; tmp++)
     {
         mime_hdr_search[tmp->search_id].name = tmp->name;
         mime_hdr_search[tmp->search_id].name_len = tmp->name_len;
-
         mime_hdr_search_mpse->add(tmp->name, tmp->name_len, tmp->search_id);
     }
 

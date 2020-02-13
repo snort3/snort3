@@ -4,9 +4,9 @@ Message digests and hash maps/table implementations:
 
 * sha2:  open source implementation by Aaron Gifford.
 
-* sfghash: Generic hash table
+* ghash: Generic hash table
 
-* sfxhash: Hash table with supports memcap and automatic memory recovery
+* xhash: Hash table with supports memcap and automatic memory recovery
   when out of memory.
 
 * zhash: zero runtime allocations/preallocated hash table.

@@ -74,7 +74,7 @@ static const Parameter s_params[] =
     { "seconds", Parameter::PT_INT, "1:max32", "60",
       "report interval" },
 
-    { "flow_ip_memcap", Parameter::PT_INT, "8200:maxSZ", "52428800",
+    { "flow_ip_memcap", Parameter::PT_INT, "236:maxSZ", "52428800",
       "maximum memory in bytes for flow tracking" },
 
     { "max_file_size", Parameter::PT_INT, "4096:max53", "1073741824",

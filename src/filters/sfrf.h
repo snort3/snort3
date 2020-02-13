@@ -32,6 +32,7 @@
 
 namespace snort
 {
+class GHash;
 struct SfIp;
 struct SnortConfig;
 }
@@ -138,7 +139,7 @@ struct RateFilterConfig
     /* Array of hash, indexed by gid. Each array element is a hash, which
      * is keyed on sid/policyId and data is a tSFRFSidNode node.
      */
-    struct snort::GHash* genHash [SFRF_MAX_GENID];
+    snort::GHash* genHash [SFRF_MAX_GENID];
 
     unsigned memcap;
     unsigned noRevertCount;

@@ -52,7 +52,7 @@ struct PortObject2
 PortObject2* PortObject2New(int nrules /*guess at this */);
 void PortObject2Free(PortObject2*);
 void PortObject2Finalize(PortObject2*);
-PortObject2* PortObject2Dup(PortObject*);
+PortObject2* PortObject2Dup(PortObject&);
 
 typedef void (*PortObjectIterator)(int port, void*);
 void PortObject2Iterate(PortObject2*, PortObjectIterator, void*);

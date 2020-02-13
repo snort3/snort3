@@ -69,9 +69,6 @@ using namespace snort;
 #define HASH_RULE_OPTIONS 16384
 #define HASH_RULE_TREE     8192
 
-#define HASH_EQUAL        0
-#define HASH_NOT_EQUAL    1
-
 struct detection_option_key_t
 {
     option_type_t option_type;
@@ -94,16 +91,15 @@ static uint32_t detection_option_hash_func(HashFnc*, const unsigned char* k, int
     return 0;
 }
 
-static int detection_option_key_compare_func(const void* k1, const void* k2, size_t)
+static bool detection_option_key_compare_func(const void* k1, const void* k2, size_t)
 {
     const detection_option_key_t* key1 = (const detection_option_key_t*)k1;
     const detection_option_key_t* key2 = (const detection_option_key_t*)k2;
 
-    if ( !key1 || !key2 )
-        return HASH_NOT_EQUAL;
+    assert(key1 && key2);
 
     if ( key1->option_type != key2->option_type )
-        return HASH_NOT_EQUAL;
+        return false;
 
     if ( key1->option_type != RULE_OPTION_TYPE_LEAF_NODE )
     {
@@ -111,9 +107,9 @@ static int detection_option_key_compare_func(const void* k1, const void* k2, siz
         IpsOption* opt2 = (IpsOption*)key2->option_data;
 
         if ( *opt1 == *opt2 )
-            return HASH_EQUAL;
+            return true;
     }
-    return HASH_NOT_EQUAL;
+    return false;
 }
 
 static int detection_hash_free_func(void* option_key, void*)
@@ -130,27 +126,17 @@ static int detection_hash_free_func(void* option_key, void*)
 
 static XHash* DetectionHashTableNew()
 {
-    XHash* doht = xhash_new(HASH_RULE_OPTIONS,
-        sizeof(detection_option_key_t),
-        0,                              /* Data size == 0, just store the ptr */
-        0,                              /* Memcap */
-        0,                              /* Auto node recovery */
-        nullptr,                           /* Auto free function */
-        detection_hash_free_func,                           /* User free function */
-        1);                             /* Recycle nodes */
+    XHash* doht = new XHash(HASH_RULE_OPTIONS, sizeof(detection_option_key_t),
+        0, 0, false,  nullptr, detection_hash_free_func, true);
 
-    if (doht == nullptr)
-        FatalError("Failed to create rule detection option hash table");
-
-    xhash_set_keyops(doht, detection_option_hash_func, detection_option_key_compare_func);
+    doht->set_key_opcodes(detection_option_hash_func, detection_option_key_compare_func);
 
     return doht;
 }
 
 void DetectionHashTableFree(XHash* doht)
 {
-    if (doht != nullptr)
-        xhash_delete(doht);
+    delete doht;
 }
 
 void* add_detection_option(SnortConfig* sc, option_type_t type, void* option_data)
@@ -162,10 +148,10 @@ void* add_detection_option(SnortConfig* sc, option_type_t type, void* option_dat
     key.option_type = type;
     key.option_data = option_data;
 
-    if ( void* p = xhash_find(sc->detection_option_hash_table, &key) )
+    if ( void* p = sc->detection_option_hash_table->get_user_data(&key) )
         return p;
 
-    xhash_add(sc->detection_option_hash_table, &key, option_data);
+    sc->detection_option_hash_table->insert(&key, option_data);
     return nullptr;
 }
 
@@ -228,37 +214,31 @@ static uint32_t detection_option_tree_hash_func(HashFnc*, const unsigned char* k
 static bool detection_option_tree_compare(
     const detection_option_tree_node_t* r, const detection_option_tree_node_t* l)
 {
-    if ( !r and !l )
-        return HASH_EQUAL;
-
-    if ( !r or !l )
-        return HASH_NOT_EQUAL;
+    assert(r and l);
 
     if ( r->option_data != l->option_data )
-        return HASH_NOT_EQUAL;
+        return false;
 
     if ( r->num_children != l->num_children )
-        return HASH_NOT_EQUAL;
+        return false;
 
-    for ( int i=0; i<r->num_children; i++ )
+    for ( int i = 0; i < r->num_children; i++ )
     {
         /* Recurse & check the children for equality */
-        int ret = detection_option_tree_compare(r->children[i], l->children[i]);
-
-        if ( ret != HASH_EQUAL )
-            return ret;
+        if ( !detection_option_tree_compare(r->children[i], l->children[i]) )
+            return false;
     }
 
-    return HASH_EQUAL;
+    return true;
 }
 
-static int detection_option_tree_compare_func(const void* k1, const void* k2, size_t)
+static bool detection_option_tree_compare_func(const void* k1, const void* k2, size_t)
 {
     const detection_option_key_t* key_r = (const detection_option_key_t*)k1;
     const detection_option_key_t* key_l = (const detection_option_key_t*)k2;
 
     if ( !key_r or !key_l )
-        return HASH_NOT_EQUAL;
+        return false;
 
     const detection_option_tree_node_t* r = (const detection_option_tree_node_t*)key_r->option_data;
     const detection_option_tree_node_t* l = (const detection_option_tree_node_t*)key_l->option_data;
@@ -275,26 +255,15 @@ static int detection_option_tree_free_func(void*, void* data)
 
 void DetectionTreeHashTableFree(XHash* dtht)
 {
-    if (dtht != nullptr)
-        xhash_delete(dtht);
+    delete dtht;
 }
 
 static XHash* DetectionTreeHashTableNew()
 {
-    XHash* dtht = xhash_new(
-        HASH_RULE_TREE,
-        sizeof(detection_option_key_t),
-        0,      /* Data size == 0, just store the ptr */
-        0,      /* Memcap */
-        0,      /* Auto node recovery */
-        nullptr,   /* Auto free function */
-        detection_option_tree_free_func,   /* User free function */
-        1);     /* Recycle nodes */
+    XHash* dtht = new XHash(HASH_RULE_TREE, sizeof(detection_option_key_t),
+        0, 0, false, nullptr, detection_option_tree_free_func, true);
 
-    if (dtht == nullptr)
-        FatalError("Failed to create rule detection option hash table");
-
-    xhash_set_keyops(dtht, detection_option_tree_hash_func, detection_option_tree_compare_func);
+    dtht->set_key_opcodes(detection_option_tree_hash_func, detection_option_tree_compare_func);
 
     return dtht;
 }
@@ -338,10 +307,10 @@ void* add_detection_option_tree(SnortConfig* sc, detection_option_tree_node_t* o
     key.option_data = (void*)option_tree;
     key.option_type = RULE_OPTION_TYPE_LEAF_NODE;
 
-    if ( void* p = xhash_find(sc->detection_option_tree_hash_table, &key) )
+    if ( void* p = sc->detection_option_tree_hash_table->get_user_data(&key) )
         return p;
 
-    xhash_add(sc->detection_option_tree_hash_table, &key, option_tree);
+    sc->detection_option_tree_hash_table->insert(&key, option_tree);
     return nullptr;
 }
 
@@ -800,7 +769,7 @@ void detection_option_tree_update_otn_stats(XHash* doth)
     if ( !doth )
         return;
 
-    for ( auto hnode = xhash_findfirst(doth); hnode; hnode = xhash_findnext(doth) )
+    for ( auto hnode = doth->find_first_node(); hnode; hnode = doth->find_next_node() )
     {
         auto* node = (detection_option_tree_node_t*)hnode->data;
         assert(node);

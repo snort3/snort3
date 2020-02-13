@@ -65,7 +65,7 @@ struct RuleListNode
 {
     ListHead* RuleList;   /* The rule list associated with this node */
     snort::Actions::Type mode;        /* the rule mode */
-    int evalIndex;        /* eval index for this rule set */
+    unsigned evalIndex;        /* eval index for this rule set */
     char* name;           /* name of this rule list */
     RuleListNode* next;   /* the next RuleListNode */
 };

@@ -53,7 +53,7 @@ static const unsigned ALL_FLOWS = 3;
 FlowCache::FlowCache(const FlowCacheConfig& cfg) : config(cfg)
 {
     hash_table = new ZHash(config.max_flows, sizeof(FlowKey));
-    hash_table->set_keyops(FlowKey::hash, FlowKey::compare);
+    hash_table->set_key_opcodes(FlowKey::hash, FlowKey::is_equal);
 
     uni_flows = new FlowUniList;
     uni_ip_flows = new FlowUniList;
@@ -365,7 +365,7 @@ unsigned FlowCache::delete_active_flows(unsigned mode, unsigned num_to_delete, u
         if ( (mode == ALLOWED_FLOWS_ONLY and (flow->was_blocked() || flow->is_suspended()))
             or (mode == OFFLOADED_FLOWS_TOO and flow->was_blocked()) )
         {
-            if (!hash_table->touch())
+            if ( !hash_table->touch() )
                 break;
 
             continue;

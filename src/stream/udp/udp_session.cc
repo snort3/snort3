@@ -57,8 +57,7 @@ static void UdpSessionCleanup(Flow* lwssn)
         udpStats.released++;
 }
 
-static int ProcessUdp(
-    Flow* lwssn, Packet* p, StreamUdpConfig*, XHashNode*)
+static int ProcessUdp(Flow* lwssn, Packet* p, StreamUdpConfig*)
 {
     assert(lwssn->pkt_type == PktType::UDP);
 
@@ -191,7 +190,7 @@ int UdpSession::process(Packet* p)
         UdpHAManager::process_deletion(*flow);
     }
 
-    ProcessUdp(flow, p, pc, nullptr);
+    ProcessUdp(flow, p, pc);
     flow->markup_packet_flags(p);
 
     flow->set_expire(p, flow->default_session_timeout);

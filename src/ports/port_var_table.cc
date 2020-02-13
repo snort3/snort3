@@ -36,28 +36,15 @@ using namespace snort;
 */
 PortVarTable* PortVarTableCreate()
 {
-    PortObject* po;
-    GHash* h;
-
     /*
      * This is used during parsing of config,
      * so 1000 entries is ok, worst that happens is somewhat slower
      * config/rule processing.
      */
-    h = ghash_new(1000,0,0,PortObjectFree);
-    if ( !h )
-        return nullptr;
-
-    /* Create default port objects */
-    po = PortObjectNew();
-    if ( !po )
-        return nullptr;
-
-    /* Default has an ANY port */
-    PortObjectAddPortAny(po);
-
-    /* Add ANY to the table */
-    PortVarTableAdd(h, po);
+    GHash* h = new GHash(1000, 0, 0, PortObjectFree);
+    PortObject* po = PortObjectNew();       // Create default port objects
+    PortObjectAddPortAny(po);   // Default has an ANY port
+    PortVarTableAdd(h, po);     // Add ANY to the table
 
     return h;
 }
@@ -69,9 +56,8 @@ PortVarTable* PortVarTableCreate()
 int PortVarTableFree(PortVarTable* pvt)
 {
     if ( pvt )
-    {
-        ghash_delete(pvt);
-    }
+        delete pvt;
+
     return 0;
 }
 
@@ -85,12 +71,13 @@ int PortVarTableFree(PortVarTable* pvt)
 */
 int PortVarTableAdd(PortVarTable* h, PortObject* po)
 {
-    int stat;
-    stat = ghash_add(h,po->name,po);
+    int stat = h->insert(po->name, po);
     if ( stat == GHASH_INTABLE )
         return 1;
+
     if ( stat == GHASH_OK )
         return 0;
+
     return -1;
 }
 
@@ -99,6 +86,6 @@ PortObject* PortVarTableFind(PortVarTable* h, const char* name)
     if (!h || !name)
         return nullptr;
 
-    return (PortObject*)ghash_find(h,name);
+    return (PortObject*)h->find(name);
 }
 

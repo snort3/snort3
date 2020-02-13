@@ -61,15 +61,13 @@ FlowStateValue* FlowIPTracker::find_stats(const SfIp* src_addr, const SfIp* dst_
         *swapped = 1;
     }
 
-    value = (FlowStateValue*)xhash_find(ip_map, &key);
+    value = (FlowStateValue*)ip_map->get_user_data(&key);
     if (!value)
     {
-        XHashNode* node = xhash_get_node_with_prune(ip_map, &key, &prune_required);
+        HashNode* node = ip_map->get_node_with_prune(&key, &prune_required);
 
         if (!node)
-        {
             return nullptr;
-        }
 
         if (prune_required)
         {
@@ -88,16 +86,16 @@ bool FlowIPTracker::initialize(size_t new_memcap)
 {
     bool need_pruning = false;
 
-    if (!ip_map)
+    if ( !ip_map )
     {
-        ip_map = xhash_new(DEFAULT_XHASH_NROWS, sizeof(FlowStateKey), sizeof(FlowStateValue),
-            new_memcap, 1, nullptr, nullptr, 1);
+        ip_map = new XHash(DEFAULT_XHASH_NROWS, sizeof(FlowStateKey), sizeof(FlowStateValue),
+            new_memcap, true, nullptr, nullptr, true);
     }
     else
     {
         need_pruning = (new_memcap < memcap);
         memcap = new_memcap;
-        ip_map->mc.memcap = memcap;
+        ip_map->set_memcap(new_memcap);
     }
 
     return need_pruning;
@@ -142,23 +140,18 @@ FlowIPTracker::FlowIPTracker(PerfConfig* perf) : PerfTracker(perf, TRACKER_NAME)
     formatter->finalize_fields();
 
     memcap = perf->flowip_memcap;
-
-    ip_map = xhash_new(DEFAULT_XHASH_NROWS, sizeof(FlowStateKey), sizeof(FlowStateValue),
-        memcap, 1, nullptr, nullptr, 1);
-
-    if (!ip_map)
-        FatalError("Unable to allocate memory for FlowIP stats\n");
+    ip_map = new XHash(DEFAULT_XHASH_NROWS, sizeof(FlowStateKey), sizeof(FlowStateValue),
+        memcap, true, nullptr, nullptr, true);
 }
 
 FlowIPTracker::~FlowIPTracker()
 {
-    if ( ip_map )
-        xhash_delete(ip_map);
+    delete ip_map;
 }
 
 void FlowIPTracker::reset()
 {
-    xhash_make_empty(ip_map);
+    ip_map->clear();
 }
 
 void FlowIPTracker::update(Packet* p)
@@ -200,7 +193,7 @@ void FlowIPTracker::update(Packet* p)
 
 void FlowIPTracker::process(bool)
 {
-    for (auto node = xhash_findfirst(ip_map); node; node = xhash_findnext(ip_map))
+    for (auto node = ip_map->find_first_node(); node; node = ip_map->find_next_node())
     {
         FlowStateKey* key = (FlowStateKey*)node->key;
         FlowStateValue* cur_stats = (FlowStateValue*)node->data;

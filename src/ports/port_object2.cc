@@ -73,23 +73,31 @@ static unsigned po_rule_hash_func(HashFnc* p, const unsigned char* k, int n)
 
 static int* RuleHashToSortedArray(GHash* rh)
 {
-    if ( !rh or !rh->count )
+    if ( !rh or !rh->get_count() )
         return nullptr;
 
-    int* ra = (int*)snort_calloc(rh->count, sizeof(int));
+    int* ra = (int*)snort_calloc(rh->get_count(), sizeof(int));
     int k = 0;
 
-    for ( GHashNode* node = ghash_findfirst(rh);
-        node != nullptr && k < (int)rh->count;
-        node = ghash_findnext(rh) )
+    for (GHashNode* node = rh->find_first();
+         node != nullptr && k < (int)rh->get_count();
+         node = rh->find_next() )
     {
         if ( int* prid = (int*)node->data )
             ra[k++] = *prid;
     }
 
-    qsort(ra,rh->count,sizeof(int),integer_compare);
+    qsort(ra, rh->get_count(), sizeof(int), integer_compare);
 
     return ra;
+}
+
+static bool port_object_key_compare_func(const void* k1, const void* k2, size_t len)
+{
+    if ( memcmp(k1, k2, len ) )
+        return false;
+    else
+        return true;
 }
 
 //-------------------------------------------------------------------------
@@ -99,25 +107,11 @@ static int* RuleHashToSortedArray(GHash* rh)
 PortObject2* PortObject2New(int nrules)
 {
     PortObject2* po = (PortObject2*)snort_calloc(sizeof(PortObject2));
-    po->item_list =(SF_LIST*)sflist_new();
-
-    if ( !po->item_list )
-    {
-        snort_free(po);
-        return nullptr;
-    }
-
-    po->rule_hash =(GHash*)ghash_new(nrules,sizeof(int), 0,
-        snort_free /* frees data - should be rule id ptrs == (int*) */);
-    if ( !po->rule_hash )
-    {
-        sflist_free_all(po->item_list, snort_free);
-        snort_free(po);
-        return nullptr;
-    }
+    po->item_list = sflist_new();
+    po->rule_hash = new GHash(nrules, sizeof(int), 0, snort_free);
 
     /* Use hash function defined above for hashing the key as an int. */
-    ghash_set_keyops(po->rule_hash, po_rule_hash_func, memcmp);
+    po->rule_hash->set_key_opcodes(po_rule_hash_func, port_object_key_compare_func);
 
     return po;
 }
@@ -134,7 +128,7 @@ void PortObject2Free(PortObject2* po)
         sflist_free_all(po->item_list, snort_free);
 
     if ( po->rule_hash)
-        ghash_delete(po->rule_hash);
+        delete po->rule_hash;
 
     if (po->port_list)
         delete po->port_list;
@@ -150,71 +144,53 @@ void PortObject2Finalize(PortObject2* po)
     sflist_free_all(po->item_list, snort_free);
     po->item_list = nullptr;
 
-    ghash_delete(po->rule_hash);
+    delete po->rule_hash;
     po->rule_hash = nullptr;
 }
 
 /*
  * Dup the PortObjects Item List, Name, and RuleList->RuleHash
  */
-PortObject2* PortObject2Dup(PortObject* po)
+PortObject2* PortObject2Dup(PortObject& po)
 {
-    PortObject2* ponew = nullptr;
-    PortObjectItem* poi = nullptr;
-    PortObjectItem* poinew = nullptr;
-    SF_LNODE* lpos = nullptr;
-    int* prid = nullptr;
-    int* prule = nullptr;
+    assert( po.rule_list );
 
-    if ( !po )
-        return nullptr;
+    PortObject2* ponew = PortObject2New(po.rule_list->count + PO_EXTRA_RULE_CNT);
 
-    if ( !po->rule_list )
-        return nullptr;
-
-    ponew = PortObject2New(po->rule_list->count + PO_EXTRA_RULE_CNT);
-    if ( !ponew )
-        return nullptr;
-
-    /* Dup the Name */
-    if ( po->name )
-        ponew->name = snort_strdup(po->name);
+    if ( po.name )
+        ponew->name = snort_strdup(po.name);
     else
         ponew->name = snort_strdup("dup");
 
     /* Dup the Item List */
-    if ( po->item_list )
+    if ( po.item_list )
     {
-        for (poi =(PortObjectItem*)sflist_first(po->item_list,&lpos);
-            poi != nullptr;
-            poi =(PortObjectItem*)sflist_next(&lpos) )
+        PortObjectItem* poi = nullptr;
+        SF_LNODE* lpos = nullptr;
+
+        for (poi = (PortObjectItem*)sflist_first(po.item_list, &lpos);
+             poi != nullptr;
+             poi = (PortObjectItem*)sflist_next(&lpos) )
         {
-            poinew = PortObjectItemDup(poi);
-
-            if (!poinew)
-            {
-                PortObject2Free(ponew);
-                return nullptr;
-            }
-
+            PortObjectItem* poinew = PortObjectItemDup(poi);
             PortObjectAddItem( (PortObject*)ponew, poinew, nullptr);
         }
     }
 
     /* Dup the input rule list */
-    if ( po->rule_list )
+    if ( po.rule_list )
     {
-        for (prid  = (int*)sflist_first(po->rule_list,&lpos);
-            prid != nullptr;
-            prid  = (int*)sflist_next(&lpos) )
+        SF_LNODE* lpos = nullptr;
+
+        for (int* prid  = (int*)sflist_first(po.rule_list, &lpos);
+             prid != nullptr;
+             prid  = (int*)sflist_next(&lpos) )
         {
-            prule = (int*)snort_calloc(sizeof(int));
+            int* prule = (int*)snort_calloc(sizeof(int));
             *prule = *prid;
 
-            if ( ghash_add(ponew->rule_hash, prule, prule) != GHASH_OK )
-            {
+            if ( ponew->rule_hash->insert(prule, prule) != GHASH_OK )
                 snort_free(prule);
-            }
         }
     }
 
@@ -243,14 +219,14 @@ PortObject2* PortObject2AppendPortObject(PortObject2* poa, PortObject* pob)
 {
     SF_LNODE* lpos;
 
-    for ( int* prid = (int*)sflist_first(pob->rule_list,&lpos);
-        prid!= nullptr;
-        prid = (int*)sflist_next(&lpos) )
+    for (int* prid = (int*)sflist_first(pob->rule_list, &lpos);
+         prid!= nullptr;
+         prid = (int*)sflist_next(&lpos) )
     {
         int* prid2 = (int*)snort_calloc(sizeof(int));
         *prid2 = *prid;
 
-        if ( ghash_add(poa->rule_hash,prid2,prid2) != GHASH_OK )
+        if ( poa->rule_hash->insert(prid2, prid2) != GHASH_OK )
             snort_free(prid2);
     }
     return poa;
@@ -259,9 +235,9 @@ PortObject2* PortObject2AppendPortObject(PortObject2* poa, PortObject* pob)
 /* Dup and append rule list numbers from pob to poa */
 PortObject2* PortObject2AppendPortObject2(PortObject2* poa, PortObject2* pob)
 {
-    for (GHashNode* node = ghash_findfirst(pob->rule_hash);
-        node!= nullptr;
-        node = ghash_findnext(pob->rule_hash) )
+    for (GHashNode* node = pob->rule_hash->find_first();
+         node!= nullptr;
+         node = pob->rule_hash->find_next() )
     {
         int* prid = (int*)node->data;
 
@@ -271,7 +247,7 @@ PortObject2* PortObject2AppendPortObject2(PortObject2* poa, PortObject2* pob)
         int* prid2 = (int*)snort_calloc(sizeof(int));
         *prid2 = *prid;
 
-        if ( ghash_add(poa->rule_hash,prid2,prid2) != GHASH_OK )
+        if ( poa->rule_hash->insert(prid2, prid2) != GHASH_OK )
             snort_free(prid2);
     }
     return poa;
@@ -295,22 +271,18 @@ PortObject2* PortObjectAppendEx2(PortObject2* poa, PortObject* pob)
 
 void PortObject2PrintPorts(PortObject2* po)
 {
-    PortObjectItem* poi = nullptr;
     SF_LNODE* pos = nullptr;
     int bufsize = sizeof(po_print_buf);
 
     po_print_buf[0] = '\0';
-
     SnortSnprintfAppend(po_print_buf, bufsize, " PortObject ");
 
     if ( po->name )
-    {
         SnortSnprintfAppend(po_print_buf, bufsize, "%s ", po->name);
-    }
 
     SnortSnprintfAppend(po_print_buf, bufsize,
         " Id:%d  Ports:%u Rules:%u\n {\n Ports [",
-        po->id, po->item_list->count, po->rule_hash->count);
+        po->id, po->item_list->count, po->rule_hash->get_count());
 
     if ( PortObjectHasAny( (PortObject*)po) )
     {
@@ -318,9 +290,9 @@ void PortObject2PrintPorts(PortObject2* po)
     }
     else
     {
-        for (poi=(PortObjectItem*)sflist_first(po->item_list,&pos);
-            poi != nullptr;
-            poi=(PortObjectItem*)sflist_next(&pos) )
+        for (PortObjectItem* poi = (PortObjectItem*)sflist_first(po->item_list, &pos);
+             poi != nullptr;
+             poi = (PortObjectItem*)sflist_next(&pos) )
         {
             PortObjectItemPrint(poi, po_print_buf, bufsize);
         }
@@ -348,7 +320,7 @@ void PortObject2PrintEx(PortObject2* po,
         SnortSnprintfAppend(po_print_buf, bufsize, "%s ",po->name);
 
     SnortSnprintfAppend(po_print_buf, bufsize, " Id:%d  Ports:%u Rules:%u PortUsageCnt=%d\n {\n",
-        po->id, po->item_list->count, po->rule_hash->count, po->port_cnt);
+        po->id, po->item_list->count, po->rule_hash->get_count(), po->port_cnt);
 
     SnortSnprintfAppend(po_print_buf, bufsize, "  Ports [\n  ");
 
@@ -373,7 +345,7 @@ void PortObject2PrintEx(PortObject2* po,
         return;
 
     SnortSnprintfAppend(po_print_buf, bufsize, "  Rules [ \n ");
-    for (i=0; i<po->rule_hash->count; i++)
+    for (i = 0; i < po->rule_hash->get_count(); i++)
     {
         if ( print_index_map )
         {

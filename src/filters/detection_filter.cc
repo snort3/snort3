@@ -82,12 +82,7 @@ void detection_filter_init(DetectionFilterConfig* df_config)
         return;
 
     if ( !detection_filter_hash )
-    {
         detection_filter_hash = sfthd_local_new(df_config->memcap);
-
-        if ( !detection_filter_hash )
-            FatalError("can't allocate detection filter cache\n");
-    }
 }
 
 void detection_filter_term()
@@ -95,7 +90,7 @@ void detection_filter_term()
     if ( !detection_filter_hash )
         return;
 
-    xhash_delete(detection_filter_hash);
+    delete detection_filter_hash;
     detection_filter_hash = nullptr;
 }
 

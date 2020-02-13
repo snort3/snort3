@@ -150,9 +150,9 @@ struct VarNode;
 namespace snort
 {
 class ProtocolReference;
+class GHash;
+class XHash;
 struct ProfilerConfig;
-struct GHash;
-struct XHash;
 struct SnortConfig;
 
 class ReloadResourceTuner
@@ -350,7 +350,7 @@ public:
 
     ProtocolReference* proto_ref = nullptr;
 
-    int num_rule_types = 0;
+    unsigned num_rule_types = 0;
     RuleListNode* rule_lists = nullptr;
     int evalOrder[Actions::MAX + 1];
 

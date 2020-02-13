@@ -112,9 +112,9 @@ int PortObjectAddItem(PortObject* po, PortObjectItem* poi, int* errflag)
         *errflag = 0;
 
     /* Make sure this is not a duplicate */
-    for (p=(PortObjectItem*)sflist_first(po->item_list,&pos);
+    for (p = (PortObjectItem*)sflist_first(po->item_list,&pos);
         p != nullptr;
-        p=(PortObjectItem*)sflist_next(&pos) )
+        p = (PortObjectItem*)sflist_next(&pos))
     {
         if ((p->lport == poi->lport) && (p->hport == poi->hport))
             ParseWarning(WARN_RULES, "duplicate ports in list");
@@ -159,10 +159,6 @@ int PortObjectAddPort(PortObject* po, int port)
 int PortObjectAddRange(PortObject* po, int lport, int hport)
 {
     PortObjectItem* poi = PortObjectItemNew();
-
-    if ( !poi )
-        return -1;
-
     poi->lport = (unsigned short)lport;
     poi->hport = (unsigned short)hport;
 
@@ -205,9 +201,6 @@ PortObject* PortObjectDup(PortObject* po)
     SF_LNODE* lpos = nullptr;
     PortObject* ponew = PortObjectNew();
 
-    if ( !ponew )
-        return nullptr;
-
     /* Dup the Name */
     if ( po->name )
         ponew->name = snort_strdup(po->name);
@@ -217,18 +210,11 @@ PortObject* PortObjectDup(PortObject* po)
     /* Dup the Item List */
     if ( po->item_list )
     {
-        for (PortObjectItem* poi =(PortObjectItem*)sflist_first(po->item_list,&lpos);
+        for (PortObjectItem* poi = (PortObjectItem*)sflist_first(po->item_list, &lpos);
             poi != nullptr;
-            poi =(PortObjectItem*)sflist_next(&lpos) )
+            poi = (PortObjectItem*)sflist_next(&lpos) )
         {
             PortObjectItem* poinew = PortObjectItemDup(poi);
-
-            if (!poinew)
-            {
-                PortObjectFree(ponew);
-                return nullptr;
-            }
-
             PortObjectAddItem(ponew, poinew, nullptr);
         }
     }
@@ -236,13 +222,13 @@ PortObject* PortObjectDup(PortObject* po)
     /* Dup the input rule list */
     if ( po->rule_list )
     {
-        for (int* prid  = (int*)sflist_first(po->rule_list,&lpos);
+        for (int* prid  = (int*)sflist_first(po->rule_list, &lpos);
             prid != nullptr;
             prid  = (int*)sflist_next(&lpos) )
         {
             int* prule = (int*)snort_calloc(sizeof(int));
             *prule = *prid;
-            sflist_add_tail(ponew->rule_list,prule);
+            sflist_add_tail(ponew->rule_list, prule);
         }
     }
 
@@ -257,9 +243,6 @@ PortObject* PortObjectDupPorts(PortObject* po)
     SF_LNODE* lpos = nullptr;
     PortObject* ponew = PortObjectNew();
 
-    if ( !ponew )
-        return nullptr;
-
     /* Dup the Name */
     if ( po->name )
         ponew->name = snort_strdup(po->name);
@@ -269,17 +252,11 @@ PortObject* PortObjectDupPorts(PortObject* po)
     /* Dup the Item List */
     if ( po->item_list )
     {
-        for (PortObjectItem* poi =(PortObjectItem*)sflist_first(po->item_list,&lpos);
+        for (PortObjectItem* poi = (PortObjectItem*)sflist_first(po->item_list, &lpos);
             poi != nullptr;
-            poi =(PortObjectItem*)sflist_next(&lpos) )
+            poi = (PortObjectItem*)sflist_next(&lpos))
         {
             PortObjectItem* poinew = PortObjectItemDup(poi);
-
-            if (!poinew)
-            {
-                PortObjectFree(ponew);
-                return nullptr;
-            }
             PortObjectAddItem(ponew, poinew, nullptr);
         }
     }
@@ -503,9 +480,9 @@ PortObject* PortObjectAppend(PortObject* poa, PortObject* pob)
 {
     SF_LNODE* cursor;
 
-    for ( PortObjectItem* poib = (PortObjectItem*)sflist_first(pob->item_list, &cursor);
-        poib!= nullptr;
-        poib = (PortObjectItem*)sflist_next(&cursor) )
+    for (PortObjectItem* poib = (PortObjectItem*)sflist_first(pob->item_list, &cursor);
+         poib!= nullptr;
+         poib = (PortObjectItem*)sflist_next(&cursor) )
     {
         PortObjectItem* poia = PortObjectItemNew();
 
@@ -589,13 +566,11 @@ void PortObjectPrintEx(PortObject* po, po_print_f print_index_map)
     SnortSnprintfAppend(print_buf, bufsize, " PortObject ");
 
     if ( po->name )
-    {
         SnortSnprintfAppend(print_buf, bufsize, "%s ", po->name);
-    }
 
     SnortSnprintfAppend(print_buf, bufsize,
         " Id:%d  Ports:%u Rules:%u\n {\n",
-        po->id, po->item_list->count,po->rule_list->count);
+        po->id, po->item_list->count, po->rule_list->count);
 
     SnortSnprintfAppend(print_buf, bufsize, "  Ports [\n  ");
 
@@ -605,9 +580,9 @@ void PortObjectPrintEx(PortObject* po, po_print_f print_index_map)
     }
     else
     {
-        for (poi=(PortObjectItem*)sflist_first(po->item_list,&pos);
+        for (poi = (PortObjectItem*)sflist_first(po->item_list,&pos);
             poi != nullptr;
-            poi=(PortObjectItem*)sflist_next(&pos) )
+            poi = (PortObjectItem*)sflist_next(&pos) )
         {
             PortObjectItemPrint(poi, print_buf, bufsize);
         }
@@ -621,16 +596,13 @@ void PortObjectPrintEx(PortObject* po, po_print_f print_index_map)
     }
 
     SnortSnprintfAppend(print_buf, bufsize, "  Rules [ \n ");
-    for (i=0; i<po->rule_list->count; i++)
+    for (i = 0; i < po->rule_list->count; i++)
     {
         if ( print_index_map )
-        {
             print_index_map(rlist[i], print_buf, bufsize);
-        }
         else
-        {
             SnortSnprintfAppend(print_buf, bufsize, " %d",rlist[i]);
-        }
+
         k++;
         if ( k == 25 )
         {

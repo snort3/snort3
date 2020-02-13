@@ -43,7 +43,7 @@ namespace snort
 {
 struct Packet;
 struct SnortConfig;
-struct XHash;
+class XHash;
 }
 struct RuleLatencyState;
 

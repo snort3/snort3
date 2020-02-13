@@ -221,14 +221,12 @@ static FILE* OpenSessionFile(Packet* p)
         if (errno != EEXIST)
         {
             FatalError("Problem creating directory %s: %s\n",
-                log_path,get_error(errno));
+                log_path, get_error(errno));
         }
     }
 
     if (p->ptrs.sp >= p->ptrs.dp)
         SnortSnprintf(session_file, STD_BUF, "%s/SESSION:%d-%d", log_path, p->ptrs.sp, p->ptrs.dp);
-
-
     else
         SnortSnprintf(session_file, STD_BUF, "%s/SESSION:%d-%d", log_path, p->ptrs.dp, p->ptrs.sp);
 

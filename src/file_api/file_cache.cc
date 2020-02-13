@@ -79,19 +79,14 @@ static int64_t time_elapsed_ms(struct timeval* now, struct timeval* expire_time,
 FileCache::FileCache(int64_t max_files_cached)
 {
     max_files = max_files_cached;
-    fileHash = xhash_new(max_files, sizeof(FileHashKey), sizeof(FileNode),
-        0, 1, file_cache_anr_free_func, file_cache_free_func, 1);
-    if (!fileHash)
-        FatalError("Failed to create the expected channel hash table.\n");
-    xhash_set_max_nodes(fileHash, max_files);
+    fileHash = new XHash(max_files, sizeof(FileHashKey), sizeof(FileNode),
+        0, true, file_cache_anr_free_func, file_cache_free_func, true);
+    fileHash->set_max_nodes(max_files);
 }
 
 FileCache::~FileCache()
 {
-    if (fileHash)
-    {
-        xhash_delete(fileHash);
-    }
+    delete fileHash;
 }
 
 void FileCache::set_block_timeout(int64_t timeout)
@@ -119,7 +114,7 @@ void FileCache::set_max_files(int64_t max)
     }
     else
         max_files = max;
-    xhash_set_max_nodes(fileHash, max_files);
+    fileHash->set_max_nodes(max_files);
 }
 
 FileContext* FileCache::add(const FileHashKey& hashKey, int64_t timeout)
@@ -141,7 +136,7 @@ FileContext* FileCache::add(const FileHashKey& hashKey, int64_t timeout)
 
     std::lock_guard<std::mutex> lock(cache_mutex);
 
-    if (xhash_add(fileHash, (void*)&hashKey, &new_node) != XHASH_OK)
+    if (fileHash->insert((void*)&hashKey, &new_node) != HASH_OK)
     {
         /* Uh, shouldn't get here...
          * There is already a node or couldn't alloc space
@@ -160,12 +155,12 @@ FileContext* FileCache::find(const FileHashKey& hashKey, int64_t timeout)
 {
     std::lock_guard<std::mutex> lock(cache_mutex);
 
-    if (!xhash_count(fileHash))
+    if (!fileHash->get_node_count())
     {
         return nullptr;
     }
 
-    XHashNode* hash_node = xhash_find_node(fileHash, &hashKey);
+    HashNode* hash_node = fileHash->find_node(&hashKey);
 
     if (!hash_node)
         return nullptr;
@@ -173,7 +168,7 @@ FileContext* FileCache::find(const FileHashKey& hashKey, int64_t timeout)
     FileNode* node = (FileNode*)hash_node->data;
     if (!node)
     {
-        xhash_free_node(fileHash, hash_node);
+        fileHash->release_node(hash_node);
         return nullptr;
     }
 
@@ -182,7 +177,7 @@ FileContext* FileCache::find(const FileHashKey& hashKey, int64_t timeout)
 
     if (timercmp(&node->cache_expire_time, &now, <))
     {
-        xhash_free_node(fileHash, hash_node);
+        fileHash->release_node(hash_node);
         return nullptr;
     }
 

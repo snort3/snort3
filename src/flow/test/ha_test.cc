@@ -207,7 +207,7 @@ void ErrorMessage(const char*,...) { }
 void LogMessage(const char*,...) { }
 }
 
-int FlowKey::compare(const void*, const void*, size_t) { return 0; }
+bool FlowKey::is_equal(const void*, const void*, size_t) { return false; }
 
 int SFDAQInstance::ioctl(DAQ_IoctlCmd, void*, size_t) { return DAQ_SUCCESS; }
 

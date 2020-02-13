@@ -20,9 +20,8 @@
 /*
      hashfcn.c
 
-     Each hash table must allocate it's own GHash struct, this is because
-     ghash_new uses the number of rows in the hash table to modulo the random
-     values.
+     Each hash table allocates it's own GHash struct, using the number of
+     rows in the hash table to modulo the random values.
 
      Updates:
 
@@ -35,6 +34,8 @@
 
 #include "hashfcn.h"
 
+#include <cassert>
+
 #include "main/snort_config.h"
 #include "utils/util.h"
 
@@ -42,10 +43,18 @@
 
 using namespace snort;
 
+static bool hashfcn_key_compare(const void* k1, const void* k2, size_t len)
+{
+    if ( memcmp(k1, k2, len ) == 0 )
+        return true;
+    else
+        return false;
+}
+
 HashFnc* hashfcn_new(int m)
 {
     HashFnc* p;
-    static int one=1;
+    static int one = 1;
 
     if ( one ) /* one time init */
     {
@@ -63,13 +72,13 @@ HashFnc* hashfcn_new(int m)
     }
     else
     {
-        p->seed     = nearest_prime( (rand()%m)+3191);
-        p->scale    = nearest_prime( (rand()%m)+709);
+        p->seed = nearest_prime( (rand() % m) + 3191);
+        p->scale = nearest_prime( (rand() % m) + 709);
         p->hardener = ((unsigned) rand() * rand()) + 133824503;
     }
 
-    p->hash_fcn   = &hashfcn_hash;
-    p->keycmp_fcn = &memcmp;
+    p->hash_fcn = &hashfcn_hash;
+    p->keycmp_fcn = &hashfcn_key_compare;
 
     return p;
 }
@@ -99,26 +108,17 @@ unsigned hashfcn_hash(HashFnc* p, const unsigned char* d, int n)
  * @param hash_fcn user specified hash function
  * @param keycmp_fcn user specified key comparison function
  */
-int hashfcn_set_keyops(HashFnc* h,
-    unsigned (* hash_fcn)(HashFnc* p, const unsigned char* d, int n),
-    int (* keycmp_fcn)(const void* s1, const void* s2, size_t n))
+void hashfcn_set_keyops(HashFnc* h, hash_func hash_fcn, keycmp_func keycmp_fcn)
 {
-    if (h && hash_fcn && keycmp_fcn)
-    {
-        h->hash_fcn   = hash_fcn;
-        h->keycmp_fcn = keycmp_fcn;
+    assert(h && hash_fcn && keycmp_fcn);
 
-        return 0;
-    }
-
-    return -1;
+    h->hash_fcn = hash_fcn;
+    h->keycmp_fcn = keycmp_fcn;
 }
 
 namespace snort
 {
-void mix_str(
-    uint32_t& a, uint32_t& b, uint32_t& c,
-    const char* s, unsigned n)
+void mix_str(uint32_t& a, uint32_t& b, uint32_t& c, const char* s, unsigned n)
 {
     unsigned i, j;
 
@@ -134,9 +134,7 @@ void mix_str(
             k=4;
 
         for (unsigned l=0; l<k; l++)
-        {
             tmp |= (unsigned char) s[i + l] << l*8;
-        }
 
         switch (j)
         {
@@ -160,9 +158,7 @@ void mix_str(
     }
 
     if (j != 0)
-    {
         mix(a,b,c);
-    }
 }
 
 uint32_t str_to_hash(const uint8_t *str, size_t length)

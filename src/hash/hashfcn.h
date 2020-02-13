@@ -54,28 +54,37 @@ SO_PUBLIC void mix_str(
     const char* s, unsigned n = 0);
 
 SO_PUBLIC uint32_t str_to_hash(const uint8_t *str, size_t length);
+
+static inline int hash_nearest_power_of_2(int nrows)
+{
+    nrows -= 1;
+    for (unsigned i = 1; i < sizeof(nrows) * 8; i <<= 1)
+        nrows = nrows | (nrows >> i);
+    nrows += 1;
+
+    return nrows;
 }
+
+}
+
+struct HashFnc;
+
+typedef uint32_t (* hash_func)(HashFnc*, const unsigned char* d, int n);
+typedef bool (* keycmp_func)(const void* s1, const void* s2, size_t n);
 
 struct HashFnc
 {
     unsigned seed;
     unsigned scale;
     unsigned hardener;
-    // FIXIT-H use types for these callbacks
-    unsigned (* hash_fcn)(HashFnc*, const unsigned char* d, int n);
-    int (* keycmp_fcn)(const void* s1, const void* s2, size_t n);
+    hash_func hash_fcn;
+    keycmp_func keycmp_fcn;
 };
 
 HashFnc* hashfcn_new(int nrows);
 void hashfcn_free(HashFnc*);
-
 unsigned hashfcn_hash(HashFnc*, const unsigned char* d, int n);
-
-int hashfcn_set_keyops(
-    HashFnc*,
-    // FIXIT-H use types for these callbacks
-    unsigned (* hash_fcn)(HashFnc* p, const unsigned char* d, int n),
-    int (* keycmp_fcn)(const void* s1, const void* s2, size_t n));
+void hashfcn_set_keyops(HashFnc*, hash_func, keycmp_func);
 
 #endif
 

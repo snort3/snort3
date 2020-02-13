@@ -156,9 +156,6 @@ public:
     static ServiceDiscoveryState* get(const snort::SfIp*, IpProtocol, uint16_t port, bool decrypted, bool do_touch = false);
     static void remove(const snort::SfIp*, IpProtocol, uint16_t port, bool decrypted);
     static void check_reset(AppIdSession& asd, const snort::SfIp* ip, uint16_t port);
-
-    static void dump_stats();
-
     static bool prune(size_t max_memory = 0, size_t num_items = -1u);
 };
 

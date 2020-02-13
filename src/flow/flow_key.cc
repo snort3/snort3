@@ -331,42 +331,42 @@ uint32_t FlowKey::hash(HashFnc* hf, const unsigned char* p, int)
     return c;
 }
 
-int FlowKey::compare(const void* s1, const void* s2, size_t)
+bool FlowKey::is_equal(const void* s1, const void* s2, size_t)
 {
     const uint64_t* a,* b;
 
     a = (const uint64_t*)s1;
     b = (const uint64_t*)s2;
     if (*a - *b)
-        return 1;               /* Compares IPv4 lo/hi
+        return false;               /* Compares IPv4 lo/hi
                                    Compares IPv6 low[0,1] */
 
     a++;
     b++;
     if (*a - *b)
-        return 1;               /* Compares port lo/hi, vlan, protocol, version
+        return false;               /* Compares port lo/hi, vlan, protocol, version
                                    Compares IPv6 low[2,3] */
 
     a++;
     b++;
     if (*a - *b)
-        return 1;               /* Compares IPv6 hi[0,1] */
+        return false;               /* Compares IPv6 hi[0,1] */
 
     a++;
     b++;
     if (*a - *b)
-        return 1;               /* Compares IPv6 hi[2,3] */
+        return false;               /* Compares IPv6 hi[2,3] */
 
     a++;
     b++;
     if (*a - *b)
-        return 1;               /* Compares MPLS label, port lo/hi */
+        return false;               /* Compares MPLS label, port lo/hi */
 
     a++;
     b++;
     if (*a - *b)
-        return 1;               /* Compares vlan,AddressSpace ID,ip_proto,type,version,8 bit pad */
+        return false;               /* Compares vlan,AddressSpace ID,ip_proto,type,version,8 bit pad */
 
-    return 0;
+    return true;
 }
 

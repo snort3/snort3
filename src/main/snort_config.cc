@@ -270,8 +270,7 @@ SnortConfig::~SnortConfig()
     fpDeleteFastPacketDetection(this);
     OtnLookupFree(otn_map);
 
-    if (rtn_hash_table)
-        xhash_delete(rtn_hash_table);
+    delete rtn_hash_table;
 
     if (eth_dst )
         snort_free(eth_dst);

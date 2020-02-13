@@ -73,9 +73,9 @@ static void FreeRuleTreeNodes(SnortConfig* sc)
     if ( !sc->otn_map )
         return;
 
-    for ( GHashNode* hashNode = ghash_findfirst(sc->otn_map);
-        hashNode;
-        hashNode = ghash_findnext(sc->otn_map) )
+    for (GHashNode* hashNode = sc->otn_map->find_first();
+         hashNode;
+         hashNode = sc->otn_map->find_next())
     {
         OptTreeNode* otn = (OptTreeNode*)hashNode->data;
 
@@ -188,16 +188,12 @@ static void OtnInit(SnortConfig* sc)
 
     /* Init sid-gid -> otn map */
     sc->otn_map = OtnLookupNew();
-    if (sc->otn_map == nullptr)
-        ParseAbort("otn_map ghash_new failed.");
 }
 
-static RuleListNode* addNodeToOrderedList(RuleListNode* ordered_list,
-    RuleListNode* node, int evalIndex)
+static RuleListNode* addNodeToOrderedList
+    (RuleListNode* ordered_list, RuleListNode* node, unsigned evalIndex)
 {
-    RuleListNode* prev;
-
-    prev = ordered_list;
+    RuleListNode* prev = ordered_list;
 
     /* set the eval order for this rule set */
     node->evalIndex = evalIndex;
@@ -417,7 +413,7 @@ void ParseRules(SnortConfig* sc)
 ListHead* CreateRuleType(SnortConfig* sc, const char* name, Actions::Type mode)
 {
     RuleListNode* node;
-    int evalIndex = 0;
+    unsigned evalIndex = 0;
 
     if (sc == nullptr)
         return nullptr;
@@ -556,7 +552,7 @@ RuleTreeNode* deleteRtnFromOtn(OptTreeNode* otn, PolicyId policyId, SnortConfig*
             {
                 assert(sc and sc->rtn_hash_table);
                 RuleTreeNodeKey key { rtn, policyId };
-                xhash_remove(sc->rtn_hash_table, &key);
+                sc->rtn_hash_table->release_node(&key);
             }
         }
         return rtn;
@@ -590,21 +586,21 @@ static uint32_t rtn_hash_func(HashFnc*, const unsigned char* k, int)
     return c;
 }
 
-static int rtn_compare_func(const void* k1, const void* k2, size_t)
+static bool rtn_compare_func(const void* k1, const void* k2, size_t)
 {
     const RuleTreeNodeKey* rtnk1 = (const RuleTreeNodeKey*)k1;
     const RuleTreeNodeKey* rtnk2 = (const RuleTreeNodeKey*)k2;
 
     if (!rtnk1 || !rtnk2)
-        return 1;
+        return false;
 
     if (rtnk1->policyId != rtnk2->policyId)
-        return 1;
+        return false;
 
     if (same_headers(rtnk1->rtn, rtnk2->rtn))
-        return 0;
+        return true;
 
-    return 1;
+    return false;
 }
 
 int addRtnToOtn(SnortConfig* sc, OptTreeNode* otn, RuleTreeNode* rtn, PolicyId policyId)
@@ -642,20 +638,16 @@ int addRtnToOtn(SnortConfig* sc, OptTreeNode* otn, RuleTreeNode* rtn, PolicyId p
 
     if (!sc->rtn_hash_table)
     {
-        sc->rtn_hash_table = xhash_new(
-            10000, sizeof(RuleTreeNodeKey), 0, 0, 0, nullptr, nullptr, 1);
-
-        if (sc->rtn_hash_table == nullptr)
-            FatalError("Failed to create rule tree node hash table\n");
-
-        xhash_set_keyops(sc->rtn_hash_table, rtn_hash_func, rtn_compare_func);
+        sc->rtn_hash_table = new XHash(
+            10000, sizeof(RuleTreeNodeKey), 0, 0, false, nullptr, nullptr, true);
+        sc->rtn_hash_table->set_key_opcodes(rtn_hash_func, rtn_compare_func);
     }
 
     RuleTreeNodeKey key;
     memset(&key, 0, sizeof(key));
     key.rtn = rtn;
     key.policyId = policyId;
-    xhash_add(sc->rtn_hash_table, &key, rtn);
+    sc->rtn_hash_table->insert(&key, rtn);
 
     return 0;
 }

@@ -28,144 +28,120 @@
 #include "utils/sfmemcap.h"
 #include "main/snort_types.h"
 
-struct HashFnc;
+#include "hash_defs.h"
+#include "hashfcn.h"
 
 namespace snort
 {
-#define XHASH_NOMEM    (-2)
-#define XHASH_ERR      (-1)
-#define XHASH_OK        0
-#define XHASH_INTABLE   1
-#define XHASH_PENDING   2
-
-struct XHashNode
+class SO_PUBLIC XHash
 {
-    struct XHashNode* gnext; // global node list - used for aging nodes
-    struct XHashNode* gprev;
-    struct XHashNode* next;  // row node list
-    struct XHashNode* prev;
+public:
+    XHash(int nrows_, int keysize_, int datasize_, unsigned long memcap,
+        bool anr_enabled, Hash_FREE_FCN, Hash_FREE_FCN, bool recycle_nodes);
+    ~XHash();
 
-    int rindex;  // row index of table this node belongs to.
+    int free_over_allocations(unsigned work_limit, unsigned* num_freed);
+    void clear();
 
-    void* key;  // Pointer to the key.
-    void* data; // Pointer to the users data, this is not copied !
-};
+    int insert(const void* key, void* data);
+    HashNode* get_node(const void* key);
+    HashNode* get_node_with_prune(const void* key, bool* prune_performed);
+    int release_node(void* key);
+    int release_node(HashNode* node);
+    int delete_anr_or_lru_node();
+    HashNode* find_node(const void* key);
+    HashNode* find_first_node();
+    HashNode* find_next_node();
+    void* get_user_data(void* key);
+    void* get_mru_user_data();
+    void* get_lru_user_data();
+    void set_key_opcodes(hash_func, keycmp_func);
 
-typedef int (* XHash_FREE_FCN)(void* key, void* data);
+    // Set the maximum nodes used in this hash table.
+    //  Specifying 0 is unlimited (or otherwise limited by memcap).
+    void set_max_nodes(int max)
+    { max_nodes = max; }
 
-struct XHash
-{
-    HashFnc* hashfcn;    // hash function
-    int keysize;             // bytes in key, if <= 0 -> keys are strings
-    int datasize;            // bytes in key, if == 0 -> user data
-    XHashNode** table;    // array of node ptr's */
-    unsigned nrows;          // # rows int the hash table use a prime number 211, 9871
-    unsigned count;          // total # nodes in table
+    unsigned get_node_count()
+    { return count; }
 
-    unsigned crow;           // findfirst/next row in table
-    unsigned pad;
-    XHashNode* cnode;     // findfirst/next node ptr
-    int splay;               // whether to splay nodes with same hash bucket
+    unsigned get_anr_count()
+    { return anr_count; }
 
-    unsigned max_nodes;      // maximum # of nodes within a hash
+    unsigned get_total_finds()
+    { return find_success + find_fail; }
+
+    unsigned get_find_fails()
+    { return find_fail; }
+
+    unsigned get_find_successes()
+    { return find_success; }
+
+    void set_memcap(unsigned long new_memcap)
+    { mc.memcap = new_memcap; }
+
+    unsigned long get_memcap()
+    { return mc.memcap; }
+
+    unsigned long get_mem_used()
+    { return mc.memused; }
+
+    const HashNode* get_cnode () const
+    { return cnode; }
+
+    int get_keysize () const
+    { return keysize; }
+
+private:
+    void purge_free_list();
+    void save_free_node(HashNode* hnode);
+    HashNode* get_free_node();
+    void glink_node(HashNode* hnode);
+    void gunlink_node(HashNode* hnode);
+    void gmove_to_front(HashNode* hnode);
+    HashNode* gfind_first();
+    HashNode* gfind_next();
+    void link_node(HashNode* hnode);
+    void unlink_node(HashNode* hnode);
+    void move_to_front(HashNode* n);
+    HashNode* allocate_node();
+    HashNode* find_node_row(const void* key, int* rindex);
+    void update_cnode();
+    int delete_free_node();
+
+    HashFnc* hashfcn = nullptr;     // hash function
+    int keysize = 0;                // bytes in key, if <= 0 -> keys are strings - FIXIT-H does negative keysize work?
+    int datasize = 0;               // bytes in key, if == 0 -> user data
+    unsigned mem_allocated_per_entry = 0;
+    HashNode** table = nullptr;  	// array of node ptr's */
+    unsigned nrows = 0;             // # rows int the hash table use a prime number 211, 9871
+    unsigned count = 0;             // total # nodes in table
+    unsigned crow = 0;              // findfirst/next row in table
+    HashNode* cnode = nullptr;     // find_[first|next] node ptr
+    int splay = 1;                  // whether to splay nodes with same hash bucket
+    unsigned max_nodes = 0;         // maximum # of nodes within a hash
     MEMCAP mc;
-    unsigned overhead_bytes;  // # of bytes that will be unavailable for nodes inside the
-                              // table
-    unsigned overhead_blocks; // # of blocks consumed by the table
-    unsigned find_fail;
-    unsigned find_success;
+    unsigned find_fail = 0;
+    unsigned find_success = 0;
 
-    XHashNode* ghead, * gtail;  // global - root of all nodes allocated in table
-    XHashNode* fhead, * ftail;  // list of free nodes, which are recycled
-    XHashNode* gnode;           // gfirst/gnext node ptr */
-    int recycle_nodes;             // recycle nodes. Nodes are not freed, but are used for
-                                   // subsequent new nodes
+    HashNode* ghead = nullptr;     // global - root of all nodes allocated in table
+    HashNode* gtail = nullptr;
+    HashNode* gnode = nullptr;     // gfirst/gnext node ptr */
+    HashNode* fhead = nullptr;     // list of free nodes, which are recycled
+    HashNode* ftail = nullptr;
+    bool recycle_nodes = false;     // recycle nodes...
 
-    /* Automatic Node Recover (ANR): When number of nodes in hash is equal
-     * to max_nodes, remove the least recently used nodes and use it for
-     * the new node. anr_tries indicates # of ANR tries.*/
+    // Automatic Node Recover (ANR): When number of nodes in hash is equal
+    // to max_nodes, remove the least recently used nodes and use it for
+    // the new node. anr_tries indicates # of ANR tries.*/
+    unsigned anr_tries = 0;
+    unsigned anr_count = 0;      // # ANR ops performed
+    bool anr_enabled = false;    // false = anr disable, true = anr enabled
 
-    unsigned anr_tries;
-    unsigned anr_count;      // # ANR ops performed
-    int anr_flag;            // 0=off, !0=on
-
-    XHash_FREE_FCN anrfree;
-    XHash_FREE_FCN usrfree;
+    Hash_FREE_FCN anr_free = nullptr;
+    Hash_FREE_FCN usr_free = nullptr;
 };
 
-SO_PUBLIC XHash* xhash_new(int nrows, int keysize, int datasize, unsigned long memcap,
-    int anr_flag,
-    XHash_FREE_FCN anrfunc,
-    XHash_FREE_FCN usrfunc,
-    int recycle_flag);
-
-SO_PUBLIC void xhash_set_max_nodes(XHash* h, int max_nodes);
-SO_PUBLIC int xhash_change_memcap(XHash *t, unsigned long new_memcap, unsigned *max_work);
-SO_PUBLIC int xhash_free_overallocations(XHash* t, unsigned work_limit, unsigned* num_freed);
-SO_PUBLIC void xhash_delete(XHash* h);
-SO_PUBLIC int xhash_make_empty(XHash*);
-
-SO_PUBLIC int xhash_add(XHash* h, void* key, void* data);
-SO_PUBLIC XHashNode* xhash_get_node(XHash* t, const void* key);
-SO_PUBLIC XHashNode* xhash_get_node_with_prune(XHash* t, const void* key, bool* prune_performed);
-SO_PUBLIC int xhash_remove(XHash* h, void* key);
-
-//  Get the # of Nodes in HASH the table
-inline unsigned xhash_count(XHash* t)
-{ return t->count; }
-
-//  Get the # auto recovery
-inline unsigned xhash_anr_count(XHash* t)
-{ return t->anr_count; }
-
-//  Get the # finds
-inline unsigned xhash_find_total(XHash* t)
-{ return t->find_success + t->find_fail; }
-
-//  Get the # unsuccessful finds
-inline unsigned xhash_find_fail(XHash* t)
-{ return t->find_fail; }
-
-//  Get the # successful finds
-inline unsigned xhash_find_success(XHash* t)
-{ return t->find_success; }
-
-//  Get the # of overhead bytes
-inline unsigned xhash_overhead_bytes(XHash* t)
-{ return t->overhead_bytes; }
-
-// Get the # of overhead blocks
-inline unsigned xhash_overhead_blocks(XHash* t)
-{ return t->overhead_blocks; }
-
-// Get the amount of space required to allocate a new node in the xhash t.
-constexpr size_t xhash_required_mem(XHash *t)
-{ return sizeof(XHashNode) + t->pad + t->keysize + t->datasize + sizeof(long); }
-
-SO_PUBLIC int xhash_free_anr_lru(XHash* t);
-SO_PUBLIC void* xhash_mru(XHash* t);
-SO_PUBLIC void* xhash_lru(XHash* t);
-SO_PUBLIC void* xhash_find(XHash* h, void* key);
-SO_PUBLIC XHashNode* xhash_find_node(XHash* t, const void* key);
-
-SO_PUBLIC XHashNode* xhash_findfirst(XHash* h);
-SO_PUBLIC XHashNode* xhash_findnext(XHash* h);
-
-SO_PUBLIC XHashNode* xhash_ghead(XHash* h);
-SO_PUBLIC void xhash_gmovetofront(XHash* t, XHashNode* hnode);
-
-SO_PUBLIC int xhash_free_node(XHash* t, XHashNode* node);
-
-typedef uint32_t (* hash_func)(HashFnc*, const unsigned char* d, int n);
-
-
-// return 0 for ==, 1 for != ; FIXIT-L convert to bool
-typedef int (* keycmp_func)(const void* s1, const void* s2, size_t n);
-
-SO_PUBLIC void xhash_set_keyops(XHash* h, hash_func, keycmp_func);
-
-SO_PUBLIC XHashNode* xhash_gfindfirst(XHash* t);
-SO_PUBLIC XHashNode* xhash_gfindnext(XHash* t);
 } // namespace snort
 #endif
 

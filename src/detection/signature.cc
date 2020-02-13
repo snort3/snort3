@@ -162,7 +162,7 @@ void OtnRemove(GHash* otn_map, OptTreeNode* otn)
     key.gid = otn->sigInfo.gid;
     key.sid = otn->sigInfo.sid;
 
-    ghash_remove(otn_map, &key);
+    otn_map->remove(&key);
 }
 
 void OtnFree(void* data)
@@ -220,7 +220,7 @@ void OtnFree(void* data)
 
 GHash* OtnLookupNew()
 {
-    return ghash_new(10000, sizeof(OtnKey), 0, OtnFree);
+    return new GHash(10000, sizeof(OtnKey), 0, OtnFree);
 }
 
 void OtnLookupAdd(GHash* otn_map, OptTreeNode* otn)
@@ -231,8 +231,7 @@ void OtnLookupAdd(GHash* otn_map, OptTreeNode* otn)
     key.gid = otn->sigInfo.gid;
     key.sid = otn->sigInfo.sid;
 
-    int status = ghash_add(otn_map, &key, otn);
-
+    int status = otn_map->insert(&key, otn);
     if ( status == GHASH_OK )
         return;
 
@@ -248,7 +247,7 @@ OptTreeNode* OtnLookup(GHash* otn_map, uint32_t gid, uint32_t sid)
     key.gid = gid;
     key.sid = sid;
 
-    OptTreeNode* otn = (OptTreeNode*)ghash_find(otn_map, &key);
+    OptTreeNode* otn = (OptTreeNode*)otn_map->find(&key);
 
     return otn;
 }
@@ -273,6 +272,6 @@ OptTreeNode* GetOTN(uint32_t gid, uint32_t sid)
 void OtnLookupFree(GHash* otn_map)
 {
     if ( otn_map )
-        ghash_delete(otn_map);
+        delete otn_map;
 }
 

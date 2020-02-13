@@ -270,10 +270,10 @@ bool PerfMonReloadTuner::tune_resources(unsigned work_limit)
     if (flow_ip_tracker)
     {
         unsigned num_freed = 0;
-        int result = xhash_free_overallocations(flow_ip_tracker->get_ip_map(), work_limit, &num_freed);
+        int result = flow_ip_tracker->get_ip_map()->free_over_allocations(work_limit, &num_freed);
         pmstats.total_frees += num_freed;
         pmstats.reload_frees += num_freed;
-        return (result == XHASH_OK);
+        return (result == HASH_OK);
     }
     else
         return true;

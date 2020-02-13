@@ -167,23 +167,15 @@ struct OptTreeNode
 
     // ptr to list of RTNs (head part); indexed by policyId
     RuleTreeNode** proto_nodes = nullptr;
-
     OtnState* state = nullptr;
-
     int chain_node_number = 0;
-    int evalIndex = 0;       /* where this rule sits in the evaluation sets */
-
+    unsigned evalIndex = 0;       /* where this rule sits in the evaluation sets */
     unsigned ruleIndex = 0; // unique index
-
     uint32_t num_detection_opts = 0;
     uint32_t plugins = 0;
-
-    // Added for integrity checks during rule parsing.
-    SnortProtocolId snort_protocol_id = 0;
-
+    SnortProtocolId snort_protocol_id = 0;    // Added for integrity checks during rule parsing.
     unsigned short proto_node_num = 0;
     uint16_t longestPatternLen = 0;
-
     IpsPolicy::Enable enable;
     Flag flags = 0;
 

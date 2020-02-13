@@ -46,8 +46,7 @@ using namespace snort;
 
 PORT_RULE_MAP* prmNewMap()
 {
-    PORT_RULE_MAP* p = (PORT_RULE_MAP*)snort_calloc(sizeof(PORT_RULE_MAP));
-    return p;
+    return (PORT_RULE_MAP*)snort_calloc(sizeof(PORT_RULE_MAP));
 }
 
 /*

@@ -70,9 +70,9 @@ int fp_eval_option(void*, Cursor&, snort::Packet*);
 struct MatchInfo
 {
     const OptTreeNode* MatchArray[MAX_EVENT_MATCH];
-    int iMatchCount;
-    int iMatchIndex;
-    int iMatchMaxLen;
+    unsigned iMatchCount;
+    unsigned iMatchIndex;
+    unsigned iMatchMaxLen;
 };
 
 /*

@@ -53,17 +53,8 @@ void PortObjectItemFree(PortObjectItem* poi)
 */
 PortObjectItem* PortObjectItemDup(PortObjectItem* poi)
 {
-    PortObjectItem* poinew;
-
-    if ( !poi )
-        return nullptr;
-
-    poinew = PortObjectItemNew();
-    if ( !poinew )
-        return nullptr;
-
-    memcpy(poinew,poi,sizeof(PortObjectItem));
-
+    PortObjectItem* poinew = PortObjectItemNew();
+    memcpy(poinew,poi, sizeof(PortObjectItem));
     return poinew;
 }
 

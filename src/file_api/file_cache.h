@@ -30,8 +30,7 @@
 
 namespace snort
 {
-struct XHash;
-struct XHashNode;
+class XHash;
 }
 
 class FileCache

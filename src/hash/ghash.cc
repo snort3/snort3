@@ -62,450 +62,219 @@
 
 #include "utils/util.h"
 
-#include "hashfcn.h"
 #include "primetable.h"
 
 namespace snort
 {
-/*
-*
-*    Create a new hash table
-*
-*    nrows    : number of rows in hash table, primes are best.
-*               > 0  => we use the nearest prime internally
-*               < 0  => we use the magnitude as nrows.
-*    keysize  : > 0 => bytes in each key, keys are binary bytes,
-*               all keys are the same size.
-*               ==0 => keys are strings and are null terminated,
-*               allowing random key lengths.
-*    userkeys : > 0 => indicates user owns the key data
-*               and we should not allocate or free space for it,
-*               nor should we attempt to free the user key. We just
-*               save the pointer to the key.
-*               ==0 => we should copy the keys and manage them internally
-*    userfree : routine to free users data, null if we should not
-*               free user data in ghash_delete(). The routine
-*               should be of the form 'void userfree(void * userdata)',
-*               'free' works for simple allocations.
-*/
-GHash* ghash_new(int nrows, int keysize, int userkeys, gHashFree userfree)
+
+GHash::GHash(int nrows_, unsigned keysize, bool userkey, gHashFree userfree)
+    : keysize(keysize), userkey(userkey), userfree(userfree)
 {
-    if ( nrows > 0 ) /* make sure we have a prime number */
-    {
-        nrows = nearest_prime(nrows);
-    }
-    else  /* use the magnitude or nrows as is */
-    {
-        nrows = -nrows;
-    }
+    if ( nrows_ > 0 )
+        nrows = nearest_prime(nrows_);
+    else
+        nrows = -nrows_;
 
-    GHash* h = (GHash*)snort_calloc(sizeof(GHash));
-
-    h->hashfcn = hashfcn_new(nrows);
-    h->table = (GHashNode**)snort_calloc(nrows, sizeof(GHashNode*));
-
+    hashfcn = hashfcn_new(nrows);
+    table = (GHashNode**)snort_calloc(nrows, sizeof(GHashNode*));
     for ( int i = 0; i < nrows; i++ )
-    {
-        h->table[i] = nullptr;
-    }
+        table[i] = nullptr;
 
-    h->userkey = userkeys;
-    h->keysize = keysize;
-    h->nrows = nrows;
-    h->count = 0;
-    h->userfree = userfree;
-
-    h->crow = 0; // findfirst/next current row
-    h->cnode = nullptr; // findfirst/next current node ptr
-
-    return h;
+    count = 0;
+    crow = 0;
+    cnode = nullptr;
 }
 
-/*
-*  Delete the hash Table
-*
-*  free key's, free node's, and free the users data, if they
-*  supply a free function
-*/
-void ghash_delete(GHash* h)
+GHash::~GHash()
 {
-    if ( !h )
-        return;
+    hashfcn_free(hashfcn);
 
-    hashfcn_free(h->hashfcn);
-
-    if ( h->table )
-    {
-        for (int i=0; i<h->nrows; i++)
+    for (int i = 0; i < nrows; i++)
+        for ( GHashNode* node = table[i]; node; )
         {
-            for ( GHashNode* node=h->table[i]; node; )
-            {
-                GHashNode* onode = node;
-                node  = node->next;
+            GHashNode* onode = node;
+            node  = node->next;
 
-                if ( !h->userkey && onode->key )
-                    snort_free(const_cast<void*>(onode->key));
+            if ( !userkey && onode->key )
+                snort_free(const_cast<void*>(onode->key));
 
-                if ( h->userfree && onode->data )
-                    h->userfree(onode->data); /* free users data, with users function */
+            if ( userfree && onode->data )
+                userfree(onode->data);
 
-                snort_free(onode);
-            }
+            snort_free(onode);
         }
-        snort_free(h->table);
-        h->table = nullptr;
-    }
 
-    snort_free(h);
+    snort_free(table);
 }
 
-/*
-*  Add a key + data pair
-*  ---------------------
-*
-*  key + data should both be non-zero, although data can be zero
-*
-*  t    - hash table
-*  key  - users key data (should be unique in this table)
-*         may be ascii strings or fixed size binary keys
-*  data - users data pointer
-*
-*  returns  SF_HASH_NOMEM: alloc error
-*           SF_HASH_INTABLE : key already in table (t->cnode points to the node)
-*           SF_OK: added a node for this key + data pair
-*
-*  Notes:
-*  If the key node already exists, then t->cnode points to it on return,
-*  this allows you to do something with the node - like add the data to a
-*  linked list of data items held by the node, or track a counter, or whatever.
-*
-*/
-int ghash_add(GHash* t, const void* const key, void* const data)
+// set key length, hashkey, and index parameters required to find/add/remove a node
+// the parameters set are valid until for the life of the initial method called
+void GHash::set_node_parameters(const void* const key)
 {
-    unsigned hashkey;
-    int klen;
-    int index;
-    GHashNode* hnode;
+    klen = ( keysize > 0  ) ? keysize : strlen((const char*)key) + 1;
+    hashkey = hashfcn->hash_fcn(hashfcn, (const unsigned char*)key, klen);
+    index = hashkey % nrows;
+}
 
-    if (t == nullptr || key == nullptr)
-        return GHASH_ERR;
+GHashNode* GHash::find_node(const void* const key)
+{
+    assert(key);
 
-    /*
-    *   Get proper Key Size
-    */
-    if ( t->keysize > 0  )
+    set_node_parameters(key);
+    for ( GHashNode* hnode = table[index]; hnode; hnode = hnode->next )
     {
-        klen = t->keysize;
-    }
-    else
-    {
-        /* need the null byte for strcmp() in ghash_find() */
-        klen = strlen( (const char*)key) + 1;
-    }
-
-    hashkey = t->hashfcn->hash_fcn(t->hashfcn, (const unsigned char*)key, klen);
-
-    index = hashkey % t->nrows;
-
-    /*
-    *  Uniqueness:
-    *  Check 1st to see if the key is already in the table
-    *  Just bail if it is.
-    */
-    for ( hnode=t->table[index]; hnode; hnode=hnode->next )
-    {
-        if ( t->keysize > 0 )
+        if ( keysize == 0 )
         {
-            if ( !t->hashfcn->keycmp_fcn(hnode->key,key,klen) )
-            {
-                t->cnode = hnode; /* save pointer to the node */
-                return GHASH_INTABLE; /* found it */
-            }
+            if ( !strcmp((const char*)hnode->key, (const char*)key) )
+                return hnode;
         }
         else
         {
-            if ( !strcmp((const char*)hnode->key,(const char*)key) )
-            {
-                t->cnode = hnode; /* save pointer to the node */
-                return GHASH_INTABLE; /* found it */
-            }
-        }
-    }
-
-    /*
-    *  Create new node
-    */
-    hnode = (GHashNode*)snort_calloc(sizeof(GHashNode));
-
-    /* Add the Key */
-    if ( t->userkey )
-    {
-        /* Use the Users key */
-        hnode->key = key;
-    }
-    else
-    {
-        /* Create new key */
-        hnode->key = snort_alloc(klen);
-
-        /* Copy key  */
-        memcpy(const_cast<void*>(hnode->key),key,klen);
-    }
-
-    /* Add The Node */
-    if ( t->table[index] ) /* add the node to the existing list */
-    {
-        hnode->prev = nullptr;  // insert node as head node
-        hnode->next=t->table[index];
-        hnode->data=data;
-        t->table[index]->prev = hnode;
-        t->table[index] = hnode;
-    }
-    else /* 1st node in this list */
-    {
-        hnode->prev=nullptr;
-        hnode->next=nullptr;
-        hnode->data=data;
-        t->table[index] = hnode;
-    }
-
-    t->count++;
-
-    return GHASH_OK;
-}
-
-/*
-*  Find a Node based on the key, return users data.
-*/
-static GHashNode* ghash_find_node(GHash* t, const void* const key)
-{
-    unsigned hashkey;
-    int index, klen;
-    GHashNode* hnode;
-
-    assert(t);
-
-    if ( t->keysize  )
-    {
-        klen = t->keysize;
-    }
-    else
-    {
-        klen = strlen( (const char*)key) + 1;
-    }
-
-    hashkey = t->hashfcn->hash_fcn(t->hashfcn, (const unsigned char*)key, klen);
-
-    index = hashkey % t->nrows;
-
-    for ( hnode=t->table[index]; hnode; hnode=hnode->next )
-    {
-        if ( t->keysize == 0 )
-        {
-            if ( !strcmp((const char*)hnode->key,(const char*)key) )
-            {
+            if ( hashfcn->keycmp_fcn(hnode->key, key, keysize) )
                 return hnode;
-            }
-        }
-        else
-        {
-            if ( !t->hashfcn->keycmp_fcn(hnode->key,key,t->keysize) )
-            {
-                return hnode;
-            }
         }
     }
 
     return nullptr;
 }
 
-/*
-*  Find a Node based on the key, return users data.
-*/
-void* ghash_find(GHash* t, const void* const key)
+int GHash::insert(const void* const key, void* const data)
 {
-    GHashNode* hnode;
+    assert(key && data);
 
-    assert(t);
+    if ( GHashNode* hnode = find_node(key) )
+    {
+        cnode = hnode;
+        return GHASH_INTABLE;
+    }
 
-    hnode = ghash_find_node(t, key);
+    GHashNode* hnode = (GHashNode*)snort_calloc(sizeof(GHashNode));
+    if ( userkey )
+    {
+        hnode->key = key;
+    }
+    else
+    {
+        hnode->key = snort_alloc(klen);
+        memcpy(const_cast<void*>(hnode->key), key, klen);
+    }
 
+    if ( table[index] )
+    {
+        hnode->prev = nullptr;
+        hnode->next = table[index];
+        hnode->data = data;
+        table[index]->prev = hnode;
+        table[index] = hnode;
+    }
+    else
+    {
+        hnode->prev = nullptr;
+        hnode->next = nullptr;
+        hnode->data = data;
+        table[index] = hnode;
+    }
+
+    count++;
+
+    return GHASH_OK;
+}
+
+void* GHash::find(const void* const key)
+{
+    assert(key);
+
+    GHashNode* hnode = find_node(key);
     if ( hnode )
         return hnode->data;
 
     return nullptr;
 }
 
-/*
-*  Unlink and free the node
-*/
-static int ghash_free_node(GHash* t, unsigned index, GHashNode* hnode)
+int GHash::free_node(unsigned index, GHashNode* hnode)
 {
-    assert(t);
+    assert(hnode);
 
-    if ( !t->userkey && hnode->key )
+    if ( !userkey && hnode->key )
         snort_free(const_cast<void*>(hnode->key));
 
     hnode->key = nullptr;
 
-    if ( t->userfree)
-        t->userfree(hnode->data);  /* free users data, with users function */
+    if ( userfree)
+        userfree(hnode->data);
 
-    if ( hnode->prev )  // not the 1st node
+    if ( hnode->prev )
     {
         hnode->prev->next = hnode->next;
         if ( hnode->next )
             hnode->next->prev = hnode->prev;
     }
-    else if ( t->table[index] )  // 1st node
+    else if ( table[index] )
     {
-        t->table[index] = t->table[index]->next;
-        if ( t->table[index] )
-            t->table[index]->prev = nullptr;
+        table[index] = table[index]->next;
+        if ( table[index] )
+            table[index]->prev = nullptr;
     }
 
     snort_free(hnode);
-
-    t->count--;
+    count--;
 
     return GHASH_OK;
 }
 
-/*
-*  Remove a Key/Data Pair from the table - find it, unlink it, and free the memory for it.
-*
-*  returns : 0 - OK
-*           -1 - node not found
-*/
-int ghash_remove(GHash* t, const void* const key)
+int GHash::remove(const void* const key)
 {
-    GHashNode* hnode;
-    int klen;
-    unsigned hashkey, index;
+    assert(key);
 
-    assert(t);
-
-    if ( t->keysize > 0 )
-    {
-        klen = t->keysize;
-    }
+    if ( GHashNode* hnode = find_node(key) )
+        return free_node(index, hnode);
     else
-    {
-        klen = strlen((const char*)key) + 1;
-    }
-
-    hashkey = t->hashfcn->hash_fcn(t->hashfcn, (const unsigned char*)key, klen);
-
-    index = hashkey % t->nrows;
-
-    for ( hnode=t->table[index]; hnode; hnode=hnode->next )
-    {
-        if ( t->keysize > 0 )
-        {
-            if ( !t->hashfcn->keycmp_fcn(hnode->key,key,klen) )
-            {
-                return ghash_free_node(t, index, hnode);
-            }
-        }
-        else
-        {
-            if ( !strcmp((const char*)hnode->key,(const char*)key) )
-            {
-                return ghash_free_node(t, index, hnode);
-            }
-        }
-    }
-
-    return GHASH_ERR;
+        return GHASH_NOT_FOUND;
 }
 
-/* Internal use only */
-static void ghash_next(GHash* t)
+void GHash::next()
 {
-    assert(t and t->cnode);
+    assert(cnode);
 
-    /* Next node in current node list */
-    t->cnode = t->cnode->next;
-    if ( t->cnode )
-    {
+    cnode = cnode->next;
+    if ( cnode )
         return;
-    }
 
-    /* Next row
-       Get 1st node in next non-empty row/node list */
-    for ( t->crow++; t->crow < t->nrows; t->crow++ )
+    for ( crow++; crow < nrows; crow++ )
     {
-        t->cnode = t->table[ t->crow ];
-        if ( t->cnode )
-        {
+        cnode = table[crow];
+        if ( cnode )
             return;
-        }
     }
 }
 
-/*
-*   Get First Hash Table Node
-*/
-GHashNode* ghash_findfirst(GHash* t)
+GHashNode* GHash::find_first()
 {
-    GHashNode* n;
-
-    assert(t);
-    /* Start with 1st row */
-    for ( t->crow=0; t->crow < t->nrows; t->crow++ )
+    for ( crow = 0; crow < nrows; crow++ )
     {
-        /* Get 1st Non-Null node in row list */
-        t->cnode = t->table[ t->crow ];
-
-        if ( t->cnode )
+        cnode = table[crow];
+        if ( cnode )
         {
-            n = t->cnode;
-
-            ghash_next(t); // load t->cnode with the next entry
-
+            GHashNode* n = cnode;
+            next();
             return n;
         }
     }
     return nullptr;
 }
 
-/*
-*   Get Next Hash Table Node
-*/
-GHashNode* ghash_findnext(GHash* t)
+GHashNode* GHash::find_next()
 {
-    GHashNode* n;
-
-    assert(t);
-
-    n = t->cnode;
-
-    if ( !n ) /* Done, no more entries */
-    {
-        return nullptr;
-    }
-
-    /*
-       Preload next node into current node
-    */
-    ghash_next(t);
+    GHashNode* n = cnode;
+    if ( n )
+        next();
 
     return n;
 }
 
-/**
- * Make hashfcn use a separate set of opcodes for the backend.
- *
- * @param h hashfcn ptr
- * @param hash_fcn user specified hash function
- * @param keycmp_fcn user specified key comparison function
- */
-int ghash_set_keyops(GHash* h,
-    unsigned (* hash_fcn)(HashFnc* p, const unsigned char* d, int n),
-    int (* keycmp_fcn)(const void* s1, const void* s2, size_t n))
+void GHash::set_key_opcodes(hash_func hash_fcn, keycmp_func keycmp_fcn)
 {
-    assert(h && hash_fcn && keycmp_fcn);
-
-    return hashfcn_set_keyops(h->hashfcn, hash_fcn, keycmp_fcn);
+    hashfcn_set_keyops(hashfcn, hash_fcn, keycmp_fcn);
 }
+
 }

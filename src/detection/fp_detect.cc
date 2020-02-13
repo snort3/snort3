@@ -95,7 +95,7 @@ static void fp_immediate(MpseGroup*, Packet*, const uint8_t*, unsigned);
 
 static inline void init_match_info(OtnxMatchData* omd)
 {
-    for ( int i = 0; i < SnortConfig::get_conf()->num_rule_types; i++ )
+    for ( unsigned i = 0; i < SnortConfig::get_conf()->num_rule_types; i++ )
         omd->matchInfo[i].iMatchCount = 0;
 
     omd->have_match = false;
@@ -212,7 +212,7 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
      * If its order is lower than 'pass', it should have been passed.
      * This is consistent with other detection rules */
     if ( (p->packet_flags & PKT_PASS_RULE)
-        &&(SnortConfig::get_eval_index(rtn->action) > SnortConfig::get_eval_index(Actions::PASS)))
+        && (SnortConfig::get_eval_index(rtn->action) > SnortConfig::get_eval_index(Actions::PASS)) )
     {
         fpLogOther(p, rtn, otn, rtn->action);
         return 1;
@@ -252,7 +252,7 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
 int fpAddMatch(OtnxMatchData* omd, const OptTreeNode* otn)
 {
     RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
-    int evalIndex = rtn->listhead->ruleListNode->evalIndex;
+    unsigned evalIndex = rtn->listhead->ruleListNode->evalIndex;
 
     /* bounds check index */
     if ( evalIndex >= SnortConfig::get_conf()->num_rule_types )
@@ -266,7 +266,7 @@ int fpAddMatch(OtnxMatchData* omd, const OptTreeNode* otn)
     **  If we hit the max number of unique events for any rule type alert,
     **  log or pass, then we don't add it to the list.
     */
-    if ( pmi->iMatchCount >= (int)SnortConfig::get_conf()->fast_pattern_config->get_max_queue_events() ||
+    if ( pmi->iMatchCount >= SnortConfig::get_conf()->fast_pattern_config->get_max_queue_events() ||
         pmi->iMatchCount >= MAX_EVENT_MATCH)
     {
         pc.match_limit++;
@@ -274,15 +274,14 @@ int fpAddMatch(OtnxMatchData* omd, const OptTreeNode* otn)
     }
 
     // don't store the same otn again
-    for ( int i=0; i< pmi->iMatchCount; i++ )
+    for ( unsigned i = 0; i < pmi->iMatchCount; i++ )
     {
-        if ( pmi->MatchArray[ i  ] == otn )
+        if ( pmi->MatchArray[i] == otn )
             return 0;
     }
 
     //  add the event to the appropriate list
     pmi->MatchArray[ pmi->iMatchCount ] = otn;
-
     pmi->iMatchCount++;
     omd->have_match = true;
     return 0;
@@ -617,22 +616,20 @@ static inline int fpFinalSelectEvent(OtnxMatchData* omd, Packet* p)
     if ( !omd->have_match )
         return 0;
 
-    int i;
-    int j;
-    int k;
-    const OptTreeNode* otn;
     unsigned tcnt = 0;
     EventQueueConfig* eq = SnortConfig::get_conf()->event_queue_config;
-    RuleTreeNode* rtn;
+    int (*compar)(const void *, const void *);
+    compar = ( eq->order == SNORT_EVENTQ_PRIORITY )
+        ? &sortOrderByPriority : sortOrderByContentLength;
 
-    for ( i = 0; i < SnortConfig::get_conf()->num_rule_types; i++ )
+    for ( unsigned i = 0; i < SnortConfig::get_conf()->num_rule_types; i++ )
     {
         /* bail if were not dumping events in all the action groups,
          * and we've already got some events */
         if (!SnortConfig::process_all_events() && (tcnt > 0))
             return 1;
 
-        if (omd->matchInfo[i].iMatchCount)
+        if ( omd->matchInfo[i].iMatchCount )
         {
             /*
              * We must always sort so if we que 8 and log 3 and they are
@@ -646,28 +643,16 @@ static inline int fpFinalSelectEvent(OtnxMatchData* omd, Packet* p)
              * part of the natural ordering....Jan '06..
              */
             /* Sort the rules in this action group */
-            if (eq->order == SNORT_EVENTQ_PRIORITY)
-            {
-                qsort(omd->matchInfo[i].MatchArray, omd->matchInfo[i].iMatchCount,
-                    sizeof(void*), sortOrderByPriority);
-            }
-            else if (eq->order == SNORT_EVENTQ_CONTENT_LEN)
-            {
-                qsort(omd->matchInfo[i].MatchArray, omd->matchInfo[i].iMatchCount,
-                    sizeof(void*), sortOrderByContentLength);
-            }
-            else
-            {
-                FatalError("fpdetect: Order function for event queue is invalid.\n");
-            }
+            qsort(omd->matchInfo[i].MatchArray, omd->matchInfo[i].iMatchCount,
+                sizeof(void*), compar);
 
             /* Process each event in the action (alert,drop,log,...) groups */
-            for (j=0; j < omd->matchInfo[i].iMatchCount; j++)
+            for (unsigned j = 0; j < omd->matchInfo[i].iMatchCount; j++)
             {
-                otn = omd->matchInfo[i].MatchArray[j];
-                rtn = getRtnFromOtn(otn);
+                const OptTreeNode* otn = omd->matchInfo[i].MatchArray[j];
+                RuleTreeNode* rtn = getRtnFromOtn(otn);
 
-                if (otn && rtn && Actions::is_pass(rtn->action))
+                if ( otn && rtn && Actions::is_pass(rtn->action) )
                 {
                     /* Already acted on rules, so just don't act on anymore */
                     if ( tcnt > 0 )
@@ -675,9 +660,9 @@ static inline int fpFinalSelectEvent(OtnxMatchData* omd, Packet* p)
                 }
 
                 //  Loop here so we don't log the same event multiple times.
-                for (k = 0; k < j; k++)
+                for (unsigned k = 0; k < j; k++)
                 {
-                    if (omd->matchInfo[i].MatchArray[k] == otn)
+                    if ( omd->matchInfo[i].MatchArray[k] == otn )
                     {
                         otn = nullptr;
                         break;
@@ -695,20 +680,20 @@ static inline int fpFinalSelectEvent(OtnxMatchData* omd, Packet* p)
                     pc.alert_limit++;
 
                 /* Only count it if we're going to log it */
-                if (tcnt <= eq->log_events)
+                if ( tcnt <= eq->log_events )
                 {
                     if ( p->flow )
                         fpAddSessionAlert(p, otn);
                 }
 
-                if (tcnt >= eq->max_events)
+                if ( tcnt >= eq->max_events )
                 {
                     pc.queue_limit++;
                     return 1;
                 }
 
                 /* only log/count one pass */
-                if ( otn && rtn && Actions::is_pass(rtn->action))
+                if ( otn && rtn && Actions::is_pass(rtn->action) )
                 {
                     p->packet_flags |= PKT_PASS_RULE;
                     return 1;
@@ -733,10 +718,8 @@ class MpseStash
 {
 public:
     MpseStash(unsigned limit)
-    {
-        enable = false;
-        max = limit;
-    }
+        : max(limit)
+    { }
 
     void init()
     {
@@ -757,8 +740,8 @@ public:
     { enable = true; }
 
 private:
-    bool enable;
-    unsigned count;
+    bool enable = false;
+    unsigned count = 0;
     unsigned max;
     std::vector<Node> queue;
 

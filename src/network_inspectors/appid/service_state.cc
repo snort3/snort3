@@ -256,26 +256,6 @@ void AppIdServiceState::check_reset(AppIdSession& asd, const SfIp* ip, uint16_t 
     }
 }
 
-void AppIdServiceState::dump_stats()
-{
-    // FIXIT-L - do we need to keep ipv4 and ipv6 separate?  CRC: No.
-#if 0
-    LogMessage("Service State:\n");
-    if (serviceStateCache4)
-    {
-        LogMessage("           IPv4 Count: %u\n", xhash_count(serviceStateCache4));
-        LogMessage("    IPv4 Memory Limit: %lu\n", serviceStateCache4->mc.memcap);
-        LogMessage("     IPv4 Memory Used: %lu\n", serviceStateCache4->mc.memused);
-    }
-    if (serviceStateCache6)
-    {
-        LogMessage("           IPv6 Count: %u\n", xhash_count(serviceStateCache6));
-        LogMessage("    IPv6 Memory Limit: %lu\n", serviceStateCache6->mc.memcap);
-        LogMessage("     IPv6 Memory Used: %lu\n", serviceStateCache6->mc.memused);
-    }
-#endif
-}
-
 bool AppIdServiceState::prune(size_t max_memory, size_t num_items)
 {
     if ( service_state_cache )

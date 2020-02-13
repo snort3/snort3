@@ -39,7 +39,7 @@ typedef unsigned char uuid_t[16];
 
 namespace snort
 {
-struct GHash;
+class GHash;
 struct SnortConfig;
 }
 
@@ -48,7 +48,7 @@ struct vartable_t;
 struct sfip_var_t;
 
 typedef unsigned int PolicyId;
-typedef struct snort::GHash PortVarTable;
+typedef snort::GHash PortVarTable;
 
 enum PolicyMode
 {

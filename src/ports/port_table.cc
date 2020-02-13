@@ -52,8 +52,7 @@ struct plx_t
 
 static plx_t* plx_new(void* pv_array[], int n)
 {
-    if (!pv_array || n < 0)
-        return nullptr;
+    assert( pv_array && n > 0);
 
     plx_t* p = (plx_t*)snort_calloc(sizeof(plx_t));
     p->p = (void**)snort_calloc(n, sizeof(void*));
@@ -117,24 +116,24 @@ static inline int p_keycmp(const void* a, const void* b)
    -1, and +1 are not strictly needed, they could both return
    a non zero value for the purposes of hashing and searching.
 */
-static int plx_keycmp(const void* a, const void* b, size_t)
+static bool plx_keycmp(const void* a, const void* b, size_t)
 {
     const plx_t* pla = *(plx_t* const*)a;
     const plx_t* plb = *(plx_t* const*)b;
 
     if ( pla->n < plb->n )
-        return -1;
+        return false;
 
     if ( pla->n > plb->n )
-        return 1;
+        return false;
 
     for ( int i = 0; i < pla->n; i++ )
     {
-        if ( int cmp = p_keycmp(&pla->p[i], &plb->p[i]) )
-            return cmp;
+        if ( p_keycmp(&pla->p[i], &plb->p[i]) )
+            return false;
     }
 
-    return 0; /* they are equal */
+    return true; /* they are equal */
 }
 
 //-------------------------------------------------------------------------
@@ -146,9 +145,9 @@ static int plx_keycmp(const void* a, const void* b, size_t)
 
    return values memcmp style
 */
-static int PortObject_keycmp(const void* a, const void* b, size_t)
+static bool PortObject_keycmp(const void* a, const void* b, size_t)
 {
-    return !PortObjectEqual(*(PortObject* const*)a, *(PortObject* const*)b);
+    return PortObjectEqual(*(PortObject* const*)a, *(PortObject* const*)b);
 }
 
 /*
@@ -167,9 +166,9 @@ static unsigned PortObject_hash(HashFnc* p, const unsigned char* d, int)
     SF_LNODE* pos;
 
     /* hash up each item */
-    for ( PortObjectItem* poi = (PortObjectItem*)sflist_first(po->item_list, &pos);
-        poi != nullptr;
-        poi = (PortObjectItem*)sflist_next(&pos) )
+    for (PortObjectItem* poi = (PortObjectItem*)sflist_first(po->item_list, &pos);
+         poi != nullptr;
+         poi = (PortObjectItem*)sflist_next(&pos) )
     {
         if ( poi->any() )
             continue;
@@ -225,112 +224,48 @@ static unsigned PortObject_hash(HashFnc* p, const unsigned char* d, int)
  * lookup.
  */
 static PortObject2* _merge_N_pol(
-    GHash* mhash, GHash* mhashx,
-    SF_LIST* plx_list, void** pol,
-    int pol_cnt, plx_t* plx)
+    GHash* mhash, GHash* mhashx, SF_LIST* plx_list,
+    void** pol, int pol_cnt, plx_t* plx)
 {
-    PortObject2* ponew;
-    PortObject2* pox;
-    plx_t* plx_tmp;
-    int stat;
-
-    /*
-    * Check for the merged port object in the plx table
-    */
-    ponew = (PortObject2*)ghash_find(mhashx, &plx);
-
+    // Check for the merged port object in the plx table
+    PortObject2* ponew = (PortObject2*)mhashx->find(&plx);
     if ( ponew )
-    {
         return ponew;
-    }
 
-    /*
-    *  Merge the port objects together - ports and rules
-    */
+    // Merge the port objects together - ports and rules
+    // Dup the 1st port objects rules and ports
+    ponew = PortObject2Dup(*((PortObject*)pol[0]));
 
-    /* Dup the 1st port objects rules and ports */
-    ponew = PortObject2Dup( (PortObject*)pol[0]);
-    if ( !ponew )
-    {
-        FatalError("Could not Dup2\n");
-    }
-
-    /* Merge in all the other port object rules and ports */
+    // Merge in all the other port object rules and ports
     if ( pol_cnt > 1 )
     {
         for ( int i = 1; i < pol_cnt; i++ )
-        {
             PortObjectAppendEx2(ponew, (PortObject*)pol[i]);
-        }
-        PortObjectNormalize( (PortObject*)ponew);
+
+        PortObjectNormalize((PortObject*)ponew);
     }
 
-    // PortObjectPrint2(ponew);
-
-    /*
-    * Add the Merged PortObject2 to the PortObject2 hash table
-    * keyed by ports.
-    */
-    stat =ghash_add(mhash, &ponew, ponew);
-    if ( stat != GHASH_OK )
+    // Add the Merged PortObject2 to the PortObject2 hash table keyed by ports.
+    int stat = mhash->insert(&ponew, ponew);
+    // This is possible since PLX hash on a different key
+    if ( stat == GHASH_INTABLE )
     {
-        /* This is possible since PLX hash on a different key */
-        if ( stat == GHASH_INTABLE )
-        {
-            pox = (PortObject2*)ghash_find(mhash, &ponew);
-            if ( pox )
-            {
-                PortObject2AppendPortObject2(pox, ponew);
-                PortObject2Free(ponew);
-                ponew = pox;
-            }
-            else
-            {
-                FatalError("mhash add/find error n=%d\n", pol_cnt);
-            }
-        }
-        else
-        {
-            FatalError("Could not add ponew to hash table- error\n");
-        }
+        PortObject2* pox = (PortObject2*)mhash->find(&ponew);
+        assert( pox );
+        PortObject2AppendPortObject2(pox, ponew);
+        PortObject2Free(ponew);
+        ponew = pox;
     }
 
-
-    /*
-    * Create a plx node and add it to plx table
-    * as the key with the merged port object as the data
-    */
-    plx_tmp = plx_new(pol, pol_cnt);
-    if (!plx_tmp)
-    {
-        FatalError("plx_new: memory alloc error\n");
-    }
+    // Create a plx node and add it to plx table as the key with the
+    // merged port object as the data
+    plx_t* plx_tmp = plx_new(pol, pol_cnt);
     sflist_add_head(plx_list, (void*)plx_tmp);
 
-    /*
-     * Add the plx node to the PLX hash table
-     */
-    stat = ghash_add(mhashx, &plx_tmp, ponew);
-    if ( stat != GHASH_OK )
-    {
-        if ( stat == GHASH_INTABLE )
-        {
-            FatalError("Could not add merged plx to PLX HASH table-INTABLE\n");
-        }
-        else
-        {
-            FatalError("Could not add merged plx to PLX HASH table\n");
-        }
-    }
-
-
-    /*
-    *  Validate hash table entry
-    */
-    if ( ghash_find(mhashx, &plx_tmp) != ponew )
-    {
-        FatalError("Find after add failed on PLX HASH table key\n");
-    }
+    // Add the plx node to the PLX hash table
+    stat = mhashx->insert(&plx_tmp, ponew);
+    if ( stat == GHASH_INTABLE )
+        FatalError("Could not add merged plx to PLX HASH table-INTABLE\n");
 
     return ponew;
 }
@@ -410,17 +345,13 @@ static PortObject2* PortTableCompileMergePortObjectList2(
     * Merge Large PortObjects
     */
     if ( nlarge )
-    {
-        ponew =  _merge_N_pol(mhash, mhashx, plx_list, polarge, nlarge, &plx_large);
-    }
+        ponew = _merge_N_pol(mhash, mhashx, plx_list, polarge, nlarge, &plx_large);
 
     /*
     * Merge Small PortObjects
     */
     if ( nsmall )
-    {
         posnew =  _merge_N_pol(mhash, mhashx, plx_list, posmall, nsmall, &plx_small);
-    }
     /*
     * Merge Large and Small (rule groups) PortObject2's together
     * append small port object rule sets to the large port objects,
@@ -522,35 +453,27 @@ static inline void delete_port_lists(SF_LIST** parray)
 }
 
 
-static int PortTableCompileMergePortObjects(PortTable* p)
+static void PortTableCompileMergePortObjects(PortTable* p)
 {
     std::unique_ptr<PortObject*[]> upA(new PortObject*[SFPO_MAX_LPORTS]);
     PortObject** pol = upA.get();
 
     // Create a Merged Port Object Table - hash by ports, no user keys, don't free data
-    GHash* mhash = ghash_new(PO_HASH_TBL_ROWS, sizeof(PortObject*), 0, nullptr);
+    GHash* mhash = new GHash(PO_HASH_TBL_ROWS, sizeof(PortObject*), 0, nullptr);
 
-    /* Setup hashing function and key comparison function */
-    hashfcn_set_keyops(mhash->hashfcn, PortObject_hash, PortObject_keycmp);
-
+    mhash->set_key_opcodes(PortObject_hash, PortObject_keycmp);
     p->pt_mpo_hash = mhash;
 
     // Create a Merged Port Object Table - hash by pointers, no user keys, don't free data
-    GHash* mhashx = ghash_new(PO_HASH_TBL_ROWS, sizeof(plx_t*), 0, nullptr);
-
-    /* Setup hashing function and key comparison function */
-    hashfcn_set_keyops(mhashx->hashfcn, plx_hash, plx_keycmp);
+    GHash* mhashx = new GHash(PO_HASH_TBL_ROWS, sizeof(plx_t*), 0, nullptr);
+    mhashx->set_key_opcodes(plx_hash, plx_keycmp);
 
     p->pt_mpxo_hash = mhashx;
-
     SF_LIST* plx_list = sflist_new();
-
     SF_LIST** optimized_pl = create_port_lists(p);
 
-    /*
-     *  For each port, merge rules from all port objects that touch the port
-     *  into an optimal object, that may be shared with other ports.
-     */
+    // For each port, merge rules from all port objects that touch the port
+    // into an optimal object, that may be shared with other ports.
     int id = PO_INIT_ID;
 
     for ( int i = 0; i < SFPO_MAX_PORTS; i++ )
@@ -561,35 +484,23 @@ static int PortTableCompileMergePortObjects(PortTable* p)
         SF_LNODE* lpos;
 
         for (po = (PortObject*)sflist_first(optimized_pl[i], &lpos);
-            po;
-            po = (PortObject*)sflist_next(&lpos) )
+             po;
+             po = (PortObject*)sflist_next(&lpos) )
         {
             if (pol_cnt < SFPO_MAX_LPORTS )
-            {
                 pol[ pol_cnt++ ] = po;
-            }
         }
         p->pt_port_object[i] = nullptr;
 
         if ( !pol_cnt )
-        {
-            //port not contained in any PortObject
-            continue;
-        }
+            continue;            //port not contained in any PortObject
 
         /* merge the rules into an optimal port object */
         p->pt_port_object[i] =
             PortTableCompileMergePortObjectList2(
                 mhash, mhashx, plx_list, pol, pol_cnt, p->pt_lrc);
-
-        if ( !p->pt_port_object[i] )
-        {
-            FatalError(" Could not merge PorObjectList on port %d\n", i);
-        }
-
-        /* give the new compiled port object an id of its own */
-        p->pt_port_object[i]->id = id++;
-
+        assert( p->pt_port_object[i] );
+        p->pt_port_object[i]->id = id++;  // set the port object id
     }
 
     delete_port_lists(optimized_pl);
@@ -601,62 +512,45 @@ static int PortTableCompileMergePortObjects(PortTable* p)
      */
 
     /* 1st- Setup bitmasks for collecting ports */
-    for (GHashNode* node=ghash_findfirst(mhashx);
-        node;
-        node=ghash_findnext(mhashx) )
+    for (GHashNode* node = mhashx->find_first();
+         node;
+         node = mhashx->find_next())
     {
         PortObject2* poa = (PortObject2*)node->data;
 
         if ( !poa )
             continue;
 
-        if (!poa->port_list)
-        {
+        if ( !poa->port_list )
             poa->port_list = new PortBitSet;
-
-            if ( !poa->port_list)
-                FatalError("Memory error in PortTableCompile\n");
-        }
     }
 
     /* Count how many ports each final port-object is used on */
     for ( int i = 0; i < SFPO_MAX_PORTS; i++ )
     {
-        PortObject2* poa;
-        poa = p->pt_port_object[i];
-        if (poa)
+        PortObject2* poa = p->pt_port_object[i];
+        if ( poa )
         {
             poa->port_cnt++;
 
             if ( poa->port_list )
                 poa->port_list->set(i);
-
             else
                 FatalError("NULL po->port_list in po on port %d\n", i);
         }
     }
 
     /* Process Port map and print final port-object usage stats */
-    for (GHashNode* node=ghash_findfirst(mhashx);
-        node;
-        node=ghash_findnext(mhashx) )
+    for (GHashNode* node = mhashx->find_first();
+         node;
+         node = mhashx->find_next())
     {
         PortObject2* po = (PortObject2*)node->data;
-
-        if ( !po )
-            FatalError("MergePortOBject-NormalizePorts -NULL po\n");
-
-        if ( !po->port_cnt ) /* port object is not used ignore it */
+        assert( po );
+        if ( !po->port_cnt || !po->port_list ) /* port object is not used ignore it */
             continue;
-
-        if ( !po->port_list )
-        {
-            //FatalError("MergePortOBject-NormalizePorts -NULL po->port_list\n");
-            continue;
-        }
 
         PortBitSet parray;
-
         /* Convert the port_list bits to a char array */
         for ( int i = 0; i < SFPO_MAX_PORTS; i++ )
             parray[ i ] = po->port_list->test(i);
@@ -670,22 +564,11 @@ static int PortTableCompileMergePortObjects(PortTable* p)
 
         /* Build a PortObjectItem list from the char array */
         SF_LIST* plist = PortObjectItemListFromBits(parray, SFPO_MAX_PORTS);
-
-        if ( !plist )
-        {
-            FatalError("MergePortObjects: No PortObjectItems in portobject\n");
-        }
-
-        /* free the original list */
-        sflist_free_all(po->item_list, snort_free);
-
-        /* set the new list - this is a list of port items for this port object */
-        po->item_list = plist;
-
+        sflist_free_all(po->item_list, snort_free);        // free the original list
+        po->item_list = plist;      // set the new port object list of port items
     }
 
     sflist_free_all(plx_list, plx_free);
-    return 0;
 }
 
 #ifdef DEBUG
@@ -704,7 +587,7 @@ static int _po2_include_po_rules(PortObject2* po2, PortObject* po)
         pid = (int*)sflist_next(&rpos) )
     {
         /* find it in po2 */
-        int* id = (int*)ghash_find(po2->rule_hash, pid);
+        int* id = (int*)po2->rule_hash->find(pid);
 
         /* make sure it's in po2 */
         if ( !id )
@@ -722,9 +605,9 @@ static bool PortTableConsistencyCheck(PortTable* p)
     char* parray = upA.get();
     memset(parray, 0, SFPO_MAX_PORTS);
 
-    for ( GHashNode* node=ghash_findfirst(p->pt_mpo_hash);
-        node;
-        node=ghash_findnext(p->pt_mpo_hash) )
+    for (GHashNode* node = p->pt_mpo_hash->find_first();
+         node;
+         node = p->pt_mpo_hash->find_next())
     {
         PortObject2* po = (PortObject2*)node->data;
 
@@ -741,9 +624,8 @@ static bool PortTableConsistencyCheck(PortTable* p)
             if ( PortObjectHasPort( (PortObject*)po, i) )
             {
                 if ( parray[i] )
-                {
                     return false;
-                }
+
                 parray[i] = 1;
             }
         }
@@ -812,13 +694,6 @@ PortTable* PortTableNew()
 {
     PortTable* p = (PortTable*)snort_calloc(sizeof(PortTable));
     p->pt_polist = sflist_new();
-
-    if (!p->pt_polist )
-    {
-        snort_free(p);
-        return nullptr;
-    }
-
     p->pt_lrc = PTBL_LRC_DEFAULT; /* 10 rules, user should really control these */
     p->pt_optimize = 1; /* if disabled, only one merged rule group is used */
 
@@ -834,22 +709,22 @@ void PortTableFree(PortTable* p)
     {
         sflist_free_all(p->pt_polist, PortObjectFree);
     }
+
     if (p->pt_mpo_hash)
     {
 
-        for ( GHashNode* node = ghash_findfirst(p->pt_mpo_hash);
-            node;
-            node = ghash_findnext(p->pt_mpo_hash) )
+        for (GHashNode* node = p->pt_mpo_hash->find_first();
+             node;
+             node = p->pt_mpo_hash->find_next())
         {
             PortObject2* po = (PortObject2*)node->data;
             PortObject2Free(po);
         }
-        ghash_delete(p->pt_mpo_hash);
+        delete p->pt_mpo_hash;
     }
+
     if (p->pt_mpxo_hash)
-    {
-        ghash_delete(p->pt_mpxo_hash);
-    }
+        delete p->pt_mpxo_hash;
 
     snort_free(p);
 }
@@ -857,7 +732,7 @@ void PortTableFree(PortTable* p)
 // FIXIT-P we should be able to free pt_mpo_hash early too
 void PortTableFinalize(PortTable* p)
 {
-    ghash_delete(p->pt_mpxo_hash);
+    delete p->pt_mpxo_hash;
     p->pt_mpxo_hash = nullptr;
 }
 
@@ -873,9 +748,7 @@ PortObject* PortTableFindInputPortObjectPorts(PortTable* pt, PortObject* pox)
         po = (PortObject*)sflist_next(&lpos) )
     {
         if ( PortObjectEqual(po, pox) )
-        {
             return po;
-        }
     }
     return nullptr;
 }
@@ -912,17 +785,11 @@ int PortTableAddObject(PortTable* p, PortObject* po)
 */
 int PortTableCompile(PortTable* p)
 {
-    /*
-    *  If not using an optimized Table use the rule_index_map in parser.c
-    */
+    // If not using an optimized Table use the rule_index_map in parser.c
     if ( !p->pt_optimize )
         return 0;
 
-    if ( PortTableCompileMergePortObjects(p) )
-    {
-        FatalError("Could not create PortArryayLists\n");
-    }
-
+    PortTableCompileMergePortObjects(p);
 
 #ifdef DEBUG
     assert(PortTableConsistencyCheck(p));
@@ -947,11 +814,11 @@ void PortTablePrintInputEx(PortTable* p, rim_print_f print_index_map)
 int PortTablePrintCompiledEx(PortTable* p, rim_print_f print_index_map)
 {
     LogMessage(" *** PortTableCompiled  [ %d compiled port groups ] \n\n",
-        p->pt_mpo_hash->count);
+        p->pt_mpo_hash->get_count());
 
-    for ( GHashNode* node = ghash_findfirst(p->pt_mpo_hash);
-        node!= nullptr;
-        node = ghash_findnext(p->pt_mpo_hash) )
+    for (GHashNode* node = p->pt_mpo_hash->find_first();
+         node != nullptr;
+         node = p->pt_mpo_hash->find_next())
     {
         PortObject2* po = (PortObject2*)node->data;
         PortObject2PrintEx(po, print_index_map);
@@ -999,11 +866,11 @@ void PortTablePrintPortGroups(PortTable* p)
 {
     /* normalized user PortObjects and rule ids */
     LogMessage(">>>PortTable - Compiled Port Groups\n");
-    LogMessage("   [ %d port groups ] \n\n", p->pt_mpo_hash->count);
+    LogMessage("   [ %d port groups ] \n\n", p->pt_mpo_hash->get_count());
 
-    for ( GHashNode* ponode = ghash_findfirst(p->pt_mpo_hash);
-        ponode!= nullptr;
-        ponode = ghash_findnext(p->pt_mpo_hash) )
+    for (GHashNode* ponode = p->pt_mpo_hash->find_first();
+         ponode != nullptr;
+         ponode = p->pt_mpo_hash->find_next())
     {
         PortObject2* po = (PortObject2*)ponode->data;
         PortObject2Print(po);

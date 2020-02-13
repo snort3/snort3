@@ -808,7 +808,8 @@ static void Term()
             p->rule = nullptr;
         }
     }
-    xhash_delete(dThd);
+
+    delete dThd;
 }
 
 static int SetupCheck(int i)

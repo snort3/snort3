@@ -223,15 +223,8 @@ static int FinishPortListRule(
         PortObject* pox = PortTableFindInputPortObjectPorts(dstTable, rtn->dst_portobject);
         if ( !pox )
         {
-            /* Create a permanent port object */
-            pox = PortObjectDupPorts(rtn->dst_portobject);
-            if ( !pox )
-            {
-                ParseError("could not dup a port object - out of memory.");
-                return -1;
-            }
-
             /* Add the port object to the table, and add the rule to the port object */
+            pox = PortObjectDupPorts(rtn->dst_portobject);
             PortTableAddObject(dstTable, pox);
         }
 
@@ -244,12 +237,6 @@ static int FinishPortListRule(
             if ( !pox )
             {
                 pox = PortObjectDupPorts(rtn->dst_portobject);
-                if ( !pox )
-                {
-                    ParseError("could not dup a bidir-port object - out of memory.");
-                    return -1;
-                }
-
                 PortTableAddObject(srcTable, pox);
             }
 
@@ -262,15 +249,9 @@ static int FinishPortListRule(
     {
         prc->src++;
         PortObject* pox = PortTableFindInputPortObjectPorts(srcTable, rtn->src_portobject);
-
         if ( !pox )
         {
             pox = PortObjectDupPorts(rtn->src_portobject);
-            if ( !pox )
-            {
-                ParseError("could not dup a port object - out of memory.");
-                return -1;
-            }
             PortTableAddObject(srcTable, pox);
         }
 
@@ -283,12 +264,6 @@ static int FinishPortListRule(
             if ( !pox )
             {
                 pox = PortObjectDupPorts(rtn->src_portobject);
-                if ( !pox )
-                {
-                    ParseError("could not dup a bidir-port object - out of memory.");
-                    return -1;
-                }
-
                 PortTableAddObject(dstTable, pox);
             }
             PortObjectAddRule(pox, otn->ruleIndex);
@@ -625,7 +600,7 @@ static RuleTreeNode* findHeadNode(
     if ( sc->rtn_hash_table )
     {
         RuleTreeNodeKey key { testNode, policyId };
-        return (RuleTreeNode*)xhash_find(sc->rtn_hash_table, &key);
+        return (RuleTreeNode*)sc->rtn_hash_table->get_user_data(&key);
     }
 
     return nullptr;

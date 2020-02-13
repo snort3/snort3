@@ -68,22 +68,17 @@ void FileMagicRule::clear()
 
 void FileIdentifier::init_merge_hash()
 {
-    identifier_merge_hash = ghash_new(1000, sizeof(MergeNode), 0, nullptr);
-    assert(identifier_merge_hash);
+    identifier_merge_hash = new GHash(1000, sizeof(MergeNode), 0, nullptr);
 }
 
 FileIdentifier::~FileIdentifier()
 {
     /*Release memory used for identifiers*/
     for (auto mem_block:id_memory_blocks)
-    {
         snort_free(mem_block);
-    }
 
     if (identifier_merge_hash != nullptr)
-    {
-        ghash_delete(identifier_merge_hash);
-    }
+        delete identifier_merge_hash;
 }
 
 void* FileIdentifier::calloc_mem(size_t size)
@@ -176,7 +171,7 @@ IdentifierNode* FileIdentifier::create_trie_from_magic(FileMagicRule& rule, uint
 
 /*This function examines whether to update the trie based on shared state*/
 
-bool FileIdentifier::update_next(IdentifierNode* start,IdentifierNode** next_ptr,
+bool FileIdentifier::update_next(IdentifierNode* start, IdentifierNode** next_ptr,
     IdentifierNode* append)
 {
     IdentifierNode* next = (*next_ptr);
@@ -195,7 +190,7 @@ bool FileIdentifier::update_next(IdentifierNode* start,IdentifierNode** next_ptr
         set_node_state_shared(append);
         return false;
     }
-    else if ((result = (IdentifierNode*)ghash_find(identifier_merge_hash, &merge_node)))
+    else if ((result = (IdentifierNode*)identifier_merge_hash->find(&merge_node)))
     {
         /*the same pointer has been processed, reuse it*/
         *next_ptr = result;
@@ -220,7 +215,7 @@ bool FileIdentifier::update_next(IdentifierNode* start,IdentifierNode** next_ptr
 
             set_node_state_shared(next);
             next = node;
-            ghash_add(identifier_merge_hash, &merge_node, next);
+            identifier_merge_hash->insert(&merge_node, next);
         }
         else if (next->state == ID_NODE_SHARED)
         {
@@ -230,7 +225,7 @@ bool FileIdentifier::update_next(IdentifierNode* start,IdentifierNode** next_ptr
             merge_node.append_node = append;
             next = clone_node(current_next);
             set_node_state_shared(next);
-            ghash_add(identifier_merge_hash, &merge_node, next);
+            identifier_merge_hash->insert(&merge_node, next);
         }
 
         *next_ptr = next;

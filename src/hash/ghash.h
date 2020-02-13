@@ -26,57 +26,63 @@
 
 #include "main/snort_types.h"
 
-struct HashFnc;
+#include "hashfcn.h"
 
 namespace snort
 {
-
-#define GHASH_NOMEM    (-2)
-#define GHASH_ERR      (-1)
+#define GHASH_NOT_FOUND      (-1)
 #define GHASH_OK        0
 #define GHASH_INTABLE   1
 
-// Flags for ghash_new: userkeys
-#define GH_COPYKEYS 0
-#define GH_USERKEYS 1
-
 struct GHashNode
 {
-    struct GHashNode* next, * prev;
-
+    struct GHashNode* next;
+    struct GHashNode* prev;
     const void* key;  /* Copy of, or Pointer to, the Users key */
     void* data;       /* The users data, this is never copied! */
 };
 
 typedef void (* gHashFree)(void*);
 
-struct GHash
+class SO_PUBLIC GHash
 {
-    HashFnc* hashfcn;
-    int keysize;          /* bytes in key, if < 0 -> keys are strings */
-    int userkey;          /* user owns the key */
+public:
+    GHash(int nrows, unsigned keysize, bool userkey, gHashFree);
+    ~GHash();
 
-    GHashNode** table; /* array of node ptr's */
-    int nrows;            /* # rows int the hash table use a prime number 211, 9871 */
+    int insert(const void* const key, void* const data);
+    int remove(const void* const key);
+    void* find(const void* const key);
+    GHashNode* find_first();
+    GHashNode* find_next();
+    void set_key_opcodes(hash_func, keycmp_func);
 
-    unsigned count;       /* total # nodes in table */
+    unsigned get_count() const
+    { return count; }
 
+private:
+    void set_node_parameters(const void* const key);
+    GHashNode* find_node(const void* const key);
+    int free_node(unsigned index, GHashNode*);
+    void next();
+
+    unsigned keysize;     // bytes in key, if < 0 -> keys are strings
+    bool userkey;          // user owns the key */
     gHashFree userfree;
+    int nrows;            // # rows int the hash table use a prime number 211, 9871
+    HashFnc* hashfcn;
+    GHashNode** table;    // array of node ptr's
+    unsigned count;       // total # nodes in table
+    int crow;             // findfirst/next row in table
+    GHashNode* cnode;     // findfirst/next node ptr
 
-    int crow;             /* findfirst/next row in table */
-    GHashNode* cnode;  /* findfirst/next node ptr */
+    // node parameters for search/add/remove
+    unsigned klen = 0;
+    unsigned hashkey = 0;
+    int index = 0;
 };
 
-SO_PUBLIC GHash* ghash_new(int nrows, int keysize, int userkeys, gHashFree);
-SO_PUBLIC void ghash_delete(GHash*);
-SO_PUBLIC int ghash_add(GHash*, const void* const key, void* const data);
-SO_PUBLIC int ghash_remove(GHash*, const void* const key);
-SO_PUBLIC void* ghash_find(GHash*, const void* const key);
-SO_PUBLIC GHashNode* ghash_findfirst(GHash*);
-SO_PUBLIC GHashNode* ghash_findnext(GHash*);
-SO_PUBLIC int ghash_set_keyops(GHash*,
-unsigned (* hash_fcn)(HashFnc* p, const unsigned char* d, int n),
-int (* keycmp_fcn)(const void* s1, const void* s2, size_t n));
+
 }
 #endif
 

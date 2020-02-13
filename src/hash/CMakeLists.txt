@@ -1,6 +1,7 @@
 
 set (HASH_INCLUDES
     hashes.h
+    hash_defs.h
     ghash.h 
     xhash.h 
     hashfcn.h

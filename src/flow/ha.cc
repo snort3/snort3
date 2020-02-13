@@ -658,7 +658,7 @@ Flow* HighAvailability::process_daq_import(Packet& p, FlowKey& key)
             // Validate that the imported flow matches up with the given flow key.
             if (flow)
             {
-                if (FlowKey::compare(&key, flow->key, 0) == 0)
+                if (FlowKey::is_equal(&key, flow->key, 0))
                 {
                     if (flow->flow_state == Flow::FlowState::BLOCK)
                     {

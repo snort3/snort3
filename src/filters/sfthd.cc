@@ -57,20 +57,10 @@ XHash* sfthd_new_hash(unsigned nbytes, size_t key, size_t data)
 
     /* Calc max ip nodes for this memory */
     if ( nbytes < size )
-    {
         nbytes = size;
-    }
-    nrows = nbytes / (size);
+    nrows = nbytes / size;
 
-    return xhash_new(
-        nrows,  /* try one node per row - for speed */
-        key,    /* keys size */
-        data,   /* data size */
-        nbytes, /* memcap **/
-        1,      /* ANR flag - true ?- Automatic Node Recovery=ANR */
-        nullptr,      /* ANR callback - none */
-        nullptr,      /* user freemem callback - none */
-        1);     /* Recycle nodes ?*/
+    return new XHash(nrows, key, data, nbytes, true, nullptr, nullptr, true);
 }
 
 /*!
@@ -142,7 +132,7 @@ THD_STRUCT* sfthd_new(unsigned lbytes, unsigned gbytes)
 #ifdef THD_DEBUG
         printf("Could not allocate the sfxhash table\n");
 #endif
-        xhash_delete(thd->ip_nodes);
+        delete thd->ip_nodes;
         snort_free(thd);
         return nullptr;
     }
@@ -179,24 +169,24 @@ void sfthd_objs_free(ThresholdObjects* thd_objs)
 
     for (i = 0; i < THD_MAX_GENID; i++)
     {
-        if (thd_objs->sfthd_array[i])
-            ghash_delete(thd_objs->sfthd_array[i]);
+        if ( thd_objs->sfthd_array[i] )
+            delete thd_objs->sfthd_array[i];
     }
 
     for (policyId = 0; policyId < thd_objs->numPoliciesAllocated; policyId++)
     {
-        if (thd_objs->sfthd_garray[policyId] == nullptr)
+        if ( !thd_objs->sfthd_garray[policyId] )
             continue;
 
-        if (thd_objs->sfthd_garray[policyId][0] != nullptr)
+        if ( thd_objs->sfthd_garray[policyId][0] )
         {
             sfthd_node_free(thd_objs->sfthd_garray[policyId][0]);
 
             /* Free any individuals */
             for (i = 0; i < THD_MAX_GENID; i++)
             {
-                if (thd_objs->sfthd_garray[policyId][i] !=
-                    thd_objs->sfthd_garray[policyId][0])
+                if ( thd_objs->sfthd_garray[policyId][i] !=
+                    thd_objs->sfthd_garray[policyId][0] )
                 {
                     sfthd_node_free(thd_objs->sfthd_garray[policyId][i]);
                 }
@@ -207,17 +197,15 @@ void sfthd_objs_free(ThresholdObjects* thd_objs)
             /* Anything other GID will be allocated individually */
             for (i = 1; i < THD_MAX_GENID; i++)
             {
-                if (thd_objs->sfthd_garray[policyId][i])
-                {
+                if ( thd_objs->sfthd_garray[policyId][i] )
                     sfthd_node_free(thd_objs->sfthd_garray[policyId][i]);
-                }
             }
         }
 
         snort_free(thd_objs->sfthd_garray[policyId]);
     }
 
-    if (thd_objs->sfthd_garray != nullptr)
+    if ( thd_objs->sfthd_garray )
         snort_free(thd_objs->sfthd_garray);
 
     snort_free(thd_objs);
@@ -235,11 +223,11 @@ void sfthd_free(THD_STRUCT* thd)
     if (thd == nullptr)
         return;
 
-    if (thd->ip_nodes != nullptr)
-        xhash_delete(thd->ip_nodes);
+    if ( thd->ip_nodes )
+        delete thd->ip_nodes;
 
-    if (thd->ip_gnodes != nullptr)
-        xhash_delete(thd->ip_gnodes);
+    if ( thd->ip_gnodes )
+        delete thd->ip_gnodes;
 
     snort_free(thd);
 }
@@ -319,12 +307,7 @@ static int sfthd_create_threshold_local(
         }
 
         /* Create the hash table for this gen_id */
-        sfthd_hash = ghash_new(nrows, sizeof(tThdItemKey), 0, sfthd_item_free);
-        if ( !sfthd_hash )
-        {
-            return -2;
-        }
-
+        sfthd_hash = new GHash(nrows, sizeof(tThdItemKey), false, sfthd_item_free);
         thd_objs->sfthd_array[config->gen_id] = sfthd_hash;
     }
     else
@@ -340,7 +323,7 @@ static int sfthd_create_threshold_local(
     key.policyId = policy_id;
 
     /* Check if sig_id is already in the table - if not allocate and add it */
-    sfthd_item = (THD_ITEM*)ghash_find(sfthd_hash, (void*)&key);
+    sfthd_item = (THD_ITEM*)sfthd_hash->find((void*)&key);
     if ( !sfthd_item )
     {
         /* Create the sfthd_item hash node data */
@@ -358,7 +341,7 @@ static int sfthd_create_threshold_local(
         }
 
         /* Add the sfthd_item to the hash table */
-        if ( ghash_add(sfthd_hash, (void*)&key, sfthd_item) )
+        if ( sfthd_hash->insert((void*)&key, sfthd_item) )
         {
             sflist_free(sfthd_item->sfthd_node_list);
             snort_free(sfthd_item);
@@ -904,21 +887,21 @@ int sfthd_test_local(
     /*
      * Check for any Permanent sig_id objects for this gen_id  or add this one ...
      */
-    int status = xhash_add(local_hash, (void*)&key, &data);
-    if (status == XHASH_INTABLE)
+    int status = local_hash->insert((void*)&key, &data);
+    if (status == HASH_INTABLE)
     {
         /* Already in the table */
-        sfthd_ip_node = (THD_IP_NODE*)local_hash->cnode->data;
+        sfthd_ip_node = (THD_IP_NODE*)local_hash->get_cnode()->data;
 
         /* Increment the event count */
         sfthd_ip_node->count++;
     }
-    else if (status == XHASH_NOMEM)
+    else if (status == HASH_NOMEM)
     {
         event_filter_stats.xhash_nomem_peg_local++;
         return 1;
     }
-    else if (status != XHASH_OK)
+    else if (status != HASH_OK)
     {
         /* hash error */
         return 1; /*  check the next threshold object */
@@ -1002,21 +985,21 @@ static inline int sfthd_test_global(
     data.tstart = data.tlast = curtime; /* Event time */
 
     /* Check for any Permanent sig_id objects for this gen_id  or add this one ...  */
-    int status = xhash_add(global_hash, (void*)&key, &data);
-    if (status == XHASH_INTABLE)
+    int status = global_hash->insert((void*)&key, &data);
+    if (status == HASH_INTABLE)
     {
         /* Already in the table */
-        sfthd_ip_node = (THD_IP_NODE*)global_hash->cnode->data;
+        sfthd_ip_node = (THD_IP_NODE*)global_hash->get_cnode()->data;
 
         /* Increment the event count */
         sfthd_ip_node->count++;
     }
-    else if (status == XHASH_NOMEM)
+    else if (status == HASH_NOMEM)
     {
         event_filter_stats.xhash_nomem_peg_global++;
         return 1;
     }
-    else if (status != XHASH_OK)
+    else if (status != HASH_OK)
     {
         /* hash error */
         return 1; /*  check the next threshold object */
@@ -1103,7 +1086,7 @@ int sfthd_test_threshold(
     /*
      * Check for any Permanent sig_id objects for this gen_id
      */
-    sfthd_item = (THD_ITEM*)ghash_find(sfthd_hash, (void*)&key);
+    sfthd_item = (THD_ITEM*)sfthd_hash->find((void*)&key);
     if (sfthd_item == nullptr)
     {
 #ifdef THD_DEBUG
@@ -1235,9 +1218,9 @@ int sfthd_show_objects(ThresholdObjects* thd_objs)
 
         printf("...GEN_ID = %u\n",gen_id);
 
-        for (item_hash_node  = ghash_findfirst(sfthd_hash);
-            item_hash_node != 0;
-            item_hash_node  = ghash_findnext(sfthd_hash) )
+        for (item_hash_node  = sfthd_hash->ghash_findfirst();
+             item_hash_node != 0;
+             item_hash_node  = sfthd_hash->ghash_findnext() )
         {
             /* Check for any Permanent sig_id objects for this gen_id */
             sfthd_item = (THD_ITEM*)item_hash_node->data;

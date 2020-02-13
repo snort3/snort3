@@ -53,8 +53,8 @@ void RateFilter_ConfigFree(RateFilterConfig* config)
 
     for (i = 0; i < SFRF_MAX_GENID; i++)
     {
-        if (config->genHash[i] != nullptr)
-            ghash_delete(config->genHash[i]);
+        if ( config->genHash[i] )
+            delete config->genHash[i];
     }
 
     snort_free(config);

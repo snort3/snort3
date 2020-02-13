@@ -31,7 +31,7 @@
 
 namespace snort
 {
-struct GHash;
+class GHash;
 struct SnortConfig;
 }
 

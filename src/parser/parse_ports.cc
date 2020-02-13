@@ -221,11 +221,7 @@ static uint16_t POParserGetShort(POParser* pop)
 
 static PortObject* _POParseVar(POParser* pop)
 {
-    PortObject* pox;
-    char* name;
-
-    name  = POParserName(pop);
-
+    char* name  = POParserName(pop);
     if (!name)
     {
         pop->pos++;
@@ -233,7 +229,7 @@ static PortObject* _POParseVar(POParser* pop)
         return nullptr;
     }
 
-    pox = PortVarTableFind(pop->pvTable, name);
+    PortObject* pox = PortVarTableFind(pop->pvTable, name);
     snort_free(name);
 
     if (!pox)
@@ -243,25 +239,12 @@ static PortObject* _POParseVar(POParser* pop)
     }
 
     pox = PortObjectDup(pox);
-
-    if (!pox)
-    {
-        pop->errflag = POPERR_MALLOC_FAILED;
-        return nullptr;
-    }
-
     return pox;
 }
 
 static PortObject* _POParsePort(POParser* pop)
 {
     PortObject* po = PortObjectNew();
-
-    if (!po)
-    {
-        pop->errflag = POPERR_MALLOC_FAILED;
-        return nullptr;
-    }
 
     pop->token[0] = 0;
 
@@ -329,20 +312,12 @@ static PortObject* _POParsePort(POParser* pop)
 
 static PortObject* _POParseString(POParser* pop)
 {
-    PortObject* po;
     PortObject* potmp = nullptr;
     int local_neg = 0;
     char c;
     int list_count = 0;
 
-    po = PortObjectNew();
-
-    if (!po)
-    {
-        pop->errflag = POPERR_MALLOC_FAILED;
-        return nullptr;
-    }
-
+    PortObject* po = PortObjectNew();
     while ( (c = POPGetChar2(pop)) != 0 )
     {
         if (c == '!')
@@ -475,16 +450,8 @@ static PortObject* _POParseString(POParser* pop)
 PortObject* PortObjectParseString(PortVarTable* pvTable, POParser* pop,
     const char* name, const char* s, int nameflag)
 {
-    PortObject* po, * potmp;
-
     POParserInit(pop, s, pvTable);
-
-    po = PortObjectNew();
-    if ( !po )
-    {
-        pop->errflag = POPERR_MALLOC_FAILED;
-        return nullptr;
-    }
+    PortObject* po = PortObjectNew();
 
     if ( nameflag ) /* parse a name */
     {
@@ -506,8 +473,7 @@ PortObject* PortObjectParseString(PortVarTable* pvTable, POParser* pop,
 
     // LogMessage("PortObjectParseString: po->name=%s\n",po->name);
 
-    potmp = _POParseString(pop);
-
+    PortObject* potmp = _POParseString(pop);
     if ( !potmp )
     {
         PortObjectFree(po);

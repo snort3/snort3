@@ -114,7 +114,7 @@ void ps_cleanup()
 {
     if ( portscan_hash )
     {
-        xhash_delete(portscan_hash);
+        delete portscan_hash;
         portscan_hash = nullptr;
     }
 }
@@ -126,18 +126,14 @@ bool ps_init_hash(unsigned long memcap)
 {
     if ( portscan_hash )
     {
-        bool need_pruning = (memcap < portscan_hash->mc.memused);
-        portscan_hash->mc.memcap = memcap;
+        bool need_pruning = (memcap < portscan_hash->get_mem_used());
+        portscan_hash->set_memcap(memcap);
         return need_pruning;
     }
 
     int rows = memcap / ps_node_size();
-
-    portscan_hash = xhash_new(rows, sizeof(PS_HASH_KEY), sizeof(PS_TRACKER),
-        memcap, 1, ps_tracker_free, nullptr, 1);
-
-    if ( !portscan_hash )
-        FatalError("Failed to initialize portscan hash table.\n");
+    portscan_hash = new XHash(rows, sizeof(PS_HASH_KEY), sizeof(PS_TRACKER),
+        memcap, true, ps_tracker_free, nullptr, true);
 
     return false;
 }
@@ -148,15 +144,15 @@ bool ps_prune_hash(unsigned work_limit)
         return true;
 
     unsigned num_pruned = 0;
-    int result = xhash_free_overallocations(portscan_hash, work_limit, &num_pruned);
+    int result = portscan_hash->free_over_allocations(work_limit, &num_pruned);
     spstats.reload_prunes += num_pruned;
-    return result != XHASH_PENDING;
+    return result != HASH_PENDING;
 }
 
 void ps_reset()
 {
     if ( portscan_hash )
-        xhash_make_empty(portscan_hash);
+        portscan_hash->clear();
 }
 
 //  Check scanner and scanned ips to see if we can filter them out.
@@ -296,20 +292,20 @@ bool PortScan::ps_filter_ignore(PS_PKT* ps_pkt)
 */
 static PS_TRACKER* ps_tracker_get(PS_HASH_KEY* key)
 {
-    PS_TRACKER* ht = (PS_TRACKER*)xhash_find(portscan_hash, (void*)key);
+    PS_TRACKER* ht = (PS_TRACKER*)portscan_hash->get_user_data((void*)key);
 
     if ( ht )
         return ht;
 
-    auto prev_count = portscan_hash->count;
-    if ( xhash_add(portscan_hash, (void*)key, nullptr) != XHASH_OK )
+    auto prev_count = portscan_hash->get_node_count();
+    if ( portscan_hash->insert((void*)key, nullptr) != HASH_OK )
         return nullptr;
 
     ++spstats.trackers;
-    if ( prev_count == portscan_hash->count )
+    if ( prev_count == portscan_hash->get_node_count() )
         ++spstats.alloc_prunes;
 
-    ht = (PS_TRACKER*)xhash_mru(portscan_hash);
+    ht = (PS_TRACKER*)portscan_hash->get_mru_user_data();
 
     if ( ht )
         memset(ht, 0x00, sizeof(PS_TRACKER));

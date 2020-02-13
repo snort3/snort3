@@ -71,7 +71,7 @@ struct SO_PUBLIC FlowKey
 
     // If this data structure changes size, compare must be updated!
     static uint32_t hash(HashFnc*, const unsigned char* d, int);
-    static int compare(const void* s1, const void* s2, size_t);
+    static bool is_equal(const void* s1, const void* s2, size_t);
 
 private:
     bool init4(

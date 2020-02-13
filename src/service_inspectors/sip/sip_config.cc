@@ -25,6 +25,8 @@
 
 #include "sip_config.h"
 
+#include <cassert>
+
 #include "log/messages.h"
 #include "main/snort_debug.h"
 #include "utils/util.h"
@@ -86,11 +88,8 @@ void SIP_SetDefaultMethods(SIP_PROTO_CONF* config)
     config->methodsConfig = SIP_METHOD_DEFAULT;
     for (i = 0; i < 6; i++)
     {
-        if (SIP_AddMethodToList(StandardMethods[i].name,
-            StandardMethods[i].methodFlag, &config->methods) == nullptr)
-        {
-            FatalError("Failed to add SIP default method: %s.\n", StandardMethods[i].name);
-        }
+        SIP_AddMethodToList(StandardMethods[i].name,
+            StandardMethods[i].methodFlag, &config->methods);
     }
 }
 
@@ -124,11 +123,7 @@ void SIP_ParseMethods(const char* cur_tokenp, uint32_t* methodsConfig, SIPMethod
     if (METHOD_NOT_FOUND != i_method )
     {
         *methodsConfig |= 1 << (StandardMethods[i_method].methodFlag - 1);
-        if (SIP_AddMethodToList(cur_tokenp,
-            StandardMethods[i_method].methodFlag, pmethods) == nullptr)
-        {
-            ParseError("Failed to add SIP method: %s.", cur_tokenp);
-        }
+        SIP_AddMethodToList(cur_tokenp, StandardMethods[i_method].methodFlag, pmethods);
     }
     else
     {
@@ -142,8 +137,7 @@ void SIP_ParseMethods(const char* cur_tokenp, uint32_t* methodsConfig, SIPMethod
 static SIPMethodNode* SIP_AddMethodToList(
     const char* methodName, SIPMethodsFlag methodConf, SIPMethodlist* p_methodList)
 {
-    if ( !methodName )
-        return nullptr;
+    assert (methodName );
 
     int methodLen = strlen(methodName);
     SIPMethodNode* method = *p_methodList;

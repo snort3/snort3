@@ -63,14 +63,14 @@ TEST(ghash, create_find_delete_test)
     int num=100;
 
     // Create a Hash Table
-    GHash* t = ghash_new(1000, 0, GH_COPYKEYS, nullptr);
+    GHash* t = new GHash(1000, 0, false, nullptr);
 
     // Add Nodes to the Hash Table
     for (i=0; i<num; i++)
     {
         snprintf(str, sizeof(str), "KeyWord%d",i+1);
         str[sizeof(str) - 1] = '\0';
-        ghash_add(t, str, (void *)(str + (i+1)));
+        t->insert(str, (void *)(str + (i+1)));
     }
 
     // find those nodes
@@ -79,20 +79,20 @@ TEST(ghash, create_find_delete_test)
         snprintf(str, sizeof(str), "KeyWord%d",i+1);
         str[sizeof(str) - 1] = '\0';
 
-        char* p = (char*)ghash_find(t, str);
+        char* p = (char*)t->find(str);
 
         CHECK(p != nullptr);
         CHECK(p == (void *)(str + (i+1)));
     }
 
-    for (GHashNode* n = ghash_findfirst(t); n; n = ghash_findnext(t) )
+    for (GHashNode* n = t->find_first(); n; n = t->find_next() )
     {
-        i = ghash_remove(t,n->key);
+        i = t->remove(n->key);
 
         CHECK(i==0);
     }
 
-    ghash_delete(t);
+    delete t;
 }
 
 // test to generate collisions and increase test code coverage
@@ -103,7 +103,7 @@ TEST(ghash, collision_test)
     int num=100;
 
     // Create a Hash Table with smaller entries
-    GHash* t = ghash_new(-10, 0, GH_COPYKEYS, nullptr);
+    GHash* t = new GHash(-10, 0, false, nullptr);
 
     CHECK(t != nullptr);
 
@@ -112,13 +112,13 @@ TEST(ghash, collision_test)
     {
         snprintf(str, sizeof(str), "KeyWord%d",i+1);
         str[sizeof(str) - 1] = '\0';
-        ghash_add(t, str, (void *)(str + (i+1)));
+        t->insert(str, (void *)(str + (i+1)));
     }
 
     // try to add an existed entry
     snprintf(str, sizeof(str), "KeyWord%d",1);
     str[sizeof(str) - 1] = '\0';
-    i = ghash_add(t, str, (void *)(str + (1)));
+    i = t->insert(str, (void *)(str + (1)));
     CHECK(i == GHASH_INTABLE);
 
     // find those nodes
@@ -127,31 +127,31 @@ TEST(ghash, collision_test)
         snprintf(str, sizeof(str), "KeyWord%d",i+1);
         str[sizeof(str) - 1] = '\0';
 
-        char* p = (char*)ghash_find(t, str);
+        char* p = (char*)t->find(str);
 
         CHECK(p != nullptr);
         CHECK(p == (void *)(str + (i+1)));
     }
 
     // remove one node
-    GHashNode* n = ghash_findfirst(t);
+    GHashNode* n = t->find_first();
     if (n)
     {
-        n = ghash_findnext(t);
-        i = ghash_remove(t,n->key);
+        n = t->find_next();
+        i = t->remove(n->key);
 
         CHECK(i==0);
     }
 
     // remove rest of nodes
-    for ( n = ghash_findfirst(t); n; n = ghash_findnext(t) )
+    for ( n = t->find_first(); n; n = t->find_next() )
     {
-        i = ghash_remove(t,n->key);
+        i = t->remove(n->key);
 
         CHECK(i==0);
     }
 
-    ghash_delete(t);
+    delete t;
 }
 
 TEST(ghash, userfree_test)
@@ -160,7 +160,7 @@ TEST(ghash, userfree_test)
     int i;
 
     // Create a small Hash Table with user free
-    GHash* t = ghash_new(-5, 0, GH_COPYKEYS, myfree);
+    GHash* t = new GHash(-5, 0, false, myfree);
     // add 5 nodes
     for (i=0; i<5; i++)
     {
@@ -169,7 +169,7 @@ TEST(ghash, userfree_test)
         char* p = (char*)snort_alloc(32);
         p[0] = (char)(i+1);
         p[1] = '\0';
-        ghash_add(t, str, (void *)p);
+        t->insert(str, (void *)p);
     }
 
     // find those nodes
@@ -178,7 +178,7 @@ TEST(ghash, userfree_test)
         snprintf(str, sizeof(str), "KeyWord%d",i+1);
         str[sizeof(str) - 1] = '\0';
 
-        char *p = (char*)ghash_find(t, str);
+        char *p = (char*)t->find(str);
 
         CHECK(p != nullptr);
         CHECK(p[0] == (i+1));
@@ -189,26 +189,20 @@ TEST(ghash, userfree_test)
     str[sizeof(str) - 1] = '\0';
 
     // it should not be found
-    CHECK(ghash_find(t, str) == nullptr);
-
+    CHECK(t->find(str) == nullptr);
+    
     // try to remove a node that is not in the table
-    CHECK(ghash_remove(t, str) == GHASH_ERR);
+    CHECK(t->remove( str) == GHASH_NOT_FOUND);
 
-    for ( GHashNode* n = ghash_findfirst(t); n; n = ghash_findnext(t) )
+    for ( GHashNode* n = t->find_first(); n; n = t->find_next() )
     {
         // user free should be called here, no memory leak should be detected
-        i = ghash_remove(t,n->key);
+        i = t->remove(n->key);
 
         CHECK(i==0);
     }
 
-    ghash_delete(t);
-}
-
-TEST(ghash, nullptr_test)
-{
-    CHECK(GHASH_ERR == ghash_add(nullptr, nullptr, nullptr));
-    ghash_delete(nullptr);
+    delete t;
 }
 
 int main(int argc, char** argv)

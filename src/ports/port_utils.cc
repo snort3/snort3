@@ -125,9 +125,6 @@ SF_LIST* PortObjectItemListFromBits(const PortBitSet& parray, int n)
     SF_LIST* plist = sflist_new();
     int nports = parray.count();
 
-    if ( !plist )
-        return nullptr;
-
     for (int i = 0; i < n && nports > 0; i++)
     {
         if ( parray[i] == 0 )
@@ -139,7 +136,7 @@ SF_LIST* PortObjectItemListFromBits(const PortBitSet& parray, int n)
         lport = hport = i;
         nports--;
 
-        for (i++; i<n; i++)
+        for (i++; i < n; i++)
         {
             if ( parray[i] )
             {
@@ -151,15 +148,8 @@ SF_LIST* PortObjectItemListFromBits(const PortBitSet& parray, int n)
         }
 
         PortObjectItem* poi = PortObjectItemNew();
-
-        if ( !poi )
-        {
-            sflist_free_all(plist, snort_free);
-            return nullptr;
-        }
-
-        poi->lport =(unsigned short)lport;
-        poi->hport =(unsigned short)hport;
+        poi->lport = (unsigned short)lport;
+        poi->hport = (unsigned short)hport;
         sflist_add_tail(plist, poi);
      }
 

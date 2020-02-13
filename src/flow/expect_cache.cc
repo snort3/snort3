@@ -270,7 +270,7 @@ ExpectCache::ExpectCache(uint32_t max)
 {
     // -size forces use of abs(size) ie w/o bumping up
     hash_table = new ZHash(-MAX_HASH, sizeof(FlowKey));
-    hash_table->set_keyops(FlowKey::hash, FlowKey::compare);
+    hash_table->set_key_opcodes(FlowKey::hash, FlowKey::is_equal);
 
     nodes = new ExpectNode[max];
     for (unsigned i = 0; i < max; ++i)

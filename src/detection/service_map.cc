@@ -57,14 +57,13 @@ using namespace snort;
 static GHash* alloc_srvmap()
 {
     // nodes are lists,free them in ghash_delete
-    GHash* p = ghash_new(1000, 0, 0, (void (*)(void*))sflist_free);
-    return p;
+    return new GHash(1000, 0, 0, (void (*)(void*))sflist_free);
 }
 
 static void free_srvmap(GHash* table)
 {
     if ( table )
-        ghash_delete(table);
+        delete table;
 }
 
 srmm_table_t* ServiceMapNew()
@@ -98,8 +97,7 @@ static void delete_pg(void* pv)
 static GHash* alloc_spgmm()
 {
     // 1000 rows, ascii key
-    GHash* p = ghash_new(1000, 0, 0, delete_pg);
-    return p;
+    return new GHash(1000, 0, 0, delete_pg);
 }
 
 static void free_spgmm(GHash* table)
@@ -107,7 +105,7 @@ static void free_spgmm(GHash* table)
     if ( !table )
         return;
 
-    ghash_delete(table);
+    delete table;
 }
 
 srmm_table_t* ServicePortGroupMapNew()
@@ -145,12 +143,12 @@ void ServicePortGroupMapFree(srmm_table_t* table)
  */
 static void ServiceMapAddOtnRaw(GHash* table, const char* servicename, OptTreeNode* otn)
 {
-    SF_LIST* list = (SF_LIST*)ghash_find(table, servicename);
+    SF_LIST* list = (SF_LIST*)table->find(servicename);
 
     if ( !list )
     {
         list = sflist_new();
-        ghash_add(table, servicename, list);
+        table->insert(servicename, list);
     }
 
     sflist_add_tail(list, otn);
@@ -161,7 +159,7 @@ static void ServiceMapAddOtnRaw(GHash* table, const char* servicename, OptTreeNo
  *  each service map maintains a list of otn's for each service it maps to a
  *  service name.
  */
-static int ServiceMapAddOtn(
+static void ServiceMapAddOtn(
     srmm_table_t* srmm, SnortProtocolId, const char* servicename, OptTreeNode* otn)
 {
     assert(servicename and otn);
@@ -171,8 +169,6 @@ static int ServiceMapAddOtn(
 
     if ( !OtnFlowFromServer(otn) )
         ServiceMapAddOtnRaw(srmm->to_srv, servicename, otn);
-
-    return 0;
 }
 
 void fpPrintServicePortGroupSummary(SnortConfig* sc)
@@ -181,10 +177,10 @@ void fpPrintServicePortGroupSummary(SnortConfig* sc)
     LogMessage("| Service-PortGroup Table Summary \n");
     LogMessage("---------------------------------\n");
 
-    if ( unsigned n = sc->spgmmTable->to_srv->count )
+    if ( unsigned n = sc->spgmmTable->to_srv->get_count() )
         LogMessage("| server   : %d services\n", n);
 
-    if ( unsigned n = sc->spgmmTable->to_cli->count )
+    if ( unsigned n = sc->spgmmTable->to_cli->get_count() )
         LogMessage("| client   : %d services\n", n);
 
     LogMessage("---------------------------------\n");
@@ -194,24 +190,18 @@ void fpPrintServicePortGroupSummary(SnortConfig* sc)
  *  Scan the master otn lists and load the Service maps
  *  for service based rule grouping.
  */
-int fpCreateServiceMaps(SnortConfig* sc)
+void fpCreateServiceMaps(SnortConfig* sc)
 {
-    RuleTreeNode* rtn;
-    GHashNode* hashNode;
-    OptTreeNode* otn  = nullptr;
-    unsigned int svc_idx;
-
-    for (hashNode = ghash_findfirst(sc->otn_map);
-        hashNode;
-        hashNode = ghash_findnext(sc->otn_map))
+    for (GHashNode* hashNode = sc->otn_map->find_first();
+         hashNode;
+         hashNode = sc->otn_map->find_next())
     {
-        otn = (OptTreeNode*)hashNode->data;
-        for ( PolicyId policyId = 0;
-            policyId < otn->proto_node_num;
-            policyId++ )
+        OptTreeNode* otn = (OptTreeNode*)hashNode->data;
+        for (PolicyId policyId = 0;
+             policyId < otn->proto_node_num;
+             policyId++ )
         {
-            rtn = getRtnFromOtn(otn, policyId);
-
+            RuleTreeNode* rtn = getRtnFromOtn(otn, policyId);
             if ( rtn )
             {
                 // skip builtin rules
@@ -222,18 +212,14 @@ int fpCreateServiceMaps(SnortConfig* sc)
                 if ( !rtn->enabled() )
                     continue;
 
-                for (svc_idx = 0; svc_idx < otn->sigInfo.num_services; svc_idx++)
+                for (unsigned svc_idx = 0; svc_idx < otn->sigInfo.num_services; svc_idx++)
                 {
                     const char* svc = otn->sigInfo.services[svc_idx].service;
-
-                    if ( ServiceMapAddOtn(sc->srmmTable, rtn->snort_protocol_id, svc, otn) )
-                        return -1;
+                    ServiceMapAddOtn(sc->srmmTable, rtn->snort_protocol_id, svc, otn);
                 }
             }
         }
     }
-
-    return 0;
 }
 
 //-------------------------------------------------------------------------

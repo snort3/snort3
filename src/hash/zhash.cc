@@ -25,38 +25,27 @@
 
 #include "zhash.h"
 
+#include <cassert>
 #include <cstring>
 
-#include "hashfcn.h"
+#include "hash_defs.h"
+
+using namespace snort;
 
 //-------------------------------------------------------------------------
 // private stuff
 //-------------------------------------------------------------------------
 
-struct ZHashNode
+static inline HashNode* s_node_alloc(int keysize)
 {
-    ZHashNode* gnext = nullptr; // global list
-    ZHashNode* gprev = nullptr; // global list
-
-    ZHashNode* next = nullptr;  // row list
-    ZHashNode* prev = nullptr;  // row list
-
-    int rindex = 0;
-
-    void* key = nullptr;
-    void* data = nullptr;
-};
-
-static inline ZHashNode* s_node_alloc(int keysize)
-{
-    auto node = static_cast<ZHashNode*>(
-        ::operator new(sizeof(ZHashNode) + keysize));
+    auto node = static_cast<HashNode*>(
+        ::operator new(sizeof(HashNode) + keysize));
 
     *node = {};
     return node;
 }
 
-static inline void s_node_free(ZHashNode* node)
+static inline void s_node_free(HashNode* node)
 { ::operator delete(node); }
 
 void ZHash::delete_free_list()
@@ -64,7 +53,7 @@ void ZHash::delete_free_list()
     if ( !fhead )
         return;
 
-    ZHashNode* cur = fhead;
+    HashNode* cur = fhead;
 
     while ( cur )
     {
@@ -74,7 +63,7 @@ void ZHash::delete_free_list()
     }
 }
 
-void ZHash::save_free_node(ZHashNode* node)
+void ZHash::save_free_node(HashNode* node)
 {
     if ( fhead )
     {
@@ -91,9 +80,9 @@ void ZHash::save_free_node(ZHashNode* node)
     }
 }
 
-ZHashNode* ZHash::get_free_node()
+HashNode* ZHash::get_free_node()
 {
-    ZHashNode* node = fhead;
+    HashNode* node = fhead;
 
     if ( fhead )
     {
@@ -106,7 +95,7 @@ ZHashNode* ZHash::get_free_node()
     return node;
 }
 
-void ZHash::glink_node(ZHashNode* node)
+void ZHash::glink_node(HashNode* node)
 {
     if ( ghead )
     {
@@ -124,7 +113,7 @@ void ZHash::glink_node(ZHashNode* node)
     }
 }
 
-void ZHash::gunlink_node(ZHashNode* node)
+void ZHash::gunlink_node(HashNode* node)
 {
     if ( cursor == node )
         cursor = node->gprev;
@@ -146,7 +135,7 @@ void ZHash::gunlink_node(ZHashNode* node)
         gtail = node->gprev;
 }
 
-void ZHash::link_node(ZHashNode* node)
+void ZHash::link_node(HashNode* node)
 {
     if ( table[node->rindex] )  // UNINITUSE
     {
@@ -163,7 +152,7 @@ void ZHash::link_node(ZHashNode* node)
     }
 }
 
-void ZHash::unlink_node(ZHashNode* node)
+void ZHash::unlink_node(HashNode* node)
 {
     if ( node->prev )
     {
@@ -180,7 +169,7 @@ void ZHash::unlink_node(ZHashNode* node)
     }
 }
 
-void ZHash::move_to_front(ZHashNode* node)
+void ZHash::move_to_front(HashNode* node)
 {
     // move to front of row list
     if ( table[node->rindex] != node )
@@ -197,7 +186,7 @@ void ZHash::move_to_front(ZHashNode* node)
     }
 }
 
-ZHashNode* ZHash::find_node_row(const void* key, int& row)
+HashNode* ZHash::find_node_row(const void* key, int& row)
 {
     unsigned hashkey = hashfcn->hash_fcn(
         hashfcn, (const unsigned char*)key, keysize);
@@ -206,9 +195,9 @@ ZHashNode* ZHash::find_node_row(const void* key, int& row)
     int index = hashkey & (nrows - 1);
     row = index;
 
-    for ( ZHashNode* node=table[index]; node; node=node->next )  // UNINITUSE
+    for ( HashNode* node = table[index]; node; node = node->next )  // UNINITUSE
     {
-        if ( !hashfcn->keycmp_fcn(node->key,key,keysize) )
+        if ( hashfcn->keycmp_fcn(node->key, key, keysize) )
         {
             move_to_front(node);
             find_success++;
@@ -220,45 +209,21 @@ ZHashNode* ZHash::find_node_row(const void* key, int& row)
     return nullptr;
 }
 
-int ZHash::nearest_powerof2(int rows)
-{
-    rows -= 1;
-
-    for ( unsigned i=1; i<sizeof(rows) * 8; i <<= 1 )
-        rows = rows | (rows >> i);
-
-    rows += 1;
-    return rows;
-}
-
 //-------------------------------------------------------------------------
 // public stuff
 //-------------------------------------------------------------------------
 
 ZHash::ZHash(int rows, int keysz)
+    : keysize(keysz)
 {
+    // adjust rows to be power of 2
     if ( rows > 0 )
-    {
-        // make sure we have a prime number
-        // rows = nearest_prime(rows);
+        nrows = hash_nearest_power_of_2(rows);
+    else
+        nrows = -rows;   // if negative use as is
 
-        /* If rows is not a power of two, need to find the
-         * next highest power of two */
-        rows = nearest_powerof2(rows);
-    }
-    else   /* use the magnitude of rows as is */
-    {
-        rows = -rows;
-    }
-
-    /* this has a default hashing function */
-    hashfcn = hashfcn_new(rows);
-
-    /* Allocate the array of node ptrs */
-    table = new ZHashNode*[rows]();
-
-    keysize = keysz;
-    nrows = rows;
+    table = new HashNode*[nrows]();
+    hashfcn = hashfcn_new(nrows);
 
     fhead = cursor = nullptr;
     ghead = gtail = nullptr;
@@ -267,22 +232,19 @@ ZHash::ZHash(int rows, int keysz)
 
 ZHash::~ZHash()
 {
-    if ( hashfcn )
-        hashfcn_free(hashfcn);
+    hashfcn_free(hashfcn);
 
-    if ( table )
+    for ( unsigned i = 0; i < nrows; ++i )
     {
-        for ( unsigned i = 0; i < nrows; ++i )
+        for ( HashNode* node = table[i]; node; )
         {
-            for ( ZHashNode* node = table[i]; node; )
-            {
-                ZHashNode* onode = node;
-                node = node->next;
-                s_node_free(onode);
-            }
+            HashNode* onode = node;
+            node = node->next;
+            s_node_free(onode);
         }
-        delete[] table;
     }
+
+    delete[] table;
     delete_free_list();
 }
 
@@ -290,7 +252,7 @@ void* ZHash::push(void* p)
 {
     auto node = s_node_alloc(keysize);
 
-    node->key = (char*)node + sizeof(ZHashNode);
+    node->key = (char*)node + sizeof(HashNode);
     node->data = p;
 
     save_free_node(node);
@@ -299,7 +261,7 @@ void* ZHash::push(void* p)
 
 void* ZHash::pop()
 {
-    ZHashNode* node = get_free_node();
+    HashNode* node = get_free_node();
 
     if ( !node )
         return nullptr;
@@ -313,7 +275,7 @@ void* ZHash::pop()
 void* ZHash::get(const void* key, bool *new_node)
 {
     int row;
-    ZHashNode* node = find_node_row(key, row);
+    HashNode* node = find_node_row(key, row);
 
     if ( node )
         return node->data;
@@ -340,7 +302,7 @@ void* ZHash::get(const void* key, bool *new_node)
 void* ZHash::find(const void* key)
 {
     int row;
-    ZHashNode* node = find_node_row(key, row);
+    HashNode* node = find_node_row(key, row);
 
     if ( node )
         return node->data;
@@ -370,7 +332,7 @@ void* ZHash::current()
 
 bool ZHash::touch()
 {
-    ZHashNode* node = cursor;
+    HashNode* node = cursor;
 
     if ( !node )
         return false;
@@ -386,7 +348,7 @@ bool ZHash::touch()
     return false;
 }
 
-bool ZHash::move_to_free_list(ZHashNode* node)
+bool ZHash::move_to_free_list(HashNode* node)
 {
     if ( !node )
         return false;
@@ -401,7 +363,7 @@ bool ZHash::move_to_free_list(ZHashNode* node)
 
 bool ZHash::release()
 {
-    ZHashNode* node = cursor;
+    HashNode* node = cursor;
     cursor = nullptr;
     return move_to_free_list(node);
 }
@@ -409,7 +371,7 @@ bool ZHash::release()
 bool ZHash::release(const void* key)
 {
     int row;
-    ZHashNode* node = find_node_row(key, row);
+    HashNode* node = find_node_row(key, row);
     return move_to_free_list(node);
 }
 
@@ -417,7 +379,7 @@ void* ZHash::remove(const void* key)
 {
     void* pv = nullptr;
     int row;
-    ZHashNode* node = find_node_row(key, row);
+    HashNode* node = find_node_row(key, row);
     if ( node )
     {
         unlink_node(node);
@@ -430,12 +392,7 @@ void* ZHash::remove(const void* key)
     return pv;
 }
 
-int ZHash::set_keyops(
-    unsigned (* hash_fcn)(HashFnc* p, const unsigned char* d, int n),
-    int (* keycmp_fcn)(const void* s1, const void* s2, size_t n))
+void ZHash::set_key_opcodes(hash_func hash_fcn, keycmp_func keycmp_fcn)
 {
-    if ( hash_fcn && keycmp_fcn )
-        return hashfcn_set_keyops(hashfcn, hash_fcn, keycmp_fcn);
-
-    return -1;
+    hashfcn_set_keyops(hashfcn, hash_fcn, keycmp_fcn);
 }

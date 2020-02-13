@@ -139,10 +139,6 @@ int PortVarDefine(SnortConfig* sc, const char* name, const char* s)
         }
 
         po = PortObjectNew();
-        if ( !po )
-        {
-            ParseAbort("PortVarTable missing an 'any' variable.");
-        }
         PortObjectSetName(po, name);
         PortObjectAddPortAny(po);
     }
@@ -382,9 +378,8 @@ void DisallowCrossTableDuplicateVars(
     switch (var_type)
     {
     case VAR_TYPE__DEFAULT:
-        if (PortVarTableFind(portVarTable, name)
-            || sfvt_lookup_var(ip_vartable, name)
-            )
+        if ( PortVarTableFind(portVarTable, name)
+            || sfvt_lookup_var(ip_vartable, name) )
         {
             ParseError("can not redefine variable name %s to be of type "
                 "'var'. Use a different name.", name);
@@ -392,11 +387,11 @@ void DisallowCrossTableDuplicateVars(
         break;
 
     case VAR_TYPE__PORTVAR:
-        if (var_table != nullptr)
+        if ( var_table )
         {
             do
             {
-                if (strcasecmp(p->name, name) == 0)
+                if ( strcasecmp(p->name, name) == 0 )
                 {
                     ParseError("can not redefine variable name %s to be of "
                         "type 'portvar'. Use a different name.", name);
@@ -406,7 +401,7 @@ void DisallowCrossTableDuplicateVars(
             while (p != var_table);
         }
 
-        if (sfvt_lookup_var(ip_vartable, name))
+        if ( sfvt_lookup_var(ip_vartable, name) )
         {
             ParseError("can not redefine variable name %s to be of type "
                 "'portvar'. Use a different name.", name);
@@ -415,11 +410,11 @@ void DisallowCrossTableDuplicateVars(
         break;
 
     case VAR_TYPE__IPVAR:
-        if (var_table != nullptr)
+        if ( var_table )
         {
             do
             {
-                if (strcasecmp(p->name, name) == 0)
+                if ( strcasecmp(p->name, name) == 0 )
                 {
                     ParseError("can not redefine variable name %s to be of "
                         "type 'ipvar'. Use a different name.", name);
@@ -430,11 +425,12 @@ void DisallowCrossTableDuplicateVars(
             while (p != var_table);
         }
 
-        if (PortVarTableFind(portVarTable, name))
+        if ( PortVarTableFind(portVarTable, name) )
         {
             ParseError("can not redefine variable name %s to be of type "
                 "'ipvar'. Use a different name.", name);
         }
+        break;
 
     default:
         /* Invalid function usage */

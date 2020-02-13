@@ -201,7 +201,7 @@ static std::vector<View> build_entries()
 
     std::vector<View> entries;
 
-    for ( auto* h = ghash_findfirst(otn_map); h; h = ghash_findnext(otn_map) )
+    for ( auto* h = otn_map->find_first(); h; h = otn_map->find_next() )
     {
         auto* otn = static_cast<OptTreeNode*>(h->data);
         assert(otn);
@@ -316,7 +316,7 @@ void reset_rule_profiler_stats()
     assert(SnortConfig::get_conf());
     auto* otn_map = SnortConfig::get_conf()->otn_map;
 
-    for ( auto* h = ghash_findfirst(otn_map); h; h = ghash_findnext(otn_map) )
+    for ( auto* h = otn_map->find_first(); h; h = otn_map->find_next() )
     {
         auto* otn = static_cast<OptTreeNode*>(h->data);
         assert(otn);

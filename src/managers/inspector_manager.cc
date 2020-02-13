@@ -908,7 +908,6 @@ Inspector* InspectorManager::acquire(const char* key, bool dflt_only)
 
     if ( !pi )
         FatalError("unconfigured inspector: '%s'.\n", key);
-
     else
         pi->add_ref();
 
