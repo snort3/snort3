@@ -35,7 +35,7 @@ struct Packet;
 }
 
 // this is the current version of the api
-#define SOAPI_VERSION ((BASE_API_VERSION << 16) | 0)
+#define SOAPI_VERSION ((BASE_API_VERSION << 16) | 1)
 
 //-------------------------------------------------------------------------
 // rule format is:  header ( [<stub opts>;] soid:<tag>; [<remaining opts>;] )
