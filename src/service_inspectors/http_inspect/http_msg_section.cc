@@ -92,6 +92,9 @@ void HttpMsgSection::update_depth() const
         session_data->detection_status[source_id] = DET_DEACTIVATING;
     }
 
+    const unsigned target_size = (session_data->compression[source_id] == CMP_NONE) ?
+        SnortConfig::get_conf()->max_pdu : GZIP_BLOCK_SIZE;
+
     if (detect_depth_remaining <= 0)
     {
         if (file_depth_remaining <= 0)
@@ -101,15 +104,12 @@ void HttpMsgSection::update_depth() const
         }
         else
         {
-            // Just for file processing. Split on packet boundaries.
-            session_data->section_size_target[source_id] = MIN_FILE_BLOCK_SIZE;
+            // Just for file processing.
+            session_data->section_size_target[source_id] = target_size;
             session_data->stretch_section_to_packet[source_id] = true;
         }
         return;
     }
-
-    const unsigned target_size = (session_data->compression[source_id] == CMP_NONE) ?
-        SnortConfig::get_conf()->max_pdu : GZIP_BLOCK_SIZE;
 
     if (detect_depth_remaining <= target_size)
     {
