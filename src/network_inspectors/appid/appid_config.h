@@ -172,9 +172,9 @@ private:
     SipPatternMatchers sip_matchers;
     SslPatternMatchers ssl_matchers;
 
-    std::array<AppId, APP_ID_PORT_ARRAY_SIZE> tcp_port_only = {APP_ID_NONE}; // port-only TCP services
-    std::array<AppId, APP_ID_PORT_ARRAY_SIZE> udp_port_only = {APP_ID_NONE}; // port-only UDP services
-    std::array<AppId, 256> ip_protocol = {APP_ID_NONE}; // non-TCP / UDP protocol services
+    std::array<AppId, APP_ID_PORT_ARRAY_SIZE> tcp_port_only = {}; // port-only TCP services
+    std::array<AppId, APP_ID_PORT_ARRAY_SIZE> udp_port_only = {}; // port-only UDP services
+    std::array<AppId, 256> ip_protocol = {}; // non-TCP / UDP protocol services
 };
 
 class AppIdContext
