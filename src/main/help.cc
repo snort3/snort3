@@ -155,7 +155,6 @@ enum HelpType
     SnortConfig::set_conf(new SnortConfig);
     ScriptManager::load_scripts(sc->script_paths);
     PluginManager::load_plugins(sc->plugin_path);
-    PluginManager::load_so_plugins(sc);
     ModuleManager::init();
 
     switch ( ht )
@@ -173,7 +172,7 @@ enum HelpType
         ModuleManager::dump_rules(val);
         break;
     case HT_DDR:
-        SoManager::dump_rule_stubs(val, sc);
+        SoManager::dump_rule_stubs(val);
         break;
     case HT_DFL:
         ModuleManager::dump_defaults(val);

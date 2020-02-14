@@ -67,9 +67,6 @@ public:
         const char* name);
 
     static const char* get_available_plugins(PlugType);
-    static void load_so_plugins(snort::SnortConfig*, bool is_reload = false);
-    static void reload_so_plugins(const char*, snort::SnortConfig*);
-    static void reload_so_plugins_cleanup(snort::SnortConfig*, bool);
 };
 
 #endif

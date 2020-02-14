@@ -1143,7 +1143,7 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
         if ( rtn.dip )
             sfvar_free(rtn.dip);
 
-        const char* rule = SoManager::get_so_rule(otn->soid, sc);
+        const char* rule = SoManager::get_so_rule(otn->soid);
         IpsManager::reset_options();
 
         if ( !rule )

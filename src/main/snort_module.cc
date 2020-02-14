@@ -65,14 +65,6 @@ static const Parameter s_reload[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter s_reload_w_path[] =
-{
-    { "filename", Parameter::PT_STRING, "(optional)", nullptr,
-      "[<plugin path>] name of file to load" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
 static const Parameter s_delete[] =
 {
     { "inspector", Parameter::PT_STRING, nullptr, nullptr,
@@ -106,7 +98,7 @@ static const Command snort_cmds[] =
 
     { "dump_stats", main_dump_stats, nullptr, "show summary statistics" },
     { "rotate_stats", main_rotate_stats, nullptr, "roll perfmonitor log files" },
-    { "reload_config", main_reload_config, s_reload_w_path, "load new configuration" },
+    { "reload_config", main_reload_config, s_reload, "load new configuration" },
     { "reload_policy", main_reload_policy, s_reload, "reload part or all of the default policy" },
     { "reload_module", main_reload_module, s_module, "reload module" },
     { "reload_daq", main_reload_daq, nullptr, "reload daq module" },

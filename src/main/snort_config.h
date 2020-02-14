@@ -136,14 +136,12 @@ struct HighAvailabilityConfig;
 struct IpsActionsConfig;
 struct LatencyConfig;
 struct MemoryConfig;
-struct Plugins;
 struct PORT_RULE_MAP;
 struct RateFilterConfig;
 struct ReferenceSystemNode;
 struct RuleListNode;
 struct RulePortTables;
 struct SFDAQConfig;
-struct SoRules;
 struct ThresholdConfig;
 struct VarNode;
 
@@ -415,8 +413,7 @@ public:
     //Reload inspector related
 
     bool cloned = false;
-    Plugins* plugins = nullptr;
-    SoRules* so_rules = nullptr;
+
 private:
     std::list<ReloadResourceTuner*> reload_tuners;
 

@@ -22,38 +22,34 @@
 
 // Factory for shared object rules.
 // Runtime is same as for text rules.
-#include <list>
+
 #include "framework/so_rule.h"
 
 namespace snort
 {
 struct SnortConfig;
 }
+struct SoApi;
 
 //-------------------------------------------------------------------------
-struct SoRules
-{
-    std::list<const SoApi*> api;
-    ~SoRules();
-};
 
 class SoManager
 {
 public:
-    static void add_plugin(const SoApi*, snort::SnortConfig*);
+    static void add_plugin(const SoApi*);
     static void dump_plugins();
+    static void release_plugins();
 
     static void instantiate(const SoApi*);
 
     // soid is arg to soid option, so is arg to so option
-    static const char* get_so_rule(const char* soid, snort::SnortConfig* sc = nullptr);
-    static SoEvalFunc get_so_eval(const char* soid, const char* so,
-        void** data, snort::SnortConfig* sc = nullptr);
-    static void delete_so_data(const char* soid, void*, snort::SnortConfig* sc = nullptr);
+    static const char* get_so_rule(const char* soid);
+    static SoEvalFunc get_so_eval(const char* soid, const char* so, void** data);
+    static void delete_so_data(const char* soid, void*);
 
     static void rule_to_hex(const char* file);
     static void rule_to_text(const char* file);
-    static void dump_rule_stubs(const char*, snort::SnortConfig*);
+    static void dump_rule_stubs(const char*);
 };
 
 #endif

@@ -40,7 +40,7 @@ static THREAD_LOCAL ProfileStats soPerfStats;
 class SoOption : public IpsOption
 {
 public:
-    SoOption(const char*, const char*, bool, SoEvalFunc f, void* v, SnortConfig*);
+    SoOption(const char*, const char*, bool, SoEvalFunc f, void* v);
     ~SoOption() override;
 
     uint32_t hash() const override;
@@ -57,11 +57,10 @@ private:
     bool relative_flag;
     SoEvalFunc func;
     void* data;
-    SnortConfig* cfg;
 };
 
 SoOption::SoOption(
-    const char* id, const char* s, bool r, SoEvalFunc f, void* v, SnortConfig* sc)
+    const char* id, const char* s, bool r, SoEvalFunc f, void* v)
     : IpsOption(s_name)
 {
     soid = id;
@@ -69,12 +68,12 @@ SoOption::SoOption(
     relative_flag = r;
     func = f;
     data = v;
-    cfg = sc;
 }
 
 SoOption::~SoOption()
 {
-    SoManager::delete_so_data(soid, data, cfg);
+    if ( data )
+        SoManager::delete_so_data(soid, data);
 }
 
 uint32_t SoOption::hash() const
@@ -143,14 +142,12 @@ public:
 public:
     string name;
     bool relative_flag;
-    SnortConfig* cfg;
 };
 
-bool SoModule::begin(const char*, int, SnortConfig* sc)
+bool SoModule::begin(const char*, int, SnortConfig*)
 {
     name.clear();
     relative_flag = false;
-    cfg = sc;
     return true;
 }
 
@@ -194,14 +191,14 @@ static IpsOption* so_ctor(Module* p, OptTreeNode* otn)
         ParseError("no soid before so:%s", name);
         return nullptr;
     }
-    SoEvalFunc func = SoManager::get_so_eval(otn->soid, name, &data, m->cfg);
+    SoEvalFunc func = SoManager::get_so_eval(otn->soid, name, &data);
 
     if ( !func )
     {
         ParseError("can't link so:%s", name);
         return nullptr;
     }
-    return new SoOption(otn->soid, name, relative_flag, func, data, m->cfg);
+    return new SoOption(otn->soid, name, relative_flag, func, data);
 }
 
 static void so_dtor(IpsOption* p)
