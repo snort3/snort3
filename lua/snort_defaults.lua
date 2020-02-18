@@ -1157,3 +1157,25 @@ default_low_port_scan =
     icmp_sweep = icmp_low_sweep,
 }
 
+---------------------------------------------------------------------------
+-- default whitelist
+---------------------------------------------------------------------------
+default_whitelist =
+[[
+    ftp_command_specs default_ftp_server smtp_default_alt_max_command_lines
+    default_smtp http_methods sip_methods telnet_commands default_wizard
+    default_references default_classifications gtp_v0_msg gtp_v1_msg gtp_v2_msg
+    gtp_v0_info gtp_v1_info gtp_v2_info default_gtp tcp_low_ports
+    tcp_low_decoy tcp_low_sweep tcp_low_dist tcp_med_ports
+    tcp_med_decoy tcp_med_sweep tcp_med_dist tcp_hi_ports tcp_hi_decoy
+    tcp_hi_sweep tcp_hi_dist udp_low_ports udp_low_decoy udp_low_sweep
+    udp_low_dist udp_med_ports udp_med_decoy udp_med_sweep udp_med_dist
+    udp_hi_ports udp_hi_decoy udp_hi_sweep udp_hi_dist ip_low_proto
+    ip_low_decoy ip_low_sweep ip_low_dist ip_med_proto ip_med_decoy
+    ip_med_sweep ip_med_dist ip_hi_proto ip_hi_decoy ip_hi_sweep
+    ip_hi_dist icmp_low_sweep icmp_med_sweep icmp_hi_sweep
+    default_hi_port_scan default_med_port_scan default_low_port_scan
+]]
+
+snort_whitelist_append(default_whitelist)
+

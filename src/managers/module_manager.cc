@@ -53,6 +53,7 @@
 // "Lua" includes
 #include "lua_bootstrap.h"
 #include "lua_coreinit.h"
+#include "lua_finalize.h"
 
 using namespace snort;
 using namespace std;
@@ -98,6 +99,8 @@ extern "C"
 
     const char* push_include_path(const char* file);
     void pop_include_path();
+    void snort_whitelist_append(const char*);
+    void snort_whitelist_add_prefix(const char*);
 }
 
 //-------------------------------------------------------------------------
@@ -106,6 +109,9 @@ extern "C"
 
 const char* ModuleManager::get_lua_bootstrap()
 { return lua_bootstrap; }
+
+const char* ModuleManager::get_lua_finalize()
+{ return lua_finalize; }
 
 const char* ModuleManager::get_lua_coreinit()
 { return lua_coreinit; }
@@ -705,6 +711,16 @@ SO_PUBLIC bool set_alias(const char* from, const char* to)
     return true;
 }
 
+SO_PUBLIC void snort_whitelist_append(const char* s)
+{
+    Shell::whitelist_append(s, false);
+}
+
+SO_PUBLIC void snort_whitelist_add_prefix(const char* s)
+{
+    Shell::whitelist_append(s, true);
+}
+
 SO_PUBLIC bool open_table(const char* s, int idx)
 {
     const char* orig = s;
@@ -721,7 +737,11 @@ SO_PUBLIC bool open_table(const char* s, int idx)
     ModHook* h = get_hook(key.c_str());
 
     if ( !h || (h->api && h->api->type == PT_IPS_OPTION) )
+    {
+        if ( !Shell::is_whitelisted(key) )
+            ParseWarning(WARN_CONF_STRICT, "unknown table %s", key.c_str());
         return false;
+    }
 
     // FIXIT-M only basic modules, inspectors and ips actions can be reloaded at present
     if ( ( Snort::is_reloading() ) and h->api

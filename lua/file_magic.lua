@@ -202,3 +202,5 @@ file_magic =
     { type = 'HWP', id = 323, category = 'Executables', msg = 'Hangul word processor file', rev = 1, version = '3.0', magic = { { content = '| 48 57 50 20 44 6F 63 75 6D 65 6E 74 20 46 69 6C 65 |', offset = 0, }, }, },
     { type = 'SWF', id = 324, category = 'Multimedia', msg = 'Flash file', rev = 1, magic = { { content = '| 5A 57 53 |', offset = 0}, }, },
 }
+
+snort_whitelist_append("file_magic")

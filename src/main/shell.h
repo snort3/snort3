@@ -22,6 +22,8 @@
 
 // Shell encapsulates a Lua state.  There is one for each policy file.
 
+#include <set>
+#include <stack>
 #include <string>
 
 struct lua_State;
@@ -34,6 +36,8 @@ struct SnortConfig;
 class Shell
 {
 public:
+    typedef std::set<std::string> Whitelist;
+
     Shell(const char* file = nullptr, bool load_defaults = false);
     ~Shell();
 
@@ -54,9 +58,33 @@ public:
     bool get_loaded() const
     { return loaded; }
 
+public:
+    static bool is_whitelisted(const std::string& key);
+    static void whitelist_append(const char* keyword, bool is_prefix);
+
 private:
     [[noreturn]] static int panic(lua_State*);
+    static Shell* get_current_shell();
+
+private:
     static std::string fatal;
+    static std::stack<Shell*> current_shells;
+
+private:
+    void clear_whitelist()
+    {
+        whitelist.clear();
+        whitelist_prefixes.clear();
+    }
+
+    const Whitelist& get_whitelist() const
+    { return whitelist; }
+
+    const Whitelist& get_whitelist_prefixes() const
+    { return whitelist_prefixes; }
+
+    void print_whitelist() const;
+    void whitelist_update(const char* keyword, bool is_prefix);
 
 private:
     bool loaded;
@@ -64,6 +92,8 @@ private:
     std::string file;
     std::string parse_from;
     std::string overrides;
+    Whitelist whitelist;
+    Whitelist whitelist_prefixes;
 };
 
 #endif

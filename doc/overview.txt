@@ -234,6 +234,27 @@ If we also wanted to limit retries to at least 5 seconds, we could do:
 
     active = { max_responses = 1, min_interval = 5 }
 
+==== Whitelist
+
+When Snort is run with the --warn-conf-strict option, warnings will be
+generated for all Lua tables present in the configuration files that do
+not map to Snort module names. Like with other warnings, these will
+upgraded to errors when Snort is run in pedantic mode.
+
+To dynamically add exceptions that should bypass this strict validation,
+two Lua functions are made available to be called during the evaluation
+of Snort configuration files: snort_whitelist_append() and
+snort_whitelist_add_prefix(). Each function takes a whitespace-delimited
+list, the former a list of exact table names and the latter a list of table
+name prefixes to allow.
+
+Examples:
+snort_whitelist_append("table1 table2")
+snort_whitelist_add_prefix("local_ foobar_")
+
+The accumulated contents of the whitelist (both exact and prefix) will be
+dumped when Snort is run in verbose mode (-v).
+
 ==== Rules
 
 Rules determine what Snort is looking for.  They can be put directly in

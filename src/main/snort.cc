@@ -464,6 +464,9 @@ SnortConfig* Snort::get_reload_config(const char* fname)
         return nullptr;
     }
 
+    if ( SnortConfig::log_verbose() )
+        InspectorManager::print_config(sc);
+
     if ((sc->file_mask != 0) && (sc->file_mask != SnortConfig::get_conf()->file_mask))
         umask(sc->file_mask);
 

@@ -9,6 +9,7 @@ set (LUA_INCLUDES
 set (CPP_INCLUDES
     ${CMAKE_CURRENT_BINARY_DIR}/lua_bootstrap.h
     ${CMAKE_CURRENT_BINARY_DIR}/lua_coreinit.h
+    ${CMAKE_CURRENT_BINARY_DIR}/lua_finalize.h
 )
 
 set( MANAGERS_INCLUDES
@@ -53,11 +54,19 @@ add_custom_command (
     OUTPUT lua_bootstrap.h snort_config.lua
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/lua_wrap.sh ${CMAKE_CURRENT_SOURCE_DIR} bootstrap > lua_bootstrap.h
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/bootstrap.lua ${CMAKE_CURRENT_BINARY_DIR}/snort_config.lua
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/bootstrap.lua
+)
+
+add_custom_command (
+    OUTPUT lua_finalize.h
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/lua_wrap.sh ${CMAKE_CURRENT_SOURCE_DIR} finalize > lua_finalize.h
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/finalize.lua
 )
 
 add_custom_command (
     OUTPUT lua_coreinit.h
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/lua_wrap.sh ${CMAKE_CURRENT_SOURCE_DIR} coreinit > lua_coreinit.h
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/coreinit.lua
 )
 
 include_directories (${CMAKE_CURRENT_BINARY_DIR})

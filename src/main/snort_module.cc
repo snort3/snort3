@@ -539,6 +539,9 @@ static const Parameter s_params[] =
     { "--warn-conf", Parameter::PT_IMPLIED, nullptr, nullptr,
       "warn about configuration issues" },
 
+    { "--warn-conf-strict", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "warn about unrecognized elements in configuration files" },
+
     { "--warn-daq", Parameter::PT_IMPLIED, nullptr, nullptr,
       "warn about DAQ issues, usually related to mode" },
 
@@ -1016,6 +1019,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--warn-conf") )
         sc->warning_flags |= (1 << WARN_CONF);
+
+    else if ( v.is("--warn-conf-strict") )
+        sc->warning_flags |= (1 << WARN_CONF_STRICT);
 
     else if ( v.is("--warn-daq") )
         sc->warning_flags |= (1 << WARN_DAQ);

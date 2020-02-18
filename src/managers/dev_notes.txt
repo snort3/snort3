@@ -14,7 +14,12 @@ Only the action, codec, and inspector managers have thread local state:
 Some Lua files are here as they are coupled closely with C++ code in this
 directory (module_manager.cc):
 
-* snort_config.lua provides the ability to parse a Lua configuration.  It
+* bootstrap.lua provides FFI for adding table names and prefixes to
+  snort's lua whitelist. This whitelist is used to ignore warnings
+  when snort modules are not found for table names. This file also
+  has the FFI used to resolve file includes in lua file.
+
+* finalize.lua provides the ability to parse a Lua configuration.  It
   is much easier to traverse the Lua tables via Lua itself.  This file
   leverages the LuaJIT FFI to open and close tables and set values.
 

@@ -36,6 +36,7 @@
 #include "managers/module_manager.h"
 #include "parser/parse_conf.h"
 #include "parser/parser.h"
+#include "utils/stats.h"
 
 using namespace snort;
 using namespace std;
@@ -44,16 +45,56 @@ using namespace std;
 // helper functions
 //-------------------------------------------------------------------------
 
+string Shell::fatal;
+std::stack<Shell*> Shell::current_shells;
+
 // FIXIT-M Shell::panic() works on Linux but on OSX we can't throw from lua
 // to C++.  unprotected lua calls could be wrapped in a pcall to ensure lua
 // panics don't kill the process.  or we can not use lua for the shell.  :(
-
-string Shell::fatal;
-
 [[noreturn]] int Shell::panic(lua_State* L)
 {
     fatal = lua_tostring(L, -1);
     throw runtime_error(fatal);
+}
+
+Shell* Shell::get_current_shell()
+{
+    if ( !current_shells.empty() )
+        return current_shells.top();
+
+    return nullptr;
+}
+
+bool Shell::is_whitelisted(const std::string& key)
+{
+    Shell* sh = Shell::get_current_shell();
+
+    if ( !sh )
+        return false;
+
+    const Whitelist& whitelist = sh->get_whitelist();
+    const Whitelist& whitelist_prefixes = sh->get_whitelist_prefixes();
+
+    for ( const auto& prefix : whitelist_prefixes )
+    {
+        if (key.compare(0, prefix.length(), prefix) == 0)
+            return true;
+    }
+
+    if ( whitelist.find(key) != whitelist.end() )
+        return true;
+
+    return false;
+}
+
+void Shell::whitelist_append(const char* keyword, bool is_prefix)
+{
+    Shell* sh = Shell::get_current_shell();
+
+    if ( !sh )
+        return;
+
+    sh->whitelist_update(keyword, is_prefix);
 }
 
 // FIXIT-L shell --pause should stop before loading config so Lua state
@@ -110,36 +151,6 @@ static void load_string(lua_State* L, const char* s)
         FatalError("can't init overrides: %s\n", lua_tostring(L, -1));
 }
 
-static void run_config(lua_State* L, const char* t)
-{
-    Lua::ManageStack ms(L);
-
-    lua_getglobal(L, "snort_config");
-    lua_getglobal(L, t);
-
-    assert(lua_isfunction(L, -2));
-
-    if ( lua_pcall(L, 1, 1, 0) )
-    {
-        const char* err = lua_tostring(L, -1);
-        FatalError("%s\n", err);
-    }
-}
-
-static bool config_lua(
-    lua_State* L, const char* file, string& s, const char* tweaks, bool is_fatal)
-{
-    if ( file && *file )
-        if (!load_config(L, file, tweaks, is_fatal))
-            return false;
-
-    if ( !s.empty() )
-        load_string(L, s.c_str());
-
-    run_config(L, "_G");
-
-    return true;
-}
 
 //-------------------------------------------------------------------------
 // public methods
@@ -152,6 +163,8 @@ Shell::Shell(const char* s, bool load_defaults)
 
     if ( !lua )
         FatalError("Lua state instantiation failed\n");
+
+    current_shells.push(this);
 
     lua_atpanic(lua, Shell::panic);
     luaL_openlibs(lua);
@@ -166,6 +179,8 @@ Shell::Shell(const char* s, bool load_defaults)
 
     if ( load_defaults )
         load_string(lua, ModuleManager::get_lua_coreinit());
+
+    current_shells.pop();
 }
 
 Shell::~Shell()
@@ -227,14 +242,31 @@ bool Shell::configure(SnortConfig* sc, bool is_fatal, bool is_root)
 
     push_parse_location(code, path.c_str(), file.c_str(), 0);
 
-    if ( !config_lua(lua, path.c_str(), overrides, sc->tweaks.c_str(), is_fatal) )
+    current_shells.push(this);
+
+    if (!path.empty() and !load_config(lua, path.c_str(), sc->tweaks.c_str(), is_fatal))
+    {
+        current_shells.pop();
         return false;
+    }
+
+    if ( !overrides.empty() )
+        load_string(lua, overrides.c_str());
+
+    if ( SnortConfig::log_verbose() )
+        print_whitelist();
+
+    load_string(lua, ModuleManager::get_lua_finalize());
+
+    clear_whitelist();
+    current_shells.pop();
 
     set_default_policy(sc);
     ModuleManager::set_config(nullptr);
     loaded = true;
 
     pop_parse_location();
+
     return true;
 }
 
@@ -270,5 +302,41 @@ void Shell::execute(const char* cmd, string& rsp)
         rsp += "\n";
         lua_pop(lua, 1);
     }
+}
+
+//-------------------------------------------------------------------------
+// private methods
+//-------------------------------------------------------------------------
+
+void Shell::print_whitelist() const
+{
+    std::string output;
+    if ( !whitelist.empty() )
+    {
+        output = "Lua Whitelist Keywords for " + file + ":";
+        LogMessage("\t%s\n",output.c_str());
+        for ( const auto& wl : whitelist )
+            LogMessage("\t\t%s\n", wl.c_str());
+    }
+
+    if ( !whitelist_prefixes.empty() )
+    {
+        output = "Lua Whitelist Prefixes for " + file + ":";
+        LogMessage("\t%s\n",output.c_str());
+        for ( const auto& wlp : whitelist_prefixes )
+            LogMessage("\t\t%s\n", wlp.c_str());
+    }
+}
+
+void Shell::whitelist_update(const char* s, bool is_prefix)
+{
+    Whitelist* wlist = nullptr;
+    if ( is_prefix )
+        wlist = &whitelist_prefixes;
+    else
+        wlist = &whitelist;
+
+    if ( s )
+        wlist->emplace(s);
 }
 
