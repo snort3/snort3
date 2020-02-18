@@ -60,6 +60,7 @@ public:
 
     SO_PUBLIC static Inspector* get_inspector(const char* key, bool dflt_only = false,
         SnortConfig* sc = nullptr);
+    SO_PUBLIC static Inspector* get_inspector_by_service(const char*);
 
     SO_PUBLIC static Binder* get_binder();
 

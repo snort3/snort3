@@ -450,12 +450,13 @@ void SnortConfig::merge(SnortConfig* cmd_line)
         file_mask = cmd_line->file_mask;
 
     if ( !cmd_line->chroot_dir.empty() )
-    {
         chroot_dir = cmd_line->chroot_dir;
-    }
 
     if ( cmd_line->dirty_pig )
         dirty_pig = cmd_line->dirty_pig;
+
+    if ( !cmd_line->metadata_filter.empty() )
+        metadata_filter = cmd_line->metadata_filter;
 
     daq_config->overlay(cmd_line->daq_config);
 

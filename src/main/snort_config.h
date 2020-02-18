@@ -326,6 +326,7 @@ public:
     uint32_t event_log_id = 0;
     SfCidr obfuscation_net;
     std::string bpf_filter;
+    std::string metadata_filter;
 
     //------------------------------------------------------
     // FIXIT-L non-module stuff - separate config from derived state?

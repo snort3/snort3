@@ -445,14 +445,14 @@ static Inspector* get_gadget(Flow* flow)
 
     const char* s = SnortConfig::get_conf()->proto_ref->get_name(flow->ssn_state.snort_protocol_id);
 
-    return InspectorManager::get_inspector(s);
+    return InspectorManager::get_inspector_by_service(s);
 }
 
 static Inspector* get_gadget_by_id(const char* service)
 {
     const SnortProtocolId id = SnortConfig::get_conf()->proto_ref->find(service);
     const char* s = SnortConfig::get_conf()->proto_ref->get_name(id);
-    return InspectorManager::get_inspector(s);
+    return InspectorManager::get_inspector_by_service(s);
 }
 
 //-------------------------------------------------------------------------
@@ -889,15 +889,13 @@ void Binder::set_binding(SnortConfig* sc, Binding* pb)
     if ( pb->use.action != BindUse::BA_INSPECT )
         return;
 
-    const char* key;
-    if ( pb->use.svc.empty() )
-        key = pb->use.name.c_str();
-    else
-        key = pb->use.svc.c_str();
-
+    const char* key = pb->use.name.c_str();
     Module* m = ModuleManager::get_module(key);
     bool is_global = m ? m->get_usage() == Module::GLOBAL : false;
-    if ( (pb->use.object = InspectorManager::get_inspector(key, is_global, sc)) )
+
+    pb->use.object = InspectorManager::get_inspector(key, is_global, sc);
+
+    if ( pb->use.object )
     {
         switch ( ((Inspector*)pb->use.object)->get_api()->type )
         {

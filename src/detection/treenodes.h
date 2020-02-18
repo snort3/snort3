@@ -152,6 +152,7 @@ struct OptTreeNode
     static constexpr Flag WARNED_FP  = 0x01;
     static constexpr Flag STATELESS  = 0x02;
     static constexpr Flag RULE_STATE = 0x04;
+    static constexpr Flag META_MATCH = 0x08;
 
     /* metadata about signature */
     SigInfo sigInfo;
@@ -183,19 +184,19 @@ struct OptTreeNode
     { flags |= WARNED_FP; }
 
     bool warned_fp() const
-    { return flags & WARNED_FP; }
+    { return (flags & WARNED_FP) != 0; }
 
     void set_stateless()
     { flags |= STATELESS; }
 
     bool stateless() const
-    { return flags & STATELESS; }
+    { return (flags & STATELESS) != 0; }
 
     void set_enabled(IpsPolicy::Enable e)
     { enable = e; flags |= RULE_STATE; }
 
-    bool is_rule_state_stub()
-    { return flags & RULE_STATE; }
+    bool is_rule_state_stub() const
+    { return (flags & RULE_STATE) != 0; }
 
     bool enabled_somewhere() const
     {
@@ -205,6 +206,12 @@ struct OptTreeNode
 
         return false;
     }
+
+    void set_metadata_match()
+    { flags |= META_MATCH; }
+
+    bool metadata_matched() const
+    { return (flags & META_MATCH) != 0; }
 };
 
 typedef int (* RuleOptEvalFunc)(void*, Cursor&, snort::Packet*);

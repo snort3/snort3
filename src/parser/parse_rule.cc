@@ -68,6 +68,7 @@ struct rule_count_t
 };
 
 static int rule_count = 0;
+static int skip_count = 0;
 static int detect_rule_count = 0;
 static int builtin_rule_count = 0;
 static int so_rule_count = 0;
@@ -860,6 +861,7 @@ int get_rule_count()
 void parse_rule_init()
 {
     rule_count = 0;
+    skip_count = 0;
     detect_rule_count = 0;
     builtin_rule_count = 0;
     so_rule_count = 0;
@@ -884,6 +886,7 @@ void parse_rule_print()
 
     LogLabel("rule counts");
     LogCount("total rules loaded", rule_count);
+    LogCount("total rules not loaded", skip_count);
     LogCount("text rules", detect_rule_count);
     LogCount("builtin rules", builtin_rule_count);
     LogCount("so rules", so_rule_count);
@@ -1118,6 +1121,7 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
     if ( s_ignore )
     {
         s_ignore = false;
+        skip_count++;
         return;
     }
 
@@ -1154,6 +1158,15 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
             parse_rules_string(sc, rule);
         }
         OtnFree(otn);
+        return;
+    }
+
+    if ( !sc->metadata_filter.empty() and !otn->metadata_matched() )
+    {
+        OtnFree(otn);
+        FreeRuleTreeNode(&rtn);
+        ClearIpsOptionsVars();
+        skip_count++;
         return;
     }
 
@@ -1234,7 +1247,6 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
         sc->port_tables, new_rtn, otn, rtn.snort_protocol_id, sc->fast_pattern_config) )
         ParseError("Failed to finish a port list rule.");
 
-    // Clear ips_option vars
     ClearIpsOptionsVars();
 }
 

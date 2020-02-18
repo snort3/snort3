@@ -382,32 +382,46 @@ void InspectorManager::empty_trash()
 // policy stuff
 //-------------------------------------------------------------------------
 
-// FIXIT-L allowing lookup by name or type or key is kinda hinky
-// would be helpful to have specific lookups
 static bool get_instance(
-    FrameworkPolicy* fp, const char* keyword, bool dflt_only,
+    FrameworkPolicy* fp, const char* keyword,
     std::vector<PHInstance*>::iterator& it)
 {
     for ( it = fp->ilist.begin(); it != fp->ilist.end(); ++it )
     {
-        PHInstance* p = *it;
-        if ( !p->name.empty() && p->name == keyword )
-            return true;
-
-        else if ( !strcmp(p->pp_class.api.base.name, keyword) )
-            return (p->name.empty() || !dflt_only) ? true : false;
-
-        else if ( p->pp_class.api.service && !strcmp(p->pp_class.api.service, keyword) )
+        if ( (*it)->name == keyword )
             return true;
     }
     return false;
 }
 
-static PHInstance* get_instance(
-    FrameworkPolicy* fp, const char* keyword, bool dflt_only = false)
+static PHInstance* get_instance_by_type(FrameworkPolicy* fp, const char* keyword)
 {
     std::vector<PHInstance*>::iterator it;
-    return get_instance(fp, keyword, dflt_only, it) ? *it : nullptr;
+
+    for ( it = fp->ilist.begin(); it != fp->ilist.end(); ++it )
+    {
+        if ( !strcmp((*it)->pp_class.api.base.name, keyword) )
+            return *it;
+    }
+    return nullptr;
+}
+
+static PHInstance* get_instance_by_service(FrameworkPolicy* fp, const char* keyword)
+{
+    std::vector<PHInstance*>::iterator it;
+
+    for ( it = fp->ilist.begin(); it != fp->ilist.end(); ++it )
+    {
+        if ( (*it)->pp_class.api.service && !strcmp((*it)->pp_class.api.service, keyword) )
+            return *it;
+    }
+    return nullptr;
+}
+
+static PHInstance* get_instance(FrameworkPolicy* fp, const char* keyword)
+{
+    std::vector<PHInstance*>::iterator it;
+    return get_instance(fp, keyword, it) ? *it : nullptr;
 }
 
 static PHInstance* get_new(
@@ -417,7 +431,7 @@ static PHInstance* get_new(
     bool reloaded = false;
     std::vector<PHInstance*>::iterator old_it;
 
-    if ( get_instance(fp, keyword, false, old_it) )
+    if ( get_instance(fp, keyword, old_it) )
     {
         if ( Snort::is_reloading() )
         {
@@ -520,7 +534,7 @@ bool InspectorManager::inspector_exists_in_any_policy(const char* key, SnortConf
         if ( !pi || !pi->framework_policy )
             continue;
 
-        const PHInstance* const p = get_instance(pi->framework_policy, key);
+        const PHInstance* const p = get_instance_by_type(pi->framework_policy, key);
 
         if ( p )
             return true;
@@ -544,7 +558,22 @@ Inspector* InspectorManager::get_inspector(const char* key, bool dflt_only, Snor
     if ( !pi || !pi->framework_policy )
         return nullptr;
 
-    PHInstance* p = get_instance(pi->framework_policy, key, dflt_only);
+    PHInstance* p = get_instance(pi->framework_policy, key);
+
+    if ( !p )
+        return nullptr;
+
+    return p->handler;
+}
+
+Inspector* InspectorManager::get_inspector_by_service(const char* key)
+{
+    InspectionPolicy* pi = get_inspection_policy();
+
+    if ( !pi || !pi->framework_policy )
+        return nullptr;
+
+    PHInstance* p = get_instance_by_service(pi->framework_policy, key);
 
     if ( !p )
         return nullptr;
@@ -558,13 +587,13 @@ bool InspectorManager::delete_inspector(SnortConfig* sc, const char* iname)
     FrameworkPolicy* fp = sc->policy_map->get_inspection_policy()->framework_policy;
     std::vector<PHInstance*>::iterator old_it;
 
-    if ( get_instance(fp, iname, false, old_it) )
+    if ( get_instance(fp, iname, old_it) )
     {
         (*old_it)->set_reloaded(RELOAD_TYPE_DELETED);
         fp->ilist.erase(old_it);
         ok = true;
         std::vector<PHInstance*>::iterator bind_it;
-        if ( get_instance(fp, bind_id, false, bind_it) )
+        if ( get_instance(fp, bind_id, bind_it) )
         {
             (*bind_it)->handler->remove_inspector_binding(sc, iname);
         }
@@ -780,11 +809,10 @@ void InspectorManager::instantiate(
 
         PHInstance* ppi = get_new(ppc, fp, keyword, mod, sc);
 
-        if ( !ppi )
+        if ( ppi )
+            ppi->set_name(keyword);
+        else
             ParseError("can't instantiate inspector: '%s'.", keyword);
-
-        else if ( name )
-            ppi->set_name(name);
     }
 }
 
@@ -872,7 +900,7 @@ static bool configure(SnortConfig* sc, FrameworkPolicy* fp, bool cloned)
     if ( new_ins or reenabled_ins )
     {
         std::vector<PHInstance*>::iterator old_binder;
-        if ( get_instance(fp, bind_id, false, old_binder) )
+        if ( get_instance(fp, bind_id, old_binder) )
         {
             if ( new_ins and fp->default_binder )
             {
@@ -955,7 +983,7 @@ void InspectorManager::print_config(SnortConfig* sc)
     for ( auto* p : pi->framework_policy->ilist )
     {
         std::string inspector_name(p->pp_class.api.base.name);
-        if ( !p->name.empty() )
+        if ( p->name != inspector_name )
             inspector_name += " (" + p->name + "):";
         else
             inspector_name += ":";

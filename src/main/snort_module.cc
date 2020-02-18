@@ -419,6 +419,9 @@ static const Parameter s_params[] =
     { "--mem-check", Parameter::PT_IMPLIED, nullptr, nullptr,
       "like -T but also compile search engines" },
 
+    { "--metadata-filter", Parameter::PT_STRING, nullptr, nullptr,
+      "<filter> load only rules containing filter string in metadata if set" },
+
     { "--nostamps", Parameter::PT_IMPLIED, nullptr, nullptr,
       "don't include timestamps in log file names" },
 
@@ -900,6 +903,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--mem-check") )
         sc->run_flags |= (RUN_FLAG__TEST | RUN_FLAG__MEM_CHECK);
+
+    else if ( v.is("--metadata-filter") )
+        sc->metadata_filter = v.get_string();
 
     else if ( v.is("--nostamps") )
         sc->set_no_logging_timestamps(true);

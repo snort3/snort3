@@ -279,6 +279,8 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
     else if ( v.is("type") )
     {
         work->use.type = v.get_string();
+        if ( work->use.type == "gtp" )
+            work->use.type = "gtp_inspect";
         use_type_count++;
     }
     else
