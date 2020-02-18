@@ -66,6 +66,7 @@ private:
     FileMagicData magic;
     FileRule file_rule;
     FileConfig *fc = nullptr;
+    bool need_active = false;
 };
 
 enum FileSid

@@ -53,7 +53,7 @@ Packet::Packet(bool packet_data)
 
     obfuscator = nullptr;
     endianness = nullptr;
-    active_inst = new Active;
+    active_inst = new Active();
     action_inst = nullptr;
     reset();
 }

@@ -33,7 +33,7 @@ namespace snort
 class Active;
 class Endianness;
 class Flow;
-class IpsAction;
+class ActiveAction;
 class IpsContext;
 class Obfuscator;
 class SFDAQInstance;
@@ -137,8 +137,8 @@ struct SO_PUBLIC Packet
     IpsContext* context;
     Active* active;
     Active* active_inst;
-    IpsAction** action;
-    IpsAction* action_inst;
+    ActiveAction** action;
+    ActiveAction* action_inst;
 
     DAQ_Msg_h daq_msg;              // DAQ message this packet came from
     SFDAQInstance* daq_instance;    // DAQ instance the message came from
@@ -385,3 +385,4 @@ inline uint64_t alignedNtohq(const uint64_t* ptr)
 }
 }
 #endif
+

@@ -34,6 +34,7 @@ typedef unsigned char uuid_t[16];
 
 #include <memory>
 #include <unordered_map>
+#include <vector>
 
 #include "framework/data_bus.h"
 
@@ -41,6 +42,7 @@ namespace snort
 {
 class GHash;
 struct SnortConfig;
+class ActiveAction;
 }
 
 struct PortTable;
@@ -166,6 +168,10 @@ public:
     Enable default_rule_state = INHERIT_ENABLE;
 
     bool obfuscate_pii;
+
+    // Holds plugin actions associated with this policy (e.g. reject, react, etc.)
+    // Indexed by Actions::Type.
+    std::vector<snort::ActiveAction*> action;
 };
 
 //-------------------------------------------------------------------------
@@ -272,6 +278,7 @@ namespace snort
 SO_PUBLIC NetworkPolicy* get_network_policy();
 SO_PUBLIC InspectionPolicy* get_inspection_policy();
 SO_PUBLIC IpsPolicy* get_ips_policy();
+SO_PUBLIC IpsPolicy* get_ips_policy(snort::SnortConfig*, unsigned i = 0);
 SO_PUBLIC InspectionPolicy* get_default_inspection_policy(snort::SnortConfig*);
 SO_PUBLIC void set_ips_policy(IpsPolicy* p);
 SO_PUBLIC void set_network_policy(NetworkPolicy* p);
@@ -297,3 +304,4 @@ bool only_ips_policy();
 bool only_network_policy();
 
 #endif
+

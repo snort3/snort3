@@ -84,7 +84,8 @@ inline RuleTreeNode* getRuntimeRtnFromOtn(const struct OptTreeNode* otn)
     return getRtnFromOtn(otn);
 }
 
-ListHead* CreateRuleType(snort::SnortConfig* sc, const char* name, snort::Actions::Type);
+RuleListNode* CreateRuleType(snort::SnortConfig* sc, const char* name,
+    snort::Actions::Type, bool is_plugin_action = false);
 
 void FreeRuleTreeNode(RuleTreeNode*);
 void DestroyRuleTreeNode(RuleTreeNode*);

@@ -23,6 +23,7 @@
 
 #include "policy.h"
 
+#include "actions/actions.h"
 #include "detection/detection_engine.h"
 #include "log/messages.h"
 #include "managers/inspector_manager.h"
@@ -106,7 +107,7 @@ void InspectionPolicy::clone_dbus(SnortConfig* from, const char* exclude_module)
 // detection policy
 //-------------------------------------------------------------------------
 
-IpsPolicy::IpsPolicy(PolicyId id)
+IpsPolicy::IpsPolicy(PolicyId id) : action(Actions::Type::MAX, nullptr)
 {
     policy_id = id;
     user_policy_id = 0;
@@ -296,6 +297,12 @@ InspectionPolicy* get_inspection_policy()
 IpsPolicy* get_ips_policy()
 { return s_detection_policy; }
 
+IpsPolicy* get_ips_policy(SnortConfig* sc, unsigned i)
+{
+    return sc && i < sc->policy_map->ips_policy_count() ?
+        sc->policy_map->get_ips_policy(0) : nullptr;
+}
+
 InspectionPolicy* get_default_inspection_policy(SnortConfig* sc)
 { return sc->policy_map->get_inspection_policy(0); }
 
@@ -391,3 +398,4 @@ bool only_ips_policy()
 
 bool only_network_policy()
 { return get_network_policy() && !get_ips_policy() && !get_inspection_policy(); }
+

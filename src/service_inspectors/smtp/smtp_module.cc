@@ -25,6 +25,7 @@
 #include "smtp_module.h"
 
 #include "log/messages.h"
+#include "packet_io/active.h"
 #include "utils/util.h"
 
 using namespace snort;
@@ -329,7 +330,10 @@ bool SmtpModule::set(const char*, Value& v, SnortConfig*)
     }
 
     else if ( v.is("xlink2state") )
+    {
         config->xlink2state = (XLINK2STATE)v.get_uint8();
+        Active::set_enabled();
+    }
 
     else
         return false;

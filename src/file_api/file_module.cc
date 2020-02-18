@@ -32,6 +32,7 @@
 #include "log/messages.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
+#include "packet_io/active.h"
 
 #include "file_service.h"
 #include "file_stats.h"
@@ -369,7 +370,11 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
         return true;
 
     else if ( v.is("verdict") )
+    {
         file_rule.use.verdict = (FileVerdict)v.get_uint8();
+        if (file_rule.use.verdict == FileVerdict::FILE_VERDICT_REJECT)
+            need_active = true;
+    }
 
     else if ( v.is("enable_file_type") )
         file_rule.use.type_enabled = v.get_bool();
@@ -433,6 +438,9 @@ bool FileIdModule::end(const char* fqn, int idx, SnortConfig*)
         fc->process_file_policy_rule(file_rule);
     }
 
+    if ( need_active )
+        Active::set_enabled();
+
     return true;
 }
 
@@ -451,3 +459,4 @@ void FileIdModule::show_dynamic_stats()
 {
     file_stats_print();
 }
+

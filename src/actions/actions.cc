@@ -25,6 +25,7 @@
 #include "detection/detect.h"
 #include "detection/tag.h"
 #include "packet_io/active.h"
+#include "packet_io/active_action.h"
 #include "parser/parser.h"
 #include "utils/stats.h"
 
@@ -131,7 +132,7 @@ void Actions::execute(Actions::Type action, Packet* p, const OptTreeNode* otn,
         break;
 
     case Actions::RESET:
-        p->active->reset_session(p);
+        p->active->reset_session(p, get_ips_policy()->action[action]);
         alert(p, otn);
         SetTags(p, otn, event_id);
         break;
@@ -154,7 +155,7 @@ void Actions::apply(Actions::Type action, Packet* p)
         break;
 
     case Actions::RESET:
-        p->active->reset_session(p);
+        p->active->reset_session(p, get_ips_policy()->action[action]);
         break;
 
     default:

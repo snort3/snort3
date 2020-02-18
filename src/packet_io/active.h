@@ -24,13 +24,13 @@
 
 // manages packet processing verdicts returned to the DAQ.  action (what to
 // do) is separate from status (whether we can actually do it or not).
-
 #include "protocols/packet_manager.h"
 
 namespace snort
 {
 struct Packet;
 struct SnortConfig;
+class ActiveAction;
 
 class SO_PUBLIC Active
 {
@@ -44,10 +44,14 @@ public:
     enum ActiveStatus : uint8_t
     { AST_ALLOW, AST_CANT, AST_WOULD, AST_FORCE, AST_MAX };
 
-    enum ActiveAction : uint8_t
+    // FIXIT-M: these are only used in set_delayed_action and
+    // apply_delayed_action, in a big switch(action). Do away with these and
+    // use the actual (Base)Action objects.
+    enum ActiveActionType : uint8_t
     { ACT_PASS, ACT_HOLD, ACT_RETRY, ACT_DROP, ACT_BLOCK, ACT_RESET, ACT_MAX };
 
 public:
+
     static void init(SnortConfig*);
     static bool thread_init(SnortConfig*);
     static void thread_term();
@@ -69,7 +73,7 @@ public:
     bool is_reset_candidate(const Packet*);
     bool is_unreachable_candidate(const Packet*);
 
-    ActiveAction get_action() const
+    ActiveActionType get_action() const
     { return active_action; }
 
     ActiveStatus get_status() const
@@ -91,6 +95,11 @@ public:
     void allow_session(Packet*);
     void block_session(Packet*, bool force = false);
     void reset_session(Packet*, bool force = false);
+    void reset_session(Packet*, snort::ActiveAction* r, bool force = false);
+
+    static void queue(snort::ActiveAction* a, snort::Packet* p);
+    static void clear_queue(snort::Packet*);
+    static void execute(Packet* p);
 
     void block_again()
     { active_action = ACT_BLOCK; }
@@ -125,7 +134,8 @@ public:
     bool get_tunnel_bypass() const
     { return active_tunnel_bypass > 0; }
 
-    void set_delayed_action(ActiveAction, bool force = false);
+    void set_delayed_action(ActiveActionType, bool force = false);
+    void set_delayed_action(ActiveActionType, ActiveAction* act, bool force = false);
     void apply_delayed_action(Packet*);
 
     void reset();
@@ -139,10 +149,9 @@ private:
     void update_status(const Packet*, bool force = false);
     void daq_update_status(const Packet*);
 
-    void block_session(const Packet*, ActiveAction, bool force = false);
+    void block_session(const Packet*, ActiveActionType, bool force = false);
 
     void cant_drop();
-
 
 private:
     static const char* act_str[ACT_MAX][AST_MAX];
@@ -156,8 +165,9 @@ private:
     // of these flags following all processing and the drop
     // or response may have been produced by a pseudopacket.
     ActiveStatus active_status;
-    ActiveAction active_action;
-    ActiveAction delayed_active_action;
+    ActiveActionType active_action;
+    ActiveActionType delayed_active_action;
+    ActiveAction* delayed_reject;    // set with set_delayed_action()
 };
 
 struct ActiveSuspendContext

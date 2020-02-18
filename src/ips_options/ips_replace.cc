@@ -22,7 +22,7 @@
 #include "config.h"
 #endif
 
-#include "actions/act_replace.h"
+#include "detection/detection_engine.h"
 #include "detection/treenodes.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
@@ -178,7 +178,7 @@ void ReplaceOption::action(Packet*)
     RuleProfile profile(replacePerfStats);
 
     if ( pending() )
-        Replace_QueueChange(repl, (unsigned)pos());
+        DetectionEngine::add_replacement(repl, (unsigned)pos());
 }
 
 //-------------------------------------------------------------------------

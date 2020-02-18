@@ -21,8 +21,6 @@
 #include "config.h"
 #endif
 
-#include "act_replace.h"
-
 #include "detection/detection_engine.h"
 #include "framework/ips_action.h"
 #include "framework/module.h"
@@ -39,16 +37,6 @@ using namespace snort;
 //--------------------------------------------------------------------------
 // queue foo
 //--------------------------------------------------------------------------
-
-void Replace_ResetQueue()
-{
-    DetectionEngine::clear_replacement();
-}
-
-void Replace_QueueChange(const std::string& s, unsigned off)
-{
-    DetectionEngine::add_replacement(s, off);
-}
 
 static inline void Replace_ApplyChange(Packet* p, std::string& data, unsigned offset)
 {
@@ -131,21 +119,20 @@ bool ReplaceModule::end(const char*, int, SnortConfig*)
 }
 
 //-------------------------------------------------------------------------
-
-class ReplaceAction : public IpsAction
+class ReplaceAction : public snort::IpsAction
 {
 public:
-    ReplaceAction(ReplaceModule*);
+    ReplaceAction(bool disable_replace);
 
-    void exec(Packet*) override;
+    void exec(snort::Packet*) override;
 private:
     bool disable_replace = false;
 };
 
-ReplaceAction::ReplaceAction(ReplaceModule* m) :
+ReplaceAction::ReplaceAction(bool dr) :
     IpsAction(s_name, ACT_RESET)
 {
-    disable_replace = m->disable_replace;
+    disable_replace = dr;
     Active::set_enabled();
 }
 
@@ -166,7 +153,7 @@ static void mod_dtor(Module* m)
 { delete m; }
 
 static IpsAction* rep_ctor(Module* m)
-{ return new ReplaceAction((ReplaceModule*)m); }
+{ return new ReplaceAction( ((ReplaceModule*)m)->disable_replace); }
 
 static void rep_dtor(IpsAction* p)
 { delete p; }

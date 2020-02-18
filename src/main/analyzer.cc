@@ -329,7 +329,7 @@ static DAQ_Verdict distill_verdict(Packet* p)
  */
 void Analyzer::post_process_daq_pkt_msg(Packet* p)
 {
-    ActionManager::execute(p);
+    Active::execute(p);
 
     DAQ_Verdict verdict = MAX_DAQ_VERDICT;
 
@@ -397,7 +397,7 @@ void Analyzer::process_daq_pkt_msg(DAQ_Msg_h msg, bool retry)
     DetectionEngine::reset();
 
     sfthreshold_reset();
-    ActionManager::reset_queue(p);
+    Active::clear_queue(p);
 
     p->daq_msg = msg;
     p->daq_instance = daq_instance;
@@ -964,3 +964,4 @@ void Analyzer::rotate()
 {
     DataBus::publish(THREAD_ROTATE_EVENT, nullptr);
 }
+

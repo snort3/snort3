@@ -410,7 +410,7 @@ void ParseRules(SnortConfig* sc)
  * Returns: the ListHead for the rule type
  *
  ***************************************************************************/
-ListHead* CreateRuleType(SnortConfig* sc, const char* name, Actions::Type mode)
+RuleListNode* CreateRuleType(SnortConfig* sc, const char* name, Actions::Type mode, bool is_plugin_action)
 {
     RuleListNode* node;
     unsigned evalIndex = 0;
@@ -433,11 +433,10 @@ ListHead* CreateRuleType(SnortConfig* sc, const char* name, Actions::Type mode)
 
         do
         {
-            /* We do not allow multiple rules types with the same name. */
             if (strcasecmp(tmp->name, name) == 0)
             {
                 snort_free(node);
-                return nullptr;
+                return tmp;
             }
 
             evalIndex++;
@@ -451,6 +450,7 @@ ListHead* CreateRuleType(SnortConfig* sc, const char* name, Actions::Type mode)
 
     node->RuleList = (ListHead*)snort_calloc(sizeof(ListHead));
     node->RuleList->ruleListNode = node;
+    node->RuleList->is_plugin_action = is_plugin_action;
     node->mode = mode;
     node->name = snort_strdup(name);
     node->evalIndex = evalIndex;
@@ -458,7 +458,7 @@ ListHead* CreateRuleType(SnortConfig* sc, const char* name, Actions::Type mode)
     sc->evalOrder[node->mode] =  evalIndex;
     sc->num_rule_types++;
 
-    return node->RuleList;
+    return node;
 }
 
 void FreeRuleLists(SnortConfig* sc)

@@ -8,7 +8,6 @@ set (IPS_ACTION_SOURCES
     ips_actions.cc
     ips_actions.h
     act_replace.cc
-    act_replace.h
 )
 
 set( PLUGIN_LIST

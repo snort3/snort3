@@ -25,7 +25,6 @@
 
 #include <vector>
 
-#include "actions/act_replace.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "packet_io/active.h"
@@ -163,9 +162,15 @@ void ActionManager::instantiate(const ActionApi* api, Module* mod, SnortConfig* 
         if ( !sc->ips_actions_config->reject && !strcmp(act->get_name(), "reject") )
             sc->ips_actions_config->reject = act;
 
-        ListHead* lh = CreateRuleType(sc, api->base.name, api->type);
-        assert(lh);
-        lh->action = act;
+        RuleListNode* rln = CreateRuleType(sc, api->base.name, api->type, true);
+
+        // The plugin actions (e.g. reject, react, etc.) are per policy, per mode.
+        // At logging time, they have to be retrieved the way we store them here.
+        IpsPolicy* ips = get_ips_policy();
+        snort::Actions::Type idx = rln->mode;
+        assert(ips->action[idx] == nullptr);
+        ips->action[idx] = act;
+
     }
 }
 
@@ -227,33 +232,6 @@ void ActionManager::thread_term(SnortConfig*)
     }
 }
 
-void ActionManager::execute(Packet* p)
-{
-    if ( *p->action )
-    {
-        (*p->action)->exec(p);
-        *p->action = nullptr;
-    }
-}
-
-void ActionManager::queue(IpsAction* a, Packet* p)
-{
-    if ( !(*p->action) || a->get_action() > (*p->action)->get_action() )
-        *p->action = a;
-}
-
-void ActionManager::queue_reject(SnortConfig* sc, Packet* p)
-{
-    if ( sc->ips_actions_config->reject )
-        queue(sc->ips_actions_config->reject, p);
-}
-
-void ActionManager::reset_queue(Packet* p)
-{
-    *p->action = nullptr;
-    Replace_ResetQueue();
-}
-
 #ifdef PIGLET
 
 //-------------------------------------------------------------------------
@@ -281,6 +259,7 @@ IpsActionWrapper* ActionManager::instantiate(const char* name, Module* m)
 
     return new IpsActionWrapper(api, p);
 }
+
 
 #endif
 

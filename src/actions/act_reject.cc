@@ -55,34 +55,33 @@
 
 using namespace snort;
 
-#define REJ_NONE     0x00
-#define REJ_RST_SRC  0x01
-#define REJ_RST_DST  0x02
-#define REJ_UNR_NET  0x04
-#define REJ_UNR_HOST 0x08
-#define REJ_UNR_PORT 0x10
-#define REJ_UNR_FWD  0x20
-
-#define REJ_RST_BOTH (REJ_RST_SRC|REJ_RST_DST)
-#define REJ_UNR_ALL  (REJ_UNR_NET|REJ_UNR_HOST|REJ_UNR_PORT|REJ_UNR_FWD)
-
 #define s_name "reject"
 
 #define s_help \
     "terminate session with TCP reset or ICMP unreachable"
 
-static THREAD_LOCAL ProfileStats rejPerfStats;
+enum
+{
+    REJ_NONE     = 0x00,
+    REJ_RST_SRC  = 0x01,
+    REJ_RST_DST  = 0x02,
+    REJ_UNR_NET  = 0x04,
+    REJ_UNR_HOST = 0x08,
+    REJ_UNR_PORT = 0x10,
+    REJ_UNR_FWD  = 0x20,
+    REJ_RST_BOTH = (REJ_RST_SRC | REJ_RST_DST),
+    REJ_UNR_ALL  = (REJ_UNR_NET | REJ_UNR_HOST | REJ_UNR_PORT | REJ_UNR_FWD)
+};
 
-class RejectAction : public IpsAction
+THREAD_LOCAL ProfileStats rejPerfStats;
+
+class RejectAction : public snort::IpsAction
 {
 public:
-    RejectAction(uint32_t f) : IpsAction(s_name, ACT_RESET), mask(f) { }
-
-    void exec(Packet*) override;
+    RejectAction(uint32_t f);
+    void exec(snort::Packet*) override;
 
 private:
-    void send(Packet*);
-
     uint32_t mask;
 };
 
@@ -90,14 +89,18 @@ private:
 // class methods
 //-------------------------------------------------------------------------
 
+RejectAction::RejectAction(uint32_t f) : IpsAction(s_name, ActionType::ACT_RESET), mask(f)
+{ }
+
+
 void RejectAction::exec(Packet* p)
 {
-    Profile profile(rejPerfStats);
-
     if ( !p->ptrs.ip_api.is_ip() )
         return;
 
     Active* act = p->active;
+
+    Profile profile(rejPerfStats);
 
     switch ( p->type() )
     {
@@ -117,12 +120,6 @@ void RejectAction::exec(Packet* p)
         return;
     }
 
-    send(p);
-}
-
-void RejectAction::send(Packet* p)
-{
-    Active* act = p->active;
     uint32_t flags = 0;
 
     if ( act->is_reset_candidate(p) )

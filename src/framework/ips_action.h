@@ -28,6 +28,7 @@
 #include "actions/actions.h"
 #include "framework/base_api.h"
 #include "main/snort_types.h"
+#include "packet_io/active_action.h"
 
 // this is the current version of the api
 #define ACTAPI_VERSION ((BASE_API_VERSION << 16) | 0)
@@ -41,33 +42,18 @@ namespace snort
 struct Packet;
 struct SnortConfig;
 
-enum ActionType
-{
-    ACT_LOCAL,
-    ACT_MODIFY,
-    ACT_PROXY,
-    ACT_RESET,
-    ACT_REMOTE,
-    ACT_MAX
-};
-
-class SO_PUBLIC IpsAction
+class SO_PUBLIC IpsAction : public ActiveAction
 {
 public:
-    virtual ~IpsAction() = default;
-
-    virtual void exec(Packet*) = 0;
-
+    virtual void exec(Packet*) override = 0;
     const char* get_name() const { return name; }
-    ActionType get_action() { return action; }
 
 protected:
-    IpsAction(const char* s, ActionType a)
-    { name = s; action = a; }
+    IpsAction(const char* s, ActionType a) : ActiveAction(a)
+    { name = s; }
 
 private:
     const char* name;
-    ActionType action;
 };
 
 typedef void (* IpsActFunc)();

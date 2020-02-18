@@ -24,10 +24,13 @@
 #endif
 
 #include "active.h"
+#include "active_action.h"
 
+#include "detection/detection_engine.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "managers/action_manager.h"
+#include "profiler/profiler.h"
 #include "protocols/tcp.h"
 #include "pub_sub/active_events.h"
 #include "stream/stream.h"
@@ -40,6 +43,17 @@
 using namespace snort;
 
 #define MAX_ATTEMPTS 20
+
+class ResetAction : public snort::ActiveAction
+{
+public:
+    ResetAction() : ActiveAction(ActionType::ACT_RESET) {}
+
+    void exec(snort::Packet* p) override
+    {
+        p->active->kill_session(p, ENC_FLAG_FWD);
+    }
+};
 
 const char* Active::act_str[Active::ACT_MAX][Active::AST_MAX] =
 {
@@ -62,6 +76,8 @@ typedef int (* send_t) (
 static THREAD_LOCAL eth_t* s_link = nullptr;
 static THREAD_LOCAL ip_t* s_ipnet = nullptr;
 static THREAD_LOCAL send_t s_send = SFDAQ::inject;
+
+static ResetAction default_reset;
 
 //--------------------------------------------------------------------
 // helpers
@@ -483,6 +499,11 @@ void Active::block_session(Packet* p, bool force)
 
 void Active::reset_session(Packet* p, bool force)
 {
+    reset_session(p, &default_reset, force);
+}
+
+void Active::reset_session(Packet* p, ActiveAction* reject, bool force)
+{
     update_status(p, force);
     active_action = ACT_RESET;
 
@@ -491,7 +512,8 @@ void Active::reset_session(Packet* p, bool force)
 
     if ( enabled )
     {
-        ActionManager::queue_reject(SnortConfig::get_conf(), p);
+        if (reject)
+            Active::queue(reject, p);
 
         if ( p->flow )
         {
@@ -503,9 +525,22 @@ void Active::reset_session(Packet* p, bool force)
     p->disable_inspect = true;
 }
 
-void Active::set_delayed_action(ActiveAction action, bool force)
+void Active::queue(ActiveAction* a, Packet* p)
+{
+    if ( !(*p->action) || a->get_action() > (*p->action)->get_action() )
+        *p->action = a;
+}
+
+void Active::set_delayed_action(ActiveActionType action, bool force)
+{
+    set_delayed_action(action, action == ACT_RESET ? &default_reset : nullptr, force);
+}
+
+void Active::set_delayed_action(ActiveActionType action, ActiveAction* act, bool force)
 {
     delayed_active_action = action;
+    assert(delayed_reject == nullptr);
+    delayed_reject = act;
 
     if ( force )
         active_status = AST_FORCE;
@@ -526,7 +561,8 @@ void Active::apply_delayed_action(Packet* p)
         block_session(p, force);
         break;
     case ACT_RESET:
-        reset_session(p, force);
+        assert(delayed_reject);   // resets must have been told which reject to use
+        reset_session(p, delayed_reject, force);
         break;
     case ACT_RETRY:
         if(!retry_packet(p))
@@ -538,6 +574,7 @@ void Active::apply_delayed_action(Packet* p)
 
     delayed_active_action = ACT_PASS;
 }
+
 
 //--------------------------------------------------------------------
 
@@ -582,4 +619,21 @@ void Active::reset()
     active_status = AST_ALLOW;
     active_action = ACT_PASS;
     delayed_active_action = ACT_PASS;
+    delayed_reject = nullptr;
 }
+
+void Active::clear_queue(Packet* p)
+{
+    *p->action = nullptr;
+    DetectionEngine::clear_replacement();
+}
+
+void Active::execute(Packet* p)
+{
+    if ( *p->action )
+    {
+        (*p->action)->exec(p);
+        *p->action = nullptr;
+    }
+}
+

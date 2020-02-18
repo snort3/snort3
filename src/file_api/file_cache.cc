@@ -271,9 +271,9 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
             policy->log_file_action(flow, file_ctx, FILE_RESUME_LOG);
         return false;
     case FILE_VERDICT_BLOCK:
-         // can't block session inside a session
-         act->set_delayed_action(Active::ACT_BLOCK, true);
-         break;
+        // can't block session inside a session
+        act->set_delayed_action(Active::ACT_BLOCK, true);
+        break;
 
     case FILE_VERDICT_REJECT:
         // can't reset session inside a session

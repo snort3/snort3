@@ -24,7 +24,6 @@
 
 #include "detection_engine.h"
 
-#include "actions/act_replace.h"
 #include "events/sfeventq.h"
 #include "filters/sfthreshold.h"
 #include "framework/endianness.h"
@@ -146,7 +145,7 @@ Packet* DetectionEngine::get_encode_packet()
 Packet* DetectionEngine::set_next_packet(Packet* parent)
 {
     static THREAD_LOCAL Active shutdown_active;
-    static THREAD_LOCAL IpsAction* shutdown_action = nullptr;
+    static THREAD_LOCAL ActiveAction* shutdown_action = nullptr;
 
     wait_for_context();
     IpsContext* c = Analyzer::get_switcher()->get_next();
@@ -698,3 +697,4 @@ void DetectionEngine::clear_events(Packet* p)
     SF_EVENTQ* pq = p->context->equeue;
     pc.log_limit += sfeventq_reset(pq);
 }
+

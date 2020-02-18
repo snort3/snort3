@@ -56,8 +56,8 @@ struct ListHead
 {
     OutputSet* LogList;
     OutputSet* AlertList;
-    snort::IpsAction* action;
     struct RuleListNode* ruleListNode;
+    bool is_plugin_action = false;
 };
 
 // for top-level rule lists by type (alert, drop, etc.)

@@ -28,6 +28,7 @@ endif ()
 add_library (packet_io OBJECT
     active.cc
     active.h
+    active_action.h
     sfdaq.cc
     sfdaq.h
     sfdaq_config.cc
