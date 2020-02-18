@@ -300,7 +300,7 @@ smtp_default_alt_max_command_lines =
 default_smtp =
 {
     -- params not specified here get internal defaults
-    alt_max_command_line_len = default_smtp_alt_max_command_lines,
+    alt_max_command_line_len = smtp_default_alt_max_command_lines,
     auth_cmds = smtp_default_auth_cmds,
     binary_data_cmds = smtp_default_binary_data_cmds,
     data_cmds = smtp_default_data_cmds,
