@@ -23,6 +23,7 @@
 #include "http_common.h"
 #include "http_enum.h"
 #include "http_msg_start.h"
+#include "http_query_parser.h"
 #include "http_str_to_code.h"
 #include "http_uri.h"
 #include "http_uri_norm.h"
@@ -37,13 +38,15 @@ public:
     HttpMsgRequest(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
         HttpCommon::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
         const HttpParaList* params_);
-    ~HttpMsgRequest() override { delete uri; }
+    ~HttpMsgRequest() override;
     void gen_events() override;
     void update_flow() override;
     const Field& get_method() { return method; }
     const Field& get_uri();
     const Field& get_uri_norm_classic();
     HttpUri* get_http_uri() { return uri; }
+    ParameterMap& get_query_params();
+    ParameterMap& get_body_params();
 
     static bool is_webdav(HttpEnums::MethodId method)
     {
@@ -69,6 +72,9 @@ private:
 
     Field method;
     HttpUri* uri = nullptr;
+
+    ParameterMap* query_params = nullptr;
+    ParameterMap* body_params = nullptr;
 };
 
 #endif

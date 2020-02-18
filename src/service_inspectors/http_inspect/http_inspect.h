@@ -24,13 +24,16 @@
 // HttpInspect class
 //-------------------------------------------------------------------------
 
+#include "framework/cursor.h"
+#include "log/messages.h"
+
+#include "http_buffer_info.h"
 #include "http_common.h"
 #include "http_enum.h"
 #include "http_field.h"
 #include "http_module.h"
 #include "http_msg_section.h"
 #include "http_stream_splitter.h"
-#include "log/messages.h"
 
 class HttpApi;
 
@@ -43,9 +46,10 @@ public:
     bool get_buf(snort::InspectionBuffer::Type ibt, snort::Packet* p,
         snort::InspectionBuffer& b) override;
     bool get_buf(unsigned id, snort::Packet* p, snort::InspectionBuffer& b) override;
-    bool http_get_buf(unsigned id, uint64_t sub_id, uint64_t form, snort::Packet* p,
-        snort::InspectionBuffer& b);
-    bool get_fp_buf(snort::InspectionBuffer::Type ibt, snort::Packet* p, snort::InspectionBuffer& b) override;
+    const Field& http_get_buf(Cursor& c, snort::Packet* p,
+        HttpBufferInfo& buffer_info);
+    bool get_fp_buf(snort::InspectionBuffer::Type ibt, snort::Packet* p,
+        snort::InspectionBuffer& b) override;
     bool configure(snort::SnortConfig*) override;
     void show(snort::SnortConfig*) override;
     void eval(snort::Packet* p) override;

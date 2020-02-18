@@ -89,13 +89,13 @@ const Parameter HttpModule::http_params[] =
     { "iis_unicode_code_page", Parameter::PT_INT, "0:65535", "1252",
       "code page to use from the IIS unicode map file" },
 
-    { "iis_double_decode", Parameter::PT_BOOL, nullptr, "false",
+    { "iis_double_decode", Parameter::PT_BOOL, nullptr, "true",
       "perform double decoding of percent encodings to normalize characters" },
 
     { "oversize_dir_length", Parameter::PT_INT, "1:65535", "300",
       "maximum length for URL directory" },
 
-    { "backslash_to_slash", Parameter::PT_BOOL, nullptr, "false",
+    { "backslash_to_slash", Parameter::PT_BOOL, nullptr, "true",
       "replace \\ with / when normalizing URIs" },
 
     { "plus_to_space", Parameter::PT_BOOL, nullptr, "true",

@@ -68,8 +68,8 @@ public:
         std::string iis_unicode_map_file;
         int iis_unicode_code_page = 1252;
         uint8_t* unicode_map = nullptr;
-        bool iis_double_decode = false;
-        bool backslash_to_slash = false;
+        bool iis_double_decode = true;
+        bool backslash_to_slash = true;
         bool plus_to_space = true;
         bool simplify_path = true;
         std::bitset<256> bad_characters;

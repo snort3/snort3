@@ -41,7 +41,7 @@ public:
         HttpEventGen* events);
     static bool classic_need_norm(const Field& uri_component, bool do_path,
         const HttpParaList::UriParam& uri_param);
-    static void classic_normalize(const Field& input, Field& result,
+    static void classic_normalize(const Field& input, Field& result, bool do_path,
         const HttpParaList::UriParam& uri_param);
     static void load_default_unicode_map(uint8_t map[65536]);
     static void load_unicode_map(uint8_t map[65536], const char* filename, int code_page);

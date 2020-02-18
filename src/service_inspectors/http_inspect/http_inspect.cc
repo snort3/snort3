@@ -156,14 +156,14 @@ bool HttpInspect::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffe
     switch (ibt)
     {
     case InspectionBuffer::IBT_KEY:
-        return http_get_buf(HTTP_BUFFER_URI, 0, 0, p, b);
+        return get_buf(HTTP_BUFFER_URI, p, b);
     case InspectionBuffer::IBT_HEADER:
         if (get_latest_is(p) == IS_TRAILER)
-            return http_get_buf(HTTP_BUFFER_TRAILER, 0, 0, p, b);
+            return get_buf(HTTP_BUFFER_TRAILER, p, b);
         else
-            return http_get_buf(HTTP_BUFFER_HEADER, 0, 0, p, b);
+            return get_buf(HTTP_BUFFER_HEADER, p , b);
     case InspectionBuffer::IBT_BODY:
-        return http_get_buf(HTTP_BUFFER_CLIENT_BODY, 0, 0, p, b);
+        return get_buf(HTTP_BUFFER_CLIENT_BODY, p, b);
     default:
         return false;
     }
@@ -171,25 +171,28 @@ bool HttpInspect::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffe
 
 bool HttpInspect::get_buf(unsigned id, Packet* p, InspectionBuffer& b)
 {
-    return http_get_buf(id, 0, 0, p, b);
+    Cursor c;
+    HttpBufferInfo buffer_info(id);
+
+    const Field& http_buffer = http_get_buf(c, p, buffer_info);
+
+    if (http_buffer.length() <= 0)
+        return false;
+
+    b.data = http_buffer.start();
+    b.len = http_buffer.length();
+    return true;
 }
 
-bool HttpInspect::http_get_buf(unsigned id, uint64_t sub_id, uint64_t form, Packet* p,
-    InspectionBuffer& b)
+const Field& HttpInspect::http_get_buf(Cursor& c, Packet* p,
+    HttpBufferInfo& buffer_info)
 {
     HttpMsgSection* current_section = HttpContextData::get_snapshot(p);
 
     if (current_section == nullptr)
-        return false;
+        return Field::FIELD_NULL;
 
-    const Field& buffer = current_section->get_classic_buffer(id, sub_id, form);
-
-    if (buffer.length() <= 0)
-        return false;
-
-    b.data = buffer.start();
-    b.len = buffer.length();
-    return true;
+    return current_section->get_classic_buffer(c, buffer_info);
 }
 
 bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)

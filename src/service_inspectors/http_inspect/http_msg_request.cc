@@ -40,6 +40,13 @@ HttpMsgRequest::HttpMsgRequest(const uint8_t* buffer, const uint16_t buf_size,
     get_related_sections();
 }
 
+HttpMsgRequest::~HttpMsgRequest()
+{
+    delete uri;
+    delete query_params;
+    delete body_params;
+}
+
 void HttpMsgRequest::parse_start_line()
 {
     // Version field
@@ -181,6 +188,22 @@ const Field& HttpMsgRequest::get_uri_norm_classic()
         return uri->get_norm_classic();
     }
     return Field::FIELD_NULL;
+}
+
+ParameterMap& HttpMsgRequest::get_query_params()
+{
+    if (query_params == nullptr)
+        query_params = new ParameterMap;
+
+    return *query_params;
+}
+
+ParameterMap& HttpMsgRequest::get_body_params()
+{
+    if (body_params == nullptr)
+        body_params = new ParameterMap;
+
+    return *body_params;
 }
 
 void HttpMsgRequest::gen_events()

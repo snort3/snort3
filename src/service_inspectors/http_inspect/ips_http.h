@@ -26,11 +26,13 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 
+#include "http_buffer_info.h"
 #include "http_enum.h"
 
-enum PsIdx { PSI_CLIENT_BODY, PSI_COOKIE, PSI_HEADER, PSI_METHOD, PSI_RAW_BODY, PSI_RAW_COOKIE,
-    PSI_RAW_HEADER, PSI_RAW_REQUEST, PSI_RAW_STATUS, PSI_RAW_TRAILER, PSI_RAW_URI, PSI_STAT_CODE,
-    PSI_STAT_MSG, PSI_TRAILER, PSI_TRUE_IP, PSI_URI, PSI_VERSION, PSI_MAX };
+enum PsIdx { PSI_CLIENT_BODY, PSI_COOKIE, PSI_HEADER, PSI_METHOD, PSI_PARAM,
+    PSI_RAW_BODY, PSI_RAW_COOKIE, PSI_RAW_HEADER, PSI_RAW_REQUEST, PSI_RAW_STATUS,
+    PSI_RAW_TRAILER, PSI_RAW_URI, PSI_STAT_CODE, PSI_STAT_MSG, PSI_TRAILER,
+    PSI_TRUE_IP, PSI_URI, PSI_VERSION, PSI_MAX };
 
 class HttpCursorModule : public snort::Module
 {
@@ -60,6 +62,8 @@ private:
     {
     public:
         std::string field;        // provide buffer containing specific header field
+        std::string param;        // provide buffer containing specific parameter
+        bool nocase;              // case insensitive match
         bool request;             // provide buffer from request not response
         bool with_header;         // provide buffer with a later section than it appears in
         bool with_body;
@@ -89,24 +93,25 @@ class HttpIpsOption : public snort::IpsOption
 {
 public:
     HttpIpsOption(const HttpCursorModule* cm) :
-        snort::IpsOption(cm->key, RULE_OPTION_TYPE_BUFFER_SET), key(cm->key),
-        buffer_index(cm->buffer_index), cat(cm->cat), psi(cm->psi),
-        inspect_section(cm->inspect_section), sub_id(cm->sub_id), form(cm->form) {}
+        snort::IpsOption(cm->key, RULE_OPTION_TYPE_BUFFER_SET),
+        key(cm->key), cat(cm->cat), psi(cm->psi),
+        inspect_section(cm->inspect_section),
+        buffer_info(cm->buffer_index, cm->sub_id, cm->form,
+            cm->para_list.param, cm->para_list.nocase) {}
     snort::CursorActionType get_cursor_type() const override { return cat; }
     EvalStatus eval(Cursor&, snort::Packet*) override;
     uint32_t hash() const override;
     bool operator==(const snort::IpsOption& ips) const override;
+    bool retry(Cursor&) override;
     static IpsOption* opt_ctor(snort::Module* m, OptTreeNode*)
         { return new HttpIpsOption((HttpCursorModule*)m); }
     static void opt_dtor(snort::IpsOption* p) { delete p; }
 private:
     const char* const key;
-    const HttpEnums::HTTP_BUFFER buffer_index;
     const snort::CursorActionType cat;
     const PsIdx psi;
     const HttpEnums::InspectSection inspect_section;
-    const uint64_t sub_id;
-    const uint64_t form;
+    HttpBufferInfo buffer_info;
 };
 
 #endif

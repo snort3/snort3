@@ -379,6 +379,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_BAD_HEADER_WHITESPACE,      "white space embedded in critical header value" },
     { EVENT_GZIP_EARLY_END,             "gzip compressed data followed by unexpected non-gzip "
                                         "data" },
+    { EVENT_EXCESS_REPEAT_PARAMS,       "excessive HTTP parameter key repeats" },
     { 0, nullptr }
 };
 
@@ -408,6 +409,8 @@ const PegInfo HttpModule::peg_names[PEG_COUNT_MAX+1] =
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent http sessions" },
     { CountType::SUM, "detained_packets", "TCP packets delayed by detained inspection" },
     { CountType::SUM, "partial_inspections", "pre-inspections for detained inspection" },
+    { CountType::SUM, "excess_parameters", "repeat parameters exceeding max" },
+    { CountType::SUM, "parameters", "HTTP parameters inspected" },
     { CountType::END, nullptr, nullptr }
 };
 

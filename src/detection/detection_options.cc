@@ -571,7 +571,7 @@ int detection_option_node_evaluate(
 
                                     continue;
                                 }
-                                else
+                                else if ( node->option_type != RULE_OPTION_TYPE_BUFFER_SET )
                                 {
                                     // Check for an unbounded relative search.  If this
                                     // failed before, it's going to fail again so don't

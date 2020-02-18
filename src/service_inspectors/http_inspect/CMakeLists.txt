@@ -2,6 +2,8 @@
 set (FILE_LIST
     ips_http.cc
     ips_http.h
+    http_buffer_info.h
+    http_buffer_info.cc
     http_inspect.cc
     http_inspect.h
     http_msg_section.cc
@@ -27,6 +29,9 @@ set (FILE_LIST
     http_msg_body_old.h
     http_msg_trailer.cc
     http_msg_trailer.h
+    http_param.h
+    http_query_parser.cc
+    http_query_parser.h
     http_header_normalizer.cc
     http_header_normalizer.h
     http_uri.cc
@@ -48,6 +53,7 @@ set (FILE_LIST
     http_flow_data.h
     http_context_data.cc
     http_context_data.h
+    http_cursor_data.h
     http_transaction.cc
     http_transaction.h
     http_test_manager.cc

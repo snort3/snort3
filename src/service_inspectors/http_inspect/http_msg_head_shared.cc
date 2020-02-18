@@ -296,7 +296,8 @@ const Field& HttpMsgHeadShared::get_classic_raw_header()
 
 const Field& HttpMsgHeadShared::get_classic_norm_header()
 {
-    return classic_normalize(get_classic_raw_header(), classic_norm_header, params->uri_param);
+    return classic_normalize(get_classic_raw_header(), classic_norm_header,
+        false, params->uri_param);
 }
 
 const Field& HttpMsgHeadShared::get_classic_raw_cookie()
@@ -307,7 +308,8 @@ const Field& HttpMsgHeadShared::get_classic_raw_cookie()
 
 const Field& HttpMsgHeadShared::get_classic_norm_cookie()
 {
-    return classic_normalize(get_classic_raw_cookie(), classic_norm_cookie, params->uri_param);
+    return classic_normalize(get_classic_raw_cookie(), classic_norm_cookie,
+        false, params->uri_param);
 }
 
 const Field& HttpMsgHeadShared::get_header_value_raw(HeaderId header_id) const

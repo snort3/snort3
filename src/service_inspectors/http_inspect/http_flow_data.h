@@ -37,6 +37,7 @@ class HttpTransaction;
 class HttpJsNorm;
 class HttpMsgSection;
 class HttpCutter;
+class HttpQueryParser;
 
 class HttpFlowData : public snort::FlowData
 {
@@ -59,6 +60,7 @@ public:
     friend class HttpMsgBodyChunk;
     friend class HttpMsgBodyCl;
     friend class HttpMsgBodyOld;
+    friend class HttpQueryParser;
     friend class HttpStreamSplitter;
     friend class HttpTransaction;
 #if defined(REG_TEST) || defined(UNIT_TEST)

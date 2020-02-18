@@ -171,7 +171,7 @@ by an attacker. The options provide tools for the user to cope with that.
     percent_u = false
     utf8_bare_byte = false
     iis_unicode = false
-    iis_double_decode = false
+    iis_double_decode = true
 
 The HTTP inspector normalizes percent encodings found in URIs. For instance
 it will convert "%48%69%64%64%65%6e" to "Hidden". All the options listed
@@ -216,7 +216,7 @@ In the example, the lower-case letters a, b, and c and the digits 1, 2, and
 3 are exempted. These may be percent-encoded without generating an alert.
 
     simplify_path = true
-    backslash_to_slash = false
+    backslash_to_slash = true
 
 HTTP inspector simplifies directory paths in URIs by eliminating extra
 traversals using ., .., and /.
@@ -240,9 +240,8 @@ directories to be separated by backslashes:
 
     \this\is\the\other\way\to\write\a\path
 
-backslash_to_slash is turned off by default. If you are protecting such a
-server then set backslash_to_slash = true and all the backslashes will be
-replaced with slashes during normalization.
+backslash_to_slash is turned on by default. It replaces all the backslashes
+with slashes during normalization.
 
 ==== Detection rules
 

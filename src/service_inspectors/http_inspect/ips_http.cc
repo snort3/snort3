@@ -26,6 +26,7 @@
 #include "framework/cursor.h"
 #include "hash/hashfcn.h"
 #include "log/messages.h"
+#include "parser/parse_utils.h"
 #include "protocols/packet.h"
 #include "service_inspectors/http2_inspect/http2_flow_data.h"
 
@@ -34,6 +35,7 @@
 #include "http_flow_data.h"
 #include "http_inspect.h"
 #include "http_msg_head_shared.h"
+#include "http_param.h"
 
 using namespace snort;
 using namespace HttpCommon;
@@ -56,6 +58,7 @@ bool HttpCursorModule::begin(const char*, int, SnortConfig*)
     case HTTP_BUFFER_COOKIE:
     case HTTP_BUFFER_HEADER:
     case HTTP_BUFFER_METHOD:
+    case HTTP_BUFFER_PARAM:
     case HTTP_BUFFER_RAW_COOKIE:
     case HTTP_BUFFER_RAW_HEADER:
     case HTTP_BUFFER_RAW_REQUEST:
@@ -97,6 +100,17 @@ bool HttpCursorModule::set(const char*, Value& v, SnortConfig*)
         sub_id = str_to_code(lower_name, name_size, HttpMsgHeadShared::header_list);
         if (sub_id == STAT_OTHER)
             ParseError("Unrecognized header field name");
+    }
+    else if (v.is("~param"))
+    {
+        std::string bc = v.get_string();
+        bool negated = false;
+        if (!parse_byte_code(bc.c_str(), negated, para_list.param) or negated)
+            ParseError("Invalid http_param");
+    }
+    else if (v.is("nocase"))
+    {
+        para_list.nocase = true;
     }
     else if (v.is("request"))
     {
@@ -167,12 +181,16 @@ bool HttpCursorModule::end(const char*, int, SnortConfig*)
     if (para_list.scheme + para_list.host + para_list.port + para_list.path + para_list.query +
           para_list.fragment > 1)
         ParseError("Only specify one part of the URI");
+    if (buffer_index == HTTP_BUFFER_PARAM && para_list.param.length() == 0)
+        ParseError("Specify parameter name");
     return true;
 }
 
 void HttpCursorModule::HttpRuleParaList::reset()
 {
     field.clear();
+    param.clear();
+    nocase = false;
     request = false;
     with_header = false;
     with_body = false;
@@ -189,15 +207,10 @@ uint32_t HttpIpsOption::hash() const
 {
     uint32_t a = IpsOption::hash();
     uint32_t b = (uint32_t)inspect_section;
-    uint32_t c = sub_id >> 32;
-    uint32_t d = sub_id & 0xFFFFFFFF;
-    uint32_t e = form >> 32;
-    uint32_t f = form & 0xFFFFFFFF;
+    uint32_t c = buffer_info.hash();
     mix(a,b,c);
-    mix(d,e,f);
-    mix(a,c,f);
-    finalize(a,c,f);
-    return f;
+    finalize(a,b,c);
+    return c;
 }
 
 bool HttpIpsOption::operator==(const IpsOption& ips) const
@@ -205,8 +218,19 @@ bool HttpIpsOption::operator==(const IpsOption& ips) const
     const HttpIpsOption& hio = static_cast<const HttpIpsOption&>(ips);
     return IpsOption::operator==(ips) &&
            inspect_section == hio.inspect_section &&
-           sub_id == hio.sub_id &&
-           form == hio.form;
+           buffer_info == hio.buffer_info;
+}
+
+bool HttpIpsOption::retry(Cursor& c)
+{
+    if (buffer_info.type == HTTP_BUFFER_PARAM)
+    {
+        HttpCursorData* cd = (HttpCursorData*)c.get_data(HttpCursorData::id);
+
+        if (cd)
+            return cd->retry();
+    }
+    return false;
 }
 
 IpsOption::EvalStatus HttpIpsOption::eval(Cursor& c, Packet* p)
@@ -225,17 +249,17 @@ IpsOption::EvalStatus HttpIpsOption::eval(Cursor& c, Packet* p)
         return NO_MATCH;
 
     const Http2FlowData* const h2i_flow_data =
-       (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
+        (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
 
     HttpInspect* const hi = (h2i_flow_data != nullptr) ?
         (HttpInspect*)(p->flow->assistant_gadget) : (HttpInspect*)(p->flow->gadget);
 
-    InspectionBuffer hb;
+    const Field& http_buffer = hi->http_get_buf(c, p, buffer_info);
 
-    if (! (hi->http_get_buf((unsigned)buffer_index, sub_id, form, p, hb)))
+    if (http_buffer.length() <= 0)
         return NO_MATCH;
 
-    c.set(key, hb.data, hb.len);
+    c.set(key, http_buffer.start(), http_buffer.length());
 
     return MATCH;
 }
@@ -432,6 +456,55 @@ static const IpsApi method_api =
         IPS_OPT,
         IPS_HELP,
         method_mod_ctor,
+        HttpCursorModule::mod_dtor
+    },
+    OPT_TYPE_DETECTION,
+    0, PROTO_BIT__TCP,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    HttpIpsOption::opt_ctor,
+    HttpIpsOption::opt_dtor,
+    nullptr
+};
+
+//-------------------------------------------------------------------------
+// http_param
+//-------------------------------------------------------------------------
+
+static const Parameter http_param_params[] =
+{
+    { "~param", Parameter::PT_STRING, nullptr, nullptr,
+        "parameter to match" },
+    { "nocase", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "case insensitive match" },
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+#undef IPS_OPT
+#define IPS_OPT "http_param"
+#undef IPS_HELP
+#define IPS_HELP "rule option to set the detection cursor to the value of the specified HTTP parameter key which may be in the query or body"
+
+static Module* param_mod_ctor()
+{
+    return new HttpCursorModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_PARAM, CAT_SET_OTHER, PSI_PARAM,
+        http_param_params);
+}
+
+static const IpsApi param_api =
+{
+    {
+        PT_IPS_OPTION,
+        sizeof(IpsApi),
+        IPSAPI_VERSION,
+        1,
+        API_RESERVED,
+        API_OPTIONS,
+        IPS_OPT,
+        IPS_HELP,
+        param_mod_ctor,
         HttpCursorModule::mod_dtor
     },
     OPT_TYPE_DETECTION,
@@ -1132,6 +1205,7 @@ const BaseApi* ips_http_client_body = &client_body_api.base;
 const BaseApi* ips_http_cookie = &cookie_api.base;
 const BaseApi* ips_http_header = &header_api.base;
 const BaseApi* ips_http_method = &method_api.base;
+const BaseApi* ips_http_param = &param_api.base;
 const BaseApi* ips_http_raw_body = &raw_body_api.base;
 const BaseApi* ips_http_raw_cookie = &raw_cookie_api.base;
 const BaseApi* ips_http_raw_header = &raw_header_api.base;

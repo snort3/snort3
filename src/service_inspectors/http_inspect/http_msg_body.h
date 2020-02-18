@@ -40,6 +40,7 @@ public:
     const Field& get_classic_client_body();
     const Field& get_detect_data() { return detect_data; }
     static void fd_event_callback(void* context, int event);
+    bool is_first() { return first_body; }
 
 protected:
     HttpMsgBody(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,

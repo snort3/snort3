@@ -274,7 +274,7 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
 
 const Field& HttpMsgBody::get_classic_client_body()
 {
-    return classic_normalize(detect_data, classic_client_body, params->uri_param);
+    return classic_normalize(detect_data, classic_client_body, false, params->uri_param);
 }
 
 #ifdef REG_TEST

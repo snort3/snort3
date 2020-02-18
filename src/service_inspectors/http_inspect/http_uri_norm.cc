@@ -450,7 +450,7 @@ int32_t UriNormalizer::norm_path_clean(uint8_t* buf, const int32_t in_length,
 
 // Provide traditional URI-style normalization for buffers that usually are not URIs
 void UriNormalizer::classic_normalize(const Field& input, Field& result,
-    const HttpParaList::UriParam& uri_param)
+    bool do_path, const HttpParaList::UriParam& uri_param)
 {
     // The requirements for generating events related to these normalizations are unclear. It
     // definitely doesn't seem right to generate standard URI events. For now we won't generate
@@ -469,7 +469,7 @@ void UriNormalizer::classic_normalize(const Field& input, Field& result,
     // Normalize character escape sequences
     int32_t data_length = norm_char_clean(input, buffer, uri_param, &unused, &dummy_ev);
 
-    if (uri_param.simplify_path)
+    if (do_path && uri_param.simplify_path)
     {
         // Normalize path directory traversals
         // Find the leading slash if there is one
