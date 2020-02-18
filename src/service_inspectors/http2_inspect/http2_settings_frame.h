@@ -31,6 +31,7 @@ class Http2SettingsFrame : public Http2Frame
 public:
     friend Http2Frame* Http2Frame::new_frame(const uint8_t*, const int32_t, const uint8_t*,
         const int32_t, Http2FlowData*, HttpCommon::SourceId);
+    bool is_detection_required() const override { return false; }
 
 #ifdef REG_TEST
     void print_frame(FILE* output) override;

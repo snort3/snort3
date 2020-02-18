@@ -35,6 +35,7 @@ public:
 
     const Field& get_buf(unsigned id) override;
     uint32_t get_xtradata_mask() override { return xtradata_mask; }
+    bool is_detection_required() const override { return detection_required; }
 
     friend Http2Frame* Http2Frame::new_frame(const uint8_t*, const int32_t, const uint8_t*,
         const int32_t, Http2FlowData*, HttpCommon::SourceId);
@@ -56,5 +57,6 @@ private:
     bool error_during_decode = false;
     bool hi_abort = false;
     uint32_t xtradata_mask = 0;
+    bool detection_required = false;
 };
 #endif

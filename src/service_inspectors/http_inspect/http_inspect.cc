@@ -27,6 +27,7 @@
 
 #include "detection/detection_engine.h"
 #include "detection/detection_util.h"
+#include "service_inspectors/http2_inspect/http2_dummy_packet.h"
 #include "service_inspectors/http2_inspect/http2_flow_data.h"
 #include "log/unified2.h"
 #include "protocols/packet.h"
@@ -310,6 +311,18 @@ int HttpInspect::get_xtra_jsnorm(Flow* flow, uint8_t** buf, uint32_t* len, uint3
     return 1;
 }
 
+void HttpInspect::disable_detection(Packet* p)
+{
+    HttpFlowData* session_data = http_get_flow_data(p->flow);
+    if (session_data->for_http2)
+        p->disable_inspect = true;
+    else
+    {
+        assert(p->context);
+        DetectionEngine::disable_all(p);
+    }
+}
+
 HttpFlowData* HttpInspect::http_get_flow_data(const Flow* flow)
 {
     Http2FlowData* h2i_flow_data = nullptr;
@@ -363,10 +376,7 @@ void HttpInspect::eval(Packet* p)
 
     const bool buf_owner = !session_data->partial_flush[source_id];
     if (!process(p->data, p->dsize, p->flow, source_id, buf_owner))
-    {
-        if (!session_data->for_http2)
-            DetectionEngine::disable_content(p);
-    }
+        disable_detection(p);
 
 #ifdef REG_TEST
     else

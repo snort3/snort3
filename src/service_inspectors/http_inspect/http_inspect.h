@@ -56,6 +56,7 @@ public:
     }
     static HttpEnums::InspectSection get_latest_is(const snort::Packet* p);
     static HttpCommon::SourceId get_latest_src(const snort::Packet* p);
+    void disable_detection(snort::Packet *p);
 
     // Callbacks that provide "extra data"
     static int get_xtra_trueip(snort::Flow*, uint8_t**, uint32_t*, uint32_t*);

@@ -324,7 +324,11 @@ void DetectionEngine::clear_replacement()
 }
 
 void DetectionEngine::disable_all(Packet* p)
-{ p->context->active_rules = IpsContext::NONE; }
+{
+    p->context->active_rules = IpsContext::NONE;
+    trace_logf(detection, TRACE_PKT_DETECTION,
+        "Disabled all detect, packet %" PRIu64"\n", p->context->packet_number);
+}
 
 bool DetectionEngine::all_disabled(Packet* p)
 { return p->context->active_rules == IpsContext::NONE; }

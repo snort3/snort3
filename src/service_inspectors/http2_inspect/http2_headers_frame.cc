@@ -28,6 +28,7 @@
 #include "service_inspectors/http_inspect/http_inspect.h"
 #include "service_inspectors/http_inspect/http_stream_splitter.h"
 
+#include "http2_dummy_packet.h"
 #include "http2_enum.h"
 #include "http2_flow_data.h"
 #include "http2_hpack.h"
@@ -79,7 +80,7 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t
     session_data->stream_in_hi = session_data->current_stream[source_id];
     {
         uint32_t flush_offset;
-        Packet dummy_pkt(false);
+        Http2DummyPacket dummy_pkt;
         dummy_pkt.flow = session_data->flow;
         const uint32_t unused = 0;
         const StreamSplitter::Status start_scan_result =
@@ -103,7 +104,7 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t
 
     // http_inspect eval() and clear() of start line
     {
-        Packet dummy_pkt(false);
+        Http2DummyPacket dummy_pkt;
         dummy_pkt.flow = session_data->flow;
         dummy_pkt.packet_flags = (source_id == SRC_CLIENT) ? PKT_FROM_CLIENT : PKT_FROM_SERVER;
         dummy_pkt.dsize = stream_buf.length;
@@ -115,7 +116,7 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t
     // http_inspect scan() of headers
     {
         uint32_t flush_offset;
-        Packet dummy_pkt(false);
+        Http2DummyPacket dummy_pkt;
         dummy_pkt.flow = session_data->flow;
         const uint32_t unused = 0;
         const StreamSplitter::Status header_scan_result =
@@ -143,13 +144,14 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t
 
     // http_inspect eval() of headers
     {
-        Packet dummy_pkt(false);
+        Http2DummyPacket dummy_pkt;
         dummy_pkt.flow = session_data->flow;
         dummy_pkt.packet_flags = (source_id == SRC_CLIENT) ? PKT_FROM_CLIENT : PKT_FROM_SERVER;
         dummy_pkt.dsize = stream_buf.length;
         dummy_pkt.data = stream_buf.data;
         dummy_pkt.xtradata_mask = 0;
         session_data->hi->eval(&dummy_pkt);
+        detection_required = dummy_pkt.is_detection_required();
         xtradata_mask = dummy_pkt.xtradata_mask;
     }
 }

@@ -46,6 +46,7 @@ public:
     void set_hi_msg_section(HttpMsgSection* section) { hi_msg_section = section; }
     uint32_t get_xtradata_mask() { return (current_frame != nullptr) ? 
         current_frame->get_xtradata_mask() : 0; }
+    Http2Frame *get_current_frame() { return current_frame; }
 #ifdef REG_TEST
     void print_frame(FILE* output);
 #endif
