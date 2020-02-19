@@ -198,7 +198,10 @@ public:
     { return tun_dest; }
 
     void free_tun_dest()
-    { delete tun_dest; }
+    {
+        delete tun_dest;
+        tun_dest = nullptr;
+    }
 
     void reset_ptype_scan_counts();
 

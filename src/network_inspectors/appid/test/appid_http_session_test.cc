@@ -265,6 +265,23 @@ TEST(appid_http_session, set_tun_dest)
     CHECK_EQUAL((ipv6 == tun_dest->ip), true);
 }
 
+TEST(appid_http_session, set_tun_dest_bad_uri)
+{
+    const TunnelDest* tun_dest  = nullptr;
+    AppidChangeBits change_bits;
+    hsession.set_field(REQ_URI_FID, new std::string("[2001:db8:85a3::8a2e:370:1234]:51413"), change_bits);
+    hsession.set_tun_dest();
+    tun_dest = hsession.get_tun_dest();
+    CHECK(tun_dest != nullptr);
+
+    // Testing with bad URL
+    hsession.free_tun_dest();
+    hsession.set_field(REQ_URI_FID, new std::string("[2001:db8:85a3::8a2e:370:1235]"), change_bits);
+    hsession.set_tun_dest();
+    tun_dest = hsession.get_tun_dest();
+    CHECK(tun_dest == nullptr);
+}
+
 TEST(appid_http_session, change_bits_for_referred_appid)
 {
     // Testing set_referred_payload_app_id_data
