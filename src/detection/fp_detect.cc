@@ -52,9 +52,9 @@
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "managers/action_manager.h"
+#include "packet_io/active.h"
 #include "packet_tracer/packet_tracer.h"
 #include "parser/parser.h"
-#include "packet_io/active.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/icmp4.h"
 #include "protocols/packet_manager.h"
@@ -123,7 +123,7 @@ static inline void fpLogOther(
     // rule actions are queued here (eg reject)
     if ( rtn->listhead->is_plugin_action )
     {
-        snort::Actions::Type idx = rtn->listhead->ruleListNode->mode;
+        Actions::Type idx = rtn->listhead->ruleListNode->mode;
         ActiveAction * act = get_ips_policy()->action[idx];
         if ( act )
             Active::queue(act, p);

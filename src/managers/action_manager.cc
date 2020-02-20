@@ -167,7 +167,7 @@ void ActionManager::instantiate(const ActionApi* api, Module* mod, SnortConfig* 
         // The plugin actions (e.g. reject, react, etc.) are per policy, per mode.
         // At logging time, they have to be retrieved the way we store them here.
         IpsPolicy* ips = get_ips_policy();
-        snort::Actions::Type idx = rln->mode;
+        Actions::Type idx = rln->mode;
         assert(ips->action[idx] == nullptr);
         ips->action[idx] = act;
 
@@ -259,7 +259,6 @@ IpsActionWrapper* ActionManager::instantiate(const char* name, Module* m)
 
     return new IpsActionWrapper(api, p);
 }
-
 
 #endif
 

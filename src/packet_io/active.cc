@@ -24,7 +24,6 @@
 #endif
 
 #include "active.h"
-#include "active_action.h"
 
 #include "detection/detection_engine.h"
 #include "log/messages.h"
@@ -36,6 +35,7 @@
 #include "stream/stream.h"
 #include "utils/dnet_header.h"
 
+#include "active_action.h"
 #include "sfdaq.h"
 #include "sfdaq_instance.h"
 #include "sfdaq_module.h"

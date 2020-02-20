@@ -422,7 +422,11 @@ bool FileIdModule::begin(const char* fqn, int idx, SnortConfig*)
 bool FileIdModule::end(const char* fqn, int idx, SnortConfig*)
 {
     if (!idx)
+    {
+        if ( need_active )
+            Active::set_enabled();
         return true;
+    }
 
     if ( !strcmp(fqn, "file_id.file_rules") )
     {
@@ -437,9 +441,6 @@ bool FileIdModule::end(const char* fqn, int idx, SnortConfig*)
     {
         fc->process_file_policy_rule(file_rule);
     }
-
-    if ( need_active )
-        Active::set_enabled();
 
     return true;
 }
