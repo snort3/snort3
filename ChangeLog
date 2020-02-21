@@ -1,3 +1,118 @@
+20/02/21 - build 268
+
+-- appid: Adding support for appid detection on decrypted SSL sessions
+-- appid: Adding support for wildcard ports in static host port cache
+-- appid: clean up ENABLE_APPID_THIRD_PARTY from configure_cmake
+-- appid: cleanup terminology
+-- appid: delete odp context on exit
+-- appid: detect payload for http tunnel traffic
+-- appid: do not reload third party on reload_config
+-- appid: Don't mark HTTP session done if the ssl detector is still in progress
+-- appid: Fix array initialization on Appid
+-- appid: get rid of ENABLE_APPID_THIRD_PARTY flag
+-- appid: handle invalid uri in http tunnel traffic
+-- appid: load app mapping data to odp context
+-- appid: move dns, sip, ssl and http pattern matchers to odp context; move client discovery
+   manager to odp context
+-- appid: move odp config, host-port cache and length cache to a separate class OdpContext; remove
+   obsolete port detector code
+-- appid: reset tp packet counters each time we do reinspect
+-- appid: support third party reload when snort is running with single packet thread
+-- bufferlen: match on total length unless remaining is specified
+-- build: Clean up accumulated tabs and trailing whitespace in the code
+-- build: clean up non-hyperscan builds
+-- build: Fix more Clang 9 compiler warnings
+-- build: Remove some extraneous semicolons (compiler warnings)
+-- build: Rename parameters that shadow class members (compiler warnings)
+-- build: Updates across the board for stricter Clang const-casting warnings
+-- catch: Update to Catch v2.11.1
+-- cip: explicitly include sys/time.h header
+-- codecs: Use unions for checksum pseudoheaders
+-- content: add hyperscan content literal matching alternative to boyer-moore
+-- content: delete flawed hyper search test
+-- content: use hs_compile if hs_compile_lit is not available
+-- copyright: update year to 2020
+-- dce_tcp: fixup flow data handling
+-- detection: add config option to enable conversion of pcre expressions to use the regex engine
+-- detection: add hyperscan_literals option
+-- detection: add pcre_override to enable/disable pcre/O
+-- detection: signature evaluation looping based on literal contents only (exclude regex)
+-- doc: manual updates for HTTP/2
+-- doc: update documentation for lua whitelist
+-- doc: update reload_limitations.txt
+-- file_api: enable Active when there are reset rules in the file policy
+-- framework: introduce ScratchAllocator class to help with scratch memory management
+-- gtp_inspect: fix default port binding
+-- hash: refactor ghash implementation to convert it to an actual C++ class
+-- hash: refactor key compare function prototype and functions to return boolean
+-- hash: refactor to move common definitions into hash_defs.h
+-- hash: refactor xhash to be a real C++ class
+-- host_tracker: Check lock in a separate thread in unit-test
+-- host_tracker: make current_size atomic to save some locks
+-- host_tracker: Support host_cache reload with RRT when memcap changes
+-- http2_inspect: add transfer encoding chunked at end of decoded http1 header block
+-- http2_inspect: data frame http inspection walking skeleton first phase
+-- http2_inspect: fast pattern support
+-- http2_inspect: fix string decode error
+-- http2_inspect: frame data no longer in file_data
+-- http2_inspect: integration with NHI
+-- http2_inspect: support disabling detection for uninteresting HTTP/2 frames
+-- http2_inspect: support HPACK dynamic table size updates
+-- http_inspect: add http_param rule option
+-- http_inspect: gzip splitting beyond request_depth should use correct target size
+-- http_inspect: no duplicate built-in events for a flow
+-- http_inspect: patch H2I-related xtra data crash
+-- http_inspect: process multiple files simultaneously over HTTP/1.1
+-- http_inspect: refactoring
+-- http_inspect: update test tool to support the HTTP/2 macros and new insert command
+-- http_inspect: when detection is disabled, disable all rules not just content rules
+-- http_inspect/http2_inspect: H2I unified2 extra data logging
+-- hyperscan: convert thread locals to scan context
+-- inspectors: ensure correct lookup by type, name, or service
+-- inspectors: print label for type and alias in inspector manager. Remove printing module name in
+   inspectors ::show() method.
+-- ips: alert service rules check ports
+-- ips_pcre: compile/evaluate pcre rule option regular expressions with the hyperscan regex engine
+   when possible
+-- ips_pcre: support the O & R modifiers when converting pcre to regex
+-- ips: refactor rule parsing
+-- ips: remove dead code from rule parser
+-- ips: use service "file" instead of "user"
+-- loggers: update vlan logging in csv and json loggers
+-- lua: Added missing file magic pattern for FLIC
+-- lua: Added missing file magic pattern for IntelHEX
+-- lua: fix typo in default smtp's alt_max_command_line_len
+-- lua: update default lua files to whitelist the defined tables
+-- main: add verbose inspector output during reload
+-- main: make IPS actions (reject, react, replace) configurable per-IPS policy
+-- main: move config_lua to Shell::configure
+-- memory: Treating config value memory.cap as per thread instead of global
+-- metadata: add --metadata-filter to load matching rules only
+-- mime: support simultaneous file processing of MIME-encoded files over HTTP/1.1
+-- module_manager: add snort_whitelist_append and snort_whitelist_add_prefix FFIs
+-- normalizer: disable all normalizations by default except for tcp.ips
+-- packet_io: provide default reset action (bidirectional reset for TCP, ICMP unreachable for the
+   rest)
+-- packet_io: refactor Active and IPS Actions to start disentangling them
+-- parser: add service http2 to http rules
+-- parser: store local copy of service name
+-- pcre: ensure use of maximal ovector size and simplify logic
+-- port_scan: Supporting reload config when memcap changes
+-- protocols: provide direct access to the CiscoMetaData layer
+-- regex: convert thread locals to scan context
+-- reload: eliminate FatalError calls that can't happen because snort_calloc always returns valid
+   memory
+-- rna: use standard uint8_t type instead of u_int8_t
+-- search_engine: trivial reformatting
+-- smtp: update defaults to better align with Snort 2
+-- snort2lua: conversion of path containing variables
+-- snort: add new warn flag warn-conf-strict that will throw out warning when table is not found
+-- snort: Adding some verbose logs for appid, file_id, and reputation inspectors
+-- stream_tcp: ensure that flows with mss and timestamps are picked up on syn
+-- tweaks: set reasonable stream_ip.min_fragment_length values
+-- tweaks: update per new normalizer defaults
+-- tweaks: update policy configs to better align with Snort 2
+
 19/12/20 - build 267
 
 -- appid: Adding command for third-party reload

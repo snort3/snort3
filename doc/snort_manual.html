@@ -782,10 +782,10 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0 (Build 267)
+o"  )~   Version 3.0.0 (Build 268)
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
-         Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
+         Copyright (C) 2014-2020 Cisco and/or its affiliates. All rights reserved.
          Copyright (C) 1998-2013 Sourcefire, Inc., et al.</code></pre>
 </div></div>
 <div id="toc">
@@ -1181,6 +1181,24 @@ active.max_responses = 1</code></pre>
 <div class="content">
 <pre><code>active = { max_responses = 1, min_interval = 5 }</code></pre>
 </div></div>
+</div>
+<div class="sect3">
+<h4 id="_whitelist">Whitelist</h4>
+<div class="paragraph"><p>When Snort is run with the --warn-conf-strict option, warnings will be
+generated for all Lua tables present in the configuration files that do
+not map to Snort module names. Like with other warnings, these will
+upgraded to errors when Snort is run in pedantic mode.</p></div>
+<div class="paragraph"><p>To dynamically add exceptions that should bypass this strict validation,
+two Lua functions are made available to be called during the evaluation
+of Snort configuration files: snort_whitelist_append() and
+snort_whitelist_add_prefix(). Each function takes a whitespace-delimited
+list, the former a list of exact table names and the latter a list of table
+name prefixes to allow.</p></div>
+<div class="paragraph"><p>Examples:
+snort_whitelist_append("table1 table2")
+snort_whitelist_add_prefix("local_ foobar_")</p></div>
+<div class="paragraph"><p>The accumulated contents of the whitelist (both exact and prefix) will be
+dumped when Snort is run in verbose mode (-v).</p></div>
 </div>
 <div class="sect3">
 <h4 id="_rules">Rules</h4>
@@ -5332,7 +5350,7 @@ plus_to_space = true
 percent_u = false
 utf8_bare_byte = false
 iis_unicode = false
-iis_double_decode = false</code></pre>
+iis_double_decode = true</code></pre>
 </div></div>
 <div class="paragraph"><p>The HTTP inspector normalizes percent encodings found in URIs. For instance
 it will convert "%48%69%64%64%65%6e" to "Hidden". All the options listed
@@ -5376,7 +5394,7 @@ you to create exemptions for those characters.</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>simplify_path = true
-backslash_to_slash = false</code></pre>
+backslash_to_slash = true</code></pre>
 </div></div>
 <div class="paragraph"><p>HTTP inspector simplifies directory paths in URIs by eliminating extra
 traversals using ., .., and /.</p></div>
@@ -5403,9 +5421,8 @@ directories to be separated by backslashes:</p></div>
 <div class="content">
 <pre><code>\this\is\the\other\way\to\write\a\path</code></pre>
 </div></div>
-<div class="paragraph"><p>backslash_to_slash is turned off by default. If you are protecting such a
-server then set backslash_to_slash = true and all the backslashes will be
-replaced with slashes during normalization.</p></div>
+<div class="paragraph"><p>backslash_to_slash is turned on by default. It replaces all the backslashes
+with slashes during normalization.</p></div>
 </div>
 </div>
 <div class="sect3">
@@ -5831,6 +5848,29 @@ http2_frame_data; content:"MaLwArE"; sid:3; rev:1; )</code></pre>
 </div></div>
 <div class="paragraph"><p>Frame type 0 is DATA which carries the HTTP message body. This rule will
 search for MaLwArE inside an HTTP message body.</p></div>
+<div class="paragraph"><p>To smooth the transition to inspecting HTTP/2, rules that specify
+service:http will be treated as if they also specify service:http2.
+Thus:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>alert tcp any any -&gt; any any (flow:established, to_server;
+http_uri; content:"/foo";
+service: http; sid:10; rev:1;)</code></pre>
+</div></div>
+<div class="paragraph"><p>is understood to mean:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>alert tcp any any -&gt; any any (flow:established, to_server;
+http_uri; content:"/foo";
+service: http,http2; sid:10; rev:1;)</code></pre>
+</div></div>
+<div class="paragraph"><p>Thus it will alert on "/foo" in the URI for both HTTP/1 and HTTP/2 traffic.</p></div>
+<div class="paragraph"><p>The reverse is not true. "service: http2" without http will match on HTTP/2
+flows but not HTTP/1 flows.</p></div>
+<div class="paragraph"><p>This feature makes it easy to add HTTP/2 inspection without modifying
+large numbers of existing rules. New rules should explicitly specify
+"service http,http2;" if that is the desired behavior. Eventually
+support for http implies http2 may be deprecated and removed.</p></div>
 <div class="paragraph"><p>In the future, http2_inspect will support HPACK header decompression and
 be fully integrated with http_inspect to provide full inspection of the
 individual HTTP/1.1 streams.</p></div>
@@ -7112,7 +7152,7 @@ int <strong>attribute_table.max_services_per_host</strong> = 8: maximum number o
 </li>
 <li>
 <p>
-int <strong>attribute_table.max_metadata_services</strong> = 8: maximum number of services in rule { 1:255 }
+int <strong>attribute_table.max_metadata_services</strong> = 9: maximum number of services in rule { 1:255 }
 </p>
 </li>
 </ul></div>
@@ -7404,6 +7444,11 @@ bool <strong>detection.global_rule_state</strong> = false: apply rule_state agai
 </li>
 <li>
 <p>
+bool <strong>detection.hyperscan_literals</strong> = false: use hyperscan for content literal searches instead of boyer-moore
+</p>
+</li>
+<li>
+<p>
 int <strong>detection.offload_limit</strong> = 99999: minimum sizeof PDU to offload fast pattern search (defaults to disabled) { 0:max32 }
 </p>
 </li>
@@ -7414,7 +7459,7 @@ int <strong>detection.offload_threads</strong> = 0: maximum number of simultaneo
 </li>
 <li>
 <p>
-bool <strong>detection.pcre_enable</strong> = true: disable pcre pattern matching
+bool <strong>detection.pcre_enable</strong> = true: enable pcre pattern matching
 </p>
 </li>
 <li>
@@ -7425,6 +7470,16 @@ int <strong>detection.pcre_match_limit</strong> = 1500: limit pcre backtracking,
 <li>
 <p>
 int <strong>detection.pcre_match_limit_recursion</strong> = 1500: limit pcre stack consumption, 0 = off { 0:max32 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>detection.pcre_override</strong> = true: enable pcre match limit overrides when pattern matching (ie ignore /O)
+</p>
+</li>
+<li>
+<p>
+bool <strong>detection.pcre_to_regex</strong> = false: enable the use of regex instead of pcre for compatible expressions
 </p>
 </li>
 <li>
@@ -7805,27 +7860,32 @@ int <strong>host_cache.memcap</strong> = 8388608: maximum host cache size in byt
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>host_cache.lru_cache_adds</strong>: lru cache added new entry (sum)
+<strong>host_cache.adds</strong>: lru cache added new entry (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>host_cache.lru_cache_prunes</strong>: lru cache pruned entry to make space for new entry (sum)
+<strong>host_cache.alloc_prunes</strong>: lru cache pruned entry to make space for new entry (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>host_cache.lru_cache_find_hits</strong>: lru cache found entry in cache (sum)
+<strong>host_cache.find_hits</strong>: lru cache found entry in cache (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>host_cache.lru_cache_find_misses</strong>: lru cache did not find entry in cache (sum)
+<strong>host_cache.find_misses</strong>: lru cache did not find entry in cache (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>host_cache.lru_cache_removes</strong>: lru cache found entry and removed it (sum)
+<strong>host_cache.reload_prunes</strong>: lru cache pruned entry for lower memcap during reload (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>host_cache.removes</strong>: lru cache found entry and removed it (sum)
 </p>
 </li>
 </ul></div>
@@ -9126,6 +9186,11 @@ implied <strong>snort.--mem-check</strong>: like -T but also compile search engi
 </li>
 <li>
 <p>
+string <strong>snort.--metadata-filter</strong>: &lt;filter&gt; load only rules containing filter string in metadata if set
+</p>
+</li>
+<li>
+<p>
 implied <strong>snort.--nostamps</strong>: don&#8217;t include timestamps in log file names
 </p>
 </li>
@@ -9287,6 +9352,11 @@ implied <strong>snort.--warn-all</strong>: enable all warnings
 <li>
 <p>
 implied <strong>snort.--warn-conf</strong>: warn about configuration issues
+</p>
+</li>
+<li>
+<p>
+implied <strong>snort.--warn-conf-strict</strong>: warn about unrecognized elements in configuration files
 </p>
 </li>
 <li>
@@ -13106,6 +13176,16 @@ int <strong>gtp_inspect.trace</strong>: mask for enabling debug traces in module
 <strong>121:12</strong> (http2_inspect) unknown parameter in HTTP/2 settings frame
 </p>
 </li>
+<li>
+<p>
+<strong>121:13</strong> (http2_inspect) invalid HTTP/2 frame sequence
+</p>
+</li>
+<li>
+<p>
+<strong>121:14</strong> (http2_inspect) HTTP/2 dynamic table size limit exceeded
+</p>
+</li>
 </ul></div>
 <div class="paragraph"><p>Peg counts:</p></div>
 <div class="ulist"><ul>
@@ -13122,6 +13202,11 @@ int <strong>gtp_inspect.trace</strong>: mask for enabling debug traces in module
 <li>
 <p>
 <strong>http2_inspect.max_concurrent_sessions</strong>: maximum concurrent HTTP/2 sessions (max)
+</p>
+</li>
+<li>
+<p>
+<strong>http2_inspect.max_table_entries</strong>: maximum entries in an HTTP/2 dynamic table (max)
 </p>
 </li>
 </ul></div>
@@ -13225,7 +13310,7 @@ int <strong>http_inspect.iis_unicode_code_page</strong> = 1252: code page to use
 </li>
 <li>
 <p>
-bool <strong>http_inspect.iis_double_decode</strong> = false: perform double decoding of percent encodings to normalize characters
+bool <strong>http_inspect.iis_double_decode</strong> = true: perform double decoding of percent encodings to normalize characters
 </p>
 </li>
 <li>
@@ -13235,7 +13320,7 @@ int <strong>http_inspect.oversize_dir_length</strong> = 300: maximum length for 
 </li>
 <li>
 <p>
-bool <strong>http_inspect.backslash_to_slash</strong> = false: replace \ with / when normalizing URIs
+bool <strong>http_inspect.backslash_to_slash</strong> = true: replace \ with / when normalizing URIs
 </p>
 </li>
 <li>
@@ -13746,6 +13831,11 @@ bool <strong>http_inspect.simplify_path</strong> = true: reduce URI directory pa
 <strong>119:248</strong> (http_inspect) gzip compressed data followed by unexpected non-gzip data
 </p>
 </li>
+<li>
+<p>
+<strong>119:249</strong> (http_inspect) excessive HTTP parameter key repeats
+</p>
+</li>
 </ul></div>
 <div class="paragraph"><p>Peg counts:</p></div>
 <div class="ulist"><ul>
@@ -13867,6 +13957,16 @@ bool <strong>http_inspect.simplify_path</strong> = true: reduce URI directory pa
 <li>
 <p>
 <strong>http_inspect.partial_inspections</strong>: pre-inspections for detained inspection (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>http_inspect.excess_parameters</strong>: repeat parameters exceeding max (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>http_inspect.parameters</strong>: HTTP parameters inspected (sum)
 </p>
 </li>
 </ul></div>
@@ -14081,7 +14181,7 @@ int <strong>imap.uu_decode_depth</strong> = -1: Unix-to-Unix decoding depth (-1 
 <div class="ulist"><ul>
 <li>
 <p>
-bool <strong>normalizer.ip4.base</strong> = true: clear options
+bool <strong>normalizer.ip4.base</strong> = false: clear options
 </p>
 </li>
 <li>
@@ -14106,17 +14206,17 @@ bool <strong>normalizer.ip4.trim</strong> = false: truncate excess payload beyon
 </li>
 <li>
 <p>
-bool <strong>normalizer.tcp.base</strong> = true: clear reserved bits and option padding and fix urgent pointer / flags issues
+bool <strong>normalizer.tcp.base</strong> = false: clear reserved bits and option padding and fix urgent pointer / flags issues
 </p>
 </li>
 <li>
 <p>
-bool <strong>normalizer.tcp.block</strong> = true: allow packet drops during TCP normalization
+bool <strong>normalizer.tcp.block</strong> = false: allow packet drops during TCP normalization
 </p>
 </li>
 <li>
 <p>
-bool <strong>normalizer.tcp.urp</strong> = true: adjust urgent pointer if beyond segment length
+bool <strong>normalizer.tcp.urp</strong> = false: adjust urgent pointer if beyond segment length
 </p>
 </li>
 <li>
@@ -14131,7 +14231,7 @@ select <strong>normalizer.tcp.ecn</strong> = off: clear ecn for all packets | se
 </li>
 <li>
 <p>
-bool <strong>normalizer.tcp.pad</strong> = true: clear any option padding bytes
+bool <strong>normalizer.tcp.pad</strong> = false: clear any option padding bytes
 </p>
 </li>
 <li>
@@ -14161,27 +14261,27 @@ bool <strong>normalizer.tcp.trim</strong> = false: enable all of the TCP trim op
 </li>
 <li>
 <p>
-bool <strong>normalizer.tcp.opts</strong> = true: clear all options except mss, wscale, timestamp, and any explicitly allowed
+bool <strong>normalizer.tcp.opts</strong> = false: clear all options except mss, wscale, timestamp, and any explicitly allowed
 </p>
 </li>
 <li>
 <p>
-bool <strong>normalizer.tcp.req_urg</strong> = true: clear the urgent pointer if the urgent flag is not set
+bool <strong>normalizer.tcp.req_urg</strong> = false: clear the urgent pointer if the urgent flag is not set
 </p>
 </li>
 <li>
 <p>
-bool <strong>normalizer.tcp.req_pay</strong> = true: clear the urgent pointer and the urgent flag if there is no payload
+bool <strong>normalizer.tcp.req_pay</strong> = false: clear the urgent pointer and the urgent flag if there is no payload
 </p>
 </li>
 <li>
 <p>
-bool <strong>normalizer.tcp.rsv</strong> = true: clear the reserved bits in the TCP header
+bool <strong>normalizer.tcp.rsv</strong> = false: clear the reserved bits in the TCP header
 </p>
 </li>
 <li>
 <p>
-bool <strong>normalizer.tcp.req_urp</strong> = true: clear the urgent flag if the urgent pointer is not set
+bool <strong>normalizer.tcp.req_urp</strong> = false: clear the urgent flag if the urgent pointer is not set
 </p>
 </li>
 <li>
@@ -14588,7 +14688,7 @@ int <strong>perf_monitor.seconds</strong> = 60: report interval { 1:max32 }
 </li>
 <li>
 <p>
-int <strong>perf_monitor.flow_ip_memcap</strong> = 52428800: maximum memory in bytes for flow tracking { 8200:maxSZ }
+int <strong>perf_monitor.flow_ip_memcap</strong> = 52428800: maximum memory in bytes for flow tracking { 236:maxSZ }
 </p>
 </li>
 <li>
@@ -15261,7 +15361,22 @@ int <strong>port_scan.icmp_window</strong> = 0: detection interval for all ICMP 
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>port_scan.packets</strong>: total packets (sum)
+<strong>port_scan.packets</strong>: number of packets processed by port scan (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>port_scan.trackers</strong>: number of trackers allocated by port scan (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>port_scan.alloc_prunes</strong>: number of trackers pruned on allocation of new tracking (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>port_scan.reload_prunes</strong>: number of trackers pruned on reload due to reduced memcap (sum)
 </p>
 </li>
 </ul></div>
@@ -16129,17 +16244,17 @@ int <strong>smtp.max_auth_command_line_len</strong> = 1000: max auth command Lin
 </li>
 <li>
 <p>
-int <strong>smtp.max_command_line_len</strong> = 0: max Command Line Length { 0:65535 }
+int <strong>smtp.max_command_line_len</strong> = 512: max Command Line Length { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>smtp.max_header_line_len</strong> = 0: max SMTP DATA header line { 0:65535 }
+int <strong>smtp.max_header_line_len</strong> = 1000: max SMTP DATA header line { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>smtp.max_response_line_len</strong> = 0: max SMTP response line { 0:65535 }
+int <strong>smtp.max_response_line_len</strong> = 512: max SMTP response line { 0:65535 }
 </p>
 </li>
 <li>
@@ -17901,7 +18016,12 @@ implied <strong>ber_skip.optional</strong>: match even if the specified BER type
 <div class="ulist"><ul>
 <li>
 <p>
-interval <strong>bufferlen.~range</strong>: check that length of current buffer is in given range { 0:65535 }
+interval <strong>bufferlen.~range</strong>: check that total length of current buffer is in given range { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+implied <strong>bufferlen.relative</strong>: use remaining length (from current position) instead of total length
 </p>
 </li>
 </ul></div>
@@ -18883,6 +19003,25 @@ implied <strong>http_method.with_trailer</strong>: parts of this rule examine HT
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_http_param">http_param</h3>
+<div class="paragraph"><p>What: rule option to set the detection cursor to the value of the specified HTTP parameter key which may be in the query or body</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Usage: detect</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+string <strong>http_param.~param</strong>: parameter to match
+</p>
+</li>
+<li>
+<p>
+implied <strong>http_param.nocase</strong>: case insensitive match
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_http_raw_body_2">http_raw_body</h3>
 <div class="paragraph"><p>What: rule option to set the detection cursor to the unnormalized message body</p></div>
 <div class="paragraph"><p>Type: ips_option</p></div>
@@ -19389,7 +19528,7 @@ implied <strong>md5.relative</strong> = false: offset from cursor instead of sta
 </div>
 <div class="sect2">
 <h3 id="_metadata">metadata</h3>
-<div class="paragraph"><p>What: rule option for conveying arbitrary name, value data within the rule text</p></div>
+<div class="paragraph"><p>What: rule option for conveying arbitrary comma-separated name, value data within the rule text</p></div>
 <div class="paragraph"><p>Type: ips_option</p></div>
 <div class="paragraph"><p>Usage: detect</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
@@ -19473,6 +19612,29 @@ interval <strong>mss.~range</strong>: check if TCP MSS is in given range { 0:655
 <li>
 <p>
 string <strong>pcre.~re</strong>: Snort regular expression
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>pcre.pcre_rules</strong>: total rules processed with pcre option (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>pcre.pcre_to_hyper</strong>: total pcre rules by hyperscan engine (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>pcre.pcre_native</strong>: total pcre rules compiled by pcre engine (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>pcre.pcre_negated</strong>: total pcre rules using negation syntax (sum)
 </p>
 </li>
 </ul></div>
@@ -24595,6 +24757,11 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
+<strong>--metadata-filter</strong> &lt;filter&gt; load only rules containing filter string in metadata if set
+</p>
+</li>
+<li>
+<p>
 <strong>--nostamps</strong> don&#8217;t include timestamps in log file names
 </p>
 </li>
@@ -24756,6 +24923,11 @@ these libraries see the Getting Started section of the manual.</p></div>
 <li>
 <p>
 <strong>--warn-conf</strong> warn about configuration issues
+</p>
+</li>
+<li>
+<p>
+<strong>--warn-conf-strict</strong> warn about unrecognized elements in configuration files
 </p>
 </li>
 <li>
@@ -25120,7 +25292,7 @@ int <strong>attribute_table.max_hosts</strong> = 1024: maximum number of hosts i
 </li>
 <li>
 <p>
-int <strong>attribute_table.max_metadata_services</strong> = 8: maximum number of services in rule { 1:255 }
+int <strong>attribute_table.max_metadata_services</strong> = 9: maximum number of services in rule { 1:255 }
 </p>
 </li>
 <li>
@@ -25275,7 +25447,12 @@ bit_list <strong><code>binder[].when.zones</code></strong>: zones { 63 }
 </li>
 <li>
 <p>
-interval <strong>bufferlen.~range</strong>: check that length of current buffer is in given range { 0:65535 }
+interval <strong>bufferlen.~range</strong>: check that total length of current buffer is in given range { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+implied <strong>bufferlen.relative</strong>: use remaining length (from current position) instead of total length
 </p>
 </li>
 <li>
@@ -25885,6 +26062,11 @@ bool <strong>detection.global_rule_state</strong> = false: apply rule_state agai
 </li>
 <li>
 <p>
+bool <strong>detection.hyperscan_literals</strong> = false: use hyperscan for content literal searches instead of boyer-moore
+</p>
+</li>
+<li>
+<p>
 int <strong>detection.offload_limit</strong> = 99999: minimum sizeof PDU to offload fast pattern search (defaults to disabled) { 0:max32 }
 </p>
 </li>
@@ -25895,7 +26077,7 @@ int <strong>detection.offload_threads</strong> = 0: maximum number of simultaneo
 </li>
 <li>
 <p>
-bool <strong>detection.pcre_enable</strong> = true: disable pcre pattern matching
+bool <strong>detection.pcre_enable</strong> = true: enable pcre pattern matching
 </p>
 </li>
 <li>
@@ -25906,6 +26088,16 @@ int <strong>detection.pcre_match_limit</strong> = 1500: limit pcre backtracking,
 <li>
 <p>
 int <strong>detection.pcre_match_limit_recursion</strong> = 1500: limit pcre stack consumption, 0 = off { 0:max32 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>detection.pcre_override</strong> = true: enable pcre match limit overrides when pattern matching (ie ignore /O)
+</p>
+</li>
+<li>
+<p>
+bool <strong>detection.pcre_to_regex</strong> = false: enable the use of regex instead of pcre for compatible expressions
 </p>
 </li>
 <li>
@@ -26675,7 +26867,7 @@ implied <strong>http_header.with_trailer</strong>: parts of this rule examine HT
 </li>
 <li>
 <p>
-bool <strong>http_inspect.backslash_to_slash</strong> = false: replace \ with / when normalizing URIs
+bool <strong>http_inspect.backslash_to_slash</strong> = true: replace \ with / when normalizing URIs
 </p>
 </li>
 <li>
@@ -26710,7 +26902,7 @@ string <strong>http_inspect.ignore_unreserved</strong>: do not alert when the sp
 </li>
 <li>
 <p>
-bool <strong>http_inspect.iis_double_decode</strong> = false: perform double decoding of percent encodings to normalize characters
+bool <strong>http_inspect.iis_double_decode</strong> = true: perform double decoding of percent encodings to normalize characters
 </p>
 </li>
 <li>
@@ -26801,6 +26993,16 @@ implied <strong>http_method.with_header</strong>: this rule is limited to examin
 <li>
 <p>
 implied <strong>http_method.with_trailer</strong>: parts of this rule examine HTTP message trailers
+</p>
+</li>
+<li>
+<p>
+implied <strong>http_param.nocase</strong>: case insensitive match
+</p>
+</li>
+<li>
+<p>
+string <strong>http_param.~param</strong>: parameter to match
 </p>
 </li>
 <li>
@@ -27400,7 +27602,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-bool <strong>normalizer.ip4.base</strong> = true: clear options
+bool <strong>normalizer.ip4.base</strong> = false: clear options
 </p>
 </li>
 <li>
@@ -27440,12 +27642,12 @@ multi <strong>normalizer.tcp.allow_names</strong>: don&#8217;t clear given optio
 </li>
 <li>
 <p>
-bool <strong>normalizer.tcp.base</strong> = true: clear reserved bits and option padding and fix urgent pointer / flags issues
+bool <strong>normalizer.tcp.base</strong> = false: clear reserved bits and option padding and fix urgent pointer / flags issues
 </p>
 </li>
 <li>
 <p>
-bool <strong>normalizer.tcp.block</strong> = true: allow packet drops during TCP normalization
+bool <strong>normalizer.tcp.block</strong> = false: allow packet drops during TCP normalization
 </p>
 </li>
 <li>
@@ -27460,32 +27662,32 @@ bool <strong>normalizer.tcp.ips</strong> = true: ensure consistency in retransmi
 </li>
 <li>
 <p>
-bool <strong>normalizer.tcp.opts</strong> = true: clear all options except mss, wscale, timestamp, and any explicitly allowed
+bool <strong>normalizer.tcp.opts</strong> = false: clear all options except mss, wscale, timestamp, and any explicitly allowed
 </p>
 </li>
 <li>
 <p>
-bool <strong>normalizer.tcp.pad</strong> = true: clear any option padding bytes
+bool <strong>normalizer.tcp.pad</strong> = false: clear any option padding bytes
 </p>
 </li>
 <li>
 <p>
-bool <strong>normalizer.tcp.req_pay</strong> = true: clear the urgent pointer and the urgent flag if there is no payload
+bool <strong>normalizer.tcp.req_pay</strong> = false: clear the urgent pointer and the urgent flag if there is no payload
 </p>
 </li>
 <li>
 <p>
-bool <strong>normalizer.tcp.req_urg</strong> = true: clear the urgent pointer if the urgent flag is not set
+bool <strong>normalizer.tcp.req_urg</strong> = false: clear the urgent pointer if the urgent flag is not set
 </p>
 </li>
 <li>
 <p>
-bool <strong>normalizer.tcp.req_urp</strong> = true: clear the urgent flag if the urgent pointer is not set
+bool <strong>normalizer.tcp.req_urp</strong> = false: clear the urgent flag if the urgent pointer is not set
 </p>
 </li>
 <li>
 <p>
-bool <strong>normalizer.tcp.rsv</strong> = true: clear the reserved bits in the TCP header
+bool <strong>normalizer.tcp.rsv</strong> = false: clear the reserved bits in the TCP header
 </p>
 </li>
 <li>
@@ -27515,7 +27717,7 @@ bool <strong>normalizer.tcp.trim_win</strong> = false: trim data to window
 </li>
 <li>
 <p>
-bool <strong>normalizer.tcp.urp</strong> = true: adjust urgent pointer if beyond segment length
+bool <strong>normalizer.tcp.urp</strong> = false: adjust urgent pointer if beyond segment length
 </p>
 </li>
 <li>
@@ -27645,7 +27847,7 @@ bool <strong>perf_monitor.flow_ip</strong> = false: enable statistics on host pa
 </li>
 <li>
 <p>
-int <strong>perf_monitor.flow_ip_memcap</strong> = 52428800: maximum memory in bytes for flow tracking { 8200:maxSZ }
+int <strong>perf_monitor.flow_ip_memcap</strong> = 52428800: maximum memory in bytes for flow tracking { 236:maxSZ }
 </p>
 </li>
 <li>
@@ -28740,17 +28942,17 @@ int <strong>smtp.max_auth_command_line_len</strong> = 1000: max auth command Lin
 </li>
 <li>
 <p>
-int <strong>smtp.max_command_line_len</strong> = 0: max Command Line Length { 0:65535 }
+int <strong>smtp.max_command_line_len</strong> = 512: max Command Line Length { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>smtp.max_header_line_len</strong> = 0: max SMTP DATA header line { 0:65535 }
+int <strong>smtp.max_header_line_len</strong> = 1000: max SMTP DATA header line { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>smtp.max_response_line_len</strong> = 0: max SMTP response line { 0:65535 }
+int <strong>smtp.max_response_line_len</strong> = 512: max SMTP response line { 0:65535 }
 </p>
 </li>
 <li>
@@ -29075,6 +29277,11 @@ implied <strong>snort.--mem-check</strong>: like -T but also compile search engi
 </li>
 <li>
 <p>
+string <strong>snort.--metadata-filter</strong>: &lt;filter&gt; load only rules containing filter string in metadata if set
+</p>
+</li>
+<li>
+<p>
 implied <strong>snort.-M</strong>: log messages to syslog (not alerts)
 </p>
 </li>
@@ -29326,6 +29533,11 @@ implied <strong>snort.-V</strong>: (same as --version)
 <li>
 <p>
 implied <strong>snort.--warn-all</strong>: enable all warnings
+</p>
+</li>
+<li>
+<p>
+implied <strong>snort.--warn-conf-strict</strong>: warn about unrecognized elements in configuration files
 </p>
 </li>
 <li>
@@ -31145,27 +31357,32 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>host_cache.lru_cache_adds</strong>: lru cache added new entry (sum)
+<strong>host_cache.adds</strong>: lru cache added new entry (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>host_cache.lru_cache_find_hits</strong>: lru cache found entry in cache (sum)
+<strong>host_cache.alloc_prunes</strong>: lru cache pruned entry to make space for new entry (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>host_cache.lru_cache_find_misses</strong>: lru cache did not find entry in cache (sum)
+<strong>host_cache.find_hits</strong>: lru cache found entry in cache (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>host_cache.lru_cache_prunes</strong>: lru cache pruned entry to make space for new entry (sum)
+<strong>host_cache.find_misses</strong>: lru cache did not find entry in cache (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>host_cache.lru_cache_removes</strong>: lru cache found entry and removed it (sum)
+<strong>host_cache.reload_prunes</strong>: lru cache pruned entry for lower memcap during reload (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>host_cache.removes</strong>: lru cache found entry and removed it (sum)
 </p>
 </li>
 <li>
@@ -31195,6 +31412,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>http2_inspect.max_table_entries</strong>: maximum entries in an HTTP/2 dynamic table (max)
+</p>
+</li>
+<li>
+<p>
 <strong>http_inspect.chunked</strong>: chunked message bodies (sum)
 </p>
 </li>
@@ -31216,6 +31438,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>http_inspect.detained_packets</strong>: TCP packets delayed by detained inspection (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>http_inspect.excess_parameters</strong>: repeat parameters exceeding max (sum)
 </p>
 </li>
 <li>
@@ -31251,6 +31478,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>http_inspect.other_requests</strong>: other request methods inspected (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>http_inspect.parameters</strong>: HTTP parameters inspected (sum)
 </p>
 </li>
 <li>
@@ -31815,6 +32047,26 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>pcre.pcre_native</strong>: total pcre rules compiled by pcre engine (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>pcre.pcre_negated</strong>: total pcre rules using negation syntax (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>pcre.pcre_rules</strong>: total rules processed with pcre option (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>pcre.pcre_to_hyper</strong>: total pcre rules by hyperscan engine (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>perf_monitor.alloc_prunes</strong>: flows pruned on allocation of IP flows (sum)
 </p>
 </li>
@@ -31895,7 +32147,22 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>port_scan.packets</strong>: total packets (sum)
+<strong>port_scan.alloc_prunes</strong>: number of trackers pruned on allocation of new tracking (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>port_scan.packets</strong>: number of packets processed by port scan (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>port_scan.reload_prunes</strong>: number of trackers pruned on reload due to reduced memcap (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>port_scan.trackers</strong>: number of trackers allocated by port scan (sum)
 </p>
 </li>
 <li>
@@ -34790,6 +35057,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>119:249</strong> (http_inspect) excessive HTTP parameter key repeats
+</p>
+</li>
+<li>
+<p>
 <strong>121:1</strong> (http2_inspect) error in HPACK integer value
 </p>
 </li>
@@ -34846,6 +35118,16 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>121:12</strong> (http2_inspect) unknown parameter in HTTP/2 settings frame
+</p>
+</li>
+<li>
+<p>
+<strong>121:13</strong> (http2_inspect) invalid HTTP/2 frame sequence
+</p>
+</li>
+<li>
+<p>
+<strong>121:14</strong> (http2_inspect) HTTP/2 dynamic table size limit exceeded
 </p>
 </li>
 <li>
@@ -37071,6 +37353,11 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
+<strong>http_param</strong> (ips_option): rule option to set the detection cursor to the value of the specified HTTP parameter key which may be in the query or body
+</p>
+</li>
+<li>
+<p>
 <strong>http_raw_body</strong> (ips_option): rule option to set the detection cursor to the unnormalized message body
 </p>
 </li>
@@ -37132,6 +37419,11 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 <li>
 <p>
 <strong>http_version</strong> (ips_option): rule option to set the detection cursor to the version buffer
+</p>
+</li>
+<li>
+<p>
+<strong>hyperscan</strong> (search_engine): intel hyperscan-based mpse with regex support
 </p>
 </li>
 <li>
@@ -37256,7 +37548,7 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
-<strong>metadata</strong> (ips_option): rule option for conveying arbitrary name, value data within the rule text
+<strong>metadata</strong> (ips_option): rule option for conveying arbitrary comma-separated name, value data within the rule text
 </p>
 </li>
 <li>
@@ -38531,6 +38823,11 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
+<strong>ips_option::http_param</strong>: rule option to set the detection cursor to the value of the specified HTTP parameter key which may be in the query or body
+</p>
+</li>
+<li>
+<p>
 <strong>ips_option::http_raw_body</strong>: rule option to set the detection cursor to the unnormalized message body
 </p>
 </li>
@@ -38641,7 +38938,7 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
-<strong>ips_option::metadata</strong>: rule option for conveying arbitrary name, value data within the rule text
+<strong>ips_option::metadata</strong>: rule option for conveying arbitrary comma-separated name, value data within the rule text
 </p>
 </li>
 <li>
@@ -39024,22 +39321,12 @@ daq.snaplen
 </li>
 <li>
 <p>
-daq.no_promisc
-</p>
-</li>
-<li>
-<p>
 detection.asn1
 </p>
 </li>
 <li>
 <p>
 file_id.max_files_cached
-</p>
-</li>
-<li>
-<p>
-port_scan.memcap
 </p>
 </li>
 <li>
@@ -39064,97 +39351,12 @@ process.set_uid
 </li>
 <li>
 <p>
-stream.footprint
+snort.--bpf
 </p>
 </li>
 <li>
 <p>
-stream.ip_cache.max_sessions
-</p>
-</li>
-<li>
-<p>
-stream.ip_cache.pruning_timeout
-</p>
-</li>
-<li>
-<p>
-stream.ip_cache.idle_timeout
-</p>
-</li>
-<li>
-<p>
-stream.icmp_cache.max_sessions
-</p>
-</li>
-<li>
-<p>
-stream.icmp_cache.pruning_timeout
-</p>
-</li>
-<li>
-<p>
-stream.icmp_cache.idle_timeout
-</p>
-</li>
-<li>
-<p>
-stream.tcp_cache.max_sessions
-</p>
-</li>
-<li>
-<p>
-stream.tcp_cache.pruning_timeout
-</p>
-</li>
-<li>
-<p>
-stream.tcp_cache.idle_timeout
-</p>
-</li>
-<li>
-<p>
-stream.udp_cache.max_sessions
-</p>
-</li>
-<li>
-<p>
-stream.udp_cache.pruning_timeout
-</p>
-</li>
-<li>
-<p>
-stream.udp_cache.idle_timeout
-</p>
-</li>
-<li>
-<p>
-stream.user_cache.max_sessions
-</p>
-</li>
-<li>
-<p>
-stream.user_cache.pruning_timeout
-</p>
-</li>
-<li>
-<p>
-stream.user_cache.idle_timeout
-</p>
-</li>
-<li>
-<p>
-stream.file_cache.max_sessions
-</p>
-</li>
-<li>
-<p>
-stream.file_cache.pruning_timeout
-</p>
-</li>
-<li>
-<p>
-stream.file_cache.idle_timeout
+snort.-l
 </p>
 </li>
 </ul></div>
@@ -39194,7 +39396,7 @@ Adding/removing stream_* inspectors if stream was already configured
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2019-12-20 13:13:48 EST
+ 2020-02-21 11:32:57 EST
 </div>
 </div>
 </body>
