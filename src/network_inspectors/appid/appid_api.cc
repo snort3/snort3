@@ -201,14 +201,26 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name, cons
 
     if (asd)
     {
+        AppidChangeBits change_bits;
         SslPatternMatchers& ssl_matchers = asd->ctxt.get_odp_ctxt().get_ssl_matchers();
-        if (common_name)
-            ssl_matchers.scan_cname((const uint8_t*)common_name, strlen(common_name), client_id,
-                payload_id);
+        if (!asd->tsession)
+            asd->tsession = (TlsSession*)snort_calloc(sizeof(TlsSession));
 
         if (server_name)
+        {
             ssl_matchers.scan_hostname((const uint8_t*)server_name, strlen(server_name), client_id,
                 payload_id);
+            asd->tsession->set_tls_host(server_name, strlen(server_name), change_bits);
+            asd->scan_flags |= SCAN_SSL_HOST_FLAG;
+        }
+
+        if (common_name)
+        {
+            ssl_matchers.scan_cname((const uint8_t*)common_name, strlen(common_name), client_id,
+                payload_id);
+            asd->tsession->set_tls_cname(common_name, strlen(common_name));
+            asd->scan_flags |= SCAN_SSL_CERTIFICATE_FLAG;
+        }
 
         service_id = asd->get_application_ids_service();
         if (client_id == APP_ID_NONE)
@@ -222,13 +234,14 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name, cons
         if (inspector)
         {
             SslPatternMatchers& ssl_matchers = inspector->get_ctxt().get_odp_ctxt().get_ssl_matchers();
-            if (common_name)
-                ssl_matchers.scan_cname((const uint8_t*)common_name, strlen(common_name), client_id,
-                    payload_id);
 
             if (server_name)
                 ssl_matchers.scan_hostname((const uint8_t*)server_name, strlen(server_name),
                     client_id, payload_id);
+
+            if (common_name)
+                ssl_matchers.scan_cname((const uint8_t*)common_name, strlen(common_name), client_id,
+                    payload_id);
         }
     }
 

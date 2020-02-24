@@ -52,15 +52,17 @@ class Inspector* InspectorManager::get_inspector(char const*, bool, SnortConfig*
 { return nullptr; }
 }
 
-bool SslPatternMatchers::scan_hostname(unsigned char const*, unsigned long, AppId& client_id, AppId&)
+bool SslPatternMatchers::scan_hostname(unsigned char const*, unsigned long, AppId& client_id, AppId& payload_id)
 {
     client_id = APPID_UT_ID + 1;
+    payload_id = APPID_UT_ID + 1;
     return true;
 }
 
-bool SslPatternMatchers::scan_cname(unsigned char const*, unsigned long, AppId&, AppId& payload_id)
+bool SslPatternMatchers::scan_cname(unsigned char const*, unsigned long, AppId& client_id, AppId& payload_id)
 {
-    payload_id = APPID_UT_ID + 1;
+    client_id++;
+    payload_id++;
     return true;
 }
 
@@ -197,10 +199,21 @@ TEST(appid_api, ssl_app_group_id_lookup)
     service = APP_ID_NONE;
     client = APP_ID_NONE;
     payload = APP_ID_NONE;
-    val = appid_api.ssl_app_group_id_lookup(flow, (const char*)APPID_UT_TLS_HOST, (const char*)APPID_UT_TLS_HOST, service, client, payload);
+    val = appid_api.ssl_app_group_id_lookup(flow, (const char*)APPID_UT_TLS_HOST, nullptr, service, client, payload);
     CHECK_TRUE(val);
     CHECK_EQUAL(client, APPID_UT_ID + 1);
     CHECK_EQUAL(payload, APPID_UT_ID + 1);
+    AppidChangeBits change_bits;
+    mock_session->tsession->set_tls_host("www.cisco.com", 13, change_bits);
+    mock_session->tsession->set_tls_cname("www.cisco.com", 13);
+    STRCMP_EQUAL(mock_session->tsession->get_tls_host(), "www.cisco.com");
+    STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), "www.cisco.com");
+    val = appid_api.ssl_app_group_id_lookup(flow, (const char*)APPID_UT_TLS_HOST, (const char*)APPID_UT_TLS_HOST, service, client, payload);
+    CHECK_TRUE(val);
+    CHECK_EQUAL(client, APPID_UT_ID + 2);
+    CHECK_EQUAL(payload, APPID_UT_ID + 2);
+    STRCMP_EQUAL(mock_session->tsession->get_tls_host(), APPID_UT_TLS_HOST);
+    STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), APPID_UT_TLS_HOST);
 }
 
 TEST(appid_api, create_appid_session_api)
