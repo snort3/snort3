@@ -103,6 +103,7 @@ private:
     // *** StreamSplitter => Inspector (facts about the most recent message section)
     HttpEnums::SectionType section_type[2] = { HttpEnums::SEC__NOT_COMPUTE,
                                                 HttpEnums::SEC__NOT_COMPUTE };
+    int32_t octets_reassembled[2] = { HttpCommon::STAT_NOT_PRESENT, HttpCommon::STAT_NOT_PRESENT };
     int32_t num_head_lines[2] = { HttpCommon::STAT_NOT_PRESENT, HttpCommon::STAT_NOT_PRESENT };
     bool tcp_close[2] = { false, false };
     bool partial_flush[2] = { false, false };

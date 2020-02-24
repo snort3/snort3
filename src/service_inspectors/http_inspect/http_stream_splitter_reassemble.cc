@@ -276,6 +276,12 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
     }
 #endif
 
+    assert(session_data->type_expected[source_id] != SEC_ABORT);
+    if (session_data->section_type[source_id] == SEC__NOT_COMPUTE)
+    {
+        return { nullptr, 0 };
+    }
+
     // Sometimes it is necessary to reassemble zero bytes when a connection is closing to trigger
     // proper clean up. But even a zero-length buffer cannot be processed with a nullptr lest we
     // get in trouble with memcpy() (undefined behavior) or some library.
@@ -283,13 +289,6 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
     if (data == nullptr)
         data = (const uint8_t*)"";
 
-    // FIXIT-H Workaround for TP Bug 149662
-    if (session_data->section_type[source_id] == SEC__NOT_COMPUTE)
-    {
-        return { nullptr, 0 };
-    }
-
-    assert(session_data->section_type[source_id] != SEC__NOT_COMPUTE);
     uint8_t*& partial_buffer = session_data->partial_buffer[source_id];
     uint32_t& partial_buffer_length = session_data->partial_buffer_length[source_id];
     uint32_t& partial_raw_bytes = session_data->partial_raw_bytes[source_id];
@@ -424,6 +423,7 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
 
         http_buf.data = buffer;
         http_buf.length = buf_size;
+        session_data->octets_reassembled[source_id] = buf_size;
 
         buffer = nullptr;
         session_data->section_offset[source_id] = 0;

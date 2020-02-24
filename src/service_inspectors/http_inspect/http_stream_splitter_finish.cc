@@ -168,21 +168,13 @@ bool HttpStreamSplitter::init_partial_flush(Flow* flow)
 {
     Profile profile(HttpModule::get_profile_stats());
 
-    if (source_id != SRC_SERVER)
-    {
-        assert(false);
-        return false;
-    }
+    assert(source_id == SRC_SERVER);
 
     HttpFlowData* session_data = HttpInspect::http_get_flow_data(flow);
     assert(session_data != nullptr);
-    if ((session_data->type_expected[source_id] != SEC_BODY_CL)      &&
-        (session_data->type_expected[source_id] != SEC_BODY_OLD)     &&
-        (session_data->type_expected[source_id] != SEC_BODY_CHUNK))
-    {
-        assert(false);
-        return false;
-    }
+    assert((session_data->type_expected[source_id] == SEC_BODY_CL)      ||
+           (session_data->type_expected[source_id] == SEC_BODY_OLD)     ||
+           (session_data->type_expected[source_id] == SEC_BODY_CHUNK));
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP) &&

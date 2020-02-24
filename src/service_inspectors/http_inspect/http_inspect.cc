@@ -359,9 +359,15 @@ void HttpInspect::eval(Packet* p)
 
     HttpFlowData* session_data = http_get_flow_data(p->flow);
 
-    // FIXIT-H Workaround for unexpected eval() calls
-    if (session_data->section_type[source_id] == SEC__NOT_COMPUTE)
+    // FIXIT-H Workaround for unexpected eval() calls. Convert to asserts when possible.
+    if ((session_data->section_type[source_id] == SEC__NOT_COMPUTE) ||
+        (session_data->type_expected[source_id] == SEC_ABORT)       ||
+        (session_data->octets_reassembled[source_id] != p->dsize))
+    {
+        session_data->type_expected[source_id] = SEC_ABORT;
         return;
+    }
+    session_data->octets_reassembled[source_id] = STAT_NOT_PRESENT;
 
     // Don't make pkt_data for headers available to detection
     if ((session_data->section_type[source_id] == SEC_HEADER) ||
@@ -415,7 +421,6 @@ bool HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
 {
     HttpMsgSection* current_section;
     HttpFlowData* session_data = http_get_flow_data(flow);
-    assert(session_data != nullptr);
 
     if (!session_data->partial_flush[source_id])
         HttpModule::increment_peg_counts(PEG_INSPECT);
