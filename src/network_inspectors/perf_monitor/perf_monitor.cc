@@ -31,11 +31,16 @@
 #include "framework/data_bus.h"
 #include "hash/xhash.h"
 #include "log/messages.h"
+#include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 
+#include "base_tracker.h"
+#include "cpu_tracker.h"
+#include "flow_ip_tracker.h"
+#include "flow_tracker.h"
 #include "perf_module.h"
-#include "perf_monitor.h"
+
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -52,6 +57,31 @@ static THREAD_LOCAL FlowIPTracker* flow_ip_tracker = nullptr;
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
+
+class FlowIPDataHandler;
+class PerfMonitor : public Inspector
+{
+public:
+    PerfMonitor(PerfConfig*);
+    ~PerfMonitor() override { delete config;}
+
+    bool configure(SnortConfig*) override;
+    void show(SnortConfig*) override;
+
+    void eval(Packet*) override;
+    bool ready_to_process(Packet* p);
+
+    void tinit() override;
+    void tterm() override;
+
+    void rotate();
+
+    FlowIPTracker* get_flow_ip();
+
+private:
+    PerfConfig* const config;
+    void disable_tracker(size_t);
+};
 
 class PerfIdleHandler : public DataHandler
 {
@@ -113,7 +143,7 @@ private:
     PerfMonitor& perf_monitor;
 };
 
-PerfMonitor::PerfMonitor(PerfConfig* pcfg) : config(pcfg), flow_ip_data_handler(nullptr)
+PerfMonitor::PerfMonitor(PerfConfig* pcfg) : config(pcfg)
 { assert (config != nullptr); }
 
 void PerfMonitor::show(SnortConfig*)
@@ -193,7 +223,7 @@ bool PerfMonitor::configure(SnortConfig* sc)
     new PerfRotateHandler(*this, sc);
 
     if ( config->perf_flags & PERF_FLOWIP )
-        flow_ip_data_handler = new FlowIPDataHandler(*this, sc);
+        new FlowIPDataHandler(*this, sc);
 
     return config->resolve();
 }
@@ -271,60 +301,6 @@ void PerfMonitor::rotate()
     for ( unsigned i = 0; i < trackers->size(); i++ )
         if ( !(*trackers)[i]->rotate() )
             disable_tracker(i--);
-}
-
-void PerfMonitor::enable_profiling(PerfMonitorConstraints* constraints)
-{
-    if (flow_ip_data_handler == nullptr)
-    {
-        flow_ip_data_handler = new FlowIPDataHandler(*this,  SnortConfig::get_conf());
-    } else {
-        if (flow_ip_tracker)
-            return;
-    }
-
-    config->perf_flags |= PERF_FLOWIP;
-    config->sample_interval = constraints->sample_interval;
-    config->pkt_cnt = constraints->packet_count;
-
-    flow_ip_tracker = new FlowIPTracker(config);
-    trackers->emplace_back(flow_ip_tracker);
-
-    for (unsigned i = 0; i < trackers->size(); i++)
-    {
-         if (trackers->at(i) == flow_ip_tracker)
-         {
-             if (!(*trackers)[i]->open(true))
-                disable_tracker(i);
-             flow_ip_tracker->reset(); 
-             break;
-         } 
-    }
-}
-
-void PerfMonitor::disable_profiling()
-{
-    config->perf_flags &= ~PERF_FLOWIP;
-
-    if (flow_ip_tracker)
-    {
-        for (unsigned i = 0; i < trackers->size(); i++)
-        {
-            if (trackers->at(i) == flow_ip_tracker)
-            {
-                disable_tracker(i);
-                break;
-            }
-        }
-        flow_ip_tracker = nullptr;
-    }
-
-    if (flow_ip_data_handler)
-    {
-        DataBus::unsubscribe_global(FLOW_STATE_EVENT, flow_ip_data_handler, SnortConfig::get_conf());
-        delete flow_ip_data_handler;
-        flow_ip_data_handler = nullptr;
-    }
 }
 
 void PerfMonitor::eval(Packet* p)
