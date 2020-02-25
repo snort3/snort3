@@ -91,6 +91,7 @@ ACGetStats::~ACGetStats()
     // FIXIT-L This should track the owner so it can dump stats to the
     // shell instead of the logs when initiated by a shell command
     DropStats();
+    LogMessage("==================================================\n"); // Marking End of stats
 }
 
 ACSwap::ACSwap(Swapper* ps, Request* req, bool from_shell) : ps(ps), request(req), from_shell(from_shell)
