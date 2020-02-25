@@ -49,7 +49,7 @@ public:
 
     static const char* get_input_spec(const SFDAQConfig*, unsigned instance_id);
     static const char* default_type();
-    SO_PUBLIC static const DAQ_Stats_t* get_stats();
+    static const DAQ_Stats_t* get_stats();
 
     static bool can_inject();
     static bool can_inject_raw();
