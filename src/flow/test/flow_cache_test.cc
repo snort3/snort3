@@ -88,8 +88,8 @@ bool HighAvailabilityManager::in_standby(Flow*) { return true; }
 SfIpRet SfIp::set(void const*, int) { return SFIP_SUCCESS; }
 namespace memory
 {
-void MemoryCap::update_allocations(unsigned long) { }
-void MemoryCap::update_deallocations(unsigned long) { }
+void MemoryCap::update_allocations(size_t) { }
+void MemoryCap::update_deallocations(size_t) { }
 bool MemoryCap::over_threshold() { return true; }
 }
 

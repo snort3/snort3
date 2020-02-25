@@ -28,10 +28,10 @@
 #include "cip_parsing.h"
 
 #include "framework/data_bus.h"
+#include "utils/endian.h"
 
 #include "cip.h"
 #include "cip_session.h"  // For CIP connection tracking
-#include "cip_util.h"     // For GetLEUint16/32
 
 using namespace snort;
 
@@ -183,14 +183,14 @@ static bool parse_enip_header(const uint8_t* data,
     #define ENIP_HEADER_OFFSET_CONTEXT 12
     #define ENIP_HEADER_OFFSET_OPTIONS 20
 
-    enip_header->command = GetLEUint16(&data[ENIP_HEADER_OFFSET_COMMAND]);
-    enip_header->length = GetLEUint16(&data[ENIP_HEADER_OFFSET_LENGTH]);
-    enip_header->session_handle = GetLEUint32(&data[ENIP_HEADER_OFFSET_HANDLE]);
-    enip_header->status = GetLEUint32(&data[ENIP_HEADER_OFFSET_STATUS]);
+    enip_header->command = LETOHS(&data[ENIP_HEADER_OFFSET_COMMAND]);
+    enip_header->length = LETOHS(&data[ENIP_HEADER_OFFSET_LENGTH]);
+    enip_header->session_handle = LETOHL(&data[ENIP_HEADER_OFFSET_HANDLE]);
+    enip_header->status = LETOHL(&data[ENIP_HEADER_OFFSET_STATUS]);
     memcpy(&enip_header->sender_context,
         &data[ENIP_HEADER_OFFSET_CONTEXT],
         sizeof(enip_header->sender_context));
-    enip_header->options = GetLEUint32(&data[ENIP_HEADER_OFFSET_OPTIONS]);
+    enip_header->options = LETOHL(&data[ENIP_HEADER_OFFSET_OPTIONS]);
 
     if (!enip_command_valid(enip_header->command))
     {
@@ -345,7 +345,7 @@ static CipMessageType get_cip_message_type(CipCurrentData* current_data,
 
         if (enip_cpf->item_list[CPF_ADDRESS_ITEM_SLOT].length > 0)
         {
-            uint32_t connection_id = GetLEUint32(enip_cpf->item_list[CPF_ADDRESS_ITEM_SLOT].data);
+            uint32_t connection_id = LETOHL(enip_cpf->item_list[CPF_ADDRESS_ITEM_SLOT].data);
 
             // Validate connected messages against CIP Connection List.
             CipConnection* connection = cip_find_connection_by_id(
@@ -403,7 +403,7 @@ static bool parse_common_packet_format(const uint8_t* data,
     #define CPF_ITEM_OFFSET_LENGTH 2
     #define CPF_ITEM_OFFSET_DATA 4
 
-    enip_cpf->item_count = GetLEUint16(&data[CPF_OFFSET_ITEM_COUNT]);
+    enip_cpf->item_count = LETOHS(&data[CPF_OFFSET_ITEM_COUNT]);
     data_length -= CPF_ITEM_COUNT_SIZE;
 
     bool valid = true;
@@ -424,8 +424,8 @@ static bool parse_common_packet_format(const uint8_t* data,
             break;
         }
 
-        item_type = GetLEUint16(&data[current_item_offset + CPF_ITEM_OFFSET_TYPE]);
-        item_length = GetLEUint16(&data[current_item_offset + CPF_ITEM_OFFSET_LENGTH]);
+        item_type = LETOHS(&data[current_item_offset + CPF_ITEM_OFFSET_TYPE]);
+        item_length = LETOHS(&data[current_item_offset + CPF_ITEM_OFFSET_LENGTH]);
         item_data = nullptr;
         if (item_length > 0)
         {
@@ -516,11 +516,11 @@ static void parse_connection_parameters(const uint8_t* data,
     #define OFFSET_RPI 0
     #define OFFSET_NETWORK_PARAMETERS 4
 
-    connection_parameters->rpi = GetLEUint32(&data[OFFSET_RPI]);
+    connection_parameters->rpi = LETOHL_UNALIGNED(&data[OFFSET_RPI]);
 
     if (!large_forward_open)
     {
-        uint16_t network_connection_parameters = GetLEUint16(&data[OFFSET_NETWORK_PARAMETERS]);
+        uint16_t network_connection_parameters = LETOHS(&data[OFFSET_NETWORK_PARAMETERS]);
         connection_parameters->network_connection_parameters = network_connection_parameters;
 
         if ((network_connection_parameters & NULL_CONNECTION_TYPE_MASK) == 0)
@@ -530,7 +530,7 @@ static void parse_connection_parameters(const uint8_t* data,
     }
     else  // SERVICE_LARGE_FORWARD_OPEN
     {
-        uint32_t network_connection_parameters = GetLEUint32(&data[OFFSET_NETWORK_PARAMETERS]);
+        uint32_t network_connection_parameters = LETOHL(&data[OFFSET_NETWORK_PARAMETERS]);
         connection_parameters->network_connection_parameters = network_connection_parameters;
 
         if ((network_connection_parameters & LARGE_NULL_CONNECTION_TYPE_MASK) == 0)
@@ -548,9 +548,9 @@ static void parse_connection_signature(const uint8_t* data,
     #define OFFSET_VENDOR 2
     #define OFFSET_ORIGINATOR_SERIAL 4
 
-    connection_signature->connection_serial_number = GetLEUint16(&data[OFFSET_CONNECTION_SERIAL]);
-    connection_signature->vendor_id = GetLEUint16(&data[OFFSET_VENDOR]);
-    connection_signature->originator_serial_number = GetLEUint32(&data[OFFSET_ORIGINATOR_SERIAL]);
+    connection_signature->connection_serial_number = LETOHS(&data[OFFSET_CONNECTION_SERIAL]);
+    connection_signature->vendor_id = LETOHS(&data[OFFSET_VENDOR]);
+    connection_signature->originator_serial_number = LETOHL(&data[OFFSET_ORIGINATOR_SERIAL]);
 }
 
 static bool parse_segment_electronic_key(const uint8_t* data,
@@ -765,7 +765,7 @@ static bool parse_segment_port(const uint8_t* data,
             extended_port_offset += sizeof(uint8_t);
         }
 
-        port_number = GetLEUint16(&data[extended_port_offset]);
+        port_number = LETOHS(&data[extended_port_offset]);
     }
 
     segment->port_id = port_number;
@@ -1147,10 +1147,10 @@ static bool parse_logical_address_format(const uint8_t* data,
     switch (segment_type & CIP_PATH_LOGICAL_FORMAT_MASK)
     {
     case CIP_PATH_LOGICAL_32_BIT:
-        logical_value = GetLEUint32(&data[data_offset]);
+        logical_value = LETOHL(&data[data_offset]);
         break;
     case CIP_PATH_LOGICAL_16_BIT:
-        logical_value = GetLEUint16(&data[data_offset]);
+        logical_value = LETOHS(&data[data_offset]);
         break;
     case CIP_PATH_LOGICAL_8_BIT:
         logical_value = data[data_offset];
@@ -1300,9 +1300,9 @@ static bool parse_forward_open_response_success(const uint8_t* data,
     #define FWD_OPEN_OFFSET_REPLY_SIZE 24
 
     forward_open_response->connection_pair.ot_connection_id
-        = GetLEUint32(&data[FWD_OPEN_OFFSET_OT_CONNECTION]);
+        = LETOHL(&data[FWD_OPEN_OFFSET_OT_CONNECTION]);
     forward_open_response->connection_pair.to_connection_id
-        = GetLEUint32(&data[FWD_OPEN_OFFSET_TO_CONNECTION]);
+        = LETOHL(&data[FWD_OPEN_OFFSET_TO_CONNECTION]);
     parse_connection_signature(&data[FWD_OPEN_OFFSET_CON_SIGNATURE],
         &forward_open_response->connection_signature);
     forward_open_response->application_reply_size
@@ -1467,7 +1467,7 @@ static bool parse_multiple_service_packet(const uint8_t* data,
 
     // Check that offset data starts after the last offset.
     data_offset = CIP_MSP_NUMBER_SERVICES_FIELD_SIZE + total_offset_size;
-    first_offset = GetLEUint16(&data[CIP_MSP_NUMBER_SERVICES_FIELD_SIZE]);
+    first_offset = LETOHS(&data[CIP_MSP_NUMBER_SERVICES_FIELD_SIZE]);
     if (first_offset < data_offset)
     {
         return false;
@@ -1487,7 +1487,7 @@ static bool parse_multiple_service_packet(const uint8_t* data,
         uint16_t buffer_offset = i * CIP_MSP_OFFSET_FIELD_SIZE;
 
         /* This if the offset from the Number of Services field to the data. */
-        size_t msp_offset = GetLEUint16(&data[buffer_offset]);
+        size_t msp_offset = LETOHS(&data[buffer_offset]);
 
         /* There is no end offset specified, so the next offset needs checked
            to find the length of the current service. For the last packet,
@@ -1500,7 +1500,7 @@ static bool parse_multiple_service_packet(const uint8_t* data,
         else
         {
             uint16_t next_buffer_offset = buffer_offset + CIP_MSP_OFFSET_FIELD_SIZE;
-            msp_offset_end = GetLEUint16(&data[next_buffer_offset]);
+            msp_offset_end = LETOHS(&data[next_buffer_offset]);
         }
 
         // Check that offsets are increasing.
@@ -1563,7 +1563,7 @@ static bool parse_unconnected_send_request(const uint8_t* data,
     cip_request->has_timeout = true;
 
     #define UNCONNECTED_SEND_OFFSET_MESSAGE_SIZE 2
-    message_request_size = GetLEUint16(&data[UNCONNECTED_SEND_OFFSET_MESSAGE_SIZE]);
+    message_request_size = LETOHS(&data[UNCONNECTED_SEND_OFFSET_MESSAGE_SIZE]);
 
     data += UNCONNECTED_SEND_HEADER_SIZE;
     data_length -= UNCONNECTED_SEND_HEADER_SIZE;
@@ -1906,7 +1906,7 @@ static bool parse_enip_command_data(const uint8_t* data,
 
     // Interface Handle
  #define ENIP_OFFSET_INTERFACE_HANDLE 0
-    interface_handle = GetLEUint32(&data[ENIP_OFFSET_INTERFACE_HANDLE]);
+    interface_handle = LETOHL(&data[ENIP_OFFSET_INTERFACE_HANDLE]);
 
 #define CIP_INTERFACE_HANDLE 0
     if (interface_handle != CIP_INTERFACE_HANDLE)

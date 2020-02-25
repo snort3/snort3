@@ -374,8 +374,8 @@ void Ipv4Codec::IP4AddrTests(
     /* Loopback traffic  - don't use htonl for speed reasons -
      * s_addr is always in network order */
 #ifdef WORDS_BIGENDIAN
-    msb_src = (iph.ip_src >> 24);
-    msb_dst = (iph.ip_dst >> 24);
+    msb_src = (uint8_t)(iph->ip_src >> 24);
+    msb_dst = (uint8_t)(iph->ip_dst >> 24);
 #else
     msb_src = (uint8_t)(iph->ip_src & 0xff);
     msb_dst = (uint8_t)(iph->ip_dst & 0xff);

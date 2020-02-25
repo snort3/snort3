@@ -93,6 +93,7 @@ int poll (struct pollfd* fds, nfds_t nfds, int)
     if ( s_poll_error )
         return -1;
 
+    fds[0].revents = 0;
     if ( s_poll_undesirable )
     {
         fds[0].revents |= POLLHUP;

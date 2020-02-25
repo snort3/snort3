@@ -25,9 +25,11 @@
 
 #include "service_netbios.h"
 
+#include "protocols/packet.h"
+#include "utils/endian.h"
+
 #include "app_info_table.h"
 #include "dcerpc.h"
-#include "protocols/packet.h"
 
 using namespace snort;
 
@@ -652,7 +654,7 @@ static inline void smb_find_domain(const uint8_t* data, uint16_t size, const int
         return;
     data += wc;
     size -= wc;
-    byte_count = LETOHS(data);
+    byte_count = LETOHS_UNALIGNED(data);
     data += sizeof(byte_count);
     size -= sizeof(byte_count);
     if (size < byte_count)
@@ -663,7 +665,7 @@ static inline void smb_find_domain(const uint8_t* data, uint16_t size, const int
     {
         if (wc == 8)
         {
-            uint16_t sec_len = LETOHS(&resp->sec_len);
+            uint16_t sec_len = LETOHS_UNALIGNED(&resp->sec_len);
             if (sec_len >= byte_count)
                 return;
             data += sec_len;
@@ -683,7 +685,7 @@ static inline void smb_find_domain(const uint8_t* data, uint16_t size, const int
     {
         if (wc == 34)
         {
-            capabilities = LETOHL(&np->capabilities);
+            capabilities = LETOHL_UNALIGNED(&np->capabilities);
             if (capabilities & SERVICE_SMB_CAPABILITIES_EXTENDED_SECURITY)
                 return;
             unicode = (capabilities & SERVICE_SMB_CAPABILITIES_UNICODE) || unicode;
@@ -1128,7 +1130,7 @@ int NbdgmServiceDetector::validate(AppIdDiscoveryArgs& args)
             {
                 goto not_mailslot;
             }
-            server_type = LETOHL(&browser->server_type);
+            server_type = LETOHL_UNALIGNED(&browser->server_type);
             add_smb_info(args.asd, browser->major, browser->minor, server_type);
         }
 not_mailslot:

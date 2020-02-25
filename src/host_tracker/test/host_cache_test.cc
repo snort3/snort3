@@ -50,17 +50,19 @@ TEST_GROUP(host_cache)
 //  Test HashIp
 TEST(host_cache, hash_test)
 {
-    size_t expected_hash_val = 4521729;
     size_t actual_hash_val;
-    uint8_t hk[16] =
-    { 0x0a,0xff,0x12,0x00,0x00,0x00,0x00,0x00,0x0b,0x00,0x56,0x00,0x00,0x00,0x00,0x00 };
 
     HashIp hash_hk;
     SfIp ip;
 
-    ip.set(hk);
+    ip.pton(AF_INET6, "aff:1200::b00:5600:0:0");
     actual_hash_val = hash_hk(ip);
-    CHECK(actual_hash_val == expected_hash_val);
+
+#if defined(WORDS_BIGENDIAN)
+    CHECK(actual_hash_val == (size_t)143908479889833984);
+#else
+    CHECK(actual_hash_val == (size_t)4521729);
+#endif
 }
 
 int main(int argc, char** argv)

@@ -133,7 +133,7 @@ void JSONFormatter::finalize_output(FILE* fh)
 #include "catch/catch.hpp"
 
 std::string cooked = R"g([{"timestamp":1234567890,"name":{"one":1},"str":{"five":"hellothere"},)g"
-                R"g("vec":{"vector":{"0":50,"2":70}}},{"timestamp":2345678901}])g" "\n";
+    R"g("vec":{"vector":{"0":50,"2":70}}},{"timestamp":2145678903}])g" "\n";
 
 TEST_CASE("json output", "[JSONFormatter]")
 {
@@ -165,7 +165,7 @@ TEST_CASE("json output", "[JSONFormatter]")
     one = 0;
     five[0] = '\0';
     kvp.clear();
-    f.write(fh, (time_t)2345678901);
+    f.write(fh, (time_t)2145678903);
     f.finalize_output(fh);
 
     auto size = ftell(fh);

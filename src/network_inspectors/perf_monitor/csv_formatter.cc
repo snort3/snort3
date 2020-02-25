@@ -110,7 +110,7 @@ TEST_CASE("csv output", "[CSVFormatter]")
     const char* cooked =
         "#timestamp,name.one,name.two,other.three,other.five,other.kvp\n"
         "1234567890,0,1,2,hellothere,3,50,60,70\n"
-        "2345678901,0,0,0,,0\n";
+        "2145678903,0,0,0,,0\n";
 
     FILE* fh = tmpfile();
     CSVFormatter f("csv_formatter");
@@ -135,7 +135,7 @@ TEST_CASE("csv output", "[CSVFormatter]")
     three = 0;
     five[0] = '\0';
     kvp.clear();
-    f.write(fh, (time_t)2345678901);
+    f.write(fh, (time_t)2145678903);
 
     auto size = ftell(fh);
     char* fake_file = new char[size + 1];

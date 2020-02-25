@@ -10,7 +10,6 @@ set( FILE_LIST
     cip_parsing.h
     cip_session.cc
     cip_session.h
-    cip_util.h
     ips_cip_attribute.cc
     ips_cip_class.cc
     ips_cip_connpathclass.cc  

@@ -181,13 +181,5 @@ protected:
     ServiceDetectorPorts service_ports;
 };
 
-#if defined(WORDS_BIGENDIAN)
-#define LETOHS(p)   BYTE_SWAP_16(*((const uint16_t*)(p)))
-#define LETOHL(p)   BYTE_SWAP_32(*((const uint32_t*)(p)))
-#else
-#define LETOHS(p)   (*((const uint16_t*)(p)))
-#define LETOHL(p)   (*((const uint32_t*)(p)))
-#endif
-
 #endif
 
