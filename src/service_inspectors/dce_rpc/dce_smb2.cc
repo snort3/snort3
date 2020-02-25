@@ -781,7 +781,7 @@ DCE2_SmbVersion DCE2_Smb2Version(const Packet* p)
 {
     /* Only check reassembled SMB2 packet*/
     if ( p->has_paf_payload() and
-        (p->dsize > sizeof(NbssHdr) + 4) ) // DCE2_SMB_ID is u32
+        (p->dsize > sizeof(NbssHdr) + DCE2_SMB_ID_SIZE) ) // DCE2_SMB_ID is u32
     {
         const Smb2Hdr* smb_hdr = (const Smb2Hdr*)(p->data + sizeof(NbssHdr));
         uint32_t smb_version_id = SmbId((const SmbNtHdr*)smb_hdr);
