@@ -99,6 +99,7 @@ public:
     PerfMonModule();
     ~PerfMonModule() override;
 
+    const snort::Command* get_commands() const override;
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
     bool begin(const char*, int, snort::SnortConfig*) override;
     bool end(const char*, int, snort::SnortConfig*) override;

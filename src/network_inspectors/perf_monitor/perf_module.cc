@@ -28,9 +28,13 @@
 #define FLATBUFFERS_ENUM
 #endif
 
+#include <lua.hpp>
+
 #include "perf_module.h"
+#include "perf_monitor.h"
 
 #include "log/messages.h"
+#include "main/analyzer_command.h"
 #include "main/snort.h"
 #include "managers/module_manager.h"
 
@@ -96,6 +100,95 @@ static const Parameter s_params[] =
       "output summary at shutdown" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class PerfMonFlowIPDebug : public AnalyzerCommand
+{
+public:
+    PerfMonFlowIPDebug(PerfMonitorConstraints*);
+    bool execute(Analyzer&, void**) override;
+    const char* stringify() override { return "FLOW_IP_PROFILING"; }
+private:
+    bool enable = false;
+    PerfMonitorConstraints constraints = { };
+};
+
+static const Parameter flow_ip_profiling_params[] =
+{
+    { "time", Parameter::PT_INT, nullptr, nullptr, "sample interval" },
+
+    { "pkts", Parameter::PT_INT, nullptr, nullptr, "number of packets" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+PerfMonFlowIPDebug::PerfMonFlowIPDebug(PerfMonitorConstraints* cs)
+{
+    if (cs)
+    {
+        constraints = *cs;
+        enable = true;
+    } else {
+        enable = false;
+    }
+}
+
+bool PerfMonFlowIPDebug::execute(Analyzer&, void**)
+{
+    PerfMonitor* perf_monitor = (PerfMonitor*)InspectorManager::get_inspector(PERF_NAME, true);    
+
+    if (!perf_monitor)
+        return false;
+
+    if (enable)
+        perf_monitor->enable_profiling(&constraints);
+    else 
+        perf_monitor->disable_profiling();
+
+    return true;
+}
+
+static int enable_flow_ip_profiling(lua_State* L)
+{
+    PerfMonitorConstraints constraints;
+
+    constraints.sample_interval = luaL_optint(L, 1, 0);
+    constraints.packet_count = luaL_optint(L, 2, 0);
+
+    LogMessage("Enabling flow ip profiling with sample interval %d packet count %d\n",
+        constraints.sample_interval, constraints.packet_count);
+
+    main_broadcast_command(new PerfMonFlowIPDebug(&constraints), true);
+    return 0;
+}
+
+static int disable_flow_ip_profiling(lua_State*)
+{
+    LogMessage("Disabling flow ip profiling\n");
+    main_broadcast_command(new PerfMonFlowIPDebug(nullptr), true);
+    return 0;
+}
+
+static int show_flow_ip_profiling(lua_State*)
+{
+    bool status = false;
+
+    PerfMonitor* perf_monitor = (PerfMonitor*)InspectorManager::get_inspector(PERF_NAME, true);
+
+    if (perf_monitor)
+        status = perf_monitor->get_config_flags() & PERF_FLOWIP; 
+
+    LogMessage("Snort flow ip profiling is %s\n", status ? "enabled" : "disabled");
+
+    return 0;
+}
+
+static const Command perf_module_cmds[] =
+{
+    {"enable_flow_ip_profiling", enable_flow_ip_profiling, flow_ip_profiling_params, "enable flow ip profiling"},
+    {"disable_flow_ip_profiling", disable_flow_ip_profiling, nullptr, "disable flow ip profiling"},
+    {"show_flow_ip_profiling", show_flow_ip_profiling, nullptr, "show flow ip profiling status"},
+    {nullptr, nullptr, nullptr, nullptr}
 };
 
 //-------------------------------------------------------------------------
@@ -233,6 +326,9 @@ const PegInfo* PerfMonModule::get_pegs() const
 
 PegCount* PerfMonModule::get_counts() const
 { return (PegCount*)&pmstats; }
+
+const Command* PerfMonModule::get_commands() const
+{ return perf_module_cmds; }
 
 void ModuleConfig::set_name(const std::string& name)
 { this->name = name; }
