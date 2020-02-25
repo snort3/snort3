@@ -48,6 +48,7 @@ enum SSLContentType
 #define SSL_SERVER_KEY_XCHG 12
 #define SSL_SERVER_CERT_REQ 13
 #define SSL_SERVER_HELLO_DONE 14
+#define SSL_CERTIFICATE_STATUS 22
 #define SSL2_SERVER_HELLO 4
 #define PCT_SERVER_HELLO 2
 
@@ -609,6 +610,7 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
                         }
                     }
                 /* fall through */
+                case SSL_CERTIFICATE_STATUS:
                 case SSL_SERVER_KEY_XCHG:
                 case SSL_SERVER_CERT_REQ:
                     ss->length = ntohs(rec->length) + offsetof(ServiceSSLV3Record, version);
