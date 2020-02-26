@@ -13,9 +13,11 @@ add_cpputest( flow_cache_test
         ../flow_cache.cc
         ../flow_control.cc
         ../flow_key.cc
-        ../../hash/zhash.cc
-        ../../hash/hashfcn.cc
+        ../../hash/hash_key_operations.cc
+        ../../hash/hash_lru_cache.cc
         ../../hash/primetable.cc
+        ../../hash/xhash.cc
+        ../../hash/zhash.cc
 )
 
 add_cpputest( session_test )

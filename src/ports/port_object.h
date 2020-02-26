@@ -61,7 +61,7 @@ PortObject* PortObjectDupPorts(PortObject*);
 
 int PortObjectNormalize(PortObject*);
 void PortObjectToggle(PortObject*);
-int PortObjectEqual(PortObject* poa, PortObject* pob);
+bool PortObjectEqual(PortObject* poa, PortObject* pob);
 
 int PortObjectPortCount(PortObject*);
 int PortObjectHasPort(PortObject*, int port);

@@ -7,6 +7,7 @@ set( UTIL_INCLUDES
     event_gen.h
     infractions.h
     kmap.h
+    memcap_allocator.h
     primed_allocator.h
     safec.h
     segment_mem.h

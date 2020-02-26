@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <cassert>
 
+#include "hash/ghash.h"
 #include "log/messages.h"
 #include "utils/util.h"
 

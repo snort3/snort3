@@ -147,8 +147,8 @@ struct VarNode;
 
 namespace snort
 {
-class ProtocolReference;
 class GHash;
+class ProtocolReference;
 class XHash;
 struct ProfilerConfig;
 struct SnortConfig;

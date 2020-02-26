@@ -15,51 +15,59 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// http_buffer_info.cc author Brandon Stultz <brastult@cisco.com>
 
-#include "hash/hash_key_operations.h"
-#include "http_buffer_info.h"
+// hash_lru_cache.h author davis mcpherson davmcphe@cisco.com
 
-using namespace snort;
+#ifndef HASH_LRU_CACHE_H
+#define HASH_LRU_CACHE_H
 
-uint32_t HttpBufferInfo::hash() const
+#include "hash_defs.h"
+
+class HashLruCache
 {
-    uint32_t a = type;
-    uint32_t b = sub_id >> 32;
-    uint32_t c = sub_id & 0xFFFFFFFF;
-    uint32_t d = form >> 32;
-    uint32_t e = form & 0xFFFFFFFF;
-    uint32_t f = 0;
-    mix(a,b,c);
-    if (param)
-        f = param->is_nocase() ? 1 : 0;
-    mix(d,e,f);
-    mix(a,c,f);
-    if (param)
-        mix_str(a,c,f,param->c_str(),param->length());
-    finalize(a,c,f);
-    return f;
-}
+public:
+    HashLruCache();
 
-bool HttpBufferInfo::operator==(const HttpBufferInfo& rhs) const
-{
-    bool param_match = false;
+    void insert(snort::HashNode*);
+    void touch(snort::HashNode*);
+    void remove_node(snort::HashNode*);
 
-    if (param && rhs.param)
+    snort::HashNode* get_lru_node()
     {
-        HttpParam& lhs_param = *param;
-        HttpParam& rhs_param = *rhs.param;
-
-        param_match = (lhs_param == rhs_param);
-    }
-    else if (!param && !rhs.param)
-    {
-        param_match = true;
+        cursor = tail;
+        return cursor;
     }
 
-    return type == rhs.type &&
-        sub_id == rhs.sub_id &&
-        form == rhs.form &&
-        param_match;
-}
+    snort::HashNode* get_next_lru_node()
+    {
+        if ( cursor )
+            cursor = cursor->gprev;
+        return cursor;
+    }
+
+    snort::HashNode* get_current_node()
+    { return cursor; }
+
+    void* get_mru_user_data()
+    { return ( head ) ? head->data : nullptr; }
+
+    void* get_lru_user_data()
+    { return ( tail ) ? tail->data : nullptr; }
+
+    snort::HashNode* remove_lru_node()
+    {
+        snort::HashNode* hnode = tail;
+        if ( hnode )
+            remove_node(hnode);
+
+        return hnode;
+    }
+
+private:
+    snort::HashNode* head = nullptr;
+    snort::HashNode* tail = nullptr;
+    snort::HashNode* cursor = nullptr;
+};
+
+#endif
 

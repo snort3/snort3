@@ -20,30 +20,28 @@
 #ifndef HASH_DEFS_H
 #define HASH_DEFS_H
 
+#include "hash_key_operations.h"
 #include "main/snort_types.h"
 #include "utils/sfmemcap.h"
 
-#include "hashfcn.h"
-
 namespace snort
 {
-#define HASH_NOMEM    (-2)
-#define HASH_ERR      (-1)
+#define HASH_NOMEM     (-2)
+#define HASH_NOT_FOUND (-1)
 #define HASH_OK        0
 #define HASH_INTABLE   1
 #define HASH_PENDING   2
 
-struct HashNode
+class HashNode
 {
-    struct HashNode* gnext; // global node list - used for aging nodes
-    struct HashNode* gprev;
-    struct HashNode* next;  // row node list
-    struct HashNode* prev;
-    int rindex;     // row index of table this node belongs to.
-    void* key;      // Pointer to the key.
-    void* data;     // Pointer to the users data, this is not copied !
+public:
+    HashNode* gnext; // lru or free node list
+    HashNode* gprev;
+    HashNode* next;  // hash row node list
+    HashNode* prev;
+    void* key;
+    void* data;
+    int rindex;
 };
-
-typedef int (* Hash_FREE_FCN)(void* key, void* data);
 }
 #endif

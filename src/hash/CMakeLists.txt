@@ -1,23 +1,25 @@
 
 set (HASH_INCLUDES
+    ghash.h
     hashes.h
     hash_defs.h
-    ghash.h 
-    xhash.h 
-    hashfcn.h
+    hash_key_operations.h
     lru_cache_shared.h
+    xhash.h
 )
 
 add_library( hash OBJECT
     ${HASH_INCLUDES}
+    ghash.cc
     hashes.cc
+    hash_lru_cache.cc
+    hash_lru_cache.h
+    hash_key_operations.cc
     lru_cache_shared.cc
-    ghash.cc 
-    hashfcn.cc 
-    primetable.cc 
-    primetable.h 
-    xhash.cc 
-    zhash.cc 
+    primetable.cc
+    primetable.h
+    xhash.cc
+    zhash.cc
     zhash.h
 )
 

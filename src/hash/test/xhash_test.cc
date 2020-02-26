@@ -25,6 +25,7 @@
 
 #include "hash/xhash.h"
 
+#include "hash/hash_defs.h"
 #include "main/snort_config.h"
 #include "utils/util.h"
 
@@ -56,9 +57,8 @@ TEST_GROUP(xhash)
 //  Test create a hash table, add nodes, find and delete.
 TEST(xhash, create_xhash_test)
 {
-    XHash* test_table = new XHash(4, sizeof(struct xhash_test_key),
-                                  0, 0, false, nullptr, nullptr, false);
-    CHECK(test_table->get_keysize() == sizeof(struct xhash_test_key));
+    XHash* test_table = new XHash(4, sizeof(struct xhash_test_key), 0, 0);
+    CHECK(test_table);
 
     void* data = test_table->get_mru_user_data();
     CHECK(data == nullptr);
@@ -84,57 +84,44 @@ TEST(xhash, create_xhash_test)
 // Create a free node in xhash and verifies if xhash_free_anr_lru() deletes it
 TEST(xhash, free_anr_lru_delete_free_node_test)
 {
-    XHash* test_table = new XHash(3, sizeof(struct xhash_test_key),
-                                  1, 1040, false, nullptr, nullptr, true);
+    XHash* test_table = new XHash(3, sizeof(struct xhash_test_key), 1, 1040);
+    CHECK(test_table);
+
     xhash_test_key xtk;
     xtk.key = 10;
     int ret = test_table->insert(&xtk, nullptr);
     CHECK(ret == HASH_OK);
 
-     HashNode* xnode = test_table->get_node(&xtk);
-    CHECK(xnode != nullptr);
+     HashNode* xnode = test_table->find_node(&xtk);
+    CHECK(xnode);
 
     ret = test_table->release_node(xnode);
     CHECK(ret == HASH_OK);
 
-    ret = test_table->delete_anr_or_lru_node();
+    ret = test_table->delete_lru_node();
     CHECK(ret == HASH_OK);
 
     HashNode* xhnode = test_table->find_node(&xtk);
-    CHECK(xhnode == nullptr);
+    CHECK(!xhnode);
 
     delete test_table;
 }
 
-// No free node is available, verifies if xhash_free_anr_lru() deletes the last node
+// No free node is available, verifies the LRU node is deleted
 TEST(xhash, free_anr_lru_delete_tail_node_test)
 {
-    XHash* test_table = new XHash(3, sizeof(struct xhash_test_key),
-                                  1, 1040, false, nullptr, nullptr, true);
+    XHash* test_table = new XHash(3, sizeof(struct xhash_test_key), 1, 1040);
+    CHECK(test_table);
+
     xhash_test_key xtk;
     int ret = test_table->insert(&xtk, nullptr);
     CHECK(ret == HASH_OK);
 
-    ret = test_table->delete_anr_or_lru_node();
-    CHECK(ret == HASH_OK);
+    CHECK(test_table->delete_lru_node());
 
     HashNode* xhnode = test_table->find_node(&xtk);
     CHECK(xhnode == nullptr);
 
-    delete test_table;
-}
-
-// No free node is available [recycle is not enabled], verifies if last node is deleted
-TEST(xhash, free_anr_lru_usr_free_delete_tail_node_test)
-{
-    XHash* test_table = new XHash(3, sizeof(struct xhash_test_key),
-                                  1, 1040, false, nullptr, nullptr, false);
-    xhash_test_key xtk;
-    int ret = test_table->insert(&xtk, nullptr);
-    CHECK(ret == HASH_OK);
-
-    ret = test_table->delete_anr_or_lru_node();
-    CHECK(ret == HASH_OK);
     delete test_table;
 }
 

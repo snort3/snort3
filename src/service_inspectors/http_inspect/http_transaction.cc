@@ -32,7 +32,7 @@
 #include "http_msg_status.h"
 #include "http_msg_trailer.h"
 
-#include "hash/hashfcn.h"
+#include "hash/hash_key_operations.h"
 
 using namespace HttpCommon;
 using namespace HttpEnums;

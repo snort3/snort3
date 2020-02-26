@@ -64,9 +64,7 @@ void* sfmemcap_alloc(MEMCAP* mc, unsigned long nbytes)
     {
         /* Check if we've maxed out our memory - if we are tracking memory */
         if ( (mc->memused + nbytes) > mc->memcap )
-        {
             return nullptr;
-        }
     }
 
     //data = (long*)snort_alloc( nbytes );

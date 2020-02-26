@@ -3,4 +3,6 @@ add_cpputest( boyer_moore_test
         ../boyer_moore.cc
 )
 
+add_cpputest( memcap_allocator_test )
+
 add_catch_test( bitop_test )

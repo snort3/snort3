@@ -24,22 +24,17 @@
 
 // generic hash table - stores and maps key + data pairs
 
+#include "hash_key_operations.h"
 #include "main/snort_types.h"
-
-#include "hashfcn.h"
 
 namespace snort
 {
-#define GHASH_NOT_FOUND      (-1)
-#define GHASH_OK        0
-#define GHASH_INTABLE   1
-
 struct GHashNode
 {
     struct GHashNode* next;
     struct GHashNode* prev;
-    const void* key;  /* Copy of, or Pointer to, the Users key */
-    void* data;       /* The users data, this is never copied! */
+    const void* key;
+    void* data;
 };
 
 typedef void (* gHashFree)(void*);
@@ -55,7 +50,7 @@ public:
     void* find(const void* const key);
     GHashNode* find_first();
     GHashNode* find_next();
-    void set_key_opcodes(hash_func, keycmp_func);
+    void set_hashkey_ops(HashKeyOperations*);
 
     unsigned get_count() const
     { return count; }
@@ -70,7 +65,7 @@ private:
     bool userkey;          // user owns the key */
     gHashFree userfree;
     int nrows;            // # rows int the hash table use a prime number 211, 9871
-    HashFnc* hashfcn;
+    HashKeyOperations* hashfcn;
     GHashNode** table;    // array of node ptr's
     unsigned count;       // total # nodes in table
     int crow;             // findfirst/next row in table

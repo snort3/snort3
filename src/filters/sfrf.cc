@@ -29,6 +29,7 @@
 #include "main/thread.h"
 #include "detection/rules.h"
 #include "hash/ghash.h"
+#include "hash/hash_defs.h"
 #include "hash/xhash.h"
 #include "sfip/sf_ip.h"
 #include "sfip/sf_ipvar.h"
@@ -146,14 +147,12 @@ static void SFRF_New(unsigned nbytes)
 
     /* Calc max ip nodes for this memory */
     if ( nbytes < SFRF_BYTES )
-    {
         nbytes = SFRF_BYTES;
-    }
+
     nrows = nbytes / (SFRF_BYTES);
 
     /* Create global hash table for all of the IP Nodes */
-    rf_hash = new XHash(nrows, sizeof(tSFRFTrackingNodeKey),
-        sizeof(tSFRFTrackingNode), nbytes, true, nullptr, nullptr, true);
+    rf_hash = new XHash(nrows, sizeof(tSFRFTrackingNodeKey), sizeof(tSFRFTrackingNode), nbytes);
 }
 
 void SFRF_Delete()
@@ -168,7 +167,7 @@ void SFRF_Delete()
 void SFRF_Flush()
 {
     if ( rf_hash )
-        rf_hash->clear();
+        rf_hash->clear_hash();
 }
 
 static void SFRF_ConfigNodeFree(void* item)
@@ -782,30 +781,24 @@ static tSFRFTrackingNode* _getSFRFTrackingNode(const SfIp* ip, unsigned tid, tim
     key.policyId = get_ips_policy()->policy_id;
     key.padding = 0;
 
-    /*
-     * Check for any Permanent sid objects for this gid or add this one ...
-     */
-    HashNode* hnode = rf_hash->get_node((void*)&key);
-    if ( !hnode )
+    // Check for any Permanent sid objects for this gid or add this one ...
+    if ( rf_hash->insert(&key, nullptr) == HASH_NOMEM )
     {
         // xhash_get_node fails to insert only if rf_hash is full.
         rate_filter_stats.xhash_nomem_peg++;
         return dynNode;
     }
 
-    if ( hnode->data )
+    dynNode = (tSFRFTrackingNode*)rf_hash->get_user_data();
+    if ( dynNode->filterState == FS_NEW )
     {
-        dynNode = (tSFRFTrackingNode*)hnode->data;
-
-        if ( dynNode->filterState == FS_NEW )
-        {
-            // first time initialization
-            dynNode->tstart = curTime;
+        // first time initialization
+        dynNode->tstart = curTime;
 #ifdef SFRF_OVER_RATE
-            dynNode->tlast = curTime;
+        dynNode->tlast = curTime;
 #endif
-            dynNode->filterState = FS_OFF;
-        }
+        dynNode->filterState = FS_OFF;
     }
+
     return dynNode;
 }

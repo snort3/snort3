@@ -17,8 +17,8 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#ifndef HASHFCN_H
-#define HASHFCN_H
+#ifndef HASH_KEY_OPERATIONS_H
+#define HASH_KEY_OPERATIONS_H
 
 #include "main/snort_types.h"
 
@@ -65,26 +65,22 @@ static inline int hash_nearest_power_of_2(int nrows)
     return nrows;
 }
 
-}
-
-struct HashFnc;
-
-typedef uint32_t (* hash_func)(HashFnc*, const unsigned char* d, int n);
-typedef bool (* keycmp_func)(const void* s1, const void* s2, size_t n);
-
-struct HashFnc
+class HashKeyOperations
 {
+public:
+    HashKeyOperations(int rows);
+    virtual ~HashKeyOperations()
+    { }
+
+    virtual unsigned do_hash(const unsigned char* key, int len);
+    virtual bool key_compare(const void* key1, const void* key2, size_t len);
+
+protected:
     unsigned seed;
     unsigned scale;
     unsigned hardener;
-    hash_func hash_fcn;
-    keycmp_func keycmp_fcn;
 };
-
-HashFnc* hashfcn_new(int nrows);
-void hashfcn_free(HashFnc*);
-unsigned hashfcn_hash(HashFnc*, const unsigned char* d, int n);
-void hashfcn_set_keyops(HashFnc*, hash_func, keycmp_func);
+}
 
 #endif
 
