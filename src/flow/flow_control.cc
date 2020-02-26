@@ -419,6 +419,8 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
             flow->set_state(Flow::FlowState::ALLOW);
 
         ++news;
+        flow->flowstats.start_time = p->pkth->ts;
+        flow->client_initiated = p->is_from_client();
     }
 
     // This requires the packet direction to be set
@@ -465,7 +467,22 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
         break;
     }
 
+    update_stats(flow, p);
     return news;
+}
+
+void FlowControl::update_stats(Flow* flow, Packet* p)
+{
+    if (p->is_from_client())
+    {
+        flow->flowstats.client_pkts++;
+        flow->flowstats.client_bytes += p->pktlen;
+    }
+    else
+    {
+        flow->flowstats.server_pkts++;
+        flow->flowstats.server_bytes += p->pktlen;
+    }
 }
 
 //-------------------------------------------------------------------------

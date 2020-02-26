@@ -142,6 +142,15 @@ private:
     unsigned id;
 };
 
+struct FlowStats
+{
+    uint64_t client_pkts;
+    uint64_t server_pkts;
+    uint64_t client_bytes;
+    uint64_t server_bytes;
+    struct timeval start_time;
+};
+
 struct LwState
 {
     uint32_t session_flags;
@@ -200,6 +209,7 @@ public:
     void set_ttl(Packet*, bool client);
     void set_mpls_layer_per_dir(Packet*);
     Layer get_mpls_layer_per_dir(bool);
+    void swap_roles();
     void set_service(Packet* pkt, const char* new_service);
     bool get_attr(const std::string& key, int32_t& val);
     bool get_attr(const std::string& key, std::string& val);
@@ -395,6 +405,14 @@ public:  // FIXIT-M privatize if possible
     // everything from here down is zeroed
     IpsContextChain context_chain;
     FlowData* flow_data;
+    FlowStats flowstats;
+
+    SfIp client_ip;
+    SfIp server_ip;
+
+    LwState ssn_state;
+    LwState previous_ssn_state;
+
     Inspector* clouseau;  // service identifier
     Inspector* gadget;    // service handler
     Inspector* assistant_gadget;
@@ -403,12 +421,8 @@ public:  // FIXIT-M privatize if possible
 
     uint64_t expire_time;
 
-    SfIp client_ip;
-    SfIp server_ip;
+    DeferredWhitelist deferred_whitelist = WHITELIST_DEFER_OFF;
 
-    LwState ssn_state;
-    LwState previous_ssn_state;
-    FlowState flow_state;
     unsigned inspection_policy_id;
     unsigned ips_policy_id;
     unsigned network_policy_id;
@@ -429,8 +443,9 @@ public:  // FIXIT-M privatize if possible
 
     bool disable_inspect;
     bool trigger_finalize_event;
+    bool client_initiated;
 
-    DeferredWhitelist deferred_whitelist = WHITELIST_DEFER_OFF;
+    FlowState flow_state;
 
 private:
     void clean();

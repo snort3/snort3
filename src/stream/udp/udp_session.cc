@@ -144,9 +144,6 @@ void UdpSession::clear()
 void UdpSession::update_direction(
     char dir, const SfIp* ip, uint16_t port)
 {
-    SfIp tmpIp;
-    uint16_t tmpPort;
-
     if (flow->client_ip.equals(*ip) && (flow->client_port == port))
     {
         if ((dir == SSN_DIR_FROM_CLIENT) && (flow->ssn_state.direction == FROM_CLIENT))
@@ -164,13 +161,8 @@ void UdpSession::update_direction(
         }
     }
 
-    // Swap them -- leave flow->ssn_state.direction the same
-    tmpIp = flow->client_ip;
-    tmpPort = flow->client_port;
-    flow->client_ip = flow->server_ip;
-    flow->client_port = flow->server_port;
-    flow->server_ip = tmpIp;
-    flow->server_port = tmpPort;
+    // Swap client/server ip, ports, and stats -- leave flow->ssn_state.direction the same
+    flow->swap_roles();
 }
 
 int UdpSession::process(Packet* p)

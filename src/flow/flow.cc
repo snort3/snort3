@@ -534,3 +534,12 @@ void Flow::set_service(Packet* pkt, const char* new_service)
     service = new_service;
     DataBus::publish(FLOW_SERVICE_CHANGE_EVENT, pkt);
 }
+
+void Flow::swap_roles()
+{
+    client_initiated = !client_initiated;
+    std::swap(client_ip, server_ip);
+    std::swap(client_port, server_port);
+    std::swap(flowstats.client_pkts, flowstats.server_pkts);
+    std::swap(flowstats.client_bytes, flowstats.server_bytes);
+}

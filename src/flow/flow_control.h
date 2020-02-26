@@ -99,6 +99,7 @@ private:
     void set_key(snort::FlowKey*, snort::Packet*);
     unsigned process(snort::Flow*, snort::Packet*);
     void preemptive_cleanup();
+    void update_stats(snort::Flow*, snort::Packet*);
 
 private:
     snort::InspectSsnFunc get_proto_session[to_utype(PktType::MAX)] = {};

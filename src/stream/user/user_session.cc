@@ -333,14 +333,7 @@ void UserSession::start(Packet* p, Flow* f)
         if ( (f->ssn_state.session_flags & SSNFLAG_CLIENT_SWAP) &&
             !(f->ssn_state.session_flags & SSNFLAG_CLIENT_SWAPPED) )
         {
-            SfIp ip = f->client_ip;
-            uint16_t port = f->client_port;
-
-            f->client_ip = f->server_ip;
-            f->server_ip = ip;
-
-            f->client_port = f->server_port;
-            f->server_port = port;
+            f->swap_roles();
 
             if ( !f->two_way_traffic() )
             {

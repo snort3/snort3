@@ -128,6 +128,28 @@ static bool ff_b64_data(const Args& a)
     return true;
 }
 
+static bool ff_client_bytes(const Args& a)
+{
+    if (a.pkt->flow)
+    {
+        print_label(a, "client_bytes");
+        TextLog_Print(json_log, "%" PRIu64, a.pkt->flow->flowstats.client_bytes);
+        return true;
+    }
+    return false;
+}
+
+static bool ff_client_pkts(const Args& a)
+{
+    if (a.pkt->flow)
+    {
+        print_label(a, "client_pkts");
+        TextLog_Print(json_log, "%" PRIu64, a.pkt->flow->flowstats.client_pkts);
+        return true;
+    }
+    return false;
+}
+
 static bool ff_dir(const Args& a)
 {
     const char* dir;
@@ -232,6 +254,17 @@ static bool ff_eth_type(const Args& a)
     print_label(a, "eth_type");
     TextLog_Print(json_log, "\"0x%X\"", ntohs(eh->ether_type));
     return true;
+}
+
+static bool ff_flowstart_time(const Args& a)
+{
+    if (a.pkt->flow)
+    {
+        print_label(a, "flowstart_time");
+        TextLog_Print(json_log, "%u", a.pkt->flow->flowstats.start_time.tv_sec);
+        return true;
+    }
+    return false;
 }
 
 static bool ff_gid(const Args& a)
@@ -401,6 +434,28 @@ static bool ff_seconds(const Args& a)
     print_label(a, "seconds");
     TextLog_Print(json_log, "%u",  a.pkt->pkth->ts.tv_sec);
     return true;
+}
+
+static bool ff_server_bytes(const Args& a)
+{
+    if (a.pkt->flow)
+    {
+        print_label(a, "server_bytes");
+        TextLog_Print(json_log, "%" PRIu64, a.pkt->flow->flowstats.server_bytes);
+        return true;
+    }
+    return false;
+}
+
+static bool ff_server_pkts(const Args& a)
+{
+    if (a.pkt->flow)
+    {
+        print_label(a, "server_pkts");
+        TextLog_Print(json_log, "%" PRIu64, a.pkt->flow->flowstats.server_pkts);
+        return true;
+    }
+    return false;
 }
 
 static bool ff_service(const Args& a)
@@ -594,23 +649,24 @@ typedef bool (*JsonFunc)(const Args&);
 
 static const JsonFunc json_func[] =
 {
-    ff_action, ff_class, ff_b64_data, ff_dir, ff_dst_addr, ff_dst_ap,
-    ff_dst_port, ff_eth_dst, ff_eth_len, ff_eth_src, ff_eth_type, ff_gid,
-    ff_icmp_code, ff_icmp_id, ff_icmp_seq, ff_icmp_type, ff_iface, ff_ip_id,
-    ff_ip_len, ff_msg, ff_mpls, ff_pkt_gen, ff_pkt_len, ff_pkt_num, ff_priority,
-    ff_proto, ff_rev, ff_rule, ff_seconds, ff_service, ff_sid, ff_src_addr, ff_src_ap,
-    ff_src_port, ff_target, ff_tcp_ack, ff_tcp_flags, ff_tcp_len, ff_tcp_seq,
-    ff_tcp_win, ff_timestamp, ff_tos, ff_ttl, ff_udp_len, ff_vlan
+    ff_action, ff_class, ff_b64_data, ff_client_bytes, ff_client_pkts, ff_dir,
+    ff_dst_addr, ff_dst_ap, ff_dst_port, ff_eth_dst, ff_eth_len, ff_eth_src, ff_eth_type,
+    ff_flowstart_time, ff_gid, ff_icmp_code, ff_icmp_id, ff_icmp_seq, ff_icmp_type,
+    ff_iface, ff_ip_id, ff_ip_len, ff_msg, ff_mpls, ff_pkt_gen, ff_pkt_len,
+    ff_pkt_num, ff_priority, ff_proto, ff_rev, ff_rule, ff_seconds, ff_server_bytes,
+    ff_server_pkts, ff_service, ff_sid, ff_src_addr, ff_src_ap, ff_src_port, ff_target,
+    ff_tcp_ack, ff_tcp_flags, ff_tcp_len, ff_tcp_seq, ff_tcp_win, ff_timestamp, ff_tos,
+    ff_ttl, ff_udp_len, ff_vlan
 };
 
 #define json_range \
-    "action | class | b64_data | dir | dst_addr | dst_ap | " \
-    "dst_port | eth_dst | eth_len | eth_src | eth_type | gid | " \
-    "icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | " \
-    "ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | " \
-    "proto | rev | rule | seconds | service | sid | src_addr | src_ap | " \
-    "src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | " \
-    "tcp_win | timestamp | tos | ttl | udp_len | vlan"
+    "action | class | b64_data | client_bytes | client_pkts | dir | dst_addr | dst_ap | " \
+    "dst_port | eth_dst | eth_len | eth_src | eth_type | flowstart_time | " \
+    "gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | " \
+    "msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | " \
+    "seconds | server_bytes | server_pkts | service | sid | src_addr | src_ap | src_port | target | " \
+    "tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | " \
+    "tos | ttl | udp_len | vlan"
 
 #define json_deflt \
     "timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action"
