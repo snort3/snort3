@@ -180,19 +180,21 @@ void ReactAction::exec(Packet* p)
 void ReactAction::send(Packet* p)
 {
     EncodeFlags df = (p->is_from_server()) ? ENC_FLAG_FWD : 0;
-    EncodeFlags sent = config->get_buf_len();
+    EncodeFlags sent = 0;
 
     Active* act = p->active;
 
     if ( p->packet_flags & PKT_STREAM_EST )
     {
-        act->send_data(p, df, (const uint8_t*)config->get_resp_buf(), sent);
-        // act->send_data() sends a FIN, so need to bump seq by 1.
-        sent++;
+        sent = act->send_data(p, df, (const uint8_t*)config->get_resp_buf(), config->get_buf_len());
     }
 
     EncodeFlags rf = ENC_FLAG_SEQ | (ENC_FLAG_VAL & sent);
     act->send_reset(p, rf);
+
+    // Blacklist the flow so that no additional data goes through in case
+    // the RST is lost.
+    act->block_session(p);
 }
 
 //-------------------------------------------------------------------------

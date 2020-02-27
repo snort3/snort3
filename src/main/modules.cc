@@ -986,7 +986,10 @@ static const Parameter active_params[] =
 
 static PegInfo active_pegs[]
 {
-    { CountType::SUM, "injects", "total crafted packets injected" },
+    { CountType::SUM, "injects", "total crafted packets encoded and injected" },
+    { CountType::SUM, "failed_injects", "total crafted packet encode + injects that failed" },
+    { CountType::SUM, "direct_injects", "total crafted packets directly injected" },
+    { CountType::SUM, "failed_direct_injects", "total crafted packet direct injects that failed" },
     { CountType::END, nullptr, nullptr }
 };
 

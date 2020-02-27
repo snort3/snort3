@@ -159,6 +159,10 @@ void Stream::check_flow_closed(Packet* p)
     {
         assert(flow_con);
 
+        // Will no longer have flow so save use_direct_inject state on packet.
+        if ( flow->flags.use_direct_inject )
+            p->packet_flags |= PKT_USE_DIRECT_INJECT;
+
         // this will get called on each onload
         // eventually all onloads will occur and delete will be called
         if ( not flow->is_suspended() )

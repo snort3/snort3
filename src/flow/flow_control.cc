@@ -420,7 +420,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
 
         ++news;
         flow->flowstats.start_time = p->pkth->ts;
-        flow->client_initiated = p->is_from_client();
+        flow->flags.client_initiated = p->is_from_client();
     }
 
     // This requires the packet direction to be set

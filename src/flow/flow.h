@@ -237,17 +237,17 @@ public:
         stash->store(key, val);
     }
 
-    uint32_t update_session_flags(uint32_t flags)
-    { return ssn_state.session_flags = flags; }
+    uint32_t update_session_flags(uint32_t ssn_flags)
+    { return ssn_state.session_flags = ssn_flags; }
 
-    uint32_t set_session_flags(uint32_t flags)
-    { return ssn_state.session_flags |= flags; }
+    uint32_t set_session_flags(uint32_t ssn_flags)
+    { return ssn_state.session_flags |= ssn_flags; }
 
     uint32_t get_session_flags()
     { return ssn_state.session_flags; }
 
-    uint32_t clear_session_flags(uint32_t flags)
-    { return ssn_state.session_flags &= ~flags; }
+    uint32_t clear_session_flags(uint32_t ssn_flags)
+    { return ssn_state.session_flags &= ~ssn_flags; }
 
     void set_to_client_detection(bool enable);
     void set_to_server_detection(bool enable);
@@ -350,10 +350,10 @@ public:
     }
 
     void disable_inspection()
-    { disable_inspect = true; }
+    { flags.disable_inspect = true; }
 
     bool is_inspection_disabled() const
-    { return disable_inspect; }
+    { return flags.disable_inspect; }
 
     bool is_suspended() const
     { return context_chain.front(); }
@@ -441,9 +441,13 @@ public:  // FIXIT-M privatize if possible
 
     uint8_t response_count;
 
-    bool disable_inspect;
-    bool trigger_finalize_event;
-    bool client_initiated;
+    struct
+    {
+        bool client_initiated : 1;
+        bool disable_inspect : 1;
+        bool trigger_finalize_event : 1;
+        bool use_direct_inject : 1;
+    } flags;
 
     FlowState flow_state;
 

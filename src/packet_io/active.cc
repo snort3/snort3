@@ -86,7 +86,6 @@ int Active::send_eth(
     DAQ_Msg_h, int, const uint8_t* buf, uint32_t len)
 {
     ssize_t sent = eth_send(s_link, buf, len);
-    active_counts.injects++;
     return ( (uint32_t)sent != len );
 }
 
@@ -94,7 +93,6 @@ int Active::send_ip(
     DAQ_Msg_h, int, const uint8_t* buf, uint32_t len)
 {
     ssize_t sent = ip_send(s_ipnet, buf, len);
-    active_counts.injects++;
     return ( (uint32_t)sent != len );
 }
 
@@ -220,16 +218,40 @@ void Active::send_reset(Packet* p, EncodeFlags ef)
 
     for ( i = 0; i < s_attempts; i++ )
     {
-        uint32_t len;
-        const uint8_t* rej;
+        if ( (p->packet_flags & PKT_USE_DIRECT_INJECT) or
+            (p->flow and p->flow->flags.use_direct_inject) )
+        {
+            DIOCTL_DirectInjectReset msg = { p->daq_msg, !(ef & ENC_FLAG_FWD) };
+            int ret = p->daq_instance->ioctl(DIOCTL_DIRECT_INJECT_RESET,
+                &msg, sizeof(msg));
+            if ( ret != DAQ_SUCCESS )
+            {
+                active_counts.failed_direct_injects++;
+                return;
+            }
 
-        value = Strafe(i, value, p);
+            active_counts.direct_injects++;
+        }
+        else
+        {
+            uint32_t len;
+            const uint8_t* rej;
 
-        rej = PacketManager::encode_response(TcpResponse::RST, flags|value, p, len);
-        if ( !rej )
-            return;
+            value = Strafe(i, value, p);
 
-        s_send(p->daq_msg, !(ef & ENC_FLAG_FWD), rej, len);
+            rej = PacketManager::encode_response(TcpResponse::RST, flags|value, p, len);
+            if ( !rej )
+            {
+                active_counts.failed_injects++;
+                return;
+            }
+
+            int ret = s_send(p->daq_msg, !(ef & ENC_FLAG_FWD), rej, len);
+            if ( ret )
+                active_counts.failed_injects++;
+            else
+                active_counts.injects++;
+        }
     }
 }
 
@@ -244,30 +266,62 @@ void Active::send_unreach(Packet* p, UnreachResponse type)
 
     rej = PacketManager::encode_reject(type, flags, p, len);
     if ( !rej )
+    {
+        active_counts.failed_injects++;
         return;
+    }
 
-    s_send(p->daq_msg, 1, rej, len);
+    int ret = s_send(p->daq_msg, 1, rej, len);
+    if ( ret )
+        active_counts.failed_injects++;
+    else
+        active_counts.injects++;
 }
 
-bool Active::send_data(
+uint32_t Active::send_data(
     Packet* p, EncodeFlags flags, const uint8_t* buf, uint32_t blen)
 {
+    int ret;
     const uint8_t* seg;
     uint32_t plen;
+    bool use_direct_inject = (p->packet_flags & PKT_USE_DIRECT_INJECT) or
+        (p->flow and p->flow->flags.use_direct_inject);
 
     flags |= GetFlags();
     flags &= ~ENC_FLAG_VAL;
 
+    // Send RST to the originator of the data.
     if ( flags & ENC_FLAG_RST_SRVR )
     {
-        plen = 0;
-        EncodeFlags tmp_flags = flags ^ ENC_FLAG_FWD;
-        seg = PacketManager::encode_response(TcpResponse::RST, tmp_flags, p, plen);
-
-        if ( seg )
+        if ( use_direct_inject )
         {
-            s_send(p->daq_msg, !(tmp_flags & ENC_FLAG_FWD), seg, plen);
-            active_counts.injects++;
+            DIOCTL_DirectInjectReset msg = { p->daq_msg, !(flags & ENC_FLAG_FWD) };
+            ret = p->daq_instance->ioctl(DIOCTL_DIRECT_INJECT_RESET,
+                &msg, sizeof(msg));
+            if ( ret != DAQ_SUCCESS )
+            {
+                active_counts.failed_direct_injects++;
+                return 0;
+            }
+
+            active_counts.direct_injects++;
+        }
+        else
+        {
+            plen = 0;
+            EncodeFlags tmp_flags = flags ^ ENC_FLAG_FWD;
+            seg = PacketManager::encode_response(TcpResponse::RST, tmp_flags, p, plen);
+
+            if ( seg )
+            {
+                ret = s_send(p->daq_msg, !(tmp_flags & ENC_FLAG_FWD), seg, plen);
+                if ( ret )
+                    active_counts.failed_injects++;
+                else
+                    active_counts.injects++;
+            }
+            else
+                active_counts.failed_injects++;
         }
     }
     flags |= ENC_FLAG_SEQ;
@@ -275,6 +329,7 @@ bool Active::send_data(
     uint32_t sent = 0;
     const uint16_t maxPayload = PacketManager::encode_get_max_payload(p);
 
+    // Inject the payload.
     if (maxPayload)
     {
         uint16_t toSend;
@@ -283,45 +338,104 @@ bool Active::send_data(
             plen = 0;
             toSend = blen > maxPayload ? maxPayload : blen;
             flags = (flags & ~ENC_FLAG_VAL) | sent;
-            seg = PacketManager::encode_response(TcpResponse::PUSH, flags, p, plen, buf, toSend);
+            if ( use_direct_inject )
+            {
+                const DAQ_DIPayloadSegment segments[] = { {buf, toSend} };
+                const DAQ_DIPayloadSegment* payload[] = { &segments[0] };
+                DIOCTL_DirectInjectPayload msg = { p->daq_msg,  payload, 1, !(flags & ENC_FLAG_FWD)};
+                ret = p->daq_instance->ioctl(DIOCTL_DIRECT_INJECT_PAYLOAD,
+                    &msg, sizeof(msg));
+                if ( ret != DAQ_SUCCESS )
+                {
+                    active_counts.failed_direct_injects++;
+                    return sent;
+                }
 
-            if ( !seg )
-                return false;
+                active_counts.direct_injects++;
+            }
+            else
+            {
+                seg = PacketManager::encode_response(TcpResponse::PUSH, flags, p, plen, buf, toSend);
 
-            s_send(p->daq_msg, !(flags & ENC_FLAG_FWD), seg, plen);
-            active_counts.injects++;
+                if ( !seg )
+                {
+                    active_counts.failed_injects++;
+                    return sent;
+                }
 
-            buf += toSend;
+                ret = s_send(p->daq_msg, !(flags & ENC_FLAG_FWD), seg, plen);
+                if ( ret )
+                    active_counts.failed_injects++;
+                else
+                    active_counts.injects++;
+            }
+
             sent += toSend;
+            buf += toSend;
         }
         while (blen -= toSend);
     }
 
-    plen = 0;
-    flags = (flags & ~ENC_FLAG_VAL) | sent;
-    seg = PacketManager::encode_response(TcpResponse::FIN, flags, p, plen, nullptr, 0);
-
-    if ( !seg )
-        return false;
-
-    s_send(p->daq_msg, !(flags & ENC_FLAG_FWD), seg, plen);
-    active_counts.injects++;
-
-    if (flags & ENC_FLAG_RST_CLNT)
+    // FIXIT-L: Currently there is no support for injecting a FIN via
+    // direct injection.
+    if ( ! use_direct_inject )
     {
-        sent++;
         plen = 0;
         flags = (flags & ~ENC_FLAG_VAL) | sent;
-        seg = PacketManager::encode_response(TcpResponse::RST, flags, p, plen);
+        seg = PacketManager::encode_response(TcpResponse::FIN, flags, p, plen, nullptr, 0);
 
-        if ( seg )
+        if ( !seg )
         {
-            s_send(p->daq_msg, !(flags & ENC_FLAG_FWD), seg, plen);
+            active_counts.failed_injects++;
+            return sent;
+        }
+
+        ret = s_send(p->daq_msg, !(flags & ENC_FLAG_FWD), seg, plen);
+        if ( ret )
+            active_counts.failed_injects++;
+        else
             active_counts.injects++;
+
+        // Sending a FIN requires that we bump the seq by 1.
+        sent++;
+    }
+
+    //  Send RST to the receiver of the data.
+    if (flags & ENC_FLAG_RST_CLNT)
+    {
+        flags = (flags & ~ENC_FLAG_VAL) | sent;
+        if ( use_direct_inject )
+        {
+            DIOCTL_DirectInjectReset msg = { p->daq_msg, !(flags & ENC_FLAG_FWD) };
+            ret = p->daq_instance->ioctl(DIOCTL_DIRECT_INJECT_RESET,
+                &msg, sizeof(msg));
+            if ( ret != DAQ_SUCCESS )
+            {
+                active_counts.failed_direct_injects++;
+                return sent;
+            }
+
+            active_counts.direct_injects++;
+        }
+        else
+        {
+            plen = 0;
+            seg = PacketManager::encode_response(TcpResponse::RST, flags, p, plen);
+
+            if ( seg )
+            {
+                ret = s_send(p->daq_msg, !(flags & ENC_FLAG_FWD), seg, plen);
+                if ( ret )
+                    active_counts.failed_injects++;
+                else
+                    active_counts.injects++;
+            }
+            else
+                active_counts.failed_injects++;
         }
     }
 
-    return true;
+    return sent;
 }
 
 void Active::inject_data(
@@ -338,9 +452,16 @@ void Active::inject_data(
 
     seg = PacketManager::encode_response(TcpResponse::PUSH, flags, p, plen, buf, blen);
     if ( !seg )
+    {
+        active_counts.failed_injects++;
         return;
+    }
 
-    s_send(p->daq_msg, !(flags & ENC_FLAG_FWD), seg, plen);
+    int ret = s_send(p->daq_msg, !(flags & ENC_FLAG_FWD), seg, plen);
+    if ( ret )
+        active_counts.failed_injects++;
+    else
+        active_counts.injects++;
 }
 
 //--------------------------------------------------------------------

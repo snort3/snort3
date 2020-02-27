@@ -80,7 +80,8 @@ class SFDAQInstance;
 #define PKT_RETRANSMIT       0x01000000  // packet is a re-transmitted pkt.
 #define PKT_RETRY            0x02000000  /* this packet is being re-evaluated from the internal retry queue */
 #define PKT_REP_MONITORED    0x04000000  /* this packet is monitored by reputation */
-#define PKT_UNUSED_FLAGS     0xf8000000
+#define PKT_USE_DIRECT_INJECT 0x08000000  /* Use ioctl when injecting. */
+#define PKT_UNUSED_FLAGS     0xf0000000
 
 #define PKT_TS_OFFLOADED        0x01
 

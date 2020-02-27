@@ -229,7 +229,7 @@ static void handle_deferred_whitelist(Packet* pkt, DAQ_Verdict& verdict)
             verdict = DAQ_VERDICT_PASS;
             pkt->flow->deferred_whitelist = WHITELIST_DEFER_STARTED;
             pkt->flow->set_state(Flow::FlowState::INSPECT);
-            pkt->flow->disable_inspect = false;
+            pkt->flow->flags.disable_inspect = false;
         }
         return;
     }
@@ -238,7 +238,7 @@ static void handle_deferred_whitelist(Packet* pkt, DAQ_Verdict& verdict)
     {
         verdict = DAQ_VERDICT_PASS;
         pkt->flow->set_state(Flow::FlowState::INSPECT);
-        pkt->flow->disable_inspect = false;
+        pkt->flow->flags.disable_inspect = false;
         return;
     }
 
@@ -250,7 +250,7 @@ static void handle_deferred_whitelist(Packet* pkt, DAQ_Verdict& verdict)
 
         // Turn inspection back off and allow the flow.
         pkt->flow->set_state(Flow::FlowState::ALLOW);
-        pkt->flow->disable_inspect = true;
+        pkt->flow->flags.disable_inspect = true;
     }
 }
 
@@ -362,7 +362,7 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
     {
         // Publish an event if something has indicated that it wants the
         // finalize event on this flow.
-        if (p->flow and p->flow->trigger_finalize_event)
+        if (p->flow and p->flow->flags.trigger_finalize_event)
         {
             FinalizePacketEvent event(p, verdict);
             DataBus::publish(FINALIZE_PACKET_EVENT, event);

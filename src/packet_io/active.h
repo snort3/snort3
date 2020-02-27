@@ -39,6 +39,9 @@ public:
     struct Counts
     {
         PegCount injects;
+        PegCount failed_injects;
+        PegCount direct_injects;
+        PegCount failed_direct_injects;
     };
 
     enum ActiveStatus : uint8_t
@@ -67,7 +70,7 @@ public:
 
     void send_reset(Packet*, EncodeFlags);
     void send_unreach(Packet*, snort::UnreachResponse);
-    bool send_data(Packet*, EncodeFlags, const uint8_t* buf, uint32_t len);
+    uint32_t send_data(Packet*, EncodeFlags, const uint8_t* buf, uint32_t len);
     void inject_data(Packet*, EncodeFlags, const uint8_t* buf, uint32_t len);
 
     bool is_reset_candidate(const Packet*);
