@@ -23,7 +23,7 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_util.h"
+#include "detection/detection_engine.h"
 #include "detection/treenodes.h"
 #include "hash/hash_key_operations.h"
 #include "framework/cursor.h"
@@ -36,13 +36,6 @@
 
 using namespace snort;
 
-struct Base64DecodeBuffer
-{
-    uint8_t data[DECODE_BLEN];
-    uint32_t size;
-};
-
-static THREAD_LOCAL Base64DecodeBuffer* base64_decode_buffer;
 static THREAD_LOCAL ProfileStats base64PerfStats;
 
 #define s_name "base64_decode"
@@ -118,10 +111,11 @@ bool Base64DecodeOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-IpsOption::EvalStatus Base64DecodeOption::eval(Cursor& c, Packet*)
+IpsOption::EvalStatus Base64DecodeOption::eval(Cursor& c, Packet* p)
 {
     RuleProfile profile(base64PerfStats);
-    base64_decode_buffer->size = 0;
+    DataBuffer& base64_decode_buffer = DetectionEngine::get_alt_buffer(p);
+    base64_decode_buffer.len = 0;
 
     Base64DecodeData* idx = (Base64DecodeData*)&config;
     const uint8_t* start_ptr = nullptr;
@@ -155,8 +149,8 @@ IpsOption::EvalStatus Base64DecodeOption::eval(Cursor& c, Packet*)
         base64_size = idx->bytes_to_decode;
     }
 
-    if (sf_base64decode(base64_buf, base64_size, base64_decode_buffer->data,
-        sizeof(base64_decode_buffer->data), &base64_decode_buffer->size) != 0)
+    if (sf_base64decode(base64_buf, base64_size, base64_decode_buffer.data,
+        sizeof(base64_decode_buffer.data), &base64_decode_buffer.len) != 0)
         return NO_MATCH;
 
     return MATCH;
@@ -289,14 +283,15 @@ public:
     EvalStatus eval(Cursor&, Packet*) override;
 };
 
-IpsOption::EvalStatus Base64DataOption::eval(Cursor& c, Packet*)
+IpsOption::EvalStatus Base64DataOption::eval(Cursor& c, Packet* p)
 {
     RuleProfile profile(base64PerfStats);
+    DataBuffer& base64_decode_buffer = DetectionEngine::get_alt_buffer(p);
 
-    if ( !base64_decode_buffer->size )
+    if ( !base64_decode_buffer.len )
         return NO_MATCH;
 
-    c.set(s_data_name, base64_decode_buffer->data, base64_decode_buffer->size);
+    c.set(s_data_name, base64_decode_buffer.data, base64_decode_buffer.len);
 
     return MATCH;
 }
@@ -322,17 +317,6 @@ static void base64_data_dtor(IpsOption* p)
     delete p;
 }
 
-static void base64_data_tinit(SnortConfig*)
-{
-    base64_decode_buffer = new Base64DecodeBuffer();
-}
-
-static void base64_data_tterm(SnortConfig*)
-{
-    delete base64_decode_buffer;
-    base64_decode_buffer = nullptr;
-}
-
 static const IpsApi base64_data_api =
 {
     {
@@ -351,8 +335,8 @@ static const IpsApi base64_data_api =
     0, 0,
     nullptr,
     nullptr,
-    base64_data_tinit,
-    base64_data_tterm,
+    nullptr,
+    nullptr,
     base64_data_ctor,
     base64_data_dtor,
     nullptr
