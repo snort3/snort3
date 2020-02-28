@@ -20,7 +20,7 @@
 /* 
  * The purpose of this Packet subclass is to enable H2I to take direction from http_inspect on
  * whether or not to send a frame to detection. When http_inspect is processing normal HTTP/1.1
- * traffic it is dealing with a 'real' packet that has a context, the field on which disable_all()
+ * traffic it is dealing with a real packet that has a context, the field on which disable_all()
  * is called to disable detection on that packet. With HTTP/2 traffic, http_inspect is processing a
  * dummy packet that H2I created, which does not contain a context object. Rather than create an
  * entire new context object when we really only need a bool, http_inspect checks if the flow is

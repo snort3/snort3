@@ -107,20 +107,10 @@ GHash::~GHash()
     delete hashfcn;
 }
 
-// set key length, hashkey, and index parameters required to find/add/remove a node
-// the parameters set are valid until for the life of the initial method called
-void GHash::set_node_parameters(const void* const key)
-{
-    klen = ( keysize > 0  ) ? keysize : strlen((const char*)key) + 1;
-    hashkey = hashfcn->do_hash((const unsigned char*)key, klen);
-    index = hashkey % nrows;
-}
-
-GHashNode* GHash::find_node(const void* const key)
+GHashNode* GHash::find_node(const void* const key, unsigned index)
 {
     assert(key);
 
-    set_node_parameters(key);
     for ( GHashNode* hnode = table[index]; hnode; hnode = hnode->next )
     {
         if ( keysize == 0 )
@@ -142,7 +132,8 @@ int GHash::insert(const void* const key, void* const data)
 {
     assert(key && data);
 
-    if ( GHashNode* hnode = find_node(key) )
+    unsigned index = get_index(key);
+    if ( GHashNode* hnode = find_node(key, index) )
     {
         cnode = hnode;
         return HASH_INTABLE;
@@ -155,6 +146,7 @@ int GHash::insert(const void* const key, void* const data)
     }
     else
     {
+        unsigned klen = get_key_length(key);
         hnode->key = snort_alloc(klen);
         memcpy(const_cast<void*>(hnode->key), key, klen);
     }
@@ -184,7 +176,8 @@ void* GHash::find(const void* const key)
 {
     assert(key);
 
-    GHashNode* hnode = find_node(key);
+    unsigned index = get_index(key);
+    GHashNode* hnode = find_node(key, index);
     if ( hnode )
         return hnode->data;
 
@@ -226,7 +219,8 @@ int GHash::remove(const void* const key)
 {
     assert(key);
 
-    if ( GHashNode* hnode = find_node(key) )
+    unsigned index = get_index(key);
+    if ( GHashNode* hnode = find_node(key, index) )
         return free_node(index, hnode);
     else
         return HASH_NOT_FOUND;

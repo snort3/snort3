@@ -516,7 +516,7 @@ bool XHash::delete_lru_node()
 {
     if ( HashNode* hnode = lru_cache->remove_lru_node() )
     {
-        unlink_node(hnode);     // remove from the hash table
+        unlink_node(hnode);
         free_user_data(hnode);
         mem_allocator->free(hnode);
         --num_nodes;

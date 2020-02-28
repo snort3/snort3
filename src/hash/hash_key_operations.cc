@@ -70,10 +70,10 @@ unsigned HashKeyOperations::do_hash(const unsigned char* key, int len)
 
 bool HashKeyOperations::key_compare(const void* key1, const void* key2, size_t len)
 {
-    if ( memcmp(key1, key2, len ) == 0 )
-        return true;
-    else
+    if ( memcmp(key1, key2, len) )
         return false;
+    else
+        return true;
 }
 
 namespace snort

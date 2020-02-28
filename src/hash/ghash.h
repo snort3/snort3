@@ -24,6 +24,7 @@
 
 // generic hash table - stores and maps key + data pairs
 
+#include <string.h>
 #include "hash_key_operations.h"
 #include "main/snort_types.h"
 
@@ -56,10 +57,18 @@ public:
     { return count; }
 
 private:
-    void set_node_parameters(const void* const key);
-    GHashNode* find_node(const void* const key);
+    GHashNode* find_node(const void* const key, unsigned index);
     int free_node(unsigned index, GHashNode*);
     void next();
+
+    unsigned get_key_length(const void* const key)
+    { return ( keysize > 0  ) ? keysize : strlen((const char*)key) + 1; }
+
+    unsigned get_index(const void* const key)
+    {
+        unsigned hashkey = hashfcn->do_hash((const unsigned char*)key, get_key_length(key));
+        return hashkey % nrows;
+    }
 
     unsigned keysize;     // bytes in key, if < 0 -> keys are strings
     bool userkey;          // user owns the key */
@@ -71,10 +80,6 @@ private:
     int crow;             // findfirst/next row in table
     GHashNode* cnode;     // findfirst/next node ptr
 
-    // node parameters for search/add/remove
-    unsigned klen = 0;
-    unsigned hashkey = 0;
-    int index = 0;
 };
 
 

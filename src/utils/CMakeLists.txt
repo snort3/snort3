@@ -12,7 +12,6 @@ set( UTIL_INCLUDES
     safec.h
     segment_mem.h
     sflsq.h
-    sfmemcap.h
     stats.h
     util.h
     util_ber.h
@@ -32,7 +31,6 @@ add_library ( utils OBJECT
     kmap.cc
     segment_mem.cc
     sflsq.cc
-    sfmemcap.cc
     snort_bounds.h
     stats.cc
     util.cc

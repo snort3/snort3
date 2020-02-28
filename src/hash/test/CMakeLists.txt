@@ -12,7 +12,6 @@ add_cpputest( xhash_test
         ../hash_lru_cache.cc
         ../primetable.cc
         ../xhash.cc
-        ../../utils/sfmemcap.cc
 )
 
 add_cpputest( ghash_test
@@ -30,5 +29,4 @@ add_cpputest( zhash_test
         ../primetable.cc
         ../xhash.cc
         ../zhash.cc
-        ../../utils/sfmemcap.cc
 )

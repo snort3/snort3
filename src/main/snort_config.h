@@ -41,7 +41,7 @@ enum RunFlag
 {
     RUN_FLAG__READ                = 0x00000001,
     RUN_FLAG__DAEMON              = 0x00000002,
-    RUN_FLAG__NO_PROMISCUOUS      = 0x00000004,
+    // unused                     = 0x00000004,
     // unused                     = 0x00000008,
 
     RUN_FLAG__INLINE              = 0x00000010,
@@ -179,7 +179,6 @@ struct SnortConfig
 {
 private:
     void init(const SnortConfig* const, ProtocolReference*);
-    bool verify_stream_inspectors();
 
 public:
     SnortConfig(const SnortConfig* const other_conf = nullptr);

@@ -79,14 +79,6 @@ public:
 
         return HashKeyOperations::do_hash(key, len);
     }
-
-    bool key_compare(const void* k1, const void* k2, size_t len) override
-    {
-        if ( memcmp(k1, k2, len ) )
-            return false;
-        else
-            return true;
-    }
 };
 
 static int* RuleHashToSortedArray(GHash* rh)

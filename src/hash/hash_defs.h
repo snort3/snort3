@@ -22,7 +22,6 @@
 
 #include "hash_key_operations.h"
 #include "main/snort_types.h"
-#include "utils/sfmemcap.h"
 
 namespace snort
 {
