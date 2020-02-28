@@ -152,6 +152,10 @@ void AppIdInspector::tinit()
     LuaDetectorManager::initialize(*ctxt);
     AppIdServiceState::initialize(config->memcap);
     appidDebug = new AppIdDebug();
+    assert(!tp_appid_thread_ctxt);
+    tp_appid_thread_ctxt = ctxt->get_tp_appid_ctxt();
+    if (tp_appid_thread_ctxt)
+        tp_appid_thread_ctxt->tinit();
     if (ctxt->config.log_all_sessions)
         appidDebug->set_enabled(true);
 }
@@ -174,20 +178,6 @@ void AppIdInspector::eval(Packet* p)
 {
     Profile profile(appid_perf_stats);
     appid_stats.packets++;
-
-    ThirdPartyAppIdContext* tp_appid_ctxt = ctxt->get_tp_appid_ctxt();
-    if (tp_appid_thread_ctxt != tp_appid_ctxt)
-    {
-        if (tp_appid_thread_ctxt)
-        {
-            tp_appid_thread_ctxt->tfini();
-
-            // FIXIT-H: Assuming one packet thread
-            delete tp_appid_thread_ctxt;
-        }
-        tp_appid_ctxt->tinit();
-        tp_appid_thread_ctxt = tp_appid_ctxt;
-    }
 
     if (p->flow)
     {

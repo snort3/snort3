@@ -128,6 +128,38 @@ bool AcAppIdDebug::execute(Analyzer&, void**)
     return true;
 }
 
+class ACThirdPartyAppIdContextSwap : public AnalyzerCommand
+{
+public:
+    bool execute(Analyzer&, void**) override;
+    ACThirdPartyAppIdContextSwap(ThirdPartyAppIdContext* tp_ctxt): tp_ctxt(tp_ctxt) { }
+    ~ACThirdPartyAppIdContextSwap() override;
+    const char* stringify() override { return "THIRD-PARTY_CONTEXT_SWAP"; }
+private:
+    ThirdPartyAppIdContext* tp_ctxt =  nullptr;
+};
+
+bool ACThirdPartyAppIdContextSwap::execute(Analyzer&, void**)
+{
+    assert(tp_appid_thread_ctxt);
+    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
+    ThirdPartyAppIdContext* tp_appid_ctxt = inspector->get_ctxt().get_tp_appid_ctxt();
+    assert(tp_appid_thread_ctxt != tp_appid_ctxt);
+    LogMessage("== swapping third-party configuration\n");
+    tp_appid_thread_ctxt->tfini();
+    tp_appid_ctxt->tinit();
+    tp_appid_thread_ctxt = tp_appid_ctxt;
+
+    return true;
+}
+
+ACThirdPartyAppIdContextSwap::~ACThirdPartyAppIdContextSwap()
+{
+    delete tp_ctxt;
+    Swapper::set_reload_in_progress(false);
+    LogMessage("== reload third-party complete\n");
+}
+
 static int enable_debug(lua_State* L)
 {
     int proto = luaL_optint(L, 1, 0);
@@ -177,20 +209,18 @@ static int reload_third_party(lua_State*)
         LogMessage("== reload pending; retry\n");
         return 0;
     }
-
-    if (ThreadConfig::get_instance_max() != 1)
-        LogMessage("Third-party reload not supported with more than one packet thread.");
-    else
+    Swapper::set_reload_in_progress(true);
+    LogMessage(".. reloading third-party\n");
+    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
+    AppIdContext& ctxt = inspector->get_ctxt();
+    ThirdPartyAppIdContext* old_ctxt = ctxt.get_tp_appid_ctxt();
+    if (!old_ctxt)
     {
-        Swapper::set_reload_in_progress(true);
-        LogMessage(".. reloading third-party\n");
-        AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
-        AppIdContext& ctxt = inspector->get_ctxt();
-        ctxt.create_tp_appid_ctxt();
-        Swapper::set_reload_in_progress(false);
-        LogMessage("== reload third-party complete\n");
+        LogMessage("== reload third-party failed - third-party module doesn't exist\n");
+        return 0;
     }
-
+    ctxt.create_tp_appid_ctxt();
+    main_broadcast_command(new ACThirdPartyAppIdContextSwap(old_ctxt), true);
     return 0;
 }
 
