@@ -25,13 +25,27 @@
 
 using namespace snort;
 
-static const Parameter defaults[] =
+static const Parameter default_trace[] =
 {
-    { "trace", Parameter::PT_INT, "0:max53", nullptr,
-      "mask for enabling debug traces in module" },
+    { "all", Parameter::PT_INT, "0:max32", "0", "enabling traces in module" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
+
+static const Parameter default_trace_params[] =
+{
+    { "trace", Parameter::PT_TABLE, default_trace, nullptr, "trace config" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const TraceValue default_trace_values[] =
+{
+    { "all", 1 }
+};
+
+static TraceMask s_default_trace_values(default_trace_values,
+    (sizeof(default_trace_values) / sizeof(TraceValue)));
 
 std::string Command::get_arg_list() const
 {
@@ -49,11 +63,31 @@ std::string Command::get_arg_list() const
     return args;
 }
 
+bool TraceMask::set(const Value& v, Trace* mask)
+{
+    const TraceValue* tv = &values[0];
+    int isize = m_size;
+
+    while ( isize-- )
+    {
+        if ( v.is(tv->alias) )
+        {
+            uint8_t opt_val = v.get_uint8();
+            if ( opt_val )
+                *mask |= tv->mask;
+            return true;
+        }
+        tv++;
+    }
+
+    return false;
+}
+
 void Module::init(const char* s, const char* h)
 {
     name = s;
     help = h;
-    params = &defaults[(sizeof(defaults) / sizeof(Parameter)) - 1];
+    params = &default_trace_params[(sizeof(default_trace_params) / sizeof(Parameter)) - 1];
     default_params = params;
     list = false;
     num_counts = -1;
@@ -62,7 +96,8 @@ void Module::init(const char* s, const char* h)
 Module::Module(const char* s, const char* h)
 { init(s, h); }
 
-Module::Module(const char* s, const char* h, const Parameter* p, bool is_list, Trace* t)
+Module::Module(const char* s, const char* h, const Parameter* p, bool is_list, Trace* t,
+                        const Parameter* module_trace_param, TraceMask* module_trace_mask)
 {
     init(s, h);
     list = is_list;
@@ -71,19 +106,26 @@ Module::Module(const char* s, const char* h, const Parameter* p, bool is_list, T
 
     // FIXIT-L: This will not be valid after adding more default options
     if ( t )
-        default_params = defaults;
+    {
+        if ( module_trace_param )
+        {
+            default_params = module_trace_param;
+            trace_mask = module_trace_mask;
+        }
+        else
+        {
+            default_params = default_trace_params;
+            trace_mask = &s_default_trace_values;
+        }
+    }
 }
 
-bool Module::set(const char*, Value& v, SnortConfig*)
+bool Module::set(const char* fqn, Value& v, SnortConfig*)
 {
-    if ( v.is("trace") )
-    {
-        if ( trace )
-            *trace = v.get_uint64();
-    }
-    else
-        return false;
-    return true;
+    if ( strstr(fqn, ".trace.") )
+        return trace_mask and trace_mask->set(v, trace);
+
+    return false;
 }
 
 void Module::sum_stats(bool accumulate_now_stats)
@@ -198,8 +240,8 @@ bool Module::verified_end(const char* fqn, int idx, SnortConfig* c)
 
 void Module::enable_trace()
 {
-    if ( trace )
-        *trace = 1;
+    if ( trace_mask )
+        trace_mask->set(trace);
 }
 
 namespace snort

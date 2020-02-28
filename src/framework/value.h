@@ -86,7 +86,7 @@ public:
     const char* get_name() const
     { return param ? param->name : nullptr; }
 
-    bool is(const char* s)
+    bool is(const char* s) const
     { return param ? !strcmp(param->name, s) : false; }
 
     bool get_bool() const

@@ -21,6 +21,8 @@ add_library (detection OBJECT
     context_switcher.h
     detect.cc
     detection_engine.cc
+    detection_module.cc
+    detection_module.h
     detection_options.cc
     detection_options.h
     detection_util.cc

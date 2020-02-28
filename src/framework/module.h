@@ -75,6 +75,30 @@ struct RuleMap
     const char* msg;
 };
 
+struct TraceValue {
+    const char* alias;
+    Trace mask;
+};
+
+class TraceMask
+{
+public:
+    TraceMask(const TraceValue* array, size_t size) : values(array), m_size(size)
+    {}
+
+    bool set(const Value& v, Trace* mask);
+
+    bool set(Trace* mask)
+    {
+        *mask = 1;
+        return true;
+    }
+
+private:
+    const TraceValue* values;
+    size_t m_size;
+};
+
 class SO_PUBLIC Module
 {
 public:
@@ -192,7 +216,7 @@ public:
 protected:
     Module(const char* name, const char* help);
     Module(const char* name, const char* help, const Parameter*,
-        bool is_list = false, Trace* = nullptr);
+        bool is_list = false, Trace* = nullptr, const Parameter* = nullptr, TraceMask* = nullptr);
 
 private:
     friend ModuleManager;
@@ -206,6 +230,7 @@ private:
 
     const Parameter* params;
     const Parameter* default_params = nullptr;
+    TraceMask* trace_mask = nullptr;
     bool list;
     int table_level = 0;
 

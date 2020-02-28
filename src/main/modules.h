@@ -32,7 +32,4 @@
 void module_init();
 const char* get_lua_defaults();
 
-extern Trace TRACE_NAME(detection);  // FIXIT-L refactor detection module out
-
 #endif
-

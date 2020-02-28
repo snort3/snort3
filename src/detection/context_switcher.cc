@@ -26,11 +26,11 @@
 
 #include <cassert>
 
-#include "main/modules.h"
 #include "main/snort_debug.h"
 #include "packet_io/active.h"
 #include "utils/stats.h"
 
+#include "detection_module.h"
 #include "detect_trace.h"
 #include "ips_context.h"
 #include "ips_context_data.h"

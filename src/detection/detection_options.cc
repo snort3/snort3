@@ -45,7 +45,6 @@
 #include "latency/packet_latency.h"
 #include "latency/rule_latency_state.h"
 #include "log/messages.h"
-#include "main/modules.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "main/thread_config.h"
@@ -56,6 +55,7 @@
 #include "utils/util.h"
 
 #include "detection_engine.h"
+#include "detection_module.h"
 #include "detection_util.h"
 #include "detect_trace.h"
 #include "fp_create.h"

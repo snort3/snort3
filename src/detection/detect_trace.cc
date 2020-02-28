@@ -168,4 +168,3 @@ void node_eval_trace(const detection_option_tree_node_t*, const Cursor&, Packet*
 }
 
 #endif
-

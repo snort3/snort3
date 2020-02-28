@@ -27,6 +27,7 @@
 #include <sys/resource.h>
 
 #include "codecs/codec_module.h"
+#include "detection/detection_module.h"
 #include "detection/fp_config.h"
 #include "detection/rules.h"
 #include "filters/detection_filter.h"
@@ -64,166 +65,6 @@
 
 using namespace snort;
 using namespace std;
-
-//-------------------------------------------------------------------------
-// detection module
-//-------------------------------------------------------------------------
-
-/* *INDENT-OFF* */   //  Uncrustify handles this section incorrectly.
-static const Parameter detection_params[] =
-{
-    { "asn1", Parameter::PT_INT, "0:65535", "0",
-      "maximum decode nodes" },
-
-    { "global_default_rule_state", Parameter::PT_BOOL, nullptr, "true",
-      "enable or disable rules by default (overridden by ips policy settings)" },
-
-    { "global_rule_state", Parameter::PT_BOOL, nullptr, "false",
-      "apply rule_state against all policies" },
-
-#ifdef HAVE_HYPERSCAN
-    { "hyperscan_literals", Parameter::PT_BOOL, nullptr, "false",
-      "use hyperscan for content literal searches instead of boyer-moore" },
-#endif
-
-    { "offload_limit", Parameter::PT_INT, "0:max32", "99999",
-      "minimum sizeof PDU to offload fast pattern search (defaults to disabled)" },
-
-    { "offload_threads", Parameter::PT_INT, "0:max32", "0",
-      "maximum number of simultaneous offloads (defaults to disabled)" },
-
-    { "pcre_enable", Parameter::PT_BOOL, nullptr, "true",
-      "enable pcre pattern matching" },
-
-    { "pcre_match_limit", Parameter::PT_INT, "0:max32", "1500",
-      "limit pcre backtracking, 0 = off" },
-
-    { "pcre_match_limit_recursion", Parameter::PT_INT, "0:max32", "1500",
-      "limit pcre stack consumption, 0 = off" },
-
-    { "pcre_override", Parameter::PT_BOOL, nullptr, "true",
-      "enable pcre match limit overrides when pattern matching (ie ignore /O)" },
-
-#ifdef HAVE_HYPERSCAN
-    { "pcre_to_regex", Parameter::PT_BOOL, nullptr, "false",
-      "enable the use of regex instead of pcre for compatible expressions" },
-#endif
-
-    { "enable_address_anomaly_checks", Parameter::PT_BOOL, nullptr, "false",
-      "enable check and alerting of address anomalies" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-/* *INDENT-ON* */
-
-#define detection_help \
-    "configure general IPS rule processing parameters"
-
-class DetectionModule : public Module
-{
-public:
-    DetectionModule() :
-        Module("detection", detection_help, detection_params, false, &TRACE_NAME(detection)) {}
-
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
-
-    const PegInfo* get_pegs() const override
-    { return pc_names; }
-
-    PegCount* get_counts() const override
-    { return (PegCount*) &pc; }
-
-    Usage get_usage() const override
-    { return GLOBAL; }
-};
-
-bool DetectionModule::end(const char*, int, SnortConfig* sc)
-{
-    if ( sc->offload_threads and ThreadConfig::get_instance_max() != 1 )
-        ParseError("You can not enable experimental offload with more than one packet thread.");
-
-    return true;
-}
-
-bool DetectionModule::set(const char* fqn, Value& v, SnortConfig* sc)
-{
-    if ( v.is("asn1") )
-        sc->asn1_mem = v.get_uint16();
-
-    else if ( v.is("global_default_rule_state") )
-        sc->global_default_rule_state = v.get_bool();
-
-    else if ( v.is("global_rule_state") )
-        sc->global_rule_state = v.get_bool();
-
-#ifdef HAVE_HYPERSCAN
-    else if ( v.is("hyperscan_literals") )
-        sc->hyperscan_literals = v.get_bool();
-#endif
-
-    else if ( v.is("offload_limit") )
-        sc->offload_limit = v.get_uint32();
-
-    else if ( v.is("offload_threads") )
-        sc->offload_threads = v.get_uint32();
-
-    else if ( v.is("pcre_enable") )
-        v.update_mask(sc->run_flags, RUN_FLAG__NO_PCRE, true);
-
-    else if ( v.is("pcre_match_limit") )
-        sc->pcre_match_limit = v.get_uint32();
-
-    else if ( v.is("pcre_match_limit_recursion") )
-    {
-        // Cap the pcre recursion limit to not exceed the stack size.
-        //
-        // Note that even if we tried to call setrlimit() here, the threads
-        // will still get the stack size decided upon the start of snort3,
-        // which is 2M (for x86_64!) if snort3 started with unlimited
-        // stack size (ulimit -s). See the pthread_create() man page, or glibc
-        // source code.
-
-        // Determine the current stack size limit:
-        rlimit lim;
-        getrlimit(RLIMIT_STACK, &lim);
-        rlim_t thread_stack_size = lim.rlim_cur;
-
-        const size_t fudge_factor = 1 << 19;         // 1/2 M
-        const size_t pcre_stack_frame_size = 1024;   // pcretest -m -C
-
-        if (lim.rlim_cur == RLIM_INFINITY)
-            thread_stack_size = 1 << 21;             // 2M
-
-        long int max_rec = (thread_stack_size - fudge_factor) / pcre_stack_frame_size;
-        if (max_rec < 0)
-            max_rec = 0;
-
-        sc->pcre_match_limit_recursion = v.get_uint32();
-        if (sc->pcre_match_limit_recursion > max_rec)
-        {
-            sc->pcre_match_limit_recursion = max_rec;
-            LogMessage("Capping pcre_match_limit_recursion to %ld, thread stack_size %ld.\n",
-                sc->pcre_match_limit_recursion, thread_stack_size);
-        }
-    }
-
-    else if ( v.is("pcre_override") )
-        sc->pcre_override = v.get_bool();
-
-#ifdef HAVE_HYPERSCAN
-    else if ( v.is("pcre_to_regex") )
-        sc->pcre_to_regex = v.get_bool();
-#endif
-
-    else if ( v.is("enable_address_anomaly_checks") )
-        sc->address_anomaly_check_enabled = v.get_bool();
-
-    else
-        return Module::set(fqn, v, sc);
-
-    return true;
-}
 
 //-------------------------------------------------------------------------
 // event queue module
@@ -2144,3 +1985,96 @@ void module_init()
     ModuleManager::add_module(new HostTrackerModule);
     ModuleManager::add_module(new HostCacheModule);
 }
+
+#ifdef UNIT_TEST
+
+#include <catch/snort_catch.h>
+
+//-------------------------------------------------------------------------
+// Set trace option tests
+//-------------------------------------------------------------------------
+
+namespace
+{
+const TraceValue default_trace_values[] =
+{
+    { "all", 1 }
+};
+
+TraceMask s_default_trace_values(default_trace_values,
+    (sizeof(default_trace_values) / sizeof(TraceValue)));
+}
+
+TEST_CASE("TraceMask - single trace value", "[trace_mask]")
+{
+    Trace test_bitmask = 0;
+    Parameter p("all", Parameter::PT_INT, "0:max32", "0", "enabling traces in module");
+    Value trace_val((double)1);
+    trace_val.set(&p);
+
+    bool result = s_default_trace_values.set(trace_val, &test_bitmask);
+    CHECK( result == true );
+    CHECK( test_bitmask == 1 );
+}
+
+TEST_CASE("TraceMask - multiple trace values", "[trace_mask]")
+{
+    enum
+    {
+        TEST_TRACE_DETECTION_ENGINE = 0x1,
+        TEST_TRACE_RULE_VARS = 0x10,
+        TEST_TRACE_OPTION_TREE = 0x80,
+        TEST_TRACE_TAG = 0x100,
+    };
+    const TraceValue test_trace_values[] =
+    {
+        { "detect_engine", TEST_TRACE_DETECTION_ENGINE },
+        { "rule_vars",     TEST_TRACE_RULE_VARS },
+        { "opt_tree",      TEST_TRACE_OPTION_TREE },
+        { "tag",           TEST_TRACE_TAG }
+    };
+    TraceMask test_mask(test_trace_values, (sizeof(test_trace_values) / sizeof(TraceValue)));
+
+    Trace test_bitmask = 0;
+    Parameter p1("detect_engine", Parameter::PT_INT, "0:max32", "0", "p1");
+    Parameter p2("rule_vars", Parameter::PT_INT, "0:max32", "0", "p2");
+    Parameter p3("opt_tree", Parameter::PT_INT, "0:max32", "0", "p3");
+    Parameter p4("tag", Parameter::PT_INT, "0:max32", "0", "p4");
+    Value trace_val("trace");
+    trace_val.set(&p1);
+    trace_val.set_enum(1);
+
+    bool result = test_mask.set(trace_val, &test_bitmask);
+    CHECK( result == true );
+    CHECK( test_bitmask == TEST_TRACE_DETECTION_ENGINE );
+
+    trace_val.set(&p2);
+    result = test_mask.set(trace_val, &test_bitmask);
+    CHECK( result == true );
+    CHECK( test_bitmask == (TEST_TRACE_DETECTION_ENGINE | TEST_TRACE_RULE_VARS) );
+
+    trace_val.set(&p3);
+    result = test_mask.set(trace_val, &test_bitmask);
+    CHECK( result == true );
+    CHECK( test_bitmask == (TEST_TRACE_DETECTION_ENGINE | TEST_TRACE_RULE_VARS | TEST_TRACE_OPTION_TREE) );
+
+    trace_val.set(&p4);
+    result = test_mask.set(trace_val, &test_bitmask);
+    CHECK( result == true );
+    CHECK( test_bitmask == (TEST_TRACE_DETECTION_ENGINE | TEST_TRACE_RULE_VARS | TEST_TRACE_OPTION_TREE | TEST_TRACE_TAG) );
+}
+
+TEST_CASE("TraceMask - incorrect trace value", "[trace_mask]")
+{
+    Trace test_bitmask = 0;
+    Parameter p("test", Parameter::PT_INT, "0:max32", "0", "p");
+    Value trace_val("trace");
+    trace_val.set(&p);
+    trace_val.set_enum(1);
+
+    bool result = s_default_trace_values.set(trace_val, &test_bitmask);
+    CHECK( result == false );
+    CHECK( test_bitmask == 0 );
+}
+
+#endif // UNIT_TEST

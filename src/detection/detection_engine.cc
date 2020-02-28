@@ -30,7 +30,6 @@
 #include "helpers/ring.h"
 #include "latency/packet_latency.h"
 #include "main/analyzer.h"
-#include "main/modules.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "main/thread.h"
@@ -44,6 +43,7 @@
 #include "utils/stats.h"
 
 #include "context_switcher.h"
+#include "detection_module.h"
 #include "detection_util.h"
 #include "detect.h"
 #include "detect_trace.h"
