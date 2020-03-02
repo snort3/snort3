@@ -342,7 +342,7 @@ TEST(appid_http_event, handle_msg_header_user_agent)
 TEST(appid_http_event, handle_msg_header_x_working_with)
 {
     TestData test_data;
-    test_data.scan_flags = 0;
+    test_data.scan_flags = SCAN_HTTP_XWORKINGWITH_FLAG;
     test_data.x_working_with = X_WORKING_WITH;
 
     run_event_handler(test_data);

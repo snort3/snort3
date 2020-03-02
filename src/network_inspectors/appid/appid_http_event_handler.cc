@@ -86,8 +86,6 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
         hsession->set_field(REQ_COOKIE_FID, header_start, header_length, change_bits);
         header_start = http_event->get_referer(header_length);
         hsession->set_field(REQ_REFERER_FID, header_start, header_length, change_bits);
-        header_start = http_event->get_x_working_with(header_length);
-        hsession->set_field(MISC_XWW_FID, header_start, header_length, change_bits);
         hsession->set_is_webdav(http_event->contains_webdav_method());
 
         // FIXIT-M: Should we get request body (may be expensive to copy)?
@@ -117,6 +115,13 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
         // FIXIT-M: Should we get response body (may be expensive to copy)?
         //      It is not currently set in callback in 2.9.x, only via
         //      third-party.
+    }
+
+    header_start = http_event->get_x_working_with(header_length);
+    if (header_length > 0)
+    {
+        hsession->set_field(MISC_XWW_FID, header_start, header_length, change_bits);
+        asd->scan_flags |= SCAN_HTTP_XWORKINGWITH_FLAG;
     }
 
     //  The Via header can be in both the request and response.
