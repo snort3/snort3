@@ -24,6 +24,8 @@
 
 #include "base_tracker.h"  // FIXIT-W Returning null reference (from <vector>)
 
+#include "managers/module_manager.h"
+
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
 #include "utils/util.h"
@@ -52,9 +54,14 @@ void BaseTracker::process(bool summary)
 
     write();
 
-    for ( const ModuleConfig& mod : modules )
-        if ( !summary )
+    if ( !summary )
+    {
+        for ( const ModuleConfig& mod : modules )
+        {
+            lock_guard<mutex> lock(ModuleManager::stats_mutex);
             mod.ptr->sum_stats(false);
+        }
+    }
 }
 
 #ifdef UNIT_TEST

@@ -53,6 +53,7 @@ struct BaseStats
      PegCount preemptive_prunes;
      PegCount memcap_prunes;
      PegCount ha_prunes;
+     PegCount stale_prunes;
      PegCount expected_flows;
      PegCount expected_realized;
      PegCount expected_pruned;

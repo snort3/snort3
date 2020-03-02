@@ -100,10 +100,9 @@ void Request::respond(const char* s, bool queue_response, bool remote_only)
 #ifdef SHELL
 void Request::send_queued_response()
 {
-    const char* qr = queued_response;
-    if ( qr )
+    if ( queued_response )
     {
-        write_response(qr);
+        write_response(queued_response);
         queued_response = nullptr;
     }
 }

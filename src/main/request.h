@@ -22,8 +22,6 @@
 #ifndef REQUEST_H
 #define REQUEST_H
 
-#include <atomic>
-
 #include "main/snort_types.h"
 
 class Request
@@ -43,6 +41,6 @@ private:
     int fd;
     char read_buf[1024];
     size_t bytes_read;
-    std::atomic<const char*> queued_response;
+    const char* queued_response;
 };
 #endif

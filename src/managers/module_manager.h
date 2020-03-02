@@ -24,8 +24,9 @@
 // Modules are strictly used during parse time.
 
 #include <cstdint>
-#include <set>
 #include <list>
+#include <mutex>
+#include <set>
 
 #include "main/snort_types.h"
 
@@ -90,6 +91,7 @@ public:
     static void reset_stats(SnortConfig*);
 
     static std::set<uint32_t> gids;
+    SO_PUBLIC static std::mutex stats_mutex;
 };
 }
 

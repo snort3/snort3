@@ -61,6 +61,7 @@ const PegInfo base_pegs[] =
     { CountType::SUM, "preemptive_prunes", "sessions pruned during preemptive pruning" },
     { CountType::SUM, "memcap_prunes", "sessions pruned due to memcap" },
     { CountType::SUM, "ha_prunes", "sessions pruned by high availability sync" },
+    { CountType::SUM, "stale_prunes", "sessions pruned due to stale connection" },
     { CountType::SUM, "expected_flows", "total expected flows created within snort" },
     { CountType::SUM, "expected_realized", "number of expected flows realized" },
     { CountType::SUM, "expected_pruned", "number of expected flows pruned" },
@@ -90,6 +91,7 @@ void base_sum()
     stream_base_stats.preemptive_prunes = flow_con->get_prunes(PruneReason::PREEMPTIVE);
     stream_base_stats.memcap_prunes = flow_con->get_prunes(PruneReason::MEMCAP);
     stream_base_stats.ha_prunes = flow_con->get_prunes(PruneReason::HA);
+    stream_base_stats.stale_prunes = flow_con->get_prunes(PruneReason::STALE);
     stream_base_stats.reload_freelist_flow_deletes = flow_con->get_deletes(FlowDeleteState::FREELIST);
     stream_base_stats.reload_allowed_flow_deletes = flow_con->get_deletes(FlowDeleteState::ALLOWED);
     stream_base_stats.reload_offloaded_flow_deletes= flow_con->get_deletes(FlowDeleteState::OFFLOADED);

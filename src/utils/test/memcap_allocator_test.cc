@@ -153,10 +153,13 @@ TEST(memcap_allocator, max_allocations_test)
         CHECK(mem_blocks[i]);
         CHECK(mca->get_mem_allocated() == bytes_allocated);
         if ( i < MAX_ALLOCATIONS_10000 - 1 )
+        {
             CHECK(mca->is_space_available());
+        }
         else
+        {
             CHECK(!mca->is_space_available());
-
+        }
         CHECK(!mca->is_over_capacity());
     }
     CHECK(mca->get_allocation_requests() == MAX_ALLOCATIONS_10000);

@@ -29,7 +29,6 @@
 #include <algorithm>
 #include <cassert>
 #include <iostream>
-#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -75,7 +74,8 @@ static std::unordered_map<std::string, const Parameter*> s_pmap;
 
 static unsigned s_errors = 0;
 
-std::set<uint32_t> ModuleManager::gids;
+set<uint32_t> ModuleManager::gids;
+mutex ModuleManager::stats_mutex;
 
 static string s_current;
 static string s_name;
@@ -83,8 +83,6 @@ static string s_type;
 
 // for callbacks from Lua
 static SnortConfig* s_config = nullptr;
-
-static std::mutex stats_mutex;
 
 // forward decls
 extern "C"
@@ -1382,7 +1380,7 @@ void ModuleManager::dump_stats(SnortConfig*, const char* skip, bool dynamic)
     {
         if ( !skip || !strstr(skip, mh->mod->get_name()) )
         {
-            std::lock_guard<std::mutex> lock(stats_mutex);
+            lock_guard<mutex> lock(stats_mutex);
             if ( dynamic )
                 mh->mod->show_dynamic_stats();
             else
@@ -1397,7 +1395,7 @@ void ModuleManager::accumulate(SnortConfig*)
 
     for ( auto* mh : mod_hooks )
     {
-        std::lock_guard<std::mutex> lock(stats_mutex);
+        lock_guard<mutex> lock(stats_mutex);
         mh->mod->prep_counts();
         mh->mod->sum_stats(true);
     }
@@ -1408,7 +1406,7 @@ void ModuleManager::accumulate_offload(const char* name)
     ModHook* mh = get_hook(name);
     if ( mh )
     {
-        std::lock_guard<std::mutex> lock(stats_mutex);
+        lock_guard<mutex> lock(stats_mutex);
         mh->mod->prep_counts();
         mh->mod->sum_stats(true);
     }
@@ -1420,7 +1418,7 @@ void ModuleManager::reset_stats(SnortConfig*)
 
     for ( auto* mh : mod_hooks )
     {
-        std::lock_guard<std::mutex> lock(stats_mutex);
+        lock_guard<mutex> lock(stats_mutex);
         mh->mod->reset_stats();
     }
 }
