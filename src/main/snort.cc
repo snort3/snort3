@@ -155,7 +155,7 @@ void Snort::init(int argc, char** argv)
      * Set the global snort_conf that will be used during run time */
     sc->merge(snort_cmd_line_conf);
     SnortConfig::set_conf(sc);
-
+    PluginManager::load_so_plugins(sc);
 #ifdef PIGLET
     if ( !Piglet::piglet_mode() )
 #endif
@@ -428,7 +428,7 @@ void Snort::reload_failure_cleanup(SnortConfig* sc)
 
 // FIXIT-M refactor this so startup and reload call the same core function to
 // instantiate things that can be reloaded
-SnortConfig* Snort::get_reload_config(const char* fname)
+SnortConfig* Snort::get_reload_config(const char* fname, const char* plugin_path)
 {
     reloading = true;
     ModuleManager::reset_errors();
@@ -444,6 +444,8 @@ SnortConfig* Snort::get_reload_config(const char* fname)
         reload_failure_cleanup(sc);
         return nullptr;
     }
+
+    PluginManager::reload_so_plugins(plugin_path, sc);
 
     sc->setup();
 

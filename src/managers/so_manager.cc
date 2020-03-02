@@ -30,36 +30,35 @@
 #include <cstring>
 #include <iomanip>
 #include <iostream>
-#include <list>
 #include <sstream>
 
 #include "log/messages.h"
+#include "main/snort_config.h"
 #include "parser/parse_so_rule.h"
 
 using namespace snort;
 using namespace std;
 
-static list<const SoApi*> s_rules;
-
 //-------------------------------------------------------------------------
 // plugins
 //-------------------------------------------------------------------------
-
-void SoManager::add_plugin(const SoApi* api)
+SoRules::~SoRules()
 {
-    s_rules.emplace_back(api);
+    api.clear();
+    handles.clear();
 }
 
-void SoManager::release_plugins()
+void SoManager::add_plugin(const SoApi* api, SnortConfig* sc, SoHandlePtr handle)
 {
-    s_rules.clear();
+    sc->so_rules->api.emplace_back(api);
+    sc->so_rules->handles.emplace_back(handle);
 }
 
 void SoManager::dump_plugins()
 {
     Dumper d("SO Rules");
 
-    for ( auto* p : s_rules )
+    for ( auto* p : SnortConfig::get_conf()->so_rules->api )
         d.dump(p->base.name, p->base.version);
 }
 
@@ -186,18 +185,18 @@ static const char* revert(const uint8_t* data, unsigned len)
 
 //-------------------------------------------------------------------------
 
-static const SoApi* get_so_api(const char* soid)
+static const SoApi* get_so_api(const char* soid, SoRules* so_rules)
 {
-    for ( auto* p : s_rules )
+    for ( auto* p : so_rules->api )
         if ( !strcmp(p->base.name, soid) )
             return p;
 
     return nullptr;
 }
 
-const char* SoManager::get_so_rule(const char* soid)
+const char* SoManager::get_so_rule(const char* soid, SnortConfig* sc)
 {
-    const SoApi* api = get_so_api(soid);
+    const SoApi* api = get_so_api(soid, sc->so_rules);
 
     if ( !api )
         return nullptr;
@@ -207,9 +206,9 @@ const char* SoManager::get_so_rule(const char* soid)
     return rule;
 }
 
-SoEvalFunc SoManager::get_so_eval(const char* soid, const char* so, void** data)
+SoEvalFunc SoManager::get_so_eval(const char* soid, const char* so, void** data, SnortConfig* sc)
 {
-    const SoApi* api = get_so_api(soid);
+    const SoApi* api = get_so_api(soid, sc->so_rules);
 
     if ( !api || !api->ctor )
         return nullptr;
@@ -217,9 +216,11 @@ SoEvalFunc SoManager::get_so_eval(const char* soid, const char* so, void** data)
     return api->ctor(so, data);
 }
 
-void SoManager::delete_so_data(const char* soid, void* pv)
+void SoManager::delete_so_data(const char* soid, void* pv, SoRules* so_rules)
 {
-    const SoApi* api = get_so_api(soid);
+    if (!pv or !so_rules)
+        return;
+    const SoApi* api = get_so_api(soid, so_rules);
 
     if ( api && api->dtor )
         api->dtor(pv);
@@ -227,11 +228,11 @@ void SoManager::delete_so_data(const char* soid, void* pv)
 
 //-------------------------------------------------------------------------
 
-void SoManager::dump_rule_stubs(const char*)
+void SoManager::dump_rule_stubs(const char*, SnortConfig* sc)
 {
     unsigned c = 0;
 
-    for ( auto* p : s_rules )
+    for ( auto* p : sc->so_rules->api )
     {
         const char* rule = revert(p->rule, p->length);
 

@@ -25,7 +25,6 @@
 
 #include <dlfcn.h>
 #include <iostream>
-#include <map>
 #include <sstream>
 #include <sys/stat.h>
 
@@ -36,6 +35,7 @@
 #include "helpers/directory.h"
 #include "helpers/markup.h"
 #include "log/messages.h"
+#include "main/snort_config.h"
 
 #ifdef PIGLET
 #include "piglet/piglet_api.h"
@@ -125,31 +125,24 @@ struct Plugin
 {
     string source;
     string key;
-
-    const BaseApi* api;
-    void* handle;
-
-    Plugin()
-    { clear(); }
-
-    void clear()
-    { source.clear(); key.clear(); api = nullptr; handle = nullptr; }
+    const BaseApi* api = nullptr;
+    SoHandlePtr handle;
 };
 
-typedef std::map<string, Plugin> PlugMap;
-static PlugMap plug_map;
-
-struct RefCount
+Plugins::~Plugins()
 {
-    unsigned count;
+    plug_map.clear();
+}
 
-    RefCount() { count = 0; }
+SoHandle::~SoHandle()
+{
+#ifndef REG_TEST
+    if ( handle )
+        dlclose(handle);
+#endif
+}
 
-    //~RefCount() { assert(!count); }; // FIXIT-L fails on fatal error
-};
-
-typedef std::map<void*, RefCount> RefMap;
-static RefMap ref_map;
+static Plugins s_plugins;
 
 static void set_key(string& key, Symbol* sym, const char* name)
 {
@@ -178,8 +171,16 @@ static bool compatible_builds(const char* plug_opts)
     return true;
 }
 
+static bool plugin_is_reloadable(const BaseApi* api)
+{
+    if ( api->type == PT_SO_RULE )
+        return true;
+    else
+        return false;
+}
+
 static bool register_plugin(
-    const BaseApi* api, void* handle, const char* file)
+    const BaseApi* api, SoHandlePtr handle, const char* file, SnortConfig* sc)
 {
     if ( api->type >= PT_MAX )
         return false;
@@ -206,20 +207,17 @@ static bool register_plugin(
         return false;
     }
 
-    // validate api ?
+    if ( sc and !plugin_is_reloadable(api) )
+        return false;
 
     string key;
     set_key(key, sym, api->name);
 
-    Plugin& p = plug_map[key];
-
+    Plugin& p = ( sc ? sc->plugins->plug_map[key] : s_plugins.plug_map[key] );
     if ( p.api )
     {
-        if ( p.api->version >= api->version)
+        if ( p.api->version > api->version )
             return false;  // keep the old one
-
-        if ( p.handle && !--ref_map[p.handle].count )
-            dlclose(p.handle); // drop the old one
     }
 
     p.key = key;
@@ -227,28 +225,35 @@ static bool register_plugin(
     p.handle = handle;
     p.source = file;
 
-    if ( handle )
-        ++ref_map[handle].count;
-
     return true;
 }
 
 static void load_list(
-    const BaseApi** api, void* handle = nullptr, const char* file = "static")
+    const BaseApi** api, void* handle = nullptr, const char* file = "static", SnortConfig* sc = nullptr)
 {
-    bool keep = false;
+    SoHandlePtr so_file;
+    if ( handle and sc )
+    {   // for reload, if the so lib file was previously opened, reuse the shared_ptr
+        for( auto const& i : s_plugins.plug_map )
+        {
+            if ( i.second.api == (*api) and i.second.handle.get()->handle == handle )
+            {
+                so_file = i.second.handle;
+                break;
+            }
+        }
+    }
+    if ( !so_file.get() )
+        so_file = std::make_shared<SoHandle>(handle);
 
     while ( *api )
     {
-        keep = register_plugin(*api, handle, file) || keep;
-        //printf("loaded %s\n", (*api)->name);
+        register_plugin(*api, so_file, file, sc);
         ++api;
     }
-    if ( handle && !keep )
-        dlclose(handle);
 }
 
-static bool load_lib(const char* file)
+static bool load_lib(const char* file, SnortConfig* sc)
 {
     struct stat fs;
     void* handle;
@@ -272,7 +277,7 @@ static bool load_lib(const char* file)
         dlclose(handle);
         return false;
     }
-    load_list(api, handle, file);
+    load_list(api, handle, file, sc);
     return true;
 }
 
@@ -314,7 +319,7 @@ static void add_plugin(Plugin& p)
         break;
 
     case PT_SO_RULE:
-        SoManager::add_plugin((const SoApi*)p.api);
+        // SO rules are added later
         break;
 
     case PT_LOGGER:
@@ -337,7 +342,7 @@ static void add_plugin(Plugin& p)
     }
 }
 
-static void load_plugins(const std::string& paths)
+static void load_plugins(const std::string& paths, SnortConfig* sc = nullptr)
 {
     struct stat sb;
     stringstream paths_stream(paths);
@@ -358,40 +363,27 @@ static void load_plugins(const std::string& paths)
             Directory d(path.c_str(), lib_pattern);
 
             while ( const char* f = d.next() )
-                load_lib(f);
+                load_lib(f, sc);
         }
         else
         {
             if ( path.find("/") == string::npos )
                 path = "./" + path;
 
-            load_lib(path.c_str());
+            load_lib(path.c_str(), sc);
         }
     }
 }
 
 static void add_plugins()
 {
-    PlugMap::iterator it;
-
-    for ( it = plug_map.begin(); it != plug_map.end(); ++it )
+    for ( auto it = s_plugins.plug_map.begin(); it != s_plugins.plug_map.end(); ++it )
         add_plugin(it->second);
 }
 
 static void unload_plugins()
 {
-    for ( PlugMap::iterator it = plug_map.begin(); it != plug_map.end(); ++it )
-    {
-        if ( it->second.handle )
-            --ref_map[it->second.handle].count;
-
-        it->second.clear();
-    }
-
-#ifndef REG_TEST
-    for ( RefMap::iterator it = ref_map.begin(); it != ref_map.end(); ++it )
-        dlclose(it->first);
-#endif
+    s_plugins.plug_map.clear();
 }
 
 //-------------------------------------------------------------------------
@@ -417,11 +409,43 @@ void PluginManager::load_plugins(const std::string& paths)
     add_plugins();
 }
 
+void PluginManager::reload_so_plugins(const char* paths, SnortConfig* sc)
+{
+    sc->plugins = new Plugins;
+    sc->plugins->plug_map = s_plugins.plug_map;
+    if ( paths )
+    {
+        // once plugin_path is provided for reload, old so_rules will be dropped
+        for( auto i = sc->plugins->plug_map.begin(); i != sc->plugins->plug_map.end(); ++i )
+            if ( plugin_is_reloadable(i->second.api) )
+                sc->plugins->plug_map.erase(i);
+        ::load_plugins(paths, sc);
+    }
+    load_so_plugins(sc, true);
+}
+
+void PluginManager::reload_so_plugins_cleanup(SnortConfig* sc)
+{
+    if ( !sc->plugins )
+        return;
+
+    // set the new plugins to current
+    s_plugins.plug_map.clear();
+    s_plugins.plug_map = sc->plugins->plug_map;
+    sc->plugins->plug_map.clear();
+}
+
+void PluginManager::load_so_plugins(SnortConfig* sc, bool is_reload)
+{
+    auto p = is_reload ? sc->plugins->plug_map : s_plugins.plug_map;
+    for ( auto it = p.begin(); it != p.end(); ++it )
+        if ( it->second.api->type == PT_SO_RULE )
+            SoManager::add_plugin((const SoApi*)it->second.api, sc, it->second.handle);
+}
+
 void PluginManager::list_plugins()
 {
-    PlugMap::iterator it;
-
-    for ( it = plug_map.begin(); it != plug_map.end(); ++it )
+    for ( auto it = s_plugins.plug_map.begin(); it != s_plugins.plug_map.end(); ++it )
     {
         Plugin& p = it->second;
         cout << Markup::item();
@@ -434,9 +458,7 @@ void PluginManager::list_plugins()
 
 void PluginManager::show_plugins()
 {
-    PlugMap::iterator it;
-
-    for ( it = plug_map.begin(); it != plug_map.end(); ++it )
+    for ( auto it = s_plugins.plug_map.begin(); it != s_plugins.plug_map.end(); ++it )
     {
         Plugin& p = it->second;
 
@@ -464,7 +486,6 @@ void PluginManager::release_plugins()
     ActionManager::release_plugins();
     InspectorManager::release_plugins();
     IpsManager::release_plugins();
-    SoManager::release_plugins();
     MpseManager::release_plugins();
     CodecManager::release_plugins();
     ConnectorManager::release_plugins();
@@ -480,9 +501,9 @@ const BaseApi* PluginManager::get_api(PlugType type, const char* name)
     string key;
     set_key(key, symbols+type, name);
 
-    const PlugMap::iterator it = plug_map.find(key);
+    auto it = s_plugins.plug_map.find(key);
 
-    if ( it != plug_map.end() )
+    if ( it != s_plugins.plug_map.end() )
         return it->second.api;
 
     return nullptr;
@@ -491,7 +512,7 @@ const BaseApi* PluginManager::get_api(PlugType type, const char* name)
 #ifdef PIGLET
 PlugType PluginManager::get_type_from_name(const std::string& name)
 {
-    for ( auto it = plug_map.begin(); it != plug_map.end(); ++it )
+    for ( auto it = s_plugins.plug_map.begin(); it != s_plugins.plug_map.end(); ++it )
     {
         const auto* api = it->second.api;
         if ( name == api->name )
@@ -562,8 +583,7 @@ const char* PluginManager::get_available_plugins(PlugType t)
 {
     static std::string s;
     s.clear();
-
-    for ( auto it = plug_map.begin(); it != plug_map.end(); ++it )
+    for ( auto it = s_plugins.plug_map.begin(); it != s_plugins.plug_map.end(); ++it )
     {
         const auto* api = it->second.api;
 
@@ -577,4 +597,3 @@ const char* PluginManager::get_available_plugins(PlugType t)
     }
     return s.c_str();
 }
-

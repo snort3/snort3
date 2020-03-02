@@ -329,16 +329,24 @@ int main_reload_config(lua_State* L)
         return 0;
     }
     const char* fname =  nullptr;
+    const char* plugin_path =  nullptr;
 
     if ( L )
     {
         Lua::ManageStack(L, 1);
         fname = luaL_checkstring(L, 1);
+        if (lua_gettop(L) > 1)
+        {
+            plugin_path = luaL_checkstring(L, 2);
+            std::ostringstream plugin_path_msg;
+            plugin_path_msg << "-- reload plugin_path: " << plugin_path << "\n";
+            current_request->respond(plugin_path_msg.str().c_str());
+        }
     }
 
     current_request->respond(".. reloading configuration\n");
     SnortConfig* old = SnortConfig::get_conf();
-    SnortConfig* sc = Snort::get_reload_config(fname);
+    SnortConfig* sc = Snort::get_reload_config(fname, plugin_path);
 
     if ( !sc )
     {
@@ -361,10 +369,12 @@ int main_reload_config(lua_State* L)
 
     if ( !tc )
     {
+        // FIXIT-L it does not seem a valid check, delete old config if come to it
         current_request->respond("== reload failed - bad config\n");
         SnortConfig::set_parser_conf(nullptr);
         return 0;
     }
+    PluginManager::reload_so_plugins_cleanup(sc);
     SnortConfig::set_conf(sc);
     proc_stats.conf_reloads++;
 

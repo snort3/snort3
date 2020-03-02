@@ -27,6 +27,7 @@
 #include "framework/so_rule.h"
 #include "hash/hash_key_operations.h"
 #include "log/messages.h"
+#include "main/snort_config.h"
 #include "managers/so_manager.h"
 #include "profiler/profiler.h"
 
@@ -40,7 +41,7 @@ static THREAD_LOCAL ProfileStats soPerfStats;
 class SoOption : public IpsOption
 {
 public:
-    SoOption(const char*, const char*, bool, SoEvalFunc f, void* v);
+    SoOption(const char*, const char*, bool, SoEvalFunc f, void* v, SnortConfig*);
     ~SoOption() override;
 
     uint32_t hash() const override;
@@ -57,10 +58,11 @@ private:
     bool relative_flag;
     SoEvalFunc func;
     void* data;
+    SoRules* so_rules;
 };
 
 SoOption::SoOption(
-    const char* id, const char* s, bool r, SoEvalFunc f, void* v)
+    const char* id, const char* s, bool r, SoEvalFunc f, void* v, SnortConfig* sc)
     : IpsOption(s_name)
 {
     soid = id;
@@ -68,12 +70,12 @@ SoOption::SoOption(
     relative_flag = r;
     func = f;
     data = v;
+    so_rules = sc->so_rules;
 }
 
 SoOption::~SoOption()
 {
-    if ( data )
-        SoManager::delete_so_data(soid, data);
+    SoManager::delete_so_data(soid, data, so_rules);
 }
 
 uint32_t SoOption::hash() const
@@ -142,12 +144,14 @@ public:
 public:
     string name;
     bool relative_flag;
+    SnortConfig* cfg;
 };
 
-bool SoModule::begin(const char*, int, SnortConfig*)
+bool SoModule::begin(const char*, int, SnortConfig* sc)
 {
     name.clear();
     relative_flag = false;
+    cfg = sc;
     return true;
 }
 
@@ -191,14 +195,14 @@ static IpsOption* so_ctor(Module* p, OptTreeNode* otn)
         ParseError("no soid before so:%s", name);
         return nullptr;
     }
-    SoEvalFunc func = SoManager::get_so_eval(otn->soid, name, &data);
+    SoEvalFunc func = SoManager::get_so_eval(otn->soid, name, &data, m->cfg);
 
     if ( !func )
     {
         ParseError("can't link so:%s", name);
         return nullptr;
     }
-    return new SoOption(otn->soid, name, relative_flag, func, data);
+    return new SoOption(otn->soid, name, relative_flag, func, data, m->cfg);
 }
 
 static void so_dtor(IpsOption* p)

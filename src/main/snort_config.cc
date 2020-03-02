@@ -47,6 +47,8 @@
 #include "managers/ips_manager.h"
 #include "managers/module_manager.h"
 #include "managers/mpse_manager.h"
+#include "managers/plugin_manager.h"
+#include "managers/so_manager.h"
 #include "memory/memory_config.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/sfdaq_config.h"
@@ -209,6 +211,7 @@ void SnortConfig::init(const SnortConfig* const other_conf, ProtocolReference* p
         memset(evalOrder, 0, sizeof(evalOrder));
         proto_ref = new ProtocolReference(protocol_reference);
         flowbits_ginit(this);
+        so_rules = new SoRules;
     }
     else
     {
@@ -304,7 +307,9 @@ SnortConfig::~SnortConfig()
     delete memory;
     delete daq_config;
     delete proto_ref;
-
+    delete so_rules;
+    if ( plugins )
+        delete plugins;
     reload_tuners.clear();
 
     trim_heap();
