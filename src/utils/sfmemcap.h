@@ -1,5 +1,6 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2019-2020 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2020 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2003-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,32 +17,23 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// perf_pegs.h author Michael Matirko <mmatirko@cisco.com>
+#ifndef SFMEMCAP_H
+#define SFMEMCAP_H
 
+// _alloc and _free wrappers that enforce a memory cap
 
-#ifndef PERF_PEGS_H
-#define PERF_PEGS_H
-
-#include "framework/counts.h"
-#include "main/snort_types.h"
-
-static const PegInfo perf_module_pegs[] =
+struct MEMCAP
 {
-
-    { CountType::SUM, "packets", "total packets processed by performance monitor" },
-    { CountType::SUM, "total_frees", "total flows pruned or freed by performance monitor" },
-    { CountType::SUM, "reload_frees", "flows freed on reload with changed memcap" },
-    { CountType::SUM, "alloc_prunes", "flows pruned on allocation of IP flows" },
-    { CountType::END, nullptr, nullptr },
+    unsigned long memused;
+    unsigned long memcap;
+    int nblocks;
 };
 
-struct PerfPegStats
-{
-    PegCount total_packets;
-    PegCount total_frees;
-    PegCount reload_frees;
-    PegCount alloc_prunes;
-};
+// FIXIT-L could be refactored as a class but should be deleted
+void sfmemcap_init(MEMCAP* mc, unsigned long nbytes);
+void* sfmemcap_alloc(MEMCAP* mc, unsigned long nbytes);
+void sfmemcap_showmem(MEMCAP* mc);
+void sfmemcap_free(MEMCAP* mc, void* memory);
 
 #endif
 

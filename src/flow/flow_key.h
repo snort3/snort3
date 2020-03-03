@@ -26,26 +26,13 @@
 #include <cstdint>
 
 #include "framework/decode_data.h"
-#include "hash/hash_key_operations.h"
 #include "utils/cpp_macros.h"
 
-class HashKeyOperations;
+struct HashFnc;
 
 namespace snort
 {
 struct SfIp;
-
-class FlowHashKeyOps : public HashKeyOperations
-{
-public:
-    FlowHashKeyOps(int rows)
-        : HashKeyOperations(rows)
-    { }
-
-    unsigned do_hash(const unsigned char* k, int len) override;
-    bool key_compare(const void* k1, const void* k2, size_t) override;
-};
-
 
 PADDING_GUARD_BEGIN
 struct SO_PUBLIC FlowKey
@@ -83,7 +70,8 @@ struct SO_PUBLIC FlowKey
     void init_address_space(uint16_t);
 
     // If this data structure changes size, compare must be updated!
-    static bool is_equal(const void* k1, const void* k2, size_t);
+    static uint32_t hash(HashFnc*, const unsigned char* d, int);
+    static bool is_equal(const void* s1, const void* s2, size_t);
 
 private:
     bool init4(

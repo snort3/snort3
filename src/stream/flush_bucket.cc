@@ -51,9 +51,6 @@ void FlushBucket::set(unsigned sz)
     assert(s_flush_bucket);
 }
 
-void FlushBucket::set()
-{ set(0); }
-
 void FlushBucket::clear()
 {
     delete s_flush_bucket;

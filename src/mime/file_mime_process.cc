@@ -28,7 +28,7 @@
 
 #include "detection/detection_engine.h"
 #include "file_api/file_flows.h"
-#include "hash/hash_key_operations.h"
+#include "hash/hashfcn.h"
 #include "log/messages.h"
 #include "search_engines/search_tool.h"
 #include "utils/util_cstring.h"

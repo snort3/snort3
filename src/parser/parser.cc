@@ -34,8 +34,7 @@
 #include "filters/detection_filter.h"
 #include "filters/rate_filter.h"
 #include "filters/sfthreshold.h"
-#include "hash/ghash.h"
-#include "hash/hash_key_operations.h"
+#include "hash/hashfcn.h"
 #include "hash/xhash.h"
 #include "helpers/directory.h"
 #include "log/messages.h"
@@ -64,62 +63,6 @@ using namespace snort;
 static struct rule_index_map_t* ruleIndexMap = nullptr;
 
 static std::string s_aux_rules;
-
-class RuleTreeHashKeyOps : public HashKeyOperations
-{
-public:
-    RuleTreeHashKeyOps(int rows)
-        : HashKeyOperations(rows)
-    { }
-
-    unsigned do_hash(const unsigned char* k, int) override
-    {
-        uint32_t a,b,c;
-        const RuleTreeNodeKey* rtnk = (const RuleTreeNodeKey*)k;
-        RuleTreeNode* rtn = rtnk->rtn;
-
-        a = rtn->action;
-        b = rtn->flags;
-        c = (uint32_t)(uintptr_t)rtn->listhead;
-
-        mix(a,b,c);
-
-        a += (uint32_t)(uintptr_t)rtn->src_portobject;
-        b += (uint32_t)(uintptr_t)rtn->dst_portobject;
-        c += (uint32_t)(uintptr_t)rtnk->policyId;
-
-        finalize(a,b,c);
-
-        return c;
-    }
-
-    bool key_compare(const void* k1, const void* k2, size_t) override
-    {
-        assert(k1 && k2);
-
-        const RuleTreeNodeKey* rtnk1 = (const RuleTreeNodeKey*)k1;
-        const RuleTreeNodeKey* rtnk2 = (const RuleTreeNodeKey*)k2;
-
-        if (rtnk1->policyId != rtnk2->policyId)
-            return false;
-
-        if (same_headers(rtnk1->rtn, rtnk2->rtn))
-            return true;
-
-        return false;
-    }
-};
-
-class RuleTreeCache : public XHash
-{
-public:
-    RuleTreeCache(int rows, int key_len)
-        : XHash(rows, key_len)
-    {
-        initialize(new RuleTreeHashKeyOps(nrows));
-        anr_enabled = false;
-    }
-};
 
 //-------------------------------------------------------------------------
 // private / implementation methods
@@ -622,6 +565,44 @@ RuleTreeNode* deleteRtnFromOtn(OptTreeNode* otn, SnortConfig* sc)
     return deleteRtnFromOtn(otn, get_ips_policy()->policy_id, sc);
 }
 
+static uint32_t rtn_hash_func(HashFnc*, const unsigned char* k, int)
+{
+    uint32_t a,b,c;
+    const RuleTreeNodeKey* rtnk = (const RuleTreeNodeKey*)k;
+    RuleTreeNode* rtn = rtnk->rtn;
+
+    a = rtn->action;
+    b = rtn->flags;
+    c = (uint32_t)(uintptr_t)rtn->listhead;
+
+    mix(a,b,c);
+
+    a += (uint32_t)(uintptr_t)rtn->src_portobject;
+    b += (uint32_t)(uintptr_t)rtn->dst_portobject;
+    c += (uint32_t)(uintptr_t)rtnk->policyId;
+
+    finalize(a,b,c);
+
+    return c;
+}
+
+static bool rtn_compare_func(const void* k1, const void* k2, size_t)
+{
+    const RuleTreeNodeKey* rtnk1 = (const RuleTreeNodeKey*)k1;
+    const RuleTreeNodeKey* rtnk2 = (const RuleTreeNodeKey*)k2;
+
+    if (!rtnk1 || !rtnk2)
+        return false;
+
+    if (rtnk1->policyId != rtnk2->policyId)
+        return false;
+
+    if (same_headers(rtnk1->rtn, rtnk2->rtn))
+        return true;
+
+    return false;
+}
+
 int addRtnToOtn(SnortConfig* sc, OptTreeNode* otn, RuleTreeNode* rtn, PolicyId policyId)
 {
     if (otn->proto_node_num <= policyId)
@@ -646,6 +627,7 @@ int addRtnToOtn(SnortConfig* sc, OptTreeNode* otn, RuleTreeNode* rtn, PolicyId p
     }
 
     RuleTreeNode* curr = otn->proto_nodes[policyId];
+
     if ( curr )
     {
         deleteRtnFromOtn(otn, policyId, sc, (curr->otnRefCount == 1));
@@ -655,7 +637,11 @@ int addRtnToOtn(SnortConfig* sc, OptTreeNode* otn, RuleTreeNode* rtn, PolicyId p
     rtn->otnRefCount++;
 
     if (!sc->rtn_hash_table)
-        sc->rtn_hash_table = new RuleTreeCache(10000, sizeof(RuleTreeNodeKey));
+    {
+        sc->rtn_hash_table = new XHash(
+            10000, sizeof(RuleTreeNodeKey), 0, 0, false, nullptr, nullptr, true);
+        sc->rtn_hash_table->set_key_opcodes(rtn_hash_func, rtn_compare_func);
+    }
 
     RuleTreeNodeKey key;
     memset(&key, 0, sizeof(key));

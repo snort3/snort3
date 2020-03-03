@@ -22,12 +22,18 @@
 
 #include <cstddef>
 
-#include "hash/xhash.h"
+#include "hashfcn.h"
 
-class ZHash : public snort::XHash
+namespace snort
+{
+struct HashNode;
+}
+
+class ZHash
 {
 public:
     ZHash(int nrows, int keysize);
+    ~ZHash();
 
     ZHash(const ZHash&) = delete;
     ZHash& operator=(const ZHash&) = delete;
@@ -35,13 +41,51 @@ public:
     void* push(void* p);
     void* pop();
 
-    void* get(const void* key);
-    void* remove();
+    void* first();
+    void* next();
+    void* current();
+    bool touch();
 
-    void* lru_first();
-    void* lru_next();
-    void* lru_current();
-    void lru_touch();
+    void* find(const void* key);
+    void* get(const void* key, bool *new_node = nullptr);
+    bool release(const void* key);
+    bool release();
+    void* remove(const void* key);
+    void set_key_opcodes(hash_func, keycmp_func);
+
+    inline unsigned get_count()
+    { return count; }
+
+private:
+    snort::HashNode* get_free_node();
+    snort::HashNode* find_node_row(const void*, int&);
+
+    void glink_node(snort::HashNode*);
+    void gunlink_node(snort::HashNode*);
+
+    void link_node(snort::HashNode*);
+    void unlink_node(snort::HashNode*);
+
+    void delete_free_list();
+    void save_free_node(snort::HashNode*);
+
+    bool move_to_free_list(snort::HashNode*);
+    void move_to_front(snort::HashNode*);
+
+private:
+    HashFnc* hashfcn;
+    int keysize;
+    unsigned nrows;
+    unsigned count;
+
+    unsigned find_fail;
+    unsigned find_success;
+
+    snort::HashNode** table;
+    snort::HashNode* ghead;
+    snort::HashNode* gtail;
+    snort::HashNode* fhead;
+    snort::HashNode* cursor;
 };
 
 #endif

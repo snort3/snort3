@@ -194,11 +194,7 @@ void StreamBase::tinit()
     if ( config.flow_cache_cfg.max_flows > 0 )
         flow_con->init_exp(config.flow_cache_cfg.max_flows);
 
-#ifdef REG_TEST
     FlushBucket::set(config.footprint);
-#else
-    FlushBucket::set();
-#endif
 }
 
 void StreamBase::tterm()

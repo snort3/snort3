@@ -24,7 +24,7 @@
 #include "ips_http.h"
 
 #include "framework/cursor.h"
-#include "hash/hash_key_operations.h"
+#include "hash/hashfcn.h"
 #include "log/messages.h"
 #include "parser/parse_utils.h"
 #include "protocols/packet.h"

@@ -22,15 +22,11 @@
 #ifndef PORT_TABLE_H
 #define PORT_TABLE_H
 
+#include "hash/ghash.h"
 #include "ports/port_item.h"
 #include "ports/port_object.h"
 #include "ports/port_object2.h"
 #include "utils/sflsq.h"
-
-namespace snort
-{
-class GHash;
-}
 
 //-------------------------------------------------------------------------
 // PortTable - provides support to analyze the Port List objects defined by

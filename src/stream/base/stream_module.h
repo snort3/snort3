@@ -75,10 +75,7 @@ extern THREAD_LOCAL BaseStats stream_base_stats;
 struct StreamModuleConfig
 {
     FlowCacheConfig flow_cache_cfg;
-#ifdef REG_TEST
     unsigned footprint = 0;
-#endif
-
 };
 
 class StreamReloadResourceManager : public snort::ReloadResourceTuner

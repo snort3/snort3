@@ -287,7 +287,7 @@ int PortObjectNormalize(PortObject* po)
 /*
    PortObjects should be normalized, prior to testing
 */
-bool PortObjectEqual(PortObject* a, PortObject* b)
+int PortObjectEqual(PortObject* a, PortObject* b)
 {
     PortObjectItem* pa;
     PortObjectItem* pb;
@@ -295,7 +295,7 @@ bool PortObjectEqual(PortObject* a, PortObject* b)
     SF_LNODE* posb;
 
     if ( a->item_list->count != b->item_list->count )
-        return false;
+        return 0;
 
     pa = (PortObjectItem*)sflist_first(a->item_list,&posa);
     pb = (PortObjectItem*)sflist_first(b->item_list,&posb);
@@ -303,16 +303,16 @@ bool PortObjectEqual(PortObject* a, PortObject* b)
     while ( pa && pb )
     {
         if ( !PortObjectItemsEqual(pa, pb) )
-            return false;
+            return 0;
 
         pa = (PortObjectItem*)sflist_next(&posa);
         pb = (PortObjectItem*)sflist_next(&posb);
     }
 
     if ( pa || pb ) /* both are not done - cannot match */
-        return false;
+        return 0;
 
-    return true; /* match */
+    return 1; /* match */
 }
 
 /*

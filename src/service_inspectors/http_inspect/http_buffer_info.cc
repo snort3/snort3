@@ -17,7 +17,7 @@
 //--------------------------------------------------------------------------
 // http_buffer_info.cc author Brandon Stultz <brastult@cisco.com>
 
-#include "hash/hash_key_operations.h"
+#include "hash/hashfcn.h"
 #include "http_buffer_info.h"
 
 using namespace snort;

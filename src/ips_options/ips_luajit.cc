@@ -24,7 +24,7 @@
 #include "framework/cursor.h"
 #include "framework/decode_data.h"
 #include "framework/module.h"
-#include "hash/hash_key_operations.h"
+#include "hash/hashfcn.h"
 #include "helpers/chunk.h"
 #include "lua/lua.h"
 #include "log/messages.h"

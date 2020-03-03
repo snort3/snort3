@@ -616,7 +616,6 @@ void Analyzer::reinit(SnortConfig* sc)
 {
     InspectorManager::thread_reinit(sc);
     ActionManager::thread_reinit(sc);
-    IpsManager::thread_reinit(sc);
 }
 
 void Analyzer::term()

@@ -23,16 +23,13 @@
 #define PORT_OBJECT2_H
 
 #include "framework/bits.h"
+#include "hash/ghash.h"
 #include "utils/sflsq.h"
 
 //-------------------------------------------------------------------------
 // PortObject2 is similar to PortObject
 //-------------------------------------------------------------------------
 
-namespace snort
-{
-class GHash;
-}
 
 struct PortObject;
 

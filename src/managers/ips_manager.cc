@@ -41,11 +41,10 @@ struct Option
 {
     const IpsApi* api;
     bool init;
-    bool thread_init;
     unsigned count;
 
     Option(const IpsApi* p)
-    { api = p; init = false; thread_init = false; count = 0; }
+    { api = p; init = false; count = 0; }
 };
 
 typedef map<std::string, Option*> OptionMap;
@@ -360,11 +359,8 @@ void IpsManager::reset_options()
 void IpsManager::setup_options()
 {
     for ( auto& p : s_options )
-        if ( p.second->init && !p.second->thread_init && p.second->api->tinit )
-        {
+        if ( p.second->init && p.second->api->tinit )
             p.second->api->tinit(SnortConfig::get_conf());
-            p.second->thread_init = true;
-        }
 }
 
 void IpsManager::clear_options()
@@ -382,9 +378,6 @@ bool IpsManager::verify(SnortConfig* sc)
 
     return true;
 }
-
-void IpsManager::thread_reinit(snort::SnortConfig*)
-{ IpsManager::setup_options(); }
 
 #ifdef PIGLET
 

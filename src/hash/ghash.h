@@ -24,18 +24,22 @@
 
 // generic hash table - stores and maps key + data pairs
 
-#include <string.h>
-#include "hash_key_operations.h"
 #include "main/snort_types.h"
+
+#include "hashfcn.h"
 
 namespace snort
 {
+#define GHASH_NOT_FOUND      (-1)
+#define GHASH_OK        0
+#define GHASH_INTABLE   1
+
 struct GHashNode
 {
     struct GHashNode* next;
     struct GHashNode* prev;
-    const void* key;
-    void* data;
+    const void* key;  /* Copy of, or Pointer to, the Users key */
+    void* data;       /* The users data, this is never copied! */
 };
 
 typedef void (* gHashFree)(void*);
@@ -51,35 +55,31 @@ public:
     void* find(const void* const key);
     GHashNode* find_first();
     GHashNode* find_next();
-    void set_hashkey_ops(HashKeyOperations*);
+    void set_key_opcodes(hash_func, keycmp_func);
 
     unsigned get_count() const
     { return count; }
 
 private:
-    GHashNode* find_node(const void* const key, unsigned index);
+    void set_node_parameters(const void* const key);
+    GHashNode* find_node(const void* const key);
     int free_node(unsigned index, GHashNode*);
     void next();
-
-    unsigned get_key_length(const void* const key)
-    { return ( keysize > 0  ) ? keysize : strlen((const char*)key) + 1; }
-
-    unsigned get_index(const void* const key)
-    {
-        unsigned hashkey = hashfcn->do_hash((const unsigned char*)key, get_key_length(key));
-        return hashkey % nrows;
-    }
 
     unsigned keysize;     // bytes in key, if < 0 -> keys are strings
     bool userkey;          // user owns the key */
     gHashFree userfree;
     int nrows;            // # rows int the hash table use a prime number 211, 9871
-    HashKeyOperations* hashfcn;
+    HashFnc* hashfcn;
     GHashNode** table;    // array of node ptr's
     unsigned count;       // total # nodes in table
     int crow;             // findfirst/next row in table
     GHashNode* cnode;     // findfirst/next node ptr
 
+    // node parameters for search/add/remove
+    unsigned klen = 0;
+    unsigned hashkey = 0;
+    int index = 0;
 };
 
 

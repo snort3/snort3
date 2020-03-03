@@ -23,7 +23,6 @@
 
 #include "file_cache.h"
 
-#include "hash/hash_defs.h"
 #include "hash/xhash.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
@@ -38,39 +37,35 @@
 
 using namespace snort;
 
-class ExpectedFileCache : public XHash
+static int file_cache_anr_free_func(void*, void* data)
 {
-public:
-    ExpectedFileCache(unsigned rows, unsigned key_len, unsigned datasize)
-        : XHash(rows, key_len, datasize, 0)
-    { }
+    FileCache::FileNode* node = (FileCache::FileNode*)data;
 
-    ~ExpectedFileCache() override
+    if (!node)
+        return 0;
+
+    struct timeval now;
+    packet_gettimeofday(&now);
+
+    // only recycle expired nodes
+    if (timercmp(&node->cache_expire_time, &now, <))
     {
-        delete_hash_table();
+        delete node->file;
+        return 0;
     }
+    else
+        return 1;
+}
 
-    bool is_node_recovery_ok(HashNode* hnode) override
+static int file_cache_free_func(void*, void* data)
+{
+    FileCache::FileNode* node = (FileCache::FileNode*)data;
+    if (node)
     {
-        FileCache::FileNode* node = (FileCache::FileNode*)hnode->data;
-        if ( !node )
-            return true;
-
-        struct timeval now;
-        packet_gettimeofday(&now);
-        if ( timercmp(&node->cache_expire_time, &now, <) )
-           return true;
-        else
-            return false;
+        delete node->file;
     }
-
-    void free_user_data(HashNode* hnode) override
-    {
-        FileCache::FileNode* node = (FileCache::FileNode*)hnode->data;
-        if ( node )
-            delete node->file;
-    }
-};
+    return 0;
+}
 
 // Return the time in ms since we started waiting for pending file lookup.
 static int64_t time_elapsed_ms(struct timeval* now, struct timeval* expire_time, int64_t lookup_timeout)
@@ -84,7 +79,8 @@ static int64_t time_elapsed_ms(struct timeval* now, struct timeval* expire_time,
 FileCache::FileCache(int64_t max_files_cached)
 {
     max_files = max_files_cached;
-    fileHash = new ExpectedFileCache(max_files, sizeof(FileHashKey), sizeof(FileNode));
+    fileHash = new XHash(max_files, sizeof(FileHashKey), sizeof(FileNode),
+        0, true, file_cache_anr_free_func, file_cache_free_func, true);
     fileHash->set_max_nodes(max_files);
 }
 
@@ -159,15 +155,18 @@ FileContext* FileCache::find(const FileHashKey& hashKey, int64_t timeout)
 {
     std::lock_guard<std::mutex> lock(cache_mutex);
 
-    if ( !fileHash->get_num_nodes() )
+    if (!fileHash->get_node_count())
+    {
         return nullptr;
+    }
 
     HashNode* hash_node = fileHash->find_node(&hashKey);
-    if ( !hash_node )
+
+    if (!hash_node)
         return nullptr;
 
     FileNode* node = (FileNode*)hash_node->data;
-    if ( !node )
+    if (!node)
     {
         fileHash->release_node(hash_node);
         return nullptr;
@@ -176,7 +175,7 @@ FileContext* FileCache::find(const FileHashKey& hashKey, int64_t timeout)
     struct timeval now;
     packet_gettimeofday(&now);
 
-    if ( timercmp(&node->cache_expire_time, &now, <) )
+    if (timercmp(&node->cache_expire_time, &now, <))
     {
         fileHash->release_node(hash_node);
         return nullptr;

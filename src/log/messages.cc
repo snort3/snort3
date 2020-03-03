@@ -27,6 +27,8 @@
 
 #include <cassert>
 #include <cstdarg>
+#include <cstdio>
+#include <cstring>
 
 #include "main/snort_config.h"
 #include "parser/parser.h"
@@ -40,8 +42,6 @@ static int already_fatal = 0;
 static unsigned parse_errors = 0;
 static unsigned parse_warnings = 0;
 static unsigned reload_errors = 0;
-
-static std::string reload_errors_description;
 
 void reset_parse_errors()
 {
@@ -63,20 +63,9 @@ unsigned get_parse_warnings()
     return tmp;
 }
 
-void reset_reload_errors()
-{
-    reload_errors = 0;
-    reload_errors_description.clear();
-}
-
 unsigned get_reload_errors()
 {
     return reload_errors;
-}
-
-std::string& get_reload_errors_description()
-{
-    return reload_errors_description;
 }
 
 static void log_message(FILE* file, const char* type, const char* msg)
@@ -136,19 +125,11 @@ void ReloadError(const char* format, ...)
     va_list ap;
 
     va_start(ap, format);
-    vsnprintf(buf, sizeof(buf), format, ap);
+    vsnprintf(buf, STD_BUF, format, ap);
     va_end(ap);
 
-    buf[sizeof(buf)-1] = '\0';
+    buf[STD_BUF] = '\0';
     log_message(stderr, "ERROR", buf);
-
-    if ( reload_errors_description.empty() )
-        reload_errors_description = buf;
-    else
-    {
-        reload_errors_description += ",";
-        reload_errors_description += buf;
-    }
 
     reload_errors++;
 }

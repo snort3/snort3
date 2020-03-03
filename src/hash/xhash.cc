@@ -95,259 +95,209 @@
 #include <cassert>
 #include "utils/util.h"
 
-#include "hash_defs.h"
-#include "hash_key_operations.h"
-#include "hash_lru_cache.h"
-
 using namespace snort;
 
 namespace snort
 {
 
-void XHash::initialize(HashKeyOperations* hk_ops)
+XHash::XHash(int nrows_, int keysize_, int datasize_, unsigned long maxmem,
+    bool anr_enabled, Hash_FREE_FCN anr_free, Hash_FREE_FCN usr_free,
+    bool recycle_nodes)
+    : keysize(keysize_), datasize(datasize_), recycle_nodes(recycle_nodes),
+      anr_enabled(anr_enabled), anr_free(anr_free), usr_free(usr_free)
 {
-    hashkey_ops = hk_ops;
-    table = (HashNode**)snort_calloc(sizeof(HashNode*) * nrows);
-    lru_cache = new HashLruCache();
-    mem_allocator = new MemCapAllocator(mem_cap, sizeof(HashNode) + keysize + datasize);
-}
-
-void XHash::initialize()
-{
-    initialize(new HashKeyOperations(nrows));
-}
-
-void XHash::set_number_of_rows (int rows)
-{
-    if ( rows > 0 )
-        nrows = hash_nearest_power_of_2 (rows);
+    // adjust rows to be power of 2
+    if ( nrows_ > 0 )
+        nrows = hash_nearest_power_of_2(nrows_);
     else
-        nrows = -rows;
-}
+        nrows = -nrows_;       // if negative use as is
 
-XHash::XHash(int rows, int keysize)
-    : keysize(keysize)
+    table = (HashNode**)snort_calloc(sizeof(HashNode*) * nrows);
+    hashfcn = hashfcn_new(nrows);
+    sfmemcap_init(&mc, maxmem);
 
-{
-    set_number_of_rows(rows);
-}
+    for ( unsigned i = 0; i < nrows; i++ )
+        table[i] = nullptr;
 
-XHash::XHash(int rows, int keysize, int datasize, unsigned long memcap)
-    : keysize(keysize), datasize(datasize), mem_cap(memcap)
-{
-    set_number_of_rows(rows);
-    initialize();
+    mem_allocated_per_entry = sizeof(HashNode) + keysize + datasize + sizeof(long);
 }
 
 XHash::~XHash()
 {
-    if ( table )
-    {
-        for (unsigned i = 0; i < nrows; i++)
-            for (HashNode* node = table[i]; node;)
-            {
-                HashNode* xnode;
-                xnode = node;
-                node = node->next;
-                mem_allocator->free(xnode);
-            }
-
-        snort_free(table);
-    }
-
-    purge_free_list();
-    delete hashkey_ops;
-    delete lru_cache;
-    delete mem_allocator;
-}
-
-void XHash::delete_hash_table()
-{
-    assert( table );
+    if ( hashfcn )
+        hashfcn_free(hashfcn);
 
     for (unsigned i = 0; i < nrows; i++)
-        for (HashNode* node = table[i]; node;)
+    {
+        for ( HashNode* node = table[i]; node; )
         {
-            HashNode* xnode;
-            xnode = node;
-            node = node->next;
-            free_user_data(xnode);
-            mem_allocator->free(xnode);
-        }
+            HashNode* onode = node;
+            node  = node->next;
 
+            if ( usr_free )
+                usr_free(onode->key, onode->data);
+
+            sfmemcap_free(&mc, onode);
+        }
+    }
     snort_free(table);
-    table = nullptr;
+    purge_free_list();
 }
 
-void XHash::initialize_node(HashNode *hnode, const void *key, void *data, int index)
+void XHash::clear()
 {
-    hnode->key = (char*) (hnode) + sizeof(HashNode);
-    memcpy(hnode->key, key, keysize);
-    if ( datasize )
+    for (unsigned i = 0; i < nrows; i++)
     {
-        hnode->data = (char*) (hnode) + sizeof(HashNode) + keysize;
-        if ( data )
-            memcpy (hnode->data, data, datasize);
+        HashNode* n = table[i];
+        while ( n )
+        {
+            HashNode* tmp;
+            tmp = n;
+            n = n->next;
+            release_node(tmp);
+        }
+    }
+
+    max_nodes = 0;
+    crow = 0;
+    cnode = nullptr;
+    count = 0;
+    ghead = nullptr;
+    gtail = nullptr;
+    anr_count = 0;
+    anr_tries = 0;
+    find_success = 0;
+    find_fail = 0;
+}
+
+void XHash::save_free_node(HashNode* hnode)
+{
+    if ( fhead )
+    {
+        hnode->gprev    = nullptr;
+        hnode->gnext    = fhead;
+        fhead->gprev = hnode;
+        fhead        = hnode;
     }
     else
-        hnode->data = data;
-
-    hnode->rindex = index;
-    link_node(hnode);
-    lru_cache->insert(hnode);
+    {
+        hnode->gprev = nullptr;
+        hnode->gnext = nullptr;
+        fhead    = hnode;
+        ftail    = hnode;
+    }
 }
 
-HashNode* XHash::allocate_node(const void* key, void* data, int index)
+HashNode* XHash::get_free_node()
 {
-    // use a free one if available...
-    HashNode* hnode = get_free_node();
+    HashNode* node = fhead;
 
-    // if no free nodes, try to allocate a new one...
-    if ( !hnode && ((max_nodes == 0) || (num_nodes < max_nodes)) )
-        hnode = (HashNode*)mem_allocator->allocate();
-
-    // if still no node then try to reuse one...
-    if ( !hnode && anr_enabled )
-        hnode = release_lru_node();
-
-    if ( hnode )
+    if ( fhead )
     {
-        initialize_node(hnode, key, data, index);
-        ++num_nodes;
+        fhead = fhead->gnext;
+        if ( fhead )
+            fhead->gprev = nullptr;
+
+        if ( ftail == node )
+            ftail = nullptr;
     }
 
-    return hnode;
+    return node;
 }
 
-int XHash::insert(const void* key, void* data)
+void XHash::purge_free_list()
 {
-    assert(key);
-
-    int index = 0;
-    HashNode* hnode = find_node_row(key, index);
-    if ( hnode )
+    HashNode* cur = fhead;
+    while ( cur )
     {
-        cursor = hnode;
-        return HASH_INTABLE;
+        HashNode* next = cur->gnext;
+        sfmemcap_free(&mc, (void*)cur);
+        cur = next;
     }
 
-    hnode = allocate_node(key, data, index);
-    cursor = hnode;
-    return ( hnode ) ? HASH_OK : HASH_NOMEM;
+    fhead = nullptr;
+    ftail = nullptr;
 }
 
-HashNode* XHash::find_node(const void* key)
+void XHash::glink_node(HashNode* hnode)
 {
-    assert(key);
-
-    int rindex = 0;
-    return find_node_row(key, rindex);
-}
-
-HashNode* XHash::find_first_node()
-{
-    for ( crow = 0; crow < nrows; crow++ )
+    if ( ghead )
     {
-        cursor = table[crow];
-        if ( cursor )
-        {
-            HashNode* n = cursor;
-            update_cursor();
-            return n;
-        }
+        hnode->gprev = nullptr;
+        hnode->gnext = ghead;
+        ghead->gprev = hnode;
+        ghead = hnode;
+    }
+    else
+    {
+        hnode->gprev = nullptr;
+        hnode->gnext = nullptr;
+        ghead = hnode;
+        gtail = hnode;
+    }
+}
+
+void XHash::gunlink_node(HashNode* hnode)
+{
+    if ( gnode == hnode )
+        gnode = hnode->gnext;
+
+    if ( ghead == hnode )
+    {
+        ghead = ghead->gnext;
+        if ( ghead )
+            ghead->gprev = nullptr;
     }
 
-    return nullptr;
+    if ( hnode->gprev )
+        hnode->gprev->gnext = hnode->gnext;
+    if ( hnode->gnext )
+        hnode->gnext->gprev = hnode->gprev;
+
+    if ( gtail == hnode )
+        gtail = hnode->gprev;
 }
 
-HashNode* XHash::find_next_node()
+void XHash::gmove_to_front(HashNode* hnode)
 {
-    HashNode* n = cursor;
-    if ( !n )
-        return nullptr;
+    if ( hnode != ghead )
+    {
+        gunlink_node(hnode);
+        glink_node(hnode);
+    }
+}
 
-    update_cursor();
+HashNode* XHash::gfind_next()
+{
+    HashNode* n = gnode;
+    if ( n )
+        gnode = n->gnext;
     return n;
 }
 
-void* XHash::get_user_data()
+HashNode* XHash::gfind_first()
 {
-    if ( cursor )
-        return cursor->data;
+    if ( ghead )
+        gnode = ghead->gnext;
+    else
+        gnode = nullptr;
+    return ghead;
+}
+
+void* XHash::get_mru_user_data()
+{
+    if ( ghead )
+        return ghead->data;
     else
         return nullptr;
 }
 
-void XHash::update_cursor()
+void* XHash::get_lru_user_data()
 {
-    if ( !cursor )
-        return;
-
-    cursor = cursor->next;
-    if ( cursor )
-        return;
-
-    for ( crow++; crow < nrows; crow++ )
-    {
-        cursor = table[crow];
-        if ( cursor )
-            return;
-    }
-}
-
-void* XHash::get_user_data(const void* key)
-{
-    assert(key);
-
-    int rindex = 0;
-    HashNode* hnode = find_node_row(key, rindex);
-    return ( hnode ) ? hnode->data : nullptr;
-}
-
-void XHash::release()
-{
-    HashNode* node = lru_cache->get_current_node();
-    assert(node);
-    release_node(node);
-}
-
-int XHash::release_node(HashNode* hnode)
-{
-    assert(hnode);
-
-    free_user_data(hnode);
-    unlink_node(hnode);
-    lru_cache->remove_node(hnode);
-    num_nodes--;
-
-    if ( recycle_nodes )
-    {
-        save_free_node(hnode);
-        ++stats.release_recycles;
-    }
+    if ( gtail )
+        return gtail->data;
     else
-    {
-        mem_allocator->free(hnode);
-        ++stats.release_deletes;
-    }
-
-    return HASH_OK;
-}
-
-int XHash::release_node(const void* key)
-{
-    assert(key);
-
-    unsigned hashkey = hashkey_ops->do_hash((const unsigned char*)key, keysize);
-
-    unsigned index = hashkey & (nrows - 1);
-    for (HashNode* hnode = table[index]; hnode; hnode = hnode->next)
-    {
-        if ( hashkey_ops->key_compare(hnode->key, key, keysize) )
-            return release_node(hnode);
-    }
-
-    return HASH_NOT_FOUND;
+        return nullptr;
 }
 
 void XHash::link_node(HashNode* hnode)
@@ -383,172 +333,327 @@ void XHash::unlink_node(HashNode* hnode)
     }
 }
 
-void XHash::move_to_front(HashNode* node)
+void XHash::move_to_front(HashNode* n)
 {
-    if ( table[node->rindex] != node )
+    if ( table[n->rindex] != n )
     {
-        unlink_node(node);
-        link_node(node);
+        unlink_node(n);
+        link_node(n);
     }
 
-    lru_cache->touch(node);
+    if (n == gnode)
+        gnode = n->gnext;
+    gmove_to_front(n);
 }
 
-HashNode* XHash::find_node_row(const void* key, int& rindex)
+/*
+ * Allocate a new hash node, uses Auto Node Recovery if needed and enabled.
+ *
+ * The oldest node is the one with the longest time since it was last touched,
+ * and does not have any direct indication of how long the node has been around.
+ * We don't monitor the actual time since last being touched, instead we use a
+ * splayed global list of node pointers. As nodes are accessed they are splayed
+ * to the front of the list. The oldest node is just the tail node.
+ *
+ */
+HashNode* XHash::allocate_node()
 {
-    unsigned hashkey = hashkey_ops->do_hash((const unsigned char*)key, keysize);
-
-    /* Modulus is slow. Switched to a table size that is a power of 2. */
-    rindex  = hashkey & (nrows - 1);
-    for (HashNode* hnode = table[rindex]; hnode; hnode = hnode->next )
+    // use previously allocated node if there is a free one...
+    HashNode* hnode = get_free_node();
+    if ( !hnode )
     {
-        if ( hashkey_ops->key_compare(hnode->key, key, keysize) )
+        if ( (max_nodes == 0) || (count < max_nodes) )
+            hnode = (HashNode*)sfmemcap_alloc(&mc,
+                sizeof(HashNode) + keysize + datasize);
+
+        if ( !hnode && anr_enabled && gtail )
         {
-            move_to_front(hnode);
+            /* Find the oldest node the users willing to let go. */
+            for (hnode = gtail; hnode; hnode = hnode->gprev )
+            {
+                if ( anr_free )
+                {
+                    anr_tries++;
+                    if ( anr_free(hnode->key, hnode->data) )
+                        continue;   // don't recycle this one...
+                }
+
+                gunlink_node(hnode);
+                unlink_node(hnode);
+                count--;
+                anr_count++;
+                break;
+            }
+        }
+    }
+
+    return hnode;
+}
+
+HashNode* XHash::find_node_row(const void* key, int* rindex)
+{
+    unsigned hashkey = hashfcn->hash_fcn(hashfcn, (const unsigned char*)key, keysize);
+
+    // Modulus is slow. masking since table size is a power of 2.
+    int index  = hashkey & (nrows - 1);
+    *rindex = index;
+
+    for (HashNode* hnode = table[index]; hnode; hnode = hnode->next )
+    {
+        if ( hashfcn->keycmp_fcn(hnode->key, key, keysize) )
+        {
+            if ( splay > 0 )
+                move_to_front(hnode);
+
+            find_success++;
             return hnode;
+        }
+    }
+
+    find_fail++;
+    return nullptr;
+}
+
+int XHash::insert(const void* key, void* data)
+{
+    assert(key);
+
+    int index = 0;
+
+    /* Enforce uniqueness: Check for the key in the table */
+    HashNode* hnode = find_node_row(key, &index);
+    if ( hnode )
+    {
+        cnode = hnode;
+        return HASH_INTABLE;
+    }
+
+    hnode = allocate_node();
+    if ( !hnode )
+        return HASH_NOMEM;
+
+    hnode->key = (char*)hnode + sizeof(HashNode);
+    memcpy(hnode->key, key, keysize);
+    hnode->rindex = index;
+
+    if ( datasize )
+    {
+        hnode->data = (char*)hnode + sizeof(HashNode) + keysize;
+        if ( data )
+            memcpy(hnode->data, data, datasize);
+    }
+    else
+        hnode->data = data;
+
+    link_node (hnode);
+    glink_node(hnode);
+    count++;
+
+    return HASH_OK;
+}
+
+HashNode* XHash::get_node(const void* key)
+{
+    assert(key);
+
+    int index = 0;
+
+    // Enforce uniqueness: Check for the key in the table
+    HashNode* hnode = find_node_row( key, &index);
+    if ( hnode )
+    {
+        cnode = hnode;
+        return hnode;
+    }
+
+    hnode = allocate_node();
+    if ( !hnode )
+        return nullptr;
+
+    hnode->key = (char*)hnode + sizeof(HashNode);
+    memcpy(hnode->key, key, keysize);
+    hnode->rindex = index;
+
+    if ( datasize )
+        hnode->data = (char*)hnode + sizeof(HashNode) + keysize;
+    else
+        hnode->data = nullptr;
+
+    link_node(hnode);
+    glink_node(hnode);
+    count++;
+
+    return hnode;
+}
+
+HashNode* XHash::get_node_with_prune(const void* key, bool* prune_performed)
+{
+    assert(key);
+
+    size_t mem_after_alloc = mc.memused + mem_allocated_per_entry;
+    bool over_capacity = (mc.memcap < mem_after_alloc);
+
+    if ( over_capacity )
+        *prune_performed = (delete_anr_or_lru_node() == HASH_OK);
+
+    HashNode* hnode = nullptr;
+    if ( *prune_performed or !over_capacity )
+        hnode = get_node(key);
+
+    return hnode;
+}
+
+HashNode* XHash::find_node(const void* key)
+{
+    assert(key);
+
+    int rindex = 0;
+    return find_node_row(key, &rindex);
+}
+
+void* XHash::get_user_data(void* key)
+{
+    assert(key);
+
+    int rindex = 0;
+    HashNode* hnode = find_node_row(key, &rindex);
+    if ( hnode )
+        return hnode->data;
+
+    return nullptr;
+}
+
+int XHash::release_node(HashNode* hnode)
+{
+    assert(hnode);
+
+    unlink_node(hnode);
+    gunlink_node(hnode);
+    count--;
+
+    if ( usr_free )
+        usr_free(hnode->key, hnode->data);
+
+    if ( recycle_nodes )
+        save_free_node(hnode);
+    else
+        sfmemcap_free(&mc, hnode);
+
+    return HASH_OK;
+}
+
+int XHash::release_node(void* key)
+{
+    assert(key);
+
+    unsigned hashkey = hashfcn->hash_fcn(hashfcn, (unsigned char*)key, keysize);
+
+    unsigned index = hashkey & (nrows - 1);
+    for ( HashNode* hnode = table[index]; hnode; hnode = hnode->next )
+    {
+        if ( hashfcn->keycmp_fcn(hnode->key, key, keysize) )
+            return release_node(hnode);
+    }
+
+    return HASH_ERR;
+}
+
+int XHash::delete_free_node()
+{
+    HashNode* fn = get_free_node();
+    if (fn)
+    {
+        sfmemcap_free(&mc, fn);
+        return HASH_OK;
+    }
+    return HASH_ERR;
+}
+
+int XHash::delete_anr_or_lru_node()
+{
+    if ( fhead )
+    {
+        if (delete_free_node() == HASH_OK)
+            return HASH_OK;
+    }
+
+    if ( gtail )
+    {
+        if ( release_node(gtail) == HASH_OK )
+        {
+            if ( fhead )
+            {
+                if ( delete_free_node() == HASH_OK )
+                    return HASH_OK;
+            }
+            else if ( !recycle_nodes )
+                return HASH_OK;
+        }
+    }
+    return HASH_ERR;
+}
+
+int XHash::free_over_allocations(unsigned work_limit, unsigned* num_freed)
+{
+
+    while (mc.memcap < mc.memused and work_limit--)
+    {
+        if (delete_anr_or_lru_node() != HASH_OK)
+            return HASH_ERR;
+
+        ++*num_freed;
+    }
+
+    return (mc.memcap >= mc.memused) ? HASH_OK : HASH_PENDING;
+}
+
+void XHash::update_cnode()
+{
+    if ( !cnode )
+        return;
+
+    cnode = cnode->next;
+    if ( cnode )
+        return;
+
+    for ( crow++; crow < nrows; crow++ )
+    {
+        cnode = table[crow];
+        if ( cnode )
+            return;
+    }
+}
+
+HashNode* XHash::find_first_node()
+{
+    for ( crow = 0; crow < nrows; crow++ )
+    {
+        cnode = table[crow];
+        if ( cnode )
+        {
+            HashNode* n = cnode;
+            update_cnode();
+            return n;
         }
     }
 
     return nullptr;
 }
 
-void XHash::save_free_node(HashNode* hnode)
+HashNode* XHash::find_next_node()
 {
-    if ( fhead )
-    {
-        hnode->gprev = nullptr;
-        hnode->gnext = fhead;
-        fhead->gprev = hnode;
-        fhead = hnode;
-    }
-    else
-    {
-        hnode->gprev = nullptr;
-        hnode->gnext = nullptr;
-        fhead = hnode;
-    }
+    HashNode* n = cnode;
+    if ( !n )
+        return nullptr;
+
+    update_cnode();
+
+    return n;
 }
 
-HashNode* XHash::get_free_node()
+void XHash::set_key_opcodes(hash_func hash_fcn, keycmp_func keycmp_fcn)
 {
-    HashNode* node = fhead;
-    if ( fhead )
-    {
-        fhead = fhead->gnext;
-        if ( fhead )
-            fhead->gprev = nullptr;
-    }
-
-    return node;
-}
-
-bool XHash::delete_free_node()
-{
-    HashNode* hnode = get_free_node();
-    if ( hnode )
-    {
-        mem_allocator->free(hnode);
-        return true;
-    }
-    return false;
-}
-
-void XHash::purge_free_list()
-{
-    HashNode* cur = fhead;
-    while ( cur )
-    {
-        HashNode* next = cur->gnext;
-        mem_allocator->free(cur);
-        cur = next;
-    }
-
-    fhead = nullptr;
-}
-
-void XHash::clear_hash()
-{
-    for (unsigned i = 0; i < nrows; i++)
-        for (HashNode* node = table[i]; node;)
-        {
-            HashNode* xnode = node;
-            node = node->next;
-            release_node(xnode);
-        }
-
-    max_nodes = 0;
-    num_nodes = 0;
-    crow = 0;
-    cursor = nullptr;
-}
-
-void* XHash::get_mru_user_data()
-{
-    return lru_cache->get_mru_user_data();
-}
-
-void* XHash::get_lru_user_data()
-{
-    return lru_cache->get_lru_user_data();
-}
-
-HashNode* XHash::release_lru_node()
-{
-    HashNode* hnode = lru_cache->get_lru_node();
-    while ( hnode )
-    {
-        if ( is_node_recovery_ok(hnode) )
-        {
-            lru_cache->remove_node(hnode);
-            free_user_data(hnode);
-            unlink_node(hnode);
-            --num_nodes;
-            ++stats.memcap_prunes;
-            break;
-        }
-        else
-            hnode = lru_cache->get_next_lru_node ();
-    }
-    return hnode;
-}
-
-bool XHash::delete_lru_node()
-{
-    if ( HashNode* hnode = lru_cache->remove_lru_node() )
-    {
-        unlink_node(hnode);
-        free_user_data(hnode);
-        mem_allocator->free(hnode);
-        --num_nodes;
-        return true;
-    }
-
-    return false;
-}
-
-bool XHash::delete_a_node()
-{
-    if ( delete_free_node() )
-        return true;
-
-    if ( delete_lru_node() )
-        return true;
-
-    return false;
-}
-
-int XHash::tune_memory_resources(unsigned work_limit, unsigned& num_freed)
-{
-    while ( work_limit-- and mem_allocator->is_over_capacity() )
-    {
-        if ( !delete_a_node() )
-            break;
-
-        ++stats.memcap_deletes;
-        ++num_freed;
-    }
-
-    return ( mem_allocator->is_over_capacity() ) ? HASH_PENDING :  HASH_OK;
+    hashfcn_set_keyops(hashfcn, hash_fcn, keycmp_fcn);
 }
 
 } // namespace snort

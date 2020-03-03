@@ -27,7 +27,7 @@
 
 #include <cstring>
 
-#include "hash/hash_key_operations.h"
+#include "hash/hashfcn.h"
 
 /*
  * Trim spaces non-destructively on both sides of string : '', \t, \n, \r

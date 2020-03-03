@@ -74,7 +74,6 @@ public:
     static void setup_options();
     static void clear_options();
     static bool verify(snort::SnortConfig*);
-    static void thread_reinit(snort::SnortConfig*);
 
 #ifdef PIGLET
     static IpsOptionWrapper* instantiate(const char*, snort::Module*, struct OptTreeNode*);

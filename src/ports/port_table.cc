@@ -25,9 +25,7 @@
 
 #include <memory>
 
-#include "hash/ghash.h"
-#include "hash/hash_defs.h"
-#include "hash/hash_key_operations.h"
+#include "hash/hashfcn.h"
 #include "log/messages.h"
 #include "main/snort_debug.h"
 #include "utils/util.h"
@@ -79,6 +77,24 @@ static void plx_free(void* p)
     snort_free(p);
 }
 
+static unsigned plx_hash(HashFnc* p, const unsigned char* d, int)
+{
+    unsigned hash = p->seed;
+    const plx_t* plx = *(plx_t* const*)d;
+
+    for ( int i = 0; i < plx->n; i++ )
+    {
+        unsigned char* pc_ptr = (unsigned char*)&plx->p[i];
+
+        for ( unsigned k = 0; k < sizeof(void*); k++ )
+        {
+            hash *=  p->scale;
+            hash +=  pc_ptr[k];
+        }
+    }
+    return hash ^ p->hardener;
+}
+
 /* for sorting an array of pointers */
 static inline int p_keycmp(const void* a, const void* b)
 {
@@ -91,93 +107,84 @@ static inline int p_keycmp(const void* a, const void* b)
     return 0; /* they are equal */
 }
 
-class PlxHashKeyOps : public HashKeyOperations
+/*
+   Hash Key Comparisons for treating plx_t types as Keys
+
+   return values memcmp style
+
+   this only needs to produce 0 => exact match, otherwise not.
+   -1, and +1 are not strictly needed, they could both return
+   a non zero value for the purposes of hashing and searching.
+*/
+static bool plx_keycmp(const void* a, const void* b, size_t)
 {
-public:
-    PlxHashKeyOps(int rows)
-        : HashKeyOperations(rows)
-    { }
+    const plx_t* pla = *(plx_t* const*)a;
+    const plx_t* plb = *(plx_t* const*)b;
 
-    unsigned do_hash(const unsigned char* k, int) override
+    if ( pla->n < plb->n )
+        return false;
+
+    if ( pla->n > plb->n )
+        return false;
+
+    for ( int i = 0; i < pla->n; i++ )
     {
-        unsigned hash = seed;
-        const plx_t* plx = *(plx_t* const*)k;
-
-        for ( int i = 0; i < plx->n; i++ )
-        {
-            unsigned char* pc_ptr = (unsigned char*)&plx->p[i];
-
-            for ( unsigned k = 0; k < sizeof(void*); k++ )
-            {
-                hash *=  scale;
-                hash +=  pc_ptr[k];
-            }
-        }
-        return hash ^ hardener;
+        if ( p_keycmp(&pla->p[i], &plb->p[i]) )
+            return false;
     }
 
-    bool key_compare(const void* k1, const void* k2, size_t) override
-    {
-        const plx_t* pla = *(plx_t* const*)k1;
-        const plx_t* plb = *(plx_t* const*)k2;
-
-        if ( pla->n < plb->n )
-            return false;
-
-        if ( pla->n > plb->n )
-            return false;
-
-        for ( int i = 0; i < pla->n; i++ )
-        {
-            if ( p_keycmp(&pla->p[i], &plb->p[i]) )
-                return false;
-        }
-
-        return true; /* they are equal */    }
-};
+    return true; /* they are equal */
+}
 
 //-------------------------------------------------------------------------
 // PortTable - private - other
 //-------------------------------------------------------------------------
 
-class PortObjectHashKeyOps : public HashKeyOperations
+/*
+   Hash Key Comparisons for treating PortObjects as Keys
+
+   return values memcmp style
+*/
+static bool PortObject_keycmp(const void* a, const void* b, size_t)
 {
-public:
-    PortObjectHashKeyOps(int rows)
-        : HashKeyOperations(rows)
-    { }
+    return PortObjectEqual(*(PortObject* const*)a, *(PortObject* const*)b);
+}
 
-    unsigned do_hash(const unsigned char* k, int) override
+/*
+    Hash routine for hashing PortObjects as Keys
+
+    p - HashFnc *
+    d - PortObject *
+    n = 4 bytes (sizeof*) - not used
+
+   Don't use this for type=ANY port objects
+*/
+static unsigned PortObject_hash(HashFnc* p, const unsigned char* d, int)
+{
+    unsigned hash = p->seed;
+    const PortObject* po = *(PortObject* const*)d;
+    SF_LNODE* pos;
+
+    /* hash up each item */
+    for (PortObjectItem* poi = (PortObjectItem*)sflist_first(po->item_list, &pos);
+         poi != nullptr;
+         poi = (PortObjectItem*)sflist_next(&pos) )
     {
-        unsigned hash = seed;
-        const PortObject* po = *(PortObject* const*)k;
-        SF_LNODE* pos;
+        if ( poi->any() )
+            continue;
 
-        for (PortObjectItem* poi = (PortObjectItem*)sflist_first(po->item_list, &pos);
-             poi != nullptr;
-             poi = (PortObjectItem*)sflist_next(&pos) )
-        {
-            if ( poi->any() )
-                continue;
+        hash *=  p->scale;
+        hash +=  poi->lport & 0xff;
+        hash *=  p->scale;
+        hash +=  (poi->lport >> 8) & 0xff;
 
-            hash *= scale;
-            hash += poi->lport & 0xff;
-            hash *= scale;
-            hash += (poi->lport >> 8) & 0xff;
-
-            hash *= scale;
-            hash += poi->hport & 0xff;
-            hash *= scale;
-            hash += (poi->hport >> 8) & 0xff;
-        }
-        return hash ^ hardener;
+        hash *=  p->scale;
+        hash +=  poi->hport & 0xff;
+        hash *=  p->scale;
+        hash +=  (poi->hport >> 8) & 0xff;
     }
-
-    bool key_compare(const void* k1, const void* k2, size_t) override
-    {
-        return PortObjectEqual(*(PortObject* const*)k1, *(PortObject* const*)k2);
-    }
-};
+    return hash ^ p->hardener;
+}
 
 /*
  * Merge multiple PortObjects into a final PortObject2,
@@ -241,7 +248,7 @@ static PortObject2* _merge_N_pol(
     // Add the Merged PortObject2 to the PortObject2 hash table keyed by ports.
     int stat = mhash->insert(&ponew, ponew);
     // This is possible since PLX hash on a different key
-    if ( stat == HASH_INTABLE )
+    if ( stat == GHASH_INTABLE )
     {
         PortObject2* pox = (PortObject2*)mhash->find(&ponew);
         assert( pox );
@@ -257,7 +264,7 @@ static PortObject2* _merge_N_pol(
 
     // Add the plx node to the PLX hash table
     stat = mhashx->insert(&plx_tmp, ponew);
-    if ( stat == HASH_INTABLE )
+    if ( stat == GHASH_INTABLE )
         FatalError("Could not add merged plx to PLX HASH table-INTABLE\n");
 
     return ponew;
@@ -453,12 +460,13 @@ static void PortTableCompileMergePortObjects(PortTable* p)
 
     // Create a Merged Port Object Table - hash by ports, no user keys, don't free data
     GHash* mhash = new GHash(PO_HASH_TBL_ROWS, sizeof(PortObject*), 0, nullptr);
-    mhash->set_hashkey_ops(new PortObjectHashKeyOps(PO_HASH_TBL_ROWS));
+
+    mhash->set_key_opcodes(PortObject_hash, PortObject_keycmp);
     p->pt_mpo_hash = mhash;
 
     // Create a Merged Port Object Table - hash by pointers, no user keys, don't free data
     GHash* mhashx = new GHash(PO_HASH_TBL_ROWS, sizeof(plx_t*), 0, nullptr);
-    mhashx->set_hashkey_ops(new PlxHashKeyOps(PO_HASH_TBL_ROWS));
+    mhashx->set_key_opcodes(plx_hash, plx_keycmp);
 
     p->pt_mpxo_hash = mhashx;
     SF_LIST* plx_list = sflist_new();

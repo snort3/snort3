@@ -36,7 +36,6 @@
 #include <cassert>
 
 #include "hash/ghash.h"
-#include "hash/hash_defs.h"
 #include "hash/xhash.h"
 #include "main/thread.h"
 #include "sfip/sf_ipvar.h"
@@ -61,7 +60,7 @@ XHash* sfthd_new_hash(unsigned nbytes, size_t key, size_t data)
         nbytes = size;
     nrows = nbytes / size;
 
-    return new XHash(nrows, key, data, nbytes);
+    return new XHash(nrows, key, data, nbytes, true, nullptr, nullptr, true);
 }
 
 /*!
@@ -892,7 +891,7 @@ int sfthd_test_local(
     if (status == HASH_INTABLE)
     {
         /* Already in the table */
-        sfthd_ip_node = (THD_IP_NODE*)local_hash->get_user_data();
+        sfthd_ip_node = (THD_IP_NODE*)local_hash->get_cnode()->data;
 
         /* Increment the event count */
         sfthd_ip_node->count++;
@@ -990,7 +989,7 @@ static inline int sfthd_test_global(
     if (status == HASH_INTABLE)
     {
         /* Already in the table */
-        sfthd_ip_node = (THD_IP_NODE*)global_hash->get_user_data();
+        sfthd_ip_node = (THD_IP_NODE*)global_hash->get_cnode()->data;
 
         /* Increment the event count */
         sfthd_ip_node->count++;

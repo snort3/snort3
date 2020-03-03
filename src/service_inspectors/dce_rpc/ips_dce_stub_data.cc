@@ -26,7 +26,7 @@
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
-#include "hash/hash_key_operations.h"
+#include "hash/hashfcn.h"
 #include "profiler/profiler.h"
 
 #include "dce_common.h"

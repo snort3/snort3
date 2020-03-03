@@ -24,7 +24,7 @@
 
 // gtp_info rule option implementation
 
-#include "hash/hash_key_operations.h"
+#include "hash/hashfcn.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"

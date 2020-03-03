@@ -33,7 +33,6 @@
 
 #include "ps_detect.h"
 
-#include "hash/hash_defs.h"
 #include "hash/xhash.h"
 #include "log/messages.h"
 #include "protocols/icmp4.h"
@@ -58,32 +57,7 @@ struct PS_HASH_KEY
 };
 PADDING_GUARD_END
 
-class PortScanCache : public XHash
-{
-public:
-    PortScanCache(unsigned rows, unsigned key_len, unsigned datasize, unsigned memcap)
-        : XHash(rows, key_len, datasize, memcap)
-    { }
-
-    bool is_node_recovery_ok(HashNode* hnode) override
-    {
-        PS_TRACKER* tracker = (PS_TRACKER*)hnode->data;
-
-        if ( !tracker->priority_node )
-            return true;
-
-        /*
-         **  Cycle through the protos to see if it's past the time.
-         **  We only get here if we ARE a priority node.
-         */
-        if ( tracker->proto.window >= packet_time() )
-            return false;
-
-        return true;
-    }
-};
-
-static THREAD_LOCAL PortScanCache* portscan_hash = nullptr;
+static THREAD_LOCAL XHash* portscan_hash = nullptr;
 extern THREAD_LOCAL PsPegStats spstats;
 
 PS_PKT::PS_PKT(Packet* p)
@@ -110,6 +84,32 @@ PortscanConfig::~PortscanConfig()
         ipset_free(watch_ip);
 }
 
+/*
+**  This function is passed into the hash algorithm, so that
+**  we only reuse nodes that aren't priority nodes.  We have to make
+**  sure that we only track so many priority nodes, otherwise we could
+**  have all priority nodes and not be able to allocate more.
+*/
+static int ps_tracker_free(void* key, void* data)
+{
+    if (!key || !data)
+        return 0;
+
+    PS_TRACKER* tracker = (PS_TRACKER*)data;
+
+    if (!tracker->priority_node)
+        return 0;
+
+    /*
+    **  Cycle through the protos to see if it's past the time.
+    **  We only get here if we ARE a priority node.
+    */
+    if (tracker->proto.window >= packet_time())
+        return 1;
+
+    return 0;
+}
+
 void ps_cleanup()
 {
     if ( portscan_hash )
@@ -132,8 +132,8 @@ bool ps_init_hash(unsigned long memcap)
     }
 
     int rows = memcap / ps_node_size();
-    portscan_hash = new PortScanCache(rows, sizeof(PS_HASH_KEY), sizeof(PS_TRACKER),
-        memcap);
+    portscan_hash = new XHash(rows, sizeof(PS_HASH_KEY), sizeof(PS_TRACKER),
+        memcap, true, ps_tracker_free, nullptr, true);
 
     return false;
 }
@@ -144,7 +144,7 @@ bool ps_prune_hash(unsigned work_limit)
         return true;
 
     unsigned num_pruned = 0;
-    int result = portscan_hash->tune_memory_resources(work_limit, num_pruned);
+    int result = portscan_hash->free_over_allocations(work_limit, &num_pruned);
     spstats.reload_prunes += num_pruned;
     return result != HASH_PENDING;
 }
@@ -152,7 +152,7 @@ bool ps_prune_hash(unsigned work_limit)
 void ps_reset()
 {
     if ( portscan_hash )
-        portscan_hash->clear_hash();
+        portscan_hash->clear();
 }
 
 //  Check scanner and scanned ips to see if we can filter them out.
@@ -297,12 +297,12 @@ static PS_TRACKER* ps_tracker_get(PS_HASH_KEY* key)
     if ( ht )
         return ht;
 
-    auto prev_count = portscan_hash->get_num_nodes();
+    auto prev_count = portscan_hash->get_node_count();
     if ( portscan_hash->insert((void*)key, nullptr) != HASH_OK )
         return nullptr;
 
     ++spstats.trackers;
-    if ( prev_count == portscan_hash->get_num_nodes() )
+    if ( prev_count == portscan_hash->get_node_count() )
         ++spstats.alloc_prunes;
 
     ht = (PS_TRACKER*)portscan_hash->get_mru_user_data();

@@ -25,7 +25,6 @@
 
 #include "hash/ghash.h"
 
-#include "hash/hash_defs.h"
 #include "main/snort_config.h"
 #include "utils/util.h"
 
@@ -120,7 +119,7 @@ TEST(ghash, collision_test)
     snprintf(str, sizeof(str), "KeyWord%d",1);
     str[sizeof(str) - 1] = '\0';
     i = t->insert(str, (void *)(str + (1)));
-    CHECK(i == HASH_INTABLE);
+    CHECK(i == GHASH_INTABLE);
 
     // find those nodes
     for (i=num-1; i>=0; i--)
@@ -193,7 +192,7 @@ TEST(ghash, userfree_test)
     CHECK(t->find(str) == nullptr);
     
     // try to remove a node that is not in the table
-    CHECK(t->remove( str) == HASH_NOT_FOUND);
+    CHECK(t->remove( str) == GHASH_NOT_FOUND);
 
     for ( GHashNode* n = t->find_first(); n; n = t->find_next() )
     {

@@ -35,16 +35,15 @@
 
 #include "detection/rule_option_types.h"
 #include "time/clock_defs.h"
-#include "main/snort_debug.h"
 
+#include "main/snort_debug.h"
 extern Trace TRACE_NAME(detection);
 
 namespace snort
 {
-class HashNode;
-class XHash;
 struct Packet;
 struct SnortConfig;
+class XHash;
 }
 struct RuleLatencyState;
 
@@ -123,6 +122,9 @@ void* add_detection_option_tree(struct snort::SnortConfig*, detection_option_tre
 
 int detection_option_node_evaluate(
     detection_option_tree_node_t*, detection_option_eval_data_t&, const class Cursor&);
+
+void DetectionHashTableFree(snort::XHash*);
+void DetectionTreeHashTableFree(snort::XHash*);
 
 void print_option_tree(detection_option_tree_node_t*, int level);
 void detection_option_tree_update_otn_stats(snort::XHash*);

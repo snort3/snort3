@@ -17,11 +17,22 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+/*
+     hashfcn.c
+
+     Each hash table allocates it's own GHash struct, using the number of
+     rows in the hash table to modulo the random values.
+
+     Updates:
+
+     8/31/2006 - man - changed to use sfprimetable.c
+*/
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "hash_key_operations.h"
+#include "hashfcn.h"
 
 #include <cassert>
 
@@ -32,48 +43,77 @@
 
 using namespace snort;
 
-HashKeyOperations::HashKeyOperations(int rows)
+static bool hashfcn_key_compare(const void* k1, const void* k2, size_t len)
 {
-    static bool one = true;
+    if ( memcmp(k1, k2, len ) == 0 )
+        return true;
+    else
+        return false;
+}
+
+HashFnc* hashfcn_new(int m)
+{
+    HashFnc* p;
+    static int one = 1;
 
     if ( one ) /* one time init */
     {
         srand( (unsigned)time(nullptr) );
-        one = false;
+        one = 0;
     }
+
+    p = (HashFnc*)snort_calloc(sizeof(*p));
 
     if ( SnortConfig::static_hash() )
     {
-        seed = 3193;
-        scale = 719;
-        hardener = 133824503;
+        p->seed     = 3193;
+        p->scale    = 719;
+        p->hardener = 133824503;
     }
     else
     {
-        seed = nearest_prime( (rand() % rows) + 3191);
-        scale = nearest_prime( (rand() % rows) + 709);
-        hardener = ((unsigned) rand() * rand()) + 133824503;
+        p->seed = nearest_prime( (rand() % m) + 3191);
+        p->scale = nearest_prime( (rand() % m) + 709);
+        p->hardener = ((unsigned) rand() * rand()) + 133824503;
     }
+
+    p->hash_fcn = &hashfcn_hash;
+    p->keycmp_fcn = &hashfcn_key_compare;
+
+    return p;
 }
 
-unsigned HashKeyOperations::do_hash(const unsigned char* key, int len)
+void hashfcn_free(HashFnc* p)
 {
-    unsigned hash = seed;
-    while ( len )
+    if ( p )
+        snort_free(p);
+}
+
+unsigned hashfcn_hash(HashFnc* p, const unsigned char* d, int n)
+{
+    unsigned hash = p->seed;
+    while ( n )
     {
-        hash *= scale;
-        hash += *key++;
-        len--;
+        hash *=  p->scale;
+        hash += *d++;
+        n--;
     }
-    return hash ^ hardener;
+    return hash ^ p->hardener;
 }
 
-bool HashKeyOperations::key_compare(const void* key1, const void* key2, size_t len)
+/**
+ * Make hashfcn use a separate set of opcodes for the backend.
+ *
+ * @param h hashfcn ptr
+ * @param hash_fcn user specified hash function
+ * @param keycmp_fcn user specified key comparison function
+ */
+void hashfcn_set_keyops(HashFnc* h, hash_func hash_fcn, keycmp_func keycmp_fcn)
 {
-    if ( memcmp(key1, key2, len) )
-        return false;
-    else
-        return true;
+    assert(h && hash_fcn && keycmp_fcn);
+
+    h->hash_fcn = hash_fcn;
+    h->keycmp_fcn = keycmp_fcn;
 }
 
 namespace snort
