@@ -41,6 +41,7 @@ using namespace snort;
 const PegInfo ip_pegs[] =
 {
     SESSION_PEGS("ip"),
+    { CountType::SUM, "total_bytes", "total number of bytes processed" },
     { CountType::SUM, "total_frags", "total fragments" },
     { CountType::NOW, "current_frags", "current fragments" },
     { CountType::SUM, "max_frags", "max fragments" },
@@ -188,7 +189,7 @@ int IpSession::process(Packet* p)
 
     if ( Stream::blocked_flow(p) || Stream::ignored_flow(flow, p) )
         return 0;
-
+    ip_stats.total_bytes += p->dsize;
     if ( p->ptrs.decode_flags & DECODE_FRAG )
     {
         Defrag* d = get_defrag(flow->ssn_server);

@@ -34,6 +34,7 @@ struct SSH_PROTO_CONF
 struct SshStats
 {
     PegCount total_packets;
+    PegCount total_bytes;
     PegCount concurrent_sessions;
     PegCount max_concurrent_sessions;
 };

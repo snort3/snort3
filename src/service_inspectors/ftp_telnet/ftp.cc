@@ -116,6 +116,7 @@ static int snort_ftp(Packet* p)
      */
     SetSiInput(&SiInput, p);
 
+    ftstats.total_bytes += p->dsize;
     if (p->flow)
     {
         FtpFlowData* fd = (FtpFlowData*)p->flow->get_flow_data(FtpFlowData::inspector_id);

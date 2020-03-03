@@ -32,6 +32,7 @@ struct POP_PROTO_CONF
 struct PopStats
 {
     PegCount packets;
+    PegCount total_bytes;
     PegCount sessions;
     PegCount concurrent_sessions;
     PegCount max_concurrent_sessions;

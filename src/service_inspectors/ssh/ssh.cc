@@ -174,6 +174,7 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
             return;
         }
     }
+    sshstats.total_bytes += p->dsize;
 
     uint8_t direction;
     uint32_t search_dir_ver;

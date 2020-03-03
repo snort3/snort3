@@ -32,6 +32,7 @@ struct SnortConfig;
 struct UdpStats
 {
     SESSION_STATS;
+    PegCount total_bytes;
     PegCount ignored;
 };
 

@@ -147,6 +147,7 @@ struct SMTP_PROTO_CONF
 struct SmtpStats
 {
     PegCount packets;
+    PegCount total_bytes;
     PegCount sessions;
     PegCount concurrent_sessions;
     PegCount max_concurrent_sessions;

@@ -162,6 +162,7 @@ static THREAD_LOCAL SMTPSearchInfo smtp_search_info;
 const PegInfo smtp_peg_names[] =
 {
     { CountType::SUM, "packets", "total packets processed" },
+    { CountType::SUM, "total_bytes", "total number of bytes processed" },
     { CountType::SUM, "sessions", "total smtp sessions" },
     { CountType::NOW, "concurrent_sessions", "total concurrent smtp sessions" },
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent smtp sessions" },
@@ -1162,6 +1163,7 @@ static void snort_smtp(SMTP_PROTO_CONF* config, Packet* p)
 
     /* reset normalization stuff */
     smtp_normalizing = false;
+    smtpstats.total_bytes += p->dsize;
 
     if (pkt_dir == SMTP_PKT_FROM_SERVER)
     {

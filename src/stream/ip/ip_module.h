@@ -60,6 +60,7 @@ struct SnortConfig;
 struct IpStats
 {
     SESSION_STATS;
+    PegCount total_bytes;        // total_ip_bytes_processed
     PegCount total;             // total_ipfragmented_packets
     PegCount current_frags;     // iCurrentFrags
     PegCount max_frags;         // iMaxFrags

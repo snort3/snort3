@@ -80,6 +80,7 @@ static THREAD_LOCAL POPSearchInfo pop_search_info;
 const PegInfo pop_peg_names[] =
 {
     { CountType::SUM, "packets", "total packets processed" },
+    { CountType::SUM, "total_bytes", "total number of bytes processed" },
     { CountType::SUM, "sessions", "total pop sessions" },
     { CountType::NOW, "concurrent_sessions", "total concurrent pop sessions" },
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent pop sessions" },
@@ -521,6 +522,7 @@ static void snort_pop(POP_PROTO_CONF* config, Packet* p)
         }
     }
 
+    popstats.total_bytes += p->dsize;
     int pkt_dir = POP_Setup(p, pop_ssn);
 
     if (pkt_dir == POP_PKT_FROM_CLIENT)

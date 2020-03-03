@@ -283,6 +283,7 @@ int SetSiInput(FTPP_SI_INPUT*, snort::Packet*);
 struct FtpStats
 {
     PegCount total_packets;
+    PegCount total_bytes;
     PegCount concurrent_sessions;
     PegCount max_concurrent_sessions;
 };

@@ -42,6 +42,7 @@ using namespace snort;
 const PegInfo udp_pegs[] =
 {
     SESSION_PEGS("udp"),
+    { CountType::SUM, "total_bytes", "total number of bytes processed" },
     { CountType::SUM, "ignored", "udp packets ignored" },
     { CountType::END, nullptr, nullptr }
 };
@@ -69,7 +70,7 @@ static int ProcessUdp(Flow* lwssn, Packet* p, StreamUdpConfig*)
         udpStats.ignored++;
         return 0;
     }
-
+    udpStats.total_bytes += p->dsize;
     /* if both seen, mark established */
     if (p->is_from_server())
     {
