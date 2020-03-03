@@ -2,6 +2,10 @@
 set (FILE_LIST
     http2_api.cc
     http2_api.h
+    http2_data_frame.cc
+    http2_data_frame.h
+    http2_data_cutter.cc
+    http2_data_cutter.h
     http2_enum.h
     http2_flow_data.cc
     http2_flow_data.h

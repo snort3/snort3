@@ -25,6 +25,8 @@
 
 #include "service_inspectors/http_inspect/http_flow_data.h"
 
+#include "http2_data_cutter.h"
+
 using namespace HttpCommon;
 
 Http2Stream::Http2Stream(uint32_t stream_id_, Http2FlowData* session_data_) :
@@ -37,6 +39,8 @@ Http2Stream::~Http2Stream()
 {
     delete current_frame;
     delete hi_flow_data;
+    delete data_cutter[SRC_CLIENT];
+    delete data_cutter[SRC_SERVER];
 }
 
 void Http2Stream::eval_frame(const uint8_t* header_buffer, int32_t header_len,
@@ -70,3 +74,9 @@ void Http2Stream::print_frame(FILE* output)
 }
 #endif
 
+Http2DataCutter* Http2Stream::get_data_cutter(HttpCommon::SourceId source_id, uint32_t len, bool is_padded)
+{
+    if (!data_cutter[source_id])
+        data_cutter[source_id] = new Http2DataCutter(session_data, len, source_id, is_padded);
+    return data_cutter[source_id];
+}

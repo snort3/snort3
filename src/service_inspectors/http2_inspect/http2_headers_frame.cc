@@ -74,7 +74,7 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t
     start_line = hpack_decoder.get_start_line();
     http1_header = hpack_decoder.get_decoded_headers(decoded_headers);
 
-    if ((error_during_decode) || (session_data->hi_ss[source_id] == nullptr))
+    if (error_during_decode)
         return;
 
     // http_inspect scan() of start line
@@ -181,7 +181,7 @@ Http2HeadersFrame::~Http2HeadersFrame()
 
 void Http2HeadersFrame::clear()
 {
-    if (error_during_decode || hi_abort || (session_data->hi == nullptr))
+    if (error_during_decode || hi_abort)
         return;
     Packet dummy_pkt(false);
     dummy_pkt.flow = session_data->flow;

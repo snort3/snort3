@@ -46,6 +46,7 @@ const RuleMap Http2Module::http2_events[] =
     { EVENT_FRAME_SEQUENCE, "invalid HTTP/2 frame sequence" },
     { EVENT_DYNAMIC_TABLE_OVERFLOW, "HTTP/2 dynamic table size limit exceeded" },
     { EVENT_INVALID_STARTLINE, "invalid HTTP/2 start line" },
+    { EVENT_PADDING_LEN, "HTTP/2 padding length is bigger than frame data size" },
     { 0, nullptr }
 };
 

@@ -58,14 +58,7 @@ StreamSplitter::Status Http2StreamSplitter::scan(Packet* pkt, const uint8_t* dat
         pkt->flow->set_flow_data(session_data = new Http2FlowData(pkt->flow));
         Http2Module::increment_peg_counts(PEG_FLOW);
     }
-
-    // General mechanism to abort using scan
-    if (session_data->frame_type[source_id] == FT__ABORT)
-    {
-        session_data->frame_type[source_id] = FT__NONE;
-        return HttpStreamSplitter::status_value(StreamSplitter::ABORT, true);
-    }
-
+    
 #ifdef REG_TEST
     uint32_t dummy_flush_offset;
 
@@ -95,8 +88,15 @@ StreamSplitter::Status Http2StreamSplitter::scan(Packet* pkt, const uint8_t* dat
     }
 #endif
 
+    // General mechanism to abort using scan
+    if (session_data->frame_type[source_id] == FT__ABORT)
+        return HttpStreamSplitter::status_value(StreamSplitter::ABORT, true);
+    
     const StreamSplitter::Status ret_val =
         implement_scan(session_data, data, length, flush_offset, source_id);
+
+    if (ret_val == StreamSplitter::ABORT)
+        session_data->frame_type[source_id] = FT__ABORT;
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP2))

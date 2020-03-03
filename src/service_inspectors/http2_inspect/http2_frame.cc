@@ -23,6 +23,7 @@
 
 #include "http2_frame.h"
 
+#include "http2_data_frame.h"
 #include "http2_enum.h"
 #include "http2_flow_data.h"
 #include "http2_headers_frame.h"
@@ -57,6 +58,8 @@ Http2Frame* Http2Frame::new_frame(const uint8_t* header, const int32_t header_le
         case FT_SETTINGS:
             return new Http2SettingsFrame(header, header_len, data, data_len, session_data,
                 source_id);
+        case FT_DATA:
+            return new Http2DataFrame(header, header_len, data, data_len, session_data, source_id);	  
         default:
             return new Http2Frame(header, header_len, data, data_len, session_data, source_id);
     }
