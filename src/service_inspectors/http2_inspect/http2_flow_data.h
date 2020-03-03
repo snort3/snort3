@@ -90,6 +90,7 @@ public:
         ~StreamInfo() { delete stream; }
     };
     class Http2Stream* get_current_stream(const HttpCommon::SourceId source_id);
+    uint32_t get_current_stream_id(const HttpCommon::SourceId source_id);
 
     Http2HpackDecoder* get_hpack_decoder(const HttpCommon::SourceId source_id)
         { return &hpack_decoder[source_id]; }

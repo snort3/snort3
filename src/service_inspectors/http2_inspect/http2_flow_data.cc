@@ -151,3 +151,8 @@ class Http2Stream* Http2FlowData::get_current_stream(const HttpCommon::SourceId 
     return get_stream(current_stream[source_id]);
 }
 
+uint32_t Http2FlowData::get_current_stream_id(const HttpCommon::SourceId source_id)
+{
+    return current_stream[source_id];
+}
+

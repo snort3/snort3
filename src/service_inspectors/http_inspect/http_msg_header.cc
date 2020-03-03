@@ -32,6 +32,7 @@
 #include "http_msg_request.h"
 #include "http_msg_body.h"
 #include "pub_sub/http_events.h"
+#include "service_inspectors/http2_inspect/http2_flow_data.h"
 #include "sfip/sf_ip.h"
 
 using namespace snort;
@@ -49,7 +50,15 @@ HttpMsgHeader::HttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size,
 
 void HttpMsgHeader::publish()
 {
-    HttpEvent http_event(this);
+    uint32_t stream_id = 0;
+    if (session_data->for_http2)
+    {
+        Http2FlowData* h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+        assert(h2i_flow_data);
+        stream_id = h2i_flow_data->get_current_stream_id(source_id);
+    }
+
+    HttpEvent http_event(this, session_data->for_http2, stream_id);
 
     const char* key = (source_id == SRC_CLIENT) ?
         HTTP_REQUEST_HEADER_EVENT_KEY : HTTP_RESPONSE_HEADER_EVENT_KEY;

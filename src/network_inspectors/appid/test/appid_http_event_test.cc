@@ -206,7 +206,7 @@ TEST_GROUP(appid_http_event)
 
 TEST(appid_http_event, handle_null_appid_data)
 {
-    HttpEvent event(nullptr);
+    HttpEvent event(nullptr, false, 0);
     HttpEventHandler event_handler(HttpEventHandler::REQUEST_EVENT);
     mock().expectOneCall("get_appid_session");
     event_handler.handle(event, flow);
@@ -215,7 +215,7 @@ TEST(appid_http_event, handle_null_appid_data)
 
 TEST(appid_http_event, handle_null_msg_header)
 {
-    HttpEvent event(nullptr);
+    HttpEvent event(nullptr, false, 0);
     HttpEventHandler event_handler(HttpEventHandler::REQUEST_EVENT);
 
     mock().strictOrder();
@@ -246,7 +246,7 @@ struct TestData
 
 static void run_event_handler(TestData test_data, TestData* expect_data = nullptr)
 {
-    HttpEvent event(nullptr);
+    HttpEvent event(nullptr, false, 0);
     FakeHttpMsgHeader http_msg_header;
     HttpEventHandler event_handler(test_data.type);
     fake_msg_header = &http_msg_header;

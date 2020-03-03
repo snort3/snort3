@@ -20,3 +20,5 @@ install (FILES ${PUB_SUB_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/pub_sub"
 )
 
+add_subdirectory ( test )
+
