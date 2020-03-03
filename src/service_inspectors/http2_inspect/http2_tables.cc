@@ -45,6 +45,7 @@ const RuleMap Http2Module::http2_events[] =
     { EVENT_SETTINGS_FRAME_UNKN_PARAM, "unknown parameter in HTTP/2 settings frame" },
     { EVENT_FRAME_SEQUENCE, "invalid HTTP/2 frame sequence" },
     { EVENT_DYNAMIC_TABLE_OVERFLOW, "HTTP/2 dynamic table size limit exceeded" },
+    { EVENT_INVALID_STARTLINE, "invalid HTTP/2 start line" },
     { 0, nullptr }
 };
 

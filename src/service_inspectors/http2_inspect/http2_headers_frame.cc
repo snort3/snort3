@@ -24,7 +24,8 @@
 #include "http2_headers_frame.h"
 
 #include "protocols/packet.h"
-
+#include "service_inspectors/http_inspect/http_enum.h"
+#include "service_inspectors/http_inspect/http_flow_data.h"
 #include "service_inspectors/http_inspect/http_inspect.h"
 #include "service_inspectors/http_inspect/http_stream_splitter.h"
 
@@ -102,6 +103,7 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t
         assert(copied == (unsigned)start_line->length());
     }
 
+    HttpFlowData* http_flow = session_data->get_current_stream(source_id)->get_hi_flow_data();
     // http_inspect eval() and clear() of start line
     {
         Http2DummyPacket dummy_pkt;
@@ -110,6 +112,13 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t
         dummy_pkt.dsize = stream_buf.length;
         dummy_pkt.data = stream_buf.data;
         session_data->hi->eval(&dummy_pkt);
+        if (http_flow->get_type_expected(source_id) != HttpEnums::SEC_HEADER)
+        {
+            *session_data->infractions[source_id] += INF_INVALID_STARTLINE;
+            session_data->events[source_id]->create_event(EVENT_INVALID_STARTLINE);
+            hi_abort = true;
+            return;
+        }
         session_data->hi->clear(&dummy_pkt);
     }
 
@@ -122,13 +131,8 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t
         const StreamSplitter::Status header_scan_result =
             session_data->hi_ss[source_id]->scan(&dummy_pkt, http1_header->start(),
             http1_header->length(), unused, &flush_offset);
-        if (header_scan_result == StreamSplitter::ABORT)
-        {
-            // eval() aborted the start line?
-            hi_abort = true;
-            return;
-        }
         assert(header_scan_result == StreamSplitter::FLUSH);
+        UNUSED(header_scan_result);
         assert((int64_t)flush_offset == http1_header->length());
     }
 
@@ -151,6 +155,17 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t
         dummy_pkt.data = stream_buf.data;
         dummy_pkt.xtradata_mask = 0;
         session_data->hi->eval(&dummy_pkt);
+        //Following if condition won't get exercised until finish() is
+        //implemented for H2I. Without finish() H2I will only flush
+        //complete header blocks. Below ABORT is only possible if
+        //tcp connection closes unexpectedly in middle of a header.
+        if (http_flow->get_type_expected(source_id) == HttpEnums::SEC_ABORT)
+        {
+            *session_data->infractions[source_id] += INF_INVALID_HEADER;
+            session_data->events[source_id]->create_event(EVENT_INVALID_HEADER);
+            hi_abort = true;
+            return;
+        }
         detection_required = dummy_pkt.is_detection_required();
         xtradata_mask = dummy_pkt.xtradata_mask;
     }
