@@ -372,7 +372,15 @@ public:
 
     void set_deferred_whitelist(DeferredWhitelist defer_state)
     {
-        deferred_whitelist = defer_state;
+        if (defer_state == WHITELIST_DEFER_DONE )
+        {
+            if (deferred_whitelist == WHITELIST_DEFER_STARTED )
+                deferred_whitelist = WHITELIST_DEFER_DONE;
+            else
+                deferred_whitelist = WHITELIST_DEFER_OFF;
+        }
+        else
+            deferred_whitelist = defer_state;
     }
 
     DeferredWhitelist get_deferred_whitelist_state()
