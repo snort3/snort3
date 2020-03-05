@@ -161,7 +161,7 @@ static bool AddDaqModuleConfig(const SFDAQModuleConfig *dmc)
     DAQ_Module_h module = daq_find_module(module_name);
     if (!module)
     {
-        ErrorMessage("Could not find requested DAQ module: %s\n", module_name);
+        ParseError("Could not find requested DAQ module: %s\n", module_name);
         return false;
     }
 
@@ -190,7 +190,7 @@ static bool AddDaqModuleConfig(const SFDAQModuleConfig *dmc)
         const char* value = kvp.second.length() ? kvp.second.c_str() : nullptr;
         if (daq_module_config_set_variable(modcfg, key, value) != DAQ_SUCCESS)
         {
-            ErrorMessage("Error setting DAQ configuration variable with key '%s' and value '%s'! (%d)",
+            ParseError("Error setting DAQ configuration variable with key '%s' and value '%s'! (%d)",
                     key, value, rval);
             daq_module_config_destroy(modcfg);
             return false;
@@ -199,7 +199,7 @@ static bool AddDaqModuleConfig(const SFDAQModuleConfig *dmc)
 
     if ((rval = daq_config_push_module_config(daqcfg, modcfg)) != DAQ_SUCCESS)
     {
-        ErrorMessage("Error pushing DAQ module configuration for '%s' onto the DAQ config! (%d)\n",
+        ParseError("Error pushing DAQ module configuration for '%s' onto the DAQ config! (%d)\n",
                 daq_module_get_name(module), rval);
         daq_module_config_destroy(modcfg);
         return false;
