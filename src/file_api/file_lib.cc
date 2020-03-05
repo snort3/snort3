@@ -477,6 +477,10 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
 
                 log_file_event(flow, policy);
             }
+            else
+            {
+                return false;
+            }
         }
     }
     else

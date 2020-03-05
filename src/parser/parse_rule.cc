@@ -855,8 +855,11 @@ static int mergeDuplicateOtn(
     return false;
 }
 
+namespace snort
+{
 int get_rule_count()
 { return rule_count; }
+}
 
 void parse_rule_init()
 {

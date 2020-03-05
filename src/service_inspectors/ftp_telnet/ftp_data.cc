@@ -27,6 +27,8 @@
 #include "file_api/file_flows.h"
 #include "file_api/file_service.h"
 #include "packet_io/active.h"
+#include "packet_tracer/packet_tracer.h"
+#include "parser/parse_rule.h"
 #include "profiler/profiler.h"
 #include "stream/stream.h"
 #include "utils/util.h"
@@ -96,10 +98,19 @@ static void FTPDataProcess(
         data_ssn->packet_flags |= FTPDATA_FLG_FILENAME_SET;
     }
 
-    /* Ignore the rest of this transfer if file processing is complete
-     * and preprocessor was configured to ignore ftp-data sessions. */
-    if (!status && data_ssn->data_chan)
-        p->flow->set_ignore_direction(SSN_DIR_BOTH);
+    // Ignore the rest of this transfer if file processing is complete
+    // and status is returned false (eg sig not enabled, sig depth exceeded etc)
+    // and no IPS rules are configured.
+    if ( !status )
+    {
+        IpsPolicy* empty_policy = snort::get_empty_ips_policy(SnortConfig::get_conf());
+        if ( !get_rule_count() || (empty_policy->policy_id == p->flow->ips_policy_id) )
+        {
+            if ( PacketTracer::is_active() )
+                PacketTracer::log("Whitelisting Flow: FTP sig depth exceeded\n");
+            p->flow->set_ignore_direction(SSN_DIR_BOTH);
+        }
+    }
 }
 
 static int SnortFTPData(Packet* p)

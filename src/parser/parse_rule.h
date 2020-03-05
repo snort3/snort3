@@ -26,6 +26,7 @@
 namespace snort
 {
 struct SnortConfig;
+SO_PUBLIC int get_rule_count();
 }
 struct OptFpList;
 struct OptTreeNode;
@@ -46,8 +47,6 @@ void parse_rule_opt_end(snort::SnortConfig*, const char* key, OptTreeNode*);
 
 OptTreeNode* parse_rule_open(snort::SnortConfig*, RuleTreeNode&, bool stub = false);
 void parse_rule_close(snort::SnortConfig*, RuleTreeNode&, OptTreeNode*);
-
-int get_rule_count();
 
 #endif
 
