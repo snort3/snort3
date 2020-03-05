@@ -69,6 +69,7 @@ DetectionEngine::~DetectionEngine() { }
 void Flow::init(PktType) { }
 void Flow::term() { }
 void Flow::reset(bool) { }
+void Flow::free_flow_data() { }
 void set_network_policy(SnortConfig*, unsigned) { }
 void DataBus::publish(const char*, const uint8_t*, unsigned, Flow*) { }
 void DataBus::publish(const char*, Packet*, Flow*) { }

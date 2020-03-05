@@ -108,7 +108,8 @@ void Flow::term()
     delete session;
     session = nullptr;
 
-    assert(!flow_data);
+    if ( flow_data )
+        free_flow_data();
 
     if ( mpls_client.length )
         delete[] mpls_client.start;
@@ -139,6 +140,9 @@ void Flow::term()
 
     if (assistant_gadget)
         assistant_gadget->rem_ref();
+
+    if ( data )
+        clear_data();
 
     if ( ha_state )
         delete ha_state;
