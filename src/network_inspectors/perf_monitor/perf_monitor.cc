@@ -29,6 +29,7 @@
 #endif
 
 #include "framework/data_bus.h"
+#include "hash/hash_defs.h"
 #include "hash/xhash.h"
 #include "log/messages.h"
 #include "managers/inspector_manager.h"
@@ -270,9 +271,8 @@ bool PerfMonReloadTuner::tune_resources(unsigned work_limit)
     if (flow_ip_tracker)
     {
         unsigned num_freed = 0;
-        int result = flow_ip_tracker->get_ip_map()->free_over_allocations(work_limit, &num_freed);
-        pmstats.total_frees += num_freed;
-        pmstats.reload_frees += num_freed;
+        int result = flow_ip_tracker->get_ip_map()->tune_memory_resources(work_limit, num_freed);
+        pmstats.flow_tracker_reload_deletes += num_freed;
         return (result == HASH_OK);
     }
     else

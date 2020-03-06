@@ -37,6 +37,7 @@
 #include "framework/mpse.h"
 #include "framework/mpse_batch.h"
 #include "hash/ghash.h"
+#include "hash/xhash.h"
 #include "log/messages.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
@@ -1660,8 +1661,8 @@ void fpDeleteFastPacketDetection(SnortConfig* sc)
         return;
 
     /* Cleanup the detection option tree */
-    DetectionHashTableFree(sc->detection_option_hash_table);
-    DetectionTreeHashTableFree(sc->detection_option_tree_hash_table);
+    delete sc->detection_option_hash_table;
+    delete sc->detection_option_tree_hash_table;
 
     fpFreeRuleMaps(sc);
     ServicePortGroupMapFree(sc->spgmmTable);

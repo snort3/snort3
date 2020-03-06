@@ -64,8 +64,10 @@ FLOW_TYPE_PARAMS(file_params, "180", "32");
 
 static const Parameter s_params[] =
 {
+#ifdef REG_TEST
     { "footprint", Parameter::PT_INT, "0:max32", "0",
         "use zero for production, non-zero for testing at given size (for TCP and user)" },
+#endif
 
     { "ip_frags_only", Parameter::PT_BOOL, nullptr, "false",
             "don't process non-frag flows" },
@@ -130,12 +132,15 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
 {
     PktType type = PktType::NONE;
 
+#ifdef REG_TEST
     if ( v.is("footprint") )
     {
         config.footprint = v.get_uint32();
         return true;
     }
-    else if ( v.is("ip_frags_only") )
+#endif
+
+    if ( v.is("ip_frags_only") )
     {
         if ( v.get_bool() )
             c->set_run_flags(RUN_FLAG__IP_FRAGS_ONLY);
@@ -176,8 +181,6 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
     return true;
 }
 
-// FIXIT-L the detection of stream.xxx_cache changes below is a temporary workaround
-// remove this check when stream.xxx_cache params become reloadable
 bool StreamModule::end(const char*, int, SnortConfig* sc)
 {
     if ( reload_resource_manager.initialize(config) )
@@ -198,22 +201,23 @@ void StreamModule::reset_stats()
 // Stream handler to adjust allocated resources as needed on a config reload
 bool StreamReloadResourceManager::initialize(const StreamModuleConfig& config_)
 {
-    // FIXIT-L - saving config here to check footprint change is a bit of a hack,
-    if ( Snort::is_reloading() )
+    // saving a copy of the config only works here because there is only
+    // one stream inspector per packet thread...
+    if ( !Snort::is_reloading() )
     {
-        if ( config.footprint != config_.footprint )
-        {
-            // FIXIT-M - reinit FlushBucket...
-            ReloadError("Changing of stream.footprint requires a restart\n");
-            return false;
-        }
-
         config = config_;
-        return true;
+        return false;
     }
 
+#ifdef REG_TEST
+    if ( config.footprint != config_.footprint )
+    {
+        ReloadError("Changing of stream.footprint requires a restart\n");
+        return false;
+    }
+#endif
     config = config_;
-    return false;
+    return true;
 }
 
 bool StreamReloadResourceManager::tinit()

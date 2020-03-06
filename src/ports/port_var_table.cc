@@ -23,6 +23,9 @@
 
 #include "port_var_table.h"
 
+#include "hash/ghash.h"
+#include "hash/hash_defs.h"
+
 using namespace snort;
 
 //-------------------------------------------------------------------------
@@ -72,10 +75,10 @@ int PortVarTableFree(PortVarTable* pvt)
 int PortVarTableAdd(PortVarTable* h, PortObject* po)
 {
     int stat = h->insert(po->name, po);
-    if ( stat == GHASH_INTABLE )
+    if ( stat == HASH_INTABLE )
         return 1;
 
-    if ( stat == GHASH_OK )
+    if ( stat == HASH_OK )
         return 0;
 
     return -1;

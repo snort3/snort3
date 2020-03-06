@@ -42,7 +42,7 @@
 
 #include "detection/detection_engine.h"
 #include "detection/detection_util.h"
-#include "hash/hashfcn.h"
+#include "hash/hash_key_operations.h"
 #include "file_api/file_service.h"
 #include "protocols/packet.h"
 #include "stream/stream.h"

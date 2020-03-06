@@ -33,6 +33,7 @@ public:
 
     static uint16_t get_size();
     static void set(unsigned sz);
+    static void set();
     static void clear();
 
 protected:

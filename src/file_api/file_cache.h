@@ -28,10 +28,7 @@
 
 #include "file_config.h"
 
-namespace snort
-{
-class XHash;
-}
+class ExpectedFileCache;
 
 class FileCache
 {
@@ -74,7 +71,7 @@ private:
     int store_verdict(snort::Flow*, snort::FileInfo*, int64_t timeout);
 
     /* The hash table of expected files */
-    snort::XHash* fileHash = nullptr;
+    ExpectedFileCache* fileHash = nullptr;
     int64_t block_timeout = DEFAULT_FILE_BLOCK_TIMEOUT;
     int64_t lookup_timeout = DEFAULT_FILE_LOOKUP_TIMEOUT;
     int64_t max_files = DEFAULT_MAX_FILES_CACHED;

@@ -26,6 +26,7 @@
 
 #include "signature.h"
 
+#include "hash/hash_defs.h"
 #include "hash/ghash.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
@@ -232,10 +233,10 @@ void OtnLookupAdd(GHash* otn_map, OptTreeNode* otn)
     key.sid = otn->sigInfo.sid;
 
     int status = otn_map->insert(&key, otn);
-    if ( status == GHASH_OK )
+    if ( status == HASH_OK )
         return;
 
-    assert(status == GHASH_INTABLE);
+    assert(status == HASH_INTABLE);
     ParseError("duplicate rule with same gid (%u) and sid (%u)", key.gid, key.sid);
 }
 

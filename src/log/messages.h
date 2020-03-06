@@ -23,6 +23,7 @@
 
 #include <arpa/inet.h>
 #include <cstdio>
+#include <string>
 #include <ctime>
 
 #include "main/snort_types.h"
@@ -49,7 +50,9 @@ enum WarningGroup
 void reset_parse_errors();
 unsigned get_parse_errors();
 unsigned get_parse_warnings();
+void reset_reload_errors();
 unsigned get_reload_errors();
+std::string& get_reload_errors_description();
 
 namespace snort
 {

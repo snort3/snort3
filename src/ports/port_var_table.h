@@ -22,9 +22,13 @@
 #ifndef PORT_VAR_TABLE_H
 #define PORT_VAR_TABLE_H
 
-#include "hash/ghash.h"
 #include "ports/port_object.h"
 #include "ports/port_table.h"
+
+namespace snort
+{
+class GHash;
+}
 
 //-------------------------------------------------------------------------
 // PortVarTable

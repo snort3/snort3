@@ -24,7 +24,7 @@
 
 #include "flow/flow_key.h"
 
-#include "hash/hashfcn.h"
+#include "hash/hash_key_operations.h"
 #include "main/snort_config.h"
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
@@ -297,46 +297,10 @@ bool FlowKey::init(
 // hash foo
 //-------------------------------------------------------------------------
 
-uint32_t FlowKey::hash(HashFnc* hf, const unsigned char* p, int)
-{
-    uint32_t a, b, c;
-    a = b = c = hf->hardener;
-
-    const uint32_t* d = (const uint32_t*)p;
-
-    a += d[0];   // IPv6 lo[0]
-    b += d[1];   // IPv6 lo[1]
-    c += d[2];   // IPv6 lo[2]
-
-    mix(a, b, c);
-
-    a += d[3];   // IPv6 lo[3]
-    b += d[4];   // IPv6 hi[0]
-    c += d[5];   // IPv6 hi[1]
-
-    mix(a, b, c);
-
-    a += d[6];   // IPv6 hi[2]
-    b += d[7];   // IPv6 hi[3]
-    c += d[8];   // mpls label
-
-    mix(a, b, c);
-
-    a += d[9];   // port lo & port hi
-    b += d[10];  // vlan tag, address space id
-    c += d[11];  // ip_proto, pkt_type, version, and 8 bits of zeroed pad
-
-    finalize(a, b, c);
-
-    return c;
-}
-
 bool FlowKey::is_equal(const void* s1, const void* s2, size_t)
 {
-    const uint64_t* a,* b;
-
-    a = (const uint64_t*)s1;
-    b = (const uint64_t*)s2;
+    const uint64_t* a = (const uint64_t*)s1;
+    const uint64_t* b = (const uint64_t*)s2;
     if (*a - *b)
         return false;               /* Compares IPv4 lo/hi
                                    Compares IPv6 low[0,1] */
@@ -369,4 +333,44 @@ bool FlowKey::is_equal(const void* s1, const void* s2, size_t)
 
     return true;
 }
+
+unsigned FlowHashKeyOps::do_hash(const unsigned char* k, int)
+{
+    uint32_t a, b, c;
+    a = b = c = hardener;
+
+    const uint32_t* d = (const uint32_t*)k;
+
+    a += d[0];   // IPv6 lo[0]
+    b += d[1];   // IPv6 lo[1]
+    c += d[2];   // IPv6 lo[2]
+
+    mix(a, b, c);
+
+    a += d[3];   // IPv6 lo[3]
+    b += d[4];   // IPv6 hi[0]
+    c += d[5];   // IPv6 hi[1]
+
+    mix(a, b, c);
+
+    a += d[6];   // IPv6 hi[2]
+    b += d[7];   // IPv6 hi[3]
+    c += d[8];   // mpls label
+
+    mix(a, b, c);
+
+    a += d[9];   // port lo & port hi
+    b += d[10];  // vlan tag, address space id
+    c += d[11];  // ip_proto, pkt_type, version, and 8 bits of zeroed pad
+
+    finalize(a, b, c);
+
+    return c;
+}
+
+bool FlowHashKeyOps::key_compare(const void* k1, const void* k2, size_t len)
+{
+    return FlowKey::is_equal(k1, k2, len);
+}
+
 

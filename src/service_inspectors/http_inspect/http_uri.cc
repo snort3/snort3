@@ -25,7 +25,7 @@
 
 #include "http_common.h"
 #include "http_enum.h"
-#include "hash/hashfcn.h"
+#include "hash/hash_key_operations.h"
 
 using namespace HttpCommon;
 using namespace HttpEnums;

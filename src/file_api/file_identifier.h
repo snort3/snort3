@@ -29,9 +29,12 @@
 #include <list>
 #include <vector>
 
-#include "hash/ghash.h"
-
 #include "file_lib.h"
+
+namespace snort
+{
+class GHash;
+}
 
 #define MAX_BRANCH (UINT8_MAX + 1)
 

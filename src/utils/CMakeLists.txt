@@ -7,11 +7,11 @@ set( UTIL_INCLUDES
     event_gen.h
     infractions.h
     kmap.h
+    memcap_allocator.h
     primed_allocator.h
     safec.h
     segment_mem.h
     sflsq.h
-    sfmemcap.h
     stats.h
     util.h
     util_ber.h
@@ -31,7 +31,6 @@ add_library ( utils OBJECT
     kmap.cc
     segment_mem.cc
     sflsq.cc
-    sfmemcap.cc
     snort_bounds.h
     stats.cc
     util.cc

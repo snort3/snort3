@@ -31,7 +31,7 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "framework/parameter.h"
-#include "hash/hashfcn.h"
+#include "hash/hash_key_operations.h"
 #include "helpers/scratch_allocator.h"
 #include "log/messages.h"
 #include "main/snort_config.h"

@@ -27,20 +27,21 @@
 
 static const PegInfo perf_module_pegs[] =
 {
-
     { CountType::SUM, "packets", "total packets processed by performance monitor" },
-    { CountType::SUM, "total_frees", "total flows pruned or freed by performance monitor" },
-    { CountType::SUM, "reload_frees", "flows freed on reload with changed memcap" },
-    { CountType::SUM, "alloc_prunes", "flows pruned on allocation of IP flows" },
+    { CountType::SUM, "flow_tracker_creates", "total number of flow trackers created" },
+    { CountType::SUM, "flow_tracker_total_deletes", "flow trackers deleted to stay below memcap limit" },
+    { CountType::SUM, "flow_tracker_reload_deletes", "flow trackers deleted due to memcap change on config reload" },
+    { CountType::SUM, "flow_tracker_prunes", "flow trackers pruned for reuse by new flows" },
     { CountType::END, nullptr, nullptr },
 };
 
 struct PerfPegStats
 {
     PegCount total_packets;
-    PegCount total_frees;
-    PegCount reload_frees;
-    PegCount alloc_prunes;
+    PegCount flow_tracker_creates;
+    PegCount flow_tracker_total_deletes;
+    PegCount flow_tracker_reload_deletes;
+    PegCount flow_tracker_prunes;
 };
 
 #endif

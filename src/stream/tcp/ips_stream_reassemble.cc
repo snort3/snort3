@@ -24,7 +24,7 @@
 #include "detection/detection_engine.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
-#include "hash/hashfcn.h"
+#include "hash/hash_key_operations.h"
 #include "main/snort_config.h"
 #include "profiler/profiler.h"
 

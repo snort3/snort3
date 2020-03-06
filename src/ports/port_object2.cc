@@ -23,7 +23,9 @@
 
 #include "port_object2.h"
 
-#include "hash/hashfcn.h"
+#include "hash/ghash.h"
+#include "hash/hash_defs.h"
+#include "hash/hash_key_operations.h"
 #include "log/messages.h"
 #include "parser/parser.h"
 #include "utils/util.h"
@@ -55,21 +57,29 @@ using namespace snort;
 #define SWAP_BYTES(a)
 #endif
 
-static unsigned po_rule_hash_func(HashFnc* p, const unsigned char* k, int n)
+class PortObject2HashKeyOps : public HashKeyOperations
 {
-    unsigned char* key;
-    int ikey = *(const int*)k;
+public:
+    PortObject2HashKeyOps(int rows)
+        : HashKeyOperations(rows)
+    { }
 
-    /* Since the input is really an int, put the bytes into a normalized
-     * order so that the hash function returns consistent results across
-     * on BE & LE hardware. */
-    SWAP_BYTES(ikey);
+    unsigned do_hash(const unsigned char* k, int len) override
+    {
+        unsigned char* key;
+        int ikey = *(const int*)k;
 
-    /* Set a pointer to the key to pass to the hashing function */
-    key = (unsigned char*)&ikey;
+        /* Since the input is really an int, put the bytes into a normalized
+         * order so that the hash function returns consistent results across
+         * on BE & LE hardware. */
+        SWAP_BYTES(ikey);
 
-    return hashfcn_hash(p, key, n);
-}
+        /* Set a pointer to the key to pass to the hashing function */
+        key = (unsigned char*)&ikey;
+
+        return HashKeyOperations::do_hash(key, len);
+    }
+};
 
 static int* RuleHashToSortedArray(GHash* rh)
 {
@@ -92,14 +102,6 @@ static int* RuleHashToSortedArray(GHash* rh)
     return ra;
 }
 
-static bool port_object_key_compare_func(const void* k1, const void* k2, size_t len)
-{
-    if ( memcmp(k1, k2, len ) )
-        return false;
-    else
-        return true;
-}
-
 //-------------------------------------------------------------------------
 // PortObject2 - public
 //-------------------------------------------------------------------------
@@ -109,9 +111,7 @@ PortObject2* PortObject2New(int nrules)
     PortObject2* po = (PortObject2*)snort_calloc(sizeof(PortObject2));
     po->item_list = sflist_new();
     po->rule_hash = new GHash(nrules, sizeof(int), 0, snort_free);
-
-    /* Use hash function defined above for hashing the key as an int. */
-    po->rule_hash->set_key_opcodes(po_rule_hash_func, port_object_key_compare_func);
+    po->rule_hash->set_hashkey_ops(new PortObject2HashKeyOps(nrules));
 
     return po;
 }
@@ -189,7 +189,7 @@ PortObject2* PortObject2Dup(PortObject& po)
             int* prule = (int*)snort_calloc(sizeof(int));
             *prule = *prid;
 
-            if ( ponew->rule_hash->insert(prule, prule) != GHASH_OK )
+            if ( ponew->rule_hash->insert(prule, prule) != HASH_OK )
                 snort_free(prule);
         }
     }
@@ -226,7 +226,7 @@ PortObject2* PortObject2AppendPortObject(PortObject2* poa, PortObject* pob)
         int* prid2 = (int*)snort_calloc(sizeof(int));
         *prid2 = *prid;
 
-        if ( poa->rule_hash->insert(prid2, prid2) != GHASH_OK )
+        if ( poa->rule_hash->insert(prid2, prid2) != HASH_OK )
             snort_free(prid2);
     }
     return poa;
@@ -247,7 +247,7 @@ PortObject2* PortObject2AppendPortObject2(PortObject2* poa, PortObject2* pob)
         int* prid2 = (int*)snort_calloc(sizeof(int));
         *prid2 = *prid;
 
-        if ( poa->rule_hash->insert(prid2, prid2) != GHASH_OK )
+        if ( poa->rule_hash->insert(prid2, prid2) != HASH_OK )
             snort_free(prid2);
     }
     return poa;

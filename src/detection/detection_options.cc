@@ -37,7 +37,8 @@
 
 #include "filters/detection_filter.h"
 #include "framework/cursor.h"
-#include "hash/hashfcn.h"
+#include "hash/hash_defs.h"
+#include "hash/hash_key_operations.h"
 #include "hash/xhash.h"
 #include "ips_options/extract.h"
 #include "ips_options/ips_flowbits.h"
@@ -79,93 +80,82 @@ struct detection_option_key_t
 static inline bool operator==(const struct timeval& a, const struct timeval& b)
 { return a.tv_sec == b.tv_sec && a.tv_usec == b.tv_usec; }
 
-static uint32_t detection_option_hash_func(HashFnc*, const unsigned char* k, int)
+class DetectionOptionHashKeyOps : public HashKeyOperations
 {
-    const detection_option_key_t* key = (const detection_option_key_t*)k;
+public:
+    DetectionOptionHashKeyOps(int rows)
+        : HashKeyOperations(rows)
+    { }
 
-    if ( key->option_type != RULE_OPTION_TYPE_LEAF_NODE )
+    unsigned do_hash(const unsigned char* k, int) override
     {
-        IpsOption* opt = (IpsOption*)key->option_data;
-        return opt->hash();
+        const detection_option_key_t* key = (const detection_option_key_t*)k;
+
+        if ( key->option_type != RULE_OPTION_TYPE_LEAF_NODE )
+        {
+            IpsOption* opt = (IpsOption*)key->option_data;
+            return opt->hash();
+        }
+        return 0;
     }
-    return 0;
-}
 
-static bool detection_option_key_compare_func(const void* k1, const void* k2, size_t)
-{
-    const detection_option_key_t* key1 = (const detection_option_key_t*)k1;
-    const detection_option_key_t* key2 = (const detection_option_key_t*)k2;
+    bool key_compare(const void* k1, const void* k2, size_t) override
+    {
+        const detection_option_key_t* key1 = (const detection_option_key_t*)k1;
+        const detection_option_key_t* key2 = (const detection_option_key_t*)k2;
 
-    assert(key1 && key2);
+        assert(key1 && key2);
 
-    if ( key1->option_type != key2->option_type )
+        if ( key1->option_type != key2->option_type )
+            return false;
+
+        if ( key1->option_type != RULE_OPTION_TYPE_LEAF_NODE )
+        {
+            IpsOption* opt1 = (IpsOption*)key1->option_data;
+            IpsOption* opt2 = (IpsOption*)key2->option_data;
+
+            if ( *opt1 == *opt2 )
+                return true;
+        }
         return false;
-
-    if ( key1->option_type != RULE_OPTION_TYPE_LEAF_NODE )
-    {
-        IpsOption* opt1 = (IpsOption*)key1->option_data;
-        IpsOption* opt2 = (IpsOption*)key2->option_data;
-
-        if ( *opt1 == *opt2 )
-            return true;
     }
-    return false;
-}
+};
 
-static int detection_hash_free_func(void* option_key, void*)
+class DetectionOptionHash : public XHash
 {
-    detection_option_key_t* key = (detection_option_key_t*)option_key;
+public:
 
-    if ( key->option_type != RULE_OPTION_TYPE_LEAF_NODE )
+    DetectionOptionHash(int rows, int key_len)
+        : XHash(rows, key_len)
     {
-        IpsOption* opt = (IpsOption*)key->option_data;
-        IpsManager::delete_option(opt);
+        initialize(new DetectionOptionHashKeyOps(nrows));
     }
-    return 0;
-}
 
-static XHash* DetectionHashTableNew()
-{
-    XHash* doht = new XHash(HASH_RULE_OPTIONS, sizeof(detection_option_key_t),
-        0, 0, false,  nullptr, detection_hash_free_func, true);
+    ~DetectionOptionHash() override
+    {
+        delete_hash_table();
+    }
 
-    doht->set_key_opcodes(detection_option_hash_func, detection_option_key_compare_func);
+    void free_user_data(HashNode* hnode) override
+    {
+        detection_option_key_t* key = (detection_option_key_t*)hnode->key;
 
-    return doht;
-}
-
-void DetectionHashTableFree(XHash* doht)
-{
-    delete doht;
-}
-
-void* add_detection_option(SnortConfig* sc, option_type_t type, void* option_data)
-{
-    if ( !sc->detection_option_hash_table )
-        sc->detection_option_hash_table = DetectionHashTableNew();
-
-    detection_option_key_t key;
-    key.option_type = type;
-    key.option_data = option_data;
-
-    if ( void* p = sc->detection_option_hash_table->get_user_data(&key) )
-        return p;
-
-    sc->detection_option_hash_table->insert(&key, option_data);
-    return nullptr;
-}
+        if ( key->option_type != RULE_OPTION_TYPE_LEAF_NODE )
+        {
+            IpsOption* opt = (IpsOption*)key->option_data;
+            IpsManager::delete_option(opt);
+        }
+    }
+};
 
 static uint32_t detection_option_tree_hash(detection_option_tree_node_t* node)
 {
-    uint32_t a,b,c;
-    int i;
+    assert(node);
 
-    if (!node)
-        return 0;
-
+    uint32_t a, b, c;
     a = b = c = 0;
 
-    for (i=0; i<node->num_children; i++)
+    for ( int i = 0; i < node->num_children; i++)
     {
 #if (defined(__ia64) || defined(__amd64) || defined(_LP64))
         {
@@ -198,19 +188,6 @@ static uint32_t detection_option_tree_hash(detection_option_tree_node_t* node)
     return c;
 }
 
-static uint32_t detection_option_tree_hash_func(HashFnc*, const unsigned char* k, int)
-{
-    const detection_option_key_t* key = (const detection_option_key_t*)k;
-    detection_option_tree_node_t* node;
-
-    if (!key || !key->option_data)
-        return 0;
-
-    node = (detection_option_tree_node_t*)key->option_data;
-
-    return detection_option_tree_hash(node);
-}
-
 static bool detection_option_tree_compare(
     const detection_option_tree_node_t* r, const detection_option_tree_node_t* l)
 {
@@ -232,40 +209,94 @@ static bool detection_option_tree_compare(
     return true;
 }
 
-static bool detection_option_tree_compare_func(const void* k1, const void* k2, size_t)
+void free_detection_option_tree(detection_option_tree_node_t* node)
 {
-    const detection_option_key_t* key_r = (const detection_option_key_t*)k1;
-    const detection_option_key_t* key_l = (const detection_option_key_t*)k2;
+    for (int i = 0; i < node->num_children; i++)
+        free_detection_option_tree(node->children[i]);
 
-    if ( !key_r or !key_l )
-        return false;
-
-    const detection_option_tree_node_t* r = (const detection_option_tree_node_t*)key_r->option_data;
-    const detection_option_tree_node_t* l = (const detection_option_tree_node_t*)key_l->option_data;
-
-    return detection_option_tree_compare(r, l);
+    snort_free(node->children);
+    snort_free(node->state);
+    snort_free(node);
 }
 
-static int detection_option_tree_free_func(void*, void* data)
+class DetectionOptionTreeHashKeyOps : public HashKeyOperations
 {
-    detection_option_tree_node_t* node = (detection_option_tree_node_t*)data;
-    free_detection_option_tree(node);
-    return 0;
+public:
+    DetectionOptionTreeHashKeyOps(int rows)
+        : HashKeyOperations(rows)
+    { }
+
+    unsigned do_hash(const unsigned char* k, int) override
+    {
+        assert(k);
+        const detection_option_key_t* key = (const detection_option_key_t*)k;
+        if ( !key->option_data )
+            return 0;
+
+        detection_option_tree_node_t* node = (detection_option_tree_node_t*)key->option_data;
+
+        return detection_option_tree_hash(node);
+    }
+
+    bool key_compare(const void* k1, const void* k2, size_t) override
+    {
+        assert(k1 && k2);
+
+        const detection_option_key_t* key_r = (const detection_option_key_t*)k1;
+        const detection_option_key_t* key_l = (const detection_option_key_t*)k2;
+
+        const detection_option_tree_node_t* r = (const detection_option_tree_node_t*)key_r->option_data;
+        const detection_option_tree_node_t* l = (const detection_option_tree_node_t*)key_l->option_data;
+
+        return detection_option_tree_compare(r, l);
+    }
+};
+
+class DetectionOptionTreeHash : public XHash
+{
+public:
+    DetectionOptionTreeHash(int rows, int key_len)
+        : XHash(rows, key_len)
+    {
+        initialize(new DetectionOptionTreeHashKeyOps(nrows));
+    }
+
+    ~DetectionOptionTreeHash() override
+    {
+        delete_hash_table();
+    }
+
+    void free_user_data(HashNode* hnode) override
+    {
+        free_detection_option_tree((detection_option_tree_node_t*)hnode->data);
+    }
+
+};
+
+static DetectionOptionHash* DetectionHashTableNew()
+{
+   return new DetectionOptionHash(HASH_RULE_OPTIONS, sizeof(detection_option_key_t));
 }
 
-void DetectionTreeHashTableFree(XHash* dtht)
+static DetectionOptionTreeHash* DetectionTreeHashTableNew()
 {
-    delete dtht;
+    return new DetectionOptionTreeHash(HASH_RULE_TREE, sizeof(detection_option_key_t));
 }
 
-static XHash* DetectionTreeHashTableNew()
+void* add_detection_option(SnortConfig* sc, option_type_t type, void* option_data)
 {
-    XHash* dtht = new XHash(HASH_RULE_TREE, sizeof(detection_option_key_t),
-        0, 0, false, nullptr, detection_option_tree_free_func, true);
+    if ( !sc->detection_option_hash_table )
+        sc->detection_option_hash_table = DetectionHashTableNew();
 
-    dtht->set_key_opcodes(detection_option_tree_hash_func, detection_option_tree_compare_func);
+    detection_option_key_t key;
+    key.option_type = type;
+    key.option_data = option_data;
 
-    return dtht;
+    if ( void* p = sc->detection_option_hash_table->get_user_data(&key) )
+        return p;
+
+    sc->detection_option_hash_table->insert(&key, option_data);
+    return nullptr;
 }
 
 void print_option_tree(detection_option_tree_node_t* node, int level)
@@ -527,7 +558,7 @@ int detection_option_node_evaluate(
 
         // Back up byte_extract vars so they don't get overwritten between rules
         trace_log(detection, TRACE_RULE_VARS, "Rule options variables: \n");
-        for ( int i = 0; i < NUM_IPS_OPTIONS_VARS; ++i )
+        for ( unsigned i = 0; i < NUM_IPS_OPTIONS_VARS; ++i )
         {
             GetVarValueByIndex(&(tmp_byte_extract_vars[i]), (int8_t)i);
             trace_logf_wo_name(detection, TRACE_RULE_VARS, "var[%d]=%d ", i,
@@ -552,7 +583,7 @@ int detection_option_node_evaluate(
                     detection_option_tree_node_t* child_node = node->children[i];
                     dot_node_state_t* child_state = child_node->state + get_instance_id();
 
-                    for ( int j = 0; j < NUM_IPS_OPTIONS_VARS; ++j )
+                    for ( unsigned j = 0; j < NUM_IPS_OPTIONS_VARS; ++j )
                         SetVarValueByIndex(tmp_byte_extract_vars[j], (int8_t)j);
 
                     if ( loop_count > 0 )
@@ -758,7 +789,7 @@ static void detection_option_node_update_otn_stats(detection_option_tree_node_t*
 
     if ( node->num_children )
     {
-        for ( int i=0; i < node->num_children; ++i )
+        for ( int i = 0; i < node->num_children; ++i )
             detection_option_node_update_otn_stats(node->children[i], &local_stats, checks,
                 timeouts, suspends);
     }
@@ -829,16 +860,3 @@ detection_option_tree_node_t* new_node(option_type_t type, void* data)
 
     return p;
 }
-
-void free_detection_option_tree(detection_option_tree_node_t* node)
-{
-    int i;
-    for (i=0; i<node->num_children; i++)
-    {
-        free_detection_option_tree(node->children[i]);
-    }
-    snort_free(node->children);
-    snort_free(node->state);
-    snort_free(node);
-}
-

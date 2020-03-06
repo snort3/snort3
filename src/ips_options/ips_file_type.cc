@@ -29,7 +29,7 @@
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
-#include "hash/hashfcn.h"
+#include "hash/hash_key_operations.h"
 
 using namespace snort;
 

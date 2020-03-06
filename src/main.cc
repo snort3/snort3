@@ -351,7 +351,12 @@ int main_reload_config(lua_State* L)
     if ( !sc )
     {
         if (get_reload_errors())
-            current_request->respond("== reload failed - restart required\n");
+        {
+            std::string response_message = "== reload failed - restart required - ";
+            response_message += get_reload_errors_description() + "\n";
+            current_request->respond(response_message.c_str());
+            reset_reload_errors();
+        }
         else
             current_request->respond("== reload failed - bad config\n");
 

@@ -498,160 +498,53 @@ void SnortConfig::merge(SnortConfig* cmd_line)
     state = new std::vector<void*>[num_slots];
 }
 
-// FIXIT-L this is a work around till snort supports adding/removing
-// stream cache during reload
-bool SnortConfig::verify_stream_inspectors()
-{
-    const std::vector<const char*> inspector_names
-        { "stream_file", "stream_icmp", "stream_ip", "stream_tcp", "stream_udp", "stream_user" };
-    static std::map <const char*, bool> orig_inspectors;
-
-    // If wasn't initialized before try to initialize from current config
-    if (orig_inspectors.empty())
-    {
-        const Inspector* const ptr = InspectorManager::get_inspector("stream", true);
-        if (ptr != nullptr)
-        {
-            for (auto name: inspector_names)
-            {
-                const bool in_orig = InspectorManager::inspector_exists_in_any_policy(name, get_conf());
-                orig_inspectors[name] = in_orig;
-            }
-        }
-    }
-
-    // If now available - compare
-    if (!orig_inspectors.empty())
-    {
-        const Inspector* const ptr = InspectorManager::get_inspector("stream", true, this);
-        if (ptr != nullptr)
-        {
-            for (auto name: inspector_names)
-            {
-                const bool in_new = InspectorManager::inspector_exists_in_any_policy(name, this);
-                if (orig_inspectors[name] != in_new)
-                {
-                    ReloadError("Snort Reload: Adding/removing %s requires a restart.\n", name);
-                    return false;
-                }
-            }
-        }
-    }
-
-    return true;
-}
-
 bool SnortConfig::verify()
 {
+    bool config_ok = false;
+
     if (get_conf()->asn1_mem != asn1_mem)
-    {
-        ReloadError("Snort Reload: Changing the asn1 memory configuration "
-            "requires a restart.\n");
-        return false;
-    }
+        ReloadError("Changing detection.asn1_mem requires a restart.\n");
 
-    if ( bpf_filter != get_conf()->bpf_filter )
-    {
-        ReloadError("Snort Reload: Changing the bpf filter configuration "
-            "requires a restart.\n");
-        return false;
-    }
+    else if ( get_conf()->bpf_filter != bpf_filter )
+        ReloadError("Changing packets.bfp_filter requires a restart.\n");
 
-    if ( respond_attempts != get_conf()->respond_attempts ||
-        respond_device != get_conf()->respond_device )
-    {
-        ReloadError("Snort Reload: Changing config response requires a restart.\n");
-        return false;
-    }
+    else if ( get_conf()->respond_attempts != respond_attempts )
+        ReloadError("Changing active.attempts requires a restart.\n");
 
-    if (get_conf()->chroot_dir != chroot_dir)
-    {
-        ReloadError("Snort Reload: Changing the chroot directory "
-            "configuration requires a restart.\n");
-        return false;
-    }
+    else if (  get_conf()->respond_device != respond_device )
+        ReloadError("Changing active.device requires a restart.\n");
 
-    if ((get_conf()->run_flags & RUN_FLAG__DAEMON) !=
-        (run_flags & RUN_FLAG__DAEMON))
-    {
-        ReloadError("Snort Reload: Changing to or from daemon mode "
-            "requires a restart.\n");
-        return false;
-    }
+    else if (get_conf()->chroot_dir != chroot_dir)
+        ReloadError("Changing process.chroot requires a restart.\n");
 
-    /* Orig log dir because a chroot might have changed it */
-    if (get_conf()->orig_log_dir != orig_log_dir)
-    {
-        ReloadError("Snort Reload: Changing the log directory "
-            "configuration requires a restart.\n");
-        return false;
-    }
+    else if ((get_conf()->run_flags & RUN_FLAG__DAEMON) != (run_flags & RUN_FLAG__DAEMON))
+        ReloadError("Changing process.daemon requires a restart.\n");
 
-    if (get_conf()->max_attribute_hosts != max_attribute_hosts)
-    {
-        ReloadError("Snort Reload: Changing max_attribute_hosts "
-            "configuration requires a restart.\n");
-        return false;
-    }
-    if (get_conf()->max_attribute_services_per_host != max_attribute_services_per_host)
-    {
-        ReloadError("Snort Reload: Changing max_attribute_services_per_host "
-            "configuration requires a restart.\n");
-        return false;
-    }
+    else if (get_conf()->orig_log_dir != orig_log_dir)
+        ReloadError("Changing output.logdir requires a restart.\n");
 
-    if ((get_conf()->run_flags & RUN_FLAG__NO_PROMISCUOUS) !=
-        (run_flags & RUN_FLAG__NO_PROMISCUOUS))
-    {
-        ReloadError("Snort Reload: Changing to or from promiscuous mode "
-            "requires a restart.\n");
-        return false;
-    }
+    else if (get_conf()->group_id != group_id)
+        ReloadError("Changing process.setgid requires a restart.\n");
 
-    if (get_conf()->group_id != group_id)
-    {
-        ReloadError("Snort Reload: Changing the group id configuration requires a restart.\n");
-        return false;
-    }
+    else if (get_conf()->user_id != user_id)
+        ReloadError("Changing process.setuid requires a restart.\n");
 
-    if (get_conf()->user_id != user_id)
-    {
-        ReloadError("Snort Reload: Changing the user id configuration requires a restart.\n");
-        return false;
-    }
+    else if (get_conf()->daq_config->get_mru_size() != daq_config->get_mru_size())
+        ReloadError("Changing daq.snaplen requires a restart.\n");
 
-    if (get_conf()->daq_config->get_mru_size() != daq_config->get_mru_size())
-    {
-        ReloadError("Snort Reload: Changing the packet snaplen "
-            "configuration requires a restart.\n");
-        return false;
-    }
+    else if (get_conf()->threshold_config->memcap != threshold_config->memcap)
+        ReloadError("Changing alerts.event_filter_memcap requires a restart.\n");
 
-    if (get_conf()->threshold_config->memcap !=
-        threshold_config->memcap)
-    {
-        ReloadError("Snort Reload: Changing the threshold memcap "
-            "configuration requires a restart.\n");
-        return false;
-    }
+    else  if (get_conf()->rate_filter_config->memcap != rate_filter_config->memcap)
+        ReloadError("Changing alerts.rate_filter_memcap requires a restart.\n");
 
-    if (get_conf()->rate_filter_config->memcap !=
-        rate_filter_config->memcap)
-    {
-        ReloadError("Snort Reload: Changing the rate filter memcap "
-            "configuration requires a restart.\n");
-        return false;
-    }
+    else if (get_conf()->detection_filter_config->memcap != detection_filter_config->memcap)
+        ReloadError("Changing alerts.detection_filter_memcap requires a restart.\n");
 
-    if (get_conf()->detection_filter_config->memcap !=
-        detection_filter_config->memcap)
-    {
-        ReloadError("Snort Reload: Changing the detection filter memcap "
-            "configuration requires a restart.\n");
-        return false;
-    }
+    else
+        config_ok = true;
 
-    return verify_stream_inspectors();
+    return config_ok;
 }
 
 void SnortConfig::set_alert_before_pass(bool enabled)

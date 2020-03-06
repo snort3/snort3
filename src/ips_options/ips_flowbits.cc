@@ -46,7 +46,8 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/ghash.h"
-#include "hash/hashfcn.h"
+#include "hash/hash_defs.h"
+#include "hash/hash_key_operations.h"
 #include "log/messages.h"
 #include "parser/mstring.h"
 #include "protocols/packet.h"
@@ -618,7 +619,7 @@ static FLOWBITS_OBJECT* getFlowBitItem(char* flowbitName, FLOWBITS_OP* flowbits,
         }
 
         int hstatus = flowbit_state->flowbits_hash->insert(flowbitName, flowbits_item);
-        if (hstatus != GHASH_OK)
+        if (hstatus != HASH_OK)
             ParseError("Could not add flowbits key (%s) to hash.",flowbitName);
     }
     flowbits_item->toggle = flowbit_state->flowbits_toggle;
@@ -811,7 +812,7 @@ static FLOWBITS_GRP* getFlowBitGroup(char* groupName, FlowBitState* flowbit_stat
         // new group defined, add (bitop set later once we know size)
         flowbits_grp = (FLOWBITS_GRP*)snort_calloc(sizeof(*flowbits_grp));
         int hstatus = flowbit_state->flowbits_grp_hash->insert(groupName, flowbits_grp);
-        if (hstatus != GHASH_OK)
+        if (hstatus != HASH_OK)
             ParseAbort("Could not add flowbits group (%s) to hash.\n",groupName);
 
         flowbit_state->flowbits_grp_count++;

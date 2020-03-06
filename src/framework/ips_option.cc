@@ -25,7 +25,7 @@
 
 #include <cstring>
 
-#include "hash/hashfcn.h"
+#include "hash/hash_key_operations.h"
 
 using namespace snort;
 

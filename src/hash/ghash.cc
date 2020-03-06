@@ -62,6 +62,7 @@
 
 #include "utils/util.h"
 
+#include "hash_defs.h"
 #include "primetable.h"
 
 namespace snort
@@ -75,7 +76,7 @@ GHash::GHash(int nrows_, unsigned keysize, bool userkey, gHashFree userfree)
     else
         nrows = -nrows_;
 
-    hashfcn = hashfcn_new(nrows);
+    hashfcn = new HashKeyOperations(nrows);
     table = (GHashNode**)snort_calloc(nrows, sizeof(GHashNode*));
     for ( int i = 0; i < nrows; i++ )
         table[i] = nullptr;
@@ -87,8 +88,6 @@ GHash::GHash(int nrows_, unsigned keysize, bool userkey, gHashFree userfree)
 
 GHash::~GHash()
 {
-    hashfcn_free(hashfcn);
-
     for (int i = 0; i < nrows; i++)
         for ( GHashNode* node = table[i]; node; )
         {
@@ -105,22 +104,13 @@ GHash::~GHash()
         }
 
     snort_free(table);
+    delete hashfcn;
 }
 
-// set key length, hashkey, and index parameters required to find/add/remove a node
-// the parameters set are valid until for the life of the initial method called
-void GHash::set_node_parameters(const void* const key)
-{
-    klen = ( keysize > 0  ) ? keysize : strlen((const char*)key) + 1;
-    hashkey = hashfcn->hash_fcn(hashfcn, (const unsigned char*)key, klen);
-    index = hashkey % nrows;
-}
-
-GHashNode* GHash::find_node(const void* const key)
+GHashNode* GHash::find_node(const void* const key, unsigned index)
 {
     assert(key);
 
-    set_node_parameters(key);
     for ( GHashNode* hnode = table[index]; hnode; hnode = hnode->next )
     {
         if ( keysize == 0 )
@@ -130,7 +120,7 @@ GHashNode* GHash::find_node(const void* const key)
         }
         else
         {
-            if ( hashfcn->keycmp_fcn(hnode->key, key, keysize) )
+            if ( hashfcn->key_compare(hnode->key, key, keysize) )
                 return hnode;
         }
     }
@@ -142,10 +132,11 @@ int GHash::insert(const void* const key, void* const data)
 {
     assert(key && data);
 
-    if ( GHashNode* hnode = find_node(key) )
+    unsigned index = get_index(key);
+    if ( GHashNode* hnode = find_node(key, index) )
     {
         cnode = hnode;
-        return GHASH_INTABLE;
+        return HASH_INTABLE;
     }
 
     GHashNode* hnode = (GHashNode*)snort_calloc(sizeof(GHashNode));
@@ -155,6 +146,7 @@ int GHash::insert(const void* const key, void* const data)
     }
     else
     {
+        unsigned klen = get_key_length(key);
         hnode->key = snort_alloc(klen);
         memcpy(const_cast<void*>(hnode->key), key, klen);
     }
@@ -177,14 +169,15 @@ int GHash::insert(const void* const key, void* const data)
 
     count++;
 
-    return GHASH_OK;
+    return HASH_OK;
 }
 
 void* GHash::find(const void* const key)
 {
     assert(key);
 
-    GHashNode* hnode = find_node(key);
+    unsigned index = get_index(key);
+    GHashNode* hnode = find_node(key, index);
     if ( hnode )
         return hnode->data;
 
@@ -219,17 +212,18 @@ int GHash::free_node(unsigned index, GHashNode* hnode)
     snort_free(hnode);
     count--;
 
-    return GHASH_OK;
+    return HASH_OK;
 }
 
 int GHash::remove(const void* const key)
 {
     assert(key);
 
-    if ( GHashNode* hnode = find_node(key) )
+    unsigned index = get_index(key);
+    if ( GHashNode* hnode = find_node(key, index) )
         return free_node(index, hnode);
     else
-        return GHASH_NOT_FOUND;
+        return HASH_NOT_FOUND;
 }
 
 void GHash::next()
@@ -272,9 +266,10 @@ GHashNode* GHash::find_next()
     return n;
 }
 
-void GHash::set_key_opcodes(hash_func hash_fcn, keycmp_func keycmp_fcn)
+void GHash::set_hashkey_ops(HashKeyOperations* hk)
 {
-    hashfcn_set_keyops(hashfcn, hash_fcn, keycmp_fcn);
+    delete hashfcn;
+    hashfcn = hk;
 }
 
 }
