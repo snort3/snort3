@@ -27,6 +27,8 @@
 // state.  Inspector state is stored in FlowData, and Flow manages a list
 // of FlowData items.
 
+#include <sys/time.h>
+
 #include "detection/ips_context_chain.h"
 #include "flow/flow_stash.h"
 #include "framework/data_bus.h"
