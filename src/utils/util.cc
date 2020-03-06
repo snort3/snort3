@@ -63,6 +63,10 @@ extern "C" {
 
 #include "util_cstring.h"
 
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+#endif
+
 using namespace snort;
 
 /****************************************************************************
@@ -211,7 +215,9 @@ int gmt2local(time_t t)
         t = time(nullptr);
 
     struct tm gmt;
-    gmtime_r(&t, &gmt);
+    struct tm* lt = gmtime_r(&t, &gmt);
+    if (lt == nullptr)
+        return 0;
 
     struct tm loc;
     localtime_r(&t, &loc);
@@ -634,4 +640,9 @@ char* snort_strdup(const char* str)
 
 }
 
-
+#ifdef UNIT_TEST
+TEST_CASE("gmt2local_time_out_of_range", "[util]")
+{
+    REQUIRE((gmt2local(0xffffffff1fff2f)==0));
+}
+#endif
