@@ -249,23 +249,44 @@ IpsOption::EvalStatus ByteMathOption::eval(Cursor& c, Packet* p)
     // If the rule isn't written correctly, there is a risk for wrap around.
     switch (config.oper)
     {
-    case BM_PLUS: value += rvalue;
-        break;
-
-    case BM_MINUS: value -= rvalue;
-        break;
-
-    case BM_MULTIPLY: value *= rvalue;
-        break;
-
+    case BM_PLUS:
+        if( value + rvalue < value )
+        {
+            return NO_MATCH;
+        }
+        else
+        {
+            value += rvalue;
+            break;
+        }
+    case BM_MINUS:
+        if( value < rvalue )
+        {
+            return NO_MATCH;
+        }
+        else
+        {
+            value -= rvalue;
+            break;
+        }
+    case BM_MULTIPLY:
+        if ( value != 0 and rvalue != 0 and (((value * rvalue) / rvalue) != value) )
+        {
+            return NO_MATCH;
+        }
+        else
+        {
+            value *= rvalue;
+            break;
+        }
     case BM_DIVIDE: value /= rvalue;
-        break;
+            break;
 
     case BM_LEFT_SHIFT: value <<= rvalue;
-        break;
+            break;
 
     case BM_RIGHT_SHIFT: value >>= rvalue;
-        break;
+            break;
     }
 
     SetVarValueByIndex(value, config.result_var);
