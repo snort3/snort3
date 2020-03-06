@@ -67,9 +67,6 @@ TEST(host_cache, hash_test)
 
 int main(int argc, char** argv)
 {
-    //  Use this if you want to turn off memory checks entirely:
-    // MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
-
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
 

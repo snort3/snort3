@@ -134,7 +134,7 @@ static IpsOption* get_option(Module* mod, const char* pat, bool relative = false
     }
     mod->end(ips_regex->name, 0, nullptr);
 
-    IpsApi* api = (IpsApi*)ips_regex;
+    const IpsApi* api = (const IpsApi*) ips_regex;
     IpsOption* opt = api->ctor(mod, nullptr);
 
     return opt;
@@ -164,7 +164,7 @@ TEST(ips_regex_base, base)
 
 TEST(ips_regex_base, ips_option)
 {
-    const IpsApi* ips_api = (IpsApi*)ips_regex;
+    const IpsApi* ips_api = (const IpsApi*) ips_regex;
 
     CHECK(ips_api->ctor);
     CHECK(ips_api->dtor);
@@ -280,7 +280,7 @@ TEST_GROUP(ips_regex_option)
     }
     void teardown() override
     {
-        IpsApi* api = (IpsApi*)ips_regex;
+        const IpsApi* api = (const IpsApi*) ips_regex;
         api->dtor(opt);
         if ( do_cleanup )
             scratcher->cleanup(snort_conf);
@@ -299,7 +299,7 @@ TEST(ips_regex_option, hash)
 
     do_cleanup = scratcher->setup(snort_conf);
 
-    IpsApi* api = (IpsApi*)ips_regex;
+    const IpsApi* api = (const IpsApi*) ips_regex;
     api->dtor(opt2);
 }
 
@@ -310,7 +310,7 @@ TEST(ips_regex_option, opeq)
 
     do_cleanup = scratcher->setup(snort_conf);
 
-    IpsApi* api = (IpsApi*)ips_regex;
+    const IpsApi* api = (const IpsApi*) ips_regex;
     api->dtor(opt2);
 }
 
@@ -319,12 +319,12 @@ TEST(ips_regex_option, match_absolute)
     do_cleanup = scratcher->setup(snort_conf);
 
     Packet pkt;
-    pkt.data = (uint8_t*)"* foo stew *";
-    pkt.dsize = strlen((char*)pkt.data);
+    pkt.data = (const uint8_t*) "* foo stew *";
+    pkt.dsize = strlen((const char*) pkt.data);
 
     Cursor c(&pkt);
     CHECK(opt->eval(c, &pkt) == IpsOption::MATCH);
-    CHECK(!strcmp((char*)c.start(), " stew *"));
+    CHECK(!strcmp((const char*) c.start(), " stew *"));
     CHECK(opt->retry(c));
 }
 
@@ -333,8 +333,8 @@ TEST(ips_regex_option, no_match_delta)
     do_cleanup = scratcher->setup(snort_conf);
 
     Packet pkt;
-    pkt.data = (uint8_t*)"* foo stew *";
-    pkt.dsize = strlen((char*)pkt.data);
+    pkt.data = (const uint8_t*) "* foo stew *";
+    pkt.dsize = strlen((const char*) pkt.data);
 
     Cursor c(&pkt);
     c.set_delta(3);
@@ -359,7 +359,7 @@ TEST_GROUP(ips_regex_option_relative)
     }
     void teardown() override
     {
-        IpsApi* api = (IpsApi*)ips_regex;
+        const IpsApi* api = (const IpsApi*) ips_regex;
         api->dtor(opt);
         if ( do_cleanup )
             scratcher->cleanup(snort_conf);
@@ -372,8 +372,8 @@ TEST(ips_regex_option_relative, no_match)
     do_cleanup = scratcher->setup(snort_conf);
 
     Packet pkt;
-    pkt.data = (uint8_t*)"* foo stew *";
-    pkt.dsize = strlen((char*)pkt.data);
+    pkt.data = (const uint8_t*)"* foo stew *";
+    pkt.dsize = strlen((const char*) pkt.data);
 
     Cursor c(&pkt);
     c.add_pos(3);

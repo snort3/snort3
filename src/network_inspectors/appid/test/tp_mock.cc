@@ -48,7 +48,7 @@ public:
         cerr << WhereMacro << endl;
     }
 
-    ~ThirdPartyAppIdContextImpl()
+    ~ThirdPartyAppIdContextImpl() override
     {
         cerr << WhereMacro << endl;
     }

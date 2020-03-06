@@ -62,7 +62,7 @@ class MockAppIdDnsSession : public AppIdDnsSession
 public:
     MockAppIdDnsSession()
     {
-        host = (char*)APPID_ID_UT_DNS_HOST;
+        host = (const char*) APPID_ID_UT_DNS_HOST;
         host_offset = APPID_UT_DNS_HOST_OFFSET;
         record_type = APPID_UT_DNS_PATTERN_CNAME_REC;
         response_type = APPID_UT_DNS_NOERROR;

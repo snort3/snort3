@@ -95,7 +95,7 @@ public:
     RetryQueue(unsigned interval_ms)
     {
         assert(interval_ms > 0);
-        interval = { interval_ms / 1000, (interval_ms % 1000) * 1000 };
+        interval = { interval_ms / 1000, static_cast<suseconds_t>((interval_ms % 1000) * 1000) };
     }
 
     ~RetryQueue()
@@ -545,7 +545,7 @@ void Analyzer::idle()
     struct timeval now, increment;
     unsigned int timeout = SnortConfig::get_conf()->daq_config->timeout;
     packet_gettimeofday(&now);
-    increment = { timeout / 1000, (timeout % 1000) * 1000 };
+    increment = { timeout / 1000, static_cast<suseconds_t>((timeout % 1000) * 1000) };
     timeradd(&now, &increment, &now);
     packet_time_update(&now);
 

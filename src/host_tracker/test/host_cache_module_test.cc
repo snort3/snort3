@@ -89,7 +89,7 @@ TEST_GROUP(host_cache_module)
     }
 };
 
-void try_reload_prune(bool is_not_locked)
+static void try_reload_prune(bool is_not_locked)
 {
     if ( is_not_locked )
     {

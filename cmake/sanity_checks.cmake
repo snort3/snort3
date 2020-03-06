@@ -153,3 +153,7 @@ endif()
 if (SAFEC_FOUND)
     check_library_exists (${SAFEC_LIBRARIES} printf_s "" HAVE_SAFEC)
 endif()
+
+if (UUID_FOUND)
+    check_library_exists ("${UUID_LIBRARY}" uuid_parse "" HAVE_UUID)
+endif()

@@ -1516,7 +1516,7 @@ struct RulePtr
 
     RulePtr(const Module* m, const RuleMap* r) : mod(m), rule(r) { }
 
-    bool operator< (RulePtr& rhs) const
+    bool operator< (const RulePtr& rhs) const
     {
         if ( mod->get_gid() != rhs.mod->get_gid() )
             return mod->get_gid() < rhs.mod->get_gid();

@@ -35,7 +35,7 @@ class DummySession : public Session
     public:
         DummySession(Flow* f) : Session(f) { }
         void clear() override { }
-        ~DummySession() { }
+        ~DummySession() override = default;
 };
 
 //-------------------------------------------------------------------------

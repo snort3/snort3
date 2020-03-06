@@ -82,7 +82,7 @@ static struct __attribute__((__packed__)) TestUpdateMessage {
         0,
         10
     },
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 }
 };
 
 
@@ -315,8 +315,6 @@ TEST(high_availability_manager_test, inst_init_term)
 
 TEST_GROUP(flow_ha_state_test)
 {
-    void setup() override { }
-    void teardown() override { }
 };
 
 TEST(flow_ha_state_test, timing_test)

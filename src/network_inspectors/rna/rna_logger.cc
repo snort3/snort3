@@ -33,6 +33,11 @@
 #include "catch/snort_catch.h"
 #endif
 
+// FIXIT-M workaround for OS X, logger should be using sfip anyway
+#ifndef s6_addr32
+#define s6_addr32 __u6_addr.__u6_addr32
+#endif
+
 using namespace snort;
 
 bool RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,

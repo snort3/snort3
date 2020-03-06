@@ -1622,7 +1622,7 @@ bool HttpPatternMatchers::get_appid_from_url(const char* host, const char* url, 
         path = url + host_len;
     }
 
-    patterns[0].pattern = (uint8_t*)host;
+    patterns[0].pattern = (const uint8_t*)host;
     patterns[0].patternSize = host_len;
     patterns[1].pattern = (const uint8_t*)path;
     patterns[1].patternSize = path_len;

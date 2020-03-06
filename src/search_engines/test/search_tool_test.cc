@@ -72,7 +72,7 @@ unsigned get_instance_id()
 { return 0; }
 
 void LogValue(const char*, const char*, FILE*) { }
-SO_PUBLIC void LogMessage(const char*, ...) { }
+void LogMessage(const char*, ...) { }
 [[noreturn]] void FatalError(const char*,...) { exit(1); }
 void LogCount(char const*, uint64_t, FILE*) { }
 void LogStat(const char*, double, FILE*) { }
@@ -162,10 +162,10 @@ Mpse* MpseManager::get_search_engine(const char *type)
     const MpseApi* api;
 
     if ( !strcmp(type, "ac_bnfa") )
-        api = (MpseApi*)se_ac_bnfa;
+        api = (const MpseApi*) se_ac_bnfa;
 
     else if ( !strcmp(type, "ac_full") )
-        api = (MpseApi*)se_ac_full;
+        api = (const MpseApi*) se_ac_full;
 
     else
         return nullptr;

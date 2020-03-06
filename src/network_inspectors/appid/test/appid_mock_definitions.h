@@ -24,7 +24,7 @@
 #include "service_inspectors/http_inspect/http_msg_header.h"
 
 class Inspector;
-struct ThirdPartyAppIdContext;
+class ThirdPartyAppIdContext;
 
 ThirdPartyAppIdContext* tp_appid_ctxt = nullptr;
 
@@ -120,20 +120,20 @@ void ServiceDiscoveryState::set_service_id_valid(ServiceDetector*) { }
 // Stubs for service_plugins/service_discovery.h
 int ServiceDiscovery::incompatible_data(AppIdSession&, const Packet*, AppidSessionDirection, ServiceDetector*)
 {
-  return 0;
+    return 0;
 }
 
 int ServiceDiscovery::fail_service(AppIdSession&, const Packet*, AppidSessionDirection, ServiceDetector*, ServiceDiscoveryState*)
 {
-  return 0;
+    return 0;
 }
 
-void mock_init_appid_pegs()
+inline void mock_init_appid_pegs()
 {
     AppIdPegCounts::init_pegs();
 }
 
-void mock_cleanup_appid_pegs()
+inline void mock_cleanup_appid_pegs()
 {
     AppIdPegCounts::cleanup_pegs();
     AppIdPegCounts::cleanup_peg_info();

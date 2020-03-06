@@ -47,15 +47,6 @@ char* snort_strdup(const char* s)
 
 TEST_GROUP(tcp_connector_module)
 {
-    void setup() override
-    {
-        MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
-    }
-
-    void teardown() override
-    {
-        MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
-    }
 };
 
 TEST(tcp_connector_module, test_call)

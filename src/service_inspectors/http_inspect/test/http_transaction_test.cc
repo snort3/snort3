@@ -48,7 +48,7 @@ fd_status_t File_Decomp_StopFree(fd_session_t*) { return File_Decomp_OK; }
 size_t str_to_hash(unsigned char const*, size_t) { return 0; }
 }
 
-THREAD_LOCAL PegCount HttpModule::peg_counts[1];
+THREAD_LOCAL PegCount HttpModule::peg_counts[PEG_COUNT_MAX] = { };
 
 class HttpUnitTestSetup
 {
