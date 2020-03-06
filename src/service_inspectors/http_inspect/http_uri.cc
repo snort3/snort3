@@ -191,126 +191,131 @@ void HttpUri::normalize()
     // Almost all HTTP requests are honest and rarely need expensive normalization processing. We
     // do a quick scan for red flags and only perform normalization if something comes up.
     // Otherwise we set the normalized fields to point at the raw values.
-    if ((host.length() > 0) &&
-            UriNormalizer::need_norm(host, false, uri_param, infractions, events))
-        *infractions += INF_URI_NEED_NORM_HOST;
-    if ((path.length() > 0) &&
-            UriNormalizer::need_norm(path, true, uri_param, infractions, events))
-        *infractions += INF_URI_NEED_NORM_PATH;
-    if ((query.length() > 0) &&
-            UriNormalizer::need_norm(query, false, uri_param, infractions, events))
-        *infractions += INF_URI_NEED_NORM_QUERY;
-    if ((fragment.length() > 0) &&
-            UriNormalizer::need_norm(fragment, false, uri_param, infractions, events))
-        *infractions += INF_URI_NEED_NORM_FRAGMENT;
-
-    if (!((*infractions & INF_URI_NEED_NORM_PATH)  || (*infractions & INF_URI_NEED_NORM_HOST) ||
-          (*infractions & INF_URI_NEED_NORM_QUERY) || (*infractions & INF_URI_NEED_NORM_FRAGMENT)))
+    switch (uri_type)
     {
-        // This URI is OK, normalization not required
-        host_norm.set(host);
-        path_norm.set(path);
-        query_norm.set(query);
-        fragment_norm.set(fragment);
-        classic_norm.set(uri);
-        check_oversize_dir(path_norm);
-        return;
-    }
-
-    HttpModule::increment_peg_counts(PEG_URI_NORM);
-
-    // Create a new buffer containing the normalized URI by normalizing each individual piece.
-    const uint32_t total_length = uri.length() + UriNormalizer::URI_NORM_EXPANSION;
-    uint8_t* const new_buf = new uint8_t[total_length];
-    uint8_t* current = new_buf;
-    if (scheme.length() >= 0)
-    {
-        memcpy(current, scheme.start(), scheme.length());
-        current += scheme.length();
-        memcpy(current, "://", 3);
-        current += 3;
-    }
-    if (host.length() > 0)
-    {
-        if (*infractions & INF_URI_NEED_NORM_HOST)
-            UriNormalizer::normalize(host, host_norm, false, current, uri_param, infractions,
-                events);
-        else
+        case URI_ASTERISK:
+        case URI__PROBLEMATIC:
+            classic_norm.set(uri);
+            return;
+        case URI_AUTHORITY:
         {
-            // The host component is not changing but other parts of the URI are being normalized.
-            // We need a copy of the raw host to provide that part of the normalized URI buffer we
-            // are assembling. But the normalized component will refer to the original raw buffer
-            // on the chance that the data retention policy in use might keep it longer.
-            memcpy(current, host.start(), host.length());
-            host_norm.set(host);
+            if ((host.length() > 0) && 
+                    UriNormalizer::need_norm(host, false, uri_param, infractions, events))
+            {
+                const int total_length = uri.length();
+
+                uint8_t* const new_buf = new uint8_t[total_length];
+                uint8_t* current = new_buf;
+
+                *infractions += INF_URI_NEED_NORM_HOST;
+
+                HttpModule::increment_peg_counts(PEG_URI_NORM);
+
+                UriNormalizer::normalize(host, host_norm, false, current, uri_param, infractions,
+                    events);
+
+                current += host_norm.length();
+
+                if (port.length() >= 0)
+                {
+                    memcpy(current, ":", 1);
+                    current += 1;
+                    memcpy(current, port.start(), port.length());
+                    current += port.length();
+                }
+
+                assert(current - new_buf <= total_length);
+
+                classic_norm.set(current - new_buf, new_buf, true);
+                return;
+            }
+
+            classic_norm.set(uri);
+            return;
         }
-        current += host_norm.length();
-    }
-    if (port.length() >= 0)
-    {
-        memcpy(current, ":", 1);
-        current += 1;
-        memcpy(current, port.start(), port.length());
-        current += port.length();
-    }
-    if (path.length() > 0)
-    {
-        if (*infractions & INF_URI_NEED_NORM_PATH)
-            UriNormalizer::normalize(path, path_norm, true, current, uri_param, infractions,
-                events);
-        else
+        case URI_ABSPATH:
+        case URI_ABSOLUTE:
         {
-            memcpy(current, path.start(), path.length());
-            path_norm.set(path);
+            if ((path.length() > 0) &&
+                    UriNormalizer::need_norm(path, true, uri_param, infractions, events))
+                *infractions += INF_URI_NEED_NORM_PATH;
+            if ((query.length() > 0) &&
+                    UriNormalizer::need_norm(query, false, uri_param, infractions, events))
+                *infractions += INF_URI_NEED_NORM_QUERY;
+
+            if (!((*infractions & INF_URI_NEED_NORM_PATH)  || (*infractions & INF_URI_NEED_NORM_QUERY)))
+            {
+                // This URI is OK, normalization not required
+                path_norm.set(path);
+                query_norm.set(query);
+ 
+                const int path_len = (path.length() > 0) ? path.length() : 0;
+                // query_len = length of query + 1 (? char)
+                const int query_len = (query.length() >= 0) ? query.length() + 1 : 0;
+
+                classic_norm.set(path_len + query_len, abs_path.start());
+
+                check_oversize_dir(path_norm);
+                return;
+            }
+
+            HttpModule::increment_peg_counts(PEG_URI_NORM);
+
+            // Create a new buffer containing the normalized URI by normalizing each individual piece.
+            int total_length = path.length() ? path.length() + UriNormalizer::URI_NORM_EXPANSION : 0;
+            total_length += (query.length() >= 0) ? query.length() + 1 : 0;
+            uint8_t* const new_buf = new uint8_t[total_length];
+            uint8_t* current = new_buf;
+
+            if (path.length() > 0)
+            {
+                if (*infractions & INF_URI_NEED_NORM_PATH)
+                    UriNormalizer::normalize(path, path_norm, true, current, uri_param, infractions,
+                        events);
+                else
+                {
+                    memcpy(current, path.start(), path.length());
+                    path_norm.set(path);
+                }
+                current += path_norm.length();
+            }
+            if (query.length() >= 0)
+            {
+                memcpy(current, "?", 1);
+                current += 1;
+                if (*infractions & INF_URI_NEED_NORM_QUERY)
+                    UriNormalizer::normalize(query, query_norm, false, current, uri_param, infractions,
+                        events);
+                else
+                {
+                    memcpy(current, query.start(), query.length());
+                    query_norm.set(query);
+                }
+                current += query_norm.length();
+            }
+
+            assert(current - new_buf <= total_length);
+
+            if ((*infractions & INF_URI_MULTISLASH) || (*infractions & INF_URI_SLASH_DOT) ||
+                (*infractions & INF_URI_SLASH_DOT_DOT))
+            {
+                HttpModule::increment_peg_counts(PEG_URI_PATH);
+            }
+
+            if ((*infractions & INF_URI_U_ENCODE) || (*infractions & INF_URI_UNKNOWN_PERCENT) ||
+                (*infractions & INF_URI_PERCENT_UNRESERVED) || (*infractions & INF_URI_PERCENT_UTF8_2B) ||
+                (*infractions & INF_URI_PERCENT_UTF8_3B) || (*infractions & INF_URI_DOUBLE_DECODE))
+            {
+                HttpModule::increment_peg_counts(PEG_URI_CODING);
+            }
+
+            check_oversize_dir(path_norm);
+
+            classic_norm.set(current - new_buf, new_buf, true);
         }
-        current += path_norm.length();
+        default:
+            return;
     }
-    if (query.length() >= 0)
-    {
-        memcpy(current, "?", 1);
-        current += 1;
-        if (*infractions & INF_URI_NEED_NORM_QUERY)
-            UriNormalizer::normalize(query, query_norm, false, current, uri_param, infractions,
-                events);
-        else
-        {
-            memcpy(current, query.start(), query.length());
-            query_norm.set(query);
-        }
-        current += query_norm.length();
-    }
-    if (fragment.length() >= 0)
-    {
-        memcpy(current, "#", 1);
-        current += 1;
-        if (*infractions & INF_URI_NEED_NORM_FRAGMENT)
-            UriNormalizer::normalize(fragment, fragment_norm, false, current, uri_param,
-                infractions, events);
-        else
-        {
-            memcpy(current, fragment.start(), fragment.length());
-            fragment_norm.set(fragment);
-        }
-        current += fragment_norm.length();
-    }
-    assert(current - new_buf <= total_length);
-
-    if ((*infractions & INF_URI_MULTISLASH) || (*infractions & INF_URI_SLASH_DOT) ||
-        (*infractions & INF_URI_SLASH_DOT_DOT))
-    {
-        HttpModule::increment_peg_counts(PEG_URI_PATH);
-    }
-
-    if ((*infractions & INF_URI_U_ENCODE) || (*infractions & INF_URI_UNKNOWN_PERCENT) ||
-        (*infractions & INF_URI_PERCENT_UNRESERVED) || (*infractions & INF_URI_PERCENT_UTF8_2B) ||
-        (*infractions & INF_URI_PERCENT_UTF8_3B) || (*infractions & INF_URI_DOUBLE_DECODE))
-    {
-        HttpModule::increment_peg_counts(PEG_URI_CODING);
-    }
-
-    check_oversize_dir(path_norm);
-
-    classic_norm.set(current - new_buf, new_buf, true);
 }
 
 size_t HttpUri::get_file_proc_hash()
@@ -324,4 +329,46 @@ size_t HttpUri::get_file_proc_hash()
     }
 
     return abs_path_hash;
+}
+
+const Field& HttpUri::get_norm_host()
+{
+    if (host_norm.length() != STAT_NOT_COMPUTE)
+        return host_norm;
+
+    if (host.length() > 0 and
+        UriNormalizer::need_norm(host, false, uri_param, infractions, events))
+    {
+        uint8_t *buf = new uint8_t[host.length()];
+
+        *infractions += INF_URI_NEED_NORM_HOST;
+         
+        UriNormalizer::normalize(host, host_norm, false, buf, uri_param, 
+            infractions, events, true);
+    }
+    else
+        host_norm.set(host);
+
+    return host_norm;
+}
+
+const Field& HttpUri::get_norm_fragment()
+{
+    if (fragment_norm.length() != STAT_NOT_COMPUTE)
+        return fragment_norm;
+
+    if ((fragment.length() > 0) and 
+        UriNormalizer::need_norm(fragment, false, uri_param, infractions, events))
+    {
+        uint8_t *buf = new uint8_t[fragment.length()];
+
+        *infractions += INF_URI_NEED_NORM_FRAGMENT;
+
+        UriNormalizer::normalize(fragment, fragment_norm, false, buf, uri_param,
+            infractions, events, true);
+    }
+    else
+        fragment_norm.set(fragment);
+
+    return fragment_norm;
 }

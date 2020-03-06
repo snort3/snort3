@@ -32,7 +32,8 @@ using namespace HttpEnums;
 using namespace snort;
 
 void UriNormalizer::normalize(const Field& input, Field& result, bool do_path, uint8_t* buffer,
-    const HttpParaList::UriParam& uri_param, HttpInfractions* infractions, HttpEventGen* events)
+    const HttpParaList::UriParam& uri_param, HttpInfractions* infractions, HttpEventGen* events,
+    bool own_the_buffer)
 {
     // Normalize percent encodings and similar escape sequences
     int32_t data_length = norm_char_clean(input, buffer, uri_param, infractions, events);
@@ -47,7 +48,7 @@ void UriNormalizer::normalize(const Field& input, Field& result, bool do_path, u
         data_length = norm_path_clean(buffer, data_length, infractions, events);
     }
 
-    result.set(data_length, buffer);
+    result.set(data_length, buffer, own_the_buffer);
 }
 
 bool UriNormalizer::need_norm(const Field& uri_component, bool do_path,

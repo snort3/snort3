@@ -50,10 +50,10 @@ public:
     const Field& get_query() { return query; }
     const Field& get_fragment() { return fragment; }
 
-    const Field& get_norm_host() { return host_norm; }
+    const Field& get_norm_host();
     const Field& get_norm_path() { return path_norm; }
     const Field& get_norm_query() { return query_norm; }
-    const Field& get_norm_fragment() { return fragment_norm; }
+    const Field& get_norm_fragment();
     const Field& get_norm_classic() { return classic_norm; }
     size_t get_file_proc_hash();
 

@@ -38,7 +38,7 @@ public:
         HttpEventGen* events);
     static void normalize(const Field& input, Field& result, bool do_path, uint8_t* buffer,
         const HttpParaList::UriParam& uri_param, HttpInfractions* infractions,
-        HttpEventGen* events);
+        HttpEventGen* events, bool own_the_buffer = false);
     static bool classic_need_norm(const Field& uri_component, bool do_path,
         const HttpParaList::UriParam& uri_param);
     static void classic_normalize(const Field& input, Field& result, bool do_path,
