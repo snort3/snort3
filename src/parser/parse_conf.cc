@@ -238,7 +238,7 @@ void ParseIpVar(SnortConfig* sc, const char* var, const char* val)
 
 void add_service_to_otn(SnortConfig* sc, OptTreeNode* otn, const char* svc_name)
 {
-    if ( !strcmp(svc_name, "file") and !otn->sigInfo.num_services )
+    if ( !strcmp(svc_name, "file") and otn->sigInfo.services.empty() )
     {
         // well-known services supporting file_data
         // applies to both alert file and service:file rules
@@ -255,25 +255,14 @@ void add_service_to_otn(SnortConfig* sc, OptTreeNode* otn, const char* svc_name)
     if ( !strcmp(svc_name, "http") )
         add_service_to_otn(sc, otn, "http2");
 
-    if (otn->sigInfo.num_services >= sc->max_metadata_services)
-    {
-        ParseError("too many service's specified for rule, can't add %s", svc_name);
-        return;
-    }
     SnortProtocolId svc_id = sc->proto_ref->add(svc_name);
 
-    for ( unsigned i = 0; i < otn->sigInfo.num_services; ++i )
-        if ( otn->sigInfo.services[i].snort_protocol_id == svc_id )
+    for ( const auto& si : otn->sigInfo.services )
+        if ( si.snort_protocol_id == svc_id )
             return;  // already added
 
-    if ( !otn->sigInfo.services )
-        otn->sigInfo.services =
-            (SignatureServiceInfo*)snort_calloc(sc->max_metadata_services, sizeof(SignatureServiceInfo));
-
-    int idx = otn->sigInfo.num_services++;
-
-    otn->sigInfo.services[idx].service = snort_strdup(svc_name);
-    otn->sigInfo.services[idx].snort_protocol_id = svc_id;
+    SignatureServiceInfo si(svc_name, svc_id);
+    otn->sigInfo.services.emplace_back(si);
 }
 
 // only keep drop rules ...
@@ -283,7 +272,8 @@ void add_service_to_otn(SnortConfig* sc, OptTreeNode* otn, const char* svc_name)
 // the alert case is tested for separately with SnortConfig::treat_drop_as_alert().
 static inline int ScKeepDropRules()
 {
-    return ( SnortConfig::inline_mode() || SnortConfig::adaptor_inline_mode() || SnortConfig::treat_drop_as_ignore() );
+    return ( SnortConfig::inline_mode() or SnortConfig::adaptor_inline_mode() or
+        SnortConfig::treat_drop_as_ignore() );
 }
 
 static inline int ScLoadAsDropRules()

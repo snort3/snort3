@@ -27,6 +27,8 @@
 
 #include <cassert>
 #include <iostream>
+#include <sstream>
+#include <string>
 
 #include "detection/fp_config.h"
 #include "detection/rules.h"
@@ -53,7 +55,6 @@
 #include "utils/util_cstring.h"
 
 #include "config_file.h"
-#include "mstring.h"
 #include "parse_conf.h"
 #include "parse_rule.h"
 #include "parse_stream.h"
@@ -550,17 +551,17 @@ void OrderRuleLists(SnortConfig* sc)
     if ( !*order )
         order = "pass drop alert log";  // FIXIT-H apply builtin module defaults
 
-    int num_toks;
-    char** toks = mSplit(order, " \t", 0, &num_toks, 0);
+    std::stringstream ss(order);
+    std::string tok;
 
-    for ( int i = 0; i < num_toks; i++ )
+    while ( ss >> tok )
     {
         RuleListNode* prev = nullptr;
         RuleListNode* node = sc->rule_lists;
 
         while (node != nullptr)
         {
-            if (strcmp(toks[i], node->name) == 0)
+            if ( tok == node->name )
             {
                 if (prev == nullptr)
                     sc->rule_lists = node->next;
@@ -579,8 +580,6 @@ void OrderRuleLists(SnortConfig* sc)
         }
         // ignore rule types that aren't in use
     }
-
-    mSplitFree(&toks, num_toks);
 
     /* anything left in the rule lists needs to be moved to the ordered lists */
     while (sc->rule_lists != nullptr)

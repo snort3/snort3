@@ -55,7 +55,6 @@ void help_args(const char* pfx);
 [[noreturn]] void dump_builtin_rules(snort::SnortConfig* sc, const char*);
 [[noreturn]] void dump_defaults(snort::SnortConfig* sc, const char*);
 [[noreturn]] void dump_dynamic_rules(snort::SnortConfig* sc, const char*);
-[[noreturn]] void dump_msg_map(snort::SnortConfig* sc, const char*);
 [[noreturn]] void dump_rule_hex(snort::SnortConfig* sc, const char*);
 [[noreturn]] void dump_rule_text(snort::SnortConfig* sc, const char*);
 [[noreturn]] void dump_version(snort::SnortConfig* sc);

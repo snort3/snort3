@@ -23,6 +23,7 @@
 #endif
 
 #include <cassert>
+#include <iostream>
 
 #include "signature.h"
 
@@ -38,122 +39,86 @@
 
 using namespace snort;
 
-/********************** Reference System Implementation ***********************/
+//--------------------------------------------------------------------------
+// reference systems
+//--------------------------------------------------------------------------
 
-ReferenceSystemNode* ReferenceSystemAdd(
-    SnortConfig* sc, const char* name, const char* url)
+const ReferenceSystem* reference_system_add(
+    SnortConfig* sc, const std::string& name, const char* url)
 {
     if ( !sc->alert_refs() )
         return nullptr;
 
-    assert(name);
+    assert(!name.empty());
 
-    ReferenceSystemNode* node = (ReferenceSystemNode*)snort_calloc(sizeof(*node));
-    node->name = snort_strdup(name);
+    ReferenceSystem* sys = new ReferenceSystem(name, url);
+    sc->references[sys->name] = sys;
 
-    if ( url )
-        node->url = snort_strdup(url);
-
-    ReferenceSystemNode** head = &sc->references;
-    node->next = *head;
-    *head = node;
-
-    return node;
+    return sys;
 }
 
-static ReferenceSystemNode* ReferenceSystemLookup(
-    ReferenceSystemNode* head, const char* name)
+static const ReferenceSystem* reference_system_lookup(SnortConfig* sc, const std::string& key)
 {
-    assert(name);
+    const auto it = sc->references.find(key);
 
-    while ( head )
-    {
-        if ( !strcasecmp(name, head->name) )
-            break;
+    if ( it != sc->references.end() )
+        return it->second;
 
-        head = head->next;
-    }
-    return head;
+    return nullptr;
 }
 
-/********************* Reference Implementation *******************************/
+//--------------------------------------------------------------------------
+// references
+//--------------------------------------------------------------------------
 
-void AddReference(
-    SnortConfig* sc, ReferenceNode** head, const char* system, const char* id)
+void add_reference(
+    SnortConfig* sc, OptTreeNode* otn, const std::string& system, const std::string& id)
 {
     if ( !sc->alert_refs() )
         return;
 
-    assert(sc and head and system and id);
+    assert(sc and otn and !system.empty() and !id.empty());
 
-    /* create the new node */
-    ReferenceNode* node = (ReferenceNode*)snort_calloc(sizeof(ReferenceNode));
+    const ReferenceSystem* sys = reference_system_lookup(sc, system);
 
-    node->system = ReferenceSystemLookup(sc->references, system);
+    if ( !sys )
+        sys = reference_system_add(sc, system);
 
-    if ( !node->system )
-        node->system = ReferenceSystemAdd(sc, system);
-
-    node->id = snort_strdup(id);
-
-    node->next = *head;
-    *head = node;
+    ReferenceNode* node = new ReferenceNode(sys, id);
+    otn->sigInfo.refs.push_back(node);
 }
 
-/************************ Class/Priority Implementation ***********************/
+//--------------------------------------------------------------------------
+// classifications
+//--------------------------------------------------------------------------
 
-void AddClassification(
-    SnortConfig* sc, const char* type, const char* name, unsigned priority)
+void add_classification(
+    SnortConfig* sc, const char* name, const char* text, unsigned priority)
 {
-    int max_id = 0;
-    ClassType* current = sc->classifications;
-
-    while (current != nullptr)
+    if ( get_classification(sc, name) )
     {
-        /* dup check */
-        if (strcasecmp(current->type, type) == 0)
-        {
-            ParseWarning(WARN_CONF,
-                "Duplicate classification \"%s\""
-                "found, ignoring this line", type);
-            return;
-        }
-
-        if (current->id > max_id)
-            max_id = current->id;
-
-        current = current->next;
+        ParseWarning(WARN_CONF, "Duplicate classification '%s' found, ignoring this line", name);
+        return;
     }
 
-    ClassType* new_node = (ClassType*)snort_calloc(sizeof(ClassType));
-
-    new_node->type = snort_strdup(type);
-    new_node->name = snort_strdup(name);
-    new_node->priority = priority;
-    new_node->id = max_id + 1;
-
-    /* insert node */
-    new_node->next = sc->classifications;
-    sc->classifications = new_node;
+    ClassType* ct = new ClassType(name, text, priority, sc->classifications.size() + 1);
+    sc->classifications[ct->name] = ct;
 }
 
-/* NOTE:  This lookup can only be done during parse time */
-ClassType* ClassTypeLookupByType(SnortConfig* sc, const char* type)
+const ClassType* get_classification(SnortConfig* sc, const char* type)
 {
-    assert(sc and type);
-    ClassType* node = sc->classifications;
+    std::string key = type;
+    const auto it = sc->classifications.find(key);
 
-    while ( node )
-    {
-        if ( !strcasecmp(type, node->type) )
-            break;
+    if ( it != sc->classifications.end() )
+        return it->second;
 
-        node = node->next;
-    }
-    return node;
+    return nullptr;
 }
 
-/***************** Otn Utilities ***********************/
+//--------------------------------------------------------------------------
+// otn utilities
+//--------------------------------------------------------------------------
 
 void OtnRemove(GHash* otn_map, OptTreeNode* otn)
 {
@@ -166,56 +131,38 @@ void OtnRemove(GHash* otn_map, OptTreeNode* otn)
     otn_map->remove(&key);
 }
 
-void OtnFree(void* data)
+OptTreeNode::~OptTreeNode()
 {
-    if ( !data )
-        return;
+    OptFpList* opt = opt_func;
 
-    OptTreeNode* otn = (OptTreeNode*)data;
-    OptFpList* opt_func = otn->opt_func;
-
-    while ( opt_func )
+    while ( opt )
     {
-        OptFpList* tmp = opt_func;
-        opt_func = opt_func->next;
-        snort_free(tmp); // FIXIT-L use c++ operators for all of this
-    }
-
-    if ( otn->sigInfo.message )
-    {
-        snort_free(otn->sigInfo.message);
-    }
-    for (unsigned svc_idx = 0; svc_idx < otn->sigInfo.num_services; svc_idx++)
-    {
-        if (otn->sigInfo.services[svc_idx].service)
-            snort_free(otn->sigInfo.services[svc_idx].service);
-    }
-    if (otn->sigInfo.services)
-        snort_free(otn->sigInfo.services);
-
-    ReferenceNode* ref_node = otn->sigInfo.refs;
-
-    while ( ref_node )
-    {
-        ReferenceNode* tmp = ref_node;
-        ref_node = ref_node->next;
-        snort_free(tmp->id);
+        OptFpList* tmp = opt;
+        opt = opt->next;
         snort_free(tmp);
     }
 
-    if ( otn->tag )
-        snort_free(otn->tag);
+    for ( auto& ref : sigInfo.refs )
+        delete ref;
 
-    if ( otn->soid )
-        snort_free(otn->soid);
+    if ( tag )
+        snort_free(tag);
 
-    if (otn->proto_nodes)
-        snort_free(otn->proto_nodes);
+    if ( soid )
+        snort_free(soid);
 
-    if (otn->detection_filter)
-        snort_free(otn->detection_filter);
+    if (proto_nodes)
+        snort_free(proto_nodes);
 
-    delete[] otn->state;
+    if (detection_filter)
+        snort_free(detection_filter);
+
+    delete[] state;
+}
+
+static void OtnFree(void* data)
+{
+    OptTreeNode* otn = (OptTreeNode*)data;
     delete otn;
 }
 
@@ -274,5 +221,27 @@ void OtnLookupFree(GHash* otn_map)
 {
     if ( otn_map )
         delete otn_map;
+}
+
+void dump_msg_map(SnortConfig* sc)
+{
+    GHashNode* ghn = sc->otn_map->find_first();
+
+    while ( ghn )
+    {
+        const OptTreeNode* otn = (OptTreeNode*)ghn->data;
+        const SigInfo& si = otn->sigInfo;
+
+        std::cout << si.gid << " || ";
+        std::cout << si.sid << " || ";
+        std::cout << si.rev << " || ";
+        std::cout << si.message;
+
+        for ( const auto& rn : si.refs )
+            std::cout << " || " << rn->system->name << "," << rn->id;
+
+        std::cout << std::endl;
+        ghn = sc->otn_map->find_next();
+    }
 }
 

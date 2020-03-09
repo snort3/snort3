@@ -37,11 +37,8 @@ using namespace snort;
 
 static const Parameter s_params[] =
 {
-    { "~scheme", Parameter::PT_STRING, nullptr, nullptr,
-      "reference scheme" },
-
-    { "~id", Parameter::PT_STRING, nullptr, nullptr,
-      "reference id" },
+    { "~ref", Parameter::PT_STRING, nullptr, nullptr,
+      "reference: <scheme>,<id>" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -75,14 +72,17 @@ bool ReferenceModule::begin(const char*, int, SnortConfig* sc)
 
 bool ReferenceModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("~scheme") )
-        scheme = v.get_string();
-
-    else if ( v.is("~id") )
-        id = v.get_string();
-
-    else
+    if ( !v.is("~ref") )
         return false;
+
+    const char* ref = v.get_string();
+    const char* sep = strchr(ref, ',');
+
+    if ( !sep or !strlen(sep + 1) )
+        return false;
+
+    scheme.assign(ref, sep - ref);
+    id = sep + 1;
 
     return true;
 }
@@ -104,7 +104,7 @@ static void mod_dtor(Module* m)
 static IpsOption* reference_ctor(Module* p, OptTreeNode* otn)
 {
     ReferenceModule* m = (ReferenceModule*)p;
-    AddReference(m->snort_config, &otn->sigInfo.refs, m->scheme.c_str(), m->id.c_str());
+    add_reference(m->snort_config, otn, m->scheme, m->id);
     return nullptr;
 }
 

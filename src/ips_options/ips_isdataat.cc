@@ -44,7 +44,6 @@
 #include "framework/module.h"
 #include "hash/hash_key_operations.h"
 #include "log/messages.h"
-#include "parser/mstring.h"
 #include "profiler/profiler.h"
 #include "utils/snort_bounds.h"
 
@@ -171,13 +170,7 @@ IpsOption::EvalStatus IsDataAtOption::eval(Cursor& c, Packet*)
 
 static void isdataat_parse(const char* data, IsDataAtData* idx)
 {
-    char** toks;
-    int num_toks;
-    char* endp;
-    char* offset;
-
-    toks = mSplit(data, ",", 3, &num_toks, 0);
-    offset = toks[0];
+    const char* offset = data;
 
     if (*offset == '!')
     {
@@ -192,12 +185,14 @@ static void isdataat_parse(const char* data, IsDataAtData* idx)
     /* set how many bytes to process from the packet */
     if (isdigit(offset[0]) || offset[0] == '-')
     {
+        char* endp;
+
         idx->offset_var = IPS_OPTIONS_NO_VAR;
         idx->offset = strtol(offset, &endp, 10);
 
         if (offset == endp)
         {
-            ParseError("unable to parse as byte value %s", toks[0]);
+            ParseError("unable to parse as byte value %s", data);
             return;
         }
 
@@ -216,8 +211,6 @@ static void isdataat_parse(const char* data, IsDataAtData* idx)
             return;
         }
     }
-
-    mSplitFree(&toks,num_toks);
 }
 
 //-------------------------------------------------------------------------

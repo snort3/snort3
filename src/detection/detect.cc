@@ -88,7 +88,7 @@ void CallLogFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
     pc.log_pkts++;
 
     OutputSet* idx = head ? head->LogList : nullptr;
-    EventManager::call_loggers(idx, p, otn->sigInfo.message, &event);
+    EventManager::call_loggers(idx, p, otn->sigInfo.message.c_str(), &event);
 }
 
 void CallAlertFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
@@ -113,7 +113,7 @@ void CallAlertFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
 #endif
 
     OutputSet* idx = head ? head->AlertList : nullptr;
-    EventManager::call_alerters(idx, p, otn->sigInfo.message, event);
+    EventManager::call_alerters(idx, p, otn->sigInfo.message.c_str(), event);
 }
 
 /*

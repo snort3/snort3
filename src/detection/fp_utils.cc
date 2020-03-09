@@ -356,7 +356,7 @@ PatternMatchVector get_fp_content(
         }
     }
 
-    if ( best.pmd and best.cat != CAT_SET_RAW and !srvc and otn->sigInfo.num_services > 0 )
+    if ( best.pmd and best.cat != CAT_SET_RAW and !srvc and !otn->sigInfo.services.empty() )
     {
         pmds.clear();  // just include in service group
         exclude = true;

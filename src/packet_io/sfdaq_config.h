@@ -22,7 +22,6 @@
 #define SFDAQ_CONFIG_H
 
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 using DaqVar = std::pair<std::string, std::string>;

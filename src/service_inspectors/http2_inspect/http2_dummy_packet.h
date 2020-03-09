@@ -17,7 +17,7 @@
 //--------------------------------------------------------------------------
 // http2_dummy_packet.h author Katura Harvey <katharve@cisco.com>
 
-/* 
+/*
  * The purpose of this Packet subclass is to enable H2I to take direction from http_inspect on
  * whether or not to send a frame to detection. When http_inspect is processing normal HTTP/1.1
  * traffic it is dealing with a real packet that has a context, the field on which disable_all()

@@ -28,11 +28,11 @@ class Http2DataFrame : public Http2Frame
 {
 public:
     ~Http2DataFrame() override {}
-    void clear() override;    
+    void clear() override;
 
     uint32_t get_xtradata_mask() override { return xtradata_mask; }
     bool is_detection_required() const override { return detection_required; }
-  
+
     friend Http2Frame* Http2Frame::new_frame(const uint8_t*, const int32_t, const uint8_t*,
         const int32_t, Http2FlowData*, HttpCommon::SourceId);
 

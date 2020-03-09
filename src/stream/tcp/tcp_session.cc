@@ -985,6 +985,8 @@ bool TcpSession::do_packet_analysis_pre_checks(Packet* p, TcpSegmentDescriptor& 
 
             client.init_flush_policy();
             server.init_flush_policy();
+
+            set_no_ack(config->no_ack);
         }
         splitter_init = true;
     }
@@ -1040,10 +1042,7 @@ int TcpSession::process(Packet* p)
 
     // FIXIT-H need to do something here to handle check for need to swap trackers??
     if ( !config )
-    {
         config = get_tcp_cfg(flow->ssn_server);
-        set_no_ack(config->no_ack);
-    }
 
     if( !tcp_init )
         set_os_policy();

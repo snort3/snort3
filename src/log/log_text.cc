@@ -72,11 +72,8 @@ void LogTimeStamp(TextLog* log, Packet* p)
  */
 void LogPriorityData(TextLog* log, const Event& e)
 {
-    if ((e.sig_info->class_type != nullptr)
-        && (e.sig_info->class_type->name != nullptr))
-    {
-        TextLog_Print(log, "[Classification: %s] ", e.sig_info->class_type->name);
-    }
+    if ( e.sig_info->class_type and !e.sig_info->class_type->text.empty() )
+        TextLog_Print(log, "[Classification: %s] ", e.sig_info->class_type->text.c_str());
 
     TextLog_Print(log, "[Priority: %d] ", e.sig_info->priority);
 }
@@ -1034,37 +1031,19 @@ void LogICMPHeader(TextLog* log, Packet* p)
  * reference stuff cloned from signature.c
  *--------------------------------------------------------------------
  */
-static void LogReference(TextLog* log, ReferenceNode* refNode)
-{
-    if (refNode)
-    {
-        if (refNode->system)
-        {
-            if (refNode->system->url)
-                TextLog_Print(log, "[Xref => %s%s]", refNode->system->url,
-                    refNode->id);
-            else
-                TextLog_Print(log, "[Xref => %s %s]", refNode->system->name,
-                    refNode->id);
-        }
-        else
-        {
-            TextLog_Print(log, "[Xref => %s]", refNode->id);
-        }
-    }
-}
 
-/*
- * prints out cross reference data associated with an alert
- */
 void LogXrefs(TextLog* log, const Event& e)
 {
-    ReferenceNode* refNode = e.sig_info->refs;
-
-    while ( refNode )
+    for ( const auto ref : e.sig_info->refs )
     {
-        LogReference(log, refNode);
-        refNode = refNode->next;
+        if ( !ref->system )
+            TextLog_Print(log, "[Xref => %s]", ref->id.c_str());
+
+        else if ( !ref->system->url.empty() )
+            TextLog_Print(log, "[Xref => %s%s]", ref->system->url.c_str(), ref->id.c_str());
+
+        else
+            TextLog_Print(log, "[Xref => %s %s]", ref->system->name.c_str(), ref->id.c_str());
     }
 }
 

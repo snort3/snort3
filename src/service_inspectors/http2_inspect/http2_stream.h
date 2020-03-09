@@ -45,14 +45,22 @@ public:
         { assert(hi_flow_data == nullptr); hi_flow_data = flow_data; }
     HttpMsgSection* get_hi_msg_section() const { return hi_msg_section; }
     void set_hi_msg_section(HttpMsgSection* section) { hi_msg_section = section; }
-    uint32_t get_xtradata_mask() { return (current_frame != nullptr) ? 
+    uint32_t get_xtradata_mask() { return (current_frame != nullptr) ?
         current_frame->get_xtradata_mask() : 0; }
     Http2Frame *get_current_frame() { return current_frame; }
-    Http2DataCutter* get_data_cutter(HttpCommon::SourceId source_id, uint32_t len=0, bool is_padded=false);
-    void set_data_cutter(Http2DataCutter* cutter, HttpCommon::SourceId source_id) { data_cutter[source_id] = cutter; }   
-    bool get_abort_data_processing(HttpCommon::SourceId source_id) const { return abort_data_processing[source_id]; }
-    void set_abort_data_processing(HttpCommon::SourceId source_id) { abort_data_processing[source_id] = true; }
-  
+
+    Http2DataCutter* get_data_cutter(
+        HttpCommon::SourceId source_id, uint32_t len=0, bool is_padded=false);
+
+    void set_data_cutter(Http2DataCutter* cutter, HttpCommon::SourceId source_id)
+    { data_cutter[source_id] = cutter; }
+
+    bool get_abort_data_processing(HttpCommon::SourceId source_id) const
+    { return abort_data_processing[source_id]; }
+
+    void set_abort_data_processing(HttpCommon::SourceId source_id)
+    { abort_data_processing[source_id] = true; }
+
 #ifdef REG_TEST
     void print_frame(FILE* output);
 #endif

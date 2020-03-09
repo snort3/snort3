@@ -90,8 +90,8 @@ static bool ff_class(const Args& a)
 {
     const char* cls = "none";
 
-    if ( a.event.sig_info->class_type and a.event.sig_info->class_type->name )
-        cls = a.event.sig_info->class_type->name;
+    if ( a.event.sig_info->class_type and !a.event.sig_info->class_type->text.empty() )
+        cls = a.event.sig_info->class_type->text.c_str();
 
     print_label(a, "class");
     TextLog_Quote(json_log, cls);

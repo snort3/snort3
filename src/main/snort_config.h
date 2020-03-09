@@ -26,6 +26,7 @@
 #include <sys/types.h>
 
 #include <list>
+#include <unordered_map>
 #include <vector>
 
 #include "events/event_queue.h"
@@ -41,7 +42,7 @@ enum RunFlag
 {
     RUN_FLAG__READ                = 0x00000001,
     RUN_FLAG__DAEMON              = 0x00000002,
-    // unused                     = 0x00000004,
+    RUN_FLAG__DUMP_MSG_MAP        = 0x00000004,
     // unused                     = 0x00000008,
 
     RUN_FLAG__INLINE              = 0x00000010,
@@ -139,7 +140,7 @@ struct MemoryConfig;
 struct Plugins;
 struct PORT_RULE_MAP;
 struct RateFilterConfig;
-struct ReferenceSystemNode;
+struct ReferenceSystem;
 struct RuleListNode;
 struct RulePortTables;
 struct SFDAQConfig;
@@ -343,9 +344,10 @@ public:
 
     int thiszone = 0;
 
+    std::unordered_map<std::string, ClassType*> classifications;
+    std::unordered_map<std::string, ReferenceSystem*> references;
+
     RuleStateMap* rule_states = nullptr;
-    ClassType* classifications = nullptr;
-    ReferenceSystemNode* references = nullptr;
     GHash* otn_map = nullptr;
 
     ProtocolReference* proto_ref = nullptr;
@@ -501,6 +503,9 @@ public:
     { return get_conf()->address_anomaly_check_enabled; }
 
     // mode related
+    static bool dump_msg_map()
+    { return get_conf()->run_flags & RUN_FLAG__DUMP_MSG_MAP; }
+
     static bool test_mode()
     { return get_conf()->run_flags & RUN_FLAG__TEST; }
 

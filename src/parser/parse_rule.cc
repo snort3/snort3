@@ -72,8 +72,9 @@ static int skip_count = 0;
 static int detect_rule_count = 0;
 static int builtin_rule_count = 0;
 static int so_rule_count = 0;
-static int head_count = 0;          /* number of header blocks (chain heads?) */
-static int otn_count = 0;           /* number of chains */
+static int head_count = 0;          // rule headers
+static int otn_count = 0;           // rule bodies
+static int dup_count = 0;           // rule bodies
 static int rule_proto = 0;
 
 static rule_count_t tcpCnt;
@@ -777,7 +778,7 @@ static RuleTreeNode* ProcessHeadNode(
     return rtn;
 }
 
-// Conditionally removes duplicate SID/GIDs. Keeps duplicate with
+// Conditionally removes duplicate OTN. Keeps duplicate with
 // higher revision.  If revision is the same, keeps newest rule.
 static int mergeDuplicateOtn(
     SnortConfig* sc, OptTreeNode* otn_cur,
@@ -801,17 +802,17 @@ static int mergeDuplicateOtn(
 
     if ( otn_new->sigInfo.rev < otn_cur->sigInfo.rev )
     {
-        // current OTN is newer version. Keep current and discard the new one.
-        // OTN is for new policy group, salvage RTN
-        deleteRtnFromOtn(otn_new, sc);
-
+        // keep orig, free new
         ParseWarning(WARN_RULES, "%u:%u duplicates previous rule. Using revision %u.",
             otn_cur->sigInfo.gid, otn_cur->sigInfo.sid, otn_cur->sigInfo.rev);
+
+        // OTN is for new policy group, salvage RTN
+        deleteRtnFromOtn(otn_new, sc);
 
         // Now free the OTN itself -- this function is also used
         // by the hash-table calls out of OtnRemove, so it cannot
         // be modified to delete data for rule options
-        OtnFree(otn_new);
+        delete otn_new;
 
         // Add rtn to current otn for the first rule instance in a policy,
         // otherwise ignore it
@@ -822,36 +823,22 @@ static int mergeDuplicateOtn(
 
         return true;
     }
-
-    // delete current rule instance and keep the new one
+    // keep new, free orig
+    ParseWarning(WARN_RULES, "%u:%u duplicates previous rule. Using revision %u.",
+        otn_new->sigInfo.gid, otn_new->sigInfo.sid, otn_new->sigInfo.rev);
 
     for ( unsigned i = 0; i < otn_cur->proto_node_num; ++i )
     {
         RuleTreeNode* rtnTmp2 = deleteRtnFromOtn(otn_cur, i, sc, (rtn_cur != rtn_new));
 
         if ( rtnTmp2 and (i != get_ips_policy()->policy_id) )
-        {
             addRtnToOtn(sc, otn_new, rtnTmp2, i);
-        }
     }
 
     if (rtn_cur)
-    {
-        if (SnortConfig::conf_error_out())
-        {
-            ParseError("%u:%u:%u duplicates previous rule.",
-                otn_new->sigInfo.gid, otn_new->sigInfo.sid, otn_new->sigInfo.rev);
-            return true;
-        }
-        else
-        {
-            ParseWarning(WARN_RULES, "%u:%u duplicates previous rule. Using revision %u.",
-                otn_new->sigInfo.gid, otn_new->sigInfo.sid, otn_new->sigInfo.rev);
-        }
         DestroyRuleTreeNode(rtn_cur);
-    }
-    OtnRemove(sc->otn_map, otn_cur);
 
+    OtnRemove(sc->otn_map, otn_cur);
     return false;
 }
 
@@ -870,6 +857,7 @@ void parse_rule_init()
     so_rule_count = 0;
     head_count = 0;
     otn_count = 0;
+    dup_count = 0;
     rule_proto = 0;
 
     memset(&ipCnt, 0, sizeof(ipCnt));
@@ -884,12 +872,13 @@ void parse_rule_term()
 
 void parse_rule_print()
 {
-    if ( !rule_count )
+    if ( !rule_count and !skip_count )
         return;
 
     LogLabel("rule counts");
     LogCount("total rules loaded", rule_count);
     LogCount("total rules not loaded", skip_count);
+    LogCount("duplicate rules", dup_count);
     LogCount("text rules", detect_rule_count);
     LogCount("builtin rules", builtin_rule_count);
     LogCount("so rules", so_rule_count);
@@ -1067,7 +1056,6 @@ OptTreeNode* parse_rule_open(SnortConfig* sc, RuleTreeNode& rtn, bool stub)
     if ( !stub )
         otn->sigInfo.gid = GID_DEFAULT;
 
-    otn->chain_node_number = otn_count;
     otn->snort_protocol_id = rtn.snort_protocol_id;
 
     if ( SnortConfig::get_default_rule_state() )
@@ -1102,7 +1090,7 @@ static void parse_rule_state(SnortConfig* sc, const RuleTreeNode& rtn, OptTreeNo
     if ( rtn.dip )
         sfvar_free(rtn.dip);
 
-    OtnFree(otn);
+    delete otn;
 }
 
 static bool is_builtin(uint32_t gid)
@@ -1160,13 +1148,13 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
             entered = true;
             parse_rules_string(sc, rule);
         }
-        OtnFree(otn);
+        delete otn;
         return;
     }
 
     if ( !sc->metadata_filter.empty() and !otn->metadata_matched() )
     {
-        OtnFree(otn);
+        delete otn;
         FreeRuleTreeNode(&rtn);
         ClearIpsOptionsVars();
         skip_count++;
@@ -1184,6 +1172,7 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
 
     if ( otn_dup )
     {
+        dup_count++;
         otn->ruleIndex = otn_dup->ruleIndex;
 
         if ( mergeDuplicateOtn(sc, otn_dup, otn, new_rtn) )
@@ -1193,13 +1182,17 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
             return;
         }
     }
-    otn_count++;
-    rule_count++;
+    else
+    {
+        otn_count++;
+        rule_count++;
+    }
 
     if ( otn->soid )
     {
         otn->sigInfo.builtin = false;
-        so_rule_count++;
+        if ( !otn_dup )
+            so_rule_count++;
     }
     else if ( is_builtin(otn->sigInfo.gid) )
     {
@@ -1208,7 +1201,8 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
                 otn->sigInfo.gid, otn->sigInfo.sid);
 
         otn->sigInfo.builtin = true;
-        builtin_rule_count++;
+        if ( !otn_dup )
+            builtin_rule_count++;
     }
     else
     {
@@ -1217,14 +1211,15 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
                 otn->sigInfo.gid, otn->sigInfo.sid);
 
         otn->sigInfo.builtin = false;
-        detect_rule_count++;
+        if ( !otn_dup )
+            detect_rule_count++;
     }
 
     if ( !otn_dup )
         otn->ruleIndex = parser_get_rule_index(otn->sigInfo.gid, otn->sigInfo.sid);
 
-    if ( !otn->sigInfo.message )
-        otn->sigInfo.message = snort_strdup("\"no msg in rule\"");  // yes, stored as "msg"
+    if ( otn->sigInfo.message.empty() )
+        otn->sigInfo.message = "\"no msg in rule\"";
 
     OptFpList* fpl = AddOptFuncToList(OptListEnd, otn);
     fpl->type = RULE_OPTION_TYPE_LEAF_NODE;

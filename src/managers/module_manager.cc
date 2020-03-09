@@ -1578,18 +1578,3 @@ void ModuleManager::show_rules(const char* pfx, bool exact)
         cout << "no match" << endl;
 }
 
-void ModuleManager::dump_msg_map(const char* pfx)
-{
-    std::vector<RulePtr> rule_set = get_rules(pfx);
-
-    for ( auto rp : rule_set )
-    {
-        cout << rp.mod->get_gid() << " || ";
-        cout << rp.rule->sid << " || ";
-        cout << rp.mod->get_name() << ": ";
-        cout << rp.rule->msg << endl;
-    }
-    if ( !rule_set.size() )
-        cout << "no match" << endl;
-}
-

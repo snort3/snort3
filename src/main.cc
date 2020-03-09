@@ -26,6 +26,7 @@
 #include <thread>
 
 #include "control/idle_processing.h"
+#include "detection/signature.h"
 #include "framework/module.h"
 #include "helpers/process.h"
 #include "helpers/ring.h"
@@ -787,6 +788,12 @@ static bool set_mode()
     {
         if ( warnings )
             FatalError("see prior %u warnings\n", warnings);
+    }
+
+    if ( SnortConfig::dump_msg_map() )
+    {
+        dump_msg_map(SnortConfig::get_conf());
+        return false;
     }
 
     if ( just_validate() )

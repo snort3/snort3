@@ -352,7 +352,7 @@ static const Parameter s_params[] =
       "enable Inline-Test Mode Operation" },
 
     { "--gen-msg-map", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "dump builtin rules in gen-msg.map format for use by other tools" },
+      "dump configured rules in gen-msg.map format for use by other tools" },
 
     { "--help", Parameter::PT_IMPLIED, nullptr, nullptr,
       "list command line options" },
@@ -847,8 +847,11 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->run_flags |= RUN_FLAG__INLINE_TEST;
 
     else if ( v.is("--gen-msg-map") )
-        dump_msg_map(sc, v.get_string());
-
+    {
+        sc->run_flags |= (RUN_FLAG__DUMP_MSG_MAP | RUN_FLAG__TEST);
+        sc->output_flags |= OUTPUT_FLAG__ALERT_REFS;
+        sc->set_quiet(true);
+    }
     else if ( v.is("--help") )
         help_basic(sc, v.get_string());
 

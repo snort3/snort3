@@ -317,7 +317,7 @@ const StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned to
     else
     {
         uint32_t data_offset = 0;
-	
+
         if (offset == 0)
         {
             // This is the first reassemble() for this frame and we need to allocate some buffers

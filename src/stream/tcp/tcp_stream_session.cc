@@ -138,6 +138,16 @@ void TcpStreamSession::update_session_on_client_packet(TcpSegmentDescriptor& tsd
         flow->set_ttl(tsd.get_pkt(), true);
 }
 
+void TcpStreamSession::set_no_ack(bool b)
+{
+    if (
+        server.get_flush_policy() == STREAM_FLPOLICY_ON_DATA and
+        client.get_flush_policy() == STREAM_FLPOLICY_ON_DATA )
+    {
+        no_ack = b;
+    }
+}
+
 uint8_t TcpStreamSession::get_reassembly_direction()
 {
     uint8_t dir = SSN_DIR_NONE;
@@ -412,6 +422,7 @@ void TcpStreamSession::start_proxy()
 //-------------------------------------------------------------------------
 // tcp module stuff
 //-------------------------------------------------------------------------
+
 void TcpStreamSession::print()
 {
     char buf[64];
@@ -429,5 +440,4 @@ void TcpStreamSession::print()
     LogMessage("Server Tracker:\n");
     server.print();
 }
-
 

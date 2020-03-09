@@ -26,6 +26,7 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <string>
 
 #include "target_based/snort_protocols.h"
 
@@ -37,44 +38,44 @@ struct SnortConfig;
 
 struct OptTreeNode;
 
-/* this contains a list of the URLs for various reference systems */
-struct ReferenceSystemNode
+struct ReferenceSystem
 {
-    char* name;
-    char* url;
-    ReferenceSystemNode* next;
+    ReferenceSystem(const std::string& n, const char* u) : name(n), url(u) { }
+    std::string name;
+    std::string url;
 };
 
-ReferenceSystemNode* ReferenceSystemAdd(snort::SnortConfig*, const char*, const char* = nullptr);
+const ReferenceSystem* reference_system_add(snort::SnortConfig*, const std::string&, const char* = "");
 
 struct ReferenceNode
 {
-    char* id;
-    ReferenceSystemNode* system;
-    ReferenceNode* next;
+    ReferenceNode(const ReferenceSystem* sys, const std::string& id) : system(sys), id(id) { }
+    const ReferenceSystem* system;
+    std::string id;
 };
 
-void AddReference(snort::SnortConfig*, ReferenceNode**, const char*, const char*);
+void add_reference(snort::SnortConfig*, OptTreeNode*, const std::string& sys, const std::string& id);
 
-/* struct for rule classification */
 struct ClassType
 {
-    // FIXIT-L type and name are backwards (name -> text, type -> name)
-    char* type;
-    int id;
-    char* name;  // "pretty" name
+    ClassType(const char* s, const char* txt, unsigned pri, int id) :
+        name(s), text(txt), priority(pri), id(id) { }
+
+    std::string name;
+    std::string text;
     unsigned priority;
-    ClassType* next;
+    int id;
 };
 
-/* NOTE:  These methods can only be used during parse time */
-void AddClassification(snort::SnortConfig*, const char* type, const char* name, unsigned priority);
+void add_classification(snort::SnortConfig*, const char* name, const char* text, unsigned priority);
 
-ClassType* ClassTypeLookupByType(snort::SnortConfig*, const char*);
+const ClassType* get_classification(snort::SnortConfig*, const char*);
 
 struct SignatureServiceInfo
 {
-    char* service;
+    SignatureServiceInfo(const char* s, SnortProtocolId proto) :
+        service(s), snort_protocol_id(proto) { }
+    std::string service;
     SnortProtocolId snort_protocol_id;
 };
 
@@ -89,10 +90,11 @@ enum Target
 
 struct SigInfo
 {
-    char* message = nullptr;
-    ClassType* class_type = nullptr;
-    ReferenceNode* refs = nullptr;
-    SignatureServiceInfo* services = nullptr;
+    std::string message;
+    std::vector<const ReferenceNode*> refs;
+    std::vector<SignatureServiceInfo> services;
+
+    const ClassType* class_type = nullptr;
 
     uint32_t gid = 0;
     uint32_t sid = 0;
@@ -100,7 +102,6 @@ struct SigInfo
 
     uint32_t class_id = 0;
     uint32_t priority = 0;
-    uint32_t num_services = 0;
 
     bool builtin = false;
     Target target = TARGET_NONE;
@@ -112,10 +113,9 @@ OptTreeNode* OtnLookup(snort::GHash*, uint32_t gid, uint32_t sid);
 void OtnLookupFree(snort::GHash*);
 void OtnRemove(snort::GHash*, OptTreeNode*);
 
-void OtnDeleteData(void* data);
-void OtnFree(void* data);
-
 OptTreeNode* GetOTN(uint32_t gid, uint32_t sid);
+
+void dump_msg_map(snort::SnortConfig*);
 
 #endif
 

@@ -212,10 +212,10 @@ void fpCreateServiceMaps(SnortConfig* sc)
                 if ( !rtn->enabled() )
                     continue;
 
-                for (unsigned svc_idx = 0; svc_idx < otn->sigInfo.num_services; svc_idx++)
+                for ( const auto& svc : otn->sigInfo.services )
                 {
-                    const char* svc = otn->sigInfo.services[svc_idx].service;
-                    ServiceMapAddOtn(sc->srmmTable, rtn->snort_protocol_id, svc, otn);
+                    const char* s = svc.service.c_str();
+                    ServiceMapAddOtn(sc->srmmTable, rtn->snort_protocol_id, s, otn);
                 }
             }
         }

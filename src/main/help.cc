@@ -146,7 +146,7 @@ void help_args(const char* pfx)
 enum HelpType
 {
     HT_BUF, HT_CFG, HT_CMD, HT_DBR, HT_DDR,
-    HT_DMM, HT_GID, HT_HMO, HT_HPL, HT_DFL,
+    HT_GID, HT_HMO, HT_HPL, HT_DFL,
     HT_IPS, HT_LST, HT_MOD, HT_PEG, HT_PLG
 };
 
@@ -177,9 +177,6 @@ enum HelpType
         break;
     case HT_DFL:
         ModuleManager::dump_defaults(val);
-        break;
-    case HT_DMM:
-        ModuleManager::dump_msg_map(val);
         break;
     case HT_GID:
         ModuleManager::show_gids(val);
@@ -310,11 +307,6 @@ void config_markup(SnortConfig*, const char*)
 [[noreturn]] void dump_dynamic_rules(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_DDR);
-}
-
-[[noreturn]] void dump_msg_map(SnortConfig* sc, const char* val)
-{
-    show_help(sc, val, HT_DMM);
 }
 
 [[noreturn]] void dump_rule_hex(SnortConfig*, const char* val)

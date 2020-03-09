@@ -23,6 +23,8 @@
 
 #include "stats.h"
 
+#include <cassert>
+
 #include "detection/detection_engine.h"
 #include "file_api/file_stats.h"
 #include "filters/sfthreshold.h"
@@ -153,12 +155,17 @@ static void timing_stats()
     LogMessage("%25.25s: %lu.%06lu\n", "seconds",
         (unsigned long)difftime.tv_sec, (unsigned long)difftime.tv_usec);
 
-    uint64_t num_pkts = (uint64_t)ModuleManager::get_module("daq")->get_global_count("received");
+    Module* daq = ModuleManager::get_module("daq");
+    assert(daq);
 
-    LogMessage("%25.25s: " STDu64 "\n", "packets", num_pkts);
+    uint64_t num_pkts = (uint64_t)daq->get_global_count("analyzed");
+    uint64_t num_byts = (uint64_t)daq->get_global_count("rx_bytes");
 
-    uint64_t pps = (num_pkts / total_secs);
-    LogMessage("%25.25s: " STDu64 "\n", "pkts/sec", pps);
+    if ( uint64_t pps = (num_pkts / total_secs) )
+        LogMessage("%25.25s: " STDu64 "\n", "pkts/sec", pps);
+
+    if ( uint64_t mbps = 8 * num_byts / total_secs / 1024 / 1024 )
+        LogMessage("%25.25s: " STDu64 "\n", "Mbits/sec", mbps);
 }
 
 //-------------------------------------------------------------------------

@@ -429,7 +429,7 @@ class BackOrifice : public Inspector
 {
 public:
     BackOrifice() = default;
-    
+
     void eval(Packet*) override;
 };
 

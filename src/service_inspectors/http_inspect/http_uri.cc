@@ -199,8 +199,8 @@ void HttpUri::normalize()
             return;
         case URI_AUTHORITY:
         {
-            if ((host.length() > 0) && 
-                    UriNormalizer::need_norm(host, false, uri_param, infractions, events))
+            if ((host.length() > 0) &&
+                UriNormalizer::need_norm(host, false, uri_param, infractions, events))
             {
                 const int total_length = uri.length();
 
@@ -248,7 +248,7 @@ void HttpUri::normalize()
                 // This URI is OK, normalization not required
                 path_norm.set(path);
                 query_norm.set(query);
- 
+
                 const int path_len = (path.length() > 0) ? path.length() : 0;
                 // query_len = length of query + 1 (? char)
                 const int query_len = (query.length() >= 0) ? query.length() + 1 : 0;
@@ -342,8 +342,8 @@ const Field& HttpUri::get_norm_host()
         uint8_t *buf = new uint8_t[host.length()];
 
         *infractions += INF_URI_NEED_NORM_HOST;
-         
-        UriNormalizer::normalize(host, host_norm, false, buf, uri_param, 
+
+        UriNormalizer::normalize(host, host_norm, false, buf, uri_param,
             infractions, events, true);
     }
     else
@@ -357,7 +357,7 @@ const Field& HttpUri::get_norm_fragment()
     if (fragment_norm.length() != STAT_NOT_COMPUTE)
         return fragment_norm;
 
-    if ((fragment.length() > 0) and 
+    if ((fragment.length() > 0) and
         UriNormalizer::need_norm(fragment, false, uri_param, infractions, events))
     {
         uint8_t *buf = new uint8_t[fragment.length()];

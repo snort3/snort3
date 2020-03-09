@@ -55,7 +55,7 @@ public:
     { return DETECT; }
 
 public:
-    ClassType* type;
+    const ClassType* type;
 };
 
 bool ClassTypeModule::set(const char*, Value& v, SnortConfig* sc)
@@ -63,7 +63,7 @@ bool ClassTypeModule::set(const char*, Value& v, SnortConfig* sc)
     if ( !v.is("~") )
         return false;
 
-    type = ClassTypeLookupByType(sc, v.get_string());
+    type = get_classification(sc, v.get_string());
 
     return type != nullptr;
 }

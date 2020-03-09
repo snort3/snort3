@@ -69,7 +69,7 @@ public:
 
     HttpEnums::SectionType get_type_expected(HttpCommon::SourceId source_id)
     { return type_expected[source_id]; }
-  
+
 private:
     bool for_http2 = false;
 

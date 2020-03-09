@@ -37,8 +37,8 @@ struct Packet;
 class AssistantGadgetEvent : public snort::DataEvent
 {
 public:
-    AssistantGadgetEvent(snort::Packet* packet, const char* _service)
-	: p(packet), service(_service)
+    AssistantGadgetEvent(snort::Packet* packet, const char* _service) :
+        p(packet), service(_service)
     { }
 
     snort::Packet* get_packet() override

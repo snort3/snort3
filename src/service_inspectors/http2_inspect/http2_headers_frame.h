@@ -31,7 +31,7 @@ class Http2HeadersFrame : public Http2Frame
 {
 public:
     ~Http2HeadersFrame() override;
-    void clear() override;    
+    void clear() override;
 
     const Field& get_buf(unsigned id) override;
     uint32_t get_xtradata_mask() override { return xtradata_mask; }

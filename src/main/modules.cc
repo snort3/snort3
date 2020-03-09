@@ -520,7 +520,7 @@ bool ClassificationsModule::begin(const char*, int, SnortConfig*)
 bool ClassificationsModule::end(const char*, int idx, SnortConfig* sc)
 {
     if ( idx )
-        AddClassification(sc, name.c_str(), text.c_str(), priority);
+        add_classification(sc, name.c_str(), text.c_str(), priority);
     return true;
 }
 
@@ -587,7 +587,7 @@ bool ReferencesModule::begin(const char*, int, SnortConfig*)
 bool ReferencesModule::end(const char*, int idx, SnortConfig* sc)
 {
     if ( idx )
-        ReferenceSystemAdd(sc, name.c_str(), url.c_str());
+        reference_system_add(sc, name, url.c_str());
     return true;
 }
 

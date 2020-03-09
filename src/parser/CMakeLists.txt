@@ -22,8 +22,6 @@ add_library (parser OBJECT
     cmd_line.h
     config_file.cc
     config_file.h
-    mstring.cc
-    mstring.h
     vars.cc
     vars.h
 )

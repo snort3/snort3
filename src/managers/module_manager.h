@@ -69,7 +69,6 @@ public:
     static void show_pegs(const char* = nullptr, bool exact = false);
     static void show_rules(const char* = nullptr, bool exact = false);
 
-    static void dump_msg_map(const char* = nullptr);
     static void dump_rules(const char* = nullptr);
     static void dump_defaults(const char* = nullptr);
 

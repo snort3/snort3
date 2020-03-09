@@ -30,9 +30,9 @@ class Http2DataCutter
 {
 public:
     Http2DataCutter(Http2FlowData* flow_data, uint32_t len, HttpCommon::SourceId
-		      src_id, bool is_padded);
+        src_id, bool is_padded);
     snort::StreamSplitter::Status scan(const uint8_t* data, uint32_t length,
-				       uint32_t* flush_offset);
+        uint32_t* flush_offset);
     const snort::StreamBuffer reassemble(unsigned total, unsigned offset, const uint8_t* data,
         unsigned len);
 

@@ -27,8 +27,6 @@
 
 #include <cassert>
 #include <string>
-#include <unordered_map>
-#include <vector>
 
 #include "framework/base_api.h"
 #include "main/snort_types.h"

@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// cisco_meta_data_test.cc author Sunirmal Mukherjee <sunimukh@cisco.com> 
+// cisco_meta_data_test.cc author Sunirmal Mukherjee <sunimukh@cisco.com>
 // unit test main
 
 #ifdef HAVE_CONFIG_H
@@ -74,7 +74,7 @@ static inline void push_layer(Packet* p,
     lyr.start = hdr_start;
     lyr.length = (uint16_t)len;
 }
-    
+
 TEST_GROUP(cisco_meta_data_test)
 {
 };
@@ -86,14 +86,17 @@ TEST(cisco_meta_data_test, cisco_meta_data_class_test)
     uint8_t * cmd_data;
     int len;
     int sgt;
-    
+
     pkt.num_layers = 0;
     pkt.layers = &layers;
 
-    cmd_data = new uint8_t[sizeof(cisco_meta_data::CiscoMetaDataHdr) + sizeof(cisco_meta_data::CiscoMetaDataOpt)];
+    cmd_data = new uint8_t[sizeof(cisco_meta_data::CiscoMetaDataHdr) +
+        sizeof(cisco_meta_data::CiscoMetaDataOpt)];
 
     cisco_meta_data::CiscoMetaDataOpt* cmd_options =
-        reinterpret_cast<cisco_meta_data::CiscoMetaDataOpt*>(cmd_data + sizeof(cisco_meta_data::CiscoMetaDataHdr)); 
+        reinterpret_cast<cisco_meta_data::CiscoMetaDataOpt*>(cmd_data +
+            sizeof(cisco_meta_data::CiscoMetaDataHdr));
+
     cmd_options->sgt = 512;
 
     len = (sizeof(cisco_meta_data::CiscoMetaDataHdr) + sizeof(cisco_meta_data::CiscoMetaDataOpt));

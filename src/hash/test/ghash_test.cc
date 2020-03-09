@@ -191,7 +191,7 @@ TEST(ghash, userfree_test)
 
     // it should not be found
     CHECK(t->find(str) == nullptr);
-    
+
     // try to remove a node that is not in the table
     CHECK(t->remove( str) == HASH_NOT_FOUND);
 

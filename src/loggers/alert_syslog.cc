@@ -210,11 +210,10 @@ static void AlertSyslog(
         else
             SnortSnprintfAppend(event_string, sizeof(event_string), "ALERT ");
 
-        if ((event.sig_info->class_type != nullptr)
-            && (event.sig_info->class_type->name != nullptr))
+        if ( event.sig_info->class_type and !event.sig_info->class_type->text.empty() )
         {
             SnortSnprintfAppend(event_string, sizeof(event_string),
-                "[Classification: %s] ", event.sig_info->class_type->name);
+                "[Classification: %s] ", event.sig_info->class_type->text.c_str());
         }
 
         if (event.sig_info->priority != 0)

@@ -20,6 +20,9 @@
 #ifndef MPSE_BATCH_H
 #define MPSE_BATCH_H
 
+#include <unordered_map>
+#include <vector>
+
 #include "framework/mpse.h"
 #include "main/snort_types.h"
 

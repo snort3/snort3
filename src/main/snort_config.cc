@@ -94,40 +94,6 @@ static std::vector<ScratchAllocator*> scratch_handlers;
 // private implementation
 //-------------------------------------------------------------------------
 
-static void FreeClassifications(ClassType* head)
-{
-    while ( head )
-    {
-        ClassType* tmp = head;
-        head = head->next;
-
-        if ( tmp->name )
-            snort_free(tmp->name);
-
-        if ( tmp->type )
-            snort_free(tmp->type);
-
-        snort_free(tmp);
-    }
-}
-
-static void FreeReferences(ReferenceSystemNode* head)
-{
-    while ( head )
-    {
-        ReferenceSystemNode* tmp = head;
-        head = head->next;
-
-        if ( tmp->name )
-            snort_free(tmp->name);
-
-        if ( tmp->url )
-            snort_free(tmp->url);
-
-        snort_free(tmp);
-    }
-}
-
 static PolicyMode init_policy_mode(PolicyMode mode)
 {
     switch ( mode )
@@ -252,8 +218,11 @@ SnortConfig::~SnortConfig()
         return;
     }
 
-    FreeClassifications(classifications);
-    FreeReferences(references);
+    for ( auto ct : classifications )
+        delete ct.second;
+
+    for ( auto rs : references )
+        delete rs.second;
 
     for ( auto* s : scratchers )
         s->cleanup(this);

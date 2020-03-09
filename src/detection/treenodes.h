@@ -148,6 +148,8 @@ struct RuleTreeNode
 // represents body part of rule
 struct OptTreeNode
 {
+    ~OptTreeNode();
+
     using Flag = uint8_t;
     static constexpr Flag WARNED_FP  = 0x01;
     static constexpr Flag STATELESS  = 0x02;
@@ -169,7 +171,7 @@ struct OptTreeNode
     // ptr to list of RTNs (head part); indexed by policyId
     RuleTreeNode** proto_nodes = nullptr;
     OtnState* state = nullptr;
-    int chain_node_number = 0;
+
     unsigned evalIndex = 0;       /* where this rule sits in the evaluation sets */
     unsigned ruleIndex = 0; // unique index
     uint32_t num_detection_opts = 0;
