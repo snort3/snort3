@@ -305,6 +305,12 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
         unsigned blacklist_event = (BLACKLISTED_SRC == decision) ?
             REPUTATION_EVENT_BLACKLIST_SRC : REPUTATION_EVENT_BLACKLIST_DST;
 
+        if (p->flow)
+        {
+            p->flow->flags.reputation_blacklist = true;
+            p->flow->flags.reputation_src_dest = (BLACKLISTED_SRC == decision);
+        }
+
         DetectionEngine::queue_event(GID_REPUTATION, blacklist_event);
         act->drop_packet(p, true);
 
@@ -324,7 +330,12 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
         unsigned monitor_event = (MONITORED_SRC == decision) ?
             REPUTATION_EVENT_MONITOR_SRC : REPUTATION_EVENT_MONITOR_DST;
 
-        p->packet_flags |= PKT_REP_MONITORED;
+        if (p->flow)
+        {
+            p->flow->flags.reputation_monitor = true;
+            p->flow->flags.reputation_src_dest = (MONITORED_SRC == decision);
+        }
+
         DetectionEngine::queue_event(GID_REPUTATION, monitor_event);
         reputationstats.monitored++;
     }
@@ -333,6 +344,12 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
     {
         unsigned whitelist_event = (WHITELISTED_TRUST_SRC == decision) ?
             REPUTATION_EVENT_WHITELIST_SRC : REPUTATION_EVENT_WHITELIST_DST;
+
+        if (p->flow)
+        {
+            p->flow->flags.reputation_whitelist = true;
+            p->flow->flags.reputation_src_dest = (WHITELISTED_TRUST_SRC == decision);
+        }
 
         DetectionEngine::queue_event(GID_REPUTATION, whitelist_event);
         p->packet_flags |= PKT_IGNORE;
