@@ -85,29 +85,6 @@
 using namespace snort;
 
 static ServiceDetector* ftp_service;
-ServiceDiscovery* ServiceDiscovery::discovery_manager = nullptr;
-
-ServiceDiscovery::ServiceDiscovery()
-{
-    initialize();
-}
-
-ServiceDiscovery& ServiceDiscovery::get_instance()
-{
-    if (!discovery_manager)
-    {
-        discovery_manager = new ServiceDiscovery();
-    }
-
-    return *discovery_manager;
-}
-
-void ServiceDiscovery::release_instance()
-{
-    assert(discovery_manager);
-    delete discovery_manager;
-    discovery_manager = nullptr;
-}
 
 void ServiceDiscovery::initialize()
 {
@@ -133,7 +110,6 @@ void ServiceDiscovery::initialize()
     new NbdgmServiceDetector(this);
     new NntpServiceDetector(this);
     new NtpServiceDetector(this);
-    new PatternServiceDetector(this);
     new Pop3ServiceDetector(this);
     new RadiusServiceDetector(this);
     new RadiusAcctServiceDetector(this);
@@ -318,7 +294,7 @@ static inline uint16_t sslPortRemap(uint16_t port)
 void ServiceDiscovery::get_port_based_services(IpProtocol protocol, uint16_t port,
     AppIdSession& asd)
 {
-    ServiceDiscovery& sd = ServiceDiscovery::get_instance();
+    ServiceDiscovery& sd = asd.ctxt.get_odp_ctxt().get_service_disco_mgr();
 
     if ( asd.is_decrypted() )
     {
@@ -440,9 +416,9 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
         asd.service_search_state = SESSION_SERVICE_SEARCH_STATE::PORT;
         sds = AppIdServiceState::add(ip, proto, port, asd.is_decrypted(), true);
         sds->set_reset_time(0);
-        SERVICE_ID_STATE sds_state = sds->get_state();
+        ServiceState sds_state = sds->get_state();
 
-        if ( sds_state == SERVICE_ID_STATE::FAILED )
+        if ( sds_state == ServiceState::FAILED )
         {
             if (appidDebug->is_active())
                 LogMessage("AppIdDbg %s No service match, failed state\n", appidDebug->get_debug_session());
@@ -453,13 +429,14 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
         if ( !asd.service_detector )
         {
             /* If a valid service already exists in host tracker, give it a try. */
-            if ( sds_state == SERVICE_ID_STATE::VALID )
+            if ( sds_state == ServiceState::VALID )
                 asd.service_detector = sds->get_service();
             /* If we've gotten to brute force, give next detector a try. */
-            else if ( sds_state == SERVICE_ID_STATE::SEARCHING_BRUTE_FORCE and
+            else if ( sds_state == ServiceState::SEARCHING_BRUTE_FORCE and
                       asd.service_candidates.empty() )
             {
-                asd.service_detector = sds->select_detector_by_brute_force(proto);
+                asd.service_detector = sds->select_detector_by_brute_force(proto,
+                    asd.ctxt.get_odp_ctxt().get_service_disco_mgr());
                 got_brute_force = true;
             }
         }
@@ -626,7 +603,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
                 asd.service_disco_state = APPID_DISCO_STATE_STATEFUL;
             }
             else
-                asd.stop_rna_service_inspection(p, direction);
+                asd.stop_service_inspection(p, direction);
         }
         else
             asd.service_disco_state = APPID_DISCO_STATE_STATEFUL;
@@ -645,7 +622,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
         {
             if (appidDebug->is_active())
                 LogMessage("AppIdDbg %s Stop service detection\n", appidDebug->get_debug_session());
-            asd.stop_rna_service_inspection(p, direction);
+            asd.stop_service_inspection(p, direction);
         }
     }
 
@@ -659,7 +636,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
             // waste time (but we will still get the Snort callbacks
             // for any of our own future flows). Shut down our detectors.
             asd.service.set_id(APP_ID_SIP, asd.ctxt.get_odp_ctxt());
-            asd.stop_rna_service_inspection(p, direction);
+            asd.stop_service_inspection(p, direction);
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
         }
         else if ((tp_app_id == APP_ID_RTP) || (tp_app_id == APP_ID_RTP_AUDIO) ||
@@ -668,7 +645,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
             // No need for anybody to keep wasting time once we've
             // found RTP - Shut down our detectors.
             asd.service.set_id(tp_app_id, asd.ctxt.get_odp_ctxt());
-            asd.stop_rna_service_inspection(p, direction);
+            asd.stop_service_inspection(p, direction);
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
             //  - Shut down TP.
 
@@ -811,8 +788,3 @@ int ServiceDiscovery::fail_service(AppIdSession& asd, const Packet* pkt, AppidSe
     return APPID_SUCCESS;
 }
 
-void ServiceDiscovery::release_thread_resources()
-{
-    for (auto detectors : service_detector_list)
-        detectors->release_thread_resources();
-}

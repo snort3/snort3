@@ -72,25 +72,8 @@ AppIdDiscovery::~AppIdDiscovery()
         delete kv.second;
 }
 
-void AppIdDiscovery::initialize_plugins()
-{
-    ServiceDiscovery::get_instance();
-}
-
-void AppIdDiscovery::finalize_plugins()
-{
-    ServiceDiscovery::get_instance().finalize_service_patterns();
-}
-
-void AppIdDiscovery::release_plugins()
-{
-    ServiceDiscovery::release_instance();
-}
-
 void AppIdDiscovery::tterm()
 {
-    ClientDiscovery::release_thread_resources();
-    ServiceDiscovery::get_instance().release_thread_resources();
 }
 
 void AppIdDiscovery::register_detector(const std::string& name, AppIdDetector* cd,  IpProtocol proto)
@@ -819,7 +802,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd,
     // exceptions for rexec and any other service detector that need to see SYN and SYN/ACK
     if (asd.get_session_flags(APPID_SESSION_REXEC_STDERR))
     {
-        ServiceDiscovery::get_instance().identify_service(asd, p, direction, change_bits);
+        asd.ctxt.get_odp_ctxt().get_service_disco_mgr().identify_service(asd, p, direction, change_bits);
 
         if (asd.get_session_flags(APPID_SESSION_SERVICE_DETECTED |
             APPID_SESSION_CONTINUE) == APPID_SESSION_SERVICE_DETECTED)
@@ -833,8 +816,8 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd,
     else if (protocol != IpProtocol::TCP || (p->packet_flags & PKT_STREAM_ORDER_OK))
     {
         if (asd.service_disco_state != APPID_DISCO_STATE_FINISHED)
-            is_discovery_done = ServiceDiscovery::get_instance().do_service_discovery(asd, p,
-                direction, change_bits);
+            is_discovery_done = asd.ctxt.get_odp_ctxt().get_service_disco_mgr().do_service_discovery(
+                asd, p, direction, change_bits);
         if (asd.client_disco_state != APPID_DISCO_STATE_FINISHED)
             is_discovery_done = asd.ctxt.get_odp_ctxt().get_client_disco_mgr().do_client_discovery(
                 asd, p, direction, change_bits);

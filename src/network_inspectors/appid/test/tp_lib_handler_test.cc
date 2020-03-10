@@ -49,7 +49,6 @@ snort::SearchTool::~SearchTool() { }
 
 AppIdDiscovery::AppIdDiscovery() { }
 AppIdDiscovery::~AppIdDiscovery() { }
-ClientDiscovery::~ClientDiscovery() { }
 void ClientDiscovery::initialize() { }
 void AppIdDiscovery::register_detector(const string&, AppIdDetector*, IpProtocol) { }
 void AppIdDiscovery::add_pattern_data(AppIdDetector*, snort::SearchTool*, int, unsigned char const*, unsigned int, unsigned int) { }
@@ -62,6 +61,9 @@ SipPatternMatchers::~SipPatternMatchers() { }
 SslPatternMatchers::~SslPatternMatchers() { }
 AppIdConfig::~AppIdConfig() { }
 OdpContext::OdpContext(AppIdConfig&, snort::SnortConfig*) { }
+void ServiceDiscovery::initialize() { }
+int ServiceDiscovery::add_service_port(AppIdDetector*, const ServiceDetectorPort&)
+{ return 0; }
 
 TEST_GROUP(tp_lib_handler)
 {

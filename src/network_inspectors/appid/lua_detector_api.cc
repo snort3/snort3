@@ -215,10 +215,10 @@ static int service_register_pattern(lua_State* L)
     unsigned int position = lua_tonumber(L, ++index);
 
     if ( protocol == IpProtocol::TCP)
-        ServiceDiscovery::get_instance().register_tcp_pattern(ud->sd, (const uint8_t*)pattern,
+        ud->get_odp_ctxt().get_service_disco_mgr().register_tcp_pattern(ud->sd, (const uint8_t*)pattern,
             size, position, 0);
     else
-        ServiceDiscovery::get_instance().register_udp_pattern(ud->sd, (const uint8_t*)pattern,
+        ud->get_odp_ctxt().get_service_disco_mgr().register_udp_pattern(ud->sd, (const uint8_t*)pattern,
             size, position, 0);
 
     lua_pushnumber(L, 0);
@@ -2304,8 +2304,8 @@ static int add_port_pattern_client(lua_State* L)
     memcpy(pPattern->pattern, pattern, patternSize);
     pPattern->length = patternSize;
     pPattern->offset = position;
-    pPattern->detectorName = snort_strdup(ud->get_detector()->get_name().c_str());
-    PatternClientDetector::insert_client_port_pattern(pPattern);
+    pPattern->detector_name = snort_strdup(ud->get_detector()->get_name().c_str());
+    ud->get_odp_ctxt().get_client_pattern_detector().insert_client_port_pattern(pPattern);
 
     ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(appId);
 
@@ -2349,8 +2349,8 @@ static int add_port_pattern_service(lua_State* L)
     memcpy(pPattern->pattern, pattern, patternSize);
     pPattern->length = patternSize;
     pPattern->offset = position;
-    pPattern->detectorName = snort_strdup(ud->get_detector()->get_name().c_str());
-    PatternServiceDetector::insert_service_port_pattern(pPattern);
+    pPattern->detector_name = snort_strdup(ud->get_detector()->get_name().c_str());
+    ud->get_odp_ctxt().get_service_pattern_detector().insert_service_port_pattern(pPattern);
     ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(appId);
 
     return 0;
@@ -2787,14 +2787,14 @@ LuaServiceObject::LuaServiceObject(AppIdDiscovery* sdm, const std::string& detec
 
         if (protocol == IpProtocol::TCP)
         {
-            appid_detectors = ServiceDiscovery::get_instance().get_tcp_detectors();
+            appid_detectors = odp_ctxt.get_service_disco_mgr().get_tcp_detectors();
             auto detector = appid_detectors->find(detector_name);
             if (detector != appid_detectors->end())
                 ad = detector->second;
         }
         else if (protocol == IpProtocol::UDP)
         {
-            appid_detectors = ServiceDiscovery::get_instance().get_udp_detectors();
+            appid_detectors = odp_ctxt.get_service_disco_mgr().get_udp_detectors();
             auto detector = appid_detectors->find(detector_name);
             if (detector != appid_detectors->end())
                 ad = detector->second;

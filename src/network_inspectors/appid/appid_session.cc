@@ -659,7 +659,7 @@ int AppIdSession::add_flow_data_id(uint16_t port, ServiceDetector* service)
     return 0;
 }
 
-void AppIdSession::stop_rna_service_inspection(Packet* p, AppidSessionDirection direction)
+void AppIdSession::stop_service_inspection(Packet* p, AppidSessionDirection direction)
 {
     if (direction == APP_ID_FROM_INITIATOR)
     {

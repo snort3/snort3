@@ -92,19 +92,10 @@ bool AppIdContext::init_appid(SnortConfig* sc)
     static bool once = false;
     if (!once)
     {
-        AppIdDiscovery::initialize_plugins();
         odp_ctxt->get_client_disco_mgr().initialize();
+        odp_ctxt->get_service_disco_mgr().initialize();
         LuaDetectorManager::initialize(*this, 1);
-        PatternServiceDetector::finalize_service_port_patterns();
-        PatternClientDetector::finalize_client_port_patterns();
-        AppIdDiscovery::finalize_plugins();
-        odp_ctxt->get_client_disco_mgr().finalize_client_plugins();
-        odp_ctxt->get_http_matchers().finalize_patterns();
-        // sip patterns need to be finalized after http patterns because they
-        // are dependent on http patterns
-        odp_ctxt->get_sip_matchers().finalize_patterns(*odp_ctxt);
-        odp_ctxt->get_ssl_matchers().finalize_patterns();
-        odp_ctxt->get_dns_matchers().finalize_patterns();
+        odp_ctxt->initialize();
         once = true;
     }
 
@@ -130,6 +121,22 @@ void AppIdContext::show()
 OdpContext::OdpContext(AppIdConfig& config, SnortConfig* sc)
 {
     app_info_mgr.init_appid_info_table(config, sc, *this);
+    client_pattern_detector = new PatternClientDetector(&client_disco_mgr);
+    service_pattern_detector = new PatternServiceDetector(&service_disco_mgr);
+}
+
+void OdpContext::initialize()
+{
+    service_pattern_detector->finalize_service_port_patterns();
+    client_pattern_detector->finalize_client_port_patterns();
+    service_disco_mgr.finalize_service_patterns();
+    client_disco_mgr.finalize_client_plugins();
+    http_matchers.finalize_patterns();
+    // sip patterns need to be finalized after http patterns because they
+    // are dependent on http patterns
+    sip_matchers.finalize_patterns(*this);
+    ssl_matchers.finalize_patterns();
+    dns_matchers.finalize_patterns();
 }
 
 void OdpContext::add_port_service_id(IpProtocol proto, uint16_t port, AppId appid)

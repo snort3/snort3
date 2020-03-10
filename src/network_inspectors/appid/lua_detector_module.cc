@@ -371,7 +371,7 @@ LuaObject* LuaDetectorManager::create_lua_detector(const char* detector_name,
         lua_getfield(L, -1, "server");
         if ( lua_istable(L, -1) )
         {
-            return new LuaServiceObject(&ServiceDiscovery::get_instance(),
+            return new LuaServiceObject(&ctxt.get_odp_ctxt().get_service_disco_mgr(),
                 detector_name, log_name, is_custom, proto, L, ctxt.get_odp_ctxt());
         }
         else if (init(L))

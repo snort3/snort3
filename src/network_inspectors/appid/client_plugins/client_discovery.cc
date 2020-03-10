@@ -52,23 +52,6 @@ using namespace snort;
 
 #define MAX_CANDIDATE_CLIENTS 10
 
-THREAD_LOCAL ClientAppMatch* match_free_list = nullptr;
-
-ClientDiscovery::~ClientDiscovery()
-{
-    release_thread_resources();
-}
-
-void ClientDiscovery::release_thread_resources()
-{
-    ClientAppMatch* match;
-    while ((match = match_free_list) != nullptr)
-    {
-        match_free_list = match->next;
-        snort_free(match);
-    }
-}
-
 void ClientDiscovery::initialize()
 {
     new AimClientDetector(this);
@@ -78,7 +61,6 @@ void ClientDiscovery::initialize()
     new ImapClientDetector(this);
     new KerberosClientDetector(this);
     new MsnClientDetector(this);
-    new PatternClientDetector(this);
     new Pop3ClientDetector(this);
     new RtpClientDetector(this);
     new SipTcpClientDetector(this);
@@ -133,13 +115,7 @@ static int pattern_match(void* id, void* /*unused_tree*/, int match_end_pos, voi
             cam->count++;
         else
         {
-            if (match_free_list)
-            {
-                cam = match_free_list;
-                match_free_list = cam->next;
-            }
-            else
-                cam = (ClientAppMatch*)snort_alloc(sizeof(ClientAppMatch));
+            cam = (ClientAppMatch*)snort_alloc(sizeof(ClientAppMatch));
 
             cam->count = 1;
             cam->detector =  static_cast<const ClientDetector*>(pd->service);
@@ -185,9 +161,9 @@ static const ClientDetector* get_next_detector(ClientAppMatch** match_list)
         else
             max_prev->next = max_curr->next;
 
-        max_curr->next = match_free_list;
-        match_free_list = max_curr;
-        return max_curr->detector;
+        const ClientDetector* detector = max_curr->detector;
+        snort_free(max_curr);
+        return detector;
     }
     else
         return nullptr;
@@ -203,8 +179,7 @@ static void free_matched_list(ClientAppMatch** match_list)
     {
         tmp = cam;
         cam = tmp->next;
-        tmp->next = match_free_list;
-        match_free_list = tmp;
+        snort_free(tmp);
     }
 
     *match_list = nullptr;

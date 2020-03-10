@@ -38,14 +38,10 @@ class ServiceDetector;
 class AppIdServiceStateKey;
 class ServiceDiscoveryState;
 
-typedef AppIdServiceStateKey Key_t;
-typedef ServiceDiscoveryState Val_t;
-
-typedef std::map<Key_t, Val_t*> Map_t;
+typedef std::map<AppIdServiceStateKey, ServiceDiscoveryState*> Map_t;
 typedef std::list<Map_t::iterator> Queue_t;
 
-
-enum SERVICE_ID_STATE
+enum ServiceState
 {
     SEARCHING_PORT_PATTERN = 0,
     SEARCHING_BRUTE_FORCE,
@@ -56,12 +52,12 @@ enum SERVICE_ID_STATE
 class AppIdDetectorList
 {
 public:
-    AppIdDetectorList(IpProtocol proto)
+    AppIdDetectorList(IpProtocol proto, ServiceDiscovery& sd)
     {
         if (proto == IpProtocol::TCP)
-            detectors = ServiceDiscovery::get_instance().get_tcp_detectors();
+            detectors = sd.get_tcp_detectors();
         else
-            detectors = ServiceDiscovery::get_instance().get_udp_detectors();
+            detectors = sd.get_udp_detectors();
         dit = detectors->begin();
     }
 
@@ -89,18 +85,18 @@ class ServiceDiscoveryState
 public:
     ServiceDiscoveryState();
     ~ServiceDiscoveryState();
-    ServiceDetector* select_detector_by_brute_force(IpProtocol proto);
+    ServiceDetector* select_detector_by_brute_force(IpProtocol proto, ServiceDiscovery& sd);
     void set_service_id_valid(ServiceDetector* sd);
     void set_service_id_failed(AppIdSession& asd, const snort::SfIp* client_ip,
         unsigned invalid_delta = 0);
     void update_service_incompatiable(const snort::SfIp* ip);
 
-    SERVICE_ID_STATE get_state() const
+    ServiceState get_state() const
     {
         return state;
     }
 
-    void set_state(SERVICE_ID_STATE state)
+    void set_state(ServiceState state)
     {
         this->state = state;
     }
@@ -128,7 +124,7 @@ public:
     Queue_t::iterator qptr; // Our place in service_state_queue
 
 private:
-    SERVICE_ID_STATE state;
+    ServiceState state;
     ServiceDetector* service = nullptr;
     AppIdDetectorList* tcp_brute_force_mgr = nullptr;
     AppIdDetectorList* udp_brute_force_mgr = nullptr;
@@ -212,9 +208,9 @@ public:
             delete kv.second;
     }
 
-    Val_t* add(const Key_t& k, bool do_touch = false)
+    ServiceDiscoveryState* add(const AppIdServiceStateKey& k, bool do_touch = false)
     {
-        Val_t* ss = nullptr;
+        ServiceDiscoveryState* ss = nullptr;
 
         // Try to emplace k first, with a nullptr.
         std::pair<Map_t::iterator, bool> sit = m.emplace( std::make_pair(k, ss) );
@@ -223,7 +219,7 @@ public:
         if ( sit.second )
         {
             // emplace succeeded
-            ss = it->second = new Val_t;
+            ss = it->second = new ServiceDiscoveryState;
             q.emplace_back(it);
             mem_used += sz;
             ss->qptr = --q.end(); // remember our place in the queue
@@ -242,7 +238,7 @@ public:
         return ss;
     }
 
-    Val_t* get(const Key_t& k, bool do_touch = 0)
+    ServiceDiscoveryState* get(const AppIdServiceStateKey& k, bool do_touch = 0)
     {
         Map_t::const_iterator it = m.find(k);
         if ( it != m.end() ) {
@@ -283,7 +279,7 @@ public:
         return mem_used <= max_memory;
     }
 
-    Map_t::iterator find(const Key_t& k)
+    Map_t::iterator find(const AppIdServiceStateKey& k)
     {
         return m.find(k);
     }

@@ -205,18 +205,9 @@ int ServiceDiscovery::fail_service(AppIdSession&, const Packet*, AppidSessionDir
     ServiceDetector*, ServiceDiscoveryState*) { return 0; }
 int ServiceDiscovery::add_service_port(AppIdDetector*,
     const ServiceDetectorPort&) { return APPID_EINVALID; }
-ServiceDiscovery::ServiceDiscovery() {}
-void ServiceDiscovery::release_instance() {}
-void ServiceDiscovery::release_thread_resources() {}
 static AppIdModule* s_app_module = nullptr;
 static AppIdInspector* s_ins = nullptr;
 static ServiceDiscovery* s_discovery_manager = nullptr;
-ServiceDiscovery& ServiceDiscovery::get_instance()
-{
-    if (!s_discovery_manager)
-        s_discovery_manager = new ServiceDiscovery();
-    return *s_discovery_manager;
-}
 
 HostCacheIp host_cache(50);
 AppId HostTracker::get_appid(Port, IpProtocol, bool, bool)
@@ -225,11 +216,8 @@ AppId HostTracker::get_appid(Port, IpProtocol, bool, bool)
 }
 
 // Stubs for ClientDiscovery
-ClientDiscovery::~ClientDiscovery() {}
 void ClientDiscovery::initialize() {}
 void ClientDiscovery::finalize_client_plugins() {}
-void ClientDiscovery::release_instance() {}
-void ClientDiscovery::release_thread_resources() {}
 static ClientDiscovery* c_discovery_manager = new ClientDiscovery();
 bool ClientDiscovery::do_client_discovery(AppIdSession&, Packet*,
     AppidSessionDirection, AppidChangeBits&)

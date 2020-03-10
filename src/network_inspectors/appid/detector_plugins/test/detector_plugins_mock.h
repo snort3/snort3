@@ -204,6 +204,12 @@ bool AppIdReloadTuner::tune_resources(unsigned int)
     return true;
 }
 
+void ServiceDiscovery::initialize()
+{ }
+
+int ServiceDiscovery::add_service_port(AppIdDetector*, const ServiceDetectorPort&)
+{ return 0; }
+
 OdpContext::OdpContext(AppIdConfig&, snort::SnortConfig*)
 { }
 

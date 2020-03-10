@@ -215,7 +215,6 @@ static void appid_inspector_pterm()
 //FIXIT-M: RELOAD - if app_info_table is associated with an object
     appid_forecast_pterm();
     LuaDetectorManager::terminate();
-    AppIdDiscovery::release_plugins();
     AppIdContext::pterm();
 //end of 'FIXIT-M: RELOAD' comment above
     openssl_cleanup();

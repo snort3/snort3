@@ -325,7 +325,7 @@ public:
     void update_encrypted_app_id(AppId);
     void examine_rtmp_metadata(AppidChangeBits& change_bits);
     void sync_with_snort_protocol_id(AppId, snort::Packet*);
-    void stop_rna_service_inspection(snort::Packet*,  AppidSessionDirection);
+    void stop_service_inspection(snort::Packet*,  AppidSessionDirection);
 
     bool is_payload_appid_set();
     void clear_http_flags();

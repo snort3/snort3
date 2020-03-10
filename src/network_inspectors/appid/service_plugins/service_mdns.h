@@ -38,7 +38,6 @@ public:
     ~MdnsServiceDetector() override;
 
     int validate(AppIdDiscoveryArgs&) override;
-    void release_thread_resources() override;
 
 private:
     unsigned create_match_list(const char* data, uint16_t dataSize);
@@ -52,6 +51,7 @@ private:
         uint16_t data_size, uint8_t* user_name_len, unsigned size);
 
     snort::SearchTool* matcher = nullptr;
+    MatchedPatterns* patternList = nullptr;
 };
 #endif
 

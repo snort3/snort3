@@ -22,11 +22,10 @@
 #ifndef CLIENT_DISCOVERY_H
 #define CLIENT_DISCOVERY_H
 
-#include "appid_discovery.h"
-
 #include "flow/flow.h"
 #include "log/messages.h"
 
+#include "appid_discovery.h"
 #include "appid_types.h"
 
 class ClientDetector;
@@ -44,12 +43,9 @@ extern THREAD_LOCAL ClientAppMatch* match_free_list;
 class ClientDiscovery : public AppIdDiscovery
 {
 public:
-    ~ClientDiscovery() override;
     void initialize() override;
-    static void release_instance();
 
     void finalize_client_plugins();
-    static void release_thread_resources();
     bool do_client_discovery(AppIdSession&, snort::Packet*,
         AppidSessionDirection direction, AppidChangeBits& change_bits);
 

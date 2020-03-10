@@ -79,9 +79,6 @@ struct MatchedPatterns
     MatchedPatterns* next;
 };
 
-static THREAD_LOCAL MatchedPatterns* patternList;
-static THREAD_LOCAL MatchedPatterns* patternFreeList;
-
 static MdnsPattern patterns[] =
 {
     { (const uint8_t*)PATTERN_STR_LOCAL_1, sizeof(PATTERN_STR_LOCAL_1) - 1 },
@@ -118,19 +115,6 @@ MdnsServiceDetector::MdnsServiceDetector(ServiceDiscovery* sd)
 MdnsServiceDetector::~MdnsServiceDetector()
 {
     destory_matcher();
-}
-
-void MdnsServiceDetector::release_thread_resources()
-{
-    MatchedPatterns* node;
-
-    destroy_match_list();
-
-    while ((node = patternFreeList))
-    {
-        patternFreeList = node->next;
-        snort_free(node);
-    }
 }
 
 int MdnsServiceDetector::validate(AppIdDiscoveryArgs& args)
@@ -405,13 +389,7 @@ static int mdns_pattern_match(void* id, void*, int match_end_pos, void* data, vo
     MatchedPatterns* element;
     MatchedPatterns* prevElement;
 
-    if (patternFreeList)
-    {
-        cm = patternFreeList;
-        patternFreeList = cm->next;
-    }
-    else
-        cm = (MatchedPatterns*)snort_calloc(sizeof(MatchedPatterns));
+    cm = (MatchedPatterns*)snort_calloc(sizeof(MatchedPatterns));
 
     cm->mpattern = target;
     cm->match_start_pos = match_end_pos - target->length;
@@ -439,9 +417,6 @@ static int mdns_pattern_match(void* id, void*, int match_end_pos, void* data, vo
 
 unsigned MdnsServiceDetector::create_match_list(const char* data, uint16_t dataSize)
 {
-    if (patternList)
-        destroy_match_list();
-
     matcher->find_all((const char*)data, dataSize, mdns_pattern_match, false, (void*)&patternList);
 
     if (patternList)
@@ -467,8 +442,7 @@ void MdnsServiceDetector::scan_matched_patterns(const char* dataPtr, uint16_t in
 
         MatchedPatterns* element = patternList;
         patternList = patternList->next;
-        element->next = patternFreeList;
-        patternFreeList = element;
+        snort_free(element);
     }
     *resp_endptr = nullptr;
     *pattern_length = 0;
@@ -476,32 +450,21 @@ void MdnsServiceDetector::scan_matched_patterns(const char* dataPtr, uint16_t in
 
 void MdnsServiceDetector::destroy_match_list()
 {
-    MatchedPatterns* element;
-
     while (patternList)
     {
-        element = patternList;
+        MatchedPatterns* element = patternList;
         patternList = patternList->next;
 
-        element->next = patternFreeList;
-        patternFreeList = element;
+        snort_free(element);
     }
 }
 
 void MdnsServiceDetector::destory_matcher()
 {
-    MatchedPatterns* node;
-
     if (matcher)
         delete matcher;
     matcher = nullptr;
 
     destroy_match_list();
-
-    while ((node = patternFreeList))
-    {
-        patternFreeList = node->next;
-        snort_free(node);
-    }
 }
 

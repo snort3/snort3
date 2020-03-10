@@ -52,7 +52,7 @@ enum SERVICE_HOST_INFO_CODE
     SERVICE_HOST_INFO_NETBIOS_NAME = 1
 };
 
-/* Service state stored per flow, which acts based on global SERVICE_ID_STATE
+/* Service state stored per flow, which acts based on global ServiceState
  * at the beginning of the flow, then independently do service discovery, and
  * synchronize findings at the end of service discovery by the flow.
  */
@@ -67,9 +67,9 @@ enum SESSION_SERVICE_SEARCH_STATE
 class ServiceDiscovery : public AppIdDiscovery
 {
 public:
-    static ServiceDiscovery& get_instance();
-    static void release_instance();
-
+    ServiceDiscovery() { }
+    ~ServiceDiscovery() override { }
+    void initialize() override;
     void finalize_service_patterns();
     int add_service_port(AppIdDetector*, const ServiceDetectorPort&) override;
 
@@ -83,10 +83,8 @@ public:
     int fail_service(AppIdSession&, const snort::Packet*, AppidSessionDirection dir, ServiceDetector*, ServiceDiscoveryState* sds = nullptr);
     int incompatible_data(AppIdSession&, const snort::Packet*, AppidSessionDirection dir, ServiceDetector*);
     static int add_ftp_service_state(AppIdSession&);
-    void release_thread_resources();
+
 private:
-    ServiceDiscovery();
-    void initialize() override;
     void get_next_service(const snort::Packet*, const AppidSessionDirection dir, AppIdSession&);
     void get_port_based_services(IpProtocol, uint16_t port, AppIdSession&);
     void match_by_pattern(AppIdSession&, const snort::Packet*, IpProtocol);

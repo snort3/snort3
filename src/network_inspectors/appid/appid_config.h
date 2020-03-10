@@ -23,18 +23,10 @@
 #define APP_ID_CONFIG_H
 
 #include <array>
-#include <map>
 #include <string>
 
-#include "framework/decode_data.h"
-#include "main/snort_config.h"
-#include "protocols/ipv6.h"
-#include "sfip/sf_ip.h"
 #include "target_based/snort_protocols.h"
-#include "utils/sflsq.h"
-#include "tp_appid_module_api.h"
 
-#include "application_ids.h"
 #include "app_info_table.h"
 #include "client_plugins/client_discovery.h"
 #include "detector_plugins/dns_patterns.h"
@@ -43,14 +35,17 @@
 #include "detector_plugins/ssl_patterns.h"
 #include "host_port_app_cache.h"
 #include "length_app_cache.h"
+#include "service_plugins/service_discovery.h"
+#include "tp_appid_module_api.h"
 
 #define APP_ID_PORT_ARRAY_SIZE  65536
-
-class AppIdInspector;
 
 extern SnortProtocolId snortId_for_unsynchronized;
 extern SnortProtocolId snortId_for_ftp_data;
 extern SnortProtocolId snortId_for_http2;
+
+class PatternClientDetector;
+class PatternServiceDetector;
 
 class AppIdConfig
 {
@@ -105,6 +100,7 @@ public:
     bool recheck_for_portservice_appid = false;
 
     OdpContext(AppIdConfig&, snort::SnortConfig*);
+    void initialize();
 
     AppInfoManager& get_app_info_mgr()
     {
@@ -114,6 +110,11 @@ public:
     ClientDiscovery& get_client_disco_mgr()
     {
         return client_disco_mgr;
+    }
+
+    ServiceDiscovery& get_service_disco_mgr()
+    {
+        return service_disco_mgr;
     }
 
     HostPortVal* host_port_cache_find(const snort::SfIp* ip, uint16_t port, IpProtocol proto)
@@ -156,6 +157,16 @@ public:
         return ssl_matchers;
     }
 
+    PatternClientDetector& get_client_pattern_detector()
+    {
+        return *client_pattern_detector;
+    }
+
+    PatternServiceDetector& get_service_pattern_detector()
+    {
+        return *service_pattern_detector;
+    }
+
     void add_port_service_id(IpProtocol, uint16_t, AppId);
     void add_protocol_service_id(IpProtocol, AppId);
     AppId get_port_service_id(IpProtocol, uint16_t);
@@ -169,8 +180,11 @@ private:
     LengthCache length_cache;
     DnsPatternMatchers dns_matchers;
     HttpPatternMatchers http_matchers;
+    ServiceDiscovery service_disco_mgr;
     SipPatternMatchers sip_matchers;
     SslPatternMatchers ssl_matchers;
+    PatternClientDetector* client_pattern_detector;
+    PatternServiceDetector* service_pattern_detector;
 
     std::array<AppId, APP_ID_PORT_ARRAY_SIZE> tcp_port_only = {}; // port-only TCP services
     std::array<AppId, APP_ID_PORT_ARRAY_SIZE> udp_port_only = {}; // port-only UDP services

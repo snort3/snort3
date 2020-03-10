@@ -280,9 +280,6 @@ struct NBDgmError
 
 #pragma pack()
 
-// FIXIT-L - make this a class member var
-static THREAD_LOCAL FpSMBData* smb_data_free_list = nullptr;
-
 static int netbios_validate_name_and_decode(const uint8_t** data,
     const uint8_t* const begin,
     const uint8_t* const end,
@@ -1020,22 +1017,6 @@ NbdgmServiceDetector::NbdgmServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-NbdgmServiceDetector::~NbdgmServiceDetector()
-{
-    release_thread_resources();
-}
-
-void NbdgmServiceDetector::release_thread_resources()
-{
-    FpSMBData* sd;
-
-    while ((sd = smb_data_free_list))
-    {
-        smb_data_free_list = sd->next;
-        snort_free(sd);
-    }
-}
-
 int NbdgmServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     const NBDgmHeader* hdr;
@@ -1188,13 +1169,7 @@ void NbdgmServiceDetector::add_smb_info(AppIdSession& asd, unsigned major, unsig
     if ( flags & FINGERPRINT_UDP_FLAGS_XENIX )
         return;
 
-    if ( smb_data_free_list )
-    {
-        sd = smb_data_free_list;
-        smb_data_free_list = sd->next;
-    }
-    else
-        sd = (FpSMBData*)snort_calloc(sizeof(FpSMBData));
+    sd = (FpSMBData*)snort_calloc(sizeof(FpSMBData));
 
     if ( asd.add_flow_data(sd, APPID_SESSION_DATA_SMB_DATA, (AppIdFreeFCN)AppIdFreeSMBData) )
     {
@@ -1210,10 +1185,6 @@ void NbdgmServiceDetector::add_smb_info(AppIdSession& asd, unsigned major, unsig
 
 void NbdgmServiceDetector::AppIdFreeSMBData(FpSMBData* sd)
 {
-    if ( sd )
-    {
-        sd->next = smb_data_free_list;
-        smb_data_free_list = sd;
-    }
+    snort_free(sd);
 }
 

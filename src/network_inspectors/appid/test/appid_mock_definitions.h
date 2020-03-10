@@ -56,7 +56,6 @@ SearchTool::~SearchTool() { }
 
 AppIdDiscovery::AppIdDiscovery() { }
 AppIdDiscovery::~AppIdDiscovery() { }
-ClientDiscovery::~ClientDiscovery() { }
 void ClientDiscovery::initialize() { }
 void AppIdDiscovery::register_detector(const string&, AppIdDetector*, IpProtocol) { }
 void AppIdDiscovery::add_pattern_data(AppIdDetector*, snort::SearchTool*, int, unsigned char const*, unsigned int, unsigned int) { }
@@ -82,6 +81,12 @@ int ServiceDiscovery::add_ftp_service_state(AppIdSession&)
 {
     return 0;
 }
+
+void ServiceDiscovery::initialize()
+{ }
+
+int ServiceDiscovery::add_service_port(AppIdDetector*, const ServiceDetectorPort&)
+{ return 0; }
 
 // Stubs for app_info_table.h
 AppInfoTableEntry* AppInfoManager::get_app_info_entry(int)

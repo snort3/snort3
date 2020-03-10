@@ -105,13 +105,6 @@ int ServiceDiscovery::fail_service(AppIdSession&, const Packet*, AppidSessionDir
     ServiceDetector*, ServiceDiscoveryState*) { return 0; }
 int ServiceDiscovery::add_service_port(AppIdDetector*,
     const ServiceDetectorPort&) { return APPID_EINVALID; }
-ServiceDiscovery::ServiceDiscovery() {}
-
-ServiceDiscovery& ServiceDiscovery::get_instance()
-{
-    static ServiceDiscovery discovery_manager;
-    return discovery_manager;
-}
 
 TEST_GROUP(service_state_tests)
 {
@@ -129,20 +122,20 @@ TEST_GROUP(service_state_tests)
 
 TEST(service_state_tests, select_detector_by_brute_force)
 {
+    ServiceDiscovery sd;
     ServiceDiscoveryState sds;
-    ServiceDiscovery::get_instance();
 
     // Testing end of brute-force walk for supported and unsupported protocols
     test_log[0] = '\0';
-    sds.select_detector_by_brute_force(IpProtocol::TCP);
+    sds.select_detector_by_brute_force(IpProtocol::TCP, sd);
     STRCMP_EQUAL(test_log, "AppIdDbg  Brute-force state failed - no more TCP detectors\n");
 
     test_log[0] = '\0';
-    sds.select_detector_by_brute_force(IpProtocol::UDP);
+    sds.select_detector_by_brute_force(IpProtocol::UDP, sd);
     STRCMP_EQUAL(test_log, "AppIdDbg  Brute-force state failed - no more UDP detectors\n");
 
     test_log[0] = '\0';
-    sds.select_detector_by_brute_force(IpProtocol::IP);
+    sds.select_detector_by_brute_force(IpProtocol::IP, sd);
     STRCMP_EQUAL(test_log, "");
 }
 
@@ -152,16 +145,15 @@ TEST(service_state_tests, set_service_id_failed)
     AppIdInspector inspector;
     AppIdSession asd(IpProtocol::PROTO_NOT_SET, nullptr, 0, inspector);
     SfIp client_ip;
-    ServiceDiscovery::get_instance();
 
     // Testing 3+ failures to exceed STATE_ID_NEEDED_DUPE_DETRACT_COUNT with valid_count = 0
     client_ip.set("1.2.3.4");
-    sds.set_state(SERVICE_ID_STATE::VALID);
+    sds.set_state(ServiceState::VALID);
     sds.set_service_id_failed(asd, &client_ip, 0);
     sds.set_service_id_failed(asd, &client_ip, 0);
     sds.set_service_id_failed(asd, &client_ip, 0);
     sds.set_service_id_failed(asd, &client_ip, 0);
-    CHECK_TRUE(sds.get_state() == SERVICE_ID_STATE::SEARCHING_PORT_PATTERN);
+    CHECK_TRUE(sds.get_state() == ServiceState::SEARCHING_PORT_PATTERN);
 }
 
 
@@ -171,18 +163,17 @@ TEST(service_state_tests, set_service_id_failed_with_valid)
     AppIdInspector inspector;
     AppIdSession asd(IpProtocol::PROTO_NOT_SET, nullptr, 0, inspector);
     SfIp client_ip;
-    ServiceDiscovery::get_instance();
 
     // Testing 3+ failures to exceed STATE_ID_NEEDED_DUPE_DETRACT_COUNT with valid_count > 1
     client_ip.set("1.2.3.4");
-    sds.set_state(SERVICE_ID_STATE::VALID);
+    sds.set_state(ServiceState::VALID);
     sds.set_service_id_valid(0);
     sds.set_service_id_valid(0);
     sds.set_service_id_failed(asd, &client_ip, 0);
     sds.set_service_id_failed(asd, &client_ip, 0);
     sds.set_service_id_failed(asd, &client_ip, 0);
     sds.set_service_id_failed(asd, &client_ip, 0);
-    CHECK_TRUE(sds.get_state() == SERVICE_ID_STATE::VALID);
+    CHECK_TRUE(sds.get_state() == ServiceState::VALID);
 }
 
 TEST(service_state_tests, appid_service_state_key_comparison_test)
@@ -193,8 +184,8 @@ TEST(service_state_tests, appid_service_state_key_comparison_test)
     IpProtocol proto = IpProtocol::TCP;
     uint16_t port=3000;
 
-    Key_t A(&ip4, proto, port, 0);
-    Key_t B(&ip6, proto, port, 0);
+    AppIdServiceStateKey A(&ip4, proto, port, 0);
+    AppIdServiceStateKey B(&ip6, proto, port, 0);
 
     // We must never be in a situation where !( A<B ) and !( B<A ),
     // because then map will consider A=B.
@@ -213,15 +204,15 @@ TEST(service_state_tests, service_cache)
     ip4.set("1.2.3.4");
     ip6.set("1111.2222.3333.4444.5555.6666.7777.8888");
 
-    Val_t* ss = nullptr;
-    std::vector<Val_t*> ssvec;
+    ServiceDiscoveryState* ss = nullptr;
+    std::vector<ServiceDiscoveryState*> ssvec;
 
 
     // Insert (ipv4 and ipv6) past the memcap, and check the memcap is not exceeded.
     for( size_t i = 1; i <= num_entries; i++, port++ )
     {
         const SfIp* ip = ( i%2 == 1 ? &ip4 : &ip6 );
-        ss = ServiceCache.add( Key_t(ip, proto, port, 0) );
+        ss = ServiceCache.add( AppIdServiceStateKey(ip, proto, port, 0) );
         CHECK_TRUE(ServiceCache.size() == ( i <= max_entries ? i : max_entries));
         ssvec.push_back(ss);
     }
@@ -229,7 +220,7 @@ TEST(service_state_tests, service_cache)
     // The cache should now be  ip6:3007, ip4:3008, ip6:3009.
     // Check that the order in the cache is correct.
     Queue_t::iterator it = ServiceCache.newest();
-    std::vector<Val_t*>::iterator vit = --ssvec.end();
+    std::vector<ServiceDiscoveryState*>::iterator vit = --ssvec.end();
     for( size_t i=0; i<max_entries; i++, --it, --vit )
     {
         Map_t::iterator mit = *it;

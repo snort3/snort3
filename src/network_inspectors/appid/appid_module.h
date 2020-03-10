@@ -25,9 +25,11 @@
 #include <unordered_map>
 #include <vector>
 
+#include "framework/module.h"
+#include "main/snort_config.h"
+
 #include "appid_config.h"
 #include "appid_pegs.h"
-#include "framework/module.h"
 
 extern THREAD_LOCAL snort::ProfileStats appid_perf_stats;
 

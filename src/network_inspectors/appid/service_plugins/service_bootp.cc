@@ -76,7 +76,6 @@ struct ServiceDHCPOption
 #pragma pack()
 
 static const uint8_t zeromac[6] = { 0, 0, 0, 0, 0, 0 };
-static THREAD_LOCAL DHCPInfo* dhcp_info_free_list = nullptr;
 
 BootpServiceDetector::BootpServiceDetector(ServiceDiscovery* sd)
 {
@@ -97,22 +96,6 @@ BootpServiceDetector::BootpServiceDetector(ServiceDiscovery* sd)
     };
 
     handler->register_detector(name, this, proto);
-}
-
-BootpServiceDetector::~BootpServiceDetector()
-{
-    release_thread_resources();
-}
-
-void BootpServiceDetector::release_thread_resources()
-{
-    DHCPInfo* info;
-
-    while ((info = dhcp_info_free_list))
-    {
-        dhcp_info_free_list = info->next;
-        snort_free(info);
-    }
 }
 
 int BootpServiceDetector::validate(AppIdDiscoveryArgs& args)
@@ -330,11 +313,7 @@ void BootpServiceDetector::AppIdFreeDhcpData(DHCPData* dd)
 
 void BootpServiceDetector::AppIdFreeDhcpInfo(DHCPInfo* dd)
 {
-    if (dd)
-    {
-        dd->next = dhcp_info_free_list;
-        dhcp_info_free_list = dd;
-    }
+    snort_free(dd);
 }
 
 int BootpServiceDetector::add_dhcp_info(AppIdSession& asd, unsigned op55_len, const uint8_t* op55,
@@ -385,13 +364,7 @@ void BootpServiceDetector::add_new_dhcp_lease(AppIdSession& asd, const uint8_t* 
     if (!(flags & IPFUNCS_HOSTS_IP))
         return;
 
-    if (dhcp_info_free_list)
-    {
-        info = dhcp_info_free_list;
-        dhcp_info_free_list = info->next;
-    }
-    else
-        info = (DHCPInfo*)snort_calloc(sizeof(DHCPInfo));
+    info = (DHCPInfo*)snort_calloc(sizeof(DHCPInfo));
 
     if (asd.add_flow_data(info, APPID_SESSION_DATA_DHCP_INFO,
         (AppIdFreeFCN)BootpServiceDetector::AppIdFreeDhcpInfo))

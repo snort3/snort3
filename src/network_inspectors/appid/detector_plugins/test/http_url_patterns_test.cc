@@ -64,7 +64,6 @@ static void* my_chp_rewritten = nullptr;
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 AppIdDiscovery::AppIdDiscovery() { }
 AppIdDiscovery::~AppIdDiscovery() { }
-ClientDiscovery::~ClientDiscovery() { }
 void ClientDiscovery::initialize() { }
 void AppIdDiscovery::register_detector(const string&, AppIdDetector*, IpProtocol) { }
 void AppIdDiscovery::add_pattern_data(AppIdDetector*, snort::SearchTool*, int, unsigned char const*, unsigned int, unsigned int) { }

@@ -48,7 +48,6 @@ public:
     void do_custom_init() override { }
     int validate(AppIdDiscoveryArgs&) override { return 0; }
     void register_appid(AppId, unsigned, OdpContext&) override { }
-    void release_thread_resources() override { }
 };
 
 TEST_GROUP(appid_detector_tests)

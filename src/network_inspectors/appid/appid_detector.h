@@ -113,7 +113,6 @@ public:
 
     virtual int initialize();
     virtual void do_custom_init() = 0;
-    virtual void release_thread_resources() = 0;
     virtual int validate(AppIdDiscoveryArgs&) = 0;
     virtual void register_appid(AppId, unsigned extractsInfo, OdpContext& odp_ctxt) = 0;
 

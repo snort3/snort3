@@ -97,9 +97,6 @@ public:
     AppIdDiscovery(const AppIdDiscovery&) = delete;
     AppIdDiscovery& operator=(const AppIdDiscovery&) = delete;
 
-    static void initialize_plugins();
-    static void finalize_plugins();
-    static void release_plugins();
     static void tterm();
 
     virtual void initialize() = 0;

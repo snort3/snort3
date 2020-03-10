@@ -40,13 +40,12 @@ using namespace snort;
 
 static THREAD_LOCAL MapList* service_state_cache = nullptr;
 
-
-const size_t MapList::sz = sizeof(Val_t) +
+const size_t MapList::sz = sizeof(ServiceDiscoveryState) +
     sizeof(Map_t::value_type) + sizeof(Queue_t::value_type);
 
 ServiceDiscoveryState::ServiceDiscoveryState()
 {
-    state = SERVICE_ID_STATE::SEARCHING_PORT_PATTERN;
+    state = ServiceState::SEARCHING_PORT_PATTERN;
     last_detract.clear();
     last_invalid_client.clear();
     reset_time = 0;
@@ -58,12 +57,13 @@ ServiceDiscoveryState::~ServiceDiscoveryState()
     delete udp_brute_force_mgr;
 }
 
-ServiceDetector* ServiceDiscoveryState::select_detector_by_brute_force(IpProtocol proto)
+ServiceDetector* ServiceDiscoveryState::select_detector_by_brute_force(IpProtocol proto,
+    ServiceDiscovery& sd)
 {
     if (proto == IpProtocol::TCP)
     {
         if ( !tcp_brute_force_mgr )
-            tcp_brute_force_mgr = new AppIdDetectorList(IpProtocol::TCP);
+            tcp_brute_force_mgr = new AppIdDetectorList(IpProtocol::TCP, sd);
         service = tcp_brute_force_mgr->next();
         if (appidDebug->is_active())
             LogMessage("AppIdDbg %s Brute-force state %s\n", appidDebug->get_debug_session(),
@@ -72,7 +72,7 @@ ServiceDetector* ServiceDiscoveryState::select_detector_by_brute_force(IpProtoco
     else if (proto == IpProtocol::UDP)
     {
         if ( !udp_brute_force_mgr )
-            udp_brute_force_mgr = new AppIdDetectorList(IpProtocol::UDP);
+            udp_brute_force_mgr = new AppIdDetectorList(IpProtocol::UDP, sd);
         service = udp_brute_force_mgr->next();
         if (appidDebug->is_active())
             LogMessage("AppIdDbg %s Brute-force state %s\n", appidDebug->get_debug_session(),
@@ -82,7 +82,7 @@ ServiceDetector* ServiceDiscoveryState::select_detector_by_brute_force(IpProtoco
         service = nullptr;
 
     if ( !service )
-        state = SERVICE_ID_STATE::FAILED;
+        state = ServiceState::FAILED;
 
     return service;
 }
@@ -91,9 +91,9 @@ void ServiceDiscoveryState::set_service_id_valid(ServiceDetector* sd)
 {
     service = sd;
     reset_time = 0;
-    if ( state != SERVICE_ID_STATE::VALID )
+    if ( state != ServiceState::VALID )
     {
-        state = SERVICE_ID_STATE::VALID;
+        state = ServiceState::VALID;
         valid_count = 0;
     }
 
@@ -122,14 +122,14 @@ void ServiceDiscoveryState::set_service_id_failed(AppIdSession& asd, const SfIp*
 
     /* If we had a valid detector, check for too many fails.  If so, start
      * search sequence again. */
-    if ( state == SERVICE_ID_STATE::VALID )
+    if ( state == ServiceState::VALID )
     {
         /* Too many invalid clients?  If so, count it as an invalid detect. */
         if ( invalid_client_count >= STATE_ID_INVALID_CLIENT_THRESHOLD )
         {
             if ( valid_count <= 1 )
             {
-                state = SERVICE_ID_STATE::SEARCHING_PORT_PATTERN;
+                state = ServiceState::SEARCHING_PORT_PATTERN;
                 invalid_client_count = 0;
                 last_invalid_client.clear();
                 valid_count = 0;
@@ -155,7 +155,7 @@ void ServiceDiscoveryState::set_service_id_failed(AppIdSession& asd, const SfIp*
             {
                 if (valid_count <= 1)
                 {
-                    state = SERVICE_ID_STATE::SEARCHING_PORT_PATTERN;
+                    state = ServiceState::SEARCHING_PORT_PATTERN;
                     invalid_client_count = 0;
                     last_invalid_client.clear();
                     valid_count = 0;
@@ -167,7 +167,7 @@ void ServiceDiscoveryState::set_service_id_failed(AppIdSession& asd, const SfIp*
             }
         }
     }
-    else if ( ( state == SERVICE_ID_STATE::SEARCHING_PORT_PATTERN ) and
+    else if ( ( state == ServiceState::SEARCHING_PORT_PATTERN ) and
         ( asd.service_search_state == SESSION_SERVICE_SEARCH_STATE::PENDING ) and
         asd.service_candidates.empty() and
         !asd.get_session_flags(APPID_SESSION_MID | APPID_SESSION_OOO) )
@@ -192,7 +192,6 @@ void ServiceDiscoveryState::update_service_incompatiable(const SfIp* ip)
         }
     }
 }
-
 
 bool AppIdServiceState::initialize(size_t memcap)
 {
