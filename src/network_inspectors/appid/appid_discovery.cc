@@ -791,7 +791,16 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd,
     if (tp_appid_ctxt)
     {
         // Skip third-party inspection for sessions using old config
-        if ((asd.tpsession and &(asd.tpsession->get_ctxt()) == tp_appid_ctxt) || !asd.tpsession)
+        if (asd.tpsession and &(asd.tpsession->get_ctxt()) != tp_appid_ctxt)
+        {
+            bool is_tp_done = asd.is_tp_processing_done();
+            delete asd.tpsession;
+            asd.tpsession = nullptr;
+            if (!is_tp_done)
+                is_discovery_done = do_tp_discovery(*tp_appid_ctxt, asd, protocol, p,
+                    direction, change_bits);
+        }
+        else
             is_discovery_done = do_tp_discovery(*tp_appid_ctxt, asd, protocol, p,
                 direction, change_bits);
     }
