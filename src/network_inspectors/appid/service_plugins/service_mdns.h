@@ -40,18 +40,17 @@ public:
     int validate(AppIdDiscoveryArgs&) override;
 
 private:
-    unsigned create_match_list(const char* data, uint16_t dataSize);
+    MatchedPatterns* create_match_list(const char* data, uint16_t dataSize);
     void scan_matched_patterns(const char* dataPtr, uint16_t index, const char** resp_endptr,
-        int* pattern_length);
-    void destroy_match_list();
-    void destory_matcher();
+        int* pattern_length, MatchedPatterns*& pattern_list);
+    void destroy_match_list(MatchedPatterns*& pattern_list);
     int validate_reply(const uint8_t* data, uint16_t size);
-    int analyze_user(AppIdSession&, const snort::Packet*, uint16_t size);
+    int analyze_user(AppIdSession&, const snort::Packet*, uint16_t size,
+        MatchedPatterns*& pattern_list);
     int reference_pointer(const char* start_ptr, const char** resp_endptr, int* start_index,
-        uint16_t data_size, uint8_t* user_name_len, unsigned size);
+        uint16_t data_size, uint8_t* user_name_len, unsigned size, MatchedPatterns*& pattern_list);
 
     snort::SearchTool* matcher = nullptr;
-    MatchedPatterns* patternList = nullptr;
 };
 #endif
 
