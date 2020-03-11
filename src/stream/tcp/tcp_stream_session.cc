@@ -30,15 +30,6 @@
 
 using namespace snort;
 
-#ifdef DEBUG_MSGS
-const char* const flush_policy_names[] =
-{
-    "ignore",
-    "on-ack",
-    "on-data"
-};
-#endif
-
 TcpStreamSession::TcpStreamSession(Flow* f)
     : Session(f), client(true), server(false)
 { }

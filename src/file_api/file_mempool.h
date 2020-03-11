@@ -73,9 +73,6 @@ private:
 
     void free_pools();
     int remove(CircularBuffer* cb, void* obj);
-#ifdef DEBUG_MSGS
-    void verify();
-#endif
 
     void** datapool; /* memory buffer */
     uint64_t total;

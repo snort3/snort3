@@ -29,10 +29,6 @@
 #include "tcp_stream_config.h"
 #include "tcp_stream_tracker.h"
 
-#ifdef DEBUG_MSGS
-extern const char* const flush_policy_names[];
-#endif
-
 // FIXIT-L session tracking must be split from reassembly
 // into a separate module a la ip_session.cc and ip_defrag.cc
 // (of course defrag should also be cleaned up)

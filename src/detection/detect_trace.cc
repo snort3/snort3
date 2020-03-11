@@ -100,7 +100,7 @@ void print_pattern(const PatternMatchData* pmd)
 
 void dump_buffer(const uint8_t* buff, unsigned len, Packet* p)
 {
-    if (!trace_enabled(detection_trace, trace_buffer))
+    if (!trace_enabled(TRACE_NAME(detection), trace_buffer))
         return;
 
     if (len == 0)
@@ -129,10 +129,10 @@ void node_eval_trace(const detection_option_tree_node_t* node, const Cursor& cur
                   name, pos);
     }
 
-    if (!trace_enabled(detection_trace, trace_buffer))
+    if (!trace_enabled(TRACE_NAME(detection), trace_buffer))
         return;
 
-    if (trace_enabled(detection_trace, TRACE_BUFFER_VERBOSE))
+    if (trace_enabled(TRACE_NAME(detection), TRACE_BUFFER_VERBOSE))
     {
         dump_buffer(cursor.buffer() + pos, cursor.length(), p);
     }
