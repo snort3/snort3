@@ -173,13 +173,15 @@ void Snort::init(int argc, char** argv)
         sc->rule_order = "reset block drop alert pass log";
 
     sc->setup();
-    FileService::post_init();
 
     // Must be after CodecManager::instantiate()
     if ( !InspectorManager::configure(sc) )
         ParseError("can't initialize inspectors");
     else if ( SnortConfig::log_verbose() )
         InspectorManager::print_config(sc);
+
+    // Must be after InspectorManager::configure()
+    FileService::post_init();
 
     ModuleManager::reset_stats(sc);
 
