@@ -249,79 +249,78 @@ Table of Contents
     11.45. gtp_type
     11.46. gtp_version
     11.47. http2_decoded_header
-    11.48. http2_frame_data
-    11.49. http2_frame_header
-    11.50. http_client_body
-    11.51. http_cookie
-    11.52. http_header
-    11.53. http_method
-    11.54. http_param
-    11.55. http_raw_body
-    11.56. http_raw_cookie
-    11.57. http_raw_header
-    11.58. http_raw_request
-    11.59. http_raw_status
-    11.60. http_raw_trailer
-    11.61. http_raw_uri
-    11.62. http_stat_code
-    11.63. http_stat_msg
-    11.64. http_trailer
-    11.65. http_true_ip
-    11.66. http_uri
-    11.67. http_version
-    11.68. icmp_id
-    11.69. icmp_seq
-    11.70. icode
-    11.71. id
-    11.72. ip_proto
-    11.73. ipopts
-    11.74. isdataat
-    11.75. itype
-    11.76. md5
-    11.77. metadata
-    11.78. modbus_data
-    11.79. modbus_func
-    11.80. modbus_unit
-    11.81. msg
-    11.82. mss
-    11.83. pcre
-    11.84. pkt_data
-    11.85. pkt_num
-    11.86. priority
-    11.87. raw_data
-    11.88. reference
-    11.89. regex
-    11.90. rem
-    11.91. replace
-    11.92. rev
-    11.93. rpc
-    11.94. s7commplus_content
-    11.95. s7commplus_func
-    11.96. s7commplus_opcode
-    11.97. sd_pattern
-    11.98. seq
-    11.99. service
-    11.100. session
-    11.101. sha256
-    11.102. sha512
-    11.103. sid
-    11.104. sip_body
-    11.105. sip_header
-    11.106. sip_method
-    11.107. sip_stat_code
-    11.108. so
-    11.109. soid
-    11.110. ssl_state
-    11.111. ssl_version
-    11.112. stream_reassemble
-    11.113. stream_size
-    11.114. tag
-    11.115. target
-    11.116. tos
-    11.117. ttl
-    11.118. urg
-    11.119. window
-    11.120. wscale
+    11.48. http2_frame_header
+    11.49. http_client_body
+    11.50. http_cookie
+    11.51. http_header
+    11.52. http_method
+    11.53. http_param
+    11.54. http_raw_body
+    11.55. http_raw_cookie
+    11.56. http_raw_header
+    11.57. http_raw_request
+    11.58. http_raw_status
+    11.59. http_raw_trailer
+    11.60. http_raw_uri
+    11.61. http_stat_code
+    11.62. http_stat_msg
+    11.63. http_trailer
+    11.64. http_true_ip
+    11.65. http_uri
+    11.66. http_version
+    11.67. icmp_id
+    11.68. icmp_seq
+    11.69. icode
+    11.70. id
+    11.71. ip_proto
+    11.72. ipopts
+    11.73. isdataat
+    11.74. itype
+    11.75. md5
+    11.76. metadata
+    11.77. modbus_data
+    11.78. modbus_func
+    11.79. modbus_unit
+    11.80. msg
+    11.81. mss
+    11.82. pcre
+    11.83. pkt_data
+    11.84. pkt_num
+    11.85. priority
+    11.86. raw_data
+    11.87. reference
+    11.88. regex
+    11.89. rem
+    11.90. replace
+    11.91. rev
+    11.92. rpc
+    11.93. s7commplus_content
+    11.94. s7commplus_func
+    11.95. s7commplus_opcode
+    11.96. sd_pattern
+    11.97. seq
+    11.98. service
+    11.99. session
+    11.100. sha256
+    11.101. sha512
+    11.102. sid
+    11.103. sip_body
+    11.104. sip_header
+    11.105. sip_method
+    11.106. sip_stat_code
+    11.107. so
+    11.108. soid
+    11.109. ssl_state
+    11.110. ssl_version
+    11.111. stream_reassemble
+    11.112. stream_size
+    11.113. tag
+    11.114. target
+    11.115. tos
+    11.116. ttl
+    11.117. urg
+    11.118. window
+    11.119. wscale
 
 12. Search Engine Modules
 13. SO Rule Modules
@@ -411,7 +410,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0 (Build 268)
+o"  )~   Version 3.0.0 (Build 269)
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2020 Cisco and/or its affiliates. All rights reserved.
@@ -4083,6 +4082,15 @@ The URI is everything between the first space and the last space.
 port, "/basic/example/of/path" is the path, "with-query" is the
 query, and "and-fragment" is the fragment.
 
+http_uri represents the normalized uri, normalization of components
+depends on uri type. If the uri is of type absolute (contains all six
+components) or absolute path (contains path, query and fragment) then
+the path and query components are normalized. In these cases,
+http_uri represents the normalized path and query (/path?query). If
+the uri is of type authority (host and port), the host is normalized
+and http_uri represents the normalized host with the port number. In
+all other cases http_uri is the same as http_raw_uri.
+
 Note: this section uses informal language to explain some things.
 Nothing here is intended to conflict with the technical language of
 the HTTP RFCs and the implementation follows the RFCs.
@@ -4322,37 +4330,17 @@ http2_inspect = {}
 to your snort.lua configuration file.
 
 Everything has a beginning and for http2_inspect this is the
-beginning of the beginning. Most of the protocol including HPACK
-decompression is not implemented yet.
+beginning of the beginning.
 
 Currently http2_inspect will divide an HTTP/2 connection into
-individual frames and make them available for detection. Two new rule
-options are available for looking at HTTP/2 frames:
-http2_frame_header provides the 9-octet frame header and
-http2_frame_data provides the frame content.
+individual frames. Two new rule options are available for looking at
+HTTP/2 frames: http2_frame_header provides the 9-octet frame header.
 
 alert tcp any any -> any any (msg:"Frame type"; flow:established,
 to_client; http2_frame_header; content:"|06|", offset 3, depth 1;
 sid:1; rev:1; )
 
 This will match if the Type byte of the frame header is 6 (PING).
-
-alert tcp any any -> any any ( msg:"Content of HTTP/2 frame";
-flow:established, to_client; http2_frame_data; content:"peppermint";
-sid:2; rev:1; )
-
-This will look for peppermint in the frame data but not the frame
-header.
-
-These can be combined:
-
-alert tcp any any -> any any ( msg:"Search in message bodies";
-flow:established, to_client;
-http2_frame_header; content:"|00|", offset 3, depth 1;
-http2_frame_data; content:"MaLwArE"; sid:3; rev:1; )
-
-Frame type 0 is DATA which carries the HTTP message body. This rule
-will search for MaLwArE inside an HTTP message body.
 
 To smooth the transition to inspecting HTTP/2, rules that specify
 service:http will be treated as if they also specify service:http2.
@@ -4379,9 +4367,9 @@ large numbers of existing rules. New rules should explicitly specify
 "service http,http2;" if that is the desired behavior. Eventually
 support for http implies http2 may be deprecated and removed.
 
-In the future, http2_inspect will support HPACK header decompression
-and be fully integrated with http_inspect to provide full inspection
-of the individual HTTP/1.1 streams.
+In the future, http2_inspect will be fully integrated with
+http_inspect to provide full inspection of the individual HTTP/1.1
+streams.
 
 
 5.11. Module Trace
@@ -5434,7 +5422,13 @@ Configuration:
 
 Peg counts:
 
-  * active.injects: total crafted packets injected (sum)
+  * active.injects: total crafted packets encoded and injected (sum)
+  * active.failed_injects: total crafted packet encode + injects that
+    failed (sum)
+  * active.direct_injects: total crafted packets directly injected
+    (sum)
+  * active.failed_direct_injects: total crafted packet direct injects
+    that failed (sum)
 
 
 6.2. alerts
@@ -5581,8 +5575,7 @@ Usage: context
 
 Configuration:
 
-  * int decode.trace: mask for enabling debug traces in module {
-    0:max53 }
+  * int decode.trace.all = 0: enabling traces in module { 0:max32 }
 
 Rules:
 
@@ -5631,8 +5624,23 @@ Configuration:
     instead of pcre for compatible expressions
   * bool detection.enable_address_anomaly_checks = false: enable
     check and alerting of address anomalies
-  * int detection.trace: mask for enabling debug traces in module {
-    0:max53 }
+  * int detection.trace.detect_engine = 0: enable detection engine
+    trace logging { 0:max53 }
+  * int detection.trace.rule_eval = 0: enable rule evaluation trace
+    logging { 0:max53 }
+  * int detection.trace.buf_min = 0: enable min buffer trace logging
+    { 0:max53 }
+  * int detection.trace.buf_verbose = 0: enable verbose buffer trace
+    logging { 0:max53 }
+  * int detection.trace.rule_vars = 0: enable rule variables trace
+    logging { 0:max53 }
+  * int detection.trace.fp_search = 0: enable fast pattern search
+    trace logging { 0:max53 }
+  * int detection.trace.pkt_detect = 0: enable packet detection trace
+    logging { 0:max53 }
+  * int detection.trace.opt_tree = 0: enable tree option trace
+    logging { 0:max53 }
+  * int detection.trace.tag = 0: enable tag trace logging { 0:max53 }
 
 Peg counts:
 
@@ -6425,7 +6433,7 @@ Configuration:
     version, and only the version
   * implied snort.--enable-inline-test: enable Inline-Test Mode
     Operation
-  * implied snort.--gen-msg-map: dump builtin rules in gen-msg.map
+  * implied snort.--gen-msg-map: dump configured rules in gen-msg.map
     format for use by other tools
   * implied snort.--help: list command line options
   * string snort.--help-commands: [<module prefix>] output matching
@@ -6550,8 +6558,7 @@ Configuration:
   * string snort.--x2s: output ASCII string for given byte code (see
     also --x2c)
   * implied snort.--trace: turn on main loop debug trace
-  * int snort.trace: mask for enabling debug traces in module {
-    0:max53 }
+  * int snort.trace.all = 0: enabling traces in module { 0:max32 }
 
 Commands:
 
@@ -7321,8 +7328,7 @@ Configuration:
     on startup
   * bool appid.log_all_sessions = false: enable logging of all appid
     sessions
-  * int appid.trace: mask for enabling debug traces in module {
-    0:max53 }
+  * int appid.trace.all = 0: enabling traces in module { 0:max32 }
 
 Commands:
 
@@ -7581,8 +7587,7 @@ Configuration:
     (-1 = disabled, 0 = unlimited) { -1:32767 }
   * string dce_smb.smb_invalid_shares: SMB shares to alert on
   * bool dce_smb.smb_legacy_mode = false: inspect only SMBv1
-  * int dce_smb.trace: mask for enabling debug traces in module {
-    0:max53 }
+  * int dce_smb.trace.all = 0: enabling traces in module { 0:max32 }
 
 Rules:
 
@@ -7844,8 +7849,7 @@ Configuration:
     defragmentation
   * int dce_udp.max_frag_len = 65535: maximum fragment size for
     defragmentation { 1514:65535 }
-  * int dce_udp.trace: mask for enabling debug traces in module {
-    0:max53 }
+  * int dce_udp.trace.all = 0: enabling traces in module { 0:max32 }
 
 Rules:
 
@@ -8131,8 +8135,14 @@ Configuration:
     packet for this PDU { 0:max32 }
   * enum finalize_packet.modify.verdict: output format for stats {
     pass | block | replace | whitelist | blacklist | ignore | retry }
-  * bool finalize_packet.switch_to_wizard = false: switch to wizard
+  * bool finalize_packet.switch_to_wizard = false: Switch to wizard
     on first finalize event
+  * bool finalize_packet.use_direct_inject = false: Use ioctl to do
+    payload and reset injects
+  * bool finalize_packet.defer_whitelist = false: Turn on defer
+    whitelist until we switch to wizard
+  * bool finalize_packet.force_whitelist = false: Set ignore
+    direction to both so that flow will be whitelisted
 
 Peg counts:
 
@@ -8251,6 +8261,7 @@ Rules:
 Peg counts:
 
   * ftp_server.total_packets: total packets (sum)
+  * ftp_server.total_bytes: total number of bytes processed (sum)
   * ftp_server.concurrent_sessions: total concurrent FTP sessions
     (now)
   * ftp_server.max_concurrent_sessions: maximum concurrent FTP
@@ -8278,8 +8289,8 @@ Configuration:
   * string gtp_inspect[].infos[].name: information element name
   * int gtp_inspect[].infos[].length = 0: information element type
     code { 0:255 }
-  * int gtp_inspect.trace: mask for enabling debug traces in module {
-    0:max53 }
+  * int gtp_inspect.trace.all = 0: enabling traces in module {
+    0:max32 }
 
 Rules:
 
@@ -8327,6 +8338,9 @@ Rules:
   * 121:12 (http2_inspect) unknown parameter in HTTP/2 settings frame
   * 121:13 (http2_inspect) invalid HTTP/2 frame sequence
   * 121:14 (http2_inspect) HTTP/2 dynamic table size limit exceeded
+  * 121:15 (http2_inspect) invalid HTTP/2 start line
+  * 121:16 (http2_inspect) HTTP/2 padding length is bigger than frame
+    data size
 
 Peg counts:
 
@@ -8868,12 +8882,14 @@ Peg counts:
 
   * perf_monitor.packets: total packets processed by performance
     monitor (sum)
-  * perf_monitor.total_frees: total flows pruned or freed by
-    performance monitor (sum)
-  * perf_monitor.reload_frees: flows freed on reload with changed
-    memcap (sum)
-  * perf_monitor.alloc_prunes: flows pruned on allocation of IP flows
-    (sum)
+  * perf_monitor.flow_tracker_creates: total number of flow trackers
+    created (sum)
+  * perf_monitor.flow_tracker_total_deletes: flow trackers deleted to
+    stay below memcap limit (sum)
+  * perf_monitor.flow_tracker_reload_deletes: flow trackers deleted
+    due to memcap change on config reload (sum)
+  * perf_monitor.flow_tracker_prunes: flow trackers pruned for reuse
+    by new flows (sum)
 
 
 9.31. pop
@@ -8915,6 +8931,7 @@ Rules:
 Peg counts:
 
   * pop.packets: total packets processed (sum)
+  * pop.total_bytes: total number of bytes processed (sum)
   * pop.sessions: total pop sessions (sum)
   * pop.concurrent_sessions: total concurrent pop sessions (now)
   * pop.max_concurrent_sessions: maximum concurrent pop sessions
@@ -9492,6 +9509,7 @@ Rules:
 Peg counts:
 
   * smtp.packets: total packets processed (sum)
+  * smtp.total_bytes: total number of bytes processed (sum)
   * smtp.sessions: total smtp sessions (sum)
   * smtp.concurrent_sessions: total concurrent smtp sessions (now)
   * smtp.max_concurrent_sessions: maximum concurrent smtp sessions
@@ -9540,6 +9558,7 @@ Rules:
 Peg counts:
 
   * ssh.packets: total packets (sum)
+  * ssh.total_bytes: total number of bytes processed (sum)
   * ssh.concurrent_sessions: total concurrent ssh sessions (now)
   * ssh.max_concurrent_sessions: maximum concurrent ssh sessions
     (max)
@@ -9606,8 +9625,6 @@ Usage: global
 
 Configuration:
 
-  * int stream.footprint = 0: use zero for production, non-zero for
-    testing at given size (for TCP and user) { 0:max32 }
   * bool stream.ip_frags_only = false: don’t process non-frag flows
   * int stream.max_flows = 476288: maximum simultaneous flows tracked
     before pruning { 2:max32 }
@@ -9637,8 +9654,7 @@ Configuration:
     before retiring session tracker { 1:max32 }
   * int stream.file_cache.cap_weight = 32: additional bytes to track
     per flow for better estimation against cap { 0:65535 }
-  * int stream.trace: mask for enabling debug traces in module {
-    0:max53 }
+  * int stream.trace.all = 0: enabling traces in module { 0:max32 }
 
 Rules:
 
@@ -9657,6 +9673,8 @@ Peg counts:
     pruning (sum)
   * stream.memcap_prunes: sessions pruned due to memcap (sum)
   * stream.ha_prunes: sessions pruned by high availability sync (sum)
+  * stream.stale_prunes: sessions pruned due to stale connection
+    (sum)
   * stream.expected_flows: total expected flows created within snort
     (sum)
   * stream.expected_realized: number of expected flows realized (sum)
@@ -9745,8 +9763,8 @@ Configuration:
     | linux | bsd | bsd_right | last | windows | solaris }
   * int stream_ip.session_timeout = 30: session tracking timeout {
     1:max31 }
-  * int stream_ip.trace: mask for enabling debug traces in module {
-    0:max53 }
+  * int stream_ip.trace.all = 0: enabling traces in module { 0:max32
+    }
 
 Rules:
 
@@ -9772,6 +9790,7 @@ Peg counts:
   * stream_ip.released: ip session trackers released (sum)
   * stream_ip.timeouts: ip session timeouts (sum)
   * stream_ip.prunes: ip session prunes (sum)
+  * stream_ip.total_bytes: total number of bytes processed (sum)
   * stream_ip.total_frags: total fragments (sum)
   * stream_ip.current_frags: current fragments (now)
   * stream_ip.max_frags: max fragments (sum)
@@ -9961,6 +9980,7 @@ Peg counts:
   * stream_udp.released: udp session trackers released (sum)
   * stream_udp.timeouts: udp session timeouts (sum)
   * stream_udp.prunes: udp session prunes (sum)
+  * stream_udp.total_bytes: total number of bytes processed (sum)
   * stream_udp.ignored: udp packets ignored (sum)
 
 
@@ -9978,8 +9998,8 @@ Configuration:
 
   * int stream_user.session_timeout = 30: session tracking timeout {
     1:max31 }
-  * int stream_user.trace: mask for enabling debug traces in module {
-    0:max53 }
+  * int stream_user.trace.all = 0: enabling traces in module {
+    0:max32 }
 
 
 9.51. telnet
@@ -10850,9 +10870,9 @@ Usage: detect
 
 Configuration:
 
-  * string flowbits.~command: set|reset|isset|etc.
-  * string flowbits.~arg1: bits or group
-  * string flowbits.~arg2: group if arg1 is bits
+  * string flowbits.~op: set|reset|isset|etc.
+  * string flowbits.~bits: bits or group
+  * string flowbits.~group: group if arg1 is bits
 
 
 11.41. fragbits
@@ -10958,18 +10978,7 @@ Type: ips_option
 Usage: detect
 
 
-11.48. http2_frame_data
-
---------------
-
-What: rule option to set detection cursor to the HTTP/2 frame body
-
-Type: ips_option
-
-Usage: detect
-
-
-11.49. http2_frame_header
+11.48. http2_frame_header
 
 --------------
 
@@ -10981,7 +10990,7 @@ Type: ips_option
 Usage: detect
 
 
-11.50. http_client_body
+11.49. http_client_body
 
 --------------
 
@@ -10992,7 +11001,7 @@ Type: ips_option
 Usage: detect
 
 
-11.51. http_cookie
+11.50. http_cookie
 
 --------------
 
@@ -11014,7 +11023,7 @@ Configuration:
     message trailers
 
 
-11.52. http_header
+11.51. http_header
 
 --------------
 
@@ -11039,7 +11048,7 @@ Configuration:
     message trailers
 
 
-11.53. http_method
+11.52. http_method
 
 --------------
 
@@ -11060,7 +11069,7 @@ Configuration:
     message trailers
 
 
-11.54. http_param
+11.53. http_param
 
 --------------
 
@@ -11077,7 +11086,7 @@ Configuration:
   * implied http_param.nocase: case insensitive match
 
 
-11.55. http_raw_body
+11.54. http_raw_body
 
 --------------
 
@@ -11089,7 +11098,7 @@ Type: ips_option
 Usage: detect
 
 
-11.56. http_raw_cookie
+11.55. http_raw_cookie
 
 --------------
 
@@ -11112,7 +11121,7 @@ Configuration:
     HTTP message trailers
 
 
-11.57. http_raw_header
+11.56. http_raw_header
 
 --------------
 
@@ -11135,7 +11144,7 @@ Configuration:
     HTTP message trailers
 
 
-11.58. http_raw_request
+11.57. http_raw_request
 
 --------------
 
@@ -11156,7 +11165,7 @@ Configuration:
     HTTP message trailers
 
 
-11.59. http_raw_status
+11.58. http_raw_status
 
 --------------
 
@@ -11175,7 +11184,7 @@ Configuration:
     HTTP message trailers
 
 
-11.60. http_raw_trailer
+11.59. http_raw_trailer
 
 --------------
 
@@ -11196,7 +11205,7 @@ Configuration:
     HTTP response message body (must be combined with request)
 
 
-11.61. http_raw_uri
+11.60. http_raw_uri
 
 --------------
 
@@ -11225,7 +11234,7 @@ Configuration:
     URI only
 
 
-11.62. http_stat_code
+11.61. http_stat_code
 
 --------------
 
@@ -11243,7 +11252,7 @@ Configuration:
     HTTP message trailers
 
 
-11.63. http_stat_msg
+11.62. http_stat_msg
 
 --------------
 
@@ -11262,7 +11271,7 @@ Configuration:
     HTTP message trailers
 
 
-11.64. http_trailer
+11.63. http_trailer
 
 --------------
 
@@ -11284,7 +11293,7 @@ Configuration:
     message body (must be combined with request)
 
 
-11.65. http_true_ip
+11.64. http_true_ip
 
 --------------
 
@@ -11305,7 +11314,7 @@ Configuration:
     HTTP message trailers
 
 
-11.66. http_uri
+11.65. http_uri
 
 --------------
 
@@ -11333,7 +11342,7 @@ Configuration:
     only
 
 
-11.67. http_version
+11.66. http_version
 
 --------------
 
@@ -11355,7 +11364,7 @@ Configuration:
     HTTP message trailers
 
 
-11.68. icmp_id
+11.67. icmp_id
 
 --------------
 
@@ -11371,7 +11380,7 @@ Configuration:
     0:65535 }
 
 
-11.69. icmp_seq
+11.68. icmp_seq
 
 --------------
 
@@ -11387,7 +11396,7 @@ Configuration:
     given range { 0:65535 }
 
 
-11.70. icode
+11.69. icode
 
 --------------
 
@@ -11403,7 +11412,7 @@ Configuration:
     0:255 }
 
 
-11.71. id
+11.70. id
 
 --------------
 
@@ -11419,7 +11428,7 @@ Configuration:
     }
 
 
-11.72. ip_proto
+11.71. ip_proto
 
 --------------
 
@@ -11434,7 +11443,7 @@ Configuration:
   * string ip_proto.~proto: [!|>|<] name or number
 
 
-11.73. ipopts
+11.72. ipopts
 
 --------------
 
@@ -11450,7 +11459,7 @@ Configuration:
     lsrre|ssrr|satid|any }
 
 
-11.74. isdataat
+11.73. isdataat
 
 --------------
 
@@ -11467,7 +11476,7 @@ Configuration:
     buffer
 
 
-11.75. itype
+11.74. itype
 
 --------------
 
@@ -11483,7 +11492,7 @@ Configuration:
     0:255 }
 
 
-11.76. md5
+11.75. md5
 
 --------------
 
@@ -11503,7 +11512,7 @@ Configuration:
     of buffer
 
 
-11.77. metadata
+11.76. metadata
 
 --------------
 
@@ -11520,7 +11529,7 @@ Configuration:
     pairs
 
 
-11.78. modbus_data
+11.77. modbus_data
 
 --------------
 
@@ -11531,7 +11540,7 @@ Type: ips_option
 Usage: detect
 
 
-11.79. modbus_func
+11.78. modbus_func
 
 --------------
 
@@ -11546,7 +11555,7 @@ Configuration:
   * string modbus_func.~: function code to match
 
 
-11.80. modbus_unit
+11.79. modbus_unit
 
 --------------
 
@@ -11561,7 +11570,7 @@ Configuration:
   * int modbus_unit.~: Modbus unit ID { 0:255 }
 
 
-11.81. msg
+11.80. msg
 
 --------------
 
@@ -11576,7 +11585,7 @@ Configuration:
   * string msg.~: message describing rule
 
 
-11.82. mss
+11.81. mss
 
 --------------
 
@@ -11592,7 +11601,7 @@ Configuration:
     }
 
 
-11.83. pcre
+11.82. pcre
 
 --------------
 
@@ -11614,7 +11623,7 @@ Peg counts:
   * pcre.pcre_negated: total pcre rules using negation syntax (sum)
 
 
-11.84. pkt_data
+11.83. pkt_data
 
 --------------
 
@@ -11626,7 +11635,7 @@ Type: ips_option
 Usage: detect
 
 
-11.85. pkt_num
+11.84. pkt_num
 
 --------------
 
@@ -11642,7 +11651,7 @@ Configuration:
     { 1: }
 
 
-11.86. priority
+11.85. priority
 
 --------------
 
@@ -11658,7 +11667,7 @@ Configuration:
     1:max31 }
 
 
-11.87. raw_data
+11.86. raw_data
 
 --------------
 
@@ -11669,7 +11678,7 @@ Type: ips_option
 Usage: detect
 
 
-11.88. reference
+11.87. reference
 
 --------------
 
@@ -11681,11 +11690,10 @@ Usage: detect
 
 Configuration:
 
-  * string reference.~scheme: reference scheme
-  * string reference.~id: reference id
+  * string reference.~ref: reference: <scheme>,<id>
 
 
-11.89. regex
+11.88. regex
 
 --------------
 
@@ -11708,7 +11716,7 @@ Configuration:
     instead of start of buffer
 
 
-11.90. rem
+11.89. rem
 
 --------------
 
@@ -11723,7 +11731,7 @@ Configuration:
   * string rem.~: comment
 
 
-11.91. replace
+11.90. replace
 
 --------------
 
@@ -11738,7 +11746,7 @@ Configuration:
   * string replace.~: byte code to replace with
 
 
-11.92. rev
+11.91. rev
 
 --------------
 
@@ -11753,7 +11761,7 @@ Configuration:
   * int rev.~: revision { 1:max32 }
 
 
-11.93. rpc
+11.92. rpc
 
 --------------
 
@@ -11770,7 +11778,7 @@ Configuration:
   * string rpc.~proc: procedure number or * for any
 
 
-11.94. s7commplus_content
+11.93. s7commplus_content
 
 --------------
 
@@ -11781,7 +11789,7 @@ Type: ips_option
 Usage: detect
 
 
-11.95. s7commplus_func
+11.94. s7commplus_func
 
 --------------
 
@@ -11796,7 +11804,7 @@ Configuration:
   * string s7commplus_func.~: function code to match
 
 
-11.96. s7commplus_opcode
+11.95. s7commplus_opcode
 
 --------------
 
@@ -11811,7 +11819,7 @@ Configuration:
   * string s7commplus_opcode.~: opcode code to match
 
 
-11.97. sd_pattern
+11.96. sd_pattern
 
 --------------
 
@@ -11835,7 +11843,7 @@ Peg counts:
   * sd_pattern.terminated: hyperscan terminated (sum)
 
 
-11.98. seq
+11.97. seq
 
 --------------
 
@@ -11851,7 +11859,7 @@ Configuration:
     range { 0: }
 
 
-11.99. service
+11.98. service
 
 --------------
 
@@ -11866,7 +11874,7 @@ Configuration:
   * string service.*: one or more comma-separated service names
 
 
-11.100. session
+11.99. session
 
 --------------
 
@@ -11881,7 +11889,7 @@ Configuration:
   * enum session.~mode: output format { printable|binary|all }
 
 
-11.101. sha256
+11.100. sha256
 
 --------------
 
@@ -11901,7 +11909,7 @@ Configuration:
     start of buffer
 
 
-11.102. sha512
+11.101. sha512
 
 --------------
 
@@ -11921,7 +11929,7 @@ Configuration:
     start of buffer
 
 
-11.103. sid
+11.102. sid
 
 --------------
 
@@ -11936,7 +11944,7 @@ Configuration:
   * int sid.~: signature id { 1:max32 }
 
 
-11.104. sip_body
+11.103. sip_body
 
 --------------
 
@@ -11947,7 +11955,7 @@ Type: ips_option
 Usage: detect
 
 
-11.105. sip_header
+11.104. sip_header
 
 --------------
 
@@ -11959,7 +11967,7 @@ Type: ips_option
 Usage: detect
 
 
-11.106. sip_method
+11.105. sip_method
 
 --------------
 
@@ -11974,7 +11982,7 @@ Configuration:
   * string sip_method.*method: sip method
 
 
-11.107. sip_stat_code
+11.106. sip_stat_code
 
 --------------
 
@@ -11989,7 +11997,7 @@ Configuration:
   * int sip_stat_code.*code: status code { 1:999 }
 
 
-11.108. so
+11.107. so
 
 --------------
 
@@ -12006,7 +12014,7 @@ Configuration:
     buffer
 
 
-11.109. soid
+11.108. soid
 
 --------------
 
@@ -12022,7 +12030,7 @@ Configuration:
     like 3_45678_9
 
 
-11.110. ssl_state
+11.109. ssl_state
 
 --------------
 
@@ -12051,7 +12059,7 @@ Configuration:
     unknown
 
 
-11.111. ssl_version
+11.110. ssl_version
 
 --------------
 
@@ -12078,7 +12086,7 @@ Configuration:
     tls1.2
 
 
-11.112. stream_reassemble
+11.111. stream_reassemble
 
 --------------
 
@@ -12099,7 +12107,7 @@ Configuration:
     remainder of the session
 
 
-11.113. stream_size
+11.112. stream_size
 
 --------------
 
@@ -12117,7 +12125,7 @@ Configuration:
     direction(s) { either|to_server|to_client|both }
 
 
-11.114. tag
+11.113. tag
 
 --------------
 
@@ -12136,7 +12144,7 @@ Configuration:
   * int tag.bytes: tag for this many bytes { 1:max32 }
 
 
-11.115. target
+11.114. target
 
 --------------
 
@@ -12152,7 +12160,7 @@ Configuration:
     dst_ip }
 
 
-11.116. tos
+11.115. tos
 
 --------------
 
@@ -12167,7 +12175,7 @@ Configuration:
   * interval tos.~range: check if IP TOS is in given range { 0:255 }
 
 
-11.117. ttl
+11.116. ttl
 
 --------------
 
@@ -12183,7 +12191,7 @@ Configuration:
     0:255 }
 
 
-11.118. urg
+11.117. urg
 
 --------------
 
@@ -12199,7 +12207,7 @@ Configuration:
     { 0:65535 }
 
 
-11.119. window
+11.118. window
 
 --------------
 
@@ -12215,7 +12223,7 @@ Configuration:
     range { 0:65535 }
 
 
-11.120. wscale
+11.119. wscale
 
 --------------
 
@@ -12279,14 +12287,15 @@ Configuration:
     stdout
   * multi alert_csv.fields = timestamp pkt_num proto pkt_gen pkt_len
     dir src_ap dst_ap rule action: selected fields will be output in
-    given order left to right { action | class | b64_data | dir |
-    dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src |
-    eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type |
-    iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num
-    | priority | proto | rev | rule | seconds | service | sid |
-    src_addr | src_ap | src_port | target | tcp_ack | tcp_flags |
-    tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len |
-    vlan }
+    given order left to right { action | class | b64_data |
+    client_bytes | client_pkts | dir | dst_addr | dst_ap | dst_port |
+    eth_dst | eth_len | eth_src | eth_type | flowstart_time | gid |
+    icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id |
+    ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority |
+    proto | rev | rule | seconds | server_bytes | server_pkts |
+    service | sid | src_addr | src_ap | src_port | target | tcp_ack |
+    tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl |
+    udp_len | vlan }
   * int alert_csv.limit = 0: set maximum size in MB before rollover
     (0 is unlimited) { 0:maxSZ }
   * string alert_csv.separator = , : separate fields with this
@@ -12362,14 +12371,15 @@ Configuration:
     stdout
   * multi alert_json.fields = timestamp pkt_num proto pkt_gen pkt_len
     dir src_ap dst_ap rule action: selected fields will be output in
-    given order left to right { action | class | b64_data | dir |
-    dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src |
-    eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type |
-    iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num
-    | priority | proto | rev | rule | seconds | service | sid |
-    src_addr | src_ap | src_port | target | tcp_ack | tcp_flags |
-    tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len |
-    vlan }
+    given order left to right { action | class | b64_data |
+    client_bytes | client_pkts | dir | dst_addr | dst_ap | dst_port |
+    eth_dst | eth_len | eth_src | eth_type | flowstart_time | gid |
+    icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id |
+    ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority |
+    proto | rev | rule | seconds | server_bytes | server_pkts |
+    service | sid | src_addr | src_ap | src_port | target | tcp_ack |
+    tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl |
+    udp_len | vlan }
   * int alert_json.limit = 0: set maximum size in MB before rollover
     (0 is unlimited) { 0:maxSZ }
   * string alert_json.separator = , : separate fields with this
@@ -14604,8 +14614,8 @@ these libraries see the Getting Started section of the manual.
   * --dump-version output the version, the whole version, and only
     the version
   * --enable-inline-test enable Inline-Test Mode Operation
-  * --gen-msg-map dump builtin rules in gen-msg.map format for use by
-    other tools
+  * --gen-msg-map dump configured rules in gen-msg.map format for use
+    by other tools
   * --help list command line options
   * --help-commands [<module prefix>] output matching commands
     (optional)
@@ -14732,14 +14742,15 @@ these libraries see the Getting Started section of the manual.
     responses { 1:255 }
   * multi alert_csv.fields = timestamp pkt_num proto pkt_gen pkt_len
     dir src_ap dst_ap rule action: selected fields will be output in
-    given order left to right { action | class | b64_data | dir |
-    dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src |
-    eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type |
-    iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num
-    | priority | proto | rev | rule | seconds | service | sid |
-    src_addr | src_ap | src_port | target | tcp_ack | tcp_flags |
-    tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len |
-    vlan }
+    given order left to right { action | class | b64_data |
+    client_bytes | client_pkts | dir | dst_addr | dst_ap | dst_port |
+    eth_dst | eth_len | eth_src | eth_type | flowstart_time | gid |
+    icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id |
+    ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority |
+    proto | rev | rule | seconds | server_bytes | server_pkts |
+    service | sid | src_addr | src_ap | src_port | target | tcp_ack |
+    tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl |
+    udp_len | vlan }
   * bool alert_csv.file = false: output to alert_csv.txt instead of
     stdout
   * int alert_csv.limit = 0: set maximum size in MB before rollover
@@ -14759,14 +14770,15 @@ these libraries see the Getting Started section of the manual.
     (0 is unlimited) { 0:maxSZ }
   * multi alert_json.fields = timestamp pkt_num proto pkt_gen pkt_len
     dir src_ap dst_ap rule action: selected fields will be output in
-    given order left to right { action | class | b64_data | dir |
-    dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src |
-    eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type |
-    iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num
-    | priority | proto | rev | rule | seconds | service | sid |
-    src_addr | src_ap | src_port | target | tcp_ack | tcp_flags |
-    tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len |
-    vlan }
+    given order left to right { action | class | b64_data |
+    client_bytes | client_pkts | dir | dst_addr | dst_ap | dst_port |
+    eth_dst | eth_len | eth_src | eth_type | flowstart_time | gid |
+    icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id |
+    ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority |
+    proto | rev | rule | seconds | server_bytes | server_pkts |
+    service | sid | src_addr | src_ap | src_port | target | tcp_ack |
+    tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl |
+    udp_len | vlan }
   * bool alert_json.file = false: output to alert_json.txt instead of
     stdout
   * int alert_json.limit = 0: set maximum size in MB before rollover
@@ -14829,8 +14841,7 @@ these libraries see the Getting Started section of the manual.
     library
   * bool appid.tp_appid_stats_enable: enable collection of stats and
     print stats on exit in third party module
-  * int appid.trace: mask for enabling debug traces in module {
-    0:max53 }
+  * int appid.trace.all = 0: enabling traces in module { 0:max32 }
   * ip4 arp_spoof.hosts[].ip: host ip address
   * mac arp_spoof.hosts[].mac: host mac address
   * int asn1.absolute_offset: absolute offset from the beginning of
@@ -15057,8 +15068,7 @@ these libraries see the Getting Started section of the manual.
   * bool dce_smb.smb_legacy_mode = false: inspect only SMBv1
   * int dce_smb.smb_max_chain = 3: SMB max chain size { 0:255 }
   * int dce_smb.smb_max_compound = 3: SMB max compound size { 0:255 }
-  * int dce_smb.trace: mask for enabling debug traces in module {
-    0:max53 }
+  * int dce_smb.trace.all = 0: enabling traces in module { 0:max32 }
   * multi dce_smb.valid_smb_versions = all: valid SMB versions { v1 |
     v2 | all }
   * bool dce_tcp.disable_defrag = false: disable DCE/RPC
@@ -15078,10 +15088,8 @@ these libraries see the Getting Started section of the manual.
     per signature per flow
   * int dce_udp.max_frag_len = 65535: maximum fragment size for
     defragmentation { 1514:65535 }
-  * int dce_udp.trace: mask for enabling debug traces in module {
-    0:max53 }
-  * int decode.trace: mask for enabling debug traces in module {
-    0:max53 }
+  * int dce_udp.trace.all = 0: enabling traces in module { 0:max32 }
+  * int decode.trace.all = 0: enabling traces in module { 0:max32 }
   * int detection.asn1 = 0: maximum decode nodes { 0:65535 }
   * bool detection.enable_address_anomaly_checks = false: enable
     check and alerting of address anomalies
@@ -15110,8 +15118,23 @@ these libraries see the Getting Started section of the manual.
     overrides when pattern matching (ie ignore /O)
   * bool detection.pcre_to_regex = false: enable the use of regex
     instead of pcre for compatible expressions
-  * int detection.trace: mask for enabling debug traces in module {
-    0:max53 }
+  * int detection.trace.buf_min = 0: enable min buffer trace logging
+    { 0:max53 }
+  * int detection.trace.buf_verbose = 0: enable verbose buffer trace
+    logging { 0:max53 }
+  * int detection.trace.detect_engine = 0: enable detection engine
+    trace logging { 0:max53 }
+  * int detection.trace.fp_search = 0: enable fast pattern search
+    trace logging { 0:max53 }
+  * int detection.trace.opt_tree = 0: enable tree option trace
+    logging { 0:max53 }
+  * int detection.trace.pkt_detect = 0: enable packet detection trace
+    logging { 0:max53 }
+  * int detection.trace.rule_eval = 0: enable rule evaluation trace
+    logging { 0:max53 }
+  * int detection.trace.rule_vars = 0: enable rule variables trace
+    logging { 0:max53 }
+  * int detection.trace.tag = 0: enable tag trace logging { 0:max53 }
   * bool dnp3.check_crc = false: validate checksums in DNP3 link
     layer frames
   * string dnp3_func.~: match DNP3 function code or name
@@ -15219,21 +15242,27 @@ these libraries see the Getting Started section of the manual.
   * bool file_log.log_sys_time = false: log the system time when
     event generated
   * string file_type.~: list of file type IDs to match
+  * bool finalize_packet.defer_whitelist = false: Turn on defer
+    whitelist until we switch to wizard
   * int finalize_packet.end_pdu = 0: Deregister for finalize packet
     events on this PDU { 0:max32 }
+  * bool finalize_packet.force_whitelist = false: Set ignore
+    direction to both so that flow will be whitelisted
   * int finalize_packet.modify.pdu = 0: Modify verdict in finalize
     packet for this PDU { 0:max32 }
   * enum finalize_packet.modify.verdict: output format for stats {
     pass | block | replace | whitelist | blacklist | ignore | retry }
   * int finalize_packet.start_pdu = 0: Register to receive finalize
     packet event starting on this PDU { 0:max32 }
-  * bool finalize_packet.switch_to_wizard = false: switch to wizard
+  * bool finalize_packet.switch_to_wizard = false: Switch to wizard
     on first finalize event
+  * bool finalize_packet.use_direct_inject = false: Use ioctl to do
+    payload and reset injects
   * string flags.~mask_flags: these flags are don’t cares
   * string flags.~test_flags: these flags are tested
-  * string flowbits.~arg1: bits or group
-  * string flowbits.~arg2: group if arg1 is bits
-  * string flowbits.~command: set|reset|isset|etc.
+  * string flowbits.~bits: bits or group
+  * string flowbits.~group: group if arg1 is bits
+  * string flowbits.~op: set|reset|isset|etc.
   * implied flow.established: match only during data transfer phase
   * implied flow.from_client: same as to_server
   * implied flow.from_server: same as to_client
@@ -15310,8 +15339,8 @@ these libraries see the Getting Started section of the manual.
   * string gtp_inspect[].messages[].name: message name
   * int gtp_inspect[].messages[].type = 0: message type code { 0:255
     }
-  * int gtp_inspect.trace: mask for enabling debug traces in module {
-    0:max53 }
+  * int gtp_inspect.trace.all = 0: enabling traces in module {
+    0:max32 }
   * int gtp_inspect[].version = 2: GTP version { 0:2 }
   * string gtp_type.~: list of types to match
   * int gtp_version.~: version to match { 0:2 }
@@ -15920,8 +15949,7 @@ these libraries see the Getting Started section of the manual.
     default message
   * string react.page: file containing HTTP response (headers and
     body)
-  * string reference.~id: reference id
-  * string reference.~scheme: reference scheme
+  * string reference.~ref: reference: <scheme>,<id>
   * string references[].name: name used with reference rule option
   * string references[].url: where this reference is defined
   * implied regex.dotall: matching a . will not exclude newlines
@@ -16160,7 +16188,7 @@ these libraries see the Getting Started section of the manual.
     Operation
   * implied snort.-f: turn off fflush() calls after binary log writes
   * int snort.-G: <0xid> (same as --logid) { 0:65535 }
-  * implied snort.--gen-msg-map: dump builtin rules in gen-msg.map
+  * implied snort.--gen-msg-map: dump configured rules in gen-msg.map
     format for use by other tools
   * string snort.-g: <gname> run snort gid as <gname> group (or gid)
     after initialization
@@ -16283,8 +16311,7 @@ these libraries see the Getting Started section of the manual.
     talos)
   * string snort.-t: <dir> chroots process to <dir> after
     initialization
-  * int snort.trace: mask for enabling debug traces in module {
-    0:max53 }
+  * int snort.trace.all = 0: enabling traces in module { 0:max32 }
   * implied snort.--trace: turn on main loop debug trace
   * implied snort.--treat-drop-as-alert: converts drop, block, and
     reset rules into alert rules when loaded
@@ -16379,8 +16406,6 @@ these libraries see the Getting Started section of the manual.
   * int stream.file_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * bool stream_file.upload = false: indicate file transfer direction
-  * int stream.footprint = 0: use zero for production, non-zero for
-    testing at given size (for TCP and user) { 0:max32 }
   * int stream.icmp_cache.cap_weight = 8: additional bytes to track
     per flow for better estimation against cap { 0:65535 }
   * int stream.icmp_cache.idle_timeout = 180: maximum inactive time
@@ -16404,8 +16429,8 @@ these libraries see the Getting Started section of the manual.
     | linux | bsd | bsd_right | last | windows | solaris }
   * int stream_ip.session_timeout = 30: session tracking timeout {
     1:max31 }
-  * int stream_ip.trace: mask for enabling debug traces in module {
-    0:max53 }
+  * int stream_ip.trace.all = 0: enabling traces in module { 0:max32
+    }
   * int stream.max_flows = 476288: maximum simultaneous flows tracked
     before pruning { 2:max32 }
   * int stream.pruning_timeout = 30: minimum inactive time before
@@ -16457,8 +16482,7 @@ these libraries see the Getting Started section of the manual.
   * int stream_tcp.small_segments.maximum_size = 0: minimum bytes for
     a TCP segment not to be considered small (129:12) { 0:2048 }
   * bool stream_tcp.track_only = false: disable reassembly if true
-  * int stream.trace: mask for enabling debug traces in module {
-    0:max53 }
+  * int stream.trace.all = 0: enabling traces in module { 0:max32 }
   * int stream.udp_cache.cap_weight = 128: additional bytes to track
     per flow for better estimation against cap { 0:65535 }
   * int stream.udp_cache.idle_timeout = 180: maximum inactive time
@@ -16471,8 +16495,8 @@ these libraries see the Getting Started section of the manual.
     before retiring session tracker { 1:max32 }
   * int stream_user.session_timeout = 30: session tracking timeout {
     1:max31 }
-  * int stream_user.trace: mask for enabling debug traces in module {
-    0:max53 }
+  * int stream_user.trace.all = 0: enabling traces in module {
+    0:max32 }
   * int suppress[].gid = 0: rule generator ID { 0:max32 }
   * string suppress[].ip: restrict suppression to these addresses
     according to track
@@ -16539,7 +16563,13 @@ these libraries see the Getting Started section of the manual.
 
 --------------
 
-  * active.injects: total crafted packets injected (sum)
+  * active.direct_injects: total crafted packets directly injected
+    (sum)
+  * active.failed_direct_injects: total crafted packet direct injects
+    that failed (sum)
+  * active.failed_injects: total crafted packet encode + injects that
+    failed (sum)
+  * active.injects: total crafted packets encoded and injected (sum)
   * appid.appid_unknown: count of sessions where appid could not be
     determined (sum)
   * appid.ignored_packets: count of packets ignored (sum)
@@ -16837,6 +16867,7 @@ these libraries see the Getting Started section of the manual.
     (now)
   * ftp_server.max_concurrent_sessions: maximum concurrent FTP
     sessions (max)
+  * ftp_server.total_bytes: total number of bytes processed (sum)
   * ftp_server.total_packets: total packets (sum)
   * gtp_inspect.concurrent_sessions: total concurrent gtp sessions
     (now)
@@ -17054,14 +17085,16 @@ these libraries see the Getting Started section of the manual.
   * pcre.pcre_negated: total pcre rules using negation syntax (sum)
   * pcre.pcre_rules: total rules processed with pcre option (sum)
   * pcre.pcre_to_hyper: total pcre rules by hyperscan engine (sum)
-  * perf_monitor.alloc_prunes: flows pruned on allocation of IP flows
-    (sum)
+  * perf_monitor.flow_tracker_creates: total number of flow trackers
+    created (sum)
+  * perf_monitor.flow_tracker_prunes: flow trackers pruned for reuse
+    by new flows (sum)
+  * perf_monitor.flow_tracker_reload_deletes: flow trackers deleted
+    due to memcap change on config reload (sum)
+  * perf_monitor.flow_tracker_total_deletes: flow trackers deleted to
+    stay below memcap limit (sum)
   * perf_monitor.packets: total packets processed by performance
     monitor (sum)
-  * perf_monitor.reload_frees: flows freed on reload with changed
-    memcap (sum)
-  * perf_monitor.total_frees: total flows pruned or freed by
-    performance monitor (sum)
   * pop.b64_attachments: total base64 attachments decoded (sum)
   * pop.b64_decoded_bytes: total base64 decoded bytes (sum)
   * pop.concurrent_sessions: total concurrent pop sessions (now)
@@ -17075,6 +17108,7 @@ these libraries see the Getting Started section of the manual.
     (sum)
   * pop.qp_decoded_bytes: total quoted-printable decoded bytes (sum)
   * pop.sessions: total pop sessions (sum)
+  * pop.total_bytes: total number of bytes processed (sum)
   * pop.uu_attachments: total uu attachments decoded (sum)
   * pop.uu_decoded_bytes: total uu decoded bytes (sum)
   * port_scan.alloc_prunes: number of trackers pruned on allocation
@@ -17189,6 +17223,7 @@ these libraries see the Getting Started section of the manual.
     (sum)
   * smtp.qp_decoded_bytes: total quoted-printable decoded bytes (sum)
   * smtp.sessions: total smtp sessions (sum)
+  * smtp.total_bytes: total number of bytes processed (sum)
   * smtp.uu_attachments: total uu attachments decoded (sum)
   * smtp.uu_decoded_bytes: total uu decoded bytes (sum)
   * snort.attribute_table_hosts: total number of hosts in table (sum)
@@ -17209,6 +17244,7 @@ these libraries see the Getting Started section of the manual.
   * ssh.max_concurrent_sessions: maximum concurrent ssh sessions
     (max)
   * ssh.packets: total packets (sum)
+  * ssh.total_bytes: total number of bytes processed (sum)
   * ssl.alert: total ssl alert records (sum)
   * ssl.bad_handshakes: total bad handshakes (sum)
   * ssl.certificate: total ssl certificates (sum)
@@ -17265,6 +17301,7 @@ these libraries see the Getting Started section of the manual.
   * stream_ip.released: ip session trackers released (sum)
   * stream_ip.sessions: total ip sessions (sum)
   * stream_ip.timeouts: ip session timeouts (sum)
+  * stream_ip.total_bytes: total number of bytes processed (sum)
   * stream_ip.total_frags: total fragments (sum)
   * stream_ip.trackers_added: datagram trackers created (sum)
   * stream_ip.trackers_cleared: datagram trackers cleared (sum)
@@ -17289,6 +17326,8 @@ these libraries see the Getting Started section of the manual.
     called while idle (sum)
   * stream.reload_tuning_packets: number of times stream resource
     tuner called while processing packets (sum)
+  * stream.stale_prunes: sessions pruned due to stale connection
+    (sum)
   * stream_tcp.client_cleanups: number of times data from server was
     flushed when session released (sum)
   * stream_tcp.closing: number of sessions currently closing (now)
@@ -17365,6 +17404,7 @@ these libraries see the Getting Started section of the manual.
   * stream_udp.released: udp session trackers released (sum)
   * stream_udp.sessions: total udp sessions (sum)
   * stream_udp.timeouts: udp session timeouts (sum)
+  * stream_udp.total_bytes: total number of bytes processed (sum)
   * stream.uni_prunes: uni sessions pruned (sum)
   * tcp.bad_tcp4_checksum: nonzero tcp over ip checksums (sum)
   * tcp.bad_tcp6_checksum: nonzero tcp over ipv6 checksums (sum)
@@ -17792,6 +17832,9 @@ these libraries see the Getting Started section of the manual.
   * 121:12 (http2_inspect) unknown parameter in HTTP/2 settings frame
   * 121:13 (http2_inspect) invalid HTTP/2 frame sequence
   * 121:14 (http2_inspect) HTTP/2 dynamic table size limit exceeded
+  * 121:15 (http2_inspect) invalid HTTP/2 start line
+  * 121:16 (http2_inspect) HTTP/2 padding length is bigger than frame
+    data size
   * 122:1 (port_scan) TCP portscan
   * 122:2 (port_scan) TCP decoy portscan
   * 122:3 (port_scan) TCP portsweep
@@ -18629,8 +18672,6 @@ deleted -> unified2: 'vlan_event_types'
   * hosts (basic): configure hosts
   * http2_decoded_header (ips_option): rule option to set detection
     cursor to the decoded HTTP/2 header
-  * http2_frame_data (ips_option): rule option to set detection
-    cursor to the HTTP/2 frame body
   * http2_frame_header (ips_option): rule option to set detection
     cursor to the 9-octet HTTP/2 frame header
   * http2_inspect (inspector): HTTP/2 inspector
@@ -19038,8 +19079,6 @@ deleted -> unified2: 'vlan_event_types'
   * ips_option::gtp_version: rule option to check GTP version
   * ips_option::http2_decoded_header: rule option to set detection
     cursor to the decoded HTTP/2 header
-  * ips_option::http2_frame_data: rule option to set detection cursor
-    to the HTTP/2 frame body
   * ips_option::http2_frame_header: rule option to set detection
     cursor to the 9-octet HTTP/2 frame header
   * ips_option::http_client_body: rule option to set the detection

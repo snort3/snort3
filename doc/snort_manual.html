@@ -782,7 +782,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0 (Build 268)
+o"  )~   Version 3.0.0 (Build 269)
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2020 Cisco and/or its affiliates. All rights reserved.
@@ -5568,6 +5568,13 @@ scheme: normally "http" or "https" but others are possible such as "ftp"
 is the scheme, "www.samplehost.com" is the host, "287" is the port,
 "/basic/example/of/path" is the path, "with-query" is the query, and
 "and-fragment" is the fragment.</p></div>
+<div class="paragraph"><p>http_uri represents the normalized uri, normalization of components depends
+on uri type. If the uri is of type absolute (contains all six components) or
+absolute path (contains path, query and fragment) then the path and query
+components are normalized. In these cases, http_uri represents the normalized
+path and query (/path?query). If the uri is of type authority (host and port),
+the host is normalized and http_uri represents the normalized host with the port
+number. In all other cases http_uri is the same as http_raw_uri.</p></div>
 <div class="paragraph"><p>Note: this section uses informal language to explain some things. Nothing
 here is intended to conflict with the technical language of the HTTP RFCs
 and the implementation follows the RFCs.</p></div>
@@ -5818,12 +5825,10 @@ received. Headers may be combined with later items but the body cannot.</p></div
 </div></div>
 <div class="paragraph"><p>to your snort.lua configuration file.</p></div>
 <div class="paragraph"><p>Everything has a beginning and for http2_inspect this is the beginning of
-the beginning. Most of the protocol including HPACK decompression is not
-implemented yet.</p></div>
+the beginning.</p></div>
 <div class="paragraph"><p>Currently http2_inspect will divide an HTTP/2 connection into individual
-frames and make them available for detection. Two new rule options are
-available for looking at HTTP/2 frames: http2_frame_header provides the
-9-octet frame header and http2_frame_data provides the frame content.</p></div>
+frames. Two new rule options are available for looking at HTTP/2 frames:
+http2_frame_header provides the 9-octet frame header.</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>alert tcp any any -&gt; any any (msg:"Frame type"; flow:established,
@@ -5831,23 +5836,6 @@ to_client; http2_frame_header; content:"|06|", offset 3, depth 1;
 sid:1; rev:1; )</code></pre>
 </div></div>
 <div class="paragraph"><p>This will match if the Type byte of the frame header is 6 (PING).</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>alert tcp any any -&gt; any any ( msg:"Content of HTTP/2 frame";
-flow:established, to_client; http2_frame_data; content:"peppermint";
-sid:2; rev:1; )</code></pre>
-</div></div>
-<div class="paragraph"><p>This will look for peppermint in the frame data but not the frame header.</p></div>
-<div class="paragraph"><p>These can be combined:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>alert tcp any any -&gt; any any ( msg:"Search in message bodies";
-flow:established, to_client;
-http2_frame_header; content:"|00|", offset 3, depth 1;
-http2_frame_data; content:"MaLwArE"; sid:3; rev:1; )</code></pre>
-</div></div>
-<div class="paragraph"><p>Frame type 0 is DATA which carries the HTTP message body. This rule will
-search for MaLwArE inside an HTTP message body.</p></div>
 <div class="paragraph"><p>To smooth the transition to inspecting HTTP/2, rules that specify
 service:http will be treated as if they also specify service:http2.
 Thus:</p></div>
@@ -5871,9 +5859,8 @@ flows but not HTTP/1 flows.</p></div>
 large numbers of existing rules. New rules should explicitly specify
 "service http,http2;" if that is the desired behavior. Eventually
 support for http implies http2 may be deprecated and removed.</p></div>
-<div class="paragraph"><p>In the future, http2_inspect will support HPACK header decompression and
-be fully integrated with http_inspect to provide full inspection of the
-individual HTTP/1.1 streams.</p></div>
+<div class="paragraph"><p>In the future, http2_inspect will be fully integrated with http_inspect to
+provide full inspection of the individual HTTP/1.1 streams.</p></div>
 </div>
 <div class="sect2">
 <h3 id="_module_trace">Module Trace</h3>
@@ -7074,7 +7061,22 @@ int <strong>active.min_interval</strong> = 255: minimum number of seconds betwee
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>active.injects</strong>: total crafted packets injected (sum)
+<strong>active.injects</strong>: total crafted packets encoded and injected (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>active.failed_injects</strong>: total crafted packet encode + injects that failed (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>active.direct_injects</strong>: total crafted packets directly injected (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>active.failed_direct_injects</strong>: total crafted packet direct injects that failed (sum)
 </p>
 </li>
 </ul></div>
@@ -7372,7 +7374,7 @@ string <strong><code>daq.modules[].variables[].variable</code></strong>: DAQ mod
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>decode.trace</strong>: mask for enabling debug traces in module { 0:max53 }
+int <strong>decode.trace.all</strong> = 0: enabling traces in module { 0:max32 }
 </p>
 </li>
 </ul></div>
@@ -7489,7 +7491,47 @@ bool <strong>detection.enable_address_anomaly_checks</strong> = false: enable ch
 </li>
 <li>
 <p>
-int <strong>detection.trace</strong>: mask for enabling debug traces in module { 0:max53 }
+int <strong>detection.trace.detect_engine</strong> = 0: enable detection engine trace logging { 0:max53 }
+</p>
+</li>
+<li>
+<p>
+int <strong>detection.trace.rule_eval</strong> = 0: enable rule evaluation trace logging { 0:max53 }
+</p>
+</li>
+<li>
+<p>
+int <strong>detection.trace.buf_min</strong> = 0: enable min buffer trace logging { 0:max53 }
+</p>
+</li>
+<li>
+<p>
+int <strong>detection.trace.buf_verbose</strong> = 0: enable verbose buffer trace logging { 0:max53 }
+</p>
+</li>
+<li>
+<p>
+int <strong>detection.trace.rule_vars</strong> = 0: enable rule variables trace logging { 0:max53 }
+</p>
+</li>
+<li>
+<p>
+int <strong>detection.trace.fp_search</strong> = 0: enable fast pattern search trace logging { 0:max53 }
+</p>
+</li>
+<li>
+<p>
+int <strong>detection.trace.pkt_detect</strong> = 0: enable packet detection trace logging { 0:max53 }
+</p>
+</li>
+<li>
+<p>
+int <strong>detection.trace.opt_tree</strong> = 0: enable tree option trace logging { 0:max53 }
+</p>
+</li>
+<li>
+<p>
+int <strong>detection.trace.tag</strong> = 0: enable tag trace logging { 0:max53 }
 </p>
 </li>
 </ul></div>
@@ -9061,7 +9103,7 @@ implied <strong>snort.--enable-inline-test</strong>: enable Inline-Test Mode Ope
 </li>
 <li>
 <p>
-implied <strong>snort.--gen-msg-map</strong>: dump builtin rules in gen-msg.map format for use by other tools
+implied <strong>snort.--gen-msg-map</strong>: dump configured rules in gen-msg.map format for use by other tools
 </p>
 </li>
 <li>
@@ -9416,7 +9458,7 @@ implied <strong>snort.--trace</strong>: turn on main loop debug trace
 </li>
 <li>
 <p>
-int <strong>snort.trace</strong>: mask for enabling debug traces in module { 0:max53 }
+int <strong>snort.trace.all</strong> = 0: enabling traces in module { 0:max32 }
 </p>
 </li>
 </ul></div>
@@ -10880,7 +10922,7 @@ bool <strong>appid.log_all_sessions</strong> = false: enable logging of all appi
 </li>
 <li>
 <p>
-int <strong>appid.trace</strong>: mask for enabling debug traces in module { 0:max53 }
+int <strong>appid.trace.all</strong> = 0: enabling traces in module { 0:max32 }
 </p>
 </li>
 </ul></div>
@@ -11399,7 +11441,7 @@ bool <strong>dce_smb.smb_legacy_mode</strong> = false: inspect only SMBv1
 </li>
 <li>
 <p>
-int <strong>dce_smb.trace</strong>: mask for enabling debug traces in module { 0:max53 }
+int <strong>dce_smb.trace.all</strong> = 0: enabling traces in module { 0:max32 }
 </p>
 </li>
 </ul></div>
@@ -12119,7 +12161,7 @@ int <strong>dce_udp.max_frag_len</strong> = 65535: maximum fragment size for def
 </li>
 <li>
 <p>
-int <strong>dce_udp.trace</strong>: mask for enabling debug traces in module { 0:max53 }
+int <strong>dce_udp.trace.all</strong> = 0: enabling traces in module { 0:max32 }
 </p>
 </li>
 </ul></div>
@@ -12748,7 +12790,22 @@ enum <strong>finalize_packet.modify.verdict</strong>: output format for stats { 
 </li>
 <li>
 <p>
-bool <strong>finalize_packet.switch_to_wizard</strong> = false: switch to wizard on first finalize event
+bool <strong>finalize_packet.switch_to_wizard</strong> = false: Switch to wizard on first finalize event
+</p>
+</li>
+<li>
+<p>
+bool <strong>finalize_packet.use_direct_inject</strong> = false: Use ioctl to do payload and reset injects
+</p>
+</li>
+<li>
+<p>
+bool <strong>finalize_packet.defer_whitelist</strong> = false: Turn on defer whitelist until we switch to wizard
+</p>
+</li>
+<li>
+<p>
+bool <strong>finalize_packet.force_whitelist</strong> = false: Set ignore direction to both so that flow will be whitelisted
 </p>
 </li>
 </ul></div>
@@ -12999,6 +13056,11 @@ bool <strong>ftp_server.telnet_cmds</strong> = false: detect Telnet escape seque
 </li>
 <li>
 <p>
+<strong>ftp_server.total_bytes</strong>: total number of bytes processed (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>ftp_server.concurrent_sessions</strong>: total concurrent FTP sessions (now)
 </p>
 </li>
@@ -13048,7 +13110,7 @@ int <strong><code>gtp_inspect[].infos[].length</code></strong> = 0: information 
 </li>
 <li>
 <p>
-int <strong>gtp_inspect.trace</strong>: mask for enabling debug traces in module { 0:max53 }
+int <strong>gtp_inspect.trace.all</strong> = 0: enabling traces in module { 0:max32 }
 </p>
 </li>
 </ul></div>
@@ -13184,6 +13246,16 @@ int <strong>gtp_inspect.trace</strong>: mask for enabling debug traces in module
 <li>
 <p>
 <strong>121:14</strong> (http2_inspect) HTTP/2 dynamic table size limit exceeded
+</p>
+</li>
+<li>
+<p>
+<strong>121:15</strong> (http2_inspect) invalid HTTP/2 start line
+</p>
+</li>
+<li>
+<p>
+<strong>121:16</strong> (http2_inspect) HTTP/2 padding length is bigger than frame data size
 </p>
 </li>
 </ul></div>
@@ -14736,17 +14808,22 @@ bool <strong>perf_monitor.summary</strong> = false: output summary at shutdown
 </li>
 <li>
 <p>
-<strong>perf_monitor.total_frees</strong>: total flows pruned or freed by performance monitor (sum)
+<strong>perf_monitor.flow_tracker_creates</strong>: total number of flow trackers created (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>perf_monitor.reload_frees</strong>: flows freed on reload with changed memcap (sum)
+<strong>perf_monitor.flow_tracker_total_deletes</strong>: flow trackers deleted to stay below memcap limit (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>perf_monitor.alloc_prunes</strong>: flows pruned on allocation of IP flows (sum)
+<strong>perf_monitor.flow_tracker_reload_deletes</strong>: flow trackers deleted due to memcap change on config reload (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>perf_monitor.flow_tracker_prunes</strong>: flow trackers pruned for reuse by new flows (sum)
 </p>
 </li>
 </ul></div>
@@ -14832,6 +14909,11 @@ int <strong>pop.uu_decode_depth</strong> = -1: Unix-to-Unix decoding depth (-1 n
 <li>
 <p>
 <strong>pop.packets</strong>: total packets processed (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>pop.total_bytes</strong>: total number of bytes processed (sum)
 </p>
 </li>
 <li>
@@ -16370,6 +16452,11 @@ enum <strong>smtp.xlink2state</strong> = alert: enable/disable xlink2state alert
 </li>
 <li>
 <p>
+<strong>smtp.total_bytes</strong>: total number of bytes processed (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>smtp.sessions</strong>: total smtp sessions (sum)
 </p>
 </li>
@@ -16486,6 +16573,11 @@ int <strong>ssh.max_server_version_len</strong> = 80: limit before alerting on s
 <li>
 <p>
 <strong>ssh.packets</strong>: total packets (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>ssh.total_bytes</strong>: total number of bytes processed (sum)
 </p>
 </li>
 <li>
@@ -16654,11 +16746,6 @@ int <strong>ssl.max_heartbeat_length</strong> = 0: maximum length of heartbeat r
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>stream.footprint</strong> = 0: use zero for production, non-zero for testing at given size (for TCP and user) { 0:max32 }
-</p>
-</li>
-<li>
-<p>
 bool <strong>stream.ip_frags_only</strong> = false: don&#8217;t process non-frag flows
 </p>
 </li>
@@ -16734,7 +16821,7 @@ int <strong>stream.file_cache.cap_weight</strong> = 32: additional bytes to trac
 </li>
 <li>
 <p>
-int <strong>stream.trace</strong>: mask for enabling debug traces in module { 0:max53 }
+int <strong>stream.trace.all</strong> = 0: enabling traces in module { 0:max32 }
 </p>
 </li>
 </ul></div>
@@ -16796,6 +16883,11 @@ int <strong>stream.trace</strong>: mask for enabling debug traces in module { 0:
 <li>
 <p>
 <strong>stream.ha_prunes</strong>: sessions pruned by high availability sync (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream.stale_prunes</strong>: sessions pruned due to stale connection (sum)
 </p>
 </li>
 <li>
@@ -16960,7 +17052,7 @@ int <strong>stream_ip.session_timeout</strong> = 30: session tracking timeout { 
 </li>
 <li>
 <p>
-int <strong>stream_ip.trace</strong>: mask for enabling debug traces in module { 0:max53 }
+int <strong>stream_ip.trace.all</strong> = 0: enabling traces in module { 0:max32 }
 </p>
 </li>
 </ul></div>
@@ -17052,6 +17144,11 @@ int <strong>stream_ip.trace</strong>: mask for enabling debug traces in module {
 <li>
 <p>
 <strong>stream_ip.prunes</strong>: ip session prunes (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream_ip.total_bytes</strong>: total number of bytes processed (sum)
 </p>
 </li>
 <li>
@@ -17628,6 +17725,11 @@ int <strong>stream_udp.session_timeout</strong> = 30: session tracking timeout {
 </li>
 <li>
 <p>
+<strong>stream_udp.total_bytes</strong>: total number of bytes processed (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>stream_udp.ignored</strong>: udp packets ignored (sum)
 </p>
 </li>
@@ -17647,7 +17749,7 @@ int <strong>stream_user.session_timeout</strong> = 30: session tracking timeout 
 </li>
 <li>
 <p>
-int <strong>stream_user.trace</strong>: mask for enabling debug traces in module { 0:max53 }
+int <strong>stream_user.trace.all</strong> = 0: enabling traces in module { 0:max32 }
 </p>
 </li>
 </ul></div>
@@ -18792,17 +18894,17 @@ implied <strong>flow.only_frag</strong>: match on defragmented packets only
 <div class="ulist"><ul>
 <li>
 <p>
-string <strong>flowbits.~command</strong>: set|reset|isset|etc.
+string <strong>flowbits.~op</strong>: set|reset|isset|etc.
 </p>
 </li>
 <li>
 <p>
-string <strong>flowbits.~arg1</strong>: bits or group
+string <strong>flowbits.~bits</strong>: bits or group
 </p>
 </li>
 <li>
 <p>
-string <strong>flowbits.~arg2</strong>: group if arg1 is bits
+string <strong>flowbits.~group</strong>: group if arg1 is bits
 </p>
 </li>
 </ul></div>
@@ -18894,12 +18996,6 @@ int <strong>gtp_version.~</strong>: version to match { 0:2 }
 <div class="sect2">
 <h3 id="_http2_decoded_header">http2_decoded_header</h3>
 <div class="paragraph"><p>What: rule option to set detection cursor to the decoded HTTP/2 header</p></div>
-<div class="paragraph"><p>Type: ips_option</p></div>
-<div class="paragraph"><p>Usage: detect</p></div>
-</div>
-<div class="sect2">
-<h3 id="_http2_frame_data">http2_frame_data</h3>
-<div class="paragraph"><p>What: rule option to set detection cursor to the HTTP/2 frame body</p></div>
 <div class="paragraph"><p>Type: ips_option</p></div>
 <div class="paragraph"><p>Usage: detect</p></div>
 </div>
@@ -19688,12 +19784,7 @@ int <strong>priority.~</strong>: relative severity level; 1 is highest priority 
 <div class="ulist"><ul>
 <li>
 <p>
-string <strong>reference.~scheme</strong>: reference scheme
-</p>
-</li>
-<li>
-<p>
-string <strong>reference.~id</strong>: reference id
+string <strong>reference.~ref</strong>: reference: &lt;scheme&gt;,&lt;id&gt;
 </p>
 </li>
 </ul></div>
@@ -20377,7 +20468,7 @@ bool <strong>alert_csv.file</strong> = false: output to alert_csv.txt instead of
 </li>
 <li>
 <p>
-multi <strong>alert_csv.fields</strong> = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | class | b64_data | dir | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | seconds | service | sid | src_addr | src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
+multi <strong>alert_csv.fields</strong> = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | class | b64_data | client_bytes | client_pkts | dir | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | flowstart_time | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | seconds | server_bytes | server_pkts | service | sid | src_addr | src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
 </p>
 </li>
 <li>
@@ -20463,7 +20554,7 @@ bool <strong>alert_json.file</strong> = false: output to alert_json.txt instead 
 </li>
 <li>
 <p>
-multi <strong>alert_json.fields</strong> = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | class | b64_data | dir | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | seconds | service | sid | src_addr | src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
+multi <strong>alert_json.fields</strong> = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | class | b64_data | client_bytes | client_pkts | dir | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | flowstart_time | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | seconds | server_bytes | server_pkts | service | sid | src_addr | src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
 </p>
 </li>
 <li>
@@ -24632,7 +24723,7 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>--gen-msg-map</strong> dump builtin rules in gen-msg.map format for use by other tools
+<strong>--gen-msg-map</strong> dump configured rules in gen-msg.map format for use by other tools
 </p>
 </li>
 <li>
@@ -25022,7 +25113,7 @@ int <strong>active.min_interval</strong> = 255: minimum number of seconds betwee
 </li>
 <li>
 <p>
-multi <strong>alert_csv.fields</strong> = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | class | b64_data | dir | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | seconds | service | sid | src_addr | src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
+multi <strong>alert_csv.fields</strong> = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | class | b64_data | client_bytes | client_pkts | dir | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | flowstart_time | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | seconds | server_bytes | server_pkts | service | sid | src_addr | src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
 </p>
 </li>
 <li>
@@ -25072,7 +25163,7 @@ int <strong>alert_full.limit</strong> = 0: set maximum size in MB before rollove
 </li>
 <li>
 <p>
-multi <strong>alert_json.fields</strong> = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | class | b64_data | dir | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | seconds | service | sid | src_addr | src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
+multi <strong>alert_json.fields</strong> = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | class | b64_data | client_bytes | client_pkts | dir | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | flowstart_time | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | seconds | server_bytes | server_pkts | service | sid | src_addr | src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
 </p>
 </li>
 <li>
@@ -25242,7 +25333,7 @@ bool <strong>appid.tp_appid_stats_enable</strong>: enable collection of stats an
 </li>
 <li>
 <p>
-int <strong>appid.trace</strong>: mask for enabling debug traces in module { 0:max53 }
+int <strong>appid.trace.all</strong> = 0: enabling traces in module { 0:max32 }
 </p>
 </li>
 <li>
@@ -25967,7 +26058,7 @@ int <strong>dce_smb.smb_max_compound</strong> = 3: SMB max compound size { 0:255
 </li>
 <li>
 <p>
-int <strong>dce_smb.trace</strong>: mask for enabling debug traces in module { 0:max53 }
+int <strong>dce_smb.trace.all</strong> = 0: enabling traces in module { 0:max32 }
 </p>
 </li>
 <li>
@@ -26017,12 +26108,12 @@ int <strong>dce_udp.max_frag_len</strong> = 65535: maximum fragment size for def
 </li>
 <li>
 <p>
-int <strong>dce_udp.trace</strong>: mask for enabling debug traces in module { 0:max53 }
+int <strong>dce_udp.trace.all</strong> = 0: enabling traces in module { 0:max32 }
 </p>
 </li>
 <li>
 <p>
-int <strong>decode.trace</strong>: mask for enabling debug traces in module { 0:max53 }
+int <strong>decode.trace.all</strong> = 0: enabling traces in module { 0:max32 }
 </p>
 </li>
 <li>
@@ -26102,7 +26193,47 @@ bool <strong>detection.pcre_to_regex</strong> = false: enable the use of regex i
 </li>
 <li>
 <p>
-int <strong>detection.trace</strong>: mask for enabling debug traces in module { 0:max53 }
+int <strong>detection.trace.buf_min</strong> = 0: enable min buffer trace logging { 0:max53 }
+</p>
+</li>
+<li>
+<p>
+int <strong>detection.trace.buf_verbose</strong> = 0: enable verbose buffer trace logging { 0:max53 }
+</p>
+</li>
+<li>
+<p>
+int <strong>detection.trace.detect_engine</strong> = 0: enable detection engine trace logging { 0:max53 }
+</p>
+</li>
+<li>
+<p>
+int <strong>detection.trace.fp_search</strong> = 0: enable fast pattern search trace logging { 0:max53 }
+</p>
+</li>
+<li>
+<p>
+int <strong>detection.trace.opt_tree</strong> = 0: enable tree option trace logging { 0:max53 }
+</p>
+</li>
+<li>
+<p>
+int <strong>detection.trace.pkt_detect</strong> = 0: enable packet detection trace logging { 0:max53 }
+</p>
+</li>
+<li>
+<p>
+int <strong>detection.trace.rule_eval</strong> = 0: enable rule evaluation trace logging { 0:max53 }
+</p>
+</li>
+<li>
+<p>
+int <strong>detection.trace.rule_vars</strong> = 0: enable rule variables trace logging { 0:max53 }
+</p>
+</li>
+<li>
+<p>
+int <strong>detection.trace.tag</strong> = 0: enable tag trace logging { 0:max53 }
 </p>
 </li>
 <li>
@@ -26432,7 +26563,17 @@ string <strong>file_type.~</strong>: list of file type IDs to match
 </li>
 <li>
 <p>
+bool <strong>finalize_packet.defer_whitelist</strong> = false: Turn on defer whitelist until we switch to wizard
+</p>
+</li>
+<li>
+<p>
 int <strong>finalize_packet.end_pdu</strong> = 0: Deregister for finalize packet events on this PDU { 0:max32 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>finalize_packet.force_whitelist</strong> = false: Set ignore direction to both so that flow will be whitelisted
 </p>
 </li>
 <li>
@@ -26452,7 +26593,12 @@ int <strong>finalize_packet.start_pdu</strong> = 0: Register to receive finalize
 </li>
 <li>
 <p>
-bool <strong>finalize_packet.switch_to_wizard</strong> = false: switch to wizard on first finalize event
+bool <strong>finalize_packet.switch_to_wizard</strong> = false: Switch to wizard on first finalize event
+</p>
+</li>
+<li>
+<p>
+bool <strong>finalize_packet.use_direct_inject</strong> = false: Use ioctl to do payload and reset injects
 </p>
 </li>
 <li>
@@ -26467,17 +26613,17 @@ string <strong>flags.~test_flags</strong>: these flags are tested
 </li>
 <li>
 <p>
-string <strong>flowbits.~arg1</strong>: bits or group
+string <strong>flowbits.~bits</strong>: bits or group
 </p>
 </li>
 <li>
 <p>
-string <strong>flowbits.~arg2</strong>: group if arg1 is bits
+string <strong>flowbits.~group</strong>: group if arg1 is bits
 </p>
 </li>
 <li>
 <p>
-string <strong>flowbits.~command</strong>: set|reset|isset|etc.
+string <strong>flowbits.~op</strong>: set|reset|isset|etc.
 </p>
 </li>
 <li>
@@ -26722,7 +26868,7 @@ int <strong><code>gtp_inspect[].messages[].type</code></strong> = 0: message typ
 </li>
 <li>
 <p>
-int <strong>gtp_inspect.trace</strong>: mask for enabling debug traces in module { 0:max53 }
+int <strong>gtp_inspect.trace.all</strong> = 0: enabling traces in module { 0:max32 }
 </p>
 </li>
 <li>
@@ -28412,12 +28558,7 @@ string <strong>react.page</strong>: file containing HTTP response (headers and b
 </li>
 <li>
 <p>
-string <strong>reference.~id</strong>: reference id
-</p>
-</li>
-<li>
-<p>
-string <strong>reference.~scheme</strong>: reference scheme
+string <strong>reference.~ref</strong>: reference: &lt;scheme&gt;,&lt;id&gt;
 </p>
 </li>
 <li>
@@ -29117,7 +29258,7 @@ int <strong>snort.-G</strong>: &lt;0xid&gt; (same as --logid) { 0:65535 }
 </li>
 <li>
 <p>
-implied <strong>snort.--gen-msg-map</strong>: dump builtin rules in gen-msg.map format for use by other tools
+implied <strong>snort.--gen-msg-map</strong>: dump configured rules in gen-msg.map format for use by other tools
 </p>
 </li>
 <li>
@@ -29477,7 +29618,7 @@ string <strong>snort.-t</strong>: &lt;dir&gt; chroots process to &lt;dir&gt; aft
 </li>
 <li>
 <p>
-int <strong>snort.trace</strong>: mask for enabling debug traces in module { 0:max53 }
+int <strong>snort.trace.all</strong> = 0: enabling traces in module { 0:max32 }
 </p>
 </li>
 <li>
@@ -29772,11 +29913,6 @@ bool <strong>stream_file.upload</strong> = false: indicate file transfer directi
 </li>
 <li>
 <p>
-int <strong>stream.footprint</strong> = 0: use zero for production, non-zero for testing at given size (for TCP and user) { 0:max32 }
-</p>
-</li>
-<li>
-<p>
 int <strong>stream.icmp_cache.cap_weight</strong> = 8: additional bytes to track per flow for better estimation against cap { 0:65535 }
 </p>
 </li>
@@ -29837,7 +29973,7 @@ int <strong>stream_ip.session_timeout</strong> = 30: session tracking timeout { 
 </li>
 <li>
 <p>
-int <strong>stream_ip.trace</strong>: mask for enabling debug traces in module { 0:max53 }
+int <strong>stream_ip.trace.all</strong> = 0: enabling traces in module { 0:max32 }
 </p>
 </li>
 <li>
@@ -29967,7 +30103,7 @@ bool <strong>stream_tcp.track_only</strong> = false: disable reassembly if true
 </li>
 <li>
 <p>
-int <strong>stream.trace</strong>: mask for enabling debug traces in module { 0:max53 }
+int <strong>stream.trace.all</strong> = 0: enabling traces in module { 0:max32 }
 </p>
 </li>
 <li>
@@ -30002,7 +30138,7 @@ int <strong>stream_user.session_timeout</strong> = 30: session tracking timeout 
 </li>
 <li>
 <p>
-int <strong>stream_user.trace</strong>: mask for enabling debug traces in module { 0:max53 }
+int <strong>stream_user.trace.all</strong> = 0: enabling traces in module { 0:max32 }
 </p>
 </li>
 <li>
@@ -30207,7 +30343,22 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>active.injects</strong>: total crafted packets injected (sum)
+<strong>active.direct_injects</strong>: total crafted packets directly injected (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>active.failed_direct_injects</strong>: total crafted packet direct injects that failed (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>active.failed_injects</strong>: total crafted packet encode + injects that failed (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>active.injects</strong>: total crafted packets encoded and injected (sum)
 </p>
 </li>
 <li>
@@ -31257,6 +31408,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>ftp_server.total_bytes</strong>: total number of bytes processed (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>ftp_server.total_packets</strong>: total packets (sum)
 </p>
 </li>
@@ -32067,22 +32223,27 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>perf_monitor.alloc_prunes</strong>: flows pruned on allocation of IP flows (sum)
+<strong>perf_monitor.flow_tracker_creates</strong>: total number of flow trackers created (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>perf_monitor.flow_tracker_prunes</strong>: flow trackers pruned for reuse by new flows (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>perf_monitor.flow_tracker_reload_deletes</strong>: flow trackers deleted due to memcap change on config reload (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>perf_monitor.flow_tracker_total_deletes</strong>: flow trackers deleted to stay below memcap limit (sum)
 </p>
 </li>
 <li>
 <p>
 <strong>perf_monitor.packets</strong>: total packets processed by performance monitor (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>perf_monitor.reload_frees</strong>: flows freed on reload with changed memcap (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>perf_monitor.total_frees</strong>: total flows pruned or freed by performance monitor (sum)
 </p>
 </li>
 <li>
@@ -32133,6 +32294,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>pop.sessions</strong>: total pop sessions (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>pop.total_bytes</strong>: total number of bytes processed (sum)
 </p>
 </li>
 <li>
@@ -32602,6 +32768,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>smtp.total_bytes</strong>: total number of bytes processed (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>smtp.uu_attachments</strong>: total uu attachments decoded (sum)
 </p>
 </li>
@@ -32668,6 +32839,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>ssh.packets</strong>: total packets (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>ssh.total_bytes</strong>: total number of bytes processed (sum)
 </p>
 </li>
 <li>
@@ -32937,6 +33113,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>stream_ip.total_bytes</strong>: total number of bytes processed (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>stream_ip.total_frags</strong>: total fragments (sum)
 </p>
 </li>
@@ -33008,6 +33189,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>stream.reload_tuning_packets</strong>: number of times stream resource tuner called while processing packets (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream.stale_prunes</strong>: sessions pruned due to stale connection (sum)
 </p>
 </li>
 <li>
@@ -33293,6 +33479,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>stream_udp.timeouts</strong>: udp session timeouts (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream_udp.total_bytes</strong>: total number of bytes processed (sum)
 </p>
 </li>
 <li>
@@ -35128,6 +35319,16 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>121:14</strong> (http2_inspect) HTTP/2 dynamic table size limit exceeded
+</p>
+</li>
+<li>
+<p>
+<strong>121:15</strong> (http2_inspect) invalid HTTP/2 start line
+</p>
+</li>
+<li>
+<p>
+<strong>121:16</strong> (http2_inspect) HTTP/2 padding length is bigger than frame data size
 </p>
 </li>
 <li>
@@ -37313,11 +37514,6 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
-<strong>http2_frame_data</strong> (ips_option): rule option to set detection cursor to the HTTP/2 frame body
-</p>
-</li>
-<li>
-<p>
 <strong>http2_frame_header</strong> (ips_option): rule option to set detection cursor to the 9-octet HTTP/2 frame header
 </p>
 </li>
@@ -38793,11 +38989,6 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
-<strong>ips_option::http2_frame_data</strong>: rule option to set detection cursor to the HTTP/2 frame body
-</p>
-</li>
-<li>
-<p>
 <strong>ips_option::http2_frame_header</strong>: rule option to set detection cursor to the 9-octet HTTP/2 frame header
 </p>
 </li>
@@ -39396,7 +39587,7 @@ Adding/removing stream_* inspectors if stream was already configured
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2020-02-21 11:32:57 EST
+ 2020-03-12 10:44:10 EDT
 </div>
 </div>
 </body>
