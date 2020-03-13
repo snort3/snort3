@@ -42,3 +42,14 @@ use status reason phrases, so the status line passed to NHI will not include one
 only the HTTP version and the status code. 
 
 H2I supports the NHI test tool. See ../http_inspect/dev_notes.txt for usage instructions.
+
+Memory requirements: Http2FlowData represents all H2I information in a flow. It does not account 
+for the entries in the hpack dynamic table. The formula below estimates the size of an entry 
+in the dynamic table:
+name.length() + value.length() + RFC_ENTRY_OVERHEAD (32 as defined by the RFC)
+
+Using the formula and some sample pcaps, the average size of the dynamic table is 1645 bytes.
+Dynamically allocated objects related to http_inspect are considered separate and are not 
+included. Temporary objects (frame_data and frame_header) are ignored. The remaining dynamically
+allocated are Http2Infractions (8 bytes * 2) and Http2EventsGen(24 bytes * 2)
+Therefore, the memory required by http2 per flow: sizeof(Http2FlowData) + 1645 + 16 + 48 
