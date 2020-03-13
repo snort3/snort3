@@ -20,7 +20,7 @@
 
 // Standalone compilation:
 // g++ -g -Wall -I.. -I/path/to/snort3/src -c tp_mock.cc
-// g++ -std=c++11 -g -Wall -I.. -I/path/to/snort3/src -shared -fPIC -o libtp_mock.so tp_mock.cc
+// g++ -std=c++14 -g -Wall -I.. -I/path/to/snort3/src -shared -fPIC -o libtp_mock.so tp_mock.cc
 // As a module (dynamically loaded)  - see CMakeLists.txt
 
 #include <iostream>

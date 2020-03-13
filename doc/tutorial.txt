@@ -7,11 +7,11 @@ out more advanced usage.
 
 Required:
 
+* a compiler that supports the C++14 feature set
+
 * cmake to build from source
 
 * daq from https://github.com/snort3/libdaq for packet IO
-
-* g\++ >= 4.8 or other recent C++11 compiler
 
 * dnet from https://github.com/dugsong/libdnet.git for network utility
   functions

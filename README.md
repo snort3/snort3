@@ -54,7 +54,7 @@ the latest:
 * cmake to build from source
 * daq from https://github.com/snort3/libdaq for packet IO
 * dnet from https://github.com/dugsong/libdnet.git for network utility functions
-* g++ >= 4.8 or other C++11 compiler
+* g++ >= 5 or other C++14 compiler
 * hwloc from https://www.open-mpi.org/projects/hwloc/ for CPU affinity management
 * LuaJIT from http://luajit.org for configuration and scripting
 * OpenSSL from https://www.openssl.org/source/ for SHA and MD5 file signatures,

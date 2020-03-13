@@ -11,15 +11,6 @@ endif()
 
 set (CMAKE_SKIP_RPATH ON)
 
-if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-    set(GNUCXX_MINVER "4.8.1")
-    message(STATUS "g++ version ${CMAKE_CXX_COMPILER_VERSION}")
-    if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS GNUCXX_MINVER)
-        message(FATAL_ERROR "A minimum of g++ ${GNUCXX_MINVER} is required for C++11 support")
-    endif()
-endif()
-
-
 # the Clang compiler on MacOS X may need the c++ library explicitly specified
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
