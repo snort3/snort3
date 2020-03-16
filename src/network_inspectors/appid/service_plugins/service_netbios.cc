@@ -1168,7 +1168,8 @@ void NbdgmServiceDetector::add_smb_info(AppIdSession& asd, unsigned major, unsig
 
     if ( flags & FINGERPRINT_UDP_FLAGS_XENIX )
         return;
-
+    if ( asd.get_session_flags(APPID_SESSION_HAS_SMB_INFO) )
+        return;
     sd = (FpSMBData*)snort_calloc(sizeof(FpSMBData));
 
     if ( asd.add_flow_data(sd, APPID_SESSION_DATA_SMB_DATA, (AppIdFreeFCN)AppIdFreeSMBData) )
