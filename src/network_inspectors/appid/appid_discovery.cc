@@ -118,10 +118,11 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
     ThirdPartyAppIdContext* tp_appid_ctxt)
 {
     IpProtocol protocol = IpProtocol::PROTO_NOT_SET;
+    IpProtocol outer_protocol = IpProtocol::PROTO_NOT_SET;
     AppidSessionDirection direction = APP_ID_FROM_INITIATOR;
     AppIdSession* asd = (AppIdSession*)p->flow->get_flow_data(AppIdSession::inspector_id);
 
-    if ( !do_pre_discovery(p, &asd, inspector, protocol, direction) )
+    if ( !do_pre_discovery(p, &asd, inspector, protocol, outer_protocol, direction) )
         return;
 
     AppId service_id = APP_ID_NONE;
@@ -129,7 +130,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
     AppId payload_id = APP_ID_NONE;
     AppId misc_id = APP_ID_NONE;
     AppidChangeBits change_bits;
-    bool is_discovery_done = do_discovery(p, *asd, protocol, direction, service_id,
+    bool is_discovery_done = do_discovery(p, *asd, protocol, outer_protocol, direction, service_id,
         client_id, payload_id, misc_id, change_bits, tp_appid_ctxt);
 
     do_post_discovery(p, *asd, direction, is_discovery_done, service_id, client_id, payload_id,
@@ -190,7 +191,7 @@ static inline bool is_special_session_monitored(const Packet* p)
 }
 
 static bool set_network_attributes(AppIdSession* asd, Packet* p, IpProtocol& protocol,
-    AppidSessionDirection& direction)
+    IpProtocol& outer_protocol, AppidSessionDirection& direction)
 {
     if (asd)
     {
@@ -225,8 +226,15 @@ static bool set_network_attributes(AppIdSession* asd, Packet* p, IpProtocol& pro
             protocol = IpProtocol::TCP;
         else if (p->is_udp())
             protocol = IpProtocol::UDP;
-        else if ( p->is_ip4() || p->is_ip6() )
+        else if (p->is_ip4() || p->is_ip6())
+        {
             protocol = p->get_ip_proto_next();
+            if (p->num_layers > 3)
+            {
+                uint8_t layer = 1;
+                p->get_ip_proto_next(layer, outer_protocol);
+            }
+        }
         else
             return false;
 
@@ -463,11 +471,11 @@ bool AppIdDiscovery::handle_unmonitored_session(AppIdSession* asd, const Packet*
 
 // Return false if the packet or the session doesn't need to be inspected
 bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInspector& inspector,
-    IpProtocol& protocol, AppidSessionDirection& direction)
+    IpProtocol& protocol, IpProtocol& outer_protocol, AppidSessionDirection& direction)
 {
     AppIdSession* asd = *p_asd;
 
-    if ( !set_network_attributes(asd, p, protocol, direction) )
+    if ( !set_network_attributes(asd, p, protocol, outer_protocol, direction) )
     {
         appid_stats.ignored_packets++;
         return false;
@@ -754,14 +762,30 @@ static inline bool is_check_host_cache_valid(AppIdSession& asd, AppId service_id
     return false;
 }
 
-bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd,
-    IpProtocol protocol, AppidSessionDirection direction, AppId& service_id, AppId& client_id,
-    AppId& payload_id, AppId& misc_id, AppidChangeBits& change_bits,
+bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol protocol,
+    IpProtocol outer_protocol, AppidSessionDirection direction, AppId& service_id,
+    AppId& client_id, AppId& payload_id, AppId& misc_id, AppidChangeBits& change_bits,
     ThirdPartyAppIdContext* tp_appid_ctxt)
 {
     bool is_discovery_done = false;
 
     asd.check_app_detection_restart(change_bits);
+
+    if (outer_protocol != IpProtocol::PROTO_NOT_SET)
+    {
+        AppId id = asd.ctxt.get_odp_ctxt().get_protocol_service_id(outer_protocol);
+        if (id > APP_ID_NONE)
+        {
+            asd.misc_app_id = misc_id = id;
+            if (appidDebug->is_active())
+            {
+                const char *app_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().
+                    get_app_name(asd.misc_app_id);
+                LogMessage("AppIdDbg %s Outer protocol service %s (%d)\n",
+                    appidDebug->get_debug_session(), app_name ? app_name : "unknown", asd.misc_app_id);
+            }
+        }
+    }
 
     if (protocol != IpProtocol::TCP and protocol != IpProtocol::UDP)
     {
@@ -783,7 +807,10 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd,
             asd.set_session_flags(APPID_SESSION_PORT_SERVICE_DONE);
         }
         else
+        {
              service_id = asd.pick_service_app_id();
+             misc_id = asd.pick_misc_app_id();
+        }
         return true;
     }
 

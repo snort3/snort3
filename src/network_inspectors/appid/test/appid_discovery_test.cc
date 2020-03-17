@@ -40,6 +40,7 @@ namespace snort
 // Stubs for packet
 Packet::Packet(bool) {}
 Packet::~Packet() {}
+bool Packet::get_ip_proto_next(unsigned char&, IpProtocol&) const { return true; }
 
 // Stubs for inspector
 Inspector::Inspector()

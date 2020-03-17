@@ -134,10 +134,10 @@ protected:
 
 private:
     static bool do_pre_discovery(snort::Packet* p, AppIdSession** p_asd, AppIdInspector& inspector,
-        IpProtocol& protocol, AppidSessionDirection& direction);
-    static bool do_discovery(snort::Packet* p, AppIdSession& asd,
-        IpProtocol protocol, AppidSessionDirection direction, AppId& service_id, AppId& client_id,
-        AppId& payload_id, AppId& misc_id, AppidChangeBits& change_bits,
+        IpProtocol& protocol, IpProtocol& outer_protocol, AppidSessionDirection& direction);
+    static bool do_discovery(snort::Packet* p, AppIdSession& asd, IpProtocol protocol,
+        IpProtocol outer_protocol, AppidSessionDirection direction, AppId& service_id,
+        AppId& client_id, AppId& payload_id, AppId& misc_id, AppidChangeBits& change_bits,
         ThirdPartyAppIdContext* tp_appid_ctxt);
     static void do_post_discovery(snort::Packet* p, AppIdSession& asd,
         AppidSessionDirection direction, bool is_discovery_done, AppId service_id, AppId client_id,
