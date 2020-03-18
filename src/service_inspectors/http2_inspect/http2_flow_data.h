@@ -74,11 +74,15 @@ public:
     friend class Http2Stream;
     friend class Http2StreamSplitter;
     friend snort::StreamSplitter::Status data_scan(Http2FlowData* session_data, const uint8_t* data,
-	uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id, uint32_t frame_length, bool is_padded);
+	uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id,
+	uint32_t frame_length, bool is_padded);
     friend const snort::StreamBuffer implement_reassemble(Http2FlowData*, unsigned, unsigned,
         const uint8_t*, unsigned, uint32_t, HttpCommon::SourceId);
     friend snort::StreamSplitter::Status implement_scan(Http2FlowData*, const uint8_t*, uint32_t,
         uint32_t*, HttpCommon::SourceId);
+    friend snort::StreamSplitter::Status non_data_scan(Http2FlowData* session_data,
+        uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id,
+        uint32_t frame_length, uint8_t type, uint8_t frame_flags, uint32_t& data_offset);
 
     size_t size_of() override
     { return sizeof(*this); }
@@ -86,7 +90,7 @@ public:
     // Stream access
     class StreamInfo
     {
-    public:
+public:
         const uint32_t id;
         class Http2Stream* stream;
 
@@ -97,9 +101,10 @@ public:
     uint32_t get_current_stream_id(const HttpCommon::SourceId source_id);
 
     Http2HpackDecoder* get_hpack_decoder(const HttpCommon::SourceId source_id)
-        { return &hpack_decoder[source_id]; }
+    { return &hpack_decoder[source_id]; }
     Http2ConnectionSettings* get_connection_settings(const HttpCommon::SourceId source_id)
-        { return &connection_settings[source_id]; }
+    { return &connection_settings[source_id]; }
+
 protected:
     snort::Flow* flow;
     HttpInspect* const hi;
@@ -131,7 +136,7 @@ protected:
     uint8_t scan_frame_header[2][Http2Enums::FRAME_HEADER_LENGTH];
     uint32_t scan_remaining_frame_octets[2] = { 0, 0 };
     uint32_t scan_octets_seen[2] = { 0, 0 };
-    uint32_t leftover_data[2] = { 0, 0 };
+    bool mid_packet[2] = { false, false };
 
     // Scan signals to reassemble()
     bool payload_discard[2] = { false, false };

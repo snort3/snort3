@@ -101,6 +101,83 @@ StreamSplitter::Status data_scan(Http2FlowData* session_data, const uint8_t* dat
     return data_cutter->scan(data, length, flush_offset);
 }
 
+StreamSplitter::Status non_data_scan(Http2FlowData* session_data,
+    uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id,
+    uint32_t frame_length, uint8_t type, uint8_t frame_flags, uint32_t& data_offset)
+{
+    // Compute frame section length once per frame
+    if (session_data->scan_remaining_frame_octets[source_id] == 0)
+    {
+        if (session_data->continuation_expected[source_id] && type != FT_CONTINUATION)
+        {
+            *session_data->infractions[source_id] += INF_MISSING_CONTINUATION;
+            session_data->events[source_id]->create_event(EVENT_MISSING_CONTINUATION);
+            return StreamSplitter::ABORT;
+        }
+
+        if (frame_length + FRAME_HEADER_LENGTH > MAX_OCTETS)
+        {
+            // FIXIT-M long non-data frame needs to be supported
+            return StreamSplitter::ABORT;
+        }
+
+        session_data->scan_remaining_frame_octets[source_id] = frame_length;
+        session_data->total_bytes_in_split[source_id] += FRAME_HEADER_LENGTH +
+            frame_length;
+    }
+
+    // If we don't have the full frame, keep scanning
+    if (length - data_offset < session_data->scan_remaining_frame_octets[source_id])
+    {
+        session_data->scan_remaining_frame_octets[source_id] -= (length - data_offset);
+        data_offset = length;
+        return StreamSplitter::SEARCH;
+    }
+
+    // Have the full frame
+    StreamSplitter::Status status = StreamSplitter::FLUSH;
+    switch (type)
+    {
+    case FT_HEADERS:
+        if (!(frame_flags & END_HEADERS))
+        {
+            session_data->continuation_expected[source_id] = true;
+            status = StreamSplitter::SEARCH;
+        }
+        break;
+    case FT_CONTINUATION:
+        if (session_data->continuation_expected[source_id])
+        {
+            if (!(frame_flags & END_HEADERS))
+                status = StreamSplitter::SEARCH;
+            else
+            {
+                // continuation frame ending headers
+                status = StreamSplitter::FLUSH;
+                session_data->continuation_expected[source_id] = false;
+            }
+        }
+        else
+        {
+            // FIXIT-M CONTINUATION frames can also follow PUSH_PROMISE frames, which
+            // are not currently supported
+            *session_data->infractions[source_id] += INF_UNEXPECTED_CONTINUATION;
+            session_data->events[source_id]->create_event(
+                EVENT_UNEXPECTED_CONTINUATION);
+            status = StreamSplitter::ABORT;
+        }
+        break;
+    default:
+        break;
+    }
+
+    data_offset += session_data->scan_remaining_frame_octets[source_id];
+    *flush_offset = data_offset;
+    session_data->scan_octets_seen[source_id] = 0;
+    session_data->scan_remaining_frame_octets[source_id] = 0;
+    return status;
+}
+
 StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t* data,
     uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id)
 {
@@ -112,7 +189,11 @@ StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t
         switch (validate_preface(data, length, session_data->scan_octets_seen[source_id]))
         {
         case V_GOOD:
-            break;
+            *flush_offset = 24 - session_data->scan_octets_seen[source_id];
+            session_data->preface[source_id] = false;
+            session_data->payload_discard[source_id] = true;
+            session_data->scan_octets_seen[source_id] = 0;
+            return StreamSplitter::FLUSH;
         case V_BAD:
             session_data->events[source_id]->create_event(EVENT_PREFACE_MATCH_FAILURE);
             return StreamSplitter::ABORT;
@@ -120,46 +201,14 @@ StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t
             session_data->scan_octets_seen[source_id] += length;
             return StreamSplitter::SEARCH;
         }
-
-        *flush_offset = 24 - session_data->scan_octets_seen[source_id];
-        session_data->preface[source_id] = false;
-        session_data->payload_discard[source_id] = true;
-        session_data->scan_octets_seen[source_id] = 0;
     }
-    //FIXIT-M This should get split points from NHI
-    else if (session_data->leftover_data[source_id] > 0)
+    else if (session_data->mid_packet[source_id])
     {
         // Continuation of ongoing data frame
-        session_data->num_frame_headers[source_id] = 0;
-
-        // If this is a new frame section, update next frame section length
-        if (session_data->scan_remaining_frame_octets[source_id] == 0)
-        {
-            if (session_data->leftover_data[source_id] > DATA_SECTION_SIZE)
-                session_data->scan_remaining_frame_octets[source_id] = DATA_SECTION_SIZE;
-            else
-                session_data->scan_remaining_frame_octets[source_id] =
-                    session_data->leftover_data[source_id];
-            session_data->total_bytes_in_split[source_id] = 0;
-        }
-
-        // Don't have full frame section, keep scanning
-        if (session_data->scan_remaining_frame_octets[source_id] > length)
-        {
-            session_data->scan_remaining_frame_octets[source_id] -= length;
-            session_data->total_bytes_in_split[source_id] += length;
-            return status = StreamSplitter::SEARCH;
-        }
-
-        // Have full frame section, flush and update leftover
-        session_data->total_bytes_in_split[source_id] +=
-            session_data->scan_remaining_frame_octets[source_id];
-        *flush_offset = session_data->scan_remaining_frame_octets[source_id];
-        session_data->leftover_data[source_id] -=
-            session_data->total_bytes_in_split[source_id];
-        session_data->octets_before_first_header[source_id] =
-            session_data->total_bytes_in_split[source_id];
-        session_data->scan_remaining_frame_octets[source_id] = 0;
+        Http2Stream* const stream = session_data->find_stream(
+            session_data->current_stream[source_id]);
+        Http2DataCutter* data_cutter = stream->get_data_cutter(source_id);
+        return data_cutter->scan(data, length, flush_offset);
     }
     else
     {
@@ -171,9 +220,11 @@ StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t
         // need to process multiple frames in a single scan
         do
         {
-            // Scanning a new frame
             if (session_data->scan_octets_seen[source_id] == 0)
+            {
+                // Scanning a new frame
                 session_data->num_frame_headers[source_id] += 1;
+            }
 
             // The first nine bytes are the frame header. But all nine might not all be present in
             // the first TCP segment we receive.
@@ -188,17 +239,14 @@ StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t
             data_offset += remaining_header_in_data;
 
             if (session_data->scan_octets_seen[source_id] < FRAME_HEADER_LENGTH)
-            {
-                status = StreamSplitter::SEARCH;
-                break;
-            }
+                return StreamSplitter::SEARCH;
 
             // We have the full frame header, compute some variables
             const uint32_t frame_length = get_frame_length(session_data->
                 scan_frame_header[source_id]);
             const uint8_t type = session_data->frame_type[source_id] = get_frame_type(
                 session_data->scan_frame_header[source_id]);
-            uint8_t frame_flags = get_frame_flags(session_data->
+            const uint8_t frame_flags = get_frame_flags(session_data->
                 scan_frame_header[source_id]);
             session_data->current_stream[source_id] =
                 get_stream_id(session_data->scan_frame_header[source_id]);
@@ -206,80 +254,9 @@ StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t
             if (type == FT_DATA)
                 return data_scan(session_data, data, length, flush_offset, source_id,
                     frame_length, ((frame_flags & PADDED) !=0));
-
-            // Compute frame section length once per frame
-            if (session_data->scan_remaining_frame_octets[source_id] == 0)
-            {
-                if (session_data->continuation_expected[source_id] && type != FT_CONTINUATION)
-                {
-                    *session_data->infractions[source_id] += INF_MISSING_CONTINUATION;
-                    session_data->events[source_id]->create_event(EVENT_MISSING_CONTINUATION);
-                    status = StreamSplitter::ABORT;
-                    break;
-                }
-
-                if (frame_length + FRAME_HEADER_LENGTH > MAX_OCTETS)
-                {
-                    // FIXIT-M long non-data frame needs to be supported
-                    status = StreamSplitter::ABORT;
-                    break;
-                }
-                else
-                {
-                    session_data->scan_remaining_frame_octets[source_id] = frame_length;
-                    session_data->total_bytes_in_split[source_id] += FRAME_HEADER_LENGTH +
-                        frame_length;
-                }
-            }
-
-            // If we don't have the full frame, keep scanning
-            if (length - data_offset < session_data->scan_remaining_frame_octets[source_id])
-            {
-                session_data->scan_remaining_frame_octets[source_id] -= (length - data_offset);
-                status = StreamSplitter::SEARCH;
-                break;
-            }
-
-            // Have the full frame
-            switch (type)
-            {
-            case FT_HEADERS:
-                if (!(frame_flags & END_HEADERS))
-                {
-                    session_data->continuation_expected[source_id] = true;
-                    status = StreamSplitter::SEARCH;
-                }
-                break;
-            case FT_CONTINUATION:
-                if (session_data->continuation_expected[source_id])
-                {
-                    if (!(frame_flags & END_HEADERS))
-                        status = StreamSplitter::SEARCH;
-                    else
-                    {
-                        // continuation frame ending headers
-                        status = StreamSplitter::FLUSH;
-                        session_data->continuation_expected[source_id] = false;
-                    }
-                }
-                else
-                {
-                    // FIXIT-M CONTINUATION frames can also follow PUSH_PROMISE frames, which
-                    // are not currently supported
-                    *session_data->infractions[source_id] += INF_UNEXPECTED_CONTINUATION;
-                    session_data->events[source_id]->create_event(
-                        EVENT_UNEXPECTED_CONTINUATION);
-                    status = StreamSplitter::ABORT;
-                }
-                break;
-            default:
-                break;
-            }
-
-            data_offset += session_data->scan_remaining_frame_octets[source_id];
-            *flush_offset = data_offset;
-            session_data->scan_octets_seen[source_id] = 0;
-            session_data->scan_remaining_frame_octets[source_id] = 0;
+            else
+                status = non_data_scan(session_data, length, flush_offset, source_id,
+                    frame_length, type, frame_flags, data_offset);
         }
         while (status == StreamSplitter::SEARCH && data_offset < length);
     }
@@ -304,11 +281,9 @@ const StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned to
         Http2Stream* const stream = session_data->find_stream(
             session_data->current_stream[source_id]);
         Http2DataCutter* data_cutter = stream->get_data_cutter(source_id);
-        StreamBuffer http_frame_buf = data_cutter->reassemble(total, offset, data, len);
+        StreamBuffer http_frame_buf = data_cutter->reassemble(total, data, len);
         if (http_frame_buf.data)
         {
-            delete data_cutter;
-            stream->set_data_cutter(nullptr, source_id);
             stream->set_abort_data_processing(source_id);
             session_data->frame_data[source_id] = const_cast<uint8_t*>(http_frame_buf.data);
             session_data->frame_data_size[source_id] = http_frame_buf.length;

@@ -33,7 +33,7 @@ public:
         src_id, bool is_padded);
     snort::StreamSplitter::Status scan(const uint8_t* data, uint32_t length,
         uint32_t* flush_offset);
-    const snort::StreamBuffer reassemble(unsigned total, unsigned offset, const uint8_t* data,
+    const snort::StreamBuffer reassemble(unsigned total, const uint8_t* data,
         unsigned len);
 
 private:
@@ -45,16 +45,22 @@ private:
     const uint32_t frame_length;
     uint32_t data_len;
     uint32_t padding_len = 0;
-    // accumulating
+    // accumulating - scan
     uint32_t frame_bytes_seen = 0;
     uint32_t bytes_sent_http = 0;
-    uint32_t hdr_bytes_read = 0;
     uint32_t data_bytes_read = 0;
     uint32_t padding_read = 0;
+    // accumulating - reassemble
+    uint32_t reassemble_bytes_sent = 0;
+    uint32_t reassemble_hdr_bytes_read = 0;
+    uint32_t reassemble_data_bytes_read = 0;
+    uint32_t reassemble_padding_read = 0;
     // per call
     uint32_t cur_data;
     uint32_t cur_padding;
     uint32_t cur_data_offset;
+    // leftover from previous scan call
+    uint32_t leftover_bytes = 0 ;
 
     //
     // State machines
