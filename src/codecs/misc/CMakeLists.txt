@@ -7,6 +7,7 @@ if(STATIC_CODECS)
         cd_llc.cc
         cd_teredo.cc
         cd_user.cc
+        cd_vxlan.cc
     )
 
 else(STATIC_CODECS)
@@ -16,6 +17,7 @@ else(STATIC_CODECS)
     add_dynamic_module(cd_llc codecs cd_llc.cc)
     add_dynamic_module(cd_teredo codecs cd_teredo.cc)
     add_dynamic_module(cd_user codecs cd_user.cc)
+    add_dynamic_module(cd_vxlan codecs cd_vxlan.cc)
 
 endif(STATIC_CODECS)
 

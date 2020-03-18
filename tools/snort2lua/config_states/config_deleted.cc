@@ -304,6 +304,19 @@ static const ConvertMap enable_decode_oversized_drops_api =
 const ConvertMap* enable_decode_oversized_drops_map = &enable_decode_oversized_drops_api;
 
 /*************************************************
+ ******************  enable_gtp ******************
+ *************************************************/
+
+static const std::string enable_gtp = "enable_gtp";
+static const ConvertMap enable_gtp_api =
+{
+    enable_gtp,
+    deleted_ctor<& enable_gtp>
+};
+
+const ConvertMap* enable_gtp_map = &enable_gtp_api;
+
+/*************************************************
  **************  enable_ipopt_drops  *************
  *************************************************/
 

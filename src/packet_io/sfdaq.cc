@@ -371,7 +371,7 @@ bool SFDAQ::can_replace()
     return local_instance && local_instance->can_replace();
 }
 
-bool SFDAQ::get_tunnel_bypass(uint8_t proto)
+bool SFDAQ::get_tunnel_bypass(uint16_t proto)
 {
     return local_instance && local_instance->get_tunnel_bypass(proto);
 }

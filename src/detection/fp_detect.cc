@@ -868,7 +868,7 @@ static inline int batch_search(
 
     // FIXIT-P Batch outer UDP payload searches for teredo set and the outer header
     // during any signature evaluation
-    if ( p->ptrs.udph && (p->proto_bits & (PROTO_BIT__TEREDO | PROTO_BIT__GTP)) )
+    if ( p->is_udp_tunneled() )
     {
         fp_immediate(so, p, buf, len);
     }
@@ -1244,7 +1244,7 @@ static void fpEvalPacket(Packet* p, FPTask task)
 {
     /* Run UDP rules against the UDP header of Teredo packets */
     // FIXIT-L udph is always inner; need to check for outer
-    if ( p->ptrs.udph && (p->proto_bits & (PROTO_BIT__TEREDO | PROTO_BIT__GTP)) )
+    if ( p->is_udp_tunneled() )
         fpEvalPacketUdp(p, task);
 
     if ( p->get_snort_protocol_id() != UNKNOWN_PROTOCOL_ID and fpEvalHeaderSvc(p, task) )

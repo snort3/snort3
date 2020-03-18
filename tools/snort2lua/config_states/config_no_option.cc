@@ -263,19 +263,6 @@ static const ConvertMap enable_deep_teredo_inspection_api =
 const ConvertMap* enable_deep_teredo_inspection_map = &enable_deep_teredo_inspection_api;
 
 /*************************************************
- ******************  enable_gtp ******************
- *************************************************/
-
-static const std::string enable_gtp = "enable_gtp";
-static const ConvertMap enable_gtp_api =
-{
-    enable_gtp,
-    config_true_no_opt_ctor<& enable_gtp, & udp>
-};
-
-const ConvertMap* enable_gtp_map = &enable_gtp_api;
-
-/*************************************************
  **********  enable_mpls_overlapping_ip **********
  *************************************************/
 

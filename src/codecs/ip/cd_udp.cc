@@ -26,6 +26,7 @@
 
 #include "codecs/codec_module.h"
 #include "framework/codec.h"
+#include "log/messages.h"
 #include "log/text_log.h"
 #include "main/snort_config.h"
 #include "protocols/teredo.h"
@@ -63,11 +64,11 @@ static const Parameter udp_params[] =
     { "deep_teredo_inspection", Parameter::PT_BOOL, nullptr, "false",
       "look for Teredo on all UDP ports (default is only 3544)" },
 
-    { "enable_gtp", Parameter::PT_BOOL, nullptr, "false",
-      "decode GTP encapsulations" },
-
     { "gtp_ports", Parameter::PT_BIT_LIST, "65535",
       "2152 3386", "set GTP ports" },
+
+    { "vxlan_ports", Parameter::PT_BIT_LIST, "65535",
+      "4789", "set VXLAN ports" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -86,11 +87,75 @@ static const RuleMap udp_rules[] =
 
 constexpr uint16_t GTP_U_PORT = 2152;
 constexpr uint16_t GTP_U_PORT_V0 = 3386;
+constexpr uint16_t VXLAN_U_PORT = 4789;
+
+class UdpCodecConfig
+{
+public:
+    UdpCodecConfig()
+    {
+        gtp_ports.set(GTP_U_PORT);
+        gtp_ports.set(GTP_U_PORT_V0);
+        vxlan_ports.set(VXLAN_U_PORT);
+    }
+
+    bool deep_teredo_inspection()
+    { return enable_teredo; }
+
+    void set_teredo_inspection(bool val)
+    { enable_teredo = val; }
+
+    bool gtp_decoding()
+    { return gtp_decode; }
+
+    bool is_gtp_port(uint16_t port)
+    { return gtp_ports.test(port); }
+
+    bool vxlan_decoding()
+    { return vxlan_decode; }
+
+    bool is_vxlan_port(uint16_t port)
+    { return vxlan_ports.test(port); }
+
+    void set_gtp_ports(PortBitSet ports)
+    {
+        gtp_ports = ports;
+        gtp_decode = ports.any();
+    }
+
+    void set_vxlan_ports(PortBitSet ports)
+    {
+        vxlan_ports = ports;
+        vxlan_decode = ports.any();
+    }
+
+private:
+    bool enable_teredo = false;
+    PortBitSet gtp_ports;
+    PortBitSet vxlan_ports;
+    bool gtp_decode = true;
+    bool vxlan_decode = true;
+};
 
 class UdpModule : public CodecModule
 {
 public:
-    UdpModule() : CodecModule(CD_UDP_NAME, CD_UDP_HELP, udp_params) { }
+    UdpModule() : CodecModule(CD_UDP_NAME, CD_UDP_HELP, udp_params)
+    { 
+        config = nullptr;
+    }
+
+    ~UdpModule() override
+    {
+        if ( config )
+        {
+            delete config;
+            config = nullptr;
+        }
+    }
+
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
 
     const RuleMap* get_rules() const override
     { return udp_rules; }
@@ -101,44 +166,53 @@ public:
     PegCount* get_counts() const override
     { return (PegCount*)&stats; }
 
-    bool set(const char*, Value& v, SnortConfig* sc) override
+    UdpCodecConfig* get_data()
     {
-        if ( v.is("deep_teredo_inspection") )
-        {
-            sc->enable_teredo = v.get_bool();
-        }
-        else if ( v.is("gtp_ports") )
-        {
-            if ( !sc->gtp_ports )
-                sc->gtp_ports = new PortBitSet;
-
-            v.get_bits(*(sc->gtp_ports));
-        }
-        else if ( v.is("enable_gtp") )
-        {
-            if ( v.get_bool() )
-            {
-                if ( !sc->gtp_ports )
-                {
-                    sc->gtp_ports = new PortBitSet;
-                    sc->gtp_ports->set(GTP_U_PORT);
-                    sc->gtp_ports->set(GTP_U_PORT_V0);
-                }
-            }
-        }
-        else
-        {
-            return false;
-        }
-
-        return true;
+        UdpCodecConfig* tmp = config;
+        config = nullptr;
+        return tmp;
     }
+private:
+    UdpCodecConfig* config;
 };
+
+bool UdpModule::set(const char*, Value& v, SnortConfig*)
+{
+    PortBitSet ports;
+
+    if ( v.is("deep_teredo_inspection") )
+    {
+        config->set_teredo_inspection(v.get_bool());
+    }
+    else if ( v.is("gtp_ports") )
+    {
+        v.get_bits(ports);
+        config->set_gtp_ports(ports);
+    }
+    else if ( v.is("vxlan_ports") )
+    {
+        v.get_bits(ports);
+        config->set_vxlan_ports(ports);
+    }
+    else
+        return false;
+
+    return true;
+}
+
+bool UdpModule::begin(const char*, int, SnortConfig*)
+{
+    assert(!config);
+    config = new UdpCodecConfig;
+    return true;
+}
+
 
 class UdpCodec : public Codec
 {
 public:
-    UdpCodec() : Codec(CD_UDP_NAME) { }
+    UdpCodec(UdpCodecConfig* c) : Codec(CD_UDP_NAME) { config = c; }
+    ~UdpCodec() override { delete config; }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
@@ -157,6 +231,7 @@ private:
     bool valid_checksum6(const RawData&, const CodecData&, const DecodeData&);
 
     void UDPMiscTests(const DecodeData&, const CodecData&, uint32_t pay_len);
+    UdpCodecConfig* config;
 };
 } // anonymous namespace
 
@@ -338,18 +413,26 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     // set in packet manager
     UDPMiscTests(snort, codec, uhlen - udp::UDP_HEADER_LEN);
 
-    if (SnortConfig::gtp_decoding() &&
-        (SnortConfig::is_gtp_port(src_port) || SnortConfig::is_gtp_port(dst_port)))
+    if (config->gtp_decoding() and
+        (config->is_gtp_port(src_port) || config->is_gtp_port(dst_port)))
     {
         if ( !(snort.decode_flags & DECODE_FRAG) )
             codec.next_prot_id = ProtocolId::GTP;
     }
     else if (teredo::is_teredo_port(src_port) ||
         teredo::is_teredo_port(dst_port) ||
-        SnortConfig::deep_teredo_inspection())
+        (config->deep_teredo_inspection()))
     {
         codec.next_prot_id = ProtocolId::TEREDO;
     }
+    else if (config->vxlan_decoding() and
+        (config->is_vxlan_port(src_port) || config->is_vxlan_port(dst_port)))
+    {
+        codec.next_prot_id = ProtocolId::VXLAN;
+    }
+
+    if (codec.next_prot_id != ProtocolId::FINISHED_DECODE)
+        codec.proto_bits |= PROTO_BIT__UDP_TUNNELED;
 
     return true;
 }
@@ -499,8 +582,14 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-static Codec* ctor(Module*)
-{ return new UdpCodec(); }
+static Codec* ctor(Module* m)
+{ 
+    UdpModule* mod = (UdpModule*)m;
+    // Codecs can be instantiated without modules. In which case use
+    // the snort defaults for config.
+    UdpCodecConfig* cfg = mod ? (mod->get_data()) : (new UdpCodecConfig());
+    return new UdpCodec(cfg);
+}
 
 static void dtor(Codec* cd)
 { delete cd; }

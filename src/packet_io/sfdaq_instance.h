@@ -81,7 +81,7 @@ public:
     int add_expected(const Packet* ctrlPkt, const SfIp* cliIP, uint16_t cliPort,
             const SfIp* srvIP, uint16_t srvPort, IpProtocol, unsigned timeout_ms,
             unsigned /* flags */);
-    bool get_tunnel_bypass(uint8_t proto);
+    bool get_tunnel_bypass(uint16_t proto);
 
 private:
     void get_tunnel_capabilities();
@@ -96,7 +96,7 @@ private:
     uint32_t pool_available = 0;
     int dlt = -1;
     DAQ_Stats_t daq_instance_stats = { };
-    uint8_t daq_tunnel_mask = 0;
+    uint16_t daq_tunnel_mask = 0;
 };
 }
 #endif

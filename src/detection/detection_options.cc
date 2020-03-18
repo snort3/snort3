@@ -381,7 +381,7 @@ int detection_option_node_evaluate(
         {
             if ( !last_check.flowbit_failed &&
                 !(p->packet_flags & PKT_IP_RULE_2ND) &&
-                !(p->proto_bits & (PROTO_BIT__TEREDO|PROTO_BIT__GTP)) )
+                !p->is_udp_tunneled() )
             {
                 trace_log(detection, TRACE_RULE_EVAL,
                     "Was evaluated before, returning last check result\n");

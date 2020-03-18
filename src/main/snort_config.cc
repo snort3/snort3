@@ -268,9 +268,6 @@ SnortConfig::~SnortConfig()
     delete ha_config;
     delete global_dbus;
 
-    if (gtp_ports)
-        delete gtp_ports;
-
     delete profiler;
     delete latency;
     delete memory;
@@ -811,6 +808,9 @@ void SnortConfig::set_tunnel_verdicts(const char* args)
         else if (!strcasecmp(tok, "teredo"))
             tunnel_mask |= TUNNEL_TEREDO;
 
+        else if (!strcasecmp(tok, "vxlan"))
+            tunnel_mask |= TUNNEL_VXLAN;
+
         else if (!strcasecmp(tok, "6in4"))
             tunnel_mask |= TUNNEL_6IN4;
 
@@ -924,7 +924,7 @@ void SnortConfig::enable_syslog()
     syslog_configured = true;
 }
 
-bool SnortConfig::tunnel_bypass_enabled(uint8_t proto)
+bool SnortConfig::tunnel_bypass_enabled(uint16_t proto)
 {
     return (!((get_conf()->tunnel_mask & proto) or SFDAQ::get_tunnel_bypass(proto)));
 }

@@ -119,7 +119,8 @@ enum TunnelFlags
     TUNNEL_4IN4   = 0x10,
     TUNNEL_6IN6   = 0x20,
     TUNNEL_GRE    = 0x40,
-    TUNNEL_MPLS   = 0x80
+    TUNNEL_MPLS   = 0x80,
+    TUNNEL_VXLAN  = 0x100
 };
 
 class FastPatternConfig;
@@ -271,8 +272,6 @@ public:
 
     //------------------------------------------------------
     // decode module stuff
-    PortBitSet* gtp_ports = nullptr;
-
     int mpls_stack_depth = 0;
 
     uint8_t mpls_payload_type = 0;
@@ -280,7 +279,6 @@ public:
     uint8_t max_ip6_extensions = 0;
     uint8_t max_ip_layers = 0;
 
-    bool enable_teredo = false;
     bool enable_esp = false;
     bool address_anomaly_check_enabled = false;
 
@@ -389,7 +387,7 @@ public:
 
     DataBus* global_dbus = nullptr;
 
-    uint8_t tunnel_mask = 0;
+    uint16_t tunnel_mask = 0;
 
     // FIXIT-L this is temporary for legacy paf_max required only for HI;
     // it is not appropriate for multiple stream_tcp with different
@@ -487,15 +485,6 @@ public:
     static bool mpls_multicast()
     { return get_conf()->run_flags & RUN_FLAG__MPLS_MULTICAST; }
 
-    static bool deep_teredo_inspection()
-    { return get_conf()->enable_teredo; }
-
-    static bool gtp_decoding()
-    { return get_conf()->gtp_ports; }
-
-    static bool is_gtp_port(uint16_t port)
-    { return get_conf()->gtp_ports->test(port); }
-
     static bool esp_decoding()
     { return get_conf()->enable_esp; }
 
@@ -569,7 +558,7 @@ public:
         return true;
     }
 
-    SO_PUBLIC static bool tunnel_bypass_enabled(uint8_t proto);
+    SO_PUBLIC static bool tunnel_bypass_enabled(uint16_t proto);
 
     // checksum stuff
     static bool checksum_drop(uint16_t codec_cksum_err_flag)

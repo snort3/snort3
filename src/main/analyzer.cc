@@ -261,7 +261,8 @@ static DAQ_Verdict distill_verdict(Packet* p)
     Active* act = p->active;
 
     // First Pass
-    if ( act->session_was_blocked() )
+    if ( act->session_was_blocked() ||
+            (p->flow && (p->flow->flow_state == Flow::FlowState::BLOCK)) )
     {
         if ( !act->can_block() )
             verdict = DAQ_VERDICT_PASS;
@@ -312,7 +313,7 @@ static DAQ_Verdict distill_verdict(Packet* p)
     }
     else if ( p->ptrs.decode_flags & DECODE_PKT_TRUST )
     {
-        if (p->flow)
+        if ( p->flow )
             p->flow->set_ignore_direction(SSN_DIR_BOTH);
         verdict = DAQ_VERDICT_WHITELIST;
     }

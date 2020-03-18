@@ -213,6 +213,8 @@ void SFDAQInstance::get_tunnel_capabilities()
             daq_tunnel_mask |= TUNNEL_GTP;
         if (caps & DAQ_CAPA_DECODE_TEREDO)
             daq_tunnel_mask |= TUNNEL_TEREDO;
+        if (caps & DAQ_CAPA_DECODE_VXLAN)
+            daq_tunnel_mask |= TUNNEL_VXLAN;
         if (caps & DAQ_CAPA_DECODE_GRE)
             daq_tunnel_mask |= TUNNEL_GRE;
         if (caps & DAQ_CAPA_DECODE_4IN4)
@@ -228,7 +230,7 @@ void SFDAQInstance::get_tunnel_capabilities()
     }
 }
 
-bool SFDAQInstance::get_tunnel_bypass(uint8_t proto)
+bool SFDAQInstance::get_tunnel_bypass(uint16_t proto)
 {
     return (daq_tunnel_mask & proto) != 0;
 }

@@ -68,6 +68,7 @@ extern const BaseApi* cd_transbridge[];
 extern const BaseApi* cd_udp[];
 extern const BaseApi* cd_user[];
 extern const BaseApi* cd_vlan[];
+extern const BaseApi* cd_vxlan[];
 #endif
 
 void load_codecs()
@@ -110,6 +111,7 @@ void load_codecs()
     PluginManager::load_plugins(cd_udp);
     PluginManager::load_plugins(cd_user);
     PluginManager::load_plugins(cd_vlan);
+    PluginManager::load_plugins(cd_vxlan);
 #endif
 }
 

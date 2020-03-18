@@ -205,6 +205,17 @@ struct SO_PUBLIC Packet
     inline bool is_fragment() const
     { return ptrs.decode_flags & DECODE_FRAG; }
 
+    inline bool is_udp_tunneled() const
+    {
+        if (proto_bits & PROTO_BIT__UDP_TUNNELED)
+        {
+            assert(ptrs.udph);
+            return true;
+        }
+
+        return false;
+    }
+
     inline bool has_tcp_data() const
     { return (proto_bits & PROTO_BIT__TCP) and data and dsize; }
 

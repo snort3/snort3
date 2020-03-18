@@ -55,7 +55,7 @@ public:
     static bool can_inject_raw();
     static bool can_replace();
     static bool can_run_unprivileged();
-    SO_PUBLIC static bool get_tunnel_bypass(uint8_t proto);
+    SO_PUBLIC static bool get_tunnel_bypass(uint16_t proto);
 
     // FIXIT-M X Temporary thread-local instance helpers to be removed when no longer needed
     static void set_local_instance(SFDAQInstance*);

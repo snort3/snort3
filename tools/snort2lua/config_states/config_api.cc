@@ -71,8 +71,8 @@ extern const ConvertMap* enable_decode_drops_map;
 extern const ConvertMap* enable_decode_oversized_alerts_map;
 extern const ConvertMap* enable_decode_oversized_drops_map;
 extern const ConvertMap* enable_deep_teredo_inspection_map;
-extern const ConvertMap* enable_ipopt_drops_map;
 extern const ConvertMap* enable_gtp_map;
+extern const ConvertMap* enable_ipopt_drops_map;
 extern const ConvertMap* enable_mpls_multicast_map;
 extern const ConvertMap* enable_mpls_overlapping_ip_map;
 extern const ConvertMap* enable_tcpopt_drops_map;
@@ -191,8 +191,8 @@ const std::vector<const ConvertMap*> config_api =
     enable_decode_oversized_alerts_map,
     enable_decode_oversized_drops_map,
     enable_deep_teredo_inspection_map,
-    enable_ipopt_drops_map,
     enable_gtp_map,
+    enable_ipopt_drops_map,
     enable_mpls_multicast_map,
     enable_mpls_overlapping_ip_map,
     enable_tcpopt_drops_map,
