@@ -377,8 +377,6 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
         }
     }
 
-    // FIXIT-H there is no support for partial flush with compression
-    assert((partial_buffer_length == 0) || (session_data->compression[source_id] == CMP_NONE));
     if (partial_buffer_length > 0)
     {
         assert(session_data->section_offset[source_id] == 0);

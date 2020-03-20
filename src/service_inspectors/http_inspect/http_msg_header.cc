@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <cassert>
+
 #include "http_msg_header.h"
 
 #include "decompress/file_decomp.h"
@@ -310,9 +312,8 @@ void HttpMsgHeader::prepare_body()
     setup_utf_decoding();
     setup_file_decompression();
     update_depth();
-    // Limitations on detained inspection will be lifted as the feature is built out
-    session_data->detained_inspection[source_id] = params->detained_inspection &&
-        (source_id == SRC_SERVER) && (session_data->compression[source_id] == CMP_NONE);
+    session_data->detained_inspection[source_id] =
+        params->detained_inspection && (source_id == SRC_SERVER);
     if (source_id == SRC_CLIENT)
     {
         HttpModule::increment_peg_counts(PEG_REQUEST_BODY);
@@ -427,6 +428,7 @@ void HttpMsgHeader::setup_encoding_decompression()
     const int window_bits = (compression == CMP_GZIP) ? GZIP_WINDOW_BITS : DEFLATE_WINDOW_BITS;
     if (inflateInit2(session_data->compress_stream[source_id], window_bits) != Z_OK)
     {
+        assert(false);
         session_data->compression[source_id] = CMP_NONE;
         delete session_data->compress_stream[source_id];
         session_data->compress_stream[source_id] = nullptr;

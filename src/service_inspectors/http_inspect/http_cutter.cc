@@ -22,6 +22,7 @@
 #endif
 
 #include "http_cutter.h"
+#include "http_enum.h"
 
 using namespace HttpEnums;
 
@@ -248,6 +249,36 @@ ScanResult HttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
     }
     octets_seen += length;
     return SCAN_NOT_FOUND;
+}
+
+HttpBodyCutter::HttpBodyCutter(bool detained_inspection_, CompressId compression_) :
+    detained_inspection(detained_inspection_), compression(compression_)
+{
+    if (detained_inspection && ((compression == CMP_GZIP) || (compression == CMP_DEFLATE)))
+    {
+        compress_stream = new z_stream;
+        compress_stream->zalloc = Z_NULL;
+        compress_stream->zfree = Z_NULL;
+        compress_stream->next_in = Z_NULL;
+        compress_stream->avail_in = 0;
+        const int window_bits = (compression == CMP_GZIP) ? GZIP_WINDOW_BITS : DEFLATE_WINDOW_BITS;
+        if (inflateInit2(compress_stream, window_bits) != Z_OK)
+        {
+            assert(false);
+            compression = CMP_NONE;
+            delete compress_stream;
+            compress_stream = nullptr;
+        }
+    }
+}
+
+HttpBodyCutter::~HttpBodyCutter()
+{
+    if (compress_stream != nullptr)
+    {
+        inflateEnd(compress_stream);
+        delete compress_stream;
+    }
 }
 
 ScanResult HttpBodyClCutter::cut(const uint8_t* buffer, uint32_t length, HttpInfractions*,
@@ -683,21 +714,55 @@ bool HttpBodyCutter::need_detained_inspection(const uint8_t* data, uint32_t leng
 // Currently we do detained inspection when we see a javascript starting
 bool HttpBodyCutter::dangerous(const uint8_t* data, uint32_t length)
 {
+    const uint8_t* input_buf = data;
+    uint32_t input_length = length;
+    uint8_t* decomp_output = nullptr;
+
+    // Zipped flows must be decompressed before we can check them. Unzipping for detained
+    // inspection is completely separate from the unzipping done later in reassemble(). 
+    if ((compression == CMP_GZIP) || (compression == CMP_DEFLATE))
+    {
+        const uint32_t decomp_buffer_size = MAX_OCTETS;
+        decomp_output = new uint8_t[decomp_buffer_size];
+
+        compress_stream->next_in = const_cast<Bytef*>(data);
+        compress_stream->avail_in = length;
+        compress_stream->next_out = decomp_output;
+        compress_stream->avail_out = decomp_buffer_size;
+
+        int ret_val = inflate(compress_stream, Z_SYNC_FLUSH);
+
+        // Not going to be subtle about this and try to fix decompression problems. If it doesn't
+        // work out we assume it could be dangerous.
+        if (((ret_val != Z_OK) && (ret_val != Z_STREAM_END)) || (compress_stream->avail_in > 0))
+        {
+            delete[] decomp_output;
+            return true;
+        }
+
+        input_buf = decomp_output;
+        input_length = decomp_buffer_size - compress_stream->avail_out;
+    }
+
     static const uint8_t match_string[] = { '<', 's', 'c', 'r', 'i', 'p', 't' };
     static const uint8_t string_length = sizeof(match_string);
-    for (uint32_t k = 0; k < length; k++)
+    for (uint32_t k = 0; k < input_length; k++)
     {
         // partial_match is persistent, enabling matches that cross data boundaries
-        if (data[k] == match_string[partial_match])
+        if (input_buf[k] == match_string[partial_match])
         {
             if (++partial_match == string_length)
+            {
+                delete[] decomp_output;
                 return true;
+            }
         }
         else
         {
             partial_match = 0;
         }
     }
+    delete[] decomp_output;
     return false;
 }
 

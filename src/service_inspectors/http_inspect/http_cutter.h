@@ -21,6 +21,7 @@
 #define HTTP_CUTTER_H
 
 #include <cassert>
+#include <zlib.h>
 
 #include "http_enum.h"
 #include "http_event.h"
@@ -96,7 +97,8 @@ private:
 class HttpBodyCutter : public HttpCutter
 {
 public:
-    HttpBodyCutter(bool detained_inspection_) : detained_inspection(detained_inspection_) {}
+    HttpBodyCutter(bool detained_inspection_, HttpEnums::CompressId compression_);
+    ~HttpBodyCutter() override;
     void soft_reset() override { octets_seen = 0; packet_detained = false; }
     void detain_ended() { packet_detained = false; }
 
@@ -110,13 +112,16 @@ private:
     bool packet_detained = false;
     uint8_t partial_match = 0;
     bool detention_required = false;
+    HttpEnums::CompressId compression;
+    z_stream* compress_stream = nullptr;
 };
 
 class HttpBodyClCutter : public HttpBodyCutter
 {
 public:
-    HttpBodyClCutter(int64_t expected_length, bool detained_inspection) :
-        HttpBodyCutter(detained_inspection), remaining(expected_length)
+    HttpBodyClCutter(int64_t expected_length, bool detained_inspection,
+        HttpEnums::CompressId compression) :
+        HttpBodyCutter(detained_inspection, compression), remaining(expected_length)
         { assert(remaining > 0); }
     HttpEnums::ScanResult cut(const uint8_t*, uint32_t length, HttpInfractions*, HttpEventGen*,
         uint32_t flow_target, bool stretch) override;
@@ -128,7 +133,8 @@ private:
 class HttpBodyOldCutter : public HttpBodyCutter
 {
 public:
-    explicit HttpBodyOldCutter(bool detained_inspection) : HttpBodyCutter(detained_inspection) {}
+    explicit HttpBodyOldCutter(bool detained_inspection, HttpEnums::CompressId compression) :
+        HttpBodyCutter(detained_inspection, compression) {}
     HttpEnums::ScanResult cut(const uint8_t*, uint32_t, HttpInfractions*, HttpEventGen*,
         uint32_t flow_target, bool stretch) override;
 };
@@ -136,8 +142,8 @@ public:
 class HttpBodyChunkCutter : public HttpBodyCutter
 {
 public:
-    explicit HttpBodyChunkCutter(bool detained_inspection) : HttpBodyCutter(detained_inspection)
-        {}
+    explicit HttpBodyChunkCutter(bool detained_inspection, HttpEnums::CompressId compression) :
+        HttpBodyCutter(detained_inspection, compression) {}
     HttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
         HttpInfractions* infractions, HttpEventGen* events, uint32_t flow_target, bool stretch)
         override;

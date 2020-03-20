@@ -14,6 +14,14 @@ one packet in a TCP stream effectively blocks all subsequent packets from being 
 delivered to a target application. Once a packet is detained no attempt is made to detain
 additional packets.
 
+The core functions of detained inspection are implemented in the message body cutters. They search
+for the beginning of Javascripts by finding the string "<script". The raw packet containing the 't'
+will be detained as well the beginning of every subsequent message section. No attempt is made to
+find the end of a script--it is assumed to continue through the rest of the message body. The
+cutter will decompress gzip data to search for "<script". This unzip is unrelated and in addition
+to the unzip done in reassemble(). The decision was made to accept the performance cost of
+unzipping twice to avoid using memory to store uncompressed data waiting for reassembly.
+
 Splitter init_partial_flush() is called by Stream when a previously detained packet must be dropped
 or released immediately. It sets up reassembly and inspection of a partial message section
 containing all available data. Once inspection of this partial message section is complete, for
@@ -157,9 +165,17 @@ simplify_path.
 
 Test tool usage instructions:
 
-The HI internal test tool is the HttpTestInput class. It allows the developer to write tests that
+The HI test tool consists of two features. test_output provides extensive information about the
+inner workings of HI. It is strongly focused on showing work products (Fields) rather than being a
+tracing feature. Given a problematic pcap, the developer can see what the input is, how HI
+interprets it, and what the output to rule options will be. Several related configuration options
+(see help) allow the developer to customize the output.
+
+test_input is provided by the HttpTestInput class. It allows the developer to write tests that
 simulate HTTP messages split into TCP segments at specified points. The tests cover all of splitter
-and inspector and the impact on downstream customers such as detection and file processing.
+and inspector and the impact on downstream customers such as detection and file processing. The
+test_input option activates a modifed form of test_output. It is not necessary to also specify
+test_output.
 
 The test input comes from the file http_test_msgs.txt in the current directory. Enter HTTP test
 message text as you want it to be presented to the StreamSplitter.
@@ -175,7 +191,7 @@ must search and reassemble).
 
 Lines beginning with # are comments. Lines beginning with @ are commands. These do not apply to
 lines in the middle of a paragraph. Lines that begin with $ are insert commands - a special class of
-commands that may be used within a paragraph the insert data into the message buffer.
+commands that may be used within a paragraph to insert data into the message buffer.
 
 Commands:
   @break resets HTTP Inspect data structures and begins a new test. Use it liberally to prevent
@@ -193,6 +209,7 @@ Commands:
      beginning.
   @<decimal number> sets the test number and hence the test output file name. Applies to subsequent
      sections until changed. Don't reuse numbers.
+
 Insert commands:
   $fill <decimal number> create a paragraph consisting of <number> octets of auto-fill data
      ABCDEFGHIJABC ....
@@ -234,5 +251,6 @@ This test tool does not implement the feature of being hardened against bad inpu
 badly formatted or improper test case the program may assert or crash. The responsibility is on the
 developer to get it right.
 
-Test input is currently designed for single-threaded operation only.
+The test tool is designed for single-threaded operation only.
 
+The test tool is only available when compiled with REG_TEST.
