@@ -109,7 +109,7 @@ public:
     { return false; }
 
     Usage get_usage() const override
-    { return CONTEXT; }
+    { return GLOBAL; }
 };
 
 //-------------------------------------------------------------------------

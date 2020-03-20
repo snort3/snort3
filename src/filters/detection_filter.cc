@@ -59,7 +59,7 @@ int detection_filter_test(void* pv, const SfIp* sip, const SfIp* dip, long curti
         return 0;
 
     return sfthd_test_rule(detection_filter_hash, (THD_NODE*)pv,
-        sip, dip, curtime);
+        sip, dip, curtime, get_ips_policy()->policy_id);
 }
 
 THD_NODE* detection_filter_create(DetectionFilterConfig* df_config, THDX_STRUCT* thdx)

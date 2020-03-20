@@ -162,48 +162,45 @@ static void sfthd_node_free(void* node)
 
 void sfthd_objs_free(ThresholdObjects* thd_objs)
 {
-    int i;
-    PolicyId policyId;
-
     if (thd_objs == nullptr)
         return;
 
-    for (i = 0; i < THD_MAX_GENID; i++)
+    for (int i = 0; i < THD_MAX_GENID; i++)
     {
         if ( thd_objs->sfthd_array[i] )
             delete thd_objs->sfthd_array[i];
     }
 
-    for (policyId = 0; policyId < thd_objs->numPoliciesAllocated; policyId++)
+    for (PolicyId policy_id = 0; policy_id < thd_objs->numPoliciesAllocated; policy_id++)
     {
-        if ( !thd_objs->sfthd_garray[policyId] )
+        if ( !thd_objs->sfthd_garray[policy_id] )
             continue;
 
-        if ( thd_objs->sfthd_garray[policyId][0] )
+        if ( thd_objs->sfthd_garray[policy_id][0] )
         {
-            sfthd_node_free(thd_objs->sfthd_garray[policyId][0]);
+            sfthd_node_free(thd_objs->sfthd_garray[policy_id][0]);
 
             /* Free any individuals */
-            for (i = 0; i < THD_MAX_GENID; i++)
+            for (int i = 0; i < THD_MAX_GENID; i++)
             {
-                if ( thd_objs->sfthd_garray[policyId][i] !=
-                    thd_objs->sfthd_garray[policyId][0] )
+                if ( thd_objs->sfthd_garray[policy_id][i] !=
+                    thd_objs->sfthd_garray[policy_id][0] )
                 {
-                    sfthd_node_free(thd_objs->sfthd_garray[policyId][i]);
+                    sfthd_node_free(thd_objs->sfthd_garray[policy_id][i]);
                 }
             }
         }
         else
         {
             /* Anything other GID will be allocated individually */
-            for (i = 1; i < THD_MAX_GENID; i++)
+            for (int i = 1; i < THD_MAX_GENID; i++)
             {
-                if ( thd_objs->sfthd_garray[policyId][i] )
-                    sfthd_node_free(thd_objs->sfthd_garray[policyId][i]);
+                if ( thd_objs->sfthd_garray[policy_id][i] )
+                    sfthd_node_free(thd_objs->sfthd_garray[policy_id][i]);
             }
         }
 
-        snort_free(thd_objs->sfthd_garray[policyId]);
+        snort_free(thd_objs->sfthd_garray[policy_id]);
     }
 
     if ( thd_objs->sfthd_garray )
@@ -278,14 +275,12 @@ the current event should be logged or dropped.
 
 */
 static int sfthd_create_threshold_local(
-    SnortConfig*, ThresholdObjects* thd_objs, THD_NODE* config)
+    SnortConfig*, ThresholdObjects* thd_objs, THD_NODE* config, PolicyId policy_id)
 {
     GHash* sfthd_hash;
     THD_ITEM* sfthd_item;
     THD_NODE* sfthd_node;
     tThdItemKey key;
-
-    PolicyId policy_id = get_network_policy()->policy_id;
 
     if (thd_objs == nullptr )
         return -1;
@@ -468,10 +463,9 @@ static int sfthd_create_threshold_local(
 /*
  */
 static int sfthd_create_threshold_global(
-    SnortConfig*, ThresholdObjects* thd_objs, THD_NODE* config)
+    SnortConfig*, ThresholdObjects* thd_objs, THD_NODE* config, PolicyId policy_id)
 {
     THD_NODE* sfthd_node;
-    PolicyId policy_id = get_network_policy()->policy_id;
 
     if (thd_objs == nullptr)
         return -1;
@@ -581,10 +575,9 @@ int sfthd_create_threshold(
     int priority,
     int count,
     int seconds,
-    sfip_var_t* ip_address)
+    sfip_var_t* ip_address, PolicyId policy_id)
 {
     //allocate memory fpr sfthd_array if needed.
-    PolicyId policyId = get_network_policy()->policy_id;
     THD_NODE sfthd_node;
     memset(&sfthd_node, 0, sizeof(sfthd_node));
 
@@ -601,24 +594,24 @@ int sfthd_create_threshold(
     sfthd_node.ip_address= ip_address;
 
     // FIXIT-L convert to std::vector
-    sfDynArrayCheckBounds ((void**)&thd_objs->sfthd_garray, policyId,
+    sfDynArrayCheckBounds ((void**)&thd_objs->sfthd_garray, policy_id,
         &thd_objs->numPoliciesAllocated);
 
-    if (thd_objs->sfthd_garray[policyId] == nullptr)
+    if (thd_objs->sfthd_garray[policy_id] == nullptr)
     {
-        thd_objs->sfthd_garray[policyId] =
+        thd_objs->sfthd_garray[policy_id] =
             (THD_NODE**)snort_calloc(THD_MAX_GENID, sizeof(THD_NODE*));
     }
 
     if ( sig_id == 0 )
     {
-        return sfthd_create_threshold_global(sc, thd_objs, &sfthd_node);
+        return sfthd_create_threshold_global(sc, thd_objs, &sfthd_node, policy_id);
     }
 
     if ( gen_id == 0 )
         return -1;
 
-    return sfthd_create_threshold_local(sc, thd_objs, &sfthd_node);
+    return sfthd_create_threshold_local(sc, thd_objs, &sfthd_node, policy_id);
 }
 
 #ifdef THD_DEBUG
@@ -631,12 +624,12 @@ static char* printIP(unsigned u, char* buf, unsigned len)
 #endif
 
 int sfthd_test_rule(XHash* rule_hash, THD_NODE* sfthd_node,
-    const SfIp* sip, const SfIp* dip, long curtime)
+    const SfIp* sip, const SfIp* dip, long curtime, PolicyId policy_id)
 {
     if ((rule_hash == nullptr) || (sfthd_node == nullptr))
         return 0;
 
-    int status = sfthd_test_local(rule_hash, sfthd_node, sip, dip, curtime);
+    int status = sfthd_test_local(rule_hash, sfthd_node, sip, dip, curtime, policy_id);
 
     return (status < -1) ? 1 : status;
 }
@@ -823,13 +816,12 @@ int sfthd_test_local(
     THD_NODE* sfthd_node,
     const SfIp* sip,
     const SfIp* dip,
-    time_t curtime)
+    time_t curtime,
+    PolicyId policy_id)
 {
     THD_IP_NODE_KEY key;
     THD_IP_NODE data,* sfthd_ip_node;
     const SfIp* ip;
-
-    PolicyId policy_id = get_network_policy()->policy_id;
 
 #ifdef THD_DEBUG
     char buf[24];
@@ -925,14 +917,13 @@ static inline int sfthd_test_global(
     unsigned sig_id,     /* from current event */
     const SfIp* sip,        /* " */
     const SfIp* dip,        /* " */
-    time_t curtime)
+    time_t curtime,
+    PolicyId policy_id)
 {
     THD_IP_GNODE_KEY key;
     THD_IP_NODE data;
     THD_IP_NODE* sfthd_ip_node;
     const SfIp* ip;
-
-    PolicyId policy_id = get_network_policy()->policy_id;
 
 #ifdef THD_DEBUG
     char buf[24];
@@ -1039,7 +1030,8 @@ int sfthd_test_threshold(
     unsigned sig_id,
     const SfIp* sip,
     const SfIp* dip,
-    long curtime)
+    long curtime,
+    PolicyId policy_id)
 {
     tThdItemKey key;
     GHash* sfthd_hash;
@@ -1049,8 +1041,6 @@ int sfthd_test_threshold(
 #ifdef THD_DEBUG
     int cnt;
 #endif
-
-    PolicyId policy_id = get_network_policy()->policy_id;
 
     if ((thd_objs == nullptr) || (thd == nullptr))
         return 0;
@@ -1126,7 +1116,7 @@ int sfthd_test_threshold(
         /*
          *   Test SUPPRESSION and THRESHOLDING
          */
-        int status = sfthd_test_local(thd->ip_nodes, sfthd_node, sip, dip, curtime);
+        int status = sfthd_test_local(thd->ip_nodes, sfthd_node, sip, dip, curtime, policy_id);
 
         if ( status < 0 ) /* -1 == Don't log and stop looking */
         {
@@ -1167,7 +1157,8 @@ global_test:
 
     if ( g_thd_node )
     {
-        int status = sfthd_test_global(thd->ip_gnodes, g_thd_node, sig_id, sip, dip, curtime);
+        int status = sfthd_test_global(thd->ip_gnodes, g_thd_node, sig_id,
+                sip, dip, curtime, policy_id);
 
         if ( status < 0 ) /* -1 == Don't log and stop looking */
         {

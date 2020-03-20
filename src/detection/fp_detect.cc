@@ -189,7 +189,7 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
         filterEvent = sfthreshold_test(
             otn->sigInfo.gid, otn->sigInfo.sid,
             p->ptrs.ip_api.get_src(), p->ptrs.ip_api.get_dst(),
-            p->pkth->ts.tv_sec);
+            p->pkth->ts.tv_sec, get_network_policy()->policy_id);
     }
     else
     {
@@ -198,7 +198,7 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
 
         filterEvent = sfthreshold_test(
             otn->sigInfo.gid, otn->sigInfo.sid,
-            &cleared, &cleared, p->pkth->ts.tv_sec);
+            &cleared, &cleared, p->pkth->ts.tv_sec, get_network_policy()->policy_id);
     }
 
     if ( (filterEvent < 0) || (filterEvent > 0 && !override) )

@@ -118,10 +118,6 @@ void Binder::add_to_configuration()
                 opt_name = "ips_policy";
                 break;
 
-            case IT_NETWORK:
-                opt_name = "network_policy";
-                break;
-
             default:
                 // This should always be set explicitly if a file name exists.
                 assert(false);

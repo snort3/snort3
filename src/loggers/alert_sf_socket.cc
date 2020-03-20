@@ -100,7 +100,7 @@ public:
     bool end(const char*, int, SnortConfig*) override;
 
     Usage get_usage() const override
-    { return CONTEXT; }
+    { return GLOBAL; }
 
 public:
     string file;

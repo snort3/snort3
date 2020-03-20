@@ -228,7 +228,7 @@ ThresholdObjects* sfthd_objs_new();
 void sfthd_objs_free(ThresholdObjects*);
 
 int sfthd_test_rule(snort::XHash* rule_hash, THD_NODE* sfthd_node,
-    const snort::SfIp* sip, const snort::SfIp* dip, long curtime);
+    const snort::SfIp* sip, const snort::SfIp* dip, long curtime, PolicyId policy_id);
 
 THD_NODE* sfthd_create_rule_threshold(
     int id,
@@ -241,18 +241,18 @@ void sfthd_node_free(THD_NODE*);
 
 int sfthd_create_threshold(snort::SnortConfig*, ThresholdObjects*, unsigned gen_id,
     unsigned sig_id, int tracking, int type, int priority, int count,
-    int seconds, sfip_var_t* ip_address);
+    int seconds, sfip_var_t* ip_address, PolicyId policy_id);
 
 //  1: don't log due to event_filter
 //  0: log
 // -1: don't log due to suppress
 int sfthd_test_threshold(ThresholdObjects*, THD_STRUCT*, unsigned gen_id, unsigned sig_id,
-    const snort::SfIp* sip, const snort::SfIp* dip, long curtime);
+    const snort::SfIp* sip, const snort::SfIp* dip, long curtime, PolicyId policy_id);
 
 snort::XHash* sfthd_new_hash(unsigned, size_t, size_t);
 
 int sfthd_test_local(snort::XHash* local_hash, THD_NODE* sfthd_node, const snort::SfIp* sip,
-    const snort::SfIp* dip, time_t curtime);
+    const snort::SfIp* dip, time_t curtime, PolicyId policy_id);
 
 #ifdef THD_DEBUG
 int sfthd_show_objects(THD_STRUCT* thd);

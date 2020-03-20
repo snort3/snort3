@@ -34,7 +34,7 @@ class Binder
 {
 public:
     enum IncludeType
-    { IT_NONE, IT_FILE, IT_INSPECTION, IT_IPS, IT_NETWORK };
+    { IT_NONE, IT_FILE, IT_INSPECTION, IT_IPS };
 
     typedef std::pair<std::string, IncludeType> IncludeTypePair;
 

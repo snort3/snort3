@@ -760,7 +760,7 @@ static void Init(ThreshData* base, int max)
 
             p->create = sfthd_create_threshold(nullptr,
                 pThdObjs, p->gid, p->sid, p->tracking, p->type, PRIORITY,
-                p->count, p->seconds, set);
+                p->count, p->seconds, set, get_network_policy()->policy_id);
 
             continue;
         }
@@ -843,12 +843,12 @@ static int EventTest(EventData* p, THD_NODE* rule)
 
     if ( rule )
     {
-        status = sfthd_test_rule(dThd, rule, &sip, &dip, curtime);
+        status = sfthd_test_rule(dThd, rule, &sip, &dip, curtime, get_ips_policy()->policy_id);
     }
     else
     {
         status = sfthd_test_threshold(
-            pThdObjs, pThd, p->gid, p->sid, &sip, &dip, curtime);
+            pThdObjs, pThd, p->gid, p->sid, &sip, &dip, curtime, get_network_policy()->policy_id);
     }
 
     return status;

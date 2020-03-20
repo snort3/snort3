@@ -1422,7 +1422,7 @@ public:
     bool end(const char*, int, SnortConfig*) override;
 
     Usage get_usage() const override
-    { return DETECT; }
+    { return CONTEXT; }
 
 private:
     THDX_STRUCT thdx;
@@ -1459,7 +1459,7 @@ bool SuppressModule::begin(const char*, int, SnortConfig*)
 
 bool SuppressModule::end(const char*, int idx, SnortConfig* sc)
 {
-    if ( idx && sfthreshold_create(sc, sc->threshold_config, &thdx) )
+    if ( idx && sfthreshold_create(sc, sc->threshold_config, &thdx, get_network_policy()->policy_id) )
     {
         ParseError("bad suppress configuration [%d]", idx);
         return false;
@@ -1573,7 +1573,7 @@ bool EventFilterModule::begin(const char*, int, SnortConfig*)
 
 bool EventFilterModule::end(const char*, int idx, SnortConfig* sc)
 {
-    if ( idx && sfthreshold_create(sc, sc->threshold_config, &thdx) )
+    if ( idx && sfthreshold_create(sc, sc->threshold_config, &thdx, get_network_policy()->policy_id) )
     {
         ParseError("bad event_filter configuration [%d]", idx);
         return false;
@@ -1649,7 +1649,7 @@ public:
     }
 
     Usage get_usage() const override
-    { return DETECT; }
+    { return CONTEXT; }
 
 private:
     tSFRFConfigNode thdx;

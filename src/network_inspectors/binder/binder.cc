@@ -82,7 +82,6 @@ Binding::Binding()
 
     use.inspection_index = 0;
     use.ips_index = 0;
-    use.network_index = 0;
     use.action = BindUse::BA_INSPECT;
 
     use.what = BindUse::BW_NONE;
@@ -743,7 +742,7 @@ bool Binder::configure(SnortConfig* sc)
                 ParseError("can't bind. ips_policy_id %u does not exist", pb->when.ips_id);
         }
 
-        if ( !pb->use.ips_index and !pb->use.inspection_index and !pb->use.network_index )
+        if ( !pb->use.ips_index and !pb->use.inspection_index )
             set_binding(sc, pb);
     }
 
@@ -818,7 +817,7 @@ void Binder::handle_flow_service_change( Flow* flow )
         for ( unsigned i = 0; i < sz; i++ )
         {
             Binding* pb = bindings[i];
-            if ( pb->use.ips_index or pb->use.inspection_index or pb->use.network_index )
+            if ( pb->use.ips_index or pb->use.inspection_index )
                 continue;
 
             if ( pb->use.what == BindUse::BW_WIZARD )
@@ -925,15 +924,14 @@ void Binder::get_bindings(Flow* flow, Stuff& stuff, Packet* p, const char* servi
     // FIXIT-L This will select the first policy ID of each type that it finds and ignore the rest.
     //          It gets potentially hairy if people start specifying overlapping policy types in
     //          overlapping rules.
-    bool inspection_set = false, ips_set = false, network_set = false;
+    bool inspection_set = false, ips_set = false;
     for ( unsigned i = 0; i < sz; i++ )
     {
         Binding* pb = bindings[i];
 
         // Skip any rules that don't contain an ID for a policy type we haven't set yet.
         if ( (!pb->use.inspection_index or inspection_set) and
-             (!pb->use.ips_index or ips_set) and
-             (!pb->use.network_index or network_set) )
+             (!pb->use.ips_index or ips_set) )
             continue;
 
         if ( !pb->check_all(flow, p, service) )
@@ -955,13 +953,6 @@ void Binder::get_bindings(Flow* flow, Stuff& stuff, Packet* p, const char* servi
             ips_set = true;
         }
 
-        if ( pb->use.network_index and !network_set )
-        {
-            set_network_policy(SnortConfig::get_conf(), pb->use.network_index - 1);
-            if (!service)
-                flow->network_policy_id = pb->use.network_index - 1;
-            network_set = true;
-        }
     }
 
     Binder* sub = InspectorManager::get_binder();
@@ -979,7 +970,7 @@ void Binder::get_bindings(Flow* flow, Stuff& stuff, Packet* p, const char* servi
     {
         Binding* pb = bindings[i];
 
-        if ( pb->use.ips_index or pb->use.inspection_index or pb->use.network_index )
+        if ( pb->use.ips_index or pb->use.inspection_index )
             continue;
 
         if ( !pb->check_all(flow, p, service) )

@@ -98,6 +98,9 @@ class TalosModule : public Module
 {
 public:
     TalosModule() : Module(S_NAME, s_help, s_params) { }
+
+    Usage get_usage() const override
+    { return GLOBAL; }
 };
 
 //-------------------------------------------------------------------------

@@ -213,12 +213,6 @@ bool Binding::convert(std::istringstream& data_stream)
 
     bind.set_use_file(file, is_ips ? Binder::IT_IPS : Binder::IT_FILE);
 
-    // FIXIT-H this resets network config by forcing network policy to swap with ips selection
-    if ( is_ips )
-    {
-        net_bind.set_use_file(file, Binder::IT_NETWORK);
-        net_bind.print_binding(true);
-    }
     return rc;
 }
 

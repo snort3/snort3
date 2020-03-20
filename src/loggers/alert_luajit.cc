@@ -122,7 +122,7 @@ public:
     { return &luaLogPerfStats; }
 
     Usage get_usage() const override
-    { return CONTEXT; }
+    { return GLOBAL; }
 
 public:
     std::string args;
