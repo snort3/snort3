@@ -228,6 +228,7 @@ add_library(appid OBJECT
 
 target_include_directories ( appid PRIVATE ${APPID_INCLUDE_DIR} )
 
+add_subdirectory(client_plugins/test)
 add_subdirectory(service_plugins/test)
 add_subdirectory(detector_plugins/test)
 add_subdirectory(test)
