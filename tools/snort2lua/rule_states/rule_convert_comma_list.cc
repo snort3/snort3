@@ -21,8 +21,8 @@
 
 #include "conversion_state.h"
 #include "helpers/converter.h"
-#include "rule_states/rule_api.h"
 #include "helpers/s2l_util.h"
+#include "rule_api.h"
 
 namespace rules
 {

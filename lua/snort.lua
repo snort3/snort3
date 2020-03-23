@@ -171,10 +171,11 @@ ips =
     --include = 'snort3-community.rules'
 }
 
+rewrite = { }
+
 -- use these to configure additional rule actions
 -- react = { }
 -- reject = { }
--- rewrite = { }
 
 ---------------------------------------------------------------------------
 -- 6. configure filters

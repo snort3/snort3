@@ -17,10 +17,10 @@
 //--------------------------------------------------------------------------
 // rule_api.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
+#include "rule_api.h"
 #include <string>
-#include "rule_states/rule_api.h"
-#include "helpers/s2l_util.h"
 #include "helpers/converter.h"
+#include "helpers/s2l_util.h"
 
 namespace rules
 {
