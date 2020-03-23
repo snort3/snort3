@@ -218,6 +218,7 @@ SslServiceDetector::SslServiceDetector(ServiceDiscovery* sd)
         { 614, IpProtocol::TCP, false },
         { 636, IpProtocol::TCP, false },
         { 636, IpProtocol::UDP, false },
+        { 853, IpProtocol::TCP, false },
         { 989, IpProtocol::TCP, false },
         { 990, IpProtocol::TCP, false },
         { 992, IpProtocol::TCP, false },
@@ -759,6 +760,8 @@ AppId getSslServiceAppId(short srcPort)
         return APP_ID_SSHELL;
     case 636:
         return APP_ID_LDAPS;
+    case 853:
+        return APP_ID_DNS_OVER_TLS;
     case 989:
         return APP_ID_FTPSDATA;
     case 990:
