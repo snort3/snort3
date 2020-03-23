@@ -409,7 +409,10 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
 
     if ((FileService::get_file_cache()->cached_verdict_lookup(p, this,
         policy) != FILE_VERDICT_UNKNOWN))
+    {
+        processing_complete = true;
         return true;
+    }
 
     /*file type id*/
     if (is_file_type_enabled())

@@ -198,9 +198,18 @@ int FileSegments::process(Packet* p, const uint8_t* file_data, uint64_t data_siz
 {
     int ret = 0;
 
-    if (offset == 0)
+    if (offset < current_offset)
     {
-        current_offset = 0;
+        if (offset + data_size > current_offset)
+        {
+            file_data += (current_offset - offset);
+            data_size = (offset + data_size) - current_offset;
+            offset = current_offset;
+        }
+        else
+        {
+            return 1;
+        }
     }
 
     // Walk through the segments that can be flushed

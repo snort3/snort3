@@ -121,17 +121,16 @@ static inline void DCE2_Smb2StoreRequest(DCE2_SmbSsnData* ssd,
         request = request->next;
     }
 
-    request = (Smb2Request*)snort_calloc(sizeof(*request));
-
-    ssd->outstanding_requests++;
-
-    if (ssd->outstanding_requests >= ssd->max_outstanding_requests)
+    if ( ssd->outstanding_requests >= (ssd->max_outstanding_requests - 1) )
     {
         dce_alert(GID_DCE2, DCE2_SMB_MAX_REQS_EXCEEDED, (dce2CommonStats*)&dce2_smb_stats,
             ssd->sd);
-        snort_free((void*)request);
         return;
     }
+
+    request = ( Smb2Request* )snort_alloc( sizeof( *request ) );
+
+    ssd->outstanding_requests++;
 
     request->message_id = message_id;
     request->offset = offset;
