@@ -33,48 +33,16 @@
 
 #include "http2_data_cutter.h"
 #include "http2_flow_data.h"
+#include "http2_utils.h"
 
 using namespace snort;
 using namespace HttpCommon;
 using namespace Http2Enums;
 
-static uint32_t get_frame_length(const uint8_t* frame_buffer)
-{
-    return (frame_buffer[0] << 16) + (frame_buffer[1] << 8) + frame_buffer[2];
-}
-
-static uint8_t get_frame_type(const uint8_t* frame_buffer)
-{
-    const uint8_t frame_type_index = 3;
-    if (frame_buffer)
-        return frame_buffer[frame_type_index];
-    // If there was no frame header, this must be a piece of a long data frame
-    else
-        return FT_DATA;
-}
-
-static uint8_t get_frame_flags(const uint8_t* frame_buffer)
-{
-    const uint8_t frame_flags_index = 4;
-    if (frame_buffer)
-        return frame_buffer[frame_flags_index];
-    else
-        return NO_HEADER;
-}
-
-static uint8_t get_stream_id(const uint8_t* frame_buffer)
-{
-    const uint8_t stream_id_index = 5;
-    assert(frame_buffer != nullptr);
-    return ((frame_buffer[stream_id_index] & 0x7f) << 24) +
-           (frame_buffer[stream_id_index + 1] << 16) +
-           (frame_buffer[stream_id_index + 2] << 8) +
-           frame_buffer[stream_id_index + 3];
-}
 
 StreamSplitter::Status data_scan(Http2FlowData* session_data, const uint8_t* data,
     uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id,
-    uint32_t frame_length, bool is_padded)
+    uint32_t frame_length, uint8_t frame_flags)
 {
     Http2Stream* const stream = session_data->find_stream(session_data->current_stream[source_id]);
     HttpFlowData* http_flow = nullptr;
@@ -87,7 +55,7 @@ StreamSplitter::Status data_scan(Http2FlowData* session_data, const uint8_t* dat
     }
 
     if (!stream || !http_flow || (frame_length > 0 and
-        (http_flow->get_type_expected(source_id) != HttpEnums::SEC_BODY_CHUNK)))
+        (http_flow->get_type_expected(source_id) != HttpEnums::SEC_BODY_H2)))
     {
         *session_data->infractions[source_id] += INF_FRAME_SEQUENCE;
         session_data->events[source_id]->create_event(EVENT_FRAME_SEQUENCE);
@@ -97,8 +65,8 @@ StreamSplitter::Status data_scan(Http2FlowData* session_data, const uint8_t* dat
     if (frame_length == 0 or frame_length > MAX_OCTETS)
         return StreamSplitter::ABORT;
 
-    Http2DataCutter* data_cutter = stream->get_data_cutter(source_id, frame_length, is_padded);
-    return data_cutter->scan(data, length, flush_offset);
+    Http2DataCutter* data_cutter = stream->get_data_cutter(source_id);
+    return data_cutter->scan(data, length, flush_offset, frame_length, frame_flags);
 }
 
 StreamSplitter::Status non_data_scan(Http2FlowData* session_data,
@@ -253,7 +221,7 @@ StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t
 
             if (type == FT_DATA)
                 return data_scan(session_data, data, length, flush_offset, source_id,
-                    frame_length, ((frame_flags & PADDED) !=0));
+                    frame_length, frame_flags);
             else
                 status = non_data_scan(session_data, length, flush_offset, source_id,
                     frame_length, type, frame_flags, data_offset);
@@ -271,7 +239,6 @@ const StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned to
     HttpCommon::SourceId source_id)
 {
     assert(offset+len <= total);
-    assert(total >= FRAME_HEADER_LENGTH);
     assert(total <= MAX_OCTETS);
 
     StreamBuffer frame_buf { nullptr, 0 };
@@ -284,13 +251,13 @@ const StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned to
         StreamBuffer http_frame_buf = data_cutter->reassemble(total, data, len);
         if (http_frame_buf.data)
         {
-            stream->set_abort_data_processing(source_id);
             session_data->frame_data[source_id] = const_cast<uint8_t*>(http_frame_buf.data);
             session_data->frame_data_size[source_id] = http_frame_buf.length;
         }
     }
     else
     {
+        assert(total >= FRAME_HEADER_LENGTH);
         uint32_t data_offset = 0;
 
         if (offset == 0)

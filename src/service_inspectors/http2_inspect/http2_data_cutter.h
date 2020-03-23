@@ -29,10 +29,9 @@
 class Http2DataCutter
 {
 public:
-    Http2DataCutter(Http2FlowData* flow_data, uint32_t len, HttpCommon::SourceId
-        src_id, bool is_padded);
+    Http2DataCutter(Http2FlowData* flow_data, HttpCommon::SourceId src_id);
     snort::StreamSplitter::Status scan(const uint8_t* data, uint32_t length,
-        uint32_t* flush_offset);
+        uint32_t* flush_offset, uint32_t frame_len =0, uint8_t frame_flags =0);
     const snort::StreamBuffer reassemble(unsigned total, const uint8_t* data,
         unsigned len);
 
@@ -42,9 +41,10 @@ private:
     const HttpCommon::SourceId source_id;
 
     // total per frame
-    const uint32_t frame_length;
+    uint32_t frame_length;
     uint32_t data_len;
     uint32_t padding_len = 0;
+    uint8_t frame_flags;
     // accumulating - scan
     uint32_t frame_bytes_seen = 0;
     uint32_t bytes_sent_http = 0;
@@ -70,16 +70,12 @@ private:
     enum DataState { PADDING_LENGTH, DATA, PADDING, FULL_FRAME };
     enum DataState data_state;
 
-    // http scan
-    enum HttpScanState { NONE_SENT, HEADER_SENT };
-    enum HttpScanState http_state = NONE_SENT;
-
     // reassemble
-    enum ReassembleState { SKIP_FRAME_HDR, SKIP_PADDING_LEN, SEND_CHUNK_HDR, SEND_DATA,
-                           SKIP_PADDING, SEND_CRLF };
-    enum ReassembleState reassemble_state = SKIP_FRAME_HDR;
+    enum ReassembleState { GET_FRAME_HDR, GET_PADDING_LEN, SEND_DATA, SKIP_PADDING, CLEANUP };
+    enum ReassembleState reassemble_state = GET_FRAME_HDR;
 
-    bool http2_scan(const uint8_t* data, uint32_t length, uint32_t* flush_offset);
+    bool http2_scan(const uint8_t* data, uint32_t length, uint32_t* flush_offset,
+	uint32_t frame_len, uint8_t frame_flags);
     snort::StreamSplitter::Status http_scan(const uint8_t* data, uint32_t* flush_offset);
 };
 

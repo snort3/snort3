@@ -74,9 +74,9 @@ void Http2Stream::print_frame(FILE* output)
 }
 #endif
 
-Http2DataCutter* Http2Stream::get_data_cutter(HttpCommon::SourceId source_id, uint32_t len, bool is_padded)
+Http2DataCutter* Http2Stream::get_data_cutter(HttpCommon::SourceId source_id)
 {
     if (!data_cutter[source_id])
-        data_cutter[source_id] = new Http2DataCutter(session_data, len, source_id, is_padded);
+        data_cutter[source_id] = new Http2DataCutter(session_data, source_id);
     return data_cutter[source_id];
 }

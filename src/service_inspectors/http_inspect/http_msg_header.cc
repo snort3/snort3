@@ -194,6 +194,14 @@ void HttpMsgHeader::update_flow()
         return;
     }
 
+    if (session_data->for_http2)
+    {
+        // FIXIT-H check for transfer-encoding and content-length headers
+        session_data->type_expected[source_id] = SEC_BODY_H2;
+        prepare_body();
+        return;
+    }
+
     const Field& te_header = get_header_value_norm(HEAD_TRANSFER_ENCODING);
     if ((te_header.length() > 0) && (version_id == VERS_1_0))
     {

@@ -25,6 +25,8 @@ set (FILE_LIST
     http_msg_body_chunk.h
     http_msg_body_cl.cc
     http_msg_body_cl.h
+    http_msg_body_h2.cc
+    http_msg_body_h2.h
     http_msg_body_old.cc
     http_msg_body_old.h
     http_msg_trailer.cc

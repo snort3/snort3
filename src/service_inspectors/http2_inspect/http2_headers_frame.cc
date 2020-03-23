@@ -50,9 +50,6 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t
     if (get_flags() & PRIORITY)
         hpack_headers_offset = 5;
 
-    // No message body after stream bit is set
-    bool no_message_body = (get_flags() & END_STREAM);
-
     // Set up the decoding context
     Http2HpackDecoder& hpack_decoder = session_data->hpack_decoder[source_id];
 
@@ -64,9 +61,8 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t
 
     // Decode headers
     if (!hpack_decoder.decode_headers((data.start() + hpack_headers_offset), data.length() -
-        hpack_headers_offset, decoded_headers,
-        start_line_generator, session_data->events[source_id],
-        session_data->infractions[source_id], no_message_body))
+        hpack_headers_offset, decoded_headers, start_line_generator,
+        session_data->events[source_id], session_data->infractions[source_id]))
     {
         session_data->frame_type[source_id] = FT__ABORT;
         error_during_decode = true;

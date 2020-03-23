@@ -50,7 +50,7 @@ processed together. There are seven types of message section:
 7. Trailers (all header lines following a chunked body as a group)
 
 Message sections are represented by message section objects that contain and process them. There
-are eleven message section classes that inherit as follows. An asterisk denotes a virtual class.
+are twelve message section classes that inherit as follows. An asterisk denotes a virtual class.
 
 1. HttpMsgSection* - top level with all common elements
 2. HttpMsgStart* : HttpMsgSection - common elements of request and status
@@ -63,6 +63,7 @@ are eleven message section classes that inherit as follows. An asterisk denotes 
 9. HttpMsgBodyCl : HttpMsgBody
 10. HttpMsgBodyChunk : HttpMsgBody
 11. HttpMsgBodyOld : HttpMsgBody
+12. HttpMsgBodyH2 : HttpMsgBody
 
 An HttpTransaction is a container that keeps all the sections of a message together and associates
 the request message with the response message. Transactions may be organized into pipelines when an

@@ -43,6 +43,8 @@ set (FILE_LIST
     http2_stream_splitter_impl.cc
     http2_stream_splitter.h
     http2_tables.cc
+    http2_utils.cc
+    http2_utils.h
     ips_http2.cc
     ips_http2.h
 )

@@ -39,7 +39,7 @@ public:
         decode_table(flow_data, src_id) { }
     bool decode_headers(const uint8_t* encoded_headers, const uint32_t encoded_headers_length,
         uint8_t* decoded_headers, Http2StartLine* start_line,
-        Http2EventGen* stream_events, Http2Infractions* stream_infractions, bool no_message_body);
+        Http2EventGen* stream_events, Http2Infractions* stream_infractions);
     bool write_decoded_headers(const uint8_t* in_buffer, const uint32_t in_length,
         uint8_t* decoded_header_buffer, uint32_t decoded_header_length, uint32_t& bytes_written);
     bool decode_header_line(const uint8_t* encoded_header_buffer,

@@ -84,6 +84,10 @@ HttpCutter* HttpStreamSplitter::get_cutter(SectionType type,
         return (HttpCutter*)new HttpBodyOldCutter(
             session_data->detained_inspection[source_id],
             session_data->compression[source_id]);
+    case SEC_BODY_H2:
+        return (HttpCutter*)new HttpBodyH2Cutter(
+            session_data->detained_inspection[source_id],
+            session_data->compression[source_id]);
     default:
         assert(false);
         return nullptr;
@@ -222,7 +226,7 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
     const ScanResult cut_result = cutter->cut(data, (length <= max_length) ? length :
         max_length, session_data->get_infractions(source_id), session_data->events[source_id],
         session_data->section_size_target[source_id],
-        session_data->stretch_section_to_packet[source_id]);
+        session_data->stretch_section_to_packet[source_id], session_data->http2_end_stream[source_id]);
     switch (cut_result)
     {
     case SCAN_NOT_FOUND:

@@ -102,17 +102,17 @@ bool HttpStreamSplitter::finish(Flow* flow)
         return true;
     }
 
-    // FIXIT-M No longer necessary to send an empty body section because the header section is
+    // FIXIT-H No longer necessary to send an empty body section because the header section is
     // always forwarded to detection.
     // If the message has been truncated immediately following the start line or immediately
     // following the headers (a body was expected) then we need to process an empty section to
     // provide an inspection section. Otherwise the start line and headers won't go through
     // detection.
     if (((session_data->type_expected[source_id] == SEC_HEADER)     ||
-         (session_data->type_expected[source_id] == SEC_BODY_CL)    ||
-         (session_data->type_expected[source_id] == SEC_BODY_CHUNK) ||
-         (session_data->type_expected[source_id] == SEC_BODY_OLD))     &&
-        (session_data->cutter[source_id] == nullptr)                   &&
+        (session_data->type_expected[source_id] == SEC_BODY_CL)     ||
+        (session_data->type_expected[source_id] == SEC_BODY_CHUNK)  ||
+        (session_data->type_expected[source_id] == SEC_BODY_OLD))   &&
+        (session_data->cutter[source_id] == nullptr)                &&
         (session_data->section_type[source_id] == SEC__NOT_COMPUTE))
     {
         // Set up to process empty message section

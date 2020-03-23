@@ -27,7 +27,7 @@
 using namespace HttpEnums;
 
 ScanResult HttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
-    HttpInfractions* infractions, HttpEventGen* events, uint32_t, bool)
+    HttpInfractions* infractions, HttpEventGen* events, uint32_t, bool, bool)
 {
     for (uint32_t k = 0; k < length; k++)
     {
@@ -155,7 +155,7 @@ HttpStartCutter::ValidationResult HttpStatusCutter::validate(uint8_t octet,
 }
 
 ScanResult HttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
-    HttpInfractions* infractions, HttpEventGen* events, uint32_t, bool)
+    HttpInfractions* infractions, HttpEventGen* events, uint32_t, bool, bool)
 {
     // Header separators: leading \r\n, leading \n, nonleading \r\n\r\n, nonleading \n\r\n,
     // nonleading \r\n\n, and nonleading \n\n. The separator itself becomes num_excess which is
@@ -282,7 +282,7 @@ HttpBodyCutter::~HttpBodyCutter()
 }
 
 ScanResult HttpBodyClCutter::cut(const uint8_t* buffer, uint32_t length, HttpInfractions*,
-    HttpEventGen*, uint32_t flow_target, bool stretch)
+    HttpEventGen*, uint32_t flow_target, bool stretch, bool)
 {
     assert(remaining > octets_seen);
 
@@ -358,7 +358,7 @@ ScanResult HttpBodyClCutter::cut(const uint8_t* buffer, uint32_t length, HttpInf
 }
 
 ScanResult HttpBodyOldCutter::cut(const uint8_t* buffer, uint32_t length, HttpInfractions*,
-    HttpEventGen*, uint32_t flow_target, bool stretch)
+    HttpEventGen*, uint32_t flow_target, bool stretch, bool)
 {
     if (flow_target == 0)
     {
@@ -395,7 +395,7 @@ ScanResult HttpBodyOldCutter::cut(const uint8_t* buffer, uint32_t length, HttpIn
 }
 
 ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
-    HttpInfractions* infractions, HttpEventGen* events, uint32_t flow_target, bool stretch)
+    HttpInfractions* infractions, HttpEventGen* events, uint32_t flow_target, bool stretch, bool)
 {
     // Are we skipping through the rest of this chunked body to the trailers and the next message?
     const bool discard_mode = (flow_target == 0);
@@ -685,6 +685,42 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
 
     octets_seen += length;
     return detain_this_packet ? SCAN_NOT_FOUND_DETAIN : SCAN_NOT_FOUND;
+}
+
+ScanResult HttpBodyH2Cutter::cut(const uint8_t* buffer, uint32_t length, HttpInfractions*,
+    HttpEventGen*, uint32_t flow_target, bool stretch, bool h2_end_stream)
+{
+    //FIXIT-M detained inspection not yet supported for http2
+    UNUSED(buffer);
+
+    // FIXIT-M stretch not yet supported for http2 message bodies
+    UNUSED(stretch);
+
+    if (flow_target == 0)
+    {
+        num_flush = length;
+        return SCAN_DISCARD_PIECE;
+    }
+    if (!h2_end_stream)
+    {
+        if (octets_seen + length < flow_target)
+        {
+            // Not enough data yet to create a message section
+            octets_seen += length;
+            return SCAN_NOT_FOUND;
+        }
+        else
+        {
+            num_flush = flow_target - octets_seen;
+            return SCAN_FOUND_PIECE;
+        }
+    }
+    else
+    {
+        // For now if end_stream is set for scan, a zero-length buffer is always sent to flush
+        num_flush = 0;
+        return SCAN_FOUND;
+    }
 }
 
 // This method searches the input stream looking for the beginning of a script or other dangerous

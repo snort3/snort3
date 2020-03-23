@@ -40,6 +40,7 @@
 #include "http_msg_body.h"
 #include "http_msg_body_chunk.h"
 #include "http_msg_body_cl.h"
+#include "http_msg_body_h2.h"
 #include "http_msg_body_old.h"
 #include "http_msg_header.h"
 #include "http_msg_request.h"
@@ -451,6 +452,10 @@ bool HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
         break;
     case SEC_BODY_CHUNK:
         current_section = new HttpMsgBodyChunk(
+            data, dsize, session_data, source_id, buf_owner, flow, params);
+        break;
+    case SEC_BODY_H2:
+        current_section = new HttpMsgBodyH2(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     case SEC_TRAILER:
