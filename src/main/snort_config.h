@@ -161,7 +161,8 @@ class ReloadResourceTuner
 {
 public:
     static const unsigned RELOAD_MAX_WORK_PER_PACKET = 3;
-    static const unsigned RELOAD_MAX_WORK_WHEN_IDLE = 10;
+    // be aggressive when idle as analyzer gets chance once in every second only due to daq timeout
+    static const unsigned RELOAD_MAX_WORK_WHEN_IDLE = 32767;
 
     virtual ~ReloadResourceTuner() = default;
 
