@@ -293,9 +293,10 @@ uint32_t Active::send_data(
     // Send RST to the originator of the data.
     if ( flags & ENC_FLAG_RST_SRVR )
     {
+        EncodeFlags tmp_flags = flags ^ ENC_FLAG_FWD;
         if ( use_direct_inject )
         {
-            DIOCTL_DirectInjectReset msg = { p->daq_msg, !(flags & ENC_FLAG_FWD) };
+            DIOCTL_DirectInjectReset msg = { p->daq_msg, !(tmp_flags & ENC_FLAG_FWD) };
             ret = p->daq_instance->ioctl(DIOCTL_DIRECT_INJECT_RESET,
                 &msg, sizeof(msg));
             if ( ret != DAQ_SUCCESS )
@@ -309,7 +310,6 @@ uint32_t Active::send_data(
         else
         {
             plen = 0;
-            EncodeFlags tmp_flags = flags ^ ENC_FLAG_FWD;
             seg = PacketManager::encode_response(TcpResponse::RST, tmp_flags, p, plen);
 
             if ( seg )
@@ -327,34 +327,37 @@ uint32_t Active::send_data(
     flags |= ENC_FLAG_SEQ;
 
     uint32_t sent = 0;
-    const uint16_t maxPayload = PacketManager::encode_get_max_payload(p);
 
     // Inject the payload.
-    if (maxPayload)
+    if ( use_direct_inject )
     {
-        uint16_t toSend;
-        do
+        flags = (flags & ~ENC_FLAG_VAL);
+        const DAQ_DIPayloadSegment segments[] = { {buf, blen} };
+        const DAQ_DIPayloadSegment* payload[] = { &segments[0] };
+        DIOCTL_DirectInjectPayload msg = { p->daq_msg,  payload, 1, !(flags & ENC_FLAG_FWD)};
+        ret = p->daq_instance->ioctl(DIOCTL_DIRECT_INJECT_PAYLOAD,
+            &msg, sizeof(msg));
+        if ( ret != DAQ_SUCCESS )
         {
-            plen = 0;
-            toSend = blen > maxPayload ? maxPayload : blen;
-            flags = (flags & ~ENC_FLAG_VAL) | sent;
-            if ( use_direct_inject )
-            {
-                const DAQ_DIPayloadSegment segments[] = { {buf, toSend} };
-                const DAQ_DIPayloadSegment* payload[] = { &segments[0] };
-                DIOCTL_DirectInjectPayload msg = { p->daq_msg,  payload, 1, !(flags & ENC_FLAG_FWD)};
-                ret = p->daq_instance->ioctl(DIOCTL_DIRECT_INJECT_PAYLOAD,
-                    &msg, sizeof(msg));
-                if ( ret != DAQ_SUCCESS )
-                {
-                    active_counts.failed_direct_injects++;
-                    return sent;
-                }
+            active_counts.failed_direct_injects++;
+            return 0;
+        }
 
-                active_counts.direct_injects++;
-            }
-            else
+        sent = blen;
+        active_counts.direct_injects++;
+    }
+    else
+    {
+        const uint16_t maxPayload = PacketManager::encode_get_max_payload(p);
+
+        if (maxPayload)
+        {
+            uint32_t toSend;
+            do
             {
+                plen = 0;
+                flags = (flags & ~ENC_FLAG_VAL) | sent;
+                toSend = blen > maxPayload ? maxPayload : blen;
                 seg = PacketManager::encode_response(TcpResponse::PUSH, flags, p, plen, buf, toSend);
 
                 if ( !seg )
@@ -368,12 +371,12 @@ uint32_t Active::send_data(
                     active_counts.failed_injects++;
                 else
                     active_counts.injects++;
-            }
 
-            sent += toSend;
-            buf += toSend;
+                sent += toSend;
+                buf += toSend;
+            }
+            while (blen -= toSend);
         }
-        while (blen -= toSend);
     }
 
     // FIXIT-L: Currently there is no support for injecting a FIN via
