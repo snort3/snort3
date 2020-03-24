@@ -239,6 +239,7 @@ void AppIdSession::reinit_session_data(AppidChangeBits& change_bits)
         service_port = 0;
         service_disco_state = APPID_DISCO_STATE_NONE;
         service_detector = nullptr;
+        service_search_state = SESSION_SERVICE_SEARCH_STATE::START;
         free_flow_data_by_mask(APPID_SESSION_DATA_SERVICE_MODSTATE_BIT);
     }
 
