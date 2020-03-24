@@ -40,7 +40,6 @@ using namespace snort;
 #define MAX_LIST    8
 #define MAX_DATA    4
 #define MAX_WAIT  300
-#define MAX_PRUNE   5
 
 static THREAD_LOCAL std::vector<ExpectFlow*>* packet_expect_flows = nullptr;
 
@@ -127,22 +126,13 @@ void ExpectNode::clear(ExpectFlow*& list)
 // private ExpectCache methods
 //-------------------------------------------------------------------------
 
-// Clean the hash table of at most MAX_PRUNE expired nodes
-void ExpectCache::prune()
+void ExpectCache::prune_lru()
 {
-    time_t now = packet_time();
-
-    for (unsigned i = 0; i < MAX_PRUNE; ++i )
-    {
-        ExpectNode* node = (ExpectNode*)hash_table->lru_first();
-
-        if ( !node || now <= node->expires )
-            break;
-
-        node->clear(free_list);
-        hash_table->release();
-        ++prunes;
-    }
+    ExpectNode* node = static_cast<ExpectNode*>( hash_table->lru_first() );
+    assert(node);
+    node->clear(free_list);
+    hash_table->release();
+    ++prunes;
 }
 
 ExpectNode* ExpectCache::find_node_by_packet(Packet* p, FlowKey &key)
@@ -171,7 +161,7 @@ ExpectNode* ExpectCache::find_node_by_packet(Packet* p, FlowKey &key)
     */
     // FIXIT-P X This should be optimized to only do full matches when full keys
     //      are present, likewise for partial keys.
-    ExpectNode* node = (ExpectNode*) hash_table->get_user_data(&key);
+    ExpectNode* node = static_cast<ExpectNode*>( hash_table->get_user_data(&key) );
     if (!node)
     {
         // FIXIT-M X This logic could fail if IPs were equal because the original key
@@ -192,12 +182,12 @@ ExpectNode* ExpectCache::find_node_by_packet(Packet* p, FlowKey &key)
             port2 = key.port_h;
             key.port_h = 0;
         }
-        node = (ExpectNode*) hash_table->get_user_data(&key);
+        node = static_cast<ExpectNode*> ( hash_table->get_user_data(&key) );
         if (!node)
         {
             key.port_l = port1;
             key.port_h = port2;
-            node = (ExpectNode*) hash_table->get_user_data(&key);
+            node = static_cast<ExpectNode*> ( hash_table->get_user_data(&key) );
             if (!node)
                 return nullptr;
         }
@@ -288,8 +278,6 @@ ExpectCache::ExpectCache(uint32_t max)
         free_list = p;
     }
 
-    expects = realized = 0;
-    prunes = overflows = 0;
     if (packet_expect_flows == nullptr)
         packet_expect_flows = new std::vector<ExpectFlow*>;
 }
@@ -335,11 +323,12 @@ int ExpectCache::add_flow(const Packet *ctrlPkt, PktType type, IpProtocol ip_pro
             vlanId, mplsId, addressSpaceId);
 
     bool new_node = false;
-    ExpectNode* node = (ExpectNode*) hash_table->get_user_data(&key);
+    ExpectNode* node = static_cast<ExpectNode*> ( hash_table->get_user_data(&key) );
     if ( !node )
     {
-        prune();
-        node = (ExpectNode*) hash_table->get(&key);
+        if ( hash_table->full() )
+            prune_lru();
+        node = static_cast<ExpectNode*> ( hash_table->get(&key) );
         assert(node);
         new_node = true;
     }

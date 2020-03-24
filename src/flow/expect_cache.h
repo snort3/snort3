@@ -109,7 +109,7 @@ public:
     unsigned long get_overflows() { return overflows; }
 
 private:
-    void prune();
+    void prune_lru();
 
     ExpectNode* get_node(snort::FlowKey&, bool&);
     snort::ExpectFlow* get_flow(ExpectNode*, uint32_t, int16_t);
@@ -123,8 +123,10 @@ private:
     snort::ExpectFlow* pool;
     snort::ExpectFlow* free_list;
 
-    unsigned long expects, realized;
-    unsigned long prunes, overflows;
+    unsigned long expects = 0;
+    unsigned long realized = 0;
+    unsigned long prunes = 0;
+    unsigned long overflows = 0;
 };
 
 #endif

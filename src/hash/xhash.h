@@ -65,6 +65,7 @@ public:
     void* get_lru_user_data();
     bool delete_lru_node();
     void clear_hash();
+    bool full() const { return !fhead; }
 
     // set max hash nodes, 0 == no limit
     void set_max_nodes(int max)
