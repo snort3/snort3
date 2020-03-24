@@ -43,9 +43,7 @@ void HttpMsgBodyH2::update_flow()
 #ifdef REG_TEST
 void HttpMsgBodyH2::print_section(FILE* output)
 {
-    HttpMsgSection::print_section_title(output, "HTTP/2 body");
-    fprintf(output, "octets seen %" PRIi64 "\n", body_octets);
-    print_body_section(output);
+    print_body_section(output, "HTTP/2 body");
 }
 #endif
 

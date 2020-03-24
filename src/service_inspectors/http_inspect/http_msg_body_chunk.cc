@@ -55,9 +55,7 @@ void HttpMsgBodyChunk::update_flow()
 #ifdef REG_TEST
 void HttpMsgBodyChunk::print_section(FILE* output)
 {
-    HttpMsgSection::print_section_title(output, "chunked body");
-    fprintf(output, "Cumulative octets %" PRIi64 "\n", body_octets);
-    print_body_section(output);
+    print_body_section(output, "chunked body");
 }
 #endif
 

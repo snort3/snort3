@@ -33,9 +33,7 @@ void HttpMsgBodyOld::update_flow()
 #ifdef REG_TEST
 void HttpMsgBodyOld::print_section(FILE* output)
 {
-    HttpMsgSection::print_section_title(output, "old-style body");
-    fprintf(output, "octets seen %" PRIi64 "\n", body_octets);
-    print_body_section(output);
+    print_body_section(output, "old-style body");
 }
 #endif
 

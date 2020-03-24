@@ -41,9 +41,7 @@ void HttpMsgBodyCl::update_flow()
 #ifdef REG_TEST
 void HttpMsgBodyCl::print_section(FILE* output)
 {
-    HttpMsgSection::print_section_title(output, "Content-Length body");
-    fprintf(output, "octets seen %" PRIi64 "\n", body_octets);
-    print_body_section(output);
+    print_body_section(output, "Content-Length body");
 }
 #endif
 

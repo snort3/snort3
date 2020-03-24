@@ -51,7 +51,7 @@ protected:
     bool first_body;
 
 #ifdef REG_TEST
-    void print_body_section(FILE* output);
+    void print_body_section(FILE* output, const char* body_type_str);
 #endif
 
 private:

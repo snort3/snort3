@@ -279,8 +279,10 @@ const Field& HttpMsgBody::get_classic_client_body()
 
 #ifdef REG_TEST
 // Common elements of print_section() for body sections
-void HttpMsgBody::print_body_section(FILE* output)
+void HttpMsgBody::print_body_section(FILE* output, const char* body_type_str)
 {
+    HttpMsgSection::print_section_title(output, body_type_str);
+    fprintf(output, "octets seen %" PRIi64 "\n", body_octets);
     detect_data.print(output, "Detect data");
     get_classic_buffer(HTTP_BUFFER_CLIENT_BODY, 0, 0).print(output,
         HttpApi::classic_buffer_names[HTTP_BUFFER_CLIENT_BODY-1]);
