@@ -1040,6 +1040,15 @@ int TcpSession::process(Packet* p)
     Profile profile(s5TcpPerfStats);
     assert(flow->ssn_server);
 
+    if ( no_ack_mode_enabled() and p->is_retry() )
+    {
+        // Don't need to process a retry packet through stream again,
+        // just make sure the retransmit handler is called so that
+        // we do things like update file inspection.
+        flow->call_handlers(p, false);
+        return ACTION_NOTHING;
+    }
+
     // FIXIT-H need to do something here to handle check for need to swap trackers??
     if ( !config )
         config = get_tcp_cfg(flow->ssn_server);
