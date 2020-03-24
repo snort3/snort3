@@ -116,8 +116,6 @@ set ( SP_APPID_SOURCES
 set ( DP_APPID_SOURCES
     detector_plugins/detector_dns.cc
     detector_plugins/detector_dns.h
-    detector_plugins/detector_http.cc
-    detector_plugins/detector_http.h
     detector_plugins/detector_imap.cc
     detector_plugins/detector_imap.h
     detector_plugins/detector_kerberos.cc

@@ -39,7 +39,6 @@
 #include "appid_inspector.h"
 #include "client_plugins/client_discovery.h"
 #include "detector_plugins/detector_dns.h"
-#include "detector_plugins/detector_http.h"
 #include "detector_plugins/detector_pattern.h"
 #include "detector_plugins/detector_sip.h"
 #include "detector_plugins/http_url_patterns.h"

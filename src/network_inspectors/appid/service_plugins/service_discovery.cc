@@ -37,7 +37,6 @@
 #include "appid_dns_session.h"
 #include "appid_session.h"
 #include "detector_plugins/detector_dns.h"
-#include "detector_plugins/detector_http.h"
 #include "detector_plugins/detector_imap.h"
 #include "detector_plugins/detector_kerberos.h"
 #include "detector_plugins/detector_pattern.h"
@@ -98,7 +97,6 @@ void ServiceDiscovery::initialize()
     new DnsUdpServiceDetector(this);
     new FlapServiceDetector(this);
     new FtpServiceDetector(this);
-    new HttpServiceDetector(this);
     new ImapServiceDetector(this);
     new IrcServiceDetector(this);
     new KerberosServiceDetector(this);

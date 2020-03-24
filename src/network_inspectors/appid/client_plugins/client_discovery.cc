@@ -40,7 +40,6 @@
 #include "client_app_timbuktu.h"
 #include "client_app_tns.h"
 #include "client_app_vnc.h"
-#include "detector_plugins/detector_http.h"
 #include "detector_plugins/detector_imap.h"
 #include "detector_plugins/detector_kerberos.h"
 #include "detector_plugins/detector_pattern.h"
@@ -57,7 +56,6 @@ void ClientDiscovery::initialize()
     new AimClientDetector(this);
     new BitClientDetector(this);
     new BitTrackerClientDetector(this);
-    new HttpClientDetector(this);
     new ImapClientDetector(this);
     new KerberosClientDetector(this);
     new MsnClientDetector(this);

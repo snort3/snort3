@@ -172,6 +172,16 @@ bool HttpEvent::contains_webdav_method()
     return true;
 }
 
+bool HttpEvent::get_is_http2() const
+{
+    return false;
+}
+
+uint32_t HttpEvent::get_http2_stream_id() const
+{
+    return 0;
+}
+
 Flow* flow = nullptr;
 AppIdSession* mock_session = nullptr;
 

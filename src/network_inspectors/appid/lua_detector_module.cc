@@ -35,7 +35,6 @@
 #include "lua_detector_util.h"
 #include "lua_detector_api.h"
 #include "lua_detector_flow_api.h"
-#include "detector_plugins/detector_http.h"
 #include "utils/util.h"
 #include "utils/sflsq.h"
 #include "log/messages.h"

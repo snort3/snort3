@@ -137,6 +137,10 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
 
     if (asd->service.get_id() == APP_ID_HTTP)
     {
+        if (http_event->get_is_http2() && http_event->get_http2_stream_id() != 0)
+        {
+            asd->service.set_id(APP_ID_HTTP2, asd->ctxt.get_odp_ctxt());
+        }
         asd->set_application_ids(asd->pick_service_app_id(), asd->pick_client_app_id(),
             asd->pick_payload_app_id(), asd->pick_misc_app_id(), change_bits);
     }
