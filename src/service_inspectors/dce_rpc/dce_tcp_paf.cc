@@ -51,7 +51,7 @@ static StreamSplitter::Status dce2_tcp_paf(DCE2_PafTcpData* ds, Flow* flow, cons
 
     int num_requests = 0;
 
-    if (dce2_paf_abort(flow, (DCE2_SsnData*)sd))
+    if ( dce2_paf_abort((DCE2_SsnData*)sd) )
     {
         return StreamSplitter::ABORT;
     }
@@ -66,9 +66,9 @@ static StreamSplitter::Status dce2_tcp_paf(DCE2_PafTcpData* ds, Flow* flow, cons
             if ((DceRpcCoVersMaj(co_hdr) == DCERPC_PROTO_MAJOR_VERS__5)
                 && (DceRpcCoVersMin(co_hdr) == DCERPC_PROTO_MINOR_VERS__0)
                 && (((flags & PKT_FROM_CLIENT)
-                && DceRpcCoPduType(co_hdr) == DCERPC_PDU_TYPE__BIND)
-                || ((flags & PKT_FROM_SERVER)
-                && DceRpcCoPduType(co_hdr) == DCERPC_PDU_TYPE__BIND_ACK))
+                        && DceRpcCoPduType(co_hdr) == DCERPC_PDU_TYPE__BIND)
+                    || ((flags & PKT_FROM_SERVER)
+                        && DceRpcCoPduType(co_hdr) == DCERPC_PDU_TYPE__BIND_ACK))
                 && (DceRpcCoFragLen(co_hdr) >= sizeof(DceRpcCoHdr)))
             {
                 autodetected = true;

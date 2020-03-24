@@ -32,7 +32,7 @@ namespace
 inline void DCE2_SMB_PAF_SHIFT(uint64_t& x64, const uint8_t& x8)
 {
     x64 <<= 8;
-    x64 |= (uint64_t) x8;
+    x64 |= (uint64_t)x8;
 }
 }
 
@@ -45,7 +45,8 @@ using namespace snort;
  *          junk states, header type must be Session Message.
  *
  *********************************************************************/
-static inline bool DCE2_PafSmbIsValidNetbiosHdr(uint32_t nb_hdr, bool junk, const SmbNtHdr *nt_hdr, uint32_t *nb_len)
+static inline bool DCE2_PafSmbIsValidNetbiosHdr(uint32_t nb_hdr, bool junk, const SmbNtHdr* nt_hdr,
+    uint32_t* nb_len)
 {
     uint8_t type = (uint8_t)(nb_hdr >> 24);
     uint8_t bit = (uint8_t)((nb_hdr & 0x00ff0000) >> 16);
@@ -72,19 +73,20 @@ static inline bool DCE2_PafSmbIsValidNetbiosHdr(uint32_t nb_hdr, bool junk, cons
             return false;
         }
     }
-    //The bit should be checked only for SMB1, because the length in NetBIOS header should not exceed 0x1FFFF.
+    //The bit should be checked only for SMB1, because the length in NetBIOS header should not
+    // exceed 0x1FFFF.
     //See [MS-SMB] 2.1 Transport. There is no such limit for SMB2 or SMB3
-    if(is_smb1)
+    if (is_smb1)
     {
         if ((bit != 0x00) && (bit != 0x01))
             return false;
     }
     nbs_hdr = htonl(nb_hdr);
 
-    if(is_smb1)
-        *nb_len = NbssLen((const NbssHdr *)&nbs_hdr);
+    if (is_smb1)
+        *nb_len = NbssLen((const NbssHdr*)&nbs_hdr);
     else
-        *nb_len = NbssLen2((const NbssHdr *)&nbs_hdr);
+        *nb_len = NbssLen2((const NbssHdr*)&nbs_hdr);
 
     return true;
 }
@@ -109,12 +111,12 @@ static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, cons
 {
     uint32_t n = 0;
     StreamSplitter::Status ps = StreamSplitter::SEARCH;
-    const SmbNtHdr *nt_hdr = nullptr;
+    const SmbNtHdr* nt_hdr = nullptr;
     uint32_t nb_len = 0;
 
     DCE2_SmbSsnData* sd = get_dce2_smb_session_data(flow);
 
-    if (dce2_paf_abort(flow, (DCE2_SsnData*)sd))
+    if ( dce2_paf_abort((DCE2_SsnData*)sd) )
     {
         return StreamSplitter::ABORT;
     }
@@ -131,7 +133,7 @@ static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, cons
             DCE2_SMB_PAF_SHIFT(ss->nb_hdr, data[n]);
             //(data + n + 1) points to the SMB header protocol identifier
             //(0xFF,'SMB' or 0xFE,'SMB'), which follows the NetBIOS header
-            nt_hdr = (const SmbNtHdr *)(data + n + 1);
+            nt_hdr = (const SmbNtHdr*)(data + n + 1);
             if (DCE2_PafSmbIsValidNetbiosHdr((uint32_t)ss->nb_hdr, false, nt_hdr, &nb_len))
             {
                 *fp = (nb_len + sizeof(NbssHdr) + n) - ss->paf_state;
@@ -146,9 +148,10 @@ static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, cons
 
             //(data + n - sizeof(DCE2_SMB_ID) + 1) points to the smb_idf field
             //in SmbNtHdr (0xFF,'SMB' or 0xFE,'SMB'), which follows the NetBIOS header
-            nt_hdr = (const SmbNtHdr *)(data + n - DCE2_SMB_ID_SIZE + 1);
+            nt_hdr = (const SmbNtHdr*)(data + n - DCE2_SMB_ID_SIZE + 1);
             //ss->nb_hdr is the value to 4 bytes of NetBIOS header + 4 bytes of
-            //SMB header protocol identifier . Right shift by 32 bits to get the value of NetBIOS header
+            //SMB header protocol identifier . Right shift by 32 bits to get the value of NetBIOS
+            // header
             if (!DCE2_PafSmbIsValidNetbiosHdr((uint32_t)(ss->nb_hdr >> 32), true, nt_hdr, &nb_len))
             {
                 break;

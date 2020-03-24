@@ -85,7 +85,7 @@ static const char* dce2_get_policy_name(DCE2_Policy policy)
 bool dce2_set_common_config(Value& v, dce2CommonProtoConf& common)
 {
     if ( v.is("limit_alerts") )
-            common.limit_alerts = v.get_bool();
+        common.limit_alerts = v.get_bool();
 
     else if ( v.is("disable_defrag") )
         common.disable_defrag = v.get_bool();
@@ -138,21 +138,13 @@ void print_dce2_co_config(dce2CoProtoConf& co)
         co.co_reassemble_threshold);
 }
 
-bool dce2_paf_abort(Flow* flow, DCE2_SsnData* sd)
+bool dce2_paf_abort(DCE2_SsnData* sd)
 {
-    // FIXIT-L Checking flags from flow is okay here because this is in paf?
-    if ( (flow->get_session_flags() & SSNFLAG_MIDSTREAM) )
-        return true;
-
-    else if ( !(flow->get_session_flags() & SSNFLAG_ESTABLISHED) )
-        return true;
-
     if ((sd != nullptr) && DCE2_SsnNoInspect(sd))
         return true;
 
     return false;
 }
-
 
 void DCE2_Detect(DCE2_SsnData* sd)
 {
@@ -168,7 +160,7 @@ void DCE2_Detect(DCE2_SsnData* sd)
     DetectionEngine::detect(top_pkt);
     dce2_detected = 1;
     /* Always reset rule option data after detecting */
-    DCE2_ResetRopts(sd , top_pkt);
+    DCE2_ResetRopts(sd, top_pkt);
 }
 
 DCE2_TransType get_dce2_trans_type(const Packet* p)
