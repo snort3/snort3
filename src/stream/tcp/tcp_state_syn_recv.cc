@@ -121,6 +121,14 @@ bool TcpStateSynRecv::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     return true;
 }
 
+bool TcpStateSynRecv::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
+{
+    trk.update_tracker_ack_sent(tsd);
+    if ( trk.session->no_ack_mode_enabled() )
+        trk.update_tracker_no_ack_recv(tsd);
+    return true;
+}
+
 bool TcpStateSynRecv::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     if ( trk.is_ack_valid(tsd.get_seg_ack()) )

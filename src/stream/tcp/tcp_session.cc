@@ -1037,10 +1037,11 @@ bool TcpSession::validate_packet_established_session(TcpSegmentDescriptor& tsd)
 {
     pkt_action_mask |= listener->normalizer.handle_paws(tsd);
 
-    if ( pkt_action_mask & ACTION_BAD_PKT )
-        return false;
+    if ( SnortConfig::inline_mode() )
+       if ( tsd.get_tcph()->is_ack() && !listener->is_ack_valid(tsd.get_seg_ack()) )
+           pkt_action_mask |= ACTION_BAD_PKT;
 
-    return true;
+    return ( pkt_action_mask & ACTION_BAD_PKT ) ? false : true;
 }
 
 /*
