@@ -410,7 +410,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0 (Build 269)
+o"  )~   Version 3.0.0 (Build 270)
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2020 Cisco and/or its affiliates. All rights reserved.
@@ -1284,9 +1284,9 @@ to figure out more advanced usage.
 
 Required:
 
+  * a compiler that supports the C++14 feature set
   * cmake to build from source
   * daq from https://github.com/snort3/libdaq for packet IO
-  * g++ >= 4.8 or other recent C++11 compiler
   * dnet from https://github.com/dugsong/libdnet.git for network
     utility functions
   * hwloc from https://www.open-mpi.org/projects/hwloc/ for CPU
@@ -5429,6 +5429,10 @@ Peg counts:
     (sum)
   * active.failed_direct_injects: total crafted packet direct injects
     that failed (sum)
+  * active.holds_denied: total number of packet hold requests denied
+    (sum)
+  * active.holds_canceled: total number of packet hold requests
+    canceled (sum)
 
 
 6.2. alerts
@@ -5460,7 +5464,7 @@ Configuration:
   * bool alerts.stateful = false: don’t alert w/o established session
     (note: rule action still taken)
   * string alerts.tunnel_verdicts: let DAQ handle non-allow verdicts
-    for gtp|teredo|6in4|4in6|4in4|6in6|gre|mpls traffic
+    for gtp|teredo|6in4|4in6|4in4|6in6|gre|mpls|vxlan traffic
 
 
 6.3. attribute_table
@@ -6187,7 +6191,7 @@ What: configure rate filters (which change rule actions)
 
 Type: basic
 
-Usage: detect
+Usage: context
 
 Configuration:
 
@@ -6606,7 +6610,7 @@ What: configure event suppressions
 
 Type: basic
 
-Usage: detect
+Usage: context
 
 Configuration:
 
@@ -7175,8 +7179,8 @@ Configuration:
 
   * bool udp.deep_teredo_inspection = false: look for Teredo on all
     UDP ports (default is only 3544)
-  * bool udp.enable_gtp = false: decode GTP encapsulations
   * bit_list udp.gtp_ports = 2152 3386: set GTP ports { 65535 }
+  * bit_list udp.vxlan_ports = 4789: set VXLAN ports { 65535 }
 
 Rules:
 
@@ -7439,8 +7443,7 @@ Configuration:
   * string binder[].use.inspection_policy: use inspection policy from
     given file
   * string binder[].use.ips_policy: use ips policy from given file
-  * string binder[].use.network_policy: use network policy from given
-    file
+  * string binder[].use.network_policy: deprecated, ignored by binder
   * string binder[].use.service: override automatic service
     identification
   * string binder[].use.type: select module for binding
@@ -9295,6 +9298,10 @@ Peg counts:
   * rt_service.flush_requests: total splitter flush requests (sum)
   * rt_service.hold_requests: total splitter hold requests (sum)
   * rt_service.search_requests: total splitter search requests (sum)
+  * rt_service.send_data_requests: total send data via daq inject
+    requests (sum)
+  * rt_service.send_data_direct_requests: total send data via direct
+    inject requests (sum)
 
 
 9.39. s7commplus
@@ -9950,8 +9957,6 @@ Peg counts:
     (now)
   * stream_tcp.max_packets_held: maximum number of packets held
     simultaneously (max)
-  * stream_tcp.held_packet_limit_exceeded: number of times limit of
-    max held packets exceeded (sum)
   * stream_tcp.partial_flushes: number of partial flushes initiated
     (sum)
   * stream_tcp.partial_flush_bytes: partial flush total bytes (sum)
@@ -12279,7 +12284,7 @@ What: output event in csv format
 
 Type: logger
 
-Usage: context
+Usage: global
 
 Configuration:
 
@@ -12326,7 +12331,7 @@ What: output event with brief text format
 
 Type: logger
 
-Usage: context
+Usage: global
 
 Configuration:
 
@@ -12345,7 +12350,7 @@ What: output event with full packet dump
 
 Type: logger
 
-Usage: context
+Usage: global
 
 Configuration:
 
@@ -12363,7 +12368,7 @@ What: output event in json format
 
 Type: logger
 
-Usage: context
+Usage: global
 
 Configuration:
 
@@ -12394,7 +12399,7 @@ What: output event over socket
 
 Type: logger
 
-Usage: context
+Usage: global
 
 Configuration:
 
@@ -12411,7 +12416,7 @@ What: output event to syslog
 
 Type: logger
 
-Usage: context
+Usage: global
 
 Configuration:
 
@@ -12433,7 +12438,7 @@ What: output event in Talos alert format
 
 Type: logger
 
-Usage: context
+Usage: global
 
 
 14.9. alert_unixsock
@@ -12444,7 +12449,7 @@ What: output event over unix socket
 
 Type: logger
 
-Usage: context
+Usage: global
 
 
 14.10. log_codecs
@@ -12455,7 +12460,7 @@ What: log protocols in packet by layer
 
 Type: logger
 
-Usage: context
+Usage: global
 
 Configuration:
 
@@ -12472,7 +12477,7 @@ What: output payload suitable for daq hext
 
 Type: logger
 
-Usage: context
+Usage: global
 
 Configuration:
 
@@ -12494,7 +12499,7 @@ What: log packet in pcap format
 
 Type: logger
 
-Usage: context
+Usage: global
 
 Configuration:
 
@@ -12510,7 +12515,7 @@ What: output event and packet in unified2 format file
 
 Type: logger
 
-Usage: context
+Usage: global
 
 Configuration:
 
@@ -14216,11 +14221,11 @@ with.
   * Use FIXIT (not FIXTHIS or TODO or whatever) to mark things left
     for a day or even just a minute. That way we can find them easily
     and won’t lose track of them.
-  * Presently using FIXIT-X where X = A | W | P | H | M | L,
-    indicating analysis, warning, perf, high, med, or low priority.
-    Place A and W comments on the exact warning line so we can match
-    up comments and build output. Supporting comments can be added
-    above.
+  * Presently using FIXIT-X where X = A | W | P | H | M | L | D,
+    indicating analysis, warning, perf, high, med, low priority, or
+    deprecated. Place A and W comments on the exact warning line so
+    we can match up comments and build output. Supporting comments
+    can be added above.
   * Put the copyright(s) and license in a comment block at the top of
     each source file (.h and .cc). Don’t bother with trivial scripts
     and make foo. Some interesting Lua code should get a comment
@@ -14805,7 +14810,7 @@ these libraries see the Getting Started section of the manual.
   * bool alerts.stateful = false: don’t alert w/o established session
     (note: rule action still taken)
   * string alerts.tunnel_verdicts: let DAQ handle non-allow verdicts
-    for gtp|teredo|6in4|4in6|4in4|6in6|gre|mpls traffic
+    for gtp|teredo|6in4|4in6|4in4|6in6|gre|mpls|vxlan traffic
   * enum alert_syslog.facility = auth: part of priority applied to
     each message { auth | authpriv | daemon | user | local0 | local1
     | local2 | local3 | local4 | local5 | local6 | local7 }
@@ -14879,8 +14884,7 @@ these libraries see the Getting Started section of the manual.
     given file
   * string binder[].use.ips_policy: use ips policy from given file
   * string binder[].use.name: symbol name (defaults to type)
-  * string binder[].use.network_policy: use network policy from given
-    file
+  * string binder[].use.network_policy: deprecated, ignored by binder
   * string binder[].use.service: override automatic service
     identification
   * string binder[].use.type: select module for binding
@@ -16524,8 +16528,8 @@ these libraries see the Getting Started section of the manual.
     0:255 }
   * bool udp.deep_teredo_inspection = false: look for Teredo on all
     UDP ports (default is only 3544)
-  * bool udp.enable_gtp = false: decode GTP encapsulations
   * bit_list udp.gtp_ports = 2152 3386: set GTP ports { 65535 }
+  * bit_list udp.vxlan_ports = 4789: set VXLAN ports { 65535 }
   * bool unified2.legacy_events = false: generate Snort 2.X style
     events for barnyard2 compatibility
   * int unified2.limit = 0: set maximum size in MB before rollover (0
@@ -16569,6 +16573,10 @@ these libraries see the Getting Started section of the manual.
     that failed (sum)
   * active.failed_injects: total crafted packet encode + injects that
     failed (sum)
+  * active.holds_canceled: total number of packet hold requests
+    canceled (sum)
+  * active.holds_denied: total number of packet hold requests denied
+    (sum)
   * active.injects: total crafted packets encoded and injected (sum)
   * appid.appid_unknown: count of sessions where appid could not be
     determined (sum)
@@ -17153,6 +17161,10 @@ these libraries see the Getting Started section of the manual.
   * rt_service.hold_requests: total splitter hold requests (sum)
   * rt_service.packets: total packets (sum)
   * rt_service.search_requests: total splitter search requests (sum)
+  * rt_service.send_data_direct_requests: total send data via direct
+    inject requests (sum)
+  * rt_service.send_data_requests: total send data via daq inject
+    requests (sum)
   * s7commplus.concurrent_sessions: total concurrent s7commplus
     sessions (now)
   * s7commplus.frames: total S7commplus messages (sum)
@@ -17346,8 +17358,6 @@ these libraries see the Getting Started section of the manual.
     segment limit was reached (sum)
   * stream_tcp.fins: number of fin packets (sum)
   * stream_tcp.gaps: missing data between PDUs (sum)
-  * stream_tcp.held_packet_limit_exceeded: number of times limit of
-    max held packets exceeded (sum)
   * stream_tcp.held_packet_rexmits: number of retransmits of held
     packets (sum)
   * stream_tcp.held_packets_dropped: number of held packets dropped
@@ -18398,6 +18408,7 @@ deleted -> config ' dump_dynamic_rules_path'
 deleted -> config ' enable_decode_drops'
 deleted -> config ' enable_decode_oversized_alerts'
 deleted -> config ' enable_decode_oversized_drops'
+deleted -> config ' enable_gtp'
 deleted -> config ' enable_ipopt_drops'
 deleted -> config ' enable_tcpopt_drops'
 deleted -> config ' enable_tcpopt_experimental_drops'
@@ -18932,6 +18943,7 @@ deleted -> unified2: 'vlan_event_types'
   * codec::udp: support for user datagram protocol
   * codec::user: support for user sessions (DLT 230)
   * codec::vlan: support for local area network
+  * codec::vxlan: support for Virtual Extensible LAN
   * codec::wlan: support for wireless local area network protocol
     (DLT 105)
   * connector::file_connector: implement the file based connector

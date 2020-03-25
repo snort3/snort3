@@ -782,7 +782,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0 (Build 269)
+o"  )~   Version 3.0.0 (Build 270)
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2020 Cisco and/or its affiliates. All rights reserved.
@@ -2084,17 +2084,17 @@ out more advanced usage.</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
+a compiler that supports the C++14 feature set
+</p>
+</li>
+<li>
+<p>
 cmake to build from source
 </p>
 </li>
 <li>
 <p>
 daq from <a href="https://github.com/snort3/libdaq">https://github.com/snort3/libdaq</a> for packet IO
-</p>
-</li>
-<li>
-<p>
-g++ &gt;= 4.8 or other recent C++11 compiler
 </p>
 </li>
 <li>
@@ -7079,6 +7079,16 @@ int <strong>active.min_interval</strong> = 255: minimum number of seconds betwee
 <strong>active.failed_direct_injects</strong>: total crafted packet direct injects that failed (sum)
 </p>
 </li>
+<li>
+<p>
+<strong>active.holds_denied</strong>: total number of packet hold requests denied (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>active.holds_canceled</strong>: total number of packet hold requests canceled (sum)
+</p>
+</li>
 </ul></div>
 </div>
 <div class="sect2">
@@ -7130,7 +7140,7 @@ bool <strong>alerts.stateful</strong> = false: don&#8217;t alert w/o established
 </li>
 <li>
 <p>
-string <strong>alerts.tunnel_verdicts</strong>: let DAQ handle non-allow verdicts for gtp|teredo|6in4|4in6|4in4|6in6|gre|mpls traffic
+string <strong>alerts.tunnel_verdicts</strong>: let DAQ handle non-allow verdicts for gtp|teredo|6in4|4in6|4in4|6in6|gre|mpls|vxlan traffic
 </p>
 </li>
 </ul></div>
@@ -8564,7 +8574,7 @@ enum <strong>profiler.rules.sort</strong> = total_time: sort by given field { no
 <h3 id="_rate_filter">rate_filter</h3>
 <div class="paragraph"><p>What: configure rate filters (which change rule actions)</p></div>
 <div class="paragraph"><p>Type: basic</p></div>
-<div class="paragraph"><p>Usage: detect</p></div>
+<div class="paragraph"><p>Usage: context</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -9588,7 +9598,7 @@ int <strong>snort.trace.all</strong> = 0: enabling traces in module { 0:max32 }
 <h3 id="_suppress">suppress</h3>
 <div class="paragraph"><p>What: configure event suppressions</p></div>
 <div class="paragraph"><p>Type: basic</p></div>
-<div class="paragraph"><p>Usage: detect</p></div>
+<div class="paragraph"><p>Usage: context</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -10657,12 +10667,12 @@ bool <strong>udp.deep_teredo_inspection</strong> = false: look for Teredo on all
 </li>
 <li>
 <p>
-bool <strong>udp.enable_gtp</strong> = false: decode GTP encapsulations
+bit_list <strong>udp.gtp_ports</strong> = 2152 3386: set GTP ports { 65535 }
 </p>
 </li>
 <li>
 <p>
-bit_list <strong>udp.gtp_ports</strong> = 2152 3386: set GTP ports { 65535 }
+bit_list <strong>udp.vxlan_ports</strong> = 4789: set VXLAN ports { 65535 }
 </p>
 </li>
 </ul></div>
@@ -11179,7 +11189,7 @@ string <strong><code>binder[].use.ips_policy</code></strong>: use ips policy fro
 </li>
 <li>
 <p>
-string <strong><code>binder[].use.network_policy</code></strong>: use network policy from given file
+string <strong><code>binder[].use.network_policy</code></strong>: deprecated, ignored by binder
 </p>
 </li>
 <li>
@@ -15808,6 +15818,16 @@ bool <strong>rt_packet.retry_all</strong> = false: request retry for all non-ret
 <strong>rt_service.search_requests</strong>: total splitter search requests (sum)
 </p>
 </li>
+<li>
+<p>
+<strong>rt_service.send_data_requests</strong>: total send data via daq inject requests (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rt_service.send_data_direct_requests</strong>: total send data via direct inject requests (sum)
+</p>
+</li>
 </ul></div>
 </div>
 <div class="sect2">
@@ -17659,11 +17679,6 @@ bool <strong>stream_tcp.track_only</strong> = false: disable reassembly if true
 <li>
 <p>
 <strong>stream_tcp.max_packets_held</strong>: maximum number of packets held simultaneously (max)
-</p>
-</li>
-<li>
-<p>
-<strong>stream_tcp.held_packet_limit_exceeded</strong>: number of times limit of max held packets exceeded (sum)
 </p>
 </li>
 <li>
@@ -20458,7 +20473,7 @@ have associated modules.</p></div>
 <h3 id="_alert_csv">alert_csv</h3>
 <div class="paragraph"><p>What: output event in csv format</p></div>
 <div class="paragraph"><p>Type: logger</p></div>
-<div class="paragraph"><p>Usage: context</p></div>
+<div class="paragraph"><p>Usage: global</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -20501,7 +20516,7 @@ bool <strong>alert_ex.upper</strong> = false: true/false &#8594; convert to uppe
 <h3 id="_alert_fast">alert_fast</h3>
 <div class="paragraph"><p>What: output event with brief text format</p></div>
 <div class="paragraph"><p>Type: logger</p></div>
-<div class="paragraph"><p>Usage: context</p></div>
+<div class="paragraph"><p>Usage: global</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -20525,7 +20540,7 @@ int <strong>alert_fast.limit</strong> = 0: set maximum size in MB before rollove
 <h3 id="_alert_full">alert_full</h3>
 <div class="paragraph"><p>What: output event with full packet dump</p></div>
 <div class="paragraph"><p>Type: logger</p></div>
-<div class="paragraph"><p>Usage: context</p></div>
+<div class="paragraph"><p>Usage: global</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -20544,7 +20559,7 @@ int <strong>alert_full.limit</strong> = 0: set maximum size in MB before rollove
 <h3 id="_alert_json">alert_json</h3>
 <div class="paragraph"><p>What: output event in json format</p></div>
 <div class="paragraph"><p>Type: logger</p></div>
-<div class="paragraph"><p>Usage: context</p></div>
+<div class="paragraph"><p>Usage: global</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -20573,7 +20588,7 @@ string <strong>alert_json.separator</strong> = , : separate fields with this cha
 <h3 id="_alert_sfsocket">alert_sfsocket</h3>
 <div class="paragraph"><p>What: output event over socket</p></div>
 <div class="paragraph"><p>Type: logger</p></div>
-<div class="paragraph"><p>Usage: context</p></div>
+<div class="paragraph"><p>Usage: global</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -20597,7 +20612,7 @@ int <strong><code>alert_sfsocket.rules[].sid</code></strong> = 1: rule signature
 <h3 id="_alert_syslog">alert_syslog</h3>
 <div class="paragraph"><p>What: output event to syslog</p></div>
 <div class="paragraph"><p>Type: logger</p></div>
-<div class="paragraph"><p>Usage: context</p></div>
+<div class="paragraph"><p>Usage: global</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -20621,19 +20636,19 @@ multi <strong>alert_syslog.options</strong>: used to open the syslog connection 
 <h3 id="_alert_talos">alert_talos</h3>
 <div class="paragraph"><p>What: output event in Talos alert format</p></div>
 <div class="paragraph"><p>Type: logger</p></div>
-<div class="paragraph"><p>Usage: context</p></div>
+<div class="paragraph"><p>Usage: global</p></div>
 </div>
 <div class="sect2">
 <h3 id="_alert_unixsock">alert_unixsock</h3>
 <div class="paragraph"><p>What: output event over unix socket</p></div>
 <div class="paragraph"><p>Type: logger</p></div>
-<div class="paragraph"><p>Usage: context</p></div>
+<div class="paragraph"><p>Usage: global</p></div>
 </div>
 <div class="sect2">
 <h3 id="_log_codecs">log_codecs</h3>
 <div class="paragraph"><p>What: log protocols in packet by layer</p></div>
 <div class="paragraph"><p>Type: logger</p></div>
-<div class="paragraph"><p>Usage: context</p></div>
+<div class="paragraph"><p>Usage: global</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -20652,7 +20667,7 @@ bool <strong>log_codecs.msg</strong> = false: include alert msg
 <h3 id="_log_hext">log_hext</h3>
 <div class="paragraph"><p>What: output payload suitable for daq hext</p></div>
 <div class="paragraph"><p>Type: logger</p></div>
-<div class="paragraph"><p>Usage: context</p></div>
+<div class="paragraph"><p>Usage: global</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -20681,7 +20696,7 @@ int <strong>log_hext.width</strong> = 20: set line width (0 is unlimited) { 0:ma
 <h3 id="_log_pcap">log_pcap</h3>
 <div class="paragraph"><p>What: log packet in pcap format</p></div>
 <div class="paragraph"><p>Type: logger</p></div>
-<div class="paragraph"><p>Usage: context</p></div>
+<div class="paragraph"><p>Usage: global</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -20695,7 +20710,7 @@ int <strong>log_pcap.limit</strong> = 0: set maximum size in MB before rollover 
 <h3 id="_unified2">unified2</h3>
 <div class="paragraph"><p>What: output event and packet in unified2 format file</p></div>
 <div class="paragraph"><p>Type: logger</p></div>
-<div class="paragraph"><p>Usage: context</p></div>
+<div class="paragraph"><p>Usage: global</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -23888,10 +23903,10 @@ Use FIXIT (not FIXTHIS or TODO or whatever) to mark things left for a
 </li>
 <li>
 <p>
-Presently using FIXIT-X where X = A | W | P | H | M | L, indicating analysis,
-  warning, perf, high, med, or low priority.  Place A and W comments on the
-  exact warning line so we can match up comments and build output.  Supporting
-  comments can be added above.
+Presently using FIXIT-X where X = A | W | P | H | M | L | D, indicating
+  analysis, warning, perf, high, med, low priority, or deprecated.  Place A and
+  W comments on the exact warning line so we can match up comments and build
+  output.  Supporting comments can be added above.
 </p>
 </li>
 <li>
@@ -25238,7 +25253,7 @@ bool <strong>alerts.stateful</strong> = false: don&#8217;t alert w/o established
 </li>
 <li>
 <p>
-string <strong>alerts.tunnel_verdicts</strong>: let DAQ handle non-allow verdicts for gtp|teredo|6in4|4in6|4in4|6in6|gre|mpls traffic
+string <strong>alerts.tunnel_verdicts</strong>: let DAQ handle non-allow verdicts for gtp|teredo|6in4|4in6|4in4|6in6|gre|mpls|vxlan traffic
 </p>
 </li>
 <li>
@@ -25448,7 +25463,7 @@ string <strong><code>binder[].use.name</code></strong>: symbol name (defaults to
 </li>
 <li>
 <p>
-string <strong><code>binder[].use.network_policy</code></strong>: use network policy from given file
+string <strong><code>binder[].use.network_policy</code></strong>: deprecated, ignored by binder
 </p>
 </li>
 <li>
@@ -30243,12 +30258,12 @@ bool <strong>udp.deep_teredo_inspection</strong> = false: look for Teredo on all
 </li>
 <li>
 <p>
-bool <strong>udp.enable_gtp</strong> = false: decode GTP encapsulations
+bit_list <strong>udp.gtp_ports</strong> = 2152 3386: set GTP ports { 65535 }
 </p>
 </li>
 <li>
 <p>
-bit_list <strong>udp.gtp_ports</strong> = 2152 3386: set GTP ports { 65535 }
+bit_list <strong>udp.vxlan_ports</strong> = 4789: set VXLAN ports { 65535 }
 </p>
 </li>
 <li>
@@ -30354,6 +30369,16 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>active.failed_injects</strong>: total crafted packet encode + injects that failed (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>active.holds_canceled</strong>: total number of packet hold requests canceled (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>active.holds_denied</strong>: total number of packet hold requests denied (sum)
 </p>
 </li>
 <li>
@@ -32473,6 +32498,16 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>rt_service.send_data_direct_requests</strong>: total send data via direct inject requests (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>rt_service.send_data_requests</strong>: total send data via daq inject requests (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>s7commplus.concurrent_sessions</strong>: total concurrent s7commplus sessions (now)
 </p>
 </li>
@@ -33254,11 +33289,6 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>stream_tcp.gaps</strong>: missing data between PDUs (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>stream_tcp.held_packet_limit_exceeded</strong>: number of times limit of max held packets exceeded (sum)
 </p>
 </li>
 <li>
@@ -36863,6 +36893,7 @@ deleted -&gt; config ' dump_dynamic_rules_path'
 deleted -&gt; config ' enable_decode_drops'
 deleted -&gt; config ' enable_decode_oversized_alerts'
 deleted -&gt; config ' enable_decode_oversized_drops'
+deleted -&gt; config ' enable_gtp'
 deleted -&gt; config ' enable_ipopt_drops'
 deleted -&gt; config ' enable_tcpopt_drops'
 deleted -&gt; config ' enable_tcpopt_experimental_drops'
@@ -38459,6 +38490,11 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
+<strong>codec::vxlan</strong>: support for Virtual Extensible LAN
+</p>
+</li>
+<li>
+<p>
 <strong>codec::wlan</strong>: support for wireless local area network protocol (DLT 105)
 </p>
 </li>
@@ -39587,7 +39623,7 @@ Adding/removing stream_* inspectors if stream was already configured
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2020-03-12 10:44:10 EDT
+ 2020-03-25 09:21:03 EDT
 </div>
 </div>
 </body>

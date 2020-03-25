@@ -1,3 +1,48 @@
+2020/03/25 - build 270
+
+-- active: Base hold_packet() decision on DAQ message pool usage
+-- active: Fix direction of RST packet being sent to server
+-- active: Move packet hold realization for Stream detainment to verdict handling
+-- active: Send entire buffer at once when send_data uses ioctl
+-- appid: Adding UT for client_app_aim_test
+-- appid: Fix SMB session data memory leak
+-- appid: Include DNS over TLS port for classification
+-- appid: Restart service detection on start of decryption
+-- appid: Support appid detection for outer protocol service
+-- appid: Support detection for first stream in http/2 session
+-- binder: Ignore the network_policy binding
+-- build: Bump the C++ compiler supported feature set requirement to C++14
+-- build: Don't try to use libuuid headers/libraries when not found.
+   Thanks to James Lay <jlay@slave-tothe-box.net> for reporting the issue.
+-- build: Refactor included headers
+-- codecs: Add new proto bit for udp tunneled traffic
+-- codecs: Add vxlan codec
+-- dce_rpc: Inspect midstream sessions for file inspection
+-- file_api: Reading the new data for the overlapped file_data
+-- filters: Update threshold tracking functions
+-- flow: Allow the ExpectCache to force prune, so that we can always make room when the cache is
+   full
+-- flow: Change the ExpectCache prune logic to only remove a specified number of oldest entries,
+   regardless of node expiration time
+-- flow: Do away altogether with the loop in ExpectCache::prune, just remove one, only when the
+   cache is full
+-- http2_inspect: Refactor data cutter - preparation for multi packet processing
+-- http2_inspect: Support single data frame sent to http, multiple flushes
+-- http2_inspect: Update dev notes with memory calculations
+-- http_inspect: Create http2 message body type
+-- http_inspect: Gzip detained inspection
+-- http_inspect: Refactor print_section for message bodies
+-- loggers: Update usage to GLOBAL for all loggers
+-- lua: Enable a rewrite plugin in a default config
+-- main: Check if flow state is blocked while applying verdicts
+-- main: Setting higher maximum pruning when idle
+-- snort2lua: Convert a replace option to a rewrite plugin/action
+-- snort2lua: Don't print out network_policy binding
+-- stream: Short-circuit stream when handling retry packets in no-ack mode
+-- stream_tcp: Cancel hold requests on the current packet when flushing
+-- stream_tcp: Finalize held packets in TcpSession::clear_session()
+-- stream_tcp: Moved retry check to TcpSession::process
+
 2020/03/12 - build 269
 
 -- active: Add ability to inject resets and payload via IOCTLs
