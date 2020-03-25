@@ -88,6 +88,8 @@ bool HttpInspect::configure(SnortConfig* )
     xtra_host_id = Stream::reg_xtra_data_cb(get_xtra_host);
     xtra_jsnorm_id = Stream::reg_xtra_data_cb(get_xtra_jsnorm);
 
+    config_decode();
+
     return true;
 }
 
@@ -440,7 +442,8 @@ bool HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
         break;
     case SEC_HEADER:
         current_section = new HttpMsgHeader(
-            data, dsize, session_data, source_id, buf_owner, flow, params);
+            data, dsize, session_data, source_id, buf_owner, flow, params,
+            decode_conf);
         break;
     case SEC_BODY_CL:
         current_section = new HttpMsgBodyCl(

@@ -31,6 +31,7 @@
 #include "http_api.h"
 #include "http_common.h"
 #include "http_enum.h"
+#include "http_inspect.h"
 #include "http_msg_request.h"
 #include "http_msg_body.h"
 #include "pub_sub/http_events.h"
@@ -43,8 +44,9 @@ using namespace HttpEnums;
 
 HttpMsgHeader::HttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size,
     HttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_,
-    const HttpParaList* params_) :
-    HttpMsgHeadShared(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_)
+    const HttpParaList* params_, DecodeConfig decode_conf_) :
+    HttpMsgHeadShared(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_),
+    decode_conf(decode_conf_)
 {
     transaction->set_header(this, source_id);
     get_related_sections();

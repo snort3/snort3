@@ -67,6 +67,7 @@ public:
     static int get_xtra_uri(snort::Flow*, uint8_t**, uint32_t*, uint32_t*);
     static int get_xtra_host(snort::Flow*, uint8_t** buf, uint32_t* len, uint32_t* type);
     static int get_xtra_jsnorm(snort::Flow*, uint8_t**, uint32_t*, uint32_t*);
+    void config_decode() { decode_conf.sync_all_depths(); }
 
 private:
     friend HttpApi;
@@ -84,6 +85,7 @@ private:
     static uint32_t xtra_uri_id;
     static uint32_t xtra_host_id;
     static uint32_t xtra_jsnorm_id;
+    snort::DecodeConfig decode_conf;
 };
 
 #endif

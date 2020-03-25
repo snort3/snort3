@@ -131,8 +131,6 @@ void DecodeConfig::sync_all_depths()
 
 int DecodeConfig::get_max_depth(int decode_depth)
 {
-    sync_all_depths();
-
     if ( file_depth and decode_depth )
         return (file_depth > decode_depth) ? file_depth : decode_depth;
 
