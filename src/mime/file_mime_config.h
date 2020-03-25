@@ -39,33 +39,33 @@ class SO_PUBLIC DecodeConfig
 {
 public:
     void set_ignore_data(bool);
-    bool is_ignore_data();
+    bool is_ignore_data() const;
 
     void set_b64_depth(int);
-    int get_b64_depth();
+    int get_b64_depth() const;
 
     void set_qp_depth(int);
-    int get_qp_depth();
+    int get_qp_depth() const;
 
     void set_bitenc_depth(int);
-    int get_bitenc_depth();
+    int get_bitenc_depth() const;
 
     void set_uu_depth(int);
-    int get_uu_depth();
+    int get_uu_depth() const;
 
     void set_decompress_pdf(bool);
-    bool is_decompress_pdf();
+    bool is_decompress_pdf() const;
 
     void set_decompress_swf(bool);
-    bool is_decompress_swf();
+    bool is_decompress_swf() const;
 
     void set_decompress_zip(bool);
-    bool is_decompress_zip();
+    bool is_decompress_zip() const;
 
-    int64_t get_file_depth();
-    bool is_decoding_enabled();
+    int64_t get_file_depth() const;
+    bool is_decoding_enabled() const;
     void sync_all_depths();
-    void print_decode_conf();
+    void show(bool = false) const;
     int get_max_depth(int);
 
 private:

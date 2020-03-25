@@ -261,17 +261,6 @@ static void IMAP_GetEOL(const uint8_t* ptr, const uint8_t* end,
     *eolm = tmp_eolm;
 }
 
-static void PrintImapConf(IMAP_PROTO_CONF* config)
-{
-    if (config == nullptr)
-        return;
-
-    config->decode_conf.print_decode_conf();
-
-    LogMessage("\n");
-
-}
-
 static inline int InspectPacket(Packet* p)
 {
     return p->has_paf_payload();
@@ -739,7 +728,8 @@ bool Imap::configure(SnortConfig*)
 
 void Imap::show(SnortConfig*)
 {
-    PrintImapConf(config);
+    if ( config )
+        config->decode_conf.show();
 }
 
 void Imap::eval(Packet* p)

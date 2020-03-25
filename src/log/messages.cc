@@ -33,6 +33,8 @@
 #include "time/packet_time.h"
 #include "utils/util_cstring.h"
 
+#define MAX_LINE_LEN 75
+
 using namespace snort;
 
 static int already_fatal = 0;
@@ -351,6 +353,59 @@ NORETURN_ASSERT void log_safec_error(const char* msg, void*, int e)
         ErrorMessage("SafeC error %i: %s\n", e, msg);
 
     assert(false);
+}
+
+bool LogFlag(const char* caption, bool flag)
+{
+    LogMessage("%25.25s: %s\n", caption, flag ? "enabled" : "disabled");
+    return flag;
+}
+
+void LogLimit(const char* caption, int val, int unlim, int disable)
+{
+    if ( val == disable )
+        LogMessage("%25.25s: %d %s\n", caption, disable, "(disabled)");
+    else if ( val == unlim )
+        LogMessage("%25.25s: %d %s\n", caption, val, "(unlimited)");
+    else
+        LogMessage("%25.25s: %d\n", caption, val);
+}
+
+void LogLimit(const char* caption, int val, int unlim)
+{
+    if ( val == unlim )
+        LogMessage("%25.25s: %d %s\n", caption, val, "(unlimited)");
+    else
+        LogMessage("%25.25s: %d\n", caption, val);
+}
+
+void LogValue(const char* caption, uint32_t n)
+{
+    LogMessage("%25.25s: %" PRIu32 "\n", caption, n);
+}
+
+void LogList(const char* caption, const char* list)
+{
+    std::string res;
+    std::stringstream ss;
+    const std::string offset(26,' ');
+
+    size_t len = 0;
+    std::string val;
+
+    ss << list;
+    while (ss >> val)
+    {
+        if ( len + val.length() > MAX_LINE_LEN )
+        {
+            res += '\n' + offset;
+            len = 0;
+        }
+        res += ' ' + val;
+        len += val.length() + 1;
+    }
+
+    LogMessage("%25.25s:%s\n", caption, res.c_str());
 }
 } //namespace snort
 

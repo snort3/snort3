@@ -24,14 +24,14 @@
 #include "mime/file_mime_process.h"
 #include "search_engines/search_tool.h"
 
-enum NORM_TYPES
+enum SMTPNormType
 {
     NORMALIZE_NONE = 0,
     NORMALIZE_CMDS,
     NORMALIZE_ALL
 };
 
-enum XLINK2STATE
+enum SMTPXlinkState
 {
     DISABLE_XLINK2STATE = 0,
     ALERT_XLINK2STATE,
@@ -120,15 +120,15 @@ struct SMTPToken
     SMTPCmdTypeEnum type;
 };
 
-struct SMTP_PROTO_CONF
+struct SmtpProtoConf
 {
-    NORM_TYPES normalize;
+    SMTPNormType normalize;
     bool ignore_tls_data;
     int max_auth_command_line_len = 1000;
     int max_command_line_len = 0;
     int max_header_line_len = 0;
     int max_response_line_len = 0;
-    int xlink2state;
+    SMTPXlinkState xlink2state;
     snort::MailLogConfig log_config;
     snort::DecodeConfig decode_conf;
 
@@ -142,6 +142,8 @@ struct SMTP_PROTO_CONF
     SMTPCmdConfig* cmd_config = nullptr;
     SMTPSearch* cmd_search = nullptr;
     snort::SearchTool* cmd_search_mpse = nullptr;
+
+    void show() const;
 };
 
 struct SmtpStats

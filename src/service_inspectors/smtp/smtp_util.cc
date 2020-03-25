@@ -107,7 +107,7 @@ int SMTP_CopyToAltBuffer(Packet* p, const uint8_t* start, int length)
     return 0;
 }
 
-void SMTP_LogFuncs(SMTP_PROTO_CONF* config, Packet* p, MimeSession* mime_ssn)
+void SMTP_LogFuncs(SmtpProtoConf* config, Packet* p, MimeSession* mime_ssn)
 {
     if (!mime_ssn)
         return;

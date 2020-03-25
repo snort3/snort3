@@ -63,7 +63,7 @@ int MailLogState::log_file_name(const uint8_t* start, int length)
     if (!alt_buf || (log_avail <= 0))
         return -1;
 
-    if ( *alt_len > 0 && ((*alt_len + 1) < alt_size))
+    if (*alt_len > 0 && ((*alt_len + 1) < alt_size))
     {
         alt_buf[*alt_len] = ',';
         *alt_len = *alt_len + 1;
@@ -137,10 +137,10 @@ int MailLogState::log_email_id(const uint8_t* start, int length, EmailUserType t
     if (tmp_eol == nullptr)
         return -1;
 
-    if ((tmp_eol+1) < (start+length))
+    if ((tmp_eol + 1) < (start + length))
     {
-        length = length - ( (tmp_eol+1) - start );
-        start = tmp_eol+1;
+        length = length - ((tmp_eol + 1) - start);
+        start = tmp_eol + 1;
     }
     else
         return -1;
@@ -170,7 +170,7 @@ int MailLogState::log_email_id(const uint8_t* start, int length, EmailUserType t
     else if (log_avail < length)
         length = log_avail;
 
-    if ( *alt_len > 0 && ((*alt_len + 1) < alt_size))
+    if (*alt_len > 0 && ((*alt_len + 1) < alt_size))
     {
         alt_buf[*alt_len] = ',';
         *alt_len = *alt_len + 1;
@@ -221,32 +221,24 @@ void MailLogState::get_email_id(uint8_t** buf, uint32_t* len, EmailUserType type
     }
 }
 
-bool MailLogState::is_file_name_present()
+bool MailLogState::is_file_name_present() const
 {
-    if (log_flags & MIME_FLAG_FILENAME_PRESENT)
-        return true;
-    return false;
+    return log_flags & MIME_FLAG_FILENAME_PRESENT;
 }
 
-bool MailLogState::is_email_hdrs_present()
+bool MailLogState::is_email_hdrs_present() const
 {
-    if (log_flags & MIME_FLAG_EMAIL_HDRS_PRESENT)
-        return true;
-    return false;
+    return log_flags & MIME_FLAG_EMAIL_HDRS_PRESENT;
 }
 
-bool MailLogState::is_email_from_present()
+bool MailLogState::is_email_from_present() const
 {
-    if (log_flags & MIME_FLAG_MAIL_FROM_PRESENT)
-        return true;
-    return false;
+    return log_flags & MIME_FLAG_MAIL_FROM_PRESENT;
 }
 
-bool MailLogState::is_email_to_present()
+bool MailLogState::is_email_to_present() const
 {
-    if (log_flags & MIME_FLAG_RCPT_TO_PRESENT)
-        return true;
-    return false;
+    return log_flags & MIME_FLAG_RCPT_TO_PRESENT;
 }
 
 MailLogState::MailLogState(MailLogConfig* conf)
@@ -254,14 +246,14 @@ MailLogState::MailLogState(MailLogConfig* conf)
     if (conf && (conf->log_email_hdrs || conf->log_filename
             || conf->log_mailfrom || conf->log_rcptto))
     {
-        uint32_t bufsz = (2* MAX_EMAIL) + MAX_FILE + conf->email_hdrs_log_depth;
+        uint32_t bufsz = (2 * MAX_EMAIL) + MAX_FILE + conf->email_hdrs_log_depth;
         buf = (uint8_t*)snort_calloc(bufsz);
 
         log_depth = conf->email_hdrs_log_depth;
         recipients = buf;
         senders = buf + MAX_EMAIL;
-        filenames = buf + (2*MAX_EMAIL);
-        emailHdrs = buf + (2*MAX_EMAIL) + MAX_FILE;
+        filenames = buf + (2 * MAX_EMAIL);
+        emailHdrs = buf + (2 * MAX_EMAIL) + MAX_FILE;
     }
 
     rcpts_logged = 0;

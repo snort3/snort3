@@ -93,7 +93,7 @@ public:
     PegCount* get_counts() const override;
     snort::ProfileStats* get_profile() const override;
 
-    SMTP_PROTO_CONF* get_data();
+    SmtpProtoConf* get_data();
     const SmtpCmd* get_cmd(unsigned idx);
 
     Usage get_usage() const override
@@ -103,7 +103,7 @@ private:
     void add_commands(snort::Value&, uint32_t flags);
 
 private:
-    SMTP_PROTO_CONF* config;
+    SmtpProtoConf* config;
     std::vector<SmtpCmd*> cmds;
     std::string names;
     int number;

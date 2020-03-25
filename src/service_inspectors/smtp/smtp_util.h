@@ -32,7 +32,7 @@ struct Packet;
 }
 
 void SMTP_GetEOL(const uint8_t*, const uint8_t*, const uint8_t**, const uint8_t**);
-void SMTP_LogFuncs(SMTP_PROTO_CONF*, snort::Packet*, snort::MimeSession*);
+void SMTP_LogFuncs(SmtpProtoConf*, snort::Packet*, snort::MimeSession*);
 
 int SMTP_CopyToAltBuffer(snort::Packet*, const uint8_t*, int);
 const uint8_t* SMTP_GetAltBuffer(snort::Packet*, unsigned& len);

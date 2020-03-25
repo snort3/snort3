@@ -22,6 +22,8 @@
 
 #include "smtp.h"
 
+#include <string>
+
 #include "detection/detection_engine.h"
 #include "detection/detection_util.h"
 #include "log/messages.h"
@@ -178,7 +180,18 @@ const PegInfo smtp_peg_names[] =
     { CountType::END, nullptr, nullptr }
 };
 
-static void snort_smtp(SMTP_PROTO_CONF* GlobalConf, Packet* p);
+enum SMTPCmdGroup
+{
+    ALERT_CMDS = 0,
+    AUTH_CMDS,
+    BDATA_CMDS,
+    DATA_CMDS,
+    NORM_CMDS,
+    VALID_CMDS,
+    ALT_LEN_CMDS
+};
+
+static void snort_smtp(SmtpProtoConf* GlobalConf, Packet* p);
 static void SMTP_ResetState(Flow*);
 
 SmtpFlowData::SmtpFlowData() : FlowData(inspector_id)
@@ -208,7 +221,7 @@ static SMTPData* get_session_data(Flow* flow)
     return fd ? &fd->session : nullptr;
 }
 
-static SMTPData* SetNewSMTPData(SMTP_PROTO_CONF* config, Packet* p)
+static SMTPData* SetNewSMTPData(SmtpProtoConf* config, Packet* p)
 {
     SMTPData* smtp_ssn;
     SmtpFlowData* fd = new SmtpFlowData;
@@ -228,7 +241,7 @@ static SMTPData* SetNewSMTPData(SMTP_PROTO_CONF* config, Packet* p)
     return smtp_ssn;
 }
 
-static void SMTP_InitCmds(SMTP_PROTO_CONF* config)
+static void SMTP_InitCmds(SmtpProtoConf* config)
 {
     if (config == nullptr)
         return;
@@ -248,7 +261,7 @@ static void SMTP_InitCmds(SMTP_PROTO_CONF* config)
     config->num_cmds = CMD_LAST;
 }
 
-static void SMTP_TermCmds(SMTP_PROTO_CONF* config)
+static void SMTP_TermCmds(SmtpProtoConf* config)
 {
     if (!config)
         return;
@@ -262,7 +275,7 @@ static void SMTP_TermCmds(SMTP_PROTO_CONF* config)
         snort_free(config->cmd_config);
 }
 
-static void SMTP_CommandSearchInit(SMTP_PROTO_CONF* config)
+static void SMTP_CommandSearchInit(SmtpProtoConf* config)
 {
     config->cmd_search_mpse = new SearchTool;
     config->cmd_search = (SMTPSearch*)snort_calloc(config->num_cmds, sizeof(*config->cmd_search));
@@ -277,7 +290,7 @@ static void SMTP_CommandSearchInit(SMTP_PROTO_CONF* config)
     config->cmd_search_mpse->prep();
 }
 
-static void SMTP_CommandSearchTerm(SMTP_PROTO_CONF* config)
+static void SMTP_CommandSearchTerm(SmtpProtoConf* config)
 {
     if (config->cmd_search == nullptr)
         return;
@@ -309,7 +322,7 @@ static void SMTP_SearchFree()
         delete smtp_resp_search_mpse;
 }
 
-static int AddCmd(SMTP_PROTO_CONF* config, const char* name, SMTPCmdTypeEnum type)
+static int AddCmd(SmtpProtoConf* config, const char* name, SMTPCmdTypeEnum type)
 {
     SMTPToken* cmds;
     SMTPCmdConfig* cmd_config;
@@ -322,11 +335,11 @@ static int AddCmd(SMTP_PROTO_CONF* config, const char* name, SMTPCmdTypeEnum typ
     cmd_config = (SMTPCmdConfig*)snort_calloc((config->num_cmds + 1) * sizeof(*cmd_config));
 
     /* copy existing commands into newly allocated memory */
-    memcpy_s(cmds, (config->num_cmds) * sizeof(*cmds),
-        config->cmds, (config->num_cmds) * sizeof(*cmds) - 1);
+    memcpy_s(cmds, config->num_cmds * sizeof(*cmds),
+        config->cmds, (config->num_cmds - 1) * sizeof(*cmds));
 
     memcpy_s(cmd_config, config->num_cmds * sizeof(*cmd_config),
-        config->cmd_config, config->num_cmds - 1);
+        config->cmd_config, (config->num_cmds - 1) * sizeof(*cmd_config));
 
     /* add new command to cmds cmd_config doesn't need anything added - this
      * will probably be done by a calling function */
@@ -336,7 +349,7 @@ static int AddCmd(SMTP_PROTO_CONF* config, const char* name, SMTPCmdTypeEnum typ
     tok->name_len = strlen(name);
     tok->search_id = config->num_cmds - 1;
 
-    if (type)
+    if ( type )
         tok->type = type;
 
     /* free global memory structures */
@@ -350,11 +363,11 @@ static int AddCmd(SMTP_PROTO_CONF* config, const char* name, SMTPCmdTypeEnum typ
     config->cmds = cmds;
     config->cmd_config = cmd_config;
 
-    return (config->num_cmds - 1);
+    return config->num_cmds - 1;
 }
 
 /* Return id associated with a given command string */
-static int GetCmdId(SMTP_PROTO_CONF* config, const char* name, SMTPCmdTypeEnum type)
+static int GetCmdId(SmtpProtoConf* config, const char* name, SMTPCmdTypeEnum type)
 {
     SMTPToken* cmd;
 
@@ -372,142 +385,135 @@ static int GetCmdId(SMTP_PROTO_CONF* config, const char* name, SMTPCmdTypeEnum t
     return AddCmd(config, name, type);
 }
 
-static void SMTP_PrintConfig(SMTP_PROTO_CONF* config)
+static std::string GetCmdGroup(const SMTPToken* cmd_tokens, const SMTPCmdConfig* cmd_config,
+    SMTPCmdGroup group)
 {
-    assert(config);
+    std::string cmds;
 
-    char buf[8192];
-    int alert_count = 0;
-
-    snprintf(buf, sizeof(buf) - 1, "    Normalize: ");
-
-    if (config->normalize == NORMALIZE_ALL)
-        sfsnprintfappend(buf, sizeof(buf) - 1, "all");
-
-    else if (config->normalize == NORMALIZE_NONE)
-        sfsnprintfappend(buf, sizeof(buf) - 1, "none");
-
-    else if (config->normalize == NORMALIZE_CMDS)
+    for (auto cmd = cmd_tokens; cmd->name; cmd++)
     {
-        for (SMTPToken* cmd = config->cmds; cmd->name != nullptr; cmd++)
-        {
-            if (config->cmd_config[cmd->search_id].normalize)
-            {
-                sfsnprintfappend(buf, sizeof(buf) - 1, "%s ", cmd->name);
-            }
-        }
-    }
+        bool cond;
 
-    LogMessage("%s\n", buf);
-
-    LogMessage("    Ignore Data: %s\n",
-        config->decode_conf.is_ignore_data() ? "Yes" : "No");
-    LogMessage("    Ignore TLS Data: %s\n",
-        config->ignore_tls_data ? "Yes" : "No");
-    snprintf(buf, sizeof(buf) - 1, "    Max Command Line Length: ");
-
-    if (config->max_command_line_len == 0)
-        sfsnprintfappend(buf, sizeof(buf) - 1, "Unlimited");
-    else
-        sfsnprintfappend(buf, sizeof(buf) - 1, "%d", config->max_command_line_len);
-
-    LogMessage("%s\n", buf);
-
-    {
-        snprintf(buf, sizeof(buf) - 1, "    Max Specific Command Line Length: ");
-        int max_line_len_count = 0;
-
-        for (SMTPToken* cmd = config->cmds; cmd->name != nullptr; cmd++)
-        {
-            int max_line_len = config->cmd_config[cmd->search_id].max_line_len;
-
-            if (max_line_len != 0)
-            {
-                if (max_line_len_count % 5 == 0)
-                {
-                    LogMessage("%s\n", buf);
-                    snprintf(buf, sizeof(buf) - 1, "       %s:%d ", cmd->name, max_line_len);
-                }
-                else
-                {
-                    sfsnprintfappend(buf, sizeof(buf) - 1, "%s:%d ", cmd->name, max_line_len);
-                }
-
-                max_line_len_count++;
-            }
-        }
-
-        if (max_line_len_count == 0)
-            LogMessage("%sNone\n", buf);
+        if ( group == ALERT_CMDS )
+            cond = cmd_config[cmd->search_id].alert;
+        else if ( group == VALID_CMDS )
+            cond = !cmd_config[cmd->search_id].alert;
+        else if ( group == NORM_CMDS )
+            cond = cmd_config[cmd->search_id].normalize;
+        else if ( group == ALT_LEN_CMDS )
+            cond = cmd_config[cmd->search_id].max_line_len;
+        else if ( group == AUTH_CMDS )
+            cond = (cmd->type == SMTP_CMD_TYPE_AUTH);
+        else if ( group == BDATA_CMDS )
+            cond = (cmd->type == SMTP_CMD_TYPE_BDATA);
+        else if ( group == DATA_CMDS )
+            cond = (cmd->type == SMTP_CMD_TYPE_DATA);
         else
-            LogMessage("%s\n", buf);
-    }
-    snprintf(buf, sizeof(buf) - 1, "    Max Header Line Length: ");
+            return cmds;
 
-    if (config->max_header_line_len == 0)
-        LogMessage("%sUnlimited\n", buf);
-    else
-        LogMessage("%s%d\n", buf, config->max_header_line_len);
-
-    snprintf(buf, sizeof(buf) - 1, "    Max Auth Command Line Length: ");
-    LogMessage("%s%d\n", buf, config->max_auth_command_line_len);
-
-    snprintf(buf, sizeof(buf) - 1, "    Max Response Line Length: ");
-
-    if (config->max_response_line_len == 0)
-        LogMessage("%sUnlimited\n", buf);
-    else
-        LogMessage("%s%d\n", buf, config->max_response_line_len);
-
-    LogMessage("    X-Link2State Enabled: %s\n",
-        (config->xlink2state == ALERT_XLINK2STATE) ? "Yes" : "No");
-    if (config->xlink2state == DROP_XLINK2STATE)
-    {
-        LogMessage("    Drop on X-Link2State Alert: %s\n", "Yes");
-    }
-    else
-    {
-        LogMessage("    Drop on X-Link2State Alert: %s\n", "No");
-    }
-
-    snprintf(buf, sizeof(buf) - 1, "    Alert on commands: ");
-
-    for (SMTPToken* cmd = config->cmds; cmd->name != nullptr; cmd++)
-    {
-        if (config->cmd_config[cmd->search_id].alert)
+        if ( cond )
         {
-            sfsnprintfappend(buf, sizeof(buf) - 1, "%s ", cmd->name);
-            alert_count++;
+            if ( group == ALT_LEN_CMDS )
+            {
+                std::string cmd_name = cmd->name;
+                int len = cmd_config[cmd->search_id].max_line_len;
+                cmds.append("{" + cmd_name + ", " + std::to_string(len) + "}");
+                cmds.append(", ");
+            }
+            else
+            {
+                cmds.append(cmd->name);
+                cmds.append(" ");
+            }
         }
     }
 
-    if (alert_count == 0)
+    if ( !cmds.empty() )
     {
-        LogMessage("%sNone\n", buf);
+        if ( group == ALT_LEN_CMDS )
+        {
+            cmds.erase(cmds.end() - 2);
+            cmds = "{ " + cmds + " }";
+        }
+        else
+            cmds.pop_back();
     }
     else
+        cmds.append("none");
+
+    return cmds;
+}
+
+static const char* to_string(const SMTPNormType& normalize)
+{
+    switch (normalize)
     {
-        LogMessage("%s\n", buf);
+    case NORMALIZE_ALL:
+        return "all";
+    case NORMALIZE_NONE:
+        return "none";
+    case NORMALIZE_CMDS:
+        return "cmds";
     }
 
-    config->decode_conf.print_decode_conf();
+    return "";
+}
 
-    LogMessage("    Log Attachment filename: %s\n",
-        config->log_config.log_filename ? "Enabled" : "Not Enabled");
-
-    LogMessage("    Log MAIL FROM Address: %s\n",
-        config->log_config.log_mailfrom ? "Enabled" : "Not Enabled");
-
-    LogMessage("    Log RCPT TO Addresses: %s\n",
-        config->log_config.log_rcptto ? "Enabled" : "Not Enabled");
-
-    LogMessage("    Log Email Headers: %s\n",
-        config->log_config.log_email_hdrs ? "Enabled" : "Not Enabled");
-    if (config->log_config.log_email_hdrs)
+static const char* to_string(const SMTPXlinkState& mode)
+{
+    switch (mode)
     {
-        LogMessage("    Email Hdrs Log Depth: %u\n",
-            config->log_config.email_hdrs_log_depth);
+    case DISABLE_XLINK2STATE:
+        return "disable";
+    case ALERT_XLINK2STATE:
+        return "alert";
+    case DROP_XLINK2STATE:
+        return "drop";
     }
+
+    return "";
+}
+
+static void log_mail_show(const snort::MailLogConfig& conf)
+{
+    LogFlag("log_mailfrom", conf.log_mailfrom);
+    LogFlag("log_rcptto", conf.log_rcptto);
+    LogFlag("log_filename", conf.log_filename);
+
+    if ( LogFlag("log_email_hdrs", conf.log_email_hdrs) )
+        LogValue("email_hdrs_log_depth", conf.email_hdrs_log_depth);
+}
+
+void SmtpProtoConf::show() const
+{
+    auto alt_len_cmds = GetCmdGroup(cmds, cmd_config, ALT_LEN_CMDS);
+    auto alert_cmds = GetCmdGroup(cmds, cmd_config, ALERT_CMDS);
+    auto auth_cmds = GetCmdGroup(cmds, cmd_config, AUTH_CMDS);
+    auto bdata_cmds = GetCmdGroup(cmds, cmd_config, BDATA_CMDS);
+    auto data_cmds = GetCmdGroup(cmds, cmd_config, DATA_CMDS);
+    auto norm_cmds = GetCmdGroup(cmds, cmd_config, NORM_CMDS);
+    auto valid_cmds = GetCmdGroup(cmds, cmd_config, VALID_CMDS);
+
+    LogValue("normalize", to_string(normalize));
+    LogList("normalize_cmds", norm_cmds.c_str());
+
+    LogFlag("ignore_tls_data", ignore_tls_data);
+    LogLimit("max_command_line_len", max_command_line_len, 0);
+    LogList("alt_max_command_line_len", alt_len_cmds.c_str());
+    LogLimit("max_header_line_len", max_header_line_len, 0);
+    LogLimit("max_auth_command_line_len", max_auth_command_line_len, 0);
+    LogLimit("max_response_line_length", max_response_line_len, 0);
+
+    LogValue("xlink2state", to_string(xlink2state));
+    LogList("invalid_cmds", alert_cmds.c_str());
+
+    LogList("auth_cmds", auth_cmds.c_str());
+    LogList("binary_data_cmds", bdata_cmds.c_str());
+    LogList("data_cmds", data_cmds.c_str());
+    LogList("valid_cmds", valid_cmds.c_str());
+
+    decode_conf.show(true);
+    log_mail_show(log_config);
 }
 
 static void SMTP_ResetState(Flow* ssn)
@@ -655,7 +661,7 @@ static bool SMTP_IsAuthChanged(SMTPData* smtp_ssn, const uint8_t* start_ptr, con
  * @return          pointer into p->data where we stopped looking at data
  *                  will be end of line or end of packet
  */
-static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMTPData* smtp_ssn,
+static const uint8_t* SMTP_HandleCommand(SmtpProtoConf* config, Packet* p, SMTPData* smtp_ssn,
     const uint8_t* ptr, const uint8_t* end)
 {
     const uint8_t* eol;   /* end of line */
@@ -982,7 +988,7 @@ static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMT
  *
  * @return  none
  */
-static void SMTP_ProcessClientPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPData* smtp_ssn)
+static void SMTP_ProcessClientPacket(SmtpProtoConf* config, Packet* p, SMTPData* smtp_ssn)
 {
     const uint8_t* ptr = p->data;
     const uint8_t* end = p->data + p->dsize;
@@ -1036,7 +1042,7 @@ static void SMTP_ProcessClientPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPDat
  * @return  None
  */
 static void SMTP_ProcessServerPacket(
-    SMTP_PROTO_CONF* config, Packet* p, SMTPData* smtp_ssn, int* next_state)
+    SmtpProtoConf* config, Packet* p, SMTPData* smtp_ssn, int* next_state)
 {
     *next_state = 0;
 
@@ -1136,7 +1142,7 @@ static void SMTP_ProcessServerPacket(
  *
  * @return  none
  */
-static void snort_smtp(SMTP_PROTO_CONF* config, Packet* p)
+static void snort_smtp(SmtpProtoConf* config, Packet* p)
 {
     int pkt_dir;
 
@@ -1288,7 +1294,7 @@ static int SMTP_GetEmailHdrs(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t*
     return 1;
 }
 
-static void SMTP_RegXtraDataFuncs(SMTP_PROTO_CONF* config)
+static void SMTP_RegXtraDataFuncs(SmtpProtoConf* config)
 {
     config->xtra_filename_id = Stream::reg_xtra_data_cb(SMTP_GetFilename);
     config->xtra_mfrom_id = Stream::reg_xtra_data_cb(SMTP_GetMailFrom);
@@ -1392,7 +1398,7 @@ bool SmtpMime::is_end_of_data(Flow* session)
 class Smtp : public Inspector
 {
 public:
-    Smtp(SMTP_PROTO_CONF*);
+    Smtp(SmtpProtoConf*);
     ~Smtp() override;
 
     bool configure(SnortConfig*) override;
@@ -1407,10 +1413,10 @@ public:
     void ProcessSmtpCmdsList(const SmtpCmd*);
 
 private:
-    SMTP_PROTO_CONF* config;
+    SmtpProtoConf* config;
 };
 
-Smtp::Smtp(SMTP_PROTO_CONF* pc)
+Smtp::Smtp(SmtpProtoConf* pc)
 {
     config = pc;
 
@@ -1441,7 +1447,8 @@ bool Smtp::configure(SnortConfig*)
 
 void Smtp::show(SnortConfig*)
 {
-    SMTP_PrintConfig(config);
+    if ( config )
+        config->show();
 }
 
 void Smtp::eval(Packet* p)
@@ -1482,10 +1489,10 @@ void Smtp::ProcessSmtpCmdsList(const SmtpCmd* sc)
     if ( sc->flags & PCMD_AUTH )
         type = SMTP_CMD_TYPE_AUTH;
 
-    else if (  sc->flags & PCMD_BDATA )
+    else if ( sc->flags & PCMD_BDATA )
         type = SMTP_CMD_TYPE_BDATA;
 
-    else if (  sc->flags & PCMD_DATA )
+    else if ( sc->flags & PCMD_DATA )
         type = SMTP_CMD_TYPE_DATA;
 
     else
@@ -1493,7 +1500,7 @@ void Smtp::ProcessSmtpCmdsList(const SmtpCmd* sc)
 
     id = GetCmdId(config, cmd, type);
 
-    if (  sc->flags & PCMD_INVALID )
+    if ( sc->flags & PCMD_INVALID )
         config->cmd_config[id].alert = true;
 
     else if ( sc->flags & PCMD_NORM )
@@ -1529,7 +1536,7 @@ static void smtp_term()
 static Inspector* smtp_ctor(Module* m)
 {
     SmtpModule* mod = (SmtpModule*)m;
-    SMTP_PROTO_CONF* conf = mod->get_data();
+    SmtpProtoConf* conf = mod->get_data();
     Smtp* smtp = new Smtp(conf);
 
     unsigned i = 0;
@@ -1593,7 +1600,7 @@ TEST_CASE("handle_header_line", "[smtp]")
     log_config.log_email_hdrs = 0;
     SmtpMime mime_ssn(&decode_conf, &log_config);
     smtp_normalizing = true;
-    SMTP_PROTO_CONF config;
+    SmtpProtoConf config;
     mime_ssn.config = &config;
     uint8_t ptr[68] = "Date: Tue, 1 Mar 2016 22:37:56 -0500\r\nFrom: acc2 <acc2@localhost>\r\n";
     uint8_t* eol = ptr + 38;
@@ -1618,7 +1625,7 @@ TEST_CASE("normalize_data", "[smtp]")
     DecodeConfig decode_conf;
     SmtpMime mime_ssn(&decode_conf, &log_config);
     smtp_normalizing = true;
-    SMTP_PROTO_CONF config;
+    SmtpProtoConf config;
     mime_ssn.config = &config;
     uint8_t ptr[23] = "\r\n--wac7ysb48OaltWcw\r\n";
     uint8_t* data_end = ptr + 22;

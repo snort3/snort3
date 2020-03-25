@@ -62,9 +62,15 @@ SO_PUBLIC void ReloadError(const char*, ...) __attribute__((format (printf, 1, 2
 [[noreturn]] SO_PUBLIC void ParseAbort(const char*, ...) __attribute__((format (printf, 1, 2)));
 
 SO_PUBLIC void LogMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
-SO_PUBLIC void LogMessage(FILE* fh, const char*, ...) __attribute__((format (printf, 2, 3)));
+SO_PUBLIC void LogMessage(FILE*, const char*, ...) __attribute__((format (printf, 2, 3)));
 SO_PUBLIC void WarningMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
 SO_PUBLIC void ErrorMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
+
+SO_PUBLIC bool LogFlag(const char* caption, bool flag);
+SO_PUBLIC void LogLimit(const char* caption, int val, int unlim);
+SO_PUBLIC void LogLimit(const char* caption, int val, int unlim, int disable);
+SO_PUBLIC void LogList(const char* caption, const char* list);
+SO_PUBLIC void LogValue(const char* caption, uint32_t n);
 
 // FIXIT-RC do not call FatalError() during runtime
 [[noreturn]] SO_PUBLIC void FatalError(const char*, ...) __attribute__((format (printf, 1, 2)));

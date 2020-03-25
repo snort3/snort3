@@ -37,10 +37,10 @@ enum EmailUserType
 
 struct MailLogConfig
 {
-    char log_mailfrom = 0;
-    char log_rcptto = 0;
-    char log_filename = 0;
-    char log_email_hdrs = 0;
+    bool log_mailfrom = false;
+    bool log_rcptto = false;
+    bool log_filename = false;
+    bool log_email_hdrs = false;
     uint32_t email_hdrs_log_depth = 0;
 };
 
@@ -56,16 +56,16 @@ public:
     int log_file_name(const uint8_t* start, int length);
 
     int log_email_hdrs(const uint8_t* start, int length);
-    int log_email_id (const uint8_t* start, int length, EmailUserType);
+    int log_email_id(const uint8_t* start, int length, EmailUserType);
 
     void get_file_name(uint8_t** buf, uint32_t* len);
     void get_email_hdrs(uint8_t** buf, uint32_t* len);
     void get_email_id(uint8_t** buf, uint32_t* len, EmailUserType);
 
-    bool is_file_name_present();
-    bool is_email_hdrs_present();
-    bool is_email_from_present();
-    bool is_email_to_present();
+    bool is_file_name_present() const;
+    bool is_email_hdrs_present() const;
+    bool is_email_from_present() const;
+    bool is_email_to_present() const;
 
 private:
     int log_flags = 0;

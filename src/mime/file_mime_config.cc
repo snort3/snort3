@@ -36,7 +36,7 @@ void DecodeConfig::set_ignore_data(bool ignored)
     ignore_data = ignored;
 }
 
-bool DecodeConfig::is_ignore_data()
+bool DecodeConfig::is_ignore_data() const
 {
     return ignore_data;
 }
@@ -46,7 +46,7 @@ void DecodeConfig::set_b64_depth(int depth)
     b64_depth = depth;
 }
 
-int DecodeConfig::get_b64_depth()
+int DecodeConfig::get_b64_depth() const
 {
     return b64_depth;
 }
@@ -56,7 +56,7 @@ void DecodeConfig::set_qp_depth(int depth)
     qp_depth = depth;
 }
 
-int DecodeConfig::get_qp_depth()
+int DecodeConfig::get_qp_depth() const
 {
     return qp_depth;
 }
@@ -66,7 +66,7 @@ void DecodeConfig::set_bitenc_depth(int depth)
     bitenc_depth = depth;
 }
 
-int DecodeConfig::get_bitenc_depth()
+int DecodeConfig::get_bitenc_depth() const
 {
     return bitenc_depth;
 }
@@ -76,7 +76,7 @@ void DecodeConfig::set_uu_depth(int depth)
     uu_depth = depth;
 }
 
-int DecodeConfig::get_uu_depth()
+int DecodeConfig::get_uu_depth() const
 {
     return uu_depth;
 }
@@ -86,7 +86,7 @@ void DecodeConfig::set_decompress_pdf(bool enabled)
     decompress_pdf = enabled;
 }
 
-bool DecodeConfig::is_decompress_pdf()
+bool DecodeConfig::is_decompress_pdf() const
 {
     return decompress_pdf;
 }
@@ -96,7 +96,7 @@ void DecodeConfig::set_decompress_swf(bool enabled)
     decompress_swf = enabled;
 }
 
-bool DecodeConfig::is_decompress_swf()
+bool DecodeConfig::is_decompress_swf() const
 {
     return decompress_swf;
 }
@@ -106,17 +106,17 @@ void DecodeConfig::set_decompress_zip(bool enabled)
     decompress_zip = enabled;
 }
 
-bool DecodeConfig::is_decompress_zip()
+bool DecodeConfig::is_decompress_zip() const
 {
     return decompress_zip;
 }
 
-int64_t DecodeConfig::get_file_depth()
+int64_t DecodeConfig::get_file_depth() const
 {
     return file_depth;
 }
 
-bool DecodeConfig::is_decoding_enabled()
+bool DecodeConfig::is_decoding_enabled() const
 {
     return decode_enabled;
 }
@@ -125,90 +125,43 @@ bool DecodeConfig::is_decoding_enabled()
 void DecodeConfig::sync_all_depths()
 {
     file_depth = FileService::get_max_file_depth();
-    if ((file_depth >= 0)or (b64_depth >= 0) or (qp_depth >= 0)
-        or (bitenc_depth >= 0) or (uu_depth >= 0))
-        decode_enabled = true;
-    else
-        decode_enabled = false;
+    decode_enabled = (file_depth >= 0) or (b64_depth >= 0) or (qp_depth >= 0) or
+        (bitenc_depth >= 0) or (uu_depth >= 0);
 }
 
 int DecodeConfig::get_max_depth(int decode_depth)
 {
     sync_all_depths();
 
-    if (!file_depth or !decode_depth)
-        return 0;
-    else if (file_depth > decode_depth)
-        return file_depth;
-    else
-        return decode_depth;
+    if ( file_depth and decode_depth )
+        return (file_depth > decode_depth) ? file_depth : decode_depth;
+
+    return 0;
 }
 
-void DecodeConfig::print_decode_conf()
+//FIXIT-L update this after mime decode depths are revisited
+void DecodeConfig::show(bool full) const
 {
-    if (b64_depth > -1)
+    if ( !decode_enabled )
     {
-        LogMessage("    Base64 Decoding: %s\n", "Enabled");
-        switch (b64_depth)
-        {
-        case 0:
-            LogMessage("    Base64 Decoding Depth: %s\n", "Unlimited");
-            break;
-        default:
-            LogMessage("    Base64 Decoding Depth: %d\n", b64_depth);
-            break;
-        }
+        LogFlag("decode_enabled", decode_enabled);
+        return;
     }
-    else
-        LogMessage("    Base64 Decoding: %s\n", "Disabled");
 
-    if (qp_depth > -1)
-    {
-        LogMessage("    Quoted-Printable Decoding: %s\n","Enabled");
-        switch (qp_depth)
-        {
-        case 0:
-            LogMessage("    Quoted-Printable Decoding Depth: %s\n", "Unlimited");
-            break;
-        default:
-            LogMessage("    Quoted-Printable Decoding Depth: %d\n", qp_depth);
-            break;
-        }
-    }
-    else
-        LogMessage("    Quoted-Printable Decoding: %s\n", "Disabled");
+    auto b64 = (b64_depth == 0) ? -1 : ((b64_depth == -1) ? 0 : b64_depth);
+    auto qp = (qp_depth == 0) ? -1 : ((qp_depth == -1) ? 0 : qp_depth);
+    auto uu = (uu_depth == 0) ? -1 : ((uu_depth == -1) ? 0 : uu_depth);
+    auto bitenc = (bitenc_depth == 0) ? -1 : ((bitenc_depth == -1) ? 0 : bitenc_depth);
+    LogLimit("b64_decode_depth", b64, -1, 0);
+    LogLimit("qp_decode_depth", qp, -1, 0);
+    LogLimit("uu_decode_depth", uu, -1, 0);
+    LogLimit("bitenc_decode_depth", bitenc, -1, 0);
 
-    if (uu_depth > -1)
-    {
-        LogMessage("    Unix-to-Unix Decoding: %s\n","Enabled");
-        switch (uu_depth)
-        {
-        case 0:
-            LogMessage("    Unix-to-Unix Decoding Depth: %s\n", "Unlimited");
-            break;
-        default:
-            LogMessage("    Unix-to-Unix Decoding Depth: %d\n", uu_depth);
-            break;
-        }
-    }
-    else
-        LogMessage("    Unix-to-Unix Decoding: %s\n", "Disabled");
+    if ( full )
+        LogFlag("ignore_data", ignore_data);
 
-    if (bitenc_depth > -1)
-    {
-        LogMessage("    Non-Encoded MIME attachment Extraction: %s\n","Enabled");
-        switch (bitenc_depth)
-        {
-        case 0:
-            LogMessage("    Non-Encoded MIME attachment Extraction Depth: %s\n", "Unlimited");
-            break;
-        default:
-            LogMessage("    Non-Encoded MIME attachment Extraction Depth: %d\n",
-                bitenc_depth);
-            break;
-        }
-    }
-    else
-        LogMessage("    Non-Encoded MIME attachment Extraction/text: %s\n", "Disabled");
+    LogFlag("decompress_pdf", decompress_pdf);
+    LogFlag("decompress_swf", decompress_swf);
+    LogFlag("decompress_zip", decompress_zip);
 }
 

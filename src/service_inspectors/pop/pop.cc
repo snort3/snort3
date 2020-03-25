@@ -221,17 +221,6 @@ static void POP_GetEOL(const uint8_t* ptr, const uint8_t* end,
     *eolm = tmp_eolm;
 }
 
-static void PrintPopConf(POP_PROTO_CONF* config)
-{
-    if (config == nullptr)
-        return;
-
-    config->decode_conf.print_decode_conf();
-
-    LogMessage("\n");
-
-}
-
 static inline int InspectPacket(Packet* p)
 {
     return p->has_paf_payload();
@@ -680,7 +669,8 @@ bool Pop::configure(SnortConfig* )
 
 void Pop::show(SnortConfig*)
 {
-    PrintPopConf(config);
+    if ( config )
+        config->decode_conf.show();
 }
 
 void Pop::eval(Packet* p)

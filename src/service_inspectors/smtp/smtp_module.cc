@@ -307,7 +307,7 @@ bool SmtpModule::set(const char*, Value& v, SnortConfig*)
         config->max_response_line_len = v.get_uint16();
 
     else if ( v.is("normalize") )
-        config->normalize = (NORM_TYPES)v.get_uint8();
+        config->normalize = (SMTPNormType)v.get_uint8();
 
     else if ( v.is("normalize_cmds"))
         add_commands(v, PCMD_NORM);
@@ -331,7 +331,7 @@ bool SmtpModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("xlink2state") )
     {
-        config->xlink2state = (XLINK2STATE)v.get_uint8();
+        config->xlink2state = (SMTPXlinkState)v.get_uint8();
         Active::set_enabled();
     }
 
@@ -341,9 +341,9 @@ bool SmtpModule::set(const char*, Value& v, SnortConfig*)
     return true;
 }
 
-SMTP_PROTO_CONF* SmtpModule::get_data()
+SmtpProtoConf* SmtpModule::get_data()
 {
-    SMTP_PROTO_CONF* tmp = config;
+    SmtpProtoConf* tmp = config;
     config = nullptr;
     return tmp;
 }
@@ -355,7 +355,7 @@ bool SmtpModule::begin(const char*, int, SnortConfig*)
 
     if(!config)
     {
-        config = new SMTP_PROTO_CONF;
+        config = new SmtpProtoConf;
         config->xlink2state = ALERT_XLINK2STATE;
         config->decode_conf.set_ignore_data(config->ignore_tls_data = false);
         config->normalize = NORMALIZE_NONE;

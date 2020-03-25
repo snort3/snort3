@@ -38,25 +38,13 @@ using namespace snort;
 #define XLINK_FIRST  2
 #define XLINK_CHUNK  3
 
-#define XLINK_LEN  12   /* strlen("X-LINK2STATE") */
+#define XLINK_LEN  12
 
-/* X-Link2State overlong length */
 #define XLINK2STATE_MAX_LEN  520
 
-/* Prototypes */
 static uint32_t get_xlink_hex_value(const uint8_t*, const uint8_t*);
 static char get_xlink_keyword(const uint8_t*, const uint8_t*);
 
-/*
- * Extract a number from a string
- *
- * @param   buf         pointer to beginning of buffer to parse
- * @param   end         end pointer of buffer to parse
- *
- * @return  unsigned long   value of number extracted
- *
- * @note    this could be more efficient, but the search buffer should be pretty short
- */
 static uint32_t get_xlink_hex_value(const uint8_t* buf, const uint8_t* end)
 {
     uint32_t value = 0;
@@ -92,15 +80,6 @@ static uint32_t get_xlink_hex_value(const uint8_t* buf, const uint8_t* end)
     return value;
 }
 
-/*
- * Check for X-LINK2STATE keywords FIRST or CHUNK
- *
- *
- * @param   x           pointer to "X-LINK2STATE" in buffer
- * @param   x_len       length of buffer after x
- *
- * @retval  int         identifies which keyword found, if any
- */
 static char get_xlink_keyword(const uint8_t* ptr, const uint8_t* end)
 {
     int len;
@@ -132,52 +111,7 @@ static char get_xlink_keyword(const uint8_t* ptr, const uint8_t* end)
     return XLINK_OTHER;
 }
 
-/*
- * Handle X-Link2State vulnerability
- *
- *  From Lurene Grenier:
-
-    The X-LINK2STATE command always takes the following form:
-
-    X-LINK2STATE [FIRST|NEXT|LAST] CHUNK=<SOME DATA>
-
-    The overwrite occurs when three criteria are met:
-
-    No chunk identifier exists - ie neither FIRST, NEXT, or LAST are specified
-    No previous FIRST chunk was sent
-    <SOME DATA> has a length greater than 520 bytes
-
-    Normally you send a FIRST chunk, then some intermediary chunks marked with
-    either NEXT or not marked, then finally a LAST chunk.  If no first chunk is
-    sent, and a chunk with no specifier is sent, it assumes it must append to
-    something, but it has nothing to append to, so an overwrite occurs. Sending out
-    of order chunks WITH specifiers results in an exception.
-
-    So simply:
-
-    if (gotFirstChunk)
-        next; # chunks came with proper first chunk specified
-    if (/X-LINK2STATE [FIRST|NEXT|LAST] CHUNK/)
-    {
-        if (/X-LINK2STATE FIRST CHUNK/) gotFirstChunk = TRUE;
-        next; # some specifier is marked
-    }
-    if (chunkLen > 520)
-       attempt = TRUE; # Gotcha!
-
-    Usually it takes more than one unspecified packet in a row, but I think this is
-    just a symptom of the fact that we're triggering a heap overwrite, and not a
-    condition of the bug. However, if we're still getting FPs this might be an
-    avenue to try.
-
- *
- * @param   p           standard Packet structure
- * @param   x           pointer to "X-LINK2STATE" in buffer
- *
- * @retval  1           if alert raised
- * @retval  0           if no alert raised
- */
-int ParseXLink2State(SMTP_PROTO_CONF* config, Packet* p, SMTPData* smtp_ssn, const uint8_t* ptr)
+int ParseXLink2State(SmtpProtoConf* config, Packet* p, SMTPData* smtp_ssn, const uint8_t* ptr)
 {
     const uint8_t* lf = nullptr;
     uint32_t len = 0;
