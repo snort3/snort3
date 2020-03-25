@@ -46,7 +46,7 @@
 using namespace snort;
 using namespace std;
 
-Trace TRACE_NAME(appid_module);
+Trace appid_module_trace(MOD_NAME);
 
 //-------------------------------------------------------------------------
 // appid module
@@ -257,7 +257,7 @@ static const PegInfo appid_pegs[] =
 };
 
 AppIdModule::AppIdModule() :
-    Module(MOD_NAME, MOD_HELP, s_params, false, &TRACE_NAME(appid_module))
+    Module(MOD_NAME, MOD_HELP, s_params, false, &appid_module_trace)
 {
     config = nullptr;
 }
@@ -321,7 +321,7 @@ bool AppIdModule::set(const char* fqn, Value& v, SnortConfig* c)
     return true;
 }
 
-bool AppIdModule::begin(const char* /*fqn*/, int, SnortConfig*)
+bool AppIdModule::begin(const char*, int, SnortConfig*)
 {
     if ( config )
         return false;

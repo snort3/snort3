@@ -37,7 +37,7 @@ using namespace std;
 //-------------------------------------------------------------------------
 // stream module
 //-------------------------------------------------------------------------
-Trace TRACE_NAME(stream);
+Trace stream_trace(MOD_NAME);
 
 #define FLOW_TYPE_PARAMS(name, idle, weight) \
 static const Parameter name[] = \
@@ -99,7 +99,7 @@ static const RuleMap stream_rules[] =
 };
 
 StreamModule::StreamModule() :
-    Module(MOD_NAME, MOD_HELP, s_params, false, &TRACE_NAME(stream))
+    Module(MOD_NAME, MOD_HELP, s_params, false, &stream_trace)
 { }
 
 const PegInfo* StreamModule::get_pegs() const

@@ -806,7 +806,7 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
         com_info.cmd_size = 0;
         com_info.byte_count = 0;
         DCE2_SmbCheckCommand(ssd, smb_hdr, smb_com, nb_ptr, nb_len, com_info);
-        trace_logf(dce_smb, "Processing command: %s (0x%02X)\n",
+        debug_logf(dce_smb_trace, "Processing command: %s (0x%02X)\n",
             get_smb_com_string(smb_com), smb_com);
 
         // Note that even if the command shouldn't be processed, some of
@@ -831,8 +831,7 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
         if (smb_com2 == SMB_COM_NO_ANDX_COMMAND)
             break;
 
-        trace_logf(dce_smb, "Chained SMB command: %s\n",
-            get_smb_com_string(smb_com2));
+        debug_logf(dce_smb_trace, "Chained SMB command: %s\n", get_smb_com_string(smb_com2));
 
         num_chained++;
         if (DCE2_ScSmbMaxChain((dce2SmbProtoConf*)ssd->sd.config) &&
@@ -1033,8 +1032,7 @@ static DCE2_SmbRequestTracker* DCE2_SmbInspect(DCE2_SmbSsnData* ssd, const SmbNt
 {
     int smb_com = SmbCom(smb_hdr);
 
-    trace_logf(dce_smb, "SMB command: %s (0x%02X)\n",
-        get_smb_com_string(smb_com), smb_com);
+    debug_logf(dce_smb_trace, "SMB command: %s (0x%02X)\n", get_smb_com_string(smb_com), smb_com);
 
     if (smb_com_funcs[smb_com] == nullptr)
     {
@@ -1629,7 +1627,7 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
             rtracker = DCE2_SmbInspect(ssd, smb_hdr);
             if (rtracker == nullptr)
             {
-                trace_log(dce_smb, "Not inspecting SMB packet.\n");
+                debug_log(dce_smb_trace, "Not inspecting SMB packet.\n");
 
                 if (DCE2_BufferIsEmpty(*seg_buf))
                 {

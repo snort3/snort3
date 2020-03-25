@@ -29,7 +29,7 @@ struct SnortConfig;
 
 extern THREAD_LOCAL snort::ProfileStats user_perf_stats;
 
-extern Trace TRACE_NAME(stream_user);
+extern snort::Trace stream_user_trace;
 
 //-------------------------------------------------------------------------
 // stream_user module
@@ -48,7 +48,6 @@ public:
 
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
     bool begin(const char*, int, snort::SnortConfig*) override;
-    bool end(const char*, int, snort::SnortConfig*) override;
 
     Usage get_usage() const override
     { return INSPECT; }

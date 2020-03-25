@@ -346,7 +346,7 @@ static int detection_option_tree_evaluate(detection_option_tree_root_t* root,
     Cursor c(eval_data.p);
     int rval = 0;
 
-    trace_log(detection, TRACE_RULE_EVAL, "Starting tree eval\n");
+    debug_log(detection_trace, TRACE_RULE_EVAL, "Starting tree eval\n");
 
     for ( int i = 0; i < root->num_children; ++i )
     {
@@ -806,7 +806,8 @@ bool MpseStash::process(MpseMatch match, void* context)
 
 #ifdef DEBUG_MSGS
     if (count == 0)
-        trace_log(detection, TRACE_RULE_EVAL, "Fast pattern processing - no matches found\n");
+        debug_log(detection_trace, TRACE_RULE_EVAL,
+            "Fast pattern processing - no matches found\n");
 #endif
     unsigned i = 0;
     for ( auto it : queue )
@@ -814,7 +815,7 @@ bool MpseStash::process(MpseMatch match, void* context)
         Node& node = it;
         i++;
         // process a pattern - case is handled by otn processing
-        trace_logf(detection, TRACE_RULE_EVAL,"Processing pattern match #%d\n", i);
+        debug_logf(detection_trace, TRACE_RULE_EVAL,"Processing pattern match #%d\n", i);
         int res = match(node.user, node.tree, node.index, context, node.list);
 
         if ( res > 0 )
@@ -895,7 +896,7 @@ static inline int search_buffer(
         if ( MpseGroup* so = pg->mpsegrp[pmt] )
         {
             // FIXIT-H DELETE ME done - get the context packet number
-            trace_logf(detection, TRACE_FP_SEARCH, "%" PRIu64 " fp %s.%s[%d]\n",
+            debug_logf(detection_trace, TRACE_FP_SEARCH, "%" PRIu64 " fp %s.%s[%d]\n",
                 p->context->packet_number, gadget->get_name(), pm_type_strings[pmt], buf.len);
 
             batch_search(so, p, buf.data, buf.len, cnt);
@@ -909,7 +910,7 @@ static int fp_search(PortGroup* port_group, Packet* p)
     Inspector* gadget = p->flow ? p->flow->gadget : nullptr;
     InspectionBuffer buf;
 
-    trace_log(detection, TRACE_RULE_EVAL, "Fast pattern search\n");
+    debug_log(detection_trace, TRACE_RULE_EVAL, "Fast pattern search\n");
 
     if ( p->data and p->dsize )
     {
@@ -918,7 +919,7 @@ static int fp_search(PortGroup* port_group, Packet* p)
         {
             if ( uint16_t pattern_match_size = p->get_detect_limit() )
             {
-                trace_logf(detection, TRACE_FP_SEARCH, "%" PRIu64 " fp %s[%u]\n",
+                debug_logf(detection_trace, TRACE_FP_SEARCH, "%" PRIu64 " fp %s[%u]\n",
                     p->context->packet_number, pm_type_strings[PM_TYPE_PKT], pattern_match_size);
 
                 batch_search(so, p, p->data, pattern_match_size, pc.pkt_searches);
@@ -956,7 +957,7 @@ static int fp_search(PortGroup* port_group, Packet* p)
 
             if ( file_data.len )
             {
-                trace_logf(detection, TRACE_FP_SEARCH, "%" PRIu64 " fp search %s[%d]\n",
+                debug_logf(detection_trace, TRACE_FP_SEARCH, "%" PRIu64 " fp search %s[%d]\n",
                     p->context->packet_number, pm_type_strings[PM_TYPE_FILE], file_data.len);
 
                 batch_search(so, p, file_data.data, file_data.len, pc.file_searches);
@@ -1046,7 +1047,7 @@ static inline void eval_nfp(
 
             int rval = 0;
             {
-                trace_log(detection, TRACE_RULE_EVAL, "Testing non-content rules\n");
+                debug_log(detection_trace, TRACE_RULE_EVAL, "Testing non-content rules\n");
                 rval = detection_option_tree_evaluate(
                     (detection_option_tree_root_t*)port_group->nfp_tree, eval_data);
             }

@@ -28,7 +28,7 @@
 using namespace snort;
 using namespace std;
 
-Trace TRACE_NAME(stream_user);
+Trace stream_user_trace(MOD_NAME);
 
 //-------------------------------------------------------------------------
 // stream_user module
@@ -43,7 +43,7 @@ static const Parameter s_params[] =
 };
 
 StreamUserModule::StreamUserModule() :
-    Module(MOD_NAME, MOD_HELP, s_params, false, &TRACE_NAME(stream_user))
+    Module(MOD_NAME, MOD_HELP, s_params, false, &stream_user_trace)
 {
     config = nullptr;
 }
@@ -77,11 +77,6 @@ bool StreamUserModule::begin(const char*, int, SnortConfig*)
     if ( !config )
         config = new StreamUserConfig;
 
-    return true;
-}
-
-bool StreamUserModule::end(const char*, int, SnortConfig*)
-{
     return true;
 }
 

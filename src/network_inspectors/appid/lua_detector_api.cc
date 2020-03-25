@@ -299,7 +299,7 @@ static int detector_log_message(lua_State* L)
         break;
 
     case LUA_LOG_TRACE:
-        trace_logf(appid_module, "%s:%s\n", name.c_str(), message);
+        debug_logf(appid_module_trace, "%s:%s\n", name.c_str(), message);
         break;
 
     default:

@@ -30,11 +30,13 @@ using namespace snort;
 #define codec_module_help \
     "general decoder rules"
 
-Trace TRACE_NAME(decode);
+static const char s_module_name[] = "decode";
+
+Trace decode_trace(s_module_name);
 
 static const Parameter s_params[] = {{ nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }};
 
-CodecModule::CodecModule() : Module("decode", codec_module_help, s_params, false, &TRACE_NAME(decode))
+CodecModule::CodecModule() : Module(s_module_name, codec_module_help, s_params, false, &decode_trace)
 { }
 
 bool CodecModule::set(const char* fqn, Value& v, SnortConfig* sc)

@@ -39,12 +39,12 @@ static void dump_patterns(const char* name, PatternService* pList)
 {
     UNUSED(name);
 
-    trace_logf(appid_module,"Adding pattern for \"%s\"\n", name);
+    debug_logf(appid_module_trace, "Adding pattern for \"%s\"\n", name);
     for (PatternService* ps = pList; ps; ps = ps->next)
         for (Pattern* pattern = ps->pattern; pattern; pattern = pattern->next)
             if (pattern->data && pattern->length)
             {
-                trace_logf(appid_module,"\t\t%s, %u\n",pattern->data, pattern->length);
+                debug_logf(appid_module_trace, "\t\t%s, %u\n",pattern->data, pattern->length);
             }
 }
 

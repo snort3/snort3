@@ -6,11 +6,8 @@ set (INCLUDES
     snort_debug.h
     snort_types.h
     thread.h
+    trace.h
 )
-
-if ( ENABLE_DEBUG_MSGS )
-    set ( DEBUG_MSGS_SOURCES snort_debug.cc )
-endif ( ENABLE_DEBUG_MSGS )
 
 if ( ENABLE_SHELL )
     set ( SHELL_SOURCES control.cc control.h control_mgmt.cc control_mgmt.h ac_shell_cmd.h ac_shell_cmd.cc)
@@ -37,6 +34,7 @@ add_library (main OBJECT
     snort.cc
     snort.h
     snort_config.cc
+    snort_debug.cc
     snort_module.h
     snort_module.cc
     swapper.cc
@@ -44,7 +42,7 @@ add_library (main OBJECT
     thread.cc
     thread_config.h
     thread_config.cc
-    ${DEBUG_MSGS_SOURCES}
+    trace.cc
     ${INCLUDES}
     ${SHELL_SOURCES}
 )

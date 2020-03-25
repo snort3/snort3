@@ -83,7 +83,7 @@ struct IpStats
 
 extern const PegInfo ip_pegs[];
 extern THREAD_LOCAL snort::ProfileStats ip_perf_stats;
-extern Trace TRACE_NAME(stream_ip);
+extern snort::Trace stream_ip_trace;
 
 //-------------------------------------------------------------------------
 // stream_ip module
@@ -102,7 +102,6 @@ public:
 
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
     bool begin(const char*, int, snort::SnortConfig*) override;
-    bool end(const char*, int, snort::SnortConfig*) override;
 
     const snort::RuleMap* get_rules() const override;
     snort::ProfileStats* get_profile() const override;

@@ -325,8 +325,8 @@ void DetectionEngine::clear_replacement()
 void DetectionEngine::disable_all(Packet* p)
 {
     p->context->active_rules = IpsContext::NONE;
-    trace_logf(detection, TRACE_PKT_DETECTION,
-        "Disabled all detect, packet %" PRIu64"\n", p->context->packet_number);
+    debug_logf(detection_trace, TRACE_PKT_DETECTION, "Disabled all detect, packet %" PRIu64"\n",
+		p->context->packet_number);
 }
 
 bool DetectionEngine::all_disabled(Packet* p)
@@ -337,7 +337,7 @@ void DetectionEngine::disable_content(Packet* p)
     if ( p->context->active_rules == IpsContext::CONTENT )
         p->context->active_rules = IpsContext::NON_CONTENT;
 
-    trace_logf(detection, TRACE_PKT_DETECTION,
+    debug_logf(detection_trace, TRACE_PKT_DETECTION,
         "Disabled content detect, packet %" PRIu64"\n", p->context->packet_number);
 }
 
@@ -372,9 +372,9 @@ bool DetectionEngine::do_offload(Packet* p)
 
     p->context->conf = SnortConfig::get_conf();
 
-    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " de::offload %" PRIu64
-        " (r=%d)\n", p->context->packet_number, p->context->context_num,
-        offloader->count());
+    debug_logf(detection_trace, TRACE_DETECTION_ENGINE,
+        "%" PRIu64 " de::offload %" PRIu64 " (r=%d)\n",
+        p->context->packet_number, p->context->context_num, offloader->count());
 
     sw->suspend();
     p->set_offloaded();
@@ -424,12 +424,12 @@ void DetectionEngine::idle()
     {
         while ( offloader->count() )
         {
-            trace_logf(detection,
-                TRACE_DETECTION_ENGINE,  "(wire) %" PRIu64 " de::sleep\n", get_packet_number());
+            debug_logf(detection_trace, TRACE_DETECTION_ENGINE,  "(wire) %" PRIu64 " de::sleep\n",
+				get_packet_number());
 
             onload();
         }
-        trace_logf(detection,  TRACE_DETECTION_ENGINE, "(wire) %" PRIu64 " de::idle (r=%d)\n",
+        debug_logf(detection_trace, TRACE_DETECTION_ENGINE, "(wire) %" PRIu64 " de::idle (r=%d)\n",
             get_packet_number(), offloader->count());
 
         offloader->stop();
@@ -443,8 +443,8 @@ void DetectionEngine::onload(Flow* flow)
 
     while ( flow->is_suspended() )
     {
-        trace_logf(detection,
-            TRACE_DETECTION_ENGINE, "(wire) %" PRIu64 " de::sleep\n", get_packet_number());
+        debug_logf(detection_trace, TRACE_DETECTION_ENGINE,
+			"(wire) %" PRIu64 " de::sleep\n", get_packet_number());
 
         resume_ready_suspends(flow->context_chain); // FIXIT-M makes onload reentrant-safe
         onload();
@@ -459,7 +459,7 @@ void DetectionEngine::onload()
 
     while (offloader->count() and offloader->get(p))
     {
-        trace_logf(detection, TRACE_DETECTION_ENGINE,
+        debug_logf(detection_trace, TRACE_DETECTION_ENGINE,
             "%" PRIu64 " de::onload %" PRIu64 " (r=%d)\n",
             p->context->packet_number, p->context->context_num, offloader->count());
 
@@ -486,7 +486,8 @@ void DetectionEngine::resume_ready_suspends(const IpsContextChain& chain)
 
 void DetectionEngine::complete(Packet* p)
 {
-    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " de::resume %" PRIu64 " (r=%d)\n",
+    debug_logf(detection_trace, TRACE_DETECTION_ENGINE,
+        "%" PRIu64 " de::resume %" PRIu64 " (r=%d)\n",
         p->context->packet_number, p->context->context_num, offloader->count());
 
     ContextSwitcher* sw = Analyzer::get_switcher();

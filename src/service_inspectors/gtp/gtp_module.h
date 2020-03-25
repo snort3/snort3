@@ -35,7 +35,7 @@
 #define GTP_HELP "gtp control channel inspection"
 
 extern THREAD_LOCAL snort::ProfileStats gtp_inspect_prof;
-extern Trace TRACE_NAME(gtp_inspect);
+extern snort::Trace gtp_inspect_trace;
 
 struct GtpStuff
 {

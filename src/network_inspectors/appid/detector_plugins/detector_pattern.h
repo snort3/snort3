@@ -27,7 +27,6 @@
 #include "service_plugins/service_detector.h"
 
 #include "main/snort_debug.h"
-extern Trace TRACE_NAME(appid_module);
 
 namespace snort
 {

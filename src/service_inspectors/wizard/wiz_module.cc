@@ -30,6 +30,8 @@
 using namespace snort;
 using namespace std;
 
+Trace wizard_trace(WIZ_NAME);
+
 //-------------------------------------------------------------------------
 // wizard module
 //-------------------------------------------------------------------------
@@ -104,7 +106,7 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-WizardModule::WizardModule() : Module(WIZ_NAME, WIZ_HELP, s_params)
+WizardModule::WizardModule() : Module(WIZ_NAME, WIZ_HELP, s_params, false, &wizard_trace)
 {
     c2s_hexes = nullptr;
     s2c_hexes = nullptr;
@@ -127,7 +129,7 @@ WizardModule::~WizardModule()
 ProfileStats* WizardModule::get_profile() const
 { return &wizPerfStats; }
 
-bool WizardModule::set(const char*, Value& v, SnortConfig*)
+bool WizardModule::set(const char* fqn, Value& v, SnortConfig* sc)
 {
     if ( v.is("service") )
         service = v.get_string();
@@ -149,7 +151,7 @@ bool WizardModule::set(const char*, Value& v, SnortConfig*)
         curses->add_curse(v.get_string());
 
     else
-        return false;
+        return Module::set(fqn, v, sc);
 
     return true;
 }

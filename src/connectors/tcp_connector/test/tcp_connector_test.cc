@@ -170,6 +170,12 @@ static void set_normal_status()
     s_rec_return_zero = false;
 }
 
+Trace::Trace(const char*, const TraceOptionString*, size_t) {}
+Trace::Trace(const char*) {}
+bool Trace::set(const snort::Value&) { return true; }
+void Trace::reset() {}
+void Trace::enable() {}
+
 TcpConnectorModule::TcpConnectorModule() :
     Module("TCPC", "TCPC Help", nullptr)
 { }

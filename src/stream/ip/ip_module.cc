@@ -81,7 +81,7 @@ FragEngine::FragEngine()
 // stream_ip module
 //-------------------------------------------------------------------------
 
-Trace TRACE_NAME(stream_ip);
+Trace stream_ip_trace(MOD_NAME);
 
 static const RuleMap stream_ip_rules[] =
 {
@@ -124,7 +124,7 @@ static const Parameter s_params[] =
 };
 
 StreamIpModule::StreamIpModule() :
-    Module(MOD_NAME, MOD_HELP, s_params, false, &TRACE_NAME(stream_ip))
+    Module(MOD_NAME, MOD_HELP, s_params, false, &stream_ip_trace)
 { config = nullptr; }
 
 StreamIpModule::~StreamIpModule()
@@ -180,11 +180,6 @@ bool StreamIpModule::begin(const char*, int, SnortConfig*)
     if ( !config )
         config = new StreamIpConfig;
 
-    return true;
-}
-
-bool StreamIpModule::end(const char*, int, SnortConfig*)
-{
     return true;
 }
 

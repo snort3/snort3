@@ -243,7 +243,7 @@ public:
 };
 }
 
-extern Trace TRACE_NAME(decode);
+extern snort::Trace decode_trace;
 
 #endif
 

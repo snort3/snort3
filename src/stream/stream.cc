@@ -217,7 +217,7 @@ void Stream::stop_inspection(
 {
     assert(flow && flow->session);
 
-    trace_logf(stream, "stop inspection on flow, dir %s \n",
+    debug_logf(stream_trace, "stop inspection on flow, dir %s \n",
         dir == SSN_DIR_BOTH ? "BOTH" :
         ((dir == SSN_DIR_FROM_CLIENT) ? "FROM_CLIENT" : "FROM_SERVER"));
 

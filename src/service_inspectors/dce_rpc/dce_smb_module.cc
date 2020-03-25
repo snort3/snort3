@@ -33,7 +33,7 @@
 using namespace snort;
 using namespace std;
 
-Trace TRACE_NAME(dce_smb);
+Trace dce_smb_trace(DCE2_SMB_NAME);
 
 static const PegInfo dce2_smb_pegs[] =
 {
@@ -190,7 +190,7 @@ static const RuleMap dce2_smb_rules[] =
     { 0, nullptr }
 };
 
-Dce2SmbModule::Dce2SmbModule() : Module(DCE2_SMB_NAME, DCE2_SMB_HELP, s_params, false, &TRACE_NAME(dce_smb))
+Dce2SmbModule::Dce2SmbModule() : Module(DCE2_SMB_NAME, DCE2_SMB_HELP, s_params, false, &dce_smb_trace)
 {
     memset(&config, 0, sizeof(config));
 }

@@ -45,6 +45,4 @@ public:
 };
 }
 
-extern Trace TRACE_NAME(detection);
-
 #endif // DETECTION_MODULE_H

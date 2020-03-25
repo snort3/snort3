@@ -837,9 +837,8 @@ void DCE2_SmbInsertTid(DCE2_SmbSsnData* ssd,
     if ( !is_ipc and
         ssd->max_file_depth == -1 and DCE2_ScSmbFileDepth((dce2SmbProtoConf*)ssd->sd.config) == -1 )
     {
-        trace_logf(dce_smb, "Not inserting TID (%hu) "
-            "because it's not IPC and not inspecting normal file "
-            "data.\n", tid);
+        debug_logf(dce_smb_trace, "Not inserting TID (%hu) "
+            "because it's not IPC and not inspecting normal file data.\n", tid);
         return;
     }
 
@@ -1534,8 +1533,8 @@ static DCE2_Ret DCE2_SmbFileAPIProcess(DCE2_SmbSsnData* ssd,
     if (!file_flows->file_process(p, data_ptr, (int)data_len, position, upload,
         DCE2_SmbIsVerdictSuspend(upload, position)))
     {
-        trace_logf(dce_smb, "File API returned FAILURE "
-            "for (0x%02X) %s\n", ftracker->fid_v1, upload ? "UPLOAD" : "DOWNLOAD");
+        debug_logf(dce_smb_trace, "File API returned FAILURE for (0x%02X) %s\n",
+            ftracker->fid_v1, upload ? "UPLOAD" : "DOWNLOAD");
 
         // Failure.  Abort tracking this file under file API
         return DCE2_RET__ERROR;
@@ -1781,7 +1780,7 @@ void DCE2_SmbProcessFileData(DCE2_SmbSsnData* ssd,
             }
             else if (ftracker->ff_file_offset < ftracker->ff_bytes_processed)
             {
-                trace_logf(dce_smb, "File offset %" PRIu64 " is "
+                debug_logf(dce_smb_trace, "File offset %" PRIu64 " is "
                     "less than bytes processed %" PRIu64 " - aborting.\n",
                     ftracker->ff_file_offset, ftracker->ff_bytes_processed);
 

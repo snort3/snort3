@@ -23,7 +23,6 @@
 
 #include "appid_inspector.h"
 
-typedef uint64_t Trace;
 class Value;
 
 namespace snort

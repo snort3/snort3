@@ -33,8 +33,6 @@
 
 #include "main/snort_debug.h"
 
-extern Trace TRACE_NAME(appid_module);
-
 namespace snort
 {
 struct Packet;

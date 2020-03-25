@@ -600,12 +600,12 @@ static const Parameter s_params[] =
     "command line configuration"
 #endif
 
-Trace TRACE_NAME(snort);
+Trace snort_trace(s_name);
 
 class SnortModule : public Module
 {
 public:
-    SnortModule() : Module(s_name, s_help, s_params, false, &TRACE_NAME(snort))
+    SnortModule() : Module(s_name, s_help, s_params, false, &snort_trace)
     { }
 
 #ifdef SHELL

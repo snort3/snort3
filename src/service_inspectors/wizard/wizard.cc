@@ -169,7 +169,10 @@ StreamSplitter::Status MagicSplitter::scan(
     count_scan(pkt->flow);
 
     if ( wizard->cast_spell(wand, pkt->flow, data, len) )
+    {
+        trace_logf(wizard_trace, "service set to %s\n", pkt->flow->service);
         count_hit(pkt->flow);
+    }
 
     else if ( wizard->finished(wand) )
         return ABORT;
@@ -244,7 +247,10 @@ void Wizard::eval(Packet* p)
     reset(wand, false, p->is_from_client());
 
     if ( cast_spell(wand, p->flow, p->data, p->dsize) )
+    {
+        trace_logf(wizard_trace, "service set to %s\n", p->flow->service);
         ++tstats.udp_hits;
+    }
 
     ++tstats.udp_scans;
 }

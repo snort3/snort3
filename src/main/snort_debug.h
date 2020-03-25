@@ -28,91 +28,133 @@
 #include <cstdarg>
 
 #include "main/snort_types.h"
+#include "main/trace.h"
 
-typedef uint64_t Trace;
+namespace snort
+{
+SO_PUBLIC void trace_vprintf(const char* name, TraceLevel log_level,
+    const char* trace_option, const char* fmt, va_list);
+}
 
-#define TRACE_NAME(name) name##_trace
+using trace_func = void(const char*, TraceLevel, const char*, const char*, va_list);
+
+template <trace_func>
+static inline void trace_printf(TraceLevel log_level, const snort::Trace& trace,
+    TraceOption trace_option, const char* fmt, ...) __attribute__((format (printf, 4, 5)));
+
+template <trace_func trace_vprintf = snort::trace_vprintf>
+static inline void trace_printf(TraceLevel log_level, const snort::Trace& trace,
+    TraceOption trace_option, const char* fmt, ...)
+{
+    if ( !trace.enabled(trace_option, log_level) )
+        return;
+
+    va_list ap;
+    va_start(ap, fmt);
+
+    const char* trace_option_name = trace.option_name(trace_option);
+    trace_vprintf(trace.module_name(), log_level, trace_option_name, fmt, ap);
+
+    va_end(ap);
+}
+
+template <trace_func>
+static inline void trace_printf(TraceLevel log_level, const snort::Trace& trace,
+    const char* fmt, ...) __attribute__((format (printf, 3, 4)));
+
+template <trace_func trace_vprintf = snort::trace_vprintf>
+static inline void trace_printf(TraceLevel log_level, const snort::Trace& trace,
+    const char* fmt, ...)
+{
+    if ( !trace.enabled(DEFAULT_TRACE_OPTION, log_level) )
+        return;
+
+    va_list ap;
+    va_start(ap, fmt);
+
+    const char* trace_option_name = trace.option_name(DEFAULT_TRACE_OPTION);
+    trace_vprintf(trace.module_name(), log_level, trace_option_name, fmt, ap);
+
+    va_end(ap);
+}
+
+template <trace_func>
+static inline void trace_printf(const snort::Trace& trace,
+    TraceOption trace_option, const char* fmt, ...) __attribute__((format (printf, 3, 4)));
+
+template <trace_func trace_vprintf = snort::trace_vprintf>
+static inline void trace_printf(const snort::Trace& trace,
+    TraceOption trace_option, const char* fmt, ...)
+{
+    if ( !trace.enabled(trace_option) )
+        return;
+
+    va_list ap;
+    va_start(ap, fmt);
+
+    const char* trace_option_name = trace.option_name(trace_option);
+    trace_vprintf(trace.module_name(), DEFAULT_LOG_LEVEL, trace_option_name, fmt, ap);
+
+    va_end(ap);
+}
+
+template <trace_func>
+static inline void trace_printf(const snort::Trace& trace,
+    const char* fmt, ...) __attribute__((format (printf, 2, 3)));
+
+template <trace_func trace_vprintf = snort::trace_vprintf>
+static inline void trace_printf(const snort::Trace& trace, const char* fmt, ...)
+{
+    if ( !trace.enabled(DEFAULT_TRACE_OPTION) )
+        return;
+
+    va_list ap;
+    va_start(ap, fmt);
+
+    const char* trace_option_name = trace.option_name(DEFAULT_TRACE_OPTION);
+    trace_vprintf(trace.module_name(), DEFAULT_LOG_LEVEL, trace_option_name, fmt, ap);
+
+    va_end(ap);
+}
+
+template <trace_func trace_vprintf = snort::trace_vprintf>
+static inline void trace_print(TraceLevel log_level, const snort::Trace& trace,
+    TraceOption trace_option, const char* msg)
+{
+    trace_printf<trace_vprintf>(log_level, trace, trace_option, "%s", msg);
+}
+
+template <trace_func trace_vprintf = snort::trace_vprintf>
+static inline void trace_print(const snort::Trace& trace, TraceOption trace_option, const char* msg)
+{
+    trace_printf<trace_vprintf>(trace, trace_option, "%s", msg);
+}
+
+template <trace_func trace_vprintf = snort::trace_vprintf>
+static inline void trace_print(TraceLevel log_level, const snort::Trace& trace,
+    const char* msg)
+{
+    trace_printf<trace_vprintf>(log_level, trace, "%s", msg);
+}
+
+template <trace_func trace_vprintf = snort::trace_vprintf>
+static inline void trace_print(const snort::Trace& trace, const char* msg)
+{
+    trace_printf<trace_vprintf>(trace, "%s", msg);
+}
+
+#define trace_print trace_print<snort::trace_vprintf>
+#define trace_printf trace_printf<snort::trace_vprintf>
+
+#define trace_log(...) trace_print(__VA_ARGS__)
+#define trace_logf(...) trace_printf(__VA_ARGS__)
 
 #ifdef DEBUG_MSGS
-
-void trace_vprintf(const char* name, const char* fmt, va_list);
-
-static inline bool trace_enabled(Trace mask, Trace flags)
-{ return mask & flags; }
-
-static inline bool trace_enabled(Trace mask)
-{ return mask; }
-
-template <void (trace_vprintf)(const char*, const char*, va_list)>
-static inline void trace_printf(const char* name, Trace mask, Trace flags, const char* fmt, ...)
-    __attribute__((format (printf, 4, 5)));
-
-template <void (trace_vprintf)(const char*, const char*, va_list) = trace_vprintf>
-static inline void trace_printf(const char* name, Trace mask, Trace flags, const char* fmt, ...)
-{
-    if (!trace_enabled(mask, flags))
-        return;
-
-    va_list ap;
-    va_start(ap, fmt);
-
-    trace_vprintf(name, fmt, ap);
-
-    va_end(ap);
-}
-
-template <void (trace_vprintf)(const char*, const char*, va_list)>
-static inline void trace_printf(const char* name, Trace mask, const char* fmt, ...)
-    __attribute__((format (printf, 3, 4)));
-
-template <void (trace_vprintf)(const char*, const char*, va_list) = trace_vprintf>
-static inline void trace_printf(const char* name, Trace mask, const char* fmt, ...)
-{
-    if (!trace_enabled(mask))
-        return;
-
-    va_list ap;
-    va_start(ap, fmt);
-
-    trace_vprintf(name, fmt, ap);
-
-    va_end(ap);
-}
-
-template <void (trace_vprintf)(const char*, const char*, va_list) = trace_vprintf>
-static inline void trace_print(const char* name, Trace mask, const char* msg)
-{
-    trace_printf<trace_vprintf>(name, mask, UINT64_MAX, "%s", msg);
-}
-
-template <void (trace_vprintf)(const char*, const char*, va_list) = trace_vprintf>
-static inline void trace_print(const char* name, Trace mask, Trace flags, const char* msg)
-{
-    trace_printf<trace_vprintf>(name, mask, flags, "%s", msg);
-}
-
-#define trace_print trace_print<trace_vprintf>
-#define trace_printf trace_printf<trace_vprintf>
-
-#define trace_log(tracer, ...) \
-    trace_print(#tracer, tracer##_trace, __VA_ARGS__)
-
-#define trace_log_wo_name(tracer, ...) \
-    trace_print(nullptr, tracer##_trace, __VA_ARGS__)
-
-#define trace_logf(tracer, ...) \
-    trace_printf(#tracer, tracer##_trace, __VA_ARGS__)
-
-#define trace_logf_wo_name(tracer, ...) \
-    trace_printf(nullptr, tracer##_trace, __VA_ARGS__)
-
+#define debug_log trace_log
+#define debug_logf trace_logf
 #else
-
-#define trace_log(tracer, ...)
-#define trace_log_wo_name(tracer, ...)
-#define trace_logf(tracer, ...)
-#define trace_logf_wo_name(tracer, ...)
-
+#define debug_log(...)
+#define debug_logf(...)
 #endif
 
 #endif

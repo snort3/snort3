@@ -37,8 +37,6 @@
 #include "time/clock_defs.h"
 #include "main/snort_debug.h"
 
-extern Trace TRACE_NAME(detection);
-
 namespace snort
 {
 class HashNode;

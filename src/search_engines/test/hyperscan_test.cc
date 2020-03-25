@@ -29,6 +29,7 @@
 #include "framework/mpse.h"
 #include "framework/mpse_batch.h"
 #include "main/snort_config.h"
+#include "main/trace.h"
 #include "utils/stats.h"
 
 // must appear after snort_config.h to avoid broken c++ map include
@@ -132,6 +133,13 @@ unsigned get_instance_id()
 { return 0; }
 
 }
+
+Trace::Trace(const char*, const TraceOptionString*, size_t) {}
+Trace::Trace(const char*) {}
+bool Trace::set(const snort::Value&) { return true; }
+void Trace::reset() {}
+void Trace::enable() {}
+
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
 

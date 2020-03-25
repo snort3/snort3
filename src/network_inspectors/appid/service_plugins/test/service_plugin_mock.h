@@ -64,7 +64,7 @@ public:
 SO_PUBLIC static Inspector* get_inspector(const char*, bool, SnortConfig*) {return nullptr;}
 };
 Module::Module(const char*, const char*) {}
-Module::Module(const char*, const char*, const Parameter*, bool, Trace*, const Parameter*, TraceMask*)
+Module::Module(const char*, const char*, const Parameter*, bool, Trace*, const Parameter*)
 {}
 PegCount Module::get_global_count(char const*) const { return 0; }
 void Module::show_interval_stats(std::vector<unsigned int, std::allocator<unsigned int> >&, FILE*) {}

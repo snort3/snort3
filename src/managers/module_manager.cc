@@ -567,6 +567,7 @@ static bool begin(Module* m, const Parameter* p, const char* s, int idx, int dep
     // Module::(verified_)begin() will be called for top-level tables, lists, and list items only
     if ( top_level(s) )
     {
+        m->reset_trace();
         if ( !m->verified_begin(s, idx, s_config) )
             return false;
         // don't set list defaults

@@ -35,26 +35,28 @@
 
 using namespace snort;
 
+static const char s_module_name[] = "detection";
+
 /* *INDENT-OFF* */   //  Uncrustify handles this section incorrectly.
 static const Parameter detection_module_trace_values[] =
 {
-    { "detect_engine", Parameter::PT_INT, "0:max53", "0", "enable detection engine trace logging" },
+    { "all", Parameter::PT_INT, "0:255", "0", "enable detection module trace logging options" },
 
-    { "rule_eval", Parameter::PT_INT, "0:max53", "0", "enable rule evaluation trace logging" },
+    { "detect_engine", Parameter::PT_INT, "0:255", "0", "enable detection engine trace logging" },
 
-    { "buf_min", Parameter::PT_INT, "0:max53", "0", "enable min buffer trace logging" },
+    { "rule_eval", Parameter::PT_INT, "0:255", "0", "enable rule evaluation trace logging" },
 
-    { "buf_verbose", Parameter::PT_INT, "0:max53", "0", "enable verbose buffer trace logging" },
+    { "buffer", Parameter::PT_INT, "0:255", "0", "enable buffer trace logging" },
 
-    { "rule_vars", Parameter::PT_INT, "0:max53", "0", "enable rule variables trace logging" },
+    { "rule_vars", Parameter::PT_INT, "0:255", "0", "enable rule variables trace logging" },
 
-    { "fp_search", Parameter::PT_INT, "0:max53", "0", "enable fast pattern search trace logging" },
+    { "fp_search", Parameter::PT_INT, "0:255", "0", "enable fast pattern search trace logging" },
 
-    { "pkt_detect", Parameter::PT_INT, "0:max53", "0", "enable packet detection trace logging" },
+    { "pkt_detect", Parameter::PT_INT, "0:255", "0", "enable packet detection trace logging" },
 
-    { "opt_tree", Parameter::PT_INT, "0:max53", "0", "enable tree option trace logging" },
+    { "opt_tree", Parameter::PT_INT, "0:255", "0", "enable tree option trace logging" },
 
-    { "tag", Parameter::PT_INT, "0:max53", "0", "enable tag trace logging" },
+    { "tag", Parameter::PT_INT, "0:255", "0", "enable tag trace logging" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -66,12 +68,11 @@ static const Parameter detection_module_trace[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const TraceValue detection_trace_masks[] =
+static const TraceOptionString detection_trace_options[] =
 {
     { "detect_engine", TRACE_DETECTION_ENGINE },
     { "rule_eval",     TRACE_RULE_EVAL },
-    { "buf_min",       TRACE_BUFFER_MINIMAL },
-    { "buf_verbose",   TRACE_BUFFER_VERBOSE },
+    { "buffer",        TRACE_BUFFER },
     { "rule_vars",     TRACE_RULE_VARS },
     { "fp_search",     TRACE_FP_SEARCH },
     { "pkt_detect",    TRACE_PKT_DETECTION },
@@ -79,8 +80,8 @@ static const TraceValue detection_trace_masks[] =
     { "tag",           TRACE_TAG }
 };
 
-static TraceMask detection_module_trace_mask(detection_trace_masks,
-    (sizeof(detection_trace_masks) / sizeof(TraceValue)));
+Trace detection_trace(s_module_name, detection_trace_options,
+    (sizeof(detection_trace_options) / sizeof(TraceOptionString)));
 
 static const Parameter detection_params[] =
 {
@@ -131,8 +132,8 @@ static const Parameter detection_params[] =
 #define detection_help \
     "configure general IPS rule processing parameters"
 
-DetectionModule::DetectionModule() : Module("detection", detection_help,
-    detection_params, false, &TRACE_NAME(detection), detection_module_trace, &detection_module_trace_mask)
+DetectionModule::DetectionModule() : Module(s_module_name, detection_help,
+    detection_params, false, &detection_trace, detection_module_trace)
 { }
 
 bool DetectionModule::end(const char*, int, SnortConfig* sc)

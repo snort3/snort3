@@ -32,7 +32,8 @@
 
 using namespace snort;
 
-Trace TRACE_NAME(gtp_inspect);
+Trace gtp_inspect_trace(GTP_NAME);
+
 THREAD_LOCAL ProfileStats gtp_inspect_prof;
 
 #define GTP_EVENT_BAD_MSG_LEN_STR        "message length is invalid"
@@ -124,7 +125,7 @@ static const Parameter gtp_params[] =
 };
 
 GtpInspectModule::GtpInspectModule() :
-    Module(GTP_NAME, GTP_HELP, gtp_params, true, &TRACE_NAME(gtp_inspect))
+    Module(GTP_NAME, GTP_HELP, gtp_params, true, &gtp_inspect_trace)
 { }
 
 bool GtpInspectModule::set(const char* fqn, Value& v, SnortConfig* c)

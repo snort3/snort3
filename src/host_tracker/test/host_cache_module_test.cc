@@ -67,6 +67,12 @@ extern "C"
 const char* luaL_optlstring(lua_State*, int, const char*, size_t*) { return nullptr; }
 }
 
+Trace::Trace(const char*, const TraceOptionString*, size_t) {}
+Trace::Trace(const char*) {}
+bool Trace::set(const snort::Value&) { return true; }
+void Trace::reset() {}
+void Trace::enable() {}
+
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
 

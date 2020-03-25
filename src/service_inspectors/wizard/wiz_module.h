@@ -73,5 +73,7 @@ private:
     CurseBook* curses;
 };
 
+extern snort::Trace wizard_trace;
+
 #endif
 

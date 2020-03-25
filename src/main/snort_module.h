@@ -31,7 +31,7 @@ namespace snort
 class Module;
 }
 
-extern Trace TRACE_NAME(snort);
+extern snort::Trace snort_trace;
 snort::Module* get_snort_module();
 
 #endif

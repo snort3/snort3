@@ -33,7 +33,7 @@
 
 extern THREAD_LOCAL snort::ProfileStats appid_perf_stats;
 
-extern Trace TRACE_NAME(appid_module);
+extern snort::Trace appid_module_trace;
 
 #define MOD_NAME "appid"
 #define MOD_HELP "application and service identification"

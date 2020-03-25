@@ -72,7 +72,8 @@ void ContextSwitcher::start()
     assert(!c->has_callbacks());
 
     c->context_num = ++global_context_num;
-    trace_logf(detection, TRACE_DETECTION_ENGINE, "(wire) %" PRIu64 " cs::start %" PRIu64 " (i=%zu, b=%zu)\n",
+    debug_logf(detection_trace, TRACE_DETECTION_ENGINE,
+        "(wire) %" PRIu64 " cs::start %" PRIu64 " (i=%zu, b=%zu)\n",
         get_packet_number(), c->context_num, idle.size(), busy.size());
 
     idle.pop_back();
@@ -93,7 +94,8 @@ void ContextSwitcher::stop()
     assert(!c->has_callbacks());
     assert(!c->dependencies());
 
-    trace_logf(detection, TRACE_DETECTION_ENGINE, "(wire) %" PRIu64 " cs::stop %" PRIu64 " (i=%zu, b=%zu)\n",
+    debug_logf(detection_trace, TRACE_DETECTION_ENGINE,
+		"(wire) %" PRIu64 " cs::stop %" PRIu64 " (i=%zu, b=%zu)\n",
         get_packet_number(), c->context_num, idle.size(), busy.size());
 
     c->clear_context_data();
@@ -107,7 +109,8 @@ void ContextSwitcher::stop()
 
 void ContextSwitcher::abort()
 {
-    trace_logf(detection, TRACE_DETECTION_ENGINE, "(wire) %" PRIu64 " cs::abort (i=%zu, b=%zu)\n",
+    debug_logf(detection_trace, TRACE_DETECTION_ENGINE,
+		"(wire) %" PRIu64 " cs::abort (i=%zu, b=%zu)\n",
         get_packet_number(), idle.size(), busy.size());
 
     busy.clear();
@@ -119,11 +122,11 @@ void ContextSwitcher::abort()
             case IpsContext::IDLE:
                 continue;
             case IpsContext::BUSY:
-                trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::abort busy",
+                debug_logf(detection_trace, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::abort busy",
                     c->packet_number);
                 break;
             case IpsContext::SUSPENDED:
-                trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::abort suspended",
+                debug_logf(detection_trace, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::abort suspended",
                     c->packet_number);
                 break;
         }
@@ -149,7 +152,8 @@ IpsContext* ContextSwitcher::interrupt()
     assert(c->state == IpsContext::IDLE);
 
     c->context_num = ++global_context_num;
-    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::interrupt %" PRIu64 " (i=%zu, b=%zu)\n",
+    debug_logf(detection_trace, TRACE_DETECTION_ENGINE,
+		"%" PRIu64 " cs::interrupt %" PRIu64 " (i=%zu, b=%zu)\n",
         busy.empty() ? get_packet_number() : busy.back()->packet_number,
         busy.empty() ? 0 : busy.back()->context_num, idle.size(), busy.size());
 
@@ -169,7 +173,8 @@ IpsContext* ContextSwitcher::complete()
     assert(!c->dependencies());
     assert(!c->has_callbacks());
 
-    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::complete %" PRIu64 " (i=%zu, b=%zu)\n",
+    debug_logf(detection_trace, TRACE_DETECTION_ENGINE,
+		"%" PRIu64 " cs::complete %" PRIu64 " (i=%zu, b=%zu)\n",
         c->packet_number, c->context_num, idle.size(), busy.size());
 
     busy.pop_back();
@@ -190,8 +195,10 @@ void ContextSwitcher::suspend()
     IpsContext* c = busy.back();
     assert(c->state == IpsContext::BUSY);
 
-    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::suspend %" PRIu64 " (i=%zu, b=%zu, wh=%zu)\n",
-        c->packet_number, c->context_num, idle.size(), busy.size(), contexts.size() - idle.size() - busy.size());
+    debug_logf(detection_trace, TRACE_DETECTION_ENGINE,
+        "%" PRIu64 " cs::suspend %" PRIu64 " (i=%zu, b=%zu, wh=%zu)\n",
+        c->packet_number, c->context_num, idle.size(), busy.size(),
+        contexts.size() - idle.size() - busy.size());
 
     c->state = IpsContext::SUSPENDED;
     busy.pop_back();
@@ -206,7 +213,8 @@ void ContextSwitcher::resume(IpsContext* c)
 {
     assert(c->state == IpsContext::SUSPENDED);
 
-    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::resume %" PRIu64 " (i=%zu)\n",
+    debug_logf(detection_trace, TRACE_DETECTION_ENGINE,
+		"%" PRIu64 " cs::resume %" PRIu64 " (i=%zu)\n",
         c->packet_number, c->context_num, idle.size());
 
     IpsContextChain& chain = c->packet->flow ? c->packet->flow->context_chain : non_flow_chain;

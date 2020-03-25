@@ -56,6 +56,12 @@ void SideChannelManager::instantiate(const SCConnectors*, const PortBitSet* port
     port_1_set = ports->test(1);
 }
 
+Trace::Trace(const char*, const TraceOptionString*, size_t) {}
+Trace::Trace(const char*) {}
+bool Trace::set(const snort::Value&) { return true; }
+void Trace::reset() {}
+void Trace::enable() {}
+
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
 

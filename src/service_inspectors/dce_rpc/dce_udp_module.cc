@@ -31,7 +31,7 @@
 using namespace snort;
 using namespace std;
 
-Trace TRACE_NAME(dce_udp);
+Trace dce_udp_trace(DCE2_UDP_NAME);
 
 static const Parameter s_params[] =
 {
@@ -84,7 +84,7 @@ static const PegInfo dce2_udp_pegs[] =
     { CountType::END, nullptr, nullptr }
 };
 
-Dce2UdpModule::Dce2UdpModule() : Module(DCE2_UDP_NAME, DCE2_UDP_HELP, s_params, false, &TRACE_NAME(dce_udp))
+Dce2UdpModule::Dce2UdpModule() : Module(DCE2_UDP_NAME, DCE2_UDP_HELP, s_params, false, &dce_udp_trace)
 {
 }
 

@@ -27,7 +27,7 @@ using namespace snort;
 
 static const Parameter default_trace[] =
 {
-    { "all", Parameter::PT_INT, "0:max32", "0", "enabling traces in module" },
+    { "all", Parameter::PT_INT, "0:255", "0", "enable traces in module" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -38,14 +38,6 @@ static const Parameter default_trace_params[] =
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
-
-static const TraceValue default_trace_values[] =
-{
-    { "all", 1 }
-};
-
-static TraceMask s_default_trace_values(default_trace_values,
-    (sizeof(default_trace_values) / sizeof(TraceValue)));
 
 std::string Command::get_arg_list() const
 {
@@ -63,24 +55,10 @@ std::string Command::get_arg_list() const
     return args;
 }
 
-bool TraceMask::set(const Value& v, Trace* mask)
+void Module::reset_trace()
 {
-    const TraceValue* tv = &values[0];
-    int isize = m_size;
-
-    while ( isize-- )
-    {
-        if ( v.is(tv->alias) )
-        {
-            uint8_t opt_val = v.get_uint8();
-            if ( opt_val )
-                *mask |= tv->mask;
-            return true;
-        }
-        tv++;
-    }
-
-    return false;
+    if ( trace )
+        trace->reset();
 }
 
 void Module::init(const char* s, const char* h)
@@ -97,7 +75,7 @@ Module::Module(const char* s, const char* h)
 { init(s, h); }
 
 Module::Module(const char* s, const char* h, const Parameter* p, bool is_list, Trace* t,
-                        const Parameter* module_trace_param, TraceMask* module_trace_mask)
+    const Parameter* module_trace_param)
 {
     init(s, h);
     list = is_list;
@@ -110,12 +88,10 @@ Module::Module(const char* s, const char* h, const Parameter* p, bool is_list, T
         if ( module_trace_param )
         {
             default_params = module_trace_param;
-            trace_mask = module_trace_mask;
         }
         else
         {
             default_params = default_trace_params;
-            trace_mask = &s_default_trace_values;
         }
     }
 }
@@ -123,7 +99,7 @@ Module::Module(const char* s, const char* h, const Parameter* p, bool is_list, T
 bool Module::set(const char* fqn, Value& v, SnortConfig*)
 {
     if ( strstr(fqn, ".trace.") )
-        return trace_mask and trace_mask->set(v, trace);
+        return trace and trace->set(v);
 
     return false;
 }
@@ -240,8 +216,8 @@ bool Module::verified_end(const char* fqn, int idx, SnortConfig* c)
 
 void Module::enable_trace()
 {
-    if ( trace_mask )
-        trace_mask->set(trace);
+    if ( trace )
+        trace->enable();
 }
 
 namespace snort

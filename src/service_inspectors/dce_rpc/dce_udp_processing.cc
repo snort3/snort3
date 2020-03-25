@@ -154,7 +154,7 @@ void DCE2_ClProcess(DCE2_SsnData* sd, DCE2_ClTracker* clt)
 
         case DCERPC_PDU_TYPE__RESPONSE:
         {
-            trace_log(dce_udp, "Response from client.  Changing stream direction.\n");
+            debug_log(dce_udp_trace, "Response from client.  Changing stream direction.\n");
             ip::IpApi* ip_api = &p->ptrs.ip_api;
 
             p->flow->session->update_direction(SSN_DIR_FROM_SERVER,
