@@ -97,7 +97,6 @@ struct TcpStats
     PegCount held_packets_passed;
     PegCount current_packets_held;
     PegCount max_packets_held;
-    PegCount held_packet_limit_exceeded;
     PegCount partial_flushes;
     PegCount partial_flush_bytes;
 };

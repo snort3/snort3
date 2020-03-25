@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include "packet_io/active.h"
+
 #include "http_common.h"
 #include "http_cutter.h"
 #include "http_enum.h"
@@ -28,7 +30,6 @@
 #include "http_module.h"
 #include "http_stream_splitter.h"
 #include "http_test_input.h"
-#include "stream/stream.h"
 
 using namespace snort;
 using namespace HttpCommon;
@@ -125,7 +126,7 @@ void HttpStreamSplitter::detain_packet(Packet* pkt)
     }
     if (!HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
 #endif
-    Stream::set_packet_action_to_hold(pkt);
+    pkt->active->hold_packet(pkt);
     HttpModule::increment_peg_counts(PEG_DETAINED);
 }
 

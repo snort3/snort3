@@ -355,16 +355,6 @@ void TcpStreamSession::cleanup(Packet* p)
     clear_session(true, true, false, p);
     client.normalizer.reset();
     server.reassembler.reset();
-    if ( p )
-    {
-        client.finalize_held_packet(p);
-        server.finalize_held_packet(p);
-    }
-    else
-    {
-        client.finalize_held_packet(flow);
-        server.finalize_held_packet(flow);
-    }
 }
 
 void TcpStreamSession::clear()

@@ -42,6 +42,8 @@ public:
         PegCount failed_injects;
         PegCount direct_injects;
         PegCount failed_direct_injects;
+        PegCount holds_denied;
+        PegCount holds_canceled;
     };
 
     enum ActiveStatus : uint8_t
@@ -94,6 +96,7 @@ public:
     void daq_drop_packet(const Packet*);
     bool retry_packet(const Packet*);
     bool hold_packet(const Packet*);
+    void cancel_packet_hold();
 
     void allow_session(Packet*);
     void block_session(Packet*, bool force = false);

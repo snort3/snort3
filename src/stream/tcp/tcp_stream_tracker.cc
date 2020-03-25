@@ -655,27 +655,15 @@ bool TcpStreamTracker::is_segment_seq_valid(TcpSegmentDescriptor& tsd)
 
 bool TcpStreamTracker::set_held_packet(Packet* p)
 {
-    // FIXIT-M - limit of packets held per packet thread should be determined based on runtime criteria
-    //           such as # of DAQ Msg buffers, # of threads, etc... for now we use small number like 10
     if ( held_packet )
         return false;
-    if ( tcpStats.current_packets_held >= 50 )
-    {
-        tcpStats.held_packet_limit_exceeded++;
-        return false;
-    }
 
-    if ( p->active->hold_packet(p) )
-    {
-        held_packet = p->daq_msg;
-        held_seq_num = p->ptrs.tcph->seq();
-        tcpStats.total_packets_held++;
-        if ( ++tcpStats.current_packets_held > tcpStats.max_packets_held )
-            tcpStats.max_packets_held = tcpStats.current_packets_held;
-        return true;
-    }
-
-    return false;
+    held_packet = p->daq_msg;
+    held_seq_num = p->ptrs.tcph->seq();
+    tcpStats.total_packets_held++;
+    if ( ++tcpStats.current_packets_held > tcpStats.max_packets_held )
+        tcpStats.max_packets_held = tcpStats.current_packets_held;
+    return true;
 }
 
 bool TcpStreamTracker::is_retransmit_of_held_packet(Packet* cp)
@@ -712,13 +700,17 @@ void TcpStreamTracker::finalize_held_packet(Packet* cp)
         held_seq_num = 0;
         tcpStats.current_packets_held--;
     }
+
+    if (cp->active->is_packet_held())
+        cp->active->cancel_packet_hold();
 }
 
 void TcpStreamTracker::finalize_held_packet(Flow* flow)
 {
     if ( held_packet )
     {
-        if ( flow->ssn_state.session_flags & SSNFLAG_BLOCK )
+        if ( (flow->session_state & STREAM_STATE_BLOCK_PENDING) ||
+             (flow->ssn_state.session_flags & SSNFLAG_BLOCK) )
         {
             Analyzer::get_local_analyzer()->finalize_daq_message(held_packet, DAQ_VERDICT_BLOCK);
             tcpStats.held_packets_dropped++;

@@ -169,6 +169,17 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
         server.reassembler.flush_queued_segments(flow, true, p);
     }
 
+    if ( p )
+    {
+        client.finalize_held_packet(p);
+        server.finalize_held_packet(p);
+    }
+    else
+    {
+        client.finalize_held_packet(flow);
+        server.finalize_held_packet(flow);
+    }
+
     client.reassembler.purge_segment_list();
     server.reassembler.purge_segment_list();
 
