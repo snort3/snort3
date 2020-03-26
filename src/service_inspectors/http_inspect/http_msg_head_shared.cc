@@ -86,9 +86,14 @@ void HttpMsgHeadShared::parse_header_block()
     int32_t bytes_used = 0;
     num_headers = 0;
     int32_t num_seps;
-    // session_data->num_head_lines is computed without consideration of wrapping and may overstate
-    // actual number of headers. Rely on num_headers which is calculated correctly.
+
+    // The number of header lines in a message may be zero
     header_line = new Field[session_data->num_head_lines[source_id]];
+
+    // session_data->num_head_lines is computed by HttpStreamSplitter without consideration of
+    // wrapping and may occasionally overstate the actual number of headers. That was OK for
+    // allocating space for the header_line array, but henceforth rely on num_headers which is
+    // calculated correctly.
     while (bytes_used < msg_text.length())
     {
         assert(num_headers < session_data->num_head_lines[source_id]);
