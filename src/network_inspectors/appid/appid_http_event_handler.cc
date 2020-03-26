@@ -51,6 +51,9 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     HttpEvent* http_event = (HttpEvent*)&event;
     AppidChangeBits change_bits;
 
+    if (asd->ctxt.get_tp_appid_ctxt() && !http_event->get_is_http2())
+        return;
+
     if (appidDebug->is_active())
         LogMessage("AppIdDbg %s Processing HTTP metadata from HTTP Inspector\n",
             appidDebug->get_debug_session());

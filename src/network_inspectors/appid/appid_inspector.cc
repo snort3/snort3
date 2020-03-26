@@ -116,14 +116,12 @@ bool AppIdInspector::configure(SnortConfig* sc)
 
     ctxt->init_appid(sc);
 
-    if (!ctxt->get_tp_appid_ctxt())
-    {
-        DataBus::subscribe_global(HTTP_REQUEST_HEADER_EVENT_KEY, new HttpEventHandler(
-            HttpEventHandler::REQUEST_EVENT), sc);
+    DataBus::subscribe_global(HTTP_REQUEST_HEADER_EVENT_KEY, new HttpEventHandler(
+        HttpEventHandler::REQUEST_EVENT), sc);
 
-        DataBus::subscribe_global(HTTP_RESPONSE_HEADER_EVENT_KEY, new HttpEventHandler(
-            HttpEventHandler::RESPONSE_EVENT), sc);
-    }
+    DataBus::subscribe_global(HTTP_RESPONSE_HEADER_EVENT_KEY, new HttpEventHandler(
+        HttpEventHandler::RESPONSE_EVENT), sc);
+
     DataBus::subscribe_global(DATA_DECRYPT_EVENT, new DataDecryptEventHandler(), sc);
 
     return true;

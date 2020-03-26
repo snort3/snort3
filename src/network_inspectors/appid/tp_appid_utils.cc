@@ -704,11 +704,6 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
                 // some cases.  Treat it like HTTP w/ is_http2 flag set.
                 if ((tp_app_id == APP_ID_HTTP2) && (tp_confidence == 100))
                 {
-                    if (appidDebug->is_active())
-                        LogMessage("AppIdDbg %s 3rd party saw HTTP/2\n",
-                            appidDebug->get_debug_session());
-
-                    tp_app_id = APP_ID_HTTP;
                     asd.is_http2 = true;
                 }
                 // if the third-party appId must be treated as a client, do it now

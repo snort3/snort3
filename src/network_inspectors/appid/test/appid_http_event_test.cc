@@ -41,6 +41,7 @@
 #include <CppUTestExt/MockSupport.h>
 
 THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
+ThirdPartyAppIdContext* AppIdContext::tp_appid_ctxt = nullptr;
 void AppIdDebug::activate(const Flow*, const AppIdSession*, bool) { active = true; }
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 
