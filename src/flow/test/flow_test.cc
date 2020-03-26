@@ -23,17 +23,18 @@
 #include "config.h"
 #endif
 
-#include "protocols/ip.h"
-#include "protocols/layer.h"
-#include "protocols/packet.h"
+#include "detection/detection_engine.h"
 #include "flow/flow.h"
 #include "flow/flow_stash.h"
 #include "flow/ha.h"
-#include "main/snort_debug.h"
 #include "framework/inspector.h"
 #include "framework/data_bus.h"
+#include "main/snort_config.h"
+#include "main/snort_debug.h"
 #include "memory/memory_cap.h"
-#include "detection/detection_engine.h"
+#include "protocols/ip.h"
+#include "protocols/layer.h"
+#include "protocols/packet.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
@@ -81,6 +82,8 @@ uint8_t ip::IpApi::ttl() const { return 0; }
 const Layer* layer::get_mpls_layer(const Packet* const) { return nullptr; }
 
 void DataBus::publish(const char*, Packet*, Flow*) {}
+
+SnortConfig* SnortConfig::get_conf() { return nullptr; }
 
 TEST_GROUP(nondefault_timeout)
 {

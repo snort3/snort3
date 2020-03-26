@@ -82,6 +82,14 @@ HostCacheAllocIp<T>::HostCacheAllocIp()
     lru = &host_cache;
 }
 
+template <class T>
+void HostCacheAlloc<T>::deallocate(T* p, std::size_t n) noexcept
+{
+    size_t sz = n*sizeof(T);
+    std::allocator<T>::deallocate(p, n);
+    lru->update( -(int) sz);
+}
+
 TEST_GROUP(host_cache_module)
 {
     void setup() override

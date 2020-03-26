@@ -28,7 +28,6 @@
 #include "flow/session.h"
 #include "framework/data_bus.h"
 #include "ips_options/ips_flowbits.h"
-#include "memory/memory_cap.h"
 #include "protocols/packet.h"
 #include "sfip/sf_ip.h"
 #include "utils/bitop.h"
@@ -36,43 +35,6 @@
 #include "utils/util.h"
 
 using namespace snort;
-
-unsigned FlowData::flow_data_id = 0;
-
-FlowData::FlowData(unsigned u, Inspector* ph)
-{
-    assert(u > 0);
-    id = u;
-    handler = ph;
-    prev = next = nullptr;
-    if ( handler )
-        handler->add_ref();
-}
-
-FlowData::~FlowData()
-{
-    if ( handler )
-        handler->rem_ref();
-
-    assert(mem_in_use == 0);
-}
-
-void FlowData::update_allocations(size_t n)
-{
-    memory::MemoryCap::free_space(n);
-    memory::MemoryCap::update_allocations(n);
-    mem_in_use += n;
-}
-
-void FlowData::update_deallocations(size_t n)
-{
-    assert(mem_in_use >= n);
-    memory::MemoryCap::update_deallocations(n);
-    mem_in_use -= n;
-}
-
-size_t FlowData::size_of()
-{ return 1024; }  // FIXIT-H remove this default impl
 
 Flow::Flow()
 {

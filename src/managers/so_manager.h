@@ -29,6 +29,7 @@
 namespace snort
 {
 struct SnortConfig;
+class Inspector;
 }
 
 //-------------------------------------------------------------------------
@@ -36,6 +37,7 @@ struct SoRules
 {
     std::list<const SoApi*> api;
     std::list<SoHandlePtr> handles;
+    snort::Inspector* proxy = nullptr;
     ~SoRules();
 };
 
@@ -56,6 +58,7 @@ public:
     static void rule_to_hex(const char* file);
     static void rule_to_text(const char* file);
     static void dump_rule_stubs(const char*, snort::SnortConfig*);
+    static void load_so_proxy();
 };
 
 #endif

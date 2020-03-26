@@ -1,6 +1,7 @@
 set (FLOW_INCLUDES
     expect_cache.h
     flow.h
+    flow_data.h
     flow_key.h
     flow_stash.h
     ha.h
@@ -16,6 +17,7 @@ add_library (flow OBJECT
     flow_config.h
     flow_control.cc
     flow_control.h
+    flow_data.cc
     flow_key.cc
     flow_stash.cc
     flow_stash.h

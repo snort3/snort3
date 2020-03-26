@@ -38,6 +38,7 @@ output = { }
 packets = { }
 process = { }
 search_engine = { }
+so_proxy = { }
 
 -- exceptions:
 

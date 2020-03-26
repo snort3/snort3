@@ -101,6 +101,7 @@ AppIdConfig::~AppIdConfig() = default;
 
 // Stubs for AppIdPegCounts
 void AppIdPegCounts::inc_payload_count(AppId) { }
+void AppIdPegCounts::inc_client_count(AppId) { }
 
 THREAD_LOCAL AppIdStats appid_stats;
 

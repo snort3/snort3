@@ -398,6 +398,8 @@ void PluginManager::load_plugins(const BaseApi** lp)
 
 void PluginManager::load_plugins(const std::string& paths)
 {
+    SoManager::load_so_proxy();
+
     // dynamic plugins
     if ( !paths.empty() )
         ::load_plugins(paths);

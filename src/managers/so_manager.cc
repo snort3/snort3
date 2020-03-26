@@ -33,6 +33,9 @@
 #include <sstream>
 
 #include "log/messages.h"
+#include "framework/decode_data.h"
+#include "framework/inspector.h"
+#include "framework/module.h"
 #include "main/snort_config.h"
 #include "parser/parse_so_rule.h"
 
@@ -337,3 +340,92 @@ void SoManager::rule_to_text(const char* delim)
     cout << "static const unsigned rule_" << var << "_len = 0;" << endl;
 }
 
+//-------------------------------------------------------------------------
+// so_proxy inspector
+//-------------------------------------------------------------------------
+static const char* sp_name = "so_proxy";
+static const char* sp_help = "a proxy inspector to track flow data from SO rules (internal use only)";
+class SoProxy : public Inspector
+{
+public:
+    void eval(Packet*) override { }
+    bool configure(SnortConfig* sc) override
+    {
+        for( auto i : sc->so_rules->handles )
+            handles.emplace_back(i);
+        sc->so_rules->proxy = this;
+        return true;
+    }
+    ~SoProxy() override { handles.clear(); }
+
+private:
+    std::list<SoHandlePtr> handles;
+};
+
+static const Parameter sp_params[] =
+{
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class SoProxyModule : public Module
+{
+public:
+    SoProxyModule() : Module(sp_name, sp_help, sp_params) { }
+    Usage get_usage() const override
+    { return GLOBAL; }
+};
+
+static Module* mod_ctor()
+{ return new SoProxyModule; }
+
+static void mod_dtor(Module* m)
+{ delete m; }
+
+static Inspector* sp_ctor(Module*)
+{
+    return new SoProxy;
+}
+
+static void sp_dtor(Inspector* p)
+{
+    delete p;
+}
+
+static const InspectApi so_proxy_api
+{
+    {
+        PT_INSPECTOR,
+        sizeof(InspectApi),
+        INSAPI_VERSION,
+        0,
+        API_RESERVED,
+        API_OPTIONS,
+        sp_name,
+        sp_help,
+        mod_ctor,
+        mod_dtor
+    },
+    IT_PASSIVE,
+    PROTO_BIT__NONE,
+    nullptr, // buffers
+    nullptr, // service
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit,
+    nullptr, // tterm,
+    sp_ctor,
+    sp_dtor,
+    nullptr, // ssn
+    nullptr  // reset
+};
+
+const BaseApi* so_proxy_plugins[] =
+{
+    &so_proxy_api.base,
+    nullptr
+};
+
+void SoManager::load_so_proxy()
+{
+    PluginManager::load_plugins(so_proxy_plugins);
+}

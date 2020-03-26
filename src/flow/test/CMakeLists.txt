@@ -23,5 +23,7 @@ add_cpputest( flow_cache_test
 add_cpputest( session_test )
 
 add_cpputest( flow_test
-    SOURCES ../flow.cc
+    SOURCES
+        ../flow.cc
+        ../flow_data.cc
 )

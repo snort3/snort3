@@ -30,6 +30,7 @@
 #include <sys/time.h>
 
 #include "detection/ips_context_chain.h"
+#include "flow/flow_data.h"
 #include "flow/flow_stash.h"
 #include "framework/data_bus.h"
 #include "framework/decode_data.h"
@@ -107,42 +108,6 @@ class IpsContext;
 struct Packet;
 
 typedef void (* StreamAppDataFree)(void*);
-
-class SO_PUBLIC FlowData
-{
-public:
-    FlowData(unsigned u, Inspector* = nullptr);
-    virtual ~FlowData();
-
-    unsigned get_id()
-    { return id; }
-
-    static unsigned create_flow_data_id()
-    { return ++flow_data_id; }
-
-    void update_allocations(size_t);
-    void update_deallocations(size_t);
-    Inspector* get_handler() { return handler; }
-
-    // return fixed size (could be an approx avg)
-    // this must be fixed for life of flow data instance
-    // track significant supplemental allocations with the above updaters
-    virtual size_t size_of() = 0;
-
-    virtual void handle_expected(Packet*) { }
-    virtual void handle_retransmit(Packet*) { }
-    virtual void handle_eof(Packet*) { }
-
-public:  // FIXIT-L privatize
-    FlowData* next;
-    FlowData* prev;
-
-private:
-    static unsigned flow_data_id;
-    Inspector* handler;
-    size_t mem_in_use = 0;
-    unsigned id;
-};
 
 struct FlowStats
 {
