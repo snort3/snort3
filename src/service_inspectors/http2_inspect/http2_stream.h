@@ -53,12 +53,6 @@ public:
     void set_data_cutter(Http2DataCutter* cutter, HttpCommon::SourceId source_id)
     { data_cutter[source_id] = cutter; }
 
-    bool get_abort_data_processing(HttpCommon::SourceId source_id) const
-    { return abort_data_processing[source_id]; }
-
-    void set_abort_data_processing(HttpCommon::SourceId source_id)
-    { abort_data_processing[source_id] = true; }
-
 #ifdef REG_TEST
     void print_frame(FILE* output);
 #endif
@@ -70,7 +64,6 @@ private:
     HttpFlowData* hi_flow_data = nullptr;
     HttpMsgSection* hi_msg_section = nullptr;
     Http2DataCutter* data_cutter[2] = { nullptr, nullptr};
-    bool abort_data_processing[2] = {false, false};
 };
 
 #endif

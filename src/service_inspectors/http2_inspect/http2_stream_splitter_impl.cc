@@ -39,20 +39,14 @@ using namespace snort;
 using namespace HttpCommon;
 using namespace Http2Enums;
 
-
 StreamSplitter::Status data_scan(Http2FlowData* session_data, const uint8_t* data,
     uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id,
-    uint32_t frame_length, uint8_t frame_flags)
+    uint32_t frame_length, uint8_t frame_flags, uint32_t& data_offset)
 {
     Http2Stream* const stream = session_data->find_stream(session_data->current_stream[source_id]);
     HttpFlowData* http_flow = nullptr;
     if (stream)
-    {
         http_flow = (HttpFlowData*)stream->get_hi_flow_data();
-        // temporary, till more than 1 data frame sent to http inspect is supported
-        if (stream->get_abort_data_processing(source_id))
-            return StreamSplitter::ABORT;
-    }
 
     if (!stream || !http_flow || (frame_length > 0 and
         (http_flow->get_type_expected(source_id) != HttpEnums::SEC_BODY_H2)))
@@ -66,13 +60,17 @@ StreamSplitter::Status data_scan(Http2FlowData* session_data, const uint8_t* dat
         return StreamSplitter::ABORT;
 
     Http2DataCutter* data_cutter = stream->get_data_cutter(source_id);
-    return data_cutter->scan(data, length, flush_offset, frame_length, frame_flags);
+    return data_cutter->scan(data, length, flush_offset, data_offset, frame_length, frame_flags);
 }
 
 StreamSplitter::Status non_data_scan(Http2FlowData* session_data,
     uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id,
     uint32_t frame_length, uint8_t type, uint8_t frame_flags, uint32_t& data_offset)
 {
+    // FIXIT-E - temporary. Will force data frame flush instead
+    if (session_data->data_processing[source_id])
+        return StreamSplitter::ABORT;
+
     // Compute frame section length once per frame
     if (session_data->scan_remaining_frame_octets[source_id] == 0)
     {
@@ -170,61 +168,66 @@ StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t
             return StreamSplitter::SEARCH;
         }
     }
-    else if (session_data->mid_packet[source_id])
-    {
-        // Continuation of ongoing data frame
-        Http2Stream* const stream = session_data->find_stream(
-            session_data->current_stream[source_id]);
-        Http2DataCutter* data_cutter = stream->get_data_cutter(source_id);
-        return data_cutter->scan(data, length, flush_offset);
-    }
     else
     {
-        // Frame with header
         *flush_offset = 0;
         uint32_t data_offset = 0;
         session_data->octets_before_first_header[source_id] = 0;
-        // If there is a header frame followed by a continuation frame in the same tcp segment,
-        // need to process multiple frames in a single scan
+
+        // If there is a header frame followed by a continuation frame in the same tcp segment or
+        // several data frames need to process multiple frames in a single scan
         do
         {
-            if (session_data->scan_octets_seen[source_id] == 0)
+            if (session_data->mid_data_frame[source_id])
             {
-                // Scanning a new frame
-                session_data->num_frame_headers[source_id] += 1;
+                // Continuation of ongoing data frame
+                Http2Stream* const stream = session_data->find_stream(
+                    session_data->current_stream[source_id]);
+                Http2DataCutter* data_cutter = stream->get_data_cutter(source_id);
+                status = data_cutter->scan(data, length, flush_offset, data_offset);
             }
-
-            // The first nine bytes are the frame header. But all nine might not all be present in
-            // the first TCP segment we receive.
-            const uint32_t remaining_header = FRAME_HEADER_LENGTH -
-                session_data->scan_octets_seen[source_id];
-            const uint32_t remaining_header_in_data = remaining_header > length - data_offset ?
-                length - data_offset : remaining_header;
-            memcpy(session_data->scan_frame_header[source_id] +
-                session_data->scan_octets_seen[source_id], data + data_offset,
-                remaining_header_in_data);
-            session_data->scan_octets_seen[source_id] += remaining_header_in_data;
-            data_offset += remaining_header_in_data;
-
-            if (session_data->scan_octets_seen[source_id] < FRAME_HEADER_LENGTH)
-                return StreamSplitter::SEARCH;
-
-            // We have the full frame header, compute some variables
-            const uint32_t frame_length = get_frame_length(session_data->
-                scan_frame_header[source_id]);
-            const uint8_t type = session_data->frame_type[source_id] = get_frame_type(
-                session_data->scan_frame_header[source_id]);
-            const uint8_t frame_flags = get_frame_flags(session_data->
-                scan_frame_header[source_id]);
-            session_data->current_stream[source_id] =
-                get_stream_id(session_data->scan_frame_header[source_id]);
-
-            if (type == FT_DATA)
-                return data_scan(session_data, data, length, flush_offset, source_id,
-                    frame_length, frame_flags);
             else
-                status = non_data_scan(session_data, length, flush_offset, source_id,
-                    frame_length, type, frame_flags, data_offset);
+            {
+                // Frame with header
+                if (session_data->scan_octets_seen[source_id] == 0)
+                {
+                    // Scanning a new frame
+                    session_data->num_frame_headers[source_id] += 1;
+                }
+
+                // The first nine bytes are the frame header. But all nine might not all be present
+                // in
+                // the first TCP segment we receive.
+                const uint32_t remaining_header = FRAME_HEADER_LENGTH -
+                    session_data->scan_octets_seen[source_id];
+                const uint32_t remaining_header_in_data = remaining_header > length - data_offset ?
+                    length - data_offset : remaining_header;
+                memcpy(session_data->scan_frame_header[source_id] +
+                    session_data->scan_octets_seen[source_id], data + data_offset,
+                    remaining_header_in_data);
+                session_data->scan_octets_seen[source_id] += remaining_header_in_data;
+                data_offset += remaining_header_in_data;
+
+                if (session_data->scan_octets_seen[source_id] < FRAME_HEADER_LENGTH)
+                    return StreamSplitter::SEARCH;
+
+                // We have the full frame header, compute some variables
+                const uint32_t frame_length = get_frame_length(session_data->
+                    scan_frame_header[source_id]);
+                const uint8_t type = session_data->frame_type[source_id] = get_frame_type(
+                    session_data->scan_frame_header[source_id]);
+                const uint8_t frame_flags = get_frame_flags(session_data->
+                    scan_frame_header[source_id]);
+                session_data->current_stream[source_id] =
+                    get_stream_id(session_data->scan_frame_header[source_id]);
+
+                if (type == FT_DATA)
+                    status = data_scan(session_data, data, length, flush_offset, source_id,
+                        frame_length, frame_flags, data_offset);
+                else
+                    status = non_data_scan(session_data, length, flush_offset, source_id,
+                        frame_length, type, frame_flags, data_offset);
+            }
         }
         while (status == StreamSplitter::SEARCH && data_offset < length);
     }
@@ -243,12 +246,24 @@ const StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned to
 
     StreamBuffer frame_buf { nullptr, 0 };
 
+    if (offset == 0)
+    {
+        // This is the first reassemble() for this frame and we need to allocate some buffers
+        session_data->frame_header_size[source_id] = FRAME_HEADER_LENGTH *
+            session_data->num_frame_headers[source_id];
+        if (session_data->frame_header_size[source_id] > 0)
+            session_data->frame_header[source_id] =
+                new uint8_t[session_data->frame_header_size[source_id]];
+
+        session_data->frame_header_offset[source_id] = 0;
+    }
+
     if (session_data->frame_type[source_id] == FT_DATA)
     {
         Http2Stream* const stream = session_data->find_stream(
             session_data->current_stream[source_id]);
         Http2DataCutter* data_cutter = stream->get_data_cutter(source_id);
-        StreamBuffer http_frame_buf = data_cutter->reassemble(total, data, len);
+        StreamBuffer http_frame_buf = data_cutter->reassemble(data, len);
         if (http_frame_buf.data)
         {
             session_data->frame_data[source_id] = const_cast<uint8_t*>(http_frame_buf.data);
@@ -262,20 +277,13 @@ const StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned to
 
         if (offset == 0)
         {
-            // This is the first reassemble() for this frame and we need to allocate some buffers
-            session_data->frame_header_size[source_id] = FRAME_HEADER_LENGTH *
-                session_data->num_frame_headers[source_id];
-            if (session_data->frame_header_size[source_id] > 0)
-                session_data->frame_header[source_id] = new uint8_t[
-                    session_data->frame_header_size[source_id]];
-
+            // This is the first reassemble() for this frame - allocate data buffer
             session_data->frame_data_size[source_id]= total -
                 session_data->frame_header_size[source_id];
             if (session_data->frame_data_size[source_id] > 0)
                 session_data->frame_data[source_id] = new uint8_t[
                     session_data->frame_data_size[source_id]];
 
-            session_data->frame_header_offset[source_id] = 0;
             session_data->frame_data_offset[source_id] = 0;
             session_data->remaining_frame_octets[source_id] =
                 session_data->octets_before_first_header[source_id];

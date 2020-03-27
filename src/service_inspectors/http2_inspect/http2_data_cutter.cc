@@ -40,9 +40,10 @@ Http2DataCutter::Http2DataCutter(Http2FlowData* _session_data, HttpCommon::Sourc
 // Scan data frame, extract information needed for http scan.
 // http scan will need the data only, stripped of padding and header.
 bool Http2DataCutter::http2_scan(const uint8_t* data, uint32_t length,
-    uint32_t* flush_offset, uint32_t frame_len, uint8_t flags)
+    uint32_t* flush_offset, uint32_t frame_len, uint8_t flags, uint32_t& data_offset)
 {
-    *flush_offset = cur_data_offset = cur_data = cur_padding = 0;
+    cur_data_offset = data_offset;
+    cur_data = cur_padding = 0;
 
     if (frame_bytes_seen == 0)
     {
@@ -50,13 +51,11 @@ bool Http2DataCutter::http2_scan(const uint8_t* data, uint32_t length,
         padding_len = data_bytes_read = padding_read = 0;
         frame_flags = flags;
         frame_bytes_seen = cur_data_offset = FRAME_HEADER_LENGTH;
-        length -= FRAME_HEADER_LENGTH;
         *flush_offset = FRAME_HEADER_LENGTH;
         data_state = ((frame_flags & PADDED) !=0) ? PADDING_LENGTH : DATA;
     }
 
-    uint32_t cur_pos = leftover_bytes;
-
+    uint32_t cur_pos = data_offset + leftover_bytes;
     while ((cur_pos < length) && (data_state != FULL_FRAME))
     {
         switch (data_state)
@@ -105,10 +104,9 @@ bool Http2DataCutter::http2_scan(const uint8_t* data, uint32_t length,
         }
     }
 
-    frame_bytes_seen += (cur_pos - leftover_bytes);
+    frame_bytes_seen += (cur_pos - leftover_bytes - data_offset);
+    *flush_offset = data_offset = cur_pos;
     session_data->scan_remaining_frame_octets[source_id] = frame_length - frame_bytes_seen;
-    *flush_offset += cur_pos;
-
     return true;
 }
 
@@ -132,7 +130,8 @@ StreamSplitter::Status Http2DataCutter::http_scan(const uint8_t* data, uint32_t*
             bytes_sent_http += http_flush_offset;
             leftover_bytes = cur_data + leftover_bytes - http_flush_offset;
             *flush_offset -= leftover_bytes;
-            session_data->mid_packet[source_id] = ( leftover_bytes > 0 ) ? true : false;
+            if (leftover_bytes || data_state != FULL_FRAME)
+                session_data->mid_data_frame[source_id] = true;
         }
         else if (scan_result == StreamSplitter::SEARCH)
         {
@@ -146,47 +145,40 @@ StreamSplitter::Status Http2DataCutter::http_scan(const uint8_t* data, uint32_t*
     {
         if (leftover_bytes == 0)
         {
-            session_data->get_current_stream(source_id)->get_hi_flow_data()->
-                set_http2_end_stream(source_id);
-            scan_result = session_data->hi_ss[source_id]->scan(&dummy_pkt, nullptr, 0, unused,
-                &http_flush_offset);
-            assert(scan_result == StreamSplitter::FLUSH);
-
-            // FIXIT-H for now only a single data frame is processed
-            Http2Stream* const stream = session_data->find_stream(
-                session_data->current_stream[source_id]);
-            stream->set_abort_data_processing(source_id);
-
             // Done with this frame, cleanup
-            session_data->mid_packet[source_id] = false;
+            session_data->mid_data_frame[source_id] = false;
             session_data->scan_octets_seen[source_id] = 0;
             session_data->scan_remaining_frame_octets[source_id] = 0;
             frame_bytes_seen = 0;
+
+            if (frame_flags & END_STREAM)
+            {
+                session_data->get_current_stream(source_id)->get_hi_flow_data()->
+                    set_http2_end_stream(source_id);
+                scan_result = session_data->hi_ss[source_id]->scan(&dummy_pkt, nullptr, 0, unused,
+                    &http_flush_offset);
+                assert(scan_result == StreamSplitter::FLUSH);
+            }
+            else
+                session_data->data_processing[source_id] = true;
         }
     }
 
     if (scan_result != StreamSplitter::FLUSH)
         *flush_offset = 0;
-
     return scan_result;
 }
 
 StreamSplitter::Status Http2DataCutter::scan(const uint8_t* data, uint32_t length,
-    uint32_t* flush_offset, uint32_t frame_len, uint8_t frame_flags)
+    uint32_t* flush_offset, uint32_t& data_offset, uint32_t frame_len, uint8_t frame_flags)
 {
-    // FIXIT-H temporary, until more than 1 data frame sent to http inspect is supported
-    Http2Stream* const stream = session_data->find_stream(session_data->current_stream[source_id]);
-    if (stream->get_abort_data_processing(source_id))
-        return StreamSplitter::ABORT;
-
-    if (!http2_scan(data, length, flush_offset, frame_len, frame_flags))
+    if (!http2_scan(data, length, flush_offset, frame_len, frame_flags, data_offset))
         return StreamSplitter::ABORT;
 
     return http_scan(data, flush_offset);
 }
 
-const StreamBuffer Http2DataCutter::reassemble(unsigned, const uint8_t* data,
-    unsigned len)
+const StreamBuffer Http2DataCutter::reassemble(const uint8_t* data, unsigned len)
 {
     StreamBuffer frame_buf { nullptr, 0 };
 
@@ -199,41 +191,40 @@ const StreamBuffer Http2DataCutter::reassemble(unsigned, const uint8_t* data,
         {
         case GET_FRAME_HDR:
           {
-            if (reassemble_hdr_bytes_read == 0)
-            {
-                session_data->frame_header[source_id] = new uint8_t[FRAME_HEADER_LENGTH];
-                session_data->frame_header_size[source_id] = FRAME_HEADER_LENGTH;
-                padding_len = 0;
-            }
-
             const uint32_t missing = FRAME_HEADER_LENGTH - reassemble_hdr_bytes_read;
             const uint32_t cur_frame = ((len - cur_pos) < missing) ? (len - cur_pos) : missing;
-            memcpy(session_data->frame_header[source_id] + reassemble_hdr_bytes_read, data +
-                cur_pos,
-                cur_frame);
+            memcpy(session_data->frame_header[source_id] +
+                session_data->frame_header_offset[source_id] +
+                reassemble_hdr_bytes_read,
+                data + cur_pos, cur_frame);
             reassemble_hdr_bytes_read += cur_frame;
+
             cur_pos += cur_frame;
 
             if (reassemble_hdr_bytes_read == FRAME_HEADER_LENGTH)
             {
-                data_len = frame_length = get_frame_length(session_data->frame_header[source_id]);
-                frame_flags = get_frame_flags(session_data->frame_header[source_id]);
+                reassemble_data_len = get_frame_length(session_data->frame_header[source_id]+
+                    session_data->frame_header_offset[source_id]);
+                reassemble_frame_flags = get_frame_flags(session_data->frame_header[source_id]+
+                    session_data->frame_header_offset[source_id]);
                 cur_data_offset = cur_pos;
-                reassemble_state = ((frame_flags & PADDED) !=0) ? GET_PADDING_LEN : SEND_DATA;
+                reassemble_state = ((reassemble_frame_flags & PADDED) !=0) ? GET_PADDING_LEN :
+                    SEND_DATA;
+                session_data->frame_header_offset[source_id] += FRAME_HEADER_LENGTH;
             }
 
             break;
           }
         case GET_PADDING_LEN:
-            padding_len = *(data + cur_pos);
-            data_len -= (padding_len + 1);
+            reassemble_padding_len = *(data + cur_pos);
+            reassemble_data_len -= (reassemble_padding_len + 1);
             cur_pos++;
             cur_data_offset++;
             reassemble_state = SEND_DATA;
             break;
         case SEND_DATA:
           {
-            const uint32_t missing = data_len - reassemble_data_bytes_read;
+            const uint32_t missing = reassemble_data_len - reassemble_data_bytes_read;
             cur_data = ((len - cur_pos) >= missing) ? missing : (len - cur_pos);
             reassemble_data_bytes_read += cur_data;
             cur_pos += cur_data;
@@ -247,33 +238,35 @@ const StreamBuffer Http2DataCutter::reassemble(unsigned, const uint8_t* data,
             assert(copied == (unsigned)cur_data);
             reassemble_bytes_sent += copied;
 
-            if (reassemble_data_bytes_read == data_len)
-                reassemble_state = (padding_len) ? SKIP_PADDING : CLEANUP;
+            if (reassemble_data_bytes_read == reassemble_data_len)
+                reassemble_state = (reassemble_padding_len) ? SKIP_PADDING : CLEANUP;
 
             break;
           }
         case SKIP_PADDING:
           {
-            const uint32_t missing = padding_len - reassemble_padding_read;
+            const uint32_t missing = reassemble_padding_len - reassemble_padding_read;
             cur_padding = ((len - cur_pos) >= missing) ?
                 missing : (len - cur_pos);
             cur_pos += cur_padding;
             reassemble_padding_read += cur_padding;
-            if (reassemble_padding_read == padding_len)
+
+            if (reassemble_padding_read == reassemble_padding_len)
                 reassemble_state = CLEANUP;
+
             break;
           }
-
         default:
             break;
         }
-    }
 
-    if (reassemble_state == CLEANUP)
-    {
-        // Done with this packet
-        reassemble_state = GET_FRAME_HDR;
-        reassemble_hdr_bytes_read = reassemble_data_bytes_read = reassemble_padding_read = 0;
+        if (reassemble_state == CLEANUP)
+        {
+            // Done with this packet, cleanup
+            reassemble_state = GET_FRAME_HDR;
+            reassemble_hdr_bytes_read = reassemble_data_bytes_read = reassemble_padding_read =
+                        reassemble_padding_len = 0;
+        }
     }
 
     if (frame_buf.data != nullptr)
