@@ -252,7 +252,7 @@ FpSelector::FpSelector(CursorActionType c, PatternMatchData* p)
     cat = c;
     pmd = p;
 
-    // FIXIT-H unconditional trim is bad mkay? see fpGetFinalPattern
+    // FIXIT-M unconditional trim is bad mkay? see fpGetFinalPattern
     size = flp_trim(pmd->pattern_buf, pmd->pattern_size, nullptr);
 }
 

@@ -124,7 +124,7 @@ void MpseRegexOffload::put(Packet* p)
     assert(p->context->searches.items.size() > 0);
 
     RegexRequest* req = idle.front();
-    idle.pop_front();  // FIXIT-H use splice to move instead
+    idle.pop_front();
 
     busy.emplace_back(req);
     // Because a list is a doubly linked list we can store the iterator
@@ -217,7 +217,7 @@ void ThreadRegexOffload::put(Packet* p)
     assert(p->context->searches.items.size() > 0);
 
     RegexRequest* req = idle.front();
-    idle.pop_front();  // FIXIT-H use splice to move instead
+    idle.pop_front();
 
     busy.emplace_back(req);
     p->context->regex_req_it = std::prev(busy.end());

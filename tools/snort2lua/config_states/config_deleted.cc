@@ -575,7 +575,7 @@ const ConvertMap* protected_content_map = &protected_content_api;
  *************  sidechannel ****************
  *************************************************/
 
-// FIXIT-H: This is temporary and needs to be translated to an appropriate `side_channel = {}`
+// FIXIT-L: This is temporary and needs to be translated to an appropriate `side_channel = {}`
 
 static const std::string sidechannel = "sidechannel";
 static const ConvertMap sidechannel_api =

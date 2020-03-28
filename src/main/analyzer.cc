@@ -571,7 +571,7 @@ void Analyzer::idle()
 void Analyzer::init_unprivileged()
 {
     // using dummy values until further integration
-    // FIXIT-H max_contexts must be <= DAQ msg pool to avoid permanent stall
+    // FIXIT-M max_contexts must be <= DAQ msg pool to avoid permanent stall (offload only)
     // condition (polling for packets that won't come to resume ready suspends)
 #ifdef REG_TEST
     const unsigned max_contexts = 20;

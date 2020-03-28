@@ -165,8 +165,6 @@ int HashOption::match(Cursor& c)
         pos += offset;
     }
 
-    // FIXIT-H should fail if offset is out of bounds
-    // same for content and possibly others too
     if ( pos < 0 )
         pos = 0;
 

@@ -219,7 +219,7 @@ uint32_t TcpNormalizer::get_tcp_timestamp(
 bool TcpNormalizer::validate_rst_seq_geq(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
 {
-    // FIXIT-H check for rcv_nxt == 0 is hack for uninitialized rcv_nxt, fix this
+    // FIXIT-M check for rcv_nxt == 0 is hack for uninitialized rcv_nxt
     if ( ( tns.tracker->rcv_nxt == 0 ) || SEQ_GEQ(tsd.get_seg_seq(), tns.tracker->rcv_nxt) )
         return true;
 
@@ -229,7 +229,7 @@ bool TcpNormalizer::validate_rst_seq_geq(
 bool TcpNormalizer::validate_rst_end_seq_geq(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
 {
-    // FIXIT-H check for r_win_base == 0 is hack for uninitialized r_win_base, fix this
+    // FIXIT-M check for r_win_base == 0 is hack for uninitialized r_win_base
     if ( tns.tracker->r_win_base == 0 )
         return true;
 
@@ -248,7 +248,7 @@ bool TcpNormalizer::validate_rst_seq_eq(
 {
     uint32_t expected_seq = tns.tracker->rcv_nxt + tns.tracker->get_fin_seq_adjust();
 
-    // FIXIT-H check for rcv_nxt == 0 is hack for uninitialized rcv_nxt, fix this
+    // FIXIT-M check for rcv_nxt == 0 is hack for uninitialized rcv_nxt
     if ( ( tns.tracker->rcv_nxt == 0 ) || SEQ_EQ(tsd.get_seg_seq(), expected_seq) )
         return true;
 

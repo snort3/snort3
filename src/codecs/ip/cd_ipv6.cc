@@ -622,7 +622,6 @@ void Ipv6Codec::update(const ip::IpApi&, const EncodeFlags flags,
     // in such case we do not modify the packet length.
     if ( (flags & UPD_MODIFIED) && !(flags & UPD_RESIZED) )
     {
-        // FIXIT-H this worked in Snort.  In Snort++, will this be accurate?
         updated_len = ntohs(h->ip6_payload_len) + ip::IP6_HEADER_LEN;
     }
     else

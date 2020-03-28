@@ -341,7 +341,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     /* if this packet isn't a fragment
      * or if it is, its a UDP packet and offset is 0 */
     if (!(snort.decode_flags & DECODE_FRAG) /*||
-        ((frag_off == 0) &&  // FIXIT-H this forces flow to udp instead of ip
+        ((frag_off == 0) &&  // FIXIT-M this forces flow to udp instead of ip
          (iph->proto() == IpProtocol::UDP))*/)
     {
         if (to_utype(iph->proto()) >= to_utype(ProtocolId::MIN_UNASSIGNED_IP_PROTO))

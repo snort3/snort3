@@ -49,7 +49,7 @@ Http2Frame::Http2Frame(const uint8_t* header_buffer, const int32_t header_len,
 Http2Frame* Http2Frame::new_frame(const uint8_t* header, const int32_t header_len,
     const uint8_t* data, const int32_t data_len, Http2FlowData* session_data, SourceId source_id)
 {
-    // FIXIT-H call the appropriate frame subclass constructor based on the type
+    // FIXIT-E call the appropriate frame subclass constructor based on the type
     switch(session_data->frame_type[source_id])
     {
         case FT_HEADERS:

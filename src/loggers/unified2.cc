@@ -166,7 +166,7 @@ static void alert_event(Packet* p, const char*, Unified2Config* config, const Ev
     Unified2Event u2_event;
     memset(&u2_event, 0, sizeof(u2_event));
 
-    u2_event.snort_id = 0;  // FIXIT-H define / use
+    u2_event.snort_id = 0;  // FIXIT-H alert_event define / use
 
     u2_event.event_id = htonl(event->event_id);
     u2_event.event_second = htonl(event->ref_time.tv_sec);

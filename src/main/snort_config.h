@@ -214,7 +214,7 @@ public:
     //------------------------------------------------------
     // output module stuff
 #ifdef REG_TEST
-    // FIXIT-H builtin modules should set SnortConfig defaults instead
+    // FIXIT-M builtin modules should set SnortConfig defaults instead
     uint32_t output_flags = OUTPUT_FLAG__WIDE_HEX;
 #else
     uint32_t output_flags = 0;

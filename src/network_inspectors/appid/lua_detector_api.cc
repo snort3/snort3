@@ -2805,11 +2805,11 @@ LuaServiceObject::LuaServiceObject(AppIdDiscovery* sdm, const std::string& detec
 
     lua_pushvalue(L, -1);
 
-    // FIXIT-M: RELOAD - go back to using lua reference
+    // FIXIT-E: RELOAD - go back to using lua reference
     // instead of using a string for lookups
     // lsd.detector_user_data_ref = luaL_ref(L, LUA_REGISTRYINDEX);
 
-    // FIXIT-H: The control and thread states have the same initialization
+    // FIXIT-E: The control and thread states have the same initialization
     // sequence, the stack index shouldn't change between the states, maybe
     // use a common index for a detector between all the states
     std::string name = detector_name + "_";
@@ -2876,11 +2876,11 @@ LuaClientObject::LuaClientObject(const std::string& detector_name,
 
     lua_pushvalue(L, -1);
 
-    // FIXIT-M: RELOAD - go back to using lua reference
+    // FIXIT-E: RELOAD - go back to using lua reference
     // instead of using a string for lookups
     // lsd.detector_user_data_ref = luaL_ref(L, LUA_REGISTRYINDEX);
 
-    // FIXIT-H: The control and thread states have the same initialization
+    // FIXIT-E: The control and thread states have the same initialization
     // sequence, the stack index shouldn't change between the states, maybe
     // use a common index for a detector between all the states
     std::string name = detector_name + "_";

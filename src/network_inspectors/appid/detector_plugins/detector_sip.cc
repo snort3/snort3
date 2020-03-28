@@ -179,9 +179,9 @@ struct ServiceSIPData
 void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, const SfIp* cliIp,
     uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol protocol, int16_t app_id)
 {
-    //  FIXIT-RC: Passing app_id instead of SnortProtocolId to
-    //  create_future_session is incorrect. We need to look up
-    //  snort_protocol_id.
+    // FIXIT-E: Passing app_id instead of SnortProtocolId to
+    // create_future_session is incorrect. We need to look up
+    // snort_protocol_id.
 
     AppIdSession* fp = AppIdSession::create_future_session(
         pkt, cliIp, cliPort, srvIp, srvPort, protocol, app_id,
@@ -193,7 +193,7 @@ void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, con
         fp->payload.set_id(asd.payload.get_id());
         fp->service.set_id(APP_ID_RTP, asd.ctxt.get_odp_ctxt());
 
-        // FIXIT-H : snort 2.9.x updated the flag to APPID_SESSION_EXPECTED_EVALUATE.
+        // FIXIT-M : snort 2.9.x updated the flag to APPID_SESSION_EXPECTED_EVALUATE.
         // Check if it is needed here as well.
         //initialize_expected_session(asd, fp, APPID_SESSION_EXPECTED_EVALUATE);
 
@@ -213,7 +213,7 @@ void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, con
         fp2->payload.set_id(asd.payload.get_id());
         fp2->service.set_id(APP_ID_RTCP, asd.ctxt.get_odp_ctxt());
 
-        // FIXIT-H : same comment as above
+        // FIXIT-M : same comment as above
         //initialize_expected_session(asd, fp2, APPID_SESSION_EXPECTED_EVALUATE);
 
         initialize_expected_session(

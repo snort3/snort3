@@ -51,9 +51,6 @@ FileSession::~FileSession()
 
 bool FileSession::setup(Packet*)
 {
-    // FIXIT-H file context is null here
-    //const char* s = DAQ_GetInterfaceSpec();
-    //file_api->set_file_name(p->flow, (uint8_t*)s, strlen(s));
     return true;
 }
 

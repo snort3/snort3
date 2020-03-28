@@ -167,8 +167,6 @@ static const Parameter s_params[] =
     { "max_pdu", Parameter::PT_INT, "1460:32768", "16384",
       "maximum reassembled PDU size" },
 
-    // FIXIT-H: This should become an API call so that
-    // an inspector can enable no-ack processing on specific flows
     { "no_ack", Parameter::PT_BOOL, nullptr, "false",
       "received data is implicitly acked immediately" },
 

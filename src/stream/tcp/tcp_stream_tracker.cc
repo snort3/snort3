@@ -94,6 +94,7 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(const TcpSegmentDescr
                 tcp_event = TCP_ACK_SENT_EVENT;
         }
         else if ( tsd.get_seg_len() > 0 )   // FIXIT-H no flags set, how do we handle this?
+                                            // discard; drop if normalizing
             tcp_event = TCP_DATA_SEG_SENT_EVENT;
         else
             tcp_event = TCP_ACK_SENT_EVENT;
@@ -136,6 +137,7 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(const TcpSegmentDescr
                 tcp_event = TCP_ACK_RECV_EVENT;
         }
         else if ( tsd.get_seg_len() > 0 )    // FIXIT-H no flags set, how do we handle this?
+                                             // discard; drop if normalizing
             tcp_event = TCP_DATA_SEG_RECV_EVENT;
         else
             tcp_event = TCP_ACK_RECV_EVENT;
@@ -281,7 +283,7 @@ void TcpStreamTracker::init_on_syn_sent(TcpSegmentDescriptor& tsd)
 void TcpStreamTracker::init_on_syn_recv(TcpSegmentDescriptor& tsd)
 {
     irs = tsd.get_seg_seq();
-    // FIXIT-H can we really set the vars below now?
+
     rcv_nxt = tsd.get_seg_seq() + 1;
     r_win_base = tsd.get_seg_seq() + 1;
     reassembler.set_seglist_base_seq(tsd.get_seg_seq() + 1);
@@ -386,7 +388,6 @@ void TcpStreamTracker::init_on_data_seg_sent(TcpSegmentDescriptor& tsd)
     else
         flow->set_session_flags(SSNFLAG_SEEN_SERVER);
 
-    // FIXIT-H should we init these?
     iss = tsd.get_seg_seq();
     irs = tsd.get_seg_ack();
     snd_una = tsd.get_seg_seq();
@@ -432,7 +433,7 @@ void TcpStreamTracker::finish_server_init(TcpSegmentDescriptor& tsd)
     snd_nxt = tsd.get_end_seq();
     snd_wnd = tsd.get_seg_wnd();
 
-    // FIXIT-H move this to fin handler for syn_recv state ..
+    // FIXIT-M move this to fin handler for syn_recv state ..
     //if ( tcph->is_fin() )
     //    server->set_snd_nxt(server->get_snd_nxt() - 1);
 
@@ -493,6 +494,7 @@ void TcpStreamTracker::update_tracker_ack_sent(TcpSegmentDescriptor& tsd)
     //snd_una = tsd.get_seg_seq();
 
     // FIXIT-H add check to validate ack...
+    // norm/drop + discard
 
     if ( SEQ_GT(tsd.get_end_seq(), snd_nxt) )
         snd_nxt = tsd.get_end_seq();

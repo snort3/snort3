@@ -28,14 +28,14 @@ void HttpMsgBodyH2::update_flow()
     session_data->body_octets[source_id] = body_octets;
     if (session_data->http2_end_stream[source_id])
     {
-        // FIXIT-H check content length header against bytes received
+        // FIXIT-E check content length header against bytes received
 
         session_data->trailer_prep(source_id);
         session_data->http2_end_stream[source_id] = false;
     }
     else
     {
-        //FIXIT-H check have not exceeded content length
+        // FIXIT-E check have not exceeded content length
         update_depth();
     }
 }

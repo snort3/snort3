@@ -209,7 +209,7 @@ bool Http2StreamSplitter::finish(Flow* flow)
     }
 #endif
 
-    // FIXIT-H not supported yet
+    // FIXIT-E not supported yet
     return false;
 }
 
@@ -236,7 +236,7 @@ bool Http2StreamSplitter::init_partial_flush(Flow* flow)
     }
 #endif
 
-    // FIXIT-H not supported yet
+    // FIXIT-E not supported yet
     return false;
 }
 

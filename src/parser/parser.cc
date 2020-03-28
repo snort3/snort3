@@ -549,7 +549,7 @@ void OrderRuleLists(SnortConfig* sc)
 
     const char* order = sc->rule_order.c_str();
     if ( !*order )
-        order = "pass drop alert log";  // FIXIT-H apply builtin module defaults
+        order = "pass drop alert log";  // FIXIT-M apply builtin module defaults
 
     std::stringstream ss(order);
     std::string tok;

@@ -51,7 +51,7 @@ class IpsContext;
 class IpsContextData;
 }
 
-// FIXIT-H add the hold to catch offloads that don't return
+// FIXIT-E add the hold to catch offloads that don't return
 class ContextSwitcher
 {
 public:

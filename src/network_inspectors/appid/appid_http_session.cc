@@ -757,7 +757,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
     return 0;
 }
 
-// FIXIT-H - Implement this function when (reconfigurable) XFF is supported.
+// FIXIT-E - Implement this function when (reconfigurable) XFF is supported.
 void AppIdHttpSession::update_http_xff_address(struct XffFieldValue* xff_fields,
     uint32_t numXffFields, AppidChangeBits& change_bits)
 {

@@ -118,7 +118,7 @@ DetectionEngine::~DetectionEngine()
 void DetectionEngine::reset()
 {
     IpsContext* c = Analyzer::get_switcher()->get_context();
-    c->alt_data.len = 0;  // FIXIT-H need context::reset()
+    c->alt_data.len = 0;  // FIXIT-L need context::reset()
 }
 
 IpsContext* DetectionEngine::get_context()
@@ -584,7 +584,7 @@ bool DetectionEngine::inspect(Packet* p)
         else
         {
             enable_content(p);
-            p->alt_dsize = 0;  // FIXIT-H should be redundant
+            p->alt_dsize = 0;  // FIXIT-M should be redundant
 
             InspectorManager::execute(p);
             inspected = true;

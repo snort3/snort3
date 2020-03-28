@@ -210,7 +210,7 @@ bool IpsManager::option_begin(
         return false;
     }
 
-    // FIXIT-H allow service too
+    // FIXIT-M allow service too
     //if ( opt->api->protos && !(proto & opt->api->protos) )
     //{
     //    ParseError("%s not allowed with given rule protocol", opt->api->base.name);

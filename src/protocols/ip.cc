@@ -161,12 +161,12 @@ uint8_t IpApi::ver() const
     return 0;
 }
 
+// FIXIT-H is this really supposed to be a shallow compare?
 bool operator==(const IpApi& lhs, const IpApi& rhs)
 {
     if ( lhs.type != rhs.type )
         return false;
 
-    // FIXIT-H is this really supposed to be a shallow compare?
     return ( lhs.iph == rhs.iph );
 }
 

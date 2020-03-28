@@ -25,7 +25,7 @@
 
 #include "lua/lua_arg.h"
 
-// FIXIT-H a lot of users keep references to this data.  Need to prevent
+// FIXIT-M a lot of users keep references to this data.  Need to prevent
 // Lua's garbage collection from destroying RawBuffer while other C++ types
 // are using the data (unbeknownst to Lua).  Add a container data type
 // which hold ref counts to RawBuffer and only frees when the ref count is

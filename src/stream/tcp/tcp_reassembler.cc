@@ -529,8 +529,8 @@ int TcpReassembler::_flush_to_seq(
 {
     if ( !p )
     {
-        // FIXIT-H we need to have user_policy_id in this case
-        // FIXIT-H this leads to format_tcp() copying from pdu to pdu
+        // FIXIT-M we need to have user_policy_id in this case
+        // FIXIT-M this leads to format_tcp() copying from pdu to pdu
         // (neither of these issues is created by passing null through to here)
         p = DetectionEngine::set_next_packet();
     }
@@ -1092,6 +1092,7 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
 
     // FIXIT-H a drop rule will yoink the seglist out from under us
     // because apply_delayed_action is only deferred to end of context
+    // this is causing stability issues
     if ( flushed and trs.sos.seg_count and
         !trs.sos.session->flow->two_way_traffic() and !p->ptrs.tcph->is_syn() )
     {

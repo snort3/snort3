@@ -143,7 +143,7 @@ TEST(appid_api, produce_ha_state)
     ip.pton(AF_INET, "192.168.1.222");
     val = appid_api.consume_ha_state(*flow, (uint8_t*)&appHA, 0, IpProtocol::TCP, &ip, 1066);
     CHECK_TRUE(val == sizeof(appHA));
-    //FIXIT-H refactor below code to test AppId consume functionality
+    // FIXIT-E refactor below code to test AppId consume functionality
     /*
     AppIdSession* session = (AppIdSession*)flow->get_flow_data(AppIdSession::inspector_id);
     CHECK_TRUE(session);
@@ -165,7 +165,7 @@ TEST(appid_api, produce_ha_state)
     mock_flow_data= nullptr;
     val = appid_api.consume_ha_state(*flow, (uint8_t*)&appHA, 0, IpProtocol::TCP, &ip, 1066);
     CHECK_TRUE(val == sizeof(appHA));
-    //FIXIT-H refactor below code to test AppId consume functionality
+    // FIXIT-E refactor below code to test AppId consume functionality
     /*
     session = (AppIdSession*)flow->get_flow_data(AppIdSession::inspector_id);
     CHECK_TRUE(session);

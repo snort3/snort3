@@ -294,14 +294,14 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
     uint32_t& partial_raw_bytes = session_data->partial_raw_bytes[source_id];
     assert(partial_raw_bytes + total <= MAX_OCTETS);
 
-    // FIXIT-H this is a precaution/workaround for stream issues. When they are fixed replace this
+    // FIXIT-E this is a precaution/workaround for stream issues. When they are fixed replace this
     // block with an assert.
     if ((session_data->section_offset[source_id] == 0) &&
         (session_data->octets_expected[source_id] != partial_raw_bytes + total))
     {
         if (session_data->octets_expected[source_id] == 0)
         {
-            // FIXIT-H This is a known problem. No data was scanned and yet somehow stream can
+            // FIXIT-E This is a known problem. No data was scanned and yet somehow stream can
             // give us data when we ask for an empty message section. Dropping the unexpected data
             // enables us to send the HTTP headers through detection as originally planned.
             total = 0;

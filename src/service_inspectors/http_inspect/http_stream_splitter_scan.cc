@@ -238,7 +238,7 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
             // FIXIT-L the following call seems inappropriate for headers and trailers. Those cases
             // should be an unconditional EVENT_LOSS_OF_SYNC.
             session_data->events[source_id]->generate_misformatted_http(data, length);
-            // FIXIT-H need to process this data not just discard it.
+            // FIXIT-E need to process this data not just discard it.
             session_data->type_expected[source_id] = SEC_ABORT;
             delete cutter;
             cutter = nullptr;

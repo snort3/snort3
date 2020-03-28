@@ -895,7 +895,6 @@ static inline int search_buffer(
         // Depending on where we are searching we call the appropriate mpse
         if ( MpseGroup* so = pg->mpsegrp[pmt] )
         {
-            // FIXIT-H DELETE ME done - get the context packet number
             debug_logf(detection_trace, TRACE_FP_SEARCH, "%" PRIu64 " fp %s.%s[%d]\n",
                 p->context->packet_number, gadget->get_name(), pm_type_strings[pmt], buf.len);
 
@@ -980,7 +979,7 @@ static inline void eval_fp(
     {
         int8_t curr_ip_layer = 0;
 
-        tmp_payload = p->data;  // FIXIT-H restore even with offload
+        tmp_payload = p->data;  // FIXIT-M restore even with offload
         tmp_dsize = p->dsize;
 
         if (layer::set_outer_ip_api(p, p->ptrs.ip_api, curr_ip_layer))

@@ -432,7 +432,7 @@ bool AppIdDiscovery::handle_unmonitored_session(AppIdSession* asd, const Packet*
             port = (dir == APP_ID_FROM_INITIATOR) ? p->ptrs.sp : p->ptrs.dp;
         }
 
-        // FIXIT-H - Creating AppId session even when flow is ignored (not monitored, e.g.,
+        // FIXIT-E - Creating AppId session even when flow is ignored (not monitored, e.g.,
         // when AppId discovery is disabled) will consume a lot of unneeded memory and perform
         // unneeded tasks in constructor. Snort2 uses static APPID_SESSION_STRUCT_FLAG ignore_fsf.
         // Snort3 may use something like that or a dummy class/object having only common.flow_type

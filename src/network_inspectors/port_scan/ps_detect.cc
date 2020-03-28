@@ -599,7 +599,7 @@ void PortScan::ps_tracker_update_tcp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
     **  picked up midstream, then we don't care about the MIDSTREAM flag.
     **  Otherwise, only consider streams not picked up midstream.
     */
-    // FIXIT-H using SSNFLAG_COUNTED_INITIALIZE is a hack to get parity with 2.X
+    // FIXIT-E using SSNFLAG_COUNTED_INITIALIZE is a hack to get parity with 2.X
     // this should be completely redone and port_scan should require stream_tcp
     if ( p->flow and (p->flow->ssn_state.session_flags & SSNFLAG_COUNTED_INITIALIZE) )
     {

@@ -190,7 +190,7 @@ bool TcpStateNone::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     if ( trk.session->config->midstream_allowed(tsd.get_pkt() ) )
     {
-        // FIXIT-H handle FIN on midstream
+        // FIXIT-M handle FIN on midstream
     }
     else if ( trk.session->config->require_3whs() )
     {
@@ -204,7 +204,7 @@ bool TcpStateNone::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     if ( trk.session->config->midstream_allowed(tsd.get_pkt() ) )
     {
-        // FIXIT-H handle FIN on midstream
+        // FIXIT-M handle FIN on midstream
     }
     else if ( trk.session->config->require_3whs() )
     {
@@ -218,7 +218,7 @@ bool TcpStateNone::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     if ( trk.session->config->midstream_allowed(tsd.get_pkt() ) )
     {
-        // FIXIT-H handle RST on midstream
+        // FIXIT-M handle RST on midstream
     }
     return true;
 }
@@ -238,7 +238,7 @@ bool TcpStateNone::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     return true;
 }
 
-#ifdef FOO  // FIXIT-H UNIT_TEST need work
+#if 0  // FIXIT-M unit tests need work
 #include "tcp_normalizers.h"
 #include "tcp_reassemblers.h"
 

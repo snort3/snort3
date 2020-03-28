@@ -1079,7 +1079,8 @@ static void parse_rule_state(SnortConfig* sc, const RuleTreeNode& rtn, OptTreeNo
     RuleKey key = { otn->sigInfo.gid, otn->sigInfo.sid };
     RuleState state =
     {
-        snort::get_ips_policy()->policy_id, // FIXIT-H need parsing policy for reload
+        // FIXIT-H parse_rule_state needs parsing policy for reload
+        snort::get_ips_policy()->policy_id,
         rtn.action,
         otn->enable
     };

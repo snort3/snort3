@@ -127,8 +127,6 @@ SnortProtocolId get_snort_protocol_id_from_host_table(const HostAttributeEntry* 
         }
     }
 
-    /* FIXIT-H client? doesn't make much sense in terms of specific port */
-
     return 0;
 }
 

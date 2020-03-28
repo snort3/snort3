@@ -362,7 +362,7 @@ void HttpInspect::eval(Packet* p)
 
     HttpFlowData* session_data = http_get_flow_data(p->flow);
 
-    // FIXIT-H Workaround for unexpected eval() calls. Convert to asserts when possible.
+    // FIXIT-E Workaround for unexpected eval() calls. Convert to asserts when possible.
     if ((session_data->section_type[source_id] == SEC__NOT_COMPUTE) ||
         (session_data->type_expected[source_id] == SEC_ABORT)       ||
         (session_data->octets_reassembled[source_id] != p->dsize))

@@ -214,8 +214,6 @@ bool TcpStreamSession::are_packets_missing(uint8_t dir)
     return false;
 }
 
-// FIXIT-H add alert and check alerted go away when we finish
-// packet / PDU split because PDU rules won't run on raw packets
 bool TcpStreamSession::add_alert(Packet* p, uint32_t gid, uint32_t sid)
 {
     TcpStreamTracker& st = p->ptrs.ip_api.get_src()->equals(flow->client_ip) ? server : client;

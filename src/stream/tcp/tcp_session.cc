@@ -126,7 +126,6 @@ void TcpSession::restart(Packet* p)
         listener = &server;
     }
 
-    // FIXIT-H on data / on ack must be based on flush policy
     if (p->dsize > 0)
         listener->reassembler.flush_on_data_policy(p);
 
@@ -297,7 +296,7 @@ bool TcpSession::flow_exceeds_config_thresholds(const TcpSegmentDescriptor& tsd)
         return true;
     }
 
-    // FIXIT-H any discards must be counted and in many cases alerted as well
+    // FIXIT-M any discards must be counted and in many cases alerted as well
     // (count all but alert at most once per flow)
     // three cases in this function; look for others
     if ( ( config->flags & STREAM_CONFIG_NO_ASYNC_REASSEMBLY ) && !flow->two_way_traffic() )
@@ -316,7 +315,7 @@ bool TcpSession::flow_exceeds_config_thresholds(const TcpSegmentDescriptor& tsd)
         && ( listener->reassembler.get_seg_bytes_total() > config->max_queued_bytes ) )
     {
         tcpStats.exceeded_max_bytes++;
-        // FIXIT-H add one alert per flow per above
+        // FIXIT-M add one alert per flow per above
         return true;
     }
 
@@ -324,7 +323,7 @@ bool TcpSession::flow_exceeds_config_thresholds(const TcpSegmentDescriptor& tsd)
         && ( listener->reassembler.get_seg_count() + 1 > config->max_queued_segs ) )
     {
         tcpStats.exceeded_max_segs++;
-        // FIXIT-H add one alert per flow per above
+        // FIXIT-M add one alert per flow per above
         return true;
     }
 
@@ -460,7 +459,7 @@ void TcpSession::set_os_policy()
     server.reassembler.init(this, &server, server_os_policy, true);
 }
 
-// FIXIT-H this is no longer called (but should be)
+// FIXIT-M this is no longer called (but should be)
 #if 0
 void TcpSession::swap_trackers()
 {
@@ -763,8 +762,8 @@ void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd)
                 st->normalizer.trim_win_payload(
                     tsd, (st->r_win_base + st->get_snd_wnd() - st->rcv_nxt));
 
-                // FIXIT-H: MSS is not being set on client so packets sent
-                // to client are not trimmed.
+                // FIXIT-H: MSS is not set on client so packets sent to client are not trimmed
+                // use case?
                 if (st->get_mss())
                     st->normalizer.trim_mss_payload(tsd, st->get_mss());
 
@@ -1061,7 +1060,7 @@ int TcpSession::process(Packet* p)
         return ACTION_NOTHING;
     }
 
-    // FIXIT-H need to do something here to handle check for need to swap trackers??
+    // FIXIT-M need to do something here to handle check for need to swap trackers??
     if ( !config )
         config = get_tcp_cfg(flow->ssn_server);
 

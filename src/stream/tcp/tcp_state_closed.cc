@@ -152,7 +152,7 @@ bool TcpStateClosed::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpStr
     return true;
 }
 
-#ifdef FOO  // FIXIT-H UNIT_TEST need work
+#if 0  // FIXIT-M unit tests need work
 #include "tcp_normalizers.h"
 #include "tcp_reassemblers.h"
 

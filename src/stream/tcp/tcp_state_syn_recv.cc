@@ -67,6 +67,7 @@ bool TcpStateSynRecv::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
     Flow* flow = tsd.get_flow();
 
     // FIXIT-H verify ack being sent is valid...
+    // norm/drop + discard
     trk.finish_server_init(tsd);
     trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs());
     flow->session_state |= STREAM_STATE_SYN_ACK;

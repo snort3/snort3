@@ -33,7 +33,7 @@
 
 using namespace snort;
 
-// FIXIT-H needs to be updated for addition of get_fp_buf()
+// FIXIT-M needs to be updated for addition of get_fp_buf()
 template<typename T>
 static inline bool get_buf(
     Inspector& i, T v, Packet& p, std::string& rb)

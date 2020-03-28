@@ -23,7 +23,7 @@
 
 //  Loads host configuration data.
 
-// FIXIT-H temporarily create new HostTracker module to test new
+// FIXIT-M temporarily create new HostTracker module to test new
 // HostTracker object.  May eventually replace old Hosts module with this
 // one.
 

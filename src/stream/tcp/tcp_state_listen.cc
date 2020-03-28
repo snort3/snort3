@@ -98,11 +98,9 @@ bool TcpStateListen::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
             && ( tsd.has_wscale() || ( tsd.get_seg_len() > 0 ) ) )
     {
         Flow* flow = tsd.get_flow();
-
-        // FIXIT-H do we need to verify the ACK field is >= the seq of the SYN-ACK?
-        // 3-way Handshake complete, create TCP session
         flow->session_state |= ( STREAM_STATE_ACK | STREAM_STATE_SYN_ACK |
             STREAM_STATE_ESTABLISHED );
+
         trk.init_on_3whs_ack_sent(tsd);
         trk.session->init_new_tcp_session(tsd);
         trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
