@@ -380,6 +380,11 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_GZIP_EARLY_END,             "gzip compressed data followed by unexpected non-gzip "
                                         "data" },
     { EVENT_EXCESS_REPEAT_PARAMS,       "excessive HTTP parameter key repeats" },
+    { EVENT_H2_NON_IDENTITY_TE,         "HTTP/2 Transfer-Encoding header other than identity" },
+    { EVENT_H2_DATA_OVERRUNS_CL,        "HTTP/2 message body overruns Content-Length header "
+                                        "value" },
+    { EVENT_H2_DATA_UNDERRUNS_CL,       "HTTP/2 message body smaller than Content-Length header "
+                                        "value" },
     { 0, nullptr }
 };
 

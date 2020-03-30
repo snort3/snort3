@@ -71,13 +71,13 @@ public:
     HttpEnums::SectionType get_type_expected(HttpCommon::SourceId source_id)
     { return type_expected[source_id]; }
 
-    void set_http2_end_stream(HttpCommon::SourceId source_id)
-    { http2_end_stream[source_id] = true; }
+    void finish_h2_body(HttpCommon::SourceId source_id)
+    { h2_body_finished[source_id] = true; }
 
 private:
     // HTTP/2 handling
     bool for_http2 = false;
-    bool http2_end_stream[2] = { false, false };
+    bool h2_body_finished[2] = { false, false };
 
     // Convenience routines
     void half_reset(HttpCommon::SourceId source_id);

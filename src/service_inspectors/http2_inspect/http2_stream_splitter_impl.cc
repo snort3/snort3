@@ -48,8 +48,8 @@ StreamSplitter::Status data_scan(Http2FlowData* session_data, const uint8_t* dat
     if (stream)
         http_flow = (HttpFlowData*)stream->get_hi_flow_data();
 
-    if (!stream || !http_flow || (frame_length > 0 and
-        (http_flow->get_type_expected(source_id) != HttpEnums::SEC_BODY_H2)))
+    if (!stream || !http_flow || stream->end_stream_is_set(source_id) ||
+        (frame_length > 0 and (http_flow->get_type_expected(source_id) != HttpEnums::SEC_BODY_H2)))
     {
         *session_data->infractions[source_id] += INF_FRAME_SEQUENCE;
         session_data->events[source_id]->create_event(EVENT_FRAME_SEQUENCE);
@@ -90,6 +90,14 @@ StreamSplitter::Status non_data_scan(Http2FlowData* session_data,
         session_data->scan_remaining_frame_octets[source_id] = frame_length;
         session_data->total_bytes_in_split[source_id] += FRAME_HEADER_LENGTH +
             frame_length;
+
+        // If the stream object exists and the end_stream flag is set, save that state in the stream
+        // object. If this is the first headers frame in the current stream,the stream object has
+        // not been created yet. The end_stream flag will be handled in the headers frame processing
+        Http2Stream* const stream = session_data->find_stream(
+            session_data->current_stream[source_id]);
+        if (stream and frame_flags & END_STREAM)
+            stream->set_end_stream(source_id);
     }
 
     // If we don't have the full frame, keep scanning

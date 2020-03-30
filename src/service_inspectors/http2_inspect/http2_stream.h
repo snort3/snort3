@@ -51,8 +51,10 @@ public:
     
     Http2DataCutter* get_data_cutter(HttpCommon::SourceId source_id);
     void set_data_cutter(Http2DataCutter* cutter, HttpCommon::SourceId source_id)
-    { data_cutter[source_id] = cutter; }
+        { data_cutter[source_id] = cutter; }
 
+    void set_end_stream(HttpCommon::SourceId source_id) { end_stream_set[source_id] = true; }
+    bool end_stream_is_set(HttpCommon::SourceId source_id) { return end_stream_set[source_id]; }
 #ifdef REG_TEST
     void print_frame(FILE* output);
 #endif
@@ -64,6 +66,7 @@ private:
     HttpFlowData* hi_flow_data = nullptr;
     HttpMsgSection* hi_msg_section = nullptr;
     Http2DataCutter* data_cutter[2] = { nullptr, nullptr};
+    bool end_stream_set[2] = { false, false };
 };
 
 #endif

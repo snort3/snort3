@@ -36,7 +36,7 @@ public:
     virtual ~HttpCutter() = default;
     virtual HttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
         HttpInfractions* infractions, HttpEventGen* events, uint32_t flow_target, bool stretch,
-        bool h2_end_stream) = 0;
+        bool h2_body_finished) = 0;
     uint32_t get_num_flush() const { return num_flush; }
     uint32_t get_octets_seen() const { return octets_seen; }
     uint32_t get_num_excess() const { return num_crlf; }
@@ -164,10 +164,14 @@ private:
 class HttpBodyH2Cutter : public HttpBodyCutter
 {
 public:
-    explicit HttpBodyH2Cutter(bool detained_inspection, HttpEnums::CompressId compression) :
-        HttpBodyCutter(detained_inspection, compression) {}
+    explicit HttpBodyH2Cutter(int64_t expected_length, bool detained_inspection,
+        HttpEnums::CompressId compression) :
+        HttpBodyCutter(detained_inspection, compression), expected_body_length(expected_length) {}
     HttpEnums::ScanResult cut(const uint8_t*, uint32_t, HttpInfractions*, HttpEventGen*,
-        uint32_t flow_target, bool stretch, bool h2_end_stream) override;
+        uint32_t flow_target, bool stretch, bool h2_body_finished) override;
+private:
+    int64_t expected_body_length;
+    uint32_t total_octets_scanned = 0;
 };
 
 

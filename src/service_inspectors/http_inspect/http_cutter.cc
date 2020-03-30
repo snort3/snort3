@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include "http_common.h"
 #include "http_cutter.h"
 #include "http_enum.h"
 
@@ -687,37 +688,60 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
     return detain_this_packet ? SCAN_NOT_FOUND_DETAIN : SCAN_NOT_FOUND;
 }
 
-ScanResult HttpBodyH2Cutter::cut(const uint8_t* buffer, uint32_t length, HttpInfractions*,
-    HttpEventGen*, uint32_t flow_target, bool stretch, bool h2_end_stream)
+ScanResult HttpBodyH2Cutter::cut(const uint8_t* buffer, uint32_t length,
+    HttpInfractions* infractions, HttpEventGen* events, uint32_t flow_target, bool stretch,
+    bool h2_body_finished)
 {
-    //FIXIT-M detained inspection not yet supported for http2
+    //FIXIT-E detained inspection not yet supported for http2
     UNUSED(buffer);
 
-    // FIXIT-M stretch not yet supported for http2 message bodies
+    // FIXIT-E stretch not yet supported for http2 message bodies
     UNUSED(stretch);
+
+    // If the headers included a content length header (expected length >= 0), check it against the
+    // actual message body length. Alert if it does not match at the end of the message body, or if
+    // it overflows during the body (alert once then stop computing).
+    if (expected_body_length >= 0)
+    {
+        if ((total_octets_scanned + length) > expected_body_length)
+        {
+            *infractions += INF_H2_DATA_OVERRUNS_CL;
+            events->create_event(EVENT_H2_DATA_OVERRUNS_CL);
+            expected_body_length = HttpCommon::STAT_NOT_COMPUTE;
+        }
+        else if (h2_body_finished and ((total_octets_scanned + length) < expected_body_length))
+        {
+            *infractions += INF_H2_DATA_UNDERRUNS_CL;
+            events->create_event(EVENT_H2_DATA_UNDERRUNS_CL);
+        }
+    }
 
     if (flow_target == 0)
     {
         num_flush = length;
+        total_octets_scanned += length;
         return SCAN_DISCARD_PIECE;
     }
-    if (!h2_end_stream)
+    if (!h2_body_finished)
     {
         if (octets_seen + length < flow_target)
         {
             // Not enough data yet to create a message section
             octets_seen += length;
+            total_octets_scanned += length;
             return SCAN_NOT_FOUND;
         }
         else
         {
             num_flush = flow_target - octets_seen;
+            total_octets_scanned += num_flush;
             return SCAN_FOUND_PIECE;
         }
     }
     else
     {
         // For now if end_stream is set for scan, a zero-length buffer is always sent to flush
+        assert(length == 0);
         num_flush = 0;
         return SCAN_FOUND;
     }

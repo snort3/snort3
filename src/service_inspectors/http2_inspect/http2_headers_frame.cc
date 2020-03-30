@@ -44,6 +44,10 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t
     HttpCommon::SourceId source_id_) :
     Http2Frame(header_buffer, header_len, data_buffer, data_len, session_data_, source_id_)
 {
+    Http2Stream* const stream = session_data->find_stream(get_stream_id());
+    if (get_flags() & END_STREAM)
+        stream->set_end_stream(source_id);
+
     uint8_t hpack_headers_offset = 0;
 
     // Remove stream dependency if present

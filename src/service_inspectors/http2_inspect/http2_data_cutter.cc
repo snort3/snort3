@@ -154,7 +154,7 @@ StreamSplitter::Status Http2DataCutter::http_scan(const uint8_t* data, uint32_t*
             if (frame_flags & END_STREAM)
             {
                 session_data->get_current_stream(source_id)->get_hi_flow_data()->
-                    set_http2_end_stream(source_id);
+                    finish_h2_body(source_id);
                 scan_result = session_data->hi_ss[source_id]->scan(&dummy_pkt, nullptr, 0, unused,
                     &http_flush_offset);
                 assert(scan_result == StreamSplitter::FLUSH);

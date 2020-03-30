@@ -141,7 +141,7 @@ const Field& HttpMsgHeader::get_true_ip_addr()
 void HttpMsgHeader::gen_events()
 {
     if ((get_header_count(HEAD_CONTENT_LENGTH) > 0) &&
-        (get_header_count(HEAD_TRANSFER_ENCODING) > 0))
+        (get_header_count(HEAD_TRANSFER_ENCODING) > 0) && !session_data->for_http2)
     {
         add_infraction(INF_BOTH_CL_AND_TE);
         create_event(EVENT_BOTH_CL_AND_TE);
@@ -196,15 +196,35 @@ void HttpMsgHeader::update_flow()
         return;
     }
 
+    const Field& te_header = get_header_value_norm(HEAD_TRANSFER_ENCODING);
+
     if (session_data->for_http2)
     {
-        // FIXIT-E check for transfer-encoding and content-length headers
+        // The only transfer-encoding header we should see for HTTP/2 traffic is "identity"
+        const int IDENTITY_SIZE = 8;
+        if ((te_header.length() > 0) && ( (te_header.length() != IDENTITY_SIZE) ||
+            memcmp(te_header.start(), "identity", IDENTITY_SIZE) != 0))
+        {
+            add_infraction(INF_H2_NON_IDENTITY_TE);
+            create_event(EVENT_H2_NON_IDENTITY_TE);
+        }
+        if (get_header_value_norm(HEAD_CONTENT_LENGTH).length() > 0)
+        {
+            const int64_t content_length =
+                norm_decimal_integer(get_header_value_norm(HEAD_CONTENT_LENGTH));
+            if (content_length >= 0)
+                session_data->data_length[source_id] = content_length;
+            else
+            {
+                add_infraction(INF_BAD_CONTENT_LENGTH);
+                create_event(EVENT_BAD_CONTENT_LENGTH);
+            }
+        }
         session_data->type_expected[source_id] = SEC_BODY_H2;
         prepare_body();
         return;
     }
 
-    const Field& te_header = get_header_value_norm(HEAD_TRANSFER_ENCODING);
     if ((te_header.length() > 0) && (version_id == VERS_1_0))
     {
         // HTTP 1.0 should not be chunked and many browsers will ignore the TE header
