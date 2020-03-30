@@ -21,6 +21,8 @@
 #ifndef LATENCY_CONFIG_H
 #define LATENCY_CONFIG_H
 
+#include "main/snort_debug.h"
+
 #include "packet_latency_config.h"
 #include "rule_latency_config.h"
 
@@ -29,5 +31,7 @@ struct LatencyConfig
     PacketLatencyConfig packet_latency;
     RuleLatencyConfig rule_latency;
 };
+
+extern snort::Trace latency_trace;
 
 #endif

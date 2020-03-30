@@ -25,17 +25,8 @@
 
 struct PacketLatencyConfig
 {
-    enum Action
-    {
-        NONE = 0x00,
-        ALERT = 0x01,
-        LOG = 0x02,
-        ALERT_AND_LOG = ALERT | LOG
-    };
-
     hr_duration max_time = CLOCK_ZERO;
     bool fastpath = false;
-    Action action = NONE;
 
     bool enabled() const { return max_time > CLOCK_ZERO; }
 };

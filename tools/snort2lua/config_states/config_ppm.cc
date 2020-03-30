@@ -47,16 +47,11 @@ bool Ppm::convert(std::istringstream& data_stream)
     while (data_stream >> keyword)
     {
         bool tmpval = true;
-        bool popped_comma;
-
+        bool popped_comma = false;
         if (keyword.back() == ',')
         {
             keyword.pop_back();
             popped_comma = true;
-        }
-        else
-        {
-            popped_comma = false;
         }
 
         if (keyword.empty())
@@ -125,67 +120,14 @@ bool Ppm::convert(std::istringstream& data_stream)
             table_api.close_table();
         }
 
-        else if (keyword == "pkt-log")
+        else if ((keyword == "pkt-log") or (keyword == "rule-log"))
         {
-            table_api.add_diff_option_comment("pkt-log", "packet.action");
-            table_api.open_table("packet");
-
-            std::string opt1;
-            std::string opt2;
-
-            if (popped_comma)
-                table_api.add_option("action", "log");
-
-            else if (!(data_stream >> opt1))
-                table_api.add_option("action", "log");
-
-            else if (opt1.back() == ',')
+            table_api.add_deleted_comment(keyword);
+            if (!popped_comma)
             {
-                opt1.pop_back();
-                tmpval = table_api.add_option("action", opt1);
+                while ((data_stream >> keyword) && (keyword.back() != ','));
             }
-
-            else if (!(data_stream >> opt2))
-                tmpval = table_api.add_option("action", opt1);
-
-            else
-            {
-                table_api.add_diff_option_comment("'both'", "'alert_and_log'");
-                tmpval = table_api.add_option("action", "alert_and_log");
-            }
-
-            table_api.close_table();
         }
-
-        else if (keyword == "rule-log")
-        {
-            table_api.add_diff_option_comment("rule-log", "rule.action");
-            table_api.open_table("rule");
-
-            std::string opt1;
-            std::string opt2;
-
-            if (!(data_stream >> opt1))
-                tmpval = false;
-
-            else if (opt1.back() == ',')
-            {
-                opt1.pop_back();
-                tmpval = table_api.add_option("action", opt1);
-            }
-
-            else if (!(data_stream >> opt2))
-                tmpval = table_api.add_option("action", opt1);
-
-            else
-            {
-                table_api.add_diff_option_comment("'both'", "'alert_and_log'");
-                tmpval = table_api.add_option("action", "alert_and_log");
-            }
-
-            table_api.close_table();
-        }
-
         else
             tmpval = false;
 

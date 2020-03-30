@@ -25,19 +25,10 @@
 
 struct RuleLatencyConfig
 {
-    enum Action
-    {
-        NONE = 0x00,
-        ALERT = 0x01,
-        LOG = 0x02,
-        ALERT_AND_LOG = ALERT | LOG
-    };
-
     hr_duration max_time = 0_ticks;
     bool suspend = false;
     unsigned suspend_threshold = 0;
     hr_duration max_suspend_time = 0_ticks;
-    Action action = NONE;
 
     bool enabled() const { return max_time > 0_ticks; }
     bool allow_reenable() const { return max_suspend_time > 0_ticks; }

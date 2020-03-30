@@ -72,7 +72,7 @@ using EventHandler = EventingWrapper<Event>;
 
 static inline std::ostream& operator<<(std::ostream& os, const Event& e)
 {
-    os << "latency: " << e.packet->context->packet_number << " packet";
+    os << "packet " << e.packet->context->packet_number;
 
     if ( e.fastpathed )
         os << " fastpathed: ";
@@ -102,7 +102,7 @@ template<typename Clock = SnortClock>
 class Impl
 {
 public:
-    Impl(const ConfigWrapper&, EventHandler&, EventHandler&);
+    Impl(const ConfigWrapper&, EventHandler&);
 
     void push();
     bool pop(const Packet*);
@@ -114,12 +114,11 @@ private:
     std::vector<PacketTimer<Clock>> timers;
     const ConfigWrapper& config;
     EventHandler& event_handler;
-    EventHandler& log_handler;
 };
 
 template<typename Clock>
-inline Impl<Clock>::Impl(const ConfigWrapper& cfg, EventHandler& eh, EventHandler& lh) :
-    config(cfg), event_handler(eh), log_handler(lh)
+inline Impl<Clock>::Impl(const ConfigWrapper& cfg, EventHandler& eh) :
+    config(cfg), event_handler(eh)
 { }
 
 template<typename Clock>
@@ -143,11 +142,7 @@ inline bool Impl<Clock>::pop(const Packet* p)
         // timer.mark implies fastpath-related timeout
         Event e { p, timer.marked_as_fastpathed, timer.elapsed() };
 
-        if ( config->action & PacketLatencyConfig::LOG )
-            log_handler.handle(e);
-
-        if ( config->action & PacketLatencyConfig::ALERT )
-            event_handler.handle(e);
+        event_handler.handle(e);
     }
 
     elapsed = clock_usecs(TO_USECS(timer.elapsed()));
@@ -187,20 +182,16 @@ static struct SnortConfigWrapper : public ConfigWrapper
 
 static struct SnortEventHandler : public EventHandler
 {
-    void handle(const Event&) override
-    { DetectionEngine::queue_event(GID_LATENCY, LATENCY_EVENT_PACKET_FASTPATHED); }
-} event_handler;
-
-static struct SnortLogHandler : public EventHandler
-{
     void handle(const Event& e) override
     {
         assert(e.packet);
         std::ostringstream ss;
         ss << e;
-        LogMessage("%s\n", ss.str().c_str());
+        debug_logf(latency_trace, "%s\n", ss.str().c_str());
+
+        DetectionEngine::queue_event(GID_LATENCY, LATENCY_EVENT_PACKET_FASTPATHED);
     }
-} log_handler;
+} event_handler;
 
 static THREAD_LOCAL Impl<>* impl = nullptr;
 
@@ -208,7 +199,7 @@ static THREAD_LOCAL Impl<>* impl = nullptr;
 static inline Impl<>& get_impl()
 {
     if ( !impl )
-        impl = new Impl<>(config, event_handler, log_handler);
+        impl = new Impl<>(config, event_handler);
 
     return *impl;
 }
@@ -312,15 +303,12 @@ TEST_CASE ( "packet latency impl", "[latency]" )
 
     MockConfigWrapper config;
     EventHandlerSpy event_handler;
-    EventHandlerSpy log_handler;
 
     MockClock::reset();
 
-    packet_latency::Impl<MockClock> impl(config, event_handler, log_handler);
+    packet_latency::Impl<MockClock> impl(config, event_handler);
 
     config.config.max_time = 2_ticks;
-    config.config.action = PacketLatencyConfig::ALERT_AND_LOG;
-
     SECTION( "fastpath enabled" )
     {
         config.config.fastpath = true;
@@ -336,7 +324,6 @@ TEST_CASE ( "packet latency impl", "[latency]" )
             CHECK( impl.pop(nullptr) );
 
             CHECK( event_handler.count == 1 );
-            CHECK( log_handler.count == 1 );
         }
 
         SECTION( "no timeout" )
@@ -345,7 +332,6 @@ TEST_CASE ( "packet latency impl", "[latency]" )
             CHECK_FALSE( impl.pop(nullptr) );
 
             CHECK( event_handler.count == 0 );
-            CHECK( log_handler.count == 0 );
         }
     }
 
@@ -364,7 +350,6 @@ TEST_CASE ( "packet latency impl", "[latency]" )
             CHECK( impl.pop(nullptr) );
 
             CHECK( event_handler.count == 1 );
-            CHECK( log_handler.count == 1 );
         }
 
         SECTION( "no timeout" )
@@ -373,7 +358,6 @@ TEST_CASE ( "packet latency impl", "[latency]" )
             CHECK_FALSE( impl.pop(nullptr) );
 
             CHECK( event_handler.count == 0 );
-            CHECK( log_handler.count == 0 );
         }
     }
 }

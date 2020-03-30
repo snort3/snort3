@@ -42,6 +42,8 @@ using namespace snort;
 #define s_help \
     "packet and rule latency monitoring and control"
 
+Trace latency_trace(s_name);
+
 static const Parameter s_packet_params[] =
 {
     { "max_time", Parameter::PT_INT, "0:max53", "500",
@@ -49,9 +51,6 @@ static const Parameter s_packet_params[] =
 
     { "fastpath", Parameter::PT_BOOL, nullptr, "false",
         "fastpath expensive packets (max_time exceeded)" },
-
-    { "action", Parameter::PT_ENUM, "none | alert | log | alert_and_log", "none",
-        "event action if packet times out and is fastpathed" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -71,9 +70,6 @@ static const Parameter s_rule_params[] =
 
     { "max_suspend_time", Parameter::PT_INT, "0:max32", "30000",
         "set max time for suspending a rule (ms, 0 means permanently disable rule)" },
-
-    { "action", Parameter::PT_ENUM, "none | alert | log | alert_and_log", "none",
-        "event action for rule latency enable and suspend events" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -126,9 +122,6 @@ static inline bool latency_set(Value& v, PacketLatencyConfig& config)
     else if ( v.is("fastpath") )
         config.fastpath = v.get_bool();
 
-    else if ( v.is("action") )
-        config.action =
-            static_cast<decltype(config.action)>(v.get_uint8());
     else
         return false;
 
@@ -153,9 +146,6 @@ static inline bool latency_set(Value& v, RuleLatencyConfig& config)
         long t = clock_ticks(v.get_uint32());
         config.max_suspend_time = TO_DURATION(config.max_time, t);
     }
-    else if ( v.is("action") )
-        config.action =
-            static_cast<decltype(config.action)>(v.get_uint8());
     else
         return false;
 
@@ -163,7 +153,7 @@ static inline bool latency_set(Value& v, RuleLatencyConfig& config)
 }
 
 LatencyModule::LatencyModule() :
-    Module(s_name, s_help, s_params)
+    Module(s_name, s_help, s_params, false, &latency_trace)
 { }
 
 bool LatencyModule::set(const char* fqn, Value& v, SnortConfig* sc)
@@ -177,7 +167,7 @@ bool LatencyModule::set(const char* fqn, Value& v, SnortConfig* sc)
     else if ( !strncmp(fqn, slr, strlen(slr)) )
         return latency_set(v, sc->latency->rule_latency);
 
-    return false;
+    return Module::set(fqn, v, sc);
 }
 
 const RuleMap* LatencyModule::get_rules() const

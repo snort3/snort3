@@ -86,7 +86,7 @@ static inline std::ostream& operator<<(std::ostream& os, const Event& e)
     using std::chrono::duration_cast;
     using std::chrono::microseconds;
 
-    os << "latency: " << e.packet->context->packet_number << " rule tree ";
+    os << "packet " << e.packet->context->packet_number << " rule tree ";
 
     switch ( e.type )
     {
@@ -186,24 +186,21 @@ template<typename Clock = SnortClock, typename RuleTree = DefaultRuleInterface>
 class Impl
 {
 public:
-    Impl(const ConfigWrapper&, EventHandler&, EventHandler&);
+    Impl(const ConfigWrapper&, EventHandler&);
 
     bool push(detection_option_tree_root_t*, Packet*);
     bool pop();
     bool suspended() const;
 
 private:
-    void handle(const Event&);
-
     std::vector<RuleTimer<Clock>> timers;
     const ConfigWrapper& config;
     EventHandler& event_handler;
-    EventHandler& log_handler;
 };
 
 template<typename Clock, typename RuleTree>
-inline Impl<Clock, RuleTree>::Impl(const ConfigWrapper& cfg, EventHandler& eh, EventHandler& lh) :
-    config(cfg), event_handler(eh), log_handler(lh)
+inline Impl<Clock, RuleTree>::Impl(const ConfigWrapper& cfg, EventHandler& eh) :
+    config(cfg), event_handler(eh)
 { }
 
 template<typename Clock, typename RuleTree>
@@ -219,7 +216,7 @@ inline bool Impl<Clock, RuleTree>::push(detection_option_tree_root_t* root, Pack
         if ( RuleTree::reenable(*root, config->max_suspend_time, Clock::now()) )
         {
             Event e { Event::EVENT_ENABLED, config->max_suspend_time, root, p };
-            handle(e);
+            event_handler.handle(e);
             return true;
         }
     }
@@ -250,7 +247,7 @@ inline bool Impl<Clock, RuleTree>::pop()
                 timer.elapsed(), timer.root, timer.packet
             };
 
-            handle(e);
+            event_handler.handle(e);
         }
     }
 
@@ -268,16 +265,6 @@ inline bool Impl<Clock, RuleTree>::suspended() const
     return RuleTree::is_suspended(*timers.back().root);
 }
 
-template<typename Clock, typename RuleTree>
-inline void Impl<Clock, RuleTree>::handle(const Event& e)
-{
-    if ( config->action & RuleLatencyConfig::LOG )
-        log_handler.handle(e);
-
-    if ( config->action & RuleLatencyConfig::ALERT )
-        event_handler.handle(e);
-}
-
 // -----------------------------------------------------------------------------
 // static variables
 // -----------------------------------------------------------------------------
@@ -293,6 +280,10 @@ static struct SnortEventHandler : public EventHandler
 {
     void handle(const Event& e) override
     {
+        std::ostringstream ss;
+        ss << e;
+        debug_logf(latency_trace, "%s\n", ss.str().c_str());
+
         switch ( e.type )
         {
             case Event::EVENT_ENABLED:
@@ -309,23 +300,13 @@ static struct SnortEventHandler : public EventHandler
     }
 } event_handler;
 
-static struct SnortLogHandler : public EventHandler
-{
-    void handle(const Event& e) override
-    {
-        std::ostringstream ss;
-        ss << e;
-        LogMessage("%s\n", ss.str().c_str());
-    }
-} log_handler;
-
 static THREAD_LOCAL Impl<>* impl = nullptr;
 
 // FIXIT-L this should probably be put in a tinit
 static inline Impl<>& get_impl()
 {
     if ( !impl )
-        impl = new Impl<>(config, event_handler, log_handler);
+        impl = new Impl<>(config, event_handler);
 
     return *impl;
 }
@@ -461,17 +442,14 @@ TEST_CASE ( "rule latency impl", "[latency]" )
 
     MockConfigWrapper config;
     EventHandlerSpy event_handler;
-    EventHandlerSpy log_handler;
 
     MockClock::reset();
     RuleInterfaceSpy::reset();
 
-    config.config.action = RuleLatencyConfig::ALERT_AND_LOG;
-
     detection_option_tree_root_t root;
     Packet pkt(false);
 
-    rule_latency::Impl<MockClock, RuleInterfaceSpy> impl(config, event_handler, log_handler);
+    rule_latency::Impl<MockClock, RuleInterfaceSpy> impl(config, event_handler);
 
     SECTION( "push" )
     {
@@ -482,7 +460,6 @@ TEST_CASE ( "rule latency impl", "[latency]" )
             SECTION( "push rule" )
             {
                 CHECK_FALSE( impl.push(&root, &pkt) );
-                CHECK( log_handler.count == 0 );
                 CHECK( event_handler.count == 0 );
                 CHECK( RuleInterfaceSpy::reenable_called );
             }
@@ -492,7 +469,6 @@ TEST_CASE ( "rule latency impl", "[latency]" )
                 RuleInterfaceSpy::reenable_result = true;
 
                 CHECK( impl.push(&root, &pkt) );
-                CHECK( log_handler.count == 1 );
                 CHECK( event_handler.count == 1 );
                 CHECK( RuleInterfaceSpy::reenable_called );
             }
@@ -505,7 +481,6 @@ TEST_CASE ( "rule latency impl", "[latency]" )
             SECTION( "push rule" )
             {
                 CHECK_FALSE( impl.push(&root, &pkt) );
-                CHECK( log_handler.count == 0 );
                 CHECK( event_handler.count == 0 );
                 CHECK_FALSE( RuleInterfaceSpy::reenable_called );
             }
@@ -550,7 +525,6 @@ TEST_CASE ( "rule latency impl", "[latency]" )
                 RuleInterfaceSpy::is_suspended_result = true;
 
                 CHECK_FALSE( impl.pop() );
-                CHECK( log_handler.count == 0 );
                 CHECK( event_handler.count == 0 );
                 CHECK_FALSE( RuleInterfaceSpy::timeout_and_suspend_called );
             }
@@ -561,7 +535,6 @@ TEST_CASE ( "rule latency impl", "[latency]" )
                 RuleInterfaceSpy::timeout_and_suspend_result = true;
 
                 CHECK( impl.pop() );
-                CHECK( log_handler.count == 1 );
                 CHECK( event_handler.count == 1 );
                 CHECK( RuleInterfaceSpy::timeout_and_suspend_called );
             }
@@ -571,7 +544,6 @@ TEST_CASE ( "rule latency impl", "[latency]" )
                 RuleInterfaceSpy::timeout_and_suspend_result = false;
 
                 CHECK( impl.pop() );
-                CHECK( log_handler.count == 1 );
                 CHECK( event_handler.count == 1 );
                 CHECK( RuleInterfaceSpy::timeout_and_suspend_called );
             }
@@ -584,7 +556,6 @@ TEST_CASE ( "rule latency impl", "[latency]" )
             RuleInterfaceSpy::is_suspended_result = false;
 
             CHECK_FALSE( impl.pop() );
-            CHECK( log_handler.count == 0 );
             CHECK( event_handler.count == 0 );
             CHECK_FALSE( RuleInterfaceSpy::timeout_and_suspend_called );
         }
