@@ -83,6 +83,7 @@ bool HttpInspect::configure(SnortConfig* )
     if (params->js_norm_param.normalize_javascript)
         params->js_norm_param.js_norm->configure();
 
+    // FIXIT-H The following four lines are not thread safe during reload
     xtra_trueip_id = Stream::reg_xtra_data_cb(get_xtra_trueip);
     xtra_uri_id = Stream::reg_xtra_data_cb(get_xtra_uri);
     xtra_host_id = Stream::reg_xtra_data_cb(get_xtra_host);
