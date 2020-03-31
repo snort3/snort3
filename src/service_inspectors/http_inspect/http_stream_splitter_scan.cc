@@ -125,9 +125,16 @@ void HttpStreamSplitter::detain_packet(Packet* pkt)
         fprintf(HttpTestManager::get_output_file(), "Packet detain request\n");
         fflush(HttpTestManager::get_output_file());
     }
+
     if (!HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
+    {
 #endif
     pkt->active->hold_packet(pkt);
+#ifdef REG_TEST
+    }
+#endif
+
+    // Count attempted detains.
     HttpModule::increment_peg_counts(PEG_DETAINED);
 }
 

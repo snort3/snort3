@@ -126,6 +126,9 @@ private:
 #define THREAD_IDLE_EVENT "thread.idle"
 #define THREAD_ROTATE_EVENT "thread.rotate"
 
+// A packet is being detained.
+#define DETAINED_PACKET_EVENT "analyzer.detained.packet"
+
 // A flow changed its service
 #define FLOW_SERVICE_CHANGE_EVENT "flow.service_change_event"
 

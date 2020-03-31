@@ -339,7 +339,12 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
         retry_queue->put(p->daq_msg);
         daq_stats.retries_queued++;
     }
-    else if (!p->active->is_packet_held() || !Stream::set_packet_action_to_hold(p))
+    else if (p->active->is_packet_held() and Stream::set_packet_action_to_hold(p))
+    {
+        if (p->flow and p->flow->flags.trigger_detained_packet_event)
+            DataBus::publish(DETAINED_PACKET_EVENT, p);
+    }
+    else
         verdict = distill_verdict(p);
 
     if (PacketTracer::is_active())

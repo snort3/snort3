@@ -70,7 +70,7 @@ static inline DCE2_Ret DCE2_Smb2InsertTid(DCE2_SmbSsnData* ssd, const uint32_t t
             (ssd->max_file_depth ==
             -1 and DCE2_ScSmbFileDepth((dce2SmbProtoConf*)ssd->sd.config) == -1) )
     {
-        debug_logf(dce_smb_trace, "Not inserting TID (%u) for DISK share type"
+        debug_logf(dce_smb_trace, "Not inserting TID (%u) for DISK share type "
             "as mandatory configuration max_file_depth is not present."
             "This will result in non-inspection of file data.\n", tid);
         return ret;

@@ -420,13 +420,13 @@ public:  // FIXIT-M privatize if possible
     {
         bool client_initiated : 1;
         bool disable_inspect : 1;
-        bool trigger_finalize_event : 1;
-        bool use_direct_inject : 1;
-
         bool reputation_src_dest : 1;
         bool reputation_blacklist : 1;
         bool reputation_monitor : 1;
         bool reputation_whitelist : 1;
+        bool trigger_detained_packet_event : 1;
+        bool trigger_finalize_event : 1;
+        bool use_direct_inject : 1;
     } flags;
 
     FlowState flow_state;
