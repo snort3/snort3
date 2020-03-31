@@ -782,7 +782,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0 (Build 270)
+o"  )~   Version 3.0.1 (Build 1)
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2020 Cisco and/or its affiliates. All rights reserved.
@@ -7384,7 +7384,7 @@ string <strong><code>daq.modules[].variables[].variable</code></strong>: DAQ mod
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>decode.trace.all</strong> = 0: enabling traces in module { 0:max32 }
+int <strong>decode.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -7501,47 +7501,47 @@ bool <strong>detection.enable_address_anomaly_checks</strong> = false: enable ch
 </li>
 <li>
 <p>
-int <strong>detection.trace.detect_engine</strong> = 0: enable detection engine trace logging { 0:max53 }
+int <strong>detection.trace.all</strong> = 0: enable detection module trace logging options { 0:255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection.trace.rule_eval</strong> = 0: enable rule evaluation trace logging { 0:max53 }
+int <strong>detection.trace.detect_engine</strong> = 0: enable detection engine trace logging { 0:255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection.trace.buf_min</strong> = 0: enable min buffer trace logging { 0:max53 }
+int <strong>detection.trace.rule_eval</strong> = 0: enable rule evaluation trace logging { 0:255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection.trace.buf_verbose</strong> = 0: enable verbose buffer trace logging { 0:max53 }
+int <strong>detection.trace.buffer</strong> = 0: enable buffer trace logging { 0:255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection.trace.rule_vars</strong> = 0: enable rule variables trace logging { 0:max53 }
+int <strong>detection.trace.rule_vars</strong> = 0: enable rule variables trace logging { 0:255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection.trace.fp_search</strong> = 0: enable fast pattern search trace logging { 0:max53 }
+int <strong>detection.trace.fp_search</strong> = 0: enable fast pattern search trace logging { 0:255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection.trace.pkt_detect</strong> = 0: enable packet detection trace logging { 0:max53 }
+int <strong>detection.trace.pkt_detect</strong> = 0: enable packet detection trace logging { 0:255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection.trace.opt_tree</strong> = 0: enable tree option trace logging { 0:max53 }
+int <strong>detection.trace.opt_tree</strong> = 0: enable tree option trace logging { 0:255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection.trace.tag</strong> = 0: enable tag trace logging { 0:max53 }
+int <strong>detection.trace.tag</strong> = 0: enable tag trace logging { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -8120,11 +8120,6 @@ bool <strong>latency.packet.fastpath</strong> = false: fastpath expensive packet
 </li>
 <li>
 <p>
-enum <strong>latency.packet.action</strong> = none: event action if packet times out and is fastpathed { none | alert | log | alert_and_log }
-</p>
-</li>
-<li>
-<p>
 int <strong>latency.rule.max_time</strong> = 500: set timeout for rule evaluation (usec) { 0:max53 }
 </p>
 </li>
@@ -8145,7 +8140,7 @@ int <strong>latency.rule.max_suspend_time</strong> = 30000: set max time for sus
 </li>
 <li>
 <p>
-enum <strong>latency.rule.action</strong> = none: event action for rule latency enable and suspend events { none | alert | log | alert_and_log }
+int <strong>latency.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -9468,7 +9463,7 @@ implied <strong>snort.--trace</strong>: turn on main loop debug trace
 </li>
 <li>
 <p>
-int <strong>snort.trace.all</strong> = 0: enabling traces in module { 0:max32 }
+int <strong>snort.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -10932,7 +10927,7 @@ bool <strong>appid.log_all_sessions</strong> = false: enable logging of all appi
 </li>
 <li>
 <p>
-int <strong>appid.trace.all</strong> = 0: enabling traces in module { 0:max32 }
+int <strong>appid.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -11451,7 +11446,7 @@ bool <strong>dce_smb.smb_legacy_mode</strong> = false: inspect only SMBv1
 </li>
 <li>
 <p>
-int <strong>dce_smb.trace.all</strong> = 0: enabling traces in module { 0:max32 }
+int <strong>dce_smb.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -12171,7 +12166,7 @@ int <strong>dce_udp.max_frag_len</strong> = 65535: maximum fragment size for def
 </li>
 <li>
 <p>
-int <strong>dce_udp.trace.all</strong> = 0: enabling traces in module { 0:max32 }
+int <strong>dce_udp.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -13120,7 +13115,7 @@ int <strong><code>gtp_inspect[].infos[].length</code></strong> = 0: information 
 </li>
 <li>
 <p>
-int <strong>gtp_inspect.trace.all</strong> = 0: enabling traces in module { 0:max32 }
+int <strong>gtp_inspect.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -13916,6 +13911,21 @@ bool <strong>http_inspect.simplify_path</strong> = true: reduce URI directory pa
 <li>
 <p>
 <strong>119:249</strong> (http_inspect) excessive HTTP parameter key repeats
+</p>
+</li>
+<li>
+<p>
+<strong>119:250</strong> (http_inspect) HTTP/2 Transfer-Encoding header other than identity
+</p>
+</li>
+<li>
+<p>
+<strong>119:251</strong> (http_inspect) HTTP/2 message body overruns Content-Length header value
+</p>
+</li>
+<li>
+<p>
+<strong>119:252</strong> (http_inspect) HTTP/2 message body smaller than Content-Length header value
 </p>
 </li>
 </ul></div>
@@ -16533,6 +16543,12 @@ enum <strong>smtp.xlink2state</strong> = alert: enable/disable xlink2state alert
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_so_proxy">so_proxy</h3>
+<div class="paragraph"><p>What: a proxy inspector to track flow data from SO rules (internal use only)</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Usage: global</p></div>
+</div>
+<div class="sect2">
 <h3 id="_ssh">ssh</h3>
 <div class="paragraph"><p>What: ssh inspection</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
@@ -16841,7 +16857,7 @@ int <strong>stream.file_cache.cap_weight</strong> = 32: additional bytes to trac
 </li>
 <li>
 <p>
-int <strong>stream.trace.all</strong> = 0: enabling traces in module { 0:max32 }
+int <strong>stream.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -17072,7 +17088,7 @@ int <strong>stream_ip.session_timeout</strong> = 30: session tracking timeout { 
 </li>
 <li>
 <p>
-int <strong>stream_ip.trace.all</strong> = 0: enabling traces in module { 0:max32 }
+int <strong>stream_ip.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -17764,7 +17780,7 @@ int <strong>stream_user.session_timeout</strong> = 30: session tracking timeout 
 </li>
 <li>
 <p>
-int <strong>stream_user.trace.all</strong> = 0: enabling traces in module { 0:max32 }
+int <strong>stream_user.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -17894,6 +17910,11 @@ string <strong><code>wizard.spells[].to_client[].spell</code></strong>: sequence
 <li>
 <p>
 multi <strong>wizard.curses</strong>: enable service identification based on internal algorithm { dce_smb | dce_udp | dce_tcp }
+</p>
+</li>
+<li>
+<p>
+int <strong>wizard.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -23903,10 +23924,49 @@ Use FIXIT (not FIXTHIS or TODO or whatever) to mark things left for a
 </li>
 <li>
 <p>
-Presently using FIXIT-X where X = A | W | P | H | M | L | D, indicating
-  analysis, warning, perf, high, med, low priority, or deprecated.  Place A and
-  W comments on the exact warning line so we can match up comments and build
-  output.  Supporting comments can be added above.
+Presently using FIXIT-X where X is one of the characters below.  Place A
+  and W comments on the exact warning line so we can match up comments and
+  build output.  Supporting comments can be added above.
+</p>
+</li>
+<li>
+<p>
+A = known static analysis issue
+</p>
+</li>
+<li>
+<p>
+D = deprecated - code to be removed after users update
+</p>
+</li>
+<li>
+<p>
+E = enhancement - next steps for incomplete features (not a bug)
+</p>
+</li>
+<li>
+<p>
+H = high priority - urgent deficiency
+</p>
+</li>
+<li>
+<p>
+L = low priority - cleanup or similar technical debt (not a bug)
+</p>
+</li>
+<li>
+<p>
+M = medium priority - suspected non-urgent deficiency
+</p>
+</li>
+<li>
+<p>
+P = performance issue (not a bug)
+</p>
+</li>
+<li>
+<p>
+W = warning - known compiler warning
 </p>
 </li>
 <li>
@@ -25348,7 +25408,7 @@ bool <strong>appid.tp_appid_stats_enable</strong>: enable collection of stats an
 </li>
 <li>
 <p>
-int <strong>appid.trace.all</strong> = 0: enabling traces in module { 0:max32 }
+int <strong>appid.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 <li>
@@ -26073,7 +26133,7 @@ int <strong>dce_smb.smb_max_compound</strong> = 3: SMB max compound size { 0:255
 </li>
 <li>
 <p>
-int <strong>dce_smb.trace.all</strong> = 0: enabling traces in module { 0:max32 }
+int <strong>dce_smb.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 <li>
@@ -26123,12 +26183,12 @@ int <strong>dce_udp.max_frag_len</strong> = 65535: maximum fragment size for def
 </li>
 <li>
 <p>
-int <strong>dce_udp.trace.all</strong> = 0: enabling traces in module { 0:max32 }
+int <strong>dce_udp.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>decode.trace.all</strong> = 0: enabling traces in module { 0:max32 }
+int <strong>decode.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 <li>
@@ -26208,47 +26268,47 @@ bool <strong>detection.pcre_to_regex</strong> = false: enable the use of regex i
 </li>
 <li>
 <p>
-int <strong>detection.trace.buf_min</strong> = 0: enable min buffer trace logging { 0:max53 }
+int <strong>detection.trace.all</strong> = 0: enable detection module trace logging options { 0:255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection.trace.buf_verbose</strong> = 0: enable verbose buffer trace logging { 0:max53 }
+int <strong>detection.trace.buffer</strong> = 0: enable buffer trace logging { 0:255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection.trace.detect_engine</strong> = 0: enable detection engine trace logging { 0:max53 }
+int <strong>detection.trace.detect_engine</strong> = 0: enable detection engine trace logging { 0:255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection.trace.fp_search</strong> = 0: enable fast pattern search trace logging { 0:max53 }
+int <strong>detection.trace.fp_search</strong> = 0: enable fast pattern search trace logging { 0:255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection.trace.opt_tree</strong> = 0: enable tree option trace logging { 0:max53 }
+int <strong>detection.trace.opt_tree</strong> = 0: enable tree option trace logging { 0:255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection.trace.pkt_detect</strong> = 0: enable packet detection trace logging { 0:max53 }
+int <strong>detection.trace.pkt_detect</strong> = 0: enable packet detection trace logging { 0:255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection.trace.rule_eval</strong> = 0: enable rule evaluation trace logging { 0:max53 }
+int <strong>detection.trace.rule_eval</strong> = 0: enable rule evaluation trace logging { 0:255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection.trace.rule_vars</strong> = 0: enable rule variables trace logging { 0:max53 }
+int <strong>detection.trace.rule_vars</strong> = 0: enable rule variables trace logging { 0:255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>detection.trace.tag</strong> = 0: enable tag trace logging { 0:max53 }
+int <strong>detection.trace.tag</strong> = 0: enable tag trace logging { 0:255 }
 </p>
 </li>
 <li>
@@ -26883,7 +26943,7 @@ int <strong><code>gtp_inspect[].messages[].type</code></strong> = 0: message typ
 </li>
 <li>
 <p>
-int <strong>gtp_inspect.trace.all</strong> = 0: enabling traces in module { 0:max32 }
+int <strong>gtp_inspect.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 <li>
@@ -27558,22 +27618,12 @@ interval <strong>itype.~range</strong>: check if ICMP type is in given range { 0
 </li>
 <li>
 <p>
-enum <strong>latency.packet.action</strong> = none: event action if packet times out and is fastpathed { none | alert | log | alert_and_log }
-</p>
-</li>
-<li>
-<p>
 bool <strong>latency.packet.fastpath</strong> = false: fastpath expensive packets (max_time exceeded)
 </p>
 </li>
 <li>
 <p>
 int <strong>latency.packet.max_time</strong> = 500: set timeout for packet latency thresholding (usec) { 0:max53 }
-</p>
-</li>
-<li>
-<p>
-enum <strong>latency.rule.action</strong> = none: event action for rule latency enable and suspend events { none | alert | log | alert_and_log }
 </p>
 </li>
 <li>
@@ -27594,6 +27644,11 @@ bool <strong>latency.rule.suspend</strong> = false: temporarily suspend expensiv
 <li>
 <p>
 int <strong>latency.rule.suspend_threshold</strong> = 5: set threshold for number of timeouts before suspending a rule { 1:max32 }
+</p>
+</li>
+<li>
+<p>
+int <strong>latency.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 <li>
@@ -29633,7 +29688,7 @@ string <strong>snort.-t</strong>: &lt;dir&gt; chroots process to &lt;dir&gt; aft
 </li>
 <li>
 <p>
-int <strong>snort.trace.all</strong> = 0: enabling traces in module { 0:max32 }
+int <strong>snort.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 <li>
@@ -29988,7 +30043,7 @@ int <strong>stream_ip.session_timeout</strong> = 30: session tracking timeout { 
 </li>
 <li>
 <p>
-int <strong>stream_ip.trace.all</strong> = 0: enabling traces in module { 0:max32 }
+int <strong>stream_ip.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 <li>
@@ -30118,7 +30173,7 @@ bool <strong>stream_tcp.track_only</strong> = false: disable reassembly if true
 </li>
 <li>
 <p>
-int <strong>stream.trace.all</strong> = 0: enabling traces in module { 0:max32 }
+int <strong>stream.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 <li>
@@ -30153,7 +30208,7 @@ int <strong>stream_user.session_timeout</strong> = 30: session tracking timeout 
 </li>
 <li>
 <p>
-int <strong>stream_user.trace.all</strong> = 0: enabling traces in module { 0:max32 }
+int <strong>stream_user.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 <li>
@@ -30344,6 +30399,11 @@ string <strong><code>wizard.spells[].to_client[].spell</code></strong>: sequence
 <li>
 <p>
 string <strong><code>wizard.spells[].to_server[].spell</code></strong>: sequence of data with wild cards (*)
+</p>
+</li>
+<li>
+<p>
+int <strong>wizard.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 <li>
@@ -35283,6 +35343,21 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>119:250</strong> (http_inspect) HTTP/2 Transfer-Encoding header other than identity
+</p>
+</li>
+<li>
+<p>
+<strong>119:251</strong> (http_inspect) HTTP/2 message body overruns Content-Length header value
+</p>
+</li>
+<li>
+<p>
+<strong>119:252</strong> (http_inspect) HTTP/2 message body smaller than Content-Length header value
+</p>
+</li>
+<li>
+<p>
 <strong>121:1</strong> (http2_inspect) error in HPACK integer value
 </p>
 </li>
@@ -36792,13 +36867,10 @@ change -&gt; perfmonitor: 'snortfile' ==&gt; 'output = 'file''
 change -&gt; perfmonitor: 'time' ==&gt; 'seconds'
 change -&gt; policy_mode: 'inline_test' ==&gt; 'inline-test'
 change -&gt; pop: 'ports' ==&gt; 'bindings'
-change -&gt; ppm: ''both'' ==&gt; ''alert_and_log''
 change -&gt; ppm: 'fastpath-expensive-packets' ==&gt; 'packet.fastpath'
 change -&gt; ppm: 'max-pkt-time' ==&gt; 'packet.max_time'
 change -&gt; ppm: 'max-rule-time' ==&gt; 'rule.max_time'
-change -&gt; ppm: 'pkt-log' ==&gt; 'packet.action'
 change -&gt; ppm: 'ppm' ==&gt; 'latency'
-change -&gt; ppm: 'rule-log' ==&gt; 'rule.action'
 change -&gt; ppm: 'suspend-expensive-rules' ==&gt; 'rule.suspend'
 change -&gt; ppm: 'suspend-timeout' ==&gt; 'max_suspend_time'
 change -&gt; ppm: 'threshold' ==&gt; 'rule.suspend_threshold'
@@ -38105,6 +38177,11 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
+<strong>so_proxy</strong> (inspector): a proxy inspector to track flow data from SO rules (internal use only)
+</p>
+</li>
+<li>
+<p>
 <strong>soid</strong> (ips_option): rule option to specify a shared object rule ID
 </p>
 </li>
@@ -38711,6 +38788,11 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 <li>
 <p>
 <strong>inspector::smtp</strong>: smtp inspection
+</p>
+</li>
+<li>
+<p>
+<strong>inspector::so_proxy</strong>: a proxy inspector to track flow data from SO rules (internal use only)
 </p>
 </li>
 <li>
@@ -39623,7 +39705,7 @@ Adding/removing stream_* inspectors if stream was already configured
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2020-03-25 09:21:03 EDT
+ 2020-03-31 10:05:15 EDT
 </div>
 </div>
 </body>

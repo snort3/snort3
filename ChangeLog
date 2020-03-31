@@ -1,3 +1,23 @@
+2020/03/31 - 3.0.1 build 1
+
+-- analyzer: Send detained packet event when a packet is held
+-- appid: use http2 inspector for detection even if third-party module is present
+-- build: Increment version to 3.0.1
+-- dce_rpc: Fixed missing space in string
+-- doc: add FIXIT-E description
+-- http2_inspect: handle Cl and TE headers, and end_stream flags set on headers frames
+-- http2_inspect: multiple data frames support
+-- http_inspect: added FIXIT for thread safety
+-- http_inspect: eliminate empty body sections for missing message bodies
+-- latency: remove action config option and convert the log handler to trace_log message
+-- mime: fix data race in mime config
+-- modules: Support verbosity level for module trace options, modify trace logging macros.
+-- service_inspectors: standardize verbose config startup output for SMTP, POP and IMAP inspectors
+-- snort2lua: remove conversion of deprecated options pkt-log and rule-log
+-- so_rule: fix reload of shared object rules that use flow data
+-- src: update high priority "to be fixed" comments (FIXIT-H)
+-- stream_tcp: Out-of-order ACK processing fix
+
 2020/03/25 - build 270
 
 -- active: Base hold_packet() decision on DAQ message pool usage

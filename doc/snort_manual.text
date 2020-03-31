@@ -182,17 +182,18 @@ Table of Contents
     9.39. s7commplus
     9.40. sip
     9.41. smtp
-    9.42. ssh
-    9.43. ssl
-    9.44. stream
-    9.45. stream_file
-    9.46. stream_icmp
-    9.47. stream_ip
-    9.48. stream_tcp
-    9.49. stream_udp
-    9.50. stream_user
-    9.51. telnet
-    9.52. wizard
+    9.42. so_proxy
+    9.43. ssh
+    9.44. ssl
+    9.45. stream
+    9.46. stream_file
+    9.47. stream_icmp
+    9.48. stream_ip
+    9.49. stream_tcp
+    9.50. stream_udp
+    9.51. stream_user
+    9.52. telnet
+    9.53. wizard
 
 10. IPS Action Modules
 
@@ -410,7 +411,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0 (Build 270)
+o"  )~   Version 3.0.1 (Build 1)
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2020 Cisco and/or its affiliates. All rights reserved.
@@ -5579,7 +5580,7 @@ Usage: context
 
 Configuration:
 
-  * int decode.trace.all = 0: enabling traces in module { 0:max32 }
+  * int decode.trace.all = 0: enable traces in module { 0:255 }
 
 Rules:
 
@@ -5628,23 +5629,23 @@ Configuration:
     instead of pcre for compatible expressions
   * bool detection.enable_address_anomaly_checks = false: enable
     check and alerting of address anomalies
+  * int detection.trace.all = 0: enable detection module trace
+    logging options { 0:255 }
   * int detection.trace.detect_engine = 0: enable detection engine
-    trace logging { 0:max53 }
+    trace logging { 0:255 }
   * int detection.trace.rule_eval = 0: enable rule evaluation trace
-    logging { 0:max53 }
-  * int detection.trace.buf_min = 0: enable min buffer trace logging
-    { 0:max53 }
-  * int detection.trace.buf_verbose = 0: enable verbose buffer trace
-    logging { 0:max53 }
+    logging { 0:255 }
+  * int detection.trace.buffer = 0: enable buffer trace logging {
+    0:255 }
   * int detection.trace.rule_vars = 0: enable rule variables trace
-    logging { 0:max53 }
+    logging { 0:255 }
   * int detection.trace.fp_search = 0: enable fast pattern search
-    trace logging { 0:max53 }
+    trace logging { 0:255 }
   * int detection.trace.pkt_detect = 0: enable packet detection trace
-    logging { 0:max53 }
+    logging { 0:255 }
   * int detection.trace.opt_tree = 0: enable tree option trace
-    logging { 0:max53 }
-  * int detection.trace.tag = 0: enable tag trace logging { 0:max53 }
+    logging { 0:255 }
+  * int detection.trace.tag = 0: enable tag trace logging { 0:255 }
 
 Peg counts:
 
@@ -5945,8 +5946,6 @@ Configuration:
     thresholding (usec) { 0:max53 }
   * bool latency.packet.fastpath = false: fastpath expensive packets
     (max_time exceeded)
-  * enum latency.packet.action = none: event action if packet times
-    out and is fastpathed { none | alert | log | alert_and_log }
   * int latency.rule.max_time = 500: set timeout for rule evaluation
     (usec) { 0:max53 }
   * bool latency.rule.suspend = false: temporarily suspend expensive
@@ -5956,8 +5955,7 @@ Configuration:
   * int latency.rule.max_suspend_time = 30000: set max time for
     suspending a rule (ms, 0 means permanently disable rule) {
     0:max32 }
-  * enum latency.rule.action = none: event action for rule latency
-    enable and suspend events { none | alert | log | alert_and_log }
+  * int latency.trace.all = 0: enable traces in module { 0:255 }
 
 Rules:
 
@@ -6562,7 +6560,7 @@ Configuration:
   * string snort.--x2s: output ASCII string for given byte code (see
     also --x2c)
   * implied snort.--trace: turn on main loop debug trace
-  * int snort.trace.all = 0: enabling traces in module { 0:max32 }
+  * int snort.trace.all = 0: enable traces in module { 0:255 }
 
 Commands:
 
@@ -7332,7 +7330,7 @@ Configuration:
     on startup
   * bool appid.log_all_sessions = false: enable logging of all appid
     sessions
-  * int appid.trace.all = 0: enabling traces in module { 0:max32 }
+  * int appid.trace.all = 0: enable traces in module { 0:255 }
 
 Commands:
 
@@ -7590,7 +7588,7 @@ Configuration:
     (-1 = disabled, 0 = unlimited) { -1:32767 }
   * string dce_smb.smb_invalid_shares: SMB shares to alert on
   * bool dce_smb.smb_legacy_mode = false: inspect only SMBv1
-  * int dce_smb.trace.all = 0: enabling traces in module { 0:max32 }
+  * int dce_smb.trace.all = 0: enable traces in module { 0:255 }
 
 Rules:
 
@@ -7852,7 +7850,7 @@ Configuration:
     defragmentation
   * int dce_udp.max_frag_len = 65535: maximum fragment size for
     defragmentation { 1514:65535 }
-  * int dce_udp.trace.all = 0: enabling traces in module { 0:max32 }
+  * int dce_udp.trace.all = 0: enable traces in module { 0:255 }
 
 Rules:
 
@@ -8292,8 +8290,7 @@ Configuration:
   * string gtp_inspect[].infos[].name: information element name
   * int gtp_inspect[].infos[].length = 0: information element type
     code { 0:255 }
-  * int gtp_inspect.trace.all = 0: enabling traces in module {
-    0:max32 }
+  * int gtp_inspect.trace.all = 0: enable traces in module { 0:255 }
 
 Rules:
 
@@ -8543,6 +8540,12 @@ Rules:
   * 119:248 (http_inspect) gzip compressed data followed by
     unexpected non-gzip data
   * 119:249 (http_inspect) excessive HTTP parameter key repeats
+  * 119:250 (http_inspect) HTTP/2 Transfer-Encoding header other than
+    identity
+  * 119:251 (http_inspect) HTTP/2 message body overruns
+    Content-Length header value
+  * 119:252 (http_inspect) HTTP/2 message body smaller than
+    Content-Length header value
 
 Peg counts:
 
@@ -9533,7 +9536,19 @@ Peg counts:
   * smtp.non_encoded_bytes: total non-encoded extracted bytes (sum)
 
 
-9.42. ssh
+9.42. so_proxy
+
+--------------
+
+What: a proxy inspector to track flow data from SO rules (internal
+use only)
+
+Type: inspector
+
+Usage: global
+
+
+9.43. ssh
 
 --------------
 
@@ -9571,7 +9586,7 @@ Peg counts:
     (max)
 
 
-9.43. ssl
+9.44. ssl
 
 --------------
 
@@ -9620,7 +9635,7 @@ Peg counts:
     (max)
 
 
-9.44. stream
+9.45. stream
 
 --------------
 
@@ -9661,7 +9676,7 @@ Configuration:
     before retiring session tracker { 1:max32 }
   * int stream.file_cache.cap_weight = 32: additional bytes to track
     per flow for better estimation against cap { 0:65535 }
-  * int stream.trace.all = 0: enabling traces in module { 0:max32 }
+  * int stream.trace.all = 0: enable traces in module { 0:255 }
 
 Rules:
 
@@ -9706,7 +9721,7 @@ Peg counts:
     deleted by config reloads (sum)
 
 
-9.45. stream_file
+9.46. stream_file
 
 --------------
 
@@ -9721,7 +9736,7 @@ Configuration:
   * bool stream_file.upload = false: indicate file transfer direction
 
 
-9.46. stream_icmp
+9.47. stream_icmp
 
 --------------
 
@@ -9746,7 +9761,7 @@ Peg counts:
   * stream_icmp.prunes: icmp session prunes (sum)
 
 
-9.47. stream_ip
+9.48. stream_ip
 
 --------------
 
@@ -9770,8 +9785,7 @@ Configuration:
     | linux | bsd | bsd_right | last | windows | solaris }
   * int stream_ip.session_timeout = 30: session tracking timeout {
     1:max31 }
-  * int stream_ip.trace.all = 0: enabling traces in module { 0:max32
-    }
+  * int stream_ip.trace.all = 0: enable traces in module { 0:255 }
 
 Rules:
 
@@ -9818,7 +9832,7 @@ Peg counts:
   * stream_ip.fragmented_bytes: total fragmented bytes (sum)
 
 
-9.48. stream_tcp
+9.49. stream_tcp
 
 --------------
 
@@ -9962,7 +9976,7 @@ Peg counts:
   * stream_tcp.partial_flush_bytes: partial flush total bytes (sum)
 
 
-9.49. stream_udp
+9.50. stream_udp
 
 --------------
 
@@ -9989,7 +10003,7 @@ Peg counts:
   * stream_udp.ignored: udp packets ignored (sum)
 
 
-9.50. stream_user
+9.51. stream_user
 
 --------------
 
@@ -10003,11 +10017,10 @@ Configuration:
 
   * int stream_user.session_timeout = 30: session tracking timeout {
     1:max31 }
-  * int stream_user.trace.all = 0: enabling traces in module {
-    0:max32 }
+  * int stream_user.trace.all = 0: enable traces in module { 0:255 }
 
 
-9.51. telnet
+9.52. telnet
 
 --------------
 
@@ -10041,7 +10054,7 @@ Peg counts:
     sessions (max)
 
 
-9.52. wizard
+9.53. wizard
 
 --------------
 
@@ -10073,6 +10086,7 @@ Configuration:
     wild cards (*)
   * multi wizard.curses: enable service identification based on
     internal algorithm { dce_smb | dce_udp | dce_tcp }
+  * int wizard.trace.all = 0: enable traces in module { 0:255 }
 
 Peg counts:
 
@@ -14221,11 +14235,18 @@ with.
   * Use FIXIT (not FIXTHIS or TODO or whatever) to mark things left
     for a day or even just a minute. That way we can find them easily
     and won’t lose track of them.
-  * Presently using FIXIT-X where X = A | W | P | H | M | L | D,
-    indicating analysis, warning, perf, high, med, low priority, or
-    deprecated. Place A and W comments on the exact warning line so
-    we can match up comments and build output. Supporting comments
-    can be added above.
+  * Presently using FIXIT-X where X is one of the characters below.
+    Place A and W comments on the exact warning line so we can match
+    up comments and build output. Supporting comments can be added
+    above.
+  * A = known static analysis issue
+  * D = deprecated - code to be removed after users update
+  * E = enhancement - next steps for incomplete features (not a bug)
+  * H = high priority - urgent deficiency
+  * L = low priority - cleanup or similar technical debt (not a bug)
+  * M = medium priority - suspected non-urgent deficiency
+  * P = performance issue (not a bug)
+  * W = warning - known compiler warning
   * Put the copyright(s) and license in a comment block at the top of
     each source file (.h and .cc). Don’t bother with trivial scripts
     and make foo. Some interesting Lua code should get a comment
@@ -14846,7 +14867,7 @@ these libraries see the Getting Started section of the manual.
     library
   * bool appid.tp_appid_stats_enable: enable collection of stats and
     print stats on exit in third party module
-  * int appid.trace.all = 0: enabling traces in module { 0:max32 }
+  * int appid.trace.all = 0: enable traces in module { 0:255 }
   * ip4 arp_spoof.hosts[].ip: host ip address
   * mac arp_spoof.hosts[].mac: host mac address
   * int asn1.absolute_offset: absolute offset from the beginning of
@@ -15072,7 +15093,7 @@ these libraries see the Getting Started section of the manual.
   * bool dce_smb.smb_legacy_mode = false: inspect only SMBv1
   * int dce_smb.smb_max_chain = 3: SMB max chain size { 0:255 }
   * int dce_smb.smb_max_compound = 3: SMB max compound size { 0:255 }
-  * int dce_smb.trace.all = 0: enabling traces in module { 0:max32 }
+  * int dce_smb.trace.all = 0: enable traces in module { 0:255 }
   * multi dce_smb.valid_smb_versions = all: valid SMB versions { v1 |
     v2 | all }
   * bool dce_tcp.disable_defrag = false: disable DCE/RPC
@@ -15092,8 +15113,8 @@ these libraries see the Getting Started section of the manual.
     per signature per flow
   * int dce_udp.max_frag_len = 65535: maximum fragment size for
     defragmentation { 1514:65535 }
-  * int dce_udp.trace.all = 0: enabling traces in module { 0:max32 }
-  * int decode.trace.all = 0: enabling traces in module { 0:max32 }
+  * int dce_udp.trace.all = 0: enable traces in module { 0:255 }
+  * int decode.trace.all = 0: enable traces in module { 0:255 }
   * int detection.asn1 = 0: maximum decode nodes { 0:65535 }
   * bool detection.enable_address_anomaly_checks = false: enable
     check and alerting of address anomalies
@@ -15122,23 +15143,23 @@ these libraries see the Getting Started section of the manual.
     overrides when pattern matching (ie ignore /O)
   * bool detection.pcre_to_regex = false: enable the use of regex
     instead of pcre for compatible expressions
-  * int detection.trace.buf_min = 0: enable min buffer trace logging
-    { 0:max53 }
-  * int detection.trace.buf_verbose = 0: enable verbose buffer trace
-    logging { 0:max53 }
+  * int detection.trace.all = 0: enable detection module trace
+    logging options { 0:255 }
+  * int detection.trace.buffer = 0: enable buffer trace logging {
+    0:255 }
   * int detection.trace.detect_engine = 0: enable detection engine
-    trace logging { 0:max53 }
+    trace logging { 0:255 }
   * int detection.trace.fp_search = 0: enable fast pattern search
-    trace logging { 0:max53 }
+    trace logging { 0:255 }
   * int detection.trace.opt_tree = 0: enable tree option trace
-    logging { 0:max53 }
+    logging { 0:255 }
   * int detection.trace.pkt_detect = 0: enable packet detection trace
-    logging { 0:max53 }
+    logging { 0:255 }
   * int detection.trace.rule_eval = 0: enable rule evaluation trace
-    logging { 0:max53 }
+    logging { 0:255 }
   * int detection.trace.rule_vars = 0: enable rule variables trace
-    logging { 0:max53 }
-  * int detection.trace.tag = 0: enable tag trace logging { 0:max53 }
+    logging { 0:255 }
+  * int detection.trace.tag = 0: enable tag trace logging { 0:255 }
   * bool dnp3.check_crc = false: validate checksums in DNP3 link
     layer frames
   * string dnp3_func.~: match DNP3 function code or name
@@ -15343,8 +15364,7 @@ these libraries see the Getting Started section of the manual.
   * string gtp_inspect[].messages[].name: message name
   * int gtp_inspect[].messages[].type = 0: message type code { 0:255
     }
-  * int gtp_inspect.trace.all = 0: enabling traces in module {
-    0:max32 }
+  * int gtp_inspect.trace.all = 0: enable traces in module { 0:255 }
   * int gtp_inspect[].version = 2: GTP version { 0:2 }
   * string gtp_type.~: list of types to match
   * int gtp_version.~: version to match { 0:2 }
@@ -15592,14 +15612,10 @@ these libraries see the Getting Started section of the manual.
     buffer
   * interval itype.~range: check if ICMP type is in given range {
     0:255 }
-  * enum latency.packet.action = none: event action if packet times
-    out and is fastpathed { none | alert | log | alert_and_log }
   * bool latency.packet.fastpath = false: fastpath expensive packets
     (max_time exceeded)
   * int latency.packet.max_time = 500: set timeout for packet latency
     thresholding (usec) { 0:max53 }
-  * enum latency.rule.action = none: event action for rule latency
-    enable and suspend events { none | alert | log | alert_and_log }
   * int latency.rule.max_suspend_time = 30000: set max time for
     suspending a rule (ms, 0 means permanently disable rule) {
     0:max32 }
@@ -15609,6 +15625,7 @@ these libraries see the Getting Started section of the manual.
     rules
   * int latency.rule.suspend_threshold = 5: set threshold for number
     of timeouts before suspending a rule { 1:max32 }
+  * int latency.trace.all = 0: enable traces in module { 0:255 }
   * bool log_codecs.file = false: output to log_codecs.txt instead of
     stdout
   * bool log_codecs.msg = false: include alert msg
@@ -16315,7 +16332,7 @@ these libraries see the Getting Started section of the manual.
     talos)
   * string snort.-t: <dir> chroots process to <dir> after
     initialization
-  * int snort.trace.all = 0: enabling traces in module { 0:max32 }
+  * int snort.trace.all = 0: enable traces in module { 0:255 }
   * implied snort.--trace: turn on main loop debug trace
   * implied snort.--treat-drop-as-alert: converts drop, block, and
     reset rules into alert rules when loaded
@@ -16433,8 +16450,7 @@ these libraries see the Getting Started section of the manual.
     | linux | bsd | bsd_right | last | windows | solaris }
   * int stream_ip.session_timeout = 30: session tracking timeout {
     1:max31 }
-  * int stream_ip.trace.all = 0: enabling traces in module { 0:max32
-    }
+  * int stream_ip.trace.all = 0: enable traces in module { 0:255 }
   * int stream.max_flows = 476288: maximum simultaneous flows tracked
     before pruning { 2:max32 }
   * int stream.pruning_timeout = 30: minimum inactive time before
@@ -16486,7 +16502,7 @@ these libraries see the Getting Started section of the manual.
   * int stream_tcp.small_segments.maximum_size = 0: minimum bytes for
     a TCP segment not to be considered small (129:12) { 0:2048 }
   * bool stream_tcp.track_only = false: disable reassembly if true
-  * int stream.trace.all = 0: enabling traces in module { 0:max32 }
+  * int stream.trace.all = 0: enable traces in module { 0:255 }
   * int stream.udp_cache.cap_weight = 128: additional bytes to track
     per flow for better estimation against cap { 0:65535 }
   * int stream.udp_cache.idle_timeout = 180: maximum inactive time
@@ -16499,8 +16515,7 @@ these libraries see the Getting Started section of the manual.
     before retiring session tracker { 1:max32 }
   * int stream_user.session_timeout = 30: session tracking timeout {
     1:max31 }
-  * int stream_user.trace.all = 0: enabling traces in module {
-    0:max32 }
+  * int stream_user.trace.all = 0: enable traces in module { 0:255 }
   * int suppress[].gid = 0: rule generator ID { 0:max32 }
   * string suppress[].ip: restrict suppression to these addresses
     according to track
@@ -16559,6 +16574,7 @@ these libraries see the Getting Started section of the manual.
     wild cards (*)
   * string wizard.spells[].to_server[].spell: sequence of data with
     wild cards (*)
+  * int wizard.trace.all = 0: enable traces in module { 0:255 }
   * interval wscale.~range: check if TCP window scale is in given
     range { 0:65535 }
 
@@ -17827,6 +17843,12 @@ these libraries see the Getting Started section of the manual.
   * 119:248 (http_inspect) gzip compressed data followed by
     unexpected non-gzip data
   * 119:249 (http_inspect) excessive HTTP parameter key repeats
+  * 119:250 (http_inspect) HTTP/2 Transfer-Encoding header other than
+    identity
+  * 119:251 (http_inspect) HTTP/2 message body overruns
+    Content-Length header value
+  * 119:252 (http_inspect) HTTP/2 message body smaller than
+    Content-Length header value
   * 121:1 (http2_inspect) error in HPACK integer value
   * 121:2 (http2_inspect) HPACK integer value has leading zeros
   * 121:3 (http2_inspect) error in HPACK string value
@@ -18307,13 +18329,10 @@ change -> perfmonitor: 'snortfile' ==> 'output = 'file''
 change -> perfmonitor: 'time' ==> 'seconds'
 change -> policy_mode: 'inline_test' ==> 'inline-test'
 change -> pop: 'ports' ==> 'bindings'
-change -> ppm: ''both'' ==> ''alert_and_log''
 change -> ppm: 'fastpath-expensive-packets' ==> 'packet.fastpath'
 change -> ppm: 'max-pkt-time' ==> 'packet.max_time'
 change -> ppm: 'max-rule-time' ==> 'rule.max_time'
-change -> ppm: 'pkt-log' ==> 'packet.action'
 change -> ppm: 'ppm' ==> 'latency'
-change -> ppm: 'rule-log' ==> 'rule.action'
 change -> ppm: 'suspend-expensive-rules' ==> 'rule.suspend'
 change -> ppm: 'suspend-timeout' ==> 'max_suspend_time'
 change -> ppm: 'threshold' ==> 'rule.suspend_threshold'
@@ -18848,6 +18867,8 @@ deleted -> unified2: 'vlan_event_types'
   * smtp (inspector): smtp inspection
   * snort (basic): command line configuration and shell commands
   * so (ips_option): rule option to call custom eval function
+  * so_proxy (inspector): a proxy inspector to track flow data from
+    SO rules (internal use only)
   * soid (ips_option): rule option to specify a shared object rule ID
   * ssh (inspector): ssh inspection
   * ssl (inspector): ssl inspection
@@ -18999,6 +19020,8 @@ deleted -> unified2: 'vlan_event_types'
   * inspector::s7commplus: s7commplus inspection
   * inspector::sip: sip inspection
   * inspector::smtp: smtp inspection
+  * inspector::so_proxy: a proxy inspector to track flow data from SO
+    rules (internal use only)
   * inspector::ssh: ssh inspection
   * inspector::ssl: ssl inspection
   * inspector::stream: common flow tracking
