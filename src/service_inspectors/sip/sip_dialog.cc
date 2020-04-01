@@ -40,12 +40,13 @@
 using namespace snort;
 
 static void SIP_updateMedias(SIP_MediaSession*, SIP_MediaList*);
-static int SIP_compareMedias(SIP_MediaDataList, SIP_MediaDataList);
-static bool SIP_checkMediaChange(SIPMsg* sipMsg, SIP_DialogData* dialog);
+static int SIP_compareMedias(const SIP_MediaDataList, const SIP_MediaDataList);
+static bool SIP_checkMediaChange(const SIPMsg*, const SIP_DialogData*);
 static int SIP_processRequest(SIPMsg*, SIP_DialogData*, SIP_DialogList*, Packet*, SIP_PROTO_CONF*);
 static int SIP_processInvite(SIPMsg*, SIP_DialogData*, SIP_DialogList*);
 static int SIP_processACK(SIPMsg*, SIP_DialogData*, SIP_DialogList*, Packet*, SIP_PROTO_CONF*);
-static int SIP_processResponse(SIPMsg*, SIP_DialogData*, SIP_DialogList*, Packet*, SIP_PROTO_CONF*);
+static int SIP_processResponse(SIPMsg*, SIP_DialogData*, SIP_DialogList*, Packet*,
+    SIP_PROTO_CONF*);
 static int SIP_ignoreChannels(SIP_DialogData*, Packet* p, SIP_PROTO_CONF*);
 static SIP_DialogData* SIP_addDialog(SIPMsg*, SIP_DialogData*, SIP_DialogList*);
 static int SIP_deleteDialog(SIP_DialogData*, SIP_DialogList*);
@@ -232,7 +233,6 @@ static int SIP_processResponse(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_Dialo
     assert (nullptr != sipMsg);
 
     statusType = sipMsg->status_code / 100;
-
     sip_stats.responses[TOTAL_RESPONSES]++;
     if (statusType < NUM_OF_RESPONSE_TYPES)
         sip_stats.responses[statusType]++;
@@ -251,7 +251,15 @@ static int SIP_processResponse(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_Dialo
 
         if (SIP_DLG_CREATE == currDialog->state)
             currDialog->state = SIP_DLG_EARLY;
-        SIP_updateMedias(sipMsg->mediaSession, &dialog->mediaSessions);
+        // 183 session progress can have SDP body for which we need to set
+        // mediaUpdated flag so that AppId can create pinhole for RTP/RTCP
+        // media session
+        if ( !SIP_checkMediaChange(sipMsg, dialog) )
+        {
+            SIP_updateMedias(sipMsg->mediaSession, &dialog->mediaSessions);
+            SIP_ignoreChannels(currDialog, p,config);
+            sipMsg->mediaUpdated = true;
+        }
         break;
     case RESPONSE2XX:
 
@@ -323,9 +331,9 @@ static int SIP_processResponse(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_Dialo
  *  true: media not changed
  *  false: media changed
  ********************************************************************/
-static bool SIP_checkMediaChange(SIPMsg* sipMsg, SIP_DialogData* dialog)
+static bool SIP_checkMediaChange(const SIPMsg* sipMsg, const SIP_DialogData* dialog)
 {
-    SIP_MediaSession* medias;
+    const SIP_MediaSession* medias;
 
     // Compare the medias (SDP part)
     if (nullptr == sipMsg->mediaSession)
@@ -376,6 +384,7 @@ static int SIP_ignoreChannels(SIP_DialogData* dialog, Packet* p, SIP_PROTO_CONF*
     // check the first media session
     if (nullptr == dialog->mediaSessions)
         return false;
+
     // check the second media session
     if (nullptr == dialog->mediaSessions->nextS)
         return false;
@@ -425,9 +434,9 @@ static int SIP_ignoreChannels(SIP_DialogData* dialog, Packet* p, SIP_PROTO_CONF*
  *   0: the same
  *
  ********************************************************************/
-static int SIP_compareMedias(SIP_MediaDataList mlistA, SIP_MediaDataList mlistB)
+static int SIP_compareMedias(const SIP_MediaDataList mlistA, const SIP_MediaDataList mlistB)
 {
-    SIP_MediaData* mdataA,* mdataB;
+    const SIP_MediaData* mdataA, * mdataB;
     mdataA = mlistA;
     mdataB = mlistB;
     while ((nullptr != mdataA) && (nullptr != mdataB))
