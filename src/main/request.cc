@@ -27,18 +27,18 @@
 #include "utils/util.h"
 
 using namespace snort;
+using namespace std;
 
 //-------------------------------------------------------------------------
 // request foo
 //-------------------------------------------------------------------------
 
-bool Request::read(const int& f)
+bool Request::read()
 {
     bool newline_found = false;
     char buf;
     ssize_t n = 0;
 
-    fd = f;
     while ( (bytes_read < sizeof(read_buf)) and ((n = ::read(fd, &buf, 1)) > 0) )
     {
         read_buf[bytes_read++] = buf;
@@ -91,19 +91,24 @@ void Request::respond(const char* s, bool queue_response, bool remote_only)
 
     if ( queue_response )
     {
-        queued_response = s;
+        lock_guard<mutex> lock(queued_response_mutex);
+        queued_response.emplace(s);
         return;
     }
     write_response(s);
 }
 
 #ifdef SHELL
-void Request::send_queued_response()
+bool Request::send_queued_response()
 {
-    if ( queued_response )
+    const char* qr;
     {
-        write_response(queued_response);
-        queued_response = nullptr;
+        lock_guard<mutex> lock(queued_response_mutex);
+        if ( queued_response.empty() )
+            return false;
+        qr = queued_response.front();
+        queued_response.pop();
     }
+    return write_response(qr);
 }
 #endif

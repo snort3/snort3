@@ -117,6 +117,8 @@ public:
 
             if ( !list.empty() )
             {
+                // A data race when reload changes max_size while other threads read this may
+                // delay pruning by one round. Yet, we are avoiding mutex for better performance.
                 max_size = current_size;
                 if ( max_size > new_size )
                 {

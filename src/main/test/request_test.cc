@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <unistd.h>
+
 #include "main/request.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
@@ -41,19 +43,18 @@ TEST_GROUP(request_tests)
 {};
 
 //--------------------------------------------------------------------------
-// Make sure request->read does not modify value of passed-in fd
+// Make sure multiple responses are queued
 //--------------------------------------------------------------------------
-TEST(request_tests, request_read_fail_test)
+TEST(request_tests, queued_response_test)
 {
-    const int fd_orig_val = 10;
-    int current_fd = fd_orig_val;
+    Request request(STDOUT_FILENO);
 
-    Request *request = new Request(current_fd);
-
-    CHECK(request->read(current_fd) == false);
-    CHECK(current_fd == fd_orig_val);
-
-    delete request;
+    CHECK(request.send_queued_response() == false); // empty queue
+    request.respond("reloading", true);
+    request.respond("swapping", true);
+    CHECK(request.send_queued_response() == true);
+    CHECK(request.send_queued_response() == true);
+    CHECK(request.send_queued_response() == false); // empty queue after being written
 }
 
 //-------------------------------------------------------------------------

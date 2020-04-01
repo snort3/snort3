@@ -62,7 +62,7 @@ void ControlConn::configure() const
 
 int ControlConn::shell_execute(int& current_fd, Request*& current_request)
 {
-    if ( !request->read(fd) )
+    if ( !request->read() )
         return -1;
 
     current_fd = fd;
