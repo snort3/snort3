@@ -277,6 +277,15 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
         context->set_file_id(file_id);
     }
 
+    if ( offset != 0 and
+        (FileService::get_file_cache()->cached_verdict_lookup(p, context, file_policy) !=
+            FILE_VERDICT_UNKNOWN) )
+    {
+        context->processing_complete = true;
+        remove_processed_file_context(multi_file_processing_id);
+        return false;
+    }
+
     if (context->processing_complete and context->verdict != FILE_VERDICT_UNKNOWN)
     {
         /*A new file session, but policy might be different*/
