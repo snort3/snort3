@@ -245,32 +245,12 @@ static bool set_network_attributes(AppIdSession* asd, Packet* p, IpProtocol& pro
     return true;
 }
 
-static bool is_packet_ignored(AppIdSession* asd, Packet* p, AppidSessionDirection direction)
+static bool is_packet_ignored(Packet* p)
 {
     if ( p->is_rebuilt() and !p->flow->is_proxied())
     {
-        // FIXIT-M: In snort2x, a rebuilt packet was ignored whether it had a session or not.
-        // Here, we are ignoring rebuilt packet only if it has a session. Why?
-        if ( asd )
-        {
-            AppIdHttpSession* hsession = asd->get_http_session();
-            if ( direction == APP_ID_FROM_INITIATOR && hsession && hsession->is_rebuilt_offsets() )
-            {
-                asd->ctxt.get_odp_ctxt().get_http_matchers().get_http_offsets(p, hsession);
-                if (appidDebug->is_active())
-                {
-                    uint16_t uri_start, uri_end, cookie_start, cookie_end;
-                    hsession->get_offset(REQ_URI_FID, uri_start, uri_end);
-                    hsession->get_offset(REQ_COOKIE_FID, cookie_start, cookie_end);
-                    LogMessage(
-                        "AppIdDbg %s Offsets from rebuilt packet: uri: %u-%u cookie: %u-%u\n",
-                        appidDebug->get_debug_session(),
-                        uri_start, uri_end, cookie_start, cookie_end);
-                }
-            }
-            appid_stats.ignored_packets++;
-            return true;
-        }
+        appid_stats.ignored_packets++;
+        return true;
     }
 
     return false;
@@ -485,7 +465,7 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
         appidDebug->activate(p->flow, asd,
             inspector.get_ctxt().config.log_all_sessions);
 
-    if ( is_packet_ignored(asd, p, direction) )
+    if ( is_packet_ignored(p) )
         return false;
 
     uint64_t flow_flags;
@@ -930,32 +910,6 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
         }
         else if (is_discovery_done and asd.get_session_flags(APPID_SESSION_DECRYPT_MONITOR))
             asd.set_session_flags(APPID_SESSION_CONTINUE);
-    }
-
-    // Set the field that the Firewall queries to see if we have a search engine
-    if (asd.search_support_type == UNKNOWN_SEARCH_ENGINE && payload_id > APP_ID_NONE)
-    {
-        uint flags = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_info_flags(payload_id,
-            APPINFO_FLAG_SEARCH_ENGINE | APPINFO_FLAG_SUPPORTED_SEARCH);
-        asd.search_support_type =
-            (flags & APPINFO_FLAG_SEARCH_ENGINE) ?
-            ((flags & APPINFO_FLAG_SUPPORTED_SEARCH) ? SUPPORTED_SEARCH_ENGINE :
-            UNSUPPORTED_SEARCH_ENGINE )
-            : NOT_A_SEARCH_ENGINE;
-        if (appidDebug->is_active())
-        {
-            const char* typeString;
-            const char *app_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(payload_id);
-            switch ( asd.search_support_type )
-            {
-            case NOT_A_SEARCH_ENGINE: typeString = "NOT_A_SEARCH_ENGINE"; break;
-            case SUPPORTED_SEARCH_ENGINE: typeString = "SUPPORTED_SEARCH_ENGINE"; break;
-            case UNSUPPORTED_SEARCH_ENGINE: typeString = "UNSUPPORTED_SEARCH_ENGINE"; break;
-            default: typeString = "unknown"; break;
-            }
-            LogMessage("AppIdDbg %s Application: %s (%d) (safe)search_support_type=%s\n",
-                appidDebug->get_debug_session(), app_name ? app_name : "unknown", payload_id, typeString);
-        }
     }
 
     if ( service_id !=  APP_ID_NONE )

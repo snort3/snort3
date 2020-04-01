@@ -38,19 +38,6 @@
 
 using namespace snort;
 
-static const char* httpFieldName[ NUM_HTTP_FIELDS ] = // for use in debug messages
-{
-    "useragent",
-    "host",
-    "referer",
-    "uri",
-    "cookie",
-    "req_body",
-    "content_type",
-    "location",
-    "body",
-};
-
 AppIdHttpSession::AppIdHttpSession(AppIdSession& asd)
     : asd(asd)
 {
@@ -170,7 +157,7 @@ void AppIdHttpSession::set_tun_dest()
     free(url );
 }
 
-int AppIdHttpSession::initial_chp_sweep(ChpMatchDescriptor& cmd, HttpPatternMatchers& http_matchers)
+bool AppIdHttpSession::initial_chp_sweep(ChpMatchDescriptor& cmd, HttpPatternMatchers& http_matchers)
 {
     CHPApp* cah = nullptr;
 
@@ -186,7 +173,7 @@ int AppIdHttpSession::initial_chp_sweep(ChpMatchDescriptor& cmd, HttpPatternMatc
     if (cmd.match_tally.empty())
     {
         free_chp_matches(cmd, MAX_KEY_PATTERN);
-        return 0;
+        return false;
     }
 
     int longest = 0;
@@ -206,7 +193,7 @@ int AppIdHttpSession::initial_chp_sweep(ChpMatchDescriptor& cmd, HttpPatternMatc
     if ( !cah )
     {
         free_chp_matches(cmd, MAX_KEY_PATTERN);
-        return 0;
+        return false;
     }
 
     /***************************************************************
@@ -248,7 +235,7 @@ int AppIdHttpSession::initial_chp_sweep(ChpMatchDescriptor& cmd, HttpPatternMatc
             asd.tpsession->clear_attr(TP_ATTR_COPY_RESPONSE_BODY);
     }
 
-    return 1;
+    return true;
 }
 
 void AppIdHttpSession::init_chp_match_descriptor(ChpMatchDescriptor& cmd)
@@ -283,154 +270,133 @@ void AppIdHttpSession::process_chp_buffers(AppidChangeBits& change_bits, HttpPat
             chp_finished = true; // this is a failure case.
     }
 
-    if ( !chp_finished && chp_candidate )
+    if (chp_finished or !chp_candidate)
+        return;
+
+    char* user = nullptr;
+    char* version = nullptr;
+
+    for (unsigned i = 0; i < NUM_HTTP_FIELDS; i++)
     {
-        char* user = nullptr;
-        char* version = nullptr;
+        if ( !ptype_scan_counts[i] )
+            continue;
 
-        for (unsigned i = 0; i < NUM_HTTP_FIELDS; i++)
+        if ( cmd.buffer[i] && cmd.length[i] )
         {
-            if ( !ptype_scan_counts[i] )
-                continue;
-
-            if ( cmd.buffer[i] && cmd.length[i] )
+            int num_found = 0;
+            cmd.cur_ptype = (HttpFieldIds)i;
+            AppId ret = http_matchers.scan_chp(cmd, &version, &user, &num_found, this, asd.ctxt);
+            total_found += num_found;
+            if (!ret || num_found < ptype_req_counts[i])
             {
-                int num_found = 0;
-                cmd.cur_ptype = (HttpFieldIds)i;
-                AppId ret = http_matchers.scan_chp(cmd, &version, &user, &num_found, this,
-                    asd.ctxt);
-                total_found += num_found;
-                if (!ret || num_found < ptype_req_counts[i])
+                // No match at all or the required matches for the field was NOT made
+                if (!num_matches)
                 {
-                    // No match at all or the required matches for the field was NOT made
-                    if (!num_matches)
-                    {
-                        // num_matches == 0 means: all must succeed
-                        // give up early
-                        chp_candidate = 0;
-                        break;
-                    }
-                }
-            }
-            else if ( !num_matches )
-            {
-                // num_matches == 0 means: all must succeed  give up early
-                chp_candidate = 0;
-                break;
-            }
-
-            // Decrement the expected scan count toward 0.
-            ptype_scan_counts[i] = 0;
-            num_scans--;
-            // if we have reached the end of the list of scans (which have something to do), then
-            // num_scans == 0
-            if (num_scans == 0)
-            {
-                // we finished the last scan
-                // either the num_matches value was zero and we failed early-on or we need to check
-                // for the min.
-                if (num_matches &&
-                    total_found < num_matches)
-                {
-                    // There was a minimum scans match count (num_matches != 0)
-                    // And we did not reach that minimum
+                    // num_matches == 0 means: all must succeed
+                    // give up early
                     chp_candidate = 0;
                     break;
                 }
-                // All required matches were met.
-                chp_finished = true;
+            }
+        }
+        else if ( !num_matches )
+        {
+            // num_matches == 0 means: all must succeed  give up early
+            chp_candidate = 0;
+            break;
+        }
+
+        // Decrement the expected scan count toward 0.
+        ptype_scan_counts[i] = 0;
+        num_scans--;
+        // if we have reached the end of the list of scans (which have something to do), then
+        // num_scans == 0
+        if (num_scans == 0)
+        {
+            // we finished the last scan
+            // either the num_matches value was zero and we failed early-on or we need to check
+            // for the min.
+            if (num_matches && total_found < num_matches)
+            {
+                // There was a minimum scans match count (num_matches != 0)
+                // And we did not reach that minimum
+                chp_candidate = 0;
                 break;
             }
-        }
-
-        // pass the index of last chp_matcher, not the length the array!
-        free_chp_matches(cmd, NUM_HTTP_FIELDS-1);
-
-        if ( !chp_candidate )
-        {
+            // All required matches were met.
             chp_finished = true;
-            if ( version )
-            {
-                snort_free(version);
-                version = nullptr;
-            }
+            break;
+        }
+    }
 
-            if ( user )
-            {
-                snort_free(user);
-                user = nullptr;
-            }
+    // pass the index of last chp_matcher, not the length the array!
+    free_chp_matches(cmd, NUM_HTTP_FIELDS-1);
 
-            cmd.free_rewrite_buffers();
-            memset(ptype_scan_counts, 0, sizeof(ptype_scan_counts));
-
-            // Make it possible for other detectors to run.
-            skip_simple_detect = false;
-            return;
+    if ( !chp_candidate )
+    {
+        chp_finished = true;
+        if ( version )
+        {
+            snort_free(version);
+            version = nullptr;
         }
 
-        if (chp_candidate && chp_finished)
+        if ( user )
         {
-            AppId chp_final = chp_alt_candidate ? chp_alt_candidate
-                : CHP_APPIDINSTANCE_TO_ID(chp_candidate);
+            snort_free(user);
+            user = nullptr;
+        }
 
+        memset(ptype_scan_counts, 0, sizeof(ptype_scan_counts));
+
+        // Make it possible for other detectors to run.
+        skip_simple_detect = false;
+        return;
+    }
+
+    if (chp_finished)
+    {
+        AppId chp_final = chp_alt_candidate ? chp_alt_candidate
+            : CHP_APPIDINSTANCE_TO_ID(chp_candidate);
+
+        if (app_type_flags & APP_TYPE_SERVICE)
+            asd.set_service_appid_data(chp_final, change_bits, version);
+
+        if (app_type_flags & APP_TYPE_CLIENT)
+            asd.set_client_appid_data(chp_final, change_bits, version);
+
+        if ( app_type_flags & APP_TYPE_PAYLOAD )
+            asd.set_payload_appid_data(chp_final, change_bits, version);
+
+        if ( version )
+        {
+            snort_free(version);
+            version = nullptr;
+        }
+
+        if ( user )
+        {
             if (app_type_flags & APP_TYPE_SERVICE)
-                asd.set_service_appid_data(chp_final, change_bits, version);
-
-            if (app_type_flags & APP_TYPE_CLIENT)
-                asd.set_client_appid_data(chp_final, change_bits, version);
-
-            if ( app_type_flags & APP_TYPE_PAYLOAD )
-                asd.set_payload_appid_data(chp_final, change_bits, version);
-
-            if ( version )
-            {
-                snort_free(version);
-                version = nullptr;
-            }
-
-            if ( user )
-            {
-                if (app_type_flags & APP_TYPE_SERVICE)
-                    asd.client.update_user(chp_final, user);
-                else
-                    asd.client.update_user(asd.service.get_id(), user);
-                user = nullptr;
-                asd.set_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
-            }
-
-            for (unsigned i = 0; i < NUM_HTTP_FIELDS; i++)
-                if ( cmd.chp_rewritten[i] )
-                {
-                    if (appidDebug->is_active())
-                        LogMessage("AppIdDbg %s Rewritten %s: %s\n",
-                            appidDebug->get_debug_session(),
-                            httpFieldName[i], cmd.chp_rewritten[i]);
-
-                    set_field((HttpFieldIds)i, (const uint8_t*)cmd.chp_rewritten[i],
-                        strlen(cmd.chp_rewritten[i]), change_bits);
-                    delete [] cmd.chp_rewritten[i];
-                    cmd.chp_rewritten[i] = nullptr;
-                }
-
-            chp_candidate = 0;
-            //if we're doing safesearch rewrites, we want to continue to hold the flow
-            if (!rebuilt_offsets)
-                chp_hold_flow = 0;
-            asd.scan_flags &= ~SCAN_HTTP_VIA_FLAG;
-            asd.scan_flags &= ~SCAN_HTTP_USER_AGENT_FLAG;
-            asd.scan_flags &= ~SCAN_HTTP_HOST_URL_FLAG;
-            memset(ptype_scan_counts, 0, sizeof(ptype_scan_counts));
+                asd.client.update_user(chp_final, user);
+            else
+                asd.client.update_user(asd.service.get_id(), user);
+            user = nullptr;
+            asd.set_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
         }
-        else /* if we have a candidate, but we're not finished */
-        {
-            if ( user )
-            {
-                snort_free(user);
-                user = nullptr;
-            }
 
-            cmd.free_rewrite_buffers();
+        chp_candidate = 0;
+        chp_hold_flow = 0;
+        asd.scan_flags &= ~SCAN_HTTP_VIA_FLAG;
+        asd.scan_flags &= ~SCAN_HTTP_USER_AGENT_FLAG;
+        asd.scan_flags &= ~SCAN_HTTP_HOST_URL_FLAG;
+        memset(ptype_scan_counts, 0, sizeof(ptype_scan_counts));
+    }
+    else /* if we have a candidate, but we're not finished */
+    {
+        if ( user )
+        {
+            snort_free(user);
+            user = nullptr;
         }
     }
 }

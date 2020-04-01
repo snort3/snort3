@@ -159,12 +159,6 @@ public:
     void set_is_webdav(bool webdav)
     { is_webdav = webdav; }
 
-    bool is_rebuilt_offsets() const
-    { return rebuilt_offsets; }
-
-    void set_rebuilt_offsets(bool use_rebuilt_offsets = false)
-    { rebuilt_offsets = use_rebuilt_offsets; }
-
     AppId get_chp_candidate() const
     { return chp_candidate; }
 
@@ -215,7 +209,7 @@ public:
 protected:
 
     void init_chp_match_descriptor(ChpMatchDescriptor& cmd);
-    int initial_chp_sweep(ChpMatchDescriptor&, HttpPatternMatchers&);
+    bool initial_chp_sweep(ChpMatchDescriptor&, HttpPatternMatchers&);
     void process_chp_buffers(AppidChangeBits&, HttpPatternMatchers&);
     void free_chp_matches(ChpMatchDescriptor& cmd, unsigned max_matches);
     void set_http_change_bits(AppidChangeBits& change_bits, HttpFieldIds id);
@@ -241,7 +235,6 @@ protected:
     unsigned app_type_flags = 0;
     int num_matches = 0;
     int num_scans = 0;
-    bool rebuilt_offsets = false;
     bool skip_simple_detect = false;
     snort::SfIp* xff_addr = nullptr;
     const char** xffPrecedence = nullptr;

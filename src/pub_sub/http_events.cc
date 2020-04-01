@@ -60,8 +60,13 @@ const uint8_t* HttpEvent::get_cookie(int32_t& length)
 
 const uint8_t* HttpEvent::get_host(int32_t& length)
 {
-    return get_header(HttpEnums::HTTP_BUFFER_HEADER, HttpEnums::HEAD_HOST,
-        length);
+    // Use Host header when available
+    const uint8_t* host_header = get_header(HttpEnums::HTTP_BUFFER_HEADER,
+        HttpEnums::HEAD_HOST, length);
+    if (length > 0)
+        return host_header;
+    // Otherwise use authority
+    return get_header(HttpEnums::HTTP_BUFFER_URI, HttpEnums::UC_HOST, length);
 }
 
 const uint8_t* HttpEvent::get_location(int32_t& length)

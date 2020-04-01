@@ -116,21 +116,6 @@ TEST(appid_session_api, get_service_port)
 }
 
 
-TEST(appid_session_api, get_http_search)
-{
-    SEARCH_SUPPORT_TYPE val = appid_session_api->get_http_search();
-    CHECK_TRUE(val == NOT_A_SEARCH_ENGINE);
-    mock_session->search_support_type = SUPPORTED_SEARCH_ENGINE;
-    val = appid_session_api->get_http_search();
-    CHECK_TRUE(val == SUPPORTED_SEARCH_ENGINE);
-    mock_session->search_support_type = UNSUPPORTED_SEARCH_ENGINE;
-    val = appid_session_api->get_http_search();
-    CHECK_TRUE(val == UNSUPPORTED_SEARCH_ENGINE);
-    mock_session->search_support_type = NOT_A_SEARCH_ENGINE;
-    val = appid_session_api->get_http_search();
-    CHECK_TRUE(val == NOT_A_SEARCH_ENGINE);
-}
-
 TEST(appid_session_api, get_tls_host)
 {
     AppidChangeBits change_bits;

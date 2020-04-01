@@ -1441,16 +1441,29 @@ static inline int get_chp_pattern_data_and_size(lua_State* L, int index, char** 
     return 0;
 }
 
-static inline int get_chp_action_type(lua_State* L, int index, ActionType* action_type)
+static inline int get_chp_action_type(lua_State* L, int index, ActionType& action_type)
 {
-    *action_type = (ActionType)lua_tointeger(L, index);
-    if (*action_type < NO_ACTION || *action_type > MAX_ACTION_TYPE)
+    action_type = (ActionType)lua_tointeger(L, index);
+    if (action_type < NO_ACTION || action_type > MAX_ACTION_TYPE)
     {
         WarningMessage(
             "LuaDetectorApi:Unsupported CHP Action type: %d, possible version mismatch.",
-            *action_type);
+            action_type);
         return -1;
     }
+
+    switch (action_type)
+    {
+    case REWRITE_FIELD:
+    case INSERT_FIELD:
+    case SEARCH_UNSUPPORTED:
+    case GET_OFFSETS_FROM_REBUILT:
+        // Valid action types but not supported, silently ignore
+        return -1;
+    default:
+        break;
+    }
+
     return 0;
 }
 
@@ -1498,40 +1511,7 @@ static int add_chp_pattern_action(AppId appIdInstance, int isKeyPattern, HttpFie
 
     unsigned precedence = chpapp->ptype_scan_counts[patternType]++;
     // at runtime we'll want to know how many of each type of pattern we are looking for.
-    if (actionType == REWRITE_FIELD || actionType == INSERT_FIELD)
-    {
-        if (!odp_ctxt.get_app_info_mgr().get_app_info_flags(CHP_APPIDINSTANCE_TO_ID(appIdInstance),
-            APPINFO_FLAG_SUPPORTED_SEARCH))
-        {
-            ErrorMessage(
-                "LuaDetectorApi: CHP action type, %d, requires previous use of action type, %d, (see appId %d, pattern=\"%s\").\n",
-                actionType, GET_OFFSETS_FROM_REBUILT,
-                CHP_APPIDINSTANCE_TO_ID(appIdInstance), patternData);
-            snort_free(patternData);
-            if (optionalActionData)
-                snort_free(optionalActionData);
-            return 0;
-        }
-        switch (patternType)
-        {
-        // permitted pattern type (modifiable HTTP/SPDY request field)
-        case REQ_AGENT_FID:
-        case REQ_HOST_FID:
-        case REQ_REFERER_FID:
-        case REQ_URI_FID:
-        case REQ_COOKIE_FID:
-            break;
-        default:
-            ErrorMessage(
-                "LuaDetectorApi: CHP action type, %d, on unsupported pattern type, %d, (see appId %d, pattern=\"%s\").\n",
-                actionType, patternType, CHP_APPIDINSTANCE_TO_ID(appIdInstance), patternData);
-            snort_free(patternData);
-            if (optionalActionData)
-                snort_free(optionalActionData);
-            return 0;
-        }
-    }
-    else if (actionType != ALTERNATE_APPID && actionType != DEFER_TO_SIMPLE_DETECT)
+    if (actionType != ALTERNATE_APPID && actionType != DEFER_TO_SIMPLE_DETECT)
         chpapp->ptype_req_counts[patternType]++;
 
     CHPListElement* chpa = (CHPListElement*)snort_calloc(sizeof(CHPListElement));
@@ -1546,16 +1526,7 @@ static int add_chp_pattern_action(AppId appIdInstance, int isKeyPattern, HttpFie
     chpa->chp_action.chpapp = chpapp; // link this struct to the Glossary entry
     odp_ctxt.get_http_matchers().insert_chp_pattern(chpa);
 
-    /* Set the safe-search bits in the appId entry */
-    if (actionType == GET_OFFSETS_FROM_REBUILT)
-        odp_ctxt.get_app_info_mgr().set_app_info_flags(CHP_APPIDINSTANCE_TO_ID(appIdInstance),
-            APPINFO_FLAG_SEARCH_ENGINE |
-            APPINFO_FLAG_SUPPORTED_SEARCH);
-    else if (actionType == SEARCH_UNSUPPORTED)
-        odp_ctxt.get_app_info_mgr().set_app_info_flags(CHP_APPIDINSTANCE_TO_ID(appIdInstance),
-            APPINFO_FLAG_SEARCH_ENGINE);
-    else if (actionType == DEFER_TO_SIMPLE_DETECT && strcmp(patternData,"<ignore-all-patterns>") ==
-        0)
+    if (actionType == DEFER_TO_SIMPLE_DETECT && strcmp(patternData,"<ignore-all-patterns>") == 0)
         odp_ctxt.get_http_matchers().remove_http_patterns_for_id(appIdInstance);
 
     return 0;
@@ -1591,7 +1562,7 @@ static int detector_add_chp_action(lua_State* L)
         return 0;
 
     // Parameter 5
-    if (get_chp_action_type(L, ++index, &action))
+    if (get_chp_action_type(L, ++index, action))
     {
         snort_free(pattern);
         return 0;
@@ -1681,7 +1652,7 @@ static int detector_add_chp_multi_action(lua_State* L)
         return 0;
 
     // Parameter 5
-    if (get_chp_action_type(L, ++index, &action))
+    if (get_chp_action_type(L, ++index, action))
     {
         snort_free(pattern);
         return 0;

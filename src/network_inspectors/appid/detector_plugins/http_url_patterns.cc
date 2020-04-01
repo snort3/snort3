@@ -413,8 +413,6 @@ void HttpPatternMatchers::remove_http_patterns_for_id(AppId id)
 {
     // Walk the list of all the patterns we have inserted, searching for this appIdInstance and
     // free them.
-    // The purpose is for the 14 and 15 to be used together to only set the
-    // APPINFO_FLAG_SEARCH_ENGINE flag
     // If the reserved pattern is not used, it is a mixed use case and should just behave normally.
     CHPListElement* chpa = nullptr;
     CHPListElement* prev_chpa = nullptr;
@@ -823,52 +821,6 @@ static inline void free_matched_patterns(MatchedPatterns* mp)
     }
 }
 
-static void rewrite_chp(const char* buf, int bs, int start, int psize, char* adata,
-    const char** outbuf, int insert)
-{
-    int maxs, bufcont, as;
-    char* copyPtr;
-
-    // special behavior for insert vs. rewrite
-    if (insert)
-    {
-        // we don't want to insert a string that is already present
-        if (!adata || strcasestr((const char*)buf, adata))
-            return;
-
-        start += psize;
-        bufcont = start;
-        as = strlen(adata);
-        maxs = bs+as;
-    }
-    else
-    {
-        if (adata)
-        {
-            // we also don't want to replace a string with an identical one.
-            if (!strncmp(buf+start,adata,psize))
-                return;
-
-            as = strlen(adata);
-        }
-        else
-            as = 0;
-
-        bufcont = start+psize;
-        maxs = bs+(as-psize);
-    }
-
-    *outbuf = copyPtr = (char*)snort_calloc(maxs + 1);
-    memcpy(copyPtr, buf, start);
-    copyPtr += start;
-    if (adata)
-    {
-        memcpy(copyPtr, adata, as);
-        copyPtr += as;
-    }
-    memcpy(copyPtr, buf+bufcont, bs-bufcont);
-}
-
 static char* normalize_userid(char* user)
 {
     int percent_count = 0;
@@ -975,8 +927,6 @@ void HttpPatternMatchers::scan_key_chp(ChpMatchDescriptor& cmd)
 AppId HttpPatternMatchers::scan_chp(ChpMatchDescriptor& cmd, char** version, char** user,
     int* total_found, AppIdHttpSession* hsession, const AppIdContext& ctxt)
 {
-    MatchedCHPAction* insert_sweep2 = nullptr;
-    bool inhibit_modify = false;
     AppId ret = APP_ID_NONE;
     unsigned pt = cmd.cur_ptype;
 
@@ -1014,8 +964,6 @@ AppId HttpPatternMatchers::scan_chp(ChpMatchDescriptor& cmd, char** version, cha
                 break;
 
             case ALTERNATE_APPID:     // an "optional" action that doesn't count towards totals
-            case REWRITE_FIELD:       // handled when the action completes successfully
-            case INSERT_FIELD:        // handled when the action completes successfully
                 break;
             }
             if ( !ret )
@@ -1041,39 +989,6 @@ AppId HttpPatternMatchers::scan_chp(ChpMatchDescriptor& cmd, char** version, cha
                     *user = normalize_userid(*user);
             }
             break;
-        case REWRITE_FIELD:
-            if ( !inhibit_modify && !cmd.chp_rewritten[pt] )
-            {
-                // The field supports rewrites, and a rewrite hasn't happened.
-                rewrite_chp(cmd.buffer[pt], cmd.length[pt], tmp.start_match_pos, match->psize,
-                    match->action_data, &cmd.chp_rewritten[pt], 0);
-                (*total_found)++;
-                inhibit_modify = true;
-            }
-            break;
-        case INSERT_FIELD:
-            if ( !inhibit_modify && !insert_sweep2 )
-            {
-                if (match->action_data)
-                {
-                    // because this insert is the first one we have come across
-                    // we only need to remember this ONE for later.
-                    insert_sweep2 = &tmp;
-                }
-                else
-                {
-                    // This is an attempt to "insert nothing"; call it a match
-                    // The side effect is to set the inhibit_modify true
-
-                    // Note that an attempt to "rewrite with identical string"
-                    // is NOT equivalent to an "insert nothing" because of case-
-                    //  insensitive pattern matching
-
-                    inhibit_modify = true;
-                    (*total_found)++;
-                }
-            }
-            break;
 
         case ALTERNATE_APPID:
             hsession->set_chp_alt_candidate(strtol(match->action_data, nullptr, 10));
@@ -1084,29 +999,12 @@ AppId HttpPatternMatchers::scan_chp(ChpMatchDescriptor& cmd, char** version, cha
             hsession->set_chp_hold_flow(true);
             break;
 
-        case GET_OFFSETS_FROM_REBUILT:
-            hsession->set_rebuilt_offsets(true);
-            hsession->set_chp_hold_flow(true);
-            break;
-
-        case SEARCH_UNSUPPORTED:
         case NO_ACTION:
             hsession->set_skip_simple_detect(true);
             break;
         default:
             break;
         }
-    }
-
-    // non-nullptr insert_sweep2 indicates the insert action we will use.
-    if ( !inhibit_modify && insert_sweep2 && !cmd.chp_rewritten[pt] )
-    {
-        // We will take the first INSERT_FIELD with an action string,
-        // which was decided with the setting of insert_sweep2.
-        rewrite_chp(cmd.buffer[pt], cmd.length[pt], insert_sweep2->start_match_pos,
-            insert_sweep2->mpattern->psize, insert_sweep2->mpattern->action_data,
-            &cmd.chp_rewritten[pt], 1);     // insert
-        (*total_found)++;
     }
 
     cmd.chp_matches[pt].clear();

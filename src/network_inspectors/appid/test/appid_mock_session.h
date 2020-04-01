@@ -92,8 +92,6 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp*, uint16_t, AppIdInspect
     service.set_version(APPID_UT_SERVICE_VERSION, change_bits);
     subtype = &APPID_UT_SERVICE_SUBTYPE;
 
-    search_support_type = UNKNOWN_SEARCH_ENGINE;
-
     tsession = new TlsSession;
 
     service_ip.pton(AF_INET, APPID_UT_SERVICE_IP_ADDR);

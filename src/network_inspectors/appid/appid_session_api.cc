@@ -242,12 +242,6 @@ const char* AppIdSessionApi::get_netbios_name()
     return asd->netbios_name;
 }
 
-SEARCH_SUPPORT_TYPE AppIdSessionApi::get_http_search()
-{
-    return (asd->search_support_type != UNKNOWN_SEARCH_ENGINE) ?
-                        asd->search_support_type : NOT_A_SEARCH_ENGINE;
-}
-
 AppIdDnsSession* AppIdSessionApi::get_dns_session()
 {
     return asd->get_dns_session();

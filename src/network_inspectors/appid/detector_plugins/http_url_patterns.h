@@ -217,16 +217,6 @@ typedef std::vector<CHPMatchCandidate> CHPMatchTally;
 class ChpMatchDescriptor
 {
 public:
-    void free_rewrite_buffers()
-    {
-        for (unsigned i = 0; i < NUM_HTTP_FIELDS; i++)
-            if (chp_rewritten[i])
-            {
-                snort_free((void*)chp_rewritten[i]);
-                chp_rewritten[i] = nullptr;
-            }
-    }
-
     void sort_chp_matches()
     {
         chp_matches[cur_ptype].sort(ChpMatchDescriptor::comp_chp_actions);
@@ -235,7 +225,6 @@ public:
     HttpFieldIds cur_ptype;
     const char* buffer[NUM_HTTP_FIELDS] = { nullptr };
     uint16_t length[NUM_HTTP_FIELDS] = { 0 };
-    const char* chp_rewritten[NUM_HTTP_FIELDS] = { nullptr };
     std::list<MatchedCHPAction> chp_matches[NUM_HTTP_FIELDS];
     CHPMatchTally match_tally;
 

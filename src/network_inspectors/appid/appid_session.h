@@ -275,7 +275,6 @@ public:
     AppId past_forecast = APP_ID_NONE;
 
     bool is_http2 = false;
-    snort::SEARCH_SUPPORT_TYPE search_support_type = snort::UNKNOWN_SEARCH_ENGINE;
     bool in_expected_cache = false;
     static unsigned inspector_id;
     static std::mutex inferred_svcs_lock;

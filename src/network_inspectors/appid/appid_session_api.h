@@ -143,15 +143,6 @@ struct FpSMBData
     uint32_t flags;
 };
 
-enum SEARCH_SUPPORT_TYPE
-{
-    NOT_A_SEARCH_ENGINE,
-    SUPPORTED_SEARCH_ENGINE,
-    UNSUPPORTED_SEARCH_ENGINE,
-    UNKNOWN_SEARCH_ENGINE,
-};
-
-
 class SO_PUBLIC AppIdSessionApi
 {
 public:
@@ -180,7 +171,6 @@ public:
     SfIp* get_initiator_ip();
     AppIdDnsSession* get_dns_session();
     AppIdHttpSession* get_http_session();
-    SEARCH_SUPPORT_TYPE get_http_search();
     char* get_tls_host();
     DHCPData* get_dhcp_fp_data();
     void free_dhcp_fp_data(DHCPData*);

@@ -59,7 +59,6 @@ static DetectorHTTPPattern mpattern;
 static const char* my_buffer[NUM_HTTP_FIELDS] = { nullptr };
 static uint16_t my_length[NUM_HTTP_FIELDS] = { 0 };
 static CHPAction my_match;
-static void* my_chp_rewritten = nullptr;
 
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 AppIdDiscovery::AppIdDiscovery() { }
@@ -179,68 +178,6 @@ TEST(http_url_patterns_tests, get_http_offsets)
     CHECK_EQUAL(true, test_find_all_done);
 }
 
-TEST(http_url_patterns_tests, rewrite_chp_exist)
-{
-    // don't insert a string that is already present
-    my_buffer[REQ_AGENT_FID] = (const char*)"existing data";
-    my_match.action_data = (char*)"exist";
-    my_match.psize = 0;
-    rewrite_chp(my_buffer[REQ_AGENT_FID], my_length[REQ_AGENT_FID], 0, my_match.psize,
-        my_match.action_data, (const char**)&my_chp_rewritten, 1);
-    CHECK((char*)my_chp_rewritten == nullptr);
-}
-
-TEST(http_url_patterns_tests, rewrite_chp_insert)
-{
-    // insert a string in my_chp_rewritten
-    my_buffer[REQ_AGENT_FID] = (const char*)"existing data";
-    my_match.action_data = (char*)"new";
-    rewrite_chp(my_buffer[REQ_AGENT_FID], my_length[REQ_AGENT_FID], 0, my_match.psize,
-        my_match.action_data, (const char**)&my_chp_rewritten, 1);
-    STRCMP_EQUAL((const char*)my_chp_rewritten, (const char*)my_match.action_data);
-    snort_free(my_chp_rewritten);
-    my_chp_rewritten = nullptr;
-}
-
-TEST(http_url_patterns_tests, rewrite_chp_same)
-{
-    // don't replace if they are same
-    my_chp_rewritten = nullptr;
-    my_buffer[REQ_AGENT_FID] = (const char*)"some data";
-    my_match.action_data = (char*)"some data";
-    rewrite_chp(my_buffer[REQ_AGENT_FID], my_length[REQ_AGENT_FID], 0, my_match.psize,
-        my_match.action_data, (const char**)&my_chp_rewritten, 0);
-    CHECK((char*)my_chp_rewritten == nullptr);
-}
-
-TEST(http_url_patterns_tests, rewrite_chp_replace_null)
-{
-    // replace null action data in my_chp_rewritten
-    my_chp_rewritten = nullptr;
-    my_buffer[REQ_AGENT_FID] = (const char*)"existing data";
-    my_match.action_data = nullptr;
-    my_match.psize = 0;
-    rewrite_chp(my_buffer[REQ_AGENT_FID], strlen(my_buffer[REQ_AGENT_FID]), 0, my_match.psize,
-        my_match.action_data, (const char**)&my_chp_rewritten, 0);
-    STRCMP_EQUAL((const char*)my_chp_rewritten, my_buffer[REQ_AGENT_FID]);
-    snort_free(my_chp_rewritten);
-    my_chp_rewritten = nullptr;
-}
-
-TEST(http_url_patterns_tests, rewrite_chp_replace_non_null)
-{
-    // replace non-null action data in my_chp_rewritten
-    my_chp_rewritten = nullptr;
-    my_buffer[REQ_AGENT_FID] = (const char*)"existing data";
-    my_match.action_data = (char*)"new data";
-    my_match.psize = 1;
-    rewrite_chp(my_buffer[REQ_AGENT_FID], 1, 0, my_match.psize,
-        my_match.action_data, (const char**)&my_chp_rewritten, 0);
-    STRCMP_EQUAL((const char*)my_chp_rewritten, (const char*)my_match.action_data);
-    snort_free(my_chp_rewritten);
-    my_chp_rewritten = nullptr;
-}
-
 TEST(http_url_patterns_tests, normalize_userid)
 {
     // no change
@@ -322,66 +259,6 @@ TEST(http_url_patterns_tests, scan_chp_extract_user)
     CHECK_EQUAL(true, test_find_all_done);
     snort_free(user);
     user = nullptr;
-}
-
-TEST(http_url_patterns_tests, scan_chp_rewrite_field)
-{
-    // testing REWRITE_FIELD
-    test_find_all_done = false;
-    cmd_test.cur_ptype = RSP_BODY_FID;
-    chpa_test.action_data = my_action_data;
-    chpa_test.appIdInstance = APP_ID_NONE;
-    chpa_test.action = REWRITE_FIELD;
-    chpa_test.psize = 1;
-    mchp.mpattern = &chpa_test;
-    mchp.start_match_pos = 0;
-    cmd_test.chp_matches[RSP_BODY_FID].emplace_back(mchp);
-    cmd_test.buffer[RSP_BODY_FID] = my_chp_data;
-    cmd_test.length[RSP_BODY_FID] = strlen(cmd_test.buffer[RSP_BODY_FID]);
-    CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &hsession, ctxt) == APP_ID_NONE);
-    CHECK_EQUAL(true, test_find_all_done);
-    snort_free(const_cast<char*>(cmd_test.chp_rewritten[RSP_BODY_FID]));
-    cmd_test.chp_rewritten[RSP_BODY_FID] = nullptr;
-}
-
-TEST(http_url_patterns_tests, scan_chp_insert_without_action)
-{
-    // testing INSERT_FIELD without action_data
-    test_find_all_done = false;
-    cmd_test.cur_ptype = RSP_BODY_FID;
-    chpa_test.action_data = nullptr;
-    chpa_test.appIdInstance = APP_ID_NONE;
-    chpa_test.action = INSERT_FIELD;
-    chpa_test.psize = 1;
-    mchp.mpattern = &chpa_test;
-    mchp.start_match_pos = 0;
-    cmd_test.chp_matches[RSP_BODY_FID].emplace_back(mchp);
-    cmd_test.buffer[RSP_BODY_FID] = my_chp_data;
-    cmd_test.length[RSP_BODY_FID] = strlen(cmd_test.buffer[RSP_BODY_FID]);
-    CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &hsession, ctxt) == APP_ID_NONE);
-    CHECK_EQUAL(true, test_find_all_done);
-    snort_free(const_cast<char*>(cmd_test.chp_rewritten[RSP_BODY_FID]));
-    cmd_test.chp_rewritten[RSP_BODY_FID] = nullptr;
-}
-
-TEST(http_url_patterns_tests, scan_chp_insert_with_action)
-{
-    // testing INSERT_FIELD with action_data
-    test_find_all_done = false;
-    cmd_test.cur_ptype = RSP_BODY_FID;
-    chpa_test.action_data = my_action_data;
-    chpa_test.appIdInstance = APP_ID_NONE;
-    chpa_test.action = INSERT_FIELD;
-    chpa_test.psize = 1;
-    mchp.mpattern = &chpa_test;
-    mchp.start_match_pos = 0;
-    cmd_test.chp_matches[RSP_BODY_FID].emplace_back(mchp);
-    cmd_test.buffer[RSP_BODY_FID] = my_chp_data;
-    cmd_test.length[RSP_BODY_FID] = strlen(cmd_test.buffer[RSP_BODY_FID]);
-    CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &hsession, ctxt) == APP_ID_NONE);
-    CHECK_EQUAL(true, test_find_all_done);
-    snort_free(const_cast<char*>(cmd_test.chp_rewritten[RSP_BODY_FID]));
-    cmd_test.chp_rewritten[RSP_BODY_FID] = nullptr;
 }
 
 TEST(http_url_patterns_tests, scan_chp_hold_and_default)
