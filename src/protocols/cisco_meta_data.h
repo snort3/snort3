@@ -15,7 +15,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// cisco_meta_data.h author Sunirmal Mukherjee <sunimukh@cisco.com>
+// cisco_meta_data.h author Michael Altizer <mialtize@cisco.com>
 
 #ifndef PROTOCOLS_CISCO_META_DATA_H
 #define PROTOCOLS_CISCO_META_DATA_H
@@ -28,14 +28,11 @@ namespace cisco_meta_data
 {
 struct CiscoMetaDataHdr
 {
-    uint8_t version; // This must be 1
-    uint8_t length; //This is the header size in bytes / 8
-};
-
-struct CiscoMetaDataOpt
-{
-    uint16_t opt_len_type;  // 3-bit length + 13-bit type. Type must be 1
-    uint16_t sgt;           // Can be any value except 0xFFFF
+    uint8_t version;        // MetaData header version
+    uint8_t length;         // Header size in quadwords
+    uint16_t opt_len_type;  // 3-bit length + 13-bit type
+    uint16_t sgt;           // Security Group Tag (anything but 0xFFFF)
+    uint16_t ether_type;    // Ethertype for following layer
 
     inline uint16_t sgt_val() const
     { return ntohs(sgt); }

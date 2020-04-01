@@ -42,6 +42,7 @@
 #include "log/text_log.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
+#include "protocols/cisco_meta_data.h"
 #include "protocols/eth.h"
 #include "protocols/icmp4.h"
 #include "protocols/tcp.h"
@@ -470,6 +471,18 @@ static bool ff_service(const Args& a)
     return true;
 }
 
+static bool ff_sgt(const Args& a)
+{
+    if (a.pkt->proto_bits & PROTO_BIT__CISCO_META_DATA)
+    {
+        const cisco_meta_data::CiscoMetaDataHdr* cmdh = layer::get_cisco_meta_data_layer(a.pkt);
+        print_label(a, "sgt");
+        TextLog_Print(json_log, "%hu", cmdh->sgt_val());
+        return true;
+    }
+    return false;
+}
+
 static bool ff_sid(const Args& a)
 {
     print_label(a, "sid");
@@ -650,22 +663,23 @@ typedef bool (*JsonFunc)(const Args&);
 static const JsonFunc json_func[] =
 {
     ff_action, ff_class, ff_b64_data, ff_client_bytes, ff_client_pkts, ff_dir,
-    ff_dst_addr, ff_dst_ap, ff_dst_port, ff_eth_dst, ff_eth_len, ff_eth_src, ff_eth_type,
-    ff_flowstart_time, ff_gid, ff_icmp_code, ff_icmp_id, ff_icmp_seq, ff_icmp_type,
-    ff_iface, ff_ip_id, ff_ip_len, ff_msg, ff_mpls, ff_pkt_gen, ff_pkt_len,
+    ff_dst_addr, ff_dst_ap, ff_dst_port, ff_eth_dst, ff_eth_len, ff_eth_src,
+    ff_eth_type, ff_flowstart_time, ff_gid, ff_icmp_code, ff_icmp_id, ff_icmp_seq,
+    ff_icmp_type, ff_iface, ff_ip_id, ff_ip_len, ff_msg, ff_mpls, ff_pkt_gen, ff_pkt_len,
     ff_pkt_num, ff_priority, ff_proto, ff_rev, ff_rule, ff_seconds, ff_server_bytes,
-    ff_server_pkts, ff_service, ff_sid, ff_src_addr, ff_src_ap, ff_src_port, ff_target,
-    ff_tcp_ack, ff_tcp_flags, ff_tcp_len, ff_tcp_seq, ff_tcp_win, ff_timestamp, ff_tos,
-    ff_ttl, ff_udp_len, ff_vlan
+    ff_server_pkts, ff_service, ff_sgt, ff_sid, ff_src_addr, ff_src_ap, ff_src_port,
+    ff_target, ff_tcp_ack, ff_tcp_flags,ff_tcp_len, ff_tcp_seq, ff_tcp_win, ff_timestamp,
+    ff_tos, ff_ttl, ff_udp_len, ff_vlan
 };
 
 #define json_range \
-    "action | class | b64_data | client_bytes | client_pkts | dir | dst_addr | dst_ap | " \
-    "dst_port | eth_dst | eth_len | eth_src | eth_type | flowstart_time | " \
-    "gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | " \
-    "msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | " \
-    "seconds | server_bytes | server_pkts | service | sid | src_addr | src_ap | src_port | target | " \
-    "tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | " \
+    "action | class | b64_data | client_bytes | client_pkts | dir | " \
+    "dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | " \
+    "eth_type | flowstart_time | gid | icmp_code | icmp_id | icmp_seq | " \
+    "icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | " \
+    "pkt_num | priority | proto | rev | rule | seconds | server_bytes | " \
+    "server_pkts | service | sgt| sid | src_addr | src_ap | src_port | " \
+    "target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | " \
     "tos | ttl | udp_len | vlan"
 
 #define json_deflt \
