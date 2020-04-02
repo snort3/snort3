@@ -918,6 +918,9 @@ bool AppIdSession::is_tp_appid_done() const
 {
     if (ctxt.get_tp_appid_ctxt())
     {
+        if (get_session_flags(APPID_SESSION_IGNORE_FLOW))
+            return true;
+
         if (!tpsession)
             return false;
 

@@ -89,7 +89,9 @@ struct SMTPDetectorData
 };
 
 #define HELO "HELO "
+#define helo "helo "
 #define EHLO "EHLO "
+#define ehlo "ehlo "
 #define MAILFROM "MAIL FROM:"
 #define RCPTTO "RCPT TO:"
 #define DATA "DATA"
@@ -137,7 +139,9 @@ SmtpClientDetector::SmtpClientDetector(ClientDiscovery* cdm)
     tcp_patterns =
     {
         { (const uint8_t*)HELO, sizeof(HELO)-1, -1, 0, APP_ID_SMTP },
+        { (const uint8_t*)helo, sizeof(helo)-1, -1, 0, APP_ID_SMTP },
         { (const uint8_t*)EHLO, sizeof(EHLO)-1, -1, 0, APP_ID_SMTP },
+        { (const uint8_t*)ehlo, sizeof(ehlo)-1, -1, 0, APP_ID_SMTP },
         { APP_SMTP_OUTLOOK,         sizeof(APP_SMTP_OUTLOOK)-1,        -1, 0, APP_ID_OUTLOOK },
         { APP_SMTP_OUTLOOK_EXPRESS, sizeof(APP_SMTP_OUTLOOK_EXPRESS)-1,-1, 0, APP_ID_OUTLOOK_EXPRESS },
         { APP_SMTP_IMO,             sizeof(APP_SMTP_IMO)-1,            -1, 0, APP_ID_SMTP_IMO },
