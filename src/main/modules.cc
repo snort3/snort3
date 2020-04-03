@@ -833,6 +833,7 @@ static PegInfo active_pegs[]
     { CountType::SUM, "failed_direct_injects", "total crafted packet direct injects that failed" },
     { CountType::SUM, "holds_denied", "total number of packet hold requests denied" },
     { CountType::SUM, "holds_canceled", "total number of packet hold requests canceled" },
+    { CountType::SUM, "holds_allowed", "total number of packet hold requests allowed" },
     { CountType::END, nullptr, nullptr }
 };
 

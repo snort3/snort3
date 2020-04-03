@@ -5,3 +5,9 @@ There is one DAQ instance per active source (interface, pcap, etc.).  The
 DAQ determines the required root decoder, instantiated upon thread
 initialization, and which remains the same for all packets.
 
+The other modules use the Active interface to detain packets. A packet will
+not be held if it would drop the the available DAQ message pool down below 
+the DAQ batch size. DAQ batch size (the number of packets Snort can process
+in batch mode) can be configured using this command line option 
+--daq-batch-size and the pool size is obtained using a DAQ API call: 
+daq_instance_get_msg_pool_info(DAQ_Instance_h, DAQ_MsgPoolInfo_t)

@@ -167,6 +167,8 @@ bool SFDAQInstance::start()
     pool_size = mpool_info.size;
     pool_available = mpool_info.available;
     assert(pool_size == pool_available);
+    if (SnortConfig::log_verbose())
+        LogMessage("DAQ pool size: %d\n", pool_size);
 
     dlt = daq_instance_get_datalink_type(instance);
     get_tunnel_capabilities();
