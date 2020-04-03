@@ -45,7 +45,6 @@ TEST_GROUP(request_tests)
 //--------------------------------------------------------------------------
 // Make sure multiple responses are queued
 //--------------------------------------------------------------------------
-#ifdef SHELL
 TEST(request_tests, queued_response_test)
 {
     Request request(STDOUT_FILENO);
@@ -57,7 +56,7 @@ TEST(request_tests, queued_response_test)
     CHECK(request.send_queued_response() == true);
     CHECK(request.send_queued_response() == false); // empty queue after being written
 }
-#endif
+
 //-------------------------------------------------------------------------
 // main
 //-------------------------------------------------------------------------
