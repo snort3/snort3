@@ -212,7 +212,7 @@ bool StreamReloadResourceManager::initialize(const StreamModuleConfig& config_)
 #ifdef REG_TEST
     if ( config.footprint != config_.footprint )
     {
-        ReloadError("Changing of stream.footprint requires a restart\n");
+        ReloadError("Changing stream.footprint requires a restart.\n");
         return false;
     }
 #endif
