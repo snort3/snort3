@@ -418,9 +418,13 @@ void PluginManager::reload_so_plugins(const char* paths, SnortConfig* sc)
     if ( paths )
     {
         // once plugin_path is provided for reload, old so_rules will be dropped
-        for( auto i = sc->plugins->plug_map.begin(); i != sc->plugins->plug_map.end(); ++i )
+        for( auto i = sc->plugins->plug_map.begin(); i != sc->plugins->plug_map.end(); )
+        {
             if ( plugin_is_reloadable(i->second.api) )
-                sc->plugins->plug_map.erase(i);
+                i = sc->plugins->plug_map.erase(i);
+            else
+                ++i;
+        }
         ::load_plugins(paths, sc);
     }
     load_so_plugins(sc, true);
