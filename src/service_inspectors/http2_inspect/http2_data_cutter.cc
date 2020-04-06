@@ -115,13 +115,13 @@ bool Http2DataCutter::http2_scan(const uint8_t* data, uint32_t length,
 StreamSplitter::Status Http2DataCutter::http_scan(const uint8_t* data, uint32_t* flush_offset)
 {
     StreamSplitter::Status scan_result = StreamSplitter::SEARCH;
-    uint32_t http_flush_offset = 0;
-    Http2DummyPacket dummy_pkt;
-    dummy_pkt.flow = session_data->flow;
-    uint32_t unused = 0;
 
     if (cur_data || leftover_bytes)
     {
+        uint32_t http_flush_offset = 0;
+        Http2DummyPacket dummy_pkt;
+        dummy_pkt.flow = session_data->flow;
+        uint32_t unused = 0;
         scan_result = session_data->hi_ss[source_id]->scan(&dummy_pkt, data + cur_data_offset,
             cur_data + leftover_bytes, unused, &http_flush_offset);
 
@@ -153,11 +153,8 @@ StreamSplitter::Status Http2DataCutter::http_scan(const uint8_t* data, uint32_t*
 
             if (frame_flags & END_STREAM)
             {
-                session_data->get_current_stream(source_id)->get_hi_flow_data()->
-                    finish_h2_body(source_id);
-                scan_result = session_data->hi_ss[source_id]->scan(&dummy_pkt, nullptr, 0, unused,
-                    &http_flush_offset);
-                assert(scan_result == StreamSplitter::FLUSH);
+                finish_msg_body(session_data, source_id);
+                return StreamSplitter::FLUSH;
             }
             else
                 session_data->data_processing[source_id] = true;

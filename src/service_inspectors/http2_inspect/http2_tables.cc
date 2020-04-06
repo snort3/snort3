@@ -40,7 +40,7 @@ const RuleMap Http2Module::http2_events[] =
     { EVENT_PREFACE_MATCH_FAILURE, "HTTP/2 connection preface does not match" },
     { EVENT_REQUEST_WITHOUT_REQUIRED_FIELD, "HTTP/2 request missing required header field" },
     { EVENT_RESPONSE_WITHOUT_STATUS, "HTTP/2 response has no status code" },
-    { EVENT_INVALID_HEADER, "invalid HTTP/2 header field" },
+    { EVENT_INVALID_HEADER, "HTTP/2 invalid header field" },
     { EVENT_SETTINGS_FRAME_ERROR, "error in HTTP/2 settings frame" },
     { EVENT_SETTINGS_FRAME_UNKN_PARAM, "unknown parameter in HTTP/2 settings frame" },
     { EVENT_FRAME_SEQUENCE, "invalid HTTP/2 frame sequence" },

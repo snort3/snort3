@@ -25,6 +25,9 @@
 #endif
 
 #include "main/snort_types.h"
+#include "service_inspectors/http_inspect/http_common.h"
+
+#include "http2_flow_data.h"
 
 // Frame header parsing utils.
 // Assumption is that if input isn't null, it contains full frame header
@@ -33,5 +36,8 @@ uint32_t get_frame_length(const uint8_t* frame_header_buffer);
 uint8_t get_frame_type(const uint8_t* frame_header_buffer);
 uint8_t get_frame_flags(const uint8_t* frame_header_buffer);
 uint8_t get_stream_id(const uint8_t* frame_header_buffer);
+
+
+void finish_msg_body(Http2FlowData* session_data, HttpCommon::SourceId source_id);
 
 #endif

@@ -73,16 +73,7 @@ public:
     friend class Http2StatusLine;
     friend class Http2Stream;
     friend class Http2StreamSplitter;
-    friend snort::StreamSplitter::Status data_scan(Http2FlowData* session_data, const
-        uint8_t* data, uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id,
-        uint32_t frame_length, uint8_t frame_flags, uint32_t& data_offset);
-    friend const snort::StreamBuffer implement_reassemble(Http2FlowData*, unsigned, unsigned,
-        const uint8_t*, unsigned, uint32_t, HttpCommon::SourceId);
-    friend snort::StreamSplitter::Status implement_scan(Http2FlowData*, const uint8_t*, uint32_t,
-        uint32_t*, HttpCommon::SourceId);
-    friend snort::StreamSplitter::Status non_data_scan(Http2FlowData* session_data,
-        uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id,
-        uint32_t frame_length, uint8_t type, uint8_t frame_flags, uint32_t& data_offset);
+    friend void finish_msg_body(Http2FlowData* session_data, HttpCommon::SourceId source_id);
 
     size_t size_of() override
     { return sizeof(*this); }
@@ -143,7 +134,11 @@ protected:
     bool payload_discard[2] = { false, false };
     uint32_t num_frame_headers[2] = { 0, 0 };
     uint32_t total_bytes_in_split[2] = { 0, 0 };
-    uint32_t octets_before_first_header[2] = { 0, 0 };
+    bool use_leftover_hdr[2] = { false, false };
+    uint8_t leftover_hdr[2][Http2Enums::FRAME_HEADER_LENGTH];
+
+    // Used by scan, reassemble
+    bool flushing_data[2] = { false, false };
 
     // Used by scan, reassemble and eval to communicate
     uint8_t frame_type[2] = { Http2Enums::FT__NONE, Http2Enums::FT__NONE };

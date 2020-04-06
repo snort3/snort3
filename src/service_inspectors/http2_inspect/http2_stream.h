@@ -55,6 +55,8 @@ public:
 
     void set_end_stream(HttpCommon::SourceId source_id) { end_stream_set[source_id] = true; }
     bool end_stream_is_set(HttpCommon::SourceId source_id) { return end_stream_set[source_id]; }
+    void set_abort_on_data(HttpCommon::SourceId source_id) { abort_on_data[source_id] = true; }
+    bool abort_on_data_is_set(HttpCommon::SourceId source_id) { return abort_on_data[source_id]; }
 #ifdef REG_TEST
     void print_frame(FILE* output);
 #endif
@@ -67,6 +69,7 @@ private:
     HttpMsgSection* hi_msg_section = nullptr;
     Http2DataCutter* data_cutter[2] = { nullptr, nullptr};
     bool end_stream_set[2] = { false, false };
+    bool abort_on_data[2] = { false, false};
 };
 
 #endif
