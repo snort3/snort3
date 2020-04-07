@@ -193,6 +193,31 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
     }
 #endif
 
+    // If the last request was a CONNECT and we have not yet seen the response, this is early C2S
+    // traffic. If there has been a pipeline overflow or underflow we cannot match requests to
+    // responses, so there is no attempt to track early C2S traffic.
+    if ((source_id == SRC_CLIENT) && (type == SEC_REQUEST) && !session_data->for_http2 &&
+        session_data->last_request_was_connect)
+    {
+        const uint64_t last_request_trans_num = session_data->expected_trans_num[SRC_CLIENT] - 1;
+        const bool server_behind_connect =
+            (session_data->expected_trans_num[SRC_SERVER] < last_request_trans_num);
+        const bool server_expecting_connect_status =
+            ((session_data->expected_trans_num[SRC_SERVER] == last_request_trans_num)
+            && (session_data->type_expected[SRC_SERVER] == SEC_STATUS));
+        const bool pipeline_valid = !session_data->pipeline_overflow &&
+            !session_data->pipeline_underflow;
+
+        if ((server_behind_connect || server_expecting_connect_status) && pipeline_valid)
+        {
+            *session_data->get_infractions(source_id) += INF_EARLY_C2S_TRAFFIC_AFTER_CONNECT;
+            session_data->events[source_id]->create_event(EVENT_EARLY_C2S_TRAFFIC_AFTER_CONNECT);
+            session_data->last_connect_trans_w_early_traffic =
+                session_data->expected_trans_num[SRC_CLIENT] - 1;
+        }
+        session_data->last_request_was_connect = false;
+    }
+
     assert(!session_data->tcp_close[source_id]);
 
     HttpModule::increment_peg_counts(PEG_SCAN);

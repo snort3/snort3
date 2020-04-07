@@ -113,6 +113,7 @@ private:
     int32_t num_head_lines[2] = { HttpCommon::STAT_NOT_PRESENT, HttpCommon::STAT_NOT_PRESENT };
     bool tcp_close[2] = { false, false };
     bool partial_flush[2] = { false, false };
+    uint64_t last_connect_trans_w_early_traffic = 0;
 
     HttpInfractions* infractions[2] = { new HttpInfractions, new HttpInfractions };
     HttpEventGen* events[2] = { new HttpEventGen, new HttpEventGen };
@@ -126,6 +127,7 @@ private:
 
     // *** Inspector => StreamSplitter (facts about the message section that is coming next)
     HttpEnums::SectionType type_expected[2] = { HttpEnums::SEC_REQUEST, HttpEnums::SEC_STATUS };
+    uint64_t last_request_was_connect = false;
     // length of the data from Content-Length field
     z_stream* compress_stream[2] = { nullptr, nullptr };
     uint64_t zero_nine_expected = 0;

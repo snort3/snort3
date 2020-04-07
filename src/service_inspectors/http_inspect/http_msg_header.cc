@@ -165,6 +165,38 @@ void HttpMsgHeader::update_flow()
         return;
     }
 
+    if ((source_id == SRC_SERVER) && request && (request->get_method_id() == METH_CONNECT) &&
+        !session_data->for_http2)
+    {
+        // Successful CONNECT responses (2XX) switch to tunneled traffic immediately following the
+        // header. Transfer-Encoding and Content-Length headers are not allowed in successful
+        // responses by the RFC.
+        if(((session_data->last_connect_trans_w_early_traffic == 0) ||
+            (trans_num > session_data->last_connect_trans_w_early_traffic)) &&
+            ((status_code_num >= 200) && (status_code_num < 300)))
+        {
+            if ((get_header_count(HEAD_TRANSFER_ENCODING) > 0))
+            {
+                add_infraction(INF_200_CONNECT_RESP_WITH_TE);
+                create_event(EVENT_200_CONNECT_RESP_WITH_TE);
+            }
+            if (get_header_count(HEAD_CONTENT_LENGTH) > 0)
+            {
+                add_infraction(INF_200_CONNECT_RESP_WITH_CL);
+                create_event(EVENT_200_CONNECT_RESP_WITH_CL);
+            }
+            // Temporary - Further traffic on this flow is tunneled traffic, and will get sent back
+            // to the wizard to determine the appropriate inspector. For now just abort.
+            session_data->type_expected[source_id] = SEC_ABORT;
+            return;
+        }
+        if ((status_code_num >= 100) && (status_code_num < 200))
+        {
+            add_infraction(INF_100_CONNECT_RESP);
+            create_event(EVENT_100_CONNECT_RESP);
+        }
+    }
+
     if ((source_id == SRC_SERVER) &&
         ((100 <= status_code_num && status_code_num <= 199) || (status_code_num == 204) ||
         (status_code_num == 304)))
@@ -347,6 +379,13 @@ void HttpMsgHeader::prepare_body()
     if (source_id == SRC_CLIENT)
     {
         HttpModule::increment_peg_counts(PEG_REQUEST_BODY);
+
+        // Message bodies for CONNECT requests have no defined semantics
+        if ((method_id == METH_CONNECT) && !session_data->for_http2)
+        {
+            add_infraction(INF_CONNECT_REQUEST_BODY);
+            create_event(EVENT_CONNECT_REQUEST_BODY);
+        }
     }
 }
 

@@ -293,6 +293,11 @@ void HttpMsgRequest::update_flow()
         return;
     }
 
+    if (method_id == METH_CONNECT)
+    {
+        session_data->last_request_was_connect = true;
+    }
+
     session_data->type_expected[source_id] = SEC_HEADER;
     session_data->version_id[source_id] = version_id;
     session_data->method_id = method_id;

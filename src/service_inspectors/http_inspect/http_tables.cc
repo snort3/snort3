@@ -385,6 +385,12 @@ const RuleMap HttpModule::http_events[] =
                                         "value" },
     { EVENT_H2_DATA_UNDERRUNS_CL,       "HTTP/2 message body smaller than Content-Length header "
                                         "value" },
+    { EVENT_CONNECT_REQUEST_BODY,       "HTTP CONNECT request with a message body" },
+    { EVENT_EARLY_C2S_TRAFFIC_AFTER_CONNECT, "HTTP client-to-server traffic after CONNECT request "
+                                        "but before CONNECT response" },
+    { EVENT_200_CONNECT_RESP_WITH_CL,   "HTTP CONNECT 2XX response with Content-Length header" },
+    { EVENT_200_CONNECT_RESP_WITH_TE,   "HTTP CONNECT 2XX response with Transfer-Encoding header" },
+    { EVENT_100_CONNECT_RESP,           "HTTP CONNECT response with 1XX status code" },
     { 0, nullptr }
 };
 
