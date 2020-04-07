@@ -356,6 +356,12 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
             }
         }
     }
+    else if (total == 0 && session_data->use_leftover_hdr[source_id])
+    {
+        memcpy(session_data->frame_header[source_id],
+            session_data->leftover_hdr[source_id], FRAME_HEADER_LENGTH);
+        session_data->use_leftover_hdr[source_id] = false;
+    }
     else
     {
         uint32_t data_offset = 0;
