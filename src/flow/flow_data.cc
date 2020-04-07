@@ -66,6 +66,7 @@ void FlowData::update_deallocations(size_t n)
     mem_in_use -= n;
 }
 
-RuleFlowData::RuleFlowData(unsigned u) : FlowData(u, 
-    SnortConfig::get_conf()->so_rules->proxy) { }
+RuleFlowData::RuleFlowData(unsigned u) :
+    FlowData(u, SnortConfig::get_conf()->so_rules->proxy)
+{ }
 

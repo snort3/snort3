@@ -293,37 +293,18 @@ int fpAddMatch(OtnxMatchData* omd, const OptTreeNode* otn)
     return 0;
 }
 
-/*
-**  DESCRIPTION
-**    Evaluates an RTN against a packet.  We can probably get rid of
-**    the check_ports variable, but it's in there for good luck.  :)
-**
-**  FORMAL INPUTS
-**    RuleTreeNode * - RTN to check packet against.
-**    Packet       * - Packet to evaluate
-**    int            - whether to do a quick enhancement against ports.
-**
-**  FORMAL OUTPUT
-**    int - 1 if match, 0 if match failed.
-*/
-int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports)
+bool fp_eval_rtn(RuleTreeNode* rtn, Packet* p, int check_ports)
 {
-    if ( !rtn )
-        return 0;
+    if ( !rtn or !rtn->enabled() )
+        return false;
 
     if ( rtn->user_mode() )
         check_ports = 1;
 
     if (!rtn->rule_func->RuleHeadFunc(p, rtn, rtn->rule_func, check_ports))
-    {
-        return 0;
-    }
+        return false;
 
-    /*
-    **  Return that there is a rule match and log the event outside
-    **  of this routine.
-    */
-    return 1;
+    return true;
 }
 
 int fp_eval_option(void* v, Cursor& c, Packet* p)

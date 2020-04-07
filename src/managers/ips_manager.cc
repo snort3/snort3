@@ -320,8 +320,6 @@ bool IpsManager::option_end(
     if ( ips->is_relative() )
         fpl->isRelative = 1;
 
-    otn_set_plugin(otn, ips->get_type());
-
     if ( ips->is_agent() and !otn_set_agent(otn, ips) )
     {
         // FIXIT-L support multiple actions (eg replaces) per rule

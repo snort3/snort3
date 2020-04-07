@@ -37,7 +37,6 @@ SET( PLUGIN_LIST
     ips_rev.cc
     ips_rpc.cc
     ips_seq.cc
-    ips_session.cc
     ips_sid.cc
     ips_soid.cc
     ips_tag.cc
@@ -129,7 +128,6 @@ else (STATIC_IPS_OPTIONS)
     add_dynamic_module(ips_rpc ips_options ips_rpc.cc)
     add_dynamic_module(ips_sid ips_options ips_sid.cc)
     add_dynamic_module(ips_seq ips_options ips_seq.cc)
-    add_dynamic_module(ips_session ips_options ips_session.cc)
     add_dynamic_module(ips_soid ips_options ips_soid.cc)
     add_dynamic_module(ips_tag ips_options ips_tag.cc)
     add_dynamic_module(ips_target ips_options ips_target.cc)

@@ -5,4 +5,3 @@ add_cpputest( boyer_moore_test
 
 add_cpputest( memcap_allocator_test )
 
-add_catch_test( bitop_test )

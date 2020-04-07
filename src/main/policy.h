@@ -278,7 +278,7 @@ namespace snort
 SO_PUBLIC NetworkPolicy* get_network_policy();
 SO_PUBLIC InspectionPolicy* get_inspection_policy();
 SO_PUBLIC IpsPolicy* get_ips_policy();
-SO_PUBLIC IpsPolicy* get_ips_policy(snort::SnortConfig*, unsigned i = 0);
+SO_PUBLIC IpsPolicy* get_ips_policy(const snort::SnortConfig*, unsigned i = 0);
 SO_PUBLIC InspectionPolicy* get_default_inspection_policy(snort::SnortConfig*);
 SO_PUBLIC void set_ips_policy(IpsPolicy* p);
 SO_PUBLIC void set_network_policy(NetworkPolicy* p);

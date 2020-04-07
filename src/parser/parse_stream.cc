@@ -473,16 +473,13 @@ static const State* get_state(int num, TokenType type, const string& tok)
 struct RuleParseState
 {
     RuleTreeNode rtn;
-    OptTreeNode* otn;
+    OptTreeNode* otn = nullptr;
 
     string key;
     string opt;
     string val;
 
     bool tbd;
-
-    RuleParseState()
-    { otn = nullptr; }
 };
 
 static bool exec(

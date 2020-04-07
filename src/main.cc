@@ -796,6 +796,24 @@ static bool set_mode()
         return false;
     }
 
+    if ( SnortConfig::dump_rule_deps() )
+    {
+        dump_rule_deps(SnortConfig::get_conf());
+        return false;
+    }
+
+    if ( SnortConfig::dump_rule_meta() )
+    {
+        dump_rule_meta(SnortConfig::get_conf());
+        return false;
+    }
+
+    if ( SnortConfig::dump_rule_state() )
+    {
+        dump_rule_state(SnortConfig::get_conf());
+        return false;
+    }
+
     if ( just_validate() )
     {
         LogMessage("\nSnort successfully validated the configuration (with %u warnings).\n",

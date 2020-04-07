@@ -289,6 +289,16 @@ void FrameworkPolicy::vectorize(SnortConfig* sc)
 // global stuff
 //-------------------------------------------------------------------------
 
+std::vector<const InspectApi*> InspectorManager::get_apis()
+{
+    std::vector<const InspectApi*> v;
+
+    for ( const auto* p : s_handlers )
+        v.emplace_back(&p->api);
+
+    return v;
+}
+
 void InspectorManager::add_plugin(const InspectApi* api)
 {
     PHGlobal* g = new PHGlobal(*api);

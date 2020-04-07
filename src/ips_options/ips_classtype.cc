@@ -25,6 +25,7 @@
 #include "framework/decode_data.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
+#include "main/snort_config.h"
 
 using namespace snort;
 
@@ -65,6 +66,12 @@ bool ClassTypeModule::set(const char*, Value& v, SnortConfig* sc)
 
     type = get_classification(sc, v.get_string());
 
+    if ( !type and sc->dump_rule_info() )
+    {
+        const char* s = v.get_string();
+        add_classification(sc, s, s, 1);
+        type = get_classification(sc, s);
+    }
     return type != nullptr;
 }
 

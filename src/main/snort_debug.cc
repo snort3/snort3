@@ -163,7 +163,7 @@ TEST_CASE("trace all=0", "[trace]")
     test.set(trace_val);
 
     testing_dump[0] = '\0';
-    debug_log(test, "my message"); 
+    debug_log(test, "my message");
     CHECK( testing_dump[0] == '\0' );
 }
 
@@ -178,7 +178,7 @@ TEST_CASE("debug_log", "[trace]")
     test.set(trace_val);
 
     testing_dump[0] = '\0';
-    debug_log(test, "my message"); 
+    debug_log(test, "my message");
     CHECK( !strcmp(testing_dump, "test:all:1: my message") );
 
     Parameter p_all("all", Parameter::PT_INT, "0:255", "0", "p_all");
@@ -223,7 +223,7 @@ TEST_CASE("debug_log", "[trace]")
     testing_dump[0] = '\0';
     debug_log(3, testing_opt, TEST_TRACE_OPTION3, "log option3 message");
     CHECK( !strcmp(testing_dump, "testing_opt:option3:3: log option3 message") );
-    
+
     testing_dump[0] = '\0';
     debug_log(2, testing_opt, TEST_TRACE_OPTION4, "log option4 message");
     CHECK( !strcmp(testing_dump, "testing_opt:option4:2: log option4 message") );
@@ -288,7 +288,7 @@ TEST_CASE("debug_logf", "[trace]")
     testing_dump[0] = '\0';
     debug_logf(6, testing_opt, TEST_TRACE_OPTION3, "%s %s %s", "log", "option3", "message");
     CHECK( testing_dump[0] == '\0' );
-    
+
     testing_dump[0] = '\0';
     debug_logf(2, testing_opt, TEST_TRACE_OPTION4, "%s %s %s", "log", "option4", "message");
     CHECK( !strcmp(testing_dump, "testing_opt:option4:2: log option4 message") );

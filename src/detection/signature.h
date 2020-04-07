@@ -91,6 +91,8 @@ enum Target
 struct SigInfo
 {
     std::string message;
+    std::string* body = nullptr;
+
     std::vector<const ReferenceNode*> refs;
     std::vector<SignatureServiceInfo> services;
 
@@ -115,7 +117,10 @@ void OtnRemove(snort::GHash*, OptTreeNode*);
 
 OptTreeNode* GetOTN(uint32_t gid, uint32_t sid);
 
-void dump_msg_map(snort::SnortConfig*);
+void dump_msg_map(const snort::SnortConfig*);
+void dump_rule_deps(const snort::SnortConfig*);
+void dump_rule_meta(const snort::SnortConfig*);
+void dump_rule_state(const snort::SnortConfig*);
 
 #endif
 

@@ -48,7 +48,7 @@ public:
     uint32_t get_xtradata_mask() { return (current_frame != nullptr) ?
         current_frame->get_xtradata_mask() : 0; }
     Http2Frame *get_current_frame() { return current_frame; }
-    
+
     Http2DataCutter* get_data_cutter(HttpCommon::SourceId source_id);
     void set_data_cutter(Http2DataCutter* cutter, HttpCommon::SourceId source_id)
         { data_cutter[source_id] = cutter; }

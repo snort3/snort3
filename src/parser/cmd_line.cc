@@ -42,20 +42,13 @@ static void check_flags(SnortConfig* sc)
     if ((sc->run_flags & RUN_FLAG__INLINE) &&
         (sc->run_flags & RUN_FLAG__INLINE_TEST))
     {
-        FatalError("Cannot use inline adapter mode and inline test "
+        ParseError("Cannot use inline adapter mode and inline test "
             "mode together. \n");
     }
 
     if (Trough::get_loop_count() && !(sc->run_flags & RUN_FLAG__READ))
     {
-        FatalError("--pcap-loop can only be used in combination with pcaps "
-            "on the command line.\n");
-    }
-
-    if ((sc->run_flags & RUN_FLAG__PCAP_RELOAD) &&
-        !(sc->run_flags & RUN_FLAG__READ))
-    {
-        FatalError("--pcap-reload can only be used in combination with pcaps "
+        ParseError("--pcap-loop can only be used in combination with pcaps "
             "on the command line.\n");
     }
 }

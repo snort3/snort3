@@ -779,7 +779,7 @@ bool HttpBodyCutter::dangerous(const uint8_t* data, uint32_t length)
     uint8_t* decomp_output = nullptr;
 
     // Zipped flows must be decompressed before we can check them. Unzipping for detained
-    // inspection is completely separate from the unzipping done later in reassemble(). 
+    // inspection is completely separate from the unzipping done later in reassemble().
     if ((compression == CMP_GZIP) || (compression == CMP_DEFLATE))
     {
         const uint32_t decomp_buffer_size = MAX_OCTETS;

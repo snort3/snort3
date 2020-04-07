@@ -27,10 +27,10 @@
 #include "flow/ha.h"
 #include "flow/session.h"
 #include "framework/data_bus.h"
+#include "helpers/bitop.h"
 #include "ips_options/ips_flowbits.h"
 #include "protocols/packet.h"
 #include "sfip/sf_ip.h"
-#include "utils/bitop.h"
 #include "utils/stats.h"
 #include "utils/util.h"
 

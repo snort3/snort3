@@ -1,6 +1,5 @@
 
 set( UTIL_INCLUDES
-    bitop.h
     boyer_moore.h
     cpp_macros.h
     endian.h

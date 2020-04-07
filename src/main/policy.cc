@@ -297,10 +297,10 @@ InspectionPolicy* get_inspection_policy()
 IpsPolicy* get_ips_policy()
 { return s_detection_policy; }
 
-IpsPolicy* get_ips_policy(SnortConfig* sc, unsigned i)
+IpsPolicy* get_ips_policy(const SnortConfig* sc, unsigned i)
 {
     return sc && i < sc->policy_map->ips_policy_count() ?
-        sc->policy_map->get_ips_policy(0) : nullptr;
+        sc->policy_map->get_ips_policy(i) : nullptr;
 }
 
 InspectionPolicy* get_default_inspection_policy(SnortConfig* sc)

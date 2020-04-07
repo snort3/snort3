@@ -326,8 +326,8 @@ bool BinderModule::end(const char* fqn, int idx, SnortConfig* sc)
             return true;
         }
 
-        // FIXIT-D: remove this when network_policy binding is deleted from    
-        // the binder's options  
+        // FIXIT-D: remove this when network_policy binding is deleted from
+        // the binder's options
         if ( work->use.type == NETWORK_KEY )
         {
             delete work;

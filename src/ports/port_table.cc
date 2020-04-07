@@ -257,8 +257,7 @@ static PortObject2* _merge_N_pol(
 
     // Add the plx node to the PLX hash table
     stat = mhashx->insert(&plx_tmp, ponew);
-    if ( stat == HASH_INTABLE )
-        FatalError("Could not add merged plx to PLX HASH table-INTABLE\n");
+    assert(stat == HASH_OK);
 
     return ponew;
 }
@@ -510,9 +509,6 @@ static void PortTableCompileMergePortObjects(PortTable* p)
     {
         PortObject2* poa = (PortObject2*)node->data;
 
-        if ( !poa )
-            continue;
-
         if ( !poa->port_list )
             poa->port_list = new PortBitSet;
     }
@@ -524,11 +520,7 @@ static void PortTableCompileMergePortObjects(PortTable* p)
         if ( poa )
         {
             poa->port_cnt++;
-
-            if ( poa->port_list )
-                poa->port_list->set(i);
-            else
-                FatalError("NULL po->port_list in po on port %d\n", i);
+            poa->port_list->set(i);
         }
     }
 
@@ -564,12 +556,8 @@ static void PortTableCompileMergePortObjects(PortTable* p)
 }
 
 #ifdef DEBUG
-/*  Verify all rules in 'po' list are in 'po2' hash
- *
- *  return  0 - OK
- *         !0 - a rule in po is not in po2
- */
-static int _po2_include_po_rules(PortObject2* po2, PortObject* po)
+//  Verify all rules in 'po' list are in 'po2' hash
+static void _po2_include_po_rules(PortObject2* po2, PortObject* po)
 {
     SF_LNODE* rpos;
 
@@ -580,18 +568,13 @@ static int _po2_include_po_rules(PortObject2* po2, PortObject* po)
     {
         /* find it in po2 */
         int* id = (int*)po2->rule_hash->find(pid);
-
-        /* make sure it's in po2 */
-        if ( !id )
-            return 1; /* error */
+        assert(id);
     }
-
-    return 0;
 }
 
 // consistency check - part 1
 // make sure each port is only in one composite port object
-static bool PortTableConsistencyCheck(PortTable* p)
+static void PortTableConsistencyCheck(PortTable* p)
 {
     std::unique_ptr<char[]> upA(new char[SFPO_MAX_PORTS]);
     char* parray = upA.get();
@@ -603,11 +586,6 @@ static bool PortTableConsistencyCheck(PortTable* p)
     {
         PortObject2* po = (PortObject2*)node->data;
 
-        if ( !po )
-        {
-            return false;
-        }
-
         if ( !po->port_cnt ) /* port object is not used ignore it */
             continue;
 
@@ -615,15 +593,11 @@ static bool PortTableConsistencyCheck(PortTable* p)
         {
             if ( PortObjectHasPort( (PortObject*)po, i) )
             {
-                if ( parray[i] )
-                    return false;
-
+                assert(!parray[i]);
                 parray[i] = 1;
             }
         }
     }
-
-    return true;
 }
 
 // consistency check - part 2
@@ -635,7 +609,7 @@ static bool PortTableConsistencyCheck(PortTable* p)
 *    check that each port it reference has all of the rules
 *    referenced to that port in the composite object
 */
-static bool PortTableConsistencyCheck2(PortTable* p)
+static void PortTableConsistencyCheck2(PortTable* p)
 {
     SF_LNODE* pos;
     PortObject2* lastpo = nullptr;
@@ -664,17 +638,12 @@ static bool PortTableConsistencyCheck2(PortTable* p)
                 /* small optimization*/
                 if ( lastpo != p->pt_port_object[i] )
                 {
-                    if ( _po2_include_po_rules(p->pt_port_object[i], ipo) )
-                    {
-                        return false;
-                    }
+                    _po2_include_po_rules(p->pt_port_object[i], ipo);
                     lastpo = p->pt_port_object[i];
                 }
             }
         }
     }
-
-    return true;
 }
 #endif
 
@@ -784,8 +753,8 @@ int PortTableCompile(PortTable* p)
     PortTableCompileMergePortObjects(p);
 
 #ifdef DEBUG
-    assert(PortTableConsistencyCheck(p));
-    assert(PortTableConsistencyCheck2(p));
+    PortTableConsistencyCheck(p);
+    PortTableConsistencyCheck2(p);
 #endif
 
     return 0;

@@ -383,6 +383,7 @@ void FreeRuleTreeNode(RuleTreeNode* rtn)
         idx = idx->next;
         delete tmp;
     }
+    delete rtn->header;
 }
 
 void DestroyRuleTreeNode(RuleTreeNode* rtn)

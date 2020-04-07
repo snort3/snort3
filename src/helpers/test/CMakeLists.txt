@@ -14,3 +14,5 @@ if ( HAVE_HYPERSCAN )
     )
 endif()
 
+add_catch_test( bitop_test )
+

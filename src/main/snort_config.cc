@@ -38,7 +38,6 @@
 #include "flow/ha_module.h"
 #include "hash/xhash.h"
 #include "helpers/process.h"
-#include "ips_options/ips_flowbits.h"
 #include "latency/latency_config.h"
 #include "log/messages.h"
 #include "managers/action_manager.h"
@@ -176,7 +175,6 @@ void SnortConfig::init(const SnortConfig* const other_conf, ProtocolReference* p
 
         memset(evalOrder, 0, sizeof(evalOrder));
         proto_ref = new ProtocolReference(protocol_reference);
-        flowbits_ginit(this);
         so_rules = new SoRules;
     }
     else
@@ -256,8 +254,6 @@ SnortConfig::~SnortConfig()
         MpseManager::stop_search_engine(fast_pattern_config->get_search_api());
     }
     delete fast_pattern_config;
-
-    flowbits_gterm(this);
 
     delete policy_map;
     InspectorManager::delete_config(this);

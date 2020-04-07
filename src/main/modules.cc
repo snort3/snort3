@@ -717,7 +717,7 @@ static const Parameter output_params[] =
       "" },
 
     { "quiet", Parameter::PT_BOOL, nullptr, "false",
-      "suppress non-fatal information (still show alerts, same as -q)" },
+      "suppress normal logging on stdout (same as -q)" },
 
     { "logdir", Parameter::PT_STRING, nullptr, ".",
       "where to put log files (same as -l)" },
@@ -1801,7 +1801,7 @@ bool RuleStateModule::begin(const char*, int, SnortConfig* sc)
 
     else
     {
-        key = { 0, 0 };
+        key = { 0, 0, 0 };
         state.action = snort::Actions::Type::ALERT;
         state.enable = IpsPolicy::Enable::INHERIT_ENABLE;
     }
@@ -1816,7 +1816,7 @@ bool RuleStateModule::end(const char* fqn, int, SnortConfig* sc)
     if ( !key.gid or !key.sid )
         return false;
 
-    state.policy_id = snort::get_ips_policy()->policy_id;
+    key.policy_id = snort::get_ips_policy()->policy_id;
     sc->rule_states->add(key, state);
 
     return true;

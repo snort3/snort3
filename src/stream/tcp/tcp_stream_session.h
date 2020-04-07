@@ -57,7 +57,6 @@ public:
 
     void reset();
     void start_proxy();
-    void print();
 
     void SetPacketHeaderFoo(const snort::Packet* p);
     void GetPacketHeaderFoo(DAQ_PktHdr_t* pkth, uint32_t dir);

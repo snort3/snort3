@@ -22,6 +22,7 @@ add_library (helpers OBJECT
     ${HELPERS_INCLUDES}
     ${HYPER_SOURCES}
     base64_encoder.cc
+    bitop.h
     boyer_moore_search.cc
     chunk.cc
     chunk.h

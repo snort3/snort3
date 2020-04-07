@@ -257,8 +257,8 @@ public:
     { return flush_policy; }
 
     virtual void init_tcp_state();
-    virtual void print();
     virtual void init_flush_policy();
+
     virtual void set_splitter(snort::StreamSplitter* ss);
     virtual void set_splitter(const snort::Flow* flow);
 

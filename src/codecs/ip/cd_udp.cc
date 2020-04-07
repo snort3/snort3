@@ -141,7 +141,7 @@ class UdpModule : public CodecModule
 {
 public:
     UdpModule() : CodecModule(CD_UDP_NAME, CD_UDP_HELP, udp_params)
-    { 
+    {
         config = nullptr;
     }
 
@@ -583,7 +583,7 @@ static void mod_dtor(Module* m)
 { delete m; }
 
 static Codec* ctor(Module* m)
-{ 
+{
     UdpModule* mod = (UdpModule*)m;
     // Codecs can be instantiated without modules. In which case use
     // the snort defaults for config.

@@ -360,7 +360,7 @@ int detection_option_node_evaluate(
     char tmp_noalert_flag = 0;
     Cursor cursor = orig_cursor;
     bool continue_loop = true;
-    char flowbits_setoperation = 0;
+    bool flowbits_setoperation = false;
     int loop_count = 0;
     uint32_t tmp_byte_extract_vars[NUM_IPS_OPTIONS_VARS];
     uint64_t cur_eval_context_num = eval_data.p->context->context_num;
@@ -443,12 +443,12 @@ int detection_option_node_evaluate(
                 }
             }
 
-            int eval_rtn_result = 0;
+            bool eval_rtn_result;
 
             // Don't include RTN time
             {
                 RulePause pause(profile);
-                eval_rtn_result = fpEvalRTN(getRuntimeRtnFromOtn(otn), p, check_ports);
+                eval_rtn_result = fp_eval_rtn(getRuntimeRtnFromOtn(otn), p, check_ports);
             }
 
             if ( eval_rtn_result )
@@ -515,7 +515,7 @@ int detection_option_node_evaluate(
         case RULE_OPTION_TYPE_FLOWBIT:
             if ( node->evaluate )
             {
-                flowbits_setoperation = FlowBits_SetOperation(node->option_data);
+                flowbits_setoperation = flowbits_setter(node->option_data);
 
                 if ( flowbits_setoperation )
                     // set to match so we don't bail early

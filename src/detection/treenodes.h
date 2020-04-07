@@ -88,6 +88,19 @@ struct RuleFpList
     RuleFpList* next = nullptr;
 };
 
+struct RuleHeader
+{
+    RuleHeader(const char* s) : action(s) { }
+
+    std::string action;
+    std::string proto;
+    std::string src_nets;
+    std::string src_ports;
+    std::string dir;
+    std::string dst_nets;
+    std::string dst_ports;
+};
+
 // one of these per rule per policy
 // represents head part of rule
 struct RuleTreeNode
@@ -103,6 +116,7 @@ struct RuleTreeNode
     static constexpr Flag USER_MODE     = 0x80;
 
     RuleFpList* rule_func = nullptr; /* match functions.. (Bidirectional etc.. ) */
+    RuleHeader* header = nullptr;
 
     sfip_var_t* sip = nullptr;
     sfip_var_t* dip = nullptr;
@@ -175,7 +189,6 @@ struct OptTreeNode
     unsigned evalIndex = 0;       /* where this rule sits in the evaluation sets */
     unsigned ruleIndex = 0; // unique index
     uint32_t num_detection_opts = 0;
-    uint32_t plugins = 0;
     SnortProtocolId snort_protocol_id = 0;    // Added for integrity checks during rule parsing.
     unsigned short proto_node_num = 0;
     uint16_t longestPatternLen = 0;
@@ -225,12 +238,6 @@ namespace snort
 {
 SO_PUBLIC bool otn_has_plugin(OptTreeNode* otn, const char* name);
 }
-
-inline bool otn_has_plugin(OptTreeNode* otn, int id)
-{ return (otn->plugins & (0x1 << id)) != 0; }
-
-inline void otn_set_plugin(OptTreeNode* otn, int id)
-{ otn->plugins |= (0x1 << id); }
 
 bool otn_set_agent(OptTreeNode*, snort::IpsOption*);
 

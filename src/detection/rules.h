@@ -72,16 +72,15 @@ struct RuleListNode
 
 struct RuleKey
 {
+    unsigned policy_id;
     unsigned gid;
     unsigned sid;
 
-    friend bool operator< (const RuleKey& lhs, const RuleKey& rhs)
-    { return lhs.gid < rhs.gid ? true : (lhs.gid > rhs.gid ? false : (lhs.sid < rhs.sid)); }
+    friend bool operator< (const RuleKey&, const RuleKey&);
 };
 
 struct RuleState
 {
-    unsigned policy_id;
     snort::Actions::Type action;
     IpsPolicy::Enable enable;
 };

@@ -398,25 +398,3 @@ void TcpStreamSession::start_proxy()
     config->policy = StreamPolicy::OS_PROXY;
 }
 
-//-------------------------------------------------------------------------
-// tcp module stuff
-//-------------------------------------------------------------------------
-
-void TcpStreamSession::print()
-{
-    char buf[64];
-
-    LogMessage("TcpStreamSession:\n");
-    sfip_ntop(&flow->server_ip, buf, sizeof(buf));
-    LogMessage("    server IP:          %s\n", buf);
-    sfip_ntop(&flow->client_ip, buf, sizeof(buf));
-    LogMessage("    client IP:          %s\n", buf);
-    LogMessage("    server port:        %d\n", flow->server_port);
-    LogMessage("    client port:        %d\n", flow->client_port);
-    LogMessage("    flags:              0x%X\n", flow->get_session_flags());
-    LogMessage("Client Tracker:\n");
-    client.print();
-    LogMessage("Server Tracker:\n");
-    server.print();
-}
-

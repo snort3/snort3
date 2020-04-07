@@ -250,7 +250,7 @@ static const Parameter s_params[] =
       "enable inline mode operation" },
 
     { "-q", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "quiet mode - Don't show banner and status report" },
+      "quiet mode - suppress normal logging on stdout" },
 
     { "-R", Parameter::PT_STRING, nullptr, nullptr,
       "<rules> include this rules file in the default policy" },
@@ -344,6 +344,15 @@ static const Parameter s_params[] =
 
     { "--dump-defaults", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output module defaults in Lua format" },
+
+    { "--dump-rule-deps", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "dump rule dependencies in json format for use by other tools" },
+
+    { "--dump-rule-meta", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "dump configured rule info in json format for use by other tools" },
+
+    { "--dump-rule-state", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "dump configured rule state in json format for use by other tools" },
 
     { "--dump-version", Parameter::PT_IMPLIED, nullptr, nullptr,
       "output the version, the whole version, and only the version" },
@@ -461,9 +470,6 @@ static const Parameter s_params[] =
 
     { "--pcap-no-filter", Parameter::PT_IMPLIED, nullptr, nullptr,
       "reset to use no filter when getting pcaps from file or directory" },
-
-    { "--pcap-reload", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "if reading multiple pcaps, reload snort config between pcaps" },
 
     { "--pcap-show", Parameter::PT_IMPLIED, nullptr, nullptr,
       "print a line saying what pcap is currently being read" },
@@ -840,6 +846,22 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("--dump-defaults") )
         dump_defaults(sc, v.get_string());
 
+    else if ( v.is("--dump-rule-deps") )
+    {
+        sc->run_flags |= (RUN_FLAG__DUMP_RULE_DEPS | RUN_FLAG__TEST);
+        sc->set_quiet(true);
+    }
+    else if ( v.is("--dump-rule-meta") )
+    {
+        sc->run_flags |= (RUN_FLAG__DUMP_RULE_META | RUN_FLAG__TEST);
+        sc->output_flags |= OUTPUT_FLAG__ALERT_REFS;
+        sc->set_quiet(true);
+    }
+    else if ( v.is("--dump-rule-state") )
+    {
+        sc->run_flags |= (RUN_FLAG__DUMP_RULE_STATE | RUN_FLAG__TEST);
+        sc->set_quiet(true);
+    }
     else if ( v.is("--dump-version") )
         dump_version(sc);
 
@@ -953,9 +975,6 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--pcap-no-filter") )
         Trough::set_filter(nullptr);
-
-    else if ( v.is("--pcap-reload") )
-        sc->run_flags |= RUN_FLAG__PCAP_RELOAD;
 
     else if ( v.is("--pcap-show") )
         sc->run_flags |= RUN_FLAG__PCAP_SHOW;

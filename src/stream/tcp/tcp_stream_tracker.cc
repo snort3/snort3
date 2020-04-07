@@ -729,17 +729,3 @@ void TcpStreamTracker::finalize_held_packet(Flow* flow)
     }
 }
 
-void TcpStreamTracker::print()
-{
-    LogMessage(" + TcpTracker +\n");
-    LogMessage("    state:              %s\n", tcp_state_names[ tcp_state ]);
-    LogMessage("    iss:                0x%X\n", iss);
-    LogMessage("    ts_last:            %u\n", ts_last);
-    LogMessage("    wscale:             %u\n", wscale);
-    LogMessage("    mss:                0x%08X\n", mss);
-    LogMessage("    snd_una:            %X\n", snd_una);
-    LogMessage("    snd_nxt:            %X\n", snd_nxt);
-    LogMessage("    snd_win:            %u\n", snd_wnd);
-    LogMessage("    rcv_nxt:            %X\n", rcv_nxt);
-    LogMessage("    r_win_base:         %X\n", r_win_base);
-}

@@ -105,7 +105,6 @@ typedef std::vector<Pattern> PatternVector;
 
 static std::vector<hs_scratch_t*> s_scratch;
 static unsigned int scratch_index;
-static bool scratch_registered = false;
 static ScratchAllocator* scratcher = nullptr;
 
 struct ScanContext
@@ -381,12 +380,9 @@ static void mod_dtor(Module* p)
 static Mpse* hs_ctor(
     SnortConfig* sc, class Module*, const MpseAgent* a)
 {
-    if ( !scratch_registered )
-    {
-        s_scratch.resize(sc->num_slots);
-        scratch_index = scratcher->get_id();
-        scratch_registered = true;
-    }
+    if ( s_scratch.empty() )
+        s_scratch.resize(sc->num_slots, nullptr);
+
     return new HyperscanMpse(sc, a);
 }
 

@@ -25,6 +25,8 @@
 
 #include "hash/ghash.h"
 #include "hash/hash_defs.h"
+#include "main/snort_config.h"
+#include "utils/util.h"
 
 using namespace snort;
 
@@ -89,6 +91,14 @@ PortObject* PortVarTableFind(PortVarTable* h, const char* name)
     if (!h || !name)
         return nullptr;
 
-    return (PortObject*)h->find(name);
+    PortObject* po = (PortObject*)h->find(name);
+
+    if ( !po and SnortConfig::dump_rule_info() and strstr(name, "PORT") )
+    {
+        po = PortObjectNew();
+        po->name = snort_strdup(name);
+        PortVarTableAdd(h, po);
+    }
+    return po;
 }
 

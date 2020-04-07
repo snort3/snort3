@@ -180,9 +180,6 @@ static void WriteLogMessage(FILE* fh, bool prefer_fh, const char* format, va_lis
 {
     if ( SnortConfig::get_conf() && !prefer_fh )
     {
-        if ( SnortConfig::log_quiet() )
-            return;
-
         if ( SnortConfig::log_syslog() )
         {
             char buf[STD_BUF+1];
@@ -207,6 +204,9 @@ static void WriteLogMessage(FILE* fh, bool prefer_fh, const char* format, va_lis
  */
 void LogMessage(const char* format,...)
 {
+    if ( SnortConfig::get_conf() and SnortConfig::log_quiet() )
+        return;
+
     va_list ap;
     va_start(ap, format);
 
@@ -217,6 +217,9 @@ void LogMessage(const char* format,...)
 
 void LogMessage(FILE* fh, const char* format,...)
 {
+    if ( fh == stdout and SnortConfig::get_conf() and SnortConfig::log_quiet() )
+        return;
+
     va_list ap;
     va_start(ap, format);
 
@@ -238,9 +241,6 @@ void LogMessage(FILE* fh, const char* format,...)
 void WarningMessage(const char* format,...)
 {
     va_list ap;
-
-    if ( SnortConfig::get_conf() and SnortConfig::log_quiet() )
-        return;
 
     va_start(ap, format);
 

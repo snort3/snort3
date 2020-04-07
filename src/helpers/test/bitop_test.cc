@@ -25,49 +25,69 @@
 
 #include "../bitop.h"
 
-static bool t_bitop_buffer_zero(BitOp& bitop)
+static unsigned num_set(BitOp& bitop, size_t max)
 {
-    for ( size_t i = 0; i < bitop.get_buf_size(); ++i )
-        if ( bitop.get_buf_element(i) )
-            return false;
+    unsigned c = 0;
 
-    return true;
+    for ( size_t i = 0; i < max; ++i )
+    {
+        if ( bitop.is_set(i) )
+            c++;
+    }
+    return c;
 }
+
+static bool is_clear(BitOp& bitop, size_t max)
+{ return num_set(bitop, max) == 0; }
 
 TEST_CASE( "bitop", "[bitop]" )
 {
-    BitOp bitop(24);
+    const size_t max = 16;
+    BitOp bitop(max);
 
     SECTION( "zero-initialized" )
     {
-        CHECK( (t_bitop_buffer_zero(bitop) == true) );
+        CHECK( (is_clear(bitop, max) == true) );
     }
 
-    SECTION( "reset" )
+    SECTION( "toggle" )
     {
-        bitop.get_buf_element(0) = 0xff;
-        bitop.reset();
+        const size_t bit = 7;
 
-        CHECK( (t_bitop_buffer_zero(bitop) == true) );
+        bitop.set(bit);
+        CHECK(bitop.is_set(bit));
+
+        CHECK(num_set(bitop, max) == 1);
+
+        bitop.clear(bit);
+        CHECK(!bitop.is_set(bit));
+
+        CHECK( (is_clear(bitop, max) == true) );
     }
 
-    SECTION( "set/is_set/clear" )
+    SECTION( "over size" )
     {
-        bitop.set(6);
+        const size_t j = max / 2;
+        const size_t k = max + 2;
 
-        CHECK( (bitop.get_buf_element(0) == 0x02) );
+        bitop.set(j);
+        CHECK(bitop.is_set(j));
 
-        CHECK( bitop.is_set(6) );
-        CHECK_FALSE( bitop.is_set(7) );
+        CHECK(!bitop.is_set(k));
 
-        bitop.set(7);
-        bitop.clear(6);
+        bitop.set(k);
+        CHECK(bitop.is_set(k));
 
-        CHECK( bitop.get_buf_element(0) == 0x01 );
-    }
+        CHECK(num_set(bitop, k + 2) == 2);
+        CHECK(bitop.is_set(j));
 
-    SECTION( "size" )
-    {
-        CHECK( (bitop.size() == 24) );
+        bitop.clear(k);
+        CHECK(!bitop.is_set(k));
+
+        CHECK(bitop.is_set(j));
+        bitop.clear(j);
+
+        CHECK( (is_clear(bitop, k + 2) == true) );
     }
 }
+

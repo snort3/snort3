@@ -44,6 +44,8 @@ public:
     static void dump_buffers();
     static void release_plugins();
 
+    static std::vector<const InspectApi*> get_apis();
+
     static void new_policy(InspectionPolicy*, InspectionPolicy*);
     static void delete_policy(InspectionPolicy*, bool cloned);
     static void update_policy(SnortConfig* sc);

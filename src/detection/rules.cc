@@ -38,6 +38,22 @@
 
 using namespace snort;
 
+bool operator< (const RuleKey& lhs, const RuleKey& rhs)
+{
+    if ( lhs.policy_id < rhs.policy_id )
+        return true;
+
+    if ( lhs.policy_id == rhs.policy_id )
+    {
+        if ( lhs.gid < rhs.gid )
+            return true;
+
+        if ( lhs.gid == rhs.gid and lhs.sid < rhs.sid )
+            return true;
+    }
+    return false;
+}
+
 void RuleStateMap::apply(SnortConfig* sc)
 {
     for ( auto it : map )
@@ -58,7 +74,7 @@ void RuleStateMap::apply(SnortConfig* sc)
                 }
             }
             else
-                apply(sc, otn, it.second.policy_id, it.second);
+                apply(sc, otn, it.first.policy_id, it.second);
         }
     }
 }

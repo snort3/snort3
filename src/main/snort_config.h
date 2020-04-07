@@ -43,7 +43,7 @@ enum RunFlag
     RUN_FLAG__READ                = 0x00000001,
     RUN_FLAG__DAEMON              = 0x00000002,
     RUN_FLAG__DUMP_MSG_MAP        = 0x00000004,
-    // unused                     = 0x00000008,
+    RUN_FLAG__DUMP_RULE_META      = 0x00000008,
 
     RUN_FLAG__INLINE              = 0x00000010,
     RUN_FLAG__STATIC_HASH         = 0x00000020,
@@ -68,7 +68,7 @@ enum RunFlag
     RUN_FLAG__ASSURE_EST          = 0x00080000,
 
     RUN_FLAG__TREAT_DROP_AS_IGNORE= 0x00100000,
-    RUN_FLAG__PCAP_RELOAD         = 0x00200000,
+    RUN_FLAG__DUMP_RULE_DEPS      = 0x00200000,
     RUN_FLAG__TEST                = 0x00400000,
 #ifdef SHELL
     RUN_FLAG__SHELL               = 0x00800000,
@@ -79,6 +79,8 @@ enum RunFlag
     RUN_FLAG__MEM_CHECK           = 0x02000000,
     RUN_FLAG__TRACK_ON_SYN        = 0x04000000,
     RUN_FLAG__IP_FRAGS_ONLY       = 0x08000000,
+
+    RUN_FLAG__DUMP_RULE_STATE     = 0x10000000,
 };
 
 enum OutputFlag
@@ -132,7 +134,6 @@ struct sopg_table_t;
 struct ClassType;
 struct DetectionFilterConfig;
 struct EventQueueConfig;
-struct FlowBitState;
 struct FrameworkConfig;
 struct HighAvailabilityConfig;
 struct IpsActionsConfig;
@@ -319,7 +320,6 @@ public:
     ThresholdConfig* threshold_config = nullptr;
     RateFilterConfig* rate_filter_config = nullptr;
     DetectionFilterConfig* detection_filter_config = nullptr;
-    FlowBitState* flowbit_state = nullptr;
 
     //------------------------------------------------------
     // FIXIT-L command line only stuff, add to conf / module
@@ -495,6 +495,22 @@ public:
     // mode related
     static bool dump_msg_map()
     { return get_conf()->run_flags & RUN_FLAG__DUMP_MSG_MAP; }
+
+    static bool dump_rule_meta()
+    { return get_conf()->run_flags & RUN_FLAG__DUMP_RULE_META; }
+
+    static bool dump_rule_state()
+    { return get_conf()->run_flags & RUN_FLAG__DUMP_RULE_STATE; }
+
+    static bool dump_rule_deps()
+    { return get_conf()->run_flags & RUN_FLAG__DUMP_RULE_DEPS; }
+
+    static bool dump_rule_info()
+    {
+        const SnortConfig* sc = get_conf();
+        return sc->dump_msg_map() or sc->dump_rule_meta() or
+            sc->dump_rule_deps() or sc->dump_rule_state();
+    }
 
     static bool test_mode()
     { return get_conf()->run_flags & RUN_FLAG__TEST; }
