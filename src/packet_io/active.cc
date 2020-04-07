@@ -586,20 +586,22 @@ bool Active::retry_packet(const Packet* p)
     return true;
 }
 
-void Active::hold_packet(const Packet* p)
+bool Active::hold_packet(const Packet* p)
 {
     if (active_action >= ACT_HOLD)
-        return;
+        return false;
 
     // FIXIT-L same semi-arbitrary heuristic as the retry queue logic - reevaluate later
     if (!p->daq_instance || p->daq_instance->get_pool_available() < p->daq_instance->get_batch_size())
     {
         active_counts.holds_denied++;
-        return;
+        return false;
     }
 
     active_action = ACT_HOLD;
     active_counts.holds_allowed++;
+
+    return true;
 }
 
 void Active::cancel_packet_hold()
