@@ -81,10 +81,10 @@ private:
     const HttpParaList* const params;
 
     // Registrations for "extra data"
-    static uint32_t xtra_trueip_id;
-    static uint32_t xtra_uri_id;
-    static uint32_t xtra_host_id;
-    static uint32_t xtra_jsnorm_id;
+    const uint32_t xtra_trueip_id;
+    const uint32_t xtra_uri_id;
+    const uint32_t xtra_host_id;
+    const uint32_t xtra_jsnorm_id;
     snort::DecodeConfig decode_conf;
 };
 

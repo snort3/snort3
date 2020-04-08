@@ -52,12 +52,12 @@ using namespace snort;
 using namespace HttpCommon;
 using namespace HttpEnums;
 
-uint32_t HttpInspect::xtra_trueip_id;
-uint32_t HttpInspect::xtra_uri_id;
-uint32_t HttpInspect::xtra_host_id;
-uint32_t HttpInspect::xtra_jsnorm_id;
-
-HttpInspect::HttpInspect(const HttpParaList* params_) : params(params_)
+HttpInspect::HttpInspect(const HttpParaList* params_) : 
+    params(params_),
+    xtra_trueip_id(Stream::reg_xtra_data_cb(get_xtra_trueip)),
+    xtra_uri_id(Stream::reg_xtra_data_cb(get_xtra_uri)),
+    xtra_host_id(Stream::reg_xtra_data_cb(get_xtra_host)),
+    xtra_jsnorm_id(Stream::reg_xtra_data_cb(get_xtra_jsnorm))
 {
 #ifdef REG_TEST
     if (params->test_input)
@@ -82,12 +82,6 @@ bool HttpInspect::configure(SnortConfig* )
 {
     if (params->js_norm_param.normalize_javascript)
         params->js_norm_param.js_norm->configure();
-
-    // FIXIT-H The following four lines are not thread safe during reload
-    xtra_trueip_id = Stream::reg_xtra_data_cb(get_xtra_trueip);
-    xtra_uri_id = Stream::reg_xtra_data_cb(get_xtra_uri);
-    xtra_host_id = Stream::reg_xtra_data_cb(get_xtra_host);
-    xtra_jsnorm_id = Stream::reg_xtra_data_cb(get_xtra_jsnorm);
 
     config_decode();
 
