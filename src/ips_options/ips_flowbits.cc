@@ -452,7 +452,7 @@ class FlowbitsModule : public Module
 {
 public:
     FlowbitsModule() : Module(s_name, s_help, s_params) { }
-    ~FlowbitsModule() { delete fbc; }
+    ~FlowbitsModule() override { delete fbc; }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;

@@ -145,7 +145,7 @@ NODE_DATA sflist_next(SF_LNODE** v)
 NODE_DATA sflist_remove_head(SF_LIST* s)
 {
     NODE_DATA ndata = nullptr;
-    SF_QNODE* q;
+    SF_LNODE* q;
     if ( s && s->head  )
     {
         q = s->head;
@@ -166,7 +166,7 @@ NODE_DATA sflist_remove_head(SF_LIST* s)
 NODE_DATA sflist_remove_tail(SF_LIST* s)
 {
     NODE_DATA ndata = nullptr;
-    SF_QNODE* q;
+    SF_LNODE* q;
     if (s && s->tail)
     {
         q = s->tail;
@@ -183,53 +183,6 @@ NODE_DATA sflist_remove_tail(SF_LIST* s)
         snort_free(q);
     }
     return (NODE_DATA)ndata;
-}
-
-void sflist_remove_node(SF_LIST* s, SF_LNODE* n)
-{
-    SF_LNODE* cur;
-
-    if ( n == s->head )
-    {
-        s->head = s->head->next;
-        s->count--;
-
-        if (!s->head)
-            s->tail = nullptr;
-        else
-            s->head->prev = nullptr;
-
-        snort_free(n);
-        return;
-    }
-    else if ( n == s->tail )
-    {
-        s->tail = s->tail->prev;
-        s->count--;
-
-        if (!s->tail )
-            s->head = nullptr;
-        else
-            s->tail->next = nullptr;
-
-        snort_free(n);
-        return;
-    }
-
-    for (cur = s->head;
-        cur!= nullptr;
-        cur = cur->next )
-    {
-        if ( n == cur )
-        {
-            /* unlink a middle node */
-            n->next->prev = n->prev;
-            n->prev->next = n->next;
-            s->count--;
-            snort_free(n);
-            return;
-        }
-    }
 }
 
 int sflist_count(SF_LIST* s)
@@ -279,34 +232,3 @@ void sflist_static_free_all(SF_LIST* s, void (* nfree)(void*) )
 
 }
 
-// ----- queue methods -----
-
-using namespace snort;
-
-SF_QUEUE* sfqueue_new()
-{
-    return (SF_QUEUE*)sflist_new();
-}
-
-void sfqueue_add(SF_QUEUE* s, NODE_DATA ndata)
-{
-    sflist_add_tail(s, ndata);
-}
-
-
-NODE_DATA sfqueue_remove(SF_QUEUE* s)
-{
-    return (NODE_DATA)sflist_remove_head(s);
-}
-
-int sfqueue_count(SF_QUEUE* s)
-{
-    if (!s)
-        return 0;
-    return s->count;
-}
-
-void sfqueue_free_all(SF_QUEUE* s,void (* nfree)(void*) )
-{
-    sflist_free_all(s, nfree);
-}
