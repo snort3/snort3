@@ -35,6 +35,8 @@ public:
         uint8_t frame_flags =0);
     const snort::StreamBuffer reassemble(const uint8_t* data, unsigned len);
 
+    bool is_flush_required() { return bytes_sent_http != 0; }
+
 private:
 
     Http2FlowData* const session_data;

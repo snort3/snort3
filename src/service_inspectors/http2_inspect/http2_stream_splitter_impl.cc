@@ -72,19 +72,36 @@ StreamSplitter::Status Http2StreamSplitter::data_scan(Http2FlowData* session_dat
     if (stream && stream->abort_on_data_is_set(source_id))
         return StreamSplitter::ABORT;
 
-    HttpFlowData* http_flow = nullptr;
-    if (stream)
-        http_flow = (HttpFlowData*)stream->get_hi_flow_data();
-
-    if (!stream || !http_flow || stream->end_stream_is_set(source_id) ||
-        (frame_length > 0 and (http_flow->get_type_expected(source_id) != HttpEnums::SEC_BODY_H2)))
+    if (!stream || stream->end_stream_is_set(source_id))
     {
         *session_data->infractions[source_id] += INF_FRAME_SEQUENCE;
         session_data->events[source_id]->create_event(EVENT_FRAME_SEQUENCE);
         return StreamSplitter::ABORT;
     }
 
-    if (frame_length == 0 or frame_length > MAX_OCTETS)
+    HttpFlowData* const http_flow = (HttpFlowData*)stream->get_hi_flow_data();
+    if (http_flow == nullptr)
+    {
+        *session_data->infractions[source_id] += INF_FRAME_SEQUENCE;
+        session_data->events[source_id]->create_event(EVENT_FRAME_SEQUENCE);
+        return StreamSplitter::ABORT;
+    }
+
+    if (http_flow->get_type_expected(source_id) != HttpEnums::SEC_BODY_H2)
+    {
+        // If 0 length frame and http isn't expecting body, flush without involving http
+        if (frame_length == 0)
+        {
+            *flush_offset = data_offset;
+            return StreamSplitter::FLUSH;
+        }
+
+        *session_data->infractions[source_id] += INF_FRAME_SEQUENCE;
+        session_data->events[source_id]->create_event(EVENT_FRAME_SEQUENCE);
+        return StreamSplitter::ABORT;
+    }
+
+    if (frame_length > MAX_OCTETS)
         return StreamSplitter::ABORT;
 
     Http2DataCutter* data_cutter = stream->get_data_cutter(source_id);
@@ -182,14 +199,17 @@ void Http2StreamSplitter::flush_data(Http2FlowData* session_data, HttpCommon::So
 {
     session_data->current_stream[source_id] = old_stream;
     session_data->frame_type[source_id] = FT_DATA;
-    finish_msg_body(session_data, source_id);
+    Http2Stream* const stream = session_data->find_stream(
+        session_data->current_stream[source_id]);
+    Http2DataCutter* const data_cutter = stream->get_data_cutter(source_id);
+    if (data_cutter->is_flush_required())
+        finish_msg_body(session_data, source_id);
+    session_data->data_processing[source_id] = false;
     *flush_offset = FRAME_HEADER_LENGTH;
     session_data->flushing_data[source_id] = true;
     memcpy(session_data->leftover_hdr[source_id],
         session_data->scan_frame_header[source_id], FRAME_HEADER_LENGTH);
     session_data->num_frame_headers[source_id] -= 1;
-    Http2Stream* const stream = session_data->find_stream(
-        session_data->current_stream[source_id]);
     stream->set_abort_on_data(source_id);
 }
 

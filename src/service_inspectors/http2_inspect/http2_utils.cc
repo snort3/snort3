@@ -75,6 +75,5 @@ void finish_msg_body(Http2FlowData* session_data, HttpCommon::SourceId source_id
         &dummy_pkt, nullptr, 0, unused, &http_flush_offset);
     assert(scan_result == snort::StreamSplitter::FLUSH);
     UNUSED(scan_result);
-    session_data->data_processing[source_id] = false;
 }
 
