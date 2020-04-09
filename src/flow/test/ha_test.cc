@@ -205,14 +205,14 @@ namespace snort
 {
 void ErrorMessage(const char*,...) { }
 void LogMessage(const char*,...) { }
+
+void packet_gettimeofday(struct timeval* tv)
+{ *tv = s_packet_time; }
 }
 
 bool FlowKey::is_equal(const void*, const void*, size_t) { return false; }
 
 int SFDAQInstance::ioctl(DAQ_IoctlCmd, void*, size_t) { return DAQ_SUCCESS; }
-
-void packet_gettimeofday(struct timeval* tv)
-{ *tv = s_packet_time; }
 
 Flow::Flow() { ha_state = new FlowHAState; key = new FlowKey; }
 Flow::~Flow() { delete key; delete ha_state; }

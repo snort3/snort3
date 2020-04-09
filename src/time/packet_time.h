@@ -26,13 +26,13 @@
 
 namespace snort
 {
+SO_PUBLIC void packet_gettimeofday(struct timeval* tv);
 SO_PUBLIC time_t packet_time();
 SO_PUBLIC int64_t timersub_ms(const struct timeval* end, const struct timeval* start);
 }
 
 void packet_time_update(const struct timeval* cur_tv);
 uint32_t packet_first_time();
-void packet_gettimeofday(struct timeval* tv);
 
 #endif
 
