@@ -51,30 +51,29 @@ struct Packet;
 class PerfTracker
 {
 public:
-    virtual void reset() {}
-
-    virtual void update(snort::Packet*) {}
-    virtual void process(bool /*summary*/) {} // FIXIT-M get rid of this step.
-
-    virtual void update_time(time_t time) final { cur_time = time; }
-    virtual const std::string& get_name() final { return tracker_name; }
-
-    virtual bool open(bool append) final;
-    virtual bool rotate() final;
-    virtual bool auto_rotate() final;
-
     virtual ~PerfTracker();
+
+    virtual void reset() { }
+    virtual void process(bool /*summary*/) { } // FIXIT-M get rid of this step.
+    virtual void update(snort::Packet*) { }
+    virtual void update_time(time_t time) { cur_time = time; }
+    virtual const std::string& get_name() { return tracker_name; }
+
+    bool open(bool append);
+    void close();
+    bool rotate();
+    bool auto_rotate();
+    bool is_open() { return fh != nullptr; }
 
     PerfTracker(const PerfTracker&) = delete;
     PerfTracker& operator=(const PerfTracker&) = delete;
 
 protected:
-    uint64_t max_file_size = 0;
-
-    PerfFormatter* formatter;
-
     PerfTracker(PerfConfig*, const char* tracker_name);
-    virtual void write() final;
+    virtual void write();
+
+    uint64_t max_file_size = 0;
+    PerfFormatter* formatter;
 
 private:
     std::string fname;

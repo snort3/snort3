@@ -97,6 +97,15 @@ PerfTracker::~PerfTracker()
         fclose(fh);
 }
 
+void PerfTracker::close()
+{
+    if (fh && fh != stdout)
+    {
+        fclose(fh);
+        fh = nullptr;
+    }
+}
+
 bool PerfTracker::open(bool append)
 {
     if (fname.length())

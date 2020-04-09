@@ -76,6 +76,17 @@ private:
     std::unordered_map<std::string, bool> peg_names;
 };
 
+struct PerfConstraints
+{
+    bool flow_ip_enabled = false;
+    unsigned sample_interval = 0;
+    uint32_t pkt_cnt = 0;
+
+    PerfConstraints() = default;
+    PerfConstraints(bool en, unsigned interval, uint32_t cnt) :
+        flow_ip_enabled(en), sample_interval(interval), pkt_cnt(cnt) { }
+};
+
 struct PerfConfig
 {
     int perf_flags = 0;
@@ -88,6 +99,10 @@ struct PerfConfig
     PerfOutput output = PerfOutput::TO_FILE;
     std::vector<ModuleConfig> modules;
     std::vector<snort::Module*> mods_to_prep;
+    PerfConstraints* constraints;
+
+    PerfConfig() { constraints = new PerfConstraints; } 
+    ~PerfConfig() { delete constraints; }
 
     bool resolve();
 };
@@ -99,6 +114,7 @@ public:
     PerfMonModule();
     ~PerfMonModule() override;
 
+    const snort::Command* get_commands() const override;
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
     bool begin(const char*, int, snort::SnortConfig*) override;
     bool end(const char*, int, snort::SnortConfig*) override;
