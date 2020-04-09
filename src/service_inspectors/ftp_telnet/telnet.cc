@@ -174,35 +174,6 @@ static int snort_telnet(TELNET_PROTO_CONF* GlobalConf, Packet* p)
     return FTPP_INVALID_PROTO;
 }
 
-/*
- * Function: PrintTelnetConf(TELNET_PROTO_CONF *TelnetConf,
- *                          char *Option)
- *
- * Purpose: Prints the telnet configuration
- *
- * Arguments: TelnetConf    => pointer to the telnet configuration
- *
- * Returns: int     => an error code integer (0 = success,
- *                     >0 = non-fatal error, <0 = fatal error)
- *
- */
-static int PrintTelnetConf(TELNET_PROTO_CONF* TelnetConf)
-{
-    if (!TelnetConf)
-    {
-        return FTPP_INVALID_ARG;
-    }
-
-    LogMessage("      Are You There Threshold: %d\n",
-        TelnetConf->ayt_threshold);
-    LogMessage("      Normalize: %s\n", TelnetConf->normalize ? "YES" : "NO");
-    PrintConfOpt(TelnetConf->detect_encrypted, "Check for Encrypted Traffic");
-    LogMessage("      Continue to check encrypted data: %s\n",
-        TelnetConf->check_encrypted_data ? "YES" : "NO");
-
-    return FTPP_SUCCESS;
-}
-
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
@@ -242,7 +213,13 @@ bool Telnet::configure(SnortConfig* sc)
 
 void Telnet::show(SnortConfig*)
 {
-    PrintTelnetConf(config);
+    if ( !config )
+        return;
+
+    ConfigLogger::log_value("ayt_attack_thresh", config->ayt_threshold);
+    ConfigLogger::log_flag("check_encrypted", config->detect_encrypted);
+    ConfigLogger::log_flag("encrypted_traffic", config->check_encrypted_data);
+    ConfigLogger::log_flag("normalize", config->normalize);
 }
 
 void Telnet::eval(Packet* p)

@@ -64,6 +64,21 @@ void FilePolicy::set_file_capture(bool enabled)
     capture_enabled = enabled;
 }
 
+bool FilePolicy::get_file_type() const
+{
+    return type_enabled;
+}
+
+bool FilePolicy::get_file_signature() const
+{
+    return signature_enabled;
+}
+
+bool FilePolicy::get_file_capture() const
+{
+    return capture_enabled;
+}
+
 void FilePolicy::insert_file_rule(FileRule& rule)
 {
     file_rules.emplace_back(rule);

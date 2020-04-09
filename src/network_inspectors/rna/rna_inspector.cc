@@ -102,31 +102,25 @@ void RnaInspector::eval(Packet* p)
 
 void RnaInspector::show(SnortConfig*)
 {
-    if (mod_conf)
+    if ( mod_conf )
     {
-        if (!mod_conf->rna_conf_path.empty())
-            LogMessage("    Config path:            %s\n", mod_conf->rna_conf_path.c_str());
-        if (!mod_conf->rna_util_lib_path.empty())
-            LogMessage("    Library path:           %s\n", mod_conf->rna_util_lib_path.c_str());
-        if (!mod_conf->fingerprint_dir.empty())
-            LogMessage("    Fingerprint dir:        %s\n", mod_conf->fingerprint_dir.c_str());
-        if (!mod_conf->custom_fingerprint_dir.empty())
-            LogMessage("    Custom fingerprint dir: %s\n",
-                mod_conf->custom_fingerprint_dir.c_str());
-        LogMessage("    Enable logger:          %d\n", mod_conf->enable_logger);
+        ConfigLogger::log_value("rna_conf_path", mod_conf->rna_conf_path.c_str());
+        ConfigLogger::log_value("rna_util_lib_path", mod_conf->rna_util_lib_path.c_str());
+        ConfigLogger::log_value("fingerprint_dir", mod_conf->fingerprint_dir.c_str());
+        ConfigLogger::log_value("custom_fingerprint_dir", mod_conf->custom_fingerprint_dir.c_str());
+        ConfigLogger::log_flag("enable_logger", mod_conf->enable_logger);
+        ConfigLogger::log_flag("log_when_idle", mod_conf->log_when_idle);
     }
 
-    if (rna_conf)
+    if ( rna_conf )
     {
-        LogMessage("    Update timeout:         %u secs\n", rna_conf->update_timeout);
-        LogMessage("    Max host client apps:   %u\n", rna_conf->max_host_client_apps);
-        LogMessage("    Max payloads:           %u\n", rna_conf->max_payloads);
-        LogMessage("    Max host services:      %u\n", rna_conf->max_host_services);
-        LogMessage("    Max host service info:  %u\n", rna_conf->max_host_service_info);
-        LogMessage("    Banner grab:            %d\n", rna_conf->enable_banner_grab);
+        ConfigLogger::log_value("UpdateTimeout", rna_conf->update_timeout);
+        ConfigLogger::log_value("MaxHostClientApps", rna_conf->max_host_client_apps);
+        ConfigLogger::log_value("MaxPayloads", rna_conf->max_payloads);
+        ConfigLogger::log_value("MaxHostServices", rna_conf->max_host_services);
+        ConfigLogger::log_value("MaxHostServiceInfo", rna_conf->max_host_service_info);
+        ConfigLogger::log_value("BannerGrab", rna_conf->enable_banner_grab);
     }
-
-    LogMessage("\n");
 }
 
 void RnaInspector::tinit()

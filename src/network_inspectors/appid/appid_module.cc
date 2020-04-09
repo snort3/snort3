@@ -70,16 +70,10 @@ static const Parameter s_params[] =
       "time period for collecting and logging appid statistics" },
     { "app_stats_rollover_size", Parameter::PT_INT, "0:max32", "20971520",
       "max file size for appid stats before rolling over the log file" },
-    { "app_stats_rollover_time", Parameter::PT_INT, "0:max31", "86400",
-      "max time period for collection appid stats before rolling over the log file" },
     { "app_detector_dir", Parameter::PT_STRING, nullptr, nullptr,
       "directory to load appid detectors from" },
-    { "instance_id", Parameter::PT_INT, "0:max32", "0",
-      "instance id - ignored" },
-    { "debug", Parameter::PT_BOOL, nullptr, "false",
-      "enable appid debug logging" },
-    { "dump_ports", Parameter::PT_BOOL, nullptr, "false",
-      "enable dump of appid port information" },
+    { "list_odp_detectors", Parameter::PT_BOOL, nullptr, "false",
+      "enable logging of odp detectors statistics" },
     { "tp_appid_path", Parameter::PT_STRING, nullptr, nullptr,
       "path to third party appid dynamic library" },
     { "tp_appid_config", Parameter::PT_STRING, nullptr, nullptr,
@@ -290,13 +284,11 @@ bool AppIdModule::set(const char* fqn, Value& v, SnortConfig* c)
     if ( v.is("memcap") )
         config->memcap = v.get_size();
     else if ( v.is("log_stats") )
-        config->stats_logging_enabled = v.get_bool();
+        config->log_stats = v.get_bool();
     else if ( v.is("app_stats_period") )
         config->app_stats_period = v.get_uint32();
     else if ( v.is("app_stats_rollover_size") )
         config->app_stats_rollover_size = v.get_uint32();
-    else if ( v.is("app_stats_rollover_time") )
-        config->app_stats_rollover_time = v.get_uint32();
     else if ( v.is("app_detector_dir") )
         config->app_detector_dir = snort_strdup(v.get_string());
     else if ( v.is("tp_appid_path") )
@@ -307,12 +299,8 @@ bool AppIdModule::set(const char* fqn, Value& v, SnortConfig* c)
         config->tp_appid_stats_enable = v.get_bool();
     else if ( v.is("tp_appid_config_dump") )
         config->tp_appid_config_dump = v.get_bool();
-    else if ( v.is("instance_id") )
-        config->instance_id = v.get_uint32();
-    else if ( v.is("debug") )
-        config->debug = v.get_bool();
-    else if ( v.is("dump_ports") )
-        config->dump_ports = v.get_bool();
+    else if ( v.is("list_odp_detectors") )
+        config->list_odp_detectors = v.get_bool();
     else if ( v.is("log_all_sessions") )
         config->log_all_sessions = v.get_bool();
     else

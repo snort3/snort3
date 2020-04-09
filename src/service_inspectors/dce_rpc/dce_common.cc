@@ -118,24 +118,17 @@ bool dce2_set_co_config(Value& v, dce2CoProtoConf& co)
 
 void print_dce2_common_config(dce2CommonProtoConf& common)
 {
-    LogMessage("    One alert per flow: %s\n",
-        common.limit_alerts ?
-        "ENABLED" : "DISABLED");
-    LogMessage("    Defragmentation: %s\n",
-        common.disable_defrag ?
-        "DISABLED" : "ENABLED");
-    LogMessage("    Max Fragment length: %d\n",
-        common.max_frag_len);
+    ConfigLogger::log_flag("limit_alerts", common.limit_alerts);
+    ConfigLogger::log_flag("disable_defrag", common.disable_defrag);
+    ConfigLogger::log_value("max_frag_len", common.max_frag_len);
 }
 
 void print_dce2_co_config(dce2CoProtoConf& co)
 {
     print_dce2_common_config(co.common);
 
-    LogMessage("    Policy : %s\n",
-        dce2_get_policy_name(co.policy));
-    LogMessage("    Reassemble Threshold : %d\n",
-        co.co_reassemble_threshold);
+    ConfigLogger::log_value("policy", dce2_get_policy_name(co.policy));
+    ConfigLogger::log_value("reassemble_threshold", co.co_reassemble_threshold);
 }
 
 bool dce2_paf_abort(DCE2_SsnData* sd)

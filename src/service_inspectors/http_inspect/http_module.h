@@ -75,6 +75,8 @@ public:
         std::bitset<256> bad_characters;
         std::bitset<256> unreserved_char;
         HttpEnums::CharAction uri_char[256];
+
+        static const std::bitset<256> default_unreserved_char;
     };
     UriParam uri_param;
 

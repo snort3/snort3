@@ -79,6 +79,7 @@ struct StreamModuleConfig
     unsigned footprint = 0;
 #endif
 
+    void show() const;
 };
 
 class StreamReloadResourceManager : public snort::ReloadResourceTuner

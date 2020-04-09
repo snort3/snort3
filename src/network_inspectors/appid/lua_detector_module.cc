@@ -212,7 +212,7 @@ void LuaDetectorManager::initialize(AppIdContext& ctxt, int is_control)
     lua_detector_mgr->initialize_lua_detectors();
     lua_detector_mgr->activate_lua_detectors();
 
-    if (ctxt.config.debug)
+    if (ctxt.config.list_odp_detectors)
         lua_detector_mgr->list_lua_detectors();
 }
 

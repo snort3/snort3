@@ -73,6 +73,9 @@ public:
     void set_file_type(bool enabled);
     void set_file_signature(bool enabled);
     void set_file_capture(bool enabled);
+    bool get_file_type() const;
+    bool get_file_signature() const;
+    bool get_file_capture() const;
     void load();
     void set_verdict_delay(int64_t delay) { verdict_delay = delay; }
 

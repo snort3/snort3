@@ -68,23 +68,15 @@ bool AppId::convert(std::istringstream& data_stream)
         {
             tmpval = parse_int_option("memcap", arg_stream, false);
         }
-        else if (keyword == "debug")
+        else if (keyword == "list_odp_detectors")
         {
             std::string val;
             if (!(arg_stream >> val))
-                data_api.failed_conversion(arg_stream,  "appid: debug <missing_arg>");
+                data_api.failed_conversion(arg_stream,  "appid: list_odp_detectors <missing_arg>");
             else if (val == "yes")
-                table_api.add_option("debug", true);
+                table_api.add_option("list_odp_detectors", true);
             else
-                table_api.add_option("debug", false);
-        }
-        else if (keyword == "dump_ports")
-        {
-            table_api.add_option("dump_ports", true);
-        }
-        else if (keyword == "instance_id")
-        {
-            tmpval = parse_int_option("instance_id", arg_stream, false);
+                table_api.add_option("list_odp_detectors", false);
         }
         else if (keyword == "app_stats_filename")
         {
@@ -106,10 +98,6 @@ bool AppId::convert(std::istringstream& data_stream)
         else if (keyword == "app_stats_rollover_size")
         {
             tmpval = parse_int_option("app_stats_rollover_size", arg_stream, false);
-        }
-        else if (keyword == "app_stats_rollover_time")
-        {
-            tmpval = parse_int_option("app_stats_rollover_time", arg_stream, false);
         }
         else if (keyword == "app_detector_dir")
         {

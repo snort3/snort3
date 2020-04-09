@@ -67,9 +67,9 @@ inline void Norm_Set(NormalizerConfig* nc, NormFlags nf, bool enable)
         Norm_Disable(nc, nf);
 }
 
-inline int Norm_IsEnabled(const NormalizerConfig* nc, NormFlags nf)
+inline bool Norm_IsEnabled(const NormalizerConfig* nc, NormFlags nf)
 {
-    return ( (nc->normalizer_flags & nf) != 0 );
+    return nc->normalizer_flags & nf;
 }
 
 inline void Norm_TcpPassOption(NormalizerConfig* nc, uint8_t opt)
@@ -84,10 +84,10 @@ inline void Norm_TcpDropOption(NormalizerConfig* nc, uint8_t opt)
     nc->normalizer_options[byte] &= ~bit;
 }
 
-inline int Norm_TcpIsOptional(const NormalizerConfig* nc, uint8_t opt)
+inline bool Norm_TcpIsOptional(const NormalizerConfig* nc, uint8_t opt)
 {
     uint8_t byte = (opt >> 3), bit = (1 << (opt & 0x07));
-    return ( (nc->normalizer_options[byte] & bit) != 0 );
+    return nc->normalizer_options[byte] & bit;
 }
 
 const PegInfo* Norm_GetPegs();

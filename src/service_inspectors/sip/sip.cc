@@ -81,74 +81,22 @@ static void FreeSipData(void* data)
     sip_freeDialogs(&ssn->dialogs);
 }
 
-static void PrintSipConf(SIP_PROTO_CONF* config)
+static std::string GetSIPMethods(SIPMethodNode* method)
 {
-    SIPMethodNode* method;
-    if (config == nullptr)
-        return;
-    LogMessage("    Max number of dialogs in a session: %d %s \n",
-        config->maxNumDialogsInSession,
-        config->maxNumDialogsInSession
-        == SIP_DEFAULT_MAX_DIALOGS_IN_SESSION ?
-        "(Default)" : "");
+    std::string cmds;
 
-    LogMessage("    Ignore media channel: %s\n",
-        config->ignoreChannel ?
-        "ENABLED" : "DISABLED");
-    LogMessage("    Max URI length: %d %s \n",
-        config->maxUriLen,
-        config->maxUriLen
-        == SIP_DEFAULT_MAX_URI_LEN ?
-        "(Default)" : "");
-    LogMessage("    Max Call ID length: %d %s \n",
-        config->maxCallIdLen,
-        config->maxCallIdLen
-        == SIP_DEFAULT_MAX_CALL_ID_LEN ?
-        "(Default)" : "");
-    LogMessage("    Max Request name length: %d %s \n",
-        config->maxRequestNameLen,
-        config->maxRequestNameLen
-        == SIP_DEFAULT_MAX_REQUEST_NAME_LEN ?
-        "(Default)" : "");
-    LogMessage("    Max From length: %d %s \n",
-        config->maxFromLen,
-        config->maxFromLen
-        == SIP_DEFAULT_MAX_FROM_LEN ?
-        "(Default)" : "");
-    LogMessage("    Max To length: %d %s \n",
-        config->maxToLen,
-        config->maxToLen
-        == SIP_DEFAULT_MAX_TO_LEN ?
-        "(Default)" : "");
-    LogMessage("    Max Via length: %d %s \n",
-        config->maxViaLen,
-        config->maxViaLen
-        == SIP_DEFAULT_MAX_VIA_LEN ?
-        "(Default)" : "");
-    LogMessage("    Max Contact length: %d %s \n",
-        config->maxContactLen,
-        config->maxContactLen
-        == SIP_DEFAULT_MAX_CONTACT_LEN ?
-        "(Default)" : "");
-    LogMessage("    Max Content length: %d %s \n",
-        config->maxContentLen,
-        config->maxContentLen
-        == SIP_DEFAULT_MAX_CONTENT_LEN ?
-        "(Default)" : "");
-    LogMessage("\n");
-    LogMessage("    Methods:\n");
-    LogMessage("\t%s ",
-        config->methodsConfig
-        == SIP_METHOD_DEFAULT ?
-        "(Default)" : "");
-    method = config->methods;
-    while (nullptr != method)
+    for (; method; method = method->nextm)
     {
-        LogMessage(" %s", method->methodName);
-        method = method->nextm;
+        cmds += method->methodName;
+        cmds += " ";
     }
 
-    LogMessage("\n");
+    if ( !cmds.empty() )
+        cmds.pop_back();
+    else
+        cmds += "none";
+
+    return cmds;
 }
 
 /*********************************************************************
@@ -271,7 +219,22 @@ Sip::~Sip()
 
 void Sip::show(SnortConfig*)
 {
-    PrintSipConf(config);
+    if ( !config )
+        return;
+
+    auto methods = GetSIPMethods(config->methods);
+
+    ConfigLogger::log_flag("ignore_call_channel", config->ignoreChannel);
+    ConfigLogger::log_value("max_call_id_len", config->maxCallIdLen);
+    ConfigLogger::log_value("max_contact_len", config->maxContactLen);
+    ConfigLogger::log_value("max_content_len", config->maxContentLen);
+    ConfigLogger::log_value("max_dialogs", config->maxNumDialogsInSession);
+    ConfigLogger::log_value("max_from_len", config->maxFromLen);
+    ConfigLogger::log_value("max_requestName_len", config->maxRequestNameLen);
+    ConfigLogger::log_value("max_to_len", config->maxToLen);
+    ConfigLogger::log_value("max_uri_len", config->maxUriLen);
+    ConfigLogger::log_value("max_via_len", config->maxViaLen);
+    ConfigLogger::log_list("methods", methods.c_str());
 }
 
 void Sip::eval(Packet* p)

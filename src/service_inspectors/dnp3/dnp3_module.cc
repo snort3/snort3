@@ -24,8 +24,6 @@
 
 #include "dnp3_module.h"
 
-#include "log/messages.h"
-
 #include "dnp3.h"
 
 using namespace snort;
@@ -101,11 +99,3 @@ void Dnp3Module::get_data(dnp3ProtoConf& dnp3_config)
 {
     dnp3_config.check_crc = config.check_crc;
 }
-
-void print_dnp3_conf(const dnp3ProtoConf& config)
-{
-    LogMessage("    Check CRC: %s\n",
-        config.check_crc ?
-        "ENABLED" : "DISABLED");
-}
-

@@ -99,18 +99,6 @@ SSLData* get_ssl_session_data(Flow* flow)
     return fd ? &fd->session : nullptr;
 }
 
-static void PrintSslConf(SSL_PROTO_CONF* config)
-{
-    if (config == nullptr)
-        return;
-    if ( config->trustservers )
-    {
-        LogMessage("    Server side data is trusted\n");
-    }
-
-    LogMessage("\n");
-}
-
 static void SSL_UpdateCounts(const uint32_t new_flags)
 {
     if (new_flags & SSL_CHANGE_CIPHER_FLAG)
@@ -445,7 +433,11 @@ Ssl::~Ssl()
 
 void Ssl::show(SnortConfig*)
 {
-    PrintSslConf(config);
+    if ( !config )
+        return;
+
+    ConfigLogger::log_flag("trust_servers", config->trustservers);
+    ConfigLogger::log_value("max_heartbeat_length", config->max_heartbeat_len);
 }
 
 void Ssl::eval(Packet* p)

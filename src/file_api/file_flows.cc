@@ -383,16 +383,42 @@ bool FileInspect::configure(SnortConfig*)
     return true;
 }
 
+static void file_config_show(const FileConfig* fc)
+{
+    const FilePolicy& fp = fc->get_file_policy();
+
+    if ( ConfigLogger::log_flag("enable_type", fp.get_file_type()) )
+        ConfigLogger::log_value("type_depth", fc->file_type_depth);
+
+    if ( ConfigLogger::log_flag("enable_signature", fp.get_file_signature()) )
+        ConfigLogger::log_value("signature_depth", fc->file_signature_depth);
+
+    if ( ConfigLogger::log_flag("block_timeout_lookup", fc->block_timeout_lookup) )
+        ConfigLogger::log_value("block_timeout", fc->file_block_timeout);
+
+    if ( ConfigLogger::log_flag("enable_capture", fp.get_file_capture()) )
+    {
+        ConfigLogger::log_value("capture_memcap", fc->capture_memcap);
+        ConfigLogger::log_value("capture_max_size", fc->capture_max_size);
+        ConfigLogger::log_value("capture_min_size", fc->capture_min_size);
+        ConfigLogger::log_value("capture_block_size", fc->capture_block_size);
+    }
+
+    ConfigLogger::log_value("lookup_timeout", fc->file_lookup_timeout);
+    ConfigLogger::log_value("max_files_cached", fc->max_files_cached);
+    ConfigLogger::log_value("max_files_per_flow", fc->max_files_per_flow);
+    ConfigLogger::log_value("show_data_depth", fc->show_data_depth);
+
+    ConfigLogger::log_flag("trace_type", fc->trace_type);
+    ConfigLogger::log_flag("trace_signature", fc->trace_signature);
+    ConfigLogger::log_flag("trace_stream", fc->trace_stream);
+    ConfigLogger::log_value("verdict_delay", fc->verdict_delay);
+}
+
 void FileInspect::show(SnortConfig*)
 {
-    if (!config)
-        return;
-
-    LogMessage("    capture_memcap: %zu MB\n", config->capture_memcap);
-    LogMessage("    capture_max_size: %zu bytes\n", config->capture_max_size);
-    LogMessage("    capture_min_size: %zu bytes\n", config->capture_min_size);
-    LogMessage("    lookup_timeout: %zu secs\n", config->file_lookup_timeout);
-    LogMessage("\n");
+    if ( config )
+        file_config_show(config);
 }
 
 static Module* mod_ctor()

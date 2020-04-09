@@ -28,7 +28,6 @@
 #include <openssl/crypto.h>
 
 #include "flow/flow.h"
-#include "log/messages.h"
 #include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
 #include "packet_tracer/packet_tracer.h"
@@ -129,16 +128,7 @@ bool AppIdInspector::configure(SnortConfig* sc)
 
 void AppIdInspector::show(SnortConfig*)
 {
-    LogMessage("    Detector Path:          %s\n", config->app_detector_dir);
-    LogMessage("    appStats Logging:       %s\n", config->stats_logging_enabled ? "enabled" :
-        "disabled");
-    LogMessage("    appStats Period:        %lu secs\n", config->app_stats_period);
-    LogMessage("    appStats Rollover Size: %lu bytes\n",
-        config->app_stats_rollover_size);
-    LogMessage("    appStats Rollover time: %lu secs\n",
-        config->app_stats_rollover_time);
-    LogMessage("    memcap:                 %zu bytes\n", config->memcap);
-    LogMessage("\n");
+    config->show();
 }
 
 void AppIdInspector::tinit()

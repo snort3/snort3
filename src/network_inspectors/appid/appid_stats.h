@@ -82,7 +82,6 @@ private:
     time_t bucketInterval = 0;
     time_t bucketEnd = 0;
     size_t rollSize = 0;
-    time_t rollPeriod = 0;
 };
 
 #endif

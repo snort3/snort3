@@ -168,6 +168,7 @@ public:
     PacketCapture(CaptureModule*);
 
     // non-static functions
+    void show(SnortConfig*) override;
     void eval(Packet*) override;
     void tterm() override { capture_term(); }
 
@@ -194,6 +195,13 @@ bool PacketCapture::capture_init()
     }
     packet_capture_disable();
     return false;
+}
+
+void PacketCapture::show(SnortConfig*)
+{
+    ConfigLogger::log_flag("enable", config.enabled);
+    if ( config.enabled )
+        ConfigLogger::log_value("filter", config.filter.c_str());
 }
 
 void PacketCapture::eval(Packet* p)

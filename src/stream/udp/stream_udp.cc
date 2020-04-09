@@ -39,15 +39,6 @@ StreamUdpConfig::StreamUdpConfig()
     session_timeout = 30;
 }
 
-static void udp_show(StreamUdpConfig* pc)
-{
-    LogMessage("    Timeout: %d seconds\n", pc->session_timeout);
-
-#ifdef REG_TEST
-    LogMessage("    UDP Session Size: %zu\n", sizeof(UdpSession));
-#endif
-}
-
 //-------------------------------------------------------------------------
 // inspector stuff
 //-------------------------------------------------------------------------
@@ -77,8 +68,10 @@ StreamUdp::~StreamUdp()
 
 void StreamUdp::show(SnortConfig*)
 {
-    if ( config )
-        udp_show(config);
+    if ( !config )
+        return;
+
+    ConfigLogger::log_value("session_timeout", config->session_timeout);
 }
 
 NORETURN_ASSERT void StreamUdp::eval(Packet*)

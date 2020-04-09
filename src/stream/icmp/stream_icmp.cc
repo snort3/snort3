@@ -40,11 +40,6 @@ StreamIcmpConfig::StreamIcmpConfig()
     session_timeout = 30;
 }
 
-static void icmp_show(StreamIcmpConfig* pc)
-{
-    LogMessage("    Timeout: %d seconds\n", pc->session_timeout);
-}
-
 //-------------------------------------------------------------------------
 // inspector stuff
 //-------------------------------------------------------------------------
@@ -74,7 +69,10 @@ StreamIcmp::~StreamIcmp()
 
 void StreamIcmp::show(SnortConfig*)
 {
-    icmp_show(config);
+    if ( !config )
+        return;
+
+    ConfigLogger::log_value("session_timeout", config->session_timeout);
 }
 
 NORETURN_ASSERT void StreamIcmp::eval(Packet*)

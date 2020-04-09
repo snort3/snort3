@@ -142,7 +142,6 @@ AppIdStatistics::AppIdStatistics(const AppIdConfig& config)
 {
     enabled = true;
 
-    rollPeriod = config.app_stats_rollover_time;
     rollSize = config.app_stats_rollover_size;
     bucketInterval = config.app_stats_period;
 
@@ -178,7 +177,7 @@ AppIdStatistics::~AppIdStatistics()
 
 AppIdStatistics* AppIdStatistics::initialize_manager(const AppIdConfig& config)
 {
-    if ( !config.stats_logging_enabled )
+    if ( !config.log_stats )
         return nullptr;
 
     appid_stats_manager = new AppIdStatistics(config);

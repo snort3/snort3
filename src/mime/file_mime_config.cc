@@ -129,7 +129,7 @@ void DecodeConfig::sync_all_depths()
         (bitenc_depth >= 0) or (uu_depth >= 0);
 }
 
-int DecodeConfig::get_max_depth(int decode_depth)
+int DecodeConfig::get_max_depth(int decode_depth) const
 {
     if ( file_depth and decode_depth )
         return (file_depth > decode_depth) ? file_depth : decode_depth;
@@ -142,7 +142,7 @@ void DecodeConfig::show(bool full) const
 {
     if ( !decode_enabled )
     {
-        LogFlag("decode_enabled", decode_enabled);
+        ConfigLogger::log_flag("decode_enabled", decode_enabled);
         return;
     }
 
@@ -150,16 +150,16 @@ void DecodeConfig::show(bool full) const
     auto qp = (qp_depth == 0) ? -1 : ((qp_depth == -1) ? 0 : qp_depth);
     auto uu = (uu_depth == 0) ? -1 : ((uu_depth == -1) ? 0 : uu_depth);
     auto bitenc = (bitenc_depth == 0) ? -1 : ((bitenc_depth == -1) ? 0 : bitenc_depth);
-    LogLimit("b64_decode_depth", b64, -1, 0);
-    LogLimit("qp_decode_depth", qp, -1, 0);
-    LogLimit("uu_decode_depth", uu, -1, 0);
-    LogLimit("bitenc_decode_depth", bitenc, -1, 0);
+    ConfigLogger::log_limit("b64_decode_depth", b64, -1, 0);
+    ConfigLogger::log_limit("qp_decode_depth", qp, -1, 0);
+    ConfigLogger::log_limit("uu_decode_depth", uu, -1, 0);
+    ConfigLogger::log_limit("bitenc_decode_depth", bitenc, -1, 0);
 
     if ( full )
-        LogFlag("ignore_data", ignore_data);
+        ConfigLogger::log_flag("ignore_data", ignore_data);
 
-    LogFlag("decompress_pdf", decompress_pdf);
-    LogFlag("decompress_swf", decompress_swf);
-    LogFlag("decompress_zip", decompress_zip);
+    ConfigLogger::log_flag("decompress_pdf", decompress_pdf);
+    ConfigLogger::log_flag("decompress_swf", decompress_swf);
+    ConfigLogger::log_flag("decompress_zip", decompress_zip);
 }
 

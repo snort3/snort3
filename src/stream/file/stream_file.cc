@@ -23,6 +23,8 @@
 
 #include "stream_file.h"
 
+#include "log/messages.h"
+
 #include "file_module.h"
 #include "file_session.h"
 
@@ -39,6 +41,7 @@ public:
     { config.upload = b; }
 
     NORETURN_ASSERT void eval(Packet*) override;
+    void show(SnortConfig*) override;
 
     StreamFileConfig config;
 };
@@ -47,6 +50,11 @@ NORETURN_ASSERT void StreamFile::eval(Packet*)
 {
     // session::process() instead
     assert(false);
+}
+
+void StreamFile::show(SnortConfig*)
+{
+    ConfigLogger::log_flag("upload", config.upload);
 }
 
 StreamFileConfig* get_file_cfg(Inspector* ins)

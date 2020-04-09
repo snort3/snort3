@@ -75,45 +75,6 @@ const char* WhiteActionOption[] =
  */
 static void snort_reputation(ReputationConfig* GlobalConf, Packet* p);
 
-static void print_iplist_stats(ReputationConfig* config)
-{
-    /*Print out the summary*/
-    LogMessage("    Reputation total memory usage: " STDu64 " bytes\n",
-        reputationstats.memory_allocated);
-    config->num_entries = sfrt_flat_num_entries(config->ip_list);
-    LogMessage("    Reputation total entries loaded: %u, invalid: %lu, re-defined: %lu\n",
-        config->num_entries,total_invalids,total_duplicates);
-}
-
-static void print_reputation_conf(ReputationConfig* config)
-{
-    assert(config);
-
-    print_iplist_stats(config);
-
-    LogMessage("    Memcap: %d %s \n",
-        config->memcap,
-        config->memcap == 500 ? "(Default) M bytes" : "M bytes");
-    LogMessage("    Scan local network: %s\n",
-        config->scanlocal ? "ENABLED" : "DISABLED (Default)");
-    LogMessage("    Reputation priority:  %s \n",
-        config->priority ==  WHITELISTED_TRUST ?
-        "whitelist (Default)" : "blacklist");
-    LogMessage("    Nested IP: %s %s \n",
-        NestedIPKeyword[config->nested_ip],
-        config->nested_ip ==  INNER ? "(Default)" : "");
-    LogMessage("    White action: %s %s \n",
-        WhiteActionOption[config->white_action],
-        config->white_action ==  UNBLACK ? "(Default)" : "");
-    if (config->blacklist_path.size())
-        LogMessage("    Blacklist File Path: %s\n", config->blacklist_path.c_str());
-
-    if (config->whitelist_path.size())
-        LogMessage("    Whitelist File Path: %s\n", config->whitelist_path.c_str());
-
-    LogMessage("\n");
-}
-
 static inline IPrepInfo* reputation_lookup(ReputationConfig* config, const SfIp* ip)
 {
     IPrepInfo* result;
@@ -246,6 +207,7 @@ static IPdecision reputation_decision(ReputationConfig* config, Packet* p)
     }
 
     // For OUTER or ALL, save current layers, iterate, then restore layers as needed
+    ip::IpApi blocked_api;
     ip::IpApi tmp_api = p->ptrs.ip_api;
     int8_t num_layer = 0;
     IpProtocol tmp_next = p->get_ip_proto_next();
@@ -254,13 +216,10 @@ static IPdecision reputation_decision(ReputationConfig* config, Packet* p)
     {
         layer::set_outer_ip_api(p, p->ptrs.ip_api, p->ip_proto_next, num_layer);
         decision_per_layer(config, p, ingress_zone, egress_zone, p->ptrs.ip_api, &decision_final);
-        if (decision_final != BLACKLISTED_SRC and decision_final != BLACKLISTED_DST)
-            p->ptrs.ip_api = tmp_api;
     }
     else if (config->nested_ip == ALL)
     {
         bool done = false;
-        ip::IpApi blocked_api;
         IPdecision decision_current = DECISION_NULL;
 
         while (!done and layer::set_outer_ip_api(p, p->ptrs.ip_api, p->ip_proto_next, num_layer))
@@ -275,13 +234,14 @@ static IPdecision reputation_decision(ReputationConfig* config, Packet* p)
                 decision_current = DECISION_NULL;
             }
         }
-        if (decision_final != BLACKLISTED_SRC and decision_final != BLACKLISTED_DST)
-            p->ptrs.ip_api = tmp_api;
-        else if (p->ptrs.ip_api != blocked_api)
-            p->ptrs.ip_api = blocked_api;
     }
     else
         assert(false); // Should never hit this
+
+    if (decision_final != BLACKLISTED_SRC and decision_final != BLACKLISTED_DST)
+        p->ptrs.ip_api = tmp_api;
+    else if (config->nested_ip == ALL and p->ptrs.ip_api != blocked_api)
+        p->ptrs.ip_api = blocked_api;
 
     p->ip_proto_next = tmp_next;
     return decision_final;
@@ -367,6 +327,65 @@ static unsigned create_reputation_id()
     return reputation_id_tracker;
 }
 
+static const char* to_string(NestedIP nip)
+{
+    switch (nip)
+    {
+    case INNER:
+        return "inner";
+    case OUTER:
+        return "outer";
+    case ALL:
+        return "all";
+    }
+
+    return "";
+}
+
+static const char* to_string(WhiteAction wa)
+{
+    switch (wa)
+    {
+    case UNBLACK:
+        return "unblack";
+    case TRUST:
+        return "trust";
+    }
+
+    return "";
+}
+
+static const char* to_string(IPdecision ipd)
+{
+    switch (ipd)
+    {
+    case BLACKLISTED:
+        return "blacklisted";
+    case WHITELISTED_TRUST:
+        return "whitelisted_trust";
+    case MONITORED:
+        return "monitored";
+    case BLACKLISTED_SRC:
+        return "blacklisted_src";
+    case BLACKLISTED_DST:
+        return "blacklisted_dst";
+    case WHITELISTED_TRUST_SRC:
+        return "whitelisted_trust_src";
+    case WHITELISTED_TRUST_DST:
+        return "whitelisted_trust_dst";
+    case WHITELISTED_UNBLACK:
+        return "whitelisted_unblack";
+    case MONITORED_SRC:
+        return "monitored_src";
+    case MONITORED_DST:
+        return "monitored_dst";
+    case DECISION_NULL:
+    case DECISION_MAX:
+    default:
+        return "";
+    }
+}
+
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
@@ -394,7 +413,14 @@ Reputation::Reputation(ReputationConfig* pc)
 
 void Reputation::show(SnortConfig*)
 {
-    print_reputation_conf(&config);
+    ConfigLogger::log_value("blacklist", config.blacklist_path.c_str());
+    ConfigLogger::log_value("list_dir", config.list_dir.c_str());
+    ConfigLogger::log_value("memcap", config.memcap);
+    ConfigLogger::log_value("nested_ip", to_string(config.nested_ip));
+    ConfigLogger::log_value("priority", to_string(config.priority));
+    ConfigLogger::log_flag("scan_local", config.scanlocal);
+    ConfigLogger::log_value("white (action)", to_string(config.white_action));
+    ConfigLogger::log_value("whitelist", config.whitelist_path.c_str());
 }
 
 void Reputation::eval(Packet* p)

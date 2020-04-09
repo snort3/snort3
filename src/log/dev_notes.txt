@@ -6,12 +6,15 @@ Text output logging facilities are located here:
 
 * messages - provides Dumper class and message logging facilities.
 
+  Class ConfigLogger is implemented to provide functions to format
+  config verbose output from Inspector::show().
+
 * obfuscator - provides an API for logging packets w/o revealing sensitive
   data.
 
   class Obfuscator is implemented with a std::set to provide in order
   access for pottentialy out-of-order insertions.
-  
+
   Currently does not support streaming mode.  It should be possible to
   iterate over contiguous chunks of data, alternating between obfuscated
   and plain.

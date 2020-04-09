@@ -80,18 +80,6 @@ static SSHData* get_session_data(Flow* flow)
     return fd ? &fd->session : nullptr;
 }
 
-static void PrintSshConf(SSH_PROTO_CONF* config)
-{
-    if ( !config )
-        return;
-
-    LogMessage("    Max Encrypted Packets: %d\n", config->MaxEncryptedPackets);
-    LogMessage("    Max Server Version String Length: %d\n", config->MaxServerVersionLen);
-    LogMessage("    MaxClientBytes: %d\n", config->MaxClientBytes);
-
-    LogMessage("\n");
-}
-
 /* Returns the true length of the ssh packet, including
  * the ssh packet header and all padding.
  *
@@ -757,7 +745,12 @@ Ssh::~Ssh()
 
 void Ssh::show(SnortConfig*)
 {
-    PrintSshConf(config);
+    if ( !config )
+        return;
+
+    ConfigLogger::log_value("max_encrypted_packets", config->MaxEncryptedPackets);
+    ConfigLogger::log_value("max_client_bytes", config->MaxClientBytes);
+    ConfigLogger::log_value("max_server_version_len", config->MaxServerVersionLen);
 }
 
 void Ssh::eval(Packet* p)

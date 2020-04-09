@@ -183,24 +183,6 @@ static const char* const frag_policy_names[] =
     "SOLARIS"
 };
 
-static void FragPrintEngineConfig(FragEngine* engine)
-{
-    LogMessage("    engine-based policy: %s\n",
-        frag_policy_names[engine->frag_policy]);
-    LogMessage("    Fragment timeout: %d seconds\n",
-        engine->frag_timeout);
-    LogMessage("    Fragment min_ttl:   %d\n", engine->min_ttl);
-
-    LogMessage("    Max frags: %d\n", engine->max_frags);
-    LogMessage("    Max overlaps:     %d\n",
-        engine->max_overlaps);
-    LogMessage("    Min fragment Length:     %d\n",
-        engine->min_fragment_length);
-#ifdef REG_TEST
-    LogMessage("    FragTracker Size: %zu\n", sizeof(FragTracker));
-#endif
-}
-
 static inline void EventAnomIpOpts(FragEngine*)
 {
     DetectionEngine::queue_event(GID_DEFRAG, DEFRAG_IPOPTIONS);
@@ -857,7 +839,11 @@ bool Defrag::configure(SnortConfig* sc)
 
 void Defrag::show(SnortConfig*)
 {
-    FragPrintEngineConfig(&engine);
+    ConfigLogger::log_value("max_frags", engine.max_frags);
+    ConfigLogger::log_value("max_overlaps", engine.max_overlaps);
+    ConfigLogger::log_value("min_frag_length", engine.min_fragment_length);
+    ConfigLogger::log_value("min_ttl", engine.min_ttl);
+    ConfigLogger::log_value("policy", frag_policy_names[engine.frag_policy]);
 }
 
 void Defrag::cleanup(FragTracker* ft)

@@ -74,6 +74,26 @@ AppIdConfig::~AppIdConfig()
     snort_free((void*)app_detector_dir);
 }
 
+void AppIdConfig::show() const
+{
+    ConfigLogger::log_value("app_detector_dir", app_detector_dir);
+
+    ConfigLogger::log_value("app_stats_period", app_stats_period);
+    ConfigLogger::log_value("app_stats_rollover_size", app_stats_rollover_size);
+
+    ConfigLogger::log_flag("list_odp_detectors", list_odp_detectors);
+
+    ConfigLogger::log_value("tp_appid_path", tp_appid_path.c_str());
+    ConfigLogger::log_value("tp_appid_config", tp_appid_config.c_str());
+
+    ConfigLogger::log_flag("tp_appid_stats_enable", tp_appid_stats_enable);
+    ConfigLogger::log_flag("tp_appid_config_dump", tp_appid_config_dump);
+
+    ConfigLogger::log_flag("log_all_sessions", log_all_sessions);
+    ConfigLogger::log_flag("log_stats", log_stats);
+    ConfigLogger::log_value("memcap", memcap);
+}
+
 void AppIdContext::pterm()
 {
     assert(odp_ctxt);
@@ -112,10 +132,9 @@ void AppIdContext::create_tp_appid_ctxt()
     tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(config, *odp_ctxt);
 }
 
-void AppIdContext::show()
+void AppIdContext::show() const
 {
-    if (!config.tp_appid_path.empty())
-        LogMessage("    3rd Party Dir: %s\n", config.tp_appid_path.c_str());
+    config.show();
 }
 
 OdpContext::OdpContext(AppIdConfig& config, SnortConfig* sc)

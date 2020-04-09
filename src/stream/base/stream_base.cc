@@ -207,10 +207,11 @@ void StreamBase::tterm()
     FlushBucket::clear();
 }
 
-void StreamBase::show(SnortConfig*)
+void StreamBase::show(SnortConfig* sc)
 {
-    LogMessage("    Max flows: %d\n", config.flow_cache_cfg.max_flows);
-    LogMessage("    Pruning timeout: %d\n", config.flow_cache_cfg.pruning_timeout);
+    if ( sc )
+        ConfigLogger::log_flag("ip_frags_only", sc->ip_frags_only());
+    config.show();
 }
 
 void StreamBase::eval(Packet* p)

@@ -66,11 +66,23 @@ SO_PUBLIC void LogMessage(FILE*, const char*, ...) __attribute__((format (printf
 SO_PUBLIC void WarningMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
 SO_PUBLIC void ErrorMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
 
-SO_PUBLIC bool LogFlag(const char* caption, bool flag);
-SO_PUBLIC void LogLimit(const char* caption, int val, int unlim);
-SO_PUBLIC void LogLimit(const char* caption, int val, int unlim, int disable);
-SO_PUBLIC void LogList(const char* caption, const char* list);
-SO_PUBLIC void LogValue(const char* caption, uint32_t n);
+class SO_PUBLIC ConfigLogger final
+{
+public:
+    ConfigLogger() = delete;
+    static bool log_flag(const char* caption, bool flag);
+    static void log_limit(const char* caption, int val, int unlim);
+    static void log_limit(const char* caption, int val, int unlim, int disable);
+    static void log_limit(const char* caption, int64_t val, int64_t unlim);
+    static void log_value(const char* caption, int32_t n);
+    static void log_value(const char* caption, uint32_t n);
+    static void log_value(const char* caption, int64_t n);
+    static void log_value(const char* caption, uint64_t n);
+    static void log_value(const char* caption, const char* str);
+    static void log_list(const char* caption, const char* list);
+private:
+    static constexpr size_t max_line_len = 75;
+};
 
 // FIXIT-RC do not call FatalError() during runtime
 [[noreturn]] SO_PUBLIC void FatalError(const char*, ...) __attribute__((format (printf, 1, 2)));

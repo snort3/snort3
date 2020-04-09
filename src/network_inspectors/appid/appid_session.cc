@@ -112,7 +112,7 @@ AppIdSession::~AppIdSession()
 {
     if (!in_expected_cache)
     {
-        if (ctxt.config.stats_logging_enabled)
+        if (ctxt.config.log_stats)
             AppIdStatistics::get_stats_manager()->update(*this);
 
         // fail any service detection that is in process for this flow

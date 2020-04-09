@@ -45,15 +45,16 @@
 class FileConfig
 {
 public:
-    FileMagicRule* get_rule_from_id(uint32_t);
+    const FileMagicRule* get_rule_from_id(uint32_t) const;
     void get_magic_rule_ids_from_type(const std::string&, const std::string&,
-        snort::FileTypeBitSet&);
+        snort::FileTypeBitSet&) const;
     void process_file_rule(FileMagicRule&);
     void process_file_policy_rule(FileRule&);
     bool process_file_magic(FileMagicData&);
     uint32_t find_file_type_id(const uint8_t* buf, int len, uint64_t file_offset, void** context);
     FilePolicy& get_file_policy() { return filePolicy; }
-    std::string file_type_name(uint32_t id);
+    const FilePolicy& get_file_policy() const { return filePolicy; }
+    std::string file_type_name(uint32_t id) const;
 
     int64_t file_type_depth = DEFAULT_FILE_TYPE_DEPTH;
     int64_t file_signature_depth = DEFAULT_FILE_SIGNATURE_DEPTH;

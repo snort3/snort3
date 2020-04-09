@@ -60,20 +60,19 @@ public:
     // after certificate-exchange). Such manual detection is disabled by default (0).
     uint32_t first_decrypted_packet_debug = 0;
 #endif
-    bool stats_logging_enabled = false;
+    bool log_stats = false;
     unsigned long app_stats_period = 300;
     unsigned long app_stats_rollover_size = 0;
-    unsigned long app_stats_rollover_time = 0;
     const char* app_detector_dir = nullptr;
     std::string tp_appid_path = "";
     std::string tp_appid_config = "";
     bool tp_appid_stats_enable = false;
     bool tp_appid_config_dump = false;
-    uint32_t instance_id = 0;
     size_t memcap = 0;
-    bool debug = false;
-    bool dump_ports = false;
+    bool list_odp_detectors = false;
     bool log_all_sessions = false;
+
+    void show() const;
 };
 
 class OdpContext
@@ -214,7 +213,7 @@ public:
     void create_tp_appid_ctxt();
     bool init_appid(snort::SnortConfig*);
     static void pterm();
-    void show();
+    void show() const;
 
     AppIdConfig& config;
 

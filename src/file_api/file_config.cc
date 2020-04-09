@@ -68,18 +68,18 @@ void FileConfig::process_file_policy_rule(FileRule& rule)
     filePolicy.insert_file_rule(rule);
 }
 
-FileMagicRule* FileConfig::get_rule_from_id(uint32_t id)
+const FileMagicRule* FileConfig::get_rule_from_id(uint32_t id) const
 {
     return fileIdentifier.get_rule_from_id(id);
 }
 
 void FileConfig::get_magic_rule_ids_from_type(const std::string& type,
-    const std::string& version, FileTypeBitSet& ids_set)
+    const std::string& version, FileTypeBitSet& ids_set) const
 {
     return fileIdentifier.get_magic_rule_ids_from_type(type, version, ids_set);
 }
 
-std::string FileConfig::file_type_name(uint32_t id)
+std::string FileConfig::file_type_name(uint32_t id) const
 {
     if (SNORT_FILE_TYPE_UNKNOWN == id)
         return "Unknown file type, done";
@@ -87,7 +87,7 @@ std::string FileConfig::file_type_name(uint32_t id)
     else if (SNORT_FILE_TYPE_CONTINUE == id)
         return "Undecided file type, continue...";
 
-    FileMagicRule* info = get_rule_from_id(id);
+    const FileMagicRule* info = get_rule_from_id(id);
 
     if (info != nullptr)
         return info->type;

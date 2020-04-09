@@ -33,8 +33,6 @@
 #include "time/packet_time.h"
 #include "utils/util_cstring.h"
 
-#define MAX_LINE_LEN 75
-
 using namespace snort;
 
 static int already_fatal = 0;
@@ -355,36 +353,65 @@ NORETURN_ASSERT void log_safec_error(const char* msg, void*, int e)
     assert(false);
 }
 
-bool LogFlag(const char* caption, bool flag)
+bool ConfigLogger::log_flag(const char* caption, bool flag)
 {
     LogMessage("%25.25s: %s\n", caption, flag ? "enabled" : "disabled");
     return flag;
 }
 
-void LogLimit(const char* caption, int val, int unlim, int disable)
+void ConfigLogger::log_limit(const char* caption, int val, int unlim, int disable)
 {
     if ( val == disable )
-        LogMessage("%25.25s: %d %s\n", caption, disable, "(disabled)");
+        LogMessage("%25.25s: %d (disabled)\n", caption, val);
     else if ( val == unlim )
-        LogMessage("%25.25s: %d %s\n", caption, val, "(unlimited)");
+        LogMessage("%25.25s: %d (unlimited)\n", caption, val);
     else
         LogMessage("%25.25s: %d\n", caption, val);
 }
 
-void LogLimit(const char* caption, int val, int unlim)
+void ConfigLogger::log_limit(const char* caption, int val, int unlim)
 {
     if ( val == unlim )
-        LogMessage("%25.25s: %d %s\n", caption, val, "(unlimited)");
+        LogMessage("%25.25s: %d (unlimited)\n", caption, val);
     else
         LogMessage("%25.25s: %d\n", caption, val);
 }
 
-void LogValue(const char* caption, uint32_t n)
+void ConfigLogger::log_limit(const char* caption, int64_t val, int64_t unlim)
+{
+    if ( val == unlim )
+        LogMessage("%25.25s: %" PRId64 " (unlimited)\n", caption, val);
+    else
+        LogMessage("%25.25s: %" PRId64 "\n", caption, val);
+}
+
+void ConfigLogger::log_value(const char* caption, int32_t n)
+{
+    LogMessage("%25.25s: %" PRId32 "\n", caption, n);
+}
+
+void ConfigLogger::log_value(const char* caption, uint32_t n)
 {
     LogMessage("%25.25s: %" PRIu32 "\n", caption, n);
 }
 
-void LogList(const char* caption, const char* list)
+void ConfigLogger::log_value(const char* caption, int64_t n)
+{
+    LogMessage("%25.25s: %" PRId64 "\n", caption, n);
+}
+
+void ConfigLogger::log_value(const char* caption, uint64_t n)
+{
+    LogMessage("%25.25s: %" PRIu64 "\n", caption, n);
+}
+
+void ConfigLogger::log_value(const char* caption, const char* str)
+{
+    if ( str and str[0] )
+        LogMessage("%25.25s: %s\n", caption, str);
+}
+
+void ConfigLogger::log_list(const char* caption, const char* list)
 {
     std::string res;
     std::stringstream ss;
@@ -396,7 +423,7 @@ void LogList(const char* caption, const char* list)
     ss << list;
     while (ss >> val)
     {
-        if ( len + val.length() > MAX_LINE_LEN )
+        if ( len + val.length() > max_line_len )
         {
             res += '\n' + offset;
             len = 0;

@@ -55,6 +55,7 @@ enum NormFlags
     NORM_TCP_REQ_URG     = 0x01000000, // clear URP if URG = 0
     NORM_TCP_REQ_PAY     = 0x02000000, // clear URP/URG on no payload
     NORM_TCP_REQ_URP     = 0x04000000, // clear URG if URP is not set
+
     NORM_ALL             = 0xFFFFFFFF,  // all normalizations on
 };
 
@@ -71,8 +72,10 @@ bool Normalize_IsEnabled(NormFlags);
 NormMode Normalize_GetMode(NormFlags);
 
 #define NORM_IP4_ANY (0xFF)
-#define NORM_IP6_ANY (NORM_IP6_BASE|NORM_IP6_TTL)
-#define NORM_TCP_ANY (0xFF000)
+#define NORM_IP6_ANY (NORM_IP6_BASE | NORM_IP6_TTL)
+#define NORM_TCP_ANY (0xFFFF000)
+#define NORM_TCP_TRIM_ANY (NORM_TCP_TRIM_SYN | NORM_TCP_TRIM_RST | \
+    NORM_TCP_TRIM_WIN | NORM_TCP_TRIM_MSS)
 
 #endif
 

@@ -59,11 +59,6 @@ StreamIpConfig::StreamIpConfig()
     frag_engine.min_fragment_length = 0;
 }
 
-static void ip_show(StreamIpConfig* pc)
-{
-    LogMessage("    Timeout: %d seconds\n", pc->session_timeout);
-}
-
 //-------------------------------------------------------------------------
 // inspector stuff
 //-------------------------------------------------------------------------
@@ -104,8 +99,11 @@ bool StreamIp::configure(SnortConfig* sc)
 
 void StreamIp::show(SnortConfig* sc)
 {
-    ip_show(config);
+    if ( !config )
+        return;
+
     defrag->show(sc);
+    ConfigLogger::log_value("session_timeout", config->session_timeout);
 }
 
 NORETURN_ASSERT void StreamIp::eval(Packet*)

@@ -160,6 +160,7 @@ public:
     ~InspectorData() override
     { delete data; }
 
+    void show(SnortConfig*) override { }
     void eval(Packet*) override { }
 
     T* data;

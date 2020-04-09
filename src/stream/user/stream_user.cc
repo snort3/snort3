@@ -39,11 +39,6 @@ StreamUserConfig::StreamUserConfig()
     session_timeout = 60;
 }
 
-static void user_show (StreamUserConfig* pc)
-{
-    LogMessage("    Timeout: %d seconds\n", pc->session_timeout);
-}
-
 //-------------------------------------------------------------------------
 // inspector stuff
 //-------------------------------------------------------------------------
@@ -74,7 +69,10 @@ StreamUser::~StreamUser()
 
 void StreamUser::show(SnortConfig*)
 {
-    user_show(config);
+    if ( !config )
+        return;
+
+    ConfigLogger::log_value("session_timeout", config->session_timeout);
 }
 
 NORETURN_ASSERT void StreamUser::eval(Packet*)

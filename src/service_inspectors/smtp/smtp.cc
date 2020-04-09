@@ -476,12 +476,12 @@ static const char* to_string(const SMTPXlinkState& mode)
 
 static void log_mail_show(const snort::MailLogConfig& conf)
 {
-    LogFlag("log_mailfrom", conf.log_mailfrom);
-    LogFlag("log_rcptto", conf.log_rcptto);
-    LogFlag("log_filename", conf.log_filename);
+    ConfigLogger::log_flag("log_mailfrom", conf.log_mailfrom);
+    ConfigLogger::log_flag("log_rcptto", conf.log_rcptto);
+    ConfigLogger::log_flag("log_filename", conf.log_filename);
 
-    if ( LogFlag("log_email_hdrs", conf.log_email_hdrs) )
-        LogValue("email_hdrs_log_depth", conf.email_hdrs_log_depth);
+    if ( ConfigLogger::log_flag("log_email_hdrs", conf.log_email_hdrs) )
+        ConfigLogger::log_value("email_hdrs_log_depth", conf.email_hdrs_log_depth);
 }
 
 void SmtpProtoConf::show() const
@@ -494,23 +494,23 @@ void SmtpProtoConf::show() const
     auto norm_cmds = GetCmdGroup(cmds, cmd_config, NORM_CMDS);
     auto valid_cmds = GetCmdGroup(cmds, cmd_config, VALID_CMDS);
 
-    LogValue("normalize", to_string(normalize));
-    LogList("normalize_cmds", norm_cmds.c_str());
+    ConfigLogger::log_value("normalize", to_string(normalize));
+    ConfigLogger::log_list("normalize_cmds", norm_cmds.c_str());
 
-    LogFlag("ignore_tls_data", ignore_tls_data);
-    LogLimit("max_command_line_len", max_command_line_len, 0);
-    LogList("alt_max_command_line_len", alt_len_cmds.c_str());
-    LogLimit("max_header_line_len", max_header_line_len, 0);
-    LogLimit("max_auth_command_line_len", max_auth_command_line_len, 0);
-    LogLimit("max_response_line_length", max_response_line_len, 0);
+    ConfigLogger::log_flag("ignore_tls_data", ignore_tls_data);
+    ConfigLogger::log_limit("max_command_line_len", max_command_line_len, 0);
+    ConfigLogger::log_list("alt_max_command_line_len", alt_len_cmds.c_str());
+    ConfigLogger::log_limit("max_header_line_len", max_header_line_len, 0);
+    ConfigLogger::log_limit("max_auth_command_line_len", max_auth_command_line_len, 0);
+    ConfigLogger::log_limit("max_response_line_length", max_response_line_len, 0);
 
-    LogValue("xlink2state", to_string(xlink2state));
-    LogList("invalid_cmds", alert_cmds.c_str());
+    ConfigLogger::log_value("xlink2state", to_string(xlink2state));
+    ConfigLogger::log_list("invalid_cmds", alert_cmds.c_str());
 
-    LogList("auth_cmds", auth_cmds.c_str());
-    LogList("binary_data_cmds", bdata_cmds.c_str());
-    LogList("data_cmds", data_cmds.c_str());
-    LogList("valid_cmds", valid_cmds.c_str());
+    ConfigLogger::log_list("auth_cmds", auth_cmds.c_str());
+    ConfigLogger::log_list("binary_data_cmds", bdata_cmds.c_str());
+    ConfigLogger::log_list("data_cmds", data_cmds.c_str());
+    ConfigLogger::log_list("valid_cmds", valid_cmds.c_str());
 
     decode_conf.show(true);
     log_mail_show(log_config);

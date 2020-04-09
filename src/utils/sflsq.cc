@@ -116,7 +116,7 @@ void sflist_add_tail(SF_LIST* s, NODE_DATA ndata)
     s->count++;
 }
 
-NODE_DATA sflist_first(SF_LIST* s, SF_LNODE** v)
+NODE_DATA sflist_first(const SF_LIST* s, SF_LNODE** v)
 {
     if ( !s )
     {

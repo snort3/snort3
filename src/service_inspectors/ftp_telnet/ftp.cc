@@ -188,6 +188,13 @@ static int snort_ftp(Packet* p)
 
 typedef InspectorData<FTP_CLIENT_PROTO_CONF> FtpClient;
 
+template<>
+void FtpClient::show(SnortConfig*)
+{
+    if ( data )
+        print_conf_client(data);
+}
+
 class FtpServer : public Inspector
 {
 public:
@@ -220,7 +227,8 @@ bool FtpServer::configure(SnortConfig* sc)
 
 void FtpServer::show(SnortConfig*)
 {
-    PrintFTPServerConf(ftp_server);
+    if ( ftp_server )
+        print_conf_server(ftp_server);
 }
 
 StreamSplitter* FtpServer::get_splitter(bool c2s)

@@ -71,6 +71,9 @@
 #include "config.h"
 #endif
 
+#include <iomanip>
+#include <sstream>
+
 #include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "log/messages.h"
@@ -103,6 +106,33 @@ static const IPMacEntry* LookupIPMacEntryByIP(const IPMacEntryList& ipmel, uint3
     return nullptr;
 }
 
+static std::string to_hex_string(const uint8_t* data, size_t len)
+{
+    std::stringstream ss;
+    ss << std::hex;
+    for (size_t i = 0; i < len; i++)
+        ss << std::setw(2) << std::setfill('0') << (unsigned int)data[i];
+    return ss.str();
+}
+
+static void arp_config_show(const ArpSpoofConfig* config)
+{
+    if ( !config->ipmel.size() )
+        return;
+
+    ConfigLogger::log_list("hosts", "(list)");
+
+    for (auto& ip : config->ipmel)
+    {
+        std::string ip_mac;
+        SfIpString ip_str;
+        snort_inet_ntop(AF_INET, &ip.ipv4_addr, ip_str, sizeof(SfIpString));
+        ip_mac += "{ ip = " + std::string(ip_str);
+        ip_mac += ", mac = " + to_hex_string(ip.mac_addr, sizeof(ip.mac_addr)) + " }";
+        ConfigLogger::log_list("", ip_mac.c_str());
+    }
+}
+
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
@@ -113,6 +143,7 @@ public:
     ArpSpoof(ArpSpoofModule*);
     ~ArpSpoof() override;
 
+    void show(snort::SnortConfig*) override;
     void eval(Packet*) override;
 
 private:
@@ -127,6 +158,12 @@ ArpSpoof::ArpSpoof(ArpSpoofModule* mod)
 ArpSpoof::~ArpSpoof ()
 {
     delete config;
+}
+
+void ArpSpoof::show(SnortConfig*)
+{
+    if ( config )
+        arp_config_show(config);
 }
 
 void ArpSpoof::eval(Packet* p)

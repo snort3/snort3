@@ -24,6 +24,8 @@
 #include "http_inspect.h"
 
 #include <cassert>
+#include <iomanip>
+#include <sstream>
 
 #include "detection/detection_engine.h"
 #include "detection/detection_util.h"
@@ -52,7 +54,35 @@ using namespace snort;
 using namespace HttpCommon;
 using namespace HttpEnums;
 
-HttpInspect::HttpInspect(const HttpParaList* params_) : 
+static std::string GetUnreservedChars(const ByteBitSet& bitset)
+{
+    const ByteBitSet& def_bitset(HttpParaList::UriParam::UriParam::default_unreserved_char);
+    std::string chars;
+
+    for (unsigned char c = 1; c; ++c)
+        if (def_bitset[c] && !bitset[c])
+            chars += c;
+
+    return chars;
+}
+
+static std::string GetBadChars(const ByteBitSet& bitset)
+{
+    std::stringstream ss;
+    ss << std::hex;
+
+    for (unsigned i = 0; i < bitset.size(); ++i)
+        if (bitset[i])
+            ss << " 0x" << std::setw(2) << std::setfill('0') << i;
+
+    auto str = ss.str();
+    if ( !str.empty() )
+        str.erase(0, 1);
+
+    return str;
+}
+
+HttpInspect::HttpInspect(const HttpParaList* params_) :
     params(params_),
     xtra_trueip_id(Stream::reg_xtra_data_cb(get_xtra_trueip)),
     xtra_uri_id(Stream::reg_xtra_data_cb(get_xtra_uri)),
@@ -92,36 +122,34 @@ void HttpInspect::show(snort::SnortConfig*)
 {
     assert(params);
 
-    if ( params->request_depth == -1 )
-        LogMessage("    request_depth: " "%s" "\n", "unlimited");
-    else
-        LogMessage("    request_depth: " STDi64 "\n", params->request_depth);
+    auto unreserved_chars = GetUnreservedChars(params->uri_param.unreserved_char);
+    auto bad_chars = GetBadChars(params->uri_param.bad_characters);
 
-    if ( params->response_depth == -1 )
-        LogMessage("    response_depth: " "%s" "\n", "unlimited");
-    else
-        LogMessage("    response_depth: " STDi64 "\n", params->response_depth);
-
-    LogMessage("    unzip: %s\n", params->unzip ? "yes" : "no");
-    LogMessage("    normalize_utf: %s\n", params->normalize_utf ? "yes" : "no");
-    LogMessage("    decompress_pdf: %s\n", params->decompress_pdf ? "yes" : "no");
-    LogMessage("    decompress_swf: %s\n", params->decompress_swf ? "yes" : "no");
-    LogMessage("    decompress_zip: %s\n", params->decompress_zip ? "yes" : "no");
-    LogMessage("    detained_inspection: %s\n", params->detained_inspection ? "yes" : "no");
-
-    LogMessage("    normalize_javascript: %s\n", params->js_norm_param.normalize_javascript ? "yes" : "no");
-    LogMessage("    max_javascript_whitespaces: %d\n", params->js_norm_param.max_javascript_whitespaces);
-
-    LogMessage("    percent_u: %s\n", params->uri_param.percent_u ? "yes" : "no");
-    LogMessage("    utf8: %s\n", params->uri_param.utf8 ? "yes" : "no");
-    LogMessage("    utf8_bare_byte: %s\n", params->uri_param.utf8_bare_byte ? "yes" : "no");
-    LogMessage("    oversize_dir_length: %d\n", params->uri_param.oversize_dir_length);
-    LogMessage("    iis_unicode: %s\n", params->uri_param.iis_unicode ? "yes" : "no");
-    LogMessage("    iis_unicode_map_file: %s\n", params->uri_param.iis_unicode_map_file.c_str());
-    LogMessage("    iis_double_decode: %s\n", params->uri_param.iis_double_decode ? "yes" : "no");
-    LogMessage("    backslash_to_slash: %s\n", params->uri_param.backslash_to_slash ? "yes" : "no");
-    LogMessage("    plus_to_space: %s\n", params->uri_param.plus_to_space ? "yes" : "no");
-    LogMessage("    simplify_path: %s\n", params->uri_param.simplify_path ? "yes" : "no");
+    ConfigLogger::log_limit("request_depth", params->request_depth, -1LL);
+    ConfigLogger::log_limit("response_depth", params->response_depth, -1LL);
+    ConfigLogger::log_flag("unzip", params->unzip);
+    ConfigLogger::log_flag("normalize_utf", params->normalize_utf);
+    ConfigLogger::log_flag("decompress_pdf", params->decompress_pdf);
+    ConfigLogger::log_flag("decompress_swf", params->decompress_swf);
+    ConfigLogger::log_flag("decompress_zip", params->decompress_zip);
+    ConfigLogger::log_flag("detained_inspection", params->detained_inspection);
+    ConfigLogger::log_flag("normalize_javascript", params->js_norm_param.normalize_javascript);
+    ConfigLogger::log_value("max_javascript_whitespaces",
+        params->js_norm_param.max_javascript_whitespaces);
+    ConfigLogger::log_flag("detained_inspection", params->detained_inspection);
+    ConfigLogger::log_value("bad_characters", bad_chars.c_str());
+    ConfigLogger::log_value("ignore_unreserved", unreserved_chars.c_str());
+    ConfigLogger::log_flag("percent_u", params->uri_param.percent_u);
+    ConfigLogger::log_flag("utf8", params->uri_param.utf8);
+    ConfigLogger::log_flag("utf8_bare_byte", params->uri_param.utf8_bare_byte);
+    ConfigLogger::log_flag("iis_unicode", params->uri_param.iis_unicode);
+    ConfigLogger::log_value("iis_unicode_map_file", params->uri_param.iis_unicode_map_file.c_str());
+    ConfigLogger::log_value("iis_unicode_code_page", params->uri_param.iis_unicode_code_page);
+    ConfigLogger::log_flag("iis_double_decode", params->uri_param.iis_double_decode);
+    ConfigLogger::log_value("oversize_dir_length", params->uri_param.oversize_dir_length);
+    ConfigLogger::log_flag("backslash_to_slash", params->uri_param.backslash_to_slash);
+    ConfigLogger::log_flag("plus_to_space", params->uri_param.plus_to_space);
+    ConfigLogger::log_flag("simplify_path", params->uri_param.simplify_path);
 }
 
 InspectSection HttpInspect::get_latest_is(const Packet* p)

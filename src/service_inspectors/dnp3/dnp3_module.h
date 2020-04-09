@@ -58,7 +58,5 @@ private:
     dnp3ProtoConf config;
 };
 
-void print_dnp3_conf(const dnp3ProtoConf& config);
-
 #endif
 

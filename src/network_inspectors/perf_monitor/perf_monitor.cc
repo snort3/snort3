@@ -123,58 +123,58 @@ private:
 PerfMonitor::PerfMonitor(PerfConfig* pcfg) : config(pcfg)
 { assert (config != nullptr); }
 
+static const char* to_string(const PerfOutput& po)
+{
+    switch (po)
+    {
+    case PerfOutput::TO_CONSOLE:
+        return "console";
+    case PerfOutput::TO_FILE:
+        return "file";
+    }
+
+    return "";
+}
+
+static const char* to_string(const PerfFormat& pf)
+{
+    switch (pf)
+    {
+    case PerfFormat::TEXT:
+        return "text";
+    case PerfFormat::CSV:
+        return "csv";
+    case PerfFormat::JSON:
+        return "json";
+#ifdef HAVE_FLATBUFFERS
+    case PerfFormat::FBS:
+        return "flatbuffers";
+#endif
+    case PerfFormat::MOCK:
+        return "mock";
+    }
+
+    return "";
+}
+
 void PerfMonitor::show(SnortConfig*)
 {
-    LogMessage("  Sample Time:      %d seconds\n", config->sample_interval);
-    LogMessage("  Packet Count:     %d\n", config->pkt_cnt);
-    LogMessage("  Max File Size:    " STDu64 "\n", config->max_file_size);
-    LogMessage("  Summary Mode:     %s\n",
-        (config->perf_flags & PERF_SUMMARY) ? "ACTIVE" : "INACTIVE");
-    LogMessage("  Base Stats:       %s\n",
-        (config->perf_flags & PERF_BASE) ? "ACTIVE" : "INACTIVE");
-    LogMessage("  Flow Stats:       %s\n",
-        (config->perf_flags & PERF_FLOW) ? "ACTIVE" : "INACTIVE");
-    if (config->perf_flags & PERF_FLOW)
-    {
-        LogMessage("    Max Flow Port:    %u\n", config->flow_max_port_to_track);
-    }
-    LogMessage("  Event Stats:      %s\n",
-        (config->perf_flags & PERF_EVENT) ? "ACTIVE" : "INACTIVE");
-    LogMessage("  Flow IP Stats:    %s\n",
-        (config->perf_flags & PERF_FLOWIP) ? "ACTIVE" : "INACTIVE");
-    if (config->perf_flags & PERF_FLOWIP)
-    {
-        LogMessage("    Flow IP Memcap:   %zu\n", config->flowip_memcap);
-    }
-    LogMessage("  CPU Stats:    %s\n",
-        (config->perf_flags & PERF_CPU) ? "ACTIVE" : "INACTIVE");
-    switch ( config->output )
-    {
-        case PerfOutput::TO_CONSOLE:
-            LogMessage("    Output Location:  console\n");
-            break;
-        case PerfOutput::TO_FILE:
-            LogMessage("    Output Location:  file\n");
-            break;
-    }
-    switch(config->format)
-    {
-        case PerfFormat::TEXT:
-            LogMessage("    Output Format:  text\n");
-            break;
-        case PerfFormat::CSV:
-            LogMessage("    Output Format:  csv\n");
-            break;
-        case PerfFormat::JSON:
-            LogMessage("    Output Format:  json\n");
-            break;
-#ifdef HAVE_FLATBUFFERS
-        case PerfFormat::FBS:
-            LogMessage("    Output Format:  flatbuffers\n");
-            break;
-#endif
-        default: break;
-    }
+    ConfigLogger::log_flag("base", config->perf_flags & PERF_BASE);
+    ConfigLogger::log_flag("cpu", config->perf_flags & PERF_CPU);
+    ConfigLogger::log_flag("summary", config->perf_flags & PERF_SUMMARY);
+
+    if ( ConfigLogger::log_flag("flow", config->perf_flags & PERF_FLOW) )
+        ConfigLogger::log_value("flow_ports", config->flow_max_port_to_track);
+
+    if ( ConfigLogger::log_flag("flow_ip", config->perf_flags & PERF_FLOWIP) )
+        ConfigLogger::log_value("flow_ip_memcap", config->flowip_memcap);
+
+    ConfigLogger::log_value("packets", config->pkt_cnt);
+    ConfigLogger::log_value("seconds", config->sample_interval);
+    ConfigLogger::log_value("max_file_size", config->max_file_size);
+
+    ConfigLogger::log_value("output", to_string(config->output));
+    ConfigLogger::log_value("format", to_string(config->format));
 }
 
 void PerfMonitor::disable_tracker(size_t i)

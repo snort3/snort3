@@ -66,7 +66,7 @@ public:
     bool is_decoding_enabled() const;
     void sync_all_depths();
     void show(bool = false) const;
-    int get_max_depth(int);
+    int get_max_depth(int) const;
 
 private:
     bool ignore_data = false;

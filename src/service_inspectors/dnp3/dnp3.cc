@@ -27,6 +27,7 @@
 
 #include "detection/detection_engine.h"
 #include "events/event_queue.h"
+#include "log/messages.h"
 #include "protocols/packet.h"
 
 #include "dnp3_paf.h"
@@ -240,7 +241,7 @@ Dnp3::Dnp3(const dnp3ProtoConf& pc)
 
 void Dnp3::show(SnortConfig*)
 {
-    print_dnp3_conf(config);
+    ConfigLogger::log_flag("check_crc", config.check_crc);
 }
 
 void Dnp3::eval(Packet* p)

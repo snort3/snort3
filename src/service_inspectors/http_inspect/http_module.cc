@@ -306,24 +306,27 @@ HttpParaList::JsNormParam::~JsNormParam()
     delete js_norm;
 }
 
+// Characters that should not be percent-encoded
+// 0-9, a-z, A-Z, tilde, period, underscore, and minus
+// Initializer string for std::bitset is in reverse order. The first character is element 255
+// and the last is element 0.
+// __STRDUMP_DISABLE__
+const std::bitset<256> HttpParaList::UriParam::UriParam::default_unreserved_char
+    { std::string(
+        "00000000" "00000000" "00000000" "00000000"
+        "00000000" "00000000" "00000000" "00000000"
+        "00000000" "00000000" "00000000" "00000000"
+        "00000000" "00000000" "00000000" "00000000"
+        "01000111" "11111111" "11111111" "11111110"
+        "10000111" "11111111" "11111111" "11111110"
+        "00000011" "11111111" "01100000" "00000000"
+        "00000000" "00000000" "00000000" "00000000") };
+// __STRDUMP_ENABLE__
+
 // Some values in these tables may be changed by configuration parameters.
 HttpParaList::UriParam::UriParam() :
-  // Characters that should not be percent-encoded
-  // 0-9, a-z, A-Z, tilde, period, underscore, and minus
-  // Initializer string for std::bitset is in reverse order. The first character is element 255
-  // and the last is element 0.
 
-// __STRDUMP_DISABLE__
-  unreserved_char { std::string(
-      "00000000" "00000000" "00000000" "00000000"
-      "00000000" "00000000" "00000000" "00000000"
-      "00000000" "00000000" "00000000" "00000000"
-      "00000000" "00000000" "00000000" "00000000"
-      "01000111" "11111111" "11111111" "11111110"
-      "10000111" "11111111" "11111111" "11111110"
-      "00000011" "11111111" "01100000" "00000000"
-      "00000000" "00000000" "00000000" "00000000" ) },
-// __STRDUMP_ENABLE__
+  unreserved_char { default_unreserved_char },
 
   uri_char {
     CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,

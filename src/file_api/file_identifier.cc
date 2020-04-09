@@ -359,7 +359,7 @@ uint32_t FileIdentifier::find_file_type_id(const uint8_t* buf, int len, uint64_t
     return file_type_id;
 }
 
-FileMagicRule* FileIdentifier::get_rule_from_id(uint32_t id)
+const FileMagicRule* FileIdentifier::get_rule_from_id(uint32_t id) const
 {
     if ((id < FILE_ID_MAX) && (file_magic_rules[id].id > 0))
     {
@@ -370,7 +370,7 @@ FileMagicRule* FileIdentifier::get_rule_from_id(uint32_t id)
 }
 
 void FileIdentifier::get_magic_rule_ids_from_type(const std::string& type,
-    const std::string& version, FileTypeBitSet& ids_set)
+    const std::string& version, FileTypeBitSet& ids_set) const
 {
     ids_set.reset();
 

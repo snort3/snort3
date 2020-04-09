@@ -98,6 +98,9 @@ static const RuleMap stream_rules[] =
     { 0, nullptr }
 };
 
+static const char* const flow_type_names[] =
+{ "none", "ip_cache", "tcp_cache", "udp_cache", "icmp_cache", "user_cache", "file_cache", "max"};
+
 StreamModule::StreamModule() :
     Module(MOD_NAME, MOD_HELP, s_params, false, &stream_trace)
 { }
@@ -266,3 +269,18 @@ bool StreamReloadResourceManager::tune_resources(unsigned work_limit)
     return ( flows_to_delete ) ? false : true;
 }
 
+void StreamModuleConfig::show() const
+{
+    ConfigLogger::log_value("max_flows", flow_cache_cfg.max_flows);
+    ConfigLogger::log_value("pruning_timeout", flow_cache_cfg.pruning_timeout);
+
+    for (int i = to_utype(PktType::IP); i < to_utype(PktType::MAX); ++i)
+    {
+        std::string tmp;
+        tmp += "{ idle_timeout = " + std::to_string(flow_cache_cfg.proto[i].nominal_timeout);
+        tmp += ", cap_weight = " + std::to_string(flow_cache_cfg.proto[i].cap_weight);
+        tmp += " }";
+
+        ConfigLogger::log_value(flow_type_names[i], tmp.c_str());
+    }
+}

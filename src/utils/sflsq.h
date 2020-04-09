@@ -59,7 +59,7 @@ SO_PUBLIC void sflist_add_before(SF_LIST*, SF_LNODE*, NODE_DATA);
 SO_PUBLIC NODE_DATA sflist_remove_head(SF_LIST*);
 SO_PUBLIC NODE_DATA sflist_remove_tail(SF_LIST*);
 SO_PUBLIC int sflist_count(SF_LIST*);
-SO_PUBLIC NODE_DATA sflist_first(SF_LIST*, SF_LNODE**);
+SO_PUBLIC NODE_DATA sflist_first(const SF_LIST*, SF_LNODE**);
 SO_PUBLIC NODE_DATA sflist_next(SF_LNODE**);
 SO_PUBLIC void sflist_free(SF_LIST*);
 SO_PUBLIC void sflist_free_all(SF_LIST*, void (* free)(void*) );

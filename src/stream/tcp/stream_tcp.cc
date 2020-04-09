@@ -59,7 +59,12 @@ StreamTcp::~StreamTcp()
 { delete config; }
 
 void StreamTcp::show(SnortConfig*)
-{ TcpStreamConfig::show_config(config); }
+{
+    if ( !config )
+        return;
+
+    config->show();
+}
 
 bool StreamTcp::configure(SnortConfig* sc)
 {
