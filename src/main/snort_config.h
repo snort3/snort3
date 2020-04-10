@@ -128,6 +128,7 @@ enum TunnelFlags
 class FastPatternConfig;
 class RuleStateMap;
 class ThreadConfig;
+class TraceConfig;
 
 struct srmm_table_t;
 struct sopg_table_t;
@@ -411,6 +412,10 @@ public:
 
     ThreadConfig* thread_config;
     HighAvailabilityConfig* ha_config = nullptr;
+
+    //------------------------------------------------------
+
+    TraceConfig* trace_config = nullptr;
 
     //------------------------------------------------------
     //Reload inspector related

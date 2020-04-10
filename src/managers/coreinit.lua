@@ -39,6 +39,7 @@ packets = { }
 process = { }
 search_engine = { }
 so_proxy = { }
+trace = { }
 
 -- exceptions:
 

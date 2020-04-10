@@ -1,0 +1,66 @@
+This directory contains the trace logger framework.
+
+* TraceLogger
+
+    The TraceLogger encapsulates the logging method for traces. A particular thread-local logger
+    is created per each packet thread and one for the main thread. The logging configuration
+    happens in the module. The logger factory is used to init/cleanup loggers.
+
+    Include "trace_log_base.h" to get TraceLogger base class.
+    Derived loggers placed into "trace_log.h/trace_log.cc".
+
+* TraceLoggerFactory
+
+    The base TraceLoggerFactory is used to create a particular TraceLogger instance per each
+    thread. One factory instance exists which used to init/cleanup loggers and placed
+    into TraceConfig. The factory object instantiates in the module due to configuration.
+
+    Include "trace_log_base.h" to get TraceLoggerFactory base class and template function
+    to create particular objects. Derived factories placed into "trace_log.h/trace_log.cc".
+
+* TraceConfig
+
+    This is a class that handles a pointer to TraceLoggerFactory and used by TraceLogApi as
+    a global access point. Pointer to TraceConfig is placed into SnortConfig. It will be
+    overwritten during reloading and new TraceLoggerFactory pointer will be used by TraceLogApi
+    since that point.
+
+    TraceConfig placed into "trace_config.h".
+
+* TraceModule
+
+    This module provides configuration for trace logs. The main goal of TraceModule
+    is to create a concrete logger factory based on the configuration, init/reload TraceConfig
+    pointer and move it into SnortConfig.
+
+    This is a built-in module (from coreinit.lua)
+
+    The module placed into "trace_module.h/trace_module.cc".
+
+* TraceLogApi
+
+    TraceLogApi is a facade API class used to init/term trace logger framework and make logs
+    per each thread. TraceLogger is encapsulated in TraceLogApi. This, in a couple with
+    the TraceConfig, is a single common entry point to trace logger framework.
+
+    TraceLogApi placed into "trace_log_api.h/trace_log_api.cc"
+
+* Configuration override
+
+    By default, the factory will be initialized based on Snort run mode (stdout or syslog).
+    But this can be explicitly overwritten in TraceModule's configuration to specify which
+    kind of logger to use.
+
+    Changes will be applied in case of reloading too.
+
+* External dependencies
+
+    Include TraceLogApi header somewhere in the code where it needs to make trace logs.
+    Make sure that TraceLogApi::thread_init()/thread_term() are provided for thread where
+    TraceLogApi::log() is going used.
+
+    TraceConfig should be configured and moved into SnortConfig before TraceLogApi init.
+
+    To create specific TraceLogger/TraceLoggerFactory pair just inherit base classes placed
+    into "trace_log_base.h" and init TraceConfig with a new factory during configuration.
+

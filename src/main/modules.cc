@@ -58,6 +58,7 @@
 #include "stream/stream.h"
 #include "target_based/sftarget_data.h"
 #include "target_based/snort_protocols.h"
+#include "trace/trace_module.h"
 
 #include "snort_config.h"
 #include "snort_module.h"
@@ -1957,6 +1958,7 @@ void module_init()
     ModuleManager::add_module(new RuleStateModule);
     ModuleManager::add_module(new SearchEngineModule);
     ModuleManager::add_module(new SFDAQModule);
+    ModuleManager::add_module(new TraceModule);
 
     // these could but prolly shouldn't be policy specific
     // or should be broken into policy and non-policy parts

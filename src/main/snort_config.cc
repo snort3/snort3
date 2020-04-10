@@ -59,6 +59,7 @@
 #include "sfip/sf_ip.h"
 #include "target_based/sftarget_reader.h"
 #include "target_based/snort_protocols.h"
+#include "trace/trace_config.h"
 #include "utils/dnet_header.h"
 #include "utils/util.h"
 #include "utils/util_cstring.h"
@@ -263,6 +264,8 @@ SnortConfig::~SnortConfig()
     delete thread_config;
     delete ha_config;
     delete global_dbus;
+
+    delete trace_config;
 
     delete profiler;
     delete latency;

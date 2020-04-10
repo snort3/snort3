@@ -67,6 +67,7 @@
 #include "stream/stream_inspectors.h"
 #include "target_based/sftarget_reader.h"
 #include "time/periodic.h"
+#include "trace/trace_log_api.h"
 #include "utils/util.h"
 
 #ifdef PIGLET
@@ -155,6 +156,11 @@ void Snort::init(int argc, char** argv)
      * Set the global snort_conf that will be used during run time */
     sc->merge(snort_cmd_line_conf);
     SnortConfig::set_conf(sc);
+
+    // This call must be immediately after "SnortConfig::set_conf(sc)"
+    // since the first trace call may happen somewhere after this point
+    TraceLogApi::thread_init(sc);
+
     PluginManager::load_so_plugins(sc);
 #ifdef PIGLET
     if ( !Piglet::piglet_mode() )
@@ -330,6 +336,10 @@ void Snort::term()
     Periodic::unregister_all();
 
     LogMessage("%s  Snort exiting\n", get_prompt());
+
+    // This call must be before SnortConfig cleanup
+    // since the "TraceLogApi::thread_term()" uses SnortConfig
+    TraceLogApi::thread_term();
 
     /* free allocated memory */
     if (SnortConfig::get_conf() == snort_cmd_line_conf)

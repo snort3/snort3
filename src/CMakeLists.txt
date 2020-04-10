@@ -109,6 +109,7 @@ add_subdirectory(host_tracker)
 add_subdirectory(pub_sub)
 add_subdirectory(time)
 add_subdirectory(profiler)
+add_subdirectory(trace)
 add_subdirectory(utils)
 add_subdirectory(helpers)
 add_subdirectory(lua)
@@ -175,6 +176,7 @@ add_executable( snort
     $<TARGET_OBJECTS:target_based>
     $<TARGET_OBJECTS:tcp_connector>
     $<TARGET_OBJECTS:time>
+    $<TARGET_OBJECTS:trace>
     $<TARGET_OBJECTS:utils>
     ${PIGLET_LIBRARIES}
     ${STATIC_CODEC_PLUGINS}
