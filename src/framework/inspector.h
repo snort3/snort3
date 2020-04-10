@@ -150,22 +150,6 @@ private:
     SnortProtocolId snort_protocol_id;
 };
 
-template <typename T>
-class InspectorData : public Inspector
-{
-public:
-    InspectorData(T* t)
-    { data = t; }
-
-    ~InspectorData() override
-    { delete data; }
-
-    void show(SnortConfig*) override { }
-    void eval(Packet*) override { }
-
-    T* data;
-};
-
 // at present there is no sequencing among like types except that appid
 // is always first among controls.
 

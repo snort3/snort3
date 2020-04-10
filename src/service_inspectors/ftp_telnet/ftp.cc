@@ -186,13 +186,24 @@ static int snort_ftp(Packet* p)
 // class stuff
 //-------------------------------------------------------------------------
 
-typedef InspectorData<FTP_CLIENT_PROTO_CONF> FtpClient;
+class FtpClient : public Inspector
+{
+public:
+    FtpClient(FTP_CLIENT_PROTO_CONF* client) : ftp_client(client) { }
 
-template<>
+    ~FtpClient() override
+    { delete ftp_client; }
+
+    void show(SnortConfig*) override;
+    void eval(Packet*) override { }
+
+    FTP_CLIENT_PROTO_CONF* ftp_client;
+};
+
 void FtpClient::show(SnortConfig*)
 {
-    if ( data )
-        print_conf_client(data);
+    if ( ftp_client )
+        print_conf_client(ftp_client);
 }
 
 class FtpServer : public Inspector
@@ -258,7 +269,7 @@ FTP_CLIENT_PROTO_CONF* get_ftp_client(Packet* p)
         assert(client);
         p->flow->set_data(client);
     }
-    return client->data;
+    return client->ftp_client;
 }
 
 FTP_SERVER_PROTO_CONF* get_ftp_server(Packet* p)
