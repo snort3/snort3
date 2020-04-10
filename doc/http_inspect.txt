@@ -359,9 +359,10 @@ http_uri represents the normalized uri, normalization of components depends
 on uri type. If the uri is of type absolute (contains all six components) or 
 absolute path (contains path, query and fragment) then the path and query 
 components are normalized. In these cases, http_uri represents the normalized
-path and query (/path?query). If the uri is of type authority (host and port),
-the host is normalized and http_uri represents the normalized host with the port
-number. In all other cases http_uri is the same as http_raw_uri.  
+path, query, and fragment (/path?query#fragment). If the uri is of type 
+authority (host and port), the host is normalized and http_uri represents the 
+normalized host with the port number. In all other cases http_uri is the same 
+as http_raw_uri.  
 
 Note: this section uses informal language to explain some things. Nothing
 here is intended to conflict with the technical language of the HTTP RFCs

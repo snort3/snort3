@@ -243,17 +243,26 @@ void HttpUri::normalize()
                     UriNormalizer::need_norm(query, false, uri_param, infractions, events))
                 *infractions += INF_URI_NEED_NORM_QUERY;
 
-            if (!((*infractions & INF_URI_NEED_NORM_PATH)  || (*infractions & INF_URI_NEED_NORM_QUERY)))
+            if ((fragment.length() > 0) &&
+                    UriNormalizer::need_norm(fragment, false, uri_param, infractions, events))
+                *infractions += INF_URI_NEED_NORM_FRAGMENT;
+
+            if (!((*infractions & INF_URI_NEED_NORM_PATH)
+                  || (*infractions & INF_URI_NEED_NORM_QUERY)
+                  || (*infractions & INF_URI_NEED_NORM_FRAGMENT)))
             {
                 // This URI is OK, normalization not required
                 path_norm.set(path);
                 query_norm.set(query);
+                fragment_norm.set(fragment);
 
                 const int path_len = (path.length() > 0) ? path.length() : 0;
                 // query_len = length of query + 1 (? char)
                 const int query_len = (query.length() >= 0) ? query.length() + 1 : 0;
+                // fragment_len = length of fragment + 1 (# char)
+                const int fragment_len = (fragment.length() >= 0) ? fragment.length() + 1 : 0;
 
-                classic_norm.set(path_len + query_len, abs_path.start());
+                classic_norm.set(path_len + query_len + fragment_len, abs_path.start());
 
                 check_oversize_dir(path_norm);
                 return;
@@ -264,6 +273,7 @@ void HttpUri::normalize()
             // Create a new buffer containing the normalized URI by normalizing each individual piece.
             int total_length = path.length() ? path.length() + UriNormalizer::URI_NORM_EXPANSION : 0;
             total_length += (query.length() >= 0) ? query.length() + 1 : 0;
+            total_length += (fragment.length() >= 0) ? fragment.length() + 1 : 0;
             uint8_t* const new_buf = new uint8_t[total_length];
             uint8_t* current = new_buf;
 
@@ -292,6 +302,20 @@ void HttpUri::normalize()
                     query_norm.set(query);
                 }
                 current += query_norm.length();
+            }
+            if (fragment.length() >= 0)
+            {
+                memcpy(current, "#", 1);
+                current += 1;
+                if (*infractions & INF_URI_NEED_NORM_FRAGMENT)
+                    UriNormalizer::normalize(fragment, fragment_norm, false, current, uri_param, infractions,
+                        events);
+                else
+                {
+                    memcpy(current, fragment.start(), fragment.length());
+                    fragment_norm.set(fragment);
+                }
+                current += fragment_norm.length();
             }
 
             assert(current - new_buf <= total_length);
@@ -350,25 +374,4 @@ const Field& HttpUri::get_norm_host()
         host_norm.set(host);
 
     return host_norm;
-}
-
-const Field& HttpUri::get_norm_fragment()
-{
-    if (fragment_norm.length() != STAT_NOT_COMPUTE)
-        return fragment_norm;
-
-    if ((fragment.length() > 0) and
-        UriNormalizer::need_norm(fragment, false, uri_param, infractions, events))
-    {
-        uint8_t *buf = new uint8_t[fragment.length()];
-
-        *infractions += INF_URI_NEED_NORM_FRAGMENT;
-
-        UriNormalizer::normalize(fragment, fragment_norm, false, buf, uri_param,
-            infractions, events, true);
-    }
-    else
-        fragment_norm.set(fragment);
-
-    return fragment_norm;
 }
