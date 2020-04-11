@@ -47,19 +47,15 @@
 
 using namespace snort;
 
-SnortProtocolId snortId_for_unsynchronized;
-SnortProtocolId snortId_for_ftp_data;
-SnortProtocolId snortId_for_http2;
 
 ThirdPartyAppIdContext* AppIdContext::tp_appid_ctxt = nullptr;
 OdpContext* AppIdContext::odp_ctxt = nullptr;
 
-static void map_app_names_to_snort_ids(SnortConfig* sc)
+static void map_app_names_to_snort_ids(SnortConfig* sc, AppIdConfig& config)
 {
-    /* init globals for snortId compares */
-    snortId_for_unsynchronized = sc->proto_ref->add("unsynchronized");
-    snortId_for_ftp_data = sc->proto_ref->add("ftp-data");
-    snortId_for_http2    = sc->proto_ref->add("http2");
+    config.snortId_for_unsynchronized = sc->proto_ref->add("unsynchronized");
+    config.snortId_for_ftp_data = sc->proto_ref->add("ftp-data");
+    config.snortId_for_http2    = sc->proto_ref->add("http2");
 
     // Have to create SnortProtocolIds during configuration initialization.
     sc->proto_ref->add("rexec");
@@ -116,14 +112,14 @@ bool AppIdContext::init_appid(SnortConfig* sc)
         odp_ctxt->get_service_disco_mgr().initialize();
         LuaDetectorManager::initialize(*this, 1);
         odp_ctxt->initialize();
+
+        // do not reload third party on reload_config()
+        if (!tp_appid_ctxt)
+            tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(config, *odp_ctxt);
         once = true;
     }
 
-    // do not reload third party on reload_config()
-    if (!tp_appid_ctxt)
-        tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(config, *odp_ctxt);
-
-    map_app_names_to_snort_ids(sc);
+    map_app_names_to_snort_ids(sc, config);
     return true;
 }
 

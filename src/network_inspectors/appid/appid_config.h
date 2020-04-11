@@ -40,9 +40,6 @@
 
 #define APP_ID_PORT_ARRAY_SIZE  65536
 
-extern SnortProtocolId snortId_for_unsynchronized;
-extern SnortProtocolId snortId_for_ftp_data;
-extern SnortProtocolId snortId_for_http2;
 
 class PatternClientDetector;
 class PatternServiceDetector;
@@ -71,7 +68,9 @@ public:
     size_t memcap = 0;
     bool list_odp_detectors = false;
     bool log_all_sessions = false;
-
+    SnortProtocolId snortId_for_unsynchronized;
+    SnortProtocolId snortId_for_ftp_data;
+    SnortProtocolId snortId_for_http2;
     void show() const;
 };
 

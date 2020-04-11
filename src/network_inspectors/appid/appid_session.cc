@@ -39,6 +39,7 @@
 
 #include "app_forecast.h"
 #include "app_info_table.h"
+#include "appid_config.h"
 #include "appid_debug.h"
 #include "appid_dns_session.h"
 #include "appid_http_session.h"
@@ -85,7 +86,7 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto,
     AppIdSession* asd = new AppIdSession(proto, ip, port, *inspector);
     asd->flow = p->flow;
     asd->stats.first_packet_second = p->pkth->ts.tv_sec;
-    asd->snort_protocol_id = snortId_for_unsynchronized;
+    asd->snort_protocol_id = asd->ctxt.config.snortId_for_unsynchronized;
     p->flow->set_flow_data(asd);
     return asd;
 }
@@ -306,13 +307,13 @@ void AppIdSession::sync_with_snort_protocol_id(AppId newAppId, Packet* p)
             // UNKNOWN_PROTOCOL_ID case.
             if (tmp_snort_protocol_id == UNKNOWN_PROTOCOL_ID &&
                 (newAppId == APP_ID_HTTP2))
-                tmp_snort_protocol_id = snortId_for_http2;
+                tmp_snort_protocol_id = ctxt.config.snortId_for_http2;
 
             if (tmp_snort_protocol_id != snort_protocol_id)
             {
                 snort_protocol_id = tmp_snort_protocol_id;
                 if (appidDebug->is_active() &&
-                    tmp_snort_protocol_id == snortId_for_http2)
+                    tmp_snort_protocol_id == ctxt.config.snortId_for_http2)
                     LogMessage("AppIdDbg %s Telling Snort that it's HTTP/2\n",
                         appidDebug->get_debug_session());
 
