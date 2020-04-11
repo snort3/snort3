@@ -71,7 +71,7 @@ struct TestCase
 
 static char testing_dump[STD_BUF_SIZE];
 
-void test_log(const char* log_msg, const char* name,
+static void test_log(const char* log_msg, const char* name,
     uint8_t log_level, const char* trace_option)
 {
     snprintf(testing_dump, sizeof(testing_dump), "%s:%s:%d: %s",
