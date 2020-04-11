@@ -154,8 +154,6 @@ AppIdHttpSession::AppIdHttpSession(AppIdSession& asd)
 
 AppIdHttpSession::~AppIdHttpSession()
 {
-    delete xff_addr;
-
     for ( int i = 0; i < NUM_METADATA_FIELDS; i++)
     {
         if ( meta_data[i] )

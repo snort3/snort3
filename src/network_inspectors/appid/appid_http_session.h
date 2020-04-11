@@ -31,7 +31,6 @@
 
 #include "appid_types.h"
 #include "application_ids.h"
-#include "http_xff_fields.h"
 
 class AppIdSession;
 class ChpMatchDescriptor;
@@ -101,12 +100,8 @@ public:
 
     int process_http_packet(AppidSessionDirection direction, AppidChangeBits& change_bits,
         HttpPatternMatchers& http_matchers);
-    void update_http_xff_address(struct XffFieldValue*, uint32_t, AppidChangeBits&);
 
     void update_url(AppidChangeBits& change_bits);
-
-    snort::SfIp* get_xff_addr()
-    { return xff_addr; }
 
     const std::string* get_field(HttpFieldIds id)
     { return meta_data[id]; }
@@ -236,9 +231,6 @@ protected:
     int num_matches = 0;
     int num_scans = 0;
     bool skip_simple_detect = false;
-    snort::SfIp* xff_addr = nullptr;
-    const char** xffPrecedence = nullptr;
-    unsigned numXffFields = 0;
     int ptype_req_counts[NUM_HTTP_FIELDS] = { 0 };
     int ptype_scan_counts[NUM_HTTP_FIELDS] = { 0 };
     const TunnelDest* tun_dest = nullptr;

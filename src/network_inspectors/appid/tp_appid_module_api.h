@@ -25,28 +25,20 @@
 #include <string>
 #include "tp_appid_types.h"
 
-#define THIRD_PARTY_APPID_API_VERSION 4
+#define THIRD_PARTY_APPID_API_VERSION 5
 
 class ThirdPartyConfig
 {
 public:
-    unsigned chp_body_collection_max;
-    unsigned ftp_userid_disabled : 1;
-    unsigned chp_body_collection_disabled : 1;
-    unsigned tp_allow_probes : 1;
-    unsigned http_upgrade_reporting_enabled : 1;
-    unsigned http_response_version_enabled : 1;
+    uint32_t chp_body_collection_max = 0;
+    bool ftp_userid_disabled = false;
+    bool chp_body_collection_disabled = false;
+    bool tp_allow_probes = false;
+    bool http_upgrade_reporting_enabled = false;
+    bool http_response_version_enabled = false;
     std::string tp_appid_config;
-    std::vector<std::string> xff_fields;
     bool tp_appid_stats_enable = false;
     bool tp_appid_config_dump = false;
-
-    ThirdPartyConfig()
-    {
-        xff_fields.clear();
-        xff_fields.emplace_back(HTTP_XFF_FIELD_X_FORWARDED_FOR);
-        xff_fields.emplace_back(HTTP_XFF_FIELD_TRUE_CLIENT_IP);
-    }
 };
 
 class ThirdPartyAppIdContext

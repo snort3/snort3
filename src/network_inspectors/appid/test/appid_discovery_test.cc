@@ -318,7 +318,7 @@ TEST(appid_discovery_tests, event_published_when_ignoring_flow)
 
     // Detect changes in service, client, payload, and misc appid
     CHECK_EQUAL(databus_publish_called, true);
-    STRCMP_EQUAL(test_log, "Published change_bits == 0000000001111");
+    STRCMP_EQUAL(test_log, "Published change_bits == 000000001111");
     delete asd;
     delete flow;
 }
@@ -348,7 +348,7 @@ TEST(appid_discovery_tests, event_published_when_processing_flow)
 
     // Detect changes in service, client, payload, and misc appid
     CHECK_EQUAL(databus_publish_called, true);
-    STRCMP_EQUAL(test_log, "Published change_bits == 0000000001111");
+    STRCMP_EQUAL(test_log, "Published change_bits == 000000001111");
     delete asd;
     delete flow;
 }
@@ -441,10 +441,10 @@ TEST(appid_discovery_tests, change_bits_to_string)
     change_bits.set();
     change_bits_to_string(change_bits, str);
     STRCMP_EQUAL(str.c_str(), "service, client, payload, misc, referred, host,"
-        " tls-host, url, user-agent, response, referrer, xff, client-version");
+        " tls-host, url, user-agent, response, referrer, client-version");
 
     // Failure of this test is a reminder that enum is changed, hence translator needs update
-    CHECK_EQUAL(APPID_MAX_BIT, 13);
+    CHECK_EQUAL(APPID_MAX_BIT, 12);
 }
 
 int main(int argc, char** argv)

@@ -25,6 +25,12 @@
 #include <cstddef>
 #include <cstdint>
 
+struct tMlpPattern
+{
+    const uint8_t* pattern;
+    size_t patternSize;
+};
+
 struct tMlmpPattern
 {
     /*binary pattern */

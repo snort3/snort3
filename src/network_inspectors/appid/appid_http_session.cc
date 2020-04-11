@@ -32,7 +32,6 @@
 #include "appid_debug.h"
 #include "appid_session.h"
 #include "detector_plugins/http_url_patterns.h"
-#include "http_xff_fields.h"
 #include "tp_lib_handler.h"
 #define PORT_MAX 65535
 
@@ -50,8 +49,6 @@ AppIdHttpSession::AppIdHttpSession(AppIdSession& asd)
 
 AppIdHttpSession::~AppIdHttpSession()
 {
-    delete xff_addr;
-
     for ( int i = 0; i < NUM_METADATA_FIELDS; i++)
         delete meta_data[i];
     if (tun_dest)
@@ -723,95 +720,6 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
     return 0;
 }
 
-// FIXIT-E - Implement this function when (reconfigurable) XFF is supported.
-void AppIdHttpSession::update_http_xff_address(struct XffFieldValue* xff_fields,
-    uint32_t numXffFields, AppidChangeBits& change_bits)
-{
-    UNUSED(xff_fields);
-    UNUSED(numXffFields);
-    UNUSED(change_bits);
-#if 0
-    // When this is implemented, do change_bits.set(APPID_XFF_BIT) soon after xff_addr is changed
-    static const char* defaultXffPrecedence[] =
-    {
-        HTTP_XFF_FIELD_X_FORWARDED_FOR,
-        HTTP_XFF_FIELD_TRUE_CLIENT_IP
-    };
-
-    // XFF precedence configuration cannot change for a session. Do not get it again if we already
-    // got it.
-    char** xffPrecedence = _dpd.sessionAPI->get_http_xff_precedence(p->stream_session, p->flags,
-        &numXffFields);
-    if (!xffPrecedence)
-    {
-        xffPrecedence = defaultXffPrecedence;
-        numXffFields = sizeof(defaultXffPrecedence) / sizeof(defaultXffPrecedence[0]);
-    }
-
-    xffPrecedence = malloc(numXffFields * sizeof(char*));
-
-    for (unsigned j = 0; j < numXffFields; j++)
-        xffPrecedence[j] = strndup(xffPrecedence[j], UINT8_MAX);
-
-    if (appidDebug->is_active())
-    {
-        for (unsigned i = 0; i < numXffFields; i++)
-            LogMessage("AppIdDbg %s XFF %s : %s\n", appidDebug->get_debug_session(),
-                xff_fields[i].field.c_str(), xff_fields[i].value.empty() ? "(empty)" :
-                xff_fields[i].value);
-    }
-
-    // xffPrecedence array is sorted based on precedence
-    for (unsigned i = 0; (i < numXffFields) && xffPrecedence[i]; i++)
-    {
-        for (unsigned j = 0; j < numXffFields; j++)
-        {
-            if (xff_addr)
-            {
-                delete xff_addr;
-                xff_addr = nullptr;
-            }
-
-            if (strncasecmp(xff_fields[j].field.c_str(), xffPrecedence[i], UINT8_MAX) == 0)
-            {
-                if (xff_fields[j].value.empty())
-                    return;
-
-                // For a comma-separated list of addresses, pick the last address
-                // FIXIT-L: change to select last address port from 2.9.10-42..not tested
-
-                // FIXIT_H: - this code is wrong. We can't have
-                // tmp-xff_fields[j].value when tmp=0.
-
-                // xff_addr = new SfIp();
-                // char* xff_addr_str = nullptr;
-                // char* tmp = strchr(xff_fields[j].value, ',');
-
-                // if (tmp)
-                // {
-                //     xff_addr_str = tmp + 1;
-                // }
-                // else
-                // {
-                //     xff_fields[j].value[tmp - xff_fields[j].value] = '\0';
-                //     xff_addr_str = xff_fields[j].value;
-                // }
-
-                // if (xff_addr->set(xff_addr_str) != SFIP_SUCCESS)
-                // {
-                //     delete xff_addr;
-                //     xff_addr = nullptr;
-                // }
-                break;
-            }
-        }
-
-        if (xff_addr)
-            break;
-    }
-#endif
-}
-
 void AppIdHttpSession::update_url(AppidChangeBits& change_bits)
 {
     const std::string* host = meta_data[REQ_HOST_FID];
@@ -836,18 +744,6 @@ void AppIdHttpSession::clear_all_fields()
     {
         delete meta_data[i];
         meta_data[i] = nullptr;
-    }
-    if (xff_addr)
-    {
-        delete xff_addr;
-        xff_addr = nullptr;
-    }
-    if (xffPrecedence)
-    {
-        for (unsigned i = 0; i < numXffFields; i++)
-            delete xffPrecedence[i];
-        delete xffPrecedence;
-        xffPrecedence = NULL;
     }
 }
 

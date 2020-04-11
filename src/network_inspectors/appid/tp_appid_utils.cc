@@ -375,10 +375,6 @@ static inline void process_http_session(AppIdSession& asd,
         hsession->set_field(RSP_BODY_FID, field, change_bits);
     }
 
-    if (attribute_data.numXffFields)
-        hsession->update_http_xff_address(attribute_data.xffFieldValue,
-            attribute_data.numXffFields, change_bits);
-
     if (!hsession->is_chp_finished() || hsession->is_chp_hold_flow())
     {
         asd.set_session_flags(APPID_SESSION_CHP_INSPECTING);

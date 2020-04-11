@@ -25,8 +25,6 @@
 #include <cstdint>
 #include <string>
 
-#include "http_xff_fields.h"
-
 using std::string;
 
 enum TPFlags
@@ -152,9 +150,6 @@ class ThirdPartyAppIDAttributeData
     // FIXIT-L: make these private too. Figure out how these get set in tp.
 
 public:
-    XffFieldValue xffFieldValue[HTTP_MAX_XFF_FIELDS];
-    uint8_t numXffFields = 0;
-
     ThirdPartyAppIDAttributeData() { }
 
     ~ThirdPartyAppIDAttributeData()

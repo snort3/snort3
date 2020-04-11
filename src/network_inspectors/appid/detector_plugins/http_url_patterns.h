@@ -32,7 +32,6 @@
 
 #include "appid_http_session.h"
 #include "appid_utils/sf_mlmp.h"
-#include "appid_utils/sf_multi_mpse.h"
 #include "application_ids.h"
 
 namespace snort

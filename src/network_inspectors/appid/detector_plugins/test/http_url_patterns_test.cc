@@ -25,7 +25,6 @@
 
 #include "protocols/protocol_ids.h"
 #include "framework/module.cc"
-#include "network_inspectors/appid/appid_utils/sf_multi_mpse.h"
 #include "network_inspectors/appid/appid_utils/sf_mlmp.cc"
 #include "utils/util_cstring.cc"
 #include "detector_plugins_mock.h"

@@ -5,7 +5,6 @@ set (APPID_INCLUDES
     appid_session_api.h
     appid_types.h
     application_ids.h
-    http_xff_fields.h
     tp_appid_module_api.h
     tp_appid_session_api.h
     tp_appid_types.h
@@ -144,8 +143,6 @@ set ( UTIL_APPID_SOURCES
     appid_utils/ip_funcs.h
     appid_utils/sf_mlmp.cc
     appid_utils/sf_mlmp.h
-    appid_utils/sf_multi_mpse.cc
-    appid_utils/sf_multi_mpse.h
 )
 
 set ( APPID_SOURCES
@@ -199,7 +196,6 @@ set ( APPID_SOURCES
     lua_detector_util.h
     service_state.cc
     service_state.h
-    http_xff_fields.h
     tp_appid_utils.cc
     tp_lib_handler.cc
     tp_lib_handler.h

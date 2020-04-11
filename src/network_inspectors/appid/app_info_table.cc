@@ -456,7 +456,7 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
             {
                 if (!(strcasecmp(conf_val, "enabled")))
                 {
-                    odp_ctxt.tp_allow_probes = 1;
+                    odp_ctxt.tp_allow_probes = true;
                 }
             }
             else if (!(strcasecmp(conf_key, "tp_client_app")))
@@ -491,7 +491,7 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
             {
                 if (!(strcasecmp(conf_val, "disabled")))
                 {
-                    odp_ctxt.chp_body_collection_disabled = 1;
+                    odp_ctxt.chp_body_collection_disabled = true;
                     continue;
                 }
             }
@@ -499,7 +499,7 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
             {
                 if (!(strcasecmp(conf_val, "disabled")))
                 {
-                    odp_ctxt.ftp_userid_disabled = 1;
+                    odp_ctxt.ftp_userid_disabled = true;
                     continue;
                 }
             }

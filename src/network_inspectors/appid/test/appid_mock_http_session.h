@@ -34,8 +34,6 @@ AppIdHttpSession::AppIdHttpSession(AppIdSession& session)
 
 AppIdHttpSession::~AppIdHttpSession()
 {
-    delete xff_addr;
-
     for ( int i = 0; i < NUM_METADATA_FIELDS; i++)
     {
         if ( meta_data[i] )
@@ -45,7 +43,6 @@ AppIdHttpSession::~AppIdHttpSession()
 
 int AppIdHttpSession::process_http_packet(AppidSessionDirection, AppidChangeBits&, HttpPatternMatchers&) { return 0; }
 
-char const* APPID_UT_XFF_IP_ADDR = "192.168.0.1";
 char const* CONTENT_TYPE = "html/text";
 char const* COOKIE = "this is my request cookie content";
 char const* NEW_COOKIE = "request new cookie content is chocolate chip";
@@ -83,10 +80,6 @@ public:
     MockAppIdHttpSession(AppIdSession& asd)
         : AppIdHttpSession(asd)
     {
-        SfIp* ip = new SfIp;
-        ip->pton(AF_INET, APPID_UT_XFF_IP_ADDR);
-        xff_addr = ip;
-
         meta_data[REQ_AGENT_FID] = new std::string(USERAGENT);
         meta_data[REQ_HOST_FID] = new std::string(HOST);
         meta_data[REQ_REFERER_FID] = new std::string(REFERER);

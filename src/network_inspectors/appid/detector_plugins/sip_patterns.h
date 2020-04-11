@@ -22,7 +22,6 @@
 #define SIP_PATTERNS_H
 
 #include "appid_utils/sf_mlmp.h"
-#include "appid_utils/sf_multi_mpse.h"
 #include "application_ids.h"
 
 class OdpContext;
