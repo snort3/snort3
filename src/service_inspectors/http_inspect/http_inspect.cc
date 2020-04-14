@@ -136,7 +136,6 @@ void HttpInspect::show(snort::SnortConfig*)
     ConfigLogger::log_flag("normalize_javascript", params->js_norm_param.normalize_javascript);
     ConfigLogger::log_value("max_javascript_whitespaces",
         params->js_norm_param.max_javascript_whitespaces);
-    ConfigLogger::log_flag("detained_inspection", params->detained_inspection);
     ConfigLogger::log_value("bad_characters", bad_chars.c_str());
     ConfigLogger::log_value("ignore_unreserved", unreserved_chars.c_str());
     ConfigLogger::log_flag("percent_u", params->uri_param.percent_u);
