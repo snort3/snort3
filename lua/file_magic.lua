@@ -24,7 +24,7 @@ file_magic =
     { type = 'RIFF', id = 24, category = 'Multimedia', msg = 'Resource Interchange File Format', rev = 1, magic = { { content = '| 52 49 46 46|', offset = 0, }, }, },
     { type = 'MSCHM', id = 25, category = 'Office Documents', msg = 'Microsoft Compiled HTML Help File', rev = 1, magic = { { content = '| 49 54 53 46|', offset = 0, }, }, },
     { type = 'MSCAB', id = 26, category = 'Archive', msg = 'Microsoft Windows CAB', rev = 1, magic = { { content = '| 4D 53 43 46|', offset = 0, }, }, },
-    { type = 'MSOLE2', id = 27, category = 'Executables,Dynamic Analysis Capable,Local Malware Analysis Capable', msg = 'Microsoft Object Linking and Embedding Compound File, used for office documents as well as installers', rev = 1, magic = { { content = '| D0 CF 11 E0 A1 B1 1A E1|', offset = 0, }, }, },
+    { type = 'MSOLE2', id = 27, category = 'Office Documents,Dynamic Analysis Capable,Local Malware Analysis Capable', msg = 'Microsoft Object Linking and Embedding Compound File, used for office documents as well as installers', rev = 1, magic = { { content = '| D0 CF 11 E0 A1 B1 1A E1|', offset = 0, }, }, },
     { type = 'MSSZDD', id = 28, category = 'Archive', msg = 'SZDD file format', rev = 1, magic = { { content = '| 53 5A 44 44 88 F0 27 33 |', offset = 0, }, }, },
     { type = 'ZIP', id = 29, category = 'Archive', msg = 'PKZIP archive file', rev = 1, magic = { { content = '| 50 4B 03 04 |', offset = 0, }, }, },
     { type = 'RAR', id = 30, category = 'Archive', msg = 'WinRAR compressed archive file', rev = 1, magic = { { content = '| 52 61 72 21 1A 07 00 |', offset = 0, }, }, },
@@ -199,7 +199,7 @@ file_magic =
     { type = 'RAR', id = 320, category = 'Archive', msg = 'WinRAR compressed archive file', rev = 1, version = '1.1', magic = { { content = '| 52 61 72 21 1A 07 01 00 |', offset = 0, }, }, },
     { type = 'ALZ', id = 321, category = 'Archive', msg = 'Archive file for Microsoft created using software ALZip', rev = 1, magic = { { content = '| 41 4C 5A 01 |', offset = 0, }, }, },
     { type = 'EGG', id = 322, category = 'Archive', msg = 'Archive File for Microsoft created using software ALZip', rev = 1, magic = { { content = '| 45 47 47 41 |', offset = 0, }, }, },
-    { type = 'HWP', id = 323, category = 'Executables', msg = 'Hangul word processor file', rev = 1, version = '3.0', magic = { { content = '| 48 57 50 20 44 6F 63 75 6D 65 6E 74 20 46 69 6C 65 |', offset = 0, }, }, },
+    { type = 'HWP', id = 323, category = 'Office Documents', msg = 'Hangul word processor file', rev = 1, version = '3.0', magic = { { content = '| 48 57 50 20 44 6F 63 75 6D 65 6E 74 20 46 69 6C 65 |', offset = 0, }, }, },
     { type = 'SWF', id = 324, category = 'Multimedia', msg = 'Flash file', rev = 1, magic = { { content = '| 5A 57 53 |', offset = 0}, }, },
 }
 
