@@ -243,6 +243,29 @@ directories to be separated by backslashes:
 backslash_to_slash is turned on by default. It replaces all the backslashes
 with slashes during normalization.
 
+==== CONNECT processing
+
+The HTTP CONNECT method is used by a client to establish a tunnel to a destination via an HTTP proxy
+server. If the connection is successful the server will send a 2XX success response to the client,
+then proceed to blindly forward traffic between the client and destination. That traffic belongs to
+a new session between the client and destination and may be of any protocol, so clearly the HTTP
+inspector will be unable to continue processing traffic following the CONNECT message as if it were
+just a continuation of the original HTTP/1.1 session.
+
+Therefore upon receiving a success response to a CONNECT request, the HTTP inspector will stop
+inspecting the session. The next packet will return to the wizard, which will determine the
+appropriate inspector to continue processing the flow. If the tunneled protocol happens to be
+HTTP/1.1, the HTTP inspector will again start inspecting the flow, but as an entirely new session.
+
+There is one scenario where the cutover to the wizard will not occur despite a 2XX success response
+to a CONNECT request. HTTP allows for pipelining, or sending multiple requests without waiting for a
+response. If the HTTP inspector sees any further traffic from the client after a CONNECT request
+before it has seen the CONNECT response, it is unclear whether this traffic should be interpreted as
+a pipelined HTTP request or tunnel traffic sent in anticipation of a success response from the
+server. Due to this potential evasion tactic, the HTTP inspector will not cut over to the wizard if
+it sees any early client-to-server traffic, but will continue normal HTTP processing of the flow
+regardless of the eventual server response.
+
 ==== Detection rules
 
 http_inspect parses HTTP messages into their components and makes them

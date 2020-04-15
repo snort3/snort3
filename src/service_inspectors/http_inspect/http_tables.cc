@@ -391,6 +391,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_200_CONNECT_RESP_WITH_CL,   "HTTP CONNECT 2XX response with Content-Length header" },
     { EVENT_200_CONNECT_RESP_WITH_TE,   "HTTP CONNECT 2XX response with Transfer-Encoding header" },
     { EVENT_100_CONNECT_RESP,           "HTTP CONNECT response with 1XX status code" },
+    { EVENT_EARLY_CONNECT_RESPONSE,     "HTTP CONNECT response before request message completed" },
     { 0, nullptr }
 };
 
@@ -422,6 +423,7 @@ const PegInfo HttpModule::peg_names[PEG_COUNT_MAX+1] =
     { CountType::SUM, "partial_inspections", "pre-inspections for detained inspection" },
     { CountType::SUM, "excess_parameters", "repeat parameters exceeding max" },
     { CountType::SUM, "parameters", "HTTP parameters inspected" },
+    { CountType::SUM, "connect_tunnel_cutovers", "CONNECT tunnel flow cutovers to wizard" },
     { CountType::END, nullptr, nullptr }
 };
 

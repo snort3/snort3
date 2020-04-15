@@ -572,5 +572,12 @@ void HttpInspect::clear(Packet* p)
 
     current_transaction->garbage_collect();
     session_data->garbage_collect();
+
+    if (session_data->cutover_on_clear)
+    {
+        Flow* flow = p->flow;
+        flow->set_service(p, nullptr);
+        flow->free_flow_data(HttpFlowData::inspector_id);
+    }
 }
 

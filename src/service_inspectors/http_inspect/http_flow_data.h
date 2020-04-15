@@ -161,6 +161,8 @@ private:
                                             HttpEnums::VERS__NOT_PRESENT };
     HttpEnums::MethodId method_id = HttpEnums::METH__NOT_PRESENT;
 
+    bool cutover_on_clear = false;
+
     // *** Transaction management including pipelining
     static const int MAX_PIPELINE = 100;  // requests seen - responses seen <= MAX_PIPELINE
     HttpTransaction* transaction[2] = { nullptr, nullptr };

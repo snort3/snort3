@@ -171,8 +171,7 @@ void HttpMsgHeader::update_flow()
         // Successful CONNECT responses (2XX) switch to tunneled traffic immediately following the
         // header. Transfer-Encoding and Content-Length headers are not allowed in successful
         // responses by the RFC.
-        if(((session_data->last_connect_trans_w_early_traffic == 0) ||
-            (trans_num > session_data->last_connect_trans_w_early_traffic)) &&
+        if((trans_num > session_data->last_connect_trans_w_early_traffic) &&
             ((status_code_num >= 200) && (status_code_num < 300)))
         {
             if ((get_header_count(HEAD_TRANSFER_ENCODING) > 0))
@@ -185,9 +184,27 @@ void HttpMsgHeader::update_flow()
                 add_infraction(INF_200_CONNECT_RESP_WITH_CL);
                 create_event(EVENT_200_CONNECT_RESP_WITH_CL);
             }
-            // Temporary - Further traffic on this flow is tunneled traffic, and will get sent back
-            // to the wizard to determine the appropriate inspector. For now just abort.
-            session_data->type_expected[source_id] = SEC_ABORT;
+
+            // FIXIT-E This case addresses the scenario where Snort sees a success response to a
+            // CONNECT request before the request message is complete. Currently this will trigger
+            // an alert then proceed to cutover as usual, meaning the remaining request message will
+            // be processed as part of the tunnel session. There may be a better solution.
+            if (session_data->type_expected[SRC_CLIENT] != SEC_REQUEST)
+            {
+                add_infraction(INF_EARLY_CONNECT_RESPONSE);
+                create_event(EVENT_EARLY_CONNECT_RESPONSE);
+            }
+            session_data->cutover_on_clear = true;
+            HttpModule::increment_peg_counts(PEG_CUTOVERS);
+
+#ifdef REG_TEST
+            if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
+            {
+                fprintf(HttpTestManager::get_output_file(), "2XX CONNECT response triggered flow "
+                    "cutover to wizard\n");
+            }
+#endif
+
             return;
         }
         if ((status_code_num >= 100) && (status_code_num < 200))
