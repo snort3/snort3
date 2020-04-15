@@ -805,11 +805,13 @@ bool HttpBodyCutter::dangerous(const uint8_t* data, uint32_t length)
     }
 
     static const uint8_t match_string[] = { '<', 's', 'c', 'r', 'i', 'p', 't' };
+    static const uint8_t match_string_upper[] = { '<', 'S', 'C', 'R', 'I', 'P', 'T' };
     static const uint8_t string_length = sizeof(match_string);
     for (uint32_t k = 0; k < input_length; k++)
     {
         // partial_match is persistent, enabling matches that cross data boundaries
-        if (input_buf[k] == match_string[partial_match])
+        if ((input_buf[k] == match_string[partial_match]) ||
+            (input_buf[k] == match_string_upper[partial_match]))
         {
             if (++partial_match == string_length)
             {
