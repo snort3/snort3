@@ -38,6 +38,7 @@
 #include "framework/data_bus.h"
 #include "main/snort_config.h"
 #include "managers/inspector_manager.h"
+#include "packet_tracer/packet_tracer.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
 #include "utils/util_utf.h"
@@ -404,6 +405,8 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
     if ((!is_file_type_enabled()) and (!is_file_signature_enabled()))
     {
         update_file_size(data_size, position);
+        if (PacketTracer::is_active())
+            PacketTracer::log("File: Type and Sig not enabled\n");
         return false;
     }
 
@@ -427,11 +430,16 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
             update_file_size(data_size, position);
             processing_complete = true;
             stop_file_capture();
+            if (PacketTracer::is_active())
+                PacketTracer::log("File: Type unknown\n");
             return false;
         }
 
         if (get_file_type() != SNORT_FILE_TYPE_CONTINUE)
         {
+            if (PacketTracer::is_active())
+                PacketTracer::log("File: Type-%s found\n",
+                    file_type_name(get_file_type()).c_str());
             config_file_type(false);
             file_stats->files_processed[get_file_type()][get_file_direction()]++;
             //Check file type based on file policy
@@ -482,6 +490,8 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
             }
             else
             {
+                if (PacketTracer::is_active())
+                    PacketTracer::log("File: Sig depth exceeded\n");
                 return false;
             }
         }

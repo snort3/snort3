@@ -107,7 +107,7 @@ static void FTPDataProcess(
         if ( !get_rule_count() || (empty_policy->policy_id == p->flow->ips_policy_id) )
         {
             if ( PacketTracer::is_active() )
-                PacketTracer::log("Whitelisting Flow: FTP sig depth exceeded\n");
+                PacketTracer::log("Whitelisting Flow: FTP data\n");
             p->flow->set_ignore_direction(SSN_DIR_BOTH);
         }
     }
