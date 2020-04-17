@@ -24,6 +24,7 @@
 
 #include "flow/flow_cache.h"
 
+#include "hash/hash_defs.h"
 #include "hash/zhash.h"
 #include "helpers/flag_context.h"
 #include "ips_options/ips_flowbits.h"
@@ -62,9 +63,17 @@ FlowCache::FlowCache(const FlowCacheConfig& cfg) : config(cfg)
 
 FlowCache::~FlowCache()
 {
+    delete hash_table;
+    delete_uni();
+}
+
+void FlowCache::delete_uni()
+{
     delete uni_flows;
     delete uni_ip_flows;
-    delete hash_table;
+
+    uni_flows = nullptr;
+    uni_ip_flows = nullptr;
 }
 
 void FlowCache::push(Flow* flow)
@@ -122,6 +131,7 @@ Flow* FlowCache::allocate(const FlowKey* key)
         {
             Flow* new_flow = new Flow();
             push(new_flow);
+            memory::MemoryCap::update_allocations(sizeof(HashNode) + sizeof(FlowKey));
         }
         else if ( !prune_stale(timestamp, nullptr) )
         {
@@ -377,6 +387,7 @@ unsigned FlowCache::delete_active_flows(unsigned mode, unsigned num_to_delete, u
             delete_stats.update(FlowDeleteState::ALLOWED);
 
         delete flow;
+        memory::MemoryCap::update_deallocations(sizeof(HashNode) + sizeof(FlowKey));
         --flows_allocated;
         ++deleted;
         --num_to_delete;
@@ -400,6 +411,8 @@ unsigned FlowCache::delete_flows(unsigned num_to_delete)
 
         delete flow;
         delete_stats.update(FlowDeleteState::FREELIST);
+        memory::MemoryCap::update_deallocations(sizeof(HashNode) + sizeof(FlowKey));
+
         --flows_allocated;
         ++deleted;
         --num_to_delete;
@@ -429,8 +442,12 @@ unsigned FlowCache::purge()
     while ( Flow* flow = (Flow*)hash_table->pop() )
     {
         delete flow;
+        memory::MemoryCap::update_deallocations(sizeof(HashNode) + sizeof(FlowKey));
         --flows_allocated;
     }
+
+    // Remove these here so alloc/dealloc counts are right when Memory::get_pegs is called
+    delete_uni();
 
     return retired;
 }

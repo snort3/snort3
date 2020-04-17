@@ -146,10 +146,15 @@ bool MemoryCap::free_space(size_t n)
 }
 
 static size_t fudge_it(size_t n)
-{ return ((n >> 7) + 1) << 7; }
+{
+    return ((n >> 7) + 1) << 7;
+}
 
 void MemoryCap::update_allocations(size_t n)
 {
+    if (n == 0)
+        return;
+
     size_t k = n;
     n = fudge_it(n);
     mem_stats.total_fudge += (n - k);
@@ -162,6 +167,9 @@ void MemoryCap::update_allocations(size_t n)
 
 void MemoryCap::update_deallocations(size_t n)
 {
+    if (n == 0)
+      return;
+
     n = fudge_it(n);
     s_tracker.deallocate(n);
     mp_active_context.update_deallocs(n);

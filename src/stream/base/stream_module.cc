@@ -51,11 +51,11 @@ static const Parameter name[] = \
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr } \
 }
 
-FLOW_TYPE_PARAMS(ip_params, "180", "64");
-FLOW_TYPE_PARAMS(icmp_params, "180", "8");
-FLOW_TYPE_PARAMS(tcp_params, "3600", "11500");
-FLOW_TYPE_PARAMS(udp_params, "180", "128");
-FLOW_TYPE_PARAMS(user_params,"180", "256");
+FLOW_TYPE_PARAMS(ip_params, "180", "0");
+FLOW_TYPE_PARAMS(icmp_params, "180", "0");
+FLOW_TYPE_PARAMS(tcp_params, "3600", "11000");
+FLOW_TYPE_PARAMS(udp_params, "180", "0");
+FLOW_TYPE_PARAMS(user_params,"180", "0");
 FLOW_TYPE_PARAMS(file_params, "180", "32");
 
 #define FLOW_TYPE_TABLE(flow_type, proto, params) \

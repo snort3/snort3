@@ -29,6 +29,7 @@
 #include "framework/data_bus.h"
 #include "helpers/bitop.h"
 #include "ips_options/ips_flowbits.h"
+#include "memory/memory_cap.h"
 #include "protocols/packet.h"
 #include "sfip/sf_ip.h"
 #include "utils/stats.h"
@@ -38,11 +39,13 @@ using namespace snort;
 
 Flow::Flow()
 {
+    memory::MemoryCap::update_allocations(sizeof(*this) + sizeof(FlowStash));
     memset(this, 0, sizeof(*this));
 }
 
 Flow::~Flow()
 {
+    memory::MemoryCap::update_deallocations(sizeof(*this) + sizeof(FlowStash));
     term();
 }
 

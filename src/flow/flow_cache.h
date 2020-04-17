@@ -59,7 +59,6 @@ public:
     unsigned prune_excess(const snort::Flow* save_me);
     bool prune_one(PruneReason, bool do_cleanup);
     unsigned timeout(unsigned num_flows, time_t cur_time);
-
     unsigned delete_flows(unsigned num_to_delete);
 
     unsigned purge();
@@ -98,6 +97,7 @@ public:
     { return flows_allocated; }
 
 private:
+    void delete_uni();
     void push(snort::Flow*);
     void link_uni(snort::Flow*);
     void remove(snort::Flow*);
