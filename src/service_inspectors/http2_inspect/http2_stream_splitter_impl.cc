@@ -272,7 +272,10 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
             return StreamSplitter::ABORT;
         case V_TBD:
             session_data->scan_octets_seen[source_id] += length;
-            return StreamSplitter::SEARCH;
+            assert(session_data->scan_octets_seen[source_id] < 24);
+            *flush_offset = length;
+            session_data->payload_discard[source_id] = true;
+            return StreamSplitter::FLUSH;
         }
     }
     else
