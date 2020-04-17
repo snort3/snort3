@@ -125,6 +125,7 @@ class ThirdPartyAppIDAttributeData
     string* tls_org_unit_buf = nullptr;
     string* http_request_referer_buf = nullptr;
     string* ftp_command_user_buf = nullptr;
+    string* quic_sni_buf = nullptr;
 
     uint16_t http_request_uri_offset = 0;
     uint16_t http_request_uri_end_offset = 0;
@@ -179,6 +180,7 @@ public:
         if (tls_org_unit_buf) delete tls_org_unit_buf;
         if (http_request_referer_buf) delete http_request_referer_buf;
         if (ftp_command_user_buf) delete ftp_command_user_buf;
+        if (quic_sni_buf) delete quic_sni_buf;
     }
 
     // Note: calling these 2 times in a row, the 2nd time it returns null.
@@ -206,6 +208,7 @@ public:
     TPAD_GET(tls_org_unit)
     TPAD_GET(http_request_referer)
     TPAD_GET(ftp_command_user)
+    TPAD_GET(quic_sni)
 
     uint16_t http_request_uri_begin() { return http_request_uri_offset; }
     uint16_t http_request_uri_end() { return http_request_uri_end_offset; }
@@ -253,6 +256,7 @@ public:
     TPAD_SET(tls_org_unit)
     TPAD_SET_OFFSET(http_request_referer)
     TPAD_SET(ftp_command_user)
+    TPAD_SET(quic_sni)
 };
 
 #endif

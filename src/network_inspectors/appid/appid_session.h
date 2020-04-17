@@ -417,6 +417,7 @@ static inline bool is_svc_http_type(AppId serviceId)
         case APP_ID_SMTPS:
         case APP_ID_SSHELL:
         case APP_ID_SSL:
+        case APP_ID_QUIC:
             return true;
     }
     return false;

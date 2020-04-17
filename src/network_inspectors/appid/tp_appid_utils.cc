@@ -552,6 +552,23 @@ static inline void process_ftp_control(AppIdSession& asd,
     }
 }
 
+static inline void process_quic(AppIdSession& asd,
+    ThirdPartyAppIDAttributeData& attribute_data, AppidChangeBits& change_bits)
+{
+    const string* field = 0;
+    if ( !asd.tsession )
+        asd.tsession = (TlsSession*)snort_calloc(sizeof(TlsSession));
+
+    if ( (field=attribute_data.quic_sni()) != nullptr )
+    {
+        if ( appidDebug->is_active() )
+            LogMessage("AppIdDbg %s Flow is QUIC\n", appidDebug->get_debug_session());
+        asd.tsession->set_tls_host(field->c_str(), field->size(), change_bits);
+        if ( asd.service.get_id() <= APP_ID_NONE )
+            asd.set_service_appid_data(APP_ID_QUIC, change_bits);
+    }
+}
+
 static inline void process_third_party_results(AppIdSession& asd, int confidence,
     const vector<AppId>& proto_list, ThirdPartyAppIDAttributeData& attribute_data,
     AppidChangeBits& change_bits)
@@ -586,6 +603,9 @@ static inline void process_third_party_results(AppIdSession& asd, int confidence
 
     else if (contains(proto_list, APP_ID_FTP_CONTROL))
         process_ftp_control(asd, attribute_data);
+
+    else if (contains(proto_list, APP_ID_QUIC))
+        process_quic(asd, attribute_data, change_bits);
 }
 
 static inline void check_terminate_tp_module(AppIdSession& asd, uint16_t tpPktCount)
@@ -749,7 +769,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
                 && (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT)
                 || asd.payload.get_id() > APP_ID_NONE) )
             {
-                AppId snort_app_id;
+                AppId snort_app_id = APP_ID_NONE;
 
                 // if the packet is HTTP, then search for via pattern
                 if ( asd.get_session_flags(APPID_SESSION_HTTP_SESSION) )
@@ -836,6 +856,8 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
                     }
                     snort_app_id = APP_ID_SSL;
                 }
+                else if (asd.service.get_id() == APP_ID_QUIC)
+                    asd.set_tp_payload_app_id(*p, direction, tp_app_id, change_bits);
                 else
                 {
                     //for non-http protocols, tp id is treated like serviceId
