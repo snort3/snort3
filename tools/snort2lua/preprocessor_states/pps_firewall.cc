@@ -54,7 +54,7 @@ namespace preprocessors
             if (keyword == "fw_rule_path")
                 tmpval = parse_string_option("fw_rule_path", data_stream);
             else if (keyword == "qos_rule_path")
-                tmpval = parse_string_option("qos_rule_path", data_stream);
+                tmpval = parse_deleted_option("qos_rule_path", data_stream);
             else if (keyword == "dns_rule_path")
                 tmpval = parse_string_option("dns_rule_path", data_stream);
             else if (keyword == "url_rule_path")
@@ -103,7 +103,7 @@ namespace preprocessors
             else if (keyword == "fw_app_stats")
                 tmpval = parse_string_option("app_stats_filename", data_stream);
             else if (keyword == "fw_qos_rule_stats")
-                tmpval = parse_string_option("qos_rule_stats_filename", data_stream);
+                tmpval = parse_deleted_option("qos_rule_stats_filename", data_stream);
             else if (keyword == "fw_intf_stats")
                 tmpval = parse_string_option("intf_stats_filename", data_stream);
             else if (keyword == "fw_stats_time")
