@@ -36,9 +36,11 @@ public:
         expected_seg_size = 0;
     }
 
-
     Status scan(snort::Packet*, const uint8_t*, uint32_t len, uint32_t flags, uint32_t* fp ) override;
     bool finish(snort::Flow*) override;
+
+    bool is_paf() override
+    { return true; }
 
 private:
     uint16_t min;

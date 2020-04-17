@@ -324,10 +324,12 @@ public:
     void show(SnortConfig*) override;
     void eval(Packet*) override;
     void clear(Packet*) override;
+
     StreamSplitter* get_splitter(bool c2s) override
-    {
-        return new Dce2SmbSplitter(c2s);
-    }
+    { return new Dce2SmbSplitter(c2s); }
+
+    bool can_carve_files() const override
+    { return true; }
 
 private:
     dce2SmbProtoConf config;

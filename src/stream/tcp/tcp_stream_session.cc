@@ -139,6 +139,21 @@ void TcpStreamSession::set_no_ack(bool b)
     }
 }
 
+void TcpStreamSession::disable_reassembly(Flow* f)
+{
+    client.set_splitter((StreamSplitter*)nullptr);
+    server.set_splitter((StreamSplitter*)nullptr);
+
+    client.reassembler.purge_segment_list();
+    server.reassembler.purge_segment_list();
+
+    client.flush_policy = STREAM_FLPOLICY_IGNORE;
+    server.flush_policy = STREAM_FLPOLICY_IGNORE;
+
+    client.finalize_held_packet(f);
+    server.finalize_held_packet(f);
+}
+
 uint8_t TcpStreamSession::get_reassembly_direction()
 {
     uint8_t dir = SSN_DIR_NONE;

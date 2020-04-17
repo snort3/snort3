@@ -700,6 +700,12 @@ public:
     StreamSplitter* get_splitter(bool c2s) override
     { return new ImapSplitter(c2s); }
 
+    bool can_carve_files() const override
+    { return true; }
+
+    bool can_start_tls() const override
+    { return true; }
+
 private:
     IMAP_PROTO_CONF* config;
 };

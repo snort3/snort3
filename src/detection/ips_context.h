@@ -67,9 +67,11 @@ public:
     IpsContext(const IpsContext&) = delete;
     IpsContext& operator=(const IpsContext&) = delete;
 
+    void setup();
+    void clear();
+
     void set_context_data(unsigned id, IpsContextData*);
     IpsContextData* get_context_data(unsigned id) const;
-    void clear_context_data();
 
     void snapshot_flow(Flow*);
 
@@ -78,6 +80,9 @@ public:
 
     SnortProtocolId get_snort_protocol_id()
     { return flow.proto_id; }
+
+    void disable_detection();
+    void disable_inspection();
 
     enum ActiveRules
     { NONE, NON_CONTENT, CONTENT };
@@ -170,6 +175,7 @@ private:
     std::vector<Callback> post_callbacks;
     IpsContext* depends_on;
     IpsContext* next_to_process;
+    bool remove_gadget;
 };
 }
 #endif

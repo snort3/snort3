@@ -256,9 +256,10 @@ public:
     void eval(Packet*) override;
 
     class StreamSplitter* get_splitter(bool c2s) override
-    {
-        return new CipSplitter(c2s);
-    }
+    { return new CipSplitter(c2s); }
+
+    bool is_control_channel() const override
+    { return true; }
 
 private:
     CipProtoConf* config;

@@ -99,7 +99,7 @@ struct PerfConfig
     std::vector<snort::Module*> mods_to_prep;
     PerfConstraints* constraints;
 
-    PerfConfig() { constraints = new PerfConstraints; } 
+    PerfConfig() { constraints = new PerfConstraints; }
     ~PerfConfig() { delete constraints; }
 
     bool resolve();

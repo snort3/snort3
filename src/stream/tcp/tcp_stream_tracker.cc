@@ -509,7 +509,7 @@ void TcpStreamTracker::update_tracker_ack_sent(TcpSegmentDescriptor& tsd)
     }
 
     snd_wnd = tsd.get_seg_wnd();
-    reassembler.flush_on_ack_policy(tsd.get_pkt() );
+    reassembler.flush_on_ack_policy(tsd.get_pkt());
 }
 
 bool TcpStreamTracker::update_on_3whs_ack(TcpSegmentDescriptor& tsd)

@@ -83,6 +83,8 @@ void ContextSwitcher::start()
     c->packet->action = &c->packet->action_inst;
     c->state = IpsContext::BUSY;
 
+    c->setup();
+
     busy.emplace_back(c);
 }
 
@@ -98,7 +100,8 @@ void ContextSwitcher::stop()
 		"(wire) %" PRIu64 " cs::stop %" PRIu64 " (i=%zu, b=%zu)\n",
         get_packet_number(), c->context_num, idle.size(), busy.size());
 
-    c->clear_context_data();
+    c->clear();
+
     c->packet->active = nullptr;
     c->packet->action = nullptr;
     c->state = IpsContext::IDLE;
@@ -137,7 +140,7 @@ void ContextSwitcher::abort()
         c->abort();
         c->state = IpsContext::IDLE;
         c->clear_callbacks();
-        c->clear_context_data();
+        c->clear();
         idle.emplace_back(c);
     }
     non_flow_chain.abort();
@@ -160,6 +163,8 @@ IpsContext* ContextSwitcher::interrupt()
     idle.pop_back();
 
     c->state = IpsContext::BUSY;
+    c->setup();
+
     busy.emplace_back(c);
     return c;
 }
@@ -178,7 +183,7 @@ IpsContext* ContextSwitcher::complete()
         c->packet_number, c->context_num, idle.size(), busy.size());
 
     busy.pop_back();
-    c->clear_context_data();
+    c->clear();
     c->state = IpsContext::IDLE;
     idle.emplace_back(c);
 

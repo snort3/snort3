@@ -102,9 +102,7 @@ public:
     bool is_inactive();
 
     void set_service(SnortProtocolId snort_protocol_id_param)
-    {
-        snort_protocol_id = snort_protocol_id_param;
-    }
+    { snort_protocol_id = snort_protocol_id_param; }
 
     SnortProtocolId get_service() { return snort_protocol_id; }
 
@@ -135,6 +133,15 @@ public:
     { return api; }
 
     const char* get_name();
+
+    virtual bool is_control_channel() const
+    { return false; }
+
+    virtual bool can_carve_files() const
+    { return false; }
+
+    virtual bool can_start_tls() const
+    { return false; }
 
 public:
     static unsigned max_slots;

@@ -1410,6 +1410,12 @@ public:
     StreamSplitter* get_splitter(bool c2s) override
     { return new SmtpSplitter(c2s, config->max_auth_command_line_len); }
 
+    bool can_carve_files() const override
+    { return true; }
+
+    bool can_start_tls() const override
+    { return true; }
+
     void ProcessSmtpCmdsList(const SmtpCmd*);
 
 private:

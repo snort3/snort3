@@ -217,6 +217,12 @@ public:
     void eval(Packet*) override;
     StreamSplitter* get_splitter(bool) override;
 
+    bool is_control_channel() const override
+    { return true; }
+
+    bool can_start_tls() const override
+    { return true; }
+
     FTP_SERVER_PROTO_CONF* ftp_server;
 };
 

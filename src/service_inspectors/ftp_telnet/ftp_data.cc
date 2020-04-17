@@ -245,6 +245,9 @@ public:
 
     void eval(Packet*) override;
     StreamSplitter* get_splitter(bool to_server) override;
+
+    bool can_carve_files() const override
+    { return true; }
 };
 
 class FtpDataModule : public Module

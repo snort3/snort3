@@ -199,6 +199,9 @@ public:
     class StreamSplitter* get_splitter(bool to_server) override
     { return new SipSplitter(to_server); }
 
+    bool is_control_channel() const override
+    { return true; }
+
 private:
     SIP_PROTO_CONF* config;
 };

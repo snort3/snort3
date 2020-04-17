@@ -143,7 +143,7 @@ public:
         Flow*, Packet* p, uint32_t gid, uint32_t sid,
         uint32_t eventId, uint32_t eventSecond);
 
-    // Get reassembly direction for given session
+    static void disable_reassembly(Flow*);
     static char get_reassembly_direction(Flow*);
 
     // Returns true if stream data for the flow is in sequence, otherwise return false.

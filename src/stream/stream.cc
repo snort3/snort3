@@ -737,6 +737,12 @@ void Stream::set_extra_data(
     flow->session->set_extra_data(p, flag);
 }
 
+void Stream::disable_reassembly(Flow* flow)
+{
+    assert(flow && flow->session);
+    return flow->session->disable_reassembly(flow);
+}
+
 char Stream::get_reassembly_direction(Flow* flow)
 {
     assert(flow && flow->session);

@@ -136,7 +136,7 @@ bool GreCodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
     if (GRE_SEQ(greh_out))
     {
         uint16_t len = 4; // Flags, version and protocol
-        
+
         if (GRE_CHKSUM(greh_out))
             len += 4;
 
@@ -151,7 +151,7 @@ bool GreCodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
         assert(raw_len >= 6);
         // Checksum field is zero for computing checksum
         *(uint16_t*)(buf.data() + 4) = 0;
-        *(uint16_t*)(buf.data() + 4) = checksum::cksum_add((uint16_t*)buf.data(), 
+        *(uint16_t*)(buf.data() + 4) = checksum::cksum_add((uint16_t*)buf.data(),
             buf.size());
     }
 

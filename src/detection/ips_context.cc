@@ -32,6 +32,7 @@
 #include "events/event_queue.h"
 #include "events/sfeventq.h"
 #include "main/snort_config.h"
+#include "stream/stream.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -88,6 +89,31 @@ IpsContext::~IpsContext()
     delete packet;
 }
 
+void IpsContext::setup()
+{
+    conf = SnortConfig::get_conf();
+    remove_gadget = false;
+}
+
+void IpsContext::clear()
+{
+    for ( auto id : ids_in_use )
+    {
+        auto* p = data[id];
+        if ( p )
+            p->clear();
+    }
+    if ( remove_gadget and packet->flow and !packet->is_rebuilt() )
+    {
+       Stream::disable_reassembly(packet->flow);
+
+       if ( packet->flow->gadget )
+           packet->flow->clear_gadget();
+    }
+    remove_gadget = false;
+    assert(post_callbacks.empty());
+}
+
 void IpsContext::set_context_data(unsigned id, IpsContextData* cd)
 {
     assert(id < data.size());
@@ -99,16 +125,6 @@ IpsContextData* IpsContext::get_context_data(unsigned id) const
 {
     assert(id < data.size());
     return data[id];
-}
-
-void IpsContext::clear_context_data()
-{
-    for ( auto id : ids_in_use )
-    {
-        auto* p = data[id];
-        if ( p )
-            p->clear();
-    }
 }
 
 void IpsContext::snapshot_flow(Flow* f)
@@ -124,6 +140,26 @@ void IpsContext::post_detection()
 
     post_callbacks.clear();
 }
+
+void IpsContext::disable_detection()
+{
+    if ( active_rules == IpsContext::NONE )
+        return;
+
+    IpsPolicy* empty_policy = get_empty_ips_policy(conf);
+    set_ips_policy(empty_policy);
+
+    if ( Flow* f = packet->flow )
+    {
+        f->ips_policy_id = empty_policy->policy_id;
+        f->set_to_client_detection(false);
+        f->set_to_server_detection(false);
+    }
+    active_rules = IpsContext::NONE;
+}
+
+void IpsContext::disable_inspection()
+{ remove_gadget = true; }
 
 //--------------------------------------------------------------------------
 // unit tests

@@ -362,10 +362,12 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
 
     HttpModule::increment_peg_counts(PEG_REASSEMBLE);
 
-    const bool is_body = (session_data->section_type[source_id] == SEC_BODY_CHUNK) ||
-                         (session_data->section_type[source_id] == SEC_BODY_CL) ||
-                         (session_data->section_type[source_id] == SEC_BODY_OLD) ||
-                         (session_data->section_type[source_id] == SEC_BODY_H2);
+    const bool is_body =
+        (session_data->section_type[source_id] == SEC_BODY_CHUNK) ||
+        (session_data->section_type[source_id] == SEC_BODY_CL) ||
+        (session_data->section_type[source_id] == SEC_BODY_OLD) ||
+        (session_data->section_type[source_id] == SEC_BODY_H2);
+
     uint8_t*& buffer = session_data->section_buffer[source_id];
     if (buffer == nullptr)
     {

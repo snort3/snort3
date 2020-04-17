@@ -54,13 +54,16 @@ public:
     void show(snort::SnortConfig*) override;
     void eval(snort::Packet* p) override;
     void clear(snort::Packet* p) override;
+
     HttpStreamSplitter* get_splitter(bool is_client_to_server) override
-    {
-        return new HttpStreamSplitter(is_client_to_server, this);
-    }
+    { return new HttpStreamSplitter(is_client_to_server, this); }
+
+    bool can_carve_files() const override
+    { return true; }
+
     static HttpEnums::InspectSection get_latest_is(const snort::Packet* p);
     static HttpCommon::SourceId get_latest_src(const snort::Packet* p);
-    void disable_detection(snort::Packet *p);
+    void disable_detection(snort::Packet* p);
 
     // Callbacks that provide "extra data"
     static int get_xtra_trueip(snort::Flow*, uint8_t**, uint32_t*, uint32_t*);

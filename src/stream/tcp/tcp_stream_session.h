@@ -29,7 +29,7 @@
 #include "tcp_stream_config.h"
 #include "tcp_stream_tracker.h"
 
-// FIXIT-L session tracking must be split from reassembly
+// FIXIT-L session tracking could be split from reassembly
 // into a separate module a la ip_session.cc and ip_defrag.cc
 // (of course defrag should also be cleaned up)
 class TcpStreamSession : public Session
@@ -40,16 +40,22 @@ public:
     bool setup(snort::Packet*) override;
     void clear() override;
     void cleanup(snort::Packet* = nullptr) override;
+
     void set_splitter(bool, snort::StreamSplitter*) override;
     snort::StreamSplitter* get_splitter(bool) override;
+
     bool is_sequenced(uint8_t /*dir*/) override;
     bool are_packets_missing(uint8_t /*dir*/) override;
+
+    void disable_reassembly(snort::Flow*) override;
     uint8_t get_reassembly_direction() override;
     uint8_t missing_in_reassembled(uint8_t /*dir*/) override;
+
     bool add_alert(snort::Packet*, uint32_t gid, uint32_t sid) override;
     bool check_alerted(snort::Packet*, uint32_t gid, uint32_t sid) override;
     int update_alert(snort::Packet*, uint32_t /*gid*/, uint32_t /*sid*/,
         uint32_t /*event_id*/, uint32_t /*event_second*/) override;
+
     bool set_packet_action_to_hold(snort::Packet*) override;
 
     uint16_t get_mss(bool to_server) const;

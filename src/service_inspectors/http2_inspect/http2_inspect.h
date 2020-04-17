@@ -47,10 +47,12 @@ public:
     bool configure(snort::SnortConfig*) override;
     void eval(snort::Packet* p) override;
     void clear(snort::Packet* p) override;
+
     Http2StreamSplitter* get_splitter(bool is_client_to_server) override
-    {
-        return new Http2StreamSplitter(is_client_to_server);
-    }
+    { return new Http2StreamSplitter(is_client_to_server); }
+
+    bool can_carve_files() const override
+    { return true; }
 
 private:
     friend Http2Api;
