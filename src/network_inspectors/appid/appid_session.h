@@ -210,6 +210,8 @@ public:
     std::unordered_map<unsigned, AppIdFlowData*> flow_data;
     CommonAppIdData common;
     uint16_t session_packet_count = 0;
+    uint16_t init_pkts_without_reply = 0;
+    uint64_t init_bytes_without_reply = 0;
 
     snort::SfIp service_ip;
     uint16_t service_port = 0;
@@ -285,10 +287,13 @@ public:
     void clear_session_flags(uint64_t flags) { common.flags &= ~flags; }
     uint64_t get_session_flags(uint64_t flags) const { return (common.flags & flags); }
     void set_service_detected() { common.flags |= APPID_SESSION_SERVICE_DETECTED; }
-    bool is_service_detected() { return ((common.flags & APPID_SESSION_SERVICE_DETECTED) == 0) ? false : true; }
+    bool is_service_detected() { return ((common.flags & APPID_SESSION_SERVICE_DETECTED) == 0) ?
+        false : true; }
     void set_client_detected() { common.flags |= APPID_SESSION_CLIENT_DETECTED; }
-    bool is_client_detected() { return ((common.flags & APPID_SESSION_CLIENT_DETECTED) == 0) ? false : true; }
+    bool is_client_detected() { return ((common.flags & APPID_SESSION_CLIENT_DETECTED) == 0) ?
+        false : true; }
     bool is_decrypted() { return ((common.flags & APPID_SESSION_DECRYPTED) == 0) ? false : true; }
+    bool is_svc_taking_too_much_time();
 
     void* get_flow_data(unsigned id);
     int add_flow_data(void* data, unsigned id, AppIdFreeFCN);
@@ -338,8 +343,10 @@ public:
     bool is_tp_processing_done() const;
     bool is_tp_appid_available() const;
 
-    void set_tp_app_id(snort::Packet& p, AppidSessionDirection dir, AppId app_id, AppidChangeBits& change_bits);
-    void set_tp_payload_app_id(snort::Packet& p, AppidSessionDirection dir, AppId app_id, AppidChangeBits& change_bits);
+    void set_tp_app_id(snort::Packet& p, AppidSessionDirection dir, AppId app_id,
+        AppidChangeBits& change_bits);
+    void set_tp_payload_app_id(snort::Packet& p, AppidSessionDirection dir, AppId app_id,
+        AppidChangeBits& change_bits);
 
     inline void set_tp_app_id(AppId app_id) {
         if (tp_app_id != app_id)

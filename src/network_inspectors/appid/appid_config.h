@@ -40,6 +40,13 @@
 
 #define APP_ID_PORT_ARRAY_SIZE  65536
 
+#define MIN_MAX_BYTES_BEFORE_SERVICE_FAIL 4096
+#define MIN_MAX_PKTS_BEFORE_SERVICE_FAIL 5
+#define MIN_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES 15
+
+extern SnortProtocolId snortId_for_unsynchronized;
+extern SnortProtocolId snortId_for_ftp_data;
+extern SnortProtocolId snortId_for_http2;
 
 class PatternClientDetector;
 class PatternServiceDetector;
@@ -96,6 +103,9 @@ public:
     bool http_response_version_enabled = false;
     bool allow_port_wildcard_host_cache = false;
     bool recheck_for_portservice_appid = false;
+    uint64_t max_bytes_before_service_fail = MIN_MAX_BYTES_BEFORE_SERVICE_FAIL;
+    uint16_t max_packet_before_service_fail = MIN_MAX_PKTS_BEFORE_SERVICE_FAIL;
+    uint16_t max_packet_service_fail_ignore_bytes = MIN_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES;
 
     OdpContext(AppIdConfig&, snort::SnortConfig*);
     void initialize();
@@ -120,7 +130,8 @@ public:
         return host_port_cache.find(ip, port, proto, *this);
     }
 
-    bool host_port_cache_add(const snort::SfIp* ip, uint16_t port, IpProtocol proto, unsigned type, AppId appid)
+    bool host_port_cache_add(const snort::SfIp* ip, uint16_t port, IpProtocol proto, unsigned type,
+        AppId appid)
     {
         return host_port_cache.add(ip, port, proto, type, appid);
     }

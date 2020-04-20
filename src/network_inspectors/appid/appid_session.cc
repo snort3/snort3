@@ -298,7 +298,8 @@ void AppIdSession::sync_with_snort_protocol_id(AppId newAppId, Packet* p)
             break;
         }
 
-        AppInfoTableEntry* entry = ctxt.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(newAppId);
+        AppInfoTableEntry* entry =
+            ctxt.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(newAppId);
         if (entry)
         {
             SnortProtocolId tmp_snort_protocol_id = entry->snort_protocol_id;
@@ -345,7 +346,8 @@ void AppIdSession::check_app_detection_restart(AppidChangeBits& change_bits)
         encrypted.referred_id = pick_referred_payload_app_id();
         reinit_session_data(change_bits);
         if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s SSL decryption is available, restarting app detection\n", appidDebug->get_debug_session());
+            LogMessage("AppIdDbg %s SSL decryption is available, restarting app detection\n",
+                appidDebug->get_debug_session());
 
         // APPID_SESSION_ENCRYPTED is set upon receiving a command which upgrades the session to
         // SSL. Next packet after the command will have encrypted traffic.  In the case of a
@@ -415,8 +417,9 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
     if ((scan_flags & SCAN_SSL_HOST_FLAG) and tls_str)
     {
         size_t size = strlen(tls_str);
-        if ((ret = ctxt.get_odp_ctxt().get_ssl_matchers().scan_hostname((const uint8_t*)tls_str, size,
-                client_id, payload_id)))
+        if ((ret =
+            ctxt.get_odp_ctxt().get_ssl_matchers().scan_hostname((const uint8_t*)tls_str, size,
+            client_id, payload_id)))
         {
             if (client.get_id() == APP_ID_NONE or client.get_id() == APP_ID_SSL_CLIENT)
                 set_client_appid_data(client_id, change_bits);
@@ -429,7 +432,7 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
     {
         size_t size = strlen(tls_str);
         if ((ret = ctxt.get_odp_ctxt().get_ssl_matchers().scan_cname((const uint8_t*)tls_str, size,
-                client_id, payload_id)))
+            client_id, payload_id)))
         {
             if (client.get_id() == APP_ID_NONE or client.get_id() == APP_ID_SSL_CLIENT)
                 set_client_appid_data(client_id, change_bits);
@@ -442,7 +445,7 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
     {
         size_t size = strlen(tls_str);
         if ((ret = ctxt.get_odp_ctxt().get_ssl_matchers().scan_cname((const uint8_t*)tls_str, size,
-                client_id, payload_id)))
+            client_id, payload_id)))
         {
             set_client_appid_data(client_id, change_bits);
             set_payload_appid_data(payload_id, change_bits);
@@ -454,7 +457,8 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
         payload.get_id() == APP_ID_NONE)
     {
         if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s End of SSL/TLS handshake detected with no payloadAppId, so setting to unknown\n", appidDebug->get_debug_session());
+            LogMessage("AppIdDbg %s End of SSL/TLS handshake detected with no payloadAppId, "
+                "so setting to unknown\n", appidDebug->get_debug_session());
         payload.set_id(APP_ID_UNKNOWN);
     }
 }
@@ -503,12 +507,11 @@ void AppIdSession::set_client_appid_data(AppId id, AppidChangeBits& change_bits,
     if (id != cur_id)
     {
         if (cur_id)
-            if (ctxt.get_odp_ctxt().get_app_info_mgr().get_priority(cur_id) > ctxt.get_odp_ctxt().get_app_info_mgr().get_priority(id))
+            if (ctxt.get_odp_ctxt().get_app_info_mgr().get_priority(cur_id) >
+                ctxt.get_odp_ctxt().get_app_info_mgr().get_priority(id))
                 return;
-
         client.set_id(id);
     }
-
     client.set_version(version, change_bits);
 }
 
@@ -529,7 +532,8 @@ void AppIdSession::set_payload_appid_data(AppId id, AppidChangeBits& change_bits
     if (id <= APP_ID_NONE)
         return;
 
-    if (ctxt.get_odp_ctxt().get_app_info_mgr().get_priority(payload.get_id()) > ctxt.get_odp_ctxt().get_app_info_mgr().get_priority(id))
+    if (ctxt.get_odp_ctxt().get_app_info_mgr().get_priority(payload.get_id()) >
+        ctxt.get_odp_ctxt().get_app_info_mgr().get_priority(id))
         return;
     payload.set_id(id);
     payload.set_version(version, change_bits);
@@ -549,6 +553,13 @@ void AppIdSession::set_service_appid_data(AppId id, AppidChangeBits& change_bits
     }
 
     service.update(id, change_bits, version);
+}
+
+bool AppIdSession::is_svc_taking_too_much_time()
+{
+    return (init_pkts_without_reply > ctxt.get_odp_ctxt().max_packet_service_fail_ignore_bytes ||
+        (init_pkts_without_reply > ctxt.get_odp_ctxt().max_packet_before_service_fail &&
+        init_bytes_without_reply > ctxt.get_odp_ctxt().max_bytes_before_service_fail));
 }
 
 void AppIdSession::free_tls_session_data()
@@ -616,7 +627,6 @@ void* AppIdSession::remove_flow_data(unsigned id)
         delete it->second;
         flow_data.erase(it);
     }
-
     return data;
 }
 
@@ -959,12 +969,14 @@ bool AppIdSession::is_tp_appid_available() const
     return true;
 }
 
-void AppIdSession::set_tp_app_id(Packet& p, AppidSessionDirection dir, AppId app_id, AppidChangeBits& change_bits)
+void AppIdSession::set_tp_app_id(Packet& p, AppidSessionDirection dir, AppId app_id,
+    AppidChangeBits& change_bits)
 {
     if (tp_app_id != app_id)
     {
         tp_app_id = app_id;
-        AppInfoTableEntry* entry = ctxt.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(tp_app_id);
+        AppInfoTableEntry* entry =
+            ctxt.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(tp_app_id);
         if (entry)
         {
             tp_app_id_deferred = (entry->flags & APPINFO_FLAG_DEFER) ? true : false;
@@ -973,12 +985,14 @@ void AppIdSession::set_tp_app_id(Packet& p, AppidSessionDirection dir, AppId app
     }
 }
 
-void AppIdSession::set_tp_payload_app_id(Packet& p, AppidSessionDirection dir, AppId app_id, AppidChangeBits& change_bits)
+void AppIdSession::set_tp_payload_app_id(Packet& p, AppidSessionDirection dir, AppId app_id,
+    AppidChangeBits& change_bits)
 {
     if (tp_payload_app_id != app_id)
     {
         tp_payload_app_id = app_id;
-        AppInfoTableEntry* entry = ctxt.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(tp_payload_app_id);
+        AppInfoTableEntry* entry =
+            ctxt.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(tp_payload_app_id);
         if (entry)
         {
             tp_payload_app_id_deferred = (entry->flags & APPINFO_FLAG_DEFER_PAYLOAD) ? true : false;

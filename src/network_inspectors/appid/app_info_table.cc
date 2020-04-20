@@ -58,17 +58,17 @@ AppInfoTableEntry::AppInfoTableEntry(AppId id, char* name)
     app_name_key = AppInfoManager::strdup_to_lower(name);
 }
 
-AppInfoTableEntry::AppInfoTableEntry(AppId id, char* name, AppId sid, AppId cid, AppId pid)
-    : appId(id), serviceId(sid), clientId(cid), payloadId(pid), app_name(name)
+AppInfoTableEntry::AppInfoTableEntry(AppId id, char* name, AppId sid, AppId cid, AppId pid) :
+    appId(id), serviceId(sid), clientId(cid), payloadId(pid), app_name(name)
 {
     app_name_key = AppInfoManager::strdup_to_lower(name);
 }
 
 AppInfoTableEntry::~AppInfoTableEntry()
 {
-    if ( app_name )
+    if (app_name)
         snort_free(app_name);
-    if ( app_name_key )
+    if (app_name_key)
         snort_free(app_name_key);
 }
 
@@ -87,27 +87,26 @@ AppInfoTableEntry* AppInfoManager::find_app_info_by_name(const char* app_name)
     const char* search_name = AppInfoManager::strdup_to_lower(app_name);
 
     app = app_info_name_table.find(search_name);
-    if ( app != app_info_name_table.end() )
+    if (app != app_info_name_table.end())
         entry = app->second;
 
     snort_free((void*)search_name);
     return entry;
 }
 
-bool AppInfoManager::add_entry_to_app_info_name_table(const char* app_name, AppInfoTableEntry* entry)
+bool AppInfoManager::add_entry_to_app_info_name_table(const char* app_name,
+    AppInfoTableEntry* entry)
 {
     bool added = true;
 
-    if ( !is_existing_entry(entry) )
+    if (!is_existing_entry(entry))
         app_info_name_table[app_name] = entry;
     else
     {
-        WarningMessage(
-            "App name, \"%s\"is a duplicate entry will be shared by each detector.\n",
+        WarningMessage("App name, \"%s\" is a duplicate entry will be shared by each detector.\n",
             app_name);
         added = false;
     }
-
     return added;
 }
 
@@ -115,8 +114,8 @@ AppId AppInfoManager::get_static_app_info_entry(AppId appid)
 {
     if (appid > 0 && appid < SF_APPID_BUILDIN_MAX)
         return appid;
-    if ( ( appid >= SF_APPID_CSD_MIN ) &&
-        appid < ( SF_APPID_CSD_MIN + ( SF_APPID_MAX - SF_APPID_BUILDIN_MAX ) ) )
+    if ((appid >= SF_APPID_CSD_MIN) &&
+        appid < (SF_APPID_CSD_MIN + (SF_APPID_MAX - SF_APPID_BUILDIN_MAX)))
         return (SF_APPID_BUILDIN_MAX + appid - SF_APPID_CSD_MIN);
     return 0;
 }
@@ -131,7 +130,6 @@ char* AppInfoManager::strdup_to_lower(const char* source)
         *lcd = tolower(*lcd);
         lcd++;
     }
-
     return dest;
 }
 
@@ -140,8 +138,8 @@ bool AppInfoManager::configured()
     return !app_info_table.empty();
 }
 
-AppInfoTableEntry* AppInfoManager::get_app_info_entry(AppId appId, const
-    AppInfoTable& lookup_table)
+AppInfoTableEntry* AppInfoManager::get_app_info_entry(AppId appId,
+    const AppInfoTable& lookup_table)
 {
     AppId tmp;
     AppInfoTable::const_iterator app;
@@ -150,16 +148,15 @@ AppInfoTableEntry* AppInfoManager::get_app_info_entry(AppId appId, const
     if ((tmp = get_static_app_info_entry(appId)))
     {
         app = lookup_table.find(tmp);
-        if ( app != lookup_table.end() )
+        if (app != lookup_table.end())
             entry = app->second;
     }
     else
     {
         app = custom_app_info_table.find(appId);
-        if ( app != custom_app_info_table.end() )
+        if (app != custom_app_info_table.end())
             entry = app->second;
     }
-
     return entry;
 }
 
@@ -182,13 +179,12 @@ AppInfoTableEntry* AppInfoManager::add_dynamic_app_entry(const char* app_name)
         entry = new AppInfoTableEntry(next_custom_appid++, snort_strdup(app_name));
         custom_app_info_table[entry->appId] = entry;
 
-        if ( !add_entry_to_app_info_name_table(entry->app_name_key, entry) )
+        if (!add_entry_to_app_info_name_table(entry->app_name_key, entry))
         {
             delete entry;
             return nullptr;
         }
     }
-
     return entry;
 }
 
@@ -325,16 +321,22 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
             else if (!(strcasecmp(conf_key, "host_port_app_cache_lookup_interval")))
             {
                 int host_port_app_cache_lookup_interval = atoi(conf_val);
-                if (host_port_app_cache_lookup_interval < MIN_HOST_PORT_APP_CACHE_LOOKUP_INTERVAL
-                    || host_port_app_cache_lookup_interval > MAX_HOST_PORT_APP_CACHE_LOOKUP_INTERVAL )
+                if (host_port_app_cache_lookup_interval <
+                    MIN_HOST_PORT_APP_CACHE_LOOKUP_INTERVAL ||
+                    host_port_app_cache_lookup_interval >
+                    MAX_HOST_PORT_APP_CACHE_LOOKUP_INTERVAL)
                 {
-                     ParseWarning(WARN_CONF,
-                        "AppId: invalid host_port_app_cache_lookup_interval %d, must be between %d and %d\n.",
-                        host_port_app_cache_lookup_interval, MIN_HOST_PORT_APP_CACHE_LOOKUP_INTERVAL , MAX_HOST_PORT_APP_CACHE_LOOKUP_INTERVAL);
+                    ParseWarning(WARN_CONF,
+                        "AppId: invalid host_port_app_cache_lookup_interval %d, "
+                        "must be between %d and %d\n.",
+                        host_port_app_cache_lookup_interval,
+                        MIN_HOST_PORT_APP_CACHE_LOOKUP_INTERVAL,
+                        MAX_HOST_PORT_APP_CACHE_LOOKUP_INTERVAL);
                 }
                 else
                 {
-                     odp_ctxt.host_port_app_cache_lookup_interval = host_port_app_cache_lookup_interval;
+                    odp_ctxt.host_port_app_cache_lookup_interval =
+                        host_port_app_cache_lookup_interval;
                 }
             }
             else if (!(strcasecmp(conf_key, "host_port_app_cache_lookup_range")))
@@ -344,12 +346,14 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                     || host_port_app_cache_lookup_range > MAX_HOST_PORT_APP_CACHE_LOOKUP_RANGE)
                 {
                      ParseWarning(WARN_CONF,
-                        "AppId: invalid host_port_app_cache_lookup_range %d, must be between %d and %d\n.",
-                        host_port_app_cache_lookup_range , MIN_HOST_PORT_APP_CACHE_LOOKUP_RANGE, MAX_HOST_PORT_APP_CACHE_LOOKUP_RANGE);
+                        "AppId: invalid host_port_app_cache_lookup_range %d, "
+                        "must be between %d and %d\n.", host_port_app_cache_lookup_range,
+                        MIN_HOST_PORT_APP_CACHE_LOOKUP_RANGE,
+                        MAX_HOST_PORT_APP_CACHE_LOOKUP_RANGE);
                 }
                 else
                 {
-                     odp_ctxt.host_port_app_cache_lookup_range = host_port_app_cache_lookup_range;
+                    odp_ctxt.host_port_app_cache_lookup_range = host_port_app_cache_lookup_range;
                 }
             }
             else if (!(strcasecmp(conf_key, "is_host_port_app_cache_runtime")))
@@ -398,7 +402,8 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                     set_app_info_flags(APP_ID_BITTORRENT, APPINFO_FLAG_DEFER);
                     set_app_info_flags(APP_ID_BITTORRENT, APPINFO_FLAG_DEFER_PAYLOAD);
                     odp_ctxt.max_tp_flow_depth = 25;
-                    LogMessage("AppId: host_port_app_cache_lookup_interval %d\n", odp_ctxt.host_port_app_cache_lookup_interval);
+                    LogMessage("AppId: host_port_app_cache_lookup_interval %d\n",
+                        odp_ctxt.host_port_app_cache_lookup_interval);
                     LogMessage("AppId: recheck_for_portservice_appid enabled\n");
                     LogMessage("AppId: defer_to_thirdparty %d\n", APP_ID_BITTORRENT);
                     LogMessage("AppId: defer_payload_to_thirdparty %d\n", APP_ID_BITTORRENT);
@@ -503,6 +508,51 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                     continue;
                 }
             }
+            else if (!(strcasecmp(conf_key, "max_bytes_before_service_fail")))
+            {
+                uint64_t max_bytes_before_service_fail = atoi(conf_val);
+                if (max_bytes_before_service_fail < MIN_MAX_BYTES_BEFORE_SERVICE_FAIL)
+                {
+                    ParseWarning(WARN_CONF, "AppId: invalid max_bytes_before_service_fail "
+                        "%" PRIu64 " must be greater than %u.\n", max_bytes_before_service_fail,
+                        MIN_MAX_BYTES_BEFORE_SERVICE_FAIL);
+                }
+                else
+                {
+                    odp_ctxt.max_bytes_before_service_fail = max_bytes_before_service_fail;
+                }
+            }
+            else if (!(strcasecmp(conf_key, "max_packet_before_service_fail")))
+            {
+                uint16_t max_packet_before_service_fail = atoi(conf_val);
+                if (max_packet_before_service_fail < MIN_MAX_PKTS_BEFORE_SERVICE_FAIL)
+                {
+                    ParseWarning(WARN_CONF, "AppId: invalid max_packet_before_service_fail "
+                        "%" PRIu16 ", must be greater than %u.\n", max_packet_before_service_fail,
+                        MIN_MAX_PKTS_BEFORE_SERVICE_FAIL);
+                }
+                else
+                {
+                    odp_ctxt.max_packet_before_service_fail = max_packet_before_service_fail;
+                }
+            }
+            else if (!(strcasecmp(conf_key, "max_packet_service_fail_ignore_bytes")))
+            {
+                uint16_t max_packet_service_fail_ignore_bytes = atoi(conf_val);
+                if (max_packet_service_fail_ignore_bytes <
+                    MIN_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES)
+                {
+                    ParseWarning(WARN_CONF, "AppId: invalid max_packet_service_fail_ignore_bytes"
+                        "%" PRIu16 ", must be greater than %u.\n",
+                        max_packet_service_fail_ignore_bytes,
+                        MIN_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES);
+                }
+                else
+                {
+                    odp_ctxt.max_packet_service_fail_ignore_bytes =
+                        max_packet_service_fail_ignore_bytes;
+                }
+            }
             /* App Priority bit set*/
             else if (!(strcasecmp(conf_key, "app_priority")))
             {
@@ -602,7 +652,7 @@ SnortProtocolId AppInfoManager::add_appid_protocol_reference(const char* protoco
 void AppInfoManager::init_appid_info_table(AppIdConfig& config,
     SnortConfig* sc, OdpContext& odp_ctxt)
 {
-    if ( !config.app_detector_dir )
+    if (!config.app_detector_dir)
     {
         return;  // no lua detectors, no rule support, already warned
     }
@@ -613,7 +663,7 @@ void AppInfoManager::init_appid_info_table(AppIdConfig& config,
 
     FILE* tableFile = fopen(filepath, "r");
 
-    if ( !tableFile )
+    if (!tableFile)
     {
         ParseError("appid: could not open %s", filepath);
     }
@@ -694,7 +744,7 @@ void AppInfoManager::init_appid_info_table(AppIdConfig& config,
             if ((app_id = get_static_app_info_entry(entry->payloadId)))
                 app_info_payload_table[app_id] = entry;
 
-            if ( !add_entry_to_app_info_name_table(entry->app_name_key, entry) )
+            if (!add_entry_to_app_info_name_table(entry->app_name_key, entry))
                 delete entry;
         }
         fclose(tableFile);

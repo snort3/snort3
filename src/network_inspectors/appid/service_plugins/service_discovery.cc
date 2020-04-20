@@ -670,6 +670,16 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
             }
         }
 
+        /* If the session appears to only have the client sending data then 
+           we must mark the service unknown to prevent pending forever. */
+        if (asd.service_disco_state == APPID_DISCO_STATE_STATEFUL &&
+            asd.service.get_id() == APP_ID_NONE && asd.is_svc_taking_too_much_time())
+        {
+                asd.stop_service_inspection(p, direction);
+                asd.service.set_id(APP_ID_UNKNOWN, asd.ctxt.get_odp_ctxt());   
+                return isTpAppidDiscoveryDone;
+        }
+
         AppIdDnsSession* dsession = asd.get_dns_session();
         if (asd.service.get_id() == APP_ID_DNS && asd.ctxt.get_odp_ctxt().dns_host_reporting
             && dsession->get_host())
