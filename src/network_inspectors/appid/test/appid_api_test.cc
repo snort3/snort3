@@ -59,10 +59,18 @@ bool SslPatternMatchers::scan_hostname(unsigned char const*, unsigned long, AppI
     return true;
 }
 
-bool SslPatternMatchers::scan_cname(unsigned char const*, unsigned long, AppId& client_id, AppId& payload_id)
+bool SslPatternMatchers::scan_cname(unsigned char const* cname, unsigned long, AppId& client_id, AppId& payload_id)
 {
-    client_id++;
-    payload_id++;
+    if (((const char*)cname) == APPID_UT_TLS_HOST)
+    {
+        client_id = APPID_UT_ID + 2;;
+        payload_id = APPID_UT_ID + 2;
+    }
+    else
+    {
+        client_id = APPID_UT_ID + 3;
+        payload_id = APPID_UT_ID + 3;
+    }
     return true;
 }
 
@@ -206,14 +214,27 @@ TEST(appid_api, ssl_app_group_id_lookup)
     AppidChangeBits change_bits;
     mock_session->tsession->set_tls_host("www.cisco.com", 13, change_bits);
     mock_session->tsession->set_tls_cname("www.cisco.com", 13);
+    mock_session->tsession->set_tls_org_unit("Cisco", 5);
     STRCMP_EQUAL(mock_session->tsession->get_tls_host(), "www.cisco.com");
     STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), "www.cisco.com");
-    val = appid_api.ssl_app_group_id_lookup(flow, (const char*)APPID_UT_TLS_HOST, (const char*)APPID_UT_TLS_HOST, service, client, payload);
+    STRCMP_EQUAL(mock_session->tsession->get_tls_org_unit(), "Cisco");
+    val = appid_api.ssl_app_group_id_lookup(flow, (const char*)APPID_UT_TLS_HOST,
+        (const char*)APPID_UT_TLS_HOST, service, client, payload);
     CHECK_TRUE(val);
     CHECK_EQUAL(client, APPID_UT_ID + 2);
     CHECK_EQUAL(payload, APPID_UT_ID + 2);
     STRCMP_EQUAL(mock_session->tsession->get_tls_host(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), APPID_UT_TLS_HOST);
+    STRCMP_EQUAL(mock_session->tsession->get_tls_org_unit(), "Cisco");
+    string host = "";
+    val = appid_api.ssl_app_group_id_lookup(flow, (const char*)(host.c_str()),
+        (const char*)APPID_UT_TLS_HOST, service, client, payload, (const char*)("Google"));
+    CHECK_TRUE(val);
+    CHECK_EQUAL(client, APPID_UT_ID + 3);
+    CHECK_EQUAL(payload, APPID_UT_ID + 3);
+    STRCMP_EQUAL(mock_session->tsession->get_tls_host(), nullptr);
+    STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), APPID_UT_TLS_HOST);
+    STRCMP_EQUAL(mock_session->tsession->get_tls_org_unit(), "Google");
 }
 
 TEST(appid_api, create_appid_session_api)

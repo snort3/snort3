@@ -349,7 +349,7 @@ static void parse_client_initiation(const uint8_t* data, uint16_t size, ServiceS
     }
 }
 
-static bool parse_certificates(ServiceSSLData* ss)
+static bool parse_certificates(ServiceSSLData* ss, AppIdDiscoveryArgs& args)
 {
     bool success = false;
     if (ss->certs_data and ss->certs_len)
@@ -390,7 +390,7 @@ static bool parse_certificates(ServiceSSLData* ss)
             {
                 if ((cert_name = X509_NAME_oneline(X509_get_subject_name(cert), nullptr, 0)))
                 {
-                    if (!common_name)
+                    if (!(args.asd.scan_flags & SCAN_DO_NOT_OVERRIDE_COMMON_NAME_FLAG) and !common_name)
                     {
                         if ((start = strstr(cert_name, COMMON_NAME_STR)))
                         {
@@ -407,7 +407,7 @@ static bool parse_certificates(ServiceSSLData* ss)
                             start = nullptr;
                         }
                     }
-                    if (!org_name)
+                    if (!(args.asd.scan_flags & SCAN_DO_NOT_OVERRIDE_ORG_NAME_FLAG) and !org_name)
                     {
                         if ((start = strstr(cert_name, COMMON_NAME_STR)))
                         {
@@ -479,7 +479,8 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
     {
         ss->state = SSL_STATE_CONNECTION;
 
-        if (args.dir == APP_ID_FROM_INITIATOR)
+        if (!(args.asd.scan_flags & SCAN_DO_NOT_OVERRIDE_SERVER_NAME_FLAG) and
+            args.dir == APP_ID_FROM_INITIATOR)
         {
             parse_client_initiation(data, size, ss);
             goto inprocess;
@@ -697,7 +698,9 @@ fail:
 success:
     if (ss->certs_data && ss->certs_len)
     {
-        if (!parse_certificates(ss))
+        if (!((args.asd.scan_flags & SCAN_DO_NOT_OVERRIDE_COMMON_NAME_FLAG) and
+            (args.asd.scan_flags & SCAN_DO_NOT_OVERRIDE_ORG_NAME_FLAG)) and
+            (!parse_certificates(ss, args)))
         {
             goto fail;
         }

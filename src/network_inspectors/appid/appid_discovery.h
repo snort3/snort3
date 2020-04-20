@@ -57,6 +57,9 @@ struct Packet;
 #define SCAN_HTTP_XWORKINGWITH_FLAG (1<<7)
 #define SCAN_HTTP_CONTENT_TYPE_FLAG (1<<8)
 #define SCAN_HTTP_URI_FLAG          (1<<9)
+#define SCAN_DO_NOT_OVERRIDE_SERVER_NAME_FLAG (1<<10)
+#define SCAN_DO_NOT_OVERRIDE_COMMON_NAME_FLAG (1<<11)
+#define SCAN_DO_NOT_OVERRIDE_ORG_NAME_FLAG    (1<<12)
 
 class AppIdPatternMatchNode
 {

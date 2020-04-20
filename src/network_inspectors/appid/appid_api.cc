@@ -189,7 +189,7 @@ uint32_t AppIdApi::consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t, IpP
 }
 
 bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name, const char* common_name,
-    AppId& service_id, AppId& client_id, AppId& payload_id)
+    AppId& service_id, AppId& client_id, AppId& payload_id, const char* org_unit)
 {
     AppIdSession* asd = nullptr;
     service_id = APP_ID_NONE;
@@ -212,6 +212,7 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name, cons
                 payload_id);
             asd->tsession->set_tls_host(server_name, strlen(server_name), change_bits);
             asd->scan_flags |= SCAN_SSL_HOST_FLAG;
+            asd->scan_flags |= SCAN_DO_NOT_OVERRIDE_SERVER_NAME_FLAG;
         }
 
         if (common_name)
@@ -220,6 +221,15 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name, cons
                 payload_id);
             asd->tsession->set_tls_cname(common_name, strlen(common_name));
             asd->scan_flags |= SCAN_SSL_CERTIFICATE_FLAG;
+            asd->scan_flags |= SCAN_DO_NOT_OVERRIDE_COMMON_NAME_FLAG;
+        }
+
+        if (org_unit)
+        {
+            ssl_matchers.scan_cname((const uint8_t*)org_unit, strlen(org_unit), client_id,
+                payload_id);
+             asd->tsession->set_tls_org_unit(org_unit, strlen(org_unit));
+             asd->scan_flags |= SCAN_DO_NOT_OVERRIDE_ORG_NAME_FLAG;
         }
 
         service_id = asd->get_application_ids_service();
@@ -242,6 +252,11 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name, cons
             if (common_name)
                 ssl_matchers.scan_cname((const uint8_t*)common_name, strlen(common_name), client_id,
                     payload_id);
+
+            if (org_unit)
+                ssl_matchers.scan_cname((const uint8_t*)org_unit, strlen(org_unit), client_id,
+                    payload_id);
+
         }
     }
 

@@ -143,7 +143,7 @@ struct TlsSession
     {
         if (tls_host)
             snort_free(tls_host);
-        if (!new_tls_host)
+        if (!new_tls_host or *new_tls_host == '\0')
         {
             tls_host = nullptr;
             return;
@@ -156,6 +156,11 @@ struct TlsSession
     {
         if (tls_cname)
             snort_free(tls_cname);
+        if (!new_tls_cname or *new_tls_cname == '\0')
+        {
+            tls_cname = nullptr;
+            return;
+        }
         tls_cname = len? snort::snort_strndup(new_tls_cname,len) :
             const_cast<char*>(new_tls_cname);
     }
@@ -164,6 +169,11 @@ struct TlsSession
     {
         if (tls_org_unit)
             snort_free(tls_org_unit);
+        if (!new_tls_org_unit or *new_tls_org_unit == '\0')
+        {
+            tls_org_unit = nullptr;
+            return;
+        }
         tls_org_unit = len? snort::snort_strndup(new_tls_org_unit,len) :
             const_cast<char*>(new_tls_org_unit);
     }

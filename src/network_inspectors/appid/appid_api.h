@@ -59,7 +59,8 @@ public:
     uint32_t produce_ha_state(const Flow& flow, uint8_t* buf);
     uint32_t consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t length, IpProtocol,
         SfIp*, uint16_t initiatorPort);
-    bool ssl_app_group_id_lookup(Flow* flow, const char*, const char*, AppId& service_id, AppId& client_id, AppId& payload_id);
+    bool ssl_app_group_id_lookup(Flow* flow, const char*, const char*, AppId& service_id,
+        AppId& client_id, AppId& payload_id, const char* org_unit = nullptr);
     AppIdSessionApi* create_appid_session_api(const Flow& flow);
     void free_appid_session_api(AppIdSessionApi* api);
 };

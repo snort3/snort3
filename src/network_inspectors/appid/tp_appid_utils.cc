@@ -516,14 +516,18 @@ static inline void process_ssl(AppIdSession& asd,
 
     reinspect_ssl_appid = check_ssl_appid_for_reinspect(tmpAppId, asd.ctxt.get_odp_ctxt());
 
-    if (asd.tsession->get_tls_host() == nullptr and ((field = attribute_data.tls_host(false)) != nullptr))
+    if (!(asd.scan_flags & SCAN_DO_NOT_OVERRIDE_SERVER_NAME_FLAG) and
+        asd.tsession->get_tls_host() == nullptr and
+        (field = attribute_data.tls_host(false)) != nullptr)
     {
         asd.tsession->set_tls_host(field->c_str(), field->size(), change_bits);
         if (reinspect_ssl_appid)
             asd.scan_flags |= SCAN_SSL_HOST_FLAG;
     }
 
-    if ((asd.tsession->get_tls_cname() == nullptr and (field = attribute_data.tls_cname()) != nullptr))
+    if (!(asd.scan_flags & SCAN_DO_NOT_OVERRIDE_COMMON_NAME_FLAG) and
+        asd.tsession->get_tls_cname() == nullptr and
+        (field = attribute_data.tls_cname()) != nullptr)
     {
         asd.tsession->set_tls_cname(field->c_str(), field->size());
         if (reinspect_ssl_appid)
@@ -532,7 +536,9 @@ static inline void process_ssl(AppIdSession& asd,
 
     if (reinspect_ssl_appid)
     {
-        if ((field = attribute_data.tls_org_unit()) != nullptr)
+        if (!(asd.scan_flags & SCAN_DO_NOT_OVERRIDE_ORG_NAME_FLAG) and
+            asd.tsession->get_tls_org_unit() == nullptr and
+            (field = attribute_data.tls_org_unit()) != nullptr)
         {
             asd.tsession->set_tls_org_unit(field->c_str(), field->size());
         }
