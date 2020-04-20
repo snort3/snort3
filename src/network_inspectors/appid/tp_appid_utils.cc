@@ -86,7 +86,9 @@ static inline int check_ssl_appid_for_reinspect(AppId app_id, OdpContext& odp_ct
 static inline void process_http_session(AppIdSession& asd,
     ThirdPartyAppIDAttributeData& attribute_data, AppidChangeBits& change_bits)
 {
-    AppIdHttpSession* hsession = asd.get_http_session();
+    AppIdHttpSession* hsession = asd.get_http_session(0);
+    if (!hsession)
+        hsession = asd.create_http_session();
     string* field=0;
     bool own=true;
 
@@ -398,6 +400,8 @@ static inline void process_rtmp(AppIdSession& asd,
     ThirdPartyAppIDAttributeData& attribute_data, int confidence, AppidChangeBits& change_bits)
 {
     AppIdHttpSession* hsession = asd.get_http_session();
+    if (!hsession)
+        hsession = asd.create_http_session();
     AppId service_id = 0;
     AppId client_id = 0;
     AppId payload_id = 0;
@@ -799,6 +803,8 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
                     }
 
                     AppIdHttpSession* hsession = asd.get_http_session();
+                    if (!hsession)
+                        hsession = asd.create_http_session();
                     hsession->process_http_packet(direction, change_bits, asd.ctxt.get_odp_ctxt().get_http_matchers());
 
                     // If SSL over HTTP tunnel, make sure Snort knows that it's encrypted.

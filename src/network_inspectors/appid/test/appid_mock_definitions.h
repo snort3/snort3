@@ -21,7 +21,11 @@
 #ifndef APPID_MOCK_DEFINITIONS_H
 #define APPID_MOCK_DEFINITIONS_H
 
+#include "appid_detector.h"
+#include "appid_module.h"
+#include "appid_peg_counts.h"
 #include "service_inspectors/http_inspect/http_msg_header.h"
+#include "utils/stats.h"
 
 class Inspector;
 class ThirdPartyAppIdContext;
@@ -53,6 +57,18 @@ void LogLabel(const char*, FILE*) {}
 SearchTool::SearchTool(char const*, bool) { }
 SearchTool::~SearchTool() { }
 }
+
+void ApplicationDescriptor::set_id(AppId app_id){ my_id = app_id;}
+void ServiceAppDescriptor::set_id(AppId app_id, OdpContext&){ set_id(app_id); }
+void ServiceAppDescriptor::update_stats(AppId){}
+void ServiceAppDescriptor::set_port_service_id(AppId app_id){ port_service_id = app_id;}
+void ClientAppDescriptor::update_user(AppId app_id, const char* username)
+{
+    my_username = username;
+    my_user_id = app_id;
+}
+void ClientAppDescriptor::update_stats(AppId) {}
+void PayloadAppDescriptor::update_stats(AppId) {}
 
 AppIdDiscovery::AppIdDiscovery() { }
 AppIdDiscovery::~AppIdDiscovery() { }

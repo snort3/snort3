@@ -60,7 +60,10 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
 
     direction = event_type == REQUEST_EVENT ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
 
-    AppIdHttpSession* hsession = asd->get_http_session();
+    AppIdHttpSession* hsession = asd->get_http_session(0);
+
+    if (!hsession)
+        hsession = asd->create_http_session();
 
     if (direction == APP_ID_FROM_INITIATOR)
     {

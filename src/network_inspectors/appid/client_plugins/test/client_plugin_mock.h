@@ -20,6 +20,10 @@
 #ifndef CLIENT_PLUGIN_MOCK_H
 #define CLIENT_PLUGIN_MOCK_H
 
+#include "appid_detector.h"
+#include "appid_module.h"
+#include "appid_peg_counts.h"
+#include "utils/stats.h"
 namespace snort
 {
 // Stubs for messages
@@ -89,6 +93,7 @@ void AppIdDiscovery::register_udp_pattern(AppIdDetector*, const uint8_t* const, 
     int, unsigned){}
 int AppIdDiscovery::add_service_port(AppIdDetector*, const ServiceDetectorPort&){return 0;}
 void ApplicationDescriptor::set_id(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&){}
+void ApplicationDescriptor::set_id(AppId){}
 AppIdDiscovery::AppIdDiscovery() { }
 AppIdDiscovery::~AppIdDiscovery() { }
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }

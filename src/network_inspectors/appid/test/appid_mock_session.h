@@ -112,7 +112,8 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp*, uint16_t, AppIdInspect
 
 AppIdSession::~AppIdSession()
 {
-    delete hsession;
+    for (auto* hsession: hsessions)
+        delete hsession;
     delete tsession;
     delete dsession;
     if (netbios_name)
@@ -245,12 +246,24 @@ bool AppIdSession::is_ssl_session_decrypted()
 {
     return is_session_decrypted;
 }
-
-AppIdHttpSession* AppIdSession::get_http_session()
+AppIdHttpSession* AppIdSession::create_http_session()
 {
-    if ( !hsession )
-        hsession = new MockAppIdHttpSession(*this);
+    AppIdHttpSession* hsession = new MockAppIdHttpSession(*this);
+    hsession->client.set_id(APPID_UT_ID);
+    hsession->payload.set_id(APPID_UT_ID);
+    hsession->misc_app_id = APPID_UT_ID;
+    hsession->referred_payload_app_id = APPID_UT_ID;
+    hsessions.push_back(hsession);
     return hsession;
+}
+
+AppIdHttpSession* AppIdSession::get_http_session(uint32_t stream_index)
+{
+    if (stream_index < hsessions.size())
+    {
+        return hsessions[stream_index];
+    }
+    return nullptr;
 }
 
 AppIdDnsSession* AppIdSession::get_dns_session()

@@ -199,6 +199,7 @@ TEST_GROUP(appid_http_event)
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         flow = new Flow;
         mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
+        mock_session->create_http_session();
         flow->set_flow_data(mock_session);
         appidDebug = new AppIdDebug();
         appidDebug->activate(nullptr, nullptr, 0);

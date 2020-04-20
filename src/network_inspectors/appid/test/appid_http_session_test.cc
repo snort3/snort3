@@ -38,6 +38,7 @@
 #include "appid_mock_definitions.h"
 #include "appid_mock_inspector.h"
 #include "appid_mock_flow.h"
+#include "appid_peg_counts.h"
 
 #include "detector_plugins/http_url_patterns.h"
 
@@ -101,12 +102,10 @@ OdpContext* AppIdContext::odp_ctxt = &stub_odp_ctxt;
 // AppIdSession mock functions
 AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector& inspector)
     : FlowData(inspector_id, &inspector), ctxt(stub_ctxt)
-{
-}
+{}
 
 AppIdSession::~AppIdSession()
-{
-}
+{}
 
 void AppIdSession::set_client_appid_data(AppId, AppidChangeBits&, char*)
 {

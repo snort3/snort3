@@ -87,26 +87,50 @@ TEST(appid_session_api, get_only_service_app_id)
 
 TEST(appid_session_api, get_misc_app_id)
 {
+    mock_session->is_http2 = false;
     AppId id = appid_session_api->get_misc_app_id();
     CHECK_EQUAL(id, APPID_UT_ID);
+    mock_session->is_http2 = true;
+    id = appid_session_api->get_client_app_id(0);
+    CHECK_EQUAL(APPID_UT_ID, id);
+    id = appid_session_api->get_client_app_id(3);
+    CHECK_EQUAL(APP_ID_UNKNOWN, id);
 }
 
 TEST(appid_session_api, get_client_app_id)
 {
+    mock_session->is_http2 = false;
     AppId id = appid_session_api->get_client_app_id();
     CHECK_EQUAL(id, APPID_UT_ID);
+    mock_session->is_http2 = true;
+    id = appid_session_api->get_client_app_id(0);
+    CHECK_EQUAL(APPID_UT_ID, id);
+    id = appid_session_api->get_client_app_id(3);
+    CHECK_EQUAL(APP_ID_UNKNOWN, id);
 }
 
 TEST(appid_session_api, get_payload_app_id)
 {
+    mock_session->is_http2 = false;
     AppId id = appid_session_api->get_payload_app_id();
     CHECK_EQUAL(id, APPID_UT_ID);
+    mock_session->is_http2 = true;
+    id = appid_session_api->get_payload_app_id(0);
+    CHECK_EQUAL(APPID_UT_ID, id);
+    id = appid_session_api->get_payload_app_id(2);
+    CHECK_EQUAL(APP_ID_UNKNOWN, id);
 }
 
 TEST(appid_session_api, get_referred_app_id)
 {
+    mock_session->is_http2 = false;
     AppId id = appid_session_api->get_referred_app_id();
     CHECK_EQUAL(id, APPID_UT_ID);
+    mock_session->is_http2 = true;
+    id = appid_session_api->get_payload_app_id(0);
+    CHECK_EQUAL(APPID_UT_ID, id);
+    id = appid_session_api->get_payload_app_id(2);
+    CHECK_EQUAL(APP_ID_UNKNOWN, id);
 }
 
 TEST(appid_session_api, get_service_port)
@@ -243,8 +267,20 @@ TEST(appid_session_api, get_client_version)
     const char* val;
     val = appid_session_api->get_client_version();
     STRCMP_EQUAL(val, APPID_UT_CLIENT_VERSION);
+    val = appid_session_api->get_client_version(0);
+    STRCMP_EQUAL(APPID_UT_CLIENT_VERSION, val);
+    mock_session->is_http2 = true;
+    val = appid_session_api->get_client_version(2);
+    STRCMP_EQUAL(nullptr, val);
 }
-
+TEST(appid_session_api, get_http_session)
+{
+    AppIdHttpSession* val;
+    val = appid_session_api->get_http_session();
+    CHECK_TRUE(val != nullptr);
+    val = appid_session_api->get_http_session(2);
+    CHECK_TRUE(val == nullptr);
+}
 TEST(appid_session_api, get_appid_session_attribute)
 {
     uint64_t flags = 0x0000000000000001;
@@ -372,6 +408,7 @@ int main(int argc, char** argv)
 {
     mock_init_appid_pegs();
     mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
+    mock_session->create_http_session();
     int rc = CommandLineTestRunner::RunAllTests(argc, argv);
     mock_cleanup_appid_pegs();
     return rc;

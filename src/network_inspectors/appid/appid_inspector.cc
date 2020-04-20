@@ -38,6 +38,7 @@
 #include "appid_debug.h"
 #include "appid_discovery.h"
 #include "appid_http_event_handler.h"
+#include "appid_peg_counts.h"
 #include "appid_session.h"
 #include "appid_stats.h"
 #include "client_plugins/client_discovery.h"

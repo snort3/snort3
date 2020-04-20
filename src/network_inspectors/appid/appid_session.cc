@@ -227,8 +227,8 @@ void AppIdSession::reinit_session_data(AppidChangeBits& change_bits)
         payload.reset();
         referred_payload_app_id = tp_payload_app_id = APP_ID_NONE;
         clear_session_flags(APPID_SESSION_CONTINUE);
-        if (hsession)
-            hsession->set_field(MISC_URL_FID, nullptr, change_bits);
+        if (!hsessions.empty())
+            hsessions[0]->set_field(MISC_URL_FID, nullptr, change_bits);
     }
 
     //service
@@ -471,13 +471,13 @@ void AppIdSession::examine_rtmp_metadata(AppidChangeBits& change_bits)
     AppId referred_payload_id = APP_ID_NONE;
     char* version = nullptr;
 
-    if (!hsession)
-        hsession = new AppIdHttpSession(*this);
+    if (hsessions.empty())
+        return;
 
-    if (const char* url = hsession->get_cfield(MISC_URL_FID))
+    if (const char* url = hsessions[0]->get_cfield(MISC_URL_FID))
     {
         HttpPatternMatchers& http_matchers = ctxt.get_odp_ctxt().get_http_matchers();
-        const char* referer = hsession->get_cfield(REQ_REFERER_FID);
+        const char* referer = hsessions[0]->get_cfield(REQ_REFERER_FID);
         if (((http_matchers.get_appid_from_url(nullptr, url, &version,
             referer, &client_id, &service_id, &payload_id,
             &referred_payload_id, true, ctxt.get_odp_ctxt())) ||
@@ -591,7 +591,8 @@ void AppIdSession::delete_session_data()
         rna_ss = subtype;
     }
 
-    delete hsession;
+    for (auto* hsession: hsessions)
+        delete hsession;
     free_tls_session_data();
     delete dsession;
 }
@@ -880,7 +881,7 @@ void AppIdSession::reset_session_data()
     delete_session_data();
     netbios_name = nullptr;
     netbios_domain = nullptr;
-    hsession = nullptr;
+    hsessions.clear();
 
     tp_payload_app_id = APP_ID_UNKNOWN;
     tp_app_id = APP_ID_UNKNOWN;
@@ -906,16 +907,23 @@ void AppIdSession::clear_http_flags()
 
 void AppIdSession::clear_http_data()
 {
-    if (!hsession)
+    if (hsessions.empty())
         return;
-    hsession->clear_all_fields();
+    hsessions[0]->clear_all_fields();
 }
 
-AppIdHttpSession* AppIdSession::get_http_session()
+AppIdHttpSession* AppIdSession::create_http_session()
 {
-    if (!hsession)
-        hsession = new AppIdHttpSession(*this);
+    AppIdHttpSession* hsession = new AppIdHttpSession(*this);
+    hsessions.push_back(hsession);
     return hsession;
+}
+AppIdHttpSession* AppIdSession::get_http_session(uint32_t stream_index)
+{
+    if (stream_index < hsessions.size())
+        return hsessions[stream_index];
+    else
+        return nullptr;
 }
 
 AppIdDnsSession* AppIdSession::get_dns_session()

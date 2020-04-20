@@ -33,14 +33,12 @@
 #include "protocols/packet.h"
 #include "pub_sub/appid_events.h"
 
-#include "app_info_table.h"
-#include "appid_config.h"
-#include "appid_module.h"
-#include "appid_peg_counts.h"
 #include "appid_types.h"
+#include "application_ids.h"
 
 class AppIdDetector;
 class AppIdSession;
+class OdpContext;
 
 class ApplicationDescriptor
 {
@@ -68,17 +66,7 @@ public:
         return my_id;
     }
 
-    virtual void set_id(AppId app_id)
-    {
-        if ( my_id != app_id )
-        {
-            my_id = app_id;
-            if ( app_id > APP_ID_NONE )
-                update_stats(app_id);
-            else if ( app_id == APP_ID_UNKNOWN )
-                appid_stats.appid_unknown++;
-        }
-    }
+    virtual void set_id(AppId app_id);
 
     virtual void set_id(const snort::Packet& p, AppIdSession& asd, AppidSessionDirection dir, AppId app_id, AppidChangeBits& change_bits);
 
@@ -118,14 +106,7 @@ class ServiceAppDescriptor : public ApplicationDescriptor
 public:
     ServiceAppDescriptor() = default;
 
-    void set_id(AppId app_id, OdpContext& odp_ctxt)
-    {
-        if (get_id() != app_id)
-        {
-            ApplicationDescriptor::set_id(app_id);
-            deferred = odp_ctxt.get_app_info_mgr().get_app_info_flags(app_id, APPINFO_FLAG_DEFER);
-        }
-    }
+    void set_id(AppId app_id, OdpContext& odp_ctxt);
 
     void reset() override
     {
@@ -133,25 +114,14 @@ public:
         port_service_id = APP_ID_NONE;
     }
 
-    void update_stats(AppId id) override
-    {
-        AppIdPegCounts::inc_service_count(id);
-    }
+    void update_stats(AppId id) override;
 
     AppId get_port_service_id() const
     {
         return port_service_id;
     }
 
-    void set_port_service_id(AppId id)
-    {
-        if ( id != port_service_id )
-        {
-            port_service_id = id;
-            if ( id > APP_ID_NONE )
-                AppIdPegCounts::inc_service_count(id);
-        }
-    }
+    void set_port_service_id(AppId id);
 
     bool get_deferred()
     {
@@ -176,18 +146,7 @@ public:
         my_user_id = APP_ID_NONE;
     }
 
-    void update_user(AppId app_id, const char* username)
-    {
-        if ( my_username != username )
-            my_username = username;
-
-        if ( my_user_id != app_id )
-        {
-            my_user_id = app_id;
-            if ( app_id > APP_ID_NONE )
-                AppIdPegCounts::inc_user_count(app_id);
-        }
-    }
+    void update_user(AppId app_id, const char* username);
 
     AppId get_user_id() const
     {
@@ -199,10 +158,7 @@ public:
         return my_username.empty() ? nullptr : my_username.c_str();
     }
 
-    void update_stats(AppId id) override
-    {
-        AppIdPegCounts::inc_client_count(id);
-    }
+    void update_stats(AppId id) override;
 
 private:
     std::string my_username;
@@ -219,10 +175,7 @@ public:
         ApplicationDescriptor::reset();
     }
 
-    void update_stats(AppId id) override
-    {
-        AppIdPegCounts::inc_payload_count(id);
-    }
+    void update_stats(AppId id) override;
 };
 
 #endif

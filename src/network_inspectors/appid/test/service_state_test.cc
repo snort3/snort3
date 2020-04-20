@@ -72,6 +72,13 @@ THREAD_LOCAL AppIdStats appid_stats;
 void AppIdDebug::activate(const Flow*, const AppIdSession*, bool) { active = true; }
 
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
+void ApplicationDescriptor::set_id(AppId){}
+void ServiceAppDescriptor::set_id(AppId, OdpContext&){}
+void ServiceAppDescriptor::update_stats(AppId){}
+void ServiceAppDescriptor::set_port_service_id(AppId){}
+void ClientAppDescriptor::update_user(AppId, const char*){}
+void ClientAppDescriptor::update_stats(AppId) {}
+void PayloadAppDescriptor::update_stats(AppId) {}
 AppIdConfig::~AppIdConfig() { }
 AppIdConfig stub_config;
 AppIdContext stub_ctxt(stub_config);

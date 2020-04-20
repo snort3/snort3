@@ -37,6 +37,7 @@
 #include "app_info_table.h"
 #include "appid_debug.h"
 #include "appid_inspector.h"
+#include "appid_peg_counts.h"
 #include "client_plugins/client_discovery.h"
 #include "detector_plugins/detector_dns.h"
 #include "detector_plugins/detector_pattern.h"

@@ -32,6 +32,8 @@
 #include "app_info_table.h"
 #include "appid_api.h"
 #include "appid_app_descriptor.h"
+#include "appid_config.h"
+#include "appid_http_session.h"
 #include "appid_types.h"
 #include "application_ids.h"
 #include "detector_plugins/http_url_patterns.h"
@@ -328,6 +330,10 @@ public:
     AppId get_application_ids_client();
     AppId get_application_ids_payload();
     AppId get_application_ids_misc();
+    uint32_t get_hsessions_size()
+    {
+        return hsessions.size();
+    }
 
     bool is_ssl_session_decrypted();
     void examine_ssl_metadata(snort::Packet*, AppidChangeBits& change_bits);
@@ -346,7 +352,8 @@ public:
     void clear_http_data();
     void reset_session_data();
 
-    AppIdHttpSession* get_http_session();
+    AppIdHttpSession* create_http_session();
+    AppIdHttpSession* get_http_session(uint32_t stream_index = 0);
     AppIdDnsSession* get_dns_session();
 
     bool is_tp_appid_done() const;
@@ -400,7 +407,7 @@ public:
     }
 
 private:
-    AppIdHttpSession* hsession = nullptr;
+    std::vector<AppIdHttpSession*> hsessions;
     AppIdDnsSession* dsession = nullptr;
 
     void reinit_session_data(AppidChangeBits& change_bits);

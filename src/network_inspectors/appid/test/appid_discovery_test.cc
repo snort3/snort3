@@ -25,6 +25,7 @@
 
 #include "host_tracker/host_cache.h"
 #include "network_inspectors/appid/appid_discovery.cc"
+#include "network_inspectors/appid/appid_peg_counts.h"
 
 #include "search_engines/search_tool.h"
 #include "utils/sflsq.cc"
@@ -123,6 +124,17 @@ SipPatternMatchers::~SipPatternMatchers() { }
 SslPatternMatchers::~SslPatternMatchers() { }
 
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
+void ApplicationDescriptor::set_id(AppId app_id){my_id = app_id;}
+void ServiceAppDescriptor::set_id(AppId app_id, OdpContext& odp_ctxt)
+{
+    set_id(app_id);
+    deferred = odp_ctxt.get_app_info_mgr().get_app_info_flags(app_id, APPINFO_FLAG_DEFER);
+}
+void ServiceAppDescriptor::update_stats(AppId){}
+void ServiceAppDescriptor::set_port_service_id(AppId){}
+void ClientAppDescriptor::update_user(AppId, const char*){}
+void ClientAppDescriptor::update_stats(AppId) {}
+void PayloadAppDescriptor::update_stats(AppId) {}
 
 // Stubs for AppIdModule
 AppIdModule::AppIdModule(): Module("appid_mock", "appid_mock_help") {}

@@ -19,6 +19,10 @@
 
 #ifndef DETECTOR_PLUGINS_MOCK_H
 #define DETECTOR_PLUGINS_MOCK_H
+#include "appid_detector.h"
+#include "appid_module.h"
+#include "appid_peg_counts.h"
+#include "utils/stats.h"
 
 namespace snort
 {
@@ -201,7 +205,12 @@ bool AppIdReloadTuner::tune_resources(unsigned int)
 {
     return true;
 }
-
+void ApplicationDescriptor::set_id(AppId){}
+void ServiceAppDescriptor::set_id(AppId, OdpContext&){}
+void ServiceAppDescriptor::update_stats(AppId){}
+void ClientAppDescriptor::update_user(AppId, const char*){}
+void ClientAppDescriptor::update_stats(AppId) {}
+void PayloadAppDescriptor::update_stats(AppId) {}
 void ServiceDiscovery::initialize()
 { }
 

@@ -60,36 +60,110 @@ AppId AppIdSessionApi::get_only_service_app_id()
     return asd->pick_only_service_app_id();
 }
 
-AppId AppIdSessionApi::get_misc_app_id()
+AppId AppIdSessionApi::get_misc_app_id(uint32_t stream_index)
 {
-    return asd->get_application_ids_misc();
+    if (asd->is_http2)
+    {
+        if (stream_index >= asd->get_hsessions_size())
+            return APP_ID_UNKNOWN;
+        return asd->get_http_session(stream_index)->misc_app_id;
+    }
+    else
+        return asd->get_application_ids_misc();
 }
 
-AppId AppIdSessionApi::get_client_app_id()
+AppId AppIdSessionApi::get_client_app_id(uint32_t stream_index)
 {
-    return asd->get_application_ids_client();
+    if (asd->is_http2)
+    {
+        if (stream_index >= asd->get_hsessions_size())
+            return APP_ID_UNKNOWN;
+        return asd->get_http_session(stream_index)->client.get_id();
+    }
+    else
+        return asd->get_application_ids_client();
 }
 
-AppId AppIdSessionApi::get_payload_app_id()
+AppId AppIdSessionApi::get_payload_app_id(uint32_t stream_index)
 {
-    return asd->get_application_ids_payload();
+    if (asd->is_http2)
+    {
+        if (stream_index >= asd->get_hsessions_size())
+            return APP_ID_UNKNOWN;
+        return asd->get_http_session(stream_index)->payload.get_id();
+    }
+    else
+        return asd->get_application_ids_payload();
 }
 
-AppId AppIdSessionApi::get_referred_app_id()
+AppId AppIdSessionApi::get_referred_app_id(uint32_t stream_index)
 {
-    return asd->pick_referred_payload_app_id();
+    if (asd->is_http2)
+    {
+        if (stream_index >= asd->get_hsessions_size())
+            return APP_ID_UNKNOWN;
+        return asd->get_http_session(stream_index)->referred_payload_app_id;
+    }
+    else
+        return asd->pick_referred_payload_app_id();
 }
 
 void AppIdSessionApi::get_app_id(AppId& service, AppId& client,
-    AppId& payload, AppId& misc, AppId& referred)
+    AppId& payload, AppId& misc, AppId& referred, uint32_t stream_index)
 {
-    asd->get_application_ids(service, client, payload, misc);
-    referred = asd->pick_referred_payload_app_id();
+    if (asd->is_http2)
+    {
+        if (stream_index >= asd->get_hsessions_size())
+            service = client = payload = misc = referred = APP_ID_UNKNOWN;
+        else
+        {
+            service = asd->get_application_ids_service();
+            client = asd->get_http_session(stream_index)->client.get_id();
+            payload = asd->get_http_session(stream_index)->payload.get_id();
+            misc = asd->get_http_session(stream_index)->misc_app_id;
+            referred = asd->get_http_session(stream_index)->referred_payload_app_id;
+        }
+    }
+    else
+    {
+        asd->get_application_ids(service, client, payload, misc);
+        referred = asd->pick_referred_payload_app_id();
+    }
 }
 
 void AppIdSessionApi::get_app_id(AppId* service, AppId* client,
-    AppId* payload, AppId* misc, AppId* referred)
+    AppId* payload, AppId* misc, AppId* referred, uint32_t stream_index)
 {
+    if (asd->is_http2)
+    {
+        if (stream_index >= asd->get_hsessions_size())
+        {
+            if(service)
+                *service = APP_ID_UNKNOWN;
+            if(client)
+                *client = APP_ID_UNKNOWN;
+            if(payload)
+                *payload = APP_ID_UNKNOWN;
+            if(misc)
+                *misc = APP_ID_UNKNOWN;
+            if(referred)
+                *referred = APP_ID_UNKNOWN;
+        }
+        else
+        {
+            AppIdHttpSession* hsession = asd->get_http_session(stream_index);
+            if (service)
+                *service = asd->get_application_ids_service();
+            if (client)
+                *client = hsession->client.get_id();
+            if (payload)
+                *payload = hsession->payload.get_id();
+            if (misc)
+                *misc = hsession->misc_app_id;
+            if (referred)
+                *referred = hsession->referred_payload_app_id;
+        }
+    }
     if (service)
         *service = asd->get_application_ids_service();
     if (client)
@@ -154,9 +228,16 @@ bool AppIdSessionApi::is_appid_available()
         asd->get_session_flags(APPID_SESSION_NO_TPI)) );
 }
 
-const char* AppIdSessionApi::get_client_version()
+const char* AppIdSessionApi::get_client_version(uint32_t stream_index)
 {
-    return asd->client.get_version();
+    if (asd->is_http2)
+    {
+        if (stream_index >= asd->get_hsessions_size())
+            return nullptr;
+        return asd->get_http_session(stream_index)->client.get_version();
+    }
+    else
+        return asd->client.get_version();
 }
 
 uint64_t AppIdSessionApi::get_appid_session_attribute(uint64_t flags)
@@ -247,9 +328,9 @@ AppIdDnsSession* AppIdSessionApi::get_dns_session()
     return asd->get_dns_session();
 }
 
-AppIdHttpSession* AppIdSessionApi::get_http_session()
+AppIdHttpSession* AppIdSessionApi::get_http_session(uint32_t stream_index)
 {
-    return asd->get_http_session();
+    return asd->get_http_session(stream_index);
 }
 
 bool AppIdSessionApi::is_http_inspection_done()

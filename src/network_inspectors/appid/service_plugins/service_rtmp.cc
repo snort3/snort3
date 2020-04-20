@@ -633,6 +633,9 @@ fail:
 
 success:
     AppIdHttpSession* hsession = args.asd.get_http_session();
+    if (!hsession)
+        hsession = args.asd.create_http_session();
+
     if ( ss->swfUrl )
     {
         if ( !hsession->get_field(MISC_URL_FID) )

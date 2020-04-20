@@ -19,6 +19,10 @@
 
 #ifndef SERVICE_PLUGIN_MOCK_H
 #define SERVICE_PLUGIN_MOCK_H
+#include "appid_detector.h"
+#include "appid_module.h"
+#include "appid_peg_counts.h"
+#include "utils/stats.h"
 
 namespace snort
 {
@@ -88,6 +92,12 @@ void AppIdDetector::add_info(AppIdSession&, const char*, AppidChangeBits&){}
 void AppIdDetector::add_user(AppIdSession&, const char*, AppId, bool){}
 void AppIdDetector::add_payload(AppIdSession&, AppId){}
 void AppIdDetector::add_app(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppId, const char*, AppidChangeBits&){}
+void ApplicationDescriptor::set_id(AppId){}
+void ServiceAppDescriptor::set_id(AppId, OdpContext&){}
+void ServiceAppDescriptor::update_stats(AppId){}
+void ClientAppDescriptor::update_user(AppId, const char*){}
+void ClientAppDescriptor::update_stats(AppId) {}
+void PayloadAppDescriptor::update_stats(AppId) {}
 void AppIdDiscovery::add_pattern_data(AppIdDetector*, snort::SearchTool*, int,
         const uint8_t* const, unsigned, unsigned){}
 void AppIdDiscovery::register_detector(const std::string&, AppIdDetector*,  IpProtocol){}

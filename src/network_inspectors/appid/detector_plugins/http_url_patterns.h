@@ -30,7 +30,7 @@
 #include "search_engines/search_tool.h"
 #include "utils/util.h"
 
-#include "appid_http_session.h"
+#include "appid_types.h"
 #include "appid_utils/sf_mlmp.h"
 #include "application_ids.h"
 

@@ -151,17 +151,17 @@ public:
     AppId get_service_app_id();
     AppId get_port_service_app_id();
     AppId get_only_service_app_id();
-    AppId get_misc_app_id();
-    AppId get_client_app_id();
-    AppId get_payload_app_id();
-    AppId get_referred_app_id();
-    void get_app_id(AppId& service, AppId& client, AppId& payload, AppId& misc, AppId& referred);
-    void get_app_id(AppId* service, AppId* client, AppId* payload, AppId* misc, AppId* referred);
+    AppId get_misc_app_id(uint32_t stream_index = 0);
+    AppId get_client_app_id(uint32_t stream_index = 0);
+    AppId get_payload_app_id(uint32_t stream_index = 0);
+    AppId get_referred_app_id(uint32_t stream_index = 0);
+    void get_app_id(AppId& service, AppId& client, AppId& payload, AppId& misc, AppId& referred, uint32_t stream_index = 0);
+    void get_app_id(AppId* service, AppId* client, AppId* payload, AppId* misc, AppId* referred, uint32_t stream_index = 0);
     bool is_ssl_session_decrypted();
     bool is_appid_inspecting_session();
     bool is_appid_available();
     const char* get_user_name(AppId* service, bool* isLoginSuccessful);
-    const char* get_client_version();
+    const char* get_client_version(uint32_t stream_index = 0);
     uint64_t get_appid_session_attribute(uint64_t flag);
     APPID_FLOW_TYPE get_flow_type();
     void get_service_info(const char** vendor, const char** version,
@@ -170,7 +170,7 @@ public:
     SfIp* get_service_ip();
     SfIp* get_initiator_ip();
     AppIdDnsSession* get_dns_session();
-    AppIdHttpSession* get_http_session();
+    AppIdHttpSession* get_http_session(uint32_t stream_index = 0);
     char* get_tls_host();
     DHCPData* get_dhcp_fp_data();
     void free_dhcp_fp_data(DHCPData*);
