@@ -140,12 +140,6 @@ void Snort::init(int argc, char** argv)
     PluginManager::load_plugins(snort_cmd_line_conf->plugin_path);
     ModuleManager::load_params();
 
-    if ( snort_cmd_line_conf->logging_flags & LOGGING_FLAG__SHOW_PLUGINS )
-    {
-        ModuleManager::dump_modules();
-        PluginManager::dump_plugins();
-    }
-
     FileService::init();
 
     parser_init();
@@ -162,6 +156,12 @@ void Snort::init(int argc, char** argv)
     TraceLogApi::thread_init(sc);
 
     PluginManager::load_so_plugins(sc);
+
+    if ( snort_cmd_line_conf->logging_flags & LOGGING_FLAG__SHOW_PLUGINS )
+    {
+        ModuleManager::dump_modules();
+        PluginManager::dump_plugins();
+    }
 #ifdef PIGLET
     if ( !Piglet::piglet_mode() )
 #endif
