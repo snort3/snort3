@@ -248,6 +248,9 @@ public:
     unsigned network_policy_count()
     { return network_policy.size(); }
 
+    unsigned shells_count()
+    { return shells.size(); }
+
     void set_cloned(bool state)
     { cloned = state; }
 

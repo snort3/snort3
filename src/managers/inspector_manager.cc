@@ -23,6 +23,7 @@
 
 #include "inspector_manager.h"
 
+#include <cstring>
 #include <list>
 #include <vector>
 
@@ -32,6 +33,7 @@
 #include "flow/flow.h"
 #include "flow/session.h"
 #include "log/messages.h"
+#include "main/shell.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
 #include "main/thread_config.h"
@@ -985,20 +987,32 @@ bool InspectorManager::configure(SnortConfig* sc, bool cloned)
 
 void InspectorManager::print_config(SnortConfig* sc)
 {
-    InspectionPolicy* pi = get_inspection_policy();
+    const auto shell_number = sc->policy_map->shells_count();
 
-    if ( !pi->framework_policy )
-        return;
-
-    for ( auto* p : pi->framework_policy->ilist )
+    for ( unsigned shell_id = 0; shell_id < shell_number; shell_id++ )
     {
-        std::string inspector_name(p->pp_class.api.base.name);
-        if ( p->name != inspector_name )
-            inspector_name += " (" + p->name + "):";
-        else
-            inspector_name += ":";
-        LogLabel(inspector_name.c_str());
-        p->handler->show(sc);
+        const auto shell = sc->policy_map->get_shell(shell_id);
+        const auto policies = sc->policy_map->get_policies(shell);
+        const auto inspection = policies->inspection;
+
+        if ( !(inspection and inspection->framework_policy) )
+            continue;
+
+        const std::string label = "Inspection Policy : policy id " +
+            std::to_string(inspection->user_policy_id) + " : " +
+            shell->get_file();
+        LogLabel(label.c_str());
+
+        for ( const auto* p : inspection->framework_policy->ilist )
+        {
+            std::string inspector_name(p->pp_class.api.base.name);
+            if ( p->name != inspector_name )
+                inspector_name += " (" + p->name + "):";
+            else
+                inspector_name += ":";
+            LogLabel(inspector_name.c_str());
+            p->handler->show(sc);
+        }
     }
 }
 
