@@ -27,8 +27,18 @@ struct PacketLatencyConfig
 {
     hr_duration max_time = CLOCK_ZERO;
     bool fastpath = false;
+#ifdef REG_TEST
+    bool test_timeout = false;
+#endif
 
-    bool enabled() const { return max_time > CLOCK_ZERO; }
+    bool enabled() const
+    {
+#ifdef REG_TEST
+        if ( test_timeout )
+            return true;
+#endif
+        return max_time > CLOCK_ZERO;
+    }
 };
 
 #endif

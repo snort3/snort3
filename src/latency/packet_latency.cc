@@ -88,8 +88,22 @@ static inline std::ostream& operator<<(std::ostream& os, const Event& e)
 
     os << "[" << e.packet->dsize << "]";
 
-    os << ", " << e.packet->ptrs.ip_api.get_src() << ":" << e.packet->ptrs.sp;
-    os << " -> " << e.packet->ptrs.ip_api.get_dst() << ":" << e.packet->ptrs.dp;
+    if ( e.packet->has_ip() or e.packet->is_data() )
+    {
+        SfIpString src_addr, dst_addr;
+        unsigned src_port = 0, dst_port = 0;
+
+        e.packet->ptrs.ip_api.get_src()->ntop(src_addr);
+        e.packet->ptrs.ip_api.get_dst()->ntop(dst_addr);
+        if ( e.packet->proto_bits & (PROTO_BIT__TCP|PROTO_BIT__UDP) )
+        {
+            src_port = e.packet->ptrs.sp;
+            dst_port = e.packet->ptrs.dp;
+        }
+
+        os << ", " << src_addr << ":" << src_port;
+        os << " -> " << dst_addr << ":" << dst_port;
+    }
 
     return os;
 }
@@ -135,7 +149,13 @@ inline bool Impl<Clock>::pop(const Packet* p)
 
     auto timed_out = timer.marked_as_fastpathed;
 
-    if ( timer.timed_out() )
+    bool force_timeout = timer.timed_out();
+
+#ifdef REG_TEST
+    force_timeout = config->test_timeout ? true : force_timeout;
+#endif
+
+    if ( force_timeout )
     {
         timed_out = true;
 

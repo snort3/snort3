@@ -52,6 +52,11 @@ static const Parameter s_packet_params[] =
     { "fastpath", Parameter::PT_BOOL, nullptr, "false",
         "fastpath expensive packets (max_time exceeded)" },
 
+#ifdef REG_TEST
+    { "test_timeout", Parameter::PT_BOOL, nullptr, "false",
+        "timeout on every packet" },
+#endif
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -70,6 +75,11 @@ static const Parameter s_rule_params[] =
 
     { "max_suspend_time", Parameter::PT_INT, "0:max32", "30000",
         "set max time for suspending a rule (ms, 0 means permanently disable rule)" },
+
+#ifdef REG_TEST
+    { "test_timeout", Parameter::PT_BOOL, nullptr, "false",
+        "timeout on every rule evaluation" },
+#endif
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -121,6 +131,10 @@ static inline bool latency_set(Value& v, PacketLatencyConfig& config)
     }
     else if ( v.is("fastpath") )
         config.fastpath = v.get_bool();
+#ifdef REG_TEST
+    else if ( v.is("test_timeout") )
+        config.test_timeout = v.get_bool();
+#endif
 
     else
         return false;
@@ -146,6 +160,10 @@ static inline bool latency_set(Value& v, RuleLatencyConfig& config)
         long t = clock_ticks(v.get_uint32());
         config.max_suspend_time = TO_DURATION(config.max_time, t);
     }
+#ifdef REG_TEST
+    else if ( v.is("test_timeout") )
+        config.test_timeout = v.get_bool();
+#endif
     else
         return false;
 

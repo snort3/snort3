@@ -110,8 +110,22 @@ static inline std::ostream& operator<<(std::ostream& os, const Event& e)
     if ( e.root->num_children > 1 )
         os << " (of " << e.root->num_children << ")";
 
-    os << ", " << e.packet->ptrs.ip_api.get_src() << ":" << e.packet->ptrs.sp;
-    os << " -> " << e.packet->ptrs.ip_api.get_dst() << ":" << e.packet->ptrs.dp;
+    if ( e.packet->has_ip() or e.packet->is_data() )
+    {
+        SfIpString src_addr, dst_addr;
+        unsigned src_port = 0, dst_port = 0;
+
+        e.packet->ptrs.ip_api.get_src()->ntop(src_addr);
+        e.packet->ptrs.ip_api.get_dst()->ntop(dst_addr);
+        if ( e.packet->proto_bits & (PROTO_BIT__TCP|PROTO_BIT__UDP) )
+        {
+            src_port = e.packet->ptrs.sp;
+            dst_port = e.packet->ptrs.dp;
+        }
+
+        os << ", " << src_addr << ":" << src_port;
+        os << " -> " << dst_addr << ":" << dst_port;
+    }
 
     return os;
 }
@@ -235,7 +249,9 @@ inline bool Impl<Clock, RuleTree>::pop()
     if ( !RuleTree::is_suspended(*timer.root) )
     {
         timed_out = timer.timed_out();
-
+#ifdef REG_TEST
+        timed_out = config->test_timeout ? true : timed_out;
+#endif
         if ( timed_out )
         {
             auto suspended = RuleTree::timeout_and_suspend(*timer.root, config->suspend_threshold,

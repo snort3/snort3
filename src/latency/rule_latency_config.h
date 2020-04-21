@@ -29,8 +29,18 @@ struct RuleLatencyConfig
     bool suspend = false;
     unsigned suspend_threshold = 0;
     hr_duration max_suspend_time = 0_ticks;
+#ifdef REG_TEST
+    bool test_timeout = false;
+#endif
 
-    bool enabled() const { return max_time > 0_ticks; }
+    bool enabled() const
+    {
+#ifdef REG_TEST
+        if ( test_timeout )
+            return true;
+#endif
+        return max_time > 0_ticks;
+    }
     bool allow_reenable() const { return max_suspend_time > 0_ticks; }
 };
 
