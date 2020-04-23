@@ -820,7 +820,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
     }
 
     // Third party detection
-    if (tp_appid_ctxt)
+    if (tp_appid_ctxt && !asd.is_http2)
     {
         // Skip third-party inspection for sessions using old config
         if (asd.tpsession and &(asd.tpsession->get_ctxt()) != tp_appid_ctxt)
