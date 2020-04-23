@@ -76,6 +76,7 @@ struct ProcessCount
     PegCount daq_reloads;
     PegCount attribute_table_reloads;
     PegCount attribute_table_hosts;
+    PegCount attribute_table_overflow;
 };
 
 extern ProcessCount proc_stats;

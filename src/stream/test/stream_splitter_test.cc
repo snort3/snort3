@@ -65,10 +65,8 @@ void Stream::flush_server(Packet*)
 { flushed = 2; }
 }
 
-
 uint16_t FlushBucket::get_size()
 { return 1; }
-
 
 //--------------------------------------------------------------------------
 // atom splitter tests

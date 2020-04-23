@@ -35,7 +35,7 @@
 #include "packet_io/active.h"
 #include "protocols/vlan.h"
 #include "stream/base/stream_module.h"
-#include "target_based/sftarget_hostentry.h"
+#include "target_based/host_attributes.h"
 #include "target_based/snort_protocols.h"
 #include "utils/util.h"
 
@@ -391,9 +391,8 @@ void Stream::set_snort_protocol_id(
         set_ip_protocol(flow);
     }
 
-    snort_protocol_id = get_snort_protocol_id_from_host_table(
-        host_entry, flow->ssn_state.ipprotocol,
-        flow->server_port, SFAT_SERVICE);
+    snort_protocol_id = host_entry->get_snort_protocol_id
+        (flow->ssn_state.ipprotocol, flow->server_port);
 
 #if 0
     // FIXIT-M from client doesn't imply need to swap
@@ -428,7 +427,7 @@ SnortProtocolId Stream::get_snort_protocol_id(Flow* flow)
         set_ip_protocol(flow);
     }
 
-    if ( HostAttributeEntry* host_entry = SFAT_LookupHostEntryByIP(&flow->server_ip) )
+    if ( HostAttributeEntry* host_entry = HostAttributes::find_host(&flow->server_ip) )
     {
         set_snort_protocol_id(flow, host_entry, FROM_SERVER);
 
@@ -436,7 +435,7 @@ SnortProtocolId Stream::get_snort_protocol_id(Flow* flow)
             return flow->ssn_state.snort_protocol_id;
     }
 
-    if ( HostAttributeEntry* host_entry = SFAT_LookupHostEntryByIP(&flow->client_ip) )
+    if ( HostAttributeEntry* host_entry = HostAttributes::find_host(&flow->client_ip) )
     {
         set_snort_protocol_id(flow, host_entry, FROM_CLIENT);
 
@@ -460,9 +459,8 @@ SnortProtocolId Stream::set_snort_protocol_id(Flow* flow, SnortProtocolId id)
 
     if ( !flow->is_proxied() )
     {
-        SFAT_UpdateApplicationProtocol(
-            &flow->server_ip, flow->server_port,
-            flow->ssn_state.ipprotocol, id);
+        HostAttributes::update_service
+            (&flow->server_ip, flow->server_port, flow->ssn_state.ipprotocol, id);
     }
     return id;
 }

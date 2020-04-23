@@ -32,8 +32,6 @@
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 
-#include "sftarget_data.h"
-
 using namespace snort;
 using namespace std;
 

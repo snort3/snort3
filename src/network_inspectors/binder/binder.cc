@@ -35,7 +35,7 @@
 #include "pub_sub/assistant_gadget_event.h"
 #include "stream/stream.h"
 #include "stream/stream_splitter.h"
-#include "target_based/sftarget_reader.h"
+#include "target_based/host_attributes.h"
 #include "target_based/snort_protocols.h"
 
 #include "bind_module.h"
@@ -994,7 +994,7 @@ void Binder::apply(Flow* flow, Stuff& stuff)
     if ( !stuff.apply_action(flow) )
         return;
 
-    const HostAttributeEntry* host = SFAT_LookupHostEntryByIP(&flow->server_ip);
+    const HostAttributeEntry* host = HostAttributes::find_host(&flow->server_ip);
 
     // setup session
     stuff.apply_session(flow, host);

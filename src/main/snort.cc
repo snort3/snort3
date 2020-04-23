@@ -65,7 +65,7 @@
 #include "service_inspectors/service_inspectors.h"
 #include "side_channel/side_channel.h"
 #include "stream/stream_inspectors.h"
-#include "target_based/sftarget_reader.h"
+#include "target_based/host_attributes.h"
 #include "time/periodic.h"
 #include "trace/trace_log_api.h"
 #include "utils/util.h"
@@ -107,7 +107,6 @@ void Snort::init(int argc, char** argv)
 #endif
 
     InitProtoNames();
-    SFAT_Init();
 
     load_actions();
     load_codecs();
@@ -180,6 +179,9 @@ void Snort::init(int argc, char** argv)
 
     sc->setup();
 
+    if ( !sc->attribute_hosts_file.empty() )
+        HostAttributes::load_hosts_file(sc, sc->attribute_hosts_file.c_str());
+
     // Must be after CodecManager::instantiate()
     if ( !InspectorManager::configure(sc) )
         ParseError("can't initialize inspectors");
@@ -209,7 +211,7 @@ void Snort::init(int argc, char** argv)
     if ((offload_search_api != nullptr) and (offload_search_api != search_api))
         MpseManager::activate_search_engine(offload_search_api, sc);
 
-    SFAT_Start();
+    HostAttributes::activate();
 
 #ifdef PIGLET
     if ( !Piglet::piglet_mode() )
@@ -310,7 +312,7 @@ void Snort::term()
 
     term_signals();
     IpsManager::global_term(SnortConfig::get_conf());
-    SFAT_Cleanup();
+    HostAttributes::cleanup();
 
 #ifdef PIGLET
     if ( !Piglet::piglet_mode() )

@@ -157,7 +157,6 @@ class GHash;
 class ProtocolReference;
 class XHash;
 struct ProfilerConfig;
-struct SnortConfig;
 
 class ReloadResourceTuner
 {
@@ -297,6 +296,7 @@ public:
 
     //------------------------------------------------------
     // attribute tables stuff
+    std::string attribute_hosts_file;
     uint32_t max_attribute_hosts = 0;
     uint32_t max_attribute_services_per_host = 0;
     uint32_t max_metadata_services = 0;

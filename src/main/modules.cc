@@ -56,7 +56,7 @@
 #include "side_channel/side_channel_module.h"
 #include "sfip/sf_ipvar.h"
 #include "stream/stream.h"
-#include "target_based/sftarget_data.h"
+#include "target_based/host_attributes.h"
 #include "target_based/snort_protocols.h"
 #include "trace/trace_module.h"
 
@@ -944,6 +944,9 @@ bool PacketsModule::set(const char*, Value& v, SnortConfig* sc)
 
 static const Parameter attribute_table_params[] =
 {
+    { "hosts_file", Parameter::PT_STRING, nullptr, nullptr,
+      "filename to load attribute host table from" },
+
     { "max_hosts", Parameter::PT_INT, "32:max53", "1024",
       "maximum number of hosts in attribute table" },
 
@@ -972,7 +975,10 @@ public:
 
 bool AttributeTableModule::set(const char*, Value& v, SnortConfig* sc)
 {
-    if ( v.is("max_hosts") )
+    if ( v.is("hosts_file") )
+        sc->attribute_hosts_file = std::string(v.get_string());
+
+    else if ( v.is("max_hosts") )
         sc->max_attribute_hosts = v.get_uint32();
 
     else if ( v.is("max_services_per_host") )
@@ -1909,24 +1915,24 @@ bool HostsModule::set(const char*, Value& v, SnortConfig* sc)
 bool HostsModule::begin(const char* fqn, int idx, SnortConfig*)
 {
     if ( idx && !strcmp(fqn, "hosts.services") )
-        app = SFAT_CreateApplicationEntry();
-
+        app = new ApplicationEntry;
     else if ( idx && !strcmp(fqn, "hosts") )
-        host = SFAT_CreateHostEntry();
+        host = new HostAttributeEntry;
 
     return true;
 }
 
-bool HostsModule::end(const char* fqn, int idx, SnortConfig*)
+bool HostsModule::end(const char* fqn, int idx, SnortConfig* sc)
 {
     if ( idx && !strcmp(fqn, "hosts.services") )
     {
-        SFAT_AddService(host, app);
+        host->add_service(app);
         app = nullptr;
     }
     else if ( idx && !strcmp(fqn, "hosts") )
     {
-        SFAT_AddHost(host);
+        if ( !HostAttributes::add_host(host, sc) )
+            delete host;
         host = nullptr;
     }
 

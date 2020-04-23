@@ -49,7 +49,7 @@
 #include "packet_io/sfdaq_config.h"
 #include "packet_io/sfdaq_instance.h"
 #include "packet_io/trough.h"
-#include "target_based/sftarget_reader.h"
+#include "target_based/host_attributes.h"
 #include "time/periodic.h"
 #include "utils/util.h"
 #include "utils/safec.h"
@@ -169,7 +169,7 @@ void Pig::start()
     assert(!athread);
     LogMessage("++ [%u] %s\n", idx, analyzer->get_source());
 
-    Swapper* ps = new Swapper(SnortConfig::get_conf(), SFAT_GetConfig());
+    Swapper* ps = new Swapper(SnortConfig::get_conf(), HostAttributes::get_host_attributes_table());
     athread = new std::thread(std::ref(*analyzer), ps, ++run_num);
 }
 
@@ -365,16 +365,12 @@ int main_reload_config(lua_State* L)
         return 0;
     }
 
-    tTargetBasedConfig* old_tc = SFAT_GetConfig();
-    tTargetBasedConfig* tc = SFAT_Swap();
+    if ( !sc->attribute_hosts_file.empty() )
+        HostAttributes::load_hosts_file(sc, sc->attribute_hosts_file.c_str());
 
-    if ( !tc )
-    {
-        // FIXIT-L it does not seem a valid check, delete old config if come to it
-        current_request->respond("== reload failed - bad config\n");
-        SnortConfig::set_parser_conf(nullptr);
-        return 0;
-    }
+    HostAttributesTable* old_tc = HostAttributes::get_host_attributes_table();
+    HostAttributesTable* tc = HostAttributes::activate();
+
     PluginManager::reload_so_plugins_cleanup(sc);
     SnortConfig::set_conf(sc);
     proc_stats.conf_reloads++;
@@ -497,17 +493,20 @@ int main_reload_hosts(lua_State* L)
         return 0;
     }
 
-    Shell sh = Shell(fname);
-    sh.configure(SnortConfig::get_conf(), false, true);
+    proc_stats.attribute_table_overflow = 0;
+    HostAttributes::load_hosts_file(SnortConfig::get_conf(), fname);
 
-    tTargetBasedConfig* old = SFAT_GetConfig();
-    tTargetBasedConfig* tc = SFAT_Swap();
+    HostAttributesTable* old = HostAttributes::get_host_attributes_table();
+    HostAttributesTable* tc = HostAttributes::activate();
 
     if ( !tc )
     {
         current_request->respond("== reload failed\n");
         return 0;
     }
+
+    proc_stats.attribute_table_reloads++;
+    LogMessage(STDu64 " hosts loaded\n", proc_stats.attribute_table_hosts);
 
     bool from_shell = ( L != nullptr );
     current_request->respond(".. swapping hosts table\n", from_shell);

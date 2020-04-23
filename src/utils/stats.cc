@@ -213,8 +213,9 @@ const PegInfo proc_names[] =
     { CountType::SUM, "policy_reloads", "number of times policies were reloaded" },
     { CountType::SUM, "inspector_deletions", "number of times inspectors were deleted" },
     { CountType::SUM, "daq_reloads", "number of times daq configuration was reloaded" },
-    { CountType::SUM, "attribute_table_reloads", "number of times hosts table was reloaded" },
-    { CountType::SUM, "attribute_table_hosts", "total number of hosts in table" },
+    { CountType::SUM, "attribute_table_reloads", "number of times hosts attribute table was reloaded" },
+    { CountType::SUM, "attribute_table_hosts", "number of hosts added to the attribute table" },
+    { CountType::SUM, "attribute_table_overflow", "number of host additions that failed due to attribute table full" },
     { CountType::END, nullptr, nullptr }
 };
 

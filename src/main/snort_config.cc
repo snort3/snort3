@@ -57,7 +57,7 @@
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "sfip/sf_ip.h"
-#include "target_based/sftarget_reader.h"
+#include "target_based/host_attributes.h"
 #include "target_based/snort_protocols.h"
 #include "trace/trace_config.h"
 #include "utils/dnet_header.h"

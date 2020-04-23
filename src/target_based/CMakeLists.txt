@@ -1,10 +1,7 @@
 
 add_library( target_based OBJECT
-    sftarget_reader.cc 
-    sftarget_reader.h
-    sftarget_hostentry.cc
-    sftarget_hostentry.h
-    sftarget_data.h
+    host_attributes.cc 
+    host_attributes.h
     snort_protocols.cc
 )
 
