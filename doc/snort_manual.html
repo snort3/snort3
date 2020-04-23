@@ -782,7 +782,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.1 (Build 1)
+o"  )~   Version 3.0.1 (Build 2)
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2020 Cisco and/or its affiliates. All rights reserved.
@@ -5426,6 +5426,27 @@ with slashes during normalization.</p></div>
 </div>
 </div>
 <div class="sect3">
+<h4 id="_connect_processing">CONNECT processing</h4>
+<div class="paragraph"><p>The HTTP CONNECT method is used by a client to establish a tunnel to a destination via an HTTP proxy
+server. If the connection is successful the server will send a 2XX success response to the client,
+then proceed to blindly forward traffic between the client and destination. That traffic belongs to
+a new session between the client and destination and may be of any protocol, so clearly the HTTP
+inspector will be unable to continue processing traffic following the CONNECT message as if it were
+just a continuation of the original HTTP/1.1 session.</p></div>
+<div class="paragraph"><p>Therefore upon receiving a success response to a CONNECT request, the HTTP inspector will stop
+inspecting the session. The next packet will return to the wizard, which will determine the
+appropriate inspector to continue processing the flow. If the tunneled protocol happens to be
+HTTP/1.1, the HTTP inspector will again start inspecting the flow, but as an entirely new session.</p></div>
+<div class="paragraph"><p>There is one scenario where the cutover to the wizard will not occur despite a 2XX success response
+to a CONNECT request. HTTP allows for pipelining, or sending multiple requests without waiting for a
+response. If the HTTP inspector sees any further traffic from the client after a CONNECT request
+before it has seen the CONNECT response, it is unclear whether this traffic should be interpreted as
+a pipelined HTTP request or tunnel traffic sent in anticipation of a success response from the
+server. Due to this potential evasion tactic, the HTTP inspector will not cut over to the wizard if
+it sees any early client-to-server traffic, but will continue normal HTTP processing of the flow
+regardless of the eventual server response.</p></div>
+</div>
+<div class="sect3">
 <h4 id="_detection_rules">Detection rules</h4>
 <div class="paragraph"><p>http_inspect parses HTTP messages into their components and makes them
 available to the detection engine through rule options. Let&#8217;s start with an
@@ -5572,9 +5593,10 @@ is the scheme, "www.samplehost.com" is the host, "287" is the port,
 on uri type. If the uri is of type absolute (contains all six components) or
 absolute path (contains path, query and fragment) then the path and query
 components are normalized. In these cases, http_uri represents the normalized
-path and query (/path?query). If the uri is of type authority (host and port),
-the host is normalized and http_uri represents the normalized host with the port
-number. In all other cases http_uri is the same as http_raw_uri.</p></div>
+path, query, and fragment (/path?query#fragment). If the uri is of type
+authority (host and port), the host is normalized and http_uri represents the
+normalized host with the port number. In all other cases http_uri is the same
+as http_raw_uri.</p></div>
 <div class="paragraph"><p>Note: this section uses informal language to explain some things. Nothing
 here is intended to conflict with the technical language of the HTTP RFCs
 and the implementation follows the RFCs.</p></div>
@@ -7089,6 +7111,11 @@ int <strong>active.min_interval</strong> = 255: minimum number of seconds betwee
 <strong>active.holds_canceled</strong>: total number of packet hold requests canceled (sum)
 </p>
 </li>
+<li>
+<p>
+<strong>active.holds_allowed</strong>: total number of packet hold requests allowed (sum)
+</p>
+</li>
 </ul></div>
 </div>
 <div class="sect2">
@@ -7152,6 +7179,11 @@ string <strong>alerts.tunnel_verdicts</strong>: let DAQ handle non-allow verdict
 <div class="paragraph"><p>Usage: global</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
+<li>
+<p>
+string <strong>attribute_table.hosts_file</strong>: filename to load attribute host table from
+</p>
+</li>
 <li>
 <p>
 int <strong>attribute_table.max_hosts</strong> = 1024: maximum number of hosts in attribute table { 32:max53 }
@@ -8346,7 +8378,7 @@ int <strong>output.event_trace.max_data</strong> = 0: maximum amount of packet d
 </li>
 <li>
 <p>
-bool <strong>output.quiet</strong> = false: suppress non-fatal information (still show alerts, same as -q)
+bool <strong>output.quiet</strong> = false: suppress normal logging on stdout (same as -q)
 </p>
 </li>
 <li>
@@ -8948,7 +8980,7 @@ implied <strong>snort.-Q</strong>: enable inline mode operation
 </li>
 <li>
 <p>
-implied <strong>snort.-q</strong>: quiet mode - Don&#8217;t show banner and status report
+implied <strong>snort.-q</strong>: quiet mode - suppress normal logging on stdout
 </p>
 </li>
 <li>
@@ -9094,6 +9126,21 @@ implied <strong>snort.--dump-dynamic-rules</strong>: output stub rules for all l
 <li>
 <p>
 string <strong>snort.--dump-defaults</strong>: [&lt;module prefix&gt;] output module defaults in Lua format { (optional) }
+</p>
+</li>
+<li>
+<p>
+implied <strong>snort.--dump-rule-deps</strong>: dump rule dependencies in json format for use by other tools
+</p>
+</li>
+<li>
+<p>
+implied <strong>snort.--dump-rule-meta</strong>: dump configured rule info in json format for use by other tools
+</p>
+</li>
+<li>
+<p>
+implied <strong>snort.--dump-rule-state</strong>: dump configured rule state in json format for use by other tools
 </p>
 </li>
 <li>
@@ -9279,11 +9326,6 @@ int <strong>snort.--pcap-loop</strong>: &lt;count&gt; read all pcaps &lt;count&g
 <li>
 <p>
 implied <strong>snort.--pcap-no-filter</strong>: reset to use no filter when getting pcaps from file or directory
-</p>
-</li>
-<li>
-<p>
-implied <strong>snort.--pcap-reload</strong>: if reading multiple pcaps, reload snort config between pcaps
 </p>
 </li>
 <li>
@@ -9579,12 +9621,17 @@ int <strong>snort.trace.all</strong> = 0: enable traces in module { 0:255 }
 </li>
 <li>
 <p>
-<strong>snort.attribute_table_reloads</strong>: number of times hosts table was reloaded (sum)
+<strong>snort.attribute_table_reloads</strong>: number of times hosts attribute table was reloaded (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>snort.attribute_table_hosts</strong>: total number of hosts in table (sum)
+<strong>snort.attribute_table_hosts</strong>: number of hosts added to the attribute table (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>snort.attribute_table_overflow</strong>: number of host additions that failed due to attribute table full (sum)
 </p>
 </li>
 </ul></div>
@@ -9614,6 +9661,20 @@ enum <strong><code>suppress[].track</code></strong>: suppress only matching sour
 <li>
 <p>
 string <strong><code>suppress[].ip</code></strong>: restrict suppression to these addresses according to track
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_trace">trace</h3>
+<div class="paragraph"><p>What: configure trace log messages</p></div>
+<div class="paragraph"><p>Type: basic</p></div>
+<div class="paragraph"><p>Usage: global</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+enum <strong>trace.output</strong>: output method for trace log messages { stdout | syslog }
 </p>
 </li>
 </ul></div>
@@ -9682,7 +9743,40 @@ protocol decoding, anomaly detection, and construction of active responses.</p><
 </li>
 <li>
 <p>
-<strong>116:471</strong> (ciscometadata) invalid Cisco Metadata SGT
+<strong>116:471</strong> (ciscometadata) invalid Cisco Metadata security group tag
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>ciscometadata.truncated_hdr</strong>: total truncated Cisco Metadata headers (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>ciscometadata.invalid_hdr_ver</strong>: total invalid Cisco Metadata header versions (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>ciscometadata.invalid_hdr_len</strong>: total invalid Cisco Metadata header lengths (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>ciscometadata.invalid_opt_len</strong>: total invalid Cisco Metadata option lengths (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>ciscometadata.invalid_opt_type</strong>: total invalid Cisco Metadata option types (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>ciscometadata.invalid_sgt</strong>: total invalid Cisco Metadata security group tags (sum)
 </p>
 </li>
 </ul></div>
@@ -10877,27 +10971,12 @@ int <strong>appid.app_stats_rollover_size</strong> = 20971520: max file size for
 </li>
 <li>
 <p>
-int <strong>appid.app_stats_rollover_time</strong> = 86400: max time period for collection appid stats before rolling over the log file { 0:max31 }
-</p>
-</li>
-<li>
-<p>
 string <strong>appid.app_detector_dir</strong>: directory to load appid detectors from
 </p>
 </li>
 <li>
 <p>
-int <strong>appid.instance_id</strong> = 0: instance id - ignored { 0:max32 }
-</p>
-</li>
-<li>
-<p>
-bool <strong>appid.debug</strong> = false: enable appid debug logging
-</p>
-</li>
-<li>
-<p>
-bool <strong>appid.dump_ports</strong> = false: enable dump of appid port information
+bool <strong>appid.list_odp_detectors</strong> = false: enable logging of odp detectors statistics
 </p>
 </li>
 <li>
@@ -13230,7 +13309,7 @@ int <strong>gtp_inspect.trace.all</strong> = 0: enable traces in module { 0:255 
 </li>
 <li>
 <p>
-<strong>121:10</strong> (http2_inspect) invalid HTTP/2 header field
+<strong>121:10</strong> (http2_inspect) HTTP/2 invalid header field
 </p>
 </li>
 <li>
@@ -13928,6 +14007,36 @@ bool <strong>http_inspect.simplify_path</strong> = true: reduce URI directory pa
 <strong>119:252</strong> (http_inspect) HTTP/2 message body smaller than Content-Length header value
 </p>
 </li>
+<li>
+<p>
+<strong>119:253</strong> (http_inspect) HTTP CONNECT request with a message body
+</p>
+</li>
+<li>
+<p>
+<strong>119:254</strong> (http_inspect) HTTP client-to-server traffic after CONNECT request but before CONNECT response
+</p>
+</li>
+<li>
+<p>
+<strong>119:255</strong> (http_inspect) HTTP CONNECT 2XX response with Content-Length header
+</p>
+</li>
+<li>
+<p>
+<strong>119:256</strong> (http_inspect) HTTP CONNECT 2XX response with Transfer-Encoding header
+</p>
+</li>
+<li>
+<p>
+<strong>119:257</strong> (http_inspect) HTTP CONNECT response with 1XX status code
+</p>
+</li>
+<li>
+<p>
+<strong>119:258</strong> (http_inspect) HTTP CONNECT response before request message completed
+</p>
+</li>
 </ul></div>
 <div class="paragraph"><p>Peg counts:</p></div>
 <div class="ulist"><ul>
@@ -14043,7 +14152,7 @@ bool <strong>http_inspect.simplify_path</strong> = true: reduce URI directory pa
 </li>
 <li>
 <p>
-<strong>http_inspect.detained_packets</strong>: TCP packets delayed by detained inspection (sum)
+<strong>http_inspect.detains_requested</strong>: packet hold requests for detained inspection (sum)
 </p>
 </li>
 <li>
@@ -14059,6 +14168,11 @@ bool <strong>http_inspect.simplify_path</strong> = true: reduce URI directory pa
 <li>
 <p>
 <strong>http_inspect.parameters</strong>: HTTP parameters inspected (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>http_inspect.connect_tunnel_cutovers</strong>: CONNECT tunnel flow cutovers to wizard (sum)
 </p>
 </li>
 </ul></div>
@@ -14816,6 +14930,24 @@ enum <strong>perf_monitor.format</strong> = csv: output format for stats { csv |
 <li>
 <p>
 bool <strong>perf_monitor.summary</strong> = false: output summary at shutdown
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Commands:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>perf_monitor.enable_flow_ip_profiling</strong>(seconds, packets): enable statistics on host pairs
+</p>
+</li>
+<li>
+<p>
+<strong>perf_monitor.disable_flow_ip_profiling</strong>(): disable statistics on host pairs
+</p>
+</li>
+<li>
+<p>
+<strong>perf_monitor.show_flow_ip_profiling</strong>(): show status of statistics on host pairs
 </p>
 </li>
 </ul></div>
@@ -15751,7 +15883,17 @@ bool <strong>rna.log_when_idle</strong> = false: enable host update logging when
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>rt_global.memcap</strong> = 2048: cap on amount of memory used
+int <strong>rt_global.downshift_packet</strong> = 0: attempt downshift at this packet on flow (0 is disabled) { 0:max32 }
+</p>
+</li>
+<li>
+<p>
+int <strong>rt_global.downshift_mode</strong> = 3: 1 = unconditional, 2 = !ctl and !tls, 3 = !ctl and !file { 1:3 }
+</p>
+</li>
+<li>
+<p>
+int <strong>rt_global.memcap</strong> = 2048: cap on amount of memory used (0 is disabled) { 0:max53 }
 </p>
 </li>
 </ul></div>
@@ -16802,7 +16944,7 @@ int <strong>stream.ip_cache.idle_timeout</strong> = 180: maximum inactive time b
 </li>
 <li>
 <p>
-int <strong>stream.ip_cache.cap_weight</strong> = 64: additional bytes to track per flow for better estimation against cap { 0:65535 }
+int <strong>stream.ip_cache.cap_weight</strong> = 0: additional bytes to track per flow for better estimation against cap { 0:65535 }
 </p>
 </li>
 <li>
@@ -16812,7 +16954,7 @@ int <strong>stream.icmp_cache.idle_timeout</strong> = 180: maximum inactive time
 </li>
 <li>
 <p>
-int <strong>stream.icmp_cache.cap_weight</strong> = 8: additional bytes to track per flow for better estimation against cap { 0:65535 }
+int <strong>stream.icmp_cache.cap_weight</strong> = 0: additional bytes to track per flow for better estimation against cap { 0:65535 }
 </p>
 </li>
 <li>
@@ -16822,7 +16964,7 @@ int <strong>stream.tcp_cache.idle_timeout</strong> = 3600: maximum inactive time
 </li>
 <li>
 <p>
-int <strong>stream.tcp_cache.cap_weight</strong> = 11500: additional bytes to track per flow for better estimation against cap { 0:65535 }
+int <strong>stream.tcp_cache.cap_weight</strong> = 11000: additional bytes to track per flow for better estimation against cap { 0:65535 }
 </p>
 </li>
 <li>
@@ -16832,7 +16974,7 @@ int <strong>stream.udp_cache.idle_timeout</strong> = 180: maximum inactive time 
 </li>
 <li>
 <p>
-int <strong>stream.udp_cache.cap_weight</strong> = 128: additional bytes to track per flow for better estimation against cap { 0:65535 }
+int <strong>stream.udp_cache.cap_weight</strong> = 0: additional bytes to track per flow for better estimation against cap { 0:65535 }
 </p>
 </li>
 <li>
@@ -16842,7 +16984,7 @@ int <strong>stream.user_cache.idle_timeout</strong> = 180: maximum inactive time
 </li>
 <li>
 <p>
-int <strong>stream.user_cache.cap_weight</strong> = 256: additional bytes to track per flow for better estimation against cap { 0:65535 }
+int <strong>stream.user_cache.cap_weight</strong> = 0: additional bytes to track per flow for better estimation against cap { 0:65535 }
 </p>
 </li>
 <li>
@@ -18930,17 +19072,12 @@ implied <strong>flow.only_frag</strong>: match on defragmented packets only
 <div class="ulist"><ul>
 <li>
 <p>
-string <strong>flowbits.~op</strong>: set|reset|isset|etc.
+enum <strong>flowbits.~op</strong>: bit operation or noalert (no bits) { set | unset | isset | isnotset | noalert }
 </p>
 </li>
 <li>
 <p>
-string <strong>flowbits.~bits</strong>: bits or group
-</p>
-</li>
-<li>
-<p>
-string <strong>flowbits.~group</strong>: group if arg1 is bits
+string <strong>flowbits.~bits</strong>: bit [|bit]* or bit [&amp;bit]*
 </p>
 </li>
 </ul></div>
@@ -20030,20 +20167,6 @@ string <strong><code>service.*</code></strong>: one or more comma-separated serv
 </ul></div>
 </div>
 <div class="sect2">
-<h3 id="_session">session</h3>
-<div class="paragraph"><p>What: rule option to check user data from TCP sessions</p></div>
-<div class="paragraph"><p>Type: ips_option</p></div>
-<div class="paragraph"><p>Usage: detect</p></div>
-<div class="paragraph"><p>Configuration:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-enum <strong>session.~mode</strong>: output format { printable|binary|all }
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect2">
 <h3 id="_sha256">sha256</h3>
 <div class="paragraph"><p>What: payload rule option for hash matching</p></div>
 <div class="paragraph"><p>Type: ips_option</p></div>
@@ -20504,7 +20627,7 @@ bool <strong>alert_csv.file</strong> = false: output to alert_csv.txt instead of
 </li>
 <li>
 <p>
-multi <strong>alert_csv.fields</strong> = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | class | b64_data | client_bytes | client_pkts | dir | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | flowstart_time | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | seconds | server_bytes | server_pkts | service | sid | src_addr | src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
+multi <strong>alert_csv.fields</strong> = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | class | b64_data | client_bytes | client_pkts | dir | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | flowstart_time | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | seconds | server_bytes | server_pkts | service | sgt| sid | src_addr | src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
 </p>
 </li>
 <li>
@@ -20590,7 +20713,7 @@ bool <strong>alert_json.file</strong> = false: output to alert_json.txt instead 
 </li>
 <li>
 <p>
-multi <strong>alert_json.fields</strong> = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | class | b64_data | client_bytes | client_pkts | dir | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | flowstart_time | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | seconds | server_bytes | server_pkts | service | sid | src_addr | src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
+multi <strong>alert_json.fields</strong> = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | class | b64_data | client_bytes | client_pkts | dir | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | flowstart_time | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | seconds | server_bytes | server_pkts | service | sgt| sid | src_addr | src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
 </p>
 </li>
 <li>
@@ -24638,7 +24761,7 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>-q</strong> quiet mode - Don&#8217;t show banner and status report
+<strong>-q</strong> quiet mode - suppress normal logging on stdout
 </p>
 </li>
 <li>
@@ -24784,6 +24907,21 @@ these libraries see the Getting Started section of the manual.</p></div>
 <li>
 <p>
 <strong>--dump-defaults</strong> [&lt;module prefix&gt;] output module defaults in Lua format (optional)
+</p>
+</li>
+<li>
+<p>
+<strong>--dump-rule-deps</strong> dump rule dependencies in json format for use by other tools
+</p>
+</li>
+<li>
+<p>
+<strong>--dump-rule-meta</strong> dump configured rule info in json format for use by other tools
+</p>
+</li>
+<li>
+<p>
+<strong>--dump-rule-state</strong> dump configured rule state in json format for use by other tools
 </p>
 </li>
 <li>
@@ -24969,11 +25107,6 @@ these libraries see the Getting Started section of the manual.</p></div>
 <li>
 <p>
 <strong>--pcap-no-filter</strong> reset to use no filter when getting pcaps from file or directory
-</p>
-</li>
-<li>
-<p>
-<strong>--pcap-reload</strong> if reading multiple pcaps, reload snort config between pcaps
 </p>
 </li>
 <li>
@@ -25188,7 +25321,7 @@ int <strong>active.min_interval</strong> = 255: minimum number of seconds betwee
 </li>
 <li>
 <p>
-multi <strong>alert_csv.fields</strong> = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | class | b64_data | client_bytes | client_pkts | dir | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | flowstart_time | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | seconds | server_bytes | server_pkts | service | sid | src_addr | src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
+multi <strong>alert_csv.fields</strong> = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | class | b64_data | client_bytes | client_pkts | dir | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | flowstart_time | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | seconds | server_bytes | server_pkts | service | sgt| sid | src_addr | src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
 </p>
 </li>
 <li>
@@ -25238,7 +25371,7 @@ int <strong>alert_full.limit</strong> = 0: set maximum size in MB before rollove
 </li>
 <li>
 <p>
-multi <strong>alert_json.fields</strong> = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | class | b64_data | client_bytes | client_pkts | dir | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | flowstart_time | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | seconds | server_bytes | server_pkts | service | sid | src_addr | src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
+multi <strong>alert_json.fields</strong> = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | class | b64_data | client_bytes | client_pkts | dir | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | flowstart_time | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | seconds | server_bytes | server_pkts | service | sgt| sid | src_addr | src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
 </p>
 </li>
 <li>
@@ -25348,22 +25481,7 @@ int <strong>appid.app_stats_rollover_size</strong> = 20971520: max file size for
 </li>
 <li>
 <p>
-int <strong>appid.app_stats_rollover_time</strong> = 86400: max time period for collection appid stats before rolling over the log file { 0:max31 }
-</p>
-</li>
-<li>
-<p>
-bool <strong>appid.debug</strong> = false: enable appid debug logging
-</p>
-</li>
-<li>
-<p>
-bool <strong>appid.dump_ports</strong> = false: enable dump of appid port information
-</p>
-</li>
-<li>
-<p>
-int <strong>appid.instance_id</strong> = 0: instance id - ignored { 0:max32 }
+bool <strong>appid.list_odp_detectors</strong> = false: enable logging of odp detectors statistics
 </p>
 </li>
 <li>
@@ -25449,6 +25567,11 @@ implied <strong>asn1.print</strong>: dump decode data to console; always true
 <li>
 <p>
 int <strong>asn1.relative_offset</strong>: relative offset from the cursor { -65535:65535 }
+</p>
+</li>
+<li>
+<p>
+string <strong>attribute_table.hosts_file</strong>: filename to load attribute host table from
 </p>
 </li>
 <li>
@@ -26688,17 +26811,12 @@ string <strong>flags.~test_flags</strong>: these flags are tested
 </li>
 <li>
 <p>
-string <strong>flowbits.~bits</strong>: bits or group
+string <strong>flowbits.~bits</strong>: bit [|bit]* or bit [&amp;bit]*
 </p>
 </li>
 <li>
 <p>
-string <strong>flowbits.~group</strong>: group if arg1 is bits
-</p>
-</li>
-<li>
-<p>
-string <strong>flowbits.~op</strong>: set|reset|isset|etc.
+enum <strong>flowbits.~op</strong>: bit operation or noalert (no bits) { set | unset | isset | isnotset | noalert }
 </p>
 </li>
 <li>
@@ -27968,7 +28086,7 @@ bool <strong>output.obfuscate</strong> = false: obfuscate the logged IP addresse
 </li>
 <li>
 <p>
-bool <strong>output.quiet</strong> = false: suppress non-fatal information (still show alerts, same as -q)
+bool <strong>output.quiet</strong> = false: suppress normal logging on stdout (same as -q)
 </p>
 </li>
 <li>
@@ -28788,7 +28906,17 @@ string <strong>rpc.~ver</strong>: version number or * for any
 </li>
 <li>
 <p>
-int <strong>rt_global.memcap</strong> = 2048: cap on amount of memory used
+int <strong>rt_global.downshift_mode</strong> = 3: 1 = unconditional, 2 = !ctl and !tls, 3 = !ctl and !file { 1:3 }
+</p>
+</li>
+<li>
+<p>
+int <strong>rt_global.downshift_packet</strong> = 0: attempt downshift at this packet on flow (0 is disabled) { 0:max32 }
+</p>
+</li>
+<li>
+<p>
+int <strong>rt_global.memcap</strong> = 2048: cap on amount of memory used (0 is disabled) { 0:max53 }
 </p>
 </li>
 <li>
@@ -28924,11 +29052,6 @@ interval <strong>seq.~range</strong>: check if TCP sequence number is in given r
 <li>
 <p>
 string <strong><code>service.*</code></strong>: one or more comma-separated service names
-</p>
-</li>
-<li>
-<p>
-enum <strong>session.~mode</strong>: output format { printable|binary|all }
 </p>
 </li>
 <li>
@@ -29303,6 +29426,21 @@ implied <strong>snort.--dump-dynamic-rules</strong>: output stub rules for all l
 </li>
 <li>
 <p>
+implied <strong>snort.--dump-rule-deps</strong>: dump rule dependencies in json format for use by other tools
+</p>
+</li>
+<li>
+<p>
+implied <strong>snort.--dump-rule-meta</strong>: dump configured rule info in json format for use by other tools
+</p>
+</li>
+<li>
+<p>
+implied <strong>snort.--dump-rule-state</strong>: dump configured rule state in json format for use by other tools
+</p>
+</li>
+<li>
+<p>
 implied <strong>snort.--dump-version</strong>: output the version, the whole version, and only the version
 </p>
 </li>
@@ -29563,11 +29701,6 @@ implied <strong>snort.--pcap-no-filter</strong>: reset to use no filter when get
 </li>
 <li>
 <p>
-implied <strong>snort.--pcap-reload</strong>: if reading multiple pcaps, reload snort config between pcaps
-</p>
-</li>
-<li>
-<p>
 implied <strong>snort.--pcap-show</strong>: print a line saying what pcap is currently being read
 </p>
 </li>
@@ -29593,7 +29726,7 @@ implied <strong>snort.-Q</strong>: enable inline mode operation
 </li>
 <li>
 <p>
-implied <strong>snort.-q</strong>: quiet mode - Don&#8217;t show banner and status report
+implied <strong>snort.-q</strong>: quiet mode - suppress normal logging on stdout
 </p>
 </li>
 <li>
@@ -29983,7 +30116,7 @@ bool <strong>stream_file.upload</strong> = false: indicate file transfer directi
 </li>
 <li>
 <p>
-int <strong>stream.icmp_cache.cap_weight</strong> = 8: additional bytes to track per flow for better estimation against cap { 0:65535 }
+int <strong>stream.icmp_cache.cap_weight</strong> = 0: additional bytes to track per flow for better estimation against cap { 0:65535 }
 </p>
 </li>
 <li>
@@ -29998,7 +30131,7 @@ int <strong>stream_icmp.session_timeout</strong> = 30: session tracking timeout 
 </li>
 <li>
 <p>
-int <strong>stream.ip_cache.cap_weight</strong> = 64: additional bytes to track per flow for better estimation against cap { 0:65535 }
+int <strong>stream.ip_cache.cap_weight</strong> = 0: additional bytes to track per flow for better estimation against cap { 0:65535 }
 </p>
 </li>
 <li>
@@ -30088,7 +30221,7 @@ interval <strong>stream_size.~range</strong>: check if the stream size is in the
 </li>
 <li>
 <p>
-int <strong>stream.tcp_cache.cap_weight</strong> = 11500: additional bytes to track per flow for better estimation against cap { 0:65535 }
+int <strong>stream.tcp_cache.cap_weight</strong> = 11000: additional bytes to track per flow for better estimation against cap { 0:65535 }
 </p>
 </li>
 <li>
@@ -30178,7 +30311,7 @@ int <strong>stream.trace.all</strong> = 0: enable traces in module { 0:255 }
 </li>
 <li>
 <p>
-int <strong>stream.udp_cache.cap_weight</strong> = 128: additional bytes to track per flow for better estimation against cap { 0:65535 }
+int <strong>stream.udp_cache.cap_weight</strong> = 0: additional bytes to track per flow for better estimation against cap { 0:65535 }
 </p>
 </li>
 <li>
@@ -30193,7 +30326,7 @@ int <strong>stream_udp.session_timeout</strong> = 30: session tracking timeout {
 </li>
 <li>
 <p>
-int <strong>stream.user_cache.cap_weight</strong> = 256: additional bytes to track per flow for better estimation against cap { 0:65535 }
+int <strong>stream.user_cache.cap_weight</strong> = 0: additional bytes to track per flow for better estimation against cap { 0:65535 }
 </p>
 </li>
 <li>
@@ -30299,6 +30432,11 @@ bool <strong>telnet.normalize</strong> = false: eliminate escape sequences
 <li>
 <p>
 interval <strong>tos.~range</strong>: check if IP TOS is in given range { 0:255 }
+</p>
+</li>
+<li>
+<p>
+enum <strong>trace.output</strong>: output method for trace log messages { stdout | syslog }
 </p>
 </li>
 <li>
@@ -30433,6 +30571,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>active.holds_allowed</strong>: total number of packet hold requests allowed (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>active.holds_canceled</strong>: total number of packet hold requests canceled (sum)
 </p>
 </li>
@@ -30539,6 +30682,36 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>cip.session</strong>: total sessions (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>ciscometadata.invalid_hdr_len</strong>: total invalid Cisco Metadata header lengths (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>ciscometadata.invalid_hdr_ver</strong>: total invalid Cisco Metadata header versions (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>ciscometadata.invalid_opt_len</strong>: total invalid Cisco Metadata option lengths (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>ciscometadata.invalid_opt_type</strong>: total invalid Cisco Metadata option types (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>ciscometadata.invalid_sgt</strong>: total invalid Cisco Metadata security group tags (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>ciscometadata.truncated_hdr</strong>: total truncated Cisco Metadata headers (sum)
 </p>
 </li>
 <li>
@@ -31673,12 +31846,17 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>http_inspect.connect_tunnel_cutovers</strong>: CONNECT tunnel flow cutovers to wizard (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>http_inspect.delete_requests</strong>: DELETE requests inspected (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>http_inspect.detained_packets</strong>: TCP packets delayed by detained inspection (sum)
+<strong>http_inspect.detains_requested</strong>: packet hold requests for detained inspection (sum)
 </p>
 </li>
 <li>
@@ -32878,12 +33056,17 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>snort.attribute_table_hosts</strong>: total number of hosts in table (sum)
+<strong>snort.attribute_table_hosts</strong>: number of hosts added to the attribute table (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>snort.attribute_table_reloads</strong>: number of times hosts table was reloaded (sum)
+<strong>snort.attribute_table_overflow</strong>: number of host additions that failed due to attribute table full (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>snort.attribute_table_reloads</strong>: number of times hosts attribute table was reloaded (sum)
 </p>
 </li>
 <li>
@@ -34818,7 +35001,7 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>116:471</strong> (ciscometadata) invalid Cisco Metadata SGT
+<strong>116:471</strong> (ciscometadata) invalid Cisco Metadata security group tag
 </p>
 </li>
 <li>
@@ -35358,6 +35541,36 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>119:253</strong> (http_inspect) HTTP CONNECT request with a message body
+</p>
+</li>
+<li>
+<p>
+<strong>119:254</strong> (http_inspect) HTTP client-to-server traffic after CONNECT request but before CONNECT response
+</p>
+</li>
+<li>
+<p>
+<strong>119:255</strong> (http_inspect) HTTP CONNECT 2XX response with Content-Length header
+</p>
+</li>
+<li>
+<p>
+<strong>119:256</strong> (http_inspect) HTTP CONNECT 2XX response with Transfer-Encoding header
+</p>
+</li>
+<li>
+<p>
+<strong>119:257</strong> (http_inspect) HTTP CONNECT response with 1XX status code
+</p>
+</li>
+<li>
+<p>
+<strong>119:258</strong> (http_inspect) HTTP CONNECT response before request message completed
+</p>
+</li>
+<li>
+<p>
 <strong>121:1</strong> (http2_inspect) error in HPACK integer value
 </p>
 </li>
@@ -35403,7 +35616,7 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>121:10</strong> (http2_inspect) invalid HTTP/2 header field
+<strong>121:10</strong> (http2_inspect) HTTP/2 invalid header field
 </p>
 </li>
 <li>
@@ -36614,6 +36827,21 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>packet_tracer.disable</strong>(): disable packet tracer
+</p>
+</li>
+<li>
+<p>
+<strong>perf_monitor.enable_flow_ip_profiling</strong>(seconds, packets): enable statistics on host pairs
+</p>
+</li>
+<li>
+<p>
+<strong>perf_monitor.disable_flow_ip_profiling</strong>(): disable statistics on host pairs
+</p>
+</li>
+<li>
+<p>
+<strong>perf_monitor.show_flow_ip_profiling</strong>(): show status of statistics on host pairs
 </p>
 </li>
 <li>
@@ -38112,11 +38340,6 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
-<strong>session</strong> (ips_option): rule option to check user data from TCP sessions
-</p>
-</li>
-<li>
-<p>
 <strong>sha256</strong> (ips_option): payload rule option for hash matching
 </p>
 </li>
@@ -38288,6 +38511,11 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 <li>
 <p>
 <strong>tos</strong> (ips_option): rule option to check type of service field
+</p>
+</li>
+<li>
+<p>
+<strong>trace</strong> (basic): configure trace log messages
 </p>
 </li>
 <li>
@@ -39362,11 +39590,6 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
-<strong>ips_option::session</strong>: rule option to check user data from TCP sessions
-</p>
-</li>
-<li>
-<p>
 <strong>ips_option::sha256</strong>: payload rule option for hash matching
 </p>
 </li>
@@ -39705,7 +39928,7 @@ Adding/removing stream_* inspectors if stream was already configured
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2020-03-31 10:05:15 EDT
+ 2020-04-23 11:59:51 EDT
 </div>
 </div>
 </body>

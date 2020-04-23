@@ -104,6 +104,7 @@ Table of Contents
     6.28. side_channel
     6.29. snort
     6.30. suppress
+    6.31. trace
 
 7. Codec Modules
 
@@ -301,27 +302,26 @@ Table of Contents
     11.96. sd_pattern
     11.97. seq
     11.98. service
-    11.99. session
-    11.100. sha256
-    11.101. sha512
-    11.102. sid
-    11.103. sip_body
-    11.104. sip_header
-    11.105. sip_method
-    11.106. sip_stat_code
-    11.107. so
-    11.108. soid
-    11.109. ssl_state
-    11.110. ssl_version
-    11.111. stream_reassemble
-    11.112. stream_size
-    11.113. tag
-    11.114. target
-    11.115. tos
-    11.116. ttl
-    11.117. urg
-    11.118. window
-    11.119. wscale
+    11.99. sha256
+    11.100. sha512
+    11.101. sid
+    11.102. sip_body
+    11.103. sip_header
+    11.104. sip_method
+    11.105. sip_stat_code
+    11.106. so
+    11.107. soid
+    11.108. ssl_state
+    11.109. ssl_version
+    11.110. stream_reassemble
+    11.111. stream_size
+    11.112. tag
+    11.113. target
+    11.114. tos
+    11.115. ttl
+    11.116. urg
+    11.117. window
+    11.118. wscale
 
 12. Search Engine Modules
 13. SO Rule Modules
@@ -411,7 +411,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.1 (Build 1)
+o"  )~   Version 3.0.1 (Build 2)
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2020 Cisco and/or its affiliates. All rights reserved.
@@ -3966,7 +3966,38 @@ allow directories to be separated by backslashes:
 backslash_to_slash is turned on by default. It replaces all the
 backslashes with slashes during normalization.
 
-5.9.3. Detection rules
+5.9.3. CONNECT processing
+
+The HTTP CONNECT method is used by a client to establish a tunnel to
+a destination via an HTTP proxy server. If the connection is
+successful the server will send a 2XX success response to the client,
+then proceed to blindly forward traffic between the client and
+destination. That traffic belongs to a new session between the client
+and destination and may be of any protocol, so clearly the HTTP
+inspector will be unable to continue processing traffic following the
+CONNECT message as if it were just a continuation of the original
+HTTP/1.1 session.
+
+Therefore upon receiving a success response to a CONNECT request, the
+HTTP inspector will stop inspecting the session. The next packet will
+return to the wizard, which will determine the appropriate inspector
+to continue processing the flow. If the tunneled protocol happens to
+be HTTP/1.1, the HTTP inspector will again start inspecting the flow,
+but as an entirely new session.
+
+There is one scenario where the cutover to the wizard will not occur
+despite a 2XX success response to a CONNECT request. HTTP allows for
+pipelining, or sending multiple requests without waiting for a
+response. If the HTTP inspector sees any further traffic from the
+client after a CONNECT request before it has seen the CONNECT
+response, it is unclear whether this traffic should be interpreted as
+a pipelined HTTP request or tunnel traffic sent in anticipation of a
+success response from the server. Due to this potential evasion
+tactic, the HTTP inspector will not cut over to the wizard if it sees
+any early client-to-server traffic, but will continue normal HTTP
+processing of the flow regardless of the eventual server response.
+
+5.9.4. Detection rules
 
 http_inspect parses HTTP messages into their components and makes
 them available to the detection engine through rule options. Let’s
@@ -4037,7 +4068,7 @@ list.
 In addition to the headers there are rule options for virtually every
 part of the HTTP message.
 
-5.9.3.1. http_uri and http_raw_uri
+5.9.4.1. http_uri and http_raw_uri
 
 These provide the URI of the request message. The raw form is exactly
 as it appeared in the message and the normalized form is determined
@@ -4087,16 +4118,17 @@ http_uri represents the normalized uri, normalization of components
 depends on uri type. If the uri is of type absolute (contains all six
 components) or absolute path (contains path, query and fragment) then
 the path and query components are normalized. In these cases,
-http_uri represents the normalized path and query (/path?query). If
-the uri is of type authority (host and port), the host is normalized
-and http_uri represents the normalized host with the port number. In
-all other cases http_uri is the same as http_raw_uri.
+http_uri represents the normalized path, query, and fragment (/path?
+query#fragment). If the uri is of type authority (host and port), the
+host is normalized and http_uri represents the normalized host with
+the port number. In all other cases http_uri is the same as
+http_raw_uri.
 
 Note: this section uses informal language to explain some things.
 Nothing here is intended to conflict with the technical language of
 the HTTP RFCs and the implementation follows the RFCs.
 
-5.9.3.2. http_header and http_raw_header
+5.9.4.2. http_header and http_raw_header
 
 These cover all the header lines except the first one. You may
 specify an individual header by name using the field option as shown
@@ -4126,7 +4158,7 @@ In most cases specifying individual headers creates a more efficient
 and accurate rule. It is recommended that new rules be written using
 individual headers whenever possible.
 
-5.9.3.3. http_trailer and http_raw_trailer
+5.9.4.3. http_trailer and http_raw_trailer
 
 HTTP permits header lines to appear after a chunked body ends.
 Typically they contain information about the message content that was
@@ -4138,7 +4170,7 @@ counterparts except they apply to these end headers. If you want a
 rule to inspect both kinds of headers you need to write two rules,
 one using header and one using trailer.
 
-5.9.3.4. http_cookie and http_raw_cookie
+5.9.4.4. http_cookie and http_raw_cookie
 
 These provide the value of the Cookie header for a request message
 and the Set-Cookie for a response message. If multiple cookies are
@@ -4147,7 +4179,7 @@ present they will be concatenated into a comma-separated list.
 Normalization for http_cookie is the same URI-style normalization
 applied to http_header when no specific header is specified.
 
-5.9.3.5. http_true_ip
+5.9.4.5. http_true_ip
 
 This provides the original IP address of the client sending the
 request as it was stored by a proxy in the request message headers.
@@ -4155,13 +4187,13 @@ Specifically it is the last IP address listed in the X-Forwarded-For
 or True-Client-IP header. If both headers are present the former is
 used.
 
-5.9.3.6. http_client_body
+5.9.4.6. http_client_body
 
 This is the body of a request message such as POST or PUT.
 Normalization for http_client_body is the same URI-like normalization
 applied to http_header when no specific header is specified.
 
-5.9.3.7. http_raw_body
+5.9.4.7. http_raw_body
 
 This is the body of a request or response message. It will be
 dechunked and unzipped if applicable but will not be normalized in
@@ -4170,30 +4202,30 @@ is a rule that uses packet data will search and may match an HTTP
 header, but http_raw_body is limited to the message body. Thus the
 latter is more efficient and more accurate for most uses.
 
-5.9.3.8. http_method
+5.9.4.8. http_method
 
 The method field of a request message. Common values are "GET",
 "POST", "OPTIONS", "HEAD", "DELETE", "PUT", "TRACE", and "CONNECT".
 
-5.9.3.9. http_stat_code
+5.9.4.9. http_stat_code
 
 The status code field of a response message. This is normally a
 3-digit number between 100 and 599. In this example it is 200.
 
 HTTP/1.1 200 OK
 
-5.9.3.10. http_stat_msg
+5.9.4.10. http_stat_msg
 
 The reason phrase field of a response message. This is the
 human-readable text following the status code. "OK" in the previous
 example.
 
-5.9.3.11. http_version
+5.9.4.11. http_version
 
 The protocol version information that appears on the first line of an
 HTTP message. This is usually "HTTP/1.0" or "HTTP/1.1".
 
-5.9.3.12. http_raw_request and http_raw_status
+5.9.4.12. http_raw_request and http_raw_status
 
 These are the unmodified first header line of the HTTP request and
 response messages respectively. These rule options are a safety valve
@@ -4203,7 +4235,7 @@ first header line. For a request message those are http_method,
 http_raw_uri, and http_version. For a response message those are
 http_version, http_stat_code, and http_stat_msg.
 
-5.9.3.13. file_data and packet data
+5.9.4.13. file_data and packet data
 
 file_data contains the normalized message body. This is the
 normalization described above under gzip, normalize_utf,
@@ -4212,7 +4244,7 @@ decompress_pdf, decompress_swf, and normalize_javascript.
 The unnormalized message content is available in the packet data. If
 gzip is configured the packet data will be unzipped.
 
-5.9.4. Timing issues and combining rule options
+5.9.5. Timing issues and combining rule options
 
 HTTP inspector is stateful. That means it is aware of a bigger
 picture than the packet in front of it. It knows what all the pieces
@@ -5434,6 +5466,8 @@ Peg counts:
     (sum)
   * active.holds_canceled: total number of packet hold requests
     canceled (sum)
+  * active.holds_allowed: total number of packet hold requests
+    allowed (sum)
 
 
 6.2. alerts
@@ -5480,6 +5514,8 @@ Usage: global
 
 Configuration:
 
+  * string attribute_table.hosts_file: filename to load attribute
+    host table from
   * int attribute_table.max_hosts = 1024: maximum number of hosts in
     attribute table { 32:max53 }
   * int attribute_table.max_services_per_host = 8: maximum number of
@@ -6058,8 +6094,8 @@ Configuration:
     starting at link layer (same as -X)
   * int output.event_trace.max_data = 0: maximum amount of packet
     data to capture { 0:65535 }
-  * bool output.quiet = false: suppress non-fatal information (still
-    show alerts, same as -q)
+  * bool output.quiet = false: suppress normal logging on stdout
+    (same as -q)
   * string output.logdir = .: where to put log files (same as -l)
   * bool output.show_year = false: include year in timestamp in the
     alert and log files (same as -y)
@@ -6379,8 +6415,7 @@ Configuration:
   * int snort.-n: <count> stop after count packets { 0:max53 }
   * implied snort.-O: obfuscate the logged IP addresses
   * implied snort.-Q: enable inline mode operation
-  * implied snort.-q: quiet mode - Don’t show banner and status
-    report
+  * implied snort.-q: quiet mode - suppress normal logging on stdout
   * string snort.-R: <rules> include this rules file in the default
     policy
   * string snort.-r: <pcap>… (same as --pcap-list)
@@ -6431,6 +6466,12 @@ Configuration:
     loaded rules libraries
   * string snort.--dump-defaults: [<module prefix>] output module
     defaults in Lua format { (optional) }
+  * implied snort.--dump-rule-deps: dump rule dependencies in json
+    format for use by other tools
+  * implied snort.--dump-rule-meta: dump configured rule info in json
+    format for use by other tools
+  * implied snort.--dump-rule-state: dump configured rule state in
+    json format for use by other tools
   * implied snort.--dump-version: output the version, the whole
     version, and only the version
   * implied snort.--enable-inline-test: enable Inline-Test Mode
@@ -6499,8 +6540,6 @@ Configuration:
     will read until Snort is terminated { 0:max32 }
   * implied snort.--pcap-no-filter: reset to use no filter when
     getting pcaps from file or directory
-  * implied snort.--pcap-reload: if reading multiple pcaps, reload
-    snort config between pcaps
   * implied snort.--pcap-show: print a line saying what pcap is
     currently being read
   * implied snort.--pedantic: warnings are fatal
@@ -6595,9 +6634,12 @@ Peg counts:
     deleted (sum)
   * snort.daq_reloads: number of times daq configuration was reloaded
     (sum)
-  * snort.attribute_table_reloads: number of times hosts table was
-    reloaded (sum)
-  * snort.attribute_table_hosts: total number of hosts in table (sum)
+  * snort.attribute_table_reloads: number of times hosts attribute
+    table was reloaded (sum)
+  * snort.attribute_table_hosts: number of hosts added to the
+    attribute table (sum)
+  * snort.attribute_table_overflow: number of host additions that
+    failed due to attribute table full (sum)
 
 
 6.30. suppress
@@ -6618,6 +6660,22 @@ Configuration:
     destination addresses { by_src | by_dst }
   * string suppress[].ip: restrict suppression to these addresses
     according to track
+
+
+6.31. trace
+
+--------------
+
+What: configure trace log messages
+
+Type: basic
+
+Usage: global
+
+Configuration:
+
+  * enum trace.output: output method for trace log messages { stdout
+    | syslog }
 
 
 ---------------------------------------------------------------------
@@ -6677,7 +6735,22 @@ Rules:
   * 116:468 (ciscometadata) truncated Cisco Metadata header
   * 116:469 (ciscometadata) invalid Cisco Metadata option length
   * 116:470 (ciscometadata) invalid Cisco Metadata option type
-  * 116:471 (ciscometadata) invalid Cisco Metadata SGT
+  * 116:471 (ciscometadata) invalid Cisco Metadata security group tag
+
+Peg counts:
+
+  * ciscometadata.truncated_hdr: total truncated Cisco Metadata
+    headers (sum)
+  * ciscometadata.invalid_hdr_ver: total invalid Cisco Metadata
+    header versions (sum)
+  * ciscometadata.invalid_hdr_len: total invalid Cisco Metadata
+    header lengths (sum)
+  * ciscometadata.invalid_opt_len: total invalid Cisco Metadata
+    option lengths (sum)
+  * ciscometadata.invalid_opt_type: total invalid Cisco Metadata
+    option types (sum)
+  * ciscometadata.invalid_sgt: total invalid Cisco Metadata security
+    group tags (sum)
 
 
 7.4. eapol
@@ -7311,15 +7384,10 @@ Configuration:
     logging appid statistics { 1:max32 }
   * int appid.app_stats_rollover_size = 20971520: max file size for
     appid stats before rolling over the log file { 0:max32 }
-  * int appid.app_stats_rollover_time = 86400: max time period for
-    collection appid stats before rolling over the log file { 0:max31
-    }
   * string appid.app_detector_dir: directory to load appid detectors
     from
-  * int appid.instance_id = 0: instance id - ignored { 0:max32 }
-  * bool appid.debug = false: enable appid debug logging
-  * bool appid.dump_ports = false: enable dump of appid port
-    information
+  * bool appid.list_odp_detectors = false: enable logging of odp
+    detectors statistics
   * string appid.tp_appid_path: path to third party appid dynamic
     library
   * string appid.tp_appid_config: path to third party appid
@@ -8333,7 +8401,7 @@ Rules:
   * 121:8 (http2_inspect) HTTP/2 request missing required header
     field
   * 121:9 (http2_inspect) HTTP/2 response has no status code
-  * 121:10 (http2_inspect) invalid HTTP/2 header field
+  * 121:10 (http2_inspect) HTTP/2 invalid header field
   * 121:11 (http2_inspect) error in HTTP/2 settings frame
   * 121:12 (http2_inspect) unknown parameter in HTTP/2 settings frame
   * 121:13 (http2_inspect) invalid HTTP/2 frame sequence
@@ -8546,6 +8614,16 @@ Rules:
     Content-Length header value
   * 119:252 (http_inspect) HTTP/2 message body smaller than
     Content-Length header value
+  * 119:253 (http_inspect) HTTP CONNECT request with a message body
+  * 119:254 (http_inspect) HTTP client-to-server traffic after
+    CONNECT request but before CONNECT response
+  * 119:255 (http_inspect) HTTP CONNECT 2XX response with
+    Content-Length header
+  * 119:256 (http_inspect) HTTP CONNECT 2XX response with
+    Transfer-Encoding header
+  * 119:257 (http_inspect) HTTP CONNECT response with 1XX status code
+  * 119:258 (http_inspect) HTTP CONNECT response before request
+    message completed
 
 Peg counts:
 
@@ -8579,13 +8657,15 @@ Peg counts:
     (now)
   * http_inspect.max_concurrent_sessions: maximum concurrent http
     sessions (max)
-  * http_inspect.detained_packets: TCP packets delayed by detained
+  * http_inspect.detains_requested: packet hold requests for detained
     inspection (sum)
   * http_inspect.partial_inspections: pre-inspections for detained
     inspection (sum)
   * http_inspect.excess_parameters: repeat parameters exceeding max
     (sum)
   * http_inspect.parameters: HTTP parameters inspected (sum)
+  * http_inspect.connect_tunnel_cutovers: CONNECT tunnel flow
+    cutovers to wizard (sum)
 
 
 9.25. imap
@@ -8883,6 +8963,15 @@ Configuration:
   * enum perf_monitor.format = csv: output format for stats { csv |
     text | json | flatbuffers }
   * bool perf_monitor.summary = false: output summary at shutdown
+
+Commands:
+
+  * perf_monitor.enable_flow_ip_profiling(seconds, packets): enable
+    statistics on host pairs
+  * perf_monitor.disable_flow_ip_profiling(): disable statistics on
+    host pairs
+  * perf_monitor.show_flow_ip_profiling(): show status of statistics
+    on host pairs
 
 Peg counts:
 
@@ -9252,7 +9341,12 @@ Usage: global
 
 Configuration:
 
-  * int rt_global.memcap = 2048: cap on amount of memory used
+  * int rt_global.downshift_packet = 0: attempt downshift at this
+    packet on flow (0 is disabled) { 0:max32 }
+  * int rt_global.downshift_mode = 3: 1 = unconditional, 2 = !ctl and
+    !tls, 3 = !ctl and !file { 1:3 }
+  * int rt_global.memcap = 2048: cap on amount of memory used (0 is
+    disabled) { 0:max53 }
 
 Peg counts:
 
@@ -9654,23 +9748,23 @@ Configuration:
     being eligible for pruning { 1:max32 }
   * int stream.ip_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
-  * int stream.ip_cache.cap_weight = 64: additional bytes to track
-    per flow for better estimation against cap { 0:65535 }
+  * int stream.ip_cache.cap_weight = 0: additional bytes to track per
+    flow for better estimation against cap { 0:65535 }
   * int stream.icmp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
-  * int stream.icmp_cache.cap_weight = 8: additional bytes to track
+  * int stream.icmp_cache.cap_weight = 0: additional bytes to track
     per flow for better estimation against cap { 0:65535 }
   * int stream.tcp_cache.idle_timeout = 3600: maximum inactive time
     before retiring session tracker { 1:max32 }
-  * int stream.tcp_cache.cap_weight = 11500: additional bytes to
+  * int stream.tcp_cache.cap_weight = 11000: additional bytes to
     track per flow for better estimation against cap { 0:65535 }
   * int stream.udp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
-  * int stream.udp_cache.cap_weight = 128: additional bytes to track
+  * int stream.udp_cache.cap_weight = 0: additional bytes to track
     per flow for better estimation against cap { 0:65535 }
   * int stream.user_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
-  * int stream.user_cache.cap_weight = 256: additional bytes to track
+  * int stream.user_cache.cap_weight = 0: additional bytes to track
     per flow for better estimation against cap { 0:65535 }
   * int stream.file_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
@@ -10889,9 +10983,9 @@ Usage: detect
 
 Configuration:
 
-  * string flowbits.~op: set|reset|isset|etc.
-  * string flowbits.~bits: bits or group
-  * string flowbits.~group: group if arg1 is bits
+  * enum flowbits.~op: bit operation or noalert (no bits) { set |
+    unset | isset | isnotset | noalert }
+  * string flowbits.~bits: bit [|bit]* or bit [&bit]*
 
 
 11.41. fragbits
@@ -11893,22 +11987,7 @@ Configuration:
   * string service.*: one or more comma-separated service names
 
 
-11.99. session
-
---------------
-
-What: rule option to check user data from TCP sessions
-
-Type: ips_option
-
-Usage: detect
-
-Configuration:
-
-  * enum session.~mode: output format { printable|binary|all }
-
-
-11.100. sha256
+11.99. sha256
 
 --------------
 
@@ -11928,7 +12007,7 @@ Configuration:
     start of buffer
 
 
-11.101. sha512
+11.100. sha512
 
 --------------
 
@@ -11948,7 +12027,7 @@ Configuration:
     start of buffer
 
 
-11.102. sid
+11.101. sid
 
 --------------
 
@@ -11963,7 +12042,7 @@ Configuration:
   * int sid.~: signature id { 1:max32 }
 
 
-11.103. sip_body
+11.102. sip_body
 
 --------------
 
@@ -11974,7 +12053,7 @@ Type: ips_option
 Usage: detect
 
 
-11.104. sip_header
+11.103. sip_header
 
 --------------
 
@@ -11986,7 +12065,7 @@ Type: ips_option
 Usage: detect
 
 
-11.105. sip_method
+11.104. sip_method
 
 --------------
 
@@ -12001,7 +12080,7 @@ Configuration:
   * string sip_method.*method: sip method
 
 
-11.106. sip_stat_code
+11.105. sip_stat_code
 
 --------------
 
@@ -12016,7 +12095,7 @@ Configuration:
   * int sip_stat_code.*code: status code { 1:999 }
 
 
-11.107. so
+11.106. so
 
 --------------
 
@@ -12033,7 +12112,7 @@ Configuration:
     buffer
 
 
-11.108. soid
+11.107. soid
 
 --------------
 
@@ -12049,7 +12128,7 @@ Configuration:
     like 3_45678_9
 
 
-11.109. ssl_state
+11.108. ssl_state
 
 --------------
 
@@ -12078,7 +12157,7 @@ Configuration:
     unknown
 
 
-11.110. ssl_version
+11.109. ssl_version
 
 --------------
 
@@ -12105,7 +12184,7 @@ Configuration:
     tls1.2
 
 
-11.111. stream_reassemble
+11.110. stream_reassemble
 
 --------------
 
@@ -12126,7 +12205,7 @@ Configuration:
     remainder of the session
 
 
-11.112. stream_size
+11.111. stream_size
 
 --------------
 
@@ -12144,7 +12223,7 @@ Configuration:
     direction(s) { either|to_server|to_client|both }
 
 
-11.113. tag
+11.112. tag
 
 --------------
 
@@ -12163,7 +12242,7 @@ Configuration:
   * int tag.bytes: tag for this many bytes { 1:max32 }
 
 
-11.114. target
+11.113. target
 
 --------------
 
@@ -12179,7 +12258,7 @@ Configuration:
     dst_ip }
 
 
-11.115. tos
+11.114. tos
 
 --------------
 
@@ -12194,7 +12273,7 @@ Configuration:
   * interval tos.~range: check if IP TOS is in given range { 0:255 }
 
 
-11.116. ttl
+11.115. ttl
 
 --------------
 
@@ -12210,7 +12289,7 @@ Configuration:
     0:255 }
 
 
-11.117. urg
+11.116. urg
 
 --------------
 
@@ -12226,7 +12305,7 @@ Configuration:
     { 0:65535 }
 
 
-11.118. window
+11.117. window
 
 --------------
 
@@ -12242,7 +12321,7 @@ Configuration:
     range { 0:65535 }
 
 
-11.119. wscale
+11.118. wscale
 
 --------------
 
@@ -12312,9 +12391,9 @@ Configuration:
     icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id |
     ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority |
     proto | rev | rule | seconds | server_bytes | server_pkts |
-    service | sid | src_addr | src_ap | src_port | target | tcp_ack |
-    tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl |
-    udp_len | vlan }
+    service | sgt| sid | src_addr | src_ap | src_port | target |
+    tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp |
+    tos | ttl | udp_len | vlan }
   * int alert_csv.limit = 0: set maximum size in MB before rollover
     (0 is unlimited) { 0:maxSZ }
   * string alert_csv.separator = , : separate fields with this
@@ -12396,9 +12475,9 @@ Configuration:
     icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id |
     ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority |
     proto | rev | rule | seconds | server_bytes | server_pkts |
-    service | sid | src_addr | src_ap | src_port | target | tcp_ack |
-    tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl |
-    udp_len | vlan }
+    service | sgt| sid | src_addr | src_ap | src_port | target |
+    tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp |
+    tos | ttl | udp_len | vlan }
   * int alert_json.limit = 0: set maximum size in MB before rollover
     (0 is unlimited) { 0:maxSZ }
   * string alert_json.separator = , : separate fields with this
@@ -14598,7 +14677,7 @@ these libraries see the Getting Started section of the manual.
   * -n <count> stop after count packets (0:max53)
   * -O obfuscate the logged IP addresses
   * -Q enable inline mode operation
-  * -q quiet mode - Don’t show banner and status report
+  * -q quiet mode - suppress normal logging on stdout
   * -R <rules> include this rules file in the default policy
   * -r <pcap>… (same as --pcap-list)
   * -S <x=v> set config variable x equal to value v
@@ -14637,6 +14716,12 @@ these libraries see the Getting Started section of the manual.
     libraries
   * --dump-defaults [<module prefix>] output module defaults in Lua
     format (optional)
+  * --dump-rule-deps dump rule dependencies in json format for use by
+    other tools
+  * --dump-rule-meta dump configured rule info in json format for use
+    by other tools
+  * --dump-rule-state dump configured rule state in json format for
+    use by other tools
   * --dump-version output the version, the whole version, and only
     the version
   * --enable-inline-test enable Inline-Test Mode Operation
@@ -14697,8 +14782,6 @@ these libraries see the Getting Started section of the manual.
     until Snort is terminated (0:max32)
   * --pcap-no-filter reset to use no filter when getting pcaps from
     file or directory
-  * --pcap-reload if reading multiple pcaps, reload snort config
-    between pcaps
   * --pcap-show print a line saying what pcap is currently being read
   * --pedantic warnings are fatal
   * --plugin-path <path> a colon separated list of directories or
@@ -14774,9 +14857,9 @@ these libraries see the Getting Started section of the manual.
     icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id |
     ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority |
     proto | rev | rule | seconds | server_bytes | server_pkts |
-    service | sid | src_addr | src_ap | src_port | target | tcp_ack |
-    tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl |
-    udp_len | vlan }
+    service | sgt| sid | src_addr | src_ap | src_port | target |
+    tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp |
+    tos | ttl | udp_len | vlan }
   * bool alert_csv.file = false: output to alert_csv.txt instead of
     stdout
   * int alert_csv.limit = 0: set maximum size in MB before rollover
@@ -14802,9 +14885,9 @@ these libraries see the Getting Started section of the manual.
     icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id |
     ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority |
     proto | rev | rule | seconds | server_bytes | server_pkts |
-    service | sid | src_addr | src_ap | src_port | target | tcp_ack |
-    tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl |
-    udp_len | vlan }
+    service | sgt| sid | src_addr | src_ap | src_port | target |
+    tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp |
+    tos | ttl | udp_len | vlan }
   * bool alert_json.file = false: output to alert_json.txt instead of
     stdout
   * int alert_json.limit = 0: set maximum size in MB before rollover
@@ -14846,13 +14929,8 @@ these libraries see the Getting Started section of the manual.
     logging appid statistics { 1:max32 }
   * int appid.app_stats_rollover_size = 20971520: max file size for
     appid stats before rolling over the log file { 0:max32 }
-  * int appid.app_stats_rollover_time = 86400: max time period for
-    collection appid stats before rolling over the log file { 0:max31
-    }
-  * bool appid.debug = false: enable appid debug logging
-  * bool appid.dump_ports = false: enable dump of appid port
-    information
-  * int appid.instance_id = 0: instance id - ignored { 0:max32 }
+  * bool appid.list_odp_detectors = false: enable logging of odp
+    detectors statistics
   * bool appid.log_all_sessions = false: enable logging of all appid
     sessions
   * bool appid.log_stats = false: enable logging of appid statistics
@@ -14881,6 +14959,8 @@ these libraries see the Getting Started section of the manual.
   * implied asn1.print: dump decode data to console; always true
   * int asn1.relative_offset: relative offset from the cursor {
     -65535:65535 }
+  * string attribute_table.hosts_file: filename to load attribute
+    host table from
   * int attribute_table.max_hosts = 1024: maximum number of hosts in
     attribute table { 32:max53 }
   * int attribute_table.max_metadata_services = 9: maximum number of
@@ -15285,9 +15365,9 @@ these libraries see the Getting Started section of the manual.
     payload and reset injects
   * string flags.~mask_flags: these flags are don’t cares
   * string flags.~test_flags: these flags are tested
-  * string flowbits.~bits: bits or group
-  * string flowbits.~group: group if arg1 is bits
-  * string flowbits.~op: set|reset|isset|etc.
+  * string flowbits.~bits: bit [|bit]* or bit [&bit]*
+  * enum flowbits.~op: bit operation or noalert (no bits) { set |
+    unset | isset | isnotset | noalert }
   * implied flow.established: match only during data transfer phase
   * implied flow.from_client: same as to_server
   * implied flow.from_server: same as to_client
@@ -15738,8 +15818,8 @@ these libraries see the Getting Started section of the manual.
   * string output.logdir = .: where to put log files (same as -l)
   * bool output.obfuscate = false: obfuscate the logged IP addresses
     (same as -O)
-  * bool output.quiet = false: suppress non-fatal information (still
-    show alerts, same as -q)
+  * bool output.quiet = false: suppress normal logging on stdout
+    (same as -q)
   * bool output.show_year = false: include year in timestamp in the
     alert and log files (same as -y)
   * int output.tagged_packet_limit = 256: maximum number of packets
@@ -16018,7 +16098,12 @@ these libraries see the Getting Started section of the manual.
   * int rpc.~app: application number { 0:max32 }
   * string rpc.~proc: procedure number or * for any
   * string rpc.~ver: version number or * for any
-  * int rt_global.memcap = 2048: cap on amount of memory used
+  * int rt_global.downshift_mode = 3: 1 = unconditional, 2 = !ctl and
+    !tls, 3 = !ctl and !file { 1:3 }
+  * int rt_global.downshift_packet = 0: attempt downshift at this
+    packet on flow (0 is disabled) { 0:max32 }
+  * int rt_global.memcap = 2048: cap on amount of memory used (0 is
+    disabled) { 0:max53 }
   * bool rt_packet.retry_all = false: request retry for all non-retry
     packets
   * bool rt_packet.retry_targeted = false: request retry for packets
@@ -16075,7 +16160,6 @@ these libraries see the Getting Started section of the manual.
   * interval seq.~range: check if TCP sequence number is in given
     range { 0: }
   * string service.*: one or more comma-separated service names
-  * enum session.~mode: output format { printable|binary|all }
   * string sha256.~hash: data to match
   * int sha256.length: number of octets in plain text { 1:65535 }
   * string sha256.offset: var or number of bytes from start of buffer
@@ -16202,6 +16286,12 @@ these libraries see the Getting Started section of the manual.
     defaults in Lua format { (optional) }
   * implied snort.--dump-dynamic-rules: output stub rules for all
     loaded rules libraries
+  * implied snort.--dump-rule-deps: dump rule dependencies in json
+    format for use by other tools
+  * implied snort.--dump-rule-meta: dump configured rule info in json
+    format for use by other tools
+  * implied snort.--dump-rule-state: dump configured rule state in
+    json format for use by other tools
   * implied snort.--dump-version: output the version, the whole
     version, and only the version
   * implied snort.-e: display the second layer header info
@@ -16290,8 +16380,6 @@ these libraries see the Getting Started section of the manual.
     will read until Snort is terminated { 0:max32 }
   * implied snort.--pcap-no-filter: reset to use no filter when
     getting pcaps from file or directory
-  * implied snort.--pcap-reload: if reading multiple pcaps, reload
-    snort config between pcaps
   * implied snort.--pcap-show: print a line saying what pcap is
     currently being read
   * implied snort.--pedantic: warnings are fatal
@@ -16299,8 +16387,7 @@ these libraries see the Getting Started section of the manual.
     directories or plugin libraries
   * implied snort.--process-all-events: process all action groups
   * implied snort.-Q: enable inline mode operation
-  * implied snort.-q: quiet mode - Don’t show banner and status
-    report
+  * implied snort.-q: quiet mode - suppress normal logging on stdout
   * string snort.-r: <pcap>… (same as --pcap-list)
   * string snort.-R: <rules> include this rules file in the default
     policy
@@ -16427,14 +16514,14 @@ these libraries see the Getting Started section of the manual.
   * int stream.file_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * bool stream_file.upload = false: indicate file transfer direction
-  * int stream.icmp_cache.cap_weight = 8: additional bytes to track
+  * int stream.icmp_cache.cap_weight = 0: additional bytes to track
     per flow for better estimation against cap { 0:65535 }
   * int stream.icmp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * int stream_icmp.session_timeout = 30: session tracking timeout {
     1:max31 }
-  * int stream.ip_cache.cap_weight = 64: additional bytes to track
-    per flow for better estimation against cap { 0:65535 }
+  * int stream.ip_cache.cap_weight = 0: additional bytes to track per
+    flow for better estimation against cap { 0:65535 }
   * int stream.ip_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * bool stream.ip_frags_only = false: don’t process non-frag flows
@@ -16466,7 +16553,7 @@ these libraries see the Getting Started section of the manual.
     direction(s) { either|to_server|to_client|both }
   * interval stream_size.~range: check if the stream size is in the
     given range { 0: }
-  * int stream.tcp_cache.cap_weight = 11500: additional bytes to
+  * int stream.tcp_cache.cap_weight = 11000: additional bytes to
     track per flow for better estimation against cap { 0:65535 }
   * int stream.tcp_cache.idle_timeout = 3600: maximum inactive time
     before retiring session tracker { 1:max32 }
@@ -16503,13 +16590,13 @@ these libraries see the Getting Started section of the manual.
     a TCP segment not to be considered small (129:12) { 0:2048 }
   * bool stream_tcp.track_only = false: disable reassembly if true
   * int stream.trace.all = 0: enable traces in module { 0:255 }
-  * int stream.udp_cache.cap_weight = 128: additional bytes to track
+  * int stream.udp_cache.cap_weight = 0: additional bytes to track
     per flow for better estimation against cap { 0:65535 }
   * int stream.udp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * int stream_udp.session_timeout = 30: session tracking timeout {
     1:max31 }
-  * int stream.user_cache.cap_weight = 256: additional bytes to track
+  * int stream.user_cache.cap_weight = 0: additional bytes to track
     per flow for better estimation against cap { 0:65535 }
   * int stream.user_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
@@ -16539,6 +16626,8 @@ these libraries see the Getting Started section of the manual.
   * bool telnet.encrypted_traffic = false: check for encrypted Telnet
   * bool telnet.normalize = false: eliminate escape sequences
   * interval tos.~range: check if IP TOS is in given range { 0:255 }
+  * enum trace.output: output method for trace log messages { stdout
+    | syslog }
   * interval ttl.~range: check if IP TTL is in the given range {
     0:255 }
   * bool udp.deep_teredo_inspection = false: look for Teredo on all
@@ -16589,6 +16678,8 @@ these libraries see the Getting Started section of the manual.
     that failed (sum)
   * active.failed_injects: total crafted packet encode + injects that
     failed (sum)
+  * active.holds_allowed: total number of packet hold requests
+    allowed (sum)
   * active.holds_canceled: total number of packet hold requests
     canceled (sum)
   * active.holds_denied: total number of packet hold requests denied
@@ -16618,6 +16709,18 @@ these libraries see the Getting Started section of the manual.
     (max)
   * cip.packets: total packets (sum)
   * cip.session: total sessions (sum)
+  * ciscometadata.invalid_hdr_len: total invalid Cisco Metadata
+    header lengths (sum)
+  * ciscometadata.invalid_hdr_ver: total invalid Cisco Metadata
+    header versions (sum)
+  * ciscometadata.invalid_opt_len: total invalid Cisco Metadata
+    option lengths (sum)
+  * ciscometadata.invalid_opt_type: total invalid Cisco Metadata
+    option types (sum)
+  * ciscometadata.invalid_sgt: total invalid Cisco Metadata security
+    group tags (sum)
+  * ciscometadata.truncated_hdr: total truncated Cisco Metadata
+    headers (sum)
   * daq.allow: total allow verdicts (sum)
   * daq.analyzed: total packets analyzed from DAQ (sum)
   * daq.blacklist: total blacklist verdicts (sum)
@@ -16946,8 +17049,10 @@ these libraries see the Getting Started section of the manual.
   * http_inspect.concurrent_sessions: total concurrent http sessions
     (now)
   * http_inspect.connect_requests: CONNECT requests inspected (sum)
+  * http_inspect.connect_tunnel_cutovers: CONNECT tunnel flow
+    cutovers to wizard (sum)
   * http_inspect.delete_requests: DELETE requests inspected (sum)
-  * http_inspect.detained_packets: TCP packets delayed by detained
+  * http_inspect.detains_requested: packet hold requests for detained
     inspection (sum)
   * http_inspect.excess_parameters: repeat parameters exceeding max
     (sum)
@@ -17254,9 +17359,12 @@ these libraries see the Getting Started section of the manual.
   * smtp.total_bytes: total number of bytes processed (sum)
   * smtp.uu_attachments: total uu attachments decoded (sum)
   * smtp.uu_decoded_bytes: total uu decoded bytes (sum)
-  * snort.attribute_table_hosts: total number of hosts in table (sum)
-  * snort.attribute_table_reloads: number of times hosts table was
-    reloaded (sum)
+  * snort.attribute_table_hosts: number of hosts added to the
+    attribute table (sum)
+  * snort.attribute_table_overflow: number of host additions that
+    failed due to attribute table full (sum)
+  * snort.attribute_table_reloads: number of times hosts attribute
+    table was reloaded (sum)
   * snort.conf_reloads: number of times configuration was reloaded
     (sum)
   * snort.daq_reloads: number of times daq configuration was reloaded
@@ -17715,7 +17823,7 @@ these libraries see the Getting Started section of the manual.
   * 116:468 (ciscometadata) truncated Cisco Metadata header
   * 116:469 (ciscometadata) invalid Cisco Metadata option length
   * 116:470 (ciscometadata) invalid Cisco Metadata option type
-  * 116:471 (ciscometadata) invalid Cisco Metadata SGT
+  * 116:471 (ciscometadata) invalid Cisco Metadata security group tag
   * 116:472 (decode) too many protocols present
   * 116:473 (decode) ether type out of range
   * 116:474 (icmp6) ICMPv6 not encapsulated in IPv6
@@ -17849,6 +17957,16 @@ these libraries see the Getting Started section of the manual.
     Content-Length header value
   * 119:252 (http_inspect) HTTP/2 message body smaller than
     Content-Length header value
+  * 119:253 (http_inspect) HTTP CONNECT request with a message body
+  * 119:254 (http_inspect) HTTP client-to-server traffic after
+    CONNECT request but before CONNECT response
+  * 119:255 (http_inspect) HTTP CONNECT 2XX response with
+    Content-Length header
+  * 119:256 (http_inspect) HTTP CONNECT 2XX response with
+    Transfer-Encoding header
+  * 119:257 (http_inspect) HTTP CONNECT response with 1XX status code
+  * 119:258 (http_inspect) HTTP CONNECT response before request
+    message completed
   * 121:1 (http2_inspect) error in HPACK integer value
   * 121:2 (http2_inspect) HPACK integer value has leading zeros
   * 121:3 (http2_inspect) error in HPACK string value
@@ -17859,7 +17977,7 @@ these libraries see the Getting Started section of the manual.
   * 121:8 (http2_inspect) HTTP/2 request missing required header
     field
   * 121:9 (http2_inspect) HTTP/2 response has no status code
-  * 121:10 (http2_inspect) invalid HTTP/2 header field
+  * 121:10 (http2_inspect) HTTP/2 invalid header field
   * 121:11 (http2_inspect) error in HTTP/2 settings frame
   * 121:12 (http2_inspect) unknown parameter in HTTP/2 settings frame
   * 121:13 (http2_inspect) invalid HTTP/2 frame sequence
@@ -18162,6 +18280,12 @@ these libraries see the Getting Started section of the manual.
   * packet_tracer.enable(proto, src_ip, src_port, dst_ip, dst_port):
     enable packet tracer debugging
   * packet_tracer.disable(): disable packet tracer
+  * perf_monitor.enable_flow_ip_profiling(seconds, packets): enable
+    statistics on host pairs
+  * perf_monitor.disable_flow_ip_profiling(): disable statistics on
+    host pairs
+  * perf_monitor.show_flow_ip_profiling(): show status of statistics
+    on host pairs
   * snort.show_plugins(): show available plugins
   * snort.delete_inspector(inspector): delete an inspector from the
     default policy
@@ -18850,8 +18974,6 @@ deleted -> unified2: 'vlan_event_types'
   * seq (ips_option): rule option to check TCP sequence number
   * service (ips_option): rule option to specify list of services for
     grouping rules
-  * session (ips_option): rule option to check user data from TCP
-    sessions
   * sha256 (ips_option): payload rule option for hash matching
   * sha512 (ips_option): payload rule option for hash matching
   * sid (ips_option): rule option to indicate signature number
@@ -18897,6 +19019,7 @@ deleted -> unified2: 'vlan_event_types'
   * telnet (inspector): telnet inspection and normalization
   * token_ring (codec): support for token ring decoding
   * tos (ips_option): rule option to check type of service field
+  * trace (basic): configure trace log messages
   * ttl (ips_option): rule option to check time to live field
   * udp (codec): support for user datagram protocol
   * unified2 (logger): output event and packet in unified2 format
@@ -19200,8 +19323,6 @@ deleted -> unified2: 'vlan_event_types'
   * ips_option::seq: rule option to check TCP sequence number
   * ips_option::service: rule option to specify list of services for
     grouping rules
-  * ips_option::session: rule option to check user data from TCP
-    sessions
   * ips_option::sha256: payload rule option for hash matching
   * ips_option::sha512: payload rule option for hash matching
   * ips_option::sid: rule option to indicate signature number

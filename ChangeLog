@@ -1,3 +1,85 @@
+2020/04/23 - 3.0.1 build 2
+
+-- appid: Change sessionAPI to accomodate stream_index
+-- appid: detect payload for first http2 stream
+-- appid: Fix thread-safety issues in appid
+-- appid: mark third-party inspection as done for expected flows
+-- appid: Populate url for QUIC sessions by extracting QUIC SNI metadata from third-party
+-- appid: remove thirdparty processing for http2 traffic
+-- appid: remove unused code
+-- appid: remove unused config options and rename "debug" option
+-- appid: set up packet counters to make sure flows with one-way data don't pend forever
+-- appid: Support org unit in SSL lookup API and do not overwrite the API provided data
+-- codecs: Clean up CiscoMetaData implementation
+-- codecs: GRE checksum updated for injected and rewritten packets
+-- codecs: Update GRE flags and offset for injected packets
+-- control: Disable request unit-test in cmake if shell is disabled
+-- control: Fixing data races in request read and response
+-- file: apply cached verdict on already seen file
+-- file_magic: Update category for HWP and MSOLE2
+-- flowbits: eliminate extraneous FlowBitState
+-- flowbits: fix reload mapping
+-- flowbits: refactor implementation
+-- flowbits: relocate bitop.h to helpers
+-- flowbits: remove extraneous count
+-- flowbits: remove unused group support
+-- flow: track allocations for each flow, update cap_weights
+-- framework: Remove unused InspectorData template
+-- ftp_data: fix ids flushing at EOF
+-- ftp: whitelisting reason support
+-- host_tracker: Move all HostCacheAlloc template implementions to the header
+-- http2_inspect: discard split connection preface
+-- http2_inspect: flush pending data when a non-data frame is received
+-- http2_inspect: handle the case of leftover header only (no body)
+-- http2_inspect: support 0 length data frames
+-- http_inspect: add fragment to http_uri
+-- http_inspect: cut over to wizard on successful CONNECT response
+-- http_inspect: enhance processing of connect messages
+-- http_inspect: fix duplicated detained_inspection print in show()
+-- http_inspect: make script tag check case insensitive
+-- http_inspect: register extra-data callbacks in constructor
+-- hyperscan: simplify scratch memory initialization
+-- inspectors: designate service inspectors control channels for avc only
+-- inspectors: designate service inspectors for file carving
+-- inspectors: designate service inspectors for start tls
+-- inspectors: update verbose config output in show() method to a new format
+-- ips_context: add support to fallback to avc only
+-- ips: fix rule state mapping and policy lookup
+-- ips: remove plugins cruft from option tree node (rule body)
+-- latency: check if ip header is present before deferring it
+-- latency: use test_timeout config option to deterministically trigger latency events for ifdef
+   REG_TEST
+-- loggers: Add SGT field to CSV and JSON loggers
+-- main: Make test_log() static in snort_debug.cc
+-- managers: print inspectors' config output for every inspection policy configured
+-- metadata-filter: apply to so rule stubs
+-- output: allow error messages in quiet mode
+-- packet_io: log daq batch size
+-- packet_io: log daq pool size
+-- perf_monitor: Enable or disable flow-ip-profiling using shell commands
+-- plugin_manager: make erase from plug_map safer
+-- plugin_manager: make sure --show-plugins option picks up SO plugins
+-- reload: update ReloadError response messages to use consistent wording across all messages
+-- session: remove unused IPS option
+-- sip: Support pinhole for sip early media
+-- snort2lua: make qos configuration values deleted from firewall
+-- snort: add --dump-rule-deps
+-- snort: add --dump-rule-state
+-- snort: add flowbits set and checked to --dump-rule-meta
+-- snort: add rule text to --dump-rule-meta
+-- snort: enable --dump-rule-meta to work without a conf
+-- snort: initial implementation of --dump-rule-meta
+-- snort: remove inappropriate fatal errors
+-- snort: remove unused --pcap-reload option
+-- so rules: allow stub gid:sid:rev to override so
+-- so rules: allow stub header to override so header
+-- stream_tcp: remove unused session printing cruft
+-- target_based: refactor host attribute table logic into a c++ class, eliminate dead code
+-- target_based: refactor to improve design of the host attribute classes
+-- target_based: refactor to load host attribute table from file
+-- time: make packet_gettimeofday public
+-- trace: refactor stdout/syslog logging of trace into logger framework
+
 2020/03/31 - 3.0.1 build 1
 
 -- analyzer: Send detained packet event when a packet is held
