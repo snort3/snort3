@@ -482,8 +482,16 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
 
             uint8_t frame_flags = get_frame_flags(session_data->frame_header[source_id] +
                 session_data->frame_header_offset[source_id] - FRAME_HEADER_LENGTH);
-            if (frame_flags & PADDED)
-                session_data->get_padding_len[source_id] = true;
+
+            const uint8_t type = session_data->frame_type[source_id];
+            if ((type == FT_DATA) || (type == FT_HEADERS))
+            {
+                if ((frame_flags & PADDED) &&
+                    (get_frame_length(session_data->frame_header[source_id]) >= 1))
+                {
+                    session_data->get_padding_len[source_id] = true;
+                }
+            }
         }
         while (data_offset < len);
         session_data->frame_type[source_id] = get_frame_type(
