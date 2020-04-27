@@ -74,6 +74,9 @@ public:
     void finish_h2_body(HttpCommon::SourceId source_id)
     { h2_body_finished[source_id] = true; }
 
+    void reset_partial_flush(HttpCommon::SourceId source_id)
+    { partial_flush[source_id] = false; }
+
 private:
     // HTTP/2 handling
     bool for_http2 = false;

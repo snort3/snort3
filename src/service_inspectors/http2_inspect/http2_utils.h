@@ -37,7 +37,4 @@ uint8_t get_frame_type(const uint8_t* frame_header_buffer);
 uint8_t get_frame_flags(const uint8_t* frame_header_buffer);
 uint8_t get_stream_id(const uint8_t* frame_header_buffer);
 
-
-void finish_msg_body(Http2FlowData* session_data, HttpCommon::SourceId source_id);
-
 #endif

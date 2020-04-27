@@ -38,15 +38,24 @@ Http2DataFrame::Http2DataFrame(const uint8_t* header_buffer, const int32_t heade
     HttpCommon::SourceId source_id_) :
     Http2Frame(header_buffer, header_len, nullptr, 0, session_data_, source_id_)
 {
-    Http2DummyPacket dummy_pkt;
-    dummy_pkt.flow = session_data->flow;
-    dummy_pkt.packet_flags = (source_id == SRC_CLIENT) ? PKT_FROM_CLIENT : PKT_FROM_SERVER;
-    dummy_pkt.dsize = data_len;
-    dummy_pkt.data = data_buffer;
-    dummy_pkt.xtradata_mask = 0;
-    session_data->hi->eval(&dummy_pkt);
-    detection_required = dummy_pkt.is_detection_required();
-    xtradata_mask = dummy_pkt.xtradata_mask;
+    if ((data_len != 0) || !session_data->flushing_data[source_id])
+    {
+        Http2DummyPacket dummy_pkt;
+        dummy_pkt.flow = session_data->flow;
+        dummy_pkt.packet_flags = (source_id == SRC_CLIENT) ? PKT_FROM_CLIENT : PKT_FROM_SERVER;
+        dummy_pkt.dsize = data_len;
+        dummy_pkt.data = data_buffer;
+        dummy_pkt.xtradata_mask = 0;
+        session_data->hi->eval(&dummy_pkt);
+        detection_required = dummy_pkt.is_detection_required();
+        xtradata_mask = dummy_pkt.xtradata_mask;
+    }
+    else
+    {
+        detection_required = true;
+        HttpFlowData* const http_flow = (HttpFlowData*)session_data_->get_hi_flow_data();
+        http_flow->reset_partial_flush(source_id_);
+    }
 }
 
 void Http2DataFrame::clear()

@@ -69,8 +69,6 @@ StreamSplitter::Status Http2StreamSplitter::data_scan(Http2FlowData* session_dat
     uint32_t& data_offset)
 {
     Http2Stream* const stream = session_data->find_stream(session_data->current_stream[source_id]);
-    if (stream && stream->abort_on_data_is_set(source_id))
-        return StreamSplitter::ABORT;
 
     if (!stream || stream->end_stream_is_set(source_id))
     {
@@ -132,9 +130,10 @@ StreamSplitter::Status Http2StreamSplitter::non_data_scan(Http2FlowData* session
         session_data->total_bytes_in_split[source_id] += FRAME_HEADER_LENGTH +
             frame_length;
 
-        // If the stream object exists and the end_stream flag is set, save that state in the stream
-        // object. If this is the first headers frame in the current stream,the stream object has
-        // not been created yet. The end_stream flag will be handled in the headers frame processing
+        // If the stream object exists and the end_stream flag is set, save that state in the
+        // stream object. If this is the first headers frame in the current stream, the stream
+        // object has not been created yet. The end_stream flag will be handled in the headers
+        // frame processing
         Http2Stream* const stream = session_data->find_stream(
             session_data->current_stream[source_id]);
         if (stream and frame_flags & END_STREAM)
@@ -174,7 +173,7 @@ StreamSplitter::Status Http2StreamSplitter::non_data_scan(Http2FlowData* session
         }
         else
         {
-            // FIXIT-M CONTINUATION frames can also follow PUSH_PROMISE frames, which
+            // FIXIT-E CONTINUATION frames can also follow PUSH_PROMISE frames, which
             // are not currently supported
             *session_data->infractions[source_id] += INF_UNEXPECTED_CONTINUATION;
             session_data->events[source_id]->create_event(
@@ -193,24 +192,21 @@ StreamSplitter::Status Http2StreamSplitter::non_data_scan(Http2FlowData* session
     return status;
 }
 
-// Flush pending data. Save current non-data header for the next scan/reassemble.
-void Http2StreamSplitter::flush_data(Http2FlowData* session_data, HttpCommon::SourceId source_id,
-    uint32_t* flush_offset, uint32_t old_stream)
+// Flush pending data
+void Http2StreamSplitter::partial_flush_data(Http2FlowData* session_data, HttpCommon::SourceId source_id,
+    uint32_t* flush_offset, uint32_t data_offset, uint32_t old_stream)
 {
-    session_data->current_stream[source_id] = old_stream;
+    session_data->current_stream[source_id] = session_data->stream_in_hi = old_stream;
     session_data->frame_type[source_id] = FT_DATA;
     Http2Stream* const stream = session_data->find_stream(
         session_data->current_stream[source_id]);
     Http2DataCutter* const data_cutter = stream->get_data_cutter(source_id);
     if (data_cutter->is_flush_required())
-        finish_msg_body(session_data, source_id);
+        session_data->hi_ss[source_id]->init_partial_flush(session_data->flow);
     session_data->data_processing[source_id] = false;
-    *flush_offset = FRAME_HEADER_LENGTH;
+    *flush_offset = data_offset;
     session_data->flushing_data[source_id] = true;
-    memcpy(session_data->leftover_hdr[source_id],
-        session_data->scan_frame_header[source_id], FRAME_HEADER_LENGTH);
     session_data->num_frame_headers[source_id] -= 1;
-    stream->set_abort_on_data(source_id);
 }
 
 bool Http2StreamSplitter::read_frame_hdr(Http2FlowData* session_data, const uint8_t* data,
@@ -308,19 +304,14 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                 const uint8_t frame_flags = get_frame_flags(session_data->
                     scan_frame_header[source_id]);
                 const uint32_t old_stream = session_data->current_stream[source_id];
-                session_data->current_stream[source_id] =
+                session_data->stream_in_hi = session_data->current_stream[source_id] =
                     get_stream_id(session_data->scan_frame_header[source_id]);
 
-                if ((old_stream != session_data->current_stream[source_id]) &&
-                    session_data->data_processing[source_id] && type == FT_DATA)
+                if (session_data->data_processing[source_id] &&
+                    ((old_stream != session_data->current_stream[source_id] && type == FT_DATA)
+                    || type != FT_DATA))
                 {
-                    // FIXIT-E split by stream multiplexing not supported yet
-                    return StreamSplitter::ABORT;
-                }
-
-                if (session_data->data_processing[source_id] && type != FT_DATA)
-                {
-                    flush_data(session_data, source_id, flush_offset, old_stream);
+                    partial_flush_data(session_data, source_id, flush_offset, data_offset, old_stream);
                     return StreamSplitter::FLUSH;
                 }
 
@@ -348,6 +339,8 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
     assert(total <= MAX_OCTETS);
 
     StreamBuffer frame_buf { nullptr, 0 };
+    Http2Stream* const stream = session_data->find_stream(
+        session_data->current_stream[source_id]);
 
     if (offset == 0)
     {
@@ -361,29 +354,44 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
         session_data->frame_header_offset[source_id] = 0;
     }
 
-    if (session_data->frame_type[source_id] == FT_DATA)
+    if (total == 0 && session_data->use_leftover_hdr[source_id])
+    {
+        memcpy(session_data->frame_header[source_id],
+            session_data->leftover_hdr[source_id], FRAME_HEADER_LENGTH);
+        session_data->use_leftover_hdr[source_id] = false;
+        if (session_data->frame_type[source_id] == FT_DATA)
+        {
+            // Check if we reached end of stream and have a partial buffer pending
+            const uint8_t frame_flags = get_frame_flags(session_data->frame_header[source_id]);
+            if ((frame_flags & END_STREAM) && stream->is_partial_buf_pending(source_id))
+            {
+                unsigned copied;
+                StreamBuffer http_frame_buf = session_data->hi_ss[source_id]->reassemble(
+                    session_data->flow,
+                    0, 0, nullptr, 0, PKT_PDU_TAIL, copied);
+                session_data->frame_data[source_id] = const_cast<uint8_t*>(http_frame_buf.data);
+                session_data->frame_data_size[source_id] = http_frame_buf.length;
+            }
+        }
+    }
+    else if (session_data->frame_type[source_id] == FT_DATA)
     {
         if (session_data->flushing_data[source_id] && (flags & PKT_PDU_TAIL))
             len -= FRAME_HEADER_LENGTH;
 
         if (len != 0)
         {
-            Http2Stream* const stream = session_data->find_stream(
-                session_data->current_stream[source_id]);
             Http2DataCutter* data_cutter = stream->get_data_cutter(source_id);
             StreamBuffer http_frame_buf = data_cutter->reassemble(data, len);
             if (http_frame_buf.data)
             {
                 session_data->frame_data[source_id] = const_cast<uint8_t*>(http_frame_buf.data);
                 session_data->frame_data_size[source_id] = http_frame_buf.length;
+                if (!session_data->flushing_data[source_id] && stream->is_partial_buf_pending(
+                    source_id))
+                    stream->reset_partial_buf_pending(source_id);
             }
         }
-    }
-    else if (total == 0 && session_data->use_leftover_hdr[source_id])
-    {
-        memcpy(session_data->frame_header[source_id],
-            session_data->leftover_hdr[source_id], FRAME_HEADER_LENGTH);
-        session_data->use_leftover_hdr[source_id] = false;
     }
     else
     {
@@ -503,6 +511,14 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
         session_data->total_bytes_in_split[source_id] = 0;
         session_data->num_frame_headers[source_id] = 0;
         session_data->scan_octets_seen[source_id] = 0;
+
+        if (session_data->flushing_data[source_id])
+        {
+            stream->set_partial_buf_pending(source_id);
+            // save current header for next scan/reassemble
+            memcpy(session_data->leftover_hdr[source_id],
+                session_data->scan_frame_header[source_id], FRAME_HEADER_LENGTH);
+        }
 
         // Return 0-length non-null buffer to stream which signals detection required, but don't
         // create pkt_data buffer

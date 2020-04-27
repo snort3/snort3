@@ -21,9 +21,6 @@
 
 #include <cassert>
 
-#include "service_inspectors/http_inspect/http_flow_data.h"
-#include "service_inspectors/http_inspect/http_stream_splitter.h"
-
 #include "http2_dummy_packet.h"
 #include "http2_enum.h"
 
@@ -61,19 +58,5 @@ uint8_t get_stream_id(const uint8_t* frame_header_buffer)
            (frame_header_buffer[stream_id_index + 1] << 16) +
            (frame_header_buffer[stream_id_index + 2] << 8) +
            frame_header_buffer[stream_id_index + 3];
-}
-
-void finish_msg_body(Http2FlowData* session_data, HttpCommon::SourceId source_id)
-{
-    uint32_t http_flush_offset = 0;
-    Http2DummyPacket dummy_pkt;
-    dummy_pkt.flow = session_data->flow;
-    uint32_t unused = 0;
-    session_data->get_current_stream(source_id)->get_hi_flow_data()->
-        finish_h2_body(source_id);
-    const snort::StreamSplitter::Status scan_result = session_data->hi_ss[source_id]->scan(
-        &dummy_pkt, nullptr, 0, unused, &http_flush_offset);
-    assert(scan_result == snort::StreamSplitter::FLUSH);
-    UNUSED(scan_result);
 }
 

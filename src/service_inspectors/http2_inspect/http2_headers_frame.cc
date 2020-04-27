@@ -78,7 +78,6 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t
         return;
 
     // http_inspect scan() of start line
-    session_data->stream_in_hi = session_data->current_stream[source_id];
     {
         uint32_t flush_offset;
         Http2DummyPacket dummy_pkt;

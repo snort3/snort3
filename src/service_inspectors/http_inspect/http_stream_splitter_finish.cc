@@ -167,7 +167,8 @@ bool HttpStreamSplitter::init_partial_flush(Flow* flow)
     assert(session_data != nullptr);
     assert((session_data->type_expected[source_id] == SEC_BODY_CL)      ||
            (session_data->type_expected[source_id] == SEC_BODY_OLD)     ||
-           (session_data->type_expected[source_id] == SEC_BODY_CHUNK));
+           (session_data->type_expected[source_id] == SEC_BODY_CHUNK)   ||
+           (session_data->type_expected[source_id] == SEC_BODY_H2));
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP) &&

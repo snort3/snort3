@@ -83,6 +83,7 @@ private:
     bool http2_scan(const uint8_t* data, uint32_t length, uint32_t* flush_offset,
         uint32_t frame_len, uint8_t frame_flags, uint32_t& data_offset);
     snort::StreamSplitter::Status http_scan(const uint8_t* data, uint32_t* flush_offset);
+    void finish_msg_body();
 };
 
 #endif

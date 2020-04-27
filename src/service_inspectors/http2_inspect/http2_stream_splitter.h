@@ -52,8 +52,8 @@ private:
     static StreamSplitter::Status data_scan(Http2FlowData* session_data, const uint8_t* data,
         uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id,
         uint32_t frame_length, uint8_t frame_flags, uint32_t& data_offset);
-    static void flush_data(Http2FlowData* session_data, HttpCommon::SourceId source_id,
-        uint32_t* flush_offset, uint32_t old_stream);
+    static void partial_flush_data(Http2FlowData* session_data, HttpCommon::SourceId source_id,
+        uint32_t* flush_offset, uint32_t data_offset, uint32_t old_stream);
     static StreamSplitter::Status non_data_scan(Http2FlowData* session_data,
         uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id,
         uint32_t frame_length, uint8_t type, uint8_t frame_flags, uint32_t& data_offset);
