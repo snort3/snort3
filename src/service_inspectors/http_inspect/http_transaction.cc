@@ -256,13 +256,15 @@ void HttpTransaction::set_one_hundred_response()
 }
 
 void HttpTransaction::set_file_processing_id(const SourceId source_id,
-    const uint64_t transaction_id)
+    const uint64_t transaction_id, const uint32_t stream_id)
 {
-    const int data_len = sizeof(source_id) + sizeof(transaction_id);
+    const int data_len = sizeof(source_id) + sizeof(transaction_id) + sizeof(stream_id);
     uint8_t data[data_len];
     memcpy(data, (void*)&source_id, sizeof(source_id));
     uint32_t offset = sizeof(source_id);
     memcpy(data + offset, (void*)&transaction_id, sizeof(transaction_id));
+    offset += sizeof(transaction_id);
+    memcpy(data + offset, (void*)&stream_id, sizeof(stream_id));
 
     file_processing_id[source_id] = str_to_hash(data, data_len);
 }

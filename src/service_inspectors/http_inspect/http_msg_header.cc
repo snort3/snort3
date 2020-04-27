@@ -54,13 +54,7 @@ HttpMsgHeader::HttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size,
 
 void HttpMsgHeader::publish()
 {
-    uint32_t stream_id = 0;
-    if (session_data->for_http2)
-    {
-        Http2FlowData* h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
-        assert(h2i_flow_data);
-        stream_id = h2i_flow_data->get_current_stream_id(source_id);
-    }
+    const uint32_t stream_id = get_h2_stream_id(source_id);
 
     HttpEvent http_event(this, session_data->for_http2, stream_id);
 
@@ -409,7 +403,8 @@ void HttpMsgHeader::prepare_body()
 void HttpMsgHeader::setup_file_processing()
 {
     // Generate the unique file id for file processing
-    transaction->set_file_processing_id(source_id, get_transaction_id());
+    transaction->set_file_processing_id(source_id, get_transaction_id(),
+        get_h2_stream_id(source_id));
 
     if ((session_data->file_depth_remaining[source_id] = FileService::get_max_file_depth()) < 0)
     {

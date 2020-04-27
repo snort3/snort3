@@ -395,6 +395,21 @@ void HttpMsgSection::get_related_sections()
     trailer[SRC_SERVER] = transaction->get_trailer(SRC_SERVER);
 }
 
+uint32_t HttpMsgSection::get_h2_stream_id(HttpCommon::SourceId source_id)
+{
+    if (h2_stream_id != STAT_NOT_COMPUTE)
+        return h2_stream_id;
+    if (session_data->for_http2)
+    {
+        Http2FlowData* h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+        assert(h2i_flow_data);
+        h2_stream_id = h2i_flow_data->get_current_stream_id(source_id);
+    }
+    else
+       h2_stream_id = 0;
+    return h2_stream_id;
+}
+
 void HttpMsgSection::clear()
 {
     transaction->clear_section();
