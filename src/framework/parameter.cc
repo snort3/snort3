@@ -115,7 +115,11 @@ static int64_t get_int(const char* r)
         if ( !strncmp(r, "max53", 5) )
             return 9007199254740992;
     }
-    return (int64_t)strtod(r, nullptr);
+    char* end = nullptr;
+    int64_t i = (int64_t)strtoll(r, &end, 0);
+    assert(!*end or *end == ':');
+
+    return i;
 }
 
 //--------------------------------------------------------------------------
@@ -580,20 +584,23 @@ num_tests[] =
     { true, valid_int, 1, "0:" },
     { false, valid_int, 1, ":0" },
 
+    { false, valid_int, 1.5, ":0" },
+
     { true, valid_int, -10, "-11:-9" },
     { true, valid_int, 10, "9:11" },
     { true, valid_int, 10, "0xA:11" },
 
     { true, valid_interval, 0, nullptr },
 
-    { true, valid_real, 0, nullptr },
-    { true, valid_real, 0, "" },
-    { true, valid_real, 0, "0.0" },
-    { true, valid_real, 0, "0:" },
-    { true, valid_real, 0, ":0" },
-    { true, valid_real, 0, ":0.9" },
-    { true, valid_real, 0, "-0.9:0.9" },
-    { true, valid_real, 0, "-0.9:" },
+    { true, valid_real, 0.0, nullptr },
+    { true, valid_real, 0.0, "" },
+    { true, valid_real, 0.0, "0.0" },
+    { true, valid_real, 0.0, ":0" },
+
+    { true, valid_real, 0.1, "0:" },
+    { true, valid_real, 0.1, ":0.9" },
+    { true, valid_real, 0.1, "-0.9:0.9" },
+    { true, valid_real, 0.1, "-0.9:" },
 
     { false, valid_real, 1, "0.9" },
     { true, valid_real, 1, "0.9:" },

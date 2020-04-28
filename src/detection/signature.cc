@@ -31,6 +31,7 @@
 #include "framework/decode_data.h"
 #include "hash/hash_defs.h"
 #include "hash/ghash.h"
+#include "helpers/json_stream.h"
 #include "ips_options/ips_flowbits.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
@@ -229,6 +230,10 @@ void OtnLookupFree(GHash* otn_map)
         delete otn_map;
 }
 
+//--------------------------------------------------------------------------
+// dump msg map
+//--------------------------------------------------------------------------
+
 void dump_msg_map(const SnortConfig* sc)
 {
     GHashNode* ghn = sc->otn_map->find_first();
@@ -250,6 +255,10 @@ void dump_msg_map(const SnortConfig* sc)
         ghn = sc->otn_map->find_next();
     }
 }
+
+//--------------------------------------------------------------------------
+// dump rule meta
+//--------------------------------------------------------------------------
 
 static void get_flow_bits(
     const OptTreeNode* otn, std::vector<std::string>& setters, std::vector<std::string>& checkers)
@@ -276,89 +285,133 @@ static void get_flow_bits(
     }
 }
 
-static void dump_field(const char* key, long val, bool sep = true)
-{ if ( sep ) std::cout << ", "; std::cout << key << ": " << val; }
-
-static void dump_field(const char* key, const std::string& val, bool sep = true)
-{ if ( sep ) std::cout << ", "; std::cout << key << ": " << val; }
-
-static void dump_opt(const char* key, const std::string& val, bool sep = true)
+static void dump_sid(JsonStream& j, const SigInfo& si)
 {
-    if ( val.empty() )
-        return;
-
-    if ( sep )
-        std::cout << ", ";
-
-    std::cout << key << ": " << val;
+    j.put("gid", si.gid);
+    j.put("sid", si.sid);
+    j.put("rev", si.rev);
 }
 
-static void dump_info(const SigInfo& si)
-{
-    dump_field("gid", si.gid, false);
-    dump_field("sid", si.sid);
-    dump_field("rev", si.rev);
-}
-
-static void dump_header(const RuleHeader* h)
+static void dump_header(JsonStream& j, const RuleHeader* h)
 {
     assert(h);
-    dump_opt("action", h->action);
-    dump_opt("src_nets", h->src_nets);
-    dump_opt("src_ports", h->src_ports);
-    dump_opt("direction", h->dir);
-    dump_opt("dst_nets", h->dst_nets);
-    dump_opt("dst_ports", h->dst_ports);
+    j.put("action", h->action);
+    j.put("src_nets", h->src_nets);
+    j.put("src_ports", h->src_ports);
+    j.put("direction", h->dir);
+    j.put("dst_nets", h->dst_nets);
+    j.put("dst_ports", h->dst_ports);
+}
+
+static void dump_info(JsonStream& j, const SigInfo& si)
+{
+    if ( si.class_type )
+        j.put("classtype", si.class_type->name);
+
+    j.put("priority", si.priority);
+
+    size_t n = si.message.length();
+    assert(n > 2 and si.message[0] == '"' and si.message[n-1] == '"');
+    std::string msg = si.message.substr(1, n-2);
+    j.put("msg", msg);
+}
+
+static void dump_services(JsonStream& json, const SigInfo& si)
+{
+    if ( si.services.empty() )
+        return;
+
+    json.open_array("services");
+
+    for ( const auto& svc : si.services )
+        json.put(nullptr, svc.service);
+
+    json.close_array();
+}
+
+static void dump_bits(JsonStream& json, const char* key, std::vector<std::string>& bits)
+{
+    if ( bits.empty() )
+        return;
+
+    json.open_array(key);
+
+    for ( const auto& s : bits )
+        json.put(nullptr, s);
+
+    json.close_array();
+}
+
+static void dump_refs(JsonStream& json, const SigInfo& si)
+{
+    if ( si.refs.empty() )
+        return;
+
+    json.open_array("references");
+
+    for ( const auto& rn : si.refs )
+    {
+        json.open();
+        json.put("system", rn->system->name);
+        json.put("id", rn->id);
+        json.close();
+    }
+
+    json.close_array();
 }
 
 void dump_rule_meta(const SnortConfig* sc)
 {
     GHashNode* ghn = sc->otn_map->find_first();
+    JsonStream json(std::cout);
 
     while ( ghn )
     {
         const OptTreeNode* otn = (OptTreeNode*)ghn->data;
+        const RuleTreeNode* rtn = otn->proto_nodes[0];
         const SigInfo& si = otn->sigInfo;
 
-        dump_info(si);
+        json.open();
 
-        const RuleTreeNode* rtn = otn->proto_nodes[0];
-        dump_header(rtn->header);
-
-        dump_field("msg", si.message);
-
-        for ( const auto& svc : si.services )
-            dump_field("service", svc.service);
+        dump_sid(json, si);
+        dump_header(json, rtn->header);
+        dump_info(json, si);
+        dump_services(json, si);
 
         std::vector<std::string> setters;
         std::vector<std::string> checkers;
         get_flow_bits(otn, setters, checkers);
 
-        for ( const auto& s : setters )
-            dump_field("sets", s);
+        dump_bits(json, "sets", setters);
+        dump_bits(json, "checks", checkers);
+        dump_refs(json, si);
 
-        for ( const auto& s : checkers )
-            dump_field("checks", s);
+        json.put("body", *si.body);
+        json.close();
 
-        dump_field("body", *si.body);
-
-        std::cout << std::endl;
         ghn = sc->otn_map->find_next();
     }
 }
 
+//--------------------------------------------------------------------------
+// dump rule states
+//--------------------------------------------------------------------------
+
 void dump_rule_state(const SnortConfig* sc)
 {
     GHashNode* ghn = sc->otn_map->find_first();
+    JsonStream json(std::cout);
 
     while ( ghn )
     {
         const OptTreeNode* otn = (OptTreeNode*)ghn->data;
         const SigInfo& si = otn->sigInfo;
 
-        dump_field("gid", si.gid, false);
-        dump_field("sid", si.sid);
-        dump_field("rev", si.rev);
+        json.open();
+        json.put("gid", si.gid);
+        json.put("sid", si.sid);
+        json.put("rev", si.rev);
+        json.open_array("states");
 
         for ( unsigned i = 0; i < otn->proto_node_num; ++i )
         {
@@ -367,19 +420,29 @@ void dump_rule_state(const SnortConfig* sc)
             if ( !rtn )
                 continue;
 
+            json.open();
+
             auto pid = snort::get_ips_policy(sc, i)->user_policy_id;
-            dump_field("policy", pid);
+            json.put("policy", pid);
 
             const char* s = Actions::get_string(rtn->action);
-            dump_field("action", s);
+            json.put("action", s);
 
             s = rtn->enabled() ? "enabled" : "disabled";
-            dump_field("state", s);
+            json.put("state", s);
+
+            json.close();
         }
-        std::cout << std::endl;
+        json.close_array();
+        json.close();
+
         ghn = sc->otn_map->find_next();
     }
 }
+
+//--------------------------------------------------------------------------
+// dump rule dependencies
+//--------------------------------------------------------------------------
 
 using SvcMap = std::unordered_map<std::string, std::vector<std::string>>;
 
@@ -412,15 +475,19 @@ static SvcMap get_dependencies()
 void dump_rule_deps(const SnortConfig*)
 {
     SvcMap map = get_dependencies();
+    JsonStream json(std::cout);
 
     for ( const auto& it : map )
     {
-        dump_field("service", it.first, false);
+        json.open();
+        json.put("service", it.first);
+        json.open_array("requires");
 
         for ( const auto& s : it.second )
-            dump_field("requires", s);
+            json.put(nullptr, s);
 
-        std::cout << std::endl;
+        json.close_array();
+        json.close();
     }
 }
 

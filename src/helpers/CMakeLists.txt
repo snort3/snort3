@@ -31,6 +31,8 @@ add_library (helpers OBJECT
     discovery_filter.cc
     discovery_filter.h
     flag_context.h
+    json_stream.cc
+    json_stream.h
     literal_search.cc
     markup.cc
     markup.h

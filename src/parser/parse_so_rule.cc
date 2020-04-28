@@ -162,14 +162,11 @@ bool SoRuleParser::parse_so_rule(const char* in, std::string& stub, std::string&
             }
             break;
         case 6:  // in rule option
-            if ( c == '#' )
-            {
-                state = 1;
-                next = 6;
-                drop = true;
-                break;
-            }
-            else if ( c == '/' )
+            // FIXIT-L ideally we'd allow # comments within so rule stub options
+            // same as we do for non stubs but we should reuse the text rule parser
+            // instead of building this out.  supporting them here is non-trivial
+            // (like state 5) because references can have # fragments.
+            if ( c == '/' )
             {
                 state = 2;
                 next = 6;
@@ -295,7 +292,8 @@ static const TestCase basic_tests[] =
     { "alert( sid:1; )", "alert( sid:1; )", true },
 
     { "alert( sid:1 /*comment*/; )", "alert( sid:1  ; )", true },
-    { "alert( sid:1 # comment\n; )", "alert( sid:1  ; )", true },
+    // ideally below would be supported, but above works
+    { "alert( sid:1 # comment\n; )", "alert( sid:1 # comment ; )", true },
     { "alert( sid:1; /*id:0;*/ )", "alert( sid:1; )", true },
 
     { "alert tcp any any -> any any ( )",

@@ -16,3 +16,9 @@ endif()
 
 add_catch_test( bitop_test )
 
+add_catch_test( json_stream_test
+    SOURCES
+        json_stream_test.cc
+        ../json_stream.cc
+)
+
