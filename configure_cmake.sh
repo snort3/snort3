@@ -66,6 +66,7 @@ Optional Features:
                             enable third party appid
     --enable-unit-tests     build unit tests
     --enable-piglet         build piglet test harness
+    --enable-ccache         enable ccache support
     --disable-static-daq    link static DAQ modules
     --disable-html-docs     don't create the HTML documentation
     --disable-pdf-docs      don't create the PDF documentation
@@ -317,6 +318,10 @@ while [ $# -ne 0 ]; do
             ;;
         --disable-piglet)
             append_cache_entry ENABLE_PIGLET            BOOL false
+            ;;
+        --enable-ccache)
+            append_cache_entry CMAKE_CXX_COMPILER_LAUNCHER STRING ccache
+            append_cache_entry CMAKE_C_COMPILER_LAUNCHER STRING ccache
             ;;
         --disable-static-daq)
             append_cache_entry ENABLE_STATIC_DAQ        BOOL false
