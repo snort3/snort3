@@ -192,6 +192,9 @@ bool StreamModule::end(const char*, int, SnortConfig* sc)
     return true;
 }
 
+void StreamModule::prep_counts()
+{ base_prep(); }
+
 void StreamModule::sum_stats(bool)
 { base_sum(); }
 

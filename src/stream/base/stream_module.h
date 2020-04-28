@@ -117,9 +117,13 @@ public:
     unsigned get_gid() const override;
     const snort::RuleMap* get_rules() const override;
 
+    void prep_counts() override;
     void sum_stats(bool) override;
     void show_stats() override;
     void reset_stats() override;
+
+    bool counts_need_prep() const override
+    { return true; }
 
     Usage get_usage() const override
     { return GLOBAL; }
@@ -129,6 +133,7 @@ private:
     StreamReloadResourceManager reload_resource_manager;
 };
 
+extern void base_prep();
 extern void base_sum();
 extern void base_stats();
 extern void base_reset();

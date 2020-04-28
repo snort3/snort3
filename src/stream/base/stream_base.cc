@@ -78,7 +78,7 @@ const PegInfo base_pegs[] =
 };
 
 // FIXIT-L dependency on stats define in another file
-void base_sum()
+void base_prep()
 {
     if ( !flow_con )
         return;
@@ -105,7 +105,10 @@ void base_sum()
         stream_base_stats.expected_pruned = exp_cache->get_prunes();
         stream_base_stats.expected_overflows = exp_cache->get_overflows();
     }
+}
 
+void base_sum()
+{
     sum_stats((PegCount*)&g_stats, (PegCount*)&stream_base_stats,
         array_size(base_pegs) - 1);
     base_reset();
