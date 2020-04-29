@@ -112,7 +112,7 @@ struct PHInstance
     ~PHInstance();
 
     static bool comp(PHInstance* a, PHInstance* b)
-    { return ( a->pp_class.api.type < b->pp_class.api.type ); }
+    { return ( a->name < b->name ); }
 
     void set_name(const char* s)
     { name = s; }
