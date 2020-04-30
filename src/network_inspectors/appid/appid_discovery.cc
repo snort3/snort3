@@ -937,7 +937,10 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
         if (asd.get_session_flags(APPID_SESSION_DECRYPTED))
         {
             if (asd.misc_app_id == APP_ID_NONE)
+            {
                 asd.update_encrypted_app_id(service_id);
+                misc_id = asd.misc_app_id;
+            }
         }
         else if (is_discovery_done and asd.get_session_flags(APPID_SESSION_DECRYPT_MONITOR))
             asd.set_session_flags(APPID_SESSION_CONTINUE);
