@@ -60,7 +60,7 @@ bool Http2DataCutter::http2_scan(const uint8_t* data, uint32_t length,
             data_state = DATA;
     }
 
-    uint32_t cur_pos = data_offset + leftover_bytes;
+    uint32_t cur_pos = data_offset + leftover_bytes + leftover_padding;
     while ((cur_pos < length) && (data_state != FULL_FRAME))
     {
         switch (data_state)
@@ -112,7 +112,7 @@ bool Http2DataCutter::http2_scan(const uint8_t* data, uint32_t length,
         }
     }
 
-    frame_bytes_seen += (cur_pos - leftover_bytes - data_offset);
+    frame_bytes_seen += (cur_pos - leftover_bytes - data_offset - leftover_padding);
     *flush_offset = data_offset = cur_pos;
     session_data->scan_remaining_frame_octets[source_id] = frame_length - frame_bytes_seen;
     return true;
@@ -137,14 +137,18 @@ StreamSplitter::Status Http2DataCutter::http_scan(const uint8_t* data, uint32_t*
         {
             bytes_sent_http += http_flush_offset;
             leftover_bytes = cur_data + leftover_bytes - http_flush_offset;
-            *flush_offset -= leftover_bytes;
+            if (leftover_bytes != 0 && cur_padding != 0)
+                leftover_padding = cur_padding;
+            else
+                leftover_padding = 0;
+            *flush_offset -= leftover_bytes + leftover_padding;
             if (leftover_bytes || data_state != FULL_FRAME)
                 session_data->mid_data_frame[source_id] = true;
         }
         else if (scan_result == StreamSplitter::SEARCH)
         {
             bytes_sent_http += (cur_data + leftover_bytes);
-            leftover_bytes = 0;
+            leftover_bytes = leftover_padding = 0;
         }
         else if (scan_result == StreamSplitter::ABORT)
             return StreamSplitter::ABORT;

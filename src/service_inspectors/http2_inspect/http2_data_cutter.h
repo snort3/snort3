@@ -54,6 +54,7 @@ private:
     uint32_t padding_read = 0;
     // leftover from previous scan call
     uint32_t leftover_bytes = 0;
+    uint32_t leftover_padding = 0;
     // total per frame - reassemble
     uint32_t reassemble_data_len;
     uint32_t reassemble_padding_len = 0;
