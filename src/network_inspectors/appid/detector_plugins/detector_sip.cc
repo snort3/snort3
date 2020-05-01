@@ -337,7 +337,7 @@ void SipEventHandler::handle(DataEvent& event, Flow* flow)
     AppidChangeBits change_bits;
     client_handler(sip_event, *asd, change_bits);
     service_handler(sip_event, *asd, change_bits);
-    AppIdDiscovery::publish_appid_event(change_bits, flow);
+    asd->publish_appid_event(change_bits, flow);
 }
 
 void SipEventHandler::client_handler(SipEvent& sip_event, AppIdSession& asd,

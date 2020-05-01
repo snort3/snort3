@@ -1008,3 +1008,20 @@ void AppIdSession::set_tp_payload_app_id(Packet& p, AppidSessionDirection dir, A
         }
     }
 }
+
+void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, Flow* flow)
+{
+    if (change_bits.none())
+        return;
+
+    AppidEvent app_event(change_bits);
+    DataBus::publish(APPID_EVENT_ANY_CHANGE, app_event, flow);
+    if (appidDebug->is_active())
+    {
+        std::string str;
+        change_bits_to_string(change_bits, str);
+        LogMessage("AppIdDbg %s Published event for changes: %s\n",
+            appidDebug->get_debug_session(), str.c_str());
+    }
+}
+

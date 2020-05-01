@@ -364,6 +364,7 @@ public:
         AppidChangeBits& change_bits);
     void set_tp_payload_app_id(snort::Packet& p, AppidSessionDirection dir, AppId app_id,
         AppidChangeBits& change_bits);
+    void publish_appid_event(AppidChangeBits&, snort::Flow*);
 
     inline void set_tp_app_id(AppId app_id) {
         if (tp_app_id != app_id)

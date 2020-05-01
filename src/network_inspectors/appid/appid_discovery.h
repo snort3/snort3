@@ -114,7 +114,6 @@ public:
 
     static void do_application_discovery(snort::Packet* p, AppIdInspector&,
         ThirdPartyAppIdContext*);
-    static void publish_appid_event(AppidChangeBits&, snort::Flow*);
 
     AppIdDetectors* get_tcp_detectors()
     {

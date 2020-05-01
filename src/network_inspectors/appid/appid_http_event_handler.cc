@@ -151,6 +151,6 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
             asd->pick_payload_app_id(), asd->pick_misc_app_id(), change_bits);
     }
 
-    AppIdDiscovery::publish_appid_event(change_bits, flow);
+    asd->publish_appid_event(change_bits, flow);
 }
 

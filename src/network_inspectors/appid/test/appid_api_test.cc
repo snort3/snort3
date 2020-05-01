@@ -42,6 +42,7 @@
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
+#include <CppUTestExt/MockSupport.h>
 
 using namespace snort;
 
@@ -50,6 +51,21 @@ namespace snort
 
 class Inspector* InspectorManager::get_inspector(char const*, bool, SnortConfig*)
 { return nullptr; }
+}
+
+void DataBus::publish(const char*, DataEvent& event, Flow*)
+{
+    AppidEvent* appid_event = (AppidEvent*)&event;
+    char* test_log = (char*)mock().getData("test_log").getObjectPointer();
+    snprintf(test_log, 256, "Published change_bits == %s",
+        appid_event->get_change_bitset().to_string().c_str());
+    mock().actualCall("publish");
+}
+
+void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, Flow* flow)
+{
+    AppidEvent app_event(change_bits);
+    DataBus::publish(APPID_EVENT_ANY_CHANGE, app_event, flow);
 }
 
 bool SslPatternMatchers::scan_hostname(unsigned char const*, unsigned long, AppId& client_id, AppId& payload_id)
@@ -90,16 +106,19 @@ AppIdSession* mock_session = nullptr;
 
 TEST_GROUP(appid_api)
 {
+    char test_log[256];
     void setup() override
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         flow = new Flow;
         flow->set_flow_data(mock_session);
+        mock().setDataObject("test_log", "char", test_log);
     }
 
     void teardown() override
     {
         delete flow;
+        mock().clear();
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
@@ -129,6 +148,11 @@ TEST(appid_api, produce_ha_state)
     memset((void*)&cmp_buf, 0, sizeof(cmp_buf));
     mock_session->common.flow_type = APPID_FLOW_TYPE_IGNORE;
     mock_session->common.flags |= APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_HTTP_SESSION;
+
+    // Reset IDs that may be updated by ssl_app_group_id_lookup test.
+    mock_session->payload.set_id(APPID_UT_ID + 4);
+    mock_session->client.set_id(APPID_UT_ID + 6);
+
     uint32_t val = appid_api.produce_ha_state(*flow, (uint8_t*)&appHA);
     CHECK_TRUE(val == sizeof(appHA));
     CHECK_TRUE(memcmp(&appHA, &cmp_buf, val) == 0);
@@ -190,6 +214,7 @@ TEST(appid_api, produce_ha_state)
 
 TEST(appid_api, ssl_app_group_id_lookup)
 {
+    mock().expectNCalls(4, "publish");
     AppId service, client, payload = APP_ID_NONE;
     bool val = false;
     mock_session->common.flow_type = APPID_FLOW_TYPE_IGNORE;
@@ -198,12 +223,15 @@ TEST(appid_api, ssl_app_group_id_lookup)
     CHECK_EQUAL(service, APP_ID_NONE);
     CHECK_EQUAL(client, APP_ID_NONE);
     CHECK_EQUAL(payload, APP_ID_NONE);
+
     mock_session->common.flow_type = APPID_FLOW_TYPE_NORMAL;
     val = appid_api.ssl_app_group_id_lookup(flow, nullptr, nullptr, service, client, payload);
     CHECK_TRUE(val);
     CHECK_EQUAL(service, APPID_UT_ID);
     CHECK_EQUAL(client, APPID_UT_ID);
     CHECK_EQUAL(payload, APPID_UT_ID);
+    STRCMP_EQUAL("Published change_bits == 000000001111", test_log);
+
     service = APP_ID_NONE;
     client = APP_ID_NONE;
     payload = APP_ID_NONE;
@@ -211,6 +239,8 @@ TEST(appid_api, ssl_app_group_id_lookup)
     CHECK_TRUE(val);
     CHECK_EQUAL(client, APPID_UT_ID + 1);
     CHECK_EQUAL(payload, APPID_UT_ID + 1);
+    STRCMP_EQUAL("Published change_bits == 000001000110", test_log);
+
     AppidChangeBits change_bits;
     mock_session->tsession->set_tls_host("www.cisco.com", 13, change_bits);
     mock_session->tsession->set_tls_cname("www.cisco.com", 13);
@@ -226,6 +256,8 @@ TEST(appid_api, ssl_app_group_id_lookup)
     STRCMP_EQUAL(mock_session->tsession->get_tls_host(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_org_unit(), "Cisco");
+    STRCMP_EQUAL("Published change_bits == 000001000110", test_log);
+
     string host = "";
     val = appid_api.ssl_app_group_id_lookup(flow, (const char*)(host.c_str()),
         (const char*)APPID_UT_TLS_HOST, service, client, payload, (const char*)("Google"));
@@ -235,6 +267,8 @@ TEST(appid_api, ssl_app_group_id_lookup)
     STRCMP_EQUAL(mock_session->tsession->get_tls_host(), nullptr);
     STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_org_unit(), "Google");
+    STRCMP_EQUAL("Published change_bits == 000000000110", test_log);
+    mock().checkExpectations();
 }
 
 TEST(appid_api, create_appid_session_api)

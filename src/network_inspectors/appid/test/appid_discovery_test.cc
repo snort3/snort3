@@ -35,6 +35,7 @@
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
+#include <CppUTestExt/MockSupport.h>
 
 namespace snort
 {
@@ -105,14 +106,13 @@ void IpApi::set(const SfIp& sip, const SfIp& dip)
 } // namespace snort
 
 // Stubs for publish
-static bool databus_publish_called = false;
-static char test_log[256];
 void DataBus::publish(const char*, DataEvent& event, Flow*)
 {
-    databus_publish_called = true;
     AppidEvent* appid_event = (AppidEvent*)&event;
+    char* test_log = (char*)mock().getData("test_log").getObjectPointer();
     snprintf(test_log, 256, "Published change_bits == %s",
         appid_event->get_change_bitset().to_string().c_str());
+    mock().actualCall("publish");
 }
 
 // Stubs for matchers
@@ -199,6 +199,13 @@ AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol,
 {
     return nullptr;
 }
+
+void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, Flow* flow)
+{
+    AppidEvent app_event(change_bits);
+    DataBus::publish(APPID_EVENT_ANY_CHANGE, app_event, flow);
+}
+
 void AppIdHttpSession::set_tun_dest(){}
 
 // Stubs for ServiceDiscovery
@@ -276,6 +283,7 @@ bool AppIdReloadTuner::tune_resources(unsigned int)
 
 TEST_GROUP(appid_discovery_tests)
 {
+    char test_log[256];
     void setup() override
     {
         appidDebug = new AppIdDebug();
@@ -283,6 +291,7 @@ TEST_GROUP(appid_discovery_tests)
         s_app_module = new AppIdModule;
         s_ins = new AppIdInspector(*s_app_module);
         AppIdPegCounts::init_pegs();
+        mock().setDataObject("test_log", "char", test_log);
     }
 
     void teardown() override
@@ -303,12 +312,13 @@ TEST_GROUP(appid_discovery_tests)
         delete s_app_module;
         AppIdPegCounts::cleanup_pegs();
         AppIdPegCounts::cleanup_peg_info();
+        mock().clear();
     }
 };
 TEST(appid_discovery_tests, event_published_when_ignoring_flow)
 {
     // Testing event from do_pre_discovery() path
-    databus_publish_called = false;
+    mock().expectOneCall("publish");
     test_log[0] = '\0';
     Packet p;
     p.packet_flags = 0;
@@ -329,7 +339,7 @@ TEST(appid_discovery_tests, event_published_when_ignoring_flow)
     AppIdDiscovery::do_application_discovery(&p, ins, nullptr);
 
     // Detect changes in service, client, payload, and misc appid
-    CHECK_EQUAL(databus_publish_called, true);
+    mock().checkExpectations();
     STRCMP_EQUAL(test_log, "Published change_bits == 000000001111");
     delete asd;
     delete flow;
@@ -338,7 +348,7 @@ TEST(appid_discovery_tests, event_published_when_ignoring_flow)
 TEST(appid_discovery_tests, event_published_when_processing_flow)
 {
     // Testing event from do_discovery() path
-    databus_publish_called = false;
+    mock().expectOneCall("publish");
     test_log[0] = '\0';
     Packet p;
     p.packet_flags = 0;
@@ -359,7 +369,7 @@ TEST(appid_discovery_tests, event_published_when_processing_flow)
     AppIdDiscovery::do_application_discovery(&p, ins, nullptr);
 
     // Detect changes in service, client, payload, and misc appid
-    CHECK_EQUAL(databus_publish_called, true);
+    mock().checkExpectations();
     STRCMP_EQUAL(test_log, "Published change_bits == 000000001111");
     delete asd;
     delete flow;
@@ -395,7 +405,7 @@ TEST(appid_discovery_tests, change_bits_for_tls_host)
 TEST(appid_discovery_tests, change_bits_for_non_http_appid)
 {
     // Testing FTP appid
-    databus_publish_called = false;
+    mock().expectNCalls(2, "publish");
     Packet p;
     p.packet_flags = 0;
     DAQ_PktHdr_t pkth;
@@ -419,12 +429,10 @@ TEST(appid_discovery_tests, change_bits_for_non_http_appid)
     AppIdDiscovery::do_application_discovery(&p, ins, nullptr);
 
     // Detect event for FTP service and CURL client
-    CHECK_EQUAL(databus_publish_called, true);
     CHECK_EQUAL(asd->client.get_id(), APP_ID_CURL);
     CHECK_EQUAL(asd->service.get_id(), APP_ID_FTP);
 
     // Testing DNS appid
-    databus_publish_called = false;
     asd->misc_app_id = APP_ID_NONE;
     asd->payload.set_id(APP_ID_NONE);
     asd->client.set_id(APP_ID_NONE);
@@ -432,7 +440,7 @@ TEST(appid_discovery_tests, change_bits_for_non_http_appid)
     AppIdDiscovery::do_application_discovery(&p, ins, nullptr);
 
     // Detect event for DNS service
-    CHECK_EQUAL(databus_publish_called, true);
+    mock().checkExpectations();
     CHECK_EQUAL(asd->service.get_id(), APP_ID_DNS);
 
     delete asd;

@@ -69,8 +69,6 @@ class FakeHttpMsgHeader
 };
 FakeHttpMsgHeader* fake_msg_header = nullptr;
 
-void AppIdDiscovery::publish_appid_event(AppidChangeBits&, Flow*) {}
-
 void AppIdHttpSession::set_http_change_bits(AppidChangeBits&, HttpFieldIds) {}
 
 const uint8_t* HttpEvent::get_content_type(int32_t& length)
@@ -191,6 +189,8 @@ AppIdSession* AppIdApi::get_appid_session(const Flow&)
     mock().actualCall("get_appid_session");
     return mock_session;
 }
+
+void AppIdSession::publish_appid_event(AppidChangeBits&, Flow*) { }
 
 TEST_GROUP(appid_http_event)
 {

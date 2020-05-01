@@ -137,22 +137,6 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
         misc_id, change_bits);
 }
 
-void AppIdDiscovery::publish_appid_event(AppidChangeBits& change_bits, Flow* flow)
-{
-    if (change_bits.none())
-        return;
-
-    AppidEvent app_event(change_bits);
-    DataBus::publish(APPID_EVENT_ANY_CHANGE, app_event, flow);
-    if (appidDebug->is_active())
-    {
-        std::string str;
-        change_bits_to_string(change_bits, str);
-        LogMessage("AppIdDbg %s Published event for changes: %s\n",
-            appidDebug->get_debug_session(), str.c_str());
-    }
-}
-
 static inline unsigned get_ipfuncs_flags(const Packet* p, bool dst)
 {
     const SfIp* sf_ip;
@@ -524,7 +508,7 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
             AppidChangeBits change_bits;
             asd->set_application_ids(asd->pick_service_app_id(), asd->pick_client_app_id(),
                 asd->pick_payload_app_id(), asd->pick_misc_app_id(), change_bits);
-            publish_appid_event(change_bits, p->flow);
+            asd->publish_appid_event(change_bits, p->flow);
             asd->set_session_flags(APPID_SESSION_IGNORE_FLOW_IDED);
         }
         if (appidDebug->is_active() &&
@@ -541,6 +525,12 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
 
         return false;
     }
+
+    // The packet_flags will not be set on a retry packet so we have to skip
+    // processing it, but can continue processing the rest of the flow since
+    // AppId should have seen this packet already.
+    if (p->is_retry())
+        return false;
 
     if (p->ptrs.tcph and !asd->get_session_flags(APPID_SESSION_OOO))
     {
@@ -977,5 +967,5 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
     }
 
     asd.set_application_ids(service_id, client_id, payload_id, misc_id, change_bits);
-    publish_appid_event(change_bits, p->flow);
+    asd.publish_appid_event(change_bits, p->flow);
 }

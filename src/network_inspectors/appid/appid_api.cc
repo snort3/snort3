@@ -233,10 +233,21 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name, cons
         }
 
         service_id = asd->get_application_ids_service();
+        AppId misc_id = asd->get_application_ids_misc();
+
         if (client_id == APP_ID_NONE)
             client_id = asd->get_application_ids_client();
+        else
+            asd->client.set_id(client_id);
+
         if (payload_id == APP_ID_NONE)
             payload_id = asd->get_application_ids_payload();
+        else
+            asd->payload.set_id(payload_id);
+
+        asd->set_application_ids(service_id, client_id, payload_id, misc_id, change_bits);
+
+        asd->publish_appid_event(change_bits, flow);
     }
     else
     {
