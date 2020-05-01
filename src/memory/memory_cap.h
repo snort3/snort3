@@ -28,7 +28,7 @@
 namespace memory
 {
 
-class MemoryCap
+class SO_PUBLIC MemoryCap
 {
 public:
     static bool free_space(size_t);
