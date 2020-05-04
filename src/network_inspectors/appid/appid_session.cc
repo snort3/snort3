@@ -324,7 +324,7 @@ void AppIdSession::sync_with_snort_protocol_id(AppId newAppId, Packet* p)
     }
 }
 
-void AppIdSession::check_app_detection_restart(AppidChangeBits& change_bits)
+void AppIdSession::check_ssl_detection_restart(AppidChangeBits& change_bits)
 {
     if (get_session_flags(APPID_SESSION_DECRYPTED) or !flow->is_proxied())
         return;
@@ -356,6 +356,49 @@ void AppIdSession::check_app_detection_restart(AppidChangeBits& change_bits)
         if (isSsl)
             set_session_flags(APPID_SESSION_APP_REINSPECT_SSL);
     }
+}
+
+void AppIdSession::check_tunnel_detection_restart()
+{
+    if (tp_payload_app_id != APP_ID_HTTP_TUNNEL or get_session_flags(APPID_SESSION_HTTP_TUNNEL))
+        return;
+
+    if (appidDebug->is_active())
+        LogMessage("AppIdDbg %s Found HTTP Tunnel, restarting app Detection\n",
+            appidDebug->get_debug_session());
+
+    // service
+    if (service.get_id() == service.get_port_service_id())
+        service.set_id(APP_ID_NONE, ctxt.get_odp_ctxt());
+    service.set_port_service_id(APP_ID_NONE);
+    service.reset();
+    service_ip.clear();
+    service_port = 0;
+    service_disco_state = APPID_DISCO_STATE_NONE;
+    service_detector = nullptr;
+    free_flow_data_by_mask(APPID_SESSION_DATA_SERVICE_MODSTATE_BIT);
+
+    // client
+    client.reset();
+    client_inferred_service_id = APP_ID_NONE;
+    client_disco_state = APPID_DISCO_STATE_NONE;
+    free_flow_data_by_mask(APPID_SESSION_DATA_CLIENT_MODSTATE_BIT);
+    client_candidates.clear();
+
+    init_tpPackets = 0;
+    resp_tpPackets = 0;
+    scan_flags &= ~SCAN_HTTP_HOST_URL_FLAG;
+    clear_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_CLIENT_DETECTED |
+        APPID_SESSION_HTTP_SESSION | APPID_SESSION_APP_REINSPECT);
+
+    set_session_flags(APPID_SESSION_HTTP_TUNNEL);
+
+}
+
+void AppIdSession::check_app_detection_restart(AppidChangeBits& change_bits)
+{
+    check_ssl_detection_restart(change_bits);
+    check_tunnel_detection_restart();
 }
 
 void AppIdSession::update_encrypted_app_id(AppId service_id)

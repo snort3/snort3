@@ -1516,8 +1516,15 @@ bool HttpPatternMatchers::get_appid_from_url(const char* host, const char* url, 
             snort_free(temp_host);
             return false;
         }
-        path_len = url_len - host_len;
-        path = url + host_len;
+        path = strchr(url, '/');
+        if (path)
+            path_len = url + url_len - path;
+    }
+
+    if (!path_len)
+    {
+        path = "/";
+        path_len = 1;
     }
 
     patterns[0].pattern = (const uint8_t*)host;

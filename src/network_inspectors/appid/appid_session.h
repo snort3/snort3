@@ -342,6 +342,8 @@ public:
     void set_referred_payload_app_id_data(AppId, AppidChangeBits& change_bits);
     void set_payload_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
     void check_app_detection_restart(AppidChangeBits& change_bits);
+    void check_ssl_detection_restart(AppidChangeBits& change_bits);
+    void check_tunnel_detection_restart();
     void update_encrypted_app_id(AppId);
     void examine_rtmp_metadata(AppidChangeBits& change_bits);
     void sync_with_snort_protocol_id(AppId, snort::Packet*);

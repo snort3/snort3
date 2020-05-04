@@ -508,6 +508,15 @@ static inline void process_ssl(AppIdSession& asd,
     const string* field = 0;
     int reinspect_ssl_appid = 0;
 
+    if (asd.get_session_flags(APPID_SESSION_HTTP_TUNNEL))
+    {
+        if (!asd.service_detector)
+            asd.service_detector = asd.ctxt.get_odp_ctxt().get_app_info_mgr().
+                get_app_info_entry(APP_ID_SSL)->service_detector;
+        if (asd.get_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_SPDY_SESSION))
+            asd.clear_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_SPDY_SESSION);
+    }
+
     tmpAppId = asd.tpsession->get_appid(tmpConfidence);
 
     asd.set_session_flags(APPID_SESSION_SSL_SESSION);
@@ -601,15 +610,15 @@ static inline void process_third_party_results(AppIdSession& asd, int confidence
         asd.set_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_SPDY_SESSION);
     }
 
+    if (contains(proto_list, APP_ID_SSL))
+        process_ssl(asd, attribute_data, change_bits);
+
     if (asd.get_session_flags(APPID_SESSION_HTTP_SESSION))
         process_http_session(asd, attribute_data, change_bits);
 
     else if (contains(proto_list, APP_ID_RTMP) ||
         contains(proto_list, APP_ID_RTSP) )
         process_rtmp(asd, attribute_data, confidence, change_bits);
-
-    else if (contains(proto_list, APP_ID_SSL))
-        process_ssl(asd, attribute_data, change_bits);
 
     else if (contains(proto_list, APP_ID_FTP_CONTROL))
         process_ftp_control(asd, attribute_data);
@@ -791,25 +800,15 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
 
                     asd.set_tp_app_id(APP_ID_HTTP);
 
-                    // Handle HTTP tunneling and SSL possibly then being used in that tunnel
                     if (tp_app_id == APP_ID_HTTP_TUNNEL)
                         asd.set_payload_appid_data(APP_ID_HTTP_TUNNEL, change_bits);
-                    else if (asd.payload.get_id() == APP_ID_HTTP_TUNNEL)
-                    {
-                        if (tp_app_id == APP_ID_SSL)
-                            asd.set_payload_appid_data(APP_ID_HTTP_SSL_TUNNEL, change_bits);
-                        else
-                            asd.set_payload_appid_data(tp_app_id, change_bits);
-                    }
+                    else if (asd.payload.get_id() == APP_ID_HTTP_TUNNEL and tp_app_id != APP_ID_SSL)
+                        asd.set_payload_appid_data(tp_app_id, change_bits);
 
                     AppIdHttpSession* hsession = asd.get_http_session();
                     if (!hsession)
                         hsession = asd.create_http_session();
                     hsession->process_http_packet(direction, change_bits, asd.ctxt.get_odp_ctxt().get_http_matchers());
-
-                    // If SSL over HTTP tunnel, make sure Snort knows that it's encrypted.
-                    if (asd.payload.get_id() == APP_ID_HTTP_SSL_TUNNEL)
-                        snort_app_id = APP_ID_SSL;
 
                     if (asd.get_tp_app_id() == APP_ID_HTTP and
                         !asd.get_session_flags(APPID_SESSION_APP_REINSPECT) and
