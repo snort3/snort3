@@ -21,3 +21,32 @@ proto-bit registrations. Packets from tracked sessions (e.g., IP, TCP, UDP, and 
 are processed via events as per subscriptions. Since RNA needs to see the first packet
 of a session published from stream trackers, these modules (e.g., stream, stream_icmp,
 stream_ip, stream_tcp, and stream_udp) should be enabled whenever RNA module is enabled.
+
+Currently, RNA only supports host discovery with filtering based on IP/port/zone. To enable
+this (disabled by default), the config file referred by rna_conf_path can have keywords:
+Analyze            # discover application, host, user (only host discovery is implemented)
+AnalyzeHostUser    # discover application, host, user (same as Analyze)
+AnalyzeApplication # discover application
+AnalyzeHost        # discover application, host
+AnalyzeUser        # discover application, user
+portexclusion      # don't discover on this port
+
+Format:
+config keyword [!]ip [zone]
+portexclusion dst|src|both tcp|udp port ip
+
+Examples:
+config AnalyzeHost 0.0.0.0/0 -1     # discover any ipv4 on any zone
+config AnalyzeHost ::/0 2           # discover any ipv6 on zone 2
+config AnalyzeHost !1.2.3.4/16 3    # exclude this ipv4 range on zone 3
+config Analyze !cafe:feed::0/64     # exclude this ipv6 range on any zone
+portexclusion dst udp 53 8.8.8.8    # exclude this ip for UDP port 53 in destination direction
+portexclusion both tcp 4000 ::0/0   # exclude any ipv6 for TCP port 4000 in both direction
+
+Note that exclusion has higher priority than inclusion. RNA does not support application/user
+discovery, fingerprint, util_lib_path decoder, enable_banner_grab, etc. The enable_logger config
+is to enable/disable sending RNA discovery events to EventManager::call_loggers. Such event logger
+or reader is not implemented yet. However, since RNA stores host information into host_cache,
+to log the discovered hosts into a file, one can
+    1) issue socket command: host_cache.dump('file.out'), or
+    2) add lua config: host_cache = { dump_file = 'file.out'}.
