@@ -48,8 +48,8 @@ static uint32_t get_parameter_value(const uint8_t* data_buffer)
 
 Http2SettingsFrame::Http2SettingsFrame(const uint8_t* header_buffer, const int32_t header_len,
     const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* ssn_data,
-    HttpCommon::SourceId src_id) : Http2Frame(header_buffer, header_len, data_buffer, data_len,
-    ssn_data, src_id)
+    HttpCommon::SourceId src_id, Http2Stream* stream_) : Http2Frame(header_buffer, header_len, data_buffer, data_len,
+    ssn_data, src_id, stream_)
 {
     if (!sanity_check())
     {

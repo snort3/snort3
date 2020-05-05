@@ -36,6 +36,8 @@ enum FrameType : uint8_t { FT_DATA=0, FT_HEADERS=1, FT_PRIORITY=2, FT_RST_STREAM
     FT_PUSH_PROMISE=5, FT_PING=6, FT_GOAWAY=7, FT_WINDOW_UPDATE=8, FT_CONTINUATION=9, FT__ABORT=254,
     FT__NONE=255 };
 
+enum StreamState { STATE_IDLE, STATE_OPEN, STATE_OPEN_DATA, STATE_CLOSED };
+
 // Message buffers available to clients
 // This enum must remain synchronized with Http2Api::classic_buffer_names[]
 enum HTTP2_BUFFER { HTTP2_BUFFER_FRAME_HEADER = 1, HTTP2_BUFFER_FRAME_DATA,
@@ -44,7 +46,7 @@ enum HTTP2_BUFFER { HTTP2_BUFFER_FRAME_HEADER = 1, HTTP2_BUFFER_FRAME_DATA,
 // Peg counts
 // This enum must remain synchronized with Http2Module::peg_names[] in http2_tables.cc
 enum PEG_COUNT { PEG_FLOW = 0, PEG_CONCURRENT_SESSIONS, PEG_MAX_CONCURRENT_SESSIONS,
-    PEG_MAX_ENTRIES, PEG_COUNT__MAX };
+    PEG_MAX_TABLE_ENTRIES, PEG_MAX_CONCURRENT_FILES, PEG_COUNT__MAX };
 
 enum EventSid
 {
@@ -100,6 +102,7 @@ enum Infraction
     INF_INVALID_STARTLINE = 25,
     INF_INVALID_HEADER = 26,
     INF_PADDING_LEN = 27,
+    INF_TRAILERS_AFTER_END_STREAM = 28,
     INF__MAX_VALUE
 };
 

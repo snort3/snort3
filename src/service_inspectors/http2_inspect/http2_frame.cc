@@ -28,6 +28,7 @@
 #include "http2_flow_data.h"
 #include "http2_headers_frame.h"
 #include "http2_settings_frame.h"
+#include "http2_stream.h"
 #include "service_inspectors/http_inspect/http_field.h"
 
 using namespace HttpCommon;
@@ -36,32 +37,33 @@ using namespace snort;
 
 Http2Frame::Http2Frame(const uint8_t* header_buffer, const int32_t header_len,
     const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* session_data,
-    SourceId source_id) :  session_data(session_data), source_id(source_id)
+    SourceId source_id, Http2Stream* stream_) :  session_data(session_data), source_id(source_id),
+    stream(stream_)
 {
     if (header_len > 0)
         header.set(header_len, header_buffer, true);
     if (data_len > 0)
-    {
         data.set(data_len, data_buffer, true);
-    }
 }
 
 Http2Frame* Http2Frame::new_frame(const uint8_t* header, const int32_t header_len,
-    const uint8_t* data, const int32_t data_len, Http2FlowData* session_data, SourceId source_id)
+    const uint8_t* data, const int32_t data_len, Http2FlowData* session_data, SourceId source_id,
+    Http2Stream* stream)
 {
     // FIXIT-E call the appropriate frame subclass constructor based on the type
     switch(session_data->frame_type[source_id])
     {
         case FT_HEADERS:
             return new Http2HeadersFrame(header, header_len, data, data_len, session_data,
-                source_id);
+                source_id, stream);
         case FT_SETTINGS:
             return new Http2SettingsFrame(header, header_len, data, data_len, session_data,
-                source_id);
+                source_id, stream);
         case FT_DATA:
-            return new Http2DataFrame(header, header_len, data, data_len, session_data, source_id);
+            return new Http2DataFrame(header, header_len, data, data_len, session_data, source_id,
+                stream);
         default:
-            return new Http2Frame(header, header_len, data, data_len, session_data, source_id);
+            return new Http2Frame(header, header_len, data, data_len, session_data, source_id, stream);
     }
 }
 

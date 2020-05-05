@@ -34,6 +34,7 @@
 #include "http2_flow_data.h"
 #include "http2_hpack.h"
 #include "http2_start_line.h"
+#include "http2_stream.h"
 
 using namespace snort;
 using namespace HttpCommon;
@@ -41,12 +42,16 @@ using namespace Http2Enums;
 
 Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t header_len,
     const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* session_data_,
-    HttpCommon::SourceId source_id_) :
-    Http2Frame(header_buffer, header_len, data_buffer, data_len, session_data_, source_id_)
+    HttpCommon::SourceId source_id_, Http2Stream* stream_) :
+    Http2Frame(header_buffer, header_len, data_buffer, data_len, session_data_, source_id_, stream_)
 {
-    Http2Stream* const stream = session_data->find_stream(get_stream_id());
-    if (get_flags() & END_STREAM)
-        stream->set_end_stream(source_id);
+    // FIXIT-E If the stream state is not IDLE, we've already received the headers. Trailers are
+    // not yet being processed
+    if (stream->get_state(source_id) >= STATE_OPEN)
+    {
+        trailer = true;
+        return;
+    }
 
     // No need to process an empty headers frame
     if (data.length() <= 0)
@@ -203,10 +208,48 @@ const Field& Http2HeadersFrame::get_buf(unsigned id)
     }
 }
 
+void Http2HeadersFrame::update_stream_state()
+{
+    switch (stream->get_state(source_id))
+    {
+        case STATE_IDLE:
+            if (get_flags() & END_STREAM)
+                stream->set_state(source_id, STATE_CLOSED);
+            else
+                stream->set_state(source_id, STATE_OPEN);
+            break;
+        case STATE_OPEN:
+            // fallthrough
+        case STATE_OPEN_DATA:
+            if (get_flags() & END_STREAM)
+            {
+                if (stream->get_state(source_id) == STATE_OPEN_DATA)
+                    session_data->concurrent_files -= 1;
+                stream->set_state(source_id, STATE_CLOSED);
+            }
+            else
+            {
+                // Headers frame without end_stream flag set after initial Headers frame
+                *session_data->infractions[source_id] += INF_FRAME_SEQUENCE;
+                session_data->events[source_id]->create_event(EVENT_FRAME_SEQUENCE);
+            }
+            break;
+        case STATE_CLOSED:
+            // Trailers in closed state
+            *session_data->infractions[source_id] += INF_TRAILERS_AFTER_END_STREAM;
+            session_data->events[source_id]->create_event(EVENT_FRAME_SEQUENCE);
+            break;
+    }
+}
+
+
 #ifdef REG_TEST
 void Http2HeadersFrame::print_frame(FILE* output)
 {
-    fprintf(output, "\nHeaders frame\n");
+    if (!trailer)
+        fprintf(output, "\nHeaders frame\n");
+    else
+        fprintf(output, "Trailing Headers frame\n");
     if (error_during_decode)
         fprintf(output, "Error decoding headers.\n");
     if (start_line)

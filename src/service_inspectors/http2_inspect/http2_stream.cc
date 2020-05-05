@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include "http2_enum.h"
 #include "http2_stream.h"
 
 #include "service_inspectors/http_inspect/http_flow_data.h"
@@ -28,6 +29,7 @@
 #include "http2_data_cutter.h"
 
 using namespace HttpCommon;
+using namespace Http2Enums;
 
 Http2Stream::Http2Stream(uint32_t stream_id_, Http2FlowData* session_data_) :
     stream_id(stream_id_),
@@ -48,7 +50,8 @@ void Http2Stream::eval_frame(const uint8_t* header_buffer, int32_t header_len,
 {
     delete current_frame;
     current_frame = Http2Frame::new_frame(header_buffer, header_len, data_buffer,
-        data_len, session_data, source_id);
+        data_len, session_data, source_id, this);
+    current_frame->update_stream_state();
 }
 
 void Http2Stream::clear_frame()
@@ -79,4 +82,9 @@ Http2DataCutter* Http2Stream::get_data_cutter(HttpCommon::SourceId source_id)
     if (!data_cutter[source_id])
         data_cutter[source_id] = new Http2DataCutter(session_data, source_id);
     return data_cutter[source_id];
+}
+
+bool Http2Stream::is_open(HttpCommon::SourceId source_id)
+{
+    return (state[source_id] == STATE_OPEN) || (state[source_id] == STATE_OPEN_DATA);
 }

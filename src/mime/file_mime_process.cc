@@ -839,7 +839,7 @@ void MimeSession::mime_file_process(Packet* p, const uint8_t* data, int data_siz
     if(!file_flows)
         return;
 
-    if (continue_inspecting_file or position == SNORT_FILE_END)
+    if (continue_inspecting_file)
     {
         if (session_base_file_id)
         {

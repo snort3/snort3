@@ -23,6 +23,7 @@
 #include "service_inspectors/http_inspect/http_common.h"
 #include "service_inspectors/http_inspect/http_field.h"
 
+#include "http2_enum.h"
 #include "http2_frame.h"
 
 class Http2DataCutter;
@@ -53,15 +54,19 @@ public:
     void set_data_cutter(Http2DataCutter* cutter, HttpCommon::SourceId source_id)
         { data_cutter[source_id] = cutter; }
 
-    void set_end_stream(HttpCommon::SourceId source_id) { end_stream_set[source_id] = true; }
-    bool end_stream_is_set(HttpCommon::SourceId source_id) { return end_stream_set[source_id]; }
-
     void set_partial_buf_pending(HttpCommon::SourceId source_id)
     { partial_buf_pending[source_id] = true; }
     void reset_partial_buf_pending(HttpCommon::SourceId source_id)
     { partial_buf_pending[source_id] = false; }
     bool is_partial_buf_pending(HttpCommon::SourceId source_id)
     { return partial_buf_pending[source_id]; }
+
+    void set_state(HttpCommon::SourceId source_id, Http2Enums::StreamState new_state) 
+        { state[source_id] = new_state; }
+    Http2Enums::StreamState get_state(HttpCommon::SourceId source_id) { return state[source_id]; }
+    bool is_open(HttpCommon::SourceId source_id);
+    void set_last_data_flush(HttpCommon::SourceId source_id) { last_data_flush[source_id] = true; }
+    bool is_last_data_flush(HttpCommon::SourceId source_id) { return last_data_flush[source_id]; }
 
 #ifdef REG_TEST
     void print_frame(FILE* output);
@@ -74,9 +79,9 @@ private:
     HttpFlowData* hi_flow_data = nullptr;
     HttpMsgSection* hi_msg_section = nullptr;
     Http2DataCutter* data_cutter[2] = { nullptr, nullptr};
-    bool end_stream_set[2] = { false, false };
     bool partial_buf_pending[2] = { false, false }; // used to indicate a partial buffer
-                                                    // is pending from a previous partial flush
+    bool last_data_flush[2] = { false, false };
+    Http2Enums::StreamState state[2] = { Http2Enums::STATE_IDLE, Http2Enums::STATE_IDLE };
 };
 
 #endif

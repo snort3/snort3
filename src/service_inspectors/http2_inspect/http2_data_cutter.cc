@@ -327,8 +327,9 @@ void Http2DataCutter::finish_msg_body()
     Http2DummyPacket dummy_pkt;
     dummy_pkt.flow = session_data->flow;
     uint32_t unused = 0;
-    session_data->get_current_stream(source_id)->get_hi_flow_data()->
-    finish_h2_body(source_id);
+    Http2Stream* const stream = session_data->get_current_stream(source_id);
+    stream->get_hi_flow_data()->finish_h2_body(source_id);
+    stream->set_last_data_flush(source_id);
     const snort::StreamSplitter::Status scan_result = session_data->hi_ss[source_id]->scan(
         &dummy_pkt, nullptr, 0, unused, &http_flush_offset);
     assert(scan_result == snort::StreamSplitter::FLUSH);

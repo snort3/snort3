@@ -52,10 +52,12 @@ const RuleMap Http2Module::http2_events[] =
 
 const PegInfo Http2Module::peg_names[PEG_COUNT__MAX+1] =
 {
-    { CountType::SUM, "flows", "HTTP connections inspected" },
+    { CountType::SUM, "flows", "HTTP/2 connections inspected" },
     { CountType::NOW, "concurrent_sessions", "total concurrent HTTP/2 sessions" },
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent HTTP/2 sessions" },
     { CountType::MAX, "max_table_entries", "maximum entries in an HTTP/2 dynamic table" },
+    { CountType::MAX, "max_concurrent_files", "maximum concurrent file transfers per HTTP/2 "
+        "connection" },
     { CountType::END, nullptr, nullptr }
 };
 

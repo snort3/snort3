@@ -161,10 +161,11 @@ bool HttpStreamSplitter::init_partial_flush(Flow* flow)
 {
     Profile profile(HttpModule::get_profile_stats());
 
-    assert(source_id == SRC_SERVER);
-
     HttpFlowData* session_data = HttpInspect::http_get_flow_data(flow);
     assert(session_data != nullptr);
+
+    assert(session_data->for_http2 || source_id == SRC_SERVER);
+
     assert((session_data->type_expected[source_id] == SEC_BODY_CL)      ||
            (session_data->type_expected[source_id] == SEC_BODY_OLD)     ||
            (session_data->type_expected[source_id] == SEC_BODY_CHUNK)   ||

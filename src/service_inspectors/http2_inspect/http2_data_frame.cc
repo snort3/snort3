@@ -29,14 +29,17 @@
 
 #include "http2_dummy_packet.h"
 #include "http2_flow_data.h"
+#include "http2_module.h"
 
 using namespace HttpCommon;
 using namespace snort;
+using namespace Http2Enums;
 
 Http2DataFrame::Http2DataFrame(const uint8_t* header_buffer, const int32_t header_len,
     const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* session_data_,
-    HttpCommon::SourceId source_id_) :
-    Http2Frame(header_buffer, header_len, nullptr, 0, session_data_, source_id_)
+    HttpCommon::SourceId source_id_, Http2Stream* stream_) :
+    Http2Frame(header_buffer, header_len, nullptr, 0, session_data_, source_id_, stream_),
+    data_length(data_len)
 {
     if ((data_len != 0) || !session_data->flushing_data[source_id])
     {
@@ -65,3 +68,34 @@ void Http2DataFrame::clear()
     session_data->hi->clear(&dummy_pkt);
 }
 
+void Http2DataFrame::update_stream_state()
+{
+    switch (stream->get_state(source_id))
+    {
+        case STATE_OPEN:
+            if (data_length > 0)
+            {
+                session_data->concurrent_files += 1;
+                stream->set_state(source_id, STATE_OPEN_DATA);
+                if (session_data->concurrent_files >
+                    Http2Module::get_peg_counts(PEG_MAX_CONCURRENT_FILES))
+                {
+                    Http2Module::increment_peg_counts(PEG_MAX_CONCURRENT_FILES);
+                }
+            }
+            if (stream->is_last_data_flush(source_id))
+                stream->set_state(source_id, STATE_CLOSED);
+            break;
+        case STATE_OPEN_DATA:
+            if (stream->is_last_data_flush(source_id))
+            {
+                assert(session_data->concurrent_files > 0);
+                session_data->concurrent_files -= 1;
+                stream->set_state(source_id, STATE_CLOSED);
+            }
+            break;
+        default:
+            // Stream state is idle or closed - this is caught in scan so should not get here
+            assert(false);
+    }
+}

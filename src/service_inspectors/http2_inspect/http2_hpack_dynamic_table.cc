@@ -65,8 +65,8 @@ bool HpackDynamicTable::add_entry(const Field& name, const Field& value)
     circular_array[start] = new_entry;
 
     num_entries++;
-    if (num_entries > Http2Module::get_peg_counts(PEG_MAX_ENTRIES))
-        Http2Module::increment_peg_counts(PEG_MAX_ENTRIES);
+    if (num_entries > Http2Module::get_peg_counts(PEG_MAX_TABLE_ENTRIES))
+        Http2Module::increment_peg_counts(PEG_MAX_TABLE_ENTRIES);
 
     rfc_table_size += new_entry_size;
     return true;

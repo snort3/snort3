@@ -405,6 +405,7 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
     if ((!is_file_type_enabled()) and (!is_file_signature_enabled()))
     {
         update_file_size(data_size, position);
+        processing_complete = true;
         if (PacketTracer::is_active())
             PacketTracer::log("File: Type and Sig not enabled\n");
         return false;

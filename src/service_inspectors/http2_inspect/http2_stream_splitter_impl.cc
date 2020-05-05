@@ -70,10 +70,11 @@ StreamSplitter::Status Http2StreamSplitter::data_scan(Http2FlowData* session_dat
 {
     Http2Stream* const stream = session_data->find_stream(session_data->current_stream[source_id]);
 
-    if (!stream || stream->end_stream_is_set(source_id))
+    if (!stream || !stream->is_open(source_id))
     {
         *session_data->infractions[source_id] += INF_FRAME_SEQUENCE;
         session_data->events[source_id]->create_event(EVENT_FRAME_SEQUENCE);
+        // FIXIT-E We should not be aborting here
         return StreamSplitter::ABORT;
     }
 
@@ -96,6 +97,7 @@ StreamSplitter::Status Http2StreamSplitter::data_scan(Http2FlowData* session_dat
 
         *session_data->infractions[source_id] += INF_FRAME_SEQUENCE;
         session_data->events[source_id]->create_event(EVENT_FRAME_SEQUENCE);
+        // FIXIT-E We should not be aborting here
         return StreamSplitter::ABORT;
     }
 
@@ -129,15 +131,6 @@ StreamSplitter::Status Http2StreamSplitter::non_data_scan(Http2FlowData* session
         session_data->scan_remaining_frame_octets[source_id] = frame_length;
         session_data->total_bytes_in_split[source_id] += FRAME_HEADER_LENGTH +
             frame_length;
-
-        // If the stream object exists and the end_stream flag is set, save that state in the
-        // stream object. If this is the first headers frame in the current stream, the stream
-        // object has not been created yet. The end_stream flag will be handled in the headers
-        // frame processing
-        Http2Stream* const stream = session_data->find_stream(
-            session_data->current_stream[source_id]);
-        if (stream and frame_flags & END_STREAM)
-            stream->set_end_stream(source_id);
     }
 
     // If we don't have the full frame, keep scanning
@@ -193,8 +186,9 @@ StreamSplitter::Status Http2StreamSplitter::non_data_scan(Http2FlowData* session
 }
 
 // Flush pending data
-void Http2StreamSplitter::partial_flush_data(Http2FlowData* session_data, HttpCommon::SourceId source_id,
-    uint32_t* flush_offset, uint32_t data_offset, uint32_t old_stream)
+void Http2StreamSplitter::partial_flush_data(Http2FlowData* session_data,
+    HttpCommon::SourceId source_id, uint32_t* flush_offset, uint32_t data_offset, uint32_t
+    old_stream)
 {
     session_data->current_stream[source_id] = session_data->stream_in_hi = old_stream;
     session_data->frame_type[source_id] = FT_DATA;
@@ -311,7 +305,8 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                     ((old_stream != session_data->current_stream[source_id] && type == FT_DATA)
                     || type != FT_DATA))
                 {
-                    partial_flush_data(session_data, source_id, flush_offset, data_offset, old_stream);
+                    partial_flush_data(session_data, source_id, flush_offset, data_offset,
+                        old_stream);
                     return StreamSplitter::FLUSH;
                 }
 

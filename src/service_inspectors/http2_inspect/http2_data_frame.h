@@ -23,6 +23,7 @@
 #include "http2_frame.h"
 
 class Http2Frame;
+class Http2Stream;
 
 class Http2DataFrame : public Http2Frame
 {
@@ -32,13 +33,16 @@ public:
 
     uint32_t get_xtradata_mask() override { return xtradata_mask; }
     bool is_detection_required() const override { return detection_required; }
+    void update_stream_state() override;
 
     friend Http2Frame* Http2Frame::new_frame(const uint8_t*, const int32_t, const uint8_t*,
-        const int32_t, Http2FlowData*, HttpCommon::SourceId);
+        const int32_t, Http2FlowData*, HttpCommon::SourceId, Http2Stream* stream);
 
 private:
-    Http2DataFrame(const uint8_t* header_buffer, const int32_t header_len,const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* ssn_data,
-        HttpCommon::SourceId src_id);
+    Http2DataFrame(const uint8_t* header_buffer, const int32_t header_len,
+        const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* ssn_data,
+        HttpCommon::SourceId src_id, Http2Stream* stream);
+    uint32_t data_length = 0;
     uint32_t xtradata_mask = 0;
     bool detection_required = false;
 };
