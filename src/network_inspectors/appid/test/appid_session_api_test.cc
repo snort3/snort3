@@ -57,12 +57,14 @@ TEST_GROUP(appid_session_api)
     void setup() override
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
+        mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
         appid_session_api = new AppIdSessionApi(mock_session);
     }
 
     void teardown() override
     {
         delete appid_session_api;
+        delete mock_session;
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
@@ -79,58 +81,44 @@ TEST(appid_session_api, get_port_service_app_id)
     CHECK_EQUAL(id, APPID_UT_ID + 3);
 }
 
-TEST(appid_session_api, get_only_service_app_id)
-{
-    AppId id = appid_session_api->get_only_service_app_id();
-    CHECK_EQUAL(id, APPID_UT_ID);
-}
-
 TEST(appid_session_api, get_misc_app_id)
 {
-    mock_session->is_http2 = false;
     AppId id = appid_session_api->get_misc_app_id();
     CHECK_EQUAL(id, APPID_UT_ID);
-    mock_session->is_http2 = true;
-    id = appid_session_api->get_client_app_id(0);
+    id = appid_session_api->get_misc_app_id(0);
     CHECK_EQUAL(APPID_UT_ID, id);
-    id = appid_session_api->get_client_app_id(3);
-    CHECK_EQUAL(APP_ID_UNKNOWN, id);
+    id = appid_session_api->get_misc_app_id(3);
+    CHECK_EQUAL(APP_ID_NONE, id);
 }
 
 TEST(appid_session_api, get_client_app_id)
 {
-    mock_session->is_http2 = false;
     AppId id = appid_session_api->get_client_app_id();
     CHECK_EQUAL(id, APPID_UT_ID);
-    mock_session->is_http2 = true;
     id = appid_session_api->get_client_app_id(0);
     CHECK_EQUAL(APPID_UT_ID, id);
     id = appid_session_api->get_client_app_id(3);
-    CHECK_EQUAL(APP_ID_UNKNOWN, id);
+    CHECK_EQUAL(APP_ID_NONE, id);
 }
 
 TEST(appid_session_api, get_payload_app_id)
 {
-    mock_session->is_http2 = false;
     AppId id = appid_session_api->get_payload_app_id();
     CHECK_EQUAL(id, APPID_UT_ID);
-    mock_session->is_http2 = true;
     id = appid_session_api->get_payload_app_id(0);
     CHECK_EQUAL(APPID_UT_ID, id);
     id = appid_session_api->get_payload_app_id(2);
-    CHECK_EQUAL(APP_ID_UNKNOWN, id);
+    CHECK_EQUAL(APP_ID_NONE, id);
 }
 
 TEST(appid_session_api, get_referred_app_id)
 {
-    mock_session->is_http2 = false;
     AppId id = appid_session_api->get_referred_app_id();
     CHECK_EQUAL(id, APPID_UT_ID);
-    mock_session->is_http2 = true;
     id = appid_session_api->get_payload_app_id(0);
     CHECK_EQUAL(APPID_UT_ID, id);
     id = appid_session_api->get_payload_app_id(2);
-    CHECK_EQUAL(APP_ID_UNKNOWN, id);
+    CHECK_EQUAL(APP_ID_NONE, id);
 }
 
 TEST(appid_session_api, get_service_port)
@@ -267,15 +255,16 @@ TEST(appid_session_api, get_client_version)
     const char* val;
     val = appid_session_api->get_client_version();
     STRCMP_EQUAL(val, APPID_UT_CLIENT_VERSION);
+    mock_session->create_http_session();
     val = appid_session_api->get_client_version(0);
     STRCMP_EQUAL(APPID_UT_CLIENT_VERSION, val);
-    mock_session->is_http2 = true;
     val = appid_session_api->get_client_version(2);
     STRCMP_EQUAL(nullptr, val);
 }
 TEST(appid_session_api, get_http_session)
 {
     AppIdHttpSession* val;
+    mock_session->create_http_session();
     val = appid_session_api->get_http_session();
     CHECK_TRUE(val != nullptr);
     val = appid_session_api->get_http_session(2);
@@ -395,7 +384,7 @@ TEST(appid_session_api, is_http_inspection_done)
     CHECK_FALSE(val);
     mock_session->service_disco_state = APPID_DISCO_STATE_STATEFUL;
     mock_session->set_session_flags(APPID_SESSION_SSL_SESSION);
-    mock_session->tsession->set_tls_host("www.cisco.com", 13, change_bits);
+    mock_session->tsession->set_tls_host(APPID_UT_TLS_HOST, 0, change_bits);
     val = appid_session_api->is_http_inspection_done();
     CHECK_TRUE(val);
     mock_session->service_disco_state = APPID_DISCO_STATE_FINISHED;
@@ -407,8 +396,6 @@ TEST(appid_session_api, is_http_inspection_done)
 int main(int argc, char** argv)
 {
     mock_init_appid_pegs();
-    mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
-    mock_session->create_http_session();
     int rc = CommandLineTestRunner::RunAllTests(argc, argv);
     mock_cleanup_appid_pegs();
     return rc;

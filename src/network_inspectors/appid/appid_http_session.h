@@ -60,7 +60,7 @@ class AppIdHttpSession
 public:
     typedef std::pair<uint16_t,uint16_t> pair_t;
 
-    AppIdHttpSession(AppIdSession&);
+    AppIdHttpSession(AppIdSession&, uint32_t);
     virtual ~AppIdHttpSession();
     ClientAppDescriptor client;
     PayloadAppDescriptor payload;
@@ -71,32 +71,14 @@ public:
         HttpPatternMatchers& http_matchers);
 
     void update_url(AppidChangeBits& change_bits);
+    void set_field(HttpFieldIds id, const std::string* str, AppidChangeBits& change_bits);
+    void set_field(HttpFieldIds id, const uint8_t* str, int32_t len, AppidChangeBits& change_bits);
 
     const std::string* get_field(HttpFieldIds id)
     { return meta_data[id]; }
 
     const char* get_cfield(HttpFieldIds id)
     { return meta_data[id] != nullptr ? meta_data[id]->c_str() : nullptr; }
-
-    void set_field(HttpFieldIds id, const std::string* str, AppidChangeBits& change_bits)
-    {
-        delete meta_data[id];
-        meta_data[id] = str;
-        if (str)
-            set_http_change_bits(change_bits, id);
-    }
-
-    void set_field(HttpFieldIds id, const uint8_t* str, int32_t len, AppidChangeBits& change_bits)
-    {
-        delete meta_data[id];
-        if (str and len)
-        {
-            meta_data[id] = new std::string((const char*)str, len);
-            set_http_change_bits(change_bits, id);
-        }
-        else
-            meta_data[id] = nullptr;
-    }
 
     bool get_offset(int id, uint16_t& start, uint16_t& end)
     {
@@ -169,6 +151,14 @@ public:
     virtual void custom_init() { }
 
     void clear_all_fields();
+    void set_client(AppId, AppidChangeBits&, const char*, const char* version = nullptr);
+    void set_payload(AppId, AppidChangeBits&, const char*, const char* version = nullptr);
+    void set_referred_payload(AppId, AppidChangeBits&);
+
+    uint32_t get_http2_stream_id() const
+    {
+        return http2_stream_id;
+    }
 
 protected:
 
@@ -177,6 +167,7 @@ protected:
     void process_chp_buffers(AppidChangeBits&, HttpPatternMatchers&);
     void free_chp_matches(ChpMatchDescriptor& cmd, unsigned max_matches);
     void set_http_change_bits(AppidChangeBits& change_bits, HttpFieldIds id);
+    void print_field(HttpFieldIds id, const std::string* str);
 
     AppIdSession& asd;
 
@@ -206,6 +197,7 @@ protected:
 #if RESPONSE_CODE_PACKET_THRESHHOLD
     unsigned response_code_packets = 0;
 #endif
+    uint32_t http2_stream_id = 0;
 };
 
 #endif

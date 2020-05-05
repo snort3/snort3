@@ -62,9 +62,9 @@ void DataBus::publish(const char*, DataEvent& event, Flow*)
     mock().actualCall("publish");
 }
 
-void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, Flow* flow)
+void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, Flow* flow, bool, uint32_t)
 {
-    AppidEvent app_event(change_bits);
+    AppidEvent app_event(change_bits, false, 0);
     DataBus::publish(APPID_EVENT_ANY_CHANGE, app_event, flow);
 }
 

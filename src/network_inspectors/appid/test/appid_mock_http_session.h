@@ -25,8 +25,8 @@
 
 typedef AppIdHttpSession::pair_t pair_t;
 
-AppIdHttpSession::AppIdHttpSession(AppIdSession& session)
-    : asd(session)
+AppIdHttpSession::AppIdHttpSession(AppIdSession& session, uint32_t http2_stream_id)
+    : asd(session), http2_stream_id(http2_stream_id)
 {
     for ( int i = 0; i < NUM_METADATA_FIELDS; i++)
         meta_data[i] = nullptr;
@@ -78,7 +78,7 @@ class MockAppIdHttpSession : public AppIdHttpSession
 {
 public:
     MockAppIdHttpSession(AppIdSession& asd)
-        : AppIdHttpSession(asd)
+        : AppIdHttpSession(asd, 0)
     {
         meta_data[REQ_AGENT_FID] = new std::string(USERAGENT);
         meta_data[REQ_HOST_FID] = new std::string(HOST);

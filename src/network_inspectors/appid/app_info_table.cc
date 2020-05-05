@@ -612,28 +612,6 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
             {
                 set_app_info_flags(atoi(conf_val), APPINFO_FLAG_IGNORE);
             }
-            else if (!(strcasecmp(conf_key, "http2_detection")))
-            {
-                // This option will control our own HTTP/2 detection.  We can
-                // still be told externally, though, that it's HTTP/2 (either
-                // from HTTP Inspect or 3rd Party).  This is intended to be
-                // used to ask AppID to detect unencrypted HTTP/2 on non-std
-                // ports.
-                if (!(strcasecmp(conf_val, "disabled")))
-                {
-                    odp_ctxt.http2_detection_enabled = false;
-                }
-                else if (!(strcasecmp(conf_val, "enabled")))
-                {
-                    odp_ctxt.http2_detection_enabled = true;
-                }
-                else
-                {
-                    ParseWarning(WARN_CONF,
-                        "AppId: ignoring invalid option for http2_detection: %s\n",
-                        conf_val);
-                }
-            }
             else
                 ParseWarning(WARN_CONF, "AppId: unsupported configuration: %s\n", conf_key);
         }

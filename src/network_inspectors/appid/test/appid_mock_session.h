@@ -175,7 +175,7 @@ void* AppIdSession::remove_flow_data(unsigned type)
     return data;
 }
 
-void AppIdSession::set_application_ids(AppId service_id, AppId client_id,
+void AppIdSession::set_ss_application_ids(AppId service_id, AppId client_id,
     AppId payload_id, AppId misc_id, AppidChangeBits& change_bits)
 {
     if (application_ids[APP_PROTOID_SERVICE] != service_id)
@@ -205,51 +205,68 @@ AppId AppIdSession::pick_service_app_id()
     return service.get_id();
 }
 
-AppId AppIdSession::pick_misc_app_id()
+AppId AppIdSession::pick_ss_misc_app_id()
 {
     return misc_app_id;
 }
 
-AppId AppIdSession::pick_client_app_id()
+AppId AppIdSession::pick_ss_client_app_id()
 {
     return client.get_id();
 }
 
-AppId AppIdSession::pick_payload_app_id()
+AppId AppIdSession::pick_ss_payload_app_id()
 {
     return payload.get_id();
 }
 
-AppId AppIdSession::pick_referred_payload_app_id()
+AppId AppIdSession::pick_ss_referred_payload_app_id()
 {
     return APPID_UT_ID;
 }
 
-void AppIdSession::get_application_ids(AppId&, AppId&, AppId&, AppId&) { }
+void AppIdSession::get_first_stream_app_ids(AppId&, AppId&, AppId&, AppId&) { }
 
-void AppIdSession::get_application_ids(AppId&, AppId&, AppId&) { }
+void AppIdSession::get_first_stream_app_ids(AppId&, AppId&, AppId&) { }
 
 AppId AppIdSession::get_application_ids_service() { return APPID_UT_ID; }
 
-AppId AppIdSession::get_application_ids_client() { return APPID_UT_ID; }
-
-AppId AppIdSession::get_application_ids_payload() { return APPID_UT_ID; }
-
-AppId AppIdSession::get_application_ids_misc() { return APPID_UT_ID; }
-
-AppId AppIdSession::pick_only_service_app_id()
+AppId AppIdSession::get_application_ids_client(uint32_t stream_index)
 {
-    return APPID_UT_ID;
+    if (stream_index < hsessions.size() or stream_index == 0)
+      return APPID_UT_ID;
+
+    return APP_ID_NONE;      
+}
+
+AppId AppIdSession::get_application_ids_payload(uint32_t stream_index)
+{
+    if (stream_index < hsessions.size() or stream_index == 0)
+      return APPID_UT_ID;
+
+    return APP_ID_NONE;      
+}
+
+AppId AppIdSession::get_application_ids_misc(uint32_t stream_index)
+{
+    if (stream_index < hsessions.size() or stream_index == 0)
+      return APPID_UT_ID;
+
+    return APP_ID_NONE;      
 }
 
 bool AppIdSession::is_ssl_session_decrypted()
 {
     return is_session_decrypted;
 }
-AppIdHttpSession* AppIdSession::create_http_session()
+
+AppIdHttpSession* AppIdSession::create_http_session(uint32_t)
 {
     AppIdHttpSession* hsession = new MockAppIdHttpSession(*this);
+    AppidChangeBits change_bits;
+
     hsession->client.set_id(APPID_UT_ID);
+    hsession->client.set_version(APPID_UT_CLIENT_VERSION, change_bits);
     hsession->payload.set_id(APPID_UT_ID);
     hsession->misc_app_id = APPID_UT_ID;
     hsession->referred_payload_app_id = APPID_UT_ID;
@@ -282,6 +299,8 @@ bool AppIdSession::is_tp_appid_available() const
 {
     return true;
 }
+
+void AppIdSession::set_application_ids_service(int, AppidChangeBits&) { }
 
 #endif
 

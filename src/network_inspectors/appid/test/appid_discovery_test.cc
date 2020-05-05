@@ -200,9 +200,9 @@ AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol,
     return nullptr;
 }
 
-void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, Flow* flow)
+void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, Flow* flow, bool, uint32_t)
 {
-    AppidEvent app_event(change_bits);
+    AppidEvent app_event(change_bits, false, 0);
     DataBus::publish(APPID_EVENT_ANY_CHANGE, app_event, flow);
 }
 
@@ -315,6 +315,7 @@ TEST_GROUP(appid_discovery_tests)
         mock().clear();
     }
 };
+
 TEST(appid_discovery_tests, event_published_when_ignoring_flow)
 {
     // Testing event from do_pre_discovery() path
@@ -334,7 +335,7 @@ TEST(appid_discovery_tests, event_published_when_ignoring_flow)
     p.flow = flow;
     asd->common.initiator_port = 21;
     asd->common.initiator_ip.set("1.2.3.4");
-    asd->set_session_flags(APPID_SESSION_IGNORE_FLOW);
+    asd->set_session_flags(APPID_SESSION_FUTURE_FLOW);
 
     AppIdDiscovery::do_application_discovery(&p, ins, nullptr);
 
@@ -461,7 +462,7 @@ TEST(appid_discovery_tests, change_bits_to_string)
     change_bits.set();
     change_bits_to_string(change_bits, str);
     STRCMP_EQUAL(str.c_str(), "service, client, payload, misc, referred, host,"
-        " tls-host, url, user-agent, response, referrer, client-version");
+        " tls-host, url, user-agent, response, referrer, version");
 
     // Failure of this test is a reminder that enum is changed, hence translator needs update
     CHECK_EQUAL(APPID_MAX_BIT, 12);

@@ -923,16 +923,10 @@ static int client_add_application(lua_State* L)
     return 1;
 }
 
-static int client_add_info(lua_State* L)
+static int client_add_info(lua_State*)
 {
-    auto& ud = *UserData<LuaClientObject>::check(L, DETECTOR, 1);
-    // Verify detector user data and that we are in packet context
-    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
-
-    const char* info = lua_tostring(L, 2);
-    ud->cd->add_info(*lsd->ldp.asd, info, *lsd->ldp.change_bits);
-    lua_pushnumber(L, 0);
-    return 1;
+    // Deprecated API. But because we are in packet context, silently ignore
+    return -1;
 }
 
 static int client_add_user(lua_State* L)

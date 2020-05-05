@@ -55,15 +55,30 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
         return;
 
     if (appidDebug->is_active())
-        LogMessage("AppIdDbg %s Processing HTTP metadata from HTTP Inspector\n",
-            appidDebug->get_debug_session());
+        LogMessage("AppIdDbg %s Processing HTTP metadata from HTTP Inspector for stream %u\n",
+            appidDebug->get_debug_session(), http_event->get_http2_stream_id());
 
+    asd->set_session_flags(APPID_SESSION_HTTP_SESSION);
     direction = event_type == REQUEST_EVENT ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
 
-    AppIdHttpSession* hsession = asd->get_http_session(0);
+    AppIdHttpSession* hsession;
+    if (http_event->get_is_http2())
+    {
+        if (asd->get_prev_http2_raw_packet() != asd->session_packet_count)
+        {
+            asd->delete_all_http_sessions();
+            asd->set_prev_http2_raw_packet(asd->session_packet_count);
+        }
 
-    if (!hsession)
-        hsession = asd->create_http_session();
+        hsession = asd->create_http_session(http_event->get_http2_stream_id());
+    }
+    else
+    {
+        hsession = asd->get_http_session(0);
+
+        if (!hsession)
+            hsession = asd->create_http_session();
+    }
 
     if (direction == APP_ID_FROM_INITIATOR)
     {
@@ -101,11 +116,19 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     else    // Response headers.
     {
         header_start = http_event->get_content_type(header_length);
-        hsession->set_field(RSP_CONTENT_TYPE_FID, header_start, header_length, change_bits);
+        if (header_length > 0)
+        {
+            hsession->set_field(RSP_CONTENT_TYPE_FID, header_start, header_length, change_bits);
+            asd->scan_flags |= SCAN_HTTP_CONTENT_TYPE_FLAG;
+        }
         header_start = http_event->get_location(header_length);
         hsession->set_field(RSP_LOCATION_FID, header_start, header_length, change_bits);
         header_start = http_event->get_server(header_length);
-        hsession->set_field(MISC_SERVER_FID, header_start, header_length, change_bits);
+        if (header_length > 0)
+        {
+            hsession->set_field(MISC_SERVER_FID, header_start, header_length, change_bits);
+            asd->scan_flags |= SCAN_HTTP_VENDOR_FLAG;
+        }
 
         int32_t responseCodeNum = http_event->get_response_code();
         if (responseCodeNum > 0 && responseCodeNum < 700)
@@ -141,16 +164,18 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     hsession->process_http_packet(direction, change_bits,
         asd->ctxt.get_odp_ctxt().get_http_matchers());
 
-    if (asd->service.get_id() == APP_ID_HTTP)
+    if (http_event->get_is_http2())
     {
-        if (http_event->get_is_http2() && http_event->get_http2_stream_id() != 0)
-        {
-            asd->service.set_id(APP_ID_HTTP2, asd->ctxt.get_odp_ctxt());
-        }
-        asd->set_application_ids(asd->pick_service_app_id(), asd->pick_client_app_id(),
-            asd->pick_payload_app_id(), asd->pick_misc_app_id(), change_bits);
+        asd->service.set_id(APP_ID_HTTP2, asd->ctxt.get_odp_ctxt());
     }
 
-    asd->publish_appid_event(change_bits, flow);
+    if (asd->service.get_id() != APP_ID_HTTP2)
+        asd->set_ss_application_ids(asd->pick_service_app_id(), asd->pick_ss_client_app_id(),
+            asd->pick_ss_payload_app_id(), asd->pick_ss_misc_app_id(), change_bits);
+    else
+          asd->set_application_ids_service(APP_ID_HTTP2, change_bits);      
+
+    asd->publish_appid_event(change_bits, flow, http_event->get_is_http2(),
+        asd->get_hsessions_size() - 1);
 }
 

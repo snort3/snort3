@@ -78,7 +78,6 @@ void ClientDiscovery::initialize() {}
 int AppIdDetector::initialize(){return 0;}
 int AppIdDetector::data_add(AppIdSession&, void*, AppIdFreeFCN){return 0;}
 void* AppIdDetector::data_get(AppIdSession&) {return nullptr;}
-void AppIdDetector::add_info(AppIdSession&, const char*, AppidChangeBits&){}
 void AppIdDetector::add_user(AppIdSession&, const char*, AppId, bool){}
 void AppIdDetector::add_payload(AppIdSession&, AppId){}
 void AppIdDetector::add_app(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppId, const char*, AppidChangeBits&){}

@@ -88,7 +88,6 @@ public:
     bool referred_appId_disabled = false;
     bool mdns_user_reporting = true;
     bool chp_userid_disabled = false;
-    bool http2_detection_enabled = false;
     bool is_host_port_app_cache_runtime = false;
     bool check_host_port_app_cache = false;
     bool check_host_cache_unknown_ssl = false;
@@ -100,7 +99,6 @@ public:
     bool tp_allow_probes = false;
     uint32_t host_port_app_cache_lookup_interval = 10;
     uint32_t host_port_app_cache_lookup_range = 100000;
-    bool http_response_version_enabled = false;
     bool allow_port_wildcard_host_cache = false;
     bool recheck_for_portservice_appid = false;
     uint64_t max_bytes_before_service_fail = MIN_MAX_BYTES_BEFORE_SERVICE_FAIL;

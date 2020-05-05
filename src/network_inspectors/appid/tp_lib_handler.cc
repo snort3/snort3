@@ -102,11 +102,6 @@ ThirdPartyAppIdContext* TPLibHandler::create_tp_appid_ctxt(const AppIdConfig& co
     tp_config.chp_body_collection_disabled =
         odp_ctxt.chp_body_collection_disabled;
     tp_config.tp_allow_probes = odp_ctxt.tp_allow_probes;
-    if (odp_ctxt.http2_detection_enabled)
-        tp_config.http_upgrade_reporting_enabled = true;
-    else
-        tp_config.http_upgrade_reporting_enabled = false;
-    tp_config.http_response_version_enabled = odp_ctxt.http_response_version_enabled;
 
     ThirdPartyAppIdContext* tp_appid_ctxt = self->tp_appid_create_ctxt(tp_config);
     if (tp_appid_ctxt == nullptr)

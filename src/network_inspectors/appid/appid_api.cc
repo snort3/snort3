@@ -61,12 +61,12 @@ const char* AppIdApi::get_application_name(const Flow& flow, bool from_client)
     AppIdSession* asd = get_appid_session(flow);
     if (asd)
     {
-        AppId appid = asd->pick_payload_app_id();
+        AppId appid = asd->pick_ss_payload_app_id();
         if (appid <= APP_ID_NONE)
-            appid = asd->pick_misc_app_id();
+            appid = asd->pick_ss_misc_app_id();
         if (!appid and from_client)
         {
-            appid = asd->pick_client_app_id();
+            appid = asd->pick_ss_client_app_id();
             if (!appid)
                 appid = asd->pick_service_app_id();
         }
@@ -74,7 +74,7 @@ const char* AppIdApi::get_application_name(const Flow& flow, bool from_client)
         {
             appid = asd->pick_service_app_id();
             if (!appid)
-                appid = asd->pick_client_app_id();
+                appid = asd->pick_ss_client_app_id();
         }
         if (appid > APP_ID_NONE && appid < SF_APPID_MAX)
             app_name = asd->ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(appid);
@@ -112,9 +112,16 @@ uint32_t AppIdApi::produce_ha_state(const Flow& flow, uint8_t* buf)
         appHA->appId[1] = asd->service.get_id();
         appHA->appId[2] = asd->client_inferred_service_id;
         appHA->appId[3] = asd->service.get_port_service_id();
-        appHA->appId[4] = asd->payload.get_id();
+        AppIdHttpSession* hsession = asd->get_http_session();
+        if (hsession)
+            appHA->appId[4] = hsession->payload.get_id();
+        else
+            appHA->appId[4] = asd->payload.get_id();
         appHA->appId[5] = asd->get_tp_payload_app_id();
-        appHA->appId[6] = asd->client.get_id();
+        if (hsession)
+            appHA->appId[6] = hsession->client.get_id();
+        else
+            appHA->appId[6] = asd->client.get_id();
         appHA->appId[7] = asd->misc_app_id;
     }
     else
@@ -180,9 +187,18 @@ uint32_t AppIdApi::consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t, IpP
         asd->service.set_id(appHA->appId[1], asd->ctxt.get_odp_ctxt());
         asd->client_inferred_service_id = appHA->appId[2];
         asd->service.set_port_service_id(appHA->appId[3]);
-        asd->payload.set_id(appHA->appId[4]);
+        AppIdHttpSession* hsession = nullptr;
+        if (appHA->appId[1] == APP_ID_HTTP or appHA->appId[1] == APP_ID_RTMP)
+            hsession = asd->create_http_session();
+        if (hsession)
+            hsession->payload.set_id(appHA->appId[4]);
+        else
+            asd->payload.set_id(appHA->appId[4]);
         asd->set_tp_payload_app_id(appHA->appId[5]);
-        asd->client.set_id(appHA->appId[6]);
+        if (hsession)
+            hsession->client.set_id(appHA->appId[6]);
+        else
+            asd->client.set_id(appHA->appId[6]);
         asd->misc_app_id = appHA->appId[7];
     }
     return sizeof(*appHA);
@@ -245,7 +261,7 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name, cons
         else
             asd->payload.set_id(payload_id);
 
-        asd->set_application_ids(service_id, client_id, payload_id, misc_id, change_bits);
+        asd->set_ss_application_ids(service_id, client_id, payload_id, misc_id, change_bits);
 
         asd->publish_appid_event(change_bits, flow);
     }

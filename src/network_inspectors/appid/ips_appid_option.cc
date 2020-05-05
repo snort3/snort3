@@ -46,16 +46,6 @@ using namespace snort;
 #define s_help \
     "detection option for application ids"
 
-// these defs are used during matching when the rule option eval function is called to
-// control the order in which the different id types are checked
-#define PAYLOAD    0
-#define MISC       1
-#define CP_CLIENT  2
-#define CP_SERVICE 3
-#define SP_CLIENT  3
-#define SP_SERVICE 2
-#define NUM_ID_TYPES 4
-
 static THREAD_LOCAL ProfileStats ips_appid_perf_stats;
 
 class AppIdIpsOption : public IpsOption
@@ -104,6 +94,9 @@ bool AppIdIpsOption::operator==(const IpsOption& ips) const
 
 bool AppIdIpsOption::match_id_against_rule(OdpContext& odp_ctxt, int32_t id)
 {
+    if (id <= APP_ID_NONE)
+        return false;
+
     const char *app_name_key = odp_ctxt.get_app_info_mgr().get_app_name_key(id);
     if ( nullptr != app_name_key )
     {
@@ -129,20 +122,38 @@ IpsOption::EvalStatus AppIdIpsOption::eval(Cursor&, Packet* p)
     if ( !session )
         return NO_MATCH;
 
-    AppId app_ids[NUM_ID_TYPES];
+    AppId app_ids[APP_PROTOID_MAX];
+    AppId service_id = session->get_application_ids_service();
+    OdpContext& odp_ctxt = session->ctxt.get_odp_ctxt();
 
-    // id order on stream api call is: service, client, payload, misc
-    if ( (p->packet_flags & PKT_FROM_CLIENT) )
-        session->get_application_ids(app_ids[CP_SERVICE], app_ids[CP_CLIENT],
-            app_ids[PAYLOAD], app_ids[MISC]);
+    if (service_id != APP_ID_HTTP2)
+    {
+        // id order on stream api call is: service, client, payload, misc
+        session->get_first_stream_app_ids(app_ids[APP_PROTOID_SERVICE], app_ids[APP_PROTOID_CLIENT],
+            app_ids[APP_PROTOID_PAYLOAD], app_ids[APP_PROTOID_MISC]);
+
+        for ( unsigned i = 0; i < APP_PROTOID_MAX; i++ )
+            if (match_id_against_rule(odp_ctxt, app_ids[i]))
+                return MATCH;
+    }
     else
-        session->get_application_ids(app_ids[SP_SERVICE], app_ids[SP_CLIENT],
-            app_ids[PAYLOAD], app_ids[MISC]);
-
-    for ( unsigned i = 0; i < NUM_ID_TYPES; i++ )
-        if ( (app_ids[i] > APP_ID_NONE) and
-            match_id_against_rule(session->ctxt.get_odp_ctxt(), app_ids[i]) )
+    {
+        if (match_id_against_rule(odp_ctxt, service_id))
             return MATCH;
+
+        for (uint32_t i = 0; i < session->get_hsessions_size(); i++)
+        {
+            AppIdHttpSession* hsession = session->get_http_session(i);
+            if (!hsession)
+                return NO_MATCH;
+            if (match_id_against_rule(odp_ctxt, hsession->client.get_id()))
+                return MATCH;
+            if (match_id_against_rule(odp_ctxt, hsession->payload.get_id()))
+                return MATCH;
+            if (match_id_against_rule(odp_ctxt, hsession->misc_app_id))
+                return MATCH;
+        }
+    }
 
     return NO_MATCH;
 }

@@ -122,7 +122,6 @@ struct CommonAppIdData
     }
 
     snort::APPID_FLOW_TYPE flow_type = snort::APPID_FLOW_TYPE_IGNORE;
-    unsigned policyId = 0;
     //flags shared with other preprocessor via session attributes.
     uint64_t flags = 0;
     snort::SfIp initiator_ip;
@@ -237,8 +236,13 @@ public:
     snort::AppIdServiceSubtype* subtype = nullptr;
     std::vector<ServiceDetector*> service_candidates;
     ServiceAppDescriptor service;
+
+    // Following three fields are used only for non-http sessions. For HTTP traffic,
+    // these fields are maintained inside AppIdHttpSession.
+    // Note: RTMP traffic is treated like HTTP in AppId
     ClientAppDescriptor client;
     PayloadAppDescriptor payload;
+    AppId misc_app_id = APP_ID_NONE;
 
     // AppId matching client side
     APPID_DISCOVERY_STATE client_disco_state = APPID_DISCO_STATE_NONE;
@@ -246,10 +250,6 @@ public:
     ClientDetector* client_detector = nullptr;
     std::map<std::string, ClientDetector*> client_candidates;
     bool tried_reverse_service = false;
-
-    AppId referred_payload_app_id = APP_ID_NONE;
-    AppId misc_app_id = APP_ID_NONE;
-
 
     // FIXIT-RC netbios_name is never set to a valid value; set when netbios_domain is set?
     char* netbios_name = nullptr;
@@ -284,11 +284,9 @@ public:
         AppId referred_id;
     } encrypted = { APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE };
 
-    void* firewall_early_data = nullptr;
     AppId past_indicator = APP_ID_NONE;
     AppId past_forecast = APP_ID_NONE;
 
-    bool is_http2 = false;
     bool in_expected_cache = false;
     static unsigned inspector_id;
     static std::mutex inferred_svcs_lock;
@@ -317,19 +315,27 @@ public:
     void free_flow_data();
 
     AppId pick_service_app_id();
-    AppId pick_only_service_app_id();
-    AppId pick_misc_app_id();
-    AppId pick_client_app_id();
-    AppId pick_payload_app_id();
-    AppId pick_referred_payload_app_id();
-    void set_application_ids(AppId service, AppId client, AppId payload, AppId misc,
+    // pick_ss_* and set_ss_* methods below are for application protocols that support only a single
+    // stream in a flow. They should not be used for HTTP2 sessions which can have multiple
+    // streams within a single flow
+    AppId pick_ss_misc_app_id();
+    AppId pick_ss_client_app_id();
+    AppId pick_ss_payload_app_id();
+    AppId pick_ss_referred_payload_app_id();
+
+    void set_ss_application_ids(AppId service, AppId client, AppId payload, AppId misc,
         AppidChangeBits& change_bits);
-    void get_application_ids(AppId& service, AppId& client, AppId& payload, AppId& misc);
-    void get_application_ids(AppId& service, AppId& client, AppId& payload);
+    void set_application_ids_service(AppId service_id, AppidChangeBits& change_bits);
+
+    // For protocols such as HTTP2 which can have multiple streams within a single flow, get_first_stream_*
+    // methods return the appids in the first stream seen in a packet.
+    void get_first_stream_app_ids(AppId& service, AppId& client, AppId& payload, AppId& misc);
+    void get_first_stream_app_ids(AppId& service, AppId& client, AppId& payload);
     AppId get_application_ids_service();
-    AppId get_application_ids_client();
-    AppId get_application_ids_payload();
-    AppId get_application_ids_misc();
+    AppId get_application_ids_client(uint32_t stream_index = 0);
+    AppId get_application_ids_payload(uint32_t stream_index = 0);
+    AppId get_application_ids_misc(uint32_t stream_index = 0);
+
     uint32_t get_hsessions_size()
     {
         return hsessions.size();
@@ -339,7 +345,6 @@ public:
     void examine_ssl_metadata(snort::Packet*, AppidChangeBits& change_bits);
     void set_client_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
     void set_service_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
-    void set_referred_payload_app_id_data(AppId, AppidChangeBits& change_bits);
     void set_payload_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
     void check_app_detection_restart(AppidChangeBits& change_bits);
     void check_ssl_detection_restart(AppidChangeBits& change_bits);
@@ -354,8 +359,15 @@ public:
     void clear_http_data();
     void reset_session_data();
 
-    AppIdHttpSession* create_http_session();
+    AppIdHttpSession* create_http_session(uint32_t stream_id = 0);
     AppIdHttpSession* get_http_session(uint32_t stream_index = 0);
+    void delete_all_http_sessions()
+    {
+        for (auto hsession : hsessions)
+            delete hsession;
+        hsessions.clear();
+    }
+
     AppIdDnsSession* get_dns_session();
 
     bool is_tp_appid_done() const;
@@ -366,7 +378,8 @@ public:
         AppidChangeBits& change_bits);
     void set_tp_payload_app_id(snort::Packet& p, AppidSessionDirection dir, AppId app_id,
         AppidChangeBits& change_bits);
-    void publish_appid_event(AppidChangeBits&, snort::Flow*);
+    void publish_appid_event(AppidChangeBits&, snort::Flow*, bool is_http2 = false,
+        uint32_t http2_stream_index = 0);
 
     inline void set_tp_app_id(AppId app_id) {
         if (tp_app_id != app_id)
@@ -409,9 +422,20 @@ public:
             inferred_svcs_ver++;
     }
 
+    uint16_t get_prev_http2_raw_packet() const
+    {
+        return prev_http2_raw_packet;
+    }
+
+    void set_prev_http2_raw_packet(uint16_t packet_num)
+    {
+        prev_http2_raw_packet = packet_num;
+    }
+
 private:
     std::vector<AppIdHttpSession*> hsessions;
     AppIdDnsSession* dsession = nullptr;
+    uint16_t prev_http2_raw_packet = 0;
 
     void reinit_session_data(AppidChangeBits& change_bits);
     void delete_session_data();

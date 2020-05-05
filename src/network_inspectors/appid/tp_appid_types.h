@@ -110,9 +110,7 @@ class ThirdPartyAppIDAttributeData
     string* http_request_cookie_buf = nullptr;
     string* http_request_via_buf = nullptr;
     string* http_response_via_buf = nullptr;
-    string* http_response_upgrade_buf = nullptr;
     string* http_request_user_agent_buf = nullptr;
-    string* http_response_version_buf = nullptr;
     string* http_response_code_buf = nullptr;
     string* http_response_content_buf = nullptr;
     string* http_response_location_buf = nullptr;
@@ -165,9 +163,7 @@ public:
         if (http_request_cookie_buf) delete http_request_cookie_buf;
         if (http_request_via_buf) delete http_request_via_buf;
         if (http_response_via_buf) delete http_response_via_buf;
-        if (http_response_upgrade_buf) delete http_response_upgrade_buf;
         if (http_request_user_agent_buf) delete http_request_user_agent_buf;
-        if (http_response_version_buf) delete http_response_version_buf;
         if (http_response_code_buf) delete http_response_code_buf;
         if (http_response_content_buf) delete http_response_content_buf;
         if (http_response_location_buf) delete http_response_location_buf;
@@ -193,9 +189,7 @@ public:
     TPAD_GET(http_request_cookie)
     TPAD_GET(http_request_via)
     TPAD_GET(http_response_via)
-    TPAD_GET(http_response_upgrade)
     TPAD_GET(http_request_user_agent)
-    TPAD_GET(http_response_version)
     TPAD_GET(http_response_code)
     TPAD_GET(http_response_content)
     TPAD_GET(http_response_location)
@@ -241,9 +235,7 @@ public:
     TPAD_SET_OFFSET(http_request_cookie)
     TPAD_SET(http_request_via)
     TPAD_SET(http_response_via)
-    TPAD_SET(http_response_upgrade)
     TPAD_SET_OFFSET(http_request_user_agent)
-    TPAD_SET(http_response_version)
     TPAD_SET(http_response_code)
     TPAD_SET(http_response_content)
     TPAD_SET(http_response_location)

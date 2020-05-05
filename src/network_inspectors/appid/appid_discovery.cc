@@ -501,26 +501,25 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
     if (!asd->get_session_flags(APPID_SESSION_PAYLOAD_SEEN) and p->dsize)
         asd->set_session_flags(APPID_SESSION_PAYLOAD_SEEN);
 
-    if (asd->get_session_flags(APPID_SESSION_IGNORE_FLOW))
+    if (asd->get_session_flags(APPID_SESSION_FUTURE_FLOW))
     {
-        if (!asd->get_session_flags(APPID_SESSION_IGNORE_FLOW_IDED))
+        if (!asd->get_session_flags(APPID_SESSION_FUTURE_FLOW_IDED))
         {
             AppidChangeBits change_bits;
-            asd->set_application_ids(asd->pick_service_app_id(), asd->pick_client_app_id(),
-                asd->pick_payload_app_id(), asd->pick_misc_app_id(), change_bits);
-            asd->publish_appid_event(change_bits, p->flow);
-            asd->set_session_flags(APPID_SESSION_IGNORE_FLOW_IDED);
-        }
-        if (appidDebug->is_active() &&
-            !asd->get_session_flags(APPID_SESSION_IGNORE_FLOW_LOGGED))
-        {
-            asd->set_session_flags(APPID_SESSION_IGNORE_FLOW_LOGGED);
 
-            const char *app_name =
-                asd->ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(asd->service.get_id());
-            LogMessage("AppIdDbg %s Ignoring connection with service %s (%d)\n",
-                appidDebug->get_debug_session(), app_name ? app_name : "unknown",
-                asd->service.get_id());
+            asd->set_ss_application_ids(asd->pick_service_app_id(), asd->pick_ss_client_app_id(),
+                asd->pick_ss_payload_app_id(), asd->pick_ss_misc_app_id(), change_bits);
+            asd->publish_appid_event(change_bits, p->flow);
+            asd->set_session_flags(APPID_SESSION_FUTURE_FLOW_IDED);
+
+            if (appidDebug->is_active())
+            {
+                const char *app_name =
+                    asd->ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(asd->service.get_id());
+                LogMessage("AppIdDbg %s Ignoring connection with service %s (%d)\n",
+                    appidDebug->get_debug_session(), app_name ? app_name : "unknown",
+                    asd->service.get_id());
+            }
         }
 
         return false;
@@ -804,13 +803,14 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
         else
         {
             service_id = asd.pick_service_app_id();
-            misc_id = asd.pick_misc_app_id();
+            misc_id = asd.pick_ss_misc_app_id();
         }
         return true;
     }
 
     // Third party detection
-    if (tp_appid_ctxt && !asd.is_http2)
+    // Skip third-party detection for http2
+    if (tp_appid_ctxt and ((service_id = asd.pick_service_app_id()) != APP_ID_HTTP2))
     {
         // Skip third-party inspection for sessions using old config
         if (asd.tpsession and &(asd.tpsession->get_ctxt()) != tp_appid_ctxt)
@@ -885,33 +885,34 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
         }
     }
 
-    payload_id = asd.pick_payload_app_id();
-    client_id = asd.pick_client_app_id();
-    misc_id =  asd.pick_misc_app_id();
+    payload_id = asd.pick_ss_payload_app_id();
+    client_id = asd.pick_ss_client_app_id();
+    misc_id =  asd.pick_ss_misc_app_id();
 
-    bool is_http_tunnel = ((asd.payload.get_id() == APP_ID_HTTP_TUNNEL) ||
-        (asd.payload.get_id() == APP_ID_HTTP_SSL_TUNNEL)) ? true:false;
+    AppIdHttpSession* hsession = asd.get_http_session();
+    bool is_http_tunnel = false;
+
+    if (hsession)
+        is_http_tunnel = ((hsession->payload.get_id() == APP_ID_HTTP_TUNNEL) ||
+            (hsession->payload.get_id() == APP_ID_HTTP_SSL_TUNNEL)) ? true : false;
 
     if (is_check_host_cache_valid(asd, service_id, client_id, payload_id, misc_id) or
         (is_http_tunnel))
     {
-        if (is_http_tunnel)
+        if (is_http_tunnel and (asd.scan_flags & SCAN_HTTP_URI_FLAG))
         {
-            AppIdHttpSession* hsession = asd.get_http_session();
-            if (hsession and (asd.scan_flags & SCAN_HTTP_URI_FLAG))
-            {
-                if (hsession->get_tun_dest())
-                    hsession->free_tun_dest();
-                hsession->set_tun_dest();
-                asd.scan_flags &= ~SCAN_HTTP_URI_FLAG;
-            }
+            if (hsession->get_tun_dest())
+                hsession->free_tun_dest();
+            hsession->set_tun_dest();
+            asd.scan_flags &= ~SCAN_HTTP_URI_FLAG;
         }
+
         if (do_host_port_based_discovery(p, asd, protocol, direction))
         {
             asd.service.set_port_service_id(APP_ID_NONE);
             service_id = asd.pick_service_app_id();
-            client_id = asd.pick_client_app_id();
-            payload_id = asd.pick_payload_app_id();
+            client_id = asd.pick_ss_client_app_id();
+            payload_id = asd.pick_ss_payload_app_id();
         }
     }
 
@@ -949,7 +950,7 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
         {
             asd.past_forecast = check_session_for_AF_forecast(asd, p, direction, service_id);
             if (asd.past_forecast != APP_ID_UNKNOWN)
-                payload_id = asd.pick_payload_app_id();
+                payload_id = asd.pick_ss_payload_app_id();
         }
     }
 
@@ -966,6 +967,6 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
         }
     }
 
-    asd.set_application_ids(service_id, client_id, payload_id, misc_id, change_bits);
+    asd.set_ss_application_ids(service_id, client_id, payload_id, misc_id, change_bits);
     asd.publish_appid_event(change_bits, p->flow);
 }

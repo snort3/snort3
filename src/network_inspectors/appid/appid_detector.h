@@ -118,7 +118,6 @@ public:
 
     virtual void* data_get(AppIdSession&);
     virtual int data_add(AppIdSession&, void*, AppIdFreeFCN);
-    virtual void add_info(AppIdSession&, const char*, AppidChangeBits&);
     virtual void add_user(AppIdSession&, const char*, AppId, bool);
     virtual void add_payload(AppIdSession&, AppId);
     virtual void add_app(AppIdSession& asd, AppId service_id, AppId client_id, const char* version, AppidChangeBits& change_bits)

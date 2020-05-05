@@ -82,7 +82,7 @@ inline void change_bits_to_string(AppidChangeBits& change_bits, std::string& str
     if (change_bits.test(APPID_REFERER_BIT))
         --n? str.append("referrer, ") : str.append("referrer");
     if (change_bits.test(APPID_VERSION_BIT))
-        --n? str.append("client-version, ") : str.append("client-version");
+        --n? str.append("version, ") : str.append("version");
     if (n != 0) // make sure all bits from AppidChangeBit enum get translated
         str.append("change_bits_to_string error!");
 }
@@ -90,13 +90,22 @@ inline void change_bits_to_string(AppidChangeBits& change_bits, std::string& str
 class AppidEvent : public snort::DataEvent
 {
 public:
-    AppidEvent(const AppidChangeBits& ac) : ac_bits(ac) {}
+    AppidEvent(const AppidChangeBits& ac, bool is_http2, uint32_t http2_stream_index) :
+        ac_bits(ac), is_http2(is_http2), http2_stream_index(http2_stream_index) {}
 
-    const AppidChangeBits& get_change_bitset()
+    const AppidChangeBits& get_change_bitset() const
     { return ac_bits; }
+
+    bool get_is_http2() const
+    { return is_http2; }
+
+    uint32_t get_http2_stream_index() const
+    { return http2_stream_index; }
 
 private:
     const AppidChangeBits& ac_bits;
+    bool is_http2;
+    uint32_t http2_stream_index;
 };
 
 #endif

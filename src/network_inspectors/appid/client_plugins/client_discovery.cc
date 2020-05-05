@@ -295,7 +295,6 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p,
     bool isTpAppidDiscoveryDone = false;
     AppInfoTableEntry* entry;
     uint32_t prevRnaClientState = asd.client_disco_state;
-    bool was_http2 = asd.is_http2;
     bool was_service = asd.is_service_detected();
     AppId tp_app_id = asd.get_tp_app_id();
 
@@ -383,10 +382,6 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p,
             asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
         }
     }
-
-    if ( appidDebug->is_active() )
-        if ( !was_http2 && asd.is_http2 )
-            LogMessage("AppIdDbg %s Got a preface for HTTP/2\n", appidDebug->get_debug_session());
 
     if ( !was_service && asd.is_service_detected() )
         asd.sync_with_snort_protocol_id(asd.service.get_id(), p);

@@ -149,8 +149,8 @@ AppIdContext stub_ctxt(stub_config);
 AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector& inspector)
     : snort::FlowData(inspector_id, (snort::Inspector*)&inspector), ctxt(stub_ctxt) { }
 AppIdSession::~AppIdSession() = default;
-AppIdHttpSession::AppIdHttpSession(AppIdSession& asd)
-    : asd(asd)
+AppIdHttpSession::AppIdHttpSession(AppIdSession& asd, uint32_t http2_stream_id)
+  : asd(asd), http2_stream_id(http2_stream_id)
 {
     for ( int i = 0; i < NUM_METADATA_FIELDS; i++)
         meta_data[i] = nullptr;

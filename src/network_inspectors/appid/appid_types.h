@@ -64,4 +64,5 @@ enum AppidSessionDirection
     APP_ID_FROM_RESPONDER,
     APP_ID_APPID_SESSION_DIRECTION_MAX
 };
+
 #endif

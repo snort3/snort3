@@ -34,8 +34,6 @@ public:
     bool ftp_userid_disabled = false;
     bool chp_body_collection_disabled = false;
     bool tp_allow_probes = false;
-    bool http_upgrade_reporting_enabled = false;
-    bool http_response_version_enabled = false;
     std::string tp_appid_config;
     bool tp_appid_stats_enable = false;
     bool tp_appid_config_dump = false;

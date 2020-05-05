@@ -36,7 +36,7 @@ namespace snort
 #define APPID_SESSION_RESPONDER_MONITORED   (1ULL << 0)
 #define APPID_SESSION_INITIATOR_MONITORED   (1ULL << 1)
 #define APPID_SESSION_SPECIAL_MONITORED     (1ULL << 2)
-#define APPID_SESSION_IGNORE_FLOW_LOGGED    (1ULL << 3)
+#define APPID_SESSION_FUTURE_FLOW           (1ULL << 3)
 #define APPID_SESSION_EXPECTED_EVALUATE     (1ULL << 4)
 #define APPID_SESSION_DISCOVER_USER         (1ULL << 5)
 #define APPID_SESSION_HAS_DHCP_FP           (1ULL << 6)
@@ -83,15 +83,14 @@ namespace snort
 #define APPID_SESSION_STICKY_SERVICE        (1ULL << 36)
 #define APPID_SESSION_APP_REINSPECT_SSL     (1ULL << 37)
 #define APPID_SESSION_NO_TPI                (1ULL << 38)
-#define APPID_SESSION_IGNORE_FLOW           (1ULL << 39)
-#define APPID_SESSION_IGNORE_FLOW_IDED      (1ULL << 40)
-#define APPID_SESSION_OOO_CHECK_TP          (1ULL << 41)
-#define APPID_SESSION_PAYLOAD_SEEN          (1ULL << 42)
-#define APPID_SESSION_HOST_CACHE_MATCHED    (1ULL << 43)
-#define APPID_SESSION_DECRYPT_MONITOR       (1ULL << 44)
-#define APPID_SESSION_HTTP_TUNNEL           (1ULL << 45)
+#define APPID_SESSION_FUTURE_FLOW_IDED      (1ULL << 39)
+#define APPID_SESSION_OOO_CHECK_TP          (1ULL << 40)
+#define APPID_SESSION_PAYLOAD_SEEN          (1ULL << 41)
+#define APPID_SESSION_HOST_CACHE_MATCHED    (1ULL << 42)
+#define APPID_SESSION_DECRYPT_MONITOR       (1ULL << 43)
+#define APPID_SESSION_HTTP_TUNNEL           (1ULL << 44)
 #define APPID_SESSION_IGNORE_ID_FLAGS \
-    (APPID_SESSION_IGNORE_FLOW | \
+    (APPID_SESSION_FUTURE_FLOW | \
     APPID_SESSION_NOT_A_SERVICE | \
     APPID_SESSION_NO_TPI | \
     APPID_SESSION_SERVICE_DETECTED | \
@@ -151,7 +150,6 @@ public:
     bool refresh(const Flow& flow);
     AppId get_service_app_id();
     AppId get_port_service_app_id();
-    AppId get_only_service_app_id();
     AppId get_misc_app_id(uint32_t stream_index = 0);
     AppId get_client_app_id(uint32_t stream_index = 0);
     AppId get_payload_app_id(uint32_t stream_index = 0);

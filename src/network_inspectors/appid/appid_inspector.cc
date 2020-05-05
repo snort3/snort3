@@ -68,7 +68,7 @@ static void add_appid_to_packet_trace(Flow& flow)
     {
         AppId service_id, client_id, payload_id, misc_id;
         const char* service_app_name, * client_app_name, * payload_app_name, * misc_name;
-        session->get_application_ids(service_id, client_id, payload_id, misc_id);
+        session->get_first_stream_app_ids(service_id, client_id, payload_id, misc_id);
         service_app_name = appid_api.get_application_name(service_id, session->ctxt);
         client_app_name = appid_api.get_application_name(client_id, session->ctxt);
         payload_app_name = appid_api.get_application_name(payload_id, session->ctxt);

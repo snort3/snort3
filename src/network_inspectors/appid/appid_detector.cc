@@ -73,14 +73,6 @@ int AppIdDetector::data_add(AppIdSession& asd, void* data, AppIdFreeFCN fcn)
     return asd.add_flow_data(data, flow_data_index, fcn);
 }
 
-void AppIdDetector::add_info(AppIdSession& asd, const char* info, AppidChangeBits& change_bits)
-{
-    AppIdHttpSession* hsession = asd.get_http_session();
-
-    if ( !hsession->get_field(MISC_URL_FID) )
-        hsession->set_field(MISC_URL_FID, new std::string(info), change_bits);
-}
-
 void AppIdDetector::add_user(AppIdSession& asd, const char* username, AppId appId, bool success)
 {
     asd.client.update_user(appId, username);

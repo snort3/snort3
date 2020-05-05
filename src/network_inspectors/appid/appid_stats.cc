@@ -273,7 +273,7 @@ void AppIdStatistics::update(AppIdSession& asd)
     bucket->totalStats.rxByteCnt += asd.stats.responder_bytes;
 
     AppId web_app_id, service_id, client_id;
-    asd.get_application_ids(service_id, client_id, web_app_id);
+    asd.get_first_stream_app_ids(service_id, client_id, web_app_id);
 
     if ( web_app_id > APP_ID_NONE )
         update_stats(asd, web_app_id, bucket);

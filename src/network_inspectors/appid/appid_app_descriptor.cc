@@ -66,7 +66,8 @@ void ServiceAppDescriptor::set_id(AppId app_id, OdpContext& odp_ctxt)
 
 void ClientAppDescriptor::update_user(AppId app_id, const char* username)
 {
-    my_username = username;
+    if ( my_username != username )
+        my_username = username;
 
     if ( my_user_id != app_id )
     {

@@ -70,6 +70,23 @@ class FakeHttpMsgHeader
 FakeHttpMsgHeader* fake_msg_header = nullptr;
 
 void AppIdHttpSession::set_http_change_bits(AppidChangeBits&, HttpFieldIds) {}
+void AppIdHttpSession::set_field(HttpFieldIds id, const std::string* str,
+    AppidChangeBits&)
+{
+    delete meta_data[id];
+    meta_data[id] = str;
+}
+
+void AppIdHttpSession::set_field(HttpFieldIds id, const uint8_t* str, int32_t len,
+    AppidChangeBits&)
+{
+    delete meta_data[id];
+    if (str and len)
+        meta_data[id] = new std::string((const char*)str, len);
+    else
+        meta_data[id] = nullptr;
+}
+void AppIdHttpSession::print_field(HttpFieldIds, const std::string*) {}
 
 const uint8_t* HttpEvent::get_content_type(int32_t& length)
 {
@@ -190,7 +207,7 @@ AppIdSession* AppIdApi::get_appid_session(const Flow&)
     return mock_session;
 }
 
-void AppIdSession::publish_appid_event(AppidChangeBits&, Flow*) { }
+void AppIdSession::publish_appid_event(AppidChangeBits&, Flow*, bool, uint32_t) { }
 
 TEST_GROUP(appid_http_event)
 {
@@ -382,7 +399,7 @@ TEST(appid_http_event, handle_msg_header_content_type)
 {
     TestData test_data;
     test_data.type = HttpEventHandler::RESPONSE_EVENT;
-    test_data.scan_flags = 0;
+    test_data.scan_flags = 0x100;
     test_data.http_flows = 0;   //  Flows are only counted on request header
     test_data.content_type = CONTENT_TYPE;
 
@@ -404,7 +421,7 @@ TEST(appid_http_event, handle_msg_header_server)
 {
     TestData test_data;
     test_data.type = HttpEventHandler::RESPONSE_EVENT;
-    test_data.scan_flags = 0;
+    test_data.scan_flags = 0x40;
     test_data.http_flows = 0;   //  Flows are only counted on request header
     test_data.server = SERVER;
 
@@ -440,7 +457,7 @@ TEST(appid_http_event, handle_msg_header_all_response_headers)
 {
     TestData test_data;
     test_data.type = HttpEventHandler::RESPONSE_EVENT;
-    test_data.scan_flags = 1;
+    test_data.scan_flags = 0x101;
     test_data.http_flows = 0;   //  Flows are only counted on request header
     test_data.response_code = RESPONSE_CODE;
     test_data.content_type = CONTENT_TYPE;

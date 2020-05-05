@@ -86,9 +86,7 @@ TEST(tp_appid_types, get_set)
     SET_GET_OFFSET_MACRO(http_request_cookie);
     SET_GET_MACRO(http_request_via);
     SET_GET_MACRO(http_response_via);
-    SET_GET_MACRO(http_response_upgrade);
     SET_GET_OFFSET_MACRO(http_request_user_agent);
-    SET_GET_MACRO(http_response_version);
     SET_GET_MACRO(http_response_code);
     SET_GET_MACRO(http_response_content);
     SET_GET_MACRO(http_response_location);

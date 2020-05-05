@@ -649,7 +649,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
 
             asd.tpsession->set_state(TP_STATE_TERMINATED);
             //  - Just ignore everything from now on.
-            asd.set_session_flags(APPID_SESSION_IGNORE_FLOW);
+            asd.set_session_flags(APPID_SESSION_FUTURE_FLOW);
         }
     }
 
