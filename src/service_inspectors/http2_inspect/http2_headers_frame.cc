@@ -48,6 +48,10 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t
     if (get_flags() & END_STREAM)
         stream->set_end_stream(source_id);
 
+    // No need to process an empty headers frame
+    if (data.length() <= 0)
+        return;
+
     uint8_t hpack_headers_offset = 0;
 
     // Remove stream dependency if present
@@ -207,7 +211,8 @@ void Http2HeadersFrame::print_frame(FILE* output)
         fprintf(output, "Error decoding headers.\n");
     if (start_line)
         start_line->print(output, "Decoded start-line");
-    http1_header->print(output, "Decoded header");
+    if (http1_header)
+        http1_header->print(output, "Decoded header");
     Http2Frame::print_frame(output);
 }
 #endif

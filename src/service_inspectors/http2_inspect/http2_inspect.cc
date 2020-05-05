@@ -120,8 +120,12 @@ void Http2Inspect::eval(Packet* p)
 
     // FIXIT-E Workaround for unexpected eval() calls
     // Avoid eval if scan/reassemble aborts
-    if (session_data->frame_type[source_id] == FT__ABORT)
+    if (session_data->frame_type[source_id] == FT__ABORT or
+        ((session_data->frame_header[source_id] == nullptr ) and
+        (session_data->frame_data[source_id] == nullptr)))
+    {
         return;
+    }
 
     Http2Stream* stream = session_data->get_current_stream(source_id);
 
