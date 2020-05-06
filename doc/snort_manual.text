@@ -411,7 +411,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.1 (Build 2)
+o"  )~   Version 3.0.1 (Build 3)
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2020 Cisco and/or its affiliates. All rights reserved.
@@ -8412,13 +8412,15 @@ Rules:
 
 Peg counts:
 
-  * http2_inspect.flows: HTTP connections inspected (sum)
+  * http2_inspect.flows: HTTP/2 connections inspected (sum)
   * http2_inspect.concurrent_sessions: total concurrent HTTP/2
     sessions (now)
   * http2_inspect.max_concurrent_sessions: maximum concurrent HTTP/2
     sessions (max)
   * http2_inspect.max_table_entries: maximum entries in an HTTP/2
     dynamic table (max)
+  * http2_inspect.max_concurrent_files: maximum concurrent file
+    transfers per HTTP/2 connection (max)
 
 
 9.24. http_inspect
@@ -17040,7 +17042,9 @@ these libraries see the Getting Started section of the manual.
   * host_tracker.service_finds: host service finds (sum)
   * http2_inspect.concurrent_sessions: total concurrent HTTP/2
     sessions (now)
-  * http2_inspect.flows: HTTP connections inspected (sum)
+  * http2_inspect.flows: HTTP/2 connections inspected (sum)
+  * http2_inspect.max_concurrent_files: maximum concurrent file
+    transfers per HTTP/2 connection (max)
   * http2_inspect.max_concurrent_sessions: maximum concurrent HTTP/2
     sessions (max)
   * http2_inspect.max_table_entries: maximum entries in an HTTP/2

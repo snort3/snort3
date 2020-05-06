@@ -1,3 +1,32 @@
+2020/05/06 - 3.0.1 build 3
+
+-- appid: Do not process retry packets but continue processing future packets in AppId
+-- appid: Extract metadata for tunneled HTTP session
+-- appid: Make unit tests multithread safe
+-- appid: On API call store new values and publish an event for them immediately
+-- appid: remove old http2 support
+-- appid: store appids for http traffic in http session
+-- appid: support for multi-stream http2 session
+-- appid: Update miscellaneous appid on first decrypted packet
+-- build: add support for ccache
+-- file_api: fix file stats
+-- file_api: mark processing of file complete after type detection if signature not enabled
+-- http2_inspect: add peg count to track max concurrent http2 file transfers
+-- http2_inspect: fix handling leftover data with padding
+-- http2_inspect: protect against unexpected eval calls
+-- http2_inspect: support stream multiplexing
+-- http2_inspect: update padding check only for header and data frames
+-- http_inspect: add support for http2 file processing
+-- json: add stream formatter helper
+-- managers: sort the inspector list in inspection policy using the instance name
+-- memory: expose memory_cap.h to plugins
+-- parameter: reject reals assigned to ints
+-- rna: Update dev notes to describe usage
+-- snort: add classtype, priority, and references to --dump-rule-meta output
+-- snort: convert --dump-rule-{meta,state,deps} to json format
+-- so rules: allow #fragments in references in so rule stubs
+-- stream: Fix for stream pegs dumping zero values into perf_monitor_base.csv
+
 2020/04/23 - 3.0.1 build 2
 
 -- appid: Change sessionAPI to accomodate stream_index

@@ -782,7 +782,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.1 (Build 2)
+o"  )~   Version 3.0.1 (Build 3)
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2020 Cisco and/or its affiliates. All rights reserved.
@@ -13347,7 +13347,7 @@ int <strong>gtp_inspect.trace.all</strong> = 0: enable traces in module { 0:255 
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>http2_inspect.flows</strong>: HTTP connections inspected (sum)
+<strong>http2_inspect.flows</strong>: HTTP/2 connections inspected (sum)
 </p>
 </li>
 <li>
@@ -13363,6 +13363,11 @@ int <strong>gtp_inspect.trace.all</strong> = 0: enable traces in module { 0:255 
 <li>
 <p>
 <strong>http2_inspect.max_table_entries</strong>: maximum entries in an HTTP/2 dynamic table (max)
+</p>
+</li>
+<li>
+<p>
+<strong>http2_inspect.max_concurrent_files</strong>: maximum concurrent file transfers per HTTP/2 connection (max)
 </p>
 </li>
 </ul></div>
@@ -31816,7 +31821,12 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>http2_inspect.flows</strong>: HTTP connections inspected (sum)
+<strong>http2_inspect.flows</strong>: HTTP/2 connections inspected (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>http2_inspect.max_concurrent_files</strong>: maximum concurrent file transfers per HTTP/2 connection (max)
 </p>
 </li>
 <li>
@@ -39928,7 +39938,7 @@ Adding/removing stream_* inspectors if stream was already configured
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2020-04-23 11:59:51 EDT
+ 2020-05-06 12:35:40 EDT
 </div>
 </div>
 </body>
