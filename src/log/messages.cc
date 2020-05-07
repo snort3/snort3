@@ -23,10 +23,10 @@
 
 #include "messages.h"
 
-#include <syslog.h>
-
 #include <cassert>
 #include <cstdarg>
+#include <string.h>
+#include <syslog.h>
 
 #include "main/snort_config.h"
 #include "parser/parser.h"
@@ -353,86 +353,146 @@ NORETURN_ASSERT void log_safec_error(const char* msg, void*, int e)
     assert(false);
 }
 
-bool ConfigLogger::log_flag(const char* caption, bool flag)
+#define CAPTION "%*s: "
+#define SUB_CAPTION "%*s = "
+
+void ConfigLogger::log_option(const char* caption)
 {
-    LogMessage("%25.25s: %s\n", caption, flag ? "enabled" : "disabled");
+    LogMessage("%*s:\n", indention, caption);
+}
+
+bool ConfigLogger::log_flag(const char* caption, bool flag, bool subopt)
+{
+    auto fmt = subopt ? SUB_CAPTION "%s\n" : CAPTION "%s\n";
+    auto ind = subopt ? indention + strlen(caption) + 2 : indention;
+
+    LogMessage(fmt, ind, caption, flag ? "enabled" : "disabled");
     return flag;
 }
 
-void ConfigLogger::log_limit(const char* caption, int val, int unlim, int disable)
+void ConfigLogger::log_limit(const char* caption, int val, int unlim, int disable, bool subopt)
 {
+    auto fmt = subopt ? SUB_CAPTION "%d%s\n" : CAPTION "%d%s\n";
+    auto ind = subopt ? indention + strlen(caption) + 2 : indention;
+
     if ( val == disable )
-        LogMessage("%25.25s: %d (disabled)\n", caption, val);
+        LogMessage(fmt, ind, caption, val, " (disabled)");
     else if ( val == unlim )
-        LogMessage("%25.25s: %d (unlimited)\n", caption, val);
+        LogMessage(fmt, ind, caption, val, " (unlimited)");
     else
-        LogMessage("%25.25s: %d\n", caption, val);
+        LogMessage(fmt, ind, caption, val, "");
 }
 
-void ConfigLogger::log_limit(const char* caption, int val, int unlim)
+void ConfigLogger::log_limit(const char* caption, int val, int unlim, bool subopt)
 {
+    auto fmt = subopt ? SUB_CAPTION "%d%s\n" : CAPTION "%d%s\n";
+    auto ind = subopt ? indention + strlen(caption) + 2 : indention;
+
     if ( val == unlim )
-        LogMessage("%25.25s: %d (unlimited)\n", caption, val);
+        LogMessage(fmt, ind, caption, val, " (unlimited)");
     else
-        LogMessage("%25.25s: %d\n", caption, val);
+        LogMessage(fmt, ind, caption, val, "");
 }
 
-void ConfigLogger::log_limit(const char* caption, int64_t val, int64_t unlim)
+void ConfigLogger::log_limit(const char* caption, int64_t val, int64_t unlim, bool subopt)
 {
+    auto fmt = subopt ? SUB_CAPTION "%" PRId64 "%s\n" : CAPTION "%" PRId64 "%s\n";
+    auto ind = subopt ? indention + strlen(caption) + 2 : indention;
+
     if ( val == unlim )
-        LogMessage("%25.25s: %" PRId64 " (unlimited)\n", caption, val);
+        LogMessage(fmt, ind, caption, val, " (unlimited)");
     else
-        LogMessage("%25.25s: %" PRId64 "\n", caption, val);
+        LogMessage(fmt, ind, caption, val, "");
 }
 
-void ConfigLogger::log_value(const char* caption, int32_t n)
+void ConfigLogger::log_value(const char* caption, int n, const char* descr, bool subopt)
 {
-    LogMessage("%25.25s: %" PRId32 "\n", caption, n);
+    auto fmt = subopt ? SUB_CAPTION "%" PRId32 " (%s)\n" : CAPTION "%" PRId32 " (%s)\n";
+    auto ind = subopt ? indention + strlen(caption) + 2 : indention;
+
+    LogMessage(fmt, ind, caption, n, descr);
 }
 
-void ConfigLogger::log_value(const char* caption, uint32_t n)
+void ConfigLogger::log_value(const char* caption, int32_t n, bool subopt)
 {
-    LogMessage("%25.25s: %" PRIu32 "\n", caption, n);
+    auto fmt = subopt ? SUB_CAPTION "%" PRId32 "\n" : CAPTION "%" PRId32 "\n";
+    auto ind = subopt ? indention + strlen(caption) + 2 : indention;
+
+    LogMessage(fmt, ind, caption, n);
 }
 
-void ConfigLogger::log_value(const char* caption, int64_t n)
+void ConfigLogger::log_value(const char* caption, uint32_t n, bool subopt)
 {
-    LogMessage("%25.25s: %" PRId64 "\n", caption, n);
+    auto fmt = subopt ? SUB_CAPTION "%" PRIu32 "\n" : CAPTION "%" PRIu32 "\n";
+    auto ind = subopt ? indention + strlen(caption) + 2 : indention;
+
+    LogMessage(fmt, ind, caption, n);
 }
 
-void ConfigLogger::log_value(const char* caption, uint64_t n)
+void ConfigLogger::log_value(const char* caption, int64_t n, bool subopt)
 {
-    LogMessage("%25.25s: %" PRIu64 "\n", caption, n);
+    auto fmt = subopt ? SUB_CAPTION "%" PRId64 "\n" : CAPTION "%" PRId64 "\n";
+    auto ind = subopt ? indention + strlen(caption) + 2 : indention;
+
+    LogMessage(fmt, ind, caption, n);
 }
 
-void ConfigLogger::log_value(const char* caption, const char* str)
+void ConfigLogger::log_value(const char* caption, uint64_t n, bool subopt)
 {
-    if ( str and str[0] )
-        LogMessage("%25.25s: %s\n", caption, str);
+    auto fmt = subopt ? SUB_CAPTION "%" PRIu64 "\n" : CAPTION "%" PRIu64 "\n";
+    auto ind = subopt ? indention + strlen(caption) + 2 : indention;
+
+    LogMessage(fmt, ind, caption, n);
 }
 
-void ConfigLogger::log_list(const char* caption, const char* list)
+void ConfigLogger::log_value(const char* caption, double n, bool subopt)
 {
+    auto fmt = subopt ? SUB_CAPTION "%lf\n" : CAPTION "%lf\n";
+    auto ind = subopt ? indention + strlen(caption) + 2 : indention;
+
+    LogMessage(fmt, ind, caption, n);
+}
+
+void ConfigLogger::log_value(const char* caption, const char* str, bool subopt)
+{
+    if ( !str or !str[0] )
+        return;
+
+    auto fmt = subopt ? SUB_CAPTION "%s\n" : CAPTION "%s\n";
+    auto ind = subopt ? indention + strlen(caption) + 2 : indention;
+
+    LogMessage(fmt, ind, caption, str);
+}
+
+void ConfigLogger::log_list(const char* caption, const char* list, const char* prefix, bool subopt)
+{
+    if ( !list or !list[0] )
+        return;
+
+    auto delim_symbol = subopt ? "=" : ":";
+    auto ind = subopt ? indention + strlen(caption) + 2 : indention;
+
+    const char* const delim = (caption and caption[0]) ? delim_symbol : " ";
+    const char* const head_fmt = "%*s%s%.0s%s\n";
+    const char* const tail_fmt = "%*.0s%.0s%s%s\n";
+    const char* fmt = head_fmt;
+
+    std::stringstream ss(list);
     std::string res;
-    std::stringstream ss;
-    const std::string offset(26,' ');
-
-    size_t len = 0;
     std::string val;
 
-    ss << list;
     while (ss >> val)
     {
-        if ( len + val.length() > max_line_len )
+        if ( res.length() + val.length() > max_line_len )
         {
-            res += '\n' + offset;
-            len = 0;
+            LogMessage(fmt, ind, caption, delim, prefix, res.c_str());
+            fmt = tail_fmt;
+            res.clear();
         }
         res += ' ' + val;
-        len += val.length() + 1;
     }
 
-    LogMessage("%25.25s:%s\n", caption, res.c_str());
+    LogMessage(fmt, ind, caption, delim, prefix, res.c_str());
 }
 } //namespace snort
 

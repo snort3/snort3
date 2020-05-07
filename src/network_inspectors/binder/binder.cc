@@ -21,6 +21,9 @@
 #include "config.h"
 #endif
 
+#include <iomanip>
+#include <sstream>
+
 #include "flow/flow.h"
 #include "flow/flow_key.h"
 #include "framework/data_bus.h"
@@ -454,6 +457,193 @@ static Inspector* get_gadget_by_id(const char* service)
     return InspectorManager::get_inspector_by_service(s);
 }
 
+static std::string to_string(const sfip_var_t* list)
+{
+    std::string ipset;
+
+    if ( !list or !list->head )
+        return "";
+
+    for (auto node = list->head; node; node = node->next)
+    {
+        SfIpString ip_str;
+        auto ip = node->ip;
+
+        ip->get_addr()->ntop(ip_str);
+        ipset += std::string(ip_str);
+
+        if ( ((ip->get_family() == AF_INET6) and (ip->get_bits() != 128)) or
+            ((ip->get_family() == AF_INET ) and (ip->get_bits() != 32 )) )
+        {
+            auto bits = ip->get_bits();
+            bits -= (ip->get_family() == AF_INET and bits) ? 96 : 0;
+            ipset += "/" + std::to_string(bits);
+        }
+
+        ipset += ", ";
+    }
+
+    if ( !ipset.empty() )
+        ipset.erase(ipset.end() - 2, ipset.end());
+
+    return ipset;
+}
+
+template <unsigned N>
+static std::string to_string(const std::bitset<N>& bitset)
+{
+    std::stringstream ss;
+
+    if ( bitset.none() or bitset.all() )
+        return "";
+
+    for (unsigned i = 0; i < bitset.size(); ++i)
+        if ( bitset[i] )
+            ss << i << " ";
+
+    auto str = ss.str();
+    if ( !str.empty() )
+        str.pop_back();
+
+    return str;
+}
+
+static std::string to_string(const BindWhen::Role& role)
+{
+    switch( role )
+    {
+    case BindWhen::BR_CLIENT:
+        return "client";
+    case BindWhen::BR_SERVER:
+        return "server";
+    default:
+        return "";
+    }
+}
+
+static std::string proto_to_string(unsigned proto)
+{
+    switch( proto )
+    {
+    case PROTO_BIT__IP:
+        return "ip";
+    case PROTO_BIT__ICMP:
+        return "icmp";
+    case PROTO_BIT__TCP:
+        return "tcp";
+    case PROTO_BIT__UDP:
+        return "udp";
+    case PROTO_BIT__PDU:
+        return "user";
+    case PROTO_BIT__FILE:
+        return "file";
+    default:
+        return "";
+    }
+}
+
+static std::string to_string(const BindUse::Action& action)
+{
+    switch( action )
+    {
+    case BindUse::BA_RESET:
+        return "reset";
+    case BindUse::BA_BLOCK:
+        return "block";
+    case BindUse::BA_ALLOW:
+        return "allow";
+    default:
+        return "";
+    }
+}
+
+static std::string to_string(const BindWhen& bw)
+{
+    std::string when;
+
+    when += "{";
+
+    if ( bw.ips_id_user )
+        when += " ips_policy_id = " + std::to_string(bw.ips_id_user) + ",";
+
+    if ( !bw.svc.empty() )
+        when += " service = " + bw.svc + ",";
+
+    auto role = to_string(bw.role);
+    if ( !role.empty() )
+        when += " role = " + role + ",";
+
+    auto proto = proto_to_string(bw.protos);
+    if ( !proto.empty() )
+        when += " proto = " + proto + ",";
+
+    auto src_nets = to_string(bw.src_nets);
+    auto dst_nets = to_string(bw.dst_nets);
+
+    if ( !src_nets.empty() )
+        when += (bw.split_nets ? " src_nets = " : " nets = ") + src_nets + ",";
+    if ( bw.split_nets and !dst_nets.empty() )
+        when += " dst_nets = " + dst_nets + ",";
+
+    auto src_ports = to_string<65536>(bw.src_ports);
+    auto dst_ports = to_string<65536>(bw.dst_ports);
+
+    if ( !src_ports.empty() )
+        when += (bw.split_ports ? " src_ports = " : " ports = ") + src_ports + ",";
+    if ( bw.split_ports and !dst_ports.empty() )
+        when += " dst_ports = " + dst_ports + ",";
+
+    auto src_zones = to_string<64>(bw.src_zones);
+    auto dst_zones = to_string<64>(bw.dst_zones);
+
+    if ( !src_zones.empty() )
+        when += (bw.split_zones ? " src_zones = " : " zones = ") + src_zones + ",";
+    if ( bw.split_zones and !dst_zones.empty() )
+        when += " dst_zones = " + dst_zones + ",";
+
+    auto ifaces = to_string<256>(bw.ifaces);
+    if ( !ifaces.empty() )
+        when += " ifaces = " + ifaces + ",";
+
+    auto vlans = to_string<4096>(bw.vlans);
+    if ( !vlans.empty() )
+        when += " vlans = " + vlans + ",";
+
+    if ( when.length() > 1 )
+        when.pop_back();
+
+    when += " }";
+
+    return when;
+}
+
+static std::string to_string(const BindUse& bu)
+{
+    std::string use;
+
+    use += "{";
+
+    auto action = to_string(bu.action);
+    if ( !action.empty() )
+        use += " action = " + action + ",";
+
+    if ( !bu.svc.empty() )
+        use += " service = " + bu.svc + ",";
+
+    if ( !bu.type.empty() )
+        use += " type = " + ((bu.type.at(0) == '.') ? bu.type.substr(1) : bu.type) + ",";
+
+    if ( !bu.name.empty() and (bu.type != bu.name) )
+        use += " name = " + bu.name + ",";
+
+    if ( use.length() > 1 )
+        use.pop_back();
+
+    use += " }";
+
+    return use;
+}
+
 //-------------------------------------------------------------------------
 // stuff stuff
 //-------------------------------------------------------------------------
@@ -635,6 +825,7 @@ public:
     void remove_inspector_binding(SnortConfig*, const char*) override;
 
     bool configure(SnortConfig*) override;
+    void show(SnortConfig*) override;
 
     void eval(Packet*) override { }
 
@@ -752,6 +943,27 @@ bool Binder::configure(SnortConfig* sc)
     DataBus::subscribe(FLOW_ASSISTANT_GADGET_EVENT, new AssistantGadgetHandler());
 
     return true;
+}
+
+void Binder::show(SnortConfig*)
+{
+    std::once_flag once;
+
+    if ( !bindings.size() )
+        return;
+
+    for (auto& b : bindings)
+    {
+        auto when = b->when;
+        auto use = b->use;
+
+        std::call_once(once, []{ ConfigLogger::log_option("bindings"); });
+
+        auto bind_when = "{ when = " + to_string(when) + ",";
+        auto bind_use = "use = " + to_string(use) + " }";
+        ConfigLogger::log_list("", bind_when.c_str(), "   ");
+        ConfigLogger::log_list("", bind_use.c_str(), "   ", true);
+    }
 }
 
 void Binder::remove_inspector_binding(SnortConfig*, const char* name)

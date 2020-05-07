@@ -70,18 +70,22 @@ class SO_PUBLIC ConfigLogger final
 {
 public:
     ConfigLogger() = delete;
-    static bool log_flag(const char* caption, bool flag);
-    static void log_limit(const char* caption, int val, int unlim);
-    static void log_limit(const char* caption, int val, int unlim, int disable);
-    static void log_limit(const char* caption, int64_t val, int64_t unlim);
-    static void log_value(const char* caption, int32_t n);
-    static void log_value(const char* caption, uint32_t n);
-    static void log_value(const char* caption, int64_t n);
-    static void log_value(const char* caption, uint64_t n);
-    static void log_value(const char* caption, const char* str);
-    static void log_list(const char* caption, const char* list);
+    static void log_option(const char* caption);
+    static bool log_flag(const char* caption, bool flag, bool subopt = false);
+    static void log_limit(const char* caption, int val, int unlim, bool subopt = false);
+    static void log_limit(const char* caption, int val, int unlim, int disable, bool subopt = false);
+    static void log_limit(const char* caption, int64_t val, int64_t unlim, bool subopt = false);
+    static void log_value(const char* caption, int n, const char* descr, bool subopt = false);
+    static void log_value(const char* caption, int32_t n, bool subopt = false);
+    static void log_value(const char* caption, uint32_t n, bool subopt = false);
+    static void log_value(const char* caption, int64_t n, bool subopt = false);
+    static void log_value(const char* caption, uint64_t n, bool subopt = false);
+    static void log_value(const char* caption, double n, bool subopt = false);
+    static void log_value(const char* caption, const char* str, bool subopt = false);
+    static void log_list(const char* caption, const char* list, const char* prefix = " ", bool subopt = false);
 private:
-    static constexpr size_t max_line_len = 75;
+    static constexpr int indention = 25;
+    static constexpr int max_line_len = 75;
 };
 
 // FIXIT-RC do not call FatalError() during runtime

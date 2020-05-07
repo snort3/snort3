@@ -120,7 +120,7 @@ static void arp_config_show(const ArpSpoofConfig* config)
     if ( !config->ipmel.size() )
         return;
 
-    ConfigLogger::log_list("hosts", "(list)");
+    ConfigLogger::log_option("hosts");
 
     for (auto& ip : config->ipmel)
     {
