@@ -41,6 +41,8 @@ public:
     virtual void trace_segments(TcpReassemblerState&);
     virtual void purge_alerts(TcpReassemblerState&);
 
+    uint32_t perform_partial_flush(TcpReassemblerState&, snort::Flow*);
+
 protected:
     TcpReassembler() = default;
 
@@ -85,6 +87,9 @@ protected:
 
     bool next_no_gap(const TcpSegmentNode&);
     void update_next(TcpReassemblerState&, const TcpSegmentNode&);
+
+    uint32_t perform_partial_flush(TcpReassemblerState&, snort::Packet*, uint32_t flushed = 0);
+
 };
 
 #endif

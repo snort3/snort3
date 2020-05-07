@@ -72,7 +72,7 @@ public:
     // for shutdown only
     static void purge_flows();
 
-    static void timeout_flows(time_t cur_time);
+    static void handle_timeouts(bool idle);
     static void prune_flows();
     static bool expected_flow(Flow*, Packet*);
 

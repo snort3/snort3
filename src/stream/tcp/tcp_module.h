@@ -95,6 +95,7 @@ struct TcpStats
     PegCount held_packet_rexmits;
     PegCount held_packets_dropped;
     PegCount held_packets_passed;
+    PegCount held_packet_timeouts;
     PegCount current_packets_held;
     PegCount max_packets_held;
     PegCount partial_flushes;

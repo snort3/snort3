@@ -81,6 +81,7 @@ const PegInfo tcp_pegs[] =
     { CountType::SUM, "held_packet_rexmits", "number of retransmits of held packets" },
     { CountType::SUM, "held_packets_dropped", "number of held packets dropped" },
     { CountType::SUM, "held_packets_passed", "number of held packets passed" },
+    { CountType::SUM, "held_packet_timeouts", "number of held packets that timed out" },
     { CountType::NOW, "cur_packets_held", "number of packets currently held" },
     { CountType::MAX, "max_packets_held", "maximum number of packets held simultaneously" },
     { CountType::SUM, "partial_flushes", "number of partial flushes initiated" },
@@ -193,6 +194,9 @@ static const Parameter s_params[] =
 
     { "track_only", Parameter::PT_BOOL, nullptr, "false",
       "disable reassembly if true" },
+
+    { "held_packet_timeout", Parameter::PT_INT, "1:max32", "1000",
+      "timeout in milliseconds for held packets" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -316,6 +320,10 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
             config->flags |= STREAM_CONFIG_NO_REASSEMBLY;
         else
             config->flags &= ~STREAM_CONFIG_NO_REASSEMBLY;
+    }
+    else if ( v.is("held_packet_timeout") )
+    {
+        config->held_packet_timeout = v.get_uint32();
     }
     else
         return false;

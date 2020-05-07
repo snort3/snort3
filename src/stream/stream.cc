@@ -41,6 +41,7 @@
 
 #include "tcp/tcp_session.h"
 #include "tcp/tcp_stream_session.h"
+#include "tcp/tcp_stream_tracker.h"
 
 using namespace snort;
 
@@ -338,11 +339,17 @@ void Stream::purge_flows()
         flow_con->purge_flows();
 }
 
-void Stream::timeout_flows(time_t cur_time)
+void Stream::handle_timeouts(bool idle)
 {
+    timeval cur_time;
+    packet_gettimeofday(&cur_time);
+
     // FIXIT-M batch here or loop vs looping over idle?
     if ( flow_con )
-        flow_con->timeout_flows(cur_time);
+        flow_con->timeout_flows(cur_time.tv_sec);
+
+    int max_remove = idle ? -1 : 1;       // -1 = all eligible
+    TcpStreamTracker::release_held_packets(cur_time, max_remove);
 }
 
 void Stream::prune_flows()

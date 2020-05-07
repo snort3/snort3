@@ -22,9 +22,10 @@
 #ifndef TCP_STREAM_TRACKER_H
 #define TCP_STREAM_TRACKER_H
 
-#include <daq_common.h>
+#include <list>
 
 #include "stream/paf.h"
+
 #include "segment_overlap_editor.h"
 #include "tcp_defs.h"
 #include "tcp_normalizers.h"
@@ -52,6 +53,7 @@ namespace snort
 struct Packet;
 }
 
+class HeldPacket;
 class TcpReassembler;
 class TcpSession;
 
@@ -288,6 +290,13 @@ public:
     bool is_retransmit_of_held_packet(snort::Packet*);
     void finalize_held_packet(snort::Packet*);
     void finalize_held_packet(snort::Flow*);
+    uint32_t perform_partial_flush();
+
+    // max_remove < 0 means time out all eligible packets
+    static void release_held_packets(const timeval& cur_time, int max_remove);
+    static void set_held_packet_timeout(const uint32_t ms);
+    static void thread_init();
+    static void thread_term();
 
 public:
     uint32_t snd_una = 0; // SND.UNA - send unacknowledged
@@ -339,6 +348,8 @@ public:
 
     FinSeqNumStatus fin_seq_status = TcpStreamTracker::FIN_NOT_SEEN;
 
+    std::list<HeldPacket>::iterator held_packet;
+
 protected:
     // FIXIT-H reorganize per-flow structs to minimize padding
     uint32_t ts_last_packet = 0;
@@ -351,9 +362,6 @@ protected:
 
     uint8_t mac_addr[6] = { };
     uint8_t tcp_options_len = 0;
-    DAQ_Msg_h held_packet = nullptr;
-    uint32_t held_seq_num = 0;
-
     bool mac_addr_valid = false;
     bool fin_seq_set = false;  // FIXIT-M should be obviated by tcp state
 };

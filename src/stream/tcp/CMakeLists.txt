@@ -3,15 +3,17 @@ if ( ENABLE_UNIT_TESTS )
 endif()
 
 add_library( stream_tcp OBJECT
+    held_packet_queue.cc
+    held_packet_queue.h
     ips_stream_reassemble.cc
     ips_stream_size.cc
-    segment_overlap_editor.h
     segment_overlap_editor.cc
+    segment_overlap_editor.h
     stream_tcp.cc
     stream_tcp.h
     tcp_defs.h
-    tcp_event_logger.h
     tcp_event_logger.cc
+    tcp_event_logger.h
     tcp_ha.cc
     tcp_ha.h
     tcp_module.cc
@@ -43,7 +45,7 @@ add_library( stream_tcp OBJECT
     tcp_state_fin_wait2.cc
     tcp_state_fin_wait2.h
     tcp_state_handler.cc
-    tcp_state_handler.h    
+    tcp_state_handler.h
     tcp_state_last_ack.cc
     tcp_state_last_ack.h
     tcp_state_listen.cc
@@ -57,7 +59,7 @@ add_library( stream_tcp OBJECT
     tcp_state_syn_sent.cc
     tcp_state_syn_sent.h
     tcp_state_time_wait.cc
-    tcp_state_time_wait.h 
+    tcp_state_time_wait.h
     tcp_stream_config.cc
     tcp_stream_config.h
     tcp_stream_session.cc

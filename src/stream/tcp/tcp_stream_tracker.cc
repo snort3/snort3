@@ -31,13 +31,19 @@
 #include "packet_io/active.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/eth.h"
-#include "stream/stream.h"
-#include "stream/tcp/tcp_module.h"
-#include "stream/tcp/tcp_normalizers.h"
-#include "stream/tcp/tcp_reassemblers.h"
-#include "stream/tcp/segment_overlap_editor.h"
+
+#include "held_packet_queue.h"
+#include "segment_overlap_editor.h"
+#include "tcp_module.h"
+#include "tcp_normalizers.h"
+#include "tcp_reassemblers.h"
+#include "tcp_session.h"
 
 using namespace snort;
+
+THREAD_LOCAL HeldPacketQueue* hpq = nullptr;
+
+static const HeldPacketQueue::iter_t null_iterator { };
 
 const char* tcp_state_names[] =
 {
@@ -58,7 +64,8 @@ const char* tcp_event_names[] = {
 };
 
 TcpStreamTracker::TcpStreamTracker(bool client) :
-    tcp_state(client ? TCP_STATE_NONE : TCP_LISTEN), client_tracker(client)
+    tcp_state(client ? TCP_STATE_NONE : TCP_LISTEN), client_tracker(client),
+    held_packet(null_iterator)
 { }
 
 TcpStreamTracker::~TcpStreamTracker()
@@ -209,8 +216,7 @@ void TcpStreamTracker::init_tcp_state()
     fin_seq_set = false;
     rst_pkt_sent = false;
     order = 0;
-    held_packet = nullptr;
-    held_seq_num = 0;
+    held_packet = null_iterator;
 }
 
 //-------------------------------------------------------------------------
@@ -657,24 +663,33 @@ bool TcpStreamTracker::is_segment_seq_valid(TcpSegmentDescriptor& tsd)
 
 bool TcpStreamTracker::set_held_packet(Packet* p)
 {
-    if ( held_packet )
+    if ( held_packet != null_iterator )
         return false;
 
-    held_packet = p->daq_msg;
-    held_seq_num = p->ptrs.tcph->seq();
+    held_packet = hpq->append(p->daq_msg, p->ptrs.tcph->seq(), *this);
+
     tcpStats.total_packets_held++;
     if ( ++tcpStats.current_packets_held > tcpStats.max_packets_held )
         tcpStats.max_packets_held = tcpStats.current_packets_held;
+
     return true;
+}
+
+uint32_t TcpStreamTracker::perform_partial_flush()
+{
+    uint32_t flushed = 0;
+    if ( held_packet != null_iterator )
+        flushed = reassembler.perform_partial_flush(session->flow);
+    return flushed;
 }
 
 bool TcpStreamTracker::is_retransmit_of_held_packet(Packet* cp)
 {
-    if ( !held_packet or ( cp->daq_msg == held_packet ) )
+    if ( (held_packet == null_iterator) or ( cp->daq_msg == held_packet->get_daq_msg() ) )
         return false;
 
     uint32_t next_send_seq = cp->ptrs.tcph->seq() + (uint32_t)cp->dsize;
-    if ( SEQ_LEQ(cp->ptrs.tcph->seq(), held_seq_num) and SEQ_GT(next_send_seq, held_seq_num) )
+    if ( SEQ_LEQ(cp->ptrs.tcph->seq(), held_packet->get_seq_num()) and SEQ_GT(next_send_seq, held_packet->get_seq_num()) )
     {
         tcpStats.held_packet_rexmits++;
         return true;
@@ -685,21 +700,21 @@ bool TcpStreamTracker::is_retransmit_of_held_packet(Packet* cp)
 
 void TcpStreamTracker::finalize_held_packet(Packet* cp)
 {
-    if ( held_packet )
+    if ( held_packet != null_iterator )
     {
         if ( cp->active->packet_was_dropped() )
         {
-            Analyzer::get_local_analyzer()->finalize_daq_message(held_packet, DAQ_VERDICT_BLOCK);
+            Analyzer::get_local_analyzer()->finalize_daq_message(held_packet->get_daq_msg(), DAQ_VERDICT_BLOCK);
             tcpStats.held_packets_dropped++;
         }
         else
         {
-            Analyzer::get_local_analyzer()->finalize_daq_message(held_packet, DAQ_VERDICT_PASS);
+            Analyzer::get_local_analyzer()->finalize_daq_message(held_packet->get_daq_msg(), DAQ_VERDICT_PASS);
             tcpStats.held_packets_passed++;
         }
 
-        held_packet = nullptr;
-        held_seq_num = 0;
+        hpq->erase(held_packet);
+        held_packet = null_iterator;
         tcpStats.current_packets_held--;
     }
 
@@ -709,23 +724,47 @@ void TcpStreamTracker::finalize_held_packet(Packet* cp)
 
 void TcpStreamTracker::finalize_held_packet(Flow* flow)
 {
-    if ( held_packet )
+    if ( held_packet != null_iterator )
     {
         if ( (flow->session_state & STREAM_STATE_BLOCK_PENDING) ||
              (flow->ssn_state.session_flags & SSNFLAG_BLOCK) )
         {
-            Analyzer::get_local_analyzer()->finalize_daq_message(held_packet, DAQ_VERDICT_BLOCK);
+            Analyzer::get_local_analyzer()->finalize_daq_message(held_packet->get_daq_msg(), DAQ_VERDICT_BLOCK);
             tcpStats.held_packets_dropped++;
         }
         else
         {
-            Analyzer::get_local_analyzer()->finalize_daq_message(held_packet, DAQ_VERDICT_PASS);
+            Analyzer::get_local_analyzer()->finalize_daq_message(held_packet->get_daq_msg(), DAQ_VERDICT_PASS);
             tcpStats.held_packets_passed++;
         }
 
-        held_packet = nullptr;
-        held_seq_num = 0;
+        hpq->erase(held_packet);
+        held_packet = null_iterator;
         tcpStats.current_packets_held--;
     }
 }
 
+void TcpStreamTracker::release_held_packets(const timeval& cur_time, int max_remove)
+{
+    if ( hpq )
+        hpq->execute(cur_time, max_remove);
+}
+
+void TcpStreamTracker::set_held_packet_timeout(const uint32_t ms)
+{
+    assert(hpq);
+    hpq->set_timeout(ms);
+}
+
+void TcpStreamTracker::thread_init()
+{
+    assert(!hpq);
+    hpq = new HeldPacketQueue();
+}
+
+void TcpStreamTracker::thread_term()
+{
+    assert(hpq->empty());
+    delete hpq;
+    hpq = nullptr;
+}

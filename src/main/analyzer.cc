@@ -416,7 +416,7 @@ void Analyzer::process_daq_pkt_msg(DAQ_Msg_h msg, bool retry)
     }
 
     oops_handler->set_current_packet(nullptr);
-    Stream::timeout_flows(packet_time());
+    Stream::handle_timeouts(false);
     HighAvailabilityManager::process_receive();
 }
 
@@ -561,7 +561,7 @@ void Analyzer::idle()
     // Service the retry queue with the new packet time.
     process_retry_queue();
 
-    Stream::timeout_flows(packet_time());
+    Stream::handle_timeouts(true);
 
     HighAvailabilityManager::process_receive();
 

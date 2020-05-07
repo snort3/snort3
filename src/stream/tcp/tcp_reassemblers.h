@@ -115,6 +115,9 @@ public:
     void reset_paf_segment()
     { trs.sos.seglist.cur_pseg = nullptr; }
 
+    uint32_t perform_partial_flush(snort::Flow* flow)
+    { return reassembler->perform_partial_flush(trs, flow); }
+
 private:
     TcpReassembler* reassembler = nullptr;
     TcpReassemblerState trs;

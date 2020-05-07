@@ -1075,20 +1075,7 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
     }
 
     if ( trs.tracker->is_retransmit_of_held_packet(p) )
-    {
-        if ( trs.tracker->splitter->init_partial_flush(p->flow) )
-        {
-            flushed += flush_stream(trs, p, trs.packet_dir, false);
-            paf_jump(&trs.tracker->paf_state, flushed);
-            tcpStats.partial_flushes++;
-            tcpStats.partial_flush_bytes += flushed;
-            if ( trs.sos.seg_count )
-            {
-                purge_to_seq(trs, trs.sos.seglist.head->i_seq + flushed);
-                trs.tracker->r_win_base = trs.sos.seglist_base_seq;
-            }
-        }
-    }
+        flushed = perform_partial_flush(trs, p, flushed);
 
     // FIXIT-H a drop rule will yoink the seglist out from under us
     // because apply_delayed_action is only deferred to end of context
@@ -1320,4 +1307,33 @@ int TcpReassembler::queue_packet_for_reassembly(
         rc = insert_segment_in_seglist(trs, tsd);
 
     return rc;
+}
+
+uint32_t TcpReassembler::perform_partial_flush(TcpReassemblerState& trs, Flow* flow)
+{
+    // Call this first, to create a context before creating a packet:
+    DetectionEngine::set_next_packet();
+    DetectionEngine de;
+
+    Packet* p = set_packet(flow, trs.packet_dir, trs.server_side);
+    return perform_partial_flush(trs, p);
+}
+
+// No error checking here, so the caller must ensure that p, p->flow and context
+// are not null.
+uint32_t TcpReassembler::perform_partial_flush(TcpReassemblerState& trs, Packet* p, uint32_t flushed)
+{
+    if ( trs.tracker->splitter->init_partial_flush(p->flow) )
+    {
+        flushed += flush_stream(trs, p, trs.packet_dir, false);
+        paf_jump(&trs.tracker->paf_state, flushed);
+        tcpStats.partial_flushes++;
+        tcpStats.partial_flush_bytes += flushed;
+        if ( trs.sos.seg_count )
+        {
+            purge_to_seq(trs, trs.sos.seglist.head->i_seq + flushed);
+            trs.tracker->r_win_base = trs.sos.seglist_base_seq;
+        }
+    }
+    return flushed;
 }
