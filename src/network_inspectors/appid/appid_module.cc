@@ -137,7 +137,8 @@ private:
 bool ACThirdPartyAppIdContextSwap::execute(Analyzer&, void**)
 {
     assert(tp_appid_thread_ctxt);
-    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
+    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
+    assert(inspector);
     ThirdPartyAppIdContext* tp_appid_ctxt = inspector->get_ctxt().get_tp_appid_ctxt();
     assert(tp_appid_thread_ctxt != tp_appid_ctxt);
     LogMessage("== swapping third-party configuration\n");
@@ -206,7 +207,12 @@ static int reload_third_party(lua_State*)
     }
     Swapper::set_reload_in_progress(true);
     LogMessage(".. reloading third-party\n");
-    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
+    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
+    if (!inspector)
+    {
+        LogMessage("== reload third-party failed - appid not enabled\n");
+        return 0;
+    }
     AppIdContext& ctxt = inspector->get_ctxt();
     ThirdPartyAppIdContext* old_ctxt = ctxt.get_tp_appid_ctxt();
     if (!old_ctxt)

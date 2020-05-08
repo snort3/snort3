@@ -118,7 +118,8 @@ static void read_patterns(PortPatternNode* portPatternList, PatternService** ser
         ps->pattern = pattern;
 
         // FIXIT-M: Tp support ODP reload, store ODP context in PatternService
-        AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
+        AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
+        assert(inspector);
         AppIdContext& ctxt = inspector->get_ctxt();
 
         ctxt.get_odp_ctxt().get_app_info_mgr().set_app_info_active(ps->id);
