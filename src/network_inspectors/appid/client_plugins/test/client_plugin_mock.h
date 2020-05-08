@@ -65,7 +65,6 @@ PegCount Module::get_global_count(char const*) const { return 0; }
 void Module::show_interval_stats(std::vector<unsigned int, std::allocator<unsigned int> >&, FILE*) {}
 void Module::show_stats(){}
 void Module::sum_stats(bool ){}
-bool Module::set(const char*, Value&, SnortConfig*){ return false;}
 void Module::reset_stats() {}
 }
 

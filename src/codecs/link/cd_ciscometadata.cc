@@ -64,10 +64,10 @@ struct CiscoMetaDataStats
 };
 static THREAD_LOCAL CiscoMetaDataStats ciscometadata_stats;
 
-class CiscoMetaDataModule : public CodecModule
+class CiscoMetaDataModule : public BaseCodecModule
 {
 public:
-    CiscoMetaDataModule() : CodecModule(CD_CISCOMETADATA_NAME, CD_CISCOMETADATA_HELP) { }
+    CiscoMetaDataModule() : BaseCodecModule(CD_CISCOMETADATA_NAME, CD_CISCOMETADATA_HELP) { }
 
     const RuleMap* get_rules() const override
     { return ciscometadata_rules; }

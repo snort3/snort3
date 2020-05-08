@@ -40,10 +40,10 @@ static const RuleMap gtp_rules[] =
     { 0, nullptr }
 };
 
-class GtpModule : public CodecModule
+class GtpModule : public BaseCodecModule
 {
 public:
-    GtpModule() : CodecModule(CD_GTP_NAME, CD_GTP_HELP) { }
+    GtpModule() : BaseCodecModule(CD_GTP_NAME, CD_GTP_HELP) { }
 
     const RuleMap* get_rules() const override
     { return gtp_rules; }

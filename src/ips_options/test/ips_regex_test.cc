@@ -98,12 +98,6 @@ extern const BaseApi* ips_regex;
 Cursor::Cursor(Packet* p)
 { set("pkt_data", p->data, p->dsize); }
 
-Trace::Trace(const char*, const TraceOptionString*, size_t) {}
-Trace::Trace(const char*) {}
-bool Trace::set(const snort::Value&) { return true; }
-void Trace::reset() {}
-void Trace::enable() {}
-
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
 

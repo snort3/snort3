@@ -30,7 +30,6 @@
 #include "framework/inspector.h"
 #include "framework/data_bus.h"
 #include "main/snort_config.h"
-#include "main/snort_debug.h"
 #include "memory/memory_cap.h"
 #include "protocols/ip.h"
 #include "protocols/layer.h"

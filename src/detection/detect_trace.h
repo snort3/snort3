@@ -25,14 +25,15 @@
 
 #include "framework/cursor.h"
 #include "main/snort_types.h"
+#include "main/thread.h"
 
 namespace snort
 {
 struct Packet;
-struct Trace;
+class Trace;
 }
 
-extern snort::Trace detection_trace;
+extern THREAD_LOCAL const snort::Trace* detection_trace;
 
 struct detection_option_tree_node_t;
 struct PatternMatchData;

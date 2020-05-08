@@ -30,6 +30,7 @@
 #include "detection/detection_engine.h"
 #include "log/text_log.h"
 #include "main/snort_config.h"
+#include "main/snort_debug.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
 #include "profiler/profiler_defs.h"

@@ -177,6 +177,7 @@ void SnortConfig::init(const SnortConfig* const other_conf, ProtocolReference* p
         memset(evalOrder, 0, sizeof(evalOrder));
         proto_ref = new ProtocolReference(protocol_reference);
         so_rules = new SoRules;
+        trace_config = new TraceConfig;
     }
     else
     {
@@ -262,10 +263,9 @@ SnortConfig::~SnortConfig()
 
     delete[] state;
     delete thread_config;
+    delete trace_config;
     delete ha_config;
     delete global_dbus;
-
-    delete trace_config;
 
     delete profiler;
     delete latency;
@@ -461,6 +461,7 @@ void SnortConfig::merge(SnortConfig* cmd_line)
     assert(!state);
     num_slots = offload_threads + ThreadConfig::get_instance_max();
     state = new std::vector<void*>[num_slots];
+    trace_config->merge_cmd_line(cmd_line->trace_config);
 }
 
 bool SnortConfig::verify()

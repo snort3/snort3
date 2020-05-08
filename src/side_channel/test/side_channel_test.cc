@@ -26,7 +26,6 @@
 #include "side_channel/side_channel.h"
 
 #include "log/messages.h"
-#include "main/snort_debug.h"
 #include "managers/connector_manager.h"
 
 #include <CppUTest/CommandLineTestRunner.h>

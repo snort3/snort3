@@ -512,9 +512,6 @@ static bool set_value(const char* fqn, Value& v)
         // now we must traverse the mod params to get the leaf
         string s = fqn;
         p = get_params(s, mod, mod->get_parameters());
-
-        if ( !p )
-            p = get_params(s, mod, mod->get_default_parameters());
     }
 
     if ( !p )
@@ -567,7 +564,6 @@ static bool begin(Module* m, const Parameter* p, const char* s, int idx, int dep
     // Module::(verified_)begin() will be called for top-level tables, lists, and list items only
     if ( top_level(s) )
     {
-        m->reset_trace();
         if ( !m->verified_begin(s, idx, s_config) )
             return false;
         // don't set list defaults
@@ -757,9 +753,6 @@ SO_PUBLIC bool open_table(const char* s, int idx)
     {
         std::string sfqn = s;
         p = get_params(sfqn, m, m->get_parameters(), idx);
-
-        if ( !p )
-            p = get_params(sfqn, m, m->get_default_parameters(), idx);
 
         if ( !p )
         {
@@ -1062,10 +1055,7 @@ void ModuleManager::show_module(const char* name)
         cout << endl << "Usage: "  << mod_use(m->get_usage()) << endl;
 
         const Parameter* params = m->get_parameters();
-        const Parameter* def_params = m->get_default_parameters();
-
-        if ( ( params and params->type < Parameter::PT_MAX ) ||
-             ( def_params and def_params->type < Parameter::PT_MAX ) )
+        if ( params and params->type < Parameter::PT_MAX )
         {
             cout << endl << "Configuration: " << endl << endl;
             show_configs(name, true);
@@ -1164,11 +1154,6 @@ void ModuleManager::show_configs(const char* pfx, bool exact)
         {
             dump_field(s, pfx, m->params);
         }
-
-        s = m->name;
-
-        if ( m->default_params )
-            dump_table(s, pfx, m->default_params);
 
         if ( !pfx )
             cout << endl;
@@ -1484,11 +1469,6 @@ void ModuleManager::load_params()
         {
             load_field(s, m->params);
         }
-
-        s = m->name;
-
-        if ( m->default_params )
-            load_table(s, m->default_params);
     }
 }
 

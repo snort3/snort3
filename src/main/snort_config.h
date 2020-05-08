@@ -412,9 +412,6 @@ public:
 
     ThreadConfig* thread_config;
     HighAvailabilityConfig* ha_config = nullptr;
-
-    //------------------------------------------------------
-
     TraceConfig* trace_config = nullptr;
 
     //------------------------------------------------------

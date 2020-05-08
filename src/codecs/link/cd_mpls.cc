@@ -78,10 +78,10 @@ struct MplsStats
 };
 static THREAD_LOCAL MplsStats mpls_stats;
 
-class MplsModule : public CodecModule
+class MplsModule : public BaseCodecModule
 {
 public:
-    MplsModule() : CodecModule(CD_MPLS_NAME, CD_MPLS_HELP, mpls_params) { }
+    MplsModule() : BaseCodecModule(CD_MPLS_NAME, CD_MPLS_HELP, mpls_params) { }
 
     const RuleMap* get_rules() const override
     { return mpls_rules; }

@@ -20,6 +20,8 @@
 #ifndef TRACE_CONFIG_H
 #define TRACE_CONFIG_H
 
+#include "trace.h"
+
 namespace snort
 {
 class TraceLoggerFactory;
@@ -28,10 +30,20 @@ class TraceLoggerFactory;
 class TraceConfig
 {
 public:
-    TraceConfig() = default;
+    TraceConfig();
     ~TraceConfig();
 
+    void enable_trace_snort();
+    void setup_module_trace() const;
+    void merge_cmd_line(TraceConfig*);
+    bool set_trace(const std::string& module_name,
+        const std::string& trace_option_name, uint8_t trace_level);
+
     snort::TraceLoggerFactory* logger_factory = nullptr;
+
+private:
+    bool trace_snort_enabled = false;
+    Traces traces;
 };
 
 #endif // TRACE_CONFIG_H

@@ -75,10 +75,10 @@ static const RuleMap ipv6_rules[] =
     { 0, nullptr }
 };
 
-class Ipv6Module : public CodecModule
+class Ipv6Module : public BaseCodecModule
 {
 public:
-    Ipv6Module() : CodecModule(CD_IPV6_NAME, CD_IPV6_HELP) { }
+    Ipv6Module() : BaseCodecModule(CD_IPV6_NAME, CD_IPV6_HELP) { }
 
     const RuleMap* get_rules() const override
     { return ipv6_rules; }

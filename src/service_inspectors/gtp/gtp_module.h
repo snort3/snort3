@@ -22,7 +22,6 @@
 #define GTP_MODULE_H
 
 #include "framework/module.h"
-#include "main/snort_debug.h"
 
 #define GID_GTP 143
 
@@ -34,8 +33,13 @@
 #define GTP_NAME "gtp_inspect"
 #define GTP_HELP "gtp control channel inspection"
 
+namespace snort
+{
+class Trace;
+}
+
 extern THREAD_LOCAL snort::ProfileStats gtp_inspect_prof;
-extern snort::Trace gtp_inspect_trace;
+extern THREAD_LOCAL const snort::Trace* gtp_inspect_trace;
 
 struct GtpStuff
 {
@@ -67,6 +71,9 @@ public:
 
     Usage get_usage() const override
     { return INSPECT; }
+
+    void set_trace(const snort::Trace*) const override;
+    const snort::TraceOption* get_trace_options() const override;
 
 public:
     GtpStuff stuff;

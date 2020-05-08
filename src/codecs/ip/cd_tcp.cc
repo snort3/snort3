@@ -96,10 +96,10 @@ static const RuleMap tcp_rules[] =
     { 0, nullptr }
 };
 
-class TcpModule : public CodecModule
+class TcpModule : public BaseCodecModule
 {
 public:
-    TcpModule() : CodecModule(CD_TCP_NAME, CD_TCP_HELP) { }
+    TcpModule() : BaseCodecModule(CD_TCP_NAME, CD_TCP_HELP) { }
 
     const RuleMap* get_rules() const override
     { return tcp_rules; }

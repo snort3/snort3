@@ -142,6 +142,9 @@ snort::ProfileStats* AppIdModule::get_profile() const
     return nullptr;
 }
 
+void AppIdModule::set_trace(const Trace*) const { }
+const TraceOption* AppIdModule::get_trace_options() const { return nullptr; }
+
 // Stubs for inspectors
 unsigned AppIdSession::inspector_id = 0;
 AppIdConfig stub_config;

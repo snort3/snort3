@@ -51,6 +51,7 @@
 #include "packet_io/trough.h"
 #include "target_based/host_attributes.h"
 #include "time/periodic.h"
+#include "trace/trace_api.h"
 #include "utils/util.h"
 #include "utils/safec.h"
 
@@ -373,6 +374,7 @@ int main_reload_config(lua_State* L)
 
     PluginManager::reload_so_plugins_cleanup(sc);
     SnortConfig::set_conf(sc);
+    TraceApi::thread_reinit(sc);
     proc_stats.conf_reloads++;
 
     bool from_shell = ( L != nullptr );

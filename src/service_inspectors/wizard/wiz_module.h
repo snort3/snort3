@@ -28,9 +28,15 @@
 #define WIZ_NAME "wizard"
 #define WIZ_HELP "inspector that implements port-independent protocol identification"
 
+namespace snort
+{
+class Trace;
+}
+
 extern const PegInfo wiz_pegs[];
 extern THREAD_LOCAL struct WizStats tstats;
 extern THREAD_LOCAL snort::ProfileStats wizPerfStats;
+extern THREAD_LOCAL const snort::Trace* wizard_trace;
 
 class MagicBook;
 class CurseBook;
@@ -55,6 +61,9 @@ public:
     Usage get_usage() const override
     { return INSPECT; }
 
+    void set_trace(const snort::Trace*) const override;
+    const snort::TraceOption* get_trace_options() const override;
+
 private:
     void add_spells(MagicBook*, std::string&);
 
@@ -72,8 +81,6 @@ private:
 
     CurseBook* curses;
 };
-
-extern snort::Trace wizard_trace;
 
 #endif
 

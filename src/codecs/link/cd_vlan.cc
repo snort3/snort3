@@ -41,10 +41,10 @@ static const RuleMap vlan_rules[] =
     { 0, nullptr }
 };
 
-class VlanModule : public CodecModule
+class VlanModule : public BaseCodecModule
 {
 public:
-    VlanModule() : CodecModule(CD_VLAN_NAME, CD_VLAN_HELP) { }
+    VlanModule() : BaseCodecModule(CD_VLAN_NAME, CD_VLAN_HELP) { }
 
     const RuleMap* get_rules() const override
     { return vlan_rules; }

@@ -42,12 +42,6 @@ char* snort_strdup(const char* s)
 time_t packet_time() { return 0; }
 }
 
-Trace::Trace(const char*, const TraceOptionString*, size_t) {}
-Trace::Trace(const char*) {}
-bool Trace::set(const snort::Value&) { return true; }
-void Trace::reset() {}
-void Trace::enable() {}
-
 //  Fake show_stats to avoid bringing in a ton of dependencies.
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }

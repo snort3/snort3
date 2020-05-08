@@ -24,11 +24,12 @@
 #include "user_module.h"
 
 #include "stream_user.h"
+#include "trace/trace.h"
 
 using namespace snort;
 using namespace std;
 
-Trace stream_user_trace(MOD_NAME);
+THREAD_LOCAL const Trace* stream_user_trace = nullptr;
 
 //-------------------------------------------------------------------------
 // stream_user module
@@ -42,8 +43,7 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-StreamUserModule::StreamUserModule() :
-    Module(MOD_NAME, MOD_HELP, s_params, false, &stream_user_trace)
+StreamUserModule::StreamUserModule() : Module(MOD_NAME, MOD_HELP, s_params)
 {
     config = nullptr;
 }
@@ -61,13 +61,19 @@ StreamUserConfig* StreamUserModule::get_data()
     return temp;
 }
 
-bool StreamUserModule::set(const char* fqn, Value& v, SnortConfig* sc)
+void StreamUserModule::set_trace(const Trace* trace) const
+{ stream_user_trace = trace; }
+
+const TraceOption* StreamUserModule::get_trace_options() const
+{
+    static const TraceOption stream_user_trace_options(nullptr, 0, nullptr);
+    return &stream_user_trace_options;
+}
+
+bool StreamUserModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("session_timeout") )
         config->session_timeout = v.get_uint32();
-
-    else
-        return Module::set(fqn, v, sc);
 
     return true;
 }

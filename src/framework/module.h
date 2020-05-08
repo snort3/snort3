@@ -45,7 +45,6 @@
 #include "framework/counts.h"
 #include "framework/parameter.h"
 #include "framework/value.h"
-#include "main/snort_debug.h"
 #include "main/snort_types.h"
 #include "utils/stats.h"
 
@@ -54,8 +53,10 @@ struct lua_State;
 namespace snort
 {
 class ModuleManager;
+class Trace;
 struct ProfileStats;
 struct SnortConfig;
+struct TraceOption;
 
 using LuaCFunction = int(*)(lua_State*);
 
@@ -90,7 +91,13 @@ public:
     virtual bool end(const char*, int, SnortConfig*)
     { return true; }
 
-    virtual bool set(const char*, Value&, SnortConfig*);
+    virtual bool set(const char*, Value&, SnortConfig*)
+    { return true; }
+
+    virtual void set_trace(const Trace*) const { }
+
+    virtual const TraceOption* get_trace_options() const
+    { return nullptr; }
 
     // used to match parameters with $var names like <gid:sid> for rule_state
     virtual bool matches(const char* /*param_name*/, std::string& /*lua_name*/)
@@ -124,9 +131,6 @@ public:
 
     const Parameter* get_parameters() const
     { return params; }
-
-    const Parameter* get_default_parameters() const
-    { return default_params; }
 
     virtual const Command* get_commands() const
     { return nullptr; }
@@ -187,13 +191,12 @@ public:
     virtual Usage get_usage() const
     { return CONTEXT; }
 
-    void enable_trace();
-    void reset_trace();
-
 protected:
     Module(const char* name, const char* help);
-    Module(const char* name, const char* help, const Parameter*,
-        bool is_list = false, Trace* = nullptr, const Parameter* = nullptr);
+    Module(const char* name, const char* help, const Parameter*, bool is_list = false);
+
+    void set_params(const Parameter* p)
+    { params = p; }
 
 private:
     friend ModuleManager;
@@ -206,10 +209,8 @@ private:
     const char* help;
 
     const Parameter* params;
-    const Parameter* default_params = nullptr;
     bool list;
     int table_level = 0;
-    Trace* trace = nullptr;
 
     void set_peg_count(int index, PegCount value)
     {

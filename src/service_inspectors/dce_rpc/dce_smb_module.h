@@ -27,8 +27,11 @@
 
 namespace snort
 {
+class Trace;
 struct SnortConfig;
 }
+
+extern THREAD_LOCAL const snort::Trace* dce_smb_trace;
 
 #define DCE2_VALID_SMB_VERSION_FLAG_V1 1
 #define DCE2_VALID_SMB_VERSION_FLAG_V2 2
@@ -61,8 +64,6 @@ struct dce2SmbProtoConf
     bool legacy_mode;
 };
 
-extern snort::Trace dce_smb_trace;
-
 class Dce2SmbModule : public snort::Module
 {
 public:
@@ -82,6 +83,9 @@ public:
 
     Usage get_usage() const override
     { return INSPECT; }
+
+    void set_trace(const snort::Trace*) const override;
+    const snort::TraceOption* get_trace_options() const override;
 
 private:
     dce2SmbProtoConf config;

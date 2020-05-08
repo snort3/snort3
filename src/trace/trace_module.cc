@@ -26,38 +26,78 @@
 #include <syslog.h>
 
 #include "main/snort_config.h"
+#include "managers/module_manager.h"
 
 #include "trace_config.h"
 #include "trace_log.h"
 
 using namespace snort;
 
-static const Parameter trace_params[] =
+#define trace_help "configure trace log messages"
+#define s_name "trace"
+
+TraceModule::TraceModule() : Module(s_name, trace_help)
 {
-    { "output", Parameter::PT_ENUM, "stdout | syslog", nullptr,
-      "output method for trace log messages" },
+    generate_params();
+}
 
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-#define trace_help \
-    "configure trace log messages"
-
-TraceModule::TraceModule() : Module("trace", trace_help, trace_params, false)
-{ }
-
-TraceModule::~TraceModule()
+void TraceModule::generate_params()
 {
-    delete t_config;
+    auto modules = snort::ModuleManager::get_all_modules();
+    for ( const auto* module : modules )
+    {
+        const TraceOption* trace_options = module->get_trace_options();
+        if ( trace_options && strcmp(module->get_name(), "snort") != 0 )
+        {
+            auto& module_trace_options = configured_trace_options[module->get_name()];
+            std::string module_trace_help(module->get_name());
+            module_trace_help += " module trace options";
+            modules_help.emplace_back(module_trace_help);
+
+            module_ranges.emplace_back();
+            auto& module_range = module_ranges.back();
+
+            module_range.emplace_back(DEFAULT_TRACE_OPTION_NAME, Parameter::PT_INT, "0:255", nullptr,
+                "enable all trace options");
+
+            if ( !trace_options->name )
+                module_trace_options[DEFAULT_TRACE_OPTION_NAME] = false;
+
+            while ( trace_options->name )
+            {
+                module_range.emplace_back(trace_options->name,
+                    Parameter::PT_INT, "0:255", nullptr, trace_options->help);
+
+                module_trace_options[trace_options->name] = false;
+                ++trace_options;
+            }
+
+            module_range.emplace_back(nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr);
+
+            modules_params.emplace_back(module->get_name(), Parameter::PT_TABLE, module_range.data(),
+                nullptr, modules_help.back().c_str());
+        }
+    }
+
+    modules_params.emplace_back(nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr);
+
+    const static Parameter trace_params[] =
+    {
+        { "modules", Parameter::PT_TABLE, modules_params.data(), nullptr, "modules trace option" },
+
+        { "output", Parameter::PT_ENUM, "stdout | syslog", nullptr,
+            "output method for trace log messages" },
+
+        { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+    };
+
+    set_params(trace_params);
 }
 
 bool TraceModule::begin(const char* fqn, int, SnortConfig* sc)
 {
     if ( !strcmp(fqn, "trace") )
     {
-        assert(!t_config);
-        t_config = new TraceConfig();
-
         // Init default output type based on Snort run-mode
         if ( sc->test_mode() )
             log_output_type = OUTPUT_TYPE_NO_INIT;
@@ -65,12 +105,21 @@ bool TraceModule::begin(const char* fqn, int, SnortConfig* sc)
             log_output_type = OUTPUT_TYPE_SYSLOG;
         else
             log_output_type = OUTPUT_TYPE_STDOUT;
+
+        reset_configured_trace_options();
     }
 
     return true;
 }
 
-bool TraceModule::set(const char*, Value& v, SnortConfig* sc)
+void TraceModule::reset_configured_trace_options()
+{
+    for ( auto& module_trace_options : configured_trace_options )
+        for ( auto& trace_options : module_trace_options.second )
+            trace_options.second = false;
+}
+
+bool TraceModule::set(const char* fqn, Value& v, SnortConfig* sc)
 {
     if ( v.is("output") )
     {
@@ -91,6 +140,25 @@ bool TraceModule::set(const char*, Value& v, SnortConfig* sc)
 
         return true;
     }
+    else if ( strstr(fqn, "trace.modules.") == fqn )
+    {
+        std::string module_name = find_module(fqn);
+        if ( strcmp(v.get_name(), DEFAULT_TRACE_OPTION_NAME) == 0 )
+        {
+            const auto& trace_options = configured_trace_options[module_name];
+            for ( const auto& trace_option : trace_options )
+                if ( !trace_option.second )
+                    sc->trace_config->set_trace(module_name, trace_option.first, v.get_uint8());
+
+            return true;
+        }
+        else
+        {
+            bool res = sc->trace_config->set_trace(module_name, v.get_name(), v.get_uint8());
+            configured_trace_options[module_name][v.get_name()] = res;
+            return res;
+        }
+    }
 
     return false;
 }
@@ -102,20 +170,16 @@ bool TraceModule::end(const char* fqn, int, SnortConfig* sc)
         switch ( log_output_type )
         {
             case OUTPUT_TYPE_STDOUT:
-                t_config->logger_factory = new StdoutLoggerFactory();
+                sc->trace_config->logger_factory = new StdoutLoggerFactory();
                 break;
             case OUTPUT_TYPE_SYSLOG:
-                t_config->logger_factory = new SyslogLoggerFactory();
+                sc->trace_config->logger_factory = new SyslogLoggerFactory();
                 break;
             case OUTPUT_TYPE_NO_INIT:
-                t_config->logger_factory = nullptr;
+                sc->trace_config->logger_factory = nullptr;
+            default:
                 break;
         }
-
-        delete sc->trace_config;
-
-        sc->trace_config = t_config;
-        t_config = nullptr;
 
         // "output=syslog" config override case
         // do not closelog() here since it will be closed in Snort::clean_exit()
@@ -128,5 +192,21 @@ bool TraceModule::end(const char* fqn, int, SnortConfig* sc)
     }
 
     return true;
+}
+
+std::string TraceModule::find_module(const char* fqn) const
+{
+    std::string module_name;
+    const std::string config_name(fqn);
+    const std::string pattern = "trace.modules.";
+    size_t start_pos = config_name.find(pattern);
+    if ( start_pos != std::string::npos )
+    {
+        start_pos += pattern.size();
+        size_t end_pos = config_name.find(".", start_pos);
+        if ( end_pos != std::string::npos )
+            module_name = config_name.substr(start_pos, end_pos - start_pos);
+    }
+    return module_name;
 }
 

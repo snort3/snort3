@@ -38,7 +38,6 @@ bool Inspector::get_buf(const char*, Packet*, InspectionBuffer&) { return true; 
 class StreamSplitter* Inspector::get_splitter(bool) { return nullptr; }
 
 Module::Module(char const*, char const*) {}
-bool Module::set(const char*, Value&, SnortConfig*) { return true; }
 void Module::sum_stats(bool) {}
 void Module::show_interval_stats(std::vector<unsigned int, std::allocator<unsigned int> >&, FILE*) {}
 void Module::show_stats() {}
@@ -58,6 +57,8 @@ const snort::Command* AppIdModule::get_commands() const { return nullptr; }
 const PegInfo* AppIdModule::get_pegs() const { return nullptr; }
 PegCount* AppIdModule::get_counts() const { return nullptr; }
 snort::ProfileStats* AppIdModule::get_profile() const { return nullptr; }
+void AppIdModule::set_trace(const Trace*) const { }
+const TraceOption* AppIdModule::get_trace_options() const { return nullptr; }
 
 AppIdInspector::AppIdInspector(AppIdModule& ) { }
 AppIdInspector::~AppIdInspector() { }

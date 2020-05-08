@@ -23,19 +23,12 @@
 
 #include "module.h"
 
+#include "trace/trace.h"
+
 using namespace snort;
 
-static const Parameter default_trace[] =
+static const Parameter null_params[] =
 {
-    { "all", Parameter::PT_INT, "0:255", "0", "enable traces in module" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-static const Parameter default_trace_params[] =
-{
-    { "trace", Parameter::PT_TABLE, default_trace, nullptr, "trace config" },
-
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -55,53 +48,23 @@ std::string Command::get_arg_list() const
     return args;
 }
 
-void Module::reset_trace()
-{
-    if ( trace )
-        trace->reset();
-}
-
 void Module::init(const char* s, const char* h)
 {
     name = s;
     help = h;
-    params = &default_trace_params[(sizeof(default_trace_params) / sizeof(Parameter)) - 1];
-    default_params = params;
     list = false;
     num_counts = -1;
+    params = null_params;
 }
 
 Module::Module(const char* s, const char* h)
 { init(s, h); }
 
-Module::Module(const char* s, const char* h, const Parameter* p, bool is_list, Trace* t,
-    const Parameter* module_trace_param)
+Module::Module(const char* s, const char* h, const Parameter* p, bool is_list)
 {
     init(s, h);
     list = is_list;
-    trace = t;
     params = p;
-
-    // FIXIT-L: This will not be valid after adding more default options
-    if ( t )
-    {
-        if ( module_trace_param )
-        {
-            default_params = module_trace_param;
-        }
-        else
-        {
-            default_params = default_trace_params;
-        }
-    }
-}
-
-bool Module::set(const char* fqn, Value& v, SnortConfig*)
-{
-    if ( strstr(fqn, ".trace.") )
-        return trace and trace->set(v);
-
-    return false;
 }
 
 void Module::sum_stats(bool accumulate_now_stats)
@@ -212,12 +175,6 @@ bool Module::verified_end(const char* fqn, int idx, SnortConfig* c)
 {
     table_level--;
     return end(fqn, idx, c);
-}
-
-void Module::enable_trace()
-{
-    if ( trace )
-        trace->enable();
 }
 
 namespace snort

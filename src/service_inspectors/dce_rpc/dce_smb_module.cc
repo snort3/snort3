@@ -26,6 +26,7 @@
 
 #include "log/messages.h"
 #include "main/snort_config.h"
+#include "trace/trace.h"
 #include "utils/util.h"
 
 #include "dce_smb.h"
@@ -33,7 +34,7 @@
 using namespace snort;
 using namespace std;
 
-Trace dce_smb_trace(DCE2_SMB_NAME);
+THREAD_LOCAL const Trace* dce_smb_trace = nullptr;
 
 static const PegInfo dce2_smb_pegs[] =
 {
@@ -213,7 +214,7 @@ static std::string get_shares(DCE2_List* shares)
     return cmds;
 }
 
-Dce2SmbModule::Dce2SmbModule() : Module(DCE2_SMB_NAME, DCE2_SMB_HELP, s_params, false, &dce_smb_trace)
+Dce2SmbModule::Dce2SmbModule() : Module(DCE2_SMB_NAME, DCE2_SMB_HELP, s_params)
 {
     memset(&config, 0, sizeof(config));
 }
@@ -224,6 +225,15 @@ Dce2SmbModule::~Dce2SmbModule()
     {
         DCE2_ListDestroy(config.smb_invalid_shares);
     }
+}
+
+void Dce2SmbModule::set_trace(const Trace* trace) const
+{ dce_smb_trace = trace; }
+
+const TraceOption* Dce2SmbModule::get_trace_options() const
+{
+    static const TraceOption dce_smb_trace_options(nullptr, 0, nullptr);
+    return &dce_smb_trace_options;
 }
 
 const RuleMap* Dce2SmbModule::get_rules() const
@@ -376,7 +386,7 @@ static bool set_smb_invalid_shares(dce2SmbProtoConf& config, Value& v)
     return(true);
 }
 
-bool Dce2SmbModule::set(const char* fqn, Value& v, SnortConfig* c)
+bool Dce2SmbModule::set(const char*, Value& v, SnortConfig*)
 {
     if (dce2_set_co_config(v,config.common))
         return true;
@@ -404,9 +414,6 @@ bool Dce2SmbModule::set(const char* fqn, Value& v, SnortConfig* c)
 
     else if ( v.is("smb_legacy_mode"))
         config.legacy_mode = v.get_bool();
-
-    else
-        return Module::set(fqn, v, c);
 
     return true;
 }

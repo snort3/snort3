@@ -27,18 +27,19 @@
 #include "flow/flow_control.h"
 #include "framework/module.h"
 
-extern THREAD_LOCAL snort::ProfileStats s5PerfStats;
-extern THREAD_LOCAL class FlowControl* flow_con;
-
 namespace snort
 {
+class Trace;
 struct SnortConfig;
 }
+
+extern THREAD_LOCAL snort::ProfileStats s5PerfStats;
+extern THREAD_LOCAL class FlowControl* flow_con;
+extern THREAD_LOCAL const snort::Trace* stream_trace;
 
 //-------------------------------------------------------------------------
 // stream module
 //-------------------------------------------------------------------------
-extern snort::Trace stream_trace;
 
 #define MOD_NAME "stream"
 #define MOD_HELP "common flow tracking"
@@ -127,6 +128,9 @@ public:
 
     Usage get_usage() const override
     { return GLOBAL; }
+
+    void set_trace(const snort::Trace*) const override;
+    const snort::TraceOption* get_trace_options() const override;
 
 private:
     StreamModuleConfig config;

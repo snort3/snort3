@@ -46,7 +46,6 @@
 #include "latency/rule_latency_state.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
-#include "main/snort_debug.h"
 #include "main/thread_config.h"
 #include "managers/ips_manager.h"
 #include "parser/parser.h"
@@ -562,7 +561,7 @@ int detection_option_node_evaluate(
             GetVarValueByIndex(&(tmp_byte_extract_vars[i]), (int8_t)i);
         }
 #ifdef DEBUG_MSGS
-        if ( detection_trace.enabled(TRACE_RULE_VARS) )
+        if ( trace_enabled(detection_trace, TRACE_RULE_VARS) )
         {
             char var_buf[100];
             std::string rule_vars;

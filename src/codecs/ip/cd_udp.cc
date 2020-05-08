@@ -137,10 +137,10 @@ private:
     bool vxlan_decode = true;
 };
 
-class UdpModule : public CodecModule
+class UdpModule : public BaseCodecModule
 {
 public:
-    UdpModule() : CodecModule(CD_UDP_NAME, CD_UDP_HELP, udp_params)
+    UdpModule() : BaseCodecModule(CD_UDP_NAME, CD_UDP_HELP, udp_params)
     {
         config = nullptr;
     }
@@ -172,6 +172,7 @@ public:
         config = nullptr;
         return tmp;
     }
+    
 private:
     UdpCodecConfig* config;
 };

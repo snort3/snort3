@@ -31,9 +31,13 @@
 #include "appid_config.h"
 #include "appid_pegs.h"
 
-extern THREAD_LOCAL snort::ProfileStats appid_perf_stats;
+namespace snort
+{
+class Trace;
+}
 
-extern snort::Trace appid_module_trace;
+extern THREAD_LOCAL snort::ProfileStats appid_perf_stats;
+extern THREAD_LOCAL const snort::Trace* appid_trace;
 
 #define MOD_NAME "appid"
 #define MOD_HELP "application and service identification"
@@ -85,6 +89,9 @@ public:
     { return CONTEXT; }
     void sum_stats(bool) override;
     void show_dynamic_stats() override;
+
+    void set_trace(const snort::Trace*) const override;
+    const snort::TraceOption* get_trace_options() const override;
 
 private:
     AppIdConfig* config;

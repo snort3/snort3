@@ -81,10 +81,10 @@ static const RuleMap icmp6_rules[] =
     { 0, nullptr }
 };
 
-class Icmp6Module : public CodecModule
+class Icmp6Module : public BaseCodecModule
 {
 public:
-    Icmp6Module() : CodecModule(CD_ICMP6_NAME, CD_ICMP6_HELP) { }
+    Icmp6Module() : BaseCodecModule(CD_ICMP6_NAME, CD_ICMP6_HELP) { }
 
     const RuleMap* get_rules() const override
     { return icmp6_rules; }

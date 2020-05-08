@@ -28,6 +28,7 @@
 #include "detection/detection_util.h"
 #include "file_api/file_flows.h"
 #include "file_api/file_service.h"
+#include "main/snort_debug.h"
 #include "utils/util.h"
 
 #include "dce_smb_module.h"

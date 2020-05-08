@@ -38,6 +38,9 @@ public:
 
     Usage get_usage() const override
     { return CONTEXT; }
+
+    void set_trace(const snort::Trace*) const override;
+    const snort::TraceOption* get_trace_options() const override;
 };
 
 #endif

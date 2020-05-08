@@ -40,10 +40,10 @@ static const RuleMap pgm_rules[] =
     { 0, nullptr }
 };
 
-class PgmModule : public CodecModule
+class PgmModule : public BaseCodecModule
 {
 public:
-    PgmModule() : CodecModule(CD_PGM_NAME, CD_PGM_HELP) { }
+    PgmModule() : BaseCodecModule(CD_PGM_NAME, CD_PGM_HELP) { }
 
     const RuleMap* get_rules() const override
     { return pgm_rules; }

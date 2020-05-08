@@ -21,56 +21,70 @@
 #define TRACE_H
 
 #include <cassert>
+#include <map>
 #include <vector>
 
-#include "framework/value.h"
-#include "main/snort_types.h"
+#include "main/thread.h"
 
-#define DEFAULT_TRACE_OPTION 0
-#define DEFAULT_LOG_LEVEL 1
-
-typedef uint8_t TraceOption;
-typedef uint8_t TraceLevel;
-
-
-struct TraceOptionString
-{
-    const char* alias;
-    TraceOption option;
-};
+#define DEFAULT_TRACE_LOG_LEVEL 1
+#define DEFAULT_TRACE_OPTION_ID 0
+#define DEFAULT_TRACE_OPTION_NAME "all"
 
 namespace snort
 {
-struct SO_PUBLIC Trace
-{
-    Trace(const char*, const TraceOptionString*, size_t);
-    Trace(const char*);
-    ~Trace() = default;
+class Trace;
+}
 
-    bool set(const snort::Value&);
-    void reset();
-    void enable();
+using TraceOptionID = uint8_t;
+using TraceLevel = uint8_t;
+using Traces = std::vector<snort::Trace>;
+using ConfigTraceOptions = std::map<std::string, bool>;
+using ModulesConfigTraceOptions = std::map<std::string, ConfigTraceOptions>;
+
+namespace snort
+{
+class Module;
+
+struct TraceOption
+{
+    TraceOption(const char* n, TraceOptionID tid, const char* h) :
+        name(n), id(tid), help(h) {}
+
+    const char* name;
+    TraceOptionID id;
+    const char* help;
+};
+
+class Trace
+{
+public:
+    Trace(const Module& m);
+
+    bool set(const std::string& option_name, uint8_t option_level);
+    void set_module_trace() const;
 
     const char* module_name() const
-    { return mod_name; }
+    { return mod_name.c_str(); }
 
     const char* option_name(size_t index) const
     {
         assert(index < option_levels.size());
-        return options[index].alias;
+        return options[index].name;
     }
 
-    bool enabled(TraceOption trace_option, TraceLevel log_level = DEFAULT_LOG_LEVEL) const
+    bool enabled(TraceOptionID trace_option_id, TraceLevel log_level = DEFAULT_TRACE_LOG_LEVEL) const
     {
-        assert(trace_option < option_levels.size());
-        return option_levels[trace_option] >= log_level;
+        assert(trace_option_id < option_levels.size());
+        return option_levels[trace_option_id] >= log_level;
     }
 
-    const TraceOptionString* options;
+private:
+    std::string mod_name;
+    const TraceOption* options;
+    const Module& module;
     std::vector<TraceLevel> option_levels;
-    std::vector<bool> config_options;
-    const char* mod_name;
 };
 }
 
 #endif
+

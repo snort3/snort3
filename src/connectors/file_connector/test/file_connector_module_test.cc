@@ -26,8 +26,6 @@
 #include "connectors/file_connector/file_connector_module.h"
 #include "profiler/profiler.h"
 
-#include "main/snort_debug.h"
-
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
@@ -44,12 +42,6 @@ namespace snort
 char* snort_strdup(const char* s)
 { return strdup(s); }
 }
-
-Trace::Trace(const char*, const TraceOptionString*, size_t) {}
-Trace::Trace(const char*) {}
-bool Trace::set(const snort::Value&) { return true; }
-void Trace::reset() {}
-void Trace::enable() {}
 
 TEST_GROUP(file_connector_module)
 {

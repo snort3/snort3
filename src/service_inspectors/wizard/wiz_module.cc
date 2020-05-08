@@ -24,13 +24,15 @@
 
 #include "wiz_module.h"
 
+#include "trace/trace.h"
+
 #include "curses.h"
 #include "magic.h"
 
 using namespace snort;
 using namespace std;
 
-Trace wizard_trace(WIZ_NAME);
+THREAD_LOCAL const Trace* wizard_trace = nullptr;
 
 //-------------------------------------------------------------------------
 // wizard module
@@ -106,7 +108,7 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-WizardModule::WizardModule() : Module(WIZ_NAME, WIZ_HELP, s_params, false, &wizard_trace)
+WizardModule::WizardModule() : Module(WIZ_NAME, WIZ_HELP, s_params)
 {
     c2s_hexes = nullptr;
     s2c_hexes = nullptr;
@@ -126,10 +128,19 @@ WizardModule::~WizardModule()
     delete curses;
 }
 
+void WizardModule::set_trace(const Trace* trace) const
+{ wizard_trace = trace; }
+
+const TraceOption* WizardModule::get_trace_options() const
+{
+    static const TraceOption wizard_trace_options(nullptr, 0, nullptr);
+    return &wizard_trace_options;
+}
+
 ProfileStats* WizardModule::get_profile() const
 { return &wizPerfStats; }
 
-bool WizardModule::set(const char* fqn, Value& v, SnortConfig* sc)
+bool WizardModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("service") )
         service = v.get_string();
@@ -149,9 +160,6 @@ bool WizardModule::set(const char* fqn, Value& v, SnortConfig* sc)
 
     else if ( v.is("curses") )
         curses->add_curse(v.get_string());
-
-    else
-        return Module::set(fqn, v, sc);
 
     return true;
 }

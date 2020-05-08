@@ -25,7 +25,6 @@
 #include "detect_trace.h"
 
 #include "log/log.h"
-#include "main/snort_debug.h"
 #include "main/thread.h"
 #include "protocols/packet.h"
 #include "utils/stats.h"
@@ -96,7 +95,7 @@ void print_pattern(const PatternMatchData* pmd)
 
 void dump_buffer(const uint8_t* buff, unsigned len, Packet* p)
 {
-    if ( !detection_trace.enabled(TRACE_BUFFER) )
+    if ( !trace_enabled(detection_trace, TRACE_BUFFER) )
         return;
 
     if (len == 0)
@@ -125,10 +124,10 @@ void node_eval_trace(const detection_option_tree_node_t* node, const Cursor& cur
             "Reached leaf, cursor name %s, cursor position %u\n", name, pos);
     }
 
-    if ( !detection_trace.enabled(TRACE_BUFFER) )
+    if ( !trace_enabled(detection_trace, TRACE_BUFFER) )
         return;
 
-    if ( detection_trace.enabled(TRACE_BUFFER, 5) )
+    if ( trace_enabled(detection_trace, TRACE_BUFFER, 5) )
 		dump_buffer(cursor.buffer() + pos, cursor.length(), p);
     else if ((pos != cursor_pos) || strcmp(cursor_name, name))
     {

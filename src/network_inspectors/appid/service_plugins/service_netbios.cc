@@ -77,8 +77,6 @@ enum NBSSState
 #define NBDGM_ERROR_CODE_MIN    0x82
 #define NBDGM_ERROR_CODE_MAX    0x84
 
-#define min(x,y) ((x)<(y) ? (x) : (y))
-
 #define FINGERPRINT_UDP_FLAGS_XENIX 0x00000800
 #define FINGERPRINT_UDP_FLAGS_NT    0x00001000
 #define FINGERPRINT_UDP_FLAGS_MASK  (FINGERPRINT_UDP_FLAGS_XENIX | FINGERPRINT_UDP_FLAGS_NT)
@@ -862,7 +860,7 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
                 }
                 else if (tmp >= 4 && nd->length >= 4 &&
                     !(*((const uint32_t*)data)) &&
-                    dcerpc_validate(data+4, ((int)min(tmp, nd->length)) - 4) > 0)
+                    dcerpc_validate(data+4, ((int)std::min(tmp, nd->length)) - 4) > 0)
                 {
                     nd->serviceAppId = APP_ID_DCE_RPC;
                     nd->miscAppId = APP_ID_NETBIOS_SSN;
@@ -924,7 +922,7 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
                 }
                 else if (tmp >= 4 && nd->length >= 4 &&
                     !(*((const uint32_t*)data)) &&
-                    !(dcerpc_validate(data+4, ((int)min(tmp, nd->length)) - 4) > 0))
+                    !(dcerpc_validate(data+4, ((int)std::min(tmp, nd->length)) - 4) > 0))
                 {
                     nd->serviceAppId = APP_ID_DCE_RPC;
                     nd->miscAppId = APP_ID_NETBIOS_SSN;

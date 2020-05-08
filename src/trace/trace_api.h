@@ -15,10 +15,10 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// trace_log_api.h author Oleksandr Serhiienko <oserhiie@cisco.com>
+// trace_api.h author Oleksandr Serhiienko <oserhiie@cisco.com>
 
-#ifndef TRACE_LOG_API_H
-#define TRACE_LOG_API_H
+#ifndef TRACE_API_H
+#define TRACE_API_H
 
 #include <cstdint>
 
@@ -26,10 +26,11 @@ namespace snort
 {
 struct SnortConfig;
 
-class TraceLogApi
+class TraceApi
 {
 public:
     static void thread_init(SnortConfig* sc);
+    static void thread_reinit(SnortConfig* sc);
     static void thread_term();
 
     static void log(const char* log_msg, const char* name,
@@ -37,5 +38,5 @@ public:
 };
 }
 
-#endif // TRACE_LOG_API_H
+#endif // TRACE_API_H
 

@@ -25,13 +25,14 @@
 #include "dce_udp_module.h"
 
 #include "log/messages.h"
+#include "trace/trace.h"
 
 #include "dce_udp.h"
 
 using namespace snort;
 using namespace std;
 
-Trace dce_udp_trace(DCE2_UDP_NAME);
+THREAD_LOCAL const Trace* dce_udp_trace = nullptr;
 
 static const Parameter s_params[] =
 {
@@ -84,8 +85,16 @@ static const PegInfo dce2_udp_pegs[] =
     { CountType::END, nullptr, nullptr }
 };
 
-Dce2UdpModule::Dce2UdpModule() : Module(DCE2_UDP_NAME, DCE2_UDP_HELP, s_params, false, &dce_udp_trace)
+Dce2UdpModule::Dce2UdpModule() : Module(DCE2_UDP_NAME, DCE2_UDP_HELP, s_params)
+{ }
+
+void Dce2UdpModule::set_trace(const Trace* trace) const
+{ dce_udp_trace = trace; }
+
+const TraceOption* Dce2UdpModule::get_trace_options() const
 {
+    static const TraceOption dce_udp_trace_options(nullptr, 0, nullptr);
+    return &dce_udp_trace_options;
 }
 
 const RuleMap* Dce2UdpModule::get_rules() const
@@ -108,12 +117,9 @@ ProfileStats* Dce2UdpModule::get_profile() const
     return &dce2_udp_pstat_main;
 }
 
-bool Dce2UdpModule::set(const char* fqn, Value& v, SnortConfig* c)
+bool Dce2UdpModule::set(const char*, Value& v, SnortConfig*)
 {
-    if (dce2_set_common_config(v,config.common))
-        return true;
-    else
-        return Module::set(fqn, v, c);
+    return dce2_set_common_config(v,config.common);
 }
 
 void Dce2UdpModule::get_data(dce2UdpProtoConf& dce2_udp_config)

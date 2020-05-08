@@ -38,6 +38,7 @@
 #include "parser/parser.h"
 #include "parser/parse_utils.h"
 #include "parser/vars.h"
+#include "trace/trace_config.h"
 
 #ifdef UNIT_TEST
 #include "catch/unit_test.h"
@@ -606,12 +607,12 @@ static const Parameter s_params[] =
     "command line configuration"
 #endif
 
-Trace snort_trace(s_name);
+THREAD_LOCAL const Trace* snort_trace = nullptr;
 
 class SnortModule : public Module
 {
 public:
-    SnortModule() : Module(s_name, s_help, s_params, false, &snort_trace)
+    SnortModule() : Module(s_name, s_help, s_params)
     { }
 
 #ifdef SHELL
@@ -640,9 +641,21 @@ public:
     Usage get_usage() const override
     { return GLOBAL; }
 
+    void set_trace(const Trace*) const override;
+    const TraceOption* get_trace_options() const override;
+
 private:
     SFDAQModuleConfig* module_config;
 };
+
+void SnortModule::set_trace(const Trace* trace) const
+{ snort_trace = trace; }
+
+const TraceOption* SnortModule::get_trace_options() const
+{
+    static const TraceOption snort_trace_options(nullptr, 0, nullptr);
+    return &snort_trace_options;
+}
 
 bool SnortModule::begin(const char* fqn, int, SnortConfig*)
 {
@@ -1084,7 +1097,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         x2s(v.get_string());
 
     else if (v.is("--trace"))
-        Module::enable_trace();
+        sc->trace_config->enable_trace_snort();
 
     return true;
 }

@@ -23,6 +23,7 @@
 
 #include "flow/flow.h"
 #include "log/messages.h"
+#include "main/snort_debug.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "stream/stream_splitter.h"

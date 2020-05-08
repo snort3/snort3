@@ -26,7 +26,7 @@
 
 #include <cstring>
 
-#include "trace/trace_log_api.h"
+#include "trace/trace_api.h"
 #include "utils/safec.h"
 
 #define STD_BUF_SIZE 1024
@@ -46,7 +46,7 @@ void trace_vprintf(const char* name, TraceLevel log_level,
 void trace_vprintf(const char* name, TraceLevel log_level,
     const char* trace_option, const char* fmt, va_list ap)
 {
-    trace_vprintf<TraceLogApi::log>(name, log_level, trace_option, fmt, ap);
+    trace_vprintf<TraceApi::log>(name, log_level, trace_option, fmt, ap);
 }
 }
 
@@ -54,6 +54,8 @@ void trace_vprintf(const char* name, TraceLevel log_level,
 #include <catch/snort_catch.h>
 
 #ifdef DEBUG_MSGS
+
+#include "framework/module.h"
 
 using namespace snort;
 
@@ -83,20 +85,20 @@ TEST_CASE("macros", "[trace]")
     TestCase cases[] =
     {
         {
-            sx(debug_log(1, testing, "my message")),
-            "trace_print<snort::trace_vprintf>(1, testing, \"my message\")"
+            sx(debug_log(1, test_trace, "my message")),
+            "trace_print<snort::trace_vprintf>(1, test_trace, \"my message\")"
         },
         {
-            sx(debug_log(testing, my_flags, "my message")),
-            "trace_print<snort::trace_vprintf>(testing, my_flags, \"my message\")"
+            sx(debug_log(test_trace, my_flags, "my message")),
+            "trace_print<snort::trace_vprintf>(test_trace, my_flags, \"my message\")"
         },
         {
-            sx(debug_logf(1, testing, "%s %s", "my", "message")),
-            "trace_printf<snort::trace_vprintf>(1, testing, \"%s %s\", \"my\", \"message\")"
+            sx(debug_logf(1, test_trace, "%s %s", "my", "message")),
+            "trace_printf<snort::trace_vprintf>(1, test_trace, \"%s %s\", \"my\", \"message\")"
         },
         {
-            sx(debug_logf(testing, my_flags, "%s %s", "my", "message")),
-            "trace_printf<snort::trace_vprintf>(testing, my_flags, \"%s %s\", \"my\", \"message\")"
+            sx(debug_logf(test_trace, my_flags, "%s %s", "my", "message")),
+            "trace_printf<snort::trace_vprintf>(test_trace, my_flags, \"%s %s\", \"my\", \"message\")"
         }
     };
 
@@ -110,214 +112,138 @@ TEST_CASE("macros", "[trace]")
 #undef trace_printf
 
 //These templates expand to replace the default expansion of trace_vprintf.
-//This custom expansion replaces log_func (expands to TraceLogApi::log())
+//This custom expansion replaces log_func (expands to TraceApi::log())
 //with test_log for capturing what would be passed to the console.
 #define trace_print trace_print<trace_vprintf<test_log>>
 #define trace_printf trace_printf<trace_vprintf<test_log>>
 
-enum
+class TraceTestModule : public Module
 {
-    TEST_TRACE_OPTION1 = 0,
-    TEST_TRACE_OPTION2,
-    TEST_TRACE_OPTION3,
-    TEST_TRACE_OPTION4,
-    TEST_TRACE_OPTION5,
+public:
+    TraceTestModule(const char* name, const TraceOption* trace_options) :
+        Module(name, "trace_test_help"), test_trace_options(trace_options)
+    { }
+
+    virtual const TraceOption* get_trace_options() const
+    { return test_trace_options; }
+
+private:
+    const TraceOption* test_trace_options;
 };
 
-const TraceOptionString test_trace_values[] =
+TEST_CASE("debug_log, debug_logf", "[trace]")
 {
-    { "option1", TEST_TRACE_OPTION1 },
-    { "option2", TEST_TRACE_OPTION2 },
-    { "option3", TEST_TRACE_OPTION3 },
-    { "option4", TEST_TRACE_OPTION4 },
-    { "option5", TEST_TRACE_OPTION5 },
-};
-
-TEST_CASE("Trace logging", "[trace]")
-{
-    SECTION("trace all=0")
+    enum
     {
-        Trace test("test");
+        TEST_TRACE_OPTION1 = 0,
+        TEST_TRACE_OPTION2,
+        TEST_TRACE_OPTION3,
+        TEST_TRACE_OPTION4,
+        TEST_TRACE_OPTION5,
+    };
 
-        Parameter p("all", Parameter::PT_INT, "0:255", "0", "enable traces in module");
-        Value trace_val((double)0);
-        trace_val.set(&p);
-
-        test.set(trace_val);
-
-        testing_dump[0] = '\0';
-        debug_log(test, "my message");
-        CHECK( testing_dump[0] == '\0' );
-    }
-    SECTION("debug_log")
+    const TraceOption test_trace_values[] =
     {
-        Trace test("test");
+        { "option1", TEST_TRACE_OPTION1, "help_option1" },
+        { "option2", TEST_TRACE_OPTION2, "help_option2" },
+        { "option3", TEST_TRACE_OPTION3, "help_option3" },
+        { "option4", TEST_TRACE_OPTION4, "help_option4" },
+        { "option5", TEST_TRACE_OPTION5, "help_option5" },
 
-        Parameter p("all", Parameter::PT_INT, "0:255", "0", "enable traces in module");
-        Value trace_val((double)1);
-        trace_val.set(&p);
+        { nullptr, 0, nullptr },
+    };
 
-        test.set(trace_val);
+    TraceOption test_trace_options(nullptr, 0, nullptr);
+    TraceTestModule trace_test_module("test_module", &test_trace_options);
+    Trace test_trace(trace_test_module);
 
-        testing_dump[0] = '\0';
-        debug_log(test, "my message");
-        CHECK( !strcmp(testing_dump, "test:all:1: my message") );
+    TraceTestModule trace_test_module_opt("test_opt_module", test_trace_values);
+    Trace test_opt_trace(trace_test_module_opt);
 
-        Parameter p_all("all", Parameter::PT_INT, "0:255", "0", "p_all");
-        Parameter p1("option1", Parameter::PT_INT, "0:255", "0", "p1");
-        Parameter p2("option3", Parameter::PT_INT, "0:255", "0", "p2");
-        Value trace_val1("trace");
+    test_trace.set("all", 0);
 
-        Trace testing_opt("testing_opt", test_trace_values,
-            (sizeof(test_trace_values) / sizeof(TraceOptionString)));
+    testing_dump[0] = '\0';
+    debug_log(&test_trace, "my message");
+    CHECK( testing_dump[0] == '\0' );
 
-        // set log_level = 1 for TEST_TRACE_OPTION1
-        trace_val1.set(&p1);
-        trace_val1.set_enum(1);
-        testing_opt.set(trace_val1);
+    test_trace.set("all", 1);
+    test_opt_trace.set("option1", 1);
+    test_opt_trace.set("option2", 2);
+    test_opt_trace.set("option3", 3);
+    test_opt_trace.set("option4", 2);
+    test_opt_trace.set("option5", 2);
 
-        // set log_level = 5 for TEST_TRACE_OPTION3
-        trace_val1.set(&p2);
-        trace_val1.set_enum(5);
-        testing_opt.set(trace_val1);
+    char message[STD_BUF_SIZE + 1];
+    for( int i = 0; i < STD_BUF_SIZE; i++ )
+        message[i] = 'A';
+    message[STD_BUF_SIZE] = '\0';
 
-        // set log_level = 2 for TEST_TRACE_OPTION2, TEST_TRACE_OPTION4, TEST_TRACE_OPTION5
-        trace_val1.set(&p_all);
-        trace_val1.set_enum(2);
-        testing_opt.set(trace_val1);
+    testing_dump[0] = '\0';
+    debug_log(&test_trace, message);
+    CHECK( (strlen(testing_dump) == STD_BUF_SIZE - 1) );
 
-        testing_dump[0] = '\0';
-        debug_log(testing_opt, TEST_TRACE_OPTION1, "my other masked message");
-        CHECK( !strcmp(testing_dump, "testing_opt:option1:1: my other masked message") );
+    testing_dump[0] = '\0';
+    debug_log(3, &test_opt_trace, TEST_TRACE_OPTION3, message);
+    CHECK( (strlen(testing_dump) == STD_BUF_SIZE - 1) );
 
-        testing_dump[0] = '\0';
-        debug_log(3, testing_opt, TEST_TRACE_OPTION2, "log option2 message");
-        CHECK( testing_dump[0] == '\0' );
+    testing_dump[0] = '\0';
+    debug_log(6, &test_opt_trace, TEST_TRACE_OPTION3, message);
+    CHECK( (strlen(testing_dump) == 0) );
 
-        testing_dump[0] = '\0';
-        debug_log(testing_opt, TEST_TRACE_OPTION2, "log option2 message");
-        CHECK( !strcmp(testing_dump, "testing_opt:option2:1: log option2 message") );
+    testing_dump[0] = '\0';
+    debug_log(&test_trace, "my message"); 
+    CHECK( !strcmp(testing_dump, "test_module:all:1: my message") );
 
-        testing_dump[0] = '\0';
-        debug_log(6, testing_opt, TEST_TRACE_OPTION3, "log option3 message");
-        CHECK( testing_dump[0] == '\0' );
+    testing_dump[0] = '\0';
+    debug_logf(&test_trace, "%s %s", "my", "message");
+    CHECK( !strcmp(testing_dump, "test_module:all:1: my message") );
 
-        testing_dump[0] = '\0';
-        debug_log(3, testing_opt, TEST_TRACE_OPTION3, "log option3 message");
-        CHECK( !strcmp(testing_dump, "testing_opt:option3:3: log option3 message") );
+    testing_dump[0] = '\0';
+    debug_log(&test_opt_trace, TEST_TRACE_OPTION1, "log option1 message");
+    CHECK( !strcmp(testing_dump, "test_opt_module:option1:1: log option1 message") );
 
-        testing_dump[0] = '\0';
-        debug_log(2, testing_opt, TEST_TRACE_OPTION4, "log option4 message");
-        CHECK( !strcmp(testing_dump, "testing_opt:option4:2: log option4 message") );
+    testing_dump[0] = '\0';
+    debug_logf(&test_opt_trace, TEST_TRACE_OPTION1, "%s %s %s", "log", "option1", "message");
+    CHECK( !strcmp(testing_dump, "test_opt_module:option1:1: log option1 message") );
 
-        testing_dump[0] = '\0';
-        debug_log(4, testing_opt, TEST_TRACE_OPTION5, "log option5 message");
-        CHECK( testing_dump[0] == '\0' );
-    }
-    SECTION("debug_logf")
-    {
-        Trace test("test");
+    testing_dump[0] = '\0';
+    debug_log(3, &test_opt_trace, TEST_TRACE_OPTION2, "log option2 message");
+    CHECK( testing_dump[0] == '\0' );
 
-        Parameter p("all", Parameter::PT_INT, "0:255", "0", "enable traces in module");
-        Value trace_val((double)1);
-        trace_val.set(&p);
-        test.set(trace_val);
+    testing_dump[0] = '\0';
+    debug_log(&test_opt_trace, TEST_TRACE_OPTION2, "log option2 message");
+    CHECK( !strcmp(testing_dump, "test_opt_module:option2:1: log option2 message") );
 
-        testing_dump[0] = '\0';
-        debug_logf(test, "%s %s", "my", "message");
-        CHECK( !strcmp(testing_dump, "test:all:1: my message") );
+    testing_dump[0] = '\0';
+    debug_logf(&test_opt_trace, TEST_TRACE_OPTION2, "%s %s %s", "log", "option2", "message");
+    CHECK( !strcmp(testing_dump, "test_opt_module:option2:1: log option2 message") );
 
-        Parameter p_all("all", Parameter::PT_INT, "0:255", "0", "p_all");
-        Parameter p1("option1", Parameter::PT_INT, "0:255", "0", "p1");
-        Parameter p2("option3", Parameter::PT_INT, "0:255", "0", "p2");
-        Value trace_val1("trace");
+    testing_dump[0] = '\0';
+    debug_log(6, &test_opt_trace, TEST_TRACE_OPTION3, "log option3 message");
+    CHECK( testing_dump[0] == '\0' );
 
-        Trace testing_opt("testing_opt", test_trace_values,
-            (sizeof(test_trace_values) / sizeof(TraceOptionString)));
+    testing_dump[0] = '\0';
+    debug_log(3, &test_opt_trace, TEST_TRACE_OPTION3, "log option3 message");
+    CHECK( !strcmp(testing_dump, "test_opt_module:option3:3: log option3 message") );
 
-        // set log_level = 1 for TEST_TRACE_OPTION1
-        trace_val1.set(&p1);
-        trace_val1.set_enum(1);
-        testing_opt.set(trace_val1);
+    testing_dump[0] = '\0';
+    debug_logf(3, &test_opt_trace, TEST_TRACE_OPTION3, "%s %s %s", "log", "option3", "message");
+    CHECK( !strcmp(testing_dump, "test_opt_module:option3:3: log option3 message") );
+    
+    testing_dump[0] = '\0';
+    debug_log(2, &test_opt_trace, TEST_TRACE_OPTION4, "log option4 message");
+    CHECK( !strcmp(testing_dump, "test_opt_module:option4:2: log option4 message") );
 
-        // set log_level = 5 for TEST_TRACE_OPTION3
-        trace_val1.set(&p2);
-        trace_val1.set_enum(5);
-        testing_opt.set(trace_val1);
+    testing_dump[0] = '\0';
+    debug_logf(2, &test_opt_trace, TEST_TRACE_OPTION4, "%s %s %s", "log", "option4", "message");
+    CHECK( !strcmp(testing_dump, "test_opt_module:option4:2: log option4 message") );
 
-        // set log_level = 3 for TEST_TRACE_OPTION2, TEST_TRACE_OPTION4, TEST_TRACE_OPTION5
-        trace_val1.set(&p_all);
-        trace_val1.set_enum(3);
-        testing_opt.set(trace_val1);
-
-        testing_dump[0] = '\0';
-        debug_logf(testing_opt, TEST_TRACE_OPTION1, "%s %s %s", "log", "option1", "message");
-        CHECK( !strcmp(testing_dump, "testing_opt:option1:1: log option1 message") );
-
-        testing_dump[0] = '\0';
-        debug_logf(testing_opt, TEST_TRACE_OPTION2, "%s %s %s", "log", "option2", "message");
-        CHECK( !strcmp(testing_dump, "testing_opt:option2:1: log option2 message") );
-
-        testing_dump[0] = '\0';
-        debug_logf(4, testing_opt, TEST_TRACE_OPTION2, "%s %s %s", "log", "option2", "message");
-        CHECK( testing_dump[0] == '\0' );
-
-        testing_dump[0] = '\0';
-        debug_logf(3, testing_opt, TEST_TRACE_OPTION3, "%s %s %s", "log", "option3", "message");
-        CHECK( !strcmp(testing_dump, "testing_opt:option3:3: log option3 message") );
-
-        testing_dump[0] = '\0';
-        debug_logf(6, testing_opt, TEST_TRACE_OPTION3, "%s %s %s", "log", "option3", "message");
-        CHECK( testing_dump[0] == '\0' );
-
-        testing_dump[0] = '\0';
-        debug_logf(2, testing_opt, TEST_TRACE_OPTION4, "%s %s %s", "log", "option4", "message");
-        CHECK( !strcmp(testing_dump, "testing_opt:option4:2: log option4 message") );
-
-        testing_dump[0] = '\0';
-        debug_logf(4, testing_opt, TEST_TRACE_OPTION5, "%s %s %s", "log", "option5", "message");
-        CHECK( testing_dump[0] == '\0' );
-    }
-    SECTION("safety")
-    {
-        Trace test("test");
-
-        Parameter p("all", Parameter::PT_INT, "0:255", "0", "enable traces in module");
-        Value trace_val((double)1);
-        trace_val.set(&p);
-
-        test.set(trace_val);
-
-        char message[STD_BUF_SIZE + 1];
-
-        for( int i = 0; i < STD_BUF_SIZE; i++ )
-            message[i] = 'A';
-        message[STD_BUF_SIZE] = '\0';
-
-        testing_dump[0] = '\0';
-        debug_log(test, message);
-        CHECK( (strlen(testing_dump) == STD_BUF_SIZE - 1) );
-
-        Trace testing_opt("testing_opt", test_trace_values,
-            (sizeof(test_trace_values) / sizeof(TraceOptionString)));
-
-        Parameter p1("option3", Parameter::PT_INT, "0:255", "0", "p1");
-        Value trace_val1("trace");
-        trace_val1.set(&p1);
-        trace_val1.set_enum(5);
-        testing_opt.set(trace_val1);
-
-        testing_dump[0] = '\0';
-        debug_log(3, testing_opt, TEST_TRACE_OPTION3, message);
-        CHECK( (strlen(testing_dump) == STD_BUF_SIZE - 1) );
-
-        testing_dump[0] = '\0';
-        debug_log(6, testing_opt, TEST_TRACE_OPTION3, message);
-        CHECK( (strlen(testing_dump) == 0) );
-    }
+    testing_dump[0] = '\0';
+    debug_log(4, &test_opt_trace, TEST_TRACE_OPTION5, "log option5 message");
+    CHECK( testing_dump[0] == '\0' );
 }
 
-#endif  // DEBUG_MSGS
+#endif // DEBUG_MSGS
 
-#endif  // UNIT_TEST
+#endif // UNIT_TEST
 

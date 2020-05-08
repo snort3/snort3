@@ -39,10 +39,10 @@ static const RuleMap arp_rules[] =
     { 0, nullptr }
 };
 
-class ArpModule : public CodecModule
+class ArpModule : public BaseCodecModule
 {
 public:
-    ArpModule() : CodecModule(CD_ARP_NAME, CD_ARP_HELP) { }
+    ArpModule() : BaseCodecModule(CD_ARP_NAME, CD_ARP_HELP) { }
 
     const RuleMap* get_rules() const override
     { return arp_rules; }

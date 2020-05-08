@@ -25,7 +25,6 @@
 // ideally, modules.cc would be refactored into several files.
 
 #include "framework/counts.h"
-#include "main/snort_debug.h"
 #include "main/thread.h"
 
 

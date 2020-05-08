@@ -63,7 +63,7 @@
 #include "side_channel/side_channel.h"
 #include "stream/stream.h"
 #include "time/packet_time.h"
-#include "trace/trace_log_api.h"
+#include "trace/trace_api.h"
 #include "utils/stats.h"
 
 #include "analyzer_command.h"
@@ -594,7 +594,8 @@ void Analyzer::init_unprivileged()
 
     // This should be called as soon as possible
     // to handle all trace log messages
-    TraceLogApi::thread_init(sc);
+    TraceApi::thread_init(sc);
+
     CodecManager::thread_init(sc);
 
     // this depends on instantiated daq capabilities
@@ -627,6 +628,7 @@ void Analyzer::reinit(SnortConfig* sc)
 {
     InspectorManager::thread_reinit(sc);
     ActionManager::thread_reinit(sc);
+    TraceApi::thread_reinit(sc);
 }
 
 void Analyzer::term()
@@ -682,7 +684,7 @@ void Analyzer::term()
     sfthreshold_free();
     RateFilter_Cleanup();
 
-    TraceLogApi::thread_term();
+    TraceApi::thread_term();
 }
 
 Analyzer::Analyzer(SFDAQInstance* instance, unsigned i, const char* s, uint64_t msg_cnt)

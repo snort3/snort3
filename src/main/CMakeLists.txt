@@ -6,7 +6,6 @@ set (INCLUDES
     snort_debug.h
     snort_types.h
     thread.h
-    trace.h
 )
 
 if ( ENABLE_SHELL )
@@ -42,7 +41,6 @@ add_library (main OBJECT
     thread.cc
     thread_config.h
     thread_config.cc
-    trace.cc
     ${INCLUDES}
     ${SHELL_SOURCES}
 )

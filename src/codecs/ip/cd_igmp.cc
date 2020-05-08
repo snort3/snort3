@@ -37,10 +37,10 @@ static const RuleMap igmp_rules[] =
     { 0, nullptr }
 };
 
-class IgmpModule : public CodecModule
+class IgmpModule : public BaseCodecModule
 {
 public:
-    IgmpModule() : CodecModule(CD_IGMP_NAME, CD_IGMP_HELP) { }
+    IgmpModule() : BaseCodecModule(CD_IGMP_NAME, CD_IGMP_HELP) { }
 
     const RuleMap* get_rules() const override
     { return igmp_rules; }

@@ -31,8 +31,6 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "main/snort_debug.h"
-
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
@@ -169,12 +167,6 @@ static void set_normal_status()
     s_rec_error_size = -1;
     s_rec_return_zero = false;
 }
-
-Trace::Trace(const char*, const TraceOptionString*, size_t) {}
-Trace::Trace(const char*) {}
-bool Trace::set(const snort::Value&) { return true; }
-void Trace::reset() {}
-void Trace::enable() {}
 
 TcpConnectorModule::TcpConnectorModule() :
     Module("TCPC", "TCPC Help", nullptr)

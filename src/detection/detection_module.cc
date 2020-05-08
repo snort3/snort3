@@ -30,58 +30,27 @@
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/thread_config.h"
+#include "trace/trace.h"
 
 #include "detect_trace.h"
 
 using namespace snort;
 
-static const char s_module_name[] = "detection";
+THREAD_LOCAL const Trace* detection_trace = nullptr;
 
-/* *INDENT-OFF* */   //  Uncrustify handles this section incorrectly.
-static const Parameter detection_module_trace_values[] =
+static const TraceOption detection_trace_options[] =
 {
-    { "all", Parameter::PT_INT, "0:255", "0", "enable detection module trace logging options" },
+    { "detect_engine", TRACE_DETECTION_ENGINE,  "enable detection engine trace logging" },
+    { "rule_eval",     TRACE_RULE_EVAL,         "enable rule evaluation trace logging" },
+    { "buffer",        TRACE_BUFFER,            "enable buffer trace logging" },
+    { "rule_vars",     TRACE_RULE_VARS,         "enable rule variables trace logging" },
+    { "fp_search",     TRACE_FP_SEARCH,         "enable fast pattern search trace logging" },
+    { "pkt_detect",    TRACE_PKT_DETECTION,     "enable packet detection trace logging" },
+    { "opt_tree",      TRACE_OPTION_TREE,       "enable tree option trace logging" },
+    { "tag",           TRACE_TAG,               "enable tag trace logging" },
 
-    { "detect_engine", Parameter::PT_INT, "0:255", "0", "enable detection engine trace logging" },
-
-    { "rule_eval", Parameter::PT_INT, "0:255", "0", "enable rule evaluation trace logging" },
-
-    { "buffer", Parameter::PT_INT, "0:255", "0", "enable buffer trace logging" },
-
-    { "rule_vars", Parameter::PT_INT, "0:255", "0", "enable rule variables trace logging" },
-
-    { "fp_search", Parameter::PT_INT, "0:255", "0", "enable fast pattern search trace logging" },
-
-    { "pkt_detect", Parameter::PT_INT, "0:255", "0", "enable packet detection trace logging" },
-
-    { "opt_tree", Parameter::PT_INT, "0:255", "0", "enable tree option trace logging" },
-
-    { "tag", Parameter::PT_INT, "0:255", "0", "enable tag trace logging" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+    { nullptr, 0, nullptr }
 };
-
-static const Parameter detection_module_trace[] =
-{
-    { "trace", Parameter::PT_TABLE, detection_module_trace_values, nullptr, "trace config for detection module" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-static const TraceOptionString detection_trace_options[] =
-{
-    { "detect_engine", TRACE_DETECTION_ENGINE },
-    { "rule_eval",     TRACE_RULE_EVAL },
-    { "buffer",        TRACE_BUFFER },
-    { "rule_vars",     TRACE_RULE_VARS },
-    { "fp_search",     TRACE_FP_SEARCH },
-    { "pkt_detect",    TRACE_PKT_DETECTION },
-    { "opt_tree",      TRACE_OPTION_TREE },
-    { "tag",           TRACE_TAG }
-};
-
-Trace detection_trace(s_module_name, detection_trace_options,
-    (sizeof(detection_trace_options) / sizeof(TraceOptionString)));
 
 static const Parameter detection_params[] =
 {
@@ -132,9 +101,16 @@ static const Parameter detection_params[] =
 #define detection_help \
     "configure general IPS rule processing parameters"
 
-DetectionModule::DetectionModule() : Module(s_module_name, detection_help,
-    detection_params, false, &detection_trace, detection_module_trace)
+#define s_name "detection"
+
+DetectionModule::DetectionModule() : Module(s_name, detection_help, detection_params)
 { }
+
+void DetectionModule::set_trace(const Trace* trace) const
+{ detection_trace = trace; }
+
+const TraceOption* DetectionModule::get_trace_options() const
+{ return detection_trace_options; }
 
 bool DetectionModule::end(const char*, int, SnortConfig* sc)
 {
@@ -144,7 +120,7 @@ bool DetectionModule::end(const char*, int, SnortConfig* sc)
     return true;
 }
 
-bool DetectionModule::set(const char* fqn, Value& v, SnortConfig* sc)
+bool DetectionModule::set(const char*, Value& v, SnortConfig* sc)
 {
     if ( v.is("asn1") )
         sc->asn1_mem = v.get_uint16();
@@ -216,8 +192,6 @@ bool DetectionModule::set(const char* fqn, Value& v, SnortConfig* sc)
 
     else if ( v.is("enable_address_anomaly_checks") )
         sc->address_anomaly_check_enabled = v.get_bool();
-    else
-        return Module::set(fqn, v, sc);
 
     return true;
 }

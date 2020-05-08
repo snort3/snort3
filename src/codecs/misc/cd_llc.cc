@@ -39,10 +39,10 @@ static const RuleMap llc_rules[] =
     { 0, nullptr }
 };
 
-class LlcModule : public CodecModule
+class LlcModule : public BaseCodecModule
 {
 public:
-    LlcModule() : CodecModule(LLC_NAME, LLC_HELP) {}
+    LlcModule() : BaseCodecModule(LLC_NAME, LLC_HELP) {}
 
     const RuleMap* get_rules() const override
     { return llc_rules; }

@@ -24,8 +24,14 @@
 #include <cstdint>
 
 #include "framework/module.h"
-#include "main/snort_debug.h"
 #include "main/snort_types.h"
+
+namespace snort
+{
+class Trace;
+}
+
+extern THREAD_LOCAL const snort::Trace* decode_trace;
 
 namespace snort
 {
@@ -221,29 +227,33 @@ enum CodecSid : uint32_t
 // module
 //-------------------------------------------------------------------------
 
-class SO_PUBLIC CodecModule : public Module
+class BaseCodecModule : public Module
 {
 public:
-    CodecModule();
-    CodecModule(const char* s, const char* h) : Module(s, h)
+    BaseCodecModule(const char* s, const char* h) : Module(s, h)
     { }
 
-    CodecModule(const char* s, const char* h, const Parameter* p, bool is_list = false)
+    BaseCodecModule(const char* s, const char* h, const Parameter* p, bool is_list = false)
         : Module(s, h, p, is_list) { }
 
     unsigned get_gid() const override
     { return GID_DECODE; }
 
-    const RuleMap* get_rules() const override;
-
     Usage get_usage() const override
     { return CONTEXT; }
+};
 
-    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
+class SO_PUBLIC CodecModule : public BaseCodecModule
+{
+public:
+    CodecModule();
+
+    const RuleMap* get_rules() const override;
+
+    void set_trace(const Trace*) const override;
+    const TraceOption* get_trace_options() const override;
 };
 }
-
-extern snort::Trace decode_trace;
 
 #endif
 

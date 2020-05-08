@@ -69,12 +69,6 @@ DnsPatternMatchers::~DnsPatternMatchers() { }
 SipPatternMatchers::~SipPatternMatchers() { }
 SslPatternMatchers::~SslPatternMatchers() { }
 
-Trace::Trace(const char*, const TraceOptionString*, size_t) {}
-Trace::Trace(const char*) {}
-bool Trace::set(const snort::Value&) { return true; }
-void Trace::reset() {}
-void Trace::enable() {}
-
 TEST_GROUP(http_url_patterns_tests)
 {
     void setup() override

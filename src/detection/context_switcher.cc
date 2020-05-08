@@ -30,7 +30,6 @@
 #include "packet_io/active.h"
 #include "utils/stats.h"
 
-#include "detection_module.h"
 #include "detect_trace.h"
 #include "ips_context.h"
 #include "ips_context_data.h"
@@ -72,6 +71,7 @@ void ContextSwitcher::start()
     assert(!c->has_callbacks());
 
     c->context_num = ++global_context_num;
+
     debug_logf(detection_trace, TRACE_DETECTION_ENGINE,
         "(wire) %" PRIu64 " cs::start %" PRIu64 " (i=%zu, b=%zu)\n",
         get_packet_number(), c->context_num, idle.size(), busy.size());

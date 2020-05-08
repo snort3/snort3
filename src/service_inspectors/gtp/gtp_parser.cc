@@ -31,6 +31,7 @@
 #include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "log/messages.h"
+#include "main/snort_debug.h"
 #include "utils/util_cstring.h"
 
 #include "gtp.h"

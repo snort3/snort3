@@ -27,12 +27,13 @@
 #include <cassert>
 
 #include "profiler/profiler.h"
+#include "trace/trace.h"
 
 #include "gtp.h"
 
 using namespace snort;
 
-Trace gtp_inspect_trace(GTP_NAME);
+THREAD_LOCAL const Trace* gtp_inspect_trace = nullptr;
 
 THREAD_LOCAL ProfileStats gtp_inspect_prof;
 
@@ -124,11 +125,19 @@ static const Parameter gtp_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-GtpInspectModule::GtpInspectModule() :
-    Module(GTP_NAME, GTP_HELP, gtp_params, true, &gtp_inspect_trace)
+GtpInspectModule::GtpInspectModule() : Module(GTP_NAME, GTP_HELP, gtp_params, true)
 { }
 
-bool GtpInspectModule::set(const char* fqn, Value& v, SnortConfig* c)
+void GtpInspectModule::set_trace(const Trace* trace) const
+{ gtp_inspect_trace = trace; }
+
+const TraceOption* GtpInspectModule::get_trace_options() const
+{
+    static const TraceOption gtp_inspect_trace_options(nullptr, 0, nullptr);
+    return &gtp_inspect_trace_options;
+}
+
+bool GtpInspectModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("version") )
         stuff.version = v.get_uint8();
@@ -141,9 +150,6 @@ bool GtpInspectModule::set(const char* fqn, Value& v, SnortConfig* c)
 
     else if ( v.is("name") )
         stuff.name = v.get_string();
-
-    else
-        return Module::set(fqn, v, c);
 
     return true;
 }

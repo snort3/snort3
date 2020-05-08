@@ -29,6 +29,7 @@
 #include "detection/detection_util.h"
 #include "file_api/file_api.h"
 #include "main/snort.h"
+#include "main/snort_debug.h"
 #include "packet_io/active.h"
 #include "utils/util.h"
 

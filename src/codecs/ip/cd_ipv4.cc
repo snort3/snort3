@@ -91,10 +91,10 @@ static const RuleMap ipv4_rules[] =
     { 0, nullptr }
 };
 
-class Ipv4Module : public CodecModule
+class Ipv4Module : public BaseCodecModule
 {
 public:
-    Ipv4Module() : CodecModule(CD_IPV4_NAME, CD_IPV4_HELP) { }
+    Ipv4Module() : BaseCodecModule(CD_IPV4_NAME, CD_IPV4_HELP) { }
 
     const RuleMap* get_rules() const override
     { return ipv4_rules; }

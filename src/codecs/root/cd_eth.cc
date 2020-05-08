@@ -45,10 +45,10 @@ static const RuleMap eth_rules[] =
     { 0, nullptr }
 };
 
-class EthModule : public CodecModule
+class EthModule : public BaseCodecModule
 {
 public:
-    EthModule() : CodecModule(CD_ETH_NAME, CD_ETH_HELP) { }
+    EthModule() : BaseCodecModule(CD_ETH_NAME, CD_ETH_HELP) { }
 
     const RuleMap* get_rules() const override
     { return eth_rules; }

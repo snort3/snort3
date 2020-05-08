@@ -29,8 +29,6 @@
 
 #include <cstdint>
 
-#include "main/snort_debug.h"
-
 namespace snort
 {
 struct Packet;

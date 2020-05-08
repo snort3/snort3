@@ -26,6 +26,7 @@
 #include "detection/detection_engine.h"
 #include "detection/rules.h"
 #include "main/analyzer.h"
+#include "main/snort_debug.h"
 #include "memory/memory_cap.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"

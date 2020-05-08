@@ -27,12 +27,15 @@
 #include <chrono>
 
 #include "main/snort_config.h"
+#include "trace/trace.h"
 
 #include "latency_config.h"
 #include "latency_rules.h"
 #include "latency_stats.h"
 
 using namespace snort;
+
+THREAD_LOCAL const Trace* latency_trace = nullptr;
 
 // -----------------------------------------------------------------------------
 // latency attributes
@@ -41,8 +44,6 @@ using namespace snort;
 #define s_name "latency"
 #define s_help \
     "packet and rule latency monitoring and control"
-
-Trace latency_trace(s_name);
 
 static const Parameter s_packet_params[] =
 {
@@ -170,9 +171,17 @@ static inline bool latency_set(Value& v, RuleLatencyConfig& config)
     return true;
 }
 
-LatencyModule::LatencyModule() :
-    Module(s_name, s_help, s_params, false, &latency_trace)
+LatencyModule::LatencyModule() : Module(s_name, s_help, s_params)
 { }
+
+void LatencyModule::set_trace(const Trace* trace) const
+{ latency_trace = trace; }
+
+const TraceOption* LatencyModule::get_trace_options() const
+{
+    static const TraceOption latency_trace_options(nullptr, 0, nullptr);
+    return &latency_trace_options;
+}
 
 bool LatencyModule::set(const char* fqn, Value& v, SnortConfig* sc)
 {
@@ -185,7 +194,7 @@ bool LatencyModule::set(const char* fqn, Value& v, SnortConfig* sc)
     else if ( !strncmp(fqn, slr, strlen(slr)) )
         return latency_set(v, sc->latency->rule_latency);
 
-    return Module::set(fqn, v, sc);
+    return true;
 }
 
 const RuleMap* LatencyModule::get_rules() const

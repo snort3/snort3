@@ -26,6 +26,7 @@
 #include "detector_pattern.h"
 
 #include "log/messages.h"
+#include "main/snort_debug.h"
 #include "managers/inspector_manager.h"
 #include "protocols/packet.h"
 #include "search_engines/search_tool.h"
@@ -39,12 +40,12 @@ static void dump_patterns(const char* name, PatternService* pList)
 {
     UNUSED(name);
 
-    debug_logf(appid_module_trace, "Adding pattern for \"%s\"\n", name);
+    debug_logf(appid_trace, "Adding pattern for \"%s\"\n", name);
     for (PatternService* ps = pList; ps; ps = ps->next)
         for (Pattern* pattern = ps->pattern; pattern; pattern = pattern->next)
             if (pattern->data && pattern->length)
             {
-                debug_logf(appid_module_trace, "\t\t%s, %u\n",pattern->data, pattern->length);
+                debug_logf(appid_trace, "\t\t%s, %u\n",pattern->data, pattern->length);
             }
 }
 

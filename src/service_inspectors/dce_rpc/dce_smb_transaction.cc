@@ -30,6 +30,8 @@
 #include "dce_smb_module.h"
 #include "dce_smb_transaction_utils.h"
 
+#include "main/snort_debug.h"
+
 using namespace snort;
 
 #define DCE2_SMB_TRANS__NONE    0x00

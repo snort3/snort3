@@ -90,10 +90,10 @@ static const RuleMap icmp4_rules[] =
     { 0, nullptr }
 };
 
-class Icmp4Module : public CodecModule
+class Icmp4Module : public BaseCodecModule
 {
 public:
-    Icmp4Module() : CodecModule(CD_ICMP4_NAME, CD_ICMP4_HELP) { }
+    Icmp4Module() : BaseCodecModule(CD_ICMP4_NAME, CD_ICMP4_HELP) { }
 
     const RuleMap* get_rules() const override
     { return icmp4_rules; }

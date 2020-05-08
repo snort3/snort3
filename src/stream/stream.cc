@@ -32,6 +32,7 @@
 #include "flow/prune_stats.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
+#include "main/snort_debug.h"
 #include "packet_io/active.h"
 #include "protocols/vlan.h"
 #include "stream/base/stream_module.h"

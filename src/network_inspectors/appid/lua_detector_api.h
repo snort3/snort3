@@ -31,8 +31,6 @@
 #include "client_plugins/client_detector.h"
 #include "service_plugins/service_detector.h"
 
-#include "main/snort_debug.h"
-
 namespace snort
 {
 struct Packet;

@@ -67,7 +67,7 @@
 #include "stream/stream_inspectors.h"
 #include "target_based/host_attributes.h"
 #include "time/periodic.h"
-#include "trace/trace_log_api.h"
+#include "trace/trace_api.h"
 #include "utils/util.h"
 
 #ifdef PIGLET
@@ -134,9 +134,12 @@ void Snort::init(int argc, char** argv)
 
     SideChannelManager::pre_config_init();
 
-    ModuleManager::init();
     ScriptManager::load_scripts(snort_cmd_line_conf->script_paths);
     PluginManager::load_plugins(snort_cmd_line_conf->plugin_path);
+
+    /* load_plugins() must be called before init() so that
+    TraceModule can properly generate its Parameter table */
+    ModuleManager::init();
     ModuleManager::load_params();
 
     FileService::init();
@@ -152,7 +155,7 @@ void Snort::init(int argc, char** argv)
 
     // This call must be immediately after "SnortConfig::set_conf(sc)"
     // since the first trace call may happen somewhere after this point
-    TraceLogApi::thread_init(sc);
+    TraceApi::thread_init(sc);
 
     PluginManager::load_so_plugins(sc);
 
@@ -340,8 +343,8 @@ void Snort::term()
     LogMessage("%s  Snort exiting\n", get_prompt());
 
     // This call must be before SnortConfig cleanup
-    // since the "TraceLogApi::thread_term()" uses SnortConfig
-    TraceLogApi::thread_term();
+    // since the "TraceApi::thread_term()" uses SnortConfig
+    TraceApi::thread_term();
 
     /* free allocated memory */
     if (SnortConfig::get_conf() == snort_cmd_line_conf)
@@ -460,7 +463,6 @@ SnortConfig* Snort::get_reload_config(const char* fname, const char* plugin_path
     }
 
     PluginManager::reload_so_plugins(plugin_path, sc);
-
     sc->setup();
 
 #ifdef SHELL

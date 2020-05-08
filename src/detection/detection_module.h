@@ -42,6 +42,9 @@ public:
 
     Usage get_usage() const override
     { return GLOBAL; }
+
+    void set_trace(const Trace*) const override;
+    const TraceOption* get_trace_options() const override;
 };
 }
 

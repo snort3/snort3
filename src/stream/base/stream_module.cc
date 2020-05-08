@@ -28,16 +28,17 @@
 #include "log/messages.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
-#include "main/snort_debug.h"
 #include "stream/flush_bucket.h"
+#include "trace/trace.h"
 
 using namespace snort;
 using namespace std;
 
+THREAD_LOCAL const Trace* stream_trace = nullptr;
+
 //-------------------------------------------------------------------------
 // stream module
 //-------------------------------------------------------------------------
-Trace stream_trace(MOD_NAME);
 
 #define FLOW_TYPE_PARAMS(name, idle, weight) \
 static const Parameter name[] = \
@@ -101,9 +102,17 @@ static const RuleMap stream_rules[] =
 static const char* const flow_type_names[] =
 { "none", "ip_cache", "tcp_cache", "udp_cache", "icmp_cache", "user_cache", "file_cache", "max"};
 
-StreamModule::StreamModule() :
-    Module(MOD_NAME, MOD_HELP, s_params, false, &stream_trace)
+StreamModule::StreamModule() : Module(MOD_NAME, MOD_HELP, s_params)
 { }
+
+void StreamModule::set_trace(const Trace* trace) const
+{ stream_trace = trace; }
+
+const TraceOption* StreamModule::get_trace_options() const
+{
+    static const TraceOption stream_trace_options(nullptr, 0, nullptr);
+    return &stream_trace_options;
+}
 
 const PegInfo* StreamModule::get_pegs() const
 { return base_pegs; }
@@ -172,14 +181,12 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
     else if ( strstr(fqn, "file_cache") )
         type = PktType::FILE;
     else
-        return Module::set(fqn, v, c);
+        return false;
 
     if ( v.is("idle_timeout") )
         config.flow_cache_cfg.proto[to_utype(type)].nominal_timeout = v.get_uint32();
     else if ( v.is("cap_weight") )
         config.flow_cache_cfg.proto[to_utype(type)].cap_weight = v.get_uint16();
-    else
-        return false;
 
     return true;
 }

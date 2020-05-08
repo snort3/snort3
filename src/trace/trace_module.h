@@ -20,9 +20,9 @@
 #ifndef TRACE_MODULE_H
 #define TRACE_MODULE_H
 
-#include "framework/module.h"
+#include <map>
 
-class TraceConfig;
+#include "framework/module.h"
 
 class TraceModule : public snort::Module
 {
@@ -36,7 +36,6 @@ private:
 
 public:
     TraceModule();
-    ~TraceModule() override;
 
     bool begin(const char*, int, snort::SnortConfig*) override;
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
@@ -46,9 +45,18 @@ public:
     { return GLOBAL; }
 
 private:
+    std::string find_module(const char* config_name) const;
+    void generate_params();
+    void reset_configured_trace_options();
+
+private:
     OutputType log_output_type = OUTPUT_TYPE_NO_INIT;
-    TraceConfig* t_config = nullptr;
     bool local_syslog = false;
+    std::vector<snort::Parameter> modules_params;
+    std::vector<std::vector<snort::Parameter>> module_ranges;
+    std::vector<std::string> modules_help;
+    std::map<std::string, std::map<std::string, bool>> configured_trace_options;
+    
 };
 
 #endif  // TRACE_MODULE_H

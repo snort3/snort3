@@ -35,6 +35,7 @@
 #include "main/thread_config.h"
 #include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
+#include "trace/trace.h"
 #include "utils/util.h"
 
 #include "app_info_table.h"
@@ -46,7 +47,7 @@
 using namespace snort;
 using namespace std;
 
-Trace appid_module_trace(MOD_NAME);
+THREAD_LOCAL const Trace* appid_trace = nullptr;
 
 //-------------------------------------------------------------------------
 // appid module
@@ -250,8 +251,7 @@ static const PegInfo appid_pegs[] =
     { CountType::END, nullptr, nullptr },
 };
 
-AppIdModule::AppIdModule() :
-    Module(MOD_NAME, MOD_HELP, s_params, false, &appid_module_trace)
+AppIdModule::AppIdModule() : Module(MOD_NAME, MOD_HELP, s_params)
 {
     config = nullptr;
 }
@@ -259,6 +259,15 @@ AppIdModule::AppIdModule() :
 AppIdModule::~AppIdModule()
 {
     AppIdPegCounts::cleanup_peg_info();
+}
+
+void AppIdModule::set_trace(const Trace* trace) const
+{ appid_trace = trace; }
+
+const TraceOption* AppIdModule::get_trace_options() const
+{
+    static const TraceOption appid_trace_options(nullptr, 0, nullptr);
+    return &appid_trace_options;
 }
 
 ProfileStats* AppIdModule::get_profile() const
@@ -273,7 +282,7 @@ const AppIdConfig* AppIdModule::get_data()
     return temp;
 }
 
-bool AppIdModule::set(const char* fqn, Value& v, SnortConfig* c)
+bool AppIdModule::set(const char*, Value& v, SnortConfig*)
 {
     // FIXIT-L: DECRYPT_DEBUG - Move this to ssl-module
 #ifdef REG_TEST
@@ -303,8 +312,6 @@ bool AppIdModule::set(const char* fqn, Value& v, SnortConfig* c)
         config->list_odp_detectors = v.get_bool();
     else if ( v.is("log_all_sessions") )
         config->log_all_sessions = v.get_bool();
-    else
-        return Module::set(fqn, v, c);
 
     return true;
 }

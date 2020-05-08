@@ -37,10 +37,10 @@ static const RuleMap fabricpath_rules[] =
     { 0, nullptr }
 };
 
-class FabricPathModule : public CodecModule
+class FabricPathModule : public BaseCodecModule
 {
 public:
-    FabricPathModule() : CodecModule(CD_FABRICPATH_NAME, CD_FABRICPATH_HELP) { }
+    FabricPathModule() : BaseCodecModule(CD_FABRICPATH_NAME, CD_FABRICPATH_HELP) { }
 
     const RuleMap* get_rules() const override
     { return fabricpath_rules; }

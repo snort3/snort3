@@ -26,6 +26,7 @@
 
 #include "detection/detect.h"
 #include "file_api/file_service.h"
+#include "main/snort_debug.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
 #include "packet_io/active.h"

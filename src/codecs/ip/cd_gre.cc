@@ -53,10 +53,10 @@ static const RuleMap gre_rules[] =
     { 0, nullptr }
 };
 
-class GreModule : public CodecModule
+class GreModule : public BaseCodecModule
 {
 public:
-    GreModule() : CodecModule(CD_GRE_NAME, CD_GRE_HELP) { }
+    GreModule() : BaseCodecModule(CD_GRE_NAME, CD_GRE_HELP) { }
 
     const RuleMap* get_rules() const override
     { return gre_rules; }

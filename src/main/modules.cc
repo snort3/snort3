@@ -1964,7 +1964,6 @@ void module_init()
     ModuleManager::add_module(new RuleStateModule);
     ModuleManager::add_module(new SearchEngineModule);
     ModuleManager::add_module(new SFDAQModule);
-    ModuleManager::add_module(new TraceModule);
 
     // these could but prolly shouldn't be policy specific
     // or should be broken into policy and non-policy parts
@@ -1995,4 +1994,6 @@ void module_init()
     ModuleManager::add_module(new HostsModule);
     ModuleManager::add_module(new HostTrackerModule);
     ModuleManager::add_module(new HostCacheModule);
+    // The TraceModule must be added last so that it can properly generate its Parameter table
+    ModuleManager::add_module(new TraceModule);
 }

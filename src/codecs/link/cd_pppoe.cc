@@ -63,10 +63,10 @@ static const RuleMap pppoe_rules[] =
 #define pppoe_help \
     "support for point-to-point protocol over ethernet"
 
-class PPPoEModule : public CodecModule
+class PPPoEModule : public BaseCodecModule
 {
 public:
-    PPPoEModule() : CodecModule(CD_PPPOE_NAME, pppoe_help) { }
+    PPPoEModule() : BaseCodecModule(CD_PPPOE_NAME, pppoe_help) { }
 
     const RuleMap* get_rules() const override
     { return pppoe_rules; }

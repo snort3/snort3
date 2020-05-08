@@ -1,16 +1,32 @@
+set ( INCLUDES
+    trace.h
+    trace_api.h
+)
 
 set ( TRACE_SOURCES
+    trace.cc
+    trace_api.cc
     trace_config.cc
     trace_config.h
     trace_log.cc
     trace_log.h
-    trace_log_api.cc
-    trace_log_api.h
     trace_log_base.h
     trace_module.cc
     trace_module.h
+    ${INCLUDES}
 )
 
 add_library ( trace OBJECT
     ${TRACE_SOURCES}
 )
+
+install ( FILES ${INCLUDES}
+    DESTINATION "${INCLUDE_INSTALL_PATH}/trace"
+)
+
+add_catch_test( trace_test
+    NO_TEST_SOURCE
+    SOURCES
+        trace.cc
+)
+

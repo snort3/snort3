@@ -510,16 +510,6 @@ const char* Parameter::get_string() const
     return deflt ? deflt : "";
 }
 
-const Parameter* Parameter::find(const Parameter* p, const Parameter* d, const char* s)
-{
-    auto ret = find(p, s);
-
-    if ( !ret )
-        ret = find(d, s);
-
-    return ret;
-}
-
 const Parameter* Parameter::find(const Parameter* p, const char* s)
 {
     if ( !p )

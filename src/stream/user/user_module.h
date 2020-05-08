@@ -24,12 +24,12 @@
 
 namespace snort
 {
+class Trace;
 struct SnortConfig;
 }
 
+extern THREAD_LOCAL const snort::Trace* stream_user_trace;
 extern THREAD_LOCAL snort::ProfileStats user_perf_stats;
-
-extern snort::Trace stream_user_trace;
 
 //-------------------------------------------------------------------------
 // stream_user module
@@ -53,6 +53,9 @@ public:
     { return INSPECT; }
 
     StreamUserConfig* get_data();
+
+    void set_trace(const snort::Trace*) const override;
+    const snort::TraceOption* get_trace_options() const override;
 
 private:
     StreamUserConfig* config;

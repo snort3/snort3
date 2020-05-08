@@ -22,8 +22,6 @@
 #ifndef TCP_SEGMENT_H
 #define TCP_SEGMENT_H
 
-#include "main/snort_debug.h"
-
 #include "tcp_segment_descriptor.h"
 #include "tcp_defs.h"
 

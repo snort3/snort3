@@ -23,12 +23,14 @@
 
 #include "flow/session.h"
 #include "framework/module.h"
-#include "main/snort_debug.h"
 
 namespace snort
 {
+class Trace;
 struct SnortConfig;
 }
+
+extern THREAD_LOCAL const snort::Trace* stream_ip_trace;
 
 #define GLOBAL_KEYWORD "defrag"
 #define ENGINE_KEYWORD "defrag_engine"
@@ -83,7 +85,6 @@ struct IpStats
 
 extern const PegInfo ip_pegs[];
 extern THREAD_LOCAL snort::ProfileStats ip_perf_stats;
-extern snort::Trace stream_ip_trace;
 
 //-------------------------------------------------------------------------
 // stream_ip module
@@ -114,6 +115,9 @@ public:
 
     Usage get_usage() const override
     { return INSPECT; }
+
+    void set_trace(const snort::Trace*) const override;
+    const snort::TraceOption* get_trace_options() const override;
 
 private:
     StreamIpConfig* config;

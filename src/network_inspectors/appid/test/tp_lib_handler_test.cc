@@ -29,7 +29,6 @@
 
 #include "tp_lib_handler.h"
 #include "appid_config.h"
-#include "main/snort_debug.h"
 #include "log_message_mock.h"
 
 #include <CppUTest/CommandLineTestRunner.h>

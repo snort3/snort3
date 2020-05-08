@@ -25,7 +25,6 @@
 #include <iostream>
 
 #include "main/snort_config.h"
-#include "main/snort_debug.h"
 #include "target_based/snort_protocols.h"
 
 #include <CppUTest/CommandLineTestRunner.h>

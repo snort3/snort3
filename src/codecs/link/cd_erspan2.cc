@@ -38,10 +38,10 @@ static const RuleMap erspan2_rules[] =
     { 0, nullptr }
 };
 
-class Erspan2Module : public CodecModule
+class Erspan2Module : public BaseCodecModule
 {
 public:
-    Erspan2Module() : CodecModule(CD_ERSPAN2_NAME, CD_ERSPAN2_HELP) { }
+    Erspan2Module() : BaseCodecModule(CD_ERSPAN2_NAME, CD_ERSPAN2_HELP) { }
 
     const RuleMap* get_rules() const override
     { return erspan2_rules; }
