@@ -198,7 +198,8 @@ void Http2StreamSplitter::partial_flush_data(Http2FlowData* session_data,
     if (data_cutter->is_flush_required())
         session_data->hi_ss[source_id]->init_partial_flush(session_data->flow);
     session_data->data_processing[source_id] = false;
-    *flush_offset = data_offset;
+    assert(data_offset != 0);
+    *flush_offset = data_offset - 1;
     session_data->flushing_data[source_id] = true;
     session_data->num_frame_headers[source_id] -= 1;
 }
@@ -232,17 +233,19 @@ bool Http2StreamSplitter::read_frame_hdr(Http2FlowData* session_data, const uint
     }
     else
     {
-        // Just finished flushing data. Use saved header.
+        // Just finished flushing data. Use saved header, skip first byte.
         session_data->num_frame_headers[source_id] = 1;
         session_data->flushing_data[source_id] = false;
         session_data->use_leftover_hdr[source_id] = true;
+        session_data->scan_octets_seen[source_id] = FRAME_HEADER_LENGTH;
+        data_offset++;
     }
 
     return true;
 }
 
-StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* session_data, const uint8_t* data,
-    uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id)
+StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* session_data,
+    const uint8_t* data, uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id)
 {
     StreamSplitter::Status status = StreamSplitter::FLUSH;
     if (session_data->preface[source_id])
@@ -326,8 +329,8 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
 
 // FIXIT-M If there are any errors in header decoding, this currently tells stream not to send
 // headers to detection. This behavior may need to be changed.
-const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* session_data, unsigned total,
-    unsigned offset, const uint8_t* data, unsigned len, uint32_t flags,
+const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* session_data,
+    unsigned total, unsigned offset, const uint8_t* data, unsigned len, uint32_t flags,
     HttpCommon::SourceId source_id)
 {
     assert(offset+len <= total);
@@ -349,30 +352,10 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
         session_data->frame_header_offset[source_id] = 0;
     }
 
-    if (total == 0 && session_data->use_leftover_hdr[source_id])
-    {
-        memcpy(session_data->frame_header[source_id],
-            session_data->leftover_hdr[source_id], FRAME_HEADER_LENGTH);
-        session_data->use_leftover_hdr[source_id] = false;
-        if (session_data->frame_type[source_id] == FT_DATA)
-        {
-            // Check if we reached end of stream and have a partial buffer pending
-            const uint8_t frame_flags = get_frame_flags(session_data->frame_header[source_id]);
-            if ((frame_flags & END_STREAM) && stream->is_partial_buf_pending(source_id))
-            {
-                unsigned copied;
-                StreamBuffer http_frame_buf = session_data->hi_ss[source_id]->reassemble(
-                    session_data->flow,
-                    0, 0, nullptr, 0, PKT_PDU_TAIL, copied);
-                session_data->frame_data[source_id] = const_cast<uint8_t*>(http_frame_buf.data);
-                session_data->frame_data_size[source_id] = http_frame_buf.length;
-            }
-        }
-    }
-    else if (session_data->frame_type[source_id] == FT_DATA)
+    if (session_data->frame_type[source_id] == FT_DATA)
     {
         if (session_data->flushing_data[source_id] && (flags & PKT_PDU_TAIL))
-            len -= FRAME_HEADER_LENGTH;
+            len -= (FRAME_HEADER_LENGTH - 1);
 
         if (len != 0)
         {
@@ -395,10 +378,18 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
         if (offset == 0)
         {
             // This is the first reassemble() for this frame - allocate data buffer
-            session_data->frame_data_size[source_id] = total;
-            if (!session_data->use_leftover_hdr[source_id])
-                session_data->frame_data_size[source_id] -=
-                    session_data->frame_header_size[source_id];
+            if (session_data->use_leftover_hdr[source_id])
+            {
+                // total has 1 byte of header, missing 8 bytes of first header
+                session_data->frame_data_size[source_id] =
+                    total - 1 - (session_data->frame_header_size[source_id] - FRAME_HEADER_LENGTH);
+            }
+            else
+            {
+                session_data->frame_data_size[source_id] =
+                    total - session_data->frame_header_size[source_id];
+            }
+
             if (session_data->frame_data_size[source_id] > 0)
                 session_data->frame_data[source_id] = new uint8_t[
                     session_data->frame_data_size[source_id]];
@@ -461,6 +452,7 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
                     session_data->leftover_hdr[source_id], FRAME_HEADER_LENGTH);
                 session_data->frame_header_offset[source_id] += FRAME_HEADER_LENGTH;
                 session_data->use_leftover_hdr[source_id] = false;
+                data_offset++;
             }
             else
             {

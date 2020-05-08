@@ -44,14 +44,12 @@ bool Http2DataCutter::http2_scan(const uint8_t* data, uint32_t length,
 {
     cur_data_offset = data_offset;
     cur_data = cur_padding = 0;
-
     if (frame_bytes_seen == 0)
     {
         frame_length = data_len = frame_len;
         padding_len = data_bytes_read = padding_read = 0;
         frame_flags = flags;
         *flush_offset = frame_bytes_seen = FRAME_HEADER_LENGTH;
-
         if (frame_length == 0)
             data_state = FULL_FRAME;
         else if ((frame_flags & PADDED) !=0)
@@ -194,7 +192,6 @@ const StreamBuffer Http2DataCutter::reassemble(const uint8_t* data, unsigned len
     cur_data = cur_padding = cur_data_offset = 0;
 
     unsigned cur_pos = 0;
-
     while (cur_pos < len)
     {
         switch (reassemble_state)
@@ -207,6 +204,7 @@ const StreamBuffer Http2DataCutter::reassemble(const uint8_t* data, unsigned len
                     session_data->leftover_hdr[source_id], FRAME_HEADER_LENGTH);
                 reassemble_hdr_bytes_read = FRAME_HEADER_LENGTH;
                 session_data->use_leftover_hdr[source_id] = false;
+                cur_pos++;
             }
             else
             {
@@ -229,7 +227,6 @@ const StreamBuffer Http2DataCutter::reassemble(const uint8_t* data, unsigned len
                     session_data->frame_header_offset[source_id]);
                 cur_data_offset = cur_pos;
                 session_data->frame_header_offset[source_id] += FRAME_HEADER_LENGTH;
-
                 if (reassemble_data_len == 0)
                     reassemble_state = CLEANUP;
                 else if ((reassemble_frame_flags & PADDED) !=0)
