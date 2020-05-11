@@ -104,7 +104,7 @@ static void FTPDataProcess(
     if ( !status )
     {
         IpsPolicy* empty_policy = snort::get_empty_ips_policy(SnortConfig::get_conf());
-        if ( !get_rule_count() || (empty_policy->policy_id == p->flow->ips_policy_id) )
+        if ( empty_policy->policy_id == p->flow->ips_policy_id )
         {
             if ( PacketTracer::is_active() )
                 PacketTracer::log("Whitelisting Flow: FTP data\n");
