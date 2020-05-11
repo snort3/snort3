@@ -36,7 +36,13 @@ public:
 
     bool has_expired(const timeval& cur_time)
     {
-        return !timercmp(&cur_time, &expiration, <);
+        expired = (timercmp(&cur_time, &expiration, <) == 0);
+        return expired;
+    }
+
+    bool has_expired()
+    {
+        return expired;
     }
 
     TcpStreamTracker& get_tracker() const { return tracker; }
@@ -48,6 +54,7 @@ private:
     uint32_t seq_num;
     timeval expiration;
     TcpStreamTracker& tracker;
+    bool expired;
 };
 
 class HeldPacketQueue

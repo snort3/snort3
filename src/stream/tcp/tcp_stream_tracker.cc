@@ -704,7 +704,8 @@ void TcpStreamTracker::finalize_held_packet(Packet* cp)
     {
         if ( cp->active->packet_was_dropped() )
         {
-            Analyzer::get_local_analyzer()->finalize_daq_message(held_packet->get_daq_msg(), DAQ_VERDICT_BLOCK);
+            DAQ_Verdict verdict = held_packet->has_expired() ? DAQ_VERDICT_BLACKLIST : DAQ_VERDICT_BLOCK;
+            Analyzer::get_local_analyzer()->finalize_daq_message(held_packet->get_daq_msg(), verdict);
             tcpStats.held_packets_dropped++;
         }
         else
@@ -729,7 +730,8 @@ void TcpStreamTracker::finalize_held_packet(Flow* flow)
         if ( (flow->session_state & STREAM_STATE_BLOCK_PENDING) ||
              (flow->ssn_state.session_flags & SSNFLAG_BLOCK) )
         {
-            Analyzer::get_local_analyzer()->finalize_daq_message(held_packet->get_daq_msg(), DAQ_VERDICT_BLOCK);
+            DAQ_Verdict verdict = held_packet->has_expired() ? DAQ_VERDICT_BLACKLIST : DAQ_VERDICT_BLOCK;
+            Analyzer::get_local_analyzer()->finalize_daq_message(held_packet->get_daq_msg(), verdict);
             tcpStats.held_packets_dropped++;
         }
         else

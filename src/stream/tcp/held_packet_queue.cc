@@ -32,7 +32,7 @@
 using namespace snort;
 
 HeldPacket::HeldPacket(DAQ_Msg_h msg, uint32_t seq, const timeval& exp, TcpStreamTracker& trk)
-    : daq_msg(msg), seq_num(seq), expiration(exp), tracker(trk)
+    : daq_msg(msg), seq_num(seq), expiration(exp), tracker(trk), expired(false)
 {
 }
 
