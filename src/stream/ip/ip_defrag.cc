@@ -1077,7 +1077,8 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
     if (p->is_ip6() && (net_frag_offset == 0))
     {
         const ip::IP6Frag* const fragHdr = layer::get_inner_ip6_frag();
-        ft->ip_proto = fragHdr->ip6f_nxt;
+        if (fragHdr)
+            ft->ip_proto = fragHdr->ip6f_nxt;
     }
 
     /*

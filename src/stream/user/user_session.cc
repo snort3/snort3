@@ -492,7 +492,7 @@ int UserSession::process(Packet* p)
 
     UserTracker& ut = p->is_from_client() ? server : client;
 
-    if ( p->ptrs.decode_flags & DECODE_SOF or !ut.splitter )
+    if ( !ut.splitter or p->ptrs.decode_flags & DECODE_SOF )
         start(p, flow);
 
     if ( p->data && p->dsize )

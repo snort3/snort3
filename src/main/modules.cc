@@ -1007,9 +1007,6 @@ static const Parameter network_params[] =
       "all | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none", "all",
       "checksums to verify" },
 
-    { "decode_drops", Parameter::PT_BOOL, nullptr, "false",
-      "enable dropping of packets by the decoder" },
-
     { "id", Parameter::PT_INT, "0:65535", "0",
       "correlate unified2 events with configuration" },
 
@@ -1056,9 +1053,6 @@ bool NetworkModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("checksum_eval") )
         ConfigChecksumMode(v.get_string());
-
-    else if ( v.is("decode_drops") )
-        p->decoder_drop = v.get_bool();
 
     else if ( v.is("id") )
     {

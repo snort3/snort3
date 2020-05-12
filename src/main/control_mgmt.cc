@@ -148,7 +148,8 @@ int ControlMgmt::socket_init()
 
     // FIXIT-M want to disable time wait
     int on = 1;
-    setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+    if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0)
+        FatalError("setsockopt() call failed: %s", get_error(errno));
 
     if (::bind(listener, sock_addr, sock_addr_size) < 0)
         FatalError("bind failed: %s\n", get_error(errno));

@@ -98,8 +98,6 @@ public:
     uint32_t checksum_eval;
     uint32_t checksum_drop;
     uint32_t normal_mask;
-
-    bool decoder_drop;
 };
 
 //-------------------------------------------------------------------------
@@ -117,7 +115,7 @@ public:
     void clone_dbus(snort::SnortConfig*, const char*);
 
 public:
-    PolicyId policy_id;
+    PolicyId policy_id = 0;
     PolicyMode policy_mode = POLICY_MODE__MAX;
     uint32_t user_policy_id = 0;
     uuid_t uuid{};

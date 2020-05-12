@@ -81,6 +81,8 @@ void InspectionPolicy::init(InspectionPolicy* other_inspection_policy)
 {
     framework_policy = nullptr;
     cloned = false;
+    if (other_inspection_policy)
+        policy_id = other_inspection_policy->policy_id;
 
     InspectorManager::new_policy(this, other_inspection_policy);
 }

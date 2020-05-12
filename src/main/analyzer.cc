@@ -342,7 +342,7 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
     }
     else if (p->active->is_packet_held() and Stream::set_packet_action_to_hold(p))
     {
-        if (p->flow and p->flow->flags.trigger_detained_packet_event)
+        if (p->flow->flags.trigger_detained_packet_event)
             DataBus::publish(DETAINED_PACKET_EVENT, p);
     }
     else
