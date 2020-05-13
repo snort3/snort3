@@ -368,6 +368,7 @@ public:
         hsessions.clear();
     }
 
+    AppIdDnsSession* create_dns_session();
     AppIdDnsSession* get_dns_session();
 
     bool is_tp_appid_done() const;

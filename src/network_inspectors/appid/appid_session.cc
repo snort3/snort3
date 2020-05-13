@@ -1023,10 +1023,16 @@ AppIdHttpSession* AppIdSession::get_http_session(uint32_t stream_index)
         return nullptr;
 }
 
+AppIdDnsSession* AppIdSession::create_dns_session()
+{
+    if (dsession)
+        delete dsession;
+    dsession = new AppIdDnsSession();
+    return dsession;
+}
+
 AppIdDnsSession* AppIdSession::get_dns_session()
 {
-    if (!dsession)
-        dsession = new AppIdDnsSession();
     return dsession;
 }
 

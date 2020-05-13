@@ -681,8 +681,8 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
         }
 
         AppIdDnsSession* dsession = asd.get_dns_session();
-        if (asd.service.get_id() == APP_ID_DNS && asd.ctxt.get_odp_ctxt().dns_host_reporting
-            && dsession->get_host())
+        if (dsession and asd.service.get_id() == APP_ID_DNS
+            and asd.ctxt.get_odp_ctxt().dns_host_reporting and dsession->get_host())
         {
             AppId client_id = APP_ID_NONE;
             AppId payload_id = APP_ID_NONE;

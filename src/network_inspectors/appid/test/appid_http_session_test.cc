@@ -27,6 +27,7 @@
 #include <string>
 
 #include "framework/data_bus.h"
+#include "memory/memory_cap.h"
 #include "protocols/protocol_ids.h"
 #include "service_inspectors/http_inspect/http_msg_header.h"
 #include "tp_appid_module_api.h"
@@ -151,6 +152,8 @@ void Profiler::show_stats() { }
 
 MemoryContext::MemoryContext(MemoryTracker&) { }
 MemoryContext::~MemoryContext() { }
+void memory::MemoryCap::update_allocations(unsigned long) { }
+void memory::MemoryCap::update_deallocations(unsigned long) { }
 
 OdpContext::OdpContext(AppIdConfig&, snort::SnortConfig*) { }
 AppIdConfig::~AppIdConfig() { }

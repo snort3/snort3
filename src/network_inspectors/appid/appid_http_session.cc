@@ -25,6 +25,7 @@
 
 #include "appid_http_session.h"
 
+#include "memory/memory_cap.h"
 #include "profiler/profiler.h"
 
 #include "app_info_table.h"
@@ -45,6 +46,7 @@ AppIdHttpSession::AppIdHttpSession(AppIdSession& asd, uint32_t http2_stream_id)
         meta_offset[i].first = 0;
         meta_offset[i].second = 0;
     }
+    memory::MemoryCap::update_allocations(sizeof(AppIdHttpSession));
 }
 
 AppIdHttpSession::~AppIdHttpSession()
@@ -53,6 +55,7 @@ AppIdHttpSession::~AppIdHttpSession()
         delete meta_data[i];
     if (tun_dest)
         delete tun_dest;
+    memory::MemoryCap::update_deallocations(sizeof(AppIdHttpSession));
 }
 
 void AppIdHttpSession::free_chp_matches(ChpMatchDescriptor& cmd, unsigned num_matches)

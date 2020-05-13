@@ -188,6 +188,8 @@ APPID_STATUS_CODE DnsValidator::add_dns_query_info(AppIdSession& asd, uint16_t i
     const uint8_t* host, uint8_t host_len, uint16_t host_offset, uint16_t record_type)
 {
     AppIdDnsSession* dsession = asd.get_dns_session();
+    if (!dsession)
+        dsession = asd.create_dns_session();
     if ( ( dsession->get_state() != 0 ) && ( dsession->get_id() != id ) )
         dsession->reset();
 
@@ -218,6 +220,8 @@ APPID_STATUS_CODE DnsValidator::add_dns_response_info(AppIdSession& asd, uint16_
     const uint8_t* host, uint8_t host_len, uint16_t host_offset, uint8_t response_type, uint32_t ttl)
 {
     AppIdDnsSession* dsession = asd.get_dns_session();
+    if (!dsession)
+        dsession = asd.create_dns_session();
     if ( ( dsession->get_state() != 0 ) && ( dsession->get_id() != id ) )
         dsession->reset();
 
@@ -438,7 +442,11 @@ int DnsValidator::dns_validate_header(const AppidSessionDirection dir, const DNS
     else if (!hdr->QR)        // Query.
     {
         if (host_reporting)
-            asd.get_dns_session()->reset();
+        {
+            AppIdDnsSession* dsession = asd.get_dns_session();
+            if (dsession)
+                dsession->reset();
+        }
         return dir == APP_ID_FROM_INITIATOR ? APPID_SUCCESS : APPID_REVERSED;
     }
     else     // Response.
