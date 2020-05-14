@@ -149,7 +149,7 @@ private:
 bool Pig::prep(const char* source)
 {
     SnortConfig* sc = SnortConfig::get_conf();
-    SFDAQInstance *instance = new SFDAQInstance(source, sc->daq_config);
+    SFDAQInstance *instance = new SFDAQInstance(source, idx, sc->daq_config);
     if (!SFDAQ::init_instance(instance, sc->bpf_filter))
     {
         delete instance;

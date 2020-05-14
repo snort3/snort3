@@ -212,7 +212,7 @@ static bool AddDaqModuleConfig(const SFDAQModuleConfig *dmc)
     return true;
 }
 
-bool SFDAQ::init(const SFDAQConfig* cfg)
+bool SFDAQ::init(const SFDAQConfig* cfg, unsigned total_instances)
 {
     if (!loaded)
         load(cfg);
@@ -235,6 +235,8 @@ bool SFDAQ::init(const SFDAQConfig* cfg)
     daq_config_set_msg_pool_size(daqcfg, cfg->get_batch_size() * 4);
     daq_config_set_snaplen(daqcfg, cfg->get_mru_size());
     daq_config_set_timeout(daqcfg, cfg->timeout);
+    if (total_instances > 1)
+        daq_config_set_total_instances(daqcfg, total_instances);
 
     /* If no modules were specified, try to automatically configure with the default. */
     if (cfg->module_configs.empty())

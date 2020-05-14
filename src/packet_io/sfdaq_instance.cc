@@ -36,10 +36,12 @@
 
 using namespace snort;
 
-SFDAQInstance::SFDAQInstance(const char* input, const SFDAQConfig* cfg)
+SFDAQInstance::SFDAQInstance(const char* input, unsigned id, const SFDAQConfig* cfg)
 {
     if (input)
         input_spec = input;
+    // The Snort instance ID is 0-based while the DAQ ID is 1-based, so adjust accordingly.
+    instance_id = id + 1;
     batch_size = cfg->get_batch_size();
     daq_msgs = new DAQ_Msg_h[batch_size];
 }
@@ -69,8 +71,11 @@ bool SFDAQInstance::init(DAQ_Config_h daqcfg, const std::string& bpf_string)
     char buf[256] = "";
     int rval;
 
-    /* Reuse the main DAQ instance configuration with the input specification specific to this instance. */
+    // Reuse the main DAQ instance configuration with the input specification specific to this
+    // instance.  Also, configure the DAQ instance ID in the multi-instance case.
     daq_config_set_input(daqcfg, input_spec.c_str());
+    if (daq_config_get_total_instances(daqcfg) > 0)
+        daq_config_set_instance_id(daqcfg, instance_id);
     if ((rval = daq_instance_instantiate(daqcfg, &instance, buf, sizeof(buf))) != DAQ_SUCCESS)
     {
         ErrorMessage("Couldn't construct a DAQ instance: %s (%d)\n", buf, rval);

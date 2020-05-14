@@ -235,7 +235,7 @@ void Snort::init(int argc, char** argv)
 
     LogMessage("%s\n", LOG_DIV);
 
-    SFDAQ::init(sc->daq_config);
+    SFDAQ::init(sc->daq_config, ThreadConfig::get_instance_max());
 }
 
 // this function should only include initialization that must be done as a

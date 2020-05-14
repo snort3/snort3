@@ -42,7 +42,7 @@ public:
 
     static void print_types(std::ostream&);
     static const char* verdict_to_string(DAQ_Verdict verdict);
-    static bool init(const SFDAQConfig*);
+    static bool init(const SFDAQConfig*, unsigned total_instances);
     static void term();
 
     static bool init_instance(SFDAQInstance*, const std::string& bpf_string);

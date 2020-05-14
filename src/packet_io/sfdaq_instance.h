@@ -39,7 +39,7 @@ struct SfIp;
 class SFDAQInstance
 {
 public:
-    SFDAQInstance(const char* intf, const SFDAQConfig*);
+    SFDAQInstance(const char* intf, unsigned id, const SFDAQConfig*);
     ~SFDAQInstance();
 
     bool init(DAQ_Config_h, const std::string& bpf_string);
@@ -87,6 +87,7 @@ private:
     void get_tunnel_capabilities();
 
     std::string input_spec;
+    uint32_t instance_id;
     DAQ_Instance_h instance = nullptr;
     DAQ_Msg_h* daq_msgs;
     unsigned curr_batch_size = 0;
