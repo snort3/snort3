@@ -320,6 +320,14 @@ static bool want_flow(PktType type, Packet* p)
     if ( type != PktType::TCP )
         return true;
 
+    if ( p->is_retry() )
+    {
+        // Do not start a new flow from a retry packet.
+        p->active->drop_packet(p);
+        p->disable_inspect = true;
+        return false;
+    }
+
     if ( p->ptrs.tcph->is_rst() )
         // guessing direction based on ports is misleading
         return false;

@@ -53,6 +53,7 @@ THREAD_LOCAL bool Active::s_suspend = false;
 
 THREAD_LOCAL PacketTracer* snort::s_pkt_trace = nullptr;
 
+void Active::drop_packet(snort::Packet const*, bool) { }
 PacketTracer::PacketTracer() = default;
 PacketTracer::~PacketTracer() = default;
 void PacketTracer::log(const char*, ...) { }
