@@ -139,8 +139,8 @@ public:
     { return DETECT; }
 
 public:
-    uint32_t type;
-    bool optional;
+    uint32_t type = 0;
+    bool optional = false;
 };
 
 bool BerSkipModule::begin(const char*, int, SnortConfig*)

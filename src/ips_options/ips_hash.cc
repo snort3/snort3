@@ -223,7 +223,8 @@ IpsOption::EvalStatus HashOption::eval(Cursor& c, Packet*)
 
 static void parse_hash(HashMatchData* hmd, const char* rule)
 {
-    parse_byte_code(rule, hmd->negated, hmd->hash);
+    if (!parse_byte_code(rule, hmd->negated, hmd->hash))
+        ParseError("Invalid hash");
 }
 
 // FIXIT-L refactor for general use?

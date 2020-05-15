@@ -189,7 +189,7 @@ public:
     { return DETECT; }
 
 public:
-    Base64DecodeData data;
+    Base64DecodeData data = {};
 };
 
 bool B64DecodeModule::begin(const char*, int, SnortConfig*)

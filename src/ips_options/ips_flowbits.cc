@@ -467,7 +467,7 @@ public:
     FlowBitCheck* get_data();
 
 public:
-    FlowBitCheck::Op op;
+    FlowBitCheck::Op op = FlowBitCheck::Op::SET;
     std::string bits;
     FlowBitCheck* fbc = nullptr;
 };

@@ -37,9 +37,9 @@ protected:
 private:
     //19 bits for microseconds
     //45 bits for seconds (out to year 1116918)
-    uint64_t last_wt;
-    uint64_t last_ut;
-    uint64_t last_st;
+    uint64_t last_wt = 0;
+    uint64_t last_ut = 0;
+    uint64_t last_st = 0;
 
     PegCount user_stat;
     PegCount system_stat;

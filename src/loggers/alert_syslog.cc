@@ -151,9 +151,9 @@ public:
     { return GLOBAL; }
 
 public:
-    int facility;
-    int level;
-    int options;
+    int facility = 0;
+    int level = 0;
+    int options = 0;
 };
 
 bool SyslogModule::set(const char*, Value& v, SnortConfig*)

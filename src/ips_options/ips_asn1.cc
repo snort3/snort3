@@ -209,7 +209,7 @@ public:
     { return DETECT; }
 
 public:
-    ASN1_CTXT data;
+    ASN1_CTXT data = {};
 };
 
 bool Asn1Module::begin(const char*, int, SnortConfig*)

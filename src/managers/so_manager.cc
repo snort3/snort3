@@ -296,6 +296,7 @@ void SoManager::rule_to_hex(const char*)
 
     const unsigned hex_per_row = 16;
 
+    std::ios_base::fmtflags f(cout.flags());
     cout << "static const uint8_t rule_" << var;
     cout << "[] =" << endl;
     cout << "{" << endl << "   ";
@@ -316,6 +317,7 @@ void SoManager::rule_to_hex(const char*)
     cout << "};" << endl;
     cout << "static const unsigned rule_" << var << "_len = ";
     cout << data.size() << ";" << endl;
+    cout.flags(f);
 }
 
 void SoManager::rule_to_text(const char* delim)

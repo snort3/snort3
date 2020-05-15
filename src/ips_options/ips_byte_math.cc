@@ -367,7 +367,7 @@ public:
     { return DETECT; }
 
 public:
-    ByteMathData data;
+    ByteMathData data = {};
     string rvalue_var;
     string off_var;
 };

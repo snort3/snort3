@@ -246,7 +246,7 @@ public:
     { return DETECT; }
 
 public:
-    IsDataAtData data;
+    IsDataAtData data = {};
 };
 
 bool IsDataAtModule::begin(const char*, int, SnortConfig*)

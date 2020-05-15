@@ -335,7 +335,7 @@ static void _Unified2LogPacketAlert(
     unsigned u2_type, U2PseudoHeader* u2h = nullptr)
 {
     Serial_Unified2_Header hdr;
-    Serial_Unified2Packet logheader;
+    Serial_Unified2Packet logheader = {};
 
     uint32_t pkt_length = 0;
     uint32_t write_len = sizeof(hdr) + sizeof(Serial_Unified2Packet) - 4;
@@ -817,9 +817,9 @@ public:
     { return GLOBAL; }
 
 public:
-    size_t limit;
-    bool nostamp;
-    bool legacy_events;
+    size_t limit = 0;
+    bool nostamp = true;
+    bool legacy_events = false;
 };
 
 bool U2Module::set(const char*, Value& v, SnortConfig*)

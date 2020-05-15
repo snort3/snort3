@@ -239,7 +239,7 @@ public:
     { return DETECT; }
 
 public:
-    IpProtoData data;
+    IpProtoData data = {};
 };
 
 bool IpProtoModule::begin(const char*, int, SnortConfig*)

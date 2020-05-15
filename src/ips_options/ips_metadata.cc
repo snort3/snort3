@@ -58,7 +58,7 @@ public:
     Usage get_usage() const override
     { return DETECT; }
 
-    bool match;
+    bool match = false;
 };
 
 bool MetadataModule::begin(const char*, int, SnortConfig*)

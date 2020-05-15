@@ -71,8 +71,8 @@ public:
     { return GLOBAL; }
 
 public:
-    bool print_to_file;
-    uint8_t flags;
+    bool print_to_file = false;
+    uint8_t flags = 0;
 };
 } // namespace
 

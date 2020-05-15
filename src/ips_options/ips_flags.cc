@@ -357,7 +357,7 @@ public:
     { return DETECT; }
 
 public:
-    TcpFlagCheckData data;
+    TcpFlagCheckData data = {};
 };
 
 bool FlagsModule::begin(const char*, int, SnortConfig*)

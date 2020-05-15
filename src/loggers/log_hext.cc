@@ -82,7 +82,7 @@ void DaqMessageEventHandler::handle(DataEvent& event, Flow*)
     int vlan_tag = fs->vlan_tag == 0xfff ?  0 : fs->vlan_tag;
 
     TextLog_Print(hext_log,
-        "\n$%s %d %d %d %d %s %d %s %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+        "\n$%s %d %d %d %d %s %d %s %d %u %lu %lu %lu %lu %lu %lu %d %lu %lu %d %d %d\n",
         cmd,
         fs->ingressZone,
         fs->egressZone,
@@ -196,10 +196,10 @@ public:
     { return GLOBAL; }
 
 public:
-    bool file;
-    bool raw;
-    size_t limit;
-    unsigned width;
+    bool file = false;
+    bool raw = false;
+    size_t limit = 0;
+    unsigned width = 20;
 };
 
 bool HextModule::set(const char*, Value& v, SnortConfig*)

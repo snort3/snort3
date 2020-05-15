@@ -55,7 +55,7 @@ public:
     { return DETECT; }
 
 public:
-    uint32_t sid;
+    uint32_t sid = 0;
 };
 
 bool SidModule::set(const char*, Value& v, SnortConfig*)

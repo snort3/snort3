@@ -383,7 +383,7 @@ static const Parameter s_params[] =
 class ByteJumpModule : public Module
 {
 public:
-    ByteJumpModule() : Module(s_name, s_help, s_params) { }
+    ByteJumpModule() : Module(s_name, s_help, s_params) { data.multiplier = 1; }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
@@ -396,7 +396,7 @@ public:
     { return DETECT; }
 
 public:
-    ByteJumpData data;
+    ByteJumpData data = {};
     string var;
     string post_var;
 };

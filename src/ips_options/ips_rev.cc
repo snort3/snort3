@@ -55,7 +55,7 @@ public:
     { return DETECT; }
 
 public:
-    uint32_t rev;
+    uint32_t rev = 0;
 };
 
 bool RevModule::set(const char*, Value& v, SnortConfig*)

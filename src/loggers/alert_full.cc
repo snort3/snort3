@@ -87,8 +87,8 @@ public:
     { return GLOBAL; }
 
 public:
-    bool file;
-    size_t limit;
+    bool file = false;
+    size_t limit = 0;
 };
 
 bool FullModule::set(const char*, Value& v, SnortConfig*)

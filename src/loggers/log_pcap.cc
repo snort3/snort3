@@ -96,7 +96,7 @@ public:
     { return GLOBAL; }
 
 public:
-    size_t limit;
+    size_t limit = 0;
 };
 
 bool TcpdumpModule::set(const char*, Value& v, SnortConfig*)

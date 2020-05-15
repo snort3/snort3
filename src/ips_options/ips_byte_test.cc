@@ -478,7 +478,7 @@ public:
     { return DETECT; }
 
 public:
-    ByteTestData data;
+    ByteTestData data = {};
     string cmp_var;
     string off_var;
 };

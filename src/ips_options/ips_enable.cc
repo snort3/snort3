@@ -58,7 +58,7 @@ public:
     { return DETECT; }
 
 public:
-    IpsPolicy::Enable enable;
+    IpsPolicy::Enable enable = IpsPolicy::Enable::ENABLED;
 };
 
 bool EnableModule::begin(const char*, int, SnortConfig* sc)

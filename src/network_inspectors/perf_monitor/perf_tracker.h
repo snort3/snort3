@@ -73,13 +73,13 @@ protected:
     virtual void write();
 
     uint64_t max_file_size = 0;
-    PerfFormatter* formatter;
+    PerfFormatter* formatter = nullptr;
 
 private:
     std::string fname;
     std::string tracker_name;
     FILE* fh = nullptr;
-    time_t cur_time;
+    time_t cur_time = 0;
 };
 #endif
 

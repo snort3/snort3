@@ -38,6 +38,7 @@
 #include "protocols/packet.h"
 #include "target_based/snort_protocols.h"
 #include "utils/util.h"
+#include "utils/util_cstring.h"
 
 using namespace snort;
 using namespace std;
@@ -105,7 +106,7 @@ public:
 public:
     string file;
     RuleVector rulez;
-    RuleId rule;
+    RuleId rule = {};
 };
 
 bool SfSocketModule::set(const char*, Value& v, SnortConfig*)
@@ -173,7 +174,7 @@ static void sock_init(const char* args)
 
     memset(&context.addr, 0, sizeof(context.addr));
     context.addr.sun_family = AF_UNIX;
-    memcpy(context.addr.sun_path + 1, name.c_str(), strlen(name.c_str()));
+    SnortStrncpy(context.addr.sun_path, name.c_str(), sizeof(context.addr.sun_path));
 
     if (AlertSFSocket_Connect() == 0)
         context.connected = 1;

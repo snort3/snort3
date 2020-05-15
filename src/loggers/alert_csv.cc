@@ -207,7 +207,7 @@ static void ff_eth_type(const Args& a)
 static void ff_flowstart_time(const Args& a)
 {
     if (a.pkt->flow)
-        TextLog_Print(csv_log, "%u", a.pkt->flow->flowstats.start_time.tv_sec);
+        TextLog_Print(csv_log, "%lu", a.pkt->flow->flowstats.start_time.tv_sec);
 }
 
 static void ff_gid(const Args& a)
@@ -318,7 +318,7 @@ static void ff_rule(const Args& a)
 
 static void ff_seconds(const Args& a)
 {
-    TextLog_Print(csv_log, "%u",  a.pkt->pkth->ts.tv_sec);
+    TextLog_Print(csv_log, "%lu",  a.pkt->pkth->ts.tv_sec);
 }
 
 static void ff_server_bytes(const Args& a)
@@ -525,8 +525,8 @@ public:
     { return GLOBAL; }
 
 public:
-    bool file;
-    size_t limit;
+    bool file = false;
+    size_t limit = 0;
     string sep;
     vector<CsvFunc> fields;
 };
@@ -543,7 +543,11 @@ bool CsvModule::set(const char*, Value& v, SnortConfig*)
         fields.clear();
 
         while ( v.get_next_token(tok) )
-            fields.emplace_back(csv_func[Parameter::index(csv_range, tok.c_str())]);
+        {
+            int i = Parameter::index(csv_range, tok.c_str());
+            if ( i >= 0 )
+                fields.emplace_back(csv_func[i]);
+        }
     }
 
     else if ( v.is("limit") )
@@ -571,7 +575,11 @@ bool CsvModule::begin(const char*, int, SnortConfig*)
         v.set_first_token();
 
         while ( v.get_next_token(tok) )
-            fields.emplace_back(csv_func[Parameter::index(csv_range, tok.c_str())]);
+        {
+            int i = Parameter::index(csv_range, tok.c_str());
+            if ( i >= 0 )
+                fields.emplace_back(csv_func[i]);
+        }
     }
     return true;
 }

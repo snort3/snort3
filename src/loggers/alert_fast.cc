@@ -101,9 +101,9 @@ public:
     { return GLOBAL; }
 
 public:
-    size_t limit;
-    bool file;
-    bool packet;
+    size_t limit = 0;
+    bool file = false;
+    bool packet = false;
 };
 
 bool FastModule::set(const char*, Value& v, SnortConfig*)

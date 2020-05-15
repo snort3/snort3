@@ -59,7 +59,7 @@ public:
 public:
     std::string scheme;
     std::string id;
-    SnortConfig* snort_config;
+    SnortConfig* snort_config = nullptr;
 };
 
 bool ReferenceModule::begin(const char*, int, SnortConfig* sc)

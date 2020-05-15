@@ -55,7 +55,7 @@ public:
     { return DETECT; }
 
 public:
-    int priority;
+    int priority = 0;
 };
 
 bool PriorityModule::set(const char*, Value& v, SnortConfig*)

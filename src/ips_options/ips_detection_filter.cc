@@ -68,8 +68,8 @@ public:
     { return DETECT; }
 
 public:
-    THDX_STRUCT thdx;
-    DetectionFilterConfig* dfc;
+    THDX_STRUCT thdx = {};
+    DetectionFilterConfig* dfc = nullptr;
 };
 
 bool DetectionFilterModule::begin(const char*, int, SnortConfig* sc)

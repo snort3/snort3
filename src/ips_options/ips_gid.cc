@@ -55,7 +55,7 @@ public:
     { return DETECT; }
 
 public:
-    uint32_t gid;
+    uint32_t gid = 0;
 };
 
 bool GidModule::set(const char*, Value& v, SnortConfig*)

@@ -55,7 +55,7 @@ public:
     { return DETECT; }
 
 public:
-    Target target;
+    Target target = Target::TARGET_NONE;
 };
 
 bool TargetModule::set(const char*, Value& v, SnortConfig*)

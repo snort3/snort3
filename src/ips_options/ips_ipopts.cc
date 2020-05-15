@@ -212,7 +212,7 @@ public:
     { return DETECT; }
 
 public:
-    IpOptionData data;
+    IpOptionData data = {};
 };
 
 bool IpOptModule::begin(const char*, int, SnortConfig*)

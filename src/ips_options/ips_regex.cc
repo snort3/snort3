@@ -278,7 +278,7 @@ bool RegexModule::begin(const char* name, int, SnortConfig*)
 bool RegexModule::convert_pcre_to_regex_form()
 {
     size_t pos = config.re.find_first_of("\"!");
-    if (config.re[pos] == '!')
+    if (pos != std::string::npos and config.re[pos] == '!')
         return false;
 
     config.re.erase(0,2);

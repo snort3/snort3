@@ -36,6 +36,7 @@
 #include "control.h"
 #include "request.h"
 #include "snort_config.h"
+#include "utils/util_cstring.h"
 
 using namespace snort;
 using namespace std;
@@ -460,7 +461,7 @@ int ControlMgmt::setup_socket_family()
 
         memset(&unix_addr, 0, sizeof(unix_addr));
         unix_addr.sun_family = AF_UNIX;
-        strncpy(unix_addr.sun_path, fullpath.c_str(), sizeof(unix_addr.sun_path)-1);
+        SnortStrncpy(unix_addr.sun_path, fullpath.c_str(), sizeof(unix_addr.sun_path));
         sock_addr = (struct sockaddr*)&unix_addr;
         sock_addr_size = sizeof(unix_addr);
         unlink(fullpath.c_str());

@@ -262,7 +262,7 @@ static bool ff_flowstart_time(const Args& a)
     if (a.pkt->flow)
     {
         print_label(a, "flowstart_time");
-        TextLog_Print(json_log, "%u", a.pkt->flow->flowstats.start_time.tv_sec);
+        TextLog_Print(json_log, "%lu", a.pkt->flow->flowstats.start_time.tv_sec);
         return true;
     }
     return false;
@@ -433,7 +433,7 @@ static bool ff_rule(const Args& a)
 static bool ff_seconds(const Args& a)
 {
     print_label(a, "seconds");
-    TextLog_Print(json_log, "%u",  a.pkt->pkth->ts.tv_sec);
+    TextLog_Print(json_log, "%lu",  a.pkt->pkth->ts.tv_sec);
     return true;
 }
 
@@ -717,8 +717,8 @@ public:
     { return GLOBAL; }
 
 public:
-    bool file;
-    size_t limit;
+    bool file = false;
+    size_t limit = 0;
     string sep;
     vector<JsonFunc> fields;
 };
@@ -735,7 +735,11 @@ bool JsonModule::set(const char*, Value& v, SnortConfig*)
         fields.clear();
 
         while ( v.get_next_token(tok) )
-            fields.emplace_back(json_func[Parameter::index(json_range, tok.c_str())]);
+        {
+            int i = Parameter::index(json_range, tok.c_str());
+            if ( i >= 0 )
+                fields.emplace_back(json_func[i]);
+        }
     }
 
     else if ( v.is("limit") )
@@ -763,7 +767,11 @@ bool JsonModule::begin(const char*, int, SnortConfig*)
         v.set_first_token();
 
         while ( v.get_next_token(tok) )
-            fields.emplace_back(json_func[Parameter::index(json_range, tok.c_str())]);
+        {
+            int i = Parameter::index(json_range, tok.c_str());
+            if ( i >= 0 )
+                fields.emplace_back(json_func[i]);
+        }
     }
     return true;
 }

@@ -143,8 +143,8 @@ public:
 
 public:
     string name;
-    bool relative_flag;
-    SnortConfig* cfg;
+    bool relative_flag = false;
+    SnortConfig* cfg = nullptr;
 };
 
 bool SoModule::begin(const char*, int, SnortConfig* sc)

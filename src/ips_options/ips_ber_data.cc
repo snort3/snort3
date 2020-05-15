@@ -128,7 +128,7 @@ public:
     { return DETECT; }
 
 public:
-    uint32_t type;
+    uint32_t type = 0;
 };
 
 bool BerDataModule::begin(const char*, int, SnortConfig*)

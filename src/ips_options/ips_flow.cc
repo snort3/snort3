@@ -340,7 +340,7 @@ public:
     { return DETECT; }
 
 public:
-    FlowCheckData data;
+    FlowCheckData data = {};
 };
 
 bool FlowModule::begin(const char*, int, SnortConfig*)

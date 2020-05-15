@@ -257,7 +257,7 @@ public:
     { return DETECT; }
 
 public:
-    RpcCheckData data;
+    RpcCheckData data = {};
 };
 
 bool RpcModule::begin(const char*, int, SnortConfig*)

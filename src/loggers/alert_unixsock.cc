@@ -31,6 +31,7 @@
 #include "log/messages.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
+#include "utils/util_cstring.h"
 
 using namespace snort;
 
@@ -212,7 +213,7 @@ static void OpenAlertSock()
     us.addr.sun_family = AF_UNIX;
 
     /* copy path over and preserve a null byte at the end */
-    strncpy(us.addr.sun_path, name.c_str(), sizeof(us.addr.sun_path)-1);
+    SnortStrncpy(us.addr.sun_path, name.c_str(), sizeof(us.addr.sun_path));
 
     if ( (us.socket = socket(AF_UNIX, SOCK_DGRAM, 0)) < 0 )
         FatalError("socket() call failed: %s", get_error(errno));

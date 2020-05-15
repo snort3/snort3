@@ -401,7 +401,7 @@ public:
     { return DETECT; }
 
 public:
-    CvsRuleOption data;
+    CvsRuleOption data = {};
 };
 
 bool CvsModule::begin(const char*, int, SnortConfig*)

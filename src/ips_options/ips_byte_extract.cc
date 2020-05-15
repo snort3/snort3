@@ -342,7 +342,7 @@ static const Parameter s_params[] =
 class ExtractModule : public Module
 {
 public:
-    ExtractModule() : Module(s_name, s_help, s_params) { }
+    ExtractModule() : Module(s_name, s_help, s_params) { data.multiplier = 1; }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
@@ -355,7 +355,7 @@ public:
     { return DETECT; }
 
 public:
-    ByteExtractData data;
+    ByteExtractData data = {};
 };
 
 bool ExtractModule::begin(const char*, int, SnortConfig*)

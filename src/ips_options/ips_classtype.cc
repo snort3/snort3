@@ -56,7 +56,7 @@ public:
     { return DETECT; }
 
 public:
-    const ClassType* type;
+    const ClassType* type = nullptr;
 };
 
 bool ClassTypeModule::set(const char*, Value& v, SnortConfig* sc)

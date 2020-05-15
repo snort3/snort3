@@ -129,6 +129,7 @@ FlowIPTracker::FlowIPTracker(PerfConfig* perf) : PerfTracker(perf, TRACKER_NAME)
     formatter->register_field("udp_created", (PegCount*)
         &stats.state_changes[SFS_STATE_UDP_CREATED]);
     formatter->finalize_fields();
+    stats.total_packets = stats.total_bytes = 0;
 
     memcap = perf->flowip_memcap;
     ip_map = new XHash(DEFAULT_XHASH_NROWS, sizeof(FlowStateKey), sizeof(FlowStateValue), memcap);
