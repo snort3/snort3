@@ -86,6 +86,8 @@ const PegInfo tcp_pegs[] =
     { CountType::MAX, "max_packets_held", "maximum number of packets held simultaneously" },
     { CountType::SUM, "partial_flushes", "number of partial flushes initiated" },
     { CountType::SUM, "partial_flush_bytes", "partial flush total bytes" },
+    { CountType::SUM, "inspector_fallbacks", "count of fallbacks from assigned service inspector" },
+    { CountType::SUM, "partial_fallbacks", "count of fallbacks from assigned service stream splitter" },
     { CountType::END, nullptr, nullptr }
 };
 

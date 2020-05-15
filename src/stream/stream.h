@@ -26,7 +26,6 @@
 
 #include "flow/flow.h"
 
-
 struct HostAttributeEntry;
 
 namespace snort

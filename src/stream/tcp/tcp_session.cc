@@ -498,7 +498,7 @@ void TcpSession::swap_trackers()
 }
 #endif
 
-void TcpSession::NewTcpSessionOnSyn(TcpSegmentDescriptor& tsd)
+void TcpSession::init_session_on_syn(TcpSegmentDescriptor& tsd)
 {
     server.init_on_syn_recv(tsd);
     client.init_on_syn_sent(tsd);
@@ -506,7 +506,7 @@ void TcpSession::NewTcpSessionOnSyn(TcpSegmentDescriptor& tsd)
     tcpStats.sessions_on_syn++;
 }
 
-void TcpSession::NewTcpSessionOnSynAck(TcpSegmentDescriptor& tsd)
+void TcpSession::init_session_on_synack(TcpSegmentDescriptor& tsd)
 {
     server.init_on_synack_sent(tsd);
     client.init_on_synack_recv(tsd);
@@ -552,26 +552,26 @@ bool TcpSession::handle_syn_on_reset_session(TcpSegmentDescriptor& tsd)
             pkt_action_mask |= ACTION_RST;
             return false;
         }
-        else if (tcph->is_syn_only())
+        else if ( tcph->is_syn_only() )
         {
             flow->ssn_state.direction = FROM_CLIENT;
             flow->session_state = STREAM_STATE_SYN;
             flow->set_ttl(tsd.get_pkt(), true);
-            NewTcpSessionOnSyn(tsd);
+            init_session_on_syn(tsd);
             tcpStats.resyns++;
             listener = &server;
             talker = &client;
             listener->normalizer.ecn_tracker(tcph, config->require_3whs());
             flow->update_session_flags(SSNFLAG_SEEN_CLIENT);
         }
-        else if (tcph->is_syn_ack())
+        else if ( tcph->is_syn_ack() )
         {
             if (config->midstream_allowed(tsd.get_pkt()))
             {
                 flow->ssn_state.direction = FROM_SERVER;
                 flow->session_state = STREAM_STATE_SYN_ACK;
                 flow->set_ttl(tsd.get_pkt(), false);
-                NewTcpSessionOnSynAck(tsd);
+                init_session_on_synack(tsd);
                 tcpStats.resyns++;
             }
 
@@ -868,7 +868,7 @@ void TcpSession::flush_tracker(
          return;
 
      tracker.set_tf_flags(TF_FORCE_FLUSH);
-     if ( tracker.reassembler.flush_stream(p, dir) )
+     if ( tracker.reassembler.flush_stream(p, dir, final_flush) )
          tracker.reassembler.purge_flushed_ackd();
 
      tracker.clear_tf_flags(TF_FORCE_FLUSH);

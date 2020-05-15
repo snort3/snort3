@@ -25,6 +25,7 @@
 
 #include "dce_tcp_paf.h"
 
+#include "dce_common.h"
 #include "dce_tcp.h"
 
 using namespace snort;
@@ -43,75 +44,70 @@ using namespace snort;
 static StreamSplitter::Status dce2_tcp_paf(DCE2_PafTcpData* ds, Flow* flow, const uint8_t* data,
     uint32_t len, uint32_t flags, uint32_t* fp)
 {
-    uint32_t n = 0;
-    int start_state;
-    StreamSplitter::Status ps = StreamSplitter::SEARCH;
-    uint32_t tmp_fp = 0;
     DCE2_TcpSsnData* sd = get_dce2_tcp_session_data(flow);
-
-    int num_requests = 0;
-
     if ( dce2_paf_abort((DCE2_SsnData*)sd) )
-    {
         return StreamSplitter::ABORT;
-    }
 
-    if (sd == nullptr)
+    if ( !sd )
     {
         bool autodetected = false;
-        if (len >= sizeof(DceRpcCoHdr))
+        if ( len >= sizeof(DceRpcCoHdr) )
         {
             const DceRpcCoHdr* co_hdr = (const DceRpcCoHdr*)data;
 
-            if ((DceRpcCoVersMaj(co_hdr) == DCERPC_PROTO_MAJOR_VERS__5)
+            if ( (DceRpcCoVersMaj(co_hdr) == DCERPC_PROTO_MAJOR_VERS__5)
                 && (DceRpcCoVersMin(co_hdr) == DCERPC_PROTO_MINOR_VERS__0)
                 && (((flags & PKT_FROM_CLIENT)
                         && DceRpcCoPduType(co_hdr) == DCERPC_PDU_TYPE__BIND)
                     || ((flags & PKT_FROM_SERVER)
                         && DceRpcCoPduType(co_hdr) == DCERPC_PDU_TYPE__BIND_ACK))
-                && (DceRpcCoFragLen(co_hdr) >= sizeof(DceRpcCoHdr)))
+                && (DceRpcCoFragLen(co_hdr) >= sizeof(DceRpcCoHdr)) )
             {
                 autodetected = true;
             }
         }
-        else if ((*data == DCERPC_PROTO_MAJOR_VERS__5) && (flags & PKT_FROM_CLIENT))
+        else if ( (*data == DCERPC_PROTO_MAJOR_VERS__5) && (flags & PKT_FROM_CLIENT) )
         {
             autodetected = true;
         }
 
-        if (!autodetected)
-        {
+        if ( !autodetected )
             return StreamSplitter::ABORT;
-        }
     }
 
-    start_state = (uint8_t)ds->paf_state;
-
-    while (n < len)
+    int start_state = (uint8_t)ds->paf_state;
+    int num_requests = 0;
+    uint32_t tmp_fp = 0;
+    uint32_t n = 0;
+    while ( n < len )
     {
-        switch (ds->paf_state)
+        switch ( ds->paf_state )
         {
         case DCE2_PAF_TCP_STATES__4:      // Get byte order
             ds->byte_order = DceRpcByteOrder(data[n]);
             ds->paf_state = (DCE2_PafTcpStates)(((int)ds->paf_state) + 1);
             break;
+
         case DCE2_PAF_TCP_STATES__8:
-            if (ds->byte_order == DCERPC_BO_FLAG__LITTLE_ENDIAN)
+            if ( ds->byte_order == DCERPC_BO_FLAG__LITTLE_ENDIAN )
                 ds->frag_len = data[n];
             else
                 ds->frag_len = data[n] << 8;
             ds->paf_state = (DCE2_PafTcpStates)(((int)ds->paf_state) + 1);
             break;
+
         case DCE2_PAF_TCP_STATES__9:
-            if (ds->byte_order == DCERPC_BO_FLAG__LITTLE_ENDIAN)
+            if ( ds->byte_order == DCERPC_BO_FLAG__LITTLE_ENDIAN )
                 ds->frag_len |= data[n] << 8;
             else
                 ds->frag_len |= data[n];
 
             /* If we get a bad frag length abort */
-            if (ds->frag_len < sizeof(DceRpcCoHdr))
+            if ( ds->frag_len < sizeof(DceRpcCoHdr) )
             {
-                return StreamSplitter::ABORT;
+               if ( sd )
+                    dce_alert(GID_DCE2, DCE2_CO_FRAG_LEN_LT_HDR, (dce2CommonStats*)&dce2_tcp_stats, *(DCE2_SsnData*)sd);
+               return StreamSplitter::ABORT;
             }
 
             /* Increment n here so we can continue */
@@ -119,11 +115,12 @@ static StreamSplitter::Status dce2_tcp_paf(DCE2_PafTcpData* ds, Flow* flow, cons
             num_requests++;
             /* Might have multiple PDUs in one segment.  If the last PDU is partial,
              * flush just before it */
-            if ((num_requests == 1) || (n <= len))
+            if ( (num_requests == 1) || (n <= len) )
                 tmp_fp += ds->frag_len;
 
             ds->paf_state = DCE2_PAF_TCP_STATES__0;
             continue;      // we incremented n already
+
         default:
             ds->paf_state = (DCE2_PafTcpStates)(((int)ds->paf_state) + 1);
             break;
@@ -132,13 +129,13 @@ static StreamSplitter::Status dce2_tcp_paf(DCE2_PafTcpData* ds, Flow* flow, cons
         n++;
     }
 
-    if (tmp_fp != 0)
+    if ( tmp_fp != 0 )
     {
         *fp = tmp_fp - start_state;
         return StreamSplitter::FLUSH;
     }
 
-    return ps;
+    return StreamSplitter::SEARCH;
 }
 
 Dce2TcpSplitter::Dce2TcpSplitter(bool c2s) : StreamSplitter(c2s)

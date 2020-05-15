@@ -416,7 +416,6 @@ int TcpReassembler::flush_data_segments(
         {
             pdu->data = sb.data;
             pdu->dsize = sb.length;
-            assert(sb.length <= Packet::max_dsize);
         }
 
         total_flushed += bytes_copied;
@@ -546,13 +545,12 @@ int TcpReassembler::_flush_to_seq(
         if ( footprint == 0 )
             return bytes_processed;
 
-        if ( footprint > Packet::max_dsize )
-            /* this is as much as we can pack into a stream buffer */
+        if ( footprint > Packet::max_dsize )    // max stream buffer size
             footprint = Packet::max_dsize;
 
         if ( trs.tracker->splitter->is_paf() and
             ( trs.tracker->get_tf_flags() & TF_MISSING_PREV_PKT ) )
-            fallback(trs);
+            fallback(*trs.tracker, trs.server_side);
 
         Packet* pdu = initialize_pdu(trs, p, pkt_flags, trs.sos.seglist.cur_rseg->tv);
         int32_t flushed_bytes = flush_data_segments(trs, p, footprint, pdu);
@@ -942,16 +940,36 @@ int32_t TcpReassembler::flush_pdu_ips(TcpReassemblerState& trs, uint32_t* flags,
     return -1;
 }
 
-void TcpReassembler::fallback(TcpReassemblerState& trs)
+static inline bool both_splitters_aborted(Flow* flow)
 {
-    bool c2s = trs.tracker->splitter->to_server();
+    uint32_t both_splitters_yoinked = (SSNFLAG_ABORT_CLIENT | SSNFLAG_ABORT_SERVER);
+    return (flow->get_session_flags() & both_splitters_yoinked) == both_splitters_yoinked;
+}
 
-    delete trs.tracker->splitter;
-    trs.tracker->splitter = new AtomSplitter(c2s, trs.sos.session->config->paf_max);
-    trs.tracker->paf_state.paf = StreamSplitter::SEARCH;
+static inline void fallback(TcpStreamTracker& trk, bool server_side, uint16_t max)
+{
+    delete trk.splitter;
+    trk.splitter = new AtomSplitter(!server_side, max);
+    trk.paf_state.paf = StreamSplitter::START;
+    ++tcpStats.partial_fallbacks;
+}
 
-    trs.sos.session->flow->set_session_flags(
-        c2s ? SSNFLAG_ABORT_CLIENT : SSNFLAG_ABORT_SERVER );
+void TcpReassembler::fallback(TcpStreamTracker& tracker, bool server_side)
+{
+    uint16_t max = tracker.session->config->paf_max;
+    ::fallback(tracker, server_side, max);
+
+    Flow* flow = tracker.session->flow;
+    if ( server_side )
+        flow->set_session_flags(SSNFLAG_ABORT_SERVER);
+    else
+        flow->set_session_flags(SSNFLAG_ABORT_CLIENT);
+
+    if ( flow->gadget and both_splitters_aborted(flow) )
+    {
+        flow->clear_gadget();
+        ++tcpStats.inspector_fallbacks;
+    }
 }
 
 // iterate over trs.sos.seglist and scan all new acked bytes
@@ -1067,7 +1085,7 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
 
         if ( !flags && trs.tracker->splitter->is_paf() )
         {
-            fallback(trs);
+            fallback(*trs.tracker, trs.server_side);
             return flush_on_data_policy(trs, p);
         }
     }
@@ -1111,8 +1129,11 @@ int TcpReassembler::flush_on_ack_policy(TcpReassemblerState& trs, Packet* p)
 
         while (flush_amt >= 0)
         {
-            if (!flush_amt)
+            if ( !flush_amt )
                 flush_amt = trs.sos.seglist.cur_rseg->c_seq - trs.sos.seglist_base_seq;
+
+            if ( trs.tracker->paf_state.paf == StreamSplitter::ABORT )
+                trs.tracker->splitter->finish(p->flow);
 
             // for consistency with other cases, should return total
             // but that breaks flushing pipelined pdus
@@ -1129,9 +1150,10 @@ int TcpReassembler::flush_on_ack_policy(TcpReassemblerState& trs, Packet* p)
                 break;  // bail if nothing flushed
         }
 
-        if (!flags && trs.tracker->splitter->is_paf())
+        if ( (trs.tracker->paf_state.paf == StreamSplitter::ABORT) &&
+            (trs.tracker->splitter && trs.tracker->splitter->is_paf()) )
         {
-            fallback(trs);
+            fallback(*trs.tracker, trs.server_side);
             return flush_on_ack_policy(trs, p);
         }
     }

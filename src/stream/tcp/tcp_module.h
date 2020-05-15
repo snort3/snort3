@@ -73,9 +73,9 @@ struct TcpStats
     PegCount segs_released;
     PegCount segs_split;
     PegCount segs_used;
-    PegCount rebuilt_packets;   //iStreamFlushes
+    PegCount rebuilt_packets;
     PegCount rebuilt_buffers;
-    PegCount rebuilt_bytes;     //total_rebuilt_bytes
+    PegCount rebuilt_bytes;
     PegCount overlaps;
     PegCount gaps;
     PegCount exceeded_max_segs;
@@ -100,6 +100,8 @@ struct TcpStats
     PegCount max_packets_held;
     PegCount partial_flushes;
     PegCount partial_flush_bytes;
+    PegCount inspector_fallbacks;
+    PegCount partial_fallbacks;
 };
 
 extern THREAD_LOCAL struct TcpStats tcpStats;

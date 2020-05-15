@@ -1160,7 +1160,8 @@ static void obfuscate(Packet* p, const uint8_t* data, int& ip_ob_start, int& ip_
 }
 
 void LogNetData(
-    TextLog* log, const uint8_t* data, const int len, Packet* p, const char* buf_name)
+        TextLog* log, const uint8_t* data, const int len, Packet* p, const char* buf_name,
+        const char* ins_name)
 {
     if ( !len )
         return;
@@ -1177,7 +1178,9 @@ void LogNetData(
 
     const HexAsciiLayout& hal = SnortConfig::get_conf()->output_wide_hex() ? hal_wide : hal_std;
     const char* hdr_off = SnortConfig::verbose_byte_dump() ? hal.offset_hdr : "";
-    const char* ins_name = p->flow and p->flow->gadget ?  p->flow->gadget->get_name() : "snort";
+
+    if ( !ins_name )
+        ins_name = p->flow and p->flow->gadget ?  p->flow->gadget->get_name() : "snort";
 
     TextLog_Print(log, "\n%s.%s[%u]:\n", ins_name, buf_name, len);
     TextLog_Print(log, "%s%s\n", hdr_off, hal.separator);

@@ -186,7 +186,7 @@ static inline int handle_repeated_syn_mswin(
     /* Windows has some strange behavior here.  If the sequence of the reset is the
      * next expected sequence, it Resets.  Otherwise it ignores the 2nd SYN.
      */
-    if (SEQ_EQ(tsd.get_seg_seq(), listener->rcv_nxt))
+    if ( SEQ_EQ(tsd.get_seg_seq(), listener->rcv_nxt) )
     {
         session->flow->set_session_flags(SSNFLAG_RESET);
         talker->set_tcp_state(TcpStreamTracker::TCP_CLOSED);
@@ -203,7 +203,7 @@ static inline int handle_repeated_syn_bsd(
     TcpStreamTracker* talker, const TcpSegmentDescriptor& tsd, TcpStreamSession* session)
 {
     /* If its not a retransmission of the actual SYN... RESET */
-    if (!SEQ_EQ(tsd.get_seg_seq(), talker->get_iss()))
+    if ( !SEQ_EQ(tsd.get_seg_seq(), talker->get_iss()) )
     {
         session->flow->set_session_flags(SSNFLAG_RESET);
         talker->set_tcp_state(TcpStreamTracker::TCP_CLOSED);
@@ -222,7 +222,7 @@ static inline bool paws_3whs_zero_ts_not_supported(
 {
     bool check_ts = true;
 
-    if (talker->get_tf_flags() & TF_TSTAMP_ZERO)
+    if ( talker->get_tf_flags() & TF_TSTAMP_ZERO )
     {
         talker->clear_tf_flags(TF_TSTAMP);
         listener->clear_tf_flags(TF_TSTAMP);
@@ -258,7 +258,7 @@ static inline uint16_t set_urg_offset_linux(const tcp::TCPHdr* tcph, uint16_t ds
 {
     uint16_t urg_offset = 0;
 
-    if (tcph->are_flags_set(TH_URG) )
+    if ( tcph->are_flags_set(TH_URG) )
     {
         urg_offset = tcph->urp();
 
@@ -369,8 +369,8 @@ bool TcpNormalizerHpux11::is_paws_ts_checked_required(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
 {
     /* HPUX 11 ignores timestamps for out of order segments */
-    if ((tns.tracker->get_tf_flags() & TF_MISSING_PKT) || !SEQ_EQ(tns.tracker->rcv_nxt,
-        tsd.get_seg_seq()))
+    if ( (tns.tracker->get_tf_flags() & TF_MISSING_PKT) || !SEQ_EQ(tns.tracker->rcv_nxt,
+        tsd.get_seg_seq()) )
         return false;
     else
         return true;

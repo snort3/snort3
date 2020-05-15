@@ -81,7 +81,7 @@ protected:
     uint32_t get_reverse_packet_dir(TcpReassemblerState&, const snort::Packet*);
     uint32_t get_forward_packet_dir(TcpReassemblerState&, const snort::Packet*);
     int32_t flush_pdu_ips(TcpReassemblerState&, uint32_t*, snort::Packet*);
-    void fallback(TcpReassemblerState&);
+    void fallback(TcpStreamTracker&, bool server_side);
     int32_t flush_pdu_ackd(TcpReassemblerState&, uint32_t* flags, snort::Packet*);
     void purge_to_seq(TcpReassemblerState&, uint32_t flush_seq);
 

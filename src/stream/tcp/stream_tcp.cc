@@ -54,7 +54,9 @@ public:
     TcpStreamConfig* const config;
 };
 
-StreamTcp::StreamTcp (TcpStreamConfig* c) : config(c) {}
+StreamTcp::StreamTcp (TcpStreamConfig* c)
+    : config(c)
+{ }
 
 StreamTcp::~StreamTcp()
 { delete config; }

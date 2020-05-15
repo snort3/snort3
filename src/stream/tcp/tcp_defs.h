@@ -30,39 +30,32 @@ struct Packet;
 }
 
 /* actions */
-#define ACTION_NOTHING                  0x00000000
-#define ACTION_FLUSH_SENDER_STREAM      0x00000001
-#define ACTION_FLUSH_RECEIVER_STREAM    0x00000002
-#define ACTION_DROP_SESSION             0x00000004
-#define ACTION_ACK_SENDER_DATA          0x00000008
-#define ACTION_ACK_RECEIVER_DATA        0x00000010
-#define ACTION_SET_SSN                  0x00000040
-#define ACTION_COMPLETE_TWH             0x00000080
-#define ACTION_RST                      0x00000100
-#define ACTION_BAD_SEQ                  0x00000200
-#define ACTION_BAD_PKT                  0x00000400
-#define ACTION_LWSSN_CLOSED             0x00000800
-#define ACTION_DISABLE_INSPECTION       0x00001000
+#define ACTION_NOTHING               0x00000000
+#define ACTION_FLUSH_SENDER_STREAM   0x00000001
+#define ACTION_FLUSH_RECEIVER_STREAM 0x00000002
+#define ACTION_DROP_SESSION          0x00000004
+#define ACTION_ACK_SENDER_DATA       0x00000008
+#define ACTION_ACK_RECEIVER_DATA     0x00000010
+#define ACTION_SET_SSN               0x00000040
+#define ACTION_COMPLETE_TWH          0x00000080
+#define ACTION_RST                   0x00000100
+#define ACTION_BAD_SEQ               0x00000200
+#define ACTION_BAD_PKT               0x00000400
+#define ACTION_LWSSN_CLOSED          0x00000800
+#define ACTION_DISABLE_INSPECTION    0x00001000
 
-#define TF_NONE                     0x0000
-#define TF_WSCALE                   0x0001
-#define TF_TSTAMP                   0x0002
-#define TF_TSTAMP_ZERO              0x0004
-#define TF_MSS                      0x0008
-#define TF_FORCE_FLUSH              0x0010
-#define TF_PKT_MISSED               0x0020  // sticky
-#define TF_MISSING_PKT              0x0040  // used internally
-#define TF_MISSING_PREV_PKT         0x0080  // reset for each reassembled
+#define TF_NONE             0x0000
+#define TF_WSCALE           0x0001
+#define TF_TSTAMP           0x0002
+#define TF_TSTAMP_ZERO      0x0004
+#define TF_MSS              0x0008
+#define TF_FORCE_FLUSH      0x0010
+#define TF_PKT_MISSED       0x0020  // sticky
+#define TF_MISSING_PKT      0x0040  // used internally
+#define TF_MISSING_PREV_PKT 0x0080  // reset for each reassembled
 
 #define PAWS_WINDOW         60
 #define PAWS_24DAYS         2073600         /* 24 days in seconds */
-
-#define SUB_STATE_NONE 0x00
-#define SUB_SYN_SENT  0x01
-#define SUB_ACK_SENT  0x02
-#define SUB_SETUP_OK  0x03
-#define SUB_RST_SENT  0x04
-#define SUB_FIN_SENT  0x08
 
 #define STREAM_UNALIGNED       0
 #define STREAM_ALIGNED         1

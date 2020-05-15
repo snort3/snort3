@@ -109,7 +109,7 @@ void TcpStreamSession::update_session_on_server_packet(TcpSegmentDescriptor& tsd
 
 void TcpStreamSession::update_session_on_client_packet(TcpSegmentDescriptor& tsd)
 {
-    /* if we got here we had to see the SYN already... */
+    /* if we got here we have seen the SYN already... */
     flow->set_session_flags(SSNFLAG_SEEN_CLIENT);
     talker = &client;
     listener = &server;

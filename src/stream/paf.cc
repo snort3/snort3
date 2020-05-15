@@ -134,7 +134,6 @@ static bool paf_callback (
     const uint8_t* data, uint32_t len, uint32_t flags)
 {
     ps->fpt = 0;
-
     ps->paf = ss->scan(pkt, data, len, flags, &ps->fpt);
 
     if ( ps->paf == StreamSplitter::ABORT )
@@ -143,7 +142,6 @@ static bool paf_callback (
     if ( ps->paf != StreamSplitter::SEARCH )
     {
         ps->fpt += px.idx;
-
         if ( ps->fpt <= px.len )
         {
             px.idx = ps->fpt;
@@ -164,9 +162,8 @@ static inline bool paf_eval (
     {
     case StreamSplitter::SEARCH:
         if ( px.len > px.idx )
-        {
             return paf_callback(ss, ps, px, pkt, data, len, flags);
-        }
+
         return false;
 
     case StreamSplitter::FLUSH:
@@ -202,6 +199,7 @@ static inline bool paf_eval (
                 uint32_t delta = ps->fpt - px.idx;
                 if ( delta > len )
                     return false;
+
                 data += delta;
                 len -= delta;
             }
@@ -270,9 +268,11 @@ int32_t paf_check (
         {
             ps->fpt = 0;
             px.ft = FT_MAX;
+            ps->paf = StreamSplitter::ABORT;
             return paf_flush(ps, px, flags);
         }
         *flags = 0;
+        ps->paf = StreamSplitter::ABORT;
         return -1;
     }
     else if ( SEQ_LEQ(seq + len, ps->seq) )
@@ -285,8 +285,8 @@ int32_t paf_check (
         data += shift;
         len -= shift;
     }
-    ps->seq += len;
 
+    ps->seq += len;
     px.idx = total - len;
 
     // if 'total' is greater than the maximum paf_max AND 'total' is greater
@@ -306,9 +306,7 @@ int32_t paf_check (
         len = len + px.len - total;
     }
     else
-    {
         px.len = total;
-    }
 
     do
     {
@@ -323,6 +321,7 @@ int32_t paf_check (
             paf_jump(ps, fp);
             return fp;
         }
+
         if ( !cont )
             break;
 

@@ -140,11 +140,9 @@ bool TcpSegmentNode::is_retransmit(const uint8_t* rdata, uint16_t rsize,
 
     if ( orig_dsize == c_len )
     {
-        if ( ( ( c_len <= rsize )and !memcmp(data, rdata, c_len) )
-            or ( ( c_len > rsize )and !memcmp(data, rdata, rsize) ) )
-        {
+        uint16_t cmp_len = ( c_len <= rsize ) ? c_len : rsize;
+        if ( !memcmp(data, rdata, cmp_len) )
             return true;
-        }
     }
     //Checking for a possible split of segment in which case
     //we compare complete data of the segment to find a retransmission

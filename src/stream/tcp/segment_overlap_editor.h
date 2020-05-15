@@ -64,9 +64,7 @@ struct SegmentOverlapState
     bool keep_segment;
 
     ~SegmentOverlapState()
-    {
-        seglist.reset();
-    }
+    { seglist.reset(); }
 
     void init_sos(TcpSession*, StreamPolicy);
     void init_soe(TcpSegmentDescriptor& tsd, TcpSegmentNode* left, TcpSegmentNode* right);

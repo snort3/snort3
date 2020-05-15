@@ -42,6 +42,8 @@
 #include "detection/detection_engine.h"
 #include "detection/signature.h"
 #include "events/event.h"
+#include "flow/flow.h"
+#include "flow/session.h"
 #include "framework/logger.h"
 #include "framework/module.h"
 #include "log/log_text.h"
@@ -52,6 +54,7 @@
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
 #include "service_inspectors/http_inspect/http_enum.h"
+#include "stream/stream_splitter.h"
 
 using namespace snort;
 using namespace std;
@@ -255,7 +258,18 @@ void FastLogger::log_data(Packet* p, const Event& event)
     bool log_pkt = true;
 
     TextLog_NewLine(fast_log);
-    Inspector* gadget = p->flow ? p->flow->gadget : nullptr;
+    const char* ins_name = "snort";
+    Inspector* gadget = nullptr;
+    if ( p->flow and p->flow->session )
+    {
+        snort::StreamSplitter* ss = p->flow->session->get_splitter(p->is_from_client());
+        if ( ss and ss->is_paf() )
+        {
+            gadget = p->flow->gadget;
+            if ( gadget )
+                ins_name = gadget->get_name();
+        }
+    }
     const char** buffers = gadget ? gadget->get_api()->buffers : nullptr;
 
     if ( buffers )
@@ -269,7 +283,7 @@ void FastLogger::log_data(Packet* p, const Event& event)
         {
 
             if ( gadget->get_buf(id, p, buf) )
-                LogNetData(fast_log, buf.data, buf.len, p, buffers[id-1]);
+                LogNetData(fast_log, buf.data, buf.len, p, buffers[id-1], ins_name);
 
             log_pkt = rsp;
         }
@@ -279,13 +293,13 @@ void FastLogger::log_data(Packet* p, const Event& event)
         InspectionBuffer buf;
 
         if ( gadget->get_buf(InspectionBuffer::IBT_KEY, p, buf) )
-            LogNetData(fast_log, buf.data, buf.len, p);
+            LogNetData(fast_log, buf.data, buf.len, p, nullptr, ins_name);
 
         if ( gadget->get_buf(InspectionBuffer::IBT_HEADER, p, buf) )
-            LogNetData(fast_log, buf.data, buf.len, p);
+            LogNetData(fast_log, buf.data, buf.len, p, nullptr, ins_name);
 
         if ( gadget->get_buf(InspectionBuffer::IBT_BODY, p, buf) )
-            LogNetData(fast_log, buf.data, buf.len, p);
+            LogNetData(fast_log, buf.data, buf.len, p, nullptr, ins_name);
     }
     if (p->has_ip())
         LogIPPkt(fast_log, p);
@@ -298,10 +312,10 @@ void FastLogger::log_data(Packet* p, const Event& event)
         for ( const auto& b : *p->obfuscator )
             buf.replace(b.offset, b.length, b.length, p->obfuscator->get_mask_char());
 
-        LogNetData(fast_log, (const uint8_t*)buf.c_str(), p->dsize, p);
+        LogNetData(fast_log, (const uint8_t*)buf.c_str(), p->dsize, p, nullptr, ins_name);
     }
     else if ( log_pkt )
-        LogNetData(fast_log, p->data, p->dsize, p);
+        LogNetData(fast_log, p->data, p->dsize, p, nullptr, ins_name);
 
     DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
 
