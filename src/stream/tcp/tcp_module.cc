@@ -197,9 +197,6 @@ static const Parameter s_params[] =
     { "track_only", Parameter::PT_BOOL, nullptr, "false",
       "disable reassembly if true" },
 
-    { "held_packet_timeout", Parameter::PT_INT, "1:max32", "1000",
-      "timeout in milliseconds for held packets" },
-
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -322,10 +319,6 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
             config->flags |= STREAM_CONFIG_NO_REASSEMBLY;
         else
             config->flags &= ~STREAM_CONFIG_NO_REASSEMBLY;
-    }
-    else if ( v.is("held_packet_timeout") )
-    {
-        config->held_packet_timeout = v.get_uint32();
     }
     else
         return false;

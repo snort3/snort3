@@ -71,8 +71,6 @@ public:
     int hs_timeout = -1;
 
     bool no_ack;
-
-    uint32_t held_packet_timeout = 1000;  // in milliseconds
 };
 
 #endif

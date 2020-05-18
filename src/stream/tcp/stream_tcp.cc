@@ -29,7 +29,6 @@
 #include "tcp_session.h"
 #include "tcp_reassemblers.h"
 #include "tcp_state_machine.h"
-#include "tcp_stream_tracker.h"
 
 using namespace snort;
 
@@ -77,7 +76,6 @@ bool StreamTcp::configure(SnortConfig* sc)
 
 void StreamTcp::tinit()
 {
-    TcpStreamTracker::set_held_packet_timeout(config->held_packet_timeout);
     TcpHAManager::tinit();
     TcpSession::sinit();
 }
@@ -119,16 +117,6 @@ static Inspector* tcp_ctor(Module* m)
 static void tcp_dtor(Inspector* p)
 { delete p; }
 
-static void stream_tcp_tinit()
-{
-    TcpStreamTracker::thread_init();
-}
-
-static void stream_tcp_tterm()
-{
-    TcpStreamTracker::thread_term();
-}
-
 static void stream_tcp_pinit()
 {
     TcpStateMachine::initialize();
@@ -166,8 +154,8 @@ static const InspectApi tcp_api =
     nullptr,  // service
     stream_tcp_pinit,  // pinit
     stream_tcp_pterm,  // pterm
-    stream_tcp_tinit,  // tinit,
-    stream_tcp_tterm,  // tterm,
+    nullptr,  // tinit,
+    nullptr,  // tterm,
     tcp_ctor,
     tcp_dtor,
     tcp_ssn,

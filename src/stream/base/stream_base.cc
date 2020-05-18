@@ -34,6 +34,7 @@
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 #include "stream/flush_bucket.h"
+#include "stream/tcp/tcp_stream_tracker.h"
 
 #include "stream_ha.h"
 #include "stream_module.h"
@@ -197,6 +198,8 @@ void StreamBase::tinit()
     if ( config.flow_cache_cfg.max_flows > 0 )
         flow_con->init_exp(config.flow_cache_cfg.max_flows);
 
+    TcpStreamTracker::set_held_packet_timeout(config.held_packet_timeout);
+
 #ifdef REG_TEST
     FlushBucket::set(config.footprint);
 #else
@@ -303,11 +306,17 @@ static void base_dtor(Inspector* p)
     delete p;
 }
 
+static void base_tinit()
+{
+    TcpStreamTracker::thread_init();
+}
+
 static void base_tterm()
 {
     // this can't happen sooner because the counts haven't been harvested yet
     delete flow_con;
     flow_con = nullptr;
+    TcpStreamTracker::thread_term();
 }
 
 static const InspectApi base_api =
@@ -330,7 +339,7 @@ static const InspectApi base_api =
     nullptr, // service
     nullptr, // init
     nullptr, // term
-    nullptr, // tinit
+    base_tinit,
     base_tterm,
     base_ctor,
     base_dtor,

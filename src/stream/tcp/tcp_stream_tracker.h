@@ -292,9 +292,11 @@ public:
     void finalize_held_packet(snort::Flow*);
     uint32_t perform_partial_flush();
 
-    // max_remove < 0 means time out all eligible packets
-    static void release_held_packets(const timeval& cur_time, int max_remove);
+    // max_remove < 0 means time out all eligible packets.
+    // Return whether there are more packets that need to be released.
+    static bool release_held_packets(const timeval& cur_time, int max_remove);
     static void set_held_packet_timeout(const uint32_t ms);
+    static bool adjust_expiration(uint32_t new_timeout_ms, const timeval& now);
     static void thread_init();
     static void thread_term();
 

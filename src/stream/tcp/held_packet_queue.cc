@@ -31,6 +31,16 @@
 
 using namespace snort;
 
+void HeldPacket::adjust_expiration(const timeval& delta, bool up)
+{
+    timeval new_expiration;
+    if ( up )
+        timeradd(&expiration, &delta, &new_expiration);
+    else
+        timersub(&expiration, &delta, &new_expiration);
+    expiration = new_expiration;
+}
+
 HeldPacket::HeldPacket(DAQ_Msg_h msg, uint32_t seq, const timeval& exp, TcpStreamTracker& trk)
     : daq_msg(msg), seq_num(seq), expiration(exp), tracker(trk), expired(false)
 {
@@ -52,7 +62,7 @@ void HeldPacketQueue::erase(iter_t it)
     q.erase(it);
 }
 
-void HeldPacketQueue::execute(const timeval& cur_time, int max_remove)
+bool HeldPacketQueue::execute(const timeval& cur_time, int max_remove)
 {
     while ( !q.empty() && (max_remove < 0 || max_remove--) )
     {
@@ -66,4 +76,38 @@ void HeldPacketQueue::execute(const timeval& cur_time, int max_remove)
         else
             break;
     }
+
+    return !q.empty() && q.front().has_expired(cur_time);
+}
+
+bool HeldPacketQueue::adjust_expiration(uint32_t new_timeout, const timeval& now)
+{
+    if ( q.empty() )
+        return false;
+
+    uint32_t ms;
+    bool up;
+
+    uint32_t old_timeout = get_timeout();
+    set_timeout(new_timeout);
+
+    if ( new_timeout < old_timeout )
+    {
+        ms = old_timeout - new_timeout;
+        up = false;
+    }
+    else if ( new_timeout > old_timeout )
+    {
+        ms = new_timeout - old_timeout;
+        up = true;
+    }
+    else
+        return false;
+
+    timeval delta = { static_cast<time_t>(ms) / 1000, static_cast<suseconds_t>((ms % 1000) * 1000) };
+
+    for ( auto& hp : q )
+        hp.adjust_expiration(delta, up);
+
+    return q.front().has_expired(now);
 }

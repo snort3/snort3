@@ -48,6 +48,7 @@ public:
     TcpStreamTracker& get_tracker() const { return tracker; }
     DAQ_Msg_h get_daq_msg() const { return daq_msg; }
     uint32_t get_seq_num() const { return seq_num; }
+    void adjust_expiration(const timeval& delta, bool up);
 
 private:
     DAQ_Msg_h daq_msg;
@@ -66,14 +67,26 @@ public:
 
     iter_t append(DAQ_Msg_h msg, uint32_t seq, TcpStreamTracker& trk);
     void erase(iter_t it);
-    void execute(const timeval& cur_time, int max_remove);
+
+    // Return whether there still are expired packets in the queue.
+    bool execute(const timeval& cur_time, int max_remove);
 
     void set_timeout(uint32_t ms)
     {
-        timeout.tv_sec = ms / 1000;
-        timeout.tv_usec = static_cast<suseconds_t>((ms % 1000) * 1000);
+        timeout = { static_cast<time_t>(ms) / 1000, static_cast<suseconds_t>((ms % 1000) * 1000) };
     }
+
+    // Return the timeout in milliseconds.
+    uint32_t get_timeout() const
+    {
+        return timeout.tv_sec * 1000 + timeout.tv_usec / 1000;
+    }
+
     bool empty() const { return q.empty(); }
+
+    // This must be called at reload time only, with now = reload time.
+    // Return true if, upon exit, there are expired packets in the queue.
+    bool adjust_expiration(uint32_t new_timeout_ms, const timeval& now);
 
 private:
     timeval timeout = {1, 0};

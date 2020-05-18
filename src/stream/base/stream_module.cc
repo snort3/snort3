@@ -29,6 +29,8 @@
 #include "main/snort.h"
 #include "main/snort_config.h"
 #include "stream/flush_bucket.h"
+#include "stream/tcp/tcp_stream_tracker.h"
+#include "time/packet_time.h"
 #include "trace/trace.h"
 
 using namespace snort;
@@ -78,6 +80,9 @@ static const Parameter s_params[] =
 
     { "pruning_timeout", Parameter::PT_INT, "1:max32", "30",
                     "minimum inactive time before being eligible for pruning" },
+
+    { "held_packet_timeout", Parameter::PT_INT, "1:max32", "1000",
+      "timeout in milliseconds for held packets" },
 
     FLOW_TYPE_TABLE("ip_cache",   "ip",   ip_params),
     FLOW_TYPE_TABLE("icmp_cache", "icmp", icmp_params),
@@ -168,6 +173,11 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
         config.flow_cache_cfg.pruning_timeout = v.get_uint32();
         return true;
     }
+    else if ( v.is("held_packet_timeout") )
+    {
+        config.held_packet_timeout = v.get_uint32();
+        return true;
+    }
     else if ( strstr(fqn, "ip_cache") )
         type = PktType::IP;
     else if ( strstr(fqn, "icmp_cache") )
@@ -195,6 +205,9 @@ bool StreamModule::end(const char*, int, SnortConfig* sc)
 {
     if ( reload_resource_manager.initialize(config) )
         sc->register_reload_resource_tuner(reload_resource_manager);
+
+    if ( hpq_rrt.initialize(config.held_packet_timeout) )
+        sc->register_reload_resource_tuner(hpq_rrt);
 
     return true;
 }
@@ -237,6 +250,7 @@ bool StreamReloadResourceManager::tinit()
 {
     int max_flows_change =
         config.flow_cache_cfg.max_flows - flow_con->get_flow_cache_config().max_flows;
+
     if ( max_flows_change )
     {
         if ( max_flows_change < 0 )
@@ -293,4 +307,26 @@ void StreamModuleConfig::show() const
 
         ConfigLogger::log_value(flow_type_names[i], tmp.c_str());
     }
+}
+
+bool HPQReloadTuner::initialize(uint32_t new_timeout_ms)
+{
+    held_packet_timeout = new_timeout_ms;
+    return Snort::is_reloading();
+}
+
+bool HPQReloadTuner::tinit()
+{
+    packet_gettimeofday(&reload_time);
+    return TcpStreamTracker::adjust_expiration(held_packet_timeout, reload_time);
+}
+
+bool HPQReloadTuner::tune_packet_context()
+{
+    return !TcpStreamTracker::release_held_packets(reload_time, max_work);
+}
+
+bool HPQReloadTuner::tune_idle_context()
+{
+    return !TcpStreamTracker::release_held_packets(reload_time, max_work_idle);
 }

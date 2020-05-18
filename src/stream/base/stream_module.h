@@ -79,6 +79,7 @@ struct StreamModuleConfig
 #ifdef REG_TEST
     unsigned footprint = 0;
 #endif
+    uint32_t held_packet_timeout = 1000;  // in milliseconds
 
     void show() const;
 };
@@ -99,6 +100,21 @@ private:
 
 private:
     StreamModuleConfig config;
+};
+
+class HPQReloadTuner : public snort::ReloadResourceTuner
+{
+public:
+    HPQReloadTuner() = default;
+
+    bool tinit() override;
+    bool tune_packet_context() override;
+    bool tune_idle_context() override;
+    bool initialize(uint32_t new_timeout_ms);
+
+private:
+    uint32_t held_packet_timeout;
+    timeval reload_time;
 };
 
 class StreamModule : public snort::Module
@@ -135,6 +151,7 @@ public:
 private:
     StreamModuleConfig config;
     StreamReloadResourceManager reload_resource_manager;
+    HPQReloadTuner hpq_rrt;
 };
 
 extern void base_prep();

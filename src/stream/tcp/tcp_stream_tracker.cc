@@ -746,16 +746,24 @@ void TcpStreamTracker::finalize_held_packet(Flow* flow)
     }
 }
 
-void TcpStreamTracker::release_held_packets(const timeval& cur_time, int max_remove)
+bool TcpStreamTracker::release_held_packets(const timeval& cur_time, int max_remove)
 {
+    bool is_front_expired = false;
     if ( hpq )
-        hpq->execute(cur_time, max_remove);
+        is_front_expired = hpq->execute(cur_time, max_remove);
+    return is_front_expired;
 }
 
 void TcpStreamTracker::set_held_packet_timeout(const uint32_t ms)
 {
     assert(hpq);
     hpq->set_timeout(ms);
+}
+
+bool TcpStreamTracker::adjust_expiration(uint32_t new_timeout_ms, const timeval& now)
+{
+    assert(hpq);
+    return hpq->adjust_expiration(new_timeout_ms, now);
 }
 
 void TcpStreamTracker::thread_init()
