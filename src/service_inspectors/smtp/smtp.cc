@@ -1402,7 +1402,7 @@ public:
     ~Smtp() override;
 
     bool configure(SnortConfig*) override;
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
     void eval(Packet*) override;
     bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
     void clear(Packet*) override;
@@ -1451,7 +1451,7 @@ bool Smtp::configure(SnortConfig*)
     return true;
 }
 
-void Smtp::show(SnortConfig*)
+void Smtp::show(const SnortConfig*) const
 {
     if ( config )
         config->show();

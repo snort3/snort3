@@ -87,7 +87,7 @@ bool TeredoCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort
         codec.proto_bits |= PROTO_BIT__TEREDO;
         codec.codec_flags |= CODEC_TEREDO_SEEN;  // for ipv6 codec
 
-        if ( SnortConfig::tunnel_bypass_enabled(TUNNEL_TEREDO) )
+        if ( codec.conf->tunnel_bypass_enabled(TUNNEL_TEREDO) )
             codec.tunnel_bypass = true;
 
         if ( (!teredo::is_teredo_port(snort.sp)) && (!teredo::is_teredo_port(snort.dp)) )

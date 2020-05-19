@@ -32,6 +32,7 @@
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "mime/file_mime_process.h"
+#include "search_engines/search_tool.h"
 
 #include "file_cache.h"
 #include "file_capture.h"
@@ -57,9 +58,12 @@ void FileService::init()
     FileFlows::init();
 }
 
-void FileService::post_init()
+void FileService::post_init(const SnortConfig* sc)
 {
+    SearchTool::set_conf(sc);
     MimeSession::init();
+    SearchTool::set_conf(nullptr);
+
     const FileConfig* const conf = get_file_config();
 
     if (!conf)
@@ -79,7 +83,7 @@ void FileService::post_init()
     }
 }
 
-void FileService::verify_reload(SnortConfig* sc)
+void FileService::verify_reload(const SnortConfig* sc)
 {
     const FileConfig* const conf = get_file_config(sc);
 

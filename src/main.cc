@@ -88,7 +88,7 @@ static const char* prompt = "o\")~ ";
 const char* get_prompt()
 { return prompt; }
 
-static bool use_shell(SnortConfig* sc)
+static bool use_shell(const SnortConfig* sc)
 {
 #ifdef SHELL
     return ( sc->run_flags & RUN_FLAG__SHELL );
@@ -148,8 +148,9 @@ private:
 
 bool Pig::prep(const char* source)
 {
-    SnortConfig* sc = SnortConfig::get_conf();
+    const SnortConfig* sc = SnortConfig::get_conf();
     SFDAQInstance *instance = new SFDAQInstance(source, idx, sc->daq_config);
+
     if (!SFDAQ::init_instance(instance, sc->bpf_filter))
     {
         delete instance;
@@ -170,7 +171,7 @@ void Pig::start()
     assert(!athread);
     LogMessage("++ [%u] %s\n", idx, analyzer->get_source());
 
-    Swapper* ps = new Swapper(SnortConfig::get_conf(), HostAttributes::get_host_attributes_table());
+    Swapper* ps = new Swapper(SnortConfig::get_main_conf(), HostAttributes::get_host_attributes_table());
     athread = new std::thread(std::ref(*analyzer), ps, ++run_num);
 }
 
@@ -347,7 +348,7 @@ int main_reload_config(lua_State* L)
     }
 
     current_request->respond(".. reloading configuration\n");
-    SnortConfig* old = SnortConfig::get_conf();
+    const SnortConfig* old = SnortConfig::get_conf();
     SnortConfig* sc = Snort::get_reload_config(fname, plugin_path);
 
     if ( !sc )
@@ -362,7 +363,6 @@ int main_reload_config(lua_State* L)
         else
             current_request->respond("== reload failed - bad config\n");
 
-        SnortConfig::set_parser_conf(nullptr);
         return 0;
     }
 
@@ -381,7 +381,6 @@ int main_reload_config(lua_State* L)
     current_request->respond(".. swapping configuration\n", from_shell);
     main_broadcast_command(new ACSwap(new Swapper(old, sc, old_tc, tc), current_request, from_shell), from_shell);
 
-    SnortConfig::set_parser_conf(nullptr);
     return 0;
 }
 
@@ -408,7 +407,7 @@ int main_reload_policy(lua_State* L)
         return 0;
     }
 
-    SnortConfig* old = SnortConfig::get_conf();
+    SnortConfig* old = SnortConfig::get_main_conf();
     SnortConfig* sc = Snort::get_updated_policy(old, fname, nullptr);
 
     if ( !sc )
@@ -449,7 +448,7 @@ int main_reload_module(lua_State* L)
         return 0;
     }
 
-    SnortConfig* old = SnortConfig::get_conf();
+    SnortConfig* old = SnortConfig::get_main_conf();
     SnortConfig* sc = Snort::get_updated_module(old, fname);
 
     if ( !sc )
@@ -496,7 +495,7 @@ int main_reload_hosts(lua_State* L)
     }
 
     proc_stats.attribute_table_overflow = 0;
-    HostAttributes::load_hosts_file(SnortConfig::get_conf(), fname);
+    HostAttributes::load_hosts_file(SnortConfig::get_main_conf(), fname);
 
     HostAttributesTable* old = HostAttributes::get_host_attributes_table();
     HostAttributesTable* tc = HostAttributes::activate();
@@ -540,7 +539,7 @@ int main_delete_inspector(lua_State* L)
         return 0;
     }
 
-    SnortConfig* old = SnortConfig::get_conf();
+    SnortConfig* old = SnortConfig::get_main_conf();
     SnortConfig* sc = Snort::get_updated_policy(old, nullptr, iname);
 
     if ( !sc )
@@ -742,20 +741,20 @@ static void service_check()
 // main foo
 //-------------------------------------------------------------------------
 
-static bool just_validate()
+static bool just_validate(const SnortConfig* sc)
 {
-    if ( SnortConfig::test_mode() )
+    if ( sc->test_mode() )
         return true;
 
-    if ( use_shell(SnortConfig::get_conf()) )
+    if ( use_shell(sc) )
         return false;
 
-    if ( SnortConfig::get_conf()->daq_config->module_configs.empty() )
+    if ( sc->daq_config->module_configs.empty() )
     {
-        if ( SnortConfig::read_mode() && !Trough::get_queue_size() )
+        if ( sc->read_mode() && !Trough::get_queue_size() )
             return true;
 
-        if ( !SnortConfig::read_mode() && !SFDAQ::get_input_spec(SnortConfig::get_conf()->daq_config, 0) )
+        if ( !sc->read_mode() && !SFDAQ::get_input_spec(sc->daq_config, 0) )
             return true;
     }
 
@@ -785,47 +784,49 @@ static bool set_mode()
     if ( unsigned k = get_parse_errors() )
         FatalError("see prior %u errors (%u warnings)\n", k, warnings);
 
-    if ( SnortConfig::conf_error_out() )
+    SnortConfig* sc = SnortConfig::get_main_conf();
+
+    if ( sc->conf_error_out() )
     {
         if ( warnings )
             FatalError("see prior %u warnings\n", warnings);
     }
 
-    if ( SnortConfig::dump_msg_map() )
+    if ( sc->dump_msg_map() )
     {
-        dump_msg_map(SnortConfig::get_conf());
+        dump_msg_map(sc);
         return false;
     }
 
-    if ( SnortConfig::dump_rule_deps() )
+    if ( sc->dump_rule_deps() )
     {
-        dump_rule_deps(SnortConfig::get_conf());
+        dump_rule_deps(sc);
         return false;
     }
 
-    if ( SnortConfig::dump_rule_meta() )
+    if ( sc->dump_rule_meta() )
     {
-        dump_rule_meta(SnortConfig::get_conf());
+        dump_rule_meta(sc);
         return false;
     }
 
-    if ( SnortConfig::dump_rule_state() )
+    if ( sc->dump_rule_state() )
     {
-        dump_rule_state(SnortConfig::get_conf());
+        dump_rule_state(sc);
         return false;
     }
 
-    if ( just_validate() )
+    if ( just_validate(sc) )
     {
         LogMessage("\nSnort successfully validated the configuration (with %u warnings).\n",
             warnings);
 
         // force test mode to exit w/o stats
-        SnortConfig::get_conf()->run_flags |= RUN_FLAG__TEST;
+        sc->run_flags |= RUN_FLAG__TEST;
         return false;
     }
 
-    if ( SnortConfig::get_conf()->run_flags & RUN_FLAG__PAUSE )
+    if ( sc->run_flags & RUN_FLAG__PAUSE )
     {
         LogMessage("Paused; resume to start packet processing\n");
         paused = true;
@@ -834,7 +835,7 @@ static bool set_mode()
         LogMessage("Commencing packet processing\n");
 
 #ifdef SHELL
-    if ( use_shell(SnortConfig::get_conf()) )
+    if ( use_shell(sc) )
     {
         LogMessage("Entering command shell\n");
         ControlMgmt::add_control(STDOUT_FILENO, true);
@@ -916,11 +917,11 @@ static void main_loop()
 {
     unsigned swine = 0, pending_privileges = 0;
 
-    if (SnortConfig::change_privileges())
+    if (SnortConfig::get_conf()->change_privileges())
         pending_privileges = max_pigs;
 
     // Preemptively prep all pigs in live traffic mode
-    if (!SnortConfig::read_mode())
+    if (!SnortConfig::get_conf()->read_mode())
     {
         for (unsigned i = 0; i < max_pigs; i++)
         {

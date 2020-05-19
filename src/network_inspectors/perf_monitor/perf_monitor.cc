@@ -157,7 +157,7 @@ static const char* to_string(const PerfFormat& pf)
     return "";
 }
 
-void PerfMonitor::show(SnortConfig*)
+void PerfMonitor::show(const SnortConfig*) const
 {
     ConfigLogger::log_flag("base", config->perf_flags & PERF_BASE);
     ConfigLogger::log_flag("cpu", config->perf_flags & PERF_CPU);

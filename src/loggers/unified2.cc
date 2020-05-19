@@ -839,10 +839,10 @@ bool U2Module::set(const char*, Value& v, SnortConfig*)
     return true;
 }
 
-bool U2Module::begin(const char*, int, SnortConfig*)
+bool U2Module::begin(const char*, int, SnortConfig* sc)
 {
     limit = 0;
-    nostamp = SnortConfig::output_no_timestamp();
+    nostamp = sc->output_no_timestamp();
     legacy_events = false;
     return true;
 }
@@ -1006,7 +1006,7 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-static Logger* u2_ctor(SnortConfig*, Module* mod)
+static Logger* u2_ctor(Module* mod)
 { return new U2Logger((U2Module*)mod); }
 
 static void u2_dtor(Logger* p)

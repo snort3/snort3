@@ -41,7 +41,7 @@ public:
     { config.upload = b; }
 
     NORETURN_ASSERT void eval(Packet*) override;
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
 
     StreamFileConfig config;
 };
@@ -52,7 +52,7 @@ NORETURN_ASSERT void StreamFile::eval(Packet*)
     assert(false);
 }
 
-void StreamFile::show(SnortConfig*)
+void StreamFile::show(const SnortConfig*) const
 {
     ConfigLogger::log_flag("upload", config.upload);
 }

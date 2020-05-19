@@ -25,6 +25,7 @@
 
 #include "service_snmp.h"
 
+#include "detection/ips_context.h"
 #include "log/messages.h"
 #include "protocols/packet.h"
 
@@ -73,20 +74,6 @@ enum SNMPPDUType
     SNMP_PDU_INFORM_REQUEST,
     SNMP_PDU_TRAPV2
 };
-
-#pragma pack(1)
-
-struct ServiceSNMPHeader
-{
-    uint16_t opcode;
-    union
-    {
-        uint16_t block;
-        uint16_t errorcode;
-    } d;
-};
-
-#pragma pack()
 
 static const uint8_t SNMP_PATTERN_2[] = { 0x02, 0x01, 0x00, 0x04 };
 static const uint8_t SNMP_PATTERN_3[] = { 0x02, 0x01, 0x01, 0x04 };
@@ -479,7 +466,7 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
 
         /*adding expected connection in case the server doesn't send from 161*/
         if(snmp_snort_protocol_id == UNKNOWN_PROTOCOL_ID)
-            snmp_snort_protocol_id = SnortConfig::get_conf()->proto_ref->find("snmp");
+            snmp_snort_protocol_id = args.pkt->context->conf->proto_ref->find("snmp");
 
         const SfIp* dip = args.pkt->ptrs.ip_api.get_dst();
         const SfIp* sip = args.pkt->ptrs.ip_api.get_src();

@@ -63,7 +63,7 @@ using namespace snort;
 
 void DetectionEngine::thread_init()
 {
-    SnortConfig* sc = SnortConfig::get_conf();
+    const SnortConfig* sc = SnortConfig::get_conf();
     FastPatternConfig* fp = sc->fast_pattern_config;
     const MpseApi* offload_search_api = fp->get_offload_search_api();
 
@@ -151,7 +151,8 @@ Packet* DetectionEngine::set_next_packet(Packet* parent)
     IpsContext* c = Analyzer::get_switcher()->get_next();
     if ( parent )
     {
-        c->snapshot_flow(parent->flow);
+        if ( parent->flow )
+            c->snapshot_flow(parent->flow);
         c->packet_number = parent->context->packet_number;
         c->wire_packet = parent->context->wire_packet;
     }
@@ -370,8 +371,6 @@ bool DetectionEngine::do_offload(Packet* p)
     assert(p == p->context->packet);
     assert(p->context == sw->get_context());
 
-    p->context->conf = SnortConfig::get_conf();
-
     debug_logf(detection_trace, TRACE_DETECTION_ENGINE,
         "%" PRIu64 " de::offload %" PRIu64 " (r=%d)\n",
         p->context->packet_number, p->context->context_num, offloader->count());
@@ -395,7 +394,7 @@ bool DetectionEngine::offload(Packet* p)
     ContextSwitcher* sw = Analyzer::get_switcher();
     fp_partial(p);
 
-    if ( p->dsize >= SnortConfig::get_conf()->offload_limit and
+    if ( p->dsize >= p->context->conf->offload_limit and
         p->context->searches.items.size() > 0 )
     {
         if ( offloader->available() )
@@ -575,8 +574,9 @@ bool DetectionEngine::inspect(Packet* p)
 
         if ( p->ptrs.decode_flags & DECODE_ERR_FLAGS )
         {
-            if ( SnortConfig::inline_mode() and
-                SnortConfig::checksum_drop(p->ptrs.decode_flags & DECODE_ERR_CKSUM_ALL) )
+            if ( p->context->conf->inline_mode() and
+                // FIXIT-H check specific proto checksum drop flags
+                snort::get_network_policy()->checksum_drops(p->ptrs.decode_flags & DECODE_ERR_CKSUM_ALL) )
             {
                 p->active->drop_packet(p);
             }

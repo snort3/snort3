@@ -89,7 +89,8 @@ Flow* Stream::get_flow(
     uint16_t vlan, uint32_t mplsId, uint16_t addressSpaceId)
 {
     FlowKey key;
-    key.init(type, proto, srcIP, srcPort, dstIP, dstPort, vlan, mplsId, addressSpaceId);
+    const SnortConfig* sc = SnortConfig::get_conf();
+    key.init(sc, type, proto, srcIP, srcPort, dstIP, dstPort, vlan, mplsId, addressSpaceId);
     return get_flow(&key);
 }
 
@@ -99,6 +100,7 @@ void Stream::populate_flow_key(Packet* p, FlowKey* key)
         return;
 
     key->init(
+        SnortConfig::get_conf(),
         p->type(), p->get_ip_proto_next(),
         p->ptrs.ip_api.get_src(), p->ptrs.sp,
         p->ptrs.ip_api.get_dst(), p->ptrs.dp,
@@ -330,8 +332,8 @@ void Stream::init_active_response(const Packet* p, Flow* flow)
 
     flow->response_count = 1;
 
-    if ( SnortConfig::get_conf()->max_responses > 1 )
-        flow->set_expire(p, SnortConfig::get_conf()->min_interval);
+    if ( p->context->conf->max_responses > 1 )
+        flow->set_expire(p, p->context->conf->min_interval);
 }
 
 void Stream::purge_flows()
@@ -558,7 +560,7 @@ uint8_t Stream::get_flow_ttl(Flow* flow, char dir, bool outer)
 // that we only send in the still active direction(s).
 static void active_response(Packet* p, Flow* lwssn)
 {
-    uint8_t max = SnortConfig::get_conf()->max_responses;
+    uint8_t max = p->context->conf->max_responses;
 
     if ( p->is_from_client() )
         lwssn->session_state |= STREAM_STATE_DROP_CLIENT;
@@ -567,7 +569,7 @@ static void active_response(Packet* p, Flow* lwssn)
 
     if ( (lwssn->response_count < max) && lwssn->expired(p) )
     {
-        uint32_t delay = SnortConfig::get_conf()->min_interval;
+        uint32_t delay = p->context->conf->min_interval;
         EncodeFlags flags =
             ( (lwssn->session_state & STREAM_STATE_DROP_CLIENT) &&
             (lwssn->session_state & STREAM_STATE_DROP_SERVER) ) ?

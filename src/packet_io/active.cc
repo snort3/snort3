@@ -178,7 +178,7 @@ void Active::init(SnortConfig* sc)
         Active::set_enabled();
 }
 
-bool Active::thread_init(SnortConfig* sc)
+bool Active::thread_init(const SnortConfig* sc)
 {
     s_attempts = sc->respond_attempts;
 
@@ -190,7 +190,7 @@ bool Active::thread_init(SnortConfig* sc)
 
     if ( enabled && (!SFDAQ::can_inject() || !sc->respond_device.empty()) )
     {
-        if ( SnortConfig::read_mode() || !open(sc->respond_device.c_str()) )
+        if ( sc->read_mode() || !open(sc->respond_device.c_str()) )
         {
             ParseWarning(WARN_DAQ, "active responses disabled since DAQ "
                 "can't inject packets.");
@@ -521,12 +521,12 @@ void Active::update_status(const Packet* p, bool force)
 
     else if ( active_status != AST_FORCE)
     {
-        if ( SnortConfig::inline_mode() )
+        if ( p->context->conf->inline_mode() )
         {
             if ( !SFDAQ::forwarding_packet(p->pkth) )
                 active_status = AST_WOULD;
         }
-        else if ( SnortConfig::inline_test_mode() )
+        else if ( p->context->conf->inline_test_mode() )
         {
             active_status = AST_WOULD;
         }
@@ -629,7 +629,7 @@ void Active::block_session(Packet* p, bool force)
     active_action = ACT_BLOCK;
     update_status(p, force);
 
-    if ( force or SnortConfig::inline_mode() or SnortConfig::treat_drop_as_ignore() )
+    if ( force or p->context->conf->inline_mode() or p->context->conf->treat_drop_as_ignore() )
         Stream::block_flow(p);
 
     p->disable_inspect = true;
@@ -645,7 +645,7 @@ void Active::reset_session(Packet* p, ActiveAction* reject, bool force)
     update_status(p, force);
     active_action = ACT_RESET;
 
-    if ( force or SnortConfig::inline_mode() or SnortConfig::treat_drop_as_ignore() )
+    if ( force or p->context->conf->inline_mode() or p->context->conf->treat_drop_as_ignore() )
         Stream::drop_flow(p);
 
     if ( enabled )

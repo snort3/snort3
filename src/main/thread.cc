@@ -72,29 +72,30 @@ SThreadType get_thread_type()
 
 const char* get_instance_file(std::string& file, const char* name)
 {
+    const SnortConfig* sc = SnortConfig::get_conf();
+
     bool sep = false;
-    file = !SnortConfig::get_conf()->log_dir.empty() ?
-        SnortConfig::get_conf()->log_dir : "./";
+    file = !sc->log_dir.empty() ?  sc->log_dir : "./";
 
     if ( file.back() != '/' )
         file += '/';
 
-    if ( !SnortConfig::get_conf()->run_prefix.empty() )
+    if ( !sc->run_prefix.empty() )
     {
-        file += SnortConfig::get_conf()->run_prefix;
+        file += sc->run_prefix;
         sep = true;
     }
 
-    if ( (ThreadConfig::get_instance_max() > 1) || SnortConfig::get_conf()->id_zero )
+    if ( (ThreadConfig::get_instance_max() > 1) || sc->id_zero )
     {
         char id[8];
         snprintf(id, sizeof(id), "%u",
-            get_instance_id() + SnortConfig::get_conf()->id_offset);
+            get_instance_id() + sc->id_offset);
         file += id;
         sep = true;
     }
 
-    if ( SnortConfig::get_conf()->id_subdir )
+    if ( sc->id_subdir )
     {
         file += '/';
         struct stat s;

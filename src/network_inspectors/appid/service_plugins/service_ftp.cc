@@ -25,6 +25,8 @@
 
 #include "service_ftp.h"
 
+#include "detection/ips_context.h"
+
 #include "appid_inspector.h"
 #include "app_info_table.h"
 #include "protocols/packet.h"
@@ -883,7 +885,7 @@ void FtpServiceDetector::create_expected_session(AppIdSession& asd, const Packet
     // FIXIT-M - Avoid thread locals
     static THREAD_LOCAL SnortProtocolId ftp_data_snort_protocol_id = UNKNOWN_PROTOCOL_ID;
     if(ftp_data_snort_protocol_id == UNKNOWN_PROTOCOL_ID)
-        ftp_data_snort_protocol_id = SnortConfig::get_conf()->proto_ref->find("ftp-data");
+        ftp_data_snort_protocol_id = pkt->context->conf->proto_ref->find("ftp-data");
 
     AppIdSession* fp = AppIdSession::create_future_session(pkt, cliIp, cliPort, srvIp, srvPort,
         protocol, ftp_data_snort_protocol_id, flags);

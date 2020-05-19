@@ -654,7 +654,7 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-static Logger* csv_ctor(SnortConfig*, Module* mod)
+static Logger* csv_ctor(Module* mod)
 { return new CsvLogger((CsvModule*)mod); }
 
 static void csv_dtor(Logger* p)

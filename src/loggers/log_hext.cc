@@ -298,7 +298,7 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-static Logger* hext_ctor(SnortConfig*, Module* mod)
+static Logger* hext_ctor(Module* mod)
 {
     return new HextLogger((HextModule*)mod);
 }

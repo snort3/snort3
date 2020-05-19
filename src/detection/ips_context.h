@@ -145,7 +145,7 @@ public:
     DAQ_PktHdr_t* pkth;
     uint8_t* buf;
 
-    SnortConfig* conf;
+    const SnortConfig* conf;
     MpseBatch searches;
     MpseStash* stash;
     OtnxMatchData* otnx;

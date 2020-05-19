@@ -176,18 +176,18 @@ void FlowControl::set_key(FlowKey* key, Packet* p)
 
     if ( (p->ptrs.decode_flags & DECODE_FRAG) )
     {
-        key->init(type, ip_proto, ip_api.get_src(), ip_api.get_dst(), ip_api.id(),
-            vlanId, mplsId, addressSpaceId);
+        key->init(p->context->conf, type, ip_proto, ip_api.get_src(),
+            ip_api.get_dst(), ip_api.id(), vlanId, mplsId, addressSpaceId);
     }
     else if ( type == PktType::ICMP )
     {
-        key->init(type, ip_proto, ip_api.get_src(), p->ptrs.icmph->type, ip_api.get_dst(), 0,
-            vlanId, mplsId, addressSpaceId);
+        key->init(p->context->conf, type, ip_proto, ip_api.get_src(), p->ptrs.icmph->type,
+            ip_api.get_dst(), 0, vlanId, mplsId, addressSpaceId);
     }
     else
     {
-        key->init(type, ip_proto, ip_api.get_src(), p->ptrs.sp, ip_api.get_dst(), p->ptrs.dp,
-            vlanId, mplsId, addressSpaceId);
+        key->init(p->context->conf, type, ip_proto, ip_api.get_src(), p->ptrs.sp,
+            ip_api.get_dst(), p->ptrs.dp, vlanId, mplsId, addressSpaceId);
     }
 }
 
@@ -332,7 +332,7 @@ static bool want_flow(PktType type, Packet* p)
         // guessing direction based on ports is misleading
         return false;
 
-    if ( !p->ptrs.tcph->is_syn_only() or SnortConfig::get_conf()->track_on_syn() )
+    if ( !p->ptrs.tcph->is_syn_only() or p->context->conf->track_on_syn() )
         return true;
 
     const unsigned DECODE_TCP_HS = DECODE_TCP_MSS | DECODE_TCP_TS | DECODE_TCP_WS;
@@ -408,9 +408,10 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
 
     if ( flow->flow_state != Flow::FlowState::SETUP )
     {
-        set_inspection_policy(SnortConfig::get_conf(), flow->inspection_policy_id);
-        set_ips_policy(SnortConfig::get_conf(), flow->ips_policy_id);
-        set_network_policy(SnortConfig::get_conf(), flow->network_policy_id);
+        const SnortConfig* sc = SnortConfig::get_conf();
+        set_inspection_policy(sc, flow->inspection_policy_id);
+        set_ips_policy(sc, flow->ips_policy_id);
+        set_network_policy(sc, flow->network_policy_id);
     }
 
     else

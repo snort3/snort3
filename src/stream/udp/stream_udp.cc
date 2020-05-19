@@ -49,7 +49,7 @@ public:
     StreamUdp(StreamUdpConfig*);
     ~StreamUdp() override;
 
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
     NORETURN_ASSERT void eval(Packet*) override;
 
 public:
@@ -66,7 +66,7 @@ StreamUdp::~StreamUdp()
     delete config;
 }
 
-void StreamUdp::show(SnortConfig*)
+void StreamUdp::show(const SnortConfig*) const
 {
     if ( !config )
         return;

@@ -83,9 +83,9 @@ public:
     static void reset_errors();
     static unsigned get_errors();
 
-    static void dump_stats(SnortConfig*, const char* skip = nullptr, bool dynamic = false);
+    static void dump_stats(const char* skip = nullptr, bool dynamic = false);
 
-    static void accumulate(SnortConfig*);
+    static void accumulate();
     static void accumulate_offload(const char* name);
     static void reset_stats(SnortConfig*);
 

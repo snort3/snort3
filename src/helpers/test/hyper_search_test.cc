@@ -68,7 +68,7 @@ int SnortConfig::request_scratch(ScratchAllocator* s)
 void SnortConfig::release_scratch(int)
 { s_state.clear(); }
 
-SnortConfig* SnortConfig::get_conf()
+const SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
 
 void ParseError(const char*, ...)

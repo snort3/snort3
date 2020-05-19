@@ -957,7 +957,7 @@ void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
         CreateRuleType(sc, s, rtn.action);
         rtn.listhead = get_rule_list(sc, s);
     }
-    if ( SnortConfig::get_default_rule_state() )
+    if ( sc->get_default_rule_state() )
         rtn.set_enabled();
 
     if ( !rtn.listhead )
@@ -1131,7 +1131,7 @@ OptTreeNode* parse_rule_open(SnortConfig* sc, RuleTreeNode& rtn, bool stub)
 
     otn->snort_protocol_id = rtn.snort_protocol_id;
 
-    if ( SnortConfig::get_default_rule_state() )
+    if ( sc->get_default_rule_state() )
         rtn.set_enabled();
 
     IpsManager::reset_options();

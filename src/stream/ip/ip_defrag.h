@@ -40,7 +40,7 @@ public:
     Defrag(FragEngine&);
 
     bool configure(snort::SnortConfig*);
-    void show(snort::SnortConfig*);
+    void show() const;
 
     void process(snort::Packet*, FragTracker*);
     void cleanup(FragTracker*);

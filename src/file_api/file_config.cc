@@ -104,8 +104,11 @@ std::string file_type_name(uint32_t id)
         return "NA";
 }
 
-FileConfig* get_file_config(SnortConfig* sc)
+FileConfig* get_file_config(const SnortConfig* sc)
 {
+    if ( !sc )
+        sc = SnortConfig::get_conf();
+
     FileInspect* fi = (FileInspect*)InspectorManager::get_inspector(FILE_ID_NAME, true, sc);
 
     if (fi)

@@ -424,7 +424,7 @@ void Dce2SmbModule::get_data(dce2SmbProtoConf& dce2_smb_config)
     config.smb_invalid_shares = nullptr;
 }
 
-void print_dce2_smb_conf(dce2SmbProtoConf& config)
+void print_dce2_smb_conf(const dce2SmbProtoConf& config)
 {
     print_dce2_co_config(config.common);
 

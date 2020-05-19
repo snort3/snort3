@@ -23,6 +23,7 @@
 
 #include "expect_cache.h"
 
+#include "detection/ips_context.h"
 #include "hash/zhash.h"
 #include "packet_io/sfdaq_instance.h"
 #include "protocols/packet.h"
@@ -148,8 +149,8 @@ ExpectNode* ExpectCache::find_node_by_packet(Packet* p, FlowKey &key)
     PktType type = p->type();
     IpProtocol ip_proto = p->get_ip_proto_next();
 
-    bool reversed_key = key.init(type, ip_proto, dstIP, p->ptrs.dp, srcIP, p->ptrs.sp,
-            vlanId, mplsId, addressSpaceId);
+    bool reversed_key = key.init(p->context->conf, type, ip_proto, dstIP, p->ptrs.dp,
+        srcIP, p->ptrs.sp, vlanId, mplsId, addressSpaceId);
 
     /*
         Lookup order:
@@ -242,8 +243,8 @@ bool ExpectCache::process_expected(ExpectNode* node, FlowKey& key, Packet* p, Fl
 
     /* If this is 0, we're ignoring, otherwise setting id of new session */
     if (!node->snort_protocol_id)
-        ignoring = node->direction ? true : false;
-    else if (lws->ssn_state.snort_protocol_id != node->snort_protocol_id)
+        ignoring = node->direction != 0;
+    else
         lws->ssn_state.snort_protocol_id = node->snort_protocol_id;
 
     if (!node->count)
@@ -318,9 +319,10 @@ int ExpectCache::add_flow(const Packet *ctrlPkt, PktType type, IpProtocol ip_pro
     uint16_t vlanId = (ctrlPkt->proto_bits & PROTO_BIT__VLAN) ? layer::get_vlan_layer(ctrlPkt)->vid() : 0;
     uint32_t mplsId = (ctrlPkt->proto_bits & PROTO_BIT__MPLS) ? ctrlPkt->ptrs.mplsHdr.label : 0;
     uint16_t addressSpaceId = ctrlPkt->pkth->address_space_id;
+
     FlowKey key;
-    bool reversed_key = key.init(type, ip_proto, cliIP, cliPort, srvIP, srvPort,
-            vlanId, mplsId, addressSpaceId);
+    bool reversed_key = key.init(ctrlPkt->context->conf, type, ip_proto, cliIP, cliPort,
+        srvIP, srvPort, vlanId, mplsId, addressSpaceId);
 
     bool new_node = false;
     ExpectNode* node = static_cast<ExpectNode*> ( hash_table->get_user_data(&key) );

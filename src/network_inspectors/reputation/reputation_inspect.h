@@ -28,7 +28,7 @@ class Reputation : public snort::Inspector
 public:
     Reputation(ReputationConfig*);
 
-    void show(snort::SnortConfig*) override;
+    void show(const snort::SnortConfig*) const override;
     void eval(snort::Packet*) override;
 
 private:

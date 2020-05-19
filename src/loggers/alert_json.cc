@@ -841,7 +841,7 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-static Logger* json_ctor(SnortConfig*, Module* mod)
+static Logger* json_ctor(Module* mod)
 { return new JsonLogger((JsonModule*)mod); }
 
 static void json_dtor(Logger* p)

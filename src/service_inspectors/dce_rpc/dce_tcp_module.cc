@@ -155,7 +155,7 @@ void Dce2TcpModule::get_data(dce2TcpProtoConf& dce2_tcp_config)
     dce2_tcp_config = config;
 }
 
-void print_dce2_tcp_conf(dce2TcpProtoConf& config)
+void print_dce2_tcp_conf(const dce2TcpProtoConf& config)
 {
     print_dce2_co_config(config.common);
 }

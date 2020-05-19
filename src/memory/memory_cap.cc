@@ -201,10 +201,12 @@ void MemoryCap::print()
     if ( !MemoryModule::is_active() )
         return;
 
-    if ( SnortConfig::log_verbose() or mem_stats.allocations )
+    bool verbose = SnortConfig::get_conf()->log_verbose();
+
+    if ( verbose or mem_stats.allocations )
         LogLabel("memory (heap)");
 
-    if ( SnortConfig::log_verbose() )
+    if ( verbose )
     {
         LogMessage("    thread cap: %zu\n", thread_cap);
         LogMessage("    thread preemptive threshold: %zu\n", preemptive_threshold);

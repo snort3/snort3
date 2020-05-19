@@ -143,7 +143,7 @@ public:
     ArpSpoof(ArpSpoofModule*);
     ~ArpSpoof() override;
 
-    void show(snort::SnortConfig*) override;
+    void show(const SnortConfig*) const override;
     void eval(Packet*) override;
 
 private:
@@ -160,7 +160,7 @@ ArpSpoof::~ArpSpoof ()
     delete config;
 }
 
-void ArpSpoof::show(SnortConfig*)
+void ArpSpoof::show(const SnortConfig*) const
 {
     if ( config )
         arp_config_show(config);

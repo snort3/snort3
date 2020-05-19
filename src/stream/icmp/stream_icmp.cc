@@ -50,7 +50,7 @@ public:
     StreamIcmp(StreamIcmpConfig*);
     ~StreamIcmp() override;
 
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
     NORETURN_ASSERT void eval(Packet*) override;
 
 public:
@@ -67,7 +67,7 @@ StreamIcmp::~StreamIcmp()
     delete config;
 }
 
-void StreamIcmp::show(SnortConfig*)
+void StreamIcmp::show(const SnortConfig*) const
 {
     if ( !config )
         return;

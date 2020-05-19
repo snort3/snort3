@@ -92,7 +92,7 @@ static inline void update_icmp6(const SfIp*& srcIP, uint16_t& srcPort,
 // init foo
 //-------------------------------------------------------------------------
 inline bool FlowKey::init4(
-    IpProtocol ip_proto,
+    const SnortConfig* sc, IpProtocol ip_proto,
     const SfIp *srcIP, uint16_t srcPort,
     const SfIp *dstIP, uint16_t dstPort,
     uint32_t mplsId, bool order)
@@ -139,7 +139,7 @@ inline bool FlowKey::init4(
         port_h = srcPort;
         reversed = true;
     }
-    if (SnortConfig::mpls_overlapping_ip() &&
+    if (sc->mpls_overlapping_ip() &&
         ip::isPrivateIP(src) && ip::isPrivateIP(dst))
         mplsLabel = mplsId;
     else
@@ -149,7 +149,7 @@ inline bool FlowKey::init4(
 }
 
 inline bool FlowKey::init6(
-    IpProtocol ip_proto,
+    const SnortConfig* sc, IpProtocol ip_proto,
     const SfIp *srcIP, uint16_t srcPort,
     const SfIp *dstIP, uint16_t dstPort,
     uint32_t mplsId, bool order)
@@ -193,7 +193,7 @@ inline bool FlowKey::init6(
         reversed = true;
     }
 
-    if (SnortConfig::mpls_overlapping_ip())
+    if (sc->mpls_overlapping_ip())
         mplsLabel = mplsId;
     else
         mplsLabel = 0;
@@ -201,31 +201,32 @@ inline bool FlowKey::init6(
     return reversed;
 }
 
-void FlowKey::init_vlan(uint16_t vlanId)
+void FlowKey::init_vlan(const SnortConfig* sc, uint16_t vlanId)
 {
-    if (!SnortConfig::get_vlan_agnostic())
+    if (!sc->get_vlan_agnostic())
         vlan_tag = vlanId;
     else
         vlan_tag = 0;
 }
 
-void FlowKey::init_address_space(uint16_t addrSpaceId)
+void FlowKey::init_address_space(const SnortConfig* sc, uint16_t addrSpaceId)
 {
-    if (!SnortConfig::address_space_agnostic())
+    if (!sc->address_space_agnostic())
         addressSpaceId = addrSpaceId;
     else
         addressSpaceId = 0;
 }
 
-void FlowKey::init_mpls(uint32_t mplsId)
+void FlowKey::init_mpls(const SnortConfig* sc, uint32_t mplsId)
 {
-    if (SnortConfig::mpls_overlapping_ip())
+    if (sc->mpls_overlapping_ip())
         mplsLabel = mplsId;
     else
         mplsLabel = 0;
 }
 
 bool FlowKey::init(
+    const SnortConfig* sc,
     PktType type, IpProtocol ip_proto,
     const SfIp *srcIP, uint16_t srcPort,
     const SfIp *dstIP, uint16_t dstPort,
@@ -242,25 +243,26 @@ bool FlowKey::init(
     if (srcIP->is_ip4() && dstIP->is_ip4())
     {
         version = 4;
-        reversed = init4(ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId);
+        reversed = init4(sc, ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId);
     }
     else
     {
         version = 6;
-        reversed = init6(ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId);
+        reversed = init6(sc, ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId);
     }
 
     pkt_type = type;
     ip_protocol = (uint8_t)ip_proto;
 
-    init_vlan(vlanId);
-    init_address_space(addrSpaceId);
+    init_vlan(sc, vlanId);
+    init_address_space(sc, addrSpaceId);
     padding = 0;
 
     return reversed;
 }
 
 bool FlowKey::init(
+    const SnortConfig* sc,
     PktType type, IpProtocol ip_proto,
     const SfIp *srcIP, const SfIp *dstIP,
     uint32_t id, uint16_t vlanId,
@@ -274,20 +276,20 @@ bool FlowKey::init(
     if (srcIP->is_ip4() && dstIP->is_ip4())
     {
         version = 4;
-        init4(ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId, false);
+        init4(sc, ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId, false);
         ip_protocol = (uint8_t)ip_proto;
     }
     else
     {
         version = 6;
-        init6(ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId, false);
+        init6(sc, ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId, false);
         ip_protocol = 0;
     }
 
     pkt_type = type;
 
-    init_vlan(vlanId);
-    init_address_space(addrSpaceId);
+    init_vlan(sc, vlanId);
+    init_address_space(sc, addrSpaceId);
     padding = 0;
 
     return false;

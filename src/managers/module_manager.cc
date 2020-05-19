@@ -1357,7 +1357,7 @@ void ModuleManager::load_rules(SnortConfig* sc)
     }
 }
 
-void ModuleManager::dump_stats(SnortConfig*, const char* skip, bool dynamic)
+void ModuleManager::dump_stats(const char* skip, bool dynamic)
 {
     auto mod_hooks = get_all_modhooks();
     mod_hooks.sort(comp_mods);
@@ -1375,7 +1375,7 @@ void ModuleManager::dump_stats(SnortConfig*, const char* skip, bool dynamic)
     }
 }
 
-void ModuleManager::accumulate(SnortConfig*)
+void ModuleManager::accumulate()
 {
     auto mod_hooks = get_all_modhooks();
 

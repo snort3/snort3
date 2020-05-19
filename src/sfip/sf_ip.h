@@ -94,7 +94,7 @@ struct SO_PUBLIC SfIp
     const char* ntop(char* buf, int bufsize) const;
     const char* ntop(SfIpString) const;
 
-    void obfuscate(SfCidr* ob);
+    void obfuscate(const SfCidr* ob);
 
 private:
     int cidr_mask(int val);

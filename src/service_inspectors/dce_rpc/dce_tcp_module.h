@@ -57,7 +57,7 @@ private:
     dce2TcpProtoConf config;
 };
 
-void print_dce2_tcp_conf(dce2TcpProtoConf& config);
+void print_dce2_tcp_conf(const dce2TcpProtoConf& config);
 
 #endif
 

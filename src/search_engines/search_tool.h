@@ -27,6 +27,11 @@ namespace snort
 class SO_PUBLIC SearchTool
 {
 public:
+    // FIXIT-L SnortConfig should be passed to ctor, a lot of appid plumbing
+    // for now set_conf must be called before instantiation
+    static void set_conf(const SnortConfig* sc)
+    { conf = sc; }
+
     SearchTool(const char* method = nullptr, bool dfa = false);
     ~SearchTool();
 
@@ -49,6 +54,7 @@ public:
         bool confine = false, void* user_data = nullptr);
 
 private:
+    static const SnortConfig* conf;
     class MpseGroup* mpsegrp;
     unsigned max_len;
 };

@@ -249,9 +249,11 @@ static OptTreeNode* OptTreeNode_Search(uint32_t, uint32_t sid)
     if (sid == 0)
         return nullptr;
 
-    for (hashNode = SnortConfig::get_conf()->otn_map->find_first();
+    const SnortConfig* sc = SnortConfig::get_conf();
+
+    for (hashNode = sc->otn_map->find_first();
         hashNode;
-        hashNode = SnortConfig::get_conf()->otn_map->find_next())
+        hashNode = sc->otn_map->find_next())
     {
         OptTreeNode* otn = (OptTreeNode*)hashNode->data;
         RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
@@ -384,7 +386,7 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-static Logger* sf_sock_ctor(SnortConfig*, Module* mod)
+static Logger* sf_sock_ctor(Module* mod)
 { return new SfSocketLogger((SfSocketModule*)mod); }
 
 static void sf_sock_dtor(Logger* p)

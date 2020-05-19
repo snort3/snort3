@@ -42,7 +42,7 @@ public:
     StreamTcp(TcpStreamConfig*);
     ~StreamTcp() override;
 
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
     bool configure(SnortConfig*) override;
     void tinit() override;
     void tterm() override;
@@ -60,7 +60,7 @@ StreamTcp::StreamTcp (TcpStreamConfig* c)
 StreamTcp::~StreamTcp()
 { delete config; }
 
-void StreamTcp::show(SnortConfig*)
+void StreamTcp::show(const SnortConfig*) const
 {
     if ( !config )
         return;

@@ -193,7 +193,7 @@ static bool process_packet(Packet* p)
     PacketTracer::activate(*p);
 
     // FIXIT-M should not need to set policies here
-    set_default_policy();
+    set_default_policy(p->context->conf);
     p->user_inspection_policy_id = get_inspection_policy()->user_policy_id;
     p->user_ips_policy_id = get_ips_policy()->user_policy_id;
     p->user_network_policy_id = get_network_policy()->user_policy_id;
@@ -272,7 +272,7 @@ static DAQ_Verdict distill_verdict(Packet* p)
             daq_stats.internal_blacklist++;
             verdict = DAQ_VERDICT_BLOCK;
         }
-        else if ( SnortConfig::inline_mode() || act->packet_force_dropped() )
+        else if ( p->context->conf->inline_mode() || act->packet_force_dropped() )
             verdict = DAQ_VERDICT_BLACKLIST;
         else
             verdict = DAQ_VERDICT_IGNORE;
@@ -387,7 +387,6 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
 void Analyzer::process_daq_pkt_msg(DAQ_Msg_h msg, bool retry)
 {
     const DAQ_PktHdr_t* pkthdr = daq_msg_get_pkthdr(msg);
-    set_default_policy();
 
     pc.analyzed_pkts++;
 
@@ -396,19 +395,22 @@ void Analyzer::process_daq_pkt_msg(DAQ_Msg_h msg, bool retry)
 
     DetectionEngine::wait_for_context();
     switcher->start();
+
     Packet* p = switcher->get_context()->packet;
     oops_handler->set_current_packet(p);
     p->context->wire_packet = p;
     p->context->packet_number = get_packet_number();
+    set_default_policy(p->context->conf);
 
     DetectionEngine::reset();
-
     sfthreshold_reset();
     Active::clear_queue(p);
 
     p->daq_msg = msg;
     p->daq_instance = daq_instance;
+
     PacketManager::decode(p, pkthdr, daq_msg_get_data(msg), daq_msg_get_data_len(msg), false, retry);
+
     if (process_packet(p))
     {
         post_process_daq_pkt_msg(p);
@@ -590,7 +592,7 @@ void Analyzer::init_unprivileged()
     for ( unsigned i = 0; i < max_contexts; ++i )
         switcher->push(new IpsContext);
 
-    SnortConfig* sc = SnortConfig::get_conf();
+    const SnortConfig* sc = SnortConfig::get_conf();
 
     // This should be called as soon as possible
     // to handle all trace log messages
@@ -607,7 +609,7 @@ void Analyzer::init_unprivileged()
     detection_filter_init(sc->detection_filter_config);
 
     EventManager::open_outputs();
-    IpsManager::setup_options();
+    IpsManager::setup_options(sc);
     ActionManager::thread_init(sc);
     FileService::thread_init();
     SideChannelManager::thread_init();
@@ -624,7 +626,7 @@ void Analyzer::init_unprivileged()
     SFRF_Alloc(sc->rate_filter_config->memcap);
 }
 
-void Analyzer::reinit(SnortConfig* sc)
+void Analyzer::reinit(const SnortConfig* sc)
 {
     InspectorManager::thread_reinit(sc);
     ActionManager::thread_reinit(sc);
@@ -633,7 +635,7 @@ void Analyzer::reinit(SnortConfig* sc)
 
 void Analyzer::term()
 {
-    SnortConfig* sc = SnortConfig::get_conf();
+    const SnortConfig* sc = SnortConfig::get_conf();
 
     HighAvailabilityManager::thread_term_beginning();
 
@@ -650,11 +652,11 @@ void Analyzer::term()
 
     DetectionEngine::idle();
     InspectorManager::thread_stop(sc);
-    ModuleManager::accumulate(sc);
-    InspectorManager::thread_term(sc);
-    ActionManager::thread_term(sc);
+    ModuleManager::accumulate();
+    InspectorManager::thread_term();
+    ActionManager::thread_term();
 
-    IpsManager::clear_options();
+    IpsManager::clear_options(sc);
     EventManager::close_outputs();
     CodecManager::thread_term();
     HighAvailabilityManager::thread_term();
@@ -716,7 +718,7 @@ void Analyzer::operator()(Swapper* ps, uint16_t run_num)
     ps->apply(*this);
     delete ps;
 
-    if (SnortConfig::pcap_show())
+    if (SnortConfig::get_conf()->pcap_show())
         show_source();
 
     // init here to pin separately from packet threads
@@ -724,8 +726,8 @@ void Analyzer::operator()(Swapper* ps, uint16_t run_num)
 
     // Perform all packet thread initialization actions that need to be taken with escalated
     // privileges prior to starting the DAQ module.
-    SnortConfig::get_conf()->thread_config->implement_thread_affinity(STHREAD_TYPE_PACKET,
-        get_instance_id());
+    SnortConfig::get_conf()->thread_config->implement_thread_affinity(
+        STHREAD_TYPE_PACKET, get_instance_id());
 
     SFDAQ::set_local_instance(daq_instance);
     set_state(State::INITIALIZED);

@@ -305,7 +305,7 @@ IpsPolicy* get_ips_policy(const SnortConfig* sc, unsigned i)
         sc->policy_map->get_ips_policy(i) : nullptr;
 }
 
-InspectionPolicy* get_default_inspection_policy(SnortConfig* sc)
+InspectionPolicy* get_default_inspection_policy(const SnortConfig* sc)
 { return sc->policy_map->get_inspection_policy(0); }
 
 void set_ips_policy(IpsPolicy* p)
@@ -314,23 +314,23 @@ void set_ips_policy(IpsPolicy* p)
 void set_network_policy(NetworkPolicy* p)
 { s_traffic_policy = p; }
 
-IpsPolicy* get_user_ips_policy(SnortConfig* sc, unsigned policy_id)
+IpsPolicy* get_user_ips_policy(const SnortConfig* sc, unsigned policy_id)
 {
     return sc->policy_map->get_user_ips(policy_id);
 }
 
-IpsPolicy* get_empty_ips_policy(SnortConfig* sc)
+IpsPolicy* get_empty_ips_policy(const SnortConfig* sc)
 {
     return sc->policy_map->get_empty_ips();
 }
 
-NetworkPolicy* get_user_network_policy(SnortConfig* sc, unsigned policy_id)
+NetworkPolicy* get_user_network_policy(const SnortConfig* sc, unsigned policy_id)
 {
     return sc->policy_map->get_user_network(policy_id);
 }
 } // namespace snort
 
-void set_network_policy(SnortConfig* sc, unsigned i)
+void set_network_policy(const SnortConfig* sc, unsigned i)
 {
     PolicyMap* pm = sc->policy_map;
 
@@ -341,7 +341,7 @@ void set_network_policy(SnortConfig* sc, unsigned i)
 void set_inspection_policy(InspectionPolicy* p)
 { s_inspection_policy = p; }
 
-void set_inspection_policy(SnortConfig* sc, unsigned i)
+void set_inspection_policy(const SnortConfig* sc, unsigned i)
 {
     PolicyMap* pm = sc->policy_map;
 
@@ -349,7 +349,7 @@ void set_inspection_policy(SnortConfig* sc, unsigned i)
         set_inspection_policy(pm->get_inspection_policy(i));
 }
 
-void set_ips_policy(SnortConfig* sc, unsigned i)
+void set_ips_policy(const SnortConfig* sc, unsigned i)
 {
     PolicyMap* pm = sc->policy_map;
 
@@ -357,7 +357,7 @@ void set_ips_policy(SnortConfig* sc, unsigned i)
         set_ips_policy(pm->get_ips_policy(i));
 }
 
-void set_policies(SnortConfig* sc, Shell* sh)
+void set_policies(const SnortConfig* sc, Shell* sh)
 {
     auto policies = sc->policy_map->get_policies(sh);
 
@@ -371,15 +371,12 @@ void set_policies(SnortConfig* sc, Shell* sh)
         set_network_policy(policies->network);
 }
 
-void set_default_policy(SnortConfig* sc)
+void set_default_policy(const SnortConfig* sc)
 {
     set_network_policy(sc->policy_map->get_network_policy(0));
     set_inspection_policy(sc->policy_map->get_inspection_policy(0));
     set_ips_policy(sc->policy_map->get_ips_policy(0));
 }
-
-void set_default_policy()
-{ set_default_policy(SnortConfig::get_conf()); }
 
 bool default_inspection_policy()
 {

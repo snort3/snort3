@@ -36,14 +36,15 @@ using namespace snort;
 
 // Stubs whose sole purpose is to make the test code link
 static SnortConfig my_config;
-THREAD_LOCAL SnortConfig *snort_conf = &my_config;
+THREAD_LOCAL SnortConfig* snort_conf = &my_config;
 
+// run_flags is used indirectly from HashFnc class by calling SnortConfig::static_hash()
 SnortConfig::SnortConfig(const SnortConfig* const)
-{ snort_conf->run_flags = 0;} // run_flags is used indirectly from HashFnc class by calling SnortConfig::static_hash()
+{ snort_conf->run_flags = 0;}
 
 SnortConfig::~SnortConfig() = default;
 
-SnortConfig* SnortConfig::get_conf()
+const SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
 
 // user free function

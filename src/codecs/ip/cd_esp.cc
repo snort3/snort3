@@ -97,7 +97,7 @@ bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     uint8_t pad_length;
     uint8_t ip_proto;
 
-    if (!SnortConfig::esp_decoding())
+    if (!codec.conf->esp_decoding())
         return false;
 
     /* The ESP header contains a crypto Initialization Vector (IV) and
@@ -126,7 +126,7 @@ bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     // must be called AFTER setting next_prot_id
     if (snort.ip_api.is_ip6())
     {
-        if ( SnortConfig::get_conf()->hit_ip6_maxopts(codec.ip6_extension_count) )
+        if ( codec.conf->hit_ip6_maxopts(codec.ip6_extension_count) )
         {
             codec_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
             return false;

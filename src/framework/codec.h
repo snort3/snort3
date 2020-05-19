@@ -116,8 +116,12 @@ constexpr uint16_t CODEC_ETHER_NEXT = 0x1000;
 constexpr uint16_t CODEC_IPOPT_FLAGS = (CODEC_IPOPT_RR_SEEN |
     CODEC_IPOPT_RTRALT_SEEN | CODEC_IPOPT_LEN_THREE);
 
+struct SnortConfig;
+
 struct CodecData
 {
+    const SnortConfig* conf;
+
     /* This section will get reset before every decode() function call */
     ProtocolId next_prot_id;      /* protocol type of the next layer */
     uint16_t lyr_len;           /* The length of the valid part layer */
@@ -137,8 +141,9 @@ struct CodecData
     IpProtocol ip6_csum_proto;      /* initialized in cd_ipv6.cc.  Used for IPv6 checksums */
     bool tunnel_bypass;
 
-    CodecData(ProtocolId init_prot) : next_prot_id(init_prot), lyr_len(0),
-        invalid_bytes(0), proto_bits(0), codec_flags(0), ip_layer_cnt(0), tunnel_bypass(false)
+    CodecData(const SnortConfig* sc, ProtocolId init_prot) :
+        conf(sc), next_prot_id(init_prot), lyr_len(0), invalid_bytes(0),
+        proto_bits(0), codec_flags(0), ip_layer_cnt(0), tunnel_bypass(false)
     { }
 
     bool inline is_cooked() const

@@ -55,7 +55,7 @@ static const luaL_Reg methods[] =
         {
             auto& self = InspectorIface.get(L);
             // FIXIT-L do we need an opaque SnortConfig interface?
-            bool result = self.configure(SnortConfig::get_conf());
+            bool result = self.configure(SnortConfig::get_main_conf());
             lua_pushboolean(L, result);
             return 1;
         }

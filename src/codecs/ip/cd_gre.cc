@@ -269,7 +269,7 @@ bool GreCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         return false;
     }
 
-    if (SnortConfig::tunnel_bypass_enabled(TUNNEL_GRE))
+    if (codec.conf->tunnel_bypass_enabled(TUNNEL_GRE))
         codec.tunnel_bypass = true;
 
     codec.lyr_len = len;

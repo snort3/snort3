@@ -192,7 +192,7 @@ public:
     Sip(SIP_PROTO_CONF*);
     ~Sip() override;
 
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
     void eval(Packet*) override;
     bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
 
@@ -220,7 +220,7 @@ Sip::~Sip()
     }
 }
 
-void Sip::show(SnortConfig*)
+void Sip::show(const SnortConfig*) const
 {
     if ( !config )
         return;

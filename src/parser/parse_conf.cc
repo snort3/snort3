@@ -84,7 +84,7 @@ void get_parse_location(const char*& file, unsigned& line)
 
 static void print_parse_file(const char* msg, Location& loc)
 {
-    if ( SnortConfig::show_file_codes() )
+    if ( SnortConfig::get_conf()->show_file_codes() )
         LogMessage("%s %s:%s:\n", msg, (loc.code ? loc.code : "?"), loc.file.c_str());
 
     else
@@ -270,15 +270,14 @@ void add_service_to_otn(SnortConfig* sc, OptTreeNode* otn, const char* svc_name)
 // or we are going to just alert instead of drop,
 // or we are going to ignore session data instead of drop.
 // the alert case is tested for separately with SnortConfig::treat_drop_as_alert().
-static inline int ScKeepDropRules()
+static inline int keep_drop_rules(const SnortConfig* sc)
 {
-    return ( SnortConfig::inline_mode() or SnortConfig::adaptor_inline_mode() or
-        SnortConfig::treat_drop_as_ignore() );
+    return ( sc->inline_mode() or sc->adaptor_inline_mode() or sc->treat_drop_as_ignore() );
 }
 
-static inline int ScLoadAsDropRules()
+static inline int load_as_drop_rules(const SnortConfig* sc)
 {
-    return ( SnortConfig::inline_test_mode() || SnortConfig::adaptor_inline_test_mode() );
+    return ( sc->inline_test_mode() || sc->adaptor_inline_test_mode() );
 }
 
 Actions::Type get_rule_type(const char* s)
@@ -288,15 +287,17 @@ Actions::Type get_rule_type(const char* s)
     if ( rt == Actions::NONE )
         rt = ActionManager::get_action_type(s);
 
+    const SnortConfig* sc = SnortConfig::get_conf();
+
     switch ( rt )
     {
     case Actions::DROP:
     case Actions::BLOCK:
     case Actions::RESET:
-        if ( SnortConfig::treat_drop_as_alert() )
+        if ( sc->treat_drop_as_alert() )
             return Actions::ALERT;
 
-        if ( ScKeepDropRules() || ScLoadAsDropRules() )
+        if ( keep_drop_rules(sc) || load_as_drop_rules(sc) )
             return rt;
 
         return Actions::NONE;

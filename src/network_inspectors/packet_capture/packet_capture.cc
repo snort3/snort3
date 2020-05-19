@@ -168,7 +168,7 @@ public:
     PacketCapture(CaptureModule*);
 
     // non-static functions
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
     void eval(Packet*) override;
     void tterm() override { capture_term(); }
 
@@ -197,7 +197,7 @@ bool PacketCapture::capture_init()
     return false;
 }
 
-void PacketCapture::show(SnortConfig*)
+void PacketCapture::show(const SnortConfig*) const
 {
     ConfigLogger::log_flag("enable", config.enabled);
     if ( config.enabled )

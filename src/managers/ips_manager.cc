@@ -331,11 +331,11 @@ bool IpsManager::option_end(
 
 //-------------------------------------------------------------------------
 
-void IpsManager::global_init(SnortConfig*)
+void IpsManager::global_init(const SnortConfig*)
 {
 }
 
-void IpsManager::global_term(SnortConfig* sc)
+void IpsManager::global_term(const SnortConfig* sc)
 {
     for ( auto& p : s_options )
         if ( p.second->init && p.second->api->pterm )
@@ -354,18 +354,18 @@ void IpsManager::reset_options()
     IpsOption::set_buffer("pkt_data");
 }
 
-void IpsManager::setup_options()
+void IpsManager::setup_options(const SnortConfig* sc)
 {
     for ( auto& p : s_options )
         if ( p.second->init && p.second->api->tinit )
-            p.second->api->tinit(SnortConfig::get_conf());
+            p.second->api->tinit(sc);
 }
 
-void IpsManager::clear_options()
+void IpsManager::clear_options(const SnortConfig* sc)
 {
     for ( auto& p : s_options )
         if ( p.second->init && p.second->api->tterm )
-            p.second->api->tterm(SnortConfig::get_conf());
+            p.second->api->tterm(sc);
 }
 
 bool IpsManager::verify(SnortConfig* sc)

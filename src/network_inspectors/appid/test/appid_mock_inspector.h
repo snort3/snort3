@@ -64,7 +64,7 @@ AppIdInspector::AppIdInspector(AppIdModule& ) { }
 AppIdInspector::~AppIdInspector() { }
 void AppIdInspector::eval(snort::Packet*) { }
 bool AppIdInspector::configure(snort::SnortConfig*) { return true; }
-void AppIdInspector::show(snort::SnortConfig*) { }
+void AppIdInspector::show(const SnortConfig*) const { }
 void AppIdInspector::tinit() { }
 void AppIdInspector::tterm() { }
 AppIdContext& AppIdInspector::get_ctxt() const { return *ctxt; }

@@ -321,7 +321,7 @@ public:
     Dce2Smb(const dce2SmbProtoConf&);
     ~Dce2Smb() override;
 
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
     void eval(Packet*) override;
     void clear(Packet*) override;
 
@@ -348,7 +348,7 @@ Dce2Smb::~Dce2Smb()
     }
 }
 
-void Dce2Smb::show(SnortConfig*)
+void Dce2Smb::show(const SnortConfig*) const
 {
     print_dce2_smb_conf(config);
 }

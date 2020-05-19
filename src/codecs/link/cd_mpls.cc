@@ -191,14 +191,14 @@ bool MplsCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             codec.proto_bits |= PROTO_BIT__MPLS;
             if (!iRet)
             {
-                iRet = SnortConfig::get_mpls_payload_type();
+                iRet = codec.conf->get_mpls_payload_type();
             }
         }
         tmpMplsHdr++;
         stack_len -= MPLS_HEADER_LEN;
 
-        if ((SnortConfig::get_mpls_stack_depth() != -1) &&
-            (chainLen++ >= SnortConfig::get_mpls_stack_depth()))
+        if ((codec.conf->get_mpls_stack_depth() != -1) &&
+            (chainLen++ >= codec.conf->get_mpls_stack_depth()))
         {
             codec_event(codec, DECODE_MPLS_LABEL_STACK);
 
@@ -207,7 +207,7 @@ bool MplsCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         }
     }   /* while bos not 1, peel off more labels */
 
-    if (SnortConfig::tunnel_bypass_enabled(TUNNEL_MPLS))
+    if (codec.conf->tunnel_bypass_enabled(TUNNEL_MPLS))
         codec.tunnel_bypass = true;
 
     codec.lyr_len = (const uint8_t*)tmpMplsHdr - raw.data;
@@ -279,8 +279,8 @@ int MplsCodec::checkMplsHdr(const CodecData& codec, uint32_t label, uint8_t bos)
 
             /* when label == 2, IPv6 is expected;
              * when label == 0, IPv4 is expected */
-            if ( (label && ( SnortConfig::get_mpls_payload_type() != MPLS_PAYLOADTYPE_IPV6) )
-                || ( (!label) && (SnortConfig::get_mpls_payload_type() != MPLS_PAYLOADTYPE_IPV4)))
+            if ( (label && ( codec.conf->get_mpls_payload_type() != MPLS_PAYLOADTYPE_IPV6) )
+                || ( (!label) && (codec.conf->get_mpls_payload_type() != MPLS_PAYLOADTYPE_IPV4)))
             {
                 if ( !label )
                     codec_event(codec, DECODE_BAD_MPLS_LABEL0);
@@ -347,7 +347,7 @@ int MplsCodec::checkMplsHdr(const CodecData& codec, uint32_t label, uint8_t bos)
     }
     if ( !iRet )
     {
-        iRet = SnortConfig::get_mpls_payload_type();
+        iRet = codec.conf->get_mpls_payload_type();
     }
     return iRet;
 }

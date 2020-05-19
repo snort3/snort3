@@ -194,8 +194,8 @@ FileContext* FileFlows::get_partially_processed_context(uint64_t file_id)
     return nullptr;
 }
 
-FileContext* FileFlows::get_file_context(uint64_t file_id, bool to_create,
-    uint64_t multi_file_processing_id)
+FileContext* FileFlows::get_file_context(
+    uint64_t file_id, bool to_create, uint64_t multi_file_processing_id)
 {
     // First check if this file is currently being processed
     if (!multi_file_processing_id)
@@ -415,7 +415,7 @@ static void file_config_show(const FileConfig* fc)
     ConfigLogger::log_value("verdict_delay", fc->verdict_delay);
 }
 
-void FileInspect::show(SnortConfig*)
+void FileInspect::show(const SnortConfig*) const
 {
     if ( config )
         file_config_show(config);

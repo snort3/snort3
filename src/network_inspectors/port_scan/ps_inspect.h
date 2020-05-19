@@ -42,7 +42,7 @@ public:
     PortScan(class PortScanModule*);
     ~PortScan() override;
 
-    void show(snort::SnortConfig*) override;
+    void show(const snort::SnortConfig*) const override;
     void eval(snort::Packet*) override;
 
     void tinit() override;

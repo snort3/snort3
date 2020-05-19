@@ -248,7 +248,7 @@ public:
     ~StreamIp() override;
 
     bool configure(SnortConfig*) override;
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
     NORETURN_ASSERT void eval(Packet*) override;
     StreamIpConfig* config;
     Defrag* defrag;

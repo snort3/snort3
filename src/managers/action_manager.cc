@@ -188,7 +188,7 @@ static ActionClass& get_thread_local_action_class(const ActionApi* api)
     return s_tl_actors->back();
 }
 
-void ActionManager::thread_init(SnortConfig* sc)
+void ActionManager::thread_init(const SnortConfig* sc)
 {
     // Initial build out of this thread's configured plugin registry
     s_tl_actors = new ACList;
@@ -201,7 +201,7 @@ void ActionManager::thread_init(SnortConfig* sc)
     }
 }
 
-void ActionManager::thread_reinit(SnortConfig* sc)
+void ActionManager::thread_reinit(const SnortConfig* sc)
 {
     // Update this thread's configured plugin registry with any newly configured inspectors
     for ( auto& p : sc->ips_actions_config->clist )
@@ -217,7 +217,7 @@ void ActionManager::thread_reinit(SnortConfig* sc)
     Active::thread_init(sc);
 }
 
-void ActionManager::thread_term(SnortConfig*)
+void ActionManager::thread_term()
 {
     if (s_tl_actors)
     {

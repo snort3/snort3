@@ -121,7 +121,7 @@ enum RuleOptType
     OPT_TYPE_MAX
 };
 
-typedef void (* IpsOptFunc)(SnortConfig*);
+typedef void (* IpsOptFunc)(const SnortConfig*);
 
 typedef IpsOption* (* IpsNewFunc)(Module*, OptTreeNode*);
 typedef void (* IpsDelFunc)(IpsOption*);

@@ -838,7 +838,7 @@ bool Defrag::configure(SnortConfig* sc)
     return true;
 }
 
-void Defrag::show(SnortConfig*)
+void Defrag::show() const
 {
     ConfigLogger::log_value("max_frags", engine.max_frags);
     ConfigLogger::log_value("max_overlaps", engine.max_overlaps);
@@ -1390,7 +1390,7 @@ left_overlap_last:
         }
     }
 
-    if ((uint16_t)fragLength > SnortConfig::get_conf()->daq_config->get_mru_size())
+    if ((uint16_t)fragLength > p->context->conf->daq_config->get_mru_size())
     {
         debug_logf(stream_ip_trace, "Overly large fragment %d 0x%x 0x%x %d\n",
             fragLength, p->ptrs.ip_api.dgram_len(), p->ptrs.ip_api.off(),
@@ -1750,7 +1750,7 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
     fragStart = p->data;
 
     /* Just to double check */
-    if (!fragLength or fragLength > SnortConfig::get_conf()->daq_config->get_mru_size())
+    if (!fragLength or fragLength > p->context->conf->daq_config->get_mru_size())
     {
         debug_logf(stream_ip_trace, "Bad fragment length:%d(0x%x) off:0x%x(%d)\n",
             fragLength, p->ptrs.ip_api.dgram_len(), p->ptrs.ip_api.off(),

@@ -156,7 +156,7 @@ void CodecLogger::log(Packet* p, const char* msg, Event* e)
     PacketManager::log_protocols(test_file, p);
     TextLog_NewLine(test_file);
 
-    if ( p->dsize and SnortConfig::output_app_data() )
+    if ( p->dsize and p->context->conf->output_app_data() )
         LogNetData(test_file, p->data, p->dsize, p);
 
     TextLog_NewLine(test_file);
@@ -172,7 +172,7 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-static Logger* codec_log_ctor(SnortConfig*, Module* mod)
+static Logger* codec_log_ctor(Module* mod)
 { return new CodecLogger((LogCodecModule*)mod); }
 
 static void codec_log_dtor(Logger* p)

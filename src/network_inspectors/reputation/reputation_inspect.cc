@@ -411,7 +411,7 @@ Reputation::Reputation(ReputationConfig* pc)
     reputationstats.memory_allocated = sfrt_flat_usage(conf->ip_list);
 }
 
-void Reputation::show(SnortConfig*)
+void Reputation::show(const SnortConfig*) const
 {
     ConfigLogger::log_value("blacklist", config.blacklist_path.c_str());
     ConfigLogger::log_value("list_dir", config.list_dir.c_str());

@@ -72,7 +72,7 @@ private:
     const LogApi* api;
 };
 
-typedef Logger* (* LogNewFunc)(struct SnortConfig*, class Module*);
+typedef Logger* (* LogNewFunc)(class Module*);
 typedef void (* LogDelFunc)(Logger*);
 
 struct LogApi

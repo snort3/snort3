@@ -127,7 +127,7 @@ bool AppIdInspector::configure(SnortConfig* sc)
     return true;
 }
 
-void AppIdInspector::show(SnortConfig*)
+void AppIdInspector::show(const SnortConfig*) const
 {
     config->show();
 }

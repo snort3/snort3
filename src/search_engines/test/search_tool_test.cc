@@ -62,10 +62,7 @@ SnortConfig::SnortConfig(const SnortConfig* const)
 
 SnortConfig::~SnortConfig() = default;
 
-SnortConfig* SnortConfig::get_conf()
-{ return snort_conf; }
-
-SnortConfig* SnortConfig::get_parser_conf()
+const SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
 
 unsigned get_instance_id()
@@ -157,28 +154,6 @@ extern const BaseApi* se_ac_bnfa;
 extern const BaseApi* se_ac_full;
 Mpse* mpse = nullptr;
 
-Mpse* MpseManager::get_search_engine(const char *type)
-{
-    const MpseApi* api;
-
-    if ( !strcmp(type, "ac_bnfa") )
-        api = (const MpseApi*) se_ac_bnfa;
-
-    else if ( !strcmp(type, "ac_full") )
-        api = (const MpseApi*) se_ac_full;
-
-    else
-        return nullptr;
-
-    api->init();
-    mpse = api->ctor(snort_conf, nullptr, &s_agent);
-
-    CHECK(mpse);
-
-    mpse->set_api(api);
-    return mpse;
-}
-
 void MpseManager::delete_search_engine(Mpse* eng)
 {
     const MpseApi* api = eng->get_api();
@@ -199,14 +174,31 @@ MpseGroup::~MpseGroup()
     }
 }
 
-bool MpseGroup::create_normal_mpse(SnortConfig*, const char* type)
+bool MpseGroup::create_normal_mpse(const SnortConfig*, const char* type)
 {
-    normal_mpse = MpseManager::get_search_engine(type);
+    const MpseApi* api;
+
+    if ( !strcmp(type, "ac_bnfa") )
+        api = (const MpseApi*) se_ac_bnfa;
+
+    else if ( !strcmp(type, "ac_full") )
+        api = (const MpseApi*) se_ac_full;
+
+    else
+        return false;
+
+    api->init();
+    mpse = api->ctor(snort_conf, nullptr, &s_agent);
+
+    CHECK(mpse);
+
+    mpse->set_api(api);
+    normal_mpse = mpse;
 
     return true;
 }
 
-bool MpseGroup::create_offload_mpse(SnortConfig*)
+bool MpseGroup::create_offload_mpse(const SnortConfig*)
 {
     offload_mpse = nullptr;
     return false;
@@ -248,7 +240,9 @@ TEST_GROUP(search_tool_bnfa)
     void setup() override
     {
         CHECK(se_ac_bnfa);
+        SearchTool::set_conf(snort_conf);
         stool = new SearchTool("ac_bnfa");
+        SearchTool::set_conf(nullptr);
 
         CHECK(stool->mpsegrp->normal_mpse);
 
@@ -338,7 +332,9 @@ TEST_GROUP(search_tool_full)
     void setup() override
     {
         CHECK(se_ac_full);
+        SearchTool::set_conf(snort_conf);
         stool = new SearchTool("ac_full", true);
+        SearchTool::set_conf(nullptr);
 
         CHECK(stool->mpsegrp->normal_mpse);
 

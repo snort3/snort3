@@ -190,7 +190,7 @@ void CodecManager::instantiate()
         instantiate(wrap, nullptr, nullptr);
 }
 
-void CodecManager::thread_init(SnortConfig* sc)
+void CodecManager::thread_init(const SnortConfig* sc)
 {
     max_layers = sc->num_layers;
 

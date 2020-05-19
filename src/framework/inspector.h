@@ -69,7 +69,7 @@ public:
     // access external dependencies here
     // return verification status
     virtual bool configure(SnortConfig*) { return true; }
-    virtual void show(SnortConfig*) { }
+    virtual void show(const SnortConfig*) const { }
 
     // Specific to Binders to notify them of an inspector being removed from the policy
     // FIXIT-L Probably shouldn't be part of the base Inspector class

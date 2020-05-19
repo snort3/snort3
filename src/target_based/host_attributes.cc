@@ -136,7 +136,7 @@ void HostAttributeEntry::update_service
     }
 
     // application service not found, add it
-    if ( service_count >= SnortConfig::get_max_services_per_host() )
+    if ( service_count >= SnortConfig::get_conf()->get_max_services_per_host() )
         return;
 
     ApplicationEntry* app = new ApplicationEntry(port, protocol, snort_protocol_id);
@@ -158,7 +158,8 @@ void HostAttributes::load_hosts_file(SnortConfig* sc, const char* fname)
     delete next_cfg;
     next_cfg = new HostAttributesTable(sc->max_attribute_hosts);
 
-    Shell sh = Shell(fname);
+    Shell sh(fname);
+
     if ( !sh.configure(sc, false, true) )
     {
         delete next_cfg;

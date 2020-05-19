@@ -64,7 +64,7 @@ bool snort_log(Packet* p)
 
 void CallLogFuncs(Packet* p, ListHead* head, Event* event, const char* msg)
 {
-    event->event_id = event_id | SnortConfig::get_event_log_id();
+    event->event_id = event_id | p->context->conf->get_event_log_id();
 
     DetectionEngine::set_check_tags(false);
     pc.log_pkts++;
@@ -81,7 +81,7 @@ void CallLogFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
     event.sig_info = const_cast<SigInfo*>(&otn->sigInfo);
     event.ref_time.tv_sec = p->pkth->ts.tv_sec;
     event.ref_time.tv_usec = p->pkth->ts.tv_usec;
-    event.event_id = event_id | SnortConfig::get_event_log_id();
+    event.event_id = event_id | p->context->conf->get_event_log_id();
     event.event_reference = event.event_id;
 
     DetectionEngine::set_check_tags(false);
@@ -98,7 +98,7 @@ void CallAlertFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
     event.sig_info = const_cast<SigInfo*>(&otn->sigInfo);
     event.ref_time.tv_sec = p->pkth->ts.tv_sec;
     event.ref_time.tv_usec = p->pkth->ts.tv_usec;
-    event.event_id = event_id | SnortConfig::get_event_log_id();
+    event.event_id = event_id | p->context->conf->get_event_log_id();
     event.event_reference = event.event_id;
 
     pc.total_alert_pkts++;

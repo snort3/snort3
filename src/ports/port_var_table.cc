@@ -93,7 +93,7 @@ PortObject* PortVarTableFind(PortVarTable* h, const char* name)
 
     PortObject* po = (PortObject*)h->find(name);
 
-    if ( !po and SnortConfig::dump_rule_info() and strstr(name, "PORT") )
+    if ( !po and SnortConfig::get_conf()->dump_rule_info() and strstr(name, "PORT") )
     {
         po = PortObjectNew();
         po->name = snort_strdup(name);

@@ -46,8 +46,7 @@ private:
     bnfa_struct_t* obj;
 
 public:
-    AcBnfaMpse(SnortConfig*, const MpseAgent* agent)
-        : Mpse("ac_bnfa")
+    AcBnfaMpse(const MpseAgent* agent) : Mpse("ac_bnfa")
     {
         obj=bnfaNew(agent);
         if ( obj ) obj->bnfaMethod = 1;
@@ -66,8 +65,7 @@ public:
     }
 
     int add_pattern(
-        SnortConfig*, const uint8_t* P, unsigned m,
-        const PatternDescriptor& desc, void* user) override
+        const uint8_t* P, unsigned m, const PatternDescriptor& desc, void* user) override
     {
         return bnfaAddPattern(obj, P, m, desc.no_case, desc.negated, user);
     }
@@ -105,9 +103,9 @@ public:
 //-------------------------------------------------------------------------
 
 static Mpse* bnfa_ctor(
-    SnortConfig* sc, class Module*, const MpseAgent* agent)
+    const SnortConfig*, class Module*, const MpseAgent* agent)
 {
-    return new AcBnfaMpse(sc, agent);
+    return new AcBnfaMpse(agent);
 }
 
 static void bnfa_dtor(Mpse* p)

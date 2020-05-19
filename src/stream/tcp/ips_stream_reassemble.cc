@@ -302,7 +302,7 @@ TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")
 
     SECTION("reassembler initialization")
     {
-        bool status = reassembler->begin(nullptr, 0, SnortConfig::get_conf());
+        bool status = reassembler->begin(nullptr, 0, SnortConfig::get_main_conf());
         CHECK(status);
         CHECK( ( reassembler->srod.enable == 0 ) );
         CHECK( ( reassembler->srod.direction == 0 ) );

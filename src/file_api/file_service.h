@@ -40,10 +40,10 @@ public:
     static void init();
 
     // Called after permission is dropped
-    static void post_init();
+    static void post_init(const SnortConfig*);
 
     // Called during reload
-    static void verify_reload(SnortConfig*);
+    static void verify_reload(const SnortConfig*);
 
     // This must be called when snort exits
     static void close();

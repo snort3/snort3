@@ -200,7 +200,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static Logger* log_ctor(SnortConfig*, Module* m)
+static Logger* log_ctor(Module* m)
 {
     const char* key = m->get_name();
     std::string* chunk = ScriptManager::get_chunk(key);

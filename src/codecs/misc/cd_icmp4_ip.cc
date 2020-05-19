@@ -151,7 +151,7 @@ void Icmp4IpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     //      the two are not necessarily the same.
 
     // FIXIT-RC this does NOT obfuscate correctly
-    if (SnortConfig::obfuscate())
+    if (SnortConfig::get_conf()->obfuscate())
     {
         TextLog_Print(text_log, "xxx.xxx.xxx.xxx -> xxx.xxx.xxx.xxx");
     }

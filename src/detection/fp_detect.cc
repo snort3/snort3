@@ -94,12 +94,12 @@ THREAD_LOCAL ProfileStats rulePerfStats;
 static void fp_immediate(Packet*);
 static void fp_immediate(MpseGroup*, Packet*, const uint8_t*, unsigned);
 
-static inline void init_match_info(OtnxMatchData* omd)
+static inline void init_match_info(const IpsContext* c)
 {
-    for ( unsigned i = 0; i < SnortConfig::get_conf()->num_rule_types; i++ )
-        omd->matchInfo[i].iMatchCount = 0;
+    for ( unsigned i = 0; i < c->conf->num_rule_types; i++ )
+        c->otnx->matchInfo[i].iMatchCount = 0;
 
-    omd->have_match = false;
+    c->otnx->have_match = false;
 }
 
 // called by fpLogEvent(), which does the filtering etc.
@@ -107,7 +107,7 @@ static inline void init_match_info(OtnxMatchData* omd)
 static inline void fpLogOther(
     Packet* p, const RuleTreeNode* rtn, const OptTreeNode* otn, int action)
 {
-    if ( EventTrace_IsEnabled() )
+    if ( EventTrace_IsEnabled(p->context->conf) )
         EventTrace_Log(p, otn, action);
 
     if ( PacketTracer::is_active() )
@@ -158,7 +158,7 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
     }
 
     if ((p->packet_flags & PKT_STREAM_UNEST_UNI) &&
-        SnortConfig::assure_established() &&
+        p->context->conf->assure_established() &&
         (!(p->packet_flags & PKT_REBUILT_STREAM)) &&
         !otn->stateless() )
     {
@@ -217,8 +217,10 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
      * check the decoder/preprocessor events (they have been added to Event queue already).
      * If its order is lower than 'pass', it should have been passed.
      * This is consistent with other detection rules */
-    if ( (p->packet_flags & PKT_PASS_RULE)
-        && (SnortConfig::get_eval_index(rtn->action) > SnortConfig::get_eval_index(Actions::PASS)) )
+    const SnortConfig* sc = p->context->conf;
+
+    if ( (p->packet_flags & PKT_PASS_RULE) &&
+        (sc->get_eval_index(rtn->action) > sc->get_eval_index(Actions::PASS)) )
     {
         fpLogOther(p, rtn, otn, rtn->action);
         return 1;
@@ -260,8 +262,10 @@ int fpAddMatch(OtnxMatchData* omd, const OptTreeNode* otn)
     RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
     unsigned evalIndex = rtn->listhead->ruleListNode->evalIndex;
 
+    const SnortConfig* sc = SnortConfig::get_conf();
+
     /* bounds check index */
-    if ( evalIndex >= SnortConfig::get_conf()->num_rule_types )
+    if ( evalIndex >= sc->num_rule_types )
     {
         pc.match_limit++;
         return 1;
@@ -272,7 +276,7 @@ int fpAddMatch(OtnxMatchData* omd, const OptTreeNode* otn)
     **  If we hit the max number of unique events for any rule type alert,
     **  log or pass, then we don't add it to the list.
     */
-    if ( pmi->iMatchCount >= SnortConfig::get_conf()->fast_pattern_config->get_max_queue_events() ||
+    if ( pmi->iMatchCount >= sc->fast_pattern_config->get_max_queue_events() ||
         pmi->iMatchCount >= MAX_EVENT_MATCH)
     {
         pc.match_limit++;
@@ -604,16 +608,16 @@ static inline int fpFinalSelectEvent(OtnxMatchData* omd, Packet* p)
         return 0;
 
     unsigned tcnt = 0;
-    EventQueueConfig* eq = SnortConfig::get_conf()->event_queue_config;
+    EventQueueConfig* eq = p->context->conf->event_queue_config;
     int (*compar)(const void *, const void *);
     compar = ( eq->order == SNORT_EVENTQ_PRIORITY )
         ? &sortOrderByPriority : sortOrderByContentLength;
 
-    for ( unsigned i = 0; i < SnortConfig::get_conf()->num_rule_types; i++ )
+    for ( unsigned i = 0; i < p->context->conf->num_rule_types; i++ )
     {
         /* bail if were not dumping events in all the action groups,
          * and we've already got some events */
-        if (!SnortConfig::process_all_events() && (tcnt > 0))
+        if (!p->context->conf->process_all_events() && (tcnt > 0))
             return 1;
 
         if ( omd->matchInfo[i].iMatchCount )
@@ -814,7 +818,7 @@ bool MpseStash::process(MpseMatch match, void* context)
 
 void fp_set_context(IpsContext& c)
 {
-    FastPatternConfig* fp = SnortConfig::get_conf()->fast_pattern_config;
+    FastPatternConfig* fp = c.conf->fast_pattern_config;
     c.stash = new MpseStash(fp->get_queue_limit());
     c.otnx = (OtnxMatchData*)snort_calloc(sizeof(OtnxMatchData));
     c.otnx->matchInfo = (MatchInfo*)snort_calloc(MAX_NUM_RULE_TYPES, sizeof(MatchInfo));
@@ -973,7 +977,7 @@ static inline void eval_fp(
 
     if ( DetectionEngine::content_enabled(p) )
     {
-        FastPatternConfig* fp = SnortConfig::get_conf()->fast_pattern_config;
+        FastPatternConfig* fp = p->context->conf->fast_pattern_config;
 
         if ( fp->get_stream_insert() || !(p->packet_flags & PKT_STREAM_INSERT) )
             if ( fp_search(port_group, p) )
@@ -995,7 +999,7 @@ static inline void eval_nfp(
     const uint8_t* tmp_payload = nullptr;
     uint16_t tmp_dsize = 0;
 
-    FastPatternConfig* fp = SnortConfig::get_conf()->fast_pattern_config;
+    FastPatternConfig* fp = p->context->conf->fast_pattern_config;
 
     if (ip_rule)
     {
@@ -1085,10 +1089,10 @@ static inline void fpEvalHeaderIp(Packet* p, FPTask task)
 {
     PortGroup* any = nullptr, * ip_group = nullptr;
 
-    if ( !prmFindRuleGroupIp(SnortConfig::get_conf()->prmIpRTNX, ANYPORT, &ip_group, &any) )
+    if ( !prmFindRuleGroupIp(p->context->conf->prmIpRTNX, ANYPORT, &ip_group, &any) )
         return;
 
-    if ( SnortConfig::get_conf()->fast_pattern_config->get_debug_print_nc_rules() )
+    if ( p->context->conf->fast_pattern_config->get_debug_print_nc_rules() )
         LogMessage("fpEvalHeaderIp: ip_group=%p, any=%p\n", (void*)ip_group, (void*)any);
 
     if ( ip_group )
@@ -1102,7 +1106,7 @@ static inline void fpEvalHeaderIcmp(Packet* p, FPTask task)
 {
     PortGroup* any = nullptr, * type = nullptr;
 
-    if ( !prmFindRuleGroupIcmp(SnortConfig::get_conf()->prmIcmpRTNX, p->ptrs.icmph->type, &type, &any) )
+    if ( !prmFindRuleGroupIcmp(p->context->conf->prmIcmpRTNX, p->ptrs.icmph->type, &type, &any) )
         return;
 
     if ( type )
@@ -1116,7 +1120,7 @@ static inline void fpEvalHeaderTcp(Packet* p, FPTask task)
 {
     PortGroup* src = nullptr, * dst = nullptr, * any = nullptr;
 
-    if ( !prmFindRuleGroupTcp(SnortConfig::get_conf()->prmTcpRTNX, p->ptrs.dp, p->ptrs.sp, &src, &dst, &any) )
+    if ( !prmFindRuleGroupTcp(p->context->conf->prmTcpRTNX, p->ptrs.dp, p->ptrs.sp, &src, &dst, &any) )
         return;
 
     if ( dst )
@@ -1133,7 +1137,7 @@ static inline void fpEvalHeaderUdp(Packet* p, FPTask task)
 {
     PortGroup* src = nullptr, * dst = nullptr, * any = nullptr;
 
-    if ( !prmFindRuleGroupUdp(SnortConfig::get_conf()->prmUdpRTNX, p->ptrs.dp, p->ptrs.sp, &src, &dst, &any) )
+    if ( !prmFindRuleGroupUdp(p->context->conf->prmUdpRTNX, p->ptrs.dp, p->ptrs.sp, &src, &dst, &any) )
         return;
 
     if ( dst )
@@ -1155,10 +1159,10 @@ static inline bool fpEvalHeaderSvc(Packet* p, FPTask task)
     if (snort_protocol_id != UNKNOWN_PROTOCOL_ID and snort_protocol_id != INVALID_PROTOCOL_ID)
     {
         if (p->is_from_server()) /* to cli */
-            svc = SnortConfig::get_conf()->sopgTable->get_port_group(false, snort_protocol_id);
+            svc = p->context->conf->sopgTable->get_port_group(false, snort_protocol_id);
 
         if (p->is_from_client()) /* to srv */
-            svc = SnortConfig::get_conf()->sopgTable->get_port_group(true, snort_protocol_id);
+            svc = p->context->conf->sopgTable->get_port_group(true, snort_protocol_id);
     }
 
     if ( svc )
@@ -1270,7 +1274,7 @@ void fp_partial(Packet* p)
     stash->enable_process();
     stash->init();
     stash->disable_process();
-    init_match_info(c->otnx);
+    init_match_info(c);
     c->searches.mf = rule_tree_queue;
     c->searches.context = c;
     assert(!c->searches.items.size());

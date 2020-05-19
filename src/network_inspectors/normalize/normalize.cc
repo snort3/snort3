@@ -209,7 +209,7 @@ public:
     Normalizer(const NormalizerConfig&);
 
     bool configure(SnortConfig*) override;
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
     void eval(Packet*) override;
 
 private:
@@ -266,7 +266,7 @@ NormMode Normalize_GetMode(NormFlags nf)
     return NORM_MODE_TEST;
 }
 
-void Normalizer::show(SnortConfig*)
+void Normalizer::show(const SnortConfig*) const
 {
     print_ip4(&config);
     print_ip6(&config);

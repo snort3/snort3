@@ -57,7 +57,7 @@ static bool DAQ_ValidateInstance(DAQ_Instance_h instance)
 {
     uint32_t caps = daq_instance_get_capabilities(instance);
 
-    if (!SnortConfig::adaptor_inline_mode())
+    if (!SnortConfig::get_conf()->adaptor_inline_mode())
         return true;
 
     if (!(caps & DAQ_CAPA_BLOCK))
@@ -172,7 +172,7 @@ bool SFDAQInstance::start()
     pool_size = mpool_info.size;
     pool_available = mpool_info.available;
     assert(pool_size == pool_available);
-    if (SnortConfig::log_verbose())
+    if (SnortConfig::get_conf()->log_verbose())
     {
         LogMessage("Instance %d daq pool size: %d\n", get_instance_id(), pool_size);
         LogMessage("Instance %d daq batch size: %d\n", get_instance_id(), batch_size);

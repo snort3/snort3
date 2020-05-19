@@ -103,7 +103,7 @@ static void FTPDataProcess(
     // and no IPS rules are configured.
     if ( !status )
     {
-        IpsPolicy* empty_policy = snort::get_empty_ips_policy(SnortConfig::get_conf());
+        IpsPolicy* empty_policy = snort::get_empty_ips_policy(p->context->conf);
         if ( empty_policy->policy_id == p->flow->ips_policy_id )
         {
             if ( PacketTracer::is_active() )

@@ -100,7 +100,7 @@ void RnaInspector::eval(Packet* p)
     UNUSED(p);
 }
 
-void RnaInspector::show(SnortConfig*)
+void RnaInspector::show(const SnortConfig*) const
 {
     if ( mod_conf )
     {

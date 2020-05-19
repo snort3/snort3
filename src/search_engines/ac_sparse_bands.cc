@@ -37,11 +37,8 @@ private:
     ACSM_STRUCT2* obj;
 
 public:
-    AcsbMpse(SnortConfig*, const MpseAgent* agent)
-        : Mpse("ac_sparse_bands")
-    {
-        obj = acsmNew2(agent, ACF_SPARSE_BANDS);
-    }
+    AcsbMpse(const MpseAgent* agent) : Mpse("ac_sparse_bands")
+    { obj = acsmNew2(agent, ACF_SPARSE_BANDS); }
 
     ~AcsbMpse() override
     { acsmFree2(obj); }
@@ -50,8 +47,7 @@ public:
     { obj->enable_dfa(); }
 
     int add_pattern(
-        SnortConfig*, const uint8_t* P, unsigned m,
-        const PatternDescriptor& desc, void* user) override
+        const uint8_t* P, unsigned m, const PatternDescriptor& desc, void* user) override
     {
         return acsmAddPattern2(obj, P, m, desc.no_case, desc.negated, user);
     }
@@ -81,9 +77,9 @@ public:
 //-------------------------------------------------------------------------
 
 static Mpse* acsb_ctor(
-    SnortConfig* sc, class Module*, const MpseAgent* agent)
+    const SnortConfig*, class Module*, const MpseAgent* agent)
 {
-    return new AcsbMpse(sc, agent);
+    return new AcsbMpse(agent);
 }
 
 static void acsb_dtor(Mpse* p)

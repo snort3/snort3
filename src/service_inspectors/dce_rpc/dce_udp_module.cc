@@ -127,7 +127,7 @@ void Dce2UdpModule::get_data(dce2UdpProtoConf& dce2_udp_config)
     dce2_udp_config = config;
 }
 
-void print_dce2_udp_conf(dce2UdpProtoConf& config)
+void print_dce2_udp_conf(const dce2UdpProtoConf& config)
 {
     print_dce2_common_config(config.common);
 }

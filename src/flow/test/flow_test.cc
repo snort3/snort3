@@ -82,7 +82,7 @@ const Layer* layer::get_mpls_layer(const Packet* const) { return nullptr; }
 
 void DataBus::publish(const char*, Packet*, Flow*) {}
 
-SnortConfig* SnortConfig::get_conf() { return nullptr; }
+const SnortConfig* SnortConfig::get_conf() { return nullptr; }
 
 TEST_GROUP(nondefault_timeout)
 {

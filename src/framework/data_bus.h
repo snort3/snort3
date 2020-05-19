@@ -93,13 +93,19 @@ public:
     DataBus();
     ~DataBus();
 
+    // configure time methods - main thread only
     void clone(DataBus& from);
     void add_mapped_module(const char*);
 
+    // FIXIT-L ideally these would not be static or would take an inspection policy*
     static void subscribe(const char* key, DataHandler*);
     static void subscribe_global(const char* key, DataHandler*, SnortConfig*);
+
+    // FIXIT-L these should be called during cleanup
     static void unsubscribe(const char* key, DataHandler*);
     static void unsubscribe_global(const char* key, DataHandler*, SnortConfig*);
+
+    // runtime methods
     static void publish(const char* key, DataEvent&, Flow* = nullptr);
 
     // convenience methods

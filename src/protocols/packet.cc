@@ -257,7 +257,7 @@ uint16_t Packet::get_flow_vlan_id() const
 
     if (flow)
         vid = flow->key->vlan_tag;
-    else if ( !SnortConfig::get_vlan_agnostic() and (proto_bits & PROTO_BIT__VLAN) )
+    else if ( !context->conf->get_vlan_agnostic() and (proto_bits & PROTO_BIT__VLAN) )
         vid = layer::get_vlan_layer(this)->vid();
 
     return vid;

@@ -290,7 +290,7 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
             timercmp(&file_ctx->pending_expire_time, &now, <))
         {
             //  Timed out while waiting for pending verdict.
-            FileConfig* fc = get_file_config(SnortConfig::get_conf());
+            FileConfig* fc = get_file_config(p->context->conf);
 
             //  Block session on timeout if configured, otherwise use the
             //  current action.

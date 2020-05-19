@@ -33,7 +33,7 @@ using namespace snort;
 
 static THREAD_LOCAL TraceLogger* g_trace_logger = nullptr;
 
-void TraceApi::thread_init(SnortConfig* sc)
+void TraceApi::thread_init(const SnortConfig* sc)
 {
     if ( sc->trace_config->logger_factory )
         g_trace_logger = sc->trace_config->logger_factory->instantiate();
@@ -47,7 +47,7 @@ void TraceApi::thread_term()
     g_trace_logger = nullptr;
 }
 
-void TraceApi::thread_reinit(SnortConfig* sc)
+void TraceApi::thread_reinit(const SnortConfig* sc)
 {
     sc->trace_config->setup_module_trace();
 }

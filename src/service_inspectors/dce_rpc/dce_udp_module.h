@@ -73,7 +73,7 @@ private:
     dce2UdpProtoConf config;
 };
 
-void print_dce2_udp_conf(dce2UdpProtoConf& config);
+void print_dce2_udp_conf(const dce2UdpProtoConf&);
 
 #endif
 

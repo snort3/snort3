@@ -144,12 +144,6 @@ int sfthreshold_create(
 int sfthreshold_test(unsigned gen_id, unsigned sig_id, const SfIp* sip,
     const SfIp* dip, long curtime, PolicyId policy_id)
 {
-    if ((SnortConfig::get_conf()->threshold_config == nullptr) ||
-        !SnortConfig::get_conf()->threshold_config->enabled)
-    {
-        return 0;
-    }
-
     if (!thd_checked)
     {
         thd_checked = 1;

@@ -31,6 +31,8 @@
 
 namespace snort
 {
+const SnortConfig* SearchTool::conf = nullptr;
+
 SearchTool::SearchTool(const char* method, bool dfa)
 {
     mpsegrp = new MpseGroup;
@@ -42,10 +44,9 @@ SearchTool::SearchTool(const char* method, bool dfa)
     // pattern offload search method.  If a method is passed in then an offload
     // search engine will not be created
 
-    SnortConfig* sc = SnortConfig::get_parser_conf();
-    assert(sc);
+    assert(conf);
 
-    if (mpsegrp->create_normal_mpse(sc, method))
+    if (mpsegrp->create_normal_mpse(conf, method))
     {
         if( dfa )
             mpsegrp->normal_mpse->set_opt(1);
@@ -53,7 +54,7 @@ SearchTool::SearchTool(const char* method, bool dfa)
 
     if (method == nullptr)
     {
-        if (mpsegrp->create_offload_mpse(sc))
+        if (mpsegrp->create_offload_mpse(conf))
         {
             if ( dfa )
                 mpsegrp->offload_mpse->set_opt(1);
@@ -69,28 +70,23 @@ SearchTool::~SearchTool()
 }
 
 void SearchTool::add(const char* pat, unsigned len, int id, bool no_case)
-{
-    add((const uint8_t*)pat, len, id, no_case);
-}
+{ add((const uint8_t*)pat, len, id, no_case); }
 
 void SearchTool::add(const char* pat, unsigned len, void* id, bool no_case)
-{
-    add((const uint8_t*)pat, len, id, no_case);
-}
+{ add((const uint8_t*)pat, len, id, no_case); }
 
 void SearchTool::add(const uint8_t* pat, unsigned len, int id, bool no_case)
-{
-    add(pat, len, (void*)(long)id, no_case);
-}
+{ add(pat, len, (void*)(long)id, no_case); }
 
 void SearchTool::add(const uint8_t* pat, unsigned len, void* id, bool no_case)
 {
     Mpse::PatternDescriptor desc(no_case, false, true);
 
     if ( mpsegrp->normal_mpse )
-        mpsegrp->normal_mpse->add_pattern(nullptr,  pat, len, desc, id);
+        mpsegrp->normal_mpse->add_pattern(pat, len, desc, id);
+
     if ( mpsegrp->offload_mpse )
-        mpsegrp->offload_mpse->add_pattern(nullptr,  pat, len, desc, id);
+        mpsegrp->offload_mpse->add_pattern(pat, len, desc, id);
 
     if ( len > max_len )
         max_len = len;
@@ -105,16 +101,11 @@ void SearchTool::prep()
 }
 
 int SearchTool::find(
-    const char* str,
-    unsigned len,
-    MpseMatch mf,
-    int& state,
-    bool confine,
-    void* user_data)
+    const char* str, unsigned len, MpseMatch mf, int& state, bool confine, void* user_data)
 {
     int num = 0;
-    SnortConfig* sc = SnortConfig::get_conf();
-    FastPatternConfig* fp = sc->fast_pattern_config;
+    const SnortConfig* sc = SnortConfig::get_conf();
+    const FastPatternConfig* fp = sc->fast_pattern_config;
 
     if ( confine && max_len > 0 )
     {
@@ -143,26 +134,18 @@ int SearchTool::find(
 }
 
 int SearchTool::find(
-    const char* str,
-    unsigned len,
-    MpseMatch mf,
-    bool confine,
-    void* user_data)
+    const char* str, unsigned len, MpseMatch mf, bool confine, void* user_data)
 {
     int state = 0;
     return find(str, len, mf, state, confine, user_data);
 }
 
 int SearchTool::find_all(
-    const char* str,
-    unsigned len,
-    MpseMatch mf,
-    bool confine,
-    void* user_data)
+    const char* str, unsigned len, MpseMatch mf, bool confine, void* user_data)
 {
     int num = 0;
-    SnortConfig* sc = SnortConfig::get_conf();
-    FastPatternConfig* fp = sc->fast_pattern_config;
+    const SnortConfig* sc = SnortConfig::get_conf();
+    const FastPatternConfig* fp = sc->fast_pattern_config;
 
     if ( confine && max_len > 0 )
     {

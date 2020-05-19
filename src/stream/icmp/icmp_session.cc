@@ -23,6 +23,7 @@
 
 #include "icmp_session.h"
 
+#include "detection/ips_context.h"
 #include "flow/flow_key.h"
 #include "memory/memory_cap.h"
 #include "profiler/profiler_defs.h"
@@ -140,9 +141,10 @@ static int ProcessIcmpUnreach(Packet* p)
 
     // FIXIT-L see FlowKey::init*() - call those instead
     // or do mpls differently for ip4 and ip6
-    skey.init_vlan(vlan);
-    skey.init_address_space(0);
-    skey.init_mpls(0);
+    const SnortConfig* sc = p->context->conf;
+    skey.init_vlan(sc, vlan);
+    skey.init_address_space(sc, 0);
+    skey.init_mpls(sc, 0);
 
     switch (p->type())
     {

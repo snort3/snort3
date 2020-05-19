@@ -45,7 +45,7 @@
 
 #include "asn1_util.h"
 
-#include "main/snort_config.h"
+#include "main/thread.h"
 #include "utils/util.h"
 
 using namespace snort;
@@ -114,9 +114,9 @@ static ASN1_TYPE* asn1_node_alloc()
 **  @return none
 **
 */
-void asn1_init_mem(SnortConfig* sc)
+void asn1_init_mem(int asn1_mem)
 {
-    asn1_config.num_nodes = sc->asn1_mem;
+    asn1_config.num_nodes = asn1_mem;
 
     if (asn1_config.num_nodes > 0)
         asn1_config.mem = (ASN1_TYPE*)snort_calloc(asn1_config.num_nodes, sizeof(ASN1_TYPE));
@@ -134,7 +134,7 @@ void asn1_init_mem(SnortConfig* sc)
 **  @return none
 **
 */
-void asn1_free_mem(SnortConfig*)
+void asn1_free_mem()
 {
     if (asn1_config.mem != nullptr)
     {

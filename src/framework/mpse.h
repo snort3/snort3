@@ -75,8 +75,7 @@ public:
     };
 
     virtual int add_pattern(
-        SnortConfig* sc, const uint8_t* pat, unsigned len,
-        const PatternDescriptor&, void* user) = 0;
+        const uint8_t* pat, unsigned len, const PatternDescriptor&, void* user) = 0;
 
     virtual int prep_patterns(SnortConfig*) = 0;
 
@@ -120,9 +119,7 @@ private:
 typedef void (* MpseOptFunc)(SnortConfig*);
 typedef void (* MpseExeFunc)();
 
-typedef Mpse* (* MpseNewFunc)(
-    SnortConfig* sc, class Module*, const MpseAgent*);
-
+typedef Mpse* (* MpseNewFunc)(const SnortConfig*, class Module*, const MpseAgent*);
 typedef void (* MpseDelFunc)(Mpse*);
 
 typedef Mpse::MpseRespType (* MpsePollFunc)(MpseBatch*&, Mpse::MpseType);

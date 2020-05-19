@@ -452,8 +452,9 @@ static Inspector* get_gadget(Flow* flow)
 
 static Inspector* get_gadget_by_id(const char* service)
 {
-    const SnortProtocolId id = SnortConfig::get_conf()->proto_ref->find(service);
-    const char* s = SnortConfig::get_conf()->proto_ref->get_name(id);
+    const SnortConfig* sc = SnortConfig::get_conf();
+    const SnortProtocolId id = sc->proto_ref->find(service);
+    const char* s = sc->proto_ref->get_name(id);
     return InspectorManager::get_inspector_by_service(s);
 }
 
@@ -825,7 +826,7 @@ public:
     void remove_inspector_binding(SnortConfig*, const char*) override;
 
     bool configure(SnortConfig*) override;
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
 
     void eval(Packet*) override { }
 
@@ -945,7 +946,7 @@ bool Binder::configure(SnortConfig* sc)
     return true;
 }
 
-void Binder::show(SnortConfig*)
+void Binder::show(const SnortConfig*) const
 {
     std::once_flag once;
 
@@ -1137,6 +1138,8 @@ void Binder::get_bindings(Flow* flow, Stuff& stuff, Packet* p, const char* servi
     //          It gets potentially hairy if people start specifying overlapping policy types in
     //          overlapping rules.
     bool inspection_set = false, ips_set = false;
+    const SnortConfig* sc = SnortConfig::get_conf();
+
     for ( unsigned i = 0; i < sz; i++ )
     {
         Binding* pb = bindings[i];
@@ -1151,7 +1154,7 @@ void Binder::get_bindings(Flow* flow, Stuff& stuff, Packet* p, const char* servi
 
         if ( pb->use.inspection_index and !inspection_set )
         {
-            set_inspection_policy(SnortConfig::get_conf(), pb->use.inspection_index - 1);
+            set_inspection_policy(sc, pb->use.inspection_index - 1);
             if (!service)
                 flow->inspection_policy_id = pb->use.inspection_index - 1;
             inspection_set = true;
@@ -1159,7 +1162,7 @@ void Binder::get_bindings(Flow* flow, Stuff& stuff, Packet* p, const char* servi
 
         if ( pb->use.ips_index and !ips_set )
         {
-            set_ips_policy(SnortConfig::get_conf(), pb->use.ips_index - 1);
+            set_ips_policy(sc, pb->use.ips_index - 1);
             if (!service)
                 flow->ips_policy_id = pb->use.ips_index - 1;
             ips_set = true;

@@ -50,9 +50,9 @@ static void replace_parse(const char* args, string& s)
         ParseError("can't negate replace string");
 }
 
-static bool replace_ok()
+static bool replace_ok(const SnortConfig* sc)
 {
-    if ( SnortConfig::inline_mode() and SFDAQ::can_replace() )
+    if ( sc->inline_mode() and SFDAQ::can_replace() )
         return true;
 
     static THREAD_LOCAL bool warned = false;
@@ -167,7 +167,7 @@ IpsOption::EvalStatus ReplaceOption::eval(Cursor& c, Packet* p)
     if ( c.get_pos() < repl.size() )
         return NO_MATCH;
 
-    if ( replace_ok() )
+    if ( replace_ok(p->context->conf) )
         store(c.get_pos() - repl.size());
 
     return MATCH;

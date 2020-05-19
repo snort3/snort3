@@ -41,7 +41,7 @@ void SetEvent(
     event.sig_info->priority = priority;
 
     /* this one gets set automatically */
-    event.event_id = ++event_id | SnortConfig::get_event_log_id();
+    event.event_id = ++event_id | SnortConfig::get_conf()->get_event_log_id();
 
     if (event_ref)
         event.event_reference = event_ref;

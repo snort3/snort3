@@ -83,8 +83,7 @@ using namespace snort;
 #define OUTPUT_U2   "unified2"
 #define OUTPUT_FAST "alert_fast"
 
-SnortConfig* parser_conf = nullptr;
-THREAD_LOCAL SnortConfig* snort_conf = nullptr;
+static THREAD_LOCAL const SnortConfig* snort_conf = nullptr;
 
 uint32_t SnortConfig::warning_flags = 0;
 
@@ -94,20 +93,20 @@ static std::vector<ScratchAllocator*> scratch_handlers;
 // private implementation
 //-------------------------------------------------------------------------
 
-static PolicyMode init_policy_mode(PolicyMode mode)
+static PolicyMode init_policy_mode(const SnortConfig* sc, PolicyMode mode)
 {
     switch ( mode )
     {
     case POLICY_MODE__PASSIVE:
-        if ( SnortConfig::adaptor_inline_test_mode() )
+        if ( sc->adaptor_inline_test_mode() )
             return POLICY_MODE__INLINE_TEST;
         break;
 
     case POLICY_MODE__INLINE:
-        if ( SnortConfig::adaptor_inline_test_mode() )
+        if ( sc->adaptor_inline_test_mode() )
             return POLICY_MODE__INLINE_TEST;
 
-        else if (!SnortConfig::adaptor_inline_mode())
+        else if (!sc->adaptor_inline_mode())
         {
             ParseWarning(WARN_DAQ, "adapter is in passive mode; switching policy mode to tap.");
             return POLICY_MODE__PASSIVE;
@@ -118,7 +117,7 @@ static PolicyMode init_policy_mode(PolicyMode mode)
         break;
 
     case POLICY_MODE__MAX:
-        if ( SnortConfig::adaptor_inline_mode() )
+        if ( sc->adaptor_inline_mode() )
             return POLICY_MODE__INLINE;
         else
             return POLICY_MODE__PASSIVE;
@@ -135,13 +134,13 @@ static void init_policies(SnortConfig* sc)
     for ( unsigned idx = 0; idx <  sc->policy_map->ips_policy_count(); ++idx )
     {
         ips_policy = sc->policy_map->get_ips_policy(idx);
-        ips_policy->policy_mode = init_policy_mode(ips_policy->policy_mode);
+        ips_policy->policy_mode = init_policy_mode(sc, ips_policy->policy_mode);
     }
 
     for ( unsigned idx = 0; idx < sc->policy_map->inspection_policy_count(); ++idx )
     {
         inspection_policy = sc->policy_map->get_inspection_policy(idx);
-        inspection_policy->policy_mode = init_policy_mode(inspection_policy->policy_mode);
+        inspection_policy->policy_mode = init_policy_mode(sc, inspection_policy->policy_mode);
     }
 }
 
@@ -184,10 +183,6 @@ void SnortConfig::init(const SnortConfig* const other_conf, ProtocolReference* p
         clone(other_conf);
         policy_map = new PolicyMap(other_conf->policy_map);
     }
-
-    set_inspection_policy(policy_map->get_inspection_policy());
-    set_ips_policy(policy_map->get_ips_policy());
-    set_network_policy(policy_map->get_network_policy());
 }
 
 //-------------------------------------------------------------------------
@@ -464,47 +459,48 @@ void SnortConfig::merge(SnortConfig* cmd_line)
     trace_config->merge_cmd_line(cmd_line->trace_config);
 }
 
-bool SnortConfig::verify()
+bool SnortConfig::verify() const
 {
     bool config_ok = false;
+    const SnortConfig* sc = get_conf();
 
-    if (get_conf()->asn1_mem != asn1_mem)
+    if ( sc->asn1_mem != asn1_mem )
         ReloadError("Changing detection.asn1_mem requires a restart.\n");
 
-    else if ( get_conf()->bpf_filter != bpf_filter )
+    else if ( sc->bpf_filter != bpf_filter )
         ReloadError("Changing packets.bfp_filter requires a restart.\n");
 
-    else if ( get_conf()->respond_attempts != respond_attempts )
+    else if ( sc->respond_attempts != respond_attempts )
         ReloadError("Changing active.attempts requires a restart.\n");
 
-    else if (  get_conf()->respond_device != respond_device )
+    else if (  sc->respond_device != respond_device )
         ReloadError("Changing active.device requires a restart.\n");
 
-    else if (get_conf()->chroot_dir != chroot_dir)
+    else if (sc->chroot_dir != chroot_dir)
         ReloadError("Changing process.chroot requires a restart.\n");
 
-    else if ((get_conf()->run_flags & RUN_FLAG__DAEMON) != (run_flags & RUN_FLAG__DAEMON))
+    else if ((sc->run_flags & RUN_FLAG__DAEMON) != (run_flags & RUN_FLAG__DAEMON))
         ReloadError("Changing process.daemon requires a restart.\n");
 
-    else if (get_conf()->orig_log_dir != orig_log_dir)
+    else if (sc->orig_log_dir != orig_log_dir)
         ReloadError("Changing output.logdir requires a restart.\n");
 
-    else if (get_conf()->group_id != group_id)
+    else if (sc->group_id != group_id)
         ReloadError("Changing process.setgid requires a restart.\n");
 
-    else if (get_conf()->user_id != user_id)
+    else if (sc->user_id != user_id)
         ReloadError("Changing process.setuid requires a restart.\n");
 
-    else if (get_conf()->daq_config->get_mru_size() != daq_config->get_mru_size())
+    else if (sc->daq_config->get_mru_size() != daq_config->get_mru_size())
         ReloadError("Changing daq.snaplen requires a restart.\n");
 
-    else if (get_conf()->threshold_config->memcap != threshold_config->memcap)
+    else if (sc->threshold_config->memcap != threshold_config->memcap)
         ReloadError("Changing alerts.event_filter_memcap requires a restart.\n");
 
-    else  if (get_conf()->rate_filter_config->memcap != rate_filter_config->memcap)
+    else  if (sc->rate_filter_config->memcap != rate_filter_config->memcap)
         ReloadError("Changing alerts.rate_filter_memcap requires a restart.\n");
 
-    else if (get_conf()->detection_filter_config->memcap != detection_filter_config->memcap)
+    else if (sc->detection_filter_config->memcap != detection_filter_config->memcap)
         ReloadError("Changing alerts.detection_filter_memcap requires a restart.\n");
 
     else
@@ -924,12 +920,28 @@ void SnortConfig::enable_syslog()
     syslog_configured = true;
 }
 
-bool SnortConfig::tunnel_bypass_enabled(uint16_t proto)
+bool SnortConfig::get_default_rule_state() const
 {
-    return (!((get_conf()->tunnel_mask & proto) or SFDAQ::get_tunnel_bypass(proto)));
+    switch ( get_ips_policy()->default_rule_state )
+    {
+    case IpsPolicy::INHERIT_ENABLE:
+        return global_default_rule_state;
+
+    case IpsPolicy::ENABLED:
+        return true;
+
+    case IpsPolicy::DISABLED:
+        return false;
+    }
+    return true;
 }
 
-SO_PUBLIC int SnortConfig::request_scratch(ScratchAllocator* s)
+bool SnortConfig::tunnel_bypass_enabled(uint16_t proto) const
+{
+    return !((tunnel_mask & proto) or SFDAQ::get_tunnel_bypass(proto));
+}
+
+int SnortConfig::request_scratch(ScratchAllocator* s)
 {
     scratch_handlers.emplace_back(s);
 
@@ -938,22 +950,19 @@ SO_PUBLIC int SnortConfig::request_scratch(ScratchAllocator* s)
     return scratch_handlers.size() - 1;
 }
 
-SO_PUBLIC void SnortConfig::release_scratch(int id)
+void SnortConfig::release_scratch(int id)
 {
     assert((unsigned)id < scratch_handlers.size());
     scratch_handlers[id] = nullptr;
 }
 
-SO_PUBLIC SnortConfig* SnortConfig::get_parser_conf()
-{ return parser_conf; }
+SnortConfig* SnortConfig::get_main_conf()
+{ return const_cast<SnortConfig*>(snort_conf); }
 
-void SnortConfig::set_parser_conf(SnortConfig* sc)
-{ parser_conf = sc; }
-
-SO_PUBLIC SnortConfig* SnortConfig::get_conf()
+const SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
 
-void SnortConfig::set_conf(SnortConfig* sc)
+void SnortConfig::set_conf(const SnortConfig* sc)
 {
     snort_conf = sc;
 

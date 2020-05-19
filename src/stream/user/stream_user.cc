@@ -49,7 +49,7 @@ public:
     StreamUser(StreamUserConfig*);
     ~StreamUser() override;
 
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
 
     NORETURN_ASSERT void eval(Packet*) override;
 
@@ -67,7 +67,7 @@ StreamUser::~StreamUser()
     delete config;
 }
 
-void StreamUser::show(SnortConfig*)
+void StreamUser::show(const SnortConfig*) const
 {
     if ( !config )
         return;

@@ -88,6 +88,21 @@ struct NetworkPolicy
 public:
     NetworkPolicy(PolicyId = 0);
 
+    bool checksum_drops(uint16_t codec_cksum_err_flag)
+    { return (checksum_drop & codec_cksum_err_flag) != 0; }
+
+    bool ip_checksums()
+    { return (checksum_eval & CHECKSUM_FLAG__IP) != 0; }
+
+    bool udp_checksums()
+    { return (checksum_eval & CHECKSUM_FLAG__UDP) != 0; }
+
+    bool tcp_checksums()
+    { return (checksum_eval & CHECKSUM_FLAG__TCP) != 0; }
+
+    bool icmp_checksums()
+    { return (checksum_eval & CHECKSUM_FLAG__ICMP) != 0; }
+
 public:
     PolicyId policy_id;
     uint32_t user_policy_id = 0;
@@ -280,24 +295,23 @@ SO_PUBLIC NetworkPolicy* get_network_policy();
 SO_PUBLIC InspectionPolicy* get_inspection_policy();
 SO_PUBLIC IpsPolicy* get_ips_policy();
 SO_PUBLIC IpsPolicy* get_ips_policy(const snort::SnortConfig*, unsigned i = 0);
-SO_PUBLIC InspectionPolicy* get_default_inspection_policy(snort::SnortConfig*);
-SO_PUBLIC void set_ips_policy(IpsPolicy* p);
-SO_PUBLIC void set_network_policy(NetworkPolicy* p);
-SO_PUBLIC IpsPolicy* get_user_ips_policy(snort::SnortConfig* sc, unsigned policy_id);
-SO_PUBLIC IpsPolicy* get_empty_ips_policy(snort::SnortConfig* sc);
-SO_PUBLIC NetworkPolicy* get_user_network_policy(snort::SnortConfig* sc, unsigned policy_id);
+SO_PUBLIC InspectionPolicy* get_default_inspection_policy(const snort::SnortConfig*);
+SO_PUBLIC void set_ips_policy(IpsPolicy*);
+SO_PUBLIC void set_network_policy(NetworkPolicy*);
+SO_PUBLIC IpsPolicy* get_user_ips_policy(const snort::SnortConfig*, unsigned policy_id);
+SO_PUBLIC IpsPolicy* get_empty_ips_policy(const snort::SnortConfig*);
+SO_PUBLIC NetworkPolicy* get_user_network_policy(const snort::SnortConfig*, unsigned policy_id);
 }
 
-void set_network_policy(snort::SnortConfig*, unsigned = 0);
+void set_network_policy(const snort::SnortConfig*, unsigned = 0);
 
 void set_inspection_policy(InspectionPolicy*);
-void set_inspection_policy(snort::SnortConfig*, unsigned = 0);
+void set_inspection_policy(const snort::SnortConfig*, unsigned = 0);
 
-void set_ips_policy(snort::SnortConfig*, unsigned = 0);
+void set_ips_policy(const snort::SnortConfig*, unsigned = 0);
 
-void set_policies(snort::SnortConfig*, Shell*);
-void set_default_policy();
-void set_default_policy(snort::SnortConfig*);
+void set_policies(const snort::SnortConfig*, Shell*);
+void set_default_policy(const snort::SnortConfig*);
 
 bool default_inspection_policy();
 bool only_inspection_policy();

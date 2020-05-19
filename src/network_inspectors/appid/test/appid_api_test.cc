@@ -49,7 +49,7 @@ using namespace snort;
 namespace snort
 {
 
-class Inspector* InspectorManager::get_inspector(char const*, bool, SnortConfig*)
+class Inspector* InspectorManager::get_inspector(char const*, bool, const SnortConfig*)
 { return nullptr; }
 }
 

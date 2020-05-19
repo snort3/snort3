@@ -118,7 +118,7 @@ bool HttpInspect::configure(SnortConfig* )
     return true;
 }
 
-void HttpInspect::show(snort::SnortConfig*)
+void HttpInspect::show(const SnortConfig*) const
 {
     assert(params);
 

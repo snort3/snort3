@@ -37,6 +37,7 @@
 #include "config.h"
 #endif
 
+#include "detection/ips_context.h"
 #include "detection/signature.h"
 #include "events/event.h"
 #include "framework/logger.h"
@@ -155,7 +156,7 @@ void FullLogger::alert(Packet* p, const char* msg, const Event& event)
     TextLog_Print(full_log, "[%u:%u:%u] ",
         event.sig_info->gid, event.sig_info->sid, event.sig_info->rev);
 
-    if (SnortConfig::alert_interface())
+    if (p->context->conf->alert_interface())
     {
         const char* iface = SFDAQ::get_input_spec();
         TextLog_Print(full_log, " <%s> ", iface);
@@ -171,7 +172,7 @@ void FullLogger::alert(Packet* p, const char* msg, const Event& event)
         TextLog_Puts(full_log, "[**]\n");
     }
 
-    if (p && p->has_ip())
+    if (p->has_ip())
     {
         LogPriorityData(full_log, event);
         TextLog_NewLine(full_log);
@@ -182,11 +183,11 @@ void FullLogger::alert(Packet* p, const char* msg, const Event& event)
     LogTimeStamp(full_log, p);
     TextLog_Putc(full_log, ' ');
 
-    if (p && p->has_ip())
+    if (p->has_ip())
     {
         /* print the packet header to the alert file */
 
-        if (SnortConfig::output_datalink())
+        if (p->context->conf->output_datalink())
         {
             Log2ndHeader(full_log, p);
         }
@@ -230,7 +231,7 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-static Logger* full_ctor(SnortConfig*, Module* mod)
+static Logger* full_ctor(Module* mod)
 { return new FullLogger((FullModule*)mod); }
 
 static void full_dtor(Logger* p)

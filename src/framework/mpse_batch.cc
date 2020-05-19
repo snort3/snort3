@@ -82,9 +82,9 @@ MpseGroup::~MpseGroup()
     }
 }
 
-bool MpseGroup::create_normal_mpse(SnortConfig* sc, const MpseAgent* agent)
+bool MpseGroup::create_normal_mpse(const SnortConfig* sc, const MpseAgent* agent)
 {
-    FastPatternConfig* fp = sc->fast_pattern_config;
+    const FastPatternConfig* fp = sc->fast_pattern_config;
     const MpseApi* search_api = nullptr;
 
     if (fp)
@@ -102,7 +102,7 @@ bool MpseGroup::create_normal_mpse(SnortConfig* sc, const MpseAgent* agent)
     }
 }
 
-bool MpseGroup::create_normal_mpse(SnortConfig* sc, const char* type)
+bool MpseGroup::create_normal_mpse(const SnortConfig* sc, const char* type)
 {
     if ( !type and sc->fast_pattern_config )
         type = sc->fast_pattern_config->get_search_method();
@@ -126,9 +126,9 @@ bool MpseGroup::create_normal_mpse(SnortConfig* sc, const char* type)
     }
 }
 
-bool MpseGroup::create_offload_mpse(SnortConfig* sc, const MpseAgent* agent)
+bool MpseGroup::create_offload_mpse(const SnortConfig* sc, const MpseAgent* agent)
 {
-    FastPatternConfig* fp = sc->fast_pattern_config;
+    const FastPatternConfig* fp = sc->fast_pattern_config;
     const MpseApi* search_api = nullptr;
     const MpseApi* offload_search_api = nullptr;
 
@@ -150,7 +150,7 @@ bool MpseGroup::create_offload_mpse(SnortConfig* sc, const MpseAgent* agent)
     }
 }
 
-bool MpseGroup::create_offload_mpse(SnortConfig* sc)
+bool MpseGroup::create_offload_mpse(const SnortConfig* sc)
 {
     const MpseApi* search_api = nullptr;
     const MpseApi* offload_search_api = nullptr;

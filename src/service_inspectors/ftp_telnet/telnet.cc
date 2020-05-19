@@ -185,7 +185,7 @@ public:
     ~Telnet() override;
 
     bool configure(SnortConfig*) override;
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
     void eval(Packet*) override;
 
     bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
@@ -211,7 +211,7 @@ bool Telnet::configure(SnortConfig* sc)
     return !TelnetCheckConfigs(sc, config);
 }
 
-void Telnet::show(SnortConfig*)
+void Telnet::show(const SnortConfig*) const
 {
     if ( !config )
         return;

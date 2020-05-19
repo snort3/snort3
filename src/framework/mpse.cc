@@ -99,6 +99,7 @@ void Mpse::_search(MpseBatch& batch, MpseType mpse_type)
 
 Mpse::MpseRespType Mpse::poll_responses(MpseBatch*& batch, MpseType mpse_type)
 {
+    // FIXIT-L validate for reload during offload
     FastPatternConfig* fp = SnortConfig::get_conf()->fast_pattern_config;
     assert(fp);
 

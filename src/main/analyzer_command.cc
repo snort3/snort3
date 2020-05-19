@@ -81,7 +81,7 @@ bool ACGetStats::execute(Analyzer&, void**)
     // FIXIT-P This incurs locking on all threads to retrieve stats.  It
     // could be reimplemented to optimize for large thread counts by
     // retrieving stats in the command and accumulating in the main thread.
-    ModuleManager::accumulate(SnortConfig::get_conf());
+    ModuleManager::accumulate();
     return true;
 }
 
@@ -106,7 +106,7 @@ bool ACSwap::execute(Analyzer& analyzer, void** ac_state)
     {
         ps->apply(analyzer);
 
-        SnortConfig* sc = ps->get_new_conf();
+        const SnortConfig* sc = ps->get_new_conf();
         if ( sc )
         {
             std::list<ReloadResourceTuner*>* reload_tuners;

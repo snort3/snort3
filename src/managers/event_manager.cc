@@ -156,7 +156,7 @@ void EventManager::copy_outputs(OutputSet* dst, OutputSet* src)
 // configuration
 
 void EventManager::instantiate(
-    Output* p, Module* mod, SnortConfig* sc)
+    Output* p, Module* mod, SnortConfig*)
 {
     bool enabled = false;
 
@@ -169,7 +169,7 @@ void EventManager::instantiate(
     if ( !enabled )
         return;
 
-    p->handler = p->api->ctor(sc, mod);
+    p->handler = p->api->ctor(mod);
     assert(p->handler);
 
     p->handler->set_api(p->api);
@@ -271,13 +271,13 @@ static const LogApi* find_api(const char* name)
     return nullptr;
 }
 
-LoggerWrapper* EventManager::instantiate(const char* name, Module* m, SnortConfig* sc)
+LoggerWrapper* EventManager::instantiate(const char* name, Module* m, SnortConfig*)
 {
     auto api = find_api(name);
     if ( !api || !api->ctor )
         return nullptr;
 
-    auto p = api->ctor(sc, m);
+    auto p = api->ctor(m);
     if ( !p )
         return nullptr;
 

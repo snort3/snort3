@@ -159,7 +159,7 @@ void Snort::init(int argc, char** argv)
 
     PluginManager::load_so_plugins(sc);
 
-    if ( snort_cmd_line_conf->logging_flags & LOGGING_FLAG__SHOW_PLUGINS )
+    if ( sc->logging_flags & LOGGING_FLAG__SHOW_PLUGINS )
     {
         ModuleManager::dump_modules();
         PluginManager::dump_plugins();
@@ -177,7 +177,7 @@ void Snort::init(int argc, char** argv)
 
     HighAvailabilityManager::configure(sc->ha_config);
 
-    if (SnortConfig::alert_before_pass())
+    if (sc->alert_before_pass())
         sc->rule_order = "reset block drop alert pass log";
 
     sc->setup();
@@ -188,11 +188,11 @@ void Snort::init(int argc, char** argv)
     // Must be after CodecManager::instantiate()
     if ( !InspectorManager::configure(sc) )
         ParseError("can't initialize inspectors");
-    else if ( SnortConfig::log_verbose() )
+    else if ( sc->log_verbose() )
         InspectorManager::print_config(sc);
 
     // Must be after InspectorManager::configure()
-    FileService::post_init();
+    FileService::post_init(sc);
 
     ModuleManager::reset_stats(sc);
 
@@ -256,20 +256,22 @@ void Snort::init(int argc, char** argv)
 
 bool Snort::drop_privileges()
 {
-    /* Enter the chroot jail if necessary. */
-    if (!SnortConfig::get_conf()->chroot_dir.empty() &&
-        !EnterChroot(SnortConfig::get_conf()->chroot_dir, SnortConfig::get_conf()->log_dir))
+    SnortConfig* sc = SnortConfig::get_main_conf();
+
+    // Enter the chroot jail if necessary.
+    if (!sc->chroot_dir.empty() && !EnterChroot(sc->chroot_dir, sc->log_dir))
         return false;
 
-    /* Drop privileges if requested. */
-    if (SnortConfig::get_uid() != -1 || SnortConfig::get_gid() != -1)
+    // Drop privileges if requested.
+    if (sc->get_uid() != -1 || sc->get_gid() != -1)
     {
         if (!SFDAQ::can_run_unprivileged())
         {
-            ParseError("Cannot drop privileges - at least one of the configured DAQ modules does not support unprivileged operation.\n");
+            ParseError("Cannot drop privileges - "
+                "at least one of the configured DAQ modules does not support unprivileged operation.\n");
             return false;
         }
-        if (!SetUidGid(SnortConfig::get_uid(), SnortConfig::get_gid()))
+        if (!SetUidGid(sc->get_uid(), sc->get_gid()))
             return false;
     }
 
@@ -283,7 +285,7 @@ void Snort::do_pidfile()
 {
     static bool pid_file_created = false;
 
-    if (SnortConfig::create_pid_file() && !pid_file_created)
+    if (SnortConfig::get_conf()->create_pid_file() && !pid_file_created)
     {
         CreatePidFile(snort_main_thread_pid);
         pid_file_created = true;
@@ -308,13 +310,15 @@ void Snort::term()
     if ( already_exiting )
         return;
 
+    const SnortConfig* sc = SnortConfig::get_conf();
+
     already_exiting = true;
     initializing = false;  // just in case we cut out early
 
     memory::MemoryCap::print();
 
     term_signals();
-    IpsManager::global_term(SnortConfig::get_conf());
+    IpsManager::global_term(sc);
     HostAttributes::cleanup();
 
 #ifdef PIGLET
@@ -325,14 +329,14 @@ void Snort::term()
     ClosePidFile();
 
     /* remove pid file */
-    if ( !SnortConfig::get_conf()->pid_filename.empty() )
+    if ( !sc->pid_filename.empty() )
     {
-        int ret = unlink(SnortConfig::get_conf()->pid_filename.c_str());
+        int ret = unlink(sc->pid_filename.c_str());
 
         if (ret != 0)
         {
             ErrorMessage("Could not remove pid file %s: %s\n",
-                SnortConfig::get_conf()->pid_filename.c_str(), get_error(errno));
+                sc->pid_filename.c_str(), get_error(errno));
         }
     }
 
@@ -347,20 +351,12 @@ void Snort::term()
     TraceApi::thread_term();
 
     /* free allocated memory */
-    if (SnortConfig::get_conf() == snort_cmd_line_conf)
-    {
-        delete snort_cmd_line_conf;
-        snort_cmd_line_conf = nullptr;
-        SnortConfig::set_conf(nullptr);
-    }
-    else
-    {
-        delete snort_cmd_line_conf;
-        snort_cmd_line_conf = nullptr;
+    if (sc != snort_cmd_line_conf)
+        delete sc;
 
-        delete SnortConfig::get_conf();
-        SnortConfig::set_conf(nullptr);
-    }
+    delete snort_cmd_line_conf;
+    snort_cmd_line_conf = nullptr;
+    SnortConfig::set_conf(nullptr);
 
     CleanupProtoNames();
     HighAvailabilityManager::term();
@@ -402,15 +398,16 @@ void Snort::setup(int argc, char* argv[])
     OpenLogger();
 
     init(argc, argv);
+    const SnortConfig* sc = SnortConfig::get_conf();
 
-    if ( SnortConfig::daemon_mode() )
+    if ( sc->daemon_mode() )
         daemonize();
 
     // this must follow daemonization
     snort_main_thread_pid = gettid();
 
     /* Change groups */
-    InitGroups(SnortConfig::get_uid(), SnortConfig::get_gid());
+    InitGroups(sc->get_uid(), sc->get_gid());
 
     set_quick_exit(false);
 
@@ -428,7 +425,7 @@ void Snort::cleanup()
     SFDAQ::term();
     FileService::close();
 
-    if ( !SnortConfig::test_mode() )  // FIXIT-M ideally the check is in one place
+    if ( !SnortConfig::get_conf()->test_mode() )  // FIXIT-M ideally the check is in one place
         PrintStatistics();
 
     CloseLogger();
@@ -482,11 +479,8 @@ SnortConfig* Snort::get_reload_config(const char* fname, const char* plugin_path
         return nullptr;
     }
 
-    if ( SnortConfig::log_verbose() )
+    if ( sc->log_verbose() )
         InspectorManager::print_config(sc);
-
-    if ((sc->file_mask != 0) && (sc->file_mask != SnortConfig::get_conf()->file_mask))
-        umask(sc->file_mask);
 
     // FIXIT-L is this still needed?
     /* Transfer any user defined rule type outputs to the new rule list */
@@ -527,7 +521,8 @@ SnortConfig* Snort::get_reload_config(const char* fname, const char* plugin_path
     return sc;
 }
 
-SnortConfig* Snort::get_updated_policy(SnortConfig* other_conf, const char* fname, const char* iname)
+SnortConfig* Snort::get_updated_policy(
+    SnortConfig* other_conf, const char* fname, const char* iname)
 {
     reloading = true;
     reset_parse_errors();

@@ -25,6 +25,7 @@
 
 #include "framework/codec.h"
 #include "lua/lua_arg.h"
+#include "main/snort_config.h"
 
 using namespace snort;
 
@@ -66,7 +67,8 @@ static const luaL_Reg methods[] =
         {
             Lua::Args args(L);
 
-            auto& self = CodecDataIface.create(L, ProtocolId::ETHERTYPE_NOT_SET);
+            auto& self = CodecDataIface.create(
+                L, SnortConfig::get_conf(), ProtocolId::ETHERTYPE_NOT_SET);
 
             if ( args[1].is_table() )
                 args[1].check_table(set_fields, self);

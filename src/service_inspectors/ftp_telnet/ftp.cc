@@ -194,13 +194,13 @@ public:
     ~FtpClient() override
     { delete ftp_client; }
 
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
     void eval(Packet*) override { }
 
     FTP_CLIENT_PROTO_CONF* ftp_client;
 };
 
-void FtpClient::show(SnortConfig*)
+void FtpClient::show(const SnortConfig*) const
 {
     if ( ftp_client )
         print_conf_client(ftp_client);
@@ -213,7 +213,7 @@ public:
     ~FtpServer() override;
 
     bool configure(SnortConfig*) override;
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
     void eval(Packet*) override;
     StreamSplitter* get_splitter(bool) override;
 
@@ -242,7 +242,7 @@ bool FtpServer::configure(SnortConfig* sc)
     return !FTPCheckConfigs(sc, ftp_server);
 }
 
-void FtpServer::show(SnortConfig*)
+void FtpServer::show(const SnortConfig*) const
 {
     if ( ftp_server )
         print_conf_server(ftp_server);

@@ -152,7 +152,7 @@ void Log2ndHeader(TextLog* log, Packet* p)
     if ( SFDAQ::get_base_protocol() == DLT_EN10MB )
         LogEthHeader(log, p);
 
-    else if ( SnortConfig::log_verbose() )
+    else if ( p->context->conf->log_verbose() )
         ErrorMessage("Datalink %i (not supported)\n", SFDAQ::get_base_protocol());
 }
 
@@ -265,13 +265,13 @@ void LogIpAddrs(TextLog* log, Packet* p)
         const char* ip_fmt = "%s -> %s";
         InetBuf src, dst;
 
-        if (SnortConfig::obfuscate())
+        if (p->context->conf->obfuscate())
         {
             ObfuscateIpToText(p->ptrs.ip_api.get_src(),
-                SnortConfig::get_conf()->homenet, SnortConfig::get_conf()->obfuscation_net, src);
+                p->context->conf->homenet, p->context->conf->obfuscation_net, src);
 
             ObfuscateIpToText(p->ptrs.ip_api.get_dst(),
-                SnortConfig::get_conf()->homenet, SnortConfig::get_conf()->obfuscation_net, dst);
+                p->context->conf->homenet, p->context->conf->obfuscation_net, dst);
 
             TextLog_Print(log, ip_fmt, src, dst);
         }
@@ -287,13 +287,13 @@ void LogIpAddrs(TextLog* log, Packet* p)
         const char* ip_fmt = "%s:%d -> %s:%d";
         InetBuf src, dst;
 
-        if (SnortConfig::obfuscate())
+        if (p->context->conf->obfuscate())
         {
             ObfuscateIpToText(p->ptrs.ip_api.get_src(),
-                SnortConfig::get_conf()->homenet, SnortConfig::get_conf()->obfuscation_net, src);
+                p->context->conf->homenet, p->context->conf->obfuscation_net, src);
 
             ObfuscateIpToText(p->ptrs.ip_api.get_dst(),
-                SnortConfig::get_conf()->homenet, SnortConfig::get_conf()->obfuscation_net, dst);
+                p->context->conf->homenet, p->context->conf->obfuscation_net, dst);
 
             TextLog_Print(log, ip_fmt, src, p->ptrs.sp, dst, p->ptrs.dp);
         }
@@ -320,7 +320,7 @@ void LogIPHeader(TextLog* log, Packet* p)
 
     LogIpAddrs(log, p);
 
-    if (!SnortConfig::output_datalink())
+    if (!p->context->conf->output_datalink())
     {
         TextLog_NewLine(log);
     }
@@ -692,14 +692,11 @@ static void LogEmbeddedICMPHeader(TextLog* log, const ICMPHdr* icmph)
  */
 static void LogICMPEmbeddedIP(TextLog* log, Packet* p)
 {
-    if (log == nullptr || p == nullptr)
-        return;
-
     // FIXIT-L -- Allocating a new Packet here is ridiculously excessive.
-    Packet* orig_p = new Packet;
-    Packet& op = *orig_p;
+    Packet* orig = DetectionEngine::set_next_packet(p);
+    orig->context->conf = p->context->conf;
 
-    if (!layer::set_api_ip_embed_icmp(p, op.ptrs.ip_api))
+    if (!layer::set_api_ip_embed_icmp(p, orig->ptrs.ip_api))
     {
         TextLog_Puts(log, "\nORIGINAL DATAGRAM TRUNCATED");
     }
@@ -709,38 +706,35 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet* p)
         {
         case PROTO_BIT__TCP_EMBED_ICMP:
         {
-            const tcp::TCPHdr* const tcph = layer::get_tcp_embed_icmp(op.ptrs.ip_api);
+            const tcp::TCPHdr* const tcph = layer::get_tcp_embed_icmp(orig->ptrs.ip_api);
             if (tcph)
             {
-                orig_p->ptrs.sp = tcph->src_port();
-                orig_p->ptrs.dp = tcph->dst_port();
-                orig_p->ptrs.tcph = tcph;
-                orig_p->ptrs.set_pkt_type(PktType::TCP);
+                orig->ptrs.sp = tcph->src_port();
+                orig->ptrs.dp = tcph->dst_port();
+                orig->ptrs.tcph = tcph;
+                orig->ptrs.set_pkt_type(PktType::TCP);
 
                 TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
-                LogIPHeader(log, orig_p);
-
-                TextLog_Print(log, "Seq: 0x%lX\n",
-                    (u_long)ntohl(orig_p->ptrs.tcph->th_seq));
+                LogIPHeader(log, orig);
+                TextLog_Print(log, "Seq: 0x%lX\n", (u_long)ntohl(orig->ptrs.tcph->th_seq));
             }
             break;
         }
 
         case PROTO_BIT__UDP_EMBED_ICMP:
         {
-            const udp::UDPHdr* const udph = layer::get_udp_embed_icmp(op.ptrs.ip_api);
+            const udp::UDPHdr* const udph = layer::get_udp_embed_icmp(orig->ptrs.ip_api);
             if (udph)
             {
-                orig_p->ptrs.sp = udph->src_port();
-                orig_p->ptrs.dp = udph->dst_port();
-                orig_p->ptrs.udph = udph;
-                orig_p->ptrs.set_pkt_type(PktType::UDP);
+                orig->ptrs.sp = udph->src_port();
+                orig->ptrs.dp = udph->dst_port();
+                orig->ptrs.udph = udph;
+                orig->ptrs.set_pkt_type(PktType::UDP);
 
                 TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
-                LogIPHeader(log, orig_p);
-                TextLog_Print(log, "Len: %d  Csum: %d\n",
-                    udph->len() - udp::UDP_HEADER_LEN,
-                    udph->cksum());
+                LogIPHeader(log, orig);
+                TextLog_Print(
+                    log, "Len: %d  Csum: %d\n", udph->len() - udp::UDP_HEADER_LEN, udph->cksum());
             }
             break;
         }
@@ -748,10 +742,11 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet* p)
         case PROTO_BIT__ICMP_EMBED_ICMP:
         {
             TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
-            LogIPHeader(log, orig_p);
+            LogIPHeader(log, orig);
 
-            const icmp::ICMPHdr* icmph = layer::get_icmp_embed_icmp(op.ptrs.ip_api);
-            if (icmph != nullptr)
+            const icmp::ICMPHdr* icmph = layer::get_icmp_embed_icmp(orig->ptrs.ip_api);
+
+            if (icmph)
                 LogEmbeddedICMPHeader(log, icmph);
             break;
         }
@@ -759,27 +754,22 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet* p)
         default:
         {
             TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
-            LogIPHeader(log, orig_p);
+            LogIPHeader(log, orig);
 
             TextLog_Print(log, "Protocol: 0x%X (unknown or "
-                "header truncated)", orig_p->ptrs.ip_api.proto());
+                "header truncated)", orig->ptrs.ip_api.proto());
             break;
         }
         } /* switch */
 
         /* if more than 8 bytes of original IP payload sent */
-
         const int16_t more_bytes = p->dsize - 8;
+
         if (more_bytes > 0)
-        {
-            TextLog_Print(log, "(%d more bytes of original packet)\n",
-                more_bytes);
-        }
+            TextLog_Print(log, "(%d more bytes of original packet)\n", more_bytes);
 
         TextLog_Puts(log, "** END OF DUMP");
     }
-
-    delete orig_p;
 }
 
 /*--------------------------------------------------------------------
@@ -1126,7 +1116,7 @@ static void obfuscate(Packet* p, const uint8_t* data, int& ip_ob_start, int& ip_
     assert(p);
     ip_ob_start = ip_ob_end = -1;
 
-    if ( !SnortConfig::obfuscate() )
+    if ( !p->context->conf->obfuscate() )
         return;
 
     const ProtocolIndex ipv4_idx = PacketManager::proto_idx(ProtocolId::IPIP);
@@ -1177,7 +1167,7 @@ void LogNetData(
     }
 
     const HexAsciiLayout& hal = SnortConfig::get_conf()->output_wide_hex() ? hal_wide : hal_std;
-    const char* hdr_off = SnortConfig::verbose_byte_dump() ? hal.offset_hdr : "";
+    const char* hdr_off = p->context->conf->verbose_byte_dump() ? hal.offset_hdr : "";
 
     if ( !ins_name )
         ins_name = p->flow and p->flow->gadget ?  p->flow->gadget->get_name() : "snort";
@@ -1193,7 +1183,7 @@ void LogNetData(
     /* loop thru the whole buffer */
     while ( pb < end )
     {
-        if (SnortConfig::verbose_byte_dump())
+        if (p->context->conf->verbose_byte_dump())
         {
             TextLog_Print(log, hal.offset_fmt, offset);
             offset += hal.bytes_per_frame;
@@ -1246,7 +1236,7 @@ void LogNetData(
 
 void LogIPPkt(TextLog* log, Packet* p)
 {
-    if ( SnortConfig::output_datalink() )
+    if ( p->context->conf->output_datalink() )
     {
         Log2ndHeader(log, p);
 
@@ -1323,9 +1313,9 @@ void LogIPPkt(TextLog* log, Packet* p)
 void LogPayload(TextLog* log, Packet* p)
 {
     /* dump the application layer data */
-    if (SnortConfig::output_app_data() && !SnortConfig::verbose_byte_dump())
+    if (p->context->conf->output_app_data() && !p->context->conf->verbose_byte_dump())
     {
-        if (SnortConfig::output_char_data())
+        if (p->context->conf->output_char_data())
         {
             LogCharData(log, p->data, p->dsize);
 
@@ -1363,7 +1353,7 @@ void LogPayload(TextLog* log, Packet* p)
             }
         }
     }
-    else if (SnortConfig::verbose_byte_dump())
+    else if (p->context->conf->verbose_byte_dump())
     {
         LogNetData(log, p->pkt, p->pktlen, p);
     }

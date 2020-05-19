@@ -91,7 +91,7 @@ private:
     dce2SmbProtoConf config;
 };
 
-void print_dce2_smb_conf(dce2SmbProtoConf& config);
+void print_dce2_smb_conf(const dce2SmbProtoConf&);
 
 inline int64_t DCE2_ScSmbFileDepth(const dce2SmbProtoConf* sc)
 {

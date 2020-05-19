@@ -22,6 +22,7 @@
 
 #include <functional>
 
+#include "detection/ips_context.h"
 #include "flow/expect_cache.h"
 #include "flow/flow_control.h"
 #include "flow/prune_stats.h"
@@ -153,7 +154,7 @@ class StreamBase : public Inspector
 {
 public:
     StreamBase(const StreamModuleConfig*);
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
 
     void tinit() override;
     void tterm() override;
@@ -213,7 +214,7 @@ void StreamBase::tterm()
     FlushBucket::clear();
 }
 
-void StreamBase::show(SnortConfig* sc)
+void StreamBase::show(const SnortConfig* sc) const
 {
     if ( sc )
         ConfigLogger::log_flag("ip_frags_only", sc->ip_frags_only());
@@ -234,7 +235,7 @@ void StreamBase::eval(Packet* p)
 
     case PktType::IP:
         if ( p->has_ip() and ((p->ptrs.decode_flags & DECODE_FRAG) or
-            !SnortConfig::get_conf()->ip_frags_only()) )
+            !p->context->conf->ip_frags_only()) )
         {
             bool new_flow = false;
             flow_con->process(PktType::IP, p, &new_flow);

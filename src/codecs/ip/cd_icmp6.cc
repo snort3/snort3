@@ -149,7 +149,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     const icmp::Icmp6Hdr* const icmp6h = reinterpret_cast<const icmp::Icmp6Hdr*>(raw.data);
 
-    if ( SnortConfig::icmp_checksums() && !valid_checksum_from_daq(raw))
+    if ( snort::get_network_policy()->icmp_checksums() && !valid_checksum_from_daq(raw))
     {
         checksum::Pseudoheader6 ph6;
         COPY4(ph6.hdr.sip, snort.ip_api.get_src()->get_ip6_ptr());

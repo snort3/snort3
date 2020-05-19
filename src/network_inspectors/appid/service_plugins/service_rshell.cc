@@ -25,6 +25,7 @@
 
 #include "service_rshell.h"
 
+#include "detection/ips_context.h"
 #include "protocols/packet.h"
 
 #include "app_info_table.h"
@@ -155,7 +156,7 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
         if (port)
         {
             if(rsh_error_snort_protocol_id == UNKNOWN_PROTOCOL_ID)
-                rsh_error_snort_protocol_id = SnortConfig::get_conf()->proto_ref->find("rsh-error");
+                rsh_error_snort_protocol_id = args.pkt->context->conf->proto_ref->find("rsh-error");
 
             const SfIp* dip = args.pkt->ptrs.ip_api.get_dst();
             const SfIp* sip = args.pkt->ptrs.ip_api.get_src();

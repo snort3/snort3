@@ -40,7 +40,6 @@
 namespace snort
 {
 struct Packet;
-struct SnortConfig;
 
 class SO_PUBLIC IpsAction : public ActiveAction
 {

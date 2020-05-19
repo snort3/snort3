@@ -34,6 +34,7 @@ class HashKeyOperations;
 namespace snort
 {
 struct SfIp;
+struct SnortConfig;
 
 class FlowHashKeyOps : public HashKeyOperations
 {
@@ -67,33 +68,33 @@ struct SO_PUBLIC FlowKey
         The IP-only init() will always return false as we will not reorder its
         addresses at this time. */
     bool init(
-        PktType, IpProtocol,
+        const SnortConfig*, PktType, IpProtocol,
         const snort::SfIp *srcIP, uint16_t srcPort,
         const snort::SfIp *dstIP, uint16_t dstPort,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId);
 
     bool init(
-        PktType, IpProtocol,
+        const SnortConfig*, PktType, IpProtocol,
         const snort::SfIp *srcIP, const snort::SfIp *dstIP,
         uint32_t id, uint16_t vlanId,
         uint32_t mplsId, uint16_t addrSpaceId);
 
-    void init_mpls(uint32_t);
-    void init_vlan(uint16_t);
-    void init_address_space(uint16_t);
+    void init_mpls(const SnortConfig*, uint32_t);
+    void init_vlan(const SnortConfig*, uint16_t);
+    void init_address_space(const SnortConfig*, uint16_t);
 
     // If this data structure changes size, compare must be updated!
     static bool is_equal(const void* k1, const void* k2, size_t);
 
 private:
     bool init4(
-        IpProtocol,
+        const SnortConfig*, IpProtocol,
         const snort::SfIp *srcIP, uint16_t srcPort,
         const snort::SfIp *dstIP, uint16_t dstPort,
         uint32_t mplsId, bool order = true);
 
     bool init6(
-        IpProtocol,
+        const SnortConfig*, IpProtocol,
         const snort::SfIp *srcIP, uint16_t srcPort,
         const snort::SfIp *dstIP, uint16_t dstPort,
         uint32_t mplsId, bool order = true);

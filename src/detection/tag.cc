@@ -25,6 +25,7 @@
 
 #include "tag.h"
 
+#include "detection/ips_context.h"
 #include "events/event.h"
 #include "hash/hash_defs.h"
 #include "hash/xhash.h"
@@ -533,8 +534,8 @@ int CheckTagList(Packet* p, Event& event, void** log_list)
              * bandwidth sensors. */
             /* Use the global max.
                If its non-0, check count for this tag node */
-            if ( SnortConfig::get_tagged_packet_limit() &&
-                returned->pkt_count >= SnortConfig::get_tagged_packet_limit() )
+            if ( p->context->conf->get_tagged_packet_limit() &&
+                returned->pkt_count >= p->context->conf->get_tagged_packet_limit() )
             {
                 returned->metric = 0;
             }
@@ -548,7 +549,7 @@ int CheckTagList(Packet* p, Event& event, void** log_list)
             /* set event reference details */
             event.ref_time.tv_sec = returned->event_time.tv_sec;
             event.ref_time.tv_usec = returned->event_time.tv_usec;
-            event.event_reference = returned->event_id | SnortConfig::get_event_log_id();
+            event.event_reference = returned->event_id | p->context->conf->get_event_log_id();
             *log_list = returned->log_list;
         }
 

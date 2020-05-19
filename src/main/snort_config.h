@@ -195,7 +195,7 @@ public:
 
     void setup();
     void post_setup();
-    bool verify();
+    bool verify() const;
 
     void merge(SnortConfig*);
     void clone(const SnortConfig* const);
@@ -474,250 +474,193 @@ public:
     void set_verbose(bool);
 
     //------------------------------------------------------
-    // Static convenience accessor methods
+    // accessor methods
 
-    static long int get_mpls_stack_depth()
-    { return get_conf()->mpls_stack_depth; }
+    long int get_mpls_stack_depth() const
+    { return mpls_stack_depth; }
 
-    static long int get_mpls_payload_type()
-    { return get_conf()->mpls_payload_type; }
+    long int get_mpls_payload_type() const
+    { return mpls_payload_type; }
 
-    static bool mpls_overlapping_ip()
-    { return get_conf()->run_flags & RUN_FLAG__MPLS_OVERLAPPING_IP; }
+    bool mpls_overlapping_ip() const
+    { return run_flags & RUN_FLAG__MPLS_OVERLAPPING_IP; }
 
-    static bool mpls_multicast()
-    { return get_conf()->run_flags & RUN_FLAG__MPLS_MULTICAST; }
+    bool mpls_multicast() const
+    { return run_flags & RUN_FLAG__MPLS_MULTICAST; }
 
-    static bool esp_decoding()
-    { return get_conf()->enable_esp; }
+    bool esp_decoding() const
+    { return enable_esp; }
 
-    static bool is_address_anomaly_check_enabled()
-    { return get_conf()->address_anomaly_check_enabled; }
+    bool is_address_anomaly_check_enabled() const
+    { return address_anomaly_check_enabled; }
 
     // mode related
-    static bool dump_msg_map()
-    { return get_conf()->run_flags & RUN_FLAG__DUMP_MSG_MAP; }
+    bool dump_msg_map() const
+    { return run_flags & RUN_FLAG__DUMP_MSG_MAP; }
 
-    static bool dump_rule_meta()
-    { return get_conf()->run_flags & RUN_FLAG__DUMP_RULE_META; }
+    bool dump_rule_meta() const
+    { return run_flags & RUN_FLAG__DUMP_RULE_META; }
 
-    static bool dump_rule_state()
-    { return get_conf()->run_flags & RUN_FLAG__DUMP_RULE_STATE; }
+    bool dump_rule_state() const
+    { return run_flags & RUN_FLAG__DUMP_RULE_STATE; }
 
-    static bool dump_rule_deps()
-    { return get_conf()->run_flags & RUN_FLAG__DUMP_RULE_DEPS; }
+    bool dump_rule_deps() const
+    { return run_flags & RUN_FLAG__DUMP_RULE_DEPS; }
 
-    static bool dump_rule_info()
-    {
-        const SnortConfig* sc = get_conf();
-        return sc->dump_msg_map() or sc->dump_rule_meta() or
-            sc->dump_rule_deps() or sc->dump_rule_state();
-    }
+    bool dump_rule_info() const
+    { return dump_msg_map() or dump_rule_meta() or dump_rule_deps() or dump_rule_state(); }
 
-    static bool test_mode()
-    { return get_conf()->run_flags & RUN_FLAG__TEST; }
+    bool test_mode() const
+    { return run_flags & RUN_FLAG__TEST; }
 
-    static bool mem_check()
-    { return get_conf()->run_flags & RUN_FLAG__MEM_CHECK; }
+    bool mem_check() const
+    { return run_flags & RUN_FLAG__MEM_CHECK; }
 
-    static bool daemon_mode()
-    { return get_conf()->run_flags & RUN_FLAG__DAEMON; }
+    bool daemon_mode() const
+    { return run_flags & RUN_FLAG__DAEMON; }
 
-    static bool read_mode()
-    { return get_conf()->run_flags & RUN_FLAG__READ; }
+    bool read_mode() const
+    { return run_flags & RUN_FLAG__READ; }
 
-    static bool inline_mode()
-    { return snort::get_ips_policy()->policy_mode == POLICY_MODE__INLINE; }
+    bool inline_mode() const
+    { return get_ips_policy()->policy_mode == POLICY_MODE__INLINE; }
 
-    static bool inline_test_mode()
-    { return snort::get_ips_policy()->policy_mode == POLICY_MODE__INLINE_TEST; }
+    bool inline_test_mode() const
+    { return get_ips_policy()->policy_mode == POLICY_MODE__INLINE_TEST; }
 
-    static bool show_file_codes()
-    { return get_conf()->run_flags & RUN_FLAG__SHOW_FILE_CODES; }
+    bool show_file_codes() const
+    { return run_flags & RUN_FLAG__SHOW_FILE_CODES; }
 
-    static bool adaptor_inline_mode()
-    { return get_conf()->run_flags & RUN_FLAG__INLINE; }
+    bool adaptor_inline_mode() const
+    { return run_flags & RUN_FLAG__INLINE; }
 
-    static bool adaptor_inline_test_mode()
-    { return get_conf()->run_flags & RUN_FLAG__INLINE_TEST; }
+    bool adaptor_inline_test_mode() const
+    { return run_flags & RUN_FLAG__INLINE_TEST; }
 
     // logging stuff
-    static bool log_syslog()
-    { return get_conf()->logging_flags & LOGGING_FLAG__SYSLOG; }
+    bool log_syslog() const
+    { return logging_flags & LOGGING_FLAG__SYSLOG; }
 
-    static bool log_verbose()
-    { return get_conf()->logging_flags & LOGGING_FLAG__VERBOSE; }
+    bool log_verbose() const
+    { return logging_flags & LOGGING_FLAG__VERBOSE; }
 
-    static bool log_quiet()
-    { return get_conf()->logging_flags & LOGGING_FLAG__QUIET; }
+    bool log_quiet() const
+    { return logging_flags & LOGGING_FLAG__QUIET; }
 
     // event stuff
-    static uint32_t get_event_log_id()
-    { return get_conf()->event_log_id; }
+    uint32_t get_event_log_id() const
+    { return event_log_id; }
 
-    static bool process_all_events()
-    { return get_conf()->event_queue_config->process_all_events; }
+    bool process_all_events() const
+    { return event_queue_config->process_all_events; }
 
-    static int get_eval_index(Actions::Type type)
-    { return get_conf()->evalOrder[type]; }
-
-    static bool get_default_rule_state()
-    {
-        switch ( get_ips_policy()->default_rule_state )
-        {
-            case IpsPolicy::INHERIT_ENABLE:
-                return get_conf()->global_default_rule_state;
-
-            case IpsPolicy::ENABLED:
-                return true;
-
-            case IpsPolicy::DISABLED:
-                return false;
-        }
-        return true;
-    }
-
-    SO_PUBLIC static bool tunnel_bypass_enabled(uint16_t proto);
-
-    // checksum stuff
-    static bool checksum_drop(uint16_t codec_cksum_err_flag)
-    { return snort::get_network_policy()->checksum_drop & codec_cksum_err_flag; }
-
-    static bool ip_checksums()
-    { return snort::get_network_policy()->checksum_eval & CHECKSUM_FLAG__IP; }
-
-    static bool ip_checksum_drops()
-    { return snort::get_network_policy()->checksum_drop & CHECKSUM_FLAG__IP; }
-
-    static bool udp_checksums()
-    { return snort::get_network_policy()->checksum_eval & CHECKSUM_FLAG__UDP; }
-
-    static bool udp_checksum_drops()
-    { return snort::get_network_policy()->checksum_drop & CHECKSUM_FLAG__UDP; }
-
-    static bool tcp_checksums()
-    { return snort::get_network_policy()->checksum_eval & CHECKSUM_FLAG__TCP; }
-
-    static bool tcp_checksum_drops()
-    { return snort::get_network_policy()->checksum_drop & CHECKSUM_FLAG__TCP; }
-
-    static bool icmp_checksums()
-    { return snort::get_network_policy()->checksum_eval & CHECKSUM_FLAG__ICMP; }
-
-    static bool icmp_checksum_drops()
-    { return snort::get_network_policy()->checksum_drop & CHECKSUM_FLAG__ICMP; }
+    int get_eval_index(Actions::Type type) const
+    { return evalOrder[type]; }
 
     // output stuff
-    static bool output_include_year()
-    { return get_conf()->output_flags & OUTPUT_FLAG__INCLUDE_YEAR; }
+    bool output_include_year() const
+    { return output_flags & OUTPUT_FLAG__INCLUDE_YEAR; }
 
-    static bool output_use_utc()
-    { return get_conf()->output_flags & OUTPUT_FLAG__USE_UTC; }
+    bool output_use_utc() const
+    { return output_flags & OUTPUT_FLAG__USE_UTC; }
 
-    static bool output_datalink()
-    { return get_conf()->output_flags & OUTPUT_FLAG__SHOW_DATA_LINK; }
+    bool output_datalink() const
+    { return output_flags & OUTPUT_FLAG__SHOW_DATA_LINK; }
 
-    static bool verbose_byte_dump()
-    { return get_conf()->output_flags & OUTPUT_FLAG__VERBOSE_DUMP; }
+    bool verbose_byte_dump() const
+    { return output_flags & OUTPUT_FLAG__VERBOSE_DUMP; }
 
-    static bool obfuscate()
-    { return get_conf()->output_flags & OUTPUT_FLAG__OBFUSCATE; }
+    bool obfuscate() const
+    { return output_flags & OUTPUT_FLAG__OBFUSCATE; }
 
-    static bool output_app_data()
-    { return get_conf()->output_flags & OUTPUT_FLAG__APP_DATA; }
+    bool output_app_data() const
+    { return output_flags & OUTPUT_FLAG__APP_DATA; }
 
-    static bool output_char_data()
-    { return get_conf()->output_flags & OUTPUT_FLAG__CHAR_DATA; }
+    bool output_char_data() const
+    { return output_flags & OUTPUT_FLAG__CHAR_DATA; }
 
-    static bool alert_interface()
-    { return get_conf()->output_flags & OUTPUT_FLAG__ALERT_IFACE; }
+    bool alert_interface() const
+    { return output_flags & OUTPUT_FLAG__ALERT_IFACE; }
 
-    static bool output_no_timestamp()
-    { return get_conf()->output_flags & OUTPUT_FLAG__NO_TIMESTAMP; }
+    bool output_no_timestamp() const
+    { return output_flags & OUTPUT_FLAG__NO_TIMESTAMP; }
 
-    static bool line_buffered_logging()
-    { return get_conf()->output_flags & OUTPUT_FLAG__LINE_BUFFER; }
+    bool line_buffered_logging() const
+    { return output_flags & OUTPUT_FLAG__LINE_BUFFER; }
 
-    static bool output_wide_hex()
-    { return get_conf()->output_flags & OUTPUT_FLAG__WIDE_HEX; }
+    bool output_wide_hex() const
+    { return output_flags & OUTPUT_FLAG__WIDE_HEX; }
 
-    static bool alert_refs()
-    { return get_conf()->output_flags & OUTPUT_FLAG__ALERT_REFS; }
+    bool alert_refs() const
+    { return output_flags & OUTPUT_FLAG__ALERT_REFS; }
 
     // run flags
-    static bool no_lock_pid_file()
-    { return get_conf()->run_flags & RUN_FLAG__NO_LOCK_PID_FILE; }
+    bool no_lock_pid_file() const
+    { return run_flags & RUN_FLAG__NO_LOCK_PID_FILE; }
 
-    static bool create_pid_file()
-    { return get_conf()->run_flags & RUN_FLAG__CREATE_PID_FILE; }
+    bool create_pid_file() const
+    { return run_flags & RUN_FLAG__CREATE_PID_FILE; }
 
-    static bool pcap_show()
-    { return get_conf()->run_flags & RUN_FLAG__PCAP_SHOW; }
+    bool pcap_show() const
+    { return run_flags & RUN_FLAG__PCAP_SHOW; }
 
-    static bool treat_drop_as_alert()
-    { return get_conf()->run_flags & RUN_FLAG__TREAT_DROP_AS_ALERT; }
+    bool treat_drop_as_alert() const
+    { return run_flags & RUN_FLAG__TREAT_DROP_AS_ALERT; }
 
-    static bool treat_drop_as_ignore()
-    { return get_conf()->run_flags & RUN_FLAG__TREAT_DROP_AS_IGNORE; }
+    bool treat_drop_as_ignore() const
+    { return run_flags & RUN_FLAG__TREAT_DROP_AS_IGNORE; }
 
-    static bool alert_before_pass()
-    { return get_conf()->run_flags & RUN_FLAG__ALERT_BEFORE_PASS; }
+    bool alert_before_pass() const
+    { return run_flags & RUN_FLAG__ALERT_BEFORE_PASS; }
 
-    static bool no_pcre()
-    { return get_conf()->run_flags & RUN_FLAG__NO_PCRE; }
+    bool no_pcre() const
+    { return run_flags & RUN_FLAG__NO_PCRE; }
 
-    static bool conf_error_out()
-    { return get_conf()->run_flags & RUN_FLAG__CONF_ERROR_OUT; }
+    bool conf_error_out() const
+    { return run_flags & RUN_FLAG__CONF_ERROR_OUT; }
 
-    static bool assure_established()
-    { return get_conf()->run_flags & RUN_FLAG__ASSURE_EST; }
-
-    // FIXIT-L snort_conf needed for static hash before initialized
-    static bool static_hash()
-    { return get_conf() && get_conf()->run_flags & RUN_FLAG__STATIC_HASH; }
+    bool assure_established() const
+    { return run_flags & RUN_FLAG__ASSURE_EST; }
 
     // other stuff
-    static uint8_t min_ttl()
-    { return snort::get_network_policy()->min_ttl; }
+    uint8_t min_ttl() const
+    { return get_network_policy()->min_ttl; }
 
-    static uint8_t new_ttl()
-    { return snort::get_network_policy()->new_ttl; }
+    uint8_t new_ttl() const
+    { return get_network_policy()->new_ttl; }
 
-    static long int get_pcre_match_limit()
-    { return get_conf()->pcre_match_limit; }
+    long int get_pcre_match_limit() const
+    { return pcre_match_limit; }
 
-    static long int get_pcre_match_limit_recursion()
-    { return get_conf()->pcre_match_limit_recursion; }
+    long int get_pcre_match_limit_recursion() const
+    { return pcre_match_limit_recursion; }
 
-    static const ProfilerConfig* get_profiler()
-    { return get_conf()->profiler; }
+    const ProfilerConfig* get_profiler() const
+    { return profiler; }
 
-    static long int get_tagged_packet_limit()
-    { return get_conf()->tagged_packet_limit; }
+    long int get_tagged_packet_limit() const
+    { return tagged_packet_limit; }
 
-    static uint32_t get_max_attribute_hosts()
-    { return get_conf()->max_attribute_hosts; }
+    uint32_t get_max_attribute_hosts() const
+    { return max_attribute_hosts; }
 
-    static uint32_t get_max_services_per_host()
-    { return get_conf()->max_attribute_services_per_host; }
+    uint32_t get_max_services_per_host() const
+    { return max_attribute_services_per_host; }
 
-    static int get_uid()
-    { return get_conf()->user_id; }
+    int get_uid() const
+    { return user_id; }
 
-    static int get_gid()
-    { return get_conf()->group_id; }
+    int get_gid() const
+    { return group_id; }
 
-    static bool get_vlan_agnostic()
-    { return get_conf()->vlan_agnostic; }
+    bool get_vlan_agnostic() const
+    { return vlan_agnostic; }
 
-    static bool address_space_agnostic()
-    { return get_conf()->addressspace_agnostic; }
+    bool address_space_agnostic() const
+    { return addressspace_agnostic; }
 
-    static bool change_privileges()
-    {
-        return get_conf()->user_id != -1 || get_conf()->group_id != -1 ||
-            !get_conf()->chroot_dir.empty();
-    }
+    bool change_privileges() const
+    { return user_id != -1 || group_id != -1 || !chroot_dir.empty(); }
 
     bool track_on_syn() const
     { return (run_flags & RUN_FLAG__TRACK_ON_SYN) != 0; }
@@ -731,26 +674,36 @@ public:
     void set_run_flags(RunFlag flag)
     { run_flags |= flag; }
 
-    // This requests an entry in the scratch space vector and calls setup /
-    // cleanup as appropriate
-    SO_PUBLIC static int request_scratch(ScratchAllocator*);
-    SO_PUBLIC static void release_scratch(int);
-
-    // Use this to access current thread's conf from other units
-    static void set_conf(SnortConfig*);
-    static void set_parser_conf(SnortConfig*);
-
-    SO_PUBLIC static SnortConfig* get_conf();
-    SO_PUBLIC static SnortConfig* get_parser_conf();  // main thread only!
-
-    SO_PUBLIC void register_reload_resource_tuner(ReloadResourceTuner& rrt)
-    { reload_tuners.push_back(&rrt); }
-
     const std::list<ReloadResourceTuner*>& get_reload_resource_tuners() const
     { return reload_tuners; }
 
     void clear_reload_resource_tuner_list()
     { reload_tuners.clear(); }
+
+    bool get_default_rule_state() const;
+
+    SO_PUBLIC bool tunnel_bypass_enabled(uint16_t proto) const;
+
+    // FIXIT-L snort_conf needed for static hash before initialized
+    static bool static_hash()
+    { return get_conf() && get_conf()->run_flags & RUN_FLAG__STATIC_HASH; }
+
+    // This requests an entry in the scratch space vector and calls setup /
+    // cleanup as appropriate
+    SO_PUBLIC static int request_scratch(ScratchAllocator*);
+    SO_PUBLIC static void release_scratch(int);
+
+    // runtime access to const config - especially for packet threads
+    // prefer access via packet->context->conf
+    SO_PUBLIC static const SnortConfig* get_conf();
+
+    // runtime access to mutable config - main thread only, and only special cases
+    SO_PUBLIC static SnortConfig* get_main_conf();
+
+    SO_PUBLIC void register_reload_resource_tuner(ReloadResourceTuner& rrt)
+    { reload_tuners.push_back(&rrt); }
+
+    static void set_conf(const SnortConfig*);
 };
 }
 

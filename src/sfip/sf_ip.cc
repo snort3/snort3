@@ -353,7 +353,7 @@ SfIpRet SfIp::set(const void* src)
 
 /* Obfuscates this IP with an obfuscation CIDR
     Makes this:  ob | (this & mask) */
-void SfIp::obfuscate(SfCidr* ob)
+void SfIp::obfuscate(const SfCidr* ob)
 {
     const uint32_t* ob_p;
     int index, i;

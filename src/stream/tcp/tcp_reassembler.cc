@@ -368,6 +368,8 @@ void TcpReassembler::show_rebuilt_packet(TcpReassemblerState& trs, Packet* pkt)
 {
     if ( trs.sos.session->config->flags & STREAM_CONFIG_SHOW_PACKETS )
     {
+        // FIXIT-L setting conf here is required because this is called before context start
+        pkt->context->conf = SnortConfig::get_conf();
         LogFlow(pkt);
         LogNetData(pkt->data, pkt->dsize, pkt);
     }

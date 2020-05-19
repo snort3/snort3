@@ -635,7 +635,7 @@ public:
     ~Pop() override;
 
     bool configure(SnortConfig*) override;
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
     void eval(Packet*) override;
 
     StreamSplitter* get_splitter(bool c2s) override
@@ -673,7 +673,7 @@ bool Pop::configure(SnortConfig* )
     return true;
 }
 
-void Pop::show(SnortConfig*)
+void Pop::show(const SnortConfig*) const
 {
     if ( config )
         config->decode_conf.show();

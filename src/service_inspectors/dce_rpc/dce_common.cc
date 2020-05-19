@@ -116,14 +116,14 @@ bool dce2_set_co_config(Value& v, dce2CoProtoConf& co)
     return true;
 }
 
-void print_dce2_common_config(dce2CommonProtoConf& common)
+void print_dce2_common_config(const dce2CommonProtoConf& common)
 {
     ConfigLogger::log_flag("limit_alerts", common.limit_alerts);
     ConfigLogger::log_flag("disable_defrag", common.disable_defrag);
     ConfigLogger::log_value("max_frag_len", common.max_frag_len);
 }
 
-void print_dce2_co_config(dce2CoProtoConf& co)
+void print_dce2_co_config(const dce2CoProtoConf& co)
 {
     print_dce2_common_config(co.common);
 

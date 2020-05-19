@@ -58,7 +58,8 @@ IpsContext::IpsContext(unsigned size) :
     pkth = new DAQ_PktHdr_t;
     buf = new uint8_t[buf_size];
 
-    const EventQueueConfig* qc = SnortConfig::get_conf()->event_queue_config;
+    conf = SnortConfig::get_conf();
+    const EventQueueConfig* qc = conf->event_queue_config;
     equeue = sfeventq_new(qc->max_events, qc->log_events, sizeof(EventNode));
 
     packet->context = this;

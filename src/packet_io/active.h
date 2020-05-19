@@ -59,7 +59,7 @@ public:
 public:
 
     static void init(SnortConfig*);
-    static bool thread_init(SnortConfig*);
+    static bool thread_init(const SnortConfig*);
     static void thread_term();
 
     static void set_enabled(bool on_off = true)

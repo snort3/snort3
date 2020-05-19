@@ -431,7 +431,7 @@ void PortScan::tterm()
     ps_cleanup();
 }
 
-void PortScan::show(SnortConfig*)
+void PortScan::show(const SnortConfig*) const
 {
     if ( config )
         portscan_config_show(config);

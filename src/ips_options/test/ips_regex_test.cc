@@ -70,7 +70,7 @@ int SnortConfig::request_scratch(ScratchAllocator* s)
 
 void SnortConfig::release_scratch(int) { }
 
-SnortConfig* SnortConfig::get_conf()
+const SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
 
 Packet::Packet(bool) { }

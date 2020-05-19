@@ -410,7 +410,7 @@ public:
     Ssl(SSL_PROTO_CONF*);
     ~Ssl() override;
 
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
     void eval(Packet*) override;
 
     StreamSplitter* get_splitter(bool c2s) override
@@ -431,7 +431,7 @@ Ssl::~Ssl()
         delete config;
 }
 
-void Ssl::show(SnortConfig*)
+void Ssl::show(const SnortConfig*) const
 {
     if ( !config )
         return;

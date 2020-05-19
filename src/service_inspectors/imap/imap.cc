@@ -694,7 +694,7 @@ public:
     ~Imap() override;
 
     bool configure(SnortConfig*) override;
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
     void eval(Packet*) override;
 
     StreamSplitter* get_splitter(bool c2s) override
@@ -732,7 +732,7 @@ bool Imap::configure(SnortConfig*)
     return true;
 }
 
-void Imap::show(SnortConfig*)
+void Imap::show(const SnortConfig*) const
 {
     if ( config )
         config->decode_conf.show();

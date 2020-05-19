@@ -785,8 +785,10 @@ bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
         sc->tagged_packet_limit = v.get_uint32();
 
     else if ( v.is("verbose") )
-        v.update_mask(sc->logging_flags, LOGGING_FLAG__VERBOSE);
-
+    {
+        if ( v.get_bool() )
+            v.update_mask(sc->logging_flags, LOGGING_FLAG__VERBOSE);
+    }
     else if ( v.is("wide_hex_dump") )
         v.update_mask(sc->output_flags, OUTPUT_FLAG__WIDE_HEX);
 
@@ -1327,8 +1329,10 @@ private:
 bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
 {
     if ( v.is("daemon") )
-        sc->set_daemon(v.get_bool());
-
+    {
+        if ( v.get_bool() )  // FIXIT-M fix cmd line vs conf conflicts
+            sc->set_daemon(true);
+    }
     else if ( v.is("chroot") )
         sc->set_chroot_dir(v.get_string());
 

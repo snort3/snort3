@@ -39,7 +39,7 @@ public:
 
     bool configure(snort::SnortConfig*) override;
     void eval(snort::Packet*) override;
-    void show(snort::SnortConfig*) override;
+    void show(const snort::SnortConfig*) const override;
     void tinit() override;
     void tterm() override;
 

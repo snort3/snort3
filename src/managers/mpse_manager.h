@@ -67,9 +67,8 @@ public:
     static const snort::MpseApi* get_search_api(const char* type);
     static void delete_search_engine(snort::Mpse*);
 
-    static snort::Mpse* get_search_engine(const char*);
     static snort::Mpse* get_search_engine(
-        snort::SnortConfig* sc,const snort::MpseApi* api, const struct MpseAgent*);
+        const snort::SnortConfig* sc,const snort::MpseApi* api, const struct MpseAgent*);
 
     static void activate_search_engine(const snort::MpseApi*, snort::SnortConfig*);
     static void setup_search_engine(const snort::MpseApi*, snort::SnortConfig*);

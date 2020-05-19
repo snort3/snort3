@@ -230,8 +230,8 @@ void DropStats()
 
     LogLabel("Module Statistics");
     const char* exclude = "daq snort";
-    ModuleManager::dump_stats(SnortConfig::get_conf(), exclude, false);
-    ModuleManager::dump_stats(SnortConfig::get_conf(), exclude, true);
+    ModuleManager::dump_stats(exclude, false);
+    ModuleManager::dump_stats(exclude, true);
 
     LogLabel("Summary Statistics");
     show_stats((PegCount*)&proc_stats, proc_names, array_size(proc_names)-1, "process");
@@ -245,17 +245,17 @@ void PrintStatistics()
     DropStats();
     timing_stats();
 
-    // FIXIT-L can do flag saving with RAII (much cleaner)
-    int save_quiet_flag = SnortConfig::get_conf()->logging_flags & LOGGING_FLAG__QUIET;
+    SnortConfig* sc = SnortConfig::get_main_conf();
 
-    SnortConfig::get_conf()->logging_flags &= ~LOGGING_FLAG__QUIET;
+    // FIXIT-L can do flag saving with RAII (much cleaner)
+    int save_quiet_flag = sc->logging_flags & LOGGING_FLAG__QUIET;
+    sc->logging_flags &= ~LOGGING_FLAG__QUIET;
 
     // once more for the main thread
     Profiler::consolidate_stats();
-
     Profiler::show_stats();
 
-    SnortConfig::get_conf()->logging_flags |= save_quiet_flag;
+    sc->logging_flags |= save_quiet_flag;
 }
 
 //-------------------------------------------------------------------------

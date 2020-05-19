@@ -206,7 +206,7 @@ class FileLog : public Inspector
 public:
     FileLog(const FileLogConfig& conf) { config = conf; }
 
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
     void eval(Packet*) override { }
 
     bool configure(SnortConfig*) override
@@ -219,7 +219,7 @@ private:
     FileLogConfig config;
 };
 
-void FileLog::show(SnortConfig*)
+void FileLog::show(const SnortConfig*) const
 {
     ConfigLogger::log_flag("log_pkt_time", config.log_pkt_time);
     ConfigLogger::log_flag("log_sys_time", config.log_sys_time);

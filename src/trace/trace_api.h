@@ -29,8 +29,8 @@ struct SnortConfig;
 class TraceApi
 {
 public:
-    static void thread_init(SnortConfig* sc);
-    static void thread_reinit(SnortConfig* sc);
+    static void thread_init(const SnortConfig* sc);
+    static void thread_reinit(const SnortConfig* sc);
     static void thread_term();
 
     static void log(const char* log_msg, const char* name,

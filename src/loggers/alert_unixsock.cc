@@ -271,7 +271,7 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-static Logger* unix_sock_ctor(SnortConfig*, Module*)
+static Logger* unix_sock_ctor(Module*)
 { return new UnixSockLogger; }
 
 static void unix_sock_dtor(Logger* p)

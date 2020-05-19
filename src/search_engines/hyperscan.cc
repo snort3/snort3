@@ -126,7 +126,7 @@ struct ScanContext
 class HyperscanMpse : public Mpse
 {
 public:
-    HyperscanMpse(SnortConfig*, const MpseAgent* a)
+    HyperscanMpse(const MpseAgent* a)
         : Mpse("hyperscan")
     {
         agent = a;
@@ -143,8 +143,7 @@ public:
     }
 
     int add_pattern(
-        SnortConfig*, const uint8_t* pat, unsigned len,
-        const PatternDescriptor& desc, void* user) override
+        const uint8_t* pat, unsigned len, const PatternDescriptor& desc, void* user) override
     {
         Pattern p(pat, len, desc, user);
         pvector.emplace_back(p);
@@ -378,12 +377,12 @@ static void mod_dtor(Module* p)
 { delete p; }
 
 static Mpse* hs_ctor(
-    SnortConfig* sc, class Module*, const MpseAgent* a)
+    const SnortConfig* sc, class Module*, const MpseAgent* a)
 {
     if ( s_scratch.empty() )
         s_scratch.resize(sc->num_slots, nullptr);
 
-    return new HyperscanMpse(sc, a);
+    return new HyperscanMpse(a);
 }
 
 static void hs_dtor(Mpse* p)

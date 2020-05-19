@@ -340,7 +340,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         return false;
     }
 
-    if (SnortConfig::udp_checksums() && !valid_checksum_from_daq(raw))
+    if (snort::get_network_policy()->udp_checksums() && !valid_checksum_from_daq(raw))
     {
         PegCount* bad_cksum_cnt;
         bool valid;

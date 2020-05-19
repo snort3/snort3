@@ -227,7 +227,7 @@ void FastLogger::alert(Packet* p, const char* msg, const Event& event)
     TextLog_Print(fast_log, "[%u:%u:%u] ",
         event.sig_info->gid, event.sig_info->sid, event.sig_info->rev);
 
-    if (SnortConfig::alert_interface())
+    if (p->context->conf->alert_interface())
         TextLog_Print(fast_log, " <%s> ", SFDAQ::get_input_spec());
 
     if ( msg )
@@ -241,7 +241,7 @@ void FastLogger::alert(Packet* p, const char* msg, const Event& event)
     TextLog_Print(fast_log, "{%s} ", p->get_type());
     LogIpAddrs(fast_log, p);
 
-    if ( packet || SnortConfig::output_app_data() )
+    if ( packet || p->context->conf->output_app_data() )
     {
         log_data(p, event);
     }
@@ -333,7 +333,7 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-static Logger* fast_ctor(SnortConfig*, Module* mod)
+static Logger* fast_ctor(Module* mod)
 { return new FastLogger((FastModule*)mod); }
 
 static void fast_dtor(Logger* p)

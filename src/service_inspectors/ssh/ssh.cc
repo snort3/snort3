@@ -725,7 +725,7 @@ public:
     Ssh(SSH_PROTO_CONF*);
     ~Ssh() override;
 
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
     void eval(Packet*) override;
 
 private:
@@ -743,7 +743,7 @@ Ssh::~Ssh()
         delete config;
 }
 
-void Ssh::show(SnortConfig*)
+void Ssh::show(const SnortConfig*) const
 {
     if ( !config )
         return;

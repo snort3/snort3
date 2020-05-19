@@ -219,7 +219,7 @@ class Dnp3 : public Inspector
 public:
     Dnp3(const dnp3ProtoConf&);
 
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
     void eval(Packet*) override;
     bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
     void clear(Packet*) override;
@@ -239,7 +239,7 @@ Dnp3::Dnp3(const dnp3ProtoConf& pc)
 }
 
 
-void Dnp3::show(SnortConfig*)
+void Dnp3::show(const SnortConfig*) const
 {
     ConfigLogger::log_flag("check_crc", config.check_crc);
 }

@@ -68,7 +68,7 @@ bool VxlanCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     if ( hdr->flags != 0x08 )
         return false;
 
-    if ( SnortConfig::tunnel_bypass_enabled(TUNNEL_VXLAN) )
+    if ( codec.conf->tunnel_bypass_enabled(TUNNEL_VXLAN) )
         codec.tunnel_bypass = true;
 
     codec.lyr_len = VXLAN_MIN_HDR_LEN;

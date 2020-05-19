@@ -396,9 +396,9 @@ inline void dce_alert(uint32_t gid, uint32_t sid, dce2CommonStats* stats, DCE2_S
 }
 
 bool dce2_set_common_config(snort::Value&, dce2CommonProtoConf&);
-void print_dce2_common_config(dce2CommonProtoConf&);
+void print_dce2_common_config(const dce2CommonProtoConf&);
 bool dce2_set_co_config(snort::Value&, dce2CoProtoConf&);
-void print_dce2_co_config(dce2CoProtoConf&);
+void print_dce2_co_config(const dce2CoProtoConf&);
 bool dce2_paf_abort(DCE2_SsnData*);
 void DCE2_Detect(DCE2_SsnData*);
 snort::Packet* DCE2_GetRpkt(snort::Packet*, DCE2_RpktType, const uint8_t*, uint32_t);

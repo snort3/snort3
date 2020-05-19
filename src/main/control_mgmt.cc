@@ -439,25 +439,27 @@ int ControlMgmt::socket_conn()
 int ControlMgmt::setup_socket_family()
 {
     int family = AF_UNSPEC;
-    if (SnortConfig::get_conf()->remote_control_port)
+    const SnortConfig* sc = SnortConfig::get_conf();
+
+    if (sc->remote_control_port)
     {
         memset(&in_addr, 0, sizeof(in_addr));
 
         in_addr.sin_family = AF_INET;
         in_addr.sin_addr.s_addr = htonl(0x7F000001);
-        in_addr.sin_port = htons(SnortConfig::get_conf()->remote_control_port);
+        in_addr.sin_port = htons(sc->remote_control_port);
         sock_addr = (struct sockaddr*)&in_addr;
         sock_addr_size = sizeof(in_addr);
         family = AF_INET;
     }
-    else if (!SnortConfig::get_conf()->remote_control_socket.empty())
+    else if (!sc->remote_control_socket.empty())
     {
         string fullpath;
-        const char* path_sep = strrchr(SnortConfig::get_conf()->remote_control_socket.c_str(), '/');
+        const char* path_sep = strrchr(sc->remote_control_socket.c_str(), '/');
         if (path_sep != nullptr)
-            fullpath = SnortConfig::get_conf()->remote_control_socket;
+            fullpath = sc->remote_control_socket;
         else
-            get_instance_file(fullpath, SnortConfig::get_conf()->remote_control_socket.c_str());
+            get_instance_file(fullpath, sc->remote_control_socket.c_str());
 
         memset(&unix_addr, 0, sizeof(unix_addr));
         unix_addr.sun_family = AF_UNIX;

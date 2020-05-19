@@ -60,7 +60,7 @@ void MobilityCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 bool MobilityCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     const MobileIPV6Header* const mip6 = reinterpret_cast<const MobileIPV6Header*>(raw.data);
-    if ( SnortConfig::get_conf()->hit_ip6_maxopts(codec.ip6_extension_count) )
+    if ( codec.conf->hit_ip6_maxopts(codec.ip6_extension_count) )
     {
         codec_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
         return false;

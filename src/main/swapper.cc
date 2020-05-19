@@ -42,7 +42,7 @@ Swapper::Swapper(SnortConfig* s, HostAttributesTable* t)
     new_attribs = t;
 }
 
-Swapper::Swapper(SnortConfig* sold, SnortConfig* snew)
+Swapper::Swapper(const SnortConfig* sold, SnortConfig* snew)
 {
     old_conf = sold;
     new_conf = snew;
@@ -51,7 +51,9 @@ Swapper::Swapper(SnortConfig* sold, SnortConfig* snew)
     new_attribs = nullptr;
 }
 
-Swapper::Swapper(SnortConfig* sold, SnortConfig* snew, HostAttributesTable* told, HostAttributesTable* tnew)
+Swapper::Swapper(
+    const SnortConfig* sold, SnortConfig* snew,
+    HostAttributesTable* told, HostAttributesTable* tnew)
 {
     old_conf = sold;
     new_conf = snew;

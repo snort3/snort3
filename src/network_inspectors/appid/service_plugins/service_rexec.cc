@@ -25,6 +25,8 @@
 
 #include "service_rexec.h"
 
+#include "detection/ips_context.h"
+
 #include "appid_debug.h"
 #include "appid_inspector.h"
 #include "app_info_table.h"
@@ -140,7 +142,7 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
     {
     case REXEC_STATE_PORT:
         if(rexec_snort_protocol_id == UNKNOWN_PROTOCOL_ID)
-            rexec_snort_protocol_id = SnortConfig::get_conf()->proto_ref->find("rexec");
+            rexec_snort_protocol_id = args.pkt->context->conf->proto_ref->find("rexec");
 
         if (args.dir != APP_ID_FROM_INITIATOR)
             goto bail;

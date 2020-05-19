@@ -218,7 +218,7 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         return false;
     }
 
-    if (SnortConfig::tcp_checksums() && !valid_checksum_from_daq(raw))
+    if (snort::get_network_policy()->tcp_checksums() && !valid_checksum_from_daq(raw))
     {
         PegCount* bad_cksum_cnt;
         bool valid;
@@ -528,7 +528,7 @@ void TcpCodec::flag_tests(const tcp::TCPHdr* const tcph,
             }
         }
 
-        if ( SnortConfig::is_address_anomaly_check_enabled() )
+        if ( codec.conf->is_address_anomaly_check_enabled() )
         {
             if ( sfvar_ip_in(SynToMulticastDstIp, snort.ip_api.get_dst()) )
                 codec_event(codec, DECODE_SYN_TO_MULTICAST);

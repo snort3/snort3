@@ -539,7 +539,7 @@ static void flowbits_dtor(IpsOption* p)
     delete p;
 }
 
-static void flowbits_verify(SnortConfig*)
+static void flowbits_verify(const SnortConfig*)
 {
     flowbits_verify();
 }

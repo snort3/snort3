@@ -38,18 +38,21 @@ InspectionPolicy::~InspectionPolicy() {}
 namespace snort
 {
 SnortConfig::SnortConfig(snort::SnortConfig const*)
-{
-    global_dbus = new DataBus();
-}
-THREAD_LOCAL SnortConfig* snort_conf = nullptr;
-SnortConfig* SnortConfig::get_conf()
+{ global_dbus = new DataBus(); }
+
+THREAD_LOCAL const SnortConfig* snort_conf = nullptr;
+
+const SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
+
+SnortConfig* SnortConfig::get_main_conf()
+{ return const_cast<SnortConfig*>(snort_conf); }
+
 SnortConfig::~SnortConfig()
-{
-    delete global_dbus;
-}
+{ delete global_dbus; }
 
 static  InspectionPolicy* my_inspection_policy = nullptr;
+
 InspectionPolicy* get_inspection_policy()
 { return my_inspection_policy; }
 }
@@ -105,7 +108,7 @@ TEST_GROUP(data_bus)
 
 TEST(data_bus, subscribe_global)
 {
-    SnortConfig* sc = SnortConfig::get_conf();
+    SnortConfig* sc = SnortConfig::get_main_conf();
     UTestHandler* h = new UTestHandler();
     DataBus::subscribe_global(DB_UTEST_EVENT, h, sc);
 

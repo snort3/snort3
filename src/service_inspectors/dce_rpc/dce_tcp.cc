@@ -110,7 +110,7 @@ class Dce2Tcp : public Inspector
 public:
     Dce2Tcp(const dce2TcpProtoConf&);
 
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
     void eval(Packet*) override;
     void clear(Packet*) override;
     StreamSplitter* get_splitter(bool c2s) override
@@ -127,7 +127,7 @@ Dce2Tcp::Dce2Tcp(const dce2TcpProtoConf& pc)
     config = pc;
 }
 
-void Dce2Tcp::show(SnortConfig*)
+void Dce2Tcp::show(const SnortConfig*) const
 {
     print_dce2_tcp_conf(config);
 }

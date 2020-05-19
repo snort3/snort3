@@ -39,7 +39,7 @@ public:
     ~PerfMonitor() override { delete config; }
 
     bool configure(snort::SnortConfig*) override;
-    void show(snort::SnortConfig*) override;
+    void show(const snort::SnortConfig*) const override;
 
     void eval(snort::Packet*) override;
     bool ready_to_process(snort::Packet* p);

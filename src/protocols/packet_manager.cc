@@ -100,7 +100,7 @@ static inline void push_layer(Packet* p,
 void PacketManager::pop_teredo(Packet* p, RawData& raw)
 {
     p->proto_bits &= ~PROTO_BIT__TEREDO;
-    if ( SnortConfig::tunnel_bypass_enabled(TUNNEL_TEREDO) )
+    if ( p->context->conf->tunnel_bypass_enabled(TUNNEL_TEREDO) )
         p->active->clear_tunnel_bypass();
 
     const ProtocolIndex mapped_prot = CodecManager::s_proto_map[to_utype(ProtocolId::TEREDO)];
@@ -138,7 +138,7 @@ void PacketManager::decode(
     ProtocolId prev_prot_id = CodecManager::grinder_id;
 
     RawData raw(p->daq_msg, pkt, pktlen);
-    CodecData codec_data(ProtocolId::FINISHED_DECODE);
+    CodecData codec_data(p->context->conf, ProtocolId::FINISHED_DECODE);
 
     if ( cooked )
         codec_data.codec_flags |= CODEC_STREAM_REBUILT;

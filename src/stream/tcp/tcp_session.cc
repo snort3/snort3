@@ -1026,7 +1026,8 @@ bool TcpSession::do_packet_analysis_pre_checks(Packet* p, TcpSegmentDescriptor& 
 
     update_ignored_session(tsd);
     set_window_scale(*talker, *listener, tsd);
-    if ( SnortConfig::is_address_anomaly_check_enabled() )
+
+    if ( p->context->conf->is_address_anomaly_check_enabled() )
         check_for_session_hijack(tsd);
 
     return true;
@@ -1036,7 +1037,7 @@ bool TcpSession::validate_packet_established_session(TcpSegmentDescriptor& tsd)
 {
     pkt_action_mask |= listener->normalizer.handle_paws(tsd);
 
-    if ( SnortConfig::inline_mode() )
+    if ( tsd.get_pkt()->context->conf->inline_mode() )
        if ( tsd.get_tcph()->is_ack() && !listener->is_ack_valid(tsd.get_seg_ack()) )
            pkt_action_mask |= ACTION_BAD_PKT;
 

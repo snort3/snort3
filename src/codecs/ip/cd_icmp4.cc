@@ -156,7 +156,7 @@ bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
     const ICMPHdr* const icmph = reinterpret_cast<const ICMPHdr*>(raw.data);
     uint16_t len = 0;
 
-    if (SnortConfig::icmp_checksums() && !valid_checksum_from_daq(raw))
+    if (snort::get_network_policy()->icmp_checksums() && !valid_checksum_from_daq(raw))
     {
         uint16_t csum = checksum::cksum_add((const uint16_t*)icmph, raw.len);
 

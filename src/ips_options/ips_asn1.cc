@@ -57,6 +57,7 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/hash_key_operations.h"
+#include "main/snort_config.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 
@@ -264,6 +265,12 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
+static void asn1_init(const SnortConfig* sc)
+{ asn1_init_mem(sc->asn1_mem); }
+
+static void asn1_term(const SnortConfig*)
+{ asn1_free_mem(); }
+
 static IpsOption* asn1_ctor(Module* p, OptTreeNode*)
 {
     Asn1Module* m = (Asn1Module*)p;
@@ -291,8 +298,8 @@ static const IpsApi asn1_api =
     },
     OPT_TYPE_DETECTION,
     0, 0,
-    asn1_init_mem,
-    asn1_free_mem,
+    asn1_init,
+    asn1_term,
     nullptr,
     nullptr,
     asn1_ctor,

@@ -168,7 +168,7 @@ AppIdInspector::AppIdInspector(AppIdModule&) { ctxt = &stub_ctxt; }
 AppIdInspector::~AppIdInspector() = default;
 void AppIdInspector::eval(Packet*) { }
 bool AppIdInspector::configure(SnortConfig*) { return true; }
-void AppIdInspector::show(SnortConfig*) { }
+void AppIdInspector::show(const SnortConfig*) const { }
 void AppIdInspector::tinit() { }
 void AppIdInspector::tterm() { }
 AppIdContext& AppIdInspector::get_ctxt() const

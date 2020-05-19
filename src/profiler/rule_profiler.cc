@@ -194,10 +194,11 @@ static void consolidate_otn_states(OtnState* states)
 
 static std::vector<View> build_entries()
 {
-    assert(SnortConfig::get_conf());
+    const SnortConfig* sc = SnortConfig::get_conf();
+    assert(sc);
 
-    detection_option_tree_update_otn_stats(SnortConfig::get_conf()->detection_option_tree_hash_table);
-    auto* otn_map = SnortConfig::get_conf()->otn_map;
+    detection_option_tree_update_otn_stats(sc->detection_option_tree_hash_table);
+    auto* otn_map = sc->otn_map;
 
     std::vector<View> entries;
 
@@ -313,8 +314,10 @@ void show_rule_profiler_stats(const RuleProfilerConfig& config)
 
 void reset_rule_profiler_stats()
 {
-    assert(SnortConfig::get_conf());
-    auto* otn_map = SnortConfig::get_conf()->otn_map;
+    const SnortConfig* sc = SnortConfig::get_conf();
+    assert(sc);
+
+    auto* otn_map = sc->otn_map;
 
     for ( auto* h = otn_map->find_first(); h; h = otn_map->find_next() )
     {

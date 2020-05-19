@@ -37,6 +37,7 @@
 #include "main/snort.h"
 #include "main/snort_config.h"
 #include "main/thread_config.h"
+#include "search_engines/search_tool.h"
 #include "protocols/packet.h"
 #include "target_based/snort_protocols.h"
 
@@ -556,14 +557,16 @@ bool InspectorManager::inspector_exists_in_any_policy(const char* key, SnortConf
 }
 
 // FIXIT-P cache get_inspector() returns or provide indexed lookup
-Inspector* InspectorManager::get_inspector(const char* key, bool dflt_only, SnortConfig* sc)
+Inspector* InspectorManager::get_inspector(const char* key, bool dflt_only, const SnortConfig* sc)
 {
     InspectionPolicy* pi;
 
-    if (dflt_only && (sc != nullptr))
+    if ( dflt_only )
+    {
+        if ( !sc )
+            sc = SnortConfig::get_conf();
         pi = get_default_inspection_policy(sc);
-    else if (dflt_only)
-        pi = get_default_inspection_policy(SnortConfig::get_conf());
+    }
     else
         pi = get_inspection_policy();
 
@@ -685,7 +688,7 @@ static PHGlobal& get_thread_local_plugin(const InspectApi& api)
     return s_tl_handlers->back();
 }
 
-void InspectorManager::thread_init(SnortConfig* sc)
+void InspectorManager::thread_init(const SnortConfig* sc)
 {
     Inspector::slot = get_instance_id();
 
@@ -700,7 +703,7 @@ void InspectorManager::thread_init(SnortConfig* sc)
     }
 
     // pin->tinit() only called for default policy
-    set_default_policy();
+    set_default_policy(sc);
     InspectionPolicy* pi = get_inspection_policy();
 
     if ( pi && pi->framework_policy )
@@ -717,7 +720,7 @@ void InspectorManager::thread_init(SnortConfig* sc)
     }
 }
 
-void InspectorManager::thread_reinit(SnortConfig* sc)
+void InspectorManager::thread_reinit(const SnortConfig* sc)
 {
     // Update this thread's configured plugin registry with any newly configured inspectors
     for ( auto* p : sc->framework_config->clist )
@@ -749,14 +752,14 @@ void InspectorManager::thread_reinit(SnortConfig* sc)
     }
 }
 
-void InspectorManager::thread_stop(SnortConfig*)
+void InspectorManager::thread_stop(const SnortConfig* sc)
 {
     // If thread_init() was never called, we have nothing to do.
     if ( !s_tl_handlers )
         return;
 
     // pin->tterm() only called for default policy
-    set_default_policy();
+    set_default_policy(sc);
     InspectionPolicy* pi = get_inspection_policy();
 
     // FIXIT-RC Any inspectors that were once configured/instantiated but
@@ -777,7 +780,7 @@ void InspectorManager::thread_stop(SnortConfig*)
     }
 }
 
-void InspectorManager::thread_term(SnortConfig*)
+void InspectorManager::thread_term()
 {
     // If thread_init() was never called, we have nothing to do.
     if ( !s_tl_handlers )
@@ -969,6 +972,8 @@ bool InspectorManager::configure(SnortConfig* sc, bool cloned)
     }
     bool ok = true;
 
+    SearchTool::set_conf(sc);
+
     for ( unsigned idx = 0; idx < sc->policy_map->inspection_policy_count(); ++idx )
     {
         if ( cloned and idx )
@@ -981,6 +986,7 @@ bool InspectorManager::configure(SnortConfig* sc, bool cloned)
     }
 
     set_inspection_policy(sc);
+    SearchTool::set_conf(nullptr);
 
     return ok;
 }
@@ -1110,7 +1116,7 @@ void InspectorManager::execute(Packet* p)
     if ( p->disable_inspect )
         return;
 
-    SnortConfig* sc = SnortConfig::get_conf();
+    const SnortConfig* sc = p->context->conf;
     FrameworkPolicy* fp_dft = get_default_inspection_policy(sc)->framework_policy;
 
     if ( !p->flow )
@@ -1149,7 +1155,7 @@ void InspectorManager::execute(Packet* p)
 
 void InspectorManager::probe(Packet* p)
 {
-    InspectionPolicy* policy = SnortConfig::get_conf()->policy_map->get_inspection_policy(0);
+    InspectionPolicy* policy = p->context->conf->policy_map->get_inspection_policy(0);
     FrameworkPolicy* fp = policy->framework_policy;
     ::execute(p, fp->probe.vec, fp->probe.num);
 }

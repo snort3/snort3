@@ -219,10 +219,12 @@ bool SFDAQ::init(const SFDAQConfig* cfg, unsigned total_instances)
 
     int rval;
 
-    if (SnortConfig::adaptor_inline_mode())
+    if (SnortConfig::get_conf()->adaptor_inline_mode())
         default_daq_mode = DAQ_MODE_INLINE;
-    else if (SnortConfig::read_mode())
+
+    else if (SnortConfig::get_conf()->read_mode())
         default_daq_mode = DAQ_MODE_READ_FILE;
+
     else
         default_daq_mode = DAQ_MODE_PASSIVE;
 

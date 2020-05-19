@@ -60,19 +60,25 @@ public:
     static void dump_plugins();
     static void release_plugins();
     static void instantiate(const snort::IpsApi*, snort::Module*, snort::SnortConfig*);
+
     static bool option_begin(snort::SnortConfig*, const char* key, SnortProtocolId);
     static bool option_set(
         snort::SnortConfig*, const char* key, const char* opt, const char* val);
     static bool option_end(
         snort::SnortConfig*, OptTreeNode*, SnortProtocolId, const char* key, snort::RuleOptType&);
+
     static void delete_option(snort::IpsOption*);
     static const char* get_option_keyword();
+
     SO_PUBLIC static const snort::IpsApi* get_option_api(const char* keyword);
-    static void global_init(snort::SnortConfig*);
-    static void global_term(snort::SnortConfig*);
+
+    static void global_init(const snort::SnortConfig*);
+    static void global_term(const snort::SnortConfig*);
+
     static void reset_options();
-    static void setup_options();
-    static void clear_options();
+    static void setup_options(const snort::SnortConfig*);
+    static void clear_options(const snort::SnortConfig*);
+
     static bool verify(snort::SnortConfig*);
 
 #ifdef PIGLET

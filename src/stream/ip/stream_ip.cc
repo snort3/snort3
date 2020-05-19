@@ -70,7 +70,7 @@ public:
     ~StreamIp() override;
 
     bool configure(SnortConfig*) override;
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
 
     NORETURN_ASSERT void eval(Packet*) override;
 
@@ -97,12 +97,12 @@ bool StreamIp::configure(SnortConfig* sc)
     return true;
 }
 
-void StreamIp::show(SnortConfig* sc)
+void StreamIp::show(const SnortConfig*) const
 {
     if ( !config )
         return;
 
-    defrag->show(sc);
+    defrag->show();
     ConfigLogger::log_value("session_timeout", config->session_timeout);
 }
 

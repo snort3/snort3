@@ -252,7 +252,7 @@ public:
     Cip(CipProtoConf*);
     ~Cip() override;
 
-    void show(SnortConfig*) override;
+    void show(const SnortConfig*) const override;
     void eval(Packet*) override;
 
     class StreamSplitter* get_splitter(bool c2s) override
@@ -278,7 +278,7 @@ Cip::~Cip()
     }
 }
 
-void Cip::show(SnortConfig*)
+void Cip::show(const SnortConfig*) const
 {
     if (!config)
         return;

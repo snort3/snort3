@@ -37,16 +37,14 @@ private:
     ACSM_STRUCT* obj;
 
 public:
-    AcMpse(SnortConfig*, const MpseAgent* agent)
-        : Mpse("ac_std")
+    AcMpse(const MpseAgent* agent) : Mpse("ac_std")
     { obj = acsmNew(agent); }
 
     ~AcMpse() override
     { acsmFree(obj); }
 
     int add_pattern(
-        SnortConfig*, const uint8_t* P, unsigned m,
-        const PatternDescriptor& desc, void* user) override
+        const uint8_t* P, unsigned m, const PatternDescriptor& desc, void* user) override
     {
         return acsmAddPattern(obj, P, m, desc.no_case, desc.negated, user);
     }
@@ -73,9 +71,9 @@ public:
 //-------------------------------------------------------------------------
 
 static Mpse* ac_ctor(
-    SnortConfig* sc, class Module*, const MpseAgent* agent)
+    const SnortConfig*, class Module*, const MpseAgent* agent)
 {
-    return new AcMpse(sc, agent);
+    return new AcMpse(agent);
 }
 
 static void ac_dtor(Mpse* p)

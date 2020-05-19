@@ -382,7 +382,7 @@ static int pmx_create_tree_offload(SnortConfig* sc, void* id, void** existing_tr
 }
 
 static int fpFinishPortGroupRule(
-    SnortConfig* sc, Mpse* mpse, OptTreeNode* otn, PatternMatchData* pmd,
+    Mpse* mpse, OptTreeNode* otn, PatternMatchData* pmd,
     FastPatternConfig* fp, Mpse::MpseType mpse_type, bool get_final_pat)
 {
     const char* pattern;
@@ -409,7 +409,7 @@ static int fpFinishPortGroupRule(
     Mpse::PatternDescriptor desc(
         pmd->is_no_case(), pmd->is_negated(), pmd->is_literal(), pmd->mpse_flags);
 
-    mpse->add_pattern(sc, (const uint8_t*)pattern, pattern_length, desc, pmx);
+    mpse->add_pattern((const uint8_t*)pattern, pattern_length, desc, pmx);
 
     return 0;
 }
@@ -496,10 +496,11 @@ static int fpFinishPortGroup(SnortConfig* sc, PortGroup* pg, FastPatternConfig* 
     return 0;
 }
 
-static void fpAddAlternatePatterns(SnortConfig* sc, Mpse* mpse,
-    OptTreeNode* otn, PatternMatchData* pmd, FastPatternConfig* fp, Mpse::MpseType mpse_type)
+static void fpAddAlternatePatterns(
+    Mpse* mpse, OptTreeNode* otn, PatternMatchData* pmd, FastPatternConfig* fp,
+    Mpse::MpseType mpse_type)
 {
-    fpFinishPortGroupRule(sc, mpse, otn, pmd, fp, mpse_type, false);
+    fpFinishPortGroupRule(mpse, otn, pmd, fp, mpse_type, false);
 }
 
 static int fpAddPortGroupRule(
@@ -638,7 +639,7 @@ static int fpAddPortGroupRule(
                     add_nfp_rule = true;
 
                 // Now add patterns
-                if (fpFinishPortGroupRule(sc, pg->mpsegrp[main_pmd->pm_type]->normal_mpse,
+                if (fpFinishPortGroupRule(pg->mpsegrp[main_pmd->pm_type]->normal_mpse,
                         otn, main_pmd, fp, Mpse::MPSE_TYPE_NORMAL, true) == 0)
                 {
                     if (main_pmd->pattern_size > otn->longestPatternLen)
@@ -646,7 +647,7 @@ static int fpAddPortGroupRule(
 
                     // Add Alternative patterns
                     for (auto p : pmv)
-                        fpAddAlternatePatterns(sc, pg->mpsegrp[main_pmd->pm_type]->normal_mpse,
+                        fpAddAlternatePatterns(pg->mpsegrp[main_pmd->pm_type]->normal_mpse,
                             otn, p, fp, Mpse::MPSE_TYPE_NORMAL);
                 }
             }
@@ -658,7 +659,7 @@ static int fpAddPortGroupRule(
                     add_nfp_rule = true;
 
                 // Now add patterns
-                if (fpFinishPortGroupRule(sc, pg->mpsegrp[main_pmd->pm_type]->offload_mpse,
+                if (fpFinishPortGroupRule(pg->mpsegrp[main_pmd->pm_type]->offload_mpse,
                         otn, ol_pmd, fp, Mpse::MPSE_TYPE_OFFLOAD, true) == 0)
                 {
                     if (ol_pmd->pattern_size > otn->longestPatternLen)
@@ -666,7 +667,7 @@ static int fpAddPortGroupRule(
 
                     // Add Alternative patterns
                     for (auto p : pmv_ol)
-                        fpAddAlternatePatterns(sc, pg->mpsegrp[main_pmd->pm_type]->offload_mpse,
+                        fpAddAlternatePatterns(pg->mpsegrp[main_pmd->pm_type]->offload_mpse,
                             otn, p, fp, Mpse::MPSE_TYPE_OFFLOAD);
                 }
             }

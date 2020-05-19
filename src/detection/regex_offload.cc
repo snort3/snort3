@@ -182,9 +182,10 @@ bool MpseRegexOffload::get(Packet*& p)
 ThreadRegexOffload::ThreadRegexOffload(unsigned max) : RegexOffload(max)
 {
     unsigned i = ThreadConfig::get_instance_max();
+    const SnortConfig* sc = SnortConfig::get_conf();
 
     for ( auto* req : idle )
-        req->thread = new std::thread(worker, req, SnortConfig::get_conf(), i++);
+        req->thread = new std::thread(worker, req, sc, i++);
 }
 
 ThreadRegexOffload::~ThreadRegexOffload()
@@ -266,7 +267,7 @@ bool ThreadRegexOffload::get(Packet*& p)
 }
 
 void ThreadRegexOffload::worker(
-    RegexRequest* req, SnortConfig* initial_config, unsigned id)
+    RegexRequest* req, const SnortConfig* initial_config, unsigned id)
 {
     set_instance_id(id);
     SnortConfig::set_conf(initial_config);

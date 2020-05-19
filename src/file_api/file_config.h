@@ -81,6 +81,6 @@ private:
 };
 
 std::string file_type_name(uint32_t id);
-FileConfig* get_file_config(snort::SnortConfig* sc = nullptr);
+FileConfig* get_file_config(const snort::SnortConfig* sc = nullptr);
 #endif
 

@@ -28,7 +28,7 @@
 
 namespace snort
 {
-char* ObfuscateIpToText(const SfIp* ip, const SfCidr& homenet, SfCidr& obfunet, InetBuf& ab)
+char* ObfuscateIpToText(const SfIp* ip, const SfCidr& homenet, const SfCidr& obfunet, InetBuf& ab)
 {
     ab[0] = 0;
 

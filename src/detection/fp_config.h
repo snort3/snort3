@@ -47,55 +47,55 @@ public:
     void set_debug_mode()
     { debug = true; }
 
-    bool get_debug_mode()
+    bool get_debug_mode() const
     { return debug; }
 
     void set_stream_insert(bool enable)
     { inspect_stream_insert = enable; }
 
-    bool get_stream_insert()
+    bool get_stream_insert() const
     { return inspect_stream_insert; }
 
     void set_max_queue_events(unsigned num_events)
     { max_queue_events = num_events; }
 
-    unsigned get_max_queue_events()
+    unsigned get_max_queue_events() const
     { return max_queue_events; }
 
     void set_bleed_over_port_limit(unsigned n)
     { bleedover_port_limit = n; }
 
-    int get_bleed_over_port_limit()
+    int get_bleed_over_port_limit() const
     { return bleedover_port_limit; }
 
-    int get_single_rule_group()
+    int get_single_rule_group() const
     { return portlists_flags & PL_SINGLE_RULE_GROUP; }
 
-    int get_bleed_over_warnings()
+    int get_bleed_over_warnings() const
     { return portlists_flags & PL_BLEEDOVER_WARNINGS_ENABLED; }
 
-    int get_debug_print_nc_rules()
+    int get_debug_print_nc_rules() const
     { return portlists_flags & PL_DEBUG_PRINT_NC_DETECT_RULES; }
 
-    int get_debug_print_rule_group_build_details()
+    int get_debug_print_rule_group_build_details() const
     { return portlists_flags & PL_DEBUG_PRINT_RULEGROUP_BUILD; }
 
-    int get_debug_print_rule_groups_compiled()
+    int get_debug_print_rule_groups_compiled() const
     { return portlists_flags & PL_DEBUG_PRINT_RULEGROUPS_COMPILED; }
 
-    int get_debug_print_rule_groups_uncompiled()
+    int get_debug_print_rule_groups_uncompiled() const
     { return portlists_flags & PL_DEBUG_PRINT_RULEGROUPS_UNCOMPILED; }
 
     void set_debug_print_fast_patterns(bool b)
     { debug_print_fast_pattern = b; }
 
-    bool get_debug_print_fast_patterns()
+    bool get_debug_print_fast_patterns() const
     { return debug_print_fast_pattern; }
 
     void set_split_any_any(bool enable)
     { split_any_any = enable; }
 
-    bool get_split_any_any()
+    bool get_split_any_any() const
     { return split_any_any; }
 
     void set_single_rule_group()
@@ -119,7 +119,7 @@ public:
     void set_search_opt(bool flag)
     { search_opt = flag; }
 
-    bool get_search_opt()
+    bool get_search_opt() const
     { return search_opt; }
 
     bool set_search_method(const char*);
@@ -132,25 +132,25 @@ public:
 
     void set_queue_limit(unsigned);
 
-    unsigned get_queue_limit()
+    unsigned get_queue_limit() const
     { return queue_limit; }
 
-    const snort::MpseApi* get_search_api()
+    const snort::MpseApi* get_search_api() const
     { return search_api; }
 
-    const snort::MpseApi* get_offload_search_api()
+    const snort::MpseApi* get_offload_search_api() const
     { return offload_search_api; }
 
-    bool get_trim()
+    bool get_trim() const
     { return trim; }
 
     void trimmed()
     { num_patterns_trimmed++; }
 
-    int get_num_patterns_trimmed()
+    int get_num_patterns_trimmed() const
     { return num_patterns_trimmed; }
 
-    int get_num_patterns_truncated()
+    int get_num_patterns_truncated() const
     { return num_patterns_truncated; }
 
     unsigned set_max(unsigned bytes);

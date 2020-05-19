@@ -27,6 +27,7 @@
 
 #include <cassert>
 
+#include "detection/ips_context.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -272,45 +273,45 @@ static void pcre_parse(const SnortConfig* sc, const char* data, PcreData* pcre_d
 
     if (pcre_data->pe)
     {
-        if ((SnortConfig::get_pcre_match_limit() != 0) &&
+        if ((sc->get_pcre_match_limit() != 0) &&
             !(pcre_data->options & SNORT_OVERRIDE_MATCH_LIMIT))
         {
             if ( !(pcre_data->pe->flags & PCRE_EXTRA_MATCH_LIMIT) )
                 pcre_data->pe->flags |= PCRE_EXTRA_MATCH_LIMIT;
 
-            pcre_data->pe->match_limit = SnortConfig::get_pcre_match_limit();
+            pcre_data->pe->match_limit = sc->get_pcre_match_limit();
         }
 
-        if ((SnortConfig::get_pcre_match_limit_recursion() != 0) &&
+        if ((sc->get_pcre_match_limit_recursion() != 0) &&
             !(pcre_data->options & SNORT_OVERRIDE_MATCH_LIMIT))
         {
             if ( !(pcre_data->pe->flags & PCRE_EXTRA_MATCH_LIMIT_RECURSION) )
                 pcre_data->pe->flags |= PCRE_EXTRA_MATCH_LIMIT_RECURSION;
 
             pcre_data->pe->match_limit_recursion =
-                SnortConfig::get_pcre_match_limit_recursion();
+                sc->get_pcre_match_limit_recursion();
         }
     }
     else
     {
         if (!(pcre_data->options & SNORT_OVERRIDE_MATCH_LIMIT) &&
-            ((SnortConfig::get_pcre_match_limit() != 0) ||
-             (SnortConfig::get_pcre_match_limit_recursion() != 0)))
+            ((sc->get_pcre_match_limit() != 0) ||
+             (sc->get_pcre_match_limit_recursion() != 0)))
         {
             pcre_data->pe = (pcre_extra*)snort_calloc(sizeof(pcre_extra));
             pcre_data->free_pe = true;
 
-            if (SnortConfig::get_pcre_match_limit() != 0)
+            if (sc->get_pcre_match_limit() != 0)
             {
                 pcre_data->pe->flags |= PCRE_EXTRA_MATCH_LIMIT;
-                pcre_data->pe->match_limit = SnortConfig::get_pcre_match_limit();
+                pcre_data->pe->match_limit = sc->get_pcre_match_limit();
             }
 
-            if (SnortConfig::get_pcre_match_limit_recursion() != 0)
+            if (sc->get_pcre_match_limit_recursion() != 0)
             {
                 pcre_data->pe->flags |= PCRE_EXTRA_MATCH_LIMIT_RECURSION;
                 pcre_data->pe->match_limit_recursion =
-                    SnortConfig::get_pcre_match_limit_recursion();
+                    sc->get_pcre_match_limit_recursion();
             }
         }
     }
@@ -342,6 +343,7 @@ syntax:
  * found_offset will be set to -1 when the find is unsuccessful OR the routine is inverted
  */
 static bool pcre_search(
+    Packet* p,
     const PcreData* pcre_data,
     const uint8_t* buf,
     unsigned len,
@@ -352,7 +354,7 @@ static bool pcre_search(
 
     found_offset = -1;
 
-    std::vector<void *> ss = SnortConfig::get_conf()->state[get_instance_id()];
+    std::vector<void *> ss = p->context->conf->state[get_instance_id()];
     assert(ss[scratch_index]);
 
     int result = pcre_exec(
@@ -363,7 +365,7 @@ static bool pcre_search(
         start_offset,   /* start at offset 0 in the subject */
         0,              /* options(handled at compile time */
         (int*)ss[scratch_index], /* vector for substring information */
-        SnortConfig::get_conf()->pcre_ovector_size); /* number of elements in the vector */
+        p->context->conf->pcre_ovector_size); /* number of elements in the vector */
 
     if (result >= 0)
     {
@@ -547,12 +549,12 @@ bool PcreOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-IpsOption::EvalStatus PcreOption::eval(Cursor& c, Packet*)
+IpsOption::EvalStatus PcreOption::eval(Cursor& c, Packet* p)
 {
     RuleProfile profile(pcrePerfStats);
 
     // short circuit this for testing pcre performance impact
-    if ( SnortConfig::no_pcre() )
+    if ( p->context->conf->no_pcre() )
         return NO_MATCH;
 
     unsigned pos = c.get_delta();
@@ -566,7 +568,7 @@ IpsOption::EvalStatus PcreOption::eval(Cursor& c, Packet*)
 
     int found_offset = -1; // where is the ending location of the pattern
 
-    if ( pcre_search(config, c.buffer()+adj, c.size()-adj, pos, found_offset) )
+    if ( pcre_search(p, config, c.buffer()+adj, c.size()-adj, pos, found_offset) )
     {
         if ( found_offset > 0 )
         {
@@ -678,8 +680,8 @@ private:
     Module* mod_regex = nullptr;
     std::string re;
 
-    static bool scratch_setup(SnortConfig* sc);
-    static void scratch_cleanup(SnortConfig* sc);
+    static bool scratch_setup(SnortConfig*);
+    static void scratch_cleanup(SnortConfig*);
 };
 
 PcreData* PcreModule::get_data()

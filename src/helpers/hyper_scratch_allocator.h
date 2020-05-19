@@ -54,7 +54,7 @@ private:
     hs_scratch_t** get_addr(SnortConfig* sc, unsigned idx)
     { return (hs_scratch_t**)&sc->state[idx][scratch_id]; }
 
-    hs_scratch_t* get(SnortConfig* sc, unsigned idx)
+    hs_scratch_t* get(const SnortConfig* sc, unsigned idx)
     { return (hs_scratch_t*)sc->state[idx][scratch_id]; }
 
     void set(SnortConfig* sc, unsigned idx, void* pv)

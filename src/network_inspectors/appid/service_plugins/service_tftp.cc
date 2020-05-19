@@ -25,6 +25,7 @@
 
 #include "service_tftp.h"
 
+#include "detection/ips_context.h"
 #include "protocols/packet.h"
 
 #include "app_info_table.h"
@@ -184,7 +185,7 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto bail;
 
         if(tftp_snort_protocol_id == UNKNOWN_PROTOCOL_ID)
-            tftp_snort_protocol_id = SnortConfig::get_conf()->proto_ref->find("tftp");
+            tftp_snort_protocol_id = args.pkt->context->conf->proto_ref->find("tftp");
 
         tmp_td = (ServiceTFTPData*)snort_calloc(sizeof(ServiceTFTPData));
         tmp_td->state = TFTP_STATE_TRANSFER;

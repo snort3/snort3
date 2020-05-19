@@ -208,7 +208,7 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-static Logger* talos_ctor(SnortConfig*, Module* mod)
+static Logger* talos_ctor(Module* mod)
 { return new TalosLogger((TalosModule*)mod); }
 
 static void talos_dtor(Logger* p)

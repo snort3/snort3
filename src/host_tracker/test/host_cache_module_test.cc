@@ -47,9 +47,15 @@ static char logged_message[LOG_MAX+1];
 
 namespace snort
 {
-SnortConfig* SnortConfig::get_conf() { return nullptr; }
-char* snort_strdup(const char* s) { return strdup(s); }
-Module* ModuleManager::get_module(const char*) { return nullptr; }
+const SnortConfig* SnortConfig::get_conf()
+{ return nullptr; }
+
+char* snort_strdup(const char* s)
+{ return strdup(s); }
+
+Module* ModuleManager::get_module(const char*)
+{ return nullptr; }
+
 void LogMessage(const char* format,...)
 {
     va_list args;

@@ -97,7 +97,7 @@ public:
     ~AppIdInspector() override = default;
     void eval(Packet*) override { }
     bool configure(snort::SnortConfig*) override { return true; }
-    void show(snort::SnortConfig*) override { }
+    void show(const SnortConfig*) const override { }
     void tinit() override { }
     void tterm() override { }
 };

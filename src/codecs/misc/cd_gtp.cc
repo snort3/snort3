@@ -174,7 +174,7 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& dd)
         return false;
     }
 
-    if ( SnortConfig::tunnel_bypass_enabled(TUNNEL_GTP) )
+    if ( codec.conf->tunnel_bypass_enabled(TUNNEL_GTP) )
         codec.tunnel_bypass = true;
 
     codec.lyr_len = len;

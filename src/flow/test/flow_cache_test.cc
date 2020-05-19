@@ -71,13 +71,13 @@ void Flow::init(PktType) { }
 void Flow::term() { }
 void Flow::reset(bool) { }
 void Flow::free_flow_data() { }
-void set_network_policy(SnortConfig*, unsigned) { }
+void set_network_policy(const SnortConfig*, unsigned) { }
 void DataBus::publish(const char*, const uint8_t*, unsigned, Flow*) { }
 void DataBus::publish(const char*, Packet*, Flow*) { }
-SnortConfig* SnortConfig::get_conf() { return nullptr; }
+const SnortConfig* SnortConfig::get_conf() { return nullptr; }
 void Flow::set_direction(Packet*) { }
-void set_inspection_policy(SnortConfig*, unsigned) { }
-void set_ips_policy(SnortConfig*, unsigned) { }
+void set_inspection_policy(const SnortConfig*, unsigned) { }
+void set_ips_policy(const SnortConfig*, unsigned) { }
 void Flow::set_mpls_layer_per_dir(Packet*) { }
 void DetectionEngine::disable_all(Packet*) { }
 void Stream::drop_traffic(const Packet*, char) { }

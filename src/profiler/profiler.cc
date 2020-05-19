@@ -117,7 +117,7 @@ void Profiler::show_stats()
 
     s_profiler_nodes.accumulate_flex();
 
-    const auto* config = SnortConfig::get_profiler();
+    const auto* config = SnortConfig::get_conf()->get_profiler();
     assert(config);
 
     show_time_profiler_stats(s_profiler_nodes, config->time);

@@ -60,7 +60,7 @@ bool Ipv6DSTOptsCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         return false;
     }
 
-    if ( SnortConfig::get_conf()->hit_ip6_maxopts(codec.ip6_extension_count) )
+    if ( codec.conf->hit_ip6_maxopts(codec.ip6_extension_count) )
         codec_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
 
     if (dsthdr->ip6dest_nxt == IpProtocol::ROUTING)
