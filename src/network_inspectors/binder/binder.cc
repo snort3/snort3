@@ -953,15 +953,12 @@ void Binder::show(const SnortConfig*) const
     if ( !bindings.size() )
         return;
 
-    for (auto& b : bindings)
+    for (const auto& b : bindings)
     {
-        auto when = b->when;
-        auto use = b->use;
-
         std::call_once(once, []{ ConfigLogger::log_option("bindings"); });
 
-        auto bind_when = "{ when = " + to_string(when) + ",";
-        auto bind_use = "use = " + to_string(use) + " }";
+        auto bind_when = "{ when = " + to_string(b->when) + ",";
+        auto bind_use = "use = " + to_string(b->use) + " }";
         ConfigLogger::log_list("", bind_when.c_str(), "   ");
         ConfigLogger::log_list("", bind_use.c_str(), "   ", true);
     }

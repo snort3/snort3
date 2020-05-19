@@ -39,7 +39,7 @@ struct RnaLoggerEvent : public Event
     uint16_t subtype;
     const RnaTracker* ht;
     const uint8_t* mac;
-    const struct in6_addr* ip;
+    const struct in6_addr* ip = nullptr;
     void* cond_var = nullptr;
 };
 

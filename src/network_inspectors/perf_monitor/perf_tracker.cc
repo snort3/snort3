@@ -75,7 +75,9 @@ PerfTracker::PerfTracker(PerfConfig* config, const char* tracker_name)
 #ifdef UNIT_TEST
         case PerfFormat::MOCK: formatter = new MockFormatter(tracker_name); break;
 #endif
-        default: break;
+        default:
+            FatalError("Perfmonitor: Can't initialize output format\n");
+            break;
     }
 
     if ( config->output == PerfOutput::TO_FILE )

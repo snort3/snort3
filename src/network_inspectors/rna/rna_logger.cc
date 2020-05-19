@@ -50,8 +50,6 @@ bool RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker
     RnaLoggerEvent rle(type, subtype, ht, src_mac);
     if ( src_ip and (!IN6_IS_ADDR_V4MAPPED(src_ip) or src_ip->s6_addr32[3]) )
         rle.ip = src_ip;
-    else
-        rle.ip = nullptr;
 
     if (ht)
     {
