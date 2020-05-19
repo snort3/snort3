@@ -45,6 +45,7 @@ void inc_parse_position();
 snort::SnortConfig* ParseSnortConf(const snort::SnortConfig*, const char* fname = nullptr,
     bool is_fatal = true);
 void ParseRules(snort::SnortConfig*);
+void ShowPolicyStats(const snort::SnortConfig*);
 
 char* ProcessFileOption(snort::SnortConfig*, const char*);
 void SetRuleStates(snort::SnortConfig*);

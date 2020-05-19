@@ -294,6 +294,8 @@ void SnortConfig::setup()
         rule_states = nullptr;
     }
 
+    ShowPolicyStats(this);
+
     /* Need to do this after dynamic detection stuff is initialized, too */
     IpsManager::verify(this);
     ModuleManager::load_commands(policy_map->get_shell());

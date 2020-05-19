@@ -32,6 +32,7 @@
 typedef unsigned char uuid_t[16];
 #endif
 
+#include <algorithm>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -266,6 +267,14 @@ public:
 
     void set_cloned(bool state)
     { cloned = state; }
+
+    const Shell* get_shell_by_policy(unsigned id) const
+    {
+        auto it = std::find_if(std::begin(shell_map), std::end(shell_map),
+            [=](auto&& p) { return p.second->ips and p.second->ips->policy_id == id; });
+
+        return (it == std::end(shell_map)) ? nullptr : it->first;
+    }
 
 private:
     std::vector<Shell*> shells;

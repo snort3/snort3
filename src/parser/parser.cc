@@ -457,6 +457,59 @@ void ParseRules(SnortConfig* sc)
     parse_rule_print();
 }
 
+void ShowPolicyStats(const SnortConfig* sc)
+{
+    std::unordered_map<PolicyId, int> stats;
+    std::multimap<PolicyId, std::tuple<const char*, int>> sorted_stats;
+
+    if ( !sc->otn_map )
+        return;
+
+    for (auto node = sc->otn_map->find_first(); node; node = sc->otn_map->find_next())
+    {
+        const OptTreeNode* otn = (const OptTreeNode*)node->data;
+        if ( !otn )
+            continue;
+
+        for (PolicyId id = 0; id < otn->proto_node_num; id++)
+        {
+            const auto rtn = getRtnFromOtn(otn, id);
+
+            if ( rtn and rtn->enabled() )
+                stats[id]++;
+        }
+    }
+
+    for (const auto& s : stats)
+    {
+        auto shell = sc->policy_map->get_shell_by_policy(s.first);
+        if ( !shell )
+            continue;
+
+        auto file = shell->get_file();
+        if ( !file or !file[0] )
+            continue;
+
+        auto policy = sc->policy_map->get_ips_policy(s.first);
+        auto id = policy ? policy->user_policy_id : 0;
+
+        sorted_stats.emplace(id, std::make_tuple(file, s.second));
+    }
+
+    if ( !sorted_stats.size() )
+        return;
+
+    LogLabel("ips policies");
+    LogMessage("%16s%16s%8s\n", "id", "rules enabled", "file");
+
+    for (const auto& s : sorted_stats)
+    {
+        auto file = std::get<0>(s.second);
+        auto rules_count = std::get<1>(s.second);
+        LogMessage("%16u%16d%4s%s\n", s.first, rules_count, " ", file);
+    }
+}
+
 /****************************************************************************
  *
  * Function: CreateRuleType
