@@ -113,7 +113,7 @@ struct PHInstance
     ~PHInstance();
 
     static bool comp(PHInstance* a, PHInstance* b)
-    { return ( a->name < b->name ); }
+    { return ( a->pp_class.api.type < b->pp_class.api.type ); }
 
     void set_name(const char* s)
     { name = s; }
@@ -1004,11 +1004,7 @@ void InspectorManager::print_config(SnortConfig* sc)
         if ( !(inspection and inspection->framework_policy) )
             continue;
 
-        const std::string label = "Inspection Policy : policy id " +
-            std::to_string(inspection->user_policy_id) + " : " +
-            shell->get_file();
-        LogLabel(label.c_str());
-
+        std::map<const std::string, const PHInstance*> sorted_ilist;
         for ( const auto* p : inspection->framework_policy->ilist )
         {
             std::string inspector_name(p->pp_class.api.base.name);
@@ -1016,8 +1012,18 @@ void InspectorManager::print_config(SnortConfig* sc)
                 inspector_name += " (" + p->name + "):";
             else
                 inspector_name += ":";
-            LogLabel(inspector_name.c_str());
-            p->handler->show(sc);
+            sorted_ilist.emplace(inspector_name, p);
+        }
+
+        const std::string label = "Inspection Policy : policy id " +
+            std::to_string(inspection->user_policy_id) + " : " +
+            shell->get_file();
+        LogLabel(label.c_str());
+
+        for ( const auto& p : sorted_ilist )
+        {
+            LogLabel(p.first.c_str());
+            p.second->handler->show(sc);
         }
     }
 }
