@@ -62,7 +62,7 @@ TEST_GROUP(appid_detector_tests)
     void setup() override
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
-        mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
+        mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492, dummy_appid_inspector);
         mock_session->get_http_session();
         flow = new Flow;
         flow->set_flow_data(mock_session);

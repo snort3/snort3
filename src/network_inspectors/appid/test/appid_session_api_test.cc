@@ -57,7 +57,7 @@ TEST_GROUP(appid_session_api)
     void setup() override
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
-        mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
+        mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492, dummy_appid_inspector);
         appid_session_api = new AppIdSessionApi(mock_session);
     }
 

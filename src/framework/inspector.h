@@ -104,7 +104,7 @@ public:
     void set_service(SnortProtocolId snort_protocol_id_param)
     { snort_protocol_id = snort_protocol_id_param; }
 
-    SnortProtocolId get_service() { return snort_protocol_id; }
+    SnortProtocolId get_service() const { return snort_protocol_id; }
 
     // for well known buffers
     // well known buffers may be included among generic below,
@@ -132,7 +132,7 @@ public:
     const InspectApi* get_api()
     { return api; }
 
-    const char* get_name();
+    const char* get_name() const;
 
     virtual bool is_control_channel() const
     { return false; }
@@ -197,7 +197,7 @@ struct InspectApi
     InspectFunc reset;     // clear stats
 };
 
-inline const char* Inspector::get_name()
+inline const char* Inspector::get_name() const
 { return api->base.name; }
 }
 

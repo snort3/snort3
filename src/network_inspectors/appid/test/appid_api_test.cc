@@ -46,12 +46,21 @@
 
 using namespace snort;
 
+static SnortProtocolId dummy_http2_protocol_id = 1;
+
 namespace snort
 {
 
-class Inspector* InspectorManager::get_inspector(char const*, bool, const SnortConfig*)
-{ return nullptr; }
+class Inspector* InspectorManager::get_inspector(const char*, bool, const SnortConfig*)
+{ return &dummy_appid_inspector; }
+
 }
+
+class DummyInspector : public snort::Inspector
+{
+public:
+    void eval(Packet*) override {};
+};
 
 void DataBus::publish(const char*, DataEvent& event, Flow*)
 {
@@ -175,8 +184,7 @@ TEST(appid_api, produce_ha_state)
     ip.pton(AF_INET, "192.168.1.222");
     val = appid_api.consume_ha_state(*flow, (uint8_t*)&appHA, 0, IpProtocol::TCP, &ip, 1066);
     CHECK_TRUE(val == sizeof(appHA));
-    // FIXIT-E refactor below code to test AppId consume functionality
-    /*
+
     AppIdSession* session = (AppIdSession*)flow->get_flow_data(AppIdSession::inspector_id);
     CHECK_TRUE(session);
     CHECK_TRUE(session->get_tp_app_id() == appHA.appId[0]);
@@ -184,21 +192,19 @@ TEST(appid_api, produce_ha_state)
     CHECK_TRUE(session->client_inferred_service_id == appHA.appId[2]);
     CHECK_TRUE(session->service.get_port_service_id() == appHA.appId[3]);
     CHECK_TRUE(session->payload.get_id() == appHA.appId[4]);
-    CHECK_TRUE(session->tp_payload_app_id == appHA.appId[5]);
+    CHECK_TRUE(session->get_tp_payload_app_id() == appHA.appId[5]);
     CHECK_TRUE(session->client.get_id() == appHA.appId[6]);
     CHECK_TRUE(session->misc_app_id == appHA.appId[7]);
     CHECK_TRUE(session->service_disco_state == APPID_DISCO_STATE_FINISHED);
     CHECK_TRUE(session->client_disco_state == APPID_DISCO_STATE_FINISHED);
     delete session;
-    */
 
     // test logic when service app is ftp control
     appHA.appId[1] = APP_ID_FTP_CONTROL;
     mock_flow_data= nullptr;
     val = appid_api.consume_ha_state(*flow, (uint8_t*)&appHA, 0, IpProtocol::TCP, &ip, 1066);
     CHECK_TRUE(val == sizeof(appHA));
-    // FIXIT-E refactor below code to test AppId consume functionality
-    /*
+
     session = (AppIdSession*)flow->get_flow_data(AppIdSession::inspector_id);
     CHECK_TRUE(session);
     uint64_t flags = session->get_session_flags(APPID_SESSION_CLIENT_DETECTED |
@@ -209,7 +215,6 @@ TEST(appid_api, produce_ha_state)
     CHECK_TRUE(session->service_disco_state == APPID_DISCO_STATE_STATEFUL);
     CHECK_TRUE(session->client_disco_state == APPID_DISCO_STATE_FINISHED);
     delete session;
-    */
 }
 
 TEST(appid_api, ssl_app_group_id_lookup)
@@ -283,7 +288,7 @@ TEST(appid_api, create_appid_session_api)
     appid_session_api = appid_api.create_appid_session_api(*flow);
     CHECK_FALSE(appid_session_api);
 
-    AppIdSession ignore_asd(IpProtocol::TCP, nullptr, 1492, appid_inspector);
+    AppIdSession ignore_asd(IpProtocol::TCP, nullptr, 1492, dummy_appid_inspector);
     ignore_asd.common.flow_type = APPID_FLOW_TYPE_IGNORE;
     flow->set_flow_data(&ignore_asd);
     appid_session_api = appid_api.create_appid_session_api(*flow);
@@ -293,10 +298,21 @@ TEST(appid_api, create_appid_session_api)
     flow = old_flow;
 }
 
+TEST(appid_api, is_inspection_needed)
+{
+    DummyInspector inspector;
+    inspector.set_service(dummy_http2_protocol_id);
+    dummy_appid_inspector.get_ctxt().config.snortId_for_http2 = dummy_http2_protocol_id;
+    CHECK_TRUE(appid_api.is_inspection_needed(inspector));
+
+    inspector.set_service(dummy_http2_protocol_id + 1);
+    CHECK_FALSE(appid_api.is_inspection_needed(inspector));
+}
+
 int main(int argc, char** argv)
 {
     mock_init_appid_pegs();
-    mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
+    mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492, dummy_appid_inspector);
     int rc = CommandLineTestRunner::RunAllTests(argc, argv);
     mock_cleanup_appid_pegs();
     return rc;

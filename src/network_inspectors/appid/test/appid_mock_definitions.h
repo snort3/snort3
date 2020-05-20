@@ -27,7 +27,6 @@
 #include "service_inspectors/http_inspect/http_msg_header.h"
 #include "utils/stats.h"
 
-class Inspector;
 class ThirdPartyAppIdContext;
 
 ThirdPartyAppIdContext* tp_appid_ctxt = nullptr;

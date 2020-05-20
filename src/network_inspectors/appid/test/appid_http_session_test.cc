@@ -162,7 +162,7 @@ unsigned AppIdSession::inspector_id = 0;
 THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
 
 const SfIp* sfip = nullptr;
-AppIdSession session(IpProtocol::IP, sfip, 0, appid_inspector);
+AppIdSession session(IpProtocol::IP, sfip, 0, dummy_appid_inspector);
 AppIdHttpSession mock_hsession(session, 0);
 
 TEST_GROUP(appid_http_session)

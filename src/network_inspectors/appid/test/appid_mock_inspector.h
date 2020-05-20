@@ -60,7 +60,6 @@ snort::ProfileStats* AppIdModule::get_profile() const { return nullptr; }
 void AppIdModule::set_trace(const Trace*) const { }
 const TraceOption* AppIdModule::get_trace_options() const { return nullptr; }
 
-AppIdInspector::AppIdInspector(AppIdModule& ) { }
 AppIdInspector::~AppIdInspector() { }
 void AppIdInspector::eval(snort::Packet*) { }
 bool AppIdInspector::configure(snort::SnortConfig*) { return true; }
@@ -70,6 +69,10 @@ void AppIdInspector::tterm() { }
 AppIdContext& AppIdInspector::get_ctxt() const { return *ctxt; }
 
 AppIdModule appid_mod;
-AppIdInspector appid_inspector( appid_mod );
+AppIdInspector dummy_appid_inspector( appid_mod );
+AppIdConfig appid_config;
+AppIdContext appid_ctxt(appid_config);
+
+AppIdInspector::AppIdInspector(AppIdModule& ) { ctxt = &appid_ctxt; }
 
 #endif

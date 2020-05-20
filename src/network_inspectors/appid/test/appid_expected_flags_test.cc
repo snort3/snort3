@@ -62,8 +62,8 @@ TEST_GROUP(appid_expected_flags)
     void setup() override
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
-        parent = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
-        expected = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
+        parent = new AppIdSession(IpProtocol::TCP, nullptr, 1492, dummy_appid_inspector);
+        expected = new AppIdSession(IpProtocol::TCP, nullptr, 1492, dummy_appid_inspector);
     }
 
     void teardown() override

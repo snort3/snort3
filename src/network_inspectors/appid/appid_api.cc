@@ -25,6 +25,7 @@
 
 #include "appid_api.h"
 
+#include "framework/inspector.h"
 #include "managers/inspector_manager.h"
 #include "utils/util.h"
 
@@ -308,4 +309,16 @@ AppIdSessionApi* AppIdApi::create_appid_session_api(const Flow& flow)
 void AppIdApi::free_appid_session_api(AppIdSessionApi* api)
 {
     delete api;
+}
+
+bool AppIdApi::is_inspection_needed(const Inspector& inspector) const
+{
+    AppIdInspector* appid_inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME,
+        true);
+
+    if (appid_inspector and
+        (inspector.get_service() == appid_inspector->get_ctxt().config.snortId_for_http2))
+        return true;
+
+    return false;
 }

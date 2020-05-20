@@ -63,6 +63,7 @@ public:
         AppId& client_id, AppId& payload_id, const char* org_unit = nullptr);
     AppIdSessionApi* create_appid_session_api(const Flow& flow);
     void free_appid_session_api(AppIdSessionApi* api);
+    bool is_inspection_needed(const Inspector& g) const;
 };
 
 SO_PUBLIC extern AppIdApi appid_api;

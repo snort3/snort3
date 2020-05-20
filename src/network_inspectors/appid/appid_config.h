@@ -44,10 +44,6 @@
 #define MIN_MAX_PKTS_BEFORE_SERVICE_FAIL 5
 #define MIN_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES 15
 
-extern SnortProtocolId snortId_for_unsynchronized;
-extern SnortProtocolId snortId_for_ftp_data;
-extern SnortProtocolId snortId_for_http2;
-
 class PatternClientDetector;
 class PatternServiceDetector;
 
