@@ -411,7 +411,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.1 (Build 3)
+o"  )~   Version 3.0.1 (Build 4)
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2020 Cisco and/or its affiliates. All rights reserved.
@@ -5614,10 +5614,6 @@ Type: basic
 
 Usage: context
 
-Configuration:
-
-  * int decode.trace.all = 0: enable traces in module { 0:255 }
-
 Rules:
 
   * 116:150 (decode) loopback IP
@@ -5665,23 +5661,6 @@ Configuration:
     instead of pcre for compatible expressions
   * bool detection.enable_address_anomaly_checks = false: enable
     check and alerting of address anomalies
-  * int detection.trace.all = 0: enable detection module trace
-    logging options { 0:255 }
-  * int detection.trace.detect_engine = 0: enable detection engine
-    trace logging { 0:255 }
-  * int detection.trace.rule_eval = 0: enable rule evaluation trace
-    logging { 0:255 }
-  * int detection.trace.buffer = 0: enable buffer trace logging {
-    0:255 }
-  * int detection.trace.rule_vars = 0: enable rule variables trace
-    logging { 0:255 }
-  * int detection.trace.fp_search = 0: enable fast pattern search
-    trace logging { 0:255 }
-  * int detection.trace.pkt_detect = 0: enable packet detection trace
-    logging { 0:255 }
-  * int detection.trace.opt_tree = 0: enable tree option trace
-    logging { 0:255 }
-  * int detection.trace.tag = 0: enable tag trace logging { 0:255 }
 
 Peg counts:
 
@@ -5991,7 +5970,6 @@ Configuration:
   * int latency.rule.max_suspend_time = 30000: set max time for
     suspending a rule (ms, 0 means permanently disable rule) {
     0:max32 }
-  * int latency.trace.all = 0: enable traces in module { 0:255 }
 
 Rules:
 
@@ -6055,8 +6033,6 @@ Configuration:
     | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
   * multi network.checksum_eval = all: checksums to verify { all | ip
     | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
-  * bool network.decode_drops = false: enable dropping of packets by
-    the decoder
   * int network.id = 0: correlate unified2 events with configuration
     { 0:65535 }
   * int network.min_ttl = 1: alert / normalize packets with lower TTL
@@ -6599,7 +6575,6 @@ Configuration:
   * string snort.--x2s: output ASCII string for given byte code (see
     also --x2c)
   * implied snort.--trace: turn on main loop debug trace
-  * int snort.trace.all = 0: enable traces in module { 0:255 }
 
 Commands:
 
@@ -6674,6 +6649,37 @@ Usage: global
 
 Configuration:
 
+  * int trace.modules.detection.all: enable all trace options { 0:255
+    }
+  * int trace.modules.detection.detect_engine: enable detection
+    engine trace logging { 0:255 }
+  * int trace.modules.detection.rule_eval: enable rule evaluation
+    trace logging { 0:255 }
+  * int trace.modules.detection.buffer: enable buffer trace logging {
+    0:255 }
+  * int trace.modules.detection.rule_vars: enable rule variables
+    trace logging { 0:255 }
+  * int trace.modules.detection.fp_search: enable fast pattern search
+    trace logging { 0:255 }
+  * int trace.modules.detection.pkt_detect: enable packet detection
+    trace logging { 0:255 }
+  * int trace.modules.detection.opt_tree: enable tree option trace
+    logging { 0:255 }
+  * int trace.modules.detection.tag: enable tag trace logging { 0:255
+    }
+  * int trace.modules.stream_user.all: enable all trace options {
+    0:255 }
+  * int trace.modules.stream_ip.all: enable all trace options { 0:255
+    }
+  * int trace.modules.stream.all: enable all trace options { 0:255 }
+  * int trace.modules.dce_smb.all: enable all trace options { 0:255 }
+  * int trace.modules.dce_udp.all: enable all trace options { 0:255 }
+  * int trace.modules.latency.all: enable all trace options { 0:255 }
+  * int trace.modules.wizard.all: enable all trace options { 0:255 }
+  * int trace.modules.gtp_inspect.all: enable all trace options {
+    0:255 }
+  * int trace.modules.appid.all: enable all trace options { 0:255 }
+  * int trace.modules.decode.all: enable all trace options { 0:255 }
   * enum trace.output: output method for trace log messages { stdout
     | syslog }
 
@@ -7398,7 +7404,6 @@ Configuration:
     on startup
   * bool appid.log_all_sessions = false: enable logging of all appid
     sessions
-  * int appid.trace.all = 0: enable traces in module { 0:255 }
 
 Commands:
 
@@ -7656,7 +7661,6 @@ Configuration:
     (-1 = disabled, 0 = unlimited) { -1:32767 }
   * string dce_smb.smb_invalid_shares: SMB shares to alert on
   * bool dce_smb.smb_legacy_mode = false: inspect only SMBv1
-  * int dce_smb.trace.all = 0: enable traces in module { 0:255 }
 
 Rules:
 
@@ -7918,7 +7922,6 @@ Configuration:
     defragmentation
   * int dce_udp.max_frag_len = 65535: maximum fragment size for
     defragmentation { 1514:65535 }
-  * int dce_udp.trace.all = 0: enable traces in module { 0:255 }
 
 Rules:
 
@@ -8358,7 +8361,6 @@ Configuration:
   * string gtp_inspect[].infos[].name: information element name
   * int gtp_inspect[].infos[].length = 0: information element type
     code { 0:255 }
-  * int gtp_inspect.trace.all = 0: enable traces in module { 0:255 }
 
 Rules:
 
@@ -9349,6 +9351,7 @@ Configuration:
     !tls, 3 = !ctl and !file { 1:3 }
   * int rt_global.memcap = 2048: cap on amount of memory used (0 is
     disabled) { 0:max53 }
+  * bool rt_global.empty_ips = false: ips policy with no rules
 
 Peg counts:
 
@@ -9748,6 +9751,8 @@ Configuration:
     before pruning { 2:max32 }
   * int stream.pruning_timeout = 30: minimum inactive time before
     being eligible for pruning { 1:max32 }
+  * int stream.held_packet_timeout = 1000: timeout in milliseconds
+    for held packets { 1:max32 }
   * int stream.ip_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * int stream.ip_cache.cap_weight = 0: additional bytes to track per
@@ -9772,7 +9777,6 @@ Configuration:
     before retiring session tracker { 1:max32 }
   * int stream.file_cache.cap_weight = 32: additional bytes to track
     per flow for better estimation against cap { 0:65535 }
-  * int stream.trace.all = 0: enable traces in module { 0:255 }
 
 Rules:
 
@@ -9881,7 +9885,6 @@ Configuration:
     | linux | bsd | bsd_right | last | windows | solaris }
   * int stream_ip.session_timeout = 30: session tracking timeout {
     1:max31 }
-  * int stream_ip.trace.all = 0: enable traces in module { 0:255 }
 
 Rules:
 
@@ -10063,6 +10066,8 @@ Peg counts:
     (sum)
   * stream_tcp.held_packets_passed: number of held packets passed
     (sum)
+  * stream_tcp.held_packet_timeouts: number of held packets that
+    timed out (sum)
   * stream_tcp.cur_packets_held: number of packets currently held
     (now)
   * stream_tcp.max_packets_held: maximum number of packets held
@@ -10070,6 +10075,10 @@ Peg counts:
   * stream_tcp.partial_flushes: number of partial flushes initiated
     (sum)
   * stream_tcp.partial_flush_bytes: partial flush total bytes (sum)
+  * stream_tcp.inspector_fallbacks: count of fallbacks from assigned
+    service inspector (sum)
+  * stream_tcp.partial_fallbacks: count of fallbacks from assigned
+    service stream splitter (sum)
 
 
 9.50. stream_udp
@@ -10113,7 +10122,6 @@ Configuration:
 
   * int stream_user.session_timeout = 30: session tracking timeout {
     1:max31 }
-  * int stream_user.trace.all = 0: enable traces in module { 0:255 }
 
 
 9.52. telnet
@@ -10182,7 +10190,6 @@ Configuration:
     wild cards (*)
   * multi wizard.curses: enable service identification based on
     internal algorithm { dce_smb | dce_udp | dce_tcp }
-  * int wizard.trace.all = 0: enable traces in module { 0:255 }
 
 Peg counts:
 
@@ -14947,7 +14954,6 @@ these libraries see the Getting Started section of the manual.
     library
   * bool appid.tp_appid_stats_enable: enable collection of stats and
     print stats on exit in third party module
-  * int appid.trace.all = 0: enable traces in module { 0:255 }
   * ip4 arp_spoof.hosts[].ip: host ip address
   * mac arp_spoof.hosts[].mac: host mac address
   * int asn1.absolute_offset: absolute offset from the beginning of
@@ -15175,7 +15181,6 @@ these libraries see the Getting Started section of the manual.
   * bool dce_smb.smb_legacy_mode = false: inspect only SMBv1
   * int dce_smb.smb_max_chain = 3: SMB max chain size { 0:255 }
   * int dce_smb.smb_max_compound = 3: SMB max compound size { 0:255 }
-  * int dce_smb.trace.all = 0: enable traces in module { 0:255 }
   * multi dce_smb.valid_smb_versions = all: valid SMB versions { v1 |
     v2 | all }
   * bool dce_tcp.disable_defrag = false: disable DCE/RPC
@@ -15195,8 +15200,6 @@ these libraries see the Getting Started section of the manual.
     per signature per flow
   * int dce_udp.max_frag_len = 65535: maximum fragment size for
     defragmentation { 1514:65535 }
-  * int dce_udp.trace.all = 0: enable traces in module { 0:255 }
-  * int decode.trace.all = 0: enable traces in module { 0:255 }
   * int detection.asn1 = 0: maximum decode nodes { 0:65535 }
   * bool detection.enable_address_anomaly_checks = false: enable
     check and alerting of address anomalies
@@ -15225,23 +15228,6 @@ these libraries see the Getting Started section of the manual.
     overrides when pattern matching (ie ignore /O)
   * bool detection.pcre_to_regex = false: enable the use of regex
     instead of pcre for compatible expressions
-  * int detection.trace.all = 0: enable detection module trace
-    logging options { 0:255 }
-  * int detection.trace.buffer = 0: enable buffer trace logging {
-    0:255 }
-  * int detection.trace.detect_engine = 0: enable detection engine
-    trace logging { 0:255 }
-  * int detection.trace.fp_search = 0: enable fast pattern search
-    trace logging { 0:255 }
-  * int detection.trace.opt_tree = 0: enable tree option trace
-    logging { 0:255 }
-  * int detection.trace.pkt_detect = 0: enable packet detection trace
-    logging { 0:255 }
-  * int detection.trace.rule_eval = 0: enable rule evaluation trace
-    logging { 0:255 }
-  * int detection.trace.rule_vars = 0: enable rule variables trace
-    logging { 0:255 }
-  * int detection.trace.tag = 0: enable tag trace logging { 0:255 }
   * bool dnp3.check_crc = false: validate checksums in DNP3 link
     layer frames
   * string dnp3_func.~: match DNP3 function code or name
@@ -15446,7 +15432,6 @@ these libraries see the Getting Started section of the manual.
   * string gtp_inspect[].messages[].name: message name
   * int gtp_inspect[].messages[].type = 0: message type code { 0:255
     }
-  * int gtp_inspect.trace.all = 0: enable traces in module { 0:255 }
   * int gtp_inspect[].version = 2: GTP version { 0:2 }
   * string gtp_type.~: list of types to match
   * int gtp_version.~: version to match { 0:2 }
@@ -15707,7 +15692,6 @@ these libraries see the Getting Started section of the manual.
     rules
   * int latency.rule.suspend_threshold = 5: set threshold for number
     of timeouts before suspending a rule { 1:max32 }
-  * int latency.trace.all = 0: enable traces in module { 0:255 }
   * bool log_codecs.file = false: output to log_codecs.txt instead of
     stdout
   * bool log_codecs.msg = false: include alert msg
@@ -15751,8 +15735,6 @@ these libraries see the Getting Started section of the manual.
     | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
   * multi network.checksum_eval = all: checksums to verify { all | ip
     | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
-  * bool network.decode_drops = false: enable dropping of packets by
-    the decoder
   * int network.id = 0: correlate unified2 events with configuration
     { 0:65535 }
   * int network.layers = 40: the maximum number of protocols that
@@ -16104,6 +16086,7 @@ these libraries see the Getting Started section of the manual.
     !tls, 3 = !ctl and !file { 1:3 }
   * int rt_global.downshift_packet = 0: attempt downshift at this
     packet on flow (0 is disabled) { 0:max32 }
+  * bool rt_global.empty_ips = false: ips policy with no rules
   * int rt_global.memcap = 2048: cap on amount of memory used (0 is
     disabled) { 0:max53 }
   * bool rt_packet.retry_all = false: request retry for all non-retry
@@ -16421,7 +16404,6 @@ these libraries see the Getting Started section of the manual.
     talos)
   * string snort.-t: <dir> chroots process to <dir> after
     initialization
-  * int snort.trace.all = 0: enable traces in module { 0:255 }
   * implied snort.--trace: turn on main loop debug trace
   * implied snort.--treat-drop-as-alert: converts drop, block, and
     reset rules into alert rules when loaded
@@ -16516,6 +16498,8 @@ these libraries see the Getting Started section of the manual.
   * int stream.file_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * bool stream_file.upload = false: indicate file transfer direction
+  * int stream.held_packet_timeout = 1000: timeout in milliseconds
+    for held packets { 1:max32 }
   * int stream.icmp_cache.cap_weight = 0: additional bytes to track
     per flow for better estimation against cap { 0:65535 }
   * int stream.icmp_cache.idle_timeout = 180: maximum inactive time
@@ -16539,7 +16523,6 @@ these libraries see the Getting Started section of the manual.
     | linux | bsd | bsd_right | last | windows | solaris }
   * int stream_ip.session_timeout = 30: session tracking timeout {
     1:max31 }
-  * int stream_ip.trace.all = 0: enable traces in module { 0:255 }
   * int stream.max_flows = 476288: maximum simultaneous flows tracked
     before pruning { 2:max32 }
   * int stream.pruning_timeout = 30: minimum inactive time before
@@ -16591,7 +16574,6 @@ these libraries see the Getting Started section of the manual.
   * int stream_tcp.small_segments.maximum_size = 0: minimum bytes for
     a TCP segment not to be considered small (129:12) { 0:2048 }
   * bool stream_tcp.track_only = false: disable reassembly if true
-  * int stream.trace.all = 0: enable traces in module { 0:255 }
   * int stream.udp_cache.cap_weight = 0: additional bytes to track
     per flow for better estimation against cap { 0:65535 }
   * int stream.udp_cache.idle_timeout = 180: maximum inactive time
@@ -16604,7 +16586,6 @@ these libraries see the Getting Started section of the manual.
     before retiring session tracker { 1:max32 }
   * int stream_user.session_timeout = 30: session tracking timeout {
     1:max31 }
-  * int stream_user.trace.all = 0: enable traces in module { 0:255 }
   * int suppress[].gid = 0: rule generator ID { 0:max32 }
   * string suppress[].ip: restrict suppression to these addresses
     according to track
@@ -16628,6 +16609,37 @@ these libraries see the Getting Started section of the manual.
   * bool telnet.encrypted_traffic = false: check for encrypted Telnet
   * bool telnet.normalize = false: eliminate escape sequences
   * interval tos.~range: check if IP TOS is in given range { 0:255 }
+  * int trace.modules.appid.all: enable all trace options { 0:255 }
+  * int trace.modules.dce_smb.all: enable all trace options { 0:255 }
+  * int trace.modules.dce_udp.all: enable all trace options { 0:255 }
+  * int trace.modules.decode.all: enable all trace options { 0:255 }
+  * int trace.modules.detection.all: enable all trace options { 0:255
+    }
+  * int trace.modules.detection.buffer: enable buffer trace logging {
+    0:255 }
+  * int trace.modules.detection.detect_engine: enable detection
+    engine trace logging { 0:255 }
+  * int trace.modules.detection.fp_search: enable fast pattern search
+    trace logging { 0:255 }
+  * int trace.modules.detection.opt_tree: enable tree option trace
+    logging { 0:255 }
+  * int trace.modules.detection.pkt_detect: enable packet detection
+    trace logging { 0:255 }
+  * int trace.modules.detection.rule_eval: enable rule evaluation
+    trace logging { 0:255 }
+  * int trace.modules.detection.rule_vars: enable rule variables
+    trace logging { 0:255 }
+  * int trace.modules.detection.tag: enable tag trace logging { 0:255
+    }
+  * int trace.modules.gtp_inspect.all: enable all trace options {
+    0:255 }
+  * int trace.modules.latency.all: enable all trace options { 0:255 }
+  * int trace.modules.stream.all: enable all trace options { 0:255 }
+  * int trace.modules.stream_ip.all: enable all trace options { 0:255
+    }
+  * int trace.modules.stream_user.all: enable all trace options {
+    0:255 }
+  * int trace.modules.wizard.all: enable all trace options { 0:255 }
   * enum trace.output: output method for trace log messages { stdout
     | syslog }
   * interval ttl.~range: check if IP TTL is in the given range {
@@ -16665,7 +16677,6 @@ these libraries see the Getting Started section of the manual.
     wild cards (*)
   * string wizard.spells[].to_server[].spell: sequence of data with
     wild cards (*)
-  * int wizard.trace.all = 0: enable traces in module { 0:255 }
   * interval wscale.~range: check if TCP window scale is in given
     range { 0:65535 }
 
@@ -17492,9 +17503,13 @@ these libraries see the Getting Started section of the manual.
     (sum)
   * stream_tcp.held_packets_passed: number of held packets passed
     (sum)
+  * stream_tcp.held_packet_timeouts: number of held packets that
+    timed out (sum)
   * stream_tcp.ignored: tcp packets ignored (sum)
   * stream_tcp.initializing: number of sessions currently
     initializing (now)
+  * stream_tcp.inspector_fallbacks: count of fallbacks from assigned
+    service inspector (sum)
   * stream_tcp.instantiated: new sessions instantiated (sum)
   * stream_tcp.internal_events: 135:X events generated (sum)
   * stream_tcp.max: max tcp sessions (max)
@@ -17503,6 +17518,8 @@ these libraries see the Getting Started section of the manual.
   * stream_tcp.memory: current memory in use (now)
   * stream_tcp.overlaps: overlapping segments queued (sum)
   * stream_tcp.packets_held: number of packets held (sum)
+  * stream_tcp.partial_fallbacks: count of fallbacks from assigned
+    service stream splitter (sum)
   * stream_tcp.partial_flush_bytes: partial flush total bytes (sum)
   * stream_tcp.partial_flushes: number of partial flushes initiated
     (sum)

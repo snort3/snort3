@@ -1,3 +1,42 @@
+2020/05/20 - 3.0.1 build 4
+
+-- appid: Do not allocate DNS session for non-DNS flows and update memory tracker for HTTP sessions
+-- appid: Get inspector for the current snort config during reload
+-- binder: print configured bindings in show() method
+-- build: fix cppcheck warnings and typos
+-- coverity: fixed issues discovered by Coverity tool
+-- daq: Configure DAQ instances with total instances and instance IDs
+-- dce_rpc: code style cleanups
+-- dce_rpc: generate alert when dce splitter aborts due to invalid fragment length
+-- flow: If a retry packet does not belong to a flow, block it.
+-- ftp_telnet: fix FTP race condition
+-- http2_inspect: change partial flush handling
+-- log: do not truncate config option names in ConfigLogger
+-- loggers: when logging alert only use inspector buffers and name when the inspector's paf
+   splitter is assigned for the direction of the alert"
+-- main: Fixing some issues reported by Coverity
+-- managers: print alphabetically sorted verbose inspector config output within an inspection
+   policy
+-- mpse: constify snort config args
+-- network_inspectors: Fixing a few minor issues reported by Coverity
+-- parser: print enabled rules for each ips policy
+-- search_tool: refactor initialization
+-- snort_config: constify Inspector::show and remove unnecessary logger args
+-- snort_config: make const for packet threads
+-- snort_config: minimize thread local access to snort_config
+-- snort_config: pseudo packet initialization
+-- snort_config: refactor access methods
+-- snort_config: use provided conf
+-- stream: add a configurable timeout for held packets
+-- stream: move held packet timeout to Stream and support changing it on reload
+-- stream_tcp: call splitter->finish() before reassemble() when flushing when PAF aborts due to gap
+   in queued data
+-- stream_tcp: change the DAQ verdict from drop to blacklist for held packets that timed out
+-- stream_tcp: clear gadget from Flow object once fallback has happened in both directions
+-- stream_tcp: only clear gadget after both splitters have aborted
+-- stream_tcp: when paf aborts due to gap in data set splitter state to ABORT
+-- trace: move module trace configuration into the trace module.
+
 2020/05/06 - 3.0.1 build 3
 
 -- appid: Do not process retry packets but continue processing future packets in AppId

@@ -782,7 +782,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.1 (Build 3)
+o"  )~   Version 3.0.1 (Build 4)
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2020 Cisco and/or its affiliates. All rights reserved.
@@ -7412,14 +7412,6 @@ string <strong><code>daq.modules[].variables[].variable</code></strong>: DAQ mod
 <div class="paragraph"><p>What: general decoder rules</p></div>
 <div class="paragraph"><p>Type: basic</p></div>
 <div class="paragraph"><p>Usage: context</p></div>
-<div class="paragraph"><p>Configuration:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-int <strong>decode.trace.all</strong> = 0: enable traces in module { 0:255 }
-</p>
-</li>
-</ul></div>
 <div class="paragraph"><p>Rules:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -7529,51 +7521,6 @@ bool <strong>detection.pcre_to_regex</strong> = false: enable the use of regex i
 <li>
 <p>
 bool <strong>detection.enable_address_anomaly_checks</strong> = false: enable check and alerting of address anomalies
-</p>
-</li>
-<li>
-<p>
-int <strong>detection.trace.all</strong> = 0: enable detection module trace logging options { 0:255 }
-</p>
-</li>
-<li>
-<p>
-int <strong>detection.trace.detect_engine</strong> = 0: enable detection engine trace logging { 0:255 }
-</p>
-</li>
-<li>
-<p>
-int <strong>detection.trace.rule_eval</strong> = 0: enable rule evaluation trace logging { 0:255 }
-</p>
-</li>
-<li>
-<p>
-int <strong>detection.trace.buffer</strong> = 0: enable buffer trace logging { 0:255 }
-</p>
-</li>
-<li>
-<p>
-int <strong>detection.trace.rule_vars</strong> = 0: enable rule variables trace logging { 0:255 }
-</p>
-</li>
-<li>
-<p>
-int <strong>detection.trace.fp_search</strong> = 0: enable fast pattern search trace logging { 0:255 }
-</p>
-</li>
-<li>
-<p>
-int <strong>detection.trace.pkt_detect</strong> = 0: enable packet detection trace logging { 0:255 }
-</p>
-</li>
-<li>
-<p>
-int <strong>detection.trace.opt_tree</strong> = 0: enable tree option trace logging { 0:255 }
-</p>
-</li>
-<li>
-<p>
-int <strong>detection.trace.tag</strong> = 0: enable tag trace logging { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -8170,11 +8117,6 @@ int <strong>latency.rule.suspend_threshold</strong> = 5: set threshold for numbe
 int <strong>latency.rule.max_suspend_time</strong> = 30000: set max time for suspending a rule (ms, 0 means permanently disable rule) { 0:max32 }
 </p>
 </li>
-<li>
-<p>
-int <strong>latency.trace.all</strong> = 0: enable traces in module { 0:255 }
-</p>
-</li>
 </ul></div>
 <div class="paragraph"><p>Rules:</p></div>
 <div class="ulist"><ul>
@@ -8310,11 +8252,6 @@ multi <strong>network.checksum_drop</strong> = none: drop if checksum is bad { a
 <li>
 <p>
 multi <strong>network.checksum_eval</strong> = all: checksums to verify { all | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
-</p>
-</li>
-<li>
-<p>
-bool <strong>network.decode_drops</strong> = false: enable dropping of packets by the decoder
 </p>
 </li>
 <li>
@@ -9503,11 +9440,6 @@ string <strong>snort.--x2s</strong>: output ASCII string for given byte code (se
 implied <strong>snort.--trace</strong>: turn on main loop debug trace
 </p>
 </li>
-<li>
-<p>
-int <strong>snort.trace.all</strong> = 0: enable traces in module { 0:255 }
-</p>
-</li>
 </ul></div>
 <div class="paragraph"><p>Commands:</p></div>
 <div class="ulist"><ul>
@@ -9672,6 +9604,101 @@ string <strong><code>suppress[].ip</code></strong>: restrict suppression to thes
 <div class="paragraph"><p>Usage: global</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
+<li>
+<p>
+int <strong>trace.modules.detection.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.detection.detect_engine</strong>: enable detection engine trace logging { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.detection.rule_eval</strong>: enable rule evaluation trace logging { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.detection.buffer</strong>: enable buffer trace logging { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.detection.rule_vars</strong>: enable rule variables trace logging { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.detection.fp_search</strong>: enable fast pattern search trace logging { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.detection.pkt_detect</strong>: enable packet detection trace logging { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.detection.opt_tree</strong>: enable tree option trace logging { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.detection.tag</strong>: enable tag trace logging { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.stream_user.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.stream_ip.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.stream.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.dce_smb.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.dce_udp.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.latency.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.wizard.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.gtp_inspect.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.appid.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.decode.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
 <li>
 <p>
 enum <strong>trace.output</strong>: output method for trace log messages { stdout | syslog }
@@ -11004,11 +11031,6 @@ bool <strong>appid.tp_appid_config_dump</strong>: print third party configuratio
 bool <strong>appid.log_all_sessions</strong> = false: enable logging of all appid sessions
 </p>
 </li>
-<li>
-<p>
-int <strong>appid.trace.all</strong> = 0: enable traces in module { 0:255 }
-</p>
-</li>
 </ul></div>
 <div class="paragraph"><p>Commands:</p></div>
 <div class="ulist"><ul>
@@ -11521,11 +11543,6 @@ string <strong>dce_smb.smb_invalid_shares</strong>: SMB shares to alert on
 <li>
 <p>
 bool <strong>dce_smb.smb_legacy_mode</strong> = false: inspect only SMBv1
-</p>
-</li>
-<li>
-<p>
-int <strong>dce_smb.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -12241,11 +12258,6 @@ bool <strong>dce_udp.disable_defrag</strong> = false: disable DCE/RPC defragment
 <li>
 <p>
 int <strong>dce_udp.max_frag_len</strong> = 65535: maximum fragment size for defragmentation { 1514:65535 }
-</p>
-</li>
-<li>
-<p>
-int <strong>dce_udp.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -13190,11 +13202,6 @@ string <strong><code>gtp_inspect[].infos[].name</code></strong>: information ele
 <li>
 <p>
 int <strong><code>gtp_inspect[].infos[].length</code></strong> = 0: information element type code { 0:255 }
-</p>
-</li>
-<li>
-<p>
-int <strong>gtp_inspect.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -15901,6 +15908,11 @@ int <strong>rt_global.downshift_mode</strong> = 3: 1 = unconditional, 2 = !ctl a
 int <strong>rt_global.memcap</strong> = 2048: cap on amount of memory used (0 is disabled) { 0:max53 }
 </p>
 </li>
+<li>
+<p>
+bool <strong>rt_global.empty_ips</strong> = false: ips policy with no rules
+</p>
+</li>
 </ul></div>
 <div class="paragraph"><p>Peg counts:</p></div>
 <div class="ulist"><ul>
@@ -16944,6 +16956,11 @@ int <strong>stream.pruning_timeout</strong> = 30: minimum inactive time before b
 </li>
 <li>
 <p>
+int <strong>stream.held_packet_timeout</strong> = 1000: timeout in milliseconds for held packets { 1:max32 }
+</p>
+</li>
+<li>
+<p>
 int <strong>stream.ip_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1:max32 }
 </p>
 </li>
@@ -17000,11 +17017,6 @@ int <strong>stream.file_cache.idle_timeout</strong> = 180: maximum inactive time
 <li>
 <p>
 int <strong>stream.file_cache.cap_weight</strong> = 32: additional bytes to track per flow for better estimation against cap { 0:65535 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -17231,11 +17243,6 @@ enum <strong>stream_ip.policy</strong> = linux: fragment reassembly policy { fir
 <li>
 <p>
 int <strong>stream_ip.session_timeout</strong> = 30: session tracking timeout { 1:max31 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream_ip.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -17836,6 +17843,11 @@ bool <strong>stream_tcp.track_only</strong> = false: disable reassembly if true
 </li>
 <li>
 <p>
+<strong>stream_tcp.held_packet_timeouts</strong>: number of held packets that timed out (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>stream_tcp.cur_packets_held</strong>: number of packets currently held (now)
 </p>
 </li>
@@ -17852,6 +17864,16 @@ bool <strong>stream_tcp.track_only</strong> = false: disable reassembly if true
 <li>
 <p>
 <strong>stream_tcp.partial_flush_bytes</strong>: partial flush total bytes (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream_tcp.inspector_fallbacks</strong>: count of fallbacks from assigned service inspector (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream_tcp.partial_fallbacks</strong>: count of fallbacks from assigned service stream splitter (sum)
 </p>
 </li>
 </ul></div>
@@ -17923,11 +17945,6 @@ int <strong>stream_udp.session_timeout</strong> = 30: session tracking timeout {
 <li>
 <p>
 int <strong>stream_user.session_timeout</strong> = 30: session tracking timeout { 1:max31 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream_user.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -18057,11 +18074,6 @@ string <strong><code>wizard.spells[].to_client[].spell</code></strong>: sequence
 <li>
 <p>
 multi <strong>wizard.curses</strong>: enable service identification based on internal algorithm { dce_smb | dce_udp | dce_tcp }
-</p>
-</li>
-<li>
-<p>
-int <strong>wizard.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -25531,11 +25543,6 @@ bool <strong>appid.tp_appid_stats_enable</strong>: enable collection of stats an
 </li>
 <li>
 <p>
-int <strong>appid.trace.all</strong> = 0: enable traces in module { 0:255 }
-</p>
-</li>
-<li>
-<p>
 ip4 <strong><code>arp_spoof.hosts[].ip</code></strong>: host ip address
 </p>
 </li>
@@ -26261,11 +26268,6 @@ int <strong>dce_smb.smb_max_compound</strong> = 3: SMB max compound size { 0:255
 </li>
 <li>
 <p>
-int <strong>dce_smb.trace.all</strong> = 0: enable traces in module { 0:255 }
-</p>
-</li>
-<li>
-<p>
 multi <strong>dce_smb.valid_smb_versions</strong> = all: valid SMB versions { v1 | v2 | all }
 </p>
 </li>
@@ -26307,16 +26309,6 @@ bool <strong>dce_udp.limit_alerts</strong> = true: limit DCE alert to at most on
 <li>
 <p>
 int <strong>dce_udp.max_frag_len</strong> = 65535: maximum fragment size for defragmentation { 1514:65535 }
-</p>
-</li>
-<li>
-<p>
-int <strong>dce_udp.trace.all</strong> = 0: enable traces in module { 0:255 }
-</p>
-</li>
-<li>
-<p>
-int <strong>decode.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 <li>
@@ -26392,51 +26384,6 @@ bool <strong>detection.pcre_override</strong> = true: enable pcre match limit ov
 <li>
 <p>
 bool <strong>detection.pcre_to_regex</strong> = false: enable the use of regex instead of pcre for compatible expressions
-</p>
-</li>
-<li>
-<p>
-int <strong>detection.trace.all</strong> = 0: enable detection module trace logging options { 0:255 }
-</p>
-</li>
-<li>
-<p>
-int <strong>detection.trace.buffer</strong> = 0: enable buffer trace logging { 0:255 }
-</p>
-</li>
-<li>
-<p>
-int <strong>detection.trace.detect_engine</strong> = 0: enable detection engine trace logging { 0:255 }
-</p>
-</li>
-<li>
-<p>
-int <strong>detection.trace.fp_search</strong> = 0: enable fast pattern search trace logging { 0:255 }
-</p>
-</li>
-<li>
-<p>
-int <strong>detection.trace.opt_tree</strong> = 0: enable tree option trace logging { 0:255 }
-</p>
-</li>
-<li>
-<p>
-int <strong>detection.trace.pkt_detect</strong> = 0: enable packet detection trace logging { 0:255 }
-</p>
-</li>
-<li>
-<p>
-int <strong>detection.trace.rule_eval</strong> = 0: enable rule evaluation trace logging { 0:255 }
-</p>
-</li>
-<li>
-<p>
-int <strong>detection.trace.rule_vars</strong> = 0: enable rule variables trace logging { 0:255 }
-</p>
-</li>
-<li>
-<p>
-int <strong>detection.trace.tag</strong> = 0: enable tag trace logging { 0:255 }
 </p>
 </li>
 <li>
@@ -27062,11 +27009,6 @@ string <strong><code>gtp_inspect[].messages[].name</code></strong>: message name
 <li>
 <p>
 int <strong><code>gtp_inspect[].messages[].type</code></strong> = 0: message type code { 0:255 }
-</p>
-</li>
-<li>
-<p>
-int <strong>gtp_inspect.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 <li>
@@ -27771,11 +27713,6 @@ int <strong>latency.rule.suspend_threshold</strong> = 5: set threshold for numbe
 </li>
 <li>
 <p>
-int <strong>latency.trace.all</strong> = 0: enable traces in module { 0:255 }
-</p>
-</li>
-<li>
-<p>
 bool <strong>log_codecs.file</strong> = false: output to log_codecs.txt instead of stdout
 </p>
 </li>
@@ -27892,11 +27829,6 @@ multi <strong>network.checksum_drop</strong> = none: drop if checksum is bad { a
 <li>
 <p>
 multi <strong>network.checksum_eval</strong> = all: checksums to verify { all | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
-</p>
-</li>
-<li>
-<p>
-bool <strong>network.decode_drops</strong> = false: enable dropping of packets by the decoder
 </p>
 </li>
 <li>
@@ -28921,6 +28853,11 @@ int <strong>rt_global.downshift_packet</strong> = 0: attempt downshift at this p
 </li>
 <li>
 <p>
+bool <strong>rt_global.empty_ips</strong> = false: ips policy with no rules
+</p>
+</li>
+<li>
+<p>
 int <strong>rt_global.memcap</strong> = 2048: cap on amount of memory used (0 is disabled) { 0:max53 }
 </p>
 </li>
@@ -29826,11 +29763,6 @@ string <strong>snort.-t</strong>: &lt;dir&gt; chroots process to &lt;dir&gt; aft
 </li>
 <li>
 <p>
-int <strong>snort.trace.all</strong> = 0: enable traces in module { 0:255 }
-</p>
-</li>
-<li>
-<p>
 implied <strong>snort.--trace</strong>: turn on main loop debug trace
 </p>
 </li>
@@ -30121,6 +30053,11 @@ bool <strong>stream_file.upload</strong> = false: indicate file transfer directi
 </li>
 <li>
 <p>
+int <strong>stream.held_packet_timeout</strong> = 1000: timeout in milliseconds for held packets { 1:max32 }
+</p>
+</li>
+<li>
+<p>
 int <strong>stream.icmp_cache.cap_weight</strong> = 0: additional bytes to track per flow for better estimation against cap { 0:65535 }
 </p>
 </li>
@@ -30177,11 +30114,6 @@ enum <strong>stream_ip.policy</strong> = linux: fragment reassembly policy { fir
 <li>
 <p>
 int <strong>stream_ip.session_timeout</strong> = 30: session tracking timeout { 1:max31 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream_ip.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 <li>
@@ -30311,11 +30243,6 @@ bool <strong>stream_tcp.track_only</strong> = false: disable reassembly if true
 </li>
 <li>
 <p>
-int <strong>stream.trace.all</strong> = 0: enable traces in module { 0:255 }
-</p>
-</li>
-<li>
-<p>
 int <strong>stream.udp_cache.cap_weight</strong> = 0: additional bytes to track per flow for better estimation against cap { 0:65535 }
 </p>
 </li>
@@ -30342,11 +30269,6 @@ int <strong>stream.user_cache.idle_timeout</strong> = 180: maximum inactive time
 <li>
 <p>
 int <strong>stream_user.session_timeout</strong> = 30: session tracking timeout { 1:max31 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream_user.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 <li>
@@ -30437,6 +30359,101 @@ bool <strong>telnet.normalize</strong> = false: eliminate escape sequences
 <li>
 <p>
 interval <strong>tos.~range</strong>: check if IP TOS is in given range { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.appid.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.dce_smb.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.dce_udp.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.decode.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.detection.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.detection.buffer</strong>: enable buffer trace logging { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.detection.detect_engine</strong>: enable detection engine trace logging { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.detection.fp_search</strong>: enable fast pattern search trace logging { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.detection.opt_tree</strong>: enable tree option trace logging { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.detection.pkt_detect</strong>: enable packet detection trace logging { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.detection.rule_eval</strong>: enable rule evaluation trace logging { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.detection.rule_vars</strong>: enable rule variables trace logging { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.detection.tag</strong>: enable tag trace logging { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.gtp_inspect.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.latency.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.stream.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.stream_ip.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.stream_user.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.wizard.all</strong>: enable all trace options { 0:255 }
 </p>
 </li>
 <li>
@@ -30542,11 +30559,6 @@ string <strong><code>wizard.spells[].to_client[].spell</code></strong>: sequence
 <li>
 <p>
 string <strong><code>wizard.spells[].to_server[].spell</code></strong>: sequence of data with wild cards (*)
-</p>
-</li>
-<li>
-<p>
-int <strong>wizard.trace.all</strong> = 0: enable traces in module { 0:255 }
 </p>
 </li>
 <li>
@@ -33561,12 +33573,22 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>stream_tcp.held_packet_timeouts</strong>: number of held packets that timed out (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>stream_tcp.ignored</strong>: tcp packets ignored (sum)
 </p>
 </li>
 <li>
 <p>
 <strong>stream_tcp.initializing</strong>: number of sessions currently initializing (now)
+</p>
+</li>
+<li>
+<p>
+<strong>stream_tcp.inspector_fallbacks</strong>: count of fallbacks from assigned service inspector (sum)
 </p>
 </li>
 <li>
@@ -33602,6 +33624,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>stream_tcp.packets_held</strong>: number of packets held (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream_tcp.partial_fallbacks</strong>: count of fallbacks from assigned service stream splitter (sum)
 </p>
 </li>
 <li>
@@ -39938,7 +39965,7 @@ Adding/removing stream_* inspectors if stream was already configured
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2020-05-06 12:35:40 EDT
+ 2020-05-20 08:20:56 EDT
 </div>
 </div>
 </body>
