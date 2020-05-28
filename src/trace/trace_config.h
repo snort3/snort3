@@ -24,6 +24,7 @@
 
 namespace snort
 {
+struct PacketConstraints;
 class TraceLoggerFactory;
 }
 
@@ -40,6 +41,7 @@ public:
         const std::string& trace_option_name, uint8_t trace_level);
 
     snort::TraceLoggerFactory* logger_factory = nullptr;
+    snort::PacketConstraints* constraints = nullptr;
 
 private:
     bool trace_snort_enabled = false;

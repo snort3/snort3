@@ -111,7 +111,7 @@ static void printInfoElements(GTP_IEData* info_elements, GTPMsg* msg)
             char buf[STD_BUF];
             convertToHex( (char*)buf, sizeof(buf),
                 msg->gtp_header + info_elements[i].shift, info_elements[i].length);
-            debug_logf(gtp_inspect_trace, "Info type: %.3d, content: %s\n", i, buf);
+            debug_logf(gtp_inspect_trace, nullptr, "Info type: %.3d, content: %s\n", i, buf);
         }
     }
 }

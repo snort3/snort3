@@ -70,16 +70,16 @@ static const Command packet_tracer_cmds[] =
 class PacketTracerDebug : public AnalyzerCommand
 {
   public:
-    PacketTracerDebug(PTSessionConstraints* cs);
+    PacketTracerDebug(PacketConstraints* cs);
     bool execute(Analyzer&, void**) override;
     const char *stringify() override { return "PACKET_TRACER_DEBUG"; }
 
   private:
-    PTSessionConstraints constraints = {};
+    PacketConstraints constraints;
     bool enable = false;
 };
 
-PacketTracerDebug::PacketTracerDebug(PTSessionConstraints* cs)
+PacketTracerDebug::PacketTracerDebug(PacketConstraints* cs)
 {
     if (cs)
     {
@@ -122,26 +122,32 @@ static int enable(lua_State* L)
             LogMessage("Invalid destination IP address provided: %s\n", dipstr);
     }
 
-    PTSessionConstraints constraints = {};
+    PacketConstraints constraints = {};
 
     if (proto)
-        constraints.protocol = (IpProtocol)proto;
+    {
+        constraints.ip_proto = (IpProtocol)proto;
+        constraints.set_bits |= PacketConstraints::SetBits::IP_PROTO;
+    }
 
     if (sip.is_set())
     {
-        constraints.sip = sip;
-        constraints.sip_flag = true;
+        constraints.src_ip = sip;
+        constraints.set_bits |= PacketConstraints::SetBits::SRC_IP;
     }
 
     if (dip.is_set())
     {
-        constraints.dip = dip;
-        constraints.dip_flag = true;
+        constraints.dst_ip = dip;
+        constraints.set_bits |= PacketConstraints::SetBits::DST_IP;
     }
 
-    constraints.sport = sport;
-    constraints.dport = dport;
-
+    constraints.src_port = sport;
+    constraints.dst_port = dport;
+    if ( sport )
+        constraints.set_bits |= PacketConstraints::SetBits::SRC_PORT;
+    if ( dport )
+        constraints.set_bits |= PacketConstraints::SetBits::DST_PORT;
     main_broadcast_command(new PacketTracerDebug(&constraints), true);
     return 0;
 }

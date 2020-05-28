@@ -163,7 +163,7 @@ TEST_CASE("debug_log, debug_logf", "[trace]")
     test_trace.set("all", 0);
 
     testing_dump[0] = '\0';
-    debug_log(&test_trace, "my message");
+    debug_log(&test_trace, nullptr, "my message");
     CHECK( testing_dump[0] == '\0' );
 
     test_trace.set("all", 1);
@@ -179,67 +179,67 @@ TEST_CASE("debug_log, debug_logf", "[trace]")
     message[STD_BUF_SIZE] = '\0';
 
     testing_dump[0] = '\0';
-    debug_log(&test_trace, message);
+    debug_log(&test_trace, nullptr, message);
     CHECK( (strlen(testing_dump) == STD_BUF_SIZE - 1) );
 
     testing_dump[0] = '\0';
-    debug_log(3, &test_opt_trace, TEST_TRACE_OPTION3, message);
+    debug_log(3, &test_opt_trace, TEST_TRACE_OPTION3, nullptr, message);
     CHECK( (strlen(testing_dump) == STD_BUF_SIZE - 1) );
 
     testing_dump[0] = '\0';
-    debug_log(6, &test_opt_trace, TEST_TRACE_OPTION3, message);
+    debug_log(6, &test_opt_trace, TEST_TRACE_OPTION3, nullptr, message);
     CHECK( (strlen(testing_dump) == 0) );
 
     testing_dump[0] = '\0';
-    debug_log(&test_trace, "my message"); 
+    debug_log(&test_trace, nullptr, "my message"); 
     CHECK( !strcmp(testing_dump, "test_module:all:1: my message") );
 
     testing_dump[0] = '\0';
-    debug_logf(&test_trace, "%s %s", "my", "message");
+    debug_logf(&test_trace, nullptr, "%s %s", "my", "message");
     CHECK( !strcmp(testing_dump, "test_module:all:1: my message") );
 
     testing_dump[0] = '\0';
-    debug_log(&test_opt_trace, TEST_TRACE_OPTION1, "log option1 message");
+    debug_log(&test_opt_trace, TEST_TRACE_OPTION1, nullptr, "log option1 message");
     CHECK( !strcmp(testing_dump, "test_opt_module:option1:1: log option1 message") );
 
     testing_dump[0] = '\0';
-    debug_logf(&test_opt_trace, TEST_TRACE_OPTION1, "%s %s %s", "log", "option1", "message");
+    debug_logf(&test_opt_trace, TEST_TRACE_OPTION1, nullptr, "%s %s %s", "log", "option1", "message");
     CHECK( !strcmp(testing_dump, "test_opt_module:option1:1: log option1 message") );
 
     testing_dump[0] = '\0';
-    debug_log(3, &test_opt_trace, TEST_TRACE_OPTION2, "log option2 message");
+    debug_log(3, &test_opt_trace, TEST_TRACE_OPTION2, nullptr, "log option2 message");
     CHECK( testing_dump[0] == '\0' );
 
     testing_dump[0] = '\0';
-    debug_log(&test_opt_trace, TEST_TRACE_OPTION2, "log option2 message");
+    debug_log(&test_opt_trace, TEST_TRACE_OPTION2, nullptr, "log option2 message");
     CHECK( !strcmp(testing_dump, "test_opt_module:option2:1: log option2 message") );
 
     testing_dump[0] = '\0';
-    debug_logf(&test_opt_trace, TEST_TRACE_OPTION2, "%s %s %s", "log", "option2", "message");
+    debug_logf(&test_opt_trace, TEST_TRACE_OPTION2, nullptr, "%s %s %s", "log", "option2", "message");
     CHECK( !strcmp(testing_dump, "test_opt_module:option2:1: log option2 message") );
 
     testing_dump[0] = '\0';
-    debug_log(6, &test_opt_trace, TEST_TRACE_OPTION3, "log option3 message");
+    debug_log(6, &test_opt_trace, TEST_TRACE_OPTION3, nullptr, "log option3 message");
     CHECK( testing_dump[0] == '\0' );
 
     testing_dump[0] = '\0';
-    debug_log(3, &test_opt_trace, TEST_TRACE_OPTION3, "log option3 message");
+    debug_log(3, &test_opt_trace, TEST_TRACE_OPTION3, nullptr, "log option3 message");
     CHECK( !strcmp(testing_dump, "test_opt_module:option3:3: log option3 message") );
 
     testing_dump[0] = '\0';
-    debug_logf(3, &test_opt_trace, TEST_TRACE_OPTION3, "%s %s %s", "log", "option3", "message");
+    debug_logf(3, &test_opt_trace, TEST_TRACE_OPTION3, nullptr, "%s %s %s", "log", "option3", "message");
     CHECK( !strcmp(testing_dump, "test_opt_module:option3:3: log option3 message") );
-    
+
     testing_dump[0] = '\0';
-    debug_log(2, &test_opt_trace, TEST_TRACE_OPTION4, "log option4 message");
+    debug_log(2, &test_opt_trace, TEST_TRACE_OPTION4, nullptr, "log option4 message");
     CHECK( !strcmp(testing_dump, "test_opt_module:option4:2: log option4 message") );
 
     testing_dump[0] = '\0';
-    debug_logf(2, &test_opt_trace, TEST_TRACE_OPTION4, "%s %s %s", "log", "option4", "message");
+    debug_logf(2, &test_opt_trace, TEST_TRACE_OPTION4, nullptr, "%s %s %s", "log", "option4", "message");
     CHECK( !strcmp(testing_dump, "test_opt_module:option4:2: log option4 message") );
 
     testing_dump[0] = '\0';
-    debug_log(4, &test_opt_trace, TEST_TRACE_OPTION5, "log option5 message");
+    debug_log(4, &test_opt_trace, TEST_TRACE_OPTION5, nullptr, "log option5 message");
     CHECK( testing_dump[0] == '\0' );
 }
 

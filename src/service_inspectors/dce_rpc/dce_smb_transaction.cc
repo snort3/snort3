@@ -528,7 +528,7 @@ static DCE2_Ret DCE2_SmbUpdateTransRequest(DCE2_SmbSsnData* ssd,
             if (DCE2_SsnIsWindowsPolicy(&ssd->sd)
                 && ssd->cur_rtracker->ftracker->fp_byte_mode)
             {
-                debug_log(dce_smb_trace, "Pipe is in byte mode - TRANS_TRANSACT_NMPIPE won't work\n");
+                debug_log(dce_smb_trace, nullptr, "Pipe is in byte mode - TRANS_TRANSACT_NMPIPE won't work\n");
                 return DCE2_RET__ERROR;
             }
             data_params = DCE2_SMB_TRANS__DATA;
@@ -588,7 +588,7 @@ static DCE2_Ret DCE2_SmbUpdateTransRequest(DCE2_SmbSsnData* ssd,
             && (DCE2_SmbTransactionGetName(nb_ptr, nb_len,
             byte_count, SmbUnicode(smb_hdr)) != DCE2_RET__SUCCESS))
         {
-            debug_log(dce_smb_trace, "Failed to validate pipe name for Samba.\n");
+            debug_log(dce_smb_trace, nullptr, "Failed to validate pipe name for Samba.\n");
             return DCE2_RET__ERROR;
         }
         break;
@@ -1071,7 +1071,7 @@ DCE2_Ret DCE2_SmbTransaction(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
     if (DCE2_ComInfoIsRequest(com_info)
         && !DCE2_SmbIsTransactionComplete(ttracker))
     {
-        debug_log(dce_smb_trace, "Got new transaction request "
+        debug_log(dce_smb_trace, nullptr, "Got new transaction request "
             "that matches an in progress transaction - not inspecting.\n");
         return DCE2_RET__ERROR;
     }
@@ -1080,7 +1080,7 @@ DCE2_Ret DCE2_SmbTransaction(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
     if (DCE2_ComInfoIsRequest(com_info)
         && (DCE2_ComInfoWordCount(com_info) != 16))
     {
-        debug_log(dce_smb_trace, "\\PIPE\\LANMAN request - not inspecting\n");
+        debug_log(dce_smb_trace, nullptr, "\\PIPE\\LANMAN request - not inspecting\n");
         return DCE2_RET__IGNORE;
     }
 
@@ -1192,7 +1192,7 @@ DCE2_Ret DCE2_SmbTransaction2(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
     if (DCE2_ComInfoIsRequest(com_info)
         && !DCE2_SmbIsTransactionComplete(ttracker))
     {
-        debug_log(dce_smb_trace, "Got new transaction request "
+        debug_log(dce_smb_trace, nullptr, "Got new transaction request "
             "that matches an in progress transaction - not inspecting.\n");
         return DCE2_RET__ERROR;
     }
@@ -1450,7 +1450,7 @@ DCE2_Ret DCE2_SmbNtTransact(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
     if (DCE2_ComInfoIsRequest(com_info)
         && !DCE2_SmbIsTransactionComplete(ttracker))
     {
-        debug_log(dce_smb_trace, "Got new transaction request "
+        debug_log(dce_smb_trace, nullptr, "Got new transaction request "
             "that matches an in progress transaction - not inspecting.\n");
         return DCE2_RET__ERROR;
     }

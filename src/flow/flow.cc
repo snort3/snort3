@@ -136,6 +136,7 @@ inline void Flow::clean()
         delete bitop;
         bitop = nullptr;
     }
+    filtering_state.clear();
 }
 
 void Flow::reset(bool do_cleanup)

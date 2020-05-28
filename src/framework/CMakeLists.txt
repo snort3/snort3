@@ -17,6 +17,7 @@ set (FRAMEWORK_INCLUDES
     module.h
     mpse.h
     mpse_batch.h
+    packet_constraints.h
     parameter.h
     range.h
     so_rule.h
@@ -31,6 +32,7 @@ add_library ( framework OBJECT
     data_bus.cc
     inspector.cc
     ips_option.cc
+    packet_constraints.cc
     parameter.cc
     module.cc
     mpse.cc
@@ -70,3 +72,4 @@ add_catch_test( range_test
     SOURCES
         range.cc
 )
+

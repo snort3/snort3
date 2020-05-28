@@ -40,12 +40,12 @@ static void dump_patterns(const char* name, PatternService* pList)
 {
     UNUSED(name);
 
-    debug_logf(appid_trace, "Adding pattern for \"%s\"\n", name);
+    debug_logf(appid_trace, nullptr, "Adding pattern for \"%s\"\n", name);
     for (PatternService* ps = pList; ps; ps = ps->next)
         for (Pattern* pattern = ps->pattern; pattern; pattern = pattern->next)
             if (pattern->data && pattern->length)
             {
-                debug_logf(appid_trace, "\t\t%s, %u\n",pattern->data, pattern->length);
+                debug_logf(appid_trace, nullptr, "\t\t%s, %u\n",pattern->data, pattern->length);
             }
 }
 

@@ -78,16 +78,17 @@ void print_pkt_info(Packet* p, const char* task)
         dst_port = p->ptrs.dp;
     }
 
-    debug_logf(detection_trace, TRACE_RULE_EVAL,"packet %" PRIu64 " %s %s:%u %s:%u (%s)\n",
-        p->context->packet_number, dir, src_addr, src_port, dst_addr, dst_port, task);
+    debug_logf(detection_trace, TRACE_RULE_EVAL, p,
+        "packet %" PRIu64 " %s %s:%u %s:%u (%s)\n", p->context->packet_number,
+        dir, src_addr, src_port, dst_addr, dst_port, task);
 }
 
-void print_pattern(const PatternMatchData* pmd)
+void print_pattern(const PatternMatchData* pmd, Packet* p)
 {
     string hex, txt, opts;
 
     get_pattern_info(pmd, pmd->pattern_buf, pmd->pattern_size, hex, txt, opts);
-    debug_logf(detection_trace, TRACE_RULE_EVAL,
+    debug_logf(detection_trace, TRACE_RULE_EVAL, p,
         "Fast pattern %s[%u] = '%s' |%s| %s\n",
         pm_type_strings[pmd->pm_type],  pmd->pattern_size,
         txt.c_str(), hex.c_str(), opts.c_str());
@@ -100,7 +101,8 @@ void dump_buffer(const uint8_t* buff, unsigned len, Packet* p)
 
     if (len == 0)
     {
-        debug_log(detection_trace, TRACE_BUFFER, "Buffer dump - empty buffer\n");
+        debug_log(detection_trace, TRACE_BUFFER, p,
+            "Buffer dump - empty buffer\n");
         return;
     }
 
@@ -114,13 +116,13 @@ void node_eval_trace(const detection_option_tree_node_t* node, const Cursor& cur
 
     if (node->option_type != RULE_OPTION_TYPE_LEAF_NODE )
     {
-        debug_logf(detection_trace, TRACE_RULE_EVAL,
+        debug_logf(detection_trace, TRACE_RULE_EVAL, p,
             "Evaluating option %s, cursor name %s, cursor position %u\n",
             ((IpsOption*)node->option_data)->get_name(), name, pos);
     }
     else
     {
-        debug_logf(detection_trace, TRACE_RULE_EVAL,
+        debug_logf(detection_trace, TRACE_RULE_EVAL, p,
             "Reached leaf, cursor name %s, cursor position %u\n", name, pos);
     }
 
@@ -148,7 +150,7 @@ void print_pkt_info(Packet*, const char*)
 {
 }
 
-void print_pattern(const PatternMatchData*)
+void print_pattern(const PatternMatchData*, Packet*)
 {
 }
 

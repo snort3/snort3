@@ -52,7 +52,7 @@ enum
 
 void clear_trace_cursor_info();
 void print_pkt_info(snort::Packet* p, const char*);
-void print_pattern(const PatternMatchData* pmd);
+void print_pattern(const PatternMatchData* pmd, snort::Packet*);
 void dump_buffer(const uint8_t* buff, unsigned len, snort::Packet*);
 void node_eval_trace(const detection_option_tree_node_t* node, const Cursor& cursor, snort::Packet*);
 

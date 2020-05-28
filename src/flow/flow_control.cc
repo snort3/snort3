@@ -412,6 +412,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
         set_inspection_policy(sc, flow->inspection_policy_id);
         set_ips_policy(sc, flow->ips_policy_id);
         set_network_policy(sc, flow->network_policy_id);
+        p->filtering_state = flow->filtering_state;
     }
 
     else

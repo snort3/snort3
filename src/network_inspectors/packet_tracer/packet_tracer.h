@@ -26,6 +26,7 @@
 #include <cstring>
 #include <vector>
 
+#include "framework/packet_constraints.h"
 #include "main/snort_types.h"
 #include "main/thread.h"
 #include "protocols/ipv6.h"
@@ -35,45 +36,6 @@
 // %s %u -> %s %u %u AS=%u ID=%u
 // IPv6 Port -> IPv6 Port Proto AS=ASNum ID=InstanceNum
 #define PT_DEBUG_SESSION_ID_SIZE ((39+1+5+1+2+1+39+1+5+1+3+1+2+1+10+1+2+1+10)+1)
-
-struct PTSessionConstraints
-{
-    snort::SfIp sip;
-    int sip_flag = 0;
-    snort::SfIp dip;
-    int dip_flag = 0;
-    uint16_t sport;
-    uint16_t dport;
-    IpProtocol protocol = IpProtocol::PROTO_NOT_SET;
-
-    bool proto_match(const IpProtocol& proto) const
-    {
-        return (protocol == IpProtocol::PROTO_NOT_SET or protocol == proto);
-    }
-    bool port_match(uint16_t p1, uint16_t p2) const
-    {
-        return (!sport or sport == p1) and (!dport or dport == p2);
-    }
-    bool ip_match(const uint32_t* ip1, const uint32_t* ip2) const
-    {
-        return
-            ((!sip_flag or !memcmp(sip.get_ip6_ptr(), ip1, sizeof(snort::ip::snort_in6_addr))) and
-             (!dip_flag or !memcmp(dip.get_ip6_ptr(), ip2, sizeof(snort::ip::snort_in6_addr))));
-    }
-
-    void set(const PTSessionConstraints& src);
-};
-
-inline void PTSessionConstraints::set(const PTSessionConstraints& src)
-{
-    if ((sip_flag = src.sip_flag))
-        sip = src.sip;
-    if ((dip_flag = src.dip_flag))
-        dip = src.dip;
-    sport = src.sport;
-    dport = src.dport;
-    protocol = src.protocol;
-}
 
 namespace snort
 {
@@ -104,7 +66,7 @@ public:
     static void dump(Packet*);
 
     static void configure(bool status, const std::string& file_name);
-    static void set_constraints(const PTSessionConstraints* constraints);
+    static void set_constraints(const PacketConstraints* constraints);
     static void activate(const snort::Packet&);
 
     static SO_PUBLIC void pause();
@@ -136,7 +98,7 @@ protected:
     bool active = false;
 
     char debug_session[PT_DEBUG_SESSION_ID_SIZE];
-    PTSessionConstraints info;
+    PacketConstraints constraints;
 
     // static functions
     template<typename T = PacketTracer> static void _thread_init();
@@ -146,7 +108,7 @@ protected:
     void add_ip_header_info(const snort::Packet&);
     void add_eth_header_info(const snort::Packet&);
     void add_packet_type_info(const snort::Packet&);
-    void update_constraints(const PTSessionConstraints* constraints);
+    void update_constraints(const PacketConstraints* constraints);
     const char *get_debug_session() { return debug_session; }
 
     virtual void open_file();

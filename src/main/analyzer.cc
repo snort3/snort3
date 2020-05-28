@@ -596,7 +596,7 @@ void Analyzer::init_unprivileged()
 
     // This should be called as soon as possible
     // to handle all trace log messages
-    TraceApi::thread_init(sc);
+    TraceApi::thread_init(sc->trace_config);
 
     CodecManager::thread_init(sc);
 
@@ -630,7 +630,7 @@ void Analyzer::reinit(const SnortConfig* sc)
 {
     InspectorManager::thread_reinit(sc);
     ActionManager::thread_reinit(sc);
-    TraceApi::thread_reinit(sc);
+    TraceApi::thread_reinit(sc->trace_config);
 }
 
 void Analyzer::term()

@@ -25,6 +25,7 @@
 
 #include <syslog.h>
 
+#include "framework/packet_constraints.h"
 #include "main/snort_config.h"
 #include "managers/module_manager.h"
 
@@ -81,9 +82,32 @@ void TraceModule::generate_params()
 
     modules_params.emplace_back(nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr);
 
+    const static Parameter trace_constraints_params[] =
+    {
+        { "ip_proto", Parameter::PT_INT, "0:255", nullptr,
+          "numerical IP protocol ID filter" },
+
+        { "src_ip", Parameter::PT_STRING, nullptr, nullptr,
+          "source IP address filter" },
+
+        { "src_port", Parameter::PT_INT, "0:65535", nullptr,
+          "source port filter" },
+
+        { "dst_ip", Parameter::PT_STRING, nullptr, nullptr,
+          "destination IP address filter" },
+
+        { "dst_port", Parameter::PT_INT, "0:65535", nullptr,
+          "destination port filter" },
+
+        { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+    };
+
     const static Parameter trace_params[] =
     {
         { "modules", Parameter::PT_TABLE, modules_params.data(), nullptr, "modules trace option" },
+
+        { "constraints", Parameter::PT_TABLE, trace_constraints_params,
+            nullptr, "trace filtering constraints" },
 
         { "output", Parameter::PT_ENUM, "stdout | syslog", nullptr,
             "output method for trace log messages" },
@@ -108,7 +132,6 @@ bool TraceModule::begin(const char* fqn, int, SnortConfig* sc)
 
         reset_configured_trace_options();
     }
-
     return true;
 }
 
@@ -137,7 +160,6 @@ bool TraceModule::set(const char* fqn, Value& v, SnortConfig* sc)
             default:
                 return false;
         }
-
         return true;
     }
     else if ( strstr(fqn, "trace.modules.") == fqn )
@@ -149,7 +171,6 @@ bool TraceModule::set(const char* fqn, Value& v, SnortConfig* sc)
             for ( const auto& trace_option : trace_options )
                 if ( !trace_option.second )
                     sc->trace_config->set_trace(module_name, trace_option.first, v.get_uint8());
-
             return true;
         }
         else
@@ -158,6 +179,47 @@ bool TraceModule::set(const char* fqn, Value& v, SnortConfig* sc)
             configured_trace_options[module_name][v.get_name()] = res;
             return res;
         }
+    }
+    else if ( strstr(fqn, "trace.constraints.") == fqn )
+    {
+        if ( !sc->trace_config->constraints )
+            sc->trace_config->constraints = new snort::PacketConstraints;
+
+        auto& cs = *sc->trace_config->constraints;
+
+        if ( v.is("ip_proto") )
+        {
+            cs.ip_proto = static_cast<IpProtocol>(v.get_uint8());
+            cs.set_bits |= PacketConstraints::SetBits::IP_PROTO;
+        }
+        else if ( v.is("src_port") )
+        {
+            cs.src_port = v.get_uint16();
+            cs.set_bits |= PacketConstraints::SetBits::SRC_PORT;
+        }
+        else if ( v.is("dst_port") )
+        {
+            cs.dst_port = v.get_uint16();
+            cs.set_bits |= PacketConstraints::SetBits::DST_PORT;
+        }
+        else if ( v.is("src_ip") )
+        {
+            const char* str = v.get_string();
+            if ( cs.src_ip.set(str) != SFIP_SUCCESS )
+                return false;
+
+            cs.set_bits |= PacketConstraints::SetBits::SRC_IP;
+        }
+        else if ( v.is("dst_ip") )
+        {
+            const char* str = v.get_string();
+            if ( cs.dst_ip.set(str) != SFIP_SUCCESS )
+                return false;
+
+            cs.set_bits |= PacketConstraints::SetBits::DST_IP;
+        }
+
+        return true;
     }
 
     return false;

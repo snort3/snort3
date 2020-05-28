@@ -208,7 +208,7 @@ static struct SnortEventHandler : public EventHandler
         assert(e.packet);
         std::ostringstream ss;
         ss << e;
-        debug_logf(latency_trace, "%s\n", ss.str().c_str());
+        debug_logf(latency_trace, e.packet, "%s\n", ss.str().c_str());
 
         DetectionEngine::queue_event(GID_LATENCY, LATENCY_EVENT_PACKET_FASTPATHED);
     }

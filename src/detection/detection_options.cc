@@ -315,7 +315,7 @@ void print_option_tree(detection_option_tree_node_t* node, int level)
         opt = buf;
     }
 
-    debug_logf(detection_trace, TRACE_OPTION_TREE, "%3d %3d  %p %*s\n",
+    debug_logf(detection_trace, TRACE_OPTION_TREE, nullptr, "%3d %3d  %p %*s\n",
         level, node->num_children, node->option_data, (int)(level + strlen(opt)), opt);
 
     for ( int i=0; i<node->num_children; i++ )
@@ -383,7 +383,7 @@ int detection_option_node_evaluate(
                 !(p->packet_flags & PKT_IP_RULE_2ND) &&
                 !p->is_udp_tunneled() )
             {
-                debug_log(detection_trace, TRACE_RULE_EVAL,
+                debug_log(detection_trace, TRACE_RULE_EVAL, p,
                     "Was evaluated before, returning last check result\n");
                 return last_check.result;
             }
@@ -435,7 +435,7 @@ int detection_option_node_evaluate(
 
                 if ( !sig_info.services.empty() and check_ports )
                 {
-                    debug_logf(detection_trace, TRACE_RULE_EVAL,
+                    debug_logf(detection_trace, TRACE_RULE_EVAL, p,
                         "SID %u not matched because of service mismatch %d\n",
                         sig_info.sid, snort_protocol_id);
                     break;  // out of case
@@ -456,7 +456,7 @@ int detection_option_node_evaluate(
 
                 if ( otn->detection_filter )
                 {
-                    debug_log(detection_trace, TRACE_RULE_EVAL,
+                    debug_log(detection_trace, TRACE_RULE_EVAL, p,
                         "Evaluating detection filter\n");
                     f_result = !detection_filter_test(otn->detection_filter,
                         p->ptrs.ip_api.get_src(), p->ptrs.ip_api.get_dst(),
@@ -471,7 +471,7 @@ int detection_option_node_evaluate(
                     {
 #ifdef DEBUG_MSGS
                         const SigInfo& si = otn->sigInfo;
-                        debug_logf(detection_trace, TRACE_RULE_EVAL,
+                        debug_logf(detection_trace, TRACE_RULE_EVAL, p,
                             "Matched rule gid:sid:rev %u:%u:%u\n", si.gid, si.sid, si.rev);
 #endif
                         fpAddMatch(p->context->otnx, otn);
@@ -481,7 +481,8 @@ int detection_option_node_evaluate(
             }
 #ifdef DEBUG_MSGS
             else
-                debug_log(detection_trace, TRACE_RULE_EVAL, "Header check failed\n");
+                debug_log(detection_trace, TRACE_RULE_EVAL, p,
+                    "Header check failed\n");
 #endif
 
             break;
@@ -533,13 +534,13 @@ int detection_option_node_evaluate(
 
         if ( rval == (int)IpsOption::NO_MATCH )
         {
-            debug_log(detection_trace, TRACE_RULE_EVAL, "no match\n");
+            debug_log(detection_trace, TRACE_RULE_EVAL, p, "no match\n");
             state.last_check.result = result;
             return result;
         }
         else if ( rval == (int)IpsOption::FAILED_BIT )
         {
-            debug_log(detection_trace, TRACE_RULE_EVAL, "failed bit\n");
+            debug_log(detection_trace, TRACE_RULE_EVAL, p, "failed bit\n");
             eval_data.flowbit_failed = 1;
             // clear the timestamp so failed flowbit gets eval'd again
             state.last_check.flowbit_failed = 1;
@@ -552,7 +553,7 @@ int detection_option_node_evaluate(
             // so nodes below this don't alert.
             tmp_noalert_flag = eval_data.flowbit_noalert;
             eval_data.flowbit_noalert = 1;
-            debug_log(detection_trace, TRACE_RULE_EVAL, "flowbit no alert\n");
+            debug_log(detection_trace, TRACE_RULE_EVAL, p, "flowbit no alert\n");
         }
 
         // Back up byte_extract vars so they don't get overwritten between rules
@@ -571,7 +572,7 @@ int detection_option_node_evaluate(
                 safe_snprintf(var_buf, sizeof(var_buf), "var[%d]=%d ", i, tmp_byte_extract_vars[i]);
                 rule_vars.append(var_buf);
             }
-            debug_logf(detection_trace, TRACE_RULE_VARS, "Rule options variables: %s\n",
+            debug_logf(detection_trace, TRACE_RULE_VARS, p, "Rule options variables: %s\n",
                 rule_vars.c_str());
         }
 #endif

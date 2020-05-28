@@ -157,7 +157,7 @@ void PacketManager::decode(
     // loop until the protocol id is no longer valid
     while (CodecManager::s_protocols[mapped_prot]->decode(raw, codec_data, p->ptrs))
     {
-        debug_logf(decode_trace, "Codec %s (protocol_id: %hu) "
+        debug_logf(decode_trace, nullptr, "Codec %s (protocol_id: %hu) "
             "ip header starts at: %p, length is %d\n",
             CodecManager::s_protocols[mapped_prot]->get_name(),
             static_cast<uint16_t>(codec_data.next_prot_id), pkt, codec_data.lyr_len);
@@ -247,7 +247,7 @@ void PacketManager::decode(
         codec_data.proto_bits = 0;
     }
 
-    debug_logf(decode_trace, "Codec %s (protocol_id: %hu) ip header"
+    debug_logf(decode_trace, nullptr, "Codec %s (protocol_id: %hu) ip header"
         " starts at: %p, length is %lu\n",
         CodecManager::s_protocols[mapped_prot]->get_name(),
         static_cast<uint16_t>(prev_prot_id), pkt, (unsigned long)codec_data.lyr_len);

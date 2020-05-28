@@ -166,7 +166,7 @@ void UserTracker::detect(
     up->packet_flags |= (p->packet_flags & (PKT_FROM_CLIENT|PKT_FROM_SERVER));
     up->packet_flags |= (p->packet_flags & (PKT_STREAM_EST|PKT_STREAM_UNEST_UNI));
 
-    debug_logf(stream_user_trace, "detect[%d]\n", up->dsize);
+    debug_logf(stream_user_trace, up, "detect[%d]\n", up->dsize);
     Analyzer::get_local_analyzer()->inspect_rebuilt(up);
 }
 
@@ -186,7 +186,7 @@ int UserTracker::scan(Packet* p, uint32_t& flags)
 
         flags = p->packet_flags & (PKT_FROM_CLIENT|PKT_FROM_SERVER);
         unsigned len = us->get_unused_len();
-        debug_logf(stream_user_trace, "scan[%d]\n", len);
+        debug_logf(stream_user_trace, p, "scan[%d]\n", len);
 
         int32_t flush_amt = paf_check(
             splitter, &paf_state, p, us->get_unused_data(), len,
@@ -211,7 +211,7 @@ int UserTracker::scan(Packet* p, uint32_t& flags)
 void UserTracker::flush(Packet* p, unsigned flush_amt, uint32_t flags)
 {
     unsigned bytes_flushed = 0;
-    debug_logf(stream_user_trace, "flush[%d]\n", flush_amt);
+    debug_logf(stream_user_trace, p, "flush[%d]\n", flush_amt);
     uint32_t rflags = flags & ~PKT_PDU_TAIL;
     Packet* up = DetectionEngine::set_next_packet(p);
 
@@ -231,7 +231,7 @@ void UserTracker::flush(Packet* p, unsigned flush_amt, uint32_t flags)
             len = flush_amt;
         }
 
-        debug_logf(stream_user_trace, "reassemble[%d]\n", len);
+        debug_logf(stream_user_trace, p, "reassemble[%d]\n", len);
         StreamBuffer sb = splitter->reassemble(
             p->flow, flush_amt, bytes_flushed, data, len, rflags, bytes_copied);
 
@@ -276,7 +276,7 @@ void UserTracker::process(Packet* p)
 
 void UserTracker::add_data(Packet* p)
 {
-    debug_logf(stream_user_trace, "add[%d]\n", p->dsize);
+    debug_logf(stream_user_trace, p, "add[%d]\n", p->dsize);
     unsigned avail = 0;
 
     if ( !seg_list.empty() )

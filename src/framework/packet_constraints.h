@@ -15,34 +15,45 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// trace_api.h author Oleksandr Serhiienko <oserhiie@cisco.com>
+// packet_constraints.h author Serhii Lysenko <selysenk@cisco.com>
 
-#ifndef TRACE_API_H
-#define TRACE_API_H
+#ifndef PACKET_CONSTRAINTS_H
+#define PACKET_CONSTRAINTS_H
 
-#include <cstdint>
-
-#include "main/snort_types.h"
-
-class TraceConfig;
+#include "protocols/protocol_ids.h"
+#include "sfip/sf_ip.h"
 
 namespace snort
 {
+
+class Flow;
 struct Packet;
 
-class SO_PUBLIC TraceApi
+struct PacketConstraints
 {
-public:
-    static void thread_init(const TraceConfig* tc);
-    static void thread_reinit(const TraceConfig* tc);
-    static void thread_term();
+    enum SetBits : uint8_t {
+        IP_PROTO = 1,
+        SRC_IP   = 1 << 1,
+        DST_IP   = 1 << 2,
+        SRC_PORT = 1 << 3,
+        DST_PORT = 1 << 4,
+    };
 
-    static void log(const char* log_msg, const char* name,
-        uint8_t log_level, const char* trace_option);
-    static void filter(const Packet& p);
-    static uint8_t get_constraints_generation();
+    bool operator==(const PacketConstraints& other) const;
+
+    bool packet_match(const Packet& p) const;
+    bool flow_match(const Flow& f) const;
+
+    IpProtocol ip_proto = IpProtocol::PROTO_NOT_SET;
+    uint16_t src_port = 0;
+    uint16_t dst_port = 0;
+    snort::SfIp src_ip;
+    snort::SfIp dst_ip;
+
+    uint8_t set_bits = 0;
 };
-}
 
-#endif // TRACE_API_H
+} // namespace snort
+
+#endif
 

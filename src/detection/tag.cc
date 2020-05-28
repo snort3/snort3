@@ -330,7 +330,7 @@ static void AddTagNode(Packet* p, TagData* tag, int mode, uint32_t now,
     TagNode* returned;
     XHash* tag_cache_ptr = nullptr;
 
-    debug_log(detection_trace, TRACE_TAG, "Adding new Tag Head\n");
+    debug_log(detection_trace, TRACE_TAG, nullptr, "Adding new Tag Head\n");
 
     if ( tag->tag_metric & TAG_METRIC_SESSION )
     {

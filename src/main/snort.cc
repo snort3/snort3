@@ -155,7 +155,7 @@ void Snort::init(int argc, char** argv)
 
     // This call must be immediately after "SnortConfig::set_conf(sc)"
     // since the first trace call may happen somewhere after this point
-    TraceApi::thread_init(sc);
+    TraceApi::thread_init(sc->trace_config);
 
     PluginManager::load_so_plugins(sc);
 

@@ -56,7 +56,6 @@ private:
     std::vector<std::vector<snort::Parameter>> module_ranges;
     std::vector<std::string> modules_help;
     std::map<std::string, std::map<std::string, bool>> configured_trace_options;
-    
 };
 
 #endif  // TRACE_MODULE_H

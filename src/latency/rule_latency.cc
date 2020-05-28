@@ -296,9 +296,11 @@ static struct SnortEventHandler : public EventHandler
 {
     void handle(const Event& e) override
     {
+        assert(e.packet);
+
         std::ostringstream ss;
         ss << e;
-        debug_logf(latency_trace, "%s\n", ss.str().c_str());
+        debug_logf(latency_trace, e.packet, "%s\n", ss.str().c_str());
 
         switch ( e.type )
         {

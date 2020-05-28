@@ -109,6 +109,29 @@ struct Packet;
 
 typedef void (* StreamAppDataFree)(void*);
 
+struct FilteringState
+{
+    uint8_t generation_id = 0;
+    bool matched = false;
+
+    void clear()
+    {
+        generation_id = 0;
+        matched = false;
+    }
+
+    bool was_checked(uint8_t id) const
+    {
+        return generation_id and (generation_id == id);
+    }
+
+    void set_matched(uint8_t id, bool match)
+    {
+        generation_id = id;
+        matched = match;
+    }
+};
+
 struct FlowStats
 {
     uint64_t client_pkts;
@@ -430,6 +453,8 @@ public:  // FIXIT-M privatize if possible
     } flags;
 
     FlowState flow_state;
+
+    FilteringState filtering_state;
 
 private:
     void clean();

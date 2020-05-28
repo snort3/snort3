@@ -132,8 +132,9 @@ struct SO_PUBLIC Packet
     // FIXIT-M Consider moving ip_proto_next below `pkth`.
     IpProtocol ip_proto_next;      /* the protocol ID after IP and all IP6 extension */
     bool disable_inspect;
-    // nothing after this point is zeroed by reset() ...
+    mutable FilteringState filtering_state;
 
+    // nothing after this point is zeroed by reset() ...
     IpsContext* context;
     Active* active;
     Active* active_inst;

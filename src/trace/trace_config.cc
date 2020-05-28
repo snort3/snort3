@@ -26,6 +26,7 @@
 #include <cstring>
 
 #include "framework/module.h"
+#include "framework/packet_constraints.h"
 #include "managers/module_manager.h"
 
 #include "trace_log_base.h"
@@ -44,6 +45,9 @@ TraceConfig::~TraceConfig()
 {
     delete logger_factory;
     logger_factory = nullptr;
+
+    delete constraints;
+    constraints = nullptr;
 }
 
 bool TraceConfig::set_trace(const std::string& module_name, const std::string& trace_option_name,

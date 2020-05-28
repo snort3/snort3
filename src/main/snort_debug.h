@@ -27,12 +27,26 @@
 
 #include <cstdarg>
 
+#include "protocols/packet.h"
 #include "trace/trace.h"
+#include "trace/trace_api.h"
 
 static inline bool trace_enabled(const snort::Trace* trace,
-    TraceOptionID trace_option_id, TraceLevel log_level = DEFAULT_TRACE_LOG_LEVEL)
+    TraceOptionID trace_option_id,
+    TraceLevel log_level = DEFAULT_TRACE_LOG_LEVEL,
+    const snort::Packet* p = nullptr)
 {
-    return trace && trace->enabled(trace_option_id, log_level);
+    if ( !trace or !trace->enabled(trace_option_id, log_level) )
+        return false;
+
+    if ( !p )
+        return true;
+
+    const auto gid = snort::TraceApi::get_constraints_generation();
+    if ( !p->filtering_state.was_checked(gid) )
+        snort::TraceApi::filter(*p);
+
+    return p->filtering_state.matched;
 }
 
 namespace snort
@@ -44,109 +58,124 @@ SO_PUBLIC void trace_vprintf(const char* name, TraceLevel log_level,
 using trace_func = void(const char*, TraceLevel, const char*, const char*, va_list);
 
 template <trace_func>
-static inline void trace_printf(TraceLevel log_level, const snort::Trace* trace,
-    TraceOptionID trace_option_id, const char* fmt, ...) __attribute__((format (printf, 4, 5)));
+static inline void trace_printf(TraceLevel log_level,
+    const snort::Trace* trace, TraceOptionID trace_option_id,
+    const snort::Packet* p, const char* fmt, ...)
+    __attribute__((format (printf, 5, 6)));
 
 template <trace_func trace_vprintf = snort::trace_vprintf>
-static inline void trace_printf(TraceLevel log_level, const snort::Trace* trace,
-    TraceOptionID trace_option_id, const char* fmt, ...)
+static inline void trace_printf(TraceLevel log_level,
+    const snort::Trace* trace, TraceOptionID trace_option_id,
+    const snort::Packet* p, const char* fmt, ...)
 {
-    if ( !trace_enabled(trace, trace_option_id, log_level) )
+    if ( !trace_enabled(trace, trace_option_id, log_level, p) )
         return;
 
     va_list ap;
     va_start(ap, fmt);
 
     const char* trace_option_name = trace->option_name(trace_option_id);
-    trace_vprintf(trace->module_name(), log_level, trace_option_name, fmt, ap);
+    trace_vprintf(trace->module_name(), log_level, trace_option_name,
+        fmt, ap);
 
     va_end(ap);
 }
 
 template <trace_func>
-static inline void trace_printf(TraceLevel log_level, const snort::Trace* trace,
-    const char* fmt, ...) __attribute__((format (printf, 3, 4)));
+static inline void trace_printf(TraceLevel log_level,
+    const snort::Trace* trace, const snort::Packet* p,
+    const char* fmt, ...) __attribute__((format (printf, 4, 5)));
 
 template <trace_func trace_vprintf = snort::trace_vprintf>
-static inline void trace_printf(TraceLevel log_level, const snort::Trace* trace,
+static inline void trace_printf(TraceLevel log_level,
+    const snort::Trace* trace, const snort::Packet* p,
     const char* fmt, ...)
 {
-    if ( !trace_enabled(trace, DEFAULT_TRACE_OPTION_ID, log_level) )
+    if ( !trace_enabled(trace, DEFAULT_TRACE_OPTION_ID, log_level, p) )
         return;
 
     va_list ap;
     va_start(ap, fmt);
 
     const char* trace_option_name = trace->option_name(DEFAULT_TRACE_OPTION_ID);
-    trace_vprintf(trace->module_name(), log_level, trace_option_name, fmt, ap);
+    trace_vprintf(trace->module_name(), log_level, trace_option_name,
+        fmt, ap);
 
     va_end(ap);
 }
 
 template <trace_func>
 static inline void trace_printf(const snort::Trace* trace,
-    TraceOptionID trace_option_id, const char* fmt, ...) __attribute__((format (printf, 3, 4)));
+    TraceOptionID trace_option_id, const snort::Packet* p,
+    const char* fmt, ...) __attribute__((format (printf, 4, 5)));
 
 template <trace_func trace_vprintf = snort::trace_vprintf>
 static inline void trace_printf(const snort::Trace* trace,
-    TraceOptionID trace_option_id, const char* fmt, ...)
+    TraceOptionID trace_option_id, const snort::Packet* p, const char* fmt, ...)
 {
-    if ( !trace_enabled(trace, trace_option_id) )
+    if ( !trace_enabled(trace, trace_option_id, DEFAULT_TRACE_LOG_LEVEL, p) )
         return;
 
     va_list ap;
     va_start(ap, fmt);
 
     const char* trace_option_name = trace->option_name(trace_option_id);
-    trace_vprintf(trace->module_name(), DEFAULT_TRACE_LOG_LEVEL, trace_option_name, fmt, ap);
+    trace_vprintf(trace->module_name(), DEFAULT_TRACE_LOG_LEVEL,
+        trace_option_name, fmt, ap);
 
     va_end(ap);
 }
 
 template <trace_func>
 static inline void trace_printf(const snort::Trace* trace,
-    const char* fmt, ...) __attribute__((format (printf, 2, 3)));
+    const snort::Packet* p, const char* fmt, ...)
+    __attribute__((format (printf, 3, 4)));
 
 template <trace_func trace_vprintf = snort::trace_vprintf>
-static inline void trace_printf(const snort::Trace* trace, const char* fmt, ...)
+static inline void trace_printf(const snort::Trace* trace,
+    const snort::Packet* p, const char* fmt, ...)
 {
-    if ( !trace_enabled(trace, DEFAULT_TRACE_OPTION_ID) )
+    if ( !trace_enabled(trace, DEFAULT_TRACE_OPTION_ID, DEFAULT_TRACE_LOG_LEVEL, p) )
         return;
 
     va_list ap;
     va_start(ap, fmt);
 
     const char* trace_option_name = trace->option_name(DEFAULT_TRACE_OPTION_ID);
-    trace_vprintf(trace->module_name(), DEFAULT_TRACE_LOG_LEVEL, trace_option_name, fmt, ap);
+    trace_vprintf(trace->module_name(), DEFAULT_TRACE_LOG_LEVEL,
+        trace_option_name, fmt, ap);
 
     va_end(ap);
 }
 
 template <trace_func trace_vprintf = snort::trace_vprintf>
-static inline void trace_print(TraceLevel log_level, const snort::Trace* trace,
-    TraceOptionID trace_option_id, const char* msg)
+static inline void trace_print(TraceLevel log_level,
+    const snort::Trace* trace, TraceOptionID trace_option_id,
+    const snort::Packet* p, const char* msg)
 {
-    trace_printf<trace_vprintf>(log_level, trace, trace_option_id, "%s", msg);
+    trace_printf<trace_vprintf>(log_level, trace, trace_option_id, p,
+        "%s", msg);
 }
 
 template <trace_func trace_vprintf = snort::trace_vprintf>
 static inline void trace_print(const snort::Trace* trace,
-    TraceOptionID trace_option_id, const char* msg)
+    TraceOptionID trace_option_id, const snort::Packet* p, const char* msg)
 {
-    trace_printf<trace_vprintf>(trace, trace_option_id, "%s", msg);
+    trace_printf<trace_vprintf>(trace, trace_option_id, p, "%s", msg);
 }
 
 template <trace_func trace_vprintf = snort::trace_vprintf>
-static inline void trace_print(TraceLevel log_level, const snort::Trace* trace,
+static inline void trace_print(TraceLevel log_level,
+    const snort::Trace* trace, const snort::Packet* p, const char* msg)
+{
+    trace_printf<trace_vprintf>(log_level, trace, p, "%s", msg);
+}
+
+template <trace_func trace_vprintf = snort::trace_vprintf>
+static inline void trace_print(const snort::Trace* trace, const snort::Packet* p,
     const char* msg)
 {
-    trace_printf<trace_vprintf>(log_level, trace, "%s", msg);
-}
-
-template <trace_func trace_vprintf = snort::trace_vprintf>
-static inline void trace_print(const snort::Trace* trace, const char* msg)
-{
-    trace_printf<trace_vprintf>(trace, "%s", msg);
+    trace_printf<trace_vprintf>(trace, p, "%s", msg);
 }
 
 #define trace_print trace_print<snort::trace_vprintf>
@@ -164,3 +193,4 @@ static inline void trace_print(const snort::Trace* trace, const char* msg)
 #endif
 
 #endif
+

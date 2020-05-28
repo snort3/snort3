@@ -163,7 +163,7 @@ bool PacketTracer::is_paused()
     return false;
 }
 
-void PacketTracer::set_constraints(const PTSessionConstraints* constraints)
+void PacketTracer::set_constraints(const PacketConstraints* constraints)
 {
     if (!s_pkt_trace)
         return;
@@ -222,26 +222,11 @@ void PacketTracer::activate(const Packet& p)
         }
         else
         {
-            if (s_pkt_trace->shell_enabled)
+            if (s_pkt_trace->shell_enabled and
+                !s_pkt_trace->constraints.packet_match(p))
             {
-                uint16_t sport = p.ptrs.sp;
-                uint16_t dport = p.ptrs.dp;
-
-                const SfIp *actual_sip = p.ptrs.ip_api.get_src();
-                const SfIp *actual_dip = p.ptrs.ip_api.get_dst();
-
-                const uint32_t *sip_ptr = actual_sip->get_ip6_ptr();
-                const uint32_t *dip_ptr = actual_dip->get_ip6_ptr();
-
-                IpProtocol proto = p.get_ip_proto_next();
-
-                if (!(s_pkt_trace->info.proto_match(proto) and
-                        ((s_pkt_trace->info.port_match(sport, dport) and s_pkt_trace->info.ip_match(sip_ptr, dip_ptr)) or
-                        (s_pkt_trace->info.port_match(dport, sport) and s_pkt_trace->info.ip_match(dip_ptr, sip_ptr)))))
-                {
-                    s_pkt_trace->active = false;
-                    return;
-                }
+                s_pkt_trace->active = false;
+                return;
             }
             s_pkt_trace->active = true;
             s_pkt_trace->add_ip_header_info(p);
@@ -382,17 +367,18 @@ void PacketTracer::add_eth_header_info(const Packet& p)
     }
 }
 
-void PacketTracer::update_constraints(const PTSessionConstraints* constraints)
+void PacketTracer::update_constraints(const PacketConstraints* cs)
 {
 
     char sipstr[INET6_ADDRSTRLEN];
     char dipstr[INET6_ADDRSTRLEN];
 
-    info.set(*constraints);
-    info.sip.ntop(sipstr, sizeof(sipstr));
-    info.dip.ntop(dipstr, sizeof(dipstr));
+    constraints = *cs;
+    constraints.src_ip.ntop(sipstr, sizeof(sipstr));
+    constraints.dst_ip.ntop(dipstr, sizeof(dipstr));
     LogMessage("Debugging packet tracer with %s-%hu and %s-%hu %hhu\n",
-               sipstr, info.sport, dipstr, info.dport, static_cast<uint8_t>(info.protocol));
+        sipstr, constraints.src_port, dipstr, constraints.dst_port,
+        static_cast<uint8_t>(constraints.ip_proto));
 
     shell_enabled = true;
 
