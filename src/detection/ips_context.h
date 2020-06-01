@@ -140,23 +140,23 @@ public:
     std::vector<Replacement> rpl;
 
     Packet* packet;
-    Packet* wire_packet;
+    Packet* wire_packet = nullptr;
     Packet* encode_packet;
     DAQ_PktHdr_t* pkth;
     uint8_t* buf;
 
-    const SnortConfig* conf;
+    const SnortConfig* conf = nullptr;
     MpseBatch searches;
     MpseStash* stash;
     OtnxMatchData* otnx;
     std::list<RegexRequest*>::iterator regex_req_it;
     SF_EVENTQ* equeue;
 
-    DataPointer file_data;
-    DataBuffer alt_data;
+    DataPointer file_data = {};
+    DataBuffer alt_data = {};
 
     uint64_t context_num;
-    uint64_t packet_number;
+    uint64_t packet_number = 0;
     ActiveRules active_rules;
     State state;
     bool check_tags;
@@ -169,13 +169,13 @@ public:
     static constexpr unsigned max_ips_id = 8;
 
 private:
-    FlowSnapshot flow;
+    FlowSnapshot flow = {};
     std::vector<IpsContextData*> data;
     std::vector<unsigned> ids_in_use;  // for indirection; FIXIT-P evaluate alternatives
     std::vector<Callback> post_callbacks;
     IpsContext* depends_on;
     IpsContext* next_to_process;
-    bool remove_gadget;
+    bool remove_gadget = false;
 };
 }
 #endif

@@ -32,9 +32,9 @@ public:
     TcpConnectorConfig()
     { direction = snort::Connector::CONN_DUPLEX; async_receive = true; }
 
-    uint16_t base_port;
+    uint16_t base_port = 0;
     std::string address;
-    Setup setup;
+    Setup setup = {};
     bool async_receive;
 
     typedef std::vector<TcpConnectorConfig*> TcpConnectorConfigSet;

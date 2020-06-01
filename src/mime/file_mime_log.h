@@ -70,8 +70,8 @@ public:
 private:
     int log_flags = 0;
     uint8_t* buf = nullptr;
-    unsigned char* emailHdrs;
-    uint32_t log_depth;
+    unsigned char* emailHdrs = nullptr;
+    uint32_t log_depth = 0;
     uint32_t hdrs_logged;
     uint8_t* recipients = nullptr;
     uint16_t rcpts_logged;

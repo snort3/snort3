@@ -174,7 +174,7 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree, Mpse::MpseTyp
 
             child->num_children++;
             child->children = (detection_option_tree_node_t**)
-                snort_calloc(child->num_children, sizeof(child->children));
+                snort_calloc(child->num_children, sizeof(detection_option_tree_node_t*));
             child->is_relative = opt_fp->isRelative;
 
             if (node && child->is_relative)
@@ -245,7 +245,7 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree, Mpse::MpseTyp
                 {
                     node->num_children++;
                     tmp_children = (detection_option_tree_node_t**)
-                        snort_calloc(node->num_children, sizeof(tmp_children));
+                        snort_calloc(node->num_children, sizeof(detection_option_tree_node_t*));
                     memcpy(tmp_children, node->children,
                         sizeof(detection_option_tree_node_t*) * (node->num_children-1));
 
@@ -289,7 +289,7 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree, Mpse::MpseTyp
             detection_option_tree_node_t** tmp_children;
             root->num_children++;
             tmp_children = (detection_option_tree_node_t**)
-                snort_calloc(root->num_children, sizeof(tmp_children));
+                snort_calloc(root->num_children, sizeof(detection_option_tree_node_t*));
             memcpy(tmp_children, root->children,
                 sizeof(detection_option_tree_node_t*) * (root->num_children-1));
             snort_free(root->children);
@@ -304,7 +304,7 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree, Mpse::MpseTyp
             detection_option_tree_node_t** tmp_children;
             node->num_children++;
             tmp_children = (detection_option_tree_node_t**)
-                snort_calloc(node->num_children, sizeof(tmp_children));
+                snort_calloc(node->num_children, sizeof(detection_option_tree_node_t*));
             memcpy(tmp_children, node->children,
                 sizeof(detection_option_tree_node_t*) * (node->num_children-1));
             snort_free(node->children);
@@ -419,8 +419,13 @@ static int fpFinishPortGroup(SnortConfig* sc, PortGroup* pg, FastPatternConfig* 
     int i;
     int rules = 0;
 
-    if ((pg == nullptr) || (fp == nullptr))
+    if (pg == nullptr)
         return -1;
+    if (fp == nullptr)
+    {
+        snort_free(pg);
+        return -1;
+    }
 
     for (i = PM_TYPE_PKT; i < PM_TYPE_MAX; i++)
     {

@@ -117,13 +117,13 @@ public:
     bool is_vxlan_port(uint16_t port)
     { return vxlan_ports.test(port); }
 
-    void set_gtp_ports(PortBitSet ports)
+    void set_gtp_ports(const PortBitSet& ports)
     {
         gtp_ports = ports;
         gtp_decode = ports.any();
     }
 
-    void set_vxlan_ports(PortBitSet ports)
+    void set_vxlan_ports(const PortBitSet& ports)
     {
         vxlan_ports = ports;
         vxlan_decode = ports.any();

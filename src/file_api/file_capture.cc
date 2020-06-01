@@ -392,11 +392,6 @@ FileCaptureState FileCapture::reserve_file(const FileInfo* file)
         head = last = fileBlock;
     }
 
-    if (!fileBlock)
-    {
-        return error_capture(FILE_CAPTURE_MEMCAP);
-    }
-
     /*Copy the last piece of file to file buffer*/
     if (save_to_file_buffer(current_data,
             current_data_len, capture_max_size) )

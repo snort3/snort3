@@ -97,14 +97,8 @@ FileFlows* FileFlows::get_file_flows(Flow* flow)
     {
         fd = new FileFlows(flow, fi);
         flow->set_flow_data(fd);
-    }
-    else
-        return fd;
-
-    FileConfig* fc = fi->config;
-    if (fc and fd)
-    {
-        fd->set_file_policy(&(fc->get_file_policy()));
+        if (fi->config)
+            fd->set_file_policy(&(fi->config->get_file_policy()));
     }
 
     return fd;
@@ -294,8 +288,7 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
         if ((context->get_file_sig_sha256()) || !context->is_file_signature_enabled())
         {
             /* Just check file type and signature */
-            FilePosition position = SNORT_FILE_FULL;
-            continue_processing = context->process(p, file_data, data_size, position,
+            continue_processing = context->process(p, file_data, data_size, SNORT_FILE_FULL,
                     file_policy);
             if (context->processing_complete)
                 remove_processed_file_context(multi_file_processing_id);

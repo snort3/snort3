@@ -1079,10 +1079,11 @@ void parse_rule_opt_set(
     if ( s_ignore )
         return;
 
+    assert(val);
     if ( s_capture )
     {
         s_body += opt;
-        if ( val and *val )
+        if ( *val )
         {
             s_body += " ";
             s_body += val;

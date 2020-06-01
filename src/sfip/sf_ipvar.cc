@@ -817,10 +817,6 @@ SfIpRet sfvar_parse_iplist(vartable_t* table, sfip_var_t* var,
         {
             sfip_node_t* node;
 
-            /* Skip leading commas */
-            for (; *str == ','; str++)
-                ;
-
             /* Check for a negated "any" */
             if (negation ^ neg_ip && !strcasecmp(tok, "any"))
             {

@@ -190,7 +190,7 @@ void LogHandler::handle(DataEvent&, Flow* f)
 
     uint64_t fsize = file->get_file_size();
     if ( fsize > 0)
-        TextLog_Print(tlog, "[Size: %u] ", fsize);
+        TextLog_Print(tlog, "[Size: %lu] ", fsize);
 
     TextLog_Print(tlog, "\n");
 

@@ -107,10 +107,10 @@ public:
         {
             unsigned char* pc_ptr = (unsigned char*)&plx->p[i];
 
-            for ( unsigned k = 0; k < sizeof(void*); k++ )
+            for ( unsigned j = 0; j < sizeof(void*); j++ )
             {
                 hash *=  scale;
-                hash +=  pc_ptr[k];
+                hash +=  pc_ptr[j];
             }
         }
         return hash ^ hardener;
@@ -722,6 +722,9 @@ int PortTableAddObject(PortTable* p, PortObject* po)
 {
     SF_LNODE* lpos;
 
+    if ( !p )
+        return -1;
+
     /* Search for the Port Object in the input list, by address */
     for ( PortObject* pox = (PortObject*)sflist_first(p->pt_polist, &lpos);
         pox!=nullptr;
@@ -853,13 +856,18 @@ void RuleListSortUniq(SF_LIST* rl)
     int* currNode = (int*)sflist_first(rl, &pos);
 
     if ( !currNode )
+    {
+        snort_free(rlist);
         return;
+    }
 
     for ( unsigned i = 0; i < rl->count; i++ )
     {
         if (rlist[i] > lastRuleIndex)
         {
-            *currNode = lastRuleIndex = rlist[i];
+            lastRuleIndex = rlist[i];
+            if (currNode)
+                *currNode = lastRuleIndex;
             //replace the next element in place
             currNode = (int*)sflist_next(&pos);
             uniqElements++;

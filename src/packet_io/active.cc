@@ -221,7 +221,8 @@ void Active::send_reset(Packet* p, EncodeFlags ef)
         if ( (p->packet_flags & PKT_USE_DIRECT_INJECT) or
             (p->flow and p->flow->flags.use_direct_inject) )
         {
-            DIOCTL_DirectInjectReset msg = { p->daq_msg, !(ef & ENC_FLAG_FWD) };
+            DIOCTL_DirectInjectReset msg =
+                { p->daq_msg, (uint8_t)((ef & ENC_FLAG_FWD) ? DAQ_DIR_FORWARD : DAQ_DIR_REVERSE) };
             int ret = p->daq_instance->ioctl(DIOCTL_DIRECT_INJECT_RESET,
                 &msg, sizeof(msg));
             if ( ret != DAQ_SUCCESS )
@@ -296,7 +297,8 @@ uint32_t Active::send_data(
         EncodeFlags tmp_flags = flags ^ ENC_FLAG_FWD;
         if ( use_direct_inject )
         {
-            DIOCTL_DirectInjectReset msg = { p->daq_msg, !(tmp_flags & ENC_FLAG_FWD) };
+            DIOCTL_DirectInjectReset msg =
+                { p->daq_msg, (uint8_t)((tmp_flags & ENC_FLAG_FWD) ? DAQ_DIR_FORWARD : DAQ_DIR_REVERSE) };
             ret = p->daq_instance->ioctl(DIOCTL_DIRECT_INJECT_RESET,
                 &msg, sizeof(msg));
             if ( ret != DAQ_SUCCESS )
@@ -334,7 +336,8 @@ uint32_t Active::send_data(
         flags = (flags & ~ENC_FLAG_VAL);
         const DAQ_DIPayloadSegment segments[] = { {buf, blen} };
         const DAQ_DIPayloadSegment* payload[] = { &segments[0] };
-        DIOCTL_DirectInjectPayload msg = { p->daq_msg,  payload, 1, !(flags & ENC_FLAG_FWD)};
+        DIOCTL_DirectInjectPayload msg = { p->daq_msg,  payload, 1,
+            (uint8_t)((flags & ENC_FLAG_FWD) ? DAQ_DIR_FORWARD : DAQ_DIR_REVERSE) };
         ret = p->daq_instance->ioctl(DIOCTL_DIRECT_INJECT_PAYLOAD,
             &msg, sizeof(msg));
         if ( ret != DAQ_SUCCESS )
@@ -409,7 +412,8 @@ uint32_t Active::send_data(
         flags = (flags & ~ENC_FLAG_VAL) | sent;
         if ( use_direct_inject )
         {
-            DIOCTL_DirectInjectReset msg = { p->daq_msg, !(flags & ENC_FLAG_FWD) };
+            DIOCTL_DirectInjectReset msg =
+                { p->daq_msg, (uint8_t)((flags & ENC_FLAG_FWD) ? DAQ_DIR_FORWARD : DAQ_DIR_REVERSE) };
             ret = p->daq_instance->ioctl(DIOCTL_DIRECT_INJECT_RESET,
                 &msg, sizeof(msg));
             if ( ret != DAQ_SUCCESS )

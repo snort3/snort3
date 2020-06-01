@@ -152,9 +152,9 @@ protected:
     Inspector();  // internal init only at this point
 
 private:
-    const InspectApi* api;
+    const InspectApi* api = nullptr;
     std::atomic_uint* ref_count;
-    SnortProtocolId snort_protocol_id;
+    SnortProtocolId snort_protocol_id = 0;
 };
 
 // at present there is no sequencing among like types except that appid

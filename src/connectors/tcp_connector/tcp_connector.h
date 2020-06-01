@@ -81,7 +81,7 @@ public:
     int sock_fd;
 
 private:
-    bool run_thread;
+    bool run_thread = false;
     std::thread* receive_thread;
     void start_receive_thread();
     void stop_receive_thread();

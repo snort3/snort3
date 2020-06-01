@@ -479,7 +479,7 @@ struct RuleParseState
     string opt;
     string val;
 
-    bool tbd;
+    bool tbd = false;
 };
 
 static bool exec(

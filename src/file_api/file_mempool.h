@@ -72,11 +72,11 @@ private:
     void free_pools();
     int remove(CircularBuffer* cb, void* obj);
 
-    void** datapool; /* memory buffer */
-    uint64_t total;
-    CircularBuffer* free_list;
-    CircularBuffer* released_list;
-    size_t obj_size;
+    void** datapool = nullptr; /* memory buffer */
+    uint64_t total = 0;
+    CircularBuffer* free_list = nullptr;
+    CircularBuffer* released_list = nullptr;
+    size_t obj_size = 0;
     std::mutex pool_mutex;
 };
 

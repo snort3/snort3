@@ -124,26 +124,23 @@ struct CodecData
 
     /* This section will get reset before every decode() function call */
     ProtocolId next_prot_id;      /* protocol type of the next layer */
-    uint16_t lyr_len;           /* The length of the valid part layer */
-    uint16_t invalid_bytes;     /* the length of the INVALID part of this layer */
+    uint16_t lyr_len = 0;           /* The length of the valid part layer */
+    uint16_t invalid_bytes = 0;     /* the length of the INVALID part of this layer */
 
     /* Reset before each decode of packet begins */
 
     /*  Codec specific fields.  These fields are only relevant to codecs. */
-    uint32_t proto_bits;    /* protocols contained within this packet
+    uint32_t proto_bits = 0;    /* protocols contained within this packet
                                  -- will be propogated to Snort++ Packet struct*/
-    uint16_t codec_flags;   /* flags used while decoding */
-    uint8_t ip_layer_cnt;
+    uint16_t codec_flags = 0;   /* flags used while decoding */
+    uint8_t ip_layer_cnt = 0;
 
-    /*  The following values have junk values after initialization */
-    uint8_t ip6_extension_count; /* initialized in cd_ipv6.cc */
-    uint8_t curr_ip6_extension;  /* initialized in cd_ipv6.cc */
-    IpProtocol ip6_csum_proto;      /* initialized in cd_ipv6.cc.  Used for IPv6 checksums */
-    bool tunnel_bypass;
+    uint8_t ip6_extension_count = 0;
+    uint8_t curr_ip6_extension = 0;
+    IpProtocol ip6_csum_proto = IpProtocol::IP;   /* Used for IPv6 checksums */
+    bool tunnel_bypass = false;
 
-    CodecData(const SnortConfig* sc, ProtocolId init_prot) :
-        conf(sc), next_prot_id(init_prot), lyr_len(0), invalid_bytes(0),
-        proto_bits(0), codec_flags(0), ip_layer_cnt(0), tunnel_bypass(false)
+    CodecData(const SnortConfig* sc, ProtocolId init_prot) : conf(sc), next_prot_id(init_prot)
     { }
 
     bool inline is_cooked() const
