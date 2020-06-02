@@ -403,8 +403,14 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
     last_pkt_type = p->type();
     preemptive_cleanup();
 
-    flow->set_direction(p);
-    flow->session->precheck(p);
+    // If this code is executed on a flow in SETUP state, it will result in a packet from both
+    // client and server on packets from 0.0.0.0 or ::
+    if ( flow->flow_state != Flow::FlowState::SETUP )
+    {
+        flow->set_direction(p);
+        // This call can reset the flow state to SETUP in lazy flow timeout cases
+        flow->session->precheck(p);
+    }
 
     if ( flow->flow_state != Flow::FlowState::SETUP )
     {
@@ -430,7 +436,10 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
 
         ++news;
         flow->flowstats.start_time = p->pkth->ts;
-        flow->flags.client_initiated = p->is_from_client();
+        // Set the flag if the flow direction matches the DAQ direction
+        flow->flags.client_initiated =
+            (p->is_from_server() ==
+                (DAQ_PKT_FLAG_REV_FLOW == (p->packet_flags & DAQ_PKT_FLAG_REV_FLOW)));
     }
 
     // This requires the packet direction to be set
@@ -453,8 +462,6 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
             Stream::stop_inspection(flow, p, SSN_DIR_BOTH, -1, 0);
         else
             DetectionEngine::disable_all(p);
-
-        p->ptrs.decode_flags |= DECODE_PKT_TRUST;
         break;
 
     case Flow::FlowState::BLOCK:

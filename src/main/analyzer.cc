@@ -299,10 +299,27 @@ static DAQ_Verdict distill_verdict(Packet* p)
         PacketManager::encode_update(p);
         verdict = DAQ_VERDICT_REPLACE;
     }
-    else if ( (p->packet_flags & PKT_IGNORE) ||
-        (p->flow && p->flow->get_ignore_direction() == SSN_DIR_BOTH) )
+    else if ( act->session_was_trusted() )
     {
-        if ( !act->get_tunnel_bypass() )
+        if ( p->flow && !act->get_prevent_trust_action() )
+            p->flow->disable_inspection();
+
+        if ( !(act->get_tunnel_bypass() || act->get_prevent_trust_action()) )
+        {
+            verdict = DAQ_VERDICT_WHITELIST;
+        }
+        else
+        {
+            verdict = DAQ_VERDICT_PASS;
+            daq_stats.internal_whitelist++;
+        }
+    }
+    else if ( (p->packet_flags & PKT_IGNORE) ||
+        (p->flow &&
+            (p->flow->get_ignore_direction() == SSN_DIR_BOTH ||
+                p->flow->flow_state == Flow::FlowState::ALLOW)) )
+    {
+        if ( !(act->get_tunnel_bypass() || act->get_prevent_trust_action()) )
         {
             verdict = DAQ_VERDICT_WHITELIST;
         }

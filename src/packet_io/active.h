@@ -54,7 +54,7 @@ public:
     // apply_delayed_action, in a big switch(action). Do away with these and
     // use the actual (Base)Action objects.
     enum ActiveActionType : uint8_t
-    { ACT_PASS, ACT_HOLD, ACT_RETRY, ACT_DROP, ACT_BLOCK, ACT_RESET, ACT_MAX };
+    { ACT_TRUST, ACT_ALLOW, ACT_HOLD, ACT_RETRY, ACT_DROP, ACT_BLOCK, ACT_RESET, ACT_MAX };
 
 public:
 
@@ -99,7 +99,7 @@ public:
     bool hold_packet(const Packet*);
     void cancel_packet_hold();
 
-    void allow_session(Packet*);
+    void trust_session(Packet*, bool force = false);
     void block_session(Packet*, bool force = false);
     void reset_session(Packet*, bool force = false);
     void reset_session(Packet*, snort::ActiveAction* r, bool force = false);
@@ -123,6 +123,9 @@ public:
     bool packet_retry_requested() const
     { return active_action == ACT_RETRY; }
 
+    bool session_was_trusted() const
+    { return active_action == ACT_TRUST; }
+
     bool session_was_blocked() const
     { return active_action >= ACT_BLOCK; }
 
@@ -140,6 +143,12 @@ public:
 
     bool get_tunnel_bypass() const
     { return active_tunnel_bypass > 0; }
+
+    void set_prevent_trust_action()
+    { prevent_trust_action = true; }
+
+    bool get_prevent_trust_action() const
+    { return prevent_trust_action; }
 
     void set_delayed_action(ActiveActionType, bool force = false);
     void set_delayed_action(ActiveActionType, ActiveAction* act, bool force = false);
@@ -167,6 +176,8 @@ private:
     static THREAD_LOCAL bool s_suspend;
 
     int active_tunnel_bypass;
+
+    bool prevent_trust_action;
 
     // these can't be pkt flags because we do the handling
     // of these flags following all processing and the drop

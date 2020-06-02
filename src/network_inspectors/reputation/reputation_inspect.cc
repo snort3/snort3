@@ -312,9 +312,7 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
         }
 
         DetectionEngine::queue_event(GID_REPUTATION, whitelist_event);
-        p->packet_flags |= PKT_IGNORE;
-        DetectionEngine::disable_all(p);
-        act->allow_session(p);
+        act->trust_session(p, true);
         reputationstats.whitelisted++;
     }
 }

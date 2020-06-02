@@ -441,7 +441,8 @@ public:  // FIXIT-M privatize if possible
 
     struct
     {
-        bool client_initiated : 1;
+        bool client_initiated : 1; // Set if the first packet on the flow was from the side that is currently
+                                   // considered to be the client
         bool disable_inspect : 1;
         bool reputation_src_dest : 1;
         bool reputation_blacklist : 1;

@@ -57,6 +57,7 @@ public:
 
 const char* Active::act_str[Active::ACT_MAX][Active::AST_MAX] =
 {
+    { "trust", "error", "error", "error" },
     { "allow", "error", "error", "error" },
     { "hold", "error", "error", "error" },
     { "retry", "error", "error", "error" },
@@ -568,7 +569,10 @@ void Active::daq_drop_packet(const Packet* p)
 
 bool Active::retry_packet(const Packet* p)
 {
-    if (active_action != ACT_PASS || !SFDAQ::forwarding_packet(p->pkth))
+    if (ACT_RETRY == active_action)
+        return true;
+
+    if (ACT_RETRY < active_action || !SFDAQ::forwarding_packet(p->pkth))
         return false;
 
     // FIXIT-L semi-arbitrary heuristic for preventing retry queue saturation - reevaluate later
@@ -612,20 +616,28 @@ void Active::cancel_packet_hold()
 {
     assert(active_action == ACT_HOLD);
     active_counts.holds_canceled++;
-    active_action = ACT_PASS;
+    active_action = ACT_ALLOW;
 }
 
-void Active::allow_session(Packet* p)
+void Active::trust_session(Packet* p, bool force)
 {
-    active_action = ACT_PASS;
+    active_action = ACT_TRUST;
+    p->packet_flags |= PKT_IGNORE;
+    DetectionEngine::disable_all(p);
 
     if ( p->flow )
     {
+        p->flow->set_ignore_direction(SSN_DIR_BOTH);
         p->flow->set_state(Flow::FlowState::ALLOW);
-        p->flow->disable_inspection();
     }
 
-    p->disable_inspect = true;
+    if (force)
+    {
+        if ( p->flow )
+            p->flow->disable_inspection();
+
+        p->disable_inspect = true;
+    }
 }
 
 void Active::block_session(Packet* p, bool force)
@@ -694,7 +706,7 @@ void Active::apply_delayed_action(Packet* p)
 
     switch ( delayed_active_action )
     {
-    case ACT_PASS:
+    case ACT_ALLOW:
         break;
     case ACT_DROP:
         drop_packet(p, force);
@@ -714,7 +726,7 @@ void Active::apply_delayed_action(Packet* p)
         break;
     }
 
-    delayed_active_action = ACT_PASS;
+    delayed_active_action = ACT_ALLOW;
 }
 
 
@@ -758,9 +770,10 @@ void Active::close()
 void Active::reset()
 {
     active_tunnel_bypass = 0;
+    prevent_trust_action = false;
     active_status = AST_ALLOW;
-    active_action = ACT_PASS;
-    delayed_active_action = ACT_PASS;
+    active_action = ACT_ALLOW;
+    delayed_active_action = ACT_ALLOW;
     delayed_reject = nullptr;
 }
 

@@ -279,6 +279,12 @@ struct SO_PUBLIC Packet
     bool is_from_server() const
     { return (packet_flags & PKT_FROM_SERVER) != 0; }
 
+    bool is_from_client_originally() const
+    { return (!flow || flow->flags.client_initiated) ? is_from_client() : is_from_server(); }
+
+    bool is_from_server_originally() const
+    { return (!flow || flow->flags.client_initiated) ? is_from_server() : is_from_client(); }
+
     bool is_full_pdu() const
     { return (packet_flags & PKT_PDU_FULL) == PKT_PDU_FULL; }
 
