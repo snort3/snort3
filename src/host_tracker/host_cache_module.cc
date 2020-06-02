@@ -73,7 +73,7 @@ static const Parameter host_cache_params[] =
     { "dump_file", Parameter::PT_STRING, nullptr, nullptr,
       "file name to dump host cache on shutdown; won't dump by default" },
 
-    { "memcap", Parameter::PT_INT, "512:max32", "8388608",
+    { "memcap", Parameter::PT_INT, "512:maxSZ", "8388608",
       "maximum host cache size in bytes" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -88,7 +88,7 @@ bool HostCacheModule::set(const char*, Value& v, SnortConfig*)
         dump_file = snort_strdup(v.get_string());
     }
     else if ( v.is("memcap") )
-        hc_rrt.memcap = v.get_uint32();
+        hc_rrt.memcap = v.get_size();
     else
         return false;
 
