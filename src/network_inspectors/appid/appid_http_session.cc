@@ -422,7 +422,7 @@ void AppIdHttpSession::set_client(AppId app_id, AppidChangeBits& change_bits, co
 void AppIdHttpSession::set_payload(AppId app_id, AppidChangeBits& change_bits, const char* type,
     const char* version)
 {
-    if (app_id <= APP_ID_NONE or (app_id == payload.get_id()))
+    if (app_id == APP_ID_NONE or (app_id == payload.get_id()))
         return;
 
     payload.set_id(app_id);
@@ -432,8 +432,12 @@ void AppIdHttpSession::set_payload(AppId app_id, AppidChangeBits& change_bits, c
     if (appidDebug->is_active())
     {
         const char *app_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(app_id);
-        LogMessage("AppIdDbg %s %s is payload %s (%d)\n", appidDebug->get_debug_session(),
-            type, app_name ? app_name : "unknown", app_id);
+        if(app_id == APP_ID_UNKNOWN)
+            LogMessage("AppIdDbg %s Payload is Unknown (%d)\n", appidDebug->get_debug_session(),
+                app_id);
+        else
+            LogMessage("AppIdDbg %s %s is payload %s (%d)\n", appidDebug->get_debug_session(),
+                type, app_name ? app_name : "unknown", app_id);
     }
 }
 
@@ -460,6 +464,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
     const std::string* host = meta_data[REQ_HOST_FID];
     const std::string* referer = meta_data[REQ_REFERER_FID];
     const std::string* uri = meta_data[REQ_URI_FID];
+    bool is_payload_processed = false;
 
     // For fragmented HTTP headers, do not process if none of the fields are set.
     // These fields will get set when the HTTP header is reassembled.
@@ -501,9 +506,10 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
 #endif
     }
 
-    if (asd.service.get_id() == APP_ID_NONE)
+    if (asd.service.get_id() == APP_ID_NONE or asd.service.get_id() == APP_ID_HTTP2)
     {
-        asd.service.set_id(APP_ID_HTTP, asd.ctxt.get_odp_ctxt());
+        if (asd.service.get_id() == APP_ID_NONE)
+            asd.service.set_id(APP_ID_HTTP, asd.ctxt.get_odp_ctxt());
         asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
         asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
     }
@@ -520,34 +526,35 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
         const std::string* server = meta_data[MISC_SERVER_FID];
         if ( (asd.scan_flags & SCAN_HTTP_VENDOR_FLAG) and server)
         {
-            if ( asd.service.get_id() == APP_ID_NONE || asd.service.get_id() == APP_ID_HTTP )
-            {
-                char* vendorVersion = nullptr;
-                char* vendor = nullptr;
-                AppIdServiceSubtype* subtype = nullptr;
-
-                http_matchers.get_server_vendor_version(server->c_str(), server->size(),
-                    &vendorVersion, &vendor, &subtype);
-                if (vendor || vendorVersion)
+            if ( asd.service.get_id() == APP_ID_NONE or asd.service.get_id() == APP_ID_HTTP  or
+                asd.service.get_id() == APP_ID_HTTP2)
                 {
-                    asd.service.set_vendor(vendor);
-                    asd.service.set_version(vendorVersion, change_bits);
-                    asd.scan_flags &= ~SCAN_HTTP_VENDOR_FLAG;
+                    char* vendorVersion = nullptr;
+                    char* vendor = nullptr;
+                    AppIdServiceSubtype* subtype = nullptr;
 
-                    snort_free(vendor);
-                    snort_free(vendorVersion);
+                    http_matchers.get_server_vendor_version(server->c_str(), server->size(),
+                        &vendorVersion, &vendor, &subtype);
+                    if (vendor || vendorVersion)
+                    {
+                        asd.service.set_vendor(vendor);
+                        asd.service.set_version(vendorVersion, change_bits);
+                        asd.scan_flags &= ~SCAN_HTTP_VENDOR_FLAG;
+
+                        snort_free(vendor);
+                        snort_free(vendorVersion);
+                    }
+
+                    if (subtype)
+                    {
+                        AppIdServiceSubtype** tmp_subtype;
+
+                        for (tmp_subtype = &asd.subtype; *tmp_subtype; tmp_subtype = &(*tmp_subtype)->next)
+                            ;
+
+                        *tmp_subtype = subtype;
+                    }
                 }
-
-                if (subtype)
-                {
-                    AppIdServiceSubtype** tmp_subtype;
-
-                    for (tmp_subtype = &asd.subtype; *tmp_subtype; tmp_subtype = &(*tmp_subtype)->next)
-                        ;
-
-                    *tmp_subtype = subtype;
-                }
-            }
         }
 
         if (is_webdav)
@@ -588,6 +595,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             AppId payload_id = http_matchers.get_appid_by_pattern(via->c_str(), via->size(),
                 nullptr);
             set_payload(payload_id, change_bits, "VIA");
+            is_payload_processed = true;
             asd.scan_flags &= ~SCAN_HTTP_VIA_FLAG;
         }
     }
@@ -629,6 +637,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
         AppId payload_id = http_matchers.get_appid_by_content_type(content_type->c_str(),
             content_type->size());
         set_payload(payload_id, change_bits, "Content-Type");
+        is_payload_processed = true;
         asd.scan_flags &= ~SCAN_HTTP_CONTENT_TYPE_FLAG;
     }
 
@@ -671,6 +680,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             set_referred_payload(referredPayloadAppId, change_bits);
         }
 
+        is_payload_processed = true; 
         asd.scan_flags &= ~SCAN_HTTP_HOST_URL_FLAG;
         if ( version )
             snort_free(version);
@@ -703,6 +713,9 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             }
         }
     }
+    if (payload.get_id() <=APP_ID_NONE and is_payload_processed and
+        asd.service.get_id()== APP_ID_HTTP2)
+        set_payload(APP_ID_UNKNOWN, change_bits);
 
     asd.clear_http_flags();
 

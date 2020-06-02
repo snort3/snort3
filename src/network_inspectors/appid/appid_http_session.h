@@ -152,7 +152,7 @@ public:
 
     void clear_all_fields();
     void set_client(AppId, AppidChangeBits&, const char*, const char* version = nullptr);
-    void set_payload(AppId, AppidChangeBits&, const char*, const char* version = nullptr);
+    void set_payload(AppId, AppidChangeBits&, const char* type = nullptr, const char* version = nullptr);
     void set_referred_payload(AppId, AppidChangeBits&);
 
     uint32_t get_http2_stream_id() const
