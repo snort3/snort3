@@ -64,13 +64,21 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     AppIdHttpSession* hsession;
     if (http_event->get_is_http2())
     {
-        if (asd->get_prev_http2_raw_packet() != asd->session_packet_count)
+        if (direction == APP_ID_FROM_INITIATOR)
         {
-            asd->delete_all_http_sessions();
-            asd->set_prev_http2_raw_packet(asd->session_packet_count);
+            if (asd->get_prev_http2_raw_packet() != asd->session_packet_count)
+            {
+                asd->delete_all_http_sessions();
+                asd->set_prev_http2_raw_packet(asd->session_packet_count);
+            }
+            hsession = asd->create_http_session(http_event->get_http2_stream_id());
         }
-
-        hsession = asd->create_http_session(http_event->get_http2_stream_id());
+        else
+        {
+            hsession = asd->get_matching_http_session(http_event->get_http2_stream_id());
+            if (!hsession)
+                hsession = asd->create_http_session(http_event->get_http2_stream_id());
+        }
     }
     else
     {

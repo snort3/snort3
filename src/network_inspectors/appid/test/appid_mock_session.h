@@ -283,6 +283,16 @@ AppIdHttpSession* AppIdSession::get_http_session(uint32_t stream_index)
     return nullptr;
 }
 
+AppIdHttpSession* AppIdSession::get_matching_http_session(uint32_t stream_id)
+{
+    for (uint32_t stream_index=0; stream_index < hsessions.size(); stream_index++)
+    {
+        if(stream_id == hsessions[stream_index]->get_http2_stream_id())
+            return hsessions[stream_index];
+    }
+    return nullptr;
+}
+
 AppIdDnsSession* AppIdSession::create_dns_session()
 {
     if ( !dsession )

@@ -361,6 +361,7 @@ public:
 
     AppIdHttpSession* create_http_session(uint32_t stream_id = 0);
     AppIdHttpSession* get_http_session(uint32_t stream_index = 0);
+    AppIdHttpSession* get_matching_http_session(uint32_t stream_id);
     void delete_all_http_sessions()
     {
         for (auto hsession : hsessions)
