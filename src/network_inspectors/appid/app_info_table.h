@@ -56,12 +56,11 @@ enum AppInfoFlags
     APPINFO_FLAG_DEFER                = (1<<7),
 
     APPINFO_FLAG_IGNORE               = (1<<8),
-    APPINFO_FLAG_SSL_SQUELCH          = (1<<9),
-    APPINFO_FLAG_PERSISTENT           = (1<<10),
-    APPINFO_FLAG_TP_CLIENT            = (1<<11),
-    APPINFO_FLAG_DEFER_PAYLOAD        = (1<<12),
-    APPINFO_FLAG_CLIENT_DETECTOR_CALLBACK = (1<<13),
-    APPINFO_FLAG_SERVICE_DETECTOR_CALLBACK = (1<<14)
+    APPINFO_FLAG_PERSISTENT           = (1<<9),
+    APPINFO_FLAG_TP_CLIENT            = (1<<10),
+    APPINFO_FLAG_DEFER_PAYLOAD        = (1<<11),
+    APPINFO_FLAG_CLIENT_DETECTOR_CALLBACK = (1<<12),
+    APPINFO_FLAG_SERVICE_DETECTOR_CALLBACK = (1<<13)
 };
 
 class AppInfoTableEntry

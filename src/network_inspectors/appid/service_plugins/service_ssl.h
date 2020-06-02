@@ -37,7 +37,6 @@ public:
 
 AppId getSslServiceAppId(short srcPort);
 bool is_service_over_ssl(AppId);
-bool setSSLSquelch(snort::Packet*, int type, AppId, OdpContext&);
 
 #endif
 

@@ -810,36 +810,3 @@ bool is_service_over_ssl(AppId appId)
     return false;
 }
 
-bool setSSLSquelch(Packet* p, int type, AppId appId, OdpContext& odp_ctxt)
-{
-    if (!odp_ctxt.get_app_info_mgr().get_app_info_flags(appId, APPINFO_FLAG_SSL_SQUELCH))
-        return false;
-
-    const SfIp* dip = p->ptrs.ip_api.get_dst();
-    const SfIp* sip = p->ptrs.ip_api.get_src();
-
-    /* FIXIT-E: Passing appId to create_future_session() is incorrect. We
-       need to pass the snort_protocol_id associated with appId. */
-    AppIdSession* asd = AppIdSession::create_future_session(p, sip, 0, dip, p->ptrs.dp,
-        IpProtocol::TCP, appId, 0);
-
-    if (asd)
-    {
-        switch (type)
-        {
-        case 1:
-            asd->payload.set_id(appId);
-            break;
-        case 2:
-            asd->client.set_id(appId);
-            asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
-            break;
-        default:
-            return false;
-        }
-        return true;
-    }
-    else
-        return false;
-}
-

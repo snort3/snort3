@@ -472,10 +472,6 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
             {
                 set_app_info_flags(atoi(conf_val), APPINFO_FLAG_SSL_INSPECT);
             }
-            else if (!(strcasecmp(conf_key, "ssl_squelch")))
-            {
-                set_app_info_flags(atoi(conf_val), APPINFO_FLAG_SSL_SQUELCH);
-            }
             else if (!(strcasecmp(conf_key, "defer_to_thirdparty")))
             {
                 set_app_info_flags(atoi(conf_val), APPINFO_FLAG_DEFER);

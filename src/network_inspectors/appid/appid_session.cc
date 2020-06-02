@@ -305,7 +305,7 @@ void AppIdSession::sync_with_snort_protocol_id(AppId newAppId, Packet* p)
     if (tmp_snort_protocol_id != snort_protocol_id)
     {
         snort_protocol_id = tmp_snort_protocol_id;
-        p->flow->ssn_state.snort_protocol_id = tmp_snort_protocol_id;
+        Stream::set_snort_protocol_id(p->flow, tmp_snort_protocol_id);
     }
 }
 
@@ -437,7 +437,6 @@ void AppIdSession::update_encrypted_app_id(AppId service_id)
 
 void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
 {
-    int ret;
     AppId client_id = 0;
     AppId payload_id = 0;
     const char* tls_str = tsession->get_tls_host();
@@ -445,39 +444,35 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
     if ((scan_flags & SCAN_SSL_HOST_FLAG) and tls_str)
     {
         size_t size = strlen(tls_str);
-        if ((ret =
-            ctxt.get_odp_ctxt().get_ssl_matchers().scan_hostname((const uint8_t*)tls_str, size,
-            client_id, payload_id)))
+        if (ctxt.get_odp_ctxt().get_ssl_matchers().scan_hostname((const uint8_t*)tls_str, size,
+            client_id, payload_id))
         {
             if (client.get_id() == APP_ID_NONE or client.get_id() == APP_ID_SSL_CLIENT)
                 set_client_appid_data(client_id, change_bits);
             set_payload_appid_data(payload_id, change_bits);
-            setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id), ctxt.get_odp_ctxt());
         }
         scan_flags &= ~SCAN_SSL_HOST_FLAG;
     }
     if ((scan_flags & SCAN_SSL_CERTIFICATE_FLAG) and (tls_str = tsession->get_tls_cname()))
     {
         size_t size = strlen(tls_str);
-        if ((ret = ctxt.get_odp_ctxt().get_ssl_matchers().scan_cname((const uint8_t*)tls_str, size,
-            client_id, payload_id)))
+        if (ctxt.get_odp_ctxt().get_ssl_matchers().scan_cname((const uint8_t*)tls_str, size,
+            client_id, payload_id))
         {
             if (client.get_id() == APP_ID_NONE or client.get_id() == APP_ID_SSL_CLIENT)
                 set_client_appid_data(client_id, change_bits);
             set_payload_appid_data(payload_id, change_bits);
-            setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id), ctxt.get_odp_ctxt());
         }
         scan_flags &= ~SCAN_SSL_CERTIFICATE_FLAG;
     }
     if ((tls_str = tsession->get_tls_org_unit()))
     {
         size_t size = strlen(tls_str);
-        if ((ret = ctxt.get_odp_ctxt().get_ssl_matchers().scan_cname((const uint8_t*)tls_str, size,
-            client_id, payload_id)))
+        if (ctxt.get_odp_ctxt().get_ssl_matchers().scan_cname((const uint8_t*)tls_str, size,
+            client_id, payload_id))
         {
             set_client_appid_data(client_id, change_bits);
             set_payload_appid_data(payload_id, change_bits);
-            setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id), ctxt.get_odp_ctxt());
         }
         tsession->set_tls_org_unit(nullptr, 0);
     }

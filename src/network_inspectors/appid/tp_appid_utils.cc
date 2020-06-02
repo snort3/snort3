@@ -684,7 +684,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
     }
 
     unsigned app_info_flags = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_info_flags(tp_app_id,
-        APPINFO_FLAG_TP_CLIENT | APPINFO_FLAG_IGNORE | APPINFO_FLAG_SSL_SQUELCH);
+        APPINFO_FLAG_TP_CLIENT | APPINFO_FLAG_IGNORE );
 
     // if the third-party appId must be treated as a client, do it now
     if (app_info_flags & APPINFO_FLAG_TP_CLIENT)
@@ -693,13 +693,6 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
             hsession->set_client(tp_app_id, change_bits, "Third Party");
         else
             asd.client.set_id(*p, asd, direction, tp_app_id, change_bits);
-    }
-
-    if ((app_info_flags & APPINFO_FLAG_SSL_SQUELCH) and
-        asd.get_session_flags(APPID_SESSION_SSL_SESSION) and
-        !(asd.scan_flags & SCAN_SSL_HOST_FLAG))
-    {
-        setSSLSquelch(p, 1, tp_app_id, asd.ctxt.get_odp_ctxt());
     }
 
     if ( app_info_flags & APPINFO_FLAG_IGNORE )
