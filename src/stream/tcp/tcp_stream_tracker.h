@@ -291,6 +291,7 @@ public:
     void finalize_held_packet(snort::Packet*);
     void finalize_held_packet(snort::Flow*);
     uint32_t perform_partial_flush();
+    bool is_holding_packet() const { return held_packet != null_iterator; }
 
     // max_remove < 0 means time out all eligible packets.
     // Return whether there are more packets that need to be released.
@@ -366,6 +367,8 @@ protected:
     uint8_t tcp_options_len = 0;
     bool mac_addr_valid = false;
     bool fin_seq_set = false;  // FIXIT-M should be obviated by tcp state
+
+    static const std::list<HeldPacket>::iterator null_iterator;
 };
 
 // <--- note -- the 'state' parameter must be a reference

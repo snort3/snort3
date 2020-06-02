@@ -82,6 +82,7 @@ const PegInfo tcp_pegs[] =
     { CountType::SUM, "held_packets_dropped", "number of held packets dropped" },
     { CountType::SUM, "held_packets_passed", "number of held packets passed" },
     { CountType::SUM, "held_packet_timeouts", "number of held packets that timed out" },
+    { CountType::SUM, "held_packet_purges", "number of held packets that were purged without flushing" },
     { CountType::NOW, "cur_packets_held", "number of packets currently held" },
     { CountType::MAX, "max_packets_held", "maximum number of packets held simultaneously" },
     { CountType::SUM, "partial_flushes", "number of partial flushes initiated" },

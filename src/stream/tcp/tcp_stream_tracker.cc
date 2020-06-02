@@ -43,7 +43,7 @@ using namespace snort;
 
 THREAD_LOCAL HeldPacketQueue* hpq = nullptr;
 
-static const HeldPacketQueue::iter_t null_iterator { };
+const std::list<HeldPacket>::iterator TcpStreamTracker::null_iterator { };
 
 const char* tcp_state_names[] =
 {

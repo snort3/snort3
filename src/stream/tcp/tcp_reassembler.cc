@@ -1340,7 +1340,17 @@ uint32_t TcpReassembler::perform_partial_flush(TcpReassemblerState& trs, Flow* f
     DetectionEngine de;
 
     Packet* p = set_packet(flow, trs.packet_dir, trs.server_side);
-    return perform_partial_flush(trs, p);
+    uint32_t result = perform_partial_flush(trs, p);
+
+    // If the held_packet hasn't been released by perform_partial_flush(),
+    // call finalize directly.
+    if ( trs.tracker->is_holding_packet() )
+    {
+        trs.tracker->finalize_held_packet(p);
+        tcpStats.held_packet_purges++;
+    }
+
+    return result;
 }
 
 // No error checking here, so the caller must ensure that p, p->flow and context
