@@ -134,6 +134,12 @@ public:
 
     const char* get_name() const;
 
+    void set_alias_name(const char* name)
+    { alias_name = name; }
+
+    const char* get_alias_name() const
+    { return alias_name; }
+
     virtual bool is_control_channel() const
     { return false; }
 
@@ -155,6 +161,8 @@ private:
     const InspectApi* api = nullptr;
     std::atomic_uint* ref_count;
     SnortProtocolId snort_protocol_id = 0;
+    // FIXIT-E Use std::string to avoid storing a pointer to external std::string buffers
+    const char* alias_name = nullptr;
 };
 
 // at present there is no sequencing among like types except that appid

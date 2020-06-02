@@ -214,7 +214,7 @@ bool Pig::queue_command(AnalyzerCommand* ac, bool orphan)
 
 #ifdef DEBUG_MSGS
     unsigned ac_ref_count = ac->get();
-    debug_logf(snort_trace, nullptr, "[%u] Queuing command %s for execution (refcount %u)\n",
+    debug_logf(snort_trace, TRACE_MAIN, nullptr, "[%u] Queuing command %s for execution (refcount %u)\n",
         idx, ac->stringify(), ac_ref_count);
 #else
     ac->get();
@@ -228,13 +228,13 @@ void Pig::reap_command(AnalyzerCommand* ac)
     unsigned ac_ref_count = ac->put();
     if (ac_ref_count == 0)
     {
-        debug_logf(snort_trace, nullptr, "[%u] Destroying completed command %s\n",
+        debug_logf(snort_trace, TRACE_MAIN, nullptr, "[%u] Destroying completed command %s\n",
             idx, ac->stringify());
         delete ac;
     }
 #ifdef DEBUG_MSGS
     else
-        debug_logf(snort_trace, nullptr, "[%u] Reaped ongoing command %s (refcount %u)\n",
+        debug_logf(snort_trace, TRACE_MAIN, nullptr, "[%u] Reaped ongoing command %s (refcount %u)\n",
             idx, ac->stringify(), ac_ref_count);
 #endif
 }
@@ -296,7 +296,7 @@ void snort::main_broadcast_command(AnalyzerCommand* ac, bool from_shell)
     unsigned dispatched = 0;
 
     ac = get_command(ac, from_shell);
-    debug_logf(snort_trace, nullptr, "Broadcasting %s command\n", ac->stringify());
+    debug_logf(snort_trace, TRACE_MAIN, nullptr, "Broadcasting %s command\n", ac->stringify());
 
     for (unsigned idx = 0; idx < max_pigs; ++idx)
     {
@@ -702,7 +702,7 @@ static void reap_commands()
     {
         AnalyzerCommand* ac = orphan_commands.front();
         orphan_commands.pop();
-        debug_logf(snort_trace, nullptr, "Destroying orphan command %s\n", ac->stringify());
+        debug_logf(snort_trace, TRACE_MAIN, nullptr, "Destroying orphan command %s\n", ac->stringify());
         delete ac;
     }
 }

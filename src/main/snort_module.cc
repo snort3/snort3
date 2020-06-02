@@ -178,6 +178,14 @@ static const Command snort_cmds[] =
 // cases the default must only be indicated in the help.
 //-------------------------------------------------------------------------
 
+static const TraceOption snort_trace_options[] =
+{
+    { "main", TRACE_MAIN, "enable main trace logging" },
+    { "inspector_manager", TRACE_INSPECTOR_MANAGER, "enable inspector manager trace logging" },
+
+    { nullptr, 0, nullptr }
+};
+
 static const Parameter s_params[] =
 {
     { "-?", Parameter::PT_STRING, "(optional)", nullptr,
@@ -653,8 +661,7 @@ void SnortModule::set_trace(const Trace* trace) const
 
 const TraceOption* SnortModule::get_trace_options() const
 {
-    static const TraceOption snort_trace_options(nullptr, 0, nullptr);
-    return &snort_trace_options;
+    return snort_trace_options;
 }
 
 bool SnortModule::begin(const char* fqn, int, SnortConfig*)
@@ -1095,9 +1102,6 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--x2s") )
         x2s(v.get_string());
-
-    else if (v.is("--trace"))
-        sc->trace_config->enable_trace_snort();
 
     return true;
 }

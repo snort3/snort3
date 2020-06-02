@@ -95,7 +95,8 @@ public:
 
 private:
     static void bumble(Packet*);
-    static void full_inspection(Packet*);
+    template<bool T> static void full_inspection(Packet*);
+    template<bool T> static void internal_execute(Packet*);
 };
 }
 #endif

@@ -48,7 +48,7 @@ void TraceModule::generate_params()
     for ( const auto* module : modules )
     {
         const TraceOption* trace_options = module->get_trace_options();
-        if ( trace_options && strcmp(module->get_name(), "snort") != 0 )
+        if ( trace_options )
         {
             auto& module_trace_options = configured_trace_options[module->get_name()];
             std::string module_trace_help(module->get_name());

@@ -34,9 +34,7 @@ public:
     TraceConfig();
     ~TraceConfig();
 
-    void enable_trace_snort();
     void setup_module_trace() const;
-    void merge_cmd_line(TraceConfig*);
     bool set_trace(const std::string& module_name,
         const std::string& trace_option_name, uint8_t trace_level);
 
@@ -44,7 +42,6 @@ public:
     snort::PacketConstraints* constraints = nullptr;
 
 private:
-    bool trace_snort_enabled = false;
     Traces traces;
 };
 

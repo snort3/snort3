@@ -36,5 +36,11 @@ extern THREAD_LOCAL const snort::Trace* snort_trace;
 
 snort::Module* get_snort_module();
 
+enum
+{
+    TRACE_MAIN = 0,
+    TRACE_INSPECTOR_MANAGER
+};
+
 #endif
 

@@ -458,7 +458,6 @@ void SnortConfig::merge(SnortConfig* cmd_line)
     assert(!state);
     num_slots = offload_threads + ThreadConfig::get_instance_max();
     state = new std::vector<void*>[num_slots];
-    trace_config->merge_cmd_line(cmd_line->trace_config);
 }
 
 bool SnortConfig::verify() const

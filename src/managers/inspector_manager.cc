@@ -36,10 +36,14 @@
 #include "main/shell.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
+#include "main/snort_debug.h"
+#include "main/snort_module.h"
 #include "main/thread_config.h"
 #include "search_engines/search_tool.h"
 #include "protocols/packet.h"
 #include "target_based/snort_protocols.h"
+#include "time/clock_defs.h"
+#include "time/stopwatch.h"
 
 #include "module_manager.h"
 
@@ -116,7 +120,10 @@ struct PHInstance
     { return ( a->pp_class.api.type < b->pp_class.api.type ); }
 
     void set_name(const char* s)
-    { name = s; }
+    {
+        name = s;
+        handler->set_alias_name(name.c_str());
+    }
 
     void set_reloaded(ReloadType val)
     { reload_type = val; }
@@ -1032,9 +1039,11 @@ void InspectorManager::print_config(SnortConfig* sc)
 // packet handling
 //-------------------------------------------------------------------------
 
+template<bool T>
 static inline void execute(
     Packet* p, PHInstance** prep, unsigned num)
 {
+    Stopwatch<SnortClock> timer;
     for ( unsigned i = 0; i < num; ++i, ++prep )
     {
         if ( p->packet_flags & PKT_PASS_RULE )
@@ -1048,6 +1057,15 @@ static inline void execute(
         if ( !p->flow && (ppc.api.type == IT_SERVICE) )
             break;
 
+        const char* inspector_name = nullptr;
+        if ( T )
+        {
+            timer.reset();
+            inspector_name = (*prep)->name.c_str();
+            trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER, "enter %s\n", inspector_name);
+            timer.start();
+        }
+
         // FIXIT-L ideally we could eliminate PktType and just use
         // proto_bits but things like teredo need to be fixed up.
         if ( p->type() == PktType::NONE )
@@ -1057,6 +1075,10 @@ static inline void execute(
         }
         else if ( BIT((unsigned)p->type()) & ppc.api.proto_bits )
             (*prep)->handler->eval(p);
+
+        if ( T )
+            trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER,
+                "exit %s, elapsed time: %" PRId64" usec\n", inspector_name, TO_USECS(timer.get()));
     }
 }
 
@@ -1076,6 +1098,7 @@ void InspectorManager::bumble(Packet* p)
         flow->session->restart(p);
 }
 
+template<bool T>
 void InspectorManager::full_inspection(Packet* p)
 {
     Flow* flow = p->flow;
@@ -1090,16 +1113,51 @@ void InspectorManager::full_inspection(Packet* p)
 
     else if ( flow->gadget && flow->gadget->likes(p) )
     {
-        flow->gadget->eval(p);
+        if ( !T )
+            flow->gadget->eval(p);
+        else
+        {
+            Stopwatch<SnortClock> timer;
+            const char* inspector_name = flow->gadget->get_alias_name();
+            trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER, "enter %s\n", inspector_name);
+            timer.start();
+
+            flow->gadget->eval(p);
+
+            trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER,
+                "exit %s, elapsed time: %" PRId64 "\n", inspector_name, TO_USECS(timer.get()));
+        }
+
         p->context->clear_inspectors = true;
     }
 }
 
 // FIXIT-M leverage knowledge of flow creation so that reputation (possibly a
 // new it_xxx) is run just once per flow (and all non-flow packets).
-
 void InspectorManager::execute(Packet* p)
 {
+    if ( trace_enabled(snort_trace, TRACE_INSPECTOR_MANAGER, DEFAULT_TRACE_LOG_LEVEL, p) )
+        internal_execute<true>(p);
+    else
+        internal_execute<false>(p);
+}
+
+template<bool T>
+void InspectorManager::internal_execute(Packet* p)
+{
+    Stopwatch<SnortClock> timer;
+    const char* packet_type = nullptr;
+    if ( T )
+    {
+        packet_type = p->is_rebuilt() ? "rebuilt" : "raw";
+
+        trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER,
+            "start inspection, %s, packet %" PRId64", context %" PRId64"\n",
+            packet_type, p->context->packet_number, p->context->context_num);
+
+        timer.start();
+    }
+
     FrameworkPolicy* fp = get_inspection_policy()->framework_policy;
     assert(fp);
 
@@ -1109,7 +1167,7 @@ void InspectorManager::execute(Packet* p)
         // be elevated from inspector to framework component (it is just
         // a flow control wrapper) and use eval() instead of process()
         // for stream_*.
-        ::execute(p, fp->session.vec, fp->session.num);
+        ::execute<T>(p, fp->session.vec, fp->session.num);
         fp = get_inspection_policy()->framework_policy;
     }
     // must check between each ::execute()
@@ -1117,7 +1175,7 @@ void InspectorManager::execute(Packet* p)
         return;
 
     if ( !p->is_cooked() )
-        ::execute(p, fp->packet.vec, fp->packet.num);
+        ::execute<T>(p, fp->packet.vec, fp->packet.num);
 
     if ( p->disable_inspect )
         return;
@@ -1128,13 +1186,13 @@ void InspectorManager::execute(Packet* p)
     if ( !p->flow )
     {
         if (fp_dft != fp)
-            ::execute(p, fp_dft->network.vec, fp_dft->network.num);
-        ::execute(p, fp->network.vec, fp->network.num);
+            ::execute<T>(p, fp_dft->network.vec, fp_dft->network.num);
+        ::execute<T>(p, fp->network.vec, fp->network.num);
 
         if ( p->disable_inspect )
             return;
 
-        ::execute(p, fp_dft->control.vec, fp_dft->control.num);
+        ::execute<T>(p, fp_dft->control.vec, fp_dft->control.num);
     }
     else
     {
@@ -1144,26 +1202,49 @@ void InspectorManager::execute(Packet* p)
         if ( !p->flow->service )
         {
             if (fp_dft != fp)
-                ::execute(p, fp_dft->network.vec, fp_dft->network.num);
-            ::execute(p, fp->network.vec, fp->network.num);
+                ::execute<T>(p, fp_dft->network.vec, fp_dft->network.num);
+            ::execute<T>(p, fp->network.vec, fp->network.num);
         }
 
         if ( p->disable_inspect )
             return;
 
         if ( p->flow->full_inspection() )
-            full_inspection(p);
+            full_inspection<T>(p);
 
         if ( !p->disable_inspect and !p->flow->is_inspection_disabled() )
-            ::execute(p, fp_dft->control.vec, fp_dft->control.num);
+            ::execute<T>(p, fp_dft->control.vec, fp_dft->control.num);
     }
+
+    if ( T )
+        trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER,
+            "stop inspection, %s, packet %" PRId64", context %" PRId64", total time: %" PRId64" usec\n",
+            packet_type, p->context->packet_number, p->context->context_num, TO_USECS(timer.get()));
 }
 
 void InspectorManager::probe(Packet* p)
 {
     InspectionPolicy* policy = p->context->conf->policy_map->get_inspection_policy(0);
     FrameworkPolicy* fp = policy->framework_policy;
-    ::execute(p, fp->probe.vec, fp->probe.num);
+
+    if ( !trace_enabled(snort_trace, TRACE_INSPECTOR_MANAGER, DEFAULT_TRACE_LOG_LEVEL, p) )
+        ::execute<false>(p, fp->probe.vec, fp->probe.num);
+    else
+    {
+        Stopwatch<SnortClock> timer;
+        const char* packet_type = p->is_rebuilt() ? "rebuilt" : "raw";
+        trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER,
+            "post detection inspection, %s, packet %" PRId64", context %" PRId64"\n",
+            packet_type, p->context->packet_number, p->context->context_num);
+
+        timer.start();
+
+        ::execute<true>(p, fp->probe.vec, fp->probe.num);
+
+        trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER,
+            "end inspection, %s, packet %" PRId64", context %" PRId64", total time: %" PRId64" usec\n",
+            packet_type, p->context->packet_number, p->context->context_num, TO_USECS(timer.get()));
+    }
 }
 
 void InspectorManager::clear(Packet* p)

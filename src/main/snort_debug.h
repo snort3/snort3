@@ -58,6 +58,23 @@ SO_PUBLIC void trace_vprintf(const char* name, TraceLevel log_level,
 using trace_func = void(const char*, TraceLevel, const char*, const char*, va_list);
 
 template <trace_func>
+static inline void trace_uprintf(const snort::Trace* trace,
+    TraceOptionID trace_option_id, const char* fmt, ...) __attribute__((format (printf, 3, 4)));
+
+template <trace_func trace_vprintf = snort::trace_vprintf>
+static inline void trace_uprintf(const snort::Trace* trace,
+    TraceOptionID trace_option_id, const char* fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+
+    const char* trace_option_name = trace->option_name(trace_option_id);
+    trace_vprintf(trace->module_name(), DEFAULT_TRACE_LOG_LEVEL, trace_option_name, fmt, ap);
+
+    va_end(ap);
+}
+
+template <trace_func>
 static inline void trace_printf(TraceLevel log_level,
     const snort::Trace* trace, TraceOptionID trace_option_id,
     const snort::Packet* p, const char* fmt, ...)
@@ -180,9 +197,11 @@ static inline void trace_print(const snort::Trace* trace, const snort::Packet* p
 
 #define trace_print trace_print<snort::trace_vprintf>
 #define trace_printf trace_printf<snort::trace_vprintf>
+#define trace_uprintf trace_uprintf<snort::trace_vprintf>
 
 #define trace_log(...) trace_print(__VA_ARGS__)
 #define trace_logf(...) trace_printf(__VA_ARGS__)
+#define trace_ulogf(...) trace_uprintf(__VA_ARGS__)
 
 #ifdef DEBUG_MSGS
 #define debug_log trace_log
@@ -193,4 +212,3 @@ static inline void trace_print(const snort::Trace* trace, const snort::Packet* p
 #endif
 
 #endif
-

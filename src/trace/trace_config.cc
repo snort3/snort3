@@ -67,14 +67,3 @@ void TraceConfig::setup_module_trace() const
         trace.set_module_trace();
 }
 
-void TraceConfig::enable_trace_snort()
-{ trace_snort_enabled = true; }
-
-void TraceConfig::merge_cmd_line(TraceConfig* trace_config)
-{
-    trace_snort_enabled = trace_config->trace_snort_enabled;
-    
-    if ( trace_snort_enabled )
-        set_trace("snort", DEFAULT_TRACE_OPTION_NAME, DEFAULT_TRACE_LOG_LEVEL);
-}
-
