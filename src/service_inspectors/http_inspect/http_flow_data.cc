@@ -29,8 +29,12 @@
 #include "http_common.h"
 #include "http_enum.h"
 #include "http_module.h"
+#include "http_msg_header.h"
+#include "http_msg_request.h"
+#include "http_msg_status.h"
 #include "http_test_manager.h"
 #include "http_transaction.h"
+#include "http_uri.h"
 
 using namespace snort;
 using namespace HttpCommon;
@@ -41,6 +45,10 @@ unsigned HttpFlowData::inspector_id = 0;
 #ifdef REG_TEST
 uint64_t HttpFlowData::instance_count = 0;
 #endif
+
+const uint16_t HttpFlowData::memory_usage_estimate = sizeof(HttpFlowData) + sizeof(HttpTransaction)
+    + sizeof(HttpMsgRequest) + sizeof(HttpMsgStatus) + (2 * sizeof(HttpMsgHeader)) + sizeof(HttpUri)
+    + header_size_estimate + small_things;
 
 HttpFlowData::HttpFlowData() : FlowData(inspector_id)
 {
@@ -233,6 +241,11 @@ HttpInfractions* HttpFlowData::get_infractions(SourceId source_id)
     assert(transaction[source_id] != nullptr);
     assert(transaction[source_id]->get_infractions(source_id) != nullptr);
     return transaction[source_id]->get_infractions(source_id);
+}
+
+uint16_t HttpFlowData::get_memory_usage_estimate()
+{
+    return memory_usage_estimate;
 }
 
 #ifdef REG_TEST

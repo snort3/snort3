@@ -165,6 +165,11 @@ private:
     class Http2Stream* get_stream(uint32_t key);
     class Http2Stream* get_hi_stream() const;
     class Http2Stream* find_stream(uint32_t key) const;
+
+    // When H2I allocates http_inspect flows, it bypasses the usual FlowData memory allocation
+    // bookkeeping. So H2I needs to update memory allocations and deallocations itself.
+    void allocate_hi_memory();
+    void deallocate_hi_memory();
 };
 
 #endif

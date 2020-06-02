@@ -158,3 +158,12 @@ uint32_t Http2FlowData::get_current_stream_id(const HttpCommon::SourceId source_
     return current_stream[source_id];
 }
 
+void Http2FlowData::allocate_hi_memory()
+{
+    update_allocations(HttpFlowData::get_memory_usage_estimate());
+}
+
+void Http2FlowData::deallocate_hi_memory()
+{
+    update_deallocations(HttpFlowData::get_memory_usage_estimate());
+}

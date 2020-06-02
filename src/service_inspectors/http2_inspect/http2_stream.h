@@ -42,8 +42,7 @@ public:
     void clear_frame();
     const Field& get_buf(unsigned id);
     HttpFlowData* get_hi_flow_data() const { return hi_flow_data; }
-    void set_hi_flow_data(HttpFlowData* flow_data)
-        { assert(hi_flow_data == nullptr); hi_flow_data = flow_data; }
+    void set_hi_flow_data(HttpFlowData* flow_data);
     HttpMsgSection* get_hi_msg_section() const { return hi_msg_section; }
     void set_hi_msg_section(HttpMsgSection* section) { hi_msg_section = section; }
     uint32_t get_xtradata_mask() { return (current_frame != nullptr) ?

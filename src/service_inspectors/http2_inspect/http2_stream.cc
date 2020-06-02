@@ -40,6 +40,8 @@ Http2Stream::Http2Stream(uint32_t stream_id_, Http2FlowData* session_data_) :
 Http2Stream::~Http2Stream()
 {
     delete current_frame;
+    if (hi_flow_data)
+        session_data->deallocate_hi_memory();
     delete hi_flow_data;
     delete data_cutter[SRC_CLIENT];
     delete data_cutter[SRC_SERVER];
@@ -60,6 +62,13 @@ void Http2Stream::clear_frame()
         current_frame->clear();
     delete current_frame;
     current_frame = nullptr;
+}
+
+void Http2Stream::set_hi_flow_data(HttpFlowData* flow_data)
+{
+    assert(hi_flow_data == nullptr);
+    hi_flow_data = flow_data;
+    session_data->allocate_hi_memory();
 }
 
 const Field& Http2Stream::get_buf(unsigned id)

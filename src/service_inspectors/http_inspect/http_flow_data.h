@@ -77,6 +77,8 @@ public:
     void reset_partial_flush(HttpCommon::SourceId source_id)
     { partial_flush[source_id] = false; }
 
+    static uint16_t get_memory_usage_estimate();
+
 private:
     // HTTP/2 handling
     bool for_http2 = false;
@@ -181,6 +183,12 @@ private:
 
     // Transactions with uncleared sections awaiting deletion
     HttpTransaction* discard_list = nullptr;
+
+    // Estimates of how much memory http_inspect uses to process a stream for H2I
+    static const uint16_t header_size_estimate = 3000;  // combined raw size of request and
+                                                        //response message headers
+    static const uint16_t small_things = 400; // minor memory costs not otherwise accounted for
+    static const uint16_t memory_usage_estimate;
 
 #ifdef REG_TEST
     static uint64_t instance_count;
