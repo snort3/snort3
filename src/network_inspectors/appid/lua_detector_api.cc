@@ -2415,8 +2415,7 @@ static int create_future_flow(lua_State* L)
     }
 
     AppIdSession* fp = AppIdSession::create_future_session(lsd->ldp.pkt,  &client_addr,
-        client_port, &server_addr, server_port, proto, snort_protocol_id,
-        APPID_EARLY_SESSION_FLAG_FW_RULE);
+        client_port, &server_addr, server_port, proto, snort_protocol_id);
     if (fp)
     {
         fp->service.set_id(service_id, ud->get_odp_ctxt());

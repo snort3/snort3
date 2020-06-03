@@ -22,9 +22,13 @@
 #ifndef DCE_TCP_H
 #define DCE_TCP_H
 
+#include "framework/inspector.h"
 #include "profiler/profiler_defs.h"
 
 #include "dce_co.h"
+#include "dce_expected_session.h"
+#include "dce_tcp_module.h"
+#include "dce_tcp_paf.h"
 
 #define DCE2_TCP_NAME "dce_tcp"
 #define DCE2_TCP_HELP "dce over tcp inspection"
@@ -64,6 +68,8 @@ struct dce2TcpStats
 
     /*DCE TCP specific*/
     PegCount tcp_sessions;
+    PegCount tcp_expected_sessions;
+    PegCount tcp_expected_realized_sessions;
     PegCount tcp_pkts;
     PegCount concurrent_sessions;
     PegCount max_concurrent_sessions;
@@ -103,6 +109,13 @@ struct DCE2_TcpSsnData
     DCE2_CoTracker co_tracker;
 };
 
+enum DCE2_TcpFlowState
+{
+    DCE2_TCP_FLOW__COMMON,
+    DCE2_TCP_FLOW__EXPECTED,
+    DCE2_TCP_FLOW__REALIZED
+};
+
 class Dce2TcpFlowData : public snort::FlowData
 {
 public:
@@ -118,6 +131,27 @@ public:
 public:
     static unsigned inspector_id;
     DCE2_TcpSsnData dce2_tcp_session;
+    DCE2_TcpFlowState state;
+};
+
+class Dce2Tcp : public snort::Inspector
+{
+public:
+    Dce2Tcp(const dce2TcpProtoConf&);
+
+    void show(const snort::SnortConfig*) const override;
+    void eval(snort::Packet*) override;
+    void clear(snort::Packet*) override;
+
+    DceTcpExpSsnManager& get_esm()
+    { return esm; }
+
+    snort::StreamSplitter* get_splitter(bool c2s) override
+    { return new Dce2TcpSplitter(c2s); }
+
+private:
+    dce2TcpProtoConf config;
+    DceTcpExpSsnManager esm;
 };
 
 DCE2_TcpSsnData* get_dce2_tcp_session_data(snort::Flow*);

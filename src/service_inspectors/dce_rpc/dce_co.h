@@ -39,6 +39,21 @@
 #define DCE2_CO_FRAG_DIFF_OPNUM             38
 #define DCE2_CO_FRAG_DIFF_CTX_ID            39
 
+/* Map response fields offsets */
+#define DCE2_CO_MAP_HANDLE_OFS              20
+#define DCE2_CO_MAP_NUM_TOWERS_OFS          4
+#define DCE2_CO_MAP_TWR_FLOOR12_OFS         25
+#define DCE2_CO_MAP_TWR_FLOOR34_OFS         7
+#define DCE2_CO_MAP_TWR_LEN_OFS             4
+#define DCE2_CO_MAP_FLR_COUNT_OFS           2
+#define DCE2_CO_MAP_FLR_LHS_RHS_OFS         2
+#define DCE2_CO_MAP_FLR_PROTO_ID_OFS        1
+
+/* Protocol IDs. Not a full list.
+ * Refer to DCE RPC 1.1 Appendix I */
+#define DCE2_CO_PROTO_DOD_TCP               0x07
+#define DCE2_CO_PROTO_ID_CO                 0x0b
+
 #define DCE2_CO_BAD_MAJOR_VERSION_STR  "connection oriented DCE/RPC - invalid major version"
 #define DCE2_CO_BAD_MINOR_VERSION_STR  "connection oriented DCE/RPC - invalid minor version"
 #define DCE2_CO_BAD_PDU_TYPE_STR       "connection-oriented DCE/RPC - invalid PDU type"
@@ -242,6 +257,25 @@ enum DCE2_CoCtxState
     DCE2_CO_CTX_STATE__PENDING
 };
 
+enum DCE2_CoCtxTransport
+{
+    /* Default 32-Bit NDR defined in DCE RPC 1.1 */
+    DCE2_CO_CTX_TRANS_SYNTAX_NDR_DEF,
+    /* 64-Bit NDR defined in [MS-RPCE] */
+    DCE2_CO_CTX_TRANS_SYNTAX_NDR64
+};
+
+enum DCE2_CoEpmOpnum {
+    DCE2_CO_EPT_NONE = -1,
+    DCE2_CO_EPT_INSERT = 0,
+    DCE2_CO_EPT_DELETE,
+    DCE2_CO_EPT_LOOKUP,
+    DCE2_CO_EPT_MAP,
+    DCE2_CO_EPT_LKUP_HANDLE_FREE,
+    DCE2_CO_EPT_INQ_OBJECT,
+    DCE2_CO_EPT_MGMT_DELETE
+};
+
 struct DCE2_CoCtxIdNode
 {
     uint16_t ctx_id;           /* The context id */
@@ -252,6 +286,7 @@ struct DCE2_CoCtxIdNode
     /* Whether or not the server accepted or rejected the client bind/alter context
      * request.  Initially set to pending until server response */
     DCE2_CoCtxState state;
+    DCE2_CoCtxTransport transport; 
 };
 
 enum DceRpcCoAuthLevelType
@@ -349,6 +384,11 @@ inline uint16_t DceRpcCoContRes(const DceRpcCoHdr* co, const DceRpcCoContResult*
     return DceRpcNtohs(&cocr->result, DceRpcCoByteOrder(co));
 }
 
+inline const Uuid* DceRpcCoContResTransport(const DceRpcCoContResult* cocr)
+{
+    return &cocr->transfer_syntax.if_uuid;
+}
+
 inline int DceRpcCoObjectFlag(const DceRpcCoHdr* co)
 {
     return co->pfc_flags & DCERPC_CO_PFC_FLAGS__OBJECT_UUID;
@@ -407,6 +447,54 @@ inline uint16_t DceRpcCoOpnum(const DceRpcCoHdr* co, const DceRpcCoRequest* cor)
 inline uint16_t DceRpcCoCtxId(const DceRpcCoHdr* co, const DceRpcCoRequest* cor)
 {
     return DceRpcNtohs(&cor->context_id, DceRpcCoByteOrder(co));
+}
+
+inline int DCE2_GetNdrUint32(const uint8_t* data_ptr, uint32_t& data,
+    int offset, DceRpcBoFlag bo_flag)
+{
+    const uint32_t* ptr;
+    int align_offset = 0;
+
+    /* Alignment */
+    if (offset % 4) 
+    {
+        align_offset = 4 - (offset % 4);
+    }
+
+    ptr = (const uint32_t*)(data_ptr + align_offset);
+    data = DceRpcNtohl(ptr, bo_flag);
+
+    return align_offset + 4;
+}
+
+inline int DCE2_GetNdrUint64(const uint8_t* data_ptr, uint64_t& data,
+    int offset, DceRpcBoFlag bo_flag)
+{
+    const uint64_t* ptr;
+    int align_offset = 0;
+
+    /* Alignment */
+    if (offset % 8) 
+    {
+        align_offset = 8 - (offset % 8);
+    }
+
+    ptr = (const uint64_t*)(data_ptr + align_offset);
+    data = DceRpcNtohl64(ptr, bo_flag);
+
+    return align_offset + 8;
+}
+
+inline int DCE2_GetNdrUint3264(const uint8_t* data_ptr, uint64_t& data,
+    int offset, DceRpcBoFlag bo_flag, DCE2_CoCtxTransport transport)
+{
+    if (transport == DCE2_CO_CTX_TRANS_SYNTAX_NDR64)
+        return DCE2_GetNdrUint64(data_ptr, data, offset, bo_flag);
+
+    uint32_t val = 0;
+    offset = DCE2_GetNdrUint32(data_ptr, val, offset, bo_flag);
+    data = val;
+    return offset;
 }
 
 void DCE2_CoInitTracker(DCE2_CoTracker*);

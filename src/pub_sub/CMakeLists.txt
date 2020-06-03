@@ -3,6 +3,7 @@ set (PUB_SUB_INCLUDES
     cip_events.h
     data_decrypt_event.h
     daq_message_event.h
+    dcerpc_events.h
     expect_events.h
     finalize_packet_event.h
     http_events.h

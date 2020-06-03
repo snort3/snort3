@@ -168,7 +168,7 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
             dip = args.pkt->ptrs.ip_api.get_dst();
             sip = args.pkt->ptrs.ip_api.get_src();
             AppIdSession* pf = AppIdSession::create_future_session(args.pkt, dip, 0, sip, (uint16_t)port,
-                IpProtocol::TCP, rexec_snort_protocol_id, APPID_EARLY_SESSION_FLAG_FW_RULE);
+                IpProtocol::TCP, rexec_snort_protocol_id);
             if (pf)
             {
                 ServiceREXECData* tmp_rd = (ServiceREXECData*)snort_calloc(
@@ -186,7 +186,7 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
                 }
                 pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
                 pf->scan_flags |= SCAN_HOST_PORT_FLAG;
-                initialize_expected_session(args.asd, *pf, REXEC_EXPECTED_SESSION_FLAGS, APP_ID_FROM_RESPONDER);
+                args.asd.initialize_future_session(*pf, REXEC_EXPECTED_SESSION_FLAGS, APP_ID_FROM_RESPONDER);
                 pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
                 rd->child = tmp_rd;
                 rd->state = REXEC_STATE_SERVER_CONNECT;

@@ -184,8 +184,7 @@ void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, con
     // snort_protocol_id.
 
     AppIdSession* fp = AppIdSession::create_future_session(
-        pkt, cliIp, cliPort, srvIp, srvPort, protocol, app_id,
-        APPID_EARLY_SESSION_FLAG_FW_RULE);
+        pkt, cliIp, cliPort, srvIp, srvPort, protocol, app_id);
 
     if ( fp )
     {
@@ -195,17 +194,16 @@ void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, con
 
         // FIXIT-M : snort 2.9.x updated the flag to APPID_SESSION_EXPECTED_EVALUATE.
         // Check if it is needed here as well.
-        //initialize_expected_session(asd, fp, APPID_SESSION_EXPECTED_EVALUATE);
+        // asd.initialize_future_session(*fp, APPID_SESSION_EXPECTED_EVALUATE, APP_ID_APPID_SESSION_DIRECTION_MAX);
 
-        initialize_expected_session(
-            asd, *fp, APPID_SESSION_IGNORE_ID_FLAGS, APP_ID_APPID_SESSION_DIRECTION_MAX);
+        asd.initialize_future_session(*fp, APPID_SESSION_IGNORE_ID_FLAGS,
+            APP_ID_APPID_SESSION_DIRECTION_MAX);
     }
 
     // create an RTCP flow as well
 
     AppIdSession* fp2 = AppIdSession::create_future_session(
-        pkt, cliIp, cliPort + 1, srvIp, srvPort + 1, protocol, app_id,
-        APPID_EARLY_SESSION_FLAG_FW_RULE);
+        pkt, cliIp, cliPort + 1, srvIp, srvPort + 1, protocol, app_id);
 
     if ( fp2 )
     {
@@ -214,10 +212,10 @@ void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, con
         fp2->service.set_id(APP_ID_RTCP, asd.ctxt.get_odp_ctxt());
 
         // FIXIT-M : same comment as above
-        //initialize_expected_session(asd, fp2, APPID_SESSION_EXPECTED_EVALUATE);
+        // asd.initialize_future_session(*fp2, APPID_SESSION_EXPECTED_EVALUATE, APP_ID_APPID_SESSION_DIRECTION_MAX);
 
-        initialize_expected_session(
-            asd, *fp2, APPID_SESSION_IGNORE_ID_FLAGS, APP_ID_APPID_SESSION_DIRECTION_MAX);
+        asd.initialize_future_session(*fp2, APPID_SESSION_IGNORE_ID_FLAGS,
+            APP_ID_APPID_SESSION_DIRECTION_MAX);
     }
 }
 

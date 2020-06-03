@@ -170,7 +170,7 @@ static inline PktType get_pkt_type_from_ip_proto(IpProtocol proto)
 
 AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const SfIp* cliIp,
     uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol proto,
-    SnortProtocolId snort_protocol_id, int /*flags*/)
+    SnortProtocolId snort_protocol_id)
 {
     char src_ip[INET6_ADDRSTRLEN];
     char dst_ip[INET6_ADDRSTRLEN];
@@ -216,6 +216,42 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
     return asd;
 }
 
+void AppIdSession::initialize_future_session(AppIdSession& expected, uint64_t flags,
+    AppidSessionDirection dir)
+{
+    if (dir == APP_ID_FROM_INITIATOR)
+    {
+        expected.set_session_flags(flags |
+            get_session_flags(
+            APPID_SESSION_INITIATOR_CHECKED |
+            APPID_SESSION_INITIATOR_MONITORED |
+            APPID_SESSION_RESPONDER_CHECKED |
+            APPID_SESSION_RESPONDER_MONITORED));
+    }
+    else if (dir == APP_ID_FROM_RESPONDER)
+    {
+        if (get_session_flags(APPID_SESSION_INITIATOR_CHECKED))
+            flags |= APPID_SESSION_RESPONDER_CHECKED;
+
+        if (get_session_flags(APPID_SESSION_INITIATOR_MONITORED))
+            flags |= APPID_SESSION_RESPONDER_MONITORED;
+
+        if (get_session_flags(APPID_SESSION_RESPONDER_CHECKED))
+            flags |= APPID_SESSION_INITIATOR_CHECKED;
+
+        if (get_session_flags(APPID_SESSION_RESPONDER_MONITORED))
+            flags |= APPID_SESSION_INITIATOR_MONITORED;
+    }
+
+    expected.set_session_flags(flags |
+        get_session_flags(
+        APPID_SESSION_SPECIAL_MONITORED |
+        APPID_SESSION_DISCOVER_APP |
+        APPID_SESSION_DISCOVER_USER));
+
+    expected.service_disco_state = APPID_DISCO_STATE_FINISHED;
+    expected.client_disco_state = APPID_DISCO_STATE_FINISHED;
+}
 void AppIdSession::reinit_session_data(AppidChangeBits& change_bits)
 {
     misc_app_id = APP_ID_NONE;

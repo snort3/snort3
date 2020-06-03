@@ -27,15 +27,139 @@
 
 #include "utils/util.h"
 
+#include "dce_expected_session.h"
 #include "dce_smb.h"
 #include "dce_smb_module.h"
 #include "dce_smb_utils.h"
 #include "dce_tcp.h"
-#include "dce_tcp_module.h"
 
 using namespace snort;
 
 static THREAD_LOCAL int co_reassembled = 0;
+
+/* [MS-RPCE] 2.2.5 - 64-Bit Network Data Representation */
+static const Uuid uuid_ndr64 = { 0x71710533, 0xbeba, 0x4937, 0x83, 0x19,
+    { 0xb5, 0xdb, 0xef, 0x9c, 0xcc, 0x36 } };
+
+/********************************************************************
+ * Function: DCE2_CoEptMapResponse()
+ *
+ * Handles the processing of EPT_MAP response.
+ * The response consists of a tower array that embeds tower pointers.
+ * Pointers, in turn, consist of floors. Our target is 4 & 5 floors,
+ * which contain info about future sessions.
+ *
+ ********************************************************************/
+static void DCE2_CoEptMapResponse(const DCE2_CoTracker* cot, const DceRpcCoHdr* co_hdr,
+    const uint8_t* stub_data, uint16_t dlen)
+{
+    DCE2_CoCtxIdNode* ctx_id_node;
+    uint64_t actual_count;
+    uint64_t tptr_length; /* Tower pointer length */
+    unsigned int i;
+    int ndr_flen = 4; /* 4-bytes fields in default NDR */
+    int offset = 0;
+    int floor3_start;
+    int proto_offset;
+    int port_offset;
+    int ip_addr_offset;
+    uint16_t ept_port;
+    SfIp ept_ip_addr;
+    DceRpcBoFlag byte_order;
+
+    if (stub_data == nullptr || dlen == 0)
+        return;
+
+    ctx_id_node = (DCE2_CoCtxIdNode*)DCE2_ListFind(cot->ctx_ids,
+        (void*)(uintptr_t)cot->ctx_id);
+
+    if (ctx_id_node == nullptr)
+        return;
+
+    if (ctx_id_node->transport == DCE2_CO_CTX_TRANS_SYNTAX_NDR64)
+        ndr_flen = 8; /* 8-bytes fields in NDR64 */
+
+    /*                     20                       4
+     * +---------------------------------------+--------+
+     * |                  Handle               | N Twrs |
+     * +---------------------------------------+--------+
+     * Length of the next fields depends on transport
+     * (NDR/NDR64, 4/8 bytes). Conformant & Varying Arr hdrs.
+     * +---------------+---------------+----------------+
+     * |   Max Count   |    Offset     |  Actual Count  |
+     * +---------------+---------------+----------------+ */
+    offset += DCE2_CO_MAP_HANDLE_OFS + DCE2_CO_MAP_NUM_TOWERS_OFS + 2 * ndr_flen;
+
+    /* Get the actual count of pointers in tower array */
+    byte_order = DceRpcCoByteOrder(co_hdr);
+    offset += DCE2_GetNdrUint3264(stub_data + offset, actual_count,
+        offset, byte_order, ctx_id_node->transport);
+
+    /* Skipping Referent IDs and moving to deferred pointers representation */
+    offset += actual_count * ndr_flen;
+    dce2_move(stub_data, dlen, offset);
+
+    for (i = 0; i < actual_count; i++)
+    {
+        int fc_offset;
+        uint16_t floor_count;
+        /*        4/8          4
+         * +---------------+--------+
+         * |     Length    | Length |
+         * +---------------+--------+
+         * The first len field seems to be a conformant array header,
+         * the second one tower length field.
+         *        2
+         * +-------------+---------+---------+---------+---------+
+         * | floor count | floor 1 | floor 2 |   ...   | floor n |
+         * +-------------+---------+---------+---------+---------+ 
+         * The target is 4th & 5th floors */
+
+        /* Get tower length and determine the floor count offset */
+        fc_offset = DCE2_GetNdrUint3264(stub_data, tptr_length,
+            offset, byte_order, ctx_id_node->transport) + DCE2_CO_MAP_TWR_LEN_OFS;
+        if (dlen < tptr_length)
+            return;
+
+        floor_count = DceRpcNtohs((const uint16_t*)(stub_data + fc_offset),
+            DceRpcCoByteOrder(co_hdr));
+
+        offset += fc_offset;
+        dce2_move(stub_data, dlen, fc_offset);
+
+        /* No needed data for the pinhole creation */
+        if (floor_count < 5) 
+            continue;
+
+        floor3_start =  2 * DCE2_CO_MAP_TWR_FLOOR12_OFS +
+            DCE2_CO_MAP_FLR_COUNT_OFS;
+        
+        /* Skipping 1st & 2nd floors up to 3rd floor protocol id */
+        proto_offset = floor3_start +
+            DCE2_CO_MAP_FLR_LHS_RHS_OFS;
+
+        /* Check protocol, expected to be connection-oriented */
+        if (*(stub_data + proto_offset) != DCE2_CO_PROTO_ID_CO)
+            return;
+
+        port_offset = floor3_start + DCE2_CO_MAP_TWR_FLOOR34_OFS +
+            2 * DCE2_CO_MAP_FLR_LHS_RHS_OFS + DCE2_CO_MAP_FLR_PROTO_ID_OFS;
+
+        ip_addr_offset = port_offset +
+            DCE2_CO_MAP_TWR_FLOOR34_OFS;
+
+        ept_port = DceRpcNtohs((const uint16_t*)(stub_data + port_offset),
+            DCERPC_BO_FLAG__BIG_ENDIAN);
+
+        /* According to DCE RPC 1.1, host address is 4 octets, big-endian order */
+        ept_ip_addr.set(stub_data + ip_addr_offset, AF_INET);
+
+        DceExpSsnManager::create_expected_session(&ept_ip_addr, ept_port, DCE2_TCP_NAME);
+
+        offset += tptr_length;
+        dce2_move(stub_data, dlen, tptr_length);
+    }
+}
 
 /********************************************************************
  * Function: DCE2_CoInitTracker()
@@ -585,6 +709,7 @@ static DCE2_CoCtxIdNode* dce_co_process_ctx_id(DCE2_SsnData* sd,DCE2_CoTracker* 
     ctx_node->iface_vers_maj = if_vers_maj;
     ctx_node->iface_vers_min = if_vers_min;
     ctx_node->state = DCE2_CO_CTX_STATE__PENDING;
+    ctx_node->transport = DCE2_CO_CTX_TRANS_SYNTAX_NDR_DEF;
     return ctx_node;
 }
 
@@ -639,7 +764,8 @@ static void DCE2_CoCtxReq(DCE2_SsnData* sd, DCE2_CoTracker* cot, const DceRpcCoH
 }
 
 static void dce_co_process_ctx_result(DCE2_SsnData*, DCE2_CoTracker* cot,
-    const DceRpcCoHdr* co_hdr,DCE2_Policy policy, uint16_t result)
+    const DceRpcCoHdr* co_hdr, DCE2_Policy policy, uint16_t result,
+    const Uuid* transport)
 {
     DCE2_CoCtxIdNode* ctx_node, * existing_ctx_node;
     DCE2_Ret status;
@@ -657,6 +783,13 @@ static void dce_co_process_ctx_result(DCE2_SsnData*, DCE2_CoTracker* cot,
         ctx_node->state = DCE2_CO_CTX_STATE__ACCEPTED;
         if (DceRpcCoPduType(co_hdr) == DCERPC_PDU_TYPE__BIND_ACK)
             cot->got_bind = 1;
+
+        /* Need to check accepted transfer syntax 
+         * for further EPT_MAP response parsing */
+        if (!DCE2_UuidCompare(transport, &uuid_ndr64))
+        {
+            ctx_node->transport = DCE2_CO_CTX_TRANS_SYNTAX_NDR64;
+        }
     }
     else
     {
@@ -804,6 +937,7 @@ static void DCE2_CoBindAck(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     for (i = 0; i < num_ctx_results; i++)
     {
         const DceRpcCoContResult* ctx_result;
+        const Uuid* transport;
         uint16_t result;
 
         if (ctx_len < sizeof(DceRpcCoContResult))
@@ -812,6 +946,7 @@ static void DCE2_CoBindAck(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             return;
         }
         ctx_result = (const DceRpcCoContResult*)ctx_data;
+        transport = DceRpcCoContResTransport(ctx_result);
         result = DceRpcCoContRes(co_hdr, ctx_result);
 
         dce2_move(ctx_data, ctx_len, sizeof(DceRpcCoContResult));
@@ -819,7 +954,7 @@ static void DCE2_CoBindAck(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         if (DCE2_QueueIsEmpty(cot->pending_ctx_ids))
             return;
 
-        dce_co_process_ctx_result(sd,cot,co_hdr,policy,result);
+        dce_co_process_ctx_result(sd,cot,co_hdr,policy,result,transport);
     }
 }
 
@@ -1704,6 +1839,30 @@ static void DCE2_CoResponse(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         {
             DCE2_CoHandleFrag(sd, cot, co_hdr, frag_ptr,
                 (uint16_t)(frag_len - (uint16_t)auth_len));
+        }
+    }
+    
+    /* If this is the last fragment, we can proceed with stub data processing */
+    if (DceRpcCoLastFrag(co_hdr))
+    {
+        const uint8_t* stub_data; 
+        uint16_t stub_data_len;
+        if (DCE2_BufferIsEmpty(cot->frag_tracker.srv_stub_buf))
+        {
+            /* Data reassembled from multiple TSDUs */
+            stub_data = frag_ptr;
+            stub_data_len = frag_len;
+        }
+        else
+        {
+            /* Data received from single TSDU */
+            stub_data = cot->frag_tracker.srv_stub_buf->data;
+            stub_data_len = cot->frag_tracker.srv_stub_buf->len;
+        }
+
+        if (cot->opnum == DCE2_CO_EPT_MAP)
+        {
+            DCE2_CoEptMapResponse(cot, co_hdr, stub_data, stub_data_len);
         }
     }
 }

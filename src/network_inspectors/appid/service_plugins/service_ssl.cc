@@ -809,4 +809,3 @@ bool is_service_over_ssl(AppId appId)
 
     return false;
 }
-

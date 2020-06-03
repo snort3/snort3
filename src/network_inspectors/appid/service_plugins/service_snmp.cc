@@ -471,7 +471,7 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
         const SfIp* dip = args.pkt->ptrs.ip_api.get_dst();
         const SfIp* sip = args.pkt->ptrs.ip_api.get_src();
         AppIdSession* pf = AppIdSession::create_future_session(args.pkt, dip, 0, sip,
-            args.pkt->ptrs.sp, args.asd.protocol, snmp_snort_protocol_id, 0);
+            args.pkt->ptrs.sp, args.asd.protocol, snmp_snort_protocol_id);
         if (pf)
         {
             tmp_sd = (ServiceSNMPData*)snort_calloc(sizeof(ServiceSNMPData));
@@ -484,7 +484,7 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
                 tmp_sd->state = SNMP_STATE_ERROR;
                 return APPID_ENULL;
             }
-            initialize_expected_session(args.asd, *pf, APPID_SESSION_EXPECTED_EVALUATE, APP_ID_APPID_SESSION_DIRECTION_MAX);
+            args.asd.initialize_future_session(*pf, APPID_SESSION_EXPECTED_EVALUATE, APP_ID_APPID_SESSION_DIRECTION_MAX);
             pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
             pf->scan_flags |= SCAN_HOST_PORT_FLAG;
             pf->common.initiator_ip = *sip;

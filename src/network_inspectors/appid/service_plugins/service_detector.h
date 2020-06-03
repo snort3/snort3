@@ -25,8 +25,6 @@
 #include "appid_detector.h"
 #include "service_discovery.h"
 
-#define APPID_EARLY_SESSION_FLAG_FW_RULE    1
-
 class ServiceDetector : public AppIdDetector
 {
 public:
@@ -57,8 +55,6 @@ public:
     {
         asd.misc_app_id = miscId;
     }
-
-    void initialize_expected_session(const AppIdSession&, AppIdSession&, uint64_t flags, AppidSessionDirection dir);
 
 private:
     int update_service_data(AppIdSession&, const snort::Packet*, AppidSessionDirection dir, AppId,

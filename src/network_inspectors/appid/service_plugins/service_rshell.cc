@@ -161,7 +161,7 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
             const SfIp* dip = args.pkt->ptrs.ip_api.get_dst();
             const SfIp* sip = args.pkt->ptrs.ip_api.get_src();
             AppIdSession* pf = AppIdSession::create_future_session(args.pkt, dip, 0, sip,
-                (uint16_t)port, IpProtocol::TCP, rsh_error_snort_protocol_id, APPID_EARLY_SESSION_FLAG_FW_RULE);
+                (uint16_t)port, IpProtocol::TCP, rsh_error_snort_protocol_id);
             if (pf)
             {
                 ServiceRSHELLData* tmp_rd = (ServiceRSHELLData*)snort_calloc(
@@ -178,10 +178,10 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
                     return APPID_ENOMEM;
                 }
                 pf->scan_flags |= SCAN_HOST_PORT_FLAG;
-                initialize_expected_session(args.asd, *pf,
-                    APPID_SESSION_CONTINUE | APPID_SESSION_REXEC_STDERR | APPID_SESSION_NO_TPI |
+                args.asd.initialize_future_session(*pf, APPID_SESSION_CONTINUE | APPID_SESSION_REXEC_STDERR | APPID_SESSION_NO_TPI |
                     APPID_SESSION_NOT_A_SERVICE | APPID_SESSION_PORT_SERVICE_DONE,
                     APP_ID_FROM_RESPONDER);
+
                 pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
                 rd->child = tmp_rd;
                 rd->state = RSHELL_STATE_SERVER_CONNECT;

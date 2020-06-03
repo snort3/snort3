@@ -192,7 +192,7 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
         dip = args.pkt->ptrs.ip_api.get_dst();
         sip = args.pkt->ptrs.ip_api.get_src();
         pf = AppIdSession::create_future_session(args.pkt, dip, 0, sip,
-            args.pkt->ptrs.sp, args.asd.protocol, tftp_snort_protocol_id, APPID_EARLY_SESSION_FLAG_FW_RULE);
+            args.pkt->ptrs.sp, args.asd.protocol, tftp_snort_protocol_id);
         if (pf)
         {
             data_add(*pf, tmp_td, &snort_free);
@@ -203,7 +203,7 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
                 tmp_td->state = TFTP_STATE_ERROR;
                 return APPID_ENOMEM;
             }
-            initialize_expected_session(args.asd, *pf, APPID_SESSION_EXPECTED_EVALUATE, APP_ID_FROM_RESPONDER);
+            args.asd.initialize_future_session(*pf, APPID_SESSION_EXPECTED_EVALUATE, APP_ID_FROM_RESPONDER);
             pf->common.initiator_ip = *sip;
             pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
             pf->scan_flags |= SCAN_HOST_PORT_FLAG;

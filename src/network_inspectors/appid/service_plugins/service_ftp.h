@@ -36,7 +36,7 @@ public:
 private:
     void create_expected_session(AppIdSession&, const snort::Packet*,
         const snort::SfIp* cliIp, uint16_t cliPort, const snort::SfIp* srvIp,
-        uint16_t srvPort, IpProtocol, int flags, AppidSessionDirection);
+        uint16_t srvPort, IpProtocol, AppidSessionDirection);
 };
 #endif
 

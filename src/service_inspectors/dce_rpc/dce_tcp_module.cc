@@ -112,6 +112,8 @@ static const PegInfo dce2_tcp_pegs[] =
     { CountType::SUM, "server_frags_reassembled",
         "total connection-oriented server fragments reassembled" },
     { CountType::SUM, "tcp_sessions", "total tcp sessions" },
+    { CountType::SUM, "tcp_expected_sessions", "total tcp dynamic endpoint expected sessions" },
+    { CountType::SUM, "tcp_expected_realized", "total tcp dynamic endpoint expected realized sessions" },
     { CountType::SUM, "tcp_packets", "total tcp packets" },
     { CountType::NOW, "concurrent_sessions", "total concurrent sessions" },
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent sessions" },

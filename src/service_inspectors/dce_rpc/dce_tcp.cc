@@ -30,8 +30,6 @@
 
 #include "dce_context_data.h"
 #include "dce_common.h"
-#include "dce_tcp_module.h"
-#include "dce_tcp_paf.h"
 
 using namespace snort;
 
@@ -57,6 +55,13 @@ unsigned Dce2TcpFlowData::inspector_id = 0;
 DCE2_TcpSsnData* get_dce2_tcp_session_data(Flow* flow)
 {
     Dce2TcpFlowData* fd = (Dce2TcpFlowData*)flow->get_flow_data(Dce2TcpFlowData::inspector_id);
+
+    // check whether this session was expected and mark it as realized
+    if (fd && fd->state == DCE2_TCP_FLOW__EXPECTED)
+    {
+        fd->state = DCE2_TCP_FLOW__REALIZED;
+        dce2_tcp_stats.tcp_expected_realized_sessions++;
+    }
     return fd ? &fd->dce2_tcp_session : nullptr;
 }
 
@@ -64,6 +69,7 @@ static DCE2_TcpSsnData* set_new_dce2_tcp_session(Packet* p)
 {
     Dce2TcpFlowData* fd = new Dce2TcpFlowData;
 
+    fd->state = DCE2_TCP_FLOW__COMMON;
     memset(&fd->dce2_tcp_session,0,sizeof(DCE2_TcpSsnData));
     p->flow->set_flow_data(fd);
     return(&fd->dce2_tcp_session);
@@ -104,28 +110,8 @@ static DCE2_TcpSsnData* dce2_handle_tcp_session(Packet* p, dce2TcpProtoConf* con
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
-
-class Dce2Tcp : public Inspector
-{
-public:
-    Dce2Tcp(const dce2TcpProtoConf&);
-
-    void show(const SnortConfig*) const override;
-    void eval(Packet*) override;
-    void clear(Packet*) override;
-    StreamSplitter* get_splitter(bool c2s) override
-    {
-        return new Dce2TcpSplitter(c2s);
-    }
-
-private:
-    dce2TcpProtoConf config;
-};
-
-Dce2Tcp::Dce2Tcp(const dce2TcpProtoConf& pc)
-{
-    config = pc;
-}
+Dce2Tcp::Dce2Tcp(const dce2TcpProtoConf& pc) :
+    config(pc), esm(config) { }
 
 void Dce2Tcp::show(const SnortConfig*) const
 {

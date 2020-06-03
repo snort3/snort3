@@ -6,6 +6,8 @@ set( FILE_LIST
     dce_common.h
     dce_context_data.cc
     dce_context_data.h
+    dce_expected_session.cc
+    dce_expected_session.h
     dce_http_proxy.cc
     dce_http_proxy_module.cc
     dce_http_proxy_module.h
