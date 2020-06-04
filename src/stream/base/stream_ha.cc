@@ -107,18 +107,17 @@ bool StreamHAClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg, ui
         DataBus::publish(STREAM_HA_NEW_FLOW_EVENT, event, flow);
 
         flow->ha_state->clear(FlowHAState::NEW);
-        int family = (hac->flags & SessionHAContent::FLAG_IP6) ? AF_INET6 : AF_INET;
         if ( hac->flags & SessionHAContent::FLAG_LOW )
         {
-            flow->server_ip.set(flow->key->ip_l, family);
-            flow->client_ip.set(flow->key->ip_h, family);
+            flow->server_ip.set(flow->key->ip_l);
+            flow->client_ip.set(flow->key->ip_h);
             flow->server_port = flow->key->port_l;
             flow->client_port = flow->key->port_h;
         }
         else
         {
-            flow->client_ip.set(flow->key->ip_l, family);
-            flow->server_ip.set(flow->key->ip_h, family);
+            flow->client_ip.set(flow->key->ip_l);
+            flow->server_ip.set(flow->key->ip_h);
             flow->client_port = flow->key->port_l;
             flow->server_port = flow->key->port_h;
         }
@@ -152,7 +151,9 @@ bool StreamHAClient::produce(Flow& flow, HAMessage& msg)
     hac->flags = 0;
     if (!is_client_lower(flow))
         hac->flags |= SessionHAContent::FLAG_LOW;
-    hac->flags |= SessionHAContent::FLAG_IP6;
+
+    if (flow.client_ip.get_family() == AF_INET6)
+        hac->flags |= SessionHAContent::FLAG_IP6;
 
     msg.advance_cursor(sizeof(SessionHAContent));
 
