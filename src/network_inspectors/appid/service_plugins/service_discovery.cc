@@ -693,7 +693,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
         else if (asd.service.get_id() == APP_ID_RTMP)
             asd.examine_rtmp_metadata(change_bits);
         else if (asd.get_session_flags(APPID_SESSION_SSL_SESSION) && asd.tsession)
-            asd.examine_ssl_metadata(p, change_bits);
+            asd.examine_ssl_metadata(change_bits);
 
         if (tp_app_id <= APP_ID_NONE && asd.get_session_flags(
             APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE |

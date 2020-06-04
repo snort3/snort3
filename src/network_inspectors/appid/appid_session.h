@@ -344,7 +344,7 @@ public:
     }
 
     bool is_ssl_session_decrypted();
-    void examine_ssl_metadata(snort::Packet*, AppidChangeBits& change_bits);
+    void examine_ssl_metadata(AppidChangeBits& change_bits);
     void set_client_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
     void set_service_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
     void set_payload_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);

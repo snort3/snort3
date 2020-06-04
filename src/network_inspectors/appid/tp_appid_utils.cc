@@ -761,7 +761,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
         }
         else if (asd.get_session_flags(APPID_SESSION_SSL_SESSION) && asd.tsession)
         {
-            asd.examine_ssl_metadata(p, change_bits);
+            asd.examine_ssl_metadata(change_bits);
             uint16_t serverPort;
             AppId portAppId;
             serverPort = (direction == APP_ID_FROM_INITIATOR) ? p->ptrs.dp : p->ptrs.sp;

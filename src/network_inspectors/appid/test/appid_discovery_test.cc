@@ -192,7 +192,7 @@ void AppIdSession::sync_with_snort_protocol_id(AppId, Packet*) {}
 void AppIdSession::check_app_detection_restart(AppidChangeBits&) {}
 void AppIdSession::set_client_appid_data(AppId, AppidChangeBits&, char*) {}
 void AppIdSession::examine_rtmp_metadata(AppidChangeBits&) {}
-void AppIdSession::examine_ssl_metadata(Packet*, AppidChangeBits&) {}
+void AppIdSession::examine_ssl_metadata(AppidChangeBits&) {}
 void AppIdSession::update_encrypted_app_id(AppId) {}
 bool AppIdSession::is_tp_processing_done() const {return 0;}
 AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol,

@@ -341,7 +341,7 @@ void AppIdSession::sync_with_snort_protocol_id(AppId newAppId, Packet* p)
     if (tmp_snort_protocol_id != snort_protocol_id)
     {
         snort_protocol_id = tmp_snort_protocol_id;
-        Stream::set_snort_protocol_id(p->flow, tmp_snort_protocol_id);
+        p->flow->ssn_state.snort_protocol_id = tmp_snort_protocol_id;
     }
 }
 
@@ -471,7 +471,7 @@ void AppIdSession::update_encrypted_app_id(AppId service_id)
     }
 }
 
-void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
+void AppIdSession::examine_ssl_metadata(AppidChangeBits& change_bits)
 {
     AppId client_id = 0;
     AppId payload_id = 0;
