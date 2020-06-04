@@ -461,7 +461,7 @@ static inline void process_ssl(AppIdSession& asd,
         asd.tsession->get_tls_cname() == nullptr and
         (field = attribute_data.tls_cname()) != nullptr)
     {
-        asd.tsession->set_tls_cname(field->c_str(), field->size());
+        asd.tsession->set_tls_cname(field->c_str(), field->size(), change_bits);
         if (reinspect_ssl_appid)
             asd.scan_flags |= SCAN_SSL_CERTIFICATE_FLAG;
     }

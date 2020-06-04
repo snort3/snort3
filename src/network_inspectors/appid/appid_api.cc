@@ -236,7 +236,7 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name, cons
         {
             ssl_matchers.scan_cname((const uint8_t*)common_name, strlen(common_name), client_id,
                 payload_id);
-            asd->tsession->set_tls_cname(common_name, strlen(common_name));
+            asd->tsession->set_tls_cname(common_name, strlen(common_name), change_bits);
             asd->scan_flags |= SCAN_SSL_CERTIFICATE_FLAG;
             asd->scan_flags |= SCAN_DO_NOT_OVERRIDE_COMMON_NAME_FLAG;
         }

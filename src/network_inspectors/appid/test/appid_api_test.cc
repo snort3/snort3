@@ -248,7 +248,7 @@ TEST(appid_api, ssl_app_group_id_lookup)
 
     AppidChangeBits change_bits;
     mock_session->tsession->set_tls_host("www.cisco.com", 13, change_bits);
-    mock_session->tsession->set_tls_cname("www.cisco.com", 13);
+    mock_session->tsession->set_tls_cname("www.cisco.com", 13, change_bits);
     mock_session->tsession->set_tls_org_unit("Cisco", 5);
     STRCMP_EQUAL(mock_session->tsession->get_tls_host(), "www.cisco.com");
     STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), "www.cisco.com");
@@ -272,7 +272,7 @@ TEST(appid_api, ssl_app_group_id_lookup)
     STRCMP_EQUAL(mock_session->tsession->get_tls_host(), nullptr);
     STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_org_unit(), "Google");
-    STRCMP_EQUAL("Published change_bits == 000000000110", test_log);
+    STRCMP_EQUAL("Published change_bits == 000001000110", test_log);
     mock().checkExpectations();
 }
 

@@ -153,7 +153,7 @@ struct TlsSession
         change_bits.set(APPID_TLSHOST_BIT);
     }
 
-    void set_tls_cname(const char* new_tls_cname, uint32_t len)
+    void set_tls_cname(const char* new_tls_cname, uint32_t len, AppidChangeBits& change_bits)
     {
         if (tls_cname)
             snort_free(tls_cname);
@@ -164,6 +164,8 @@ struct TlsSession
         }
         tls_cname = len? snort::snort_strndup(new_tls_cname,len) :
             const_cast<char*>(new_tls_cname);
+        if (tls_host == nullptr)
+            change_bits.set(APPID_TLSHOST_BIT);
     }
 
     void set_tls_org_unit(const char* new_tls_org_unit, uint32_t len)
