@@ -23,6 +23,8 @@
 
 #include "trace.h"
 
+#include <algorithm>
+
 #include "framework/module.h"
 
 using namespace snort;
@@ -39,7 +41,7 @@ Trace::Trace(const Module& m) : module(m)
     mod_name = module.get_name();
     const snort::TraceOption* trace_options = module.get_trace_options();
     options = ( trace_options->name ) ? trace_options : s_default_trace_options;
-    
+
     size_t options_size = 0;
     trace_options = options;
     while ( trace_options->name )
@@ -48,6 +50,16 @@ Trace::Trace(const Module& m) : module(m)
         ++trace_options;
     }
     option_levels.resize(options_size, 0);
+}
+
+Trace& Trace::operator=(const Trace& other)
+{
+    if ( this != &other )
+    {
+        option_levels = other.option_levels;
+        options = other.options;
+    }
+    return *this;
 }
 
 bool Trace::set(const std::string& trace_option_name, uint8_t trace_level)
@@ -68,6 +80,9 @@ void Trace::set_module_trace() const
 {
     module.set_trace(this);
 }
+
+void Trace::clear()
+{ std::fill(option_levels.begin(), option_levels.end(), 0); }
 
 #ifdef CATCH_TEST_BUILD
 

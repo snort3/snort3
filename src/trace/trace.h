@@ -59,9 +59,12 @@ class Trace
 {
 public:
     Trace(const Module& m);
+    Trace& operator=(const Trace&);
 
     bool set(const std::string& option_name, uint8_t option_level);
     void set_module_trace() const;
+
+    void clear();
 
     const char* module_name() const
     { return mod_name.c_str(); }

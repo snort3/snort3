@@ -31,14 +31,24 @@
 
 #include "trace_log_base.h"
 
+using namespace snort;
+
 TraceConfig::TraceConfig()
 {
-    auto modules = snort::ModuleManager::get_all_modules();
+    auto modules = ModuleManager::get_all_modules();
     for ( auto* module : modules )
     {
         if ( module->get_trace_options() )
             traces.emplace_back(*module);
     }
+}
+
+TraceConfig::TraceConfig(const TraceConfig& other)
+    : TraceConfig()
+{
+    traces = other.traces;
+    if ( other.constraints )
+        constraints = new PacketConstraints(*other.constraints);
 }
 
 TraceConfig::~TraceConfig()
@@ -59,6 +69,12 @@ bool TraceConfig::set_trace(const std::string& module_name, const std::string& t
             return trace.set(trace_option_name, trace_level);
     }
     return false;
+}
+
+void TraceConfig::clear_traces()
+{
+    for ( auto& trace : traces )
+        trace.clear();
 }
 
 void TraceConfig::setup_module_trace() const

@@ -39,6 +39,24 @@ This directory contains the trace logger framework.
     TraceModule ctor should be called after all existed modules due to TraceModule
         dynamic params restriction.
 
+* TraceSwap
+
+    This class extends snort::AnalyzerCommand and represents control channel CLI commands
+    for setting/clearing trace configuration from the shell. Commands parameters are encapsulated in
+    the TraceSwapParams class.
+    Available commands:
+        1) trace.set({ modules = {}, constraints = {} }) -- set new modules traces and constraints;
+        2) trace.clear() -- clear modules traces and constraints.
+
+* TraceSwapParams
+
+    This is a helper class for TraceSwap which encapsulates dynamic initialization and storing of
+    snort::Parameter and snort::Command lists based on TraceModule's parameters.
+
+* TraceParser
+
+    This class encapsulates module trace options and packet constraints parsing and setting logic.
+
 * TraceApi
 
     TraceApi is a facade API class used to init/reinit/term thread-local trace logger and module's

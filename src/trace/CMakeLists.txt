@@ -13,6 +13,10 @@ set ( TRACE_SOURCES
     trace_log_base.h
     trace_module.cc
     trace_module.h
+    trace_parser.cc
+    trace_parser.h
+    trace_swap.cc
+    trace_swap.h
     ${INCLUDES}
 )
 

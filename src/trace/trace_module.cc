@@ -25,12 +25,13 @@
 
 #include <syslog.h>
 
-#include "framework/packet_constraints.h"
 #include "main/snort_config.h"
 #include "managers/module_manager.h"
 
 #include "trace_config.h"
 #include "trace_log.h"
+#include "trace_parser.h"
+#include "trace_swap.h"
 
 using namespace snort;
 
@@ -40,7 +41,14 @@ using namespace snort;
 TraceModule::TraceModule() : Module(s_name, trace_help)
 {
     generate_params();
+    TraceSwapParams::set_params(get_parameters());
 }
+
+TraceModule::~TraceModule()
+{ delete trace_parser; }
+
+const Command* TraceModule::get_commands() const
+{ return TraceSwapParams::get_commands(); }
 
 void TraceModule::generate_params()
 {
@@ -50,7 +58,6 @@ void TraceModule::generate_params()
         const TraceOption* trace_options = module->get_trace_options();
         if ( trace_options )
         {
-            auto& module_trace_options = configured_trace_options[module->get_name()];
             std::string module_trace_help(module->get_name());
             module_trace_help += " module trace options";
             modules_help.emplace_back(module_trace_help);
@@ -61,15 +68,11 @@ void TraceModule::generate_params()
             module_range.emplace_back(DEFAULT_TRACE_OPTION_NAME, Parameter::PT_INT, "0:255", nullptr,
                 "enable all trace options");
 
-            if ( !trace_options->name )
-                module_trace_options[DEFAULT_TRACE_OPTION_NAME] = false;
-
             while ( trace_options->name )
             {
                 module_range.emplace_back(trace_options->name,
                     Parameter::PT_INT, "0:255", nullptr, trace_options->help);
 
-                module_trace_options[trace_options->name] = false;
                 ++trace_options;
             }
 
@@ -122,33 +125,22 @@ bool TraceModule::begin(const char* fqn, int, SnortConfig* sc)
 {
     if ( !strcmp(fqn, "trace") )
     {
+        trace_parser = new TraceParser(sc->trace_config);
+
         // Init default output type based on Snort run-mode
-        if ( sc->test_mode() )
-            log_output_type = OUTPUT_TYPE_NO_INIT;
-        else if ( sc->daemon_mode() or sc->log_syslog() )
+        if ( sc->daemon_mode() or sc->log_syslog() )
             log_output_type = OUTPUT_TYPE_SYSLOG;
         else
             log_output_type = OUTPUT_TYPE_STDOUT;
 
-        reset_configured_trace_options();
     }
     return true;
 }
 
-void TraceModule::reset_configured_trace_options()
-{
-    for ( auto& module_trace_options : configured_trace_options )
-        for ( auto& trace_options : module_trace_options.second )
-            trace_options.second = false;
-}
-
-bool TraceModule::set(const char* fqn, Value& v, SnortConfig* sc)
+bool TraceModule::set(const char* fqn, Value& v, SnortConfig*)
 {
     if ( v.is("output") )
     {
-        if ( sc->test_mode() )
-            return true;
-
         switch ( v.get_uint8() )
         {
             case OUTPUT_TYPE_STDOUT:
@@ -165,62 +157,10 @@ bool TraceModule::set(const char* fqn, Value& v, SnortConfig* sc)
     else if ( strstr(fqn, "trace.modules.") == fqn )
     {
         std::string module_name = find_module(fqn);
-        if ( strcmp(v.get_name(), DEFAULT_TRACE_OPTION_NAME) == 0 )
-        {
-            const auto& trace_options = configured_trace_options[module_name];
-            for ( const auto& trace_option : trace_options )
-                if ( !trace_option.second )
-                    sc->trace_config->set_trace(module_name, trace_option.first, v.get_uint8());
-            return true;
-        }
-        else
-        {
-            bool res = sc->trace_config->set_trace(module_name, v.get_name(), v.get_uint8());
-            configured_trace_options[module_name][v.get_name()] = res;
-            return res;
-        }
+        return trace_parser->set_traces(module_name, v);
     }
     else if ( strstr(fqn, "trace.constraints.") == fqn )
-    {
-        if ( !sc->trace_config->constraints )
-            sc->trace_config->constraints = new snort::PacketConstraints;
-
-        auto& cs = *sc->trace_config->constraints;
-
-        if ( v.is("ip_proto") )
-        {
-            cs.ip_proto = static_cast<IpProtocol>(v.get_uint8());
-            cs.set_bits |= PacketConstraints::SetBits::IP_PROTO;
-        }
-        else if ( v.is("src_port") )
-        {
-            cs.src_port = v.get_uint16();
-            cs.set_bits |= PacketConstraints::SetBits::SRC_PORT;
-        }
-        else if ( v.is("dst_port") )
-        {
-            cs.dst_port = v.get_uint16();
-            cs.set_bits |= PacketConstraints::SetBits::DST_PORT;
-        }
-        else if ( v.is("src_ip") )
-        {
-            const char* str = v.get_string();
-            if ( cs.src_ip.set(str) != SFIP_SUCCESS )
-                return false;
-
-            cs.set_bits |= PacketConstraints::SetBits::SRC_IP;
-        }
-        else if ( v.is("dst_ip") )
-        {
-            const char* str = v.get_string();
-            if ( cs.dst_ip.set(str) != SFIP_SUCCESS )
-                return false;
-
-            cs.set_bits |= PacketConstraints::SetBits::DST_IP;
-        }
-
-        return true;
-    }
+        return trace_parser->set_constraints(v);
 
     return false;
 }
@@ -229,16 +169,15 @@ bool TraceModule::end(const char* fqn, int, SnortConfig* sc)
 {
     if ( !strcmp(fqn, "trace") )
     {
+        assert(trace_parser);
         switch ( log_output_type )
         {
             case OUTPUT_TYPE_STDOUT:
-                sc->trace_config->logger_factory = new StdoutLoggerFactory();
+                trace_parser->get_trace_config()->logger_factory = new StdoutLoggerFactory();
                 break;
             case OUTPUT_TYPE_SYSLOG:
-                sc->trace_config->logger_factory = new SyslogLoggerFactory();
+                trace_parser->get_trace_config()->logger_factory = new SyslogLoggerFactory();
                 break;
-            case OUTPUT_TYPE_NO_INIT:
-                sc->trace_config->logger_factory = nullptr;
             default:
                 break;
         }
@@ -251,6 +190,9 @@ bool TraceModule::end(const char* fqn, int, SnortConfig* sc)
             local_syslog = true;
             openlog("snort", LOG_PID | LOG_CONS, LOG_DAEMON);
         }
+
+        delete trace_parser;
+        trace_parser = nullptr;
     }
 
     return true;

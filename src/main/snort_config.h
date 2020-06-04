@@ -414,6 +414,9 @@ public:
     HighAvailabilityConfig* ha_config = nullptr;
     TraceConfig* trace_config = nullptr;
 
+    // TraceConfig instance which used by TraceSwap control channel command
+    TraceConfig* overlay_trace_config = nullptr;
+
     //------------------------------------------------------
     //Reload inspector related
 
@@ -472,6 +475,7 @@ public:
     void set_umask(uint32_t);
     void set_utc(bool);
     void set_verbose(bool);
+    void set_overlay_trace_config(TraceConfig*);
 
     //------------------------------------------------------
     // accessor methods

@@ -259,6 +259,7 @@ SnortConfig::~SnortConfig()
     delete[] state;
     delete thread_config;
     delete trace_config;
+    delete overlay_trace_config;
     delete ha_config;
     delete global_dbus;
 
@@ -787,6 +788,12 @@ void SnortConfig::set_verbose(bool enabled)
     }
     else
         logging_flags &= ~LOGGING_FLAG__VERBOSE;
+}
+
+void SnortConfig::set_overlay_trace_config(TraceConfig* tc)
+{
+    delete overlay_trace_config;
+    overlay_trace_config = tc;
 }
 
 void SnortConfig::set_tunnel_verdicts(const char* args)

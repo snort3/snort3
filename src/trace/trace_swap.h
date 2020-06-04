@@ -15,39 +15,29 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// trace_config.h author Oleksandr Serhiienko <oserhiie@cisco.com>
+// trace_swap.h author Oleksandr Serhiienko <oserhiie@cisco.com>
 
-#ifndef TRACE_CONFIG_H
-#define TRACE_CONFIG_H
-
-#include "trace.h"
+#ifndef TRACE_SWAP_H
+#define TRACE_SWAP_H
 
 namespace snort
 {
-struct PacketConstraints;
-class TraceLoggerFactory;
+struct Command;
+struct Parameter;
 }
 
-class TraceConfig
+class TraceSwapParams
 {
 public:
-    TraceConfig();
-    TraceConfig(const TraceConfig&);
-    ~TraceConfig();
+    static void set_params(const snort::Parameter* params);
 
-    void setup_module_trace() const;
-    bool set_trace(const std::string& module_name,
-        const std::string& trace_option_name, uint8_t trace_level);
-
-    void clear_traces();
-
-public:
-    snort::TraceLoggerFactory* logger_factory = nullptr;
-    snort::PacketConstraints* constraints = nullptr;
+    static const snort::Command* get_commands();
+    static const snort::Parameter* get_params();
 
 private:
-    Traces traces;
+    static const snort::Command* s_commands;
+    static const snort::Parameter* s_params;
 };
 
-#endif // TRACE_CONFIG_H
+#endif // TRACE_SWAP_H
 

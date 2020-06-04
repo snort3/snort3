@@ -15,39 +15,45 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// trace_config.h author Oleksandr Serhiienko <oserhiie@cisco.com>
+// trace_parser.h author Oleksandr Serhiienko <oserhiie@cisco.com>
 
-#ifndef TRACE_CONFIG_H
-#define TRACE_CONFIG_H
+#ifndef TRACE_PARSER_H
+#define TRACE_PARSER_H
 
-#include "trace.h"
+#include <map>
+#include <string>
 
 namespace snort
 {
-struct PacketConstraints;
-class TraceLoggerFactory;
+class Module;
+class Value;
 }
 
-class TraceConfig
+class TraceConfig;
+
+class TraceParser
 {
 public:
-    TraceConfig();
-    TraceConfig(const TraceConfig&);
-    ~TraceConfig();
+    TraceParser(TraceConfig*);
 
-    void setup_module_trace() const;
-    bool set_trace(const std::string& module_name,
-        const std::string& trace_option_name, uint8_t trace_level);
+    bool set_traces(const std::string& module_name, const snort::Value& val);
+    bool set_constraints(const snort::Value& val);
 
     void clear_traces();
+    void clear_constraints();
 
-public:
-    snort::TraceLoggerFactory* logger_factory = nullptr;
-    snort::PacketConstraints* constraints = nullptr;
+    void reset_configured_trace_options();
+
+    TraceConfig* get_trace_config() const
+    { return trace_config; }
 
 private:
-    Traces traces;
+    void init_configured_trace_options();
+
+private:
+    TraceConfig* trace_config = nullptr;
+    static std::map<std::string, std::map<std::string, bool>> s_configured_trace_options;
 };
 
-#endif // TRACE_CONFIG_H
+#endif // TRACE_PARSER_H
 
