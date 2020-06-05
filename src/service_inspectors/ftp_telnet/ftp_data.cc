@@ -62,6 +62,9 @@ static void FTPDataProcess(
     if (data_ssn->packet_flags & FTPDATA_FLG_REST)
     {
         p->active->block_again();
+        p->active->set_drop_reason("ftp");
+        if (PacketTracer::is_active())
+            PacketTracer::log("FTP: session reset, drop\n");
         return;
     }
 

@@ -392,6 +392,9 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
             DataBus::publish(FINALIZE_PACKET_EVENT, event);
         }
 
+        if (verdict == DAQ_VERDICT_BLOCK or verdict == DAQ_VERDICT_BLACKLIST)
+            p->active->send_reason_to_daq(*p);
+        
         p->pkth = nullptr;  // No longer avail after finalize_message.
 
         {

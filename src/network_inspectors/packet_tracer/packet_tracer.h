@@ -44,14 +44,7 @@ struct Packet;
 class PacketTracer
 {
 public:
-    enum VerdictPriority : uint8_t
-    {
-        PRIORITY_UNSET = 0,
-        PRIORITY_LOW = 1,
-        PRIORITY_HIGH = 2
-    };
-
-    PacketTracer();
+    PacketTracer() = default;
     virtual ~PacketTracer();
 
     typedef uint8_t TracerMute;
@@ -76,8 +69,6 @@ public:
 
     static SO_PUBLIC TracerMute get_mute();
 
-    static SO_PUBLIC void register_verdict_reason(uint8_t reason_code, uint8_t priority);
-    static SO_PUBLIC void set_reason(uint8_t);
     static SO_PUBLIC void log(const char* format, ...) __attribute__((format (printf, 1, 2)));
     static SO_PUBLIC void log(TracerMute, const char* format, ...) __attribute__((format (printf, 2, 3)));
 
@@ -89,7 +80,6 @@ protected:
     std::vector<bool> mutes;
     char buffer[max_buff_size];
     unsigned buff_len = 0;
-    uint8_t reason;
 
     unsigned pause_count = 0;
     bool user_enabled = false;

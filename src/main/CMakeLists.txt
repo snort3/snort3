@@ -2,6 +2,7 @@
 set (INCLUDES
     analyzer_command.h
     policy.h
+    snort.h
     snort_config.h
     snort_debug.h
     snort_types.h

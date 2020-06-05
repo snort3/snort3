@@ -317,12 +317,21 @@ int SFDAQInstance::modify_flow_opaque(DAQ_Msg_h msg, uint32_t opaque)
     return daq_instance_ioctl(instance, DIOCTL_SET_FLOW_OPAQUE, &d_sfo, sizeof(d_sfo));
 }
 
-int SFDAQInstance::modify_flow_pkt_trace(DAQ_Msg_h msg, uint8_t verdict_reason, uint8_t* buff, uint32_t buff_len)
+int SFDAQInstance::set_packet_verdict_reason(DAQ_Msg_h msg, uint8_t verdict_reason)
+{
+    DIOCTL_SetPacketVerdictReason d_spvr;
+
+    d_spvr.msg = msg;
+    d_spvr.verdict_reason = verdict_reason;
+
+    return daq_instance_ioctl(instance, DIOCTL_SET_PACKET_VERDICT_REASON, &d_spvr, sizeof(d_spvr));
+}
+
+int SFDAQInstance::set_packet_trace_data(DAQ_Msg_h msg, uint8_t* buff, uint32_t buff_len)
 {
     DIOCTL_SetPacketTraceData d_sptd;
 
     d_sptd.msg = msg;
-    d_sptd.verdict_reason = verdict_reason;
     d_sptd.trace_data_len = buff_len;
     d_sptd.trace_data = buff;
 

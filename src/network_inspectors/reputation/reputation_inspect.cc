@@ -37,8 +37,6 @@
 
 #include "reputation_parse.h"
 
-#define VERDICT_REASON_REPUTATION 19
-
 using namespace snort;
 
 THREAD_LOCAL ProfileStats reputation_perf_stats;
@@ -277,12 +275,10 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
         // disable all preproc analysis and detection for this packet
         DetectionEngine::disable_all(p);
         act->block_session(p, true);
+        act->set_drop_reason("reputation");
         reputationstats.blacklisted++;
         if (PacketTracer::is_active())
-        {
-            PacketTracer::set_reason(VERDICT_REASON_REPUTATION);
             PacketTracer::log("Reputation: packet blacklisted, drop\n");
-        }
     }
 
     else if (MONITORED_SRC == decision or MONITORED_DST == decision)
@@ -453,10 +449,6 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-static void reputation_init()
-{
-    PacketTracer::register_verdict_reason(VERDICT_REASON_REPUTATION, PacketTracer::PRIORITY_LOW);
-}
 
 static Inspector* reputation_ctor(Module* m)
 {
@@ -488,7 +480,7 @@ const InspectApi reputation_api =
     PROTO_BIT__ANY_IP,
     nullptr, // buffers
     nullptr, // service
-    reputation_init, // pinit
+    nullptr, // pinit
     nullptr, // pterm
     nullptr, // tinit
     nullptr, // tterm
