@@ -31,7 +31,6 @@
 #include "detection/ips_context.h"
 #include "log/log.h"
 #include "log/messages.h"
-#include "packet_io/active.h"
 #include "packet_io/sfdaq_instance.h"
 #include "protocols/eth.h"
 #include "protocols/icmp4.h"
@@ -50,6 +49,11 @@ using namespace snort;
 // static variables
 // -----------------------------------------------------------------------------
 
+static const uint8_t VERDICT_REASON_NO_BLOCK = 2; /* Not blocking packet; all enum defined after this indicates blocking */
+
+// FIXIT-M currently non-thread-safe accesses being done in packet threads against this
+static std::unordered_map<uint8_t, uint8_t> reasons = { {VERDICT_REASON_NO_BLOCK, PacketTracer::PRIORITY_UNSET} };
+
 // FIXIT-M refactor the way this is used so all methods are members called against this pointer
 THREAD_LOCAL PacketTracer* snort::s_pkt_trace = nullptr;
 
@@ -62,6 +66,12 @@ static bool config_status = false;
 // -----------------------------------------------------------------------------
 // static functions
 // -----------------------------------------------------------------------------
+
+void PacketTracer::register_verdict_reason(uint8_t reason_code, uint8_t priority)
+{
+    assert(reasons.find(reason_code) == reasons.end());
+    reasons[reason_code] = priority;
+}
 
 void PacketTracer::set_log_file(const std::string& file)
 { log_file = file; }
@@ -110,16 +120,16 @@ void PacketTracer::dump(Packet* p)
     if (s_pkt_trace->daq_activated)
         s_pkt_trace->dump_to_daq(p);
 
-    if ((s_pkt_trace->buff_len > 0)
-        and (s_pkt_trace->user_enabled or s_pkt_trace->shell_enabled))
-    {
-        const char* drop_reason = p->active->get_drop_reason();
-        if (drop_reason)
-            PacketTracer::log("Verdict Reason: %s\n", drop_reason);
+    if (s_pkt_trace->user_enabled or s_pkt_trace->shell_enabled)
         LogMessage(s_pkt_trace->log_fh, "%s\n", s_pkt_trace->buffer);
-    }
 
     s_pkt_trace->reset();
+}
+
+void PacketTracer::set_reason(uint8_t reason)
+{
+    if ( reasons[reason] > reasons[s_pkt_trace->reason] )
+        s_pkt_trace->reason = reason;
 }
 
 void PacketTracer::log(const char* format, ...)
@@ -229,6 +239,10 @@ void PacketTracer::activate(const Packet& p)
 // -----------------------------------------------------------------------------
 // non-static functions
 // -----------------------------------------------------------------------------
+
+// constructor
+PacketTracer::PacketTracer()
+{ reason = VERDICT_REASON_NO_BLOCK; }
 
 // destructor
 PacketTracer::~PacketTracer()
@@ -391,7 +405,7 @@ void PacketTracer::open_file()
 void PacketTracer::dump_to_daq(Packet* p)
 {
     assert(p);
-    p->daq_instance->set_packet_trace_data(p->daq_msg, 
+    p->daq_instance->modify_flow_pkt_trace(p->daq_msg, reason,
         (uint8_t *)buffer, buff_len + 1);
 }
 
@@ -399,10 +413,12 @@ void PacketTracer::reset()
 {
     buff_len = 0;
     buffer[0] = '\0';
+    reason = VERDICT_REASON_NO_BLOCK;
 
     for ( unsigned i = 0; i < mutes.size(); i++ )
         mutes[i] = false;
 }
+
 // --------------------------------------------------------------------------
 // unit tests
 // --------------------------------------------------------------------------
@@ -414,6 +430,8 @@ void PacketTracer::reset()
 class TestPacketTracer : public PacketTracer
 {
 public:
+    uint8_t dump_reason = VERDICT_REASON_NO_BLOCK;
+
     static void thread_init()
     { PacketTracer::_thread_init<TestPacketTracer>(); }
 
@@ -438,8 +456,14 @@ public:
     static bool is_paused()
     { return ((TestPacketTracer*)s_pkt_trace)->pause_count; }
 
+    static uint8_t get_reason()
+    { return ((TestPacketTracer*)s_pkt_trace)->reason; }
+
+    static uint8_t get_dump_reason()
+    { return ((TestPacketTracer*)s_pkt_trace)->dump_reason; }
+
     void dump_to_daq(Packet*) override
-    { }
+    { dump_reason = reason; }
 
     static std::vector<bool> get_mutes()
     { return ((TestPacketTracer*)s_pkt_trace)->mutes; }
@@ -567,6 +591,42 @@ TEST_CASE("pause", "[PacketTracer]")
     TestPacketTracer::log("%s", test_str);
     CHECK( !strcmp(TestPacketTracer::get_buff(), test_str) );
     CHECK((TestPacketTracer::get_buff_len() == 10));
+
+    TestPacketTracer::thread_term();
+}
+
+TEST_CASE("reasons", "[PacketTracer]")
+{
+    TestPacketTracer::thread_init();
+    TestPacketTracer::set_daq_enable(true);
+    uint8_t low1 = 100, low2 = 101, high = 102;
+    TestPacketTracer::register_verdict_reason(low1, PacketTracer::PRIORITY_LOW);
+    TestPacketTracer::register_verdict_reason(low2, PacketTracer::PRIORITY_LOW);
+    TestPacketTracer::register_verdict_reason(high, PacketTracer::PRIORITY_HIGH);
+
+    // Init
+    CHECK((TestPacketTracer::get_reason() == VERDICT_REASON_NO_BLOCK));
+
+    // Update
+    TestPacketTracer::set_reason(low1);
+    CHECK((TestPacketTracer::get_reason() == low1));
+
+    // Don't update if already set
+    TestPacketTracer::set_reason(VERDICT_REASON_NO_BLOCK);
+    CHECK((TestPacketTracer::get_reason() == low1));
+    TestPacketTracer::set_reason(low2);
+    CHECK((TestPacketTracer::get_reason() == low1));
+
+    // Always update for high priority
+    TestPacketTracer::set_reason(high);
+    CHECK((TestPacketTracer::get_reason() == high));
+
+    // Dump resets reason
+    TestPacketTracer::dump(nullptr);
+    CHECK((TestPacketTracer::get_reason() == VERDICT_REASON_NO_BLOCK));
+
+    // Dump delivers reason to daq
+    CHECK((TestPacketTracer::get_dump_reason() == high));
 
     TestPacketTracer::thread_term();
 }

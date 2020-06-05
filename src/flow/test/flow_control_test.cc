@@ -54,12 +54,12 @@ THREAD_LOCAL bool Active::s_suspend = false;
 THREAD_LOCAL PacketTracer* snort::s_pkt_trace = nullptr;
 
 void Active::drop_packet(snort::Packet const*, bool) { }
+PacketTracer::PacketTracer() = default;
 PacketTracer::~PacketTracer() = default;
 void PacketTracer::log(const char*, ...) { }
 void PacketTracer::open_file() { }
 void PacketTracer::dump_to_daq(Packet*) { }
 void PacketTracer::reset() { }
-void Active::set_drop_reason(char const*) { }
 Packet::Packet(bool) { }
 Packet::~Packet() = default;
 FlowCache::FlowCache(const FlowCacheConfig& cfg) : config(cfg) { }

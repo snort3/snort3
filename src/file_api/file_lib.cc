@@ -349,13 +349,6 @@ void FileContext::finish_signature_lookup(Packet* p, bool final_lookup, FilePoli
             FileCache* file_cache = FileService::get_file_cache();
             if (file_cache)
                 file_cache->apply_verdict(p, this, verdict, false, policy);
-
-            if ( PacketTracer::is_active() and ( verdict == FILE_VERDICT_BLOCK
-                    or verdict == FILE_VERDICT_REJECT ))
-            {
-                PacketTracer::log("File: signature lookup verdict %s\n",
-                    verdict == FILE_VERDICT_BLOCK ? "block" : "reject");
-            }
             log_file_event(flow, policy);
             config_file_signature(false);
             file_stats->signatures_processed[get_file_type()][get_file_direction()]++;
@@ -457,13 +450,6 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
                 FileCache* file_cache = FileService::get_file_cache();
                 if (file_cache)
                     file_cache->apply_verdict(p, this, v, false, policy);
-
-                if ( PacketTracer::is_active() and ( v == FILE_VERDICT_BLOCK
-                        or v == FILE_VERDICT_REJECT ))
-                {
-                    PacketTracer::log("File: file type verdict %s\n",
-                        v == FILE_VERDICT_BLOCK ? "block" : "reject");
-                }
             }
 
             log_file_event(flow, policy);

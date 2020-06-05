@@ -79,9 +79,6 @@ static THREAD_LOCAL ip_t* s_ipnet = nullptr;
 static THREAD_LOCAL send_t s_send = SFDAQ::inject;
 
 static ResetAction default_reset;
-static int default_drop_reason_id = -1;
-
-static std::unordered_map<std::string, uint8_t> drop_reason_id_map;
 
 //--------------------------------------------------------------------
 // helpers
@@ -778,7 +775,6 @@ void Active::reset()
     active_action = ACT_ALLOW;
     delayed_active_action = ACT_ALLOW;
     delayed_reject = nullptr;
-    drop_reason = nullptr;
 }
 
 void Active::clear_queue(Packet* p)
@@ -796,37 +792,3 @@ void Active::execute(Packet* p)
     }
 }
 
-void Active::set_default_drop_reason(uint8_t reason_id)
-{
-    default_drop_reason_id = reason_id;
-}
-
-void Active::map_drop_reason_id(const char* verdict_reason, uint8_t id)
-{
-    drop_reason_id_map[verdict_reason] = id;
-}
-
-void Active::set_drop_reason(const char* reason)
-{
-    if ( drop_reason == nullptr )
-        drop_reason = reason;
-}
-
-int Active::get_drop_reason_id()
-{
-    const auto iter = drop_reason_id_map.find(drop_reason);
-    if ( iter != drop_reason_id_map.end() )
-        return iter->second;
-            
-    return default_drop_reason_id;
-}
-
-void Active::send_reason_to_daq(Packet& p)
-{
-    if ( drop_reason == nullptr )
-        return;
-
-    int reason = get_drop_reason_id();
-    if ( reason != -1 )
-        p.daq_instance->set_packet_verdict_reason(p.daq_msg, reason);
-}

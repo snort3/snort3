@@ -156,14 +156,6 @@ public:
 
     void reset();
 
-    static void set_default_drop_reason(uint8_t reason_id);
-    static void map_drop_reason_id(const char* verdict_reason, uint8_t id);
-    void set_drop_reason(const char*);
-    void send_reason_to_daq(Packet&);
-
-    const char* get_drop_reason() 
-    { return drop_reason; }
-
 private:
     static bool open(const char*);
     static void close();
@@ -177,8 +169,6 @@ private:
 
     void cant_drop();
 
-    int get_drop_reason_id();
-
 private:
     static const char* act_str[ACT_MAX][AST_MAX];
     static bool enabled;
@@ -186,7 +176,6 @@ private:
     static THREAD_LOCAL bool s_suspend;
 
     int active_tunnel_bypass;
-    const char* drop_reason;
 
     bool prevent_trust_action;
 

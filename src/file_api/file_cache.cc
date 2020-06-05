@@ -274,13 +274,11 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
     case FILE_VERDICT_BLOCK:
         // can't block session inside a session
         act->set_delayed_action(Active::ACT_BLOCK, true);
-        act->set_drop_reason("file");
         break;
 
     case FILE_VERDICT_REJECT:
         // can't reset session inside a session
         act->set_delayed_action(Active::ACT_RESET, true);
-        act->set_drop_reason("file");
         break;
     case FILE_VERDICT_STOP_CAPTURE:
         file_ctx->stop_file_capture();

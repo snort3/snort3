@@ -26,7 +26,6 @@
 #include "stubs.h"
 
 #include "main/analyzer.h"
-#include "packet_io/sfdaq_instance.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>

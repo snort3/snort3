@@ -30,7 +30,6 @@
 #include "file_api/file_api.h"
 #include "main/snort.h"
 #include "main/snort_debug.h"
-#include "network_inspectors/packet_tracer/packet_tracer.h"
 #include "packet_io/active.h"
 #include "utils/util.h"
 
@@ -1445,7 +1444,6 @@ static void DCE2_SmbFinishFileBlockVerdict(DCE2_SmbSsnData* ssd)
     if ((verdict == FILE_VERDICT_BLOCK) || (verdict == FILE_VERDICT_REJECT))
     {
         DCE2_SmbInjectDeletePdu(ssd->fb_ftracker);
-        DetectionEngine::get_current_packet()->active->set_drop_reason("smb");
     }
 
     ssd->fb_ftracker = nullptr;
@@ -1477,12 +1475,7 @@ static void DCE2_SmbFinishFileAPI(DCE2_SmbSsnData* ssd)
                     FileVerdict verdict = DCE2_get_file_verdict();
 
                     if ((verdict == FILE_VERDICT_BLOCK) || (verdict == FILE_VERDICT_REJECT))
-                    {
                         ssd->fb_ftracker = ftracker;
-                        if (PacketTracer::is_active())
-                            PacketTracer::log("Dce2_smb: smb file verdict %s\n",
-                                verdict == FILE_VERDICT_BLOCK ? "block" : "reject");
-                    }
                 }
             }
             dce2_smb_stats.smb_files_processed++;
@@ -1565,11 +1558,6 @@ static DCE2_Ret DCE2_SmbFileAPIProcess(DCE2_SmbSsnData* ssd,
                     || (verdict == FILE_VERDICT_PENDING))
                 {
                     ssd->fb_ftracker = ftracker;
-                    if (verdict != FILE_VERDICT_PENDING and PacketTracer::is_active())
-                    {
-                        PacketTracer::log("Dce2_smb: smb file verdict %s\n",
-                            verdict == FILE_VERDICT_BLOCK ? "block" : "reject");
-                    }
                 }
             }
             ftracker->ff_sequential_only = false;

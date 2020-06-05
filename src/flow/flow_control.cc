@@ -470,10 +470,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
         else
             p->active->block_again();
 
-        p->active->set_drop_reason("session");
         DetectionEngine::disable_all(p);
-        if ( PacketTracer::is_active() )
-            PacketTracer::log("Session: session has been blocked, drop\n");
         break;
 
     case Flow::FlowState::RESET:
@@ -483,10 +480,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
             p->active->reset_again();
 
         Stream::blocked_flow(p);
-        p->active->set_drop_reason("session");
         DetectionEngine::disable_all(p);
-        if ( PacketTracer::is_active() )
-            PacketTracer::log("Session: session has been reset\n");
         break;
     }
 

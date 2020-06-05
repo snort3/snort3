@@ -152,7 +152,6 @@ bool SFDAQ::forwarding_packet(const DAQ_PktHdr_t*) { return false; }
 int SFDAQ::inject(DAQ_Msg_h, int, const uint8_t*, uint32_t) { return -1; }
 bool SFDAQ::can_inject() { return false; }
 bool SFDAQ::can_inject_raw() { return false; }
-int SFDAQInstance::set_packet_verdict_reason(DAQ_Msg_h, uint8_t) { return 0; }
 DetectionEngine::DetectionEngine() { }
 DetectionEngine::~DetectionEngine() { }
 void DetectionEngine::onload() { }

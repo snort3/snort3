@@ -30,6 +30,7 @@
 #include "tcp_stream_session.h"
 #include "tcp_stream_tracker.h"
 
+
 using namespace snort;
 
 THREAD_LOCAL PegCount tcp_norm_stats[PC_TCP_MAX][NORM_MODE_MAX];
@@ -101,7 +102,6 @@ bool TcpNormalizer::packet_dropper(
     {
         Packet* p = tsd.get_pkt();
         p->active->drop_packet(p);
-        p->active->set_drop_reason("stream");
         return true;
     }
 

@@ -33,7 +33,6 @@
 #include "main/snort.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
-#include "network_inspectors/packet_tracer/packet_tracer.h"
 #include "packet_io/active.h"
 #include "protocols/vlan.h"
 #include "stream/base/stream_module.h"
@@ -181,12 +180,7 @@ void Stream::check_flow_closed(Packet* p)
         flow->set_state(Flow::FlowState::BLOCK);
 
         if ( !(p->packet_flags & PKT_STATELESS) )
-        {
             drop_traffic(p, SSN_DIR_BOTH);
-            p->active->set_drop_reason("stream");
-            if (PacketTracer::is_active())
-                PacketTracer::log("Stream: pending block, drop\n");
-        }
         flow->session_state &= ~STREAM_STATE_BLOCK_PENDING;
     }
 }
@@ -325,10 +319,6 @@ void Stream::drop_flow(const Packet* p)
 
     if ( !(p->packet_flags & PKT_STATELESS) )
         drop_traffic(p, SSN_DIR_BOTH);
-
-    p->active->set_drop_reason("stream");
-    if (PacketTracer::is_active())
-        PacketTracer::log("Stream: session has been dropped\n");
 }
 
 //-------------------------------------------------------------------------
@@ -610,9 +600,6 @@ bool Stream::blocked_flow(Packet* p)
         DetectionEngine::disable_content(p);
         p->active->drop_packet(p);
         active_response(p, flow);
-        p->active->set_drop_reason("stream");
-        if (PacketTracer::is_active())
-            PacketTracer::log("Stream: session was already blocked\n");
         return true;
     }
     return false;

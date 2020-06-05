@@ -180,8 +180,8 @@ bool TcpStateSynRecv::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     else
     {
         inc_tcp_discards();
-        trk.session->tel.set_tcp_event(EVENT_BAD_RST);
         trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
+        trk.session->tel.set_tcp_event(EVENT_BAD_RST);
     }
 
     // FIXIT-L might be good to create alert specific to RST with data
