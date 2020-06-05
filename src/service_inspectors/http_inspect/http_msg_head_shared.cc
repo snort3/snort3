@@ -72,9 +72,7 @@ void HttpMsgHeadShared::create_norm_head_list()
             {
                 headers_present[header_name_id[j]] = true;
                 NormalizedHeader* tmp_ptr = norm_heads;
-                norm_heads = new NormalizedHeader(header_name_id[j]);
-                norm_heads->next = tmp_ptr;
-                norm_heads->count = 1;
+                norm_heads = new NormalizedHeader(tmp_ptr, 1, header_name_id[j]);
             }
         }
     }

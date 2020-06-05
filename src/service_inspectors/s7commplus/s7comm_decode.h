@@ -27,6 +27,8 @@ namespace snort
 struct Packet;
 }
 
+class S7commplusFlowData;
+
 /* S7comm defines */
 #define S7COMMPLUS_PDUTYPE_CONNECT                 0x01
 #define S7COMMPLUS_PDUTYPE_DATA                    0x02
@@ -59,7 +61,7 @@ struct Packet;
 #define S7COMMPLUS_RESERVED_FUNCTION_STR \
     "(spp_s7commplus): Reserved S7commplus function code in use."
 
-bool S7commplusDecode(snort::Packet*);
+bool S7commplusDecode(snort::Packet*, S7commplusFlowData* mfd);
 
 #endif
 

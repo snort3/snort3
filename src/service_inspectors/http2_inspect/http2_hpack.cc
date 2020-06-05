@@ -365,6 +365,7 @@ bool Http2HpackDecoder::decode_headers(const uint8_t* encoded_headers,
     events = stream_events;
     infractions = stream_infractions;
     pseudo_headers_fragment_size = 0;
+    decode_error = false;
 
     // A maximum of two table size updates are allowed, and must be at the start of the header block
     table_size_update_allowed = true;

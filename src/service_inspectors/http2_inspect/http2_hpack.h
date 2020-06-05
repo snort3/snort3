@@ -72,10 +72,10 @@ public:
     HpackIndexTable* get_decode_table() { return &decode_table; }
 
 private:
-    Http2StartLine* start_line = nullptr;
+    Http2StartLine* start_line;
     uint32_t decoded_headers_size;
-    uint32_t pseudo_headers_fragment_size = 0;
-    bool decode_error = false;
+    uint32_t pseudo_headers_fragment_size;
+    bool decode_error;
     Http2EventGen* events;
     Http2Infractions* infractions;
 

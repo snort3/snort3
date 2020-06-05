@@ -114,7 +114,7 @@ void Modbus::eval(Packet* p)
     // evaluating on the first PDU. Setting this flag stops the caching.
     p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;
 
-    if ( !ModbusDecode(p) )
+    if ( !ModbusDecode(p, mfd) )
         mfd->reset();
 }
 

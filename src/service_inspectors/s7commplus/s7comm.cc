@@ -114,7 +114,7 @@ void S7commplus::eval(Packet* p)
     // evaluating on the first PDU. Setting this flag stops the caching.
     p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;
 
-    if ( !S7commplusDecode(p) )
+    if ( !S7commplusDecode(p, mfd))
         mfd->reset();
 }
 

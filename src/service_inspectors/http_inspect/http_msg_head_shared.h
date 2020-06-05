@@ -107,7 +107,8 @@ private:
 
     struct NormalizedHeader
     {
-        NormalizedHeader(HttpEnums::HeaderId id_) : id(id_) {}
+        NormalizedHeader(NormalizedHeader* next_, int32_t count_, HttpEnums::HeaderId id_) :
+            next(next_), count(count_), id(id_) {}
 
         Field norm;
         NormalizedHeader* next;

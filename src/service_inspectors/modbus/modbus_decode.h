@@ -27,10 +27,12 @@ namespace snort
 struct Packet;
 }
 
+class ModbusFlowData;
+
 /* Need 8 bytes for MBAP Header + Function Code */
 #define MODBUS_MIN_LEN 8
 
-bool ModbusDecode(snort::Packet*);
+bool ModbusDecode(snort::Packet*, ModbusFlowData* mfd);
 
 #endif
 

@@ -45,13 +45,13 @@ private:
     // total per frame - scan
     uint32_t frame_length;
     uint32_t data_len;
-    uint32_t padding_len = 0;
+    uint32_t padding_len;
     uint8_t frame_flags;
     // accumulating - scan
     uint32_t frame_bytes_seen = 0;
     uint32_t bytes_sent_http = 0;
-    uint32_t data_bytes_read = 0;
-    uint32_t padding_read = 0;
+    uint32_t data_bytes_read;
+    uint32_t padding_read;
     // leftover from previous scan call
     uint32_t leftover_bytes = 0;
     uint32_t leftover_padding = 0;
