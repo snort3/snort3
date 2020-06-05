@@ -29,6 +29,7 @@
 #include "detection/rules.h"
 #include "filters/sfrf.h"
 #include "main/snort_config.h"
+#include "packet_tracer/packet_tracer.h"
 
 #include "tcp_module.h"
 
@@ -38,35 +39,37 @@ struct tcp_event_sid
 {
     uint32_t event_id;
     uint32_t sid;
+    const char* event_description;
 };
 
 // ffs returns 1 as bit position of lsb so event id array
 // has dummy entry for index 0
 struct tcp_event_sid tcp_event_sids[] =
 {
-    { 0, 0 },
-    { EVENT_SYN_ON_EST, STREAM_TCP_SYN_ON_EST },
-    { EVENT_DATA_ON_SYN, STREAM_TCP_DATA_ON_SYN },
-    { EVENT_DATA_ON_CLOSED, STREAM_TCP_DATA_ON_CLOSED },
-    { EVENT_BAD_TIMESTAMP, STREAM_TCP_BAD_TIMESTAMP },
-    { EVENT_WINDOW_TOO_LARGE, STREAM_TCP_WINDOW_TOO_LARGE },
-    { EVENT_DATA_AFTER_RESET, STREAM_TCP_DATA_AFTER_RESET },
-    { EVENT_SESSION_HIJACK_CLIENT, STREAM_TCP_SESSION_HIJACKED_CLIENT },
-    { EVENT_SESSION_HIJACK_SERVER, STREAM_TCP_SESSION_HIJACKED_SERVER },
-    { EVENT_DATA_WITHOUT_FLAGS, STREAM_TCP_DATA_WITHOUT_FLAGS },
-    { EVENT_4WHS, STREAM_TCP_4WAY_HANDSHAKE },
-    { EVENT_NO_TIMESTAMP, STREAM_TCP_NO_TIMESTAMP },
-    { EVENT_BAD_RST, STREAM_TCP_BAD_RST },
-    { EVENT_BAD_FIN, STREAM_TCP_BAD_FIN },
-    { EVENT_BAD_ACK, STREAM_TCP_BAD_ACK },
-    { EVENT_DATA_AFTER_RST_RCVD, STREAM_TCP_DATA_AFTER_RST_RCVD },
-    { EVENT_WINDOW_SLAM, STREAM_TCP_WINDOW_SLAM },
-    { EVENT_NO_3WHS, STREAM_TCP_NO_3WHS },
-    { EVENT_BAD_SEGMENT, STREAM_TCP_BAD_SEGMENT },
-    { EVENT_EXCESSIVE_OVERLAP, STREAM_TCP_EXCESSIVE_TCP_OVERLAPS },
-    { EVENT_MAX_SMALL_SEGS_EXCEEDED, STREAM_TCP_SMALL_SEGMENT },
-    { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
-    { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }
+    { 0, 0, nullptr },
+    { EVENT_SYN_ON_EST, STREAM_TCP_SYN_ON_EST, "SYN_ON_EST" },
+    { EVENT_DATA_ON_SYN, STREAM_TCP_DATA_ON_SYN, "DATA_ON_SYN" },
+    { EVENT_DATA_ON_CLOSED, STREAM_TCP_DATA_ON_CLOSED, "DATA_ON_CLOSED" },
+    { EVENT_BAD_TIMESTAMP, STREAM_TCP_BAD_TIMESTAMP, "BAD_TIMESTAMP" },
+    { EVENT_WINDOW_TOO_LARGE, STREAM_TCP_WINDOW_TOO_LARGE, "WINDOW_TOO_LARGE" },
+    { EVENT_DATA_AFTER_RESET, STREAM_TCP_DATA_AFTER_RESET, "DATA_AFTER_RESET" },
+    { EVENT_SESSION_HIJACK_CLIENT, STREAM_TCP_SESSION_HIJACKED_CLIENT, "SESSION_HIJACK_CLIENT" },
+    { EVENT_SESSION_HIJACK_SERVER, STREAM_TCP_SESSION_HIJACKED_SERVER, "SESSION_HIJACK_SERVER" },
+    { EVENT_DATA_WITHOUT_FLAGS, STREAM_TCP_DATA_WITHOUT_FLAGS, "DATA_WITHOUT_FLAGS" },
+    { EVENT_4WHS, STREAM_TCP_4WAY_HANDSHAKE, "4WHS" },
+    { EVENT_NO_TIMESTAMP, STREAM_TCP_NO_TIMESTAMP, "NO_TIMESTAMP" },
+    { EVENT_BAD_RST, STREAM_TCP_BAD_RST, "BAD_RST" },
+    { EVENT_BAD_FIN, STREAM_TCP_BAD_FIN, "BAD_FIN" },
+    { EVENT_BAD_ACK, STREAM_TCP_BAD_ACK, "BAD_ACK" },
+    { EVENT_DATA_AFTER_RST_RCVD, STREAM_TCP_DATA_AFTER_RST_RCVD, "DATA_AFTER_RST_RCVD" },
+    { EVENT_WINDOW_SLAM, STREAM_TCP_WINDOW_SLAM, "WINDOW_SLAM" },
+    { EVENT_NO_3WHS, STREAM_TCP_NO_3WHS, "NO_3WHS" },
+    { EVENT_BAD_SEGMENT, STREAM_TCP_BAD_SEGMENT, "BAD_SEGMENT" },
+    { EVENT_EXCESSIVE_OVERLAP, STREAM_TCP_EXCESSIVE_TCP_OVERLAPS, "EXCESSIVE_OVERLAP" },
+    { EVENT_MAX_SMALL_SEGS_EXCEEDED, STREAM_TCP_SMALL_SEGMENT, "MAX_SMALL_SEGS_EXCEEDED" },
+    { 0, 0, nullptr }, { 0, 0, nullptr }, { 0, 0, nullptr }, { 0, 0, nullptr },
+    { 0, 0, nullptr }, { 0, 0, nullptr }, { 0, 0, nullptr }, { 0, 0, nullptr },
+    { 0, 0, nullptr }, { 0, 0, nullptr }, { 0, 0, nullptr }, { 0, 0, nullptr }
 };
 
 void TcpEventLogger::log_internal_event(uint32_t eventSid)
@@ -85,8 +88,11 @@ void TcpEventLogger::log_tcp_events()
         uint32_t idx = ffs(tcp_events);
         if ( idx )
         {
-            DetectionEngine::queue_event(GID_STREAM_TCP, tcp_event_sids[ idx ].sid);
-            tcp_events ^= tcp_event_sids[ idx ].event_id;
+            DetectionEngine::queue_event(GID_STREAM_TCP, tcp_event_sids[idx].sid);
+            if ( PacketTracer::is_active() )
+                PacketTracer::log("Stream: TCP normalization error in %s\n",
+                    tcp_event_sids[idx].event_description);
+            tcp_events ^= tcp_event_sids[idx].event_id;
             tcpStats.events++;
         }
     }

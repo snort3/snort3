@@ -76,8 +76,8 @@ public:
 
     SO_PUBLIC int ioctl(DAQ_IoctlCmd cmd, void *arg, size_t arglen);
     SO_PUBLIC int modify_flow_opaque(DAQ_Msg_h, uint32_t opaque);
-    int modify_flow_pkt_trace(DAQ_Msg_h, uint8_t verdict_reason,
-        uint8_t* buff, uint32_t buff_len);
+    int set_packet_verdict_reason(DAQ_Msg_h msg, uint8_t verdict_reason);
+    int set_packet_trace_data(DAQ_Msg_h, uint8_t* buff, uint32_t buff_len);
     int add_expected(const Packet* ctrlPkt, const SfIp* cliIP, uint16_t cliPort,
             const SfIp* srvIP, uint16_t srvPort, IpProtocol, unsigned timeout_ms,
             unsigned /* flags */);

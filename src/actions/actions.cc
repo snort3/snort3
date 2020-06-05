@@ -121,12 +121,14 @@ void Actions::execute(Actions::Type action, Packet* p, const OptTreeNode* otn,
 
     case Actions::DROP:
         p->active->drop_packet(p);
+        p->active->set_drop_reason("ips");
         alert(p, otn);
         SetTags(p, otn, event_id);
         break;
 
     case Actions::BLOCK:
         p->active->block_session(p);
+        p->active->set_drop_reason("ips");
         alert(p, otn);
         SetTags(p, otn, event_id);
         break;
