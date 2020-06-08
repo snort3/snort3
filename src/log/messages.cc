@@ -336,6 +336,8 @@ void ErrorMessage(const char* format,...)
         fprintf(stderr,"Fatal Error, Quitting..\n");
     }
 
+    SnortConfig::cleanup_fatal_error();
+
 #if 0
     // FIXIT-M need to stop analyzers / workers
     // and they should handle the DAQ break / abort

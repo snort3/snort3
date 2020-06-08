@@ -314,6 +314,9 @@ static void base_tinit()
 
 static void base_tterm()
 {
+    StreamHAManager::tterm();
+    FlushBucket::clear();
+
     // this can't happen sooner because the counts haven't been harvested yet
     delete flow_con;
     flow_con = nullptr;

@@ -140,10 +140,8 @@ void AppIdInspector::tinit()
     appid_mute = PacketTracer::get_mute();
 
     AppIdStatistics::initialize_manager(*config);
-    appid_forecast_tinit();
     LuaDetectorManager::initialize(*ctxt);
     AppIdServiceState::initialize(config->memcap);
-    appidDebug = new AppIdDebug();
     assert(!tp_appid_thread_ctxt);
     tp_appid_thread_ctxt = ctxt->get_tp_appid_ctxt();
     if (tp_appid_thread_ctxt)
@@ -154,13 +152,8 @@ void AppIdInspector::tinit()
 
 void AppIdInspector::tterm()
 {
-    appid_forecast_tterm();
     AppIdStatistics::cleanup();
-    LuaDetectorManager::terminate();
     AppIdDiscovery::tterm();
-    AppIdServiceState::clean();
-    delete appidDebug;
-    appidDebug = nullptr;
     ThirdPartyAppIdContext* tp_appid_ctxt = ctxt->get_tp_appid_ctxt();
     if (tp_appid_ctxt)
         tp_appid_ctxt->tfini();
@@ -216,12 +209,18 @@ static void appid_inspector_pterm()
 static void appid_inspector_tinit()
 {
     AppIdPegCounts::init_pegs();
+    appid_forecast_tinit();
+    appidDebug = new AppIdDebug();
 }
 
 static void appid_inspector_tterm()
 {
     TPLibHandler::tfini();
     AppIdPegCounts::cleanup_pegs();
+    LuaDetectorManager::terminate();
+    AppIdServiceState::clean();
+    appid_forecast_tterm();
+    delete appidDebug;
 }
 
 static Inspector* appid_inspector_ctor(Module* m)

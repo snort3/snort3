@@ -209,6 +209,7 @@ bool AppIdServiceState::initialize(size_t memcap)
 void AppIdServiceState::clean()
 {
     delete service_state_cache;
+    service_state_cache = nullptr;
 }
 
 ServiceDiscoveryState* AppIdServiceState::add(const SfIp* ip, IpProtocol proto, uint16_t port,

@@ -74,20 +74,17 @@ bool React::convert(std::istringstream& data_stream)
                 do
                 {
                     if (tmp == "warn")
-                        table_api.add_deleted_comment("warn");
+                        rule_api.add_comment("react: warn - deprecated");
 
                     else if (tmp == "block")
-                        table_api.add_deleted_comment("block");
+                        rule_api.add_comment("react: block - deprecated");
 
                     else if (!tmp.compare(0, 5, "proxy"))
-                        table_api.add_deleted_comment(tmp);
+                        rule_api.add_comment("react: proxy - deprecated");
 
                     else if (tmp == "msg")
-                    {
-                        table_api.add_diff_option_comment(
-                            "msg", "react.msg = true");
-                        table_api.add_option("msg", true);
-                    }
+                        rule_api.add_comment("react: msg - deprecated");
+
                     else
                         rule_api.bad_rule(data_stream, "resp: " + tmp);
                 }

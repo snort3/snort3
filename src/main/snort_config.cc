@@ -981,3 +981,21 @@ void SnortConfig::set_conf(const SnortConfig* sc)
             set_policies(sc, sh);
     }
 }
+
+void SnortConfig::cleanup_fatal_error()
+{
+    // guard against FatalError calls from packet threads (which should not happen!)
+    // FIXIT-L should also guard against non-main non-packet threads calling FatalError
+    if ( is_packet_thread() )
+        return;
+
+    const SnortConfig* sc = SnortConfig::get_conf();
+    if ( sc && !sc->dirty_pig )
+    {
+        ModuleManager::term();
+        EventManager::release_plugins();
+        IpsManager::release_plugins();
+        InspectorManager::release_plugins();
+    }
+}
+

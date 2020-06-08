@@ -1231,7 +1231,10 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
         IpsManager::reset_options();
 
         if ( !rule )
+        {
             ParseError("SO rule %s not loaded.", otn->soid);
+            FreeRuleTreeNode(&rtn);
+        }
         else
         {
             SoRule so_rule(&rtn, otn);

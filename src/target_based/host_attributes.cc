@@ -142,6 +142,7 @@ void HostAttributeEntry::update_service
     ApplicationEntry* app = new ApplicationEntry(port, protocol, snort_protocol_id);
     host->add_service(app);
 }
+
 SnortProtocolId HostAttributeEntry::get_snort_protocol_id(int ipprotocol, uint16_t port) const
 {
     for ( auto app : services )

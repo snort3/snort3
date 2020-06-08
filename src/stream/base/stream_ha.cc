@@ -282,5 +282,8 @@ void StreamHAManager::tinit()
 void StreamHAManager::tterm()
 {
     if ( ha_client )
+    {
         delete ha_client;
+        ha_client = nullptr;
+    }
 }

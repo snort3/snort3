@@ -411,9 +411,7 @@ static void portscan_config_show(const PortscanConfig* config)
 //-------------------------------------------------------------------------
 
 PortScan::PortScan(PortScanModule* mod)
-{
-    config = mod->get_data();
-}
+{ config = mod->get_data(); }
 
 PortScan::~PortScan()
 {
@@ -422,14 +420,10 @@ PortScan::~PortScan()
 }
 
 void PortScan::tinit()
-{
-    ps_init_hash(config->memcap);
-}
+{ ps_init_hash(config->memcap); }
 
 void PortScan::tterm()
-{
-    ps_cleanup();
-}
+{ ps_cleanup(); }
 
 void PortScan::show(const SnortConfig*) const
 {
@@ -467,6 +461,12 @@ void PortScan::eval(Packet* p)
 // api stuff
 //-------------------------------------------------------------------------
 
+static void port_scan_tinit()
+{ }
+
+static void port_scan_tterm()
+{ ps_cleanup(); }
+
 static Module* mod_ctor()
 { return new PortScanModule; }
 
@@ -502,8 +502,8 @@ static const InspectApi sp_api =
     nullptr, // service
     nullptr, // pinit
     nullptr, // pterm
-    nullptr, // tinit
-    nullptr, // tterm
+    port_scan_tinit, // tinit
+    port_scan_tterm, // tterm
     sp_ctor,
     sp_dtor,
     nullptr, // ssn

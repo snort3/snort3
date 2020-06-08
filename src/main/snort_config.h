@@ -703,11 +703,13 @@ public:
 
     // runtime access to mutable config - main thread only, and only special cases
     SO_PUBLIC static SnortConfig* get_main_conf();
+    
+    static void set_conf(const SnortConfig*);
 
     SO_PUBLIC void register_reload_resource_tuner(ReloadResourceTuner& rrt)
     { reload_tuners.push_back(&rrt); }
 
-    static void set_conf(const SnortConfig*);
+    static void cleanup_fatal_error();
 };
 }
 
