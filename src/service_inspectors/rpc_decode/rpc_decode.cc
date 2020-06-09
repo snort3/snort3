@@ -58,11 +58,6 @@ using namespace std;
 #define RPC_FRAG_HDR_SIZE  sizeof(uint32_t)
 #define RPC_FRAG_LEN(ptr)  (ntohl(*((const uint32_t*)(ptr))) & 0x7FFFFFFF)
 
-struct RpcDecodeConfig
-{
-    int dummy;
-};
-
 struct RpcBuffer
 {
     uint8_t* data;
@@ -121,16 +116,16 @@ static const uint32_t flush_size = 28;
 THREAD_LOCAL ProfileStats rpcdecodePerfStats;
 THREAD_LOCAL RpcStats rdstats;
 
-static int ConvertRPC(RpcDecodeConfig*, RpcSsnData*, Packet*);
+static int ConvertRPC(RpcSsnData*, Packet*);
 
 static RpcSsnData* RpcSsnDataNew(Packet*);
 static inline void RpcSsnClean(RpcSsnData*);
 static inline void RpcSsnSetInactive(RpcSsnData*, Packet*);
 static inline int RpcSsnIsActive(RpcSsnData*);
 
-static RpcStatus RpcStatefulInspection(RpcDecodeConfig*, RpcSsnData*, Packet*);
-static inline void RpcPreprocEvent(RpcDecodeConfig*, RpcSsnData*, int);
-static RpcStatus RpcHandleFrag(RpcDecodeConfig*, RpcSsnData*, const uint8_t*);
+static RpcStatus RpcStatefulInspection(RpcSsnData*, Packet*);
+static inline void RpcPreprocEvent(RpcSsnData*, int);
+static RpcStatus RpcHandleFrag(RpcSsnData*, const uint8_t*);
 static RpcStatus RpcPrepRaw(const uint8_t*, uint32_t, Packet*);
 static RpcStatus RpcPrepFrag(RpcSsnData*, Packet*);
 static RpcStatus RpcPrepSeg(RpcSsnData*, Packet*);
@@ -139,12 +134,8 @@ static inline uint8_t* RpcBufData(RpcBuffer*);
 static RpcStatus RpcBufAdd(RpcBuffer*, const uint8_t*, uint32_t);
 static inline void RpcBufClean(RpcBuffer*);
 
-static inline void RpcPreprocEvent(
-    RpcDecodeConfig* rconfig, RpcSsnData* rsdata, int event)
+static inline void RpcPreprocEvent(RpcSsnData* rsdata, int event)
 {
-    if (rconfig == nullptr)
-        return;
-
     if (rsdata != nullptr)
     {
         /* Only log one event of the same type per session */
@@ -181,8 +172,7 @@ static inline void RpcPreprocEvent(
     }
 }
 
-static RpcStatus RpcStatefulInspection(RpcDecodeConfig* rconfig,
-    RpcSsnData* rsdata, Packet* p)
+static RpcStatus RpcStatefulInspection(RpcSsnData* rsdata, Packet* p)
 {
     const uint8_t* data = p->data;
     uint16_t dsize = p->dsize;
@@ -213,7 +203,7 @@ static RpcStatus RpcStatefulInspection(RpcDecodeConfig* rconfig,
         {
             if (dsize < RPC_FRAG_HDR_SIZE)
             {
-                RpcPreprocEvent(rconfig, rsdata, RPC_INCOMPLETE_SEGMENT);
+                RpcPreprocEvent(rsdata, RPC_INCOMPLETE_SEGMENT);
 
                 if (RpcBufAdd(&rsdata->seg, data, dsize) != RPC_STATUS__SUCCESS)
                     return RPC_STATUS__ERROR;
@@ -224,7 +214,7 @@ static RpcStatus RpcStatefulInspection(RpcDecodeConfig* rconfig,
             rsdata->frag_len = RPC_FRAG_LEN(data);
             if (dsize < (RPC_FRAG_HDR_SIZE + rsdata->frag_len))
             {
-                RpcPreprocEvent(rconfig, rsdata, RPC_INCOMPLETE_SEGMENT);
+                RpcPreprocEvent(rsdata, RPC_INCOMPLETE_SEGMENT);
 
                 if (RpcBufAdd(&rsdata->seg, data, dsize) != RPC_STATUS__SUCCESS)
                     return RPC_STATUS__ERROR;
@@ -234,7 +224,7 @@ static RpcStatus RpcStatefulInspection(RpcDecodeConfig* rconfig,
 
             dsize -= (RPC_FRAG_HDR_SIZE + rsdata->frag_len);
 
-            status = RpcHandleFrag(rconfig, rsdata, data);
+            status = RpcHandleFrag(rsdata, data);
 
             if (status == RPC_STATUS__ERROR)
                 return RPC_STATUS__ERROR;
@@ -252,7 +242,7 @@ static RpcStatus RpcStatefulInspection(RpcDecodeConfig* rconfig,
                 }
 
                 if ( (dsize > 0) )
-                    RpcPreprocEvent(rconfig, rsdata, RPC_MULTIPLE_RECORD);
+                    RpcPreprocEvent(rsdata, RPC_MULTIPLE_RECORD);
             }
 
             data += (RPC_FRAG_HDR_SIZE + rsdata->frag_len);
@@ -264,7 +254,7 @@ static RpcStatus RpcStatefulInspection(RpcDecodeConfig* rconfig,
                 need = RPC_FRAG_HDR_SIZE - RpcBufLen(&rsdata->seg);
                 if (dsize < need)
                 {
-                    RpcPreprocEvent(rconfig, rsdata, RPC_INCOMPLETE_SEGMENT);
+                    RpcPreprocEvent(rsdata, RPC_INCOMPLETE_SEGMENT);
 
                     if (RpcBufAdd(&rsdata->seg, data, dsize) != RPC_STATUS__SUCCESS)
                         return RPC_STATUS__ERROR;
@@ -284,7 +274,7 @@ static RpcStatus RpcStatefulInspection(RpcDecodeConfig* rconfig,
             need = rsdata->frag_len - (RpcBufLen(&rsdata->seg) - RPC_FRAG_HDR_SIZE);
             if (dsize < need)
             {
-                RpcPreprocEvent(rconfig, rsdata, RPC_INCOMPLETE_SEGMENT);
+                RpcPreprocEvent(rsdata, RPC_INCOMPLETE_SEGMENT);
 
                 if (RpcBufAdd(&rsdata->seg, data, dsize) != RPC_STATUS__SUCCESS)
                     return RPC_STATUS__ERROR;
@@ -298,7 +288,7 @@ static RpcStatus RpcStatefulInspection(RpcDecodeConfig* rconfig,
             data += need;
             dsize -= need;
 
-            status = RpcHandleFrag(rconfig, rsdata, RpcBufData(&rsdata->seg));
+            status = RpcHandleFrag(rsdata, RpcBufData(&rsdata->seg));
 
             if (status == RPC_STATUS__ERROR)
                 return RPC_STATUS__ERROR;
@@ -317,7 +307,7 @@ static RpcStatus RpcStatefulInspection(RpcDecodeConfig* rconfig,
                 }
 
                 if ( (dsize > 0) )
-                    RpcPreprocEvent(rconfig, rsdata, RPC_MULTIPLE_RECORD);
+                    RpcPreprocEvent(rsdata, RPC_MULTIPLE_RECORD);
 
                 DataBus::publish(PACKET_EVENT, p);
                 RpcBufClean(&rsdata->frag);
@@ -406,17 +396,16 @@ static RpcStatus RpcPrepSeg(RpcSsnData* rsdata, Packet* p)
     return RPC_STATUS__SUCCESS;
 }
 
-static RpcStatus RpcHandleFrag(RpcDecodeConfig* rconfig,
-    RpcSsnData* rsdata, const uint8_t* fragment)
+static RpcStatus RpcHandleFrag(RpcSsnData* rsdata, const uint8_t* fragment)
 {
     int last_frag = fragment[0] & 0x80;
     uint32_t frag_len = RPC_FRAG_LEN(fragment);
 
     if (frag_len == 0)
-        RpcPreprocEvent(rconfig, rsdata, RPC_ZERO_LENGTH_FRAGMENT);
+        RpcPreprocEvent(rsdata, RPC_ZERO_LENGTH_FRAGMENT);
 
     if (!last_frag)
-        RpcPreprocEvent(rconfig, rsdata, RPC_FRAG_TRAFFIC);
+        RpcPreprocEvent(rsdata, RPC_FRAG_TRAFFIC);
 
     if ((RpcBufLen(&rsdata->frag) == 0) && last_frag)
         return RPC_STATUS__DEFRAG;
@@ -603,7 +592,7 @@ static RpcSsnData* RpcSsnDataNew(Packet* p)
 
 #define MIN_CALL_BODY_SZ 32
 
-static int ConvertRPC(RpcDecodeConfig* rconfig, RpcSsnData* rsdata, Packet* p)
+static int ConvertRPC(RpcSsnData* rsdata, Packet* p)
 {
     const uint8_t* data = p->data;
     uint32_t psize = p->dsize;
@@ -652,7 +641,7 @@ static int ConvertRPC(RpcDecodeConfig* rconfig, RpcSsnData* rsdata, Packet* p)
     }
     else
     {
-        RpcPreprocEvent(rconfig, rsdata, RPC_FRAG_TRAFFIC);
+        RpcPreprocEvent(rsdata, RPC_FRAG_TRAFFIC);
     }
 
     norm_index = buf.data;
@@ -810,9 +799,6 @@ public:
 
     StreamSplitter* get_splitter(bool c2s) override
     { return c2s ? new RpcSplitter(c2s) : nullptr; }
-
-private:
-    RpcDecodeConfig config;
 };
 
 RpcDecode::RpcDecode(RpcDecodeModule*)
@@ -856,7 +842,7 @@ void RpcDecode::eval(Packet* p)
 
     if ( RpcSsnIsActive(rsdata) and (p->packet_flags & PKT_REBUILT_STREAM) )
     {
-        RpcStatus ret = RpcStatefulInspection(&config, rsdata, p);
+        RpcStatus ret = RpcStatefulInspection(rsdata, p);
 
         if (ret == RPC_STATUS__SUCCESS)
             return;
@@ -866,7 +852,7 @@ void RpcDecode::eval(Packet* p)
         if (ret == RPC_STATUS__ERROR)
             RpcSsnSetInactive(rsdata, p);
     }
-    RpcPreprocEvent(&config, rsdata, ConvertRPC(&config, rsdata, p));
+    RpcPreprocEvent(rsdata, ConvertRPC(rsdata, p));
 }
 
 bool RpcDecode::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
