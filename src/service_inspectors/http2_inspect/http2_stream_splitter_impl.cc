@@ -354,8 +354,23 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
 
     if (session_data->frame_type[source_id] == FT_DATA)
     {
-        if (session_data->flushing_data[source_id] && (flags & PKT_PDU_TAIL))
-            len -= (FRAME_HEADER_LENGTH - 1);
+        if (session_data->flushing_data[source_id])
+        {
+            assert(total  > (FRAME_HEADER_LENGTH - 1));
+            const uint32_t total_data = total - (FRAME_HEADER_LENGTH - 1);
+            if (offset+len > total_data)
+            {
+                // frame header that caused the flush is included in current data
+                if (offset > total_data)
+                    len = 0; // only header bytes
+                else
+                {
+                    const uint32_t frame_hdr_bytes =  offset + len - total_data;
+                    assert(len >= frame_hdr_bytes);
+                    len -= frame_hdr_bytes;
+                }
+            }
+        }
 
         if (len != 0)
         {
