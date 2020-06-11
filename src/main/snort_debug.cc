@@ -33,20 +33,20 @@
 
 namespace snort
 {
-template <void (log_func)(const char*, const char*, uint8_t, const char*)>
+template <void (log_func)(const char*, const char*, uint8_t, const char*, const Packet*)>
 void trace_vprintf(const char* name, TraceLevel log_level,
-    const char* trace_option, const char* fmt, va_list ap)
+    const char* trace_option, const Packet* p, const char* fmt, va_list ap)
 {
     char buf[STD_BUF_SIZE];
     vsnprintf(buf, sizeof(buf), fmt, ap);
 
-    log_func(buf, name, log_level, trace_option);
+    log_func(buf, name, log_level, trace_option, p);
 }
 
 void trace_vprintf(const char* name, TraceLevel log_level,
-    const char* trace_option, const char* fmt, va_list ap)
+    const char* trace_option, const Packet* p, const char* fmt, va_list ap)
 {
-    trace_vprintf<TraceApi::log>(name, log_level, trace_option, fmt, ap);
+    trace_vprintf<TraceApi::log>(name, log_level, trace_option, p, fmt, ap);
 }
 }
 
@@ -74,7 +74,7 @@ struct TestCase
 static char testing_dump[STD_BUF_SIZE];
 
 static void test_log(const char* log_msg, const char* name,
-    uint8_t log_level, const char* trace_option)
+    uint8_t log_level, const char* trace_option, const snort::Packet*)
 {
     snprintf(testing_dump, sizeof(testing_dump), "%s:%s:%d: %s",
         name, trace_option, log_level, log_msg);

@@ -38,7 +38,7 @@ public:
     static void thread_term();
 
     static void log(const char* log_msg, const char* name,
-        uint8_t log_level, const char* trace_option);
+        uint8_t log_level, const char* trace_option, const Packet* p);
     static void filter(const Packet& p);
     static uint8_t get_constraints_generation();
 };

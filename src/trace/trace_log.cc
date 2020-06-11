@@ -40,7 +40,7 @@ public:
     StdoutTraceLogger();
 
     void log(const char* log_msg, const char* name,
-        uint8_t log_level, const char* trace_option) override;
+        uint8_t log_level, const char* trace_option, const Packet* p) override;
 
 private:
     FILE* file;
@@ -51,7 +51,7 @@ StdoutTraceLogger::StdoutTraceLogger()
 { }
 
 void StdoutTraceLogger::log(const char* log_msg, const char* name,
-    uint8_t log_level, const char* trace_option)
+    uint8_t log_level, const char* trace_option, const Packet*)
 {
     fprintf(file, "%s:%s:%d: %s", name, trace_option, log_level, log_msg);
 }
@@ -64,7 +64,7 @@ public:
     SyslogTraceLogger();
 
     void log(const char* log_msg, const char* name,
-        uint8_t log_level, const char* trace_option) override;
+        uint8_t log_level, const char* trace_option, const Packet* p) override;
 
 private:
     int priority;
@@ -75,7 +75,7 @@ SyslogTraceLogger::SyslogTraceLogger()
 { }
 
 void SyslogTraceLogger::log(const char* log_msg, const char* name,
-    uint8_t log_level, const char* trace_option)
+    uint8_t log_level, const char* trace_option, const Packet*)
 {
     syslog(priority, "%s:%s:%d: %s", name, trace_option, log_level, log_msg);
 }

@@ -1062,7 +1062,7 @@ static inline void execute(
         {
             timer.reset();
             inspector_name = (*prep)->name.c_str();
-            trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER, "enter %s\n", inspector_name);
+            trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER, p, "enter %s\n", inspector_name);
             timer.start();
         }
 
@@ -1077,7 +1077,7 @@ static inline void execute(
             (*prep)->handler->eval(p);
 
         if ( T )
-            trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER,
+            trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER, p,
                 "exit %s, elapsed time: %" PRId64" usec\n", inspector_name, TO_USECS(timer.get()));
     }
 }
@@ -1119,12 +1119,12 @@ void InspectorManager::full_inspection(Packet* p)
         {
             Stopwatch<SnortClock> timer;
             const char* inspector_name = flow->gadget->get_alias_name();
-            trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER, "enter %s\n", inspector_name);
+            trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER, p, "enter %s\n", inspector_name);
             timer.start();
 
             flow->gadget->eval(p);
 
-            trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER,
+            trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER, p,
                 "exit %s, elapsed time: %" PRId64 "\n", inspector_name, TO_USECS(timer.get()));
         }
 
@@ -1151,7 +1151,7 @@ void InspectorManager::internal_execute(Packet* p)
     {
         packet_type = p->is_rebuilt() ? "rebuilt" : "raw";
 
-        trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER,
+        trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER, p,
             "start inspection, %s, packet %" PRId64", context %" PRId64"\n",
             packet_type, p->context->packet_number, p->context->context_num);
 
@@ -1217,7 +1217,7 @@ void InspectorManager::internal_execute(Packet* p)
     }
 
     if ( T )
-        trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER,
+        trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER, p,
             "stop inspection, %s, packet %" PRId64", context %" PRId64", total time: %" PRId64" usec\n",
             packet_type, p->context->packet_number, p->context->context_num, TO_USECS(timer.get()));
 }
@@ -1233,7 +1233,7 @@ void InspectorManager::probe(Packet* p)
     {
         Stopwatch<SnortClock> timer;
         const char* packet_type = p->is_rebuilt() ? "rebuilt" : "raw";
-        trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER,
+        trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER, p,
             "post detection inspection, %s, packet %" PRId64", context %" PRId64"\n",
             packet_type, p->context->packet_number, p->context->context_num);
 
@@ -1241,7 +1241,7 @@ void InspectorManager::probe(Packet* p)
 
         ::execute<true>(p, fp->probe.vec, fp->probe.num);
 
-        trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER,
+        trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER, p,
             "end inspection, %s, packet %" PRId64", context %" PRId64", total time: %" PRId64" usec\n",
             packet_type, p->context->packet_number, p->context->context_num, TO_USECS(timer.get()));
     }

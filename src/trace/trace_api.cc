@@ -75,9 +75,9 @@ void TraceApi::thread_reinit(const TraceConfig* trace_config)
 }
 
 void TraceApi::log(const char* log_msg, const char* name,
-    uint8_t log_level, const char* trace_option)
+    uint8_t log_level, const char* trace_option, const Packet* p)
 {
-    g_trace_logger->log(log_msg, name, log_level, trace_option);
+    g_trace_logger->log(log_msg, name, log_level, trace_option, p);
 }
 
 void TraceApi::filter(const Packet& p)

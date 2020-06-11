@@ -24,13 +24,15 @@
 
 namespace snort
 {
+struct Packet;
+
 class TraceLogger
 {
 public:
     virtual ~TraceLogger() = default;
 
     virtual void log(const char* log_msg, const char* name,
-        uint8_t log_level, const char* trace_option) = 0;
+        uint8_t log_level, const char* trace_option, const Packet* p) = 0;
 };
 
 class TraceLoggerFactory
