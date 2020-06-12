@@ -32,5 +32,6 @@ const PegInfo lru_cache_shared_peg_names[] =
     { CountType::SUM, "find_misses", "lru cache did not find entry in cache" },
     { CountType::SUM, "reload_prunes", "lru cache pruned entry for lower memcap during reload" },
     { CountType::SUM, "removes", "lru cache found entry and removed it" },
+    { CountType::SUM, "replaced", "lru cache found entry and replaced it" },
     { CountType::END, nullptr, nullptr },
 };

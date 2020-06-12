@@ -45,6 +45,7 @@ struct LruCacheSharedStats
     PegCount find_misses = 0;   // did not find entry in cache
     PegCount reload_prunes = 0; // when an old entry is removed due to lower memcap during reload
     PegCount removes = 0;       // found entry and removed it
+    PegCount replaced = 0;      // found entry and replaced it
 };
 
 template<typename Key, typename Value, typename Hash>
@@ -74,8 +75,8 @@ public:
     // Same as operator[]; additionally, sets the boolean if a new entry is created.
     Data find_else_create(const Key& key, bool* new_data);
 
-    // Returns true if found, takes a ref to a user managed entry
-    bool find_else_insert(const Key& key, std::shared_ptr<Value>& data);
+    // Returns true if found or replaced, takes a ref to a user managed entry
+    bool find_else_insert(const Key& key, std::shared_ptr<Value>& data, bool replace = false);
 
     // Return all data from the LruCache in order (most recently used to least)
     std::vector<std::pair<Key, Data> > get_all_data();
@@ -275,7 +276,7 @@ find_else_create(const Key& key, bool* new_data)
 
 template<typename Key, typename Value, typename Hash>
 bool LruCacheShared<Key, Value, Hash>::
-find_else_insert(const Key& key, std::shared_ptr<Value>& data)
+find_else_insert(const Key& key, std::shared_ptr<Value>& data, bool replace)
 {
     LruMapIter map_iter;
 
@@ -286,6 +287,13 @@ find_else_insert(const Key& key, std::shared_ptr<Value>& data)
     if (map_iter != map.end())
     {
         stats.find_hits++;
+        if (replace)
+        {
+            // Explicitly calling the reset so its more clear that destructor could be called for the object
+            map_iter->second->second.reset();
+            map_iter->second->second = data; 
+            stats.replaced++;
+        }
         list.splice(list.begin(), list, map_iter->second); // update LRU
         return true;
     }
