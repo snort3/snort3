@@ -38,6 +38,8 @@ using namespace snort;
 using namespace HttpCommon;
 using namespace Http2Enums;
 
+static void print_flow_issues(FILE*, Http2Infractions* const, Http2EventGen* const);
+
 Http2Inspect::Http2Inspect(const Http2ParaList* params_) : params(params_)
 {
 #ifdef REG_TEST
@@ -154,6 +156,8 @@ void Http2Inspect::eval(Packet* p)
             printf("Finished processing section from test %" PRIi64 "\n",
                 HttpTestManager::get_test_number());
         }
+        print_flow_issues(HttpTestManager::get_output_file(), session_data->infractions[source_id],
+            session_data->events[source_id]);
     }
 #endif
 }
@@ -173,3 +177,9 @@ void Http2Inspect::clear(Packet* p)
     stream->clear_frame();
 }
 
+static void print_flow_issues(FILE* output, Http2Infractions* const infractions,
+    Http2EventGen* const events)
+{
+    fprintf(output, "Infractions: %016" PRIx64 ", Events: %016" PRIx64 "\n\n",
+        infractions->get_raw(), events->get_raw());
+}

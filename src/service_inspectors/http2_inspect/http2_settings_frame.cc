@@ -119,7 +119,7 @@ void Http2SettingsFrame::handle_update(uint16_t id, uint32_t value)
 #ifdef REG_TEST
 void Http2SettingsFrame::print_frame(FILE* output)
 {
-    fprintf(output, "Settings frame:");
+    fprintf(output, "\nSettings frame:");
 
     if (bad_frame)
         fprintf(output, " Error in settings frame.");
@@ -130,7 +130,6 @@ void Http2SettingsFrame::print_frame(FILE* output)
 
     fprintf(output, "\n");
     Http2Frame::print_frame(output);
-    fprintf(output, "\n");
 }
 #endif
 

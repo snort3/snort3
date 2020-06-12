@@ -103,6 +103,11 @@ protected:
 
     // 0 element refers to client frame, 1 element refers to server frame
 
+    // There is currently one infraction and one event object per flow per direction. This may
+    // change in the future.
+    Http2Infractions* const infractions[2] = { new Http2Infractions, new Http2Infractions };
+    Http2EventGen* const events[2] = { new Http2EventGen, new Http2EventGen };
+
     // Stream ID of the frame currently being read in and processed
     uint32_t current_stream[2] = { Http2Enums::NO_STREAM_ID, Http2Enums::NO_STREAM_ID };
     // At any given time there may be different streams going in each direction. But only one of
@@ -150,11 +155,6 @@ protected:
     uint32_t remaining_frame_octets[2] = { 0, 0 };
     uint8_t padding_octets_in_frame[2] = { 0, 0 };
     bool get_padding_len[2] = { false, false };
-
-    // These will eventually be moved over to the frame/stream object, as they are moved to the
-    // transaction in NHI. Also as in NHI accessor methods will need to be added.
-    Http2Infractions* infractions[2] = { new Http2Infractions, new Http2Infractions };
-    Http2EventGen* events[2] = { new Http2EventGen, new Http2EventGen };
 
 #ifdef REG_TEST
     static uint64_t instance_count;

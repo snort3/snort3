@@ -35,7 +35,7 @@ class Http2HpackIntDecode
 public:
     Http2HpackIntDecode(uint8_t prefix);
     bool translate(const uint8_t* in_buff, const uint32_t in_len, uint32_t& bytes_consumed,
-        uint64_t& result, Http2EventGen* events, Http2Infractions* infractions) const;
+        uint64_t& result, Http2EventGen* const events, Http2Infractions* const infractions) const;
 
 private:
     const uint8_t prefix_mask;

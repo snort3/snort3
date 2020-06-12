@@ -37,7 +37,7 @@ class Http2StartLine
 {
 public:
     static Http2StartLine* new_start_line_generator(HttpCommon::SourceId source_id,
-        Http2EventGen* events, Http2Infractions* infractions);
+        Http2EventGen* const events, Http2Infractions* const infractions);
 
     virtual ~Http2StartLine();
 
@@ -45,21 +45,22 @@ public:
 
     const Field* get_start_line();
     virtual void process_pseudo_header_name(const uint8_t* const& name, uint32_t length) = 0;
-    virtual void process_pseudo_header_value(const uint8_t* const& value, const uint32_t length) = 0;
+    virtual void process_pseudo_header_value(const uint8_t* const& value, const uint32_t length) =
+        0;
     bool finalize();
     bool is_finalized() { return finalized; }
     bool is_pseudo_value() { return value_coming != Http2Enums::HEADER__NONE; }
     bool is_pseudo_name(const uint8_t* const& name) { return name[0] == ':'; }
 
 protected:
-    Http2StartLine(Http2EventGen* events, Http2Infractions* infractions)   : events(events),
-        infractions(infractions) { }
+    Http2StartLine(Http2EventGen* const events, Http2Infractions* const infractions) :
+        events(events), infractions(infractions) { }
 
     void process_pseudo_header_precheck();
     virtual bool generate_start_line() = 0;
 
-    Http2EventGen* events;
-    Http2Infractions* infractions;
+    Http2EventGen* const events;
+    Http2Infractions* const infractions;
     bool finalized = false;
     uint32_t start_line_length = 0;
     uint8_t *start_line_buffer = nullptr;

@@ -60,7 +60,7 @@ void Http2RequestLine::process_pseudo_header_name(const uint8_t* const& name, ui
         value_coming = SCHEME;
     else
     {
-        infractions += INF_INVALID_PSEUDO_HEADER;
+        *infractions += INF_INVALID_PSEUDO_HEADER;
         events->create_event(EVENT_INVALID_HEADER);
         value_coming = HEADER__INVALID;
     }
@@ -100,7 +100,7 @@ bool Http2RequestLine::generate_start_line()
     {
         if (method.length() <= 0)
         {
-            infractions += INF_PSEUDO_HEADER_URI_FORM_MISMATCH;
+            *infractions += INF_PSEUDO_HEADER_URI_FORM_MISMATCH;
             events->create_event(EVENT_REQUEST_WITHOUT_REQUIRED_FIELD);
             return false;
         }
@@ -127,14 +127,14 @@ bool Http2RequestLine::generate_start_line()
         // FIXIT-L May want to be more lenient than RFC on generating start line
         if (authority.length() <= 0)
         {
-            infractions += INF_PSEUDO_HEADER_URI_FORM_MISMATCH;
+            *infractions += INF_PSEUDO_HEADER_URI_FORM_MISMATCH;
             events->create_event(EVENT_REQUEST_WITHOUT_REQUIRED_FIELD);
             return false;
         }
         // Should not have a scheme or path
         if ( scheme.length() > 0 or path.length() > 0)
         {
-            infractions += INF_PSEUDO_HEADER_URI_FORM_MISMATCH;
+            *infractions += INF_PSEUDO_HEADER_URI_FORM_MISMATCH;
             events->create_event(EVENT_INVALID_HEADER);
         }
         start_line_length = method.length() + authority.length() + http_version_length +
@@ -202,7 +202,7 @@ bool Http2RequestLine::generate_start_line()
     else
     {
         // FIXIT-L May want to be more lenient than RFC on generating start line
-        infractions += INF_PSEUDO_HEADER_URI_FORM_MISMATCH;
+        *infractions += INF_PSEUDO_HEADER_URI_FORM_MISMATCH;
         events->create_event(EVENT_MISFORMATTED_HTTP2);
         return false;
     }

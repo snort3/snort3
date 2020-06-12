@@ -46,7 +46,10 @@ Http2FlowData::Http2FlowData(Flow* flow_) :
     FlowData(inspector_id),
     flow(flow_),
     hi((HttpInspect*)(flow->assistant_gadget)),
-    hpack_decoder{Http2HpackDecoder(this, SRC_CLIENT), Http2HpackDecoder(this, SRC_SERVER)}
+    hpack_decoder { Http2HpackDecoder(this, SRC_CLIENT, events[SRC_CLIENT],
+                        infractions[SRC_CLIENT]),
+                    Http2HpackDecoder(this, SRC_SERVER, events[SRC_SERVER],
+                        infractions[SRC_SERVER]) }
 {
     if (hi != nullptr)
     {

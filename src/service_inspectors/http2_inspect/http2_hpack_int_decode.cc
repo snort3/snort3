@@ -36,8 +36,8 @@ Http2HpackIntDecode::Http2HpackIntDecode(uint8_t prefix) : prefix_mask(((uint16_
 }
 
 bool Http2HpackIntDecode::translate(const uint8_t* in_buff, const uint32_t in_len,
-    uint32_t& bytes_consumed, uint64_t& result, Http2EventGen* events,
-    Http2Infractions* infractions) const
+    uint32_t& bytes_consumed, uint64_t& result, Http2EventGen* const events,
+    Http2Infractions* const infractions) const
 {
     bytes_consumed = 0;
     result = 0;

@@ -74,8 +74,7 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t
 
     // Decode headers
     if (!hpack_decoder.decode_headers((data.start() + hpack_headers_offset), data.length() -
-        hpack_headers_offset, decoded_headers, start_line_generator,
-        session_data->events[source_id], session_data->infractions[source_id]))
+        hpack_headers_offset, decoded_headers, start_line_generator))
     {
         session_data->frame_type[source_id] = FT__ABORT;
         error_during_decode = true;
@@ -247,7 +246,7 @@ void Http2HeadersFrame::update_stream_state()
 void Http2HeadersFrame::print_frame(FILE* output)
 {
     if (!trailer)
-        fprintf(output, "\nHeaders frame\n");
+        fprintf(output, "Headers frame\n");
     else
         fprintf(output, "Trailing Headers frame\n");
     if (error_during_decode)

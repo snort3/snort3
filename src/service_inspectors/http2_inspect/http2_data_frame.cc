@@ -99,3 +99,11 @@ void Http2DataFrame::update_stream_state()
             assert(false);
     }
 }
+
+#ifdef REG_TEST
+void Http2DataFrame::print_frame(FILE* output)
+{
+    fprintf(output, "Data frame\n");
+    Http2Frame::print_frame(output);
+}
+#endif

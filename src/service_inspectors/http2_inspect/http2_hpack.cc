@@ -94,7 +94,7 @@ bool Http2HpackDecoder::decode_indexed_name(const uint8_t* encoded_header_buffer
 
     if (!entry)
     {
-        infractions += INF_HPACK_INDEX_OUT_OF_BOUNDS;
+        *infractions += INF_HPACK_INDEX_OUT_OF_BOUNDS;
         events->create_event(EVENT_MISFORMATTED_HTTP2);
         return false;
     }
@@ -199,7 +199,7 @@ bool Http2HpackDecoder::decode_literal_header_line(const uint8_t* encoded_header
         // table exceeds the Snort hard-coded limit of 512
         if (!decode_table.add_index(name, value))
         {
-            infractions += INF_DYNAMIC_TABLE_OVERFLOW;
+            *infractions += INF_DYNAMIC_TABLE_OVERFLOW;
             events->create_event(EVENT_DYNAMIC_TABLE_OVERFLOW);
             return false;
         }
@@ -226,14 +226,14 @@ bool Http2HpackDecoder::decode_indexed_header(const uint8_t* encoded_header_buff
 
     if (!entry)
     {
-        infractions += INF_HPACK_INDEX_OUT_OF_BOUNDS;
+        *infractions += INF_HPACK_INDEX_OUT_OF_BOUNDS;
         events->create_event(EVENT_MISFORMATTED_HTTP2);
         return false;
     }
 
     if (entry->value.length() <= 0)
     {
-        infractions += INF_LOOKUP_EMPTY_VALUE;
+        *infractions += INF_LOOKUP_EMPTY_VALUE;
         events->create_event(EVENT_MISFORMATTED_HTTP2);
     }
 
@@ -353,8 +353,7 @@ bool Http2HpackDecoder::decode_header_line(const uint8_t* encoded_header_buffer,
 // get_start_line() and get_decoded_headers() to generate and obtain these fields.
 bool Http2HpackDecoder::decode_headers(const uint8_t* encoded_headers,
     const uint32_t encoded_headers_length, uint8_t* decoded_headers,
-    Http2StartLine *start_line_generator, Http2EventGen* stream_events,
-    Http2Infractions* stream_infractions)
+    Http2StartLine *start_line_generator)
 {
     uint32_t total_bytes_consumed = 0;
     uint32_t line_bytes_consumed = 0;
@@ -362,8 +361,6 @@ bool Http2HpackDecoder::decode_headers(const uint8_t* encoded_headers,
     bool success = true;
     start_line = start_line_generator;
     decoded_headers_size = 0;
-    events = stream_events;
-    infractions = stream_infractions;
     pseudo_headers_fragment_size = 0;
     decode_error = false;
 

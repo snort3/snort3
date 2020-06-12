@@ -45,7 +45,7 @@ void Http2StatusLine::process_pseudo_header_name(const uint8_t* const& name, uin
         value_coming = STATUS;
     else
     {
-        infractions += INF_INVALID_PSEUDO_HEADER;
+        *infractions += INF_INVALID_PSEUDO_HEADER;
         events->create_event(EVENT_INVALID_HEADER);
         value_coming = HEADER__INVALID;
     }
@@ -70,7 +70,7 @@ bool Http2StatusLine::generate_start_line()
 
     if (status.length() <= 0)
     {
-        infractions += INF_RESPONSE_WITHOUT_STATUS;
+        *infractions += INF_RESPONSE_WITHOUT_STATUS;
         events->create_event(EVENT_RESPONSE_WITHOUT_STATUS);
         return false;
     }
