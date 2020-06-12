@@ -122,7 +122,8 @@ TEST(host_cache_module, misc)
     CHECK(!strcmp(ht_pegs[3].name, "find_misses"));
     CHECK(!strcmp(ht_pegs[4].name, "reload_prunes"));
     CHECK(!strcmp(ht_pegs[5].name, "removes"));
-    CHECK(!ht_pegs[6].name);
+    CHECK(!strcmp(ht_pegs[6].name, "replaced"));
+    CHECK(!ht_pegs[7].name);
 
     // add 3 entries
     SfIp ip1, ip2, ip3;
