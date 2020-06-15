@@ -35,6 +35,8 @@ struct RuleTreeNode;
 void parse_rule_init();
 void parse_rule_term();
 void parse_rule_print();
+int get_policy_loaded_rule_count();
+int get_policy_shared_rule_count();
 
 void parse_rule_type(snort::SnortConfig*, const char*, RuleTreeNode&);
 void parse_rule_proto(snort::SnortConfig*, const char*, RuleTreeNode&);

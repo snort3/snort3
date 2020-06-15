@@ -68,6 +68,7 @@ struct rule_count_t
 };
 
 static int rule_count = 0;
+static int prev_rule_count = 0;
 static int skip_count = 0;
 static int detect_rule_count = 0;
 static int builtin_rule_count = 0;
@@ -75,6 +76,7 @@ static int so_rule_count = 0;
 static int head_count = 0;          // rule headers
 static int otn_count = 0;           // rule bodies
 static int dup_count = 0;           // rule bodies
+static int prev_dup_count = 0;
 static int rule_proto = 0;
 
 static rule_count_t tcpCnt;
@@ -866,9 +868,24 @@ int get_rule_count()
 { return rule_count; }
 }
 
+int get_policy_loaded_rule_count()
+{
+    auto policy_rule_count = rule_count - prev_rule_count;
+    prev_rule_count = rule_count;
+    return policy_rule_count;
+}
+
+int get_policy_shared_rule_count()
+{
+    auto policy_rule_count = dup_count - prev_dup_count;
+    prev_dup_count = dup_count;
+    return policy_rule_count;
+}
+
 void parse_rule_init()
 {
     rule_count = 0;
+    prev_rule_count = 0;
     skip_count = 0;
     detect_rule_count = 0;
     builtin_rule_count = 0;
@@ -876,6 +893,7 @@ void parse_rule_init()
     head_count = 0;
     otn_count = 0;
     dup_count = 0;
+    prev_dup_count = 0;
     rule_proto = 0;
 
     memset(&ipCnt, 0, sizeof(ipCnt));

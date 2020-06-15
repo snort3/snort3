@@ -122,6 +122,14 @@ public:
     }
 };
 
+struct PolicyRuleStats
+{
+    const char* file;
+    int loaded;
+    int shared;
+    int enabled;
+};
+
 //-------------------------------------------------------------------------
 // private / implementation methods
 //-------------------------------------------------------------------------
@@ -447,6 +455,9 @@ void ParseRules(SnortConfig* sc)
             parse_stream(std::cin, sc);
             pop_parse_location();
         }
+
+        p->rules_loaded = get_policy_loaded_rule_count();
+        p->rules_shared = get_policy_shared_rule_count();
     }
 
     set_ips_policy(sc, 0);
@@ -460,7 +471,7 @@ void ParseRules(SnortConfig* sc)
 void ShowPolicyStats(const SnortConfig* sc)
 {
     std::unordered_map<PolicyId, int> stats;
-    std::multimap<PolicyId, std::tuple<const char*, int>> sorted_stats;
+    std::multimap<PolicyId, PolicyRuleStats> sorted_stats;
 
     if ( !sc->otn_map )
         return;
@@ -480,9 +491,13 @@ void ShowPolicyStats(const SnortConfig* sc)
         }
     }
 
-    for (const auto& s : stats)
+    for (unsigned i = 0; i < sc->policy_map->ips_policy_count(); i++)
     {
-        auto shell = sc->policy_map->get_shell_by_policy(s.first);
+        auto policy = sc->policy_map->get_ips_policy(i);
+        if ( !policy )
+            continue;
+
+        auto shell = sc->policy_map->get_shell_by_policy(i);
         if ( !shell )
             continue;
 
@@ -490,24 +505,27 @@ void ShowPolicyStats(const SnortConfig* sc)
         if ( !file or !file[0] )
             continue;
 
-        auto policy = sc->policy_map->get_ips_policy(s.first);
-        auto id = policy ? policy->user_policy_id : 0;
+        auto id = policy->user_policy_id;
+        auto rules_loaded = policy->rules_loaded;
+        auto rules_shared = policy->rules_shared;
 
-        sorted_stats.emplace(id, std::make_tuple(file, s.second));
+        auto res = stats.find(i);
+        auto rules_enabled = (res == stats.end()) ? 0 : res->second;
+
+        if ( rules_loaded or rules_shared or rules_enabled )
+            sorted_stats.emplace(id, PolicyRuleStats{file, rules_loaded,
+                rules_shared, rules_enabled});
     }
 
     if ( !sorted_stats.size() )
         return;
 
-    LogLabel("ips policies");
-    LogMessage("%16s%16s%8s\n", "id", "rules enabled", "file");
+    LogLabel("ips policies rule stats");
+    LogMessage("%16s%8s%8s%8s%8s\n", "id", "loaded", "shared", "enabled", "file");
 
     for (const auto& s : sorted_stats)
-    {
-        auto file = std::get<0>(s.second);
-        auto rules_count = std::get<1>(s.second);
-        LogMessage("%16u%16d%4s%s\n", s.first, rules_count, " ", file);
-    }
+        LogMessage("%16u%8d%8d%8d%4s%s\n", s.first, s.second.loaded, s.second.shared,
+            s.second.enabled, " ", s.second.file);
 }
 
 /****************************************************************************

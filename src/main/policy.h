@@ -163,6 +163,8 @@ public:
 
     PolicyMode policy_mode = POLICY_MODE__MAX;
     bool enable_builtin_rules;
+    int rules_loaded = 0;
+    int rules_shared = 0;
 
     std::string includer;
     std::string include;
