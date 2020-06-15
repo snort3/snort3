@@ -301,8 +301,8 @@ void PerfMonitor::swap_constraints(PerfConstraints* constraints)
 
 PerfConstraints* PerfMonitor::get_original_constraints()
 {
-    auto* new_constraints = new PerfConstraints(false, config->pkt_cnt,
-        config->sample_interval);
+    auto* new_constraints = new PerfConstraints(false, config->sample_interval,
+        config->pkt_cnt);
 
     return new_constraints;
 }
