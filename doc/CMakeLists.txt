@@ -55,15 +55,14 @@ if ( MAKE_DOC )
 	high_availability.txt
 	http_inspect.txt
 	http2_inspect.txt
-	module_trace.txt
 	overview.txt
 	params.txt
 	perf_monitor.txt
 	pop_imap.txt
+	port_scan.txt
 	reference.txt
 	reload_limitations.txt
 	sensitive_data.txt
-	port_scan.txt
 	side_channel.txt
 	smtp.txt
 	snort2lua.txt
@@ -78,6 +77,7 @@ if ( MAKE_DOC )
 	telnet.txt
 	terms.txt
 	testing_numerical_values.txt
+	trace.txt
 	tutorial.txt
 	usage.txt
 	wizard.txt

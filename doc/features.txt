@@ -64,10 +64,6 @@ include::http_inspect.txt[]
 
 include::http2_inspect.txt[]
 
-=== Module Trace
-
-include::module_trace.txt[]
-
 === Performance Monitor
 
 include::perf_monitor.txt[]
@@ -91,6 +87,10 @@ include::smtp.txt[]
 === Telnet
 
 include::telnet.txt[]
+
+=== Trace
+
+include::trace.txt[]
 
 === Wizard
 
