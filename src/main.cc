@@ -87,7 +87,6 @@ static const char* prompt = "o\")~ ";
 
 const char* get_prompt()
 { return prompt; }
-
 static bool use_shell(const SnortConfig* sc)
 {
 #ifdef SHELL
@@ -116,6 +115,11 @@ static Request* current_request = &request;
 #ifdef SHELL
 static int current_fd = -1;
 #endif
+
+Request& get_current_request()
+{
+    return *current_request;
+}
 
 //-------------------------------------------------------------------------
 // pig foo

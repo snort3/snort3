@@ -35,6 +35,7 @@
 #include "main/thread_config.h"
 #include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
+#include "src/main.h"
 #include "trace/trace.h"
 #include "utils/util.h"
 
@@ -127,11 +128,15 @@ class ACThirdPartyAppIdContextSwap : public AnalyzerCommand
 {
 public:
     bool execute(Analyzer&, void**) override;
-    ACThirdPartyAppIdContextSwap(ThirdPartyAppIdContext* tp_ctxt): tp_ctxt(tp_ctxt) { }
+    ACThirdPartyAppIdContextSwap(ThirdPartyAppIdContext* tp_ctxt, Request& current_request,
+        bool from_shell): tp_ctxt(tp_ctxt),request(current_request),
+        from_shell(from_shell) { }
     ~ACThirdPartyAppIdContextSwap() override;
     const char* stringify() override { return "THIRD-PARTY_CONTEXT_SWAP"; }
 private:
     ThirdPartyAppIdContext* tp_ctxt =  nullptr;
+    Request& request;
+    bool from_shell;
 };
 
 bool ACThirdPartyAppIdContextSwap::execute(Analyzer&, void**)
@@ -141,7 +146,7 @@ bool ACThirdPartyAppIdContextSwap::execute(Analyzer&, void**)
     assert(inspector);
     ThirdPartyAppIdContext* tp_appid_ctxt = inspector->get_ctxt().get_tp_appid_ctxt();
     assert(tp_appid_thread_ctxt != tp_appid_ctxt);
-    LogMessage("== swapping third-party configuration\n");
+    request.respond("== swapping third-party configuration\n", from_shell);
     tp_appid_thread_ctxt->tfini();
     tp_appid_ctxt->tinit();
     tp_appid_thread_ctxt = tp_appid_ctxt;
@@ -154,6 +159,7 @@ ACThirdPartyAppIdContextSwap::~ACThirdPartyAppIdContextSwap()
     delete tp_ctxt;
     Swapper::set_reload_in_progress(false);
     LogMessage("== reload third-party complete\n");
+    request.respond("== reload third-party complete\n", from_shell, true);
 }
 
 static int enable_debug(lua_State* L)
@@ -198,30 +204,32 @@ static int disable_debug(lua_State*)
     return 0;
 }
 
-static int reload_third_party(lua_State*)
+static int reload_third_party(lua_State* L)
 {
+    bool from_shell = ( L != nullptr );
+    Request& current_request = get_current_request();
     if (Swapper::get_reload_in_progress())
     {
-        LogMessage("== reload pending; retry\n");
+        current_request.respond("== reload pending; retry\n", from_shell);
         return 0;
     }
     Swapper::set_reload_in_progress(true);
-    LogMessage(".. reloading third-party\n");
+    current_request.respond(".. reloading third-party\n", from_shell);
     AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
     if (!inspector)
     {
-        LogMessage("== reload third-party failed - appid not enabled\n");
+        current_request.respond("== reload third-party failed - appid not enabled\n", from_shell);
         return 0;
     }
     AppIdContext& ctxt = inspector->get_ctxt();
     ThirdPartyAppIdContext* old_ctxt = ctxt.get_tp_appid_ctxt();
     if (!old_ctxt)
     {
-        LogMessage("== reload third-party failed - third-party module doesn't exist\n");
+        current_request.respond("== reload third-party failed - third-party module doesn't exist\n", from_shell);
         return 0;
     }
     ctxt.create_tp_appid_ctxt();
-    main_broadcast_command(new ACThirdPartyAppIdContextSwap(old_ctxt), true);
+    main_broadcast_command(new ACThirdPartyAppIdContextSwap(old_ctxt, current_request, from_shell), from_shell);
     return 0;
 }
 
