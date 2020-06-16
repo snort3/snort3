@@ -331,13 +331,16 @@ bool AppIdModule::begin(const char*, int, SnortConfig*)
     return true;
 }
 
-bool AppIdModule::end(const char*, int, SnortConfig* sc)
+bool AppIdModule::end(const char* fqn, int, SnortConfig* sc)
 {
     assert(config);
 
-    appid_rrt.memcap = config->memcap;
-    if ( Snort::is_reloading() )
-        sc->register_reload_resource_tuner(appid_rrt);
+    if ( strcmp(fqn, "appid") == 0 )
+    {
+        appid_rrt.memcap = config->memcap;
+        if ( Snort::is_reloading() )
+            sc->register_reload_resource_tuner(appid_rrt);
+    }
 
     if ( !config->app_detector_dir )
     {
