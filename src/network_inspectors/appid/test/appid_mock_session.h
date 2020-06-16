@@ -80,7 +80,6 @@ OdpContext* AppIdContext::odp_ctxt = &stub_odp_ctxt;
 AppIdSession::AppIdSession(IpProtocol proto, const SfIp*, uint16_t, AppIdInspector& inspector)
     : FlowData(inspector_id, &inspector), ctxt(stub_ctxt), protocol(proto)
 {
-    common.flow_type = APPID_FLOW_TYPE_NORMAL;
     service_port = APPID_UT_SERVICE_PORT;
     AppidChangeBits change_bits;
 
@@ -120,59 +119,14 @@ AppIdSession::~AppIdSession()
         snort_free(netbios_name);
 }
 
-DHCPInfo* dhcp_info = nullptr;
-DHCPData* dhcp_data = nullptr;
-FpSMBData* smb_data = nullptr;
-
 void* AppIdSession::get_flow_data(unsigned)
 {
     return nullptr;
 }
 
-int AppIdSession::add_flow_data(void* data, unsigned type, AppIdFreeFCN)
+int AppIdSession::add_flow_data(void*, unsigned, AppIdFreeFCN)
 {
-    if ( type == APPID_SESSION_DATA_DHCP_FP_DATA )
-    {
-        dhcp_data = (DHCPData*)data;
-        set_session_flags(APPID_SESSION_HAS_DHCP_FP);
-    }
-    else if (  type == APPID_SESSION_DATA_DHCP_INFO )
-    {
-        dhcp_info = (DHCPInfo*)data;
-        set_session_flags(APPID_SESSION_HAS_DHCP_INFO);
-    }
-    else if ( type == APPID_SESSION_DATA_SMB_DATA )
-    {
-        smb_data = (FpSMBData*)data;
-        set_session_flags(APPID_SESSION_HAS_SMB_INFO);
-    }
     return 0;
-}
-
-void* AppIdSession::remove_flow_data(unsigned type)
-{
-    void* data = nullptr;
-
-    if ( type == APPID_SESSION_DATA_DHCP_FP_DATA )
-    {
-        data = dhcp_data;
-        dhcp_data = nullptr;
-        clear_session_flags(APPID_SESSION_HAS_DHCP_FP);
-    }
-    else if (  type == APPID_SESSION_DATA_DHCP_INFO )
-    {
-        data = dhcp_info;
-        dhcp_info = nullptr;
-        clear_session_flags(APPID_SESSION_HAS_DHCP_INFO);
-    }
-    else if ( type == APPID_SESSION_DATA_SMB_DATA )
-    {
-        data = smb_data;
-        smb_data = nullptr;
-        clear_session_flags(APPID_SESSION_HAS_SMB_INFO);
-    }
-
-    return data;
 }
 
 void AppIdSession::set_ss_application_ids(AppId service_id, AppId client_id,

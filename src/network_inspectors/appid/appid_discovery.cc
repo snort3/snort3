@@ -179,18 +179,8 @@ static bool set_network_attributes(AppIdSession* asd, Packet* p, IpProtocol& pro
 {
     if (asd)
     {
-        if (asd->common.flow_type == APPID_FLOW_TYPE_IGNORE)
-            return false;
-
-        if (asd->common.flow_type == APPID_FLOW_TYPE_NORMAL)
-        {
-            protocol = asd->protocol;
-            asd->flow = p->flow;
-        }
-        else if (p->is_tcp())
-            protocol = IpProtocol::TCP;
-        else
-            protocol = IpProtocol::UDP;
+        protocol = asd->protocol;
+        asd->flow = p->flow;
 
         if (asd->common.initiator_port)
             direction = (asd->common.initiator_port == p->ptrs.sp) ?
@@ -373,67 +363,6 @@ static uint64_t is_session_monitored(const Packet* p, AppidSessionDirection dir)
     return flow_flags;
 }
 
-bool AppIdDiscovery::handle_unmonitored_session(AppIdSession* asd, const Packet* p,
-    IpProtocol protocol, AppidSessionDirection dir, AppIdInspector& inspector,
-    uint64_t& flow_flags)
-{
-    if (asd)
-        flow_flags = is_session_monitored(*asd, p, dir);
-    else
-        flow_flags = is_session_monitored(p, dir);
-
-    if ( flow_flags & (APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED) )
-        return false;
-
-    if ( !asd )
-    {
-        uint16_t port = 0;
-
-        const SfIp* ip = (dir == APP_ID_FROM_INITIATOR) ?
-            p->ptrs.ip_api.get_src() : p->ptrs.ip_api.get_dst();
-        if ((protocol == IpProtocol::TCP || protocol == IpProtocol::UDP)
-            && p->ptrs.sp != p->ptrs.dp)
-        {
-            port = (dir == APP_ID_FROM_INITIATOR) ? p->ptrs.sp : p->ptrs.dp;
-        }
-
-        // FIXIT-E - Creating AppId session even when flow is ignored (not monitored, e.g.,
-        // when AppId discovery is disabled) will consume a lot of unneeded memory and perform
-        // unneeded tasks in constructor. Snort2 uses static APPID_SESSION_STRUCT_FLAG ignore_fsf.
-        // Snort3 may use something like that or a dummy class/object having only common.flow_type
-        // to let us know that it is APPID_FLOW_TYPE_IGNORE type and thus being returned early
-        // from this method due to set_network_attributes() checking.
-        AppIdSession* tmp_session = new AppIdSession(protocol, ip, port, inspector);
-
-        if ((flow_flags & APPID_SESSION_BIDIRECTIONAL_CHECKED) ==
-            APPID_SESSION_BIDIRECTIONAL_CHECKED)
-        {
-            tmp_session->common.flow_type = APPID_FLOW_TYPE_IGNORE;
-            if (appidDebug->is_active())
-                LogMessage("AppIdDbg %s Not monitored\n", appidDebug->get_debug_session());
-        }
-        else
-        {
-            tmp_session->common.flow_type = APPID_FLOW_TYPE_TMP;
-            if (appidDebug->is_active())
-                LogMessage("AppIdDbg %s Unknown monitoring\n", appidDebug->get_debug_session());
-        }
-        tmp_session->common.flags = flow_flags;
-        p->flow->set_flow_data(tmp_session);
-    }
-    else
-    {
-        asd->common.flags = flow_flags;
-        if ( ( flow_flags & APPID_SESSION_BIDIRECTIONAL_CHECKED) ==
-            APPID_SESSION_BIDIRECTIONAL_CHECKED )
-            asd->common.flow_type = APPID_FLOW_TYPE_IGNORE;
-        if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s Not monitored\n", appidDebug->get_debug_session());
-    }
-
-    return true;
-}
-
 // Return false if the packet or the session doesn't need to be inspected
 bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInspector& inspector,
     IpProtocol& protocol, IpProtocol& outer_protocol, AppidSessionDirection& direction)
@@ -454,12 +383,15 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
         return false;
 
     uint64_t flow_flags;
-    if (handle_unmonitored_session(asd, p, protocol, direction, inspector, flow_flags))
+    if (asd)
+        flow_flags = is_session_monitored(*asd, p, direction);
+    else
+        flow_flags = is_session_monitored(p, direction);
+
+    if ( !(flow_flags & (APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED)) )
         return false;
 
-    // FIXIT-M - Potential memory leak for TMP sessions. handle_unmonitored_session() already
-    // TMP session and that is not being freed before creating the new one below
-    if (!asd || asd->common.flow_type == APPID_FLOW_TYPE_TMP)
+    if (!asd)
     {
         *p_asd = asd = AppIdSession::allocate_session(p, protocol, direction, &inspector);
         if (p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)

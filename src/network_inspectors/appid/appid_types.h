@@ -65,4 +65,12 @@ enum AppidSessionDirection
     APP_ID_APPID_SESSION_DIRECTION_MAX
 };
 
+struct AppIdServiceSubtype
+{
+    AppIdServiceSubtype* next;
+    const char* service;
+    const char* vendor;
+    const char* version;
+};
+
 #endif

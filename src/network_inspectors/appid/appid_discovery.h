@@ -147,9 +147,6 @@ private:
         AppidSessionDirection direction);
     static bool do_host_port_based_discovery(snort::Packet* p, AppIdSession& asd,
         IpProtocol protocol, AppidSessionDirection direction);
-    static bool handle_unmonitored_session(AppIdSession* asd, const snort::Packet* p,
-        IpProtocol protocol, AppidSessionDirection dir, AppIdInspector& inspector,
-        uint64_t& flow_flags);
 };
 #endif
 

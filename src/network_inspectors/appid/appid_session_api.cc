@@ -37,7 +37,7 @@ bool AppIdSessionApi::refresh(const Flow& flow)
 {
     AppIdSession* new_asd = (AppIdSession*)flow.get_flow_data(AppIdSession::inspector_id);
 
-    if (new_asd and new_asd->common.flow_type == APPID_FLOW_TYPE_NORMAL)
+    if (new_asd)
     {
         asd = new_asd;
         return true;
@@ -48,11 +48,6 @@ bool AppIdSessionApi::refresh(const Flow& flow)
 AppId AppIdSessionApi::get_service_app_id()
 {
     return asd->get_application_ids_service();
-}
-
-AppId AppIdSessionApi::get_port_service_app_id()
-{
-    return asd->service.get_port_service_id();
 }
 
 AppId AppIdSessionApi::get_misc_app_id(uint32_t stream_index)
@@ -154,11 +149,6 @@ void AppIdSessionApi::get_app_id(AppId* service, AppId* client,
         *referred = asd->pick_ss_referred_payload_app_id();
 }
 
-bool AppIdSessionApi::is_ssl_session_decrypted()
-{
-    return asd->is_ssl_session_decrypted();
-}
-
 bool AppIdSessionApi::is_appid_inspecting_session()
 {
     if ( asd->service_disco_state != APPID_DISCO_STATE_FINISHED or
@@ -191,13 +181,6 @@ bool AppIdSessionApi::is_appid_inspecting_session()
     return false;
 }
 
-const char* AppIdSessionApi::get_user_name(AppId* service, bool* isLoginSuccessful)
-{
-    *service = asd->client.get_user_id();
-    *isLoginSuccessful = asd->get_session_flags(APPID_SESSION_LOGIN_SUCCEEDED) ? true : false;
-    return asd->client.get_username();
-}
-
 bool AppIdSessionApi::is_appid_available()
 {
     return ( (asd->service.get_id() != APP_ID_NONE ||
@@ -226,19 +209,6 @@ uint64_t AppIdSessionApi::get_appid_session_attribute(uint64_t flags)
     return asd->get_session_flags(flags);
 }
 
-void AppIdSessionApi::get_service_info(const char** vendor, const char** version,
-        AppIdServiceSubtype** subtype)
-{
-    *vendor = asd->service.get_vendor();
-    *version = asd->service.get_version();
-    *subtype = asd->subtype;
-}
-
-short AppIdSessionApi::get_service_port()
-{
-    return asd->service_port;
-}
-
 const char* AppIdSessionApi::get_tls_host()
 {
     if (asd->tsession)
@@ -246,61 +216,9 @@ const char* AppIdSessionApi::get_tls_host()
     return nullptr;
 }
 
-SfIp* AppIdSessionApi::get_service_ip()
-{
-    return &asd->service_ip;
-}
-
 SfIp* AppIdSessionApi::get_initiator_ip()
 {
     return &asd->common.initiator_ip;
-}
-
-DHCPData* AppIdSessionApi::get_dhcp_fp_data()
-{
-    if (asd->get_session_flags(APPID_SESSION_HAS_DHCP_FP))
-        return static_cast<DHCPData*>(asd->remove_flow_data(APPID_SESSION_DATA_DHCP_FP_DATA));
-
-    return nullptr;
-}
-
-void AppIdSessionApi::free_dhcp_fp_data(DHCPData* data)
-{
-    asd->clear_session_flags(APPID_SESSION_HAS_DHCP_FP);
-    BootpServiceDetector::AppIdFreeDhcpData(data);
-}
-
-DHCPInfo* AppIdSessionApi::get_dhcp_info()
-{
-    if (asd->get_session_flags(APPID_SESSION_HAS_DHCP_INFO))
-        return static_cast<DHCPInfo*>(asd->remove_flow_data(APPID_SESSION_DATA_DHCP_INFO));
-
-    return nullptr;
-}
-
-void AppIdSessionApi::free_dhcp_info(DHCPInfo* data)
-{
-    asd->clear_session_flags(APPID_SESSION_HAS_DHCP_INFO);
-    BootpServiceDetector::AppIdFreeDhcpInfo(data);
-}
-
-FpSMBData* AppIdSessionApi::get_smb_fp_data()
-{
-    if (asd->get_session_flags(APPID_SESSION_HAS_SMB_INFO))
-        return static_cast<FpSMBData*>(asd->remove_flow_data(APPID_SESSION_DATA_SMB_DATA));
-
-    return nullptr;
-}
-
-void AppIdSessionApi::free_smb_fp_data(FpSMBData* data)
-{
-    asd->clear_session_flags(APPID_SESSION_HAS_SMB_INFO);
-    NbdgmServiceDetector::AppIdFreeSMBData(data);
-}
-
-const char* AppIdSessionApi::get_netbios_name()
-{
-    return asd->netbios_name;
 }
 
 AppIdDnsSession* AppIdSessionApi::get_dns_session()
@@ -320,5 +238,3 @@ bool AppIdSessionApi::is_http_inspection_done()
                !get_tls_host() and
                (asd->service_disco_state!= APPID_DISCO_STATE_FINISHED)));
 }
-
-

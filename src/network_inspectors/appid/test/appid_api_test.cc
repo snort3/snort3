@@ -108,6 +108,7 @@ bool SslPatternMatchers::scan_cname(unsigned char const* cname, unsigned long, A
 }
 
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
+
 const char* AppInfoManager::get_app_name(AppId)
 {
     return test_app_name;
@@ -156,25 +157,24 @@ TEST(appid_api, get_application_id)
     CHECK_EQUAL(id, 1492);
 }
 
-// FIXIT - enable this test when consume ha appid api call is fixed
 TEST(appid_api, produce_ha_state)
 {
     AppIdSessionHA appHA, cmp_buf;
 
     memset((void*)&appHA, 0, sizeof(appHA));
     memset((void*)&cmp_buf, 0, sizeof(cmp_buf));
-    mock_session->common.flow_type = APPID_FLOW_TYPE_IGNORE;
     mock_session->common.flags |= APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_HTTP_SESSION;
 
-    // Reset IDs that may be updated by ssl_app_group_id_lookup test.
+    mock_session->set_tp_app_id(APPID_UT_ID);
+    mock_session->service.set_id(APPID_UT_ID + 1, stub_odp_ctxt);
+    mock_session->client_inferred_service_id = APPID_UT_ID + 2;
+    mock_session->service.set_port_service_id(APPID_UT_ID + 3);
     mock_session->payload.set_id(APPID_UT_ID + 4);
+    mock_session->set_tp_payload_app_id(APPID_UT_ID + 5);
     mock_session->client.set_id(APPID_UT_ID + 6);
+    mock_session->misc_app_id = APPID_UT_ID + 7;
 
     uint32_t val = appid_api.produce_ha_state(*flow, (uint8_t*)&appHA);
-    CHECK_TRUE(val == sizeof(appHA));
-    CHECK_TRUE(memcmp(&appHA, &cmp_buf, val) == 0);
-    mock_session->common.flow_type = APPID_FLOW_TYPE_NORMAL;
-    val = appid_api.produce_ha_state(*flow, (uint8_t*)&appHA);
     CHECK_TRUE(val == sizeof(appHA));
     CHECK_TRUE(appHA.appId[0] == APPID_UT_ID);
     CHECK_TRUE(appHA.appId[1] == APPID_UT_ID + 1);
@@ -230,15 +230,7 @@ TEST(appid_api, ssl_app_group_id_lookup)
     mock().expectNCalls(4, "publish");
     AppId service, client, payload = APP_ID_NONE;
     bool val = false;
-    mock_session->common.flow_type = APPID_FLOW_TYPE_IGNORE;
-    val = appid_api.ssl_app_group_id_lookup(flow, nullptr, nullptr, nullptr, nullptr,
-        false, service, client, payload);
-    CHECK_TRUE(!val);
-    CHECK_EQUAL(service, APP_ID_NONE);
-    CHECK_EQUAL(client, APP_ID_NONE);
-    CHECK_EQUAL(payload, APP_ID_NONE);
 
-    mock_session->common.flow_type = APPID_FLOW_TYPE_NORMAL;
     val = appid_api.ssl_app_group_id_lookup(flow, nullptr, nullptr, nullptr, nullptr,
         false, service, client, payload);
     CHECK_TRUE(val);
@@ -299,12 +291,6 @@ TEST(appid_api, create_appid_session_api)
     Flow* old_flow = flow;
     flow = new Flow;
     flow->set_flow_data(nullptr);
-    appid_session_api = appid_api.create_appid_session_api(*flow);
-    CHECK_FALSE(appid_session_api);
-
-    AppIdSession ignore_asd(IpProtocol::TCP, nullptr, 1492, dummy_appid_inspector);
-    ignore_asd.common.flow_type = APPID_FLOW_TYPE_IGNORE;
-    flow->set_flow_data(&ignore_asd);
     appid_session_api = appid_api.create_appid_session_api(*flow);
     CHECK_FALSE(appid_session_api);
 

@@ -97,87 +97,26 @@ namespace snort
     APPID_SESSION_PORT_SERVICE_DONE)
 const uint64_t APPID_SESSION_ALL_FLAGS = 0xFFFFFFFFFFFFFFFFULL;
 
-enum APPID_FLOW_TYPE
-{
-    APPID_FLOW_TYPE_IGNORE,
-    APPID_FLOW_TYPE_NORMAL,
-    APPID_FLOW_TYPE_TMP
-};
-
-struct AppIdServiceSubtype
-{
-    AppIdServiceSubtype* next;
-    const char* service;
-    const char* vendor;
-    const char* version;
-};
-
-#define DHCP_OP55_MAX_SIZE  64
-#define DHCP_OP60_MAX_SIZE  64
-
-struct DHCPData
-{
-    DHCPData* next;
-    unsigned op55_len;
-    unsigned op60_len;
-    uint8_t op55[DHCP_OP55_MAX_SIZE];
-    uint8_t op60[DHCP_OP60_MAX_SIZE];
-    uint8_t eth_addr[6];
-};
-
-struct DHCPInfo
-{
-    DHCPInfo* next;
-    uint32_t ipAddr;
-    uint8_t eth_addr[6];
-    uint32_t subnetmask;
-    uint32_t leaseSecs;
-    uint32_t router;
-};
-
-struct FpSMBData
-{
-    FpSMBData* next;
-    unsigned major;
-    unsigned minor;
-    uint32_t flags;
-};
-
 class SO_PUBLIC AppIdSessionApi
 {
 public:
     AppIdSessionApi(AppIdSession* asd) : asd(asd) {}
     bool refresh(const Flow& flow);
     AppId get_service_app_id();
-    AppId get_port_service_app_id();
     AppId get_misc_app_id(uint32_t stream_index = 0);
     AppId get_client_app_id(uint32_t stream_index = 0);
     AppId get_payload_app_id(uint32_t stream_index = 0);
     AppId get_referred_app_id(uint32_t stream_index = 0);
     void get_app_id(AppId& service, AppId& client, AppId& payload, AppId& misc, AppId& referred, uint32_t stream_index = 0);
     void get_app_id(AppId* service, AppId* client, AppId* payload, AppId* misc, AppId* referred, uint32_t stream_index = 0);
-    bool is_ssl_session_decrypted();
     bool is_appid_inspecting_session();
     bool is_appid_available();
-    const char* get_user_name(AppId* service, bool* isLoginSuccessful);
     const char* get_client_version(uint32_t stream_index = 0);
     uint64_t get_appid_session_attribute(uint64_t flag);
-    APPID_FLOW_TYPE get_flow_type();
-    void get_service_info(const char** vendor, const char** version,
-        AppIdServiceSubtype**);
-    short get_service_port();
-    SfIp* get_service_ip();
     SfIp* get_initiator_ip();
     AppIdDnsSession* get_dns_session();
     AppIdHttpSession* get_http_session(uint32_t stream_index = 0);
     const char* get_tls_host();
-    DHCPData* get_dhcp_fp_data();
-    void free_dhcp_fp_data(DHCPData*);
-    DHCPInfo* get_dhcp_info();
-    void free_dhcp_info(DHCPInfo*);
-    FpSMBData* get_smb_fp_data();
-    void free_smb_fp_data(FpSMBData*);
-    const char* get_netbios_name();
     bool is_http_inspection_done();
 
 private:

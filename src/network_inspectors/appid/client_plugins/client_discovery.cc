@@ -232,7 +232,7 @@ int ClientDiscovery::get_detector_candidates_list(AppIdSession& asd, Packet* p, 
         && asd.get_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS) )
         create_detector_candidates_list(asd, p);
 
-    return APPID_SESSION_SUCCESS;
+    return 0;
 }
 
 // This function sets the client discovery state to APPID_DISCO_STATE_FINISHED

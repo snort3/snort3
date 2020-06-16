@@ -72,21 +72,6 @@ const uint8_t* service_strstr(const uint8_t* haystack, unsigned haystack_len,
     APPID_SESSION_INITIATOR_MONITORED | APPID_SESSION_DISCOVER_USER | \
     APPID_SESSION_SPECIAL_MONITORED)
 
-// flow status codes
-enum AppIdFlowStatusCodes
-{
-    APPID_SESSION_SUCCESS = 0,
-    APPID_SESSION_ENULL,
-    APPID_SESSION_EINVALID,
-    APPID_SESSION_ENOMEM,
-    APPID_SESSION_NOTFOUND,
-    APPID_SESSION_BADJUJU,
-    APPID_SESSION_DISABLED,
-    APPID_SESSION_EUNSUPPORTED,
-    APPID_SESSION_STOP_PROCESSING,
-    APPID_SESSION_EEXISTS
-};
-
 enum APPID_DISCOVERY_STATE
 {
     APPID_DISCO_STATE_NONE = 0,
@@ -121,7 +106,6 @@ struct CommonAppIdData
         initiator_ip.clear();
     }
 
-    snort::APPID_FLOW_TYPE flow_type = snort::APPID_FLOW_TYPE_IGNORE;
     //flags shared with other preprocessor via session attributes.
     uint64_t flags = 0;
     snort::SfIp initiator_ip;
@@ -287,7 +271,7 @@ public:
     APPID_DISCOVERY_STATE service_disco_state = APPID_DISCO_STATE_NONE;
     SESSION_SERVICE_SEARCH_STATE service_search_state = SESSION_SERVICE_SEARCH_STATE::START;
     ServiceDetector* service_detector = nullptr;
-    snort::AppIdServiceSubtype* subtype = nullptr;
+    AppIdServiceSubtype* subtype = nullptr;
     std::vector<ServiceDetector*> service_candidates;
     ServiceAppDescriptor service;
 

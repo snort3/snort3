@@ -98,7 +98,6 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port,
 {
     service_ip.clear();
     session_id = ++appid_flow_data_id;
-    common.flow_type = APPID_FLOW_TYPE_NORMAL;
     common.initiator_ip = *ip;
     common.initiator_port = port;
 
@@ -740,9 +739,6 @@ AppId AppIdSession::pick_service_app_id()
 {
     AppId rval = APP_ID_NONE;
 
-    if (common.flow_type != APPID_FLOW_TYPE_NORMAL)
-        return APP_ID_NONE;
-
     if (is_service_detected())
     {
         bool deferred = service.get_deferred() || tp_app_id_deferred;
@@ -779,8 +775,7 @@ AppId AppIdSession::pick_service_app_id()
 
 AppId AppIdSession::pick_ss_misc_app_id()
 {
-    if (common.flow_type != APPID_FLOW_TYPE_NORMAL or
-        service.get_id() == APP_ID_HTTP2)
+    if (service.get_id() == APP_ID_HTTP2)
         return APP_ID_NONE;
 
     if (misc_app_id > APP_ID_NONE)
@@ -797,8 +792,7 @@ AppId AppIdSession::pick_ss_misc_app_id()
 
 AppId AppIdSession::pick_ss_client_app_id()
 {
-    if (common.flow_type != APPID_FLOW_TYPE_NORMAL or
-        service.get_id() == APP_ID_HTTP2)
+    if (service.get_id() == APP_ID_HTTP2)
         return APP_ID_NONE;
 
     AppId tmp_id = APP_ID_NONE;
@@ -815,8 +809,7 @@ AppId AppIdSession::pick_ss_client_app_id()
 
 AppId AppIdSession::pick_ss_payload_app_id()
 {
-    if (common.flow_type != APPID_FLOW_TYPE_NORMAL or
-        service.get_id() == APP_ID_HTTP2)
+    if (service.get_id() == APP_ID_HTTP2)
         return APP_ID_NONE;
 
     if (tp_payload_app_id_deferred)
@@ -851,8 +844,7 @@ AppId AppIdSession::pick_ss_payload_app_id()
 
 AppId AppIdSession::pick_ss_referred_payload_app_id()
 {
-    if (common.flow_type != APPID_FLOW_TYPE_NORMAL or
-        service.get_id() == APP_ID_HTTP2)
+    if (service.get_id() == APP_ID_HTTP2)
         return APP_ID_NONE;
 
     AppId tmp_id = APP_ID_NONE;

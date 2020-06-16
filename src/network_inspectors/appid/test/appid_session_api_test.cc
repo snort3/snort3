@@ -32,21 +32,6 @@
 
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 
-void BootpServiceDetector::AppIdFreeDhcpData(DHCPData* data)
-{
-    delete data;
-}
-
-void BootpServiceDetector::AppIdFreeDhcpInfo(DHCPInfo* info)
-{
-    delete info;
-}
-
-void NbdgmServiceDetector::AppIdFreeSMBData(FpSMBData* data)
-{
-    delete data;
-}
-
 AppIdSession* mock_session = nullptr;
 AppIdSessionApi* appid_session_api = nullptr;
 static AppIdConfig config;
@@ -73,12 +58,6 @@ TEST(appid_session_api, get_service_app_id)
 {
     AppId id = appid_session_api->get_service_app_id();
     CHECK_EQUAL(id, APPID_UT_ID);
-}
-
-TEST(appid_session_api, get_port_service_app_id)
-{
-    AppId id = appid_session_api->get_port_service_app_id();
-    CHECK_EQUAL(id, APPID_UT_ID + 3);
 }
 
 TEST(appid_session_api, get_misc_app_id)
@@ -121,13 +100,6 @@ TEST(appid_session_api, get_referred_app_id)
     CHECK_EQUAL(APP_ID_NONE, id);
 }
 
-TEST(appid_session_api, get_service_port)
-{
-    short sp = appid_session_api->get_service_port();
-    CHECK_EQUAL(sp, APPID_UT_SERVICE_PORT);
-}
-
-
 TEST(appid_session_api, get_tls_host)
 {
     AppidChangeBits change_bits;
@@ -135,16 +107,6 @@ TEST(appid_session_api, get_tls_host)
     mock_session->tsession->set_tls_host(host, 0, change_bits);
     const char* val = appid_session_api->get_tls_host();
     STRCMP_EQUAL(val, APPID_UT_TLS_HOST);
-}
-
-TEST(appid_session_api, get_service_ip)
-{
-    SfIp expected_ip;
-
-    expected_ip.pton(AF_INET, APPID_UT_SERVICE_IP_ADDR);
-
-    SfIp* val = appid_session_api->get_service_ip();
-    CHECK_TRUE(val->fast_eq4(expected_ip));
 }
 
 TEST(appid_session_api, get_initiator_ip)
@@ -155,22 +117,6 @@ TEST(appid_session_api, get_initiator_ip)
 
     SfIp* val = appid_session_api->get_initiator_ip();
     CHECK_TRUE(val->fast_eq4(expected_ip));
-}
-
-TEST(appid_session_api, get_netbios_name)
-{
-    const char* val;
-    val = appid_session_api->get_netbios_name();
-    STRCMP_EQUAL(val, APPID_UT_NETBIOS_NAME);
-}
-
-TEST(appid_session_api, is_ssl_session_decrypted)
-{
-    bool val = appid_session_api->is_ssl_session_decrypted();
-    CHECK_TRUE(!val);
-    is_session_decrypted = true;
-    val = appid_session_api->is_ssl_session_decrypted();
-    CHECK_TRUE(val);
 }
 
 TEST(appid_session_api, is_appid_inspecting_session)
@@ -225,22 +171,6 @@ TEST(appid_session_api, is_appid_inspecting_session)
     CHECK_TRUE(val);
 }
 
-TEST(appid_session_api, get_user_name)
-{
-    AppId service;
-    bool isLoginSuccessful;
-
-    const char* val;
-    val = appid_session_api->get_user_name(&service, &isLoginSuccessful);
-    STRCMP_EQUAL(val, APPID_UT_USERNAME);
-    CHECK_TRUE(service == APPID_UT_ID);
-    CHECK_TRUE(!isLoginSuccessful);
-    mock_session->set_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
-    appid_session_api->get_user_name(&service, &isLoginSuccessful);
-    CHECK_TRUE(service == APPID_UT_ID);
-    CHECK_TRUE(isLoginSuccessful);
-}
-
 TEST(appid_session_api, is_appid_available)
 {
     bool val;
@@ -287,20 +217,6 @@ TEST(appid_session_api, get_appid_session_attribute)
     }
 }
 
-TEST(appid_session_api, get_service_info)
-{
-    const char* serviceVendor;
-    const char* serviceVersion;
-    AppIdServiceSubtype* serviceSubtype;
-
-    appid_session_api->get_service_info(&serviceVendor, &serviceVersion, &serviceSubtype);
-    STRCMP_EQUAL(serviceVendor, APPID_UT_SERVICE_VENDOR);
-    STRCMP_EQUAL(serviceVersion, APPID_UT_SERVICE_VERSION);
-    STRCMP_EQUAL(serviceSubtype->service, APPID_UT_SERVICE);
-    STRCMP_EQUAL(serviceSubtype->vendor, APPID_UT_SERVICE_VENDOR);
-    STRCMP_EQUAL(serviceSubtype->version, APPID_UT_SERVICE_VERSION);
-}
-
 TEST(appid_session_api, appid_dns_api)
 {
     AppIdDnsSession* dsession = appid_session_api->get_dns_session();
@@ -325,48 +241,6 @@ TEST(appid_session_api, appid_dns_api)
     uint32_t ttl;
     ttl = dsession->get_ttl();
     CHECK_TRUE(ttl == APPID_UT_DNS_TTL);
-}
-
-TEST(appid_session_api, dhcp_fp_data)
-{
-    DHCPData* val;
-    val = appid_session_api->get_dhcp_fp_data();
-    CHECK_TRUE(!val);
-    val = new DHCPData;
-    mock_session->add_flow_data(val, APPID_SESSION_DATA_DHCP_FP_DATA, nullptr);
-    val = appid_session_api->get_dhcp_fp_data();
-    CHECK_TRUE(val);
-    appid_session_api->free_dhcp_fp_data(val);
-    val = appid_session_api->get_dhcp_fp_data();
-    CHECK_TRUE(!val);
-}
-
-TEST(appid_session_api, dhcp_info)
-{
-    DHCPInfo* val;
-    val = appid_session_api->get_dhcp_info();
-    CHECK_TRUE(!val);
-    val = new DHCPInfo;
-    mock_session->add_flow_data(val, APPID_SESSION_DATA_DHCP_INFO, nullptr);
-    val = appid_session_api->get_dhcp_info();
-    CHECK_TRUE(val);
-    appid_session_api->free_dhcp_info(val);
-    val = appid_session_api->get_dhcp_info();
-    CHECK_TRUE(!val);
-}
-
-TEST(appid_session_api, smb_fp_data)
-{
-    FpSMBData* val;
-    val = appid_session_api->get_smb_fp_data();
-    CHECK_TRUE(!val);
-    val = new FpSMBData;
-    mock_session->add_flow_data(val, APPID_SESSION_DATA_SMB_DATA, nullptr);
-    val = appid_session_api->get_smb_fp_data();
-    CHECK_TRUE(val);
-    appid_session_api->free_smb_fp_data(val);
-    val = appid_session_api->get_smb_fp_data();
-    CHECK_TRUE(!val);
 }
 
 TEST(appid_session_api, is_http_inspection_done)

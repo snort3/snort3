@@ -48,7 +48,7 @@ AppIdSession* AppIdApi::get_appid_session(const Flow& flow)
 {
     AppIdSession* asd = (AppIdSession*)flow.get_flow_data(AppIdSession::inspector_id);
 
-    return (asd && asd->common.flow_type == APPID_FLOW_TYPE_NORMAL) ? asd : nullptr;
+    return asd;
 }
 
 const char* AppIdApi::get_application_name(AppId app_id, AppIdContext& ctxt)
@@ -100,7 +100,7 @@ uint32_t AppIdApi::produce_ha_state(const Flow& flow, uint8_t* buf)
     assert(buf);
     AppIdSessionHA* appHA = (AppIdSessionHA*)buf;
     AppIdSession* asd = get_appid_session(flow);
-    if (asd and (asd->common.flow_type == APPID_FLOW_TYPE_NORMAL))
+    if (asd)
     {
         appHA->flags = APPID_HA_FLAGS_APP;
         if (asd->is_tp_appid_available())
@@ -126,7 +126,7 @@ uint32_t AppIdApi::produce_ha_state(const Flow& flow, uint8_t* buf)
         appHA->appId[7] = asd->misc_app_id;
     }
     else
-        memset(appHA->appId, 0, sizeof(appHA->appId));
+        memset(appHA, 0, sizeof(*appHA));
 
     return sizeof(*appHA);
 }
@@ -327,7 +327,7 @@ AppIdSessionApi* AppIdApi::create_appid_session_api(const Flow& flow)
 {
     AppIdSession* asd = (AppIdSession*)flow.get_flow_data(AppIdSession::inspector_id);
 
-    if (asd and asd->common.flow_type == APPID_FLOW_TYPE_NORMAL)
+    if (asd)
         return new AppIdSessionApi(asd);
 
     return nullptr;

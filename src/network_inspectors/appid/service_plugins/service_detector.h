@@ -37,11 +37,11 @@ public:
 
     int add_service(AppidChangeBits&, AppIdSession&, const snort::Packet*,
         AppidSessionDirection, AppId, const char* vendor = nullptr,
-        const char* version = nullptr, const snort::AppIdServiceSubtype* = nullptr);
+        const char* version = nullptr, const AppIdServiceSubtype* = nullptr);
 
     int add_service_consume_subtype(AppIdSession&, const snort::Packet*,
         AppidSessionDirection dir, AppId, const char* vendor, const char* version,
-        snort::AppIdServiceSubtype*, AppidChangeBits&);
+        AppIdServiceSubtype*, AppidChangeBits&);
 
     int incompatible_data(AppIdSession&, const snort::Packet*, AppidSessionDirection dir);
     int fail_service(AppIdSession&, const snort::Packet*, AppidSessionDirection dir);

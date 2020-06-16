@@ -24,8 +24,16 @@
 
 #include "service_detector.h"
 
-class ServiceDiscovery;
 class AppIdSession;
+class ServiceDiscovery;
+
+struct FpSMBData
+{
+    FpSMBData* next;
+    unsigned major;
+    unsigned minor;
+    uint32_t flags;
+};
 
 class NbssServiceDetector : public ServiceDetector
 {
@@ -50,7 +58,7 @@ public:
 
     int validate(AppIdDiscoveryArgs&) override;
 
-    static void AppIdFreeSMBData(snort::FpSMBData*);
+    static void AppIdFreeSMBData(FpSMBData*);
 
 private:
     void add_smb_info(AppIdSession&, unsigned major, unsigned minor, uint32_t flags);
