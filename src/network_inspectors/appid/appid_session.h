@@ -128,14 +128,56 @@ struct CommonAppIdData
     uint16_t initiator_port = 0;
 };
 
-// FIXIT-L: make these const strings
-struct TlsSession
+enum MatchedTlsType
 {
-    char* get_tls_host() { return tls_host; }
+    MATCHED_TLS_NONE = 0,
+    MATCHED_TLS_HOST,
+    MATCHED_TLS_FIRST_SAN,
+    MATCHED_TLS_CNAME,
+    MATCHED_TLS_ORG_UNIT,
+};
 
-    char* get_tls_cname() { return tls_cname; }
+class TlsSession
+{
+public:
+    ~TlsSession()
+    {
+        if (tls_host)
+            snort_free(tls_host);
+        if (tls_first_alt_name)
+            snort_free(tls_first_alt_name);
+        if (tls_cname)
+            snort_free(tls_cname);
+        if (tls_org_unit)
+            snort_free(tls_org_unit);
+    }
 
-    char* get_tls_org_unit() { return tls_org_unit; }
+    const char* get_tls_host() const
+    {
+        switch (matched_tls_type)
+        {
+            case MATCHED_TLS_HOST:
+                return tls_host;
+            case MATCHED_TLS_FIRST_SAN:
+                return tls_first_alt_name;
+            case MATCHED_TLS_CNAME:
+                return tls_cname;
+            default:
+                if (tls_host)
+                    return tls_host;
+                else if (tls_first_alt_name)
+                    return tls_first_alt_name;
+                else if (tls_cname)
+                    return tls_cname;
+        }
+        return nullptr;
+    }
+
+    const char* get_tls_first_alt_name() const { return tls_first_alt_name; }
+
+    const char* get_tls_cname() const { return tls_cname; }
+
+    const char* get_tls_org_unit() const { return tls_org_unit; }
 
     bool get_tls_handshake_done() { return tls_handshake_done; }
 
@@ -151,6 +193,21 @@ struct TlsSession
         }
         tls_host = len? snort::snort_strndup(new_tls_host,len) : const_cast<char*>(new_tls_host);
         change_bits.set(APPID_TLSHOST_BIT);
+    }
+
+    void set_tls_first_alt_name(const char* new_tls_first_alt_name, uint32_t len, AppidChangeBits& change_bits)
+    {
+        if (tls_first_alt_name)
+            snort_free(tls_first_alt_name);
+        if (!new_tls_first_alt_name or *new_tls_first_alt_name == '\0')
+        {
+            tls_first_alt_name = nullptr;
+            return;
+        }
+        tls_first_alt_name = len? snort::snort_strndup(new_tls_first_alt_name, len) :
+            const_cast<char*>(new_tls_first_alt_name);
+        if (!tls_host)
+            change_bits.set(APPID_TLSHOST_BIT);
     }
 
     void set_tls_cname(const char* new_tls_cname, uint32_t len, AppidChangeBits& change_bits)
@@ -183,23 +240,18 @@ struct TlsSession
 
     void set_tls_handshake_done() { tls_handshake_done = true; }
 
-    void free_data()
+    void set_matched_tls_type(MatchedTlsType type)
     {
-        if (tls_host)
-            snort_free(tls_host);
-        if (tls_cname)
-            snort_free(tls_cname);
-        if (tls_org_unit)
-            snort_free(tls_org_unit);
-        tls_host = tls_cname = tls_org_unit = nullptr;
-        tls_handshake_done = false;
+        matched_tls_type = type;
     }
 
 private:
     char* tls_host = nullptr;
+    char* tls_first_alt_name = nullptr;
     char* tls_cname = nullptr;
     char* tls_org_unit = nullptr;
     bool tls_handshake_done = false;
+    MatchedTlsType matched_tls_type = MATCHED_TLS_NONE;
 };
 
 class AppIdSession : public snort::FlowData
@@ -313,7 +365,6 @@ public:
     void* remove_flow_data(unsigned id);
     void free_flow_data_by_id(unsigned id);
     void free_flow_data_by_mask(unsigned mask);
-    void free_tls_session_data();
     void free_flow_data();
 
     AppId pick_service_app_id();

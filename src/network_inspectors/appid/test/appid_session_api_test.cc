@@ -131,7 +131,8 @@ TEST(appid_session_api, get_service_port)
 TEST(appid_session_api, get_tls_host)
 {
     AppidChangeBits change_bits;
-    mock_session->tsession->set_tls_host(APPID_UT_TLS_HOST, 0, change_bits);
+    char* host = snort_strdup(APPID_UT_TLS_HOST);
+    mock_session->tsession->set_tls_host(host, 0, change_bits);
     const char* val = appid_session_api->get_tls_host();
     STRCMP_EQUAL(val, APPID_UT_TLS_HOST);
 }
@@ -384,7 +385,8 @@ TEST(appid_session_api, is_http_inspection_done)
     CHECK_FALSE(val);
     mock_session->service_disco_state = APPID_DISCO_STATE_STATEFUL;
     mock_session->set_session_flags(APPID_SESSION_SSL_SESSION);
-    mock_session->tsession->set_tls_host(APPID_UT_TLS_HOST, 0, change_bits);
+    char* host = snort_strdup(APPID_UT_TLS_HOST);
+    mock_session->tsession->set_tls_host(host, 0, change_bits);
     val = appid_session_api->is_http_inspection_done();
     CHECK_TRUE(val);
     mock_session->service_disco_state = APPID_DISCO_STATE_FINISHED;

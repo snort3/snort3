@@ -441,14 +441,14 @@ static inline void process_ssl(AppIdSession& asd,
     asd.set_session_flags(APPID_SESSION_SSL_SESSION);
 
     if (!asd.tsession)
-        asd.tsession = (TlsSession*)snort_calloc(sizeof(TlsSession));
+        asd.tsession = new TlsSession();
 
     if (!asd.client.get_id())
         asd.set_client_appid_data(APP_ID_SSL_CLIENT, change_bits);
 
     reinspect_ssl_appid = check_ssl_appid_for_reinspect(tmpAppId, asd.ctxt.get_odp_ctxt());
 
-    if (!(asd.scan_flags & SCAN_DO_NOT_OVERRIDE_SERVER_NAME_FLAG) and
+    if (!(asd.scan_flags & SCAN_CERTVIZ_ENABLED_FLAG) and
         asd.tsession->get_tls_host() == nullptr and
         (field = attribute_data.tls_host(false)) != nullptr)
     {
@@ -457,7 +457,7 @@ static inline void process_ssl(AppIdSession& asd,
             asd.scan_flags |= SCAN_SSL_HOST_FLAG;
     }
 
-    if (!(asd.scan_flags & SCAN_DO_NOT_OVERRIDE_COMMON_NAME_FLAG) and
+    if (!(asd.scan_flags & SCAN_CERTVIZ_ENABLED_FLAG) and
         asd.tsession->get_tls_cname() == nullptr and
         (field = attribute_data.tls_cname()) != nullptr)
     {
@@ -468,7 +468,7 @@ static inline void process_ssl(AppIdSession& asd,
 
     if (reinspect_ssl_appid)
     {
-        if (!(asd.scan_flags & SCAN_DO_NOT_OVERRIDE_ORG_NAME_FLAG) and
+        if (!(asd.scan_flags & SCAN_CERTVIZ_ENABLED_FLAG) and
             asd.tsession->get_tls_org_unit() == nullptr and
             (field = attribute_data.tls_org_unit()) != nullptr)
         {
@@ -495,7 +495,7 @@ static inline void process_quic(AppIdSession& asd,
 {
     const string* field = 0;
     if ( !asd.tsession )
-        asd.tsession = (TlsSession*)snort_calloc(sizeof(TlsSession));
+        asd.tsession = new TlsSession();
 
     if ( (field=attribute_data.quic_sni()) != nullptr )
     {
@@ -784,7 +784,8 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
             }
             else
             {
-                asd.set_tp_payload_app_id(*p, direction, tp_app_id, change_bits);
+                if (!(asd.scan_flags & SCAN_SPOOFED_SNI_FLAG))
+                    asd.set_tp_payload_app_id(*p, direction, tp_app_id, change_bits);
                 tp_app_id = portAppId;
                 if (appidDebug->is_active())
                 {

@@ -477,6 +477,9 @@ void AppIdSession::examine_ssl_metadata(AppidChangeBits& change_bits)
     AppId payload_id = 0;
     const char* tls_str = tsession->get_tls_host();
 
+    if (scan_flags & SCAN_CERTVIZ_ENABLED_FLAG)
+        return;
+
     if ((scan_flags & SCAN_SSL_HOST_FLAG) and tls_str)
     {
         size_t size = strlen(tls_str);
@@ -610,16 +613,6 @@ bool AppIdSession::is_svc_taking_too_much_time()
         init_bytes_without_reply > ctxt.get_odp_ctxt().max_bytes_before_service_fail));
 }
 
-void AppIdSession::free_tls_session_data()
-{
-    if (tsession)
-    {
-        tsession->free_data();
-        snort_free(tsession);
-        tsession = nullptr;
-    }
-}
-
 void AppIdSession::delete_session_data()
 {
     service.reset();
@@ -640,7 +633,8 @@ void AppIdSession::delete_session_data()
     }
 
     delete_all_http_sessions();
-    free_tls_session_data();
+    if (tsession)
+        delete tsession;
     delete dsession;
 }
 

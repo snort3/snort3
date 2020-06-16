@@ -170,7 +170,7 @@ public:
     SfIp* get_initiator_ip();
     AppIdDnsSession* get_dns_session();
     AppIdHttpSession* get_http_session(uint32_t stream_index = 0);
-    char* get_tls_host();
+    const char* get_tls_host();
     DHCPData* get_dhcp_fp_data();
     void free_dhcp_fp_data(DHCPData*);
     DHCPInfo* get_dhcp_info();

@@ -396,7 +396,7 @@ TEST(appid_discovery_tests, change_bits_for_tls_host)
 {
     // Testing set_tls_host
     AppidChangeBits change_bits;
-    const char* host = "www.cisco.com";
+    char* host = snort_strdup(APPID_UT_TLS_HOST);
     TlsSession tls;
     tls.set_tls_host(host, 0, change_bits);
 

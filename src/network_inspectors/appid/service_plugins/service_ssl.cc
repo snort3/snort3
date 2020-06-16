@@ -333,9 +333,7 @@ static void parse_client_initiation(const uint8_t* data, uint16_t size, ServiceS
 
             const uint8_t* str = data + offsetof(ServiceSSLV3ExtensionServerName, string_length) +
                 sizeof(ext->string_length);
-            ss->host_name = (char*)snort_alloc(len + 1);  //Plus nullptr term.
-            memcpy(ss->host_name, str, len);
-            ss->host_name[len] = '\0';
+            ss->host_name = snort_strndup((const char*)str, len);
             ss->host_name_strlen = len;
             return;
         }
@@ -349,7 +347,7 @@ static void parse_client_initiation(const uint8_t* data, uint16_t size, ServiceS
     }
 }
 
-static bool parse_certificates(ServiceSSLData* ss, AppIdDiscoveryArgs& args)
+static bool parse_certificates(ServiceSSLData* ss)
 {
     bool success = false;
     if (ss->certs_data and ss->certs_len)
@@ -390,7 +388,7 @@ static bool parse_certificates(ServiceSSLData* ss, AppIdDiscoveryArgs& args)
             {
                 if ((cert_name = X509_NAME_oneline(X509_get_subject_name(cert), nullptr, 0)))
                 {
-                    if (!(args.asd.scan_flags & SCAN_DO_NOT_OVERRIDE_COMMON_NAME_FLAG) and !common_name)
+                    if (!common_name)
                     {
                         if ((start = strstr(cert_name, COMMON_NAME_STR)))
                         {
@@ -407,7 +405,7 @@ static bool parse_certificates(ServiceSSLData* ss, AppIdDiscoveryArgs& args)
                             start = nullptr;
                         }
                     }
-                    if (!(args.asd.scan_flags & SCAN_DO_NOT_OVERRIDE_ORG_NAME_FLAG) and !org_name)
+                    if (!org_name)
                     {
                         if ((start = strstr(cert_name, COMMON_NAME_STR)))
                         {
@@ -479,7 +477,7 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
     {
         ss->state = SSL_STATE_CONNECTION;
 
-        if (!(args.asd.scan_flags & SCAN_DO_NOT_OVERRIDE_SERVER_NAME_FLAG) and
+        if (!(args.asd.scan_flags & SCAN_CERTVIZ_ENABLED_FLAG) and
             args.dir == APP_ID_FROM_INITIATOR)
         {
             parse_client_initiation(data, size, ss);
@@ -698,9 +696,8 @@ fail:
 success:
     if (ss->certs_data && ss->certs_len)
     {
-        if (!((args.asd.scan_flags & SCAN_DO_NOT_OVERRIDE_COMMON_NAME_FLAG) and
-            (args.asd.scan_flags & SCAN_DO_NOT_OVERRIDE_ORG_NAME_FLAG)) and
-            (!parse_certificates(ss, args)))
+        if (!(args.asd.scan_flags & SCAN_CERTVIZ_ENABLED_FLAG) and
+            (!parse_certificates(ss)))
         {
             goto fail;
         }
@@ -710,7 +707,7 @@ success:
     if (ss->host_name || ss->common_name || ss->org_name)
     {
         if (!args.asd.tsession)
-            args.asd.tsession = (TlsSession*)snort_calloc(sizeof(TlsSession));
+            args.asd.tsession = new TlsSession();
 
         /* TLS Host */
         if (ss->host_name)

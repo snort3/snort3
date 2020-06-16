@@ -239,16 +239,10 @@ short AppIdSessionApi::get_service_port()
     return asd->service_port;
 }
 
-char* AppIdSessionApi::get_tls_host()
+const char* AppIdSessionApi::get_tls_host()
 {
     if (asd->tsession)
-    {
-        if (asd->tsession->get_tls_host())
-            return asd->tsession->get_tls_host();
-        else
-            return asd->tsession->get_tls_cname();
-    }
-
+        return asd->tsession->get_tls_host();
     return nullptr;
 }
 
