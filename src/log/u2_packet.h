@@ -54,8 +54,8 @@ private:
     static const unsigned max_size =
         offset + sizeof(eth::EtherHdr) + sizeof(ip::IP6Hdr) + sizeof(tcp::TCPHdr);
 
-    uint16_t size;
-    uint16_t dsize;
+    uint16_t size = 0;
+    uint16_t dsize = 0;
 
     union
     {

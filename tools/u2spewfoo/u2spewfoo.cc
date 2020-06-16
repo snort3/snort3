@@ -72,6 +72,10 @@ static u2iterator* new_iterator(char* filename)
 
 static inline void free_iterator(u2iterator* it)
 {
+
+    if (!it)
+        return;
+
     if (it->file)
         fclose(it->file);
     if (it->filename)

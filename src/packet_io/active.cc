@@ -111,7 +111,7 @@ static inline EncodeFlags GetFlags()
 // TBD strafed sequence numbers could be divided by window
 // scaling if present.
 
-static uint32_t Strafe(int i, uint32_t flags, const Packet* p)
+static uint64_t Strafe(int i, uint64_t flags, const Packet* p)
 {
     flags &= ENC_FLAG_VAL;
 
@@ -817,7 +817,7 @@ int Active::get_drop_reason_id()
     const auto iter = drop_reason_id_map.find(drop_reason);
     if ( iter != drop_reason_id_map.end() )
         return iter->second;
-            
+
     return default_drop_reason_id;
 }
 

@@ -341,8 +341,7 @@ void LogIPHeader(TextLog* log, Packet* p)
     if (is_ip6)
     {
         const ip::IP6Hdr* const ip6h = p->ptrs.ip_api.get_ip6h(); // nullptr if ipv4
-        const ip::IP6Frag* const ip6_frag = // nullptr if ipv4
-            (is_ip6 ? layer::get_inner_ip6_frag() : nullptr);
+        const ip::IP6Frag* const ip6_frag = layer::get_inner_ip6_frag();
 
         TextLog_Print(log, "%s TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
             protocol_names[to_utype(p->get_ip_proto_next())],

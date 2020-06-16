@@ -61,7 +61,7 @@ public:
     EvalStatus eval(Cursor&, Packet*) override;
 
 private:
-    SslVersionRuleOptionData svod;
+    SslVersionRuleOptionData svod = {};
 };
 
 //-------------------------------------------------------------------------
@@ -171,7 +171,7 @@ public:
     { return DETECT; }
 
 public:
-    SslVersionRuleOptionData svod;
+    SslVersionRuleOptionData svod = {};
 };
 
 bool SslVersionModule::begin(const char*, int, SnortConfig*)

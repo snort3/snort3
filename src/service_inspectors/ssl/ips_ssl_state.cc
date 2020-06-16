@@ -61,7 +61,7 @@ public:
     EvalStatus eval(Cursor&, Packet*) override;
 
 private:
-    SslStateRuleOptionData ssod;
+    SslStateRuleOptionData ssod = {};
 };
 
 //-------------------------------------------------------------------------
@@ -171,7 +171,7 @@ public:
     { return DETECT; }
 
 public:
-    SslStateRuleOptionData ssod;
+    SslStateRuleOptionData ssod = {};
 };
 
 bool SslStateModule::begin(const char*, int, SnortConfig*)
