@@ -1171,12 +1171,20 @@ static int detector_add_host_port_dynamic(lua_State* L)
         return 0;
     }
 
+
+
     bool added = false;
     std::lock_guard<std::mutex> lck(AppIdSession::inferred_svcs_lock);
     if ( !host_cache[ip_addr]->add_service(port, proto, appid, true, &added) )
         ErrorMessage("%s:Failed to add host tracker service\n",__func__);
     if (added)
+    {
         AppIdSession::incr_inferred_svcs_ver();
+        if (appidDebug->is_active())
+            LogMessage("AppIdDbg %s "
+                "Added hostPortCache entry ip=%s, port %d, ip_proto %u, type=%u, appId=%d\n",
+                appidDebug->get_debug_session(), ip_str, port, (unsigned)proto, type, appid);
+    }
 
     return 0;
 }
@@ -2448,6 +2456,94 @@ static int is_midstream_session(lua_State *L)
     return 0;
 }
 
+/**Check if traffic is going through an HTTP proxy.
+ *
+ * @param Lua_State* - Lua state variable.
+ * @param detector/stack - detector object
+ * @return int - Number of elements on stack, which is 1 if successful, 0 otherwise.
+ * @return int/stack - 1 if traffic is going through a proxy, 0 otherwise.
+ */
+static int is_http_tunnel(lua_State* L)
+{
+    auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
+    // Verify detector user data and that we are in packet context
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
+
+    if (!lua_checkstack(L, 1))
+        return 0;
+
+    AppIdHttpSession* hsession = lsd->ldp.asd->get_http_session();
+
+    if (hsession)
+    {
+        if (hsession->payload.get_id() == APP_ID_HTTP_TUNNEL ||
+            hsession->payload.get_id() == APP_ID_HTTP_SSL_TUNNEL)
+            lua_pushboolean(L, 1);
+        else
+            lua_pushboolean(L, 0);
+
+        return 1;
+    }
+
+    return 0;
+}
+
+/**Get destination IP tunneled through a proxy.
+ *
+ * @param Lua_State* - Lua state variable.
+ * @param detector/stack - detector object
+ * @return int - Number of elements on stack, which is 1 if successful, 0 otherwise.
+ * @return IPv4/stack - destination IPv4 address.
+ */
+static int get_http_tunneled_ip(lua_State* L)
+{
+    auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
+    // Verify detector user data and that we are in packet context
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
+
+    if (!lua_checkstack(L, 1))
+        return 0;
+
+    AppIdHttpSession* hsession = lsd->ldp.asd->get_http_session();
+
+    const TunnelDest* tunnel_dest = hsession->get_tun_dest();
+
+    if (!tunnel_dest)
+        lua_pushnumber(L, 0);
+    else
+        lua_pushnumber(L, tunnel_dest->ip.get_ip4_value());
+
+    return 1;
+}
+
+/**Get port tunneled through a proxy.
+ *
+ * @param Lua_State* - Lua state variable.
+ * @param detector/stack - detector object
+ * @return int - Number of elements on stack, which is 1 if successful, 0 otherwise.
+ * @return portNumber/stack - source port number.
+ */
+static int get_http_tunneled_port(lua_State* L)
+{
+    auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
+    // Verify detector user data and that we are in packet context
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
+
+    if (!lua_checkstack(L, 1))
+        return 0;
+
+    AppIdHttpSession* hsession = lsd->ldp.asd->get_http_session();
+
+    const TunnelDest* tunnel_dest = hsession->get_tun_dest();
+
+    if (!tunnel_dest)
+        lua_pushnumber(L, 0);
+    else
+        lua_pushnumber(L, tunnel_dest->port);
+
+    return 1;
+}
+
 static const luaL_Reg detector_methods[] =
 {
     /* Obsolete API names.  No longer use these!  They are here for backward
@@ -2575,6 +2671,10 @@ static const luaL_Reg detector_methods[] =
 
     { "createFutureFlow",         create_future_flow },
     { "isMidStreamSession",       is_midstream_session },
+
+    { "isHttpTunnel",             is_http_tunnel },
+    { "getHttpTunneledIp",        get_http_tunneled_ip },
+    { "getHttpTunneledPort",      get_http_tunneled_port },
 
     { nullptr, nullptr }
 };
