@@ -329,7 +329,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         else if (keyword == "profile")
             parse_deleted_option("profile", data_stream);
         else if ( keyword == "xff_headers" )
-            parse_bracketed_unsupported_list("xff_headers", data_stream);
+            tmpval = parse_bracketed_unsupported_list("xff_headers", data_stream);
         else
         {
             tmpval = false;

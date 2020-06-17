@@ -18,22 +18,24 @@
 // dt_data.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include "dt_data.h"
-#include "helpers/s2l_util.h"
+
+#include <algorithm>
+#include <cstring>
 #include <iostream>
 #include <sstream>
-#include <cstring>
 
 #include "data/data_types/dt_table.h"
 #include "data/data_types/dt_var.h"
 #include "data/data_types/dt_comment.h"
 #include "data/data_types/dt_rule.h"
 #include "data/data_types/dt_include.h"
+#include "helpers/s2l_util.h"
 
 DataApi::PrintMode DataApi::mode = DataApi::PrintMode::DEFAULT;
 std::size_t DataApi::dev_warnings = 0;
 std::size_t DataApi::errors_count = 0;
 
-DataApi::DataApi() : curr_data_bad(false)
+DataApi::DataApi()
 {
     comments = new Comments(start_comments, 0,
         Comments::CommentType::MULTI_LINE);
@@ -157,11 +159,11 @@ std::string DataApi::expand_vars(const std::string& string)
                     if (strlen(p) >= 2)
                     {
                         varmodifier = *(p + 1);
-                        std::strncpy(varaux, p + 2, sizeof(varaux));
+                        std::strncpy(varaux, p + 2, sizeof(varaux) - 1);
                     }
                 }
                 else
-                    std::strncpy(varname, rawvarname, sizeof(varname));
+                    std::strncpy(varname, rawvarname, sizeof(varname) - 1);
 
                 std::memset((char*)varbuffer, 0, sizeof(varbuffer));
 
@@ -345,13 +347,7 @@ void DataApi::swap_conf_data(std::vector<Variable*>& new_vars,
 {
     vars.swap(new_vars);
     includes.swap(new_includes);
-
-    Comments* tmp = new_comments;
-    new_comments = comments;
-    comments = tmp;
-
-    tmp = new_unsupported;
-    new_unsupported = unsupported;
-    unsupported = tmp;
+    std::swap(comments, new_comments);
+    std::swap(unsupported, new_unsupported);
 }
 

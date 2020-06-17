@@ -61,12 +61,11 @@ bool React::convert(std::istringstream& data_stream)
             // since we still can't be sure if we passed the resp buffer,
             // check the next option and ensure it matches
             std::istringstream arg_stream(args);
-            util::get_string(arg_stream, tmp, ",");
-
-            if (tmp == "msg" ||
+            if (util::get_string(arg_stream, tmp, ",") &&
+                (tmp == "msg" ||
                 tmp == "warn" ||
                 tmp == "block" ||
-                !tmp.compare(0, 5, "proxy"))
+                !tmp.compare(0, 5, "proxy")))
             {
                 // Now that we have confirmed this is a valid option, parse it!!
                 table_api.open_table("react");

@@ -61,11 +61,10 @@ bool Base64Decode::convert(std::istringstream& data_stream)
             // since we still can't be sure if we passed the base64_decode buffer,
             // check the next option and ensure it matches
             std::istringstream arg_stream(args);
-            util::get_string(arg_stream, tmp, ", ");
-
-            if (tmp == "bytes" ||
+            if (util::get_string(arg_stream, tmp, ", ") &&
+                (tmp == "bytes" ||
                 tmp == "offset" ||
-                tmp == "relative")
+                tmp == "relative"))
             {
                 rule_api.add_option("base64_decode", args);
             }

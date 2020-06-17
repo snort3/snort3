@@ -122,17 +122,17 @@ bool PortScan::convert(std::istringstream& data_stream)
             table_api.add_deleted_comment("logfile");
         }
         else if (keyword == "memcap")
-            tmpval = parse_option("memcap", data_stream) && retval;
+            tmpval = parse_option("memcap", data_stream);
 
         else if (keyword == "proto")
         {
             table_api.add_diff_option_comment("proto", "protos");
-            retval = parse_curly_bracket_list("protos", data_stream) && retval;
+            tmpval = parse_curly_bracket_list("protos", data_stream);
         }
         else if (keyword == "scan_type")
         {
             table_api.add_diff_option_comment("scan_type", "scan_types");
-            tmpval = parse_curly_bracket_list("scan_types", data_stream) && retval;
+            tmpval = parse_curly_bracket_list("scan_types", data_stream);
         }
         else
             tmpval = false;

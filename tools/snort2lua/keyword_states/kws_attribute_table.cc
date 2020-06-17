@@ -37,7 +37,7 @@ public:
     bool convert(std::istringstream& data) override;
 
 private:
-    std::istringstream* stream; // so I can call ld->failed_conversion
+    std::istringstream* stream = nullptr; // so I can call ld->failed_conversion
     std::unordered_map<std::string, std::string> attr_map;
     std::ifstream attr_file;
 

@@ -530,5 +530,6 @@ static void help_args(const char* /*pfx*/, const char* /*val*/)
         }
         ++p;
     }
+    std::cout << std::resetiosflags(std::ios::adjustfield);
 }
 } // namespace parser

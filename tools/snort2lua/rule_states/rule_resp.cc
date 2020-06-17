@@ -69,9 +69,8 @@ bool Resp::convert(std::istringstream& data_stream)
             // since we still can't be sure if we passed the resp buffer,
             // check the next option and ensure it matches
             std::istringstream arg_stream(args);
-            util::get_string(arg_stream, tmp, ",");
-
-            if (tmp == "reset_dest" ||
+            if (util::get_string(arg_stream, tmp, ",") &&
+                (tmp == "reset_dest" ||
                 tmp == "reset_both" ||
                 tmp == "rst_snd" ||
                 tmp == "rst_rcv" ||
@@ -80,7 +79,7 @@ bool Resp::convert(std::istringstream& data_stream)
                 tmp == "icmp_host" ||
                 tmp == "icmp_all" ||
                 tmp == "reset_source" ||
-                tmp == "icmp_port")
+                tmp == "icmp_port"))
             {
                 // Now that we have confirmed this is a valid option, parse it!!
                 table_api.open_table("reject");

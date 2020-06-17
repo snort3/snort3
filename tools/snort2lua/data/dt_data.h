@@ -145,9 +145,9 @@ private:
     Comments* errors;
     Comments* unsupported;
 
-    bool curr_data_bad;  // keep track whether current 'conversion' is already bad
-    const std::string* current_file;
-    unsigned current_line;
+    bool curr_data_bad = false;  // keep track whether current 'conversion' is already bad
+    const std::string* current_file = nullptr;
+    unsigned current_line = 0;
 
     std::string get_file_line();
 };
