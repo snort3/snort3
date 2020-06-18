@@ -24,6 +24,7 @@
 #include "stream.h"
 
 #include <cassert>
+#include <mutex>
 
 #include "detection/detection_engine.h"
 #include "flow/flow_control.h"
@@ -60,6 +61,7 @@ public:
 };
 
 static StreamImpl stream;
+static std::mutex stream_xtra_mutex;
 
 //-------------------------------------------------------------------------
 // session foo
@@ -542,6 +544,7 @@ uint32_t Stream::get_xtra_data_map(LogFunction*& f)
 
 void Stream::reg_xtra_data_log(LogExtraData f, void* config)
 {
+    const std::lock_guard<std::mutex> xtra_lock(stream_xtra_mutex);
     stream.extra_data_log = f;
     stream.extra_data_config = config;
 }
