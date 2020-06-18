@@ -782,7 +782,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.1 (Build 4)
+o"  )~   Version 3.0.1 (Build 5)
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2020 Cisco and/or its affiliates. All rights reserved.
@@ -5885,208 +5885,6 @@ support for http implies http2 may be deprecated and removed.</p></div>
 provide full inspection of the individual HTTP/1.1 streams.</p></div>
 </div>
 <div class="sect2">
-<h3 id="_module_trace">Module Trace</h3>
-<div class="paragraph"><p>Snort 3 retired the different flavors of debug macros that used to be set
-through environment variable SNORT_DEBUG. It was replaced by a module specific
-trace. Trace is turned on by setting the module-specific trace bitmask in
-snort.lua. As before, in order to enable it, snort has to be configured and
-built with  --enable-debug-msgs.</p></div>
-<div class="sect3">
-<h4 id="_debugging_rules_using_detection_trace">Debugging rules using detection trace</h4>
-<div class="paragraph"><p>Detection engine is responsible for rule evaluation. Turning on the
-trace for it can help with debugging new rules.</p></div>
-<div class="paragraph"><p>The relevant options for detection are as follow (represented as hex):</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>0x2 - follow rule evaluation
-0x4 - print evaluated buffer if it changed
-0x8 - print evaluated buffer at every step
-0x10 - print value of ips rule options vars
-0x20 - print information on fast pattern search</code></pre>
-</div></div>
-<div class="paragraph"><p>Buffer print is useful, but in case the buffer is very big can be too verbose.
-Choose between 0x4, 0x8 or no buffer trace accordingly.</p></div>
-<div class="paragraph"><p>0x10 is useful when the rule is using ips rule options vars.</p></div>
-</div>
-<div class="sect3">
-<h4 id="_example_rule_evaluation_traces">Example - rule evaluation traces:</h4>
-<div class="paragraph"><p>In snort.lua, the following line was added:</p></div>
-<div class="paragraph"><p>detection = {trace = 0x20 + 0x10 + 0x2 + 0x4}</p></div>
-<div class="paragraph"><p>The pcap has a single packet with payload:
-10.AAAAAAAfoobar</p></div>
-<div class="paragraph"><p>Evaluated on rules:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code># byte_math + oper with byte extract and content
-# VAL = 1, byte_math = 0 + 10
-alert tcp ( byte_extract: 1, 0, VAL, string, dec;
-byte_math:bytes 1,offset VAL,oper +, rvalue 10, result var1, string dec;
-content:"foo", offset var1; sid:3)</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>#This rule should not trigger
-alert tcp (content:"AAAAA"; byte_jump:2,0,relative;
-content:"foo", within 3; sid:2)</code></pre>
-</div></div>
-<div class="paragraph"><p>The output:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>detection: packet 1 C2S 127.0.0.1:1234 127.0.0.1:5678
-detection: Fast pattern search
-detection: 1 fp packet[16]</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>snort.raw[16]:
-- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
-31 30 00 41 41 41 41 41 41 41  66 6F 6F 62 61 72              10.AAAAAAAfoobar
-- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
-detection: Processing pattern match #1
-detection: Fast pattern packet[5] = 'AAAAA' |41 41 41 41 41 | ( )
-detection: Starting tree eval
-detection: Evaluating option content, cursor name pkt_data, cursor position 0</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>snort.raw[16]:
-- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
-31 30 00 41 41 41 41 41 41 41  66 6F 6F 62 61 72              10.AAAAAAAfoobar
-- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
-detection: Rule options variables:
-var[0]=0 var[1]=0 var[2]=0
-detection: Evaluating option byte_jump, cursor name pkt_data, cursor position 8</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>snort.raw[8]:
-- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
-41 41 66 6F 6F 62 61 72                                       AAfoobar
-- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
-detection: no match
-detection: Rule options variables:
-var[0]=0 var[1]=0 var[2]=0
-detection: Evaluating option byte_jump, cursor name pkt_data, cursor position 9</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>snort.raw[7]:
-- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
-41 66 6F 6F 62 61 72                                          Afoobar
-- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
-detection: no match
-detection: Rule options variables:
-var[0]=0 var[1]=0 var[2]=0
-detection: Evaluating option byte_jump, cursor name pkt_data, cursor position 10</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>snort.raw[6]:
-- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
-66 6F 6F 62 61 72                                             foobar
-- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
-detection: no match
-detection: no match
-detection: Processing pattern match #2
-detection: Fast pattern packet[3] = 'foo' |66 6F 6F | ( )
-detection: Starting tree eval
-detection: Evaluating option byte_extract, cursor name pkt_data, cursor position 0</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>snort.raw[16]:
-- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
-31 30 00 41 41 41 41 41 41 41  66 6F 6F 62 61 72              10.AAAAAAAfoobar
-- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
-detection: Rule options variables:
-var[0]=1 var[1]=0 var[2]=0
-detection: Evaluating option byte_math, cursor name pkt_data, cursor position 1</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>snort.raw[15]:
-- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
-30 00 41 41 41 41 41 41 41 66  6F 6F 62 61 72                 0.AAAAAAAfoobar
-- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
-detection: Rule options variables:
-var[0]=1 var[1]=10 var[2]=0
-detection: Evaluating option content, cursor name pkt_data, cursor position 2</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>snort.raw[14]:
-- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
-00 41 41 41 41 41 41 41 66 6F  6F 62 61 72                    .AAAAAAAfoobar
-- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
-detection: Rule options variables:
-var[0]=1 var[1]=10 var[2]=0
-detection: Reached leaf, cursor name pkt_data, cursor position 13</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>snort.raw[3]:
-- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
-62 61 72                                                      bar
-- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
-detection: Matched rule gid:sid:rev 1:3:0
-detection: Rule options variables:
-var[0]=1 var[1]=10 var[2]=0
-04/22-20:21:40.905630, 1, TCP, raw, 56, C2S, 127.0.0.1:1234, 127.0.0.1:5678, 1:3:0, allow</code></pre>
-</div></div>
-</div>
-<div class="sect3">
-<h4 id="_protocols_decoding_trace">Protocols decoding trace</h4>
-<div class="paragraph"><p>Turning on decode trace will print out information about the packets decoded
-protocols. Can be useful in case of tunneling.</p></div>
-<div class="paragraph"><p>Example for a icmpv4-in-ipv6 packet:</p></div>
-<div class="paragraph"><p>In snort.lua, the following line was added:</p></div>
-<div class="paragraph"><p>decode = { trace = 1 }</p></div>
-<div class="paragraph"><p>The output:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>decode: Codec eth (protocol_id: 34525) ip header starts at: 0x7f70800110f0, length is 14
-decode: Codec ipv6 (protocol_id: 1) ip header starts at: 0x7f70800110f0, length is 40
-decode: Codec icmp4 (protocol_id: 256) ip header starts at: 0x7f70800110f0, length is 8
-decode: Codec unknown (protocol_id: 256) ip header starts at: 0x7f70800110f0, length is 0</code></pre>
-</div></div>
-</div>
-<div class="sect3">
-<h4 id="_other_available_traces">Other available traces</h4>
-<div class="paragraph"><p>There are more trace options supported by detection:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>0x1 - prints statistics about the engine
-0x40 - prints a message when disabling content detect for packet
-0x80 - prints option tree data structure
-0x100 - prints a message when a new tag is added</code></pre>
-</div></div>
-<div class="paragraph"><p>Detection is the only module that support multiple options for trace.</p></div>
-<div class="paragraph"><p>The rest support only 1 option, and can be turned on by adding trace = 1 to
-their lua config.</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-stream module trace:
-</p>
-</li>
-</ul></div>
-<div class="paragraph"><p>When turned on prints a message in case inspection is stopped on a flow.
-Example for output:</p></div>
-<div class="paragraph"><p>stream: stop inspection on flow, dir BOTH</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-stream_ip, stream_user: trace will output general processing messages
-</p>
-</li>
-</ul></div>
-<div class="paragraph"><p>Other modules that support trace have messages as seemed fit to the developer.
-Some are for corner cases, other for complex data structures prints.  Current
-list of additional modules supporting trace: appid, dce_smb, gtp_inspect and
-dce_udp.</p></div>
-</div>
-</div>
-<div class="sect2">
 <h3 id="_performance_monitor">Performance Monitor</h3>
 <div class="paragraph"><p>The new and improved performance monitor! Is your sensor being bogged down by
 too many flows? perf_monitor! Why are certain TCP segments being dropped without
@@ -6991,6 +6789,637 @@ relating to bsd-based implementations of telnet.</p></div>
 </div>
 </div>
 <div class="sect2">
+<h3 id="_trace">Trace</h3>
+<div class="paragraph"><p>Snort 3 retired the different flavors of debug macros that used to be set
+through the SNORT_DEBUG environment variable. It was replaced by per-module
+trace functionality. Trace is turned on by setting the specific trace module
+configuration in snort.lua. As before, to enable debug tracing, Snort must be
+configured at build time with --enable-debug-msgs. However, a growing number
+of modules (such as wizard and snort.inspector_manager) are providing non-debug
+trace messages in normal production builds.</p></div>
+<div class="sect3">
+<h4 id="_trace_module">Trace module</h4>
+<div class="paragraph"><p>The trace module is responsible for configuring traces and supports the
+following parameters:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>output - configure the output method for trace messages
+modules - trace configuration for specific modules
+constraints - filter traces by the packet constraints</code></pre>
+</div></div>
+<div class="paragraph"><p>The following lines, added in snort.lua, will enable trace messages for
+detection and codec modules. The messages will be printed to syslog if
+the packet filtering constraints match.</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>trace =
+{
+    output = "syslog",
+    modules =
+    {
+        detection = { detect_engine = 1 },
+        decode = { all = 1 }
+    },
+    constraints =
+    {
+        ip_proto = 17,
+        dst_ip = "10.1.1.2",
+        src_port = 100,
+        dst_port = 200
+    }
+}</code></pre>
+</div></div>
+<div class="paragraph"><p>The trace module supports config reloading. Also, it&#8217;s possible to set or clear
+modules traces and packet filter constraints via the control channel command.</p></div>
+</div>
+<div class="sect3">
+<h4 id="_trace_module_configuring_traces">Trace module - configuring traces</h4>
+<div class="paragraph"><p>The trace module has the <strong>modules</strong> option - a table with trace configuration
+for specific modules. The following lines placed in snort.lua will enable trace
+messages for detection, codec and wizard modules:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>trace =
+{
+    modules =
+    {
+        detection = { all = 1 },
+        decode = { all = 1 },
+        wizard = { all = 1 }
+    }
+}</code></pre>
+</div></div>
+<div class="paragraph"><p>The detection and snort modules are currently the only modules to support
+multiple trace options. Others have only the default <strong>all</strong> option, which will
+enable or disable all traces in a given module. It&#8217;s available for multi-option
+modules also and works as a global switcher:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>trace =
+{
+    modules =
+    {
+        detection = { all = 1 }  -- set each detection option to level 1
+    }
+}</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>trace =
+{
+    modules =
+    {
+        detection = { all = 1, tag = 2 }  -- set each detection option to level 1 but the 'tag' to level 2
+    }
+}</code></pre>
+</div></div>
+<div class="paragraph"><p>The full list of available trace parameters is placed into
+the "Basic Modules.trace" chapter.</p></div>
+<div class="paragraph"><p>Each option must be assigned an integer value between 0 and 255 to specify
+a level of verbosity for that option:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>0 - turn off trace messages printing for the option
+1 - print most significant trace messages for the option
+255 - print all available trace messages for the option</code></pre>
+</div></div>
+<div class="paragraph"><p>Tracing is disabled by default (verbosity level equals 0). The verbosity level
+is treated as a threshold, so specifying a higher value will result in all
+messages with a lower level being printed as well. For example:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>trace =
+{
+    modules =
+    {
+        decode = { all = 3 }  -- messages with levels 1, 2, and 3 will be printed
+    }
+}</code></pre>
+</div></div>
+</div>
+<div class="sect3">
+<h4 id="_trace_module_configuring_packet_filter_constraints_for_packet_related_trace_messages">Trace module - configuring packet filter constraints for packet related trace messages</h4>
+<div class="paragraph"><p>There is a capability to filter traces by the packet constraints. The trace
+module has the <strong>constraints</strong> option - a table with filtering configuration that
+will be applied to all trace messages that include a packet. Filtering is done
+on a flow that packet is related. By default filtering is disabled.</p></div>
+<div class="paragraph"><p>Available constraints options:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>ip_proto - numerical IP protocol ID
+src_ip - match all packets with a flow that has this client IP address (passed as a string)
+src_port - match all packets with a flow that has this source port
+dst_ip - match all packets with a flow that has this server IP address (passed as a string)
+dst_port - match all packets with a flow that has this destination port</code></pre>
+</div></div>
+<div class="paragraph"><p>The following lines placed in snort.lua will enable all trace messages for
+detection filtered by ip_proto, dst_ip, src_port and dst_port:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>trace =
+{
+    modules =
+    {
+        detection = { all = 1 }
+    },
+    constraints =
+    {
+        ip_proto = 6, -- tcp
+        dst_ip = "10.1.1.10",
+        src_port = 150,
+        dst_port = 250
+    }
+}</code></pre>
+</div></div>
+</div>
+<div class="sect3">
+<h4 id="_trace_module_configuring_trace_output_method">Trace module - configuring trace output method</h4>
+<div class="paragraph"><p>There is a capability to configure the output method for trace messages.
+The trace module has the <strong>output</strong> option with two acceptable values:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>"stdout" - printing to stdout
+"syslog" - printing to syslog</code></pre>
+</div></div>
+<div class="paragraph"><p>By default, the output method will be set based on the Snort run mode. Normally
+it will use stdout, but if -D (daemon mode) and/or -M (alert-syslog mode)
+are set, it will instead use syslog.</p></div>
+<div class="paragraph"><p>Example - set output method as syslog:</p></div>
+<div class="paragraph"><p>In snort.lua, the following lines were added:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>trace =
+{
+    output = "syslog",
+    modules =
+    {
+        detection = { all = 1 }
+    }
+}</code></pre>
+</div></div>
+<div class="paragraph"><p>As a result, each trace message will be printed into syslog
+(the Snort run-mode will be ignored).</p></div>
+</div>
+<div class="sect3">
+<h4 id="_configuring_traces_via_control_channel_command">Configuring traces via control channel command</h4>
+<div class="paragraph"><p>There is a capability to configure module trace options and packet constraints
+via the control channel command by using a Snort shell. In order to enable
+shell, Snort has to be configured and built with --enable-shell.</p></div>
+<div class="paragraph"><p>The trace control channel command is a way how to configure module trace
+options and/or packet filter constraints directly during Snort run and
+without reloading the entire config.</p></div>
+<div class="paragraph"><p>After entering the Snort shell, there are two commands available for
+the trace module:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>trace.set({ modules = {...}, constraints = {...} }) - set modules traces and constraints (should pass a valid Lua-entry)</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>trace.clear() - clear modules traces and constraints</code></pre>
+</div></div>
+<div class="paragraph"><p>Also, it&#8217;s possible to omit tables in the trace.set() command:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>trace.set({constraints = {...}}) - set only filtering configuration keeping old modules traces</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>trace.set({modules = {...}}) - set only module trace options keeping old filtering constraints</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>trace.set({}) - disable traces and constraints (set to empty)</code></pre>
+</div></div>
+</div>
+<div class="sect3">
+<h4 id="_trace_messages_format">Trace messages format</h4>
+<div class="paragraph"><p>Each tracing message has a standard format:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>&lt;module_name&gt;:&lt;option_name&gt;:&lt;message_log_level&gt;: &lt;particular_message&gt;</code></pre>
+</div></div>
+</div>
+<div class="sect3">
+<h4 id="_example_debugging_rules_using_detection_trace">Example - Debugging rules using detection trace</h4>
+<div class="paragraph"><p>The detection engine is responsible for rule evaluation. Turning on the
+trace for it can help with debugging new rules.</p></div>
+<div class="paragraph"><p>The relevant options for detection are as follow:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>rule_eval - follow rule evaluation
+buffer - print evaluated buffer if it changed (level 1) or at every step (level 5)
+rule_vars - print value of ips rule options vars
+fp_search - print information on fast pattern search</code></pre>
+</div></div>
+<div class="paragraph"><p>Buffer print is useful, but in case the buffer is very big can be too verbose.
+Choose between verbosity levels 1, 5, or no buffer trace accordingly.</p></div>
+<div class="paragraph"><p>rule_vars is useful when the rule is using ips rule options vars.</p></div>
+<div class="paragraph"><p>In snort.lua, the following lines were added:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>trace =
+{
+    modules =
+    {
+        detection =
+        {
+            rule_eval = 1,
+            buffer = 1,
+            rule_vars = 1,
+            fp_search = 1
+        }
+    }
+}</code></pre>
+</div></div>
+<div class="paragraph"><p>The pcap has a single packet with payload:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>10.AAAAAAAfoobar</code></pre>
+</div></div>
+<div class="paragraph"><p>Evaluated on rules:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code># byte_math + oper with byte extract and content
+# VAL = 1, byte_math = 0 + 10
+alert tcp ( byte_extract: 1, 0, VAL, string, dec;
+byte_math:bytes 1,offset VAL,oper +, rvalue 10, result var1, string dec;
+content:"foo", offset var1; sid:3)</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>#This rule should not trigger
+alert tcp (content:"AAAAA"; byte_jump:2,0,relative;
+content:"foo", within 3; sid:2)</code></pre>
+</div></div>
+<div class="paragraph"><p>The output:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>detection:rule_eval:1: packet 1 C2S 127.0.0.1:1234 127.0.0.1:5678 (fast-patterns)
+detection:rule_eval:1: Fast pattern search
+detection:fp_search:1: 1 fp packet[16]</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort.raw[16]:
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+31 30 00 41 41 41 41 41 41 41  66 6F 6F 62 61 72              10.AAAAAAAfoobar
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+detection:rule_eval:1: Processing pattern match #1
+detection:rule_eval:1: Fast pattern packet[5] = 'AAAAA' |41 41 41 41 41 | ( )
+detection:rule_eval:1: Starting tree eval
+detection:rule_eval:1: Evaluating option content, cursor name pkt_data, cursor position 0</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort.raw[16]:
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+31 30 00 41 41 41 41 41 41 41  66 6F 6F 62 61 72              10.AAAAAAAfoobar
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+detection:rule_vars:1: Rule options variables: var[0]=0 var[1]=0 var[2]=0
+detection:rule_eval:1: Evaluating option byte_jump, cursor name pkt_data, cursor position 8</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort.raw[8]:
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+41 41 66 6F 6F 62 61 72                                       AAfoobar
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+detection:rule_eval:1: no match
+detection:rule_vars:1: Rule options variables: var[0]=0 var[1]=0 var[2]=0
+detection:rule_eval:1: Evaluating option byte_jump, cursor name pkt_data, cursor position 9</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort.raw[7]:
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+41 66 6F 6F 62 61 72                                          Afoobar
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+detection:rule_eval:1: no match
+detection:rule_vars:1: Rule options variables: var[0]=0 var[1]=0 var[2]=0
+detection:rule_eval:1: Evaluating option byte_jump, cursor name pkt_data, cursor position 10</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort.raw[6]:
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+66 6F 6F 62 61 72                                             foobar
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+detection:rule_eval:1: no match
+detection:rule_eval:1: no match
+detection:rule_eval:1: Processing pattern match #2
+detection:rule_eval:1: Fast pattern packet[3] = 'foo' |66 6F 6F | ( )
+detection:rule_eval:1: Starting tree eval
+detection:rule_eval:1: Evaluating option byte_extract, cursor name pkt_data, cursor position 0</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort.raw[16]:
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+31 30 00 41 41 41 41 41 41 41  66 6F 6F 62 61 72              10.AAAAAAAfoobar
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+detection:rule_vars:1: Rule options variables: var[0]=1 var[1]=0 var[2]=0
+detection:rule_eval:1: Evaluating option byte_math, cursor name pkt_data, cursor position 1</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort.raw[15]:
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+30 00 41 41 41 41 41 41 41 66  6F 6F 62 61 72                 0.AAAAAAAfoobar
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+detection:rule_vars:1: Rule options variables: var[0]=1 var[1]=10 var[2]=0
+detection:rule_eval:1: Evaluating option content, cursor name pkt_data, cursor position 2</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort.raw[14]:
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+00 41 41 41 41 41 41 41 66 6F  6F 62 61 72                    .AAAAAAAfoobar
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+detection:rule_vars:1: Rule options variables: var[0]=1 var[1]=10 var[2]=0
+detection:rule_eval:1: Reached leaf, cursor name pkt_data, cursor position 13</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort.raw[3]:
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+62 61 72                                                      bar
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+detection:rule_eval:1: Matched rule gid:sid:rev 1:3:0
+detection:rule_vars:1: Rule options variables: var[0]=1 var[1]=10 var[2]=0
+04/22-20:21:40.905630, 1, TCP, raw, 56, C2S, 127.0.0.1:1234, 127.0.0.1:5678, 1:3:0, allow</code></pre>
+</div></div>
+</div>
+<div class="sect3">
+<h4 id="_example_protocols_decoding_trace">Example - Protocols decoding trace</h4>
+<div class="paragraph"><p>Turning on decode trace will print out information about the packets decoded
+protocols. Can be useful in case of tunneling.</p></div>
+<div class="paragraph"><p>Example for a icmpv4-in-ipv6 packet:</p></div>
+<div class="paragraph"><p>In snort.lua, the following line was added:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>trace =
+{
+    modules =
+    {
+        decode = { all = 1 }
+    }
+}</code></pre>
+</div></div>
+<div class="paragraph"><p>The output:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>decode:all:1: Codec eth (protocol_id: 34525) ip header starts at: 0x7f70800110f0, length is 14
+decode:all:1: Codec ipv6 (protocol_id: 1) ip header starts at: 0x7f70800110f0, length is 40
+decode:all:1: Codec icmp4 (protocol_id: 256) ip header starts at: 0x7f70800110f0, length is 8
+decode:all:1: Codec unknown (protocol_id: 256) ip header starts at: 0x7f70800110f0, length is 0</code></pre>
+</div></div>
+</div>
+<div class="sect3">
+<h4 id="_example_track_the_time_packet_spends_in_each_inspector">Example - Track the time packet spends in each inspector</h4>
+<div class="paragraph"><p>There is a capability to track which inspectors evaluate a packet, and how much
+time the inspector consumes doing so. These trace messages could be enabled by
+the Snort module trace options:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>main - command execution traces (main trace logging)
+inspector_manager - inspectors execution and time tracking traces</code></pre>
+</div></div>
+<div class="paragraph"><p>Example for a single packet with payload:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>10.AAAAAAAfoobar</code></pre>
+</div></div>
+<div class="paragraph"><p>In snort.lua, the following lines were added:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>trace =
+{
+    modules =
+    {
+        snort =
+        {
+            -- could be replaced by 'all = 1'
+            main = 1,
+            inspector_manager = 1
+        }
+    }
+}</code></pre>
+</div></div>
+<div class="paragraph"><p>The output:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort:main:1: [0] Queuing command START for execution (refcount 1)
+snort:main:1: [0] Queuing command RUN for execution (refcount 1)
+snort:main:1: [0] Destroying completed command START
+snort:inspector_manager:1: start inspection, raw, packet 1, context 1
+snort:inspector_manager:1: enter stream
+snort:inspector_manager:1: exit stream, elapsed time: 2 usec
+snort:inspector_manager:1: stop inspection, raw, packet 1, context 1, total time: 14 usec
+snort:inspector_manager:1: post detection inspection, raw, packet 1, context 1
+snort:inspector_manager:1: end inspection, raw, packet 1, context 1, total time: 0 usec
+snort:main:1: [0] Destroying completed command RUN</code></pre>
+</div></div>
+</div>
+<div class="sect3">
+<h4 id="_example_trace_filtering_by_packet_constraints">Example - trace filtering by packet constraints:</h4>
+<div class="paragraph"><p>In snort.lua, the following lines were added:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>ips =
+{
+    rules =
+    [[
+        alert tcp any any -&gt; any any ( msg: "ALERT_TCP"; gid: 1001; sid: 1001 )
+        alert udp any any -&gt; any any ( msg: "ALERT_UDP"; gid: 1002; sid: 1002 )
+    ]]
+}</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>trace =
+{
+    modules =
+    {
+        detection = { rule_eval = 1 }
+    },
+    constraints =
+    {
+        ip_proto = 17, -- udp
+        dst_ip = "10.1.1.2",
+        src_port = 100,
+        dst_port = 200
+    }
+}</code></pre>
+</div></div>
+<div class="paragraph"><p>The processed traffic was next:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>d ( stack="eth:ip4:udp" )</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>c ( ip4:a="10.1.1.1", ip4:b="10.1.1.2", udp:a=100, udp:b=200 )
+a ( pay="pass" )
+b ( pay="pass" )</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>c ( ip4:a="10.2.1.1" )
+a ( pay="pass" )
+b ( pay="pass" )</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>c ( udp:a=101 )
+a ( pay="block" )
+b ( pay="block" )</code></pre>
+</div></div>
+<div class="paragraph"><p>The output:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>detection:rule_eval:1: packet 1 UNK 10.1.1.1:100 10.1.1.2:200 (fast-patterns)
+detection:rule_eval:1: Fast pattern processing - no matches found
+detection:rule_eval:1: packet 1 UNK 10.1.1.1:100 10.1.1.2:200 (non-fast-patterns)
+detection:rule_eval:1: packet 2 UNK 10.1.1.2:200 10.1.1.1:100 (fast-patterns)
+detection:rule_eval:1: Fast pattern processing - no matches found
+detection:rule_eval:1: packet 2 UNK 10.1.1.2:200 10.1.1.1:100 (non-fast-patterns)
+detection:rule_eval:1: packet 3 UNK 10.2.1.1:100 10.1.1.2:200 (fast-patterns)
+detection:rule_eval:1: Fast pattern processing - no matches found
+detection:rule_eval:1: packet 3 UNK 10.2.1.1:100 10.1.1.2:200 (non-fast-patterns)
+detection:rule_eval:1: packet 4 UNK 10.1.1.2:200 10.2.1.1:100 (fast-patterns)
+detection:rule_eval:1: Fast pattern processing - no matches found
+detection:rule_eval:1: packet 4 UNK 10.1.1.2:200 10.2.1.1:100 (non-fast-patterns)</code></pre>
+</div></div>
+<div class="paragraph"><p>The trace messages for two last packets (numbers 5 and 6) weren&#8217;t printed.</p></div>
+</div>
+<div class="sect3">
+<h4 id="_example_configuring_traces_via_trace_set_command">Example - configuring traces via trace.set() command</h4>
+<div class="paragraph"><p>In snort.lua, the following lines were added:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>ips =
+{
+    rules =
+    [[
+        alert tcp any any -&gt; any any ( msg: "ALERT_TCP"; gid: 1001; sid: 1001 )
+        alert udp any any -&gt; any any ( msg: "ALERT_UDP"; gid: 1002; sid: 1002 )
+    ]]
+}</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>trace =
+{
+    constraints =
+    {
+        ip_proto = 17, -- udp
+        dst_ip = "10.1.1.2",
+        src_port = 100,
+        dst_port = 200
+    },
+    modules =
+    {
+        detection = { rule_eval = 1 }
+    }
+}</code></pre>
+</div></div>
+<div class="paragraph"><p>The processed traffic was next:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code># Flow 1
+d ( stack="eth:ip4:udp" )
+c ( ip4:a="10.1.1.1", ip4:b="10.1.1.2", udp:a=100, udp:b=200 )
+a ( data="udp packet 1" )
+a ( data="udp packet 2" )</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code># Flow 2
+d ( stack="eth:ip4:tcp" )
+c ( ip4:a="10.1.1.3", ip4:b="10.1.1.4", tcp:a=5000, tcp:b=6000 )
+a ( syn )
+b ( syn, ack )
+a ( ack )
+a ( ack, data="tcp packet 1" )
+a ( ack, data="tcp packet 2" )
+a ( fin, ack )
+b ( fin, ack )</code></pre>
+</div></div>
+<div class="paragraph"><p>After 1 packet, entering shell and pass the trace.set() command as follows:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>trace.set({ constraints = { ip_proto = 6, dst_ip = "10.1.1.4", src_port = 5000, dst_port = 6000 }, modules = { decode = { all = 1 }, detection = { rule_eval = 1 } } })</code></pre>
+</div></div>
+<div class="paragraph"><p>The output (not full, only descriptive lines):</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>detection:rule_eval:1: packet 1 UNK 10.1.1.1:100 10.1.1.2:200 (fast-patterns)
+detection:rule_eval:1: packet 1 UNK 10.1.1.1:100 10.1.1.2:200 (non-fast-patterns)
+decode:all:1: Codec udp (protocol_id: 256) ip header starts length is 8
+decode:all:1: Codec tcp (protocol_id: 256) ip header starts length is 20
+detection:rule_eval:1: packet 3 UNK 10.1.1.3:5000 10.1.1.4:6000 (fast-patterns)
+detection:rule_eval:1: packet 3 UNK 10.1.1.3:5000 10.1.1.4:6000 (non-fast-patterns)
+decode:all:1: Codec tcp (protocol_id: 256) ip header starts length is 20
+detection:rule_eval:1: packet 4 UNK 10.1.1.4:6000 10.1.1.3:5000 (fast-patterns)
+detection:rule_eval:1: packet 4 UNK 10.1.1.4:6000 10.1.1.3:5000 (non-fast-patterns)
+decode:all:1: Codec tcp (protocol_id: 256) ip header starts length is 20
+detection:rule_eval:1: packet 5 UNK 10.1.1.3:5000 10.1.1.4:6000 (fast-patterns)
+detection:rule_eval:1: packet 5 UNK 10.1.1.3:5000 10.1.1.4:6000 (non-fast-patterns)
+decode:all:1: Codec tcp (protocol_id: 256) ip header starts length is 20
+detection:rule_eval:1: packet 6 UNK 10.1.1.3:5000 10.1.1.4:6000 (fast-patterns)
+detection:rule_eval:1: packet 6 UNK 10.1.1.3:5000 10.1.1.4:6000 (non-fast-patterns)
+decode:all:1: Codec tcp (protocol_id: 256) ip header starts length is 20
+detection:rule_eval:1: packet 7 UNK 10.1.1.3:5000 10.1.1.4:6000 (fast-patterns)
+detection:rule_eval:1: packet 7 UNK 10.1.1.3:5000 10.1.1.4:6000 (non-fast-patterns)
+decode:all:1: Codec tcp (protocol_id: 256) ip header starts length is 20
+detection:rule_eval:1: packet 8 UNK 10.1.1.3:5000 10.1.1.4:6000 (fast-patterns)
+detection:rule_eval:1: packet 8 UNK 10.1.1.3:5000 10.1.1.4:6000 (non-fast-patterns)
+decode:all:1: Codec tcp (protocol_id: 256) ip header starts length is 20
+detection:rule_eval:1: packet 9 UNK 10.1.1.4:6000 10.1.1.3:5000 (fast-patterns)
+detection:rule_eval:1: packet 9 UNK 10.1.1.4:6000 10.1.1.3:5000 (non-fast-patterns)</code></pre>
+</div></div>
+<div class="paragraph"><p>The new configuration was applied. <strong>decode:all:1</strong> messages aren&#8217;t filtered
+because they don&#8217;t include a packet (a packet isn&#8217;t well-formed at the point
+when the message is printing).</p></div>
+</div>
+<div class="sect3">
+<h4 id="_other_available_traces">Other available traces</h4>
+<div class="paragraph"><p>There are more trace options supported by detection:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>detect_engine - prints statistics about the engine
+pkt_detect - prints a message when disabling content detect for packet
+opt_tree - prints option tree data structure
+tag - prints a message when a new tag is added</code></pre>
+</div></div>
+<div class="paragraph"><p>The rest support only 1 option, and can be turned on by adding all = 1 to
+their table in trace lua config.</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+stream module trace:
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>When turned on prints a message in case inspection is stopped on a flow.
+Example for output:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>stream:all:1: stop inspection on flow, dir BOTH</code></pre>
+</div></div>
+<div class="ulist"><ul>
+<li>
+<p>
+stream_ip, stream_user: trace will output general processing messages
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Other modules that support trace have messages as seemed fit to the developer.
+Some are for corner cases, others for complex data structures.</p></div>
+</div>
+</div>
+<div class="sect2">
 <h3 id="_wizard">Wizard</h3>
 <div class="paragraph"><p>Using the wizard enables port-independent configuration and the detection of
 malware command and control channels.  If the wizard is bound to a session, it
@@ -7875,7 +8304,7 @@ string <strong>host_cache.dump_file</strong>: file name to dump host cache on sh
 </li>
 <li>
 <p>
-int <strong>host_cache.memcap</strong> = 8388608: maximum host cache size in bytes { 512:max32 }
+int <strong>host_cache.memcap</strong> = 8388608: maximum host cache size in bytes { 512:maxSZ }
 </p>
 </li>
 </ul></div>
@@ -7917,6 +8346,11 @@ int <strong>host_cache.memcap</strong> = 8388608: maximum host cache size in byt
 <li>
 <p>
 <strong>host_cache.removes</strong>: lru cache found entry and removed it (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>host_cache.replaced</strong>: lru cache found entry and replaced it (sum)
 </p>
 </li>
 </ul></div>
@@ -9598,7 +10032,7 @@ string <strong><code>suppress[].ip</code></strong>: restrict suppression to thes
 </ul></div>
 </div>
 <div class="sect2">
-<h3 id="_trace">trace</h3>
+<h3 id="_trace_2">trace</h3>
 <div class="paragraph"><p>What: configure trace log messages</p></div>
 <div class="paragraph"><p>Type: basic</p></div>
 <div class="paragraph"><p>Usage: global</p></div>
@@ -9666,6 +10100,21 @@ int <strong>trace.modules.stream.all</strong>: enable all trace options { 0:255 
 </li>
 <li>
 <p>
+int <strong>trace.modules.snort.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.snort.main</strong>: enable main trace logging { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.snort.inspector_manager</strong>: enable inspector manager trace logging { 0:255 }
+</p>
+</li>
+<li>
+<p>
 int <strong>trace.modules.dce_smb.all</strong>: enable all trace options { 0:255 }
 </p>
 </li>
@@ -9701,7 +10150,45 @@ int <strong>trace.modules.decode.all</strong>: enable all trace options { 0:255 
 </li>
 <li>
 <p>
+int <strong>trace.constraints.ip_proto</strong>: numerical IP protocol ID filter { 0:255 }
+</p>
+</li>
+<li>
+<p>
+string <strong>trace.constraints.src_ip</strong>: source IP address filter
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.constraints.src_port</strong>: source port filter { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+string <strong>trace.constraints.dst_ip</strong>: destination IP address filter
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.constraints.dst_port</strong>: destination port filter { 0:65535 }
+</p>
+</li>
+<li>
+<p>
 enum <strong>trace.output</strong>: output method for trace log messages { stdout | syslog }
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Commands:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>trace.set</strong>(modules, constraints): set modules traces and constraints
+</p>
+</li>
+<li>
+<p>
+<strong>trace.clear</strong>(): clear modules traces and constraints
 </p>
 </li>
 </ul></div>
@@ -11095,6 +11582,12 @@ bool <strong>appid.log_all_sessions</strong> = false: enable logging of all appi
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_appid_listener">appid_listener</h3>
+<div class="paragraph"><p>What: log selected published data to appid_listener.log</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Usage: context</p></div>
+</div>
+<div class="sect2">
 <h3 id="_arp_spoof">arp_spoof</h3>
 <div class="paragraph"><p>What: detect ARP attacks and anomalies</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
@@ -12223,6 +12716,16 @@ enum <strong>dce_tcp.policy</strong> = WinXP: target based policy to use { Win20
 </li>
 <li>
 <p>
+<strong>dce_tcp.tcp_expected_sessions</strong>: total tcp dynamic endpoint expected sessions (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_tcp.tcp_expected_realized</strong>: total tcp dynamic endpoint expected realized sessions (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>dce_tcp.tcp_packets</strong>: total tcp packets (sum)
 </p>
 </li>
@@ -12684,7 +13187,7 @@ bool <strong>file_id.enable_type</strong> = true: enable type ID
 </li>
 <li>
 <p>
-bool <strong>file_id.enable_signature</strong> = true: enable signature calculation
+bool <strong>file_id.enable_signature</strong> = false: enable signature calculation
 </p>
 </li>
 <li>
@@ -12790,6 +13293,41 @@ bool <strong>file_id.trace_stream</strong> = false: enable runtime dump of file 
 <li>
 <p>
 int <strong>file_id.verdict_delay</strong> = 0: number of queries to return final verdict { 0:max53 }
+</p>
+</li>
+<li>
+<p>
+int <strong>file_id.b64_decode_depth</strong> = -1: base64 decoding depth (-1 no limit) { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>file_id.bitenc_decode_depth</strong> = -1: Non-Encoded MIME attachment extraction depth (-1 no limit) { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>file_id.decompress_pdf</strong> = false: decompress pdf files in MIME attachments
+</p>
+</li>
+<li>
+<p>
+bool <strong>file_id.decompress_swf</strong> = false: decompress swf files in MIME attachments
+</p>
+</li>
+<li>
+<p>
+bool <strong>file_id.decompress_zip</strong> = false: decompress zip files in MIME attachments
+</p>
+</li>
+<li>
+<p>
+int <strong>file_id.qp_decode_depth</strong> = -1: Quoted Printable decoding depth (-1 no limit) { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>file_id.uu_decode_depth</strong> = -1: Unix-to-Unix decoding depth (-1 no limit) { -1:65535 }
 </p>
 </li>
 </ul></div>
@@ -15913,6 +16451,11 @@ int <strong>rt_global.memcap</strong> = 2048: cap on amount of memory used (0 is
 bool <strong>rt_global.empty_ips</strong> = false: ips policy with no rules
 </p>
 </li>
+<li>
+<p>
+bool <strong>rt_global.init_drop_reason</strong> = false: populate drop reason map
+</p>
+</li>
 </ul></div>
 <div class="paragraph"><p>Peg counts:</p></div>
 <div class="ulist"><ul>
@@ -17848,6 +18391,11 @@ bool <strong>stream_tcp.track_only</strong> = false: disable reassembly if true
 </li>
 <li>
 <p>
+<strong>stream_tcp.held_packet_purges</strong>: number of held packets that were purged without flushing (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>stream_tcp.cur_packets_held</strong>: number of packets currently held (now)
 </p>
 </li>
@@ -18129,11 +18677,6 @@ parse.</p></div>
 <div class="paragraph"><p>Usage: detect</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
-<li>
-<p>
-bool <strong>react.msg</strong> = false:  use rule msg in response page instead of default message
-</p>
-</li>
 <li>
 <p>
 string <strong>react.page</strong>: file containing HTTP response (headers and body)
@@ -26528,6 +27071,16 @@ string <strong>file_connector.name</strong>: channel name
 </li>
 <li>
 <p>
+int <strong>file_id.b64_decode_depth</strong> = -1: base64 decoding depth (-1 no limit) { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>file_id.bitenc_decode_depth</strong> = -1: Non-Encoded MIME attachment extraction depth (-1 no limit) { -1:65535 }
+</p>
+</li>
+<li>
+<p>
 int <strong>file_id.block_timeout</strong> = 86400: stop blocking after this many seconds { 0:max31 }
 </p>
 </li>
@@ -26558,12 +27111,27 @@ int <strong>file_id.capture_min_size</strong> = 0: stop file capture if file siz
 </li>
 <li>
 <p>
+bool <strong>file_id.decompress_pdf</strong> = false: decompress pdf files in MIME attachments
+</p>
+</li>
+<li>
+<p>
+bool <strong>file_id.decompress_swf</strong> = false: decompress swf files in MIME attachments
+</p>
+</li>
+<li>
+<p>
+bool <strong>file_id.decompress_zip</strong> = false: decompress zip files in MIME attachments
+</p>
+</li>
+<li>
+<p>
 bool <strong>file_id.enable_capture</strong> = false: enable file capture
 </p>
 </li>
 <li>
 <p>
-bool <strong>file_id.enable_signature</strong> = true: enable signature calculation
+bool <strong>file_id.enable_signature</strong> = false: enable signature calculation
 </p>
 </li>
 <li>
@@ -26663,6 +27231,11 @@ int <strong>file_id.max_files_per_flow</strong> = 32: maximal number of files ab
 </li>
 <li>
 <p>
+int <strong>file_id.qp_decode_depth</strong> = -1: Quoted Printable decoding depth (-1 no limit) { -1:65535 }
+</p>
+</li>
+<li>
+<p>
 int <strong>file_id.show_data_depth</strong> = 100: print this many octets { 0:max53 }
 </p>
 </li>
@@ -26689,6 +27262,11 @@ bool <strong>file_id.trace_type</strong> = false: enable runtime dump of type in
 <li>
 <p>
 int <strong>file_id.type_depth</strong> = 1460: stop type ID at this point { 0:max53 }
+</p>
+</li>
+<li>
+<p>
+int <strong>file_id.uu_decode_depth</strong> = -1: Unix-to-Unix decoding depth (-1 no limit) { -1:65535 }
 </p>
 </li>
 <li>
@@ -27058,7 +27636,7 @@ string <strong>host_cache.dump_file</strong>: file name to dump host cache on sh
 </li>
 <li>
 <p>
-int <strong>host_cache.memcap</strong> = 8388608: maximum host cache size in bytes { 512:max32 }
+int <strong>host_cache.memcap</strong> = 8388608: maximum host cache size in bytes { 512:maxSZ }
 </p>
 </li>
 <li>
@@ -28673,11 +29251,6 @@ enum <strong><code>rate_filter[].track</code></strong> = by_src: filter only mat
 </li>
 <li>
 <p>
-bool <strong>react.msg</strong> = false:  use rule msg in response page instead of default message
-</p>
-</li>
-<li>
-<p>
 string <strong>react.page</strong>: file containing HTTP response (headers and body)
 </p>
 </li>
@@ -28854,6 +29427,11 @@ int <strong>rt_global.downshift_packet</strong> = 0: attempt downshift at this p
 <li>
 <p>
 bool <strong>rt_global.empty_ips</strong> = false: ips policy with no rules
+</p>
+</li>
+<li>
+<p>
+bool <strong>rt_global.init_drop_reason</strong> = false: populate drop reason map
 </p>
 </li>
 <li>
@@ -30363,6 +30941,31 @@ interval <strong>tos.~range</strong>: check if IP TOS is in given range { 0:255 
 </li>
 <li>
 <p>
+string <strong>trace.constraints.dst_ip</strong>: destination IP address filter
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.constraints.dst_port</strong>: destination port filter { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.constraints.ip_proto</strong>: numerical IP protocol ID filter { 0:255 }
+</p>
+</li>
+<li>
+<p>
+string <strong>trace.constraints.src_ip</strong>: source IP address filter
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.constraints.src_port</strong>: source port filter { 0:65535 }
+</p>
+</li>
+<li>
+<p>
 int <strong>trace.modules.appid.all</strong>: enable all trace options { 0:255 }
 </p>
 </li>
@@ -30434,6 +31037,21 @@ int <strong>trace.modules.gtp_inspect.all</strong>: enable all trace options { 0
 <li>
 <p>
 int <strong>trace.modules.latency.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.snort.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.snort.inspector_manager</strong>: enable inspector manager trace logging { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.snort.main</strong>: enable main trace logging { 0:255 }
 </p>
 </li>
 <li>
@@ -31263,6 +31881,16 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>dce_tcp.tcp_expected_realized</strong>: total tcp dynamic endpoint expected realized sessions (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_tcp.tcp_expected_sessions</strong>: total tcp dynamic endpoint expected sessions (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>dce_tcp.tcp_packets</strong>: total tcp packets (sum)
 </p>
 </li>
@@ -31814,6 +32442,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>host_cache.removes</strong>: lru cache found entry and removed it (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>host_cache.replaced</strong>: lru cache found entry and replaced it (sum)
 </p>
 </li>
 <li>
@@ -33554,6 +34187,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>stream_tcp.gaps</strong>: missing data between PDUs (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream_tcp.held_packet_purges</strong>: number of held packets that were purged without flushing (sum)
 </p>
 </li>
 <li>
@@ -36951,6 +37589,16 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <strong>snort.help</strong>(): this output
 </p>
 </li>
+<li>
+<p>
+<strong>trace.set</strong>(modules, constraints): set modules traces and constraints
+</p>
+</li>
+<li>
+<p>
+<strong>trace.clear</strong>(): clear modules traces and constraints
+</p>
+</li>
 </ul></div>
 </div>
 <div class="sect2">
@@ -37308,8 +37956,6 @@ deleted -&gt; pop: 'disabled'
 deleted -&gt; pop: 'max_mime_mem'
 deleted -&gt; pop: 'memcap'
 deleted -&gt; ppm: 'debug-pkts'
-deleted -&gt; react: 'block'
-deleted -&gt; react: 'warn'
 deleted -&gt; reputation: 'shared_max_instances'
 deleted -&gt; reputation: 'shared_refresh'
 deleted -&gt; rpc_decode: 'alert_fragments'
@@ -37428,6 +38074,11 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 <li>
 <p>
 <strong>appid</strong> (inspector): application and service identification
+</p>
+</li>
+<li>
+<p>
+<strong>appid_listener</strong> (inspector): log selected published data to appid_listener.log
 </p>
 </li>
 <li>
@@ -38857,6 +39508,11 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
+<strong>inspector::appid_listener</strong>: log selected published data to appid_listener.log
+</p>
+</li>
+<li>
+<p>
 <strong>inspector::arp_spoof</strong>: detect ARP attacks and anomalies
 </p>
 </li>
@@ -39965,7 +40621,7 @@ Adding/removing stream_* inspectors if stream was already configured
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2020-05-20 08:20:56 EDT
+ 2020-06-18 08:11:48 EDT
 </div>
 </div>
 </body>

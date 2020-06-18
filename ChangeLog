@@ -1,3 +1,63 @@
+2020/06/18 - 3.0.1 build 5
+
+-- actions: on a reload_config() free the memory allocated for react page on previous configuration
+   loading
+-- actions: refactor to store react page response in std::string
+-- active: add a facility to prevent a DAQ whitelist verdict
+-- appid: add api to check if appid needs inspection
+-- appid: add braces to fix static analysis complaint
+-- appid: add response message to reload_third_party
+-- appid: check fqn before registering rrt
+-- appid: for http2, if metadata doesn't give a match on payload, set payload id to unknown
+-- appid: free memory allocated when appid is configured initially and then not configured on a
+   subsequent reload
+-- appid: lua APIs to get IP and port tunneled through a proxy
+-- appid: match http2 response to request
+-- appid: remove unnecessary stuff from appid apis
+-- appid: revert snort protocol id changes and fixed warnings
+-- appid: set appid_tlshost_bit when we set tls_cname
+-- appid: set snort protocol id on the flow and remove ssl squelch code
+-- appid: update cert viz API to handle subject alt name and SNI mismatch
+-- codecs: fix issues found by static analysis
+-- dce_rpc: suppport for DCE/RPC future session
+-- detection: do not apply global rule state to the empty policy
+-- doc: update user manual for trace feature
+-- file_api: making sure that file malware inspection is turned off and only file-type detection is
+   enabled when file_id config is defined without any parameter
+-- flow: make client_initiated flag depend on the DAQ reverse flow flag
+-- hash: replace the cache entry if found
+-- host_cache: add new peg to module test
+-- host_cache: allowing module to accept 64 bit memcap value
+-- http2_inspect: fix hpack infractions
+-- http2_inspect: partial inspect with less than 8 bytes of frame header in the same packet
+-- http2_inspect: track memory usage for http_inspect flows in http2_inspect
+-- log: fix issues found by static analysis
+-- managers: add inspector execution and timing traces to InspectorManager
+-- packet: add client and server direction methods that use the client initiator flow flag
+-- parser: free memory allocated for RTN when SO rule load fails
+-- parser: print loaded and shared rules for each ips policy
+-- perf_monitor: fix count and interval during disable cli execution
+-- port_scan: cleanup port scan memory allocations in module tterm
+-- rpc_decode: remove unused config object
+-- search_engines: fix potential memory leaks and an error in a printed value
+-- service_inspectors: remove some redundant initializations and lookups, move some field
+   initializations into the constructor
+-- shell: if initial load of snort configuration fails release memory allocated for modules and
+   plugins
+-- snort2lua: deprecate react::msg option, display of rule message in react page not currently
+   supported
+-- snort2lua: fix issues found by static analysis
+-- snort_config: only perform FatalError cleanup from main thread
+-- stream: add final check to free allocated memory when module tterm is called
+-- stream: fixed ip family in the flow->key during StreamHAClient::consume
+-- stream_tcp: fix issues for tcp simultaneous close
+-- stream_tcp: unconditionally release held packets that have timed out, regardless of flushing
+-- trace: add control channel command
+-- trace: add support for passing in the packet pointer to loggers
+-- trace: filter traces by packet constraints
+-- trace: fix for trace messages in the test-mode ('-T' option)
+-- trace: remove redundant include
+
 2020/05/20 - 3.0.1 build 4
 
 -- appid: Do not allocate DNS session for non-DNS flows and update memory tracker for HTTP sessions
