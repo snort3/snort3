@@ -224,6 +224,9 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
     if (!session_data->mime_state[source_id])
     {
         FileFlows* file_flows = FileFlows::get_file_flows(flow);
+        if (!file_flows)
+            return;
+
         const FileDirection dir = source_id == SRC_SERVER ? FILE_DOWNLOAD : FILE_UPLOAD;
 
         size_t file_index = 0;

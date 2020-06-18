@@ -44,9 +44,8 @@ using namespace HttpEnums;
 
 HttpMsgHeader::HttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size,
     HttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_,
-    const HttpParaList* params_, DecodeConfig decode_conf_) :
-    HttpMsgHeadShared(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_),
-    decode_conf(decode_conf_)
+    const HttpParaList* params_) :
+    HttpMsgHeadShared(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_)
 {
     transaction->set_header(this, source_id);
     get_related_sections();
@@ -420,7 +419,7 @@ void HttpMsgHeader::setup_file_processing()
         {
             if (boundary_present(content_type))
             {
-                session_data->mime_state[source_id] = new MimeSession(&decode_conf, &mime_conf,
+                session_data->mime_state[source_id] = new MimeSession(&FileService::decode_conf, &mime_conf,
                     transaction->get_file_processing_id(source_id));
                 // Show file processing the Content-Type header as if it were regular data.
                 // This will enable it to find the boundary string.

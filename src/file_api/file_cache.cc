@@ -219,16 +219,14 @@ FileVerdict FileCache::check_verdict(Packet* p, FileInfo* file,
     assert(file);
 
     FileVerdict verdict = policy->type_lookup(p, file);
-
-    if ( file->get_file_sig_sha256() and
-        ((verdict == FILE_VERDICT_UNKNOWN) or (verdict == FILE_VERDICT_STOP_CAPTURE)))
+    if (verdict == FILE_VERDICT_STOP_CAPTURE)
     {
-        verdict = policy->signature_lookup(p, file);
+        verdict = FILE_VERDICT_UNKNOWN;
     }
 
-    if ((verdict == FILE_VERDICT_UNKNOWN) or (verdict == FILE_VERDICT_STOP_CAPTURE))
+    if ( file->get_file_sig_sha256() and verdict == FILE_VERDICT_UNKNOWN )
     {
-        verdict = file->verdict;
+        verdict = policy->signature_lookup(p, file);
     }
 
     return verdict;

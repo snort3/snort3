@@ -159,7 +159,7 @@ static const Parameter file_id_params[] =
     { "enable_type", Parameter::PT_BOOL, nullptr, "true",
       "enable type ID" },
 
-    { "enable_signature", Parameter::PT_BOOL, nullptr, "true",
+    { "enable_signature", Parameter::PT_BOOL, nullptr, "false",
       "enable signature calculation" },
 
     { "enable_capture", Parameter::PT_BOOL, nullptr, "false",
@@ -185,6 +185,27 @@ static const Parameter file_id_params[] =
 
     { "verdict_delay", Parameter::PT_INT, "0:max53", "0",
       "number of queries to return final verdict" },
+
+    { "b64_decode_depth", Parameter::PT_INT, "-1:65535", "-1",
+      "base64 decoding depth (-1 no limit)" },
+
+    { "bitenc_decode_depth", Parameter::PT_INT, "-1:65535", "-1",
+      "Non-Encoded MIME attachment extraction depth (-1 no limit)" },
+
+    { "decompress_pdf", Parameter::PT_BOOL, nullptr, "false",
+      "decompress pdf files in MIME attachments" },
+
+    { "decompress_swf", Parameter::PT_BOOL, nullptr, "false",
+      "decompress swf files in MIME attachments" },
+
+    { "decompress_zip", Parameter::PT_BOOL, nullptr, "false",
+      "decompress zip files in MIME attachments" },
+
+    { "qp_decode_depth", Parameter::PT_INT, "-1:65535", "-1",
+      "Quoted Printable decoding depth (-1 no limit)" },
+
+    { "uu_decode_depth", Parameter::PT_INT, "-1:65535", "-1",
+      "Unix-to-Unix decoding depth (-1 no limit)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -272,29 +293,20 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("enable_type") )
     {
-        if ( v.get_bool() )
-        {
-            fp.set_file_type(true);
-        }
+        fp.set_file_type(v.get_bool());
     }
     else if ( v.is("enable_signature") )
     {
-        if ( v.get_bool() )
-        {
-            fp.set_file_signature(true);
-        }
+        fp.set_file_signature(v.get_bool());
     }
     else if ( v.is("enable_capture") )
     {
-        if ( v.get_bool() )
+        if (v.get_bool() and Snort::is_reloading() and !FileService::is_file_capture_enabled())
         {
-            if (Snort::is_reloading() && !FileService::is_file_capture_enabled())
-            {
-                ReloadError("Changing file_id.enable_capture requires a restart.\n");
-                return false;
-            }
-            fp.set_file_capture(true);
+            ReloadError("Changing file_id.enable_capture requires a restart.\n");
+            return false;
         }
+        fp.set_file_capture(v.get_bool());
     }
     else if ( v.is("show_data_depth") )
         fc->show_data_depth = v.get_int64();
@@ -312,6 +324,39 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
     {
         fc->verdict_delay = v.get_int64();
         fp.set_verdict_delay(fc->verdict_delay);
+    }
+    else if ( v.is("decompress_pdf") )
+        FileService::decode_conf.set_decompress_pdf(v.get_bool());
+
+    else if ( v.is("decompress_swf") )
+        FileService::decode_conf.set_decompress_swf(v.get_bool());
+
+    else if ( v.is("decompress_zip") )
+        FileService::decode_conf.set_decompress_zip(v.get_bool());
+
+    else if (v.is("b64_decode_depth"))
+    {
+        int32_t value = v.get_int32();
+        int32_t mime = value > 0 ? value : -(value+1);
+        FileService::decode_conf.set_b64_depth(mime);
+    }
+    else if (v.is("bitenc_decode_depth"))
+    {
+        int32_t value = v.get_int32();
+        int32_t mime = value > 0 ? value : -(value+1);
+        FileService::decode_conf.set_bitenc_depth(mime);
+    }
+    else if (v.is("qp_decode_depth"))
+    {
+        int32_t value = v.get_int32();
+        int32_t mime = value > 0 ? value : -(value+1);
+        FileService::decode_conf.set_qp_depth(mime);
+    }
+    else if (v.is("uu_decode_depth"))
+    {
+        int32_t value = v.get_int32();
+        int32_t mime = value > 0 ? value : -(value+1);
+        FileService::decode_conf.set_uu_depth(mime);
     }
 
     else if ( v.is("file_rules") )

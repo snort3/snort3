@@ -1345,8 +1345,10 @@ void DCE2_SmbAbortFileAPI(DCE2_SmbSsnData* ssd)
 static FileContext* DCE2_get_main_file_context()
 {
     FileFlows* file_flows = FileFlows::get_file_flows(DetectionEngine::get_current_packet()->flow);
-    assert(file_flows);
-    return file_flows->get_current_file_context();
+    if (file_flows)
+        return file_flows->get_current_file_context();
+    else
+        return nullptr;
 }
 
 FileVerdict DCE2_get_file_verdict()
@@ -1538,6 +1540,10 @@ static DCE2_Ret DCE2_SmbFileAPIProcess(DCE2_SmbSsnData* ssd,
 
     Packet* p = DetectionEngine::get_current_packet();
     FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
+
+    if (!file_flows)
+        return DCE2_RET__ERROR;
+
     if (!file_flows->file_process(p, data_ptr, (int)data_len, position, upload,
         DCE2_SmbIsVerdictSuspend(upload, position)))
     {

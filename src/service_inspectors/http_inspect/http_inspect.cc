@@ -113,8 +113,6 @@ bool HttpInspect::configure(SnortConfig* )
     if (params->js_norm_param.normalize_javascript)
         params->js_norm_param.js_norm->configure();
 
-    config_decode();
-
     return true;
 }
 
@@ -464,8 +462,7 @@ bool HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
         break;
     case SEC_HEADER:
         current_section = new HttpMsgHeader(
-            data, dsize, session_data, source_id, buf_owner, flow, params,
-            decode_conf);
+            data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     case SEC_BODY_CL:
         current_section = new HttpMsgBodyCl(

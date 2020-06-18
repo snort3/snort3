@@ -27,6 +27,7 @@
 #include "file_api/file_policy.h"
 #include "main/snort_config.h"
 #include "main/snort_types.h"
+#include "mime/file_mime_config.h"
 
 class FileEnforcer;
 class FileCache;
@@ -59,8 +60,10 @@ public:
     static bool is_file_capture_enabled() { return file_capture_enabled; }
     static bool is_file_service_enabled();
     static int64_t get_max_file_depth();
+    static void reset_depths();
 
     static FileCache* get_file_cache() { return file_cache; }
+    static DecodeConfig decode_conf;
 
 private:
     static bool file_type_id_enabled;

@@ -36,7 +36,7 @@ class HttpMsgHeader : public HttpMsgHeadShared
 public:
     HttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
         HttpCommon::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
-        const HttpParaList* params_, snort::DecodeConfig decode_conf);
+        const HttpParaList* params_);
     HttpEnums::InspectSection get_inspection_section() const override
         { return HttpEnums::IS_HEADER; }
     bool detection_required() const override { return true; }
@@ -55,7 +55,6 @@ private:
 
     // Dummy configurations to support MIME processing
     snort::MailLogConfig mime_conf;
-    snort::DecodeConfig decode_conf;
 
     Field true_ip;
     Field true_ip_addr;

@@ -47,6 +47,7 @@ bool FileService::file_capture_enabled = false;
 bool FileService::file_processing_initiated = false;
 
 FileCache* FileService::file_cache = nullptr;
+DecodeConfig FileService::decode_conf;
 
 // FIXIT-L make these params reloadable
 static int64_t max_files_cached = 0;
@@ -175,6 +176,16 @@ int64_t FileService::get_max_file_depth()
     {
         return -1;
     }
+}
+
+void FileService::reset_depths()
+{
+    FileConfig* file_config = get_file_config();
+    
+    if (file_config)
+        file_config->file_depth = 0;
+
+    decode_conf.sync_all_depths();
 }
 
 namespace snort
