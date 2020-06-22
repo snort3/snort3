@@ -23,6 +23,7 @@
 
 #include "packet_manager.h"
 
+#include <daq.h>
 #include <mutex>
 
 #include "codecs/codec_module.h"
@@ -111,6 +112,18 @@ void PacketManager::pop_teredo(Packet* p, RawData& raw)
     const uint16_t lyr_len = raw.data - lyr.start;
     raw.data = lyr.start;
     raw.len += lyr_len;
+}
+
+static inline bool payload_offset_from_daq_mismatch(const uint8_t* pkt, const RawData& raw)
+{
+    const DAQ_PktDecodeData_t* pdd =
+        (const DAQ_PktDecodeData_t*) daq_msg_get_meta(raw.daq_msg, DAQ_PKT_META_DECODE_DATA);
+    if ( !pdd || (pdd->payload_offset == DAQ_PKT_DECODE_OFFSET_INVALID) )
+        return false;
+    // compare payload offset from DAQ with decoded data offset 
+    if ( raw.data - pkt != pdd->payload_offset )
+        return true;
+    return false;
 }
 
 //-------------------------------------------------------------------------
@@ -306,6 +319,9 @@ void PacketManager::decode(
             }
         }
     }
+
+    if ( payload_offset_from_daq_mismatch(pkt, raw) )
+        p->active->set_tunnel_bypass();
 
     // set any final Packet fields
     p->data = raw.data;
