@@ -576,8 +576,8 @@ bool DetectionEngine::inspect(Packet* p)
         if ( p->ptrs.decode_flags & DECODE_ERR_FLAGS )
         {
             if ( p->context->conf->inline_mode() and
-                // FIXIT-H check specific proto checksum drop flags
-                snort::get_network_policy()->checksum_drops(p->ptrs.decode_flags & DECODE_ERR_CKSUM_ALL) )
+                snort::get_network_policy()->checksum_drops(p->ptrs.decode_flags &
+                    DECODE_ERR_CKSUM_ALL) )
             {
                 p->active->drop_packet(p);
             }
