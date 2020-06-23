@@ -56,6 +56,8 @@ public:
     bool begin(const char*, int, snort::SnortConfig*) override;
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
     bool end(const char*, int, snort::SnortConfig*) override;
+
+    const snort::Command* get_commands() const override;
     RnaModuleConfig* get_config();
     PegCount* get_counts() const override;
     const PegInfo* get_pegs() const override;

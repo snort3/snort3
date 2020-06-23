@@ -29,3 +29,5 @@ add_library( rna OBJECT
 install(FILES ${RNA_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/network_inspectors/rna"
 )
+
+add_subdirectory(test)

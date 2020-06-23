@@ -28,6 +28,9 @@
 
 #include "log/messages.h"
 #include "main/snort_config.h"
+#include "main/swapper.h"
+#include "managers/inspector_manager.h"
+#include "src/main.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -36,13 +39,51 @@
 using namespace snort;
 
 //-------------------------------------------------------------------------
-// rna params and pegs
+// rna commands, params, and pegs
 //-------------------------------------------------------------------------
+
+static int reload_fingerprint(lua_State*)
+{
+    // This should be initialized from lua parameter when the rest of this command is implemented
+    bool from_shell = false;
+
+    Request& current_request = get_current_request();
+
+    if (Swapper::get_reload_in_progress())
+    {
+        current_request.respond("== reload pending; retry\n", from_shell);
+        return 0;
+    }
+
+    if (!InspectorManager::get_inspector(RNA_NAME))
+    {
+        current_request.respond("== reload fingerprint failed - rna not enabled\n", from_shell);
+        return 0;
+    }
+
+    // Check here if rna utility library and fingerprint database are present; fail if absent
+
+    Swapper::set_reload_in_progress(true);
+    current_request.respond(".. reloading fingerprint\n", from_shell);
+
+    // Reinitialize here fingerprint database; broadcast command if it is in thread local context
+
+    current_request.respond("== reload fingerprint complete\n", from_shell);
+    Swapper::set_reload_in_progress(false);
+    return 0;
+}
+
+static const Command rna_cmds[] =
+{
+    { "reload_fingerprint", reload_fingerprint, nullptr,
+      "reload rna database of fingerprint patterns/signatures" },
+    { nullptr, nullptr, nullptr, nullptr }
+};
 
 static const Parameter rna_params[] =
 {
     { "rna_conf_path", Parameter::PT_STRING, nullptr, nullptr,
-      "path to RNA configuration" },
+      "path to rna configuration" },
 
     { "rna_util_lib_path", Parameter::PT_STRING, nullptr, nullptr,
       "path to library for utilities such as fingerprint decoder" },
@@ -133,6 +174,11 @@ bool RnaModule::end(const char* fqn, int, SnortConfig* sc)
     }
 
     return true;
+}
+
+const Command* RnaModule::get_commands() const
+{
+    return rna_cmds;
 }
 
 RnaModuleConfig* RnaModule::get_config()
