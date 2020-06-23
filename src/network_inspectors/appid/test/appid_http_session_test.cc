@@ -128,7 +128,7 @@ void AppIdSession::reset_session_data()
 {
 }
 
-bool AppIdSession::is_payload_appid_set()
+bool AppIdSession::is_payload_appid_set() const
 {
     return true;
 }

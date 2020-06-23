@@ -40,6 +40,11 @@
 #include "length_app_cache.h"
 #include "service_state.h"
 
+namespace snort
+{
+    class AppIdSessionApi;
+}
+
 class ClientDetector;
 class ServiceDetector;
 class AppIdDnsSession;
@@ -99,19 +104,6 @@ public:
 };
 typedef std::unordered_map<unsigned, AppIdFlowData*>::const_iterator AppIdFlowDataIter;
 
-struct CommonAppIdData
-{
-    CommonAppIdData()
-    {
-        initiator_ip.clear();
-    }
-
-    //flags shared with other preprocessor via session attributes.
-    uint64_t flags = 0;
-    snort::SfIp initiator_ip;
-    uint16_t initiator_port = 0;
-};
-
 enum MatchedTlsType
 {
     MATCHED_TLS_NONE = 0,
@@ -163,7 +155,7 @@ public:
 
     const char* get_tls_org_unit() const { return tls_org_unit; }
 
-    bool get_tls_handshake_done() { return tls_handshake_done; }
+    bool get_tls_handshake_done() const { return tls_handshake_done; }
 
     // Duplicate only if len > 0, otherwise simply set (i.e., own the argument)
     void set_tls_host(const char* new_tls_host, uint32_t len, AppidChangeBits& change_bits)
@@ -257,7 +249,10 @@ public:
     snort::Flow* flow = nullptr;
     AppIdContext& ctxt;
     std::unordered_map<unsigned, AppIdFlowData*> flow_data;
-    CommonAppIdData common;
+    uint64_t flags = 0;
+    snort::SfIp initiator_ip;
+    uint16_t initiator_port = 0;
+
     uint16_t session_packet_count = 0;
     uint16_t init_pkts_without_reply = 0;
     uint64_t init_bytes_without_reply = 0;
@@ -331,19 +326,19 @@ public:
 
     static void init() { inspector_id = FlowData::create_flow_data_id(); }
 
-    void set_session_flags(uint64_t flags) { common.flags |= flags; }
-    void clear_session_flags(uint64_t flags) { common.flags &= ~flags; }
-    uint64_t get_session_flags(uint64_t flags) const { return (common.flags & flags); }
-    void set_service_detected() { common.flags |= APPID_SESSION_SERVICE_DETECTED; }
-    bool is_service_detected() { return ((common.flags & APPID_SESSION_SERVICE_DETECTED) == 0) ?
+    void set_session_flags(uint64_t set_flags) { flags |= set_flags; }
+    void clear_session_flags(uint64_t clear_flags) { flags &= ~clear_flags; }
+    uint64_t get_session_flags(uint64_t get_flags) const { return (flags & get_flags); }
+    void set_service_detected() { flags |= APPID_SESSION_SERVICE_DETECTED; }
+    bool is_service_detected() const { return ((flags & APPID_SESSION_SERVICE_DETECTED) == 0) ?
         false : true; }
-    void set_client_detected() { common.flags |= APPID_SESSION_CLIENT_DETECTED; }
-    bool is_client_detected() { return ((common.flags & APPID_SESSION_CLIENT_DETECTED) == 0) ?
+    void set_client_detected() { flags |= APPID_SESSION_CLIENT_DETECTED; }
+    bool is_client_detected() const { return ((flags & APPID_SESSION_CLIENT_DETECTED) == 0) ?
         false : true; }
-    bool is_decrypted() { return ((common.flags & APPID_SESSION_DECRYPTED) == 0) ? false : true; }
-    bool is_svc_taking_too_much_time();
+    bool is_decrypted() const { return ((flags & APPID_SESSION_DECRYPTED) == 0) ? false : true; }
+    bool is_svc_taking_too_much_time() const;
 
-    void* get_flow_data(unsigned id);
+    void* get_flow_data(unsigned id) const;
     int add_flow_data(void* data, unsigned id, AppIdFreeFCN);
     int add_flow_data_id(uint16_t port, ServiceDetector*);
     void* remove_flow_data(unsigned id);
@@ -351,14 +346,14 @@ public:
     void free_flow_data_by_mask(unsigned mask);
     void free_flow_data();
 
-    AppId pick_service_app_id();
+    AppId pick_service_app_id() const;
     // pick_ss_* and set_ss_* methods below are for application protocols that support only a single
     // stream in a flow. They should not be used for HTTP2 sessions which can have multiple
     // streams within a single flow
-    AppId pick_ss_misc_app_id();
-    AppId pick_ss_client_app_id();
-    AppId pick_ss_payload_app_id();
-    AppId pick_ss_referred_payload_app_id();
+    AppId pick_ss_misc_app_id() const;
+    AppId pick_ss_client_app_id() const;
+    AppId pick_ss_payload_app_id() const;
+    AppId pick_ss_referred_payload_app_id() const;
 
     void set_ss_application_ids(AppId service, AppId client, AppId payload, AppId misc,
         AppidChangeBits& change_bits);
@@ -366,19 +361,19 @@ public:
 
     // For protocols such as HTTP2 which can have multiple streams within a single flow, get_first_stream_*
     // methods return the appids in the first stream seen in a packet.
-    void get_first_stream_app_ids(AppId& service, AppId& client, AppId& payload, AppId& misc);
-    void get_first_stream_app_ids(AppId& service, AppId& client, AppId& payload);
-    AppId get_application_ids_service();
-    AppId get_application_ids_client(uint32_t stream_index = 0);
-    AppId get_application_ids_payload(uint32_t stream_index = 0);
-    AppId get_application_ids_misc(uint32_t stream_index = 0);
+    void get_first_stream_app_ids(AppId& service, AppId& client, AppId& payload, AppId& misc) const;
+    void get_first_stream_app_ids(AppId& service, AppId& client, AppId& payload) const;
+    AppId get_application_ids_service() const;
+    AppId get_application_ids_client(uint32_t stream_index = 0) const;
+    AppId get_application_ids_payload(uint32_t stream_index = 0) const;
+    AppId get_application_ids_misc(uint32_t stream_index = 0) const;
 
-    uint32_t get_hsessions_size()
+    uint32_t get_hsessions_size() const
     {
         return hsessions.size();
     }
 
-    bool is_ssl_session_decrypted();
+    bool is_ssl_session_decrypted() const;
     void examine_ssl_metadata(AppidChangeBits& change_bits);
     void set_client_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
     void set_service_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
@@ -391,14 +386,14 @@ public:
     void sync_with_snort_protocol_id(AppId, snort::Packet*);
     void stop_service_inspection(snort::Packet*,  AppidSessionDirection);
 
-    bool is_payload_appid_set();
+    bool is_payload_appid_set() const;
     void clear_http_flags();
     void clear_http_data();
     void reset_session_data();
 
     AppIdHttpSession* create_http_session(uint32_t stream_id = 0);
-    AppIdHttpSession* get_http_session(uint32_t stream_index = 0);
-    AppIdHttpSession* get_matching_http_session(uint32_t stream_id);
+    AppIdHttpSession* get_http_session(uint32_t stream_index = 0) const;
+    AppIdHttpSession* get_matching_http_session(uint32_t stream_id) const;
     void delete_all_http_sessions()
     {
         for (auto hsession : hsessions)
@@ -407,7 +402,7 @@ public:
     }
 
     AppIdDnsSession* create_dns_session();
-    AppIdDnsSession* get_dns_session();
+    AppIdDnsSession* get_dns_session() const;
 
     bool is_tp_appid_done() const;
     bool is_tp_processing_done() const;
@@ -420,7 +415,8 @@ public:
     void publish_appid_event(AppidChangeBits&, snort::Flow*, bool is_http2 = false,
         uint32_t http2_stream_index = 0);
 
-    inline void set_tp_app_id(AppId app_id) {
+    inline void set_tp_app_id(AppId app_id)
+    {
         if (tp_app_id != app_id)
         {
             tp_app_id = app_id;
@@ -429,7 +425,8 @@ public:
         }
     }
 
-    inline void set_tp_payload_app_id(AppId app_id) {
+    inline void set_tp_payload_app_id(AppId app_id)
+    {
         if (tp_payload_app_id != app_id)
         {
             tp_payload_app_id = app_id;
@@ -438,11 +435,13 @@ public:
         }
     }
 
-    inline AppId get_tp_app_id() {
+    inline AppId get_tp_app_id() const
+    {
         return tp_app_id;
     }
 
-    inline AppId get_tp_payload_app_id() {
+    inline AppId get_tp_payload_app_id() const
+    {
         return tp_payload_app_id;
     }
 
@@ -471,6 +470,11 @@ public:
         prev_http2_raw_packet = packet_num;
     }
 
+    const snort::AppIdSessionApi& get_api() const
+    {
+        return api;
+    }
+
 private:
     std::vector<AppIdHttpSession*> hsessions;
     AppIdDnsSession* dsession = nullptr;
@@ -480,7 +484,8 @@ private:
     void delete_session_data();
 
     static THREAD_LOCAL uint32_t appid_flow_data_id;
-    AppId application_ids[APP_PROTOID_MAX];
+    AppId application_ids[APP_PROTOID_MAX] =
+        { APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE };
     bool tp_app_id_deferred = false;
     bool tp_payload_app_id_deferred = false;
 
@@ -489,6 +494,7 @@ private:
     AppId tp_payload_app_id = APP_ID_NONE;
 
     uint16_t my_inferred_svcs_ver = 0;
+    snort::AppIdSessionApi api{*this};
     static uint16_t inferred_svcs_ver;
 };
 
@@ -513,4 +519,3 @@ static inline bool is_svc_http_type(AppId serviceId)
     return false;
 }
 #endif
-

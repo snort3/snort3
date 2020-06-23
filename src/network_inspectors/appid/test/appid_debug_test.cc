@@ -120,8 +120,8 @@ TEST(appid_debug, basic_test)
     IpProtocol protocol = IpProtocol::TCP;
     uint16_t address_space_id = 0;
     // The session...
-    session.common.initiator_port = sport;
-    session.common.initiator_ip = sip;
+    session.initiator_port = sport;
+    session.initiator_ip = sip;
     // activate()
     appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
         protocol, 4, address_space_id, &session, false);
@@ -153,8 +153,8 @@ TEST(appid_debug, reverse_direction_activate_test)
     IpProtocol protocol = IpProtocol::TCP;
     uint16_t address_space_id = 0;
     // The session...
-    session.common.initiator_port = dport;    // session initiator is now dst
-    session.common.initiator_ip = dip;
+    session.initiator_port = dport;    // session initiator is now dst
+    session.initiator_ip = dip;
     // activate()
     appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
         protocol, 4, address_space_id, &session, false);
@@ -187,8 +187,8 @@ TEST(appid_debug, ipv6_test)
     IpProtocol protocol = IpProtocol::UDP;    // also threw in UDP and address space ID for kicks
     uint16_t address_space_id = 100;
     // The session...
-    session.common.initiator_port = sport;
-    session.common.initiator_ip = sip;
+    session.initiator_port = sport;
+    session.initiator_ip = sip;
     // activate()
     appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
         protocol, 6, address_space_id, &session, false);
@@ -226,8 +226,8 @@ TEST(appid_debug, no_initiator_port_test)
     IpProtocol protocol = IpProtocol::TCP;
     uint16_t address_space_id = 0;
     // The session...
-    session.common.initiator_port = 0;    // no initiator port yet (uses IPs)
-    session.common.initiator_ip = sip;
+    session.initiator_port = 0;    // no initiator port yet (uses IPs)
+    session.initiator_ip = sip;
     // activate()
     appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
         protocol, 4, address_space_id, &session, false);
@@ -259,8 +259,8 @@ TEST(appid_debug, no_initiator_port_reversed_test)
     IpProtocol protocol = IpProtocol::TCP;
     uint16_t address_space_id = 0;
     // The session...
-    session.common.initiator_port = 0;    // no initiator port yet (uses IPs)... and reversed packet dir from above
-    session.common.initiator_ip = dip;
+    session.initiator_port = 0;    // no initiator port yet (uses IPs)... and reversed packet dir from above
+    session.initiator_ip = dip;
     // activate()
     appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
         protocol, 4, address_space_id, &session, false);
@@ -327,8 +327,8 @@ TEST(appid_debug, no_match_test)
     IpProtocol protocol = IpProtocol::UDP;    // but this packet is UDP instead
     uint16_t address_space_id = 0;
     // The session...
-    session.common.initiator_port = sport;
-    session.common.initiator_ip = sip;
+    session.initiator_port = sport;
+    session.initiator_ip = sip;
     // activate()
     appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
         protocol, 4, address_space_id, &session, false);
@@ -356,8 +356,8 @@ TEST(appid_debug, all_constraints_test)
     IpProtocol protocol = IpProtocol::TCP;
     uint16_t address_space_id = 0;
     // The session...
-    session.common.initiator_port = sport;
-    session.common.initiator_ip = sip;
+    session.initiator_port = sport;
+    session.initiator_ip = sip;
     // activate()
     appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
         protocol, 4, address_space_id, &session, false);
@@ -389,8 +389,8 @@ TEST(appid_debug, just_proto_test)
     IpProtocol protocol = IpProtocol::TCP;
     uint16_t address_space_id = 0;
     // The session...
-    session.common.initiator_port = sport;
-    session.common.initiator_ip = sip;
+    session.initiator_port = sport;
+    session.initiator_ip = sip;
     // activate()
     appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
         protocol, 4, address_space_id, &session, false);
@@ -422,8 +422,8 @@ TEST(appid_debug, just_ip_test)
     IpProtocol protocol = IpProtocol::TCP;
     uint16_t address_space_id = 0;
     // The session...
-    session.common.initiator_port = sport;
-    session.common.initiator_ip = sip;
+    session.initiator_port = sport;
+    session.initiator_ip = sip;
     // activate()
     appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
         protocol, 4, address_space_id, &session, false);
@@ -455,8 +455,8 @@ TEST(appid_debug, just_port_test)
     IpProtocol protocol = IpProtocol::TCP;
     uint16_t address_space_id = 0;
     // The session...
-    session.common.initiator_port = sport;
-    session.common.initiator_ip = sip;
+    session.initiator_port = sport;
+    session.initiator_ip = sip;
     // activate()
     appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
         protocol, 4, address_space_id, &session, false);

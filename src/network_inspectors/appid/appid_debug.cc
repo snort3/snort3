@@ -62,9 +62,9 @@ void AppIdDebug::activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t por
         sport = port1;
         dport = port2;
     }
-    else if (session->common.initiator_port)
+    else if (session->initiator_port)
     {
-        if (session->common.initiator_port == port1)
+        if (session->initiator_port == port1)
         {
             sip = (const ip::snort_in6_addr*)ip1;
             dip = (const ip::snort_in6_addr*)ip2;
@@ -79,7 +79,7 @@ void AppIdDebug::activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t por
             dport = port1;
         }
     }
-    else if (memcmp(session->common.initiator_ip.get_ip6_ptr(),
+    else if (memcmp(session->initiator_ip.get_ip6_ptr(),
                 ip1, sizeof(ip::snort_in6_addr)) == 0)
     {
         sip = (const ip::snort_in6_addr*)ip1;

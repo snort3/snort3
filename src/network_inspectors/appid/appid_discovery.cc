@@ -122,7 +122,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
     AppidSessionDirection direction = APP_ID_FROM_INITIATOR;
     AppIdSession* asd = (AppIdSession*)p->flow->get_flow_data(AppIdSession::inspector_id);
 
-    if (!do_pre_discovery(p, &asd, inspector, protocol, outer_protocol, direction))
+    if (!do_pre_discovery(p, asd, inspector, protocol, outer_protocol, direction))
         return;
 
     AppId service_id = APP_ID_NONE;
@@ -182,13 +182,13 @@ static bool set_network_attributes(AppIdSession* asd, Packet* p, IpProtocol& pro
         protocol = asd->protocol;
         asd->flow = p->flow;
 
-        if (asd->common.initiator_port)
-            direction = (asd->common.initiator_port == p->ptrs.sp) ?
+        if (asd->initiator_port)
+            direction = (asd->initiator_port == p->ptrs.sp) ?
                 APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
         else
         {
             const SfIp* ip = p->ptrs.ip_api.get_src();
-            direction = ip->fast_equals_raw(asd->common.initiator_ip) ?
+            direction = ip->fast_equals_raw(asd->initiator_ip) ?
                 APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
         }
 
@@ -236,7 +236,7 @@ static uint64_t is_session_monitored(const AppIdSession& asd, const Packet* p,
     uint64_t flags;
     uint64_t flow_flags = APPID_SESSION_DISCOVER_APP;
 
-    flow_flags |= asd.common.flags;
+    flow_flags |= asd.flags;
 
     // FIXIT-M - Re-check a flow after snort is reloaded. RNA policy might have changed
     if (asd.get_session_flags(APPID_SESSION_BIDIRECTIONAL_CHECKED) ==
@@ -364,11 +364,9 @@ static uint64_t is_session_monitored(const Packet* p, AppidSessionDirection dir)
 }
 
 // Return false if the packet or the session doesn't need to be inspected
-bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInspector& inspector,
+bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspector& inspector,
     IpProtocol& protocol, IpProtocol& outer_protocol, AppidSessionDirection& direction)
 {
-    AppIdSession* asd = *p_asd;
-
     if (!set_network_attributes(asd, p, protocol, outer_protocol, direction))
     {
         appid_stats.ignored_packets++;
@@ -393,7 +391,7 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
 
     if (!asd)
     {
-        *p_asd = asd = AppIdSession::allocate_session(p, protocol, direction, &inspector);
+        asd = AppIdSession::allocate_session(p, protocol, direction, &inspector);
         if (p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
         {
             flow_flags |= APPID_SESSION_MID;
@@ -429,29 +427,27 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
         }
     }
 
-    asd->common.flags = flow_flags;
+    asd->flags = flow_flags;
     if (!asd->get_session_flags(APPID_SESSION_PAYLOAD_SEEN) and p->dsize)
         asd->set_session_flags(APPID_SESSION_PAYLOAD_SEEN);
 
-    if (asd->get_session_flags(APPID_SESSION_FUTURE_FLOW))
+    if (asd->get_session_flags(APPID_SESSION_FUTURE_FLOW) and
+        (!asd->get_session_flags(APPID_SESSION_FUTURE_FLOW_IDED)))
     {
-        if (!asd->get_session_flags(APPID_SESSION_FUTURE_FLOW_IDED))
+        AppidChangeBits change_bits;
+
+        asd->set_ss_application_ids(asd->pick_service_app_id(), asd->pick_ss_client_app_id(),
+            asd->pick_ss_payload_app_id(), asd->pick_ss_misc_app_id(), change_bits);
+        asd->publish_appid_event(change_bits, p->flow);
+        asd->set_session_flags(APPID_SESSION_FUTURE_FLOW_IDED);
+
+        if (appidDebug->is_active())
         {
-            AppidChangeBits change_bits;
-
-            asd->set_ss_application_ids(asd->pick_service_app_id(), asd->pick_ss_client_app_id(),
-                asd->pick_ss_payload_app_id(), asd->pick_ss_misc_app_id(), change_bits);
-            asd->publish_appid_event(change_bits, p->flow);
-            asd->set_session_flags(APPID_SESSION_FUTURE_FLOW_IDED);
-
-            if (appidDebug->is_active())
-            {
-                const char *app_name =
-                    asd->ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(asd->service.get_id());
-                LogMessage("AppIdDbg %s Ignoring connection with service %s (%d)\n",
-                    appidDebug->get_debug_session(), app_name ? app_name : "unknown",
-                    asd->service.get_id());
-            }
+            const char *app_name =
+                asd->ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(asd->service.get_id());
+            LogMessage("AppIdDbg %s Ignoring connection with service %s (%d)\n",
+                appidDebug->get_debug_session(), app_name ? app_name : "unknown",
+                asd->service.get_id());
         }
 
         return false;

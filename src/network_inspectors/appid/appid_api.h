@@ -61,8 +61,7 @@ public:
         SfIp*, uint16_t initiatorPort);
     bool ssl_app_group_id_lookup(Flow* flow, const char*, const char*, const char*,
         const char*, bool, AppId& service_id, AppId& client_id, AppId& payload_id);
-    AppIdSessionApi* create_appid_session_api(const Flow& flow);
-    void free_appid_session_api(AppIdSessionApi* api);
+    const AppIdSessionApi* get_appid_session_api(const Flow& flow) const;
     bool is_inspection_needed(const Inspector& g) const;
 };
 

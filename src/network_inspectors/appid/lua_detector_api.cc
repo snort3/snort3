@@ -1171,8 +1171,6 @@ static int detector_add_host_port_dynamic(lua_State* L)
         return 0;
     }
 
-
-
     bool added = false;
     std::lock_guard<std::mutex> lck(AppIdSession::inferred_svcs_lock);
     if ( !host_cache[ip_addr]->add_service(port, proto, appid, true, &added) )

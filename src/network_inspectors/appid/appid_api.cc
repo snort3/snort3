@@ -143,9 +143,8 @@ uint32_t AppIdApi::consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t, IpP
         if (!asd)
         {
             AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
-            if(inspector)
+            if (inspector)
             {
-
                 asd = new AppIdSession(proto, ip, port, *inspector);
                 flow.set_flow_data(asd);
                 asd->service.set_id(appHA->appId[1], asd->ctxt.get_odp_ctxt());
@@ -323,19 +322,14 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name,
     return false;
 }
 
-AppIdSessionApi* AppIdApi::create_appid_session_api(const Flow& flow)
+const AppIdSessionApi* AppIdApi::get_appid_session_api(const Flow& flow) const
 {
     AppIdSession* asd = (AppIdSession*)flow.get_flow_data(AppIdSession::inspector_id);
 
     if (asd)
-        return new AppIdSessionApi(asd);
+        return &asd->get_api();
 
     return nullptr;
-}
-
-void AppIdApi::free_appid_session_api(AppIdSessionApi* api)
-{
-    delete api;
 }
 
 bool AppIdApi::is_inspection_needed(const Inspector& inspector) const

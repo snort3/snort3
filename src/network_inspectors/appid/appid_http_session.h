@@ -74,13 +74,13 @@ public:
     void set_field(HttpFieldIds id, const std::string* str, AppidChangeBits& change_bits);
     void set_field(HttpFieldIds id, const uint8_t* str, int32_t len, AppidChangeBits& change_bits);
 
-    const std::string* get_field(HttpFieldIds id)
+    const std::string* get_field(HttpFieldIds id) const
     { return meta_data[id]; }
 
-    const char* get_cfield(HttpFieldIds id)
+    const char* get_cfield(HttpFieldIds id) const
     { return meta_data[id] != nullptr ? meta_data[id]->c_str() : nullptr; }
 
-    bool get_offset(int id, uint16_t& start, uint16_t& end)
+    bool get_offset(int id, uint16_t& start, uint16_t& end) const
     {
         if ( REQ_AGENT_FID <= id and id < NUM_HTTP_FIELDS )
         {
@@ -134,7 +134,7 @@ public:
 
     void set_tun_dest();
 
-    const TunnelDest* get_tun_dest()
+    const TunnelDest* get_tun_dest() const
     { return tun_dest; }
 
     void free_tun_dest()
@@ -145,7 +145,7 @@ public:
 
     void reset_ptype_scan_counts();
 
-    int get_ptype_scan_count(enum HttpFieldIds type)
+    int get_ptype_scan_count(enum HttpFieldIds type) const
     { return ptype_scan_counts[type]; }
 
     virtual void custom_init() { }

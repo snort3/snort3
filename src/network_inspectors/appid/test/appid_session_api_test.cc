@@ -43,7 +43,7 @@ TEST_GROUP(appid_session_api)
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492, dummy_appid_inspector);
-        appid_session_api = new AppIdSessionApi(mock_session);
+        appid_session_api = new AppIdSessionApi(*mock_session);
     }
 
     void teardown() override
@@ -115,7 +115,7 @@ TEST(appid_session_api, get_initiator_ip)
 
     expected_ip.pton(AF_INET, APPID_UT_INITIATOR_IP_ADDR);
 
-    SfIp* val = appid_session_api->get_initiator_ip();
+    const SfIp* val = appid_session_api->get_initiator_ip();
     CHECK_TRUE(val->fast_eq4(expected_ip));
 }
 
@@ -194,7 +194,7 @@ TEST(appid_session_api, get_client_version)
 }
 TEST(appid_session_api, get_http_session)
 {
-    AppIdHttpSession* val;
+    const AppIdHttpSession* val;
     mock_session->create_http_session();
     val = appid_session_api->get_http_session();
     CHECK_TRUE(val != nullptr);
@@ -219,7 +219,7 @@ TEST(appid_session_api, get_appid_session_attribute)
 
 TEST(appid_session_api, appid_dns_api)
 {
-    AppIdDnsSession* dsession = appid_session_api->get_dns_session();
+    const AppIdDnsSession* dsession = appid_session_api->get_dns_session();
 
     const char* val = dsession->get_host();
     STRCMP_EQUAL(val, APPID_ID_UT_DNS_HOST);

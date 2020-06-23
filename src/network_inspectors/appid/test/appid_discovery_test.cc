@@ -31,6 +31,7 @@
 #include "utils/sflsq.cc"
 
 #include "appid_mock_session.h"
+#include "appid_session_api.h"
 #include "tp_lib_handler.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
@@ -203,7 +204,8 @@ AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol,
 
 void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, Flow* flow, bool, uint32_t)
 {
-    AppidEvent app_event(change_bits, false, 0);
+    static AppIdSessionApi api(*this);
+    AppidEvent app_event(change_bits, false, 0, api);
     DataBus::publish(APPID_EVENT_ANY_CHANGE, app_event, flow);
 }
 
@@ -334,15 +336,15 @@ TEST(appid_discovery_tests, event_published_when_ignoring_flow)
     Flow* flow = new Flow;
     flow->set_flow_data(asd);
     p.flow = flow;
-    asd->common.initiator_port = 21;
-    asd->common.initiator_ip.set("1.2.3.4");
+    asd->initiator_port = 21;
+    asd->initiator_ip.set("1.2.3.4");
     asd->set_session_flags(APPID_SESSION_FUTURE_FLOW);
 
     AppIdDiscovery::do_application_discovery(&p, ins, nullptr);
 
     // Detect changes in service, client, payload, and misc appid
     mock().checkExpectations();
-    STRCMP_EQUAL(test_log, "Published change_bits == 000000001111");
+    STRCMP_EQUAL(test_log, "Published change_bits == 0000000011110");
     delete asd;
     delete flow;
 }
@@ -365,14 +367,14 @@ TEST(appid_discovery_tests, event_published_when_processing_flow)
     Flow* flow = new Flow;
     flow->set_flow_data(asd);
     p.flow = flow;
-    asd->common.initiator_port = 21;
-    asd->common.initiator_ip.set("1.2.3.4");
+    asd->initiator_port = 21;
+    asd->initiator_ip.set("1.2.3.4");
 
     AppIdDiscovery::do_application_discovery(&p, ins, nullptr);
 
     // Detect changes in service, client, payload, and misc appid
     mock().checkExpectations();
-    STRCMP_EQUAL(test_log, "Published change_bits == 000000001111");
+    STRCMP_EQUAL(test_log, "Published change_bits == 0000000011110");
     delete asd;
     delete flow;
 }
@@ -421,8 +423,8 @@ TEST(appid_discovery_tests, change_bits_for_non_http_appid)
     flow->set_flow_data(asd);
     p.flow = flow;
     p.ptrs.tcph = nullptr;
-    asd->common.initiator_port = 21;
-    asd->common.initiator_ip.set("1.2.3.4");
+    asd->initiator_port = 21;
+    asd->initiator_ip.set("1.2.3.4");
     asd->misc_app_id = APP_ID_NONE;
     asd->payload.set_id(APP_ID_NONE);
     asd->client.set_id(APP_ID_CURL);
@@ -462,11 +464,11 @@ TEST(appid_discovery_tests, change_bits_to_string)
     // Detect all; failure of this test means some bits from enum are missed in translation
     change_bits.set();
     change_bits_to_string(change_bits, str);
-    STRCMP_EQUAL(str.c_str(), "service, client, payload, misc, referred, host,"
+    STRCMP_EQUAL(str.c_str(), "created, service, client, payload, misc, referred, host,"
         " tls-host, url, user-agent, response, referrer, version");
 
     // Failure of this test is a reminder that enum is changed, hence translator needs update
-    CHECK_EQUAL(APPID_MAX_BIT, 12);
+    CHECK_EQUAL(APPID_MAX_BIT, 13);
 }
 
 int main(int argc, char** argv)

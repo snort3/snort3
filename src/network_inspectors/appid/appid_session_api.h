@@ -100,27 +100,33 @@ const uint64_t APPID_SESSION_ALL_FLAGS = 0xFFFFFFFFFFFFFFFFULL;
 class SO_PUBLIC AppIdSessionApi
 {
 public:
-    AppIdSessionApi(AppIdSession* asd) : asd(asd) {}
-    bool refresh(const Flow& flow);
-    AppId get_service_app_id();
-    AppId get_misc_app_id(uint32_t stream_index = 0);
-    AppId get_client_app_id(uint32_t stream_index = 0);
-    AppId get_payload_app_id(uint32_t stream_index = 0);
-    AppId get_referred_app_id(uint32_t stream_index = 0);
-    void get_app_id(AppId& service, AppId& client, AppId& payload, AppId& misc, AppId& referred, uint32_t stream_index = 0);
-    void get_app_id(AppId* service, AppId* client, AppId* payload, AppId* misc, AppId* referred, uint32_t stream_index = 0);
-    bool is_appid_inspecting_session();
-    bool is_appid_available();
-    const char* get_client_version(uint32_t stream_index = 0);
-    uint64_t get_appid_session_attribute(uint64_t flag);
-    SfIp* get_initiator_ip();
-    AppIdDnsSession* get_dns_session();
-    AppIdHttpSession* get_http_session(uint32_t stream_index = 0);
-    const char* get_tls_host();
-    bool is_http_inspection_done();
+    AppIdSessionApi(const AppIdSession& asd) : asd(asd) {}
+    AppId get_service_app_id() const;
+    AppId get_misc_app_id(uint32_t stream_index = 0) const;
+    AppId get_client_app_id(uint32_t stream_index = 0) const;
+    AppId get_payload_app_id(uint32_t stream_index = 0) const;
+    AppId get_referred_app_id(uint32_t stream_index = 0) const;
+    void get_app_id(AppId& service, AppId& client, AppId& payload, AppId& misc, AppId& referred, uint32_t stream_index = 0) const;
+    void get_app_id(AppId* service, AppId* client, AppId* payload, AppId* misc, AppId* referred, uint32_t stream_index = 0) const;
+    bool is_appid_inspecting_session() const;
+    bool is_appid_available() const;
+    const char* get_client_version(uint32_t stream_index = 0) const;
+    uint64_t get_appid_session_attribute(uint64_t flag) const;
+    const SfIp* get_initiator_ip() const;
+    const AppIdDnsSession* get_dns_session() const;
+    const AppIdHttpSession* get_http_session(uint32_t stream_index = 0) const;
+    const char* get_tls_host() const;
+    bool is_http_inspection_done() const;
+
+    bool get_published() const
+    { return published; }
+
+    void set_published(bool val)
+    { published = val; }
 
 private:
-    AppIdSession* asd;
+    const AppIdSession& asd;
+    bool published = false;
 };
 
 }

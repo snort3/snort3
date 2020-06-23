@@ -176,7 +176,7 @@ void AppIdSession::free_flow_data()
 {
     snort_free(smb_data);
 }
-void* AppIdSession::get_flow_data(unsigned){ return smb_data;}
+void* AppIdSession::get_flow_data(unsigned) const { return smb_data;}
 
 // Stubs for AppIdPegCounts
 void AppIdPegCounts::inc_service_count(AppId) { }

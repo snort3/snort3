@@ -28,12 +28,19 @@
 
 #define APPID_EVENT_ANY_CHANGE "appid_event_any_change"
 
+namespace snort
+{
+    class AppIdSessionApi;
+}
+
 // Events are added as needed by subscribers
 // Any change here should also change change_bits_to_string()
 enum AppidChangeBit
 {
+    APPID_CREATED_BIT = 0,
+
     // id
-    APPID_SERVICE_BIT = 0,
+    APPID_SERVICE_BIT,
     APPID_CLIENT_BIT,
     APPID_PAYLOAD_BIT,
     APPID_MISC_BIT,
@@ -59,6 +66,8 @@ inline void change_bits_to_string(AppidChangeBits& change_bits, std::string& str
 {
     size_t n = change_bits.count();
 
+    if (change_bits.test(APPID_CREATED_BIT))
+        --n? str.append("created, ") : str.append("created");
     if (change_bits.test(APPID_SERVICE_BIT))
         --n? str.append("service, ") : str.append("service");
     if (change_bits.test(APPID_CLIENT_BIT))
@@ -90,8 +99,9 @@ inline void change_bits_to_string(AppidChangeBits& change_bits, std::string& str
 class AppidEvent : public snort::DataEvent
 {
 public:
-    AppidEvent(const AppidChangeBits& ac, bool is_http2, uint32_t http2_stream_index) :
-        ac_bits(ac), is_http2(is_http2), http2_stream_index(http2_stream_index) {}
+    AppidEvent(const AppidChangeBits& ac, bool is_http2, uint32_t http2_stream_index,
+        const snort::AppIdSessionApi& api) :
+        ac_bits(ac), is_http2(is_http2), http2_stream_index(http2_stream_index), api(api) {}
 
     const AppidChangeBits& get_change_bitset() const
     { return ac_bits; }
@@ -102,10 +112,14 @@ public:
     uint32_t get_http2_stream_index() const
     { return http2_stream_index; }
 
+    const snort::AppIdSessionApi& get_appid_session_api() const
+    { return api; }
+
 private:
     const AppidChangeBits& ac_bits;
     bool is_http2;
     uint32_t http2_stream_index;
+    const snort::AppIdSessionApi& api;
 };
 
 #endif

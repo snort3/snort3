@@ -94,7 +94,7 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp*, uint16_t, AppIdInspect
     tsession = new TlsSession;
 
     service_ip.pton(AF_INET, APPID_UT_SERVICE_IP_ADDR);
-    common.initiator_ip.pton(AF_INET, APPID_UT_INITIATOR_IP_ADDR);
+    initiator_ip.pton(AF_INET, APPID_UT_INITIATOR_IP_ADDR);
 
     netbios_name = snort_strdup(APPID_UT_NETBIOS_NAME);
 
@@ -119,7 +119,7 @@ AppIdSession::~AppIdSession()
         snort_free(netbios_name);
 }
 
-void* AppIdSession::get_flow_data(unsigned)
+void* AppIdSession::get_flow_data(unsigned) const
 {
     return nullptr;
 }
@@ -154,38 +154,38 @@ void AppIdSession::set_ss_application_ids(AppId service_id, AppId client_id,
     }
 }
 
-AppId AppIdSession::pick_service_app_id()
+AppId AppIdSession::pick_service_app_id() const
 {
     return service.get_id();
 }
 
-AppId AppIdSession::pick_ss_misc_app_id()
+AppId AppIdSession::pick_ss_misc_app_id() const
 {
     return misc_app_id;
 }
 
-AppId AppIdSession::pick_ss_client_app_id()
+AppId AppIdSession::pick_ss_client_app_id() const
 {
     return client.get_id();
 }
 
-AppId AppIdSession::pick_ss_payload_app_id()
+AppId AppIdSession::pick_ss_payload_app_id() const
 {
     return payload.get_id();
 }
 
-AppId AppIdSession::pick_ss_referred_payload_app_id()
+AppId AppIdSession::pick_ss_referred_payload_app_id() const
 {
     return APPID_UT_ID;
 }
 
-void AppIdSession::get_first_stream_app_ids(AppId&, AppId&, AppId&, AppId&) { }
+void AppIdSession::get_first_stream_app_ids(AppId&, AppId&, AppId&, AppId&) const { }
 
-void AppIdSession::get_first_stream_app_ids(AppId&, AppId&, AppId&) { }
+void AppIdSession::get_first_stream_app_ids(AppId&, AppId&, AppId&) const { }
 
-AppId AppIdSession::get_application_ids_service() { return APPID_UT_ID; }
+AppId AppIdSession::get_application_ids_service() const { return APPID_UT_ID; }
 
-AppId AppIdSession::get_application_ids_client(uint32_t stream_index)
+AppId AppIdSession::get_application_ids_client(uint32_t stream_index) const
 {
     if (stream_index < hsessions.size() or stream_index == 0)
       return APPID_UT_ID;
@@ -193,7 +193,7 @@ AppId AppIdSession::get_application_ids_client(uint32_t stream_index)
     return APP_ID_NONE;      
 }
 
-AppId AppIdSession::get_application_ids_payload(uint32_t stream_index)
+AppId AppIdSession::get_application_ids_payload(uint32_t stream_index) const
 {
     if (stream_index < hsessions.size() or stream_index == 0)
       return APPID_UT_ID;
@@ -201,7 +201,7 @@ AppId AppIdSession::get_application_ids_payload(uint32_t stream_index)
     return APP_ID_NONE;      
 }
 
-AppId AppIdSession::get_application_ids_misc(uint32_t stream_index)
+AppId AppIdSession::get_application_ids_misc(uint32_t stream_index) const
 {
     if (stream_index < hsessions.size() or stream_index == 0)
       return APPID_UT_ID;
@@ -209,7 +209,7 @@ AppId AppIdSession::get_application_ids_misc(uint32_t stream_index)
     return APP_ID_NONE;      
 }
 
-bool AppIdSession::is_ssl_session_decrypted()
+bool AppIdSession::is_ssl_session_decrypted() const
 {
     return is_session_decrypted;
 }
@@ -228,7 +228,7 @@ AppIdHttpSession* AppIdSession::create_http_session(uint32_t)
     return hsession;
 }
 
-AppIdHttpSession* AppIdSession::get_http_session(uint32_t stream_index)
+AppIdHttpSession* AppIdSession::get_http_session(uint32_t stream_index) const
 {
     if (stream_index < hsessions.size())
     {
@@ -237,11 +237,11 @@ AppIdHttpSession* AppIdSession::get_http_session(uint32_t stream_index)
     return nullptr;
 }
 
-AppIdHttpSession* AppIdSession::get_matching_http_session(uint32_t stream_id)
+AppIdHttpSession* AppIdSession::get_matching_http_session(uint32_t stream_id) const
 {
     for (uint32_t stream_index=0; stream_index < hsessions.size(); stream_index++)
     {
-        if(stream_id == hsessions[stream_index]->get_http2_stream_id())
+        if (stream_id == hsessions[stream_index]->get_http2_stream_id())
             return hsessions[stream_index];
     }
     return nullptr;
@@ -254,7 +254,7 @@ AppIdDnsSession* AppIdSession::create_dns_session()
     return dsession;
 }
 
-AppIdDnsSession* AppIdSession::get_dns_session()
+AppIdDnsSession* AppIdSession::get_dns_session() const
 {
     return dsession;
 }

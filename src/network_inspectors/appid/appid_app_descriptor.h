@@ -123,7 +123,7 @@ public:
 
     void set_port_service_id(AppId id);
 
-    bool get_deferred()
+    bool get_deferred() const
     {
         return deferred;
     }

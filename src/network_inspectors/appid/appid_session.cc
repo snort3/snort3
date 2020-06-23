@@ -44,6 +44,7 @@
 #include "appid_dns_session.h"
 #include "appid_http_session.h"
 #include "appid_inspector.h"
+#include "appid_session_api.h"
 #include "appid_stats.h"
 #include "lua_detector_api.h"
 #include "service_plugins/service_ssl.h"
@@ -98,13 +99,9 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port,
 {
     service_ip.clear();
     session_id = ++appid_flow_data_id;
-    common.initiator_ip = *ip;
-    common.initiator_port = port;
+    initiator_ip = *ip;
+    initiator_port = port;
 
-    length_sequence.proto = IpProtocol::PROTO_NOT_SET;
-    length_sequence.sequence_cnt = 0;
-    memset(length_sequence.sequence, '\0', sizeof(length_sequence.sequence));
-    memset(application_ids, 0, sizeof(application_ids));
     appid_stats.total_sessions++;
 }
 
@@ -605,7 +602,7 @@ void AppIdSession::set_service_appid_data(AppId id, AppidChangeBits& change_bits
     service.update(id, change_bits, version);
 }
 
-bool AppIdSession::is_svc_taking_too_much_time()
+bool AppIdSession::is_svc_taking_too_much_time() const
 {
     return (init_pkts_without_reply > ctxt.get_odp_ctxt().max_packet_service_fail_ignore_bytes ||
         (init_pkts_without_reply > ctxt.get_odp_ctxt().max_packet_before_service_fail &&
@@ -648,7 +645,7 @@ int AppIdSession::add_flow_data(void* data, unsigned id, AppIdFreeFCN fcn)
     return 0;
 }
 
-void* AppIdSession::get_flow_data(unsigned id)
+void* AppIdSession::get_flow_data(unsigned id) const
 {
     AppIdFlowDataIter it = flow_data.find(id);
     if (it != flow_data.end())
@@ -735,7 +732,7 @@ void AppIdSession::stop_service_inspection(Packet* p, AppidSessionDirection dire
     clear_session_flags(APPID_SESSION_CONTINUE);
 }
 
-AppId AppIdSession::pick_service_app_id()
+AppId AppIdSession::pick_service_app_id() const
 {
     AppId rval = APP_ID_NONE;
 
@@ -773,7 +770,7 @@ AppId AppIdSession::pick_service_app_id()
     return rval;
 }
 
-AppId AppIdSession::pick_ss_misc_app_id()
+AppId AppIdSession::pick_ss_misc_app_id() const
 {
     if (service.get_id() == APP_ID_HTTP2)
         return APP_ID_NONE;
@@ -790,7 +787,7 @@ AppId AppIdSession::pick_ss_misc_app_id()
     return encrypted.misc_id;
 }
 
-AppId AppIdSession::pick_ss_client_app_id()
+AppId AppIdSession::pick_ss_client_app_id() const
 {
     if (service.get_id() == APP_ID_HTTP2)
         return APP_ID_NONE;
@@ -807,7 +804,7 @@ AppId AppIdSession::pick_ss_client_app_id()
     return encrypted.client_id;
 }
 
-AppId AppIdSession::pick_ss_payload_app_id()
+AppId AppIdSession::pick_ss_payload_app_id() const
 {
     if (service.get_id() == APP_ID_HTTP2)
         return APP_ID_NONE;
@@ -842,7 +839,7 @@ AppId AppIdSession::pick_ss_payload_app_id()
     return APP_ID_NONE;
 }
 
-AppId AppIdSession::pick_ss_referred_payload_app_id()
+AppId AppIdSession::pick_ss_referred_payload_app_id() const
 {
     if (service.get_id() == APP_ID_HTTP2)
         return APP_ID_NONE;
@@ -891,7 +888,7 @@ void AppIdSession::set_application_ids_service(AppId service_id, AppidChangeBits
 }
 
 void AppIdSession::get_first_stream_app_ids(AppId& service_id, AppId& client_id,
-    AppId& payload_id, AppId& misc_id)
+    AppId& payload_id, AppId& misc_id) const
 {
     service_id = application_ids[APP_PROTOID_SERVICE];
     if (service_id != APP_ID_HTTP2)
@@ -915,7 +912,7 @@ void AppIdSession::get_first_stream_app_ids(AppId& service_id, AppId& client_id,
 }
 
 void AppIdSession::get_first_stream_app_ids(AppId& service_id, AppId& client_id,
-    AppId& payload_id)
+    AppId& payload_id) const
 {
     service_id = application_ids[APP_PROTOID_SERVICE];
     if (service_id != APP_ID_HTTP2)
@@ -935,12 +932,12 @@ void AppIdSession::get_first_stream_app_ids(AppId& service_id, AppId& client_id,
     }
 }
 
-AppId AppIdSession::get_application_ids_service()
+AppId AppIdSession::get_application_ids_service() const
 {
     return application_ids[APP_PROTOID_SERVICE];
 }
 
-AppId AppIdSession::get_application_ids_client(uint32_t stream_index)
+AppId AppIdSession::get_application_ids_client(uint32_t stream_index) const
 {
     if (get_application_ids_service() == APP_ID_HTTP2)
     {
@@ -955,7 +952,7 @@ AppId AppIdSession::get_application_ids_client(uint32_t stream_index)
     return APP_ID_NONE;
 }
 
-AppId AppIdSession::get_application_ids_payload(uint32_t stream_index)
+AppId AppIdSession::get_application_ids_payload(uint32_t stream_index) const
 {
     if (get_application_ids_service() == APP_ID_HTTP2)
     {
@@ -970,7 +967,7 @@ AppId AppIdSession::get_application_ids_payload(uint32_t stream_index)
     return APP_ID_NONE;
 }
 
-AppId AppIdSession::get_application_ids_misc(uint32_t stream_index)
+AppId AppIdSession::get_application_ids_misc(uint32_t stream_index) const
 {
     if (service.get_id() == APP_ID_HTTP2)
     {
@@ -985,7 +982,7 @@ AppId AppIdSession::get_application_ids_misc(uint32_t stream_index)
     return APP_ID_NONE;
 }
 
-bool AppIdSession::is_ssl_session_decrypted()
+bool AppIdSession::is_ssl_session_decrypted() const
 {
     return get_session_flags(APPID_SESSION_DECRYPTED);
 }
@@ -1004,7 +1001,7 @@ void AppIdSession::reset_session_data()
         this->tpsession->reset();
 }
 
-bool AppIdSession::is_payload_appid_set()
+bool AppIdSession::is_payload_appid_set() const
 {
     return (payload.get_id() || tp_payload_app_id);
 }
@@ -1032,7 +1029,8 @@ AppIdHttpSession* AppIdSession::create_http_session(uint32_t stream_id)
     hsessions.push_back(hsession);
     return hsession;
 }
-AppIdHttpSession* AppIdSession::get_http_session(uint32_t stream_index)
+
+AppIdHttpSession* AppIdSession::get_http_session(uint32_t stream_index) const
 {
     if (stream_index < hsessions.size())
         return hsessions[stream_index];
@@ -1040,7 +1038,7 @@ AppIdHttpSession* AppIdSession::get_http_session(uint32_t stream_index)
         return nullptr;
 }
 
-AppIdHttpSession* AppIdSession::get_matching_http_session(uint32_t stream_id)
+AppIdHttpSession* AppIdSession::get_matching_http_session(uint32_t stream_id) const
 {
     for (uint32_t stream_index=0; stream_index < hsessions.size(); stream_index++)
     {
@@ -1058,7 +1056,7 @@ AppIdDnsSession* AppIdSession::create_dns_session()
     return dsession;
 }
 
-AppIdDnsSession* AppIdSession::get_dns_session()
+AppIdDnsSession* AppIdSession::get_dns_session() const
 {
     return dsession;
 }
@@ -1142,10 +1140,16 @@ void AppIdSession::set_tp_payload_app_id(Packet& p, AppidSessionDirection dir, A
 void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, Flow* flow,
     bool is_http2, uint32_t http2_stream_index)
 {
+    if (!api.get_published())
+    {
+        change_bits.set(APPID_CREATED_BIT);
+        api.set_published(true);
+    }
+
     if (change_bits.none())
         return;
 
-    AppidEvent app_event(change_bits, is_http2, http2_stream_index);
+    AppidEvent app_event(change_bits, is_http2, http2_stream_index, api);
     DataBus::publish(APPID_EVENT_ANY_CHANGE, app_event, flow);
     if (appidDebug->is_active())
     {

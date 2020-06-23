@@ -73,7 +73,8 @@ void DataBus::publish(const char*, DataEvent& event, Flow*)
 
 void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, Flow* flow, bool, uint32_t)
 {
-    AppidEvent app_event(change_bits, false, 0);
+    static AppIdSessionApi api(*this);
+    AppidEvent app_event(change_bits, false, 0, api);
     DataBus::publish(APPID_EVENT_ANY_CHANGE, app_event, flow);
 }
 
@@ -163,7 +164,7 @@ TEST(appid_api, produce_ha_state)
 
     memset((void*)&appHA, 0, sizeof(appHA));
     memset((void*)&cmp_buf, 0, sizeof(cmp_buf));
-    mock_session->common.flags |= APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_HTTP_SESSION;
+    mock_session->flags |= APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_HTTP_SESSION;
 
     mock_session->set_tp_app_id(APPID_UT_ID);
     mock_session->service.set_id(APPID_UT_ID + 1, stub_odp_ctxt);
@@ -237,7 +238,7 @@ TEST(appid_api, ssl_app_group_id_lookup)
     CHECK_EQUAL(service, APPID_UT_ID);
     CHECK_EQUAL(client, APPID_UT_ID);
     CHECK_EQUAL(payload, APPID_UT_ID);
-    STRCMP_EQUAL("Published change_bits == 000000001111", test_log);
+    STRCMP_EQUAL("Published change_bits == 0000000011110", test_log);
 
     service = APP_ID_NONE;
     client = APP_ID_NONE;
@@ -250,7 +251,7 @@ TEST(appid_api, ssl_app_group_id_lookup)
     STRCMP_EQUAL(mock_session->tsession->get_tls_host(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_first_alt_name(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), APPID_UT_TLS_HOST);
-    STRCMP_EQUAL("Published change_bits == 000001000110", test_log);
+    STRCMP_EQUAL("Published change_bits == 0000010001100", test_log);
 
     AppidChangeBits change_bits;
     mock_session->tsession->set_tls_host("www.cisco.com", 13, change_bits);
@@ -267,7 +268,7 @@ TEST(appid_api, ssl_app_group_id_lookup)
     STRCMP_EQUAL(mock_session->tsession->get_tls_host(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_org_unit(), "Cisco");
-    STRCMP_EQUAL("Published change_bits == 000001000110", test_log);
+    STRCMP_EQUAL("Published change_bits == 0000010001100", test_log);
 
     string host = "";
     val = appid_api.ssl_app_group_id_lookup(flow, (const char*)(host.c_str()), nullptr,
@@ -278,24 +279,8 @@ TEST(appid_api, ssl_app_group_id_lookup)
     STRCMP_EQUAL(mock_session->tsession->get_tls_host(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_org_unit(), "Google");
-    STRCMP_EQUAL("Published change_bits == 000001000000", test_log);
+    STRCMP_EQUAL("Published change_bits == 0000010000000", test_log);
     mock().checkExpectations();
-}
-
-TEST(appid_api, create_appid_session_api)
-{
-    AppIdSessionApi* appid_session_api = appid_api.create_appid_session_api(*flow);
-    CHECK_TRUE(appid_session_api);
-    appid_api.free_appid_session_api(appid_session_api);
-
-    Flow* old_flow = flow;
-    flow = new Flow;
-    flow->set_flow_data(nullptr);
-    appid_session_api = appid_api.create_appid_session_api(*flow);
-    CHECK_FALSE(appid_session_api);
-
-    delete flow;
-    flow = old_flow;
 }
 
 TEST(appid_api, is_inspection_needed)

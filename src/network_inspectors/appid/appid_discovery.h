@@ -134,7 +134,7 @@ protected:
     std::vector<AppIdPatternMatchNode*> pattern_data;
 
 private:
-    static bool do_pre_discovery(snort::Packet* p, AppIdSession** p_asd, AppIdInspector& inspector,
+    static bool do_pre_discovery(snort::Packet* p, AppIdSession*& asd, AppIdInspector& inspector,
         IpProtocol& protocol, IpProtocol& outer_protocol, AppidSessionDirection& direction);
     static bool do_discovery(snort::Packet* p, AppIdSession& asd, IpProtocol protocol,
         IpProtocol outer_protocol, AppidSessionDirection direction, AppId& service_id,
