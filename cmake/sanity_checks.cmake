@@ -150,6 +150,12 @@ if (ICONV_FOUND)
     set (HAVE_ICONV "1")
 endif()
 
+if (LIBUNWIND_FOUND)
+    # We don't actually use backtrace from libunwind, but it's basically the
+    # only symbol guaranteed to be present.
+    check_library_exists (${LIBUNWIND_LIBRARIES} backtrace "" HAVE_LIBUNWIND)
+endif()
+
 if (SAFEC_FOUND)
     check_library_exists (${SAFEC_LIBRARIES} printf_s "" HAVE_SAFEC)
 endif()

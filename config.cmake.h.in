@@ -113,9 +113,18 @@
 
 /*  Available libraries */
 
+/* flatbuffers available */
+#cmakedefine HAVE_FLATBUFFERS 1
+
 /* hyperscan available */
 #cmakedefine HAVE_HYPERSCAN 1
 #cmakedefine HAVE_HS_COMPILE_LIT 1
+
+/* iconv available */
+#cmakedefine HAVE_ICONV 1
+
+/* libunwind available */
+#cmakedefine HAVE_LIBUNWIND 1
 
 /* lzma available */
 #cmakedefine HAVE_LZMA 1
@@ -123,12 +132,10 @@
 /* safec available */
 #cmakedefine HAVE_SAFEC 1
 
-#cmakedefine HAVE_FLATBUFFERS 1
-
-#cmakedefine HAVE_ICONV 1
-
+/* uuid available */
 #cmakedefine HAVE_UUID 1
 
+/* tirpc should be used for RPC database lookups */
 #cmakedefine USE_TIRPC 1
 
 

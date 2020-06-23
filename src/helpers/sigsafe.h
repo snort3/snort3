@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2019-2020 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2020 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,36 +15,31 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// oops_handler.h author Michael Altizer <mialtize@cisco.com>
+// sigsafe.h author Michael Altizer <mialtize@cisco.com>
 
-#ifndef OOPS_HANDLER_H
-#define OOPS_HANDLER_H
+#ifndef SIGSAFE_H
+#define SIGSAFE_H
 
-#include <daq_common.h>
+#include <cstddef>
+#include <cstdint>
 
-class OopsHandler
+class SigSafePrinter
 {
 public:
-    static void handle_crash(int fd);
+    SigSafePrinter(char *buf, size_t size);
+    SigSafePrinter(int fd) : fd(fd) { }
 
-    OopsHandler() = default;
-    ~OopsHandler() = default;
-
-    void tinit();
-    void set_current_message(DAQ_Msg_h cm) { msg = cm; }
-    void tterm();
+    void hex_dump(const uint8_t* data, unsigned len);
+    void printf(const char* format, ...);
 
 private:
-    void eternalize(int fd);
+    void write_string(const char* str);
 
 private:
-    DAQ_Msg_h msg = nullptr;
-    // Eternalized data
-    DAQ_MsgType type = static_cast<DAQ_MsgType>(0);
-    uint8_t header[UINT16_MAX] = { };
-    size_t header_len = 0;
-    uint8_t data[UINT16_MAX] = { };
-    uint32_t data_len = 0;
+    char* buf = nullptr;
+    size_t buf_size = 0;
+    size_t buf_idx = 0;
+    int fd = -1;
 };
 
 #endif

@@ -1,4 +1,4 @@
-if ( FLATBUFFERS_FOUND )
+if ( HAVE_FLATBUFFERS )
     set( FLATBUFFERS_SOURCE fbs_formatter.h fbs_formatter.cc )
 endif()
 
@@ -39,7 +39,7 @@ else (STATIC_INSPECTORS)
 
 endif (STATIC_INSPECTORS)
 
-if ( FLATBUFFERS_FOUND )
+if ( HAVE_FLATBUFFERS )
     target_include_directories( perf_monitor PRIVATE ${FLATBUFFERS_INCLUDE_DIR} )
 endif()
 
@@ -57,7 +57,7 @@ add_catch_test( json_formatter_test
         perf_formatter.cc
 )
 
-if ( FLATBUFFERS_FOUND )
+if ( HAVE_FLATBUFFERS )
     add_catch_test( fbs_formatter_test
         NO_TEST_SOURCE
         SOURCES

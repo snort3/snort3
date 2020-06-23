@@ -40,6 +40,8 @@ add_library (helpers OBJECT
     process.h
     ring.h
     ring_logic.h
+    sigsafe.cc
+    sigsafe.h
     scratch_allocator.cc
 )
 
@@ -51,6 +53,12 @@ add_catch_test( base64_encoder_test
     NO_TEST_SOURCE
     SOURCES
         base64_encoder.cc
+)
+
+add_catch_test( sigsafe_test
+    NO_TEST_SOURCE
+    SOURCES
+        sigsafe.cc
 )
 
 add_subdirectory(test)

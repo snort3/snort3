@@ -18,6 +18,8 @@ present.  There is no need to explicitly enable.
 
 * *iconv*: for converting UTF16-LE filenames to UTF8 (usually included in glibc)
 
+* *libunwind*: for printing a backtrace when a fatal signal is received.
+
 * *lzma*: for decompression of SWF and PDF files.
 
 * *safec*: for additional runtime error checking of some memory copy operations.

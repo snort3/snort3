@@ -125,6 +125,14 @@ else ()
     ICONV:          OFF")
 endif ()
 
+if (HAVE_LIBUNWIND)
+    message("\
+    Libunwind:      ON")
+else ()
+    message("\
+    Libunwind:      OFF")
+endif ()
+
 if (HAVE_LZMA)
     message("\
     LZMA:           ON")

@@ -23,38 +23,58 @@
 
 #include "oops_handler.h"
 
-#include "protocols/packet.h"
+#include <daq.h>
+
+#include <cassert>
+#include <cstring>
+
+#include "helpers/sigsafe.h"
+
+#include "thread.h"
 
 static THREAD_LOCAL OopsHandler* local_oops_handler = nullptr;
 
-void OopsHandler::handle_crash()
+void OopsHandler::handle_crash(int fd)
 {
     if (local_oops_handler)
-        local_oops_handler->eternalize();
+        local_oops_handler->eternalize(fd);
 }
 
-OopsHandler::OopsHandler()
+void OopsHandler::tinit()
 {
     assert(local_oops_handler == nullptr);
     local_oops_handler = this;
 }
 
-OopsHandler::~OopsHandler()
+void OopsHandler::tterm()
 {
     local_oops_handler = nullptr;
 }
 
-void OopsHandler::eternalize()
+void OopsHandler::eternalize(int fd)
 {
-    // Copy the crashed thread's data.  C++11 specs ensure the
-    // thread that segfaulted will still be running.
-    if (packet && packet->pkth)
-    {
-        pkth = *(packet->pkth);
-        if (packet->pkt)
-        {
-            memcpy(data, packet->pkt, 0xFFFF & packet->pktlen);
-            packet->pkt = data;
-        }
-    }
+    if (!msg)
+        return;
+
+    // Copy the crashed thread's data.  C++11 specs ensure the thread that segfaulted will
+    // still be running.
+    // Signal safety of functions called from here (POSIX async-signal-safe requirement):
+    //  memcpy                  POSIX.1-2016
+    type = daq_msg_get_type(msg);
+    header_len = daq_msg_get_hdr_len(msg);
+    memcpy(header, daq_msg_get_hdr(msg), std::min<size_t>(header_len, sizeof(header)));
+    data_len = daq_msg_get_data_len(msg);
+    memcpy(data, daq_msg_get_data(msg), std::min<size_t>(data_len, sizeof(data)));
+
+    if (fd < 0)
+        return;
+
+    // Dump the eternalized information to the file descriptor for coreless debugging
+    SigSafePrinter ssp(fd);
+    ssp.printf("= Current DAQ Message (Type %u) =\n\n", static_cast<uint64_t>(type));
+    ssp.printf("== Header (%u) ==\n", header_len);
+    ssp.hex_dump(header, header_len);
+    ssp.printf("\n== Data (%u) ==\n", data_len);
+    ssp.hex_dump(data, data_len);
+    ssp.printf("\n");
 }

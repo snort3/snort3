@@ -1,4 +1,4 @@
-if ( FLATBUFFERS_FOUND )
+if ( HAVE_FLATBUFFERS )
     add_executable( fbstreamer
         fbstreamer.cc
     )

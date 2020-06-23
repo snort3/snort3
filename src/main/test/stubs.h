@@ -69,8 +69,8 @@ void Profiler::consolidate_stats() { }
 void ThreadConfig::implement_thread_affinity(SThreadType, unsigned) { }
 void Swapper::apply(Analyzer&) { }
 Swapper::~Swapper() { }
-OopsHandler::OopsHandler() { }
-OopsHandler::~OopsHandler() { }
+void OopsHandler::tinit() { }
+void OopsHandler::tterm() { }
 uint16_t get_run_num() { return 0; }
 void set_run_num(uint16_t) { }
 void set_instance_id(unsigned) { }

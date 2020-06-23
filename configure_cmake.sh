@@ -145,7 +145,7 @@ append_cache_entry CMAKE_INSTALL_PREFIX PATH   $prefix
 # parse arguments
 while [ $# -ne 0 ]; do
     case "$1" in
-        -*=*) optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'` ;;
+        *=*) optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'` ;;
         *) optarg= ;;
     esac
 

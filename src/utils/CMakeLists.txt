@@ -43,7 +43,7 @@ add_library ( utils OBJECT
     ${TEST_FILES}
 )
 
-if ( FLATBUFFERS_FOUND )
+if ( HAVE_FLATBUFFERS )
     target_include_directories( utils PRIVATE ${FLATBUFFERS_INCLUDE_DIR} )
 endif()
 

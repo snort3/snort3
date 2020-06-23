@@ -395,6 +395,7 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
         if (verdict == DAQ_VERDICT_BLOCK or verdict == DAQ_VERDICT_BLACKLIST)
             p->active->send_reason_to_daq(*p);
         
+        oops_handler->set_current_message(nullptr);
         p->pkth = nullptr;  // No longer avail after finalize_message.
 
         {
@@ -417,7 +418,6 @@ void Analyzer::process_daq_pkt_msg(DAQ_Msg_h msg, bool retry)
     switcher->start();
 
     Packet* p = switcher->get_context()->packet;
-    oops_handler->set_current_packet(p);
     p->context->wire_packet = p;
     p->context->packet_number = get_packet_number();
     set_default_policy(p->context->conf);
@@ -437,13 +437,13 @@ void Analyzer::process_daq_pkt_msg(DAQ_Msg_h msg, bool retry)
         switcher->stop();
     }
 
-    oops_handler->set_current_packet(nullptr);
     Stream::handle_timeouts(false);
     HighAvailabilityManager::process_receive();
 }
 
 void Analyzer::process_daq_msg(DAQ_Msg_h msg, bool retry)
 {
+    oops_handler->set_current_message(msg);
     DAQ_Verdict verdict = DAQ_VERDICT_PASS;
     switch (daq_msg_get_type(msg))
     {
@@ -463,6 +463,7 @@ void Analyzer::process_daq_msg(DAQ_Msg_h msg, bool retry)
             }
             break;
     }
+    oops_handler->set_current_message(nullptr);
     {
         Profile profile(daqPerfStats);
         daq_instance->finalize_message(msg, verdict);
@@ -682,7 +683,7 @@ void Analyzer::term()
     HighAvailabilityManager::thread_term();
     SideChannelManager::thread_term();
 
-    oops_handler->set_current_packet(nullptr);
+    oops_handler->set_current_message(nullptr);
 
     daq_instance->stop();
     SFDAQ::set_local_instance(nullptr);
@@ -715,6 +716,7 @@ Analyzer::Analyzer(SFDAQInstance* instance, unsigned i, const char* s, uint64_t 
     exit_after_cnt = msg_cnt;
     source = s ? s : "";
     daq_instance = instance;
+    oops_handler = new OopsHandler();
     retry_queue = new RetryQueue(200);
     set_state(State::NEW);
 }
@@ -728,7 +730,7 @@ Analyzer::~Analyzer()
 
 void Analyzer::operator()(Swapper* ps, uint16_t run_num)
 {
-    oops_handler = new OopsHandler();
+    oops_handler->tinit();
 
     set_thread_type(STHREAD_TYPE_PACKET);
     set_instance_id(id);
@@ -761,6 +763,8 @@ void Analyzer::operator()(Swapper* ps, uint16_t run_num)
     term();
 
     set_state(State::STOPPED);
+
+    oops_handler->tterm();
 }
 
 /* Note: This will be called from the main thread.  Everything it does must be

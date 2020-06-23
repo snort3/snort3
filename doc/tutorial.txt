@@ -16,7 +16,8 @@ Required:
 * dnet from https://github.com/dugsong/libdnet.git for network utility
   functions
 
-* hwloc from https://www.open-mpi.org/projects/hwloc/ for CPU affinity management
+* hwloc from https://www.open-mpi.org/projects/hwloc/ for CPU affinity
+  management
 
 * LuaJIT from http://luajit.org for configuration and scripting
 
@@ -27,7 +28,8 @@ Required:
 
 * pcre from http://www.pcre.org for regular expression pattern matching
 
-* pkgconfig from https://www.freedesktop.org/wiki/Software/pkg-config/ to locate build dependencies
+* pkgconfig from https://www.freedesktop.org/wiki/Software/pkg-config/ to locate
+  build dependencies
 
 * zlib from http://www.zlib.net for decompression (>= 1.2.8 recommended)
 
@@ -52,6 +54,9 @@ Optional:
 
 * iconv from https://ftp.gnu.org/pub/gnu/libiconv/ for converting
   UTF16-LE filenames to UTF8 (usually included in glibc)
+
+* libunwind from https://www.nongnu.org/libunwind/ to attempt to dump a
+  somewhat readable backtrace when a fatal signal is received
 
 * lzma >= 5.1.2 from http://tukaani.org/xz/ for decompression of SWF and
   PDF files

@@ -24,7 +24,13 @@
 
 #include <fcntl.h>
 
-#if defined(HAVE_MALLOC_TRIM)
+#ifdef HAVE_LIBUNWIND
+#define UNW_LOCAL_ONLY
+#include <libunwind.h>
+#include <dlfcn.h>
+#endif
+
+#ifdef HAVE_MALLOC_TRIM
 #include <malloc.h>
 #endif
 
@@ -33,6 +39,7 @@
 
 #include "log/messages.h"
 #include "main.h"
+#include "main/build.h"
 #include "main/oops_handler.h"
 #include "main/snort_config.h"
 #include "utils/stats.h"
@@ -40,9 +47,9 @@
 
 #include "markup.h"
 #include "ring.h"
+#include "sigsafe.h"
 
 using namespace snort;
-using namespace std;
 
 #ifndef SIGNAL_SNORT_RELOAD
 #define SIGNAL_SNORT_RELOAD        SIGHUP
@@ -74,8 +81,38 @@ static Ring<PigSignal> sig_ring(4);
 static volatile sig_atomic_t child_ready_signal = 0;
 static THREAD_LOCAL bool is_main_thread = false;
 
-typedef void (* sighandler_t)(int);
-static bool add_signal(int sig, sighandler_t, bool check_needed);
+// Backup copies of the original fatal signal actions.  Kept here because they must
+//  be trivially accessible to signal handlers.
+#ifdef HAVE_SIGACTION
+static struct
+{
+    int signal;
+    struct sigaction original_sigaction;
+}
+original_sigactions[] =
+{
+    { SIGABRT, { } },
+    { SIGBUS,  { } },
+    { SIGSEGV, { } },
+    { 0, { } },
+};
+#else
+static struct
+{
+    int signal;
+    sighandler_t original_sighandler;
+}
+original_sighandlers[] =
+{
+    { SIGABRT, SIG_DFL },
+    { SIGBUS,  SIG_DFL },
+    { SIGSEGV, SIG_DFL },
+    { 0, SIG_DFL },
+};
+#endif
+
+static bool add_signal(int sig, sighandler_t);
+static bool restore_signal(int sig, bool silent = false);
 
 static bool exit_pronto = true;
 
@@ -85,19 +122,6 @@ void set_quick_exit(bool b)
 void set_main_thread()
 { is_main_thread = true; }
 
-static void exit_log(const char* why)
-{
-    // printf() etc not allowed here
-    char buf[256] = "\n\0";
-
-    strncat(buf, get_prompt(), sizeof(buf)-strlen(buf)-1);
-    strncat(buf, " caught ", sizeof(buf)-strlen(buf)-1);
-    strncat(buf, why, sizeof(buf)-strlen(buf)-1);
-    strncat(buf, " signal, exiting\n", sizeof(buf)-strlen(buf)-1);
-
-    (void)write(STDOUT_FILENO, buf, strlen(buf));  // FIXIT-W ignoring return value
-}
-
 static void exit_handler(int signal)
 {
     PigSignal s;
@@ -105,15 +129,15 @@ static void exit_handler(int signal)
 
     switch ( signal )
     {
-    case SIGTERM: s = PIG_SIG_TERM; t = "term"; break;
-    case SIGQUIT: s = PIG_SIG_QUIT; t = "quit"; break;
-    case SIGINT: s = PIG_SIG_INT;  t = "int";  break;
-    default: return;
+        case SIGTERM: s = PIG_SIG_TERM; t = "term"; break;
+        case SIGQUIT: s = PIG_SIG_QUIT; t = "quit"; break;
+        case SIGINT:  s = PIG_SIG_INT;  t = "int";  break;
+        default: return;
     }
 
     if ( exit_pronto )
     {
-        exit_log(t);
+        SigSafePrinter(STDOUT_FILENO).printf("%s caught %s signal, exiting\n", get_prompt(), t);
         _exit(0);
     }
 
@@ -146,22 +170,114 @@ static void reload_attrib_handler(int /*signal*/)
     sig_ring.put(PIG_SIG_RELOAD_HOSTS);
 }
 
-static void ignore_handler(int /*signal*/)
-{
-}
-
 static void child_ready_handler(int /*signal*/)
 {
     child_ready_signal = 1;
 }
 
+#ifdef HAVE_LIBUNWIND
+static void print_backtrace(SigSafePrinter& ssp)
+{
+    int ret;
+
+    // grab the machine context and initialize the cursor
+    unw_context_t context;
+    if ((ret = unw_getcontext(&context)) < 0)
+    {
+        ssp.printf("unw_getcontext failed: %s (%d)\n", unw_strerror(ret), ret);
+        return;
+    }
+
+    unw_cursor_t cursor;
+    if ((ret = unw_init_local(&cursor, &context)) < 0)
+    {
+        ssp.printf("unw_init_local failed: %s (%d)\n", unw_strerror(ret), ret);
+        return;
+    }
+
+    ssp.printf("Backtrace:\n");
+
+    // walk the stack frames
+    unsigned frame_num = 0;
+    while ((ret = unw_step(&cursor)) > 0)
+    {
+        // skip printing any frames until we've found the frame that received the signal
+        if (frame_num == 0 && !unw_is_signal_frame(&cursor))
+            continue;
+
+        unw_word_t pc;
+        if ((ret = unw_get_reg(&cursor, UNW_REG_IP, &pc)) < 0)
+        {
+            ssp.printf("unw_get_reg failed for instruction pointer: %s (%d)\n",
+                    unw_strerror(ret), ret);
+            return;
+        }
+
+        unw_proc_info_t pip;
+        if ((ret = unw_get_proc_info(&cursor, &pip)) < 0)
+        {
+            ssp.printf("unw_get_proc_info failed: %s (%d)\n", unw_strerror(ret), ret);
+            return;
+        }
+
+        ssp.printf("  #%u 0x%x", frame_num, pc);
+
+        char sym[256];
+        unw_word_t offset;
+        if (unw_get_proc_name(&cursor, sym, sizeof(sym), &offset) == 0)
+            ssp.printf(" in %s+0x%x", sym, offset);
+
+        Dl_info dlinfo;
+        if (dladdr((void *)(uintptr_t)(pip.start_ip + offset), &dlinfo)
+            && dlinfo.dli_fname && *dlinfo.dli_fname)
+        {
+            ssp.printf(" (%s @0x%x)", dlinfo.dli_fname, dlinfo.dli_fbase);
+        }
+
+        ssp.printf("\n");
+
+        frame_num++;
+    }
+    if (ret < 0)
+        ssp.printf("unw_step failed: %s (%d)\n", unw_strerror(ret), ret);
+
+    ssp.printf("\n");
+}
+#endif
+
 static void oops_handler(int signal)
 {
+    // First things first, restore the original signal handler.
+    restore_signal(signal, true);
+
+    // Log the Snort version and signal caught.
+    const char* sigstr = "???\n";
+    switch (signal)
+    {
+        case SIGABRT:
+            sigstr = STRINGIFY(SIGABRT) " (" STRINGIFY_MX(SIGABRT) ")";
+            break;
+        case SIGBUS:
+            sigstr = STRINGIFY(SIGBUS) " (" STRINGIFY_MX(SIGBUS) ")";
+            break;
+        case SIGSEGV:
+            sigstr = STRINGIFY(SIGSEGV) " (" STRINGIFY_MX(SIGSEGV) ")";
+            break;
+    }
+    SigSafePrinter ssp(STDERR_FILENO);
+    ssp.printf("\nSnort (PID %u) caught fatal signal: %s\n", getpid(), sigstr);
+    ssp.printf("Version: " VERSION " Build " BUILD "\n\n");
+
+#ifdef HAVE_LIBUNWIND
+    // Try to pretty-print a stack trace using libunwind to traverse the stack.
+    print_backtrace(ssp);
+#endif
+
     // FIXIT-L what should we capture if this is the main thread?
     if ( !is_main_thread )
-        OopsHandler::handle_crash();
+        OopsHandler::handle_crash(STDERR_FILENO);
 
-    add_signal(signal, SIG_DFL, false);
+    // Finally, raise the signal so that the original handler can handle it.
     raise(signal);
 }
 
@@ -186,34 +302,101 @@ const char* get_signal_name(PigSignal s)
 // signal management
 //-------------------------------------------------------------------------
 
-// If check needed, also check whether previous signal_handler is neither
-// SIG_IGN nor SIG_DFL
-
-// FIXIT-L convert sigaction, etc. to c++11
-static bool add_signal(int sig, sighandler_t signal_handler, bool check_needed)
+static bool add_signal(int sig, sighandler_t signal_handler)
 {
-    sighandler_t pre_handler;
-
 #ifdef HAVE_SIGACTION
     struct sigaction action;
-    struct sigaction old_action;
+    // Mask all other signals while in the signal handler
     sigfillset(&action.sa_mask);
+    // Make compatible system calls restartable across signals
     action.sa_flags = SA_RESTART;
     action.sa_handler = signal_handler;
-    sigaction(sig, &action, &old_action);
-    pre_handler = old_action.sa_handler;
-#else
-    pre_handler = signal(sig, signal_handler);
-#endif
-    if (SIG_ERR == pre_handler)
+
+    struct sigaction* old_action = nullptr;
+    for (unsigned i = 0; original_sigactions[i].signal; i++)
     {
-        ParseError("Could not add handler for signal %d \n", sig);
+        if (original_sigactions[i].signal == sig)
+        {
+            old_action = &original_sigactions[i].original_sigaction;
+            break;
+        }
+    }
+
+    if (sigaction(sig, &action, old_action) != 0)
+    {
+        ErrorMessage("Could not add handler for signal %d: %s (%d)\n", sig, get_error(errno), errno);
         return false;
     }
-    else if (check_needed && (SIG_IGN != pre_handler) && (SIG_DFL!= pre_handler))
+#else
+    sighandler_t original_handler = signal(sig, signal_handler);
+    if (original_handler == SIG_ERR)
     {
-        ParseWarning(WARN_CONF, "handler is already installed for signal %d.\n", sig);
+        ErrorMessage("Could not add handler for signal %d: %s (%d)\n", sig, get_error(errno), errno);
+        return false;
     }
+
+    for (unsigned i = 0; original_sighandlers[i].signal; i++)
+    {
+        if (original_sigactions[i].signal == sig)
+        {
+            original_sigactions[i].original_handler = original_handler;
+            break;
+        }
+    }
+#endif
+
+    return true;
+}
+
+static bool restore_signal(int sig, bool silent)
+{
+#ifdef HAVE_SIGACTION
+    struct sigaction* new_action = nullptr;
+    struct sigaction action;
+
+    for (unsigned i = 0; original_sigactions[i].signal; i++)
+    {
+        if (original_sigactions[i].signal == sig)
+        {
+            new_action = &original_sigactions[i].original_sigaction;
+            break;
+        }
+    }
+
+    if (!new_action)
+    {
+        sigemptyset(&action.sa_mask);
+        action.sa_flags = 0;
+        action.sa_handler = SIG_DFL;
+        new_action = &action;
+    }
+
+    if (sigaction(sig, new_action, nullptr) != 0)
+    {
+        if (!silent)
+            ErrorMessage("Could not restore handler for signal %d: %s (%d)\n", sig, get_error(errno), errno);
+        return false;
+    }
+#else
+    sighandler_t signal_handler = SIG_DFL;
+
+    for (unsigned i = 0; original_sighandlers[i].signal; i++)
+    {
+        if (original_sigactions[i].signal == sig)
+        {
+            signal_handler = original_sigactions[i].original_handler;
+            break;
+        }
+    }
+
+    if (signal(sig, signal_handler) == SIG_ERR)
+    {
+        if (!silent)
+            ErrorMessage("Could not restore handler for signal %d: %s (%d)\n", sig, get_error(errno), errno);
+        return false;
+    }
+#endif
+
     return true;
 }
 
@@ -225,53 +408,50 @@ void init_signals()
     // FIXIT-L this is undefined for multithreaded apps
     sigprocmask(SIG_SETMASK, &set, nullptr);
 
-    /* Make this prog behave nicely when signals come along.
-     * Windows doesn't like all of these signals, and will
-     * set errno for some.  Ignore/reset this error so it
-     * doesn't interfere with later checks of errno value.  */
-    add_signal(SIGTERM, exit_handler, true);
-    add_signal(SIGINT, exit_handler, true);
-    add_signal(SIGQUIT, dirty_handler, true);
+    // Make this program behave nicely when signals come along.
+    add_signal(SIGTERM, exit_handler);
+    add_signal(SIGINT, exit_handler);
+    add_signal(SIGQUIT, dirty_handler);
 
-    add_signal(SIGNAL_SNORT_DUMP_STATS, dump_stats_handler, true);
-    add_signal(SIGNAL_SNORT_ROTATE_STATS, rotate_stats_handler, true);
-    add_signal(SIGNAL_SNORT_RELOAD, reload_config_handler, true);
-    add_signal(SIGNAL_SNORT_READ_ATTR_TBL, reload_attrib_handler, true);
+    add_signal(SIGNAL_SNORT_DUMP_STATS, dump_stats_handler);
+    add_signal(SIGNAL_SNORT_ROTATE_STATS, rotate_stats_handler);
+    add_signal(SIGNAL_SNORT_RELOAD, reload_config_handler);
+    add_signal(SIGNAL_SNORT_READ_ATTR_TBL, reload_attrib_handler);
 
-    add_signal(SIGPIPE, ignore_handler, true);
-    add_signal(SIGABRT, oops_handler, true);
-    add_signal(SIGSEGV, oops_handler, true);
-    add_signal(SIGBUS, oops_handler, true);
+    add_signal(SIGPIPE, SIG_IGN);
+    add_signal(SIGABRT, oops_handler);
+    add_signal(SIGSEGV, oops_handler);
+    add_signal(SIGBUS, oops_handler);
 
     errno = 0;
 }
 
 void term_signals()
 {
-    add_signal(SIGTERM, SIG_DFL, false);
-    add_signal(SIGINT, SIG_DFL, false);
-    add_signal(SIGQUIT, SIG_DFL, false);
+    restore_signal(SIGTERM);
+    restore_signal(SIGINT);
+    restore_signal(SIGQUIT);
 
-    add_signal(SIGNAL_SNORT_DUMP_STATS, SIG_DFL, false);
-    add_signal(SIGNAL_SNORT_ROTATE_STATS, SIG_DFL, false);
-    add_signal(SIGNAL_SNORT_RELOAD, SIG_DFL, false);
-    add_signal(SIGNAL_SNORT_READ_ATTR_TBL, SIG_DFL, false);
+    restore_signal(SIGNAL_SNORT_DUMP_STATS);
+    restore_signal(SIGNAL_SNORT_ROTATE_STATS);
+    restore_signal(SIGNAL_SNORT_RELOAD);
+    restore_signal(SIGNAL_SNORT_READ_ATTR_TBL);
 
-    add_signal(SIGPIPE, SIG_DFL, false);
-    add_signal(SIGABRT, SIG_DFL, false);
-    add_signal(SIGSEGV, SIG_DFL, false);
-    add_signal(SIGBUS, SIG_DFL, false);
+    restore_signal(SIGPIPE);
+    restore_signal(SIGABRT);
+    restore_signal(SIGSEGV);
+    restore_signal(SIGBUS);
 }
 
 static void help_signal(unsigned n, const char* name, const char* h)
 {
-    cout << Markup::item();
+    std::cout << Markup::item();
 
-    cout << Markup::emphasis_on();
-    cout << name;
-    cout << Markup::emphasis_off();
+    std::cout << Markup::emphasis_on();
+    std::cout << name;
+    std::cout << Markup::emphasis_off();
 
-    cout << "(" << n << "): " << h << endl;
+    std::cout << "(" << n << "): " << h << std::endl;
 }
 
 void help_signals()
@@ -325,7 +505,7 @@ void daemonize()
     LogMessage("initializing daemon mode\n");
 
     // register signal handler so that parent can trap signal
-    add_signal(SIGNAL_SNORT_CHILD_READY, child_ready_handler, true);
+    add_signal(SIGNAL_SNORT_CHILD_READY, child_ready_handler);
 
     pid_t cpid = fork();
 
