@@ -126,10 +126,7 @@ public:
     const char* get_search_method();
 
     bool set_offload_search_method(const char*);
-    const char* get_offload_search_method();
-
     void set_max_pattern_len(unsigned);
-
     void set_queue_limit(unsigned);
 
     unsigned get_queue_limit() const
@@ -141,15 +138,6 @@ public:
     const snort::MpseApi* get_offload_search_api() const
     { return offload_search_api; }
 
-    bool get_trim() const
-    { return trim; }
-
-    void trimmed()
-    { num_patterns_trimmed++; }
-
-    int get_num_patterns_trimmed() const
-    { return num_patterns_trimmed; }
-
     int get_num_patterns_truncated() const
     { return num_patterns_truncated; }
 
@@ -160,7 +148,6 @@ private:
     const snort::MpseApi* offload_search_api = nullptr;
 
     bool inspect_stream_insert = true;
-    bool trim;
     bool split_any_any = false;
     bool debug_print_fast_pattern = false;
     bool debug = false;
@@ -174,7 +161,6 @@ private:
 
     int portlists_flags = 0;
     int num_patterns_truncated = 0;  // due to max_pattern_len
-    int num_patterns_trimmed = 0;    // due to zero byte prefix
 };
 
 #endif

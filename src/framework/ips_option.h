@@ -52,6 +52,12 @@ enum CursorActionType
     CAT_ADJUST,
     CAT_SET_OTHER,
     CAT_SET_RAW,
+    CAT_SET_COOKIE,
+    CAT_SET_STAT_MSG,
+    CAT_SET_STAT_CODE,
+    CAT_SET_METHOD,
+    CAT_SET_RAW_HEADER,
+    CAT_SET_RAW_KEY,
     CAT_SET_FILE,
     CAT_SET_BODY,
     CAT_SET_HEADER,
@@ -81,7 +87,6 @@ public:
 
     // packet threads
     virtual bool is_relative() { return false; }
-    virtual bool fp_research() { return false; }
     virtual bool retry(Cursor&) { return false; }
     virtual void action(Packet*) { }
 

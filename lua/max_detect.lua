@@ -11,10 +11,14 @@ ftp_server.check_encrypted = true
 detection =
 {
     pcre_match_limit = 3500,
-    pcre_match_limit_recursion = 3500
+    pcre_match_limit_recursion = 3500,
+
+    -- enable for hyperscan for best throughput
+    -- use multiple packet threads for fast startup
+    --hyperscan_literals = true,
+    --pcre_to_regex = true
 }
 
-http_inspect.detained_inspection = true
 http_inspect.decompress_pdf = true
 http_inspect.decompress_swf = true
 http_inspect.decompress_zip = true
@@ -39,8 +43,6 @@ smtp.decompress_swf = true
 smtp.decompress_zip = true
 
 stream_ip.min_frag_length = 100
-
-stream_tcp.require_3whs = 0
 
 stream_tcp.small_segments =
 {

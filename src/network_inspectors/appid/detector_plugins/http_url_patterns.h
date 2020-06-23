@@ -270,8 +270,7 @@ class HttpPatternMatchers
 {
 public:
     HttpPatternMatchers()
-        : url_matcher("ac_full", true), client_agent_matcher("ac_full", true), via_matcher("ac_full", true),
-          content_type_matcher("ac_full", true)
+        : url_matcher(), client_agent_matcher(), via_matcher(), content_type_matcher()
     { }
     ~HttpPatternMatchers();
 

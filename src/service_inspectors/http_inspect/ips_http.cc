@@ -328,7 +328,7 @@ static const Parameter http_cookie_params[] =
 
 static Module* cookie_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_COOKIE, CAT_SET_OTHER, PSI_COOKIE,
+    return new HttpCursorModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_COOKIE, CAT_SET_COOKIE, PSI_COOKIE,
         http_cookie_params);
 }
 
@@ -440,7 +440,7 @@ static const Parameter http_method_params[] =
 
 static Module* method_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_METHOD, CAT_SET_OTHER, PSI_METHOD,
+    return new HttpCursorModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_METHOD, CAT_SET_METHOD, PSI_METHOD,
         http_method_params);
 }
 
@@ -635,7 +635,7 @@ static const Parameter http_raw_header_params[] =
 
 static Module* raw_header_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_RAW_HEADER, CAT_SET_OTHER,
+    return new HttpCursorModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_RAW_HEADER, CAT_SET_RAW_HEADER,
         PSI_RAW_HEADER, http_raw_header_params);
 }
 
@@ -850,7 +850,7 @@ static const Parameter http_raw_uri_params[] =
 
 static Module* raw_uri_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_RAW_URI, CAT_SET_OTHER,
+    return new HttpCursorModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_RAW_URI, CAT_SET_RAW_KEY,
         PSI_RAW_URI, http_raw_uri_params);
 }
 
@@ -899,7 +899,7 @@ static const Parameter http_stat_code_params[] =
 
 static Module* stat_code_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_STAT_CODE, CAT_SET_OTHER,
+    return new HttpCursorModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_STAT_CODE, CAT_SET_STAT_CODE,
         PSI_STAT_CODE, http_stat_code_params);
 }
 
@@ -948,7 +948,7 @@ static const Parameter http_stat_msg_params[] =
 
 static Module* stat_msg_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_STAT_MSG, CAT_SET_OTHER,
+    return new HttpCursorModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_STAT_MSG, CAT_SET_STAT_MSG,
         PSI_STAT_MSG, http_stat_msg_params);
 }
 

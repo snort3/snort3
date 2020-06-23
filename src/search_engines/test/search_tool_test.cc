@@ -29,6 +29,7 @@
 
 #include <string.h>
 
+#include "detection/fp_config.h"
 #include "framework/base_api.h"
 #include "framework/mpse.h"
 #include "framework/mpse_batch.h"
@@ -149,6 +150,9 @@ void Mpse::_search(MpseBatch& batch, MpseType mpse_type)
 }
 
 }
+
+const char* FastPatternConfig::get_search_method()
+{ return "ac_bnfa"; }
 
 extern const BaseApi* se_ac_bnfa;
 extern const BaseApi* se_ac_full;

@@ -25,6 +25,7 @@
 // FIXIT-L refactor this header
 
 #include <map>
+#include <string>
 
 #include "actions/actions.h"
 #include "main/policy.h"
@@ -81,6 +82,7 @@ struct RuleKey
 
 struct RuleState
 {
+    std::string rule_action;
     snort::Actions::Type action;
     IpsPolicy::Enable enable;
 };

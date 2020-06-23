@@ -1788,7 +1788,10 @@ bool RuleStateModule::set(const char* fqn, Value& v, SnortConfig*)
     if ( key.gid and key.sid )
     {
         if ( v.is("action") )
+        {
+            state.rule_action = v.get_string();
             state.action = snort::Actions::Type(v.get_uint8() + 1);
+        }
 
         else if ( v.is("enable") )
             state.enable = IpsPolicy::Enable(v.get_uint8());

@@ -52,15 +52,6 @@ static const luaL_Reg methods[] =
         }
     },
     {
-        "fp_research",
-        [](lua_State* L)
-        {
-            bool result = IpsOptionIface.get(L).fp_research();
-            lua_pushboolean(L, result);
-            return 1;
-        }
-    },
-    {
         "get_cursor_type",
         [](lua_State* L)
         {

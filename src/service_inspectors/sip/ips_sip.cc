@@ -83,7 +83,7 @@ class SipIpsOption : public IpsOption
 {
 public:
     SipIpsOption(
-        const char* s, SipIdx psi, CursorActionType c = CAT_SET_OTHER) :
+        const char* s, SipIdx psi, CursorActionType c) :
         IpsOption(s, RULE_OPTION_TYPE_BUFFER_SET)
     { key = s; cat = c; idx = psi; }
 

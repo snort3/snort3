@@ -54,7 +54,7 @@ public:
 
 private:
     DnsHostPatternList* dns_host_pattern_list = nullptr;
-    snort::SearchTool dns_host_matcher = snort::SearchTool("ac_full", true);
+    snort::SearchTool dns_host_matcher = snort::SearchTool();
 };
 
 #endif

@@ -22,12 +22,15 @@
 #include "config.h"
 #endif
 
+#include "detection/treenodes.h"
 #include "framework/base_api.h"
 #include "framework/counts.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
+#include "log/messages.h"
 #include "main/snort_config.h"
+#include "ports/port_group.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
 
@@ -81,6 +84,8 @@ static unsigned s_parse_errors = 0;
 void ParseError(const char*, ...)
 { s_parse_errors++; }
 
+void ParseWarning(WarningGroup, const char*, ...) { }
+
 unsigned get_instance_id()
 { return 0; }
 
@@ -101,6 +106,8 @@ Cursor::Cursor(Packet* p)
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
 
+OptTreeNode::~OptTreeNode() { }
+
 //-------------------------------------------------------------------------
 // helpers
 //-------------------------------------------------------------------------
@@ -118,24 +125,21 @@ static const Parameter* get_param(Module* m, const char* s)
     return nullptr;
 }
 
-static IpsOption* get_option(Module* mod, const char* pat, bool relative = false)
+static IpsOption* get_option(Module* mod, const char* pat)
 {
     mod->begin(ips_regex->name, 0, nullptr);
 
     Value vs(pat);
     vs.set(get_param(mod, "~re"));
-    mod->set(ips_regex->name, vs, nullptr);
 
-    if ( relative )
-    {
-        Value vb(relative);
-        vb.set(get_param(mod, "relative"));
-        mod->set(ips_regex->name, vb, nullptr);
-    }
+    mod->set(ips_regex->name, vs, nullptr);
     mod->end(ips_regex->name, 0, nullptr);
 
+    OptTreeNode otn;
+    otn.sticky_buf = 0;
+
     const IpsApi* api = (const IpsApi*) ips_regex;
-    IpsOption* opt = api->ctor(mod, nullptr);
+    IpsOption* opt = api->ctor(mod, &otn);
 
     return opt;
 }
@@ -198,7 +202,7 @@ TEST_GROUP(ips_regex_module)
 TEST(ips_regex_module, basic)
 {
     // always need a re
-    Value vs("foo");
+    Value vs("\"/highway star/\"");
     const Parameter* p = get_param(mod, "~re");
     CHECK(p);
     vs.set(p);
@@ -209,34 +213,14 @@ TEST(ips_regex_module, basic)
 
 TEST(ips_regex_module, config_pass)
 {
-    Value vs("foo");
+    Value vs("\"/jon lord/\"");
     const Parameter* p = get_param(mod, "~re");
     CHECK(p);
     vs.set(p);
     CHECK(mod->set(ips_regex->name, vs, nullptr));
 
     Value vb(true);
-    p = get_param(mod, "dotall");
-    CHECK(p);
-    vb.set(p);
-    CHECK(mod->set(ips_regex->name, vb, nullptr));
-
     p = get_param(mod, "fast_pattern");
-    CHECK(p);
-    vb.set(p);
-    CHECK(mod->set(ips_regex->name, vb, nullptr));
-
-    p = get_param(mod, "multiline");
-    CHECK(p);
-    vb.set(p);
-    CHECK(mod->set(ips_regex->name, vb, nullptr));
-
-    p = get_param(mod, "nocase");
-    CHECK(p);
-    vb.set(p);
-    CHECK(mod->set(ips_regex->name, vb, nullptr));
-
-    p = get_param(mod, "relative");
     CHECK(p);
     vb.set(p);
     CHECK(mod->set(ips_regex->name, vb, nullptr));
@@ -244,7 +228,7 @@ TEST(ips_regex_module, config_pass)
 
 TEST(ips_regex_module, config_fail_name)
 {
-    Value vs("unknown");
+    Value vs("lazy");
     Parameter bad { "bad", Parameter::PT_STRING, nullptr, nullptr, "bad" };
     vs.set(&bad);
     CHECK(!mod->set(ips_regex->name, vs, nullptr));
@@ -254,7 +238,7 @@ TEST(ips_regex_module, config_fail_name)
 
 TEST(ips_regex_module, config_fail_regex)
 {
-    Value vs("[[:fubar:]]");
+    Value vs("\"/[[:fubar:]]/\"");
     const Parameter* p = get_param(mod, "~re");
     CHECK(p);
     vs.set(p);
@@ -276,7 +260,7 @@ TEST_GROUP(ips_regex_option)
     void setup() override
     {
         mod = ips_regex->mod_ctor();
-        opt = get_option(mod, " foo ");
+        opt = get_option(mod, "\"/foo/\"");
     }
     void teardown() override
     {
@@ -290,7 +274,7 @@ TEST_GROUP(ips_regex_option)
 
 TEST(ips_regex_option, hash)
 {
-    IpsOption* opt2 = get_option(mod, "bar");
+    IpsOption* opt2 = get_option(mod, "\"/machine head/\"");
     CHECK(opt2);
 
     uint32_t h1 = opt->hash();
@@ -305,7 +289,7 @@ TEST(ips_regex_option, hash)
 
 TEST(ips_regex_option, opeq)
 {
-    IpsOption* opt2 = get_option(mod, " foo ");
+    IpsOption* opt2 = get_option(mod, "\"/foo/\"");
     CHECK(opt2);
 
     do_cleanup = scratcher->setup(snort_conf);
@@ -355,7 +339,7 @@ TEST_GROUP(ips_regex_option_relative)
     void setup() override
     {
         mod = ips_regex->mod_ctor();
-        opt = get_option(mod, "\\bfoo", true);
+        opt = get_option(mod, "\"/\\bfoo/R\"");
     }
     void teardown() override
     {

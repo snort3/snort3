@@ -30,6 +30,7 @@
 #include "hash/xhash.h"
 #include "main/policy.h"
 #include "main/snort_config.h"
+#include "parser/parse_conf.h"
 #include "parser/parser.h"
 #include "sfip/sf_ipvar.h"
 #include "sfip/sf_vartable.h"
@@ -138,5 +139,11 @@ void RuleStateMap::update_rtn(RuleTreeNode* rtn, const RuleState& s)
     case IpsPolicy::INHERIT_ENABLE: break;
     }
     rtn->action = s.action;
+
+    if ( rtn->header )
+    {
+        rtn->header = new RuleHeader(*rtn->header);
+        rtn->header->action = s.rule_action;
+    }
 }
 

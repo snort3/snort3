@@ -22,6 +22,7 @@
 #endif
 
 #include <cassert>
+#include <cstring>
 
 #include "detection/fp_config.h"
 #include "framework/mpse.h"
@@ -37,14 +38,32 @@ SearchTool::SearchTool(const char* method, bool dfa)
 {
     mpsegrp = new MpseGroup;
 
-    // When no method is passed in, a normal search engine mpse will be created
-    // with the search method the same as that configured for the fast pattern
-    // normal search method, and also an offload search engine mpse will be
-    // created with the search method the same as that configured for the fast
-    // pattern offload search method.  If a method is passed in then an offload
-    // search engine will not be created
+    // When no method is passed in, a normal search engine mpse will be created with the search
+    // method the same as that configured for the fast pattern normal search method, and also an
+    // offload search engine mpse will be created with the search method the same as that
+    // configured for the fast pattern offload search method.  If a method is passed in then an
+    // offload search engine will not be created
+
+    // FIXIT-L the above is flawed.  Offload should not depend on default.  Also, offload only
+    // works in an inline, synchronous fashion for SearchTool so the overhead must be offset by
+    // the speed gain.  Offload support should be removed from here for now.
+
+    // FIXIT-L we force non-hyperscan to be ac_full since the other algorithms like ac_bnfa don't
+    // return all matches.  This could be fixed by adding the match iteration loops like ac_full to
+    // ac_bnfa or removing that and updating SearchTool to do a trivial vector of matches.
 
     assert(conf);
+
+    if ( !method )
+    {
+        method = conf->fast_pattern_config->get_search_method();
+
+        if ( strcmp(method, "hyperscan") )
+        {
+            method = "ac_full";
+            dfa = true;
+        }
+    }
 
     if (mpsegrp->create_normal_mpse(conf, method))
     {

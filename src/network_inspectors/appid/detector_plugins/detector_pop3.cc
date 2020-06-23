@@ -219,7 +219,7 @@ void Pop3ClientDetector::do_custom_init()
 {
     if (cmd_matcher)
         delete cmd_matcher;
-    cmd_matcher = new SearchTool("ac_full", true);
+    cmd_matcher = new SearchTool;
 
     if ( !tcp_patterns.empty() )
     {

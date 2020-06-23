@@ -51,8 +51,8 @@ using namespace snort;
 
 AppIdDiscovery::AppIdDiscovery()
 {
-    tcp_patterns = new SearchTool("ac_full", true);
-    udp_patterns = new SearchTool("ac_full", true);
+    tcp_patterns = new SearchTool;
+    udp_patterns = new SearchTool;
 }
 
 AppIdDiscovery::~AppIdDiscovery()

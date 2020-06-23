@@ -23,12 +23,14 @@
 #endif
 
 #include "detection/pattern_match_data.h"
+#include "detection/treenodes.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/hash_key_operations.h"
 #include "helpers/literal_search.h"
 #include "log/messages.h"
+#include "main/thread_config.h"
 #include "parser/parse_utils.h"
 #include "profiler/profiler.h"
 #include "utils/util.h"
@@ -179,12 +181,11 @@ bool ContentOption::retry(Cursor& c)
 
 uint32_t ContentOption::hash() const
 {
-    uint32_t a,b,c;
     const ContentData* cd = config;
 
-    a = cd->pmd.flags;
-    b = cd->pmd.offset;
-    c = cd->pmd.depth;
+    uint32_t a = cd->pmd.flags;
+    uint32_t b = cd->pmd.offset;
+    uint32_t c = cd->pmd.depth;
 
     mix(a,b,c);
 
@@ -194,38 +195,36 @@ uint32_t ContentOption::hash() const
 
     mix(a,b,c);
 
+    a += cd->pmd.pm_type;
+
     if ( cd->pmd.pattern_size )
         mix_str(a, b, c, cd->pmd.pattern_buf, cd->pmd.pattern_size);
 
-    mix_str(a,b,c,get_name());
+    mix_str(a, b, c, get_name());
 
     a += cd->depth_var;
     b += cd->offset_var;
     c += cd->match_delta;
 
-    mix(a,b,c);
-    finalize(a,b,c);
+    mix(a, b, c);
+
+    finalize(a, b, c);
 
     return c;
 }
 
-#if 0
-// see below for why this is disabled
 static bool same_buffers(
     unsigned len1, const char* buf1, bool no_case1,
     unsigned len2, const char* buf2, bool no_case2)
 {
-    /* Sizes will be most different, check that first */
     if ( len1 != len2 or no_case1 != no_case2 )
         return false;
 
     if ( !len1 )
         return true;
 
-    /* Next compare the patterns for uniqueness */
     if ( no_case1 )
     {
-        /* If no_case is set, do case insensitive compare on pattern */
         for ( unsigned i = 0; i < len1; ++i )
         {
             if ( toupper(buf1[i]) != toupper(buf2[i]) )
@@ -234,21 +233,14 @@ static bool same_buffers(
     }
     else
     {
-        /* If no_case is not set, do case sensitive compare on pattern */
         if ( memcmp(buf1, buf2, len1) )
             return false;
     }
     return true;
 }
 
-#endif
-
-// FIXIT-P FAST_PAT and fp_only are set after hash table comparisons so this must
-// return this == &ips to avoid unnecessary reevaluation and false positives.
-// when this is fixed, add PatternMatchData::operator==().
 bool ContentOption::operator==(const IpsOption& ips) const
 {
-#if 0
     if ( !IpsOption::operator==(ips) )
         return false;
 
@@ -260,22 +252,20 @@ bool ContentOption::operator==(const IpsOption& ips) const
         right.pmd.pattern_size, right.pmd.pattern_buf, right.pmd.is_no_case()) )
         return false;
 
-    /* Now check the rest of the options */
-    if ((left.pmd.flags == right.pmd.flags) &&
-        (left.pmd.fp_offset == right.pmd.fp_offset) &&
-        (left.pmd.fp_length == right.pmd.fp_length) &&
-        (left.pmd.offset == right.pmd.offset) &&
-        (left.pmd.depth == right.pmd.depth) &&
-        // pattern_size and pattern_buf already checked
-        // pm_type set later (but determined by CAT)
-        (left.match_delta == right.match_delta) &&
-        (left.offset_var == right.offset_var) &&
+    if (
+        (left.pmd.flags == right.pmd.flags) and
+        (left.pmd.offset == right.pmd.offset) and
+        (left.pmd.depth == right.pmd.depth) and
+        (left.pmd.fp_offset == right.pmd.fp_offset) and
+        (left.pmd.fp_length == right.pmd.fp_length) and
+        (left.pmd.pm_type == right.pmd.pm_type) and
+        (left.match_delta == right.match_delta) and
+        (left.offset_var == right.offset_var) and
         (left.depth_var == right.depth_var) )
     {
         return true;
     }
-#endif
-    return this == &ips;
+    return false;
 }
 
 //-------------------------------------------------------------------------
@@ -690,6 +680,13 @@ bool ContentModule::end(const char*, int, SnortConfig*)
             s[i] = toupper(cd->pmd.pattern_buf[i]);
     }
     cd->setup_bm();
+
+    if ( cd->pmd.is_negated() )
+    {
+        cd->pmd.last_check = (PmdLastCheck*)snort_calloc(
+            ThreadConfig::get_instance_max(), sizeof(*cd->pmd.last_check));
+    }
+
     return true;
 }
 
@@ -746,10 +743,11 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* content_ctor(Module* p, OptTreeNode*)
+static IpsOption* content_ctor(Module* p, OptTreeNode* otn)
 {
     ContentModule* m = (ContentModule*)p;
     ContentData* cd = m->get_data();
+    cd->pmd.pm_type = otn->sticky_buf;
     return new ContentOption(cd);
 }
 

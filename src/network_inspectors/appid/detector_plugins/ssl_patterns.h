@@ -58,8 +58,8 @@ public:
 private:
     SslPatternList* cert_pattern_list = nullptr;
     SslPatternList* cname_pattern_list = nullptr;
-    snort::SearchTool ssl_host_matcher = snort::SearchTool("ac_full", true);
-    snort::SearchTool ssl_cname_matcher= snort::SearchTool("ac_full", true);
+    snort::SearchTool ssl_host_matcher = snort::SearchTool();
+    snort::SearchTool ssl_cname_matcher= snort::SearchTool();
 };
 
 #endif

@@ -42,7 +42,6 @@ FastPatternConfig::FastPatternConfig()
 {
     search_api = MpseManager::get_search_api("ac_bnfa");
     assert(search_api);
-    trim = MpseManager::search_engine_trim(search_api);
 }
 
 
@@ -54,7 +53,6 @@ bool FastPatternConfig::set_search_method(const char* method)
         return false;
 
     search_api = api;
-    trim = MpseManager::search_engine_trim(search_api);
     return true;
 }
 
@@ -75,14 +73,6 @@ bool FastPatternConfig::set_offload_search_method(const char* method)
 
     offload_search_api = api;
     return true;
-}
-
-const char* FastPatternConfig::get_offload_search_method()
-{
-    if ( !offload_search_api )
-        return nullptr;
-
-    return offload_search_api->base.name;
 }
 
 void FastPatternConfig::set_max_pattern_len(unsigned int max_len)

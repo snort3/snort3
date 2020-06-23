@@ -411,18 +411,14 @@ int detection_option_node_evaluate(
     // No, haven't evaluated this one before... Check it.
     do
     {
-        switch ( node->option_type )
+        if ( node->otn )
         {
-        case RULE_OPTION_TYPE_LEAF_NODE:
-            // Add the match for this otn to the queue.
-        {
-            OptTreeNode* otn = (OptTreeNode*)node->option_data;
             SnortProtocolId snort_protocol_id = p->get_snort_protocol_id();
             int check_ports = 1;
 
             if ( snort_protocol_id != UNKNOWN_PROTOCOL_ID )
             {
-                const auto& sig_info = otn->sigInfo;
+                const auto& sig_info = node->otn->sigInfo;
 
                 for ( const auto& svc : sig_info.services )
                 {
@@ -442,16 +438,15 @@ int detection_option_node_evaluate(
                 }
             }
 
-            bool eval_rtn_result;
+            if ( !fp_eval_rtn(getRuntimeRtnFromOtn(node->otn), p, check_ports) )
+                break;
+        }
 
-            // Don't include RTN time
+        switch ( node->option_type )
+        {
+        case RULE_OPTION_TYPE_LEAF_NODE:
             {
-                RulePause pause(profile);
-                eval_rtn_result = fp_eval_rtn(getRuntimeRtnFromOtn(otn), p, check_ports);
-            }
-
-            if ( eval_rtn_result )
-            {
+                OptTreeNode* otn = (OptTreeNode*)node->option_data;
                 bool f_result = true;
 
                 if ( otn->detection_filter )
@@ -463,7 +458,11 @@ int detection_option_node_evaluate(
                         p->pkth->ts.tv_sec);
                 }
 
-                if ( f_result )
+                if ( !f_result )
+                {
+                    debug_log(detection_trace, TRACE_RULE_EVAL, p, "Header check failed\n");
+                }
+                else
                 {
                     otn->state[get_instance_id()].matches++;
 
@@ -479,14 +478,7 @@ int detection_option_node_evaluate(
                     result = rval = (int)IpsOption::MATCH;
                 }
             }
-#ifdef DEBUG_MSGS
-            else
-                debug_log(detection_trace, TRACE_RULE_EVAL, p,
-                    "Header check failed\n");
-#endif
-
             break;
-        }
 
         case RULE_OPTION_TYPE_CONTENT:
             if ( node->evaluate )
@@ -585,7 +577,6 @@ int detection_option_node_evaluate(
         }
 
         {
-            RulePause pause(profile);
             // Passed, check the children.
             if ( node->num_children )
             {

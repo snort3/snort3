@@ -874,14 +874,13 @@ static inline int batch_search(
     return 0;
 }
 
-static inline int search_buffer(
+static inline void search_buffer(
     Inspector* gadget, InspectionBuffer& buf, InspectionBuffer::Type ibt,
     Packet* p, PortGroup* pg, PmType pmt, PegCount& cnt)
 {
-    if ( gadget->get_fp_buf(ibt, p, buf) )
+    if ( MpseGroup* so = pg->mpsegrp[pmt] )
     {
-        // Depending on where we are searching we call the appropriate mpse
-        if ( MpseGroup* so = pg->mpsegrp[pmt] )
+        if ( gadget->get_fp_buf(ibt, p, buf) )
         {
             debug_logf(detection_trace, TRACE_FP_SEARCH, p,
                 "%" PRIu64 " fp %s.%s[%d]\n", p->context->packet_number,
@@ -890,19 +889,20 @@ static inline int search_buffer(
             batch_search(so, p, buf.data, buf.len, cnt);
         }
     }
-    return 0;
 }
 
-static int fp_search(PortGroup* port_group, Packet* p)
+static int fp_search(PortGroup* port_group, Packet* p, bool srvc)
 {
     Inspector* gadget = p->flow ? p->flow->gadget : nullptr;
     InspectionBuffer buf;
 
     debug_log(detection_trace, TRACE_RULE_EVAL, p, "Fast pattern search\n");
 
-    if ( p->data and p->dsize )
+    // ports search raw packet only
+    if ( p->dsize )
     {
-        // ports search raw packet only
+        assert(p->data);
+
         if ( MpseGroup* so = port_group->mpsegrp[PM_TYPE_PKT] )
         {
             if ( uint16_t pattern_match_size = p->get_detect_limit() )
@@ -919,23 +919,42 @@ static int fp_search(PortGroup* port_group, Packet* p)
 
     if ( gadget )
     {
-        // service searches PDU buffers and file
-        if ( search_buffer(gadget, buf, buf.IBT_KEY, p, port_group, PM_TYPE_KEY, pc.key_searches) )
-            return 1;
-
-        if ( search_buffer(gadget, buf, buf.IBT_HEADER, p, port_group, PM_TYPE_HEADER, pc.header_searches) )
-            return 1;
-
-        if ( search_buffer(gadget, buf, buf.IBT_BODY, p, port_group, PM_TYPE_BODY, pc.body_searches) )
-            return 1;
-
         // FIXIT-L PM_TYPE_ALT will never be set unless we add
         // norm_data keyword or telnet, rpc_decode, smtp keywords
         // until then we must use the standard packet mpse
-        if ( search_buffer(gadget, buf, buf.IBT_ALT, p, port_group, PM_TYPE_PKT, pc.alt_searches) )
-            return 1;
+        search_buffer(gadget, buf, buf.IBT_ALT, p, port_group, PM_TYPE_PKT, pc.alt_searches);
     }
 
+    if ( !srvc )
+        return 0;
+
+    // service searches PDU buffers and file
+    if ( gadget )
+    {
+        search_buffer(gadget, buf, buf.IBT_KEY, p, port_group, PM_TYPE_KEY, pc.key_searches);
+
+        search_buffer(gadget, buf, buf.IBT_HEADER, p, port_group, PM_TYPE_HEADER, pc.header_searches);
+
+        search_buffer(gadget, buf, buf.IBT_BODY, p, port_group, PM_TYPE_BODY, pc.body_searches);
+
+        search_buffer(
+            gadget, buf, buf.IBT_RAW_KEY, p, port_group, PM_TYPE_RAW_KEY, pc.raw_key_searches);
+
+        search_buffer(
+            gadget, buf, buf.IBT_RAW_HEADER, p, port_group, PM_TYPE_RAW_HEADER, pc.raw_header_searches);
+
+        search_buffer(
+            gadget, buf, buf.IBT_METHOD, p, port_group, PM_TYPE_METHOD, pc.method_searches);
+
+        search_buffer(
+            gadget, buf, buf.IBT_STAT_CODE, p, port_group, PM_TYPE_STAT_CODE, pc.stat_code_searches);
+
+        search_buffer(
+            gadget, buf, buf.IBT_STAT_MSG, p, port_group, PM_TYPE_STAT_MSG, pc.stat_msg_searches);
+
+        search_buffer(
+            gadget, buf, buf.IBT_COOKIE, p, port_group, PM_TYPE_COOKIE, pc.cookie_searches);
+    }
     {
         // file searches file only
         if ( MpseGroup* so = port_group->mpsegrp[PM_TYPE_FILE] )
@@ -958,7 +977,7 @@ static int fp_search(PortGroup* port_group, Packet* p)
 }
 
 static inline void eval_fp(
-    PortGroup* port_group, Packet* p, char ip_rule)
+    PortGroup* port_group, Packet* p, char ip_rule, bool srvc)
 {
     const uint8_t* tmp_payload = nullptr;
     uint16_t tmp_dsize = 0;
@@ -983,11 +1002,8 @@ static inline void eval_fp(
 
     if ( DetectionEngine::content_enabled(p) )
     {
-        FastPatternConfig* fp = p->context->conf->fast_pattern_config;
-
-        if ( fp->get_stream_insert() || !(p->packet_flags & PKT_STREAM_INSERT) )
-            if ( fp_search(port_group, p) )
-                return;
+        if ( fp_search(port_group, p, srvc) )
+            return;
     }
     if ( ip_rule )
     {
@@ -1078,18 +1094,17 @@ static inline void eval_nfp(
 //  for non-content.  The otn list search will eventually be redone for
 //  for performance purposes.
 
-static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p, char ip_rule, FPTask task)
+static inline void fpEvalHeaderSW(
+    PortGroup* port_group, Packet* p, char ip_rule, FPTask task, bool srvc = false)
 {
     if ( !p->is_detection_enabled(p->packet_flags & PKT_FROM_CLIENT) )
-        return 0;
+        return;
 
     if ( task & FPTask::FP )
-        eval_fp(port_group, p, ip_rule);
+        eval_fp(port_group, p, ip_rule, srvc);
 
     if ( task & FPTask::NON_FP )
         eval_nfp(port_group, p, ip_rule);
-
-    return 0;
 }
 
 static inline void fpEvalHeaderIp(Packet* p, FPTask task)
@@ -1125,6 +1140,7 @@ static inline void fpEvalHeaderIcmp(Packet* p, FPTask task)
 
 static inline void fpEvalHeaderTcp(Packet* p, FPTask task)
 {
+
     PortGroup* src = nullptr, * dst = nullptr, * any = nullptr;
 
     if ( !prmFindRuleGroupTcp(p->context->conf->prmTcpRTNX, p->ptrs.dp, p->ptrs.sp, &src, &dst, &any) )
@@ -1157,25 +1173,23 @@ static inline void fpEvalHeaderUdp(Packet* p, FPTask task)
         fpEvalHeaderSW(any, p, 0, task);
 }
 
-static inline bool fpEvalHeaderSvc(Packet* p, FPTask task)
+static inline void fpEvalHeaderSvc(Packet* p, FPTask task)
 {
-    PortGroup* svc = nullptr;
-
     SnortProtocolId snort_protocol_id = p->get_snort_protocol_id();
 
-    if (snort_protocol_id != UNKNOWN_PROTOCOL_ID and snort_protocol_id != INVALID_PROTOCOL_ID)
-    {
-        if (p->is_from_server()) /* to cli */
-            svc = p->context->conf->sopgTable->get_port_group(false, snort_protocol_id);
+    if (snort_protocol_id == UNKNOWN_PROTOCOL_ID or snort_protocol_id == INVALID_PROTOCOL_ID)
+        return;
 
-        if (p->is_from_client()) /* to srv */
-            svc = p->context->conf->sopgTable->get_port_group(true, snort_protocol_id);
-    }
+    PortGroup* svc = nullptr;
+
+    if (p->is_from_server())
+        svc = p->context->conf->sopgTable->get_port_group(false, snort_protocol_id);
+
+    else if (p->is_from_client())
+        svc = p->context->conf->sopgTable->get_port_group(true, snort_protocol_id);
 
     if ( svc )
-        fpEvalHeaderSW(svc, p, 0, task);
-
-    return svc != nullptr;
+        fpEvalHeaderSW(svc, p, 0, task, true);
 }
 
 static void fpEvalPacketUdp(Packet* p, FPTask task)
@@ -1220,27 +1234,44 @@ static void fpEvalPacketUdp(Packet* p, FPTask task)
     DetectionEngine::set_detects(p, save_detect);
 }
 
-/*
-**    the IP protocol is processed.  If it is TCP, UDP, or ICMP, we
-**    process the both that particular ruleset and the IP ruleset
-**    with in the fpEvalHeader for that protocol.  If the protocol
-**    is not TCP, UDP, or ICMP, we just process the packet against
-**    the IP rules at the end of the fpEvalPacket routine.  Since
-**    we are using a setwise methodology for snort rules, both the
-**    network layer rules and the transport layer rules are done
-**    at the same time.  While this is not the best for modularity,
-**    it is the best for performance, which is what we are working
-**    on currently.
-*/
+static inline bool skip_raw_tcp(const Packet* p)
+{
+    if ( !(p->packet_flags & PKT_STREAM_INSERT) )
+        return false;
+
+    if ( !p->flow or !p->flow->gadget )
+        return false;
+
+    if ( !p->context->conf->fast_pattern_config->get_stream_insert() )
+        return true;
+
+    return false;
+}
+
+// the IP protocol is processed.  If it is TCP, UDP, or ICMP, we
+// process the both that particular ruleset and the IP ruleset
+// with in the fpEvalHeader for that protocol.  If the protocol
+// is not TCP, UDP, or ICMP, we just process the packet against
+// the IP rules at the end of the fpEvalPacket routine.  Since
+// we are using a setwise methodology for snort rules, both the
+// network layer rules and the transport layer rules are done
+// at the same time.  While this is not the best for modularity,
+// it is the best for performance, which is what we are working
+// on currently.
+
 static void fpEvalPacket(Packet* p, FPTask task)
 {
-    /* Run UDP rules against the UDP header of Teredo packets */
+    // Run UDP rules against the UDP header of Teredo packets
     // FIXIT-L udph is always inner; need to check for outer
+    // FIXIT-M UDP tunnel not searching service groups
+
     if ( p->is_udp_tunneled() )
         fpEvalPacketUdp(p, task);
 
-    if ( p->get_snort_protocol_id() != UNKNOWN_PROTOCOL_ID and fpEvalHeaderSvc(p, task) )
+    if ( skip_raw_tcp(p) )
         return;
+
+    fpEvalHeaderSvc(p, task);
 
     switch (p->type())
     {

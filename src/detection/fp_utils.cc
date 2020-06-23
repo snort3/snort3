@@ -28,10 +28,9 @@
 #include <mutex>
 #include <thread>
 
-#include "ips_options/ips_flow.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
-#include "main/thread_config.h"
+#include "parser/parse_conf.h"
 #include "pattern_match_data.h"
 #include "ports/port_group.h"
 #include "target_based/snort_protocols.h"
@@ -48,31 +47,18 @@ using namespace snort;
 // private utilities
 //--------------------------------------------------------------------------
 
-static void finalize_content(OptFpList* ofl)
-{
-    PatternMatchData* pmd = get_pmd(ofl, UNKNOWN_PROTOCOL_ID, RULE_WO_DIR);
-
-    if ( !pmd )
-        return;
-
-    if ( pmd->is_negated() )
-        pmd->last_check = (PmdLastCheck*)snort_calloc(
-            ThreadConfig::get_instance_max(), sizeof(*pmd->last_check));
-}
-
-static void clear_fast_pattern_only(OptFpList* ofl)
-{
-    PatternMatchData* pmd = get_pmd(ofl, UNKNOWN_PROTOCOL_ID, RULE_WO_DIR);
-
-    if ( pmd && pmd->fp_only > 0 )
-        pmd->fp_only = 0;
-}
-
 static bool pmd_can_be_fp(
     PatternMatchData* pmd, CursorActionType cat, bool only_literals)
 {
-    if ( cat <= CAT_SET_OTHER )
+    switch ( cat )
+    {
+    case CAT_NONE:
+    case CAT_ADJUST:
+    case CAT_SET_OTHER:
         return false;
+    default:
+        break;
+    }
 
     if ( only_literals and !pmd->is_literal() )
         return false;
@@ -80,13 +66,34 @@ static bool pmd_can_be_fp(
     return pmd->can_be_fp();
 }
 
-static PmType get_pm_type(CursorActionType cat)
+PmType get_pm_type(CursorActionType cat)
 {
     switch ( cat )
     {
     case CAT_SET_RAW:
     case CAT_SET_OTHER:
         return PM_TYPE_PKT;
+
+    case CAT_SET_COOKIE:
+        return PM_TYPE_COOKIE;
+
+    case CAT_SET_STAT_MSG:
+        return PM_TYPE_STAT_MSG;
+
+    case CAT_SET_STAT_CODE:
+        return PM_TYPE_STAT_CODE;
+
+    case CAT_SET_METHOD:
+        return PM_TYPE_METHOD;
+
+    case CAT_SET_RAW_HEADER:
+        return PM_TYPE_RAW_HEADER;
+
+    case CAT_SET_RAW_KEY:
+        return PM_TYPE_RAW_KEY;
+
+    case CAT_SET_FILE:
+        return PM_TYPE_FILE;
 
     case CAT_SET_BODY:
         return PM_TYPE_BODY;
@@ -97,9 +104,6 @@ static PmType get_pm_type(CursorActionType cat)
     case CAT_SET_KEY:
         return PM_TYPE_KEY;
 
-    case CAT_SET_FILE:
-        return PM_TYPE_FILE;
-
     default:
         break;
     }
@@ -109,123 +113,43 @@ static PmType get_pm_type(CursorActionType cat)
 
 static RuleDirection get_dir(OptTreeNode* otn)
 {
-    if ( OtnFlowFromServer(otn) )
+    if ( otn->to_client() )
         return RULE_FROM_SERVER;
 
-    if ( OtnFlowFromClient(otn) )
+    if ( otn->to_server() )
         return RULE_FROM_CLIENT;
 
     return RULE_WO_DIR;
 }
 
-//--------------------------------------------------------------------------
-// public utilities
-//--------------------------------------------------------------------------
-
-PatternMatchData* get_pmd(OptFpList* ofl, SnortProtocolId snort_protocol_id, RuleDirection direction)
+// this will be made extensible when fast patterns are extensible
+static const char* get_service(const char* opt)
 {
-    if ( !ofl->ips_opt )
-        return nullptr;
+    if ( !strncmp(opt, "http_", 5) )
+        return "http";
 
-    return ofl->ips_opt->get_pattern(snort_protocol_id, direction);
-}
+    if ( !strncmp(opt, "cip_", 4) )  // NO FP BUF
+        return "cip";
 
-bool is_fast_pattern_only(OptFpList* ofl, Mpse::MpseType mpse_type)
-{
-    PatternMatchData* pmd = get_pmd(ofl, UNKNOWN_PROTOCOL_ID, RULE_WO_DIR);
+    if ( !strncmp(opt, "dce_", 4) )
+        return "netbios-ssn";
 
-    if ( !pmd )
-        return false;
+    if ( !strncmp(opt, "dnp3_", 5) )
+        return "dnp3";
 
-    assert((mpse_type == Mpse::MPSE_TYPE_NORMAL) or (mpse_type == Mpse::MPSE_TYPE_OFFLOAD));
+    if ( !strncmp(opt, "gtp_", 4) )  // NO FP BUF
+        return "gtp";
 
-    return (pmd->fp_only & (1 << mpse_type));
-}
+    if ( !strncmp(opt, "modbus_", 7) )
+        return "modbus";
 
-bool is_fast_pattern_only(OptFpList* ofl)
-{
-    PatternMatchData* pmd = get_pmd(ofl, UNKNOWN_PROTOCOL_ID, RULE_WO_DIR);
+    if ( !strncmp(opt, "s7commplus_", 11) )
+        return "s7commplus";
 
-    if ( !pmd )
-        return false;
+    if ( !strncmp(opt, "sip_", 4) )
+        return "sip";
 
-    return pmd->fp_only > 0;
-}
-
-/*
-  * Trim zero byte prefixes, this increases uniqueness
-  * will not alter regex since they can't contain bald \0
-  *
-  * returns
-  *   length - of trimmed pattern
-  *   buff - ptr to new beginning of trimmed buffer
-  */
-unsigned flp_trim(const char* p, unsigned plen, const char** buff)
-{
-    unsigned i;
-    unsigned size = 0;
-
-    if ( !p )
-        return 0;
-
-    for (i=0; i<plen; i++)
-    {
-        if ( p[i] != 0 )
-            break;
-    }
-
-    if ( i < plen )
-        size = plen - i;
-    else
-        size = 0;
-
-    if ( buff && (size==0) )
-    {
-        *buff = nullptr;
-    }
-    else if ( buff )
-    {
-        *buff = &p[i];
-    }
-    return size;
-}
-
-void validate_fast_pattern(OptTreeNode* otn)
-{
-    OptFpList* fp = nullptr;
-    bool relative_is_bad_mkay = false;
-
-    for (OptFpList* fpl = otn->opt_func; fpl; fpl = fpl->next)
-    {
-        // a relative option is following a fast_pattern/only and
-        if ( relative_is_bad_mkay )
-        {
-            if (fpl->isRelative)
-            {
-                assert(fp);
-                clear_fast_pattern_only(fp);
-            }
-        }
-
-        // reset the check if one of these are present.
-        if ( fpl->ips_opt and !fpl->ips_opt->get_pattern(0))
-        {
-            if ( fpl->ips_opt->get_cursor_type() > CAT_NONE )
-                relative_is_bad_mkay = false;
-        }
-        // set/unset the check on content options.
-        else
-        {
-            if ( is_fast_pattern_only(fpl) )
-            {
-                fp = fpl;
-                relative_is_bad_mkay = true;
-            }
-            else
-                relative_is_bad_mkay = false;
-        }
-        finalize_content(fpl);
-    }
+    return nullptr;
 }
 
 //--------------------------------------------------------------------------
@@ -235,25 +159,23 @@ void validate_fast_pattern(OptTreeNode* otn)
 
 struct FpSelector
 {
-    CursorActionType cat;
-    PatternMatchData* pmd;
-    unsigned size;
+    CursorActionType cat = CAT_NONE;
+    IpsOption* opt = nullptr;
+    PatternMatchData* pmd = nullptr;
+    unsigned size = 0;
 
-    FpSelector(CursorActionType, PatternMatchData*);
-
-    FpSelector()
-    { cat = CAT_NONE; pmd = nullptr; size = 0; }
+    FpSelector() = default;
+    FpSelector(CursorActionType, IpsOption*, PatternMatchData*);
 
     bool is_better_than(FpSelector&, bool srvc, RuleDirection, bool only_literals = false);
 };
 
-FpSelector::FpSelector(CursorActionType c, PatternMatchData* p)
+FpSelector::FpSelector(CursorActionType c, IpsOption* o, PatternMatchData* p)
 {
     cat = c;
+    opt = o;
     pmd = p;
-
-    // FIXIT-M unconditional trim is bad mkay? see fpGetFinalPattern
-    size = flp_trim(pmd->pattern_buf, pmd->pattern_size, nullptr);
+    size = p->pattern_size;
 }
 
 bool FpSelector::is_better_than(
@@ -262,13 +184,8 @@ bool FpSelector::is_better_than(
     if ( !pmd_can_be_fp(pmd, cat, only_literals) )
     {
         if ( pmd->is_fast_pattern() )
-        {
             ParseWarning(WARN_RULES, "content ineligible for fast_pattern matcher - ignored");
-            // When we have a normal search engine we do not wish to invalidate the user
-            // indicated fast pattern as this may be a valid fast pattern for use in the offload
-            // search engine
-            // pmd->flags &= ~PatternMatchData::FAST_PAT;
-        }
+
         return false;
     }
 
@@ -281,7 +198,7 @@ bool FpSelector::is_better_than(
         {
             ParseWarning(WARN_RULES,
                 "only one fast_pattern content per rule allowed - using first");
-            pmd->flags &= ~PatternMatchData::FAST_PAT;
+
             return false;
         }
         return true;
@@ -305,13 +222,70 @@ bool FpSelector::is_better_than(
 // public methods
 //--------------------------------------------------------------------------
 
+void validate_services(SnortConfig* sc, OptTreeNode* otn)
+{
+    std::string svc;
+    bool file = false;
+
+    for (OptFpList* ofl = otn->opt_func; ofl; ofl = ofl->next)
+    {
+        if ( !ofl->ips_opt )
+            continue;
+
+        CursorActionType cat = ofl->ips_opt->get_cursor_type();
+
+        if ( cat <= CAT_ADJUST )
+            continue;
+
+        const char* s = ofl->ips_opt->get_name();
+
+        // special case file_data because it could be any subset of file carving services
+        if ( !strcmp(s, "file_data") )
+        {
+            file = true;
+            continue;
+        }
+
+        s = get_service(s);
+
+        if ( !s )
+            continue;
+
+        if ( !svc.empty() and svc != s )
+        {
+            ParseWarning(WARN_RULES, "%u:%u:%u has mixed service buffers (%s and %s)",
+                otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev, svc.c_str(), s);
+        }
+        svc = s;
+    }
+    if ( otn->sigInfo.services.size() == 1 and !svc.empty() and otn->sigInfo.services[0].service != svc )
+    {
+        ParseWarning(WARN_RULES, "%u:%u:%u has service:%s with %s buffer",
+            otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev,
+            otn->sigInfo.services[0].service.c_str(), svc.c_str());
+    }
+    if ( otn->sigInfo.services.empty() and !svc.empty() )
+    {
+        ParseWarning(WARN_RULES, "%u:%u:%u has no service with %s buffer",
+            otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev, svc.c_str());
+
+        add_service_to_otn(sc, otn, svc.c_str());
+    }
+    if ( otn->sigInfo.services.empty() and file )
+    {
+        ParseWarning(WARN_RULES, "%u:%u:%u has no service with file_data",
+            otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev);
+
+        add_service_to_otn(sc, otn, "file");
+    }
+}
+
 PatternMatchVector get_fp_content(
-    OptTreeNode* otn, OptFpList*& next, bool srvc, bool only_literals, bool& exclude)
+    OptTreeNode* otn, OptFpList*& node, bool srvc, bool only_literals, bool& exclude)
 {
     CursorActionType curr_cat = CAT_SET_RAW;
     FpSelector best;
     bool content = false;
-    bool fp_only = true;
     PatternMatchVector pmds;
 
     for (OptFpList* ofl = otn->opt_func; ofl; ofl = ofl->next)
@@ -322,53 +296,63 @@ PatternMatchVector get_fp_content(
         CursorActionType cat = ofl->ips_opt->get_cursor_type();
 
         if ( cat > CAT_ADJUST )
-        {
             curr_cat = cat;
-            fp_only = !ofl->ips_opt->fp_research();
-        }
 
         RuleDirection dir = get_dir(otn);
-        PatternMatchData* tmp = get_pmd(ofl, otn->snort_protocol_id, dir);
+        PatternMatchData* tmp = ofl->ips_opt->get_pattern(otn->snort_protocol_id, dir);
 
         if ( !tmp )
             continue;
 
         content = true;
 
-        if ( !fp_only )
-            tmp->fp_only = -1;
-
-        tmp->pm_type = get_pm_type(curr_cat);
-
-        FpSelector curr(curr_cat, tmp);
+        FpSelector curr(curr_cat, ofl->ips_opt, tmp);
 
         if ( curr.is_better_than(best, srvc, dir, only_literals) )
         {
             best = curr;
-            next = ofl->next;
-            pmds.clear();
-            // Add alternate pattern
-            PatternMatchData* alt_pmd = ofl->ips_opt->get_alternate_pattern();
-            if (alt_pmd)
-                pmds.emplace_back(alt_pmd);
-            // Add main pattern last
-            pmds.emplace_back(best.pmd);
+            node = ofl;
         }
     }
 
-    if ( best.pmd and best.cat != CAT_SET_RAW and !srvc and !otn->sigInfo.services.empty() )
-    {
-        pmds.clear();  // just include in service group
-        exclude = true;
-    }
-    else
-        exclude = false;
+    exclude = best.pmd and (best.cat != CAT_SET_RAW) and !srvc and !otn->sigInfo.services.empty();
 
     if ( content && !best.pmd)
         ParseWarning(WARN_RULES, "content based rule %u:%u has no eligible fast pattern",
             otn->sigInfo.gid, otn->sigInfo.sid);
 
+    if ( !exclude and best.pmd )
+    {
+        PatternMatchData* alt_pmd = best.opt->get_alternate_pattern();
+        if (alt_pmd)
+            pmds.emplace_back(alt_pmd);
+        pmds.emplace_back(best.pmd); // add primary pattern last
+    }
     return pmds;
+}
+
+bool make_fast_pattern_only(const OptFpList* ofp, const PatternMatchData* pmd)
+{
+    // FIXIT-L no_case consideration is mpse specific, delegate
+    if ( !pmd->is_relative() and !pmd->is_negated() and
+         !pmd->offset and !pmd->depth and pmd->is_no_case() )
+    {
+        ofp = ofp->next;
+        if ( !ofp || !ofp->ips_opt || !ofp->ips_opt->is_relative() )
+            return true;
+    }
+    return false;
+}
+
+bool is_fast_pattern_only(const OptTreeNode* otn, const OptFpList* ofp, Mpse::MpseType mpse_type)
+{
+    if ( mpse_type == Mpse::MPSE_TYPE_NORMAL and otn->normal_fp_only == ofp )
+        return true;
+
+    if ( mpse_type == Mpse::MPSE_TYPE_OFFLOAD and otn->offload_fp_only == ofp )
+        return true;
+
+    return false;
 }
 
 //--------------------------------------------------------------------------
@@ -520,7 +504,7 @@ TEST_CASE("fp_simple", "[FastPatternSelect]")
     FpSelector test;
     PatternMatchData pmd;
     set_pmd(pmd, 0x0, "foo");
-    FpSelector left(CAT_SET_RAW, &pmd);
+    FpSelector left(CAT_SET_RAW, nullptr, &pmd);
     CHECK(left.is_better_than(test, false, RULE_WO_DIR));
 
     test.size = 1;
@@ -531,11 +515,11 @@ TEST_CASE("fp_negated", "[FastPatternSelect]")
 {
     PatternMatchData p0;
     set_pmd(p0, 0x0, "foo");
-    FpSelector s0(CAT_SET_RAW, &p0);
+    FpSelector s0(CAT_SET_RAW, nullptr, &p0);
 
     PatternMatchData p1;
     set_pmd(p1, 0x1, "foo");
-    FpSelector s1(CAT_SET_RAW, &p1);
+    FpSelector s1(CAT_SET_RAW, nullptr, &p1);
 
     CHECK(s0.is_better_than(s1, false, RULE_WO_DIR));
     CHECK(!s1.is_better_than(s0, false, RULE_WO_DIR));
@@ -545,11 +529,11 @@ TEST_CASE("fp_cat1", "[FastPatternSelect]")
 {
     PatternMatchData p0;
     set_pmd(p0, 0x0, "longer");
-    FpSelector s0(CAT_SET_FILE, &p0);
+    FpSelector s0(CAT_SET_FILE, nullptr, &p0);
 
     PatternMatchData p1;
     set_pmd(p1, 0x0, "short");
-    FpSelector s1(CAT_SET_BODY, &p1);
+    FpSelector s1(CAT_SET_BODY, nullptr, &p1);
 
     CHECK(s0.is_better_than(s1, true, RULE_WO_DIR));
 }
@@ -558,11 +542,11 @@ TEST_CASE("fp_cat2", "[FastPatternSelect]")
 {
     PatternMatchData p0;
     set_pmd(p0, 0x0, "foo");
-    FpSelector s0(CAT_SET_RAW, &p0);
+    FpSelector s0(CAT_SET_RAW, nullptr, &p0);
 
     PatternMatchData p1;
     set_pmd(p1, 0x0, "foo");
-    FpSelector s1(CAT_SET_FILE, &p1);
+    FpSelector s1(CAT_SET_FILE, nullptr, &p1);
 
     CHECK(!s0.is_better_than(s1, false, RULE_WO_DIR));
     CHECK(!s1.is_better_than(s0, false, RULE_WO_DIR));
@@ -572,11 +556,11 @@ TEST_CASE("fp_cat3", "[FastPatternSelect]")
 {
     PatternMatchData p0;
     set_pmd(p0, 0x0, "foo");
-    FpSelector s0(CAT_SET_RAW, &p0);
+    FpSelector s0(CAT_SET_RAW, nullptr, &p0);
 
     PatternMatchData p1;
     set_pmd(p1, 0x0, "foo");
-    FpSelector s1(CAT_SET_FILE, &p1);
+    FpSelector s1(CAT_SET_FILE, nullptr, &p1);
 
     CHECK(!s0.is_better_than(s1, true, RULE_WO_DIR));
 }
@@ -585,11 +569,11 @@ TEST_CASE("fp_size", "[FastPatternSelect]")
 {
     PatternMatchData p0;
     set_pmd(p0, 0x0, "longer");
-    FpSelector s0(CAT_SET_HEADER, &p0);
+    FpSelector s0(CAT_SET_HEADER, nullptr, &p0);
 
     PatternMatchData p1;
     set_pmd(p1, 0x0, "short");
-    FpSelector s1(CAT_SET_HEADER, &p1);
+    FpSelector s1(CAT_SET_HEADER, nullptr, &p1);
 
     CHECK(s0.is_better_than(s1, false, RULE_WO_DIR));
 }
@@ -598,11 +582,11 @@ TEST_CASE("fp_pkt_key_port", "[FastPatternSelect]")
 {
     PatternMatchData p0;
     set_pmd(p0, 0x0, "short");
-    FpSelector s0(CAT_SET_RAW, &p0);
+    FpSelector s0(CAT_SET_RAW, nullptr, &p0);
 
     PatternMatchData p1;
     set_pmd(p1, 0x0, "longer");
-    FpSelector s1(CAT_SET_KEY, &p1);
+    FpSelector s1(CAT_SET_KEY, nullptr, &p1);
 
     CHECK(!s0.is_better_than(s1, false, RULE_WO_DIR));
 }
@@ -611,11 +595,11 @@ TEST_CASE("fp_pkt_key_port_user", "[FastPatternSelect]")
 {
     PatternMatchData p0;
     set_pmd(p0, 0x10, "short");
-    FpSelector s0(CAT_SET_KEY, &p0);
+    FpSelector s0(CAT_SET_KEY, nullptr, &p0);
 
     PatternMatchData p1;
     set_pmd(p1, 0x0, "longer");
-    FpSelector s1(CAT_SET_KEY, &p1);
+    FpSelector s1(CAT_SET_KEY, nullptr, &p1);
 
     CHECK(s0.is_better_than(s1, false, RULE_WO_DIR));
 }
@@ -624,11 +608,11 @@ TEST_CASE("fp_pkt_key_port_user_user", "[FastPatternSelect]")
 {
     PatternMatchData p0;
     set_pmd(p0, 0x10, "longer");
-    FpSelector s0(CAT_SET_KEY, &p0);
+    FpSelector s0(CAT_SET_KEY, nullptr, &p0);
 
     PatternMatchData p1;
     set_pmd(p1, 0x10, "short");
-    FpSelector s1(CAT_SET_KEY, &p1);
+    FpSelector s1(CAT_SET_KEY, nullptr, &p1);
 
     CHECK(!s0.is_better_than(s1, false, RULE_WO_DIR));
 }
@@ -637,11 +621,11 @@ TEST_CASE("fp_pkt_key_port_user_user2", "[FastPatternSelect]")
 {
     PatternMatchData p0;
     set_pmd(p0, 0x0, "longer");
-    FpSelector s0(CAT_SET_KEY, &p0);
+    FpSelector s0(CAT_SET_KEY, nullptr, &p0);
 
     PatternMatchData p1;
     set_pmd(p1, 0x10, "short");
-    FpSelector s1(CAT_SET_KEY, &p1);
+    FpSelector s1(CAT_SET_KEY, nullptr, &p1);
 
     CHECK(!s0.is_better_than(s1, false, RULE_WO_DIR));
 }
@@ -650,11 +634,11 @@ TEST_CASE("fp_pkt_key_srvc_1", "[FastPatternSelect]")
 {
     PatternMatchData p0;
     set_pmd(p0, 0x0, "short");
-    FpSelector s0(CAT_SET_RAW, &p0);
+    FpSelector s0(CAT_SET_RAW, nullptr, &p0);
 
     PatternMatchData p1;
     set_pmd(p1, 0x0, "longer");
-    FpSelector s1(CAT_SET_KEY, &p1);
+    FpSelector s1(CAT_SET_KEY, nullptr, &p1);
 
     CHECK(s1.is_better_than(s0, true, RULE_WO_DIR));
 }
@@ -663,11 +647,11 @@ TEST_CASE("fp_pkt_key_srvc_2", "[FastPatternSelect]")
 {
     PatternMatchData p0;
     set_pmd(p0, 0x0, "longer");
-    FpSelector s0(CAT_SET_RAW, &p0);
+    FpSelector s0(CAT_SET_RAW, nullptr, &p0);
 
     PatternMatchData p1;
     set_pmd(p1, 0x0, "short");
-    FpSelector s1(CAT_SET_KEY, &p1);
+    FpSelector s1(CAT_SET_KEY, nullptr, &p1);
 
     CHECK(s0.is_better_than(s1, true, RULE_WO_DIR));
 }
@@ -676,11 +660,11 @@ TEST_CASE("fp_pkt_key_srvc_rsp", "[FastPatternSelect]")
 {
     PatternMatchData p0;
     set_pmd(p0, 0x0, "short");
-    FpSelector s0(CAT_SET_RAW, &p0);
+    FpSelector s0(CAT_SET_RAW, nullptr, &p0);
 
     PatternMatchData p1;
     set_pmd(p1, 0x0, "longer");
-    FpSelector s1(CAT_SET_KEY, &p1);
+    FpSelector s1(CAT_SET_KEY, nullptr, &p1);
 
     CHECK(!s0.is_better_than(s1, true, RULE_FROM_SERVER));
     CHECK(s1.is_better_than(s0, true, RULE_FROM_SERVER));

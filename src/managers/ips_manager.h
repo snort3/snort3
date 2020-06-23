@@ -64,7 +64,7 @@ public:
     static bool option_begin(snort::SnortConfig*, const char* key, SnortProtocolId);
     static bool option_set(
         snort::SnortConfig*, const char* key, const char* opt, const char* val);
-    static bool option_end(
+    static snort::IpsOption* option_end(
         snort::SnortConfig*, OptTreeNode*, SnortProtocolId, const char* key, snort::RuleOptType&);
 
     static void delete_option(snort::IpsOption*);

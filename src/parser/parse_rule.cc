@@ -88,6 +88,7 @@ static rule_count_t svcCnt;  // dummy for now
 static bool s_ignore = false;  // for skipping drop rules when not inline, etc.
 static bool s_capture = false;
 
+static std::string s_type;
 static std::string s_body;
 
 struct SoRule
@@ -168,28 +169,20 @@ static int FinishPortListRule(
     if ( !rtn->any_src_port() and !rtn->any_dst_port() )
         prc->both++;
 
+    int src_cnt = rtn->any_src_port() ? 65535 : PortObjectPortCount(rtn->src_portobject);
+    int dst_cnt = rtn->any_dst_port() ? 65535 : PortObjectPortCount(rtn->dst_portobject);
+
     /* If not an any-any rule test for port bleedover, if we are using a
      * single rule group, don't bother */
     if ( !fp->get_single_rule_group() and !rtn->any_any_port() )
     {
-        int dst_cnt = 0;
-        int src_cnt = 0;
+        if (src_cnt >= fp->get_bleed_over_port_limit())
+            ++large_port_group;
 
-        if ( !rtn->any_src_port() )
-        {
-            src_cnt = PortObjectPortCount(rtn->src_portobject);
-            if (src_cnt >= fp->get_bleed_over_port_limit())
-                large_port_group = 1;
-        }
+        if (dst_cnt >= fp->get_bleed_over_port_limit())
+            ++large_port_group;
 
-        if ( !rtn->any_dst_port() )
-        {
-            dst_cnt = PortObjectPortCount(rtn->dst_portobject);
-            if (dst_cnt >= fp->get_bleed_over_port_limit())
-                large_port_group = 1;
-        }
-
-        if (large_port_group && fp->get_bleed_over_warnings())
+        if (large_port_group == 2 && fp->get_bleed_over_warnings())
         {
             LogMessage("***Bleedover Port Limit(%d) Exceeded for rule %u:%u "
                 "(%d)ports: ", fp->get_bleed_over_port_limit(),
@@ -211,7 +204,7 @@ static int FinishPortListRule(
      * any-any port rules...
      * If we have an any-any rule or a large port group or
      * were using a single rule group we make it an any-any rule. */
-    if ( rtn->any_any_port() or large_port_group or fp->get_single_rule_group() )
+    if ( rtn->any_any_port() or large_port_group == 2 or fp->get_single_rule_group() )
     {
         if (otn->snort_protocol_id == SNORT_PROTO_IP)
         {
@@ -231,8 +224,10 @@ static int FinishPortListRule(
         return 0; /* done */
     }
 
+    bool both_dirs = false;
+
     /* add rule index to dst table if we have a specific dst port or port list */
-    if ( !rtn->any_dst_port() )
+    if ( dst_cnt < fp->get_bleed_over_port_limit() and dst_cnt <= src_cnt )
     {
         prc->dst++;
 
@@ -248,7 +243,7 @@ static int FinishPortListRule(
         PortObjectAddRule(pox, otn->ruleIndex);
 
         /* if bidir, add this rule and port group to the src table */
-        if (rtn->flags & RuleTreeNode::BIDIRECTIONAL)
+        if ( rtn->flags & RuleTreeNode::BIDIRECTIONAL )
         {
             pox = PortTableFindInputPortObjectPorts(srcTable, rtn->dst_portobject);
             if ( !pox )
@@ -258,11 +253,12 @@ static int FinishPortListRule(
             }
 
             PortObjectAddRule(pox, otn->ruleIndex);
+            both_dirs = true;
         }
     }
 
     /* add rule index to src table if we have a specific src port or port list */
-    if ( !rtn->any_src_port() )
+    if ( src_cnt < fp->get_bleed_over_port_limit() and src_cnt < dst_cnt )
     {
         prc->src++;
         PortObject* pox = PortTableFindInputPortObjectPorts(srcTable, rtn->src_portobject);
@@ -275,7 +271,7 @@ static int FinishPortListRule(
         PortObjectAddRule(pox, otn->ruleIndex);
 
         /* if bidir, add this rule and port group to the dst table */
-        if (rtn->flags & RuleTreeNode::BIDIRECTIONAL)
+        if ( !both_dirs and rtn->flags & RuleTreeNode::BIDIRECTIONAL )
         {
             pox = PortTableFindInputPortObjectPorts(dstTable, rtn->src_portobject);
             if ( !pox )
@@ -953,6 +949,7 @@ void parse_rule_print()
 
 void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
 {
+    s_type = s;
     rtn = RuleTreeNode();
 
     if ( s_so_rule )
@@ -1122,7 +1119,11 @@ void parse_rule_opt_end(SnortConfig* sc, const char* key, OptTreeNode* otn)
         s_body += ";";
     }
     RuleOptType type = OPT_TYPE_MAX;
-    IpsManager::option_end(sc, otn, otn->snort_protocol_id, key, type);
+    IpsOption* ips = IpsManager::option_end(sc, otn, otn->snort_protocol_id, key, type);
+    CursorActionType cat = ips ? ips->get_cursor_type() : CAT_NONE;
+
+    if ( cat > CAT_ADJUST )
+        otn->sticky_buf = get_pm_type(cat);
 
     if ( type != OPT_TYPE_META )
         otn->num_detection_opts++;
@@ -1161,7 +1162,6 @@ OptTreeNode* parse_rule_open(SnortConfig* sc, RuleTreeNode& rtn, bool stub)
     return otn;
 }
 
-// FIXIT-H parse_rule_state needs parsing policy for reload
 static void parse_rule_state(SnortConfig* sc, const RuleTreeNode& rtn, OptTreeNode* otn)
 {
     if ( !otn->sigInfo.gid )
@@ -1180,6 +1180,7 @@ static void parse_rule_state(SnortConfig* sc, const RuleTreeNode& rtn, OptTreeNo
     };
     RuleState state =
     {
+        s_type,
         rtn.action,
         otn->enable
     };
@@ -1328,9 +1329,6 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
     OptFpList* fpl = AddOptFuncToList(OptListEnd, otn);
     fpl->type = RULE_OPTION_TYPE_LEAF_NODE;
 
-    validate_fast_pattern(otn);
-    OtnLookupAdd(sc->otn_map, otn);
-
     if ( is_service_protocol(otn->snort_protocol_id) )
     {
         // copy required because the call to add_service_to_otn can 
@@ -1338,6 +1336,9 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
         std::string service = sc->proto_ref->get_name(otn->snort_protocol_id);
         add_service_to_otn(sc, otn, service.c_str());
     }
+
+    validate_services(sc, otn);
+    OtnLookupAdd(sc->otn_map, otn);
 
     if ( FinishPortListRule(sc->port_tables, new_rtn, otn, sc->fast_pattern_config) )
         ParseError("Failed to finish a port list rule.");

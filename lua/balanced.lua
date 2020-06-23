@@ -5,6 +5,8 @@
 
 arp_spoof = nil
 
+detection = { pcre_override = false }
+
 http_inspect.request_depth = 300
 http_inspect.response_depth = 500
 

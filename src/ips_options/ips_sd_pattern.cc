@@ -28,6 +28,7 @@
 #include <hs_runtime.h>
 
 #include "detection/pattern_match_data.h"
+#include "detection/treenodes.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -146,10 +147,14 @@ SdPatternOption::~SdPatternOption()
 
 uint32_t SdPatternOption::hash() const
 {
-    uint32_t a = 0, b = 0, c = config.threshold;
+    uint32_t a = config.pmd.pattern_size;
+    uint32_t b = config.pmd.pm_type;
+    uint32_t c = config.threshold;
+
     mix_str(a, b, c, config.pii.c_str());
     mix_str(a, b, c, get_name());
     finalize(a, b, c);
+
     return c;
 }
 
@@ -160,7 +165,7 @@ bool SdPatternOption::operator==(const IpsOption& ips) const
 
     const SdPatternOption& rhs = static_cast<const SdPatternOption&>(ips);
 
-    if ( config == rhs.config )
+    if ( config == rhs.config )  // FIXIT-H seems incorrect
         return true;
 
     return false;
@@ -397,11 +402,12 @@ static void mod_dtor(Module* p)
     delete p;
 }
 
-static IpsOption* sd_pattern_ctor(Module* m, OptTreeNode*)
+static IpsOption* sd_pattern_ctor(Module* m, OptTreeNode* otn)
 {
     SdPatternModule* mod = (SdPatternModule*)m;
     SdPatternConfig c;
     mod->get_data(c);
+    c.pmd.pm_type = otn->sticky_buf;
     return new SdPatternOption(c);
 }
 

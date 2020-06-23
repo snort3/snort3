@@ -33,8 +33,6 @@ smtp.decompress_zip = true
 
 stream_ip.min_frag_length = 100
 
-stream_tcp.require_3whs = 180
-
 stream_tcp.small_segments =
 {
     count = 3,

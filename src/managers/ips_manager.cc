@@ -264,12 +264,12 @@ bool IpsManager::option_set(
     return true;
 }
 
-bool IpsManager::option_end(
+IpsOption* IpsManager::option_end(
     SnortConfig* sc, OptTreeNode* otn, SnortProtocolId snort_protocol_id,
     const char* key, RuleOptType& type)
 {
     if ( current_keyword.empty() )
-        return false;
+        return nullptr;
 
     assert(!strcmp(current_keyword.c_str(), key));
 
@@ -290,14 +290,14 @@ bool IpsManager::option_end(
     {
         ParseError("unknown option %s", key);
         current_keyword.clear();
-        return false;
+        return nullptr;
     }
 
     if ( mod and !mod->end(key, 0, sc) )
     {
         ParseError("can't finalize %s", key);
         current_keyword.clear();
-        return false;
+        return nullptr;
     }
 
     IpsOption* ips = opt->api->ctor(mod, otn);
@@ -305,7 +305,7 @@ bool IpsManager::option_end(
     current_keyword.clear();
 
     if ( !ips )
-        return ( type == OPT_TYPE_META );
+        return nullptr;
 
     if ( void* prev = add_detection_option(sc, ips->get_type(), ips) )
     {
@@ -326,7 +326,7 @@ bool IpsManager::option_end(
         ParseWarning(WARN_RULES,
             "at most one action per rule is allowed; other actions disabled");
     }
-    return true;
+    return ips;
 }
 
 //-------------------------------------------------------------------------

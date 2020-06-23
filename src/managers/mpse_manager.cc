@@ -141,12 +141,6 @@ void MpseManager::stop_search_engine(const MpseApi* api)
         api->stop();
 }
 
-bool MpseManager::search_engine_trim(const MpseApi* api)
-{
-    assert(api);
-    return (api->flags & MPSE_TRIM) != 0;
-}
-
 bool MpseManager::is_async_capable(const MpseApi* api)
 {
     assert(api);

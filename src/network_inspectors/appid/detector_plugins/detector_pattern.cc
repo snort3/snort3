@@ -130,7 +130,7 @@ static void register_pattern(SearchTool** patterns, Pattern* pattern)
 {
     if (!*patterns)
     {
-        *patterns = new SearchTool("ac_full", true);
+        *patterns = new SearchTool;
         if (!*patterns)
         {
             ErrorMessage("Error initializing the pattern table\n");

@@ -74,7 +74,6 @@ public:
     static void setup_search_engine(const snort::MpseApi*, snort::SnortConfig*);
     static void start_search_engine(const snort::MpseApi*);
     static void stop_search_engine(const snort::MpseApi*);
-    static bool search_engine_trim(const snort::MpseApi*);
     static bool is_async_capable(const snort::MpseApi*);
     static bool is_regex_capable(const snort::MpseApi*);
     static bool parallel_compiles(const snort::MpseApi*);

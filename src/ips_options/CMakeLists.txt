@@ -56,7 +56,6 @@ set (IPS_SOURCES
     ips_dsize.cc
     ips_file_data.cc
     ips_flow.cc
-    ips_flow.h
     ips_flowbits.cc
     ips_flowbits.h
     ips_hash.cc

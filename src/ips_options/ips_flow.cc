@@ -22,8 +22,6 @@
 #include "config.h"
 #endif
 
-#include "ips_flow.h"
-
 #include "detection/treenodes.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -199,85 +197,56 @@ IpsOption::EvalStatus FlowCheckOption::eval(Cursor&, Packet* p)
 }
 
 //-------------------------------------------------------------------------
-// public methods
-//-------------------------------------------------------------------------
-
-int OtnFlowFromServer(OptTreeNode* otn)
-{
-    FlowCheckOption* fco =
-        (FlowCheckOption*)get_rule_type_data(otn, s_name);
-
-    if (fco )
-    {
-        if ( fco->config.from_server )
-            return 1;
-    }
-    return 0;
-}
-
-int OtnFlowFromClient(OptTreeNode* otn)
-{
-    FlowCheckOption* fco =
-        (FlowCheckOption*)get_rule_type_data(otn, s_name);
-
-    if (fco )
-    {
-        if ( fco->config.from_client )
-            return 1;
-    }
-    return 0;
-}
-
-//-------------------------------------------------------------------------
 // support methods
 //-------------------------------------------------------------------------
 
-static void flow_verify(FlowCheckData* fcd)
+static bool flow_verify(FlowCheckData* fcd)
 {
     if (fcd->from_client && fcd->from_server)
     {
         ParseError("can't use both from_client and flow_from server");
-        return;
+        return false;
     }
 
     if ((fcd->ignore_reassembled & IGNORE_STREAM) && (fcd->only_reassembled & ONLY_STREAM))
     {
         ParseError("can't use no_stream and only_stream");
-        return;
+        return false;
     }
 
     if ((fcd->ignore_reassembled & IGNORE_FRAG) && (fcd->only_reassembled & ONLY_FRAG))
     {
         ParseError("can't use no_frag and only_frag");
-        return;
+        return false;
     }
 
     if (fcd->stateless && (fcd->from_client || fcd->from_server))
     {
         ParseError("can't use flow: stateless option with other options");
-        return;
+        return false;
     }
 
     if (fcd->stateless && fcd->established)
     {
         ParseError("can't specify established and stateless "
             "options in same rule");
-        return;
+        return false;
     }
 
     if (fcd->stateless && fcd->unestablished)
     {
         ParseError("can't specify unestablished and stateless "
             "options in same rule");
-        return;
+        return false;
     }
 
     if (fcd->established && fcd->unestablished)
     {
         ParseError("can't specify unestablished and established "
             "options in same rule");
-        return;
+        return false;
     }
+    return true;
 }
 
 //-------------------------------------------------------------------------
@@ -331,6 +300,7 @@ public:
     FlowModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
@@ -347,6 +317,11 @@ bool FlowModule::begin(const char*, int, SnortConfig*)
 {
     memset(&data, 0, sizeof(data));
     return true;
+}
+
+bool FlowModule::end(const char*, int, SnortConfig*)
+{
+    return flow_verify(&data);
 }
 
 bool FlowModule::set(const char*, Value& v, SnortConfig*)
@@ -387,7 +362,6 @@ bool FlowModule::set(const char*, Value& v, SnortConfig*)
     else
         return false;
 
-    flow_verify(&data);
     return true;
 }
 
@@ -411,6 +385,12 @@ static IpsOption* flow_ctor(Module* p, OptTreeNode* otn)
 
     if ( m->data.stateless )
         otn->set_stateless();
+
+    if ( m->data.from_server )
+        otn->set_to_client();
+
+    else if ( m->data.from_client )
+        otn->set_to_server();
 
     if (otn->snort_protocol_id == SNORT_PROTO_ICMP)
     {

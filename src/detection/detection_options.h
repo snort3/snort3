@@ -89,13 +89,14 @@ struct dot_node_state_t
 struct detection_option_tree_node_t
 {
     eval_func_t evaluate;
+    detection_option_tree_node_t** children;
+    void* option_data;
+    dot_node_state_t* state;
+    struct OptTreeNode* otn;
     int is_relative;
     int num_children;
     int relative_children;
-    void* option_data;
     option_type_t option_type;
-    detection_option_tree_node_t** children;
-    dot_node_state_t* state;
 };
 
 struct detection_option_tree_root_t

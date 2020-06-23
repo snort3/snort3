@@ -38,7 +38,6 @@
 #include <cassert>
 
 #include "hash/ghash.h"
-#include "ips_options/ips_flow.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "parser/parser.h"
@@ -164,10 +163,10 @@ static void ServiceMapAddOtn(
 {
     assert(servicename and otn);
 
-    if ( !OtnFlowFromClient(otn) )
+    if ( !otn->to_server() )
         ServiceMapAddOtnRaw(srmm->to_cli, servicename, otn);
 
-    if ( !OtnFlowFromServer(otn) )
+    if ( !otn->to_client() )
         ServiceMapAddOtnRaw(srmm->to_srv, servicename, otn);
 }
 

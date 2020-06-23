@@ -27,6 +27,7 @@
 #include "detection/rule_option_types.h"
 #include "main/policy.h"
 #include "main/snort_types.h"
+#include "ports/port_group.h"
 #include "time/clock_defs.h"
 
 namespace snort
@@ -169,6 +170,8 @@ struct OptTreeNode
     static constexpr Flag STATELESS  = 0x02;
     static constexpr Flag RULE_STATE = 0x04;
     static constexpr Flag META_MATCH = 0x08;
+    static constexpr Flag TO_CLIENT  = 0x10;
+    static constexpr Flag TO_SERVER  = 0x20;
 
     /* metadata about signature */
     SigInfo sigInfo;
@@ -178,6 +181,9 @@ struct OptTreeNode
     OptFpList* opt_func = nullptr;
     OutputSet* outputFuncs = nullptr; /* per sid enabled output functions */
     snort::IpsOption* agent = nullptr;
+
+    OptFpList* normal_fp_only = nullptr;
+    OptFpList* offload_fp_only = nullptr;
 
     struct THD_NODE* detection_filter = nullptr; /* if present, evaluated last, after header checks */
     TagData* tag = nullptr;
@@ -194,6 +200,8 @@ struct OptTreeNode
     uint16_t longestPatternLen = 0;
     IpsPolicy::Enable enable;
     Flag flags = 0;
+
+    uint8_t sticky_buf = PM_TYPE_PKT; // parsing only
 
     void set_warned_fp()
     { flags |= WARNED_FP; }
@@ -227,6 +235,20 @@ struct OptTreeNode
 
     bool metadata_matched() const
     { return (flags & META_MATCH) != 0; }
+
+    void set_to_client()
+    { flags |= TO_CLIENT; }
+
+    bool to_client()
+    { return (flags & TO_CLIENT) != 0; }
+
+    void set_to_server()
+    { flags |= TO_SERVER; }
+
+    bool to_server()
+    { return (flags & TO_SERVER) != 0; }
+
+    void update_fp(snort::IpsOption*);
 };
 
 typedef int (* RuleOptEvalFunc)(void*, Cursor&, snort::Packet*);

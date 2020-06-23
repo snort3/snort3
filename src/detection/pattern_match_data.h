@@ -70,7 +70,6 @@ struct PatternMatchData
     uint16_t fp_length;
 
     // not used by ips_content
-    int8_t fp_only;
     uint8_t pm_type;
 
     bool is_unbounded() const

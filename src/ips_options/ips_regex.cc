@@ -29,6 +29,7 @@
 #include <cassert>
 
 #include "detection/pattern_match_data.h"
+#include "detection/treenodes.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -43,14 +44,14 @@ using namespace snort;
 #define s_name "regex"
 
 #define s_help \
-    "rule option for matching payload data with hyperscan regex"
+    "rule option for matching payload data with hyperscan regex; uses pcre syntax"
 
 struct RegexConfig
 {
     hs_database_t* db;
     std::string re;
     PatternMatchData pmd;
-    bool pcre_conversion;
+    bool pcre_upgrade;
 
     RegexConfig()
     { reset(); }
@@ -60,7 +61,7 @@ struct RegexConfig
         memset(&pmd, 0, sizeof(pmd));
         re.clear();
         db = nullptr;
-        pcre_conversion = false;
+        pcre_upgrade = false;
     }
 };
 
@@ -120,14 +121,17 @@ RegexOption::~RegexOption()
 
 uint32_t RegexOption::hash() const
 {
-    uint32_t a = config.pmd.flags, b = config.pmd.mpse_flags, c = 0;
+    uint32_t a = config.pmd.flags;
+    uint32_t b = config.pmd.mpse_flags;
+    uint32_t c = config.pmd.pm_type;
+
     mix_str(a, b, c, config.re.c_str());
     mix_str(a, b, c, get_name());
     finalize(a, b, c);
+
     return c;
 }
 
-// see ContentOption::operator==()
 bool RegexOption::operator==(const IpsOption& ips) const
 {
     if ( !IpsOption::operator==(ips) )
@@ -135,11 +139,11 @@ bool RegexOption::operator==(const IpsOption& ips) const
 
     const RegexOption& rhs = (const RegexOption&)ips;
 
-    if ( config.pcre_conversion && rhs.config.pcre_conversion )
-        if ( config.re == rhs.config.re and
-             config.pmd.flags == rhs.config.pmd.flags and
-             config.pmd.mpse_flags == rhs.config.pmd.mpse_flags )
-            return true;
+    if ( config.re == rhs.config.re and
+         config.pmd.pm_type == rhs.config.pmd.pm_type and
+         config.pmd.flags == rhs.config.pmd.flags and
+         config.pmd.mpse_flags == rhs.config.pmd.mpse_flags )
+        return true;
 
     return false;
 }
@@ -258,111 +262,118 @@ RegexModule::~RegexModule()
 bool RegexModule::begin(const char* name, int, SnortConfig*)
 {
     config.reset();
-    config.pmd.flags |= PatternMatchData::NO_FP;
     config.pmd.mpse_flags |= HS_FLAG_SINGLEMATCH;
 
-    // if regex is in pcre syntax set conversion mode
     if ( strcmp(name, "pcre") == 0 )
-        config.pcre_conversion = true;
+        config.pcre_upgrade = true;
 
     return true;
 }
 
-// The regex string received from the ips_pcre plugin must be scrubbed to remove
+// The regex string is in pcre syntax so it must be scrubbed to remove
 // two characters from  the front; an extra '"' and the '/' and also the same
 // two characters from the end of the string as well as any pcre modifier flags
 // included in the expression.  The modifier flags are checked to set the
 // corresponding hyperscan regex engine flags.
-// Hyperscan regex also does not support negated pcre expression so negated expression
-// are not converted and will be compiled by the pcre engine.
 bool RegexModule::convert_pcre_to_regex_form()
 {
-    size_t pos = config.re.find_first_of("\"!");
-    if (pos != std::string::npos and config.re[pos] == '!')
-        return false;
-
-    config.re.erase(0,2);
-    std::size_t re_end = config.re.rfind("/");
-    if ( re_end != std::string::npos )
+    // we get string with quotes so length is at least 3
+    // start with a bang:  ! "/regex/smi"
+    if ( config.re[0] == '!' )
     {
-        std::size_t mod_len = (config.re.length() - 2) - re_end;
-        std::string modifiers = config.re.substr(re_end + 1, mod_len);
-        std::size_t erase_len = config.re.length() - re_end;
-        config.re.erase(re_end, erase_len);
-
-        for( char& c : modifiers )
-        {
-            switch (c)
-            {
-            case 'i':
-                config.pmd.mpse_flags |= HS_FLAG_CASELESS;
-                config.pmd.set_no_case();
-                break;
-
-            case 'm':
-                config.pmd.mpse_flags |= HS_FLAG_MULTILINE;
-                break;
-
-            case 's':
-                config.pmd.mpse_flags |= HS_FLAG_DOTALL;
-                break;
-
-            case 'O':
-                break;
-
-            case 'R':
-                config.pmd.set_relative();
-                break;
-
-            default:
-                return false;
-                break;
-            }
-        }
-
-        return true;
+        if ( !config.pcre_upgrade )
+            ParseError("regex does not (yet) support negation");
+        return false;
     }
 
-    return false;
+    // remove quotes: "/regex/smi" -> /regex/smi
+    config.re.erase(0, 1);
+    config.re.erase(config.re.length() - 1, 1);
+
+    // remove leading slash: /regex/smi -> regex/smi
+    size_t len = config.re.length();
+
+    if ( len < 3 or config.re[0] != '/' )
+    {
+        ParseError("regex uses pcre syntax");
+        return false;
+    }
+    config.re.erase(0, 1);
+
+    // remove trailing slash: regex/smi -> regexsmi
+    size_t re_end = config.re.rfind("/");
+
+    if ( re_end == std::string::npos )
+    {
+        ParseError("regex uses pcre syntax");
+        return false;
+    }
+    config.re.erase(re_end, 1);
+
+    // capture and remove optional modifiers: regex/smi -> regex, smi
+    std::string modifiers;
+    len = config.re.length() - re_end;
+
+    if ( len > 0 )
+    {
+        modifiers = config.re.substr(re_end, len);
+        config.re.erase(re_end, len);
+    }
+
+    // finally, process the modifiers
+    for ( char& c : modifiers )
+    {
+        switch ( c )
+        {
+        case 'i':
+            config.pmd.mpse_flags |= HS_FLAG_CASELESS;
+            config.pmd.set_no_case();
+            break;
+
+        case 'm':
+            config.pmd.mpse_flags |= HS_FLAG_MULTILINE;
+            break;
+
+        case 's':
+            config.pmd.mpse_flags |= HS_FLAG_DOTALL;
+            break;
+
+        case 'O':
+            if ( !config.pcre_upgrade )
+                ParseWarning(WARN_RULES, "regex does not support override, ignored");
+            break;
+
+        case 'R':
+            config.pmd.set_relative();
+            break;
+
+        default:
+            return false;
+        }
+    }
+    return true;
 }
 
 bool RegexModule::set(const char*, Value& v, SnortConfig*)
 {
-    bool valid_opt = true;
-
     if ( v.is("~re") )
     {
         config.re = v.get_string();
-
-        if ( config.pcre_conversion )
-            valid_opt = convert_pcre_to_regex_form();
-        else
-        {
-            // remove quotes
-            config.re.erase(0, 1);
-            config.re.erase(config.re.length() - 1, 1);
-        }
+        return convert_pcre_to_regex_form();
     }
-    else if ( v.is("dotall") )
-        config.pmd.mpse_flags |= HS_FLAG_DOTALL;
     else if ( v.is("fast_pattern") )
-    {
-        config.pmd.flags &= ~PatternMatchData::NO_FP;
-        config.pmd.flags |= PatternMatchData::FAST_PAT;
-    }
-    else if ( v.is("multiline") )
-        config.pmd.mpse_flags |= HS_FLAG_MULTILINE;
+        config.pmd.set_fast_pattern();
+
+
     else if ( v.is("nocase") )
     {
         config.pmd.mpse_flags |= HS_FLAG_CASELESS;
         config.pmd.set_no_case();
     }
-    else if ( v.is("relative") )
-        config.pmd.set_relative();
     else
-        valid_opt = false;
+        return false;
 
-    return valid_opt;
+    return true;
 }
 
 bool RegexModule::end(const char*, int, SnortConfig*)
@@ -373,12 +384,16 @@ bool RegexModule::end(const char*, int, SnortConfig*)
         return false;
     }
 
+    if ( !config.pmd.is_fast_pattern() )
+        config.pmd.flags |= PatternMatchData::NO_FP;
+
     hs_compile_error_t* err = nullptr;
 
     if ( hs_compile(config.re.c_str(), config.pmd.mpse_flags, HS_MODE_BLOCK,
         nullptr, &config.db, &err) or !config.db )
     {
-        if ( !config.pcre_conversion )
+        // gracefully fall back to pcre upon upgrade failure
+        if ( !config.pcre_upgrade )
             ParseError("can't compile regex '%s'", config.re.c_str());
         hs_free_compile_error(err);
         return false;
@@ -396,11 +411,12 @@ static Module* mod_ctor()
 static void mod_dtor(Module* p)
 { delete p; }
 
-static IpsOption* regex_ctor(Module* m, OptTreeNode*)
+static IpsOption* regex_ctor(Module* m, OptTreeNode* otn)
 {
     RegexModule* mod = (RegexModule*)m;
     RegexConfig c;
     mod->get_data(c);
+    c.pmd.pm_type = otn->sticky_buf;
     return new RegexOption(c);
 }
 

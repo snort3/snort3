@@ -180,13 +180,37 @@ bool HttpInspect::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffe
     {
     case InspectionBuffer::IBT_KEY:
         return get_buf(HTTP_BUFFER_URI, p, b);
+
     case InspectionBuffer::IBT_HEADER:
         if (get_latest_is(p) == IS_TRAILER)
             return get_buf(HTTP_BUFFER_TRAILER, p, b);
         else
             return get_buf(HTTP_BUFFER_HEADER, p , b);
+
     case InspectionBuffer::IBT_BODY:
         return get_buf(HTTP_BUFFER_CLIENT_BODY, p, b);
+
+    case InspectionBuffer::IBT_RAW_KEY:
+        return get_buf(HTTP_BUFFER_RAW_URI, p , b);
+
+    case InspectionBuffer::IBT_RAW_HEADER:
+        if (get_latest_is(p) == IS_TRAILER)
+            return get_buf(HTTP_BUFFER_RAW_TRAILER, p, b);
+        else
+            return get_buf(HTTP_BUFFER_RAW_HEADER, p , b);
+
+    case InspectionBuffer::IBT_METHOD:
+        return get_buf(HTTP_BUFFER_METHOD, p , b);
+
+    case InspectionBuffer::IBT_STAT_CODE:
+        return get_buf(HTTP_BUFFER_STAT_CODE, p , b);
+
+    case InspectionBuffer::IBT_STAT_MSG:
+        return get_buf(HTTP_BUFFER_STAT_MSG, p , b);
+
+    case InspectionBuffer::IBT_COOKIE:
+        return get_buf(HTTP_BUFFER_COOKIE, p , b);
+
     default:
         return false;
     }
@@ -227,6 +251,7 @@ bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBu
     switch (ibt)
     {
     case InspectionBuffer::IBT_KEY:
+    case InspectionBuffer::IBT_RAW_KEY:
         // Many rules targeting POST feature http_uri fast pattern with http_client_body. We
         // accept the performance hit of rerunning http_uri fast pattern with request body message
         // sections
@@ -234,6 +259,7 @@ bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBu
             return false;
         break;
     case InspectionBuffer::IBT_HEADER:
+    case InspectionBuffer::IBT_RAW_HEADER:
         // http_header fast patterns for response bodies limited to first section
         if ((get_latest_src(p) == SRC_SERVER) && (get_latest_is(p) == IS_BODY))
             return false;
@@ -242,8 +268,21 @@ bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBu
         if ((get_latest_is(p) != IS_FIRST_BODY) && (get_latest_is(p) != IS_BODY))
             return false;
         break;
+    case InspectionBuffer::IBT_METHOD:
+        if ((get_latest_src(p) != SRC_CLIENT) || (get_latest_is(p) != IS_HEADER))
+            return false;
+        break;
+    case InspectionBuffer::IBT_STAT_CODE:
+    case InspectionBuffer::IBT_STAT_MSG:
+        if ((get_latest_src(p) != SRC_SERVER) || (get_latest_is(p) != IS_HEADER))
+            return false;
+        break;
+    case InspectionBuffer::IBT_COOKIE:
+        if (get_latest_is(p) != IS_HEADER)
+            return false;
+        break;
     default:
-        return false;
+        break;
     }
     return get_buf(ibt, p, b);
 }
