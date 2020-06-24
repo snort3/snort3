@@ -5,6 +5,9 @@
 
 arp_spoof = nil
 
+-- bug: false will limit http file_data
+file_id.enable_signature = true
+
 ftp_server.check_encrypted = true
 
 detection =
