@@ -127,7 +127,6 @@ enum TunnelFlags
 
 class FastPatternConfig;
 class RuleStateMap;
-class ThreadConfig;
 class TraceConfig;
 
 struct srmm_table_t;
@@ -155,6 +154,7 @@ namespace snort
 {
 class GHash;
 class ProtocolReference;
+class ThreadConfig;
 class XHash;
 struct ProfilerConfig;
 
@@ -703,7 +703,7 @@ public:
 
     // runtime access to mutable config - main thread only, and only special cases
     SO_PUBLIC static SnortConfig* get_main_conf();
-    
+
     static void set_conf(const SnortConfig*);
 
     SO_PUBLIC void register_reload_resource_tuner(ReloadResourceTuner& rrt)

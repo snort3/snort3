@@ -1272,8 +1272,14 @@ static const Parameter thread_pinning_params[] =
     { "cpuset", Parameter::PT_STRING, nullptr, nullptr,
       "pin the associated thread to this cpuset" },
 
-    { "thread", Parameter::PT_INT, "0:65535", "0",
+    { "thread", Parameter::PT_INT, "0:65535", nullptr,
       "set cpu affinity for the <cur_thread_num> thread that runs" },
+
+    { "type", Parameter::PT_ENUM, "other|packet|main", nullptr,
+      "define which threads will have specified affinity, by their type" },
+
+    { "name", Parameter::PT_STRING, nullptr, nullptr,
+      "define which threads will have specified affinity, by thread name" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -1324,6 +1330,8 @@ public:
 private:
     int thread;
     CpuSet* cpuset;
+    string type;
+    string name;
 };
 
 bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
@@ -1356,8 +1364,15 @@ bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
         if (!(cpuset = ThreadConfig::validate_cpuset_string(v.get_string())))
             return false;
     }
+
     else if (v.is("thread"))
         thread = v.get_uint16();
+
+    else if (v.is("type"))
+        type = v.get_string();
+
+    else if (v.is("name"))
+        name = v.get_string();
 
     else
         return false;
@@ -1369,6 +1384,8 @@ bool ProcessModule::begin(const char*, int, SnortConfig*)
 {
     thread = -1;
     cpuset = nullptr;
+    type.clear();
+    name.clear();
     return true;
 }
 
@@ -1379,19 +1396,61 @@ bool ProcessModule::end(const char* fqn, int idx, SnortConfig* sc)
 
     if (!strcmp(fqn, "process.threads"))
     {
-        if (thread == -1)
-        {
-            ParseError("%s - no thread ID specified", fqn);
-            if (cpuset)
-                ThreadConfig::destroy_cpuset(cpuset);
-            return false;
-        }
         if (!cpuset)
         {
-            ParseError("%s - no cpuset specified for thread %d", fqn, thread);
+            ParseError("%s - no cpuset specified", fqn);
             return false;
         }
-        sc->thread_config->set_thread_affinity(STHREAD_TYPE_PACKET, thread, cpuset);
+
+        if (thread >= 0)
+        {
+            // Packet thread affinity.
+            if ( !(name.empty() && (type.empty() || type == "packet")) )
+            {
+                ParseError("%s - type or name specified for thread %d", fqn, thread);
+                ThreadConfig::destroy_cpuset(cpuset);
+                return false;
+            }
+
+            // Thread type is implicitly "packet".
+            sc->thread_config->set_thread_affinity(STHREAD_TYPE_PACKET, thread, cpuset);
+        }
+
+        else if (!type.empty() && name.empty())
+        {
+            // Type-based affinity: main, or other.
+            thread = ThreadConfig::DEFAULT_THREAD_ID;
+            if (type == "main")
+                sc->thread_config->set_thread_affinity(STHREAD_TYPE_MAIN, thread, cpuset);
+            else if (type == "other")
+                sc->thread_config->set_thread_affinity(STHREAD_TYPE_OTHER, thread, cpuset);
+            else
+            {
+                ParseError("%s - bad thread type %s", fqn, type.c_str());
+                ThreadConfig::destroy_cpuset(cpuset);
+                return false;
+            }
+        }
+
+        else if (type.empty() && !name.empty())
+        {
+            // name-based affinity
+            sc->thread_config->set_named_thread_affinity(name, cpuset);
+        }
+
+        else if (!type.empty() && !name.empty())
+        {
+            ParseError("%s - can't specify both type and name", fqn);
+            ThreadConfig::destroy_cpuset(cpuset);
+            return false;
+        }
+
+        else
+        {
+            ParseError("%s - none of thread, type or name specified", fqn);
+            ThreadConfig::destroy_cpuset(cpuset);
+            return false;
+        }
     }
 
     return true;

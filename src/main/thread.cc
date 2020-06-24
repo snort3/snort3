@@ -36,7 +36,7 @@
 
 static THREAD_LOCAL uint16_t run_num = 0;
 static THREAD_LOCAL unsigned instance_id = 0;
-static THREAD_LOCAL SThreadType thread_type = STHREAD_TYPE_MAIN;
+static THREAD_LOCAL SThreadType thread_type = STHREAD_TYPE_OTHER;
 
 void set_run_num(uint16_t num)
 { run_num = num; }

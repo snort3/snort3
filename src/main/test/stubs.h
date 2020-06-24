@@ -66,7 +66,6 @@ THREAD_LOCAL DAQStats daq_stats;
 void Profiler::start() { }
 void Profiler::stop(uint64_t) { }
 void Profiler::consolidate_stats() { }
-void ThreadConfig::implement_thread_affinity(SThreadType, unsigned) { }
 void Swapper::apply(Analyzer&) { }
 Swapper::~Swapper() { }
 void OopsHandler::tinit() { }
@@ -211,4 +210,5 @@ NetworkPolicy* get_network_policy() { return nullptr; }
 InspectionPolicy* get_inspection_policy() { return nullptr; }
 Flow::Flow() { }
 Flow::~Flow() { }
+void ThreadConfig::implement_thread_affinity(SThreadType, unsigned) { }
 }

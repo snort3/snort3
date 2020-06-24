@@ -7,6 +7,7 @@ set (INCLUDES
     snort_debug.h
     snort_types.h
     thread.h
+    thread_config.h
 )
 
 if ( ENABLE_SHELL )

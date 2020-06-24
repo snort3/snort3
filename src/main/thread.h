@@ -39,6 +39,7 @@
 
 enum SThreadType
 {
+    STHREAD_TYPE_OTHER,
     STHREAD_TYPE_PACKET,
     STHREAD_TYPE_MAIN
 };

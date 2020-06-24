@@ -991,6 +991,9 @@ static void snort_main()
     ControlMgmt::socket_init();
 #endif
 
+    SnortConfig::get_conf()->thread_config->implement_thread_affinity(
+        STHREAD_TYPE_MAIN, get_instance_id());
+
     max_pigs = ThreadConfig::get_instance_max();
     assert(max_pigs > 0);
 
