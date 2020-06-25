@@ -150,6 +150,7 @@ PegCount* AppIdModule::get_counts() const { return nullptr; }
 ProfileStats* AppIdModule::get_profile() const { return nullptr; }
 void AppIdModule::set_trace(const Trace*) const { }
 const TraceOption* AppIdModule::get_trace_options() const { return nullptr; }
+THREAD_LOCAL bool ThirdPartyAppIdContext::tp_reload_in_progress = false;
 
 // Stubs for config
 static AppIdConfig app_config;

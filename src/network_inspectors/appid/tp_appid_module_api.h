@@ -23,6 +23,7 @@
 
 #include <vector>
 #include <string>
+#include "main/thread.h"
 #include "tp_appid_types.h"
 
 #define THIRD_PARTY_APPID_API_VERSION 5
@@ -51,9 +52,12 @@ public:
     const std::string& module_name() const { return name; }
 
     virtual int tinit() = 0;
-    virtual int tfini() = 0;
+    virtual bool tfini(bool reload = false) = 0;
 
     virtual const ThirdPartyConfig& get_config() const { return cfg; }
+
+    void set_tp_reload_in_progress(bool value) { tp_reload_in_progress = value; }
+    bool get_tp_reload_in_progress() { return tp_reload_in_progress; }
 
 protected:
     const uint32_t version;
@@ -64,6 +68,7 @@ private:
     // No implicit constructor as derived classes need to provide
     // version and name.
     ThirdPartyAppIdContext() : version(0), name("") { }
+    static THREAD_LOCAL bool tp_reload_in_progress;
 };
 
 #endif

@@ -56,6 +56,7 @@ THREAD_LOCAL const Trace* appid_trace = nullptr;
 
 THREAD_LOCAL ProfileStats appid_perf_stats;
 THREAD_LOCAL AppIdStats appid_stats;
+THREAD_LOCAL bool ThirdPartyAppIdContext::tp_reload_in_progress = false;
 
 static const Parameter s_params[] =
 {
@@ -128,12 +129,13 @@ class ACThirdPartyAppIdContextSwap : public AnalyzerCommand
 {
 public:
     bool execute(Analyzer&, void**) override;
-    ACThirdPartyAppIdContextSwap(ThirdPartyAppIdContext* tp_ctxt, Request& current_request,
-        bool from_shell): tp_ctxt(tp_ctxt),request(current_request),
-        from_shell(from_shell) { }
+    ACThirdPartyAppIdContextSwap(const AppIdInspector& inspector, ThirdPartyAppIdContext* tp_ctxt,
+        Request& current_request, bool from_shell): inspector(inspector),
+        tp_ctxt(tp_ctxt),request(current_request), from_shell(from_shell) { }
     ~ACThirdPartyAppIdContextSwap() override;
     const char* stringify() override { return "THIRD-PARTY_CONTEXT_SWAP"; }
 private:
+    const AppIdInspector& inspector;
     ThirdPartyAppIdContext* tp_ctxt =  nullptr;
     Request& request;
     bool from_shell;
@@ -142,12 +144,13 @@ private:
 bool ACThirdPartyAppIdContextSwap::execute(Analyzer&, void**)
 {
     assert(tp_appid_thread_ctxt);
-    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
-    assert(inspector);
-    ThirdPartyAppIdContext* tp_appid_ctxt = inspector->get_ctxt().get_tp_appid_ctxt();
+    ThirdPartyAppIdContext* tp_appid_ctxt = inspector.get_ctxt().get_tp_appid_ctxt();
     assert(tp_appid_thread_ctxt != tp_appid_ctxt);
+    bool reload_in_progress = tp_appid_thread_ctxt->tfini(true);
+    tp_appid_thread_ctxt->set_tp_reload_in_progress(reload_in_progress);
+    if (reload_in_progress)
+        return false;
     request.respond("== swapping third-party configuration\n", from_shell);
-    tp_appid_thread_ctxt->tfini();
     tp_appid_ctxt->tinit();
     tp_appid_thread_ctxt = tp_appid_ctxt;
 
@@ -213,7 +216,6 @@ static int reload_third_party(lua_State* L)
         current_request.respond("== reload pending; retry\n", from_shell);
         return 0;
     }
-    Swapper::set_reload_in_progress(true);
     current_request.respond(".. reloading third-party\n", from_shell);
     AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
     if (!inspector)
@@ -228,8 +230,10 @@ static int reload_third_party(lua_State* L)
         current_request.respond("== reload third-party failed - third-party module doesn't exist\n", from_shell);
         return 0;
     }
+    Swapper::set_reload_in_progress(true);
     ctxt.create_tp_appid_ctxt();
-    main_broadcast_command(new ACThirdPartyAppIdContextSwap(old_ctxt, current_request, from_shell), from_shell);
+    main_broadcast_command(new ACThirdPartyAppIdContextSwap(*inspector, old_ctxt,
+        current_request, from_shell), from_shell);
     return 0;
 }
 
