@@ -623,7 +623,7 @@ SnortProtocolId AppInfoManager::add_appid_protocol_reference(const char* protoco
     return snort_protocol_id;
 }
 
-void AppInfoManager::init_appid_info_table(AppIdConfig& config,
+void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
     SnortConfig* sc, OdpContext& odp_ctxt)
 {
     if (!config.app_detector_dir)

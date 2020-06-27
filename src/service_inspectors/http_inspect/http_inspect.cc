@@ -232,7 +232,7 @@ bool HttpInspect::get_buf(unsigned id, Packet* p, InspectionBuffer& b)
 }
 
 const Field& HttpInspect::http_get_buf(Cursor& c, Packet* p,
-    HttpBufferInfo& buffer_info)
+    const HttpBufferInfo& buffer_info)
 {
     HttpMsgSection* current_section = HttpContextData::get_snapshot(p);
 

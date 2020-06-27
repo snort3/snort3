@@ -82,7 +82,7 @@ static const char* dce2_get_policy_name(DCE2_Policy policy)
     return policyStr;
 }
 
-bool dce2_set_common_config(Value& v, dce2CommonProtoConf& common)
+bool dce2_set_common_config(const Value& v, dce2CommonProtoConf& common)
 {
     if ( v.is("limit_alerts") )
         common.limit_alerts = v.get_bool();
@@ -99,7 +99,7 @@ bool dce2_set_common_config(Value& v, dce2CommonProtoConf& common)
     return true;
 }
 
-bool dce2_set_co_config(Value& v, dce2CoProtoConf& co)
+bool dce2_set_co_config(const Value& v, dce2CoProtoConf& co)
 {
     if (dce2_set_common_config(v, co.common))
         return true;

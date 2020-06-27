@@ -113,7 +113,7 @@ StreamSplitter::Status DceHttpProxySplitter::match_response_head(const uint8_t* 
 
 /* match_request() is only used by the s2c splitter instance. */
 StreamSplitter::Status
-    DceHttpProxySplitter::match_response(const uint8_t* data, uint32_t& len)
+    DceHttpProxySplitter::match_response(const uint8_t* data, const uint32_t& len)
 {
     uint32_t starting_index = 0;
 

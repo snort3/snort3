@@ -431,7 +431,7 @@ int DnsValidator::dns_validate_answer(const uint8_t* data, uint16_t* offset, uin
 }
 
 int DnsValidator::dns_validate_header(const AppidSessionDirection dir, const DNSHeader* hdr,
-    bool host_reporting, AppIdSession& asd)
+    bool host_reporting, const AppIdSession& asd)
 {
     if (hdr->Opcode > MAX_OPCODE || hdr->Opcode == INVALID_OPCODE)
         return APPID_NOMATCH;

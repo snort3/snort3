@@ -255,7 +255,7 @@ bool TcpStreamSession::check_alerted(Packet* p, uint32_t gid, uint32_t sid)
     if (!(p->packet_flags & PKT_REBUILT_STREAM))
         return false;
 
-    TcpStreamTracker& st = p->ptrs.ip_api.get_src()->equals(flow->client_ip) ? server : client;
+    const TcpStreamTracker& st = p->ptrs.ip_api.get_src()->equals(flow->client_ip) ? server : client;
     for (int i = 0; i < st.alert_count; i++)
     {
         /*  This is a rebuilt packet and if we've seen this alert before,
@@ -276,7 +276,7 @@ int TcpStreamSession::update_alert(Packet* p, uint32_t gid, uint32_t sid,
 
     for (unsigned i = 0; i < st.alert_count; i++)
     {
-        StreamAlertInfo* ai = st.alerts + i;
+        StreamAlertInfo* ai = &st.alerts[i];
 
         if (ai->gid == gid && ai->sid == sid && SEQ_EQ(ai->seq, seq_num))
         {

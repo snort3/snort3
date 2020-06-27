@@ -286,7 +286,7 @@ public:
 IpsOption::EvalStatus Base64DataOption::eval(Cursor& c, Packet* p)
 {
     RuleProfile profile(base64PerfStats);
-    DataBuffer& base64_decode_buffer = DetectionEngine::get_alt_buffer(p);
+    const DataBuffer& base64_decode_buffer = DetectionEngine::get_alt_buffer(p);
 
     if ( !base64_decode_buffer.len )
         return NO_MATCH;

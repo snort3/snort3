@@ -155,7 +155,7 @@ MemoryContext::~MemoryContext() { }
 void memory::MemoryCap::update_allocations(unsigned long) { }
 void memory::MemoryCap::update_deallocations(unsigned long) { }
 
-OdpContext::OdpContext(AppIdConfig&, snort::SnortConfig*) { }
+OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }
 AppIdConfig::~AppIdConfig() { }
 
 unsigned AppIdSession::inspector_id = 0;

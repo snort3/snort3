@@ -61,7 +61,7 @@ void DceExpSsnManager::create_expected_session(const SfIp* ept_ip,
     DataBus::publish(DCERPC_EXP_SESSION_EVENT_KEY, map_resp_event, pkt->flow);
 }
 
-DceTcpExpSsnManager::DceTcpExpSsnManager(dce2TcpProtoConf& config) :
+DceTcpExpSsnManager::DceTcpExpSsnManager(const dce2TcpProtoConf& config) :
     DceExpSsnManager("dce-tcp", IpProtocol::TCP, PktType::TCP),
     pc(config) { }
 

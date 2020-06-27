@@ -37,7 +37,7 @@ class ThirdPartyAppIdContext;
 class ThirdPartyAppIdSession
 {
 public:
-    ThirdPartyAppIdSession(ThirdPartyAppIdContext& ctxt)
+    ThirdPartyAppIdSession(const ThirdPartyAppIdContext& ctxt)
         : appid(APP_ID_NONE), confidence(100), state(TP_STATE_INIT), ctxt(ctxt) { }
     virtual ~ThirdPartyAppIdSession() { }
 

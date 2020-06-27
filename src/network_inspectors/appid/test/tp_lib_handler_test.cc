@@ -59,7 +59,7 @@ HttpPatternMatchers::~HttpPatternMatchers() { }
 SipPatternMatchers::~SipPatternMatchers() { }
 SslPatternMatchers::~SslPatternMatchers() { }
 AppIdConfig::~AppIdConfig() { }
-OdpContext::OdpContext(AppIdConfig&, snort::SnortConfig*) { }
+OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }
 void ServiceDiscovery::initialize() { }
 int ServiceDiscovery::add_service_port(AppIdDetector*, const ServiceDetectorPort&)
 { return 0; }

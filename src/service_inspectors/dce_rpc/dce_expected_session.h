@@ -65,7 +65,7 @@ class DceTcpExpSsnManager : public DceExpSsnManager
 {
 public:
     DceTcpExpSsnManager() = delete;
-    DceTcpExpSsnManager(dce2TcpProtoConf&);
+    DceTcpExpSsnManager(const dce2TcpProtoConf&);
     DceTcpExpSsnManager(const DceTcpExpSsnManager&) = delete;
     DceTcpExpSsnManager& operator=(const DceTcpExpSsnManager&) =delete;
 

@@ -41,7 +41,8 @@ public:
         uint16_t id, bool host_reporting, AppIdSession&);
     int dns_validate_answer(const uint8_t* data, uint16_t* offset, uint16_t size,
         uint16_t id, uint8_t rcode, bool host_reporting, AppIdSession&);
-    int dns_validate_header(const AppidSessionDirection dir, const DNSHeader*, bool host_reporting, AppIdSession&);
+    int dns_validate_header(const AppidSessionDirection dir, const DNSHeader*, bool host_reporting,
+        const AppIdSession&);
     int validate_packet(const uint8_t* data, uint16_t size, const int,
         bool host_reporting, AppIdSession&);
 };

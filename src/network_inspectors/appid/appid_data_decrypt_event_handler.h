@@ -38,7 +38,7 @@ public:
         AppIdSession* asd = snort::appid_api.get_appid_session(*flow);
         if (!asd)
             return;
-        DataDecryptEvent& data_decrypt_event = static_cast<DataDecryptEvent&>(event);
+        const DataDecryptEvent& data_decrypt_event = static_cast<DataDecryptEvent&>(event);
         if (data_decrypt_event.get_type() == DataDecryptEvent::DATA_DECRYPT_MONITOR_EVENT)
         {
             asd->set_session_flags(APPID_SESSION_DECRYPT_MONITOR);

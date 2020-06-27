@@ -133,7 +133,7 @@ void AppIdContext::show() const
     config.show();
 }
 
-OdpContext::OdpContext(AppIdConfig& config, SnortConfig* sc)
+OdpContext::OdpContext(const AppIdConfig& config, SnortConfig* sc)
 {
     app_info_mgr.init_appid_info_table(config, sc, *this);
     client_pattern_detector = new PatternClientDetector(&client_disco_mgr);

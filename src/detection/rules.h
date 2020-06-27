@@ -98,7 +98,7 @@ public:
 private:
     RuleTreeNode* dup_rtn(RuleTreeNode*);
     void update_rtn(RuleTreeNode*, const RuleState&);
-    void apply(snort::SnortConfig*, OptTreeNode*, unsigned ips_num, RuleState&);
+    void apply(snort::SnortConfig*, OptTreeNode*, unsigned ips_num, const RuleState&);
 
 private:
     std::map<RuleKey, RuleState> map;

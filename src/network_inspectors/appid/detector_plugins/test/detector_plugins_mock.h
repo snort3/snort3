@@ -220,7 +220,7 @@ void ServiceDiscovery::initialize()
 int ServiceDiscovery::add_service_port(AppIdDetector*, const ServiceDetectorPort&)
 { return 0; }
 
-OdpContext::OdpContext(AppIdConfig&, snort::SnortConfig*)
+OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*)
 { }
 
 #endif

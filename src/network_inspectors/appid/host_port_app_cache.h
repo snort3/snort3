@@ -63,7 +63,7 @@ struct HostPortVal
 class HostPortCache
 {
 public:
-    HostPortVal* find(const snort::SfIp*, uint16_t port, IpProtocol, OdpContext&);
+    HostPortVal* find(const snort::SfIp*, uint16_t port, IpProtocol, const OdpContext&);
     bool add(const snort::SfIp*, uint16_t port, IpProtocol, unsigned type, AppId);
     void dump();
 

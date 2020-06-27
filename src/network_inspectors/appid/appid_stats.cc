@@ -251,7 +251,7 @@ static void update_stats(const AppIdSession& asd, AppId app_id, StatsBucket* buc
     }
 }
 
-void AppIdStatistics::update(AppIdSession& asd)
+void AppIdStatistics::update(const AppIdSession& asd)
 {
     time_t now = get_time();
 

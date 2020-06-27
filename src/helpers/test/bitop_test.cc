@@ -25,7 +25,7 @@
 
 #include "../bitop.h"
 
-static unsigned num_set(BitOp& bitop, size_t max)
+static unsigned num_set(const BitOp& bitop, size_t max)
 {
     unsigned c = 0;
 
@@ -37,7 +37,7 @@ static unsigned num_set(BitOp& bitop, size_t max)
     return c;
 }
 
-static bool is_clear(BitOp& bitop, size_t max)
+static bool is_clear(const BitOp& bitop, size_t max)
 { return num_set(bitop, max) == 0; }
 
 TEST_CASE( "bitop", "[bitop]" )

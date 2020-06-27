@@ -184,7 +184,7 @@ FileVerdict FilePolicy::type_lookup(Packet*, FileInfo* file)
 
 FileVerdict FilePolicy::signature_lookup(Packet*, FileInfo* file)
 {
-    FileRule& rule = match_file_rule(nullptr, file);
+    const FileRule& rule = match_file_rule(nullptr, file);
 
     if (rule.use.capture_enabled)
     {

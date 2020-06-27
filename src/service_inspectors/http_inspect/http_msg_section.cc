@@ -156,7 +156,7 @@ const Field& HttpMsgSection::get_classic_buffer(unsigned id, uint64_t sub_id, ui
     return get_classic_buffer(c, buffer_info);
 }
 
-const Field& HttpMsgSection::get_classic_buffer(Cursor& c, HttpBufferInfo& buf)
+const Field& HttpMsgSection::get_classic_buffer(Cursor& c, const HttpBufferInfo& buf)
 {
     // buffer_side replaces source_id for buffers that support the request option
     const SourceId buffer_side = (buf.form & FORM_REQUEST) ? SRC_CLIENT : source_id;

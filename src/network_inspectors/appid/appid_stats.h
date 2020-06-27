@@ -51,7 +51,7 @@ public:
     static AppIdStatistics* initialize_manager(const AppIdConfig&);
     static AppIdStatistics* get_stats_manager();
     static void cleanup();
-    void update(AppIdSession&);
+    void update(const AppIdSession&);
     void flush();
 
 private:

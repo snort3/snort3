@@ -123,7 +123,7 @@ static const PegInfo latency_pegs[] =
 // latency module
 // -----------------------------------------------------------------------------
 
-static inline bool latency_set(Value& v, PacketLatencyConfig& config)
+static inline bool latency_set(const Value& v, PacketLatencyConfig& config)
 {
     if ( v.is("max_time") )
     {
@@ -143,7 +143,7 @@ static inline bool latency_set(Value& v, PacketLatencyConfig& config)
     return true;
 }
 
-static inline bool latency_set(Value& v, RuleLatencyConfig& config)
+static inline bool latency_set(const Value& v, RuleLatencyConfig& config)
 {
     if ( v.is("max_time") )
     {

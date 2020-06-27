@@ -47,7 +47,7 @@ public:
         snort::InspectionBuffer& b) override;
     bool get_buf(unsigned id, snort::Packet* p, snort::InspectionBuffer& b) override;
     const Field& http_get_buf(Cursor& c, snort::Packet* p,
-        HttpBufferInfo& buffer_info);
+        const HttpBufferInfo& buffer_info);
     bool get_fp_buf(snort::InspectionBuffer::Type ibt, snort::Packet* p,
         snort::InspectionBuffer& b) override;
     bool configure(snort::SnortConfig*) override;

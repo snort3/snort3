@@ -213,7 +213,7 @@ NormalizeModule::~NormalizeModule()
 ProfileStats* NormalizeModule::get_profile() const
 { return &norm_perf_stats; }
 
-bool NormalizeModule::set_ip4(const char*, Value& v, SnortConfig*)
+bool NormalizeModule::set_ip4(const char*, const Value& v, SnortConfig*)
 {
     if ( v.is("base") )
         Norm_Set(&config, NORM_IP4_BASE, v.get_bool());
@@ -236,7 +236,7 @@ bool NormalizeModule::set_ip4(const char*, Value& v, SnortConfig*)
     return true;
 }
 
-bool NormalizeModule::set_tcp(const char*, Value& v, SnortConfig*)
+bool NormalizeModule::set_tcp(const char*, const Value& v, SnortConfig*)
 {
     if ( v.is("base") )
     {

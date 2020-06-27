@@ -134,7 +134,7 @@ public:
         return entry ? entry->priority : 0;
     }
 
-    void init_appid_info_table(AppIdConfig&, snort::SnortConfig*, OdpContext& odp_ctxt);
+    void init_appid_info_table(const AppIdConfig&, snort::SnortConfig*, OdpContext& odp_ctxt);
     void cleanup_appid_info_table();
     void dump_app_info_table();
     SnortProtocolId add_appid_protocol_reference(const char* protocol, snort::SnortConfig*);

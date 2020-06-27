@@ -204,7 +204,7 @@ void ServiceDiscoveryState::set_service_id_valid(ServiceDetector*) { }
 static OdpContext stub_odp_ctxt(stub_config, nullptr);
 OdpContext* AppIdContext::odp_ctxt = &stub_odp_ctxt;
 
-OdpContext::OdpContext(AppIdConfig&, snort::SnortConfig*)
+OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*)
 { }
 
 #endif

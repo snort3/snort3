@@ -51,7 +51,7 @@ AppIdSession* AppIdApi::get_appid_session(const Flow& flow)
     return asd;
 }
 
-const char* AppIdApi::get_application_name(AppId app_id, AppIdContext& ctxt)
+const char* AppIdApi::get_application_name(AppId app_id, const AppIdContext& ctxt)
 {
     return ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(app_id);
 }
@@ -85,7 +85,7 @@ const char* AppIdApi::get_application_name(const Flow& flow, bool from_client)
     return app_name;
 }
 
-AppId AppIdApi::get_application_id(const char* appName, AppIdContext& ctxt)
+AppId AppIdApi::get_application_id(const char* appName, const AppIdContext& ctxt)
 {
     return ctxt.get_odp_ctxt().get_app_info_mgr().get_appid_by_name(appName);
 }

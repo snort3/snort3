@@ -35,7 +35,7 @@
 using namespace snort;
 
 HostPortVal* HostPortCache::find(const SfIp* ip, uint16_t port, IpProtocol protocol,
-    OdpContext& odp_ctxt)
+    const OdpContext& odp_ctxt)
 {
     HostPortKey hk;
 
@@ -60,7 +60,7 @@ bool HostPortCache::add(const SfIp* ip, uint16_t port, IpProtocol proto, unsigne
     hk.ip = *ip;
     AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
     assert(inspector);
-    AppIdContext& ctxt = inspector->get_ctxt();
+    const AppIdContext& ctxt = inspector->get_ctxt();
     hk.port = (ctxt.get_odp_ctxt().allow_port_wildcard_host_cache)? 0 : port;
     hk.proto = proto;
 

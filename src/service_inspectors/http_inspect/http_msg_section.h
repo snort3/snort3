@@ -67,7 +67,7 @@ public:
     virtual void update_flow() = 0;
 
     const Field& get_classic_buffer(unsigned id, uint64_t sub_id, uint64_t form);
-    const Field& get_classic_buffer(Cursor& c, HttpBufferInfo& buf);
+    const Field& get_classic_buffer(Cursor& c, const HttpBufferInfo& buf);
 
     HttpEnums::MethodId get_method_id() const { return method_id; }
 

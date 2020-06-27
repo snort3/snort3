@@ -244,7 +244,7 @@ bool ContentOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    ContentOption& rhs = (ContentOption&)ips;
+    const ContentOption& rhs = (const ContentOption&)ips;
     const ContentData& left = *config;
     const ContentData& right = *rhs.config;
 

@@ -83,7 +83,7 @@ void RuleStateMap::apply(SnortConfig* sc)
 }
 
 void RuleStateMap::apply(
-    SnortConfig* sc, OptTreeNode* otn, unsigned ips_num, RuleState& s)
+    SnortConfig* sc, OptTreeNode* otn, unsigned ips_num, const RuleState& s)
 {
     IpsPolicy* policy = nullptr;
     RuleTreeNode* rtn = getRtnFromOtn(otn, ips_num);

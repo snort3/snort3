@@ -50,8 +50,8 @@ public:
     { return INSPECT; }
 
 private:
-    bool set_ip4(const char*, snort::Value&, snort::SnortConfig*);
-    bool set_tcp(const char*, snort::Value&, snort::SnortConfig*);
+    bool set_ip4(const char*, const snort::Value&, snort::SnortConfig*);
+    bool set_tcp(const char*, const snort::Value&, snort::SnortConfig*);
 
     void add_test_peg(const PegInfo&) const;
 
