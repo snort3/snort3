@@ -175,13 +175,13 @@ private:
 static const char* const frag_policy_names[] =
 {
     "no policy",
-    "FIRST",
-    "LINUX",
-    "BSD",
-    "BSD_RIGHT",
-    "LAST",
-    "WINDOWS",
-    "SOLARIS"
+    "first",
+    "linux",
+    "bsd",
+    "bsd_right",
+    "last",
+    "windows",
+    "solaris"
 };
 
 static inline void EventAnomIpOpts(FragEngine*)
