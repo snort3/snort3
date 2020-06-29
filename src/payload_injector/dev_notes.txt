@@ -1,0 +1,9 @@
+Payload injector is a utility class intended to help other Snort components with
+application-protocol-level injection. The calling components decide when and
+what to inject. Payload injector is responsible for flow-control concerns such
+as transmitting RST flags to endpoints as well as blocking flows within Snort.
+It coordinates with the Active component of Snort to perform these functions.
+
+Currently it is being used for HTTP/1 injections. HTTP/2 support is in developement.
+
+

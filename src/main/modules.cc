@@ -51,6 +51,7 @@
 #include "parser/parse_conf.h"
 #include "parser/parse_ip.h"
 #include "parser/parser.h"
+#include "payload_injector/payload_injector_module.h"
 #include "profiler/profiler.h"
 #include "search_engines/pat_stats.h"
 #include "side_channel/side_channel_module.h"
@@ -2024,8 +2025,9 @@ void module_init()
     ModuleManager::add_module(new RuleStateModule);
     ModuleManager::add_module(new SearchEngineModule);
     ModuleManager::add_module(new SFDAQModule);
+    ModuleManager::add_module(new PayloadInjectorModule);
 
-    // these could but prolly shouldn't be policy specific
+    // these could but probably shouldn't be policy specific
     // or should be broken into policy and non-policy parts
     ModuleManager::add_module(new AlertsModule);
     ModuleManager::add_module(new EventQueueModule);

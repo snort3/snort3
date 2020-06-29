@@ -103,6 +103,7 @@ add_subdirectory(memory)
 add_subdirectory(mime)
 add_subdirectory(packet_io)
 add_subdirectory(parser)
+add_subdirectory(payload_injector)
 add_subdirectory(ports)
 add_subdirectory(protocols)
 add_subdirectory(sfip)
@@ -160,6 +161,7 @@ add_executable( snort
     $<TARGET_OBJECTS:network_inspectors>
     $<TARGET_OBJECTS:packet_io>
     $<TARGET_OBJECTS:parser>
+    $<TARGET_OBJECTS:payload_injector>
     $<TARGET_OBJECTS:ports>
     $<TARGET_OBJECTS:profiler>
     $<TARGET_OBJECTS:protocols>

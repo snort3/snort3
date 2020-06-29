@@ -177,6 +177,9 @@ rewrite = { }
 -- react = { }
 -- reject = { }
 
+-- use this to enable payload injection utility
+-- payload_injector = { }
+
 ---------------------------------------------------------------------------
 -- 6. configure filters
 ---------------------------------------------------------------------------
