@@ -41,6 +41,10 @@ static THREAD_LOCAL int co_reassembled = 0;
 static const Uuid uuid_ndr64 = { 0x71710533, 0xbeba, 0x4937, 0x83, 0x19,
     { 0xb5, 0xdb, 0xef, 0x9c, 0xcc, 0x36 } };
 
+/* Endpoint mapper UUID */
+static const Uuid uuid_epm = { 0xe1af8308, 0x5d1f, 0x11c9, 0x91, 0xa4,
+    { 0x08, 0x00, 0x2b, 0x14, 0xa0, 0xfa } };
+
 /********************************************************************
  * Function: DCE2_CoEptMapResponse()
  *
@@ -50,10 +54,9 @@ static const Uuid uuid_ndr64 = { 0x71710533, 0xbeba, 0x4937, 0x83, 0x19,
  * which contain info about future sessions.
  *
  ********************************************************************/
-static void DCE2_CoEptMapResponse(const DCE2_CoTracker* cot, const DceRpcCoHdr* co_hdr,
+static void DCE2_CoEptMapResponse(const DceRpcCoHdr* co_hdr, const DCE2_CoCtxIdNode* ctx_id_node,
     const uint8_t* stub_data, uint16_t dlen)
 {
-    DCE2_CoCtxIdNode* ctx_id_node;
     uint64_t actual_count;
     uint64_t tptr_length; /* Tower pointer length */
     unsigned int i;
@@ -69,9 +72,6 @@ static void DCE2_CoEptMapResponse(const DCE2_CoTracker* cot, const DceRpcCoHdr* 
 
     if (stub_data == nullptr || dlen == 0)
         return;
-
-    ctx_id_node = (DCE2_CoCtxIdNode*)DCE2_ListFind(cot->ctx_ids,
-        (void*)(uintptr_t)cot->ctx_id);
 
     if (ctx_id_node == nullptr)
         return;
@@ -92,11 +92,19 @@ static void DCE2_CoEptMapResponse(const DCE2_CoTracker* cot, const DceRpcCoHdr* 
 
     /* Get the actual count of pointers in tower array */
     byte_order = DceRpcCoByteOrder(co_hdr);
+
+    if (offset + ndr_flen > dlen)
+        return;
+
     offset += DCE2_GetNdrUint3264(stub_data + offset, actual_count,
         offset, byte_order, ctx_id_node->transport);
 
     /* Skipping Referent IDs and moving to deferred pointers representation */
     offset += actual_count * ndr_flen;
+
+    if (offset > dlen)
+        return;
+
     dce2_move(stub_data, dlen, offset);
 
     for (i = 0; i < actual_count; i++)
@@ -114,6 +122,9 @@ static void DCE2_CoEptMapResponse(const DCE2_CoTracker* cot, const DceRpcCoHdr* 
          * | floor count | floor 1 | floor 2 |   ...   | floor n |
          * +-------------+---------+---------+---------+---------+ 
          * The target is 4th & 5th floors */
+
+        if (ndr_flen > dlen)
+            return;
 
         /* Get tower length and determine the floor count offset */
         fc_offset = DCE2_GetNdrUint3264(stub_data, tptr_length,
@@ -1862,7 +1873,14 @@ static void DCE2_CoResponse(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 
         if (cot->opnum == DCE2_CO_EPT_MAP)
         {
-            DCE2_CoEptMapResponse(cot, co_hdr, stub_data, stub_data_len);
+            DCE2_CoCtxIdNode* ctx_node;
+            ctx_node = (DCE2_CoCtxIdNode*)DCE2_ListFind(cot->ctx_ids,
+                (void*)(uintptr_t)cot->ctx_id);
+
+            if (ctx_node and !DCE2_UuidCompare(&ctx_node->iface, &uuid_epm))
+            {
+                DCE2_CoEptMapResponse(co_hdr, ctx_node, stub_data, stub_data_len);
+            }
         }
     }
 }
