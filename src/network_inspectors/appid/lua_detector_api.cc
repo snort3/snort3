@@ -130,6 +130,22 @@ static inline bool lua_params_validator(LuaDetectorParameters& ldp, bool packet_
     return true;
 }
 
+static inline int toipprotocol(lua_State *L, int index,
+    IpProtocol &proto, bool print_err = true)
+{
+    unsigned tmp_proto = lua_tointeger(L, index);
+
+    if (tmp_proto > (unsigned)IpProtocol::RESERVED)
+    {
+        if (print_err)
+            ErrorMessage("Invalid protocol value %u\n", tmp_proto);
+        return -1;
+    }
+
+    proto = static_cast<IpProtocol>(tmp_proto);
+    return 0;
+}
+
 int init(lua_State* L, int result)
 {
     lua_getglobal(L,"is_control");
@@ -202,13 +218,12 @@ static int service_register_pattern(lua_State* L)
     int index = 1;
 
     // FIXIT-M  none of these params check for signedness casting issues
-    // FIXIT-M May want to create a lua_toipprotocol() so we can handle
-    //          error checking in that function.
-    IpProtocol protocol = (IpProtocol)lua_tonumber(L, ++index);
-    if (protocol > IpProtocol::RESERVED)
+
+    IpProtocol protocol;
+    if (toipprotocol(L, ++index, protocol))
     {
-        ErrorMessage("Invalid protocol value %u\n", (unsigned)protocol);
-        return -1;
+        lua_pushnumber(L, -1);
+        return 1;
     }
 
     const char* pattern = lua_tostring(L, ++index);
@@ -363,7 +378,13 @@ static int service_add_ports(lua_State* L)
     if (!init(L, 1)) return 1;
 
     ServiceDetectorPort pp;
-    pp.proto = (IpProtocol)lua_tonumber(L, 2);
+
+    if (toipprotocol(L, 2, pp.proto))
+    {
+        lua_pushnumber(L, -1);
+        return 1;
+    }
+
     pp.port = lua_tonumber(L, 3);
     pp.reversed_validation = lua_tonumber(L, 5);
 
@@ -846,7 +867,13 @@ static int client_register_pattern(lua_State* L)
 
     int index = 1;
 
-    IpProtocol protocol = (IpProtocol)lua_tonumber(L, ++index);
+    IpProtocol protocol;
+    if (toipprotocol(L, ++index, protocol))
+    {
+        lua_pushnumber(L, -1);
+        return 1;
+    }
+
     const char* pattern = lua_tostring(L, ++index);
     size_t size = lua_tonumber(L, ++index);
     unsigned int position = lua_tonumber(L, ++index);
@@ -1127,14 +1154,11 @@ static int detector_add_host_port_application(lua_State* L)
     }
 
     unsigned port  = lua_tointeger(L, ++index);
-    unsigned proto  = lua_tointeger(L, ++index);
-    if (proto > (unsigned)IpProtocol::RESERVED)
-    {
-        ErrorMessage("%s:Invalid protocol value %u\n",__func__, proto);
+    IpProtocol proto;
+    if (toipprotocol(L, ++index, proto))
         return 0;
-    }
 
-    if (!ud->get_odp_ctxt().host_port_cache_add(&ip_addr, (uint16_t)port, (IpProtocol)proto, type, app_id))
+    if (!ud->get_odp_ctxt().host_port_cache_add(&ip_addr, (uint16_t)port, proto, type, app_id))
         ErrorMessage("%s:Failed to backend call\n",__func__);
 
     return 0;
@@ -1158,23 +1182,17 @@ static int detector_add_host_port_dynamic(lua_State* L)
     size_t ipaddr_size = 0;
     const char* ip_str = lua_tolstring(L, ++index, &ipaddr_size);
     if (!ip_str || !ipaddr_size || !convert_string_to_address(ip_str, &ip_addr))
-    {
-        ErrorMessage("%s: Invalid IP address: %s\n",__func__, ip_str);
         return 0;
-    }
 
     unsigned port = lua_tointeger(L, ++index);
-    IpProtocol proto = (IpProtocol) lua_tointeger(L, ++index);
-    if (proto > IpProtocol::RESERVED)
-    {
-        ErrorMessage("%s:Invalid protocol value %u\n",__func__, (unsigned) proto);
+    IpProtocol proto;
+    if (toipprotocol(L, ++index, proto, false))
         return 0;
-    }
 
     bool added = false;
     std::lock_guard<std::mutex> lck(AppIdSession::inferred_svcs_lock);
-    if ( !host_cache[ip_addr]->add_service(port, proto, appid, true, &added) )
-        ErrorMessage("%s:Failed to add host tracker service\n",__func__);
+    host_cache[ip_addr]->add_service(port, proto, appid, true, &added);
+
     if (added)
     {
         AppIdSession::incr_inferred_svcs_ver();
@@ -1682,7 +1700,9 @@ static int detector_port_only_service(lua_State* L)
 
     AppId appId = lua_tointeger(L, ++index);
     uint16_t port = lua_tointeger(L, ++index);
-    IpProtocol protocol = static_cast<IpProtocol>(lua_tointeger(L, ++index));
+    IpProtocol protocol;
+    if (toipprotocol(L, ++index, protocol))
+        return 0;
 
     if (port == 0)
         ud->get_odp_ctxt().add_protocol_service_id(protocol, appId);
@@ -1722,7 +1742,13 @@ static int detector_add_length_app_cache(lua_State* L)
     int index = 1;
 
     AppId appId = lua_tonumber(L, ++index);
-    IpProtocol proto = (IpProtocol)lua_tonumber(L, ++index);
+    IpProtocol proto;
+    if (toipprotocol(L, ++index, proto))
+    {
+        lua_pushnumber(L, -1);
+        return 1;
+    }
+
     uint8_t sequence_cnt = lua_tonumber(L, ++index);
     const char* sequence_str = lua_tostring(L, ++index);
 
@@ -2256,7 +2282,10 @@ static int add_port_pattern_client(lua_State* L)
     size_t patternSize = 0;
     int index = 1;
 
-    IpProtocol protocol = (IpProtocol)lua_tonumber(L, ++index);
+    IpProtocol protocol;
+    if (toipprotocol(L, ++index, protocol))
+        return 0;
+
     uint16_t port = 0;      // port = lua_tonumber(L, ++index);  FIXIT-RC - why commented out?
     const char* pattern = lua_tolstring(L, ++index, &patternSize);
     unsigned position = lua_tonumber(L, ++index);
@@ -2307,7 +2336,10 @@ static int add_port_pattern_service(lua_State* L)
     size_t patternSize = 0;
     int index = 1;
 
-    IpProtocol protocol = (IpProtocol)lua_tonumber(L, ++index);
+    IpProtocol protocol;
+    if (toipprotocol(L, ++index, protocol))
+        return 0;
+
     uint16_t port = lua_tonumber(L, ++index);
     const char* pattern = lua_tolstring(L, ++index, &patternSize);
     unsigned position = lua_tonumber(L, ++index);
@@ -2406,7 +2438,9 @@ static int create_future_flow(lua_State* L)
         return 0;
 
     uint16_t server_port = lua_tonumber(L, 5);
-    IpProtocol proto = (IpProtocol)lua_tonumber(L, 6);
+    IpProtocol proto;
+    if (toipprotocol(L, 6, proto))
+        return 0;
     AppId service_id = lua_tointeger(L, 7);
     AppId client_id  = lua_tointeger(L, 8);
     AppId payload_id = lua_tointeger(L, 9);
@@ -2503,14 +2537,18 @@ static int get_http_tunneled_ip(lua_State* L)
         return 0;
 
     AppIdHttpSession* hsession = lsd->ldp.asd->get_http_session();
+    if (hsession)
+    {
+        const TunnelDest* tunnel_dest = hsession->get_tun_dest();
 
-    const TunnelDest* tunnel_dest = hsession->get_tun_dest();
+        if (tunnel_dest)
+        {
+            lua_pushnumber(L, tunnel_dest->ip.get_ip4_value());
+            return 1;
+        }
+    }
 
-    if (!tunnel_dest)
-        lua_pushnumber(L, 0);
-    else
-        lua_pushnumber(L, tunnel_dest->ip.get_ip4_value());
-
+    lua_pushnumber(L, 0);
     return 1;
 }
 
@@ -2531,14 +2569,18 @@ static int get_http_tunneled_port(lua_State* L)
         return 0;
 
     AppIdHttpSession* hsession = lsd->ldp.asd->get_http_session();
+    if (hsession)
+    {
+        const TunnelDest* tunnel_dest = hsession->get_tun_dest();
 
-    const TunnelDest* tunnel_dest = hsession->get_tun_dest();
+        if (tunnel_dest)
+        {
+            lua_pushnumber(L, tunnel_dest->port);
+            return 1;
+        }
+    }
 
-    if (!tunnel_dest)
-        lua_pushnumber(L, 0);
-    else
-        lua_pushnumber(L, tunnel_dest->port);
-
+    lua_pushnumber(L, 0);
     return 1;
 }
 

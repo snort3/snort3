@@ -55,12 +55,12 @@ PADDING_GUARD_BEGIN
 class AFActKey
 {
     public:
-        AFActKey(snort::Packet* p, AppidSessionDirection dir, AppId forecast, AFActKey &master_key)
+        AFActKey(snort::Packet* p, AppidSessionDirection dir, AppId forecast) :
+            forecast(forecast)
         {
             const snort::SfIp* src = dir ? p->ptrs.ip_api.get_dst() : p->ptrs.ip_api.get_src();
 
-            memcpy(master_key.ip, src->get_ip6_ptr(), sizeof(master_key.ip));
-            master_key.forecast = forecast;
+            memcpy(ip, src->get_ip6_ptr(), sizeof(ip));
         }
 
         bool operator<(const AFActKey &key) const

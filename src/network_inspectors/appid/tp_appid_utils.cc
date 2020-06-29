@@ -430,8 +430,14 @@ static inline void process_ssl(AppIdSession& asd,
     if (asd.get_session_flags(APPID_SESSION_HTTP_TUNNEL))
     {
         if (!asd.service_detector)
-            asd.service_detector = asd.ctxt.get_odp_ctxt().get_app_info_mgr().
-                get_app_info_entry(APP_ID_SSL)->service_detector;
+        {
+            AppInfoTableEntry* entry = asd.ctxt.get_odp_ctxt().
+                get_app_info_mgr().get_app_info_entry(APP_ID_SSL);
+
+            if (entry)
+                asd.service_detector = entry->service_detector;
+        }
+
         if (asd.get_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_SPDY_SESSION))
             asd.clear_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_SPDY_SESSION);
     }

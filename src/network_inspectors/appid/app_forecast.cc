@@ -78,7 +78,7 @@ void check_session_for_AF_indicator(Packet* p, AppidSessionDirection dir, AppId 
         return;
 
     AFElement ind_element = af_indicator_entry->second;
-    AFActKey master_key(p, dir, ind_element.forecast, master_key);
+    AFActKey master_key(p, dir, ind_element.forecast);
 
     AFActVal new_active_value;
     new_active_value.target = ind_element.target;
@@ -89,7 +89,7 @@ void check_session_for_AF_indicator(Packet* p, AppidSessionDirection dir, AppId 
 
 AppId check_session_for_AF_forecast(AppIdSession& asd, Packet* p, AppidSessionDirection dir, AppId forecast)
 {
-    AFActKey master_key(p, dir, forecast, master_key);
+    AFActKey master_key(p, dir, forecast);
 
     //get out if there is no value
     auto check_act_val = AF_actives->find(master_key);

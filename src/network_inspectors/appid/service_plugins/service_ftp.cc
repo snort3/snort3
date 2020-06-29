@@ -486,7 +486,10 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset,
                     fd.rstate = FTP_REPLY_PARTIAL_EOL;
                 else if (parse_ret == FTP_NOT_FOUND_EOL)
                 {
-                    check_ret_digit_code((data+temp), 3, 4 - (size - (temp)), fd.part_code_resp, fd );
+                    ret_code = check_ret_digit_code((data+temp), 3, 4 - (size - (temp)), fd.part_code_resp, fd );
+                    if(!ret_code)
+                        return -1;
+
                     fd.rstate = FTP_REPLY_PARTIAL_RESP;
                     fd.part_code_len = 3 - (size - (temp ));
                 }
