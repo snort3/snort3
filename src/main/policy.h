@@ -128,7 +128,6 @@ public:
     ~InspectionPolicy();
 
     void configure();
-    void clone_dbus(snort::SnortConfig*, const char*);
 
 public:
     PolicyId policy_id = 0;

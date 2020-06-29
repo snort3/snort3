@@ -88,8 +88,7 @@ DataBus::~DataBus()
             delete h;
 }
 
-void DataBus::add_mapped_module(const char*) {}
-void DataBus::clone(DataBus& ) {}
+void DataBus::clone(DataBus&, const char*) {}
 void DataBus::subscribe(const char* key, DataHandler* h)
 {
     DB->_subscribe(key, h);

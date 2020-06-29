@@ -97,14 +97,6 @@ void InspectionPolicy::configure()
     dbus.subscribe(PACKET_EVENT, new AltPktHandler);
 }
 
-void InspectionPolicy::clone_dbus(SnortConfig* from, const char* exclude_module)
-{
-    // Clone subscriptions from another config if they are not excluded
-    // (e.g., reloading module) and not already subscribed
-    dbus.add_mapped_module(exclude_module);
-    dbus.clone(from->policy_map->get_inspection_policy()->dbus);
-}
-
 //-------------------------------------------------------------------------
 // detection policy
 //-------------------------------------------------------------------------

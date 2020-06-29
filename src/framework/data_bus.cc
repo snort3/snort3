@@ -77,21 +77,13 @@ DataBus::~DataBus()
             else
                 delete h;
         }
-
-    mapped_module.clear();
 }
 
-void DataBus::add_mapped_module(const char* name)
-{
-    if ( name )
-        mapped_module.emplace(name);
-}
-
-void DataBus::clone(DataBus& from)
+void DataBus::clone(DataBus& from, const char* exclude_name)
 {
     for ( auto& p : from.map )
         for ( auto* h : p.second )
-            if ( mapped_module.count(h->module_name) == 0 )
+            if ( nullptr == exclude_name || 0 != strcmp(exclude_name, h->module_name) )
             {
                 h->cloned = true;
                 _subscribe(p.first.c_str(), h);
@@ -154,10 +146,6 @@ void DataBus::_subscribe(const char* key, DataHandler* h)
 {
     DataList& v = map[key];
     v.emplace_back(h);
-
-    // Track fresh subscriptions to distinguish during cloning
-    if ( !h->cloned )
-        add_mapped_module(h->module_name);
 }
 
 void DataBus::_unsubscribe(const char* key, DataHandler* h)

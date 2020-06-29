@@ -85,7 +85,6 @@ protected:
 // FIXIT-P evaluate perf; focus is on correctness
 typedef std::vector<DataHandler*> DataList;
 typedef std::unordered_map<std::string, DataList> DataMap;
-typedef std::unordered_set<const char*> DataModule;
 
 class SO_PUBLIC DataBus
 {
@@ -94,8 +93,7 @@ public:
     ~DataBus();
 
     // configure time methods - main thread only
-    void clone(DataBus& from);
-    void add_mapped_module(const char*);
+    void clone(DataBus& from, const char* exclude_name = nullptr);
 
     // FIXIT-L ideally these would not be static or would take an inspection policy*
     static void subscribe(const char* key, DataHandler*);
@@ -119,7 +117,6 @@ private:
 
 private:
     DataMap map;
-    DataModule mapped_module;
 };
 }
 

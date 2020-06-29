@@ -208,6 +208,7 @@ SnortConfig::~SnortConfig()
 {
     if ( cloned )
     {
+        delete global_dbus;
         policy_map->set_cloned(true);
         delete policy_map;
         return;
@@ -322,6 +323,7 @@ void SnortConfig::post_setup()
 void SnortConfig::clone(const SnortConfig* const conf)
 {
     *this = *conf;
+    global_dbus = new DataBus();
     if (conf->homenet.get_family() != 0)
         memcpy(&homenet, &conf->homenet, sizeof(homenet));
 
