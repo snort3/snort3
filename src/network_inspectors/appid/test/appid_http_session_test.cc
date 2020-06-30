@@ -152,8 +152,8 @@ void Profiler::show_stats() { }
 
 MemoryContext::MemoryContext(MemoryTracker&) { }
 MemoryContext::~MemoryContext() { }
-void memory::MemoryCap::update_allocations(unsigned long) { }
-void memory::MemoryCap::update_deallocations(unsigned long) { }
+void memory::MemoryCap::update_allocations(size_t) { }
+void memory::MemoryCap::update_deallocations(size_t) { }
 
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }
 AppIdConfig::~AppIdConfig() { }

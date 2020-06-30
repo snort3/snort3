@@ -38,7 +38,7 @@
 static int sigsafe_format_uint64_dec(uint64_t num, char* buf, size_t buf_len)
 {
     uint64_t divisor;
-    size_t len;
+    size_t len, i;
 
     // ceil(log10(0xFFFFFFFFFFFFFFFF)) = 20 + 1 for '\0'
     if (buf_len > 21)
@@ -48,7 +48,7 @@ static int sigsafe_format_uint64_dec(uint64_t num, char* buf, size_t buf_len)
          len < buf_len - 1 && num / divisor;
          len++, divisor *= 10);
 
-    for (size_t i = len, divisor = 1; i > 0; i--, divisor *= 10)
+    for (i = len, divisor = 1; i > 0; i--, divisor *= 10)
         buf[i - 1] = '0' + ((num / divisor) % 10);
 
     buf[len] = '\0';
@@ -58,7 +58,7 @@ static int sigsafe_format_uint64_dec(uint64_t num, char* buf, size_t buf_len)
 static int sigsafe_format_uint64_hex(uint64_t num, char* buf, size_t buf_len)
 {
     uint64_t divisor;
-    size_t len;
+    size_t len, i;
 
     // log16(0xFFFFFFFFFFFFFFFF) = 16 + 1 for '\0'
     if (buf_len > 17)
@@ -68,7 +68,7 @@ static int sigsafe_format_uint64_hex(uint64_t num, char* buf, size_t buf_len)
          len < buf_len - 1 && num / divisor;
          len++, divisor *= 0x10);
 
-    for (size_t i = len, divisor = 1; i > 0; i--, divisor *= 0x10)
+    for (i = len, divisor = 1; i > 0; i--, divisor *= 0x10)
     {
         int val = (num / divisor) % 0x10;
 
@@ -243,7 +243,7 @@ void SigSafePrinter::hex_dump(const uint8_t* data, unsigned len)
             else if (i % 2 == 0)
                 line[lidx++] = ' ';
         }
-        sigsafe_snprintf(line + lidx, sizeof(line) - lidx, "%02x", data[i]);
+        sigsafe_snprintf(line + lidx, sizeof(line) - lidx, "%02x", (uint64_t) data[i]);
         lidx += 2;
     }
     if (lidx)

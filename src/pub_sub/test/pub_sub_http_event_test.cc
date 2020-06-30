@@ -37,8 +37,8 @@ using namespace HttpCommon;
 
 // Stubs to make the code link
 const Field Field::FIELD_NULL { STAT_NO_SOURCE };
-const Field& HttpMsgSection::get_classic_buffer(unsigned int, unsigned long, unsigned long)
-    { return Field::FIELD_NULL; }
+const Field& HttpMsgSection::get_classic_buffer(unsigned, uint64_t, uint64_t)
+{ return Field::FIELD_NULL; }
 
 TEST_GROUP(pub_sub_http_event_test)
 {

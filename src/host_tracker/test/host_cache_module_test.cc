@@ -99,11 +99,11 @@ static void try_reload_prune(bool is_not_locked)
 {
     if ( is_not_locked )
     {
-        CHECK(host_cache.reload_prune(256, 2) == true);
+        CHECK(host_cache.reload_prune(host_cache.mem_chunk * 1.5, 2) == true);
     }
     else
     {
-        CHECK(host_cache.reload_prune(256, 2) == false);
+        CHECK(host_cache.reload_prune(host_cache.mem_chunk * 1.5, 2) == false);
     }
 }
 
@@ -136,10 +136,10 @@ TEST(host_cache_module, misc)
     CHECK(ht_stats[0] == 3);
 
     // no pruning needed for resizing higher than current size
-    CHECK(host_cache.reload_resize(2048) == false);
+    CHECK(host_cache.reload_resize(host_cache.mem_chunk * 10) == false);
 
     // pruning needed for resizing lower than current size
-    CHECK(host_cache.reload_resize(256) == true);
+    CHECK(host_cache.reload_resize(host_cache.mem_chunk * 1.5) == true);
 
     // pruning in thread is not done when reload_mutex is already locked
     host_cache.reload_mutex.lock();

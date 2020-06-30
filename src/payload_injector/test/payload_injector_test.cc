@@ -40,7 +40,7 @@ using namespace snort;
 //--------------------------------------------------------------------------
 namespace snort
 {
-uint32_t Active::send_data(snort::Packet*, unsigned long, unsigned char const*, unsigned int)
+uint32_t Active::send_data(snort::Packet*, EncodeFlags, unsigned char const*, unsigned int)
 {
     return 1;
 }

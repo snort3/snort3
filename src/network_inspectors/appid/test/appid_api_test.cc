@@ -78,7 +78,7 @@ void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, Flow* flow,
     DataBus::publish(APPID_EVENT_ANY_CHANGE, app_event, flow);
 }
 
-bool SslPatternMatchers::scan_hostname(unsigned char const* server_name, unsigned long, AppId& client_id, AppId& payload_id)
+bool SslPatternMatchers::scan_hostname(const uint8_t* server_name, size_t, AppId& client_id, AppId& payload_id)
 {
     if (((const char*)server_name) == APPID_UT_TLS_HOST)
     {
@@ -93,7 +93,7 @@ bool SslPatternMatchers::scan_hostname(unsigned char const* server_name, unsigne
     return true;
 }
 
-bool SslPatternMatchers::scan_cname(unsigned char const* cname, unsigned long, AppId& client_id, AppId& payload_id)
+bool SslPatternMatchers::scan_cname(const uint8_t* cname, size_t, AppId& client_id, AppId& payload_id)
 {
     if (((const char*)cname) == APPID_UT_TLS_HOST)
     {
