@@ -24,9 +24,7 @@
 struct RnaModuleConfig
 {
     std::string rna_conf_path;
-    std::string rna_util_lib_path;
     std::string fingerprint_dir;
-    std::string custom_fingerprint_dir;
     bool enable_logger;
     bool log_when_idle;
 };

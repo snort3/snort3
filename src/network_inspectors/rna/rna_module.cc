@@ -85,14 +85,8 @@ static const Parameter rna_params[] =
     { "rna_conf_path", Parameter::PT_STRING, nullptr, nullptr,
       "path to rna configuration" },
 
-    { "rna_util_lib_path", Parameter::PT_STRING, nullptr, nullptr,
-      "path to library for utilities such as fingerprint decoder" },
-
     { "fingerprint_dir", Parameter::PT_STRING, nullptr, nullptr,
       "directory to fingerprint patterns" },
-
-    { "custom_fingerprint_dir", Parameter::PT_STRING, nullptr, nullptr,
-      "directory to custom fingerprint patterns" },
 
     { "enable_logger", Parameter::PT_BOOL, nullptr, "true",
       "enable or disable writing discovery events into logger" },
@@ -144,12 +138,8 @@ bool RnaModule::set(const char*, Value& v, SnortConfig*)
 {
     if (v.is("rna_conf_path"))
         mod_conf->rna_conf_path = std::string(v.get_string());
-    else if (v.is("rna_util_lib_path"))
-        mod_conf->rna_util_lib_path = std::string(v.get_string());
     else if (v.is("fingerprint_dir"))
         mod_conf->fingerprint_dir = std::string(v.get_string());
-    else if (v.is("custom_fingerprint_dir"))
-        mod_conf->custom_fingerprint_dir = std::string(v.get_string());
     else if (v.is("enable_logger"))
         mod_conf->enable_logger = v.get_bool();
     else if (v.is("log_when_idle"))
@@ -213,28 +203,18 @@ TEST_CASE("RNA module", "[rna_module]")
         v1.set(Parameter::find(rna_params, "rna_conf_path"));
         CHECK(mod.set(nullptr, v1, nullptr) == true);
 
-        Value v2("rna_util.so");
-        v2.set(Parameter::find(rna_params, "rna_util_lib_path"));
+        Value v2("/dir/fingerprints");
+        v2.set(Parameter::find(rna_params, "fingerprint_dir"));
         CHECK(mod.set(nullptr, v2, nullptr) == true);
 
-        Value v3("/dir/fingerprints");
-        v3.set(Parameter::find(rna_params, "fingerprint_dir"));
-        CHECK(mod.set(nullptr, v3, nullptr) == true);
-
-        Value v4("/dir/custom_fingerprints");
-        v4.set(Parameter::find(rna_params, "custom_fingerprint_dir"));
-        CHECK(mod.set(nullptr, v4, nullptr) == true);
-
-        Value v5("dummy");
-        CHECK(mod.set(nullptr, v5, nullptr) == false);
+        Value v3("dummy");
+        CHECK(mod.set(nullptr, v3, nullptr) == false);
         CHECK(mod.end("rna", 0, &sc) == true);
 
         RnaModuleConfig* rc = mod.get_config();
         CHECK(rc != nullptr);
         CHECK(rc->rna_conf_path == "rna.conf");
-        CHECK(rc->rna_util_lib_path == "rna_util.so");
         CHECK(rc->fingerprint_dir == "/dir/fingerprints");
-        CHECK(rc->custom_fingerprint_dir == "/dir/custom_fingerprints");
 
         delete rc;
     }

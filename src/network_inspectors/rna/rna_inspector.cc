@@ -105,9 +105,7 @@ void RnaInspector::show(const SnortConfig*) const
     if ( mod_conf )
     {
         ConfigLogger::log_value("rna_conf_path", mod_conf->rna_conf_path.c_str());
-        ConfigLogger::log_value("rna_util_lib_path", mod_conf->rna_util_lib_path.c_str());
         ConfigLogger::log_value("fingerprint_dir", mod_conf->fingerprint_dir.c_str());
-        ConfigLogger::log_value("custom_fingerprint_dir", mod_conf->custom_fingerprint_dir.c_str());
         ConfigLogger::log_flag("enable_logger", mod_conf->enable_logger);
         ConfigLogger::log_flag("log_when_idle", mod_conf->log_when_idle);
     }

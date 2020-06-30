@@ -44,7 +44,7 @@ portexclusion dst udp 53 8.8.8.8    # exclude this ip for UDP port 53 in destina
 portexclusion both tcp 4000 ::0/0   # exclude any ipv6 for TCP port 4000 in both direction
 
 Note that exclusion has higher priority than inclusion. RNA does not support application/user
-discovery, fingerprint, util_lib_path decoder, enable_banner_grab, etc. The enable_logger config
+discovery, fingerprint, fingerprint reader, enable_banner_grab, etc. The enable_logger config
 is to enable/disable sending RNA discovery events to EventManager::call_loggers. Such event logger
 or reader is not implemented yet. However, since RNA stores host information into host_cache,
 to log the discovered hosts into a file, one can
