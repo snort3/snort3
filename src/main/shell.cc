@@ -73,6 +73,7 @@ bool Shell::is_whitelisted(const std::string& key)
         return false;
 
     const Whitelist& whitelist = sh->get_whitelist();
+    const Whitelist& internal_whitelist = sh->get_internal_whitelist();
     const Whitelist& whitelist_prefixes = sh->get_whitelist_prefixes();
 
     for ( const auto& prefix : whitelist_prefixes )
@@ -82,6 +83,9 @@ bool Shell::is_whitelisted(const std::string& key)
     }
 
     if ( whitelist.find(key) != whitelist.end() )
+        return true;
+
+    if ( internal_whitelist.find(key) != internal_whitelist.end() )
         return true;
 
     return false;
@@ -176,6 +180,7 @@ Shell::Shell(const char* s, bool load_defaults)
 
     loaded = false;
     load_string(lua, ModuleManager::get_lua_bootstrap());
+    bootstrapped = true;
 
     if ( load_defaults )
         load_string(lua, ModuleManager::get_lua_coreinit());
@@ -305,6 +310,27 @@ void Shell::execute(const char* cmd, string& rsp)
 }
 
 //-------------------------------------------------------------------------
+// Helper methods
+//-------------------------------------------------------------------------
+
+static void print_list(const Shell::Whitelist& wlist, const std::string& msg)
+{
+    LogMessage("\t%s\n", msg.c_str());
+    std::string list;
+
+    for ( const auto& wl : wlist )
+    {
+        list += wl;
+        list += ", ";
+    }
+
+    if ( !list.empty() )
+        list.erase(list.end() - 2, list.end());
+
+    ConfigLogger::log_list(list.c_str());
+}
+
+//-------------------------------------------------------------------------
 // private methods
 //-------------------------------------------------------------------------
 
@@ -314,17 +340,13 @@ void Shell::print_whitelist() const
     if ( !whitelist.empty() )
     {
         output = "Lua Whitelist Keywords for " + file + ":";
-        LogMessage("\t%s\n",output.c_str());
-        for ( const auto& wl : whitelist )
-            LogMessage("\t\t%s\n", wl.c_str());
+        print_list(whitelist, output);
     }
 
     if ( !whitelist_prefixes.empty() )
     {
         output = "Lua Whitelist Prefixes for " + file + ":";
-        LogMessage("\t%s\n",output.c_str());
-        for ( const auto& wlp : whitelist_prefixes )
-            LogMessage("\t\t%s\n", wlp.c_str());
+        print_list(whitelist_prefixes, output);
     }
 }
 
@@ -333,6 +355,8 @@ void Shell::whitelist_update(const char* s, bool is_prefix)
     Whitelist* wlist = nullptr;
     if ( is_prefix )
         wlist = &whitelist_prefixes;
+    else if ( !bootstrapped )
+        wlist = &internal_whitelist;
     else
         wlist = &whitelist;
 

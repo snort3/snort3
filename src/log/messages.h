@@ -83,6 +83,7 @@ public:
     static void log_value(const char* caption, double n, bool subopt = false);
     static void log_value(const char* caption, const char* str, bool subopt = false);
     static void log_list(const char* caption, const char* list, const char* prefix = " ", bool subopt = false);
+    static void log_list(const char* list);
 private:
     static constexpr int indention = 25;
     static constexpr int max_line_len = 75;

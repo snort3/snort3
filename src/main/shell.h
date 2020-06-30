@@ -74,11 +74,15 @@ private:
     void clear_whitelist()
     {
         whitelist.clear();
+        internal_whitelist.clear();
         whitelist_prefixes.clear();
     }
 
     const Whitelist& get_whitelist() const
     { return whitelist; }
+
+    const Whitelist& get_internal_whitelist() const
+    { return internal_whitelist; }
 
     const Whitelist& get_whitelist_prefixes() const
     { return whitelist_prefixes; }
@@ -88,11 +92,13 @@ private:
 
 private:
     bool loaded;
+    bool bootstrapped = false;
     lua_State* lua;
     std::string file;
     std::string parse_from;
     std::string overrides;
     Whitelist whitelist;
+    Whitelist internal_whitelist;
     Whitelist whitelist_prefixes;
 };
 

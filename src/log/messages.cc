@@ -505,5 +505,31 @@ void ConfigLogger::log_list(const char* caption, const char* list, const char* p
 
     LogMessage(fmt, ind, caption, delim, prefix, res.c_str());
 }
+
+void ConfigLogger::log_list(const char* list)
+{
+    if ( !list or !list[0] )
+        return;
+
+    std::stringstream ss(list);
+    std::string res;
+    std::string val;
+
+    while (ss >> val)
+    {
+        if ( res.length() + val.length() > max_line_len )
+        {
+            LogMessage("\t\t%s\n", res.c_str());
+            res.clear();
+        }
+
+        if (!res.empty())
+            res += ' ';
+
+        res += val;
+    }
+
+    LogMessage("\t\t%s\n", res.c_str());
+}
 } //namespace snort
 
