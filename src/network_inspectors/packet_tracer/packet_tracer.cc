@@ -129,7 +129,7 @@ void PacketTracer::log(const char* format, ...)
 
     va_list ap;
     va_start(ap, format);
-    s_pkt_trace->log(format, ap);
+    s_pkt_trace->log_va(format, ap);
     va_end(ap);
 }
 
@@ -140,7 +140,7 @@ void PacketTracer::log(TracerMute mute, const char* format, ...)
 
     va_list ap;
     va_start(ap, format);
-    s_pkt_trace->log(format, ap);
+    s_pkt_trace->log_va(format, ap);
     va_end(ap);
 
     s_pkt_trace->mutes[mute] = true;
@@ -240,7 +240,7 @@ PacketTracer::~PacketTracer()
     }
 }
 
-void PacketTracer::log(const char* format, va_list ap)
+void PacketTracer::log_va(const char* format, va_list ap)
 {
     // FIXIT-L Need to find way to add 'PktTracerDbg' string as part of format string.
     std::string dbg_str;

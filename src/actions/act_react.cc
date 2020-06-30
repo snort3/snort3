@@ -218,8 +218,6 @@ bool ReactModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("page") )
         return getpage(v.get_string());
-    else
-        return false;
 
     return true;
 }

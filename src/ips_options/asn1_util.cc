@@ -152,7 +152,7 @@ void asn1_free_mem()
 **  tag numbers, etc.
 **
 **  @param ASN1_DATA ptr to data
-**  @param u_int ptr to tag num
+**  @param unsigned ptr to tag num
 **
 **  @return integer
 **
@@ -161,10 +161,10 @@ void asn1_free_mem()
 **  @retval ASN1_ERR_OOB encoding goes out of bounds
 **  @retval ASN1_ERR_NULL_MEM function arguments are NULL
 */
-static int asn1_decode_tag_num_ext(ASN1_DATA* asn1_data, u_int* tag_num)
+static int asn1_decode_tag_num_ext(ASN1_DATA* asn1_data, unsigned* tag_num)
 {
     int iExtension = 0;
-    u_int new_tag_num;
+    unsigned new_tag_num;
 
     if (!asn1_data || !tag_num)
         return ASN1_ERR_NULL_MEM;
@@ -305,11 +305,11 @@ static int asn1_decode_len_type(const uint8_t* data)
 **  @retval ASN1_ERR_OOB out of bounds condition
 **  @retval ASN1_OK function successful
 */
-static int asn1_decode_len_ext(ASN1_DATA* asn1_data, u_int* size)
+static int asn1_decode_len_ext(ASN1_DATA* asn1_data, unsigned* size)
 {
     int iBytes;
     int iCtr;
-    u_int new_size;
+    unsigned new_size;
 
     if (!asn1_data || !size)
         return ASN1_ERR_NULL_MEM;
@@ -487,10 +487,10 @@ static int asn1_is_eoc(ASN1_TYPE* asn1)
 **  @retval ASN1_ERR_INVALID_ARG invalid argument
 **  @retval ASN1_ERR_OOB out of bounds
 */
-static int asn1_decode_type(const uint8_t** data, u_int* len, ASN1_TYPE** asn1_type)
+static int asn1_decode_type(const uint8_t** data, unsigned* len, ASN1_TYPE** asn1_type)
 {
     ASN1_DATA asn1data;
-    u_int uiRawLen;
+    unsigned uiRawLen;
     int iRet;
 
     if (!*data)
@@ -638,7 +638,7 @@ valid:
 **  @retval  ASN1_OK function successful
 **  @retval !ASN1_OK lots of error conditions, figure it out
 */
-int asn1_decode(const uint8_t* data, u_int len, ASN1_TYPE** asn1_type)
+int asn1_decode(const uint8_t* data, unsigned len, ASN1_TYPE** asn1_type)
 {
     ASN1_TYPE* cur;
     ASN1_TYPE* child = nullptr;
@@ -646,7 +646,7 @@ int asn1_decode(const uint8_t* data, u_int len, ASN1_TYPE** asn1_type)
     ASN1_TYPE* asnstack[ASN1_MAX_STACK];
 
     const uint8_t* end;
-    u_int con_len;
+    unsigned con_len;
     int index = 0;
     int iRet;
 

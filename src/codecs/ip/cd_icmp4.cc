@@ -548,7 +548,7 @@ void Icmp4Codec::log(TextLog* const log, const uint8_t* raw_pkt,
     case icmp::IcmpType::ADDRESSREPLY:
         TextLog_Print(log, "ID: %u  Seq: %u  ADDRESS REPLY: 0x%08X",
             ntohs(icmph->s_icmp_id), ntohs(icmph->s_icmp_seq),
-            (u_int)ntohl(icmph->s_icmp_mask));
+            ntohl(icmph->s_icmp_mask));
         break;
 
     default:

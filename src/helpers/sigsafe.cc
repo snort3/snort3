@@ -213,7 +213,7 @@ void SigSafePrinter::write_string(const char* str)
 {
     size_t len = strlen(str);
     if (fd >= 0)
-        write(fd, str, len);
+        (void) write(fd, str, len);
     else if (buf)
     {
         if (len > buf_size - buf_idx - 1)

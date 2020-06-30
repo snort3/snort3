@@ -38,7 +38,9 @@ using namespace snort;
 using namespace HttpCommon;
 using namespace Http2Enums;
 
+#ifdef REG_TEST
 static void print_flow_issues(FILE*, Http2Infractions* const, Http2EventGen* const);
+#endif
 
 Http2Inspect::Http2Inspect(const Http2ParaList* params_) : params(params_)
 {
@@ -177,9 +179,11 @@ void Http2Inspect::clear(Packet* p)
     stream->clear_frame();
 }
 
+#ifdef REG_TEST
 static void print_flow_issues(FILE* output, Http2Infractions* const infractions,
     Http2EventGen* const events)
 {
     fprintf(output, "Infractions: %016" PRIx64 ", Events: %016" PRIx64 "\n\n",
         infractions->get_raw(), events->get_raw());
 }
+#endif

@@ -94,7 +94,7 @@ protected:
     template<typename T = PacketTracer> static void _thread_init();
 
     // non-static functions
-    void log(const char*, va_list);
+    void log_va(const char*, va_list);
     void add_ip_header_info(const snort::Packet&);
     void add_eth_header_info(const snort::Packet&);
     void add_packet_type_info(const snort::Packet&);

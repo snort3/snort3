@@ -1005,7 +1005,7 @@ void LogICMPHeader(TextLog* log, Packet* p)
     case ICMP_ADDRESSREPLY:
         TextLog_Print(log, "ID: %u  Seq: %u  ADDRESS REPLY: 0x%08X",
             ntohs(p->ptrs.icmph->s_icmp_id), ntohs(p->ptrs.icmph->s_icmp_seq),
-            (u_int)ntohl(p->ptrs.icmph->s_icmp_mask));
+            ntohl(p->ptrs.icmph->s_icmp_mask));
         break;
 
     default:

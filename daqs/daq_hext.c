@@ -27,6 +27,7 @@
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -240,18 +241,43 @@ static void IpAddr(uint32_t* addr, char const* ip)
 
 static bool parse_flowstats(DAQ_MsgType type, const char* line, HextMsgDesc *desc)
 {
-#define FLOWSTATS_FORMAT "%d %d %d %d %s %hu %s %hu %u %lu %lu %lu %lu %lu %lu %hhu %ld %ld %hu %hu %hhu"
+#define FLOWSTATS_FORMAT \
+    "%" SCNi32 " "  /* ingressZone */   \
+    "%" SCNi32 " "  /* egressZone */    \
+    "%" SCNi32 " "  /* ingressIntf */   \
+    "%" SCNi32 " "  /* egressIntf */    \
+    "%s "           /* srcAddr */       \
+    "%" SCNu16 " "  /* initiatorPort */ \
+    "%s "           /* dstAddr */       \
+    "%" SCNu16 " "  /* responderPort */ \
+    "%" SCNu32 " "  /* opaque */        \
+    "%" SCNu64 " "  /* initiatorPkts */ \
+    "%" SCNu64 " "  /* responderPkts */ \
+    "%" SCNu64 " "  /* initiatorPktsDropped */  \
+    "%" SCNu64 " "  /* responderPktsDropped */  \
+    "%" SCNu64 " "  /* initiatorBytesDropped */ \
+    "%" SCNu64 " "  /* responderBytesDropped */ \
+    "%" SCNu8  " "  /* isQoSAppliedOnSrcIntf */ \
+    "%" SCNu32 " "  /* sof_timestamp.tv_sec */  \
+    "%" SCNu32 " "  /* eof_timestamp.tv_sec */  \
+    "%" SCNu16 " "  /* vlan_tag */      \
+    "%" SCNu16 " "  /* address_space_id */  \
+    "%" SCNu8       /* protocol */
 #define FLOWSTATS_ITEMS 21
     Flow_Stats_t* f = &desc->flowstats;
     char srcaddr[INET6_ADDRSTRLEN], dstaddr[INET6_ADDRSTRLEN];
+    uint32_t sof_sec, eof_sec;
     int rval = sscanf(line, FLOWSTATS_FORMAT, &f->ingressZone, &f->egressZone, &f->ingressIntf,
             &f->egressIntf, srcaddr, &f->initiatorPort, dstaddr, &f->responderPort, &f->opaque,
             &f->initiatorPkts, &f->responderPkts, &f->initiatorPktsDropped, &f->responderPktsDropped,
             &f->initiatorBytesDropped, &f->responderBytesDropped, &f->isQoSAppliedOnSrcIntf,
-            &f->sof_timestamp.tv_sec, &f->eof_timestamp.tv_sec, &f->vlan_tag, &f->address_space_id,
+            &sof_sec, &eof_sec, &f->vlan_tag, &f->address_space_id,
             &f->protocol);
     if (rval != FLOWSTATS_ITEMS)
         return false;
+
+    f->sof_timestamp.tv_sec = sof_sec;
+    f->eof_timestamp.tv_sec = eof_sec;
 
     desc->msg.type = type;
     desc->msg.hdr_len = sizeof(desc->flowstats);

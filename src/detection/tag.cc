@@ -562,7 +562,7 @@ int CheckTagList(Packet* p, Event& event, void** log_list)
         }
     }
 
-    if ( (u_int)(p->pkth->ts.tv_sec) > last_prune_time + TAG_PRUNE_QUANTUM )
+    if ( (unsigned)(p->pkth->ts.tv_sec) > last_prune_time + TAG_PRUNE_QUANTUM )
     {
         PruneTagCache(p->pkth->ts.tv_sec, 0);
         last_prune_time = p->pkth->ts.tv_sec;

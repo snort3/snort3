@@ -61,8 +61,8 @@ public:
     uint32_t first_decrypted_packet_debug = 0;
 #endif
     bool log_stats = false;
-    unsigned long app_stats_period = 300;
-    unsigned long app_stats_rollover_size = 0;
+    uint32_t app_stats_period = 300;
+    uint32_t app_stats_rollover_size = 0;
     const char* app_detector_dir = nullptr;
     std::string tp_appid_path = "";
     std::string tp_appid_config = "";
