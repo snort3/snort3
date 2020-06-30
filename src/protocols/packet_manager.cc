@@ -685,28 +685,13 @@ int PacketManager::encode_format(
     EncodeFlags f, const Packet* p, Packet* c, PseudoPacketType type,
     const DAQ_PktHdr_t* phdr, uint32_t opaque)
 {
-    int i;
-    int len;
     bool update_ip4_len = false;
-    uint8_t num_layers = p->num_layers;
+    uint8_t num_layers;
 
-    if ( num_layers == 0 )
-        return -1;
-
-    c->reset();
-    init_daq_pkthdr(p, c, phdr, opaque);
-
-    if ( f & ENC_FLAG_NET )
-    {
-        num_layers = layer::get_inner_ip_lyr_index(p) + 1;
-
-        if (num_layers == 0) // FIXIT-L is this an extraneous check?
-            return -1;
-    }
-    else if ( f & ENC_FLAG_DEF )
+    if ( f & ENC_FLAG_DEF )
     {
         /*
-         * By its definitinos, this flag means 'stop before innermost ip4
+         * By its definitions, this flag means 'stop before innermost ip4
          * opts or ip6 frag header'. So, stop after the ip4 layer IP4 will format itself, and now
          * we ensure that the ip6_frag header is not copied too.
          */
@@ -720,28 +705,26 @@ int PacketManager::encode_format(
             num_layers = layer::get_inner_ip_lyr_index(p) + 1;
             update_ip4_len = true;
         }
-
-        if (num_layers == 0)
-            return -1;
     }
+    else if ( f & ENC_FLAG_NET )
+        num_layers = layer::get_inner_ip_lyr_index(p) + 1;
+    else
+        num_layers = p->num_layers;
+
+    if ( num_layers == 0 )
+        return -1;
+
+    init_daq_pkthdr(p, c, phdr, opaque);
 
     // copy raw packet data to clone
     Layer* lyr = (Layer*)p->layers + num_layers - 1;
-    len = lyr->start - p->pkt + lyr->length;
+    int len = lyr->start - p->pkt + lyr->length;
     memcpy((void*)c->pkt, p->pkt, len);
-
-    if ( update_ip4_len )
-    {
-        ip::IP4Hdr* ip4h = reinterpret_cast<ip::IP4Hdr*>(const_cast<uint8_t*>(lyr->start));
-        lyr->length = ip::IP4_HEADER_LEN;
-        ip4h->set_ip_len(ip::IP4_HEADER_LEN);
-        ip4h->set_hlen(ip::IP4_HEADER_LEN >> 2);
-    }
 
     const bool reverse = !(f & ENC_FLAG_FWD);
 
     // set up and format layers
-    for ( i = 0; i < num_layers; i++ )
+    for ( int i = 0; i < num_layers; i++ )
     {
         const uint8_t* b = c->pkt + (p->layers[i].start - p->pkt); // == c->pkt + p->layers[i].len
         lyr = c->layers + i;
@@ -757,6 +740,15 @@ int PacketManager::encode_format(
 
         CodecManager::s_protocols[mapped_prot]->format(
             reverse, const_cast<uint8_t*>(lyr->start), c->ptrs);
+    }
+
+    if ( update_ip4_len )
+    {
+        lyr = (Layer*)c->layers + num_layers - 1;
+        ip::IP4Hdr* ip4h = reinterpret_cast<ip::IP4Hdr*>(const_cast<uint8_t*>(lyr->start));
+        lyr->length = ip::IP4_HEADER_LEN;
+        ip4h->set_ip_len(ip::IP4_HEADER_LEN);
+        ip4h->set_hlen(ip::IP4_HEADER_LEN >> 2);
     }
 
     // setup payload info

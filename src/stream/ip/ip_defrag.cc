@@ -359,8 +359,8 @@ static inline int FragCheckFirstLast(
                 break;
             }
         }
-
-        ft->frag_flags |= FRAG_GOT_LAST;
+        else
+            ft->frag_flags |= FRAG_GOT_LAST;
 
         /*
          * If this is the last frag (and we don't have a frag that already
