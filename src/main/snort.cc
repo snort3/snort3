@@ -191,6 +191,8 @@ void Snort::init(int argc, char** argv)
     else if ( sc->log_verbose() )
         InspectorManager::print_config(sc);
 
+    InspectorManager::prepare_controls(sc);
+
     // Must be after InspectorManager::configure()
     FileService::post_init(sc);
 
@@ -472,6 +474,8 @@ SnortConfig* Snort::get_reload_config(const char* fname, const char* plugin_path
         return nullptr;
     }
 
+    InspectorManager::prepare_controls(sc);
+
     FileService::verify_reload(sc);
     if ( get_reload_errors() )
     {
@@ -569,6 +573,8 @@ SnortConfig* Snort::get_updated_policy(
         return nullptr;
     }
 
+    InspectorManager::prepare_controls(sc);
+
     other_conf->cloned = true;
     InspectorManager::update_policy(sc);
     reloading = false;
@@ -607,6 +613,8 @@ SnortConfig* Snort::get_updated_module(SnortConfig* other_conf, const char* name
         reloading = false;
         return nullptr;
     }
+
+    InspectorManager::prepare_controls(sc);
 
     other_conf->cloned = true;
     InspectorManager::update_policy(sc);

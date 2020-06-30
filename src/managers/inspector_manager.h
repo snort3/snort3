@@ -71,6 +71,7 @@ public:
     SO_PUBLIC static void release(Inspector*);
 
     static bool configure(SnortConfig*, bool cloned = false);
+    static void prepare_controls(SnortConfig*);
     static void print_config(SnortConfig*);
 
     static void thread_init(const SnortConfig*);

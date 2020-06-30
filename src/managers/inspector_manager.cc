@@ -998,6 +998,25 @@ bool InspectorManager::configure(SnortConfig* sc, bool cloned)
     return ok;
 }
 
+// remove any disabled controls while retaining order
+void InspectorManager::prepare_controls(SnortConfig* sc)
+{
+    InspectionPolicy* pi = get_default_inspection_policy(sc);
+    assert(pi);
+
+    FrameworkPolicy* fp = pi->framework_policy;
+    assert(fp);
+
+    unsigned c = 0;
+
+    for ( unsigned i = 0; i < fp->control.num; ++i )
+    {
+        if ( !fp->control.vec[i]->handler->disable(sc) )
+            fp->control.vec[c++] = fp->control.vec[i];
+    }
+    fp->control.num = c;
+}
+
 void InspectorManager::print_config(SnortConfig* sc)
 {
     const auto shell_number = sc->policy_map->shells_count();

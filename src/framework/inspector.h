@@ -71,6 +71,11 @@ public:
     // access external dependencies here
     // return verification status
     virtual bool configure(SnortConfig*) { return true; }
+
+    // called on controls after everything is configured
+    // return true if there is nothing to do ever based on config
+    virtual bool disable(SnortConfig*) { return false; }
+
     virtual void show(const SnortConfig*) const { }
 
     // Specific to Binders to notify them of an inspector being removed from the policy
