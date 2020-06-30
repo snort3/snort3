@@ -31,6 +31,7 @@
 #include <lua/lua.h>
 
 #include "main/thread.h"
+#include "main/thread_config.h"
 #include "protocols/protocol_ids.h"
 
 #include "application_ids.h"
@@ -49,8 +50,9 @@ class LuaDetectorManager
 public:
     LuaDetectorManager(AppIdContext&, int);
     ~LuaDetectorManager();
-    static void initialize(AppIdContext&, int is_control=0);
-    static void terminate();
+    static void initialize(AppIdContext&, int is_control=0, bool reload=false);
+    static void init_thread_manager(const AppIdContext&);
+    static void terminate(bool is_control=false);
     static void add_detector_flow(DetectorFlow*);
     static void free_detector_flows();
     // FIXIT-M: RELOAD - When reload is supported, move this variable to a separate location

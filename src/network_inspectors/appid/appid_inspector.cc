@@ -140,7 +140,12 @@ void AppIdInspector::tinit()
     appid_mute = PacketTracer::get_mute();
 
     AppIdStatistics::initialize_manager(*config);
-    LuaDetectorManager::initialize(*ctxt);
+
+    if (ctxt->config.load_odp_detectors_in_ctrl)
+        LuaDetectorManager::init_thread_manager(*ctxt);
+    else
+        LuaDetectorManager::initialize(*ctxt);
+
     AppIdServiceState::initialize(config->memcap);
     assert(!tp_appid_thread_ctxt);
     tp_appid_thread_ctxt = ctxt->get_tp_appid_ctxt();
@@ -199,7 +204,7 @@ static void appid_inspector_pterm()
 {
 //FIXIT-M: RELOAD - if app_info_table is associated with an object
     appid_forecast_pterm();
-    LuaDetectorManager::terminate();
+    LuaDetectorManager::terminate(true);
     AppIdContext::pterm();
 //end of 'FIXIT-M: RELOAD' comment above
     openssl_cleanup();

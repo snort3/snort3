@@ -71,6 +71,7 @@ public:
     size_t memcap = 0;
     bool list_odp_detectors = false;
     bool log_all_sessions = false;
+    bool load_odp_detectors_in_ctrl = false;
     SnortProtocolId snortId_for_unsynchronized;
     SnortProtocolId snortId_for_ftp_data;
     SnortProtocolId snortId_for_http2;

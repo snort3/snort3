@@ -87,6 +87,8 @@ static const Parameter s_params[] =
       "print third party configuration on startup" },
     { "log_all_sessions", Parameter::PT_BOOL, nullptr, "false",
       "enable logging of all appid sessions" },
+    { "load_odp_detectors_in_ctrl", Parameter::PT_BOOL, nullptr, "false",
+      "load odp detectors in control thread" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -330,6 +332,8 @@ bool AppIdModule::set(const char*, Value& v, SnortConfig*)
         config->list_odp_detectors = v.get_bool();
     else if ( v.is("log_all_sessions") )
         config->log_all_sessions = v.get_bool();
+    else if ( v.is("load_odp_detectors_in_ctrl") )
+        config->load_odp_detectors_in_ctrl = v.get_bool();
 
     return true;
 }

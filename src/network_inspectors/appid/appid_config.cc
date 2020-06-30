@@ -88,6 +88,8 @@ void AppIdConfig::show() const
     ConfigLogger::log_flag("log_all_sessions", log_all_sessions);
     ConfigLogger::log_flag("log_stats", log_stats);
     ConfigLogger::log_value("memcap", memcap);
+
+    ConfigLogger::log_flag("load_odp_detectors_in_ctrl", load_odp_detectors_in_ctrl);
 }
 
 void AppIdContext::pterm()
@@ -110,7 +112,7 @@ bool AppIdContext::init_appid(SnortConfig* sc)
     {
         odp_ctxt->get_client_disco_mgr().initialize();
         odp_ctxt->get_service_disco_mgr().initialize();
-        LuaDetectorManager::initialize(*this, 1);
+        LuaDetectorManager::initialize(*this, 1, config.load_odp_detectors_in_ctrl);
         odp_ctxt->initialize();
 
         // do not reload third party on reload_config()
