@@ -319,7 +319,7 @@ TEST_CASE("Named thread affinity with type configured", "[ThreadConfig]")
 
         // Configure type affinity, but not the named thread affinity.
         hwloc_bitmap_singlify(type_cpuset->cpuset);
-        tc.set_thread_affinity(STHREAD_TYPE_OTHER, ThreadConfig::DEFAULT_THREAD_ID, type_cpuset);
+        tc.set_thread_affinity(STHREAD_TYPE_MAIN, ThreadConfig::DEFAULT_THREAD_ID, type_cpuset);
 
         // The named thread should inherit the type affinity.
         tc.implement_named_thread_affinity("not found, type other");

@@ -190,6 +190,16 @@ Each tracing message has a standard format:
 
     <module_name>:<option_name>:<message_log_level>: <particular_message>
 
+The stdout logger also prints thread type and thread instance ID at the beginning
+of each trace message in a colon-separated manner.
+
+The capital letter at the beginning of the trace message indicates the thread type.
+
+Possible thread types:
+C – main (control) thread
+P – packet thread
+O – other thread
+
 ==== Example - Debugging rules using detection trace
 
 The detection engine is responsible for rule evaluation. Turning on the

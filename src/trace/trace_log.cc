@@ -26,6 +26,8 @@
 #include <cstdio>
 #include <syslog.h>
 
+#include "main/thread.h"
+
 using namespace snort;
 
 //-----------------------------------------------
@@ -44,16 +46,32 @@ public:
 
 private:
     FILE* file;
+    char thread_type;
+    unsigned instance_id;
 };
 
 StdoutTraceLogger::StdoutTraceLogger()
-    : file(stdout)
-{ }
+    : file(stdout), instance_id(get_instance_id())
+{
+    auto t = get_thread_type();
+    switch (t)
+    {
+    case STHREAD_TYPE_PACKET:
+        thread_type = 'P';
+        break;
+    case STHREAD_TYPE_MAIN:
+        thread_type = 'C';
+        break;
+    default:
+        thread_type = 'O';
+    }
+}
 
 void StdoutTraceLogger::log(const char* log_msg, const char* name,
     uint8_t log_level, const char* trace_option, const Packet*)
 {
-    fprintf(file, "%s:%s:%d: %s", name, trace_option, log_level, log_msg);
+    fprintf(file, "%c%u:%s:%s:%d: %s", thread_type, instance_id, name,
+        trace_option, log_level, log_msg);
 }
 
 // Syslog

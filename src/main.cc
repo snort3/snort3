@@ -1034,6 +1034,8 @@ int main(int argc, char* argv[])
     if ( s )
         prompt = s;
 
+    set_thread_type(STHREAD_TYPE_MAIN);
+
     Snort::setup(argc, argv);
 
     if ( set_mode() )
