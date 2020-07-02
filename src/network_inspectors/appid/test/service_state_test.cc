@@ -187,7 +187,7 @@ TEST(service_state_tests, appid_service_state_key_comparison_test)
 {
     SfIp ip4, ip6;
     ip4.set("1.2.3.4");
-    ip6.set("1111.2222.3333.4444.5555.6666.7777.8888");
+    ip6.set("1111:2222:3333:4444:5555:6666:7777:8888");
     IpProtocol proto = IpProtocol::TCP;
     uint16_t port=3000;
 
@@ -209,7 +209,7 @@ TEST(service_state_tests, service_cache)
     uint16_t port = 3000;
     SfIp ip4, ip6;
     ip4.set("1.2.3.4");
-    ip6.set("1111.2222.3333.4444.5555.6666.7777.8888");
+    ip6.set("1111:2222:3333:4444:5555:6666:7777:8888");
 
     ServiceDiscoveryState* ss = nullptr;
     std::vector<ServiceDiscoveryState*> ssvec;
