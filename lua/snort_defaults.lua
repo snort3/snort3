@@ -329,7 +329,7 @@ default_wizard =
     spells =
     {
         { service = 'ftp', proto = 'tcp', client_first = false,
-          to_client = { '220*FTP' } },
+          to_client = { '220*FTP', '220*FileZilla' } },
 
         { service = 'http', proto = 'tcp', client_first = true,
           to_server = http_methods, to_client = { 'HTTP/' } },
