@@ -12,7 +12,7 @@
 //                                               //
 //-----------------------------------------------//
 
-#define BUILD_NUMBER 0
+#define BUILD_NUMBER 1
 
 #ifndef EXTRABUILD
 #define BUILD STRINGIFY_MX(BUILD_NUMBER)

@@ -95,16 +95,17 @@ Table of Contents
     6.19. output
     6.20. packet_tracer
     6.21. packets
-    6.22. process
-    6.23. profiler
-    6.24. rate_filter
-    6.25. references
-    6.26. rule_state
-    6.27. search_engine
-    6.28. side_channel
-    6.29. snort
-    6.30. suppress
-    6.31. trace
+    6.22. payload_injector
+    6.23. process
+    6.24. profiler
+    6.25. rate_filter
+    6.26. references
+    6.27. rule_state
+    6.28. search_engine
+    6.29. side_channel
+    6.30. snort
+    6.31. suppress
+    6.32. trace
 
 7. Codec Modules
 
@@ -160,42 +161,38 @@ Table of Contents
     9.16. dpx
     9.17. file_id
     9.18. file_log
-    9.19. finalize_packet
-    9.20. ftp_client
-    9.21. ftp_data
-    9.22. ftp_server
-    9.23. gtp_inspect
-    9.24. http2_inspect
-    9.25. http_inspect
-    9.26. imap
-    9.27. mem_test
-    9.28. modbus
-    9.29. normalizer
-    9.30. packet_capture
-    9.31. perf_monitor
-    9.32. pop
-    9.33. port_scan
-    9.34. reputation
-    9.35. rna
-    9.36. rpc_decode
-    9.37. rt_global
-    9.38. rt_packet
-    9.39. rt_service
-    9.40. s7commplus
-    9.41. sip
-    9.42. smtp
-    9.43. so_proxy
-    9.44. ssh
-    9.45. ssl
-    9.46. stream
-    9.47. stream_file
-    9.48. stream_icmp
-    9.49. stream_ip
-    9.50. stream_tcp
-    9.51. stream_udp
-    9.52. stream_user
-    9.53. telnet
-    9.54. wizard
+    9.19. ftp_client
+    9.20. ftp_data
+    9.21. ftp_server
+    9.22. gtp_inspect
+    9.23. http2_inspect
+    9.24. http_inspect
+    9.25. imap
+    9.26. mem_test
+    9.27. modbus
+    9.28. normalizer
+    9.29. packet_capture
+    9.30. perf_monitor
+    9.31. pop
+    9.32. port_scan
+    9.33. reputation
+    9.34. rna
+    9.35. rpc_decode
+    9.36. s7commplus
+    9.37. sip
+    9.38. smtp
+    9.39. so_proxy
+    9.40. ssh
+    9.41. ssl
+    9.42. stream
+    9.43. stream_file
+    9.44. stream_icmp
+    9.45. stream_ip
+    9.46. stream_tcp
+    9.47. stream_udp
+    9.48. stream_user
+    9.49. telnet
+    9.50. wizard
 
 10. IPS Action Modules
 
@@ -412,7 +409,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.1 (Build 5)
+o"  )~   Version 3.0.2 (Build 1)
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2020 Cisco and/or its affiliates. All rights reserved.
@@ -1321,6 +1318,9 @@ Optional:
     their instructions for building it as a shared library.
   * iconv from https://ftp.gnu.org/pub/gnu/libiconv/ for converting
     UTF16-LE filenames to UTF8 (usually included in glibc)
+  * libunwind from https://www.nongnu.org/libunwind/ to attempt to
+    dump a somewhat readable backtrace when a fatal signal is
+    received
   * lzma >= 5.1.2 from http://tukaani.org/xz/ for decompression of
     SWF and PDF files
   * safec >= 3.5 from https://github.com/rurban/safeclib/ for runtime
@@ -5409,6 +5409,15 @@ Each tracing message has a standard format:
 
 <module_name>:<option_name>:<message_log_level>: <particular_message>
 
+The stdout logger also prints thread type and thread instance ID at
+the beginning of each trace message in a colon-separated manner.
+
+The capital letter at the beginning of the trace message indicates
+the thread type.
+
+Possible thread types: C – main (control) thread P – packet thread O
+– other thread
+
 5.17.7. Example - Debugging rules using detection trace
 
 The detection engine is responsible for rule evaluation. Turning on
@@ -6070,6 +6079,18 @@ Peg counts:
     (sum)
   * detection.file_searches: fast pattern searches in file buffer
     (sum)
+  * detection.raw_key_searches: fast pattern searches in raw key
+    buffer (sum)
+  * detection.raw_header_searches: fast pattern searches in raw
+    header buffer (sum)
+  * detection.method_searches: fast pattern searches in method buffer
+    (sum)
+  * detection.stat_code_searches: fast pattern searches in status
+    code buffer (sum)
+  * detection.stat_msg_searches: fast pattern searches in status
+    message buffer (sum)
+  * detection.cookie_searches: fast pattern searches in cookie buffer
+    (sum)
   * detection.offloads: fast pattern searches that were offloaded
     (sum)
   * detection.alerts: alerts not including IP reputation (sum)
@@ -6522,7 +6543,23 @@ Configuration:
     is used to track fragments and connections
 
 
-6.22. process
+6.22. payload_injector
+
+--------------
+
+What: payload injection utility
+
+Type: basic
+
+Usage: global
+
+Peg counts:
+
+  * payload_injector.http_injects: total number of http injections
+    (sum)
+
+
+6.23. process
 
 --------------
 
@@ -6537,8 +6574,12 @@ Configuration:
   * string process.chroot: set chroot directory (same as -t)
   * string process.threads[].cpuset: pin the associated thread to
     this cpuset
-  * int process.threads[].thread = 0: set cpu affinity for the
+  * int process.threads[].thread: set cpu affinity for the
     <cur_thread_num> thread that runs { 0:65535 }
+  * enum process.threads[].type: define which threads will have
+    specified affinity, by their type { other|packet|main }
+  * string process.threads[].name: define which threads will have
+    specified affinity, by thread name
   * bool process.daemon = false: fork as a daemon (same as -D)
   * bool process.dirty_pig = false: shutdown without internal cleanup
   * string process.set_gid: set group ID (same as -g)
@@ -6548,7 +6589,7 @@ Configuration:
     timestamps
 
 
-6.23. profiler
+6.24. profiler
 
 --------------
 
@@ -6583,7 +6624,7 @@ Configuration:
     avg_match | avg_no_match }
 
 
-6.24. rate_filter
+6.25. rate_filter
 
 --------------
 
@@ -6614,7 +6655,7 @@ Peg counts:
     memory (sum)
 
 
-6.25. references
+6.26. references
 
 --------------
 
@@ -6630,7 +6671,7 @@ Configuration:
   * string references[].url: where this reference is defined
 
 
-6.26. rule_state
+6.27. rule_state
 
 --------------
 
@@ -6651,7 +6692,7 @@ Configuration:
     no | yes | inherit }
 
 
-6.27. search_engine
+6.28. search_engine
 
 --------------
 
@@ -6718,7 +6759,7 @@ Peg counts:
   * search_engine.searched_bytes: total bytes searched (sum)
 
 
-6.28. side_channel
+6.29. side_channel
 
 --------------
 
@@ -6740,7 +6781,7 @@ Peg counts:
   * side_channel.packets: total packets (sum)
 
 
-6.29. snort
+6.30. snort
 
 --------------
 
@@ -7007,7 +7048,7 @@ Peg counts:
     failed due to attribute table full (sum)
 
 
-6.30. suppress
+6.31. suppress
 
 --------------
 
@@ -7027,7 +7068,7 @@ Configuration:
     according to track
 
 
-6.31. trace
+6.32. trace
 
 --------------
 
@@ -7811,6 +7852,8 @@ Configuration:
     on startup
   * bool appid.log_all_sessions = false: enable logging of all appid
     sessions
+  * bool appid.load_odp_detectors_in_ctrl = false: load odp detectors
+    in control thread
 
 Commands:
 
@@ -8623,43 +8666,7 @@ Peg counts:
   * file_log.total_events: total file events (sum)
 
 
-9.19. finalize_packet
-
---------------
-
-What: handle the finalize packet event
-
-Type: inspector
-
-Usage: inspect
-
-Configuration:
-
-  * int finalize_packet.start_pdu = 0: Register to receive finalize
-    packet event starting on this PDU { 0:max32 }
-  * int finalize_packet.end_pdu = 0: Deregister for finalize packet
-    events on this PDU { 0:max32 }
-  * int finalize_packet.modify.pdu = 0: Modify verdict in finalize
-    packet for this PDU { 0:max32 }
-  * enum finalize_packet.modify.verdict: output format for stats {
-    pass | block | replace | whitelist | blacklist | ignore | retry }
-  * bool finalize_packet.switch_to_wizard = false: Switch to wizard
-    on first finalize event
-  * bool finalize_packet.use_direct_inject = false: Use ioctl to do
-    payload and reset injects
-  * bool finalize_packet.defer_whitelist = false: Turn on defer
-    whitelist until we switch to wizard
-  * bool finalize_packet.force_whitelist = false: Set ignore
-    direction to both so that flow will be whitelisted
-
-Peg counts:
-
-  * finalize_packet.pdus: total PDUs seen (sum)
-  * finalize_packet.events: total events seen (sum)
-  * finalize_packet.other_messages: total other message seen (sum)
-
-
-9.20. ftp_client
+9.19. ftp_client
 
 --------------
 
@@ -8685,7 +8692,7 @@ Configuration:
     sequences on FTP control channel
 
 
-9.21. ftp_data
+9.20. ftp_data
 
 --------------
 
@@ -8700,7 +8707,7 @@ Peg counts:
   * ftp_data.packets: total packets (sum)
 
 
-9.22. ftp_server
+9.21. ftp_server
 
 --------------
 
@@ -8776,7 +8783,7 @@ Peg counts:
     sessions (max)
 
 
-9.23. gtp_inspect
+9.22. gtp_inspect
 
 --------------
 
@@ -8817,7 +8824,7 @@ Peg counts:
   * gtp_inspect.unknown_infos: unknown information elements (sum)
 
 
-9.24. http2_inspect
+9.23. http2_inspect
 
 --------------
 
@@ -8861,7 +8868,7 @@ Peg counts:
     transfers per HTTP/2 connection (max)
 
 
-9.25. http_inspect
+9.24. http_inspect
 
 --------------
 
@@ -9108,7 +9115,7 @@ Peg counts:
     cutovers to wizard (sum)
 
 
-9.26. imap
+9.25. imap
 
 --------------
 
@@ -9163,7 +9170,7 @@ Peg counts:
   * imap.non_encoded_bytes: total non-encoded extracted bytes (sum)
 
 
-9.27. mem_test
+9.26. mem_test
 
 --------------
 
@@ -9178,7 +9185,7 @@ Peg counts:
   * mem_test.packets: total packets (sum)
 
 
-9.28. modbus
+9.27. modbus
 
 --------------
 
@@ -9205,7 +9212,7 @@ Peg counts:
     sessions (max)
 
 
-9.29. normalizer
+9.28. normalizer
 
 --------------
 
@@ -9341,7 +9348,7 @@ Peg counts:
   * normalizer.tcp_block: blocked segments (sum)
 
 
-9.30. packet_capture
+9.29. packet_capture
 
 --------------
 
@@ -9369,7 +9376,7 @@ Peg counts:
     filter (sum)
 
 
-9.31. perf_monitor
+9.30. perf_monitor
 
 --------------
 
@@ -9427,7 +9434,7 @@ Peg counts:
     by new flows (sum)
 
 
-9.32. pop
+9.31. pop
 
 --------------
 
@@ -9483,7 +9490,7 @@ Peg counts:
   * pop.non_encoded_bytes: total non-encoded extracted bytes (sum)
 
 
-9.33. port_scan
+9.32. port_scan
 
 --------------
 
@@ -9653,7 +9660,7 @@ Peg counts:
     to reduced memcap (sum)
 
 
-9.34. reputation
+9.33. reputation
 
 --------------
 
@@ -9698,7 +9705,7 @@ Peg counts:
   * reputation.memory_allocated: total memory allocated (sum)
 
 
-9.35. rna
+9.34. rna
 
 --------------
 
@@ -9711,16 +9718,17 @@ Usage: context
 
 Configuration:
 
-  * string rna.rna_conf_path: path to RNA configuration
-  * string rna.rna_util_lib_path: path to library for utilities such
-    as fingerprint decoder
+  * string rna.rna_conf_path: path to rna configuration
   * string rna.fingerprint_dir: directory to fingerprint patterns
-  * string rna.custom_fingerprint_dir: directory to custom
-    fingerprint patterns
   * bool rna.enable_logger = true: enable or disable writing
     discovery events into logger
   * bool rna.log_when_idle = false: enable host update logging when
     snort is idle
+
+Commands:
+
+  * rna.reload_fingerprint(): reload rna database of fingerprint
+    patterns/signatures
 
 Peg counts:
 
@@ -9741,7 +9749,7 @@ Peg counts:
     (sum)
 
 
-9.36. rpc_decode
+9.35. rpc_decode
 
 --------------
 
@@ -9768,82 +9776,7 @@ Peg counts:
     sessions (max)
 
 
-9.37. rt_global
-
---------------
-
-What: The regression test global inspector is used for regression
-tests specific to a global inspector
-
-Type: inspector
-
-Usage: global
-
-Configuration:
-
-  * int rt_global.downshift_packet = 0: attempt downshift at this
-    packet on flow (0 is disabled) { 0:max32 }
-  * int rt_global.downshift_mode = 3: 1 = unconditional, 2 = !ctl and
-    !tls, 3 = !ctl and !file { 1:3 }
-  * int rt_global.memcap = 2048: cap on amount of memory used (0 is
-    disabled) { 0:max53 }
-  * bool rt_global.empty_ips = false: ips policy with no rules
-  * bool rt_global.init_drop_reason = false: populate drop reason map
-
-Peg counts:
-
-  * rt_global.packets: total packets (sum)
-
-
-9.38. rt_packet
-
---------------
-
-What: The regression test packet inspector is used when special
-packet handling is required for a reg test
-
-Type: inspector
-
-Usage: context
-
-Configuration:
-
-  * bool rt_packet.retry_targeted = false: request retry for packets
-    whose data starts with A
-  * bool rt_packet.retry_all = false: request retry for all non-retry
-    packets
-
-Peg counts:
-
-  * rt_packet.packets: total packets (sum)
-  * rt_packet.retry_requests: total retry packets requested (sum)
-  * rt_packet.retry_packets: total retried packets received (sum)
-
-
-9.39. rt_service
-
---------------
-
-What: The regression test service inspector is used by regression
-tests that require custom service inspector support.
-
-Type: inspector
-
-Usage: context
-
-Peg counts:
-
-  * rt_service.packets: total packets (sum)
-  * rt_service.flush_requests: total splitter flush requests (sum)
-  * rt_service.hold_requests: total splitter hold requests (sum)
-  * rt_service.search_requests: total splitter search requests (sum)
-  * rt_service.send_data_requests: total send data via daq inject
-    requests (sum)
-  * rt_service.send_data_direct_requests: total send data via direct
-    inject requests (sum)
-
-
-9.40. s7commplus
+9.36. s7commplus
 
 --------------
 
@@ -9870,7 +9803,7 @@ Peg counts:
     sessions (max)
 
 
-9.41. sip
+9.37. sip
 
 --------------
 
@@ -9969,7 +9902,7 @@ Peg counts:
   * sip.code_9xx: 9xx (sum)
 
 
-9.42. smtp
+9.38. smtp
 
 --------------
 
@@ -10072,7 +10005,7 @@ Peg counts:
   * smtp.non_encoded_bytes: total non-encoded extracted bytes (sum)
 
 
-9.43. so_proxy
+9.39. so_proxy
 
 --------------
 
@@ -10084,7 +10017,7 @@ Type: inspector
 Usage: global
 
 
-9.44. ssh
+9.40. ssh
 
 --------------
 
@@ -10122,7 +10055,7 @@ Peg counts:
     (max)
 
 
-9.45. ssl
+9.41. ssl
 
 --------------
 
@@ -10171,7 +10104,7 @@ Peg counts:
     (max)
 
 
-9.46. stream
+9.42. stream
 
 --------------
 
@@ -10258,7 +10191,7 @@ Peg counts:
     deleted by config reloads (sum)
 
 
-9.47. stream_file
+9.43. stream_file
 
 --------------
 
@@ -10273,7 +10206,7 @@ Configuration:
   * bool stream_file.upload = false: indicate file transfer direction
 
 
-9.48. stream_icmp
+9.44. stream_icmp
 
 --------------
 
@@ -10298,7 +10231,7 @@ Peg counts:
   * stream_icmp.prunes: icmp session prunes (sum)
 
 
-9.49. stream_ip
+9.45. stream_ip
 
 --------------
 
@@ -10368,7 +10301,7 @@ Peg counts:
   * stream_ip.fragmented_bytes: total fragmented bytes (sum)
 
 
-9.50. stream_tcp
+9.46. stream_tcp
 
 --------------
 
@@ -10520,7 +10453,7 @@ Peg counts:
     service stream splitter (sum)
 
 
-9.51. stream_udp
+9.47. stream_udp
 
 --------------
 
@@ -10547,7 +10480,7 @@ Peg counts:
   * stream_udp.ignored: udp packets ignored (sum)
 
 
-9.52. stream_user
+9.48. stream_user
 
 --------------
 
@@ -10563,7 +10496,7 @@ Configuration:
     1:max31 }
 
 
-9.53. telnet
+9.49. telnet
 
 --------------
 
@@ -10597,7 +10530,7 @@ Peg counts:
     sessions (max)
 
 
-9.54. wizard
+9.50. wizard
 
 --------------
 
@@ -12256,7 +12189,8 @@ Configuration:
 
 --------------
 
-What: rule option for matching payload data with hyperscan regex
+What: rule option for matching payload data with hyperscan regex;
+uses pcre syntax
 
 Type: ips_option
 
@@ -15058,6 +14992,8 @@ are present. There is no need to explicitly enable.
     the hyperscan search engine.
   * iconv: for converting UTF16-LE filenames to UTF8 (usually
     included in glibc)
+  * libunwind: for printing a backtrace when a fatal signal is
+    received.
   * lzma: for decompression of SWF and PDF files.
   * safec: for additional runtime error checking of some memory copy
     operations.
@@ -15377,6 +15313,8 @@ these libraries see the Getting Started section of the manual.
     appid stats before rolling over the log file { 0:max32 }
   * bool appid.list_odp_detectors = false: enable logging of odp
     detectors statistics
+  * bool appid.load_odp_detectors_in_ctrl = false: load odp detectors
+    in control thread
   * bool appid.log_all_sessions = false: enable logging of all appid
     sessions
   * bool appid.log_stats = false: enable logging of appid statistics
@@ -15786,22 +15724,6 @@ these libraries see the Getting Started section of the manual.
   * bool file_log.log_sys_time = false: log the system time when
     event generated
   * string file_type.~: list of file type IDs to match
-  * bool finalize_packet.defer_whitelist = false: Turn on defer
-    whitelist until we switch to wizard
-  * int finalize_packet.end_pdu = 0: Deregister for finalize packet
-    events on this PDU { 0:max32 }
-  * bool finalize_packet.force_whitelist = false: Set ignore
-    direction to both so that flow will be whitelisted
-  * int finalize_packet.modify.pdu = 0: Modify verdict in finalize
-    packet for this PDU { 0:max32 }
-  * enum finalize_packet.modify.verdict: output format for stats {
-    pass | block | replace | whitelist | blacklist | ignore | retry }
-  * int finalize_packet.start_pdu = 0: Register to receive finalize
-    packet event starting on this PDU { 0:max32 }
-  * bool finalize_packet.switch_to_wizard = false: Switch to wizard
-    on first finalize event
-  * bool finalize_packet.use_direct_inject = false: Use ioctl to do
-    payload and reset injects
   * string flags.~mask_flags: these flags are don’t cares
   * string flags.~test_flags: these flags are tested
   * string flowbits.~bits: bit [|bit]* or bit [&bit]*
@@ -16443,8 +16365,12 @@ these libraries see the Getting Started section of the manual.
   * string process.set_uid: set user ID (same as -u)
   * string process.threads[].cpuset: pin the associated thread to
     this cpuset
-  * int process.threads[].thread = 0: set cpu affinity for the
+  * string process.threads[].name: define which threads will have
+    specified affinity, by thread name
+  * int process.threads[].thread: set cpu affinity for the
     <cur_thread_num> thread that runs { 0:65535 }
+  * enum process.threads[].type: define which threads will have
+    specified affinity, by their type { other|packet|main }
   * int process.umask: set process umask (same as -m) { 0x000:0x1FF }
   * bool process.utc = false: use UTC instead of local time for
     timestamps
@@ -16518,31 +16444,15 @@ these libraries see the Getting Started section of the manual.
   * int rev.~: revision { 1:max32 }
   * bool rewrite.disable_replace = false: disable replace of packet
     contents with rewrite rules
-  * string rna.custom_fingerprint_dir: directory to custom
-    fingerprint patterns
   * bool rna.enable_logger = true: enable or disable writing
     discovery events into logger
   * string rna.fingerprint_dir: directory to fingerprint patterns
   * bool rna.log_when_idle = false: enable host update logging when
     snort is idle
-  * string rna.rna_conf_path: path to RNA configuration
-  * string rna.rna_util_lib_path: path to library for utilities such
-    as fingerprint decoder
+  * string rna.rna_conf_path: path to rna configuration
   * int rpc.~app: application number { 0:max32 }
   * string rpc.~proc: procedure number or * for any
   * string rpc.~ver: version number or * for any
-  * int rt_global.downshift_mode = 3: 1 = unconditional, 2 = !ctl and
-    !tls, 3 = !ctl and !file { 1:3 }
-  * int rt_global.downshift_packet = 0: attempt downshift at this
-    packet on flow (0 is disabled) { 0:max32 }
-  * bool rt_global.empty_ips = false: ips policy with no rules
-  * bool rt_global.init_drop_reason = false: populate drop reason map
-  * int rt_global.memcap = 2048: cap on amount of memory used (0 is
-    disabled) { 0:max53 }
-  * bool rt_packet.retry_all = false: request retry for all non-retry
-    packets
-  * bool rt_packet.retry_targeted = false: request retry for packets
-    whose data starts with A
   * enum rule_state.$gid_sid[].action = alert: apply action if rule
     matches or inherit from rule definition { log | pass | alert |
     drop | block | reset }
@@ -17399,6 +17309,8 @@ these libraries see the Getting Started section of the manual.
     available context (sum)
   * detection.cooked_searches: fast pattern searches in cooked packet
     data (sum)
+  * detection.cookie_searches: fast pattern searches in cookie buffer
+    (sum)
   * detection.event_limit: events filtered (sum)
   * detection.file_searches: fast pattern searches in file buffer
     (sum)
@@ -17409,6 +17321,8 @@ these libraries see the Getting Started section of the manual.
   * detection.logged: logged packets (sum)
   * detection.log_limit: events queued but not logged (sum)
   * detection.match_limit: fast pattern matches not processed (sum)
+  * detection.method_searches: fast pattern searches in method buffer
+    (sum)
   * detection.offload_busy: times offload was not available (sum)
   * detection.offload_failures: fast pattern offload search failures
     (sum)
@@ -17430,8 +17344,16 @@ these libraries see the Getting Started section of the manual.
   * detection.pkt_searches: fast pattern searches in packet data
     (sum)
   * detection.queue_limit: events not queued because queue full (sum)
+  * detection.raw_header_searches: fast pattern searches in raw
+    header buffer (sum)
+  * detection.raw_key_searches: fast pattern searches in raw key
+    buffer (sum)
   * detection.raw_searches: fast pattern searches in raw packet data
     (sum)
+  * detection.stat_code_searches: fast pattern searches in status
+    code buffer (sum)
+  * detection.stat_msg_searches: fast pattern searches in status
+    message buffer (sum)
   * detection.total_alerts: alerts including IP reputation (sum)
   * dnp3.concurrent_sessions: total concurrent dnp3 sessions (now)
   * dnp3.dnp3_application_pdus: total dnp3 application pdus (sum)
@@ -17464,9 +17386,6 @@ these libraries see the Getting Started section of the manual.
     (sum)
   * file_id.total_files: number of files processed (sum)
   * file_log.total_events: total file events (sum)
-  * finalize_packet.events: total events seen (sum)
-  * finalize_packet.other_messages: total other message seen (sum)
-  * finalize_packet.pdus: total PDUs seen (sum)
   * ftp_data.packets: total packets (sum)
   * ftp_server.concurrent_sessions: total concurrent FTP sessions
     (now)
@@ -17691,6 +17610,8 @@ these libraries see the Getting Started section of the manual.
   * packet_capture.captured: packets matching dumped after matching
     filter (sum)
   * packet_capture.processed: packets processed against filter (sum)
+  * payload_injector.http_injects: total number of http injections
+    (sum)
   * pcre.pcre_native: total pcre rules compiled by pcre engine (sum)
   * pcre.pcre_negated: total pcre rules using negation syntax (sum)
   * pcre.pcre_rules: total rules processed with pcre option (sum)
@@ -17755,18 +17676,6 @@ these libraries see the Getting Started section of the manual.
   * rpc_decode.max_concurrent_sessions: maximum concurrent rpc
     sessions (max)
   * rpc_decode.total_packets: total packets (sum)
-  * rt_global.packets: total packets (sum)
-  * rt_packet.packets: total packets (sum)
-  * rt_packet.retry_packets: total retried packets received (sum)
-  * rt_packet.retry_requests: total retry packets requested (sum)
-  * rt_service.flush_requests: total splitter flush requests (sum)
-  * rt_service.hold_requests: total splitter hold requests (sum)
-  * rt_service.packets: total packets (sum)
-  * rt_service.search_requests: total splitter search requests (sum)
-  * rt_service.send_data_direct_requests: total send data via direct
-    inject requests (sum)
-  * rt_service.send_data_requests: total send data via daq inject
-    requests (sum)
   * s7commplus.concurrent_sessions: total concurrent s7commplus
     sessions (now)
   * s7commplus.frames: total S7commplus messages (sum)
@@ -18775,6 +18684,8 @@ these libraries see the Getting Started section of the manual.
     host pairs
   * perf_monitor.show_flow_ip_profiling(): show status of statistics
     on host pairs
+  * rna.reload_fingerprint(): reload rna database of fingerprint
+    patterns/signatures
   * snort.show_plugins(): show available plugins
   * snort.delete_inspector(inspector): delete an inspector from the
     default policy
@@ -19290,7 +19201,6 @@ deleted -> unified2: 'vlan_event_types'
   * file_id (inspector): configure file identification
   * file_log (inspector): log file event to file.log
   * file_type (ips_option): rule option to check file type
-  * finalize_packet (inspector): handle the finalize packet event
   * flags (ips_option): rule option to test TCP control flags
   * flow (ips_option): rule option to check session properties
   * flowbits (ips_option): rule option to set and test arbitrary
@@ -19405,6 +19315,7 @@ deleted -> unified2: 'vlan_event_types'
   * packet_capture (inspector): raw packet dumping facility
   * packet_tracer (basic): generate debug trace messages for packets
   * packets (basic): configure basic packet handling
+  * payload_injector (basic): payload injection utility
   * pbb (codec): support for 802.1ah protocol
   * pcre (ips_option): rule option for matching payload data with
     pcre
@@ -19430,7 +19341,7 @@ deleted -> unified2: 'vlan_event_types'
     identification system
   * references (basic): define reference systems used in rules
   * regex (ips_option): rule option for matching payload data with
-    hyperscan regex
+    hyperscan regex; uses pcre syntax
   * reject (ips_action): terminate session with TCP reset or ICMP
     unreachable
   * rem (ips_option): rule option to convey an arbitrary comment in
@@ -19445,13 +19356,6 @@ deleted -> unified2: 'vlan_event_types'
     fingerprinting (experimental)
   * rpc (ips_option): rule option to check SUNRPC CALL parameters
   * rpc_decode (inspector): RPC inspector
-  * rt_global (inspector): The regression test global inspector is
-    used for regression tests specific to a global inspector
-  * rt_packet (inspector): The regression test packet inspector is
-    used when special packet handling is required for a reg test
-  * rt_service (inspector): The regression test service inspector is
-    used by regression tests that require custom service inspector
-    support.
   * rule_state (basic): enable/disable and set actions for specific
     IPS rules; deprecated, use rule state stubs with enable instead
   * s7commplus (inspector): s7commplus inspection
@@ -19606,7 +19510,6 @@ deleted -> unified2: 'vlan_event_types'
   * inspector::dpx: dynamic inspector example
   * inspector::file_id: configure file identification
   * inspector::file_log: log file event to file.log
-  * inspector::finalize_packet: handle the finalize packet event
   * inspector::ftp_client: FTP inspector client module
   * inspector::ftp_data: FTP data channel handler
   * inspector::ftp_server: FTP inspector server module
@@ -19627,13 +19530,6 @@ deleted -> unified2: 'vlan_event_types'
   * inspector::rna: Real-time network awareness and OS fingerprinting
     (experimental)
   * inspector::rpc_decode: RPC inspector
-  * inspector::rt_global: The regression test global inspector is
-    used for regression tests specific to a global inspector
-  * inspector::rt_packet: The regression test packet inspector is
-    used when special packet handling is required for a reg test
-  * inspector::rt_service: The regression test service inspector is
-    used by regression tests that require custom service inspector
-    support.
   * inspector::s7commplus: s7commplus inspection
   * inspector::sip: sip inspection
   * inspector::smtp: smtp inspection
@@ -19799,7 +19695,7 @@ deleted -> unified2: 'vlan_event_types'
   * ips_option::reference: rule option to indicate relevant attack
     identification system
   * ips_option::regex: rule option for matching payload data with
-    hyperscan regex
+    hyperscan regex; uses pcre syntax
   * ips_option::rem: rule option to convey an arbitrary comment in
     the rule body
   * ips_option::replace: rule option to overwrite payload data; use

@@ -1,3 +1,55 @@
+2020/07/06 - 3.0.2 build 1
+
+-- appid: Appid coverity issues
+-- appid: Create lua states and lua detectors in control thread
+-- appid: Delete stale third-party connections when reloading third-party on midstream
+-- appid: Fix the format of the IPv6 strings in the Service State unit tests
+-- appid: include appid session api in appid event
+-- appid: use configured search method for multi-pattern matching
+-- build: Eradicate u_int usage
+-- build: Fix unit tests to build and work properly on a 32-bit system
+-- build: Fix various cppcheck warnings about constness
+-- build: Increment version to 3.0.2
+-- build: Miscellaneous 32-bit build fixes
+-- build: Use sanity check results (HAVE_*) for optional packages in CMake
+-- cmake: Properly handle SIGNAL_SNORT_* options in configure_cmake.sh
+-- codecs: add tunnel bypass logic based on DAQ payload_offset
+-- dce_tcp: parse only endpoint mapper messages
+-- detection: remove checksum drop fixit
+-- detection: remove unused code
+-- framework: fix global data bus cloning during reload module and policy
+-- helpers: Add a signal-safe formatted printing utility class
+-- helpers: Add support for dumping a backtrace via libunwind on fatal signals
+-- helpers: Dump additional information to stderr when a fatal signal is received
+-- helpers: Revamp signal handler installation and removal
+-- http2_inspect: Make print_flow_issues() regtest-only
+-- inspectors: add a virtual disable method for controls
+-- ips: add http fast pattern buffers
+-- ips: add ips service vs buffer checks; add missing services
+-- ips: enable non-service rules when service is detected
+-- ips: minimize port group construction for any-any and bidirectional rules
+-- ips: refactor fast pattern selection.
+-- ips: update detection trees for earliest header checks
+-- main: configure and set main thread affinity
+-- main: set thread type for main thread
+-- managers: format lua whitelist output and ignore internal whitelist keywords
+-- max_detect: detained inspection disabled pending further work
+-- mpse: remove unused pattern trimming support
+-- oops_handler: Operate on DAQ message instead of Snort Packets
+-- payload_injector: add payload injection utility
+-- regex: convert to same syntax as pcre plus fast_pattern option
+-- rna: Adding initial support for reload_fingerprint command
+-- rna: remove custom_fingerprint_dir from configuration
+-- snort_defaults.lua: remove unused AIM_SERVERS var
+-- snort: fix --dump-rule-meta with ips.states
+-- stream_ip: Avoid modifying the original fragmented packet during rebuild
+-- stream_ip: use lowercase fragmentation policy names for verbose output
+-- stream: lock xtradata stream_impl to avoid data race on logging
+-- trace: add thread type and thread instance id to each log message for stdout logger
+-- tweaks: enable file signature for sec and max until depth issue resolved
+-- tweaks: updates for efficacy and performance
+-- wizard: Add FTP pattern to recognize FileZilla FTP Server
+
 2020/06/18 - 3.0.1 build 5
 
 -- actions: on a reload_config() free the memory allocated for react page on previous configuration

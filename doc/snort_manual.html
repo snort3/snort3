@@ -782,7 +782,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.1 (Build 5)
+o"  )~   Version 3.0.2 (Build 1)
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2020 Cisco and/or its affiliates. All rights reserved.
@@ -2105,7 +2105,8 @@ dnet from <a href="https://github.com/dugsong/libdnet.git">https://github.com/du
 </li>
 <li>
 <p>
-hwloc from <a href="https://www.open-mpi.org/projects/hwloc/">https://www.open-mpi.org/projects/hwloc/</a> for CPU affinity management
+hwloc from <a href="https://www.open-mpi.org/projects/hwloc/">https://www.open-mpi.org/projects/hwloc/</a> for CPU affinity
+  management
 </p>
 </li>
 <li>
@@ -2131,7 +2132,8 @@ pcre from <a href="http://www.pcre.org">http://www.pcre.org</a> for regular expr
 </li>
 <li>
 <p>
-pkgconfig from <a href="https://www.freedesktop.org/wiki/Software/pkg-config/">https://www.freedesktop.org/wiki/Software/pkg-config/</a> to locate build dependencies
+pkgconfig from <a href="https://www.freedesktop.org/wiki/Software/pkg-config/">https://www.freedesktop.org/wiki/Software/pkg-config/</a> to locate
+  build dependencies
 </p>
 </li>
 <li>
@@ -2178,6 +2180,12 @@ hyperscan &gt;= 4.4.0 from <a href="https://github.com/01org/hyperscan">https://
 <p>
 iconv from <a href="https://ftp.gnu.org/pub/gnu/libiconv/">https://ftp.gnu.org/pub/gnu/libiconv/</a> for converting
   UTF16-LE filenames to UTF8 (usually included in glibc)
+</p>
+</li>
+<li>
+<p>
+libunwind from <a href="https://www.nongnu.org/libunwind/">https://www.nongnu.org/libunwind/</a> to attempt to dump a
+  somewhat readable backtrace when a fatal signal is received
 </p>
 </li>
 <li>
@@ -6999,6 +7007,13 @@ the trace module:</p></div>
 <div class="content">
 <pre><code>&lt;module_name&gt;:&lt;option_name&gt;:&lt;message_log_level&gt;: &lt;particular_message&gt;</code></pre>
 </div></div>
+<div class="paragraph"><p>The stdout logger also prints thread type and thread instance ID at the beginning
+of each trace message in a colon-separated manner.</p></div>
+<div class="paragraph"><p>The capital letter at the beginning of the trace message indicates the thread type.</p></div>
+<div class="paragraph"><p>Possible thread types:
+C – main (control) thread
+P – packet thread
+O – other thread</p></div>
 </div>
 <div class="sect3">
 <h4 id="_example_debugging_rules_using_detection_trace">Example - Debugging rules using detection trace</h4>
@@ -8007,6 +8022,36 @@ bool <strong>detection.enable_address_anomaly_checks</strong> = false: enable ch
 </li>
 <li>
 <p>
+<strong>detection.raw_key_searches</strong>: fast pattern searches in raw key buffer (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>detection.raw_header_searches</strong>: fast pattern searches in raw header buffer (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>detection.method_searches</strong>: fast pattern searches in method buffer (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>detection.stat_code_searches</strong>: fast pattern searches in status code buffer (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>detection.stat_msg_searches</strong>: fast pattern searches in status message buffer (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>detection.cookie_searches</strong>: fast pattern searches in cookie buffer (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>detection.offloads</strong>: fast pattern searches that were offloaded (sum)
 </p>
 </li>
@@ -8851,6 +8896,20 @@ bool <strong>packets.vlan_agnostic</strong> = false: determines whether VLAN inf
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_payload_injector">payload_injector</h3>
+<div class="paragraph"><p>What: payload injection utility</p></div>
+<div class="paragraph"><p>Type: basic</p></div>
+<div class="paragraph"><p>Usage: global</p></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>payload_injector.http_injects</strong>: total number of http injections (sum)
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_process">process</h3>
 <div class="paragraph"><p>What: configure basic process setup</p></div>
 <div class="paragraph"><p>Type: basic</p></div>
@@ -8869,7 +8928,17 @@ string <strong><code>process.threads[].cpuset</code></strong>: pin the associate
 </li>
 <li>
 <p>
-int <strong><code>process.threads[].thread</code></strong> = 0: set cpu affinity for the &lt;cur_thread_num&gt; thread that runs { 0:65535 }
+int <strong><code>process.threads[].thread</code></strong>: set cpu affinity for the &lt;cur_thread_num&gt; thread that runs { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+enum <strong><code>process.threads[].type</code></strong>: define which threads will have specified affinity, by their type { other|packet|main }
+</p>
+</li>
+<li>
+<p>
+string <strong><code>process.threads[].name</code></strong>: define which threads will have specified affinity, by thread name
 </p>
 </li>
 <li>
@@ -11518,6 +11587,11 @@ bool <strong>appid.tp_appid_config_dump</strong>: print third party configuratio
 bool <strong>appid.log_all_sessions</strong> = false: enable logging of all appid sessions
 </p>
 </li>
+<li>
+<p>
+bool <strong>appid.load_odp_detectors_in_ctrl</strong> = false: load odp detectors in control thread
+</p>
+</li>
 </ul></div>
 <div class="paragraph"><p>Commands:</p></div>
 <div class="ulist"><ul>
@@ -13391,73 +13465,6 @@ bool <strong>file_log.log_sys_time</strong> = false: log the system time when ev
 <li>
 <p>
 <strong>file_log.total_events</strong>: total file events (sum)
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect2">
-<h3 id="_finalize_packet">finalize_packet</h3>
-<div class="paragraph"><p>What: handle the finalize packet event</p></div>
-<div class="paragraph"><p>Type: inspector</p></div>
-<div class="paragraph"><p>Usage: inspect</p></div>
-<div class="paragraph"><p>Configuration:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-int <strong>finalize_packet.start_pdu</strong> = 0: Register to receive finalize packet event starting on this PDU { 0:max32 }
-</p>
-</li>
-<li>
-<p>
-int <strong>finalize_packet.end_pdu</strong> = 0: Deregister for finalize packet events on this PDU { 0:max32 }
-</p>
-</li>
-<li>
-<p>
-int <strong>finalize_packet.modify.pdu</strong> = 0: Modify verdict in finalize packet for this PDU { 0:max32 }
-</p>
-</li>
-<li>
-<p>
-enum <strong>finalize_packet.modify.verdict</strong>: output format for stats { pass | block | replace | whitelist | blacklist | ignore | retry }
-</p>
-</li>
-<li>
-<p>
-bool <strong>finalize_packet.switch_to_wizard</strong> = false: Switch to wizard on first finalize event
-</p>
-</li>
-<li>
-<p>
-bool <strong>finalize_packet.use_direct_inject</strong> = false: Use ioctl to do payload and reset injects
-</p>
-</li>
-<li>
-<p>
-bool <strong>finalize_packet.defer_whitelist</strong> = false: Turn on defer whitelist until we switch to wizard
-</p>
-</li>
-<li>
-<p>
-bool <strong>finalize_packet.force_whitelist</strong> = false: Set ignore direction to both so that flow will be whitelisted
-</p>
-</li>
-</ul></div>
-<div class="paragraph"><p>Peg counts:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-<strong>finalize_packet.pdus</strong>: total PDUs seen (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>finalize_packet.events</strong>: total events seen (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>finalize_packet.other_messages</strong>: total other message seen (sum)
 </p>
 </li>
 </ul></div>
@@ -16284,22 +16291,12 @@ string <strong>reputation.whitelist</strong>: whitelist file name with IP lists
 <div class="ulist"><ul>
 <li>
 <p>
-string <strong>rna.rna_conf_path</strong>: path to RNA configuration
-</p>
-</li>
-<li>
-<p>
-string <strong>rna.rna_util_lib_path</strong>: path to library for utilities such as fingerprint decoder
+string <strong>rna.rna_conf_path</strong>: path to rna configuration
 </p>
 </li>
 <li>
 <p>
 string <strong>rna.fingerprint_dir</strong>: directory to fingerprint patterns
-</p>
-</li>
-<li>
-<p>
-string <strong>rna.custom_fingerprint_dir</strong>: directory to custom fingerprint patterns
 </p>
 </li>
 <li>
@@ -16310,6 +16307,14 @@ bool <strong>rna.enable_logger</strong> = true: enable or disable writing discov
 <li>
 <p>
 bool <strong>rna.log_when_idle</strong> = false: enable host update logging when snort is idle
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Commands:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>rna.reload_fingerprint</strong>(): reload rna database of fingerprint patterns/signatures
 </p>
 </li>
 </ul></div>
@@ -16420,124 +16425,6 @@ bool <strong>rna.log_when_idle</strong> = false: enable host update logging when
 <li>
 <p>
 <strong>rpc_decode.max_concurrent_sessions</strong>: maximum concurrent rpc sessions (max)
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect2">
-<h3 id="_rt_global">rt_global</h3>
-<div class="paragraph"><p>What: The regression test global inspector is used for regression tests specific to a global inspector</p></div>
-<div class="paragraph"><p>Type: inspector</p></div>
-<div class="paragraph"><p>Usage: global</p></div>
-<div class="paragraph"><p>Configuration:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-int <strong>rt_global.downshift_packet</strong> = 0: attempt downshift at this packet on flow (0 is disabled) { 0:max32 }
-</p>
-</li>
-<li>
-<p>
-int <strong>rt_global.downshift_mode</strong> = 3: 1 = unconditional, 2 = !ctl and !tls, 3 = !ctl and !file { 1:3 }
-</p>
-</li>
-<li>
-<p>
-int <strong>rt_global.memcap</strong> = 2048: cap on amount of memory used (0 is disabled) { 0:max53 }
-</p>
-</li>
-<li>
-<p>
-bool <strong>rt_global.empty_ips</strong> = false: ips policy with no rules
-</p>
-</li>
-<li>
-<p>
-bool <strong>rt_global.init_drop_reason</strong> = false: populate drop reason map
-</p>
-</li>
-</ul></div>
-<div class="paragraph"><p>Peg counts:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-<strong>rt_global.packets</strong>: total packets (sum)
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect2">
-<h3 id="_rt_packet">rt_packet</h3>
-<div class="paragraph"><p>What: The regression test packet inspector is used when special packet handling is required for a reg test</p></div>
-<div class="paragraph"><p>Type: inspector</p></div>
-<div class="paragraph"><p>Usage: context</p></div>
-<div class="paragraph"><p>Configuration:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-bool <strong>rt_packet.retry_targeted</strong> = false: request retry for packets whose data starts with <em>A</em>
-</p>
-</li>
-<li>
-<p>
-bool <strong>rt_packet.retry_all</strong> = false: request retry for all non-retry packets
-</p>
-</li>
-</ul></div>
-<div class="paragraph"><p>Peg counts:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-<strong>rt_packet.packets</strong>: total packets (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>rt_packet.retry_requests</strong>: total retry packets requested (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>rt_packet.retry_packets</strong>: total retried packets received (sum)
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect2">
-<h3 id="_rt_service">rt_service</h3>
-<div class="paragraph"><p>What: The regression test service inspector is used by regression tests that require custom service inspector support.</p></div>
-<div class="paragraph"><p>Type: inspector</p></div>
-<div class="paragraph"><p>Usage: context</p></div>
-<div class="paragraph"><p>Peg counts:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-<strong>rt_service.packets</strong>: total packets (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>rt_service.flush_requests</strong>: total splitter flush requests (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>rt_service.hold_requests</strong>: total splitter hold requests (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>rt_service.search_requests</strong>: total splitter search requests (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>rt_service.send_data_requests</strong>: total send data via daq inject requests (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>rt_service.send_data_direct_requests</strong>: total send data via direct inject requests (sum)
 </p>
 </li>
 </ul></div>
@@ -20524,7 +20411,7 @@ string <strong>reference.~ref</strong>: reference: &lt;scheme&gt;,&lt;id&gt;
 </div>
 <div class="sect2">
 <h3 id="_regex">regex</h3>
-<div class="paragraph"><p>What: rule option for matching payload data with hyperscan regex</p></div>
+<div class="paragraph"><p>What: rule option for matching payload data with hyperscan regex; uses pcre syntax</p></div>
 <div class="paragraph"><p>Type: ips_option</p></div>
 <div class="paragraph"><p>Usage: detect</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
@@ -25146,6 +25033,11 @@ present.  There is no need to explicitly enable.</p></div>
 </li>
 <li>
 <p>
+<strong>libunwind</strong>: for printing a backtrace when a fatal signal is received.
+</p>
+</li>
+<li>
+<p>
 <strong>lzma</strong>: for decompression of SWF and PDF files.
 </p>
 </li>
@@ -26042,6 +25934,11 @@ int <strong>appid.app_stats_rollover_size</strong> = 20971520: max file size for
 <li>
 <p>
 bool <strong>appid.list_odp_detectors</strong> = false: enable logging of odp detectors statistics
+</p>
+</li>
+<li>
+<p>
+bool <strong>appid.load_odp_detectors_in_ctrl</strong> = false: load odp detectors in control thread
 </p>
 </li>
 <li>
@@ -27287,46 +27184,6 @@ bool <strong>file_log.log_sys_time</strong> = false: log the system time when ev
 <li>
 <p>
 string <strong>file_type.~</strong>: list of file type IDs to match
-</p>
-</li>
-<li>
-<p>
-bool <strong>finalize_packet.defer_whitelist</strong> = false: Turn on defer whitelist until we switch to wizard
-</p>
-</li>
-<li>
-<p>
-int <strong>finalize_packet.end_pdu</strong> = 0: Deregister for finalize packet events on this PDU { 0:max32 }
-</p>
-</li>
-<li>
-<p>
-bool <strong>finalize_packet.force_whitelist</strong> = false: Set ignore direction to both so that flow will be whitelisted
-</p>
-</li>
-<li>
-<p>
-int <strong>finalize_packet.modify.pdu</strong> = 0: Modify verdict in finalize packet for this PDU { 0:max32 }
-</p>
-</li>
-<li>
-<p>
-enum <strong>finalize_packet.modify.verdict</strong>: output format for stats { pass | block | replace | whitelist | blacklist | ignore | retry }
-</p>
-</li>
-<li>
-<p>
-int <strong>finalize_packet.start_pdu</strong> = 0: Register to receive finalize packet event starting on this PDU { 0:max32 }
-</p>
-</li>
-<li>
-<p>
-bool <strong>finalize_packet.switch_to_wizard</strong> = false: Switch to wizard on first finalize event
-</p>
-</li>
-<li>
-<p>
-bool <strong>finalize_packet.use_direct_inject</strong> = false: Use ioctl to do payload and reset injects
 </p>
 </li>
 <li>
@@ -29141,7 +28998,17 @@ string <strong><code>process.threads[].cpuset</code></strong>: pin the associate
 </li>
 <li>
 <p>
-int <strong><code>process.threads[].thread</code></strong> = 0: set cpu affinity for the &lt;cur_thread_num&gt; thread that runs { 0:65535 }
+string <strong><code>process.threads[].name</code></strong>: define which threads will have specified affinity, by thread name
+</p>
+</li>
+<li>
+<p>
+int <strong><code>process.threads[].thread</code></strong>: set cpu affinity for the &lt;cur_thread_num&gt; thread that runs { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+enum <strong><code>process.threads[].type</code></strong>: define which threads will have specified affinity, by their type { other|packet|main }
 </p>
 </li>
 <li>
@@ -29371,11 +29238,6 @@ bool <strong>rewrite.disable_replace</strong> = false: disable replace of packet
 </li>
 <li>
 <p>
-string <strong>rna.custom_fingerprint_dir</strong>: directory to custom fingerprint patterns
-</p>
-</li>
-<li>
-<p>
 bool <strong>rna.enable_logger</strong> = true: enable or disable writing discovery events into logger
 </p>
 </li>
@@ -29391,12 +29253,7 @@ bool <strong>rna.log_when_idle</strong> = false: enable host update logging when
 </li>
 <li>
 <p>
-string <strong>rna.rna_conf_path</strong>: path to RNA configuration
-</p>
-</li>
-<li>
-<p>
-string <strong>rna.rna_util_lib_path</strong>: path to library for utilities such as fingerprint decoder
+string <strong>rna.rna_conf_path</strong>: path to rna configuration
 </p>
 </li>
 <li>
@@ -29412,41 +29269,6 @@ string <strong>rpc.~proc</strong>: procedure number or * for any
 <li>
 <p>
 string <strong>rpc.~ver</strong>: version number or * for any
-</p>
-</li>
-<li>
-<p>
-int <strong>rt_global.downshift_mode</strong> = 3: 1 = unconditional, 2 = !ctl and !tls, 3 = !ctl and !file { 1:3 }
-</p>
-</li>
-<li>
-<p>
-int <strong>rt_global.downshift_packet</strong> = 0: attempt downshift at this packet on flow (0 is disabled) { 0:max32 }
-</p>
-</li>
-<li>
-<p>
-bool <strong>rt_global.empty_ips</strong> = false: ips policy with no rules
-</p>
-</li>
-<li>
-<p>
-bool <strong>rt_global.init_drop_reason</strong> = false: populate drop reason map
-</p>
-</li>
-<li>
-<p>
-int <strong>rt_global.memcap</strong> = 2048: cap on amount of memory used (0 is disabled) { 0:max53 }
-</p>
-</li>
-<li>
-<p>
-bool <strong>rt_packet.retry_all</strong> = false: request retry for all non-retry packets
-</p>
-</li>
-<li>
-<p>
-bool <strong>rt_packet.retry_targeted</strong> = false: request retry for packets whose data starts with <em>A</em>
 </p>
 </li>
 <li>
@@ -32051,6 +31873,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>detection.cookie_searches</strong>: fast pattern searches in cookie buffer (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>detection.event_limit</strong>: events filtered (sum)
 </p>
 </li>
@@ -32087,6 +31914,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>detection.match_limit</strong>: fast pattern matches not processed (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>detection.method_searches</strong>: fast pattern searches in method buffer (sum)
 </p>
 </li>
 <li>
@@ -32151,7 +31983,27 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>detection.raw_header_searches</strong>: fast pattern searches in raw header buffer (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>detection.raw_key_searches</strong>: fast pattern searches in raw key buffer (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>detection.raw_searches</strong>: fast pattern searches in raw packet data (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>detection.stat_code_searches</strong>: fast pattern searches in status code buffer (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>detection.stat_msg_searches</strong>: fast pattern searches in status message buffer (sum)
 </p>
 </li>
 <li>
@@ -32277,21 +32129,6 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>file_log.total_events</strong>: total file events (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>finalize_packet.events</strong>: total events seen (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>finalize_packet.other_messages</strong>: total other message seen (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>finalize_packet.pdus</strong>: total PDUs seen (sum)
 </p>
 </li>
 <li>
@@ -33121,6 +32958,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>payload_injector.http_injects</strong>: total number of http injections (sum)
+</p>
+</li>
+<li>
+<p>
 <strong>pcre.pcre_native</strong>: total pcre rules compiled by pcre engine (sum)
 </p>
 </li>
@@ -33347,56 +33189,6 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>rpc_decode.total_packets</strong>: total packets (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>rt_global.packets</strong>: total packets (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>rt_packet.packets</strong>: total packets (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>rt_packet.retry_packets</strong>: total retried packets received (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>rt_packet.retry_requests</strong>: total retry packets requested (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>rt_service.flush_requests</strong>: total splitter flush requests (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>rt_service.hold_requests</strong>: total splitter hold requests (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>rt_service.packets</strong>: total packets (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>rt_service.search_requests</strong>: total splitter search requests (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>rt_service.send_data_direct_requests</strong>: total send data via direct inject requests (sum)
-</p>
-</li>
-<li>
-<p>
-<strong>rt_service.send_data_requests</strong>: total send data via daq inject requests (sum)
 </p>
 </li>
 <li>
@@ -37521,6 +37313,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>rna.reload_fingerprint</strong>(): reload rna database of fingerprint patterns/signatures
+</p>
+</li>
+<li>
+<p>
 <strong>snort.show_plugins</strong>(): show available plugins
 </p>
 </li>
@@ -38428,11 +38225,6 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
-<strong>finalize_packet</strong> (inspector): handle the finalize packet event
-</p>
-</li>
-<li>
-<p>
 <strong>flags</strong> (ips_option): rule option to test TCP control flags
 </p>
 </li>
@@ -38833,6 +38625,11 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
+<strong>payload_injector</strong> (basic): payload injection utility
+</p>
+</li>
+<li>
+<p>
 <strong>pbb</strong> (codec): support for 802.1ah protocol
 </p>
 </li>
@@ -38918,7 +38715,7 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
-<strong>regex</strong> (ips_option): rule option for matching payload data with hyperscan regex
+<strong>regex</strong> (ips_option): rule option for matching payload data with hyperscan regex; uses pcre syntax
 </p>
 </li>
 <li>
@@ -38964,21 +38761,6 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 <li>
 <p>
 <strong>rpc_decode</strong> (inspector): RPC inspector
-</p>
-</li>
-<li>
-<p>
-<strong>rt_global</strong> (inspector): The regression test global inspector is used for regression tests specific to a global inspector
-</p>
-</li>
-<li>
-<p>
-<strong>rt_packet</strong> (inspector): The regression test packet inspector is used when special packet handling is required for a reg test
-</p>
-</li>
-<li>
-<p>
-<strong>rt_service</strong> (inspector): The regression test service inspector is used by regression tests that require custom service inspector support.
 </p>
 </li>
 <li>
@@ -39593,11 +39375,6 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
-<strong>inspector::finalize_packet</strong>: handle the finalize packet event
-</p>
-</li>
-<li>
-<p>
 <strong>inspector::ftp_client</strong>: FTP inspector client module
 </p>
 </li>
@@ -39679,21 +39456,6 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 <li>
 <p>
 <strong>inspector::rpc_decode</strong>: RPC inspector
-</p>
-</li>
-<li>
-<p>
-<strong>inspector::rt_global</strong>: The regression test global inspector is used for regression tests specific to a global inspector
-</p>
-</li>
-<li>
-<p>
-<strong>inspector::rt_packet</strong>: The regression test packet inspector is used when special packet handling is required for a reg test
-</p>
-</li>
-<li>
-<p>
-<strong>inspector::rt_service</strong>: The regression test service inspector is used by regression tests that require custom service inspector support.
 </p>
 </li>
 <li>
@@ -40228,7 +39990,7 @@ deleted -&gt; unified2: 'vlan_event_types'</code></pre>
 </li>
 <li>
 <p>
-<strong>ips_option::regex</strong>: rule option for matching payload data with hyperscan regex
+<strong>ips_option::regex</strong>: rule option for matching payload data with hyperscan regex; uses pcre syntax
 </p>
 </li>
 <li>
@@ -40621,7 +40383,7 @@ Adding/removing stream_* inspectors if stream was already configured
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2020-06-18 08:11:48 EDT
+ 2020-07-06 10:25:58 EDT
 </div>
 </div>
 </body>
