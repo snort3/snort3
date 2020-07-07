@@ -37,9 +37,9 @@ TcpStateCloseWait::TcpStateCloseWait(TcpStateMachine& tsm) :
 
 bool TcpStateCloseWait::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs() );
+    trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs() );
 
-    if ( tsd.get_seg_len() )
+    if ( tsd.get_len() )
         trk.session->handle_data_on_syn(tsd);
 
     return true;
@@ -83,7 +83,7 @@ bool TcpStateCloseWait::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
 
     trk.update_tracker_ack_recv(tsd);
 
-    if ( SEQ_GT(tsd.get_seg_seq(), trk.get_fin_final_seq() ) )
+    if ( SEQ_GT(tsd.get_seq(), trk.get_fin_final_seq() ) )
     {
         trk.session->tel.set_tcp_event(EVENT_BAD_FIN);
         trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
@@ -93,7 +93,7 @@ bool TcpStateCloseWait::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
     {
         if ( !flow->two_way_traffic() )
             trk.set_tf_flags(TF_FORCE_FLUSH);
-        if ( tsd.get_seg_len() > 0 )
+        if ( tsd.get_len() > 0 )
             trk.session->handle_data_segment(tsd);
     }
     return true;
@@ -106,7 +106,7 @@ bool TcpStateCloseWait::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
         trk.session->update_session_on_rst(tsd, true);
         trk.session->update_perf_base_state(TcpStreamTracker::TCP_CLOSING);
         trk.session->set_pkt_action_flag(ACTION_RST);
-        tsd.get_pkt()->flow->session_state |= STREAM_STATE_CLOSED;
+        tsd.get_flow()->session_state |= STREAM_STATE_CLOSED;
     }
     else
     {

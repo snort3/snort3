@@ -43,8 +43,8 @@ bool TcpStateTimeWait::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
 
 bool TcpStateTimeWait::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs());
-    if ( tsd.get_seg_len() )
+    trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs());
+    if ( tsd.get_len() )
         trk.session->handle_data_on_syn(tsd);
 
     return true;
@@ -67,13 +67,13 @@ bool TcpStateTimeWait::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker
 bool TcpStateTimeWait::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.update_tracker_ack_recv(tsd);
-    if ( SEQ_GT(tsd.get_seg_seq(), trk.get_fin_final_seq() ) )
+    if ( SEQ_GT(tsd.get_seq(), trk.get_fin_final_seq() ) )
     {
         trk.session->tel.set_tcp_event(EVENT_BAD_FIN);
         trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
         trk.session->set_pkt_action_flag(ACTION_BAD_PKT);
     }
-    else if ( tsd.get_seg_len() > 0 )
+    else if ( tsd.get_len() > 0 )
         trk.session->handle_data_segment(tsd);
 
     return true;
@@ -94,7 +94,7 @@ bool TcpStateTimeWait::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
 
     // FIXIT-L might be good to create alert specific to RST with data
     // FIXIT-L refactoring required?  seen this in many places
-    if ( tsd.get_seg_len() > 0 )
+    if ( tsd.get_len() > 0 )
         trk.session->tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
 
     return true;
@@ -112,7 +112,7 @@ bool TcpStateTimeWait::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpS
 
     if ( trk.get_tcp_event() != TcpStreamTracker::TCP_FIN_RECV_EVENT )
     {
-        TcpStreamTracker::TcpState talker_state = trk.session->get_talker_state();
+        TcpStreamTracker::TcpState talker_state = trk.session->get_talker_state(tsd);
         Flow* flow = tsd.get_flow();
 
         if ( ( talker_state == TcpStreamTracker::TCP_TIME_WAIT )

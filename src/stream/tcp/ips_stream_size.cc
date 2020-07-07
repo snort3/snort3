@@ -219,14 +219,10 @@ bool SizeModule::set(const char*, Value& v, SnortConfig*)
 //-------------------------------------------------------------------------
 
 static Module* size_mod_ctor()
-{
-    return new SizeModule;
-}
+{ return new SizeModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{  delete m; }
 
 static IpsOption* size_ctor(Module* p, OptTreeNode*)
 {
@@ -235,9 +231,7 @@ static IpsOption* size_ctor(Module* p, OptTreeNode*)
 }
 
 static void opt_dtor(IpsOption* p)
-{
-    delete p;
-}
+{ delete p; }
 
 static const IpsApi size_api =
 {

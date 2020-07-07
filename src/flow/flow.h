@@ -93,9 +93,7 @@
 #define STREAM_STATE_TIMEDOUT          0x0080
 #define STREAM_STATE_UNREACH           0x0100
 #define STREAM_STATE_CLOSED            0x0800
-#define STREAM_STATE_IGNORE            0x1000
-#define STREAM_STATE_NO_PICKUP         0x2000
-#define STREAM_STATE_BLOCK_PENDING     0x4000
+#define STREAM_STATE_BLOCK_PENDING     0x1000
 
 class BitOp;
 class Session;

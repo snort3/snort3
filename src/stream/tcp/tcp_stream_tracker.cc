@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_stream_tracker.cpp author davis mcpherson <davmcphe@@cisco.com>
+// tcp_stream_tracker.cpp author davis mcpherson <davmcphe@cisco.com>
 // Created on: Jun 24, 2015
 
 #ifdef HAVE_CONFIG_H
@@ -76,7 +76,7 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(const TcpSegmentDescr
     bool talker;
     const tcp::TCPHdr* tcph = tsd.get_tcph();
 
-    if ( tsd.get_pkt()->is_from_client() )
+    if ( tsd.is_packet_from_client() )
         talker = ( client_tracker ) ? true : false;
     else
         talker = ( client_tracker ) ? false : true;
@@ -95,12 +95,12 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(const TcpSegmentDescr
             tcp_event = TCP_FIN_SENT_EVENT;
         else if ( tcph->is_ack() || tcph->is_psh() )
         {
-            if ( tsd.get_seg_len() > 0 )
+            if ( tsd.get_len() > 0 )
                 tcp_event = TCP_DATA_SEG_SENT_EVENT;
             else
                 tcp_event = TCP_ACK_SENT_EVENT;
         }
-        else if ( tsd.get_seg_len() > 0 )   // FIXIT-H no flags set, how do we handle this?
+        else if ( tsd.get_len() > 0 )   // FIXIT-H no flags set, how do we handle this?
                                             // discard; drop if normalizing
             tcp_event = TCP_DATA_SEG_SENT_EVENT;
         else
@@ -138,12 +138,12 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(const TcpSegmentDescr
         }
         else if ( tcph->is_ack() || tcph->is_psh() )
         {
-            if ( tsd.get_seg_len() > 0 )
+            if ( tsd.get_len() > 0 )
                 tcp_event = TCP_DATA_SEG_RECV_EVENT;
             else
                 tcp_event = TCP_ACK_RECV_EVENT;
         }
-        else if ( tsd.get_seg_len() > 0 )    // FIXIT-H no flags set, how do we handle this?
+        else if ( tsd.get_len() > 0 )    // FIXIT-H no flags set, how do we handle this?
                                              // discard; drop if normalizing
             tcp_event = TCP_DATA_SEG_RECV_EVENT;
         else
@@ -268,14 +268,14 @@ void TcpStreamTracker::init_on_syn_sent(TcpSegmentDescriptor& tsd)
     if ( tsd.get_tcph()->are_flags_set(TH_CWR | TH_ECE) )
         tsd.get_flow()->set_session_flags(SSNFLAG_ECN_CLIENT_QUERY);
 
-    iss = tsd.get_seg_seq();
+    iss = tsd.get_seq();
     snd_una = iss;
     snd_nxt = tsd.get_end_seq();
-    snd_wnd =  tsd.get_seg_wnd();
+    snd_wnd =  tsd.get_wnd();
 
-    ts_last_packet = tsd.get_pkt()->pkth->ts.tv_sec;
+    ts_last_packet = tsd.get_packet_timestamp();
     tf_flags |= normalizer.get_tcp_timestamp(tsd, false);
-    ts_last = tsd.get_ts();
+    ts_last = tsd.get_timestamp();
     if (ts_last == 0)
         tf_flags |= TF_TSTAMP_ZERO;
     tf_flags |= tsd.init_mss(&mss);
@@ -288,11 +288,11 @@ void TcpStreamTracker::init_on_syn_sent(TcpSegmentDescriptor& tsd)
 
 void TcpStreamTracker::init_on_syn_recv(TcpSegmentDescriptor& tsd)
 {
-    irs = tsd.get_seg_seq();
+    irs = tsd.get_seq();
 
-    rcv_nxt = tsd.get_seg_seq() + 1;
-    r_win_base = tsd.get_seg_seq() + 1;
-    reassembler.set_seglist_base_seq(tsd.get_seg_seq() + 1);
+    rcv_nxt = tsd.get_seq() + 1;
+    r_win_base = tsd.get_seq() + 1;
+    reassembler.set_seglist_base_seq(tsd.get_seq() + 1);
 
     cache_mac_address(tsd, FROM_CLIENT);
     tcp_state = TcpStreamTracker::TCP_SYN_RECV;
@@ -304,19 +304,19 @@ void TcpStreamTracker::init_on_synack_sent(TcpSegmentDescriptor& tsd)
     if (tsd.get_tcph()->are_flags_set(TH_CWR | TH_ECE))
         tsd.get_flow()->set_session_flags(SSNFLAG_ECN_SERVER_REPLY);
 
-    iss = tsd.get_seg_seq();
-    irs = tsd.get_seg_ack() - 1;
-    snd_una = tsd.get_seg_seq();
+    iss = tsd.get_seq();
+    irs = tsd.get_ack() - 1;
+    snd_una = tsd.get_seq();
     snd_nxt = tsd.get_end_seq();
-    snd_wnd = tsd.get_seg_wnd();
+    snd_wnd = tsd.get_wnd();
 
-    r_win_base = tsd.get_seg_ack();
-    rcv_nxt = tsd.get_seg_ack();
-    reassembler.set_seglist_base_seq(tsd.get_seg_ack() );
+    r_win_base = tsd.get_ack();
+    rcv_nxt = tsd.get_ack();
+    reassembler.set_seglist_base_seq(tsd.get_ack() );
 
-    ts_last_packet = tsd.get_pkt()->pkth->ts.tv_sec;
+    ts_last_packet = tsd.get_packet_timestamp();
     tf_flags |= normalizer.get_tcp_timestamp(tsd, false);
-    ts_last = tsd.get_ts();
+    ts_last = tsd.get_timestamp();
     if ( ts_last == 0 )
         tf_flags |= TF_TSTAMP_ZERO;
     tf_flags |= tsd.init_mss(&mss);
@@ -329,14 +329,14 @@ void TcpStreamTracker::init_on_synack_sent(TcpSegmentDescriptor& tsd)
 
 void TcpStreamTracker::init_on_synack_recv(TcpSegmentDescriptor& tsd)
 {
-    iss = tsd.get_seg_ack() - 1;
-    irs = tsd.get_seg_seq();
-    snd_una = tsd.get_seg_ack();
+    iss = tsd.get_ack() - 1;
+    irs = tsd.get_seq();
+    snd_una = tsd.get_ack();
     snd_nxt = snd_una;
 
-    rcv_nxt = tsd.get_seg_seq() + 1;
-    r_win_base = tsd.get_seg_seq() + 1;
-    reassembler.set_seglist_base_seq(tsd.get_seg_seq() + 1);
+    rcv_nxt = tsd.get_seq() + 1;
+    r_win_base = tsd.get_seq() + 1;
+    reassembler.set_seglist_base_seq(tsd.get_seq() + 1);
 
     cache_mac_address(tsd, FROM_SERVER);
     tcp_state = TcpStreamTracker::TCP_ESTABLISHED;
@@ -349,17 +349,17 @@ void TcpStreamTracker::init_on_3whs_ack_sent(TcpSegmentDescriptor& tsd)
     if ( tsd.get_tcph()->are_flags_set(TH_CWR | TH_ECE) )
         tsd.get_flow()->set_session_flags(SSNFLAG_ECN_CLIENT_QUERY);
 
-    iss = tsd.get_seg_seq();
-    snd_una = tsd.get_seg_seq();
+    iss = tsd.get_seq();
+    snd_una = tsd.get_seq();
     snd_nxt = snd_una;
-    snd_wnd = tsd.get_seg_wnd();
+    snd_wnd = tsd.get_wnd();
 
-    r_win_base = tsd.get_seg_ack();
-    rcv_nxt = tsd.get_seg_ack();
+    r_win_base = tsd.get_ack();
+    rcv_nxt = tsd.get_ack();
 
-    ts_last_packet = tsd.get_pkt()->pkth->ts.tv_sec;
+    ts_last_packet = tsd.get_packet_timestamp();
     tf_flags |= normalizer.get_tcp_timestamp(tsd, false);
-    ts_last = tsd.get_ts();
+    ts_last = tsd.get_timestamp();
     if (ts_last == 0)
         tf_flags |= TF_TSTAMP_ZERO;
     tf_flags |= tsd.init_mss(&mss);
@@ -371,14 +371,14 @@ void TcpStreamTracker::init_on_3whs_ack_sent(TcpSegmentDescriptor& tsd)
 
 void TcpStreamTracker::init_on_3whs_ack_recv(TcpSegmentDescriptor& tsd)
 {
-    iss = tsd.get_seg_ack() - 1;
-    irs = tsd.get_seg_seq();
-    snd_una = tsd.get_seg_ack();
+    iss = tsd.get_ack() - 1;
+    irs = tsd.get_seq();
+    snd_una = tsd.get_ack();
     snd_nxt = snd_una;
 
-    rcv_nxt = tsd.get_seg_seq();
-    r_win_base = tsd.get_seg_seq();
-    reassembler.set_seglist_base_seq(tsd.get_seg_seq() + 1);
+    rcv_nxt = tsd.get_seq();
+    r_win_base = tsd.get_seq();
+    reassembler.set_seglist_base_seq(tsd.get_seq() + 1);
 
     cache_mac_address(tsd, FROM_CLIENT);
     tcp_state = TcpStreamTracker::TCP_ESTABLISHED;
@@ -394,19 +394,19 @@ void TcpStreamTracker::init_on_data_seg_sent(TcpSegmentDescriptor& tsd)
     else
         flow->set_session_flags(SSNFLAG_SEEN_SERVER);
 
-    iss = tsd.get_seg_seq();
-    irs = tsd.get_seg_ack();
-    snd_una = tsd.get_seg_seq();
-    snd_nxt = snd_una + tsd.get_seg_len();
-    snd_wnd = tsd.get_seg_wnd();
+    iss = tsd.get_seq();
+    irs = tsd.get_ack();
+    snd_una = tsd.get_seq();
+    snd_nxt = snd_una + tsd.get_len();
+    snd_wnd = tsd.get_wnd();
 
-    r_win_base = tsd.get_seg_ack();
-    rcv_nxt = tsd.get_seg_ack();
-    reassembler.set_seglist_base_seq(tsd.get_seg_ack());
+    r_win_base = tsd.get_ack();
+    rcv_nxt = tsd.get_ack();
+    reassembler.set_seglist_base_seq(tsd.get_ack());
 
-    ts_last_packet = tsd.get_pkt()->pkth->ts.tv_sec;
+    ts_last_packet = tsd.get_packet_timestamp();
     tf_flags |= normalizer.get_tcp_timestamp(tsd, false);
-    ts_last = tsd.get_ts();
+    ts_last = tsd.get_timestamp();
     if (ts_last == 0)
         tf_flags |= TF_TSTAMP_ZERO;
     tf_flags |= ( tsd.init_mss(&mss) | tsd.init_wscale(&wscale) );
@@ -417,15 +417,15 @@ void TcpStreamTracker::init_on_data_seg_sent(TcpSegmentDescriptor& tsd)
 
 void TcpStreamTracker::init_on_data_seg_recv(TcpSegmentDescriptor& tsd)
 {
-    iss = tsd.get_seg_ack();
-    irs = tsd.get_seg_seq();
-    snd_una = tsd.get_seg_ack();
+    iss = tsd.get_ack();
+    irs = tsd.get_seq();
+    snd_una = tsd.get_ack();
     snd_nxt = snd_una;
     snd_wnd = 0; /* reset later */
 
-    rcv_nxt = tsd.get_seg_seq();
-    r_win_base = tsd.get_seg_seq();
-    reassembler.set_seglist_base_seq(tsd.get_seg_seq());
+    rcv_nxt = tsd.get_seq();
+    r_win_base = tsd.get_seq();
+    reassembler.set_seglist_base_seq(tsd.get_seq());
 
     cache_mac_address(tsd, tsd.get_direction() );
     tcp_state = TcpStreamTracker::TCP_ESTABLISHED;
@@ -434,19 +434,19 @@ void TcpStreamTracker::init_on_data_seg_recv(TcpSegmentDescriptor& tsd)
 
 void TcpStreamTracker::finish_server_init(TcpSegmentDescriptor& tsd)
 {
-    iss = tsd.get_seg_seq();
-    snd_una = tsd.get_seg_seq();
+    iss = tsd.get_seq();
+    snd_una = tsd.get_seq();
     snd_nxt = tsd.get_end_seq();
-    snd_wnd = tsd.get_seg_wnd();
+    snd_wnd = tsd.get_wnd();
 
     // FIXIT-M move this to fin handler for syn_recv state ..
     //if ( tcph->is_fin() )
     //    server->set_snd_nxt(server->get_snd_nxt() - 1);
 
     tf_flags |= normalizer.get_tcp_timestamp(tsd, false);
-    ts_last = tsd.get_ts();
+    ts_last = tsd.get_timestamp();
     if ( ts_last != 0 )
-        ts_last_packet = tsd.get_pkt()->pkth->ts.tv_sec;
+        ts_last_packet = tsd.get_packet_timestamp();
     else
         tf_flags |= TF_TSTAMP_ZERO;
 
@@ -461,21 +461,21 @@ void TcpStreamTracker::finish_client_init(TcpSegmentDescriptor& tsd)
 
     if ( !( flow->session_state & STREAM_STATE_MIDSTREAM ) )
     {
-        reassembler.set_seglist_base_seq(tsd.get_seg_seq() + 1);
+        reassembler.set_seglist_base_seq(tsd.get_seq() + 1);
         r_win_base = tsd.get_end_seq();
     }
     else
     {
-        reassembler.set_seglist_base_seq(tsd.get_seg_seq() );
-        r_win_base = tsd.get_seg_seq();
+        reassembler.set_seglist_base_seq(tsd.get_seq() );
+        r_win_base = tsd.get_seq();
     }
 }
 
 void TcpStreamTracker::update_tracker_ack_recv(TcpSegmentDescriptor& tsd)
 {
-    if ( SEQ_GT(tsd.get_seg_ack(), snd_una) )
+    if ( SEQ_GT(tsd.get_ack(), snd_una) )
     {
-        snd_una = tsd.get_seg_ack();
+        snd_una = tsd.get_ack();
         if ( snd_nxt < snd_una )
             snd_nxt = snd_una;
     }
@@ -505,8 +505,8 @@ void TcpStreamTracker::update_tracker_ack_sent(TcpSegmentDescriptor& tsd)
     if ( SEQ_GT(tsd.get_end_seq(), snd_nxt) )
         snd_nxt = tsd.get_end_seq();
 
-    if ( SEQ_GT(tsd.get_seg_ack(), r_win_base) )
-        r_win_base = tsd.get_seg_ack();
+    if ( SEQ_GT(tsd.get_ack(), r_win_base) )
+        r_win_base = tsd.get_ack();
 
     if ( ( fin_seq_status == TcpStreamTracker::FIN_WITH_SEQ_SEEN )
         && SEQ_EQ(r_win_base, fin_final_seq) )
@@ -514,7 +514,7 @@ void TcpStreamTracker::update_tracker_ack_sent(TcpSegmentDescriptor& tsd)
         fin_seq_status = TcpStreamTracker::FIN_WITH_SEQ_ACKED;
     }
 
-    snd_wnd = tsd.get_seg_wnd();
+    snd_wnd = tsd.get_wnd();
     reassembler.flush_on_ack_policy(tsd.get_pkt());
 }
 
@@ -522,11 +522,11 @@ bool TcpStreamTracker::update_on_3whs_ack(TcpSegmentDescriptor& tsd)
 {
     bool good_ack = true;
 
-    if ( is_ack_valid(tsd.get_seg_ack()) )
+    if ( is_ack_valid(tsd.get_ack()) )
     {
         Flow* flow = tsd.get_flow();
 
-        irs = tsd.get_seg_seq();
+        irs = tsd.get_seq();
         finish_client_init(tsd);
         update_tracker_ack_recv(tsd);
         flow->set_session_flags(SSNFLAG_ESTABLISHED);
@@ -578,7 +578,7 @@ void TcpStreamTracker::flush_data_on_fin_recv(TcpSegmentDescriptor& tsd)
         && (flush_policy != STREAM_FLPOLICY_ON_DATA)
         && normalizer.is_tcp_ips_enabled())
     {
-        tsd.get_pkt()->packet_flags |= PKT_PDU_TAIL;
+        tsd.set_packet_flags(PKT_PDU_TAIL);
     }
 
     reassembler.flush_on_data_policy(tsd.get_pkt());
@@ -603,7 +603,7 @@ bool TcpStreamTracker::update_on_fin_recv(TcpSegmentDescriptor& tsd)
     {
         fin_final_seq = tsd.get_end_seq();
         fin_seq_set = true;
-        if( tsd.get_seg_len() == 0 )
+        if( tsd.get_len() == 0 )
             fin_seq_status = TcpStreamTracker::FIN_WITH_SEQ_SEEN;
     }
 
@@ -629,7 +629,7 @@ bool TcpStreamTracker::is_segment_seq_valid(TcpSegmentDescriptor& tsd)
     else
         left_seq = r_win_base;
 
-    if ( tsd.get_seg_len() )
+    if ( tsd.get_len() )
         right_ok = SEQ_GT(tsd.get_end_seq(), left_seq);
     else
         right_ok = SEQ_GEQ(tsd.get_end_seq(), left_seq);
@@ -638,7 +638,7 @@ bool TcpStreamTracker::is_segment_seq_valid(TcpSegmentDescriptor& tsd)
     {
         uint32_t win = normalizer.get_stream_window(tsd);
 
-        if ( SEQ_LEQ(tsd.get_seg_seq(), r_win_base + win) )
+        if ( SEQ_LEQ(tsd.get_seq(), r_win_base + win) )
         {
             return true;
         }

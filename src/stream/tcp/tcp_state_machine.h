@@ -38,7 +38,7 @@ public:
     { return TcpStateMachine::tsm; }
 
     virtual void register_state_handler(TcpStreamTracker::TcpState, TcpStateHandler&);
-    virtual bool eval(TcpSegmentDescriptor&, TcpStreamTracker&, TcpStreamTracker&);
+    virtual bool eval(TcpSegmentDescriptor&);
 
 protected:
     TcpStateMachine();

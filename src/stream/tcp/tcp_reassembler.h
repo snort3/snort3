@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_reassembly.h author davis mcpherson <davmcphe@@cisco.com>
+// tcp_reassembly.h author davis mcpherson <davmcphe@cisco.com>
 // Created on: Jul 31, 2015
 
 #ifndef TCP_REASSEMBLER_H
@@ -28,7 +28,7 @@
 class TcpReassembler : public SegmentOverlapEditor
 {
 public:
-    virtual int queue_packet_for_reassembly(TcpReassemblerState&, TcpSegmentDescriptor&);
+    virtual void queue_packet_for_reassembly(TcpReassemblerState&, TcpSegmentDescriptor&);
     virtual void purge_segment_list(TcpReassemblerState&);
     virtual void purge_flushed_ackd(TcpReassemblerState&);
     virtual int flush_stream(
@@ -46,15 +46,15 @@ public:
 protected:
     TcpReassembler() = default;
 
-    int add_reassembly_segment(
+    void add_reassembly_segment(
         TcpReassemblerState&, TcpSegmentDescriptor&, uint16_t len, uint32_t slide,
         uint32_t trunc, uint32_t seq, TcpSegmentNode* left) override;
 
-    int dup_reassembly_segment(
+    void dup_reassembly_segment(
         TcpReassemblerState&, TcpSegmentNode* left, TcpSegmentNode** retSeg) override;
     int delete_reassembly_segment(TcpReassemblerState&, TcpSegmentNode*) override;
     virtual void insert_segment_in_empty_seglist(TcpReassemblerState&, TcpSegmentDescriptor&);
-    virtual int insert_segment_in_seglist(TcpReassemblerState&, TcpSegmentDescriptor&);
+    virtual void insert_segment_in_seglist(TcpReassemblerState&, TcpSegmentDescriptor&);
     virtual uint32_t get_pending_segment_count(TcpReassemblerState&, unsigned max);
     bool flush_data_ready(TcpReassemblerState&);
     int trim_delete_reassembly_segment(TcpReassemblerState&, TcpSegmentNode*, uint32_t flush_seq);
@@ -89,7 +89,6 @@ protected:
     void update_next(TcpReassemblerState&, const TcpSegmentNode&);
 
     uint32_t perform_partial_flush(TcpReassemblerState&, snort::Packet*, uint32_t flushed = 0);
-
 };
 
 #endif

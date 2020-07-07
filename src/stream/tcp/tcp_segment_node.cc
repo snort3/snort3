@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_segment.cc author davis mcpherson <davmcphe@@cisco.com>
+// tcp_segment.cc author davis mcpherson <davmcphe@cisco.com>
 // Created on: Sep 21, 2015
 
 #ifdef HAVE_CONFIG_H
@@ -104,7 +104,7 @@ TcpSegmentNode* TcpSegmentNode::create(
 
 TcpSegmentNode* TcpSegmentNode::init(const TcpSegmentDescriptor& tsd)
 {
-    return create(tsd.get_pkt()->pkth->ts, tsd.get_pkt()->data, tsd.get_seg_len());
+    return create(tsd.get_pkt()->pkth->ts, tsd.get_pkt()->data, tsd.get_len());
 }
 
 TcpSegmentNode* TcpSegmentNode::init(TcpSegmentNode& tns)

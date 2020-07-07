@@ -91,6 +91,7 @@ struct TcpStats
     PegCount syn_acks;
     PegCount resets;
     PegCount fins;
+    PegCount meta_acks;
     PegCount total_packets_held;
     PegCount held_packet_rexmits;
     PegCount held_packets_dropped;

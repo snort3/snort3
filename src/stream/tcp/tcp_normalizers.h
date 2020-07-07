@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_normalizers.h author davis mcpherson <davmcphe@@cisco.com>
+// tcp_normalizers.h author davis mcpherson <davmcphe@cisco.com>
 // Created on: Sep 22, 2015
 
 #ifndef TCP_NORMALIZERS_H
@@ -68,8 +68,8 @@ public:
     void ecn_tracker(const snort::tcp::TCPHdr* tcph, bool req3way)
     { norm->ecn_tracker(tns, tcph, req3way); }
 
-    void ecn_stripper(snort::Packet* p)
-    { norm->ecn_stripper(tns, p); }
+    void ecn_stripper(TcpSegmentDescriptor& tsd)
+    { norm->ecn_stripper(tns, tsd); }
 
     uint32_t get_stream_window(TcpSegmentDescriptor& tsd)
     { return norm->get_stream_window(tns, tsd); }

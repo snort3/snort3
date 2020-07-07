@@ -46,8 +46,8 @@ public:
     void init(TcpSession* ssn, TcpStreamTracker* trk, StreamPolicy pol, bool server);
     void reset();
 
-    int queue_packet_for_reassembly(TcpSegmentDescriptor& tsd)
-    { return reassembler->queue_packet_for_reassembly(trs, tsd); }
+    void queue_packet_for_reassembly(TcpSegmentDescriptor& tsd)
+    { reassembler->queue_packet_for_reassembly(trs, tsd); }
 
     void purge_alerts()
     { reassembler->purge_alerts(trs); }

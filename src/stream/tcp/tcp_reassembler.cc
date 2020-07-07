@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_reassembler.cc author davis mcpherson <davmcphe@@cisco.com>
+// tcp_reassembler.cc author davis mcpherson <davmcphe@cisco.com>
 // Created on: Jul 31, 2015
 
 #ifdef HAVE_CONFIG_H
@@ -192,13 +192,13 @@ void TcpReassembler::queue_reassembly_segment(
 bool TcpReassembler::is_segment_fasttrack(
     TcpReassemblerState&, TcpSegmentNode* tail, const TcpSegmentDescriptor& tsd)
 {
-    if ( SEQ_EQ(tsd.get_seg_seq(), tail->i_seq + tail->i_len) )
+    if ( SEQ_EQ(tsd.get_seq(), tail->i_seq + tail->i_len) )
         return true;
 
     return false;
 }
 
-int TcpReassembler::add_reassembly_segment(
+void TcpReassembler::add_reassembly_segment(
     TcpReassemblerState& trs, TcpSegmentDescriptor& tsd, uint16_t len, uint32_t slide,
     uint32_t trunc_len, uint32_t seq, TcpSegmentNode* left)
 {
@@ -210,8 +210,7 @@ int TcpReassembler::add_reassembly_segment(
         // Zero size data because of trimming. Don't insert it.
         inc_tcp_discards();
         trs.tracker->normalizer.trim_win_payload(tsd);
-
-        return STREAM_INSERT_OK;
+        return;
     }
 
     // FIXIT-L don't allocate overlapped part
@@ -221,7 +220,7 @@ int TcpReassembler::add_reassembly_segment(
     tsn->c_len = (uint16_t)new_size;
     tsn->i_len = (uint16_t)new_size;
     tsn->i_seq = tsn->c_seq = seq;
-    tsn->ts = tsd.get_ts();
+    tsn->ts = tsd.get_timestamp();
 
     // FIXIT-M the urgent ptr handling is broken... urg_offset could be set here but currently
     // not actually referenced anywhere else.  In 2.9.7 the FlushStream function did reference
@@ -232,12 +231,10 @@ int TcpReassembler::add_reassembly_segment(
 
     trs.sos.seg_bytes_logical += tsn->c_len;
     trs.sos.total_bytes_queued += tsn->c_len;
-    tsd.get_pkt()->packet_flags |= PKT_STREAM_INSERT;
-
-    return STREAM_INSERT_OK;
+    tsd.set_packet_flags(PKT_STREAM_INSERT);
 }
 
-int TcpReassembler::dup_reassembly_segment(
+void TcpReassembler::dup_reassembly_segment(
     TcpReassemblerState& trs, TcpSegmentNode* left, TcpSegmentNode** retSeg)
 {
     TcpSegmentNode* tsn = TcpSegmentNode::init(*left);
@@ -249,7 +246,6 @@ int TcpReassembler::dup_reassembly_segment(
     queue_reassembly_segment(trs, left, tsn);
 
     *retSeg = tsn;
-    return STREAM_INSERT_OK;
 }
 
 void TcpReassembler::purge_alerts(TcpReassemblerState& trs)
@@ -366,7 +362,7 @@ void TcpReassembler::purge_flushed_ackd(TcpReassemblerState& trs)
 
 void TcpReassembler::show_rebuilt_packet(TcpReassemblerState& trs, Packet* pkt)
 {
-    if ( trs.sos.session->config->flags & STREAM_CONFIG_SHOW_PACKETS )
+    if ( trs.sos.session->tcp_config->flags & STREAM_CONFIG_SHOW_PACKETS )
     {
         // FIXIT-L setting conf here is required because this is called before context start
         pkt->context->conf = SnortConfig::get_conf();
@@ -515,7 +511,7 @@ Packet* TcpReassembler::initialize_pdu(
 
     EncodeFlags enc_flags = 0;
     DAQ_PktHdr_t pkth;
-    trs.sos.session->GetPacketHeaderFoo(&pkth, pkt_flags);
+    trs.sos.session->get_packet_header_foo(&pkth, pkt_flags);
     PacketManager::format_tcp(enc_flags, p, pdu, PSEUDO_PKT_TCP, &pkth, pkth.opaque);
     prep_pdu(trs, trs.sos.session->flow, p, pkt_flags, pdu);
     assert(pdu->pkth == pdu->context->pkth);
@@ -953,12 +949,12 @@ static inline void fallback(TcpStreamTracker& trk, bool server_side, uint16_t ma
     delete trk.splitter;
     trk.splitter = new AtomSplitter(!server_side, max);
     trk.paf_state.paf = StreamSplitter::START;
-    ++tcpStats.partial_fallbacks;
+    tcpStats.partial_fallbacks++;
 }
 
 void TcpReassembler::fallback(TcpStreamTracker& tracker, bool server_side)
 {
-    uint16_t max = tracker.session->config->paf_max;
+    uint16_t max = tracker.session->tcp_config->paf_max;
     ::fallback(tracker, server_side, max);
 
     Flow* flow = tracker.session->flow;
@@ -970,7 +966,7 @@ void TcpReassembler::fallback(TcpStreamTracker& tracker, bool server_side)
     if ( flow->gadget and both_splitters_aborted(flow) )
     {
         flow->clear_gadget();
-        ++tcpStats.inspector_fallbacks;
+        tcpStats.inspector_fallbacks++;
     }
 }
 
@@ -1184,16 +1180,16 @@ void TcpReassembler::insert_segment_in_empty_seglist(
     const tcp::TCPHdr* tcph = tsd.get_tcph();
 
     uint32_t overlap = 0;
-    uint32_t seq = tsd.get_seg_seq();
+    uint32_t seq = tsd.get_seq();
 
     if ( tcph->is_syn() )
         seq++;
 
     if ( SEQ_GT(trs.tracker->r_win_base, seq) )
     {
-        overlap = trs.tracker->r_win_base - tsd.get_seg_seq();
+        overlap = trs.tracker->r_win_base - tsd.get_seq();
 
-        if ( overlap >= tsd.get_seg_len() )
+        if ( overlap >= tsd.get_len() )
             return;
     }
 
@@ -1201,13 +1197,13 @@ void TcpReassembler::insert_segment_in_empty_seglist(
     {
         overlap = trs.sos.seglist_base_seq- seq - overlap;
 
-        if ( overlap >= tsd.get_seg_len() )
+        if ( overlap >= tsd.get_len() )
             return;
     }
 
     // BLOCK add new block to trs.sos.seglist containing data
     add_reassembly_segment(
-        trs, tsd, tsd.get_seg_len(), overlap, 0, seq + overlap, nullptr);
+        trs, tsd, tsd.get_len(), overlap, 0, seq + overlap, nullptr);
 
 }
 
@@ -1219,15 +1215,15 @@ void TcpReassembler::init_overlap_editor(
 
     if ( trs.sos.seglist.head && trs.sos.seglist.tail )
     {
-        if ( SEQ_GT(tsd.get_seg_seq(), trs.sos.seglist.head->i_seq) )
-            dist_head = tsd.get_seg_seq() - trs.sos.seglist.head->i_seq;
+        if ( SEQ_GT(tsd.get_seq(), trs.sos.seglist.head->i_seq) )
+            dist_head = tsd.get_seq() - trs.sos.seglist.head->i_seq;
         else
-            dist_head = trs.sos.seglist.head->i_seq - tsd.get_seg_seq();
+            dist_head = trs.sos.seglist.head->i_seq - tsd.get_seq();
 
-        if ( SEQ_GT(tsd.get_seg_seq(), trs.sos.seglist.tail->i_seq) )
-            dist_tail = tsd.get_seg_seq() - trs.sos.seglist.tail->i_seq;
+        if ( SEQ_GT(tsd.get_seq(), trs.sos.seglist.tail->i_seq) )
+            dist_tail = tsd.get_seq() - trs.sos.seglist.tail->i_seq;
         else
-            dist_tail = trs.sos.seglist.tail->i_seq - tsd.get_seg_seq();
+            dist_tail = trs.sos.seglist.tail->i_seq - tsd.get_seq();
     }
 
     if ( SEQ_LEQ(dist_head, dist_tail) )
@@ -1236,7 +1232,7 @@ void TcpReassembler::init_overlap_editor(
         {
             right = tsn;
 
-            if ( SEQ_GEQ(right->i_seq, tsd.get_seg_seq() ) )
+            if ( SEQ_GEQ(right->i_seq, tsd.get_seq() ) )
                 break;
 
             left = right;
@@ -1251,7 +1247,7 @@ void TcpReassembler::init_overlap_editor(
         {
             left = tsn;
 
-            if ( SEQ_LT(left->i_seq, tsd.get_seg_seq() ) )
+            if ( SEQ_LT(left->i_seq, tsd.get_seq() ) )
                 break;
 
             right = left;
@@ -1264,73 +1260,57 @@ void TcpReassembler::init_overlap_editor(
     trs.sos.init_soe(tsd, left, right);
 }
 
-int TcpReassembler::insert_segment_in_seglist(
+void TcpReassembler::insert_segment_in_seglist(
     TcpReassemblerState& trs, TcpSegmentDescriptor& tsd)
 {
-    int rc = STREAM_INSERT_OK;
-
     // NORM fast tracks are in sequence - no norms
     if ( trs.sos.seglist.tail && is_segment_fasttrack(trs, trs.sos.seglist.tail, tsd) )
     {
         /* segment fit cleanly at the end of the segment list */
-        rc = add_reassembly_segment(
-            trs, tsd, tsd.get_seg_len(), 0, 0, tsd.get_seg_seq(), trs.sos.seglist.tail);
-        return rc;
+        add_reassembly_segment(
+            trs, tsd, tsd.get_len(), 0, 0, tsd.get_seq(), trs.sos.seglist.tail);
+        return;
     }
 
     init_overlap_editor(trs, tsd);
-    rc = eval_left(trs);
-
-    if ( rc != STREAM_INSERT_OK )
-        return rc;
-
-    rc = eval_right(trs);
-
-    if ( rc != STREAM_INSERT_OK )
-        return rc;
+    eval_left(trs);
+    eval_right(trs);
 
     if ( trs.sos.keep_segment )
     {
         /* Adjust slide so that is correct relative to orig seq */
-        trs.sos.slide = trs.sos.seq - tsd.get_seg_seq();
+        trs.sos.slide = trs.sos.seq - tsd.get_seq();
         // FIXIT-L for some reason length - slide - trunc_len is sometimes negative
         if (trs.sos.len - trs.sos.slide - trs.sos.trunc_len < 0)
-            return STREAM_INSERT_OK;
-        rc = add_reassembly_segment(
+            return;
+
+        add_reassembly_segment(
             trs, tsd, trs.sos.len, trs.sos.slide, trs.sos.trunc_len, trs.sos.seq, trs.sos.left);
     }
-    else
-        rc = STREAM_INSERT_OK;
-
-    return rc;
 }
 
-int TcpReassembler::queue_packet_for_reassembly(
+void TcpReassembler::queue_packet_for_reassembly(
     TcpReassemblerState& trs, TcpSegmentDescriptor& tsd)
 {
-    int rc = STREAM_INSERT_OK;
-
     if ( trs.sos.seg_count == 0 )
     {
         insert_segment_in_empty_seglist(trs, tsd);
-        return STREAM_INSERT_OK;
+        return;
     }
 
-    if ( SEQ_GT(trs.tracker->r_win_base, tsd.get_seg_seq() ) )
+    if ( SEQ_GT(trs.tracker->r_win_base, tsd.get_seq() ) )
     {
-        const int32_t offset = trs.tracker->r_win_base - tsd.get_seg_seq();
+        const int32_t offset = trs.tracker->r_win_base - tsd.get_seq();
 
-        if ( offset < tsd.get_seg_len() )
+        if ( offset < tsd.get_len() )
         {
             tsd.slide_segment_in_rcv_window(offset);
-            rc = insert_segment_in_seglist(trs, tsd);
+            insert_segment_in_seglist(trs, tsd);
             tsd.slide_segment_in_rcv_window(-offset);
         }
     }
     else
-        rc = insert_segment_in_seglist(trs, tsd);
-
-    return rc;
+        insert_segment_in_seglist(trs, tsd);
 }
 
 uint32_t TcpReassembler::perform_partial_flush(TcpReassemblerState& trs, Flow* flow)

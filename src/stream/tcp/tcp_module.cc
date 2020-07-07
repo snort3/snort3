@@ -77,6 +77,7 @@ const PegInfo tcp_pegs[] =
     { CountType::SUM, "syn_acks", "number of syn-ack packets" },
     { CountType::SUM, "resets", "number of reset packets" },
     { CountType::SUM, "fins", "number of fin packets" },
+    { CountType::SUM, "meta_acks", "number of meta acks processed" },
     { CountType::SUM, "packets_held", "number of packets held" },
     { CountType::SUM, "held_packet_rexmits", "number of retransmits of held packets" },
     { CountType::SUM, "held_packets_dropped", "number of held packets dropped" },

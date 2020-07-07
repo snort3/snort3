@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_stream_tracker.h author davis mcpherson <davmcphe@@cisco.com>
+// tcp_stream_tracker.h author davis mcpherson <davmcphe@cisco.com>
 // Created on: Jun 24, 2015
 
 #ifndef TCP_STREAM_TRACKER_H
@@ -211,7 +211,7 @@ public:
 
     // ack number must ack syn
     bool is_rst_valid_in_syn_sent(const TcpSegmentDescriptor& tsd) const
-    { return tsd.get_seg_ack() == snd_una; }
+    { return tsd.get_ack() == snd_una; }
 
     uint32_t get_ts_last() const
     { return ts_last; }

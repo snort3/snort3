@@ -16,154 +16,188 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_segment_descriptor.h author davis mcpherson <davmcphe@@cisco.com>
+// tcp_segment_descriptor.h author davis mcpherson <davmcphe@cisco.com>
 // Created on: Jul 30, 2015
 
 #ifndef TCP_SEGMENT_DESCRIPTOR_H
 #define TCP_SEGMENT_DESCRIPTOR_H
 
+#include <cassert>
+
+#include <daq_common.h>
+
 #include "flow/flow.h"
+#include "detection/ips_context.h"
+#include "packet_io/active.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 #include "stream/tcp/tcp_event_logger.h"
+
+class TcpStreamTracker;
 
 class TcpSegmentDescriptor
 {
 public:
     TcpSegmentDescriptor(snort::Flow*, snort::Packet*, TcpEventLogger&);
+    TcpSegmentDescriptor(snort::Flow*, snort::Packet*, uint32_t meta_ack, uint16_t window);
+
     virtual ~TcpSegmentDescriptor() = default;
+
+    static void setup();
+    static void clear();
+
+    bool is_policy_inline()
+    { return pkt->context->conf->inline_mode(); }
 
     uint32_t init_mss(uint16_t* value);
     uint32_t init_wscale(uint16_t* value);
     bool has_wscale();
+    void set_retransmit_flag();
 
     snort::Flow* get_flow() const
-    {
-        return flow;
-    }
+    { return flow; }
 
     snort::Packet* get_pkt() const
-    {
-        return pkt;
-    }
+    { return pkt; }
 
     const snort::tcp::TCPHdr* get_tcph() const
-    {
-        return tcph;
-    }
+    { return tcph; }
 
-    void set_seg_seq(uint32_t seq)
-    {
-        seg_seq = seq;
-    }
+    void set_seq(uint32_t seq_num)
+    { seq = seq_num; }
 
-    void update_seg_seq(int32_t offset)
-    {
-        seg_seq += offset;
-    }
+    void update_seq(int32_t offset)
+    { seq += offset; }
 
-    uint32_t get_seg_seq() const
-    {
-        return seg_seq;
-    }
+    uint32_t get_seq() const
+    { return seq; }
 
-    uint32_t get_seg_ack() const
-    {
-        return seg_ack;
-    }
+    uint32_t get_ack() const
+    { return ack; }
 
-    void set_seg_ack(uint32_t ack)
-    {
-        this->seg_ack = ack;
-    }
+    void set_ack(uint32_t ack_num)
+    { ack = ack_num; }
 
-    void set_end_seq(uint32_t end_seq)
-    {
-        this->end_seq = end_seq;
-    }
+    void set_end_seq(uint32_t seq)
+    { end_seq = seq; }
 
     uint32_t get_end_seq() const
-    {
-        return end_seq;
-    }
+    { return end_seq; }
 
-    void set_ts(uint32_t ts)
-    {
-        this->ts = ts;
-    }
+    void set_timestamp(uint32_t timestamp)
+    { timestamp_option = timestamp; }
 
-    uint32_t get_ts() const
-    {
-        return ts;
-    }
+    uint32_t get_timestamp() const
+    { return timestamp_option; }
 
-    void scale_seg_wnd(uint16_t wscale)
-    {
-        seg_wnd <<= wscale;
-    }
+    void scale_wnd(uint16_t wscale)
+    { wnd <<= wscale; }
 
-    uint32_t get_seg_wnd() const
-    {
-        return seg_wnd;
-    }
+    uint32_t get_wnd() const
+    { return wnd; }
 
     uint16_t get_dst_port() const
-    {
-        return dst_port;
-    }
+    { return dst_port; }
 
     uint16_t get_src_port() const
-    {
-        return src_port;
-    }
+    { return src_port; }
 
     uint8_t get_direction() const
-    {
-        return flow->ssn_state.direction;
-    }
+    { return flow->ssn_state.direction; }
 
-    uint16_t get_seg_len() const
-    {
-        return pkt->dsize;
-    }
+    uint16_t get_len() const
+    { return pkt->dsize; }
 
-    void set_seg_len(uint16_t seg_len)
+    void set_len(uint16_t seg_len)
     {
-        // Reset segment size to seg_len
+        assert(!meta_ack_packet);
         pkt->dsize = seg_len;
     }
 
-    void update_seg_len(int32_t offset)
+    void update_len(int32_t offset)
     {
-        // Increase segment size by offset
+        assert(!meta_ack_packet);
         pkt->dsize += offset;
     }
 
-    bool is_packet_from_server()
-    {
-        return pkt->is_from_server();
-    }
+    bool is_packet_from_client() const
+    { return packet_from_client; }
+
+    bool is_packet_from_server() const
+    { return !packet_from_client; }
 
     void slide_segment_in_rcv_window(int32_t offset)
     {
-        // This actually deletes the first offset bytes of the segment, no sliding involved
-        seg_seq += offset;
+        assert(!meta_ack_packet);
+        seq += offset;
         pkt->data += offset;
         pkt->dsize -= offset;
     }
 
+    void set_packet_flags(uint32_t flags) const
+    {
+        assert(!meta_ack_packet);
+        pkt->packet_flags |= flags;
+    }
+
+    bool are_packet_flags_set(uint32_t flags) const
+    { return (pkt->packet_flags & flags) == flags; }
+
+    uint32_t get_packet_timestamp() const
+    { return packet_timestamp; }
+
+    void drop_packet() const
+    {
+        pkt->active->drop_packet(pkt);
+        pkt->active->set_drop_reason("stream");
+    }
+
+    bool is_meta_ack_packet() const
+    { return meta_ack_packet; }
+
+    uint64_t get_packet_number() const
+    { return packet_number; }
+
+    void rewrite_payload(uint16_t offset, uint8_t* from, uint16_t length)
+    {
+        assert(!meta_ack_packet);
+        memcpy(const_cast<uint8_t*>(pkt->data + offset), from, length);
+        set_packet_flags(PKT_MODIFIED);
+    }
+
+    void rewrite_payload(uint16_t offset, uint8_t* from)
+    { rewrite_payload(offset, from, pkt->dsize); }
+
+    TcpStreamTracker* get_listener() const
+    { return listener; }
+
+    void set_listener(TcpStreamTracker& tracker)
+    { listener = &tracker; }
+
+    TcpStreamTracker* get_talker() const
+    { return talker; }
+
+    void set_talker(TcpStreamTracker& tracker)
+    { talker = &tracker; }
+
 private:
     snort::Flow* const flow;
     snort::Packet* const pkt;
-
     const snort::tcp::TCPHdr* const tcph;
-    const uint16_t src_port;
-    const uint16_t dst_port;
-    uint32_t seg_seq;
-    uint32_t seg_ack;
-    uint32_t seg_wnd;
+    TcpStreamTracker* talker = nullptr;
+    TcpStreamTracker* listener = nullptr;
+
+    const uint64_t packet_number;
+    uint32_t seq;
+    uint32_t ack;
+    uint32_t wnd;
     uint32_t end_seq;
-    uint32_t ts = 0;
+    uint32_t timestamp_option;
+    uint16_t src_port;
+    uint16_t dst_port;
+    uint32_t packet_timestamp;
+    bool packet_from_client;
+    bool meta_ack_packet = false;
 };
 
 #endif

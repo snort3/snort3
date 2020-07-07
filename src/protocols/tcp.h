@@ -143,7 +143,7 @@ struct TCPHdr
     inline uint16_t raw_src_port() const
     { return th_sport; }
 
-    inline uint16_t raw_dst_len() const
+    inline uint16_t raw_dst_port() const
     { return th_dport; }
 
     inline uint32_t raw_seq() const

@@ -39,13 +39,15 @@ TcpStreamSession::~TcpStreamSession()
 
 void TcpStreamSession::init_new_tcp_session(TcpSegmentDescriptor& tsd)
 {
-    flow->pkt_type = tsd.get_pkt()->type();
-    flow->ip_proto = (uint8_t)tsd.get_pkt()->get_ip_proto_next();
+    Packet* p = tsd.get_pkt();
+
+    flow->pkt_type = p->type();
+    flow->ip_proto = (uint8_t)p->get_ip_proto_next();
 
     /* New session, previous was marked as reset.  Clear the reset flag. */
     flow->clear_session_flags(SSNFLAG_RESET);
 
-    flow->set_expire(tsd.get_pkt(), flow->default_session_timeout);
+    flow->set_expire(p, flow->default_session_timeout);
 
     update_perf_base_state(TcpStreamTracker::TCP_SYN_SENT);
 
@@ -83,8 +85,8 @@ void TcpStreamSession::update_session_on_ack()
 void TcpStreamSession::update_session_on_server_packet(TcpSegmentDescriptor& tsd)
 {
     flow->set_session_flags(SSNFLAG_SEEN_SERVER);
-    talker = &server;
-    listener = &client;
+    tsd.set_talker(server);
+    tsd.set_listener(client);
 
     /* If we picked this guy up midstream, finish the initialization */
     if ( !( flow->session_state & STREAM_STATE_ESTABLISHED )
@@ -103,7 +105,7 @@ void TcpStreamSession::update_session_on_server_packet(TcpSegmentDescriptor& tsd
         }
     }
 
-    if (!flow->inner_server_ttl)
+    if ( !flow->inner_server_ttl && !tsd.is_meta_ack_packet() )
         flow->set_ttl(tsd.get_pkt(), false);
 }
 
@@ -111,8 +113,8 @@ void TcpStreamSession::update_session_on_client_packet(TcpSegmentDescriptor& tsd
 {
     /* if we got here we have seen the SYN already... */
     flow->set_session_flags(SSNFLAG_SEEN_CLIENT);
-    talker = &client;
-    listener = &server;
+    tsd.set_talker(client);
+    tsd.set_listener(server);
 
     if ( !( flow->session_state & STREAM_STATE_ESTABLISHED )
         && ( flow->session_state & STREAM_STATE_MIDSTREAM ) )
@@ -125,15 +127,14 @@ void TcpStreamSession::update_session_on_client_packet(TcpSegmentDescriptor& tsd
         }
     }
 
-    if (!flow->inner_client_ttl)
+    if (!flow->inner_client_ttl && !tsd.is_meta_ack_packet() )
         flow->set_ttl(tsd.get_pkt(), true);
 }
 
 void TcpStreamSession::set_no_ack(bool b)
 {
-    if (
-        server.get_flush_policy() == STREAM_FLPOLICY_ON_DATA and
-        client.get_flush_policy() == STREAM_FLPOLICY_ON_DATA )
+    if ( server.get_flush_policy() == STREAM_FLPOLICY_ON_DATA and
+         client.get_flush_policy() == STREAM_FLPOLICY_ON_DATA )
     {
         no_ack = b;
     }
@@ -291,11 +292,16 @@ int TcpStreamSession::update_alert(Packet* p, uint32_t gid, uint32_t sid,
 
 bool TcpStreamSession::set_packet_action_to_hold(Packet* p)
 {
-    return listener->set_held_packet(p);
+    if ( p->is_from_client() )
+        return server.set_held_packet(p);
+    else
+        return client.set_held_packet(p);
 }
 
-void TcpStreamSession::SetPacketHeaderFoo(const Packet* p)
+void TcpStreamSession::set_packet_header_foo(const TcpSegmentDescriptor& tsd)
 {
+    const Packet* p = tsd.get_pkt();
+
     if ( daq_flags & DAQ_PKT_FLAG_NOT_FORWARDING )
     {
         ingress_index = p->pkth->ingress_index;
@@ -304,7 +310,7 @@ void TcpStreamSession::SetPacketHeaderFoo(const Packet* p)
         egress_index = p->pkth->egress_index;
         egress_group = p->pkth->egress_group;
     }
-    else if ( p->is_from_client() )
+    else if ( tsd.is_packet_from_client() )
     {
         ingress_index = p->pkth->ingress_index;
         ingress_group = p->pkth->ingress_group;
@@ -316,11 +322,12 @@ void TcpStreamSession::SetPacketHeaderFoo(const Packet* p)
         egress_index = p->pkth->ingress_index;
         egress_group = p->pkth->ingress_group;
     }
+
     daq_flags = p->pkth->flags;
     address_space_id = p->pkth->address_space_id;
 }
 
-void TcpStreamSession::GetPacketHeaderFoo(DAQ_PktHdr_t* pkth, uint32_t dir)
+void TcpStreamSession::get_packet_header_foo(DAQ_PktHdr_t* pkth, uint32_t dir)
 {
     if ( (dir & PKT_FROM_CLIENT) || (daq_flags & DAQ_PKT_FLAG_NOT_FORWARDING) )
     {
@@ -358,7 +365,7 @@ bool TcpStreamSession::setup(Packet*)
     ingress_index = egress_index = 0;
     ingress_group = egress_group = 0;
     daq_flags = address_space_id = 0;
-    config = nullptr;
+    tcp_config = nullptr;
 
     return true;
 }
@@ -410,6 +417,6 @@ StreamSplitter* TcpStreamSession::get_splitter(bool to_server)
 
 void TcpStreamSession::start_proxy()
 {
-    config->policy = StreamPolicy::OS_PROXY;
+    tcp_config->policy = StreamPolicy::OS_PROXY;
 }
 

@@ -43,7 +43,7 @@ bool TcpStateSynSent::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 bool TcpStateSynSent::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.finish_client_init(tsd);
-    if ( tsd.get_seg_len() )
+    if ( tsd.get_len() )
         trk.session->handle_data_on_syn(tsd);
     trk.set_tcp_state(TcpStreamTracker::TCP_SYN_RECV);
     return true;
@@ -54,7 +54,7 @@ bool TcpStateSynSent::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
     if ( trk.update_on_3whs_ack(tsd) )
     {
         trk.session->update_timestamp_tracking(tsd);
-        if ( tsd.get_seg_len() )
+        if ( tsd.get_len() )
             trk.session->handle_data_on_syn(tsd);
     }
     else
@@ -79,7 +79,7 @@ bool TcpStateSynSent::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateSynSent::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( tsd.get_seg_len() > 0 )
+    if ( tsd.get_len() > 0 )
         trk.session->handle_data_segment(tsd);
     return true;
 }
@@ -107,7 +107,7 @@ bool TcpStateSynSent::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker&
 
 bool TcpStateSynSent::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( tsd.get_seg_len() > 0 )
+    if ( tsd.get_len() > 0 )
         trk.session->handle_data_segment(tsd);
     return true;
 }
@@ -120,7 +120,7 @@ bool TcpStateSynSent::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         trk.set_tcp_state(TcpStreamTracker::TCP_CLOSED);
         trk.session->update_perf_base_state(TcpStreamTracker::TCP_CLOSED);
         trk.session->set_pkt_action_flag(ACTION_RST);
-        tsd.get_pkt()->flow->session_state |= STREAM_STATE_CLOSED;
+        tsd.get_flow()->session_state |= STREAM_STATE_CLOSED;
     }
     else
     {
@@ -128,7 +128,7 @@ bool TcpStateSynSent::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     }
 
     // FIXIT-L might be good to create alert specific to RST with data
-    if ( tsd.get_seg_len() > 0 )
+    if ( tsd.get_len() > 0 )
         trk.session->tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
     return true;
 }

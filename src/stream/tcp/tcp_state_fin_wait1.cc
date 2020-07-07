@@ -44,15 +44,15 @@ bool TcpStateFinWait1::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
 
 bool TcpStateFinWait1::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs());
-    if ( tsd.get_seg_len() )
+    trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs());
+    if ( tsd.get_len() )
         trk.session->handle_data_on_syn(tsd);
     return true;
 }
 
 bool TcpStateFinWait1::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( tsd.get_seg_len() )
+    if ( tsd.get_len() )
         trk.session->handle_data_on_syn(tsd);
     return true;
 }
@@ -81,7 +81,7 @@ bool TcpStateFinWait1::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker
     trk.update_tracker_ack_recv(tsd);
     if ( check_for_window_slam(tsd, trk) )
     {
-        if ( tsd.get_seg_len() > 0 )
+        if ( tsd.get_len() > 0 )
             trk.session->handle_data_segment(tsd);
     }
     return true;
@@ -103,7 +103,7 @@ bool TcpStateFinWait1::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
         bool is_ack_valid = false;
         if ( check_for_window_slam(tsd, trk, &is_ack_valid) )
         {
-            if ( tsd.get_seg_len() > 0 )
+            if ( tsd.get_len() > 0 )
                 trk.session->handle_data_segment(tsd);
 
             if ( !flow->two_way_traffic() )
@@ -125,7 +125,7 @@ bool TcpStateFinWait1::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
         trk.session->update_session_on_rst(tsd, true);
         trk.session->update_perf_base_state(TcpStreamTracker::TCP_CLOSING);
         trk.session->set_pkt_action_flag(ACTION_RST);
-        tsd.get_pkt()->flow->session_state |= STREAM_STATE_CLOSED;
+        tsd.get_flow()->session_state |= STREAM_STATE_CLOSED;
     }
     else
     {
@@ -133,17 +133,17 @@ bool TcpStateFinWait1::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
     }
 
     // FIXIT-L might be good to create alert specific to RST with data
-    if ( tsd.get_seg_len() > 0 )
+    if ( tsd.get_len() > 0 )
         trk.session->tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
     return true;
 }
 
 bool TcpStateFinWait1::check_for_window_slam(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk, bool* is_ack_valid)
 {
-    if ( SEQ_EQ(tsd.get_seg_ack(), trk.get_snd_nxt() ) )
+    if ( SEQ_EQ(tsd.get_ack(), trk.get_snd_nxt() ) )
     {
         if ( (trk.normalizer.get_os_policy() == StreamPolicy::OS_WINDOWS)
-            && (tsd.get_seg_wnd() == 0))
+            && (tsd.get_wnd() == 0))
         {
             trk.session->tel.set_tcp_event(EVENT_WINDOW_SLAM);
             inc_tcp_discards();

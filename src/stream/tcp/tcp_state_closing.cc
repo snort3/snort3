@@ -43,8 +43,8 @@ bool TcpStateClosing::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateClosing::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs());
-    if ( tsd.get_seg_len() )
+    trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs());
+    if ( tsd.get_len() )
         trk.session->handle_data_on_syn(tsd);
     return true;
 }
@@ -88,7 +88,7 @@ bool TcpStateClosing::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     Flow* flow = tsd.get_flow();
 
     trk.update_tracker_ack_recv(tsd);
-    if ( SEQ_GT(tsd.get_seg_seq(), trk.get_fin_final_seq() ) )
+    if ( SEQ_GT(tsd.get_seq(), trk.get_fin_final_seq() ) )
     {
         trk.session->tel.set_tcp_event(EVENT_BAD_FIN);
         trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
@@ -98,7 +98,7 @@ bool TcpStateClosing::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     if ( !flow->two_way_traffic() )
         trk.set_tf_flags(TF_FORCE_FLUSH);
 
-    if ( SEQ_EQ(tsd.get_seg_ack(), trk.get_snd_nxt() ) )
+    if ( SEQ_EQ(tsd.get_ack(), trk.get_snd_nxt() ) )
         trk.set_tcp_state(TcpStreamTracker::TCP_TIME_WAIT);
     return true;
 }
@@ -110,7 +110,7 @@ bool TcpStateClosing::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         trk.session->update_session_on_rst(tsd, true);
         trk.session->update_perf_base_state(TcpStreamTracker::TCP_CLOSING);
         trk.session->set_pkt_action_flag(ACTION_RST);
-        tsd.get_pkt()->flow->session_state |= STREAM_STATE_CLOSED;
+        tsd.get_flow()->session_state |= STREAM_STATE_CLOSED;
     }
     else
     {
@@ -132,8 +132,8 @@ bool TcpStateClosing::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpSt
     // Handle getting stuck in CLOSED/FIN_WAIT on simultaneous close (FIN FIN ACK ACK)
     if ( trk.get_tcp_event() != TcpStreamTracker::TCP_FIN_RECV_EVENT )
     {
-        if ( ( trk.session->get_talker_state() == TcpStreamTracker::TCP_CLOSED ) &&
-            ( trk.session->get_listener_state() == TcpStreamTracker::TCP_TIME_WAIT ) )
+        if ( ( trk.session->get_talker_state(tsd) == TcpStreamTracker::TCP_CLOSED ) &&
+            ( trk.session->get_listener_state(tsd) == TcpStreamTracker::TCP_TIME_WAIT ) )
         {
             Flow* flow = tsd.get_flow();
             trk.session->clear_session(false, true, false, tsd.get_pkt() );

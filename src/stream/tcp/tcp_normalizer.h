@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_normalizer.h author davis mcpherson <davmcphe@@cisco.com>
+// tcp_normalizer.h author davis mcpherson <davmcphe@cisco.com>
 // Created on: Jul 31, 2015
 
 #ifndef TCP_NORMALIZER_H
@@ -84,7 +84,7 @@ public:
     virtual void trim_win_payload(State&, TcpSegmentDescriptor&, uint32_t max = 0);
     virtual void trim_mss_payload(State&, TcpSegmentDescriptor&, uint32_t max = 0);
     virtual void ecn_tracker(State&, const snort::tcp::TCPHdr*, bool req3way);
-    virtual void ecn_stripper(State&, snort::Packet*);
+    virtual void ecn_stripper(State&, TcpSegmentDescriptor&);
     virtual uint32_t get_stream_window(State&, TcpSegmentDescriptor&);
     virtual uint32_t get_tcp_timestamp(State&, TcpSegmentDescriptor&, bool strip);
     virtual int handle_paws(State&, TcpSegmentDescriptor&);

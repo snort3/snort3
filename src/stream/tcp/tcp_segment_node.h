@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_segment_node.h author davis mcpherson <davmcphe@@cisco.com>
+// tcp_segment_node.h author davis mcpherson <davmcphe@cisco.com>
 // Created on: Sep 21, 2015
 
 #ifndef TCP_SEGMENT_H
@@ -73,7 +73,6 @@ public:
     uint16_t c_len;             // length of data remaining for reassembly
     uint16_t offset;
     uint16_t size;              // actual allocated size (overlaps cause i_len to differ)
-
     uint8_t data[1];
 };
 

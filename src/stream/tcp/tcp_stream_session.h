@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_stream_session.h author davis mcpherson <davmcphe@@cisco.com>
+// tcp_stream_session.h author davis mcpherson <davmcphe@cisco.com>
 // Created on: Feb 18, 2016
 
 #ifndef TCP_STREAM_SESSION_H
@@ -64,56 +64,34 @@ public:
     void reset();
     void start_proxy();
 
-    void SetPacketHeaderFoo(const snort::Packet* p);
-    void GetPacketHeaderFoo(DAQ_PktHdr_t* pkth, uint32_t dir);
-    void SwapPacketHeaderFoo();
+    void set_packet_header_foo(const TcpSegmentDescriptor&);
+    void get_packet_header_foo(DAQ_PktHdr_t*, uint32_t dir);
     void set_no_ack(bool);
     bool no_ack_mode_enabled() { return no_ack; }
 
-    virtual void update_perf_base_state(char) { }
+    virtual void update_perf_base_state(char) = 0;
     virtual void clear_session(
         bool free_flow_data, bool flush_segments, bool restart, snort::Packet* p = nullptr) = 0;
 
-    // FIXIT-RC these 2 function names convey no meaning afaict... figure out
-    // why are they called and name appropriately...
-    virtual void retransmit_process(snort::Packet* p)
-    {
-        // Data has already been analyzed so don't bother looking at it again.
-        snort::DetectionEngine::disable_content(p);
-    }
+    virtual void flush() = 0;
 
-    virtual void retransmit_handle(snort::Packet* p)
-    {
-        flow->call_handlers(p, false);
-    }
+    virtual TcpStreamTracker::TcpState get_talker_state(TcpSegmentDescriptor&) = 0;
 
-    virtual void eof_handle(snort::Packet* p)
-    {
-        flow->call_handlers(p, true);
-    }
-
-    virtual void flush() { }
-
-    virtual TcpStreamTracker::TcpState get_talker_state()
-    { return TcpStreamTracker::TCP_MAX_STATES; }
-
-    virtual TcpStreamTracker::TcpState get_listener_state()
-    { return TcpStreamTracker::TCP_MAX_STATES; }
+    virtual TcpStreamTracker::TcpState get_listener_state(TcpSegmentDescriptor&) = 0;
 
     TcpStreamTracker::TcpState get_peer_state(TcpStreamTracker* me)
     { return me == &client ? server.get_tcp_state() : client.get_tcp_state(); }
 
     virtual void init_new_tcp_session(TcpSegmentDescriptor&);
-    virtual void update_timestamp_tracking(TcpSegmentDescriptor&) { }
+    virtual void update_timestamp_tracking(TcpSegmentDescriptor&) = 0;
     virtual void update_session_on_syn_ack();
     virtual void update_session_on_ack();
     virtual void update_session_on_server_packet(TcpSegmentDescriptor&);
     virtual void update_session_on_client_packet(TcpSegmentDescriptor&);
-    virtual void update_session_on_rst(TcpSegmentDescriptor&, bool) { }
-    virtual bool handle_syn_on_reset_session(TcpSegmentDescriptor&) { return true; }
-    virtual void handle_data_on_syn(TcpSegmentDescriptor&) { }
-    virtual void update_ignored_session(TcpSegmentDescriptor&) { }
-
+    virtual void update_session_on_rst(TcpSegmentDescriptor&, bool) = 0;
+    virtual bool handle_syn_on_reset_session(TcpSegmentDescriptor&) = 0;
+    virtual void handle_data_on_syn(TcpSegmentDescriptor&) = 0;
+    virtual void update_ignored_session(TcpSegmentDescriptor&) = 0;
     void generate_no_3whs_event()
     {
         if ( generate_3whs_alert && flow->two_way_traffic())
@@ -126,13 +104,13 @@ public:
     void set_pkt_action_flag(uint32_t flag)
     { pkt_action_mask |= flag; }
 
-    virtual void update_paws_timestamps(TcpSegmentDescriptor&) { }
-    virtual void check_for_repeated_syn(TcpSegmentDescriptor&) { }
-    virtual void check_for_session_hijack(TcpSegmentDescriptor&) { }
-    virtual bool check_for_window_slam(TcpSegmentDescriptor&) { return true; }
-    virtual void mark_packet_for_drop(TcpSegmentDescriptor&) { }
-    virtual void handle_data_segment(TcpSegmentDescriptor&) { }
-    virtual bool validate_packet_established_session(TcpSegmentDescriptor&) { return true; }
+    virtual void update_paws_timestamps(TcpSegmentDescriptor&) = 0;
+    virtual void check_for_repeated_syn(TcpSegmentDescriptor&) = 0;
+    virtual void check_for_session_hijack(TcpSegmentDescriptor&) = 0;
+    virtual bool check_for_window_slam(TcpSegmentDescriptor&) = 0;
+    virtual void mark_packet_for_drop(TcpSegmentDescriptor&) = 0;
+    virtual void handle_data_segment(TcpSegmentDescriptor&) = 0;
+    virtual bool validate_packet_established_session(TcpSegmentDescriptor&) = 0;
 
     TcpStreamTracker client;
     TcpStreamTracker server;
@@ -147,7 +125,7 @@ public:
     uint32_t daq_flags = 0;
     uint16_t address_space_id = 0;
     bool generate_3whs_alert = true;
-    TcpStreamConfig* config = nullptr;
+    TcpStreamConfig* tcp_config = nullptr;
     TcpEventLogger tel;
 
 private:
@@ -156,9 +134,6 @@ private:
 protected:
     TcpStreamSession(snort::Flow*);
     virtual void set_os_policy() = 0;
-
-    TcpStreamTracker* talker = nullptr;
-    TcpStreamTracker* listener = nullptr;
 };
 
 #endif

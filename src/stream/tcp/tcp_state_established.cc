@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_state_established.cc author davis mcpherson <davmcphe@@cisco.com>
+// tcp_state_established.cc author davis mcpherson <davmcphe@cisco.com>
 // Created on: Jul 30, 2015
 
 #ifdef HAVE_CONFIG_H
@@ -42,13 +42,13 @@ bool TcpStateEstablished::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 bool TcpStateEstablished::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.session->check_for_repeated_syn(tsd);
-    trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs());
+    trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs());
     return true;
 }
 
 bool TcpStateEstablished::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.session->config->midstream_allowed(tsd.get_pkt()) )
+    if ( trk.session->tcp_config->midstream_allowed(tsd.get_pkt()) )
     {
         // FIXIT-M there may be an issue when syn/ack from server is seen
         // after ack from client which causes some tracker state variables to
@@ -59,7 +59,7 @@ bool TcpStateEstablished::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTrack
     }
 
     if ( trk.is_server_tracker() )
-        trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs() );
+        trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs() );
 
     return true;
 }
@@ -96,16 +96,15 @@ bool TcpStateEstablished::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTrac
 bool TcpStateEstablished::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.update_on_fin_sent(tsd);
-    trk.session->eof_handle(tsd.get_pkt());
+    trk.session->flow->call_handlers(tsd.get_pkt(), true);
     trk.set_tcp_state(TcpStreamTracker::TCP_FIN_WAIT1);
-
     return true;
 }
 
 bool TcpStateEstablished::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.update_tracker_ack_recv(tsd);
-    if ( tsd.get_seg_len() > 0 )
+    if ( tsd.get_len() > 0 )
     {
          trk.session->handle_data_segment(tsd);
          trk.flush_data_on_fin_recv(tsd);
@@ -134,7 +133,7 @@ bool TcpStateEstablished::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
     }
 
     // FIXIT-L might be good to create alert specific to RST with data
-    if ( tsd.get_seg_len() > 0 )
+    if ( tsd.get_len() > 0 )
         trk.session->tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
 
     return true;

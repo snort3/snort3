@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// segment_overlap_editor.h author davis mcpherson <davmcphe@@cisco.com>
+// segment_overlap_editor.h author davis mcpherson <davmcphe@cisco.com>
 // Created on: Oct 11, 2015
 
 #ifndef SEGMENT_OVERLAP_EDITOR_H
@@ -27,8 +27,6 @@
 
 class TcpSession;
 class TcpStreamTracker;
-
-#define STREAM_INSERT_OK  0  // FIXIT-RC replace with bool CRC: if useful else just delete
 
 struct SegmentOverlapState
 {
@@ -87,33 +85,33 @@ protected:
     SegmentOverlapEditor() { }
     virtual ~SegmentOverlapEditor() = default;
 
-    int eval_left(TcpReassemblerState&);
-    int eval_right(TcpReassemblerState&);
+    void eval_left(TcpReassemblerState&);
+    void eval_right(TcpReassemblerState&);
 
     virtual bool is_segment_retransmit(TcpReassemblerState&, bool*);
     virtual void drop_old_segment(TcpReassemblerState&);
 
-    virtual int left_overlap_keep_first(TcpReassemblerState&);
-    virtual int left_overlap_trim_first(TcpReassemblerState&);
-    virtual int left_overlap_keep_last(TcpReassemblerState&);
+    virtual void left_overlap_keep_first(TcpReassemblerState&);
+    virtual void left_overlap_trim_first(TcpReassemblerState&);
+    virtual void left_overlap_keep_last(TcpReassemblerState&);
     virtual void right_overlap_truncate_existing(TcpReassemblerState&);
     virtual void right_overlap_truncate_new(TcpReassemblerState&);
-    virtual int full_right_overlap_truncate_new(TcpReassemblerState&);
-    virtual int full_right_overlap_os1(TcpReassemblerState&);
-    virtual int full_right_overlap_os2(TcpReassemblerState&);
-    virtual int full_right_overlap_os3(TcpReassemblerState&);
-    virtual int full_right_overlap_os4(TcpReassemblerState&);
-    virtual int full_right_overlap_os5(TcpReassemblerState&);
+    virtual void full_right_overlap_truncate_new(TcpReassemblerState&);
+    virtual void full_right_overlap_os1(TcpReassemblerState&);
+    virtual void full_right_overlap_os2(TcpReassemblerState&);
+    virtual void full_right_overlap_os3(TcpReassemblerState&);
+    virtual void full_right_overlap_os4(TcpReassemblerState&);
+    virtual void full_right_overlap_os5(TcpReassemblerState&);
 
-    virtual int insert_left_overlap(TcpReassemblerState&) = 0;
+    virtual void insert_left_overlap(TcpReassemblerState&) = 0;
     virtual void insert_right_overlap(TcpReassemblerState&) = 0;
-    virtual int insert_full_overlap(TcpReassemblerState&) = 0;
+    virtual void insert_full_overlap(TcpReassemblerState&) = 0;
 
-    virtual int add_reassembly_segment(
+    virtual void add_reassembly_segment(
         TcpReassemblerState&, TcpSegmentDescriptor&, uint16_t, uint32_t,
         uint32_t, uint32_t, TcpSegmentNode*) = 0;
 
-    virtual int dup_reassembly_segment(TcpReassemblerState&, TcpSegmentNode*, TcpSegmentNode**) = 0;
+    virtual void dup_reassembly_segment(TcpReassemblerState&, TcpSegmentNode*, TcpSegmentNode**) = 0;
     virtual int delete_reassembly_segment(TcpReassemblerState&, TcpSegmentNode*) = 0;
     virtual void print(TcpReassemblerState&);
 };

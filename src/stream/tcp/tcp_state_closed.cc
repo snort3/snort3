@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_state_closed.cc author davis mcpherson <davmcphe@@cisco.com>
+// tcp_state_closed.cc author davis mcpherson <davmcphe@cisco.com>
 // Created on: Jul 30, 2015
 
 #ifdef HAVE_CONFIG_H
@@ -47,7 +47,7 @@ bool TcpStateClosed::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 bool TcpStateClosed::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     Flow* flow = tsd.get_flow();
-    flow->set_expire(tsd.get_pkt(), trk.session->config->session_timeout);
+    flow->set_expire(tsd.get_pkt(), trk.session->tcp_config->session_timeout);
     return true;
 }
 
@@ -99,7 +99,7 @@ bool TcpStateClosed::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.update_tracker_ack_recv(tsd);
 
-    if( tsd.get_seg_len() > 0 )
+    if( tsd.get_len() > 0 )
     {
         if ( trk.is_rst_pkt_sent() )
             trk.session->tel.set_tcp_event(EVENT_DATA_AFTER_RESET);
@@ -136,7 +136,7 @@ bool TcpStateClosed::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpStr
 
     if ( trk.get_tcp_event() != TcpStreamTracker::TCP_FIN_RECV_EVENT )
     {
-        TcpStreamTracker::TcpState talker_state = trk.session->get_talker_state();
+        TcpStreamTracker::TcpState talker_state = trk.session->get_talker_state(tsd);
         Flow* flow = tsd.get_flow();
 
         if ( ( talker_state == TcpStreamTracker::TCP_TIME_WAIT ) || !flow->two_way_traffic() )

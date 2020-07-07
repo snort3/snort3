@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_state_handler.h author davis mcpherson <davmcphe@@cisco.com>
+// tcp_state_handler.h author davis mcpherson <davmcphe@cisco.com>
 // Created on: Jun 24, 2015
 
 #ifndef TCP_STATE_HANDLER_H

@@ -43,8 +43,8 @@ bool TcpStateLastAck::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateLastAck::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs());
-    if ( tsd.get_seg_len() )
+    trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs());
+    if ( tsd.get_len() )
         trk.session->handle_data_on_syn(tsd);
     return true;
 }
@@ -58,7 +58,7 @@ bool TcpStateLastAck::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 bool TcpStateLastAck::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.update_tracker_ack_recv(tsd);
-    if ( SEQ_EQ(tsd.get_seg_ack(), trk.get_snd_nxt() ) )
+    if ( SEQ_EQ(tsd.get_ack(), trk.get_snd_nxt() ) )
         trk.set_tcp_state(TcpStreamTracker::TCP_CLOSED);
     return true;
 }
@@ -72,7 +72,7 @@ bool TcpStateLastAck::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker&
 bool TcpStateLastAck::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.update_tracker_ack_recv(tsd);
-    if ( SEQ_EQ(tsd.get_seg_ack(), trk.get_snd_nxt() ) )
+    if ( SEQ_EQ(tsd.get_ack(), trk.get_snd_nxt() ) )
         trk.set_tcp_state(TcpStreamTracker::TCP_CLOSED);
     return true;
 }
@@ -88,7 +88,7 @@ bool TcpStateLastAck::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     Flow* flow = tsd.get_flow();
 
     trk.update_tracker_ack_recv(tsd);
-    if ( SEQ_EQ(tsd.get_seg_ack(), trk.get_snd_nxt() ) )
+    if ( SEQ_EQ(tsd.get_ack(), trk.get_snd_nxt() ) )
         trk.set_tcp_state(TcpStreamTracker::TCP_CLOSED);
 
     if ( !flow->two_way_traffic() )
@@ -110,7 +110,7 @@ bool TcpStateLastAck::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     }
 
     // FIXIT-L might be good to create alert specific to RST with data
-    if ( tsd.get_seg_len() > 0 )
+    if ( tsd.get_len() > 0 )
         trk.session->tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
     return true;
 }
@@ -125,10 +125,10 @@ bool TcpStateLastAck::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpSt
     trk.session->update_paws_timestamps(tsd);
     trk.session->check_for_window_slam(tsd);
 
-    if ( ( trk.session->get_listener_state() == TcpStreamTracker::TCP_CLOSED ) &&
+    if ( ( trk.session->get_listener_state(tsd) == TcpStreamTracker::TCP_CLOSED ) &&
         ( trk.get_tcp_event() != TcpStreamTracker::TCP_FIN_RECV_EVENT ) )
     {
-        TcpStreamTracker::TcpState talker_state = trk.session->get_talker_state();
+        TcpStreamTracker::TcpState talker_state = trk.session->get_talker_state(tsd);
         Flow* flow = tsd.get_flow();
 
         if ( ( talker_state == TcpStreamTracker::TCP_TIME_WAIT )

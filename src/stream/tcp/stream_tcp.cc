@@ -62,9 +62,7 @@ StreamTcp::~StreamTcp()
 
 void StreamTcp::show(const SnortConfig*) const
 {
-    if ( !config )
-        return;
-
+    assert( config );
     config->show();
 }
 

@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_reassemblers.cc author davis mcpherson <davmcphe@@cisco.com>
+// tcp_reassemblers.cc author davis mcpherson <davmcphe@cisco.com>
 // Created on: Oct 9, 2015
 
 #ifdef HAVE_CONFIG_H
@@ -34,14 +34,14 @@ public:
     TcpReassemblerFirst() = default;
 
 private:
-    int insert_left_overlap(TcpReassemblerState& trs) override
-    { return left_overlap_keep_first(trs); }
+    void insert_left_overlap(TcpReassemblerState& trs) override
+    { left_overlap_keep_first(trs); }
 
     void insert_right_overlap(TcpReassemblerState& trs) override
     { right_overlap_truncate_new(trs); }
 
-    int insert_full_overlap(TcpReassemblerState& trs) override
-    { return full_right_overlap_os5(trs); }
+    void insert_full_overlap(TcpReassemblerState& trs) override
+    { full_right_overlap_os5(trs); }
 };
 
 class TcpReassemblerLast : public TcpReassembler
@@ -50,14 +50,14 @@ public:
     TcpReassemblerLast() = default;
 
 private:
-    int insert_left_overlap(TcpReassemblerState& trs) override
-    { return left_overlap_keep_last(trs); }
+    void insert_left_overlap(TcpReassemblerState& trs) override
+    { left_overlap_keep_last(trs); }
 
     void insert_right_overlap(TcpReassemblerState& trs) override
     { right_overlap_truncate_existing(trs); }
 
-    int insert_full_overlap(TcpReassemblerState& trs) override
-    { return full_right_overlap_os4(trs); }
+    void insert_full_overlap(TcpReassemblerState& trs) override
+    { full_right_overlap_os4(trs); }
 };
 
 class TcpReassemblerLinux : public TcpReassembler
@@ -66,14 +66,14 @@ public:
     TcpReassemblerLinux() = default;
 
 private:
-    int insert_left_overlap(TcpReassemblerState& trs) override
-    { return left_overlap_keep_first(trs); }
+    void insert_left_overlap(TcpReassemblerState& trs) override
+    { left_overlap_keep_first(trs); }
 
     void insert_right_overlap(TcpReassemblerState& trs) override
     { right_overlap_truncate_existing(trs); }
 
-    int insert_full_overlap(TcpReassemblerState& trs) override
-    { return full_right_overlap_os2(trs); }
+    void insert_full_overlap(TcpReassemblerState& trs) override
+    { full_right_overlap_os2(trs); }
 };
 
 class TcpReassemblerOldLinux : public TcpReassembler
@@ -82,14 +82,14 @@ public:
     TcpReassemblerOldLinux() = default;
 
 private:
-    int insert_left_overlap(TcpReassemblerState& trs) override
-    { return left_overlap_keep_first(trs); }
+    void insert_left_overlap(TcpReassemblerState& trs) override
+    { left_overlap_keep_first(trs); }
 
     void insert_right_overlap(TcpReassemblerState& trs) override
     { right_overlap_truncate_existing(trs); }
 
-    int insert_full_overlap(TcpReassemblerState& trs) override
-    { return full_right_overlap_os4(trs); }
+    void insert_full_overlap(TcpReassemblerState& trs) override
+    { full_right_overlap_os4(trs); }
 };
 
 class TcpReassemblerBSD : public TcpReassembler
@@ -98,14 +98,14 @@ public:
     TcpReassemblerBSD() = default;
 
 private:
-    int insert_left_overlap(TcpReassemblerState& trs) override
-    { return left_overlap_keep_first(trs); }
+    void insert_left_overlap(TcpReassemblerState& trs) override
+    { left_overlap_keep_first(trs); }
 
     void insert_right_overlap(TcpReassemblerState& trs) override
     { right_overlap_truncate_existing(trs); }
 
-    int insert_full_overlap(TcpReassemblerState& trs) override
-    { return full_right_overlap_os1(trs); }
+    void insert_full_overlap(TcpReassemblerState& trs) override
+    { full_right_overlap_os1(trs); }
 };
 
 class TcpReassemblerMacOS : public TcpReassembler
@@ -114,14 +114,14 @@ public:
     TcpReassemblerMacOS() = default;
 
 private:
-    int insert_left_overlap(TcpReassemblerState& trs) override
-    { return left_overlap_keep_first(trs); }
+    void insert_left_overlap(TcpReassemblerState& trs) override
+    { left_overlap_keep_first(trs); }
 
     void insert_right_overlap(TcpReassemblerState& trs) override
     { right_overlap_truncate_existing(trs); }
 
-    int insert_full_overlap(TcpReassemblerState& trs) override
-    { return full_right_overlap_os1(trs); }
+    void insert_full_overlap(TcpReassemblerState& trs) override
+    { full_right_overlap_os1(trs); }
 };
 
 class TcpReassemblerSolaris : public TcpReassembler
@@ -130,14 +130,14 @@ public:
     TcpReassemblerSolaris() = default;
 
 private:
-    int insert_left_overlap(TcpReassemblerState& trs) override
-    { return left_overlap_trim_first(trs); }
+    void insert_left_overlap(TcpReassemblerState& trs) override
+    { left_overlap_trim_first(trs); }
 
     void insert_right_overlap(TcpReassemblerState& trs) override
     { right_overlap_truncate_new(trs); }
 
-    int insert_full_overlap(TcpReassemblerState& trs) override
-    { return full_right_overlap_os3(trs); }
+    void insert_full_overlap(TcpReassemblerState& trs) override
+    { full_right_overlap_os3(trs); }
 };
 
 class TcpReassemblerIrix : public TcpReassembler
@@ -146,14 +146,14 @@ public:
     TcpReassemblerIrix() = default;
 
 private:
-    int insert_left_overlap(TcpReassemblerState& trs) override
-    { return left_overlap_keep_first(trs);  }
+    void insert_left_overlap(TcpReassemblerState& trs) override
+    { left_overlap_keep_first(trs);  }
 
     void insert_right_overlap(TcpReassemblerState& trs) override
     { right_overlap_truncate_existing(trs); }
 
-    int insert_full_overlap(TcpReassemblerState& trs) override
-    { return full_right_overlap_os2(trs); }
+    void insert_full_overlap(TcpReassemblerState& trs) override
+    { full_right_overlap_os2(trs); }
 };
 
 class TcpReassemblerHpux11 : public TcpReassembler
@@ -162,14 +162,14 @@ public:
     TcpReassemblerHpux11() = default;
 
 private:
-    int insert_left_overlap(TcpReassemblerState& trs) override
-    { return left_overlap_trim_first(trs); }
+    void insert_left_overlap(TcpReassemblerState& trs) override
+    { left_overlap_trim_first(trs); }
 
     void insert_right_overlap(TcpReassemblerState& trs) override
     { right_overlap_truncate_new(trs); }
 
-    int insert_full_overlap(TcpReassemblerState& trs) override
-    { return full_right_overlap_os3(trs); }
+    void insert_full_overlap(TcpReassemblerState& trs) override
+    { full_right_overlap_os3(trs); }
 };
 
 class TcpReassemblerHpux10 : public TcpReassembler
@@ -178,14 +178,14 @@ public:
     TcpReassemblerHpux10() = default;
 
 private:
-    int insert_left_overlap(TcpReassemblerState& trs) override
-    { return left_overlap_keep_first(trs); }
+    void insert_left_overlap(TcpReassemblerState& trs) override
+    { left_overlap_keep_first(trs); }
 
     void insert_right_overlap(TcpReassemblerState& trs) override
     { right_overlap_truncate_existing(trs); }
 
-    int insert_full_overlap(TcpReassemblerState& trs) override
-    { return full_right_overlap_os2(trs); }
+    void insert_full_overlap(TcpReassemblerState& trs) override
+    { full_right_overlap_os2(trs); }
 };
 
 class TcpReassemblerWindows : public TcpReassembler
@@ -194,14 +194,14 @@ public:
     TcpReassemblerWindows() = default;
 
 private:
-    int insert_left_overlap(TcpReassemblerState& trs) override
-    { return left_overlap_keep_first(trs); }
+    void insert_left_overlap(TcpReassemblerState& trs) override
+    { left_overlap_keep_first(trs); }
 
     void insert_right_overlap(TcpReassemblerState& trs) override
     { right_overlap_truncate_existing(trs); }
 
-    int insert_full_overlap(TcpReassemblerState& trs) override
-    { return full_right_overlap_os1(trs); }
+    void insert_full_overlap(TcpReassemblerState& trs) override
+    { full_right_overlap_os1(trs); }
 };
 
 class TcpReassemblerWindows2K3 : public TcpReassembler
@@ -210,14 +210,14 @@ public:
     TcpReassemblerWindows2K3() = default;
 
 private:
-    int insert_left_overlap(TcpReassemblerState& trs) override
-    { return left_overlap_keep_first(trs); }
+    void insert_left_overlap(TcpReassemblerState& trs) override
+    { left_overlap_keep_first(trs); }
 
     void insert_right_overlap(TcpReassemblerState& trs) override
     { right_overlap_truncate_existing(trs); }
 
-    int insert_full_overlap(TcpReassemblerState& trs) override
-    { return full_right_overlap_os1(trs); }
+    void insert_full_overlap(TcpReassemblerState& trs) override
+    { full_right_overlap_os1(trs); }
 };
 
 class TcpReassemblerVista : public TcpReassembler
@@ -226,14 +226,14 @@ public:
     TcpReassemblerVista() = default;
 
 private:
-    int insert_left_overlap(TcpReassemblerState& trs) override
-    { return left_overlap_keep_first(trs); }
+    void insert_left_overlap(TcpReassemblerState& trs) override
+    { left_overlap_keep_first(trs); }
 
     void insert_right_overlap(TcpReassemblerState& trs) override
     { right_overlap_truncate_new(trs); }
 
-    int insert_full_overlap(TcpReassemblerState& trs) override
-    { return full_right_overlap_os5 (trs); }
+    void insert_full_overlap(TcpReassemblerState& trs) override
+    { full_right_overlap_os5 (trs); }
 };
 
 class TcpReassemblerProxy : public TcpReassemblerFirst
@@ -242,14 +242,14 @@ public:
     TcpReassemblerProxy() = default;
 
 private:
-    int insert_left_overlap(TcpReassemblerState& trs) override
-    { return left_overlap_keep_first(trs); }
+    void insert_left_overlap(TcpReassemblerState& trs) override
+    { left_overlap_keep_first(trs); }
 
     void insert_right_overlap(TcpReassemblerState& trs) override
     { right_overlap_truncate_new(trs); }
 
-    int insert_full_overlap(TcpReassemblerState& trs) override
-    { return full_right_overlap_os5(trs); }
+    void insert_full_overlap(TcpReassemblerState& trs) override
+    { full_right_overlap_os5(trs); }
 };
 
 void TcpReassemblerPolicy::init(TcpSession* ssn, TcpStreamTracker* trk, StreamPolicy pol, bool server)
@@ -276,9 +276,7 @@ void TcpReassemblerPolicy::init(TcpSession* ssn, TcpStreamTracker* trk, StreamPo
 }
 
 void TcpReassemblerPolicy::reset()
-{
-    init(nullptr, nullptr, StreamPolicy::OS_DEFAULT, false);
-}
+{ init(nullptr, nullptr, StreamPolicy::OS_DEFAULT, false); }
 
 TcpReassembler* TcpReassemblerFactory::reassemblers[StreamPolicy::OS_END_OF_LIST];
 

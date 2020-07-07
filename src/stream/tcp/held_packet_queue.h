@@ -41,9 +41,7 @@ public:
     }
 
     bool has_expired()
-    {
-        return expired;
-    }
+    { return expired; }
 
     TcpStreamTracker& get_tracker() const { return tracker; }
     DAQ_Msg_h get_daq_msg() const { return daq_msg; }
@@ -78,11 +76,10 @@ public:
 
     // Return the timeout in milliseconds.
     uint32_t get_timeout() const
-    {
-        return timeout.tv_sec * 1000 + timeout.tv_usec / 1000;
-    }
+    { return timeout.tv_sec * 1000 + timeout.tv_usec / 1000; }
 
-    bool empty() const { return q.empty(); }
+    bool empty() const
+    { return q.empty(); }
 
     // This must be called at reload time only, with now = reload time.
     // Return true if, upon exit, there are expired packets in the queue.

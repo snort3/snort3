@@ -86,20 +86,21 @@ void TcpStateMachine::register_state_handler(TcpStreamTracker::TcpState state,
     tcp_state_handlers[ state ] = &handler;
 }
 
-bool TcpStateMachine::eval(TcpSegmentDescriptor& tsd, TcpStreamTracker& talker,
-    TcpStreamTracker& listener)
+bool TcpStateMachine::eval(TcpSegmentDescriptor& tsd)
 {
-    const TcpStreamTracker::TcpState talker_state = talker.get_tcp_state( );
+    TcpStreamTracker* talker = tsd.get_talker();
+    const TcpStreamTracker::TcpState talker_state = talker->get_tcp_state();
 
-    talker.set_tcp_event(tsd);
-    if ( tcp_state_handlers[ talker_state ]->do_pre_sm_packet_actions(tsd, talker) )
+    talker->set_tcp_event(tsd);
+    if ( tcp_state_handlers[ talker_state ]->do_pre_sm_packet_actions(tsd, *talker) )
     {
-        if ( tcp_state_handlers[ talker_state ]->eval(tsd, talker) )
+        if ( tcp_state_handlers[ talker_state ]->eval(tsd, *talker) )
         {
-            const TcpStreamTracker::TcpState listener_state = listener.get_tcp_state( );
-            listener.set_tcp_event(tsd);
-            tcp_state_handlers[ listener_state ]->eval(tsd, listener);
-            tcp_state_handlers[ listener_state ]->do_post_sm_packet_actions(tsd, listener);
+            TcpStreamTracker* listener = tsd.get_listener();
+            const TcpStreamTracker::TcpState listener_state = listener->get_tcp_state( );
+            listener->set_tcp_event(tsd);
+            tcp_state_handlers[ listener_state ]->eval(tsd, *listener);
+            tcp_state_handlers[ listener_state ]->do_post_sm_packet_actions(tsd, *listener);
             return true;
         }
 
