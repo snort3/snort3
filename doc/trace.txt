@@ -112,6 +112,7 @@ Available constraints options:
     src_port - match all packets with a flow that has this source port
     dst_ip - match all packets with a flow that has this server IP address (passed as a string)
     dst_port - match all packets with a flow that has this destination port
+    match - boolean flag to enable/disable whether constraints will ever match (enabled by default)
 
 The following lines placed in snort.lua will enable all trace messages for
 detection filtered by ip_proto, dst_ip, src_port and dst_port:
@@ -128,6 +129,24 @@ detection filtered by ip_proto, dst_ip, src_port and dst_port:
             dst_ip = "10.1.1.10",
             src_port = 150,
             dst_port = 250
+        }
+    }
+
+To create constraints that will never successfully match, set the *match*
+parameter to 'false'. This is useful for situations where one is relying on
+external packet filtering from the DAQ module, or for preventing all trace
+messages in the context of a packet. The following is an example of such
+configuration:
+
+    trace =
+    {
+        modules =
+        {
+            snort = { all = 1 }
+        },
+        constraints =
+        {
+            match = false
         }
     }
 

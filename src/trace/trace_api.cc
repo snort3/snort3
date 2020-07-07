@@ -82,14 +82,20 @@ void TraceApi::log(const char* log_msg, const char* name,
 
 void TraceApi::filter(const Packet& p)
 {
-    if ( !g_packet_constraints )
+
+    if ( p.pkth->flags & DAQ_PKT_FLAG_DEBUG_ENABLED )
         p.filtering_state.set_matched(g_constraints_generation, true);
     else
     {
-        const bool matched = p.flow
+        bool matched;
+        if ( !g_packet_constraints )
+            matched = true;
+        else
+        {
+            matched = p.flow
             ? g_packet_constraints->flow_match(*p.flow)
             : g_packet_constraints->packet_match(p);
-
+        }
         p.filtering_state.set_matched(g_constraints_generation, matched);
     }
 

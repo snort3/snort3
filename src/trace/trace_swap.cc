@@ -26,6 +26,7 @@
 #include <lua.hpp>
 
 #include "framework/module.h"
+#include "framework/packet_constraints.h"
 #include "log/messages.h"
 #include "main/analyzer_command.h"
 #include "main/snort_config.h"
@@ -162,24 +163,24 @@ static int set(lua_State* L)
     lua_pushnil(L);
     while ( lua_next(L, 1) )
     {
-        const char* root_tbl_name = luaL_checkstring(L, -2);
-        const Parameter* root_tbl_param = Parameter::find(params_tree, root_tbl_name);
+        const char* root_element_key = luaL_checkstring(L, -2);
+        const Parameter* root_parameter = Parameter::find(params_tree, root_element_key);
 
-        if ( !lua_istable(L, -1) or !root_tbl_param )
+        if ( !lua_istable(L, -1) or !root_parameter )
         {
-            LogMessage("== invalid table is provided: %s\n", root_tbl_name);
+            LogMessage("== invalid table is provided: %s\n", root_element_key);
             parse_err = true;
             lua_pop(L, 1);
             continue;
         }
 
         // "modules" table traversal
-        if ( !strcmp(root_tbl_name, params_tree[0].name) )
+        else if ( !strcmp(root_element_key, params_tree[0].name) )
         {
             set_traces = true;
             trace_parser.clear_traces();
 
-            const Parameter* modules_param = (const Parameter*)root_tbl_param->range;
+            const Parameter* modules_param = (const Parameter*)root_parameter->range;
 
             int modules_tbl_idx = lua_gettop(L);
             lua_pushnil(L);
@@ -190,7 +191,7 @@ static int set(lua_State* L)
 
                 if ( !lua_istable(L, -1) or !module_param )
                 {
-                    LogMessage("== invalid table is provided: %s.%s\n", root_tbl_name,
+                    LogMessage("== invalid table is provided: %s.%s\n", root_element_key,
                         module_name);
 
                     parse_err = true;
@@ -219,7 +220,7 @@ static int set(lua_State* L)
                          !trace_parser.set_traces(module_name, val) )
                     {
                         LogMessage("== invalid trace value is provided: %s.%s.%s = %s\n",
-                            root_tbl_name, module_name, val_name, val.get_as_string());
+                            root_element_key, module_name, val_name, val.get_as_string());
 
                         parse_err = true;
                     }
@@ -231,12 +232,12 @@ static int set(lua_State* L)
             }
         }
         // "constraints" table traversal
-        else if ( !strcmp(root_tbl_name, params_tree[1].name) )
+        else if ( !strcmp(root_element_key, params_tree[1].name) )
         {
             set_constraints = true;
             trace_parser.clear_constraints();
 
-            const Parameter* constraints_param = (const Parameter*)root_tbl_param->range;
+            const Parameter* constraints_param = (const Parameter*)root_parameter->range;
 
             int constraints_tbl_idx = lua_gettop(L);
             lua_pushnil(L);
@@ -249,6 +250,8 @@ static int set(lua_State* L)
 
                 if ( lua_isnumber(L, -1) )
                     val.set((double)lua_tointeger(L, -1));
+                else if ( lua_isboolean(L, -1) )
+                    val.set(bool(lua_toboolean(L, -1)));
                 else
                     val.set(luaL_checkstring(L, -1));
 
@@ -256,7 +259,7 @@ static int set(lua_State* L)
                      !trace_parser.set_constraints(val) )
                 {
                     LogMessage("== invalid constraints value is provided: %s.%s = %s\n",
-                        root_tbl_name, val_name, val.get_as_string());
+                        root_element_key, val_name, val.get_as_string());
 
                     parse_err = true;
                 }
@@ -276,6 +279,9 @@ static int set(lua_State* L)
             trace_parser.clear_constraints();
         }
 
+        if ( set_constraints )
+            trace_parser.finalize_constraints();
+
         main_broadcast_command(new TraceSwap(
             trace_parser.get_trace_config(), set_traces, set_constraints),
             true);
@@ -290,7 +296,7 @@ static int clear(lua_State*)
 {
     // Create an empty overlay TraceConfig
     // It will be set in a SnortConfig during TraceSwap execution and owned by it after
-    main_broadcast_command(new TraceSwap(new TraceConfig()), true);
+    main_broadcast_command(new TraceSwap(new TraceConfig), true);
     return 0;
 }
 

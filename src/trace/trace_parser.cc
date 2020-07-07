@@ -24,7 +24,6 @@
 #include "trace_parser.h"
 
 #include "framework/module.h"
-#include "framework/packet_constraints.h"
 #include "managers/module_manager.h"
 
 #include "trace_config.h"
@@ -71,46 +70,49 @@ bool TraceParser::set_traces(const std::string& module_name, const Value& val)
 
 bool TraceParser::set_constraints(const Value& val)
 {
-    if ( !trace_config->constraints )
-        trace_config->constraints = new PacketConstraints;
-
-    auto& cs = *trace_config->constraints;
-
     if ( val.is("ip_proto") )
     {
-        cs.ip_proto = static_cast<IpProtocol>(val.get_uint8());
-        cs.set_bits |= PacketConstraints::SetBits::IP_PROTO;
+        parsed_constraints.ip_proto = static_cast<IpProtocol>(val.get_uint8());
+        parsed_constraints.set_bits |= PacketConstraints::SetBits::IP_PROTO;
     }
     else if ( val.is("src_port") )
     {
-        cs.src_port = val.get_uint16();
-        cs.set_bits |= PacketConstraints::SetBits::SRC_PORT;
+        parsed_constraints.src_port = val.get_uint16();
+        parsed_constraints.set_bits |= PacketConstraints::SetBits::SRC_PORT;
     }
     else if ( val.is("dst_port") )
     {
-        cs.dst_port = val.get_uint16();
-        cs.set_bits |= PacketConstraints::SetBits::DST_PORT;
+        parsed_constraints.dst_port = val.get_uint16();
+        parsed_constraints.set_bits |= PacketConstraints::SetBits::DST_PORT;
     }
     else if ( val.is("src_ip") )
     {
         const char* str = val.get_string();
-        if ( cs.src_ip.set(str) != SFIP_SUCCESS )
+        if ( parsed_constraints.src_ip.set(str) != SFIP_SUCCESS )
             return false;
 
-        cs.set_bits |= PacketConstraints::SetBits::SRC_IP;
+        parsed_constraints.set_bits |= PacketConstraints::SetBits::SRC_IP;
     }
     else if ( val.is("dst_ip") )
     {
         const char* str = val.get_string();
-        if ( cs.dst_ip.set(str) != SFIP_SUCCESS )
+        if ( parsed_constraints.dst_ip.set(str) != SFIP_SUCCESS )
             return false;
 
-        cs.set_bits |= PacketConstraints::SetBits::DST_IP;
+        parsed_constraints.set_bits |= PacketConstraints::SetBits::DST_IP;
     }
+    else if ( val.is("match") )
+        parsed_constraints.match = val.get_bool();
     else
         return false;
 
     return true;
+}
+
+void TraceParser::finalize_constraints()
+{
+    if ( !parsed_constraints.match or parsed_constraints.set_bits )
+        trace_config->constraints = new PacketConstraints(parsed_constraints);
 }
 
 void TraceParser::clear_traces()

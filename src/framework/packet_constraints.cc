@@ -29,8 +29,9 @@
 
 namespace {
 
-inline bool match(const snort::PacketConstraints& cs, const snort::SfIp& sip,
-    const snort::SfIp& dip, uint16_t sport, uint16_t dport)
+inline bool match_constraints(const snort::PacketConstraints& cs,
+    const snort::SfIp& sip, const snort::SfIp& dip, uint16_t sport,
+    uint16_t dport)
 {
     using SetBits = snort::PacketConstraints::SetBits;
 
@@ -56,6 +57,9 @@ bool PacketConstraints::operator==(const PacketConstraints& other) const
 
 bool PacketConstraints::packet_match(const Packet& p) const
 {
+    if ( !match )
+        return false;
+
     if ( !p.has_ip() )
         return false;
 
@@ -67,16 +71,21 @@ bool PacketConstraints::packet_match(const Packet& p) const
     const auto sp = p.ptrs.sp;
     const auto dp = p.ptrs.dp;
 
-    return match(*this, sip, dip, sp, dp) or match(*this, dip, sip, dp, sp);
+    return match_constraints(*this, sip, dip, sp, dp) or
+        match_constraints(*this, dip, sip, dp, sp);
 }
 
 bool PacketConstraints::flow_match(const Flow& f) const
 {
+    if ( !match )
+        return false;
+
     if ( (set_bits & SetBits::IP_PROTO) and
         (IpProtocol(f.ip_proto) != ip_proto) )
         return false;
 
-    return match(*this, f.client_ip, f.server_ip, f.client_port, f.server_port);
+    return match_constraints(*this, f.client_ip, f.server_ip, f.client_port,
+        f.server_port);
 }
 
 #ifdef UNIT_TEST
@@ -109,7 +118,7 @@ TEST_CASE("Packet constraints matching", "[framework]")
         cs.src_ip = sip;
         cs.dst_ip = dip;
 
-        CHECK( match(cs, sip, dip, sport, dport) );
+        CHECK( match_constraints(cs, sip, dip, sport, dport) );
     }
 
     SECTION("backwards")
@@ -126,7 +135,7 @@ TEST_CASE("Packet constraints matching", "[framework]")
         cs.src_ip = sip;
         cs.dst_ip = dip;
 
-        CHECK( !match(cs, dip, sip, dport, sport) );
+        CHECK( !match_constraints(cs, dip, sip, dport, sport) );
     }
 
     SECTION("any ip")
@@ -139,7 +148,7 @@ TEST_CASE("Packet constraints matching", "[framework]")
         cs.src_port = sport;
         cs.dst_port = dport;
 
-        CHECK( match(cs, sip, dip, sport, dport) );
+        CHECK( match_constraints(cs, sip, dip, sport, dport) );
     }
 
     SECTION("any port")
@@ -152,7 +161,7 @@ TEST_CASE("Packet constraints matching", "[framework]")
         cs.src_ip = sip;
         cs.dst_ip = dip;
 
-        CHECK( match(cs, sip, dip, sport, dport) );
+        CHECK( match_constraints(cs, sip, dip, sport, dport) );
     }
 
     SECTION("any src")
@@ -165,9 +174,8 @@ TEST_CASE("Packet constraints matching", "[framework]")
         cs.dst_port = dport;
         cs.dst_ip = dip;
 
-        CHECK( match(cs, sip, dip, sport, dport) );
+        CHECK( match_constraints(cs, sip, dip, sport, dport) );
     }
-
 }
 
 #endif

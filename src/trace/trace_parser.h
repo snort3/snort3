@@ -23,6 +23,8 @@
 #include <map>
 #include <string>
 
+#include "framework/packet_constraints.h"
+
 namespace snort
 {
 class Module;
@@ -39,6 +41,7 @@ public:
     bool set_traces(const std::string& module_name, const snort::Value& val);
     bool set_constraints(const snort::Value& val);
 
+    void finalize_constraints();
     void clear_traces();
     void clear_constraints();
 
@@ -52,6 +55,7 @@ private:
 
 private:
     TraceConfig* trace_config = nullptr;
+    snort::PacketConstraints parsed_constraints;
     static std::map<std::string, std::map<std::string, bool>> s_configured_trace_options;
 };
 

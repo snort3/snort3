@@ -51,6 +51,8 @@ struct PacketConstraints
     snort::SfIp dst_ip;
 
     uint8_t set_bits = 0;
+
+    bool match = true;
 };
 
 } // namespace snort

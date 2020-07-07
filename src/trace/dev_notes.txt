@@ -87,3 +87,10 @@ This directory contains the trace logger framework.
     To create specific TraceLogger/TraceLoggerFactory pair just inherit base classes placed
     into "trace_log_base.h" and init TraceConfig with a new factory during configuration.
 
+* Disabling packet constraints matching
+
+    Constraints matching can be disabled by setting "trace.constraints.match = false" during
+    configuration. This is effectively saying all packets don't pass the trace filter. It may be
+    useful in case of using external packet filtering, such as filtering by the DAQ, or to block
+    printing for all trace messages in the context of a packet.
+

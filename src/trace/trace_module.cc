@@ -25,6 +25,7 @@
 
 #include <syslog.h>
 
+#include "framework/packet_constraints.h"
 #include "main/snort_config.h"
 #include "managers/module_manager.h"
 
@@ -101,6 +102,9 @@ void TraceModule::generate_params()
 
         { "dst_port", Parameter::PT_INT, "0:65535", nullptr,
           "destination port filter" },
+
+        { "match", Parameter::PT_BOOL, nullptr, "true",
+          "use constraints to filter traces" },
 
         { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
     };
@@ -190,6 +194,8 @@ bool TraceModule::end(const char* fqn, int, SnortConfig* sc)
             local_syslog = true;
             openlog("snort", LOG_PID | LOG_CONS, LOG_DAEMON);
         }
+
+        trace_parser->finalize_constraints();
 
         delete trace_parser;
         trace_parser = nullptr;
