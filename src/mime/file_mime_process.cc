@@ -541,7 +541,7 @@ const uint8_t* MimeSession::process_mime_data_paf(
 
     // FIXIT-L why is this being set?  we don't search file data until
     // we set it again below after decoding.  can it be deleted?
-    if ( decode_conf && (!decode_conf->is_ignore_data()))
+    if ( !is_http && decode_conf && (!decode_conf->is_ignore_data()))
         set_file_data(start, (end - start));
 
     if (data_state == STATE_DATA_HEADER)
@@ -594,7 +594,8 @@ const uint8_t* MimeSession::process_mime_data_paf(
             if ( result != DECODE_SUCCESS )
                 decompress_alert();
 
-            set_file_data(decomp_buffer, decomp_buf_size);
+            if (!is_http)
+                set_file_data(decomp_buffer, decomp_buf_size);
         }
 
         /*Process file type/file signature*/
@@ -800,12 +801,14 @@ void MimeSession::exit()
         delete mime_hdr_search_mpse;
 }
 
-MimeSession::MimeSession(DecodeConfig* dconf, MailLogConfig* lconf, uint64_t base_file_id)
+MimeSession::MimeSession(DecodeConfig* dconf, MailLogConfig* lconf, uint64_t base_file_id,
+    bool session_is_http)
 {
     decode_conf = dconf;
     log_config =  lconf;
     log_state = new MailLogState(log_config);
     session_base_file_id = base_file_id;
+    is_http = session_is_http;
     reset_mime_paf_state(&mime_boundary);
 }
 
