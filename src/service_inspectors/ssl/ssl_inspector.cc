@@ -33,6 +33,8 @@
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "protocols/ssl.h"
+#include "pub_sub/finalize_packet_event.h"
+#include "pub_sub/opportunistic_tls_event.h"
 #include "stream/stream.h"
 #include "stream/stream_splitter.h"
 
@@ -403,6 +405,7 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
+static const char* s_name = "ssl";
 
 class Ssl : public Inspector
 {
@@ -412,12 +415,40 @@ public:
 
     void show(const SnortConfig*) const override;
     void eval(Packet*) override;
+    bool configure(SnortConfig*) override;
 
     StreamSplitter* get_splitter(bool c2s) override
     { return new SslSplitter(c2s); }
 
 private:
     SSL_PROTO_CONF* config;
+};
+
+class SslStartTlsEventtHandler : public DataHandler
+{
+public:
+    SslStartTlsEventtHandler() : DataHandler(s_name) { }
+
+    void handle(DataEvent&, Flow* flow) override
+    {
+        flow->flags.trigger_finalize_event = true;
+    }
+};
+
+class SslFinalizePacketHandler : public DataHandler
+{
+public:
+    SslFinalizePacketHandler() : DataHandler(s_name) {}
+
+    void handle(DataEvent& e, Flow*) override
+    {
+        FinalizePacketEvent* fp_event = (FinalizePacketEvent*)&e;
+        const Packet* pkt = fp_event->get_packet();
+
+        pkt->flow->flags.trigger_finalize_event = false;
+        pkt->flow->set_proxied();
+        pkt->flow->set_service(const_cast<Packet*>(pkt), s_name);
+    }
 };
 
 Ssl::Ssl(SSL_PROTO_CONF* pc)
@@ -448,6 +479,13 @@ void Ssl::eval(Packet* p)
 
     sslstats.packets++;
     snort_ssl(config, p);
+}
+
+bool Ssl::configure(SnortConfig*)
+{
+    DataBus::subscribe(FINALIZE_PACKET_EVENT, new SslFinalizePacketHandler());
+    DataBus::subscribe(OPPORTUNISTIC_TLS_EVENT, new SslStartTlsEventtHandler());
+    return true;
 }
 
 //-------------------------------------------------------------------------
@@ -493,7 +531,7 @@ const InspectApi ssl_api =
     IT_SERVICE,
     PROTO_BIT__PDU,
     nullptr, // buffers
-    "ssl",
+    s_name,
     ssl_init,
     nullptr, // pterm
     nullptr, // tinit

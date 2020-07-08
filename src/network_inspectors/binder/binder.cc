@@ -24,6 +24,7 @@
 #include <iomanip>
 #include <sstream>
 
+#include "detection/detection_engine.h"
 #include "flow/flow.h"
 #include "flow/flow_key.h"
 #include "framework/data_bus.h"
@@ -798,6 +799,8 @@ void Stuff::apply_service(Flow* flow, const HostAttributeEntry* host)
 
         if ( flow->ssn_state.snort_protocol_id == UNKNOWN_PROTOCOL_ID )
             flow->ssn_state.snort_protocol_id = gadget->get_service();
+
+        DataBus::publish(SERVICE_INSPECTOR_CHANGE_EVENT, DetectionEngine::get_current_packet());
     }
 
     else if ( wizard )
@@ -1015,6 +1018,7 @@ void Binder::handle_flow_service_change( Flow* flow )
             {
                 flow->set_gadget(ins);
                 flow->ssn_state.snort_protocol_id = ins->get_service();
+                DataBus::publish(SERVICE_INSPECTOR_CHANGE_EVENT, DetectionEngine::get_current_packet());
             }
             else
                 flow->ssn_state.snort_protocol_id = UNKNOWN_PROTOCOL_ID;

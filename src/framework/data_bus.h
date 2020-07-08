@@ -134,6 +134,8 @@ private:
 
 // A flow changed its service
 #define FLOW_SERVICE_CHANGE_EVENT "flow.service_change_event"
+// A flow has found the service inspector
+#define SERVICE_INSPECTOR_CHANGE_EVENT "flow.service_inspector.changed"
 
 // A flow has entered the setup state
 #define FLOW_STATE_SETUP_EVENT "flow.state_setup"

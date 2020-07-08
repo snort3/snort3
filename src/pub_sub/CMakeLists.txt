@@ -7,6 +7,7 @@ set (PUB_SUB_INCLUDES
     expect_events.h
     finalize_packet_event.h
     http_events.h
+    opportunistic_tls_event.h
     sip_events.h
 )
 

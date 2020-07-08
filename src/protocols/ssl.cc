@@ -114,10 +114,6 @@ static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
             hello = (const SSL_handshake_hello_t*)handshake;
             retval |= SSL_decode_version_v3(hello->major, hello->minor);
 
-            /* Compare version of record with version of handshake */
-            if ((cur_flags & SSL_VERFLAGS) != (retval & SSL_VERFLAGS))
-                retval |= SSL_BAD_VER_FLAG;
-
             break;
 
         case SSL_HS_SHELLO:

@@ -31,6 +31,7 @@
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "protocols/ssl.h"
+#include "pub_sub/opportunistic_tls_event.h"
 #include "stream/stream.h"
 #include "utils/safec.h"
 #include "utils/util.h"
@@ -1090,6 +1091,13 @@ static void SMTP_ProcessServerPacket(
                 /* This is either an initial server response or a STARTTLS response */
                 if (smtp_ssn->state == STATE_CONNECT)
                     smtp_ssn->state = STATE_COMMAND;
+
+                if (smtp_ssn->state == STATE_TLS_CLIENT_PEND)
+                {
+                    OpportunisticTlsEvent event(p, p->flow->service);
+                    DataBus::publish(OPPORTUNISTIC_TLS_EVENT, event, p->flow);
+                }
+
                 break;
 
             case RESP_250:
