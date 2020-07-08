@@ -36,7 +36,6 @@ using namespace std;
 #define FILE_KEY ".file"
 #define INSPECTION_KEY ".inspection"
 #define IPS_KEY ".ips"
-#define NETWORK_KEY ".network"
 
 THREAD_LOCAL BindStats bstats;
 
@@ -120,9 +119,6 @@ static const Parameter binder_use_params[] =
 
     { "ips_policy", Parameter::PT_STRING, nullptr, nullptr,
       "use ips policy from given file" },
-
-    { "network_policy", Parameter::PT_STRING, nullptr, nullptr,
-      "deprecated, ignored by binder" },
 
     { "service", Parameter::PT_STRING, nullptr, nullptr,
       "override automatic service identification" },
@@ -268,9 +264,6 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
     else if ( v.is("ips_policy") )
         add_file(v.get_string(), IPS_KEY);
 
-    else if ( v.is("network_policy") )
-        add_file(v.get_string(), NETWORK_KEY);
-
     else if ( v.is("name") )
     {
         work->use.name = v.get_string();
@@ -323,15 +316,6 @@ bool BinderModule::end(const char* fqn, int idx, SnortConfig* sc)
         if ( !work )
         {
             ParseError("invalid %s[%d]", fqn, idx);
-            return true;
-        }
-
-        // FIXIT-D: remove this when network_policy binding is deleted from
-        // the binder's options
-        if ( work->use.type == NETWORK_KEY )
-        {
-            delete work;
-            work = nullptr;
             return true;
         }
 
