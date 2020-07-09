@@ -218,11 +218,12 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
         return;
     }
 
-    const int32_t fp_length = (file_data.length() <= session_data->file_depth_remaining[source_id])
-        ? file_data.length() : session_data->file_depth_remaining[source_id];
-
     if (!session_data->mime_state[source_id])
     {
+        const int32_t fp_length = (file_data.length() <=
+            session_data->file_depth_remaining[source_id]) ?
+            file_data.length() : session_data->file_depth_remaining[source_id];
+
         FileFlows* file_flows = FileFlows::get_file_flows(flow);
         if (!file_flows)
             return;
@@ -264,14 +265,7 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
     else
     {
         session_data->mime_state[source_id]->process_mime_data(p, file_data.start(),
-            fp_length, true, SNORT_FILE_POSITION_UNKNOWN);
-
-        session_data->file_depth_remaining[source_id] -= fp_length;
-        if (session_data->file_depth_remaining[source_id] == 0)
-        {
-            delete session_data->mime_state[source_id];
-            session_data->mime_state[source_id] = nullptr;
-        }
+            file_data.length(), true, SNORT_FILE_POSITION_UNKNOWN);
     }
 }
 

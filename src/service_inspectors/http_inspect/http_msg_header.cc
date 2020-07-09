@@ -401,15 +401,16 @@ void HttpMsgHeader::prepare_body()
 
 void HttpMsgHeader::setup_file_processing()
 {
-    // Generate the unique file id for file processing
-    transaction->set_file_processing_id(source_id, get_transaction_id(),
-        get_h2_stream_id(source_id));
-
-    if ((session_data->file_depth_remaining[source_id] = FileService::get_max_file_depth()) < 0)
+    const int64_t max_file_depth = FileService::get_max_file_depth();
+    if (max_file_depth <= 0)
     {
         session_data->file_depth_remaining[source_id] = 0;
         return;
     }
+
+    // Generate the unique file id for file processing
+    transaction->set_file_processing_id(source_id, get_transaction_id(),
+        get_h2_stream_id(source_id));
 
     // Do we meet all the conditions for MIME file processing?
     if (source_id == SRC_CLIENT)
@@ -432,6 +433,7 @@ void HttpMsgHeader::setup_file_processing()
                     SNORT_FILE_POSITION_UNKNOWN);
                 session_data->mime_state[source_id]->process_mime_data(p,
                     (const uint8_t*)"\r\n", 2, true, SNORT_FILE_POSITION_UNKNOWN);
+                session_data->file_depth_remaining[source_id] = INT64_MAX;
             }
         }
     }
@@ -439,6 +441,7 @@ void HttpMsgHeader::setup_file_processing()
     // Otherwise do regular file processing
     if (session_data->mime_state[source_id] == nullptr)
     {
+        session_data->file_depth_remaining[source_id] = max_file_depth;
         FileFlows* file_flows = FileFlows::get_file_flows(flow);
         if (!file_flows)
             session_data->file_depth_remaining[source_id] = 0;
