@@ -1096,18 +1096,15 @@ int TcpSession::process(Packet* p)
     TcpSegmentDescriptor tsd(flow, p, tel);
     init_tcp_packet_analysis(tsd);
 
-    // if listener is in pre-ack mode, check for and process meta-ack info first if present
-    // the current listener is the talker for the meta-ack...
-    if ( tsd.get_listener()->get_flush_policy() == STREAM_FLPOLICY_ON_DATA )
+    // check for and process meta-ack info first if present, the current listener is the
+    // talker for the meta-ack...
+    DAQ_PktTcpAckData_t* tcp_mack = (DAQ_PktTcpAckData_t*)p->daq_msg->meta[DAQ_PKT_META_TCP_ACK_DATA];
+    if ( tcp_mack )
     {
-        DAQ_PktTcpAckData_t* tcp_mack = (DAQ_PktTcpAckData_t*)p->daq_msg->meta[DAQ_PKT_META_TCP_ACK_DATA];
-        if ( tcp_mack )
-        {
-            TcpSegmentDescriptor ma_tsd(flow, p, tcp_mack->tcp_ack_seq_num, tcp_mack->tcp_window_size);
-            init_tcp_packet_analysis(ma_tsd);
-            process_tcp_packet(ma_tsd);
-            tcpStats.meta_acks++;
-        }
+        TcpSegmentDescriptor ma_tsd(flow, p, tcp_mack->tcp_ack_seq_num, tcp_mack->tcp_window_size);
+        init_tcp_packet_analysis(ma_tsd);
+        process_tcp_packet(ma_tsd);
+        tcpStats.meta_acks++;
     }
 
     if ( p->context->conf->is_address_anomaly_check_enabled() )

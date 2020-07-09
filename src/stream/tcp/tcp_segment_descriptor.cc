@@ -68,10 +68,10 @@ TcpSegmentDescriptor::TcpSegmentDescriptor
     ma_pseudo_tcph.th_dport = p->ptrs.tcph->raw_src_port();
     ma_pseudo_tcph.th_sport = p->ptrs.tcph->raw_dst_port();
     ma_pseudo_tcph.th_seq = p->ptrs.tcph->raw_ack();
-    ma_pseudo_tcph.th_ack = htonl(meta_ack);
+    ma_pseudo_tcph.th_ack = meta_ack;
     ma_pseudo_tcph.th_offx2 = 0;
     ma_pseudo_tcph.th_flags = TH_ACK;
-    ma_pseudo_tcph.th_win = htons(window);
+    ma_pseudo_tcph.th_win = window;
     ma_pseudo_tcph.th_sum = 0;
     ma_pseudo_tcph.th_urp = 0;
 
