@@ -45,6 +45,19 @@ static const Uuid uuid_ndr64 = { 0x71710533, 0xbeba, 0x4937, 0x83, 0x19,
 static const Uuid uuid_epm = { 0xe1af8308, 0x5d1f, 0x11c9, 0x91, 0xa4,
     { 0x08, 0x00, 0x2b, 0x14, 0xa0, 0xfa } };
 
+static inline dce2CommonStats* dce_get_proto_stats_ptr(const DCE2_SsnData* sd)
+{
+    if (sd->trans == DCE2_TRANS_TYPE__TCP)
+    {
+        return((dce2CommonStats*)&dce2_tcp_stats);
+    }
+    else
+    {
+        return((dce2CommonStats*)&dce2_smb_stats);
+    }
+    // FIXIT-M add HTTP, UDP cases when these are ported
+}
+
 /********************************************************************
  * Function: DCE2_CoEptMapResponse()
  *
@@ -54,14 +67,14 @@ static const Uuid uuid_epm = { 0xe1af8308, 0x5d1f, 0x11c9, 0x91, 0xa4,
  * which contain info about future sessions.
  *
  ********************************************************************/
-static void DCE2_CoEptMapResponse(const DceRpcCoHdr* co_hdr, const DCE2_CoCtxIdNode* ctx_id_node,
-    const uint8_t* stub_data, uint16_t dlen)
+static void DCE2_CoEptMapResponse(DCE2_SsnData* sd, const DceRpcCoHdr* co_hdr,
+    const DCE2_CoCtxIdNode* ctx_id_node, const uint8_t* stub_data, uint16_t dlen)
 {
     uint64_t actual_count;
     uint64_t tptr_length; /* Tower pointer length */
     unsigned int i;
+    unsigned int offset = 0;
     int ndr_flen = 4; /* 4-bytes fields in default NDR */
-    int offset = 0;
     int floor3_start;
     int proto_offset;
     int port_offset;
@@ -69,6 +82,7 @@ static void DCE2_CoEptMapResponse(const DceRpcCoHdr* co_hdr, const DCE2_CoCtxIdN
     uint16_t ept_port;
     SfIp ept_ip_addr;
     DceRpcBoFlag byte_order;
+    dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
 
     if (stub_data == nullptr || dlen == 0)
         return;
@@ -94,16 +108,28 @@ static void DCE2_CoEptMapResponse(const DceRpcCoHdr* co_hdr, const DCE2_CoCtxIdN
     byte_order = DceRpcCoByteOrder(co_hdr);
 
     if (offset + ndr_flen > dlen)
+    {
+        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE, dce_common_stats, *sd);
         return;
+    }
 
     offset += DCE2_GetNdrUint3264(stub_data + offset, actual_count,
         offset, byte_order, ctx_id_node->transport);
+
+    if (actual_count > UINT16_MAX)
+    {
+        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE, dce_common_stats, *sd);
+        return;
+    }
 
     /* Skipping Referent IDs and moving to deferred pointers representation */
     offset += actual_count * ndr_flen;
 
     if (offset > dlen)
+    {
+        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE, dce_common_stats, *sd);
         return;
+    }
 
     dce2_move(stub_data, dlen, offset);
 
@@ -124,13 +150,20 @@ static void DCE2_CoEptMapResponse(const DceRpcCoHdr* co_hdr, const DCE2_CoCtxIdN
          * The target is 4th & 5th floors */
 
         if (ndr_flen > dlen)
+        {
+            dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE, dce_common_stats, *sd);
             return;
+        }
 
         /* Get tower length and determine the floor count offset */
         fc_offset = DCE2_GetNdrUint3264(stub_data, tptr_length,
             offset, byte_order, ctx_id_node->transport) + DCE2_CO_MAP_TWR_LEN_OFS;
-        if (dlen < tptr_length)
+
+        if (tptr_length > dlen)
+        {
+            dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE, dce_common_stats, *sd);
             return;
+        }
 
         floor_count = DceRpcNtohs((const uint16_t*)(stub_data + fc_offset),
             DceRpcCoByteOrder(co_hdr));
@@ -424,19 +457,6 @@ static inline void DCE2_CoSetRopts(DCE2_SsnData* sd, DCE2_CoTracker* cot, const
     sd->ropts.opnum = opnum;
     sd->ropts.stub_data = cot->stub_data;
     endianness->stub_data_offset = cot->stub_data - p->data;
-}
-
-static inline dce2CommonStats* dce_get_proto_stats_ptr(DCE2_SsnData* sd)
-{
-    if (sd->trans == DCE2_TRANS_TYPE__TCP)
-    {
-        return((dce2CommonStats*)&dce2_tcp_stats);
-    }
-    else
-    {
-        return((dce2CommonStats*)&dce2_smb_stats);
-    }
-    // FIXIT-M add HTTP, UDP cases when these are ported
 }
 
 // FIXIT-L revisit to check if early reassembly functionality is required
@@ -1879,7 +1899,7 @@ static void DCE2_CoResponse(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 
             if (ctx_node and !DCE2_UuidCompare(&ctx_node->iface, &uuid_epm))
             {
-                DCE2_CoEptMapResponse(co_hdr, ctx_node, stub_data, stub_data_len);
+                DCE2_CoEptMapResponse(sd, co_hdr, ctx_node, stub_data, stub_data_len);
             }
         }
     }
