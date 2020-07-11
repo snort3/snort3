@@ -62,6 +62,8 @@ struct dce2SmbProtoConf
     int16_t smb_file_depth;
     DCE2_List* smb_invalid_shares;
     bool legacy_mode;
+    uint16_t smb_max_credit;
+    size_t memcap;
 };
 
 class Dce2SmbModule : public snort::Module
@@ -110,6 +112,27 @@ inline DCE2_List* DCE2_ScSmbInvalidShares(const dce2SmbProtoConf* sc)
     if (sc == nullptr)
         return nullptr;
     return sc->smb_invalid_shares;
+}
+
+inline uint16_t DCE2_ScSmbMaxCredit(const dce2SmbProtoConf* sc)
+{
+    if (sc == nullptr)
+        return 8192;
+    return sc->smb_max_credit;
+}
+
+inline size_t DCE2_ScSmbMemcap(const dce2SmbProtoConf* sc)
+{
+    if (sc == nullptr)
+        return 8388608;
+    return sc->memcap;
+}
+
+inline uint16_t DCE2_ScSmbMaxCompound(const dce2SmbProtoConf* sc)
+{
+    if (sc == nullptr)
+        return 3;
+    return sc->smb_max_compound;
 }
 
 inline bool DCE2_GcSmbFingerprintClient(const dce2SmbProtoConf* sc)

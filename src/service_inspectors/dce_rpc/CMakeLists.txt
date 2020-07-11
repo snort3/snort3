@@ -6,6 +6,7 @@ set( FILE_LIST
     dce_common.h
     dce_context_data.cc
     dce_context_data.h
+    dce_db.h
     dce_expected_session.cc
     dce_expected_session.h
     dce_http_proxy.cc
@@ -24,6 +25,10 @@ set( FILE_LIST
     dce_smb.h
     dce_smb2.cc
     dce_smb2.h
+    dce_smb2_commands.cc
+    dce_smb2_commands.h
+    dce_smb2_utils.cc
+    dce_smb2_utils.h
     dce_smb_commands.cc
     dce_smb_commands.h
     dce_smb_module.cc

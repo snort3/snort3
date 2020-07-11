@@ -27,15 +27,14 @@
 #include "detection/detection_engine.h"
 #include "file_api/file_service.h"
 #include "protocols/packet.h"
-#include "utils/util.h"
 
 #include "dce_context_data.h"
 #include "dce_smb_commands.h"
 #include "dce_smb_module.h"
 #include "dce_smb_paf.h"
 #include "dce_smb_transaction.h"
-#include "dce_smb_utils.h"
 #include "dce_smb2.h"
+#include "dce_smb2_utils.h"
 
 using namespace snort;
 
@@ -355,38 +354,74 @@ void Dce2Smb::show(const SnortConfig*) const
 
 void Dce2Smb::eval(Packet* p)
 {
-    DCE2_SmbSsnData* dce2_smb_sess;
+    DCE2_SmbSsnData* dce2_smb_sess = nullptr;
+    DCE2_Smb2SsnData* dce2_smb2_sess = nullptr;
+    DCE2_SmbVersion smb_version = DCE2_SMB_VERSION_NULL;
     Profile profile(dce2_smb_pstat_main);
 
     assert(p->has_tcp_data());
     assert(p->flow);
 
-    dce2_smb_sess = dce2_handle_smb_session(p, &config);
-
-    if (dce2_smb_sess)
+    Dce2SmbFlowData *smb_flowdata = (Dce2SmbFlowData*)p->flow->get_flow_data(Dce2SmbFlowData::inspector_id);
+    if (smb_flowdata and smb_flowdata->dce2_smb_session_data)
     {
-        p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;
-        dce2_detected = 0;
+        smb_version = smb_flowdata->smb_version;
+        if (DCE2_SMB_VERSION_1 == smb_version)
+            dce2_smb_sess = (DCE2_SmbSsnData*)smb_flowdata->dce2_smb_session_data;
+        else
+            dce2_smb2_sess = (DCE2_Smb2SsnData*)smb_flowdata->dce2_smb_session_data;
+    }
+    else
+    {
+        smb_version = DCE2_Smb2Version(p);
 
-        p->endianness = new DceEndianness();
+        if (DCE2_SMB_VERSION_1 == smb_version)
+        {
+            //1st packet of flow in smb1 session, create smb1 session and flowdata
+            dce2_smb_sess = dce2_create_new_smb_session(p, &config);
+        }
+        else if (DCE2_SMB_VERSION_2 == smb_version)
+        {
+            //1st packet of flow in smb2 session, create smb2 session and flowdata
+            dce2_smb2_sess = dce2_create_new_smb2_session(p, &config);
+        }
+        else
+        {
+            //smb_version is DCE2_SMB_VERSION_NULL
+            //This means there is no flow data and this is not an SMB packet
+            //if it is a TCP packet for smb data, the flow must have been 
+            //already identified with version.
+            return;
+        }
+    }
 
-        DCE2_SmbProcess(dce2_smb_sess);
+    //  By this time we must know the smb version, have correct smb session data and created flowdata
+    p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;
+    dce2_detected = 0;
+    p->endianness = new DceEndianness();
 
+    if (DCE2_SMB_VERSION_1 == smb_version)
+    {
+        DCE2_Smb1Process(dce2_smb_sess);
         if (!dce2_detected)
             DCE2_Detect(&dce2_smb_sess->sd);
-
-        delete p->endianness;
-        p->endianness = nullptr;
     }
+    else
+    {
+        DCE2_Smb2Process(dce2_smb2_sess);
+        if (!dce2_detected)
+            DCE2_Detect(&dce2_smb2_sess->sd);
+    }
+
+    delete(p->endianness);
+    p->endianness = nullptr;
 }
 
 void Dce2Smb::clear(Packet* p)
 {
-    DCE2_SmbSsnData* dce2_smb_sess = get_dce2_smb_session_data(p->flow);
-    if ( dce2_smb_sess )
-    {
-        DCE2_ResetRopts(&dce2_smb_sess->sd, p);
-    }
+    DCE2_SsnData* sd = get_dce2_session_data(p->flow);
+    if ( sd )
+        DCE2_ResetRopts(sd, p);
 }
 
 //-------------------------------------------------------------------------
@@ -411,11 +446,22 @@ static void dce2_smb_init()
     DceContextData::init(DCE2_TRANS_TYPE__SMB);
 }
 
+static void dce2_smb_thread_int()
+{
+    DCE2_SmbSessionCacheInit(session_cache_size);
+}
+
+static void dce_smb_thread_term()
+{
+    delete smb2_session_cache;
+}
+
 static Inspector* dce2_smb_ctor(Module* m)
 {
     Dce2SmbModule* mod = (Dce2SmbModule*)m;
     dce2SmbProtoConf config;
     mod->get_data(config);
+    session_cache_size = DCE2_ScSmbMemcap(&config)/1024;
     return new Dce2Smb(config);
 }
 
@@ -444,8 +490,8 @@ const InspectApi dce2_smb_api =
     "netbios-ssn",
     dce2_smb_init,
     nullptr, // pterm
-    nullptr, // tinit
-    nullptr, // tterm
+    dce2_smb_thread_int, // tinit
+    dce_smb_thread_term, // tterm
     dce2_smb_ctor,
     dce2_smb_dtor,
     nullptr, // ssn

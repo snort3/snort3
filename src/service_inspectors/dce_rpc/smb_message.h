@@ -25,10 +25,8 @@
 
 #include <cstdint>
 
-namespace snort
-{
-struct Packet;
-}
+#include "protocols/packet.h"
+#include "smb_common.h"
 
 #pragma pack(1)
 
@@ -2193,8 +2191,10 @@ inline uint16_t SmbWriteAndCloseRespCount(const SmbWriteAndCloseResp* resp)
 #pragma pack()
 
 void DCE2_SmbInitGlobals();
-void DCE2_SmbProcess(struct DCE2_SmbSsnData*);
-DCE2_SmbSsnData* dce2_handle_smb_session(snort::Packet*, struct dce2SmbProtoConf*);
+void DCE2_Smb1Process(struct DCE2_SmbSsnData*);
+struct DCE2_SmbSsnData* dce2_create_new_smb_session(snort::Packet*, struct dce2SmbProtoConf*);
+struct DCE2_Smb2SsnData* dce2_create_new_smb2_session(snort::Packet*, struct dce2SmbProtoConf*);
+void DCE2_SmbDataFree(DCE2_SmbSsnData*);
 
 #endif
 

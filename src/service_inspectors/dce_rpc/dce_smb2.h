@@ -22,9 +22,9 @@
 #ifndef DCE_SMB2_H
 #define DCE_SMB2_H
 
+#include "dce_db.h"
 #include "dce_smb.h"
-
-#define SMB2_FLAGS_ASYNC_COMMAND  0x00000002
+#include "utils/util.h"
 
 struct Smb2Hdr
 {
@@ -81,6 +81,237 @@ struct Smb2ErrorResponseHdr
     uint16_t reserved;        /* reserved */
     uint32_t byte_count;      /* The number of bytes of error_data */
     uint8_t error_data[1];    /* If byte_count is 0, this MUST be 0*/
+};
+
+class DCE2_Smb2TreeTracker;
+
+class DCE2_Smb2RequestTracker
+{
+public:
+
+    DCE2_Smb2RequestTracker() = delete;
+    DCE2_Smb2RequestTracker(const DCE2_Smb2RequestTracker& arg) = delete;
+    DCE2_Smb2RequestTracker& operator=(const DCE2_Smb2RequestTracker& arg) = delete;
+
+    DCE2_Smb2RequestTracker(uint64_t offset_v, uint64_t file_id_v,
+        char* fname_v, uint16_t fname_len_v, DCE2_Smb2TreeTracker *ttr) :
+        fname_len(fname_len_v), fname(fname_v), offset(offset_v),
+        file_id(file_id_v), tree_trk(ttr)
+    {
+        // fname allocated by DCE2_SmbGetFileName
+    }
+
+    ~DCE2_Smb2RequestTracker()
+    {
+        if (fname != nullptr)
+        {
+            snort_free((void*)fname);
+        }
+    }
+
+    uint16_t get_file_name_len() { return fname_len; }
+    char* get_file_name()  { return fname; }
+    uint64_t get_offset() { return offset; }
+    uint64_t get_file_id() { return file_id; }
+    DCE2_Smb2TreeTracker* get_tree_tracker() { return tree_trk; }
+
+private:
+
+    uint16_t fname_len;
+    char* fname;
+    uint64_t offset;
+    uint64_t file_id;
+    DCE2_Smb2TreeTracker* tree_trk;
+};
+
+class DCE2_Smb2FileTracker
+{
+public:
+
+    DCE2_Smb2FileTracker() = delete;
+    DCE2_Smb2FileTracker(const DCE2_Smb2FileTracker& arg) = delete;
+    DCE2_Smb2FileTracker& operator=(const DCE2_Smb2FileTracker& arg) = delete;
+
+    DCE2_Smb2FileTracker(uint64_t file_id_v, char* file_name_v,
+         uint64_t file_size_v) : file_id(file_id_v), file_size(file_size_v)
+    {
+        if (file_name_v)
+            file_name.assign(file_name_v);
+
+        file_offset = 0;
+        bytes_processed = 0;
+    }
+
+    ~DCE2_Smb2FileTracker()
+    {
+        // Nothing to be done
+    }
+
+    uint64_t bytes_processed;
+    uint64_t file_offset;
+    uint64_t file_id;
+    uint64_t file_size = 0;
+    std::string file_name;
+    DCE2_SmbPduState smb2_pdu_state;
+};
+
+
+typedef DCE2_DbMap<uint64_t, DCE2_Smb2FileTracker*, std::hash<uint64_t> > DCE2_DbMapFtracker;
+typedef DCE2_DbMap<uint64_t, DCE2_Smb2RequestTracker*, std::hash<uint64_t> > DCE2_DbMapRtracker;
+class DCE2_Smb2TreeTracker
+{
+public:
+
+    DCE2_Smb2TreeTracker() = delete;
+    DCE2_Smb2TreeTracker(const DCE2_Smb2TreeTracker& arg) = delete;
+    DCE2_Smb2TreeTracker& operator=(const DCE2_Smb2TreeTracker& arg) = delete;
+
+    DCE2_Smb2TreeTracker (uint32_t tid_v, uint8_t share_type_v) : share_type(
+            share_type_v), tid(tid_v)
+    {
+    }
+
+    DCE2_Smb2FileTracker* findFtracker(uint64_t file_id)
+    {
+        return file_trackers.Find(file_id);
+    }
+
+    void insertFtracker(uint64_t file_id, DCE2_Smb2FileTracker* ftracker)
+    {
+        file_trackers.Insert(file_id, ftracker);
+    }
+
+    void removeFtracker(uint64_t file_id)
+    {
+        removeDataRtrackerWithFid(file_id);
+        file_trackers.Remove(file_id);
+    }
+
+    DCE2_Smb2RequestTracker* findDataRtracker(uint64_t message_id)
+    {
+        return request_trackers.Find(message_id);
+    }
+
+    void insertDataRtracker(uint64_t message_id, DCE2_Smb2RequestTracker* readtracker)
+    {
+        request_trackers.Insert(message_id, readtracker);
+    }
+
+    void removeDataRtracker(uint64_t message_id)
+    {
+        if (findDataRtracker(message_id))
+        {
+            request_trackers.Remove(message_id);
+        }
+    }
+
+    void removeDataRtrackerWithFid(uint64_t fid)
+    {
+        auto all_requests = request_trackers.get_all_entry();
+        for ( auto & h : all_requests )
+        {
+            if (h.second->get_file_id() == fid)
+                removeDataRtracker(h.first); // this is message id
+        }
+    }
+
+    int getDataRtrackerSize()
+    {
+        return request_trackers.GetSize();
+    }
+
+    uint8_t get_share_type() { return share_type; }
+    uint32_t get_tid() { return tid; }
+private:
+    uint8_t share_type;
+    uint32_t tid;
+
+    DCE2_DbMapRtracker request_trackers;
+    DCE2_DbMapFtracker file_trackers;
+};
+
+typedef DCE2_DbMap<uint32_t, DCE2_Smb2TreeTracker*, std::hash<uint32_t> > DCE2_DbMapTtracker;
+class DCE2_Smb2SessionTracker
+{
+public:
+
+    DCE2_Smb2SessionTracker() { }
+
+    void insertTtracker(uint32_t tree_id, DCE2_Smb2TreeTracker* ttr)
+    {
+        tree_trackers.Insert(tree_id, ttr);
+    }
+
+    DCE2_Smb2TreeTracker* findTtracker(uint32_t tree_id)
+    {
+        return tree_trackers.Find(tree_id);
+    }
+
+    void removeTtracker(uint32_t tree_id)
+    {
+        // Remove any dangling request trackers with tree id
+        removeRtrackerWithTid(tree_id);
+        tree_trackers.Remove(tree_id);
+    }
+
+    DCE2_Smb2RequestTracker* findRtracker(uint64_t mid)
+    {
+        return create_request_trackers.Find(mid);
+    }
+
+    void insertRtracker(uint64_t message_id, DCE2_Smb2RequestTracker* rtracker)
+    {
+        create_request_trackers.Insert(message_id, rtracker);
+    }
+
+    void removeRtracker(uint64_t message_id)
+    {
+        create_request_trackers.Remove(message_id);
+    }
+
+    void removeRtrackerWithTid(uint32_t tid)
+    {
+        auto all_requests = create_request_trackers.get_all_entry();
+        for ( auto & h : all_requests )
+        {
+            if (h.second->get_tree_tracker() and h.second->get_tree_tracker()->get_tid() == tid)
+                removeRtracker(h.first); // this is message id
+        }
+    }
+
+    uint16_t getTotalRequestsPending()
+    {
+        uint16_t total_count = 0;
+        auto all_tree_trackers = tree_trackers.get_all_entry();
+        for ( auto & h : all_tree_trackers )
+        {
+            total_count += h.second->getDataRtrackerSize(); // all read/write
+        }
+        total_count += create_request_trackers.GetSize(); // all create
+        return total_count;
+    }
+
+    void set_session_id(uint64_t sid) { session_id = sid; }
+    uint64_t get_session_id() { return session_id; }
+
+private:
+    uint64_t session_id;
+    DCE2_DbMapTtracker tree_trackers;
+    DCE2_DbMapRtracker create_request_trackers;
+};
+
+typedef DCE2_DbMap<uint64_t, DCE2_Smb2SessionTracker*, std::hash<uint64_t> > DCE2_DbMapStracker;
+struct DCE2_Smb2SsnData
+{
+    DCE2_SsnData sd;  // This member must be first
+    uint8_t smb_id;
+    DCE2_Policy policy;
+    int dialect_index;
+    int ssn_state_flags;
+    int64_t max_file_depth; // Maximum file depth as returned from file API
+    int16_t max_outstanding_requests; // Maximum number of request that can stay pending
+    DCE2_DbMapStracker session_trackers;
+    DCE2_Smb2FileTracker* ftracker_tcp; //To keep tab of current file being transferred over TCP
 };
 
 /* SMB2 command codes */
@@ -216,7 +447,6 @@ struct Smb2CloseRequestHdr
     uint64_t fileId_volatile;         /* fileId that is volatile */
 };
 
-#define SMB2_SHARE_TYPE_NONE  0x00
 #define SMB2_SHARE_TYPE_DISK  0x01
 #define SMB2_SHARE_TYPE_PIPE  0x02
 #define SMB2_SHARE_TYPE_PRINT 0x03
@@ -237,6 +467,26 @@ struct Smb2TreeDisConnectHdr
     uint16_t reserved;                 /* reserved */
 };
 
+struct  Smb2SetupRequestHdr
+{
+    uint16_t structure_size;            /* This MUST be set to 25 (0x19) bytes */
+    uint8_t flags;
+    uint8_t security_mode;
+    uint32_t capabilities;
+    uint32_t channel;
+    uint16_t secblob_ofs;
+    uint16_t secblob_size;
+    uint64_t previous_sessionid;
+};
+
+struct Smb2SetupResponseHdr
+{
+    uint16_t structure_size;            /* This MUST be set to 9 (0x09) bytes */
+    uint16_t session_flags;
+    uint16_t secblob_ofs;
+    uint16_t secblob_size;
+};
+
 #define SMB2_HEADER_LENGTH 64
 
 #define SMB2_ERROR_RESPONSE_STRUC_SIZE 9
@@ -246,6 +496,7 @@ struct Smb2TreeDisConnectHdr
 #define SMB2_CREATE_REQUEST_DATA_OFFSET 120
 
 #define SMB2_CLOSE_REQUEST_STRUC_SIZE 24
+#define SMB2_CLOSE_RESPONSE_STRUC_SIZE 60
 
 #define SMB2_WRITE_REQUEST_STRUC_SIZE 49
 #define SMB2_WRITE_RESPONSE_STRUC_SIZE 17
@@ -256,20 +507,19 @@ struct Smb2TreeDisConnectHdr
 #define SMB2_SET_INFO_REQUEST_STRUC_SIZE 33
 #define SMB2_SET_INFO_RESPONSE_STRUC_SIZE 2
 
+#define SMB2_TREE_CONNECT_REQUEST_STRUC_SIZE 9
 #define SMB2_TREE_CONNECT_RESPONSE_STRUC_SIZE 16
-#define SMB2_TREE_DISCONNECT_STRUC_SIZE 4
+#define SMB2_TREE_DISCONNECT_REQUEST_STRUC_SIZE 4
 
 #define SMB2_FILE_ENDOFFILE_INFO 0x14
 
-/* Clean up all the pending requests*/
-void DCE2_Smb2CleanRequests(Smb2Request* requests);
+#define SMB2_SETUP_REQUEST_STRUC_SIZE 25
+#define SMB2_SETUP_RESPONSE_STRUC_SIZE 9
+
+#define SMB2_LOGOFF_REQUEST_STRUC_SIZE 4
 
 /* Process smb2 message */
-void DCE2_Smb2Process(DCE2_SmbSsnData* ssd);
-
-/* Initialize file tracker for smb2 processing */
-DCE2_Ret DCE2_Smb2InitFileTracker(DCE2_SmbFileTracker* ftracker,
-    const bool is_ipc, const uint64_t fid);
+void DCE2_Smb2Process(DCE2_Smb2SsnData* ssd);
 
 /* Check smb version based on smb header */
 DCE2_SmbVersion DCE2_Smb2Version(const snort::Packet* p);

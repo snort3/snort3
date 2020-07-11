@@ -24,3 +24,8 @@ The http_proxy and http_server functionality is implemented as two
 inspectors.  These inspectors only serve to locate the 'tunnel' setup
 content.  If/when the setup content is located, the session is transfered
 to the DCE TCP inspector.
+
+The SMB inspector supports version 1 and version 2 of the protocol. 
+It processes relevant messages and inspects file transferred over this transport. 
+For SMBv2, it supports TCP as transport and it also supports 
+Multiple File transfer on single SMB2 connection.

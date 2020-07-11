@@ -22,22 +22,19 @@
 #include "config.h"
 #endif
 
-#include "dce_smb.h"
+#include "smb_message.h"
 
-#include "detection/detect.h"
-#include "file_api/file_service.h"
-#include "main/snort_debug.h"
-#include "protocols/packet.h"
-#include "utils/util.h"
-#include "packet_io/active.h"
-
-#include "dce_smb.h"
 #include "dce_smb_commands.h"
 #include "dce_smb_module.h"
 #include "dce_smb_paf.h"
 #include "dce_smb_transaction.h"
-#include "dce_smb_utils.h"
-#include "dce_smb2.h"
+#include "dce_smb2_utils.h"
+#include "detection/detect.h"
+#include "file_api/file_service.h"
+#include "main/snort_debug.h"
+#include "packet_io/active.h"
+#include "protocols/packet.h"
+#include "utils/util.h"
 
 using namespace snort;
 
@@ -1243,7 +1240,7 @@ static void DCE2_SmbProcessRawData(DCE2_SmbSsnData* ssd, const uint8_t* nb_ptr, 
     }
 }
 
-static void DCE2_SmbDataFree(DCE2_SmbSsnData* ssd)
+void DCE2_SmbDataFree(DCE2_SmbSsnData* ssd)
 {
     if (ssd == nullptr)
         return;
@@ -1291,12 +1288,6 @@ static void DCE2_SmbDataFree(DCE2_SmbSsnData* ssd)
         DCE2_BufferDestroy(ssd->srv_seg);
         ssd->srv_seg = nullptr;
     }
-
-    if (ssd->smb2_requests != nullptr)
-    {
-        DCE2_Smb2CleanRequests(ssd->smb2_requests);
-        ssd->smb2_requests = nullptr;
-    }
 }
 
 Dce2SmbFlowData::Dce2SmbFlowData() : FlowData(inspector_id)
@@ -1304,32 +1295,37 @@ Dce2SmbFlowData::Dce2SmbFlowData() : FlowData(inspector_id)
     dce2_smb_stats.concurrent_sessions++;
     if (dce2_smb_stats.max_concurrent_sessions < dce2_smb_stats.concurrent_sessions)
         dce2_smb_stats.max_concurrent_sessions = dce2_smb_stats.concurrent_sessions;
+    smb_version = DCE2_SMB_VERSION_NULL;
+    dce2_smb_session_data = nullptr;
 }
 
 Dce2SmbFlowData::~Dce2SmbFlowData()
 {
-    DCE2_SmbDataFree(&dce2_smb_session);
+    if (DCE2_SMB_VERSION_1 == smb_version)
+    {
+        DCE2_SmbDataFree((DCE2_SmbSsnData*)dce2_smb_session_data);
+        delete (DCE2_SmbSsnData*)dce2_smb_session_data;
+    }
+    else
+    {
+        delete (DCE2_Smb2SsnData*)dce2_smb_session_data;
+    }
     assert(dce2_smb_stats.concurrent_sessions > 0);
     dce2_smb_stats.concurrent_sessions--;
 }
 
 unsigned Dce2SmbFlowData::inspector_id = 0;
 
-DCE2_SmbSsnData* get_dce2_smb_session_data(Flow* flow)
-{
-    Dce2SmbFlowData* fd = (Dce2SmbFlowData*)flow->get_flow_data(Dce2SmbFlowData::inspector_id);
-    return fd ? &fd->dce2_smb_session : nullptr;
-}
-
-static DCE2_SmbSsnData* set_new_dce2_smb_session(Packet* p)
+static inline DCE2_SmbSsnData* set_new_dce2_smb_session(Packet* p)
 {
     Dce2SmbFlowData* fd = new Dce2SmbFlowData;
-    memset(&fd->dce2_smb_session,0,sizeof(DCE2_SmbSsnData));
+    fd->smb_version = DCE2_SMB_VERSION_1;
+    fd->dce2_smb_session_data = new DCE2_SmbSsnData();
     p->flow->set_flow_data(fd);
-    return(&fd->dce2_smb_session);
+    return (DCE2_SmbSsnData*)(fd->dce2_smb_session_data);
 }
 
-static DCE2_SmbSsnData* dce2_create_new_smb_session(Packet* p, dce2SmbProtoConf* config)
+DCE2_SmbSsnData* dce2_create_new_smb_session(Packet* p, dce2SmbProtoConf* config)
 {
     DCE2_SmbSsnData* dce2_smb_sess = set_new_dce2_smb_session(p);
     if ( dce2_smb_sess )
@@ -1456,11 +1452,11 @@ static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
 }
 
 // This is the main entry point for SMB1 processing.
-static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
+void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
 {
     dce2_smb_stats.smb_pkts++;
 
-    const Packet* p = DetectionEngine::get_current_packet();
+    Packet* p = DetectionEngine::get_current_packet();
     const uint8_t* data_ptr = p->data;
     uint16_t data_len = p->dsize;
     DCE2_Buffer** seg_buf = DCE2_SmbGetSegBuffer(ssd);
@@ -1615,12 +1611,19 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
 
             if (SmbId(smb_hdr) == DCE2_SMB2_ID)
             {
-                ssd->sd.flags |= DCE2_SSN_FLAG__SMB2;
                 if (!DCE2_GcIsLegacyMode((dce2SmbProtoConf*)ssd->sd.config))
                 {
-                    DCE2_Smb2InitFileTracker(&(ssd->ftracker), false, 0);
-                    DCE2_Smb2Process(ssd);
+                    // Upgrade connection to SMBv2
+                    dce2SmbProtoConf* config = (dce2SmbProtoConf*)ssd->sd.config;
+                    Dce2SmbFlowData* fd = (Dce2SmbFlowData*)p->flow->get_flow_data(Dce2SmbFlowData::inspector_id);
+                    p->flow->free_flow_data(fd);
+                    DCE2_Smb2SsnData* dce2_smb2_sess = dce2_create_new_smb2_session(p, config);
+                    DCE2_Smb2Process(dce2_smb2_sess);
+                    if(!dce2_detected)
+                        DCE2_Detect(&dce2_smb2_sess->sd);
                 }
+                else
+                    ssd->sd.flags |= DCE2_SSN_FLAG__SMB2;
                 return;
             }
 
@@ -2542,51 +2545,48 @@ void DCE2_SmbInitGlobals()
     }
 }
 
-DCE2_SmbSsnData* dce2_handle_smb_session(Packet* p, dce2SmbProtoConf* config)
+/* smb2 Functions */
+
+static inline DCE2_Smb2SsnData* set_new_dce2_smb2_session(Packet* p)
 {
-    DCE2_SmbSsnData* dce2_smb_sess =  get_dce2_smb_session_data(p->flow);
-
-    if (dce2_smb_sess == nullptr)
-    {
-        dce2_smb_sess = dce2_create_new_smb_session(p, config);
-    }
-
-    return dce2_smb_sess;
+    Dce2SmbFlowData* fd = new Dce2SmbFlowData;
+    fd->smb_version = DCE2_SMB_VERSION_2;
+    fd->dce2_smb_session_data = new DCE2_Smb2SsnData();
+    DCE2_Smb2InitData((DCE2_Smb2SsnData*)fd->dce2_smb_session_data);
+    p->flow->set_flow_data(fd);
+    return((DCE2_Smb2SsnData*)fd->dce2_smb_session_data);
 }
 
-// This is the main entry point for SMB processing
-void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
+DCE2_Smb2SsnData* dce2_create_new_smb2_session(Packet* p, dce2SmbProtoConf* config)
 {
-    if (DCE2_GcIsLegacyMode((dce2SmbProtoConf*)ssd->sd.config))
+    DCE2_Smb2SsnData* dce2_smb2_sess = set_new_dce2_smb2_session(p);
+    if ( dce2_smb2_sess )
     {
-        DCE2_Smb1Process(ssd);
-        return;
+        dce2_smb2_sess->sd.flags |= DCE2_SSN_FLAG__SMB2;
+        dce2_smb2_sess->dialect_index = DCE2_SENTINEL;
+
+        DCE2_ResetRopts(&dce2_smb2_sess->sd, p);
+
+        dce2_smb_stats.smb_sessions++;
+
+        dce2_smb2_sess->sd.trans = DCE2_TRANS_TYPE__SMB;
+        dce2_smb2_sess->sd.server_policy = config->common.policy;
+        dce2_smb2_sess->sd.client_policy = DCE2_POLICY__WINXP;
+        dce2_smb2_sess->sd.config = (void*)config;
+        dce2_smb2_sess->max_outstanding_requests = DCE2_ScSmbMaxCredit(config);
     }
 
-    Packet* p = DetectionEngine::get_current_packet();
-    DCE2_SmbVersion smb_version = DCE2_Smb2Version(p);
-    if (smb_version == DCE2_SMB_VERISON_1)
-    {
-        if ((ssd->sd.flags & DCE2_SSN_FLAG__SMB2))
-        {
-            ssd->sd.flags &= ~DCE2_SSN_FLAG__SMB2;
-            DCE2_SmbCleanFileTracker(&(ssd->ftracker));
-            ssd->ftracker.is_smb2 = false;
-        }
-    }
-    else if (smb_version == DCE2_SMB_VERISON_2)
-    {
-        if (!(ssd->sd.flags & DCE2_SSN_FLAG__SMB2))
-        {
-            DCE2_SmbCleanFileTracker(&(ssd->ftracker));
-            DCE2_Smb2InitFileTracker(&(ssd->ftracker), false, 0);
-            ssd->sd.flags |= DCE2_SSN_FLAG__SMB2;
-        }
-    }
+    return dce2_smb2_sess;
+}
 
-    if (ssd->sd.flags & DCE2_SSN_FLAG__SMB2)
-        DCE2_Smb2Process(ssd);
-    else
-        DCE2_Smb1Process(ssd);
+DCE2_SsnData* get_dce2_session_data(snort::Flow* flow)
+{
+   Dce2SmbFlowData* fd = (Dce2SmbFlowData*)flow->get_flow_data(Dce2SmbFlowData::inspector_id);
+   if (fd and fd->dce2_smb_session_data)
+       return (fd->smb_version == DCE2_SMB_VERSION_1) ?
+           (DCE2_SsnData*)(&((DCE2_SmbSsnData*)fd->dce2_smb_session_data)->sd) :
+           (DCE2_SsnData*)(&((DCE2_Smb2SsnData*)fd->dce2_smb_session_data)->sd);
+   else
+       return nullptr;
 }
 

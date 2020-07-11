@@ -158,8 +158,7 @@ void DCE2_Detect(DCE2_SsnData* sd)
 
 DCE2_TransType get_dce2_trans_type(const Packet* p)
 {
-    DCE2_SmbSsnData* smb_data = get_dce2_smb_session_data(p->flow);
-    DCE2_SsnData* sd = (smb_data != nullptr) ? &(smb_data->sd) : nullptr;
+    DCE2_SsnData* sd = get_dce2_session_data(p->flow);
     if ((sd != nullptr) && (sd->trans == DCE2_TRANS_TYPE__SMB))
     {
         return DCE2_TRANS_TYPE__SMB;

@@ -83,14 +83,99 @@ static const PegInfo dce2_smb_pegs[] =
     { CountType::SUM, "smb_server_segs_reassembled", "total smb server segments reassembled" },
     { CountType::SUM, "max_outstanding_requests", "total smb maximum outstanding requests" },
     { CountType::SUM, "files_processed", "total smb files processed" },
-    { CountType::SUM, "smbv2_create", "total number of SMBv2 create packets seen" },
-    { CountType::SUM, "smbv2_write", "total number of SMBv2 write packets seen" },
-    { CountType::SUM, "smbv2_read", "total number of SMBv2 read packets seen" },
-    { CountType::SUM, "smbv2_set_info", "total number of SMBv2 set info packets seen" },
-    { CountType::SUM, "smbv2_tree_connect", "total number of SMBv2 tree connect packets seen" },
-    { CountType::SUM, "smbv2_tree_disconnect",
+    { CountType::SUM, "v2_setup", "total number of SMBv2 setup packets seen" },
+    { CountType::SUM, "v2_setup_err_resp", "total number of SMBv2 setup error response packets seen" },
+    { CountType::SUM, "v2_setup_inv_str_sz",
+        "total number of SMBv2 setup packets seen with invalid structure size" },
+    { CountType::SUM, "v2_setup_resp_hdr_err",
+        "total number of SMBv2 setup response packets ignored due to corrupted header" },
+    { CountType::SUM, "v2_tree_cnct", "total number of SMBv2 tree connect packets seen" },
+    { CountType::SUM, "v2_tree_cnct_err_resp",
+        "total number of SMBv2 tree connect error response packets seen" },
+    { CountType::SUM, "v2_tree_cnct_ignored",
+        "total number of SMBv2 setup response packets ignored due to failure in creating tree tracker" },
+    { CountType::SUM, "v2_tree_cnct_inv_str_sz",
+        "total number of SMBv2 tree connect packets seen with invalid structure size" },
+    { CountType::SUM, "v2_tree_cnct_resp_hdr_err",
+        "total number of SMBv2 tree connect response packets ignored due to corrupted header" },
+    { CountType::SUM, "v2_crt", "total number of SMBv2 create packets seen" },
+    { CountType::SUM, "v2_crt_err_resp", "total number of SMBv2 create error response packets seen" },
+    { CountType::SUM, "v2_crt_inv_file_data",
+        "total number of SMBv2 create request packets ignored due to error in getting file name" },
+    { CountType::SUM, "v2_crt_inv_str_sz",
+        "total number of SMBv2 create packets seen with invalid structure size" },
+    { CountType::SUM, "v2_crt_resp_hdr_err",
+        "total number of SMBv2 create response packets ignored due to corrupted header" },
+    { CountType::SUM, "v2_crt_req_hdr_err",
+        "total number of SMBv2 create request packets ignored due to corrupted header" },
+    { CountType::SUM, "v2_crt_rtrkr_misng",
+        "total number of SMBv2 create response packets ignored due to missing create request tracker" },
+    { CountType::SUM, "v2_crt_req_ipc",
+        "total number of SMBv2 create request packets ignored as share type is IPC" },
+    { CountType::SUM, "v2_crt_tree_trkr_misng",
+        "total number of SMBv2 create response packets ignored due to missing tree tracker" },
+    { CountType::SUM, "v2_wrt", "total number of SMBv2 write packets seen" },
+    { CountType::SUM, "v2_wrt_err_resp", "total number of SMBv2 write error response packets seen" },
+    { CountType::SUM, "v2_wrt_ignored",
+        "total number of SMBv2 write packets ignored due to missing trackers or invalid share type" },
+    { CountType::SUM, "v2_wrt_inv_str_sz",
+        "total number of SMBv2 write packets seen with invalid structure size" },
+    { CountType::SUM, "v2_wrt_req_hdr_err",
+        "total number of SMBv2 write request packets ignored due to corrupted header" },
+    { CountType::SUM, "v2_read", "total number of SMBv2 read packets seen" },
+    { CountType::SUM, "v2_read_err_resp", "total number of SMBv2 read error response packets seen" },
+    { CountType::SUM, "v2_read_ignored",
+        "total number of SMBv2 write packets ignored due to missing trackers or invalid share type" },
+    { CountType::SUM, "v2_read_inv_str_sz",
+        "total number of SMBv2 read packets seen with invalid structure size" },
+    { CountType::SUM, "v2_read_rtrkr_misng",
+        "total number of SMBv2 read response packets ignored due to missing read request tracker" },
+    { CountType::SUM, "v2_read_resp_hdr_err",
+        "total number of SMBv2 read response packets ignored due to corrupted header" },
+    { CountType::SUM, "v2_read_req_hdr_err",
+        "total number of SMBv2 read request packets ignored due to corrupted header" },
+    { CountType::SUM, "v2_stinf", "total number of SMBv2 set info packets seen" },
+    { CountType::SUM, "v2_stinf_err_resp", "total number of SMBv2 set info error response packets seen" },
+    { CountType::SUM, "v2_stinf_ignored",
+        "total number of SMBv2 set info packets ignored due to missing trackers or invalid share type" },
+    { CountType::SUM, "v2_stinf_inv_str_sz",
+        "total number of SMBv2 set info packets seen with invalid structure size" },
+    { CountType::SUM, "v2_stinf_req_ftrkr_misng",
+        "total number of SMBv2 set info request packets ignored due to missing file tracker" },
+    { CountType::SUM, "v2_stinf_req_hdr_err",
+        "total number of SMBv2 set info request packets ignored due to corrupted header" },
+    { CountType::SUM, "v2_cls", "total number of SMBv2 close packets seen" },
+    { CountType::SUM, "v2_cls_err_resp", "total number of SMBv2 close error response packets seen" },
+    { CountType::SUM, "v2_cls_ignored",
+        "total number of SMBv2 close packets ignored due to missing trackers or invalid share type" },
+    { CountType::SUM, "v2_cls_inv_str_sz",
+        "total number of SMBv2 close packets seen with invalid structure size" },
+    { CountType::SUM, "v2_cls_req_ftrkr_misng",
+        "total number of SMBv2 close request packets ignored due to missing file tracker" },
+    { CountType::SUM, "v2_cls_req_hdr_err",
+        "total number of SMBv2 close request packets ignored due to corrupted header" },
+    { CountType::SUM, "v2_tree_discn",
         "total number of SMBv2 tree disconnect packets seen" },
-    { CountType::SUM, "smbv2_close", "total number of SMBv2 close packets seen" },
+    { CountType::SUM, "v2_tree_discn_ignored",
+        "total number of SMBv2 tree disconnect packets ignored due to missing trackers or invalid share type" },
+    { CountType::SUM, "v2_tree_discn_inv_str_sz",
+        "total number of SMBv2 tree disconnect packets seen with invalid structure size" },
+    { CountType::SUM, "v2_tree_discn_req_hdr_err",
+        "total number of SMBv2 tree disconnect request packets ignored due to corrupted header" },
+    { CountType::SUM, "v2_logoff", "total number of SMBv2 logoff" },
+    { CountType::SUM, "v2_logoff_inv_str_sz",
+        "total number of SMBv2 logoff packets seen with invalid structure size" },
+    { CountType::SUM, "v2_hdr_err", "total number of SMBv2 packets seen with corrupted hdr" },
+    { CountType::SUM, "v2_bad_next_cmd_offset",
+        "total number of SMBv2 packets seen with invalid next command offset" },
+    { CountType::SUM, "v2_extra_file_data_err",
+        "total number of SMBv2 packets seen with where file data beyond file size is observed" },
+    { CountType::SUM, "v2_inv_file_ctx_err",
+        "total number of times null file context are seen resulting in not being able to set file size" },
+    { CountType::SUM, "v2_msgs_uninspected",
+        "total number of SMBv2 packets seen where command is not being inspected" },
+    { CountType::SUM, "v2_cmpnd_req_lt_crossed",
+        "total number of SMBv2 packets seen where compound requests exceed the smb_max_compound limit" },
     { CountType::NOW, "concurrent_sessions", "total concurrent sessions" },
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent sessions" },
     { CountType::END, nullptr, nullptr }
@@ -141,6 +226,12 @@ static const Parameter s_params[] =
 
     { "smb_legacy_mode", Parameter::PT_BOOL, nullptr, "false",
       "inspect only SMBv1" },
+
+    { "smb_max_credit", Parameter::PT_INT, "1:65536", "8192",
+      "Maximum number of outstanding request" },
+
+    { "memcap", Parameter::PT_INT, "512:maxSZ", "8388608",
+      "Memory utilization limit on smb" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -415,6 +506,12 @@ bool Dce2SmbModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("smb_legacy_mode"))
         config.legacy_mode = v.get_bool();
 
+    else if ( v.is("smb_max_credit") )
+        config.smb_max_credit = v.get_uint16();
+
+    else if ( v.is("memcap") )
+        config.memcap = v.get_size();
+
     return true;
 }
 
@@ -438,5 +535,7 @@ void print_dce2_smb_conf(const dce2SmbProtoConf& config)
     ConfigLogger::log_list("smb_invalid_shares",
         get_shares(config.smb_invalid_shares).c_str());
     ConfigLogger::log_flag("smb_legacy_mode", config.legacy_mode);
+    ConfigLogger::log_limit("smb_max_credit", config.smb_max_credit, 0, 1);
+
 }
 
