@@ -60,9 +60,8 @@ void Profiler::register_module(Module* m)
     {
         unsigned i = 0;
         const char* n, * pn;
-        const ProfileStats* ps = nullptr;
 
-        while ( (ps = m->get_profile(i++, n, pn)) )
+        while ( m->get_profile(i++, n, pn) )
             register_module(n, pn, m);
     }
 }

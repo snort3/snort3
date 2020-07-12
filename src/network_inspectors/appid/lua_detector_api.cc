@@ -1763,7 +1763,6 @@ static int detector_add_length_app_cache(lua_State* L)
     }
 
     LengthKey length_sequence;
-    memset(length_sequence.sequence, 0, sizeof(length_sequence.sequence));
     length_sequence.proto        = proto;
     length_sequence.sequence_cnt = sequence_cnt;
 

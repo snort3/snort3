@@ -447,7 +447,6 @@ static void _Unified2LogPacketAlert(
 static void Unified2Write(uint8_t* buf, uint32_t buf_len, Unified2Config* config)
 {
     size_t fwcount = 0;
-    int ffstatus = 0;
 
     /* Nothing to write or nothing to write to */
     if ((buf == nullptr) || (config == nullptr) || (u2.stream == nullptr))
@@ -455,7 +454,7 @@ static void Unified2Write(uint8_t* buf, uint32_t buf_len, Unified2Config* config
 
     /* Don't use fsync().  It is a total performance killer */
     if (((fwcount = fwrite(buf, (size_t)buf_len, 1, u2.stream)) != 1) ||
-        ((ffstatus = fflush(u2.stream)) != 0))
+        (fflush(u2.stream) != 0))
     {
         /* errno is saved just to avoid other intervening calls
          * (e.g. ErrorMessage) potentially resetting it to something else. */
@@ -489,13 +488,13 @@ static void Unified2Write(uint8_t* buf, uint32_t buf_len, Unified2Config* config
                 {
                     /* fwrite() failed.  Redo fwrite and fflush */
                     if (((fwcount = fwrite(buf, (size_t)buf_len, 1, u2.stream)) == 1) &&
-                        ((ffstatus = fflush(u2.stream)) == 0))
+                        fflush(u2.stream) == 0)
                     {
                         error = 0;
                         break;
                     }
                 }
-                else if ((ffstatus = fflush(u2.stream)) == 0)
+                else if (fflush(u2.stream) == 0)
                 {
                     error = 0;
                     break;
@@ -530,7 +529,7 @@ static void Unified2Write(uint8_t* buf, uint32_t buf_len, Unified2Config* config
                 }
 
                 if (((fwcount = fwrite(buf, (size_t)buf_len, 1, u2.stream)) == 1) &&
-                    ((ffstatus = fflush(u2.stream)) == 0))
+                    fflush(u2.stream) == 0)
                 {
                     error = 0;
                     break;

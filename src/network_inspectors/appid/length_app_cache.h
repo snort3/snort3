@@ -30,8 +30,6 @@
 
 #pragma pack(1)
 
-enum class IpProtocol : uint8_t;
-
 struct LengthSequenceEntry
 {
     AppidSessionDirection direction = APP_ID_FROM_INITIATOR;

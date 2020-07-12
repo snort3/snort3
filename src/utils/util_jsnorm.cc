@@ -1022,23 +1022,16 @@ static int Unescape_exec(UnescapeState* s, ActionUnsc a, int c, JSState* js)
 
 static int Unescape_scan_fsm(UnescapeState* s, int c, JSState* js)
 {
-    int indexed = 0;
-    int value = 0;
-    int uc;
-    const JSNorm* m = unescape_norm + s->fsm;
-
-    uc = toupper(c);
-
     if (isspace(c))
     {
-        c = uc =' ';
+        c = ' ';
         return(Unescape_exec(s, UNESC_ACT_SPACE, c, js));
     }
 
-    value = valid_chars[uc];
-
-    if (value)
-        indexed = 1;
+    const JSNorm* m = unescape_norm + s->fsm;
+    int uc = toupper(c);
+    int value = valid_chars[uc];
+    int indexed = value ? 1 : 0;
 
     do
     {
@@ -1211,16 +1204,14 @@ static int JSNorm_exec(JSNormState* s, ActionJSNorm a, int c, const char* src, u
 static int JSNorm_scan_fsm(JSNormState* s, int c, const char* src, uint16_t srclen, const char** ptr,
     JSState* js)
 {
-    char uc;
-    const JSNorm* m = javascript_norm + s->fsm;
-
-    uc = toupper(c);
-
     if (isspace(c))
     {
-        c = uc =' ';
+        c = ' ';
         return(JSNorm_exec(s, ACT_SPACE, c, src, srclen, ptr, js));
     }
+
+    const JSNorm* m = javascript_norm + s->fsm;
+    int uc = toupper(c);
 
     do
     {

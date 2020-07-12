@@ -567,8 +567,6 @@ int ImapClientDetector::validate(AppIdDiscoveryArgs& args)
 {
     const uint8_t* s = args.data;
     const uint8_t* end = (args.data + args.size);
-    unsigned length;
-    AppIdFlowContentPattern* cmd = nullptr;
     char tag[IMAP_TAG_MAX_LEN + 1] = { 0 };
 
 #ifdef APP_ID_USES_REASSEMBLED
@@ -588,9 +586,8 @@ int ImapClientDetector::validate(AppIdDiscoveryArgs& args)
         return APPID_INPROCESS;
     }
 
-    while ((length = (end - s)) > 0)
+    while (end > s)
     {
-        unsigned long pattern_index;
         if (fd->auth)
         {
             /* authentication exchange in progress ignore all client-side
@@ -636,9 +633,9 @@ int ImapClientDetector::validate(AppIdDiscoveryArgs& args)
             args.asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
             return APPID_SUCCESS;
         }
-        cmd = nullptr;
-        pattern_index = num_imap_client_patterns;
-        length = end - s;
+        AppIdFlowContentPattern* cmd = nullptr;
+        unsigned long pattern_index = num_imap_client_patterns;
+        unsigned length = end - s;
         cmd_matcher->find_all((const char*)s, (length > longest_pattern ? longest_pattern : length),
             &pattern_match, false, (void*)&pattern_index);
 
