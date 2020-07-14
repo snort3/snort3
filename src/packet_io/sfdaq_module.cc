@@ -233,40 +233,28 @@ static DAQ_Stats_t operator-(const DAQ_Stats_t& left, const DAQ_Stats_t& right)
 
 void SFDAQModule::prep_counts()
 {
-    static THREAD_LOCAL DAQ_Stats_t sfdaq_stats;
-    static THREAD_LOCAL bool did_init = false;
-
-    if ( !did_init )
-    {
-        memset(&sfdaq_stats, 0, sizeof(DAQ_Stats_t));
-        did_init = true;
-    }
+    static THREAD_LOCAL DAQ_Stats_t prev_daq_stats;
 
     if ( SFDAQ::get_local_instance() == nullptr )
         return;
 
-    DAQ_Stats_t new_sfdaq_stats = *SFDAQ::get_stats();
+    DAQ_Stats_t new_daq_stats = *SFDAQ::get_stats();
 
     // must subtract explicitly; can't zero; daq stats are cumulative ...
-    DAQ_Stats_t sfdaq_stats_delta = new_sfdaq_stats - sfdaq_stats;
-
-    uint64_t pkts_out = new_sfdaq_stats.hw_packets_received -
-                        new_sfdaq_stats.packets_filtered -
-                        new_sfdaq_stats.packets_received;
+    DAQ_Stats_t daq_stats_delta = new_daq_stats - prev_daq_stats;
 
     daq_stats.pcaps = Trough::get_file_count();
-    daq_stats.received = sfdaq_stats_delta.hw_packets_received;
-    daq_stats.analyzed = sfdaq_stats_delta.packets_received;
-    daq_stats.dropped = sfdaq_stats_delta.hw_packets_dropped;
-    daq_stats.filtered =  sfdaq_stats_delta.packets_filtered;
-    daq_stats.outstanding =  pkts_out;
-    daq_stats.injected =  sfdaq_stats_delta.packets_injected;
+    daq_stats.received = daq_stats_delta.hw_packets_received;
+    daq_stats.analyzed = daq_stats_delta.packets_received;
+    daq_stats.dropped = daq_stats_delta.hw_packets_dropped;
+    daq_stats.filtered = daq_stats_delta.packets_filtered;
+    daq_stats.outstanding = daq_stats_delta.hw_packets_received -
+        daq_stats_delta.packets_filtered - daq_stats_delta.packets_received;
+    daq_stats.injected =  daq_stats_delta.packets_injected;
 
     for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )
-        daq_stats.verdicts[i] = sfdaq_stats_delta.verdicts[i];
+        daq_stats.verdicts[i] = daq_stats_delta.verdicts[i];
 
-    sfdaq_stats = new_sfdaq_stats;
-    for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )
-        sfdaq_stats.verdicts[i] = new_sfdaq_stats.verdicts[i];
+    prev_daq_stats = new_daq_stats;
 }
 
