@@ -66,6 +66,7 @@
 #define SMTP_FLAG_GOT_RCPT_CMD               0x00000002
 #define SMTP_FLAG_BDAT                       0x00001000
 #define SMTP_FLAG_ABORT                      0x00002000
+#define SMTP_FLAG_ABANDON_EVT                0x00010000
 
 // session flags
 #define SMTP_FLAG_XLINK2STATE_GOTFIRSTCHUNK  0x00000001

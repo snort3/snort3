@@ -1104,6 +1104,13 @@ static void SMTP_ProcessServerPacket(
             case RESP_221:
             case RESP_334:
             case RESP_354:
+                if ((smtp_ssn->state == STATE_DATA or smtp_ssn->state == STATE_BDATA)
+                    and !p->flow->flags.data_decrypted
+                    and !(smtp_ssn->state_flags & SMTP_FLAG_ABANDON_EVT))
+                {
+                    smtp_ssn->state_flags |= SMTP_FLAG_ABANDON_EVT;
+                    DataBus::publish(SSL_SEARCH_ABANDONED, p);
+                }
                 break;
 
             case RESP_235:
