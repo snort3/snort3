@@ -53,6 +53,8 @@
 
 using namespace snort;
 THREAD_LOCAL ThirdPartyAppIdContext* tp_appid_thread_ctxt = nullptr;
+THREAD_LOCAL OdpThreadContext* odp_thread_ctxt = nullptr;
+
 static THREAD_LOCAL PacketTracer::TracerMute appid_mute;
 
 // FIXIT-L - appid cleans up openssl now as it is the primary (only) user... eventually this
@@ -141,10 +143,9 @@ void AppIdInspector::tinit()
 
     AppIdStatistics::initialize_manager(*config);
 
-    if (ctxt->config.load_odp_detectors_in_ctrl)
-        LuaDetectorManager::init_thread_manager(*ctxt);
-    else
-        LuaDetectorManager::initialize(*ctxt);
+    assert(!odp_thread_ctxt);
+    odp_thread_ctxt = new OdpThreadContext();
+    odp_thread_ctxt->initialize(*ctxt);
 
     AppIdServiceState::initialize(config->memcap);
     assert(!tp_appid_thread_ctxt);
@@ -159,6 +160,9 @@ void AppIdInspector::tterm()
 {
     AppIdStatistics::cleanup();
     AppIdDiscovery::tterm();
+    assert(odp_thread_ctxt);
+    delete odp_thread_ctxt;
+    odp_thread_ctxt = nullptr;
     ThirdPartyAppIdContext* tp_appid_ctxt = ctxt->get_tp_appid_ctxt();
     if (tp_appid_ctxt)
         tp_appid_ctxt->tfini();
@@ -203,8 +207,6 @@ static void appid_inspector_pinit()
 static void appid_inspector_pterm()
 {
 //FIXIT-M: RELOAD - if app_info_table is associated with an object
-    appid_forecast_pterm();
-    LuaDetectorManager::terminate(true);
     AppIdContext::pterm();
 //end of 'FIXIT-M: RELOAD' comment above
     openssl_cleanup();
@@ -214,7 +216,6 @@ static void appid_inspector_pterm()
 static void appid_inspector_tinit()
 {
     AppIdPegCounts::init_pegs();
-    appid_forecast_tinit();
     appidDebug = new AppIdDebug();
 }
 
@@ -222,9 +223,7 @@ static void appid_inspector_tterm()
 {
     TPLibHandler::tfini();
     AppIdPegCounts::cleanup_pegs();
-    LuaDetectorManager::terminate();
     AppIdServiceState::clean();
-    appid_forecast_tterm();
     delete appidDebug;
 }
 

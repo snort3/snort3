@@ -203,17 +203,14 @@ static int create_detector_flow(lua_State* L)
     uint16_t dport = lua_tonumber(L, 5);
     IpProtocol proto = (IpProtocol)lua_tonumber(L, 6);
 
-    auto detector_flow = new DetectorFlow();
+    auto detector_flow = new DetectorFlow(L, AppIdSession::create_future_session(lsd->ldp.pkt, &saddr, sport,
+        &daddr, dport, proto, 0));
     UserData<DetectorFlow>::push(L, DETECTORFLOW, detector_flow);
 
-    detector_flow->myLuaState = L;
     lua_pushvalue(L, -1);
     detector_flow->userDataRef = luaL_ref(L, LUA_REGISTRYINDEX);
 
-    LuaDetectorManager::add_detector_flow(detector_flow);
-
-    detector_flow->asd = AppIdSession::create_future_session(lsd->ldp.pkt, &saddr, sport,
-        &daddr, dport, proto, 0);
+    odp_thread_ctxt->get_lua_detector_mgr().set_detector_flow(detector_flow);
 
     if (!detector_flow->asd)
     {
@@ -223,22 +220,6 @@ static int create_detector_flow(lua_State* L)
     }
 
     return 1;
-}
-
-// free DetectorFlow and its corresponding user data.
-void free_detector_flow(void* userdata)
-{
-    DetectorFlow* detector_flow = (DetectorFlow*)userdata;
-
-    /*The detectorUserData itself is a userdata and therefore be freed by Lua side. */
-    if (detector_flow->userDataRef != LUA_REFNIL)
-    {
-        auto L = detector_flow->myLuaState;
-        luaL_unref(L, LUA_REGISTRYINDEX, detector_flow->userDataRef);
-        detector_flow->userDataRef = LUA_REFNIL;
-    }
-
-    delete detector_flow;
 }
 
 /**Sets a flow flag

@@ -60,6 +60,7 @@ private:
 
 };
 
+extern THREAD_LOCAL OdpThreadContext* odp_thread_ctxt;
 extern THREAD_LOCAL ThirdPartyAppIdContext* tp_appid_thread_ctxt;
 
 #endif

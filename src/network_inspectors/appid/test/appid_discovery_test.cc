@@ -272,7 +272,7 @@ AppId find_length_app_cache(const LengthKey&)
 {
     return APP_ID_NONE;
 }
-void check_session_for_AF_indicator(Packet*, AppidSessionDirection, AppId) {}
+void check_session_for_AF_indicator(Packet*, AppidSessionDirection, AppId, const OdpContext&) {}
 AppId check_session_for_AF_forecast(AppIdSession&, Packet*, AppidSessionDirection, AppId)
 {
     return APP_ID_UNKNOWN;

@@ -1001,13 +1001,15 @@ static int detector_get_flow(lua_State* L)
     // Verify detector user data and that we are in packet context
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
-    auto df = new DetectorFlow();
-    df->asd = lsd->ldp.asd;
+    auto df = odp_thread_ctxt->get_lua_detector_mgr().get_detector_flow();
+    if (!df)
+    {
+        df = new DetectorFlow(L, lsd->ldp.asd);
+        odp_thread_ctxt->get_lua_detector_mgr().set_detector_flow(df);
+    }
     UserData<DetectorFlow>::push(L, DETECTORFLOW, df);
-    df->myLuaState = L;
     lua_pushvalue(L, -1);
     df->userDataRef = luaL_ref(L, LUA_REGISTRYINDEX);
-    LuaDetectorManager::add_detector_flow(df);
     return 1;
 }
 
@@ -1274,8 +1276,7 @@ static int register_callback(lua_State* L, LuaObject& ud, AppInfoFlags flag)
         // Note that Lua detector objects are thread local
         ud.set_cb_fn_name(callback);
 
-        assert(lua_detector_mgr);
-        if (!lua_detector_mgr->insert_cb_detector(app_id, &ud))
+        if (!odp_thread_ctxt->get_lua_detector_mgr().insert_cb_detector(app_id, &ud))
         {
             ErrorMessage("AppId: detector callback already registered for app %d\n", app_id);
             return 1;
@@ -1309,7 +1310,8 @@ static int detector_callback(const uint8_t* data, uint16_t size, AppidSessionDir
         return -10;
     }
 
-    auto my_lua_state = lua_detector_mgr->L;
+    LuaDetectorManager& lua_detector_mgr = odp_thread_ctxt->get_lua_detector_mgr();
+    auto my_lua_state = lua_detector_mgr.L;
     const string& cb_fn_name = ud.get_cb_fn_name();
     const char* detector_name = ud.get_detector()->get_name().c_str();
 
@@ -1338,7 +1340,8 @@ static int detector_callback(const uint8_t* data, uint16_t size, AppidSessionDir
     }
 
     // detector flows must be destroyed after each packet is processed
-    LuaDetectorManager::free_detector_flows();
+    if (lua_detector_mgr.get_detector_flow())
+        lua_detector_mgr.free_detector_flow();
 
     // retrieve result
     if (!lua_isnumber(my_lua_state, -1))
@@ -1366,8 +1369,7 @@ void check_detector_callback(const Packet& p, AppIdSession& asd, AppidSessionDir
     if (entry->flags & APPINFO_FLAG_CLIENT_DETECTOR_CALLBACK or
         entry->flags & APPINFO_FLAG_SERVICE_DETECTOR_CALLBACK)
     {
-        assert(lua_detector_mgr);
-        LuaObject* ud = lua_detector_mgr->get_cb_detector(app_id);
+        LuaObject* ud = odp_thread_ctxt->get_lua_detector_mgr().get_cb_detector(app_id);
         assert(ud);
 
         if (ud->is_running())
@@ -1847,7 +1849,7 @@ static int detector_add_af_application(lua_State* L)
     AppId indicator = (AppId)lua_tointeger(L, ++index);
     AppId forecast  = (AppId)lua_tointeger(L, ++index);
     AppId target    = (AppId)lua_tointeger(L, ++index);
-    add_af_indicator(indicator, forecast, target);
+    ud->get_odp_ctxt().add_af_indicator(indicator, forecast, target);
 
     return 0;
 }
@@ -2781,7 +2783,8 @@ int register_detector(lua_State* L)
 
 int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
 {
-    auto my_lua_state = lua_detector_mgr? lua_detector_mgr->L : nullptr;
+    LuaDetectorManager& lua_detector_mgr = odp_thread_ctxt->get_lua_detector_mgr();
+    auto my_lua_state = lua_detector_mgr.L;
     if (!my_lua_state)
     {
         ErrorMessage("lua detector %s: no LUA state\n", package_info.name.c_str());
@@ -2826,12 +2829,13 @@ int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
         ErrorMessage("lua detector %s: error validating %s\n",
             package_info.name.c_str(), lua_tostring(my_lua_state, -1));
         ldp.pkt = nullptr;
-        LuaDetectorManager::free_detector_flows();
+        lua_detector_mgr.free_detector_flow();
         return APPID_ENULL;
     }
 
     /**detectorFlows must be destroyed after each packet is processed.*/
-    LuaDetectorManager::free_detector_flows();
+    if (lua_detector_mgr.get_detector_flow())
+        lua_detector_mgr.free_detector_flow();
 
     /* retrieve result */
     if ( !lua_isnumber(my_lua_state, -1) )
@@ -2924,7 +2928,7 @@ LuaServiceObject::LuaServiceObject(AppIdDiscovery* sdm, const std::string& detec
 int LuaServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     //FIXIT-M: RELOAD - use lua references to get user data object from stack
-    auto my_lua_state = lua_detector_mgr? lua_detector_mgr->L : nullptr;
+    auto my_lua_state = odp_thread_ctxt->get_lua_detector_mgr().L;
     lua_settop(my_lua_state,0);
     std::string name = this->name + "_";
     lua_getglobal(my_lua_state, name.c_str());
@@ -3002,7 +3006,7 @@ LuaStateDescriptor* LuaObject::validate_lua_state(bool packet_context)
 int LuaClientDetector::validate(AppIdDiscoveryArgs& args)
 {
     //FIXIT-M: RELOAD - use lua references to get user data object from stack
-    auto my_lua_state = lua_detector_mgr? lua_detector_mgr->L : nullptr;
+    auto my_lua_state = odp_thread_ctxt->get_lua_detector_mgr().L;
     std::string name = this->name + "_";
     lua_settop(my_lua_state,0); //set stack index to 0
     lua_getglobal(my_lua_state, name.c_str());

@@ -26,18 +26,32 @@
 // object.
 // The flow object on Lua side is a userData.
 
+#include "lua_detector_util.h"
+
 struct lua_State;
 class AppIdSession;
 
 struct DetectorFlow
 {
+    DetectorFlow(lua_State* myLuaState, AppIdSession* asd)
+    : myLuaState(myLuaState), asd(asd) { }
+
+    ~DetectorFlow()
+    {
+        /*The detectorUserData itself is a userdata and therefore be freed by Lua side. */
+        if (userDataRef != LUA_REFNIL)
+        {
+            luaL_unref(myLuaState, LUA_REGISTRYINDEX, userDataRef);
+            userDataRef = LUA_REFNIL;
+        }
+    }
+
     lua_State* myLuaState;
     AppIdSession* asd;
     int userDataRef;
 };
 
 int register_detector_flow_api(lua_State*);
-void free_detector_flow(void* userdata);
 
 #endif
 

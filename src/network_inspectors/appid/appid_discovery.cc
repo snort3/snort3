@@ -870,7 +870,7 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
         if (payload_id != asd.past_indicator and payload_id != APP_ID_NONE)
         {
             asd.past_indicator = payload_id;
-            check_session_for_AF_indicator(p, direction, (AppId)payload_id);
+            check_session_for_AF_indicator(p, direction, (AppId)payload_id, asd.ctxt.get_odp_ctxt());
         }
 
         if (asd.past_forecast != service_id and asd.past_forecast != APP_ID_UNKNOWN and

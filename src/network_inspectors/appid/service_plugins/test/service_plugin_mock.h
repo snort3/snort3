@@ -207,4 +207,6 @@ OdpContext* AppIdContext::odp_ctxt = &stub_odp_ctxt;
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*)
 { }
 
+OdpContext::~OdpContext() { }
+
 #endif

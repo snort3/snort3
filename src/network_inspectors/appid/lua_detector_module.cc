@@ -32,6 +32,7 @@
 #include <fstream>
 
 #include "appid_config.h"
+#include "appid_inspector.h"
 #include "lua_detector_util.h"
 #include "lua_detector_api.h"
 #include "lua_detector_flow_api.h"
@@ -47,8 +48,6 @@ using namespace std;
 #define AVG_LUA_TRACKER_SIZE_IN_BYTES 740
 #define MAX_MEMORY_FOR_LUA_DETECTORS (512 * 1024 * 1024)
 
-THREAD_LOCAL LuaDetectorManager* lua_detector_mgr = nullptr;
-static THREAD_LOCAL SF_LIST allocated_detector_flow_list;
 static std::vector<LuaDetectorManager*> lua_detector_mgr_list;
 
 bool get_lua_field(lua_State* L, int table, const char* field, std::string& out)
@@ -153,7 +152,6 @@ static lua_State* create_lua_state(const AppIdConfig& config, int is_control)
 LuaDetectorManager::LuaDetectorManager(AppIdContext& ctxt, int is_control) :
     ctxt(ctxt)
 {
-    sflist_init(&allocated_detector_flow_list);
     allocated_objects.clear();
     cb_detectors.clear();
     L = create_lua_state(ctxt.config, is_control);
@@ -193,18 +191,16 @@ LuaDetectorManager::~LuaDetectorManager()
         lua_close(L);
     }
 
-    sflist_static_free_all(&allocated_detector_flow_list, free_detector_flow);
+    if (detector_flow)
+        free_detector_flow();
     allocated_objects.clear();
     cb_detectors.clear(); // do not free Lua objects in cb_detectors
 }
 
 void LuaDetectorManager::initialize(AppIdContext& ctxt, int is_control, bool reload)
 {
-    // FIXIT-M: RELOAD - When reload is supported, remove this line which prevents re-initialize
-    if (lua_detector_mgr)
-        return;
-
-    lua_detector_mgr = new LuaDetectorManager(ctxt, is_control);
+    LuaDetectorManager* lua_detector_mgr = new LuaDetectorManager(ctxt, is_control);
+    odp_thread_ctxt->set_lua_detector_mgr(*lua_detector_mgr);
 
     if (!lua_detector_mgr->L)
         FatalError("Error - appid: can not create new luaState, instance=%u\n",
@@ -234,40 +230,17 @@ void LuaDetectorManager::initialize(AppIdContext& ctxt, int is_control, bool rel
 
 void LuaDetectorManager::init_thread_manager(const AppIdContext& ctxt)
 {
-    lua_detector_mgr = lua_detector_mgr_list[get_instance_id()];
+    LuaDetectorManager* lua_detector_mgr = lua_detector_mgr_list[get_instance_id()];
+    odp_thread_ctxt->set_lua_detector_mgr(*lua_detector_mgr);
     lua_detector_mgr->activate_lua_detectors();
     if (ctxt.config.list_odp_detectors)
         lua_detector_mgr->list_lua_detectors();
 }
 
-void LuaDetectorManager::terminate(bool is_control)
+void LuaDetectorManager::free_detector_flow()
 {
-    unsigned size = lua_detector_mgr_list.size();
-    if (size and !is_control)
-        return;
-
-    if (!lua_detector_mgr)
-        return;
-
-    delete lua_detector_mgr;
-    lua_detector_mgr = nullptr;
-
-    if (size)
-    {
-        for (unsigned i = 0; i < size; i++)
-            delete lua_detector_mgr_list[i];
-        lua_detector_mgr_list.clear();
-    }
-}
-
-void LuaDetectorManager::add_detector_flow(DetectorFlow* df)
-{
-    sflist_add_tail(&allocated_detector_flow_list, df);
-}
-
-void LuaDetectorManager::free_detector_flows()
-{
-    sflist_static_free_all(&allocated_detector_flow_list, free_detector_flow);
+    delete detector_flow;
+    detector_flow = nullptr;
 }
 
 bool LuaDetectorManager::insert_cb_detector(AppId app_id, LuaObject* cb_detector)

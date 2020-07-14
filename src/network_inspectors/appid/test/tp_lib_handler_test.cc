@@ -60,6 +60,7 @@ SipPatternMatchers::~SipPatternMatchers() { }
 SslPatternMatchers::~SslPatternMatchers() { }
 AppIdConfig::~AppIdConfig() { }
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }
+OdpContext::~OdpContext() { }
 void ServiceDiscovery::initialize() { }
 int ServiceDiscovery::add_service_port(AppIdDetector*, const ServiceDetectorPort&)
 { return 0; }

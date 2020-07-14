@@ -32,12 +32,12 @@
 #include "app_info_table.h"
 #include "appid_discovery.h"
 #include "appid_http_session.h"
+#include "appid_inspector.h"
 #include "appid_session.h"
 #include "detector_plugins/detector_pattern.h"
 #include "host_port_app_cache.h"
 #include "main/snort_config.h"
 #include "log/messages.h"
-#include "lua_detector_module.h"
 #include "utils/util.h"
 #include "service_plugins/service_ssl.h"
 #include "detector_plugins/detector_dns.h"
@@ -46,7 +46,6 @@
 #include "tp_lib_handler.h"
 
 using namespace snort;
-
 
 ThirdPartyAppIdContext* AppIdContext::tp_appid_ctxt = nullptr;
 OdpContext* AppIdContext::odp_ctxt = nullptr;
@@ -97,6 +96,10 @@ void AppIdContext::pterm()
     assert(odp_ctxt);
     odp_ctxt->get_app_info_mgr().cleanup_appid_info_table();
     delete odp_ctxt;
+
+    assert(odp_thread_ctxt);
+    delete odp_thread_ctxt;
+    odp_thread_ctxt = nullptr;
 }
 
 bool AppIdContext::init_appid(SnortConfig* sc)
@@ -105,6 +108,9 @@ bool AppIdContext::init_appid(SnortConfig* sc)
     if (!odp_ctxt)
         odp_ctxt = new OdpContext(config, sc);
 
+    if (!odp_thread_ctxt)
+        odp_thread_ctxt = new OdpThreadContext(true);
+
     // FIXIT-M: RELOAD - Get rid of "once" flag
     // Handle the if condition in AppIdContext::init_appid
     static bool once = false;
@@ -112,7 +118,7 @@ bool AppIdContext::init_appid(SnortConfig* sc)
     {
         odp_ctxt->get_client_disco_mgr().initialize();
         odp_ctxt->get_service_disco_mgr().initialize();
-        LuaDetectorManager::initialize(*this, 1, config.load_odp_detectors_in_ctrl);
+        odp_thread_ctxt->initialize(*this, true);
         odp_ctxt->initialize();
 
         // do not reload third party on reload_config()
@@ -140,6 +146,11 @@ OdpContext::OdpContext(const AppIdConfig& config, SnortConfig* sc)
     app_info_mgr.init_appid_info_table(config, sc, *this);
     client_pattern_detector = new PatternClientDetector(&client_disco_mgr);
     service_pattern_detector = new PatternServiceDetector(&service_disco_mgr);
+}
+
+OdpContext::~OdpContext()
+{
+    AF_indicators.clear();
 }
 
 void OdpContext::initialize()
@@ -215,4 +226,45 @@ void OdpContext::display_port_config()
             }
             LogMessage("        %5u - %u\n", i, udp_port_only[i]);
         }
+}
+
+void OdpContext::add_af_indicator(AppId indicator, AppId forecast, AppId target)
+{
+    if (AF_indicators.find(indicator) != AF_indicators.end())
+    {
+        ErrorMessage("LuaDetectorApi:Attempt to add more than one AFElement per appId %d",
+            indicator);
+        return;
+    }
+
+    AFElement val = AFElement(forecast, target);
+    if (false == AF_indicators.emplace(indicator, val).second)
+        ErrorMessage("LuaDetectorApi:Failed to add AFElement for appId %d", indicator);
+}
+
+OdpThreadContext::OdpThreadContext(bool is_control)
+{
+    if (!is_control)
+        AF_actives = new std::map<AFActKey, AFActVal>;
+}
+
+void OdpThreadContext::initialize(AppIdContext& ctxt, bool is_control)
+{
+    if (!is_control and ctxt.config.load_odp_detectors_in_ctrl)
+        LuaDetectorManager::init_thread_manager(ctxt);
+    else
+        LuaDetectorManager::initialize(ctxt, is_control? 1 : 0,
+            ctxt.config.load_odp_detectors_in_ctrl);
+}
+
+OdpThreadContext::~OdpThreadContext()
+{
+    assert(lua_detector_mgr);
+    delete lua_detector_mgr;
+
+    if (AF_actives != nullptr)
+    {
+        AF_actives->clear();
+        delete AF_actives;
+    }
 }

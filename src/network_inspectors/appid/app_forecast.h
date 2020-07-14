@@ -32,6 +32,7 @@
 #include "application_ids.h"
 
 class AppIdSession;
+class OdpContext;
 namespace snort
 {
 struct Packet;
@@ -47,6 +48,8 @@ struct Packet;
 
 struct AFElement
 {
+    AFElement(AppId forecast, AppId target) : forecast(forecast), target(target) { }
+
     AppId forecast;
     AppId target;
 };
@@ -76,15 +79,13 @@ PADDING_GUARD_END
 
 struct AFActVal
 {
+    AFActVal(AppId target, time_t last) : target(target), last(last) { }
+
     AppId target;
     time_t last;
 };
 
-void appid_forecast_tinit();
-void appid_forecast_tterm();
-void appid_forecast_pterm();
-void add_af_indicator(AppId, AppId, AppId);
-void check_session_for_AF_indicator(snort::Packet*, AppidSessionDirection, AppId);
+void check_session_for_AF_indicator(snort::Packet*, AppidSessionDirection, AppId, const OdpContext&);
 AppId check_session_for_AF_forecast(AppIdSession&, snort::Packet*, AppidSessionDirection, AppId);
 
 #endif

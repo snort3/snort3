@@ -52,9 +52,17 @@ public:
     ~LuaDetectorManager();
     static void initialize(AppIdContext&, int is_control=0, bool reload=false);
     static void init_thread_manager(const AppIdContext&);
-    static void terminate(bool is_control=false);
-    static void add_detector_flow(DetectorFlow*);
-    static void free_detector_flows();
+
+    void set_detector_flow(DetectorFlow* df)
+    {
+        detector_flow = df;
+    }
+
+    DetectorFlow* get_detector_flow()
+    {
+        return detector_flow;
+    }
+    void free_detector_flow();
     // FIXIT-M: RELOAD - When reload is supported, move this variable to a separate location
     lua_State* L;
     bool insert_cb_detector(AppId app_id, LuaObject* ud);
@@ -73,9 +81,8 @@ private:
     std::list<LuaObject*> allocated_objects;
     size_t num_odp_detectors = 0;
     std::map<AppId, LuaObject*> cb_detectors;
+    DetectorFlow* detector_flow = nullptr;
 };
-
-extern THREAD_LOCAL LuaDetectorManager* lua_detector_mgr;
 
 #endif
 

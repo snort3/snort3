@@ -38,8 +38,6 @@ struct ClientAppMatch
     const ClientDetector* detector = nullptr;
 };
 
-extern THREAD_LOCAL ClientAppMatch* match_free_list;
-
 class ClientDiscovery : public AppIdDiscovery
 {
 public:
