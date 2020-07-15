@@ -1,3 +1,29 @@
+2020/07/15 - 3.0.2 build 2
+
+-- appid: Moving thread local ODP stuff to a new class
+-- binder: delete obsolete network_policy parsing code
+-- build: Fix static analyzer complaints about unused stored values
+-- daq: Fix calculation of outstanding packets stat to properly use the delta
+-- dce_rpc: adding support for multiple smbv2 sessions for same tcp connection
+-- dce_rpc: Invalid endpoint mapper message
+-- dce_rpc: SMB ID invalid memory access
+-- http_inspect: send MIME full message body for file processing
+-- main: add config options --ignore-warn-rules and --ignore-warn-flowbits to snort module
+-- mime: mime no longer overwrites file_data buffer for http packets
+-- smtp: generate SSL_SEARCH_ABANDONED event when no STARTTLS is detected
+-- smtp: support opportunistic SSL/TLS switch over
+-- stream_tcp: coding style improvements
+-- stream_tcp: eliminate direct references to the Packet* wherevever possible within the TCP state
+   machine context
+-- stream_tcp: eliminate use of STREAM_INSERT_OK as return code, it conveyed no useful information
+   and was ultimately unused
+-- stream_tcp: implement meta-ack pseudo packet as thread local that is reused on each meta-ack TSD
+-- stream_tcp: implement support for processing meta-ack information when present
+-- stream_tcp: meta-ack from daq is in network order not host, remove conversion from host to
+   network
+-- stream_tcp: process meta-ack info in any flush policy mode
+-- trace: add support for DAQ trace filtering
+
 2020/07/06 - 3.0.2 build 1
 
 -- appid: Appid coverity issues

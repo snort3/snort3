@@ -782,7 +782,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.2 (Build 1)
+o"  )~   Version 3.0.2 (Build 2)
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2020 Cisco and/or its affiliates. All rights reserved.
@@ -6918,7 +6918,8 @@ on a flow that packet is related. By default filtering is disabled.</p></div>
 src_ip - match all packets with a flow that has this client IP address (passed as a string)
 src_port - match all packets with a flow that has this source port
 dst_ip - match all packets with a flow that has this server IP address (passed as a string)
-dst_port - match all packets with a flow that has this destination port</code></pre>
+dst_port - match all packets with a flow that has this destination port
+match - boolean flag to enable/disable whether constraints will ever match (enabled by default)</code></pre>
 </div></div>
 <div class="paragraph"><p>The following lines placed in snort.lua will enable all trace messages for
 detection filtered by ip_proto, dst_ip, src_port and dst_port:</p></div>
@@ -6936,6 +6937,25 @@ detection filtered by ip_proto, dst_ip, src_port and dst_port:</p></div>
         dst_ip = "10.1.1.10",
         src_port = 150,
         dst_port = 250
+    }
+}</code></pre>
+</div></div>
+<div class="paragraph"><p>To create constraints that will never successfully match, set the <strong>match</strong>
+parameter to <em>false</em>. This is useful for situations where one is relying on
+external packet filtering from the DAQ module, or for preventing all trace
+messages in the context of a packet. The following is an example of such
+configuration:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>trace =
+{
+    modules =
+    {
+        snort = { all = 1 }
+    },
+    constraints =
+    {
+        match = false
     }
 }</code></pre>
 </div></div>
@@ -9665,6 +9685,16 @@ implied <strong>snort.--id-zero</strong>: use id prefix / subdirectory even with
 </li>
 <li>
 <p>
+implied <strong>snort.--ignore-warn-flowbits</strong>: ignore warnings about flowbits that are checked but not set and vice-versa
+</p>
+</li>
+<li>
+<p>
+implied <strong>snort.--ignore-warn-rules</strong>: ignore warnings about duplicate rules and rule parsing issues
+</p>
+</li>
+<li>
+<p>
 string <strong>snort.--include-path</strong>: &lt;path&gt; where to find Lua and rule included files; searched before current or config directories
 </p>
 </li>
@@ -10109,6 +10139,11 @@ string <strong><code>suppress[].ip</code></strong>: restrict suppression to thes
 <div class="ulist"><ul>
 <li>
 <p>
+int <strong>trace.modules.latency.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
 int <strong>trace.modules.detection.all</strong>: enable all trace options { 0:255 }
 </p>
 </li>
@@ -10154,17 +10189,37 @@ int <strong>trace.modules.detection.tag</strong>: enable tag trace logging { 0:2
 </li>
 <li>
 <p>
+int <strong>trace.modules.stream.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.gtp_inspect.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
 int <strong>trace.modules.stream_user.all</strong>: enable all trace options { 0:255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>trace.modules.stream_ip.all</strong>: enable all trace options { 0:255 }
+int <strong>trace.modules.dce_smb.all</strong>: enable all trace options { 0:255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>trace.modules.stream.all</strong>: enable all trace options { 0:255 }
+int <strong>trace.modules.decode.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.dce_udp.all</strong>: enable all trace options { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>trace.modules.appid.all</strong>: enable all trace options { 0:255 }
 </p>
 </li>
 <li>
@@ -10184,37 +10239,12 @@ int <strong>trace.modules.snort.inspector_manager</strong>: enable inspector man
 </li>
 <li>
 <p>
-int <strong>trace.modules.dce_smb.all</strong>: enable all trace options { 0:255 }
-</p>
-</li>
-<li>
-<p>
-int <strong>trace.modules.dce_udp.all</strong>: enable all trace options { 0:255 }
-</p>
-</li>
-<li>
-<p>
-int <strong>trace.modules.latency.all</strong>: enable all trace options { 0:255 }
+int <strong>trace.modules.stream_ip.all</strong>: enable all trace options { 0:255 }
 </p>
 </li>
 <li>
 <p>
 int <strong>trace.modules.wizard.all</strong>: enable all trace options { 0:255 }
-</p>
-</li>
-<li>
-<p>
-int <strong>trace.modules.gtp_inspect.all</strong>: enable all trace options { 0:255 }
-</p>
-</li>
-<li>
-<p>
-int <strong>trace.modules.appid.all</strong>: enable all trace options { 0:255 }
-</p>
-</li>
-<li>
-<p>
-int <strong>trace.modules.decode.all</strong>: enable all trace options { 0:255 }
 </p>
 </li>
 <li>
@@ -10240,6 +10270,11 @@ string <strong>trace.constraints.dst_ip</strong>: destination IP address filter
 <li>
 <p>
 int <strong>trace.constraints.dst_port</strong>: destination port filter { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>trace.constraints.match</strong> = true: use constraints to filter traces
 </p>
 </li>
 <li>
@@ -11852,11 +11887,6 @@ string <strong><code>binder[].use.ips_policy</code></strong>: use ips policy fro
 </li>
 <li>
 <p>
-string <strong><code>binder[].use.network_policy</code></strong>: deprecated, ignored by binder
-</p>
-</li>
-<li>
-<p>
 string <strong><code>binder[].use.service</code></strong>: override automatic service identification
 </p>
 </li>
@@ -12110,6 +12140,16 @@ string <strong>dce_smb.smb_invalid_shares</strong>: SMB shares to alert on
 <li>
 <p>
 bool <strong>dce_smb.smb_legacy_mode</strong> = false: inspect only SMBv1
+</p>
+</li>
+<li>
+<p>
+int <strong>dce_smb.smb_max_credit</strong> = 8192: Maximum number of outstanding request { 1:65536 }
+</p>
+</li>
+<li>
+<p>
+int <strong>dce_smb.memcap</strong> = 8388608: Memory utilization limit on smb { 512:maxSZ }
 </p>
 </li>
 </ul></div>
@@ -12495,37 +12535,272 @@ bool <strong>dce_smb.smb_legacy_mode</strong> = false: inspect only SMBv1
 </li>
 <li>
 <p>
-<strong>dce_smb.smbv2_create</strong>: total number of SMBv2 create packets seen (sum)
+<strong>dce_smb.v2_setup</strong>: total number of SMBv2 setup packets seen (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>dce_smb.smbv2_write</strong>: total number of SMBv2 write packets seen (sum)
+<strong>dce_smb.v2_setup_err_resp</strong>: total number of SMBv2 setup error response packets seen (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>dce_smb.smbv2_read</strong>: total number of SMBv2 read packets seen (sum)
+<strong>dce_smb.v2_setup_inv_str_sz</strong>: total number of SMBv2 setup packets seen with invalid structure size (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>dce_smb.smbv2_set_info</strong>: total number of SMBv2 set info packets seen (sum)
+<strong>dce_smb.v2_setup_resp_hdr_err</strong>: total number of SMBv2 setup response packets ignored due to corrupted header (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>dce_smb.smbv2_tree_connect</strong>: total number of SMBv2 tree connect packets seen (sum)
+<strong>dce_smb.v2_tree_cnct</strong>: total number of SMBv2 tree connect packets seen (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>dce_smb.smbv2_tree_disconnect</strong>: total number of SMBv2 tree disconnect packets seen (sum)
+<strong>dce_smb.v2_tree_cnct_err_resp</strong>: total number of SMBv2 tree connect error response packets seen (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>dce_smb.smbv2_close</strong>: total number of SMBv2 close packets seen (sum)
+<strong>dce_smb.v2_tree_cnct_ignored</strong>: total number of SMBv2 setup response packets ignored due to failure in creating tree tracker (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_tree_cnct_inv_str_sz</strong>: total number of SMBv2 tree connect packets seen with invalid structure size (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_tree_cnct_resp_hdr_err</strong>: total number of SMBv2 tree connect response packets ignored due to corrupted header (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_crt</strong>: total number of SMBv2 create packets seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_crt_err_resp</strong>: total number of SMBv2 create error response packets seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_crt_inv_file_data</strong>: total number of SMBv2 create request packets ignored due to error in getting file name (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_crt_inv_str_sz</strong>: total number of SMBv2 create packets seen with invalid structure size (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_crt_resp_hdr_err</strong>: total number of SMBv2 create response packets ignored due to corrupted header (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_crt_req_hdr_err</strong>: total number of SMBv2 create request packets ignored due to corrupted header (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_crt_rtrkr_misng</strong>: total number of SMBv2 create response packets ignored due to missing create request tracker (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_crt_req_ipc</strong>: total number of SMBv2 create request packets ignored as share type is IPC (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_crt_tree_trkr_misng</strong>: total number of SMBv2 create response packets ignored due to missing tree tracker (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_wrt</strong>: total number of SMBv2 write packets seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_wrt_err_resp</strong>: total number of SMBv2 write error response packets seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_wrt_ignored</strong>: total number of SMBv2 write packets ignored due to missing trackers or invalid share type (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_wrt_inv_str_sz</strong>: total number of SMBv2 write packets seen with invalid structure size (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_wrt_req_hdr_err</strong>: total number of SMBv2 write request packets ignored due to corrupted header (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_read</strong>: total number of SMBv2 read packets seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_read_err_resp</strong>: total number of SMBv2 read error response packets seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_read_ignored</strong>: total number of SMBv2 write packets ignored due to missing trackers or invalid share type (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_read_inv_str_sz</strong>: total number of SMBv2 read packets seen with invalid structure size (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_read_rtrkr_misng</strong>: total number of SMBv2 read response packets ignored due to missing read request tracker (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_read_resp_hdr_err</strong>: total number of SMBv2 read response packets ignored due to corrupted header (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_read_req_hdr_err</strong>: total number of SMBv2 read request packets ignored due to corrupted header (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_stinf</strong>: total number of SMBv2 set info packets seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_stinf_err_resp</strong>: total number of SMBv2 set info error response packets seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_stinf_ignored</strong>: total number of SMBv2 set info packets ignored due to missing trackers or invalid share type (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_stinf_inv_str_sz</strong>: total number of SMBv2 set info packets seen with invalid structure size (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_stinf_req_ftrkr_misng</strong>: total number of SMBv2 set info request packets ignored due to missing file tracker (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_stinf_req_hdr_err</strong>: total number of SMBv2 set info request packets ignored due to corrupted header (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_cls</strong>: total number of SMBv2 close packets seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_cls_err_resp</strong>: total number of SMBv2 close error response packets seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_cls_ignored</strong>: total number of SMBv2 close packets ignored due to missing trackers or invalid share type (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_cls_inv_str_sz</strong>: total number of SMBv2 close packets seen with invalid structure size (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_cls_req_ftrkr_misng</strong>: total number of SMBv2 close request packets ignored due to missing file tracker (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_cls_req_hdr_err</strong>: total number of SMBv2 close request packets ignored due to corrupted header (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_tree_discn</strong>: total number of SMBv2 tree disconnect packets seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_tree_discn_ignored</strong>: total number of SMBv2 tree disconnect packets ignored due to missing trackers or invalid share type (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_tree_discn_inv_str_sz</strong>: total number of SMBv2 tree disconnect packets seen with invalid structure size (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_tree_discn_req_hdr_err</strong>: total number of SMBv2 tree disconnect request packets ignored due to corrupted header (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_logoff</strong>: total number of SMBv2 logoff (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_logoff_inv_str_sz</strong>: total number of SMBv2 logoff packets seen with invalid structure size (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_hdr_err</strong>: total number of SMBv2 packets seen with corrupted hdr (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_bad_next_cmd_offset</strong>: total number of SMBv2 packets seen with invalid next command offset (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_extra_file_data_err</strong>: total number of SMBv2 packets seen with where file data beyond file size is observed (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_inv_file_ctx_err</strong>: total number of times null file context are seen resulting in not being able to set file size (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_msgs_uninspected</strong>: total number of SMBv2 packets seen where command is not being inspected (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_cmpnd_req_lt_crossed</strong>: total number of SMBv2 packets seen where compound requests exceed the smb_max_compound limit (sum)
 </p>
 </li>
 <li>
@@ -18249,6 +18524,11 @@ bool <strong>stream_tcp.track_only</strong> = false: disable reassembly if true
 <li>
 <p>
 <strong>stream_tcp.fins</strong>: number of fin packets (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>stream_tcp.meta_acks</strong>: number of meta acks processed (sum)
 </p>
 </li>
 <li>
@@ -25458,6 +25738,16 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
+<strong>--ignore-warn-flowbits</strong> ignore warnings about flowbits that are checked but not set and vice-versa
+</p>
+</li>
+<li>
+<p>
+<strong>--ignore-warn-rules</strong> ignore warnings about duplicate rules and rule parsing issues
+</p>
+</li>
+<li>
+<p>
 <strong>--include-path</strong> &lt;path&gt; where to find Lua and rule included files; searched before current or config directories
 </p>
 </li>
@@ -26098,11 +26388,6 @@ string <strong><code>binder[].use.name</code></strong>: symbol name (defaults to
 </li>
 <li>
 <p>
-string <strong><code>binder[].use.network_policy</code></strong>: deprecated, ignored by binder
-</p>
-</li>
-<li>
-<p>
 string <strong><code>binder[].use.service</code></strong>: override automatic service identification
 </p>
 </li>
@@ -26663,6 +26948,11 @@ int <strong>dce_smb.max_frag_len</strong> = 65535: maximum fragment size for def
 </li>
 <li>
 <p>
+int <strong>dce_smb.memcap</strong> = 8388608: Memory utilization limit on smb { 512:maxSZ }
+</p>
+</li>
+<li>
+<p>
 enum <strong>dce_smb.policy</strong> = WinXP: target based policy to use { Win2000 |  WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba | Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
 </p>
 </li>
@@ -26704,6 +26994,11 @@ int <strong>dce_smb.smb_max_chain</strong> = 3: SMB max chain size { 0:255 }
 <li>
 <p>
 int <strong>dce_smb.smb_max_compound</strong> = 3: SMB max compound size { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>dce_smb.smb_max_credit</strong> = 8192: Maximum number of outstanding request { 1:65536 }
 </p>
 </li>
 <li>
@@ -29888,6 +30183,16 @@ implied <strong>snort.--id-zero</strong>: use id prefix / subdirectory even with
 </li>
 <li>
 <p>
+implied <strong>snort.--ignore-warn-flowbits</strong>: ignore warnings about flowbits that are checked but not set and vice-versa
+</p>
+</li>
+<li>
+<p>
+implied <strong>snort.--ignore-warn-rules</strong>: ignore warnings about duplicate rules and rule parsing issues
+</p>
+</li>
+<li>
+<p>
 string <strong>snort.-i</strong>: &lt;iface&gt;&#8230; list of interfaces
 </p>
 </li>
@@ -30778,6 +31083,11 @@ int <strong>trace.constraints.ip_proto</strong>: numerical IP protocol ID filter
 </li>
 <li>
 <p>
+bool <strong>trace.constraints.match</strong> = true: use constraints to filter traces
+</p>
+</li>
+<li>
+<p>
 string <strong>trace.constraints.src_ip</strong>: source IP address filter
 </p>
 </li>
@@ -31518,37 +31828,272 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>dce_smb.smbv2_close</strong>: total number of SMBv2 close packets seen (sum)
+<strong>dce_smb.v2_bad_next_cmd_offset</strong>: total number of SMBv2 packets seen with invalid next command offset (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>dce_smb.smbv2_create</strong>: total number of SMBv2 create packets seen (sum)
+<strong>dce_smb.v2_cls_err_resp</strong>: total number of SMBv2 close error response packets seen (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>dce_smb.smbv2_read</strong>: total number of SMBv2 read packets seen (sum)
+<strong>dce_smb.v2_cls_ignored</strong>: total number of SMBv2 close packets ignored due to missing trackers or invalid share type (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>dce_smb.smbv2_set_info</strong>: total number of SMBv2 set info packets seen (sum)
+<strong>dce_smb.v2_cls_inv_str_sz</strong>: total number of SMBv2 close packets seen with invalid structure size (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>dce_smb.smbv2_tree_connect</strong>: total number of SMBv2 tree connect packets seen (sum)
+<strong>dce_smb.v2_cls_req_ftrkr_misng</strong>: total number of SMBv2 close request packets ignored due to missing file tracker (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>dce_smb.smbv2_tree_disconnect</strong>: total number of SMBv2 tree disconnect packets seen (sum)
+<strong>dce_smb.v2_cls_req_hdr_err</strong>: total number of SMBv2 close request packets ignored due to corrupted header (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>dce_smb.smbv2_write</strong>: total number of SMBv2 write packets seen (sum)
+<strong>dce_smb.v2_cls</strong>: total number of SMBv2 close packets seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_cmpnd_req_lt_crossed</strong>: total number of SMBv2 packets seen where compound requests exceed the smb_max_compound limit (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_crt_err_resp</strong>: total number of SMBv2 create error response packets seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_crt_inv_file_data</strong>: total number of SMBv2 create request packets ignored due to error in getting file name (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_crt_inv_str_sz</strong>: total number of SMBv2 create packets seen with invalid structure size (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_crt_req_hdr_err</strong>: total number of SMBv2 create request packets ignored due to corrupted header (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_crt_req_ipc</strong>: total number of SMBv2 create request packets ignored as share type is IPC (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_crt_resp_hdr_err</strong>: total number of SMBv2 create response packets ignored due to corrupted header (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_crt_rtrkr_misng</strong>: total number of SMBv2 create response packets ignored due to missing create request tracker (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_crt</strong>: total number of SMBv2 create packets seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_crt_tree_trkr_misng</strong>: total number of SMBv2 create response packets ignored due to missing tree tracker (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_extra_file_data_err</strong>: total number of SMBv2 packets seen with where file data beyond file size is observed (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_hdr_err</strong>: total number of SMBv2 packets seen with corrupted hdr (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_inv_file_ctx_err</strong>: total number of times null file context are seen resulting in not being able to set file size (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_logoff_inv_str_sz</strong>: total number of SMBv2 logoff packets seen with invalid structure size (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_logoff</strong>: total number of SMBv2 logoff (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_msgs_uninspected</strong>: total number of SMBv2 packets seen where command is not being inspected (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_read_err_resp</strong>: total number of SMBv2 read error response packets seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_read_ignored</strong>: total number of SMBv2 write packets ignored due to missing trackers or invalid share type (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_read_inv_str_sz</strong>: total number of SMBv2 read packets seen with invalid structure size (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_read_req_hdr_err</strong>: total number of SMBv2 read request packets ignored due to corrupted header (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_read_resp_hdr_err</strong>: total number of SMBv2 read response packets ignored due to corrupted header (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_read_rtrkr_misng</strong>: total number of SMBv2 read response packets ignored due to missing read request tracker (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_read</strong>: total number of SMBv2 read packets seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_setup_err_resp</strong>: total number of SMBv2 setup error response packets seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_setup_inv_str_sz</strong>: total number of SMBv2 setup packets seen with invalid structure size (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_setup_resp_hdr_err</strong>: total number of SMBv2 setup response packets ignored due to corrupted header (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_setup</strong>: total number of SMBv2 setup packets seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_stinf_err_resp</strong>: total number of SMBv2 set info error response packets seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_stinf_ignored</strong>: total number of SMBv2 set info packets ignored due to missing trackers or invalid share type (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_stinf_inv_str_sz</strong>: total number of SMBv2 set info packets seen with invalid structure size (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_stinf_req_ftrkr_misng</strong>: total number of SMBv2 set info request packets ignored due to missing file tracker (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_stinf_req_hdr_err</strong>: total number of SMBv2 set info request packets ignored due to corrupted header (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_stinf</strong>: total number of SMBv2 set info packets seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_tree_cnct_err_resp</strong>: total number of SMBv2 tree connect error response packets seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_tree_cnct_ignored</strong>: total number of SMBv2 setup response packets ignored due to failure in creating tree tracker (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_tree_cnct_inv_str_sz</strong>: total number of SMBv2 tree connect packets seen with invalid structure size (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_tree_cnct_resp_hdr_err</strong>: total number of SMBv2 tree connect response packets ignored due to corrupted header (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_tree_cnct</strong>: total number of SMBv2 tree connect packets seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_tree_discn_ignored</strong>: total number of SMBv2 tree disconnect packets ignored due to missing trackers or invalid share type (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_tree_discn_inv_str_sz</strong>: total number of SMBv2 tree disconnect packets seen with invalid structure size (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_tree_discn_req_hdr_err</strong>: total number of SMBv2 tree disconnect request packets ignored due to corrupted header (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_tree_discn</strong>: total number of SMBv2 tree disconnect packets seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_wrt_err_resp</strong>: total number of SMBv2 write error response packets seen (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_wrt_ignored</strong>: total number of SMBv2 write packets ignored due to missing trackers or invalid share type (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_wrt_inv_str_sz</strong>: total number of SMBv2 write packets seen with invalid structure size (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_wrt_req_hdr_err</strong>: total number of SMBv2 write request packets ignored due to corrupted header (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.v2_wrt</strong>: total number of SMBv2 write packets seen (sum)
 </p>
 </li>
 <li>
@@ -34044,6 +34589,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>stream_tcp.memory</strong>: current memory in use (now)
+</p>
+</li>
+<li>
+<p>
+<strong>stream_tcp.meta_acks</strong>: number of meta acks processed (sum)
 </p>
 </li>
 <li>
@@ -40383,7 +40933,7 @@ Adding/removing stream_* inspectors if stream was already configured
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2020-07-06 10:25:58 EDT
+ 2020-07-15 08:52:02 EDT
 </div>
 </div>
 </body>
