@@ -411,6 +411,12 @@ static const Parameter s_params[] =
     { "--id-zero", Parameter::PT_IMPLIED, nullptr, nullptr,
       "use id prefix / subdirectory even with one packet thread" },
 
+    { "--ignore-warn-flowbits", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "ignore warnings about flowbits that are checked but not set and vice-versa" },
+
+    { "--ignore-warn-rules", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "ignore warnings about duplicate rules and rule parsing issues" },
+
     { "--include-path", Parameter::PT_STRING, nullptr, nullptr,
       "<path> where to find Lua and rule included files; "
       "searched before current or config directories" },
@@ -654,6 +660,8 @@ public:
 
 private:
     SFDAQModuleConfig* module_config;
+    bool ignore_warn_flowbits = false;
+    bool ignore_warn_rules = false;
 };
 
 void SnortModule::set_trace(const Trace* trace) const
@@ -1082,6 +1090,12 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("--warn-hosts") )
         sc->warning_flags |= (1 << WARN_HOSTS);
 
+    else if ( v.is("--ignore-warn-flowbits") )
+        ignore_warn_flowbits = true;
+
+    else if ( v.is("--ignore-warn-rules") )
+        ignore_warn_rules = true;
+
     else if ( v.is("--warn-plugins") )
         sc->warning_flags |= (1 << WARN_PLUGINS);
 
@@ -1110,6 +1124,18 @@ bool SnortModule::end(const char*, int, SnortConfig* sc)
 {
     if ( sc->offload_threads and ThreadConfig::get_instance_max() != 1 )
         ParseError("You can not enable experimental offload with more than one packet thread.");
+
+    if ( ignore_warn_flowbits )
+    {
+        sc->warning_flags &= ~(1 << WARN_FLOWBITS);
+        ignore_warn_flowbits = false;
+    }
+
+    if ( ignore_warn_rules )
+    {
+        sc->warning_flags &= ~(1 << WARN_RULES);
+        ignore_warn_rules = false;
+    }
 
     return true;
 }
