@@ -15,12 +15,12 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// trace_log.h author Oleksandr Serhiienko <oserhiie@cisco.com>
+// trace_loggers.h author Oleksandr Serhiienko <oserhiie@cisco.com>
 
-#ifndef TRACE_LOG_H
-#define TRACE_LOG_H
+#ifndef TRACE_LOGGERS_H
+#define TRACE_LOGGERS_H
 
-#include "trace_log_base.h"
+#include "trace_logger.h"
 
 //-----------------------------------------------
 //  Logger factories
@@ -46,5 +46,5 @@ public:
     snort::TraceLogger* instantiate() override;
 };
 
-#endif // TRACE_LOG_H
+#endif // TRACE_LOGGERS_H
 

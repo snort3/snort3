@@ -69,6 +69,8 @@ executed when:
 * IT_PROBE - process all packets after all the above (e.g. perf_monitor,
   port_scan)
 
+* IT_PASSIVE - for configuration only or data consuming
+
 
 === Codecs
 
@@ -253,6 +255,41 @@ to accomplish some of its basic functionality.
 Action plugins specify a builtin action in the API which is used to
 determine verdict.  (Conversely, builtin actions don't have an associated
 plugin function.)
+
+
+=== Trace Loggers
+
+The Trace Loggers print trace messages. They can be implemented as inspector
+plugins.
+
+The first step is creating a custom logger by inheriting from the Snort
+TraceLogger class. The following is an example TraceLogger.
+
+    class FooLogger : public TraceLogger
+    {
+    public:
+        void log(const char*, const char*, uint8_t, const char*, const Packet*) override
+        { printf("%s%s\n", "Foo", "Bar"); }
+    };
+
+To instantiate logger objects it's needed to create a logger factory derived
+from the Snort TraceLoggerFactory class.
+
+    class FooFactory : public TraceLoggerFactory
+    {
+    public:
+        TraceLogger* instantiate() override
+        { return new FooLogger(); }
+    };
+
+Once the Factory is created, Inspector and appropriate Module are needed.
+*Inspector::configure()* must initialize the logger factory.
+
+    bool FooInspector::configure(SnortConfig* sc) override
+    {
+        return TraceApi::override_logger_factory(sc, new FooFactory());
+    }
+
 
 === Piglet Test Harness
 

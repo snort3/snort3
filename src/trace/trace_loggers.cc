@@ -15,13 +15,13 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// trace_log.cc author Oleksandr Serhiienko <oserhiie@cisco.com>
+// trace_loggers.cc author Oleksandr Serhiienko <oserhiie@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "trace_log.h"
+#include "trace_loggers.h"
 
 #include <cstdio>
 #include <syslog.h>

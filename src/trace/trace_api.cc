@@ -24,12 +24,13 @@
 #include "trace_api.h"
 
 #include "framework/packet_constraints.h"
+#include "main/snort.h"
 #include "main/snort_config.h"
 #include "main/thread.h"
 #include "protocols/packet.h"
 
 #include "trace_config.h"
-#include "trace_log_base.h"
+#include "trace_logger.h"
 
 using namespace snort;
 
@@ -72,6 +73,23 @@ void TraceApi::thread_reinit(const TraceConfig* trace_config)
 {
     update_constraints(trace_config->constraints);
     trace_config->setup_module_trace();
+}
+
+bool TraceApi::override_logger_factory(SnortConfig* sc, TraceLoggerFactory* factory)
+{
+    if ( !sc or !sc->trace_config or !factory )
+        return false;
+
+    delete sc->trace_config->logger_factory;
+    sc->trace_config->logger_factory = factory;
+
+    if ( !Snort::is_reloading() )
+    {
+        delete g_trace_logger;
+        g_trace_logger = sc->trace_config->logger_factory->instantiate();
+    }
+
+    return true;
 }
 
 void TraceApi::log(const char* log_msg, const char* name,

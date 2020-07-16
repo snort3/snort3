@@ -29,7 +29,7 @@
 #include "framework/packet_constraints.h"
 #include "managers/module_manager.h"
 
-#include "trace_log_base.h"
+#include "trace_logger.h"
 
 using namespace snort;
 

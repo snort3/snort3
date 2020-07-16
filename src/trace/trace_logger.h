@@ -15,10 +15,10 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// trace_log_base.h author Oleksandr Serhiienko <oserhiie@cisco.com>
+// trace_logger.h author Oleksandr Serhiienko <oserhiie@cisco.com>
 
-#ifndef TRACE_LOG_BASE_H
-#define TRACE_LOG_BASE_H
+#ifndef TRACE_LOGGER_H
+#define TRACE_LOGGER_H
 
 #include <cstdint>
 
@@ -44,5 +44,5 @@ public:
 };
 }
 
-#endif // TRACE_LOG_BASE_H
+#endif // TRACE_LOGGER_H
 

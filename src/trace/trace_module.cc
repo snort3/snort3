@@ -30,7 +30,7 @@
 #include "managers/module_manager.h"
 
 #include "trace_config.h"
-#include "trace_log.h"
+#include "trace_loggers.h"
 #include "trace_parser.h"
 #include "trace_swap.h"
 

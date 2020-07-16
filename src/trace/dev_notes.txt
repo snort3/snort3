@@ -6,8 +6,8 @@ This directory contains the trace logger framework.
     is created per each packet thread and one for the main thread. The logging configuration
     happens in the module. The logger factory is used to init/cleanup loggers.
 
-    Include "trace_log_base.h" to get TraceLogger base class.
-    Derived loggers placed into "trace_log.h/trace_log.cc".
+    Include "trace_logger.h" to get TraceLogger base class.
+    Built-in loggers are defined in "trace_loggers.h/trace_loggers.cc".
 
 * TraceLoggerFactory
 
@@ -15,8 +15,8 @@ This directory contains the trace logger framework.
     thread. One factory instance exists which used to init/cleanup loggers and placed
     into TraceConfig. The factory object instantiates in the module due to configuration.
 
-    Include "trace_log_base.h" to get TraceLoggerFactory base class and template function
-    to create particular objects. Derived factories placed into "trace_log.h/trace_log.cc".
+    Include "trace_logger.h" to get TraceLoggerFactory base class and template function
+    to create particular objects. Built-in factories are defined in "trace_loggers.h/trace_loggers.cc".
 
 * TraceConfig
 
@@ -85,7 +85,15 @@ This directory contains the trace logger framework.
     TraceConfig should be configured in SnortConfig before TraceApi init.
 
     To create specific TraceLogger/TraceLoggerFactory pair just inherit base classes placed
-    into "trace_log_base.h" and init TraceConfig with a new factory during configuration.
+    into "trace_logger.h" and init TraceConfig with a new factory during configuration.
+
+* Extending the trace logger framework with TraceLogger plugins
+
+    It's possible to create a trace logger as an inspector plugin to handle a custom logic of trace
+    messages printing. The workflow here is to implement the custom logger and logger factory by
+    inheriting from the Snort TraceLogger and TraceLoggerFactory classes, put them into a separate
+    plugin, and call TraceApi::override_logger_factory() during the plugin configuration to
+    initialize the framework with the custom logger factory.
 
 * Disabling packet constraints matching
 

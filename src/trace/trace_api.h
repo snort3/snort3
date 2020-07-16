@@ -29,6 +29,9 @@ class TraceConfig;
 namespace snort
 {
 struct Packet;
+struct SnortConfig;
+
+class TraceLoggerFactory;
 
 class SO_PUBLIC TraceApi
 {
@@ -36,6 +39,10 @@ public:
     static void thread_init(const TraceConfig* tc);
     static void thread_reinit(const TraceConfig* tc);
     static void thread_term();
+
+    // This method will change an ownership of the passed TraceLoggerFactory
+    // from the caller to the passed SnortConfig
+    static bool override_logger_factory(SnortConfig*, TraceLoggerFactory*);
 
     static void log(const char* log_msg, const char* name,
         uint8_t log_level, const char* trace_option, const Packet* p);
