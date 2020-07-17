@@ -590,7 +590,8 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
 
         /* Scan Via Header for squid */
         const std::string* via = meta_data[MISC_VIA_FID];
-        if ( !asd.get_tp_payload_app_id() and !payload.get_id() and (asd.scan_flags & SCAN_HTTP_VIA_FLAG) and via )
+        if ( !asd.get_tp_payload_app_id() and payload.get_id() <= APP_ID_NONE and
+            (asd.scan_flags & SCAN_HTTP_VIA_FLAG) and via )
         {
             AppId payload_id = http_matchers.get_appid_by_pattern(via->c_str(), via->size(),
                 nullptr);
@@ -632,7 +633,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
     // Scan Content-Type Header for multimedia types and scan contents
     const std::string* content_type = meta_data[RSP_CONTENT_TYPE_FID];
     if ( (asd.scan_flags & SCAN_HTTP_CONTENT_TYPE_FLAG)
-         and content_type and !asd.get_tp_payload_app_id() and !payload.get_id())
+         and content_type and !asd.get_tp_payload_app_id() and payload.get_id() <= APP_ID_NONE)
     {
         AppId payload_id = http_matchers.get_appid_by_content_type(content_type->c_str(),
             content_type->size());
@@ -714,7 +715,8 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
         }
     }
     if (payload.get_id() <=APP_ID_NONE and is_payload_processed and
-        asd.service.get_id()== APP_ID_HTTP2)
+        (asd.service.get_id()== APP_ID_HTTP2 or (asd.service.get_id()== APP_ID_HTTP and
+        asd.is_tp_appid_available())))
         set_payload(APP_ID_UNKNOWN, change_bits);
 
     asd.clear_http_flags();
