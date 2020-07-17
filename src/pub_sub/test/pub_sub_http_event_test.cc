@@ -25,6 +25,7 @@
 
 #include "pub_sub/http_events.h"
 #include "service_inspectors/http_inspect/http_common.h"
+#include "service_inspectors/http_inspect/http_msg_header.h"
 #include "service_inspectors/http_inspect/http_msg_section.h"
 #include "service_inspectors/http_inspect/http_field.h"
 
@@ -36,14 +37,33 @@ using namespace snort;
 using namespace HttpCommon;
 
 // Stubs to make the code link
+void Field::set(const Field& input)
+{
+    strt = input.strt;
+    len = input.len;
+}
+
 const Field Field::FIELD_NULL { STAT_NO_SOURCE };
 const Field& HttpMsgSection::get_classic_buffer(unsigned, uint64_t, uint64_t)
 { return Field::FIELD_NULL; }
+const Field& HttpMsgHeader::get_true_ip_addr()
+{
+    Field *out = (Field*)mock().getData("output").getObjectPointer();
+    return (*out);
+}
 
 TEST_GROUP(pub_sub_http_event_test)
 {
-};
+    void setup() override
+    {
+        mock().setDataObject("output", "Field", nullptr);
+    }
 
+    void teardown() override
+    {
+        mock().clear();
+    }
+};
 
 TEST(pub_sub_http_event_test, http_traffic)
 {
@@ -59,6 +79,32 @@ TEST(pub_sub_http_event_test, http2_traffic)
     HttpEvent event(nullptr, true, stream_id);
     CHECK(event.get_is_http2());
     CHECK(event.get_http2_stream_id() == stream_id);
+}
+
+TEST(pub_sub_http_event_test, no_true_ip_addr)
+{
+    const uint8_t* header_start;
+    int32_t header_length;
+    Field input(0, nullptr);
+    mock().setDataObject("output", "Field", &input);
+    HttpEvent event(nullptr, false, 0);
+    header_start = event.get_trueip_addr(header_length);
+    CHECK(header_length == 0);
+    CHECK(header_start == nullptr);
+    mock().checkExpectations();
+}
+
+TEST(pub_sub_http_event_test, true_ip_addr)
+{
+    const uint8_t* header_start;
+    int32_t header_length;
+    Field input(7, (const uint8_t*) "1.1.1.1");
+    mock().setDataObject("output", "Field", &input);
+    HttpEvent event(nullptr, false, 0);
+    header_start = event.get_trueip_addr(header_length);
+    CHECK(header_length == 7);
+    CHECK(memcmp(header_start, "1.1.1.1", 7) == 0);
+    mock().checkExpectations();
 }
 
 int main(int argc, char** argv)

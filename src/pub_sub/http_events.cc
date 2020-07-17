@@ -92,6 +92,21 @@ const uint8_t* HttpEvent::get_server(int32_t& length)
         length);
 }
 
+const uint8_t* HttpEvent::get_trueip_addr(int32_t& length)
+{
+    const Field& field = http_msg_header->get_true_ip_addr();
+    if (field.length() > 0)
+    {
+        length = field.length();
+        return field.start();
+    }
+    else
+    {
+        length = 0;
+        return nullptr;
+    }
+}
+
 const uint8_t* HttpEvent::get_uri(int32_t& length)
 {
     return get_header(HttpEnums::HTTP_BUFFER_URI, 0, length);

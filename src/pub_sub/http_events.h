@@ -46,6 +46,7 @@ public:
     const uint8_t* get_location(int32_t &length);
     const uint8_t* get_referer(int32_t &length);
     const uint8_t* get_server(int32_t &length);
+    const uint8_t* get_trueip_addr(int32_t& length);
     const uint8_t* get_uri(int32_t &length);
     const uint8_t* get_user_agent(int32_t &length);
     const uint8_t* get_via(int32_t &length);
