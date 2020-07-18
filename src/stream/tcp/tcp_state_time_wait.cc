@@ -120,7 +120,7 @@ bool TcpStateTimeWait::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpS
         {
             // The last ACK is a part of the session. Delete the session after processing is
             // complete.
-            trk.session->clear_session(false, true, false, tsd.get_pkt() );
+            trk.session->clear_session(false, true, false, tsd.is_meta_ack_packet() ? nullptr : tsd.get_pkt() );
             flow->session_state |= STREAM_STATE_CLOSED;
             trk.session->set_pkt_action_flag(ACTION_LWSSN_CLOSED);
         }

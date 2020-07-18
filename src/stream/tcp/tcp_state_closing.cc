@@ -136,7 +136,7 @@ bool TcpStateClosing::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpSt
             ( trk.session->get_listener_state(tsd) == TcpStreamTracker::TCP_TIME_WAIT ) )
         {
             Flow* flow = tsd.get_flow();
-            trk.session->clear_session(false, true, false, tsd.get_pkt() );
+            trk.session->clear_session(false, true, false, tsd.is_meta_ack_packet() ? nullptr : tsd.get_pkt() );
             flow->session_state |= STREAM_STATE_CLOSED;
             trk.session->set_pkt_action_flag(ACTION_LWSSN_CLOSED);
         }
