@@ -379,7 +379,7 @@ void AppIdHttpSession::process_chp_buffers(AppidChangeBits& change_bits, HttpPat
             if (app_type_flags & APP_TYPE_SERVICE)
                 client.update_user(chp_final, user);
             else
-                client.update_user(asd.service.get_id(), user);
+                client.update_user(asd.get_service_id(), user);
             user = nullptr;
             asd.set_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
         }
@@ -488,7 +488,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
                 if (appidDebug->is_active())
                     LogMessage("AppIdDbg %s Bad http response code.\n",
                         appidDebug->get_debug_session());
-                asd.reset_session_data();
+                asd.reset_session_data(change_bits);
                 return 0;
             }
         }
@@ -497,7 +497,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
         {
             set_session_flags(APPID_SESSION_RESPONSE_CODE_CHECKED);
             /* didn't receive response code in first X packets. Stop processing this session */
-            asd.reset_session_data();
+            asd.reset_session_data(change_bits);
             if (appidDebug->is_active())
                 LogMessage("AppIdDbg %s No response code received\n",
                     appidDebug->get_debug_session());
@@ -506,10 +506,10 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
 #endif
     }
 
-    if (asd.service.get_id() == APP_ID_NONE or asd.service.get_id() == APP_ID_HTTP2)
+    if (asd.get_service_id() == APP_ID_NONE or asd.get_service_id() == APP_ID_HTTP2)
     {
-        if (asd.service.get_id() == APP_ID_NONE)
-            asd.service.set_id(APP_ID_HTTP, asd.ctxt.get_odp_ctxt());
+        if (asd.get_service_id() == APP_ID_NONE)
+            asd.set_service_id(APP_ID_HTTP, asd.ctxt.get_odp_ctxt());
         asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
         asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
     }
@@ -526,8 +526,8 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
         const std::string* server = meta_data[MISC_SERVER_FID];
         if ( (asd.scan_flags & SCAN_HTTP_VENDOR_FLAG) and server)
         {
-            if ( asd.service.get_id() == APP_ID_NONE or asd.service.get_id() == APP_ID_HTTP  or
-                asd.service.get_id() == APP_ID_HTTP2)
+            if ( asd.get_service_id() == APP_ID_NONE or asd.get_service_id() == APP_ID_HTTP  or
+                asd.get_service_id() == APP_ID_HTTP2)
                 {
                     char* vendorVersion = nullptr;
                     char* vendor = nullptr;
@@ -537,8 +537,8 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
                         &vendorVersion, &vendor, &subtype);
                     if (vendor || vendorVersion)
                     {
-                        asd.service.set_vendor(vendor);
-                        asd.service.set_version(vendorVersion, change_bits);
+                        asd.set_service_vendor(vendor);
+                        asd.set_service_version(vendorVersion, change_bits);
                         asd.scan_flags &= ~SCAN_HTTP_VENDOR_FLAG;
 
                         snort_free(vendor);
@@ -573,7 +573,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             if (appidDebug->is_active())
             {
                 if (service_id > APP_ID_NONE and service_id != APP_ID_HTTP and
-                    asd.service.get_id() != service_id)
+                    asd.get_service_id() != service_id)
                 {
                     const char *app_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(service_id);
                     LogMessage("AppIdDbg %s User Agent is service %s (%d)\n",
@@ -614,7 +614,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             set_client(app_id, change_bits, "X-working-with", version);
         else
         {
-            if (app_id and asd.service.get_id() != app_id)
+            if (app_id and asd.get_service_id() != app_id)
             {
                 asd.set_service_appid_data(app_id, change_bits, version);
                 if (appidDebug->is_active())
@@ -662,10 +662,10 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             if (client.get_id() <= APP_ID_NONE and client_id != APP_ID_HTTP)
                 set_client(client_id, change_bits, "URL", version);
 
-            if (asd.service.get_id() <= APP_ID_NONE)
+            if (asd.get_service_id() <= APP_ID_NONE)
             {
                 if (appidDebug->is_active() && service_id > APP_ID_NONE && service_id !=
-                    APP_ID_HTTP && asd.service.get_id() != service_id)
+                    APP_ID_HTTP && asd.get_service_id() != service_id)
                 {
                     const char *app_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(service_id);
                     LogMessage("AppIdDbg %s URL is service %s (%d)\n",
@@ -714,9 +714,9 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             }
         }
     }
-    if (payload.get_id() <=APP_ID_NONE and is_payload_processed and
-        (asd.service.get_id()== APP_ID_HTTP2 or (asd.service.get_id()== APP_ID_HTTP and
-        asd.is_tp_appid_available())))
+    if (payload.get_id() <= APP_ID_NONE and is_payload_processed and
+        (asd.get_service_id() == APP_ID_HTTP2 or (asd.get_service_id() == APP_ID_HTTP and
+            asd.is_tp_appid_available())))
         set_payload(APP_ID_UNKNOWN, change_bits);
 
     asd.clear_http_flags();

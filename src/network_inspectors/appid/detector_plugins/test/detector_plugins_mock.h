@@ -149,8 +149,9 @@ const TraceOption* AppIdModule::get_trace_options() const { return nullptr; }
 unsigned AppIdSession::inspector_id = 0;
 AppIdConfig stub_config;
 AppIdContext stub_ctxt(stub_config);
-AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector& inspector)
-    : snort::FlowData(inspector_id, (snort::Inspector*)&inspector), ctxt(stub_ctxt) { }
+AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector& inspector)
+    : snort::FlowData(inspector_id, (snort::Inspector*)&inspector), ctxt(stub_ctxt),
+        api(*(new AppIdSessionApi(this, *ip)))  { }
 AppIdSession::~AppIdSession() = default;
 AppIdHttpSession::AppIdHttpSession(AppIdSession& asd, uint32_t http2_stream_id)
   : asd(asd), http2_stream_id(http2_stream_id)

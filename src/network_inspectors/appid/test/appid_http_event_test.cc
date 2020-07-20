@@ -69,6 +69,24 @@ class FakeHttpMsgHeader
 };
 FakeHttpMsgHeader* fake_msg_header = nullptr;
 
+void AppIdSession::set_application_ids_service(AppId, AppidChangeBits&) {}
+void AppIdSession::set_ss_application_ids(AppId, AppId, AppId, AppId, AppId, AppidChangeBits&) {}
+AppIdHttpSession* AppIdSession::get_http_session(uint32_t stream_index) const
+{
+    if (stream_index < api.hsessions.size())
+    {
+        return api.hsessions[stream_index];
+    }
+    return nullptr;
+}
+
+void AppIdSession::delete_all_http_sessions()
+{
+    for (auto hsession : api.hsessions)
+        delete hsession;
+    api.hsessions.clear();
+}
+
 void AppIdHttpSession::set_http_change_bits(AppidChangeBits&, HttpFieldIds) {}
 void AppIdHttpSession::set_field(HttpFieldIds id, const std::string* str,
     AppidChangeBits&)
@@ -215,7 +233,8 @@ TEST_GROUP(appid_http_event)
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         flow = new Flow;
-        mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492, dummy_appid_inspector);
+        SfIp ip;
+        mock_session = new AppIdSession(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector);
         mock_session->create_http_session();
         flow->set_flow_data(mock_session);
         appidDebug = new AppIdDebug();
@@ -225,6 +244,7 @@ TEST_GROUP(appid_http_event)
     void teardown() override
     {
         fake_msg_header = nullptr;
+        delete &mock_session->get_api();
         delete mock_session;
         delete flow;
         mock().clear();

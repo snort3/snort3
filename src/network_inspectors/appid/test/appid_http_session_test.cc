@@ -101,8 +101,9 @@ static OdpContext stub_odp_ctxt(stub_config, nullptr);
 OdpContext* AppIdContext::odp_ctxt = &stub_odp_ctxt;
 
 // AppIdSession mock functions
-AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector& inspector)
-    : FlowData(inspector_id, &inspector), ctxt(stub_ctxt)
+AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector& inspector)
+    : FlowData(inspector_id, &inspector), ctxt(stub_ctxt),
+        api(*(new AppIdSessionApi(this, *ip)))
 {}
 
 AppIdSession::~AppIdSession()
@@ -124,7 +125,7 @@ void AppIdSession::clear_http_flags()
 {
 }
 
-void AppIdSession::reset_session_data()
+void AppIdSession::reset_session_data(AppidChangeBits&)
 {
 }
 
@@ -168,8 +169,8 @@ AppIdConfig::~AppIdConfig() { }
 unsigned AppIdSession::inspector_id = 0;
 THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
 
-const SfIp* sfip = nullptr;
-AppIdSession session(IpProtocol::IP, sfip, 0, dummy_appid_inspector);
+SfIp sfip;
+AppIdSession session(IpProtocol::IP, &sfip, 0, dummy_appid_inspector);
 AppIdHttpSession mock_hsession(session, 0);
 
 TEST_GROUP(appid_http_session)
@@ -286,7 +287,7 @@ TEST(appid_http_session, change_bits_for_referred_appid)
     AppIdPegCounts::init_pegs();
     AppIdConfig config;
     OdpContext odp_ctxt(config, nullptr);
-    session.service.set_id(APP_ID_HTTP, odp_ctxt);
+    session.set_service_id(APP_ID_HTTP, odp_ctxt);
     session.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
     mock_hsession.set_skip_simple_detect(false);
     mock_hsession.set_field( (HttpFieldIds)2, new std::string("referer"), change_bits );

@@ -197,6 +197,7 @@ void AppIdSession::examine_rtmp_metadata(AppidChangeBits&) {}
 void AppIdSession::examine_ssl_metadata(AppidChangeBits&) {}
 void AppIdSession::update_encrypted_app_id(AppId) {}
 bool AppIdSession::is_tp_processing_done() const {return 0;}
+AppId AppIdSession::pick_ss_payload_app_id(AppId) const { return get_payload_id(); }
 AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol,
     AppidSessionDirection, AppIdInspector*)
 {
@@ -205,8 +206,7 @@ AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol,
 
 void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, Flow* flow, bool, uint32_t)
 {
-    static AppIdSessionApi api(*this);
-    AppidEvent app_event(change_bits, false, 0, api);
+    AppidEvent app_event(change_bits, false, 0, this->get_api());
     DataBus::publish(APPID_EVENT_ANY_CHANGE, app_event, flow);
 }
 
@@ -285,6 +285,38 @@ bool AppIdReloadTuner::tune_resources(unsigned int)
     return true;
 }
 
+void AppIdSession::set_ss_application_ids(AppId service_id, AppId client_id, AppId payload_id,
+    AppId misc_id, AppId referred_id, AppidChangeBits& change_bits)
+{
+    if (api.application_ids[APP_PROTOID_SERVICE] != service_id)
+    {
+        api.application_ids[APP_PROTOID_SERVICE] = service_id;
+        change_bits.set(APPID_SERVICE_BIT);
+    }
+    if (api.application_ids[APP_PROTOID_CLIENT] != client_id)
+    {
+        api.application_ids[APP_PROTOID_CLIENT] = client_id;
+        change_bits.set(APPID_CLIENT_BIT);
+    }
+    if (api.application_ids[APP_PROTOID_PAYLOAD] != payload_id)
+    {
+        api.application_ids[APP_PROTOID_PAYLOAD] = payload_id;
+        change_bits.set(APPID_PAYLOAD_BIT);
+    }
+    if (api.application_ids[APP_PROTOID_MISC] != misc_id)
+    {
+        api.application_ids[APP_PROTOID_MISC] = misc_id;
+        change_bits.set(APPID_MISC_BIT);
+    }
+    if (api.application_ids[APP_PROTOID_REFERRED] != referred_id)
+    {
+        api.application_ids[APP_PROTOID_REFERRED] = referred_id;
+        change_bits.set(APPID_REFERRED_BIT);
+    }
+}
+
+AppIdHttpSession* AppIdSession::get_http_session(uint32_t) const { return nullptr; }
+
 TEST_GROUP(appid_discovery_tests)
 {
     char test_log[256];
@@ -330,22 +362,24 @@ TEST(appid_discovery_tests, event_published_when_ignoring_flow)
     DAQ_PktHdr_t pkth;
     p.pkth = &pkth;
     SfIp ip;
+    ip.set("1.2.3.4");
     p.ptrs.ip_api.set(ip, ip);
     AppIdModule app_module;
     AppIdInspector ins(app_module);
-    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, nullptr, 21, ins);
+    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins);
     Flow* flow = new Flow;
     flow->set_flow_data(asd);
     p.flow = flow;
     asd->initiator_port = 21;
-    asd->initiator_ip.set("1.2.3.4");
     asd->set_session_flags(APPID_SESSION_FUTURE_FLOW);
 
     AppIdDiscovery::do_application_discovery(&p, ins, nullptr);
 
     // Detect changes in service, client, payload, and misc appid
     mock().checkExpectations();
-    STRCMP_EQUAL(test_log, "Published change_bits == 0000000011110");
+    STRCMP_EQUAL(test_log, "Published change_bits == 00000001111100");
+
+    delete &asd->get_api();
     delete asd;
     delete flow;
 }
@@ -360,22 +394,23 @@ TEST(appid_discovery_tests, event_published_when_processing_flow)
     DAQ_PktHdr_t pkth;
     p.pkth = &pkth;
     SfIp ip;
+    ip.set("1.2.3.4");
     p.ptrs.ip_api.set(ip, ip);
     p.ptrs.tcph = nullptr;
     AppIdModule app_module;
     AppIdInspector ins(app_module);
-    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, nullptr, 21, ins);
+    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins);
     Flow* flow = new Flow;
     flow->set_flow_data(asd);
     p.flow = flow;
     asd->initiator_port = 21;
-    asd->initiator_ip.set("1.2.3.4");
 
     AppIdDiscovery::do_application_discovery(&p, ins, nullptr);
 
     // Detect changes in service, client, payload, and misc appid
     mock().checkExpectations();
-    STRCMP_EQUAL(test_log, "Published change_bits == 0000000011110");
+    STRCMP_EQUAL(test_log, "Published change_bits == 00000001111100");
+    delete &asd->get_api();
     delete asd;
     delete flow;
 }
@@ -386,12 +421,14 @@ TEST(appid_discovery_tests, change_bits_for_client_version)
     AppidChangeBits change_bits;
     AppIdModule app_module;
     AppIdInspector ins(app_module);
-    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, nullptr, 21, ins);
+    SfIp ip;
+    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins);
     const char* version = "3.0";
-    asd->client.set_version(version, change_bits);
+    asd->set_client_version(version, change_bits);
 
     // Detect changes in client version
     CHECK_EQUAL(change_bits.test(APPID_VERSION_BIT), true);
+    delete &asd->get_api();
     delete asd;
 }
 
@@ -416,38 +453,39 @@ TEST(appid_discovery_tests, change_bits_for_non_http_appid)
     DAQ_PktHdr_t pkth;
     p.pkth = &pkth;
     SfIp ip;
+    ip.set("1.2.3.4");
     p.ptrs.ip_api.set(ip, ip);
     AppIdModule app_module;
     AppIdInspector ins(app_module);
-    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, nullptr, 21, ins);
+    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins);
     Flow* flow = new Flow;
     flow->set_flow_data(asd);
     p.flow = flow;
     p.ptrs.tcph = nullptr;
     asd->initiator_port = 21;
-    asd->initiator_ip.set("1.2.3.4");
     asd->misc_app_id = APP_ID_NONE;
-    asd->payload.set_id(APP_ID_NONE);
-    asd->client.set_id(APP_ID_CURL);
-    asd->service.set_id(APP_ID_FTP, app_ctxt.get_odp_ctxt());
+    asd->set_payload_id(APP_ID_NONE);
+    asd->set_client_id(APP_ID_CURL);
+    asd->set_service_id(APP_ID_FTP, app_ctxt.get_odp_ctxt());
 
     AppIdDiscovery::do_application_discovery(&p, ins, nullptr);
 
     // Detect event for FTP service and CURL client
-    CHECK_EQUAL(asd->client.get_id(), APP_ID_CURL);
-    CHECK_EQUAL(asd->service.get_id(), APP_ID_FTP);
+    CHECK_EQUAL(asd->get_client_id(), APP_ID_CURL);
+    CHECK_EQUAL(asd->get_service_id(), APP_ID_FTP);
 
     // Testing DNS appid
     asd->misc_app_id = APP_ID_NONE;
-    asd->payload.set_id(APP_ID_NONE);
-    asd->client.set_id(APP_ID_NONE);
-    asd->service.set_id(APP_ID_DNS, app_ctxt.get_odp_ctxt());
+    asd->set_payload_id(APP_ID_NONE);
+    asd->set_client_id(APP_ID_NONE);
+    asd->set_service_id(APP_ID_DNS, app_ctxt.get_odp_ctxt());
     AppIdDiscovery::do_application_discovery(&p, ins, nullptr);
 
     // Detect event for DNS service
     mock().checkExpectations();
-    CHECK_EQUAL(asd->service.get_id(), APP_ID_DNS);
+    CHECK_EQUAL(asd->get_service_id(), APP_ID_DNS);
 
+    delete &asd->get_api();
     delete asd;
     delete flow;
 }
@@ -465,11 +503,11 @@ TEST(appid_discovery_tests, change_bits_to_string)
     // Detect all; failure of this test means some bits from enum are missed in translation
     change_bits.set();
     change_bits_to_string(change_bits, str);
-    STRCMP_EQUAL(str.c_str(), "created, service, client, payload, misc, referred, host,"
+    STRCMP_EQUAL(str.c_str(), "created, reset, service, client, payload, misc, referred, host,"
         " tls-host, url, user-agent, response, referrer, version");
 
     // Failure of this test is a reminder that enum is changed, hence translator needs update
-    CHECK_EQUAL(APPID_MAX_BIT, 13);
+    CHECK_EQUAL(APPID_MAX_BIT, 14);
 }
 
 int main(int argc, char** argv)

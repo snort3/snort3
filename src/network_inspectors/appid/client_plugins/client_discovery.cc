@@ -384,7 +384,7 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p,
     }
 
     if ( !was_service && asd.is_service_detected() )
-        asd.sync_with_snort_protocol_id(asd.service.get_id(), p);
+        asd.sync_with_snort_protocol_id(asd.get_service_id(), p);
 
     return isTpAppidDiscoveryDone;
 }

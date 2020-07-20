@@ -82,8 +82,8 @@ void PayloadAppDescriptor::update_stats(AppId) {}
 AppIdConfig::~AppIdConfig() { }
 AppIdConfig stub_config;
 AppIdContext stub_ctxt(stub_config);
-AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector&)
-    : FlowData(0), ctxt(stub_ctxt) {}
+AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector&)
+    : FlowData(0), ctxt(stub_ctxt), api(*(new AppIdSessionApi(this, *ip)))  { }
 AppIdSession::~AppIdSession() = default;
 AppIdDiscovery::AppIdDiscovery() {}
 AppIdDiscovery::~AppIdDiscovery() {}
@@ -150,17 +150,19 @@ TEST(service_state_tests, set_service_id_failed)
 {
     ServiceDiscoveryState sds;
     AppIdInspector inspector;
-    AppIdSession asd(IpProtocol::PROTO_NOT_SET, nullptr, 0, inspector);
     SfIp client_ip;
+    client_ip.set("1.2.3.4");
+    AppIdSession asd(IpProtocol::PROTO_NOT_SET, &client_ip, 0, inspector);
 
     // Testing 3+ failures to exceed STATE_ID_NEEDED_DUPE_DETRACT_COUNT with valid_count = 0
-    client_ip.set("1.2.3.4");
     sds.set_state(ServiceState::VALID);
     sds.set_service_id_failed(asd, &client_ip, 0);
     sds.set_service_id_failed(asd, &client_ip, 0);
     sds.set_service_id_failed(asd, &client_ip, 0);
     sds.set_service_id_failed(asd, &client_ip, 0);
     CHECK_TRUE(sds.get_state() == ServiceState::SEARCHING_PORT_PATTERN);
+
+    delete &asd.get_api();
 }
 
 
@@ -168,11 +170,11 @@ TEST(service_state_tests, set_service_id_failed_with_valid)
 {
     ServiceDiscoveryState sds;
     AppIdInspector inspector;
-    AppIdSession asd(IpProtocol::PROTO_NOT_SET, nullptr, 0, inspector);
     SfIp client_ip;
+    client_ip.set("1.2.3.4");
+    AppIdSession asd(IpProtocol::PROTO_NOT_SET, &client_ip, 0, inspector);
 
     // Testing 3+ failures to exceed STATE_ID_NEEDED_DUPE_DETRACT_COUNT with valid_count > 1
-    client_ip.set("1.2.3.4");
     sds.set_state(ServiceState::VALID);
     sds.set_service_id_valid(0);
     sds.set_service_id_valid(0);
@@ -181,6 +183,8 @@ TEST(service_state_tests, set_service_id_failed_with_valid)
     sds.set_service_id_failed(asd, &client_ip, 0);
     sds.set_service_id_failed(asd, &client_ip, 0);
     CHECK_TRUE(sds.get_state() == ServiceState::VALID);
+
+    delete &asd.get_api();
 }
 
 TEST(service_state_tests, appid_service_state_key_comparison_test)

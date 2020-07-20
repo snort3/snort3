@@ -35,10 +35,10 @@
 
 static HttpPatternMatchers* hm = nullptr;
 static Packet pkt;
-static const SfIp* sfip = nullptr;
+static SfIp sfip;
 static AppIdModule appid_mod;
 static AppIdInspector appid_inspector(appid_mod);
-static AppIdSession session(IpProtocol::IP, sfip, 0, appid_inspector);
+static AppIdSession session(IpProtocol::IP, &sfip, 0, appid_inspector);
 static AppIdHttpSession mock_hsession(session, 0);
 static ChpMatchDescriptor cmd_test;
 static MatchedCHPAction mchp;
@@ -79,7 +79,6 @@ TEST_GROUP(http_url_patterns_tests)
     void teardown() override
     {
         delete hm;
-        delete sfip;
     }
 };
 

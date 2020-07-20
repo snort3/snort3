@@ -30,6 +30,7 @@ enum AppProtoIdIndex
     APP_PROTOID_CLIENT,
     APP_PROTOID_PAYLOAD,
     APP_PROTOID_MISC,
+    APP_PROTOID_REFERRED,
     APP_PROTOID_MAX
 };
 
@@ -1004,7 +1005,7 @@ enum ApplicationIds : AppId
     APP_ID_LYCOS                          = 2775,
     APP_ID_DOGPILE                        = 2804,
     APP_ID_SPDY                           = 2886,
-    APP_ID_HTTP2                          = 2889,   // only used for bookkeeping -- treat as HTTP
+    APP_ID_HTTP2                          = 2889,
     APP_ID_ANYCONNECT                     = 2921,
     APP_ID_ANYCONNECT_SSL_CLIENT          = 2922,
     APP_ID_ANYCONNECT_IPSEC_CLIENT        = 2923,
@@ -1015,13 +1016,14 @@ enum ApplicationIds : AppId
     APP_ID_FTP_PASSIVE                    = 4003,
     APP_ID_QUIC                           = 4023,
     APP_ID_PSIPHON                        = 4075,
-    APP_ID_DNS_OVER_TLS                   = 4615,
 #ifdef REG_TEST
+    APP_ID_DNS_OVER_TLS                   = 4615,
     APP_ID_REGTEST                        = 10000,
     APP_ID_REGTEST1                       = 10001,
-    APP_ID_REGTEST2                       = 10002,
+    APP_ID_REGTEST2                       = 10002
+#else
+    APP_ID_DNS_OVER_TLS                   = 4615
 #endif
-    APP_ID_UNKNOWN_UI                     = 65535   // UI renders this value as 'Unknown'
 };
 
 enum AppIdType

@@ -204,7 +204,7 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
                 return APPID_ENOMEM;
             }
             args.asd.initialize_future_session(*pf, APPID_SESSION_EXPECTED_EVALUATE, APP_ID_FROM_RESPONDER);
-            pf->initiator_ip = *sip;
+            pf->set_initiator_ip(*sip);
             pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
             pf->scan_flags |= SCAN_HOST_PORT_FLAG;
         }

@@ -80,12 +80,12 @@ void FlowStash::store(const string& key, const string& val)
     store(key, val, STASH_ITEM_TYPE_STRING);
 }
 
-void FlowStash::store(const std::string& key, StashGenericObject* val)
+void FlowStash::store(const std::string& key, StashGenericObject* val, bool publish)
 {
-    store(key, val, STASH_ITEM_TYPE_GENERIC_OBJECT);
+    store(key, val, STASH_ITEM_TYPE_GENERIC_OBJECT, publish);
 }
 
-void FlowStash::store(const string& key, StashGenericObject* &val, StashItemType type)
+void FlowStash::store(const string& key, StashGenericObject* &val, StashItemType type, bool publish)
 {
 #ifdef NDEBUG
     UNUSED(type);
@@ -103,8 +103,11 @@ void FlowStash::store(const string& key, StashGenericObject* &val, StashItemType
         it_and_status.first->second = item;
     }
 
-    StashEvent e(item);
-    DataBus::publish(key.c_str(), e);
+    if (publish)
+    {
+        StashEvent e(item);
+        DataBus::publish(key.c_str(), e);
+    }
 }
 
 void FlowStash::store(const std::string& key, std::string* val)

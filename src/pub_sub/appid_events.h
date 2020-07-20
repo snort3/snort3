@@ -38,6 +38,7 @@ namespace snort
 enum AppidChangeBit
 {
     APPID_CREATED_BIT = 0,
+    APPID_RESET_BIT,
 
     // id
     APPID_SERVICE_BIT,
@@ -68,6 +69,8 @@ inline void change_bits_to_string(AppidChangeBits& change_bits, std::string& str
 
     if (change_bits.test(APPID_CREATED_BIT))
         --n? str.append("created, ") : str.append("created");
+    if (change_bits.test(APPID_RESET_BIT))
+        --n? str.append("reset, ") : str.append("reset");
     if (change_bits.test(APPID_SERVICE_BIT))
         --n? str.append("service, ") : str.append("service");
     if (change_bits.test(APPID_CLIENT_BIT))

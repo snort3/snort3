@@ -24,6 +24,10 @@
 #include <cstdint>
 #include <string>
 
+#define STASH_APPID_DATA "appid_data"
+
+#define STASH_GENERIC_OBJECT_APPID 1
+
 namespace snort
 {
 

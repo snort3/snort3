@@ -54,7 +54,7 @@ public:
 
         if (fp) // initialize data session
         {
-            fp->service.set_id(APP_ID_DCE_RPC, asd->ctxt.get_odp_ctxt());
+            fp->set_service_id(APP_ID_DCE_RPC, asd->ctxt.get_odp_ctxt());
             asd->initialize_future_session(*fp, APPID_SESSION_IGNORE_ID_FLAGS,
                 APP_ID_FROM_RESPONDER);
         }

@@ -36,8 +36,11 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
-snort::Inspector* snort::InspectorManager::get_inspector(
+namespace snort
+{
+Inspector* InspectorManager::get_inspector(
     char const*, bool, const snort::SnortConfig*) { return nullptr; }
+}
 
 void ApplicationDescriptor::set_id(
     const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
@@ -62,8 +65,8 @@ TEST_GROUP(appid_detector_tests)
     void setup() override
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
-        mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492, dummy_appid_inspector);
-        mock_session->get_http_session();
+        SfIp ip;
+        mock_session = new AppIdSession(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector);
         flow = new Flow;
         flow->set_flow_data(mock_session);
     }
@@ -71,6 +74,7 @@ TEST_GROUP(appid_detector_tests)
     void teardown() override
     {
         delete flow;
+        delete &mock_session->get_api();
         delete mock_session;
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
@@ -81,8 +85,8 @@ TEST(appid_detector_tests, add_user)
     const char* username = "snorty";
     AppIdDetector* ad = new TestDetector;
     ad->add_user(*mock_session, username, APPID_UT_ID, true);
-    STRCMP_EQUAL(mock_session->client.get_username(), username);
-    CHECK_TRUE((mock_session->client.get_user_id() == APPID_UT_ID));
+    STRCMP_EQUAL(mock_session->get_client_user(), username);
+    CHECK_TRUE((mock_session->get_client_user_id() == APPID_UT_ID));
     CHECK_TRUE((mock_session->get_session_flags(APPID_SESSION_LOGIN_SUCCEEDED)
         & APPID_SESSION_LOGIN_SUCCEEDED));
     delete ad;

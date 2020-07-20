@@ -63,6 +63,29 @@ public:
         const char*, bool, AppId& service_id, AppId& client_id, AppId& payload_id);
     const AppIdSessionApi* get_appid_session_api(const Flow& flow) const;
     bool is_inspection_needed(const Inspector& g) const;
+
+    bool is_service_http_type(AppId service_id) const
+    {
+        switch (service_id)
+        {
+            case APP_ID_HTTP:
+            case APP_ID_HTTPS:
+            case APP_ID_HTTP2:
+            case APP_ID_FTPS:
+            case APP_ID_IMAPS:
+            case APP_ID_IRCS:
+            case APP_ID_LDAPS:
+            case APP_ID_NNTPS:
+            case APP_ID_POP3S:
+            case APP_ID_SMTPS:
+            case APP_ID_SSHELL:
+            case APP_ID_SSL:
+            case APP_ID_QUIC:
+                return true;
+        }
+
+        return false;
+    }
 };
 
 SO_PUBLIC extern AppIdApi appid_api;

@@ -79,7 +79,7 @@ void AppIdDebug::activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t por
             dport = port1;
         }
     }
-    else if (memcmp(session->initiator_ip.get_ip6_ptr(),
+    else if (memcmp(session->get_initiator_ip().get_ip6_ptr(),
                 ip1, sizeof(ip::snort_in6_addr)) == 0)
     {
         sip = (const ip::snort_in6_addr*)ip1;

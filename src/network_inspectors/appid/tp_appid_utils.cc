@@ -362,7 +362,7 @@ static inline void process_rtmp(AppIdSession& asd,
     }
 
     if ( ( asd.scan_flags & SCAN_HTTP_USER_AGENT_FLAG ) and
-         asd.client.get_id() <= APP_ID_NONE and
+         asd.get_client_id() <= APP_ID_NONE and
          ( field = hsession->get_field(REQ_AGENT_FID) ) and
          ( size = attribute_data.http_request_user_agent_end() -
            attribute_data.http_request_user_agent_begin() ) > 0 )
@@ -376,7 +376,7 @@ static inline void process_rtmp(AppIdSession& asd,
         hsession->set_client(client_id, change_bits, "User Agent", version);
 
         // do not overwrite a previously-set service
-        if ( asd.service.get_id() <= APP_ID_NONE )
+        if ( asd.get_service_id() <= APP_ID_NONE )
             asd.set_service_appid_data(service_id, change_bits);
 
         asd.scan_flags |= ~SCAN_HTTP_USER_AGENT_FLAG;
@@ -402,7 +402,7 @@ static inline void process_rtmp(AppIdSession& asd,
                 // do not overwrite a previously-set client or service
                 if ( hsession->client.get_id() <= APP_ID_NONE )
                     hsession->set_client(client_id, change_bits, "URL");
-                if ( asd.service.get_id() <= APP_ID_NONE )
+                if ( asd.get_service_id() <= APP_ID_NONE )
                     asd.set_service_appid_data(service_id, change_bits);
 
                 // DO overwrite a previously-set payload
@@ -449,7 +449,7 @@ static inline void process_ssl(AppIdSession& asd,
     if (!asd.tsession)
         asd.tsession = new TlsSession();
 
-    if (!asd.client.get_id())
+    if (!asd.get_client_id())
         asd.set_client_appid_data(APP_ID_SSL_CLIENT, change_bits);
 
     reinspect_ssl_appid = check_ssl_appid_for_reinspect(tmpAppId, asd.ctxt.get_odp_ctxt());
@@ -490,7 +490,7 @@ static inline void process_ftp_control(AppIdSession& asd,
     if (!asd.ctxt.get_odp_ctxt().ftp_userid_disabled &&
         (field=attribute_data.ftp_command_user()) != nullptr)
     {
-        asd.client.update_user(APP_ID_FTP_CONTROL, field->c_str());
+        asd.set_client_user(APP_ID_FTP_CONTROL, field->c_str());
         asd.set_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
         // attribute_data.ftpCommandUser = nullptr;
     }
@@ -508,7 +508,7 @@ static inline void process_quic(AppIdSession& asd,
         if ( appidDebug->is_active() )
             LogMessage("AppIdDbg %s Flow is QUIC\n", appidDebug->get_debug_session());
         asd.tsession->set_tls_host(field->c_str(), field->size(), change_bits);
-        if ( asd.service.get_id() <= APP_ID_NONE )
+        if ( asd.get_service_id() <= APP_ID_NONE )
             asd.set_service_appid_data(APP_ID_QUIC, change_bits);
     }
 }
@@ -517,8 +517,8 @@ static inline void process_third_party_results(AppIdSession& asd, int confidence
     const vector<AppId>& proto_list, ThirdPartyAppIDAttributeData& attribute_data,
     AppidChangeBits& change_bits)
 {
-    if ( asd.payload.get_id() == APP_ID_NONE and contains(proto_list, APP_ID_EXCHANGE) )
-        asd.payload.set_id(APP_ID_EXCHANGE);
+    if ( asd.get_payload_id() == APP_ID_NONE and contains(proto_list, APP_ID_EXCHANGE) )
+        asd.set_payload_id(APP_ID_EXCHANGE);
 
     if ( contains(proto_list, APP_ID_HTTP) )
     {
@@ -558,7 +558,7 @@ static inline void check_terminate_tp_module(AppIdSession& asd, uint16_t tpPktCo
 
     if ((tpPktCount >= asd.ctxt.get_odp_ctxt().max_tp_flow_depth) ||
         (asd.get_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_APP_REINSPECT) ==
-        (APPID_SESSION_HTTP_SESSION | APPID_SESSION_APP_REINSPECT) &&
+        (APPID_SESSION_HTTP_SESSION | APPID_SESSION_APP_REINSPECT) && hsession &&
         hsession->get_field(REQ_URI_FID) &&
         (!hsession->get_chp_candidate() || hsession->is_chp_finished())))
     {
@@ -566,8 +566,8 @@ static inline void check_terminate_tp_module(AppIdSession& asd, uint16_t tpPktCo
             asd.set_tp_app_id(APP_ID_UNKNOWN);
 
         if ( !hsession and asd.service_disco_state == APPID_DISCO_STATE_FINISHED and
-            asd.payload.get_id() == APP_ID_NONE )
-            asd.payload.set_id(APP_ID_UNKNOWN);
+            asd.get_payload_id() == APP_ID_NONE )
+            asd.set_payload_id(APP_ID_UNKNOWN);
 
         if ( hsession and asd.service_disco_state == APPID_DISCO_STATE_FINISHED and
             hsession->payload.get_id() == APP_ID_NONE )
@@ -610,13 +610,13 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
 {
     AppId tp_app_id = asd.get_tp_app_id();
 
-    if (tp_app_id == APP_ID_SSH && asd.payload.get_id() != APP_ID_SFTP &&
+    if (tp_app_id == APP_ID_SSH && asd.get_payload_id() != APP_ID_SFTP &&
         asd.session_packet_count >= MIN_SFTP_PACKET_COUNT &&
         asd.session_packet_count < MAX_SFTP_PACKET_COUNT)
     {
         if ( p->ptrs.ip_api.tos() == 8 )
         {
-            asd.payload.set_id(APP_ID_SFTP);
+            asd.set_payload_id(APP_ID_SFTP);
             if (appidDebug->is_active())
                 LogMessage("AppIdDbg %s Payload is SFTP\n", appidDebug->get_debug_session());
         }
@@ -698,7 +698,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
         if (hsession)
             hsession->set_client(tp_app_id, change_bits, "Third Party");
         else
-            asd.client.set_id(*p, asd, direction, tp_app_id, change_bits);
+            asd.set_client_id(*p, direction, tp_app_id, change_bits);
     }
 
     if ( app_info_flags & APPINFO_FLAG_IGNORE )
@@ -777,15 +777,15 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
                 tp_app_id = portAppId;
                 //SSL policy determines IMAPS/POP3S etc before appId sees first server
                 // packet
-                asd.service.set_port_service_id(portAppId);
+                asd.set_port_service_id(portAppId);
                 if (appidDebug->is_active())
                 {
                     const char *service_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(tp_app_id);
-                    const char *port_service_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(asd.service.get_port_service_id());
+                    const char *port_service_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(asd.get_port_service_id());
                     LogMessage("AppIdDbg %s SSL is service %s (%d), portServiceAppId %s (%d)\n",
                         appidDebug->get_debug_session(),
                         service_name ? service_name : "unknown", tp_app_id,
-                        port_service_name ? port_service_name : "unknown", asd.service.get_port_service_id());
+                        port_service_name ? port_service_name : "unknown", asd.get_port_service_id());
                 }
             }
             else
@@ -802,7 +802,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
             }
             snort_app_id = APP_ID_SSL;
         }
-        else if (asd.service.get_id() == APP_ID_QUIC)
+        else if (asd.get_service_id() == APP_ID_QUIC)
             asd.set_tp_payload_app_id(*p, direction, tp_app_id, change_bits);
         else
         {

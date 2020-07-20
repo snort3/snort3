@@ -123,13 +123,13 @@ IpsOption::EvalStatus AppIdIpsOption::eval(Cursor&, Packet* p)
         return NO_MATCH;
 
     AppId app_ids[APP_PROTOID_MAX];
-    AppId service_id = session->get_application_ids_service();
+    AppId service_id = session->get_api().get_service_app_id();
     OdpContext& odp_ctxt = session->ctxt.get_odp_ctxt();
 
     if (service_id != APP_ID_HTTP2)
     {
         // id order on stream api call is: service, client, payload, misc
-        session->get_first_stream_app_ids(app_ids[APP_PROTOID_SERVICE], app_ids[APP_PROTOID_CLIENT],
+        session->get_api().get_first_stream_app_ids(app_ids[APP_PROTOID_SERVICE], app_ids[APP_PROTOID_CLIENT],
             app_ids[APP_PROTOID_PAYLOAD], app_ids[APP_PROTOID_MISC]);
 
         for ( unsigned i = 0; i < APP_PROTOID_MAX; i++ )
@@ -141,9 +141,9 @@ IpsOption::EvalStatus AppIdIpsOption::eval(Cursor&, Packet* p)
         if (match_id_against_rule(odp_ctxt, service_id))
             return MATCH;
 
-        for (uint32_t i = 0; i < session->get_hsessions_size(); i++)
+        for (uint32_t i = 0; i < session->get_api().get_hsessions_size(); i++)
         {
-            AppIdHttpSession* hsession = session->get_http_session(i);
+            const AppIdHttpSession* hsession = session->get_http_session(i);
             if (!hsession)
                 return NO_MATCH;
             if (match_id_against_rule(odp_ctxt, hsession->client.get_id()))

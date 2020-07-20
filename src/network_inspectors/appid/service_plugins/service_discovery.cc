@@ -579,9 +579,9 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
                 asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
                 asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
 
-                if (asd.payload.get_id() == APP_ID_NONE and
+                if (asd.get_payload_id() == APP_ID_NONE and
                     (asd.is_tp_appid_available() or asd.get_session_flags(APPID_SESSION_NO_TPI)))
-                    asd.payload.set_id(APP_ID_UNKNOWN);
+                    asd.set_payload_id(APP_ID_UNKNOWN);
             }
         }
         else if (tp_app_id > APP_ID_NONE and asd.is_tp_appid_available())
@@ -633,7 +633,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
             // job of it than we do, so stay out of its way, and don't
             // waste time (but we will still get the Snort callbacks
             // for any of our own future flows). Shut down our detectors.
-            asd.service.set_id(APP_ID_SIP, asd.ctxt.get_odp_ctxt());
+            asd.set_service_id(APP_ID_SIP, asd.ctxt.get_odp_ctxt());
             asd.stop_service_inspection(p, direction);
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
         }
@@ -642,7 +642,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
         {
             // No need for anybody to keep wasting time once we've
             // found RTP - Shut down our detectors.
-            asd.service.set_id(tp_app_id, asd.ctxt.get_odp_ctxt());
+            asd.set_service_id(tp_app_id, asd.ctxt.get_odp_ctxt());
             asd.stop_service_inspection(p, direction);
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
             //  - Shut down TP.
@@ -662,26 +662,26 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
             APPID_SESSION_CONTINUE) == APPID_SESSION_SERVICE_DETECTED)
         {
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
-            if ( asd.payload.get_id() == APP_ID_NONE and
+            if ( asd.get_payload_id() == APP_ID_NONE and
                  ( asd.is_tp_appid_available() or
                    asd.get_session_flags(APPID_SESSION_NO_TPI) ) )
             {
-                asd.payload.set_id(APP_ID_UNKNOWN);
+                asd.set_payload_id(APP_ID_UNKNOWN);
             }
         }
 
         /* If the session appears to only have the client sending data then
            we must mark the service unknown to prevent pending forever. */
         if (asd.service_disco_state == APPID_DISCO_STATE_STATEFUL &&
-            asd.service.get_id() == APP_ID_NONE && asd.is_svc_taking_too_much_time())
+            asd.get_service_id() == APP_ID_NONE && asd.is_svc_taking_too_much_time())
         {
                 asd.stop_service_inspection(p, direction);
-                asd.service.set_id(APP_ID_UNKNOWN, asd.ctxt.get_odp_ctxt());
+                asd.set_service_id(APP_ID_UNKNOWN, asd.ctxt.get_odp_ctxt());
                 return isTpAppidDiscoveryDone;
         }
 
         AppIdDnsSession* dsession = asd.get_dns_session();
-        if (dsession and asd.service.get_id() == APP_ID_DNS
+        if (dsession and asd.get_service_id() == APP_ID_DNS
             and asd.ctxt.get_odp_ctxt().dns_host_reporting and dsession->get_host())
         {
             AppId client_id = APP_ID_NONE;
@@ -690,7 +690,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
                 dsession->get_host_len(), client_id, payload_id);
             asd.set_client_appid_data(client_id, change_bits);
         }
-        else if (asd.service.get_id() == APP_ID_RTMP)
+        else if (asd.get_service_id() == APP_ID_RTMP)
             asd.examine_rtmp_metadata(change_bits);
         else if (asd.get_session_flags(APPID_SESSION_SSL_SESSION) && asd.tsession)
             asd.examine_ssl_metadata(change_bits);
@@ -699,7 +699,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
             APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE |
             APPID_SESSION_IGNORE_HOST) == APPID_SESSION_SERVICE_DETECTED)
         {
-            asd.sync_with_snort_protocol_id(asd.service.get_id(), p);
+            asd.sync_with_snort_protocol_id(asd.get_service_id(), p);
         }
     }
 
@@ -724,7 +724,7 @@ int ServiceDiscovery::incompatible_data(AppIdSession& asd, const Packet* pkt, Ap
 
     asd.set_service_detected();
     asd.clear_session_flags(APPID_SESSION_CONTINUE);
-    asd.service.set_id(APP_ID_NONE, asd.ctxt.get_odp_ctxt());
+    asd.set_service_id(APP_ID_NONE, asd.ctxt.get_odp_ctxt());
 
     if ( asd.get_session_flags(APPID_SESSION_IGNORE_HOST | APPID_SESSION_UDP_REVERSED) )
         return APPID_SUCCESS;
@@ -760,7 +760,7 @@ int ServiceDiscovery::fail_service(AppIdSession& asd, const Packet* pkt, AppidSe
     if ( !asd.service_detector && !asd.service_candidates.empty() )
         return APPID_SUCCESS;
 
-    asd.service.set_id(APP_ID_NONE, asd.ctxt.get_odp_ctxt());
+    asd.set_service_id(APP_ID_NONE, asd.ctxt.get_odp_ctxt());
     asd.set_service_detected();
     asd.clear_session_flags(APPID_SESSION_CONTINUE);
 

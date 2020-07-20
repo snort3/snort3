@@ -76,7 +76,7 @@ int AppIdDetector::data_add(AppIdSession& asd, void* data, AppIdFreeFCN fcn)
 
 void AppIdDetector::add_user(AppIdSession& asd, const char* username, AppId appId, bool success)
 {
-    asd.client.update_user(appId, username);
+    asd.set_client_user(appId, username);
     if ( success )
         asd.set_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
     else
@@ -85,18 +85,18 @@ void AppIdDetector::add_user(AppIdSession& asd, const char* username, AppId appI
 
 void AppIdDetector::add_payload(AppIdSession& asd, AppId payload_id)
 {
-    asd.payload.set_id(payload_id);
+    asd.set_payload_id(payload_id);
 }
 
 void AppIdDetector::add_app(const Packet& p, AppIdSession& asd, AppidSessionDirection dir, AppId service_id,
     AppId client_id, const char* version, AppidChangeBits& change_bits)
 {
     if ( version )
-        asd.client.set_version(version, change_bits);
+        asd.set_client_version(version, change_bits);
 
     asd.set_client_detected();
     asd.client_inferred_service_id = service_id;
-    asd.client.set_id(p, asd, dir, client_id, change_bits);
+    asd.set_client_id(p, dir, client_id, change_bits);
 }
 
 const char* AppIdDetector::get_code_string(APPID_STATUS_CODE code) const

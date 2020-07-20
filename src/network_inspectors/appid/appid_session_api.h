@@ -23,12 +23,16 @@
 #define APPID_SESSION_API_H
 
 #include "flow/flow.h"
+#include "flow/stash_item.h"
 #include "main/snort_types.h"
+#include "pub_sub/appid_events.h"
 #include "sfip/sf_ip.h"
+#include "utils/util.h"
+#include "appid_dns_session.h"
+#include "appid_http_session.h"
 #include "application_ids.h"
 
 class AppIdDnsSession;
-class AppIdHttpSession;
 class AppIdSession;
 
 namespace snort
@@ -97,10 +101,9 @@ namespace snort
     APPID_SESSION_PORT_SERVICE_DONE)
 const uint64_t APPID_SESSION_ALL_FLAGS = 0xFFFFFFFFFFFFFFFFULL;
 
-class SO_PUBLIC AppIdSessionApi
+class SO_PUBLIC AppIdSessionApi : public StashGenericObject
 {
 public:
-    AppIdSessionApi(const AppIdSession& asd) : asd(asd) {}
     AppId get_service_app_id() const;
     AppId get_misc_app_id(uint32_t stream_index = 0) const;
     AppId get_client_app_id(uint32_t stream_index = 0) const;
@@ -118,15 +121,72 @@ public:
     const char* get_tls_host() const;
     bool is_http_inspection_done() const;
 
-    bool get_published() const
-    { return published; }
+    // For protocols such as HTTP2 which can have multiple streams within a single flow, get_first_stream_*
+    // methods return the appids in the first stream seen in a packet.
+    void get_first_stream_app_ids(AppId& service, AppId& client, AppId& payload, AppId& misc) const;
+    void get_first_stream_app_ids(AppId& service, AppId& client, AppId& payload) const;
 
-    void set_published(bool val)
-    { published = val; }
+    ~AppIdSessionApi()
+    {
+        delete_session_data();
+    }
+
+    uint32_t get_hsessions_size() const
+    {
+        return hsessions.size();
+    }
+
+protected:
+    AppIdSessionApi(const AppIdSession* asd, const SfIp& ip) :
+        StashGenericObject(STASH_GENERIC_OBJECT_APPID), asd(asd), initiator_ip(ip) {}
 
 private:
-    const AppIdSession& asd;
+    const AppIdSession* asd = nullptr;
+    AppId application_ids[APP_PROTOID_MAX] =
+        { APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE };
     bool published = false;
+    bool stored_in_stash = false;
+    std::vector<AppIdHttpSession*> hsessions;
+    AppIdDnsSession* dsession = nullptr;
+    snort::SfIp initiator_ip;
+    ServiceAppDescriptor service;
+    char* tls_host = nullptr;
+
+    // Following two fields are used only for non-http sessions. For HTTP traffic,
+    // these fields are maintained inside AppIdHttpSession.
+    // Note: RTMP traffic is treated like HTTP in AppId
+    ClientAppDescriptor client;
+    PayloadAppDescriptor payload;
+
+    void set_ss_application_ids(AppId service, AppId client, AppId payload, AppId misc,
+        AppId referred, AppidChangeBits& change_bits);
+    void set_ss_application_ids(AppId client, AppId payload, AppidChangeBits& change_bits);
+    void set_application_ids_service(AppId service_id, AppidChangeBits& change_bits);
+
+    AppIdHttpSession* get_hsession(uint32_t stream_index = 0) const;
+
+    void delete_session_data()
+    {
+        delete_all_http_sessions();
+        snort_free(tls_host);
+        delete dsession;
+    }
+
+    void delete_all_http_sessions()
+    {
+        for (auto hsession : hsessions)
+            delete hsession;
+        hsessions.clear();
+    }
+
+    void set_tls_host(const char* host)
+    {
+        if (tls_host)
+            snort_free(tls_host);
+        tls_host = snort_strdup(host);
+    }
+
+    friend AppIdSession;
 };
 
 }

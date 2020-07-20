@@ -37,18 +37,33 @@ AppIdSessionApi* appid_session_api = nullptr;
 static AppIdConfig config;
 static OdpContext odpctxt(config, nullptr);
 
+void AppIdSession::set_ss_application_ids(AppId service_id, AppId client_id, AppId payload_id,
+    AppId misc_id, AppId referred_id, AppidChangeBits& change_bits)
+{
+    api.set_ss_application_ids(service_id, client_id, payload_id, misc_id, referred_id, change_bits);
+}
+
+void AppIdSession::set_application_ids_service(AppId service_id, AppidChangeBits& change_bits)
+{
+    api.set_application_ids_service(service_id, change_bits);
+}
+
 TEST_GROUP(appid_session_api)
 {
     void setup() override
     {
+        AppidChangeBits change_bits;
+
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
-        mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492, dummy_appid_inspector);
-        appid_session_api = new AppIdSessionApi(*mock_session);
+        SfIp ip;
+        mock_session = new AppIdSession(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector);
+        mock_session->set_ss_application_ids(APPID_UT_ID, APPID_UT_ID, APPID_UT_ID,
+            APPID_UT_ID, APPID_UT_ID, change_bits);
     }
 
     void teardown() override
     {
-        delete appid_session_api;
+        delete &mock_session->get_api();
         delete mock_session;
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
@@ -56,56 +71,58 @@ TEST_GROUP(appid_session_api)
 
 TEST(appid_session_api, get_service_app_id)
 {
-    AppId id = appid_session_api->get_service_app_id();
+    AppId id = mock_session->get_api().get_service_app_id();
     CHECK_EQUAL(id, APPID_UT_ID);
 }
 
 TEST(appid_session_api, get_misc_app_id)
 {
-    AppId id = appid_session_api->get_misc_app_id();
+    AppId id = mock_session->get_api().get_misc_app_id();
     CHECK_EQUAL(id, APPID_UT_ID);
-    id = appid_session_api->get_misc_app_id(0);
+    id = mock_session->get_api().get_misc_app_id(0);
     CHECK_EQUAL(APPID_UT_ID, id);
-    id = appid_session_api->get_misc_app_id(3);
+    id = mock_session->get_api().get_misc_app_id(3);
     CHECK_EQUAL(APP_ID_NONE, id);
 }
 
 TEST(appid_session_api, get_client_app_id)
 {
-    AppId id = appid_session_api->get_client_app_id();
+    AppId id = mock_session->get_api().get_client_app_id();
     CHECK_EQUAL(id, APPID_UT_ID);
-    id = appid_session_api->get_client_app_id(0);
+    id = mock_session->get_api().get_client_app_id(0);
     CHECK_EQUAL(APPID_UT_ID, id);
-    id = appid_session_api->get_client_app_id(3);
+    id = mock_session->get_api().get_client_app_id(3);
     CHECK_EQUAL(APP_ID_NONE, id);
 }
 
 TEST(appid_session_api, get_payload_app_id)
 {
-    AppId id = appid_session_api->get_payload_app_id();
+    AppId id = mock_session->get_api().get_payload_app_id();
     CHECK_EQUAL(id, APPID_UT_ID);
-    id = appid_session_api->get_payload_app_id(0);
+    id = mock_session->get_api().get_payload_app_id(0);
     CHECK_EQUAL(APPID_UT_ID, id);
-    id = appid_session_api->get_payload_app_id(2);
+    id = mock_session->get_api().get_payload_app_id(2);
     CHECK_EQUAL(APP_ID_NONE, id);
 }
 
 TEST(appid_session_api, get_referred_app_id)
 {
-    AppId id = appid_session_api->get_referred_app_id();
+    AppId id = mock_session->get_api().get_referred_app_id();
     CHECK_EQUAL(id, APPID_UT_ID);
-    id = appid_session_api->get_payload_app_id(0);
+    id = mock_session->get_api().get_referred_app_id(0);
     CHECK_EQUAL(APPID_UT_ID, id);
-    id = appid_session_api->get_payload_app_id(2);
+    id = mock_session->get_api().get_referred_app_id(2);
     CHECK_EQUAL(APP_ID_NONE, id);
 }
 
 TEST(appid_session_api, get_tls_host)
 {
     AppidChangeBits change_bits;
+    change_bits.set(APPID_TLSHOST_BIT);
     char* host = snort_strdup(APPID_UT_TLS_HOST);
     mock_session->tsession->set_tls_host(host, 0, change_bits);
-    const char* val = appid_session_api->get_tls_host();
+    mock_session->set_tls_host(change_bits);
+    const char* val = mock_session->get_api().get_tls_host();
     STRCMP_EQUAL(val, APPID_UT_TLS_HOST);
 }
 
@@ -115,90 +132,91 @@ TEST(appid_session_api, get_initiator_ip)
 
     expected_ip.pton(AF_INET, APPID_UT_INITIATOR_IP_ADDR);
 
-    const SfIp* val = appid_session_api->get_initiator_ip();
+    const SfIp* val = mock_session->get_api().get_initiator_ip();
     CHECK_TRUE(val->fast_eq4(expected_ip));
 }
 
 TEST(appid_session_api, is_appid_inspecting_session)
 {
     mock_session->service_disco_state = APPID_DISCO_STATE_STATEFUL;
-    bool val = appid_session_api->is_appid_inspecting_session();
+    bool val = mock_session->get_api().is_appid_inspecting_session();
     CHECK_TRUE(val);
     mock_session->service_disco_state = APPID_DISCO_STATE_FINISHED;
     mock_session->set_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_CONTINUE);
-    val = appid_session_api->is_appid_inspecting_session();
+    val = mock_session->get_api().is_appid_inspecting_session();
     CHECK_TRUE(val);
     mock_session->clear_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_CONTINUE);
     mock_session->set_session_flags(APPID_SESSION_ENCRYPTED);
-    val = appid_session_api->is_appid_inspecting_session();
+    val = mock_session->get_api().is_appid_inspecting_session();
     CHECK_TRUE(val);
     mock_session->set_session_flags(APPID_SESSION_DECRYPTED);
     mock_session->session_packet_count = SSL_WHITELIST_PKT_LIMIT;
-    val = appid_session_api->is_appid_inspecting_session();
+    val = mock_session->get_api().is_appid_inspecting_session();
     CHECK_TRUE(val);
 
     // 2nd if in is_appid_inspecting_session
     mock_session->clear_session_flags(APPID_SESSION_DECRYPTED);
     mock_session->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
-    val = appid_session_api->is_appid_inspecting_session();
+    val = mock_session->get_api().is_appid_inspecting_session();
     CHECK_TRUE(!val);
     mock_session->set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
-    val = appid_session_api->is_appid_inspecting_session();
+    val = mock_session->get_api().is_appid_inspecting_session();
     CHECK_TRUE(val);
     mock_session->client_disco_state = APPID_DISCO_STATE_FINISHED;
-    val = appid_session_api->is_appid_inspecting_session();
+    val = mock_session->get_api().is_appid_inspecting_session();
     CHECK_TRUE(!val);
 
     // 3rd if in is_appid_inspecting_session
     mock_session->session_packet_count = MAX_SFTP_PACKET_COUNT;
-    val = appid_session_api->is_appid_inspecting_session();
+    val = mock_session->get_api().is_appid_inspecting_session();
     CHECK_TRUE(!val);
-    mock_session->payload.set_id(APP_ID_SFTP);
-    val = appid_session_api->is_appid_inspecting_session();
+    mock_session->set_payload_id(APP_ID_SFTP);
+    val = mock_session->get_api().is_appid_inspecting_session();
     CHECK_TRUE(!val);
     mock_session->session_packet_count = MAX_SFTP_PACKET_COUNT - 1;
-    val = appid_session_api->is_appid_inspecting_session();
+    val = mock_session->get_api().is_appid_inspecting_session();
     CHECK_TRUE(!val);
-    mock_session->payload.set_id(APP_ID_NONE);
-    mock_session->set_tp_app_id(APP_ID_SSH);
-    val = appid_session_api->is_appid_inspecting_session();
+    mock_session->set_payload_id(APP_ID_NONE);
+    AppidChangeBits change_bits;
+    mock_session->set_application_ids_service(APP_ID_SSH, change_bits);
+    val = mock_session->get_api().is_appid_inspecting_session();
     CHECK_TRUE(val);
 
     // 4th if in is_appid_inspecting_session
-    mock_session->set_tp_app_id(APP_ID_NONE);
+    mock_session->set_application_ids_service(APP_ID_NONE, change_bits);
     mock_session->ctxt.get_odp_ctxt().check_host_port_app_cache = true;
-    val = appid_session_api->is_appid_inspecting_session();
+    val = mock_session->get_api().is_appid_inspecting_session();
     CHECK_TRUE(val);
 }
 
 TEST(appid_session_api, is_appid_available)
 {
     bool val;
-    val = appid_session_api->is_appid_available();
+    val = mock_session->get_api().is_appid_available();
     CHECK_TRUE(val);
     mock_session->set_session_flags(APPID_SESSION_NO_TPI);
-    val = appid_session_api->is_appid_available();
+    val = mock_session->get_api().is_appid_available();
     CHECK_TRUE(val);
 }
 
 TEST(appid_session_api, get_client_version)
 {
     const char* val;
-    val = appid_session_api->get_client_version();
+    val = mock_session->get_api().get_client_version();
     STRCMP_EQUAL(val, APPID_UT_CLIENT_VERSION);
     mock_session->create_http_session();
-    val = appid_session_api->get_client_version(0);
+    val = mock_session->get_api().get_client_version(0);
     STRCMP_EQUAL(APPID_UT_CLIENT_VERSION, val);
-    val = appid_session_api->get_client_version(2);
+    val = mock_session->get_api().get_client_version(2);
     STRCMP_EQUAL(nullptr, val);
 }
 TEST(appid_session_api, get_http_session)
 {
     const AppIdHttpSession* val;
     mock_session->create_http_session();
-    val = appid_session_api->get_http_session();
+    val = mock_session->get_api().get_http_session();
     CHECK_TRUE(val != nullptr);
-    val = appid_session_api->get_http_session(2);
+    val = mock_session->get_api().get_http_session(2);
     CHECK_TRUE(val == nullptr);
 }
 TEST(appid_session_api, get_appid_session_attribute)
@@ -209,17 +227,17 @@ TEST(appid_session_api, get_appid_session_attribute)
     {
         flags <<= i;
         mock_session->set_session_flags(flags);
-        uint64_t fv = appid_session_api->get_appid_session_attribute(flags);
+        uint64_t fv = mock_session->get_api().get_appid_session_attribute(flags);
         CHECK_TRUE((fv & flags) == flags);
         mock_session->clear_session_flags(flags);
-        fv = appid_session_api->get_appid_session_attribute(flags);
+        fv = mock_session->get_api().get_appid_session_attribute(flags);
         CHECK_TRUE((fv & flags) == 0);
     }
 }
 
 TEST(appid_session_api, appid_dns_api)
 {
-    const AppIdDnsSession* dsession = appid_session_api->get_dns_session();
+    const AppIdDnsSession* dsession = mock_session->get_api().get_dns_session();
 
     const char* val = dsession->get_host();
     STRCMP_EQUAL(val, APPID_ID_UT_DNS_HOST);
@@ -246,26 +264,28 @@ TEST(appid_session_api, appid_dns_api)
 TEST(appid_session_api, is_http_inspection_done)
 {
     bool val;
-    val = appid_session_api->is_http_inspection_done();
+    val = mock_session->get_api().is_http_inspection_done();
     CHECK_TRUE(val);
     mock_session->service_disco_state = APPID_DISCO_STATE_FINISHED;
     mock_session->set_session_flags(APPID_SESSION_SSL_SESSION);
-    val = appid_session_api->is_http_inspection_done();
+    val = mock_session->get_api().is_http_inspection_done();
     CHECK_TRUE(val);
     AppidChangeBits change_bits;
     mock_session->service_disco_state = APPID_DISCO_STATE_STATEFUL;
     mock_session->set_session_flags(APPID_SESSION_SSL_SESSION);
-    val = appid_session_api->is_http_inspection_done();
+    val = mock_session->get_api().is_http_inspection_done();
     CHECK_FALSE(val);
     mock_session->service_disco_state = APPID_DISCO_STATE_STATEFUL;
     mock_session->set_session_flags(APPID_SESSION_SSL_SESSION);
     char* host = snort_strdup(APPID_UT_TLS_HOST);
     mock_session->tsession->set_tls_host(host, 0, change_bits);
-    val = appid_session_api->is_http_inspection_done();
+    change_bits.set(APPID_TLSHOST_BIT);
+    mock_session->set_tls_host(change_bits);
+    val = mock_session->get_api().is_http_inspection_done();
     CHECK_TRUE(val);
     mock_session->service_disco_state = APPID_DISCO_STATE_FINISHED;
     mock_session->set_session_flags(APPID_SESSION_SSL_SESSION);
-    val = appid_session_api->is_http_inspection_done();
+    val = mock_session->get_api().is_http_inspection_done();
     CHECK_TRUE(val);
 }
 

@@ -66,7 +66,7 @@ AppId check_session_for_AF_forecast(AppIdSession& asd, Packet* p, AppidSessionDi
         odp_thread_ctxt->erase_af_actives(master_key);
         return APP_ID_UNKNOWN;
     }
-    asd.payload.set_id(check_act_val->second.target);
+    asd.set_payload_id(check_act_val->second.target);
     return forecast;
 }
 

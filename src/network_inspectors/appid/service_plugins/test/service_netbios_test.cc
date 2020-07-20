@@ -73,7 +73,8 @@ TEST(service_netbios_test, check_add_smb_info_pointer )
     AppIdInspector ins;
     snort::Packet pkt;
     AppidChangeBits cb;
-    AppIdSession asd(IpProtocol::TCP, nullptr, 21, ins);
+    SfIp ip;
+    AppIdSession asd(IpProtocol::TCP, &ip, 21, ins);
     AppIdDiscoveryArgs args(data, size, dir, asd, &pkt,cb);
     ServiceDiscovery& s_discovery_manager = asd.ctxt.get_odp_ctxt().get_service_disco_mgr();
     args.pkt->ptrs.sp = args.pkt->ptrs.dp = 138;
@@ -84,6 +85,7 @@ TEST(service_netbios_test, check_add_smb_info_pointer )
     FpSMBData *smb_ptr2 = (FpSMBData*)(asd.get_flow_data(APPID_SESSION_DATA_SMB_DATA));
     CHECK(smb_ptr1 == smb_ptr2);
     asd.free_flow_data();
+    delete &asd.get_api();
 }
 
 int main(int argc, char** argv)

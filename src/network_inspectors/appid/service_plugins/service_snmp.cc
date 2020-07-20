@@ -459,7 +459,7 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
         {
             args.asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE);
             args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
-            args.asd.service.set_id(APP_ID_SNMP, args.asd.ctxt.get_odp_ctxt());
+            args.asd.set_service_id(APP_ID_SNMP, args.asd.ctxt.get_odp_ctxt());
             break;
         }
         sd->state = SNMP_STATE_RESPONSE;
@@ -487,7 +487,7 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
             args.asd.initialize_future_session(*pf, APPID_SESSION_EXPECTED_EVALUATE, APP_ID_APPID_SESSION_DIRECTION_MAX);
             pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
             pf->scan_flags |= SCAN_HOST_PORT_FLAG;
-            pf->initiator_ip = *sip;
+            pf->set_initiator_ip(*sip);
         }
     }
     break;

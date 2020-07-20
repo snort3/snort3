@@ -171,19 +171,20 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
 
     if (http_event->get_is_http2())
     {
-        asd->service.set_id(APP_ID_HTTP2, asd->ctxt.get_odp_ctxt());
+        asd->set_service_id(APP_ID_HTTP2, asd->ctxt.get_odp_ctxt());
     }
 
     hsession->process_http_packet(direction, change_bits,
         asd->ctxt.get_odp_ctxt().get_http_matchers());
 
-    if (asd->service.get_id() != APP_ID_HTTP2)
+    if (asd->get_service_id() != APP_ID_HTTP2)
         asd->set_ss_application_ids(asd->pick_service_app_id(), asd->pick_ss_client_app_id(),
-            asd->pick_ss_payload_app_id(), asd->pick_ss_misc_app_id(), change_bits);
+            asd->pick_ss_payload_app_id(), asd->pick_ss_misc_app_id(),
+            asd->pick_ss_referred_payload_app_id(), change_bits);
     else
-          asd->set_application_ids_service(APP_ID_HTTP2, change_bits);      
+        asd->set_application_ids_service(APP_ID_HTTP2, change_bits);
 
     asd->publish_appid_event(change_bits, flow, http_event->get_is_http2(),
-        asd->get_hsessions_size() - 1);
+        asd->get_api().get_hsessions_size() - 1);
 }
 

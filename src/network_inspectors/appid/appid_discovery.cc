@@ -188,7 +188,7 @@ static bool set_network_attributes(AppIdSession* asd, Packet* p, IpProtocol& pro
         else
         {
             const SfIp* ip = p->ptrs.ip_api.get_src();
-            direction = ip->fast_equals_raw(asd->initiator_ip) ?
+            direction = ip->fast_equals_raw(asd->get_initiator_ip()) ?
                 APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
         }
 
@@ -437,17 +437,18 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
         AppidChangeBits change_bits;
 
         asd->set_ss_application_ids(asd->pick_service_app_id(), asd->pick_ss_client_app_id(),
-            asd->pick_ss_payload_app_id(), asd->pick_ss_misc_app_id(), change_bits);
+            asd->pick_ss_payload_app_id(), asd->pick_ss_misc_app_id(),
+            asd->pick_ss_referred_payload_app_id(), change_bits);
         asd->publish_appid_event(change_bits, p->flow);
         asd->set_session_flags(APPID_SESSION_FUTURE_FLOW_IDED);
 
         if (appidDebug->is_active())
         {
             const char *app_name =
-                asd->ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(asd->service.get_id());
+                asd->ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(asd->get_service_id());
             LogMessage("AppIdDbg %s Ignoring connection with service %s (%d)\n",
                 appidDebug->get_debug_session(), app_name ? app_name : "unknown",
-                asd->service.get_id());
+                asd->get_service_id());
         }
 
         return false;
@@ -505,6 +506,7 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
                     port = p->ptrs.sp;
                 }
                 AppIdServiceState::check_reset(*asd, ip, port);
+                return false;
             }
             asd->previous_tcp_flags = p->ptrs.tcph->th_flags;
         }
@@ -550,14 +552,14 @@ void AppIdDiscovery::do_port_based_discovery(Packet* p, AppIdSession& asd, IpPro
     AppId id = asd.ctxt.get_odp_ctxt().get_port_service_id(protocol, p->ptrs.sp);
     if (id > APP_ID_NONE)
     {
-        asd.service.set_port_service_id(id);
+        asd.set_port_service_id(id);
         if (appidDebug->is_active())
         {
-            AppId ps_id = asd.service.get_port_service_id();
+            AppId ps_id = asd.get_port_service_id();
             const char *app_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(ps_id);
             LogMessage("AppIdDbg %s Port service %s (%d) from port\n",
                 appidDebug->get_debug_session(), app_name ? app_name : "unknown",
-                asd.service.get_port_service_id());
+                asd.get_port_service_id());
         }
     }
     asd.set_session_flags(APPID_SESSION_PORT_SERVICE_DONE);
@@ -619,22 +621,22 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
         switch (hv->type)
         {
         case APP_ID_TYPE_CLIENT:
-            asd.client.set_id(hv->appId);
+            asd.set_client_id(hv->appId);
             asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
             break;
         case APP_ID_TYPE_PAYLOAD:
-            asd.payload.set_id(hv->appId);
+            asd.set_payload_id(hv->appId);
             break;
         default:
-            asd.service.set_id(hv->appId, asd.ctxt.get_odp_ctxt());
+            asd.set_service_id(hv->appId, asd.ctxt.get_odp_ctxt());
             asd.sync_with_snort_protocol_id(hv->appId, p);
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
             asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
             asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
             if (asd.tpsession)
                 asd.tpsession->reset();
-            if ( asd.payload.get_id() == APP_ID_NONE)
-                asd.payload.set_id(APP_ID_UNKNOWN);
+            if ( asd.get_payload_id() == APP_ID_NONE)
+                asd.set_payload_id(APP_ID_UNKNOWN);
         }
         asd.set_session_flags(APPID_SESSION_HOST_CACHE_MATCHED);
         return true;
@@ -654,7 +656,7 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
             if (appid > APP_ID_NONE)
             {
                 // FIXIT-L: Make this more generic to support service and payload IDs
-                asd.client.set_id(appid);
+                asd.set_client_id(appid);
                 asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
                 asd.set_session_flags(APPID_SESSION_HOST_CACHE_MATCHED);
             }
@@ -670,9 +672,8 @@ static inline bool is_check_host_cache_valid(AppIdSession& asd, AppId service_id
     bool is_payload_client_misc_none = (payload_id <= APP_ID_NONE and client_id <= APP_ID_NONE and
         misc_id <= APP_ID_NONE);
     bool is_appid_none = is_payload_client_misc_none and (service_id <= APP_ID_NONE or
-        service_id == APP_ID_UNKNOWN_UI or
         (asd.ctxt.get_odp_ctxt().recheck_for_portservice_appid and
-        service_id == asd.service.get_port_service_id()));
+        service_id == asd.get_port_service_id()));
     bool is_ssl_none = asd.ctxt.get_odp_ctxt().check_host_cache_unknown_ssl and
         asd.get_session_flags(APPID_SESSION_SSL_SESSION) and
         (not(asd.tsession and asd.tsession->get_tls_host() and asd.tsession->get_tls_cname()));
@@ -714,12 +715,12 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
             AppId id = asd.ctxt.get_odp_ctxt().get_protocol_service_id(protocol);
             if (id > APP_ID_NONE)
             {
-                asd.service.set_port_service_id(id);
+                asd.set_port_service_id(id);
                 service_id = id;
                 asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
                 if (appidDebug->is_active())
                 {
-                    AppId ps_id = asd.service.get_port_service_id();
+                    AppId ps_id = asd.get_port_service_id();
                     const char *app_name =
                         asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(ps_id);
                     LogMessage("AppIdDbg %s Protocol service %s (%d) from protocol\n",
@@ -768,8 +769,8 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
             APPID_SESSION_CONTINUE) == APPID_SESSION_SERVICE_DETECTED)
         {
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
-            if ( asd.payload.get_id() == APP_ID_NONE)
-                asd.payload.set_id(APP_ID_UNKNOWN);
+            if ( asd.get_payload_id() == APP_ID_NONE)
+                asd.set_payload_id(APP_ID_UNKNOWN);
         }
     }
     // FIXIT-M - snort 2.x has added a check for midstream pickup to this, do we need that?
@@ -789,7 +790,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
     service_id = asd.pick_service_app_id();
 
     // Length-based service detection if no service is found yet
-    if ((service_id <= APP_ID_NONE or service_id == APP_ID_UNKNOWN_UI) and (p->dsize > 0) and
+    if ((service_id <= APP_ID_NONE) and (p->dsize > 0) and
          (asd.length_sequence.sequence_cnt < LENGTH_SEQUENCE_CNT_MAX) and
          !asd.get_session_flags(APPID_SESSION_OOO))
     {
@@ -802,7 +803,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
         if (id > APP_ID_NONE)
         {
             service_id = id;
-            asd.service.set_port_service_id(id);
+            asd.set_port_service_id(id);
             if (appidDebug->is_active())
             {
                 const char *app_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(id);
@@ -813,7 +814,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
         }
     }
 
-    payload_id = asd.pick_ss_payload_app_id();
+    payload_id = asd.pick_ss_payload_app_id(service_id);
     client_id = asd.pick_ss_client_app_id();
     misc_id =  asd.pick_ss_misc_app_id();
 
@@ -837,10 +838,10 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
 
         if (do_host_port_based_discovery(p, asd, protocol, direction))
         {
-            asd.service.set_port_service_id(APP_ID_NONE);
+            asd.set_port_service_id(APP_ID_NONE);
             service_id = asd.pick_service_app_id();
             client_id = asd.pick_ss_client_app_id();
-            payload_id = asd.pick_ss_payload_app_id();
+            payload_id = asd.pick_ss_payload_app_id(service_id);
         }
     }
 
@@ -874,11 +875,11 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
         }
 
         if (asd.past_forecast != service_id and asd.past_forecast != APP_ID_UNKNOWN and
-             asd.payload.get_id() == APP_ID_NONE)
+             asd.get_payload_id() == APP_ID_NONE)
         {
             asd.past_forecast = check_session_for_AF_forecast(asd, p, direction, service_id);
             if (asd.past_forecast != APP_ID_UNKNOWN)
-                payload_id = asd.pick_ss_payload_app_id();
+                payload_id = asd.pick_ss_payload_app_id(service_id);
         }
     }
 
@@ -895,6 +896,9 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
         }
     }
 
-    asd.set_ss_application_ids(service_id, client_id, payload_id, misc_id, change_bits);
+    asd.set_ss_application_ids(service_id, client_id, payload_id, misc_id,
+        asd.pick_ss_referred_payload_app_id(), change_bits);
+    asd.set_tls_host(change_bits);
+
     asd.publish_appid_event(change_bits, p->flow);
 }

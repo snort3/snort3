@@ -87,10 +87,10 @@ int ServiceDetector::update_service_data(AppIdSession& asd, const Packet* pkt, A
     const SfIp* ip = nullptr;
 
     asd.service_detector = this;
-    asd.service.set_vendor(vendor);
-    asd.service.set_version(version, change_bits);
+    asd.set_service_vendor(vendor);
+    asd.set_service_version(version, change_bits);
     asd.set_service_detected();
-    asd.service.set_id(appId, asd.ctxt.get_odp_ctxt());
+    asd.set_service_id(appId, asd.ctxt.get_odp_ctxt());
 
     if (asd.get_session_flags(APPID_SESSION_IGNORE_HOST))
         return APPID_SUCCESS;

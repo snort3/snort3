@@ -338,7 +338,7 @@ static int service_analyze_payload(lua_State* L)
     // Verify detector user data and that we are in packet context
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
-    lsd->ldp.asd->payload.set_id(lua_tonumber(L, 2));
+    lsd->ldp.asd->set_payload_id(lua_tonumber(L, 2));
     return 0;
 }
 
@@ -2459,9 +2459,9 @@ static int create_future_flow(lua_State* L)
         client_port, &server_addr, server_port, proto, snort_protocol_id);
     if (fp)
     {
-        fp->service.set_id(service_id, ud->get_odp_ctxt());
-        fp->client.set_id(client_id);
-        fp->payload.set_id(payload_id);
+        fp->set_service_id(service_id, ud->get_odp_ctxt());
+        fp->set_client_id(client_id);
+        fp->set_payload_id(payload_id);
         fp->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE |
             APPID_SESSION_PORT_SERVICE_DONE);
         fp->service_disco_state = APPID_DISCO_STATE_FINISHED;
@@ -2505,7 +2505,7 @@ static int is_http_tunnel(lua_State* L)
     if (!lua_checkstack(L, 1))
         return 0;
 
-    AppIdHttpSession* hsession = lsd->ldp.asd->get_http_session();
+    const AppIdHttpSession* hsession = lsd->ldp.asd->get_http_session();
 
     if (hsession)
     {
@@ -2537,7 +2537,7 @@ static int get_http_tunneled_ip(lua_State* L)
     if (!lua_checkstack(L, 1))
         return 0;
 
-    AppIdHttpSession* hsession = lsd->ldp.asd->get_http_session();
+    const AppIdHttpSession* hsession = lsd->ldp.asd->get_http_session();
     if (hsession)
     {
         const TunnelDest* tunnel_dest = hsession->get_tun_dest();
@@ -2569,7 +2569,7 @@ static int get_http_tunneled_port(lua_State* L)
     if (!lua_checkstack(L, 1))
         return 0;
 
-    AppIdHttpSession* hsession = lsd->ldp.asd->get_http_session();
+    const AppIdHttpSession* hsession = lsd->ldp.asd->get_http_session();
     if (hsession)
     {
         const TunnelDest* tunnel_dest = hsession->get_tun_dest();

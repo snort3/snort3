@@ -250,7 +250,6 @@ public:
     AppIdContext& ctxt;
     std::unordered_map<unsigned, AppIdFlowData*> flow_data;
     uint64_t flags = 0;
-    snort::SfIp initiator_ip;
     uint16_t initiator_port = 0;
 
     uint16_t session_packet_count = 0;
@@ -268,13 +267,9 @@ public:
     ServiceDetector* service_detector = nullptr;
     AppIdServiceSubtype* subtype = nullptr;
     std::vector<ServiceDetector*> service_candidates;
-    ServiceAppDescriptor service;
 
-    // Following three fields are used only for non-http sessions. For HTTP traffic,
-    // these fields are maintained inside AppIdHttpSession.
-    // Note: RTMP traffic is treated like HTTP in AppId
-    ClientAppDescriptor client;
-    PayloadAppDescriptor payload;
+    // Following field is used only for non-http sessions. For HTTP traffic,
+    // this field is maintained inside AppIdHttpSession.
     AppId misc_app_id = APP_ID_NONE;
 
     // AppId matching client side
@@ -353,25 +348,13 @@ public:
     AppId pick_ss_misc_app_id() const;
     AppId pick_ss_client_app_id() const;
     AppId pick_ss_payload_app_id() const;
+    AppId pick_ss_payload_app_id(AppId service_id) const;
     AppId pick_ss_referred_payload_app_id() const;
 
     void set_ss_application_ids(AppId service, AppId client, AppId payload, AppId misc,
-        AppidChangeBits& change_bits);
+        AppId referred, AppidChangeBits& change_bits);
+    void set_ss_application_ids(AppId client, AppId payload, AppidChangeBits& change_bits);
     void set_application_ids_service(AppId service_id, AppidChangeBits& change_bits);
-
-    // For protocols such as HTTP2 which can have multiple streams within a single flow, get_first_stream_*
-    // methods return the appids in the first stream seen in a packet.
-    void get_first_stream_app_ids(AppId& service, AppId& client, AppId& payload, AppId& misc) const;
-    void get_first_stream_app_ids(AppId& service, AppId& client, AppId& payload) const;
-    AppId get_application_ids_service() const;
-    AppId get_application_ids_client(uint32_t stream_index = 0) const;
-    AppId get_application_ids_payload(uint32_t stream_index = 0) const;
-    AppId get_application_ids_misc(uint32_t stream_index = 0) const;
-
-    uint32_t get_hsessions_size() const
-    {
-        return hsessions.size();
-    }
 
     bool is_ssl_session_decrypted() const;
     void examine_ssl_metadata(AppidChangeBits& change_bits);
@@ -389,17 +372,12 @@ public:
     bool is_payload_appid_set() const;
     void clear_http_flags();
     void clear_http_data();
-    void reset_session_data();
+    void reset_session_data(AppidChangeBits& change_bits);
 
-    AppIdHttpSession* create_http_session(uint32_t stream_id = 0);
     AppIdHttpSession* get_http_session(uint32_t stream_index = 0) const;
+    AppIdHttpSession* create_http_session(uint32_t stream_id = 0);
     AppIdHttpSession* get_matching_http_session(uint32_t stream_id) const;
-    void delete_all_http_sessions()
-    {
-        for (auto hsession : hsessions)
-            delete hsession;
-        hsessions.clear();
-    }
+    void delete_all_http_sessions();
 
     AppIdDnsSession* create_dns_session();
     AppIdDnsSession* get_dns_session() const;
@@ -475,17 +453,104 @@ public:
         return api;
     }
 
+    AppId get_service_id() const
+    {
+        return api.service.get_id();
+    }
+
+    void set_service_id(AppId id, OdpContext &ctxt)
+    {
+        api.service.set_id(id, ctxt);
+    }
+
+    AppId get_port_service_id() const
+    {
+        return api.service.get_port_service_id();
+    }
+
+    void set_port_service_id(AppId id)
+    {
+        api.service.set_port_service_id(id);
+    }
+
+    void set_service_version(const char* version, AppidChangeBits& change_bits)
+    {
+        api.service.set_version(version, change_bits);
+    }
+
+    void set_service_vendor(const char* vendor)
+    {
+        api.service.set_vendor(vendor);
+    }
+
+    AppId get_client_id() const
+    {
+        return api.client.get_id();
+    }
+
+    void set_client_id(AppId id)
+    {
+        api.client.set_id(id);
+    }
+
+    void set_client_id(const snort::Packet& p, AppidSessionDirection dir, AppId id, AppidChangeBits& change_bits)
+    {
+        api.client.set_id(p, *this, dir, id, change_bits);
+    }
+
+    void set_client_version(const char* version, AppidChangeBits& change_bits)
+    {
+        api.client.set_version(version, change_bits);
+    }
+
+    const char* get_client_user() const
+    {
+        return api.client.get_username();
+    }
+
+    AppId get_client_user_id() const
+    {
+        return api.client.get_user_id();
+    }
+
+    void set_client_user(AppId id, const char* username)
+    {
+        api.client.update_user(id, username);
+    }
+
+    AppId get_payload_id() const
+    {
+        return api.payload.get_id();
+    }
+
+    void set_payload_id(AppId id)
+    {
+        api.payload.set_id(id);
+    }
+
+    const snort::SfIp& get_initiator_ip() const
+    {
+        return api.initiator_ip;
+    }
+
+    void set_initiator_ip(const snort::SfIp& ip)
+    {
+        api.initiator_ip = ip;
+    }
+
+    void set_tls_host(const AppidChangeBits& change_bits)
+    {
+        if (tsession and change_bits[APPID_TLSHOST_BIT])
+            api.set_tls_host(tsession->get_tls_host());
+    }
+
 private:
-    std::vector<AppIdHttpSession*> hsessions;
-    AppIdDnsSession* dsession = nullptr;
     uint16_t prev_http2_raw_packet = 0;
 
     void reinit_session_data(AppidChangeBits& change_bits);
-    void delete_session_data();
+    void delete_session_data(bool free_api = true);
 
     static THREAD_LOCAL uint32_t appid_flow_data_id;
-    AppId application_ids[APP_PROTOID_MAX] =
-        { APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE };
     bool tp_app_id_deferred = false;
     bool tp_payload_app_id_deferred = false;
 
@@ -494,28 +559,8 @@ private:
     AppId tp_payload_app_id = APP_ID_NONE;
 
     uint16_t my_inferred_svcs_ver = 0;
-    snort::AppIdSessionApi api{*this};
+    snort::AppIdSessionApi& api;
     static uint16_t inferred_svcs_ver;
 };
 
-static inline bool is_svc_http_type(AppId serviceId)
-{
-    switch(serviceId)
-    {
-        case APP_ID_HTTP:
-        case APP_ID_HTTPS:
-        case APP_ID_FTPS:
-        case APP_ID_IMAPS:
-        case APP_ID_IRCS:
-        case APP_ID_LDAPS:
-        case APP_ID_NNTPS:
-        case APP_ID_POP3S:
-        case APP_ID_SMTPS:
-        case APP_ID_SSHELL:
-        case APP_ID_SSL:
-        case APP_ID_QUIC:
-            return true;
-    }
-    return false;
-}
 #endif

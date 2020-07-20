@@ -71,7 +71,7 @@ static void add_appid_to_packet_trace(Flow& flow)
     {
         AppId service_id, client_id, payload_id, misc_id;
         const char* service_app_name, * client_app_name, * payload_app_name, * misc_name;
-        session->get_first_stream_app_ids(service_id, client_id, payload_id, misc_id);
+        session->get_api().get_first_stream_app_ids(service_id, client_id, payload_id, misc_id);
         service_app_name = appid_api.get_application_name(service_id, session->ctxt);
         client_app_name = appid_api.get_application_name(client_id, session->ctxt);
         payload_app_name = appid_api.get_application_name(payload_id, session->ctxt);
@@ -80,11 +80,11 @@ static void add_appid_to_packet_trace(Flow& flow)
         if (PacketTracer::is_active())
         {
             PacketTracer::log(appid_mute,
-                    "AppID: service: %s(%d), client: %s(%d), payload: %s(%d), misc: %s(%d)\n",
-                    (service_app_name ? service_app_name : ""), service_id,
-                    (client_app_name ? client_app_name : ""), client_id,
-                    (payload_app_name ? payload_app_name : ""), payload_id,
-                    (misc_name ? misc_name : ""), misc_id);
+                "AppID: service: %s(%d), client: %s(%d), payload: %s(%d), misc: %s(%d)\n",
+                (service_app_name ? service_app_name : ""), service_id,
+                (client_app_name ? client_app_name : ""), client_id,
+                (payload_app_name ? payload_app_name : ""), payload_id,
+                (misc_name ? misc_name : ""), misc_id);
         }
     }
 }

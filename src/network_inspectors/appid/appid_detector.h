@@ -123,11 +123,11 @@ public:
     virtual void add_app(AppIdSession& asd, AppId service_id, AppId client_id, const char* version, AppidChangeBits& change_bits)
     {
         if ( version )
-            asd.client.set_version(version, change_bits);
+            asd.set_client_version(version, change_bits);
 
         asd.set_client_detected();
         asd.client_inferred_service_id = service_id;
-        asd.client.set_id(client_id);
+        asd.set_client_id(client_id);
     }
     virtual void add_app(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppId, const char*, AppidChangeBits&);
     const char* get_code_string(APPID_STATUS_CODE) const;

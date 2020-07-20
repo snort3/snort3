@@ -148,8 +148,6 @@ public:
     int get_ptype_scan_count(enum HttpFieldIds type) const
     { return ptype_scan_counts[type]; }
 
-    virtual void custom_init() { }
-
     void clear_all_fields();
     void set_client(AppId, AppidChangeBits&, const char*, const char* version = nullptr);
     void set_payload(AppId, AppidChangeBits&, const char* type = nullptr, const char* version = nullptr);

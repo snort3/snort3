@@ -217,7 +217,7 @@ static void update_stats(const AppIdSession& asd, AppId app_id, StatsBucket* buc
             else
                 record->app_name = snort_strdup(entry->app_name);
         }
-        else if ( app_id == APP_ID_UNKNOWN || app_id == APP_ID_UNKNOWN_UI )
+        else if ( app_id == APP_ID_UNKNOWN )
             record->app_name = snort_strdup("__unknown");
         else if ( app_id == APP_ID_NONE )
             record->app_name = snort_strdup("__none");
@@ -273,7 +273,7 @@ void AppIdStatistics::update(const AppIdSession& asd)
     bucket->totalStats.rxByteCnt += asd.stats.responder_bytes;
 
     AppId web_app_id, service_id, client_id;
-    asd.get_first_stream_app_ids(service_id, client_id, web_app_id);
+    asd.get_api().get_first_stream_app_ids(service_id, client_id, web_app_id);
 
     if ( web_app_id > APP_ID_NONE )
         update_stats(asd, web_app_id, bucket);
