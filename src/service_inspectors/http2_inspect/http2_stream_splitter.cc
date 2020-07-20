@@ -190,17 +190,17 @@ bool Http2StreamSplitter::finish(Flow* flow)
     Profile profile(Http2Module::get_profile_stats());
 
     Http2FlowData* session_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
-    // FIXIT-M - this assert has been changed to check for null session data and return false if so
-    //           due to lack of reliable feedback to stream that scan has been called...if that is
-    //           addressed in stream reassembly rewrite this can be reverted to an assert
-    //assert(session_data != nullptr);
     if (!session_data)
         return false;
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2))
     {
-        if (!HttpTestManager::use_test_input(HttpTestManager::IN_HTTP2))
+        if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP2))
+        {
+            HttpTestManager::get_test_input_source()->finish();
+        }
+        else
         {
             printf("Finish from flow data %" PRIu64 " direction %d\n", session_data->seq_num,
                 source_id);
@@ -209,8 +209,11 @@ bool Http2StreamSplitter::finish(Flow* flow)
     }
 #endif
 
-    // FIXIT-E not supported yet
-    return false;
+    bool need_reassemble = false;
+
+    // Loop through all streams and call NHI finish()
+
+    return need_reassemble;
 }
 
 bool Http2StreamSplitter::init_partial_flush(Flow* flow)

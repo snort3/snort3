@@ -41,10 +41,6 @@ bool HttpStreamSplitter::finish(Flow* flow)
     Profile profile(HttpModule::get_profile_stats());
 
     HttpFlowData* session_data = HttpInspect::http_get_flow_data(flow);
-    // FIXIT-M - this assert has been changed to check for null session data and return false if so
-    //           due to lack of reliable feedback to stream that scan has been called...if that is
-    //           addressed in stream reassembly rewrite this can be reverted to an assert
-    //assert(session_data != nullptr);
     if(!session_data)
         return false;
 
@@ -109,6 +105,7 @@ bool HttpStreamSplitter::finish(Flow* flow)
         (session_data->cutter[source_id] == nullptr)                &&
         (session_data->section_type[source_id] == SEC__NOT_COMPUTE))
     {
+        assert(!session_data->for_http2);
         // Set up to process empty header section
         uint32_t not_used;
         prepare_flush(session_data, &not_used, SEC_HEADER, 0, 0, 0, false, 0, 0);
