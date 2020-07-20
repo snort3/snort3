@@ -299,6 +299,8 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
 
             if (resume)
                 policy->log_file_action(flow, file_ctx, FILE_RESUME_BLOCK);
+            else
+                file_ctx->verdict = FILE_VERDICT_LOG;
 
             if (PacketTracer::is_active())
             {
