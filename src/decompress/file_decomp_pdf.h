@@ -36,7 +36,7 @@
 enum fd_PDF_States
 {
     PDF_STATE_NEW,
-    PDF_STATE_LOCATE_STREAM,     /* Found sig bytes, looking for dictionary & stream*/
+    PDF_STATE_LOCATE_STREAM,     /* Found sig bytes, looking for dictionary & stream */
     PDF_STATE_INIT_STREAM,       /* Init stream */
     PDF_STATE_PROCESS_STREAM     /* Processing stream */
 };
@@ -79,21 +79,16 @@ struct fd_PDF_t
     uint8_t State;
 };
 
-// FIXIT-RC don't obfuscate pointers
-typedef fd_PDF_Parse_Stack_t* fd_PDF_Parse_Stack_p_t;
-typedef fd_PDF_Parse_t* fd_PDF_Parse_p_t;
-typedef fd_PDF_t* fd_PDF_p_t;
-
 /* API Functions */
 
 /* Init the PDF decompressor */
 fd_status_t File_Decomp_Init_PDF(fd_session_t*);
 
 /* Run the incremental PDF file parser/decompressor */
-fd_status_t File_Decomp_End_PDF(fd_session_t*);
+fd_status_t File_Decomp_PDF(fd_session_t*);
 
 /* End the decompressor */
-fd_status_t File_Decomp_PDF(fd_session_t*);
+fd_status_t File_Decomp_End_PDF(fd_session_t*);
 
 #endif
 

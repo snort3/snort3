@@ -196,7 +196,7 @@ static fd_status_t Process_Filter_Spec(fd_session_t* SessionPtr)
     int Index;
 
     fd_status_t Ret_Code = File_Decomp_OK;
-    fd_PDF_Parse_p_t p = &(SessionPtr->PDF->Parse);
+    fd_PDF_Parse_t* p = &(SessionPtr->PDF->Parse);
 
     /* Assume the 'no compression' result */
     SessionPtr->Decomp_Type = FILE_COMPRESSION_TYPE_NONE;
@@ -279,7 +279,7 @@ static fd_status_t Process_Filter_Spec(fd_session_t* SessionPtr)
 
 static inline void Init_Parser(fd_session_t* SessionPtr)
 {
-    fd_PDF_Parse_p_t p = &(SessionPtr->PDF->Parse);
+    fd_PDF_Parse_t* p = &(SessionPtr->PDF->Parse);
     /* The parser starts in the P_COMMENT state we start
        parsing the file just after the signature is located
        and the signature is syntactically a comment. */
@@ -288,14 +288,12 @@ static inline void Init_Parser(fd_session_t* SessionPtr)
     p->xref_tok = (const uint8_t*)TOK_XRF_STARTXREF;
 }
 
-static inline fd_status_t Push_State(fd_PDF_Parse_p_t p)
+static inline fd_status_t Push_State(fd_PDF_Parse_t* p)
 {
-    fd_PDF_Parse_Stack_p_t StckPtr;
-
     if ( p->Parse_Stack_Index >= (PARSE_STACK_LEN-1) )
         return File_Decomp_Error;
 
-    StckPtr = &(p->Parse_Stack[(p->Parse_Stack_Index)++]);
+    fd_PDF_Parse_Stack_t* StckPtr = &(p->Parse_Stack[(p->Parse_Stack_Index)++]);
 
     StckPtr->State = p->State;
     StckPtr->Sub_State = p->Sub_State;
@@ -303,14 +301,12 @@ static inline fd_status_t Push_State(fd_PDF_Parse_p_t p)
     return File_Decomp_OK;
 }
 
-static inline fd_status_t Pop_State(fd_PDF_Parse_p_t p)
+static inline fd_status_t Pop_State(fd_PDF_Parse_t* p)
 {
-    fd_PDF_Parse_Stack_p_t StckPtr;
-
     if ( p->Parse_Stack_Index == 0 )
         return File_Decomp_Error;
 
-    StckPtr = &(p->Parse_Stack[--(p->Parse_Stack_Index)]);
+    fd_PDF_Parse_Stack_t* StckPtr = &(p->Parse_Stack[--(p->Parse_Stack_Index)]);
 
     p->Elem_Index = 0;  // Reset to beginning of token as can't push/pop in mid-token
     p->State = StckPtr->State;
@@ -320,7 +316,7 @@ static inline fd_status_t Pop_State(fd_PDF_Parse_p_t p)
 }
 
 /* If there's a previous state on the stack, return a pointer to it, else return NULL */
-static inline fd_PDF_Parse_Stack_p_t Get_Previous_State(fd_PDF_Parse_p_t p)
+static inline fd_PDF_Parse_Stack_t* Get_Previous_State(fd_PDF_Parse_t* p)
 {
     if ( p->Parse_Stack_Index == 0 )
         return nullptr;
@@ -335,7 +331,7 @@ static inline fd_PDF_Parse_Stack_p_t Get_Previous_State(fd_PDF_Parse_p_t p)
    only explore Dictionary objects within Indirect Objects.  */
 static inline fd_status_t Handle_State_DICT_OBJECT(fd_session_t* SessionPtr, uint8_t c)
 {
-    fd_PDF_Parse_p_t p = &(SessionPtr->PDF->Parse);
+    fd_PDF_Parse_t* p = &(SessionPtr->PDF->Parse);
 
     /* enter with c being an EOL from the ind obj state */
     if ( p->State != P_DICT_OBJECT )
@@ -491,7 +487,7 @@ static inline fd_status_t Handle_State_DICT_OBJECT(fd_session_t* SessionPtr, uin
                of the stream.  */
             if ( SessionPtr->Decomp_Type != FILE_COMPRESSION_TYPE_NONE )
             {
-                fd_PDF_Parse_Stack_p_t StckPtr;
+                fd_PDF_Parse_Stack_t* StckPtr;
 
                 if ( (StckPtr = Get_Previous_State(p)) == nullptr )
                 {
@@ -524,7 +520,7 @@ static inline fd_status_t Handle_State_DICT_OBJECT(fd_session_t* SessionPtr, uin
     return File_Decomp_OK;
 }
 
-static inline fd_status_t Process_Stream(fd_PDF_Parse_p_t p)
+static inline fd_status_t Process_Stream(fd_PDF_Parse_t* p)
 {
     p->Sub_State = P_ENDSTREAM_TOKEN;
     p->State = P_IND_OBJ;
@@ -543,7 +539,7 @@ static inline fd_status_t Process_Stream(fd_PDF_Parse_p_t p)
    bulk of the file content. */
 static inline fd_status_t Handle_State_IND_OBJ(fd_session_t* SessionPtr, uint8_t c)
 {
-    fd_PDF_Parse_p_t p = &(SessionPtr->PDF->Parse);
+    fd_PDF_Parse_t* p = &(SessionPtr->PDF->Parse);
 
     /* Upon initial entry, setup state context */
     if ( p->State != P_IND_OBJ )
@@ -724,7 +720,7 @@ static inline fd_status_t Handle_State_IND_OBJ(fd_session_t* SessionPtr, uint8_t
    this segment. */
 static inline fd_status_t Handle_State_XREF(fd_session_t* SessionPtr, uint8_t c)
 {
-    fd_PDF_Parse_p_t p = &(SessionPtr->PDF->Parse);
+    fd_PDF_Parse_t* p = &(SessionPtr->PDF->Parse);
 
     if ( p->State != P_XREF )
     {
@@ -783,7 +779,7 @@ static inline fd_status_t Handle_State_XREF(fd_session_t* SessionPtr, uint8_t c)
 
 static inline fd_status_t Handle_State_START(fd_session_t* SessionPtr, uint8_t c)
 {
-    fd_PDF_Parse_p_t p = &(SessionPtr->PDF->Parse);
+    fd_PDF_Parse_t* p = &(SessionPtr->PDF->Parse);
     /* Skip any whitespace.  This will include
        the LF as part of a <CRLF> EOL token. */
     if ( IS_WHITESPACE(c) )
@@ -826,7 +822,7 @@ static inline fd_status_t Handle_State_START(fd_session_t* SessionPtr, uint8_t c
 /* Parse file until input blocked or stream located. */
 static fd_status_t Locate_Stream_Beginning(fd_session_t* SessionPtr)
 {
-    fd_PDF_Parse_p_t p = &(SessionPtr->PDF->Parse);
+    fd_PDF_Parse_t* p = &(SessionPtr->PDF->Parse);
     fd_status_t Ret_Code = File_Decomp_OK;
 
     while ( true )
@@ -900,7 +896,7 @@ static fd_status_t Locate_Stream_Beginning(fd_session_t* SessionPtr)
 
 static fd_status_t Init_Stream(fd_session_t* SessionPtr)
 {
-    fd_PDF_p_t StPtr = SessionPtr->PDF;
+    fd_PDF_t* StPtr = SessionPtr->PDF;
 
     switch ( StPtr->Decomp_Type )
     {
@@ -935,7 +931,7 @@ static fd_status_t Init_Stream(fd_session_t* SessionPtr)
 
 static fd_status_t Decomp_Stream(fd_session_t* SessionPtr)
 {
-    fd_PDF_p_t StPtr = SessionPtr->PDF;
+    fd_PDF_t* StPtr = SessionPtr->PDF;
 
     /* No reason to decompress if there's no input or
        room for output. */
@@ -993,12 +989,10 @@ static fd_status_t Close_Stream(fd_session_t* SessionPtr)
 /* Abort the decompression session upon command from caller. */
 fd_status_t File_Decomp_End_PDF(fd_session_t* SessionPtr)
 {
-    fd_PDF_p_t StPtr;
-
     if ( SessionPtr == nullptr )
         return File_Decomp_Error;
 
-    StPtr = SessionPtr->PDF;
+    fd_PDF_t* StPtr = SessionPtr->PDF;
 
     if ( (StPtr->State != PDF_STATE_INIT_STREAM) &&
         (StPtr->State != PDF_STATE_PROCESS_STREAM) )
@@ -1036,7 +1030,7 @@ fd_status_t File_Decomp_Init_PDF(fd_session_t* SessionPtr)
 
     SessionPtr->PDF = (fd_PDF_t*)snort_calloc(sizeof(fd_PDF_t));
 
-    fd_PDF_p_t StPtr = SessionPtr->PDF;
+    fd_PDF_t* StPtr = SessionPtr->PDF;
 
     Init_Parser(SessionPtr);
 

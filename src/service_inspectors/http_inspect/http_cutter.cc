@@ -692,14 +692,14 @@ ScanResult HttpBodyH2Cutter::cut(const uint8_t* buffer, uint32_t length,
     HttpInfractions* infractions, HttpEventGen* events, uint32_t flow_target, bool stretch,
     bool h2_body_finished)
 {
-    //FIXIT-E detained inspection not yet supported for http2
+    // FIXIT-E detained inspection not yet supported for HTTP/2
     UNUSED(buffer);
 
-    // FIXIT-E stretch not yet supported for http2 message bodies
+    // FIXIT-E stretch not yet supported for HTTP/2 message bodies
     UNUSED(stretch);
 
     // If the headers included a content length header (expected length >= 0), check it against the
-    // actual message body length. Alert if it does not match at the end of the message body, or if
+    // actual message body length. Alert if it does not match at the end of the message body or if
     // it overflows during the body (alert once then stop computing).
     if (expected_body_length >= 0)
     {
@@ -722,6 +722,7 @@ ScanResult HttpBodyH2Cutter::cut(const uint8_t* buffer, uint32_t length,
         total_octets_scanned += length;
         return SCAN_DISCARD_PIECE;
     }
+
     if (!h2_body_finished)
     {
         if (octets_seen + length < flow_target)
