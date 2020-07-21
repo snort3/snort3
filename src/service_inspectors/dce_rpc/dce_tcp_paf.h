@@ -25,20 +25,18 @@
 #include "dce_common.h"
 #include "stream/stream_splitter.h"
 
-#define DCE2_DEBUG__PAF_START_MSG_TCP  "DCE/RPC over TCP PAF ====================================="
-
 enum DCE2_PafTcpStates
 {
     DCE2_PAF_TCP_STATES__0 = 0,
-    DCE2_PAF_TCP_STATES__1,
-    DCE2_PAF_TCP_STATES__2,
-    DCE2_PAF_TCP_STATES__3,
-    DCE2_PAF_TCP_STATES__4,   // Byte order
+    DCE2_PAF_TCP_STATES__1,     // Major version
+    DCE2_PAF_TCP_STATES__2,     // Minor version
+    DCE2_PAF_TCP_STATES__3,     // PDU type
+    DCE2_PAF_TCP_STATES__4,     // Byte order
     DCE2_PAF_TCP_STATES__5,
     DCE2_PAF_TCP_STATES__6,
     DCE2_PAF_TCP_STATES__7,
-    DCE2_PAF_TCP_STATES__8,   // First byte of fragment length
-    DCE2_PAF_TCP_STATES__9    // Second byte of fragment length
+    DCE2_PAF_TCP_STATES__8,     // First byte of fragment length
+    DCE2_PAF_TCP_STATES__9      // Second byte of fragment length
 };
 
 // State tracker for DCE/RPC over TCP PAF
@@ -47,6 +45,7 @@ struct DCE2_PafTcpData
     DCE2_PafTcpStates paf_state;
     DceRpcBoFlag byte_order;
     uint16_t frag_len;
+    bool autodetected;
 };
 
 class Dce2TcpSplitter : public snort::StreamSplitter
@@ -57,12 +56,9 @@ public:
     Status scan(snort::Packet*, const uint8_t* data, uint32_t len,
         uint32_t flags, uint32_t* fp) override;
 
-    bool is_paf() override
-    {
-        return true;
-    }
+    bool is_paf() override { return true; }
 
-public:
+private:
     DCE2_PafTcpData state;
 };
 

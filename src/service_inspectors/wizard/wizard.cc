@@ -41,20 +41,26 @@ struct WizStats
 {
     PegCount tcp_scans;
     PegCount tcp_hits;
+    PegCount tcp_misses;
     PegCount udp_scans;
     PegCount udp_hits;
+    PegCount udp_misses;
     PegCount user_scans;
     PegCount user_hits;
+    PegCount user_misses;
 };
 
 const PegInfo wiz_pegs[] =
 {
     { CountType::SUM, "tcp_scans", "tcp payload scans" },
     { CountType::SUM, "tcp_hits", "tcp identifications" },
+    { CountType::SUM, "tcp_misses", "tcp searches abandoned" },
     { CountType::SUM, "udp_scans", "udp payload scans" },
     { CountType::SUM, "udp_hits", "udp identifications" },
+    { CountType::SUM, "udp_misses", "udp searches abandoned" },
     { CountType::SUM, "user_scans", "user payload scans" },
     { CountType::SUM, "user_hits", "user identifications" },
+    { CountType::SUM, "user_misses", "user searches abandoned" },
     { CountType::END, nullptr, nullptr }
 };
 
@@ -107,9 +113,18 @@ private:
             ++tstats.user_hits;
     }
 
+    void count_miss(const Flow* f)
+    {
+        if ( f->pkt_type == PktType::TCP )
+            ++tstats.tcp_misses;
+        else
+            ++tstats.user_misses;
+    }
+
 private:
     Wizard* wizard;
     Wand wand;
+    unsigned bytes_scanned = 0;
 };
 
 class Wizard : public Inspector
@@ -169,14 +184,20 @@ StreamSplitter::Status MagicSplitter::scan(
     Profile profile(wizPerfStats);
     count_scan(pkt->flow);
 
+    bytes_scanned += len;
     if ( wizard->cast_spell(wand, pkt->flow, data, len) )
     {
-        trace_logf(wizard_trace, pkt, "service set to %s\n", pkt->flow->service);
+        trace_logf(wizard_trace, pkt, "%s streaming search found service %s\n",
+            to_server() ? "c2s" : "s2c", pkt->flow->service);
         count_hit(pkt->flow);
     }
 
-    else if ( wizard->finished(wand) )
+    else if ( wizard->finished(wand) || bytes_scanned >= max(pkt->flow) )
+    {
+        count_miss(pkt->flow);
+        trace_logf(wizard_trace, pkt, "%s streaming search abandoned\n", to_server() ? "c2s" : "s2c");
         return ABORT;
+    }
 
     // ostensibly continue but splitter will be swapped out upon hit
     return SEARCH;
@@ -244,16 +265,23 @@ void Wizard::eval(Packet* p)
     if ( !p->data || !p->dsize )
         return;
 
+    bool c2s = p->is_from_client();
     Wand wand;
-    reset(wand, false, p->is_from_client());
-
-    if ( cast_spell(wand, p->flow, p->data, p->dsize) )
-    {
-        trace_logf(wizard_trace, p, "service set to %s\n", p->flow->service);
-        ++tstats.udp_hits;
-    }
+    reset(wand, false, c2s);
 
     ++tstats.udp_scans;
+    if ( cast_spell(wand, p->flow, p->data, p->dsize) )
+    {
+        trace_logf(wizard_trace, p, "%s datagram search found service %s\n",
+            c2s ? "c2s" : "s2c", p->flow->service);
+        ++tstats.udp_hits;
+    }
+    else
+    {
+        p->flow->clear_clouseau();
+        trace_logf(wizard_trace, p, "%s datagram search abandoned\n", c2s ? "c2s" : "s2c");
+        ++tstats.udp_misses;
+    }
 }
 
 StreamSplitter* Wizard::get_splitter(bool c2s)
