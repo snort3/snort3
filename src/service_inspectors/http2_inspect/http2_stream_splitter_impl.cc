@@ -202,6 +202,7 @@ void Http2StreamSplitter::partial_flush_data(Http2FlowData* session_data,
     *flush_offset = data_offset - 1;
     session_data->flushing_data[source_id] = true;
     session_data->num_frame_headers[source_id] -= 1;
+    session_data->stream_in_hi = NO_STREAM_ID;
 }
 
 bool Http2StreamSplitter::read_frame_hdr(Http2FlowData* session_data, const uint8_t* data,
@@ -301,7 +302,7 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                 const uint8_t frame_flags = get_frame_flags(session_data->
                     scan_frame_header[source_id]);
                 const uint32_t old_stream = session_data->current_stream[source_id];
-                session_data->stream_in_hi = session_data->current_stream[source_id] =
+                session_data->current_stream[source_id] =
                     get_stream_id(session_data->scan_frame_header[source_id]);
 
                 if (session_data->data_processing[source_id] &&

@@ -182,11 +182,17 @@ StreamSplitter::Status Http2DataCutter::scan(const uint8_t* data, uint32_t lengt
     if (!http2_scan(data, length, flush_offset, frame_len, frame_flags, data_offset))
         return StreamSplitter::ABORT;
 
-    return http_scan(data, flush_offset);
+    session_data->stream_in_hi = session_data->current_stream[source_id];
+    StreamSplitter::Status status = http_scan(data, flush_offset);
+    session_data->stream_in_hi = NO_STREAM_ID;
+
+    return status;
 }
 
 const StreamBuffer Http2DataCutter::reassemble(const uint8_t* data, unsigned len)
 {
+    session_data->stream_in_hi = session_data->current_stream[source_id];
+
     StreamBuffer frame_buf { nullptr, 0 };
 
     cur_data = cur_padding = cur_data_offset = 0;
@@ -314,6 +320,8 @@ const StreamBuffer Http2DataCutter::reassemble(const uint8_t* data, unsigned len
         session_data->frame_data_size[source_id] = frame_buf.length;
         bytes_sent_http = reassemble_bytes_sent = 0;
     }
+
+    session_data->stream_in_hi = NO_STREAM_ID;
 
     return frame_buf;
 }

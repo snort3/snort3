@@ -132,6 +132,7 @@ void Http2Inspect::eval(Packet* p)
     }
 
     Http2Stream* stream = session_data->get_current_stream(source_id);
+    session_data->stream_in_hi = stream->get_stream_id();
 
     stream->eval_frame(session_data->frame_header[source_id],
         session_data->frame_header_size[source_id], session_data->frame_data[source_id],
@@ -177,6 +178,7 @@ void Http2Inspect::clear(Packet* p)
     const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;
     Http2Stream* stream = session_data->get_current_stream(source_id);
     stream->clear_frame();
+    session_data->stream_in_hi = NO_STREAM_ID;
 }
 
 #ifdef REG_TEST
