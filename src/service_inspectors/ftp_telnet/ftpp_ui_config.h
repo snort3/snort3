@@ -144,9 +144,6 @@ typedef struct s_FTP_PARAM_FMT
     struct s_FTP_PARAM_FMT** choices;
     int numChoices;
     int prev_optional; /* Only set if optional is set */
-    const char* next_param; /* Pointer to buffer for the next parameter.
-                         To be used to backtrack for optional
-                         parameters that don't match. */
 }  FTP_PARAM_FMT;
 
 typedef struct s_FTP_CMD_CONF

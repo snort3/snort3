@@ -533,16 +533,18 @@ static int validate_date_format(FTP_DATE_FMT* ThisFmt, const char** this_param)
  *                            char *param
  *                            char *end
  *                            FTP_PARAM_FMT *param_format,
+ *                            const char** this_fmt_next_param,
  *                            FTP_SESSION *session)
  *
  * Purpose: Validates the current parameter against the format
  *          specified.
  *
- * Arguments: p              => Pointer to the current packet
- *            params_begin   => Pointer to beginning of parameters
- *            params_end     => End of params buffer
- *            param_format   => Parameter format specifier for this command
- *            session        => Pointer to the session info
+ * Arguments: p                    => Pointer to the current packet
+ *            params_begin         => Pointer to beginning of parameters
+ *            params_end           => End of params buffer
+ *            param_format         => Parameter format specifier for this command
+ *            this_fmt_next_param  => Pointer to next parameter
+ *            session              => Pointer to the session info
  *
  * Returns: int => return code indicating error or success
  *
@@ -551,6 +553,7 @@ static int validate_param(Packet* p,
     const char* param,
     const char* end,
     FTP_PARAM_FMT* ThisFmt,
+    const char** this_fmt_next_param,
     FTP_SESSION* session)
 {
     int iRet;
@@ -777,7 +780,7 @@ static int validate_param(Packet* p,
     break;
     }
 
-    ThisFmt->next_param = this_param;
+    *this_fmt_next_param = this_param;
 
     return FTPP_SUCCESS;
 }
@@ -788,16 +791,19 @@ static int validate_param(Packet* p,
  *                            char *params_begin,
  *                            char *params_end,
  *                            FTP_PARAM_FMT *param_format,
+ *                            const char** this_fmt_next_param,
  *                            FTP_SESSION *session)
  *
  * Purpose: Recursively determines whether each of the parameters for
  *          an FTP command are valid.
  *
- * Arguments: p              => Pointer to the current packet
- *            params_begin   => Pointer to beginning of parameters
- *            params_end     => End of params buffer
- *            param_format   => Parameter format specifier for this command
- *            session        => Pointer to the session info
+ * Arguments: p                   => Pointer to the current packet
+ *            params_begin        => Pointer to beginning of parameters
+ *            params_end          => End of params buffer
+ *            param_format        => Parameter format specifier for this command
+ *            this_fmt_next_param => Pointer to the next parameter
+ *                                   To be used to backtrack for optional parameters that don't match
+ *            session             => Pointer to the session info
  *
  * Returns: int => return code indicating error or success
  *
@@ -806,6 +812,7 @@ static int check_ftp_param_validity(Packet* p,
     const char* params_begin,
     const char* params_end,
     FTP_PARAM_FMT* param_format,
+    const char** this_fmt_next_param,
     FTP_SESSION* session)
 {
     int iRet = FTPP_ALERT;
@@ -828,23 +835,24 @@ static int check_ftp_param_validity(Packet* p,
     if ((!ThisFmt->next_param_fmt) && (params_begin >= params_end))
         return FTPP_SUCCESS;
 
-    ThisFmt->next_param = params_begin;
-
+    *this_fmt_next_param = params_begin;
     if (ThisFmt->optional_fmt)
     {
         /* Check against optional */
+        const char* opt_fmt_next_param = nullptr;
         iRet = validate_param(p, this_param, params_end,
-            ThisFmt->optional_fmt, session);
+            ThisFmt->optional_fmt, &opt_fmt_next_param, session);
         if (iRet == FTPP_SUCCESS)
         {
             const char* next_param;
+            const char* next_fmt_next_param = opt_fmt_next_param;
             NextFmt = ThisFmt->optional_fmt;
-            next_param = NextFmt->next_param+1;
+            next_param = opt_fmt_next_param+1;
             iRet = check_ftp_param_validity(p, next_param, params_end,
-                NextFmt, session);
+                 NextFmt, &next_fmt_next_param, session);
             if (iRet == FTPP_SUCCESS)
             {
-                this_param = NextFmt->next_param+1;
+                this_param = next_fmt_next_param+1;
             }
         }
     }
@@ -857,18 +865,20 @@ static int check_ftp_param_validity(Packet* p,
         for (i=0; i<ThisFmt->numChoices && !valid; i++)
         {
             /* Try choice [i] */
+            const char* this_fmt_choice_next_param = nullptr;
             iRet = validate_param(p, this_param, params_end,
-                ThisFmt->choices[i], session);
+                ThisFmt->choices[i], &this_fmt_choice_next_param, session);
             if (iRet == FTPP_SUCCESS)
             {
                 const char* next_param;
+                const char* next_fmt_next_param = this_fmt_choice_next_param;
                 NextFmt = ThisFmt->choices[i];
-                next_param = NextFmt->next_param+1;
+                next_param = this_fmt_choice_next_param+1;
                 iRet = check_ftp_param_validity(p, next_param, params_end,
-                    NextFmt, session);
+                    NextFmt, &next_fmt_next_param, session);
                 if (iRet == FTPP_SUCCESS)
                 {
-                    this_param = NextFmt->next_param+1;
+                    this_param = next_fmt_next_param+1;
                     break;
                 }
             }
@@ -877,18 +887,20 @@ static int check_ftp_param_validity(Packet* p,
     else if ((iRet != FTPP_SUCCESS) && (ThisFmt->next_param_fmt))
     {
         /* Check against next param */
+        const char* this_fmt_next_fmt_next_param = nullptr;
         iRet = validate_param(p, this_param, params_end,
-            ThisFmt->next_param_fmt, session);
+            ThisFmt->next_param_fmt, &this_fmt_next_fmt_next_param, session);
         if (iRet == FTPP_SUCCESS)
         {
             const char* next_param;
+            const char* next_fmt_next_param = this_fmt_next_fmt_next_param;
             NextFmt = ThisFmt->next_param_fmt;
-            next_param = NextFmt->next_param+1;
+            next_param = this_fmt_next_fmt_next_param+1;
             iRet = check_ftp_param_validity(p, next_param, params_end,
-                NextFmt, session);
+                NextFmt, &next_fmt_next_param, session);
             if (iRet == FTPP_SUCCESS)
             {
-                this_param = NextFmt->next_param+1;
+                this_param = next_fmt_next_param+1;
             }
         }
     }
@@ -899,7 +911,7 @@ static int check_ftp_param_validity(Packet* p,
     }
     if (iRet == FTPP_SUCCESS)
     {
-        ThisFmt->next_param = this_param;
+        *this_fmt_next_param = this_param;
     }
     return iRet;
 }
@@ -1785,8 +1797,9 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                 }
                 if (CmdConf->check_validity)
                 {
+                    const char* next_param = nullptr;
                     iRet = check_ftp_param_validity(p, req->param_begin,
-                        req->param_end, CmdConf->param_format,
+                        req->param_end, CmdConf->param_format, &next_param,
                         ftpssn);
                     /* If negative, haven't already alerted on violation */
                     if (iRet < 0)
