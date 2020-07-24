@@ -50,6 +50,7 @@
 
 #include "framework/ips_action.h"
 #include "framework/module.h"
+#include "main/snort_config.h"
 #include "packet_io/active.h"
 #include "profiler/profiler.h"
 
@@ -180,9 +181,10 @@ public:
     uint32_t flags;
 };
 
-bool RejectModule::begin(const char*, int, SnortConfig*)
+bool RejectModule::begin(const char*, int, SnortConfig* sc)
 {
     flags = 0;
+    sc->set_active_enabled();
     return true;
 }
 
@@ -241,7 +243,6 @@ static void mod_dtor(Module* m)
 static IpsAction* rej_ctor(Module* p)
 {
     RejectModule* m = (RejectModule*)p;
-    Active::set_enabled();
     return new RejectAction(m->flags);
 }
 

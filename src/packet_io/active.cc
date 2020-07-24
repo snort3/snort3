@@ -65,7 +65,6 @@ const char* Active::act_str[Active::ACT_MAX][Active::AST_MAX] =
     { "block", "cant_block", "would_block", "force_block" },
     { "reset", "cant_reset", "would_reset", "force_reset" },
 };
-bool Active::enabled = false;
 
 THREAD_LOCAL uint8_t Active::s_attempts = 0;
 THREAD_LOCAL bool Active::s_suspend = false;
@@ -176,12 +175,6 @@ void Active::kill_session(Packet* p, EncodeFlags flags)
 
 //--------------------------------------------------------------------
 
-void Active::init(SnortConfig* sc)
-{
-    if (sc->max_responses > 0)
-        Active::set_enabled();
-}
-
 bool Active::thread_init(const SnortConfig* sc)
 {
     s_attempts = sc->respond_attempts;
@@ -189,10 +182,10 @@ bool Active::thread_init(const SnortConfig* sc)
     if ( s_attempts > MAX_ATTEMPTS )
         s_attempts = MAX_ATTEMPTS;
 
-    if ( enabled && !s_attempts )
+    if ( sc->is_active_enabled() && !s_attempts )
         s_attempts = 1;
 
-    if ( enabled && (!SFDAQ::can_inject() || !sc->respond_device.empty()) )
+    if ( sc->is_active_enabled() && (!SFDAQ::can_inject() || !sc->respond_device.empty()) )
     {
         if ( sc->read_mode() || !open(sc->respond_device.c_str()) )
         {
@@ -667,7 +660,7 @@ void Active::reset_session(Packet* p, ActiveAction* reject, bool force)
     if ( force or p->context->conf->inline_mode() or p->context->conf->treat_drop_as_ignore() )
         Stream::drop_flow(p);
 
-    if ( enabled )
+    if ( p->context->conf->is_active_enabled() )
     {
         if (reject)
             Active::queue(reject, p);

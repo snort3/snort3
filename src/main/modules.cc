@@ -869,7 +869,12 @@ bool ActiveModule::set(const char*, Value& v, SnortConfig* sc)
         sc->set_dst_mac(v.get_string());
 
     else if ( v.is("max_responses") )
+    {
         sc->max_responses = v.get_uint8();
+
+        if ( sc->max_responses )
+            sc->set_active_enabled();
+    }
 
     else if ( v.is("min_interval") )
         sc->min_interval = v.get_uint8();

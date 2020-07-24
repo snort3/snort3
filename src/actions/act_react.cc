@@ -52,6 +52,7 @@
 #include "framework/ips_action.h"
 #include "framework/module.h"
 #include "log/messages.h"
+#include "main/snort_config.h"
 #include "packet_io/active.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
@@ -208,9 +209,10 @@ bool ReactModule::getpage(const char* file)
     return true;
 }
 
-bool ReactModule::begin(const char*, int, SnortConfig*)
+bool ReactModule::begin(const char*, int, SnortConfig* sc)
 {
     page.clear();
+    sc->set_active_enabled();
     return true;
 }
 
@@ -236,7 +238,6 @@ static IpsAction* react_ctor(Module* p)
 {
     ReactModule* m = (ReactModule*)p;
     ReactData* rd = new ReactData(m->page);
-    Active::set_enabled();
 
     return new ReactAction(rd);
 }

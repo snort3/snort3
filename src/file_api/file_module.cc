@@ -464,12 +464,12 @@ bool FileIdModule::begin(const char* fqn, int idx, SnortConfig*)
     return true;
 }
 
-bool FileIdModule::end(const char* fqn, int idx, SnortConfig*)
+bool FileIdModule::end(const char* fqn, int idx, SnortConfig* sc)
 {
     if (!idx)
     {
         if ( need_active )
-            Active::set_enabled();
+            sc->set_active_enabled();
         return true;
     }
 

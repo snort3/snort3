@@ -24,6 +24,7 @@
 #include "detection/detection_engine.h"
 #include "framework/ips_action.h"
 #include "framework/module.h"
+#include "main/snort_config.h"
 #include "packet_io/active.h"
 #include "protocols/packet.h"
 
@@ -88,7 +89,6 @@ public:
     ReplaceModule() : Module(s_name, s_help, s_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
 
     Usage get_usage() const override
     { return DETECT; }
@@ -107,14 +107,10 @@ bool ReplaceModule::set(const char*, Value& v, SnortConfig*)
     return true;
 }
 
-bool ReplaceModule::begin(const char*, int, SnortConfig*)
+bool ReplaceModule::begin(const char*, int, SnortConfig* sc)
 {
     disable_replace = false;
-    return true;
-}
-
-bool ReplaceModule::end(const char*, int, SnortConfig*)
-{
+    sc->set_active_enabled();
     return true;
 }
 
@@ -133,7 +129,6 @@ ReplaceAction::ReplaceAction(bool dr) :
     IpsAction(s_name, ACT_RESET)
 {
     disable_replace = dr;
-    Active::set_enabled();
 }
 
 void ReplaceAction::exec(Packet* p)

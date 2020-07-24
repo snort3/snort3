@@ -424,6 +424,7 @@ public:
     Plugins* plugins = nullptr;
     SoRules* so_rules = nullptr;
 private:
+    bool active_enabled = false;
     std::list<ReloadResourceTuner*> reload_tuners;
 
 public:
@@ -625,6 +626,13 @@ public:
 
     bool assure_established() const
     { return run_flags & RUN_FLAG__ASSURE_EST; }
+
+    // active stuff
+    void set_active_enabled()
+    { active_enabled = true; }
+
+    bool is_active_enabled() const
+    { return active_enabled; }
 
     // other stuff
     uint8_t min_ttl() const

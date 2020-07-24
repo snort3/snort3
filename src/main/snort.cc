@@ -233,8 +233,6 @@ void Snort::init(int argc, char** argv)
 
     parser_term(sc);
 
-    Active::init(sc);
-
     LogMessage("%s\n", LOG_DIV);
 
     SFDAQ::init(sc->daq_config, ThreadConfig::get_instance_max());

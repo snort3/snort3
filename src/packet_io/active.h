@@ -58,12 +58,8 @@ public:
 
 public:
 
-    static void init(SnortConfig*);
     static bool thread_init(const SnortConfig*);
     static void thread_term();
-
-    static void set_enabled(bool on_off = true)
-    { enabled = on_off; }
 
     static void suspend()
     { s_suspend = true; }
@@ -181,7 +177,6 @@ private:
 
 private:
     static const char* act_str[ACT_MAX][AST_MAX];
-    static bool enabled;
     static THREAD_LOCAL uint8_t s_attempts;
     static THREAD_LOCAL bool s_suspend;
 
