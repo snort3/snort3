@@ -1,13 +1,3 @@
-Snort 3 differs from Snort 2 in the following ways:
-
-* command line and conf file syntax made more uniform
-* removed unused and deprecated features
-* remove as many barriers to successful run as possible
-  (e.g.: no upper bounds on memcaps)
-* assume the simplest mode of operation
-  (e.g.: never assume input from or output to some hardcoded filename)
-* all Snort 2 config options are grouped into Snort 3 modules
-
 === Features New to Snort 3
 
 Some things Snort++ can do today that Snort can not do:
@@ -23,7 +13,6 @@ Some things Snort++ can do today that Snort can not do:
 * process raw files (eg read a PDF and do file processing)
 * process raw payload (eg bridge 2 sockets and do inspection)
 * fast pattern offload to separate thread (experimental)
-* track all memory allocated
 * add or override any config item on command line
 * set CPU affinity
 * pause and resume commands
@@ -32,86 +21,58 @@ Some things Snort++ can do today that Snort can not do:
 
 Some things Snort++ can do today that Snort can not do as well:
 
-* Hyperscan search engine plugin
-  (Intel provides patch for Snort 2)
-* fast pattern sensitive data
-  (Snort 2 requires a slow, extra search)
-* multiple packet threads with one config
-  (Snort 2 requires multiple processes)
-* wizard automatically detects service for first flow
-  (Snort 2 appid detects for next flow)
-* nested policy binding
-  (Snort 2 has just one level)
-* decode arbitrary layers
-  (Snort 2 supports only 2 IP layers)
-* process PDU buffers
-  (Snort 2 only processes packets)
-* fully stateful http_inspect with 97 builtin alerts
-  (Snort 2 is only partly stateful with 33 builtin alerts)
-* output all semantic errors before quitting
-  (Snort 2 stops at first one)
-* alert file rules
-  (Snort 2 must use multiple rules)
-* alert service rules, eg alert http
-  (Snort 2 must use metadata:service)
-* automatic fast_pattern only
-  (Snort 2 requires explicit fast_pattern:only)
-* elided rule headers omit nets and/or ports
-  (Snort 2 requires explicit 'any')
-* dump builtin rule stubs
-  (Snort 2 can only dump SO stubs)
-* rule sticky buffers
-  (Snort 2 buffers must be repeated)
-* http_header:name supported to restrict to single field
-  (Snort 2 searches all headers)
-* fully equivalent SO rules
-  (Snort 2 has some limitations with SO processing)
-* text-based SO rule implementation
-  (Snort 2 requires tedious, nested C structs)
-* extensible module-based tracing
-  (Snort 2 has a fixed set of flags)
-* over 200 plugins, no need to change core source code
-  (Snort 2 only supports preprocessors and outputs)
-* use consistent conf syntax
-  (Snort 2 defines lists different ways in different places, etc.)
-* use consistent rule syntax
-  (Snort 2 has semicolon separated suboptions, etc.)
-* arbitrary whitespace and comments in conf and rules
-  (Snort 2 requires newline escapes)
-* properly parse rules
-  (Snort 2 can actually completely ignore stuff)
-* optional, expanded warnings output, can be fatal
-  (Snort 2 warnings limited and are not optional or fatal)
-* define and use arbitrary variables and functions in config with Lua
-  (Snort 2 has variables just for rule headers)
-* text-based command line shell
-  (Snort 2 has binary control socket)
-* generate text and HTML user guide in addition to PDF
-  (Snort 2 just has PDF and Talos provides HTML)
-* generate developer's guide
-  (Snort 2's is manually written)
-* extensive command line help, eg every config item, rule option, and peg count
-  (Snort 2 only has command line args)
-* cmake builds
-  (Snort 2 only does automake)
-* read rules from separate file or stdin
-  (Snort 2 requires rules directly in or included in conf)
-* simple, clean, uniform startup and shutdown output
-  (Snort 2 is heavy and inconsistent)
-* port_scan is fully configurable
-  (Snort 2 hard codes most of the configuration)
-* port_scan can block scans
-  (Snort 2 can only detect scans)
-* sigquit will cause a --dirty-pig style exit
-  (Snort 2 handles sigquit the same as sigterm and sigint)
-* detection trace
-  (Snort 2 has more limited buffer dumping)
-* updated unified2 events with MPLS, VLAN, and IP6
-  (Snort 2 requires configuration and extra data)
-* significantly more unit tests, including --catch and make check
-  (Snort 2 has very few unit tests)
-* better modularity 346K/1534 = 226 lines/file, max=2700
-  (Snort 2 has 440K/1021 = 431 lines/file, max=13K)
+|===
+| Feature             | Snort 2                              | Snort 3
+| Packet Threads      | 1 per process                        | N per process
+| Config Memory Use   | N processes * M GB                   | M GB total, more for packets
+| Config Reload       | N processes, slower                  | 1 thread, can be pinned to separate core
+| Startup             | Single threaded, slower              | Multithreaded, faster
+| Plugins             | Limited to preprocs and outputs      | Full plugin system with over 230 plugins
+| Plugin Examples     | DPX preproc                          | snort3_extra repo, all types, LuaJIT
+| DAQ                 | 2.X, run to completion               | 3.X, vector input, multiple outstanding packets
+| DAQ Modules         | Legacy modules                       | Stacked modules, IOCTLs, file, socket, text modules
+| Pcap Readback Speed | X Mbits/sec for Max-Detect           | 2X with ac, 4X with hyperscan
+| IP Layers           | 2 max                                | Arbitrary / configurable limits
+| IP Reputation       | Complex, shared memory               | Simplified process memory
+| Stream TCP          | Complex implementation               | New and improved implementation
+| Service detection   | appid only, port configs required    | Autodetection, most port configs optional
+| HTTP inspector      | Partly stateful                      | Fully stateful
+| HTTP Evader         | 65 misses                            | 10 misses
+| Port Scan Detection | High, medium, low thresholds only    | Fully configurable detection thresholds
+| Config parsing      | Report one error and quit            | Report all errors
+| Config syntax       | Irregular, static, limited variables | Lua, fully scriptable, arbitrary variables
+| Command Line        | Some overlap with config file        | Set or override any config from command line
+| Default Config      | Complex, needs tuning                | Simplified, effective default config
+| Policy Examples     | None                                 | Tweaks for all standard Talos policies
+| Policy Bindings     | One level                            | Nested
+| Rule syntax         | Inconsistent, requires line escapes  | Uniform syntax, arbitrary whitespace
+| Rule parsing        | Buggy, limited warnings              | Robust, many optional warnings
+| Rule comments       | # comments only                      | #, #begin/#end, C-style, rem option
+| Rule input          | Config includes only                 | Includes, external file or path, stdin
+| Hyperscan           | External patch available             | Native support, regex fast patterns
+| Sensitive Data      | Requires a slow, extra search        | Normal fast pattern rule
+| alert file rules    | No                                   | Yes
+| alert service rules | No                                   | Yes
+| fast_pattern_only   | Hand optimization                    | Automatic optimization
+| Fast Pattern Buffers| 6 available                          | 14 available
+| Elided rule headers | No                                   | Yes (omit nets and/or ports)
+| Rule sticky buffers | Some                                 | All buffers are sticky
+| SO rule features    | Restricted functionality             | True superset of text rules
+| Simple SO rules     | No (based on tedious C-structs)      | Yes (based on text rule)
+| Dump builtin stubs  | No (SO stubs only)                   | Yes
+| Runtime tracing     | No (debug traces and misc logs only) | Yes
+| Event Logging       | Legacy unified2 recommended          | JSON recommended, integrates with ELK stack, etc.
+| Statistics          | Limited counts, fixed perf monitor   | 2X counts, configurable perf monitor
+| Control interface   | Limited binary interface             | Extensible text shell, socket access
+| Documentation       | LaTeX-based PDF, READMEs             | Asciidoc text, html, and PDF (user, ref, dev, upgrade)
+| Command line help   | No                                   | Extensive, supports data driven management
+| Build system        | Automake, Linux, *BSD, Windows       | Cmake, Linux, *BSD, Mac
+| Startup / Shutdown  | Noisy, limited                       | Clean, extensible, non-zero counts only
+| Sig Quit            | Same as Sig Term and Sig Int         | Quick exit
+| Source Code         | 470K lines C, avg 400 lines/file     | 389K lines C++, avg 200 lines/file
+| Tests               | A few unit tests                     | Many unit tests, snort3_demo suite
+| Distribution        | snort.org tarballs, ~6 month updates | github repo, ~2 week updates
+|===
 
 === Build Options
 
@@ -130,7 +91,7 @@ Some things Snort++ can do today that Snort can not do as well:
 * added --script-path
 * added -L none|dump|pcap
 * added -z <#> and --max-packet-threads <#>
-* delete --enable-mpls-multicast, --enable-mpls-overlapping-ip, 
+* delete --enable-mpls-multicast, --enable-mpls-overlapping-ip,
   --max-mpls-labelchain-len, --mpls-payload-type
 * deleted --pid-path and --no-interface-pidfile
 * deleting command line options which will be available with --lua or some such including:
@@ -178,7 +139,7 @@ Some things Snort++ can do today that Snort can not do as well:
 * preprocessor disabled settings deleted since no longer relevant
 * sessions are always created; snort config stateful checks eliminated
 * stream5_tcp: prune_log_max deleted; to be replaced with histogram
-* stream5_tcp: max_active_responses, min_response_seconds moved to 
+* stream5_tcp: max_active_responses, min_response_seconds moved to
   active.max_responses, min_interval
 
 === Rules
@@ -270,16 +231,3 @@ For more information, See Features > Sensitive Data Filtering for details.
   possible to configure additional custom headers to search for Original
   Client IP.
 
-* The -n option does not work properly when perf_monitor is configured. The
-  number of packets processed from the pcap is likely to be more than the
-  number specified with the -n option.
-
-* When a file is transferred via SMB2 it may be allowed even though
-  according to file policy it should be blocked. This occurs when the
-  create and read requests are sent together and then the read and create
-  responses are sent together. Blocking is done correctly if the create and
-  read requests are sent separately or if the file is large enough to
-  require two read responses.
-
-* This user manual is incomplete and does not fully cover many Snort 2.X
-  features that are also supported by Snort 3.

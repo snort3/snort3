@@ -1,0 +1,24 @@
+
+= Snort++ Developers Guide
+The Snort Team
+include::version.txt[]
+:revdate: {localdate} {localtime}
+:toc:
+:toc-placement: manual
+:toc-title: Contents
+:toclevels: 4
+
+toc::[]
+
+== Extending Snort
+
+include::extending.txt[]
+
+== Coding Style
+
+include::style.txt[]
+
+== Source Code
+
+include::dev_data.txt[]
+

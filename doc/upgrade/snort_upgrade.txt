@@ -1,0 +1,29 @@
+
+= Snort 3 Upgrade Manual
+The Snort Team
+include::version.txt[]
+:revdate: {localdate} {localtime}
+:toc:
+:toc-placement: manual
+:toc-title: Contents
+
+toc::[]
+
+== Overview
+
+include::overview.txt[]
+
+== Snort 3 vs Snort 2
+
+include::differences.txt[]
+
+== Snort2Lua
+
+include::snort2lua.txt[]
+
+== Configuration Changes
+
+----
+include::config_changes.txt[]
+----
+

@@ -611,11 +611,6 @@ Note: calling ++RawBuffer.new()++ with no arguments returns a RawBuffer of size 
 Note: StreamSplitter does not have a ++new()++ method, it must be created by an inspector via
 ++Inspector.get_splitter()++
 
-=== Developers Guide
-
-Run doc/dev_guide.sh to generate /tmp/dev_guide.html, an annotated guide to
-the source tree.
-
 === Performance Considerations for Developers
 
 * Since C compilers evaluate compound conditional expression from left to

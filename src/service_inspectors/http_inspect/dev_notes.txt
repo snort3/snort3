@@ -74,7 +74,7 @@ because the corresponding request is unknown or unavailable.
 The attach_my_transaction() factory method contains all the logic that makes this work. There are
 many corner cases. Don't mess with it until you fully understand it.
 
-Message sections implement the Just-In-Time (JIT) principle for work products. A mimimum of
+Message sections implement the Just-In-Time (JIT) principle for work products. A minimum of
 essential processing is done under process(). Other work products are derived and stored the first
 time detection or some other customer asks for them.
 
@@ -175,7 +175,7 @@ interprets it, and what the output to rule options will be. Several related conf
 test_input is provided by the HttpTestInput class. It allows the developer to write tests that
 simulate HTTP messages split into TCP segments at specified points. The tests cover all of splitter
 and inspector and the impact on downstream customers such as detection and file processing. The
-test_input option activates a modifed form of test_output. It is not necessary to also specify
+test_input option activates a modified form of test_output. It is not necessary to also specify
 test_output.
 
 The test input comes from the file http_test_msgs.txt in the current directory. Enter HTTP test
@@ -245,7 +245,7 @@ When the inspector aborts the connection (scan() returns StreamSplitter::ABORT) 
 to receive any more input from stream on that connection in that direction. Accordingly the test
 tool should not send it any more input. A paragraph of test input expected to result in an abort
 should be the last paragraph. The developer should either start a new test (@break, etc.) or at
-least reverse the direction and not send any more data in the orignal direction. Sending more data
+least reverse the direction and not send any more data in the original direction. Sending more data
 after an abort is likely to lead to confusing output that has no bearing on the test.
 
 This test tool does not implement the feature of being hardened against bad input. If you write a

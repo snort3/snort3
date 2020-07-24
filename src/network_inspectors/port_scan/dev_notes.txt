@@ -27,7 +27,7 @@ occurs.  An important requirement of this phase is that an attacker does not
 already know what protocols and services are supported by the destination host.
 If an attacker does know what services are open on the destination host then
 there is no need for this phase.  Because of this requirement, we assume that
-if an attacker engages in this phase that they do not have prior knowledege to
+if an attacker engages in this phase that they do not have prior knowledge to
 what services are open.  So, the attacker will need to query the ports or
 protocols they are interested in.  Most or at least some of these queries will
 be negative and take the form of either an invalid response (TCP RSTs, ICMP
@@ -64,7 +64,7 @@ number of invalid responses or connections.
 
 Decoy Portscan:  A decoy portscan is a variation on a distributed portscan, the
 difference being that a decoy portscan connects to a single port multiple
-times.  This shows up in the unqiue port count that is tracked.  There's still
+times.  This shows up in the unique port count that is tracked.  There's still
 many hosts connecting to the destination host.
 
 Portsweep:  A portsweep is a basic one host to many host scan where one to a

@@ -19,7 +19,7 @@ contains fields "target" and "type" which indicate the plugin type and name
 of the plugin to be instantiated and tested.  The table should also contain
 an entry point function called "test".
 
-The Piglets all derive from Piget::BasePlugin and contain code to expose
+The Piglets all derive from Piglet::BasePlugin and contain code to expose
 the target plugin methods to the Lua chunk.  There is a Piglet subclass for
 each plugin type.  (The enum of plugin types is located in
 framework/base_api.h)

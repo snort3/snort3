@@ -74,7 +74,7 @@ As rules are loaded we generate some large rule counts on some ports and
 small rule counts on most ports.  If for each port you build a list of
 rules on that port, we may end up with some ports with a large rule set
 that differs by the addition of a few rules on each port (relative to the
-group sizes) we don't want to generate compeletely different rule groups
+group sizes) we don't want to generate completely different rule groups
 for these as that would then generate multiple large state machines for the
 multi-pattern matching phase of the detection engine which in turn
 could use a lot of memory.
@@ -113,7 +113,7 @@ cases where we have multiple port-objects with at least one common port.
 We maintain for each port a list of port objects and their rules that apply
 to it. This allows us to view combining the rules associated with each port
 object using a few heuristics. A list of port objects applicable to each
-port presents rules in one of four catagories:
+port presents rules in one of four categories:
 
 1. a single port object, and all rules associated with it.
 

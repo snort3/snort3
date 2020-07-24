@@ -93,7 +93,7 @@ include::snort2lua_cmds.txt[]
    files name.
 
 *  If a rule's action is a custom ruletype, that rule action will be
-   silently converted to the rultype's 'type'. No warnings or errors are
+   silently converted to the rule's 'type'. No warnings or errors are
    currently emitted. Additionally, the custom ruletypes outputs will be
    silently discarded.
 

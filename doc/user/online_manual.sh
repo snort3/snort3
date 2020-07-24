@@ -4,7 +4,7 @@
 # with embedded images in base64 format for use in places where
 # the image links aren't supported.
 
-input="snort_manual"
+input="snort_user"
 output="snort_online"
 data="images.dat"
 

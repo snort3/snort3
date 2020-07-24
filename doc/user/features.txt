@@ -13,19 +13,24 @@ include::binder.txt[]
 === Byte rule options
 
 ==== byte_test
+
 include::byte_test.txt[]
 
 ==== byte_jump
+
 include::byte_jump.txt[]
 
 ==== byte_extract
+
 include::byte_extract.txt[]
 
 ==== byte_math
+
 include::byte_math.txt[]
 
 ==== Testing Numerical Values
-include::testing_numerical_values.txt[] 
+
+include::byte_options.txt[] 
 
 === DCE Inspectors
 

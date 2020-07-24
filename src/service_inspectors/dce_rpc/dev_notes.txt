@@ -22,7 +22,7 @@ configuration.
 
 The http_proxy and http_server functionality is implemented as two
 inspectors.  These inspectors only serve to locate the 'tunnel' setup
-content.  If/when the setup content is located, the session is transfered
+content.  If/when the setup content is located, the session is transferred
 to the DCE TCP inspector.
 
 The SMB inspector supports version 1 and version 2 of the protocol. 

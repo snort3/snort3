@@ -50,14 +50,14 @@ Some implementations of MPSE have the capability to perform searches for
 multiple pattern groups over the same piece of data efficiently, rather than
 requiring a separate search for each group. A batch of searches can be built
 up from a single piece of data and passed to the search_batch() MPSE method,
-allowing MPSE specific optimisation of how to carry out the searches to be
+allowing MPSE specific optimization of how to carry out the searches to be
 performed.
 
 The methodology presented here to solve this problem is based on the
 premise that we can use the source and destination ports to isolate pattern
 groups for pattern matching, and rely on an event validation procedure to
 authenticate other parameters such as sip, dip and flags after a pattern
-match is made. An instrinsic assumption here is that most sip and dip
+match is made. An intrinsic assumption here is that most sip and dip
 values will be acceptable and that the big gain in performance is due to
 the fact that by isolating traffic based on services (ports) we gain the
 most benefit.  Additionally, and just as important, is the requirement that
@@ -103,8 +103,8 @@ Rules are placed into each group as follows:
 1. Src Port == Unique Service, Dst Port == ANY -> Unique Src Port Table
      Src Port == Unique Service, Dst Port ==
      Unique -> Unique Src & Dst Port Tables
-2. Dst Port == Unqiue Service, Src Port == ANY -> Unique Dst Port Table
-     Dst Port == Unqiue Service, Src Port ==
+2. Dst Port == Unique Service, Src Port == ANY -> Unique Dst Port Table
+     Dst Port == Unique Service, Src Port ==
      Unique -> Unique Dst & Src Port Tables
 3. Dst Port == ANY, Src Port == ANY -> Generic Rule Set,
      And add to all Unique Src/Dst Rule Sets that have entries

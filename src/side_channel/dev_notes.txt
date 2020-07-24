@@ -46,7 +46,7 @@ Connector objects implement a simplex channel.
 Each thread (packet thread or other thread) can own multiple SideChannel
 objects.  The SCPort is used to distinguish.  The
 SideChannelManager::thread_init() method is called during the thread
-initalization to instantiate SideChannel objects for the thread.  
+initialization to instantiate SideChannel objects for the thread.
 
 During snort configuration, one side channel object is created to capture the
 common configuration elements.  Then every thread that needs to utilize side

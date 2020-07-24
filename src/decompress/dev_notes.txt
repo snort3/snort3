@@ -20,7 +20,7 @@ proceed as the file is received and processed.
 SWF File Processing:
 
 SWF files exist in three forms: 1) uncompressed, 2) ZLIB compressed, and 3)
-LZMA compressed.  SWF files begin with a file signature block (alway
+LZMA compressed.  SWF files begin with a file signature block (always
 uncompressed) to indicate the format of the balance of the file.  The
 balance of the file is formatted and processed as specified.
 

@@ -4,7 +4,7 @@ instead of directly accessing system headers.  Advantages:
 * the vagaries of required system includes are minimized and localized here
 
 * these headers are OO in nature and much more user friendly than the often
-  awkard system defined structs
+  awkward system defined structs
 
 Packet, used throughout Snort, is defined here as well.  Packet represents
 a unit of work, essentially a buffer associated with a flow.  It does not

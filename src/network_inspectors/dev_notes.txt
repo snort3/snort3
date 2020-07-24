@@ -6,7 +6,7 @@ The collection includes:
 
 binder - The flow to config mapping (policy selection)
 
-arp_spoof - Monitor ARP requests/replies for consistancy.  Locate spoofing
+arp_spoof - Monitor ARP requests/replies for consistency.  Locate spoofing
 attempts and ARP cache inconsistancies
 
 port_scan - A tool to attempt to locate IP port scanning activity.

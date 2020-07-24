@@ -17,7 +17,7 @@ within 'stream' can have specific HA logic and interfaces.
 IpHAManager::process_deletion() is called when an IP stream is being 
 destroyed and indicates to the stream & flow HA logic that a flow
 deletion HA message needs to be emitted for the flow in question.
-Ip streams are closed due to timeout or puning actions which lead
+Ip streams are closed due to timeout or pruning actions which lead
 to the invocation of process_deletion().
 
 IpHA::create_session() is called from the stream & flow HA logic and

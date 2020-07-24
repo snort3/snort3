@@ -13,7 +13,7 @@ Process IP4, IP6, ICMP4, ICMP6, and TCP protocols.  No UDP nor Ethernet
 level normalizations currently exist.
 
 Maintain activity counts and print these counts as part of the Snort exit
-(or on-demain) counts.
+(or on-demand) counts.
 
 If inline and able to perform packet replacement, replace the normalized
 packet in the output stream.

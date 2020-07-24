@@ -1,36 +1,22 @@
-= Snort 3 User Manual
-:author: The Snort Team
+
+= Snort 3 Reference Manual
+The Snort Team
+include::version.txt[]
+:revdate: {localdate} {localtime}
 :toc:
 :toc-placement: manual
 :toc-title: Contents
 
-image::snorty.png["Snorty",width="480"]
-include::version.txt[]
 toc::[]
 
-== Overview
+== Help
 
-include::overview.txt[]
+The detail in this reference manual was generated from the various help commands
+available in Snort.  `snort --help` will output:
 
-== Concepts
-
-This section provides background on essential aspects of Snort's operation.
-
-include::concepts.txt[]
-
-== Tutorial
-
-include::tutorial.txt[]
-
-== Usage
-
-include::usage.txt[]
-
-== Features
-
-This section explains how to use key features of Snort.
-
-include::features.txt[]
+----
+include::help.txt[]
+----
 
 == Basic Modules
 
@@ -96,27 +82,7 @@ All output of events and packets is done by Loggers.
 
 include::logger.txt[]
 
-== DAQ Configuration and Modules
+== Appendix
 
-include::daq.txt[]
-
-== Snort 3 vs Snort 2
-
-include::differences.txt[]
-
-== Snort2Lua
-
-include::snort2lua.txt[]
-
-== Extending Snort
-
-include::extending.txt[]
-
-== Coding Style
-
-include::style.txt[]
-
-== Reference
-
-include::reference.txt[]
+include::appendix.txt[]
 

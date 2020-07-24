@@ -9,14 +9,14 @@ the network connection. Example applications include:
 AppId inspects packets from the client and server endpoints to identify the applications on each
 end of the connection.
 
-The AppIdModule and AppIdInspector classes subclass the framework Module and Inspector classes to 
+The AppIdModule and AppIdInspector classes subclass the framework Module and Inspector classes to
 provide the logic to plug this inspector into the snort framework.  AppIdModule represents the
 configuration for AppId and AppIdInspector provides the packet processing context.  An AppId
 inspector is instantiated for each packet thread created by the framework.
 
 AppId registers to recieve any IP packet, it does not process rebuilt packets.
 
-AppIdModule contains all the logic to process the AppId inspector Lua configuration which is identified 
+AppIdModule contains all the logic to process the AppId inspector Lua configuration which is identified
 by the 'appid' keyword.  This configuration includes settings for logging, statistics, etc. and also
 the directory path or filename for three additional configuration items:
 
@@ -24,7 +24,7 @@ the directory path or filename for three additional configuration items:
     - path to legacy 'RNA' configuration (appid uses a small part of this to configure monitored networks)
     - path to third party application identification configuration
 
-The configuration syntax for these items has not been converted to use Lua so currently custom 
+The configuration syntax for these items has not been converted to use Lua so currently custom
 parsing code is used to process these files.  Converting these to use Lua is on the AppId roadmap.
 
 The application id mapping table is a key component of AppId and must be configured in order for detection
@@ -59,11 +59,11 @@ periodically dumped to file for post processing.  These statistics are legacy an
 review to determine if they should be refactored to use the enhanced snort3 statistics capabilities.  See
 appid_stats.[h|cc] for implementation of these counts.
 
-Supporting the 'appids' option on detection rules is one of the primary features of AppId and this 
+Supporting the 'appids' option on detection rules is one of the primary features of AppId and this
 support is implemented in the AppIdIpsOption class.  This is a subclass of the IpsOption with an IpsApi
 defined to plug into the detection framework.  The AppIdIpsOption eval method is called for all rules that
 have the 'appids' option to determine if any of the applications discovered on a flow match the rule.
-The application id mapping table is required to map the numerical ids maintained by AppId to the 
+The application id mapping table is required to map the numerical ids maintained by AppId to the
 corresponding name that is used in IPS rules.  Since this table is loaded after the framework has
 initialized all the rule options AppIdIpsOption must generate its lookup table on the first call to check
 for a match.  This is not ideal but until the rule option framework supports a 'post-config' callback to
@@ -71,12 +71,12 @@ handle situations like this AppId will need this workaround.
 
 The application discovery state for a flow is maintained in the AppIdSession object that AppId instantiates
 for each flow.  This is typically done of the first packet of the flow, however for expected flows this
-object may have already been allocated.  AppIdSession is a subclass of FlowData and currently is a kitchen 
+object may have already been allocated.  AppIdSession is a subclass of FlowData and currently is a kitchen
 sink of data and methods to support discovery and report results to interested parties. Many of the member
 variables are public to support access from legacy code.  Refactoring this class to improve organization
 and encapsulation would be a worthy undertaking.
 
-The application discovery process for a flow is managed in the AppIdDiscovery class or the client or 
+The application discovery process for a flow is managed in the AppIdDiscovery class or the client or
 service discovery classes derived from this class.  An instance of the client and service discovery classes
 is created during initialization and these classes in turn instantiate each of builtin detectors for its
 category (client or service).  Detectors register with discovery the ports and patterns they are interested
@@ -90,24 +90,24 @@ to inspect a flow.
 
 <NOTE: add details for how third-party discovery fits into this process>
 
-Application 'detectors' are the workhorses of the AppId inspector.  Detectors inspect packets for either 
+Application 'detectors' are the workhorses of the AppId inspector.  Detectors inspect packets for either
 the server side or the client side (there are a few exceptions where a client detector may look at packets in
-both directions in some scenarios).  Common behavior for both detector types is implemented in the 
+both directions in some scenarios).  Common behavior for both detector types is implemented in the
 AppIdDetector base class.  ClientDetector and ServiceDetector subclass AppIdDetector to implement behavior
-that is common to all detectors with each catergory.  Finally each application specific detector is a 
+that is common to all detectors with each category.  Finally each application specific detector is a
 subclass of either the client or service detector class.
 
-When a detector is instantiated it registers the ports for which it should be dispatched when packets 
+When a detector is instantiated it registers the ports for which it should be dispatched when packets
 arrive on that port and it also registers the set of patterns to match against the content of the packet
 payloads.  The application ids the detector supports and flags indicating additional meta-data the detector
-may discover are also registered.  When a detector is selected based on a port or pattern match the 
+may discover are also registered.  When a detector is selected based on a port or pattern match the
 discovery framework will call the 'validate' function of the detector to initiate detailed inspection of
 the payload.  The detector will determine one of the following:
 
 1. The flow is not a match for its applications.  In this case the detector is removed from the list of
 candidates and discovery moves on to the next detector.
 
-2. The flow may match but more packets must be inspected to make a final decision.  In this case the 
+2. The flow may match but more packets must be inspected to make a final decision.  In this case the
 detector remains a candidate and discovery moves on to the next detector.
 
 3. The flow is a match.  In this case the AppIdSession is updated with the detected application id and
@@ -121,11 +121,11 @@ represent client and service Lua detectors.
 
 AppId's Lua API relies on Lua States to interact with Lua detectors. Every thread has an independent state
 and the detectors need to be initialized once per thread/state, whereas the C detectors, are only initialized
-once in the control thread. To mimic this behavior, session information is stored in a LuaStateDescriptor 
-object and is associated with every detector in a thread/state. The Lua detectors are initialized once in the 
+once in the control thread. To mimic this behavior, session information is stored in a LuaStateDescriptor
+object and is associated with every detector in a thread/state. The Lua detectors are initialized once in the
 control thread and are shared by all the threads/states.
 
-During initialization and discovery there are multiple callbacks between C and Lua functions. To keep track 
+During initialization and discovery there are multiple callbacks between C and Lua functions. To keep track
 of the session and detector another layer of abstraction is added. The LuaObject class encapsulates a Lua
 detector and a LuaStateDescriptor object, it is stored in the Lua State and is accessed by C functions
 during Lua callbacks. LuaServiceObject and LuaClientObject subclass LuaObject to represent stateful (session)
@@ -134,11 +134,11 @@ LuaServiceDetectors and LuaClientDetectors.
 When a Lua detector is initialized, a unique environment/table is created in the global registry of the
 Lua State and a LuaObject object is created in C. And when a detector is activated, a call is made to
 it's initialization function in Lua code and the corresponding LuaObject object is stored in it's local stack.
-Callbacks to C functions to register ports and patterns are processed only in the control thread and 
-ignored in the packet processing threads. 
+Callbacks to C functions to register ports and patterns are processed only in the control thread and
+ignored in the packet processing threads.
 
-During discovery, if a Lua detector is selected based on a port or pattern and "validate" is called, 
-the table corresponding to that detector is pulled from the Lua State and a call is made to the 
-corresponding "validate" function in Lua code. The "validate" function in Lua can in turn make callbacks 
-to C functions and shares its local stack with the C function. These funtions make sure that the call 
+During discovery, if a Lua detector is selected based on a port or pattern and "validate" is called,
+the table corresponding to that detector is pulled from the Lua State and a call is made to the
+corresponding "validate" function in Lua code. The "validate" function in Lua can in turn make callbacks
+to C functions and shares its local stack with the C function. These functions make sure that the call
 is made only during discovery before executing.

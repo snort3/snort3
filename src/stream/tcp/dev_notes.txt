@@ -75,7 +75,7 @@ handles the creation of new flow upon receiving an HA update message.
 TcpHA::deactivate_session() is called from the stream & flow HA logic to 
 place a session into standby mode.  Upon receiving an HA Update message, 
 the flow is first created if necessary, and is then placed into Standby
-state.  deactivate_session() sets the TCP specific state for Standy mode.
+state.  deactivate_session() sets the TCP specific state for Standby mode.
 
 One HA state transition is implemented within this TCP library.  In
 TcpStreamSession::clear(), TcpHAManager::process_deletion() is invoked to

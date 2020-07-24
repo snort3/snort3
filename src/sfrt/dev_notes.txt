@@ -34,13 +34,13 @@ either index the data array, or point to another table.
 Inserts are performed by specifying a CIDR and a pointer to its associated
 data.  Since a new routing table entry may overwrite previous entries,
 a flag selects whether the insert favors the most recent or favors the most
-specific.  Favoring most specific should be the default behvior.  If
+specific.  Favoring most specific should be the default behavior.  If
 the user wishes to overwrite routing entries with more general data, the
 table should be flushed, rather than using favor-most-recent.
 
 Before modifying the routing or data tables, the insert function performs a
-lookup on the CIDR-to-be-insertted.  If no entry or an entry of differing
-bit length is found, the data is insertted into the data table, and its
+lookup on the CIDR-to-be-inserted.  If no entry or an entry of differing
+bit length is found, the data is inserted into the data table, and its
 index is used for the new routing table entry.  If an entry is found that
 is as specific as the new CIDR, the index stored points to where the new
 data is written into the data table.

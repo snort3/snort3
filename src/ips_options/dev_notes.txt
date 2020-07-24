@@ -1,5 +1,5 @@
 Standard IPS rule option such as "content", "pcre", "flowbits" etc..
-(non-preprocessor specific) implemented as IpsOption subcclasses.
+(non-preprocessor specific) implemented as IpsOption subclasses.
 
 Most of the IpsOptions can be built statically or dynamically.  Several,
 however, such as content, are still tightly coupled with the code and can

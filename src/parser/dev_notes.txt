@@ -1,5 +1,5 @@
 This unit support parsing of command line args, detection rules, IP addresses,
-and config files. New Lua-based feratures are elsewhere.
+and config files. New Lua-based features are elsewhere.
 
 * parse_stream.cc uses state machines to parse IPS rules.
 

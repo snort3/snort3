@@ -6,7 +6,7 @@ inspector engaged as quickly as possible.
 For TCP, the wizard uses a stream splitter to examine the in order data as
 it becomes available.  If the splitter finds a match, it sets the service
 on the flow which will result in a reevaluation of the bindings.  If a
-service inspector is bound, its spliter is activated and the stream is
+service inspector is bound, its splitter is activated and the stream is
 rewound to the start.
 
 The wizard is deactivated from the flow upon finding a match or finding

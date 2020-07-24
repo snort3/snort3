@@ -1,0 +1,96 @@
+
+Snort 3.0 is an updated version of the Snort Intrusion Prevention System (IPS) which features a new
+design that provides a superset of Snort 2.X functionality with better efficacy, performance,
+scalability, usability, and extensibility.  Some of the key features of Snort 3.0 are:
+
+* Support multiple packet processing threads
+* Use a shared configuration and attribute table
+* Autodetect services for portless configuration
+* Modular design
+* Plugin framework with over 200 plugins
+* More scalable memory profile
+* LuaJIT configuration, loggers, and rule options
+* Hyperscan support
+* Rewritten TCP handling
+* New rule parser and syntax
+* Service rules like alert http
+* Rule "sticky" buffers
+* Way better SO rules
+* New HTTP inspector
+* New performance monitor
+* New time and space profiling
+* New latency monitoring and enforcement
+* Piglets to facilitate component testing
+* Inspection Events
+* Automake and Cmake
+* Autogenerate reference documentation
+
+=== Efficacy
+
+* Detects and blocks all but 10 HTTP Evader tests (see https://noxxi.de/research/http-evader.html).
+
+* Autodetection of services reduces misses due to incorrect or out of date port configurations and
+  improves detection on unexpected command and control channels.
+
+=== Performance
+
+* Vastly improved throughput over Snort 2 for deep flow inspection.
+
+* Many more fast pattern buffers means fewer non-fast pattern rules.
+
+* Hyperscan is used for faster fast patterns, content literals and (optionally) compatible PCRE
+  during signature evaluation, and various searches done by inspectors.
+
+* sd_pattern rules have normal fast patterns, don't require extra searches.
+
+* The snort3_demo repo has a performance suite that can be used to compare Snort 2 and Snort 3.
+
+* The DAQ 3 interface facilitates leveraging your data plane for maximum throughput including
+  checksum offload and acquisition of a vector of packets.
+
+* Snort 3 is not run-to-completion, making it possible to detain packets for lookaside acceleration
+  and other new features.
+
+=== Scalability
+
+* Much easier to leverage multiple cores.
+
+* All packet threads share configuration and rule engine which frees up much more memory for packet
+  processing.
+
+=== Usability
+
+* Sticky buffers make it easier to write correct rules.
+
+* Autodetection eliminates much port configuration maintenance.
+
+* Service-based detection doesn't preclude port-based detection.
+
+* Builtin defaults and policy tweaks make effective tuning much simpler.
+
+* Command line help and generated reference documentation make it easy to get the correct
+  configuration details.
+
+* A trace mechanism is provided to make it easy to see how packets are processed.
+
+* Build a scaled down image and configure for smaller systems such as IoT devices.
+
+* The snort2lua utility (described later) makes it easy to convert your local rules.
+
+* Extensive peg counts capture the important events and actions to provide more detailed insight
+  into your deployment.
+
+=== Extensibility
+
+* Several plugin types are defined and over 220 plugins are available.
+
+* Inspection events make collaboration among plugins possible without framework updates.
+
+* All plugins, including SO rules, can be mixed in the same library.
+
+* A command line shell is available for reloads and other operations.
+
+* The snort3_extra repo has examples to each plugin type to help you get started.
+
+* Easy to add SO rules for 0-day attacks.
+

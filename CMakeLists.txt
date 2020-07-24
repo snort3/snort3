@@ -57,8 +57,11 @@ endif (ENABLE_UNIT_TESTS)
 add_subdirectory (src)
 add_subdirectory (tools)
 add_subdirectory (lua)
-add_subdirectory (doc)
 add_subdirectory (daqs)
+
+if ( MAKE_DOC )
+    add_subdirectory (doc)
+endif ( MAKE_DOC )
 
 # Miscellaneous stuff.  Does NOT directly affect Snort's build environment.
 include (${CMAKE_MODULE_PATH}/packaging_data.cmake)

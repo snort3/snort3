@@ -1,0 +1,41 @@
+
+= Snort 3 User Manual
+The Snort Team
+include::version.txt[]
+:revdate: {localdate} {localtime}
+:toc:
+:toc-placement: manual
+:toc-title: Contents
+
+toc::[]
+
+image::snorty.png["Snorty",width="480"]
+
+== Overview
+
+include::overview.txt[]
+
+== Concepts
+
+This section provides background on essential aspects of Snort's operation.
+
+include::concepts.txt[]
+
+== Tutorial
+
+include::tutorial.txt[]
+
+== Usage
+
+include::usage.txt[]
+
+== Features
+
+This section explains how to use key features of Snort.
+
+include::features.txt[]
+
+== DAQ Configuration and Modules
+
+include::daq.txt[]
+

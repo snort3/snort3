@@ -1,7 +1,7 @@
 This directory contains all the file processing related classes and APIs
 
 * file_api: provides the interfaces for file processing, used by service
-inpsectors such as HTTP, SMTP, POP, IMAP, SMB, and FTP etc.
+inspectors such as HTTP, SMTP, POP, IMAP, SMB, and FTP etc.
 
 * File capture: provides the ability to capture file data and save them in the
 mempool, then they can be stored to disk. Currently, files can be saved to the 

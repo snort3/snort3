@@ -17,7 +17,7 @@ within 'stream' can have specific HA logic and interfaces.
 UdpHAManager::process_deletion() is called when an UDP stream is being 
 destroyed and indicates to the stream & flow HA logic that a flow
 deletion HA message needs to be emitted for the flow in question.
-Udp streams are closed due to timeout or puning actions which lead
+Udp streams are closed due to timeout or pruning actions which lead
 to the invocation of process_deletion().
 
 UdpHA::create_session() is called from the stream & flow HA logic and

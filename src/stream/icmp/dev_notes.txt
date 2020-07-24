@@ -20,7 +20,7 @@ within 'stream' can have specific HA logic and interfaces.
 IcmpHAManager::process_deletion() is called when an ICMP stream is being 
 destroyed and indicates to the stream & flow HA logic that a flow
 deletion HA message needs to be emitted for the flow in question.
-Icmp streams are closed due to timeout or puning actions which lead
+Icmp streams are closed due to timeout or pruning actions which lead
 to the invocation of process_deletion().
 
 IcmpHA::create_session() is called from the stream & flow HA logic and

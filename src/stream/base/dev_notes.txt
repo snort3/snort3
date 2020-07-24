@@ -17,7 +17,7 @@ is implemented as the class 'StreamHAClient'.  This provides all top-level Strea
 processing.  Each stream per-protocol (../udp, ../tcp, etc.) in turn implements the
 per-protocol HA specifics.
 
-A static StreamHAManager class is used to create/destoy the StreamHAClient class in each
+A static StreamHAManager class is used to create/destroy the StreamHAClient class in each
 packet processing thread.
 
 The StreamHAContent class defines the actual HA message content for this 'session' client.
