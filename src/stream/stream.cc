@@ -397,11 +397,11 @@ int Stream::set_snort_protocol_id_expected(
 }
 
 void Stream::set_snort_protocol_id(
-    Flow* flow, const HostAttributeEntry* host_entry, int /*direction*/)
+    Flow* flow, const HostAttributesEntry& host, int /*direction*/)
 {
     SnortProtocolId snort_protocol_id;
 
-    if (!flow || !host_entry)
+    if (!flow )
         return;
 
     /* Cool, its already set! */
@@ -413,7 +413,7 @@ void Stream::set_snort_protocol_id(
         set_ip_protocol(flow);
     }
 
-    snort_protocol_id = host_entry->get_snort_protocol_id
+    snort_protocol_id = host->get_snort_protocol_id
         (flow->ssn_state.ipprotocol, flow->server_port);
 
 #if 0
@@ -445,21 +445,19 @@ SnortProtocolId Stream::get_snort_protocol_id(Flow* flow)
         return flow->ssn_state.snort_protocol_id;
 
     if (flow->ssn_state.ipprotocol == 0)
-    {
         set_ip_protocol(flow);
-    }
 
-    if ( HostAttributeEntry* host_entry = HostAttributes::find_host(&flow->server_ip) )
+    if ( HostAttributesEntry host = HostAttributesManager::find_host(flow->server_ip) )
     {
-        set_snort_protocol_id(flow, host_entry, FROM_SERVER);
+        set_snort_protocol_id(flow, host, FROM_SERVER);
 
         if (flow->ssn_state.snort_protocol_id != UNKNOWN_PROTOCOL_ID)
             return flow->ssn_state.snort_protocol_id;
     }
 
-    if ( HostAttributeEntry* host_entry = HostAttributes::find_host(&flow->client_ip) )
+    if ( HostAttributesEntry host = HostAttributesManager::find_host(flow->client_ip) )
     {
-        set_snort_protocol_id(flow, host_entry, FROM_CLIENT);
+        set_snort_protocol_id(flow, host, FROM_CLIENT);
 
         if (flow->ssn_state.snort_protocol_id != UNKNOWN_PROTOCOL_ID)
             return flow->ssn_state.snort_protocol_id;
@@ -481,9 +479,10 @@ SnortProtocolId Stream::set_snort_protocol_id(Flow* flow, SnortProtocolId id)
 
     if ( !flow->is_proxied() )
     {
-        HostAttributes::update_service
-            (&flow->server_ip, flow->server_port, flow->ssn_state.ipprotocol, id);
+        HostAttributesManager::update_service
+            (flow->server_ip, flow->server_port, flow->ssn_state.ipprotocol, id);
     }
+
     return id;
 }
 

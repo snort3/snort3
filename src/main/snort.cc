@@ -183,7 +183,10 @@ void Snort::init(int argc, char** argv)
     sc->setup();
 
     if ( !sc->attribute_hosts_file.empty() )
-        HostAttributes::load_hosts_file(sc, sc->attribute_hosts_file.c_str());
+    {
+        if ( !HostAttributesManager::load_hosts_file(sc, sc->attribute_hosts_file.c_str()) )
+            ParseError("host attributes file failed to load\n");
+    }
 
     // Must be after CodecManager::instantiate()
     if ( !InspectorManager::configure(sc) )
@@ -215,8 +218,6 @@ void Snort::init(int argc, char** argv)
 
     if ((offload_search_api != nullptr) and (offload_search_api != search_api))
         MpseManager::activate_search_engine(offload_search_api, sc);
-
-    HostAttributes::activate();
 
 #ifdef PIGLET
     if ( !Piglet::piglet_mode() )
@@ -319,7 +320,7 @@ void Snort::term()
 
     term_signals();
     IpsManager::global_term(sc);
-    HostAttributes::cleanup();
+    HostAttributesManager::term();
 
 #ifdef PIGLET
     if ( !Piglet::piglet_mode() )

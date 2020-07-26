@@ -220,8 +220,6 @@ const PegInfo proc_names[] =
     { CountType::SUM, "inspector_deletions", "number of times inspectors were deleted" },
     { CountType::SUM, "daq_reloads", "number of times daq configuration was reloaded" },
     { CountType::SUM, "attribute_table_reloads", "number of times hosts attribute table was reloaded" },
-    { CountType::SUM, "attribute_table_hosts", "number of hosts added to the attribute table" },
-    { CountType::SUM, "attribute_table_overflow", "number of host additions that failed due to attribute table full" },
     { CountType::END, nullptr, nullptr }
 };
 
@@ -241,7 +239,6 @@ void DropStats()
 
     LogLabel("Summary Statistics");
     show_stats((PegCount*)&proc_stats, proc_names, array_size(proc_names)-1, "process");
-
 }
 
 //-------------------------------------------------------------------------

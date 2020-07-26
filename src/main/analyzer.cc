@@ -62,6 +62,7 @@
 #include "pub_sub/finalize_packet_event.h"
 #include "side_channel/side_channel.h"
 #include "stream/stream.h"
+#include "target_based/host_attributes.h"
 #include "time/packet_time.h"
 #include "trace/trace_api.h"
 #include "utils/stats.h"
@@ -637,6 +638,7 @@ void Analyzer::init_unprivileged()
     HighAvailabilityManager::thread_init(); // must be before InspectorManager::thread_init();
     InspectorManager::thread_init(sc);
     PacketTracer::thread_init();
+    HostAttributesManager::initialize();
 
     // in case there are HA messages waiting, process them first
     HighAvailabilityManager::process_receive();

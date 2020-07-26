@@ -118,7 +118,6 @@ SCENARIO("TCP State Handler Base Class", "[state_handlers][stream_tcp]")
         WHEN("SYN is sent")
         {
             TcpSegmentDescriptor* tsd = new TcpSegmentDescriptor(flow, pkt, tel);
-            REQUIRE( ( tsd != nullptr ) );
             client_tracker->set_tcp_event(TcpStreamTracker::TCP_SYN_SENT_EVENT);
             tsh->eval(*tsd, *client_tracker);
             THEN("Event should be TCP_SYN_SENT_EVENT")
@@ -131,7 +130,6 @@ SCENARIO("TCP State Handler Base Class", "[state_handlers][stream_tcp]")
         SECTION("SYN is received")
         {
             TcpSegmentDescriptor* tsd = new TcpSegmentDescriptor(flow, pkt, tel);
-            REQUIRE( ( tsd != nullptr ) );
             server_tracker->set_tcp_event(TcpStreamTracker::TCP_SYN_RECV_EVENT);
             tsh->eval(*tsd, *server_tracker);
             CHECK( ( tsh->get_tcp_event() == server_tracker->get_tcp_event() ) );
@@ -149,7 +147,6 @@ SCENARIO("TCP State Handler Base Class", "[state_handlers][stream_tcp]")
         SECTION("syn_ack_sent")
         {
             TcpSegmentDescriptor* tsd = new TcpSegmentDescriptor(flow, pkt, tel);
-            REQUIRE( ( tsd != nullptr ) );
             client_tracker->set_tcp_event(TcpStreamTracker::TCP_SYN_ACK_SENT_EVENT);
             tsh->eval(*tsd, *client_tracker);
             CHECK( ( tsh->get_tcp_event() == client_tracker->get_tcp_event() ) );
@@ -159,7 +156,6 @@ SCENARIO("TCP State Handler Base Class", "[state_handlers][stream_tcp]")
         SECTION("syn_ack_recv")
         {
             TcpSegmentDescriptor* tsd = new TcpSegmentDescriptor(flow, pkt, tel);
-            REQUIRE( ( tsd != nullptr ) );
             server_tracker->set_tcp_event(TcpStreamTracker::TCP_SYN_ACK_RECV_EVENT);
             tsh->eval(*tsd, *server_tracker);
             CHECK( ( tsh->get_tcp_event() == server_tracker->get_tcp_event() ) );
@@ -177,7 +173,6 @@ SCENARIO("TCP State Handler Base Class", "[state_handlers][stream_tcp]")
         SECTION("ack_sent")
         {
             TcpSegmentDescriptor* tsd = new TcpSegmentDescriptor(flow, pkt, tel);
-            REQUIRE( ( tsd != nullptr ) );
             client_tracker->set_tcp_event(TcpStreamTracker::TCP_ACK_SENT_EVENT);
             tsh->eval(*tsd, *client_tracker);
             CHECK( ( tsh->get_tcp_event() == client_tracker->get_tcp_event() ) );
@@ -187,7 +182,6 @@ SCENARIO("TCP State Handler Base Class", "[state_handlers][stream_tcp]")
         SECTION("ack_recv")
         {
             TcpSegmentDescriptor* tsd = new TcpSegmentDescriptor(flow, pkt, tel);
-            REQUIRE( ( tsd != nullptr ) );
             server_tracker->set_tcp_event(TcpStreamTracker::TCP_ACK_RECV_EVENT);
             tsh->eval(*tsd, *server_tracker);
             CHECK( ( tsh->get_tcp_event() == server_tracker->get_tcp_event() ) );
@@ -205,7 +199,6 @@ SCENARIO("TCP State Handler Base Class", "[state_handlers][stream_tcp]")
         SECTION("data_seg_sent")
         {
             TcpSegmentDescriptor* tsd = new TcpSegmentDescriptor(flow, pkt, tel);
-            REQUIRE( ( tsd != nullptr ) );
             client_tracker->set_tcp_event(TcpStreamTracker::TCP_DATA_SEG_SENT_EVENT);
             tsh->eval(*tsd, *client_tracker);
             CHECK( ( tsh->get_tcp_event() == client_tracker->get_tcp_event() ) );
@@ -215,7 +208,6 @@ SCENARIO("TCP State Handler Base Class", "[state_handlers][stream_tcp]")
         SECTION("data_seg_recv")
         {
             TcpSegmentDescriptor* tsd = new TcpSegmentDescriptor(flow, pkt, tel);
-            REQUIRE( ( tsd != nullptr ) );
             server_tracker->set_tcp_event(TcpStreamTracker::TCP_DATA_SEG_RECV_EVENT);
             tsh->eval(*tsd, *server_tracker);
             CHECK( ( tsh->get_tcp_event() == server_tracker->get_tcp_event() ) );
@@ -233,7 +225,6 @@ SCENARIO("TCP State Handler Base Class", "[state_handlers][stream_tcp]")
         SECTION("fin_sent")
         {
             TcpSegmentDescriptor* tsd = new TcpSegmentDescriptor(flow, pkt, tel);
-            REQUIRE( ( tsd != nullptr ) );
             client_tracker->set_tcp_event(TcpStreamTracker::TCP_FIN_SENT_EVENT);
             tsh->eval(*tsd, *client_tracker);
             CHECK( ( tsh->get_tcp_event() == client_tracker->get_tcp_event() ) );
@@ -243,7 +234,6 @@ SCENARIO("TCP State Handler Base Class", "[state_handlers][stream_tcp]")
         SECTION("fin_recv")
         {
             TcpSegmentDescriptor* tsd = new TcpSegmentDescriptor(flow, pkt, tel);
-            REQUIRE( ( tsd != nullptr ) );
             server_tracker->set_tcp_event(TcpStreamTracker::TCP_FIN_RECV_EVENT);
             tsh->eval(*tsd, *server_tracker);
             CHECK( ( tsh->get_tcp_event() == server_tracker->get_tcp_event() ) );
@@ -261,7 +251,6 @@ SCENARIO("TCP State Handler Base Class", "[state_handlers][stream_tcp]")
         SECTION("rst_sent")
         {
             TcpSegmentDescriptor* tsd = new TcpSegmentDescriptor(flow, pkt, tel);
-            REQUIRE( ( tsd != nullptr ) );
             client_tracker->set_tcp_event(TcpStreamTracker::TCP_RST_SENT_EVENT);
             tsh->eval(*tsd, *client_tracker);
             CHECK( ( tsh->get_tcp_event() == client_tracker->get_tcp_event() ) );
@@ -271,7 +260,6 @@ SCENARIO("TCP State Handler Base Class", "[state_handlers][stream_tcp]")
         SECTION("rst_recv")
         {
             TcpSegmentDescriptor* tsd = new TcpSegmentDescriptor(flow, pkt, tel);
-            REQUIRE( ( tsd != nullptr ) );
             server_tracker->set_tcp_event(TcpStreamTracker::TCP_RST_RECV_EVENT);
             tsh->eval(*tsd, *server_tracker);
             CHECK( ( tsh->get_tcp_event() == server_tracker->get_tcp_event() ) );

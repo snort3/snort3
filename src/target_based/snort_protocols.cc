@@ -36,9 +36,7 @@ using namespace snort;
 using namespace std;
 
 SnortProtocolId ProtocolReference::get_count()
-{
-    return protocol_number;
-}
+{ return protocol_number; }
 
 const char* ProtocolReference::get_name(SnortProtocolId id)
 {
@@ -74,14 +72,12 @@ const char* ProtocolReference::get_name_sorted(SnortProtocolId id)
 
 SnortProtocolId ProtocolReference::add(const char* protocol)
 {
-    if (!protocol)
+    if ( !protocol )
         return UNKNOWN_PROTOCOL_ID;
 
     auto protocol_ref = ref_table.find(protocol);
     if ( protocol_ref != ref_table.end() )
-    {
         return protocol_ref->second;
-    }
 
     SnortProtocolId snort_protocol_id = protocol_number++;
     id_map.emplace_back(protocol);
@@ -94,16 +90,14 @@ SnortProtocolId ProtocolReference::find(const char* protocol)
 {
     auto protocol_ref = ref_table.find(protocol);
     if ( protocol_ref != ref_table.end() )
-    {
         return protocol_ref->second;
-    }
 
     return UNKNOWN_PROTOCOL_ID;
 }
 
 void ProtocolReference::init(ProtocolReference* old_proto_ref)
 {
-    if(!old_proto_ref)
+    if ( !old_proto_ref )
     {
         bool ok = ( add("unknown") == UNKNOWN_PROTOCOL_ID );
         ok = ( add("ip") == SNORT_PROTO_IP ) and ok;
@@ -115,26 +109,17 @@ void ProtocolReference::init(ProtocolReference* old_proto_ref)
     }
     else
     {
-        // Copy old ProtocolReference ID/name pairs to new ProtocolReference
         for(SnortProtocolId id = 0; id < old_proto_ref->get_count(); id++)
-        {
             add(old_proto_ref->get_name(id));
-        }
     }
 }
 
 ProtocolReference::ProtocolReference()
-{
-    init(nullptr);
-}
+{ init(nullptr); }
 
 ProtocolReference::ProtocolReference(ProtocolReference* old_proto_ref)
-{
-    init(old_proto_ref);
-}
+{ init(old_proto_ref); }
 
 ProtocolReference::~ProtocolReference()
-{
-    ref_table.clear();
-}
+{ ref_table.clear(); }
 

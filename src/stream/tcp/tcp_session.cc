@@ -1054,11 +1054,12 @@ bool TcpSession::validate_packet_established_session(TcpSegmentDescriptor& tsd)
 {
     TcpStreamTracker* listener = tsd.get_listener();
 
-    pkt_action_mask |= listener->normalizer.handle_paws(tsd);
-
     if ( tsd.is_policy_inline() )
        if ( tsd.get_tcph()->is_ack() && !listener->is_ack_valid(tsd.get_ack()) )
            pkt_action_mask |= ACTION_BAD_PKT;
+
+    if ( !tsd.is_meta_ack_packet() )
+        pkt_action_mask |= listener->normalizer.handle_paws(tsd);
 
     return ( pkt_action_mask & ACTION_BAD_PKT ) ? false : true;
 }

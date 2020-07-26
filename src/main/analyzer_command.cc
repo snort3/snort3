@@ -28,6 +28,7 @@
 #include "framework/module.h"
 #include "log/messages.h"
 #include "managers/module_manager.h"
+#include "target_based/host_attributes.h"
 #include "utils/stats.h"
 
 #include "analyzer.h"
@@ -165,9 +166,32 @@ ACSwap::~ACSwap()
             sc->clear_reload_resource_tuner_list();
     }
     delete ps;
+    HostAttributesManager::swap_cleanup();
+
     Swapper::set_reload_in_progress(false);
     LogMessage("== reload complete\n");
     request->respond("== reload complete\n", from_shell, true);
+}
+
+ACHostAttributesSwap::ACHostAttributesSwap(Request* req, bool from_shell)
+    : request(req), from_shell(from_shell)
+{
+    assert(Swapper::get_reload_in_progress() == false);
+    Swapper::set_reload_in_progress(true);
+}
+
+bool ACHostAttributesSwap::execute(Analyzer&, void**)
+{
+    HostAttributesManager::initialize();
+    return true;
+}
+
+ACHostAttributesSwap::~ACHostAttributesSwap()
+{
+    HostAttributesManager::swap_cleanup();
+    Swapper::set_reload_in_progress(false);
+    LogMessage("== reload host attributes complete\n");
+    request->respond("== reload host attributes complete\n", from_shell, true);
 }
 
 bool ACDAQSwap::execute(Analyzer& analyzer, void**)

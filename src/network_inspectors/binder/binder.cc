@@ -436,7 +436,7 @@ static void set_session(Flow* flow)
     flow->clouseau = nullptr;
 }
 
-static void set_service(Flow* flow, const HostAttributeEntry* host)
+static void set_service(Flow* flow, const HostAttributesEntry host)
 {
     Stream::set_snort_protocol_id(flow, host, FROM_SERVER);
 }
@@ -671,8 +671,8 @@ struct Stuff
     bool update(Binding*);
 
     bool apply_action(Flow*);
-    void apply_session(Flow*, const HostAttributeEntry*);
-    void apply_service(Flow*, const HostAttributeEntry*);
+    void apply_session(Flow*, const HostAttributesEntry);
+    void apply_service(Flow*, const HostAttributesEntry);
     void apply_assistant(Flow*, const char*);
 };
 
@@ -735,7 +735,7 @@ bool Stuff::apply_action(Flow* flow)
     return true;
 }
 
-void Stuff::apply_session(Flow* flow, const HostAttributeEntry* host)
+void Stuff::apply_session(Flow* flow, const HostAttributesEntry host)
 {
     if ( server )
     {
@@ -753,7 +753,7 @@ void Stuff::apply_session(Flow* flow, const HostAttributeEntry* host)
     {
     case PktType::IP:
         set_session(flow, INS_IP);
-        flow->ssn_policy = host ? host->hostInfo.fragPolicy : 0;
+        flow->ssn_policy = host ? host->get_frag_policy() : 0;
         break;
 
     case PktType::ICMP:
@@ -762,7 +762,7 @@ void Stuff::apply_session(Flow* flow, const HostAttributeEntry* host)
 
     case PktType::TCP:
         set_session(flow, INS_TCP);
-        flow->ssn_policy = host ? host->hostInfo.streamPolicy : 0;
+        flow->ssn_policy = host ? host->get_stream_policy() : 0;
         break;
 
     case PktType::UDP:
@@ -782,7 +782,7 @@ void Stuff::apply_session(Flow* flow, const HostAttributeEntry* host)
     }
 }
 
-void Stuff::apply_service(Flow* flow, const HostAttributeEntry* host)
+void Stuff::apply_service(Flow* flow, const HostAttributesEntry host)
 {
     if ( data )
         flow->set_data(data);
@@ -1210,7 +1210,7 @@ void Binder::apply(Flow* flow, Stuff& stuff)
     if ( !stuff.apply_action(flow) )
         return;
 
-    const HostAttributeEntry* host = HostAttributes::find_host(&flow->server_ip);
+    const HostAttributesEntry host = HostAttributesManager::find_host(flow->server_ip);
 
     // setup session
     stuff.apply_session(flow, host);

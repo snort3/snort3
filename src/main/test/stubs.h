@@ -56,6 +56,7 @@
 #include "protocols/packet_manager.h"
 #include "side_channel/side_channel.h"
 #include "stream/stream.h"
+#include "target_based/host_attributes.h"
 #include "time/packet_time.h"
 #include "trace/trace_api.h"
 #include "utils/dnet_header.h"
@@ -113,6 +114,7 @@ ssize_t ip_send(ip_t*, const void*, size_t) { return -1; }
 eth_t* eth_open(const char*) { return nullptr; }
 eth_t* eth_close(eth_t*) { return nullptr; }
 ssize_t eth_send(eth_t*, const void*, size_t) { return -1; }
+void HostAttributesManager::initialize() { }
 
 namespace snort
 {

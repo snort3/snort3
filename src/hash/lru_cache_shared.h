@@ -63,6 +63,8 @@ public:
     LruCacheShared(const size_t initial_size) :
         max_size(initial_size), current_size(0) { }
 
+    virtual ~LruCacheShared() = default;
+
     using Data = std::shared_ptr<Value>;
     using ValueType = Value;
 
@@ -114,29 +116,21 @@ public:
     bool remove(const Key& key, Data& data);
 
     const PegInfo* get_pegs() const
-    {
-        return lru_cache_shared_peg_names;
-    }
+    { return lru_cache_shared_peg_names; }
 
     PegCount* get_counts()
-    {
-        return (PegCount*)&stats;
-    }
+    { return (PegCount*)&stats; }
 
     void lock()
-    {
-        cache_mutex.lock();
-    }
+    { cache_mutex.lock(); }
 
     void unlock()
-    {
-        cache_mutex.unlock();
-    }
+    { cache_mutex.unlock(); }
 
 protected:
-    using LruList = std::list<std::pair<Key, Data> >;
+    using LruList = std::list<std::pair<Key, Data>>;
     using LruListIter = typename LruList::iterator;
-    using LruMap  = std::unordered_map<Key, LruListIter, Hash>;
+    using LruMap = std::unordered_map<Key, LruListIter, Hash>;
     using LruMapIter = typename LruMap::iterator;
 
     static constexpr size_t mem_chunk = sizeof(Data) + sizeof(Value);

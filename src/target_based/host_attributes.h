@@ -17,102 +17,140 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// host_attributes.h author davis mcpherson
+// host_attributes.h author davis mcpherson <davmcphe@cisco.com>
 
 #ifndef HOST_ATTRIBUTES_H
 #define HOST_ATTRIBUTES_H
 
 // Provides attribute table initialization, lookup, swap, and releasing.
 
+#include <functional>
+#include <memory>
+#include <mutex>
 #include <vector>
 
-#include "sfip/sf_cidr.h"
-#include "sfrt/sfrt.h"
+#include "framework/counts.h"
+#include "sfip/sf_ip.h"
 #include "target_based/snort_protocols.h"
 
-struct ApplicationEntry
+namespace snort
 {
-    ApplicationEntry() = default;
-    ApplicationEntry(uint16_t port, uint16_t protocol, SnortProtocolId spi)
+struct SnortConfig;
+}
+
+struct HostAttributeStats
+{
+    PegCount total_hosts = 0;
+    PegCount hosts_pruned = 0;
+    PegCount dynamic_host_adds = 0;
+    PegCount dynamic_service_adds = 0;
+    PegCount dynamic_service_updates = 0;
+    PegCount service_list_overflows = 0;
+};
+
+class HostServiceDescriptor
+{
+public:
+    HostServiceDescriptor() = default;
+    HostServiceDescriptor(uint16_t port, uint16_t protocol, SnortProtocolId spi)
         : port(port), ipproto(protocol), snort_protocol_id(spi)
     { }
-    ~ApplicationEntry() = default;
+
+    ~HostServiceDescriptor() = default;
+
+    void reset()
+    {
+        port = 0;
+        ipproto = 0;
+        snort_protocol_id = UNKNOWN_PROTOCOL_ID;
+    }
 
     uint16_t port = 0;
     uint16_t ipproto = 0;
-    SnortProtocolId snort_protocol_id = 0;
+    SnortProtocolId snort_protocol_id = UNKNOWN_PROTOCOL_ID;
 };
 
-struct HostInfo
+struct HostPolicyDescriptor
 {
     uint8_t streamPolicy = 0;
     uint8_t fragPolicy = 0;
 };
 
-struct HostAttributeEntry
+class HostAttributesDescriptor
 {
-    HostAttributeEntry() = default;
-    ~HostAttributeEntry();
+public:
+    HostAttributesDescriptor() = default;
+    ~HostAttributesDescriptor() = default;
 
-    void add_service(ApplicationEntry*);
-    void update_service(HostAttributeEntry*, uint16_t port, uint16_t protocol, SnortProtocolId);
+    bool update_service(uint16_t port, uint16_t protocol, SnortProtocolId, bool& updated);
     SnortProtocolId get_snort_protocol_id(int ipprotocol, uint16_t port) const;
 
-    snort::SfCidr ipAddr;
-    HostInfo hostInfo;
-    std::vector<ApplicationEntry*> services;
+    const snort::SfIp& get_ip_addr() const
+    { return ip_address; }
+
+    void set_ip_addr(const snort::SfIp& host_ip_addr)
+    {
+        std::lock_guard<std::mutex> lck(host_attributes_lock);
+        ip_address = host_ip_addr;
+    }
+
+    uint8_t get_frag_policy() const
+    { return policies.fragPolicy; }
+
+    void set_frag_policy(const uint8_t frag_policy)
+    {
+        std::lock_guard<std::mutex> lck(host_attributes_lock);
+        policies.fragPolicy = frag_policy;
+    }
+
+    uint8_t get_stream_policy() const
+    { return policies.streamPolicy; }
+
+    void set_stream_policy(uint8_t stream_policy)
+    {
+        std::lock_guard<std::mutex> lck(host_attributes_lock);
+        policies.streamPolicy = stream_policy;
+    }
+
+private:
+    mutable std::mutex host_attributes_lock; // ensure updates to this shared object are safe
+    snort::SfIp ip_address;
+    HostPolicyDescriptor policies;
+    std::vector<HostServiceDescriptor> services;
 };
+
+typedef std::shared_ptr<HostAttributesDescriptor> HostAttributesEntry;
 
 #define DEFAULT_MAX_ATTRIBUTE_HOSTS 10000
 #define DEFAULT_MAX_ATTRIBUTE_SERVICES_PER_HOST 100
 #define DEFAULT_MAX_METADATA_SERVICES 9
 
-namespace snort
+// Create a hash key from an IP address stored in a SfIp object.
+struct HostAttributesCacheKey
 {
-struct SfIp;
-struct SnortConfig;
-}
-
-struct HostAttributesTable
-{
-    HostAttributesTable(uint32_t max_hosts);
-    ~HostAttributesTable();
-
-    bool add_host(HostAttributeEntry*);
-    HostAttributeEntry* get_host(snort::SfIp*);
-    HostAttributeEntry* find_host(const snort::SfIp*);
-    void add_service(HostAttributeEntry*, ApplicationEntry*);
-
-    bool is_host_attribute_table_full()
-    { return num_hosts >= max_hosts; }
-
-    uint32_t get_num_hosts () const
-    { return num_hosts; }
-
-private:
-    table_t* host_table;
-    uint32_t max_hosts;
-    uint32_t num_hosts = 0;
-
-    bool sfat_grammar_error_printed = false;
-    bool sfat_insufficient_space_logged = false;
-
-    static void free_host_entry(void* host);
+    size_t operator()(const snort::SfIp& ip) const
+    {
+        const uint64_t* ip64 = (const uint64_t*) ip.get_ip6_ptr();
+        return std::hash<uint64_t>() (ip64[0]) ^
+               std::hash<uint64_t>() (ip64[1]);
+    }
 };
 
-class HostAttributes
+class HostAttributesManager
 {
 public:
-    static void load_hosts_file(snort::SnortConfig*, const char* fname);
-    static HostAttributesTable* activate();
-    static HostAttributesTable* get_host_attributes_table();
-    static void set_host_attributes_table(HostAttributesTable*);
-    static bool add_host(HostAttributeEntry*, snort::SnortConfig*);
-    static HostAttributeEntry* find_host(const snort::SfIp* ipAddr);
-    static void update_service(snort::SfIp*, uint16_t port, uint16_t protocol, uint16_t id);
-    static void cleanup();
+    static bool load_hosts_file(snort::SnortConfig*, const char* fname);
+    static bool activate();
+    static void initialize();
+    static void swap_cleanup();
+    static void term();
+
+    static bool add_host(HostAttributesEntry, snort::SnortConfig*);
+    static HostAttributesEntry find_host(const snort::SfIp&);
+    static void update_service(const snort::SfIp&, uint16_t port, uint16_t protocol, SnortProtocolId);
+    static int32_t get_num_host_entries();
+    static const PegInfo* get_pegs();
+    static PegCount* get_peg_counts();
 };
 
-
 #endif
-

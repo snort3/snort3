@@ -346,7 +346,7 @@ void AppIdSession::sync_with_snort_protocol_id(AppId newAppId, Packet* p)
     if (tmp_snort_protocol_id != snort_protocol_id)
     {
         snort_protocol_id = tmp_snort_protocol_id;
-        p->flow->ssn_state.snort_protocol_id = tmp_snort_protocol_id;
+        Stream::set_snort_protocol_id(p->flow, tmp_snort_protocol_id);
     }
 }
 

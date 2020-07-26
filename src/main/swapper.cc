@@ -23,8 +23,6 @@
 
 #include "swapper.h"
 
-#include "target_based/host_attributes.h"
-
 #include "analyzer.h"
 #include "snort.h"
 #include "snort_config.h"
@@ -33,51 +31,28 @@ using namespace snort;
 
 bool Swapper::reload_in_progress = false;
 
-Swapper::Swapper(SnortConfig* s, HostAttributesTable* t)
+Swapper::Swapper(SnortConfig* s)
 {
     old_conf = nullptr;
     new_conf = s;
-
-    old_attribs = nullptr;
-    new_attribs = t;
 }
 
 Swapper::Swapper(const SnortConfig* sold, SnortConfig* snew)
 {
     old_conf = sold;
     new_conf = snew;
-
-    old_attribs = nullptr;
-    new_attribs = nullptr;
 }
 
-Swapper::Swapper(
-    const SnortConfig* sold, SnortConfig* snew,
-    HostAttributesTable* told, HostAttributesTable* tnew)
-{
-    old_conf = sold;
-    new_conf = snew;
-
-    old_attribs = told;
-    new_attribs = tnew;
-}
-
-Swapper::Swapper(HostAttributesTable* told, HostAttributesTable* tnew)
+Swapper::Swapper()
 {
     old_conf = nullptr;
     new_conf = nullptr;
-
-    old_attribs = told;
-    new_attribs = tnew;
 }
 
 Swapper::~Swapper()
 {
     if ( old_conf )
         delete old_conf;
-
-    if ( old_attribs )
-        delete old_attribs;
 }
 
 void Swapper::apply(Analyzer& analyzer)
@@ -90,7 +65,4 @@ void Swapper::apply(Analyzer& analyzer)
         if ( reload )
             analyzer.reinit(new_conf);
     }
-
-    if ( new_attribs )
-        HostAttributes::set_host_attributes_table(new_attribs);
 }

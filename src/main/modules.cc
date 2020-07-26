@@ -1899,6 +1899,24 @@ bool RuleStateModule::end(const char* fqn, int, SnortConfig* sc)
 // hosts module
 //-------------------------------------------------------------------------
 
+class HostAttributesReloadTuner : public snort::ReloadResourceTuner
+{
+public:
+    HostAttributesReloadTuner() = default;
+
+    bool tinit() override
+    {
+        HostAttributesManager::initialize();
+        return true;
+    }
+
+    bool tune_packet_context() override
+    { return true; }
+
+    bool tune_idle_context() override
+    { return true; }
+};
+
 static const Parameter service_params[] =
 {
     { "name", Parameter::PT_STRING, nullptr, nullptr,
@@ -1937,40 +1955,53 @@ class HostsModule : public Module
 {
 public:
     HostsModule() : Module("hosts", hosts_help, hosts_params, true)
-    { app = nullptr; host = nullptr; }
-    ~HostsModule() override { assert(!host && !app); }
+    { host = nullptr; }
+
+    ~HostsModule() override
+    { assert(!host); }
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
 
+    const PegInfo* get_pegs() const override
+    { return HostAttributesManager::get_pegs(); }
+
+    PegCount* get_counts() const override
+    { return HostAttributesManager::get_peg_counts(); }
+
     Usage get_usage() const override
     { return GLOBAL; }
 
 private:
-    ApplicationEntry* app;
-    HostAttributeEntry* host;
+    HostServiceDescriptor service;
+    HostAttributesEntry host;
+    HostAttributesReloadTuner hart;
 };
 
 bool HostsModule::set(const char*, Value& v, SnortConfig* sc)
 {
     if ( host and v.is("ip") )
-        v.get_addr(host->ipAddr);
+    {
+        SfIp addr;
+        v.get_addr(addr);
+        host->set_ip_addr(addr);
+    }
 
     else if ( host and v.is("frag_policy") )
-        host->hostInfo.fragPolicy = v.get_uint8() + 1;
+        host->set_frag_policy(v.get_uint8() + 1);
 
     else if ( host and v.is("tcp_policy") )
-        host->hostInfo.streamPolicy = v.get_uint8();
+        host->set_stream_policy(v.get_uint8());
 
-    else if ( app and v.is("name") )
-        app->snort_protocol_id = sc->proto_ref->add(v.get_string());
+    else if ( v.is("name") )
+        service.snort_protocol_id = sc->proto_ref->add(v.get_string());
 
-    else if ( app and v.is("proto") )
-        app->ipproto = sc->proto_ref->add(v.get_string());
+    else if ( v.is("proto") )
+        service.ipproto = sc->proto_ref->add(v.get_string());
 
-    else if ( app and v.is("port") )
-        app->port = v.get_uint16();
+    else if ( v.is("port") )
+        service.port = v.get_uint16();
 
     else
         return false;
@@ -1981,9 +2012,9 @@ bool HostsModule::set(const char*, Value& v, SnortConfig* sc)
 bool HostsModule::begin(const char* fqn, int idx, SnortConfig*)
 {
     if ( idx && !strcmp(fqn, "hosts.services") )
-        app = new ApplicationEntry;
+        service.reset();
     else if ( idx && !strcmp(fqn, "hosts") )
-        host = new HostAttributeEntry;
+        host.reset(new HostAttributesDescriptor);
 
     return true;
 }
@@ -1992,14 +2023,23 @@ bool HostsModule::end(const char* fqn, int idx, SnortConfig* sc)
 {
     if ( idx && !strcmp(fqn, "hosts.services") )
     {
-        host->add_service(app);
-        app = nullptr;
+        bool updated = false;
+        host->update_service(service.port, service.ipproto, service.snort_protocol_id, updated);
+        service.reset();
     }
     else if ( idx && !strcmp(fqn, "hosts") )
     {
-        if ( !HostAttributes::add_host(host, sc) )
-            delete host;
+        if ( !HostAttributesManager::add_host(host, sc) )
+            host.reset();
         host = nullptr;
+    }
+    else if ( !idx && !strcmp(fqn, "hosts"))
+    {
+        if ( HostAttributesManager::activate() )
+        {
+            if ( Snort::is_reloading() )
+                sc->register_reload_resource_tuner(hart);
+        }
     }
 
     return true;

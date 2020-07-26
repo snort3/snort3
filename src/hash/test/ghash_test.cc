@@ -107,8 +107,6 @@ TEST(ghash, collision_test)
     // Create a Hash Table with smaller entries
     GHash* t = new GHash(-10, 0, false, nullptr);
 
-    CHECK(t != nullptr);
-
     // Add Nodes to the Hash Table
     for (i=0; i<num; i++)
     {

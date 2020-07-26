@@ -116,6 +116,19 @@ private:
     bool from_shell;
 };
 
+class ACHostAttributesSwap : public snort::AnalyzerCommand
+{
+public:
+    ACHostAttributesSwap(Request* req, bool from_shell);
+    bool execute(Analyzer&, void**) override;
+    const char* stringify() override { return "HOST_ATTRIBUTES_SWAP"; }
+    ~ACHostAttributesSwap() override;
+
+private:
+    Request* request;
+    bool from_shell;
+};
+
 class ACDAQSwap : public snort::AnalyzerCommand
 {
 public:

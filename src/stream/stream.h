@@ -24,9 +24,12 @@
 
 // provides a common flow management interface
 
+#include <memory>
+
 #include "flow/flow.h"
 
-struct HostAttributeEntry;
+class HostAttributesDescriptor;
+typedef std::shared_ptr<HostAttributesDescriptor> HostAttributesEntry;
 
 namespace snort
 {
@@ -204,7 +207,7 @@ public:
     static void populate_flow_key(Packet*, FlowKey*);
 
     static void set_snort_protocol_id(
-        Flow*, const HostAttributeEntry*, int direction);
+        Flow*, const HostAttributesEntry&, int direction);
 
     static bool is_midstream(Flow* flow)
     { return ((flow->ssn_state.session_flags & SSNFLAG_MIDSTREAM) != 0); }

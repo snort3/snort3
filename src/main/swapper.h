@@ -28,18 +28,13 @@ struct SnortConfig;
 }
 
 class Analyzer;
-struct HostAttributesTable;
 
 class Swapper
 {
 public:
-    Swapper(snort::SnortConfig*, HostAttributesTable*);
+    Swapper(snort::SnortConfig*);
     Swapper(const snort::SnortConfig* sold, snort::SnortConfig* snew);
-
-    Swapper(const snort::SnortConfig* sold, snort::SnortConfig* snew,
-        HostAttributesTable*, HostAttributesTable*);
-
-    Swapper(HostAttributesTable*, HostAttributesTable*);
+    Swapper();
     ~Swapper();
 
     void apply(Analyzer&);
@@ -51,9 +46,6 @@ public:
 private:
     const snort::SnortConfig* old_conf;
     snort::SnortConfig* new_conf;
-
-    HostAttributesTable* old_attribs;
-    HostAttributesTable* new_attribs;
 
     static bool reload_in_progress;
 };

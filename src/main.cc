@@ -175,7 +175,7 @@ void Pig::start()
     assert(!athread);
     LogMessage("++ [%u] %s\n", idx, analyzer->get_source());
 
-    Swapper* ps = new Swapper(SnortConfig::get_main_conf(), HostAttributes::get_host_attributes_table());
+    Swapper* ps = new Swapper(SnortConfig::get_main_conf());
     athread = new std::thread(std::ref(*analyzer), ps, ++run_num);
 }
 
@@ -371,10 +371,16 @@ int main_reload_config(lua_State* L)
     }
 
     if ( !sc->attribute_hosts_file.empty() )
-        HostAttributes::load_hosts_file(sc, sc->attribute_hosts_file.c_str());
+    {
+        if ( !HostAttributesManager::load_hosts_file(sc, sc->attribute_hosts_file.c_str()) )
+            current_request->respond("== reload failed - host attributes file failed to load\n");
+    }
 
-    HostAttributesTable* old_tc = HostAttributes::get_host_attributes_table();
-    HostAttributesTable* tc = HostAttributes::activate();
+    int32_t num_hosts = HostAttributesManager::get_num_host_entries();
+    if ( num_hosts >= 0 )
+        LogMessage( "host attribute table: %d hosts loaded\n", num_hosts);
+    else
+        LogMessage("No host attribute table loaded\n");
 
     PluginManager::reload_so_plugins_cleanup(sc);
     SnortConfig::set_conf(sc);
@@ -383,7 +389,7 @@ int main_reload_config(lua_State* L)
 
     bool from_shell = ( L != nullptr );
     current_request->respond(".. swapping configuration\n", from_shell);
-    main_broadcast_command(new ACSwap(new Swapper(old, sc, old_tc, tc), current_request, from_shell), from_shell);
+    main_broadcast_command(new ACSwap(new Swapper(old, sc), current_request, from_shell), from_shell);
 
     return 0;
 }
@@ -498,24 +504,20 @@ int main_reload_hosts(lua_State* L)
         return 0;
     }
 
-    proc_stats.attribute_table_overflow = 0;
-    HostAttributes::load_hosts_file(SnortConfig::get_main_conf(), fname);
-
-    HostAttributesTable* old = HostAttributes::get_host_attributes_table();
-    HostAttributesTable* tc = HostAttributes::activate();
-
-    if ( !tc )
+    if ( !HostAttributesManager::load_hosts_file(SnortConfig::get_main_conf(), fname) )
     {
         current_request->respond("== reload failed\n");
         return 0;
     }
 
     proc_stats.attribute_table_reloads++;
-    LogMessage(STDu64 " hosts loaded\n", proc_stats.attribute_table_hosts);
+    int32_t num_hosts = HostAttributesManager::get_num_host_entries();
+    assert( num_hosts >= 0 );
+    LogMessage( "host attribute table: %d hosts loaded\n", num_hosts);
 
     bool from_shell = ( L != nullptr );
     current_request->respond(".. swapping hosts table\n", from_shell);
-    main_broadcast_command(new ACSwap(new Swapper(old, tc), current_request, from_shell), from_shell);
+    main_broadcast_command(new ACHostAttributesSwap(current_request, from_shell), from_shell);
 
     return 0;
 }
