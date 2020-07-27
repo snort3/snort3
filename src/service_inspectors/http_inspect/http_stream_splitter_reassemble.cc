@@ -416,7 +416,8 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
         if (session_data->partial_flush[source_id])
         {
             // Store the data from a partial flush for reuse
-            partial_buffer = buffer;
+            partial_buffer = new uint8_t[buf_size];
+            memcpy(partial_buffer, buffer, buf_size);
             partial_buffer_length = buf_size;
             partial_raw_bytes += total;
         }
