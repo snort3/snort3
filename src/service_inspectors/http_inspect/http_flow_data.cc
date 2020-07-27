@@ -86,6 +86,7 @@ HttpFlowData::~HttpFlowData()
         delete events[k];
         delete[] section_buffer[k];
         delete[] partial_buffer[k];
+        delete[] partial_detect_buffer[k];
         HttpTransaction::delete_transaction(transaction[k], nullptr);
         delete cutter[k];
         if (compress_stream[k] != nullptr)
@@ -119,6 +120,7 @@ void HttpFlowData::half_reset(SourceId source_id)
     version_id[source_id] = VERS__NOT_PRESENT;
     data_length[source_id] = STAT_NOT_PRESENT;
     body_octets[source_id] = STAT_NOT_PRESENT;
+    partial_inspected_octets[source_id] = 0;
     section_size_target[source_id] = 0;
     stretch_section_to_packet[source_id] = false;
     detained_inspection[source_id] = false;

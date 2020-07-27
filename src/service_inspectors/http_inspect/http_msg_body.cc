@@ -48,30 +48,70 @@ HttpMsgBody::HttpMsgBody(const uint8_t* buffer, const uint16_t buf_size,
 
 void HttpMsgBody::analyze()
 {
-    do_utf_decoding(msg_text, decoded_body);
+    uint32_t& partial_inspected_octets = session_data->partial_inspected_octets[source_id];
+
+    // When there have been partial inspections we focus on the part of the message we have not
+    // seen before
+    if (partial_inspected_octets > 0)
+        msg_text_new.set(msg_text.length() - partial_inspected_octets,
+            msg_text.start() + partial_inspected_octets);
+    else
+        msg_text_new.set(msg_text);
+
+    do_utf_decoding(msg_text_new, decoded_body);
+
+    if (session_data->file_depth_remaining[source_id] > 0)
+    {
+        do_file_processing(decoded_body);
+    }
 
     if (session_data->detect_depth_remaining[source_id] > 0)
     {
         do_file_decompression(decoded_body, decompressed_file_body);
         do_js_normalization(decompressed_file_body, js_norm_body);
+
+        uint32_t& partial_detect_length = session_data->partial_detect_length[source_id];
+        uint8_t*& partial_detect_buffer = session_data->partial_detect_buffer[source_id];
+        const int32_t total_length = js_norm_body.length() + partial_detect_length;
         const int32_t detect_length =
-            (js_norm_body.length() <= session_data->detect_depth_remaining[source_id]) ?
-            js_norm_body.length() : session_data->detect_depth_remaining[source_id];
-        detect_data.set(detect_length, js_norm_body.start());
+            (total_length <= session_data->detect_depth_remaining[source_id]) ?
+            total_length : session_data->detect_depth_remaining[source_id];
+
+        if (partial_detect_length > 0)
+        {
+            uint8_t* const detect_buffer = new uint8_t[total_length];
+            memcpy(detect_buffer, partial_detect_buffer, partial_detect_length);
+            memcpy(detect_buffer + partial_detect_length, js_norm_body.start(),
+                js_norm_body.length());
+            detect_data.set(total_length, detect_buffer, true);
+        }
+        else
+        {
+            detect_data.set(detect_length, js_norm_body.start());
+        }
+
+        delete[] partial_detect_buffer;
+
         if (!session_data->partial_flush[source_id])
+        {
             session_data->detect_depth_remaining[source_id] -= detect_length;
+            partial_detect_buffer = nullptr;
+            partial_detect_length = 0;
+        }
+        else
+        {
+            uint8_t* const save_partial = new uint8_t[detect_data.length()];
+            memcpy(save_partial, detect_data.start(), detect_data.length());
+            partial_detect_buffer = save_partial;
+            partial_detect_length = detect_data.length();
+        }
+
         set_file_data(const_cast<uint8_t*>(detect_data.start()),
             (unsigned)detect_data.length());
     }
 
-    // Only give data to file processing once, when we inspect the entire message section.
-    if (!session_data->partial_flush[source_id] &&
-        (session_data->file_depth_remaining[source_id] > 0))
-    {
-        do_file_processing(decoded_body);
-    }
-
     body_octets += msg_text.length();
+    partial_inspected_octets = session_data->partial_flush[source_id] ? msg_text.length() : 0;
 }
 
 void HttpMsgBody::do_utf_decoding(const Field& input, Field& output)
@@ -203,7 +243,8 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
 {
     // Using the trick that cutter is deleted when regular or chunked body is complete
     Packet* p = DetectionEngine::get_current_packet();
-    const bool front = (body_octets == 0);
+    const bool front = (body_octets == 0) &&
+        (session_data->partial_inspected_octets[source_id] == 0);
     const bool back = (session_data->cutter[source_id] == nullptr) || tcp_close;
 
     FilePosition file_position;
@@ -237,7 +278,8 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
             file_index = request->get_http_uri()->get_file_proc_hash();
         }
 
-        if (file_flows->file_process(p, file_index, file_data.start(), fp_length, body_octets, dir,
+        if (file_flows->file_process(p, file_index, file_data.start(), fp_length,
+            body_octets + session_data->partial_inspected_octets[source_id], dir,
             transaction->get_file_processing_id(source_id), file_position))
         {
             session_data->file_depth_remaining[source_id] -= fp_length;

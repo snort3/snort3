@@ -60,11 +60,13 @@ private:
     void do_file_decompression(const Field& input, Field& output);
     void do_js_normalization(const Field& input, Field& output);
 
-    Field detect_data;
-    Field classic_client_body;   // URI normalization applied
+    // In order of generation
+    Field msg_text_new;
     Field decoded_body;
     Field decompressed_file_body;
     Field js_norm_body;
+    Field detect_data;
+    Field classic_client_body;   // URI normalization applied
 };
 
 #endif
