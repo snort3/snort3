@@ -207,7 +207,7 @@ TEST(appid_api, get_application_name)
 {
     AppIdConfig config;
     AppIdContext ctxt(config);
-    const char* app_name = appid_api.get_application_name(1066, ctxt);
+    const char* app_name = appid_api.get_application_name(1066, ctxt.get_odp_ctxt());
     STRCMP_EQUAL(app_name, test_app_name);
 }
 
@@ -371,7 +371,8 @@ int main(int argc, char** argv)
 {
     mock_init_appid_pegs();
     SfIp ip;
-    mock_session = new AppIdSession(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector);
+    mock_session = new AppIdSession(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector,
+        dummy_appid_inspector.get_ctxt().get_odp_ctxt());
     int rc = CommandLineTestRunner::RunAllTests(argc, argv);
     mock_cleanup_appid_pegs();
     delete &mock_session->get_api();

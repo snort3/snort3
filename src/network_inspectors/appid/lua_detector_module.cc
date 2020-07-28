@@ -200,7 +200,7 @@ LuaDetectorManager::~LuaDetectorManager()
 void LuaDetectorManager::initialize(AppIdContext& ctxt, int is_control, bool reload)
 {
     LuaDetectorManager* lua_detector_mgr = new LuaDetectorManager(ctxt, is_control);
-    odp_thread_ctxt->set_lua_detector_mgr(*lua_detector_mgr);
+    odp_thread_local_ctxt->set_lua_detector_mgr(*lua_detector_mgr);
 
     if (!lua_detector_mgr->L)
         FatalError("Error - appid: can not create new luaState, instance=%u\n",
@@ -231,10 +231,15 @@ void LuaDetectorManager::initialize(AppIdContext& ctxt, int is_control, bool rel
 void LuaDetectorManager::init_thread_manager(const AppIdContext& ctxt)
 {
     LuaDetectorManager* lua_detector_mgr = lua_detector_mgr_list[get_instance_id()];
-    odp_thread_ctxt->set_lua_detector_mgr(*lua_detector_mgr);
+    odp_thread_local_ctxt->set_lua_detector_mgr(*lua_detector_mgr);
     lua_detector_mgr->activate_lua_detectors();
     if (ctxt.config.list_odp_detectors)
         lua_detector_mgr->list_lua_detectors();
+}
+
+void LuaDetectorManager::clear_lua_detector_mgrs()
+{
+    lua_detector_mgr_list.clear();
 }
 
 void LuaDetectorManager::free_detector_flow()

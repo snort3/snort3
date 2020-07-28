@@ -50,6 +50,8 @@ using namespace snort;
 namespace snort
 {
 AppIdApi appid_api;
+Inspector* InspectorManager::get_inspector(
+    char const*, bool, const snort::SnortConfig*) { return nullptr; }
 }
 
 const char* content_type = nullptr;
@@ -234,7 +236,7 @@ TEST_GROUP(appid_http_event)
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         flow = new Flow;
         SfIp ip;
-        mock_session = new AppIdSession(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector);
+        mock_session = new AppIdSession(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, stub_odp_ctxt);
         mock_session->create_http_session();
         flow->set_flow_data(mock_session);
         appidDebug = new AppIdDebug();

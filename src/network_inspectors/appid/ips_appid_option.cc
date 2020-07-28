@@ -33,6 +33,7 @@
 #include "utils/util.h"
 
 #include "app_info_table.h"
+#include "appid_inspector.h"
 #include "appid_session.h"
 
 using namespace std;
@@ -119,12 +120,13 @@ IpsOption::EvalStatus AppIdIpsOption::eval(Cursor&, Packet* p)
 
     AppIdSession* session = appid_api.get_appid_session(*(p->flow));
 
-    if ( !session )
+    // Skip detection for sessions using old odp context after odp reload
+    if ( !session || (&(session->get_odp_ctxt()) != pkt_thread_odp_ctxt))
         return NO_MATCH;
 
     AppId app_ids[APP_PROTOID_MAX];
     AppId service_id = session->get_api().get_service_app_id();
-    OdpContext& odp_ctxt = session->ctxt.get_odp_ctxt();
+    OdpContext& odp_ctxt = session->get_odp_ctxt();
 
     if (service_id != APP_ID_HTTP2)
     {

@@ -183,15 +183,15 @@ static void free_matched_list(ClientAppMatch** match_list)
     *match_list = nullptr;
 }
 
-ClientAppMatch* ClientDiscovery::find_detector_candidates(const Packet* pkt, AppIdSession& asd)
+ClientAppMatch* ClientDiscovery::find_detector_candidates(const Packet* pkt, const AppIdSession& asd)
 {
     ClientAppMatch* match_list = nullptr;
     SearchTool* patterns;
 
     if (asd.protocol == IpProtocol::TCP)
-        patterns = asd.ctxt.get_odp_ctxt().get_client_disco_mgr().tcp_patterns;
+        patterns = asd.get_odp_ctxt().get_client_disco_mgr().tcp_patterns;
     else
-        patterns = asd.ctxt.get_odp_ctxt().get_client_disco_mgr().udp_patterns;
+        patterns = asd.get_odp_ctxt().get_client_disco_mgr().udp_patterns;
 
     if ( patterns )
         patterns->find_all((const char*)pkt->data, pkt->dsize, &pattern_match, false, (void*)&match_list);
@@ -307,7 +307,7 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p,
         {
             // Third party has positively identified appId; Dig deeper only if our
             // detector identifies additional information
-            entry = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(tp_app_id);
+            entry = asd.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(tp_app_id);
             if ( entry && entry->client_detector
                 && ( ( entry->flags & ( APPINFO_FLAG_CLIENT_ADDITIONAL |
                 APPINFO_FLAG_CLIENT_USER ) )
@@ -336,7 +336,7 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p,
          !asd.get_session_flags(APPID_SESSION_NO_TPI)  and
          asd.is_tp_appid_available() )
     {
-        entry = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(tp_app_id);
+        entry = asd.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(tp_app_id);
         if ( !( entry && entry->client_detector
             && entry->client_detector == asd.client_detector
             && (entry->flags & (APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER) ) ) )

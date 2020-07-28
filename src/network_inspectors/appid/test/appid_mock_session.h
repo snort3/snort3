@@ -78,9 +78,9 @@ static AppIdConfig stub_config;
 static AppIdContext stub_ctxt(stub_config);
 static OdpContext stub_odp_ctxt(stub_config, nullptr);
 OdpContext* AppIdContext::odp_ctxt = &stub_odp_ctxt;
-AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t, AppIdInspector& inspector)
-    : FlowData(inspector_id, &inspector), ctxt(stub_ctxt), protocol(proto),
-        api(*(new AppIdSessionApi(this, *ip)))
+AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t, AppIdInspector& inspector,
+    OdpContext&) : FlowData(inspector_id, &inspector), config(stub_config),
+    protocol(proto), api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(stub_odp_ctxt)
 {
     service_port = APPID_UT_SERVICE_PORT;
     AppidChangeBits change_bits;
@@ -101,7 +101,7 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t, AppIdInsp
 
     api.dsession = new MockAppIdDnsSession;
     tp_app_id = APPID_UT_ID;
-    set_service_id(APPID_UT_ID + 1, ctxt.get_odp_ctxt());
+    set_service_id(APPID_UT_ID + 1, odp_ctxt);
     client_inferred_service_id = APPID_UT_ID + 2;
     set_port_service_id(APPID_UT_ID + 3);
     set_payload_id(APPID_UT_ID + 4);

@@ -77,7 +77,7 @@ class AppIdDiscoveryArgs
 public:
     AppIdDiscoveryArgs(const uint8_t* data, uint16_t size, AppidSessionDirection dir,
         AppIdSession& asd, snort::Packet* p, AppidChangeBits& cb) : data(data),
-        size(size), dir(dir), asd(asd), pkt(p), ctxt(asd.ctxt), change_bits(cb)
+        size(size), dir(dir), asd(asd), pkt(p), change_bits(cb)
     {}
 
     const uint8_t* data;
@@ -85,7 +85,6 @@ public:
     AppidSessionDirection dir;
     AppIdSession& asd;
     snort::Packet* pkt;
-    const AppIdContext& ctxt;
     AppidChangeBits& change_bits;
 };
 

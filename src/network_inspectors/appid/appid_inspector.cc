@@ -52,8 +52,9 @@
 #include "tp_lib_handler.h"
 
 using namespace snort;
-THREAD_LOCAL ThirdPartyAppIdContext* tp_appid_thread_ctxt = nullptr;
-THREAD_LOCAL OdpThreadContext* odp_thread_ctxt = nullptr;
+THREAD_LOCAL ThirdPartyAppIdContext* pkt_thread_tp_appid_ctxt = nullptr;
+THREAD_LOCAL OdpThreadContext* odp_thread_local_ctxt = nullptr;
+THREAD_LOCAL OdpContext* pkt_thread_odp_ctxt = nullptr;
 
 static THREAD_LOCAL PacketTracer::TracerMute appid_mute;
 
@@ -64,28 +65,30 @@ static void openssl_cleanup()
     CRYPTO_cleanup_all_ex_data();
 }
 
-static void add_appid_to_packet_trace(Flow& flow)
+static void add_appid_to_packet_trace(Flow& flow, OdpContext& odp_context)
 {
     AppIdSession* session = appid_api.get_appid_session(flow);
-    if (session)
-    {
-        AppId service_id, client_id, payload_id, misc_id;
-        const char* service_app_name, * client_app_name, * payload_app_name, * misc_name;
-        session->get_api().get_first_stream_app_ids(service_id, client_id, payload_id, misc_id);
-        service_app_name = appid_api.get_application_name(service_id, session->ctxt);
-        client_app_name = appid_api.get_application_name(client_id, session->ctxt);
-        payload_app_name = appid_api.get_application_name(payload_id, session->ctxt);
-        misc_name = appid_api.get_application_name(misc_id, session->ctxt);
+    // Skip sessions using old odp context after odp reload
+    if (!session || (&(session->get_odp_ctxt()) != &odp_context))
+        return;
 
-        if (PacketTracer::is_active())
-        {
-            PacketTracer::log(appid_mute,
-                "AppID: service: %s(%d), client: %s(%d), payload: %s(%d), misc: %s(%d)\n",
-                (service_app_name ? service_app_name : ""), service_id,
-                (client_app_name ? client_app_name : ""), client_id,
-                (payload_app_name ? payload_app_name : ""), payload_id,
-                (misc_name ? misc_name : ""), misc_id);
-        }
+    AppId service_id, client_id, payload_id, misc_id;
+    const char* service_app_name, * client_app_name, * payload_app_name, * misc_name;
+    OdpContext& odp_ctxt = session->get_odp_ctxt();
+    session->get_api().get_first_stream_app_ids(service_id, client_id, payload_id, misc_id);
+    service_app_name = appid_api.get_application_name(service_id, odp_ctxt);
+    client_app_name = appid_api.get_application_name(client_id, odp_ctxt);
+    payload_app_name = appid_api.get_application_name(payload_id, odp_ctxt);
+    misc_name = appid_api.get_application_name(misc_id, odp_ctxt);
+
+    if (PacketTracer::is_active())
+    {
+        PacketTracer::log(appid_mute,
+            "AppID: service: %s(%d), client: %s(%d), payload: %s(%d), misc: %s(%d)\n",
+            (service_app_name ? service_app_name : ""), service_id,
+            (client_app_name ? client_app_name : ""), client_id,
+            (payload_app_name ? payload_app_name : ""), payload_id,
+            (misc_name ? misc_name : ""), misc_id);
     }
 }
 
@@ -143,15 +146,18 @@ void AppIdInspector::tinit()
 
     AppIdStatistics::initialize_manager(*config);
 
-    assert(!odp_thread_ctxt);
-    odp_thread_ctxt = new OdpThreadContext();
-    odp_thread_ctxt->initialize(*ctxt);
+    assert(!pkt_thread_odp_ctxt);
+    pkt_thread_odp_ctxt = &(ctxt->get_odp_ctxt());
+
+    assert(!odp_thread_local_ctxt);
+    odp_thread_local_ctxt = new OdpThreadContext();
+    odp_thread_local_ctxt->initialize(*ctxt);
 
     AppIdServiceState::initialize(config->memcap);
-    assert(!tp_appid_thread_ctxt);
-    tp_appid_thread_ctxt = ctxt->get_tp_appid_ctxt();
-    if (tp_appid_thread_ctxt)
-        tp_appid_thread_ctxt->tinit();
+    assert(!pkt_thread_tp_appid_ctxt);
+    pkt_thread_tp_appid_ctxt = ctxt->get_tp_appid_ctxt();
+    if (pkt_thread_tp_appid_ctxt)
+        pkt_thread_tp_appid_ctxt->tinit();
     if (ctxt->config.log_all_sessions)
         appidDebug->set_enabled(true);
 }
@@ -160,9 +166,9 @@ void AppIdInspector::tterm()
 {
     AppIdStatistics::cleanup();
     AppIdDiscovery::tterm();
-    assert(odp_thread_ctxt);
-    delete odp_thread_ctxt;
-    odp_thread_ctxt = nullptr;
+    assert(odp_thread_local_ctxt);
+    delete odp_thread_local_ctxt;
+    odp_thread_local_ctxt = nullptr;
     ThirdPartyAppIdContext* tp_appid_ctxt = ctxt->get_tp_appid_ctxt();
     if (tp_appid_ctxt)
         tp_appid_ctxt->tfini();
@@ -175,10 +181,10 @@ void AppIdInspector::eval(Packet* p)
 
     if (p->flow)
     {
-        AppIdDiscovery::do_application_discovery(p, *this, tp_appid_thread_ctxt);
+        AppIdDiscovery::do_application_discovery(p, *this, *pkt_thread_odp_ctxt, pkt_thread_tp_appid_ctxt);
         // FIXIT-L tag verdict reason as appid for daq
         if (PacketTracer::is_active())
-            add_appid_to_packet_trace(*p->flow);
+            add_appid_to_packet_trace(*p->flow, *pkt_thread_odp_ctxt);
     }
     else
         appid_stats.ignored_packets++;

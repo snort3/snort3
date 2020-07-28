@@ -29,10 +29,12 @@
 
 #include <cassert>
 
+#include "managers/inspector_manager.h"
 #include "app_info_table.h"
 #include "appid_debug.h"
 #include "appid_discovery.h"
 #include "appid_http_session.h"
+#include "appid_inspector.h"
 #include "appid_session.h"
 #include "utils/util.h"
 
@@ -44,6 +46,13 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     AppIdSession* asd = appid_api.get_appid_session(*flow);
     if (!asd)
         return;
+    else
+    {
+        // Skip detection for sessions using old odp context after odp reload
+        AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
+        if (inspector and (&(asd->get_odp_ctxt()) != &(inspector->get_ctxt().get_odp_ctxt())))
+            return;
+    }
 
     AppidSessionDirection direction;
     const uint8_t* header_start;
@@ -51,7 +60,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     HttpEvent* http_event = (HttpEvent*)&event;
     AppidChangeBits change_bits;
 
-    if (asd->ctxt.get_tp_appid_ctxt() && !http_event->get_is_http2())
+    if (asd->get_tp_appid_ctxt() && !http_event->get_is_http2())
         return;
 
     if (appidDebug->is_active())
@@ -171,11 +180,11 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
 
     if (http_event->get_is_http2())
     {
-        asd->set_service_id(APP_ID_HTTP2, asd->ctxt.get_odp_ctxt());
+        asd->set_service_id(APP_ID_HTTP2, asd->get_odp_ctxt());
     }
 
     hsession->process_http_packet(direction, change_bits,
-        asd->ctxt.get_odp_ctxt().get_http_matchers());
+        asd->get_odp_ctxt().get_http_matchers());
 
     if (asd->get_service_id() != APP_ID_HTTP2)
         asd->set_ss_application_ids(asd->pick_service_app_id(), asd->pick_ss_client_app_id(),

@@ -51,9 +51,9 @@ AppIdSession* AppIdApi::get_appid_session(const Flow& flow)
     return asd;
 }
 
-const char* AppIdApi::get_application_name(AppId app_id, const AppIdContext& ctxt)
+const char* AppIdApi::get_application_name(AppId app_id, OdpContext& odp_ctxt)
 {
-    return ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(app_id);
+    return odp_ctxt.get_app_info_mgr().get_app_name(app_id);
 }
 
 const char* AppIdApi::get_application_name(const Flow& flow, bool from_client)
@@ -62,6 +62,11 @@ const char* AppIdApi::get_application_name(const Flow& flow, bool from_client)
     AppIdSession* asd = get_appid_session(flow);
     if (asd)
     {
+        // Skip sessions using old odp context after odp reload
+        AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
+        if (inspector and (&(inspector->get_ctxt().get_odp_ctxt()) != &(asd->get_odp_ctxt())))
+            return nullptr;
+
         AppId appid = asd->pick_ss_payload_app_id();
         if (appid <= APP_ID_NONE)
             appid = asd->pick_ss_misc_app_id();
@@ -78,7 +83,7 @@ const char* AppIdApi::get_application_name(const Flow& flow, bool from_client)
                 appid = asd->pick_ss_client_app_id();
         }
         if (appid > APP_ID_NONE && appid < SF_APPID_MAX)
-            app_name = asd->ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(appid);
+            app_name = asd->get_odp_ctxt().get_app_info_mgr().get_app_name(appid);
 
     }
 
@@ -145,9 +150,9 @@ uint32_t AppIdApi::consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t, IpP
             AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
             if (inspector)
             {
-                asd = new AppIdSession(proto, ip, port, *inspector);
+                asd = new AppIdSession(proto, ip, port, *inspector, inspector->get_ctxt().get_odp_ctxt());
                 flow.set_flow_data(asd);
-                asd->set_service_id(appHA->appId[1], asd->ctxt.get_odp_ctxt());
+                asd->set_service_id(appHA->appId[1], asd->get_odp_ctxt());
                 if (asd->get_service_id() == APP_ID_FTP_CONTROL)
                 {
                     asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED |
@@ -184,7 +189,7 @@ uint32_t AppIdApi::consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t, IpP
             asd->set_session_flags(APPID_SESSION_HTTP_SESSION);
 
         asd->set_tp_app_id(appHA->appId[0]);
-        asd->set_service_id(appHA->appId[1], asd->ctxt.get_odp_ctxt());
+        asd->set_service_id(appHA->appId[1], asd->get_odp_ctxt());
         asd->client_inferred_service_id = appHA->appId[2];
         asd->set_port_service_id(appHA->appId[3]);
         AppIdHttpSession* hsession = nullptr;
@@ -218,8 +223,13 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name,
 
     if (asd)
     {
+        // Skip detection for sessions using old odp context after odp reload
+        AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
+        if (inspector and (&(inspector->get_ctxt().get_odp_ctxt()) != &(asd->get_odp_ctxt())))
+            return false;
+
         AppidChangeBits change_bits;
-        SslPatternMatchers& ssl_matchers = asd->ctxt.get_odp_ctxt().get_ssl_matchers();
+        SslPatternMatchers& ssl_matchers = asd->get_odp_ctxt().get_ssl_matchers();
         if (!asd->tsession)
             asd->tsession = new TlsSession();
         else if (sni_mismatch)

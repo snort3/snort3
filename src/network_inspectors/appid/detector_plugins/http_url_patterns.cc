@@ -925,7 +925,7 @@ void HttpPatternMatchers::scan_key_chp(ChpMatchDescriptor& cmd)
 }
 
 AppId HttpPatternMatchers::scan_chp(ChpMatchDescriptor& cmd, char** version, char** user,
-    int* total_found, AppIdHttpSession* hsession, const AppIdContext& ctxt)
+    int* total_found, AppIdHttpSession* hsession, const OdpContext& odp_ctxt)
 {
     AppId ret = APP_ID_NONE;
     unsigned pt = cmd.cur_ptype;
@@ -981,7 +981,7 @@ AppId HttpPatternMatchers::scan_chp(ChpMatchDescriptor& cmd, char** version, cha
             hsession->set_skip_simple_detect(true);
             break;
         case EXTRACT_USER:
-            if ( !*user && !ctxt.get_odp_ctxt().chp_userid_disabled )
+            if ( !*user && !odp_ctxt.chp_userid_disabled )
             {
                 extract_chp(cmd.buffer[pt], cmd.length[pt], tmp.start_match_pos, match->psize,
                     match->action_data, user);

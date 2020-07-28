@@ -75,7 +75,6 @@ public:
     size_t memcap = 0;
     bool list_odp_detectors = false;
     bool log_all_sessions = false;
-    bool load_odp_detectors_in_ctrl = false;
     SnortProtocolId snortId_for_unsynchronized;
     SnortProtocolId snortId_for_ftp_data;
     SnortProtocolId snortId_for_http2;
@@ -212,7 +211,7 @@ class OdpThreadContext
 public:
     OdpThreadContext(bool is_control=false);
     ~OdpThreadContext();
-    void initialize(AppIdContext& ctxt, bool is_control=false);
+    void initialize(AppIdContext& ctxt, bool is_control=false, bool reload_odp=false);
 
     void set_lua_detector_mgr(LuaDetectorManager& mgr)
     {
@@ -267,6 +266,7 @@ public:
     static void delete_tp_appid_ctxt()
     { delete tp_appid_ctxt; }
 
+    void create_odp_ctxt();
     void create_tp_appid_ctxt();
     bool init_appid(snort::SnortConfig*);
     static void pterm();

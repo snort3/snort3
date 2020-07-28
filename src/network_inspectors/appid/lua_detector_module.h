@@ -52,6 +52,7 @@ public:
     ~LuaDetectorManager();
     static void initialize(AppIdContext&, int is_control=0, bool reload=false);
     static void init_thread_manager(const AppIdContext&);
+    static void clear_lua_detector_mgrs();
 
     void set_detector_flow(DetectorFlow* df)
     {

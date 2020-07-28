@@ -134,7 +134,7 @@ int MdnsServiceDetector::validate(AppIdDiscoveryArgs& args)
         ret_val = validate_reply(args.data, args.size);
         if (ret_val == 1)
         {
-            if (args.ctxt.get_odp_ctxt().mdns_user_reporting)
+            if (args.asd.get_odp_ctxt().mdns_user_reporting)
             {
                 MatchedPatterns* pattern_list = nullptr;
                 analyze_user(args.asd, args.pkt, args.size, pattern_list);

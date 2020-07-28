@@ -33,6 +33,8 @@ struct AppIdStats
     PegCount service_cache_prunes;
     PegCount service_cache_adds;
     PegCount service_cache_removes;
+    PegCount odp_reload_ignored_pkts;
+    PegCount tp_reload_ignored_pkts;
 };
 
 #endif

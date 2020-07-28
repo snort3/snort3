@@ -190,7 +190,7 @@ void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, con
     {
         fp->set_client_id(asd.get_client_id());
         fp->set_payload_id(asd.get_payload_id());
-        fp->set_service_id(APP_ID_RTP, asd.ctxt.get_odp_ctxt());
+        fp->set_service_id(APP_ID_RTP, asd.get_odp_ctxt());
 
         // FIXIT-M : snort 2.9.x updated the flag to APPID_SESSION_EXPECTED_EVALUATE.
         // Check if it is needed here as well.
@@ -209,7 +209,7 @@ void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, con
     {
         fp2->set_client_id(asd.get_client_id());
         fp2->set_payload_id(asd.get_payload_id());
-        fp2->set_service_id(APP_ID_RTCP, asd.ctxt.get_odp_ctxt());
+        fp2->set_service_id(APP_ID_RTCP, asd.get_odp_ctxt());
 
         // FIXIT-M : same comment as above
         // asd.initialize_future_session(*fp2, APPID_SESSION_EXPECTED_EVALUATE, APP_ID_APPID_SESSION_DIRECTION_MAX);
@@ -329,7 +329,7 @@ void SipEventHandler::handle(DataEvent& event, Flow* flow)
         IpProtocol protocol = p->is_tcp() ? IpProtocol::TCP : IpProtocol::UDP;
         AppidSessionDirection direction = p->is_from_client() ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
         AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
-        asd = AppIdSession::allocate_session(p, protocol, direction, inspector);
+        asd = AppIdSession::allocate_session(p, protocol, direction, inspector, inspector->get_ctxt().get_odp_ctxt());
     }
 
     AppidChangeBits change_bits;
@@ -372,7 +372,7 @@ void SipEventHandler::client_handler(SipEvent& sip_event, AppIdSession& asd,
 
     if ( !fd->user_agent.empty() )
     {
-        if ( asd.ctxt.get_odp_ctxt().get_sip_matchers().get_client_from_ua(
+        if ( asd.get_odp_ctxt().get_sip_matchers().get_client_from_ua(
             fd->user_agent.c_str(), fd->user_agent.size(), client_id, client_version) )
             goto success;
     }
@@ -381,7 +381,7 @@ void SipEventHandler::client_handler(SipEvent& sip_event, AppIdSession& asd,
     {
         fd->flags |= SIP_FLAG_SERVER_CHECKED;
 
-        if ( asd.ctxt.get_odp_ctxt().get_sip_matchers().get_client_from_server(
+        if ( asd.get_odp_ctxt().get_sip_matchers().get_client_from_server(
             fd->from.c_str(), fd->from.size(), client_id, client_version) )
             goto success;
     }

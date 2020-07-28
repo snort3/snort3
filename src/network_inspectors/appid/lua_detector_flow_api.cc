@@ -210,7 +210,7 @@ static int create_detector_flow(lua_State* L)
     lua_pushvalue(L, -1);
     detector_flow->userDataRef = luaL_ref(L, LUA_REGISTRYINDEX);
 
-    odp_thread_ctxt->get_lua_detector_mgr().set_detector_flow(detector_flow);
+    odp_thread_local_ctxt->get_lua_detector_mgr().set_detector_flow(detector_flow);
 
     if (!detector_flow->asd)
     {

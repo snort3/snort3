@@ -64,7 +64,7 @@ AppId HttpPatternMatchers::scan_header_x_working_with(const char*, uint32_t, cha
 }
 
 AppId HttpPatternMatchers::scan_chp(ChpMatchDescriptor&, char**, char**,
-    int*, AppIdHttpSession*, const AppIdContext&)
+    int*, AppIdHttpSession*, const OdpContext&)
 {
     return 0;
 }
@@ -101,9 +101,9 @@ static OdpContext stub_odp_ctxt(stub_config, nullptr);
 OdpContext* AppIdContext::odp_ctxt = &stub_odp_ctxt;
 
 // AppIdSession mock functions
-AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector& inspector)
-    : FlowData(inspector_id, &inspector), ctxt(stub_ctxt),
-        api(*(new AppIdSessionApi(this, *ip)))
+AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector& inspector, OdpContext&)
+    : FlowData(inspector_id, &inspector), config(stub_config),
+        api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(stub_odp_ctxt)
 {}
 
 AppIdSession::~AppIdSession()
@@ -170,7 +170,7 @@ unsigned AppIdSession::inspector_id = 0;
 THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
 
 SfIp sfip;
-AppIdSession session(IpProtocol::IP, &sfip, 0, dummy_appid_inspector);
+AppIdSession session(IpProtocol::IP, &sfip, 0, dummy_appid_inspector, stub_odp_ctxt);
 AppIdHttpSession mock_hsession(session, 0);
 
 TEST_GROUP(appid_http_session)

@@ -41,6 +41,7 @@ class AppIdDetector;
 class ServiceDetector;
 struct ServiceDetectorPort;
 class ThirdPartyAppIdContext;
+class OdpContext;
 
 namespace snort
 {
@@ -112,7 +113,7 @@ public:
     virtual int add_service_port(AppIdDetector*, const ServiceDetectorPort&);
 
     static void do_application_discovery(snort::Packet* p, AppIdInspector&,
-        ThirdPartyAppIdContext*);
+        OdpContext&, ThirdPartyAppIdContext*);
 
     AppIdDetectors* get_tcp_detectors()
     {
@@ -135,7 +136,8 @@ protected:
 
 private:
     static bool do_pre_discovery(snort::Packet* p, AppIdSession*& asd, AppIdInspector& inspector,
-        IpProtocol& protocol, IpProtocol& outer_protocol, AppidSessionDirection& direction);
+        IpProtocol& protocol, IpProtocol& outer_protocol, AppidSessionDirection& direction,
+        OdpContext& odp_ctxt);
     static bool do_discovery(snort::Packet* p, AppIdSession& asd, IpProtocol protocol,
         IpProtocol outer_protocol, AppidSessionDirection direction, AppId& service_id,
         AppId& client_id, AppId& payload_id, AppId& misc_id, AppidChangeBits& change_bits,

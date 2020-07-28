@@ -33,12 +33,16 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
+static AppIdConfig config;
+static AppIdContext ctxt(config);
+static OdpContext odpctxt(config, nullptr);
+OdpContext* AppIdContext::odp_ctxt = &odpctxt;
 static HttpPatternMatchers* hm = nullptr;
 static Packet pkt;
 static SfIp sfip;
 static AppIdModule appid_mod;
 static AppIdInspector appid_inspector(appid_mod);
-static AppIdSession session(IpProtocol::IP, &sfip, 0, appid_inspector);
+static AppIdSession session(IpProtocol::IP, &sfip, 0, appid_inspector, odpctxt);
 static AppIdHttpSession mock_hsession(session, 0);
 static ChpMatchDescriptor cmd_test;
 static MatchedCHPAction mchp;
@@ -48,10 +52,6 @@ static char* user = nullptr;
 static char* my_action_data = (char*)"0";
 static const char* my_chp_data = (const char*)"chp_data";
 static int total_found;
-static AppIdConfig config;
-static AppIdContext ctxt(config);
-static OdpContext odpctxt(config, nullptr);
-OdpContext* AppIdContext::odp_ctxt = &odpctxt;
 static AppId service_id = APP_ID_NONE;
 static AppId client_id = APP_ID_NONE;
 static DetectorHTTPPattern mpattern;
@@ -212,7 +212,7 @@ TEST(http_url_patterns_tests, scan_chp_defer)
     mchp.mpattern = &chpa_test;
     cmd_test.chp_matches[RSP_BODY_FID].emplace_back(mchp);
     cmd_test.cur_ptype = RSP_BODY_FID;
-    CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &mock_hsession, ctxt) == APP_ID_NONE);
+    CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &mock_hsession, odpctxt) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
 }
 
@@ -226,7 +226,7 @@ TEST(http_url_patterns_tests, scan_chp_alt_appid)
     mchp.mpattern = &chpa_test;
     cmd_test.chp_matches[RSP_BODY_FID].emplace_back(mchp);
     cmd_test.cur_ptype = RSP_BODY_FID;
-    CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &mock_hsession, ctxt) == APP_ID_NONE);
+    CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &mock_hsession, odpctxt) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
 }
 
@@ -244,7 +244,7 @@ TEST(http_url_patterns_tests, scan_chp_extract_user)
     cmd_test.chp_matches[RSP_BODY_FID].emplace_back(mchp);
     cmd_test.buffer[RSP_BODY_FID] = (const char*)"userid\n\rpassword";
     cmd_test.length[RSP_BODY_FID] = strlen(cmd_test.buffer[RSP_BODY_FID]);
-    CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &mock_hsession, ctxt) == APP_ID_NONE);
+    CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &mock_hsession, odpctxt) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
     snort_free(user);
     user = nullptr;
@@ -264,7 +264,7 @@ TEST(http_url_patterns_tests, scan_chp_hold_and_default)
     mchp.start_match_pos = 0;
     cmd_test.buffer[RSP_BODY_FID] = my_chp_data;
     cmd_test.length[RSP_BODY_FID] = strlen(cmd_test.buffer[RSP_BODY_FID]);
-    CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &mock_hsession, ctxt) == APP_ID_NONE);
+    CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &mock_hsession, odpctxt) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
 
     // testing FUTURE_APPID_SESSION_SIP (default action)
@@ -274,7 +274,7 @@ TEST(http_url_patterns_tests, scan_chp_hold_and_default)
     chpa_test.action = FUTURE_APPID_SESSION_SIP;
     mchp.mpattern = &chpa_test;
     cmd_test.chp_matches[RSP_BODY_FID].emplace_back(mchp);
-    CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &mock_hsession, ctxt) == APP_ID_NONE);
+    CHECK(hm->scan_chp(cmd_test, &version, &user, &total_found, &mock_hsession, odpctxt) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
 }
 

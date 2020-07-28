@@ -87,8 +87,6 @@ void AppIdConfig::show() const
     ConfigLogger::log_flag("log_all_sessions", log_all_sessions);
     ConfigLogger::log_flag("log_stats", log_stats);
     ConfigLogger::log_value("memcap", memcap);
-
-    ConfigLogger::log_flag("load_odp_detectors_in_ctrl", load_odp_detectors_in_ctrl);
 }
 
 void AppIdContext::pterm()
@@ -97,9 +95,9 @@ void AppIdContext::pterm()
     odp_ctxt->get_app_info_mgr().cleanup_appid_info_table();
     delete odp_ctxt;
 
-    assert(odp_thread_ctxt);
-    delete odp_thread_ctxt;
-    odp_thread_ctxt = nullptr;
+    assert(odp_thread_local_ctxt);
+    delete odp_thread_local_ctxt;
+    odp_thread_local_ctxt = nullptr;
 }
 
 bool AppIdContext::init_appid(SnortConfig* sc)
@@ -108,8 +106,8 @@ bool AppIdContext::init_appid(SnortConfig* sc)
     if (!odp_ctxt)
         odp_ctxt = new OdpContext(config, sc);
 
-    if (!odp_thread_ctxt)
-        odp_thread_ctxt = new OdpThreadContext(true);
+    if (!odp_thread_local_ctxt)
+        odp_thread_local_ctxt = new OdpThreadContext(true);
 
     // FIXIT-M: RELOAD - Get rid of "once" flag
     // Handle the if condition in AppIdContext::init_appid
@@ -118,7 +116,7 @@ bool AppIdContext::init_appid(SnortConfig* sc)
     {
         odp_ctxt->get_client_disco_mgr().initialize();
         odp_ctxt->get_service_disco_mgr().initialize();
-        odp_thread_ctxt->initialize(*this, true);
+        odp_thread_local_ctxt->initialize(*this, true);
         odp_ctxt->initialize();
 
         // do not reload third party on reload_config()
@@ -129,6 +127,13 @@ bool AppIdContext::init_appid(SnortConfig* sc)
 
     map_app_names_to_snort_ids(sc, config);
     return true;
+}
+
+void AppIdContext::create_odp_ctxt()
+{
+    SnortConfig* sc = SnortConfig::get_main_conf();
+    SearchTool::set_conf(sc);
+    odp_ctxt = new OdpContext(config, sc);
 }
 
 void AppIdContext::create_tp_appid_ctxt()
@@ -248,13 +253,12 @@ OdpThreadContext::OdpThreadContext(bool is_control)
         AF_actives = new std::map<AFActKey, AFActVal>;
 }
 
-void OdpThreadContext::initialize(AppIdContext& ctxt, bool is_control)
+void OdpThreadContext::initialize(AppIdContext& ctxt, bool is_control, bool reload_odp)
 {
-    if (!is_control and ctxt.config.load_odp_detectors_in_ctrl)
+    if (!is_control and reload_odp)
         LuaDetectorManager::init_thread_manager(ctxt);
     else
-        LuaDetectorManager::initialize(ctxt, is_control? 1 : 0,
-            ctxt.config.load_odp_detectors_in_ctrl);
+        LuaDetectorManager::initialize(ctxt, is_control? 1 : 0, reload_odp);
 }
 
 OdpThreadContext::~OdpThreadContext()

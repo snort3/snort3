@@ -45,7 +45,7 @@ void check_session_for_AF_indicator(Packet* p, AppidSessionDirection dir, AppId 
 
     AFActVal new_active_value = AFActVal(ind_element.target, packet_time());
 
-    odp_thread_ctxt->add_af_actives(master_key, new_active_value);
+    odp_thread_local_ctxt->add_af_actives(master_key, new_active_value);
 }
 
 AppId check_session_for_AF_forecast(AppIdSession& asd, Packet* p, AppidSessionDirection dir, AppId forecast)
@@ -53,7 +53,7 @@ AppId check_session_for_AF_forecast(AppIdSession& asd, Packet* p, AppidSessionDi
     AFActKey master_key(p, dir, forecast);
 
     //get out if there is no value
-    std::map<AFActKey, AFActVal>* AF_actives = odp_thread_ctxt->get_af_actives();
+    std::map<AFActKey, AFActVal>* AF_actives = odp_thread_local_ctxt->get_af_actives();
     assert(AF_actives);
     auto check_act_val = AF_actives->find(master_key);
     if (check_act_val == AF_actives->end())
@@ -63,7 +63,7 @@ AppId check_session_for_AF_forecast(AppIdSession& asd, Packet* p, AppidSessionDi
     time_t age = packet_time() - check_act_val->second.last;
     if (age < 0 || age > 300)
     {
-        odp_thread_ctxt->erase_af_actives(master_key);
+        odp_thread_local_ctxt->erase_af_actives(master_key);
         return APP_ID_UNKNOWN;
     }
     asd.set_payload_id(check_act_val->second.target);

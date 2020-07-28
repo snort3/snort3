@@ -288,7 +288,7 @@ public:
 
     void scan_key_chp(ChpMatchDescriptor&);
     AppId scan_chp(ChpMatchDescriptor&, char**, char**, int*, AppIdHttpSession*,
-           const AppIdContext&);
+           const OdpContext&);
     AppId scan_header_x_working_with(const char*, uint32_t, char**);
     int get_appid_by_pattern(const char*, unsigned, char**);
     bool get_appid_from_url(const char*, const char*, char**, const char*, AppId*, AppId*,

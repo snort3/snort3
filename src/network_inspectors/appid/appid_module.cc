@@ -32,7 +32,6 @@
 #include "main/analyzer_command.h"
 #include "main/snort.h"
 #include "main/swapper.h"
-#include "main/thread_config.h"
 #include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
 #include "src/main.h"
@@ -87,8 +86,6 @@ static const Parameter s_params[] =
       "print third party configuration on startup" },
     { "log_all_sessions", Parameter::PT_BOOL, nullptr, "false",
       "enable logging of all appid sessions" },
-    { "load_odp_detectors_in_ctrl", Parameter::PT_BOOL, nullptr, "false",
-      "load odp detectors in control thread" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -145,16 +142,16 @@ private:
 
 bool ACThirdPartyAppIdContextSwap::execute(Analyzer&, void**)
 {
-    assert(tp_appid_thread_ctxt);
+    assert(pkt_thread_tp_appid_ctxt);
     ThirdPartyAppIdContext* tp_appid_ctxt = inspector.get_ctxt().get_tp_appid_ctxt();
-    assert(tp_appid_thread_ctxt != tp_appid_ctxt);
-    bool reload_in_progress = tp_appid_thread_ctxt->tfini(true);
-    tp_appid_thread_ctxt->set_tp_reload_in_progress(reload_in_progress);
+    assert(pkt_thread_tp_appid_ctxt != tp_appid_ctxt);
+    bool reload_in_progress = pkt_thread_tp_appid_ctxt->tfini(true);
+    pkt_thread_tp_appid_ctxt->set_tp_reload_in_progress(reload_in_progress);
     if (reload_in_progress)
         return false;
     request.respond("== swapping third-party configuration\n", from_shell);
     tp_appid_ctxt->tinit();
-    tp_appid_thread_ctxt = tp_appid_ctxt;
+    pkt_thread_tp_appid_ctxt = tp_appid_ctxt;
 
     return true;
 }
@@ -165,6 +162,53 @@ ACThirdPartyAppIdContextSwap::~ACThirdPartyAppIdContextSwap()
     Swapper::set_reload_in_progress(false);
     LogMessage("== reload third-party complete\n");
     request.respond("== reload third-party complete\n", from_shell, true);
+}
+
+class ACOdpContextSwap : public AnalyzerCommand
+{
+public:
+    bool execute(Analyzer&, void**) override;
+    ACOdpContextSwap(const AppIdInspector& inspector, OdpContext& odp_ctxt,
+        Request& current_request, bool from_shell) : inspector(inspector),
+        odp_ctxt(odp_ctxt), request(current_request), from_shell(from_shell) { }
+    ~ACOdpContextSwap() override;
+    const char* stringify() override { return "ODP_CONTEXT_SWAP"; }
+private:
+    const AppIdInspector& inspector;
+    OdpContext& odp_ctxt;
+    Request& request;
+    bool from_shell;
+};
+
+bool ACOdpContextSwap::execute(Analyzer&, void**)
+{
+    AppIdContext& ctxt = inspector.get_ctxt();
+    OdpContext& current_odp_ctxt = ctxt.get_odp_ctxt();
+    assert(pkt_thread_odp_ctxt != &current_odp_ctxt);
+
+    LogMessage("== swapping ODP configuration\n");
+    request.respond("== swapping ODP configuration\n", from_shell);
+
+    AppIdServiceState::clean();
+    AppIdPegCounts::cleanup_pegs();
+    AppIdServiceState::initialize(ctxt.config.memcap);
+    AppIdPegCounts::init_pegs();
+
+    pkt_thread_odp_ctxt = &current_odp_ctxt;
+    assert(odp_thread_local_ctxt);
+    delete odp_thread_local_ctxt;
+    odp_thread_local_ctxt = new OdpThreadContext();
+    odp_thread_local_ctxt->initialize(ctxt, false, true);
+    return true;
+}
+
+ACOdpContextSwap::~ACOdpContextSwap()
+{
+    odp_ctxt.get_app_info_mgr().cleanup_appid_info_table();
+    delete &odp_ctxt;
+    LogMessage("== reload ODP complete\n");
+    request.respond("== reload ODP complete\n", from_shell);
+    Swapper::set_reload_in_progress(false);
 }
 
 static int enable_debug(lua_State* L)
@@ -239,6 +283,44 @@ static int reload_third_party(lua_State* L)
     return 0;
 }
 
+static int reload_odp(lua_State* L)
+{
+    bool from_shell = ( L != nullptr );
+    Request& current_request = get_current_request();
+    if (Swapper::get_reload_in_progress())
+    {
+        current_request.respond("== reload pending; retry\n", from_shell);
+        return 0;
+    }
+    current_request.respond(".. reloading ODP\n", from_shell);
+    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
+    if (!inspector)
+    {
+        current_request.respond("== reload ODP failed - appid not enabled\n", from_shell);
+        return 0;
+    }
+    Swapper::set_reload_in_progress(true);
+
+    AppIdContext& ctxt = inspector->get_ctxt();
+    OdpContext& old_odp_ctxt = ctxt.get_odp_ctxt();
+    AppIdPegCounts::cleanup_peg_info();
+    LuaDetectorManager::clear_lua_detector_mgrs();
+    ctxt.create_odp_ctxt();
+    assert(odp_thread_local_ctxt);
+    delete odp_thread_local_ctxt;
+    odp_thread_local_ctxt = new OdpThreadContext(true);
+ 
+    OdpContext& odp_ctxt = ctxt.get_odp_ctxt();
+    odp_ctxt.get_client_disco_mgr().initialize();
+    odp_ctxt.get_service_disco_mgr().initialize();
+    odp_thread_local_ctxt->initialize(ctxt, true, true);
+    odp_ctxt.initialize();
+
+    main_broadcast_command(new ACOdpContextSwap(*inspector, old_odp_ctxt,
+        current_request, from_shell), from_shell);
+    return 0;
+}
+
 static const Parameter enable_debug_params[] =
 {
     { "proto", Parameter::PT_INT, nullptr, nullptr, "numerical IP protocol ID filter" },
@@ -255,6 +337,7 @@ static const Command appid_cmds[] =
     { "enable_debug", enable_debug, enable_debug_params, "enable appid debugging"},
     { "disable_debug", disable_debug, nullptr, "disable appid debugging"},
     { "reload_third_party", reload_third_party, nullptr, "reload appid third-party module" },
+    { "reload_odp", reload_odp, nullptr, "reload appid open detector package" },
     { nullptr, nullptr, nullptr, nullptr }
 };
 
@@ -268,6 +351,8 @@ static const PegInfo appid_pegs[] =
     { CountType::SUM, "service_cache_prunes", "number of times the service cache was pruned" },
     { CountType::SUM, "service_cache_adds", "number of times an entry was added to the service cache" },
     { CountType::SUM, "service_cache_removes", "number of times an item was removed from the service cache" },
+    { CountType::SUM, "odp_reload_ignored_pkts", "count of packets ignored after open detector package is reloaded" },
+    { CountType::SUM, "tp_reload_ignored_pkts", "count of packets ignored after third-party module is reloaded" },
     { CountType::END, nullptr, nullptr },
 };
 
@@ -332,8 +417,6 @@ bool AppIdModule::set(const char*, Value& v, SnortConfig*)
         config->list_odp_detectors = v.get_bool();
     else if ( v.is("log_all_sessions") )
         config->log_all_sessions = v.get_bool();
-    else if ( v.is("load_odp_detectors_in_ctrl") )
-        config->load_odp_detectors_in_ctrl = v.get_bool();
 
     return true;
 }

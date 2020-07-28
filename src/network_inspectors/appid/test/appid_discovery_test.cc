@@ -199,7 +199,7 @@ void AppIdSession::update_encrypted_app_id(AppId) {}
 bool AppIdSession::is_tp_processing_done() const {return 0;}
 AppId AppIdSession::pick_ss_payload_app_id(AppId) const { return get_payload_id(); }
 AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol,
-    AppidSessionDirection, AppIdInspector*)
+    AppidSessionDirection, AppIdInspector*, OdpContext&)
 {
     return nullptr;
 }
@@ -366,14 +366,14 @@ TEST(appid_discovery_tests, event_published_when_ignoring_flow)
     p.ptrs.ip_api.set(ip, ip);
     AppIdModule app_module;
     AppIdInspector ins(app_module);
-    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins);
+    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt());
     Flow* flow = new Flow;
     flow->set_flow_data(asd);
     p.flow = flow;
     asd->initiator_port = 21;
     asd->set_session_flags(APPID_SESSION_FUTURE_FLOW);
 
-    AppIdDiscovery::do_application_discovery(&p, ins, nullptr);
+    AppIdDiscovery::do_application_discovery(&p, ins, app_ctxt.get_odp_ctxt(), nullptr);
 
     // Detect changes in service, client, payload, and misc appid
     mock().checkExpectations();
@@ -399,13 +399,13 @@ TEST(appid_discovery_tests, event_published_when_processing_flow)
     p.ptrs.tcph = nullptr;
     AppIdModule app_module;
     AppIdInspector ins(app_module);
-    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins);
+    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt());
     Flow* flow = new Flow;
     flow->set_flow_data(asd);
     p.flow = flow;
     asd->initiator_port = 21;
 
-    AppIdDiscovery::do_application_discovery(&p, ins, nullptr);
+    AppIdDiscovery::do_application_discovery(&p, ins, app_ctxt.get_odp_ctxt(), nullptr);
 
     // Detect changes in service, client, payload, and misc appid
     mock().checkExpectations();
@@ -422,7 +422,7 @@ TEST(appid_discovery_tests, change_bits_for_client_version)
     AppIdModule app_module;
     AppIdInspector ins(app_module);
     SfIp ip;
-    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins);
+    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt());
     const char* version = "3.0";
     asd->set_client_version(version, change_bits);
 
@@ -457,7 +457,7 @@ TEST(appid_discovery_tests, change_bits_for_non_http_appid)
     p.ptrs.ip_api.set(ip, ip);
     AppIdModule app_module;
     AppIdInspector ins(app_module);
-    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins);
+    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt());
     Flow* flow = new Flow;
     flow->set_flow_data(asd);
     p.flow = flow;
@@ -468,7 +468,7 @@ TEST(appid_discovery_tests, change_bits_for_non_http_appid)
     asd->set_client_id(APP_ID_CURL);
     asd->set_service_id(APP_ID_FTP, app_ctxt.get_odp_ctxt());
 
-    AppIdDiscovery::do_application_discovery(&p, ins, nullptr);
+    AppIdDiscovery::do_application_discovery(&p, ins, app_ctxt.get_odp_ctxt(), nullptr);
 
     // Detect event for FTP service and CURL client
     CHECK_EQUAL(asd->get_client_id(), APP_ID_CURL);
@@ -479,7 +479,7 @@ TEST(appid_discovery_tests, change_bits_for_non_http_appid)
     asd->set_payload_id(APP_ID_NONE);
     asd->set_client_id(APP_ID_NONE);
     asd->set_service_id(APP_ID_DNS, app_ctxt.get_odp_ctxt());
-    AppIdDiscovery::do_application_discovery(&p, ins, nullptr);
+    AppIdDiscovery::do_application_discovery(&p, ins, app_ctxt.get_odp_ctxt(), nullptr);
 
     // Detect event for DNS service
     mock().checkExpectations();

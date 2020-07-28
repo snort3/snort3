@@ -252,6 +252,7 @@ RpcServiceDetector::~RpcServiceDetector()
             snort_free(toast->name);
         snort_free(toast);
     }
+    rpc_programs = nullptr;
 }
 
 int RpcServiceDetector::validate(AppIdDiscoveryArgs& args)

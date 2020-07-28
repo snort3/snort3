@@ -80,13 +80,18 @@ void ClientAppDescriptor::update_user(AppId, const char*){}
 void ClientAppDescriptor::update_stats(AppId) {}
 void PayloadAppDescriptor::update_stats(AppId) {}
 AppIdConfig::~AppIdConfig() { }
+OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }
+OdpContext::~OdpContext() { }
 AppIdConfig stub_config;
 AppIdContext stub_ctxt(stub_config);
-AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector&)
-    : FlowData(0), ctxt(stub_ctxt), api(*(new AppIdSessionApi(this, *ip)))  { }
+OdpContext stub_odp_ctxt(stub_config, nullptr);
+AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector&, OdpContext&)
+    : FlowData(0), config(stub_config), api(*(new AppIdSessionApi(this, *ip))),
+    odp_ctxt(stub_odp_ctxt) { }
 AppIdSession::~AppIdSession() = default;
 AppIdDiscovery::AppIdDiscovery() {}
 AppIdDiscovery::~AppIdDiscovery() {}
+void ClientDiscovery::initialize() { }
 void AppIdDiscovery::register_detector(const std::string&, AppIdDetector*,  IpProtocol) {}
 void AppIdDiscovery::add_pattern_data(AppIdDetector*, SearchTool*, int, const uint8_t* const,
     unsigned, unsigned) {}
@@ -112,6 +117,12 @@ int ServiceDiscovery::fail_service(AppIdSession&, const Packet*, AppidSessionDir
     ServiceDetector*, ServiceDiscoveryState*) { return 0; }
 int ServiceDiscovery::add_service_port(AppIdDetector*,
     const ServiceDetectorPort&) { return APPID_EINVALID; }
+DnsPatternMatchers::~DnsPatternMatchers() { }
+HttpPatternMatchers::~HttpPatternMatchers() { }
+SipPatternMatchers::~SipPatternMatchers() { }
+SslPatternMatchers::~SslPatternMatchers() { }
+snort::SearchTool::SearchTool(char const*, bool) { }
+snort::SearchTool::~SearchTool() { }
 
 TEST_GROUP(service_state_tests)
 {
@@ -152,7 +163,7 @@ TEST(service_state_tests, set_service_id_failed)
     AppIdInspector inspector;
     SfIp client_ip;
     client_ip.set("1.2.3.4");
-    AppIdSession asd(IpProtocol::PROTO_NOT_SET, &client_ip, 0, inspector);
+    AppIdSession asd(IpProtocol::PROTO_NOT_SET, &client_ip, 0, inspector, stub_odp_ctxt);
 
     // Testing 3+ failures to exceed STATE_ID_NEEDED_DUPE_DETRACT_COUNT with valid_count = 0
     sds.set_state(ServiceState::VALID);
@@ -172,7 +183,7 @@ TEST(service_state_tests, set_service_id_failed_with_valid)
     AppIdInspector inspector;
     SfIp client_ip;
     client_ip.set("1.2.3.4");
-    AppIdSession asd(IpProtocol::PROTO_NOT_SET, &client_ip, 0, inspector);
+    AppIdSession asd(IpProtocol::PROTO_NOT_SET, &client_ip, 0, inspector, stub_odp_ctxt);
 
     // Testing 3+ failures to exceed STATE_ID_NEEDED_DUPE_DETRACT_COUNT with valid_count > 1
     sds.set_state(ServiceState::VALID);

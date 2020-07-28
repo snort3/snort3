@@ -71,12 +71,13 @@ TEST(service_netbios_test, check_add_smb_info_pointer )
     uint16_t size =215;
     AppidSessionDirection dir = APP_ID_FROM_INITIATOR;
     AppIdInspector ins;
+    OdpContext odp_ctxt(config, nullptr);
     snort::Packet pkt;
     AppidChangeBits cb;
     SfIp ip;
-    AppIdSession asd(IpProtocol::TCP, &ip, 21, ins);
+    AppIdSession asd(IpProtocol::TCP, &ip, 21, ins, odp_ctxt);
     AppIdDiscoveryArgs args(data, size, dir, asd, &pkt,cb);
-    ServiceDiscovery& s_discovery_manager = asd.ctxt.get_odp_ctxt().get_service_disco_mgr();
+    ServiceDiscovery& s_discovery_manager = asd.get_odp_ctxt().get_service_disco_mgr();
     args.pkt->ptrs.sp = args.pkt->ptrs.dp = 138;
     NbdgmServiceDetector nsd(&s_discovery_manager);
     nsd.validate(args);

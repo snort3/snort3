@@ -233,11 +233,12 @@ private:
 class AppIdSession : public snort::FlowData
 {
 public:
-    AppIdSession(IpProtocol, const snort::SfIp*, uint16_t port, AppIdInspector&);
+    AppIdSession(IpProtocol, const snort::SfIp*, uint16_t port,
+        AppIdInspector&, OdpContext&);
     ~AppIdSession() override;
 
     static AppIdSession* allocate_session(const snort::Packet*, IpProtocol,
-        AppidSessionDirection, AppIdInspector*);
+        AppidSessionDirection, AppIdInspector*, OdpContext&);
     static AppIdSession* create_future_session(const snort::Packet*, const snort::SfIp*, uint16_t,
         const snort::SfIp*, uint16_t, IpProtocol, SnortProtocolId);
     void initialize_future_session(AppIdSession&, uint64_t, AppidSessionDirection);
@@ -247,7 +248,7 @@ public:
 
     uint32_t session_id = 0;
     snort::Flow* flow = nullptr;
-    AppIdContext& ctxt;
+    AppIdConfig& config;
     std::unordered_map<unsigned, AppIdFlowData*> flow_data;
     uint64_t flags = 0;
     uint16_t initiator_port = 0;
@@ -398,7 +399,7 @@ public:
         if (tp_app_id != app_id)
         {
             tp_app_id = app_id;
-            tp_app_id_deferred = ctxt.get_odp_ctxt().get_app_info_mgr().get_app_info_flags
+            tp_app_id_deferred = odp_ctxt.get_app_info_mgr().get_app_info_flags
                 (tp_app_id, APPINFO_FLAG_DEFER);
         }
     }
@@ -408,7 +409,7 @@ public:
         if (tp_payload_app_id != app_id)
         {
             tp_payload_app_id = app_id;
-            tp_payload_app_id_deferred = ctxt.get_odp_ctxt().get_app_info_mgr().get_app_info_flags
+            tp_payload_app_id_deferred = odp_ctxt.get_app_info_mgr().get_app_info_flags
                 (tp_payload_app_id, APPINFO_FLAG_DEFER_PAYLOAD);
         }
     }
@@ -544,6 +545,16 @@ public:
             api.set_tls_host(tsession->get_tls_host());
     }
 
+    OdpContext& get_odp_ctxt() const
+    {
+        return odp_ctxt;
+    }
+
+    ThirdPartyAppIdContext* get_tp_appid_ctxt() const
+    {
+        return tp_appid_ctxt;
+    }
+
 private:
     uint16_t prev_http2_raw_packet = 0;
 
@@ -561,6 +572,8 @@ private:
     uint16_t my_inferred_svcs_ver = 0;
     snort::AppIdSessionApi& api;
     static uint16_t inferred_svcs_ver;
+    OdpContext& odp_ctxt;
+    ThirdPartyAppIdContext* tp_appid_ctxt = nullptr;
 };
 
 #endif

@@ -169,9 +169,11 @@ const TraceOption* AppIdModule::get_trace_options() const { return nullptr; }
 unsigned AppIdSession::inspector_id = 0;
 AppIdConfig stub_config;
 AppIdContext stub_ctxt(stub_config);
-AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector& inspector)
-    : snort::FlowData(inspector_id, (snort::Inspector*)&inspector), ctxt(stub_ctxt),
-        api(*(new AppIdSessionApi(this, *ip))) { }
+static OdpContext stub_odp_ctxt(stub_config, nullptr);
+OdpContext* AppIdContext::odp_ctxt = &stub_odp_ctxt;
+AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector& inspector,
+    OdpContext&) : snort::FlowData(inspector_id, (snort::Inspector*)&inspector),
+    config(stub_config), api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(stub_odp_ctxt) { }
 AppIdSession::~AppIdSession() = default;
 void AppIdSession::free_flow_data()
 {
@@ -202,8 +204,6 @@ ServiceDiscoveryState* AppIdServiceState::add(SfIp const*, IpProtocol, unsigned 
   return nullptr;
 }
 void ServiceDiscoveryState::set_service_id_valid(ServiceDetector*) { }
-static OdpContext stub_odp_ctxt(stub_config, nullptr);
-OdpContext* AppIdContext::odp_ctxt = &stub_odp_ctxt;
 
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*)
 { }

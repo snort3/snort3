@@ -339,7 +339,7 @@ static inline void process_rtmp(AppIdSession& asd,
         }
     }
 
-    if ( !asd.ctxt.get_odp_ctxt().referred_appId_disabled &&
+    if ( !asd.get_odp_ctxt().referred_appId_disabled &&
         !hsession->get_field(REQ_REFERER_FID) )
     {
         if ( ( field=attribute_data.http_request_referer(own) ) != nullptr )
@@ -368,7 +368,7 @@ static inline void process_rtmp(AppIdSession& asd,
            attribute_data.http_request_user_agent_begin() ) > 0 )
     {
         char *version = nullptr;
-        HttpPatternMatchers& http_matchers = asd.ctxt.get_odp_ctxt().get_http_matchers();
+        HttpPatternMatchers& http_matchers = asd.get_odp_ctxt().get_http_matchers();
 
         http_matchers.identify_user_agent(field->c_str(), size, service_id,
             client_id, &version);
@@ -384,20 +384,20 @@ static inline void process_rtmp(AppIdSession& asd,
     }
 
     if ( hsession->get_field(MISC_URL_FID) || (confidence == 100 &&
-        asd.session_packet_count > asd.ctxt.get_odp_ctxt().rtmp_max_packets) )
+        asd.session_packet_count > asd.get_odp_ctxt().rtmp_max_packets) )
     {
         const std::string* url;
         if ( ( url = hsession->get_field(MISC_URL_FID) ) != nullptr )
         {
-            HttpPatternMatchers& http_matchers = asd.ctxt.get_odp_ctxt().get_http_matchers();
+            HttpPatternMatchers& http_matchers = asd.get_odp_ctxt().get_http_matchers();
             const char* referer = hsession->get_cfield(REQ_REFERER_FID);
             if ( ( ( http_matchers.get_appid_from_url(nullptr, url->c_str(),
                 nullptr, referer, &client_id, &service_id,
-                &payload_id, &referred_payload_app_id, true, asd.ctxt.get_odp_ctxt()) )
+                &payload_id, &referred_payload_app_id, true, asd.get_odp_ctxt()) )
                 ||
                 ( http_matchers.get_appid_from_url(nullptr, url->c_str(),
                 nullptr, referer, &client_id, &service_id,
-                &payload_id, &referred_payload_app_id, false, asd.ctxt.get_odp_ctxt()) ) ) == 1 )
+                &payload_id, &referred_payload_app_id, false, asd.get_odp_ctxt()) ) ) == 1 )
             {
                 // do not overwrite a previously-set client or service
                 if ( hsession->client.get_id() <= APP_ID_NONE )
@@ -431,7 +431,7 @@ static inline void process_ssl(AppIdSession& asd,
     {
         if (!asd.service_detector)
         {
-            AppInfoTableEntry* entry = asd.ctxt.get_odp_ctxt().
+            AppInfoTableEntry* entry = asd.get_odp_ctxt().
                 get_app_info_mgr().get_app_info_entry(APP_ID_SSL);
 
             if (entry)
@@ -452,7 +452,7 @@ static inline void process_ssl(AppIdSession& asd,
     if (!asd.get_client_id())
         asd.set_client_appid_data(APP_ID_SSL_CLIENT, change_bits);
 
-    reinspect_ssl_appid = check_ssl_appid_for_reinspect(tmpAppId, asd.ctxt.get_odp_ctxt());
+    reinspect_ssl_appid = check_ssl_appid_for_reinspect(tmpAppId, asd.get_odp_ctxt());
 
     if (!(asd.scan_flags & SCAN_CERTVIZ_ENABLED_FLAG) and
         asd.tsession->get_tls_host() == nullptr and
@@ -487,7 +487,7 @@ static inline void process_ftp_control(AppIdSession& asd,
     ThirdPartyAppIDAttributeData& attribute_data)
 {
     const string* field=0;
-    if (!asd.ctxt.get_odp_ctxt().ftp_userid_disabled &&
+    if (!asd.get_odp_ctxt().ftp_userid_disabled &&
         (field=attribute_data.ftp_command_user()) != nullptr)
     {
         asd.set_client_user(APP_ID_FTP_CONTROL, field->c_str());
@@ -556,7 +556,7 @@ static inline void check_terminate_tp_module(AppIdSession& asd, uint16_t tpPktCo
 {
     AppIdHttpSession* hsession = asd.get_http_session();
 
-    if ((tpPktCount >= asd.ctxt.get_odp_ctxt().max_tp_flow_depth) ||
+    if ((tpPktCount >= asd.get_odp_ctxt().max_tp_flow_depth) ||
         (asd.get_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_APP_REINSPECT) ==
         (APPID_SESSION_HTTP_SESSION | APPID_SESSION_APP_REINSPECT) && hsession &&
         hsession->get_field(REQ_URI_FID) &&
@@ -624,11 +624,11 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
         return true;
     }
 
-    if (!p->dsize and !asd.ctxt.get_odp_ctxt().tp_allow_probes)
+    if (!p->dsize and !asd.get_odp_ctxt().tp_allow_probes)
         return false;
 
     bool process_packet = (protocol != IpProtocol::TCP or (p->packet_flags & PKT_STREAM_ORDER_OK) or
-        asd.ctxt.get_odp_ctxt().tp_allow_probes);
+        asd.get_odp_ctxt().tp_allow_probes);
 
     if (!process_packet)
         return false;
@@ -675,7 +675,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
 
     if (appidDebug->is_active())
     {
-        const char *app_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(tp_app_id);
+        const char *app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(tp_app_id);
         LogMessage("AppIdDbg %s 3rd party returned %s (%d)\n",
             appidDebug->get_debug_session(), app_name ? app_name : "unknown", tp_app_id);
     }
@@ -689,7 +689,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
         assert(hsession);
     }
 
-    unsigned app_info_flags = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_info_flags(tp_app_id,
+    unsigned app_info_flags = asd.get_odp_ctxt().get_app_info_mgr().get_app_info_flags(tp_app_id,
         APPINFO_FLAG_TP_CLIENT | APPINFO_FLAG_IGNORE );
 
     // if the third-party appId must be treated as a client, do it now
@@ -716,7 +716,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
     }
 
     if (tp_app_id == APP_ID_SSL &&
-        (Stream::get_snort_protocol_id(p->flow) == asd.ctxt.config.snortId_for_ftp_data))
+        (Stream::get_snort_protocol_id(p->flow) == asd.config.snortId_for_ftp_data))
     {
         //  If we see SSL on an FTP data channel set tpAppId back
         //  to APP_ID_NONE so the FTP preprocessor picks up the flow.
@@ -742,7 +742,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
             else if (hsession->payload.get_id() == APP_ID_HTTP_TUNNEL and tp_app_id != APP_ID_SSL)
                 hsession->set_payload(tp_app_id, change_bits, "3rd party");
 
-            hsession->process_http_packet(direction, change_bits, asd.ctxt.get_odp_ctxt().get_http_matchers());
+            hsession->process_http_packet(direction, change_bits, asd.get_odp_ctxt().get_http_matchers());
 
             if (asd.get_tp_app_id() == APP_ID_HTTP and
                 !asd.get_session_flags(APPID_SESSION_APP_REINSPECT) and
@@ -780,8 +780,8 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
                 asd.set_port_service_id(portAppId);
                 if (appidDebug->is_active())
                 {
-                    const char *service_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(tp_app_id);
-                    const char *port_service_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(asd.get_port_service_id());
+                    const char *service_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(tp_app_id);
+                    const char *port_service_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(asd.get_port_service_id());
                     LogMessage("AppIdDbg %s SSL is service %s (%d), portServiceAppId %s (%d)\n",
                         appidDebug->get_debug_session(),
                         service_name ? service_name : "unknown", tp_app_id,
@@ -795,7 +795,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
                 tp_app_id = portAppId;
                 if (appidDebug->is_active())
                 {
-                    const char *app_name = asd.ctxt.get_odp_ctxt().get_app_info_mgr().get_app_name(tp_app_id);
+                    const char *app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(tp_app_id);
                     LogMessage("AppIdDbg %s SSL is %s (%d)\n", appidDebug->get_debug_session(),
                         app_name ? app_name : "unknown", tp_app_id);
                 }

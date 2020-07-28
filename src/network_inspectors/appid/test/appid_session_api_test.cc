@@ -56,7 +56,7 @@ TEST_GROUP(appid_session_api)
 
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         SfIp ip;
-        mock_session = new AppIdSession(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector);
+        mock_session = new AppIdSession(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt);
         mock_session->set_ss_application_ids(APPID_UT_ID, APPID_UT_ID, APPID_UT_ID,
             APPID_UT_ID, APPID_UT_ID, change_bits);
     }
@@ -184,7 +184,7 @@ TEST(appid_session_api, is_appid_inspecting_session)
 
     // 4th if in is_appid_inspecting_session
     mock_session->set_application_ids_service(APP_ID_NONE, change_bits);
-    mock_session->ctxt.get_odp_ctxt().check_host_port_app_cache = true;
+    mock_session->get_odp_ctxt().check_host_port_app_cache = true;
     val = mock_session->get_api().is_appid_inspecting_session();
     CHECK_TRUE(val);
 }

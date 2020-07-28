@@ -537,7 +537,7 @@ int DnsUdpServiceDetector::validate(AppIdDiscoveryArgs& args)
         goto udp_done;
     }
     if ((rval = dns_validate_header(args.dir, (const DNSHeader*)args.data,
-        args.ctxt.get_odp_ctxt().dns_host_reporting, args.asd)) != APPID_SUCCESS)
+        args.asd.get_odp_ctxt().dns_host_reporting, args.asd)) != APPID_SUCCESS)
     {
         if (rval == APPID_REVERSED)
         {
@@ -548,7 +548,7 @@ int DnsUdpServiceDetector::validate(AppIdDiscoveryArgs& args)
                     // To get here, we missed the initial query, got a
                     // response, and now we've got another query.
                     rval = validate_packet(args.data, args.size, args.dir,
-                        args.ctxt.get_odp_ctxt().dns_host_reporting, args.asd);
+                        args.asd.get_odp_ctxt().dns_host_reporting, args.asd);
                     if (rval == APPID_SUCCESS)
                         goto inprocess;
                 }
@@ -559,7 +559,7 @@ int DnsUdpServiceDetector::validate(AppIdDiscoveryArgs& args)
                 // To get here, we missed the initial query, but now we've got
                 // a response.
                 rval = validate_packet(args.data, args.size, args.dir,
-                    args.ctxt.get_odp_ctxt().dns_host_reporting, args.asd);
+                    args.asd.get_odp_ctxt().dns_host_reporting, args.asd);
                 if (rval == APPID_SUCCESS)
                 {
                     args.asd.set_session_flags(APPID_SESSION_UDP_REVERSED);
@@ -573,7 +573,7 @@ int DnsUdpServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
     rval = validate_packet(args.data, args.size, args.dir,
-        args.ctxt.get_odp_ctxt().dns_host_reporting, args.asd);
+        args.asd.get_odp_ctxt().dns_host_reporting, args.asd);
     if ((rval == APPID_SUCCESS) && (args.dir == APP_ID_FROM_INITIATOR))
         goto inprocess;
 
@@ -625,7 +625,7 @@ int DnsTcpServiceDetector::validate(AppIdDiscoveryArgs& args)
         uint16_t size = args.size - sizeof(DNSTCPHeader);
         uint16_t tmp = ntohs(hdr->length);
         if (tmp < sizeof(DNSHeader) || dns_validate_header(args.dir, (const DNSHeader*)data,
-            args.ctxt.get_odp_ctxt().dns_host_reporting, args.asd))
+            args.asd.get_odp_ctxt().dns_host_reporting, args.asd))
         {
             if (args.dir == APP_ID_FROM_INITIATOR)
                 goto not_compatible;
@@ -636,7 +636,7 @@ int DnsTcpServiceDetector::validate(AppIdDiscoveryArgs& args)
         if (tmp > size)
             goto not_compatible;
         rval = validate_packet(data, size, args.dir,
-            args.ctxt.get_odp_ctxt().dns_host_reporting, args.asd);
+            args.asd.get_odp_ctxt().dns_host_reporting, args.asd);
         if (rval != APPID_SUCCESS)
             goto tcp_done;
 
