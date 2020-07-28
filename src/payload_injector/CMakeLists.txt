@@ -5,6 +5,7 @@ set (PAYLOAD_INJECTOR_INCLUDES
 add_library ( payload_injector OBJECT
     ${PAYLOAD_INJECTOR_INCLUDES}
     payload_injector_module.cc
+    payload_injector_translate_page.cc
 )
 
 install(FILES ${PAYLOAD_INJECTOR_INCLUDES}

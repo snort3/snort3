@@ -62,7 +62,7 @@ bool PayloadInjectorModule::end(const char*, int, SnortConfig*)
 }
 
 InjectionReturnStatus PayloadInjectorModule::inject_http_payload(Packet* p,
-    InjectionControl& control)
+    const InjectionControl& control)
 {
     InjectionReturnStatus status = INJECTION_SUCCESS;
 

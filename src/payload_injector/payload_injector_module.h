@@ -43,6 +43,7 @@ enum InjectionReturnStatus : int8_t
     ERR_STREAM_NOT_ESTABLISHED = -2,
     ERR_HTTP2_STREAM_ID_0 = -3,
     ERR_UNIDENTIFIED_PROTOCOL = -4,
+    ERR_PAGE_TRANSLATION = -4,
 };
 
 struct InjectionControl
@@ -64,7 +65,7 @@ public:
 
     bool end(const char*, int, snort::SnortConfig*) override;
 
-    static InjectionReturnStatus inject_http_payload(snort::Packet* p, InjectionControl& control);
+    static InjectionReturnStatus inject_http_payload(snort::Packet* p, const InjectionControl& control);
 
 #ifdef UNIT_TEST
     void set_configured(bool val) { configured = val; }
@@ -72,6 +73,11 @@ public:
 
 private:
     static bool configured;
+
+#ifdef UNIT_TEST
+public:
+#endif
+    static InjectionReturnStatus get_http2_payload(InjectionControl control, uint8_t *& http2_payload, uint32_t & payload_len);
 };
 
 #endif

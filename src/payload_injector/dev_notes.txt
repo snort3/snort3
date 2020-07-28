@@ -6,4 +6,9 @@ It coordinates with the Active component of Snort to perform these functions.
 
 Currently it is being used for HTTP/1 injections. HTTP/2 support is in development.
 
+get_http2_payload supports translation of HTTP block/redirect page to HTTP2.
+Current implementation is limited, the constraints are specified in
+payload_injector_translate_page.cc.
+
+
 
