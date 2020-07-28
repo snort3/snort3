@@ -31,6 +31,7 @@ struct Packet;
 struct PayloadInjectorCounts
 {
     PegCount http_injects;
+    PegCount http2_injects;
 };
 
 extern THREAD_LOCAL PayloadInjectorCounts payload_injection_stats;
@@ -40,12 +41,15 @@ enum InjectionReturnStatus : int8_t
     INJECTION_SUCCESS = 1,
     ERR_INJECTOR_NOT_CONFIGURED = -1,
     ERR_STREAM_NOT_ESTABLISHED = -2,
+    ERR_HTTP2_STREAM_ID_0 = -3,
+    ERR_UNIDENTIFIED_PROTOCOL = -4,
 };
 
 struct InjectionControl
 {
     const uint8_t* http_page = nullptr;
     uint32_t http_page_len = 0;
+    uint32_t stream_id = 0;
 };
 
 class SO_PUBLIC PayloadInjectorModule : public snort::Module

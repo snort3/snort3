@@ -28,10 +28,6 @@
 #include "packet_io/active.h"
 #include "protocols/packet.h"
 
-#ifdef UNIT_TEST
-#include "catch/snort_catch.h"
-#endif
-
 #define s_name "payload_injector"
 #define s_help \
     "payload injection utility"
@@ -43,6 +39,7 @@ THREAD_LOCAL PayloadInjectorCounts payload_injector_stats;
 const PegInfo payload_injector_pegs[] =
 {
     { CountType::SUM, "http_injects", "total number of http injections" },
+    { CountType::SUM, "http2_injects", "total number of http2 injections" },
     { CountType::END, nullptr, nullptr }
 };
 
@@ -64,7 +61,8 @@ bool PayloadInjectorModule::end(const char*, int, SnortConfig*)
     return true;
 }
 
-InjectionReturnStatus PayloadInjectorModule::inject_http_payload(Packet* p, InjectionControl& control)
+InjectionReturnStatus PayloadInjectorModule::inject_http_payload(Packet* p,
+    InjectionControl& control)
 {
     InjectionReturnStatus status = INJECTION_SUCCESS;
 
@@ -77,8 +75,26 @@ InjectionReturnStatus PayloadInjectorModule::inject_http_payload(Packet* p, Inje
 
         if (p->packet_flags & PKT_STREAM_EST)
         {
-            payload_injector_stats.http_injects++;
-            p->active->send_data(p, df, control.http_page, control.http_page_len);
+            if (!p->flow || !p->flow->gadget)
+                status = ERR_UNIDENTIFIED_PROTOCOL;
+            else if (strcmp(p->flow->gadget->get_name(),"http_inspect") == 0)
+            {
+                payload_injector_stats.http_injects++;
+                p->active->send_data(p, df, control.http_page, control.http_page_len);
+            }
+            else if (strcmp(p->flow->gadget->get_name(),"http2_inspect") == 0)
+            {
+                if (control.stream_id != 0)
+                {
+                    payload_injector_stats.http2_injects++;
+                    // FIXIT-E translate page, inject payload
+                    p->active->send_data(p, df, nullptr, 0);
+                }
+                else
+                    status = ERR_HTTP2_STREAM_ID_0;
+            }
+	    else
+	        status = ERR_UNIDENTIFIED_PROTOCOL;
         }
         else
             status = ERR_STREAM_NOT_ESTABLISHED;

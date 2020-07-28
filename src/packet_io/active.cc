@@ -47,7 +47,7 @@ using namespace snort;
 class ResetAction : public snort::ActiveAction
 {
 public:
-    ResetAction() : ActiveAction(ActionType::ACT_RESET) {}
+    ResetAction() : ActiveAction(ActionType::ACT_RESET) { }
 
     void exec(snort::Packet* p) override
     {
@@ -295,7 +295,8 @@ uint32_t Active::send_data(
         if ( use_direct_inject )
         {
             DIOCTL_DirectInjectReset msg =
-                { p->daq_msg, (uint8_t)((tmp_flags & ENC_FLAG_FWD) ? DAQ_DIR_FORWARD : DAQ_DIR_REVERSE) };
+                { p->daq_msg, (uint8_t)((tmp_flags & ENC_FLAG_FWD) ? DAQ_DIR_FORWARD :
+                DAQ_DIR_REVERSE) };
             ret = p->daq_instance->ioctl(DIOCTL_DIRECT_INJECT_RESET,
                 &msg, sizeof(msg));
             if ( ret != DAQ_SUCCESS )
@@ -327,61 +328,68 @@ uint32_t Active::send_data(
 
     uint32_t sent = 0;
 
-    // Inject the payload.
-    if ( use_direct_inject )
+    if (buf != nullptr)
     {
-        flags = (flags & ~ENC_FLAG_VAL);
-        const DAQ_DIPayloadSegment segments[] = { {buf, blen} };
-        const DAQ_DIPayloadSegment* payload[] = { &segments[0] };
-        DIOCTL_DirectInjectPayload msg = { p->daq_msg,  payload, 1,
-            (uint8_t)((flags & ENC_FLAG_FWD) ? DAQ_DIR_FORWARD : DAQ_DIR_REVERSE) };
-        ret = p->daq_instance->ioctl(DIOCTL_DIRECT_INJECT_PAYLOAD,
-            &msg, sizeof(msg));
-        if ( ret != DAQ_SUCCESS )
+        // Inject the payload.
+        if ( use_direct_inject )
         {
-            active_counts.failed_direct_injects++;
-            return 0;
-        }
-
-        sent = blen;
-        active_counts.direct_injects++;
-    }
-    else
-    {
-        const uint16_t maxPayload = PacketManager::encode_get_max_payload(p);
-
-        if (maxPayload)
-        {
-            uint32_t toSend;
-            do
+            flags = (flags & ~ENC_FLAG_VAL);
+            const DAQ_DIPayloadSegment segments[] = {
+                { buf, blen }
+            };
+            const DAQ_DIPayloadSegment* payload[] = { &segments[0] };
+            DIOCTL_DirectInjectPayload msg = { p->daq_msg,  payload, 1,
+                                               (uint8_t)((flags & ENC_FLAG_FWD) ? DAQ_DIR_FORWARD :
+                                               DAQ_DIR_REVERSE) };
+            ret = p->daq_instance->ioctl(DIOCTL_DIRECT_INJECT_PAYLOAD,
+                &msg, sizeof(msg));
+            if ( ret != DAQ_SUCCESS )
             {
-                plen = 0;
-                flags = (flags & ~ENC_FLAG_VAL) | sent;
-                toSend = blen > maxPayload ? maxPayload : blen;
-                seg = PacketManager::encode_response(TcpResponse::PUSH, flags, p, plen, buf, toSend);
-
-                if ( !seg )
-                {
-                    active_counts.failed_injects++;
-                    return sent;
-                }
-
-                ret = s_send(p->daq_msg, !(flags & ENC_FLAG_FWD), seg, plen);
-                if ( ret )
-                    active_counts.failed_injects++;
-                else
-                    active_counts.injects++;
-
-                sent += toSend;
-                buf += toSend;
+                active_counts.failed_direct_injects++;
+                return 0;
             }
-            while (blen -= toSend);
+
+            sent = blen;
+            active_counts.direct_injects++;
+        }
+        else
+        {
+            const uint16_t maxPayload = PacketManager::encode_get_max_payload(p);
+
+            if (maxPayload)
+            {
+                uint32_t toSend;
+                do
+                {
+                    plen = 0;
+                    flags = (flags & ~ENC_FLAG_VAL) | sent;
+                    toSend = blen > maxPayload ? maxPayload : blen;
+                    seg = PacketManager::encode_response(TcpResponse::PUSH, flags, p, plen, buf,
+                        toSend);
+
+                    if ( !seg )
+                    {
+                        active_counts.failed_injects++;
+                        return sent;
+                    }
+
+                    ret = s_send(p->daq_msg, !(flags & ENC_FLAG_FWD), seg, plen);
+                    if ( ret )
+                        active_counts.failed_injects++;
+                    else
+                        active_counts.injects++;
+
+                    sent += toSend;
+                    buf += toSend;
+                }
+                while (blen -= toSend);
+            }
         }
     }
 
     // FIXIT-L: Currently there is no support for injecting a FIN via
     // direct injection.
-    if ( ! use_direct_inject )
+    if ( !use_direct_inject )
     {
         plen = 0;
         flags = (flags & ~ENC_FLAG_VAL) | sent;
@@ -596,7 +604,8 @@ bool Active::hold_packet(const Packet* p)
         return false;
 
     // FIXIT-L same semi-arbitrary heuristic as the retry queue logic - reevaluate later
-    if (!p->daq_instance || p->daq_instance->get_pool_available() < p->daq_instance->get_batch_size())
+    if (!p->daq_instance || p->daq_instance->get_pool_available() <
+        p->daq_instance->get_batch_size())
     {
         active_counts.holds_denied++;
         return false;
@@ -715,7 +724,7 @@ void Active::apply_delayed_action(Packet* p)
         reset_session(p, delayed_reject, force);
         break;
     case ACT_RETRY:
-        if(!retry_packet(p))
+        if (!retry_packet(p))
             drop_packet(p, force);
         break;
     default:
@@ -724,7 +733,6 @@ void Active::apply_delayed_action(Packet* p)
 
     delayed_active_action = ACT_ALLOW;
 }
-
 
 //--------------------------------------------------------------------
 
@@ -823,3 +831,4 @@ void Active::send_reason_to_daq(Packet& p)
     if ( reason != -1 )
         p.daq_instance->set_packet_verdict_reason(p.daq_msg, reason);
 }
+
