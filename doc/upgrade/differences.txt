@@ -141,6 +141,8 @@ Some things Snort++ can do today that Snort can not do as well:
 * stream5_tcp: prune_log_max deleted; to be replaced with histogram
 * stream5_tcp: max_active_responses, min_response_seconds moved to
   active.max_responses, min_interval
+* ips policies support snort variables (_PATH, _PORT, _NET, _SERVER),
+  ips = { variables = { var1 = expr1, var2 = expr2, ... } }
 
 === Rules
 

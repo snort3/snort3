@@ -159,17 +159,13 @@ int PortVarDefine(SnortConfig* sc, const char* name, const char* s)
     if ( rstat < 0 )
     {
         ParseError("PortVarTableAdd failed with '%s', exiting.", po->name);
+        PortObjectFree(po);
     }
     else if ( rstat > 0 )
     {
         ParseWarning(WARN_VARS, "PortVar '%s', already defined.", po->name);
+        PortObjectFree(po);
     }
-
-#if 0
-    LogMessage("PortVar '%s' defined : ",po->name);
-    PortObjectPrintPortsRaw(po);
-    LogMessage("\n");
-#endif
 
     return 0;
 }
@@ -588,30 +584,6 @@ VarEntry* VarDefine(
         p->id = dp->var_id++;
     else
         p->id = var_id;
-
-#if 0
-    vlen = strlen(value);
-    LogMessage("Var '%s' defined, value len = %d chars", p->name, vlen);
-
-    if ( vlen < 64 )
-    {
-        LogMessage(", value = %s\n", value);
-    }
-    else
-    {
-        LogMessage("\n");
-        n = 128;
-        s = value;
-        while (vlen)
-        {
-            if ( n > vlen )
-                n = vlen;
-            LogMessage("   %.*s\n", n, s);
-            s    += n;
-            vlen -= n;
-        }
-    }
-#endif
 
     return p;
 }

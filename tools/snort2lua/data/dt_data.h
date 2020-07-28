@@ -81,10 +81,11 @@ public:
     void reset_state();
 
     // Output Functions
-    void print_errors(std::ostream&);
-    void print_data(std::ostream&);
-    void print_comments(std::ostream& out);
-    void print_unsupported(std::ostream& out);
+    void print_errors(std::ostream&) const;
+    void print_data(std::ostream&) const;
+    void print_comments(std::ostream& out) const;
+    void print_unsupported(std::ostream& out) const;
+    void print_local_variables(std::ostream&) const;
 
     // have there been any failed conversion?
     bool failed_conversions() const;
@@ -92,6 +93,9 @@ public:
     // is there any actual data to print?
     bool empty() const
     { return vars.empty() && includes.empty(); }
+
+    bool has_local_vars() const
+    { return !local_vars.empty(); }
 
     // functions specifically useful when parsing includes.
     // allows for easy swapping of data.  These two functions
@@ -141,6 +145,7 @@ private:
 
     std::vector<Variable*> vars;
     std::vector<Include*> includes;
+    std::vector<std::string> local_vars;
     Comments* comments;
     Comments* errors;
     Comments* unsupported;

@@ -41,6 +41,7 @@ const char* get_config_file(const char* arg, std::string& file);
 void parse_rules_file(snort::SnortConfig*, const char* fname);
 void parse_rules_string(snort::SnortConfig*, const char* str);
 
+void SetVar(snort::SnortConfig*, const char* name, const char* value);
 void ParseIpVar(snort::SnortConfig*, const char* name, const char* s);
 void parse_include(snort::SnortConfig*, const char*);
 

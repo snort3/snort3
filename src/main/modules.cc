@@ -51,6 +51,7 @@
 #include "parser/parse_conf.h"
 #include "parser/parse_ip.h"
 #include "parser/parser.h"
+#include "parser/vars.h"
 #include "payload_injector/payload_injector_module.h"
 #include "profiler/profiler.h"
 #include "search_engines/pat_stats.h"
@@ -1167,6 +1168,21 @@ bool InspectionModule::set(const char*, Value& v, SnortConfig* sc)
 // Ips policy module
 //-------------------------------------------------------------------------
 
+static void set_var(SnortConfig* sc, const char* fqn, Value& v)
+{
+    const char* ptr = strrchr(fqn, '.');
+    assert(ptr);
+    SetVar(sc, ptr + 1, v.get_string());
+}
+
+static const Parameter variable_params[] =
+{
+    { "$var" , Parameter::PT_STRING, nullptr, nullptr,
+      "IPS policy variable" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 static const Parameter ips_params[] =
 {
     { "default_rule_state", Parameter::PT_ENUM, "no | yes | inherit", "inherit",
@@ -1202,6 +1218,9 @@ static const Parameter ips_params[] =
       "IPS policy uuid" },
 #endif
 
+    { "variables", Parameter::PT_TABLE, variable_params, nullptr,
+      "defines IPS policy variables" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -1213,12 +1232,27 @@ class IpsModule : public Module
 public:
     IpsModule() : Module("ips", ips_help, ips_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
+    bool matches(const char*, std::string&) override;
 
     Usage get_usage() const override
     { return DETECT; }
 };
 
-bool IpsModule::set(const char*, Value& v, SnortConfig* sc)
+bool IpsModule::matches(const char* param, std::string& name)
+{
+    if ( strcmp(param, "$var") )
+        return false;
+
+    if ( name.find("_PATH") != string::npos or
+        name.find("_PORT") != string::npos or
+        name.find("_NET") != string::npos or
+        name.find("_SERVER") != string::npos )
+        return true;
+
+    return false;
+}
+
+bool IpsModule::set(const char* fqn, Value& v, SnortConfig* sc)
 {
     IpsPolicy* p = get_ips_policy();
 
@@ -1262,6 +1296,9 @@ bool IpsModule::set(const char*, Value& v, SnortConfig* sc)
         }
     }
 #endif
+
+    else if ( strstr(fqn, "variables") )
+        set_var(sc, fqn, v);
 
     else
         return false;

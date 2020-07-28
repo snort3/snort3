@@ -263,8 +263,19 @@ void DataApi::failed_conversion(const std::istringstream& stream, const std::str
         errors->add_text("^^^^ unknown_syntax=" + unknown_option);
 }
 
+static bool is_local_variable(const std::string& name)
+{
+    return name.find("_PATH") != std::string::npos
+        || name.find("_PORT") != std::string::npos
+        || name.find("_NET") != std::string::npos
+        || name.find("_SERVER") != std::string::npos;
+}
+
 void DataApi::set_variable(const std::string& name, const std::string& value, bool quoted)
 {
+    if (is_local_variable(name))
+        local_vars.push_back(name);
+
     Variable* var = new Variable(name);
     vars.push_back(var);
     var->set_value(value, quoted);
@@ -275,6 +286,9 @@ bool DataApi::add_variable(const std::string& name, const std::string& value)
     for (auto v : vars)
         if (name == v->get_name())
             return v->add_value(value);
+
+    if (is_local_variable(name))
+        local_vars.push_back(name);
 
     Variable* var = new Variable(name);
     vars.push_back(var);
@@ -311,7 +325,7 @@ void DataApi::add_comment(const std::string& c)
 void DataApi::add_unsupported_comment(const std::string& c)
 { unsupported->add_text(c); }
 
-void DataApi::print_errors(std::ostream& out)
+void DataApi::print_errors(std::ostream& out) const
 {
     if (is_default_mode() &&
         !errors->empty())
@@ -320,7 +334,7 @@ void DataApi::print_errors(std::ostream& out)
     }
 }
 
-void DataApi::print_data(std::ostream& out)
+void DataApi::print_data(std::ostream& out) const
 {
     for (Variable* v : vars)
         out << (*v) << "\n\n";
@@ -329,16 +343,27 @@ void DataApi::print_data(std::ostream& out)
         out << (*i) << "\n\n";
 }
 
-void DataApi::print_comments(std::ostream& out)
+void DataApi::print_comments(std::ostream& out) const
 {
     if (is_default_mode() && !comments->empty())
         out << (*comments) << "\n";
 }
 
-void DataApi::print_unsupported(std::ostream& out)
+void DataApi::print_unsupported(std::ostream& out) const
 {
     if (is_default_mode() && !unsupported->empty())
         out << (*unsupported) << "\n";
+}
+
+void DataApi::print_local_variables(std::ostream& out) const
+{
+    if (local_vars.empty())
+        return;
+
+    out << "local_variables =\n{\n";
+    for (const auto& v : local_vars)
+        out << "    " << v << " = " << v << ",\n";
+    out << "}\n\n";
 }
 
 void DataApi::swap_conf_data(std::vector<Variable*>& new_vars,

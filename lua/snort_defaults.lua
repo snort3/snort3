@@ -34,7 +34,7 @@ BLACK_LIST_PATH = '../lists'
 -- default networks
 ---------------------------------------------------------------------------
 
--- List of DNS servers on your network 
+-- List of DNS servers on your network
 DNS_SERVERS = HOME_NET
 
 -- List of ftp servers on your network
@@ -49,7 +49,7 @@ SIP_SERVERS = HOME_NET
 -- List of SMTP servers on your network
 SMTP_SERVERS = HOME_NET
 
--- List of sql servers on your network 
+-- List of sql servers on your network
 SQL_SERVERS = HOME_NET
 
 -- List of ssh servers on your network
@@ -72,7 +72,7 @@ HTTP_PORTS =
     3702 4343 4848 5250 6988 7000 7001 7144 7145 7510 7777 7779 8000 8008
     8014 8028 8080 8085 8088 8090 8118 8123 8180 8181 8243 8280 8300 8800
     8888 8899 9000 9060 9080 9090 9091 9443 9999 11371 34443 34444 41080
-    50002 55555 
+    50002 55555
 ]]
 
 -- List of ports you run mail servers on
@@ -91,6 +91,37 @@ SSH_PORTS = ' 22'
 FILE_DATA_PORTS = HTTP_PORTS .. MAIL_PORTS
 
 ---------------------------------------------------------------------------
+-- default variables
+---------------------------------------------------------------------------
+
+default_variables = {
+    RULE_PATH = RULE_PATH,
+    BUILTIN_RULE_PATH = BUILTIN_RULE_PATH,
+    PLUGIN_RULE_PATH = PLUGIN_RULE_PATH,
+    WHITE_LIST_PATH = WHITE_LIST_PATH,
+    BLACK_LIST_PATH = BLACK_LIST_PATH,
+
+    HOME_NET = HOME_NET,
+    EXTERNAL_NET = EXTERNAL_NET,
+    DNS_SERVERS = DNS_SERVERS,
+    FTP_SERVERS = FTP_SERVERS,
+    HTTP_SERVERS = HTTP_SERVERS,
+    SIP_SERVERS = SIP_SERVERS,
+    SMTP_SERVERS = SMTP_SERVERS,
+    SQL_SERVERS = SQL_SERVERS,
+    SSH_SERVERS = SSH_SERVERS,
+    TELNET_SERVERS = TELNET_SERVERS,
+
+    FTP_PORTS = FTP_PORTS,
+    HTTP_PORTS = HTTP_PORTS,
+    MAIL_PORTS = MAIL_PORTS,
+    ORACLE_PORTS = ORACLE_PORTS,
+    SIP_PORTS = SIP_PORTS,
+    SSH_PORTS = SSH_PORTS,
+    FILE_DATA_PORTS = FILE_DATA_PORTS,
+}
+
+---------------------------------------------------------------------------
 -- default ftp server
 ---------------------------------------------------------------------------
 
@@ -104,7 +135,7 @@ ftp_default_cmds =
     XSEM XSEN XSHA1 XSHA256
 ]]
 
-ftp_default_data_chan_cmds = 
+ftp_default_data_chan_cmds =
 [[
     PORT PASV LPRT LPSV EPRT EPSV
 ]]
@@ -114,28 +145,28 @@ ftp_default_data_xfer_cmds =
     RETR STOR STOU APPE LIST NLST
 ]]
 
-ftp_default_file_put_cmds = 
+ftp_default_file_put_cmds =
 [[
     STOR STOU
 ]]
 
-ftp_default_file_get_cmds = 
+ftp_default_file_get_cmds =
 [[
     RETR
 ]]
 
-ftp_default_login_cmds = 
+ftp_default_login_cmds =
 [[
     USER PASS
 ]]
 
-ftp_default_encr_cmds = 
+ftp_default_encr_cmds =
 [[
     AUTH
 ]]
 
-ftp_format_commands = 
-[[ 
+ftp_format_commands =
+[[
     ACCT ADAT ALLO APPE AUTH CEL CLNT CMD CONF CWD DELE ENC EPRT EPSV ESTP
     HELP LANG LIST LPRT MACB MAIL MDTM MIC MKD MLSD MLST MODE NLST OPTS
     PASS PBSZ PORT PROT REST RETR RMD RNFR RNTO SDUP SITE SIZE SMNT STAT
@@ -358,7 +389,7 @@ default_wizard =
     },
     hexes =
     {
-        { service = 'dnp3', proto = 'tcp', client_first = true, 
+        { service = 'dnp3', proto = 'tcp', client_first = true,
           to_server = { '|05 64|' }, to_client = { '|05 64|' } },
 
         { service = 'http2', proto = 'tcp', client_first = true,
@@ -1157,6 +1188,7 @@ default_whitelist =
     ip_med_sweep ip_med_dist ip_hi_proto ip_hi_decoy ip_hi_sweep
     ip_hi_dist icmp_low_sweep icmp_med_sweep icmp_hi_sweep
     default_hi_port_scan default_med_port_scan default_low_port_scan
+    default_variables
 ]]
 
 snort_whitelist_append(default_whitelist)

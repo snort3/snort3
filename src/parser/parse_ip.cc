@@ -34,14 +34,10 @@ sfip_var_t* sfip_var_from_string(const char* addr, const char* caller)
 {
     sfip_var_t* ret;
     int ret_code;
-    vartable_t* ip_vartable = nullptr;
-
-    if (get_ips_policy())
-        ip_vartable = get_ips_policy()->ip_vartable;
 
     ret = (sfip_var_t*)snort_calloc(sizeof(sfip_var_t));
 
-    if ((ret_code = sfvt_add_to_var(ip_vartable, ret, addr)) != SFIP_SUCCESS)
+    if ((ret_code = sfvt_add_to_var(nullptr, ret, addr)) != SFIP_SUCCESS)
     {
         if (ret_code == SFIP_LOOKUP_FAILURE)
         {

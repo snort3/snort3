@@ -1340,6 +1340,55 @@ TEST_CASE("SfIpVarListMerge", "[SfIpVar]")
 
         sfvt_free_table(table);
     }
+
+    SECTION("merge without table")
+    {
+        SfIp* ip;
+
+        var2 = (sfip_var_t*)snort_calloc(sizeof(sfip_var_t));
+        table = sfvt_alloc_table();
+
+        // 'foo' variable
+        CHECK(sfvt_add_str(table, "foo 1.0.0.1", &var1) == SFIP_SUCCESS);
+
+        // no table used
+        CHECK(sfvt_add_to_var(nullptr, var2, "1.0.0.2") == SFIP_SUCCESS);
+        CHECK(sfvt_add_to_var(nullptr, var2, "$foo") == SFIP_LOOKUP_UNAVAILABLE);
+        CHECK(sfvt_add_to_var(nullptr, var2, "$moo") == SFIP_LOOKUP_UNAVAILABLE);
+
+        print_var_list(var2->head);
+        CHECK(!strcmp("1.0.0.2", sfipvar_test_buff));
+
+        ip = (SfIp *)snort_alloc(sizeof(SfIp));
+        CHECK(ip->set("1.0.0.1") == SFIP_SUCCESS);
+        CHECK((sfvar_ip_in(var2, ip) == false));
+        snort_free(ip);
+
+        ip = (SfIp *)snort_alloc(sizeof(SfIp));
+        CHECK(ip->set("1.0.0.2") == SFIP_SUCCESS);
+        CHECK((sfvar_ip_in(var2, ip) == true));
+        snort_free(ip);
+
+        // using table
+        CHECK(sfvt_add_to_var(table, var2, "$foo") == SFIP_SUCCESS);
+        CHECK(sfvt_add_to_var(table, var2, "$moo") == SFIP_LOOKUP_FAILURE);
+
+        print_var_list(var2->head);
+        CHECK(!strcmp("1.0.0.1,1.0.0.2", sfipvar_test_buff));
+
+        ip = (SfIp *)snort_alloc(sizeof(SfIp));
+        CHECK(ip->set("1.0.0.1") == SFIP_SUCCESS);
+        CHECK((sfvar_ip_in(var2, ip) == true));
+        snort_free(ip);
+
+        ip = (SfIp *)snort_alloc(sizeof(SfIp));
+        CHECK(ip->set("1.0.0.2") == SFIP_SUCCESS);
+        CHECK((sfvar_ip_in(var2, ip) == true));
+        snort_free(ip);
+
+        sfvar_free(var2);
+        sfvt_free_table(table);
+    }
 }
 
 TEST_CASE("SfIpVarCopyAddCompare", "[SfIpVar]")

@@ -31,8 +31,10 @@
 #include "helpers/converter.h"
 #include "conversion_state.h"
 #include "data/data_types/dt_comment.h"
+#include "data/data_types/dt_include.h"
 #include "data/data_types/dt_rule.h"
 #include "data/data_types/dt_table.h"
+#include "data/data_types/dt_var.h"
 #include "helpers/s2l_util.h"
 #include "helpers/util_binder.h"
 #include "init_state.h"
@@ -173,11 +175,17 @@ int Converter::parse_include_file(const std::string& input_file)
             rule_api.include_rule_file(input_file + ".rules");
     }
 
+    for (auto v : vars)
+        delete v;
+
     for (auto r : rules)
         delete r;
 
     for (auto t : tables)
         delete t;
+
+    for (auto i : includes)
+        delete i;
 
     return rc;
 }
@@ -518,13 +526,16 @@ int Converter::convert(
 
         if (!rule_api.empty())
         {
+            data_api.print_local_variables(out);
+
             if (rule_file.empty() || rule_file == output_file)
             {
                 rule_api.print_rules(out, false);
 
-                std::string s = std::string("$local_rules");
                 table_api.open_top_level_table("ips");
-                table_api.add_option("rules", s);
+                table_api.add_option("rules", "$local_rules");
+                if (data_api.has_local_vars())
+                    table_api.add_option("variables", "$local_variables");
                 table_api.close_table();
             }
             else
@@ -536,6 +547,8 @@ int Converter::convert(
 
                 table_api.open_top_level_table("ips");
                 table_api.add_option("include", rule_file);
+                if (data_api.has_local_vars())
+                    table_api.add_option("variables", "$local_variables");
                 table_api.close_table();
             }
         }

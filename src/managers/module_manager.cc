@@ -188,19 +188,6 @@ static void set_top(string& fqn)
         fqn.erase(pos);
 }
 
-static void trace(const char* s, const char* fqn, Value& v)
-{
-#if 1
-    if ( s )
-        return;
-#endif
-
-    if ( v.get_type() == Value::VT_STR )
-        printf("%s: %s = '%s'\n", s, fqn, v.get_string());
-    else
-        printf("%s: %s = " STDi64 "\n", s, fqn, v.get_int64());
-}
-
 static ModHook* get_hook(const char* s)
 {
     auto mh = s_modules.find(s);
@@ -407,54 +394,6 @@ static const Parameter* get_params(
     return get_params(new_fqn, m, p, idx);
 }
 
-// FIXIT-M vars may have been defined on command line. that mechanism will
-// be replaced with pulling a Lua chunk from the command line and stuffing
-// into L before setting configs; that will overwrite
-//
-// FIXIT-M should only need one table with dynamically typed vars
-//
-//
-// FIXIT-M this is a hack to tell vars by naming convention; with one table
-// this is obviated but if multiple tables are kept might want to change
-// these to a module with parameters
-//
-// FIXIT-L presently no way to catch errors like EXTERNAL_NET = not HOME_NET
-// which becomes a bool var and is ignored.
-static bool set_var(const char* fqn, Value& val)
-{
-    if ( val.get_type() != Value::VT_STR )
-        return false;
-
-    if ( get_ips_policy() == nullptr )
-        return true;
-
-    trace("var", fqn, val);
-    const char* s = val.get_string();
-
-    if ( strstr(fqn, "PATH") )
-        AddVarToTable(s_config, fqn, s);
-
-    else if ( strstr(fqn, "PORT") )
-        PortVarDefine(s_config, fqn, s);
-
-    else if ( strstr(fqn, "NET") || strstr(fqn, "SERVER") )
-        ParseIpVar(s_config, fqn, s);
-
-    return true;
-}
-
-static bool set_param(Module* mod, const char* fqn, Value& val)
-{
-    if ( !mod->verified_set(fqn, val, s_config) )
-    {
-        ParseError("%s is invalid", fqn);
-        ++s_errors;
-    }
-
-    trace("par", fqn, val);
-    return true;
-}
-
 static bool ignored(const char* fqn)
 {
     static const char* ignore = nullptr;
@@ -481,6 +420,41 @@ static bool ignored(const char* fqn)
     return true;
 }
 
+// FIXIT-M vars may have been defined on command line. that mechanism will
+// be replaced with pulling a Lua chunk from the command line and stuffing
+// into L before setting configs; that will overwrite
+//
+// FIXIT-L presently no way to catch errors like EXTERNAL_NET = not HOME_NET
+// which becomes a bool var and is ignored.
+static bool set_var(const char* fqn, Value& v)
+{
+    bool to_be_set = v.get_type() == Value::VT_STR;
+
+    if ( to_be_set )
+    {
+        if ( get_ips_policy() != nullptr )
+            SetVar(s_config, fqn, v.get_string());
+    }
+    else
+    {
+        if ( !ignored(fqn) )
+            ParseWarning(WARN_SYMBOLS, "unknown symbol %s", fqn);
+    }
+
+    return to_be_set;
+}
+
+static bool set_param(Module* mod, const char* fqn, Value& val)
+{
+    if ( !mod->verified_set(fqn, val, s_config) )
+    {
+        ParseError("%s is invalid", fqn);
+        ++s_errors;
+    }
+
+    return true;
+}
+
 static bool set_value(const char* fqn, Value& v)
 {
     string t = fqn;
@@ -493,13 +467,7 @@ static bool set_value(const char* fqn, Value& v)
     Module* mod = ModuleManager::get_module(key.c_str());
 
     if ( !mod )
-    {
-        bool found = set_var(fqn, v);
-
-        if ( !found && !ignored(fqn) )
-            ParseWarning(WARN_SYMBOLS, "unknown symbol %s", fqn);
-        return found;
-    }
+        return set_var(fqn, v);
 
     const Parameter* p;
     auto a = s_pmap.find(t);

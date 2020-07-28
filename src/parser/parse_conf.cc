@@ -201,6 +201,26 @@ void parse_include(SnortConfig* sc, const char* arg)
     pop_parse_location();
 }
 
+// FIXIT-M should only need one table with dynamically typed vars
+//
+// FIXIT-M this is a hack to tell vars by naming convention; with one table
+// this is obviated but if multiple tables are kept might want to change
+// these to a module with parameters
+void SetVar(snort::SnortConfig* sc, const char* name, const char* value)
+{
+    if ( strstr(name, "_PATH") )
+        AddVarToTable(sc, name, value);
+
+    else if ( strstr(name, "_PORT") )
+        PortVarDefine(sc, name, value);
+
+    else if ( strstr(name, "_NET") )
+        ParseIpVar(sc, name, value);
+
+    else if ( strstr(name, "_SERVER") )
+        ParseIpVar(sc, name, value);
+}
+
 void ParseIpVar(SnortConfig* sc, const char* var, const char* val)
 {
     int ret;
