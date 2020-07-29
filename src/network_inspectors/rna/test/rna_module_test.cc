@@ -26,6 +26,12 @@
 
 #include "rna_module_mock.h"
 
+// To avoid warnings between catch.hpp and UtestMacros.h macro definitions,
+// since rna_module.cc has both catch and cpputest tests
+#undef CHECK
+#undef CHECK_FALSE
+#undef CHECK_THROWS
+
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
