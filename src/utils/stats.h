@@ -81,6 +81,8 @@ struct ProcessCount
     PegCount inspector_deletions;
     PegCount daq_reloads;
     PegCount attribute_table_reloads;
+    PegCount attribute_table_hosts;     // FIXIT-D - remove when host attribute pegs updated
+    PegCount attribute_table_overflow;  // FIXIT-D - remove when host attribute pegs updated
 };
 
 extern ProcessCount proc_stats;
