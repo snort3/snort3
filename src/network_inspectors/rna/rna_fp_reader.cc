@@ -24,6 +24,10 @@
 
 #include "rna_fp_reader.h"
 
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+#endif
+
 using namespace snort;
 
 static RnaFingerprintReader* fp_reader = nullptr;
@@ -42,3 +46,16 @@ void set_rna_fp_reader(RnaFingerprintReader* fpr)
 }
 
 }
+
+#ifdef UNIT_TEST
+TEST_CASE("rna_fp_reader", "[rna_fp_reader]")
+{
+    RnaFingerprintReader rna_fp_reader;
+    snort::set_rna_fp_reader(&rna_fp_reader);
+    CHECK(fp_reader == &rna_fp_reader);
+
+    const RnaFingerprintReader* fpr = snort::get_rna_fp_reader();
+    CHECK(fp_reader == fpr);
+}
+
+#endif

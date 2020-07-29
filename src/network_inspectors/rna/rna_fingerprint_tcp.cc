@@ -24,6 +24,10 @@
 
 #include "rna_fingerprint_tcp.h"
 
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+#endif
+
 using namespace snort;
 using namespace std;
 
@@ -60,3 +64,15 @@ void TcpFpProcessor::push(const vector<FpTcpFingerprint>& fplist, TCP_FP_MODE mo
 }
 
 }
+
+#ifdef UNIT_TEST
+TEST_CASE("get_tcp_fp_processor", "[tcp_processor]")
+{
+    vector<FpTcpFingerprint> fplist;
+    tcp_fp_processor.push(fplist, TcpFpProcessor::TCP_FP_MODE::SERVER);
+
+    snort::TcpFpProcessor* tfp = snort::get_tcp_fp_processor();
+    CHECK(tfp == &tcp_fp_processor);
+}
+
+#endif
