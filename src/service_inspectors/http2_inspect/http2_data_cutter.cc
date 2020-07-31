@@ -149,6 +149,10 @@ StreamSplitter::Status Http2DataCutter::http_scan(const uint8_t* data, uint32_t*
             leftover_bytes = leftover_padding = 0;
         }
         else if (scan_result == StreamSplitter::ABORT)
+            // FIXIT-E eventually need to implement continued processing. We cannot abort just
+            // because one stream went sideways. A better approach would be to put this one stream
+            // into a pass through mode while continuing to process other streams. As long as we
+            // can parse the framing and process most streams it is reasonable to continue.
             return StreamSplitter::ABORT;
     }
     if (data_state == FULL_FRAME)

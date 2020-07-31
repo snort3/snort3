@@ -306,9 +306,13 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                     get_stream_id(session_data->scan_frame_header[source_id]);
 
                 if (session_data->data_processing[source_id] &&
-                    ((old_stream != session_data->current_stream[source_id] && type == FT_DATA)
-                    || type != FT_DATA))
+                    ((type != FT_DATA) || (old_stream != session_data->current_stream[source_id])))
                 {
+                    // When there is unflushed data in stream we cannot bypass it to work on some
+                    // other frame. Partial flush gets it out of stream while retaining control of
+                    // message body section sizes. It also avoids extreme delays in inspecting the
+                    // data that could occur if we put this aside indefinitely while processing
+                    // other streams.
                     partial_flush_data(session_data, source_id, flush_offset, data_offset,
                         old_stream);
                     return StreamSplitter::FLUSH;

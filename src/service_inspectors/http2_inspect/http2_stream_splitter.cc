@@ -198,7 +198,8 @@ bool Http2StreamSplitter::finish(Flow* flow)
     {
         if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP2))
         {
-            HttpTestManager::get_test_input_source()->finish();
+            if (!HttpTestManager::get_test_input_source()->finish())
+                return false;
         }
         else
         {

@@ -81,7 +81,7 @@ public:
     // Stream access
     class StreamInfo
     {
-public:
+    public:
         const uint32_t id;
         class Http2Stream* stream;
 
