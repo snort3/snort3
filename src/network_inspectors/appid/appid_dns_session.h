@@ -23,6 +23,7 @@
 #define APPID_DNS_SESSION_H
 
 #include <string>
+#include "pub_sub/appid_events.h"
 
 #define DNS_GOT_QUERY    0x01
 #define DNS_GOT_RESPONSE 0x02
@@ -76,8 +77,11 @@ public:
     const char* get_host() const
     { return host.c_str(); }
 
-    void set_host(char* host)
-    { this->host = host; }
+    void set_host(char* host, AppidChangeBits& change_bits)
+    {
+        this->host = host;
+        change_bits.set(APPID_DNS_HOST_BIT);
+    }
 
     uint32_t get_host_len() const
     { return host.size(); }

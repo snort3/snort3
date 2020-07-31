@@ -55,6 +55,9 @@ enum AppidChangeBit
     APPID_RESPONSE_BIT,
     APPID_REFERER_BIT,
 
+    // dns
+    APPID_DNS_HOST_BIT,
+
     // other
     APPID_VERSION_BIT,
 
@@ -93,6 +96,8 @@ inline void change_bits_to_string(AppidChangeBits& change_bits, std::string& str
         --n? str.append("response, ") : str.append("response");
     if (change_bits.test(APPID_REFERER_BIT))
         --n? str.append("referrer, ") : str.append("referrer");
+    if (change_bits.test(APPID_DNS_HOST_BIT))
+        --n? str.append("dns-host, ") : str.append("dns-host");
     if (change_bits.test(APPID_VERSION_BIT))
         --n? str.append("version, ") : str.append("version");
     if (n != 0) // make sure all bits from AppidChangeBit enum get translated
