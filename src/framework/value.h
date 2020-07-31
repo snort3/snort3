@@ -42,34 +42,71 @@ public:
     enum ValueType { VT_BOOL, VT_NUM, VT_STR };
 
     Value(bool b)
-    { set(b); init(); }
+    { set(b); set_origin(b); }
 
     Value(double d)
-    { set(d); init(); }
+    { set(d); set_origin(d); }
 
     Value(const char* s)
-    { set(s); init(); }
+    { set(s); set_origin(s); }
+
+    Value(const Value& v) :
+        type(v.type),
+        num(v.num),
+        str(v.str),
+        origin_str(v.origin_str),
+        ss(nullptr),
+        param(v.param)
+    {}
+
+    Value& operator=(const Value& v)
+    {
+        if ( this == &v )
+            return *this;
+
+        delete ss;
+        ss = nullptr;
+
+        type = v.type;
+        num = v.num;
+        str = v.str;
+        origin_str = v.origin_str;
+        param = v.param;
+
+        return *this;
+    }
 
     ValueType get_type()
     { return type; }
 
     ~Value()
-    {
-        if ( ss )
-            delete ss;
-    }
+    { delete ss; }
 
     void set(bool b)
     { type = VT_BOOL; num = b ? 1 : 0; str.clear(); }
 
+    void set_origin(bool val)
+    { origin_str = val ? "true" : "false"; }
+
     void set(double d)
     { type = VT_NUM; num = d; str.clear(); }
+
+    void set_origin(double val)
+    {
+        auto temp = new std::stringstream;
+        *temp << val;
+        origin_str = temp->str();
+        delete temp;
+    }
 
     void set(long n)
     { set((double)n); }
 
     void set(const char* s)
     { type = VT_STR; str = s; num = 0; }
+
+    void set_origin(const char* val)
+    { origin_str = val; }
 
     void set(const uint8_t* s, unsigned len)
     { type = VT_STR; str.assign((const char*)s, len); num = 0; }
@@ -88,6 +125,9 @@ public:
 
     bool is(const char* s) const
     { return param ? !strcmp(param->name, s) : false; }
+
+    bool has_default() const
+    { return param ? param->deflt != nullptr : false; }
 
     bool get_bool() const
     { return num != 0; }
@@ -129,6 +169,8 @@ public:
     { return str.c_str(); }
 
     const char* get_as_string();
+    Parameter::Type get_param_type() const;
+    std::string get_origin_string() const;
 
     bool strtol(long&) const;
     bool strtol(long&, const std::string&) const;
@@ -172,15 +214,12 @@ public:
     void update_mask(uint64_t& mask, uint64_t flag, bool invert = false);
 
 private:
-    void init()
-    { param = nullptr; ss = nullptr; }
-
-private:
     ValueType type;
     double num;
     std::string str;
-    std::stringstream* ss;
-    const Parameter* param;
+    std::string origin_str;
+    std::stringstream* ss = nullptr;
+    const Parameter* param = nullptr;
 };
 }
 #endif

@@ -21,6 +21,8 @@ add_library (main OBJECT
     analyzer.h
     analyzer_command.cc
     build.h
+    config_tree.cc
+    config_tree.h
     help.cc
     help.h
     modules.cc

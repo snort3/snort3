@@ -1613,7 +1613,7 @@ int fpCreateFastPacketDetection(SnortConfig* sc)
     if ( log_rule_group_details )
         LogMessage("Service Based Rule Maps Done....\n");
 
-    if ( !sc->test_mode() or sc->mem_check() )
+    if ( !sc->validation_mode() or sc->mem_check() )
     {
         unsigned c = compile_mpses(sc, can_build_mt(fp));
         unsigned expected = mpse_count + offload_mpse_count;

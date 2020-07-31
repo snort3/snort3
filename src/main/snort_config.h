@@ -81,6 +81,7 @@ enum RunFlag
     RUN_FLAG__IP_FRAGS_ONLY       = 0x08000000,
 
     RUN_FLAG__DUMP_RULE_STATE     = 0x10000000,
+    RUN_FLAG__DUMP_CONFIG         = 0x20000000,
 };
 
 enum OutputFlag
@@ -500,6 +501,9 @@ public:
     { return address_anomaly_check_enabled; }
 
     // mode related
+    bool dump_config() const
+    { return run_flags & RUN_FLAG__DUMP_CONFIG; }
+
     bool dump_msg_map() const
     { return run_flags & RUN_FLAG__DUMP_MSG_MAP; }
 
@@ -518,11 +522,14 @@ public:
     bool test_mode() const
     { return run_flags & RUN_FLAG__TEST; }
 
+    bool validation_mode() const
+    { return test_mode() or dump_config(); }
+
     bool mem_check() const
-    { return run_flags & RUN_FLAG__MEM_CHECK; }
+    { return (run_flags & RUN_FLAG__MEM_CHECK) and !dump_config(); }
 
     bool daemon_mode() const
-    { return run_flags & RUN_FLAG__DAEMON; }
+    { return (run_flags & RUN_FLAG__DAEMON) and !dump_config(); }
 
     bool read_mode() const
     { return run_flags & RUN_FLAG__READ; }

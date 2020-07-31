@@ -26,9 +26,9 @@
 #include <unistd.h>
 
 #include <cassert>
-#include <cstring>
 #include <stdexcept>
 
+#include "config_tree.h"
 #include "log/messages.h"
 #include "lua/lua.h"
 #include "main/policy.h"
@@ -101,6 +101,125 @@ void Shell::whitelist_append(const char* keyword, bool is_prefix)
     sh->whitelist_update(keyword, is_prefix);
 }
 
+void Shell::config_open_table(bool is_root_node, bool is_list, int idx,
+    const std::string& table_name, const Parameter* p)
+{
+    Parameter::Type node_type = is_list ? Parameter::PT_LIST : Parameter::PT_TABLE;
+    if ( is_root_node )
+        add_config_root_node(table_name, node_type);
+    else
+    {
+        if ( p )
+            node_type = p->type;
+
+        if ( node_type == Parameter::PT_TABLE )
+            update_current_config_node(table_name);
+        else
+        {
+            if ( idx )
+                node_type = Parameter::PT_TABLE;
+
+            add_config_child_node(table_name, node_type);
+        }
+    }
+}
+
+void Shell::add_config_child_node(const std::string& node_name, snort::Parameter::Type type)
+{
+    Shell* sh = Shell::get_current_shell();
+
+    if ( !sh )
+        return;
+
+    std::string name;
+    if ( sh->s_current_node->get_name() != node_name )
+        name = node_name;
+
+    auto new_node = new TreeConfigNode(sh->s_current_node, name, type);
+    sh->s_current_node->add_child_node(new_node);
+    sh->s_current_node = new_node;
+}
+
+void Shell::add_config_root_node(const std::string& root_name, snort::Parameter::Type node_type)
+{
+    Shell* sh = Shell::get_current_shell();
+
+    if ( !sh )
+        return;
+
+    sh->s_current_node = new TreeConfigNode(nullptr, root_name, node_type);
+    sh->config_trees.push_back(sh->s_current_node);
+}
+
+void Shell::update_current_config_node(const std::string& node_name)
+{
+    Shell* sh = Shell::get_current_shell();
+
+    if ( !sh )
+        return;
+
+    if ( !sh->s_current_node )
+        return;
+
+    // node has been added during setting default options
+    if ( !node_name.empty() )
+        sh->s_current_node = sh->s_current_node->get_node(node_name);
+    else if ( sh->s_current_node->get_parent_node() and
+        sh->s_current_node->get_type() == Parameter::PT_TABLE and
+        !sh->s_current_node->get_name().empty() )
+            sh->s_current_node = sh->s_current_node->get_parent_node();
+
+    assert(sh->s_current_node);
+}
+
+void Shell::config_close_table()
+{
+    Shell* sh = Shell::get_current_shell();
+
+    if ( !sh )
+        return;
+
+    if ( !sh->s_current_node )
+        return;
+
+    sh->s_current_node = sh->s_current_node->get_parent_node();
+}
+
+void Shell::set_config_value(const snort::Value& value)
+{
+    Shell* sh = Shell::get_current_shell();
+
+    if ( !sh )
+        return;
+
+    if ( !sh->s_current_node )
+        return;
+
+    // lua interpreter does not call open_table for simple list items like (string)
+    // we have to add tree node for this item too
+    if ( sh->s_current_node->get_type() == Parameter::PT_LIST )
+    {
+        add_config_child_node("", Parameter::PT_TABLE);
+        sh->s_current_node->add_child_node(new ValueConfigNode(sh->s_current_node, value));
+        sh->s_current_node = sh->s_current_node->get_parent_node();
+
+        return;
+    }
+    
+    BaseConfigNode* child_node = nullptr;
+    for ( auto node : sh->s_current_node->get_children() )
+    {
+        child_node = node->get_node(value.get_name());
+        if ( child_node )
+            break;
+    }
+
+    if ( !child_node )
+        sh->s_current_node->add_child_node(new ValueConfigNode(sh->s_current_node, value));
+    else
+        child_node->set_value(value);
+}
+
 // FIXIT-L shell --pause should stop before loading config so Lua state
 // can be examined and modified.
 
@@ -154,7 +273,6 @@ static void load_string(lua_State* L, const char* s)
     if ( lua_pcall(L, 0, 0, 0) )
         FatalError("can't init overrides: %s\n", lua_tostring(L, -1));
 }
-
 
 //-------------------------------------------------------------------------
 // public methods
@@ -264,6 +382,14 @@ bool Shell::configure(SnortConfig* sc, bool is_fatal, bool is_root)
     load_string(lua, ModuleManager::get_lua_finalize());
 
     clear_whitelist();
+
+    if ( SnortConfig::get_conf()->dump_config() )
+    {
+        sort_config();
+        print_config_text();
+        clear_config_tree();
+    }
+
     current_shells.pop();
 
     set_default_policy(sc);
@@ -333,6 +459,29 @@ static void print_list(const Shell::Whitelist& wlist, const std::string& msg)
 //-------------------------------------------------------------------------
 // private methods
 //-------------------------------------------------------------------------
+void Shell::sort_config()
+{
+    config_trees.sort([](const BaseConfigNode* l, const BaseConfigNode* r)
+        { return l->get_name() < r->get_name(); });
+}
+
+void Shell::print_config_text() const
+{
+    std::string output("consolidated config for ");
+    output += file;
+    LogConfig("%s\n", output.c_str());
+
+    for ( const auto config_tree: config_trees )
+        ConfigTextFormat::print(config_tree, config_tree->get_name());
+}
+
+void Shell::clear_config_tree()
+{
+    for ( auto config_tree: config_trees )
+        BaseConfigNode::clear_nodes(config_tree);
+
+    config_trees.clear();
+}
 
 void Shell::print_whitelist() const
 {

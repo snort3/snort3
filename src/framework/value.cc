@@ -217,6 +217,39 @@ const char* Value::get_as_string()
     return str.c_str();
 }
 
+std::string Value::get_origin_string() const
+{
+    std::string value;
+    std::string token;
+
+    stringstream ss(origin_str);
+    while ( ss >> token )
+    {
+        value += token;
+        value += " ";
+    }
+    value.erase(value.size() - 1);
+
+    if ( param && param->type != Parameter::PT_BOOL
+        && param->type != Parameter::PT_REAL
+        && param->type != Parameter::PT_INT
+        && param->type != Parameter::PT_IMPLIED )
+    {
+        value.insert(0, "'");
+        value.insert(value.length(), "'");
+    }
+
+    return value;
+}
+
+Parameter::Type Value::get_param_type() const
+{
+    if ( param )
+        return param->type;
+
+    return Parameter::PT_MAX;
+}
+
 void Value::update_mask(uint8_t& mask, uint8_t flag, bool invert)
 {
     if ( get_bool() xor invert )

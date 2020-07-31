@@ -22,15 +22,21 @@
 
 // Shell encapsulates a Lua state.  There is one for each policy file.
 
+#include <list>
 #include <set>
 #include <stack>
 #include <string>
 
+#include "framework/parameter.h"
+
 struct lua_State;
+
+class BaseConfigNode;
 
 namespace snort
 {
 struct SnortConfig;
+class Value;
 }
 
 class Shell
@@ -62,6 +68,16 @@ public:
     static bool is_whitelisted(const std::string& key);
     static void whitelist_append(const char* keyword, bool is_prefix);
 
+    static void config_open_table(bool is_root_node, bool is_list, int idx,
+        const std::string& table_name, const snort::Parameter* p);
+    static void set_config_value(const snort::Value& value);
+    static void add_config_child_node(const std::string& node_name, snort::Parameter::Type type);
+    static void update_current_config_node(const std::string& node_name = "");
+    static void config_close_table();
+
+private:
+    static void add_config_root_node(const std::string& root_name, snort::Parameter::Type type);
+
 private:
     [[noreturn]] static int panic(lua_State*);
     static Shell* get_current_shell();
@@ -90,6 +106,10 @@ private:
     void print_whitelist() const;
     void whitelist_update(const char* keyword, bool is_prefix);
 
+    void sort_config();
+    void print_config_text() const;
+    void clear_config_tree();
+
 private:
     bool loaded;
     bool bootstrapped = false;
@@ -100,6 +120,8 @@ private:
     Whitelist whitelist;
     Whitelist internal_whitelist;
     Whitelist whitelist_prefixes;
+    std::list<BaseConfigNode*> config_trees;
+    BaseConfigNode* s_current_node = nullptr;
 };
 
 #endif

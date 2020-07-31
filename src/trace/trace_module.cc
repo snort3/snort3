@@ -84,6 +84,9 @@ void TraceModule::generate_params()
         }
     }
 
+    std::sort(modules_params.begin(), modules_params.end(),
+        [](const Parameter& l, const Parameter& r) { return (strcmp(l.name, r.name) < 0); });
+
     modules_params.emplace_back(nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr);
 
     const static Parameter trace_constraints_params[] =
@@ -174,28 +177,34 @@ bool TraceModule::end(const char* fqn, int, SnortConfig* sc)
     if ( !strcmp(fqn, "trace") )
     {
         assert(trace_parser);
-        switch ( log_output_type )
-        {
-            case OUTPUT_TYPE_STDOUT:
-                trace_parser->get_trace_config()->logger_factory = new StdoutLoggerFactory();
-                break;
-            case OUTPUT_TYPE_SYSLOG:
-                trace_parser->get_trace_config()->logger_factory = new SyslogLoggerFactory();
-                break;
-            default:
-                break;
-        }
 
-        // "output=syslog" config override case
-        // do not closelog() here since it will be closed in Snort::clean_exit()
-        if ( !sc->log_syslog() and log_output_type == OUTPUT_TYPE_SYSLOG
-             and !local_syslog )
+        if ( sc->dump_config() )
+            trace_parser->clear_traces();
+        else
         {
-            local_syslog = true;
-            openlog("snort", LOG_PID | LOG_CONS, LOG_DAEMON);
-        }
+            switch ( log_output_type )
+            {
+                case OUTPUT_TYPE_STDOUT:
+                    trace_parser->get_trace_config()->logger_factory = new StdoutLoggerFactory();
+                    break;
+                case OUTPUT_TYPE_SYSLOG:
+                    trace_parser->get_trace_config()->logger_factory = new SyslogLoggerFactory();
+                    break;
+                default:
+                    break;
+            }
 
-        trace_parser->finalize_constraints();
+            // "output=syslog" config override case
+            // do not closelog() here since it will be closed in Snort::clean_exit()
+            if ( !sc->log_syslog() and log_output_type == OUTPUT_TYPE_SYSLOG
+                and !local_syslog )
+            {
+                local_syslog = true;
+                openlog("snort", LOG_PID | LOG_CONS, LOG_DAEMON);
+            }
+
+            trace_parser->finalize_constraints();
+        }
 
         delete trace_parser;
         trace_parser = nullptr;

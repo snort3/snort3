@@ -347,6 +347,9 @@ static const Parameter s_params[] =
     { "--dump-builtin-rules", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output stub rules for selected modules" },
 
+    { "--dump-config-text", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "dump config in text format" },
+
     // FIXIT-L add --list-dynamic-rules like --list-builtin-rules
     { "--dump-dynamic-rules", Parameter::PT_IMPLIED, nullptr, nullptr,
       "output stub rules for all loaded rules libraries" },
@@ -600,9 +603,6 @@ static const Parameter s_params[] =
 
     { "--x2s", Parameter::PT_STRING, nullptr, nullptr,
       "output ASCII string for given byte code (see also --x2c)" },
-
-    { "--trace", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "turn on main loop debug trace" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -867,6 +867,12 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--dump-builtin-rules") )
         dump_builtin_rules(sc, v.get_string());
+
+    else if ( v.is("--dump-config-text") )
+    {
+      sc->run_flags |= RUN_FLAG__DUMP_CONFIG;
+      sc->set_quiet(true);
+    }
 
     else if ( v.is("--dump-dynamic-rules") )
         dump_dynamic_rules(sc, v.get_string());

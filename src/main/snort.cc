@@ -426,7 +426,7 @@ void Snort::cleanup()
     SFDAQ::term();
     FileService::close();
 
-    if ( !SnortConfig::get_conf()->test_mode() )  // FIXIT-M ideally the check is in one place
+    if ( !SnortConfig::get_conf()->validation_mode() )  // FIXIT-M ideally the check is in one place
         PrintStatistics();
 
     CloseLogger();

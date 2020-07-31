@@ -166,6 +166,14 @@ void ModHook::init()
 //-------------------------------------------------------------------------
 // helper functions
 //-------------------------------------------------------------------------
+static std::string get_sub_table(const std::string& fqn)
+{
+    auto pos = fqn.find_last_of(".");
+    if ( pos != std::string::npos )
+        return fqn.substr(pos + 1);
+    else
+        return fqn;
+}
 
 static void set_type(string& fqn)
 {
@@ -446,6 +454,9 @@ static bool set_var(const char* fqn, Value& v)
 
 static bool set_param(Module* mod, const char* fqn, Value& val)
 {
+    if ( s_config->dump_config() )
+        Shell::set_config_value(val);
+
     if ( !mod->verified_set(fqn, val, s_config) )
     {
         ParseError("%s is invalid", fqn);
@@ -583,6 +594,9 @@ static bool begin(Module* m, const Parameter* p, const char* s, int idx, int dep
             {
                 const Parameter* table_item_params = reinterpret_cast<const Parameter*>(p->range);
 
+                if ( s_config->dump_config() )
+                    Shell::add_config_child_node(get_sub_table(fqn), p->type);
+
                 if ( !begin(m, table_item_params, fqn.c_str(), idx, depth+1) )
                     return false;
             }
@@ -619,6 +633,8 @@ static bool begin(Module* m, const Parameter* p, const char* s, int idx, int dep
         }
         ++p;
     }
+    if ( s_config->dump_config() )
+        Shell::update_current_config_node();
     return true;
 }
 
@@ -747,6 +763,19 @@ SO_PUBLIC bool open_table(const char* s, int idx)
         s_current = unique_key;
     }
 
+    if ( s_config->dump_config() )
+    {
+        std::string table_name = get_sub_table(s);
+        bool is_top_level = false;
+        if ( top_level(s) && !idx )
+        {
+            table_name = s_current;
+            is_top_level = true;
+        }
+
+        Shell::config_open_table(is_top_level, m->is_list(), idx, table_name, p);
+    }
+
     if ( !begin(m, p, s, idx, 0) )
     {
         ParseError("can't open %s", m->get_name());
@@ -786,6 +815,9 @@ SO_PUBLIC void close_table(const char* s, int idx)
         s_name.clear();
         s_type.clear();
     }
+
+    if ( s_config->dump_config() )
+        Shell::config_close_table();
 }
 
 SO_PUBLIC bool set_bool(const char* fqn, bool b)
