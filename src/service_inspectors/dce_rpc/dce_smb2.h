@@ -151,6 +151,7 @@ public:
     uint64_t file_offset;
     uint64_t file_id;
     uint64_t file_size = 0;
+    uint64_t file_name_hash = 0;
     std::string file_name;
     DCE2_SmbPduState smb2_pdu_state;
 };

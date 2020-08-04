@@ -26,6 +26,7 @@
 #endif
 
 #include "dce_smb2_commands.h"
+#include "hash/hash_key_operations.h"
 #include "log/messages.h"
 #include "main/snort_debug.h"
 #include "packet_io/active.h"
@@ -42,7 +43,8 @@ using namespace snort;
     }\
 }
 
-static inline FileContext* get_smb_file_context(uint64_t file_id)
+static inline FileContext* get_smb_file_context(uint64_t file_id, uint64_t multi_file_processing_id,
+    bool to_create = false)
 {
     FileFlows* file_flows = FileFlows::get_file_flows(DetectionEngine::get_current_packet()->flow);
 
@@ -52,7 +54,7 @@ static inline FileContext* get_smb_file_context(uint64_t file_id)
         return nullptr;
     }
 
-    return file_flows->get_file_context(file_id, true);
+    return file_flows->get_file_context(file_id, to_create, multi_file_processing_id);
 }
 
 void DCE2_Smb2ProcessFileData(DCE2_Smb2SsnData* ssd, const uint8_t* file_data,
@@ -91,8 +93,8 @@ void DCE2_Smb2ProcessFileData(DCE2_Smb2SsnData* ssd, const uint8_t* file_data,
         return;
     }
 
-    file_flows->file_process(p, ssd->ftracker_tcp->file_id, file_data, data_size,
-        ssd->ftracker_tcp->file_offset, dir);
+    file_flows->file_process(p, ssd->ftracker_tcp->file_name_hash, file_data, data_size,
+        ssd->ftracker_tcp->file_offset, dir, ssd->ftracker_tcp->file_id);
 }
 
 //-------------------------------------------------------------------------
@@ -250,10 +252,13 @@ static void DCE2_Smb2CreateResponse(DCE2_Smb2SsnData*,
         ftracker->file_size = file_size;
     }
 
+    ftracker->file_name_hash = str_to_hash(
+        (const uint8_t *)rtracker->get_file_name(), rtracker->get_file_name_len());
+
     if (rtracker->get_file_name() and rtracker->get_file_name_len())
     {
-        FileContext* file = get_smb_file_context(fileId_persistent);
-        if (file)
+        FileContext* file = get_smb_file_context(ftracker->file_name_hash, fileId_persistent, true);
+        if (file and file->verdict == FILE_VERDICT_UNKNOWN)
         {
             file->set_file_size(!file_size ? UNKNOWN_FILE_SIZE : file_size);
             file->set_file_name(rtracker->get_file_name(), rtracker->get_file_name_len());
@@ -378,7 +383,7 @@ void DCE2_Smb2CloseCmd(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
                 FILE_UPLOAD : FILE_DOWNLOAD;
 
             ftracker->file_size = ftracker->file_offset;
-            FileContext* file = get_smb_file_context(fileId_persistent);
+            FileContext* file = get_smb_file_context(ftracker->file_name_hash, fileId_persistent);
             if (file)
             {
                 file->set_file_size(ftracker->file_size);
@@ -436,7 +441,7 @@ void DCE2_Smb2SetInfo(DCE2_Smb2SsnData*, const Smb2Hdr* smb_hdr,
             {
                 ftracker->file_size = file_size;
 
-                FileContext* file = get_smb_file_context(fileId_persistent);
+                FileContext* file = get_smb_file_context(ftracker->file_name_hash, fileId_persistent);
                 if (file)
                 {
                     file->set_file_size(ftracker->file_size);
