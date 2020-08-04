@@ -301,16 +301,13 @@ void Flow::free_flow_data(uint32_t proto)
 
 void Flow::free_flow_data()
 {
-    FlowData* fd = flow_data;
-
-    while (fd)
+    while (flow_data)
     {
-        FlowData* tmp = fd;
-        fd = fd->next;
+        FlowData* tmp = flow_data;
+        flow_data = flow_data->next;
         tmp->update_deallocations(tmp->size_of());
         delete tmp;
     }
-    flow_data = nullptr;
 }
 
 void Flow::call_handlers(Packet* p, bool eof)
