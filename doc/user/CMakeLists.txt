@@ -11,6 +11,7 @@ set (
     byte_test.txt
     concepts.txt
     connectors.txt
+    consolidated_config.txt
     daq.txt
     dcerpc.txt
     errors.txt
