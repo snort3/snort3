@@ -32,6 +32,7 @@
 #include "detection/detect.h"
 #include "file_api/file_service.h"
 #include "main/snort_debug.h"
+#include "memory/memory_cap.h"
 #include "packet_io/active.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
@@ -829,7 +830,8 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
         if (smb_com2 == SMB_COM_NO_ANDX_COMMAND)
             break;
 
-        debug_logf(dce_smb_trace, nullptr, "Chained SMB command: %s\n", get_smb_com_string(smb_com2));
+        debug_logf(dce_smb_trace, nullptr, "Chained SMB command: %s\n", get_smb_com_string(
+            smb_com2));
 
         num_chained++;
         if (DCE2_ScSmbMaxChain((dce2SmbProtoConf*)ssd->sd.config) &&
@@ -1030,7 +1032,8 @@ static DCE2_SmbRequestTracker* DCE2_SmbInspect(DCE2_SmbSsnData* ssd, const SmbNt
 {
     int smb_com = SmbCom(smb_hdr);
 
-    debug_logf(dce_smb_trace, nullptr, "SMB command: %s (0x%02X)\n", get_smb_com_string(smb_com), smb_com);
+    debug_logf(dce_smb_trace, nullptr, "SMB command: %s (0x%02X)\n", get_smb_com_string(smb_com),
+        smb_com);
 
     if (smb_com_funcs[smb_com] == nullptr)
     {
@@ -1297,6 +1300,7 @@ Dce2SmbFlowData::Dce2SmbFlowData() : FlowData(inspector_id)
         dce2_smb_stats.max_concurrent_sessions = dce2_smb_stats.concurrent_sessions;
     smb_version = DCE2_SMB_VERSION_NULL;
     dce2_smb_session_data = nullptr;
+    memory::MemoryCap::update_allocations(sizeof(*this));
 }
 
 Dce2SmbFlowData::~Dce2SmbFlowData()
@@ -1308,10 +1312,13 @@ Dce2SmbFlowData::~Dce2SmbFlowData()
     }
     else
     {
+        DCE2_Smb2RemoveAllSession((DCE2_Smb2SsnData*)dce2_smb_session_data);
         delete (DCE2_Smb2SsnData*)dce2_smb_session_data;
+        memory::MemoryCap::update_deallocations(sizeof(*(DCE2_Smb2SsnData*)dce2_smb_session_data));
     }
     assert(dce2_smb_stats.concurrent_sessions > 0);
     dce2_smb_stats.concurrent_sessions--;
+    memory::MemoryCap::update_deallocations(sizeof(*this));
 }
 
 unsigned Dce2SmbFlowData::inspector_id = 0;
@@ -1615,11 +1622,12 @@ void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
                 {
                     // Upgrade connection to SMBv2
                     dce2SmbProtoConf* config = (dce2SmbProtoConf*)ssd->sd.config;
-                    Dce2SmbFlowData* fd = (Dce2SmbFlowData*)p->flow->get_flow_data(Dce2SmbFlowData::inspector_id);
+                    Dce2SmbFlowData* fd = (Dce2SmbFlowData*)p->flow->get_flow_data(
+                        Dce2SmbFlowData::inspector_id);
                     p->flow->free_flow_data(fd);
                     DCE2_Smb2SsnData* dce2_smb2_sess = dce2_create_new_smb2_session(p, config);
                     DCE2_Smb2Process(dce2_smb2_sess);
-                    if(!dce2_detected)
+                    if (!dce2_detected)
                         DCE2_Detect(&dce2_smb2_sess->sd);
                 }
                 else
@@ -2552,6 +2560,7 @@ static inline DCE2_Smb2SsnData* set_new_dce2_smb2_session(Packet* p)
     Dce2SmbFlowData* fd = new Dce2SmbFlowData;
     fd->smb_version = DCE2_SMB_VERSION_2;
     fd->dce2_smb_session_data = new DCE2_Smb2SsnData();
+    memory::MemoryCap::update_allocations(sizeof(*(DCE2_Smb2SsnData*)(fd->dce2_smb_session_data)));
     DCE2_Smb2InitData((DCE2_Smb2SsnData*)fd->dce2_smb_session_data);
     p->flow->set_flow_data(fd);
     return((DCE2_Smb2SsnData*)fd->dce2_smb_session_data);
@@ -2581,12 +2590,12 @@ DCE2_Smb2SsnData* dce2_create_new_smb2_session(Packet* p, dce2SmbProtoConf* conf
 
 DCE2_SsnData* get_dce2_session_data(snort::Flow* flow)
 {
-   Dce2SmbFlowData* fd = (Dce2SmbFlowData*)flow->get_flow_data(Dce2SmbFlowData::inspector_id);
-   if (fd and fd->dce2_smb_session_data)
-       return (fd->smb_version == DCE2_SMB_VERSION_1) ?
-           (DCE2_SsnData*)(&((DCE2_SmbSsnData*)fd->dce2_smb_session_data)->sd) :
-           (DCE2_SsnData*)(&((DCE2_Smb2SsnData*)fd->dce2_smb_session_data)->sd);
-   else
-       return nullptr;
+    Dce2SmbFlowData* fd = (Dce2SmbFlowData*)flow->get_flow_data(Dce2SmbFlowData::inspector_id);
+    if (fd and fd->dce2_smb_session_data)
+        return (fd->smb_version == DCE2_SMB_VERSION_1) ?
+               (DCE2_SsnData*)(&((DCE2_SmbSsnData*)fd->dce2_smb_session_data)->sd) :
+               (DCE2_SsnData*)(&((DCE2_Smb2SsnData*)fd->dce2_smb_session_data)->sd);
+    else
+        return nullptr;
 }
 

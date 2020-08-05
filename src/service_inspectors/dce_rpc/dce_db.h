@@ -31,16 +31,13 @@
 
 #include "main/snort_types.h"
 
-// Callbacks
-typedef void (* DCE2_DbDataFree)(void*);
-
 template<typename Key, typename Value, typename Hash>
 class DCE2_Db
 {
 public:
 
-    virtual void Init(const DCE2_DbDataFree func) = 0;
-    virtual DCE2_Ret Insert(const Key& key, Value data) = 0;
+    virtual void SetDoNotFree() = 0;
+    virtual bool Insert(const Key& key, Value data) = 0;
     virtual Value Find(const Key& key) = 0;
     virtual void Remove(const Key& key) = 0;
     virtual int GetSize() = 0;
@@ -52,50 +49,45 @@ class DCE2_DbMap : public DCE2_Db<Key, Value, Hash>
 {
 public:
 
-    DCE2_DbMap()
-    {
-        data_free = nullptr;
-    }
+    DCE2_DbMap() { }
 
     ~DCE2_DbMap()
     {
         auto it = Map.cbegin();
         while (it != Map.cend())
         {
-            if (data_free)
-                data_free((void*)(it->second));
-            else
+            if (!do_not_free)
                 delete it->second;
             it = Map.erase(it);
         }
     }
 
-    void Init(const DCE2_DbDataFree func);
-    DCE2_Ret Insert(const Key& key, Value data);
+    void SetDoNotFree();
+    bool Insert(const Key& key, Value data);
     Value Find(const Key& key);
     void Remove(const Key& key);
     int GetSize()
     {
         return Map.size();
     }
+
     std::vector< std::pair<Key, Value> > get_all_entry();
 
 private:
     std::unordered_map<Key, Value, Hash> Map;
-    DCE2_DbDataFree data_free;
+    bool do_not_free = false;
 };
 
 template<typename Key, typename Value, typename Hash>
-void DCE2_DbMap<Key, Value, Hash>::Init(const DCE2_DbDataFree df)
+void DCE2_DbMap<Key, Value, Hash>::SetDoNotFree()
 {
-    data_free = df;
+    do_not_free = true;
 }
 
 template<typename Key, typename Value, typename Hash>
-DCE2_Ret DCE2_DbMap<Key, Value, Hash>::Insert(const Key& key, Value data)
+bool DCE2_DbMap<Key, Value, Hash>::Insert(const Key& key, Value data)
 {
-    Map[key] = data;
-    return DCE2_RET__SUCCESS;
+    return Map.insert(std::make_pair(key,data)).second;
 }
 
 template<typename Key, typename Value, typename Hash>
@@ -113,17 +105,15 @@ void DCE2_DbMap<Key, Value, Hash>::Remove(const Key& key)
     auto elem = Map.find(key);
     if (elem != Map.end())
     {
-        if (data_free)
-            data_free((void*)(elem->second));
-        else
+        if (!do_not_free)
             delete elem->second;
+
         Map.erase(elem->first);
     }
 }
 
 template<typename Key, typename Value, typename Hash>
-std::vector< std::pair<Key, Value> >
-DCE2_DbMap<Key, Value, Hash>::get_all_entry()
+std::vector< std::pair<Key, Value> >DCE2_DbMap<Key, Value, Hash>::get_all_entry()
 {
     std::vector<std::pair<Key, Value> > vec;
 
@@ -134,4 +124,6 @@ DCE2_DbMap<Key, Value, Hash>::get_all_entry()
 
     return vec;
 }
+
 #endif
+

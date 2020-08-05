@@ -52,14 +52,15 @@ void DCE2_Smb2Write(DCE2_Smb2SsnData*, const Smb2Hdr*,
 void DCE2_Smb2SetInfo(DCE2_Smb2SsnData*, const Smb2Hdr*,
     const uint8_t* smb_data, const uint8_t* end, DCE2_Smb2TreeTracker* ttr);
 
-void DCE2_Smb2ProcessFileData(DCE2_Smb2SsnData*, const uint8_t* file_data,
-    uint32_t data_size, FileDirection dir);
+bool DCE2_Smb2ProcessFileData(DCE2_Smb2SsnData*, const uint8_t* file_data,
+    uint32_t data_size);
 
 void DCE2_Smb2CloseCmd(DCE2_Smb2SsnData*, const Smb2Hdr*,
-    const uint8_t* smb_data, const uint8_t* end, DCE2_Smb2TreeTracker* ttr);
+    const uint8_t* smb_data, const uint8_t* end, DCE2_Smb2TreeTracker* ttr,
+    DCE2_Smb2SessionTracker* str);
 
 void DCE2_Smb2Logoff(DCE2_Smb2SsnData*, const uint8_t* smb_data,
-        const uint64_t sid);
+    const uint64_t sid);
 
 #endif
 

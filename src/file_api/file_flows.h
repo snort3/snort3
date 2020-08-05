@@ -78,6 +78,8 @@ public:
     // Remove a file from the flow object when processing is complete
     void remove_processed_file_context(uint64_t file_id);
 
+    void remove_processed_file_context(uint64_t file_id, uint64_t multi_file_processing_id);
+
     uint64_t get_new_file_instance();
 
     void set_file_name(const uint8_t* fname, uint32_t name_size, uint64_t file_id=0);

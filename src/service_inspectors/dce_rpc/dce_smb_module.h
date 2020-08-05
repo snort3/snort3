@@ -114,24 +114,28 @@ inline DCE2_List* DCE2_ScSmbInvalidShares(const dce2SmbProtoConf* sc)
     return sc->smb_invalid_shares;
 }
 
+#define SMB_DEFAULT_MAX_CREDIT        8192
+#define SMB_DEFAULT_MEMCAP            8388608
+#define SMB_DEFAULT_MAX_COMPOUND_REQ  3
+
 inline uint16_t DCE2_ScSmbMaxCredit(const dce2SmbProtoConf* sc)
 {
     if (sc == nullptr)
-        return 8192;
+        return SMB_DEFAULT_MAX_CREDIT;
     return sc->smb_max_credit;
 }
 
 inline size_t DCE2_ScSmbMemcap(const dce2SmbProtoConf* sc)
 {
     if (sc == nullptr)
-        return 8388608;
+        return SMB_DEFAULT_MEMCAP;
     return sc->memcap;
 }
 
 inline uint16_t DCE2_ScSmbMaxCompound(const dce2SmbProtoConf* sc)
 {
     if (sc == nullptr)
-        return 3;
+        return SMB_DEFAULT_MAX_COMPOUND_REQ;
     return sc->smb_max_compound;
 }
 

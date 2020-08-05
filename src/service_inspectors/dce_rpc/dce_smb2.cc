@@ -26,9 +26,74 @@
 #include "dce_smb2.h"
 #include "dce_smb2_commands.h"
 #include "detection/detection_util.h"
+#include "flow/flow_key.h"
 #include "main/snort_debug.h"
 
 using namespace snort;
+
+void get_flow_key(SmbFlowKey* key)
+{
+    const FlowKey* flow_key = DetectionEngine::get_current_packet()->flow->key;
+
+    key->ip_l[0] = flow_key->ip_l[0];
+    key->ip_l[1] = flow_key->ip_l[1];
+    key->ip_l[2] = flow_key->ip_l[2];
+    key->ip_l[3] = flow_key->ip_l[3];
+    key->ip_h[0] = flow_key->ip_h[0];
+    key->ip_h[1] = flow_key->ip_h[1];
+    key->ip_h[2] = flow_key->ip_h[2];
+    key->ip_h[3] = flow_key->ip_h[3];
+    key->mplsLabel = flow_key->mplsLabel;
+    key->port_l = flow_key->port_l;
+    key->port_h = flow_key->port_h;
+    key->vlan_tag = flow_key->vlan_tag;
+    key->addressSpaceId = flow_key->addressSpaceId;
+    key->ip_protocol = flow_key->ip_protocol;
+    key->pkt_type = (uint8_t)flow_key->pkt_type;
+    key->version = flow_key->version;
+    key->padding = 0;
+}
+
+DCE2_Smb2FileTracker::~DCE2_Smb2FileTracker(void)
+{
+    FileFlows* file_flows = FileFlows::get_file_flows(DetectionEngine::get_current_packet()->flow);
+    if (file_flows)
+        file_flows->remove_processed_file_context(file_name_hash, file_id);
+
+    if (file_name)
+        snort_free((void*)file_name);
+
+    memory::MemoryCap::update_deallocations(sizeof(*this));
+}
+
+DCE2_Smb2SessionTracker::~DCE2_Smb2SessionTracker(void)
+{
+    removeSessionFromAllConnection();
+    memory::MemoryCap::update_deallocations(sizeof(*this));
+}
+
+void DCE2_Smb2SessionTracker::removeSessionFromAllConnection()
+{
+    auto all_conn_trackers = conn_trackers.get_all_entry();
+    auto all_tree_trackers = tree_trackers.get_all_entry();
+    for ( auto& h : all_conn_trackers )
+    {
+        if (h.second->ftracker_tcp)
+        {
+            for (auto& t : all_tree_trackers)
+            {
+                DCE2_Smb2FileTracker* ftr = t.second->findFtracker(
+                    h.second->ftracker_tcp->file_id);
+                if (ftr and ftr == h.second->ftracker_tcp)
+                {
+                    h.second->ftracker_tcp = nullptr;
+                    break;
+                }
+            }
+        }
+        DCE2_Smb2RemoveSidInSsd(h.second, session_id);
+    }
+}
 
 static inline bool DCE2_Smb2FindSidTid(DCE2_Smb2SsnData* ssd, const uint64_t sid,
     const uint32_t tid, DCE2_Smb2SessionTracker** str, DCE2_Smb2TreeTracker** ttr)
@@ -107,7 +172,7 @@ static void DCE2_Smb2Inspect(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             return;
         }
 
-        DCE2_Smb2CloseCmd(ssd, smb_hdr, smb_data, end, ttr);
+        DCE2_Smb2CloseCmd(ssd, smb_hdr, smb_data, end, ttr, str);
         break;
     case SMB2_COM_TREE_CONNECT:
         dce2_smb_stats.v2_tree_cnct++;
@@ -198,24 +263,20 @@ void DCE2_Smb2Process(DCE2_Smb2SsnData* ssd)
     else if ( ssd->ftracker_tcp and (ssd->ftracker_tcp->smb2_pdu_state ==
         DCE2_SMB_PDU_STATE__RAW_DATA))
     {
-        debug_logf(dce_smb_trace, nullptr, "Processing raw data\n");
-        // continue processing raw data
-        FileDirection dir = p->is_from_client() ? FILE_UPLOAD : FILE_DOWNLOAD;
-        DCE2_Smb2ProcessFileData(ssd, data_ptr, data_len, dir);
+        debug_logf(dce_smb_trace, nullptr,
+            "processing raw data file_name_hash %" PRIu64 " fid %" PRIu64 "\n",
+            ssd->ftracker_tcp->file_name_hash, ssd->ftracker_tcp->file_id);
+
+        if (!DCE2_Smb2ProcessFileData(ssd, data_ptr, data_len))
+            return;
         ssd->ftracker_tcp->file_offset += data_len;
     }
-}
-
-static inline void DCE2_Smb2FreeSessionData(void* str)
-{
-    DCE2_Smb2SessionTracker* stracker = (DCE2_Smb2SessionTracker*)str;
-    DCE2_SmbSessionCacheRemove(stracker->get_session_id());
 }
 
 DCE2_Ret DCE2_Smb2InitData(DCE2_Smb2SsnData* ssd)
 {
     memset(&ssd->sd, 0, sizeof(DCE2_SsnData));
-    ssd->session_trackers.Init(DCE2_Smb2FreeSessionData);
+    ssd->session_trackers.SetDoNotFree();
     memset(&ssd->policy, 0, sizeof(DCE2_Policy));
     ssd->dialect_index = 0;
     ssd->ssn_state_flags = 0;
@@ -242,3 +303,4 @@ DCE2_SmbVersion DCE2_Smb2Version(const Packet* p)
 
     return DCE2_SMB_VERSION_NULL;
 }
+

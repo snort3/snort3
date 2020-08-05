@@ -34,6 +34,16 @@ using namespace snort;
 size_t session_cache_size;
 THREAD_LOCAL SmbSessionCache* smb2_session_cache;
 
+Smb2SidHashKey get_key(uint64_t sid)
+{
+    Smb2SidHashKey key;
+    Flow* flow = DetectionEngine::get_current_packet()->flow;
+    memcpy(&key.cip, &flow->client_ip, sizeof(SfIp));
+    memcpy(&key.sip, &flow->server_ip, sizeof(SfIp));
+    key.sid = sid;
+    return key;
+}
+
 DCE2_Smb2SessionTracker* DCE2_Smb2FindElseCreateSid(DCE2_Smb2SsnData* ssd, const
     uint64_t sid)
 {
@@ -47,16 +57,16 @@ DCE2_Smb2SessionTracker* DCE2_Smb2FindElseCreateSid(DCE2_Smb2SsnData* ssd, const
         stracker = DCE2_SmbSessionCacheFindElseCreate(sid, &entry_created);
         assert(stracker);
         if (entry_created)
-        {
             stracker->set_session_id(sid);
-        }
+
         DCE2_Smb2InsertSidInSsd(ssd, sid, stracker);
     }
 
     return stracker;
 }
 
-DCE2_Smb2TreeTracker* DCE2_Smb2InsertTid(DCE2_Smb2SsnData* ssd, const uint32_t tid, uint8_t share_type,
+DCE2_Smb2TreeTracker* DCE2_Smb2InsertTid(DCE2_Smb2SsnData* ssd, const uint32_t tid, uint8_t
+    share_type,
     DCE2_Smb2SessionTracker* str)
 {
     if (share_type == SMB2_SHARE_TYPE_DISK and
@@ -67,20 +77,33 @@ DCE2_Smb2TreeTracker* DCE2_Smb2InsertTid(DCE2_Smb2SsnData* ssd, const uint32_t t
         return nullptr;
     }
 
-    DCE2_Smb2TreeTracker* ttracker = new DCE2_Smb2TreeTracker(tid, share_type);
-    str->insertTtracker(tid, ttracker);
+    DCE2_Smb2TreeTracker* ttracker = str->findTtracker(tid);
+    if (!ttracker)
+    {
+        ttracker = new DCE2_Smb2TreeTracker(tid, share_type);
+        str->insertTtracker(tid, ttracker);
+    }
+
     return ttracker;
 }
 
-DCE2_Smb2TreeTracker* DCE2_Smb2FindElseCreateTid(DCE2_Smb2SsnData* ssd, const uint32_t tid,
-    uint8_t share_type, DCE2_Smb2SessionTracker* str)
+void DCE2_Smb2RemoveAllSession(DCE2_Smb2SsnData* ssd)
 {
-    DCE2_Smb2TreeTracker* ttr = str->findTtracker(tid);
-    if (!ttr)
+    SmbFlowKey key;
+    get_flow_key(&key);
+    ssd->ftracker_tcp = nullptr;
+
+    // iterate over smb sessions for this tcp connection and cleanup its instance from them
+    auto all_session_trackers = ssd->session_trackers.get_all_entry();
+    for ( auto& h : all_session_trackers )
     {
-        ttr = DCE2_Smb2InsertTid(ssd, tid, share_type, str);
+        ssd->session_trackers.Remove(h.second->session_id);  // remove session tracker from this
+                                                             // tcp conn
+        h.second->removeConnTracker(key); // remove tcp connection from session tracker
+        if (!h.second->getConnTrackerSize()) // if no tcp connection present in session tracker,
+                                             // delete session tracker
+        {
+            DCE2_SmbSessionCacheRemove(h.second->session_id);
+        }
     }
-
-    return ttr;
 }
-

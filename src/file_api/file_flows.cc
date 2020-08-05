@@ -238,6 +238,21 @@ void FileFlows::remove_processed_file_context(uint64_t file_id)
         current_context_delete_pending = true;
 }
 
+// Remove file context explicitly
+void FileFlows::remove_processed_file_context(uint64_t file_id, uint64_t multi_file_processing_id)
+{
+    if (!multi_file_processing_id)
+        multi_file_processing_id = file_id;
+
+    FileContext* context = get_file_context(file_id, false, multi_file_processing_id);
+    if (context)
+    {
+        set_current_file_context(context);
+        context->processing_complete = true;
+        remove_processed_file_context(multi_file_processing_id);
+    }
+}
+
 /* This function is used to process file that is sent in pieces
  *
  * Return:

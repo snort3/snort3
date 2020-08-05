@@ -24,7 +24,12 @@
 
 #include "dce_db.h"
 #include "dce_smb.h"
+#include "hash/lru_cache_shared.h"
+#include "main/thread_config.h"
+#include "memory/memory_cap.h"
 #include "utils/util.h"
+
+#define SMB_AVG_FILES_PER_SESSION 5
 
 struct Smb2Hdr
 {
@@ -93,36 +98,51 @@ public:
     DCE2_Smb2RequestTracker(const DCE2_Smb2RequestTracker& arg) = delete;
     DCE2_Smb2RequestTracker& operator=(const DCE2_Smb2RequestTracker& arg) = delete;
 
-    DCE2_Smb2RequestTracker(uint64_t offset_v, uint64_t file_id_v,
-        char* fname_v, uint16_t fname_len_v, DCE2_Smb2TreeTracker *ttr) :
-        fname_len(fname_len_v), fname(fname_v), offset(offset_v),
-        file_id(file_id_v), tree_trk(ttr)
+    DCE2_Smb2RequestTracker(uint64_t file_id_v, uint64_t offset_v = 0) :
+        file_id(file_id_v), offset(offset_v)
     {
-        // fname allocated by DCE2_SmbGetFileName
+        memory::MemoryCap::update_allocations(sizeof(*this));
+    }
+
+    DCE2_Smb2RequestTracker(char* fname_v, uint16_t fname_len_v) :
+        fname(fname_v), fname_len(fname_len_v)
+    {
+        memory::MemoryCap::update_allocations(sizeof(*this));
     }
 
     ~DCE2_Smb2RequestTracker()
     {
-        if (fname != nullptr)
-        {
-            snort_free((void*)fname);
-        }
+        if (!file_id and fname)
+            snort_free(fname);
+        memory::MemoryCap::update_deallocations(sizeof(*this));
     }
 
-    uint16_t get_file_name_len() { return fname_len; }
-    char* get_file_name()  { return fname; }
-    uint64_t get_offset() { return offset; }
-    uint64_t get_file_id() { return file_id; }
-    DCE2_Smb2TreeTracker* get_tree_tracker() { return tree_trk; }
+    uint64_t get_offset()
+    {
+        return offset;
+    }
+
+    uint64_t get_file_id()
+    {
+        return file_id;
+    }
+
+    void set_file_id(uint64_t fid)
+    {
+        file_id = fid;
+    }
+
+    char* fname = nullptr;
+    uint16_t fname_len = 0;
 
 private:
 
-    uint16_t fname_len;
-    char* fname;
-    uint64_t offset;
-    uint64_t file_id;
-    DCE2_Smb2TreeTracker* tree_trk;
+    uint64_t file_id = 0;
+    uint64_t offset = 0;
 };
+
+struct DCE2_Smb2SsnData;
+class DCE2_Smb2SessionTracker;
 
 class DCE2_Smb2FileTracker
 {
@@ -132,30 +152,28 @@ public:
     DCE2_Smb2FileTracker(const DCE2_Smb2FileTracker& arg) = delete;
     DCE2_Smb2FileTracker& operator=(const DCE2_Smb2FileTracker& arg) = delete;
 
-    DCE2_Smb2FileTracker(uint64_t file_id_v, char* file_name_v,
-         uint64_t file_size_v) : file_id(file_id_v), file_size(file_size_v)
+    DCE2_Smb2FileTracker(uint64_t file_id_v, DCE2_Smb2TreeTracker* ttr_v,
+         DCE2_Smb2SessionTracker* str_v) : file_id(file_id_v), ttr(ttr_v),
+         str(str_v)
     {
-        if (file_name_v)
-            file_name.assign(file_name_v);
-
-        file_offset = 0;
-        bytes_processed = 0;
+        memory::MemoryCap::update_allocations(sizeof(*this));
     }
 
-    ~DCE2_Smb2FileTracker()
-    {
-        // Nothing to be done
-    }
+    ~DCE2_Smb2FileTracker();
 
-    uint64_t bytes_processed;
-    uint64_t file_offset;
-    uint64_t file_id;
+    bool ignore = false;
+    bool upload = false;
+    uint16_t file_name_len = 0;
+    uint64_t bytes_processed = 0;
+    uint64_t file_offset = 0;
+    uint64_t file_id = 0;
     uint64_t file_size = 0;
     uint64_t file_name_hash = 0;
-    std::string file_name;
+    char* file_name = nullptr;
     DCE2_SmbPduState smb2_pdu_state;
+    DCE2_Smb2TreeTracker* ttr = nullptr;
+    DCE2_Smb2SessionTracker* str = nullptr;
 };
-
 
 typedef DCE2_DbMap<uint64_t, DCE2_Smb2FileTracker*, std::hash<uint64_t> > DCE2_DbMapFtracker;
 typedef DCE2_DbMap<uint64_t, DCE2_Smb2RequestTracker*, std::hash<uint64_t> > DCE2_DbMapRtracker;
@@ -170,77 +188,185 @@ public:
     DCE2_Smb2TreeTracker (uint32_t tid_v, uint8_t share_type_v) : share_type(
             share_type_v), tid(tid_v)
     {
+        memory::MemoryCap::update_allocations(sizeof(*this));
     }
 
+    ~DCE2_Smb2TreeTracker()
+    {
+        memory::MemoryCap::update_deallocations(sizeof(*this));
+    }
+
+    // File Tracker
     DCE2_Smb2FileTracker* findFtracker(uint64_t file_id)
     {
         return file_trackers.Find(file_id);
     }
 
-    void insertFtracker(uint64_t file_id, DCE2_Smb2FileTracker* ftracker)
+    bool insertFtracker(uint64_t file_id, DCE2_Smb2FileTracker* ftracker)
     {
-        file_trackers.Insert(file_id, ftracker);
+        return file_trackers.Insert(file_id, ftracker);
     }
 
     void removeFtracker(uint64_t file_id)
     {
-        removeDataRtrackerWithFid(file_id);
         file_trackers.Remove(file_id);
     }
 
-    DCE2_Smb2RequestTracker* findDataRtracker(uint64_t message_id)
+    // Request Tracker
+    DCE2_Smb2RequestTracker* findRtracker(uint64_t mid)
     {
-        return request_trackers.Find(message_id);
+        return req_trackers.Find(mid);
     }
 
-    void insertDataRtracker(uint64_t message_id, DCE2_Smb2RequestTracker* readtracker)
+    bool insertRtracker(uint64_t message_id, DCE2_Smb2RequestTracker* rtracker)
     {
-        request_trackers.Insert(message_id, readtracker);
+        return req_trackers.Insert(message_id, rtracker);
     }
 
-    void removeDataRtracker(uint64_t message_id)
+    void removeRtracker(uint64_t message_id)
     {
-        if (findDataRtracker(message_id))
-        {
-            request_trackers.Remove(message_id);
-        }
+        req_trackers.Remove(message_id);
     }
 
-    void removeDataRtrackerWithFid(uint64_t fid)
+    int getRtrackerSize()
     {
-        auto all_requests = request_trackers.get_all_entry();
-        for ( auto & h : all_requests )
-        {
-            if (h.second->get_file_id() == fid)
-                removeDataRtracker(h.first); // this is message id
-        }
+        return req_trackers.GetSize();
     }
 
-    int getDataRtrackerSize()
+    // common methods
+    uint8_t get_share_type()
     {
-        return request_trackers.GetSize();
+        return share_type;
     }
 
-    uint8_t get_share_type() { return share_type; }
-    uint32_t get_tid() { return tid; }
+    uint32_t get_tid()
+    {
+        return tid;
+    }
+
 private:
-    uint8_t share_type;
-    uint32_t tid;
+    uint8_t share_type = 0;
+    uint32_t tid = 0;
 
-    DCE2_DbMapRtracker request_trackers;
+    DCE2_DbMapRtracker req_trackers;
     DCE2_DbMapFtracker file_trackers;
 };
 
+struct SmbFlowKey
+{
+    uint32_t ip_l[4];   /* Low IP */
+    uint32_t ip_h[4];   /* High IP */
+    uint32_t mplsLabel;
+    uint16_t port_l;    /* Low Port - 0 if ICMP */
+    uint16_t port_h;    /* High Port - 0 if ICMP */
+    uint16_t vlan_tag;
+    uint16_t addressSpaceId;
+    uint8_t ip_protocol;
+    uint8_t pkt_type;
+    uint8_t version;
+    uint8_t padding;
+
+    bool operator==(const SmbFlowKey& other) const
+    {
+        return (ip_l[0] == other.ip_l[0] and
+               ip_l[1] == other.ip_l[1] and
+               ip_l[2] == other.ip_l[2] and
+               ip_l[3] == other.ip_l[3] and
+               ip_h[0] == other.ip_h[0] and
+               ip_l[1] == other.ip_l[1] and
+               ip_l[2] == other.ip_l[2] and
+               ip_l[3] == other.ip_l[3] and
+               mplsLabel == other.mplsLabel and
+               port_l == other.port_l and
+               port_h == other.port_h and
+               vlan_tag == other.vlan_tag and
+               addressSpaceId == other.addressSpaceId and
+               ip_protocol == other.ip_protocol and
+               pkt_type == other.pkt_type and
+               version == other.version);
+    }
+};
+
+void get_flow_key(SmbFlowKey* key);
+
+struct SmbFlowKeyHash
+{
+    size_t operator()(const struct SmbFlowKey& key) const
+    {
+        uint32_t a, b, c;
+        a = b = c = 133824503;
+
+        const uint32_t* d = (const uint32_t*)&key;
+
+        a += d[0];   // IPv6 lo[0]
+        b += d[1];   // IPv6 lo[1]
+        c += d[2];   // IPv6 lo[2]
+
+        mix(a, b, c);
+
+        a += d[3];   // IPv6 lo[3]
+        b += d[4];   // IPv6 hi[0]
+        c += d[5];   // IPv6 hi[1]
+
+        mix(a, b, c);
+
+        a += d[6];   // IPv6 hi[2]
+        b += d[7];   // IPv6 hi[3]
+        c += d[8];   // mpls label
+
+        mix(a, b, c);
+
+        a += d[9];   // port lo & port hi
+        b += d[10];  // vlan tag, address space id
+        c += d[11];  // ip_proto, pkt_type, version, and 8 bits of zeroed pad
+
+        finalize(a, b, c);
+
+        return c;
+    }
+
+private:
+    inline uint32_t rot(uint32_t x, unsigned k) const
+    { return (x << k) | (x >> (32 - k)); }
+
+    inline void mix(uint32_t& a, uint32_t& b, uint32_t& c) const
+    {
+        a -= c; a ^= rot(c, 4); c += b;
+        b -= a; b ^= rot(a, 6); a += c;
+        c -= b; c ^= rot(b, 8); b += a;
+        a -= c; a ^= rot(c,16); c += b;
+        b -= a; b ^= rot(a,19); a += c;
+        c -= b; c ^= rot(b, 4); b += a;
+    }
+
+    inline void finalize(uint32_t& a, uint32_t& b, uint32_t& c) const
+    {
+        c ^= b; c -= rot(b,14);
+        a ^= c; a -= rot(c,11);
+        b ^= a; b -= rot(a,25);
+        c ^= b; c -= rot(b,16);
+        a ^= c; a -= rot(c,4);
+        b ^= a; b -= rot(a,14);
+        c ^= b; c -= rot(b,24);
+    }
+};
+
 typedef DCE2_DbMap<uint32_t, DCE2_Smb2TreeTracker*, std::hash<uint32_t> > DCE2_DbMapTtracker;
+typedef DCE2_DbMap<struct SmbFlowKey, DCE2_Smb2SsnData*, SmbFlowKeyHash> DCE2_DbMapConntracker;
 class DCE2_Smb2SessionTracker
 {
 public:
 
-    DCE2_Smb2SessionTracker() { }
+    DCE2_Smb2SessionTracker() { memory::MemoryCap::update_allocations(sizeof(*this)); }
 
-    void insertTtracker(uint32_t tree_id, DCE2_Smb2TreeTracker* ttr)
+    ~DCE2_Smb2SessionTracker();
+
+    void removeSessionFromAllConnection();
+
+    // tree tracker
+    bool insertTtracker(uint32_t tree_id, DCE2_Smb2TreeTracker* ttr)
     {
-        tree_trackers.Insert(tree_id, ttr);
+        return tree_trackers.Insert(tree_id, ttr);
     }
 
     DCE2_Smb2TreeTracker* findTtracker(uint32_t tree_id)
@@ -250,55 +376,50 @@ public:
 
     void removeTtracker(uint32_t tree_id)
     {
-        // Remove any dangling request trackers with tree id
-        removeRtrackerWithTid(tree_id);
         tree_trackers.Remove(tree_id);
     }
 
-    DCE2_Smb2RequestTracker* findRtracker(uint64_t mid)
+    // ssd tracker
+    bool insertConnTracker(SmbFlowKey key, DCE2_Smb2SsnData* ssd)
     {
-        return create_request_trackers.Find(mid);
+        return conn_trackers.Insert(key, ssd);
     }
 
-    void insertRtracker(uint64_t message_id, DCE2_Smb2RequestTracker* rtracker)
+    DCE2_Smb2SsnData* findConnTracker(SmbFlowKey key)
     {
-        create_request_trackers.Insert(message_id, rtracker);
+        return conn_trackers.Find(key);
     }
 
-    void removeRtracker(uint64_t message_id)
+    void removeConnTracker(SmbFlowKey key)
     {
-        create_request_trackers.Remove(message_id);
+        conn_trackers.Remove(key);
     }
 
-    void removeRtrackerWithTid(uint32_t tid)
+    int getConnTrackerSize()
     {
-        auto all_requests = create_request_trackers.get_all_entry();
-        for ( auto & h : all_requests )
-        {
-            if (h.second->get_tree_tracker() and h.second->get_tree_tracker()->get_tid() == tid)
-                removeRtracker(h.first); // this is message id
-        }
+        return conn_trackers.GetSize();
     }
 
     uint16_t getTotalRequestsPending()
     {
         uint16_t total_count = 0;
         auto all_tree_trackers = tree_trackers.get_all_entry();
-        for ( auto & h : all_tree_trackers )
+        for ( auto& h : all_tree_trackers )
         {
-            total_count += h.second->getDataRtrackerSize(); // all read/write
+            total_count += h.second->getRtrackerSize();
         }
-        total_count += create_request_trackers.GetSize(); // all create
         return total_count;
     }
 
-    void set_session_id(uint64_t sid) { session_id = sid; }
-    uint64_t get_session_id() { return session_id; }
+    void set_session_id(uint64_t sid)
+    {
+        session_id = sid;
+        conn_trackers.SetDoNotFree();
+    }
 
-private:
-    uint64_t session_id;
+    DCE2_DbMapConntracker conn_trackers;
     DCE2_DbMapTtracker tree_trackers;
-    DCE2_DbMapRtracker create_request_trackers;
+    uint64_t session_id = 0;
 };
 
 typedef DCE2_DbMap<uint64_t, DCE2_Smb2SessionTracker*, std::hash<uint64_t> > DCE2_DbMapStracker;
@@ -418,6 +539,9 @@ struct Smb2CreateRequestHdr
     uint32_t create_contexts_offset;  /* offset of contexts from beginning of header */
     uint32_t create_contexts_length;  /* length of contexts */
 };
+
+// file attribute for create response
+#define SMB2_CREATE_RESPONSE_DIRECTORY 0x10
 
 struct Smb2CreateResponseHdr
 {

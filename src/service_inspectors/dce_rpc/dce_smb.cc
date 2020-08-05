@@ -27,6 +27,7 @@
 #include "detection/detection_engine.h"
 #include "file_api/file_service.h"
 #include "protocols/packet.h"
+#include "managers/inspector_manager.h"
 
 #include "dce_context_data.h"
 #include "dce_smb_commands.h"
@@ -456,12 +457,23 @@ static void dce_smb_thread_term()
     delete smb2_session_cache;
 }
 
+static size_t get_max_smb_session(dce2SmbProtoConf* config)
+{
+    size_t smb_sess_storage_req = (sizeof(DCE2_Smb2SessionTracker) +
+        sizeof(DCE2_Smb2TreeTracker) +  sizeof(DCE2_Smb2RequestTracker) +
+        (sizeof(DCE2_Smb2FileTracker) * SMB_AVG_FILES_PER_SESSION));
+
+    size_t max_smb_sess = DCE2_ScSmbMemcap(config);
+
+    return (max_smb_sess/smb_sess_storage_req);
+}
+
 static Inspector* dce2_smb_ctor(Module* m)
 {
     Dce2SmbModule* mod = (Dce2SmbModule*)m;
     dce2SmbProtoConf config;
     mod->get_data(config);
-    session_cache_size = DCE2_ScSmbMemcap(&config)/1024;
+    session_cache_size = get_max_smb_session(&config);
     return new Dce2Smb(config);
 }
 
