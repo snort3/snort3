@@ -120,6 +120,7 @@ void HttpFlowData::half_reset(SourceId source_id)
     version_id[source_id] = VERS__NOT_PRESENT;
     data_length[source_id] = STAT_NOT_PRESENT;
     body_octets[source_id] = STAT_NOT_PRESENT;
+    file_octets[source_id] = STAT_NOT_PRESENT;
     partial_inspected_octets[source_id] = 0;
     section_size_target[source_id] = 0;
     stretch_section_to_packet[source_id] = false;
@@ -265,6 +266,7 @@ void HttpFlowData::show(FILE* out_file) const
     fprintf(out_file, "File depth remaining: %" PRIi64 "/%" PRIi64 "\n", file_depth_remaining[0],
         file_depth_remaining[1]);
     fprintf(out_file, "Body octets: %" PRIi64 "/%" PRIi64 "\n", body_octets[0], body_octets[1]);
+    fprintf(out_file, "File octets: %" PRIi64 "/%" PRIi64 "\n", file_octets[0], file_octets[1]);
     fprintf(out_file, "Pipelining: front %d back %d overflow %d underflow %d\n", pipeline_front,
         pipeline_back, pipeline_overflow, pipeline_underflow);
     fprintf(out_file, "Cutter: %s/%s\n", (cutter[0] != nullptr) ? "Present" : "nullptr",

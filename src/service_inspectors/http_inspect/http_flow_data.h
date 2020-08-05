@@ -161,6 +161,8 @@ private:
 
     // number of user data octets seen so far (regular body or chunks)
     int64_t body_octets[2] = { HttpCommon::STAT_NOT_PRESENT, HttpCommon::STAT_NOT_PRESENT };
+    // normalized octets forwarded to file or MIME processing
+    int64_t file_octets[2] = { HttpCommon::STAT_NOT_PRESENT, HttpCommon::STAT_NOT_PRESENT };
     uint32_t partial_inspected_octets[2] = { 0, 0 };
     uint8_t* partial_detect_buffer[2] = { nullptr, nullptr };
     uint32_t partial_detect_length[2] = { 0, 0 };

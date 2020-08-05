@@ -401,6 +401,8 @@ void HttpMsgHeader::prepare_body()
 
 void HttpMsgHeader::setup_file_processing()
 {
+    session_data->file_octets[source_id] = 0;
+
     const int64_t max_file_depth = FileService::get_max_file_depth();
     if (max_file_depth <= 0)
     {

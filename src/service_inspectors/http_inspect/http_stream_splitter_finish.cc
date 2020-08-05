@@ -125,31 +125,44 @@ bool HttpStreamSplitter::finish(Flow* flow)
             if (!file_flows)
                 return false;
 
-            const FileDirection dir = source_id == SRC_SERVER ? FILE_DOWNLOAD : FILE_UPLOAD;
+            const FileDirection dir = (source_id == SRC_SERVER) ? FILE_DOWNLOAD : FILE_UPLOAD;
 
             size_t file_index = 0;
-            uint64_t file_processing_id = 0;
 
-            // FIXIT-L How can there be a file in progress and no transaction in this direction?
-            if (session_data->transaction[source_id] != nullptr)
+            assert(session_data->transaction[source_id] != nullptr);
+            HttpMsgRequest* request = session_data->transaction[source_id]->get_request();
+            if ((request != nullptr) and (request->get_http_uri() != nullptr))
             {
-                HttpMsgRequest* request = session_data->transaction[source_id]->get_request();
-                if ((request != nullptr) and (request->get_http_uri() != nullptr))
-                {
-                    file_index = request->get_http_uri()->get_file_proc_hash();
-                }
-                file_processing_id =
-                    session_data->transaction[source_id]->get_file_processing_id(source_id);
+                file_index = request->get_http_uri()->get_file_proc_hash();
             }
+            const uint64_t file_processing_id =
+                session_data->transaction[source_id]->get_file_processing_id(source_id);
             file_flows->file_process(packet, file_index, nullptr, 0, 0, dir, file_processing_id,
                 SNORT_FILE_END);
+#ifdef REG_TEST
+            if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
+            {
+                fprintf(HttpTestManager::get_output_file(),
+                    "File processing finalization during finish()\n");
+                fflush(HttpTestManager::get_output_file());
+            }
+#endif
         }
         else
         {
+            // FIXIT-M The following call does not actually accomplish anything. The MIME interface
+            // needs to be enhanced so that we can communicate end-of-data without side effects.
             session_data->mime_state[source_id]->process_mime_data(packet, nullptr, 0, true,
                 SNORT_FILE_POSITION_UNKNOWN);
             delete session_data->mime_state[source_id];
             session_data->mime_state[source_id] = nullptr;
+#ifdef REG_TEST
+            if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
+            {
+                fprintf(HttpTestManager::get_output_file(), "MIME finalization during finish()\n");
+                fflush(HttpTestManager::get_output_file());
+            }
+#endif
         }
         return false;
     }

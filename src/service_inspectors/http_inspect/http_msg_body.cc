@@ -279,7 +279,7 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
         }
 
         if (file_flows->file_process(p, file_index, file_data.start(), fp_length,
-            body_octets + session_data->partial_inspected_octets[source_id], dir,
+            session_data->file_octets[source_id], dir,
             transaction->get_file_processing_id(source_id), file_position))
         {
             session_data->file_depth_remaining[source_id] -= fp_length;
@@ -303,11 +303,15 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
             // file processing doesn't want any more data
             session_data->file_depth_remaining[source_id] = 0;
         }
+        session_data->file_octets[source_id] += fp_length;
     }
     else
     {
+        // FIXIT-M this interface does not convey any indication of end of message body. If the
+        // message body ends in the middle of a MIME message the partial file will not be flushed.
         session_data->mime_state[source_id]->process_mime_data(p, file_data.start(),
             file_data.length(), true, SNORT_FILE_POSITION_UNKNOWN);
+        session_data->file_octets[source_id] += file_data.length();
     }
 }
 
