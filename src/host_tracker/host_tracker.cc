@@ -121,6 +121,18 @@ AppId HostTracker::get_appid(Port port, IpProtocol proto, bool inferred_only, bo
     return APP_ID_NONE;
 }
 
+void HostTracker::remove_inferred_services()
+{
+    std::lock_guard<std::mutex> lck(host_tracker_lock);
+    for ( auto s = services.begin(); s != services.end(); )
+    {
+        if (s->inferred_appid)
+            s = services.erase(s);
+        else
+            s++;
+    }
+}
+
 static inline string to_time_string(uint32_t p_time)
 {
     time_t raw_time = (time_t) p_time;

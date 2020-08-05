@@ -110,6 +110,8 @@ public:
 
     AppId get_appid(Port port, IpProtocol proto, bool inferred_only = false, bool allow_port_wildcard = false);
 
+    void remove_inferred_services();
+
     //  This should be updated whenever HostTracker data members are changed
     void stringify(std::string& str);
 

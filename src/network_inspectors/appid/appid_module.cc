@@ -28,6 +28,7 @@
 #include <climits>
 #include <lua.hpp>
 
+#include "host_tracker/host_cache.h"
 #include "log/messages.h"
 #include "main/analyzer_command.h"
 #include "main/snort.h"
@@ -283,6 +284,15 @@ static int reload_third_party(lua_State* L)
     return 0;
 }
 
+static void clear_dynamic_host_cache_services()
+{
+    auto hosts = host_cache.get_all_data();
+    for ( auto& h : hosts )
+    {
+        h.second->remove_inferred_services();
+    }
+}
+
 static int reload_odp(lua_State* L)
 {
     bool from_shell = ( L != nullptr );
@@ -303,6 +313,7 @@ static int reload_odp(lua_State* L)
 
     AppIdContext& ctxt = inspector->get_ctxt();
     OdpContext& old_odp_ctxt = ctxt.get_odp_ctxt();
+    clear_dynamic_host_cache_services();
     AppIdPegCounts::cleanup_peg_info();
     LuaDetectorManager::clear_lua_detector_mgrs();
     ctxt.create_odp_ctxt();
