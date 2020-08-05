@@ -31,27 +31,30 @@
 
 using namespace snort;
 
-void get_flow_key(SmbFlowKey* key)
+static inline SmbFlowKey get_flow_key(void)
 {
+    SmbFlowKey key;
     const FlowKey* flow_key = DetectionEngine::get_current_packet()->flow->key;
 
-    key->ip_l[0] = flow_key->ip_l[0];
-    key->ip_l[1] = flow_key->ip_l[1];
-    key->ip_l[2] = flow_key->ip_l[2];
-    key->ip_l[3] = flow_key->ip_l[3];
-    key->ip_h[0] = flow_key->ip_h[0];
-    key->ip_h[1] = flow_key->ip_h[1];
-    key->ip_h[2] = flow_key->ip_h[2];
-    key->ip_h[3] = flow_key->ip_h[3];
-    key->mplsLabel = flow_key->mplsLabel;
-    key->port_l = flow_key->port_l;
-    key->port_h = flow_key->port_h;
-    key->vlan_tag = flow_key->vlan_tag;
-    key->addressSpaceId = flow_key->addressSpaceId;
-    key->ip_protocol = flow_key->ip_protocol;
-    key->pkt_type = (uint8_t)flow_key->pkt_type;
-    key->version = flow_key->version;
-    key->padding = 0;
+    key.ip_l[0] = flow_key->ip_l[0];
+    key.ip_l[1] = flow_key->ip_l[1];
+    key.ip_l[2] = flow_key->ip_l[2];
+    key.ip_l[3] = flow_key->ip_l[3];
+    key.ip_h[0] = flow_key->ip_h[0];
+    key.ip_h[1] = flow_key->ip_h[1];
+    key.ip_h[2] = flow_key->ip_h[2];
+    key.ip_h[3] = flow_key->ip_h[3];
+    key.mplsLabel = flow_key->mplsLabel;
+    key.port_l = flow_key->port_l;
+    key.port_h = flow_key->port_h;
+    key.vlan_tag = flow_key->vlan_tag;
+    key.addressSpaceId = flow_key->addressSpaceId;
+    key.ip_protocol = flow_key->ip_protocol;
+    key.pkt_type = (uint8_t)flow_key->pkt_type;
+    key.version = flow_key->version;
+    key.padding = 0;
+
+    return key;
 }
 
 DCE2_Smb2FileTracker::~DCE2_Smb2FileTracker(void)
@@ -282,6 +285,7 @@ DCE2_Ret DCE2_Smb2InitData(DCE2_Smb2SsnData* ssd)
     ssd->ssn_state_flags = 0;
     ssd->ftracker_tcp = nullptr;
     ssd->max_file_depth = FileService::get_max_file_depth();
+    ssd->flow_key = get_flow_key();
     return DCE2_RET__SUCCESS;
 }
 

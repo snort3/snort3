@@ -252,6 +252,29 @@ private:
     DCE2_DbMapFtracker file_trackers;
 };
 
+PADDING_GUARD_BEGIN
+struct Smb2SidHashKey
+{
+    //must be of size 3*x*sizeof(uint32_t)
+    uint32_t cip[4];
+    uint32_t sip[4];
+    uint64_t sid;
+    uint64_t padding;
+
+    bool operator== (const Smb2SidHashKey &other) const
+    {
+        return( sid == other.sid and
+                cip[0] == other.cip[0] and
+                cip[1] == other.cip[1] and
+                cip[2] == other.cip[2] and
+                cip[3] == other.cip[3] and
+                sip[0] == other.sip[0] and
+                sip[1] == other.sip[1] and
+                sip[2] == other.sip[2] and
+                sip[3] == other.sip[3]);
+    }
+};
+
 struct SmbFlowKey
 {
     uint32_t ip_l[4];   /* Low IP */
@@ -286,46 +309,35 @@ struct SmbFlowKey
                version == other.version);
     }
 };
+PADDING_GUARD_END
 
-void get_flow_key(SmbFlowKey* key);
+//The below value is taken from Hash Key class static hash hardener
+#define SMB_KEY_HASH_HARDENER 133824503
 
-struct SmbFlowKeyHash
+struct SmbKeyHash
 {
-    size_t operator()(const struct SmbFlowKey& key) const
+    size_t operator() (const SmbFlowKey& key) const
     {
-        uint32_t a, b, c;
-        a = b = c = 133824503;
+        return  do_hash((const uint32_t*)&key);
+    }
 
-        const uint32_t* d = (const uint32_t*)&key;
-
-        a += d[0];   // IPv6 lo[0]
-        b += d[1];   // IPv6 lo[1]
-        c += d[2];   // IPv6 lo[2]
-
-        mix(a, b, c);
-
-        a += d[3];   // IPv6 lo[3]
-        b += d[4];   // IPv6 hi[0]
-        c += d[5];   // IPv6 hi[1]
-
-        mix(a, b, c);
-
-        a += d[6];   // IPv6 hi[2]
-        b += d[7];   // IPv6 hi[3]
-        c += d[8];   // mpls label
-
-        mix(a, b, c);
-
-        a += d[9];   // port lo & port hi
-        b += d[10];  // vlan tag, address space id
-        c += d[11];  // ip_proto, pkt_type, version, and 8 bits of zeroed pad
-
-        finalize(a, b, c);
-
-        return c;
+    size_t operator() (const Smb2SidHashKey& key) const
+    {
+        return do_hash((const uint32_t*)&key);
     }
 
 private:
+    size_t do_hash(const uint32_t* d) const
+    {
+        uint32_t a, b, c;
+        a = b = c = SMB_KEY_HASH_HARDENER;
+        a += d[0]; b += d[1];  c += d[2];  mix(a, b, c);
+        a += d[3]; b += d[4];  c += d[5];  mix(a, b, c);
+        a += d[6]; b += d[7];  c += d[8];  mix(a, b, c);
+        a += d[9]; b += d[10]; c += d[11]; finalize(a, b, c);
+        return c;
+    }
+
     inline uint32_t rot(uint32_t x, unsigned k) const
     { return (x << k) | (x >> (32 - k)); }
 
@@ -352,7 +364,7 @@ private:
 };
 
 typedef DCE2_DbMap<uint32_t, DCE2_Smb2TreeTracker*, std::hash<uint32_t> > DCE2_DbMapTtracker;
-typedef DCE2_DbMap<struct SmbFlowKey, DCE2_Smb2SsnData*, SmbFlowKeyHash> DCE2_DbMapConntracker;
+typedef DCE2_DbMap<struct SmbFlowKey, DCE2_Smb2SsnData*, SmbKeyHash> DCE2_DbMapConntracker;
 class DCE2_Smb2SessionTracker
 {
 public:
@@ -419,6 +431,7 @@ public:
 
     DCE2_DbMapConntracker conn_trackers;
     DCE2_DbMapTtracker tree_trackers;
+    Smb2SidHashKey session_key;
     uint64_t session_id = 0;
 };
 
@@ -434,6 +447,7 @@ struct DCE2_Smb2SsnData
     int16_t max_outstanding_requests; // Maximum number of request that can stay pending
     DCE2_DbMapStracker session_trackers;
     DCE2_Smb2FileTracker* ftracker_tcp; //To keep tab of current file being transferred over TCP
+    SmbFlowKey flow_key;
 };
 
 /* SMB2 command codes */

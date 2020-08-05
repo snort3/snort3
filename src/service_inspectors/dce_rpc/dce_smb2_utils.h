@@ -25,65 +25,6 @@
 #include "dce_smb.h"
 #include "dce_smb2.h"
 #include "file_api/file_flows.h"
-#include "sfip/sf_ip.h"
-
-struct Smb2SidHashKey
-{
-    snort::SfIp cip; // client ip
-    snort::SfIp sip; // server ip
-    uint64_t sid;
-    bool operator==(const Smb2SidHashKey& other) const
-    {
-        return( sid == other.sid and
-               cip == other.cip and
-               sip == other.sip );
-    }
-};
-
-struct Smb2SidHash
-{
-    size_t operator()(const Smb2SidHashKey& key) const
-    {
-        const uint32_t* cip64 = key.cip.get_ip6_ptr();
-        const uint32_t* sip64 = key.cip.get_ip6_ptr();
-        const uint32_t sid_lo = key.sid & 0xFFFFFFFF;
-        const uint32_t sid_hi = key.sid >> 32;
-        uint32_t a, b, c;
-        a = b = c = 133824503;
-        a += cip64[0]; b += cip64[1]; c += cip64[2];
-        mix(a, b, c);
-        a += cip64[3]; b += sip64[0]; c += sip64[2];
-        mix(a, b, c);
-        a += sip64[3]; b += sid_lo; c += sid_hi;
-        finalize(a, b, c);
-        return c;
-    }
-
-private:
-    inline uint32_t rot(uint32_t x, unsigned k) const
-    { return (x << k) | (x >> (32 - k)); }
-
-    inline void mix(uint32_t& a, uint32_t& b, uint32_t& c) const
-    {
-        a -= c; a ^= rot(c, 4); c += b;
-        b -= a; b ^= rot(a, 6); a += c;
-        c -= b; c ^= rot(b, 8); b += a;
-        a -= c; a ^= rot(c,16); c += b;
-        b -= a; b ^= rot(a,19); a += c;
-        c -= b; c ^= rot(b, 4); b += a;
-    }
-
-    inline void finalize(uint32_t& a, uint32_t& b, uint32_t& c) const
-    {
-        c ^= b; c -= rot(b,14);
-        a ^= c; a -= rot(c,11);
-        b ^= a; b -= rot(a,25);
-        c ^= b; c -= rot(b,16);
-        a ^= c; a -= rot(c,4);
-        b ^= a; b -= rot(a,14);
-        c ^= b; c -= rot(b,24);
-    }
-};
 
 Smb2SidHashKey get_key(uint64_t sid);
 
@@ -100,7 +41,7 @@ public:
     virtual ~SmbSessionCache_map() { }
 };
 
-typedef SmbSessionCache_map<Smb2SidHashKey, DCE2_Smb2SessionTracker, Smb2SidHash> SmbSessionCache;
+typedef SmbSessionCache_map<Smb2SidHashKey, DCE2_Smb2SessionTracker, SmbKeyHash> SmbSessionCache;
 
 extern THREAD_LOCAL SmbSessionCache* smb2_session_cache;
 extern size_t session_cache_size;
@@ -122,9 +63,9 @@ inline DCE2_Smb2SessionTracker* DCE2_SmbSessionCacheFindElseCreate(uint64_t sid,
     return (smb2_session_cache->find_else_create(get_key(sid), entry_created)).get();
 }
 
-inline bool DCE2_SmbSessionCacheRemove(uint64_t sid)
+inline bool DCE2_SmbSessionCacheRemove(Smb2SidHashKey key)
 {
-    return smb2_session_cache->remove(get_key(sid));
+    return smb2_session_cache->remove(key);
 }
 
 // SMB2 functions for fetching sid, tid, request type and so on.
@@ -158,9 +99,7 @@ inline void DCE2_Smb2InsertSidInSsd(DCE2_Smb2SsnData* ssd, const uint64_t sid,
     DCE2_Smb2SessionTracker* stracker)
 {
     // add ssd in session tracker's tcp trackers database
-    SmbFlowKey key;
-    get_flow_key(&key);
-    stracker->insertConnTracker(key, ssd);
+    stracker->insertConnTracker(ssd->flow_key, ssd);
 
     ssd->session_trackers.Insert(sid, stracker);
 }

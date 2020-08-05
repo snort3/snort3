@@ -747,7 +747,7 @@ void DCE2_Smb2Logoff(DCE2_Smb2SsnData* ssd, const uint8_t* smb_data,
         if (str)
         {
             str->removeSessionFromAllConnection();
-            DCE2_SmbSessionCacheRemove(sid);
+            DCE2_SmbSessionCacheRemove(str->session_key);
         }
     }
     else
