@@ -295,6 +295,7 @@ static void init_roles(Packet* p, Flow* flow)
     default:
         break;
     }
+    flow->flags.app_direction_swapped = false;
     if ( flow->ssn_state.direction == FROM_CLIENT )
         p->packet_flags |= PKT_FROM_CLIENT;
     else
@@ -427,6 +428,10 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
             PacketTracer::log("Session: new snort session\n");
 
         init_roles(p, flow);
+
+        // process expected flows
+        check_expected_flow(flow, p);
+
         DataBus::publish(FLOW_STATE_SETUP_EVENT, p);
 
         if ( flow->flow_state == Flow::FlowState::SETUP ||
@@ -522,7 +527,7 @@ void FlowControl::init_exp(uint32_t max)
     exp_cache = new ExpectCache(max);
 }
 
-bool FlowControl::expected_flow(Flow* flow, Packet* p)
+void FlowControl::check_expected_flow(Flow* flow, Packet* p)
 {
     bool ignore = exp_cache->check(p, flow);
 
@@ -531,30 +536,22 @@ bool FlowControl::expected_flow(Flow* flow, Packet* p)
         flow->ssn_state.ignore_direction = ignore;
         DetectionEngine::disable_all(p);
     }
-
-    return ignore;
 }
 
-int FlowControl::add_expected(
-    const Packet* ctrlPkt, PktType type, IpProtocol ip_proto,
-    const SfIp *srcIP, uint16_t srcPort,
-    const SfIp *dstIP, uint16_t dstPort,
-    char direction, FlowData* fd)
+int FlowControl::add_expected_ignore( const Packet* ctrlPkt, PktType type, IpProtocol ip_proto,
+    const SfIp *srcIP, uint16_t srcPort, const SfIp *dstIP, uint16_t dstPort, char direction,
+    FlowData* fd)
 {
-    return exp_cache->add_flow(
-        ctrlPkt, type, ip_proto, srcIP, srcPort, dstIP, dstPort,
-        direction, fd);
+    return exp_cache->add_flow( ctrlPkt, type, ip_proto, srcIP, srcPort, dstIP, dstPort, direction,
+        fd);
 }
 
-int FlowControl::add_expected(
-    const Packet* ctrlPkt, PktType type, IpProtocol ip_proto,
-    const SfIp *srcIP, uint16_t srcPort,
-    const SfIp *dstIP, uint16_t dstPort,
-    SnortProtocolId snort_protocol_id, FlowData* fd)
+int FlowControl::add_expected( const Packet* ctrlPkt, PktType type, IpProtocol ip_proto,
+    const SfIp *srcIP, uint16_t srcPort, const SfIp *dstIP, uint16_t dstPort,
+    SnortProtocolId snort_protocol_id, FlowData* fd, bool swap_app_direction)
 {
-    return exp_cache->add_flow(
-        ctrlPkt, type, ip_proto, srcIP, srcPort, dstIP, dstPort,
-        SSN_DIR_BOTH, fd, snort_protocol_id);
+    return exp_cache->add_flow( ctrlPkt, type, ip_proto, srcIP, srcPort, dstIP, dstPort,
+        SSN_DIR_BOTH, fd, snort_protocol_id, swap_app_direction);
 }
 
 bool FlowControl::is_expected(Packet* p)

@@ -264,5 +264,21 @@ uint16_t Packet::get_flow_vlan_id() const
     return vid;
 }
 
+bool Packet::is_from_application_client() const
+{ 
+    if (flow)
+        return flow->flags.app_direction_swapped ? is_from_server() : is_from_client();
+    else
+        return is_from_client();
+}
+
+bool Packet::is_from_application_server() const
+{ 
+    if (flow)
+        return flow->flags.app_direction_swapped ? is_from_client() : is_from_server();
+    else
+        return is_from_server();
+}
+
 } // namespace snort
 

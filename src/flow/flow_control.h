@@ -68,20 +68,18 @@ public:
     bool prune_one(PruneReason, bool do_cleanup);
     snort::Flow* stale_flow_cleanup(FlowCache*, snort::Flow*, snort::Packet*);
     void timeout_flows(time_t cur_time);
-    bool expected_flow(snort::Flow*, snort::Packet*);
+    void check_expected_flow(snort::Flow*, snort::Packet*);
     bool is_expected(snort::Packet*);
 
-    int add_expected(
+    int add_expected_ignore(
         const snort::Packet* ctrlPkt, PktType, IpProtocol,
         const snort::SfIp *srcIP, uint16_t srcPort,
         const snort::SfIp *dstIP, uint16_t dstPort,
         char direction, snort::FlowData*);
 
-    int add_expected(
-        const snort::Packet* ctrlPkt, PktType, IpProtocol,
-        const snort::SfIp *srcIP, uint16_t srcPort,
-        const snort::SfIp *dstIP, uint16_t dstPort,
-        SnortProtocolId snort_protocol_id, snort::FlowData*);
+    int add_expected(const snort::Packet* ctrlPkt, PktType, IpProtocol, const snort::SfIp *srcIP,
+        uint16_t srcPort, const snort::SfIp *dstIP, uint16_t dstPort,
+        SnortProtocolId snort_protocol_id, snort::FlowData*, bool swap_app_direction = false);
 
     class ExpectCache* get_exp_cache()
     { return exp_cache; }

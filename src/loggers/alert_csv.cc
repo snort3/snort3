@@ -124,9 +124,9 @@ static void ff_dir(const Args& a)
 {
     const char* dir;
 
-    if ( a.pkt->is_from_client() )
+    if ( a.pkt->is_from_application_client() )
         dir = "C2S";
-    else if ( a.pkt->is_from_server() )
+    else if ( a.pkt->is_from_application_server() )
         dir = "S2C";
     else
         dir = "UNK";

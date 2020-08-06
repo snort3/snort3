@@ -116,7 +116,7 @@ void Stream::stop_inspection(Flow*, Packet*, char, int32_t, int) { }
 
 
 int ExpectCache::add_flow(const Packet*, PktType, IpProtocol, const SfIp*, uint16_t,
-    const SfIp*, uint16_t, char, FlowData*, SnortProtocolId)
+    const SfIp*, uint16_t, char, FlowData*, SnortProtocolId, bool)
 {
     return 1;
 }

@@ -1182,10 +1182,10 @@ static inline void fpEvalHeaderSvc(Packet* p, FPTask task)
 
     PortGroup* svc = nullptr;
 
-    if (p->is_from_server())
+    if (p->is_from_application_server())
         svc = p->context->conf->sopgTable->get_port_group(false, snort_protocol_id);
 
-    else if (p->is_from_client())
+    else if (p->is_from_application_client())
         svc = p->context->conf->sopgTable->get_port_group(true, snort_protocol_id);
 
     if ( svc )

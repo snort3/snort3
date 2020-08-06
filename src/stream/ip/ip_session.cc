@@ -161,13 +161,11 @@ bool IpSession::setup(Packet* p)
         ip_stats.trackers_created++;
         ip_stats.current_frags++;
     }
-#ifdef ENABLE_EXPECTED_IP
-    if ( Stream::expected_flow(flow, p) )
+    if ( flow->ssn_state.ignore_direction != SSN_DIR_NONE )
     {
         ip_stats.sessions--; // Incremented in SESSION_STATS_ADD
         return false;
     }
-#endif
     return true;
 }
 

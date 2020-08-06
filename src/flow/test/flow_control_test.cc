@@ -141,7 +141,7 @@ int ExpectCache::add_flow(const Packet*,
     PktType, IpProtocol,
     const SfIp*, uint16_t,
     const SfIp*, uint16_t,
-    char, FlowData*, SnortProtocolId)
+    char, FlowData*, SnortProtocolId, bool)
 {
     return 1;
 }

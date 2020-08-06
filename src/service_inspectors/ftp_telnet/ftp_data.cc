@@ -74,16 +74,16 @@ static void FTPDataProcess(
 
     if (data_ssn->packet_flags & FTPDATA_FLG_FLUSH)
     {
-        file_flows->set_sig_gen_state( true );
+        file_flows->set_sig_gen_state(true);
         data_ssn->packet_flags &= ~FTPDATA_FLG_FLUSH;
     }
     else
-        file_flows->set_sig_gen_state( false );
+        file_flows->set_sig_gen_state(false);
 
     status = file_flows->file_process(p, file_data, data_length,
         data_ssn->position, data_ssn->direction, data_ssn->path_hash);
 
-    if ( p->active->packet_force_dropped() )
+    if (p->active->packet_force_dropped())
     {
         FtpFlowData* fd = (FtpFlowData*)Stream::get_flow_data(
                             &data_ssn->ftp_key, FtpFlowData::inspector_id);
@@ -104,12 +104,12 @@ static void FTPDataProcess(
     // Ignore the rest of this transfer if file processing is complete
     // and status is returned false (eg sig not enabled, sig depth exceeded etc)
     // and no IPS rules are configured.
-    if ( !status )
+    if (!status)
     {
         IpsPolicy* empty_policy = snort::get_empty_ips_policy(p->context->conf);
-        if ( empty_policy->policy_id == p->flow->ips_policy_id )
+        if (empty_policy->policy_id == p->flow->ips_policy_id)
         {
-            if ( PacketTracer::is_active() )
+            if (PacketTracer::is_active())
                 PacketTracer::log("Whitelisting Flow: FTP data\n");
             p->flow->set_ignore_direction(SSN_DIR_BOTH);
         }
@@ -126,7 +126,7 @@ static int SnortFTPData(Packet* p)
 
     FTP_DATA_SESSION* data_ssn = fdfd ? &fdfd->session : nullptr;
 
-    if ( !data_ssn or (data_ssn->packet_flags & FTPDATA_FLG_STOP) )
+    if (!data_ssn or (data_ssn->packet_flags & FTPDATA_FLG_STOP))
         return 0;
 
     assert(PROTO_IS_FTP_DATA(data_ssn));
@@ -285,7 +285,7 @@ void FtpData::eval(Packet* p)
     // precondition - what we registered for
     assert(p->has_tcp_data());
 
-    if ( FileService::get_max_file_depth() < 0 )
+    if (FileService::get_max_file_depth() < 0)
         return;
 
     SnortFTPData(p);

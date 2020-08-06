@@ -201,7 +201,7 @@ int Stream::ignore_flow(
 {
     assert(flow_con);
 
-    return flow_con->add_expected(
+    return flow_con->add_expected_ignore(
         ctrlPkt, type, ip_proto, srcIP, srcPort, dstIP, dstPort, direction, fd);
 }
 
@@ -373,13 +373,6 @@ void Stream::prune_flows()
         flow_con->prune_one(PruneReason::MEMCAP, false);
 }
 
-bool Stream::expected_flow(Flow* f, Packet* p)
-{
-    if ( flow_con )
-        return flow_con->expected_flow(f, p) != SSN_DIR_NONE;
-    return false;
-}
-
 //-------------------------------------------------------------------------
 // app proto id foo
 //-------------------------------------------------------------------------
@@ -388,12 +381,13 @@ int Stream::set_snort_protocol_id_expected(
     const Packet* ctrlPkt, PktType type, IpProtocol ip_proto,
     const SfIp* srcIP, uint16_t srcPort,
     const SfIp* dstIP, uint16_t dstPort,
-    SnortProtocolId snort_protocol_id, FlowData* fd)
+    SnortProtocolId snort_protocol_id, FlowData* fd, bool swap_app_direction)
 {
     assert(flow_con);
 
     return flow_con->add_expected(
-        ctrlPkt, type, ip_proto, srcIP, srcPort, dstIP, dstPort, snort_protocol_id, fd);
+        ctrlPkt, type, ip_proto, srcIP, srcPort, dstIP, dstPort, snort_protocol_id, fd,
+        swap_app_direction);
 }
 
 void Stream::set_snort_protocol_id(

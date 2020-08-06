@@ -439,8 +439,9 @@ public:  // FIXIT-M privatize if possible
 
     struct
     {
-        bool client_initiated : 1; // Set if the first packet on the flow was from the side that is currently
-                                   // considered to be the client
+        bool client_initiated : 1;  // Set if the first packet on the flow was from the side that is
+                                    // currently considered to be the client
+        bool app_direction_swapped : 1; // Packet direction swapped from application perspective
         bool disable_inspect : 1;
         bool reputation_src_dest : 1;
         bool reputation_blacklist : 1;
@@ -449,7 +450,8 @@ public:  // FIXIT-M privatize if possible
         bool trigger_detained_packet_event : 1;
         bool trigger_finalize_event : 1;
         bool use_direct_inject : 1;
-        bool data_decrypted : 1;    // indicate data in current flow is decrypted TLS application data
+        bool data_decrypted : 1;    // indicate data in current flow is decrypted TLS application
+                                    //data
     } flags;
 
     FlowState flow_state;

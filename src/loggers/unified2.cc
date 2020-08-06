@@ -189,7 +189,7 @@ static void alert_event(Packet* p, const char*, Unified2Config* config, const Ev
 
         else if (p->flow)
         {
-            if (p->is_from_client())
+            if (p->is_from_application_client())
                 copy_addr(p->flow->client_ip, p->flow->server_ip, u2_event);
             else
                 copy_addr(p->flow->server_ip, p->flow->client_ip, u2_event);
@@ -638,7 +638,7 @@ static void _AlertIP4_v2(Packet* p, const char*, Unified2Config* config, const E
         }
         else if (p->flow)
         {
-            if (p->is_from_client())
+            if (p->is_from_application_client())
             {
                 alertdata.ip_source = *(p->flow->client_ip.get_ip4_ptr());
                 alertdata.ip_destination = *(p->flow->server_ip.get_ip4_ptr());
@@ -726,7 +726,7 @@ static void _AlertIP6_v2(Packet* p, const char*, Unified2Config* config, const E
         }
         else if (p->flow)
         {
-            if (p->is_from_client())
+            if (p->is_from_application_client())
             {
                 alertdata.ip_source = *(const struct in6_addr*)p->flow->client_ip.get_ip6_ptr();
                 alertdata.ip_destination = *(const struct in6_addr*)p->flow->server_ip.get_ip6_ptr();

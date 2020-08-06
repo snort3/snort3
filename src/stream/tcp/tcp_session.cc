@@ -969,9 +969,7 @@ bool TcpSession::ignore_this_packet(Packet* p)
     if ( Stream::blocked_flow(p) )
         return true;
 
-    // FIXIT-L expected flow should be checked by Stream before we get here
-    // harmonize this with that and the checks above
-    if ( Stream::expected_flow(flow, p) )
+    if ( flow->ssn_state.ignore_direction != SSN_DIR_NONE )
     {
         server.flush_policy = STREAM_FLPOLICY_IGNORE;
         client.flush_policy = STREAM_FLPOLICY_IGNORE;

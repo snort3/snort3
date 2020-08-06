@@ -126,7 +126,7 @@ bool UdpSession::setup(Packet* p)
 
     DataBus::publish(FLOW_STATE_EVENT, p);
 
-    if ( Stream::expected_flow(flow, p) )
+    if ( flow->ssn_state.ignore_direction != SSN_DIR_NONE )
     {
         udpStats.sessions--; // incremented in SESSIONS_STATS_ADD
         return false;

@@ -175,7 +175,7 @@ static inline PktType get_pkt_type_from_ip_proto(IpProtocol proto)
 
 AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const SfIp* cliIp,
     uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol proto,
-    SnortProtocolId snort_protocol_id)
+    SnortProtocolId snort_protocol_id, bool swap_app_direction)
 {
     char src_ip[INET6_ADDRSTRLEN];
     char dst_ip[INET6_ADDRSTRLEN];
@@ -193,7 +193,7 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
         inspector->get_ctxt().get_odp_ctxt());
 
     if (Stream::set_snort_protocol_id_expected(ctrlPkt, type, proto, cliIp,
-        cliPort, srvIp, srvPort, snort_protocol_id, asd))
+        cliPort, srvIp, srvPort, snort_protocol_id, asd, swap_app_direction))
     {
         if (appidDebug->is_active())
         {

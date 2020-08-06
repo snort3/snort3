@@ -139,7 +139,7 @@ IpsOption::EvalStatus FlowCheckOption::eval(Cursor&, Packet* p)
     if (fcd->from_client)
     {
         {
-            if (!p->is_from_client() && p->is_from_server())
+            if (!p->is_from_application_client() && p->is_from_application_server())
             {
                 // No match on from_client
                 return NO_MATCH;
@@ -151,7 +151,7 @@ IpsOption::EvalStatus FlowCheckOption::eval(Cursor&, Packet* p)
     if (fcd->from_server)
     {
         {
-            if (!p->is_from_server() && p->is_from_client())
+            if (!p->is_from_application_server() && p->is_from_application_client())
             {
                 // No match on from_server
                 return NO_MATCH;

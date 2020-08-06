@@ -100,6 +100,7 @@ struct ExpectNode
     time_t expires = 0;
     bool reversed_key = false;
     int direction = 0;
+    bool swap_app_direction = false;
     unsigned count = 0;
     SnortProtocolId snort_protocol_id = UNKNOWN_PROTOCOL_ID;
 
@@ -220,7 +221,7 @@ bool ExpectCache::process_expected(ExpectNode* node, FlowKey& key, Packet* p, Fl
 {
     ExpectFlow* head;
     FlowData* fd;
-    int ignoring = false;
+    bool ignoring = false;
 
     assert(node->count && node->head);
 
@@ -245,7 +246,11 @@ bool ExpectCache::process_expected(ExpectNode* node, FlowKey& key, Packet* p, Fl
     if (!node->snort_protocol_id)
         ignoring = node->direction != 0;
     else
+    {
         lws->ssn_state.snort_protocol_id = node->snort_protocol_id;
+        if ( node->swap_app_direction)
+            lws->flags.app_direction_swapped = true;
+    }
 
     if (!node->count)
         hash_table->release_node(&key);
@@ -312,7 +317,7 @@ ExpectCache::~ExpectCache()
  */
 int ExpectCache::add_flow(const Packet *ctrlPkt, PktType type, IpProtocol ip_proto,
     const SfIp* cliIP, uint16_t cliPort, const SfIp* srvIP, uint16_t srvPort,
-    char direction, FlowData* fd, SnortProtocolId snort_protocol_id)
+    char direction, FlowData* fd, SnortProtocolId snort_protocol_id, bool swap_app_direction)
 {
     /* Just pull the VLAN ID, MPLS ID, and Address Space ID from the
         control packet until we have a use case for not doing so. */
@@ -372,6 +377,7 @@ int ExpectCache::add_flow(const Packet *ctrlPkt, PktType type, IpProtocol ip_pro
         node->snort_protocol_id = snort_protocol_id;
         node->reversed_key = reversed_key;
         node->direction = direction;
+        node->swap_app_direction = swap_app_direction;
         node->head = node->tail = nullptr;
         node->count = 0;
         last = nullptr;

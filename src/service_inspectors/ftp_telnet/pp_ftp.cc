@@ -1176,7 +1176,7 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                                 p, PktType::TCP, IpProtocol::TCP,
                                 &session->clientIP, session->clientPort,
                                 &session->serverIP, session->serverPort,
-                                ftp_data_snort_protocol_id, fd);
+                                ftp_data_snort_protocol_id, fd, true);
 
                             if (result < 0)
                             {

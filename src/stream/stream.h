@@ -177,7 +177,8 @@ public:
     // TCP only.
     static int set_snort_protocol_id_expected(
         const Packet* ctrlPkt, PktType, IpProtocol, const snort::SfIp* srcIP, uint16_t srcPort,
-        const snort::SfIp* dstIP, uint16_t dstPort, SnortProtocolId, FlowData*);
+        const snort::SfIp* dstIP, uint16_t dstPort, SnortProtocolId, FlowData*,
+        bool swap_app_direction = false);
 
     // Get pointer to application data for a flow based on the lookup tuples for cases where
     // Snort does not have an active packet that is relevant.

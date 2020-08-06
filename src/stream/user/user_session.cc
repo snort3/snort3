@@ -436,10 +436,8 @@ bool UserSession::setup(Packet*)
     StreamUserConfig* pc = get_user_cfg(flow->ssn_server);
     flow->set_default_session_timeout(pc->session_timeout, false);
 
-#ifdef ENABLE_EXPECTED_USER
-    if ( Stream::expected_flow(flow, p) )
+    if ( flow->ssn_state.ignore_direction != SSN_DIR_NONE )
         return false;
-#endif
     return true;
 }
 

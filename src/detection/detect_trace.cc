@@ -59,9 +59,9 @@ void print_pkt_info(Packet* p, const char* task)
     SfIpString src_addr, dst_addr;
     unsigned src_port = 0, dst_port = 0;
 
-    if ( p->is_from_client() )
+    if ( p->is_from_application_client() )
         dir = "C2S";
-    else if ( p->is_from_server() )
+    else if ( p->is_from_application_server() )
         dir = "S2C";
     else
         dir = "UNK";
