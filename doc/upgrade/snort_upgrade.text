@@ -8,7 +8,7 @@ Snort 3 Upgrade Manual
 The Snort Team
 
 Revision History
-Revision 3.0.2 (Build 2) 2020-07-23 14:25:50 EDT TST
+Revision 3.0.2 (Build 4) 2020-08-06 08:06:38 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -422,6 +422,8 @@ Some things Snort++ can do today that Snort can not do as well:
   * stream5_tcp: prune_log_max deleted; to be replaced with histogram
   * stream5_tcp: max_active_responses, min_response_seconds moved to
     active.max_responses, min_interval
+  * ips policies support snort variables (_PATH, _PORT, _NET,
+    _SERVER), ips = { variables = { var1 = expr1, var2 = expr2, … } }
 
 
 2.6. Rules
@@ -665,8 +667,6 @@ Converts the Snort configuration file specified by the -c or
   * --output-file=<out_file> Same as -o. output the new Snort++ lua
     configuration to <out_file>
   * --print-all Same as -a. default option. print all data
-  * --print-binding-order Print sorting priority used when generating
-    binder table
   * --print-differences Same as -d. output the differences, and only
     the differences, between the Snort and Snort++ configurations to
     the <out_file>

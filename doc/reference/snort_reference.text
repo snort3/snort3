@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.0.2 (Build 2) 2020-07-23 11:20:26 EDT TST
+Revision 3.0.2 (Build 4) 2020-08-06 08:06:49 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -824,6 +824,21 @@ Configuration:
   * enum hosts[].services[].proto = tcp: IP protocol { tcp | udp }
   * port hosts[].services[].port: port number
 
+Peg counts:
+
+  * hosts.total_hosts: maximum number of entries in the host
+    attribute table (max)
+  * hosts.hosts_pruned: number of LRU hosts pruned due to configured
+    resource limits (sum)
+  * hosts.dynamic_host_adds: number of host additions after initial
+    host file load (sum)
+  * hosts.dynamic_service_adds: number of service additions after
+    initial host file load (sum)
+  * hosts.dynamic_service_updates: number of service updates after
+    initial host file load (sum)
+  * hosts.service_list_overflows: number of service additions that
+    failed due to configured resource limits (sum)
+
 
 2.14. inspection
 
@@ -874,6 +889,7 @@ Configuration:
     rules too)
   * string ips.uuid = 00000000-0000-0000-0000-000000000000: IPS
     policy uuid
+  * string ips.variables.$var: IPS policy variable
 
 
 2.16. latency
@@ -892,7 +908,6 @@ Configuration:
     thresholding (usec) { 0:max53 }
   * bool latency.packet.fastpath = false: fastpath expensive packets
     (max_time exceeded)
-  * bool latency.packet.test_timeout = false: timeout on every packet
   * int latency.rule.max_time = 500: set timeout for rule evaluation
     (usec) { 0:max53 }
   * bool latency.rule.suspend = false: temporarily suspend expensive
@@ -902,8 +917,6 @@ Configuration:
   * int latency.rule.max_suspend_time = 30000: set max time for
     suspending a rule (ms, 0 means permanently disable rule) {
     0:max32 }
-  * bool latency.rule.test_timeout = false: timeout on every rule
-    evaluation
 
 Rules:
 
@@ -1014,7 +1027,7 @@ Configuration:
   * bool output.verbose = false: be verbose (same as -v)
   * bool output.obfuscate = false: obfuscate the logged IP addresses
     (same as -O)
-  * bool output.wide_hex_dump = true: output 20 bytes per lines
+  * bool output.wide_hex_dump = false: output 20 bytes per lines
     instead of 16 when dumping buffers
 
 
@@ -1079,6 +1092,8 @@ Usage: global
 Peg counts:
 
   * payload_injector.http_injects: total number of http injections
+    (sum)
+  * payload_injector.http2_injects: total number of http2 injections
     (sum)
 
 
@@ -1392,6 +1407,7 @@ Configuration:
   * implied snort.--dirty-pig: don’t flush packets on shutdown
   * string snort.--dump-builtin-rules: [<module prefix>] output stub
     rules for selected modules { (optional) }
+  * implied snort.--dump-config-text: dump config in text format
   * implied snort.--dump-dynamic-rules: output stub rules for all
     loaded rules libraries
   * string snort.--dump-defaults: [<module prefix>] output module
@@ -1432,10 +1448,6 @@ Configuration:
     logdir instead of instance filename prefix
   * implied snort.--id-zero: use id prefix / subdirectory even with
     one packet thread
-  * implied snort.--ignore-warn-flowbits: ignore warnings about
-    flowbits that are checked but not set and vice-versa
-  * implied snort.--ignore-warn-rules: ignore warnings about
-    duplicate rules and rule parsing issues
   * string snort.--include-path: <path> where to find Lua and rule
     included files; searched before current or config directories
   * implied snort.--list-buffers: output available inspection buffers
@@ -1460,10 +1472,12 @@ Configuration:
   * implied snort.--nostamps: don’t include timestamps in log file
     names
   * implied snort.--nolock-pidfile: do not try to lock Snort PID file
+  * implied snort.--no-warn-flowbits: ignore warnings about flowbits
+    that are checked but not set and vice-versa
+  * implied snort.--no-warn-rules: ignore warnings about duplicate
+    rules and rule parsing issues
   * implied snort.--pause: wait for resume/quit command before
     processing packets/terminating
-  * int snort.--pause-after-n: <count> pause after count packets {
-    1:max53 }
   * string snort.--pcap-file: <file> file that contains a list of
     pcaps to read - read mode is implied
   * string snort.--pcap-list: <list> a space separated list of pcaps
@@ -1479,7 +1493,6 @@ Configuration:
   * implied snort.--pcap-show: print a line saying what pcap is
     currently being read
   * implied snort.--pedantic: warnings are fatal
-  * implied snort.--piglet: enable piglet test harness mode
   * string snort.--plugin-path: <path> a colon separated list of
     directories or plugin libraries
   * implied snort.--process-all-events: process all action groups
@@ -1511,8 +1524,6 @@ Configuration:
   * implied snort.--treat-drop-as-ignore: use drop, block, and reset
     rules to ignore session traffic when not inline
   * string snort.--tweaks: tune configuration
-  * string snort.--catch-test: comma separated list of cat unit test
-    tags or all
   * implied snort.--version: show version number (same as -V)
   * implied snort.--warn-all: enable all warnings
   * implied snort.--warn-conf: warn about configuration issues
@@ -1537,7 +1548,6 @@ Configuration:
     { 0x00:0xFF }
   * string snort.--x2s: output ASCII string for given byte code (see
     also --x2c)
-  * implied snort.--trace: turn on main loop debug trace
 
 Commands:
 
@@ -1612,11 +1622,10 @@ Usage: global
 
 Configuration:
 
-  * int trace.modules.latency.all: enable all trace options { 0:255 }
-  * int trace.modules.snort.all: enable all trace options { 0:255 }
-  * int trace.modules.snort.main: enable main trace logging { 0:255 }
-  * int trace.modules.snort.inspector_manager: enable inspector
-    manager trace logging { 0:255 }
+  * int trace.modules.appid.all: enable all trace options { 0:255 }
+  * int trace.modules.dce_smb.all: enable all trace options { 0:255 }
+  * int trace.modules.dce_udp.all: enable all trace options { 0:255 }
+  * int trace.modules.decode.all: enable all trace options { 0:255 }
   * int trace.modules.detection.all: enable all trace options { 0:255
     }
   * int trace.modules.detection.detect_engine: enable detection
@@ -1635,18 +1644,19 @@ Configuration:
     logging { 0:255 }
   * int trace.modules.detection.tag: enable tag trace logging { 0:255
     }
+  * int trace.modules.gtp_inspect.all: enable all trace options {
+    0:255 }
+  * int trace.modules.latency.all: enable all trace options { 0:255 }
+  * int trace.modules.snort.all: enable all trace options { 0:255 }
+  * int trace.modules.snort.main: enable main trace logging { 0:255 }
+  * int trace.modules.snort.inspector_manager: enable inspector
+    manager trace logging { 0:255 }
+  * int trace.modules.stream.all: enable all trace options { 0:255 }
   * int trace.modules.stream_ip.all: enable all trace options { 0:255
     }
   * int trace.modules.stream_user.all: enable all trace options {
     0:255 }
   * int trace.modules.wizard.all: enable all trace options { 0:255 }
-  * int trace.modules.dce_smb.all: enable all trace options { 0:255 }
-  * int trace.modules.dce_udp.all: enable all trace options { 0:255 }
-  * int trace.modules.decode.all: enable all trace options { 0:255 }
-  * int trace.modules.stream.all: enable all trace options { 0:255 }
-  * int trace.modules.gtp_inspect.all: enable all trace options {
-    0:255 }
-  * int trace.modules.appid.all: enable all trace options { 0:255 }
   * int trace.constraints.ip_proto: numerical IP protocol ID filter {
     0:255 }
   * string trace.constraints.src_ip: source IP address filter
@@ -2365,9 +2375,6 @@ Usage: context
 
 Configuration:
 
-  * int appid.first_decrypted_packet_debug = 0: the first packet of
-    an already decrypted SSL flow (debug single session only) {
-    0:max32 }
   * int appid.memcap = 1048576: max size of the service cache before
     we start pruning the cache { 1024:maxSZ }
   * bool appid.log_stats = false: enable logging of appid statistics
@@ -2389,8 +2396,6 @@ Configuration:
     on startup
   * bool appid.log_all_sessions = false: enable logging of all appid
     sessions
-  * bool appid.load_odp_detectors_in_ctrl = false: load odp detectors
-    in control thread
 
 Commands:
 
@@ -2398,6 +2403,7 @@ Commands:
     enable appid debugging
   * appid.disable_debug(): disable appid debugging
   * appid.reload_third_party(): reload appid third-party module
+  * appid.reload_odp(): reload appid open detector package
 
 Peg counts:
 
@@ -2413,6 +2419,10 @@ Peg counts:
     the service cache (sum)
   * appid.service_cache_removes: number of times an item was removed
     from the service cache (sum)
+  * appid.odp_reload_ignored_pkts: count of packets ignored after
+    open detector package is reloaded (sum)
+  * appid.tp_reload_ignored_pkts: count of packets ignored after
+    third-party module is reloaded (sum)
 
 
 5.2. appid_listener
@@ -3467,20 +3477,6 @@ Type: inspector
 
 Usage: inspect
 
-Configuration:
-
-  * bool http2_inspect.test_input = false: read HTTP/2 messages from
-    text file
-  * bool http2_inspect.test_output = false: print out HTTP section
-    data
-  * int http2_inspect.print_amount = 1200: number of characters to
-    print from a Field { 1:max53 }
-  * bool http2_inspect.print_hex = false: nonprinting characters
-    printed in [HH] format instead of using an asterisk
-  * bool http2_inspect.show_pegs = true: display peg counts with test
-    output
-  * bool http2_inspect.show_scan = false: display scanned segments
-
 Rules:
 
   * 121:1 (http2_inspect) error in HPACK integer value
@@ -3577,17 +3573,6 @@ Configuration:
     normalizing URIs
   * bool http_inspect.simplify_path = true: reduce URI directory path
     to simplest form
-  * bool http_inspect.test_input = false: read HTTP messages from
-    text file
-  * bool http_inspect.test_output = false: print out HTTP section
-    data
-  * int http_inspect.print_amount = 1200: number of characters to
-    print from a Field { 1:max53 }
-  * bool http_inspect.print_hex = false: nonprinting characters
-    printed in [HH] format instead of using an asterisk
-  * bool http_inspect.show_pegs = true: display peg counts with test
-    output
-  * bool http_inspect.show_scan = false: display scanned segments
 
 Rules:
 
@@ -4785,8 +4770,6 @@ Usage: global
 
 Configuration:
 
-  * int stream.footprint = 0: use zero for production, non-zero for
-    testing at given size (for TCP and user) { 0:max32 }
   * bool stream.ip_frags_only = false: don’t process non-frag flows
   * int stream.max_flows = 476288: maximum simultaneous flows tracked
     before pruning { 2:max32 }
@@ -7805,6 +7788,7 @@ these libraries see the Getting Started section of the manual.
   * --dirty-pig don’t flush packets on shutdown
   * --dump-builtin-rules [<module prefix>] output stub rules for
     selected modules (optional)
+  * --dump-config-text dump config in text format
   * --dump-dynamic-rules output stub rules for all loaded rules
     libraries
   * --dump-defaults [<module prefix>] output module defaults in Lua
@@ -7840,10 +7824,6 @@ these libraries see the Getting Started section of the manual.
     of instance filename prefix
   * --id-zero use id prefix / subdirectory even with one packet
     thread
-  * --ignore-warn-flowbits ignore warnings about flowbits that are
-    checked but not set and vice-versa
-  * --ignore-warn-rules ignore warnings about duplicate rules and
-    rule parsing issues
   * --include-path <path> where to find Lua and rule included files;
     searched before current or config directories
   * --list-buffers output available inspection buffers
@@ -7865,9 +7845,12 @@ these libraries see the Getting Started section of the manual.
     string in metadata if set
   * --nostamps don’t include timestamps in log file names
   * --nolock-pidfile do not try to lock Snort PID file
+  * --no-warn-flowbits ignore warnings about flowbits that are
+    checked but not set and vice-versa
+  * --no-warn-rules ignore warnings about duplicate rules and rule
+    parsing issues
   * --pause wait for resume/quit command before processing packets/
     terminating
-  * --pause-after-n <count> pause after count packets (1:max53)
   * --pcap-file <file> file that contains a list of pcaps to read -
     read mode is implied
   * --pcap-list <list> a space separated list of pcaps to read - read
@@ -7882,7 +7865,6 @@ these libraries see the Getting Started section of the manual.
     file or directory
   * --pcap-show print a line saying what pcap is currently being read
   * --pedantic warnings are fatal
-  * --piglet enable piglet test harness mode
   * --plugin-path <path> a colon separated list of directories or
     plugin libraries
   * --process-all-events process all action groups
@@ -7911,7 +7893,6 @@ these libraries see the Getting Started section of the manual.
   * --treat-drop-as-ignore use drop, block, and reset rules to ignore
     session traffic when not inline
   * --tweaks tune configuration
-  * --catch-test comma separated list of cat unit test tags or all
   * --version show version number (same as -V)
   * --warn-all enable all warnings
   * --warn-conf warn about configuration issues
@@ -7931,7 +7912,6 @@ these libraries see the Getting Started section of the manual.
   * --x2c output ASCII char for given hex (see also --c2x)
     (0x00:0xFF)
   * --x2s output ASCII string for given byte code (see also --x2c)
-  * --trace turn on main loop debug trace
 
 
 11.4. Configuration
@@ -8029,13 +8009,8 @@ these libraries see the Getting Started section of the manual.
     logging appid statistics { 1:max32 }
   * int appid.app_stats_rollover_size = 20971520: max file size for
     appid stats before rolling over the log file { 0:max32 }
-  * int appid.first_decrypted_packet_debug = 0: the first packet of
-    an already decrypted SSL flow (debug single session only) {
-    0:max32 }
   * bool appid.list_odp_detectors = false: enable logging of odp
     detectors statistics
-  * bool appid.load_odp_detectors_in_ctrl = false: load odp detectors
-    in control thread
   * bool appid.log_all_sessions = false: enable logging of all appid
     sessions
   * bool appid.log_stats = false: enable logging of appid statistics
@@ -8558,17 +8533,6 @@ these libraries see the Getting Started section of the manual.
   * port host_tracker[].services[].port: port number
   * enum host_tracker[].services[].proto: IP protocol { ip | tcp |
     udp }
-  * int http2_inspect.print_amount = 1200: number of characters to
-    print from a Field { 1:max53 }
-  * bool http2_inspect.print_hex = false: nonprinting characters
-    printed in [HH] format instead of using an asterisk
-  * bool http2_inspect.show_pegs = true: display peg counts with test
-    output
-  * bool http2_inspect.show_scan = false: display scanned segments
-  * bool http2_inspect.test_input = false: read HTTP/2 messages from
-    text file
-  * bool http2_inspect.test_output = false: print out HTTP section
-    data
   * implied http_cookie.request: match against the cookie from the
     request message even when examining the response
   * implied http_cookie.with_body: parts of this rule examine HTTP
@@ -8624,23 +8588,12 @@ these libraries see the Getting Started section of the manual.
     encodings
   * bool http_inspect.plus_to_space = true: replace + with <sp> when
     normalizing URIs
-  * int http_inspect.print_amount = 1200: number of characters to
-    print from a Field { 1:max53 }
-  * bool http_inspect.print_hex = false: nonprinting characters
-    printed in [HH] format instead of using an asterisk
   * int http_inspect.request_depth = -1: maximum request message body
     bytes to examine (-1 no limit) { -1:max53 }
   * int http_inspect.response_depth = -1: maximum response message
     body bytes to examine (-1 no limit) { -1:max53 }
-  * bool http_inspect.show_pegs = true: display peg counts with test
-    output
-  * bool http_inspect.show_scan = false: display scanned segments
   * bool http_inspect.simplify_path = true: reduce URI directory path
     to simplest form
-  * bool http_inspect.test_input = false: read HTTP messages from
-    text file
-  * bool http_inspect.test_output = false: print out HTTP section
-    data
   * bool http_inspect.unzip = true: decompress gzip and deflate
     message bodies
   * bool http_inspect.utf8_bare_byte = false: when doing UTF-8
@@ -8793,6 +8746,7 @@ these libraries see the Getting Started section of the manual.
     rules too)
   * string ips.uuid = 00000000-0000-0000-0000-000000000000: IPS
     policy uuid
+  * string ips.variables.$var: IPS policy variable
   * string isdataat.~length: num | !num
   * implied isdataat.relative: offset from cursor instead of start of
     buffer
@@ -8802,7 +8756,6 @@ these libraries see the Getting Started section of the manual.
     (max_time exceeded)
   * int latency.packet.max_time = 500: set timeout for packet latency
     thresholding (usec) { 0:max53 }
-  * bool latency.packet.test_timeout = false: timeout on every packet
   * int latency.rule.max_suspend_time = 30000: set max time for
     suspending a rule (ms, 0 means permanently disable rule) {
     0:max32 }
@@ -8812,8 +8765,6 @@ these libraries see the Getting Started section of the manual.
     rules
   * int latency.rule.suspend_threshold = 5: set threshold for number
     of timeouts before suspending a rule { 1:max32 }
-  * bool latency.rule.test_timeout = false: timeout on every rule
-    evaluation
   * bool log_codecs.file = false: output to log_codecs.txt instead of
     stdout
   * bool log_codecs.msg = false: include alert msg
@@ -8931,7 +8882,7 @@ these libraries see the Getting Started section of the manual.
   * int output.tagged_packet_limit = 256: maximum number of packets
     tagged for non-packet metrics { 0:max32 }
   * bool output.verbose = false: be verbose (same as -v)
-  * bool output.wide_hex_dump = true: output 20 bytes per lines
+  * bool output.wide_hex_dump = false: output 20 bytes per lines
     instead of 16 when dumping buffers
   * bool packet_capture.enable = false: initially enable packet
     dumping
@@ -9353,8 +9304,6 @@ these libraries see the Getting Started section of the manual.
   * string snort.--bpf: <filter options> are standard BPF options, as
     seen in TCPDump
   * string snort.--c2x: output hex for given char (see also --x2c)
-  * string snort.--catch-test: comma separated list of cat unit test
-    tags or all
   * string snort.-c: <conf> use this configuration
   * string snort.--control-socket: <file> to create unix socket
   * implied snort.-C: print out payloads with character data only (no
@@ -9378,6 +9327,7 @@ these libraries see the Getting Started section of the manual.
   * implied snort.-D: run Snort in background (daemon) mode
   * string snort.--dump-builtin-rules: [<module prefix>] output stub
     rules for selected modules { (optional) }
+  * implied snort.--dump-config-text: dump config in text format
   * string snort.--dump-defaults: [<module prefix>] output module
     defaults in Lua format { (optional) }
   * implied snort.--dump-dynamic-rules: output stub rules for all
@@ -9424,10 +9374,6 @@ these libraries see the Getting Started section of the manual.
     logdir instead of instance filename prefix
   * implied snort.--id-zero: use id prefix / subdirectory even with
     one packet thread
-  * implied snort.--ignore-warn-flowbits: ignore warnings about
-    flowbits that are checked but not set and vice-versa
-  * implied snort.--ignore-warn-rules: ignore warnings about
-    duplicate rules and rule parsing issues
   * string snort.-i: <iface>… list of interfaces
   * string snort.--include-path: <path> where to find Lua and rule
     included files; searched before current or config directories
@@ -9463,11 +9409,13 @@ these libraries see the Getting Started section of the manual.
   * implied snort.--nolock-pidfile: do not try to lock Snort PID file
   * implied snort.--nostamps: don’t include timestamps in log file
     names
+  * implied snort.--no-warn-flowbits: ignore warnings about flowbits
+    that are checked but not set and vice-versa
+  * implied snort.--no-warn-rules: ignore warnings about duplicate
+    rules and rule parsing issues
   * implied snort.-O: obfuscate the logged IP addresses
   * string snort.-?: <option prefix> output matching command line
     option quick help (same as --help-options) { (optional) }
-  * int snort.--pause-after-n: <count> pause after count packets {
-    1:max53 }
   * implied snort.--pause: wait for resume/quit command before
     processing packets/terminating
   * string snort.--pcap-dir: <dir> a directory to recurse to look for
@@ -9485,7 +9433,6 @@ these libraries see the Getting Started section of the manual.
   * implied snort.--pcap-show: print a line saying what pcap is
     currently being read
   * implied snort.--pedantic: warnings are fatal
-  * implied snort.--piglet: enable piglet test harness mode
   * string snort.--plugin-path: <path> a colon separated list of
     directories or plugin libraries
   * implied snort.--process-all-events: process all action groups
@@ -9522,7 +9469,6 @@ these libraries see the Getting Started section of the manual.
     talos)
   * string snort.-t: <dir> chroots process to <dir> after
     initialization
-  * implied snort.--trace: turn on main loop debug trace
   * implied snort.--treat-drop-as-alert: converts drop, block, and
     reset rules into alert rules when loaded
   * implied snort.--treat-drop-as-ignore: use drop, block, and reset
@@ -9616,8 +9562,6 @@ these libraries see the Getting Started section of the manual.
   * int stream.file_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * bool stream_file.upload = false: indicate file transfer direction
-  * int stream.footprint = 0: use zero for production, non-zero for
-    testing at given size (for TCP and user) { 0:max32 }
   * int stream.held_packet_timeout = 1000: timeout in milliseconds
     for held packets { 1:max32 }
   * int stream.icmp_cache.cap_weight = 0: additional bytes to track
@@ -9834,6 +9778,8 @@ these libraries see the Getting Started section of the manual.
   * appid.appid_unknown: count of sessions where appid could not be
     determined (sum)
   * appid.ignored_packets: count of packets ignored (sum)
+  * appid.odp_reload_ignored_pkts: count of packets ignored after
+    open detector package is reloaded (sum)
   * appid.packets: count of packets received (sum)
   * appid.processed_packets: count of packets processed (sum)
   * appid.service_cache_adds: number of times an entry was added to
@@ -9843,6 +9789,8 @@ these libraries see the Getting Started section of the manual.
   * appid.service_cache_removes: number of times an item was removed
     from the service cache (sum)
   * appid.total_sessions: count of sessions created (sum)
+  * appid.tp_reload_ignored_pkts: count of packets ignored after
+    third-party module is reloaded (sum)
   * arp_spoof.packets: total packets (sum)
   * back_orifice.packets: total packets (sum)
   * binder.allows: allow bindings (sum)
@@ -10289,6 +10237,18 @@ these libraries see the Getting Started section of the manual.
     during reload (sum)
   * host_cache.removes: lru cache found entry and removed it (sum)
   * host_cache.replaced: lru cache found entry and replaced it (sum)
+  * hosts.dynamic_host_adds: number of host additions after initial
+    host file load (sum)
+  * hosts.dynamic_service_adds: number of service additions after
+    initial host file load (sum)
+  * hosts.dynamic_service_updates: number of service updates after
+    initial host file load (sum)
+  * hosts.hosts_pruned: number of LRU hosts pruned due to configured
+    resource limits (sum)
+  * hosts.service_list_overflows: number of service additions that
+    failed due to configured resource limits (sum)
+  * hosts.total_hosts: maximum number of entries in the host
+    attribute table (max)
   * host_tracker.service_adds: host service adds (sum)
   * host_tracker.service_finds: host service finds (sum)
   * http2_inspect.concurrent_sessions: total concurrent HTTP/2
@@ -10465,6 +10425,8 @@ these libraries see the Getting Started section of the manual.
   * packet_capture.captured: packets matching dumped after matching
     filter (sum)
   * packet_capture.processed: packets processed against filter (sum)
+  * payload_injector.http2_injects: total number of http2 injections
+    (sum)
   * payload_injector.http_injects: total number of http injections
     (sum)
   * pcre.pcre_native: total pcre rules compiled by pcre engine (sum)
@@ -11531,6 +11493,7 @@ these libraries see the Getting Started section of the manual.
     enable appid debugging
   * appid.disable_debug(): disable appid debugging
   * appid.reload_third_party(): reload appid third-party module
+  * appid.reload_odp(): reload appid open detector package
   * host_cache.dump(file_name): dump host cache
   * packet_capture.enable(filter): dump raw packets
   * packet_capture.disable(): stop packet dump
@@ -12254,14 +12217,6 @@ and are not applicable elsewhere.
   * logger::log_null: disable logging of packets
   * logger::log_pcap: log packet in pcap format
   * logger::unified2: output event and packet in unified2 format file
-  * piglet::pp_codec: Codec piglet
-  * piglet::pp_inspector: Inspector piglet
-  * piglet::pp_ips_action: Ips action piglet
-  * piglet::pp_ips_option: Ips option piglet
-  * piglet::pp_logger: Logger piglet
-  * piglet::pp_search_engine: Search engine piglet
-  * piglet::pp_so_rule: SO rule piglet
-  * piglet::pp_test: Test piglet
   * search_engine::ac_banded: Aho-Corasick Banded (high memory,
     moderate performance)
   * search_engine::ac_bnfa: Aho-Corasick Binary NFA (low memory, high

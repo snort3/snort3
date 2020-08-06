@@ -1,3 +1,61 @@
+2020/08/06 - 3.0.2 build 4
+
+-- appid: Clear service appid entries in dynamic host cache on ODP reload
+-- appid: Generate event notification when dns host is set
+-- dce_rpc: Fix for smb crash while tcp session pruning
+-- dce_rpc: Fix for smb session cleanup issue
+-- dce_rpc: Use file name hash as file id
+-- doc: Add documentation for dumping consolidated config in text format
+-- flow: Fixing free_flow_data logic
+-- http_inspect: Code clean up
+-- http_inspect: Test tool enhancement
+-- main: Dump consolidated config in the text format
+-- rna: Fix redefined macro warnings in between unit-test tools
+-- rna: TCP fingerprint input and retrieval
+-- utils: Keep deprecated attribute table pegcounts
+
+2020/07/28 - 3.0.2 build 3
+
+-- active: Move Active enabled flag into SnortConfig
+-- appid: For http traffic, if payload cannot be detected, set it to unknown
+-- appid: Move appid data needed by external components to stash
+-- appid: Support ODP reload for multiple packet threads and new session
+-- dce_rpc: Improve PAF autodetection for heavily segmented TCP traffic
+-- doc: Split Snort manual into separate user, reference, and upgrade docs.
+-- doc: Update default text manuals
+-- doc: Update extending.txt about TraceLogger plugin
+-- file_api: Log event generated when lookup timedout
+-- ftp_telnet: Remove global config variable shared between multiple threads to prevent data race
+-- http2_inpsect: Fix interaction with tool tcpclose
+-- http2_inspect: Fix stream_in_hi
+-- http2_inspect: General code cleanup
+-- http_inspect: Do partial inspections incrementally
+-- http_inspect: Reduce memory used by partial inspections
+-- main: Rename the config options to ignore flowbits and rules warnings
+-- parser: Add support for variables with each ips policy
+-- payload_injector: Add HTTP page translation
+-- payload_injector: Extend utility to support HTTP/2 (no injection)
+-- pub_sub: Added a method in HttpEvent to retrieve true client-ip address from HTTP header based
+   on priority
+-- rna: Fingerprint reader class and lookup table for tcp fingerprints
+-- snort_defaults: Remove the NOTIFY, SUBSCRIBE, and UPDATE HTTP methods
+-- stream_tcp: Only perform paws validation on real packets, skip this on meta-ack packets
+-- stream_tcp: When clearing a session during meta-ack processing pass a nullptr as the Packet*
+   parameter
+-- target_based: Add mutex lock to ensure host service accesses are thread safe
+-- target_based: Move host attribute peg counts from the process pegs to stats specific to host
+   attribute operations
+-- target_based: Refactor host attribute to use the LruCacheShared data store class to support
+   thread safe access
+-- target_based: Streamline host attribute table activate and swap logic on startup and reload
+-- trace: Add support for extending TraceLogger as a passive inspector plugin
+-- wizard: Abandon the wizard on UDP flows after the first packet
+-- wizard: Abort the splitter once we've hit the max PDU size
+-- wizard: Add peg counts for abandoned searches per protocol
+-- wizard: Improve wizard tracing to indicate direction and abandonment
+-- wizard: Properly terminate hex matching
+-- wizard: Report spell and hex configuration errors and warnings
+
 2020/07/15 - 3.0.2 build 2
 
 -- appid: Moving thread local ODP stuff to a new class
