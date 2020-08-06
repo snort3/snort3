@@ -79,6 +79,9 @@ public:
     Usage get_usage() const override
     { return INSPECT; }
 
+    bool is_bindable() const override
+    { return true; }
+
 private:
     static const snort::Parameter http2_params[];
     static const snort::RuleMap http2_events[];

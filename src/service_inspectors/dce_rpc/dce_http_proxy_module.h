@@ -41,6 +41,9 @@ public:
 
     Usage get_usage() const override
     { return INSPECT; }
+
+    bool is_bindable() const override
+    { return true; }
 };
 
 #define DCE_HTTP_PROXY_NAME "dce_http_proxy"

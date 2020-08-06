@@ -1104,10 +1104,18 @@ void Binder::set_binding(SnortConfig* sc, Binding* pb)
     if (pb->use.action != BindUse::BA_INSPECT)
         return;
 
-    const char* key = pb->use.name.c_str();
-    Module* m = ModuleManager::get_module(key);
+    const char *mod_name = pb->use.type.c_str();
+    Module* m = ModuleManager::get_module(mod_name);
+
+    if ( m and !m->is_bindable() )
+    {
+        ParseError("can't bind %s", mod_name);
+        return;
+    }
+
     bool is_global = m ? m->get_usage() == Module::GLOBAL : false;
 
+    const char* key = pb->use.name.c_str();
     pb->use.object = InspectorManager::get_inspector(key, is_global, sc);
 
     if (pb->use.object)

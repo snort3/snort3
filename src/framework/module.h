@@ -191,6 +191,9 @@ public:
     virtual Usage get_usage() const
     { return CONTEXT; }
 
+    virtual bool is_bindable() const
+    { return false; }
+
 protected:
     Module(const char* name, const char* help);
     Module(const char* name, const char* help, const Parameter*, bool is_list = false);

@@ -66,6 +66,9 @@ public:
     Usage get_usage() const override
     { return INSPECT; }
 
+    bool is_bindable() const override
+    { return true; }
+
     void set_trace(const snort::Trace*) const override;
     const snort::TraceOption* get_trace_options() const override;
 

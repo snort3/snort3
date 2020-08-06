@@ -99,6 +99,9 @@ public:
     Usage get_usage() const override
     { return INSPECT; }
 
+    bool is_bindable() const override
+    { return true; }
+
 private:
     void add_commands(snort::Value&, uint32_t flags);
 

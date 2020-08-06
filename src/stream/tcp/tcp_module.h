@@ -147,6 +147,9 @@ public:
     Usage get_usage() const override
     { return INSPECT; }
 
+    bool is_bindable() const override
+    { return true; }
+
 private:
     TcpStreamConfig* config;
 };

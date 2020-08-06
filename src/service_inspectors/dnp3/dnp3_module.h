@@ -52,6 +52,9 @@ public:
     Usage get_usage() const override
     { return INSPECT; }
 
+    bool is_bindable() const override
+    { return true; }
+
     void get_data(dnp3ProtoConf&);
 
 private:

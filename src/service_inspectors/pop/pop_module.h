@@ -66,6 +66,9 @@ public:
     Usage get_usage() const override
     { return INSPECT; }
 
+    bool is_bindable() const override
+    { return true; }
+
     POP_PROTO_CONF* get_data();
 
 private:

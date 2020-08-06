@@ -125,6 +125,9 @@ public:
     Usage get_usage() const override
     { return INSPECT; }
 
+    bool is_bindable() const override
+    { return true; }
+
 #ifdef REG_TEST
     static const PegInfo* get_peg_names() { return peg_names; }
     static const PegCount* get_peg_counts() { return peg_counts; }

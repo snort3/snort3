@@ -1027,6 +1027,18 @@ static const char* mod_use(Module::Usage use)
     return "error";
 }
 
+static const char* mod_bind(const Module* m)
+{
+    if ( m->is_bindable() )
+        return "multiton";
+    else if (
+        (m->get_usage() == Module::GLOBAL) or
+        (m->get_usage() == Module::CONTEXT) )
+        return "global";
+
+    return "singleton";
+}
+
 void ModuleManager::show_module(const char* name)
 {
     if ( !name || !*name )
@@ -1053,6 +1065,9 @@ void ModuleManager::show_module(const char* name)
 
         cout << endl << "Type: "  << mod_type(mh->api) << endl;
         cout << endl << "Usage: "  << mod_use(m->get_usage()) << endl;
+
+        if ( mh->api and (mh->api->type == PT_INSPECTOR) )
+            cout << endl << "Instance Type: " << mod_bind(m) << endl;
 
         const Parameter* params = m->get_parameters();
         if ( params and params->type < Parameter::PT_MAX )

@@ -70,6 +70,9 @@ public:
     Usage get_usage() const override
     { return INSPECT; }
 
+    bool is_bindable() const override
+    { return true; }
+
 private:
     FTP_CLIENT_PROTO_CONF* conf;
     std::vector<BounceTo*> bounce_to;
@@ -125,6 +128,9 @@ public:
 
     Usage get_usage() const override
     { return INSPECT; }
+
+    bool is_bindable() const override
+    { return true; }
 
     FTP_SERVER_PROTO_CONF* get_data();
     const FtpCmd* get_cmd(unsigned idx);
