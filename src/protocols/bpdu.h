@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2020 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2003-2013 Sourcefire, Inc.
+// Copyright (C) 2020-2020 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,19 +15,38 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// bpdu.h author Michael Matirko <mmatirko@cisco.com>
 
-#ifndef RNA_LOGGER_COMMON_H
-#define RNA_LOGGER_COMMON_H
+// Represents the BPDU (bridge protocol data unit) payload used for Spanning Tree Protocol
 
-// Common definitions between rna logger and pnd modules
-#define RNA_EVENT_NEW       1000
-    #define NEW_HOST            1
+#ifndef PROTOCOLS_BPDU_H
+#define PROTOCOLS_BPDU_H
 
-#define RNA_EVENT_CHANGE    1001
-    #define CHANGE_HOPS                 5
-    #define CHANGE_MAC_INFO            13
-    #define CHANGE_MAC_ADD             14
-    #define CHANGE_HOST_UPDATE         15
-    #define CHANGE_VLAN_TAG            18
+namespace snort
+{
+namespace bpdu
+{
+
+#define BPDU_TYPE_TOPCHANGE  0x80    // Topology change type BPDU
+
+static const uint8_t BPDU_DEST[6] = {0x01, 0x80, 0xC2, 0x00, 0x00, 0x00};
+
+bool isBPDU(const uint8_t mac[6]);
+
+struct BPDUData
+{
+    uint16_t id;
+    uint8_t version;
+    uint8_t type;
+} __attribute__((__packed__));
+
+
+bool isBPDU(const uint8_t mac[6])
+{
+    return (memcmp(mac, BPDU_DEST, sizeof(BPDU_DEST)) == 0);
+}
+
+} // namespace bpdu
+} // namespace snort
 
 #endif

@@ -50,3 +50,32 @@ or reader is not implemented yet. However, since RNA stores host information int
 to log the discovered hosts into a file, one can
     1) issue socket command: host_cache.dump('file.out'), or
     2) add lua config: host_cache = { dump_file = 'file.out'}.
+
+RNA Uses HostCacheMac, derived from LruCacheSharedMemcap, to track MAC addresses. The implementation
+of the MAC cache is as follows:
+
+   HostCacheMac (LruCacheSharedMemcap<uint8_t*, LruMac, HashMac>)
+      |- - - - Key = uint8_t[6] (mac address)
+      |- - - - Data = LruMac
+      |                 | - - - - Valuetype = HostMacIp (derived from snort::HostMac)
+      |                 | - - - - Data = std::vector<ValueType, MacAllocator<ValueType>>
+      |
+      |- - - - Hash = HashMac
+      |                 |
+                        | - - - - Takes uint8_t[6], returns 64-bit hash of MAC. This allows us to
+                        |             hash a 48 bit value (MAC) to a 64 bit key with relatively
+                                      few collisions. AA:BB:CC:DD:EE:FF becomes 0xAABBCCDDEEFF
+
+In RNAPnd discover_network_ethernet, in some scenarios, we are required to create a host tracker to
+be used for exclusively for logging. The call chain is the following:
+    -> discover_network_ethernet
+        | discover_network_arp
+        | discover_network_bpdu
+            | discover_switch
+
+We pass a host tracker pointer by reference (HostTracker**) from discover_network_ethernet down to
+the lower-level calls. These functions (discover[network_arp|network_bpdu|switch]) are responsible
+for setting the top level pointer to point at their own instantiated host tracker, as it
+needs to be preserved until discover_network_ethernet calls generate_change_vlan_update with this
+newly-created host tracker as an argument. This host tracker is deleted at the top level, and we must
+not return prior to that to avoid leaking any host trackers.

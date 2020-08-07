@@ -26,9 +26,13 @@
 
 #include "rna_pnd.h"
 
-#include "protocols/eth.h"
+#include <algorithm>
+
+#include "protocols/arp.h"
+#include "protocols/bpdu.h"
 #include "protocols/icmp4.h"
 #include "protocols/packet.h"
+#include "protocols/protocol_ids.h"
 #include "protocols/tcp.h"
 
 #include "rna_logger_common.h"
@@ -38,6 +42,7 @@
 #endif
 
 using namespace snort;
+using namespace bpdu;
 
 static inline bool is_eligible_packet(const Packet* p)
 {
@@ -125,7 +130,7 @@ void RnaPnd::discover_network_ip(const Packet* p)
 void RnaPnd::discover_network_non_ip(const Packet* p)
 {
     // process rna discovery for non-ip in mac cache
-    UNUSED(p);
+    discover_network_ethernet(p);
 }
 
 void RnaPnd::discover_network_tcp(const Packet* p)
@@ -147,22 +152,104 @@ void RnaPnd::discover_network_udp(const Packet* p)
 void RnaPnd::discover_network(const Packet* p, uint8_t ttl)
 {
     bool new_host = false;
+    bool new_mac = false;
     const auto& src_ip = p->ptrs.ip_api.get_src();
     auto ht = host_cache.find_else_create(*src_ip, &new_host);
+
     if ( !new_host )
         ht->update_last_seen(); // this should be done always and foremost
 
     const auto& src_mac = layer::get_eth_layer(p)->ether_src;
-    ht->add_mac(src_mac, ttl, 0);
+
+    new_mac = ht->add_mac(src_mac, ttl, 0);
 
     if ( new_host )
     {
         logger.log(RNA_EVENT_NEW, NEW_HOST, p, &ht,
             (const struct in6_addr*) src_ip->get_ip6_ptr(), src_mac);
     }
-    else if ( update_timeout )
-        generate_change_host_update(&ht, p, src_ip, src_mac, packet_time());
 
+    if ( new_mac and !new_host )
+        logger.log(RNA_EVENT_CHANGE, CHANGE_MAC_ADD, p, &ht,
+            (const struct in6_addr*) src_ip->get_ip6_ptr(), src_mac,
+            0, nullptr, ht->get_hostmac(src_mac));
+
+    if ( ht->update_mac_ttl(src_mac, ttl) )
+    {
+        logger.log(RNA_EVENT_CHANGE, CHANGE_MAC_INFO, p, &ht,
+            (const struct in6_addr*) src_ip->get_ip6_ptr(), src_mac,
+            0, nullptr, ht->get_hostmac(src_mac));
+
+        HostMac* hm = ht->get_max_ttl_hostmac();
+        if (hm and hm->primary and ht->get_hops())
+        {
+            ht->update_hops(0);
+            logger.log(RNA_EVENT_CHANGE, CHANGE_HOPS, p, &ht,
+                (const struct in6_addr*) src_ip->get_ip6_ptr(), src_mac);
+        }
+    }
+
+    if ( !new_host )
+    {
+        generate_change_host_update(&ht, p, src_ip, src_mac, packet_time());
+    }
+}
+
+inline void RnaPnd::update_vlan(const Packet* p, HostMacIp& hm)
+{
+    if (!(p->proto_bits & PROTO_BIT__VLAN))
+        return;
+
+    const vlan::VlanTagHdr* vh = layer::get_vlan_layer(p);
+
+    if (vh)
+        hm.update_vlan(vh->vth_pri_cfi_vlan, vh->vth_proto);
+}
+
+void RnaPnd::generate_change_vlan_update(RnaTracker *rt, const Packet* p,
+    const uint8_t* src_mac, HostMacIp& hm, bool isnew)
+{
+    if (!(p->proto_bits & PROTO_BIT__VLAN))
+        return;
+
+    const vlan::VlanTagHdr* vh = layer::get_vlan_layer(p);
+
+    if (!vh)
+        return;
+
+    if (isnew or !hm.has_vlan() or hm.get_vlan() != vh->vth_pri_cfi_vlan)
+    {
+        time_t timestamp = packet_time() - update_timeout;
+
+        if (!isnew)
+            update_vlan(p, hm);
+
+        rt->get()->update_vlan(vh->vth_pri_cfi_vlan, vh->vth_proto);
+        logger.log(RNA_EVENT_CHANGE, CHANGE_VLAN_TAG, p, rt, nullptr,
+            src_mac, rt->get()->get_last_seen(), (void*) &timestamp);
+    }
+}
+
+void RnaPnd::generate_change_vlan_update(RnaTracker *rt, const Packet* p,
+    const uint8_t* src_mac, const SfIp* src_ip, bool isnew)
+{
+    if (!(p->proto_bits & PROTO_BIT__VLAN))
+        return;
+
+    const vlan::VlanTagHdr* vh = layer::get_vlan_layer(p);
+
+    if (!vh)
+        return;
+
+    if (isnew or !rt->get()->has_vlan() or rt->get()->get_vlan() != vh->vth_pri_cfi_vlan)
+    {
+        time_t timestamp = packet_time() - update_timeout;
+
+        rt->get()->update_vlan(vh->vth_pri_cfi_vlan, vh->vth_proto);
+        logger.log(RNA_EVENT_CHANGE, CHANGE_VLAN_TAG, p, rt,
+            (const struct in6_addr*) src_ip->get_ip6_ptr(),
+            src_mac, rt->get()->get_last_seen(), (void*) &timestamp);
+    }
 }
 
 void RnaPnd::generate_change_host_update(RnaTracker* ht, const Packet* p,
@@ -189,6 +276,220 @@ void RnaPnd::generate_change_host_update()
     auto sec = time(nullptr);
     for ( auto & h : hosts )
         generate_change_host_update(&h.second, nullptr, &h.first, nullptr, sec);
+}
+
+void RnaPnd::generate_new_host_mac(const Packet* p, RnaTracker ht)
+{
+    // In general, this is the default case for mac eventing.
+    // Ex. if BPDU dsap, ssap checks fail, we fallback here to
+    // generate a new_host event
+
+    bool new_host_mac = false;
+    MacKey mk(layer::get_eth_layer(p)->ether_src);
+
+    auto hm_ptr = host_cache_mac.find_else_create(mk, &new_host_mac);
+
+    if (new_host_mac)
+    {
+        HostMacIp hm(mk.mac_addr, 0, p->pkth->ts.tv_sec);
+
+        update_vlan(p, hm);
+        hm_ptr->insert(&hm);
+
+        ht.get()->update_last_seen();
+        ht.get()->add_mac(mk.mac_addr, 0, 0);
+
+        logger.log(RNA_EVENT_NEW, NEW_HOST, p, &ht,
+            (const struct in6_addr*) nullptr, mk.mac_addr);
+
+        generate_change_vlan_update(&ht, p, mk.mac_addr, hm, true);
+    }
+    else
+    {
+        if (hm_ptr and !hm_ptr->isempty())
+        {
+            generate_change_vlan_update(&ht, p, mk.mac_addr, hm_ptr->data.front(), false);
+        }
+    }
+}
+
+// RNA Flow Tracking for non-IP connections (ARP, BPDU, CDP)
+void RnaPnd::discover_network_ethernet(const Packet* p)
+{
+    #define BPDU_ID 0x42
+    #define SNAP_ID 0xAA
+    int retval = 1;
+    HostTracker* ht = new HostTracker();
+    RnaTracker rt = std::shared_ptr<snort::HostTracker>(ht);
+
+    if (!p->is_eth())
+        return;
+
+    if (layer::get_arp_layer(p))
+    {
+        retval = discover_network_arp(p, &rt);
+    }
+
+    // If we have an inner LLC layer, grab it
+    Layer lyr = p->layers[p->num_layers-1];
+    if (p->layers[p->num_layers-1].prot_id == ProtocolId::ETHERNET_LLC)
+    {
+        uint16_t etherType = rna_get_eth(p);
+
+        if (!etherType || etherType > static_cast<uint16_t>(ProtocolId::ETHERTYPE_MINIMUM))
+        {
+            generate_new_host_mac(p, rt);
+            return;
+        }
+
+        const RNA_LLC* llc = (const RNA_LLC*) lyr.start;
+
+        if (llc->s.s.DSAP != llc->s.s.SSAP)
+        {
+            generate_new_host_mac(p, rt);
+            return;
+        }
+
+        switch (llc->s.s.DSAP)
+        {
+            case BPDU_ID:
+            {
+                retval = discover_network_bpdu(p, ((const uint8_t*)llc + sizeof(RNA_LLC)), rt);
+                break;
+            }
+
+            default:
+                break;
+        }
+    }
+
+    if (retval)
+        generate_new_host_mac(p, rt);
+
+    return;
+}
+
+int RnaPnd::discover_network_arp(const Packet* p, RnaTracker* ht_ref)
+{
+    bool new_host_mac = false;
+    bool new_host = false;
+
+    MacKey mk(layer::get_eth_layer(p)->ether_src);
+    const auto& src_mac = mk.mac_addr;
+    HostMacIp hm(mk.mac_addr, 0, p->pkth->ts.tv_sec);
+
+    const snort::arp::EtherARP *ah = layer::get_arp_layer(p);
+
+    if (ntohs(ah->ea_hdr.ar_hrd) != 0x0001)
+        return 1;
+    if (ntohs(ah->ea_hdr.ar_pro) != 0x0800)
+        return 1;
+    if (ah->ea_hdr.ar_hln != 6 || ah->ea_hdr.ar_pln != 4)
+        return 1;
+    if ((ntohs(ah->ea_hdr.ar_op) != 0x0002))
+        return 1;
+    if (memcmp(src_mac, ah->arp_sha, MAC_SIZE))
+        return 1;
+    if (!ah->arp_spa32)
+        return 1;
+
+    SfIp spa(ah->arp_spa, AF_INET);
+
+    // In the case where SPA is not monitored, log as a generic "NEW MAC"
+    if ( !(filter.is_host_monitored(p, nullptr, &spa) ))
+        return 1;
+
+    auto ht = host_cache.find_else_create(spa, &new_host);
+
+    std::shared_ptr<LruMac> hm_ptr = host_cache_mac.find_else_create(mk, &new_host_mac);
+
+    if (new_host_mac)
+        hm_ptr->insert(&hm);
+
+    *ht_ref = ht;
+
+    if( new_host )
+    {
+        ht->update_hops(255);
+        ht->add_mac(src_mac, 0, 0);
+        logger.log(RNA_EVENT_NEW, NEW_HOST, p, &ht,
+            (const struct in6_addr*) spa.get_ip6_ptr(), src_mac);
+    }
+
+    if ( ht->add_mac(src_mac, 0, 0) )
+    {
+        logger.log(RNA_EVENT_CHANGE, CHANGE_MAC_ADD, p, ht_ref,
+            (const struct in6_addr*) spa.get_ip6_ptr(), src_mac,
+            0, nullptr, ht->get_hostmac(src_mac));
+    }
+    else if (ht->make_primary(src_mac))
+    {
+        logger.log(RNA_EVENT_CHANGE, CHANGE_MAC_INFO, p, ht_ref,
+            (const struct in6_addr*) spa.get_ip6_ptr(), src_mac,
+            0, nullptr, ht->get_hostmac(src_mac));
+    }
+
+    generate_change_vlan_update(&ht, p, src_mac, &spa, true);
+
+    if ( ht->get_hops() )
+    {
+        ht->update_hops(0);
+        logger.log(RNA_EVENT_CHANGE, CHANGE_HOPS, p, ht_ref,
+            (const struct in6_addr*) spa.get_ip6_ptr(), src_mac, 0, nullptr,
+             ht->get_hostmac(src_mac));
+    }
+
+    return 0;
+}
+
+int RnaPnd::discover_network_bpdu(const Packet* p, const uint8_t* data,
+    RnaTracker ht_ref)
+{
+    const uint8_t* dst_mac = layer::get_eth_layer(p)->ether_dst;
+
+    const BPDUData* stp;
+
+    if (!isBPDU(dst_mac))
+        return 1;
+    stp = reinterpret_cast<const BPDUData*>(data);
+    if (stp->id || stp->version)
+        return 1;
+    if (stp->type !=  BPDU_TYPE_TOPCHANGE)
+        return 1;
+
+    return discover_switch(p, ht_ref);
+}
+
+int RnaPnd::discover_switch(const Packet* p, RnaTracker ht_ref)
+{
+    bool new_host = false;
+    MacKey mk(layer::get_eth_layer(p)->ether_src);
+
+    std::shared_ptr<LruMac> hm_ptr = host_cache_mac.find_else_create(mk, &new_host);
+
+    if (new_host)
+    {
+        HostMacIp hm(mk.mac_addr, 0, p->pkth->ts.tv_sec);
+
+        hm.host_type = HOST_TYPE_BRIDGE;
+
+        update_vlan(p, hm);
+        hm_ptr->insert(&hm);
+
+        ht_ref.get()->update_last_seen();
+        ht_ref.get()->add_mac(mk.mac_addr, 0, 1);
+
+        logger.log(RNA_EVENT_NEW, NEW_HOST, p, &ht_ref,
+            (const struct in6_addr*) nullptr, mk.mac_addr);
+
+        generate_change_vlan_update(&ht_ref, p, mk.mac_addr, hm, true);
+    }
+    else
+    {
+        generate_change_vlan_update(&ht_ref, p, mk.mac_addr, hm_ptr->data.front(), false);
+    }
+
+    return 0;
 }
 
 #ifdef UNIT_TEST

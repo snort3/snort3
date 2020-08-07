@@ -22,6 +22,7 @@
 
 #include "events/event.h"
 #include "host_tracker/host_cache.h"
+#include "host_tracker/host_tracker.h"
 
 namespace snort
 {
@@ -41,6 +42,7 @@ struct RnaLoggerEvent : public Event
     const uint8_t* mac;
     const struct in6_addr* ip = nullptr;
     void* cond_var = nullptr;
+    const snort::HostMac* hm;
 };
 
 class RnaLogger
@@ -49,7 +51,7 @@ public:
     RnaLogger(const bool enable) : enabled(enable) { }
     bool log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
        const struct in6_addr* src_ip, const uint8_t* src_mac,
-       uint32_t event_time = 0, void* cond_var = nullptr);
+       uint32_t event_time = 0, void* cond_var = nullptr, const snort::HostMac* hm = nullptr);
 
 private:
     const bool enabled;

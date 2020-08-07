@@ -41,7 +41,8 @@ public:
 
     // If flag is provided (preferable), results are stored in flag to avoid future lookups
     bool is_app_monitored(const snort::Packet* p, uint8_t* flag = nullptr);
-    bool is_host_monitored(const snort::Packet* p, uint8_t* flag = nullptr);
+    bool is_host_monitored(const snort::Packet* p, uint8_t* flag = nullptr,
+        const snort::SfIp* ip = nullptr);
     bool is_user_monitored(const snort::Packet* p, uint8_t* flag = nullptr);
 
 private:
@@ -49,8 +50,8 @@ private:
     enum Direction { CLIENT, SERVER, NUM_DIRECTIONS };
 
     bool is_monitored(const snort::Packet* p, FilterType type, uint8_t& flag,
-        uint8_t checked, uint8_t monitored);
-    bool is_monitored(const snort::Packet* p, FilterType type);
+        uint8_t checked, uint8_t monitored, const snort::SfIp* ip = nullptr);
+    bool is_monitored(const snort::Packet* p, FilterType type, const snort::SfIp* ip = nullptr);
     void add_ip(FilterType type, ZoneType zone, std::string& ip);
     sfip_var_t* get_list(FilterType type, ZoneType zone, bool exclude_empty = false);
 

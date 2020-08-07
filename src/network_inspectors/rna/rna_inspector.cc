@@ -96,8 +96,7 @@ void RnaInspector::eval(Packet* p)
     assert( !(BIT((unsigned)p->type()) & PROTO_BIT__ANY_SSN) );
 
     // Handling untracked sessions, e.g., non-IP packets
-    // pnd->analyze_flow_non_ip(p);
-    UNUSED(p);
+    pnd->analyze_flow_non_ip(p);
 }
 
 void RnaInspector::show(const SnortConfig*) const

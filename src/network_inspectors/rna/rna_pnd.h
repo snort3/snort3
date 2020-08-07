@@ -20,10 +20,19 @@
 #ifndef RNA_PND_H
 #define RNA_PND_H
 
-#include "helpers/discovery_filter.h"
+#include <limits>
 
-#include "rna_logger.h"
+#include "helpers/discovery_filter.h"
+#include "host_tracker/host_tracker.h"
+#include "protocols/eth.h"
+#include "protocols/layer.h"
+#include "protocols/vlan.h"
 #include "sfip/sf_ip.h"
+
+#include "rna_mac_cache.h"
+#include "rna_logger.h"
+
+#define USHRT_MAX std::numeric_limits<unsigned short>::max()
 
 namespace snort
 {
@@ -34,6 +43,37 @@ enum class TcpPacketType
 {
     SYN, SYN_ACK, MIDSTREAM
 };
+
+#pragma pack(1)
+struct RNA_LLC
+{
+    union
+    {
+        struct
+        {
+            uint8_t DSAP;
+            uint8_t SSAP;
+        } s;
+        uint16_t proto;
+    } s;
+    uint8_t flags;
+};
+#pragma pack()
+
+static inline unsigned short rna_get_eth(const snort::Packet* p)
+{
+    const snort::vlan::VlanTagHdr* vh = nullptr;
+    const snort::eth::EtherHdr* eh = nullptr;
+
+    if (p->proto_bits & PROTO_BIT__VLAN)
+        vh = snort::layer::get_vlan_layer(p);
+
+    if (vh)
+        return ntohs(vh->vth_proto);
+    else if ((eh = snort::layer::get_eth_layer(p)))
+        return ntohs(eh->ether_type);
+    return USHRT_MAX;
+}
 
 class RnaPnd
 {
@@ -55,6 +95,15 @@ public:
     // generate change event for all hosts in the ip cache
     void generate_change_host_update();
 
+    // Change vlan event related utilities
+    inline void update_vlan(const snort::Packet* p, HostMacIp& hm);
+    void generate_change_vlan_update(RnaTracker *rt, const snort::Packet* p,
+        const uint8_t* src_mac, HostMacIp& hm, bool isnew);
+    void generate_change_vlan_update(RnaTracker *rt, const snort::Packet* p,
+        const uint8_t* src_mac, const SfIp* src_ip, bool isnew);
+
+    void generate_new_host_mac(const snort::Packet* p, RnaTracker ht);
+
 private:
     // General rna utilities not associated with flow
     void discover_network_icmp(const snort::Packet* p);
@@ -63,6 +112,12 @@ private:
     void discover_network_tcp(const snort::Packet* p);
     void discover_network_udp(const snort::Packet* p);
     void discover_network(const snort::Packet* p, uint8_t ttl);
+
+    // RNA utilities for non-IP packets
+    void discover_network_ethernet(const snort::Packet* p);
+    int discover_network_arp(const snort::Packet* p, RnaTracker* ht_ref);
+    int discover_network_bpdu(const snort::Packet* p, const uint8_t* data, RnaTracker ht_ref);
+    int discover_switch(const snort::Packet* p, RnaTracker ht_ref);
 
     RnaLogger logger;
     DiscoveryFilter filter;

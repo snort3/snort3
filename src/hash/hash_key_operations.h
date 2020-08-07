@@ -65,6 +65,17 @@ static inline int hash_nearest_power_of_2(int nrows)
     return nrows;
 }
 
+static inline uint64_t hash_mac(const uint8_t* a)
+{
+    uint64_t hash = a[0];
+    hash = (hash << 8) | a[1];
+    hash = (hash << 8) | a[2];
+    hash = (hash << 8) | a[3];
+    hash = (hash << 8) | a[4];
+    hash = (hash << 8) | a[5];
+    return hash;
+}
+
 class HashKeyOperations
 {
 public:

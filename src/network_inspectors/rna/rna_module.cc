@@ -25,12 +25,21 @@
 #include "rna_module.h"
 
 #include <cassert>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+#include <sys/stat.h>
 
 #include "log/messages.h"
+#include "lua/lua.h"
 #include "main/snort_config.h"
 #include "main/swapper.h"
 #include "managers/inspector_manager.h"
+#include "managers/module_manager.h"
 #include "src/main.h"
+#include "utils/util.h"
+
+#include "rna_mac_cache.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -41,6 +50,13 @@ using namespace snort;
 //-------------------------------------------------------------------------
 // rna commands, params, and pegs
 //-------------------------------------------------------------------------
+static int dump_mac_cache(lua_State* L)
+{
+    RnaModule* mod = (RnaModule*) ModuleManager::get_module(RNA_NAME);
+    if ( mod )
+        mod->log_mac_cache( luaL_optstring(L, 1, nullptr) );
+    return 0;
+}
 
 static int reload_fingerprint(lua_State*)
 {
@@ -73,10 +89,27 @@ static int reload_fingerprint(lua_State*)
     return 0;
 }
 
+std::string format_dump_mac(uint8_t mac[MAC_SIZE])
+{
+    std::stringstream ss;
+    ss << std::hex;
+
+    for(int i=0; i < MAC_SIZE; i++)
+    {
+        ss << std::setfill('0') << std::setw(2) << static_cast<int>(mac[i]);
+        if (i != MAC_SIZE - 1)
+            ss << ":";
+    }
+
+    return ss.str();
+}
+
 static const Command rna_cmds[] =
 {
     { "reload_fingerprint", reload_fingerprint, nullptr,
       "reload rna database of fingerprint patterns/signatures" },
+    { "dump_macs", dump_mac_cache, nullptr,
+      "dump rna's internal MAC trackers" },
     { nullptr, nullptr, nullptr, nullptr }
 };
 
@@ -93,6 +126,9 @@ static const Parameter rna_params[] =
 
     { "log_when_idle", Parameter::PT_BOOL, nullptr, "false",
       "enable host update logging when snort is idle" },
+
+    { "dump_file", Parameter::PT_STRING, nullptr, nullptr,
+      "file name to dump RNA mac cache on shutdown; won't dump by default" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -122,6 +158,12 @@ RnaModule::RnaModule() : Module(RNA_NAME, RNA_HELP, rna_params)
 
 RnaModule::~RnaModule()
 {
+    if ( dump_file )
+    {
+        log_mac_cache(dump_file);
+        snort_free((void*)dump_file);
+    }
+
     delete mod_conf;
 }
 
@@ -144,6 +186,12 @@ bool RnaModule::set(const char*, Value& v, SnortConfig*)
         mod_conf->enable_logger = v.get_bool();
     else if (v.is("log_when_idle"))
         mod_conf->log_when_idle = v.get_bool();
+    else if ( v.is("dump_file") )
+    {
+        if ( dump_file )
+            snort_free((void*)dump_file);
+        dump_file = snort_strdup(v.get_string());
+    }
     else
         return false;
 
@@ -186,6 +234,48 @@ const PegInfo* RnaModule::get_pegs() const
 
 ProfileStats* RnaModule::get_profile() const
 { return &rna_perf_stats; }
+
+bool RnaModule::log_mac_cache(const char* outfile)
+{
+    if ( !outfile )
+    {
+        LogMessage("File name is needed!\n");
+        return 0;
+    }
+
+    struct stat file_stat;
+    if ( stat(outfile, &file_stat) == 0 )
+    {
+        LogMessage("File %s already exists!\n", outfile);
+        return 0;
+    }
+
+    std::ofstream out_stream(outfile);
+    if ( !out_stream )
+    {
+        snort::LogMessage("Error opening %s for dumping MAC cache", outfile);
+    }
+
+    std::string str;
+    const auto&& lru_data = host_cache_mac.get_all_data();
+    out_stream << "Current mac cache size: " << host_cache_mac.mem_size() << " bytes, "
+        << lru_data.size() << " trackers" << std::endl << std::endl;
+    for ( const auto& elem : lru_data )
+    {
+        str = "MAC: ";
+
+        if (elem.second->data.size() > 0)
+            str += format_dump_mac(elem.second->data.front().mac);
+        else
+            str += "No MacHostTracker found for entry ";
+
+        str += "\n Key: " +  std::to_string(hash_mac(elem.second->data.front().mac));
+        out_stream << str << std::endl << std::endl;
+    }
+    out_stream.close();
+
+    return 0;
+}
 
 #ifdef UNIT_TEST
 TEST_CASE("RNA module", "[rna_module]")

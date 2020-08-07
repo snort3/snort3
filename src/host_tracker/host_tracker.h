@@ -36,6 +36,7 @@
 #include "main/thread.h"
 #include "network_inspectors/appid/application_ids.h"
 #include "protocols/protocol_ids.h"
+#include "protocols/vlan.h"
 #include "time/packet_time.h"
 
 struct HostTrackerStats
@@ -71,6 +72,15 @@ struct HostApplication
     bool inferred_appid;
 };
 
+enum HostType
+{
+    HOST_TYPE_HOST=0,
+    HOST_TYPE_ROUTER,
+    HOST_TYPE_BRIDGE,
+    HOST_TYPE_NAT,
+    HOST_TYPE_LB
+};
+
 typedef HostCacheAllocIp<HostMac> HostMacAllocator;
 typedef HostCacheAllocIp<HostApplication> HostAppAllocator;
 
@@ -97,8 +107,31 @@ public:
         return last_event;
     }
 
+    void set_host_type(HostType rht)
+    { host_type = rht; }
+
+    uint8_t get_hops() { return hops; }
+    void update_hops(uint8_t h) { hops = h; }
+
     // Returns true if a new mac entry is added, false otherwise
     bool add_mac(const uint8_t* mac, uint8_t ttl, uint8_t primary);
+
+    // Returns true if a mac entry TTL is updated and decreased, false otherwise
+    bool update_mac_ttl(const uint8_t* mac, uint8_t new_ttl);
+
+    // Returns true if we changed primary (false->true), false otherwise
+    bool make_primary(const uint8_t* mac);
+
+    // Returns the hostmac pointer with the highest TTL
+    HostMac* get_max_ttl_hostmac();
+
+    // Returns the matching host_mac
+    const HostMac* get_hostmac(const uint8_t* mac);
+
+    void update_vlan(uint16_t vth_pri_cfi_vlan, uint16_t vth_proto);
+    bool has_vlan();
+    uint16_t get_vlan();
+    void get_vlan_details(uint8_t& cfi, uint8_t& priority, uint16_t& vid);
 
     // The caller owns and deletes the copied list of mac addresses
     void copy_data(uint8_t& p_hops, uint32_t& p_last_seen, std::list<HostMac>*& p_macs);
@@ -122,6 +155,9 @@ private:
     uint32_t last_event;          // the last time an event was generated
     std::list<HostMac, HostMacAllocator> macs;
     std::vector<HostApplication, HostAppAllocator> services;
+    bool vlan_tag_present = false;
+    vlan::VlanTagHdr vlan_tag;
+    HostType host_type;
 
     // Hide / delete the constructor from the outside world. We don't want to
     // have zombie host trackers, i.e. host tracker objects that live outside

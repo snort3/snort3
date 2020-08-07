@@ -42,7 +42,7 @@ using namespace snort;
 
 bool RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
     const struct in6_addr* src_ip, const uint8_t* src_mac, uint32_t event_time,
-    void* cond_var)
+    void* cond_var, const HostMac* hm)
 {
     if ( !enabled )
         return false;
@@ -57,6 +57,9 @@ bool RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker
         if (type == RNA_EVENT_CHANGE && subtype == CHANGE_HOST_UPDATE)
             rle.cond_var = cond_var;
     }
+
+    if (hm)
+        rle.hm = hm;
 
     EventManager::call_loggers(nullptr, const_cast<Packet*>(p), "RNA", &rle);
     return true;

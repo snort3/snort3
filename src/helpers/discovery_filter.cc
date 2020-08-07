@@ -203,11 +203,11 @@ bool DiscoveryFilter::is_app_monitored(const Packet* p, uint8_t* flag)
     return is_monitored(p, DF_APP, *flag, DF_APP_CHECKED, DF_APP_MONITORED);
 }
 
-bool DiscoveryFilter::is_host_monitored(const Packet* p, uint8_t* flag)
+bool DiscoveryFilter::is_host_monitored(const Packet* p, uint8_t* flag, const SfIp* ip)
 {
     if ( flag == nullptr )
-        return is_monitored(p, DF_HOST);
-    return is_monitored(p, DF_HOST, *flag, DF_HOST_CHECKED, DF_HOST_MONITORED);
+        return is_monitored(p, DF_HOST, ip);
+    return is_monitored(p, DF_HOST, *flag, DF_HOST_CHECKED, DF_HOST_MONITORED, ip);
 }
 
 bool DiscoveryFilter::is_user_monitored(const Packet* p, uint8_t* flag)
@@ -218,14 +218,14 @@ bool DiscoveryFilter::is_user_monitored(const Packet* p, uint8_t* flag)
 }
 
 bool DiscoveryFilter::is_monitored(const Packet* p, FilterType type, uint8_t& flag,
-    uint8_t checked, uint8_t monitored)
+    uint8_t checked, uint8_t monitored, const SfIp* ip)
 {
     if ( flag & checked )
         return flag & monitored;
 
     flag |= checked;
 
-    if ( is_monitored(p, type) )
+    if ( is_monitored(p, type, ip) )
     {
         flag |= monitored;
         return true;
@@ -235,7 +235,7 @@ bool DiscoveryFilter::is_monitored(const Packet* p, FilterType type, uint8_t& fl
     return false;
 }
 
-bool DiscoveryFilter::is_monitored(const Packet* p, FilterType type)
+bool DiscoveryFilter::is_monitored(const Packet* p, FilterType type, const SfIp* ip)
 {
     if ( !vartable )
         return true; // when not configured, 'any' ip/port/zone are monitored by default
@@ -255,7 +255,11 @@ bool DiscoveryFilter::is_monitored(const Packet* p, FilterType type)
     if (!varip and zone != DF_ANY_ZONE)
         varip = get_list(type, DF_ANY_ZONE, true);
 
-    return sfvar_ip_in(varip, p->ptrs.ip_api.get_src()); // source ip only
+    if (!p->ptrs.ip_api.get_src() and !ip)
+        return true; // Don't check for non-IP, non ARP
+
+    const SfIp* host_ip = (ip) ? ip : p->ptrs.ip_api.get_src();
+    return sfvar_ip_in(varip, host_ip);
 }
 
 bool DiscoveryFilter::is_port_excluded(const Packet* p)

@@ -18,6 +18,8 @@ set ( RNA_SOURCES
     rna_inspector.h
     rna_logger.cc
     rna_logger_common.h
+    rna_mac_cache.cc
+    rna_mac_cache.h
     rna_module.cc
     rna_module.h
     rna_pnd.cc

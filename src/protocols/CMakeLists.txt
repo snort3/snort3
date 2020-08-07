@@ -1,6 +1,7 @@
 
 set (PROTOCOL_HEADERS
     arp.h
+    bpdu.h
     cisco_meta_data.h
     eapol.h
     eth.h

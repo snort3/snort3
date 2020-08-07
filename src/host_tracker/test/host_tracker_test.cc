@@ -114,7 +114,7 @@ TEST(host_tracker, stringify)
     ht.add_mac(mac1, 9, 0);
     test_time = 1562198407; // this time should be the time of the second mac address
     ht.update_last_seen();
-    ht.add_mac(mac2, 3, 1); // this primary mac should go to the front of the list
+    ht.add_mac(mac2, 3, 1); // this primary mac should go to the back of the list
 
     ht.add_service(80, IpProtocol::TCP, 676, true);
     test_time = 1562198409; // this time should be the last seen time of the host
@@ -127,8 +127,8 @@ TEST(host_tracker, stringify)
     STRCMP_EQUAL(host_tracker_string.c_str(),
         "\n    hops: 255, time: 2019-07-04 00:00:09"
         "\nmacs size: 2"
-        "\n    mac: CA:FE:C0:FF:EE:00, ttl: 3, primary: 1, time: 2019-07-04 00:00:07"
         "\n    mac: FE:ED:DE:AD:BE:EF, ttl: 9, primary: 0, time: 2019-07-04 00:00:04"
+        "\n    mac: CA:FE:C0:FF:EE:00, ttl: 3, primary: 1, time: 2019-07-04 00:00:07"
         "\nservices size: 2"
         "\n    port: 80, proto: 6, appid: 676, inferred"
         "\n    port: 443, proto: 6, appid: 1122");

@@ -29,6 +29,8 @@
 #define RNA_NAME "rna"
 #define RNA_HELP "Real-time network awareness and OS fingerprinting (experimental)"
 
+std::string format_dump_mac(uint8_t mac[6]);
+
 struct RnaStats
 {
     PegCount icmp_bidirectional;
@@ -56,6 +58,7 @@ public:
     bool begin(const char*, int, snort::SnortConfig*) override;
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
     bool end(const char*, int, snort::SnortConfig*) override;
+    bool log_mac_cache(const char* outfile);
 
     const snort::Command* get_commands() const override;
     RnaModuleConfig* get_config();
@@ -68,6 +71,8 @@ public:
 
 private:
     RnaModuleConfig* mod_conf = nullptr;
+    const char* dump_file = nullptr;
+
 };
 
 #endif

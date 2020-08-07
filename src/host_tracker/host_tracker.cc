@@ -57,16 +57,118 @@ bool HostTracker::add_mac(const uint8_t* mac, uint8_t ttl, uint8_t primary)
         if ( !memcmp(mac, hm.mac, MAC_SIZE) )
             return false;
 
-    if ( primary )
-    {
-        // only one primary mac (e.g., from ARP) is maintained at the front
-        if ( !macs.empty() )
-            macs.front().primary = 0;
-        macs.emplace_front(ttl, mac, primary, last_seen);
-    }
-    else
-        macs.emplace_back(ttl, mac, primary, last_seen);
+    macs.emplace_back(ttl, mac, primary, last_seen);
     return true;
+}
+
+const HostMac* HostTracker::get_hostmac(const uint8_t* mac)
+{
+    if ( !mac or !memcmp(mac, zero_mac, MAC_SIZE) )
+        return nullptr;
+
+    std::lock_guard<std::mutex> lck(host_tracker_lock);
+
+    for ( const auto& hm : macs )
+        if ( !memcmp(mac, hm.mac, MAC_SIZE) )
+            return &hm;
+
+    return nullptr;
+}
+
+bool HostTracker::update_mac_ttl(const uint8_t* mac, uint8_t new_ttl)
+{
+    if ( !mac or !memcmp(mac, zero_mac, MAC_SIZE) )
+        return false;
+
+    std::lock_guard<std::mutex> lck(host_tracker_lock);
+
+    for ( auto& hm : macs )
+        if ( !memcmp(mac, hm.mac, MAC_SIZE) )
+        {
+            if (hm.ttl < new_ttl)
+            {
+                hm.ttl = new_ttl;
+                return true;
+            }
+
+            return false;
+        }
+
+    return false;
+}
+
+bool HostTracker::make_primary(const uint8_t* mac)
+{
+    if ( !mac or !memcmp(mac, zero_mac, MAC_SIZE) )
+        return false;
+
+    HostMac* hm = nullptr;
+
+    std::lock_guard<std::mutex> lck(host_tracker_lock);
+
+    for ( auto& hm_iter : macs )
+        if ( !memcmp(mac, hm_iter.mac, MAC_SIZE) )
+        {
+            hm = &hm_iter;
+            break;
+        }
+
+    if ( !hm )
+        return false;
+
+    if (!hm->primary)
+    {
+        hm->primary = true;
+        return true;
+    }
+
+    return false;
+}
+
+HostMac* HostTracker::get_max_ttl_hostmac()
+{
+    std::lock_guard<std::mutex> lck(host_tracker_lock);
+
+    HostMac* max_ttl_hm = nullptr;
+    uint8_t max_ttl = 0;
+
+    for ( auto& hm : macs )
+    {
+        if (hm.primary)
+            return &hm;
+
+        if (hm.ttl > max_ttl)
+        {
+            max_ttl = hm.ttl;
+            max_ttl_hm = &hm;
+        }
+    }
+
+    return max_ttl_hm;
+}
+
+void HostTracker::update_vlan(uint16_t vth_pri_cfi_vlan, uint16_t vth_proto)
+{
+    vlan_tag_present = true;
+    vlan_tag.vth_pri_cfi_vlan = vth_pri_cfi_vlan;
+    vlan_tag.vth_proto = vth_proto;
+}
+
+bool HostTracker::has_vlan()
+{
+    return vlan_tag_present;
+}
+
+uint16_t HostTracker::get_vlan()
+{
+    return vlan_tag.vth_pri_cfi_vlan;
+}
+
+void HostTracker::get_vlan_details(uint8_t& cfi, uint8_t& priority, uint16_t& vid)
+{
+    cfi = vlan_tag.cfi();
+    priority = vlan_tag.priority();
+    vid = vlan_tag.vid();
 }
 
 void HostTracker::copy_data(uint8_t& p_hops, uint32_t& p_last_seen, list<HostMac>*& p_macs)
