@@ -130,6 +130,7 @@ public:
 
 private:
     bool no_ack = false;
+    bool cleaning = false;
 
 protected:
     TcpStreamSession(snort::Flow*);

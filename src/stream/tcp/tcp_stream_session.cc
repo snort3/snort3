@@ -360,6 +360,7 @@ bool TcpStreamSession::setup(Packet*)
     server.init_tcp_state();
     lws_init = tcp_init = false;
     generate_3whs_alert = true;
+    cleaning = false;
     pkt_action_mask = ACTION_NOTHING;
     ecn = 0;
     ingress_index = egress_index = 0;
@@ -372,9 +373,16 @@ bool TcpStreamSession::setup(Packet*)
 
 void TcpStreamSession::cleanup(Packet* p)
 {
+    if ( cleaning )
+        return;
+
+    cleaning = true;
     clear_session(true, true, false, p);
     client.normalizer.reset();
+    server.normalizer.reset();
+    client.reassembler.reset();
     server.reassembler.reset();
+    cleaning = false;
 }
 
 void TcpStreamSession::clear()
