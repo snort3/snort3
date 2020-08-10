@@ -39,11 +39,52 @@ TEST_CASE("basic", "[json_stream]")
         CHECK(ss.str() == "{  }\n");
     }
 
+    SECTION("empty root array")
+    {
+        js.open_array();
+        js.close_array();
+        const char* x = R"-([  ])-" "\n";
+        CHECK(ss.str() == x);
+    }
+
+    SECTION("empty object")
+    {
+        js.open();
+        js.open("o");
+        js.close();
+        js.close();
+        const char* x = R"-({ "o": {  } })-" "\n";
+        CHECK(ss.str() == x);
+    }
+
     SECTION("empty array")
     {
+        js.open();
         js.open_array("a");
         js.close_array();
-        const char* x = R"-("a": [  ])-";
+        js.close();
+        const char* x = R"-({ "a": [  ] })-" "\n";
+        CHECK(ss.str() == x);
+    }
+
+    SECTION("null")
+    {
+        js.put("n");
+        const char* x = R"-("n": null)-";
+        CHECK(ss.str() == x);
+    }
+
+    SECTION("bool true")
+    {
+        js.put_true("b");
+        const char* x = R"-("b": true)-";
+        CHECK(ss.str() == x);
+    }
+
+    SECTION("bool false")
+    {
+        js.put_false("b");
+        const char* x = R"-("b": false)-";
         CHECK(ss.str() == x);
     }
 
@@ -51,6 +92,13 @@ TEST_CASE("basic", "[json_stream]")
     {
         js.put("i", 0);
         const char* x = R"-("i": 0)-";
+        CHECK(ss.str() == x);
+    }
+
+    SECTION("real")
+    {
+        js.put("r", 2.5, 2);
+        const char* x = R"-("r": 2.50)-";
         CHECK(ss.str() == x);
     }
 
@@ -68,10 +116,34 @@ TEST_CASE("basic", "[json_stream]")
         CHECK(ss.str() == "");
     }
 
+    SECTION("null item")
+    {
+        js.put(nullptr);
+        CHECK(ss.str() == "null");
+    }
+
+    SECTION("bool true item")
+    {
+        js.put_true(nullptr);
+        CHECK(ss.str() == "true");
+    }
+
+    SECTION("bool false item")
+    {
+        js.put_false(nullptr);
+        CHECK(ss.str() == "false");
+    }
+
     SECTION("int item")
     {
         js.put(nullptr, 1);
         CHECK(ss.str() == "1");
+    }
+
+    SECTION("real item")
+    {
+        js.put(nullptr, 2.5, 2);
+        CHECK(ss.str() == "2.50");
     }
 
     SECTION("string item")
@@ -86,6 +158,22 @@ TEST_CASE("basic", "[json_stream]")
         const char* s = R"-(content:"foo";)-";
         const char* x = R"-("content:\"foo\";")-";
         js.put(nullptr, s);
+        CHECK(ss.str() == x);
+    }
+
+    SECTION("null list")
+    {
+        js.put("i");
+        js.put("j");
+        const char* x = R"-("i": null, "j": null)-";
+        CHECK(ss.str() == x);
+    }
+
+    SECTION("bool list")
+    {
+        js.put_true("i");
+        js.put_false("j");
+        const char* x = R"-("i": true, "j": false)-";
         CHECK(ss.str() == x);
     }
 
@@ -118,6 +206,32 @@ TEST_CASE("basic", "[json_stream]")
         CHECK(ss.str() == x);
     }
 
+    SECTION("null array")
+    {
+        js.open();
+        js.open_array("n");
+        js.put(nullptr);
+        js.put(nullptr);
+        js.put(nullptr);
+        js.close_array();
+        js.close();
+        const char* x = R"-({ "n": [ null, null, null ] })-" "\n";
+        CHECK(ss.str() == x);
+    }
+
+    SECTION("bool array")
+    {
+        js.open();
+        js.open_array("b");
+        js.put_true(nullptr);
+        js.put_false(nullptr);
+        js.put_true(nullptr);
+        js.close_array();
+        js.close();
+        const char* x = R"-({ "b": [ true, false, true ] })-" "\n";
+        CHECK(ss.str() == x);
+    }
+
     SECTION("int array")
     {
         js.open();
@@ -131,6 +245,18 @@ TEST_CASE("basic", "[json_stream]")
         CHECK(ss.str() == x);
     }
 
+    SECTION("real array")
+    {
+        js.open();
+        js.open_array("r");
+        js.put(nullptr, 2.556, 3);
+        js.put(nullptr, 3.7778, 4);
+        js.close_array();
+        js.close();
+        const char* x = R"-({ "r": [ 2.556, 3.7778 ] })-" "\n";
+        CHECK(ss.str() == x);
+    }
+
     SECTION("string array")
     {
         js.open();
@@ -140,18 +266,6 @@ TEST_CASE("basic", "[json_stream]")
         js.close_array();
         js.close();
         const char* x = R"-({ "v": [ "long", "road" ] })-" "\n";
-        CHECK(ss.str() == x);
-    }
-
-    SECTION("array list")
-    {
-        js.open();
-        js.open_array("m");
-        js.close_array();
-        js.open_array("n");
-        js.close_array();
-        js.close();
-        const char* x = R"-({ "m": [  ], "n": [  ] })-" "\n";
         CHECK(ss.str() == x);
     }
 
@@ -176,6 +290,73 @@ TEST_CASE("basic", "[json_stream]")
         js.put("d", "++");
         js.close();
         const char* x = R"-({ "c": "Snort", "n": [  ], "d": "++" })-" "\n";
+        CHECK(ss.str() == x);
+    }
+
+    SECTION("root array of objects")
+    {
+        js.open_array();
+        js.open();
+        js.close();
+        js.open();
+        js.close();
+        js.open();
+        js.close();
+        js.close_array();
+        const char* x = R"-([ {  }, {  }, {  } ])-" "\n";
+        CHECK(ss.str() == x);
+    }
+
+    SECTION("root array of objects with nested arrays of objects")
+    {
+        js.open_array();
+        js.open();
+        js.put("i", 1);
+        js.open_array("array_1");
+        js.open();
+        js.put("str", "Snort");
+        js.close();
+        js.open();
+        js.put("str", "++");
+        js.close();
+        js.close_array();
+        js.put("j", 2);
+        js.close();
+        js.open();
+        js.put("i", 3);
+        js.open_array("array_2");
+        js.open();
+        js.put("str", "IPS");
+        js.close();
+        js.open();
+        js.put("str", "IDS");
+        js.close();
+        js.close_array();
+        js.put("j", 4);
+        js.close();
+        js.close_array();
+        const char* x = R"-([ { "i": 1, "array_1": [ { "str": "Snort" }, { "str": "++" } ],)-"
+            R"-( "j": 2 }, { "i": 3, "array_2": [ { "str": "IPS" }, { "str": "IDS" } ],)-"
+            R"-( "j": 4 } ])-" "\n";
+        CHECK(ss.str() == x);
+    }
+
+    SECTION("root object with nested objects")
+    {
+        js.open();
+        js.open_array("keys");
+        js.put(nullptr, "name");
+        js.put(nullptr, "version");
+        js.close_array();
+        js.open("name");
+        js.put("value", "Snort");
+        js.close();
+        js.open("version");
+        js.put("value", "3.0.0");
+        js.close();
+        js.close();
+        const char* x = R"-({ "keys": [ "name", "version" ], "name": { "value": "Snort" },)-"
+            R"-( "version": { "value": "3.0.0" } })-" "\n";
         CHECK(ss.str() == x);
     }
 }

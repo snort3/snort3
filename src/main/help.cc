@@ -55,6 +55,7 @@ static constexpr const char* snort_help =
     "--help-limits print the int upper bounds denoted by max*\n"
     "--help-module <module> output description of given module\n"
     "--help-modules list all available modules with brief help\n"
+    "--help-modules-json dump description of all available modules in JSON format\n"
     "--help-plugins list all available plugins with brief help\n"
     "--help-options [<option prefix>] output matching command line options\n"
     "--help-signals dump available control signals\n"
@@ -146,7 +147,7 @@ void help_args(const char* pfx)
 enum HelpType
 {
     HT_BUF, HT_CFG, HT_CMD, HT_DBR, HT_DDR,
-    HT_GID, HT_HMO, HT_HPL, HT_DFL,
+    HT_GID, HT_HMO, HT_HMO_JSON, HT_HPL, HT_DFL,
     HT_IPS, HT_LST, HT_MOD, HT_PEG, HT_PLG
 };
 
@@ -183,6 +184,9 @@ enum HelpType
         break;
     case HT_HMO:
         ModuleManager::show_modules();
+        break;
+    case HT_HMO_JSON:
+        ModuleManager::show_modules_json();
         break;
     case HT_HPL:
         PluginManager::show_plugins();
@@ -263,6 +267,11 @@ void config_markup(SnortConfig*, const char*)
 [[noreturn]] void help_modules(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_HMO);
+}
+
+[[noreturn]] void help_modules_json(SnortConfig* sc, const char* val)
+{
+    show_help(sc, val, HT_HMO_JSON);
 }
 
 [[noreturn]] void help_plugins(SnortConfig* sc, const char* val)

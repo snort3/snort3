@@ -396,6 +396,9 @@ static const Parameter s_params[] =
     { "--help-modules", Parameter::PT_IMPLIED, nullptr, nullptr,
       "list all available modules with brief help" },
 
+    { "--help-modules-json", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "dump description of all available modules in JSON format" },
+
     { "--help-options", Parameter::PT_STRING, "(optional)", nullptr,
       "[<option prefix>] output matching command line option quick help (same as -?)" },
 
@@ -928,6 +931,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--help-modules") )
         help_modules(sc, v.get_string());
+
+    else if ( v.is("--help-modules-json") )
+        help_modules_json(sc, v.get_string());
 
     else if ( v.is("--help-options") )
         help_options(sc, v.get_string());

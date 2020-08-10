@@ -42,6 +42,7 @@ void help_args(const char* pfx);
 [[noreturn]] void help_limits(snort::SnortConfig* sc, const char*);
 [[noreturn]] void help_module(snort::SnortConfig* sc, const char*);
 [[noreturn]] void help_modules(snort::SnortConfig* sc, const char*);
+[[noreturn]] void help_modules_json(snort::SnortConfig* sc, const char*);
 [[noreturn]] void help_options(snort::SnortConfig*, const char*);
 [[noreturn]] void help_plugins(snort::SnortConfig* sc, const char*);
 [[noreturn]] void help_signals(snort::SnortConfig*, const char*);

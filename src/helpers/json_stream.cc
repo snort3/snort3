@@ -41,9 +41,10 @@ void JsonStream::open(const char* key)
 void JsonStream::close()
 {
     out << " }";
+    sep = true;
     assert(level > 0);
 
-    if ( --level == 0 )
+    if ( --level == 0 and !level_array )
     {
         out << std::endl;
         sep = false;
@@ -53,14 +54,36 @@ void JsonStream::close()
 void JsonStream::open_array(const char* key)
 {
     split();
-    out << std::quoted(key) << ": [ ";
+
+    if ( key )
+        out << std::quoted(key) << ": ";
+
+    out << "[ ";
     sep = false;
+    level_array++;
 }
 
 void JsonStream::close_array()
 {
     out << " ]";
     sep = true;
+    assert(level_array > 0);
+
+    if ( --level_array == 0 and !level )
+    {
+        out << std::endl;
+        sep = false;
+    }
+}
+
+void JsonStream::put(const char* key)
+{
+    split();
+
+    if ( key )
+        out << std::quoted(key) << ": ";
+
+    out << "null";
 }
 
 void JsonStream::put(const char* key, long val)
@@ -84,6 +107,37 @@ void JsonStream::put(const char* key, const std::string& val)
         out << std::quoted(key) << ": ";
 
     out << std::quoted(val);
+}
+
+void JsonStream::put(const char* key, double val, int precision)
+{
+    split();
+
+    if ( key )
+        out << std::quoted(key) << ": ";
+
+    out.precision(precision);
+    out << std::fixed << val;
+}
+
+void JsonStream::put_true(const char* key)
+{
+    split();
+
+    if ( key )
+        out << std::quoted(key) << ": ";
+
+    out << "true";
+}
+
+void JsonStream::put_false(const char* key)
+{
+    split();
+
+    if ( key )
+        out << std::quoted(key) << ": ";
+
+    out << "false";
 }
 
 void JsonStream::split()

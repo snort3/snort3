@@ -47,7 +47,7 @@ static const Parameter c_params[] =
       "max cip connections" },
     { "max_unconnected_messages", Parameter::PT_INT, "1:10000", "100",
       "max unconnected cip messages" },
-    { nullptr, Parameter::PT_STRING, nullptr, nullptr, nullptr }
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 static const RuleMap cip_rules[] =

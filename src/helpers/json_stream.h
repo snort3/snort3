@@ -33,11 +33,16 @@ public:
     void open(const char* key = nullptr);
     void close();
 
-    void open_array(const char* key);
+    void open_array(const char* key = nullptr);
     void close_array();
 
+    void put(const char* key);    // null
     void put(const char* key, long val);
     void put(const char* key, const std::string& val);
+    void put(const char* key, double val, int precision);
+
+    void put_true(const char* key);
+    void put_false(const char* key);
 
 private:
     void split();
@@ -46,6 +51,7 @@ private:
     std::ostream& out;
     bool sep = false;
     unsigned level = 0;
+    unsigned level_array = 0;
 };
 
 #endif

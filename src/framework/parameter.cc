@@ -99,7 +99,7 @@ static size_t split(const string& txt, vector<string>& strs)
     return strs.size();
 }
 
-static int64_t get_int(const char* r)
+int64_t Parameter::get_int(const char* r)
 {
     if ( *r == 'm' )
     {
@@ -153,7 +153,7 @@ static bool valid_int(Value& v, const char* r)
 
     if ( *r != ':' )
     {
-        int64_t low = get_int(r);
+        int64_t low = Parameter::get_int(r);
 
         if ( d < low )
             return false;
@@ -164,7 +164,7 @@ static bool valid_int(Value& v, const char* r)
 
     if ( t and *++t )
     {
-        int64_t hi = get_int(t);
+        int64_t hi = Parameter::get_int(t);
 
         if ( d > hi )
             return false;
@@ -693,14 +693,14 @@ TEST_CASE("string", "[Parameter]")
 
 TEST_CASE("max", "[Parameter]")
 {
-    CHECK(get_int("max31") == 2147483647);
-    CHECK(get_int("max32") == 4294967295);
-    CHECK(get_int("max53") == 9007199254740992);
+    CHECK(Parameter::get_int("max31") == 2147483647);
+    CHECK(Parameter::get_int("max32") == 4294967295);
+    CHECK(Parameter::get_int("max53") == 9007199254740992);
 
     if ( sizeof(size_t) == 4 )
-        CHECK(get_int("maxSZ") == 4294967295);
+        CHECK(Parameter::get_int("maxSZ") == 4294967295);
     else
-        CHECK(get_int("maxSZ") == 9007199254740992);
+        CHECK(Parameter::get_int("maxSZ") == 9007199254740992);
 }
 
 #endif

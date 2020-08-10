@@ -96,6 +96,9 @@ struct SO_PUBLIC Parameter
 
     // 0-based; -1 if not found; list is | delimited
     static int index(const char* list, const char* key);
+
+    // convert string to long (including 'maxN' literals)
+    static int64_t get_int(const char*);
 };
 }
 #endif

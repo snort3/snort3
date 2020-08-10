@@ -58,6 +58,7 @@ public:
     static void list_modules(const char* = nullptr);
     static void dump_modules();
     static void show_modules();
+    static void show_modules_json();
     static void show_module(const char*);
 
     static bool gid_in_use(uint32_t);

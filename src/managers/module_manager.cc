@@ -35,6 +35,7 @@
 
 #include "framework/base_api.h"
 #include "framework/module.h"
+#include "helpers/json_stream.h"
 #include "helpers/markup.h"
 #include "log/messages.h"
 #include "main/modules.h"
@@ -1061,7 +1062,7 @@ void ModuleManager::show_module(const char* name)
         cout << endl << Markup::head(3) << name << endl << endl;
 
         if ( const char* h = m->get_help() )
-            cout << endl << "What: " << h << endl;
+            cout << endl << "Help: " << h << endl;
 
         cout << endl << "Type: "  << mod_type(mh->api) << endl;
         cout << endl << "Usage: "  << mod_use(m->get_usage()) << endl;
@@ -1261,9 +1262,9 @@ static const char* peg_op(CountType ct)
 {
     switch ( ct )
     {
-    case CountType::SUM: return " (sum)";
-    case CountType::NOW: return " (now)";
-    case CountType::MAX: return " (max)";
+    case CountType::SUM: return "sum";
+    case CountType::NOW: return "now";
+    case CountType::MAX: return "max";
     default: break;
     }
     assert(false);
@@ -1297,7 +1298,7 @@ void ModuleManager::show_pegs(const char* pfx, bool exact)
             cout << "." << pegs->name;
             cout << Markup::emphasis_off();
             cout << ": " << pegs->help;
-            cout << peg_op(pegs->type);
+            cout << " (" << peg_op(pegs->type) << ")";
             cout << endl;
             ++pegs;
         }
@@ -1573,4 +1574,377 @@ void ModuleManager::show_rules(const char* pfx, bool exact)
     if ( !rule_set.size() )
         cout << "no match" << endl;
 }
+
+//--------------------------------------------------------------------------
+// JSON dumpers
+//--------------------------------------------------------------------------
+
+static void dump_param_range_json(JsonStream& json, const Parameter* p)
+{
+    const char* range = p->get_range();
+
+    if ( !range )
+        json.put("range");
+    else
+    {
+        switch ( p->type )
+        {
+        case Parameter::PT_INT:
+        case Parameter::PT_PORT:
+        {
+            std::string tr = range;
+            const char* d = strchr(range, ':');
+            if ( *range == 'm' )
+            {
+                if ( d )
+                {
+                    tr = std::to_string(Parameter::get_int(range)) +
+                        tr.substr(tr.find(":"));
+                }
+                else
+                    tr = std::to_string(Parameter::get_int(range));
+            }
+            if ( d and *++d == 'm' )
+            {
+                tr = tr.substr(0, tr.find(":") + 1) +
+                    std::to_string(Parameter::get_int(d));
+            }
+            json.put("range", tr);
+            break;
+        }
+
+        default:
+            json.put("range", p->get_range());
+        }
+    }
+}
+
+static void dump_param_default_json(JsonStream& json, const Parameter* p)
+{
+    const char* def = p->deflt;
+
+    if ( !def )
+        json.put("default");
+    else
+    {
+        switch ( p->type )
+        {
+        case Parameter::PT_INT:
+        case Parameter::PT_PORT:
+            json.put("default", std::stol(def));
+            break;
+
+        case Parameter::PT_REAL:
+        {
+            const char* dot = strchr(def, '.');
+            if ( dot )
+                json.put("default", std::stod(def), strlen(dot) - 1);
+            else
+                json.put("default", std::stod(def));
+
+            break;
+        }
+
+        case Parameter::PT_BOOL:
+            !strcmp(def, "true") ? json.put_true("default") : json.put_false("default");
+            break;
+
+        default:
+            json.put("default", def);
+        }
+    }
+}
+
+static void dump_params_tree_json(JsonStream& json, const Parameter* p)
+{
+    while ( p and p->type != Parameter::PT_MAX )
+    {
+        assert(p->name);
+
+        json.open();
+        json.put("option", p->name);
+        json.put("type", p->get_type());
+        if ( p->is_table() and p->range )
+        {
+            json.open_array("sub_options");
+            dump_params_tree_json(json, (const Parameter*)p->range);
+            json.close_array();
+        }
+        else
+            dump_param_range_json(json, p);
+
+        dump_param_default_json(json, p);
+        if ( p->help )
+            json.put("help", p->help);
+        else
+            json.put("help");
+
+        json.close();
+
+        ++p;
+    }
+}
+
+static void dump_configs_json(JsonStream& json, const Module* mod)
+{
+    const Parameter* params = mod->get_parameters();
+
+    json.open_array("configuration");
+    dump_params_tree_json(json, params);
+    json.close_array();
+}
+
+static void dump_commands_json(JsonStream& json, const Module* mod)
+{
+    const Command* cmds = mod->get_commands();
+
+    json.open_array("commands");
+
+    while ( cmds and cmds->name )
+    {
+        json.open();
+
+        json.put("name", cmds->name);
+
+        json.open_array("params");
+        if ( cmds->params )
+            dump_params_tree_json(json, cmds->params);
+
+        json.close_array();
+
+        if ( cmds->help )
+            json.put("help", cmds->help);
+        else
+            json.put("help");
+
+        json.close();
+
+        ++cmds;
+    }
+
+    json.close_array();
+}
+
+static void dump_rules_json(JsonStream& json, const Module* mod)
+{
+    auto rules = get_rules(mod->get_name(), true);
+
+    json.open_array("rules");
+    for ( const auto& rp : rules )
+    {
+        json.open();
+
+        json.put("gid", rp.mod->get_gid());
+        json.put("sid", rp.rule->sid);
+        json.put("msg", rp.rule->msg);
+
+        json.close();
+    }
+    json.close_array();
+}
+
+static void dump_pegs_json(JsonStream& json, const Module* mod)
+{
+    const PegInfo* pegs = mod->get_pegs();
+
+    json.open_array("peg_counts");
+    while ( pegs and pegs->type != CountType::END )
+    {
+        json.open();
+        json.put("type", peg_op(pegs->type));
+
+        assert(pegs->name);
+        json.put("name", pegs->name);
+
+        if ( pegs->help )
+            json.put("help", pegs->help);
+        else
+            json.put("help");
+
+        json.close();
+
+        ++pegs;
+    }
+    json.close_array();
+}
+
+void ModuleManager::show_modules_json()
+{
+    auto mod_hooks = get_all_modhooks();
+    mod_hooks.sort(comp_mods);
+    JsonStream json(std::cout);
+
+    json.open_array();
+    for ( const auto* mh : mod_hooks )
+    {
+        const Module* mod = mh->mod;
+        assert(mod);
+
+        std::string name = "";
+        if ( const char* n = mod->get_name() )
+            name = n;
+
+        assert(!name.empty());
+
+        std::string help = "";
+        if ( const char* h = mod->get_help() )
+            help = h;
+
+        const char* type = mod_type(mh->api);
+        const char* usage = mod_use(mod->get_usage());
+
+        json.open();
+        json.put("module", name);
+        json.put("help", help);
+        json.put("type", type);
+        json.put("usage", usage);
+        if ( mh->api and (mh->api->type == PT_INSPECTOR) )
+            json.put("instance_type", mod_bind(mod));
+
+        dump_configs_json(json, mod);
+        dump_commands_json(json, mod);
+        dump_rules_json(json, mod);
+        dump_pegs_json(json, mod);
+        json.close();
+    }
+    json.close_array();
+}
+
+#ifdef UNIT_TEST
+
+#include <catch/snort_catch.h>
+
+TEST_CASE("param range JSON dumper", "[ModuleManager]")
+{
+    std::stringstream ss;
+    JsonStream json(ss);
+
+    SECTION("null")
+    {
+        const Parameter p("string", Parameter::PT_STRING, nullptr, nullptr, "help");
+        dump_param_range_json(json, &p);
+        std::string x = R"-("range": null)-";
+        CHECK(ss.str() == x);
+    }
+
+    SECTION("common string")
+    {
+        const Parameter p("enum", Parameter::PT_ENUM, "one | two | three", nullptr, "help");
+        dump_param_range_json(json, &p);
+        std::string x = R"-("range": "one | two | three")-";
+        CHECK(ss.str() == x);
+    }
+
+    SECTION("number string")
+    {
+        const Parameter i_max("int_max", Parameter::PT_INT, "255", nullptr, "help");
+        dump_param_range_json(json, &i_max);
+        std::string x = R"-("range": "255")-";
+        CHECK(ss.str() == x);
+        ss.str("");
+
+        const Parameter i_min("int_min", Parameter::PT_INT, "255:", nullptr, "help");
+        dump_param_range_json(json, &i_min);
+        x = R"-(, "range": "255:")-";
+        CHECK(ss.str() == x);
+        ss.str("");
+
+        const Parameter i_exp_max("int_exp_max", Parameter::PT_INT, ":255", nullptr, "help");
+        dump_param_range_json(json, &i_exp_max);
+        x = R"-(, "range": ":255")-";
+        CHECK(ss.str() == x);
+        ss.str("");
+
+        const Parameter p_min_max("int_min_max", Parameter::PT_PORT, "0:65535", nullptr, "help");
+        dump_param_range_json(json, &p_min_max);
+        x = R"-(, "range": "0:65535")-";
+        CHECK(ss.str() == x);
+        ss.str("");
+
+        const Parameter i_hex("int_in_hex", Parameter::PT_INT, "0x5:0xFF", nullptr, "help");
+        dump_param_range_json(json, &i_hex);
+        x = R"-(, "range": "0x5:0xFF")-";
+        CHECK(ss.str() == x);
+    }
+
+    SECTION("number string with maxN")
+    {
+        const Parameter i_max("int_max", Parameter::PT_INT, "max32", nullptr, "help");
+        dump_param_range_json(json, &i_max);
+        std::string x = R"-("range": "4294967295")-";
+        CHECK(ss.str() == x);
+        ss.str("");
+
+        const Parameter i_min("int_min", Parameter::PT_INT, "max32:", nullptr, "help");
+        dump_param_range_json(json, &i_min);
+        x = R"-(, "range": "4294967295:")-";
+        CHECK(ss.str() == x);
+        ss.str("");
+
+        const Parameter i_exp_max("int_exp_max", Parameter::PT_INT, ":max32", nullptr, "help");
+        dump_param_range_json(json, &i_exp_max);
+        x = R"-(, "range": ":4294967295")-";
+        CHECK(ss.str() == x);
+        ss.str("");
+
+        const Parameter p_min_max("int_min_max", Parameter::PT_INT, "max31:max32", nullptr, "help");
+        dump_param_range_json(json, &p_min_max);
+        x = R"-(, "range": "2147483647:4294967295")-";
+        CHECK(ss.str() == x);
+    }
+}
+
+TEST_CASE("param default JSON dumper", "[ModuleManager]")
+{
+    std::stringstream ss;
+    JsonStream json(ss);
+
+    SECTION("null")
+    {
+        const Parameter p("int", Parameter::PT_INT, nullptr, nullptr, "help");
+        dump_param_default_json(json, &p);
+        std::string x = R"-("default": null)-";
+        CHECK(ss.str() == x);
+    }
+
+    SECTION("string")
+    {
+        const Parameter p("multi", Parameter::PT_MULTI, "one | two | three", "one two", "help");
+        dump_param_default_json(json, &p);
+        std::string x = R"-("default": "one two")-";
+        CHECK(ss.str() == x);
+    }
+
+    SECTION("integer")
+    {
+        const Parameter p("int", Parameter::PT_INT, nullptr, "5", "help");
+        dump_param_default_json(json, &p);
+        std::string x = R"-("default": 5)-";
+        CHECK(ss.str() == x);
+    }
+
+    SECTION("real")
+    {
+        const Parameter p("real", Parameter::PT_REAL, nullptr, "12.345", "help");
+        dump_param_default_json(json, &p);
+        std::string x = R"-("default": 12.345)-";
+        CHECK(ss.str() == x);
+    }
+
+    SECTION("boolean")
+    {
+        const Parameter t("bool_true", Parameter::PT_BOOL, nullptr, "true", "help");
+        dump_param_default_json(json, &t);
+        std::string x = R"-("default": true)-";
+        CHECK(ss.str() == x);
+        ss.str("");
+
+        const Parameter f("bool_false", Parameter::PT_BOOL, nullptr, "false", "help");
+        dump_param_default_json(json, &f);
+        x = R"-(, "default": false)-";
+        CHECK(ss.str() == x);
+    }
+}
+
+#endif // UNIT_TEST
 
