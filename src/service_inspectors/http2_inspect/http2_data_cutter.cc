@@ -170,7 +170,7 @@ StreamSplitter::Status Http2DataCutter::http_scan(const uint8_t* data, uint32_t*
                 finish_msg_body();
                 return StreamSplitter::FLUSH;
             }
-            else
+            else if (scan_result != StreamSplitter::FLUSH)
                 session_data->data_processing[source_id] = true;
         }
     }
