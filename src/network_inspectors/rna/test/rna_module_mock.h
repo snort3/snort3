@@ -61,6 +61,7 @@ void LogMessage(const char*,...) {}
 void WarningMessage(const char*,...) {}
 SnortConfig::SnortConfig(SnortConfig const*) {}
 SnortConfig::~SnortConfig() {}
+time_t packet_time() { return 0; }
 } // end of namespace snort
 
 #endif

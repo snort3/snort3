@@ -46,6 +46,7 @@
 #endif
 
 using namespace snort;
+using namespace std;
 
 //-------------------------------------------------------------------------
 // rna commands, params, and pegs
@@ -89,14 +90,14 @@ static int reload_fingerprint(lua_State*)
     return 0;
 }
 
-std::string format_dump_mac(uint8_t mac[MAC_SIZE])
+static inline string format_dump_mac(const uint8_t mac[MAC_SIZE])
 {
-    std::stringstream ss;
-    ss << std::hex;
+    stringstream ss;
+    ss << hex;
 
     for(int i=0; i < MAC_SIZE; i++)
     {
-        ss << std::setfill('0') << std::setw(2) << static_cast<int>(mac[i]);
+        ss << setfill('0') << setw(2) << static_cast<int>(mac[i]);
         if (i != MAC_SIZE - 1)
             ss << ":";
     }
@@ -179,9 +180,9 @@ bool RnaModule::begin(const char* fqn, int, SnortConfig*)
 bool RnaModule::set(const char*, Value& v, SnortConfig*)
 {
     if (v.is("rna_conf_path"))
-        mod_conf->rna_conf_path = std::string(v.get_string());
+        mod_conf->rna_conf_path = string(v.get_string());
     else if (v.is("fingerprint_dir"))
-        mod_conf->fingerprint_dir = std::string(v.get_string());
+        mod_conf->fingerprint_dir = string(v.get_string());
     else if (v.is("enable_logger"))
         mod_conf->enable_logger = v.get_bool();
     else if (v.is("log_when_idle"))
@@ -250,27 +251,23 @@ bool RnaModule::log_mac_cache(const char* outfile)
         return 0;
     }
 
-    std::ofstream out_stream(outfile);
+    ofstream out_stream(outfile);
     if ( !out_stream )
     {
         snort::LogMessage("Error opening %s for dumping MAC cache", outfile);
     }
 
-    std::string str;
+    string str;
     const auto&& lru_data = host_cache_mac.get_all_data();
     out_stream << "Current mac cache size: " << host_cache_mac.mem_size() << " bytes, "
-        << lru_data.size() << " trackers" << std::endl << std::endl;
+        << lru_data.size() << " trackers" << endl << endl;
     for ( const auto& elem : lru_data )
     {
         str = "MAC: ";
-
-        if (elem.second->data.size() > 0)
-            str += format_dump_mac(elem.second->data.front().mac);
-        else
-            str += "No MacHostTracker found for entry ";
-
-        str += "\n Key: " +  std::to_string(hash_mac(elem.second->data.front().mac));
-        out_stream << str << std::endl << std::endl;
+        str += format_dump_mac(elem.first.mac_addr);
+        str += "\n Key: " +  to_string(hash_mac(elem.first.mac_addr));
+        elem.second->stringify(str);
+        out_stream << str << endl << endl;
     }
     out_stream.close();
 

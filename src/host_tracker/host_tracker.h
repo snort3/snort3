@@ -136,6 +136,9 @@ public:
     // The caller owns and deletes the copied list of mac addresses
     void copy_data(uint8_t& p_hops, uint32_t& p_last_seen, std::list<HostMac>*& p_macs);
 
+    bool add_network_proto(const uint16_t type);
+    bool add_xport_proto(const uint8_t type);
+
     // Appid may not be identified always. Inferred means dynamic/runtime
     // appid detected from one flow to another flow such as BitTorrent.
     bool add_service(Port port, IpProtocol proto,
@@ -153,7 +156,9 @@ private:
     uint8_t hops;                 // hops from the snort inspector, e.g., zero for ARP
     uint32_t last_seen;           // the last time this host was seen
     uint32_t last_event;          // the last time an event was generated
-    std::list<HostMac, HostMacAllocator> macs;
+    std::vector<HostMac, HostMacAllocator> macs;
+    std::vector<uint16_t, HostCacheAllocIp<uint16_t>> network_protos;
+    std::vector<uint8_t, HostCacheAllocIp<uint8_t>> xport_protos;
     std::vector<HostApplication, HostAppAllocator> services;
     bool vlan_tag_present = false;
     vlan::VlanTagHdr vlan_tag;

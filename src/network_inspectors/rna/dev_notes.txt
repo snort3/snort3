@@ -54,11 +54,10 @@ to log the discovered hosts into a file, one can
 RNA Uses HostCacheMac, derived from LruCacheSharedMemcap, to track MAC addresses. The implementation
 of the MAC cache is as follows:
 
-   HostCacheMac (LruCacheSharedMemcap<uint8_t*, LruMac, HashMac>)
+   HostCacheMac (LruCacheSharedMemcap<uint8_t*, HostTrackerMac, HashMac>)
       |- - - - Key = uint8_t[6] (mac address)
-      |- - - - Data = LruMac
-      |                 | - - - - Valuetype = HostMacIp (derived from snort::HostMac)
-      |                 | - - - - Data = std::vector<ValueType, MacAllocator<ValueType>>
+      |- - - - Value = HostTrackerMac
+      |                 | - - - - Dynamic memory growth is tracked by HostCacheAllocMac allocator
       |
       |- - - - Hash = HashMac
       |                 |

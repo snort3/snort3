@@ -29,8 +29,6 @@
 #define RNA_NAME "rna"
 #define RNA_HELP "Real-time network awareness and OS fingerprinting (experimental)"
 
-std::string format_dump_mac(uint8_t mac[6]);
-
 struct RnaStats
 {
     PegCount icmp_bidirectional;

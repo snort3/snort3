@@ -29,8 +29,8 @@
 #include "protocols/vlan.h"
 #include "sfip/sf_ip.h"
 
-#include "rna_mac_cache.h"
 #include "rna_logger.h"
+#include "rna_mac_cache.h"
 
 #define USHRT_MAX std::numeric_limits<unsigned short>::max()
 
@@ -88,23 +88,23 @@ public:
     void analyze_flow_tcp(const snort::Packet* p, TcpPacketType type);
     void analyze_flow_udp(const snort::Packet* p);
 
+    // generate change event for all hosts in the ip cache
+    void generate_change_host_update();
+
+private:
     // generate change event for single host
     void generate_change_host_update(RnaTracker* ht, const snort::Packet* p,
         const snort::SfIp* src_ip, const uint8_t* src_mac, time_t sec);
 
-    // generate change event for all hosts in the ip cache
-    void generate_change_host_update();
-
     // Change vlan event related utilities
-    inline void update_vlan(const snort::Packet* p, HostMacIp& hm);
+    inline void update_vlan(const snort::Packet* p, HostTrackerMac& hm);
     void generate_change_vlan_update(RnaTracker *rt, const snort::Packet* p,
-        const uint8_t* src_mac, HostMacIp& hm, bool isnew);
+        const uint8_t* src_mac, HostTrackerMac& hm, bool isnew);
     void generate_change_vlan_update(RnaTracker *rt, const snort::Packet* p,
-        const uint8_t* src_mac, const SfIp* src_ip, bool isnew);
+        const uint8_t* src_mac, const snort::SfIp* src_ip, bool isnew);
 
-    void generate_new_host_mac(const snort::Packet* p, RnaTracker ht);
+    void generate_new_host_mac(const snort::Packet* p, RnaTracker ht, bool discover_proto = false);
 
-private:
     // General rna utilities not associated with flow
     void discover_network_icmp(const snort::Packet* p);
     void discover_network_ip(const snort::Packet* p);

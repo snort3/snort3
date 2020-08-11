@@ -25,39 +25,48 @@
 // Non-standard, required to include template definition across compiler translation units
 #include "host_tracker/host_cache_allocator.cc"
 #include "host_tracker/host_cache_allocator.h"
-#include "host_tracker/host_cache.h"
-#include "host_tracker/host_tracker.h"
-#include "sfip/sf_ip.h"
-
-using snort::SfIp;
 
 #define MAC_CACHE_INITIAL_SIZE 1024 * 1024 // Default to 1 MB
 
-class HostMacIp : public snort::HostMac
+template <class T>
+class HostCacheAllocMac : public HostCacheAlloc<T>
 {
 public:
-    HostMacIp (const uint8_t* p_mac, uint8_t p_primary, uint32_t p_last_seen)
-        : snort::HostMac(0, p_mac, p_primary, p_last_seen), src_ip(nullptr), dst_ip(nullptr)
-    { }
+    template <class U>
+    struct rebind
+    {
+        typedef HostCacheAllocMac<U> other;
+    };
 
-    HostMacIp (const uint8_t* p_mac, uint8_t p_primary, uint32_t p_last_seen,
-        SfIp* src, SfIp* dst) : snort::HostMac(0, p_mac, p_primary, p_last_seen),
-        src_ip(src), dst_ip(dst)
-    { }
+    using HostCacheAlloc<T>::lru;
 
-    SfIp* src_ip;
-    SfIp* dst_ip;
+    HostCacheAllocMac();
+};
 
-    snort::HostType host_type;
+class HostTrackerMac
+{
+public:
+    HostTrackerMac()
+    { last_seen = (uint32_t) snort::packet_time(); }
 
+    bool add_network_proto(const uint16_t type);
+    void update_last_seen(uint32_t p_last_seen);
     void update_vlan(uint16_t vth_pri_cfi_vlan, uint16_t vth_proto);
     bool has_vlan();
     uint16_t get_vlan();
     void get_vlan_details(uint8_t& cfi, uint8_t& priority, uint16_t& vid);
 
+    // This should be updated whenever HostTrackerMac data members are changed
+    void stringify(std::string& str);
+
+    snort::HostType host_type = snort::HostType::HOST_TYPE_HOST;
+
 private:
+    std::mutex host_tracker_mac_lock;
+    uint32_t last_seen;
     bool vlan_tag_present = false;
     snort::vlan::VlanTagHdr vlan_tag;
+    std::vector<uint16_t, HostCacheAllocMac<uint16_t>> network_protos;
 };
 
 class MacKey
@@ -80,36 +89,7 @@ struct HashMac
     { return snort::hash_mac(mk.mac_addr); }
 };
 
-template <class T>
-class HostCacheAllocMac : public HostCacheAlloc<T>
-{
-public:
-    template <class U>
-    struct rebind
-    {
-        typedef HostCacheAllocMac<U> other;
-    };
-
-    using HostCacheAlloc<T>::lru;
-
-    HostCacheAllocMac();
-};
-
-class LruMac
-{
-public:
-    typedef HostMacIp ValueType;
-    std::vector<ValueType, HostCacheAllocMac<ValueType>> data;
-
-    bool isempty()
-    { return data.size() == 0; }
-
-    void insert(HostMacIp *hmi)
-    { data.emplace_back(*hmi); }
-
-};
-
-typedef LruCacheSharedMemcap<MacKey, LruMac, HashMac> HostCacheMac;
+typedef LruCacheSharedMemcap<MacKey, HostTrackerMac, HashMac> HostCacheMac;
 extern HostCacheMac host_cache_mac;
 
 template <class T>

@@ -36,14 +36,38 @@ const uint8_t snort::zero_mac[MAC_SIZE] = {0, 0, 0, 0, 0, 0};
 
 void HostTracker::update_last_seen()
 {
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
+    lock_guard<mutex> lck(host_tracker_lock);
     last_seen = (uint32_t) packet_time();
 }
 
 void HostTracker::update_last_event(uint32_t time)
 {
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
+    lock_guard<mutex> lck(host_tracker_lock);
     last_event = time ? time : last_seen;
+}
+
+bool HostTracker::add_network_proto(const uint16_t type)
+{
+    lock_guard<mutex> lck(host_tracker_lock);
+
+    for ( const auto& proto : network_protos )
+        if ( proto == type )
+            return false;
+
+    network_protos.emplace_back(type);
+    return true;
+}
+
+bool HostTracker::add_xport_proto(const uint8_t type)
+{
+    lock_guard<mutex> lck(host_tracker_lock);
+
+    for ( const auto& proto : xport_protos )
+        if ( proto == type )
+            return false;
+
+    xport_protos.emplace_back(type);
+    return true;
 }
 
 bool HostTracker::add_mac(const uint8_t* mac, uint8_t ttl, uint8_t primary)
@@ -51,9 +75,9 @@ bool HostTracker::add_mac(const uint8_t* mac, uint8_t ttl, uint8_t primary)
     if ( !mac or !memcmp(mac, zero_mac, MAC_SIZE) )
         return false;
 
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
+    lock_guard<mutex> lck(host_tracker_lock);
 
-    for ( auto& hm : macs )
+    for ( const auto& hm : macs )
         if ( !memcmp(mac, hm.mac, MAC_SIZE) )
             return false;
 
@@ -66,7 +90,7 @@ const HostMac* HostTracker::get_hostmac(const uint8_t* mac)
     if ( !mac or !memcmp(mac, zero_mac, MAC_SIZE) )
         return nullptr;
 
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
+    lock_guard<mutex> lck(host_tracker_lock);
 
     for ( const auto& hm : macs )
         if ( !memcmp(mac, hm.mac, MAC_SIZE) )
@@ -80,7 +104,7 @@ bool HostTracker::update_mac_ttl(const uint8_t* mac, uint8_t new_ttl)
     if ( !mac or !memcmp(mac, zero_mac, MAC_SIZE) )
         return false;
 
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
+    lock_guard<mutex> lck(host_tracker_lock);
 
     for ( auto& hm : macs )
         if ( !memcmp(mac, hm.mac, MAC_SIZE) )
@@ -104,7 +128,7 @@ bool HostTracker::make_primary(const uint8_t* mac)
 
     HostMac* hm = nullptr;
 
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
+    lock_guard<mutex> lck(host_tracker_lock);
 
     for ( auto& hm_iter : macs )
         if ( !memcmp(mac, hm_iter.mac, MAC_SIZE) )
@@ -127,7 +151,7 @@ bool HostTracker::make_primary(const uint8_t* mac)
 
 HostMac* HostTracker::get_max_ttl_hostmac()
 {
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
+    lock_guard<mutex> lck(host_tracker_lock);
 
     HostMac* max_ttl_hm = nullptr;
     uint8_t max_ttl = 0;
@@ -173,7 +197,7 @@ void HostTracker::get_vlan_details(uint8_t& cfi, uint8_t& priority, uint16_t& vi
 
 void HostTracker::copy_data(uint8_t& p_hops, uint32_t& p_last_seen, list<HostMac>*& p_macs)
 {
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
+    lock_guard<mutex> lck(host_tracker_lock);
 
     p_hops = hops;
     p_last_seen = last_seen;
@@ -184,7 +208,7 @@ void HostTracker::copy_data(uint8_t& p_hops, uint32_t& p_last_seen, list<HostMac
 bool HostTracker::add_service(Port port, IpProtocol proto, AppId appid, bool inferred_appid, bool* added)
 {
     host_tracker_stats.service_adds++;
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
+    lock_guard<mutex> lck(host_tracker_lock);
 
     for ( auto& s : services )
     {
@@ -211,7 +235,7 @@ bool HostTracker::add_service(Port port, IpProtocol proto, AppId appid, bool inf
 AppId HostTracker::get_appid(Port port, IpProtocol proto, bool inferred_only, bool allow_port_wildcard)
 {
     host_tracker_stats.service_finds++;
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
+    lock_guard<mutex> lck(host_tracker_lock);
 
     for ( const auto& s : services )
     {
@@ -225,7 +249,7 @@ AppId HostTracker::get_appid(Port port, IpProtocol proto, bool inferred_only, bo
 
 void HostTracker::remove_inferred_services()
 {
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
+    lock_guard<mutex> lck(host_tracker_lock);
     for ( auto s = services.begin(); s != services.end(); )
     {
         if (s->inferred_appid)
@@ -254,7 +278,7 @@ static inline string to_mac_string(const uint8_t* mac)
 
 void HostTracker::stringify(string& str)
 {
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
+    lock_guard<mutex> lck(host_tracker_lock);
 
     str += "\n    hops: " + to_string(hops) + ", time: " + to_time_string(last_seen);
 
@@ -284,5 +308,21 @@ void HostTracker::stringify(string& str)
                     str += ", inferred";
             }
         }
-   }
+    }
+
+    auto total = network_protos.size();
+    if ( total )
+    {
+        str += "\nnetwork proto: ";
+        while ( total-- )
+            str += to_string(network_protos[total]) + (total? ", " : "");
+    }
+
+    total = xport_protos.size();
+    if ( total )
+    {
+        str += "\ntransport proto: ";
+        while ( total-- )
+            str += to_string(xport_protos[total]) + (total? ", " : "");
+    }
 }

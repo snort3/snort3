@@ -25,6 +25,8 @@
 
 #include "rna_logger.h"
 
+#include <cassert>
+
 #include "managers/event_manager.h"
 #include "protocols/packet.h"
 #include "rna_logger_common.h"
@@ -42,24 +44,20 @@ using namespace snort;
 
 bool RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
     const struct in6_addr* src_ip, const uint8_t* src_mac, uint32_t event_time,
-    void* cond_var, const HostMac* hm)
+    void* cond_var, const HostMac* hm, const uint16_t proto)
 {
     if ( !enabled )
         return false;
 
-    RnaLoggerEvent rle(type, subtype, ht, src_mac);
+    assert(ht);
+    RnaLoggerEvent rle(type, subtype, ht, src_mac, hm, proto);
     if ( src_ip and (!IN6_IS_ADDR_V4MAPPED(src_ip) or src_ip->s6_addr32[3]) )
         rle.ip = src_ip;
 
-    if (ht)
-    {
+    if ( event_time )
         (*ht)->update_last_event(event_time);
-        if (type == RNA_EVENT_CHANGE && subtype == CHANGE_HOST_UPDATE)
-            rle.cond_var = cond_var;
-    }
-
-    if (hm)
-        rle.hm = hm;
+    if ( subtype == CHANGE_HOST_UPDATE and type == RNA_EVENT_CHANGE )
+        rle.cond_var = cond_var;
 
     EventManager::call_loggers(nullptr, const_cast<Packet*>(p), "RNA", &rle);
     return true;
@@ -70,11 +68,12 @@ TEST_CASE("RNA logger", "[rna_logger]")
 {
     SECTION("Checking enabled flag")
     {
+        RnaTracker ht;
         RnaLogger logger1(false);
-        CHECK(logger1.log(0, 0, 0, 0, 0, 0) == false);
+        CHECK(logger1.log(0, 0, 0, &ht, 0, 0) == false);
 
         RnaLogger logger2(true);
-        CHECK(logger2.log(0, 0, 0, 0, 0, 0) == true);
+        CHECK(logger2.log(0, 0, 0, &ht, 0, 0) == true);
     }
 }
 #endif
