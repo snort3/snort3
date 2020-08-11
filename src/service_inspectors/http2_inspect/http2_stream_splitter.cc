@@ -184,7 +184,6 @@ const StreamBuffer Http2StreamSplitter::reassemble(Flow* flow, unsigned total, u
     return implement_reassemble(session_data, total, offset, data, len, flags, source_id);
 }
 
-// Eventually we will need to address unexpected connection closes
 bool Http2StreamSplitter::finish(Flow* flow)
 {
     Profile profile(Http2Module::get_profile_stats());
@@ -203,16 +202,39 @@ bool Http2StreamSplitter::finish(Flow* flow)
         }
         else
         {
-            printf("Finish from flow data %" PRIu64 " direction %d\n", session_data->seq_num,
-                source_id);
+            printf("HTTP/2 finish from flow data %" PRIu64 " direction %d\n",
+                session_data->seq_num, source_id);
             fflush(stdout);
         }
     }
 #endif
 
+    // Loop through all nonzero streams and call NHI finish()
     bool need_reassemble = false;
+    for (const Http2FlowData::StreamInfo& stream_info : session_data->streams)
+    {
+        if ((stream_info.id == 0)                                                 ||
+            (stream_info.stream->get_state(source_id) == STATE_CLOSED)            ||
+            (stream_info.stream->get_hi_flow_data() == nullptr)                   ||
+            (stream_info.stream->get_hi_flow_data()->get_type_expected(source_id)
+                != HttpEnums::SEC_BODY_H2))
+        {
+            continue;
+        }
 
-    // Loop through all streams and call NHI finish()
+        session_data->stream_in_hi = stream_info.id;
+        if (session_data->hi_ss[source_id]->finish(flow))
+        {
+            assert(stream_info.id == session_data->current_stream[source_id]);
+            need_reassemble = true;
+#ifdef REG_TEST
+            if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP2))
+                HttpTestManager::get_test_input_source()->flush(0);
+#endif
+        }
+        session_data->stream_in_hi = NO_STREAM_ID;
+
+    }
 
     return need_reassemble;
 }

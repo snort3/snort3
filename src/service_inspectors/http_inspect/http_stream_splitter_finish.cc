@@ -73,8 +73,9 @@ bool HttpStreamSplitter::finish(Flow* flow)
     // up to process because it is about to go to reassemble(). But we don't support partial start
     // lines.
     if ((session_data->section_type[source_id] == SEC__NOT_COMPUTE) &&
-        (session_data->cutter[source_id] != nullptr)               &&
-        (session_data->cutter[source_id]->get_octets_seen() > 0))
+        (session_data->cutter[source_id] != nullptr)                &&
+        (session_data->cutter[source_id]->get_octets_seen() >
+            session_data->partial_raw_bytes[source_id]))
     {
         if ((session_data->type_expected[source_id] == SEC_REQUEST) ||
             (session_data->type_expected[source_id] == SEC_STATUS))
@@ -116,7 +117,8 @@ bool HttpStreamSplitter::finish(Flow* flow)
     if ((session_data->section_type[source_id] == SEC__NOT_COMPUTE) &&
         (session_data->file_depth_remaining[source_id] > 0)        &&
         (session_data->cutter[source_id] != nullptr)               &&
-        (session_data->cutter[source_id]->get_octets_seen() == 0))
+        (session_data->cutter[source_id]->get_octets_seen() ==
+            session_data->partial_raw_bytes[source_id]))
     {
         Packet* packet = DetectionEngine::get_current_packet();
         if (!session_data->mime_state[source_id])

@@ -106,7 +106,8 @@ StreamSplitter::Status HttpStreamSplitter::status_value(StreamSplitter::Status r
         http2 ? HttpTestManager::IN_HTTP2 : HttpTestManager::IN_HTTP;
     if (HttpTestManager::use_test_output(type))
     {
-        fprintf(HttpTestManager::get_output_file(), "scan() returning status %d\n", ret_val);
+        fprintf(HttpTestManager::get_output_file(), "%sscan() returning status %d\n",
+            http2 ? "HTTP/2 ": "", ret_val);
         fflush(HttpTestManager::get_output_file());
     }
     if (HttpTestManager::use_test_input(type))
