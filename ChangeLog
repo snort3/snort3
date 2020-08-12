@@ -1,3 +1,21 @@
+2020/08/12 - 3.0.2 build 5
+
+-- cip: Fix the trailing parameter for the module
+-- dce_rpc: Set dce_rpc as a control channel inspector
+-- flow: Check expected flows in flow control and add direction swap flag to expected flows
+-- framework: Add an API to check if the module can be bound in the binder
+-- ftp: Add opportunistic TLS support
+-- ftp: Fix direction for active FTP data transfers
+-- helpers: Extend printed JSON syntax
+-- http2_inpsect: Fix for flush on data frame boundray w/o end of stream
+-- http_inspect: Do finish() after partial inspection
+-- lua: Add TCP port 80 binding to the connectivity and balanced tweaks
+-- main: Add printing modules help in JSON format
+-- managers: Print the instance type of the inspector module with --help-module
+-- rna: Add RNA MAC-based discovery logic
+-- rna: Discover network and transport protocols
+-- stream_tcp: Add check to prevent reentry to TCP session cleanup when flushing a PDU
+
 2020/08/06 - 3.0.2 build 4
 
 -- appid: Clear service appid entries in dynamic host cache on ODP reload

@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.0.2 (Build 4) 2020-08-06 08:06:49 EDT TST
+Revision 3.0.2 (Build 5) 2020-08-12 08:28:30 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -317,6 +317,7 @@ Snort has several options to get more help:
 --help-limits print the int upper bounds denoted by max*
 --help-module <module> output description of given module
 --help-modules list all available modules with brief help
+--help-modules-json dump description of all available modules in JSON format
 --help-plugins list all available plugins with brief help
 --help-options [<option prefix>] output matching command line options
 --help-signals dump available control signals
@@ -353,7 +354,7 @@ include configuration for core processing.
 
 --------------
 
-What: configure responses
+Help: configure responses
 
 Type: basic
 
@@ -392,7 +393,7 @@ Peg counts:
 
 --------------
 
-What: configure alerts
+Help: configure alerts
 
 Type: basic
 
@@ -424,7 +425,7 @@ Configuration:
 
 --------------
 
-What: configure hosts loading
+Help: configure hosts loading
 
 Type: basic
 
@@ -446,7 +447,7 @@ Configuration:
 
 --------------
 
-What: define rule categories with priority
+Help: define rule categories with priority
 
 Type: basic
 
@@ -465,7 +466,7 @@ Configuration:
 
 --------------
 
-What: configure packet acquisition interface
+Help: configure packet acquisition interface
 
 Type: basic
 
@@ -526,7 +527,7 @@ Peg counts:
 
 --------------
 
-What: general decoder rules
+Help: general decoder rules
 
 Type: basic
 
@@ -549,7 +550,7 @@ Rules:
 
 --------------
 
-What: configure general IPS rule processing parameters
+Help: configure general IPS rule processing parameters
 
 Type: basic
 
@@ -646,7 +647,7 @@ Peg counts:
 
 --------------
 
-What: configure thresholding of events
+Help: configure thresholding of events
 
 Type: basic
 
@@ -678,7 +679,7 @@ Peg counts:
 
 --------------
 
-What: configure event queue parameters
+Help: configure event queue parameters
 
 Type: basic
 
@@ -699,7 +700,7 @@ Configuration:
 
 --------------
 
-What: implement flow tracking high availability
+Help: implement flow tracking high availability
 
 Type: basic
 
@@ -748,7 +749,7 @@ Peg counts:
 
 --------------
 
-What: global LRU cache of host_tracker data about hosts
+Help: global LRU cache of host_tracker data about hosts
 
 Type: basic
 
@@ -783,7 +784,7 @@ Peg counts:
 
 --------------
 
-What: configure hosts
+Help: configure hosts
 
 Type: basic
 
@@ -806,7 +807,7 @@ Peg counts:
 
 --------------
 
-What: configure hosts
+Help: configure hosts
 
 Type: basic
 
@@ -844,7 +845,7 @@ Peg counts:
 
 --------------
 
-What: configure basic inspection policy parameters
+Help: configure basic inspection policy parameters
 
 Type: basic
 
@@ -863,7 +864,7 @@ Configuration:
 
 --------------
 
-What: configure IPS rule processing
+Help: configure IPS rule processing
 
 Type: basic
 
@@ -896,7 +897,7 @@ Configuration:
 
 --------------
 
-What: packet and rule latency monitoring and control
+Help: packet and rule latency monitoring and control
 
 Type: basic
 
@@ -939,7 +940,7 @@ Peg counts:
 
 --------------
 
-What: memory management configuration
+Help: memory management configuration
 
 Type: basic
 
@@ -968,7 +969,7 @@ Peg counts:
 
 --------------
 
-What: configure basic network parameters
+Help: configure basic network parameters
 
 Type: basic
 
@@ -1001,7 +1002,7 @@ Configuration:
 
 --------------
 
-What: configure general output parameters
+Help: configure general output parameters
 
 Type: basic
 
@@ -1035,7 +1036,7 @@ Configuration:
 
 --------------
 
-What: generate debug trace messages for packets
+Help: generate debug trace messages for packets
 
 Type: basic
 
@@ -1059,7 +1060,7 @@ Commands:
 
 --------------
 
-What: configure basic packet handling
+Help: configure basic packet handling
 
 Type: basic
 
@@ -1083,7 +1084,7 @@ Configuration:
 
 --------------
 
-What: payload injection utility
+Help: payload injection utility
 
 Type: basic
 
@@ -1101,7 +1102,7 @@ Peg counts:
 
 --------------
 
-What: configure basic process setup
+Help: configure basic process setup
 
 Type: basic
 
@@ -1131,7 +1132,7 @@ Configuration:
 
 --------------
 
-What: configure profiling of rules and/or modules
+Help: configure profiling of rules and/or modules
 
 Type: basic
 
@@ -1166,7 +1167,7 @@ Configuration:
 
 --------------
 
-What: configure rate filters (which change rule actions)
+Help: configure rate filters (which change rule actions)
 
 Type: basic
 
@@ -1197,7 +1198,7 @@ Peg counts:
 
 --------------
 
-What: define reference systems used in rules
+Help: define reference systems used in rules
 
 Type: basic
 
@@ -1213,7 +1214,7 @@ Configuration:
 
 --------------
 
-What: enable/disable and set actions for specific IPS rules;
+Help: enable/disable and set actions for specific IPS rules;
 deprecated, use rule state stubs with enable instead
 
 Type: basic
@@ -1234,7 +1235,7 @@ Configuration:
 
 --------------
 
-What: configure fast pattern matcher
+Help: configure fast pattern matcher
 
 Type: basic
 
@@ -1301,7 +1302,7 @@ Peg counts:
 
 --------------
 
-What: implement the side-channel asynchronous messaging subsystem
+Help: implement the side-channel asynchronous messaging subsystem
 
 Type: basic
 
@@ -1323,7 +1324,7 @@ Peg counts:
 
 --------------
 
-What: command line configuration and shell commands
+Help: command line configuration and shell commands
 
 Type: basic
 
@@ -1437,6 +1438,8 @@ Configuration:
     module
   * implied snort.--help-modules: list all available modules with
     brief help
+  * implied snort.--help-modules-json: dump description of all
+    available modules in JSON format
   * string snort.--help-options: [<option prefix>] output matching
     command line option quick help (same as -?) { (optional) }
   * implied snort.--help-plugins: list all available plugins with
@@ -1594,7 +1597,7 @@ Peg counts:
 
 --------------
 
-What: configure event suppressions
+Help: configure event suppressions
 
 Type: basic
 
@@ -1614,7 +1617,7 @@ Configuration:
 
 --------------
 
-What: configure trace log messages
+Help: configure trace log messages
 
 Type: basic
 
@@ -1691,7 +1694,7 @@ responses.
 
 --------------
 
-What: support for address resolution protocol
+Help: support for address resolution protocol
 
 Type: codec
 
@@ -1706,7 +1709,7 @@ Rules:
 
 --------------
 
-What: support for IP authentication header
+Help: support for IP authentication header
 
 Type: codec
 
@@ -1722,7 +1725,7 @@ Rules:
 
 --------------
 
-What: support for cisco metadata
+Help: support for cisco metadata
 
 Type: codec
 
@@ -1755,7 +1758,7 @@ Peg counts:
 
 --------------
 
-What: support for extensible authentication protocol over LAN
+Help: support for extensible authentication protocol over LAN
 
 Type: codec
 
@@ -1772,7 +1775,7 @@ Rules:
 
 --------------
 
-What: support for encapsulated remote switched port analyzer - type 2
+Help: support for encapsulated remote switched port analyzer - type 2
 
 Type: codec
 
@@ -1788,7 +1791,7 @@ Rules:
 
 --------------
 
-What: support for encapsulated remote switched port analyzer - type 3
+Help: support for encapsulated remote switched port analyzer - type 3
 
 Type: codec
 
@@ -1803,7 +1806,7 @@ Rules:
 
 --------------
 
-What: support for encapsulating security payload
+Help: support for encapsulating security payload
 
 Type: codec
 
@@ -1823,7 +1826,7 @@ Rules:
 
 --------------
 
-What: support for ethernet protocol (DLT 1) (DLT 51)
+Help: support for ethernet protocol (DLT 1) (DLT 51)
 
 Type: codec
 
@@ -1838,7 +1841,7 @@ Rules:
 
 --------------
 
-What: support for fabricpath
+Help: support for fabricpath
 
 Type: codec
 
@@ -1853,7 +1856,7 @@ Rules:
 
 --------------
 
-What: support for generic routing encapsulation
+Help: support for generic routing encapsulation
 
 Type: codec
 
@@ -1873,7 +1876,7 @@ Rules:
 
 --------------
 
-What: support for general-packet-radio-service tunneling protocol
+Help: support for general-packet-radio-service tunneling protocol
 
 Type: codec
 
@@ -1889,7 +1892,7 @@ Rules:
 
 --------------
 
-What: support for Internet control message protocol v4
+Help: support for Internet control message protocol v4
 
 Type: codec
 
@@ -1938,7 +1941,7 @@ Peg counts:
 
 --------------
 
-What: support for Internet control message protocol v6
+Help: support for Internet control message protocol v6
 
 Type: codec
 
@@ -1977,7 +1980,7 @@ Peg counts:
 
 --------------
 
-What: support for Internet group management protocol
+Help: support for Internet group management protocol
 
 Type: codec
 
@@ -1992,7 +1995,7 @@ Rules:
 
 --------------
 
-What: support for Internet protocol v4 (DLT 228)
+Help: support for Internet protocol v4 (DLT 228)
 
 Type: codec
 
@@ -2033,7 +2036,7 @@ Peg counts:
 
 --------------
 
-What: support for Internet protocol v6 (DLT 229)
+Help: support for Internet protocol v6 (DLT 229)
 
 Type: codec
 
@@ -2080,7 +2083,7 @@ Rules:
 
 --------------
 
-What: support for logical link control
+Help: support for logical link control
 
 Type: codec
 
@@ -2096,7 +2099,7 @@ Rules:
 
 --------------
 
-What: support for multiprotocol label switching
+Help: support for multiprotocol label switching
 
 Type: codec
 
@@ -2134,7 +2137,7 @@ Peg counts:
 
 --------------
 
-What: support for 802.1ah protocol
+Help: support for 802.1ah protocol
 
 Type: codec
 
@@ -2149,7 +2152,7 @@ Rules:
 
 --------------
 
-What: support for pragmatic general multicast
+Help: support for pragmatic general multicast
 
 Type: codec
 
@@ -2164,7 +2167,7 @@ Rules:
 
 --------------
 
-What: support for point-to-point protocol over ethernet
+Help: support for point-to-point protocol over ethernet
 
 Type: codec
 
@@ -2179,7 +2182,7 @@ Rules:
 
 --------------
 
-What: support for transmission control protocol
+Help: support for transmission control protocol
 
 Type: codec
 
@@ -2220,7 +2223,7 @@ Peg counts:
 
 --------------
 
-What: support for token ring decoding
+Help: support for token ring decoding
 
 Type: codec
 
@@ -2238,7 +2241,7 @@ Rules:
 
 --------------
 
-What: support for user datagram protocol
+Help: support for user datagram protocol
 
 Type: codec
 
@@ -2272,7 +2275,7 @@ Peg counts:
 
 --------------
 
-What: support for local area network
+Help: support for local area network
 
 Type: codec
 
@@ -2287,7 +2290,7 @@ Rules:
 
 --------------
 
-What: support for wireless local area network protocol (DLT 105)
+Help: support for wireless local area network protocol (DLT 105)
 
 Type: codec
 
@@ -2312,7 +2315,7 @@ Connectors support High Availability communication links.
 
 --------------
 
-What: implement the file based connector
+Help: implement the file based connector
 
 Type: connector
 
@@ -2335,7 +2338,7 @@ Peg counts:
 
 --------------
 
-What: implement the tcp stream connector
+Help: implement the tcp stream connector
 
 Type: connector
 
@@ -2367,11 +2370,13 @@ protocols beyond basic decoding.
 
 --------------
 
-What: application and service identification
+Help: application and service identification
 
 Type: inspector
 
 Usage: context
+
+Instance Type: global
 
 Configuration:
 
@@ -2429,22 +2434,26 @@ Peg counts:
 
 --------------
 
-What: log selected published data to appid_listener.log
+Help: log selected published data to appid_listener.log
 
 Type: inspector
 
 Usage: context
+
+Instance Type: global
 
 
 5.3. arp_spoof
 
 --------------
 
-What: detect ARP attacks and anomalies
+Help: detect ARP attacks and anomalies
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: singleton
 
 Configuration:
 
@@ -2467,11 +2476,13 @@ Peg counts:
 
 --------------
 
-What: back orifice detection
+Help: back orifice detection
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Rules:
 
@@ -2489,11 +2500,13 @@ Peg counts:
 
 --------------
 
-What: configure processing based on CIDRs, ports, services, etc.
+Help: configure processing based on CIDRs, ports, services, etc.
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: singleton
 
 Configuration:
 
@@ -2540,11 +2553,13 @@ Peg counts:
 
 --------------
 
-What: cip inspection
+Help: cip inspection
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Configuration:
 
@@ -2578,11 +2593,13 @@ Peg counts:
 
 --------------
 
-What: log selected published data to data.log
+Help: log selected published data to data.log
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: singleton
 
 Configuration:
 
@@ -2601,11 +2618,13 @@ Peg counts:
 
 --------------
 
-What: dce over http inspection - client to/from proxy
+Help: dce over http inspection - client to/from proxy
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Peg counts:
 
@@ -2619,11 +2638,13 @@ Peg counts:
 
 --------------
 
-What: dce over http inspection - proxy to/from server
+Help: dce over http inspection - proxy to/from server
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Peg counts:
 
@@ -2637,11 +2658,13 @@ Peg counts:
 
 --------------
 
-What: dce over smb inspection
+Help: dce over smb inspection
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Configuration:
 
@@ -2904,11 +2927,13 @@ Peg counts:
 
 --------------
 
-What: dce over tcp inspection
+Help: dce over tcp inspection
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Configuration:
 
@@ -3016,11 +3041,13 @@ Peg counts:
 
 --------------
 
-What: dce over udp inspection
+Help: dce over udp inspection
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Configuration:
 
@@ -3075,11 +3102,13 @@ Peg counts:
 
 --------------
 
-What: dnp3 inspection
+Help: dnp3 inspection
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Configuration:
 
@@ -3114,11 +3143,13 @@ Peg counts:
 
 --------------
 
-What: dns inspection
+Help: dns inspection
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Rules:
 
@@ -3140,11 +3171,13 @@ Peg counts:
 
 --------------
 
-What: alert on configured HTTP domains
+Help: alert on configured HTTP domains
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: singleton
 
 Configuration:
 
@@ -3167,11 +3200,13 @@ Peg counts:
 
 --------------
 
-What: dynamic inspector example
+Help: dynamic inspector example
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: singleton
 
 Configuration:
 
@@ -3191,11 +3226,13 @@ Peg counts:
 
 --------------
 
-What: configure file identification
+Help: configure file identification
 
 Type: inspector
 
 Usage: global
+
+Instance Type: global
 
 Configuration:
 
@@ -3291,11 +3328,13 @@ Peg counts:
 
 --------------
 
-What: log file event to file.log
+Help: log file event to file.log
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: singleton
 
 Configuration:
 
@@ -3313,11 +3352,13 @@ Peg counts:
 
 --------------
 
-What: FTP client configuration module for use with ftp_server
+Help: FTP client configuration module for use with ftp_server
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Configuration:
 
@@ -3339,11 +3380,13 @@ Configuration:
 
 --------------
 
-What: FTP data channel handler
+Help: FTP data channel handler
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Peg counts:
 
@@ -3354,11 +3397,13 @@ Peg counts:
 
 --------------
 
-What: main FTP module; ftp_client should also be configured
+Help: main FTP module; ftp_client should also be configured
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Configuration:
 
@@ -3424,17 +3469,23 @@ Peg counts:
     (now)
   * ftp_server.max_concurrent_sessions: maximum concurrent FTP
     sessions (max)
+  * ftp_server.start_tls: total STARTTLS events generated (sum)
+  * ftp_server.ssl_search_abandoned: total SSL search abandoned (sum)
+  * ftp_server.ssl_srch_abandoned_early: total SSL search abandoned
+    too soon (sum)
 
 
 5.22. gtp_inspect
 
 --------------
 
-What: gtp control channel inspection
+Help: gtp control channel inspection
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Configuration:
 
@@ -3471,11 +3522,13 @@ Peg counts:
 
 --------------
 
-What: HTTP/2 inspector
+Help: HTTP/2 inspector
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Rules:
 
@@ -3515,11 +3568,13 @@ Peg counts:
 
 --------------
 
-What: HTTP inspector
+Help: HTTP inspector
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Configuration:
 
@@ -3762,11 +3817,13 @@ Peg counts:
 
 --------------
 
-What: imap inspection
+Help: imap inspection
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Configuration:
 
@@ -3817,11 +3874,13 @@ Peg counts:
 
 --------------
 
-What: for testing memory management
+Help: for testing memory management
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: singleton
 
 Peg counts:
 
@@ -3832,11 +3891,13 @@ Peg counts:
 
 --------------
 
-What: modbus inspection
+Help: modbus inspection
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Rules:
 
@@ -3859,11 +3920,13 @@ Peg counts:
 
 --------------
 
-What: packet scrubbing for inline mode
+Help: packet scrubbing for inline mode
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: singleton
 
 Configuration:
 
@@ -3995,22 +4058,26 @@ Peg counts:
 
 --------------
 
-What: trace logger with a null printout
+Help: trace logger with a null printout
 
 Type: inspector
 
 Usage: global
+
+Instance Type: global
 
 
 5.30. packet_capture
 
 --------------
 
-What: raw packet dumping facility
+Help: raw packet dumping facility
 
 Type: inspector
 
 Usage: global
+
+Instance Type: global
 
 Configuration:
 
@@ -4034,11 +4101,13 @@ Peg counts:
 
 --------------
 
-What: performance monitoring and flow statistics collection
+Help: performance monitoring and flow statistics collection
 
 Type: inspector
 
 Usage: global
+
+Instance Type: global
 
 Configuration:
 
@@ -4092,11 +4161,13 @@ Peg counts:
 
 --------------
 
-What: pop inspection
+Help: pop inspection
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Configuration:
 
@@ -4148,11 +4219,13 @@ Peg counts:
 
 --------------
 
-What: detect various ip, icmp, tcp, and udp port or protocol scans
+Help: detect various ip, icmp, tcp, and udp port or protocol scans
 
 Type: inspector
 
 Usage: global
+
+Instance Type: global
 
 Configuration:
 
@@ -4318,11 +4391,13 @@ Peg counts:
 
 --------------
 
-What: reputation inspection
+Help: reputation inspection
 
 Type: inspector
 
 Usage: global
+
+Instance Type: global
 
 Configuration:
 
@@ -4363,12 +4438,14 @@ Peg counts:
 
 --------------
 
-What: Real-time network awareness and OS fingerprinting
+Help: Real-time network awareness and OS fingerprinting
 (experimental)
 
 Type: inspector
 
 Usage: context
+
+Instance Type: global
 
 Configuration:
 
@@ -4378,11 +4455,14 @@ Configuration:
     discovery events into logger
   * bool rna.log_when_idle = false: enable host update logging when
     snort is idle
+  * string rna.dump_file: file name to dump RNA mac cache on
+    shutdown; won’t dump by default
 
 Commands:
 
   * rna.reload_fingerprint(): reload rna database of fingerprint
     patterns/signatures
+  * rna.dump_macs(): dump rna’s internal MAC trackers
 
 Peg counts:
 
@@ -4407,11 +4487,13 @@ Peg counts:
 
 --------------
 
-What: RPC inspector
+Help: RPC inspector
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Rules:
 
@@ -4434,11 +4516,13 @@ Peg counts:
 
 --------------
 
-What: s7commplus inspection
+Help: s7commplus inspection
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Rules:
 
@@ -4461,11 +4545,13 @@ Peg counts:
 
 --------------
 
-What: sip inspection
+Help: sip inspection
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Configuration:
 
@@ -4560,11 +4646,13 @@ Peg counts:
 
 --------------
 
-What: smtp inspection
+Help: smtp inspection
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Configuration:
 
@@ -4647,6 +4735,10 @@ Peg counts:
   * smtp.concurrent_sessions: total concurrent smtp sessions (now)
   * smtp.max_concurrent_sessions: maximum concurrent smtp sessions
     (max)
+  * smtp.start_tls: total STARTTLS events generated (sum)
+  * smtp.ssl_search_abandoned: total SSL search abandoned (sum)
+  * smtp.ssl_srch_abandoned_early: total SSL search abandoned too
+    soon (sum)
   * smtp.b64_attachments: total base64 attachments decoded (sum)
   * smtp.b64_decoded_bytes: total base64 decoded bytes (sum)
   * smtp.qp_attachments: total quoted-printable attachments decoded
@@ -4663,23 +4755,27 @@ Peg counts:
 
 --------------
 
-What: a proxy inspector to track flow data from SO rules (internal
+Help: a proxy inspector to track flow data from SO rules (internal
 use only)
 
 Type: inspector
 
 Usage: global
 
+Instance Type: global
+
 
 5.41. ssh
 
 --------------
 
-What: ssh inspection
+Help: ssh inspection
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Configuration:
 
@@ -4713,11 +4809,13 @@ Peg counts:
 
 --------------
 
-What: ssl inspection
+Help: ssl inspection
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Configuration:
 
@@ -4762,11 +4860,13 @@ Peg counts:
 
 --------------
 
-What: common flow tracking
+Help: common flow tracking
 
 Type: inspector
 
 Usage: global
+
+Instance Type: global
 
 Configuration:
 
@@ -4849,11 +4949,13 @@ Peg counts:
 
 --------------
 
-What: stream inspector for file flow tracking and processing
+Help: stream inspector for file flow tracking and processing
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Configuration:
 
@@ -4864,11 +4966,13 @@ Configuration:
 
 --------------
 
-What: stream inspector for ICMP flow tracking
+Help: stream inspector for ICMP flow tracking
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Configuration:
 
@@ -4889,11 +4993,13 @@ Peg counts:
 
 --------------
 
-What: stream inspector for IP flow tracking and defragmentation
+Help: stream inspector for IP flow tracking and defragmentation
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Configuration:
 
@@ -4959,12 +5065,14 @@ Peg counts:
 
 --------------
 
-What: stream inspector for TCP flow tracking and stream normalization
+Help: stream inspector for TCP flow tracking and stream normalization
 and reassembly
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Configuration:
 
@@ -5112,11 +5220,13 @@ Peg counts:
 
 --------------
 
-What: stream inspector for UDP flow tracking
+Help: stream inspector for UDP flow tracking
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Configuration:
 
@@ -5139,11 +5249,13 @@ Peg counts:
 
 --------------
 
-What: stream inspector for user flow tracking and reassembly
+Help: stream inspector for user flow tracking and reassembly
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Configuration:
 
@@ -5155,11 +5267,13 @@ Configuration:
 
 --------------
 
-What: telnet inspection and normalization
+Help: telnet inspection and normalization
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Configuration:
 
@@ -5189,12 +5303,14 @@ Peg counts:
 
 --------------
 
-What: inspector that implements port-independent protocol
+Help: inspector that implements port-independent protocol
 identification
 
 Type: inspector
 
 Usage: inspect
+
+Instance Type: multiton
 
 Configuration:
 
@@ -5250,7 +5366,7 @@ rule to parse.
 
 --------------
 
-What: send response to client and terminate session
+Help: send response to client and terminate session
 
 Type: ips_action
 
@@ -5266,7 +5382,7 @@ Configuration:
 
 --------------
 
-What: terminate session with TCP reset or ICMP unreachable
+Help: terminate session with TCP reset or ICMP unreachable
 
 Type: ips_action
 
@@ -5284,7 +5400,7 @@ Configuration:
 
 --------------
 
-What: overwrite packet contents
+Help: overwrite packet contents
 
 Type: ips_action
 
@@ -5309,7 +5425,7 @@ IPS options are the building blocks of IPS rules.
 
 --------------
 
-What: rule option to match on TCP ack numbers
+Help: rule option to match on TCP ack numbers
 
 Type: ips_option
 
@@ -5325,7 +5441,7 @@ Configuration:
 
 --------------
 
-What: detection option for application ids
+Help: detection option for application ids
 
 Type: ips_option
 
@@ -5340,7 +5456,7 @@ Configuration:
 
 --------------
 
-What: rule option for asn1 detection
+Help: rule option for asn1 detection
 
 Type: ips_option
 
@@ -5365,7 +5481,7 @@ Configuration:
 
 --------------
 
-What: rule option to decode base64 data - must be used with
+Help: rule option to decode base64 data - must be used with
 base64_data option
 
 Type: ips_option
@@ -5386,7 +5502,7 @@ Configuration:
 
 --------------
 
-What: rule option to move to the data for a specified BER element
+Help: rule option to move to the data for a specified BER element
 
 Type: ips_option
 
@@ -5402,7 +5518,7 @@ Configuration:
 
 --------------
 
-What: rule option to skip BER element
+Help: rule option to skip BER element
 
 Type: ips_option
 
@@ -5419,7 +5535,7 @@ Configuration:
 
 --------------
 
-What: rule option to check length of current buffer
+Help: rule option to check length of current buffer
 
 Type: ips_option
 
@@ -5437,7 +5553,7 @@ Configuration:
 
 --------------
 
-What: rule option to convert data to an integer variable
+Help: rule option to convert data to an integer variable
 
 Type: ips_option
 
@@ -5472,7 +5588,7 @@ Configuration:
 
 --------------
 
-What: rule option to move the detection cursor
+Help: rule option to move the detection cursor
 
 Type: ips_option
 
@@ -5511,7 +5627,7 @@ Configuration:
 
 --------------
 
-What: rule option to perform mathematical operations on extracted
+Help: rule option to perform mathematical operations on extracted
 value and a specified value or existing variable
 
 Type: ips_option
@@ -5543,7 +5659,7 @@ Configuration:
 
 --------------
 
-What: rule option to convert data to integer and compare
+Help: rule option to convert data to integer and compare
 
 Type: ips_option
 
@@ -5576,7 +5692,7 @@ Configuration:
 
 --------------
 
-What: detection option to match CIP attribute
+Help: detection option to match CIP attribute
 
 Type: ips_option
 
@@ -5591,7 +5707,7 @@ Configuration:
 
 --------------
 
-What: detection option to match CIP class
+Help: detection option to match CIP class
 
 Type: ips_option
 
@@ -5606,7 +5722,7 @@ Configuration:
 
 --------------
 
-What: detection option to match CIP Connection Path Class
+Help: detection option to match CIP Connection Path Class
 
 Type: ips_option
 
@@ -5622,7 +5738,7 @@ Configuration:
 
 --------------
 
-What: detection option to match CIP instance
+Help: detection option to match CIP instance
 
 Type: ips_option
 
@@ -5637,7 +5753,7 @@ Configuration:
 
 --------------
 
-What: detection option to match CIP request
+Help: detection option to match CIP request
 
 Type: ips_option
 
@@ -5648,7 +5764,7 @@ Usage: detect
 
 --------------
 
-What: detection option to match CIP response
+Help: detection option to match CIP response
 
 Type: ips_option
 
@@ -5659,7 +5775,7 @@ Usage: detect
 
 --------------
 
-What: detection option to match CIP service
+Help: detection option to match CIP service
 
 Type: ips_option
 
@@ -5674,7 +5790,7 @@ Configuration:
 
 --------------
 
-What: detection option to match CIP response status
+Help: detection option to match CIP response status
 
 Type: ips_option
 
@@ -5689,7 +5805,7 @@ Configuration:
 
 --------------
 
-What: general rule option for rule classification
+Help: general rule option for rule classification
 
 Type: ips_option
 
@@ -5704,7 +5820,7 @@ Configuration:
 
 --------------
 
-What: payload rule option for basic pattern matching
+Help: payload rule option for basic pattern matching
 
 Type: ips_option
 
@@ -5735,7 +5851,7 @@ Configuration:
 
 --------------
 
-What: payload rule option for detecting specific attacks
+Help: payload rule option for detecting specific attacks
 
 Type: ips_option
 
@@ -5750,7 +5866,7 @@ Configuration:
 
 --------------
 
-What: detection option to check dcerpc interface
+Help: detection option to check dcerpc interface
 
 Type: ips_option
 
@@ -5767,7 +5883,7 @@ Configuration:
 
 --------------
 
-What: detection option to check dcerpc operation number
+Help: detection option to check dcerpc operation number
 
 Type: ips_option
 
@@ -5783,7 +5899,7 @@ Configuration:
 
 --------------
 
-What: sets the cursor to dcerpc stub data
+Help: sets the cursor to dcerpc stub data
 
 Type: ips_option
 
@@ -5794,7 +5910,7 @@ Usage: detect
 
 --------------
 
-What: rule option to require multiple hits before a rule generates an
+Help: rule option to require multiple hits before a rule generates an
 event
 
 Type: ips_option
@@ -5815,7 +5931,7 @@ Configuration:
 
 --------------
 
-What: sets the cursor to dnp3 data
+Help: sets the cursor to dnp3 data
 
 Type: ips_option
 
@@ -5826,7 +5942,7 @@ Usage: detect
 
 --------------
 
-What: detection option to check DNP3 function code
+Help: detection option to check DNP3 function code
 
 Type: ips_option
 
@@ -5841,7 +5957,7 @@ Configuration:
 
 --------------
 
-What: detection option to check DNP3 indicator flags
+Help: detection option to check DNP3 indicator flags
 
 Type: ips_option
 
@@ -5856,7 +5972,7 @@ Configuration:
 
 --------------
 
-What: detection option to check DNP3 object headers
+Help: detection option to check DNP3 object headers
 
 Type: ips_option
 
@@ -5874,7 +5990,7 @@ Configuration:
 
 --------------
 
-What: rule option to test payload size
+Help: rule option to test payload size
 
 Type: ips_option
 
@@ -5890,7 +6006,7 @@ Configuration:
 
 --------------
 
-What: stub rule option to enable or disable full rule
+Help: stub rule option to enable or disable full rule
 
 Type: ips_option
 
@@ -5907,7 +6023,7 @@ Configuration:
 
 --------------
 
-What: detection option to match CIP Enip Command
+Help: detection option to match CIP Enip Command
 
 Type: ips_option
 
@@ -5922,7 +6038,7 @@ Configuration:
 
 --------------
 
-What: detection option to match ENIP Request
+Help: detection option to match ENIP Request
 
 Type: ips_option
 
@@ -5933,7 +6049,7 @@ Usage: detect
 
 --------------
 
-What: detection option to match ENIP response
+Help: detection option to match ENIP response
 
 Type: ips_option
 
@@ -5944,7 +6060,7 @@ Usage: detect
 
 --------------
 
-What: rule option to set detection cursor to file data
+Help: rule option to set detection cursor to file data
 
 Type: ips_option
 
@@ -5955,7 +6071,7 @@ Usage: detect
 
 --------------
 
-What: rule option to check file type
+Help: rule option to check file type
 
 Type: ips_option
 
@@ -5970,7 +6086,7 @@ Configuration:
 
 --------------
 
-What: rule option to test TCP control flags
+Help: rule option to test TCP control flags
 
 Type: ips_option
 
@@ -5986,7 +6102,7 @@ Configuration:
 
 --------------
 
-What: rule option to check session properties
+Help: rule option to check session properties
 
 Type: ips_option
 
@@ -6012,7 +6128,7 @@ Configuration:
 
 --------------
 
-What: rule option to set and test arbitrary boolean flags
+Help: rule option to set and test arbitrary boolean flags
 
 Type: ips_option
 
@@ -6029,7 +6145,7 @@ Configuration:
 
 --------------
 
-What: rule option to test IP frag flags
+Help: rule option to test IP frag flags
 
 Type: ips_option
 
@@ -6044,7 +6160,7 @@ Configuration:
 
 --------------
 
-What: rule option to test IP frag offset
+Help: rule option to test IP frag offset
 
 Type: ips_option
 
@@ -6060,7 +6176,7 @@ Configuration:
 
 --------------
 
-What: rule option specifying rule generator
+Help: rule option specifying rule generator
 
 Type: ips_option
 
@@ -6075,7 +6191,7 @@ Configuration:
 
 --------------
 
-What: rule option to check gtp info element
+Help: rule option to check gtp info element
 
 Type: ips_option
 
@@ -6090,7 +6206,7 @@ Configuration:
 
 --------------
 
-What: rule option to check gtp types
+Help: rule option to check gtp types
 
 Type: ips_option
 
@@ -6105,7 +6221,7 @@ Configuration:
 
 --------------
 
-What: rule option to check GTP version
+Help: rule option to check GTP version
 
 Type: ips_option
 
@@ -6120,7 +6236,7 @@ Configuration:
 
 --------------
 
-What: rule option to set detection cursor to the decoded HTTP/2
+Help: rule option to set detection cursor to the decoded HTTP/2
 header
 
 Type: ips_option
@@ -6132,7 +6248,7 @@ Usage: detect
 
 --------------
 
-What: rule option to set detection cursor to the 9-octet HTTP/2 frame
+Help: rule option to set detection cursor to the 9-octet HTTP/2 frame
 header
 
 Type: ips_option
@@ -6144,7 +6260,7 @@ Usage: detect
 
 --------------
 
-What: rule option to set the detection cursor to the request body
+Help: rule option to set the detection cursor to the request body
 
 Type: ips_option
 
@@ -6155,7 +6271,7 @@ Usage: detect
 
 --------------
 
-What: rule option to set the detection cursor to the HTTP cookie
+Help: rule option to set the detection cursor to the HTTP cookie
 
 Type: ips_option
 
@@ -6177,7 +6293,7 @@ Configuration:
 
 --------------
 
-What: rule option to set the detection cursor to the normalized
+Help: rule option to set the detection cursor to the normalized
 headers
 
 Type: ips_option
@@ -6202,7 +6318,7 @@ Configuration:
 
 --------------
 
-What: rule option to set the detection cursor to the HTTP request
+Help: rule option to set the detection cursor to the HTTP request
 method
 
 Type: ips_option
@@ -6223,7 +6339,7 @@ Configuration:
 
 --------------
 
-What: rule option to set the detection cursor to the value of the
+Help: rule option to set the detection cursor to the value of the
 specified HTTP parameter key which may be in the query or body
 
 Type: ips_option
@@ -6240,7 +6356,7 @@ Configuration:
 
 --------------
 
-What: rule option to set the detection cursor to the unnormalized
+Help: rule option to set the detection cursor to the unnormalized
 message body
 
 Type: ips_option
@@ -6252,7 +6368,7 @@ Usage: detect
 
 --------------
 
-What: rule option to set the detection cursor to the unnormalized
+Help: rule option to set the detection cursor to the unnormalized
 cookie
 
 Type: ips_option
@@ -6275,7 +6391,7 @@ Configuration:
 
 --------------
 
-What: rule option to set the detection cursor to the unnormalized
+Help: rule option to set the detection cursor to the unnormalized
 headers
 
 Type: ips_option
@@ -6298,7 +6414,7 @@ Configuration:
 
 --------------
 
-What: rule option to set the detection cursor to the unnormalized
+Help: rule option to set the detection cursor to the unnormalized
 request line
 
 Type: ips_option
@@ -6319,7 +6435,7 @@ Configuration:
 
 --------------
 
-What: rule option to set the detection cursor to the unnormalized
+Help: rule option to set the detection cursor to the unnormalized
 status line
 
 Type: ips_option
@@ -6338,7 +6454,7 @@ Configuration:
 
 --------------
 
-What: rule option to set the detection cursor to the unnormalized
+Help: rule option to set the detection cursor to the unnormalized
 trailers
 
 Type: ips_option
@@ -6359,7 +6475,7 @@ Configuration:
 
 --------------
 
-What: rule option to set the detection cursor to the unnormalized URI
+Help: rule option to set the detection cursor to the unnormalized URI
 
 Type: ips_option
 
@@ -6388,7 +6504,7 @@ Configuration:
 
 --------------
 
-What: rule option to set the detection cursor to the HTTP status code
+Help: rule option to set the detection cursor to the HTTP status code
 
 Type: ips_option
 
@@ -6406,7 +6522,7 @@ Configuration:
 
 --------------
 
-What: rule option to set the detection cursor to the HTTP status
+Help: rule option to set the detection cursor to the HTTP status
 message
 
 Type: ips_option
@@ -6425,7 +6541,7 @@ Configuration:
 
 --------------
 
-What: rule option to set the detection cursor to the normalized
+Help: rule option to set the detection cursor to the normalized
 trailers
 
 Type: ips_option
@@ -6447,7 +6563,7 @@ Configuration:
 
 --------------
 
-What: rule option to set the detection cursor to the final client IP
+Help: rule option to set the detection cursor to the final client IP
 address
 
 Type: ips_option
@@ -6468,7 +6584,7 @@ Configuration:
 
 --------------
 
-What: rule option to set the detection cursor to the normalized URI
+Help: rule option to set the detection cursor to the normalized URI
 buffer
 
 Type: ips_option
@@ -6496,7 +6612,7 @@ Configuration:
 
 --------------
 
-What: rule option to set the detection cursor to the version buffer
+Help: rule option to set the detection cursor to the version buffer
 
 Type: ips_option
 
@@ -6518,7 +6634,7 @@ Configuration:
 
 --------------
 
-What: rule option to check ICMP ID
+Help: rule option to check ICMP ID
 
 Type: ips_option
 
@@ -6534,7 +6650,7 @@ Configuration:
 
 --------------
 
-What: rule option to check ICMP sequence number
+Help: rule option to check ICMP sequence number
 
 Type: ips_option
 
@@ -6550,7 +6666,7 @@ Configuration:
 
 --------------
 
-What: rule option to check ICMP code
+Help: rule option to check ICMP code
 
 Type: ips_option
 
@@ -6566,7 +6682,7 @@ Configuration:
 
 --------------
 
-What: rule option to check the IP ID field
+Help: rule option to check the IP ID field
 
 Type: ips_option
 
@@ -6582,7 +6698,7 @@ Configuration:
 
 --------------
 
-What: rule option to check the IP protocol number
+Help: rule option to check the IP protocol number
 
 Type: ips_option
 
@@ -6597,7 +6713,7 @@ Configuration:
 
 --------------
 
-What: rule option to check for IP options
+Help: rule option to check for IP options
 
 Type: ips_option
 
@@ -6613,7 +6729,7 @@ Configuration:
 
 --------------
 
-What: rule option to check for the presence of payload data
+Help: rule option to check for the presence of payload data
 
 Type: ips_option
 
@@ -6630,7 +6746,7 @@ Configuration:
 
 --------------
 
-What: rule option to check ICMP type
+Help: rule option to check ICMP type
 
 Type: ips_option
 
@@ -6646,7 +6762,7 @@ Configuration:
 
 --------------
 
-What: payload rule option for hash matching
+Help: payload rule option for hash matching
 
 Type: ips_option
 
@@ -6666,7 +6782,7 @@ Configuration:
 
 --------------
 
-What: rule option for conveying arbitrary comma-separated name, value
+Help: rule option for conveying arbitrary comma-separated name, value
 data within the rule text
 
 Type: ips_option
@@ -6683,7 +6799,7 @@ Configuration:
 
 --------------
 
-What: rule option to set cursor to modbus data
+Help: rule option to set cursor to modbus data
 
 Type: ips_option
 
@@ -6694,7 +6810,7 @@ Usage: detect
 
 --------------
 
-What: rule option to check modbus function code
+Help: rule option to check modbus function code
 
 Type: ips_option
 
@@ -6709,7 +6825,7 @@ Configuration:
 
 --------------
 
-What: rule option to check Modbus unit ID
+Help: rule option to check Modbus unit ID
 
 Type: ips_option
 
@@ -6724,7 +6840,7 @@ Configuration:
 
 --------------
 
-What: rule option summarizing rule purpose output with events
+Help: rule option summarizing rule purpose output with events
 
 Type: ips_option
 
@@ -6739,7 +6855,7 @@ Configuration:
 
 --------------
 
-What: detection for TCP maximum segment size
+Help: detection for TCP maximum segment size
 
 Type: ips_option
 
@@ -6755,7 +6871,7 @@ Configuration:
 
 --------------
 
-What: rule option for matching payload data with pcre
+Help: rule option for matching payload data with pcre
 
 Type: ips_option
 
@@ -6777,7 +6893,7 @@ Peg counts:
 
 --------------
 
-What: rule option to set the detection cursor to the normalized
+Help: rule option to set the detection cursor to the normalized
 packet data
 
 Type: ips_option
@@ -6789,7 +6905,7 @@ Usage: detect
 
 --------------
 
-What: alert on raw packet number
+Help: alert on raw packet number
 
 Type: ips_option
 
@@ -6805,7 +6921,7 @@ Configuration:
 
 --------------
 
-What: rule option for prioritizing events
+Help: rule option for prioritizing events
 
 Type: ips_option
 
@@ -6821,7 +6937,7 @@ Configuration:
 
 --------------
 
-What: rule option to set the detection cursor to the raw packet data
+Help: rule option to set the detection cursor to the raw packet data
 
 Type: ips_option
 
@@ -6832,7 +6948,7 @@ Usage: detect
 
 --------------
 
-What: rule option to indicate relevant attack identification system
+Help: rule option to indicate relevant attack identification system
 
 Type: ips_option
 
@@ -6847,7 +6963,7 @@ Configuration:
 
 --------------
 
-What: rule option for matching payload data with hyperscan regex;
+Help: rule option for matching payload data with hyperscan regex;
 uses pcre syntax
 
 Type: ips_option
@@ -6871,7 +6987,7 @@ Configuration:
 
 --------------
 
-What: rule option to convey an arbitrary comment in the rule body
+Help: rule option to convey an arbitrary comment in the rule body
 
 Type: ips_option
 
@@ -6886,7 +7002,7 @@ Configuration:
 
 --------------
 
-What: rule option to overwrite payload data; use with rewrite action
+Help: rule option to overwrite payload data; use with rewrite action
 
 Type: ips_option
 
@@ -6901,7 +7017,7 @@ Configuration:
 
 --------------
 
-What: rule option to indicate current revision of signature
+Help: rule option to indicate current revision of signature
 
 Type: ips_option
 
@@ -6916,7 +7032,7 @@ Configuration:
 
 --------------
 
-What: rule option to check SUNRPC CALL parameters
+Help: rule option to check SUNRPC CALL parameters
 
 Type: ips_option
 
@@ -6933,7 +7049,7 @@ Configuration:
 
 --------------
 
-What: rule option to set cursor to s7commplus content
+Help: rule option to set cursor to s7commplus content
 
 Type: ips_option
 
@@ -6944,7 +7060,7 @@ Usage: detect
 
 --------------
 
-What: rule option to check s7commplus function code
+Help: rule option to check s7commplus function code
 
 Type: ips_option
 
@@ -6959,7 +7075,7 @@ Configuration:
 
 --------------
 
-What: rule option to check s7commplus opcode code
+Help: rule option to check s7commplus opcode code
 
 Type: ips_option
 
@@ -6974,7 +7090,7 @@ Configuration:
 
 --------------
 
-What: rule option for detecting sensitive data
+Help: rule option for detecting sensitive data
 
 Type: ips_option
 
@@ -6998,7 +7114,7 @@ Peg counts:
 
 --------------
 
-What: rule option to check TCP sequence number
+Help: rule option to check TCP sequence number
 
 Type: ips_option
 
@@ -7014,7 +7130,7 @@ Configuration:
 
 --------------
 
-What: rule option to specify list of services for grouping rules
+Help: rule option to specify list of services for grouping rules
 
 Type: ips_option
 
@@ -7029,7 +7145,7 @@ Configuration:
 
 --------------
 
-What: payload rule option for hash matching
+Help: payload rule option for hash matching
 
 Type: ips_option
 
@@ -7049,7 +7165,7 @@ Configuration:
 
 --------------
 
-What: payload rule option for hash matching
+Help: payload rule option for hash matching
 
 Type: ips_option
 
@@ -7069,7 +7185,7 @@ Configuration:
 
 --------------
 
-What: rule option to indicate signature number
+Help: rule option to indicate signature number
 
 Type: ips_option
 
@@ -7084,7 +7200,7 @@ Configuration:
 
 --------------
 
-What: rule option to set the detection cursor to the request body
+Help: rule option to set the detection cursor to the request body
 
 Type: ips_option
 
@@ -7095,7 +7211,7 @@ Usage: detect
 
 --------------
 
-What: rule option to set the detection cursor to the SIP header
+Help: rule option to set the detection cursor to the SIP header
 buffer
 
 Type: ips_option
@@ -7107,7 +7223,7 @@ Usage: detect
 
 --------------
 
-What: detection option for sip stat code
+Help: detection option for sip stat code
 
 Type: ips_option
 
@@ -7122,7 +7238,7 @@ Configuration:
 
 --------------
 
-What: detection option for sip stat code
+Help: detection option for sip stat code
 
 Type: ips_option
 
@@ -7137,7 +7253,7 @@ Configuration:
 
 --------------
 
-What: rule option to call custom eval function
+Help: rule option to call custom eval function
 
 Type: ips_option
 
@@ -7154,7 +7270,7 @@ Configuration:
 
 --------------
 
-What: rule option to specify a shared object rule ID
+Help: rule option to specify a shared object rule ID
 
 Type: ips_option
 
@@ -7170,7 +7286,7 @@ Configuration:
 
 --------------
 
-What: detection option for ssl state
+Help: detection option for ssl state
 
 Type: ips_option
 
@@ -7199,7 +7315,7 @@ Configuration:
 
 --------------
 
-What: detection option for ssl version
+Help: detection option for ssl version
 
 Type: ips_option
 
@@ -7226,7 +7342,7 @@ Configuration:
 
 --------------
 
-What: detection option for stream reassembly control
+Help: detection option for stream reassembly control
 
 Type: ips_option
 
@@ -7247,7 +7363,7 @@ Configuration:
 
 --------------
 
-What: detection option for stream size checking
+Help: detection option for stream size checking
 
 Type: ips_option
 
@@ -7265,7 +7381,7 @@ Configuration:
 
 --------------
 
-What: rule option to log additional packets
+Help: rule option to log additional packets
 
 Type: ips_option
 
@@ -7284,7 +7400,7 @@ Configuration:
 
 --------------
 
-What: rule option to indicate target of attack
+Help: rule option to indicate target of attack
 
 Type: ips_option
 
@@ -7300,7 +7416,7 @@ Configuration:
 
 --------------
 
-What: rule option to check type of service field
+Help: rule option to check type of service field
 
 Type: ips_option
 
@@ -7315,7 +7431,7 @@ Configuration:
 
 --------------
 
-What: rule option to check time to live field
+Help: rule option to check time to live field
 
 Type: ips_option
 
@@ -7331,7 +7447,7 @@ Configuration:
 
 --------------
 
-What: detection for TCP urgent pointer
+Help: detection for TCP urgent pointer
 
 Type: ips_option
 
@@ -7347,7 +7463,7 @@ Configuration:
 
 --------------
 
-What: rule option to check TCP window field
+Help: rule option to check TCP window field
 
 Type: ips_option
 
@@ -7363,7 +7479,7 @@ Configuration:
 
 --------------
 
-What: detection for TCP window scale
+Help: detection for TCP window scale
 
 Type: ips_option
 
@@ -7411,7 +7527,7 @@ All output of events and packets is done by Loggers.
 
 --------------
 
-What: output event in csv format
+Help: output event in csv format
 
 Type: logger
 
@@ -7442,7 +7558,7 @@ Configuration:
 
 --------------
 
-What: output gid:sid:rev for alerts
+Help: output gid:sid:rev for alerts
 
 Type: logger
 
@@ -7458,7 +7574,7 @@ Configuration:
 
 --------------
 
-What: output event with brief text format
+Help: output event with brief text format
 
 Type: logger
 
@@ -7477,7 +7593,7 @@ Configuration:
 
 --------------
 
-What: output event with full packet dump
+Help: output event with full packet dump
 
 Type: logger
 
@@ -7495,7 +7611,7 @@ Configuration:
 
 --------------
 
-What: output event in json format
+Help: output event in json format
 
 Type: logger
 
@@ -7526,7 +7642,7 @@ Configuration:
 
 --------------
 
-What: output event over socket
+Help: output event over socket
 
 Type: logger
 
@@ -7543,7 +7659,7 @@ Configuration:
 
 --------------
 
-What: output event to syslog
+Help: output event to syslog
 
 Type: logger
 
@@ -7565,7 +7681,7 @@ Configuration:
 
 --------------
 
-What: output event in Talos alert format
+Help: output event in Talos alert format
 
 Type: logger
 
@@ -7576,7 +7692,7 @@ Usage: global
 
 --------------
 
-What: output event over unix socket
+Help: output event over unix socket
 
 Type: logger
 
@@ -7587,7 +7703,7 @@ Usage: global
 
 --------------
 
-What: log protocols in packet by layer
+Help: log protocols in packet by layer
 
 Type: logger
 
@@ -7604,7 +7720,7 @@ Configuration:
 
 --------------
 
-What: output payload suitable for daq hext
+Help: output payload suitable for daq hext
 
 Type: logger
 
@@ -7626,7 +7742,7 @@ Configuration:
 
 --------------
 
-What: log packet in pcap format
+Help: log packet in pcap format
 
 Type: logger
 
@@ -7642,7 +7758,7 @@ Configuration:
 
 --------------
 
-What: output event and packet in unified2 format file
+Help: output event and packet in unified2 format file
 
 Type: logger
 
@@ -7814,6 +7930,8 @@ these libraries see the Getting Started section of the manual.
   * --help-limits print the int upper bounds denoted by max*
   * --help-module <module> output description of given module
   * --help-modules list all available modules with brief help
+  * --help-modules-json dump description of all available modules in
+    JSON format
   * --help-options [<option prefix>] output matching command line
     option quick help (same as -?) (optional)
   * --help-plugins list all available plugins with brief help
@@ -9144,6 +9262,8 @@ these libraries see the Getting Started section of the manual.
   * int rev.~: revision { 1:max32 }
   * bool rewrite.disable_replace = false: disable replace of packet
     contents with rewrite rules
+  * string rna.dump_file: file name to dump RNA mac cache on
+    shutdown; won’t dump by default
   * bool rna.enable_logger = true: enable or disable writing
     discovery events into logger
   * string rna.fingerprint_dir: directory to fingerprint patterns
@@ -9360,6 +9480,8 @@ these libraries see the Getting Started section of the manual.
   * implied snort.--help: list command line options
   * string snort.--help-module: <module> output description of given
     module
+  * implied snort.--help-modules-json: dump description of all
+    available modules in JSON format
   * implied snort.--help-modules: list all available modules with
     brief help
   * string snort.--help-options: [<option prefix>] output matching
@@ -10194,6 +10316,10 @@ these libraries see the Getting Started section of the manual.
     (now)
   * ftp_server.max_concurrent_sessions: maximum concurrent FTP
     sessions (max)
+  * ftp_server.ssl_search_abandoned: total SSL search abandoned (sum)
+  * ftp_server.ssl_srch_abandoned_early: total SSL search abandoned
+    too soon (sum)
+  * ftp_server.start_tls: total STARTTLS events generated (sum)
   * ftp_server.total_bytes: total number of bytes processed (sum)
   * ftp_server.total_packets: total packets (sum)
   * gtp_inspect.concurrent_sessions: total concurrent gtp sessions
@@ -10563,6 +10689,10 @@ these libraries see the Getting Started section of the manual.
     (sum)
   * smtp.qp_decoded_bytes: total quoted-printable decoded bytes (sum)
   * smtp.sessions: total smtp sessions (sum)
+  * smtp.ssl_search_abandoned: total SSL search abandoned (sum)
+  * smtp.ssl_srch_abandoned_early: total SSL search abandoned too
+    soon (sum)
+  * smtp.start_tls: total STARTTLS events generated (sum)
   * smtp.total_bytes: total number of bytes processed (sum)
   * smtp.uu_attachments: total uu attachments decoded (sum)
   * smtp.uu_decoded_bytes: total uu decoded bytes (sum)
@@ -11508,6 +11638,7 @@ these libraries see the Getting Started section of the manual.
     on host pairs
   * rna.reload_fingerprint(): reload rna database of fingerprint
     patterns/signatures
+  * rna.dump_macs(): dump rna’s internal MAC trackers
   * snort.show_plugins(): show available plugins
   * snort.delete_inspector(inspector): delete an inspector from the
     default policy
