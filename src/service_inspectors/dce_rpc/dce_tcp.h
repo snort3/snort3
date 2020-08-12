@@ -146,6 +146,9 @@ public:
     DceTcpExpSsnManager& get_esm()
     { return esm; }
 
+    bool is_control_channel() const override
+    { return true; }
+
     snort::StreamSplitter* get_splitter(bool c2s) override
     { return new Dce2TcpSplitter(c2s); }
 
