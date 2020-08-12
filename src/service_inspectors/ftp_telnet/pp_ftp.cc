@@ -45,6 +45,7 @@
 #include "hash/hash_key_operations.h"
 #include "file_api/file_service.h"
 #include "protocols/packet.h"
+#include "pub_sub/opportunistic_tls_event.h"
 #include "stream/stream.h"
 #include "utils/util.h"
 
@@ -1021,6 +1022,15 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
              * If we saw all the other dat for this channel
              * session->data_chan_state should be NO_STATE. */
         }
+        else if (session->flags & FTP_PROTP_CMD_ISSUED)
+        {
+            if (rsp_code == 200)
+            {
+                session->flags &= ~FTP_PROTP_CMD_ISSUED;
+                session->flags |= FTP_PROTP_CMD_ACCEPT;
+            }
+                
+        }
         else if (session->data_chan_state & DATA_CHAN_PASV_CMD_ISSUED)
         {
             if (ftp_cmd_pipe_index == session->data_chan_index)
@@ -1092,6 +1102,10 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                                 ftpdata->data_chan = session->server_conf->data_chan;
                                 if (session->flags & FTP_FLG_MALWARE)
                                     session->datassn = ftpdata;
+
+                                if (p->flow->flags.data_decrypted and
+                                    (session->flags & FTP_PROTP_CMD_ACCEPT))
+                                    fd->in_tls = true;
 
                                 /* Call into Streams to mark data channel as ftp-data */
                                 result = Stream::set_snort_protocol_id_expected(
@@ -1171,6 +1185,10 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                             if (session->flags & FTP_FLG_MALWARE)
                                 session->datassn = ftpdata;
 
+                            if (p->flow->flags.data_decrypted and
+                                (session->flags & FTP_PROTP_CMD_ACCEPT))
+                                fd->in_tls = true;
+
                             /* Call into Streams to mark data channel as ftp-data */
                             result = Stream::set_snort_protocol_id_expected(
                                 p, PktType::TCP, IpProtocol::TCP,
@@ -1247,6 +1265,16 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
             }
         }
     } /* if (session->server_conf->data_chan) */
+
+    if ((session->encr_state == AUTH_TLS_CMD_ISSUED or session->encr_state == AUTH_SSL_CMD_ISSUED)
+        and rsp_code == 234)
+    {
+        OpportunisticTlsEvent event(p, p->flow->service);
+        DataBus::publish(OPPORTUNISTIC_TLS_EVENT, event, p->flow);
+        ++ftstats.starttls;
+        if (session->flags & FTP_FLG_SEARCH_ABANDONED)
+            ++ftstats.ssl_search_abandoned_too_soon;
+    }
 
     if (session->server_conf->detect_encrypted)
     {
@@ -1795,6 +1823,23 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                         ftpssn->encr_state = AUTH_UNKNOWN_CMD_ISSUED;
                     }
                 }
+                else if (CmdConf->prot_cmd)
+                {
+                    if (req->param_begin && (req->param_size > 0) &&
+                        ((req->param_begin[0] == 'P') || (req->param_begin[0] == 'p')))
+                    {
+                        ftpssn->flags &= ~FTP_PROTP_CMD_ACCEPT;
+                        ftpssn->flags |= FTP_PROTP_CMD_ISSUED;
+                    }
+                }
+                else if (CmdConf->login_cmd and !p->flow->flags.data_decrypted and
+                    !(ftpssn->flags & FTP_FLG_SEARCH_ABANDONED))
+                {
+                    ftpssn->flags |= FTP_FLG_SEARCH_ABANDONED;
+                    DataBus::publish(SSL_SEARCH_ABANDONED, p);
+                    ++ftstats.ssl_search_abandoned;
+                }
+
                 if (CmdConf->check_validity)
                 {
                     const char* next_param = nullptr;

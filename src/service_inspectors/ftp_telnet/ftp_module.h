@@ -95,6 +95,7 @@ private:
 #define CMD_DIR    0x0100
 #define CMD_VALID  0x0200
 #define CMD_REST   0x0400
+#define CMD_PROT   0x0800
 
 struct FtpCmd
 {

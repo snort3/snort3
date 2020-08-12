@@ -67,7 +67,10 @@
 #define PROTO_IS_FTP_DATA(ssn)          FTPP_SI_IS_PROTO(ssn, FTPP_SI_PROTO_FTP_DATA)
 #define PROTO_IS_TELNET(ssn)            FTPP_SI_IS_PROTO(ssn, FTPP_SI_PROTO_TELNET)
 
-#define FTP_FLG_MALWARE  (1<<0)
+#define FTP_FLG_MALWARE                 0x01
+#define FTP_FLG_SEARCH_ABANDONED        0x02
+#define FTP_PROTP_CMD_ISSUED            0x04
+#define FTP_PROTP_CMD_ACCEPT            0x08
 
 typedef struct s_FTP_TELNET_SESSION
 {
@@ -237,6 +240,7 @@ public:
     static unsigned inspector_id;
     FTP_DATA_SESSION session;
     bool eof_handled = false;
+    bool in_tls = false;
 };
 
 #define FTPDATA_FLG_REASSEMBLY_SET  (1<<0)
@@ -286,6 +290,9 @@ struct FtpStats
     PegCount total_bytes;
     PegCount concurrent_sessions;
     PegCount max_concurrent_sessions;
+    PegCount starttls;
+    PegCount ssl_search_abandoned;
+    PegCount ssl_search_abandoned_too_soon;
 };
 
 struct TelnetStats

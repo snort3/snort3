@@ -153,6 +153,9 @@ struct SmtpStats
     PegCount sessions;
     PegCount concurrent_sessions;
     PegCount max_concurrent_sessions;
+    PegCount starttls;
+    PegCount ssl_search_abandoned;
+    PegCount ssl_search_abandoned_too_soon;
     snort::MimeStats mime_stats;
 };
 

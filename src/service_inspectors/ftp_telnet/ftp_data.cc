@@ -30,6 +30,7 @@
 #include "packet_tracer/packet_tracer.h"
 #include "parser/parse_rule.h"
 #include "profiler/profiler.h"
+#include "pub_sub/opportunistic_tls_event.h"
 #include "stream/stream.h"
 #include "utils/util.h"
 
@@ -222,7 +223,17 @@ FtpDataFlowData::~FtpDataFlowData()
 void FtpDataFlowData::handle_expected(Packet* p)
 {
     if (!p->flow->service)
+    {
         p->flow->set_service(p, fd_svc_name);
+
+        FtpDataFlowData* fd =
+            (FtpDataFlowData*)p->flow->get_flow_data(FtpDataFlowData::inspector_id);
+        if (fd and fd->in_tls)
+        {
+            OpportunisticTlsEvent evt(p, fd_svc_name);
+            DataBus::publish(OPPORTUNISTIC_TLS_EVENT, evt, p->flow);
+        }   
+    }
 }
 
 void FtpDataFlowData::handle_eof(Packet* p)

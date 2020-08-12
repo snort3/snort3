@@ -77,6 +77,7 @@ const PegInfo ssl_peg_names[] =
 SslFlowData::SslFlowData() : FlowData(inspector_id)
 {
     memset(&session, 0, sizeof(session));
+    finalize_info = {};
     sslstats.concurrent_sessions++;
     if(sslstats.max_concurrent_sessions < sslstats.concurrent_sessions)
         sslstats.max_concurrent_sessions = sslstats.concurrent_sessions;
@@ -431,6 +432,10 @@ public:
 
     void handle(DataEvent&, Flow* flow) override
     {
+        SslFlowData* fd = new SslFlowData;
+        fd->finalize_info.orig_flag = flow->flags.trigger_finalize_event;
+        fd->finalize_info.switch_in = true;
+        flow->set_flow_data(fd);
         flow->flags.trigger_finalize_event = true;
     }
 };
@@ -444,10 +449,14 @@ public:
     {
         FinalizePacketEvent* fp_event = (FinalizePacketEvent*)&e;
         const Packet* pkt = fp_event->get_packet();
-
-        pkt->flow->flags.trigger_finalize_event = false;
-        pkt->flow->set_proxied();
-        pkt->flow->set_service(const_cast<Packet*>(pkt), s_name);
+        SslFlowData* fd = (SslFlowData*)pkt->flow->get_flow_data(SslFlowData::inspector_id);
+        if (fd and fd->finalize_info.switch_in)
+        {
+            pkt->flow->flags.trigger_finalize_event = fd->finalize_info.orig_flag;
+            fd->finalize_info.switch_in = false;
+            pkt->flow->set_proxied();
+            pkt->flow->set_service(const_cast<Packet*>(pkt), s_name);
+        }
     }
 };
 

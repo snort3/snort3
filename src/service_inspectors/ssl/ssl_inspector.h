@@ -51,6 +51,10 @@ public:
 public:
     static unsigned inspector_id;
     SSLData session;
+    struct {
+        bool orig_flag : 1;
+        bool switch_in : 1;
+    } finalize_info;
 };
 //Function: API to get the ssl flow data from the packet flow.
 SSLData* get_ssl_session_data(snort::Flow* flow);

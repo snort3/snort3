@@ -344,6 +344,9 @@ static const PegInfo ftp_pegs[] =
     { CountType::SUM, "total_bytes", "total number of bytes processed" },
     { CountType::NOW, "concurrent_sessions", "total concurrent FTP sessions" },
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent FTP sessions" },
+    { CountType::SUM, "start_tls", "total STARTTLS events generated" },
+    { CountType::SUM, "ssl_search_abandoned", "total SSL search abandoned" },
+    { CountType::SUM, "ssl_srch_abandoned_early", "total SSL search abandoned too soon" },
 
     { CountType::END, nullptr, nullptr }
 };
@@ -569,6 +572,9 @@ static int ProcessFTPDataChanCmdsList(
     if ( fc->flags & CMD_ENCR )
         FTPCmd->encr_cmd = true;
 
+    if ( fc->flags & CMD_PROT )
+        FTPCmd->prot_cmd = true;
+
     if ( fc->flags & CMD_LOGIN )
         FTPCmd->login_cmd = true;
 
@@ -599,6 +605,7 @@ bool FtpServerModule::end(const char* fqn, int idx, SnortConfig*)
 
     if ( !idx && !strcmp(fqn, "ftp_server") )
     {
+        cmds.emplace_back(new FtpCmd("PROT", CMD_PROT, 0));
         for( auto cmd : cmds)
         {
             if ( FTPP_SUCCESS !=  ProcessFTPDataChanCmdsList(conf, cmd) )

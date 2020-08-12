@@ -169,6 +169,9 @@ const PegInfo smtp_peg_names[] =
     { CountType::SUM, "sessions", "total smtp sessions" },
     { CountType::NOW, "concurrent_sessions", "total concurrent smtp sessions" },
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent smtp sessions" },
+    { CountType::SUM, "start_tls", "total STARTTLS events generated" },
+    { CountType::SUM, "ssl_search_abandoned", "total SSL search abandoned" },
+    { CountType::SUM, "ssl_srch_abandoned_early", "total SSL search abandoned too soon" },
     { CountType::SUM, "b64_attachments", "total base64 attachments decoded" },
     { CountType::SUM, "b64_decoded_bytes", "total base64 decoded bytes" },
     { CountType::SUM, "qp_attachments", "total quoted-printable attachments decoded" },
@@ -1096,6 +1099,9 @@ static void SMTP_ProcessServerPacket(
                 {
                     OpportunisticTlsEvent event(p, p->flow->service);
                     DataBus::publish(OPPORTUNISTIC_TLS_EVENT, event, p->flow);
+                    ++smtpstats.starttls;
+                    if (smtp_ssn->state_flags & SMTP_FLAG_ABANDON_EVT)
+                        ++smtpstats.ssl_search_abandoned_too_soon;
                 }
 
                 break;
@@ -1110,6 +1116,7 @@ static void SMTP_ProcessServerPacket(
                 {
                     smtp_ssn->state_flags |= SMTP_FLAG_ABANDON_EVT;
                     DataBus::publish(SSL_SEARCH_ABANDONED, p);
+                    ++smtpstats.ssl_search_abandoned;
                 }
                 break;
 

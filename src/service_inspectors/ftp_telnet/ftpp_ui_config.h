@@ -161,6 +161,7 @@ typedef struct s_FTP_CMD_CONF
     bool file_get_cmd;
     bool encr_cmd;
     bool login_cmd;
+    bool prot_cmd;
     int dir_response;
 
     FTP_PARAM_FMT* param_format;
