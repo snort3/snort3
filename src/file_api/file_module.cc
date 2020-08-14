@@ -153,7 +153,7 @@ static const Parameter file_id_params[] =
     { "max_files_cached", Parameter::PT_INT, "8:max53", "65536",
       "maximal number of files cached in memory" },
 
-    { "max_files_per_flow", Parameter::PT_INT, "1:max53", "32",
+    { "max_files_per_flow", Parameter::PT_INT, "1:max53", "128",
       "maximal number of files able to be concurrently processed per flow" },
 
     { "enable_type", Parameter::PT_BOOL, nullptr, "true",
