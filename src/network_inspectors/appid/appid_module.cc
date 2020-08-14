@@ -150,7 +150,6 @@ bool ACThirdPartyAppIdContextSwap::execute(Analyzer&, void**)
     pkt_thread_tp_appid_ctxt->set_tp_reload_in_progress(reload_in_progress);
     if (reload_in_progress)
         return false;
-    request.respond("== swapping third-party configuration\n", from_shell);
     tp_appid_ctxt->tinit();
     pkt_thread_tp_appid_ctxt = tp_appid_ctxt;
 
@@ -187,9 +186,6 @@ bool ACOdpContextSwap::execute(Analyzer&, void**)
     OdpContext& current_odp_ctxt = ctxt.get_odp_ctxt();
     assert(pkt_thread_odp_ctxt != &current_odp_ctxt);
 
-    LogMessage("== swapping ODP configuration\n");
-    request.respond("== swapping ODP configuration\n", from_shell);
-
     AppIdServiceState::clean();
     AppIdPegCounts::cleanup_pegs();
     AppIdServiceState::initialize(ctxt.config.memcap);
@@ -208,7 +204,7 @@ ACOdpContextSwap::~ACOdpContextSwap()
     odp_ctxt.get_app_info_mgr().cleanup_appid_info_table();
     delete &odp_ctxt;
     LogMessage("== reload ODP complete\n");
-    request.respond("== reload ODP complete\n", from_shell);
+    request.respond("== reload ODP complete\n", from_shell, true);
     Swapper::set_reload_in_progress(false);
 }
 
@@ -279,6 +275,7 @@ static int reload_third_party(lua_State* L)
     }
     Swapper::set_reload_in_progress(true);
     ctxt.create_tp_appid_ctxt();
+    current_request.respond("== swapping third-party configuration\n", from_shell);
     main_broadcast_command(new ACThirdPartyAppIdContextSwap(*inspector, old_ctxt,
         current_request, from_shell), from_shell);
     return 0;
@@ -327,6 +324,7 @@ static int reload_odp(lua_State* L)
     odp_thread_local_ctxt->initialize(ctxt, true, true);
     odp_ctxt.initialize();
 
+    current_request.respond("== swapping ODP configuration\n", from_shell);
     main_broadcast_command(new ACOdpContextSwap(*inspector, old_odp_ctxt,
         current_request, from_shell), from_shell);
     return 0;
