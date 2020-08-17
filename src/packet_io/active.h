@@ -50,6 +50,12 @@ public:
     enum ActiveStatus : uint8_t
     { AST_ALLOW, AST_CANT, AST_WOULD, AST_FORCE, AST_MAX };
 
+    enum ActiveWouldReason : uint8_t
+    { WHD_NONE, WHD_INTERFACE_IDS, WHD_IPS_INLINE_TEST, WHD_NAP_INLINE_TEST, WHD_TIMEOUT, WHD_PRUNE, WHD_RELOAD, WHD_EXIT };
+
+    enum ActiveSuspendReason : uint8_t
+    { ASP_NONE, ASP_PRUNE, ASP_TIMEOUT, ASP_RELOAD, ASP_EXIT };
+
     // FIXIT-M: these are only used in set_delayed_action and
     // apply_delayed_action, in a big switch(action). Do away with these and
     // use the actual (Base)Action objects.
@@ -61,11 +67,30 @@ public:
     static bool thread_init(const SnortConfig*);
     static void thread_term();
 
-    static void suspend()
-    { s_suspend = true; }
+    static void suspend(ActiveSuspendReason suspend_reason)
+    {
+        s_suspend = true;
+        s_suspend_reason = suspend_reason;
+    }
 
     static void resume()
-    { s_suspend = false; }
+    {
+        s_suspend = false;
+        s_suspend_reason = ASP_NONE;
+    }
+
+    static ActiveWouldReason get_whd_reason_from_suspend_reason()
+    {
+        switch ( s_suspend_reason )
+        {
+        case ASP_NONE: return WHD_NONE;
+        case ASP_PRUNE: return WHD_PRUNE;
+        case ASP_TIMEOUT: return WHD_TIMEOUT;
+        case ASP_RELOAD: return WHD_RELOAD;
+        case ASP_EXIT: return WHD_EXIT;
+        }
+        return WHD_NONE;
+    }
 
     void send_reset(Packet*, EncodeFlags);
     void send_unreach(Packet*, snort::UnreachResponse);
@@ -116,6 +141,12 @@ public:
     bool packet_would_be_dropped() const
     { return active_status == AST_WOULD; }
 
+    ActiveWouldReason get_would_be_dropped_reason() const
+    { return active_would_reason; }
+
+    bool can_partial_block_session() const
+    { return active_status == AST_CANT and s_suspend_reason > ASP_NONE and s_suspend_reason != ASP_TIMEOUT; }
+
     bool packet_retry_requested() const
     { return active_action == ACT_RETRY; }
 
@@ -157,7 +188,7 @@ public:
     void set_drop_reason(const char*);
     void send_reason_to_daq(Packet&);
 
-    const char* get_drop_reason() 
+    const char* get_drop_reason()
     { return drop_reason; }
 
 private:
@@ -166,6 +197,7 @@ private:
     static int send_eth(DAQ_Msg_h, int, const uint8_t* buf, uint32_t len);
     static int send_ip(DAQ_Msg_h, int, const uint8_t* buf, uint32_t len);
 
+    void update_status_actionable(const Packet*);
     void update_status(const Packet*, bool force = false);
     void daq_update_status(const Packet*);
 
@@ -179,6 +211,7 @@ private:
     static const char* act_str[ACT_MAX][AST_MAX];
     static THREAD_LOCAL uint8_t s_attempts;
     static THREAD_LOCAL bool s_suspend;
+    static THREAD_LOCAL ActiveSuspendReason s_suspend_reason;
 
     int active_tunnel_bypass;
     const char* drop_reason;
@@ -189,6 +222,7 @@ private:
     // of these flags following all processing and the drop
     // or response may have been produced by a pseudopacket.
     ActiveStatus active_status;
+    ActiveWouldReason active_would_reason;
     ActiveActionType active_action;
     ActiveActionType delayed_active_action;
     ActiveAction* delayed_reject;    // set with set_delayed_action()
@@ -196,8 +230,8 @@ private:
 
 struct ActiveSuspendContext
 {
-    ActiveSuspendContext()
-    { Active::suspend(); }
+    ActiveSuspendContext(Active::ActiveSuspendReason suspend_reason)
+    { Active::suspend(suspend_reason); }
 
     ~ActiveSuspendContext()
     { Active::resume(); }

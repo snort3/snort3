@@ -115,7 +115,7 @@ void PacketTracer::dump(Packet* p)
     {
         const char* drop_reason = p->active->get_drop_reason();
         if (drop_reason)
-            PacketTracer::log("Verdict Reason: %s\n", drop_reason);
+            PacketTracer::log("Verdict Reason: %s, %s\n", drop_reason, p->active->get_action_string() );
         LogMessage(s_pkt_trace->log_fh, "%s\n", s_pkt_trace->buffer);
     }
 

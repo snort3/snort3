@@ -50,6 +50,7 @@
 using namespace snort;
 
 THREAD_LOCAL bool Active::s_suspend = false;
+THREAD_LOCAL Active::ActiveSuspendReason Active::s_suspend_reason = Active::ASP_NONE;
 
 THREAD_LOCAL PacketTracer* snort::s_pkt_trace = nullptr;
 

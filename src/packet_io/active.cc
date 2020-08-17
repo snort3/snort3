@@ -68,6 +68,7 @@ const char* Active::act_str[Active::ACT_MAX][Active::AST_MAX] =
 
 THREAD_LOCAL uint8_t Active::s_attempts = 0;
 THREAD_LOCAL bool Active::s_suspend = false;
+THREAD_LOCAL Active::ActiveSuspendReason Active::s_suspend_reason = Active::ASP_NONE;
 THREAD_LOCAL Active::Counts snort::active_counts;
 
 typedef int (* send_t) (
@@ -514,31 +515,50 @@ bool Active::is_unreachable_candidate(const Packet* p)
 void Active::cant_drop()
 {
     if ( active_status < AST_CANT )
+    {
         active_status = AST_CANT;
-
+        active_would_reason = get_whd_reason_from_suspend_reason();
+    }
     else if ( active_status < AST_WOULD )
+    {
         active_status = AST_WOULD;
+        active_would_reason = get_whd_reason_from_suspend_reason();
+    }
+}
+
+void Active::update_status_actionable(const Packet* p)
+{
+    if ( p->context->conf->inline_mode() )
+    {
+        if ( !SFDAQ::forwarding_packet(p->pkth) )
+        {
+            active_status = AST_WOULD;
+            active_would_reason = WHD_INTERFACE_IDS;
+        }
+    }
+    else if ( p->context->conf->inline_test_mode() )
+    {
+        active_status = AST_WOULD;
+        active_would_reason = WHD_IPS_INLINE_TEST;
+    }
 }
 
 void Active::update_status(const Packet* p, bool force)
 {
     if ( s_suspend )
-        cant_drop();
+    {
+        update_status_actionable(p);
+
+        if(!active_status)
+            cant_drop();
+    }
 
     else if ( force )
         active_status = AST_FORCE;
 
     else if ( active_status != AST_FORCE)
     {
-        if ( p->context->conf->inline_mode() )
-        {
-            if ( !SFDAQ::forwarding_packet(p->pkth) )
-                active_status = AST_WOULD;
-        }
-        else if ( p->context->conf->inline_test_mode() )
-        {
-            active_status = AST_WOULD;
-        }
+        update_status_actionable(p);
     }
 }
 
@@ -546,12 +566,14 @@ void Active::daq_update_status(const Packet* p)
 {
     if ( s_suspend )
     {
-        cant_drop();
+        update_status_actionable(p);
+
+        if(!active_status)
+            cant_drop();
     }
     else if ( active_status != AST_FORCE )
     {
-        if ( !SFDAQ::forwarding_packet(p->pkth) )
-            active_status = AST_WOULD;
+        update_status_actionable(p);
     }
 }
 
@@ -663,8 +685,8 @@ void Active::reset_session(Packet* p, bool force)
 
 void Active::reset_session(Packet* p, ActiveAction* reject, bool force)
 {
-    update_status(p, force);
     active_action = ACT_RESET;
+    update_status(p, force);
 
     if ( force or p->context->conf->inline_mode() or p->context->conf->treat_drop_as_ignore() )
         Stream::drop_flow(p);
@@ -776,6 +798,7 @@ void Active::reset()
     active_tunnel_bypass = 0;
     prevent_trust_action = false;
     active_status = AST_ALLOW;
+    active_would_reason = WHD_NONE;
     active_action = ACT_ALLOW;
     delayed_active_action = ACT_ALLOW;
     delayed_reject = nullptr;

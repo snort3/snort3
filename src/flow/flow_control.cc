@@ -120,7 +120,7 @@ bool FlowControl::prune_one(PruneReason reason, bool do_cleanup)
 
 void FlowControl::timeout_flows(time_t cur_time)
 {
-    ActiveSuspendContext act_susp;
+    ActiveSuspendContext act_susp(Active::ASP_TIMEOUT);
 
     cache->timeout(1, cur_time);
 }

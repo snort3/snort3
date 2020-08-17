@@ -187,7 +187,7 @@ void FlowCache::retire(Flow* flow)
 
 unsigned FlowCache::prune_stale(uint32_t thetime, const Flow* save_me)
 {
-    ActiveSuspendContext act_susp;
+    ActiveSuspendContext act_susp(Active::ASP_PRUNE);
 
     unsigned pruned = 0;
     auto flow = static_cast<Flow*>(hash_table->lru_first());
@@ -227,7 +227,7 @@ unsigned FlowCache::prune_stale(uint32_t thetime, const Flow* save_me)
 
 unsigned FlowCache::prune_unis(PktType pkt_type)
 {
-    ActiveSuspendContext act_susp;
+    ActiveSuspendContext act_susp(Active::ASP_PRUNE);
 
     // we may have many or few unis; need to find reasonable ratio
     // FIXIT-M max_uni should be based on typical ratios seen in perfmon
@@ -258,7 +258,7 @@ unsigned FlowCache::prune_unis(PktType pkt_type)
 
 unsigned FlowCache::prune_excess(const Flow* save_me)
 {
-    ActiveSuspendContext act_susp;
+    ActiveSuspendContext act_susp(Active::ASP_PRUNE);
 
     auto max_cap = config.max_flows - cleanup_flows;
     assert(max_cap > 0);
@@ -324,7 +324,7 @@ bool FlowCache::prune_one(PruneReason reason, bool do_cleanup)
 
 unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
 {
-    ActiveSuspendContext act_susp;
+    ActiveSuspendContext act_susp(Active::ASP_TIMEOUT);
     unsigned retired = 0;
 
     auto flow = static_cast<Flow*>(hash_table->lru_current());
@@ -398,7 +398,7 @@ unsigned FlowCache::delete_active_flows(unsigned mode, unsigned num_to_delete, u
 
 unsigned FlowCache::delete_flows(unsigned num_to_delete)
 {
-    ActiveSuspendContext act_susp;
+    ActiveSuspendContext act_susp(Active::ASP_RELOAD);
 
     unsigned deleted = 0;
 
@@ -428,7 +428,7 @@ unsigned FlowCache::delete_flows(unsigned num_to_delete)
 // Remove all flows from the hash table.
 unsigned FlowCache::purge()
 {
-    ActiveSuspendContext act_susp;
+    ActiveSuspendContext act_susp(Active::ASP_EXIT);
     FlagContext<decltype(flags)>(flags, SESSION_CACHE_FLAG_PURGING);
 
     unsigned retired = 0;
