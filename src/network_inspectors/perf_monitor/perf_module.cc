@@ -395,7 +395,7 @@ bool ModuleConfig::resolve()
     ptr = ModuleManager::get_module(name.c_str());
     if ( ptr == nullptr )
     {
-        ParseWarning(WARN_CONF, "Perf monitor is unable to find the %s module.\n", name.c_str());
+        ParseError("Perf monitor is unable to find the %s module.\n", name.c_str());
         return false;
     }
 
@@ -425,7 +425,7 @@ bool ModuleConfig::resolve()
         {
             if ( !i.second )
             {
-                ParseWarning(WARN_CONF, "Perf monitor is unable to find %s.%s count", name.c_str(), i.first.c_str());
+                ParseError("Perf monitor is unable to find %s.%s count", name.c_str(), i.first.c_str());
                 return false;
             }
         }
