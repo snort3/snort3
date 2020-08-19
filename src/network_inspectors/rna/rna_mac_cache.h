@@ -53,8 +53,33 @@ public:
     void update_last_seen(uint32_t p_last_seen);
     void update_vlan(uint16_t vth_pri_cfi_vlan, uint16_t vth_proto);
     bool has_vlan();
-    uint16_t get_vlan();
     void get_vlan_details(uint8_t& cfi, uint8_t& priority, uint16_t& vid);
+
+    uint16_t get_vlan();
+
+    uint32_t get_last_seen()
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_mac_lock);
+        return last_seen;
+    }
+
+    uint32_t get_last_event()
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_mac_lock);
+        return last_event;
+    }
+
+    void update_last_seen()
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_mac_lock);
+        last_seen = (uint32_t) snort::packet_time();
+    }
+
+    void update_last_event(uint32_t event_time)
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_mac_lock);
+        last_event = event_time ? event_time : last_seen;
+    }
 
     // This should be updated whenever HostTrackerMac data members are changed
     void stringify(std::string& str);
@@ -63,7 +88,8 @@ public:
 
 private:
     std::mutex host_tracker_mac_lock;
-    uint32_t last_seen;
+    uint32_t last_seen = 0;
+    uint32_t last_event = 0;
     bool vlan_tag_present = false;
     snort::vlan::VlanTagHdr vlan_tag;
     std::vector<uint16_t, HostCacheAllocMac<uint16_t>> network_protos;

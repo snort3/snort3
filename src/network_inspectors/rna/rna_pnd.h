@@ -94,7 +94,9 @@ public:
 private:
     // generate change event for single host
     void generate_change_host_update(RnaTracker* ht, const snort::Packet* p,
-        const snort::SfIp* src_ip, const uint8_t* src_mac, time_t sec);
+        const snort::SfIp* src_ip, const uint8_t* src_mac, const time_t& sec);
+    void generate_change_host_update_eth(HostTrackerMac* mt, const snort::Packet* p,
+        const uint8_t* src_mac, const time_t& sec);
 
     // Change vlan event related utilities
     inline void update_vlan(const snort::Packet* p, HostTrackerMac& hm);

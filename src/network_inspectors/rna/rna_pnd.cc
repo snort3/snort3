@@ -259,7 +259,7 @@ void RnaPnd::generate_change_vlan_update(RnaTracker *rt, const Packet* p,
 }
 
 void RnaPnd::generate_change_host_update(RnaTracker* ht, const Packet* p,
-    const SfIp* src_ip, const uint8_t* src_mac, time_t sec)
+    const SfIp* src_ip, const uint8_t* src_mac, const time_t& sec)
 {
     if ( !ht || !update_timeout)
         return;
@@ -273,15 +273,47 @@ void RnaPnd::generate_change_host_update(RnaTracker* ht, const Packet* p,
     // FIXIT-M: deal with host service hits.
 }
 
+
+void RnaPnd::generate_change_host_update_eth(HostTrackerMac* mt, const Packet* p,
+    const uint8_t* src_mac, const time_t& sec)
+{
+    if ( !mt || !update_timeout)
+        return;
+
+    // Create and populate a new HostTracker solely for event logging
+    RnaTracker rt = shared_ptr<snort::HostTracker>(new HostTracker());
+    rt.get()->update_last_seen();
+    rt.get()->add_mac(src_mac, 0, 1);
+
+    uint32_t last_seen = mt->get_last_seen();
+    uint32_t last_event = mt->get_last_event();
+    time_t timestamp = sec - update_timeout;
+
+    if ( last_seen > last_event && (time_t) last_event + update_timeout <= sec )
+    {
+        logger.log(RNA_EVENT_CHANGE, CHANGE_HOST_UPDATE, p, &rt,
+            nullptr, src_mac, last_seen, (void*) &timestamp);
+
+        mt->update_last_event(sec);
+    }
+
+}
+
 void RnaPnd::generate_change_host_update()
 {
     if ( !update_timeout )
         return;
 
     auto hosts = host_cache.get_all_data();
+    auto mac_hosts = host_cache_mac.get_all_data();
     auto sec = time(nullptr);
+
     for ( auto & h : hosts )
         generate_change_host_update(&h.second, nullptr, &h.first, nullptr, sec);
+
+    for ( auto & m : mac_hosts)
+        generate_change_host_update_eth(m.second.get(), nullptr,
+            (const uint8_t*) &m.first.mac_addr, sec);
 }
 
 void RnaPnd::generate_new_host_mac(const Packet* p, RnaTracker ht, bool discover_proto)
@@ -303,11 +335,12 @@ void RnaPnd::generate_new_host_mac(const Packet* p, RnaTracker ht, bool discover
         ht.get()->add_mac(mk.mac_addr, 0, 0);
 
         logger.log(RNA_EVENT_NEW, NEW_HOST, p, &ht, nullptr, mk.mac_addr);
-
+        hm_ptr->update_last_event(p->pkth->ts.tv_sec);
         generate_change_vlan_update(&ht, p, mk.mac_addr, *hm_ptr, true);
     }
     else
     {
+        generate_change_host_update_eth(hm_ptr.get(), p, mk.mac_addr, packet_time());
         hm_ptr->update_last_seen(p->pkth->ts.tv_sec);
         generate_change_vlan_update(&ht, p, mk.mac_addr, *hm_ptr, false);
     }
@@ -318,8 +351,11 @@ void RnaPnd::generate_new_host_mac(const Packet* p, RnaTracker ht, bool discover
         if ( ntype > to_utype(ProtocolId::ETHERTYPE_MINIMUM) )
         {
             if ( hm_ptr->add_network_proto(ntype) )
+            {
                 logger.log(RNA_EVENT_NEW, NEW_NET_PROTOCOL, p, &ht, nullptr, mk.mac_addr,
                     0, nullptr, nullptr, ntype);
+                hm_ptr->update_last_event(p->pkth->ts.tv_sec);
+            }
         }
         else if ( ntype != to_utype(ProtocolId::ETHERTYPE_NOT_SET) )
         {
@@ -328,8 +364,11 @@ void RnaPnd::generate_new_host_mac(const Packet* p, RnaTracker ht, bool discover
             {
                 ntype = ((const RNA_LLC*) lyr.start)->s.proto;
                 if ( hm_ptr->add_network_proto(ntype) )
+                {
                     logger.log(RNA_EVENT_NEW, NEW_NET_PROTOCOL, p, &ht, nullptr, mk.mac_addr,
                         0, nullptr, nullptr, ntype);
+                    hm_ptr->update_last_event(p->pkth->ts.tv_sec);
+                }
             }
         }
     }
@@ -421,6 +460,9 @@ int RnaPnd::discover_network_arp(const Packet* p, RnaTracker* ht_ref)
     auto ht = host_cache.find_else_create(spa, &new_host);
     auto hm_ptr = host_cache_mac.find_else_create(mk, &new_host_mac);
 
+    if ( !new_host )
+        generate_change_host_update_eth(hm_ptr.get(), p, src_mac, packet_time());
+
     if (!new_host_mac)
         hm_ptr->update_last_seen(p->pkth->ts.tv_sec);
 
@@ -432,6 +474,7 @@ int RnaPnd::discover_network_arp(const Packet* p, RnaTracker* ht_ref)
         ht->add_mac(src_mac, 0, 0);
         logger.log(RNA_EVENT_NEW, NEW_HOST, p, &ht,
             (const struct in6_addr*) spa.get_ip6_ptr(), src_mac);
+        hm_ptr->update_last_event(p->pkth->ts.tv_sec);
     }
 
     if ( ht->add_mac(src_mac, 0, 0) )
@@ -439,20 +482,25 @@ int RnaPnd::discover_network_arp(const Packet* p, RnaTracker* ht_ref)
         logger.log(RNA_EVENT_CHANGE, CHANGE_MAC_ADD, p, ht_ref,
             (const struct in6_addr*) spa.get_ip6_ptr(), src_mac,
             0, nullptr, ht->get_hostmac(src_mac));
+        hm_ptr->update_last_event(p->pkth->ts.tv_sec);
     }
     else if (ht->make_primary(src_mac))
     {
         logger.log(RNA_EVENT_CHANGE, CHANGE_MAC_INFO, p, ht_ref,
             (const struct in6_addr*) spa.get_ip6_ptr(), src_mac,
             0, nullptr, ht->get_hostmac(src_mac));
+        hm_ptr->update_last_event(p->pkth->ts.tv_sec);
     }
 
     generate_change_vlan_update(&ht, p, src_mac, &spa, true);
 
     auto ntype = to_utype(ProtocolId::ETHERTYPE_ARP);
     if ( hm_ptr->add_network_proto(ntype) )
+    {
         logger.log(RNA_EVENT_NEW, NEW_NET_PROTOCOL, p, &ht, nullptr, src_mac,
             0, nullptr, nullptr, ntype);
+        hm_ptr->update_last_event(p->pkth->ts.tv_sec);
+    }
 
     if ( ht->get_hops() )
     {
@@ -460,6 +508,7 @@ int RnaPnd::discover_network_arp(const Packet* p, RnaTracker* ht_ref)
         logger.log(RNA_EVENT_CHANGE, CHANGE_HOPS, p, ht_ref,
             (const struct in6_addr*) spa.get_ip6_ptr(), src_mac, 0, nullptr,
              ht->get_hostmac(src_mac));
+        hm_ptr->update_last_event(p->pkth->ts.tv_sec);
     }
 
     return 0;
@@ -495,6 +544,8 @@ int RnaPnd::discover_switch(const Packet* p, RnaTracker ht_ref)
         hm_ptr->host_type = HOST_TYPE_BRIDGE;
         update_vlan(p, *hm_ptr);
 
+        hm_ptr->update_last_event(p->pkth->ts.tv_sec);
+
         ht_ref.get()->update_last_seen();
         ht_ref.get()->add_mac(mk.mac_addr, 0, 1);
 
@@ -506,6 +557,7 @@ int RnaPnd::discover_switch(const Packet* p, RnaTracker ht_ref)
     else
     {
         hm_ptr->update_last_seen(p->pkth->ts.tv_sec);
+        generate_change_host_update_eth(hm_ptr.get(), p, mk.mac_addr, packet_time());
         generate_change_vlan_update(&ht_ref, p, mk.mac_addr, *hm_ptr, false);
     }
 
