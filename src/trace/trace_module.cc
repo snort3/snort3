@@ -178,20 +178,20 @@ bool TraceModule::end(const char* fqn, int, SnortConfig* sc)
     {
         assert(trace_parser);
 
-        if ( sc->dump_config() )
+        if ( sc->dump_config_mode() )
             trace_parser->clear_traces();
         else
         {
             switch ( log_output_type )
             {
-                case OUTPUT_TYPE_STDOUT:
-                    trace_parser->get_trace_config()->logger_factory = new StdoutLoggerFactory();
-                    break;
-                case OUTPUT_TYPE_SYSLOG:
-                    trace_parser->get_trace_config()->logger_factory = new SyslogLoggerFactory();
-                    break;
-                default:
-                    break;
+            case OUTPUT_TYPE_STDOUT:
+                trace_parser->get_trace_config()->logger_factory = new StdoutLoggerFactory();
+                break;
+            case OUTPUT_TYPE_SYSLOG:
+                trace_parser->get_trace_config()->logger_factory = new SyslogLoggerFactory();
+                break;
+            default:
+                break;
             }
 
             // "output=syslog" config override case

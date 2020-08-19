@@ -89,6 +89,7 @@ add_subdirectory(actions)
 add_subdirectory(codecs)
 add_subdirectory(control)
 add_subdirectory(detection)
+add_subdirectory(dump_config)
 add_subdirectory(events)
 add_subdirectory(file_api)
 add_subdirectory(filters)
@@ -139,6 +140,7 @@ add_executable( snort
     $<TARGET_OBJECTS:control>
     $<TARGET_OBJECTS:decompress>
     $<TARGET_OBJECTS:detection>
+    $<TARGET_OBJECTS:dump_config>
     $<TARGET_OBJECTS:events>
     $<TARGET_OBJECTS:file_api>
     $<TARGET_OBJECTS:file_connector>

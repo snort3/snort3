@@ -235,16 +235,6 @@ void LogMessage(FILE* fh, const char* format,...)
     va_end(ap);
 }
 
-void LogConfig(const char* format, ...)
-{
-    va_list ap;
-    va_start(ap, format);
-
-    WriteLogMessage(stdout, false, format, ap);
-
-    va_end(ap);
-}
-
 /*
  * Function: WarningMessage(const char *, ...)
  *

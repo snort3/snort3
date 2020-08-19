@@ -220,7 +220,7 @@ static int set(lua_State* L)
                          !trace_parser.set_traces(module_name, val) )
                     {
                         LogMessage("== invalid trace value is provided: %s.%s.%s = %s\n",
-                            root_element_key, module_name, val_name, val.get_as_string());
+                            root_element_key, module_name, val_name, val.get_as_string().c_str());
 
                         parse_err = true;
                     }
@@ -259,7 +259,7 @@ static int set(lua_State* L)
                      !trace_parser.set_constraints(val) )
                 {
                     LogMessage("== invalid constraints value is provided: %s.%s = %s\n",
-                        root_element_key, val_name, val.get_as_string());
+                        root_element_key, val_name, val.get_as_string().c_str());
 
                     parse_err = true;
                 }

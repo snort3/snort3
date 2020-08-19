@@ -15,10 +15,10 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// config_tree.h author Serhii Vlasiuk <svlasiuk@cisco.com>
+// config_data.h author Serhii Vlasiuk <svlasiuk@cisco.com>
 
-#ifndef CONFIG_TREE_H
-#define CONFIG_TREE_H
+#ifndef CONFIG_DATA_H
+#define CONFIG_DATA_H
 
 #include <list>
 
@@ -26,13 +26,7 @@
 
 class BaseConfigNode;
 
-using ChildrenNodes = std::list<BaseConfigNode*>;
-
-class ConfigTextFormat
-{
-public:
-    static void print(const BaseConfigNode* parent, const std::string& config_name);
-};
+using ConfigTrees = std::list<BaseConfigNode*>;
 
 class BaseConfigNode
 {
@@ -43,10 +37,10 @@ public:
     virtual std::string get_name() const = 0;
     virtual snort::Parameter::Type get_type() const = 0;
     virtual BaseConfigNode* get_node(const std::string& name) = 0;
-    virtual std::string data() const { return ""; }
     virtual void set_value(const snort::Value&) {}
+    virtual const snort::Value* get_value() const { return nullptr; }
 
-    const ChildrenNodes& get_children() const
+    const ConfigTrees& get_children() const
     { return children; }
 
     BaseConfigNode* get_parent_node() const
@@ -57,7 +51,7 @@ public:
     static void clear_nodes(BaseConfigNode* root);
 
 protected:
-    ChildrenNodes children;
+    ConfigTrees children;
     BaseConfigNode* parent = nullptr;
 };
 
@@ -84,26 +78,43 @@ private:
 class ValueConfigNode : public BaseConfigNode
 {
 public:
-    ValueConfigNode(BaseConfigNode* parent, const snort::Value& value);
+    ValueConfigNode(BaseConfigNode* parent, const snort::Value& value,
+        const std::string& name = "");
 
 private:
     virtual std::string get_name() const override
-    { return value.get_name(); }
+    { return !custom_name.empty() ? custom_name : value.get_name(); }
 
     virtual snort::Parameter::Type get_type() const override
     { return value.get_param_type(); }
 
-    virtual std::string data() const override
-    { return value.get_origin_string(); }
+    virtual const snort::Value* get_value() const override
+    { return &value; }
 
-    virtual void set_value(const snort::Value& v) override
-    { value = v; }
-
+    virtual void set_value(const snort::Value& v) override;
     virtual BaseConfigNode* get_node(const std::string& name) override;
 
 private:
     snort::Value value;
+    bool multi_value = false;
+    std::string custom_name;
 };
 
-#endif // CONFIG_TREE_H
+class ConfigData
+{
+public:
+    ConfigData(const char* file_name);
+
+    void add_config_tree(BaseConfigNode* root)
+    { config_trees.push_back(root); }
+
+    void sort();
+    void clear();
+
+public:
+    std::string file_name;
+    ConfigTrees config_trees;
+};
+
+#endif // CONFIG_DATA_H
 

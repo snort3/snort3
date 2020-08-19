@@ -42,10 +42,10 @@ public:
     enum ValueType { VT_BOOL, VT_NUM, VT_STR };
 
     Value(bool b)
-    { set(b); set_origin(b); }
+    { set(b); }
 
     Value(double d)
-    { set(d); set_origin(d); }
+    { set(d); }
 
     Value(const char* s)
     { set(s); set_origin(s); }
@@ -85,19 +85,8 @@ public:
     void set(bool b)
     { type = VT_BOOL; num = b ? 1 : 0; str.clear(); }
 
-    void set_origin(bool val)
-    { origin_str = val ? "true" : "false"; }
-
     void set(double d)
     { type = VT_NUM; num = d; str.clear(); }
-
-    void set_origin(double val)
-    {
-        auto temp = new std::stringstream;
-        *temp << val;
-        origin_str = temp->str();
-        delete temp;
-    }
 
     void set(long n)
     { set((double)n); }
@@ -168,7 +157,7 @@ public:
     const char* get_string() const
     { return str.c_str(); }
 
-    const char* get_as_string();
+    std::string get_as_string() const;
     Parameter::Type get_param_type() const;
     std::string get_origin_string() const;
 

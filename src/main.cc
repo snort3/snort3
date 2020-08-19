@@ -822,9 +822,6 @@ static bool set_mode()
         return false;
     }
 
-    if ( sc->dump_config() )
-        return false;
-
     if ( just_validate(sc) )
     {
         LogMessage("\nSnort successfully validated the configuration (with %u warnings).\n",

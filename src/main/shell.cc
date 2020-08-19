@@ -28,7 +28,7 @@
 #include <cassert>
 #include <stdexcept>
 
-#include "config_tree.h"
+#include "dump_config/config_output.h"
 #include "log/messages.h"
 #include "lua/lua.h"
 #include "main/policy.h"
@@ -47,6 +47,9 @@ using namespace std;
 
 string Shell::fatal;
 std::stack<Shell*> Shell::current_shells;
+ConfigOutput* Shell::s_config_output = nullptr;
+BaseConfigNode* Shell::s_current_node = nullptr;
+bool Shell::s_close_table = true;
 
 // FIXIT-M Shell::panic() works on Linux but on OSX we can't throw from lua
 // to C++.  unprotected lua calls could be wrapped in a pcall to ensure lua
@@ -63,6 +66,15 @@ Shell* Shell::get_current_shell()
         return current_shells.top();
 
     return nullptr;
+}
+
+void Shell::set_config_output(ConfigOutput* output)
+{ s_config_output = output; }
+
+void Shell::clear_config_output()
+{
+    s_config_output = nullptr;
+    s_current_node = nullptr;
 }
 
 bool Shell::is_whitelisted(const std::string& key)
@@ -112,6 +124,12 @@ void Shell::config_open_table(bool is_root_node, bool is_list, int idx,
         if ( p )
             node_type = p->type;
 
+        if ( node_type == Parameter::PT_MULTI )
+        {
+            s_close_table = false;
+            return;
+        }
+
         if ( node_type == Parameter::PT_TABLE )
             update_current_config_node(table_name);
         else
@@ -126,18 +144,16 @@ void Shell::config_open_table(bool is_root_node, bool is_list, int idx,
 
 void Shell::add_config_child_node(const std::string& node_name, snort::Parameter::Type type)
 {
-    Shell* sh = Shell::get_current_shell();
-
-    if ( !sh )
+    if ( !s_current_node )
         return;
 
     std::string name;
-    if ( sh->s_current_node->get_name() != node_name )
+    if ( s_current_node->get_name() != node_name )
         name = node_name;
 
-    auto new_node = new TreeConfigNode(sh->s_current_node, name, type);
-    sh->s_current_node->add_child_node(new_node);
-    sh->s_current_node = new_node;
+    auto new_node = new TreeConfigNode(s_current_node, name, type);
+    s_current_node->add_child_node(new_node);
+    s_current_node = new_node;
 }
 
 void Shell::add_config_root_node(const std::string& root_name, snort::Parameter::Type node_type)
@@ -148,74 +164,86 @@ void Shell::add_config_root_node(const std::string& root_name, snort::Parameter:
         return;
 
     sh->s_current_node = new TreeConfigNode(nullptr, root_name, node_type);
-    sh->config_trees.push_back(sh->s_current_node);
+    sh->config_data.add_config_tree(sh->s_current_node);
 }
 
 void Shell::update_current_config_node(const std::string& node_name)
 {
-    Shell* sh = Shell::get_current_shell();
-
-    if ( !sh )
-        return;
-
-    if ( !sh->s_current_node )
+    if ( !s_current_node )
         return;
 
     // node has been added during setting default options
     if ( !node_name.empty() )
-        sh->s_current_node = sh->s_current_node->get_node(node_name);
-    else if ( sh->s_current_node->get_parent_node() and
-        sh->s_current_node->get_type() == Parameter::PT_TABLE and
-        !sh->s_current_node->get_name().empty() )
-            sh->s_current_node = sh->s_current_node->get_parent_node();
+        s_current_node = s_current_node->get_node(node_name);
+    else if ( s_current_node->get_parent_node() and
+        s_current_node->get_type() == Parameter::PT_TABLE and
+        !s_current_node->get_name().empty() )
+            s_current_node = s_current_node->get_parent_node();
 
-    assert(sh->s_current_node);
+    assert(s_current_node);
 }
 
 void Shell::config_close_table()
 {
-    Shell* sh = Shell::get_current_shell();
+    if ( !s_close_table )
+    {
+        s_close_table = true;
+        return;
+    }
 
-    if ( !sh )
+    if ( !s_current_node )
         return;
 
-    if ( !sh->s_current_node )
-        return;
-
-    sh->s_current_node = sh->s_current_node->get_parent_node();
+    s_current_node = s_current_node->get_parent_node();
 }
 
-void Shell::set_config_value(const snort::Value& value)
+void Shell::set_config_value(const std::string& fqn, const snort::Value& value)
 {
-    Shell* sh = Shell::get_current_shell();
-
-    if ( !sh )
+    if ( !s_current_node )
         return;
 
-    if ( !sh->s_current_node )
-        return;
-
-    // lua interpreter does not call open_table for simple list items like (string)
-    // we have to add tree node for this item too
-    if ( sh->s_current_node->get_type() == Parameter::PT_LIST )
+    // lua interpreter does not call open_table for simple list items like (string) or
+    // special rule_state list items
+    // We have to add tree node for this item too
+    if ( s_current_node->get_type() == Parameter::PT_LIST )
     {
-        add_config_child_node("", Parameter::PT_TABLE);
-        sh->s_current_node->add_child_node(new ValueConfigNode(sh->s_current_node, value));
-        sh->s_current_node = sh->s_current_node->get_parent_node();
+        auto node = s_current_node->get_node("");
+        if ( !node || s_current_node->get_name().find(":") == std::string::npos )
+        {
+            node = new TreeConfigNode(s_current_node, "", Parameter::PT_TABLE);
+            s_current_node->add_child_node(node);
+        }
+
+        node->add_child_node(new ValueConfigNode(node, value));
 
         return;
     }
-    
+
     BaseConfigNode* child_node = nullptr;
-    for ( auto node : sh->s_current_node->get_children() )
+
+    std::string custom_name;
+    if ( strchr(value.get_name(), '$') )
+        custom_name = fqn.substr(fqn.find_last_of(".") + 1);
+
+    for ( auto node : s_current_node->get_children() )
     {
-        child_node = node->get_node(value.get_name());
+        if ( (node->get_type() == Parameter::PT_MULTI) and (node->get_name() == value.get_name()) )
+        {
+            child_node = node;
+            break;
+        }
+
+        if ( !custom_name.empty() )
+            child_node = node->get_node(custom_name);
+        else
+            child_node = node->get_node(value.get_name());
+
         if ( child_node )
             break;
     }
 
     if ( !child_node )
-        sh->s_current_node->add_child_node(new ValueConfigNode(sh->s_current_node, value));
+        s_current_node->add_child_node(new ValueConfigNode(s_current_node, value, custom_name));
     else
         child_node->set_value(value);
 }
@@ -278,7 +306,8 @@ static void load_string(lua_State* L, const char* s)
 // public methods
 //-------------------------------------------------------------------------
 
-Shell::Shell(const char* s, bool load_defaults)
+Shell::Shell(const char* s, bool load_defaults) :
+    config_data(s)
 {
     // FIXIT-M should wrap in Lua::State
     lua = luaL_newstate();
@@ -314,6 +343,7 @@ Shell::~Shell()
 void Shell::set_file(const char* s)
 {
     file = s;
+    config_data.file_name = file;
 }
 
 void Shell::set_overrides(const char* s)
@@ -383,12 +413,9 @@ bool Shell::configure(SnortConfig* sc, bool is_fatal, bool is_root)
 
     clear_whitelist();
 
-    if ( SnortConfig::get_conf()->dump_config() )
-    {
-        sort_config();
-        print_config_text();
-        clear_config_tree();
-    }
+    auto config_output = Shell::get_current_shell()->s_config_output;
+    if ( config_output )
+        config_output->dump_config(config_data);
 
     current_shells.pop();
 
@@ -459,29 +486,6 @@ static void print_list(const Shell::Whitelist& wlist, const std::string& msg)
 //-------------------------------------------------------------------------
 // private methods
 //-------------------------------------------------------------------------
-void Shell::sort_config()
-{
-    config_trees.sort([](const BaseConfigNode* l, const BaseConfigNode* r)
-        { return l->get_name() < r->get_name(); });
-}
-
-void Shell::print_config_text() const
-{
-    std::string output("consolidated config for ");
-    output += file;
-    LogConfig("%s\n", output.c_str());
-
-    for ( const auto config_tree: config_trees )
-        ConfigTextFormat::print(config_tree, config_tree->get_name());
-}
-
-void Shell::clear_config_tree()
-{
-    for ( auto config_tree: config_trees )
-        BaseConfigNode::clear_nodes(config_tree);
-
-    config_trees.clear();
-}
 
 void Shell::print_whitelist() const
 {

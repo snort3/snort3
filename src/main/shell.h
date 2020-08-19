@@ -27,11 +27,13 @@
 #include <stack>
 #include <string>
 
+#include "dump_config/config_data.h"
 #include "framework/parameter.h"
 
 struct lua_State;
 
 class BaseConfigNode;
+class ConfigOutput;
 
 namespace snort
 {
@@ -70,10 +72,12 @@ public:
 
     static void config_open_table(bool is_root_node, bool is_list, int idx,
         const std::string& table_name, const snort::Parameter* p);
-    static void set_config_value(const snort::Value& value);
+    static void set_config_value(const std::string& fqn, const snort::Value& value);
     static void add_config_child_node(const std::string& node_name, snort::Parameter::Type type);
     static void update_current_config_node(const std::string& node_name = "");
     static void config_close_table();
+    static void set_config_output(ConfigOutput* config_output);
+    static void clear_config_output();
 
 private:
     static void add_config_root_node(const std::string& root_name, snort::Parameter::Type type);
@@ -85,6 +89,9 @@ private:
 private:
     static std::string fatal;
     static std::stack<Shell*> current_shells;
+    static ConfigOutput* s_config_output;
+    static BaseConfigNode* s_current_node;
+    static bool s_close_table;
 
 private:
     void clear_whitelist()
@@ -106,10 +113,6 @@ private:
     void print_whitelist() const;
     void whitelist_update(const char* keyword, bool is_prefix);
 
-    void sort_config();
-    void print_config_text() const;
-    void clear_config_tree();
-
 private:
     bool loaded;
     bool bootstrapped = false;
@@ -120,8 +123,7 @@ private:
     Whitelist whitelist;
     Whitelist internal_whitelist;
     Whitelist whitelist_prefixes;
-    std::list<BaseConfigNode*> config_trees;
-    BaseConfigNode* s_current_node = nullptr;
+    ConfigData config_data;
 };
 
 #endif

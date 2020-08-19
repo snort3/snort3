@@ -455,8 +455,8 @@ static bool set_var(const char* fqn, Value& v)
 
 static bool set_param(Module* mod, const char* fqn, Value& val)
 {
-    if ( s_config->dump_config() )
-        Shell::set_config_value(val);
+    if ( s_config->dump_config_mode() )
+        Shell::set_config_value(fqn, val);
 
     if ( !mod->verified_set(fqn, val, s_config) )
     {
@@ -595,7 +595,7 @@ static bool begin(Module* m, const Parameter* p, const char* s, int idx, int dep
             {
                 const Parameter* table_item_params = reinterpret_cast<const Parameter*>(p->range);
 
-                if ( s_config->dump_config() )
+                if ( s_config->dump_config_mode() )
                     Shell::add_config_child_node(get_sub_table(fqn), p->type);
 
                 if ( !begin(m, table_item_params, fqn.c_str(), idx, depth+1) )
@@ -634,7 +634,7 @@ static bool begin(Module* m, const Parameter* p, const char* s, int idx, int dep
         }
         ++p;
     }
-    if ( s_config->dump_config() )
+    if ( s_config->dump_config_mode() )
         Shell::update_current_config_node();
     return true;
 }
@@ -764,7 +764,7 @@ SO_PUBLIC bool open_table(const char* s, int idx)
         s_current = unique_key;
     }
 
-    if ( s_config->dump_config() )
+    if ( s_config->dump_config_mode() )
     {
         std::string table_name = get_sub_table(s);
         bool is_top_level = false;
@@ -817,7 +817,7 @@ SO_PUBLIC void close_table(const char* s, int idx)
         s_type.clear();
     }
 
-    if ( s_config->dump_config() )
+    if ( s_config->dump_config_mode() )
         Shell::config_close_table();
 }
 

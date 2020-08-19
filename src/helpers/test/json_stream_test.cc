@@ -153,10 +153,26 @@ TEST_CASE("basic", "[json_stream]")
         CHECK(ss.str() == x);
     }
 
+    SECTION("backslash")
+    {
+        const char* s = R"-(content:\test\;)-";
+        const char* x = R"-("content:\\test\\;")-";
+        js.put(nullptr, s);
+        CHECK(ss.str() == x);
+    }
+
     SECTION("embedded quotes")
     {
         const char* s = R"-(content:"foo";)-";
         const char* x = R"-("content:\"foo\";")-";
+        js.put(nullptr, s);
+        CHECK(ss.str() == x);
+    }
+
+    SECTION("special characters")
+    {
+        const char* s = R"-(content: / " \ $ # ! @ % ^ & * ' \b\f\t\r\n . )-";
+        const char* x = R"-("content: / \" \\ $ # ! @ % ^ & * ' \\b\\f\\t\\r\\n . ")-";
         js.put(nullptr, s);
         CHECK(ss.str() == x);
     }

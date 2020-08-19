@@ -31,6 +31,8 @@
 #include "detection/detection_engine.h"
 #include "detection/fp_config.h"
 #include "detection/fp_create.h"
+#include "dump_config/json_config_output.h"
+#include "dump_config/text_config_output.h"
 #include "filters/detection_filter.h"
 #include "filters/rate_filter.h"
 #include "filters/sfrf.h"
@@ -944,6 +946,25 @@ bool SnortConfig::get_default_rule_state() const
         return false;
     }
     return true;
+}
+
+ConfigOutput* SnortConfig::create_config_output() const
+{
+    ConfigOutput* output = nullptr;
+
+    switch (dump_config_type)
+    {
+    case DUMP_CONFIG_JSON_ALL:
+        output = new JsonAllConfigOutput();
+        break;
+    case DUMP_CONFIG_TEXT:
+        output = new TextConfigOutput();
+        break;
+    default:
+        break;
+    }
+
+    return output;
 }
 
 bool SnortConfig::tunnel_bypass_enabled(uint16_t proto) const

@@ -15,21 +15,48 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// config_tree.cc author Serhii Vlasiuk <svlasiuk@cisco.com>
+// text_config_output.cc author Serhii Vlasiuk <svlasiuk@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "text_config_output.h"
 
-#include "config_tree.h"
+#include <iomanip>
+#include <iostream>
 
-#include <cassert>
-
-#include "log/messages.h"
+#include "config_data.h"
 
 using namespace snort;
 
-void ConfigTextFormat::print(const BaseConfigNode* parent, const std::string& config_name)
+void TextConfigOutput::dump_value(const BaseConfigNode* node, const std::string& config_name)
+{
+    const Value* value = node->get_value();
+    if ( !value )
+        return;
+
+    if ( value->get_as_string().empty() )
+        return;
+
+    switch ( node->get_type() )
+    {
+    case Parameter::PT_BOOL:
+    case Parameter::PT_IMPLIED:
+    {
+        std::string value_str = value->get_bool() ? "true" : "false";
+        std::cout << config_name << "=" << value_str << std::endl;
+        break;
+    }
+    case Parameter::PT_INT:
+        std::cout << config_name << "=" << value->get_long() << std::endl;
+        break;
+    case Parameter::PT_REAL:
+        std::cout << config_name << "=" << value->get_real() << std::endl;
+        break;
+    default:
+        std::cout << config_name << "=" << std::quoted(value->get_origin_string()) << std::endl;
+        break;
+    }
+}
+
+void TextConfigOutput::dump_modules(const BaseConfigNode* parent, const std::string& config_name)
 {
     static char buf[16];
     int list_index = 0;
@@ -51,53 +78,19 @@ void ConfigTextFormat::print(const BaseConfigNode* parent, const std::string& co
             full_config_name += "]";
         }
 
-        print(node, full_config_name);
+        dump_modules(node, full_config_name);
     }
 
-    std::string config_data = parent->data();
-    if ( !config_data.empty() )
-        LogConfig("%s=%s\n", config_name.c_str(), config_data.c_str());
+    dump_value(parent, config_name);
 }
 
-BaseConfigNode::BaseConfigNode(BaseConfigNode* p) :
-    parent(p)
-{}
-
-void BaseConfigNode::add_child_node(BaseConfigNode* node)
+void TextConfigOutput::dump(const ConfigData& config_data)
 {
-    assert(node);
-    children.push_back(node);
-}
+    std::string output("consolidated config for ");
+    output += config_data.file_name;
+    std::cout << output << std::endl;
 
-void BaseConfigNode::clear_nodes(BaseConfigNode* node)
-{
-    for ( auto& config_node : node->children )
-        clear_nodes(config_node);
-
-    delete node;
-}
-
-TreeConfigNode::TreeConfigNode(BaseConfigNode* parent_node,
-    const std::string& node_name, const Parameter::Type node_type) :
-        BaseConfigNode(parent_node), name(node_name), type(node_type)
-{}
-
-BaseConfigNode* TreeConfigNode::get_node(const std::string& name)
-{
-    for ( auto node : children )
-    {
-        if ( node->get_name() == name )
-            return node;
-    }
-    return nullptr;
-}
-
-ValueConfigNode::ValueConfigNode(BaseConfigNode* parent_node, const Value& val) :
-    BaseConfigNode(parent_node), value(val)
-{}
-
-BaseConfigNode* ValueConfigNode::get_node(const std::string& name)
-{
-    return value.is(name.c_str()) and value.has_default() ? this : nullptr;
+    for ( const auto config_tree: config_data.config_trees )
+        dump_modules(config_tree, config_tree->get_name());
 }
 

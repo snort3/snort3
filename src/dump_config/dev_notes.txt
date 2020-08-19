@@ -1,0 +1,29 @@
+This directory contains classes related to Snort configuration dump.
+
+Snort supports dumping config into a file for JSON and text formats.
+
+* ConfigData
+
+    The ConfigData structure represents the internal config data of a particular Lua file.
+    A unique shell is associated with every base and targeted policy file.
+    Every module in a Lua file is represented by the General Tree.
+    The Tree node can be one of the following types: TreeConfigNode, ValueConfigNode.
+    The TreeConfigNode represents a table or list.
+    The ValueConfigNode represents a config value itself.
+
+* ConfigOutput
+
+    The ConfigOutput class is a base class that encapsulates dumping config into a file.
+    Pure virtual function dump() should be overridden by derived classes for particular
+    output format.
+
+* JsonAllConfigOutput
+
+    The JsonAllConfigOutput class inherits from ConfigOutput and dumps base and targeted
+    policy file in JSON format.
+
+* TextConfigOutput
+
+    The TextConfigOutput class inherits from ConfigOutput and dumps base and targeted
+    policy file in text format.
+

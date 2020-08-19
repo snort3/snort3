@@ -33,6 +33,7 @@
 #include "detection/fp_config.h"
 #include "detection/rules.h"
 #include "detection/sfrim.h"
+#include "dump_config/config_output.h"
 #include "filters/detection_filter.h"
 #include "filters/rate_filter.h"
 #include "filters/sfthreshold.h"
@@ -320,6 +321,7 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname, boo
     sc->output_flags = boot_conf->output_flags;
     sc->logging_flags = boot_conf->logging_flags;
     sc->tweaks = boot_conf->tweaks;
+    sc->dump_config_type = boot_conf->dump_config_type;
 
     VarNode* tmp = boot_conf->var_list;
 
@@ -357,6 +359,9 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname, boo
         sh->set_file(fname);
     }
 
+    bool parse_file_failed = false;
+    auto output = SnortConfig::get_conf()->create_config_output();
+    Shell::set_config_output(output);
     for ( unsigned i = 0; true; i++ )
     {
         sh = sc->policy_map->get_shell(i);
@@ -367,10 +372,18 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname, boo
         set_policies(sc, sh);
 
         if (!parse_file(sc, sh, is_fatal, (i == 0)))
-            return sc;
+        {
+            parse_file_failed = true;
+            break;
+        }
     }
 
-    set_default_policy(sc);
+    delete output;
+    Shell::clear_config_output();
+
+    if ( !parse_file_failed )
+        set_default_policy(sc);
+
     return sc;
 }
 

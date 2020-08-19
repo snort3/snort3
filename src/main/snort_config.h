@@ -81,7 +81,6 @@ enum RunFlag
     RUN_FLAG__IP_FRAGS_ONLY       = 0x08000000,
 
     RUN_FLAG__DUMP_RULE_STATE     = 0x10000000,
-    RUN_FLAG__DUMP_CONFIG         = 0x20000000,
 };
 
 enum OutputFlag
@@ -126,6 +125,14 @@ enum TunnelFlags
     TUNNEL_VXLAN  = 0x100
 };
 
+enum DumpConfigType
+{
+    DUMP_CONFIG_NONE = 0,
+    DUMP_CONFIG_JSON_ALL,
+    DUMP_CONFIG_TEXT
+};
+
+class ConfigOutput;
 class FastPatternConfig;
 class RuleStateMap;
 class TraceConfig;
@@ -424,6 +431,8 @@ public:
     bool cloned = false;
     Plugins* plugins = nullptr;
     SoRules* so_rules = nullptr;
+
+    DumpConfigType dump_config_type = DUMP_CONFIG_NONE;
 private:
     bool active_enabled = false;
     std::list<ReloadResourceTuner*> reload_tuners;
@@ -501,8 +510,8 @@ public:
     { return address_anomaly_check_enabled; }
 
     // mode related
-    bool dump_config() const
-    { return run_flags & RUN_FLAG__DUMP_CONFIG; }
+    bool dump_config_mode() const
+    { return dump_config_type > DUMP_CONFIG_NONE; }
 
     bool dump_msg_map() const
     { return run_flags & RUN_FLAG__DUMP_MSG_MAP; }
@@ -522,14 +531,11 @@ public:
     bool test_mode() const
     { return run_flags & RUN_FLAG__TEST; }
 
-    bool validation_mode() const
-    { return test_mode() or dump_config(); }
-
     bool mem_check() const
-    { return (run_flags & RUN_FLAG__MEM_CHECK) and !dump_config(); }
+    { return run_flags & RUN_FLAG__MEM_CHECK; }
 
     bool daemon_mode() const
-    { return (run_flags & RUN_FLAG__DAEMON) and !dump_config(); }
+    { return run_flags & RUN_FLAG__DAEMON; }
 
     bool read_mode() const
     { return run_flags & RUN_FLAG__READ; }
@@ -700,6 +706,8 @@ public:
     { reload_tuners.clear(); }
 
     bool get_default_rule_state() const;
+
+    ConfigOutput* create_config_output() const;
 
     SO_PUBLIC bool tunnel_bypass_enabled(uint16_t proto) const;
 

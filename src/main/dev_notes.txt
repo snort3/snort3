@@ -63,11 +63,3 @@ information and management.  Currently it is being used as a cross-platform
 mechanism for managing CPU affinity of threads, but it will be used in the
 future for NUMA (non-uniform memory access) awareness among other things.
 
-Consolidated Config output
-
-The snort config parsed is stored as an internal tree structure within the Shell.
-A unique shell is associated with every base and targeted policy file.
-Every module in a lua file is represented by the General Tree.
-The Tree node can be one of the following types: TreeConfigNode, ValueConfigNode.
-The TreeConfigNode represents a table or list.
-The ValueConfigNode represents a config value itself.
