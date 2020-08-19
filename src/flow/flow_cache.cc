@@ -375,7 +375,6 @@ unsigned FlowCache::delete_active_flows(unsigned mode, unsigned num_to_delete, u
         }
 
         // we have a winner...
-        hash_table->remove();
         if ( flow->next )
             unlink_uni(flow);
 
@@ -386,6 +385,9 @@ unsigned FlowCache::delete_active_flows(unsigned mode, unsigned num_to_delete, u
         else
             delete_stats.update(FlowDeleteState::ALLOWED);
 
+        flow->reset(true);
+        //The flow should not be removed from the hash before reset
+        hash_table->remove();
         delete flow;
         memory::MemoryCap::update_deallocations(sizeof(HashNode) + sizeof(FlowKey));
         --flows_allocated;
