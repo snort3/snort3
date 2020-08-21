@@ -29,6 +29,7 @@
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "protocols/ssl.h"
+#include "pub_sub/opportunistic_tls_event.h"
 #include "search_engines/search_tool.h"
 #include "stream/stream.h"
 #include "utils/util_cstring.h"
@@ -128,6 +129,9 @@ const PegInfo imap_peg_names[] =
     { CountType::SUM, "sessions", "total imap sessions" },
     { CountType::NOW, "concurrent_sessions", "total concurrent imap sessions" },
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent imap sessions" },
+    { CountType::SUM, "start_tls", "total STARTTLS events generated" },
+    { CountType::SUM, "ssl_search_abandoned", "total SSL search abandoned" },
+    { CountType::SUM, "ssl_srch_abandoned_early", "total SSL search abandoned too soon" },
     { CountType::SUM, "b64_attachments", "total base64 attachments decoded" },
     { CountType::SUM, "b64_decoded_bytes", "total base64 decoded bytes" },
     { CountType::SUM, "qp_attachments", "total quoted-printable attachments decoded" },
@@ -478,6 +482,13 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
             {
             case RESP_FETCH:
                 imap_ssn->body_len = imap_ssn->body_read = 0;
+                if (!(imap_ssn->session_flags & IMAP_FLAG_ABANDON_EVT)
+                    and !p->flow->flags.data_decrypted)
+                {
+                    imap_ssn->session_flags |= IMAP_FLAG_ABANDON_EVT;
+                    DataBus::publish(SSL_SEARCH_ABANDONED, p);
+                    imapstats.ssl_search_abandoned++;
+                }
                 imap_ssn->state = STATE_DATA;
                 tmp = SnortStrcasestr((const char*)cmd_start, (eol - cmd_start), "BODY");
                 if (tmp != nullptr)
@@ -491,6 +502,20 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
                         imap_ssn->state = STATE_UNKNOWN;
                 }
                 break;
+            case RESP_OK:
+                if (imap_ssn->state == STATE_TLS_CLIENT_PEND)
+                {
+                    if ((imap_ssn->session_flags & IMAP_FLAG_ABANDON_EVT)
+                        and !p->flow->flags.data_decrypted)
+                    {
+                        imapstats.ssl_srch_abandoned_early++;
+                    }
+
+                    OpportunisticTlsEvent event(p, p->flow->service);
+                    DataBus::publish(OPPORTUNISTIC_TLS_EVENT, event, p->flow);
+                    imapstats.start_tls++;
+                    imap_ssn->state = STATE_DECRYPTION_REQ;
+                }
             default:
                 break;
             }
@@ -576,7 +601,8 @@ static void snort_imap(IMAP_PROTO_CONF* config, Packet* p)
     if (pkt_dir == IMAP_PKT_FROM_CLIENT)
     {
         /* This packet should be a tls client hello */
-        if (imap_ssn->state == STATE_TLS_CLIENT_PEND)
+        if ((imap_ssn->state == STATE_TLS_CLIENT_PEND)
+            || (imap_ssn->state == STATE_DECRYPTION_REQ))
         {
             if (IsTlsClientHello(p->data, p->data + p->dsize))
             {

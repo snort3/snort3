@@ -38,11 +38,13 @@
 #define STATE_TLS_DATA         3    // Successful handshake, TLS encrypted data
 #define STATE_COMMAND          4
 #define STATE_UNKNOWN          5
+#define STATE_DECRYPTION_REQ   6    
 
 // session flags
 #define IMAP_FLAG_NEXT_STATE_UNKNOWN         0x00000004
 #define IMAP_FLAG_GOT_NON_REBUILT            0x00000008
 #define IMAP_FLAG_CHECK_SSL                  0x00000010
+#define IMAP_FLAG_ABANDON_EVT                0x00000020
 
 typedef enum _IMAPCmdEnum
 {
