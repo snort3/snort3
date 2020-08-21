@@ -40,7 +40,9 @@ using namespace snort;
 Flow::Flow()
 {
     memory::MemoryCap::update_allocations(sizeof(*this) + sizeof(FlowStash));
-    memset(this, 0, sizeof(*this));
+    constexpr size_t offset = offsetof(Flow, key);
+    // FIXIT-L need a struct to zero here to make future proof
+    memset((uint8_t*)this+offset, 0, sizeof(*this)-offset);
 }
 
 Flow::~Flow()
@@ -187,7 +189,9 @@ void Flow::reset(bool do_cleanup)
     if ( stash )
         stash->reset();
 
-    constexpr size_t offset = offsetof(Flow, flow_data);
+    deferred_trust.clear();
+
+    constexpr size_t offset = offsetof(Flow, context_chain);
     // FIXIT-L need a struct to zero here to make future proof
     memset((uint8_t*)this+offset, 0, sizeof(Flow)-offset);
 }
@@ -229,6 +233,13 @@ void Flow::clear(bool dump_flow_data)
 
     if ( gadget )
         clear_gadget();
+}
+
+void Flow::trust()
+{
+    set_ignore_direction(SSN_DIR_BOTH);
+    set_state(Flow::FlowState::ALLOW);
+    disable_inspection();
 }
 
 int Flow::set_flow_data(FlowData* fd)

@@ -39,6 +39,12 @@ int SFDAQInstance::finalize_message(DAQ_Msg_h, DAQ_Verdict verdict)
     mock().actualCall("finalize_message").onObject(this).withParameter("verdict", verdict);
     return -1;
 }
+void DeferredTrust::finalize(Active&) { }
+void DeferredTrust::set_deferred_trust(unsigned module_id, bool on)
+{
+    deferred_trust = on ? TRUST_DEFER_ON : TRUST_DEFER_OFF;
+}
+void Flow::trust() { }
 }
 
 using namespace snort;
@@ -82,6 +88,22 @@ TEST(distill_verdict_tests, normal_pass)
     mock().checkExpectations();
 }
 
+TEST(distill_verdict_tests, trust_session_whitelist_on_blocked)
+{
+    // Trust session whitelist verdict on blocked packet does nothing
+    pkt.flow = &flow;
+    pkt.packet_flags = PKT_FROM_CLIENT;
+    flow.flags.disable_inspect = false;
+    flow.ssn_state.ignore_direction = SSN_DIR_NONE;
+    flow.flow_state = Flow::FlowState::INSPECT;
+    act.reset();
+    act.drop_packet(&pkt, true);
+    act.trust_session(&pkt);
+    mock().expectNCalls(1, "finalize_message").onObject(di).withParameter("verdict", DAQ_VERDICT_BLOCK);
+    analyzer->post_process_packet(&pkt);
+    mock().checkExpectations();
+}
+
 TEST(distill_verdict_tests, trust_session_whitelist)
 {
     // Trust session whitelist verdict
@@ -95,24 +117,6 @@ TEST(distill_verdict_tests, trust_session_whitelist)
     mock().expectNCalls(1, "finalize_message").onObject(di).withParameter("verdict", DAQ_VERDICT_WHITELIST);
     analyzer->post_process_packet(&pkt);
     mock().checkExpectations();
-    CHECK_TEXT(flow.flags.disable_inspect, "Disable inspection should have been called");
-}
-
-TEST(distill_verdict_tests, prevent_trust_session_whitelist)
-{
-    // Prevent trust_session whitelist verdict
-    pkt.flow = &flow;
-    pkt.packet_flags = PKT_FROM_CLIENT;
-    flow.flags.disable_inspect = false;
-    flow.ssn_state.ignore_direction = SSN_DIR_NONE;
-    flow.flow_state = Flow::FlowState::INSPECT;
-    act.reset();
-    act.trust_session(&pkt);
-    act.set_prevent_trust_action();
-    mock().expectNCalls(1, "finalize_message").onObject(di).withParameter("verdict", DAQ_VERDICT_PASS);
-    analyzer->post_process_packet(&pkt);
-    mock().checkExpectations();
-    CHECK_TEXT(!flow.flags.disable_inspect, "Disable inspection should not have been called");
 }
 
 TEST(distill_verdict_tests, flow_state_whitelist)
@@ -125,22 +129,6 @@ TEST(distill_verdict_tests, flow_state_whitelist)
     flow.flow_state = Flow::FlowState::ALLOW;
     act.reset();
     mock().expectNCalls(1, "finalize_message").onObject(di).withParameter("verdict", DAQ_VERDICT_WHITELIST);
-    analyzer->post_process_packet(&pkt);
-    mock().checkExpectations();
-    CHECK_TEXT(!flow.flags.disable_inspect, "Disable inspection should not have been called");
-}
-
-TEST(distill_verdict_tests, prevent_flow_state_whitelist)
-{
-    // Prevent flow state whitelist verdict
-    pkt.flow = &flow;
-    pkt.packet_flags = PKT_FROM_CLIENT;
-    flow.flags.disable_inspect = false;
-    flow.ssn_state.ignore_direction = SSN_DIR_NONE;
-    flow.flow_state = Flow::FlowState::ALLOW;
-    act.reset();
-    act.set_prevent_trust_action();
-    mock().expectNCalls(1, "finalize_message").onObject(di).withParameter("verdict", DAQ_VERDICT_PASS);
     analyzer->post_process_packet(&pkt);
     mock().checkExpectations();
     CHECK_TEXT(!flow.flags.disable_inspect, "Disable inspection should not have been called");
@@ -161,20 +149,19 @@ TEST(distill_verdict_tests, ignore_both_whitelist)
     CHECK_TEXT(!flow.flags.disable_inspect, "Disable inspection should not have been called");
 }
 
-TEST(distill_verdict_tests, prevent_ignore_both_whitelist)
+TEST(distill_verdict_tests, deferred_trust_prevent_whitelist)
 {
-    // Prevent ignore both directions whitelist verdict
+    // Deferred trust prevent whitelist
     pkt.flow = &flow;
     pkt.packet_flags = PKT_FROM_CLIENT;
     flow.flags.disable_inspect = false;
-    flow.ssn_state.ignore_direction = SSN_DIR_BOTH;
-    flow.flow_state = Flow::FlowState::INSPECT;
+    flow.ssn_state.ignore_direction = SSN_DIR_NONE;
+    flow.flow_state = Flow::FlowState::ALLOW;
+    flow.set_deferred_trust(53, true);
     act.reset();
-    act.set_prevent_trust_action();
     mock().expectNCalls(1, "finalize_message").onObject(di).withParameter("verdict", DAQ_VERDICT_PASS);
     analyzer->post_process_packet(&pkt);
     mock().checkExpectations();
-    CHECK_TEXT(!flow.flags.disable_inspect, "Disable inspection should not have been called");
 }
 
 //-------------------------------------------------------------------------

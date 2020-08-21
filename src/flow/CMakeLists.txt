@@ -1,4 +1,5 @@
 set (FLOW_INCLUDES
+    deferred_trust.h
     expect_cache.h
     flow.h
     flow_data.h
@@ -10,6 +11,7 @@ set (FLOW_INCLUDES
 
 add_library (flow OBJECT
     ${FLOW_INCLUDES}
+    deferred_trust.cc
     expect_cache.cc
     flow.cc
     flow_cache.cc

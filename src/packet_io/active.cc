@@ -648,23 +648,23 @@ void Active::cancel_packet_hold()
 
 void Active::trust_session(Packet* p, bool force)
 {
-    active_action = ACT_TRUST;
-    p->packet_flags |= PKT_IGNORE;
-    DetectionEngine::disable_all(p);
+    if (ACT_ALLOW < active_action)
+        return;
 
-    if ( p->flow )
-    {
-        p->flow->set_ignore_direction(SSN_DIR_BOTH);
-        p->flow->set_state(Flow::FlowState::ALLOW);
-    }
+    DetectionEngine::disable_all(p);
 
     if (force)
     {
+        p->packet_flags |= PKT_IGNORE;
         if ( p->flow )
-            p->flow->disable_inspection();
-
+        {
+            p->flow->trust();
+            p->flow->stop_deferring_trust();
+        }
         p->disable_inspect = true;
     }
+    else if (p->flow && p->flow->try_trust())
+        active_action = ACT_TRUST;
 }
 
 void Active::block_session(Packet* p, bool force)
@@ -796,7 +796,6 @@ void Active::close()
 void Active::reset()
 {
     active_tunnel_bypass = 0;
-    prevent_trust_action = false;
     active_status = AST_ALLOW;
     active_would_reason = WHD_NONE;
     active_action = ACT_ALLOW;
@@ -817,6 +816,13 @@ void Active::execute(Packet* p)
     {
         (*p->action)->exec(p);
         *p->action = nullptr;
+    }
+
+    if (p->flow)
+    {
+        p->flow->finalize_trust(*p->active);
+        if (p->active->session_was_trusted())
+            p->flow->trust();
     }
 }
 

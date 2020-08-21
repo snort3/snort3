@@ -1098,6 +1098,10 @@ static inline void execute(
         if ( T )
             trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER, p,
                 "exit %s, elapsed time: %" PRId64" usec\n", inspector_name, TO_USECS(timer.get()));
+
+        // must check between each ::execute()
+        if ( p->disable_inspect )
+            return;
     }
 }
 

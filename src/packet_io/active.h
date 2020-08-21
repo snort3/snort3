@@ -135,6 +135,12 @@ public:
     void reset_again()
     { active_action = ACT_RESET; }
 
+    void set_trust()
+    { active_action = ACT_TRUST; }
+
+    void set_allow()
+    { active_action = ACT_ALLOW; }
+
     bool packet_was_dropped() const
     { return active_action >= ACT_DROP; }
 
@@ -156,6 +162,9 @@ public:
     bool session_was_blocked() const
     { return active_action >= ACT_BLOCK; }
 
+    bool session_was_allowed() const
+    { return active_action <= ACT_ALLOW; }
+
     bool packet_force_dropped() const
     { return active_status == AST_FORCE; }
 
@@ -170,12 +179,6 @@ public:
 
     bool get_tunnel_bypass() const
     { return active_tunnel_bypass > 0; }
-
-    void set_prevent_trust_action()
-    { prevent_trust_action = true; }
-
-    bool get_prevent_trust_action() const
-    { return prevent_trust_action; }
 
     void set_delayed_action(ActiveActionType, bool force = false);
     void set_delayed_action(ActiveActionType, ActiveAction* act, bool force = false);
@@ -215,8 +218,6 @@ private:
 
     int active_tunnel_bypass;
     const char* drop_reason;
-
-    bool prevent_trust_action;
 
     // these can't be pkt flags because we do the handling
     // of these flags following all processing and the drop

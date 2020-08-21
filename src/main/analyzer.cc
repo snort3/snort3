@@ -210,52 +210,6 @@ static bool process_packet(Packet* p)
     return true;
 }
 
-// If necessary, defer returning a WHITELIST until it's safe to do so.
-// While deferring, keep inspection turned on.
-static void handle_deferred_whitelist(Packet* pkt, DAQ_Verdict& verdict)
-{
-    if ( !pkt->flow or pkt->flow->deferred_whitelist == WHITELIST_DEFER_OFF )
-        return;
-
-    if (verdict == DAQ_VERDICT_BLOCK or verdict == DAQ_VERDICT_BLACKLIST )
-    {
-        // A block/blacklist verdict overrides any earlier whitelist.
-        pkt->flow->deferred_whitelist = WHITELIST_DEFER_OFF;
-        return;
-    }
-
-    if ( pkt->flow->deferred_whitelist == WHITELIST_DEFER_ON )
-    {
-        if ( verdict == DAQ_VERDICT_WHITELIST )
-        {
-            verdict = DAQ_VERDICT_PASS;
-            pkt->flow->deferred_whitelist = WHITELIST_DEFER_STARTED;
-            pkt->flow->set_state(Flow::FlowState::INSPECT);
-            pkt->flow->flags.disable_inspect = false;
-        }
-        return;
-    }
-
-    if ( pkt->flow->deferred_whitelist == WHITELIST_DEFER_STARTED)
-    {
-        verdict = DAQ_VERDICT_PASS;
-        pkt->flow->set_state(Flow::FlowState::INSPECT);
-        pkt->flow->flags.disable_inspect = false;
-        return;
-    }
-
-    if ( pkt->flow->deferred_whitelist == WHITELIST_DEFER_DONE )
-    {
-        // Now that we're done deferring, return the WHITELIST that would
-        // have happened earlier.
-        verdict = DAQ_VERDICT_WHITELIST;
-
-        // Turn inspection back off and allow the flow.
-        pkt->flow->set_state(Flow::FlowState::ALLOW);
-        pkt->flow->flags.disable_inspect = true;
-    }
-}
-
 // Finalize DAQ message verdict
 static DAQ_Verdict distill_verdict(Packet* p)
 {
@@ -301,34 +255,13 @@ static DAQ_Verdict distill_verdict(Packet* p)
         verdict = DAQ_VERDICT_REPLACE;
     }
     else if ( act->session_was_trusted() )
-    {
-        if ( p->flow && !act->get_prevent_trust_action() )
-            p->flow->disable_inspection();
-
-        if ( !(act->get_tunnel_bypass() || act->get_prevent_trust_action()) )
-        {
-            verdict = DAQ_VERDICT_WHITELIST;
-        }
-        else
-        {
-            verdict = DAQ_VERDICT_PASS;
-            daq_stats.internal_whitelist++;
-        }
-    }
+        verdict = DAQ_VERDICT_WHITELIST;
     else if ( (p->packet_flags & PKT_IGNORE) ||
         (p->flow &&
             (p->flow->get_ignore_direction() == SSN_DIR_BOTH ||
                 p->flow->flow_state == Flow::FlowState::ALLOW)) )
     {
-        if ( !(act->get_tunnel_bypass() || act->get_prevent_trust_action()) )
-        {
-            verdict = DAQ_VERDICT_WHITELIST;
-        }
-        else
-        {
-            verdict = DAQ_VERDICT_PASS;
-            daq_stats.internal_whitelist++;
-        }
+        verdict = DAQ_VERDICT_WHITELIST;
     }
     else if ( p->ptrs.decode_flags & DECODE_PKT_TRUST )
     {
@@ -339,8 +272,16 @@ static DAQ_Verdict distill_verdict(Packet* p)
     else
         verdict = DAQ_VERDICT_PASS;
 
-    handle_deferred_whitelist(p, verdict);
-
+    if (DAQ_VERDICT_WHITELIST == verdict)
+    {
+        if (p->flow && p->flow->cannot_trust())
+            verdict = DAQ_VERDICT_PASS;
+        else if (act->get_tunnel_bypass())
+        {
+            verdict = DAQ_VERDICT_PASS;
+            daq_stats.internal_whitelist++;
+        }
+    }
     return verdict;
 }
 
@@ -395,7 +336,7 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
 
         if (verdict == DAQ_VERDICT_BLOCK or verdict == DAQ_VERDICT_BLACKLIST)
             p->active->send_reason_to_daq(*p);
-        
+
         oops_handler->set_current_message(nullptr);
         p->pkth = nullptr;  // No longer avail after finalize_message.
 

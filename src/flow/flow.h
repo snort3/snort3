@@ -30,6 +30,7 @@
 #include <sys/time.h>
 
 #include "detection/ips_context_chain.h"
+#include "flow/deferred_trust.h"
 #include "flow/flow_data.h"
 #include "flow/flow_stash.h"
 #include "framework/data_bus.h"
@@ -148,14 +149,6 @@ struct LwState
 
     char direction;
     char ignore_direction;
-};
-
-enum DeferredWhitelist
-{
-    WHITELIST_DEFER_OFF = 0,
-    WHITELIST_DEFER_ON,
-    WHITELIST_DEFER_STARTED,
-    WHITELIST_DEFER_DONE,
 };
 
 // this struct is organized by member size for compactness
@@ -358,29 +351,36 @@ public:
     bool is_hard_expiration()
     { return (ssn_state.session_flags & SSNFLAG_HARD_EXPIRATION) != 0; }
 
-    void set_deferred_whitelist(DeferredWhitelist defer_state)
+    void set_deferred_trust(unsigned module_id, bool on)
+    { deferred_trust.set_deferred_trust(module_id, on); }
+
+    bool cannot_trust()
+    { return deferred_trust.is_active(); }
+
+    bool try_trust()
+    { return deferred_trust.try_trust(); }
+
+    void stop_deferring_trust()
+    { deferred_trust.clear(); }
+
+    void finalize_trust(Active& active)
     {
-        if (defer_state == WHITELIST_DEFER_DONE )
-        {
-            if (deferred_whitelist == WHITELIST_DEFER_STARTED )
-                deferred_whitelist = WHITELIST_DEFER_DONE;
-            else
-                deferred_whitelist = WHITELIST_DEFER_OFF;
-        }
-        else
-            deferred_whitelist = defer_state;
+        deferred_trust.finalize(active);
     }
 
-    DeferredWhitelist get_deferred_whitelist_state()
-    {
-        return deferred_whitelist;
-    }
+    void trust();
+
+    bool trust_is_deferred()
+    { return deferred_trust.is_deferred(); }
 
 public:  // FIXIT-M privatize if possible
     // fields are organized by initialization and size to minimize
     // void space and allow for memset of tail end of struct
 
     // these fields are const after initialization
+    DeferredTrust deferred_trust;
+
+    // Anything before this comment is not zeroed during construction
     const FlowKey* key;
     BitOp* bitop;
     FlowHAState* ha_state;
@@ -416,8 +416,6 @@ public:  // FIXIT-M privatize if possible
     const char* service;
 
     uint64_t expire_time;
-
-    DeferredWhitelist deferred_whitelist = WHITELIST_DEFER_OFF;
 
     unsigned inspection_policy_id;
     unsigned ips_policy_id;
