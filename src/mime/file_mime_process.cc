@@ -641,7 +641,8 @@ void MimeSession::reset_file_data()
     // Clear MIME's file data to prepare for next file
     file_counter++;
     file_process_offset = 0;
-    current_mime_file_id = 0;
+    current_file_cache_file_id = 0;
+    current_multiprocessing_file_id = 0;
     continue_inspecting_file = true;
 }
 
@@ -821,17 +822,29 @@ MimeSession::~MimeSession()
         delete(log_state);
 }
 
-uint64_t MimeSession::get_mime_file_id()
+// File verdicts get cached with key (file_id, sip, dip). File_id is hash of filename if available.
+// Otherwise file_id is 0 and verdict will not be cached.
+uint64_t MimeSession::get_file_cache_file_id()
 {
-    if (!current_mime_file_id)
+    if (!current_file_cache_file_id and filename.length() > 0)
+        current_file_cache_file_id = str_to_hash((const uint8_t*)filename.c_str(), filename.length());
+    return current_file_cache_file_id;
+}
+
+// This file id is used to store file contexts on the flow during processing. Each file processed
+// per flow needs a unique (per flow) id, so use hash of the URL (passed from http_inspect) with a
+// file counter
+uint64_t MimeSession::get_multiprocessing_file_id()
+{
+    if (!current_multiprocessing_file_id)
     {
         const int data_len = sizeof(session_base_file_id) + sizeof(file_counter);
         uint8_t data[data_len];
         memcpy(data, (void*)&session_base_file_id, sizeof(session_base_file_id));
         memcpy(data + sizeof(session_base_file_id), (void*)&file_counter, sizeof(file_counter));
-        current_mime_file_id = str_to_hash(data, data_len);
+        current_multiprocessing_file_id = str_to_hash(data, data_len);
     }
-    return current_mime_file_id;
+    return current_multiprocessing_file_id;
 }
 
 void MimeSession::mime_file_process(Packet* p, const uint8_t* data, int data_size,
@@ -848,13 +861,8 @@ void MimeSession::mime_file_process(Packet* p, const uint8_t* data, int data_siz
         {
             const FileDirection dir = upload? FILE_UPLOAD : FILE_DOWNLOAD;
             uint64_t offset = file_process_offset;
-            // MIME has found the end of a file that file processing didn't want - tell file
-            // processing it can clear this file's data
-            if (!continue_inspecting_file)
-                offset = 0;
-            uint64_t file_id = get_mime_file_id();
-            continue_inspecting_file = file_flows->file_process(p, file_id, data, data_size, offset,
-                dir, file_id, position);
+            continue_inspecting_file = file_flows->file_process(p, get_file_cache_file_id(), data,
+                data_size, offset, dir, get_multiprocessing_file_id(), position);
         }
         else
         {

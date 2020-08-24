@@ -173,7 +173,10 @@ FileContext* FileFlows::find_main_file_context(FilePosition pos, FileDirection d
     context->check_policy(flow, dir, file_policy);
 
     if (!index)
+    {
         context->set_file_id(get_new_file_instance());
+        context->set_not_cacheable();
+    }
     else
         context->set_file_id(index);
 
@@ -265,6 +268,8 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
 {
     int64_t file_depth = FileService::get_max_file_depth();
     bool continue_processing;
+    bool cacheable = file_id or offset;
+
     if (!multi_file_processing_id)
         multi_file_processing_id = file_id;
 
@@ -278,6 +283,9 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
     if (!context)
         return false;
 
+    if (!cacheable)
+        context->set_not_cacheable();
+
     set_current_file_context(context);
 
     if (!context->get_processed_bytes())
@@ -286,7 +294,7 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
         context->set_file_id(file_id);
     }
 
-    if ( offset != 0 and
+    if ( offset != 0 and context->is_cacheable() and
         (FileService::get_file_cache()->cached_verdict_lookup(p, context, file_policy) !=
             FILE_VERDICT_UNKNOWN) )
     {

@@ -273,7 +273,11 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
 
         size_t file_index = 0;
 
-        if ((request != nullptr) and (request->get_http_uri() != nullptr))
+        // For downloads file_id for the file cache is the URL since that should be unique per file.
+        // Upload verdicts are not currently cached since we have no unique information.
+        // FIXIT-E For uploads use the filename for the file_id when available.
+        if ((request != nullptr) and (request->get_http_uri() != nullptr)
+            and (dir == FILE_DOWNLOAD))
         {
             file_index = request->get_http_uri()->get_file_proc_hash();
         }

@@ -353,7 +353,7 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
         file_ctx->log_file_event(flow, policy);
         policy->log_file_action(flow, file_ctx, FILE_RESUME_BLOCK);
     }
-    else
+    else if (file_ctx->is_cacheable())
         store_verdict(flow, file_ctx, block_timeout);
 
     return true;

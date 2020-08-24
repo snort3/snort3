@@ -90,8 +90,10 @@ private:
     uint32_t file_counter = 0;
     uint32_t file_process_offset = 0;
     uint64_t session_base_file_id = 0;
-    uint64_t current_mime_file_id = 0;
-    uint64_t get_mime_file_id();
+    uint64_t current_file_cache_file_id = 0;
+    uint64_t current_multiprocessing_file_id = 0;
+    uint64_t get_file_cache_file_id();
+    uint64_t get_multiprocessing_file_id();
     void mime_file_process(Packet* p, const uint8_t* data, int data_size,
         FilePosition position, bool upload);
     void reset_file_data();

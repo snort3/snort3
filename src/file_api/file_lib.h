@@ -135,6 +135,8 @@ public:
     static void print_file_data(FILE* fp, const uint8_t* data, int len, int max_depth);
     void print(std::ostream&);
     char* get_UTF8_fname(size_t* converted_len);
+    void set_not_cacheable() { cacheable = false; }
+    bool is_cacheable() { return cacheable; }
 
 private:
     uint64_t processed_bytes = 0;
@@ -143,6 +145,7 @@ private:
     FileSegments* file_segments;
     FileInspect* inspector;
     FileConfig*  config;
+    bool cacheable = true;
 
     inline void finalize_file_type();
     inline void finish_signature_lookup(Packet*, bool, FilePolicyBase*);
