@@ -107,11 +107,35 @@ public:
         return last_event;
     }
 
-    void set_host_type(HostType rht)
-    { host_type = rht; }
+    std::vector<uint16_t, HostCacheAllocIp<uint16_t>> get_network_protos()
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        return network_protos;
+    }
 
-    uint8_t get_hops() { return hops; }
-    void update_hops(uint8_t h) { hops = h; }
+    std::vector<uint8_t, HostCacheAllocIp<uint8_t>> get_xport_protos()
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        return xport_protos;
+    }
+
+    void set_host_type(HostType rht)
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        host_type = rht;
+    }
+
+    uint8_t get_hops()
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        return hops;
+    }
+
+    void update_hops(uint8_t h)
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        hops = h;
+    }
 
     // Returns true if a new mac entry is added, false otherwise
     bool add_mac(const uint8_t* mac, uint8_t ttl, uint8_t primary);

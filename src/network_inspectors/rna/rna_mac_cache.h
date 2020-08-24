@@ -55,6 +55,12 @@ public:
     bool has_vlan();
     void get_vlan_details(uint8_t& cfi, uint8_t& priority, uint16_t& vid);
 
+    std::vector<uint16_t, HostCacheAllocMac<uint16_t>> get_network_protos()
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_mac_lock);
+        return network_protos;
+    }
+
     uint16_t get_vlan();
 
     uint32_t get_last_seen()
