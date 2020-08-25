@@ -97,31 +97,36 @@ private:
 class HttpBodyCutter : public HttpCutter
 {
 public:
-    HttpBodyCutter(bool detained_inspection_, HttpEnums::CompressId compression_);
+    HttpBodyCutter(HttpEnums::AcceleratedBlocking accelerated_blocking_,
+        HttpEnums::CompressId compression_);
     ~HttpBodyCutter() override;
     void soft_reset() override { octets_seen = 0; packet_detained = false; }
     void detain_ended() { packet_detained = false; }
 
 protected:
-    bool need_detained_inspection(const uint8_t* data, uint32_t length);
+    bool need_accelerated_blocking(const uint8_t* data, uint32_t length);
 
 private:
     bool dangerous(const uint8_t* data, uint32_t length);
 
-    const bool detained_inspection;
+    const HttpEnums::AcceleratedBlocking accelerated_blocking;
     bool packet_detained = false;
     uint8_t partial_match = 0;
     bool detention_required = false;
     HttpEnums::CompressId compression;
     z_stream* compress_stream = nullptr;
+    const uint8_t* match_string;
+    const uint8_t* match_string_upper;
+    uint8_t string_length;
 };
 
 class HttpBodyClCutter : public HttpBodyCutter
 {
 public:
-    HttpBodyClCutter(int64_t expected_length, bool detained_inspection,
+    HttpBodyClCutter(int64_t expected_length,
+        HttpEnums::AcceleratedBlocking accelerated_blocking,
         HttpEnums::CompressId compression) :
-        HttpBodyCutter(detained_inspection, compression), remaining(expected_length)
+        HttpBodyCutter(accelerated_blocking, compression), remaining(expected_length)
         { assert(remaining > 0); }
     HttpEnums::ScanResult cut(const uint8_t*, uint32_t length, HttpInfractions*, HttpEventGen*,
         uint32_t flow_target, bool stretch, bool) override;
@@ -133,8 +138,10 @@ private:
 class HttpBodyOldCutter : public HttpBodyCutter
 {
 public:
-    explicit HttpBodyOldCutter(bool detained_inspection, HttpEnums::CompressId compression) :
-        HttpBodyCutter(detained_inspection, compression) {}
+    HttpBodyOldCutter(HttpEnums::AcceleratedBlocking accelerated_blocking,
+        HttpEnums::CompressId compression) :
+        HttpBodyCutter(accelerated_blocking, compression)
+        {}
     HttpEnums::ScanResult cut(const uint8_t*, uint32_t, HttpInfractions*, HttpEventGen*,
         uint32_t flow_target, bool stretch, bool) override;
 };
@@ -142,8 +149,10 @@ public:
 class HttpBodyChunkCutter : public HttpBodyCutter
 {
 public:
-    explicit HttpBodyChunkCutter(bool detained_inspection, HttpEnums::CompressId compression) :
-        HttpBodyCutter(detained_inspection, compression) {}
+    HttpBodyChunkCutter(HttpEnums::AcceleratedBlocking accelerated_blocking,
+        HttpEnums::CompressId compression) :
+        HttpBodyCutter(accelerated_blocking, compression)
+        {}
     HttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
         HttpInfractions* infractions, HttpEventGen* events, uint32_t flow_target, bool stretch,
         bool) override;
@@ -164,16 +173,17 @@ private:
 class HttpBodyH2Cutter : public HttpBodyCutter
 {
 public:
-    explicit HttpBodyH2Cutter(int64_t expected_length, bool detained_inspection,
+    HttpBodyH2Cutter(int64_t expected_length,
+        HttpEnums::AcceleratedBlocking accelerated_blocking,
         HttpEnums::CompressId compression) :
-        HttpBodyCutter(detained_inspection, compression), expected_body_length(expected_length) {}
+        HttpBodyCutter(accelerated_blocking, compression), expected_body_length(expected_length)
+        {}
     HttpEnums::ScanResult cut(const uint8_t*, uint32_t, HttpInfractions*, HttpEventGen*,
         uint32_t flow_target, bool stretch, bool h2_body_finished) override;
 private:
     int64_t expected_body_length;
     uint32_t total_octets_scanned = 0;
 };
-
 
 #endif
 

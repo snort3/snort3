@@ -109,6 +109,16 @@ traffic it is designed for use with inline mode operation (-Q).
 This feature is off by default. detained_inspection = true will activate
 it.
 
+===== script_detection
+
+Script detection is an alternative to detained inspection. When
+http_inspect detects the end of a script it immediately forwards the
+available part of the message body for early detection. This enables
+malicious Javascripts to be detected more quickly but consumes somewhat
+more of the sensor's resources.
+
+This feature is off by default. script_detection = true will activate it.
+
 ===== gzip
 
 http_inspect by default decompresses deflate and gzip message bodies

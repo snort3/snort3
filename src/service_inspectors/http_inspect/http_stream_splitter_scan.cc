@@ -75,20 +75,20 @@ HttpCutter* HttpStreamSplitter::get_cutter(SectionType type,
     case SEC_BODY_CL:
         return (HttpCutter*)new HttpBodyClCutter(
             session_data->data_length[source_id],
-            session_data->detained_inspection[source_id],
+            session_data->accelerated_blocking[source_id],
             session_data->compression[source_id]);
     case SEC_BODY_CHUNK:
         return (HttpCutter*)new HttpBodyChunkCutter(
-            session_data->detained_inspection[source_id],
+            session_data->accelerated_blocking[source_id],
             session_data->compression[source_id]);
     case SEC_BODY_OLD:
         return (HttpCutter*)new HttpBodyOldCutter(
-            session_data->detained_inspection[source_id],
+            session_data->accelerated_blocking[source_id],
             session_data->compression[source_id]);
     case SEC_BODY_H2:
         return (HttpCutter*)new HttpBodyH2Cutter(
             session_data->data_length[source_id],
-            session_data->detained_inspection[source_id],
+            AB_NONE,
             session_data->compression[source_id]);
     default:
         assert(false);
@@ -266,7 +266,7 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
     switch (cut_result)
     {
     case SCAN_NOT_FOUND:
-    case SCAN_NOT_FOUND_DETAIN:
+    case SCAN_NOT_FOUND_ACCELERATE:
         if (cutter->get_octets_seen() == MAX_OCTETS)
         {
             *session_data->get_infractions(source_id) += INF_ENDLESS_HEADER;
@@ -279,8 +279,28 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
             cutter = nullptr;
             return status_value(StreamSplitter::ABORT);
         }
-        if (cut_result == SCAN_NOT_FOUND_DETAIN)
-            detain_packet(pkt);
+
+        if (cut_result == SCAN_NOT_FOUND_ACCELERATE)
+        {
+            if (session_data->accelerated_blocking[source_id] == AB_DETAIN)
+                detain_packet(pkt);
+            else
+            {
+                assert(session_data->accelerated_blocking[source_id] == AB_INSPECT);
+                HttpModule::increment_peg_counts(PEG_SCRIPT_DETECTION);
+                init_partial_flush(flow);
+#ifdef REG_TEST
+                if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
+                {
+                    HttpTestManager::get_test_input_source()->flush(length);
+                }
+                else
+#endif
+                    *flush_offset = length;
+                return status_value(StreamSplitter::FLUSH);
+            }
+        }
+
         // Wait patiently for more data
         return status_value(StreamSplitter::SEARCH);
     case SCAN_ABORT:

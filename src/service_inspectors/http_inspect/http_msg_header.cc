@@ -384,8 +384,15 @@ void HttpMsgHeader::prepare_body()
     setup_utf_decoding();
     setup_file_decompression();
     update_depth();
-    session_data->detained_inspection[source_id] =
-        params->detained_inspection && (source_id == SRC_SERVER);
+
+    if (source_id == SRC_SERVER)
+    {
+        if (params->script_detection)
+            session_data->accelerated_blocking[source_id] = AB_INSPECT;
+        else if (params->detained_inspection)
+            session_data->accelerated_blocking[source_id] = AB_DETAIN;
+    }
+
     if (source_id == SRC_CLIENT)
     {
         HttpModule::increment_peg_counts(PEG_REQUEST_BODY);

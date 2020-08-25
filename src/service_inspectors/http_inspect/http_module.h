@@ -43,6 +43,7 @@ public:
     bool decompress_swf = false;
     bool decompress_zip = false;
     bool detained_inspection = false;
+    bool script_detection = false;
 
     struct JsNormParam
     {

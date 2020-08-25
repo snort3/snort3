@@ -72,7 +72,7 @@ void HttpMsgBody::analyze()
 
         uint32_t& partial_detect_length = session_data->partial_detect_length[source_id];
         uint8_t*& partial_detect_buffer = session_data->partial_detect_buffer[source_id];
-        const int32_t total_length = js_norm_body.length() + partial_detect_length;
+        const int32_t total_length = partial_detect_length + js_norm_body.length();
         const int32_t detect_length =
             (total_length <= session_data->detect_depth_remaining[source_id]) ?
             total_length : session_data->detect_depth_remaining[source_id];
@@ -83,7 +83,7 @@ void HttpMsgBody::analyze()
             memcpy(detect_buffer, partial_detect_buffer, partial_detect_length);
             memcpy(detect_buffer + partial_detect_length, js_norm_body.start(),
                 js_norm_body.length());
-            detect_data.set(total_length, detect_buffer, true);
+            detect_data.set(detect_length, detect_buffer, true);
         }
         else
         {

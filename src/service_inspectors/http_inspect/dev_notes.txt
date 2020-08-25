@@ -31,6 +31,13 @@ message section. Only reassemble() knows that something different is happening. 
 delivers message data for reassembly once. reassemble() stores data received for a partial
 inspection and prepends it to the buffer for the next inspection.
 
+Script detection is a different feature developed to solve the same problem. The scanning mechanism
+developed for detained inspection is repurposed to look for the end-of-script tag "</script>". When
+one is found an immediate partial inspection is performed. This avoids the adverse network
+consequences of detaining packets at the performance and memory cost of doing a much larger number
+of partial inspections. Code features that support both approaches are referred to as accelerated
+blocking.
+
 HttpFlowData is a data class representing all HI information relating to a flow. It serves as
 persistent memory between invocations of HI by the framework. It also glues together the inspector,
 the client-to-server splitter, and the server-to-client splitter which pass information through the

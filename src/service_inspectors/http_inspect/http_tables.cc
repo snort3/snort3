@@ -420,6 +420,7 @@ const PegInfo HttpModule::peg_names[PEG_COUNT_MAX+1] =
     { CountType::NOW, "concurrent_sessions", "total concurrent http sessions" },
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent http sessions" },
     { CountType::SUM, "detains_requested", "packet hold requests for detained inspection" },
+    { CountType::SUM, "script_detections", "early inspections of scripts in HTTP responses" },
     { CountType::SUM, "partial_inspections", "pre-inspections for detained inspection" },
     { CountType::SUM, "excess_parameters", "repeat parameters exceeding max" },
     { CountType::SUM, "parameters", "HTTP parameters inspected" },

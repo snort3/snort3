@@ -58,6 +58,9 @@ const Parameter HttpModule::http_params[] =
     { "detained_inspection", Parameter::PT_BOOL, nullptr, "false",
       "store-and-forward as necessary to effectively block alerting JavaScript" },
 
+    { "script_detection", Parameter::PT_BOOL, nullptr, "false",
+      "inspect JavaScript immediately upon script end" },
+
     { "normalize_javascript", Parameter::PT_BOOL, nullptr, "false",
       "normalize JavaScript in response bodies" },
 
@@ -175,6 +178,10 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     {
         params->detained_inspection = val.get_bool();
     }
+    else if (val.is("script_detection"))
+    {
+        params->script_detection = val.get_bool();
+    }
     else if (val.is("normalize_javascript"))
     {
         params->js_norm_param.normalize_javascript = val.get_bool();
@@ -283,6 +290,12 @@ bool HttpModule::end(const char*, int, SnortConfig*)
         ParseWarning(WARN_CONF, "Meaningless to do bare byte when not doing UTF-8");
         params->uri_param.utf8_bare_byte = false;
     }
+
+    if (params->detained_inspection && params->script_detection)
+    {
+        ParseError("Cannot use detained inspection and script detection together.");
+    }
+
     if (params->uri_param.iis_unicode)
     {
         params->uri_param.unicode_map = new uint8_t[65536];
