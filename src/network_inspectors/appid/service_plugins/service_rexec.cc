@@ -123,8 +123,6 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
     uint32_t port = 0;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
-    // FIXIT-M - Avoid thread locals
-    static THREAD_LOCAL SnortProtocolId rexec_snort_protocol_id = UNKNOWN_PROTOCOL_ID;
 
     ServiceREXECData* rd = (ServiceREXECData*)data_get(args.asd);
     if (!rd)
@@ -141,9 +139,6 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
     switch (rd->state)
     {
     case REXEC_STATE_PORT:
-        if(rexec_snort_protocol_id == UNKNOWN_PROTOCOL_ID)
-            rexec_snort_protocol_id = args.pkt->context->conf->proto_ref->find("rexec");
-
         if (args.dir != APP_ID_FROM_INITIATOR)
             goto bail;
         if (size > REXEC_MAX_PORT_PACKET)
@@ -167,8 +162,10 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
 
             dip = args.pkt->ptrs.ip_api.get_dst();
             sip = args.pkt->ptrs.ip_api.get_src();
-            AppIdSession* pf = AppIdSession::create_future_session(args.pkt, dip, 0, sip, (uint16_t)port,
-                IpProtocol::TCP, rexec_snort_protocol_id);
+            AppIdSession* pf = AppIdSession::create_future_session(args.pkt,
+                dip, 0, sip,(uint16_t)port, IpProtocol::TCP,
+                args.asd.config.snort_proto_ids[PROTO_INDEX_REXEC]);
+
             if (pf)
             {
                 ServiceREXECData* tmp_rd = (ServiceREXECData*)snort_calloc(

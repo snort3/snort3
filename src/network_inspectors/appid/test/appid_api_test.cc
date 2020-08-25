@@ -352,7 +352,9 @@ TEST(appid_api, is_inspection_needed)
 {
     DummyInspector inspector;
     inspector.set_service(dummy_http2_protocol_id);
-    dummy_appid_inspector.get_ctxt().config.snortId_for_http2 = dummy_http2_protocol_id;
+    dummy_appid_inspector.get_ctxt().config.snort_proto_ids[PROTO_INDEX_HTTP2] =
+        dummy_http2_protocol_id;
+
     CHECK_TRUE(appid_api.is_inspection_needed(inspector));
 
     inspector.set_service(dummy_http2_protocol_id + 1);

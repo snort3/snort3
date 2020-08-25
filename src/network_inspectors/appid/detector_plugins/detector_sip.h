@@ -63,7 +63,7 @@ public:
 
 private:
     void createRtpFlow(AppIdSession&, const snort::Packet*, const snort::SfIp* cliIp,
-        uint16_t cliPort, const snort::SfIp* srvIp, uint16_t srvPort, IpProtocol, int16_t app_id);
+        uint16_t cliPort, const snort::SfIp* srvIp, uint16_t srvPort, IpProtocol);
 };
 
 class SipEventHandler : public snort::DataHandler

@@ -395,8 +395,6 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
     const char* version_str = nullptr;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
-    //FIXIT-M - Avoid thread locals
-    static THREAD_LOCAL SnortProtocolId snmp_snort_protocol_id = UNKNOWN_PROTOCOL_ID;
 
     if (!size)
         goto inprocess;
@@ -465,13 +463,12 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
         sd->state = SNMP_STATE_RESPONSE;
 
         /*adding expected connection in case the server doesn't send from 161*/
-        if(snmp_snort_protocol_id == UNKNOWN_PROTOCOL_ID)
-            snmp_snort_protocol_id = args.pkt->context->conf->proto_ref->find("snmp");
-
         const SfIp* dip = args.pkt->ptrs.ip_api.get_dst();
         const SfIp* sip = args.pkt->ptrs.ip_api.get_src();
-        AppIdSession* pf = AppIdSession::create_future_session(args.pkt, dip, 0, sip,
-            args.pkt->ptrs.sp, args.asd.protocol, snmp_snort_protocol_id);
+        AppIdSession* pf = AppIdSession::create_future_session(args.pkt,
+            dip, 0, sip, args.pkt->ptrs.sp, args.asd.protocol,
+            args.asd.config.snort_proto_ids[PROTO_INDEX_SNMP]);
+
         if (pf)
         {
             tmp_sd = (ServiceSNMPData*)snort_calloc(sizeof(ServiceSNMPData));

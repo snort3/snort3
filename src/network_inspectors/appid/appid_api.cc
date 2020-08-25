@@ -348,7 +348,8 @@ bool AppIdApi::is_inspection_needed(const Inspector& inspector) const
         true);
 
     if (appid_inspector and
-        (inspector.get_service() == appid_inspector->get_ctxt().config.snortId_for_http2))
+        (inspector.get_service() ==
+            appid_inspector->get_ctxt().config.snort_proto_ids[PROTO_INDEX_HTTP2]))
         return true;
 
     return false;

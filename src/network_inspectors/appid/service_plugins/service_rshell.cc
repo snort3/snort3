@@ -118,8 +118,6 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
     uint32_t port = 0;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
-    //FIXIT-M - Avoid thread locals
-    static THREAD_LOCAL SnortProtocolId rsh_error_snort_protocol_id = UNKNOWN_PROTOCOL_ID;
 
     ServiceRSHELLData* rd = (ServiceRSHELLData*)data_get(args.asd);
     if (!rd)
@@ -155,13 +153,12 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto bail;
         if (port)
         {
-            if(rsh_error_snort_protocol_id == UNKNOWN_PROTOCOL_ID)
-                rsh_error_snort_protocol_id = args.pkt->context->conf->proto_ref->find("rsh-error");
-
             const SfIp* dip = args.pkt->ptrs.ip_api.get_dst();
             const SfIp* sip = args.pkt->ptrs.ip_api.get_src();
-            AppIdSession* pf = AppIdSession::create_future_session(args.pkt, dip, 0, sip,
-                (uint16_t)port, IpProtocol::TCP, rsh_error_snort_protocol_id);
+            AppIdSession* pf = AppIdSession::create_future_session(args.pkt,
+                dip, 0, sip, (uint16_t)port, IpProtocol::TCP,
+                args.asd.config.snort_proto_ids[PROTO_INDEX_RSH_ERROR]);
+
             if (pf)
             {
                 ServiceRSHELLData* tmp_rd = (ServiceRSHELLData*)snort_calloc(

@@ -402,19 +402,15 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
                     pmr = (const ServiceRPCPortmapReply*)data;
                     if (pmr->port)
                     {
-                        // FIXIT-M - Avoid thread locals
-                        static THREAD_LOCAL SnortProtocolId sunrpc_snort_protocol_id = UNKNOWN_PROTOCOL_ID;
-
-                        if(sunrpc_snort_protocol_id == UNKNOWN_PROTOCOL_ID)
-                            sunrpc_snort_protocol_id = pkt->context->conf->proto_ref->find("sunrpc");
-
                         const SfIp* dip = pkt->ptrs.ip_api.get_dst();
                         const SfIp* sip = pkt->ptrs.ip_api.get_src();
                         tmp = ntohl(pmr->port);
 
                         AppIdSession* pf = AppIdSession::create_future_session(
                             pkt, dip, 0, sip, (uint16_t)tmp,
-                            (IpProtocol)ntohl((uint32_t)rd->proto), sunrpc_snort_protocol_id);
+                            (IpProtocol)ntohl((uint32_t)rd->proto),
+                            asd.config.snort_proto_ids[PROTO_INDEX_SUNRPC]);
+
                         if (pf)
                         {
                             pf->add_flow_data_id((uint16_t)tmp, this);

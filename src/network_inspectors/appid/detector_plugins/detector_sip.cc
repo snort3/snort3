@@ -177,14 +177,11 @@ struct ServiceSIPData
 };
 
 void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, const SfIp* cliIp,
-    uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol protocol, int16_t app_id)
+    uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol protocol)
 {
-    // FIXIT-E: Passing app_id instead of SnortProtocolId to
-    // create_future_session is incorrect. We need to look up
-    // snort_protocol_id.
-
     AppIdSession* fp = AppIdSession::create_future_session(
-        pkt, cliIp, cliPort, srvIp, srvPort, protocol, app_id);
+        pkt, cliIp, cliPort, srvIp, srvPort, protocol,
+        asd.config.snort_proto_ids[PROTO_INDEX_SIP]);
 
     if ( fp )
     {
@@ -203,7 +200,8 @@ void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, con
     // create an RTCP flow as well
 
     AppIdSession* fp2 = AppIdSession::create_future_session(
-        pkt, cliIp, cliPort + 1, srvIp, srvPort + 1, protocol, app_id);
+        pkt, cliIp, cliPort + 1, srvIp, srvPort + 1, protocol,
+        asd.config.snort_proto_ids[PROTO_INDEX_SIP]);
 
     if ( fp2 )
     {
@@ -238,9 +236,9 @@ void SipServiceDetector::addFutureRtpFlows(SipEvent& event, AppIdSession& asd)
     while ( media_a && media_b )
     {
         createRtpFlow(asd, event.get_packet(), media_a->get_address(), media_a->get_port(),
-            media_b->get_address(), media_b->get_port(), IpProtocol::UDP, APP_ID_RTP);
+            media_b->get_address(), media_b->get_port(), IpProtocol::UDP);
         createRtpFlow(asd, event.get_packet(), media_b->get_address(), media_b->get_port(),
-            media_a->get_address(), media_b->get_port(), IpProtocol::UDP, APP_ID_RTP);
+            media_a->get_address(), media_b->get_port(), IpProtocol::UDP);
 
         media_a = session_a->next_media_data();
         media_b = session_b->next_media_data();

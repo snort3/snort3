@@ -133,8 +133,6 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
     AppIdSession* pf = nullptr;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
-    //FIXIT-M - Avoid thread locals
-    static THREAD_LOCAL SnortProtocolId tftp_snort_protocol_id = UNKNOWN_PROTOCOL_ID;
 
     if (!size)
         goto inprocess;
@@ -184,15 +182,15 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
         if (strcasecmp((const char*)data, "netascii") && strcasecmp((const char*)data, "octet"))
             goto bail;
 
-        if(tftp_snort_protocol_id == UNKNOWN_PROTOCOL_ID)
-            tftp_snort_protocol_id = args.pkt->context->conf->proto_ref->find("tftp");
 
         tmp_td = (ServiceTFTPData*)snort_calloc(sizeof(ServiceTFTPData));
         tmp_td->state = TFTP_STATE_TRANSFER;
         dip = args.pkt->ptrs.ip_api.get_dst();
         sip = args.pkt->ptrs.ip_api.get_src();
-        pf = AppIdSession::create_future_session(args.pkt, dip, 0, sip,
-            args.pkt->ptrs.sp, args.asd.protocol, tftp_snort_protocol_id);
+        pf = AppIdSession::create_future_session(args.pkt,
+            dip, 0, sip, args.pkt->ptrs.sp, args.asd.protocol,
+            args.asd.config.snort_proto_ids[PROTO_INDEX_TFTP]);
+
         if (pf)
         {
             data_add(*pf, tmp_td, &snort_free);

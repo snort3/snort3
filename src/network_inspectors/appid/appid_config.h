@@ -48,6 +48,21 @@
 #define MIN_MAX_PKTS_BEFORE_SERVICE_FAIL 5
 #define MIN_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES 15
 
+enum SnortProtoIdIndex
+{
+    PROTO_INDEX_UNSYNCHRONIZED = 0,
+    PROTO_INDEX_FTP_DATA,
+    PROTO_INDEX_HTTP2,
+    PROTO_INDEX_REXEC,
+    PROTO_INDEX_RSH_ERROR,
+    PROTO_INDEX_SNMP,
+    PROTO_INDEX_SUNRPC,
+    PROTO_INDEX_TFTP,
+    PROTO_INDEX_SIP,
+
+    PROTO_INDEX_MAX
+};
+
 class PatternClientDetector;
 class PatternServiceDetector;
 
@@ -75,9 +90,7 @@ public:
     size_t memcap = 0;
     bool list_odp_detectors = false;
     bool log_all_sessions = false;
-    SnortProtocolId snortId_for_unsynchronized;
-    SnortProtocolId snortId_for_ftp_data;
-    SnortProtocolId snortId_for_http2;
+    SnortProtocolId snort_proto_ids[PROTO_INDEX_MAX];
     void show() const;
 };
 

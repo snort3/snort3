@@ -88,7 +88,7 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto,
     AppIdSession* asd = new AppIdSession(proto, ip, port, *inspector, odp_context);
     asd->flow = p->flow;
     asd->stats.first_packet_second = p->pkth->ts.tv_sec;
-    asd->snort_protocol_id = asd->config.snortId_for_unsynchronized;
+    asd->snort_protocol_id = asd->config.snort_proto_ids[PROTO_INDEX_UNSYNCHRONIZED];
     p->flow->set_flow_data(asd);
     return asd;
 }

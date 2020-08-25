@@ -52,16 +52,16 @@ OdpContext* AppIdContext::odp_ctxt = nullptr;
 
 static void map_app_names_to_snort_ids(SnortConfig* sc, AppIdConfig& config)
 {
-    config.snortId_for_unsynchronized = sc->proto_ref->add("unsynchronized");
-    config.snortId_for_ftp_data = sc->proto_ref->add("ftp-data");
-    config.snortId_for_http2    = sc->proto_ref->add("http2");
-
     // Have to create SnortProtocolIds during configuration initialization.
-    sc->proto_ref->add("rexec");
-    sc->proto_ref->add("rsh-error");
-    sc->proto_ref->add("snmp");
-    sc->proto_ref->add("sunrpc");
-    sc->proto_ref->add("tftp");
+    config.snort_proto_ids[PROTO_INDEX_UNSYNCHRONIZED] = sc->proto_ref->add("unsynchronized");
+    config.snort_proto_ids[PROTO_INDEX_FTP_DATA] = sc->proto_ref->add("ftp-data");
+    config.snort_proto_ids[PROTO_INDEX_HTTP2] = sc->proto_ref->add("http2");
+    config.snort_proto_ids[PROTO_INDEX_REXEC] = sc->proto_ref->add("rexec");
+    config.snort_proto_ids[PROTO_INDEX_RSH_ERROR] = sc->proto_ref->add("rsh-error");
+    config.snort_proto_ids[PROTO_INDEX_SNMP] = sc->proto_ref->add("snmp");
+    config.snort_proto_ids[PROTO_INDEX_SUNRPC] = sc->proto_ref->add("sunrpc");
+    config.snort_proto_ids[PROTO_INDEX_TFTP] = sc->proto_ref->add("tftp");
+    config.snort_proto_ids[PROTO_INDEX_SIP] = sc->proto_ref->add("sip");
 }
 
 AppIdConfig::~AppIdConfig()
