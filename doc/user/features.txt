@@ -34,7 +34,7 @@ include::byte_options.txt[]
 
 === Consolidated Config
 
-include::consolidated_config.txt[]
+include::dump_config.txt[]
 
 === DCE Inspectors
 

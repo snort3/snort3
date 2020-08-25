@@ -1,0 +1,295 @@
+Config dump mode generates a consolidated dump of the config passed to Snort.
+This output consists of the configured values as well as the module defaults
+for the values that aren't configured.
+
+In the dump mode Snort validates the config (similar to option -T)
+and suppresses unrelated messages going to stdout
+(but not stderr one like ParseWarnings).
+
+The dump mode is activated by the following options:
+--dump-config-text, --dump-config=all, --dump-config=top.
+They are described in detail below.
+
+The simple configuration is used in examples.
+The output contains applied configurations (defaults and configured).
+To simplify the output we show a brief list of default options.
+
+snort.lua
+
+    stream =
+    {
+        max_flows = 2
+    }
+
+    stream_tcp =
+    {
+        show_rebuilt_packets = true
+    }
+
+    binder =
+    {
+        { when = { nets = '10.1.2.0/24' }, use = { inspection_policy = 'http.lua' } },
+        { when = { nets = '192.168.2.0/24' }, use = { inspection_policy = 'sip.lua' } },
+    }
+
+http.lua
+
+    wizard =
+    {
+        spells =
+        {
+            { service = 'http', proto = 'tcp', client_first = true, to_server = { 'GET' }, to_client = { 'HTTP/' } },
+        }
+    }
+
+sip.lua
+
+    wizard =
+    {
+        spells =
+        {
+            { service = 'sip', to_server = { 'INVITE' } },
+        }
+    }
+
+==== Text Format
+
+The --dump-config-text option verifies the configuration and dumps it to stdout in text format.
+The output contains a config of the main policy and all other included sub-policies.
+
+Example:
+    snort -c snort.lua --dump-config-text
+
+    consolidated config for snort.lua
+    alerts.order="pass reset block drop alert log"
+    alerts.rate_filter_memcap=1048576
+    binder[0].when.ips_policy_id=0
+    binder[0].when.role="any"
+    binder[0].when.nets="10.1.2.0/24"
+    binder[0].use.action="inspect"
+    binder[0].use.inspection_policy="http.lua"
+    binder[1].when.ips_policy_id=0
+    binder[1].when.role="any"
+    binder[1].when.nets="192.168.2.0/24"
+    binder[1].use.action="inspect"
+    binder[1].use.inspection_policy="sip.lua"
+    output.obfuscate=false
+    output.wide_hex_dump=true
+    packets.address_space_agnostic=false
+    packets.limit=0
+    search_engine.split_any_any=true
+    search_engine.queue_limit=128
+    stream.file_cache.idle_timeout=180
+    stream.file_cache.cap_weight=32
+    stream.max_flows=2
+    stream_tcp.small_segments.maximum_size=0
+    stream_tcp.session_timeout=30
+    stream_tcp.track_only=false
+    stream_tcp.show_rebuilt_packets=true
+    consolidated config for http.lua
+    wizard.spells[0].proto="tcp"
+    wizard.spells[0].client_first=true
+    wizard.spells[0].service="http"
+    wizard.spells[0].to_client[0].spell="HTTP/"
+    wizard.spells[0].to_server[0].spell="GET"
+    consolidated config for sip.lua
+    wizard.spells[0].proto="tcp"
+    wizard.spells[0].client_first=true
+    wizard.spells[0].service="sip"
+    wizard.spells[0].to_server[0].spell="INVITE"
+
+For lists, the index next to the option name designates an element parsing order.
+
+==== JSON Format
+
+The --dump-config=all command-line option verifies the configuration and dumps it to
+stdout in JSON format. The output contains a config of the main policy and all other
+included sub-policies. Snort dumps output in a one-line format.
+
+There is 3rd party tool 'jq' for converting to a pretty printed format.
+
+Example:
+    snort -c snort.lua --dump-config=all | jq '.'
+
+    [
+        {
+            "filename": "snort.lua",
+            "config": {
+            "alerts": {
+                "order": "pass reset block drop alert log",
+                "rate_filter_memcap": 1048576
+            },
+            "binder": [
+                {
+                "when": {
+                    "ips_policy_id": 0,
+                    "role": "any",
+                    "nets": "10.1.2.0/24"
+                },
+                "use": {
+                    "action": "inspect",
+                    "inspection_policy": "http.lua"
+                }
+                },
+                {
+                "when": {
+                    "ips_policy_id": 0,
+                    "role": "any",
+                    "nets": "192.168.2.0/24"
+                },
+                "use": {
+                    "action": "inspect",
+                    "inspection_policy": "sip.lua"
+                }
+                }
+            ],
+            "output": {
+                "obfuscate": false,
+                "wide_hex_dump": true
+            },
+            "packets": {
+                "address_space_agnostic": false,
+                "limit": 0
+            },
+            "process": {
+                "daemon": false,
+                "dirty_pig": false,
+                "utc": false
+            },
+            "search_engine": {
+                "split_any_any": true,
+                "queue_limit": 128
+            },
+            "stream": {
+                "file_cache": {
+                "idle_timeout": 180,
+                "cap_weight": 32
+                },
+                "max_flows": 2
+            },
+            "stream_tcp": {
+                "small_segments": {
+                    "maximum_size": 0
+                },
+                "session_timeout": 30,
+                "track_only": false,
+                "show_rebuilt_packets": true
+            }
+            }
+        },
+        {
+            "filename": "http.lua",
+            "config": {
+            "wizard": {
+                "spells": [
+                {
+                    "proto": "tcp",
+                    "client_first": true,
+                    "service": "http",
+                    "to_client": [
+                    {
+                        "spell": "HTTP/"
+                    }
+                    ],
+                    "to_server": [
+                    {
+                        "spell": "GET"
+                    }
+                    ]
+                }
+                ]
+            }
+            }
+        },
+        {
+            "filename": "sip.lua",
+            "config": {
+            "wizard": {
+                "spells": [
+                {
+                    "proto": "tcp",
+                    "client_first": true,
+                    "service": "sip",
+                    "to_server": [
+                    {
+                        "spell": "INVITE"
+                    }
+                    ]
+                }
+                ]
+            }
+            }
+        }
+    ]
+
+The --dump-config=top command-line option is similar to --dump-config=all,
+except it produces dump for the main policy only.
+It verifies the configuration and dumps the main policy configuration to
+stdout in JSON format.
+
+Example:
+    snort -c snort.lua --dump-config=top | jq '.'
+
+    {
+        "alerts": {
+            "order": "pass reset block drop alert log",
+            "rate_filter_memcap": 1048576,
+        },
+        "binder": [
+            {
+                "when": {
+                    "ips_policy_id": 0,
+                    "role": "any",
+                    "nets": "10.1.2.0/24"
+                },
+                "use": {
+                    "action": "inspect",
+                    "inspection_policy": "http.lua"
+                }
+            },
+            {
+                "when": {
+                    "ips_policy_id": 0,
+                    "role": "any",
+                    "nets": "192.168.2.0/24"
+                },
+                "use": {
+                    "action": "inspect",
+                    "inspection_policy": "sip.lua"
+                }
+            }
+        ],
+        "output": {
+            "obfuscate": false,
+            "wide_hex_dump": true
+        },
+        "packets": {
+            "address_space_agnostic": false,
+            "limit": 0,
+        },
+        "process": {
+            "daemon": false,
+            "dirty_pig": false,
+            "utc": false
+        },
+        "search_engine": {
+            "split_any_any": true,
+            "queue_limit": 128
+        },
+        "stream": {
+            "file_cache": {
+                "idle_timeout": 180,
+                "cap_weight": 32
+            }
+            "max_flows": 2
+        },
+        "stream_tcp": {
+            "small_segments": {
+                "count": 0,
+                "maximum_size": 0
+            },
+            "session_timeout": 30,
+            "track_only": false,
+            "show_rebuilt_packets": true
+        },
+    }
