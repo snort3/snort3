@@ -129,6 +129,7 @@ enum DumpConfigType
 {
     DUMP_CONFIG_NONE = 0,
     DUMP_CONFIG_JSON_ALL,
+    DUMP_CONFIG_JSON_TOP,
     DUMP_CONFIG_TEXT
 };
 

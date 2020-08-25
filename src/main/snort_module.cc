@@ -347,7 +347,7 @@ static const Parameter s_params[] =
     { "--dump-builtin-rules", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output stub rules for selected modules" },
 
-    { "--dump-config", Parameter::PT_SELECT, "all", nullptr,
+    { "--dump-config", Parameter::PT_SELECT, "all | top", nullptr,
       "dump config in json format" },
 
     { "--dump-config-text", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -880,6 +880,8 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->run_flags |= RUN_FLAG__TEST;
         if ( v.get_as_string() == "all" )
             sc->dump_config_type = DUMP_CONFIG_JSON_ALL;
+        else if ( v.get_as_string() == "top" )
+            sc->dump_config_type = DUMP_CONFIG_JSON_TOP;
     }
 
     else if ( v.is("--dump-config-text") )

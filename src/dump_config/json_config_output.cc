@@ -27,49 +27,7 @@
 
 using namespace snort;
 
-JsonAllConfigOutput::JsonAllConfigOutput() :
-    ConfigOutput(), json(std::cout)
-{ json.open_array(); }
-
-JsonAllConfigOutput::~JsonAllConfigOutput()
-{ json.close_array(); }
-
-void JsonAllConfigOutput::dump(const ConfigData& config_data)
-{
-    json.open();
-    json.put("filename", config_data.file_name);
-    json.open("config");
-
-    for ( const auto config_tree: config_data.config_trees )
-        dump_modules(config_tree);
-
-    json.close();
-    json.close();
-}
-
-void JsonAllConfigOutput::dump_modules(const BaseConfigNode* node)
-{
-    Parameter::Type type = node->get_type();
-    if ( type == Parameter::PT_LIST )
-        json.open_array(node->get_name().c_str());
-    else if ( type == Parameter::PT_TABLE )
-    {
-        std::string name = node->get_name();
-        name.empty() ? json.open() : json.open(name.c_str());
-    }
-    else
-        dump_value(node);
-
-    for ( const auto n : node->get_children() )
-        dump_modules(n);
-
-    if ( type == Parameter::PT_LIST )
-        json.close_array();
-    else if ( type == Parameter::PT_TABLE )
-        json.close();
-}
-
-void JsonAllConfigOutput::dump_value(const BaseConfigNode* node)
+static void dump_value(JsonStream& json, const BaseConfigNode* node)
 {
     const Value* value = node->get_value();
     if ( !value )
@@ -102,3 +60,54 @@ void JsonAllConfigOutput::dump_value(const BaseConfigNode* node)
     }
 }
 
+static void dump_modules(JsonStream& json, const BaseConfigNode* node)
+{
+    Parameter::Type type = node->get_type();
+    if ( type == Parameter::PT_LIST )
+        json.open_array(node->get_name().c_str());
+    else if ( type == Parameter::PT_TABLE )
+    {
+        std::string name = node->get_name();
+        name.empty() ? json.open() : json.open(name.c_str());
+    }
+    else
+        dump_value(json, node);
+
+    for ( const auto n : node->get_children() )
+        dump_modules(json, n);
+
+    if ( type == Parameter::PT_LIST )
+        json.close_array();
+    else if ( type == Parameter::PT_TABLE )
+        json.close();
+}
+
+JsonAllConfigOutput::JsonAllConfigOutput() :
+    ConfigOutput(), json(std::cout)
+{ json.open_array(); }
+
+JsonAllConfigOutput::~JsonAllConfigOutput()
+{ json.close_array(); }
+
+void JsonAllConfigOutput::dump(const ConfigData& config_data)
+{
+    json.open();
+    json.put("filename", config_data.file_name);
+    json.open("config");
+
+    for ( const auto config_tree: config_data.config_trees )
+        dump_modules(json, config_tree);
+
+    json.close();
+    json.close();
+}
+
+void JsonTopConfigOutput::dump(const ConfigData& config_data)
+{
+    json.open();
+
+    for ( const auto config_tree: config_data.config_trees )
+        dump_modules(json, config_tree);
+
+    json.close();
+}

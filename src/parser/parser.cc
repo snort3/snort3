@@ -361,7 +361,7 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname, boo
 
     bool parse_file_failed = false;
     auto output = SnortConfig::get_conf()->create_config_output();
-    Shell::set_config_output(output);
+    bool is_top = SnortConfig::get_conf()->dump_config_type == DUMP_CONFIG_JSON_TOP;
     for ( unsigned i = 0; true; i++ )
     {
         sh = sc->policy_map->get_shell(i);
@@ -369,6 +369,8 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname, boo
         if ( !sh )
             break;
 
+        auto shell_output = ( i != 0 && is_top ) ? nullptr : output;
+        Shell::set_config_output(shell_output);
         set_policies(sc, sh);
 
         if (!parse_file(sc, sh, is_fatal, (i == 0)))

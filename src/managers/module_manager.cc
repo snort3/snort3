@@ -455,8 +455,7 @@ static bool set_var(const char* fqn, Value& v)
 
 static bool set_param(Module* mod, const char* fqn, Value& val)
 {
-    if ( s_config->dump_config_mode() )
-        Shell::set_config_value(fqn, val);
+    Shell::set_config_value(fqn, val);
 
     if ( !mod->verified_set(fqn, val, s_config) )
     {
@@ -595,8 +594,7 @@ static bool begin(Module* m, const Parameter* p, const char* s, int idx, int dep
             {
                 const Parameter* table_item_params = reinterpret_cast<const Parameter*>(p->range);
 
-                if ( s_config->dump_config_mode() )
-                    Shell::add_config_child_node(get_sub_table(fqn), p->type);
+                Shell::add_config_child_node(get_sub_table(fqn), p->type);
 
                 if ( !begin(m, table_item_params, fqn.c_str(), idx, depth+1) )
                     return false;
@@ -634,8 +632,9 @@ static bool begin(Module* m, const Parameter* p, const char* s, int idx, int dep
         }
         ++p;
     }
-    if ( s_config->dump_config_mode() )
-        Shell::update_current_config_node();
+
+    Shell::update_current_config_node();
+
     return true;
 }
 
@@ -817,8 +816,7 @@ SO_PUBLIC void close_table(const char* s, int idx)
         s_type.clear();
     }
 
-    if ( s_config->dump_config_mode() )
-        Shell::config_close_table();
+    Shell::config_close_table();
 }
 
 SO_PUBLIC bool set_bool(const char* fqn, bool b)

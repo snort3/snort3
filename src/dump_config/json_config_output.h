@@ -34,12 +34,20 @@ public:
 private:
     void dump(const ConfigData&) override;
 
-    void dump_modules(const BaseConfigNode* node);
-    void dump_value(const BaseConfigNode* node);
+private:
+    JsonStream json;
+};
+
+class JsonTopConfigOutput : public ConfigOutput
+{
+public:
+    JsonTopConfigOutput() : ConfigOutput(), json(std::cout) {}
+
+private:
+    void dump(const ConfigData&) override;
 
 private:
     JsonStream json;
 };
 
 #endif // JSON_CONFIG_OUTPUT_H
-

@@ -957,6 +957,9 @@ ConfigOutput* SnortConfig::create_config_output() const
     case DUMP_CONFIG_JSON_ALL:
         output = new JsonAllConfigOutput();
         break;
+    case DUMP_CONFIG_JSON_TOP:
+        output = new JsonTopConfigOutput();
+        break;
     case DUMP_CONFIG_TEXT:
         output = new TextConfigOutput();
         break;

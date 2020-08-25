@@ -116,6 +116,9 @@ void Shell::whitelist_append(const char* keyword, bool is_prefix)
 void Shell::config_open_table(bool is_root_node, bool is_list, int idx,
     const std::string& table_name, const Parameter* p)
 {
+    if ( !s_config_output )
+        return;
+
     Parameter::Type node_type = is_list ? Parameter::PT_LIST : Parameter::PT_TABLE;
     if ( is_root_node )
         add_config_root_node(table_name, node_type);
@@ -144,7 +147,7 @@ void Shell::config_open_table(bool is_root_node, bool is_list, int idx,
 
 void Shell::add_config_child_node(const std::string& node_name, snort::Parameter::Type type)
 {
-    if ( !s_current_node )
+    if ( !s_config_output || !s_current_node )
         return;
 
     std::string name;
@@ -158,6 +161,9 @@ void Shell::add_config_child_node(const std::string& node_name, snort::Parameter
 
 void Shell::add_config_root_node(const std::string& root_name, snort::Parameter::Type node_type)
 {
+    if ( !s_config_output )
+        return;
+
     Shell* sh = Shell::get_current_shell();
 
     if ( !sh )
@@ -169,7 +175,7 @@ void Shell::add_config_root_node(const std::string& root_name, snort::Parameter:
 
 void Shell::update_current_config_node(const std::string& node_name)
 {
-    if ( !s_current_node )
+    if ( !s_config_output || !s_current_node )
         return;
 
     // node has been added during setting default options
@@ -185,6 +191,9 @@ void Shell::update_current_config_node(const std::string& node_name)
 
 void Shell::config_close_table()
 {
+    if ( !s_config_output )
+        return;
+
     if ( !s_close_table )
     {
         s_close_table = true;
@@ -199,7 +208,7 @@ void Shell::config_close_table()
 
 void Shell::set_config_value(const std::string& fqn, const snort::Value& value)
 {
-    if ( !s_current_node )
+    if ( !s_config_output || !s_current_node )
         return;
 
     // lua interpreter does not call open_table for simple list items like (string) or
