@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2020 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2019-2020 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,46 +16,12 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// rna_fp_reader.cc author Silviu Minut <sminut@cisco.com>
+// rna_name.h author Silviu Minut <sminut@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef RNA_NAME_H
+#define RNA_NAME_H
 
-#include "rna_fp_reader.h"
-
-#ifdef UNIT_TEST
-#include "catch/snort_catch.h"
-#endif
-
-using namespace snort;
-
-static RnaFingerprintReader* fp_reader = nullptr;
-
-namespace snort
-{
-
-const RnaFingerprintReader* get_rna_fp_reader()
-{
-    return fp_reader;
-}
-
-void set_rna_fp_reader(RnaFingerprintReader* fpr)
-{
-    fp_reader = fpr;
-}
-
-}
-
-#ifdef UNIT_TEST
-TEST_CASE("rna_fp_reader", "[rna_fp_reader]")
-{
-    RnaFingerprintReader rna_fp_reader;
-    snort::set_rna_fp_reader(&rna_fp_reader);
-    CHECK(fp_reader == &rna_fp_reader);
-
-    const RnaFingerprintReader* fpr = snort::get_rna_fp_reader();
-    CHECK(fp_reader == fpr);
-}
+#define RNA_NAME "rna"
+#define RNA_HELP "Real-time network awareness and OS fingerprinting (experimental)"
 
 #endif

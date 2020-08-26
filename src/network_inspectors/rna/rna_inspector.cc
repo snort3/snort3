@@ -34,6 +34,9 @@
 #include "protocols/packet.h"
 
 #include "rna_event_handler.h"
+#include "rna_fingerprint_tcp.h"
+#include "rna_module.h"
+#include "rna_pnd.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -64,6 +67,8 @@ RnaInspector::~RnaInspector()
 {
     delete pnd;
     delete rna_conf;
+    if (mod_conf)
+        delete mod_conf->processor;
     delete mod_conf;
 }
 
@@ -104,7 +109,6 @@ void RnaInspector::show(const SnortConfig*) const
     if ( mod_conf )
     {
         ConfigLogger::log_value("rna_conf_path", mod_conf->rna_conf_path.c_str());
-        ConfigLogger::log_value("fingerprint_dir", mod_conf->fingerprint_dir.c_str());
         ConfigLogger::log_flag("enable_logger", mod_conf->enable_logger);
         ConfigLogger::log_flag("log_when_idle", mod_conf->log_when_idle);
     }
@@ -123,6 +127,7 @@ void RnaInspector::show(const SnortConfig*) const
 void RnaInspector::tinit()
 {
     // thread local initialization
+    set_tcp_fp_processor(mod_conf->processor);
 }
 
 void RnaInspector::tterm()
@@ -183,6 +188,18 @@ void RnaInspector::load_rna_conf()
     in_stream.close();
 }
 
+TcpFpProcessor* RnaInspector::get_or_create_fp_processor()
+{
+    if (mod_conf)
+    {
+        if (!mod_conf->processor)
+            mod_conf->processor = new TcpFpProcessor;
+        return mod_conf->processor;
+    }
+    return nullptr;
+}
+
+
 //-------------------------------------------------------------------------
 // api stuff
 //-------------------------------------------------------------------------
@@ -196,6 +213,7 @@ static void rna_mod_dtor(Module* m)
 static void rna_inspector_pinit()
 {
     // global initialization
+    RNAFlow::init();
 }
 
 static void rna_inspector_pterm()

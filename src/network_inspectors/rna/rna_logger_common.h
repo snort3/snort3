@@ -25,6 +25,7 @@
     #define NEW_HOST            1
     #define NEW_NET_PROTOCOL    3
     #define NEW_XPORT_PROTOCOL  4
+    #define NEW_OS              8
 
 #define RNA_EVENT_CHANGE    1001
     #define CHANGE_HOPS                 5

@@ -28,6 +28,7 @@
 #include <cstring>
 #include <mutex>
 #include <list>
+#include <set>
 #include <vector>
 
 #include "framework/counts.h"
@@ -172,6 +173,8 @@ public:
 
     void remove_inferred_services();
 
+    bool add_tcp_fingerprint(uint32_t fpid);
+
     //  This should be updated whenever HostTracker data members are changed
     void stringify(std::string& str);
 
@@ -184,6 +187,8 @@ private:
     std::vector<uint16_t, HostCacheAllocIp<uint16_t>> network_protos;
     std::vector<uint8_t, HostCacheAllocIp<uint8_t>> xport_protos;
     std::vector<HostApplication, HostAppAllocator> services;
+    std::set<uint32_t, std::less<uint32_t>, HostCacheAllocIp<uint32_t>> tcp_fpids;
+
     bool vlan_tag_present = false;
     vlan::VlanTagHdr vlan_tag;
     HostType host_type;

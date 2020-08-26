@@ -29,6 +29,7 @@
 
 #include "managers/event_manager.h"
 #include "protocols/packet.h"
+#include "rna_fingerprint_tcp.h"
 #include "rna_logger_common.h"
 
 #ifdef UNIT_TEST
@@ -44,13 +45,14 @@ using namespace snort;
 
 bool RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
     const struct in6_addr* src_ip, const uint8_t* src_mac, uint32_t event_time,
-    void* cond_var, const HostMac* hm, const uint16_t proto)
+    void* cond_var, const HostMac* hm, const uint16_t proto,
+    const TcpFingerprint* tfp)
 {
     if ( !enabled )
         return false;
 
     assert(ht);
-    RnaLoggerEvent rle(type, subtype, ht, src_mac, hm, proto);
+    RnaLoggerEvent rle(type, subtype, ht, src_mac, hm, proto, tfp);
     if ( src_ip and (!IN6_IS_ADDR_V4MAPPED(src_ip) or src_ip->s6_addr32[3]) )
         rle.ip = src_ip;
 

@@ -62,6 +62,52 @@ void WarningMessage(const char*,...) {}
 SnortConfig::SnortConfig(SnortConfig const*) {}
 SnortConfig::~SnortConfig() {}
 time_t packet_time() { return 0; }
+
+// tcp fingerprint functions
+void TcpFpProcessor::push(const TcpFingerprint&) { }
+void TcpFpProcessor::make_tcp_fp_tables(TCP_FP_MODE) { }
+const TcpFingerprint* TcpFpProcessor::get_tcp_fp(const FpTcpKey&, uint8_t, TCP_FP_MODE) const
+{ return nullptr; }
+const TcpFingerprint* TcpFpProcessor::get(const Packet*, RNAFlow*) const
+{ return nullptr; }
+TcpFpProcessor* get_tcp_fp_processor() { return nullptr; }
+void set_tcp_fp_processor(TcpFpProcessor*) { }
+
+TcpFingerprint::TcpFingerprint(const RawFingerprint&) { }
+bool TcpFingerprint::operator==(const TcpFingerprint&) const { return true; }
+
+// inspector
+class RnaInspector
+{
+public:
+
+// The module gets created first, with a mod_conf and fingerprint processor,
+// then, when the module is done, we take ownership of that.
+RnaInspector(RnaModule* mod)
+{
+    mod_conf = mod->get_config();
+}
+
+~RnaInspector()
+{
+    if (mod_conf)
+    {
+	if (mod_conf->processor)
+	    delete mod_conf->processor;
+	delete mod_conf;
+    }
+}
+
+TcpFpProcessor* get_fp_processor()
+{
+    return mod_conf->processor;
+}
+
+private:
+    RnaModuleConfig* mod_conf = nullptr;
+};
+
+
 } // end of namespace snort
 
 #endif

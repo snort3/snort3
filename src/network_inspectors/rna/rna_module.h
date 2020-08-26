@@ -25,9 +25,8 @@
 #include "profiler/profiler.h"
 
 #include "rna_config.h"
-
-#define RNA_NAME "rna"
-#define RNA_HELP "Real-time network awareness and OS fingerprinting (experimental)"
+#include "rna_fingerprint.h"
+#include "rna_name.h"
 
 struct RnaStats
 {
@@ -71,6 +70,9 @@ private:
     RnaModuleConfig* mod_conf = nullptr;
     const char* dump_file = nullptr;
 
+    RawFingerprint fingerprint;
+
+    bool is_valid_fqn(const char* fqn) const;
 };
 
 #endif

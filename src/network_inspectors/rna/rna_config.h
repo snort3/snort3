@@ -21,12 +21,17 @@
 #ifndef RNA_CONFIG_H
 #define RNA_CONFIG_H
 
+namespace snort
+{
+class TcpFpProcessor;
+}
+
 struct RnaModuleConfig
 {
     std::string rna_conf_path;
-    std::string fingerprint_dir;
     bool enable_logger;
     bool log_when_idle;
+    snort::TcpFpProcessor* processor = nullptr;
 };
 
 // Give default values so that RNA can work even if rna_conf_path is not provided

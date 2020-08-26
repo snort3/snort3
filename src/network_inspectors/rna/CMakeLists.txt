@@ -1,19 +1,19 @@
 set (RNA_INCLUDES
     rna_fingerprint.h
     rna_fingerprint_tcp.h
-    rna_fp_reader.h
+    rna_inspector.h
     rna_logger.h
+    rna_name.h
 )
 
 set ( RNA_SOURCES
     ${RNA_INCLUDES}
     rna_event_handler.cc
     rna_event_handler.h
+    rna_fingerprint.cc
     rna_fingerprint.h
     rna_fingerprint_tcp.cc
     rna_fingerprint_tcp.h
-    rna_fp_reader.cc
-    rna_fp_reader.h
     rna_inspector.cc
     rna_inspector.h
     rna_logger.cc

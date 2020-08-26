@@ -39,6 +39,7 @@
 #include "src/main.h"
 #include "utils/util.h"
 
+#include "rna_fingerprint_tcp.h"
 #include "rna_mac_cache.h"
 
 #ifdef UNIT_TEST
@@ -114,13 +115,45 @@ static const Command rna_cmds[] =
     { nullptr, nullptr, nullptr, nullptr }
 };
 
+static const Parameter rna_fp_params[] =
+{
+    { "fpid", Parameter::PT_INT, "0:max32", "0",
+      "fingerprint id" },
+
+    { "type", Parameter::PT_INT, "0:max32", "0",
+      "fingerprint type" },
+
+    { "uuid", Parameter::PT_STRING, nullptr, nullptr,
+      "fingerprint uuid" },
+
+    { "ttl", Parameter::PT_INT, "0:256", "0",
+      "fingerprint ttl" },
+
+    { "tcp_window", Parameter::PT_STRING, nullptr, nullptr,
+      "fingerprint tcp window" },
+
+    { "mss", Parameter::PT_STRING, nullptr, "X",
+      "fingerprint mss" },
+
+    { "id", Parameter::PT_STRING, nullptr, "X",
+      "id" },
+
+    { "topts", Parameter::PT_STRING, nullptr, nullptr,
+      "fingerprint tcp options" },
+
+    { "ws", Parameter::PT_STRING, nullptr, "X",
+      "fingerprint window size" },
+
+    { "df", Parameter::PT_BOOL, nullptr, "false",
+      "fingerprint don't fragment flag" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 static const Parameter rna_params[] =
 {
     { "rna_conf_path", Parameter::PT_STRING, nullptr, nullptr,
       "path to rna configuration" },
-
-    { "fingerprint_dir", Parameter::PT_STRING, nullptr, nullptr,
-      "directory to fingerprint patterns" },
 
     { "enable_logger", Parameter::PT_BOOL, nullptr, "true",
       "enable or disable writing discovery events into logger" },
@@ -130,6 +163,9 @@ static const Parameter rna_params[] =
 
     { "dump_file", Parameter::PT_STRING, nullptr, nullptr,
       "file name to dump RNA mac cache on shutdown; won't dump by default" },
+
+    { "tcp_fingerprints", Parameter::PT_LIST, rna_fp_params, nullptr,
+      "list tcp fingerprints" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -170,19 +206,26 @@ RnaModule::~RnaModule()
 
 bool RnaModule::begin(const char* fqn, int, SnortConfig*)
 {
-    if (strcmp(fqn, RNA_NAME))
+    if (!is_valid_fqn(fqn))
         return false;
-    else if (!mod_conf)
+
+    if (!mod_conf)
         mod_conf = new RnaModuleConfig;
+
+    if (!strcmp(fqn, "rna.tcp_fingerprints"))
+    {
+        fingerprint.clear();
+        if (!mod_conf->processor)
+            mod_conf->processor = new TcpFpProcessor;
+    }
+
     return true;
 }
 
-bool RnaModule::set(const char*, Value& v, SnortConfig*)
+bool RnaModule::set(const char* fqn, Value& v, SnortConfig*)
 {
     if (v.is("rna_conf_path"))
         mod_conf->rna_conf_path = string(v.get_string());
-    else if (v.is("fingerprint_dir"))
-        mod_conf->fingerprint_dir = string(v.get_string());
     else if (v.is("enable_logger"))
         mod_conf->enable_logger = v.get_bool();
     else if (v.is("log_when_idle"))
@@ -193,23 +236,65 @@ bool RnaModule::set(const char*, Value& v, SnortConfig*)
             snort_free((void*)dump_file);
         dump_file = snort_strdup(v.get_string());
     }
+
+    else if (fqn && strstr(fqn, "rna.tcp_fingerprints"))
+    {
+        if (v.is("fpid"))
+            fingerprint.fpid = v.get_uint32();
+        else if (v.is("type"))
+            fingerprint.fp_type = v.get_uint32();
+        else if (v.is("uuid"))
+            fingerprint.fpuuid = v.get_string();
+        else if (v.is("ttl"))
+            fingerprint.ttl = v.get_uint8();
+        else if (v.is("tcp_window"))
+            fingerprint.tcp_window = v.get_string();
+        else if (v.is("mss"))
+            fingerprint.mss = v.get_string();
+        else if (v.is("id"))
+            fingerprint.id = v.get_string();
+        else if (v.is("topts"))
+            fingerprint.topts = v.get_string();
+        else if (v.is("ws"))
+            fingerprint.ws = v.get_string();
+        else if (v.is("df"))
+            fingerprint.df = v.get_uint8();
+    }
+
     else
         return false;
 
     return true;
 }
 
-bool RnaModule::end(const char* fqn, int, SnortConfig* sc)
+bool RnaModule::end(const char* fqn, int index, SnortConfig* sc)
 {
-    if ( mod_conf == nullptr and strcmp(fqn, RNA_NAME) == 0 )
+    if ( mod_conf == nullptr || !is_valid_fqn(fqn) )
         return false;
 
-    sc->set_run_flags(RUN_FLAG__TRACK_ON_SYN); // Internal flag to track TCP on SYN
-
-    if ( sc->ip_frags_only() )
+    if ( !strcmp(fqn, RNA_NAME) )
     {
-        WarningMessage("RNA: Disabling stream.ip_frags_only option!\n");
-        sc->clear_run_flags(RUN_FLAG__IP_FRAGS_ONLY);
+        sc->set_run_flags(RUN_FLAG__TRACK_ON_SYN); // Internal flag to track TCP on SYN
+
+        if ( sc->ip_frags_only() )
+        {
+            WarningMessage("RNA: Disabling stream.ip_frags_only option!\n");
+            sc->clear_run_flags(RUN_FLAG__IP_FRAGS_ONLY);
+        }
+
+        if (mod_conf->processor)
+        {
+            mod_conf->processor->make_tcp_fp_tables(TcpFpProcessor::TCP_FP_MODE::SERVER);
+            mod_conf->processor->make_tcp_fp_tables(TcpFpProcessor::TCP_FP_MODE::CLIENT);
+        }
+    }
+
+    if ( index > 0 && mod_conf->processor && !strcmp(fqn, "rna.tcp_fingerprints") )
+    {
+        // there is an implicit conversion here from raw fingerprint (all
+        // strings) to tcp fingerprint, done by the tcp fingerprint constructor
+        mod_conf->processor->push(fingerprint);
+        fingerprint.clear();
     }
 
     return true;
@@ -274,7 +359,14 @@ bool RnaModule::log_mac_cache(const char* outfile)
     return 0;
 }
 
+bool RnaModule::is_valid_fqn(const char* fqn) const
+{
+    return !strcmp(fqn, RNA_NAME) || !strcmp(fqn, "rna.tcp_fingerprints");
+}
+
+
 #ifdef UNIT_TEST
+
 TEST_CASE("RNA module", "[rna_module]")
 {
     SECTION("module begin, set, end")
@@ -290,10 +382,6 @@ TEST_CASE("RNA module", "[rna_module]")
         v1.set(Parameter::find(rna_params, "rna_conf_path"));
         CHECK(mod.set(nullptr, v1, nullptr) == true);
 
-        Value v2("/dir/fingerprints");
-        v2.set(Parameter::find(rna_params, "fingerprint_dir"));
-        CHECK(mod.set(nullptr, v2, nullptr) == true);
-
         Value v3("dummy");
         CHECK(mod.set(nullptr, v3, nullptr) == false);
         CHECK(mod.end("rna", 0, &sc) == true);
@@ -301,7 +389,6 @@ TEST_CASE("RNA module", "[rna_module]")
         RnaModuleConfig* rc = mod.get_config();
         CHECK(rc != nullptr);
         CHECK(rc->rna_conf_path == "rna.conf");
-        CHECK(rc->fingerprint_dir == "/dir/fingerprints");
 
         delete rc;
     }
@@ -336,4 +423,5 @@ TEST_CASE("RNA module", "[rna_module]")
         delete mod.get_config();
     }
 }
+
 #endif

@@ -259,6 +259,13 @@ void HostTracker::remove_inferred_services()
     }
 }
 
+bool HostTracker::add_tcp_fingerprint(uint32_t fpid)
+{
+    lock_guard<mutex> lck(host_tracker_lock);
+    auto result = tcp_fpids.emplace(fpid);
+    return result.second;
+}
+
 static inline string to_time_string(uint32_t p_time)
 {
     time_t raw_time = (time_t) p_time;
@@ -324,5 +331,13 @@ void HostTracker::stringify(string& str)
         str += "\ntransport proto: ";
         while ( total-- )
             str += to_string(xport_protos[total]) + (total? ", " : "");
+    }
+
+    total = tcp_fpids.size();
+    if ( total )
+    {
+        str += "\ntcp fingerprint: ";
+        for ( const auto& fpid : tcp_fpids )
+            str += to_string(fpid) + (--total ? ", " : "");
     }
 }

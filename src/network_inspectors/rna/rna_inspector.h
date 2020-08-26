@@ -23,15 +23,20 @@
 
 #include "framework/inspector.h"
 
-#include "rna_module.h"
-#include "rna_pnd.h"
+#include <string>
 
 namespace snort
 {
 struct Packet;
+class TcpFpProcessor;
 }
 
-class RnaInspector : public snort::Inspector
+struct RnaConfig;
+class RnaModule;
+struct RnaModuleConfig;
+class RnaPnd;
+
+class SO_PUBLIC RnaInspector : public snort::Inspector
 {
 public:
     RnaInspector(RnaModule*);
@@ -43,12 +48,13 @@ public:
     void tinit() override;
     void tterm() override;
 
+    snort::TcpFpProcessor* get_or_create_fp_processor();
+
 private:
     void load_rna_conf();
-    const RnaModuleConfig* mod_conf = nullptr;
+    RnaModuleConfig* mod_conf = nullptr;
     RnaConfig* rna_conf = nullptr;
     RnaPnd* pnd = nullptr;
 };
 
 #endif
-

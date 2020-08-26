@@ -78,3 +78,144 @@ for setting the top level pointer to point at their own instantiated host tracke
 needs to be preserved until discover_network_ethernet calls generate_change_vlan_update with this
 newly-created host tracker as an argument. This host tracker is deleted at the top level, and we must
 not return prior to that to avoid leaking any host trackers.
+
+Fingerprints
+
+Fingerprints are a sequence of features in network traffic used to identify a host's operating system.
+Currently only tcp fingerprints are supported, but future work may include udp fingerprints and
+user agent fingerprints.
+
+Tcp fingerprints are specified in lua and read by snort at configure time.
+Only the SYN and SYN-ACK packets are used for fingerprint matching. We refer to the SYN packet
+as "client" and SYN_ACK packet as "server" traffic.
+
+A typical fingerprint looks like this:
+
+-- centos client
+{
+    fpid = 110005,
+    type = 10,
+    uuid = "2fc04d1a-a2c2-11e2-840f-850c4648cdef",
+    ttl = 64,
+    tcp_window = "5712-5760",
+    mss = "X",
+    id = "X",
+    topts = "2 4 8 3",
+    ws = "7",
+    df = false,
+},
+
+This particular example identifies the host as one of 'CentOS Linux version 5.5','CentOS','Linux','Linux 5.5'.
+Note that there is no reference to the actual operating system in the fingerprint, but
+the fpid or the uuid field can be used for this purpose.
+
+The fields are as follows:
+
+fpid: (int) a unique fingerprint identifier. If snort encounters another fingerprint with the same
+      fpid, it will display a warning message and skip it. This field can be used as an index
+      into a database or table with details in human readable form about the host.
+      This field is not used for matching the fingerprint to the network traffic.
+
+type:  (int) the type of traffic this fingerprint should be matched against. Currently, these types
+       are defined in rna_fingerprint.h:
+
+       enum FpType
+       {
+           FINGERPRINT_TYPE_SERVER = 1,
+           FINGERPRINT_TYPE_CLIENT = 2,
+           FINGERPRINT_TYPE_SERVER6 = 10,
+           FINGERPRINT_TYPE_CLIENT6 = 11,
+       };
+
+uuid:  (uuid string, not an arbitrary string) similar in purpose to fpid, e.g. we could store
+       the host details in a file named 2fc04d1a-a2c2-11e2-840f-850c4648cdef.
+       Not used in matching.
+
+ttl:   (int) time to live
+
+df:    (bool) don't fragment flag
+
+The remaining fields are space-separated lists of FpElement, each of FpElementType.
+See rna_fingerprint.h. Such a list might be "1 2-5 6" or simply "X", or "10". Snort
+infers the FpElementType from the input string, e.g. "2-5" will be interpreted as a
+FpElementType::RANGE, and "X" will be interpreted as FpElementType::DONT_CARE.
+See the FpElement::parse_value() function in rna_fingerprint.cc.
+
+Here are all possible element types, with examples for each case:
+
+FpElementType::RANGE:     "1" or "20-30"
+FpElementType::INCREMENT: "+5"
+FpElementType::SYN_MATCH: "SYN"
+FpElementType::RANDOM:    "R"
+FpElementType::DONT_CARE: "X"
+FpElementType::SYNTS:     "TS"
+
+For instance, the list
+
+"1 2-5 SYN"
+
+is a legal list, consisting of 3 elements: 1 (RANGE), 2-5 (RANGE) and SYN (SYN_MATCH).
+While the elements in this list are all valid, there are constraints on the
+type of the elements that make up the fingerprint fields. For instance,
+
+mss = "2 3 X"
+
+would result in error, because DONT_CARE ("X") is not allowed for the mss field.
+
+Here are the remaining fingerprint fields.
+
+tcp_window: the tcp window
+            FpElementType::RANGE
+
+            In the packet, the tcp window is a single integer value, but in the fingerprint
+            we can specify a range like tcp_window = "1234-4321".
+
+            Examples:
+            tcp_window = "1234-4321" -- will match any packet with tcp_window in the range
+            tcp_window = "5678"      -- will match only packets with tcp_window = 5678
+            tcp_window = "R"         -- error: RANDOM is not a valid tcp_window element
+
+mss:   maximum segment size
+       On the client: FpElementType::RANGE, FpFLementType::DONT_CARE
+       On the server: FpElementType::RANGE, FpElementType::DONT_CARE,
+                      FpElementType::SYN_MATCH, FpElementType::SYNTS
+
+       Examples:
+       fptype = 2, mss = "12-34" -- client traffic (fptype = 2) with mss beween 12 and 34
+       fptype = 2, mss = "X"     -- don't use mss for matching, so match anything from cient
+       fptype = 2, mss = "SYN"   -- error: client traffic (fptype = 2) but mss of type SYN_MATCH
+                                    only accepted for server traffic (fptyp1 = 1 or 10)
+       fptype = 1, mss = "TS"    -- OK: server traffic (fptype = 1) and mss of type SYNTS
+       mss = "+5"                -- eror: mss cannot be an INCREMENT type
+
+id:    ip id
+       FpElementType::RANGE
+       FpElementType::RANDOM
+       FpElementType::INCREMENT
+       FpElementType::DONT_CARE
+
+       Example:
+       id = "X"
+
+topts: tcp options
+       FpElementType::RANGE
+
+       These are defined by TcpOptCode in src/protocols/tcp_options.h.
+       The ones we use for fingerprint matcing are
+
+       - MAXSEG (2)
+       - WSCALE (3)
+       - SACKOK (4)
+       - TIMESTAMP (8)
+
+       We match (a) whether or not an option is set, (b) what its value is and (c) the order
+       of the options.
+
+       Example:
+       topts = [2 4 8 3] -- will match tcp packets with mss (2), window scale (4), sack OK (8)
+                            and timestamp (3) set, in this exact order. If we swap any two
+                            numbers in topts, the resulting fingerprint will no longer match.
+
+ws:    window scale
+       FpElementType::RANGE
+       FpElementType::DONT_CARE

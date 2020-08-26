@@ -35,6 +35,7 @@
 #include "protocols/protocol_ids.h"
 #include "protocols/tcp.h"
 
+#include "rna_fingerprint_tcp.h"
 #include "rna_logger_common.h"
 
 #ifdef UNIT_TEST
@@ -105,11 +106,21 @@ void RnaPnd::analyze_flow_non_ip(const Packet* p)
 
 void RnaPnd::analyze_flow_tcp(const Packet* p, TcpPacketType type)
 {
-    // If and when flow stores rna state, process the flow data here before global cache access
-    if ( is_eligible_tcp(p) and filter.is_host_monitored(p) )
-        discover_network_tcp(p);
+    if ( is_eligible_tcp(p) )
+    {
+        // If it's a tcp SYN packet, create a fingerprint state for
+        // the SYN-ACK, but only if we're monitoring the destination (server)
+        const auto& dst_ip = p->ptrs.ip_api.get_dst();
+        if ( type == TcpPacketType::SYN && filter.is_host_monitored(p, nullptr, dst_ip) )
+        {
+            RNAFlow* rna_flow = new RNAFlow();
+            p->flow->set_flow_data(rna_flow);
+            rna_flow->state.set(p);
+        }
 
-    UNUSED(type);
+        if ( filter.is_host_monitored(p) )
+            discover_network_tcp(p);
+    }
 }
 
 void RnaPnd::analyze_flow_udp(const Packet* p)
@@ -202,6 +213,22 @@ void RnaPnd::discover_network(const Packet* p, uint8_t ttl)
     if ( !new_host )
     {
         generate_change_host_update(&ht, p, src_ip, src_mac, packet_time());
+    }
+
+    // Fingerprint stuff
+    const TcpFpProcessor* processor;
+    if ( p->is_tcp() && (processor = get_tcp_fp_processor()) != nullptr )
+    {
+        RNAFlow* rna_flow = nullptr;
+        if ( p->ptrs.tcph->is_syn_ack() )
+            rna_flow = (RNAFlow*) p->flow->get_flow_data(RNAFlow::inspector_id);
+        const TcpFingerprint* tfp = processor->get(p, rna_flow);
+
+        if (tfp && ht->add_tcp_fingerprint(tfp->fpid))
+        {
+            logger.log(RNA_EVENT_NEW, NEW_OS, p, &ht, src_ip_ptr,
+                src_mac, 0, nullptr, nullptr, ptype, tfp);
+        }
     }
 }
 

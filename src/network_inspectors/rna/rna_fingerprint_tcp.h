@@ -21,74 +21,134 @@
 #ifndef RNA_FINGERPRINT_TCP_H
 #define RNA_FINGERPRINT_TCP_H
 
-#include <list>
+#include <unordered_map>
 #include <vector>
 
 #include "main/snort_types.h"
 #include "protocols/packet.h"
+#include "protocols/tcp.h"
 
 #include "rna_fingerprint.h"
+
+class RNAFlow;
 
 namespace snort
 {
 
-enum FpElementType
-{
-    RANGE=1,
-    INCREMENT,
-    SYN_MATCH,
-    RANDOM,
-    DONT_CARE,
-    SYNTS
-};
-
-class FpElement
+class SO_PUBLIC TcpFingerprint : public FpFingerprint
 {
 public:
-    FpElementType type;
-    union
-    {
-        int value;
-        struct
-        {
-            int min;
-            int max;
-        } range;
-    } d;
-};
 
-class FpTcpFingerprint : public FpFingerprint
-{
-public:
+    TcpFingerprint() = default;
+    TcpFingerprint(const RawFingerprint& rfp);
 
     std::vector<FpElement> tcp_window;
     std::vector<FpElement> mss;
     std::vector<FpElement> id;
     std::vector<FpElement> topts;
     std::vector<FpElement> ws;
-    char df;
+    bool df = false;
+
+    void clear() override
+    {
+        FpFingerprint::clear();
+        tcp_window.clear();
+        mss.clear();
+        id.clear();
+        topts.clear();
+        ws.clear();
+        df = false;
+    }
+
+    bool operator==(const TcpFingerprint& y) const;
 };
 
-class TcpFpProcessor
+struct FpTcpKey
+{
+    int synmss;
+    uint8_t *syn_tcpopts;
+    int num_syn_tcpopts;
+    int syn_timestamp;
+
+    int tcp_window;
+    int mss;
+    int ws;
+
+    int mss_pos;
+    int ws_pos;
+    int sackok_pos;
+    int timestamp_pos;
+
+    char df;
+    uint8_t isIpv6;
+};
+
+class SO_PUBLIC TcpFpProcessor
 {
 public:
 
+    typedef std::unordered_map<uint32_t, TcpFingerprint> TcpFpContainer;
+
     enum TCP_FP_MODE { SERVER, CLIENT };
 
-    typedef std::list<snort::FpTcpFingerprint>::iterator Iter_t;
+    void push(const TcpFingerprint& tfp);
 
-    SO_PUBLIC void push(const std::vector<snort::FpTcpFingerprint>&, TCP_FP_MODE);
+    void make_tcp_fp_tables(TCP_FP_MODE mode);
 
+    const TcpFingerprint* get_tcp_fp(const FpTcpKey& key, uint8_t ttl, TCP_FP_MODE mode) const;
+
+    const TcpFingerprint* get(const Packet* p, RNAFlow* flowp) const;
+
+    const TcpFingerprint* get(uint32_t fpid) const
+    {
+        auto it = tcp_fps.find(fpid);
+        return it != tcp_fps.end() ? &it->second : nullptr;
+    }
+
+    const TcpFpContainer& get_tcp_fps() const
+    { return tcp_fps; }
 
 private:
 
-    // table_tcp_xxx[i] contains all fingerprints whose tcp window range
-    // contains i
-    std::vector<const snort::FpTcpFingerprint*> table_tcp_server[snort::MAX_PORTS];
-    std::vector<const snort::FpTcpFingerprint*> table_tcp_client[snort::MAX_PORTS];
+    // underlying container for input fingerprints
+    TcpFpContainer tcp_fps;
+
+    // table_tcp_xxx[i] contains pointers into tcp_fps to all fingerprints
+    // whose tcp window range contains i
+    static constexpr uint32_t table_size = TCP_MAXWIN + 1;
+    std::vector<const snort::TcpFingerprint*> table_tcp_server[table_size];
+    std::vector<const snort::TcpFingerprint*> table_tcp_client[table_size];
 };
 
-SO_PUBLIC TcpFpProcessor* get_tcp_fp_processor();
 }
+
+snort::TcpFpProcessor* get_tcp_fp_processor();
+void set_tcp_fp_processor(snort::TcpFpProcessor*);
+
+struct FpFingerprintState
+{
+    int initial_mss = -1;
+    int timestamp = -1;
+    int numopts = -1;
+    uint8_t tcpopts[4];
+    time_t timeout = -1;
+
+    bool set(const snort::Packet*);
+};
+
+class RNAFlow : public snort::FlowData
+{
+public:
+    FpFingerprintState state;
+
+
+    RNAFlow() : FlowData(inspector_id) { }
+    ~RNAFlow() override { }
+
+    static void init();
+    size_t size_of() override;
+
+    static unsigned inspector_id;
+};
 
 #endif
