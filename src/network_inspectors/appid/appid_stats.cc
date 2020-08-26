@@ -27,10 +27,12 @@
 
 #include "log/text_log.h"
 #include "log/unified2.h"
+#include "managers/inspector_manager.h"
 #include "time/packet_time.h"
 
 #include "appid_config.h"
 #include "app_info_table.h"
+#include "appid_inspector.h"
 #include "appid_session.h"
 
 using namespace snort;
@@ -203,8 +205,17 @@ static void update_stats(const AppIdSession& asd, AppId app_id, StatsBucket* buc
         if ( app_id >= 2000000000 )
             cooked_client = true;
 
+        // Skip stats for sessions using old odp context after reload detectors
+        AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
+        OdpContext& odp_ctxt = asd.get_odp_ctxt();
+        if (inspector and (&(inspector->get_ctxt().get_odp_ctxt()) != &odp_ctxt))
+        {
+            snort_free(record);
+            return;
+        }
+
         AppInfoTableEntry* entry
-            = asd.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(app_id);
+            = odp_ctxt.get_app_info_mgr().get_app_info_entry(app_id);
 
         if ( entry )
         {

@@ -36,6 +36,10 @@ AppIdSession* mock_session = nullptr;
 AppIdSessionApi* appid_session_api = nullptr;
 static AppIdConfig config;
 static OdpContext odpctxt(config, nullptr);
+Inspector* InspectorManager::get_inspector(char const*, bool, const snort::SnortConfig*)
+{
+    return nullptr;
+}
 
 namespace snort
 {

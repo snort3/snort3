@@ -25,6 +25,8 @@
 
 #include "appid_session_api.h"
 
+#include "managers/inspector_manager.h"
+#include "appid_inspector.h"
 #include "appid_session.h"
 #include "service_plugins/service_bootp.h"
 #include "service_plugins/service_netbios.h"
@@ -179,6 +181,13 @@ bool AppIdSessionApi::is_appid_inspecting_session() const
 {
     if (!asd)
         return false;
+    else
+    {
+        // Inspection is not done for sessions using old odp context after reload detectors
+        AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
+        if (inspector and (&(inspector->get_ctxt().get_odp_ctxt()) != &(asd->get_odp_ctxt())))
+            return false;
+    }
 
     if ( asd->service_disco_state != APPID_DISCO_STATE_FINISHED or
         !asd->is_tp_appid_done() or

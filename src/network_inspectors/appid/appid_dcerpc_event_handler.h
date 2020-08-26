@@ -38,6 +38,13 @@ public:
         AppIdSession* asd = snort::appid_api.get_appid_session(*flow);
         if (!asd)
             return; // appid disabled
+        else
+        {
+            // Skip sessions using old odp context after reload detectors
+            AppIdInspector* inspector = (AppIdInspector*) snort::InspectorManager::get_inspector(MOD_NAME, true);
+            if (inspector and (&(inspector->get_ctxt().get_odp_ctxt()) != &(asd->get_odp_ctxt())))
+                return;
+        }
 
         DceExpectedSessionEvent& map_resp_event = static_cast<DceExpectedSessionEvent&>(event);
 

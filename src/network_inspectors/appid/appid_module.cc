@@ -203,8 +203,8 @@ ACOdpContextSwap::~ACOdpContextSwap()
 {
     odp_ctxt.get_app_info_mgr().cleanup_appid_info_table();
     delete &odp_ctxt;
-    LogMessage("== reload ODP complete\n");
-    request.respond("== reload ODP complete\n", from_shell, true);
+    LogMessage("== reload detectors complete\n");
+    request.respond("== reload detectors complete\n", from_shell, true);
     Swapper::set_reload_in_progress(false);
 }
 
@@ -290,7 +290,7 @@ static void clear_dynamic_host_cache_services()
     }
 }
 
-static int reload_odp(lua_State* L)
+static int reload_detectors(lua_State* L)
 {
     bool from_shell = ( L != nullptr );
     Request& current_request = get_current_request();
@@ -299,11 +299,11 @@ static int reload_odp(lua_State* L)
         current_request.respond("== reload pending; retry\n", from_shell);
         return 0;
     }
-    current_request.respond(".. reloading ODP\n", from_shell);
+    current_request.respond(".. reloading detectors\n", from_shell);
     AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
     if (!inspector)
     {
-        current_request.respond("== reload ODP failed - appid not enabled\n", from_shell);
+        current_request.respond("== reload detectors failed - appid not enabled\n", from_shell);
         return 0;
     }
     Swapper::set_reload_in_progress(true);
@@ -324,7 +324,7 @@ static int reload_odp(lua_State* L)
     odp_thread_local_ctxt->initialize(ctxt, true, true);
     odp_ctxt.initialize();
 
-    current_request.respond("== swapping ODP configuration\n", from_shell);
+    current_request.respond("== swapping detectors configuration\n", from_shell);
     main_broadcast_command(new ACOdpContextSwap(*inspector, old_odp_ctxt,
         current_request, from_shell), from_shell);
     return 0;
@@ -346,7 +346,7 @@ static const Command appid_cmds[] =
     { "enable_debug", enable_debug, enable_debug_params, "enable appid debugging"},
     { "disable_debug", disable_debug, nullptr, "disable appid debugging"},
     { "reload_third_party", reload_third_party, nullptr, "reload appid third-party module" },
-    { "reload_odp", reload_odp, nullptr, "reload appid open detector package" },
+    { "reload_detectors", reload_detectors, nullptr, "reload appid detectors" },
     { nullptr, nullptr, nullptr, nullptr }
 };
 
