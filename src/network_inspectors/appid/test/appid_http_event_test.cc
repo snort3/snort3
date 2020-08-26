@@ -52,6 +52,18 @@ namespace snort
 AppIdApi appid_api;
 Inspector* InspectorManager::get_inspector(
     char const*, bool, const snort::SnortConfig*) { return nullptr; }
+
+Packet::Packet(bool) { }
+Packet::~Packet() { }
+
+Packet* DetectionEngine::get_current_packet()
+{
+    static Packet p;
+    return &p;
+}
+
+AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
+    StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
 }
 
 const char* content_type = nullptr;
@@ -227,7 +239,7 @@ AppIdSession* AppIdApi::get_appid_session(const Flow&)
     return mock_session;
 }
 
-void AppIdSession::publish_appid_event(AppidChangeBits&, Flow*, bool, uint32_t) { }
+void AppIdSession::publish_appid_event(AppidChangeBits&, const Packet&, bool, uint32_t) { }
 
 TEST_GROUP(appid_http_event)
 {

@@ -54,7 +54,6 @@
 using namespace snort;
 
 unsigned AppIdSession::inspector_id = 0;
-THREAD_LOCAL uint32_t AppIdSession::appid_flow_data_id = 0;
 std::mutex AppIdSession::inferred_svcs_lock;
 uint16_t AppIdSession::inferred_svcs_ver = 0;
 
@@ -100,7 +99,6 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port,
         odp_ctxt(odp_ctxt), tp_appid_ctxt(inspector.get_ctxt().get_tp_appid_ctxt())
 {
     service_ip.clear();
-    session_id = ++appid_flow_data_id;
     initiator_port = port;
 
     appid_stats.total_sessions++;
@@ -1066,13 +1064,13 @@ void AppIdSession::set_tp_payload_app_id(Packet& p, AppidSessionDirection dir, A
     }
 }
 
-void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, Flow* flow,
+void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packet& p,
     bool is_http2, uint32_t http2_stream_index)
 {
     if (!api.stored_in_stash and change_bits.any())
     {
-        assert(flow and flow->stash);
-        flow->stash->store(STASH_APPID_DATA, &api, false);
+        assert(p.flow and p.flow->stash);
+        p.flow->stash->store(STASH_APPID_DATA, &api, false);
         api.stored_in_stash = true;
     }
 
@@ -1085,8 +1083,8 @@ void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, Flow* flow,
     if (change_bits.none())
         return;
 
-    AppidEvent app_event(change_bits, is_http2, http2_stream_index, api);
-    DataBus::publish(APPID_EVENT_ANY_CHANGE, app_event, flow);
+    AppidEvent app_event(change_bits, is_http2, http2_stream_index, api, p);
+    DataBus::publish(APPID_EVENT_ANY_CHANGE, app_event, p.flow);
     if (appidDebug->is_active())
     {
         std::string str;

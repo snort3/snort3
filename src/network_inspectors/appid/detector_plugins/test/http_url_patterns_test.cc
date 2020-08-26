@@ -56,6 +56,12 @@ static AppId service_id = APP_ID_NONE;
 static AppId client_id = APP_ID_NONE;
 static DetectorHTTPPattern mpattern;
 
+namespace snort
+{
+AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
+    StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
+}
+
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 AppIdDiscovery::AppIdDiscovery() { }
 AppIdDiscovery::~AppIdDiscovery() { }

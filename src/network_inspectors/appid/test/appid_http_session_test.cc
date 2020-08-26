@@ -47,6 +47,12 @@
 #include <CppUTest/TestHarness.h>
 using namespace snort;
 
+namespace snort
+{
+AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
+    StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
+}
+
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 const char* AppInfoManager::get_app_name(AppId)
 {

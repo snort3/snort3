@@ -26,6 +26,8 @@
 #include <cassert>
 #include <iomanip>
 
+using namespace snort;
+
 void JsonStream::open(const char* key)
 {
     split();
@@ -94,6 +96,22 @@ void JsonStream::put(const char* key, long val)
         out << std::quoted(key) << ": ";
 
     out << val;
+}
+
+void JsonStream::put(const char* key, const char* val)
+{
+    if (val and val[0] == '\0')
+        return;
+
+    split();
+
+    if ( key )
+        out << std::quoted(key) << ": ";
+
+    if (val)
+        out << std::quoted(val);
+    else
+        out << "null";
 }
 
 void JsonStream::put(const char* key, const std::string& val)

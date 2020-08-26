@@ -36,7 +36,7 @@
 
 #include "main/snort_types.h"
 
-#define TIMEBUF_SIZE 26
+#define TIMEBUF_SIZE 27
 
 #define SECONDS_PER_DAY  86400  /* number of seconds in a day  */
 #define SECONDS_PER_HOUR  3600  /* number of seconds in a hour */
@@ -45,7 +45,6 @@
 void StoreSnortInfoStrings();
 int DisplayBanner();
 int gmt2local(time_t);
-void ts_print(const struct timeval*, char*);
 std::string read_infile(const char* key, const char* fname);
 void CleanupProtoNames();
 void CreatePidFile(pid_t);
@@ -107,6 +106,7 @@ SO_PUBLIC extern char** protocol_names;
 SO_PUBLIC const char* get_error(int errnum);
 SO_PUBLIC char* snort_strdup(const char*);
 SO_PUBLIC char* snort_strndup(const char*, size_t);
+SO_PUBLIC void ts_print(const struct timeval*, char*, bool yyyymmdd = false);
 }
 
 #endif

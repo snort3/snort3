@@ -355,8 +355,7 @@ static int get_detector_flow_key(lua_State* L)
     // Verify detector user data and that we are in packet context
     assert(pLuaData.ptr);
 
-    lua_pushlstring(L, (char*)&pLuaData->asd->session_id,
-        sizeof(pLuaData->asd->session_id));
+    lua_pushstring(L, pLuaData->asd->get_api().get_session_id().c_str());
 
     return 1;
 }

@@ -43,6 +43,8 @@ unsigned get_instance_id() { return 3; }
 
 FlowData::FlowData(unsigned, Inspector*) { }
 FlowData::~FlowData() = default;
+AppIdSessionApi::AppIdSessionApi(const AppIdSession* asd, const SfIp& ip) :
+    StashGenericObject(STASH_GENERIC_OBJECT_APPID), asd(asd), initiator_ip(ip) {}
 }
 
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }

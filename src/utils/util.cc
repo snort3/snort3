@@ -86,17 +86,6 @@ void StoreSnortInfoStrings()
 #undef SNORT_VERSION_STRING
 #undef SNORT_VERSION_STRLEN
 
-/****************************************************************************
- *
- * Function: DisplayBanner()
- *
- * Purpose:  Show valuable proggie info
- *
- * Arguments: None.
- *
- * Returns: 0 all the time
- *
- ****************************************************************************/
 int DisplayBanner()
 {
     const char* ljv = LUAJIT_VERSION;
@@ -131,85 +120,7 @@ int DisplayBanner()
     return 0;
 }
 
-/****************************************************************************
- *
- * Function: ts_print(const struct, char *)
- *
- * Purpose: Generate a time stamp and stuff it in a buffer.  This one has
- *          millisecond precision.  Oh yeah, I ripped this code off from
- *          TCPdump, props to those guys.
- *
- * Arguments: timeval => clock struct coming out of libpcap
- *            timebuf => buffer to stuff timestamp into
- *
- * Returns: void function
- *
- ****************************************************************************/
-void ts_print(const struct timeval* tvp, char* timebuf)
-{
-    struct timeval tv;
-    struct timezone tz;
-
-    /* if null was passed, we use current time */
-    if (!tvp)
-    {
-        /* manual page (for linux) says tz is never used, so.. */
-        memset((char*)&tz, 0, sizeof(tz));
-        gettimeofday(&tv, &tz);
-        tvp = &tv;
-    }
-
-    const SnortConfig* sc = SnortConfig::get_conf();
-    int localzone = sc->thiszone;
-
-    /*
-    **  If we're doing UTC, then make sure that the timezone is correct.
-    */
-    if (sc->output_use_utc())
-        localzone = 0;
-
-    int s = (tvp->tv_sec + localzone) % SECONDS_PER_DAY;
-    time_t Time = (tvp->tv_sec + localzone) - s;
-
-    struct tm ttm;
-    struct tm* lt = gmtime_r(&Time, &ttm);
-
-    if ( !lt )
-    {
-        (void)SnortSnprintf(timebuf, TIMEBUF_SIZE, "%lu", tvp->tv_sec);
-
-    }
-    else if (sc->output_include_year())
-    {
-        int year = (lt->tm_year >= 100) ? (lt->tm_year - 100) : lt->tm_year;
-
-        (void)SnortSnprintf(timebuf, TIMEBUF_SIZE,
-            "%02d/%02d/%02d-%02d:%02d:%02d.%06u",
-            year, lt->tm_mon + 1, lt->tm_mday,
-            s / 3600, (s % 3600) / 60, s % 60,
-            (unsigned)tvp->tv_usec);
-    }
-    else
-    {
-        (void)SnortSnprintf(timebuf, TIMEBUF_SIZE,
-            "%02d/%02d-%02d:%02d:%02d.%06u", lt->tm_mon + 1,
-            lt->tm_mday, s / 3600, (s % 3600) / 60, s % 60,
-            (unsigned)tvp->tv_usec);
-    }
-}
-
-/****************************************************************************
- *
- * Function: gmt2local(time_t)
- *
- * Purpose: Figures out how to adjust the current clock reading based on the
- *          timezone you're in.  Ripped off from TCPdump.
- *
- * Arguments: time_t => offset from GMT
- *
- * Returns: offset seconds from GMT
- *
- ****************************************************************************/
+// get offset seconds from GMT
 int gmt2local(time_t t)
 {
     if (t == 0)
@@ -297,17 +208,6 @@ void CreatePidFile(pid_t pid)
         unlink(pid_lockfilename.c_str());
 }
 
-/****************************************************************************
- *
- * Function: ClosePidFile(char *)
- *
- * Purpose:  Releases lock on a PID file
- *
- * Arguments: None
- *
- * Returns: void function
- *
- ****************************************************************************/
 void ClosePidFile()
 {
     if (pid_file)
@@ -322,17 +222,7 @@ void ClosePidFile()
     }
 }
 
-/****************************************************************************
- *
- * Function: SetUidGid()
- *
- * Purpose:  Sets safe UserID and GroupID if needed
- *
- * Arguments: none
- *
- * Returns: void function
- *
- ****************************************************************************/
+// set safe UserID and GroupID, if needed
 bool SetUidGid(int user_id, int group_id)
 {
     // Were any changes requested?
@@ -362,18 +252,7 @@ bool SetUidGid(int user_id, int group_id)
     return true;
 }
 
-/****************************************************************************
- *
- * Function: InitGroups()
- *
- * Purpose:  Sets the groups of the process based on the UserID with the
- *           GroupID added
- *
- * Arguments: none
- *
- * Returns: void function
- *
- ****************************************************************************/
+// set the groups of the process based on the UserID with the GroupID added
 void InitGroups(int user_id, int group_id)
 {
     if ((user_id != -1) && (getuid() == 0))
@@ -442,17 +321,7 @@ void CleanupProtoNames()
     }
 }
 
-/****************************************************************************
- *
- * Function: read_infile(const char* key, const char* file)
- *
- * Purpose: Reads the BPF filters in from a file.  Ripped from tcpdump.
- *
- * Arguments: fname => the name of the file containing the BPF filters
- *
- * Returns: the processed BPF string
- *
- ****************************************************************************/
+// read the BPF filters in from a file, return the processed BPF string
 std::string read_infile(const char* key, const char* fname)
 {
     int fd = open(fname, O_RDONLY);
@@ -525,9 +394,7 @@ static char* GetAbsolutePath(const char* dir, PathBuf& buf)
     return buf;
 }
 
-/**
- * Chroot and adjust the log_dir reference
- */
+// Chroot and adjust the log_dir reference
 bool EnterChroot(std::string& root_dir, std::string& log_dir)
 {
     if (log_dir.empty())
@@ -641,6 +508,64 @@ char* snort_strdup(const char* str)
     return p;
 }
 
+void ts_print(const struct timeval* tvp, char* timebuf, bool yyyymmdd)
+{
+    struct timeval tv;
+    struct timezone tz;
+
+    // if null was passed, use current time
+    if (!tvp)
+    {
+        // manual page (for linux) says tz is never used, so..
+        memset((char*)&tz, 0, sizeof(tz));
+        gettimeofday(&tv, &tz);
+        tvp = &tv;
+    }
+
+    const SnortConfig* sc = SnortConfig::get_conf();
+    int localzone = sc->thiszone;
+
+    // If we're doing UTC, then make sure that the timezone is correct.
+    if (sc->output_use_utc())
+        localzone = 0;
+
+    int s = (tvp->tv_sec + localzone) % SECONDS_PER_DAY;
+    time_t Time = (tvp->tv_sec + localzone) - s;
+
+    struct tm ttm;
+    struct tm* lt = gmtime_r(&Time, &ttm);
+
+    if ( !lt )
+    {
+        (void)SnortSnprintf(timebuf, TIMEBUF_SIZE, "%lu", tvp->tv_sec);
+
+    }
+    else if (sc->output_include_year())
+    {
+        int year = (lt->tm_year >= 100) ? (lt->tm_year - 100) : lt->tm_year;
+
+        (void)SnortSnprintf(timebuf, TIMEBUF_SIZE,
+            "%02d/%02d/%02d-%02d:%02d:%02d.%06u",
+            year, lt->tm_mon + 1, lt->tm_mday,
+            s / 3600, (s % 3600) / 60, s % 60,
+            (unsigned)tvp->tv_usec);
+    }
+    else if (yyyymmdd)
+    {
+        (void)SnortSnprintf(timebuf, TIMEBUF_SIZE,
+            "%04d-%02d-%02d %02d:%02d:%02d.%06u",
+            lt->tm_year + 1900, lt->tm_mon + 1, lt->tm_mday,
+            s / 3600, (s % 3600) / 60, s % 60,
+            (unsigned)tvp->tv_usec);
+    }
+    else
+    {
+        (void)SnortSnprintf(timebuf, TIMEBUF_SIZE,
+            "%02d/%02d-%02d:%02d:%02d.%06u", lt->tm_mon + 1,
+            lt->tm_mday, s / 3600, (s % 3600) / 60, s % 60,
+            (unsigned)tvp->tv_usec);
+    }
+}
 }
 
 #ifdef UNIT_TEST

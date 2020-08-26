@@ -448,7 +448,7 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
         asd->set_ss_application_ids(asd->pick_service_app_id(), asd->pick_ss_client_app_id(),
             asd->pick_ss_payload_app_id(), asd->pick_ss_misc_app_id(),
             asd->pick_ss_referred_payload_app_id(), change_bits);
-        asd->publish_appid_event(change_bits, p->flow);
+        asd->publish_appid_event(change_bits, *p);
         asd->set_session_flags(APPID_SESSION_FUTURE_FLOW_IDED);
 
         if (appidDebug->is_active())
@@ -911,5 +911,5 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
         asd.pick_ss_referred_payload_app_id(), change_bits);
     asd.set_tls_host(change_bits);
 
-    asd.publish_appid_event(change_bits, p->flow);
+    asd.publish_appid_event(change_bits, *p);
 }

@@ -27,6 +27,8 @@
 
 #include "../json_stream.h"
 
+using namespace snort;
+
 TEST_CASE("basic", "[json_stream]")
 {
     std::ostringstream ss;
@@ -90,7 +92,7 @@ TEST_CASE("basic", "[json_stream]")
 
     SECTION("int")
     {
-        js.put("i", 0);
+        js.put("i", (long) 0);
         const char* x = R"-("i": 0)-";
         CHECK(ss.str() == x);
     }

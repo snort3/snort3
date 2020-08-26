@@ -128,14 +128,12 @@ int DirectConnectServiceDetector::tcp_validate(const uint8_t* data, uint16_t siz
         {
             if (memcmp(data, PATTERN1, sizeof(PATTERN1)-1) == 0)
             {
-                printf("maybe first directconnect to hub  detected\n");
                 serviceData->state = CONN_STATE_1;
                 goto inprocess;
             }
 
             if (memcmp(data, PATTERN2, sizeof(PATTERN2)-1) == 0)
             {
-                printf("maybe first dc connect between peers  detected\n");
                 serviceData->state = CONN_STATE_2;
                 goto inprocess;
             }
@@ -154,7 +152,6 @@ int DirectConnectServiceDetector::tcp_validate(const uint8_t* data, uint16_t siz
         break;
 
     case CONN_STATE_1:
-        printf ("ValidateDirectConnectTcp(): state 1 size %d\n", size);
         if (size >= 11)
         {
             if (memcmp(data, PATTERN3, sizeof(PATTERN3)-1) == 0
@@ -162,7 +159,6 @@ int DirectConnectServiceDetector::tcp_validate(const uint8_t* data, uint16_t siz
                 || memcmp(data, PATTERN5, sizeof(PATTERN5)-1) == 0
                 || memcmp(data, PATTERN6, sizeof(PATTERN6)-1) == 0)
             {
-                printf("found directconnect HSUP ADBAS E in second packet\n");
                 goto success;
             }
         }

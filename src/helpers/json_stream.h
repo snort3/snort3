@@ -23,8 +23,11 @@
 // Simple output stream for outputting JSON data.
 
 #include <iostream>
+#include "main/snort_types.h"
 
-class JsonStream
+namespace snort
+{
+class SO_PUBLIC JsonStream
 {
 public:
     JsonStream(std::ostream& o) : out(o) { }
@@ -38,6 +41,7 @@ public:
 
     void put(const char* key);    // null
     void put(const char* key, long val);
+    void put(const char* key, const char* val);
     void put(const char* key, const std::string& val);
     void put(const char* key, double val, int precision);
 
@@ -53,6 +57,6 @@ private:
     unsigned level = 0;
     unsigned level_array = 0;
 };
-
+}
 #endif
 

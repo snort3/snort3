@@ -75,6 +75,9 @@ void Module::show_interval_stats(std::vector<unsigned int, std::allocator<unsign
 void Module::show_stats(){}
 void Module::sum_stats(bool ){}
 void Module::reset_stats() {}
+
+AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
+    StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
 }
 
 SslPatternMatchers::~SslPatternMatchers() { }

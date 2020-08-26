@@ -246,7 +246,6 @@ public:
     size_t size_of() override
     { return sizeof(*this); }
 
-    uint32_t session_id = 0;
     snort::Flow* flow = nullptr;
     AppIdConfig& config;
     std::unordered_map<unsigned, AppIdFlowData*> flow_data;
@@ -391,7 +390,7 @@ public:
         AppidChangeBits& change_bits);
     void set_tp_payload_app_id(snort::Packet& p, AppidSessionDirection dir, AppId app_id,
         AppidChangeBits& change_bits);
-    void publish_appid_event(AppidChangeBits&, snort::Flow*, bool is_http2 = false,
+    void publish_appid_event(AppidChangeBits&, const snort::Packet&, bool is_http2 = false,
         uint32_t http2_stream_index = 0);
 
     inline void set_tp_app_id(AppId app_id)
@@ -561,7 +560,6 @@ private:
     void reinit_session_data(AppidChangeBits& change_bits);
     void delete_session_data(bool free_api = true);
 
-    static THREAD_LOCAL uint32_t appid_flow_data_id;
     bool tp_app_id_deferred = false;
     bool tp_payload_app_id_deferred = false;
 

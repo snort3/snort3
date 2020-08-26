@@ -35,7 +35,7 @@ private:
     void dump(const ConfigData&) override;
 
 private:
-    JsonStream json;
+    snort::JsonStream json;
 };
 
 class JsonTopConfigOutput : public ConfigOutput
@@ -47,7 +47,7 @@ private:
     void dump(const ConfigData&) override;
 
 private:
-    JsonStream json;
+    snort::JsonStream json;
 };
 
 #endif // JSON_CONFIG_OUTPUT_H

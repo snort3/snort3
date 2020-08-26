@@ -54,6 +54,7 @@ public:
 
     AppIdSession* get_appid_session(const Flow& flow);
     const char* get_application_name(AppId app_id, OdpContext& odp_ctxt);
+    const char* get_application_name(AppId app_id, const Flow& flow);
     const char* get_application_name(const Flow& flow, bool from_client);
     AppId get_application_id(const char* appName, const AppIdContext& ctxt);
     uint32_t produce_ha_state(const Flow& flow, uint8_t* buf);

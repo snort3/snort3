@@ -108,8 +108,8 @@ class AppidEvent : public snort::DataEvent
 {
 public:
     AppidEvent(const AppidChangeBits& ac, bool is_http2, uint32_t http2_stream_index,
-        const snort::AppIdSessionApi& api) :
-        ac_bits(ac), is_http2(is_http2), http2_stream_index(http2_stream_index), api(api) {}
+        const snort::AppIdSessionApi& api, const snort::Packet& p) :
+        ac_bits(ac), is_http2(is_http2), http2_stream_index(http2_stream_index), api(api), p(p) {}
 
     const AppidChangeBits& get_change_bitset() const
     { return ac_bits; }
@@ -123,11 +123,15 @@ public:
     const snort::AppIdSessionApi& get_appid_session_api() const
     { return api; }
 
+    const snort::Packet* get_packet() override
+    { return &p; }
+
 private:
     const AppidChangeBits& ac_bits;
     bool is_http2;
     uint32_t http2_stream_index;
     const snort::AppIdSessionApi& api;
+    const snort::Packet& p;
 };
 
 #endif

@@ -136,9 +136,13 @@ public:
         return hsessions.size();
     }
 
+    const std::string& get_session_id() const
+    {
+        return session_id;
+    }
+
 protected:
-    AppIdSessionApi(const AppIdSession* asd, const SfIp& ip) :
-        StashGenericObject(STASH_GENERIC_OBJECT_APPID), asd(asd), initiator_ip(ip) {}
+    AppIdSessionApi(const AppIdSession* asd, const SfIp& ip);
 
 private:
     const AppIdSession* asd = nullptr;
@@ -151,12 +155,15 @@ private:
     snort::SfIp initiator_ip;
     ServiceAppDescriptor service;
     char* tls_host = nullptr;
+    std::string session_id;
 
     // Following two fields are used only for non-http sessions. For HTTP traffic,
     // these fields are maintained inside AppIdHttpSession.
     // Note: RTMP traffic is treated like HTTP in AppId
     ClientAppDescriptor client;
     PayloadAppDescriptor payload;
+
+    static THREAD_LOCAL uint32_t appid_flow_data_id;
 
     void set_ss_application_ids(AppId service, AppId client, AppId payload, AppId misc,
         AppId referred, AppidChangeBits& change_bits);

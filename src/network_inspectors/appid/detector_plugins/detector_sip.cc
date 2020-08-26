@@ -315,15 +315,16 @@ SipServiceDetector* SipEventHandler::service = nullptr;
 
 void SipEventHandler::handle(DataEvent& event, Flow* flow)
 {
+    if (!flow)
+        return;
+
     SipEvent& sip_event = (SipEvent&)event;
-    AppIdSession* asd = nullptr;
+    AppIdSession* asd = appid_api.get_appid_session(*flow);
 
-    if ( flow )
-        asd = appid_api.get_appid_session(*flow);
-
+    const Packet* p = sip_event.get_packet();
+    assert(p);
     if ( !asd )
     {
-        const Packet* p = sip_event.get_packet();
         IpProtocol protocol = p->is_tcp() ? IpProtocol::TCP : IpProtocol::UDP;
         AppidSessionDirection direction = p->is_from_client() ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
         AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
@@ -333,7 +334,7 @@ void SipEventHandler::handle(DataEvent& event, Flow* flow)
     AppidChangeBits change_bits;
     client_handler(sip_event, *asd, change_bits);
     service_handler(sip_event, *asd, change_bits);
-    asd->publish_appid_event(change_bits, flow);
+    asd->publish_appid_event(change_bits, *p);
 }
 
 void SipEventHandler::client_handler(SipEvent& sip_event, AppIdSession& asd,

@@ -29,6 +29,7 @@
 
 #include <cassert>
 
+#include "detection/detection_engine.h"
 #include "managers/inspector_manager.h"
 #include "app_info_table.h"
 #include "appid_debug.h"
@@ -193,7 +194,9 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     else
         asd->set_application_ids_service(APP_ID_HTTP2, change_bits);
 
-    asd->publish_appid_event(change_bits, flow, http_event->get_is_http2(),
+    Packet* p = DetectionEngine::get_current_packet();
+    assert(p);
+    asd->publish_appid_event(change_bits, *p, http_event->get_is_http2(),
         asd->get_api().get_hsessions_size() - 1);
 }
 

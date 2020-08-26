@@ -25,6 +25,7 @@
 
 #include "appid_api.h"
 
+#include "detection/detection_engine.h"
 #include "framework/inspector.h"
 #include "managers/inspector_manager.h"
 #include "utils/util.h"
@@ -54,6 +55,25 @@ AppIdSession* AppIdApi::get_appid_session(const Flow& flow)
 const char* AppIdApi::get_application_name(AppId app_id, OdpContext& odp_ctxt)
 {
     return odp_ctxt.get_app_info_mgr().get_app_name(app_id);
+}
+
+const char* AppIdApi::get_application_name(AppId app_id, const Flow& flow)
+{
+    const char* app_name = nullptr;
+    AppIdSession* asd = get_appid_session(flow);
+    if (asd)
+    {
+        // Skip sessions using old odp context after odp reload
+        AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
+        if (inspector and (&(inspector->get_ctxt().get_odp_ctxt()) != &(asd->get_odp_ctxt())))
+            return nullptr;
+
+        if (app_id == APP_ID_UNKNOWN)
+            return "unknown";
+        app_name = asd->get_odp_ctxt().get_app_info_mgr().get_app_name(app_id);
+    }
+
+    return app_name;
 }
 
 const char* AppIdApi::get_application_name(const Flow& flow, bool from_client)
@@ -300,7 +320,9 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name,
         asd->set_ss_application_ids(client_id, payload_id, change_bits);
         asd->set_tls_host(change_bits);
 
-        asd->publish_appid_event(change_bits, flow);
+        Packet* p = DetectionEngine::get_current_packet();
+        assert(p);
+        asd->publish_appid_event(change_bits, *p);
     }
     else
     {

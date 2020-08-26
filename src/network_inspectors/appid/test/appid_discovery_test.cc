@@ -103,6 +103,8 @@ void IpApi::set(const SfIp& sip, const SfIp& dip)
 }
 } // namespace ip
 
+AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
+    StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
 } // namespace snort
 
 // Stubs for publish
@@ -204,10 +206,10 @@ AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol,
     return nullptr;
 }
 
-void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, Flow* flow, bool, uint32_t)
+void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packet& p, bool, uint32_t)
 {
-    AppidEvent app_event(change_bits, false, 0, this->get_api());
-    DataBus::publish(APPID_EVENT_ANY_CHANGE, app_event, flow);
+    AppidEvent app_event(change_bits, false, 0, this->get_api(), p);
+    DataBus::publish(APPID_EVENT_ANY_CHANGE, app_event, p.flow);
 }
 
 void AppIdHttpSession::set_tun_dest(){}

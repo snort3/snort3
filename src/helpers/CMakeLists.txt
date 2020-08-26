@@ -16,6 +16,7 @@ set (HELPERS_INCLUDES
     boyer_moore_search.h
     literal_search.h
     scratch_allocator.h
+    json_stream.h
 )
 
 add_library (helpers OBJECT

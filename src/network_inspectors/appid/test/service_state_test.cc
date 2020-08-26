@@ -52,6 +52,9 @@ char* snort_strdup(const char* str)
     return p;
 }
 time_t packet_time() { return std::time(0); }
+
+AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
+    StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
 }
 
 // Stubs for AppInfoManager
