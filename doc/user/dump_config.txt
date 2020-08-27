@@ -4,7 +4,7 @@ for the values that aren't configured.
 
 In the dump mode Snort validates the config (similar to option -T)
 and suppresses unrelated messages going to stdout
-(but not stderr one like ParseWarnings).
+(configuration warnings and errors are still printed to stderr).
 
 The dump mode is activated by the following options:
 --dump-config-text, --dump-config=all, --dump-config=top.
