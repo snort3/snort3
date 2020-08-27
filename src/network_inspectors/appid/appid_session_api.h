@@ -188,9 +188,12 @@ private:
 
     void set_tls_host(const char* host)
     {
-        if (tls_host)
-            snort_free(tls_host);
-        tls_host = snort_strdup(host);
+        if (host)
+        {
+            if (tls_host)
+                snort_free(tls_host);
+            tls_host = snort_strdup(host);
+        }
     }
 
     friend AppIdSession;

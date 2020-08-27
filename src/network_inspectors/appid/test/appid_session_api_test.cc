@@ -131,10 +131,14 @@ TEST(appid_session_api, get_tls_host)
 {
     AppidChangeBits change_bits;
     change_bits.set(APPID_TLSHOST_BIT);
+    mock_session->tsession->set_tls_host(nullptr, 0, change_bits);
+    mock_session->set_tls_host(change_bits);
+    const char* val = mock_session->get_api().get_tls_host();                                       
+    STRCMP_EQUAL(val, nullptr);                   
     char* host = snort_strdup(APPID_UT_TLS_HOST);
     mock_session->tsession->set_tls_host(host, 0, change_bits);
     mock_session->set_tls_host(change_bits);
-    const char* val = mock_session->get_api().get_tls_host();
+    val = mock_session->get_api().get_tls_host();
     STRCMP_EQUAL(val, APPID_UT_TLS_HOST);
 }
 
