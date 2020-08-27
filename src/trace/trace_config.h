@@ -44,6 +44,7 @@ public:
 public:
     snort::TraceLoggerFactory* logger_factory = nullptr;
     snort::PacketConstraints* constraints = nullptr;
+    bool log_ntuple = false;
 
 private:
     Traces traces;

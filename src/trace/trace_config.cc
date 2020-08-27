@@ -47,6 +47,7 @@ TraceConfig::TraceConfig(const TraceConfig& other)
     : TraceConfig()
 {
     traces = other.traces;
+    log_ntuple = other.log_ntuple;
     if ( other.constraints )
         constraints = new PacketConstraints(*other.constraints);
 }

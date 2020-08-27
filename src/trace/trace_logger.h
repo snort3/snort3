@@ -33,6 +33,12 @@ public:
 
     virtual void log(const char* log_msg, const char* name,
         uint8_t log_level, const char* trace_option, const Packet* p) = 0;
+
+    void set_ntuple(bool flag)
+    { log_ntuple = flag; }
+
+protected:
+    bool log_ntuple = false;
 };
 
 class TraceLoggerFactory

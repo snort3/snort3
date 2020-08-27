@@ -27,12 +27,40 @@
 #include <syslog.h>
 
 #include "main/thread.h"
+#include "protocols/packet.h"
 
 using namespace snort;
 
 //-----------------------------------------------
 //  Loggers
 //-----------------------------------------------
+
+static std::string get_ntuple(bool log_ntuple, const Packet* p)
+{
+    if ( !log_ntuple or !p or !p->has_ip() )
+        return "";
+
+    SfIpString src_addr;
+    SfIpString dst_addr;
+    uint16_t src_port = 0;
+    uint16_t dst_port = 0;
+    std::stringstream ss;
+
+    p->ptrs.ip_api.get_src()->ntop(src_addr);
+    p->ptrs.ip_api.get_dst()->ntop(dst_addr);
+
+    if ( p->proto_bits & (PROTO_BIT__TCP | PROTO_BIT__UDP) )
+    {
+        src_port = p->ptrs.sp;
+        dst_port = p->ptrs.dp;
+    }
+
+    ss << src_addr << " " << src_port << " -> " << dst_addr << " " << dst_port << " ";
+    ss << unsigned(p->get_ip_proto_next()) << " ";
+    ss << "AS=" << p->pkth->address_space_id << ":";
+
+    return ss.str();
+}
 
 // Stdout
 
@@ -68,10 +96,10 @@ StdoutTraceLogger::StdoutTraceLogger()
 }
 
 void StdoutTraceLogger::log(const char* log_msg, const char* name,
-    uint8_t log_level, const char* trace_option, const Packet*)
+    uint8_t log_level, const char* trace_option, const Packet* p)
 {
-    fprintf(file, "%c%u:%s:%s:%d: %s", thread_type, instance_id, name,
-        trace_option, log_level, log_msg);
+    fprintf(file, "%c%u:%s%s:%s:%d: %s", thread_type, instance_id,
+        get_ntuple(log_ntuple, p).c_str(), name, trace_option, log_level, log_msg);
 }
 
 // Syslog
@@ -93,9 +121,10 @@ SyslogTraceLogger::SyslogTraceLogger()
 { }
 
 void SyslogTraceLogger::log(const char* log_msg, const char* name,
-    uint8_t log_level, const char* trace_option, const Packet*)
+    uint8_t log_level, const char* trace_option, const Packet* p)
 {
-    syslog(priority, "%s:%s:%d: %s", name, trace_option, log_level, log_msg);
+    syslog(priority, "%s%s:%s:%d: %s", get_ntuple(log_ntuple, p).c_str(),
+        name, trace_option, log_level, log_msg);
 }
 
 //-----------------------------------------------

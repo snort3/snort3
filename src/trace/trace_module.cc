@@ -117,10 +117,13 @@ void TraceModule::generate_params()
         { "modules", Parameter::PT_TABLE, modules_params.data(), nullptr, "modules trace option" },
 
         { "constraints", Parameter::PT_TABLE, trace_constraints_params,
-            nullptr, "trace filtering constraints" },
+          nullptr, "trace filtering constraints" },
 
         { "output", Parameter::PT_ENUM, "stdout | syslog", nullptr,
-            "output method for trace log messages" },
+          "output method for trace log messages" },
+
+        { "log_ntuple", Parameter::PT_BOOL, nullptr, "false",
+          "use extended trace output with n-tuple packet info" },
 
         { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
     };
@@ -159,6 +162,11 @@ bool TraceModule::set(const char* fqn, Value& v, SnortConfig*)
             default:
                 return false;
         }
+        return true;
+    }
+    else if ( v.is("log_ntuple") )
+    {
+        trace_parser->get_trace_config()->log_ntuple = v.get_bool();
         return true;
     }
     else if ( strstr(fqn, "trace.modules.") == fqn )
