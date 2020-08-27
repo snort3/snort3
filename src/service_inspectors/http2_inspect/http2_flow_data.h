@@ -96,6 +96,16 @@ public:
     Http2ConnectionSettings* get_connection_settings(const HttpCommon::SourceId source_id)
     { return &connection_settings[source_id]; }
 
+    bool is_mid_frame(const HttpCommon::SourceId source_id = HttpCommon::SRC_SERVER)
+    { return (continuation_expected[source_id] || reading_frame[source_id]); }
+
+#ifdef UNIT_TEST
+    void set_reading_frame(HttpCommon::SourceId source_id, bool val)
+    { reading_frame[source_id] = val;}
+    void set_continuation_expected(HttpCommon::SourceId source_id, bool val)
+    { continuation_expected[source_id] = val;}
+#endif
+
 protected:
     snort::Flow* flow;
     HttpInspect* const hi;
@@ -155,6 +165,10 @@ protected:
     uint32_t remaining_frame_octets[2] = { 0, 0 };
     uint8_t padding_octets_in_frame[2] = { 0, 0 };
     bool get_padding_len[2] = { false, false };
+
+    // used to signal frame wasn't fully read yet,
+    // currently used by payload injector
+    bool reading_frame[2] = { false, false };
 
 #ifdef REG_TEST
     static uint64_t instance_count;

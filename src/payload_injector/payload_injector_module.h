@@ -21,6 +21,7 @@
 #ifndef PAYLOAD_INJECTOR_MODULE_H
 #define PAYLOAD_INJECTOR_MODULE_H
 
+#include "framework/codec.h"
 #include "framework/module.h"
 
 namespace snort
@@ -32,6 +33,8 @@ struct PayloadInjectorCounts
 {
     PegCount http_injects;
     PegCount http2_injects;
+    PegCount http2_translate_err;
+    PegCount http2_mid_frame;
 };
 
 extern THREAD_LOCAL PayloadInjectorCounts payload_injection_stats;
@@ -41,9 +44,14 @@ enum InjectionReturnStatus : int8_t
     INJECTION_SUCCESS = 1,
     ERR_INJECTOR_NOT_CONFIGURED = -1,
     ERR_STREAM_NOT_ESTABLISHED = -2,
-    ERR_HTTP2_STREAM_ID_0 = -3,
-    ERR_UNIDENTIFIED_PROTOCOL = -4,
-    ERR_PAGE_TRANSLATION = -4,
+    ERR_UNIDENTIFIED_PROTOCOL = -3,
+    ERR_HTTP2_STREAM_ID_0 = -4,
+    ERR_PAGE_TRANSLATION = -5,
+    ERR_HTTP2_MID_FRAME = -6,
+    ERR_HTTP2_HDR_FIELD_VAL_LEN = -7,
+    ERR_TRANSLATED_HDRS_SIZE = -8,
+    ERR_HTTP2_BODY_SIZE = -9,
+    // Update InjectionErrorToString when adding/removing error codes
 };
 
 struct InjectionControl
@@ -65,8 +73,11 @@ public:
 
     bool end(const char*, int, snort::SnortConfig*) override;
 
-    static InjectionReturnStatus inject_http_payload(snort::Packet* p, const InjectionControl& control);
+    static InjectionReturnStatus inject_http_payload(snort::Packet* p, const
+        InjectionControl& control);
 
+    static const char* get_err_string(InjectionReturnStatus status);
+    
 #ifdef UNIT_TEST
     void set_configured(bool val) { configured = val; }
 #endif
@@ -74,10 +85,14 @@ public:
 private:
     static bool configured;
 
+    static InjectionReturnStatus inject_http2_payload(snort::Packet* p, const
+         InjectionControl& control, snort::EncodeFlags df);
+
 #ifdef UNIT_TEST
+
 public:
 #endif
-    static InjectionReturnStatus get_http2_payload(InjectionControl control, uint8_t *& http2_payload, uint32_t & payload_len);
+    static InjectionReturnStatus get_http2_payload(InjectionControl control, uint8_t*& http2_payload, uint32_t& payload_len);
 };
 
 #endif

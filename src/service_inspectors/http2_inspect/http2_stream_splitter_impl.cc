@@ -142,6 +142,7 @@ StreamSplitter::Status Http2StreamSplitter::non_data_scan(Http2FlowData* session
     }
 
     // Have the full frame
+    session_data->reading_frame[source_id] = false;
     StreamSplitter::Status status = StreamSplitter::FLUSH;
     switch (type)
     {
@@ -215,6 +216,7 @@ bool Http2StreamSplitter::read_frame_hdr(Http2FlowData* session_data, const uint
         {
             // Scanning a new frame
             session_data->num_frame_headers[source_id] += 1;
+            session_data->reading_frame[source_id] = true;
         }
 
         // The first nine bytes are the frame header. But all nine might not all be

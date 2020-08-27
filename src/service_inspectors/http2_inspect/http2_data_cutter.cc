@@ -110,6 +110,9 @@ bool Http2DataCutter::http2_scan(const uint8_t* data, uint32_t length,
         }
     }
 
+    if (data_state == FULL_FRAME)
+        session_data->reading_frame[source_id] = false;        
+
     frame_bytes_seen += (cur_pos - leftover_bytes - data_offset - leftover_padding);
     *flush_offset = data_offset = cur_pos;
     session_data->scan_remaining_frame_octets[source_id] = frame_length - frame_bytes_seen;

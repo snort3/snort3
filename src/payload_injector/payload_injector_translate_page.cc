@@ -19,11 +19,11 @@
 // payload_injector_translate_page.cc author Maya Dagon <mdagon@cisco.com>
 
 // Translates HTTP 1.1 block/redirect page to HTTP2.
-// 1. Headers are separated by /r/n
-// 2. Headers end with /r/n
+// 1. Headers are separated by \r\n or \n
+// 2. Headers end with \r\n or \n
 // 3. Must have headers and body
 // 4. Translated header length <= 2000
-// 5. Supported: HTTP/1.1 403, HTTP/1.1 307, Connection: close,
+// 5. Supported: HTTP/1.1 200, HTTP/1.1 403, HTTP/1.1 307, Connection: close,
 //     Content-Length: , Content-Type: , Set-Cookie: , Location:
 
 #ifdef HAVE_CONFIG_H
@@ -35,10 +35,14 @@
 #include "service_inspectors/http2_inspect/http2_enum.h"
 #include "utils/util.h"
 
+using namespace Http2Enums;
+
 static const char status_403[] = "HTTP/1.1 403";
 static uint8_t status_403_h2[] = { 0, 7, ':', 's', 't', 'a', 't', 'u', 's', 3, '4', '0', '3' };
 static const char status_307[] = "HTTP/1.1 307";
 static uint8_t status_307_h2[] = { 0, 7, ':', 's', 't', 'a', 't', 'u', 's', 3, '3', '0', '7' };
+static const char status_200[] = "HTTP/1.1 200";
+static uint8_t status_200_h2[] =  { 0x88 };
 static const char connection[] = "Connection: close";
 static const uint8_t connection_h2[] = { 0, 10, 'c','o','n','n','e','c','t','i','o','n',
                                          5, 'c', 'l', 'o', 's', 'e' };
@@ -50,10 +54,10 @@ static const char location[] = "Location: ";
 static const uint32_t max_hdr_size = 2000;
 
 // Write literal header field
-static InjectionReturnStatus write_indexed(char* hdr, uint32_t len, uint8_t*& out,
+static InjectionReturnStatus write_indexed(const uint8_t* hdr, uint32_t len, uint8_t*& out,
     uint32_t& out_free_space, const uint8_t* ind, uint8_t ind_size)
 {
-    const char* sep = (char*)memchr(hdr,':',len);
+    const uint8_t* sep = (const uint8_t*)memchr(hdr,':',len);
     assert(sep != nullptr);
     const uint32_t skip_len = strlen(": ");
     assert((sep - hdr) >= skip_len);
@@ -61,7 +65,10 @@ static InjectionReturnStatus write_indexed(char* hdr, uint32_t len, uint8_t*& ou
     const uint8_t max_val_len = (1<<7) - 1; // FIXIT-E bigger than this will have to be 7 bit
                                             // prefix
                                             // encoded - currently not supported
-    if ((val_len == 0) || (val_len > max_val_len))
+    if (val_len > max_val_len)
+        return ERR_HTTP2_HDR_FIELD_VAL_LEN;
+
+    if (val_len == 0)
         return ERR_PAGE_TRANSLATION;
 
     if (out_free_space < (val_len + 1 + ind_size))
@@ -69,7 +76,7 @@ static InjectionReturnStatus write_indexed(char* hdr, uint32_t len, uint8_t*& ou
 #ifndef UNIT_TEST
         assert(false);  // increase max_hdr_size
 #endif
-        return ERR_PAGE_TRANSLATION;
+        return ERR_TRANSLATED_HDRS_SIZE;
     }
 
     memcpy(out, ind, ind_size);
@@ -91,7 +98,7 @@ static InjectionReturnStatus write_translation(uint8_t*& out, uint32_t& out_free
 #ifndef UNIT_TEST
         assert(false);  // increase max_hdr_size
 #endif
-        return ERR_PAGE_TRANSLATION;
+        return ERR_TRANSLATED_HDRS_SIZE;
     }
 
     memcpy(out, translation, size);
@@ -101,7 +108,7 @@ static InjectionReturnStatus write_translation(uint8_t*& out, uint32_t& out_free
     return INJECTION_SUCCESS;
 }
 
-static InjectionReturnStatus translate_hdr_field(char* hdr, uint32_t len, uint8_t*& out,
+static InjectionReturnStatus translate_hdr_field(const uint8_t* hdr, uint32_t len, uint8_t*& out,
     uint32_t& out_free_space)
 {
     if (len > strlen(status_403) && memcmp(hdr, status_403, strlen(status_403)) == 0)
@@ -110,7 +117,11 @@ static InjectionReturnStatus translate_hdr_field(char* hdr, uint32_t len, uint8_
     }
     else if (len > strlen(status_307) && memcmp(hdr, status_307, strlen(status_307)) == 0)
     {
-        return write_translation(out, out_free_space,status_307_h2, sizeof(status_307_h2));
+        return write_translation(out, out_free_space, status_307_h2, sizeof(status_307_h2));
+    }
+    else if (len > strlen(status_200) && memcmp(hdr, status_200, strlen(status_200)) == 0)
+    {
+        return write_translation(out, out_free_space, status_200_h2, sizeof(status_200_h2));
     }
     else if (len == strlen(connection) && memcmp(hdr, connection, strlen(connection))==0)
     {
@@ -143,37 +154,46 @@ static InjectionReturnStatus translate_hdr_field(char* hdr, uint32_t len, uint8_
         return ERR_PAGE_TRANSLATION;
 }
 
-static InjectionReturnStatus get_http2_hdr(char* http_page, uint32_t len,
+static InjectionReturnStatus get_http2_hdr(const uint8_t* http_page, uint32_t len,
     uint8_t* http2_hdr, uint32_t& hdr_len, uint32_t& body_offset)
 {
     InjectionReturnStatus status = ERR_PAGE_TRANSLATION;
     body_offset = 0;
 
     uint32_t hdr_free_space = max_hdr_size;
-    char* page_cur = http_page;
+    const uint8_t* page_cur = http_page;
     uint8_t* hdr_cur = http2_hdr;
     while ((page_cur - http_page) < len)
     {
-        char* cr_newline = strstr(page_cur, "\r\n");
-        if (cr_newline != nullptr)
+        const uint8_t* newline = (const uint8_t*)memchr(page_cur, '\n', len - (page_cur - http_page));
+        if (newline != nullptr)
         {
-            if (cr_newline == page_cur)
+            // FIXIT-E only \r\n should be supported
+            if (newline == page_cur || (newline == page_cur + 1 && *page_cur == '\r'))
             {
                 // reached end of headers
-                if ((page_cur - http_page + 2) < len)
-                    body_offset = page_cur - http_page + 2;
+                if ((newline + 1 - http_page) < len)
+                    body_offset = newline + 1 - http_page;
                 break;
             }
-            status = translate_hdr_field(page_cur, cr_newline-page_cur, hdr_cur, hdr_free_space);
+            if (*(newline - 1) == '\r')
+                status = translate_hdr_field(page_cur, newline - page_cur - 1, hdr_cur,
+                    hdr_free_space);
+            else
+                status = translate_hdr_field(page_cur, newline - page_cur, hdr_cur,
+                    hdr_free_space);
             if (status != INJECTION_SUCCESS)
                 break;
-            page_cur = cr_newline + 2;
+            page_cur = newline + 1;
         }
         else
             break;
     }
 
-    if (status == ERR_PAGE_TRANSLATION || body_offset == 0)
+    if (status != INJECTION_SUCCESS)
+        return status;
+
+    if (body_offset == 0)
         return ERR_PAGE_TRANSLATION;
 
     hdr_len = hdr_cur - http2_hdr;
@@ -211,35 +231,27 @@ InjectionReturnStatus PayloadInjectorModule::get_http2_payload(InjectionControl 
     if (control.http_page == nullptr || control.http_page_len == 0)
         return ERR_PAGE_TRANSLATION;
 
-    // create a string version to run with strstr
-    char* page_string = (char*)snort_alloc(control.http_page_len + 1);
-    memcpy(page_string, control.http_page, control.http_page_len);
-    page_string[control.http_page_len] = '\0';
-
     uint8_t http2_hdr[max_hdr_size];
     uint32_t hdr_len, body_offset;
-    InjectionReturnStatus status = get_http2_hdr(page_string, control.http_page_len, http2_hdr,
-        hdr_len, body_offset);
+    InjectionReturnStatus status = get_http2_hdr(control.http_page, control.http_page_len,
+        http2_hdr, hdr_len, body_offset);
 
-    snort_free(page_string);
-
-    if (status == ERR_PAGE_TRANSLATION)
+    if (status != INJECTION_SUCCESS)
         return status;
 
     const uint32_t body_len = control.http_page_len - body_offset;
     // FIXIT-E support larger body size
     if (body_len > 1<<14)
-        return ERR_PAGE_TRANSLATION;
+        return ERR_HTTP2_BODY_SIZE;
 
-    payload_len = 2*Http2Enums::FRAME_HEADER_LENGTH + hdr_len + body_len;
+    payload_len = 2*FRAME_HEADER_LENGTH + hdr_len + body_len;
     http2_payload = (uint8_t*)snort_alloc(payload_len);
 
     uint8_t* http2_payload_cur = http2_payload;
-    // FIXIT-E update flags
-    write_frame_hdr(http2_payload_cur, hdr_len, Http2Enums::FT_HEADERS, 0, control.stream_id);
+    write_frame_hdr(http2_payload_cur, hdr_len, FT_HEADERS, END_HEADERS, control.stream_id);
     memcpy(http2_payload_cur, http2_hdr, hdr_len);
     http2_payload_cur += hdr_len;
-    write_frame_hdr(http2_payload_cur, body_len, Http2Enums::FT_DATA, 0, control.stream_id);
+    write_frame_hdr(http2_payload_cur, body_len, FT_DATA, END_STREAM, control.stream_id);
     memcpy(http2_payload_cur, control.http_page + body_offset, body_len);
 
     return INJECTION_SUCCESS;
