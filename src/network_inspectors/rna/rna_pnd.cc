@@ -31,10 +31,9 @@
 #include "protocols/arp.h"
 #include "protocols/bpdu.h"
 #include "protocols/icmp4.h"
-#include "protocols/packet.h"
 #include "protocols/protocol_ids.h"
-#include "protocols/tcp.h"
 
+#include "rna_app_discovery.h"
 #include "rna_fingerprint_tcp.h"
 #include "rna_logger_common.h"
 
@@ -46,44 +45,9 @@ using namespace snort;
 using namespace snort::bpdu;
 using namespace std;
 
-static inline bool is_eligible_packet(const Packet* p)
+void RnaPnd::analyze_appid_changes(DataEvent& event)
 {
-    if ( p->has_ip() or
-        memcmp(layer::get_eth_layer(p)->ether_src, zero_mac, MAC_SIZE) )
-        return true;
-    return false;
-}
-
-static inline bool is_eligible_ip(const Packet* p)
-{
-    // If payload needs to be inspected ever, allow rebuilt packet when is_proxied
-    if ( !p->has_ip() or p->is_rebuilt() or !p->flow )
-        return false;
-    return true;
-}
-
-static inline bool is_eligible_tcp(const Packet* p)
-{
-    if ( !is_eligible_ip(p) or p->ptrs.tcph->is_rst() )
-        return false;
-    return true;
-}
-
-static inline bool is_eligible_udp(const Packet* p)
-{
-    if ( !is_eligible_ip(p) )
-        return false;
-    if ( p->is_from_client() )
-    {
-        const SfIp* src = p->ptrs.ip_api.get_src();
-        const SfIp* dst = p->ptrs.ip_api.get_dst();
-        // FIXIT-M this code checking the v6 address unconditionally is almost certainly wrong,
-        //          especially since it's looking for an IPv4-specific protocol
-        if ( !src->is_set() and ((const uint8_t *) dst->get_ip6_ptr())[0] == 0XFF and
-            p->ptrs.sp == 68 and p->ptrs.dp == 67 )
-            return false; // skip BOOTP
-    }
-    return true;
+    RnaAppDiscovery::process(static_cast<AppidEvent*>(&event), filter, conf, logger);
 }
 
 void RnaPnd::analyze_flow_icmp(const Packet* p)
@@ -182,12 +146,12 @@ void RnaPnd::discover_network(const Packet* p, uint8_t ttl)
 
     if ( new_mac and !new_host )
         logger.log(RNA_EVENT_CHANGE, CHANGE_MAC_ADD, p, &ht,
-            src_ip_ptr, src_mac, packet_time(), nullptr, ht->get_hostmac(src_mac));
+            src_ip_ptr, src_mac, ht->get_hostmac(src_mac), packet_time());
 
     if ( ht->update_mac_ttl(src_mac, ttl) )
     {
         logger.log(RNA_EVENT_CHANGE, CHANGE_MAC_INFO, p, &ht,
-            src_ip_ptr, src_mac, packet_time(), nullptr, ht->get_hostmac(src_mac));
+            src_ip_ptr, src_mac, ht->get_hostmac(src_mac), packet_time());
 
         HostMac* hm = ht->get_max_ttl_hostmac();
         if (hm and hm->primary and ht->get_hops())
@@ -201,14 +165,21 @@ void RnaPnd::discover_network(const Packet* p, uint8_t ttl)
     if ( ptype > to_utype(ProtocolId::ETHERTYPE_MINIMUM) )
     {
         if ( ht->add_network_proto(ptype) )
-            logger.log(RNA_EVENT_NEW, NEW_NET_PROTOCOL, p, &ht, src_ip_ptr, src_mac,
-                packet_time(), nullptr, nullptr, ptype);
+            logger.log(RNA_EVENT_NEW, NEW_NET_PROTOCOL, p, &ht, ptype, src_mac, src_ip_ptr,
+                packet_time());
     }
 
     ptype = to_utype(p->get_ip_proto_next());
     if ( ht->add_xport_proto(ptype) )
-        logger.log(RNA_EVENT_NEW, NEW_XPORT_PROTOCOL, p, &ht, src_ip_ptr, src_mac,
-            packet_time(), nullptr, nullptr, ptype);
+        logger.log(RNA_EVENT_NEW, NEW_XPORT_PROTOCOL, p, &ht, ptype, src_mac, src_ip_ptr,
+            packet_time());
+
+    if ( p->flow->two_way_traffic() )
+    {
+        auto proto = p->get_ip_proto_next();
+        if ( proto == IpProtocol::TCP or proto == IpProtocol::UDP )
+            RnaAppDiscovery::discover_service(p, proto, ht, src_ip_ptr, src_mac, conf, logger);
+    }
 
     if ( !new_host )
     {
@@ -225,10 +196,7 @@ void RnaPnd::discover_network(const Packet* p, uint8_t ttl)
         const TcpFingerprint* tfp = processor->get(p, rna_flow);
 
         if (tfp && ht->add_tcp_fingerprint(tfp->fpid))
-        {
-            logger.log(RNA_EVENT_NEW, NEW_OS, p, &ht, src_ip_ptr,
-                src_mac, 0, nullptr, nullptr, ptype, tfp);
-        }
+            logger.log(RNA_EVENT_NEW, NEW_OS, p, &ht, src_ip_ptr, src_mac, tfp);
     }
 }
 
@@ -260,8 +228,7 @@ void RnaPnd::generate_change_vlan_update(RnaTracker *rt, const Packet* p,
             update_vlan(p, hm);
 
         rt->get()->update_vlan(vh->vth_pri_cfi_vlan, vh->vth_proto);
-        logger.log(RNA_EVENT_CHANGE, CHANGE_VLAN_TAG, p, rt, nullptr,
-            src_mac, rt->get()->get_last_seen());
+        logger.log(RNA_EVENT_CHANGE, CHANGE_VLAN_TAG, p, rt, nullptr, src_mac, packet_time());
     }
 }
 
@@ -280,8 +247,7 @@ void RnaPnd::generate_change_vlan_update(RnaTracker *rt, const Packet* p,
     {
         rt->get()->update_vlan(vh->vth_pri_cfi_vlan, vh->vth_proto);
         logger.log(RNA_EVENT_CHANGE, CHANGE_VLAN_TAG, p, rt,
-            (const struct in6_addr*) src_ip->get_ip6_ptr(),
-            src_mac, rt->get()->get_last_seen());
+            (const struct in6_addr*) src_ip->get_ip6_ptr(), src_mac, packet_time());
     }
 }
 
@@ -295,8 +261,8 @@ void RnaPnd::generate_change_host_update(RnaTracker* ht, const Packet* p,
     uint32_t last_event = (*ht)->get_last_event();
     time_t timestamp = sec - update_timeout;
     if ( last_seen > last_event && (time_t) last_event + update_timeout <= sec )
-        logger.log(RNA_EVENT_CHANGE, CHANGE_HOST_UPDATE, p, ht,
-        (const struct in6_addr*) src_ip->get_ip6_ptr(), src_mac, last_seen, (void*) &timestamp);
+        logger.log(RNA_EVENT_CHANGE, CHANGE_HOST_UPDATE, p, src_mac,
+            (const struct in6_addr*) src_ip->get_ip6_ptr(), ht, last_seen, (void*) &timestamp);
     // FIXIT-M: deal with host service hits.
 }
 
@@ -323,8 +289,8 @@ void RnaPnd::generate_change_host_update_eth(HostTrackerMac* mt, const Packet* p
 
     if ( last_seen > last_event && (time_t) last_event + update_timeout <= sec )
     {
-        logger.log(RNA_EVENT_CHANGE, CHANGE_HOST_UPDATE, p, &rt,
-            nullptr, src_mac, last_seen, (void*) &timestamp);
+        logger.log(RNA_EVENT_CHANGE, CHANGE_HOST_UPDATE, p, src_mac, nullptr,
+            &rt, last_seen, (void*) &timestamp);
 
         mt->update_last_event(sec);
     }
@@ -384,8 +350,7 @@ void RnaPnd::generate_new_host_mac(const Packet* p, RnaTracker ht, bool discover
         {
             if ( hm_ptr->add_network_proto(ntype) )
             {
-                logger.log(RNA_EVENT_NEW, NEW_NET_PROTOCOL, p, &ht, nullptr, mk.mac_addr,
-                    0, nullptr, nullptr, ntype);
+                logger.log(RNA_EVENT_NEW, NEW_NET_PROTOCOL, p, &ht, ntype, mk.mac_addr);
                 hm_ptr->update_last_event(p->pkth->ts.tv_sec);
             }
         }
@@ -397,8 +362,7 @@ void RnaPnd::generate_new_host_mac(const Packet* p, RnaTracker ht, bool discover
                 ntype = ((const RNA_LLC*) lyr.start)->s.proto;
                 if ( hm_ptr->add_network_proto(ntype) )
                 {
-                    logger.log(RNA_EVENT_NEW, NEW_NET_PROTOCOL, p, &ht, nullptr, mk.mac_addr,
-                        0, nullptr, nullptr, ntype);
+                    logger.log(RNA_EVENT_NEW, NEW_NET_PROTOCOL, p, &ht, ntype, mk.mac_addr);
                     hm_ptr->update_last_event(p->pkth->ts.tv_sec);
                 }
             }
@@ -509,15 +473,13 @@ int RnaPnd::discover_network_arp(const Packet* p, RnaTracker* ht_ref)
     if ( ht->add_mac(src_mac, 0, 0) )
     {
         logger.log(RNA_EVENT_CHANGE, CHANGE_MAC_ADD, p, ht_ref,
-            (const struct in6_addr*) spa.get_ip6_ptr(), src_mac,
-            0, nullptr, ht->get_hostmac(src_mac));
+            (const struct in6_addr*) spa.get_ip6_ptr(), src_mac, ht->get_hostmac(src_mac));
         hm_ptr->update_last_event(p->pkth->ts.tv_sec);
     }
     else if (ht->make_primary(src_mac))
     {
         logger.log(RNA_EVENT_CHANGE, CHANGE_MAC_INFO, p, ht_ref,
-            (const struct in6_addr*) spa.get_ip6_ptr(), src_mac,
-            0, nullptr, ht->get_hostmac(src_mac));
+            (const struct in6_addr*) spa.get_ip6_ptr(), src_mac, ht->get_hostmac(src_mac));
         hm_ptr->update_last_event(p->pkth->ts.tv_sec);
     }
 
@@ -526,8 +488,7 @@ int RnaPnd::discover_network_arp(const Packet* p, RnaTracker* ht_ref)
 
     if ( hm_ptr->add_network_proto(ntype) )
     {
-        logger.log(RNA_EVENT_NEW, NEW_NET_PROTOCOL, p, &ht, nullptr, src_mac,
-            0, nullptr, nullptr, ntype);
+        logger.log(RNA_EVENT_NEW, NEW_NET_PROTOCOL, p, &ht, ntype, src_mac);
         hm_ptr->update_last_event(p->pkth->ts.tv_sec);
     }
 
@@ -535,8 +496,7 @@ int RnaPnd::discover_network_arp(const Packet* p, RnaTracker* ht_ref)
     {
         ht->update_hops(0);
         logger.log(RNA_EVENT_CHANGE, CHANGE_HOPS, p, ht_ref,
-            (const struct in6_addr*) spa.get_ip6_ptr(), src_mac, 0, nullptr,
-             ht->get_hostmac(src_mac));
+            (const struct in6_addr*) spa.get_ip6_ptr(), src_mac, ht->get_hostmac(src_mac));
         hm_ptr->update_last_event(p->pkth->ts.tv_sec);
     }
 

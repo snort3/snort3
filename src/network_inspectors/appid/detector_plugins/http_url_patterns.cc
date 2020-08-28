@@ -1656,21 +1656,11 @@ void HttpPatternMatchers::get_server_vendor_version(const char* data, int len, c
                 {
                     if ( subname && subname_len > 0 && subver && *subname )
                     {
-                        AppIdServiceSubtype* sub =
-                            (AppIdServiceSubtype*)snort_calloc(
-                            sizeof(AppIdServiceSubtype));
-                        char* tmp = (char*)snort_calloc(subname_len + 1);
-                        memcpy(tmp, subname, subname_len);
-                        tmp[subname_len] = 0;
-                        sub->service = tmp;
+                        AppIdServiceSubtype* sub = new AppIdServiceSubtype();
+                        sub->service.assign(subname, subname_len);
                         int subver_len = p - subver;
                         if (subver_len > 0 && *subver)
-                        {
-                            tmp = (char*)snort_calloc(subver_len + 1);
-                            memcpy(tmp, subver, subver_len);
-                            tmp[subver_len] = 0;
-                            sub->version = tmp;
-                        }
+                            sub->version.assign(subver, subver_len);
                         sub->next = *subtype;
                         *subtype = sub;
                     }
@@ -1690,21 +1680,12 @@ void HttpPatternMatchers::get_server_vendor_version(const char* data, int len, c
 
         if ( subname && subname_len > 0 && subver && *subname )
         {
-            AppIdServiceSubtype* sub =
-                (AppIdServiceSubtype*)snort_calloc(sizeof(AppIdServiceSubtype));
-            char* tmp = (char*)snort_calloc(subname_len + 1);
-            memcpy(tmp, subname, subname_len);
-            tmp[subname_len] = 0;
-            sub->service = tmp;
+            AppIdServiceSubtype* sub = new AppIdServiceSubtype();
+            sub->service.assign(subname, subname_len);
 
             int subver_len = p - subver;
             if ( subver_len > 0 && *subver )
-            {
-                tmp = (char*)snort_calloc(subver_len + 1);
-                memcpy(tmp, subver, subver_len);
-                tmp[subver_len] = 0;
-                sub->version = tmp;
-            }
+                sub->version.assign(subver, subver_len);
             sub->next = *subtype;
             *subtype = sub;
         }

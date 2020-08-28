@@ -49,6 +49,8 @@
 using namespace snort;
 using namespace std;
 
+THREAD_LOCAL const Trace* rna_trace = nullptr;
+
 //-------------------------------------------------------------------------
 // rna commands, params, and pegs
 //-------------------------------------------------------------------------
@@ -172,6 +174,7 @@ static const Parameter rna_params[] =
 
 static const PegInfo rna_pegs[] =
 {
+    { CountType::SUM, "appid_change", "count of appid change events received" },
     { CountType::SUM, "icmp_bidirectional", "count of bidirectional ICMP flows received" },
     { CountType::SUM, "icmp_new", "count of new ICMP flows received" },
     { CountType::SUM, "ip_bidirectional", "count of bidirectional IP received" },
@@ -320,6 +323,15 @@ const PegInfo* RnaModule::get_pegs() const
 
 ProfileStats* RnaModule::get_profile() const
 { return &rna_perf_stats; }
+
+void RnaModule::set_trace(const Trace* trace) const
+{ rna_trace = trace; }
+
+const TraceOption* RnaModule::get_trace_options() const
+{
+    static const TraceOption rna_trace_options(nullptr, 0, nullptr);
+    return &rna_trace_options;
+}
 
 bool RnaModule::log_mac_cache(const char* outfile)
 {

@@ -35,30 +35,60 @@ using RnaTracker = std::shared_ptr<snort::HostTracker>;
 
 struct RnaLoggerEvent : public Event
 {
-    RnaLoggerEvent(uint16_t p_type, uint16_t p_subtype, const RnaTracker* p_ht,
-        const uint8_t* p_mac, const snort::HostMac* p_hm, const uint16_t p_proto,
-        const snort::TcpFingerprint* tcp_fp)
-        : type(p_type), subtype(p_subtype), ht(p_ht), mac(p_mac), hm(p_hm), proto(p_proto), tfp(tcp_fp) { }
+    RnaLoggerEvent (uint16_t t, uint16_t st, const uint8_t* mc, const RnaTracker* rt,
+        const snort::HostMac* hmp, uint16_t pr, void* cv, const snort::HostApplication* hap,
+        const snort::TcpFingerprint* tf) : type(t), subtype(st), mac(mc), ht(rt), hm(hmp),
+        proto(pr), cond_var(cv), ha(hap), tfp(tf) { }
+
     uint16_t type;
     uint16_t subtype;
-    const RnaTracker* ht;
+    const struct in6_addr* ip;
     const uint8_t* mac;
-    const struct in6_addr* ip = nullptr;
-    void* cond_var = nullptr;
+    const RnaTracker* ht;
     const snort::HostMac* hm;
-    const uint16_t proto;
-    const snort::TcpFingerprint* tfp = nullptr;
+    uint16_t proto;
+    void* cond_var;
+    const snort::HostApplication* ha;
+    const snort::TcpFingerprint* tfp;
 };
 
 class RnaLogger
 {
 public:
     RnaLogger(const bool enable) : enabled(enable) { }
-    bool log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
-       const struct in6_addr* src_ip, const uint8_t* src_mac,
-       uint32_t event_time = 0, void* cond_var = nullptr,
-	     const snort::HostMac* hm = nullptr, const uint16_t proto = 0,
-	     const snort::TcpFingerprint* tfp = nullptr);
+
+    // for host application
+    void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
+        const struct in6_addr* src_ip, const uint8_t* src_mac, const snort::HostApplication* ha);
+
+    // for tcp fingerprint
+    void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
+        const struct in6_addr* src_ip, const uint8_t* src_mac, const snort::TcpFingerprint* tfp);
+
+    // for event time
+    void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
+        const struct in6_addr* src_ip, const uint8_t* src_mac, uint32_t event_time);
+
+    // for mac event
+    void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
+        const struct in6_addr* src_ip, const uint8_t* src_mac,
+        const snort::HostMac* hm = nullptr, uint32_t event_time = 0);
+
+    // for protocol event
+    void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
+        uint16_t proto, const uint8_t* mac, const struct in6_addr* ip = nullptr,
+        uint32_t event_time = 0);
+
+    // for timeout update
+    void log(uint16_t type, uint16_t subtype, const snort::Packet* p, const uint8_t* src_mac,
+        const struct in6_addr* src_ip, RnaTracker* ht, uint32_t event_time, void* cond_var);
+
+    // for all
+    bool log(uint16_t type, uint16_t subtype, const struct in6_addr* src_ip,
+        const uint8_t* src_mac, RnaTracker* ht, const snort::Packet* p = nullptr,
+        uint32_t event_time = 0, uint16_t proto = 0, const snort::HostMac* hm = nullptr,
+        const snort::HostApplication* ha = nullptr, const snort::TcpFingerprint* tfp = nullptr,
+        void* cond_var = nullptr);
 
 private:
     const bool enabled;

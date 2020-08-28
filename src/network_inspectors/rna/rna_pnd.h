@@ -26,18 +26,17 @@
 #include "host_tracker/host_tracker.h"
 #include "protocols/eth.h"
 #include "protocols/layer.h"
+#include "protocols/packet.h"
+#include "protocols/tcp.h"
 #include "protocols/vlan.h"
+#include "pub_sub/appid_events.h"
 #include "sfip/sf_ip.h"
 
+#include "rna_config.h"
 #include "rna_logger.h"
 #include "rna_mac_cache.h"
 
 #define USHRT_MAX std::numeric_limits<unsigned short>::max()
-
-namespace snort
-{
-struct Packet;
-}
 
 enum class TcpPacketType
 {
@@ -60,6 +59,46 @@ struct RNA_LLC
 };
 #pragma pack()
 
+static inline bool is_eligible_packet(const snort::Packet* p)
+{
+    if ( p->has_ip() or
+        memcmp(snort::layer::get_eth_layer(p)->ether_src, snort::zero_mac, MAC_SIZE) )
+        return true;
+    return false;
+}
+
+static inline bool is_eligible_ip(const snort::Packet* p)
+{
+    // If payload needs to be inspected ever, allow rebuilt packet when is_proxied
+    if ( !p->has_ip() or p->is_rebuilt() or !p->flow )
+        return false;
+    return true;
+}
+
+static inline bool is_eligible_tcp(const snort::Packet* p)
+{
+    if ( !is_eligible_ip(p) or p->ptrs.tcph->is_rst() )
+        return false;
+    return true;
+}
+
+static inline bool is_eligible_udp(const snort::Packet* p)
+{
+    if ( !is_eligible_ip(p) )
+        return false;
+    if ( p->is_from_client() )
+    {
+        const snort::SfIp* src = p->ptrs.ip_api.get_src();
+        const snort::SfIp* dst = p->ptrs.ip_api.get_dst();
+        // FIXIT-M this code checking the v6 address unconditionally is almost certainly wrong,
+        //          especially since it's looking for an IPv4-specific protocol
+        if ( !src->is_set() and ((const uint8_t *) dst->get_ip6_ptr())[0] == 0XFF and
+            p->ptrs.sp == 68 and p->ptrs.dp == 67 )
+            return false; // skip BOOTP
+    }
+    return true;
+}
+
 static inline unsigned short rna_get_eth(const snort::Packet* p)
 {
     const snort::vlan::VlanTagHdr* vh = nullptr;
@@ -79,9 +118,11 @@ class RnaPnd
 {
 public:
 
-    RnaPnd(const bool en, const std::string& conf, time_t ut = 0)
-        : logger(RnaLogger(en)), filter(DiscoveryFilter(conf)), update_timeout(ut) { }
+    RnaPnd(const bool en, const std::string& cp, RnaConfig* rc = nullptr) :
+        logger(RnaLogger(en)), filter(DiscoveryFilter(cp)), conf(rc)
+        { update_timeout = (rc ? rc->update_timeout : 0); }
 
+    void analyze_appid_changes(snort::DataEvent& event);
     void analyze_flow_icmp(const snort::Packet* p);
     void analyze_flow_ip(const snort::Packet* p);
     void analyze_flow_non_ip(const snort::Packet* p);
@@ -123,6 +164,7 @@ private:
 
     RnaLogger logger;
     DiscoveryFilter filter;
+    RnaConfig* conf;
     time_t update_timeout;
 };
 

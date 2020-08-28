@@ -37,7 +37,7 @@ public:
 
     int add_service(AppidChangeBits&, AppIdSession&, const snort::Packet*,
         AppidSessionDirection, AppId, const char* vendor = nullptr,
-        const char* version = nullptr, const AppIdServiceSubtype* = nullptr);
+        const char* version = nullptr, AppIdServiceSubtype* = nullptr);
 
     int add_service_consume_subtype(AppIdSession&, const snort::Packet*,
         AppidSessionDirection dir, AppId, const char* vendor, const char* version,
@@ -57,8 +57,8 @@ public:
     }
 
 private:
-    int update_service_data(AppIdSession&, const snort::Packet*, AppidSessionDirection dir, AppId,
-        const char* vendor, const char* version, AppidChangeBits& change_bits);
+    int update_service_data(AppIdSession&, const snort::Packet*, AppidSessionDirection, AppId,
+        const char*, const char*, AppidChangeBits&, AppIdServiceSubtype*);
 };
 #endif
 

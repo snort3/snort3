@@ -40,6 +40,7 @@ struct Packet;
 }
 class AppIdHttpSession;
 class AppIdContext;
+struct AppIdServiceSubtype;
 class OdpContext;
 
 enum httpPatternType

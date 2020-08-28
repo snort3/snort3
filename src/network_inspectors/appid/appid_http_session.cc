@@ -528,33 +528,26 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
         {
             if ( asd.get_service_id() == APP_ID_NONE or asd.get_service_id() == APP_ID_HTTP  or
                 asd.get_service_id() == APP_ID_HTTP2)
+            {
+                char* vendorVersion = nullptr;
+                char* vendor = nullptr;
+                AppIdServiceSubtype* subtype = nullptr;
+
+                http_matchers.get_server_vendor_version(server->c_str(), server->size(),
+                    &vendorVersion, &vendor, &subtype);
+                if (vendor || vendorVersion)
                 {
-                    char* vendorVersion = nullptr;
-                    char* vendor = nullptr;
-                    AppIdServiceSubtype* subtype = nullptr;
+                    asd.set_service_vendor(vendor, change_bits);
+                    asd.set_service_version(vendorVersion, change_bits);
+                    asd.scan_flags &= ~SCAN_HTTP_VENDOR_FLAG;
 
-                    http_matchers.get_server_vendor_version(server->c_str(), server->size(),
-                        &vendorVersion, &vendor, &subtype);
-                    if (vendor || vendorVersion)
-                    {
-                        asd.set_service_vendor(vendor);
-                        asd.set_service_version(vendorVersion, change_bits);
-                        asd.scan_flags &= ~SCAN_HTTP_VENDOR_FLAG;
-
-                        snort_free(vendor);
-                        snort_free(vendorVersion);
-                    }
-
-                    if (subtype)
-                    {
-                        AppIdServiceSubtype** tmp_subtype;
-
-                        for (tmp_subtype = &asd.subtype; *tmp_subtype; tmp_subtype = &(*tmp_subtype)->next)
-                            ;
-
-                        *tmp_subtype = subtype;
-                    }
+                    snort_free(vendor);
+                    snort_free(vendorVersion);
                 }
+
+                if (subtype)
+                    asd.add_service_subtype(*subtype, change_bits);
+            }
         }
 
         if (is_webdav)

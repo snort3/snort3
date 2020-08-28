@@ -48,6 +48,14 @@ AppId AppIdSessionApi::get_service_app_id() const
     return application_ids[APP_PROTOID_SERVICE];
 }
 
+void AppIdSessionApi::get_service_info(const char*& vendor, const char*& version,
+    const AppIdServiceSubtype*& subtype) const
+{
+    vendor = service.get_vendor();
+    version = service.get_version();
+    subtype = service.get_subtype();
+}
+
 AppId AppIdSessionApi::get_misc_app_id(uint32_t stream_index) const
 {
     if (get_service_app_id() == APP_ID_HTTP2)

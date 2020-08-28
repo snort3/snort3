@@ -8,6 +8,8 @@ set (RNA_INCLUDES
 
 set ( RNA_SOURCES
     ${RNA_INCLUDES}
+    rna_app_discovery.cc
+    rna_app_discovery.h
     rna_event_handler.cc
     rna_event_handler.h
     rna_fingerprint.cc

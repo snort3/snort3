@@ -497,14 +497,12 @@ done:
         {
             if (pname && *pname)
             {
-                memset(&sub, 0, sizeof(sub));
                 sub.service = pname;
                 subtype = &sub;
             }
             else if (program)
             {
                 snprintf(subname, sizeof(subname), "(%u)", program);
-                memset(&sub, 0, sizeof(sub));
                 sub.service = subname;
                 subtype = &sub;
             }
@@ -844,14 +842,12 @@ inprocess:
         {
             if (pname && *pname)
             {
-                memset(&sub, 0, sizeof(sub));
                 sub.service = pname;
                 subtype = &sub;
             }
             else if (program)
             {
                 sprintf(subname, "(%u)", program);
-                memset(&sub, 0, sizeof(sub));
                 sub.service = subname;
                 subtype = &sub;
             }

@@ -88,9 +88,9 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t, AppIdInsp
     set_client_user(APPID_UT_ID, APPID_UT_USERNAME);
     set_client_version(APPID_UT_CLIENT_VERSION, change_bits);
 
-    set_service_vendor(APPID_UT_SERVICE_VENDOR);
+    set_service_vendor(APPID_UT_SERVICE_VENDOR, change_bits);
     set_service_version(APPID_UT_SERVICE_VERSION, change_bits);
-    subtype = &APPID_UT_SERVICE_SUBTYPE;
+    add_service_subtype(*(new AppIdServiceSubtype(APPID_UT_SERVICE_SUBTYPE)), change_bits);
 
     tsession = new TlsSession;
 

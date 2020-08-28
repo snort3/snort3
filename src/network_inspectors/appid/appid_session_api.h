@@ -105,12 +105,16 @@ class SO_PUBLIC AppIdSessionApi : public StashGenericObject
 {
 public:
     AppId get_service_app_id() const;
+    void get_service_info(const char*& vendor, const char*& version,
+        const AppIdServiceSubtype*& subtype) const;
     AppId get_misc_app_id(uint32_t stream_index = 0) const;
     AppId get_client_app_id(uint32_t stream_index = 0) const;
     AppId get_payload_app_id(uint32_t stream_index = 0) const;
     AppId get_referred_app_id(uint32_t stream_index = 0) const;
-    void get_app_id(AppId& service, AppId& client, AppId& payload, AppId& misc, AppId& referred, uint32_t stream_index = 0) const;
-    void get_app_id(AppId* service, AppId* client, AppId* payload, AppId* misc, AppId* referred, uint32_t stream_index = 0) const;
+    void get_app_id(AppId& service, AppId& client, AppId& payload, AppId& misc, AppId& referred,
+        uint32_t stream_index = 0) const;
+    void get_app_id(AppId* service, AppId* client, AppId* payload, AppId* misc, AppId* referred,
+        uint32_t stream_index = 0) const;
     bool is_appid_inspecting_session() const;
     bool is_appid_available() const;
     const char* get_client_version(uint32_t stream_index = 0) const;
@@ -121,8 +125,8 @@ public:
     const char* get_tls_host() const;
     bool is_http_inspection_done() const;
 
-    // For protocols such as HTTP2 which can have multiple streams within a single flow, get_first_stream_*
-    // methods return the appids in the first stream seen in a packet.
+    // For protocols such as HTTP2 which can have multiple streams within a single flow,
+    // get_first_stream_* methods return the appids in the first stream seen in a packet.
     void get_first_stream_app_ids(AppId& service, AppId& client, AppId& payload, AppId& misc) const;
     void get_first_stream_app_ids(AppId& service, AppId& client, AppId& payload) const;
 

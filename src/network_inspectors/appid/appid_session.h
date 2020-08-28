@@ -265,7 +265,6 @@ public:
     APPID_DISCOVERY_STATE service_disco_state = APPID_DISCO_STATE_NONE;
     SESSION_SERVICE_SEARCH_STATE service_search_state = SESSION_SERVICE_SEARCH_STATE::START;
     ServiceDetector* service_detector = nullptr;
-    AppIdServiceSubtype* subtype = nullptr;
     std::vector<ServiceDetector*> service_candidates;
 
     // Following field is used only for non-http sessions. For HTTP traffic,
@@ -478,9 +477,14 @@ public:
         api.service.set_version(version, change_bits);
     }
 
-    void set_service_vendor(const char* vendor)
+    void set_service_vendor(const char* vendor, AppidChangeBits& change_bits)
     {
-        api.service.set_vendor(vendor);
+        api.service.set_vendor(vendor, change_bits);
+    }
+
+    void add_service_subtype(AppIdServiceSubtype& subtype, AppidChangeBits& change_bits)
+    {
+        api.service.add_subtype(subtype, change_bits);
     }
 
     AppId get_client_id() const

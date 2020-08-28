@@ -22,6 +22,7 @@
 #define RNA_MODULE_H
 
 #include "framework/module.h"
+#include "main/snort_debug.h"
 #include "profiler/profiler.h"
 
 #include "rna_config.h"
@@ -30,6 +31,7 @@
 
 struct RnaStats
 {
+    PegCount appid_change;
     PegCount icmp_bidirectional;
     PegCount icmp_new;
     PegCount ip_bidirectional;
@@ -45,6 +47,7 @@ struct RnaStats
 
 extern THREAD_LOCAL RnaStats rna_stats;
 extern THREAD_LOCAL snort::ProfileStats rna_perf_stats;
+extern THREAD_LOCAL const snort::Trace* rna_trace;
 
 class RnaModule : public snort::Module
 {
@@ -65,6 +68,9 @@ public:
 
     Usage get_usage() const override
     { return CONTEXT; }
+
+    void set_trace(const snort::Trace*) const override;
+    const snort::TraceOption* get_trace_options() const override;
 
 private:
     RnaModuleConfig* mod_conf = nullptr;

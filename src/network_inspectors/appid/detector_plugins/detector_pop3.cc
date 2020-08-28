@@ -256,11 +256,7 @@ static void pop3_free_state(void* data)
         {
             AppIdServiceSubtype* sub = sd->subtype;
             sd->subtype = sub->next;
-            if (sub->service)
-                snort_free((void*)sub->service);
-            if (sub->version)
-                snort_free((void*)sub->version);
-            snort_free(sub);
+            delete sub;
         }
         ClientPOP3Data* cd = &dd->client;
         if (cd->username)
@@ -495,13 +491,11 @@ static int pop3_server_validate(POP3DetectorData* dd, const uint8_t* data, uint1
                     ;
                 if (p == s || p >= line_end || !(*p))
                     goto ven_ver_done;
-                sub = (AppIdServiceSubtype*)snort_calloc(sizeof(AppIdServiceSubtype));
                 unsigned sub_len;
 
                 sub_len = p - s;
-                sub->service = (const char*)snort_calloc(sub_len+1);
-                memcpy(const_cast<char*>(sub->service), s, sub_len);
-                (const_cast<char*>(sub->service))[sub_len] = 0;
+                sub = new AppIdServiceSubtype();
+                sub->service.assign(reinterpret_cast<const char*>(s), sub_len);
                 sub->next = pd->subtype;
                 pd->subtype = sub;
                 if (line_end-p > (int)sizeof(subver_po)-1
@@ -513,9 +507,7 @@ static int pop3_server_validate(POP3DetectorData* dd, const uint8_t* data, uint1
                     if (p != s && p < line_end && *p)
                     {
                         sub_len = p - s;
-                        sub->version = (const char*)snort_calloc(sub_len+1);
-                        memcpy(const_cast<char*>(sub->version), s, sub_len);
-                        (const_cast<char*>(sub->version))[sub_len] = 0;
+                        sub->version.assign(reinterpret_cast<const char*>(s), sub_len);
                     }
                 }
             }

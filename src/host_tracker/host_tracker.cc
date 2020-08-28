@@ -23,7 +23,6 @@
 #endif
 
 #include "host_tracker.h"
-#include "host_cache_allocator.cc"
 
 #include "utils/util.h"
 
@@ -97,6 +96,21 @@ const HostMac* HostTracker::get_hostmac(const uint8_t* mac)
             return &hm;
 
     return nullptr;
+}
+
+const uint8_t* HostTracker::get_last_seen_mac()
+{
+    lock_guard<mutex> lck(host_tracker_lock);
+    const HostMac* max_hm = nullptr;
+
+    for ( const auto& hm : macs )
+        if ( !max_hm or max_hm->last_seen < hm.last_seen)
+            max_hm = &hm;
+
+    if ( max_hm )
+        return max_hm->mac;
+
+    return zero_mac;
 }
 
 bool HostTracker::update_mac_ttl(const uint8_t* mac, uint8_t new_ttl)
@@ -205,7 +219,8 @@ void HostTracker::copy_data(uint8_t& p_hops, uint32_t& p_last_seen, list<HostMac
         p_macs = new list<HostMac>(macs.begin(), macs.end());
 }
 
-bool HostTracker::add_service(Port port, IpProtocol proto, AppId appid, bool inferred_appid, bool* added)
+bool HostTracker::add_service(Port port, IpProtocol proto, AppId appid, bool inferred_appid,
+    bool* added)
 {
     host_tracker_stats.service_adds++;
     lock_guard<mutex> lck(host_tracker_lock);
@@ -225,26 +240,114 @@ bool HostTracker::add_service(Port port, IpProtocol proto, AppId appid, bool inf
         }
     }
 
-    services.emplace_back( HostApplication{port, proto, appid, inferred_appid} );
+    services.emplace_back(port, proto, appid, inferred_appid);
     if (added)
         *added = true;
 
     return true;
 }
 
-AppId HostTracker::get_appid(Port port, IpProtocol proto, bool inferred_only, bool allow_port_wildcard)
+AppId HostTracker::get_appid(Port port, IpProtocol proto, bool inferred_only,
+    bool allow_port_wildcard)
 {
     host_tracker_stats.service_finds++;
     lock_guard<mutex> lck(host_tracker_lock);
 
     for ( const auto& s : services )
     {
-        bool matched = (s.port == port and s.proto == proto and (!inferred_only or s.inferred_appid == inferred_only));
+        bool matched = (s.port == port and s.proto == proto and
+            (!inferred_only or s.inferred_appid == inferred_only));
         if ( matched or ( allow_port_wildcard and s.inferred_appid ) )
             return s.appid;
     }
 
     return APP_ID_NONE;
+}
+
+size_t HostTracker::get_service_count()
+{
+    lock_guard<mutex> lck(host_tracker_lock);
+    return services.size();
+}
+
+HostApplication HostTracker::get_service(Port port, IpProtocol proto, uint32_t lseen,
+    bool& is_new, AppId appid)
+{
+    host_tracker_stats.service_finds++;
+    lock_guard<mutex> lck(host_tracker_lock);
+
+    for ( auto& s : services )
+    {
+        if ( s.port == port and s.proto == proto )
+        {
+            if ( s.appid != appid and appid != APP_ID_NONE )
+            {
+                s.appid = appid;
+                is_new = true;
+            }
+            else if ( s.last_seen == 0 )
+                is_new = true;
+            s.last_seen = lseen;
+            ++s.hits;
+            return s;
+        }
+    }
+
+    is_new = true;
+    host_tracker_stats.service_adds++;
+    services.emplace_back(port, proto, appid, false, 1, lseen);
+    return services.back();
+}
+
+void HostTracker::update_service(const HostApplication& ha)
+{
+    host_tracker_stats.service_finds++;
+    lock_guard<mutex> lck(host_tracker_lock);
+
+    for ( auto& s : services )
+    {
+        if ( s.port == ha.port and s.proto == ha.proto )
+        {
+            s.hits = ha.hits;
+            s.last_seen = ha.last_seen;
+            if ( ha.appid > APP_ID_NONE )
+                s.appid = ha.appid;
+            return;
+        }
+    }
+}
+
+bool HostTracker::update_service_info(HostApplication& ha, const char* vendor, const char* version)
+{
+    host_tracker_stats.service_finds++;
+    lock_guard<mutex> lck(host_tracker_lock);
+
+    for ( auto& s : services )
+    {
+        if ( s.port == ha.port and s.proto == ha.proto )
+        {
+            bool changed = false;
+            if ( vendor and strncmp(s.vendor, vendor, INFO_SIZE) )
+            {
+                strncpy(s.vendor, vendor, INFO_SIZE);
+                s.vendor[INFO_SIZE-1] = '\0';
+                changed = true;
+            }
+            if ( version and strncmp(s.version, version, INFO_SIZE) )
+            {
+                strncpy(s.version, version, INFO_SIZE);
+                s.version[INFO_SIZE-1] = '\0';
+                changed = true;
+            }
+            if ( !changed )
+                return false;
+
+            ha.appid = s.appid; // copy these info for the caller
+            ha.hits = s.hits;
+            return true;
+        }
+    }
+    return false;
 }
 
 void HostTracker::remove_inferred_services()
@@ -314,6 +417,10 @@ void HostTracker::stringify(string& str)
                 if ( s.inferred_appid )
                     str += ", inferred";
             }
+            if ( s.vendor[0] != '\0' )
+                str += ", vendor: " + string(s.vendor);
+            if ( s.version[0] != '\0' )
+                str += ", version: " + string(s.version);
         }
     }
 

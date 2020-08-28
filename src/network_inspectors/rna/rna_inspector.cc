@@ -56,11 +56,10 @@ RnaInspector::RnaInspector(RnaModule* mod)
 {
     mod_conf = mod->get_config();
     load_rna_conf();
-    time_t update_timeout = rna_conf ? rna_conf->update_timeout : 0;
     if ( mod_conf )
-        pnd = new RnaPnd(mod_conf->enable_logger, mod_conf->rna_conf_path, update_timeout);
+        pnd = new RnaPnd(mod_conf->enable_logger, mod_conf->rna_conf_path, rna_conf);
     else
-        pnd = new RnaPnd(false, "", update_timeout);
+        pnd = new RnaPnd(false, "", rna_conf);
 }
 
 RnaInspector::~RnaInspector()
@@ -74,6 +73,8 @@ RnaInspector::~RnaInspector()
 
 bool RnaInspector::configure(SnortConfig* sc)
 {
+    DataBus::subscribe_global( APPID_EVENT_ANY_CHANGE, new RnaAppidEventHandler(*pnd), sc );
+
     DataBus::subscribe_global( STREAM_ICMP_NEW_FLOW_EVENT, new RnaIcmpNewFlowEventHandler(*pnd), sc );
     DataBus::subscribe_global( STREAM_ICMP_BIDIRECTIONAL_EVENT, new RnaIcmpBidirectionalEventHandler(*pnd), sc );
 

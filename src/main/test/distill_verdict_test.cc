@@ -40,7 +40,7 @@ int SFDAQInstance::finalize_message(DAQ_Msg_h, DAQ_Verdict verdict)
     return -1;
 }
 void DeferredTrust::finalize(Active&) { }
-void DeferredTrust::set_deferred_trust(unsigned module_id, bool on)
+void DeferredTrust::set_deferred_trust(unsigned, bool on)
 {
     deferred_trust = on ? TRUST_DEFER_ON : TRUST_DEFER_OFF;
 }

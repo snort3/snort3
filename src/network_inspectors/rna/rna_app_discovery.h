@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2020 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2003-2013 Sourcefire, Inc.
+// Copyright (C) 2020-2020 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -17,25 +16,25 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#ifndef RNA_LOGGER_COMMON_H
-#define RNA_LOGGER_COMMON_H
+#ifndef RNA_APP_DISCOVERY_H
+#define RNA_APP_DISCOVERY_H
 
-// Common definitions between rna logger and pnd modules
-#define RNA_EVENT_NEW       1000
-    #define NEW_HOST            1
-    #define NEW_TCP_SERVICE     2
-    #define NEW_NET_PROTOCOL    3
-    #define NEW_XPORT_PROTOCOL  4
-    #define NEW_UDP_SERVICE     6
-    #define NEW_OS              8
+#include "rna_pnd.h"
 
-#define RNA_EVENT_CHANGE    1001
-    #define CHANGE_HOPS                 5
-    #define CHANGE_TCP_SERVICE_INFO     6
-    #define CHANGE_UDP_SERVICE_INFO    10
-    #define CHANGE_MAC_INFO            13
-    #define CHANGE_MAC_ADD             14
-    #define CHANGE_HOST_UPDATE         15
-    #define CHANGE_VLAN_TAG            18
+class RnaAppDiscovery
+{
+public:
+    static void process(AppidEvent* appid_event, DiscoveryFilter& filter,
+        RnaConfig* conf, RnaLogger& logger);
+
+    static void discover_service(const snort::Packet* p, IpProtocol proto, RnaTracker& rt,
+        const struct in6_addr* src_ip, const uint8_t* src_mac, RnaConfig* conf,
+        RnaLogger& logger, AppId service = APP_ID_NONE);
+
+private:
+    static void update_service_info(const snort::Packet* p, IpProtocol proto, const char* vendor,
+        const char* version, RnaTracker& rt, const snort::SfIp* ip, const uint8_t* src_mac,
+        RnaLogger& logger);
+};
 
 #endif

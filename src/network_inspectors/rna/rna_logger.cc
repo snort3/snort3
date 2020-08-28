@@ -29,8 +29,10 @@
 
 #include "managers/event_manager.h"
 #include "protocols/packet.h"
+
 #include "rna_fingerprint_tcp.h"
 #include "rna_logger_common.h"
+#include "rna_module.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -43,25 +45,91 @@
 
 using namespace snort;
 
-bool RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
-    const struct in6_addr* src_ip, const uint8_t* src_mac, uint32_t event_time,
-    void* cond_var, const HostMac* hm, const uint16_t proto,
-    const TcpFingerprint* tfp)
+#ifdef DEBUG_MSGS
+static inline void rna_logger_message(const RnaLoggerEvent& rle)
+{
+    char macbuf[19];
+    snprintf(macbuf, 19, "%02X:%02X:%02X:%02X:%02X:%02X",
+        rle.mac[0], rle.mac[1], rle.mac[2], rle.mac[3], rle.mac[4], rle.mac[5]);
+    if ( rle.ip )
+    {
+        SfIp ip;
+        SfIpString ipbuf;
+        ip.set(rle.ip); // using this instead of packet's ip to support ARP
+        debug_logf(rna_trace, nullptr, "RNA log: type %u, subtype %u, mac %s, ip %s\n",
+            rle.type, rle.subtype, macbuf, ip.ntop(ipbuf));
+    }
+    else
+        debug_logf(rna_trace, nullptr, "RNA log: type %u, subtype %u, mac %s\n",
+            rle.type, rle.subtype, macbuf);
+}
+#endif
+
+void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
+   const struct in6_addr* src_ip, const uint8_t* src_mac, const HostApplication* ha)
+{
+    log(type, subtype, src_ip, src_mac, ht, p, 0, 0,
+        nullptr, ha, nullptr, nullptr);
+}
+
+void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
+    const struct in6_addr* src_ip, const uint8_t* src_mac, const TcpFingerprint* tfp)
+{
+    log(type, subtype, src_ip, src_mac, ht, p, 0, 0,
+        nullptr, nullptr, tfp, nullptr);
+}
+
+void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
+    const struct in6_addr* src_ip, const uint8_t* src_mac, uint32_t event_time)
+{
+    log(type, subtype, src_ip, src_mac, ht, p, event_time, 0,
+        nullptr, nullptr, nullptr, nullptr);
+}
+
+void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
+    const struct in6_addr* src_ip, const uint8_t* src_mac, const HostMac* hm, uint32_t event_time)
+{
+    log(type, subtype, src_ip, src_mac, ht, p, event_time, 0,
+        hm, nullptr, nullptr, nullptr);
+}
+
+void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
+    uint16_t proto, const uint8_t* src_mac, const struct in6_addr* src_ip, uint32_t event_time)
+{
+    log(type, subtype, src_ip, src_mac, ht, p, event_time, proto,
+        nullptr, nullptr, nullptr, nullptr);
+}
+
+void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, const uint8_t* src_mac,
+    const struct in6_addr* src_ip, RnaTracker* ht, uint32_t event_time, void* cond_var)
+{
+    log(type, subtype, src_ip, src_mac, ht, p, event_time, 0,
+        nullptr, nullptr, nullptr, cond_var);
+}
+
+bool RnaLogger::log(uint16_t type, uint16_t subtype, const struct in6_addr* src_ip,
+    const uint8_t* src_mac, RnaTracker* ht, const Packet* p, uint32_t event_time,
+    uint16_t proto, const HostMac* hm, const HostApplication* ha, const TcpFingerprint* tfp,
+    void* cond_var)
 {
     if ( !enabled )
         return false;
 
     assert(ht);
-    RnaLoggerEvent rle(type, subtype, ht, src_mac, hm, proto, tfp);
+
+    RnaLoggerEvent rle(type, subtype, src_mac, ht, hm, proto, cond_var, ha, tfp);
     if ( src_ip and (!IN6_IS_ADDR_V4MAPPED(src_ip) or src_ip->s6_addr32[3]) )
         rle.ip = src_ip;
-
+    else
+        rle.ip = nullptr;
     if ( event_time )
         (*ht)->update_last_event(event_time);
-    if ( subtype == CHANGE_HOST_UPDATE and type == RNA_EVENT_CHANGE )
-        rle.cond_var = cond_var;
 
     EventManager::call_loggers(nullptr, const_cast<Packet*>(p), "RNA", &rle);
+
+#ifdef DEBUG_MSGS
+    rna_logger_message(rle);
+#endif
     return true;
 }
 
@@ -71,11 +139,14 @@ TEST_CASE("RNA logger", "[rna_logger]")
     SECTION("Checking enabled flag")
     {
         RnaTracker ht;
+        uint8_t mac[6] = {0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6};
         RnaLogger logger1(false);
-        CHECK(logger1.log(0, 0, 0, &ht, 0, 0) == false);
+        CHECK(logger1.log(0, 0, nullptr, mac, &ht, nullptr, 0, 0,
+            nullptr, nullptr, nullptr, nullptr) == false);
 
         RnaLogger logger2(true);
-        CHECK(logger2.log(0, 0, 0, &ht, 0, 0) == true);
+        CHECK(logger2.log(0, 0, nullptr, mac, &ht, nullptr, 0, 0,
+            nullptr, nullptr, nullptr, nullptr) == true);
     }
 }
 #endif

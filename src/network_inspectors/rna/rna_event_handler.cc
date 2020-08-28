@@ -26,6 +26,13 @@
 
 using namespace snort;
 
+void RnaAppidEventHandler::handle(DataEvent& event, Flow*)
+{
+    Profile profile(rna_perf_stats);
+    ++rna_stats.appid_change;
+    pnd.analyze_appid_changes(event);
+}
+
 void RnaIcmpBidirectionalEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);

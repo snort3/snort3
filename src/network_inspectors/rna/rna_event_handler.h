@@ -26,6 +26,15 @@
 #include "rna_module.h"
 #include "rna_pnd.h"
 
+class RnaAppidEventHandler : public snort::DataHandler
+{
+public:
+    RnaAppidEventHandler(RnaPnd& nd) : DataHandler(RNA_NAME), pnd(nd) { }
+    void handle(snort::DataEvent&, snort::Flow*) override;
+private:
+    RnaPnd& pnd;
+};
+
 class RnaIcmpNewFlowEventHandler : public snort::DataHandler
 {
 public:

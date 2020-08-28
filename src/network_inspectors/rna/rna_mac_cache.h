@@ -97,7 +97,7 @@ private:
     uint32_t last_seen = 0;
     uint32_t last_event = 0;
     bool vlan_tag_present = false;
-    snort::vlan::VlanTagHdr vlan_tag;
+    snort::vlan::VlanTagHdr vlan_tag = { };
     std::vector<uint16_t, HostCacheAllocMac<uint16_t>> network_protos;
 };
 

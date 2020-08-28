@@ -50,6 +50,7 @@ extern THREAD_LOCAL struct HostTrackerStats host_tracker_stats;
 
 namespace snort
 {
+#define INFO_SIZE 32
 #define MAC_SIZE 6
 extern const uint8_t zero_mac[MAC_SIZE];
 
@@ -67,10 +68,18 @@ struct HostMac
 
 struct HostApplication
 {
+    HostApplication() = default;
+    HostApplication(Port pt, IpProtocol pr, AppId ap, bool in, uint32_t ht = 0, uint32_t ls = 0) :
+        port(pt), proto(pr), appid(ap), inferred_appid(in), hits(ht), last_seen(ls) { }
+
     Port port;
     IpProtocol proto;
     AppId appid;
     bool inferred_appid;
+    uint32_t hits;
+    uint32_t last_seen;
+    char vendor[INFO_SIZE] = { 0 };
+    char version[INFO_SIZE] = { 0 };
 };
 
 enum HostType
@@ -153,6 +162,8 @@ public:
     // Returns the matching host_mac
     const HostMac* get_hostmac(const uint8_t* mac);
 
+    const uint8_t* get_last_seen_mac();
+
     void update_vlan(uint16_t vth_pri_cfi_vlan, uint16_t vth_proto);
     bool has_vlan();
     uint16_t get_vlan();
@@ -169,8 +180,14 @@ public:
     bool add_service(Port port, IpProtocol proto,
         AppId appid = APP_ID_NONE, bool inferred_appid = false, bool* added = nullptr);
 
-    AppId get_appid(Port port, IpProtocol proto, bool inferred_only = false, bool allow_port_wildcard = false);
+    AppId get_appid(Port port, IpProtocol proto, bool inferred_only = false,
+        bool allow_port_wildcard = false);
 
+    size_t get_service_count();
+    HostApplication get_service(Port port, IpProtocol proto, uint32_t lseen, bool& is_new,
+        AppId appid = APP_ID_NONE);
+    void update_service(const HostApplication& ha);
+    bool update_service_info(HostApplication& ha, const char* vendor, const char* version);
     void remove_inferred_services();
 
     bool add_tcp_fingerprint(uint32_t fpid);
@@ -183,7 +200,7 @@ private:
     uint8_t hops;                 // hops from the snort inspector, e.g., zero for ARP
     uint32_t last_seen;           // the last time this host was seen
     uint32_t last_event;          // the last time an event was generated
-    std::vector<HostMac, HostMacAllocator> macs;
+    std::list<HostMac, HostMacAllocator> macs; // list guarantees iterator validity on insertion
     std::vector<uint16_t, HostCacheAllocIp<uint16_t>> network_protos;
     std::vector<uint8_t, HostCacheAllocIp<uint8_t>> xport_protos;
     std::vector<HostApplication, HostAppAllocator> services;

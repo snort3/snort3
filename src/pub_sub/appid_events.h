@@ -60,6 +60,8 @@ enum AppidChangeBit
 
     // other
     APPID_VERSION_BIT,
+    APPID_SERVICE_VENDOR_BIT,
+    APPID_SERVICE_SUBTYPE_BIT,
 
     APPID_MAX_BIT
 };
@@ -100,6 +102,10 @@ inline void change_bits_to_string(AppidChangeBits& change_bits, std::string& str
         --n? str.append("dns-host, ") : str.append("dns-host");
     if (change_bits.test(APPID_VERSION_BIT))
         --n? str.append("version, ") : str.append("version");
+    if (change_bits.test(APPID_SERVICE_VENDOR_BIT))
+        --n? str.append("service-vendor, ") : str.append("service-vendor");
+    if (change_bits.test(APPID_SERVICE_SUBTYPE_BIT))
+        --n? str.append("service-subtype, ") : str.append("service-subtype");
     if (n != 0) // make sure all bits from AppidChangeBit enum get translated
         str.append("change_bits_to_string error!");
 }

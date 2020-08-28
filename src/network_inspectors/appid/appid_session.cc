@@ -627,17 +627,6 @@ void AppIdSession::delete_session_data(bool free_api)
     snort_free(netbios_name);
     snort_free(netbios_domain);
 
-    AppIdServiceSubtype* rna_ss = subtype;
-    while (rna_ss)
-    {
-        subtype = rna_ss->next;
-        snort_free(const_cast<char*>(rna_ss->service));
-        snort_free(const_cast<char*>(rna_ss->vendor));
-        snort_free(const_cast<char*>(rna_ss->version));
-        snort_free(rna_ss);
-        rna_ss = subtype;
-    }
-
     if (tsession)
         delete tsession;
 

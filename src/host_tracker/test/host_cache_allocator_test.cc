@@ -66,10 +66,6 @@ public:
 typedef LruCacheSharedMemcap<string, Item, hash<string>> CacheType;
 CacheType cache(100);
 
-// Unorthodox, but necessary because we need the implementation of
-// HostCacheAlloc in this file, which we inherit.
-#include "host_tracker/host_cache_allocator.cc"
-
 // Implement the allocator constructor AFTER we have a cache object
 // to point to and the implementation of our base HostCacheAlloc:
 template <class T>

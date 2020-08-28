@@ -32,6 +32,7 @@
 
 #include "protocols/packet.h"
 #include "pub_sub/appid_events.h"
+#include "utils/util.h"
 
 #include "appid_types.h"
 #include "application_ids.h"
@@ -49,7 +50,6 @@ public:
     virtual void reset()
     {
         my_id = APP_ID_NONE;
-        my_vendor.clear();
         my_version.clear();
     }
 
@@ -70,17 +70,6 @@ public:
 
     virtual void set_id(const snort::Packet& p, AppIdSession& asd, AppidSessionDirection dir, AppId app_id, AppidChangeBits& change_bits);
 
-    const char* get_vendor() const
-    {
-        return my_vendor.empty() ? nullptr : my_vendor.c_str();
-    }
-
-    void set_vendor(const char* vendor)
-    {
-        if ( vendor )
-            my_vendor = vendor;
-    }
-
     const char* get_version() const
     {
         return my_version.empty() ? nullptr : my_version.c_str();
@@ -97,21 +86,47 @@ public:
 
 private:
     AppId my_id = APP_ID_NONE;
-    std::string my_vendor;
     std::string my_version;
+};
+
+struct AppIdServiceSubtype
+{
+    AppIdServiceSubtype* next = nullptr;
+    std::string service;
+    std::string vendor;
+    std::string version;
 };
 
 class ServiceAppDescriptor : public ApplicationDescriptor
 {
 public:
     ServiceAppDescriptor() = default;
+    ~ServiceAppDescriptor() override
+    {
+        AppIdServiceSubtype* tmp_subtype = subtype;
+        while (tmp_subtype)
+        {
+            subtype = tmp_subtype->next;
+            delete tmp_subtype;
+            tmp_subtype = subtype;
+        }
+    }
 
     void set_id(AppId app_id, OdpContext& odp_ctxt);
 
     void reset() override
     {
         ApplicationDescriptor::reset();
+        my_vendor.clear();
         port_service_id = APP_ID_NONE;
+
+        AppIdServiceSubtype* tmp_subtype = subtype;
+        while (tmp_subtype)
+        {
+            subtype = tmp_subtype->next;
+            delete tmp_subtype;
+            tmp_subtype = subtype;
+        }
     }
 
     void update_stats(AppId id) override;
@@ -128,10 +143,41 @@ public:
         return deferred;
     }
 
+    const char* get_vendor() const
+    {
+        return my_vendor.empty() ? nullptr : my_vendor.c_str();
+    }
+
+    void set_vendor(const char* vendor, AppidChangeBits& change_bits)
+    {
+        if ( vendor )
+        {
+            my_vendor = vendor;
+            change_bits.set(APPID_SERVICE_VENDOR_BIT);
+        }
+    }
+
+    void add_subtype(AppIdServiceSubtype& more_subtype, AppidChangeBits& change_bits)
+    {
+        AppIdServiceSubtype** tmp_subtype;
+
+        for (tmp_subtype = &subtype; *tmp_subtype; tmp_subtype = &(*tmp_subtype)->next)
+            ;
+        *tmp_subtype = &more_subtype;
+        change_bits.set(APPID_SERVICE_SUBTYPE_BIT);
+    }
+
+    const AppIdServiceSubtype* get_subtype() const
+    {
+        return subtype;
+    }
+
 private:
     AppId port_service_id = APP_ID_NONE;
     bool deferred = false;
     using ApplicationDescriptor::set_id;
+    std::string my_vendor;
+    AppIdServiceSubtype* subtype = nullptr;
 };
 
 class ClientAppDescriptor : public ApplicationDescriptor
