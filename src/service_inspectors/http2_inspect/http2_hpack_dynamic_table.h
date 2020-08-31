@@ -25,13 +25,15 @@
 
 #include "http2_enum.h"
 
+#include <vector>
+
 struct HpackTableEntry;
 
 class HpackDynamicTable
 {
 public:
     // FIXIT-P This array can be optimized to start smaller and grow on demand 
-    HpackDynamicTable() : circular_array(new HpackTableEntry*[ARRAY_CAPACITY]()) { }
+    HpackDynamicTable() : circular_buf(4096, nullptr) {}
     ~HpackDynamicTable();
     const HpackTableEntry* get_entry(uint32_t index) const;
     bool add_entry(const Field& name, const Field& value);
@@ -39,8 +41,6 @@ public:
     uint32_t get_max_size() { return max_size; }
 
 private:
-    void expand_array();
-
     const static uint32_t RFC_ENTRY_OVERHEAD = 32;
 
     const static uint32_t DEFAULT_MAX_SIZE = 4096;
@@ -50,7 +50,7 @@ private:
     uint32_t start = 0;
     uint32_t num_entries = 0;
     uint32_t rfc_table_size = 0;
-    HpackTableEntry** circular_array;
+    std::vector<HpackTableEntry*> circular_buf;
 
     void prune_to_size(uint32_t new_max_size);
 };

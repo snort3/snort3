@@ -32,9 +32,11 @@ using namespace Http2Enums;
 
 HpackDynamicTable::~HpackDynamicTable()
 {
-    for (unsigned i = 0; i < ARRAY_CAPACITY; i++)
-        delete circular_array[i];
-    delete[] circular_array;
+    for (std::vector<HpackTableEntry*>::iterator it = circular_buf.begin();
+        it != circular_buf.end(); ++it)
+    {
+        delete *it;
+    }
 }
 
 bool HpackDynamicTable::add_entry(const Field& name, const Field& value)
@@ -55,14 +57,14 @@ bool HpackDynamicTable::add_entry(const Field& name, const Field& value)
 
     // Create new entry. This is done before pruning because the entry referenced by the new name
     // may be pruned.
-    HpackTableEntry *new_entry = new HpackTableEntry(name, value);
+    HpackTableEntry* new_entry = new HpackTableEntry(name, value);
 
     // If add entry would exceed max table size, evict old entries
     prune_to_size(max_size - new_entry_size);
 
     // Add new entry to the front of the table (newest entry = lowest index)
     start = (start + ARRAY_CAPACITY - 1) % ARRAY_CAPACITY;
-    circular_array[start] = new_entry;
+    circular_buf[start] = new_entry;
 
     num_entries++;
     if (num_entries > Http2Module::get_peg_counts(PEG_MAX_TABLE_ENTRIES))
@@ -80,7 +82,7 @@ const HpackTableEntry* HpackDynamicTable::get_entry(uint32_t virtual_index) cons
         return nullptr;
 
     const uint32_t arr_index = (start + dyn_index) % ARRAY_CAPACITY;
-    return circular_array[arr_index];
+    return circular_buf[arr_index];
 }
 
 /* This is called when adding a new entry and when receiving a dynamic table size update.
@@ -95,10 +97,10 @@ void HpackDynamicTable::prune_to_size(uint32_t new_max_size)
     {
         const uint32_t last_index = (start + num_entries - 1 + ARRAY_CAPACITY) % ARRAY_CAPACITY;
         num_entries--;
-        rfc_table_size -= circular_array[last_index]->name.length() +
-            circular_array[last_index]->value.length() + RFC_ENTRY_OVERHEAD;
-        delete circular_array[last_index];
-        circular_array[last_index] = nullptr;
+        rfc_table_size -= circular_buf[last_index]->name.length() +
+            circular_buf[last_index]->value.length() + RFC_ENTRY_OVERHEAD;
+        delete circular_buf[last_index];
+        circular_buf[last_index] = nullptr;
     }
 }
 
