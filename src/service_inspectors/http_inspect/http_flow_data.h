@@ -68,11 +68,10 @@ public:
     friend class HttpUnitTestSetup;
 #endif
 
-    HttpEnums::SectionType get_type_expected(HttpCommon::SourceId source_id)
+    HttpEnums::SectionType get_type_expected(HttpCommon::SourceId source_id) const
     { return type_expected[source_id]; }
 
-    void finish_h2_body(HttpCommon::SourceId source_id)
-    { h2_body_finished[source_id] = true; }
+    void finish_h2_body(HttpCommon::SourceId source_id, HttpEnums::H2BodyState state);
 
     void reset_partial_flush(HttpCommon::SourceId source_id)
     { partial_flush[source_id] = false; }
@@ -82,7 +81,8 @@ public:
 private:
     // HTTP/2 handling
     bool for_http2 = false;
-    bool h2_body_finished[2] = { false, false };
+    HttpEnums::H2BodyState h2_body_state[2] = { HttpEnums::H2_BODY_NOT_COMPLETE,
+         HttpEnums::H2_BODY_NOT_COMPLETE };
 
     // Convenience routines
     void half_reset(HttpCommon::SourceId source_id);

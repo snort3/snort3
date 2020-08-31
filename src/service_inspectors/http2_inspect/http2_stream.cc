@@ -24,12 +24,16 @@
 #include "http2_enum.h"
 #include "http2_stream.h"
 
+#include "service_inspectors/http_inspect/http_enum.h"
 #include "service_inspectors/http_inspect/http_flow_data.h"
+#include "service_inspectors/http_inspect/http_stream_splitter.h"
 
 #include "http2_data_cutter.h"
+#include "http2_dummy_packet.h"
 
 using namespace HttpCommon;
 using namespace Http2Enums;
+using namespace HttpEnums;
 
 Http2Stream::Http2Stream(uint32_t stream_id_, Http2FlowData* session_data_) :
     stream_id(stream_id_),
@@ -96,4 +100,20 @@ Http2DataCutter* Http2Stream::get_data_cutter(HttpCommon::SourceId source_id)
 bool Http2Stream::is_open(HttpCommon::SourceId source_id)
 {
     return (state[source_id] == STATE_OPEN) || (state[source_id] == STATE_OPEN_DATA);
+}
+
+void Http2Stream::finish_msg_body(HttpCommon::SourceId source_id, bool expect_trailers)
+{
+    uint32_t http_flush_offset = 0;
+    Http2DummyPacket dummy_pkt;
+    dummy_pkt.flow = session_data->flow;
+    uint32_t unused = 0;
+    const H2BodyState body_state = expect_trailers ?
+        H2_BODY_COMPLETE_EXPECT_TRAILERS : H2_BODY_COMPLETE;
+    get_hi_flow_data()->finish_h2_body(source_id, body_state);
+    const snort::StreamSplitter::Status scan_result = session_data->hi_ss[source_id]->scan(
+        &dummy_pkt, nullptr, 0, unused, &http_flush_offset);
+    assert(scan_result == snort::StreamSplitter::FLUSH);
+    UNUSED(scan_result);
+    session_data->data_processing[source_id] = false;
 }

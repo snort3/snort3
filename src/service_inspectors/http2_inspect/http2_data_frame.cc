@@ -83,11 +83,11 @@ void Http2DataFrame::update_stream_state()
                     Http2Module::increment_peg_counts(PEG_MAX_CONCURRENT_FILES);
                 }
             }
-            if (stream->is_last_data_flush(source_id))
+            if (stream->is_end_stream_on_data_flush(source_id))
                 stream->set_state(source_id, STATE_CLOSED);
             break;
         case STATE_OPEN_DATA:
-            if (stream->is_last_data_flush(source_id))
+            if (stream->is_end_stream_on_data_flush(source_id))
             {
                 assert(session_data->concurrent_files > 0);
                 session_data->concurrent_files -= 1;

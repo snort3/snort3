@@ -262,7 +262,7 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
         max_length, session_data->get_infractions(source_id), session_data->events[source_id],
         session_data->section_size_target[source_id],
         session_data->stretch_section_to_packet[source_id],
-        session_data->h2_body_finished[source_id]);
+        session_data->h2_body_state[source_id]);
     switch (cut_result)
     {
     case SCAN_NOT_FOUND:

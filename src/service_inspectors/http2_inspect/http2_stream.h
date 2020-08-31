@@ -64,8 +64,11 @@ public:
         { state[source_id] = new_state; }
     Http2Enums::StreamState get_state(HttpCommon::SourceId source_id) { return state[source_id]; }
     bool is_open(HttpCommon::SourceId source_id);
-    void set_last_data_flush(HttpCommon::SourceId source_id) { last_data_flush[source_id] = true; }
-    bool is_last_data_flush(HttpCommon::SourceId source_id) { return last_data_flush[source_id]; }
+    void set_end_stream_on_data_flush(HttpCommon::SourceId source_id)
+        { end_stream_on_data_flush[source_id] = true; }
+    bool is_end_stream_on_data_flush(HttpCommon::SourceId source_id)
+        { return end_stream_on_data_flush[source_id]; }
+    void finish_msg_body(HttpCommon::SourceId source_id, bool expect_trailers = false);
 
 #ifdef REG_TEST
     void print_frame(FILE* output);
@@ -79,7 +82,7 @@ private:
     HttpMsgSection* hi_msg_section = nullptr;
     Http2DataCutter* data_cutter[2] = { nullptr, nullptr};
     bool partial_buf_pending[2] = { false, false }; // used to indicate a partial buffer
-    bool last_data_flush[2] = { false, false };
+    bool end_stream_on_data_flush[2] = { false, false };
     Http2Enums::StreamState state[2] = { Http2Enums::STATE_IDLE, Http2Enums::STATE_IDLE };
 };
 

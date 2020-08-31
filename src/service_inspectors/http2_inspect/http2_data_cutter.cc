@@ -170,7 +170,13 @@ StreamSplitter::Status Http2DataCutter::http_scan(const uint8_t* data, uint32_t*
 
             if (frame_flags & END_STREAM)
             {
-                finish_msg_body();
+                Http2Stream* const stream = session_data->find_stream(
+                    session_data->current_stream[source_id]);
+                stream->finish_msg_body(source_id);
+
+                // Since there may be multiple frame headers or zero frame headers in the flushed
+                // data section, remember END_STREAM flag in the stream object
+                stream->set_end_stream_on_data_flush(source_id);
                 return StreamSplitter::FLUSH;
             }
             else if (scan_result != StreamSplitter::FLUSH)
@@ -332,20 +338,3 @@ const StreamBuffer Http2DataCutter::reassemble(const uint8_t* data, unsigned len
 
     return frame_buf;
 }
-
-void Http2DataCutter::finish_msg_body()
-{
-    uint32_t http_flush_offset = 0;
-    Http2DummyPacket dummy_pkt;
-    dummy_pkt.flow = session_data->flow;
-    uint32_t unused = 0;
-    Http2Stream* const stream = session_data->get_current_stream(source_id);
-    stream->get_hi_flow_data()->finish_h2_body(source_id);
-    stream->set_last_data_flush(source_id);
-    const snort::StreamSplitter::Status scan_result = session_data->hi_ss[source_id]->scan(
-        &dummy_pkt, nullptr, 0, unused, &http_flush_offset);
-    assert(scan_result == snort::StreamSplitter::FLUSH);
-    UNUSED(scan_result);
-    session_data->data_processing[source_id] = false;
-}
-

@@ -378,6 +378,9 @@ extern const bool is_sp_tab_cr_lf_vt_ff[256];
 extern const bool is_sp_tab_quote_dquote[256];
 extern const bool is_print_char[256]; // printable includes SP, tab, CR, LF
 extern const bool is_sp_comma[256];
+
+enum H2BodyState { H2_BODY_NOT_COMPLETE, H2_BODY_COMPLETE, H2_BODY_COMPLETE_EXPECT_TRAILERS };
+
 } // end namespace HttpEnums
 
 #endif

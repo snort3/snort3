@@ -251,6 +251,13 @@ uint16_t HttpFlowData::get_memory_usage_estimate()
     return memory_usage_estimate;
 }
 
+void HttpFlowData::finish_h2_body(HttpCommon::SourceId source_id, HttpEnums::H2BodyState state)
+{
+    assert(h2_body_state[source_id] == H2_BODY_NOT_COMPLETE);
+    h2_body_state[source_id] = state;
+    partial_flush[source_id] = false;
+}
+
 #ifdef REG_TEST
 void HttpFlowData::show(FILE* out_file) const
 {

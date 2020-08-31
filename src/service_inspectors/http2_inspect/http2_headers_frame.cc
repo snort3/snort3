@@ -45,10 +45,44 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t
     HttpCommon::SourceId source_id_, Http2Stream* stream_) :
     Http2Frame(header_buffer, header_len, data_buffer, data_len, session_data_, source_id_, stream_)
 {
-    // FIXIT-E If the stream state is not IDLE, we've already received the headers. Trailers are
-    // not yet being processed
+    // FIXIT-E check frame validity before creating frame
+    if (!check_frame_validity())
+        return;
+
+    // If the stream state is not IDLE, this frame contains trailers.
     if (stream->get_state(source_id) >= STATE_OPEN)
     {
+        HttpFlowData* http_flow = session_data->get_current_stream(source_id)->get_hi_flow_data();
+        if (http_flow->get_type_expected(source_id) != HttpEnums::SEC_TRAILER)
+        {
+            // If there was no unflushed data on this stream when the trailers arrived, http_inspect
+            // will not yet be expecting trailers. Flush empty buffer through scan, reassemble, and
+            // eval to prepare http_inspect for trailers.
+            assert(http_flow->get_type_expected(source_id) == HttpEnums::SEC_BODY_H2);
+            stream->finish_msg_body(source_id, true); // calls http_inspect scan()
+
+            unsigned copied;
+            StreamBuffer stream_buf;
+            stream_buf = session_data->hi_ss[source_id]->reassemble(session_data->flow,
+                0, 0, nullptr, 0, PKT_PDU_TAIL, copied);
+            assert(stream_buf.data != nullptr);
+            assert(copied == 0);
+
+            Http2DummyPacket dummy_pkt;
+            dummy_pkt.flow = session_data->flow;
+            dummy_pkt.packet_flags = (source_id == SRC_CLIENT) ? PKT_FROM_CLIENT : PKT_FROM_SERVER;
+            dummy_pkt.dsize = stream_buf.length;
+            dummy_pkt.data = stream_buf.data;
+            session_data->hi->eval(&dummy_pkt);
+            assert (http_flow->get_type_expected(source_id) == HttpEnums::SEC_TRAILER);
+            if (http_flow->get_type_expected(source_id) == HttpEnums::SEC_ABORT)
+            {
+                hi_abort = true;
+                return;
+            }
+            session_data->hi->clear(&dummy_pkt);
+        }
+        // FIXIT-E Trailers are not yet being processed
         trailer = true;
         return;
     }
@@ -207,6 +241,24 @@ const Field& Http2HeadersFrame::get_buf(unsigned id)
     }
 }
 
+// Return: continue processing frame
+bool Http2HeadersFrame::check_frame_validity()
+{
+    if (stream->get_state(source_id) == STATE_CLOSED)
+    {
+        *session_data->infractions[source_id] += INF_TRAILERS_AFTER_END_STREAM;
+        session_data->events[source_id]->create_event(EVENT_FRAME_SEQUENCE);
+        return false;
+    }
+    else if ((stream->get_state(source_id) != STATE_IDLE) and !(get_flags() & END_STREAM))
+    {
+        // Trailers without END_STREAM flag set. Alert but continue to process.
+        *session_data->infractions[source_id] += INF_FRAME_SEQUENCE;
+        session_data->events[source_id]->create_event(EVENT_FRAME_SEQUENCE);
+    }
+    return true;
+}
+
 void Http2HeadersFrame::update_stream_state()
 {
     switch (stream->get_state(source_id))
@@ -220,23 +272,15 @@ void Http2HeadersFrame::update_stream_state()
         case STATE_OPEN:
             // fallthrough
         case STATE_OPEN_DATA:
-            if (get_flags() & END_STREAM)
-            {
-                if (stream->get_state(source_id) == STATE_OPEN_DATA)
-                    session_data->concurrent_files -= 1;
-                stream->set_state(source_id, STATE_CLOSED);
-            }
-            else
-            {
-                // Headers frame without end_stream flag set after initial Headers frame
-                *session_data->infractions[source_id] += INF_FRAME_SEQUENCE;
-                session_data->events[source_id]->create_event(EVENT_FRAME_SEQUENCE);
-            }
+            // Any trailing headers frame will be processed as trailers regardless of whether the
+            // END_STREAM flag is set
+            if (stream->get_state(source_id) == STATE_OPEN_DATA)
+                session_data->concurrent_files -= 1;
+            stream->set_state(source_id, STATE_CLOSED);
             break;
         case STATE_CLOSED:
-            // Trailers in closed state
-            *session_data->infractions[source_id] += INF_TRAILERS_AFTER_END_STREAM;
-            session_data->events[source_id]->create_event(EVENT_FRAME_SEQUENCE);
+            // FIXIT-E frame validity should be checked before creating frame so we should not get
+            // here
             break;
     }
 }

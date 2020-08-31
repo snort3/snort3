@@ -50,6 +50,7 @@ private:
     Http2HeadersFrame(const uint8_t* header_buffer, const int32_t header_len,
         const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* ssn_data,
         HttpCommon::SourceId src_id, Http2Stream* stream);
+    bool check_frame_validity();
 
     Http2StartLine* start_line_generator = nullptr;
     uint8_t* decoded_headers = nullptr; // working buffer to store decoded headers

@@ -115,13 +115,6 @@ StreamSplitter::Status Http2StreamSplitter::non_data_scan(Http2FlowData* session
     // Compute frame section length once per frame
     if (session_data->scan_remaining_frame_octets[source_id] == 0)
     {
-        if (session_data->continuation_expected[source_id] && type != FT_CONTINUATION)
-        {
-            *session_data->infractions[source_id] += INF_MISSING_CONTINUATION;
-            session_data->events[source_id]->create_event(EVENT_MISSING_CONTINUATION);
-            return StreamSplitter::ABORT;
-        }
-
         if (frame_length + FRAME_HEADER_LENGTH > MAX_OCTETS)
         {
             // FIXIT-M long non-data frame needs to be supported
@@ -188,13 +181,10 @@ StreamSplitter::Status Http2StreamSplitter::non_data_scan(Http2FlowData* session
 
 // Flush pending data
 void Http2StreamSplitter::partial_flush_data(Http2FlowData* session_data,
-    HttpCommon::SourceId source_id, uint32_t* flush_offset, uint32_t data_offset, uint32_t
-    old_stream)
+    HttpCommon::SourceId source_id, uint32_t* flush_offset, uint32_t data_offset,
+    Http2Stream* const stream)
 {
-    session_data->current_stream[source_id] = session_data->stream_in_hi = old_stream;
     session_data->frame_type[source_id] = FT_DATA;
-    Http2Stream* const stream = session_data->find_stream(
-        session_data->current_stream[source_id]);
     Http2DataCutter* const data_cutter = stream->get_data_cutter(source_id);
     if (data_cutter->is_flush_required())
         session_data->hi_ss[source_id]->init_partial_flush(session_data->flow);
@@ -203,7 +193,6 @@ void Http2StreamSplitter::partial_flush_data(Http2FlowData* session_data,
     *flush_offset = data_offset - 1;
     session_data->flushing_data[source_id] = true;
     session_data->num_frame_headers[source_id] -= 1;
-    session_data->stream_in_hi = NO_STREAM_ID;
 }
 
 bool Http2StreamSplitter::read_frame_hdr(Http2FlowData* session_data, const uint8_t* data,
@@ -307,6 +296,13 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                 session_data->current_stream[source_id] =
                     get_stream_id(session_data->scan_frame_header[source_id]);
 
+                if (session_data->continuation_expected[source_id] && type != FT_CONTINUATION)
+                {
+                    *session_data->infractions[source_id] += INF_MISSING_CONTINUATION;
+                    session_data->events[source_id]->create_event(EVENT_MISSING_CONTINUATION);
+                    return StreamSplitter::ABORT;
+                }
+
                 if (session_data->data_processing[source_id] &&
                     ((type != FT_DATA) || (old_stream != session_data->current_stream[source_id])))
                 {
@@ -315,8 +311,19 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                     // message body section sizes. It also avoids extreme delays in inspecting the
                     // data that could occur if we put this aside indefinitely while processing
                     // other streams.
-                    partial_flush_data(session_data, source_id, flush_offset, data_offset,
-                        old_stream);
+                    const uint32_t next_stream = session_data->current_stream[source_id];
+                    session_data->current_stream[source_id] = session_data->stream_in_hi =
+                        old_stream;
+                    Http2Stream* const stream = session_data->find_stream(
+                        session_data->current_stream[source_id]);
+                    partial_flush_data(session_data, source_id, flush_offset, data_offset, stream);
+
+                    if ((type == FT_HEADERS) and
+                        (session_data->current_stream[source_id]) == next_stream)
+                    {
+                        stream->finish_msg_body(source_id, true);
+                    }
+                    session_data->stream_in_hi = NO_STREAM_ID;
                     return StreamSplitter::FLUSH;
                 }
 

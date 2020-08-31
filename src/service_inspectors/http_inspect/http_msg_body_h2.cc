@@ -23,16 +23,15 @@
 
 #include "http_msg_body_h2.h"
 
+using namespace HttpEnums;
+
 void HttpMsgBodyH2::update_flow()
 {
     session_data->body_octets[source_id] = body_octets;
-    if (session_data->h2_body_finished[source_id])
-    {
-        session_data->trailer_prep(source_id);
-        session_data->h2_body_finished[source_id] = false;
-    }
-    else
+    if (session_data->h2_body_state[source_id] == H2_BODY_NOT_COMPLETE)
         update_depth();
+    else if (session_data->h2_body_state[source_id] == H2_BODY_COMPLETE_EXPECT_TRAILERS)
+        session_data->trailer_prep(source_id);
 }
 
 #ifdef REG_TEST
