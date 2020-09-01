@@ -51,7 +51,11 @@ uint32_t Active::send_data(snort::Packet*, EncodeFlags, unsigned char const*, un
 
 void Active::block_session(snort::Packet*, bool) { }
 void DetectionEngine::disable_all(snort::Packet*) { }
-Flow::Flow() { memset(this, 0, sizeof(*this)); }
+Flow::Flow()
+{
+    gadget = nullptr;
+    flow_state = Flow::FlowState::SETUP;
+}
 Flow::~Flow() { }
 Packet::Packet(bool) { packet_flags = 0; flow = nullptr; }
 Packet::~Packet() { }
