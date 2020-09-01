@@ -71,7 +71,12 @@ int SnortConfig::request_scratch(ScratchAllocator* s)
     return 0;
 }
 
-void SnortConfig::release_scratch(int) { }
+void SnortConfig::release_scratch(int)
+{
+    scratcher = nullptr;
+    s_state.clear();
+    s_state.shrink_to_fit();
+}
 
 const SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
@@ -373,8 +378,6 @@ TEST(ips_regex_option_relative, no_match)
 
 int main(int argc, char** argv)
 {
-    // FIXIT-L cpputest hangs or crashes in the leak detector
-    MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
 

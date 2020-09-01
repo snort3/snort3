@@ -100,6 +100,8 @@ TEST(host_tracker_module, host_tracker_module_test_basic)
 
 int main(int argc, char** argv)
 {
+    // FIXIT-L There is currently no external way to fully release the memory from the global host
+    //   cache unordered_map in host_cache.cc
     MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }

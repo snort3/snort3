@@ -66,7 +66,6 @@ TEST_GROUP(appid_detector_tests)
 
     void setup() override
     {
-        MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         SfIp ip;
         mock_session = new AppIdSession(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector,
             dummy_appid_inspector.get_ctxt().get_odp_ctxt());
@@ -79,7 +78,6 @@ TEST_GROUP(appid_detector_tests)
         delete flow;
         delete &mock_session->get_api();
         delete mock_session;
-        MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
 

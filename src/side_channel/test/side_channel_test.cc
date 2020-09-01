@@ -146,10 +146,7 @@ TEST_GROUP(side_channel)
 {
     void setup() override
     {
-        // FIXIT-L workaround for issue with CppUTest memory leak detection
-        MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         SideChannelManager::pre_config_init();
-
         SCConnectors test_connectors;
         PortBitSet test_ports;
 
@@ -200,7 +197,6 @@ TEST_GROUP(side_channel)
     {
         SideChannelManager::thread_term();
         SideChannelManager::term();
-        MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
 
@@ -283,7 +279,6 @@ TEST(side_channel, test_connector_receive_process_dispatch_discard)
 {
     SideChannel* sc = SideChannelManager::get_side_channel(1);
     CHECK(sc != nullptr);
-
     sc->register_receive_handler(receive_handler);
 
     bool success = sc->process(1);

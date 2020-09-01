@@ -37,7 +37,6 @@
 #include "sfip/sf_ip.h"
 
 using namespace snort;
-using namespace std;
 
 // All tests here use the same module since host_cache is global. Creating a local module for each
 // test will cause host_cache PegCount testing to be dependent on the order of running these tests.
@@ -84,15 +83,6 @@ HostCacheAllocIp<T>::HostCacheAllocIp()
 
 TEST_GROUP(host_cache_module)
 {
-    void setup() override
-    {
-        MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
-    }
-
-    void teardown() override
-    {
-        MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
-    }
 };
 
 static void try_reload_prune(bool is_not_locked)
@@ -111,8 +101,6 @@ static void try_reload_prune(bool is_not_locked)
 // This method is a friend of LruCacheSharedMemcap class.
 TEST(host_cache_module, misc)
 {
-    Value size_val((double)2112);
-    Parameter size_param = { "size", Parameter::PT_INT, nullptr, nullptr, "cache size" };
     const PegInfo* ht_pegs = module.get_pegs();
     const PegCount* ht_stats = module.get_counts();
 
@@ -165,13 +153,6 @@ TEST(host_cache_module, misc)
     CHECK(ht_stats[4] == 2); // 2 reload_prunes
     CHECK(ht_stats[5] == 1); // 1 remove
 
-    size_val.set(&size_param);
-
-    // Set up the host_cache max size.
-    module.begin("host_cache", 0, nullptr);
-    module.set(nullptr, size_val, nullptr);
-    module.end("host_cache", 0, nullptr);
-
     ht_stats = module.get_counts();
     CHECK(ht_stats[0] == 4);
 }
@@ -194,5 +175,8 @@ TEST(host_cache_module, log_host_cache_messages)
 
 int main(int argc, char** argv)
 {
+    // FIXIT-L There is currently no external way to fully release the memory from the global host
+    //   cache unordered_map in host_cache.cc
+    MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }

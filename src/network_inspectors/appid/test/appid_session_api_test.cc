@@ -66,7 +66,6 @@ TEST_GROUP(appid_session_api)
     {
         AppidChangeBits change_bits;
 
-        MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         SfIp ip;
         mock_session = new AppIdSession(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt);
         mock_session->set_ss_application_ids(APPID_UT_ID, APPID_UT_ID, APPID_UT_ID,
@@ -77,7 +76,6 @@ TEST_GROUP(appid_session_api)
     {
         delete &mock_session->get_api();
         delete mock_session;
-        MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
 

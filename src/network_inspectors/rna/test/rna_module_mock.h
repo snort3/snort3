@@ -26,15 +26,10 @@
 bool Swapper::reload_in_progress = false;
 THREAD_LOCAL RnaStats rna_stats;
 THREAD_LOCAL ProfileStats rna_perf_stats;
-static std::string message;
 static Request mock_request;
 
 const char* luaL_optlstring(lua_State*, int, const char*, size_t*) { return nullptr; }
 
-void Request::respond(const char* msg, bool, bool)
-{
-    message = msg;
-}
 Request& get_current_request()
 { return mock_request; }
 

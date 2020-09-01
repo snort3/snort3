@@ -181,6 +181,7 @@ void SideChannelManager::term()
         delete scm;
 
     s_maps.clear();
+    s_maps.shrink_to_fit();
 }
 
 // receive at most max_messages.  Zero indicates unlimited.

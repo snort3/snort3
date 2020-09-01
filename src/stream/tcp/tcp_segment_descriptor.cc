@@ -61,8 +61,8 @@ TcpSegmentDescriptor::TcpSegmentDescriptor(Flow* f, Packet* p, TcpEventLogger& t
 
 TcpSegmentDescriptor::TcpSegmentDescriptor
     (snort::Flow* f, snort::Packet* p, uint32_t meta_ack, uint16_t window)
-	: flow(f), pkt(ma_pseudo_packet), tcph(&ma_pseudo_tcph),
-	  packet_number(p->context->packet_number)
+    : flow(f), pkt(ma_pseudo_packet), tcph(&ma_pseudo_tcph),
+      packet_number(p->context->packet_number)
 {
     // init tcp header fields for meta-ack packet
     ma_pseudo_tcph.th_dport = p->ptrs.tcph->raw_src_port();
@@ -76,7 +76,7 @@ TcpSegmentDescriptor::TcpSegmentDescriptor
     ma_pseudo_tcph.th_urp = 0;
 
     // init meta-ack Packet fields stream cares about for TCP ack processing
-	pkt->flow = p->flow;
+    pkt->flow = p->flow;
     pkt->context = p->context;
     pkt->dsize = 0;
 

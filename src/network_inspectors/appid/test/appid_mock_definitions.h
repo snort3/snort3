@@ -35,7 +35,9 @@ namespace snort
 {
 char* snort_strndup(const char* src, size_t dst_size)
 {
-    return strndup(src, dst_size);
+    char* dup = (char*)snort_calloc(dst_size + 1);
+    strncpy(dup, src, dst_size + 1);
+    return dup;
 }
 
 char* snort_strdup(const char* str)

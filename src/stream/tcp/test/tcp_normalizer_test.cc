@@ -229,7 +229,6 @@ TEST(tcp_normalizers, norm_options_enabled)
 
 int main(int argc, char** argv)
 {
-    //MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
 

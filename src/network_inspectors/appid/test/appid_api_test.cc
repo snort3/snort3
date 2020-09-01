@@ -200,7 +200,10 @@ TEST_GROUP(appid_api)
     char test_log[256];
     void setup() override
     {
-        MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
+        mock_init_appid_pegs();
+        SfIp ip;
+        mock_session = new AppIdSession(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector,
+        dummy_appid_inspector.get_ctxt().get_odp_ctxt());
         flow = new Flow;
         flow->set_flow_data(mock_session);
         mock().setDataObject("test_log", "char", test_log);
@@ -210,7 +213,9 @@ TEST_GROUP(appid_api)
     {
         delete flow;
         mock().clear();
-        MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
+        mock_cleanup_appid_pegs();
+        delete &mock_session->get_api();
+        delete mock_session;
     }
 };
 
@@ -382,13 +387,6 @@ TEST(appid_api, is_service_http_type)
 
 int main(int argc, char** argv)
 {
-    mock_init_appid_pegs();
-    SfIp ip;
-    mock_session = new AppIdSession(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector,
-        dummy_appid_inspector.get_ctxt().get_odp_ctxt());
     int rc = CommandLineTestRunner::RunAllTests(argc, argv);
-    mock_cleanup_appid_pegs();
-    delete &mock_session->get_api();
-    delete mock_session;
     return rc;
 }

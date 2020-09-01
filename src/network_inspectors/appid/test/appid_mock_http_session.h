@@ -35,10 +35,9 @@ AppIdHttpSession::AppIdHttpSession(AppIdSession& session, uint32_t http2_stream_
 AppIdHttpSession::~AppIdHttpSession()
 {
     for ( int i = 0; i < NUM_METADATA_FIELDS; i++)
-    {
-        if ( meta_data[i] )
-            delete meta_data[i];
-    }
+        delete meta_data[i];
+    if (tun_dest)
+        delete tun_dest;
 }
 
 int AppIdHttpSession::process_http_packet(AppidSessionDirection, AppidChangeBits&, HttpPatternMatchers&) { return 0; }

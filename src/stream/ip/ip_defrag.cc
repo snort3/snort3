@@ -1300,7 +1300,7 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
                 }
 
                 debug_logf(stream_ip_trace, p, "left overlap, truncating new pkt (slide: %d)\n",
-					slide);
+                    slide);
 
                 break;
 
@@ -1947,7 +1947,7 @@ int Defrag::add_frag_node(
     ft->frag_bytes += newfrag->size;
 
     debug_logf(stream_ip_trace, nullptr, "[#] accumulated bytes on FragTracker %u, count %d\n",
-		ft->frag_bytes, ft->fraglist_count);
+        ft->frag_bytes, ft->fraglist_count);
 
     *retFrag = newfrag;
     return FRAG_INSERT_OK;
@@ -1981,7 +1981,7 @@ int Defrag::dup_frag_node( FragTracker* ft, Fragment* left, Fragment** retFrag)
     ft->frag_bytes += newfrag->size;
 
     debug_logf(stream_ip_trace, nullptr, "[#] accumulated bytes on FragTracker %u, count %d\n",
-		ft->frag_bytes, ft->fraglist_count);
+        ft->frag_bytes, ft->fraglist_count);
 
     *retFrag = newfrag;
     return FRAG_INSERT_OK;

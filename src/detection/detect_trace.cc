@@ -130,7 +130,7 @@ void node_eval_trace(const detection_option_tree_node_t* node, const Cursor& cur
         return;
 
     if ( trace_enabled(detection_trace, TRACE_BUFFER, 5) )
-		dump_buffer(cursor.buffer() + pos, cursor.length(), p);
+        dump_buffer(cursor.buffer() + pos, cursor.length(), p);
     else if ((pos != cursor_pos) || strcmp(cursor_name, name))
     {
         cursor_pos = pos;

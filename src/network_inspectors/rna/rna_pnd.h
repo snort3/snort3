@@ -20,7 +20,7 @@
 #ifndef RNA_PND_H
 #define RNA_PND_H
 
-#include <limits>
+#include <climits>
 
 #include "helpers/discovery_filter.h"
 #include "host_tracker/host_tracker.h"
@@ -35,8 +35,6 @@
 #include "rna_config.h"
 #include "rna_logger.h"
 #include "rna_mac_cache.h"
-
-#define USHRT_MAX std::numeric_limits<unsigned short>::max()
 
 enum class TcpPacketType
 {

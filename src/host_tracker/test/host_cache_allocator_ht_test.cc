@@ -33,7 +33,6 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
-using namespace std;
 using namespace snort;
 
 namespace snort
@@ -59,13 +58,18 @@ TEST(host_cache_allocator_ht, allocate)
     const size_t hc_item_sz = sizeof(HostCacheIp::Data) + sizeof(HostTracker);
     const size_t ht_item_sz = sizeof(HostApplication);
 
-    // room for n host trackers in the cache and m host applications in ht
-    const size_t max_size = n * hc_item_sz + m * ht_item_sz;
+    // room for n host trackers in the cache and 2^floor(log2(3))+2^ceil(log2(3))-1 host
+    // applications in ht
+    // FIXIT-L this makes a questionable assumption about the STL vector implementation
+    // that it will double the allocation each time it needs to increase its size, so
+    // going from 2 to 3 will allocate 4 and then release 2, meaning in order to exactly
+    // induce pruning, the max size should be just one <ht_item_sz> short of holding 6
+    const size_t max_size = n * hc_item_sz + 5 * ht_item_sz;
 
     host_cache.set_max_size(max_size);
 
     // insert n empty host trackers:
-    for (size_t i=0; i<n; i++)
+    for (size_t i = 0; i < n; i++)
     {
         memset(hk, 0, 16);
         hk[i] = (uint8_t) i;
@@ -78,7 +82,7 @@ TEST(host_cache_allocator_ht, allocate)
 
     // insert m host tracker items (host applications) into the most recent
     // host tracker
-    size_t i = n-1;
+    size_t i = n - 1;
     memset(hk, 0, 16);
     hk[i] = (uint8_t) i;
     ip.set(hk);
@@ -91,20 +95,19 @@ TEST(host_cache_allocator_ht, allocate)
         auto ht_ptr = host_cache[ip];
         CHECK(ht_ptr != nullptr);
 
-        for (size_t port = 0; port+1<m; port++)
+        for (size_t port = 0; port + 1 < m; port++)
             CHECK(true == ht_ptr->add_service(port, IpProtocol::TCP, 676, true));
 
         // Insert a new host tracker item. The sequence of operations is this:
-        // - host tracker vector is holding 2 * ht_item_sz = 24 and wants to
-        //   double in size.
-        // - the allocator honors the vector's request, allocating 48 bytes and
-        //   informs the host_cache about the new size, which exceeds max_size now
+        // - host tracker vector is holding 2 * <ht_item_sz> bytes and wants to double in size.
+        // - the allocator honors the vector's request, allocating 4 * <ht_item_sz> bytes and
+        //   informs the host_cache about the new size, which exceeds max_size
         // - host_cache prunes, removing the least recent host tracker.
-        //   Since this ht is empty, precisely hc_item_sz = 88 bytes are freed.
-        // - the host tracker vector destructor frees up an additional 24 bytes
+        //   Since this ht is empty, precisely <hc_item_sz> bytes are freed.
+        // - the host tracker vector destructor frees up an additional 2 * <ht_item_sz> bytes
         //   that it reallocated.
         // Hence, after the next insert, the math is this:
-        size_t sz = host_cache.mem_size() + 4*ht_item_sz - hc_item_sz - 2*ht_item_sz;
+        size_t sz = host_cache.mem_size() + 4 * ht_item_sz - hc_item_sz - 2 * ht_item_sz;
 
         CHECK(true == ht_ptr->add_service(m, IpProtocol::TCP, 676, true));
         CHECK(sz == host_cache.mem_size());
@@ -138,13 +141,12 @@ TEST(host_cache_allocator_ht, allocate)
     res = host_cache.remove(ip, ht_ptr);
     CHECK(res == true);
     CHECK(ht_ptr != nullptr);
-
 }
 
 int main(int argc, char** argv)
 {
-    //  Use this if you want to turn off memory checks entirely:
+    // FIXIT-L There is currently no external way to fully release the memory from the global host
+    //   cache unordered_map in host_cache.cc
     MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
-
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }

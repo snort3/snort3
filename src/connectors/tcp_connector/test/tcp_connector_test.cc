@@ -344,8 +344,6 @@ TEST_GROUP(tcp_connector_tinit_tterm_thread_call)
 {
     void setup() override
     {
-        // FIXIT-RC workaround for CppUTest mem leak detector issue
-        MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         tcpc_api = (const ConnectorApi*) tcp_connector;
         s_instance = 0;
         set_normal_status();
@@ -370,7 +368,6 @@ TEST_GROUP(tcp_connector_tinit_tterm_thread_call)
         tcpc_api->tterm(connector);
         tcpc_api->dtor(connector_common);
         tcp_connector->mod_dtor(mod);
-        MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
 

@@ -66,7 +66,11 @@ int SnortConfig::request_scratch(ScratchAllocator* s)
 }
 
 void SnortConfig::release_scratch(int)
-{ s_state.clear(); }
+{
+    scratcher = nullptr;
+    s_state.clear();
+    s_state.shrink_to_fit();
+}
 
 const SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
@@ -253,7 +257,6 @@ TEST(hyper_search_test_group, not_found4)
 
 int main(int argc, char** argv)
 {
-    MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
 

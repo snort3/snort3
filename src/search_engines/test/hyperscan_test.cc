@@ -116,7 +116,12 @@ int SnortConfig::request_scratch(ScratchAllocator* s)
     return 0;
 }
 
-void SnortConfig::release_scratch(int) { }
+void SnortConfig::release_scratch(int)
+{
+    scratcher = nullptr;
+    s_state.clear();
+    s_state.shrink_to_fit();
+}
 
 const SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
@@ -224,8 +229,6 @@ TEST_GROUP(mpse_hs_match)
 
     void setup() override
     {
-        // FIXIT-L cpputest hangs or crashes in the leak detector
-        MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         CHECK(se_hyperscan);
         mod = mpse_api->base.mod_ctor();
         hs = mpse_api->ctor(snort_conf, nullptr, &s_agent);
@@ -239,7 +242,6 @@ TEST_GROUP(mpse_hs_match)
         if ( do_cleanup )
             scratcher->cleanup(snort_conf);
         mpse_api->base.mod_dtor(mod);
-        MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
 
@@ -373,8 +375,6 @@ TEST_GROUP(mpse_hs_multi)
 
     void setup() override
     {
-        // FIXIT-L cpputest hangs or crashes in the leak detector
-        MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         CHECK(se_hyperscan);
 
         mod = mpse_api->base.mod_ctor();
@@ -395,7 +395,6 @@ TEST_GROUP(mpse_hs_multi)
         if ( do_cleanup )
             scratcher->cleanup(snort_conf);
         mpse_api->base.mod_dtor(mod);
-        MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
 
@@ -431,6 +430,9 @@ TEST(mpse_hs_multi, single)
 
 int main(int argc, char** argv)
 {
+    // FIXIT-L There is currently no external way to fully release the memory from the static
+    //   s_scratch vector in hyperscan.cc
+    MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
 

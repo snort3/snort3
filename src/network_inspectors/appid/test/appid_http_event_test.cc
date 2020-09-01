@@ -245,7 +245,6 @@ TEST_GROUP(appid_http_event)
 {
     void setup() override
     {
-        MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         flow = new Flow;
         SfIp ip;
         mock_session = new AppIdSession(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, stub_odp_ctxt);
@@ -263,7 +262,6 @@ TEST_GROUP(appid_http_event)
         delete flow;
         mock().clear();
         delete appidDebug;
-        MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
 

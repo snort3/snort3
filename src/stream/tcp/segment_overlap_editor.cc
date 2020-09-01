@@ -396,7 +396,7 @@ void SegmentOverlapEditor::full_right_overlap_os1(TcpReassemblerState& trs)
         drop_old_segment(trs);
     }
     else
-    	full_right_overlap_truncate_new(trs);
+        full_right_overlap_truncate_new(trs);
 }
 
 // REASSEMBLY_POLICY_LINUX:
@@ -415,7 +415,7 @@ void SegmentOverlapEditor::full_right_overlap_os2(TcpReassemblerState& trs)
         drop_old_segment(trs);
     }
     else
-    	full_right_overlap_truncate_new(trs);
+        full_right_overlap_truncate_new(trs);
 }
 
 // REASSEMBLY_POLICY_HPUX11:
@@ -447,7 +447,7 @@ void SegmentOverlapEditor::full_right_overlap_os4(TcpReassemblerState& trs)
 
 void SegmentOverlapEditor::full_right_overlap_os5(TcpReassemblerState& trs)
 {
-	full_right_overlap_truncate_new(trs);
+    full_right_overlap_truncate_new(trs);
 }
 
 void SegmentOverlapEditor::print(TcpReassemblerState& trs)

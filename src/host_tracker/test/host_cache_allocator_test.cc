@@ -121,8 +121,8 @@ TEST(cache_allocator, allocate)
 
 int main(int argc, char** argv)
 {
-    //  Use this if you want to turn off memory checks entirely:
+    // FIXIT-L There is currently no external way to fully release the memory from the global host
+    //   cache unordered_map in host_cache.cc
     MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
-
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }

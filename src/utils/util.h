@@ -27,6 +27,7 @@
 #if defined(__linux__)
 #include <sys/syscall.h>
 #endif
+#include <sys/time.h>
 #include <unistd.h>
 
 #include <cerrno>
