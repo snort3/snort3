@@ -87,7 +87,6 @@ public:
 
     Binder& make_binder(Binder&);
     Binder& make_binder();
-    Binder& make_pending_binder(int ips_policy_id);
 
     int convert(const std::string& input,
         const std::string& output,
@@ -154,7 +153,6 @@ private:
 
     RuleApi rule_api;
     std::vector<std::shared_ptr<Binder>> binders;
-    std::vector<PendingBinder> pending_binders;
 
     // the current parsing state.
     ConversionState* state;

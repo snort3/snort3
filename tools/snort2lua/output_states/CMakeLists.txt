@@ -7,7 +7,6 @@ add_library(output_states OBJECT
     out_null.cc
     out_tcpdump.cc
     out_test.cc
-    out_sfunified2.cc
     out_syslog.cc
     out_unified2.cc
     out_unixsock.cc

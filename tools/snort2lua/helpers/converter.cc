@@ -375,13 +375,6 @@ Binder& Converter::make_binder()
     return *binders.back();
 }
 
-Binder& Converter::make_pending_binder(int ips_policy_id)
-{
-    PendingBinder b(ips_policy_id, std::make_shared<Binder>(table_api));
-    pending_binders.push_back(b);
-    return *pending_binders.back().second;
-}
-
 void Converter::add_bindings()
 {
     std::unordered_map<int, std::shared_ptr<Binder>> policy_map;
@@ -391,34 +384,6 @@ void Converter::add_bindings()
             policy_map[b->get_when_ips_policy_id()] = b;
     }
 
-    for ( auto it = pending_binders.rbegin(); it != pending_binders.rend(); it++ )
-    {
-        auto& pb = *it;
-        auto result = policy_map.find(pb.first);
-
-        if ( result == policy_map.end() )
-        {
-            pb.second->print_binding(false);
-            data_api.error("Unable to satisfy pending binding for policy id " +
-                std::to_string(pb.first));
-
-            continue;
-        }
-
-        auto b = result->second;
-        b->print_binding(false);  // FIXIT-M is it desired to keep this around? not for nap case
-
-        // FIXIT-M as of writing, this assumes pending is only for nap rules
-        pb.second->set_use_file(b->get_use_file().first, Binder::IT_INSPECTION);
-
-        pb.second->set_use_type(b->get_use_type());
-        pb.second->set_use_name(b->get_use_name());
-        pb.second->set_use_service(b->get_use_service());
-        pb.second->set_use_action(b->get_use_action());
-
-        binders.push_back(pb.second);
-    }
-    pending_binders.clear();
     policy_map.clear();
 
     // vector::clear()'s ordering isn't deterministic but this is

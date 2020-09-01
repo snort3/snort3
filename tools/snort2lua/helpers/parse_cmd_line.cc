@@ -83,7 +83,6 @@ public:
     { idx = 0; arg = nullptr; }
 
     bool get_arg(const char*& key, const char*& val);
-    void dump();
 
 private:
     char** argv;
@@ -91,12 +90,6 @@ private:
     const char* arg;
     std::string buf;
 };
-
-void ArgList::dump()
-{
-    for ( int i = 0; i < argc; ++i )
-        printf("argv[%d]='%s'\n", i, argv[i]);
-}
 
 // FIXIT-L this chokes on -n -4 because it thinks
 // -4 is another arg instead of an option to -n
