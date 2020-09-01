@@ -829,6 +829,14 @@ static Packet* set_packet(Flow* flow, uint32_t flags, bool c2s)
         p->ptrs.sp = flow->server_port;
         p->ptrs.dp = flow->client_port;
     }
+
+    p->ip_proto_next = (IpProtocol)flow->ip_proto;
+
+    const SnortConfig* sc = SnortConfig::get_conf();
+    set_inspection_policy(sc, flow->inspection_policy_id);
+    set_ips_policy(sc, flow->ips_policy_id);
+    set_network_policy(sc, flow->network_policy_id);
+
     return p;
 }
 

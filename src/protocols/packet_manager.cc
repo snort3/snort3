@@ -670,6 +670,7 @@ int PacketManager::format_tcp(
     c->user_inspection_policy_id = p->user_inspection_policy_id;
     c->user_ips_policy_id = p->user_ips_policy_id;
     c->user_network_policy_id = p->user_network_policy_id;
+    c->ip_proto_next = p->ip_proto_next;
 
     // setup pkt capture header
     c->pktlen = 0;
