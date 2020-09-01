@@ -136,9 +136,9 @@ InjectionReturnStatus PayloadInjectorModule::inject_http_payload(Packet* p,
 
         if (p->packet_flags & PKT_STREAM_EST)
         {
-            if (!p->flow || !p->flow->gadget)
+            if (!p->flow)
                 status = ERR_UNIDENTIFIED_PROTOCOL;
-            else if (strcmp(p->flow->gadget->get_name(),"http_inspect") == 0)
+            else if (!p->flow->gadget || strcmp(p->flow->gadget->get_name(),"http_inspect") == 0)
             {
                 payload_injector_stats.http_injects++;
                 p->active->send_data(p, df, control.http_page, control.http_page_len);

@@ -131,6 +131,7 @@ TEST_GROUP(payload_injector_test)
     InjectionControl control;
     PayloadInjectorCounts* counts = (PayloadInjectorCounts*)mod.get_counts();
     Flow flow;
+    Active active;
 
     void setup() override
     {
@@ -193,6 +194,7 @@ TEST(payload_injector_test, configured_stream_established)
     mock_api.base.name = "http_inspect";
     flow.gadget = new MockInspector();
     p.flow = &flow;
+    p.active = &active;
     InjectionReturnStatus status = mod.inject_http_payload(&p, control);
     CHECK(counts->http_injects == 1);
     CHECK(status == INJECTION_SUCCESS);
@@ -225,6 +227,7 @@ TEST(payload_injector_test, http2_success)
     mock_api.base.name = "http2_inspect";
     flow.gadget = new MockInspector();
     p.flow = &flow;
+    p.active = &active;
     control.stream_id = 1;
     InjectionReturnStatus status = mod.inject_http_payload(&p, control);
     CHECK(counts->http2_injects == 1);
@@ -239,11 +242,11 @@ TEST(payload_injector_test, unidentified_gadget_is_null)
     Packet p(false);
     p.packet_flags = PKT_STREAM_EST;
     p.flow = &flow;
+    p.active = &active;
     InjectionReturnStatus status = mod.inject_http_payload(&p, control);
-    CHECK(status == ERR_UNIDENTIFIED_PROTOCOL);
+    CHECK(counts->http_injects == 1);
+    CHECK(status == INJECTION_SUCCESS);
     CHECK(flow.flow_state == Flow::FlowState::BLOCK);
-    const char* err_string = mod.get_err_string(status);
-    CHECK(strcmp(err_string, "Unidentified protocol") == 0);
 }
 
 TEST(payload_injector_test, unidentified_gadget_name)
