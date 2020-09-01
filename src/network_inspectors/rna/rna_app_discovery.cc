@@ -72,6 +72,14 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
         if ( appid_change_bits[APPID_SERVICE_BIT] and service > APP_ID_NONE )
             discover_service(p, proto, ht, (const struct in6_addr*) src_ip->get_ip6_ptr(),
                 src_mac, conf, logger, service);
+
+        if (appid_change_bits[APPID_CLIENT_BIT] and client > APP_ID_NONE
+            and service > APP_ID_NONE)
+        {
+            const char* version = appid_session_api.get_client_version();
+            discover_client(p, ht, (const struct in6_addr*) src_ip->get_ip6_ptr(), src_mac,
+                conf, logger, version, client, service);
+        }
     }
 
     if ( appid_change_bits[APPID_SERVICE_VENDOR_BIT] or appid_change_bits[APPID_VERSION_BIT] )
@@ -140,4 +148,21 @@ void RnaAppDiscovery::update_service_info(const Packet* p, IpProtocol proto, con
 
     ha.hits = 0;
     rt->update_service(ha);
+}
+
+void RnaAppDiscovery::discover_client(const Packet* p, RnaTracker& rt,
+    const struct in6_addr* src_ip, const uint8_t* src_mac, RnaConfig* conf,
+    RnaLogger& logger, const char* version, AppId client, AppId service)
+{
+    if (conf and conf->max_host_client_apps and
+        conf->max_host_client_apps <= rt->get_client_count())
+        return;
+
+    bool is_new = false;
+
+    auto hc = rt->get_client(client, version, service, is_new);
+    if ( is_new )
+    {
+        logger.log(RNA_EVENT_NEW, NEW_CLIENT_APP, p, &rt, src_ip, src_mac, &hc);
+    }
 }

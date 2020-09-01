@@ -82,6 +82,24 @@ struct HostApplication
     char version[INFO_SIZE] = { 0 };
 };
 
+struct HostClient
+{
+    HostClient() = default;
+    HostClient(AppId clientid, const char *ver, AppId ser) :
+        id(clientid), service(ser)
+    {
+        if (ver)
+        {
+            strncpy(version, ver, INFO_SIZE);
+            version[INFO_SIZE-1] = '\0';
+        }
+    }
+
+    AppId id;
+    char version[INFO_SIZE] = { 0 };
+    AppId service;
+};
+
 enum HostType
 {
     HOST_TYPE_HOST=0,
@@ -93,6 +111,7 @@ enum HostType
 
 typedef HostCacheAllocIp<HostMac> HostMacAllocator;
 typedef HostCacheAllocIp<HostApplication> HostAppAllocator;
+typedef HostCacheAllocIp<HostClient> HostClientAllocator;
 
 class SO_PUBLIC HostTracker
 {
@@ -190,6 +209,8 @@ public:
     bool update_service_info(HostApplication& ha, const char* vendor, const char* version);
     void remove_inferred_services();
 
+    size_t get_client_count();
+    HostClient get_client(AppId id, const char* version, AppId service, bool& is_new);
     bool add_tcp_fingerprint(uint32_t fpid);
 
     //  This should be updated whenever HostTracker data members are changed
@@ -204,6 +225,7 @@ private:
     std::vector<uint16_t, HostCacheAllocIp<uint16_t>> network_protos;
     std::vector<uint8_t, HostCacheAllocIp<uint8_t>> xport_protos;
     std::vector<HostApplication, HostAppAllocator> services;
+    std::vector<HostClient, HostClientAllocator> clients;
     std::set<uint32_t, std::less<uint32_t>, HostCacheAllocIp<uint32_t>> tcp_fpids;
 
     bool vlan_tag_present = false;

@@ -369,6 +369,31 @@ bool HostTracker::add_tcp_fingerprint(uint32_t fpid)
     return result.second;
 }
 
+size_t HostTracker::get_client_count()
+{
+    lock_guard<mutex> lck(host_tracker_lock);
+    return clients.size();
+}
+
+HostClient HostTracker::get_client(AppId id, const char* version, AppId service, bool& is_new)
+{
+    lock_guard<mutex> lck(host_tracker_lock);
+
+    for ( const auto& c : clients )
+    {
+        if (c.id != APP_ID_NONE and c.id == id and c.service == service
+            and ((c.version[0] == '\0' and !version) or
+            (version and strncmp(c.version, version, INFO_SIZE) == 0)))
+        {
+            return c;
+        }
+    }
+
+    is_new = true;
+    clients.emplace_back(id, version, service);
+    return clients.back();
+}
+
 static inline string to_time_string(uint32_t p_time)
 {
     time_t raw_time = (time_t) p_time;
@@ -421,6 +446,18 @@ void HostTracker::stringify(string& str)
                 str += ", vendor: " + string(s.vendor);
             if ( s.version[0] != '\0' )
                 str += ", version: " + string(s.version);
+        }
+    }
+
+    if ( !clients.empty() )
+    {
+        str += "\nclients size: " + to_string(clients.size());
+        for ( const auto& c : clients )
+        {
+            str += "\n    id: " + to_string(c.id)
+                + ", service: " + to_string(c.service);
+            if ( c.version[0] != '\0' )
+                str += ", version: " + string(c.version);
         }
     }
 

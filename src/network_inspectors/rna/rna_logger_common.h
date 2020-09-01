@@ -27,6 +27,7 @@
     #define NEW_NET_PROTOCOL    3
     #define NEW_XPORT_PROTOCOL  4
     #define NEW_UDP_SERVICE     6
+    #define NEW_CLIENT_APP      7
     #define NEW_OS              8
 
 #define RNA_EVENT_CHANGE    1001

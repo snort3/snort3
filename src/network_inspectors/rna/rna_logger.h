@@ -37,8 +37,8 @@ struct RnaLoggerEvent : public Event
 {
     RnaLoggerEvent (uint16_t t, uint16_t st, const uint8_t* mc, const RnaTracker* rt,
         const snort::HostMac* hmp, uint16_t pr, void* cv, const snort::HostApplication* hap,
-        const snort::TcpFingerprint* tf) : type(t), subtype(st), mac(mc), ht(rt), hm(hmp),
-        proto(pr), cond_var(cv), ha(hap), tfp(tf) { }
+        const snort::TcpFingerprint* tf, const snort::HostClient* hcp) : type(t), subtype(st),
+            mac(mc), ht(rt), hm(hmp), proto(pr), cond_var(cv), ha(hap), tfp(tf), hc(hcp) { }
 
     uint16_t type;
     uint16_t subtype;
@@ -50,6 +50,7 @@ struct RnaLoggerEvent : public Event
     void* cond_var;
     const snort::HostApplication* ha;
     const snort::TcpFingerprint* tfp;
+    const snort::HostClient* hc;
 };
 
 class RnaLogger
@@ -60,6 +61,10 @@ public:
     // for host application
     void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
         const struct in6_addr* src_ip, const uint8_t* src_mac, const snort::HostApplication* ha);
+
+    // for host client
+    void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
+        const struct in6_addr* src_ip, const uint8_t* src_mac, const snort::HostClient* hcp);
 
     // for tcp fingerprint
     void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
@@ -88,7 +93,7 @@ public:
         const uint8_t* src_mac, RnaTracker* ht, const snort::Packet* p = nullptr,
         uint32_t event_time = 0, uint16_t proto = 0, const snort::HostMac* hm = nullptr,
         const snort::HostApplication* ha = nullptr, const snort::TcpFingerprint* tfp = nullptr,
-        void* cond_var = nullptr);
+        void* cond_var = nullptr, const snort::HostClient* hc = nullptr);
 
 private:
     const bool enabled;
