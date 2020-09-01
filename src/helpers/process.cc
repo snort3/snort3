@@ -100,7 +100,7 @@ original_sigactions[] =
 static struct
 {
     int signal;
-    sighandler_t original_sighandler;
+    sig_t original_sighandler;
 }
 original_sighandlers[] =
 {
@@ -111,7 +111,7 @@ original_sighandlers[] =
 };
 #endif
 
-static bool add_signal(int sig, sighandler_t);
+static bool add_signal(int sig, sig_t);
 static bool restore_signal(int sig, bool silent = false);
 
 static bool exit_pronto = true;
@@ -302,7 +302,7 @@ const char* get_signal_name(PigSignal s)
 // signal management
 //-------------------------------------------------------------------------
 
-static bool add_signal(int sig, sighandler_t signal_handler)
+static bool add_signal(int sig, sig_t signal_handler)
 {
 #ifdef HAVE_SIGACTION
     struct sigaction action;
@@ -328,7 +328,7 @@ static bool add_signal(int sig, sighandler_t signal_handler)
         return false;
     }
 #else
-    sighandler_t original_handler = signal(sig, signal_handler);
+    sig_t original_handler = signal(sig, signal_handler);
     if (original_handler == SIG_ERR)
     {
         ErrorMessage("Could not add handler for signal %d: %s (%d)\n", sig, get_error(errno), errno);
@@ -337,9 +337,9 @@ static bool add_signal(int sig, sighandler_t signal_handler)
 
     for (unsigned i = 0; original_sighandlers[i].signal; i++)
     {
-        if (original_sigactions[i].signal == sig)
+        if (original_sighandlers[i].signal == sig)
         {
-            original_sigactions[i].original_handler = original_handler;
+            original_sighandlers[i].original_sighandler = original_handler;
             break;
         }
     }
@@ -378,13 +378,13 @@ static bool restore_signal(int sig, bool silent)
         return false;
     }
 #else
-    sighandler_t signal_handler = SIG_DFL;
+    sig_t signal_handler = SIG_DFL;
 
     for (unsigned i = 0; original_sighandlers[i].signal; i++)
     {
-        if (original_sigactions[i].signal == sig)
+        if (original_sighandlers[i].signal == sig)
         {
-            signal_handler = original_sigactions[i].original_handler;
+            signal_handler = original_sighandlers[i].original_sighandler;
             break;
         }
     }
