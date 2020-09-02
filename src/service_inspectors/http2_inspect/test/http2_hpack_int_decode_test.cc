@@ -154,6 +154,22 @@ TEST(http2_hpack_int_decode_success, 0_using_5_bits)
     CHECK(bytes_processed == 1);
 }
 
+TEST(http2_hpack_int_decode_success, MAX_UINT32_using_7_bits)
+{
+    // prepare decode object
+    Http2HpackIntDecode decode_7(7);
+    // prepare buf to decode - MAX_UINT32 using 7 bits
+    uint8_t buf[6] = {0x7f, 0x80, 0xff, 0xff, 0xff, 0xf};
+    // decode
+    uint32_t bytes_processed = 0;
+    uint64_t res = 0;
+    bool success = decode_7.translate(buf, 6, bytes_processed, res, &events, &inf);
+    // check results
+    CHECK(success == true);
+    CHECK(res == UINT32_MAX);
+    CHECK(bytes_processed == 6);
+}
+
 //
 // The following tests should result in a failure and set infractions/events
 //

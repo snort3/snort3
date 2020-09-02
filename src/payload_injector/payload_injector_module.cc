@@ -57,8 +57,6 @@ static const std::map <InjectionReturnStatus, const char*> InjectionErrorToStrin
     { ERR_PAGE_TRANSLATION, "Error in translating HTTP block page to HTTP/2. "
       "Unsupported or bad format." },
     { ERR_HTTP2_MID_FRAME, "HTTP/2 - attempt to inject mid frame. Currently not supported." },
-    { ERR_HTTP2_HDR_FIELD_VAL_LEN, "HTTP/2 header field value length > 127. "
-      " Currently not supported." },
     { ERR_TRANSLATED_HDRS_SIZE,
       "HTTP/2 translated header size is bigger than expected. Update max size." },
     { ERR_HTTP2_BODY_SIZE, "HTTP/2 body is > 16k. Currently not supported." }

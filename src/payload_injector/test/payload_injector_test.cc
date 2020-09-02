@@ -346,18 +346,6 @@ TEST(payload_injector_translate_err_test, http2_page_translation_err)
         "Unsupported or bad format.") == 0);
 }
 
-TEST(payload_injector_translate_err_test, http2_field_len_err)
-{
-    Packet p(false);
-    p.packet_flags = PKT_STREAM_EST;
-    p.flow = &flow;
-    translation_status = ERR_HTTP2_HDR_FIELD_VAL_LEN;
-    status = mod.inject_http_payload(&p, control);
-    const char* err_string = mod.get_err_string(status);
-    CHECK(strcmp(err_string, "HTTP/2 header field value length > 127. "
-        " Currently not supported.") == 0);
-}
-
 TEST(payload_injector_translate_err_test, http2_hdrs_size)
 {
     Packet p(false);

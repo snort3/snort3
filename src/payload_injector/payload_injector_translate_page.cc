@@ -53,45 +53,8 @@ static const char location[] = "Location: ";
 
 static const uint32_t max_hdr_size = 2000;
 
-// Write literal header field
-static InjectionReturnStatus write_indexed(const uint8_t* hdr, uint32_t len, uint8_t*& out,
-    uint32_t& out_free_space, const uint8_t* ind, uint8_t ind_size)
-{
-    const uint8_t* sep = (const uint8_t*)memchr(hdr,':',len);
-    assert(sep != nullptr);
-    const uint32_t skip_len = strlen(": ");
-    assert((sep - hdr) >= skip_len);
-    const uint32_t val_len = len - (sep - hdr) - skip_len;
-    const uint8_t max_val_len = (1<<7) - 1; // FIXIT-E bigger than this will have to be 7 bit
-                                            // prefix
-                                            // encoded - currently not supported
-    if (val_len > max_val_len)
-        return ERR_HTTP2_HDR_FIELD_VAL_LEN;
-
-    if (val_len == 0)
-        return ERR_PAGE_TRANSLATION;
-
-    if (out_free_space < (val_len + 1 + ind_size))
-    {
-#ifndef UNIT_TEST
-        assert(false);  // increase max_hdr_size
-#endif
-        return ERR_TRANSLATED_HDRS_SIZE;
-    }
-
-    memcpy(out, ind, ind_size);
-    out += ind_size;
-    out[0] = val_len;
-    memcpy(out + 1, sep + skip_len, val_len);
-    out += 1 + val_len;
-    out_free_space -= val_len + 1 + ind_size;
-
-    return INJECTION_SUCCESS;
-}
-
-// Write fixed translation
 static InjectionReturnStatus write_translation(uint8_t*& out, uint32_t& out_free_space,
-    const uint8_t* translation, uint8_t size)
+    const uint8_t* translation, uint32_t size)
 {
     if (out_free_space < size)
     {
@@ -106,6 +69,63 @@ static InjectionReturnStatus write_translation(uint8_t*& out, uint32_t& out_free
     out_free_space -= size;
 
     return INJECTION_SUCCESS;
+}
+
+#ifndef UNIT_TEST
+static
+#endif
+InjectionReturnStatus write_7_bit_prefix_int(uint32_t val, uint8_t*& out, uint32_t& out_free_space)
+{
+    uint8_t write_val;
+    if (val < ((1<<7) - 1))
+    {
+        write_val = val;
+        return write_translation(out, out_free_space, &write_val, 1);
+    }
+
+    write_val = (1<<7) - 1;
+    InjectionReturnStatus status =  write_translation(out, out_free_space, &write_val, 1);
+    if (status != INJECTION_SUCCESS)
+        return status;
+    val -= write_val;
+
+    while (val >= 128)
+    {
+        write_val = val % 128 + 128;
+        status =  write_translation(out, out_free_space, &write_val, 1);
+        if (status != INJECTION_SUCCESS)
+            return status;
+        val = val/128;
+    }
+    write_val = val;
+    status =  write_translation(out, out_free_space, &write_val, 1);
+    return status;
+}
+
+// Write literal header field
+static InjectionReturnStatus write_indexed(const uint8_t* hdr, uint32_t len, uint8_t*& out,
+    uint32_t& out_free_space, const uint8_t* ind, uint8_t ind_size)
+{
+    const uint8_t* sep = (const uint8_t*)memchr(hdr,':',len);
+    assert(sep != nullptr);
+    const uint32_t skip_len = strlen(": ");
+    assert((sep - hdr) >= skip_len);
+    const uint32_t val_len = len - (sep - hdr) - skip_len;
+
+    if (val_len == 0)
+        return ERR_PAGE_TRANSLATION;
+
+    InjectionReturnStatus status = write_translation(out, out_free_space, ind, ind_size);
+    if (status != INJECTION_SUCCESS)
+        return status;
+
+    status = write_7_bit_prefix_int(val_len, out, out_free_space);
+    if (status != INJECTION_SUCCESS)
+        return status;
+
+    status = write_translation(out, out_free_space, sep + skip_len, val_len);
+
+    return status;
 }
 
 static InjectionReturnStatus translate_hdr_field(const uint8_t* hdr, uint32_t len, uint8_t*& out,
@@ -165,7 +185,8 @@ static InjectionReturnStatus get_http2_hdr(const uint8_t* http_page, uint32_t le
     uint8_t* hdr_cur = http2_hdr;
     while ((page_cur - http_page) < len)
     {
-        const uint8_t* newline = (const uint8_t*)memchr(page_cur, '\n', len - (page_cur - http_page));
+        const uint8_t* newline = (const uint8_t*)memchr(page_cur, '\n', len - (page_cur -
+            http_page));
         if (newline != nullptr)
         {
             // FIXIT-E only \r\n should be supported

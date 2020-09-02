@@ -48,9 +48,8 @@ enum InjectionReturnStatus : int8_t
     ERR_HTTP2_STREAM_ID_0 = -4,
     ERR_PAGE_TRANSLATION = -5,
     ERR_HTTP2_MID_FRAME = -6,
-    ERR_HTTP2_HDR_FIELD_VAL_LEN = -7,
-    ERR_TRANSLATED_HDRS_SIZE = -8,
-    ERR_HTTP2_BODY_SIZE = -9,
+    ERR_TRANSLATED_HDRS_SIZE = -7,
+    ERR_HTTP2_BODY_SIZE = -8,
     // Update InjectionErrorToString when adding/removing error codes
 };
 
@@ -94,6 +93,11 @@ public:
 #endif
     static InjectionReturnStatus get_http2_payload(InjectionControl control, uint8_t*& http2_payload, uint32_t& payload_len);
 };
+
+#ifdef UNIT_TEST
+InjectionReturnStatus write_7_bit_prefix_int(uint32_t val, uint8_t*& out,
+					     uint32_t& out_free_space);
+#endif
 
 #endif
 
