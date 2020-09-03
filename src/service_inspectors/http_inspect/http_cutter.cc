@@ -21,8 +21,9 @@
 #include "config.h"
 #endif
 
-#include "http_common.h"
 #include "http_cutter.h"
+
+#include "http_common.h"
 #include "http_enum.h"
 
 using namespace HttpEnums;
@@ -770,9 +771,8 @@ ScanResult HttpBodyH2Cutter::cut(const uint8_t* /*buffer*/, uint32_t length,
     }
 }
 
-// This method searches the input stream looking for the beginning of a script or other dangerous
-// content that requires accelerated blocking. Exactly what we are looking for is encapsulated in
-// dangerous().
+// This method searches the input stream looking for a script or other dangerous content that
+// requires accelerated blocking. Exactly what we are looking for is encapsulated in dangerous().
 //
 // Return value true indicates a match and enables the packet that completes the matching sequence
 // to be detained (detained inspection) or sent for partial inspection (script detection).
@@ -818,17 +818,21 @@ bool HttpBodyCutter::need_accelerated_blocking(const uint8_t* data, uint32_t len
     return false;
 }
 
-// Currently we do detained inspection when we see a javascript starting
+// Currently we do accelerated blocking when we see a javascript
 bool HttpBodyCutter::dangerous(const uint8_t* data, uint32_t length)
 {
     const uint8_t* input_buf = data;
     uint32_t input_length = length;
     uint8_t* decomp_output = nullptr;
 
-    // Zipped flows must be decompressed before we can check them. Unzipping for detained
-    // inspection is completely separate from the unzipping done later in reassemble().
+    // Zipped flows must be decompressed before we can check them. Unzipping for accelerated
+    // blocking is completely separate from the unzipping done later in reassemble().
     if ((compression == CMP_GZIP) || (compression == CMP_DEFLATE))
     {
+        // Previous decompression failures make it impossible to search for scripts
+        if (decompress_failed)
+            return true;
+
         const uint32_t decomp_buffer_size = MAX_OCTETS;
         decomp_output = new uint8_t[decomp_buffer_size];
 
@@ -843,6 +847,7 @@ bool HttpBodyCutter::dangerous(const uint8_t* data, uint32_t length)
         // work out we assume it could be dangerous.
         if (((ret_val != Z_OK) && (ret_val != Z_STREAM_END)) || (compress_stream->avail_in > 0))
         {
+            decompress_failed = true;
             delete[] decomp_output;
             return true;
         }

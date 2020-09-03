@@ -53,12 +53,15 @@ const uint16_t HttpFlowData::memory_usage_estimate = sizeof(HttpFlowData) + size
 HttpFlowData::HttpFlowData() : FlowData(inspector_id)
 {
 #ifdef REG_TEST
-    seq_num = ++instance_count;
-    if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP) &&
-        !HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
+    if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
     {
-        fprintf(HttpTestManager::get_output_file(), "Flow Data construct %" PRIu64 "\n", seq_num);
-        fflush(HttpTestManager::get_output_file());
+        seq_num = ++instance_count;
+        if (!HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
+        {
+            fprintf(HttpTestManager::get_output_file(),
+                "Flow Data construct %" PRIu64 "\n", seq_num);
+            fflush(HttpTestManager::get_output_file());
+        }
     }
 #endif
     HttpModule::increment_peg_counts(PEG_CONCURRENT_SESSIONS);

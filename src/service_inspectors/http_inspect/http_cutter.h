@@ -117,6 +117,7 @@ private:
     bool detention_required = false;
     HttpEnums::CompressId compression;
     z_stream* compress_stream = nullptr;
+    bool decompress_failed = false;
     const uint8_t* match_string;
     const uint8_t* match_string_upper;
     uint8_t string_length;
