@@ -1603,6 +1603,8 @@ left_overlap_last:
 
                     ip_stats.discards++;
 
+                    EventAnomZeroFrag(fe);
+
                     return FRAG_INSERT_ANOMALY;
                 }
 
@@ -1871,7 +1873,7 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
  */
 int Defrag::add_frag_node(
     FragTracker* ft,
-    FragEngine*,
+    FragEngine* fe,
     const uint8_t* fragStart,
     int16_t fragLength,
     char lastfrag,
@@ -1911,6 +1913,8 @@ int Defrag::add_frag_node(
             newfrag = newfrag->next;
         }
 #endif
+
+        EventAnomZeroFrag(fe);
 
         return FRAG_INSERT_ANOMALY;
     }
