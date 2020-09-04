@@ -310,15 +310,14 @@ void Snort::term()
     static bool already_exiting = false;
     if ( already_exiting )
         return;
+    already_exiting = true;
 
     const SnortConfig* sc = SnortConfig::get_conf();
 
-    already_exiting = true;
     initializing = false;  // just in case we cut out early
 
     memory::MemoryCap::print();
 
-    term_signals();
     IpsManager::global_term(sc);
     HostAttributesManager::term();
 
@@ -365,6 +364,7 @@ void Snort::term()
     ModuleManager::term();
     PluginManager::release_plugins();
     ScriptManager::release_scripts();
+    term_signals();
 }
 
 void Snort::clean_exit(int)
