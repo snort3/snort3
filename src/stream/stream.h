@@ -165,7 +165,7 @@ public:
     static SnortProtocolId get_snort_protocol_id(Flow*);
 
     // Set the protocol identifier for a stream
-    static SnortProtocolId set_snort_protocol_id(Flow*, SnortProtocolId);
+    static SnortProtocolId set_snort_protocol_id(Flow*, SnortProtocolId, bool is_appid_service = false);
 
     // initialize response count and expiration time
     static void init_active_response(const Packet*, Flow*);

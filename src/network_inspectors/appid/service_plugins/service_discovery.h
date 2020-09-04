@@ -83,6 +83,7 @@ public:
     int fail_service(AppIdSession&, const snort::Packet*, AppidSessionDirection dir, ServiceDetector*, ServiceDiscoveryState* sds = nullptr);
     int incompatible_data(AppIdSession&, const snort::Packet*, AppidSessionDirection dir, ServiceDetector*);
     static int add_ftp_service_state(AppIdSession&);
+    static void clear_ftp_service_state();
 
 private:
     void get_next_service(const snort::Packet*, const AppidSessionDirection dir, AppIdSession&);

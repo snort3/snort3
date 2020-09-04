@@ -551,6 +551,11 @@ int ServiceDiscovery::add_ftp_service_state(AppIdSession& asd)
     return asd.add_flow_data_id(21, ftp_service);
 }
 
+void ServiceDiscovery::clear_ftp_service_state()
+{
+    ftp_service = nullptr;
+}
+
 bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
     AppidSessionDirection direction, AppidChangeBits& change_bits)
 {

@@ -60,7 +60,8 @@ static HostAttributesSharedCache* old_cache = nullptr;
 static THREAD_LOCAL HostAttributeStats host_attribute_stats;
 
 bool HostAttributesDescriptor::update_service
-    (uint16_t port, uint16_t protocol, SnortProtocolId snort_protocol_id, bool& updated)
+    (uint16_t port, uint16_t protocol, SnortProtocolId snort_protocol_id, bool& updated,
+    bool is_appid_service)
 {
     std::lock_guard<std::mutex> lck(host_attributes_lock);
 
@@ -68,6 +69,8 @@ bool HostAttributesDescriptor::update_service
     {
         if ( s.ipproto == protocol && (uint16_t)s.port == port )
         {
+            if ( s.snort_protocol_id != snort_protocol_id )
+                s.appid_service = is_appid_service;
             s.snort_protocol_id = snort_protocol_id;
             updated = true;
             return true;
@@ -78,11 +81,23 @@ bool HostAttributesDescriptor::update_service
     if ( services.size() < SnortConfig::get_conf()->get_max_services_per_host() )
     {
         updated = false;
-        services.emplace_back(HostServiceDescriptor(port, protocol, snort_protocol_id));
+        services.emplace_back(HostServiceDescriptor(port, protocol, snort_protocol_id, is_appid_service));
         return true;
     }
 
     return false;
+}
+
+void HostAttributesDescriptor::clear_appid_services()
+{
+    std::lock_guard<std::mutex> lck(host_attributes_lock);
+    for ( auto s = services.begin(); s != services.end(); )
+    {
+        if ( s->appid_service and s->snort_protocol_id != UNKNOWN_PROTOCOL_ID )
+            s = services.erase(s);
+        else
+            s++;
+    }
 }
 
 SnortProtocolId HostAttributesDescriptor::get_snort_protocol_id(int ipprotocol, uint16_t port) const
@@ -148,7 +163,8 @@ HostAttributesEntry HostAttributesManager::find_host(const snort::SfIp& host_ip)
     return nullptr;
 }
 
-void HostAttributesManager::update_service(const snort::SfIp& host_ip, uint16_t port, uint16_t protocol, SnortProtocolId snort_protocol_id)
+void HostAttributesManager::update_service(const snort::SfIp& host_ip, uint16_t port,
+    uint16_t protocol, SnortProtocolId snort_protocol_id, bool is_appid_service)
 {
     if ( active_cache )
     {
@@ -163,7 +179,7 @@ void HostAttributesManager::update_service(const snort::SfIp& host_ip, uint16_t 
             }
 
             bool updated = false;
-            if ( host->update_service(port, protocol, snort_protocol_id, updated) )
+            if ( host->update_service(port, protocol, snort_protocol_id, updated, is_appid_service) )
             {
                 if ( updated )
                     host_attribute_stats.dynamic_service_updates++;
@@ -173,6 +189,16 @@ void HostAttributesManager::update_service(const snort::SfIp& host_ip, uint16_t 
             else
                 host_attribute_stats.service_list_overflows++;
         }
+    }
+}
+
+void HostAttributesManager::clear_appid_services()
+{
+    if ( active_cache )
+    {
+        auto hosts = active_cache->get_all_data();
+        for ( auto& h : hosts )
+            h.second->clear_appid_services();
     }
 }
 

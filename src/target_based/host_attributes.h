@@ -52,8 +52,8 @@ class HostServiceDescriptor
 {
 public:
     HostServiceDescriptor() = default;
-    HostServiceDescriptor(uint16_t port, uint16_t protocol, SnortProtocolId spi)
-        : port(port), ipproto(protocol), snort_protocol_id(spi)
+    HostServiceDescriptor(uint16_t port, uint16_t protocol, SnortProtocolId spi, bool appid_service)
+        : port(port), ipproto(protocol), snort_protocol_id(spi), appid_service(appid_service)
     { }
 
     ~HostServiceDescriptor() = default;
@@ -68,6 +68,7 @@ public:
     uint16_t port = 0;
     uint16_t ipproto = 0;
     SnortProtocolId snort_protocol_id = UNKNOWN_PROTOCOL_ID;
+    bool appid_service = false;
 };
 
 struct HostPolicyDescriptor
@@ -82,7 +83,9 @@ public:
     HostAttributesDescriptor() = default;
     ~HostAttributesDescriptor() = default;
 
-    bool update_service(uint16_t port, uint16_t protocol, SnortProtocolId, bool& updated);
+    bool update_service(uint16_t port, uint16_t protocol, SnortProtocolId, bool& updated,
+        bool is_appid_service = false);
+    void clear_appid_services();
     SnortProtocolId get_snort_protocol_id(int ipprotocol, uint16_t port) const;
 
     const snort::SfIp& get_ip_addr() const
@@ -147,7 +150,9 @@ public:
 
     static bool add_host(HostAttributesEntry, snort::SnortConfig*);
     static HostAttributesEntry find_host(const snort::SfIp&);
-    static void update_service(const snort::SfIp&, uint16_t port, uint16_t protocol, SnortProtocolId);
+    static void update_service(const snort::SfIp&, uint16_t port, uint16_t protocol,
+        SnortProtocolId, bool is_appid_service = false);
+    static void clear_appid_services();
     static int32_t get_num_host_entries();
     static const PegInfo* get_pegs();
     static PegCount* get_peg_counts();

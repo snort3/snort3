@@ -36,6 +36,7 @@
 #include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
 #include "src/main.h"
+#include "target_based/host_attributes.h"
 #include "trace/trace.h"
 #include "utils/util.h"
 
@@ -221,6 +222,7 @@ bool ACOdpContextSwap::execute(Analyzer&, void**)
     OdpContext& current_odp_ctxt = ctxt.get_odp_ctxt();
     assert(pkt_thread_odp_ctxt != &current_odp_ctxt);
 
+    HostAttributesManager::clear_appid_services();
     AppIdServiceState::clean();
     AppIdPegCounts::cleanup_pegs();
     AppIdServiceState::initialize(ctxt.config.memcap);
@@ -344,6 +346,7 @@ static int reload_detectors(lua_State* L)
 
     AppIdContext& ctxt = inspector->get_ctxt();
     OdpContext& old_odp_ctxt = ctxt.get_odp_ctxt();
+    ServiceDiscovery::clear_ftp_service_state();
     clear_dynamic_host_cache_services();
     AppIdPegCounts::cleanup_peg_info();
     LuaDetectorManager::clear_lua_detector_mgrs();

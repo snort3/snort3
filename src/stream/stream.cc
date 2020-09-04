@@ -461,7 +461,7 @@ SnortProtocolId Stream::get_snort_protocol_id(Flow* flow)
     return UNKNOWN_PROTOCOL_ID;
 }
 
-SnortProtocolId Stream::set_snort_protocol_id(Flow* flow, SnortProtocolId id)
+SnortProtocolId Stream::set_snort_protocol_id(Flow* flow, SnortProtocolId id, bool is_appid_service)
 {
     if (!flow)
         return UNKNOWN_PROTOCOL_ID;
@@ -474,7 +474,7 @@ SnortProtocolId Stream::set_snort_protocol_id(Flow* flow, SnortProtocolId id)
     if ( !flow->is_proxied() )
     {
         HostAttributesManager::update_service
-            (flow->server_ip, flow->server_port, flow->ssn_state.ipprotocol, id);
+            (flow->server_ip, flow->server_port, flow->ssn_state.ipprotocol, id, is_appid_service);
     }
 
     return id;
