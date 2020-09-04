@@ -33,7 +33,7 @@ class HpackDynamicTable
 {
 public:
     // FIXIT-P This array can be optimized to start smaller and grow on demand 
-    HpackDynamicTable() : circular_buf(4096, nullptr) {}
+    HpackDynamicTable() : circular_buf(ARRAY_CAPACITY, nullptr) {}
     ~HpackDynamicTable();
     const HpackTableEntry* get_entry(uint32_t index) const;
     bool add_entry(const Field& name, const Field& value);

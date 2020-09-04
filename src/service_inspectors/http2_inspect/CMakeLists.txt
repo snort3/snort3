@@ -13,6 +13,10 @@ set (FILE_LIST
     http2_frame.h
     http2_headers_frame.cc
     http2_headers_frame.h
+    http2_headers_frame_header.cc
+    http2_headers_frame_header.h
+    http2_headers_frame_trailer.cc
+    http2_headers_frame_trailer.h
     http2_hpack.cc
     http2_hpack.h
     http2_hpack_dynamic_table.cc

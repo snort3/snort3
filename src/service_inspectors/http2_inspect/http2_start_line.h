@@ -43,29 +43,17 @@ public:
 
     friend class Http2Hpack;
 
-    const Field* get_start_line();
-    virtual void process_pseudo_header_name(const uint8_t* const& name, uint32_t length) = 0;
-    virtual void process_pseudo_header_value(const uint8_t* const& value, const uint32_t length) =
-        0;
-    bool finalize();
-    bool is_finalized() { return finalized; }
-    bool is_pseudo_value() { return value_coming != Http2Enums::HEADER__NONE; }
-    bool is_pseudo_name(const uint8_t* const& name) { return name[0] == ':'; }
+    virtual bool generate_start_line(const Field*& start_line) = 0;
+    virtual void process_pseudo_header(const Field& name, const Field& value) = 0;
 
 protected:
     Http2StartLine(Http2EventGen* const events, Http2Infractions* const infractions) :
         events(events), infractions(infractions) { }
 
-    void process_pseudo_header_precheck();
-    virtual bool generate_start_line() = 0;
-
     Http2EventGen* const events;
     Http2Infractions* const infractions;
-    bool finalized = false;
     uint32_t start_line_length = 0;
     uint8_t *start_line_buffer = nullptr;
-    Http2Enums::PseudoHeaders value_coming = Http2Enums::HEADER__NONE;
-    uint32_t pseudo_header_fragment_size = 0;
 
     // Version string is HTTP/1.1
     static const char* http_version_string;

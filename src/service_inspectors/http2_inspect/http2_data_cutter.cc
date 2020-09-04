@@ -172,7 +172,10 @@ StreamSplitter::Status Http2DataCutter::http_scan(const uint8_t* data, uint32_t*
             {
                 Http2Stream* const stream = session_data->find_stream(
                     session_data->current_stream[source_id]);
-                stream->finish_msg_body(source_id);
+                bool clear_partial_buffers = false;
+                if (!bytes_sent_http)
+                    clear_partial_buffers = true;
+                stream->finish_msg_body(source_id, false, clear_partial_buffers);
 
                 // Since there may be multiple frame headers or zero frame headers in the flushed
                 // data section, remember END_STREAM flag in the stream object

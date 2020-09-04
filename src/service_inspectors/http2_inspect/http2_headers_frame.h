@@ -27,6 +27,7 @@ class Http2HpackDecoder;
 class Http2StartLine;
 class Http2Frame;
 class Http2Stream;
+class HttpFlowData;
 
 class Http2HeadersFrame : public Http2Frame
 {
@@ -39,30 +40,26 @@ public:
     bool is_detection_required() const override { return detection_required; }
     void update_stream_state() override;
 
-    friend Http2Frame* Http2Frame::new_frame(const uint8_t*, const int32_t, const uint8_t*,
-        const int32_t, Http2FlowData*, HttpCommon::SourceId, Http2Stream* stream);
-
 #ifdef REG_TEST
     void print_frame(FILE* output) override;
 #endif
 
-private:
+protected:
     Http2HeadersFrame(const uint8_t* header_buffer, const int32_t header_len,
         const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* ssn_data,
         HttpCommon::SourceId src_id, Http2Stream* stream);
     bool check_frame_validity();
+    void process_decoded_headers(HttpFlowData* http_flow);
 
-    Http2StartLine* start_line_generator = nullptr;
     uint8_t* decoded_headers = nullptr; // working buffer to store decoded headers
     uint32_t decoded_headers_size = 0;
     const Field* http1_header = nullptr; // finalized headers to be passed to NHI
-    const Field* start_line = nullptr;
     bool error_during_decode = false;
     bool hi_abort = false;
     uint32_t xtradata_mask = 0;
     bool detection_required = false;
-
-    // FIXIT-E Process trailers
-    bool trailer = false;
+    bool process_frame = true;
+    Http2HpackDecoder* hpack_decoder;
+    uint8_t hpack_headers_offset = 0;
 };
 #endif

@@ -68,7 +68,8 @@ public:
         { end_stream_on_data_flush[source_id] = true; }
     bool is_end_stream_on_data_flush(HttpCommon::SourceId source_id)
         { return end_stream_on_data_flush[source_id]; }
-    void finish_msg_body(HttpCommon::SourceId source_id, bool expect_trailers = false);
+    void finish_msg_body(HttpCommon::SourceId source_id, bool expect_trailers,
+        bool clear_partial_buffer);
 
 #ifdef REG_TEST
     void print_frame(FILE* output);

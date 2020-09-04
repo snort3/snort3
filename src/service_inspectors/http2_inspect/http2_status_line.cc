@@ -36,32 +36,24 @@ using namespace Http2Enums;
 
 const char* Http2StatusLine::STATUS_NAME = ":status";
 
-void Http2StatusLine::process_pseudo_header_name(const uint8_t* const& name, uint32_t length)
+void Http2StatusLine::process_pseudo_header(const Field& name, const Field& value)
 {
-    process_pseudo_header_precheck();
-
-    if (length == STATUS_NAME_LENGTH and memcmp(name, STATUS_NAME, length) == 0 and
-            status.length() <= 0)
-        value_coming = STATUS;
+    if ((name.length() == STATUS_NAME_LENGTH) and
+        (memcmp(name.start(), STATUS_NAME, name.length()) == 0) and (status.length() <= 0))
+    {
+        uint8_t* value_str = new uint8_t[value.length()];
+        memcpy(value_str, value.start(), value.length());
+        status.set(value.length(), value_str, true);
+    }
     else
     {
         *infractions += INF_INVALID_PSEUDO_HEADER;
-        events->create_event(EVENT_INVALID_HEADER);
-        value_coming = HEADER__INVALID;
+        events->create_event(EVENT_INVALID_PSEUDO_HEADER);
     }
 }
 
-void Http2StatusLine::process_pseudo_header_value(const uint8_t* const& value, const uint32_t length)
-{
-    // ignore invalid pseudo-header value - alert generated in process_pseudo_header_name
-    if  (value_coming == STATUS)
-        status.set(length, (const uint8_t*) value);
-
-    value_coming = HEADER__NONE;
-}
-
 // This is called on the first non-pseudo-header.
-bool Http2StatusLine::generate_start_line()
+bool Http2StatusLine::generate_start_line(const Field*& start_line)
 {
     uint32_t bytes_written = 0;
 
@@ -87,6 +79,8 @@ bool Http2StatusLine::generate_start_line()
     memcpy(start_line_buffer + bytes_written, "\r\n", 2);
     bytes_written += 2;
     assert(bytes_written == start_line_length);
+
+    start_line = new Field(start_line_length, start_line_buffer, false);
 
     return true;
 }

@@ -42,56 +42,43 @@ const char* Http2RequestLine::SCHEME_NAME = ":scheme";
 const char* Http2RequestLine::OPTIONS = "OPTIONS";
 const char* Http2RequestLine::CONNECT = "CONNECT";
 
-void Http2RequestLine::process_pseudo_header_name(const uint8_t* const& name, uint32_t length)
+void Http2RequestLine::process_pseudo_header(const Field& name, const Field& value)
 {
-    process_pseudo_header_precheck();
-
-    if (length == AUTHORITY_NAME_LENGTH and memcmp(name, AUTHORITY_NAME, length) == 0 and
-            authority.length() <= 0)
-        value_coming = AUTHORITY;
-    else if (length == METHOD_NAME_LENGTH and memcmp(name, METHOD_NAME, length) == 0 and
-            method.length() <= 0)
-        value_coming = METHOD;
-    else if (length == PATH_NAME_LENGTH and memcmp(name, PATH_NAME, length) == 0 and
-            path.length() <= 0)
-        value_coming = PATH;
-    else if (length == SCHEME_NAME_LENGTH and memcmp(name, SCHEME_NAME, length) == 0 and
-            scheme.length() <= 0)
-        value_coming = SCHEME;
+    Field *field;
+    if ((name.length() == AUTHORITY_NAME_LENGTH) and
+        (memcmp(name.start(), AUTHORITY_NAME, name.length()) == 0) and (authority.length() <= 0))
+    {
+        field = &authority;
+    }
+    else if ((name.length() == METHOD_NAME_LENGTH) and
+        (memcmp(name.start(), METHOD_NAME, name.length()) == 0) and (method.length() <= 0))
+    {
+        field = &method;
+    }
+    else if ((name.length() == PATH_NAME_LENGTH) and
+        (memcmp(name.start(), PATH_NAME, name.length()) == 0) and (path.length() <= 0))
+    {
+        field = &path;
+    }
+    else if ((name.length() == SCHEME_NAME_LENGTH) and
+        (memcmp(name.start(), SCHEME_NAME, name.length()) == 0) and (scheme.length() <= 0))
+    {
+        field = &scheme;
+    }
     else
     {
         *infractions += INF_INVALID_PSEUDO_HEADER;
-        events->create_event(EVENT_INVALID_HEADER);
-        value_coming = HEADER__INVALID;
+        events->create_event(EVENT_INVALID_PSEUDO_HEADER);
+        return;
     }
-}
-
-void Http2RequestLine::process_pseudo_header_value(const uint8_t* const& value, const uint32_t length)
-{
-    switch (value_coming)
-    {
-        case AUTHORITY:
-            authority.set(length, value);
-            break;
-        case METHOD:
-            method.set(length, value);
-            break;
-        case PATH:
-            path.set(length, value);
-            break;
-        case SCHEME:
-            scheme.set(length, value);
-            break;
-        default:
-            // ignore invalid pseudo-header value - alert generated in process_pseudo_header_name
-            break;
-    }
-    value_coming = HEADER__NONE;
+    uint8_t* value_str = new uint8_t[value.length()];
+    memcpy(value_str, value.start(), value.length());
+    field->set(value.length(), value_str, true);
 }
 
 // This is called on the first non-pseudo-header. Select the appropriate URI form based on the
 // provided pseudo-headers and generate the start line
-bool Http2RequestLine::generate_start_line()
+bool Http2RequestLine::generate_start_line(const Field*& start_line)
 {
     uint32_t bytes_written = 0;
 
@@ -210,6 +197,8 @@ bool Http2RequestLine::generate_start_line()
     memcpy(start_line_buffer + bytes_written, "\r\n", 2);
     bytes_written += 2;
     assert(bytes_written == start_line_length);
+
+    start_line = new Field(start_line_length, start_line_buffer, false);
 
     return true;
 }

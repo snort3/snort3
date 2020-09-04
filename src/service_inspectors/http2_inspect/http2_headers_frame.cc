@@ -46,122 +46,46 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t
     Http2Frame(header_buffer, header_len, data_buffer, data_len, session_data_, source_id_, stream_)
 {
     // FIXIT-E check frame validity before creating frame
-    if (!check_frame_validity())
-        return;
-
-    // If the stream state is not IDLE, this frame contains trailers.
-    if (stream->get_state(source_id) >= STATE_OPEN)
+    if (!check_frame_validity() or data.length() <= 0)
     {
-        HttpFlowData* http_flow = session_data->get_current_stream(source_id)->get_hi_flow_data();
-        if (http_flow->get_type_expected(source_id) != HttpEnums::SEC_TRAILER)
-        {
-            // If there was no unflushed data on this stream when the trailers arrived, http_inspect
-            // will not yet be expecting trailers. Flush empty buffer through scan, reassemble, and
-            // eval to prepare http_inspect for trailers.
-            assert(http_flow->get_type_expected(source_id) == HttpEnums::SEC_BODY_H2);
-            stream->finish_msg_body(source_id, true); // calls http_inspect scan()
-
-            unsigned copied;
-            StreamBuffer stream_buf;
-            stream_buf = session_data->hi_ss[source_id]->reassemble(session_data->flow,
-                0, 0, nullptr, 0, PKT_PDU_TAIL, copied);
-            assert(stream_buf.data != nullptr);
-            assert(copied == 0);
-
-            Http2DummyPacket dummy_pkt;
-            dummy_pkt.flow = session_data->flow;
-            dummy_pkt.packet_flags = (source_id == SRC_CLIENT) ? PKT_FROM_CLIENT : PKT_FROM_SERVER;
-            dummy_pkt.dsize = stream_buf.length;
-            dummy_pkt.data = stream_buf.data;
-            session_data->hi->eval(&dummy_pkt);
-            assert (http_flow->get_type_expected(source_id) == HttpEnums::SEC_TRAILER);
-            if (http_flow->get_type_expected(source_id) == HttpEnums::SEC_ABORT)
-            {
-                hi_abort = true;
-                return;
-            }
-            session_data->hi->clear(&dummy_pkt);
-        }
-        // FIXIT-E Trailers are not yet being processed
-        trailer = true;
+        process_frame = false;
         return;
     }
-
-    // No need to process an empty headers frame
-    if (data.length() <= 0)
-        return;
-
-    uint8_t hpack_headers_offset = 0;
 
     // Remove stream dependency if present
     if (get_flags() & PRIORITY)
         hpack_headers_offset = 5;
 
-    // Set up the decoding context
-    Http2HpackDecoder& hpack_decoder = session_data->hpack_decoder[source_id];
-
-    // Allocate stuff
+    // Set up HPACK decoding
+    hpack_decoder = &session_data->hpack_decoder[source_id];
     decoded_headers = new uint8_t[MAX_OCTETS];
+}
 
-    start_line_generator = Http2StartLine::new_start_line_generator(source_id,
-        session_data->events[source_id], session_data->infractions[source_id]);
 
-    // Decode headers
-    if (!hpack_decoder.decode_headers((data.start() + hpack_headers_offset), data.length() -
-        hpack_headers_offset, decoded_headers, start_line_generator))
-    {
-        session_data->frame_type[source_id] = FT__ABORT;
-        error_during_decode = true;
-    }
-    start_line = hpack_decoder.get_start_line();
-    http1_header = hpack_decoder.get_decoded_headers(decoded_headers);
+Http2HeadersFrame::~Http2HeadersFrame()
+{
+    delete http1_header;
+    delete[] decoded_headers;
+}
 
+void Http2HeadersFrame::clear()
+{
+    if (error_during_decode || hi_abort)
+        return;
+    Packet dummy_pkt(false);
+    dummy_pkt.flow = session_data->flow;
+    session_data->hi->clear(&dummy_pkt);
+}
+
+
+
+void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow)
+{
     if (error_during_decode)
         return;
 
-    // http_inspect scan() of start line
-    {
-        uint32_t flush_offset;
-        Http2DummyPacket dummy_pkt;
-        dummy_pkt.flow = session_data->flow;
-        const uint32_t unused = 0;
-        const StreamSplitter::Status start_scan_result =
-            session_data->hi_ss[source_id]->scan(&dummy_pkt, start_line->start(),
-            start_line->length(), unused, &flush_offset);
-        assert(start_scan_result == StreamSplitter::FLUSH);
-        UNUSED(start_scan_result);
-        assert((int64_t)flush_offset == start_line->length());
-    }
-
+    http1_header = hpack_decoder->get_decoded_headers(decoded_headers);
     StreamBuffer stream_buf;
-    // http_inspect reassemble() of start line
-    {
-        unsigned copied;
-        stream_buf = session_data->hi_ss[source_id]->reassemble(session_data->flow,
-            start_line->length(), 0, start_line->start(), start_line->length(), PKT_PDU_TAIL,
-            copied);
-        assert(stream_buf.data != nullptr);
-        assert(copied == (unsigned)start_line->length());
-    }
-
-    HttpFlowData* http_flow = session_data->get_current_stream(source_id)->get_hi_flow_data();
-    // http_inspect eval() and clear() of start line
-    {
-        Http2DummyPacket dummy_pkt;
-        dummy_pkt.flow = session_data->flow;
-        dummy_pkt.packet_flags = (source_id == SRC_CLIENT) ? PKT_FROM_CLIENT : PKT_FROM_SERVER;
-        dummy_pkt.dsize = stream_buf.length;
-        dummy_pkt.data = stream_buf.data;
-        session_data->hi->eval(&dummy_pkt);
-        if (http_flow->get_type_expected(source_id) != HttpEnums::SEC_HEADER)
-        {
-            *session_data->infractions[source_id] += INF_INVALID_STARTLINE;
-            session_data->events[source_id]->create_event(EVENT_INVALID_STARTLINE);
-            hi_abort = true;
-            return;
-        }
-        session_data->hi->clear(&dummy_pkt);
-    }
 
     // http_inspect scan() of headers
     {
@@ -210,23 +134,6 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t
         detection_required = dummy_pkt.is_detection_required();
         xtradata_mask = dummy_pkt.xtradata_mask;
     }
-}
-
-Http2HeadersFrame::~Http2HeadersFrame()
-{
-    delete start_line;
-    delete start_line_generator;
-    delete http1_header;
-    delete[] decoded_headers;
-}
-
-void Http2HeadersFrame::clear()
-{
-    if (error_during_decode || hi_abort)
-        return;
-    Packet dummy_pkt(false);
-    dummy_pkt.flow = session_data->flow;
-    session_data->hi->clear(&dummy_pkt);
 }
 
 const Field& Http2HeadersFrame::get_buf(unsigned id)
@@ -289,14 +196,8 @@ void Http2HeadersFrame::update_stream_state()
 #ifdef REG_TEST
 void Http2HeadersFrame::print_frame(FILE* output)
 {
-    if (!trailer)
-        fprintf(output, "Headers frame\n");
-    else
-        fprintf(output, "Trailing Headers frame\n");
     if (error_during_decode)
         fprintf(output, "Error decoding headers.\n");
-    if (start_line)
-        start_line->print(output, "Decoded start-line");
     if (http1_header)
         http1_header->print(output, "Decoded header");
     Http2Frame::print_frame(output);

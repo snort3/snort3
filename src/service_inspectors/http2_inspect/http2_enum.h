@@ -67,6 +67,9 @@ enum EventSid
     EVENT_DYNAMIC_TABLE_OVERFLOW = 14,
     EVENT_INVALID_STARTLINE = 15,
     EVENT_PADDING_LEN = 16,
+    EVENT_PSEUDO_HEADER_AFTER_REGULAR_HEADER = 17,
+    EVENT_PSEUDO_HEADER_IN_TRAILERS = 18,
+    EVENT_INVALID_PSEUDO_HEADER = 19,
     EVENT__MAX_VALUE
 };
 
@@ -103,6 +106,7 @@ enum Infraction
     INF_INVALID_HEADER = 26,
     INF_PADDING_LEN = 27,
     INF_TRAILERS_AFTER_END_STREAM = 28,
+    INF_PSEUDO_HEADER_IN_TRAILERS = 29,
     INF__MAX_VALUE
 };
 
@@ -113,17 +117,6 @@ enum HeaderFrameFlags
     PADDED = 0x8,
     PRIORITY = 0x20,
     NO_HEADER = 0x80, //No valid flags use this bit
-};
-
-enum PseudoHeaders
-{
-    HEADER__INVALID = -1,
-    HEADER__NONE = 0,
-    AUTHORITY = 1,
-    METHOD = 3,
-    PATH = 5,
-    SCHEME = 7,
-    STATUS = 14,
 };
 
 enum SettingsFrameIds

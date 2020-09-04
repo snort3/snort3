@@ -71,7 +71,8 @@ public:
     HttpEnums::SectionType get_type_expected(HttpCommon::SourceId source_id) const
     { return type_expected[source_id]; }
 
-    void finish_h2_body(HttpCommon::SourceId source_id, HttpEnums::H2BodyState state);
+    void finish_h2_body(HttpCommon::SourceId source_id, HttpEnums::H2BodyState state,
+        bool clear_partial_buffer);
 
     void reset_partial_flush(HttpCommon::SourceId source_id)
     { partial_flush[source_id] = false; }

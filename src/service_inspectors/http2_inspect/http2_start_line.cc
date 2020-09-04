@@ -50,22 +50,3 @@ Http2StartLine* Http2StartLine::new_start_line_generator(SourceId source_id,
         return new Http2StatusLine(events, infractions);
 }
 
-void Http2StartLine::process_pseudo_header_precheck()
-{
-    if (finalized)
-    {
-        *infractions += INF_PSEUDO_HEADER_AFTER_REGULAR_HEADER;
-        events->create_event(EVENT_INVALID_HEADER);
-    }
-}
-
-bool Http2StartLine::finalize()
-{
-    finalized = true;
-    return generate_start_line();
-}
-
-const Field* Http2StartLine::get_start_line()
-{
-    return new Field(start_line_length, start_line_buffer, false);
-}

@@ -254,11 +254,24 @@ uint16_t HttpFlowData::get_memory_usage_estimate()
     return memory_usage_estimate;
 }
 
-void HttpFlowData::finish_h2_body(HttpCommon::SourceId source_id, HttpEnums::H2BodyState state)
+void HttpFlowData::finish_h2_body(HttpCommon::SourceId source_id, HttpEnums::H2BodyState state,
+    bool clear_partial_buffer)
 {
     assert(h2_body_state[source_id] == H2_BODY_NOT_COMPLETE);
     h2_body_state[source_id] = state;
     partial_flush[source_id] = false;
+    if (clear_partial_buffer)
+    {
+        // We've already sent all data through detection so no need to reinspect. Just need to
+        // prep for trailers
+        partial_buffer_length[source_id] = 0;
+        delete[] partial_buffer[source_id];
+        partial_buffer[source_id] = nullptr;
+        partial_inspected_octets[source_id] = 0;
+        partial_detect_length[source_id] = 0;
+        delete[] partial_detect_buffer[source_id];
+        partial_detect_buffer[source_id] = nullptr;
+    }
 }
 
 #ifdef REG_TEST

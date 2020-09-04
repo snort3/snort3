@@ -65,6 +65,8 @@ public:
     friend class Http2DataFrame;
     friend class Http2DataCutter;
     friend class Http2HeadersFrame;
+    friend class Http2HeadersFrameHeader;
+    friend class Http2HeadersFrameTrailer;
     friend class Http2Hpack;
     friend class Http2Inspect;
     friend class Http2RequestLine;

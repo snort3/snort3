@@ -39,33 +39,39 @@ public:
         Http2EventGen* const _events, Http2Infractions* const _infractions) :
         events(_events), infractions(_infractions), decode_table(flow_data, src_id) { }
     bool decode_headers(const uint8_t* encoded_headers, const uint32_t encoded_headers_length,
-        uint8_t* decoded_headers, Http2StartLine* start_line);
+        uint8_t* decoded_headers, Http2StartLine* start_line, bool trailers);
     bool write_decoded_headers(const uint8_t* in_buffer, const uint32_t in_length,
         uint8_t* decoded_header_buffer, uint32_t decoded_header_length, uint32_t& bytes_written);
     bool decode_header_line(const uint8_t* encoded_header_buffer,
         const uint32_t encoded_header_length, uint32_t& bytes_consumed,
         uint8_t* decoded_header_buffer, const uint32_t decoded_header_length,
         uint32_t& bytes_written);
+    bool handle_dynamic_size_update(const uint8_t* encoded_header_buffer,
+        const uint32_t encoded_header_length, uint32_t& bytes_consumed);
+    const HpackTableEntry* get_hpack_table_entry(const uint8_t* encoded_header_buffer,
+        const uint32_t encoded_header_length, const Http2HpackIntDecode& decode_int,
+        uint32_t& bytes_consumed);
+    bool write_header_part(Field& header, const uint8_t* suffix, uint32_t suffix_length,
+        uint8_t* decoded_header_buffer, const uint32_t decoded_header_length,
+        uint32_t& bytes_written);
+    bool decode_indexed_name(const uint8_t* encoded_header_buffer,
+        const uint32_t encoded_header_length, const Http2HpackIntDecode& decode_int,
+        uint32_t& bytes_consumed, uint8_t* decoded_header_buffer, const uint32_t decoded_header_length,
+        uint32_t& bytes_written, Field& name);
     bool decode_literal_header_line(const uint8_t* encoded_header_buffer,
         const uint32_t encoded_header_length, const uint8_t name_index_mask,
         const Http2HpackIntDecode& decode_int, bool with_indexing, uint32_t& bytes_consumed,
-        uint8_t* decoded_header_buffer, const uint32_t decoded_header_length,
-        uint32_t& bytes_written);
-    bool decode_string_literal(const uint8_t* encoded_header_buffer,
-        const uint32_t encoded_header_length, uint32_t &bytes_consumed,
-        uint8_t* decoded_header_buffer, const uint32_t decoded_header_length,
-        uint32_t &bytes_written, Field& field);
-    bool decode_indexed_name(const uint8_t* encoded_header_buffer,
-        const uint32_t encoded_header_length, const Http2HpackIntDecode& decode_int,
-        uint32_t& bytes_consumed, uint8_t* decoded_header_buffer,
-        const uint32_t decoded_header_length, uint32_t& bytes_written, Field& name);
+        uint8_t* decoded_header_buffer, const uint32_t decoded_header_length, uint32_t& bytes_written,
+        Field& name, Field& value);
     bool decode_indexed_header(const uint8_t* encoded_header_buffer,
         const uint32_t encoded_header_length, const Http2HpackIntDecode& decode_int,
-        uint32_t& bytes_consumed, uint8_t* decoded_header_buffer,
-        const uint32_t decoded_header_length, uint32_t& bytes_written);
-    bool handle_dynamic_size_update(const uint8_t* encoded_header_buffer,
-        const uint32_t encoded_header_length, const Http2HpackIntDecode &decode_int,
-        uint32_t& bytes_consumed, uint32_t& bytes_written);
+        uint32_t &bytes_consumed, uint8_t* decoded_header_buffer, const uint32_t decoded_header_length,
+        uint32_t& bytes_written, Field& name, Field& value);
+    bool decode_string_literal(const uint8_t* encoded_header_buffer,
+        const uint32_t encoded_header_length, uint32_t& bytes_consumed,
+        uint8_t* decoded_header_buffer, const uint32_t decoded_header_length,
+        uint32_t& bytes_written, Field& field);
+
     bool finalize_start_line();
     const Field* get_start_line();
     const Field* get_decoded_headers(const uint8_t* const decoded_headers);
@@ -73,8 +79,8 @@ public:
 
 private:
     Http2StartLine* start_line;
+    bool pseudo_headers_allowed;
     uint32_t decoded_headers_size;
-    uint32_t pseudo_headers_fragment_size;
     bool decode_error;
     Http2EventGen* const events;
     Http2Infractions* const infractions;
@@ -88,6 +94,7 @@ private:
     HpackIndexTable decode_table;
     bool table_size_update_allowed = true;
     uint8_t num_table_size_updates = 0;
+    bool is_trailers = false;
 };
 
 #endif

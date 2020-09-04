@@ -47,6 +47,9 @@ const RuleMap Http2Module::http2_events[] =
     { EVENT_DYNAMIC_TABLE_OVERFLOW, "HTTP/2 dynamic table size limit exceeded" },
     { EVENT_INVALID_STARTLINE, "invalid HTTP/2 start line" },
     { EVENT_PADDING_LEN, "HTTP/2 padding length is bigger than frame data size" },
+    { EVENT_PSEUDO_HEADER_AFTER_REGULAR_HEADER, "HTTP/2 pseudo-header after regular header" },
+    { EVENT_PSEUDO_HEADER_IN_TRAILERS, "HTTP/2 pseudo-header in trailers" },
+    { EVENT_INVALID_PSEUDO_HEADER, "invalid HTTP/2 pseudo-header" },
     { 0, nullptr }
 };
 

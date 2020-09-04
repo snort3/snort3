@@ -26,7 +26,8 @@
 #include "http2_data_frame.h"
 #include "http2_enum.h"
 #include "http2_flow_data.h"
-#include "http2_headers_frame.h"
+#include "http2_headers_frame_header.h"
+#include "http2_headers_frame_trailer.h"
 #include "http2_settings_frame.h"
 #include "http2_stream.h"
 #include "service_inspectors/http_inspect/http_field.h"
@@ -54,8 +55,12 @@ Http2Frame* Http2Frame::new_frame(const uint8_t* header, const int32_t header_le
     switch(session_data->frame_type[source_id])
     {
         case FT_HEADERS:
-            return new Http2HeadersFrame(header, header_len, data, data_len, session_data,
-                source_id, stream);
+            if (stream->get_state(source_id) == STATE_IDLE)
+                return new Http2HeadersFrameHeader(header, header_len, data, data_len, session_data,
+                    source_id, stream);
+            else
+                return new Http2HeadersFrameTrailer(header, header_len, data, data_len,
+                    session_data, source_id, stream);
         case FT_SETTINGS:
             return new Http2SettingsFrame(header, header_len, data, data_len, session_data,
                 source_id, stream);

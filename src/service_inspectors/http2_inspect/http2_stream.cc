@@ -102,7 +102,8 @@ bool Http2Stream::is_open(HttpCommon::SourceId source_id)
     return (state[source_id] == STATE_OPEN) || (state[source_id] == STATE_OPEN_DATA);
 }
 
-void Http2Stream::finish_msg_body(HttpCommon::SourceId source_id, bool expect_trailers)
+void Http2Stream::finish_msg_body(HttpCommon::SourceId source_id, bool expect_trailers,
+    bool clear_partial_buffer)
 {
     uint32_t http_flush_offset = 0;
     Http2DummyPacket dummy_pkt;
@@ -110,7 +111,7 @@ void Http2Stream::finish_msg_body(HttpCommon::SourceId source_id, bool expect_tr
     uint32_t unused = 0;
     const H2BodyState body_state = expect_trailers ?
         H2_BODY_COMPLETE_EXPECT_TRAILERS : H2_BODY_COMPLETE;
-    get_hi_flow_data()->finish_h2_body(source_id, body_state);
+    get_hi_flow_data()->finish_h2_body(source_id, body_state, clear_partial_buffer);
     const snort::StreamSplitter::Status scan_result = session_data->hi_ss[source_id]->scan(
         &dummy_pkt, nullptr, 0, unused, &http_flush_offset);
     assert(scan_result == snort::StreamSplitter::FLUSH);

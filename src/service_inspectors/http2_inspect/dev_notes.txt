@@ -1,9 +1,5 @@
-The HTTP/2 inspector (H2I) will convert HTTP/2 frames into HTTP/1.1 message sections and feed them
+The HTTP/2 inspector (H2I) converts HTTP/2 frames into HTTP/1.1 message sections and feeds them
 to the new HTTP inspector (NHI) for further processing.
-
-The current implementation is the very first step. It splits an HTTP/2 stream into frame sections
-and forwards them for inspection. It does not interface with NHI and does not address the
-multiplexed nature of HTTP/2.
 
 The Http2StreamSplitter strips the frame headers from the frame data and stores them in separate
 buffers. As in NHI, long data frames are split into 16kb chunks for inspection. If a header frame
@@ -12,14 +8,19 @@ frame headers from each frame are stored contiguously in the frame_header buffer
 the frame headers, the frame data is stored as a single block, consisting of the HPACK encoded
 HTTP/2 headers.
 
-HPACK decoding is under ongoing development. In the current implementation, reassemble() makes a
-first copy of the encoded headers, which is stored in the frame_data buffer. The frame_data buffer
-is passed to the function decode_headers(), which is the main loop driving HPACK decoding. The
-function allocates a second buffer, raw_decoded_header, to which the decoding routine will
-progressively write. As part of decoding the pseudo-headers (described below), data that must not be
-sent to NHI may be written to the start of the buffer. In order to avoid making any extra copies,
-the decoding routine sets a pointer to the start of the regular headers inside raw_decoded_header
-that will be processed by NHI, called http2_decoded_header.
+HTTP/2 headers frames can come at the start of a stream and contain the header block, or at the end
+of a stream and contain trailers. H2I contains headers frame subclasses Http2HeadersFrameHeader and
+Http2HeadersFrameTrailer to support these two types of headers frames. Headers frames containing the
+header block will contain pseudo-headers that must be converted into an HTTP/1.1 start line in
+addition to regular HTTP/1.1 headers. The two Http2StartLine subclasses, Http2RequestLine and
+Http2ResponseLine perform this translation and generate the start-line, which is stored in a new
+buffer inside the Http2StartLine object. Trailers may only contain regular headers. 
+
+Both headers and trailers must undergo HPACK decoding before being sent to NHI for processing. To
+perform decoding, reassemble() makes a first copy of the encoded headers, which is stored in the
+frame_data buffer. The frame_data buffer is passed to the function decode_headers(), which is the
+main loop driving HPACK decoding. Each decoded header line is progressively written to a second
+decoded_headers buffer that will ultimately be sent to NHI.
 
 The main loop in decode_headers() finds the cut point for a single header line. The line is is
 passed to decode_header_line(), which parses the line and calls the appropriate decoding function
@@ -28,18 +29,9 @@ in the table and copied to the decoded header buffer. The index may belong to ei
 the dynamic table. The static table is 61-elements defined in the HPACK RFC. The dynamic table,
 which starts at index 62, is specific to each direction of each flow. For the second type, literal
 to be indexed, the header name may be indexed or a string literal, while the value is always a
-literal. The resulting header line will then be added to the dynamic table (not yet implemented).
-The third representation type is literal not to be indexed, which is the same as literal to be
-indexed, except the header line is not added to the dynamic table.
-
-HTTP/2 uses pseudo-headers to convey the information included in an HTTP/1.1 start-line.
-Pseudo-headers are not valid HTTP/1.1 headers, so must be translated into a start-line before the
-decoded headers can be passed to NHI. The two Http2StartLine subclasses, Http2RequestLine and
-Http2ResponseLine perform this translation and generate the start-line, which is stored in a new
-buffer inside the Http2StartLine object. The start-line buffer must be passed to NHI before the
-http2_decoded_header buffer, which contains the regular HTTP/1.1 headers. Note that HTTP/2 does not
-use status reason phrases, so the status line passed to NHI will not include one. It will include
-only the HTTP version and the status code. 
+literal. The resulting header line is then added to the dynamic table. The third representation type
+is literal not to be indexed, which is the same as literal to be indexed, except the header line is
+not added to the dynamic table.
 
 H2I supports the NHI test tool. See ../http_inspect/dev_notes.txt for usage instructions.
 

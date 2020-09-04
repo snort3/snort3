@@ -321,7 +321,7 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                     if ((type == FT_HEADERS) and
                         (session_data->current_stream[source_id]) == next_stream)
                     {
-                        stream->finish_msg_body(source_id, true);
+                        stream->finish_msg_body(source_id, true, false);
                     }
                     session_data->stream_in_hi = NO_STREAM_ID;
                     return StreamSplitter::FLUSH;
