@@ -369,7 +369,8 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
     OdpContext& odp_ctxt)
 {
     // Skip inspection for sessions using old odp context after an odp reload
-    if (asd and (&(asd->get_odp_ctxt()) != &(inspector.get_ctxt().get_odp_ctxt())))
+    if (asd and
+        asd->get_odp_ctxt_version() != odp_ctxt.get_version())
     {
         appid_stats.odp_reload_ignored_pkts++;
         appid_stats.tp_reload_ignored_pkts++;
@@ -751,7 +752,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
     if (tp_appid_ctxt and ((service_id = asd.pick_service_app_id()) != APP_ID_HTTP2))
     {
         // Skip third-party inspection for sessions using old config
-        if (asd.tpsession and &(asd.tpsession->get_ctxt()) != tp_appid_ctxt)
+        if (asd.tpsession and asd.tpsession->get_ctxt_version() != tp_appid_ctxt->get_version())
         {
             bool is_tp_done = asd.is_tp_processing_done();
             delete asd.tpsession;

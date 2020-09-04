@@ -38,7 +38,10 @@ class ThirdPartyAppIdSession
 {
 public:
     ThirdPartyAppIdSession(const ThirdPartyAppIdContext& ctxt)
-        : appid(APP_ID_NONE), confidence(100), state(TP_STATE_INIT), ctxt(ctxt) { }
+        : appid(APP_ID_NONE), confidence(100), state(TP_STATE_INIT), ctxt(ctxt)
+    {
+        ctxt_version = ctxt.get_version();
+    }
     virtual ~ThirdPartyAppIdSession() { }
 
     virtual bool reset() = 0;            // just reset state
@@ -57,12 +60,14 @@ public:
     virtual AppId get_appid(int& conf) { conf=confidence; return appid; }
     virtual const ThirdPartyAppIdContext& get_ctxt() const
     { return ctxt; }
+    uint32_t get_ctxt_version() { return ctxt_version; }
 
 protected:
     AppId appid;
     int confidence;
     TPState state;
     const ThirdPartyAppIdContext& ctxt;
+    uint32_t ctxt_version;
 };
 
 #endif

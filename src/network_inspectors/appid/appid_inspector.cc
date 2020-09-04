@@ -65,11 +65,11 @@ static void openssl_cleanup()
     CRYPTO_cleanup_all_ex_data();
 }
 
-static void add_appid_to_packet_trace(Flow& flow, OdpContext& odp_context)
+static void add_appid_to_packet_trace(Flow& flow, const OdpContext& odp_context)
 {
     AppIdSession* session = appid_api.get_appid_session(flow);
     // Skip sessions using old odp context after odp reload
-    if (!session || (&(session->get_odp_ctxt()) != &odp_context))
+    if (!session || (session->get_odp_ctxt_version() != odp_context.get_version()))
         return;
 
     AppId service_id, client_id, payload_id, misc_id;
@@ -169,9 +169,8 @@ void AppIdInspector::tterm()
     assert(odp_thread_local_ctxt);
     delete odp_thread_local_ctxt;
     odp_thread_local_ctxt = nullptr;
-    ThirdPartyAppIdContext* tp_appid_ctxt = ctxt->get_tp_appid_ctxt();
-    if (tp_appid_ctxt)
-        tp_appid_ctxt->tfini();
+    if (pkt_thread_tp_appid_ctxt)
+        pkt_thread_tp_appid_ctxt->tfini();
 }
 
 void AppIdInspector::eval(Packet* p)

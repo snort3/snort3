@@ -35,6 +35,7 @@ using namespace std;
 using namespace snort;
 
 TPLibHandler* TPLibHandler::self = nullptr;
+uint32_t ThirdPartyAppIdContext::next_version = 0;
 
 bool TPLibHandler::load_callback(const char* const path)
 {
@@ -112,11 +113,11 @@ ThirdPartyAppIdContext* TPLibHandler::create_tp_appid_ctxt(const AppIdConfig& co
         return nullptr;
     }
 
-    if ( (tp_appid_ctxt->api_version() != THIRD_PARTY_APPID_API_VERSION)
+    if ( (tp_appid_ctxt->get_api_version() != THIRD_PARTY_APPID_API_VERSION)
         || (tp_appid_ctxt->module_name().empty()) )
     {
         ErrorMessage("Ignoring incomplete 3rd party AppID module (%s, %u, %s)!\n",
-            config.tp_appid_path.c_str(), tp_appid_ctxt->api_version(),
+            config.tp_appid_path.c_str(), tp_appid_ctxt->get_api_version(),
             tp_appid_ctxt->module_name().empty() ? "empty" : tp_appid_ctxt->module_name().c_str());
 
         delete tp_appid_ctxt;

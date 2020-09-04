@@ -129,11 +129,48 @@ class ACThirdPartyAppIdContextSwap : public AnalyzerCommand
 {
 public:
     bool execute(Analyzer&, void**) override;
-    ACThirdPartyAppIdContextSwap(const AppIdInspector& inspector, ThirdPartyAppIdContext* tp_ctxt,
+    ACThirdPartyAppIdContextSwap(const AppIdInspector& inspector,
         Request& current_request, bool from_shell): inspector(inspector),
-        tp_ctxt(tp_ctxt),request(current_request), from_shell(from_shell) { }
+        request(current_request), from_shell(from_shell)
+    {
+        LogMessage("== swapping third-party configuration\n");
+        request.respond("== swapping third-party configuration\n", from_shell, true);
+    }
+
     ~ACThirdPartyAppIdContextSwap() override;
     const char* stringify() override { return "THIRD-PARTY_CONTEXT_SWAP"; }
+private:
+    const AppIdInspector& inspector;
+    Request& request;
+    bool from_shell;
+};
+
+bool ACThirdPartyAppIdContextSwap::execute(Analyzer&, void**)
+{
+    assert(!pkt_thread_tp_appid_ctxt);
+    pkt_thread_tp_appid_ctxt = inspector.get_ctxt().get_tp_appid_ctxt();
+    pkt_thread_tp_appid_ctxt->tinit();
+    pkt_thread_tp_appid_ctxt->set_tp_reload_in_progress(false);
+
+    return true;
+}
+
+ACThirdPartyAppIdContextSwap::~ACThirdPartyAppIdContextSwap()
+{
+    Swapper::set_reload_in_progress(false);
+    LogMessage("== reload third-party complete\n");
+    request.respond("== reload third-party complete\n", from_shell, true);
+}
+
+class ACThirdPartyAppIdContextUnload : public AnalyzerCommand
+{
+public:
+    bool execute(Analyzer&, void**) override;
+    ACThirdPartyAppIdContextUnload(const AppIdInspector& inspector, ThirdPartyAppIdContext* tp_ctxt,
+        Request& current_request, bool from_shell): inspector(inspector),
+        tp_ctxt(tp_ctxt), request(current_request), from_shell(from_shell) { }
+    ~ACThirdPartyAppIdContextUnload() override;
+    const char* stringify() override { return "THIRD-PARTY_CONTEXT_UNLOAD"; }
 private:
     const AppIdInspector& inspector;
     ThirdPartyAppIdContext* tp_ctxt =  nullptr;
@@ -141,27 +178,25 @@ private:
     bool from_shell;
 };
 
-bool ACThirdPartyAppIdContextSwap::execute(Analyzer&, void**)
+bool ACThirdPartyAppIdContextUnload::execute(Analyzer&, void**)
 {
     assert(pkt_thread_tp_appid_ctxt);
-    ThirdPartyAppIdContext* tp_appid_ctxt = inspector.get_ctxt().get_tp_appid_ctxt();
-    assert(pkt_thread_tp_appid_ctxt != tp_appid_ctxt);
+    pkt_thread_tp_appid_ctxt->set_tp_reload_in_progress(true);
     bool reload_in_progress = pkt_thread_tp_appid_ctxt->tfini(true);
-    pkt_thread_tp_appid_ctxt->set_tp_reload_in_progress(reload_in_progress);
     if (reload_in_progress)
         return false;
-    tp_appid_ctxt->tinit();
-    pkt_thread_tp_appid_ctxt = tp_appid_ctxt;
+    pkt_thread_tp_appid_ctxt = nullptr;
 
     return true;
 }
 
-ACThirdPartyAppIdContextSwap::~ACThirdPartyAppIdContextSwap()
+ACThirdPartyAppIdContextUnload::~ACThirdPartyAppIdContextUnload()
 {
     delete tp_ctxt;
-    Swapper::set_reload_in_progress(false);
-    LogMessage("== reload third-party complete\n");
-    request.respond("== reload third-party complete\n", from_shell, true);
+    AppIdContext& ctxt = inspector.get_ctxt();
+    ctxt.create_tp_appid_ctxt();
+    main_broadcast_command(new ACThirdPartyAppIdContextSwap(inspector,
+        request, from_shell), from_shell);
 }
 
 class ACOdpContextSwap : public AnalyzerCommand
@@ -266,7 +301,7 @@ static int reload_third_party(lua_State* L)
         current_request.respond("== reload third-party failed - appid not enabled\n", from_shell);
         return 0;
     }
-    AppIdContext& ctxt = inspector->get_ctxt();
+    const AppIdContext& ctxt = inspector->get_ctxt();
     ThirdPartyAppIdContext* old_ctxt = ctxt.get_tp_appid_ctxt();
     if (!old_ctxt)
     {
@@ -274,9 +309,8 @@ static int reload_third_party(lua_State* L)
         return 0;
     }
     Swapper::set_reload_in_progress(true);
-    ctxt.create_tp_appid_ctxt();
-    current_request.respond("== swapping third-party configuration\n", from_shell);
-    main_broadcast_command(new ACThirdPartyAppIdContextSwap(*inspector, old_ctxt,
+    current_request.respond("== unloading old third-party configuration\n", from_shell);
+    main_broadcast_command(new ACThirdPartyAppIdContextUnload(*inspector, old_ctxt,
         current_request, from_shell), from_shell);
     return 0;
 }

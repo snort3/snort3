@@ -122,6 +122,11 @@ public:
     ~OdpContext();
     void initialize();
 
+    uint32_t get_version() const
+    {
+        return version;
+    }
+
     AppInfoManager& get_app_info_mgr()
     {
         return app_info_mgr;
@@ -217,6 +222,9 @@ private:
     std::array<AppId, APP_ID_PORT_ARRAY_SIZE> tcp_port_only = {}; // port-only TCP services
     std::array<AppId, APP_ID_PORT_ARRAY_SIZE> udp_port_only = {}; // port-only UDP services
     std::array<AppId, 256> ip_protocol = {}; // non-TCP / UDP protocol services
+
+    uint32_t version;
+    static uint32_t next_version;
 };
 
 class OdpThreadContext

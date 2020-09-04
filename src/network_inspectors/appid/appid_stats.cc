@@ -206,14 +206,14 @@ static void update_stats(const AppIdSession& asd, AppId app_id, StatsBucket* buc
             cooked_client = true;
 
         // Skip stats for sessions using old odp context after reload detectors
-        AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
-        OdpContext& odp_ctxt = asd.get_odp_ctxt();
-        if (inspector and (&(inspector->get_ctxt().get_odp_ctxt()) != &odp_ctxt))
+        if (!pkt_thread_odp_ctxt or
+            (pkt_thread_odp_ctxt->get_version() != asd.get_odp_ctxt_version()))
         {
             snort_free(record);
             return;
         }
 
+        OdpContext& odp_ctxt = asd.get_odp_ctxt();
         AppInfoTableEntry* entry
             = odp_ctxt.get_app_info_mgr().get_app_info_entry(app_id);
 

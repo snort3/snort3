@@ -41,8 +41,8 @@ public:
         else
         {
             // Skip sessions using old odp context after reload detectors
-            AppIdInspector* inspector = (AppIdInspector*) snort::InspectorManager::get_inspector(MOD_NAME, true);
-            if (inspector and (&(inspector->get_ctxt().get_odp_ctxt()) != &(asd->get_odp_ctxt())))
+            if (!pkt_thread_odp_ctxt or
+                (pkt_thread_odp_ctxt->get_version() != asd->get_odp_ctxt_version()))
                 return;
         }
 

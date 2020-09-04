@@ -64,8 +64,8 @@ const char* AppIdApi::get_application_name(AppId app_id, const Flow& flow)
     if (asd)
     {
         // Skip sessions using old odp context after odp reload
-        AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
-        if (inspector and (&(inspector->get_ctxt().get_odp_ctxt()) != &(asd->get_odp_ctxt())))
+        if (!pkt_thread_odp_ctxt or
+            pkt_thread_odp_ctxt->get_version() != asd->get_odp_ctxt_version())
             return nullptr;
 
         if (app_id == APP_ID_UNKNOWN)
@@ -83,8 +83,8 @@ const char* AppIdApi::get_application_name(const Flow& flow, bool from_client)
     if (asd)
     {
         // Skip sessions using old odp context after odp reload
-        AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
-        if (inspector and (&(inspector->get_ctxt().get_odp_ctxt()) != &(asd->get_odp_ctxt())))
+        if (!pkt_thread_odp_ctxt or
+            pkt_thread_odp_ctxt->get_version() != asd->get_odp_ctxt_version())
             return nullptr;
 
         AppId appid = asd->pick_ss_payload_app_id();
@@ -244,8 +244,8 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name,
     if (asd)
     {
         // Skip detection for sessions using old odp context after odp reload
-        AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
-        if (inspector and (&(inspector->get_ctxt().get_odp_ctxt()) != &(asd->get_odp_ctxt())))
+        if (!pkt_thread_odp_ctxt or
+            pkt_thread_odp_ctxt->get_version() != asd->get_odp_ctxt_version())
             return false;
 
         AppidChangeBits change_bits;

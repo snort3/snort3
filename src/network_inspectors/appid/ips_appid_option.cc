@@ -121,7 +121,8 @@ IpsOption::EvalStatus AppIdIpsOption::eval(Cursor&, Packet* p)
     AppIdSession* session = appid_api.get_appid_session(*(p->flow));
 
     // Skip detection for sessions using old odp context after odp reload
-    if ( !session || (&(session->get_odp_ctxt()) != pkt_thread_odp_ctxt))
+    if ( !session or !pkt_thread_odp_ctxt or
+        (session->get_odp_ctxt_version() != pkt_thread_odp_ctxt->get_version()))
         return NO_MATCH;
 
     AppId app_ids[APP_PROTOID_MAX];

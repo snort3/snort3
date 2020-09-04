@@ -553,6 +553,11 @@ public:
         return odp_ctxt;
     }
 
+    uint32_t get_odp_ctxt_version() const
+    {
+        return odp_ctxt_version;
+    }
+
     ThirdPartyAppIdContext* get_tp_appid_ctxt() const
     {
         return tp_appid_ctxt;
@@ -575,6 +580,7 @@ private:
     snort::AppIdSessionApi& api;
     static uint16_t inferred_svcs_ver;
     OdpContext& odp_ctxt;
+    uint32_t odp_ctxt_version;
     ThirdPartyAppIdContext* tp_appid_ctxt = nullptr;
 };
 

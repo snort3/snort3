@@ -44,11 +44,19 @@ class ThirdPartyAppIdContext
 {
 public:
     ThirdPartyAppIdContext(uint32_t ver, const char* mname, ThirdPartyConfig& config)
-        : version(ver), name(mname), cfg(config) { }
+        : api_version(ver), name(mname), cfg(config)
+    {
+        version = next_version++;
+    }
+
+    uint32_t get_version() const
+    {
+        return version;
+    }
 
     virtual ~ThirdPartyAppIdContext() { }
 
-    uint32_t api_version() const { return version; }
+    uint32_t get_api_version() const { return api_version; }
     const std::string& module_name() const { return name; }
 
     virtual int tinit() = 0;
@@ -60,15 +68,18 @@ public:
     bool get_tp_reload_in_progress() { return tp_reload_in_progress; }
 
 protected:
-    const uint32_t version;
+    const uint32_t api_version;
     const std::string name;
     ThirdPartyConfig cfg;
 
 private:
     // No implicit constructor as derived classes need to provide
     // version and name.
-    ThirdPartyAppIdContext() : version(0), name("") { }
+    ThirdPartyAppIdContext() : api_version(0), name(""), version(0) { }
+    uint32_t version;
     static THREAD_LOCAL bool tp_reload_in_progress;
+    // Increments when a new third-party context is loaded
+    SO_PUBLIC static uint32_t next_version;
 };
 
 #endif

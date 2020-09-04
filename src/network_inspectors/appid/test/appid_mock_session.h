@@ -56,6 +56,7 @@ AppIdServiceSubtype APPID_UT_SERVICE_SUBTYPE = { nullptr, APPID_UT_SERVICE,
 unsigned AppIdSession::inspector_id = 0;
 std::mutex AppIdSession::inferred_svcs_lock;
 uint16_t AppIdSession::inferred_svcs_ver = 0;
+uint32_t OdpContext::next_version = 0;
 
 class MockAppIdDnsSession : public AppIdDnsSession
 {
@@ -82,6 +83,7 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t, AppIdInsp
     OdpContext&) : FlowData(inspector_id, &inspector), config(stub_config),
     protocol(proto), api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(stub_odp_ctxt)
 {
+    odp_ctxt_version = odp_ctxt.get_version();
     service_port = APPID_UT_SERVICE_PORT;
     AppidChangeBits change_bits;
 

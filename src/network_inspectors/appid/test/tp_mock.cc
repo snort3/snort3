@@ -39,6 +39,8 @@
 using namespace snort;
 using namespace std;
 
+uint32_t ThirdPartyAppIdContext::next_version = 0;
+
 class ThirdPartyAppIdContextImpl : public ThirdPartyAppIdContext
 {
 public:

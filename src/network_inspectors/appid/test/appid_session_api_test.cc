@@ -30,12 +30,13 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
-void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
-
 AppIdSession* mock_session = nullptr;
 AppIdSessionApi* appid_session_api = nullptr;
 static AppIdConfig config;
 static OdpContext odpctxt(config, nullptr);
+
+void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
+
 Inspector* InspectorManager::get_inspector(char const*, bool, const snort::SnortConfig*)
 {
     return nullptr;
@@ -68,6 +69,7 @@ TEST_GROUP(appid_session_api)
 
         SfIp ip;
         mock_session = new AppIdSession(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt);
+        pkt_thread_odp_ctxt = &mock_session->get_odp_ctxt();
         mock_session->set_ss_application_ids(APPID_UT_ID, APPID_UT_ID, APPID_UT_ID,
             APPID_UT_ID, APPID_UT_ID, change_bits);
     }

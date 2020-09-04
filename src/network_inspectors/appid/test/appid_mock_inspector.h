@@ -72,6 +72,7 @@ AppIdModule appid_mod;
 AppIdInspector dummy_appid_inspector( appid_mod );
 AppIdConfig appid_config;
 AppIdContext appid_ctxt(appid_config);
+THREAD_LOCAL OdpContext* pkt_thread_odp_ctxt = nullptr;
 
 AppIdInspector::AppIdInspector(AppIdModule& ) { ctxt = &appid_ctxt; }
 

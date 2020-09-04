@@ -50,8 +50,8 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     else
     {
         // Skip detection for sessions using old odp context after odp reload
-        AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
-        if (inspector and (&(asd->get_odp_ctxt()) != &(inspector->get_ctxt().get_odp_ctxt())))
+        if (!pkt_thread_odp_ctxt or
+            (asd->get_odp_ctxt_version() != pkt_thread_odp_ctxt->get_version()))
             return;
     }
 

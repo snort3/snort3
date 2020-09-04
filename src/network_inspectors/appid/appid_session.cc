@@ -100,6 +100,7 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port,
 {
     service_ip.clear();
     initiator_port = port;
+    odp_ctxt_version = odp_ctxt.get_version();
 
     appid_stats.total_sessions++;
 }

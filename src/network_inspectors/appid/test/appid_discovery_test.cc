@@ -38,6 +38,8 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
+uint32_t ThirdPartyAppIdContext::next_version = 0;
+
 namespace snort
 {
 // Stubs for packet

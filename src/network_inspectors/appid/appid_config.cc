@@ -49,6 +49,7 @@ using namespace snort;
 
 ThirdPartyAppIdContext* AppIdContext::tp_appid_ctxt = nullptr;
 OdpContext* AppIdContext::odp_ctxt = nullptr;
+uint32_t OdpContext::next_version = 0;
 
 static void map_app_names_to_snort_ids(SnortConfig* sc, AppIdConfig& config)
 {
@@ -151,6 +152,7 @@ OdpContext::OdpContext(const AppIdConfig& config, SnortConfig* sc)
     app_info_mgr.init_appid_info_table(config, sc, *this);
     client_pattern_detector = new PatternClientDetector(&client_disco_mgr);
     service_pattern_detector = new PatternServiceDetector(&service_disco_mgr);
+    version = next_version++;
 }
 
 OdpContext::~OdpContext()
