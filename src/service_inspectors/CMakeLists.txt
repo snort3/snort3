@@ -6,18 +6,19 @@ add_subdirectory(dnp3)
 add_subdirectory(dns)
 add_subdirectory(ftp_telnet)
 add_subdirectory(gtp)
-add_subdirectory(imap)
-add_subdirectory(modbus)
 add_subdirectory(http_inspect)
 add_subdirectory(http2_inspect)
+add_subdirectory(imap)
+add_subdirectory(modbus)
+add_subdirectory(netflow)
 add_subdirectory(pop)
 add_subdirectory(rpc_decode)
+add_subdirectory(s7commplus)
 add_subdirectory(sip)
 add_subdirectory(smtp)
 add_subdirectory(ssh)
 add_subdirectory(ssl)
 add_subdirectory(wizard)
-add_subdirectory(s7commplus)
 
 if (STATIC_INSPECTORS)
     set (STATIC_INSPECTOR_OBJS
@@ -30,12 +31,13 @@ if (STATIC_INSPECTORS)
         $<TARGET_OBJECTS:gtp_inspect>
         $<TARGET_OBJECTS:imap>
         $<TARGET_OBJECTS:modbus>
+        $<TARGET_OBJECTS:netflow>
         $<TARGET_OBJECTS:pop>
         $<TARGET_OBJECTS:rpc_decode>
+        $<TARGET_OBJECTS:s7commplus>
         $<TARGET_OBJECTS:smtp>
         $<TARGET_OBJECTS:ssh>
         $<TARGET_OBJECTS:wizard>
-        $<TARGET_OBJECTS:s7commplus>
     )
 endif()
 

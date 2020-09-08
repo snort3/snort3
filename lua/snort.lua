@@ -58,6 +58,7 @@ http_inspect = { }
 http2_inspect = { }
 imap = { }
 modbus = { }
+netflow = {}
 normalizer = { }
 pop = { }
 rpc_decode = { }
@@ -118,6 +119,7 @@ binder =
 
     { when = { proto = 'tcp', service = 'dcerpc' }, use = { type = 'dce_tcp' } },
     { when = { proto = 'udp', service = 'dcerpc' }, use = { type = 'dce_udp' } },
+    { when = { proto = 'udp', service = 'netflow' }, use = { type = 'netflow' } },
 
     { when = { service = 'netbios-ssn' },      use = { type = 'dce_smb' } },
     { when = { service = 'dce_http_server' },  use = { type = 'dce_http_server' } },

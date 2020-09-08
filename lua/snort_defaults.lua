@@ -354,6 +354,12 @@ telnet_commands =
     '|FF FC|', '|FF FD|', '|FF FE|', '|FF FF|'
 }
 
+
+netflow_versions =
+{
+    '|00 05|', '|00 09|'
+}
+
 default_wizard =
 {
     spells =
@@ -392,8 +398,12 @@ default_wizard =
         { service = 'dnp3', proto = 'tcp', client_first = true,
           to_server = { '|05 64|' }, to_client = { '|05 64|' } },
 
+        { service = 'netflow', proto = 'udp',  client_first = true,
+          to_server = netflow_versions },
+
         { service = 'http2', proto = 'tcp', client_first = true,
           to_server = { '|50 52 49 20 2a 20 48 54 54 50 2f 32 2e 30 0d 0a 0d 0a 53 4d 0d 0a 0d 0a|' } },
+
 --[[
         { service = 'modbus', proto = 'tcp', client_first = true,
           to_server = { '??|0 0|' } },
@@ -1188,7 +1198,7 @@ default_whitelist =
     ip_med_sweep ip_med_dist ip_hi_proto ip_hi_decoy ip_hi_sweep
     ip_hi_dist icmp_low_sweep icmp_med_sweep icmp_hi_sweep
     default_hi_port_scan default_med_port_scan default_low_port_scan
-    default_variables
+    default_variables netflow_versions
 ]]
 
 snort_whitelist_append(default_whitelist)
