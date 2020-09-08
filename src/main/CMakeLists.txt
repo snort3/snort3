@@ -6,6 +6,7 @@ set (INCLUDES
     snort_config.h
     snort_debug.h
     snort_types.h
+    swapper.h
     thread.h
     thread_config.h
 )
@@ -39,7 +40,6 @@ add_library (main OBJECT
     snort_module.h
     snort_module.cc
     swapper.cc
-    swapper.h
     thread.cc
     thread_config.h
     thread_config.cc

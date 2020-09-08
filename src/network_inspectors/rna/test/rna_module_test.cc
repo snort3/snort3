@@ -36,34 +36,9 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
-void Request::respond(const char* msg, bool, bool)
-{
-    mock().actualCall("respond").onObject(this).withParameter("msg", msg);
-}
-
 TEST_GROUP(rna_module_test)
 {
 };
-
-TEST(rna_module_test, reload_fingerprint)
-{
-    // When another reload is pending
-    mock().expectOneCall("respond").onObject(&mock_request).withParameter("msg", "== reload pending; retry\n");
-    Swapper::set_reload_in_progress(true);
-    reload_fingerprint(nullptr);
-    Swapper::set_reload_in_progress(false);
-    mock().checkExpectations();
-
-    // When rna is not configured
-    mock().expectOneCall("respond").onObject(&mock_request).withParameter("msg", "== reload fingerprint failed - rna not enabled\n");
-    reload_fingerprint(nullptr);
-    mock().checkExpectations();
-
-    // Reload in progress flag should remain unset at the end
-    CHECK_FALSE(Swapper::get_reload_in_progress());
-
-    mock().clear();
-}
 
 TEST(rna_module_test, push_tcp_fingerprints)
 {

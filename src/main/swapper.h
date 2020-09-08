@@ -22,6 +22,8 @@
 
 // used to make thread local, pointer-based config swaps by packet threads
 
+#include "main/snort_types.h"
+
 namespace snort
 {
 struct SnortConfig;
@@ -29,7 +31,7 @@ struct SnortConfig;
 
 class Analyzer;
 
-class Swapper
+class SO_PUBLIC Swapper
 {
 public:
     Swapper(snort::SnortConfig*);

@@ -200,6 +200,14 @@ TcpFpProcessor* RnaInspector::get_or_create_fp_processor()
     return nullptr;
 }
 
+void RnaInspector::set_fp_processor(TcpFpProcessor* tfp)
+{
+    if ( mod_conf )
+    {
+        delete mod_conf->processor;
+        mod_conf->processor = tfp;
+    }
+}
 
 //-------------------------------------------------------------------------
 // api stuff

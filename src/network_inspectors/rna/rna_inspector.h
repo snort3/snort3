@@ -49,6 +49,7 @@ public:
     void tterm() override;
 
     snort::TcpFpProcessor* get_or_create_fp_processor();
+    void set_fp_processor(snort::TcpFpProcessor* tfp);
 
 private:
     void load_rna_conf();

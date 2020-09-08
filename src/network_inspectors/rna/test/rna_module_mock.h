@@ -23,21 +23,13 @@
 
 #include "../rna_mac_cache.cc"
 
-bool Swapper::reload_in_progress = false;
 THREAD_LOCAL RnaStats rna_stats;
 THREAD_LOCAL ProfileStats rna_perf_stats;
-static Request mock_request;
 
 const char* luaL_optlstring(lua_State*, int, const char*, size_t*) { return nullptr; }
 
-Request& get_current_request()
-{ return mock_request; }
-
 namespace snort
 {
-Inspector* InspectorManager::get_inspector(const char*, bool, const SnortConfig*)
-{ return nullptr; }
-
 Module* ModuleManager::get_module(const char*)
 { return nullptr; }
 

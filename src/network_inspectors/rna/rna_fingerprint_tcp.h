@@ -123,7 +123,7 @@ private:
 }
 
 snort::TcpFpProcessor* get_tcp_fp_processor();
-void set_tcp_fp_processor(snort::TcpFpProcessor*);
+SO_PUBLIC void set_tcp_fp_processor(snort::TcpFpProcessor*);
 
 struct FpFingerprintState
 {
