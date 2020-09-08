@@ -44,26 +44,45 @@ TraceParser::TraceParser(TraceConfig* tc)
         reset_configured_trace_options();
 }
 
-bool TraceParser::set_traces(const std::string& module_name, const Value& val)
+bool TraceParser::set_traces(const std::string& option_name, const Value& val)
 {
-    if ( !s_configured_trace_options.count(module_name) )
+    if ( !s_configured_trace_options.count(option_name)
+        and option_name != DEFAULT_TRACE_OPTION_NAME )
         return false;
 
-    if ( val.is(DEFAULT_TRACE_OPTION_NAME) )
+    if ( option_name == DEFAULT_TRACE_OPTION_NAME )
     {
-        const auto& trace_options = s_configured_trace_options[module_name];
+        for ( const auto& trace_options : s_configured_trace_options )
+        {
+            if ( trace_options.second.at(DEFAULT_TRACE_OPTION_NAME) )
+                continue;
+
+            for ( const auto& trace_option : trace_options.second )
+            {
+                if ( !trace_option.second )
+                    trace_config->set_trace(trace_options.first, trace_option.first,
+                        val.get_uint8());
+            }
+        }
+
+        return true;
+    }
+    else if ( val.is(DEFAULT_TRACE_OPTION_NAME) )
+    {
+        auto& trace_options = s_configured_trace_options[option_name];
         for ( const auto& trace_option : trace_options )
         {
             if ( !trace_option.second )
-                trace_config->set_trace(module_name, trace_option.first, val.get_uint8());
+                trace_config->set_trace(option_name, trace_option.first, val.get_uint8());
         }
+        trace_options[DEFAULT_TRACE_OPTION_NAME] = true;
 
         return true;
     }
     else
     {
-        bool res = trace_config->set_trace(module_name, val.get_name(), val.get_uint8());
-        s_configured_trace_options[module_name][val.get_name()] = res;
+        bool res = trace_config->set_trace(option_name, val.get_name(), val.get_uint8());
+        s_configured_trace_options[option_name][val.get_name()] = res;
         return res;
     }
 }
@@ -142,9 +161,8 @@ void TraceParser::init_configured_trace_options()
         if ( trace_options )
         {
             auto& module_trace_options = s_configured_trace_options[module->get_name()];
-            if ( !trace_options->name )
-                module_trace_options[DEFAULT_TRACE_OPTION_NAME] = false;
 
+            module_trace_options[DEFAULT_TRACE_OPTION_NAME] = false;
             while ( trace_options->name )
             {
                 module_trace_options[trace_options->name] = false;

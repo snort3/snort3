@@ -36,6 +36,28 @@
 
 using namespace snort;
 
+// Helpers
+
+static std::string extract_module_option(const char* fqn)
+{
+    std::string option_name;
+    const std::string config_name(fqn);
+    const std::string pattern = "trace.modules.";
+    size_t start_pos = config_name.find(pattern);
+    if ( start_pos != std::string::npos )
+    {
+        start_pos += pattern.size();
+        size_t end_pos = config_name.find(".", start_pos);
+        size_t option_len = ( end_pos != std::string::npos ) ? end_pos - start_pos
+            : config_name.size() - start_pos;
+
+        option_name = config_name.substr(start_pos, option_len);
+    }
+    return option_name;
+}
+
+// Module stuff
+
 #define trace_help "configure trace log messages"
 #define s_name "trace"
 
@@ -86,6 +108,9 @@ void TraceModule::generate_params()
 
     std::sort(modules_params.begin(), modules_params.end(),
         [](const Parameter& l, const Parameter& r) { return (strcmp(l.name, r.name) < 0); });
+
+    modules_params.emplace(modules_params.begin(), DEFAULT_TRACE_OPTION_NAME, Parameter::PT_INT,
+        "0:255", nullptr, "enable trace for all modules");
 
     modules_params.emplace_back(nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr);
 
@@ -171,8 +196,8 @@ bool TraceModule::set(const char* fqn, Value& v, SnortConfig*)
     }
     else if ( strstr(fqn, "trace.modules.") == fqn )
     {
-        std::string module_name = find_module(fqn);
-        return trace_parser->set_traces(module_name, v);
+        std::string option_name = extract_module_option(fqn);
+        return trace_parser->set_traces(option_name, v);
     }
     else if ( strstr(fqn, "trace.constraints.") == fqn )
         return trace_parser->set_constraints(v);
@@ -219,21 +244,5 @@ bool TraceModule::end(const char* fqn, int, SnortConfig* sc)
     }
 
     return true;
-}
-
-std::string TraceModule::find_module(const char* fqn) const
-{
-    std::string module_name;
-    const std::string config_name(fqn);
-    const std::string pattern = "trace.modules.";
-    size_t start_pos = config_name.find(pattern);
-    if ( start_pos != std::string::npos )
-    {
-        start_pos += pattern.size();
-        size_t end_pos = config_name.find(".", start_pos);
-        if ( end_pos != std::string::npos )
-            module_name = config_name.substr(start_pos, end_pos - start_pos);
-    }
-    return module_name;
 }
 

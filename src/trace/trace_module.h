@@ -47,7 +47,6 @@ public:
     { return GLOBAL; }
 
 private:
-    std::string find_module(const char* config_name) const;
     void generate_params();
 
 private:

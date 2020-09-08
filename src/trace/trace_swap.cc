@@ -215,46 +215,63 @@ static int set(lua_State* L)
             lua_pushnil(L);
             while ( lua_next(L, modules_tbl_idx) )
             {
-                const char* module_name = luaL_checkstring(L, -2);
-                const Parameter* module_param = Parameter::find(modules_param, module_name);
-
-                if ( !lua_istable(L, -1) or !module_param )
-                {
-                    LogMessage("== invalid table is provided: %s.%s\n", root_element_key,
-                        module_name);
-
-                    parse_err = true;
-                    lua_pop(L, 1);
-                    continue;
-                }
+                const char* option_name = luaL_checkstring(L, -2);
+                const Parameter* option_param = Parameter::find(modules_param, option_name);
 
                 // Trace table traversal
-                int module_tbl_idx = lua_gettop(L);
-                lua_pushnil(L);
-                while ( lua_next(L, module_tbl_idx) )
+                if ( lua_istable(L, -1) and option_param )
                 {
-                    const char* val_name = luaL_checkstring(L, -2);
-                    const Parameter* trace_param = Parameter::find(
-                        (const Parameter*)module_param->range, val_name);
-
-                    Value val(false);
-                    val.set(trace_param);
-
-                    if ( lua_isnumber(L, -1) )
-                        val.set((double)lua_tointeger(L, -1));
-                    else
-                        val.set(luaL_checkstring(L, -1));
-
-                    if ( !trace_param or !trace_param->validate(val) or
-                         !trace_parser.set_traces(module_name, val) )
+                    int module_tbl_idx = lua_gettop(L);
+                    lua_pushnil(L);
+                    while ( lua_next(L, module_tbl_idx) )
                     {
-                        LogMessage("== invalid trace value is provided: %s.%s.%s = %s\n",
-                            root_element_key, module_name, val_name, val.get_as_string().c_str());
+                        const char* val_name = luaL_checkstring(L, -2);
+                        const Parameter* trace_param = Parameter::find(
+                            (const Parameter*)option_param->range, val_name);
+
+                        Value val(false);
+                        val.set(trace_param);
+
+                        if ( lua_isnumber(L, -1) )
+                            val.set((double)lua_tointeger(L, -1));
+                        else
+                            val.set(luaL_checkstring(L, -1));
+
+                        if ( !trace_param or !trace_param->validate(val) or
+                            !trace_parser.set_traces(option_name, val) )
+                        {
+                            LogMessage("== invalid trace value is provided: %s.%s.%s = %s\n",
+                                root_element_key, option_name, val_name,
+                                val.get_as_string().c_str());
+
+                            parse_err = true;
+                        }
+
+                        lua_pop(L, 1);
+                    }
+                }
+                // Enable all option
+                else if ( lua_isnumber(L, -1) and option_param )
+                {
+                    Value val((double)lua_tointeger(L, -1));
+                    val.set(option_param);
+
+                    if ( !option_param->validate(val) or
+                        !trace_parser.set_traces(option_name, val) )
+                    {
+                        LogMessage("== invalid option value is provided: %s.%s = %s\n",
+                            root_element_key, option_name, val.get_as_string().c_str());
 
                         parse_err = true;
                     }
+                }
+                // Error
+                else
+                {
+                    LogMessage("== invalid option is provided: %s.%s\n", root_element_key,
+                        option_name);
 
-                    lua_pop(L, 1);
+                    parse_err = true;
                 }
 
                 lua_pop(L, 1);
