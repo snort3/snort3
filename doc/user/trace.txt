@@ -79,6 +79,25 @@ modules also and works as a global switcher:
         }
     }
 
+Also, it's possible to enable or disable traces for all modules with a
+top-level *all* option.
+
+The following configuration states that:
+
+* all traces are enabled with verbosity level 5
+* traces for the decode module are enabled with level 3
+* rule_eval traces for the detection module are enabled with level 1
+
+    trace =
+    {
+        modules =
+        {
+            all = 5,
+            decode = { all = 3 },
+            detection = { rule_eval = 1 }
+        }
+    }
+
 The full list of available trace parameters is placed into
 the "Basic Modules.trace" chapter.
 
@@ -197,6 +216,8 @@ After entering the Snort shell, there are two commands available for
 the trace module:
 
     trace.set({ modules = {...}, constraints = {...} }) - set modules traces and constraints (should pass a valid Lua-entry)
+
+    trace.set({ modules = { all = N } }) - enable traces for all modules with verbosity level N
 
     trace.set({ log_ntuple = true/false }) - on/off packet n-tuple info logging
 
