@@ -22,7 +22,7 @@ are processed via events as per subscriptions. Since RNA needs to see the first 
 of a session published from stream trackers, these modules (e.g., stream, stream_icmp,
 stream_ip, stream_tcp, and stream_udp) should be enabled whenever RNA module is enabled.
 
-Currently, RNA only supports host discovery with filtering based on IP/port/zone. To enable
+Currently, RNA only supports host discovery with filtering based on IP/port/interface. To enable
 this (disabled by default), the config file referred by rna_conf_path can have keywords:
 Analyze            # discover application, host, user (only host discovery is implemented)
 AnalyzeHostUser    # discover application, host, user (same as Analyze)
@@ -32,14 +32,14 @@ AnalyzeUser        # discover application, user
 portexclusion      # don't discover on this port
 
 Format:
-config keyword [!]ip [zone]
+config keyword [!]ip [interface]
 portexclusion dst|src|both tcp|udp port ip
 
 Examples:
-config AnalyzeHost 0.0.0.0/0 -1     # discover any ipv4 on any zone
-config AnalyzeHost ::/0 2           # discover any ipv6 on zone 2
-config AnalyzeHost !1.2.3.4/16 3    # exclude this ipv4 range on zone 3
-config Analyze !cafe:feed::0/64     # exclude this ipv6 range on any zone
+config AnalyzeHost 0.0.0.0/0 -1     # discover any ipv4 on any interface
+config AnalyzeHost ::/0 2           # discover any ipv6 on interface 2
+config AnalyzeHost !1.2.3.4/16 3    # exclude this ipv4 range on interface 3
+config Analyze !cafe:feed::0/64     # exclude this ipv6 range on any interface
 portexclusion dst udp 53 8.8.8.8    # exclude this ip for UDP port 53 in destination direction
 portexclusion both tcp 4000 ::0/0   # exclude any ipv6 for TCP port 4000 in both direction
 

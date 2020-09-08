@@ -119,9 +119,9 @@ public:
     uint32_t pkt_action_mask = ACTION_NOTHING;
     uint8_t ecn = 0;
     int32_t ingress_index = 0;
-    int32_t ingress_group = 0;
+    int16_t ingress_group = 0;
     int32_t egress_index = 0;
-    int32_t egress_group = 0;
+    int16_t egress_group = 0;
     uint32_t daq_flags = 0;
     uint16_t address_space_id = 0;
     bool generate_3whs_alert = true;

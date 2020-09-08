@@ -85,21 +85,21 @@ DiscoveryFilter::DiscoveryFilter(const string& conf_path)
             if ( config_key.find("Analyze", 0, sizeof("Analyze")-1) != 0 )
                 continue;
 
-            int64_t zone = DF_ANY_ZONE;
-            string config_zone("");
-            line_stream >> config_zone;
-            if ( !config_zone.empty() and config_zone != "-1" )
+            int64_t intf = DF_ANY_INTF;
+            string config_intf("");
+            line_stream >> config_intf;
+            if ( !config_intf.empty() and config_intf != "-1" )
             {
-                if (config_zone == "0")
-                    zone = 0;
+                if (config_intf == "0")
+                    intf = 0;
                 else
                 {
-                    zone = strtol(config_zone.c_str(), nullptr, 0);
-                    if ( zone < 1 or zone >= DF_ANY_ZONE )
+                    intf = strtol(config_intf.c_str(), nullptr, 0);
+                    if ( intf < 1 or intf >= DF_ANY_INTF )
                     {
-                        WarningMessage("Discovery Filter: Invalid zone at line %u from %s;"
+                        WarningMessage("Discovery Filter: Invalid interface at line %u from %s;"
                             " supported range is -1 (any) to %d\n", line_num,
-                            conf_path.c_str(), DF_ANY_ZONE-1);
+                            conf_path.c_str(), DF_ANY_INTF-1);
                         continue;
                     }
                 }
@@ -108,23 +108,23 @@ DiscoveryFilter::DiscoveryFilter(const string& conf_path)
             // host or user discovery will also enable application discovery
             if ( config_key == "AnalyzeApplication" )
             {
-                add_ip(DF_APP, zone, config_value);
+                add_ip(DF_APP, intf, config_value);
             }
             else if ( config_key == "AnalyzeHost" )
             {
-                add_ip(DF_APP, zone, config_value);
-                add_ip(DF_HOST, zone, config_value);
+                add_ip(DF_APP, intf, config_value);
+                add_ip(DF_HOST, intf, config_value);
             }
             else if ( config_key == "AnalyzeUser" )
             {
-                add_ip(DF_APP, zone, config_value);
-                add_ip(DF_USER, zone, config_value);
+                add_ip(DF_APP, intf, config_value);
+                add_ip(DF_USER, intf, config_value);
             }
             else if ( config_key == "AnalyzeHostUser" or config_key == "Analyze" )
             {
-                add_ip(DF_APP, zone, config_value);
-                add_ip(DF_HOST, zone, config_value);
-                add_ip(DF_USER, zone, config_value);
+                add_ip(DF_APP, intf, config_value);
+                add_ip(DF_HOST, intf, config_value);
+                add_ip(DF_USER, intf, config_value);
             }
         }
         else if ( config_type == "portexclusion" )
@@ -173,18 +173,18 @@ DiscoveryFilter::DiscoveryFilter(const string& conf_path)
 
     }
 
-    // Merge any-zone rules to zone-based rules
+    // Merge any-interface rules to interface-based rules
     for (int type = DF_APP; type < DF_MAX; ++type)
     {
-        auto any_list = get_list((FilterType)type, DF_ANY_ZONE);
+        auto any_list = get_list((FilterType)type, DF_ANY_INTF);
         if (!any_list)
             continue;
-        for (auto& zone_entry : zone_ip_list[type])
+        for (auto& intf_entry : intf_ip_list[type])
         {
-            if (zone_entry.second != any_list and
-                sfvar_add(zone_entry.second, any_list) != SFIP_SUCCESS)
+            if (intf_entry.second != any_list and
+                sfvar_add(intf_entry.second, any_list) != SFIP_SUCCESS)
                 WarningMessage("Discovery Filter: Failed to add any network list "
-                    "to zone network list for type %d", type);
+                    "to interface network list for type %d", type);
         }
     }
 
@@ -238,22 +238,22 @@ bool DiscoveryFilter::is_monitored(const Packet* p, FilterType type, uint8_t& fl
 bool DiscoveryFilter::is_monitored(const Packet* p, FilterType type, const SfIp* ip)
 {
     if ( !vartable )
-        return true; // when not configured, 'any' ip/port/zone are monitored by default
+        return true; // when not configured, 'any' ip/port/interface are monitored by default
 
     // port exclusion
     if ( is_port_excluded(p) )
         return false;
 
-    // check zone
-    if (zone_ip_list[type].empty())
+    // check interface 
+    if (intf_ip_list[type].empty())
         return false; // the configuration did not have this type of rule
 
-    auto zone = p->pkth->ingress_group;
-    if ( zone == DAQ_PKTHDR_UNKNOWN or zone < 0 )
-        zone = DF_ANY_ZONE;
-    auto varip = get_list(type, zone, true);
-    if (!varip and zone != DF_ANY_ZONE)
-        varip = get_list(type, DF_ANY_ZONE, true);
+    auto intf = (int32_t)p->pkth->ingress_index;
+    if ( intf == DAQ_PKTHDR_UNKNOWN or intf < 0 )
+        intf = DF_ANY_INTF;
+    auto varip = get_list(type, intf, true);
+    if (!varip and intf != DF_ANY_INTF)
+        varip = get_list(type, DF_ANY_INTF, true);
 
     if (!p->ptrs.ip_api.get_src() and !ip)
         return true; // Don't check for non-IP, non ARP
@@ -309,28 +309,28 @@ bool DiscoveryFilter::is_port_excluded(const Packet* p)
     return false;
 }
 
-void DiscoveryFilter::add_ip(FilterType type, ZoneType zone, string& ip)
+void DiscoveryFilter::add_ip(FilterType type, IntfType intf, string& ip)
 {
-    auto varip = get_list(type, zone);
+    auto varip = get_list(type, intf);
     if ( varip )
         sfvt_add_to_var(vartable, varip, ip.c_str());
     else
     {
         string named_ip = to_string((int)type);
         named_ip += "_";
-        named_ip += to_string(zone);
+        named_ip += to_string(intf);
         named_ip += " ";
         named_ip += ip;
 
         if ( sfvt_add_str(vartable, named_ip.c_str(), &varip) == SFIP_SUCCESS )
-            zone_ip_list[type].emplace(zone, varip);
+            intf_ip_list[type].emplace(intf, varip);
     }
 }
 
-sfip_var_t* DiscoveryFilter::get_list(FilterType type, ZoneType zone, bool exclude_empty)
+sfip_var_t* DiscoveryFilter::get_list(FilterType type, IntfType intf, bool exclude_empty)
 {
-    auto& list = zone_ip_list[type];
-    auto entry = list.find(zone);
+    auto& list = intf_ip_list[type];
+    auto entry = list.find(intf);
 
     // If head is empty and the boolean flag is true, treat every IP as excluded. The flag
     // is not used during parsing when we are still building, it is used during searching.
@@ -381,20 +381,20 @@ TEST_CASE("Discovery Filter", "[is_monitored]")
     string conf("test.txt");
     ofstream out_stream(conf.c_str());
     out_stream << "config Error\n"; // invalid
-    out_stream << "config AnalyzeUser ::/0 0\n"; // any ipv6, zone 0
-    out_stream << "config AnalyzeApplication 1.1.1.0/24 -1\n"; // targeted ipv4, any zone
+    out_stream << "config AnalyzeUser ::/0 0\n"; // any ipv6, interface 0
+    out_stream << "config AnalyzeApplication 1.1.1.0/24 -1\n"; // targeted ipv4, any interface 
     out_stream.close();
 
     Packet p;
     SfIp ip;
-    ip.set("1.1.1.1"); // zone 0 by default
+    ip.set("1.1.1.1"); // interface 0 by default
     p.ptrs.ip_api.set(ip, ip);
     DiscoveryFilter df(conf);
 
     // Without flag
-    CHECK(df.is_app_monitored(&p, nullptr) == true);   // any zone rule for app is added to zone 0
+    CHECK(df.is_app_monitored(&p, nullptr) == true);   // any interface rule for app is added to interface 0
     CHECK(df.is_host_monitored(&p, nullptr) == false); // no rule for host
-    CHECK(df.is_user_monitored(&p, nullptr) == false); // no any zone rule for user
+    CHECK(df.is_user_monitored(&p, nullptr) == false); // no any interface rule for user
 
     // With flag
     uint8_t flag = 0;
@@ -440,16 +440,16 @@ TEST_CASE("Discovery Filter Empty Configuration", "[is_monitored_config]")
     remove("test_empty_analyze.txt");
 }
 
-TEST_CASE("Discovery Filter Zone", "[is_monitored_zone_vs_ip]")
+TEST_CASE("Discovery Filter Intf", "[is_monitored_intf_vs_ip]")
 {
-    string conf("test_zone_ip.txt");
+    string conf("test_intf_ip.txt");
     ofstream out_stream(conf.c_str());
-    out_stream << "config AnalyzeHost 1.1.1.1 -1\n";         // zone any
-    out_stream << "config AnalyzeHost 1.1.1.2 0\n";          // zone 0
-    out_stream << "config AnalyzeHost 1.1.1.3 2\n";          // zone 2
-    out_stream << "config AnalyzeHost 1.1.1.4 -3\n";         // zone out of range
-    out_stream << "config AnalyzeHost 1.1.1.5 2147483648\n"; // zone out of range
-    out_stream << "config AnalyzeHost 1.1.1.6 kidding\n";    // zone invalid
+    out_stream << "config AnalyzeHost 1.1.1.1 -1\n";         // interface any
+    out_stream << "config AnalyzeHost 1.1.1.2 0\n";          // interface 0
+    out_stream << "config AnalyzeHost 1.1.1.3 2\n";          // interface 2
+    out_stream << "config AnalyzeHost 1.1.1.4 -3\n";         // interface out of range
+    out_stream << "config AnalyzeHost 1.1.1.5 2147483648\n"; // interface out of range
+    out_stream << "config AnalyzeHost 1.1.1.6 kidding\n";    // interface invalid
     out_stream.close();
 
     Packet p;
@@ -463,31 +463,31 @@ TEST_CASE("Discovery Filter Zone", "[is_monitored_zone_vs_ip]")
     ip7.set("1.1.1.7");
     const DAQ_PktHdr_t* saved_hdr = p.pkth;
     DAQ_PktHdr_t z_undefined, z1, z2;
-    z_undefined.ingress_group = DAQ_PKTHDR_UNKNOWN;
-    z1.ingress_group = 1;
-    z2.ingress_group = 2;
+    z_undefined.ingress_index = DAQ_PKTHDR_UNKNOWN;
+    z1.ingress_index = 1;
+    z2.ingress_index = 2;
     DiscoveryFilter df(conf);
 
-    p.ptrs.ip_api.set(ip1, ip7);  // ip from undefined zone matches zone any list
+    p.ptrs.ip_api.set(ip1, ip7);  // ip from undefined interface matches interface any list
     p.pkth = &z_undefined;
     CHECK(df.is_app_monitored(&p, nullptr) == true); // analyze host enables application discovery
     CHECK(df.is_host_monitored(&p, nullptr) == true);
     CHECK(df.is_user_monitored(&p, nullptr) == false);
 
-    p.pkth = &z2; // the ip is not in zone 2 list, but it is in zone any list
+    p.pkth = &z2; // the ip is not in interface 2 list, but it is in interface any list
     CHECK(df.is_host_monitored(&p, nullptr) == true);
 
-    p.ptrs.ip_api.set(ip3, ip7); // the ip matches zone 2 list
+    p.ptrs.ip_api.set(ip3, ip7); // the ip matches interface 2 list
     CHECK(df.is_host_monitored(&p, nullptr) == true);
 
-    p.pkth = &z1; // no zone 1 list and the ip is not in zone any list
+    p.pkth = &z1; // no interface 1 list and the ip is not in interface any list
     CHECK(df.is_host_monitored(&p, nullptr) == false);
 
-    p.ptrs.ip_api.set(ip1, ip7); // no zone 1 list, but the ip is in zone any list
+    p.ptrs.ip_api.set(ip1, ip7); // no interface 1 list, but the ip is in interface any list
     CHECK(df.is_host_monitored(&p, nullptr) == true);
 
     p.pkth = saved_hdr;
-    p.ptrs.ip_api.set(ip2, ip7);  // the ip matches zone 0 list
+    p.ptrs.ip_api.set(ip2, ip7);  // the ip matches interface 0 list
     CHECK(df.is_host_monitored(&p, nullptr) == true);
 
     // no match since the configuration for these ip addresses were invalid
@@ -498,7 +498,7 @@ TEST_CASE("Discovery Filter Zone", "[is_monitored_zone_vs_ip]")
     p.ptrs.ip_api.set(ip6, ip7);
     CHECK(df.is_host_monitored(&p, nullptr) == false);
 
-    remove("test_zone_ip.txt");
+    remove("test_intf_ip.txt");
 }
 
 TEST_CASE("Discovery Filter Port Exclusion", "[portexclusion]")

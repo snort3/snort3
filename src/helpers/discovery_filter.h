@@ -29,10 +29,10 @@
 
 enum FilterType { DF_APP, DF_HOST, DF_USER, DF_MAX };
 
-typedef int32_t ZoneType; // matching daq header
-#define DF_ANY_ZONE INT32_MAX
+typedef int32_t IntfType; // matching daq header
+#define DF_ANY_INTF INT32_MAX
 
-// Holds configurations to filter traffic discovery based network address, port, and zone
+// Holds configurations to filter traffic discovery based network address, port, and interface
 class DiscoveryFilter
 {
 public:
@@ -52,8 +52,8 @@ private:
     bool is_monitored(const snort::Packet* p, FilterType type, uint8_t& flag,
         uint8_t checked, uint8_t monitored, const snort::SfIp* ip = nullptr);
     bool is_monitored(const snort::Packet* p, FilterType type, const snort::SfIp* ip = nullptr);
-    void add_ip(FilterType type, ZoneType zone, std::string& ip);
-    sfip_var_t* get_list(FilterType type, ZoneType zone, bool exclude_empty = false);
+    void add_ip(FilterType type, IntfType intf, std::string& ip);
+    sfip_var_t* get_list(FilterType type, IntfType intf, bool exclude_empty = false);
 
     // add ip for port exclusion
     void add_ip(Direction dir, uint16_t proto, uint16_t port, const std::string& ip);
@@ -66,7 +66,7 @@ private:
 
     bool is_port_excluded(const snort::Packet* p);
 
-    std::unordered_map<ZoneType, sfip_var_t*> zone_ip_list[DF_MAX];
+    std::unordered_map<IntfType, sfip_var_t*> intf_ip_list[DF_MAX];
     vartable_t* vartable = nullptr;
 
     // Internal cache for sfip_var_t indexed by protocol x port, for port

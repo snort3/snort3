@@ -61,7 +61,7 @@ enum IPdecision
     DECISION_MAX
 };
 
-#define MAX_NUM_ZONES             UINT32_MAX
+#define MAX_NUM_INTFS             INT32_MAX
 #define MAX_LIST_ID               UINT32_MAX
 
 struct ListFile
@@ -69,8 +69,8 @@ struct ListFile
     std::string file_name;
     int file_type;
     uint32_t list_id;
-    bool all_zones_enabled = false;
-    std::set<unsigned int> zones;
+    bool all_intfs_enabled = false;
+    std::set<unsigned int> intfs;
     uint8_t list_index;
     uint8_t list_type;
 };

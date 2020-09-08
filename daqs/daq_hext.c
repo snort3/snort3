@@ -242,8 +242,8 @@ static void IpAddr(uint32_t* addr, char const* ip)
 static bool parse_flowstats(DAQ_MsgType type, const char* line, HextMsgDesc *desc)
 {
 #define FLOWSTATS_FORMAT \
-    "%" SCNi32 " "  /* ingressZone */   \
-    "%" SCNi32 " "  /* egressZone */    \
+    "%" SCNi16 " "  /* ingressGroup */  \
+    "%" SCNi16 " "  /* egressGroup */   \
     "%" SCNi32 " "  /* ingressIntf */   \
     "%" SCNi32 " "  /* egressIntf */    \
     "%s "           /* srcAddr */       \
@@ -267,7 +267,7 @@ static bool parse_flowstats(DAQ_MsgType type, const char* line, HextMsgDesc *des
     Flow_Stats_t* f = &desc->flowstats;
     char srcaddr[INET6_ADDRSTRLEN], dstaddr[INET6_ADDRSTRLEN];
     uint32_t sof_sec, eof_sec;
-    int rval = sscanf(line, FLOWSTATS_FORMAT, &f->ingressZone, &f->egressZone, &f->ingressIntf,
+    int rval = sscanf(line, FLOWSTATS_FORMAT, &f->ingressGroup, &f->egressGroup, &f->ingressIntf,
             &f->egressIntf, srcaddr, &f->initiatorPort, dstaddr, &f->responderPort, &f->opaque,
             &f->initiatorPkts, &f->responderPkts, &f->initiatorPktsDropped, &f->responderPktsDropped,
             &f->initiatorBytesDropped, &f->responderBytesDropped, &f->isQoSAppliedOnSrcIntf,

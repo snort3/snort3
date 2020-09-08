@@ -82,10 +82,10 @@ void DaqMessageEventHandler::handle(DataEvent& event, Flow*)
     int vlan_tag = fs->vlan_tag == 0xfff ?  0 : fs->vlan_tag;
 
     TextLog_Print(hext_log,
-        "\n$%s %d %d %d %d %s %d %s %d %u %lu %lu %lu %lu %lu %lu %d %lu %lu %d %d %d\n",
+        "\n$%s %hd %hd %d %d %s %d %s %d %u %lu %lu %lu %lu %lu %lu %d %lu %lu %d %hd %d\n",
         cmd,
-        fs->ingressZone,
-        fs->egressZone,
+        fs->ingressGroup,
+        fs->egressGroup,
         fs->ingressIntf,
         fs->egressIntf,
         shost, ntohs(fs->initiatorPort),

@@ -749,7 +749,7 @@ void add_black_white_List(ReputationConfig* config)
     if (config->blacklist_path.size())
     {
         ListFile* listItem = new ListFile;
-        listItem->all_zones_enabled = true;
+        listItem->all_intfs_enabled = true;
         listItem->file_name = config->blacklist_path;
         listItem->file_type = BLACK_LIST;
         listItem->list_id = 0;
@@ -758,7 +758,7 @@ void add_black_white_List(ReputationConfig* config)
     if (config->whitelist_path.size())
     {
         ListFile* listItem = new ListFile;
-        listItem->all_zones_enabled = true;
+        listItem->all_intfs_enabled = true;
         listItem->file_name = config->whitelist_path;
         listItem->file_type = WHITE_LIST;
         listItem->list_id = 0;
@@ -816,8 +816,8 @@ static int get_file_type(char* type_name)
 }
 
 //The format of manifest is:
-//    file_name, list_id, action (black, white, monitor), zone information
-//If no zone information provided, this means all zones are applied.
+//    file_name, list_id, action (black, white, monitor), interface information
+//If no interface information provided, this means all interfaces are applied.
 
 static bool process_line_in_manifest(ListFile* list_item, const char* manifest, const char* line,
     int line_number, ReputationConfig* config)
@@ -825,14 +825,14 @@ static bool process_line_in_manifest(ListFile* list_item, const char* manifest, 
     char* token;
     int token_index = 0;
     char* next_ptr = const_cast<char*>(line);
-    bool has_zone = false;
+    bool has_intf = false;
 
-    list_item->zones.clear();
+    list_item->intfs.clear();
 
     while ((token = strtok_r(next_ptr, MANIFEST_SEPARATORS, &next_ptr)) != NULL)
     {
         char* end_str;
-        long zone_id;
+        long intf_id;
         long list_id;
 
         switch (token_index)
@@ -878,26 +878,26 @@ static bool process_line_in_manifest(ListFile* list_item, const char* manifest, 
             token= ignore_start_space(token);
             if ('0' == (*token))
                 break;
-            zone_id = SnortStrtol(token, &end_str, 10);
+            intf_id = SnortStrtol(token, &end_str, 10);
             end_str = ignore_start_space(end_str);
 
             if ( *end_str )
             {
-                ErrorMessage("%s(%d) => Bad value (%s) specified for zone. "
+                ErrorMessage("%s(%d) => Bad value (%s) specified for interface. "
                     "Please specify an integer between 0 and %u.\n",
-                    manifest, line_number, token, MAX_NUM_ZONES);
+                    manifest, line_number, token, MAX_NUM_INTFS);
                 return false;
             }
-            if ((zone_id < 0)  || (zone_id > MAX_NUM_ZONES ) || (errno == ERANGE))
+            if ((intf_id < 0)  || (intf_id > MAX_NUM_INTFS ) || (errno == ERANGE))
             {
-                ErrorMessage(" %s(%d) => Value specified (%s) for zone is "
+                ErrorMessage(" %s(%d) => Value specified (%s) for interface is "
                     "out of bounds. Please specify an integer between 0 and %u.\n",
-                    manifest, line_number, token, MAX_NUM_ZONES);
+                    manifest, line_number, token, MAX_NUM_INTFS);
                 return false;
             }
 
-            list_item->zones.emplace(zone_id);
-            has_zone = true;
+            list_item->intfs.emplace(intf_id);
+            has_intf = true;
         }
 
         token_index++;
@@ -912,9 +912,9 @@ static bool process_line_in_manifest(ListFile* list_item, const char* manifest, 
         return false;
     }
 
-    if (!has_zone)
+    if (!has_intf)
     {
-        list_item->all_zones_enabled = true;
+        list_item->all_intfs_enabled = true;
     }
 
     config->list_files.emplace_back(list_item);

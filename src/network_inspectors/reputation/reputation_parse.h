@@ -22,7 +22,7 @@
 
 #include "reputation_config.h"
 
-#define MANIFEST_FILENAME "zone.info"
+#define MANIFEST_FILENAME "interface.info"
 
 void ip_list_init(uint32_t,ReputationConfig *config);
 void estimate_num_entries(ReputationConfig* config);

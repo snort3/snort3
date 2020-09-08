@@ -91,7 +91,7 @@ static inline IPrepInfo* reputation_lookup(ReputationConfig* config, const SfIp*
 }
 
 static inline IPdecision get_reputation(ReputationConfig* config, IPrepInfo* rep_info,
-    uint32_t* listid, uint32_t ingress_zone, uint32_t egress_zone)
+    uint32_t* listid, uint32_t ingress_intf, uint32_t egress_intf)
 {
     IPdecision decision = DECISION_NULL;
 
@@ -108,9 +108,9 @@ static inline IPdecision get_reputation(ReputationConfig* config, IPrepInfo* rep
             if (!list_index)
                 break;
             list_index--;
-            if (list_info[list_index]->all_zones_enabled ||
-                list_info[list_index]->zones.count(ingress_zone) ||
-                list_info[list_index]->zones.count(egress_zone))
+            if (list_info[list_index]->all_intfs_enabled ||
+                list_info[list_index]->intfs.count(ingress_intf) ||
+                list_info[list_index]->intfs.count(egress_intf))
             {
                 if (WHITELISTED_UNBLACK == (IPdecision)list_info[list_index]->list_type)
                     return DECISION_NULL;
@@ -136,7 +136,7 @@ static inline IPdecision get_reputation(ReputationConfig* config, IPrepInfo* rep
 }
 
 static bool decision_per_layer(ReputationConfig* config, Packet* p,
-    uint32_t ingressZone, uint32_t egressZone, const ip::IpApi& ip_api, IPdecision* decision_final)
+    uint32_t ingress_intf, uint32_t egress_intf, const ip::IpApi& ip_api, IPdecision* decision_final)
 {
     const SfIp* ip;
     IPdecision decision;
@@ -146,7 +146,7 @@ static bool decision_per_layer(ReputationConfig* config, Packet* p,
     result = reputation_lookup(config, ip);
     if (result)
     {
-        decision = get_reputation(config, result, &p->iplist_id, ingressZone, egressZone);
+        decision = get_reputation(config, result, &p->iplist_id, ingress_intf, egress_intf);
 
         if (decision == BLACKLISTED)
             *decision_final = BLACKLISTED_SRC;
@@ -165,7 +165,7 @@ static bool decision_per_layer(ReputationConfig* config, Packet* p,
     result = reputation_lookup(config, ip);
     if (result)
     {
-        decision = get_reputation(config, result, &p->iplist_id, ingressZone, egressZone);
+        decision = get_reputation(config, result, &p->iplist_id, ingress_intf, egress_intf);
 
         if (decision == BLACKLISTED)
             *decision_final = BLACKLISTED_DST;
@@ -186,21 +186,21 @@ static bool decision_per_layer(ReputationConfig* config, Packet* p,
 static IPdecision reputation_decision(ReputationConfig* config, Packet* p)
 {
     IPdecision decision_final = DECISION_NULL;
-    uint32_t ingress_zone = 0;
-    uint32_t egress_zone = 0;
+    uint32_t ingress_intf = 0;
+    uint32_t egress_intf = 0;
 
     if (p->pkth)
     {
-        ingress_zone = p->pkth->ingress_group;
+        ingress_intf = p->pkth->ingress_index;
         if (p->pkth->egress_index < 0)
-            egress_zone = ingress_zone;
+            egress_intf = ingress_intf;
         else
-            egress_zone = p->pkth->egress_group;
+            egress_intf = p->pkth->egress_index;
     }
 
     if (config->nested_ip == INNER)
     {
-        decision_per_layer(config, p, ingress_zone, egress_zone, p->ptrs.ip_api, &decision_final);
+        decision_per_layer(config, p, ingress_intf, egress_intf, p->ptrs.ip_api, &decision_final);
         return decision_final;
     }
 
@@ -213,7 +213,7 @@ static IPdecision reputation_decision(ReputationConfig* config, Packet* p)
     if (config->nested_ip == OUTER)
     {
         layer::set_outer_ip_api(p, p->ptrs.ip_api, p->ip_proto_next, num_layer);
-        decision_per_layer(config, p, ingress_zone, egress_zone, p->ptrs.ip_api, &decision_final);
+        decision_per_layer(config, p, ingress_intf, egress_intf, p->ptrs.ip_api, &decision_final);
     }
     else if (config->nested_ip == ALL)
     {
@@ -222,7 +222,7 @@ static IPdecision reputation_decision(ReputationConfig* config, Packet* p)
 
         while (!done and layer::set_outer_ip_api(p, p->ptrs.ip_api, p->ip_proto_next, num_layer))
         {
-            done = decision_per_layer(config, p, ingress_zone, egress_zone, p->ptrs.ip_api,
+            done = decision_per_layer(config, p, ingress_intf, egress_intf, p->ptrs.ip_api,
                 &decision_current);
             if (decision_current != DECISION_NULL)
             {

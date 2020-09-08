@@ -147,9 +147,9 @@ static inline unsigned get_ipfuncs_flags(const Packet* p, bool dst)
     }
     else
     {
-        int32_t zone = (p->pkth->egress_index == DAQ_PKTHDR_UNKNOWN) ?
-            p->pkth->ingress_group : p->pkth->egress_group;
-        if (zone == DAQ_PKTHDR_FLOOD)
+        int32_t intf = (p->pkth->egress_index == DAQ_PKTHDR_UNKNOWN) ?
+            p->pkth->ingress_index : p->pkth->egress_index;
+        if (intf == DAQ_PKTHDR_FLOOD)
             return 0;
         sf_ip = p->ptrs.ip_api.get_dst();
     }
