@@ -26,6 +26,7 @@
 #include "app_info_table.h"
 
 #include <climits>
+#include <fstream>
 #include <string>
 #include <unistd.h>
 
@@ -614,6 +615,23 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
     }
 
     fclose(config_file);
+}
+
+void AppInfoManager::dump_appid_configurations(std::string file_path)
+{
+    std::ifstream conf_file(file_path);
+    if (!conf_file.is_open())
+    {
+        ParseError("appid: could not open %s", file_path.c_str());
+        return;
+    }
+
+    LogMessage("AppId: Configuration file %s\n", file_path.c_str());
+    std::string line;
+    while (getline(conf_file, line))
+        LogMessage("%s\n", line.c_str());
+
+    conf_file.close();
 }
 
 SnortProtocolId AppInfoManager::add_appid_protocol_reference(const char* protocol,

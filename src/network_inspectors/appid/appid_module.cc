@@ -240,6 +240,14 @@ ACOdpContextSwap::~ACOdpContextSwap()
 {
     odp_ctxt.get_app_info_mgr().cleanup_appid_info_table();
     delete &odp_ctxt;
+    AppIdContext& ctxt = inspector.get_ctxt();
+    if (ctxt.config.app_detector_dir)
+    {
+        std::string file_path = std::string(ctxt.config.app_detector_dir) + "/custom/userappid.conf";
+        if (access(file_path.c_str(), F_OK))
+            file_path = std::string(ctxt.config.app_detector_dir) + "/../userappid.conf";
+        ctxt.get_odp_ctxt().get_app_info_mgr().dump_appid_configurations(file_path);
+    }
     LogMessage("== reload detectors complete\n");
     request.respond("== reload detectors complete\n", from_shell, true);
     Swapper::set_reload_in_progress(false);
