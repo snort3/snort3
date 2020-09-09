@@ -24,6 +24,7 @@
 #include <bitset>
 
 #include "framework/module.h"
+#include "helpers/literal_search.h"
 #include "profiler/profiler.h"
 
 #include "http_enum.h"
@@ -95,8 +96,8 @@ public:
 class HttpModule : public snort::Module
 {
 public:
-    HttpModule() : Module(HTTP_NAME, HTTP_HELP, http_params) { }
-    ~HttpModule() override { delete params; }
+    HttpModule();
+    ~HttpModule() override;
     bool begin(const char*, int, snort::SnortConfig*) override;
     bool end(const char*, int, snort::SnortConfig*) override;
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
@@ -117,6 +118,9 @@ public:
         { peg_counts[counter]--; }
     static PegCount get_peg_counts(HttpEnums::PEG_COUNT counter)
         { return peg_counts[counter]; }
+
+    static void get_detain_finder(snort::LiteralSearch*&, snort::LiteralSearch::Handle*&);
+    static void get_script_finder(snort::LiteralSearch*&, snort::LiteralSearch::Handle*&);
 
     snort::ProfileStats* get_profile() const override;
 

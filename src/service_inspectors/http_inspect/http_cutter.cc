@@ -25,6 +25,7 @@
 
 #include "http_common.h"
 #include "http_enum.h"
+#include "http_module.h"
 
 using namespace HttpEnums;
 
@@ -285,12 +286,14 @@ HttpBodyCutter::HttpBodyCutter(AcceleratedBlocking accelerated_blocking_, Compre
             match_string = detain_string;
             match_string_upper = detain_upper;
             string_length = sizeof(detain_string);
+            HttpModule::get_detain_finder(finder, handle);
         }
         else
         {
             match_string = inspect_string;
             match_string_upper = inspect_upper;
             string_length = sizeof(inspect_string);
+            HttpModule::get_script_finder(finder, handle);
         }
     }
 }
@@ -818,6 +821,30 @@ bool HttpBodyCutter::need_accelerated_blocking(const uint8_t* data, uint32_t len
     return false;
 }
 
+bool HttpBodyCutter::find_partial(const uint8_t* input_buf, uint32_t input_length, bool end)
+{
+    for (uint32_t k = 0; k < input_length; k++)
+    {
+        // partial_match is persistent, enabling matches that cross data boundaries
+        if ((input_buf[k] == match_string[partial_match]) ||
+            (input_buf[k] == match_string_upper[partial_match]))
+        {
+            if (++partial_match == string_length)
+            {
+                partial_match = 0;
+                return true;
+            }
+        }
+        else
+        {
+            partial_match = 0;
+            if ( end )
+                return false;
+        }
+    }
+    return false;
+}
+
 // Currently we do accelerated blocking when we see a javascript
 bool HttpBodyCutter::dangerous(const uint8_t* data, uint32_t length)
 {
@@ -856,25 +883,24 @@ bool HttpBodyCutter::dangerous(const uint8_t* data, uint32_t length)
         input_length = decomp_buffer_size - compress_stream->avail_out;
     }
 
-    for (uint32_t k = 0; k < input_length; k++)
+    std::unique_ptr<uint8_t[]> uniq(decomp_output);
+
+    if ( input_length > string_length )
     {
-        // partial_match is persistent, enabling matches that cross data boundaries
-        if ((input_buf[k] == match_string[partial_match]) ||
-            (input_buf[k] == match_string_upper[partial_match]))
-        {
-            if (++partial_match == string_length)
-            {
-                partial_match = 0;
-                delete[] decomp_output;
-                return true;
-            }
-        }
-        else
-        {
-            partial_match = 0;
-        }
+        if ( partial_match and find_partial(input_buf, input_length, true) )
+            return true;
+
+        if ( finder->search(handle, input_buf, input_length) >= 0 )
+            return true;
+
+        uint32_t delta = input_length - string_length + 1;
+        input_buf += delta;
+        input_length -= delta;
     }
-    delete[] decomp_output;
+
+    if ( find_partial(input_buf, input_length, false) )
+        return true;
+
     return false;
 }
 

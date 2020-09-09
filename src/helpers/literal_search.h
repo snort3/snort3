@@ -36,7 +36,8 @@ public:
     static Handle* setup();        // call from module ctor
     static void cleanup(Handle*);  // call from module dtor
 
-    static LiteralSearch* instantiate(Handle*, const uint8_t* pattern, unsigned pattern_len, bool no_case = false);
+    static LiteralSearch* instantiate(
+            Handle*, const uint8_t* pattern, unsigned pattern_len, bool no_case = false, bool hs = false);
     virtual ~LiteralSearch() { }
 
     virtual int search(Handle*, const uint8_t* buffer, unsigned buffer_len) const = 0;

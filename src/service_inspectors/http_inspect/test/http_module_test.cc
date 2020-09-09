@@ -23,6 +23,7 @@
 #include "config.h"
 #endif
 
+#include "helpers/literal_search.h"
 #include "log/messages.h"
 
 #include "service_inspectors/http_inspect/http_js_norm.h"
@@ -45,6 +46,10 @@ void ParseError(const char*, ...) {}
 
 void Value::get_bits(std::bitset<256ul>&) const {}
 int DetectionEngine::queue_event(unsigned int, unsigned int, Actions::Type) { return 0; }
+LiteralSearch::Handle* LiteralSearch::setup() { return nullptr; }
+void LiteralSearch::cleanup(LiteralSearch::Handle*) {}
+LiteralSearch* LiteralSearch::instantiate(LiteralSearch::Handle*, const uint8_t*, unsigned, bool,
+    bool) { return nullptr; }
 }
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }

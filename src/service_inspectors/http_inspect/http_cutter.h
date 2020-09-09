@@ -23,6 +23,8 @@
 #include <cassert>
 #include <zlib.h>
 
+#include "helpers/literal_search.h"
+
 #include "http_enum.h"
 #include "http_event.h"
 
@@ -110,6 +112,7 @@ protected:
 
 private:
     bool dangerous(const uint8_t* data, uint32_t length);
+    bool find_partial(const uint8_t*, uint32_t, bool);
 
     const HttpEnums::AcceleratedBlocking accelerated_blocking;
     bool packet_detained = false;
@@ -118,6 +121,8 @@ private:
     HttpEnums::CompressId compression;
     z_stream* compress_stream = nullptr;
     bool decompress_failed = false;
+    snort::LiteralSearch* finder = nullptr;
+    snort::LiteralSearch::Handle* handle = nullptr;
     const uint8_t* match_string;
     const uint8_t* match_string_upper;
     uint8_t string_length;

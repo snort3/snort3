@@ -23,6 +23,7 @@
 
 #include "http_module.h"
 
+#include "helpers/literal_search.h"
 #include "log/messages.h"
 
 #include "http_enum.h"
@@ -31,6 +32,37 @@
 
 using namespace snort;
 using namespace HttpEnums;
+
+LiteralSearch::Handle* s_handle = nullptr;
+LiteralSearch* s_detain = nullptr;
+LiteralSearch* s_script = nullptr;
+
+HttpModule::HttpModule() : Module(HTTP_NAME, HTTP_HELP, http_params)
+{
+    s_handle = LiteralSearch::setup();
+    s_detain = LiteralSearch::instantiate(s_handle, (const uint8_t*)"<SCRIPT", 7, true, true);
+    s_script = LiteralSearch::instantiate(s_handle, (const uint8_t*)"</SCRIPT>", 9, true, true);
+}
+
+HttpModule::~HttpModule()
+{
+    delete params;
+    delete s_detain;
+    delete s_script;
+    LiteralSearch::cleanup(s_handle);
+}
+
+void HttpModule::get_detain_finder(LiteralSearch*& finder, LiteralSearch::Handle*& handle)
+{
+    finder = s_detain;
+    handle = s_handle;
+}
+
+void HttpModule::get_script_finder(LiteralSearch*& finder, LiteralSearch::Handle*& handle)
+{
+    finder = s_script;
+    handle = s_handle;
+}
 
 const Parameter HttpModule::http_params[] =
 {

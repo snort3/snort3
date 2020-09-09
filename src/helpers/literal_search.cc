@@ -56,13 +56,14 @@ void LiteralSearch::cleanup(LiteralSearch::Handle* h)
 }
 
 LiteralSearch* LiteralSearch::instantiate(
-    LiteralSearch::Handle* h, const uint8_t* pattern, unsigned pattern_len, bool no_case)
+    LiteralSearch::Handle* h, const uint8_t* pattern, unsigned pattern_len, bool no_case, bool hs)
 {
 #ifdef HAVE_HYPERSCAN
-    if ( SnortConfig::get_conf()->hyperscan_literals )
+    if ( hs or SnortConfig::get_conf()->hyperscan_literals )
         return new HyperSearch(h, pattern, pattern_len, no_case);
 #else
     UNUSED(h);
+    UNUSED(hs);
 #endif
     if ( no_case )
         return new snort::BoyerMooreSearchNoCase(pattern, pattern_len);
