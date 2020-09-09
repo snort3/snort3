@@ -23,7 +23,6 @@
 
 #include <cstdint>
 #include <string>
-#include <uuid/uuid.h>
 
 #include "main/snort_types.h"
 
@@ -62,7 +61,7 @@ public:
 
     uint32_t fpid = 0;
     uint32_t fp_type = 0;
-    uuid_t fpuuid;
+    std::string fpuuid;
     uint8_t ttl = 0;
 
     virtual ~FpFingerprint() { }
@@ -71,7 +70,7 @@ public:
     {
         fpid = 0;
         fp_type = 0;
-        uuid_clear(fpuuid);
+        fpuuid.clear();
         ttl = 0;
     }
 };

@@ -69,7 +69,7 @@ TcpFingerprint::TcpFingerprint(const RawFingerprint& rfp)
 {
     fpid = rfp.fpid;
     fp_type = rfp.fp_type;
-    uuid_parse(rfp.fpuuid.c_str(), fpuuid);
+    fpuuid = rfp.fpuuid;
     ttl = rfp.ttl;
 
     parse_fp_element(rfp.tcp_window, tcp_window);
@@ -85,7 +85,7 @@ bool TcpFingerprint::operator==(const TcpFingerprint& y) const
     return (
         fpid == y.fpid &&
         fp_type == y.fp_type &&
-        !uuid_compare(fpuuid, y.fpuuid) &&
+        fpuuid == y.fpuuid &&
         ttl == y.ttl &&
         equal(tcp_window.begin(), tcp_window.end(), y.tcp_window.begin()) &&
         equal(mss.begin(), mss.end(), y.mss.begin()) &&
@@ -482,7 +482,7 @@ TEST_CASE("get_tcp_fp_processor", "[rna_fingerprint_tcp]")
 TEST_CASE("clear_fingerprint", "[rna_fingerprint_tcp]")
 {
     TcpFingerprint fpx;
-    uuid_clear(fpx.fpuuid);
+    fpx.fpuuid.clear();
 
     RawFingerprint rawfp;
     rawfp.fpid = 948;
@@ -534,7 +534,7 @@ TEST_CASE("raw_to_tcp_fp", "[rna_fingerprint_tcp]")
     TcpFingerprint tfpe;
     tfpe.fpid = rawfp.fpid;
     tfpe.fp_type = rawfp.fp_type;
-    uuid_parse(rawfp.fpuuid.c_str(), tfpe.fpuuid);
+    tfpe.fpuuid = rawfp.fpuuid;
     tfpe.ttl = rawfp.ttl;
     tfpe.tcp_window = vector<FpElement> {
         FpElement("10"), FpElement("20"), FpElement("30-40"),

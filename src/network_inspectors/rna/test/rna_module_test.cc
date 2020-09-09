@@ -74,7 +74,7 @@ TEST(rna_module_test, push_tcp_fingerprints)
     TcpFingerprint tfpe;
     tfpe.fpid = rawfp.fpid;
     tfpe.fp_type = rawfp.fp_type;
-    uuid_parse(rawfp.fpuuid.c_str(), tfpe.fpuuid);
+    tfpe.fpuuid = rawfp.fpuuid;
     tfpe.ttl = rawfp.ttl;
     tfpe.tcp_window = vector<FpElement> {
         FpElement("10"), FpElement("20"), FpElement("30-40"),
