@@ -488,6 +488,9 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
                 (p->ptrs.sp != 21 && p->ptrs.dp != 21)) // exception for ftp-control
             {
                 asd->service_disco_state = APPID_DISCO_STATE_FINISHED;
+                if (asd->get_payload_id() == APP_ID_NONE and
+                    (asd->is_tp_appid_available() or asd->get_session_flags(APPID_SESSION_NO_TPI)))
+                        asd->set_payload_id(APP_ID_UNKNOWN);
                 asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
                 asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED |
                     APPID_SESSION_CLIENT_DETECTED);
