@@ -660,7 +660,8 @@ Flow* HighAvailability::process_daq_import(Packet& p, FlowKey& key)
             {
                 if (FlowKey::is_equal(&key, flow->key, 0))
                 {
-                    if (flow->flow_state == Flow::FlowState::BLOCK)
+                    if (flow->flow_state == Flow::FlowState::BLOCK
+                        or flow->flow_state == Flow::FlowState::RESET)
                     {
                         flow->disable_inspection();
                         p.disable_inspect = true;
