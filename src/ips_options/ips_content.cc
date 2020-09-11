@@ -181,33 +181,31 @@ bool ContentOption::retry(Cursor& c)
 
 uint32_t ContentOption::hash() const
 {
-    const ContentData* cd = config;
-
-    uint32_t a = cd->pmd.flags;
-    uint32_t b = cd->pmd.offset;
-    uint32_t c = cd->pmd.depth;
+    uint32_t a = config->pmd.flags;
+    uint32_t b = config->pmd.offset;
+    uint32_t c = config->pmd.depth;
 
     mix(a,b,c);
 
-    a += cd->pmd.pattern_size;
-    b += cd->pmd.fp_offset;
-    c += cd->pmd.fp_length;
+    a += config->pmd.pattern_size;
+    b += config->pmd.fp_offset;
+    c += config->pmd.fp_length;
 
     mix(a,b,c);
 
-    a += cd->pmd.pm_type;
-
-    if ( cd->pmd.pattern_size )
-        mix_str(a, b, c, cd->pmd.pattern_buf, cd->pmd.pattern_size);
-
-    mix_str(a, b, c, get_name());
-
-    a += cd->depth_var;
-    b += cd->offset_var;
-    c += cd->match_delta;
+    a += config->pmd.pm_type;
+    b += IpsOption::hash();
 
     mix(a, b, c);
 
+    if ( config->pmd.pattern_size )
+        mix_str(a, b, c, config->pmd.pattern_buf, config->pmd.pattern_size);
+
+    a += config->depth_var;
+    b += config->offset_var;
+    c += config->match_delta;
+
+    mix(a, b, c);
     finalize(a, b, c);
 
     return c;

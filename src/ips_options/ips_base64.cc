@@ -78,15 +78,14 @@ private:
 
 uint32_t Base64DecodeOption::hash() const
 {
-    uint32_t a,b,c;
-
-    a = config.bytes_to_decode;
-    b = config.offset;
-    c = config.flags;
+    uint32_t a = config.bytes_to_decode;
+    uint32_t b = config.offset;
+    uint32_t c = config.flags;
 
     mix(a,b,c);
-    mix_str(a,b,c,get_name());
+    a += IpsOption::hash();
 
+    mix(a,b,c);
     finalize(a,b,c);
 
     return c;

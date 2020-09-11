@@ -73,14 +73,11 @@ private:
 
 uint32_t IpProtoOption::hash() const
 {
-    uint32_t a,b,c;
-    const IpProtoData* data = &config;
+    uint32_t a = to_utype(config.protocol);
+    uint32_t b = config.comparison_flag;
+    uint32_t c = IpsOption::hash();
 
-    a = to_utype(data->protocol);
-    b = data->comparison_flag;
-    c = 0;
-
-    mix_str(a,b,c,get_name());
+    mix(a,b,c);
     finalize(a,b,c);
 
     return c;
@@ -88,7 +85,7 @@ uint32_t IpProtoOption::hash() const
 
 bool IpProtoOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const IpProtoOption& rhs = (const IpProtoOption&)ips;

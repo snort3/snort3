@@ -336,7 +336,7 @@ uint32_t Dce2IfaceOption::hash() const
         (uuid.node[0] << 8) |
         (uuid.node[1]);
 
-    mix_str(a, b, c, get_name());
+    mix(a, b, c);
 
     a += (uuid.node[2] << 24) |
         (uuid.node[3] << 16) |
@@ -349,6 +349,7 @@ uint32_t Dce2IfaceOption::hash() const
 
     a += version.op;
     b += any_frag;
+    c += IpsOption::hash();
 
     finalize(a, b, c);
 

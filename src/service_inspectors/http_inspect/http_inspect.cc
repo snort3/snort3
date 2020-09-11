@@ -270,7 +270,7 @@ bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBu
             return false;
         break;
     case InspectionBuffer::IBT_METHOD:
-        if ((get_latest_src(p) != SRC_CLIENT) || (get_latest_is(p) != IS_HEADER))
+        if ((get_latest_src(p) != SRC_CLIENT) || (get_latest_is(p) == IS_BODY))
             return false;
         break;
     case InspectionBuffer::IBT_STAT_CODE:

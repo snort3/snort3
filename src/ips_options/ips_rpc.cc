@@ -79,18 +79,16 @@ private:
 
 uint32_t RpcOption::hash() const
 {
-    uint32_t a,b,c;
-    const RpcCheckData* data = &config;
-
-    a = data->program;
-    b = data->version;
-    c = data->procedure;
+    uint32_t a = config.program;
+    uint32_t b = config.version;
+    uint32_t c = config.procedure;
 
     mix(a,b,c);
 
-    a += data->flags;
+    a += config.flags;
+    b += IpsOption::hash();
 
-    mix_str(a,b,c,get_name());
+    mix(a,b,c);
     finalize(a,b,c);
 
     return c;
@@ -98,7 +96,7 @@ uint32_t RpcOption::hash() const
 
 bool RpcOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const RpcOption& rhs = (const RpcOption&)ips;

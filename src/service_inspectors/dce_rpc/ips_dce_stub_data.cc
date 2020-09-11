@@ -56,9 +56,10 @@ public:
 
 uint32_t Dce2StubDataOption::hash() const
 {
-    uint32_t a = 0, b = 0, c = 0;
+    uint32_t a = IpsOption::hash();
+    uint32_t b = 0, c = 0;
 
-    mix_str(a, b, c, get_name());
+    mix(a, b, c);
     finalize(a,b,c);
 
     return c;
@@ -66,7 +67,7 @@ uint32_t Dce2StubDataOption::hash() const
 
 bool Dce2StubDataOption::operator==(const IpsOption& ips) const
 {
-    return !strcmp(get_name(), ips.get_name());
+    return IpsOption::operator==(ips);
 }
 
 IpsOption::EvalStatus Dce2StubDataOption::eval(Cursor& c, Packet* p)

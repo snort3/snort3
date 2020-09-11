@@ -100,30 +100,30 @@ private:
 
 uint32_t ByteMathOption::hash() const
 {
-    uint32_t a,b,c;
-    const ByteMathData* data = &config;
-
-    a = data->bytes_to_extract;
-    b = data->rvalue;
-    c = data->oper;
+    uint32_t a = config.bytes_to_extract;
+    uint32_t b = config.rvalue;
+    uint32_t c = config.oper;
 
     mix(a,b,c);
 
-    a += data->offset;
-    b += ((uint32_t) data->rvalue_var << 24 |
-        (uint32_t) data->offset_var << 16 |
-        (uint32_t) data->result_var << 8 |
-        data->endianess);
-    c += data->base;
+    a += config.offset;
+    b += ((uint32_t) config.rvalue_var << 24 |
+        (uint32_t) config.offset_var << 16 |
+        (uint32_t) config.result_var << 8 |
+        config.endianess);
+    c += config.base;
 
     mix(a,b,c);
 
-    a += data->bitmask_val;
-    b += data->relative_flag;
-    c += data->string_convert_flag;
-    mix_str(a,b,c,get_name());
+    a += config.bitmask_val;
+    b += config.relative_flag;
+    c += config.string_convert_flag;
+
+    mix(a,b,c);
+
+    a += IpsOption::hash();
+
     finalize(a,b,c);
-
     return c;
 }
 

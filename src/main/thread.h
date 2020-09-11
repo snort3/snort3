@@ -54,10 +54,12 @@ namespace snort
 {
 SO_PUBLIC unsigned get_instance_id();
 SO_PUBLIC SThreadType get_thread_type();
+
+SO_PUBLIC inline bool in_main_thread()
+{ return get_thread_type() == STHREAD_TYPE_MAIN; }
+
 SO_PUBLIC inline bool is_packet_thread()
-{
-    return get_thread_type() == STHREAD_TYPE_PACKET;
-}
+{ return get_thread_type() == STHREAD_TYPE_PACKET; }
 
 // all modules that use packet thread files should call this function to
 // get a packet thread specific path.  name should be the module name or

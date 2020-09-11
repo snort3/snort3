@@ -76,15 +76,16 @@ uint32_t GtpTypeOption::hash() const
     uint32_t b = types[1].count();
     uint32_t c = types[2].count();
 
-    mix_str(a, b, c, get_name());
-    finalize(a,b,c);
+    mix(a, b, c);
+    a += IpsOption::hash();
 
+    finalize(a,b,c);
     return c;
 }
 
 bool GtpTypeOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const GtpTypeOption& rhs = (const GtpTypeOption&)ips;

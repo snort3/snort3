@@ -99,9 +99,9 @@ public:
 
 uint32_t S7commplusFuncOption::hash() const
 {
-    uint32_t a = func, b = 0, c = 0;
+    uint32_t a = func, b = IpsOption::hash(), c = 0;
 
-    mix_str(a, b, c, get_name());
+    mix(a, b, c);
     finalize(a,b,c);
 
     return c;
@@ -109,7 +109,7 @@ uint32_t S7commplusFuncOption::hash() const
 
 bool S7commplusFuncOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const S7commplusFuncOption& rhs = (const S7commplusFuncOption&)ips;

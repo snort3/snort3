@@ -151,8 +151,10 @@ uint32_t SdPatternOption::hash() const
     uint32_t b = config.pmd.pm_type;
     uint32_t c = config.threshold;
 
+    mix(a, b, c);
+    a += IpsOption::hash();
+
     mix_str(a, b, c, config.pii.c_str());
-    mix_str(a, b, c, get_name());
     finalize(a, b, c);
 
     return c;

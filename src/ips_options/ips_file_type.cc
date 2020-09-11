@@ -64,8 +64,7 @@ FileTypeOption::FileTypeOption(const FileTypeBitSet& t) : IpsOption(s_name)
 
 uint32_t FileTypeOption::hash() const
 {
-    uint32_t a = 0, b = 0, c = 0;
-    mix_str(a, b, c, get_name());
+    uint32_t a = IpsOption::hash(), b = 0, c = 0;
     mix_str(a, b, c, types.to_string().c_str());
     finalize(a, b, c);
     return c;
@@ -73,7 +72,7 @@ uint32_t FileTypeOption::hash() const
 
 bool FileTypeOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     return types == ((const FileTypeOption&) ips).types;

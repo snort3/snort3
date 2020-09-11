@@ -98,20 +98,20 @@ private:
 
 uint32_t HashOption::hash() const
 {
-    uint32_t a,b,c;
-    const HashMatchData* hmd = config;
+    uint32_t a = config->negated;
+    uint32_t b = config->relative;
+    uint32_t c = size;
 
-    a = hmd->negated;
-    b = hmd->relative;
-    c = size;
+    mix(a,b,c);
+    a += IpsOption::hash();
 
-    mix_str(a,b,c,hmd->hash.c_str());
+    mix_str(a,b,c,config->hash.c_str());
 
-    a += hmd->length;
-    b += hmd->offset;
-    c += hmd->offset_var;
+    a += config->length;
+    b += config->offset;
+    c += config->offset_var;
 
-    mix_str(a,b,c,get_name());
+    mix(a,b,c);
     finalize(a,b,c);
 
     return c;

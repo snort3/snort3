@@ -60,9 +60,9 @@ private:
 
 uint32_t Dnp3IndOption::hash() const
 {
-    uint32_t a = flags, b = 0, c = 0;
+    uint32_t a = flags, b = IpsOption::hash(), c = 0;
 
-    mix_str(a,b,c,get_name());
+    mix(a,b,c);
     finalize(a,b,c);
 
     return c;
@@ -70,7 +70,7 @@ uint32_t Dnp3IndOption::hash() const
 
 bool Dnp3IndOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const Dnp3IndOption& rhs = (const Dnp3IndOption&)ips;

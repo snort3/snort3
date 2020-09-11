@@ -59,9 +59,9 @@ private:
 
 uint32_t BerSkipOption::hash() const
 {
-    uint32_t a = type, b = optional, c = 0;
+    uint32_t a = type, b = optional, c = IpsOption::hash();
 
-    mix_str(a,b,c,s_name);
+    mix(a,b,c);
     finalize(a,b,c);
 
     return c;
@@ -69,6 +69,9 @@ uint32_t BerSkipOption::hash() const
 
 bool BerSkipOption::operator==(const IpsOption& ips) const
 {
+    if ( !IpsOption::operator==(ips) )
+        return false;
+
     const BerSkipOption& rhs = (const BerSkipOption&)ips;
 
     if ( type != rhs.type )

@@ -106,9 +106,9 @@ public:
 
 uint32_t ModbusFuncOption::hash() const
 {
-    uint32_t a = func, b = 0, c = 0;
+    uint32_t a = func, b = IpsOption::hash(), c = 0;
 
-    mix_str(a, b, c, get_name());
+    mix(a, b, c);
     finalize(a,b,c);
 
     return c;
@@ -116,7 +116,7 @@ uint32_t ModbusFuncOption::hash() const
 
 bool ModbusFuncOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const ModbusFuncOption& rhs = (const ModbusFuncOption&)ips;

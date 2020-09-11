@@ -75,25 +75,22 @@ private:
 
 uint32_t SipMethodOption::hash() const
 {
-    uint32_t a,b,c;
+    uint32_t a = methods.size();
+    uint32_t b = a ? methods.begin()->second : 0;
+    uint32_t c = IpsOption::hash();
 
-    a = methods.size();
-    b = a ? methods.begin()->second : 0;
-    c = 0;
-
-    mix_str(a, b, c, get_name());
+    mix(a, b, c);
 
     for ( auto& m : methods )
         mix_str(a, b, c, m.first.c_str(), m.first.size());
 
     finalize(a, b, c);
-
     return c;
 }
 
 bool SipMethodOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const SipMethodOption& rhs = (const SipMethodOption&)ips;

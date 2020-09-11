@@ -74,17 +74,16 @@ public:
 
 uint32_t FlowCheckOption::hash() const
 {
-    uint32_t a,b,c;
-    const FlowCheckData* data = &config;
-
-    a = data->from_server | (data->from_client << 16);
-    b = data->ignore_reassembled | (data->only_reassembled << 16);
-    c = data->stateless | (data->established << 16);
+    uint32_t a = config.from_server | (config.from_client << 16);
+    uint32_t b = config.ignore_reassembled | (config.only_reassembled << 16);
+    uint32_t c = config.stateless | (config.established << 16);
 
     mix(a,b,c);
-    mix_str(a,b,c,get_name());
 
-    a += data->unestablished;
+    a += config.unestablished;
+    b += IpsOption::hash();
+
+    mix(a,b,c);
     finalize(a,b,c);
 
     return c;
@@ -92,7 +91,7 @@ uint32_t FlowCheckOption::hash() const
 
 bool FlowCheckOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const FlowCheckOption& rhs = (const FlowCheckOption&)ips;

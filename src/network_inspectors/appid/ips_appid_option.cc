@@ -68,21 +68,17 @@ private:
 
 uint32_t AppIdIpsOption::hash() const
 {
-    uint32_t abc[3];
+    uint32_t a = appid_table.size();
+    uint32_t b = IpsOption::hash();
+    uint32_t c = 0;
 
-    abc[0] = appid_table.size();
-    abc[1] = 0;
-    abc[2] = 0;
-
-    mix(abc[0], abc[1], abc[2]);
+    mix(a, b, c);
 
     for ( auto& appid_name : appid_table )
-        mix_str(abc[0], abc[1], abc[2],
-            appid_name.c_str(), appid_name.length());
+        mix_str(a, b, c, appid_name.c_str(), appid_name.length());
 
-    finalize(abc[0], abc[1], abc[2]);
-
-    return abc[2];
+    finalize(a, b, c);
+    return c;
 }
 
 bool AppIdIpsOption::operator==(const IpsOption& ips) const

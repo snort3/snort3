@@ -524,8 +524,9 @@ uint32_t PcreOption::hash() const
     }
 
     a += config->options;
+    b += IpsOption::hash();
 
-    mix_str(a,b,c,get_name());
+    mix(a,b,c);
     finalize(a,b,c);
 
     return c;

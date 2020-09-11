@@ -172,48 +172,44 @@ FlowBitsOption::~FlowBitsOption()
 
 uint32_t FlowBitsOption::hash() const
 {
-    uint32_t a,b,c;
-    const FlowBitCheck* data = config;
+    uint32_t a = config->or_bits ? 1 : 0;
+    uint32_t b = config->type;
+    uint32_t c = IpsOption::hash();
+
+    mix(a,b,c);
+
     unsigned i;
     unsigned j = 0;
 
-    a = data->or_bits ? 1 : 0;
-    b = data->type;
-    c = 0;
-
-    mix(a,b,c);
-    mix_str(a,b,c,get_name());
-
-    for (i = 0, j = 0; i < data->ids.size(); i++, j++)
+    for (i = 0, j = 0; i < config->ids.size(); i++, j++)
     {
         if (j >= 3)
         {
-            a += data->ids[i - 2];
-            b += data->ids[i - 1];
-            c += data->ids[i];
+            a += config->ids[i - 2];
+            b += config->ids[i - 1];
+            c += config->ids[i];
             mix(a,b,c);
             j -= 3;
         }
     }
     if (1 == j)
     {
-        a += data->ids[data->ids.size() - 1];
-        b += data->ids.size();
+        a += config->ids[config->ids.size() - 1];
+        b += config->ids.size();
     }
     else if (2 == j)
     {
-        a += data->ids[data->ids.size() - 2];
-        b += data->ids[data->ids.size() - 1]|data->ids.size() << 16;
+        a += config->ids[config->ids.size() - 2];
+        b += config->ids[config->ids.size() - 1]|config->ids.size() << 16;
     }
 
     finalize(a,b,c);
-
     return c;
 }
 
 bool FlowBitsOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const FlowBitsOption& rhs = (const FlowBitsOption&)ips;

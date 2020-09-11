@@ -62,21 +62,20 @@ private:
 
 uint32_t CipEnipCommandOption::hash() const
 {
-    uint32_t a,b,c;
+    uint32_t a = cip_enip_cmd.op;
+    uint32_t b = cip_enip_cmd.min;
+    uint32_t c = cip_enip_cmd.max;
 
-    a = cip_enip_cmd.op;
-    b = cip_enip_cmd.min;
-    c = cip_enip_cmd.max;
+    mix(a, b, c);
+    a += IpsOption::hash();
 
-    mix_str(a, b, c, get_name());
     finalize(a,b,c);
-
     return c;
 }
 
 bool CipEnipCommandOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const CipEnipCommandOption& rhs = static_cast<const CipEnipCommandOption&>(ips);

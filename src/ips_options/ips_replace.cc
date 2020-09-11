@@ -124,18 +124,12 @@ ReplaceOption::~ReplaceOption()
 
 uint32_t ReplaceOption::hash() const
 {
-    uint32_t a,b,c;
-
-    const char* s = repl.c_str();
-    unsigned n = repl.size();
-
-    a = 0;
-    b = n;
-    c = 0;
+    uint32_t a = IpsOption::hash();
+    uint32_t b = repl.size();
+    uint32_t c = 0;
 
     mix(a,b,c);
-    mix_str(a,b,c,s,n);
-    mix_str(a,b,c,get_name());
+    mix_str(a,b,c,repl.c_str());
     finalize(a,b,c);
 
     return c;
@@ -143,7 +137,7 @@ uint32_t ReplaceOption::hash() const
 
 bool ReplaceOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const ReplaceOption& rhs = (const ReplaceOption&)ips;

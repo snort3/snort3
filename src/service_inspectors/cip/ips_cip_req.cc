@@ -58,9 +58,9 @@ public:
 
 uint32_t CipReqOption::hash() const
 {
-    uint32_t a = 0, b = 0, c = 0;
+    uint32_t a = IpsOption::hash(), b = 0, c = 0;
 
-    mix_str(a, b, c, get_name());
+    mix(a, b, c);
     finalize(a,b,c);
 
     return c;
@@ -68,7 +68,7 @@ uint32_t CipReqOption::hash() const
 
 bool CipReqOption::operator==(const IpsOption& ips) const
 {
-    return !strcmp(get_name(), ips.get_name());
+    return IpsOption::operator==(ips);
 }
 
 IpsOption::EvalStatus CipReqOption::eval(Cursor&, Packet* p)

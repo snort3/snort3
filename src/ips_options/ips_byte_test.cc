@@ -210,30 +210,29 @@ private:
 
 uint32_t ByteTestOption::hash() const
 {
-    uint32_t a,b,c;
-    const ByteTestData* data = &config;
-
-    a = data->bytes_to_compare;
-    b = data->cmp_value;
-    c = data->opcode;
+    uint32_t a = config.bytes_to_compare;
+    uint32_t b = config.cmp_value;
+    uint32_t c = config.opcode;
 
     mix(a,b,c);
 
-    a += data->offset;
-    b += data->not_flag ? (1 << 24) : 0;
-    b += data->relative_flag ? (1 << 16) : 0;
-    b += data->data_string_convert_flag ? (1 << 8) : 0;
-    b += data->endianness;
-    c += data->base;
+    a += config.offset;
+    b += config.not_flag ? (1 << 24) : 0;
+    b += config.relative_flag ? (1 << 16) : 0;
+    b += config.data_string_convert_flag ? (1 << 8) : 0;
+    b += config.endianness;
+    c += config.base;
 
     mix(a,b,c);
 
-    a += data->cmp_value_var;
-    b += data->offset_var;
-    c += data->bitmask_val;
+    a += config.cmp_value_var;
+    b += config.offset_var;
+    c += config.bitmask_val;
 
     mix(a,b,c);
-    mix_str(a,b,c,get_name());
+    a += IpsOption::hash();
+
+    mix(a,b,c);
     finalize(a,b,c);
 
     return c;

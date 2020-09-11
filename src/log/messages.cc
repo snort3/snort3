@@ -336,6 +336,10 @@ void ErrorMessage(const char* format,...)
         fprintf(stderr,"Fatal Error, Quitting..\n");
     }
 
+    // guard against FatalError calls from non-main thread (which should not happen!)
+    if ( !in_main_thread() )
+        abort();
+
     SnortConfig::cleanup_fatal_error();
 
 #if 0

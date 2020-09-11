@@ -62,21 +62,20 @@ private:
 
 uint32_t CipAttributeOption::hash() const
 {
-    uint32_t a, b, c;
+    uint32_t a = cip_attr.op;
+    uint32_t b = cip_attr.min;
+    uint32_t c = cip_attr.max;
 
-    a = cip_attr.op;
-    b = cip_attr.min;
-    c = cip_attr.max;
+    mix(a, b, c);
+    a += IpsOption::hash();
 
-    mix_str(a, b, c, get_name());
     finalize(a,b,c);
-
     return c;
 }
 
 bool CipAttributeOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const CipAttributeOption& rhs = static_cast<const CipAttributeOption&>(ips);

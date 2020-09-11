@@ -57,22 +57,20 @@ private:
 
 uint32_t DsizeOption::hash() const
 {
-    uint32_t a,b,c;
-
-    a = config.min;
-    b = config.max;
-    c = config.op;
+    uint32_t a = config.min;
+    uint32_t b = config.max;
+    uint32_t c = config.op;
 
     mix(a,b,c);
-    mix_str(a,b,c,get_name());
-    finalize(a,b,c);
+    a += IpsOption::hash();
 
+    finalize(a,b,c);
     return c;
 }
 
 bool DsizeOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const DsizeOption& rhs = (const DsizeOption&)ips;

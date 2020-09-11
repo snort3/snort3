@@ -66,14 +66,11 @@ private:
 
 uint32_t IpOptOption::hash() const
 {
-    uint32_t a,b,c;
-    const IpOptionData* data = &config;
+    uint32_t a = (uint32_t)config.ip_option;
+    uint32_t b = config.any_flag;
+    uint32_t c = IpsOption::hash();
 
-    a = (uint32_t)data->ip_option;
-    b = data->any_flag;
-    c = 0;
-
-    mix_str(a,b,c,get_name());
+    mix(a,b,c);
     finalize(a,b,c);
 
     return c;
@@ -81,7 +78,7 @@ uint32_t IpOptOption::hash() const
 
 bool IpOptOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const IpOptOption& rhs = (const IpOptOption&)ips;

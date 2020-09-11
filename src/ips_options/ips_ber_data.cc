@@ -58,9 +58,9 @@ private:
 
 uint32_t BerDataOption::hash() const
 {
-    uint32_t a = type, b = 0, c = 0;
+    uint32_t a = type, b = IpsOption::hash(), c = 0;
 
-    mix_str(a,b,c,s_name);
+    mix(a,b,c);
     finalize(a,b,c);
 
     return c;
@@ -68,6 +68,9 @@ uint32_t BerDataOption::hash() const
 
 bool BerDataOption::operator==(const IpsOption& ips) const
 {
+    if ( !IpsOption::operator==(ips) )
+        return false;
+
     const BerDataOption& rhs = (const BerDataOption&)ips;
 
     if ( type != rhs.type )

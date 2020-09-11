@@ -107,26 +107,22 @@ private:
 
 uint32_t Asn1Option::hash() const
 {
-    uint32_t a,b,c;
-    const ASN1_CTXT* data = &config;
-
-    a = data->bs_overflow;
-    b = data->double_overflow;
-    c = data->print;
+    uint32_t a = config.bs_overflow;
+    uint32_t b = config.double_overflow;
+    uint32_t c = config.print;
 
     mix(a,b,c);
 
-    a += data->length;
-    b += data->max_length;
-    c += data->offset;
+    a += config.length;
+    b += config.max_length;
+    c += config.offset;
 
     mix(a,b,c);
-    mix_str(a,b,c,get_name());
 
-    a += data->offset_type;
+    a += config.offset_type;
+    b += IpsOption::hash();
 
     finalize(a,b,c);
-
     return c;
 }
 

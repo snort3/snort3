@@ -357,7 +357,7 @@ uint32_t Dce2OpnumOption::hash() const
 {
     uint32_t a = opnum.opnum_lo, b = opnum.opnum_hi, c = opnum.mask_size;
 
-    mix_str(a,b,c,get_name());
+    mix(a,b,c);
 
     if (opnum.mask_size != 0)
     {
@@ -368,6 +368,7 @@ uint32_t Dce2OpnumOption::hash() const
 
         mix(a,b,c);
     }
+    a += IpsOption::hash();
 
     finalize(a, b, c);
 
@@ -376,7 +377,7 @@ uint32_t Dce2OpnumOption::hash() const
 
 bool Dce2OpnumOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const Dce2OpnumOption& rhs = (const Dce2OpnumOption&)ips;

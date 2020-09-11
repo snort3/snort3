@@ -125,8 +125,10 @@ uint32_t RegexOption::hash() const
     uint32_t b = config.pmd.mpse_flags;
     uint32_t c = config.pmd.pm_type;
 
+    mix(a, b, c);
+    a += IpsOption::hash();
+
     mix_str(a, b, c, config.re.c_str());
-    mix_str(a, b, c, get_name());
     finalize(a, b, c);
 
     return c;

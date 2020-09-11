@@ -33,6 +33,7 @@
 #include "detection/fp_create.h"
 #include "dump_config/json_config_output.h"
 #include "dump_config/text_config_output.h"
+#include "file_api/file_service.h"
 #include "filters/detection_filter.h"
 #include "filters/rate_filter.h"
 #include "filters/sfrf.h"
@@ -1010,11 +1011,11 @@ void SnortConfig::set_conf(const SnortConfig* sc)
 
 void SnortConfig::cleanup_fatal_error()
 {
-    // guard against FatalError calls from packet threads (which should not happen!)
-    // FIXIT-L should also guard against non-main non-packet threads calling FatalError
-    if ( is_packet_thread() )
-        return;
+    // FIXIT-L need a generic way to manage type other threads
+    // and preferably not start them too soon
+    FileService::close();
 
+#ifdef REG_TEST
     const SnortConfig* sc = SnortConfig::get_conf();
     if ( sc && !sc->dirty_pig )
     {
@@ -1023,5 +1024,6 @@ void SnortConfig::cleanup_fatal_error()
         IpsManager::release_plugins();
         InspectorManager::release_plugins();
     }
+#endif
 }
 

@@ -72,17 +72,16 @@ private:
 
 uint32_t ReassembleOption::hash() const
 {
-    uint32_t a,b,c;
-
-    a = srod.enable;
-    b = srod.direction;
-    c = srod.alert;
+    uint32_t a = srod.enable;
+    uint32_t b = srod.direction;
+    uint32_t c = srod.alert;
 
     mix(a,b,c);
 
     a = srod.fastpath;
+    b += IpsOption::hash();
 
-    mix_str(a,b,c,get_name());
+    mix(a,b,c);
     finalize(a,b,c);
 
     return c;
@@ -90,7 +89,7 @@ uint32_t ReassembleOption::hash() const
 
 bool ReassembleOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const ReassembleOption& rhs = (const ReassembleOption&)ips;

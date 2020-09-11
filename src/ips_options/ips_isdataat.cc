@@ -93,23 +93,20 @@ private:
 
 uint32_t IsDataAtOption::hash() const
 {
-    uint32_t a,b,c;
-    const IsDataAtData* data = &config;
-
-    a = data->offset;
-    b = data->flags;
-    c = data->offset_var;
+    uint32_t a = config.offset;
+    uint32_t b = config.flags;
+    uint32_t c = config.offset_var;
 
     mix(a,b,c);
-    mix_str(a,b,c,get_name());
-    finalize(a,b,c);
+    a += IpsOption::hash();
 
+    finalize(a,b,c);
     return c;
 }
 
 bool IsDataAtOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const IsDataAtOption& rhs = (const IsDataAtOption&)ips;

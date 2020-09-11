@@ -80,7 +80,7 @@ SoOption::~SoOption()
 
 uint32_t SoOption::hash() const
 {
-    uint32_t a = relative_flag, b = 0, c = 0;
+    uint32_t a = relative_flag, b = IpsOption::hash(), c = 0;
     mix_str(a,b,c,soid);
     mix_str(a,b,c,so);
     finalize(a,b,c);
@@ -89,6 +89,9 @@ uint32_t SoOption::hash() const
 
 bool SoOption::operator==(const IpsOption& ips) const
 {
+    if ( !IpsOption::operator==(ips) )
+        return false;
+
     const SoOption& rhs = (const SoOption&)ips;
 
     if ( strcmp(soid, rhs.soid) )

@@ -70,21 +70,17 @@ private:
 
 uint32_t SslVersionOption::hash() const
 {
-    uint32_t a,b,c;
+    uint32_t a = svod.flags;
+    uint32_t b = svod.mask;
+    uint32_t c = IpsOption::hash();
 
-    a = svod.flags;
-    b = svod.mask;
-    c = 0;
-
-    mix_str(a,b,c,get_name());
     finalize(a,b,c);
-
     return c;
 }
 
 bool SslVersionOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const SslVersionOption& rhs = (const SslVersionOption&)ips;

@@ -51,7 +51,7 @@ public:
     const HpackTableEntry* get_hpack_table_entry(const uint8_t* encoded_header_buffer,
         const uint32_t encoded_header_length, const Http2HpackIntDecode& decode_int,
         uint32_t& bytes_consumed);
-    bool write_header_part(Field& header, const uint8_t* suffix, uint32_t suffix_length,
+    bool write_header_part(const Field& header, const uint8_t* suffix, uint32_t suffix_length,
         uint8_t* decoded_header_buffer, const uint32_t decoded_header_length,
         uint32_t& bytes_written);
     bool decode_indexed_name(const uint8_t* encoded_header_buffer,

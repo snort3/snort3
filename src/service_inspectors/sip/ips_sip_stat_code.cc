@@ -64,20 +64,20 @@ private:
 
 uint32_t SipStatCodeOption::hash() const
 {
-    uint32_t a = 0, b = 0, c = 0;
+    uint32_t a = IpsOption::hash(), b = 0, c = 0;
 
     unsigned n = 0;
     while ( n < SIP_NUM_STAT_CODE_MAX and ssod.stat_codes[n] ) ++n;
 
     mix_str(a, b, c, (const char*)ssod.stat_codes, n*sizeof(ssod.stat_codes[0]));
-    mix_str(a, b, c, get_name());
+    finalize(a, b, c);
 
     return c;
 }
 
 bool SipStatCodeOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const SipStatCodeOption& rhs = (const SipStatCodeOption&)ips;

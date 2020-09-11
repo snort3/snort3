@@ -1655,8 +1655,7 @@ left_overlap_last:
                          * further.
                          */
                         trunc = 0;
-                        if (right)
-                            continue;
+                        continue;
                     }
 
                     if (curr_end < frag_end)

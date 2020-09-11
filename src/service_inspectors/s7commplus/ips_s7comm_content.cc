@@ -55,9 +55,9 @@ public:
 
 uint32_t S7commplusContentOption::hash() const
 {
-    uint32_t a = 0, b = 0, c = 0;
+    uint32_t a = IpsOption::hash(), b = 0, c = 0;
 
-    mix_str(a, b, c, get_name());
+    mix(a, b, c);
     finalize(a,b,c);
 
     return c;
@@ -65,7 +65,7 @@ uint32_t S7commplusContentOption::hash() const
 
 bool S7commplusContentOption::operator==(const IpsOption& ips) const
 {
-    return !strcmp(get_name(), ips.get_name());
+    return IpsOption::operator==(ips);
 }
 
 IpsOption::EvalStatus S7commplusContentOption::eval(Cursor& c, Packet* p)

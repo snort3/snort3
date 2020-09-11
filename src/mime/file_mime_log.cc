@@ -44,43 +44,33 @@ using namespace snort;
 /* accumulate MIME attachment filenames. The filenames are appended by commas */
 int MailLogState::log_file_name(const uint8_t* start, int length)
 {
-    uint8_t* alt_buf;
-    int alt_size;
-    uint16_t* alt_len;
-
-    int log_avail = 0;
-
     if (!start || (length <= 0))
-    {
         return -1;
-    }
 
-    alt_buf = filenames;
-    alt_size =  MAX_FILE;
-    alt_len = &(file_logged);
-    log_avail = alt_size - *alt_len;
+    uint8_t* alt_buf = filenames;
+    int alt_size =  MAX_FILE;
+    uint16_t* alt_len = &(file_logged);
+
+    int sep = (*alt_len > 0) ? 1 : 0;
+    int log_avail = alt_size - *alt_len - sep;
 
     if (!alt_buf || (log_avail <= 0))
         return -1;
 
-    if (*alt_len > 0 && ((*alt_len + 1) < alt_size))
-    {
-        alt_buf[*alt_len] = ',';
-        *alt_len = *alt_len + 1;
-    }
-
-    if (length > log_avail)
-    {
-        if (*alt_len != 0)
-            *alt_len = *alt_len - 1;
-        return -1;
-    }
+    else if (log_avail < length )
+        length = log_avail;
 
     if (length > 0)
+    {
+        if (sep)
+        {
+            alt_buf[*alt_len] = ',';
+            *alt_len = *alt_len + 1;
+        }
         memcpy_s(alt_buf + *alt_len, log_avail, start, length);
-
-    file_current = *alt_len;
-    *alt_len += length;
+        file_current = *alt_len;
+        *alt_len += length;
+    }
 
     log_flags |= MIME_FLAG_FILENAME_PRESENT;
 
@@ -90,14 +80,11 @@ int MailLogState::log_file_name(const uint8_t* start, int length)
 /* Accumulate EOL separated headers, one or more at a time */
 int MailLogState::log_email_hdrs(const uint8_t* start, int length)
 {
-    int log_avail = 0;
-    uint8_t* log_buf;
-
     if (length <= 0)
         return -1;
 
-    log_avail = log_depth - hdrs_logged;
-    log_buf = (uint8_t*)emailHdrs;
+    int log_avail = log_depth - hdrs_logged;
+    uint8_t* log_buf = (uint8_t*)emailHdrs;
 
     if (log_avail <= 0)
         return 0;
@@ -124,17 +111,12 @@ int MailLogState::log_email_hdrs(const uint8_t* start, int length)
    by comma */
 int MailLogState::log_email_id(const uint8_t* start, int length, EmailUserType type)
 {
-    uint8_t* alt_buf;
-    int alt_size;
-    uint16_t* alt_len;
-    int log_avail=0;
-    const uint8_t* tmp_eol;
-
     if (length <= 0)
         return -1;
 
-    tmp_eol = (const uint8_t*)memchr(start, ':', length);
-    if (tmp_eol == nullptr)
+    const uint8_t* tmp_eol = (const uint8_t*)memchr(start, ':', length);
+
+    if ( !tmp_eol )
         return -1;
 
     if ((tmp_eol + 1) < (start + length))
@@ -144,6 +126,10 @@ int MailLogState::log_email_id(const uint8_t* start, int length, EmailUserType t
     }
     else
         return -1;
+
+    uint8_t* alt_buf;
+    int alt_size;
+    uint16_t* alt_len;
 
     switch (type)
     {
@@ -163,35 +149,31 @@ int MailLogState::log_email_id(const uint8_t* start, int length, EmailUserType t
         return -1;
     }
 
-    log_avail = alt_size - *alt_len;
+    int sep = (*alt_len > 0) ? 1 : 0;
+    int log_avail = alt_size - *alt_len - sep;
 
     if (log_avail <= 0 || !alt_buf)
         return -1;
-    else if (log_avail < length)
+
+    else if (log_avail < length )
         length = log_avail;
 
-    if (*alt_len > 0 && ((*alt_len + 1) < alt_size))
-    {
-        alt_buf[*alt_len] = ',';
-        *alt_len = *alt_len + 1;
-    }
-
-    if (length > log_avail)
-    {
-        if (*alt_len != 0)
-            *alt_len = *alt_len - 1;
-        return -1;
-    }
-
     if (length > 0)
+    {
+        if (sep)
+        {
+            alt_buf[*alt_len] = ',';
+            *alt_len = *alt_len + 1;
+        }
         memcpy_s(alt_buf + *alt_len, log_avail, start, length);
-
-    *alt_len += length;
+        *alt_len += length;
+    }
 
     if (type == EMAIL_SENDER)
         log_flags |= MIME_FLAG_MAIL_FROM_PRESENT;
     else
         log_flags |= MIME_FLAG_RCPT_TO_PRESENT;
+
     return 0;
 }
 

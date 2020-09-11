@@ -145,6 +145,7 @@ static IpsOption* get_option(Module* mod, const char* pat)
 
     const IpsApi* api = (const IpsApi*) ips_regex;
     IpsOption* opt = api->ctor(mod, &otn);
+    IpsOption::set_buffer("pkt_data");
 
     return opt;
 }

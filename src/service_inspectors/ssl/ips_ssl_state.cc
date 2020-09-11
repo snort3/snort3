@@ -70,21 +70,17 @@ private:
 
 uint32_t SslStateOption::hash() const
 {
-    uint32_t a,b,c;
+    uint32_t a = ssod.flags;
+    uint32_t b = ssod.mask;
+    uint32_t c = IpsOption::hash();
 
-    a = ssod.flags;
-    b = ssod.mask;
-    c = 0;
-
-    mix_str(a,b,c,get_name());
     finalize(a,b,c);
-
     return c;
 }
 
 bool SslStateOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const SslStateOption& rhs = (const SslStateOption&)ips;

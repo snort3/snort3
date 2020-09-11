@@ -81,14 +81,11 @@ private:
 
 uint32_t TcpFlagOption::hash() const
 {
-    uint32_t a,b,c;
-    const TcpFlagCheckData* data = &config;
+    uint32_t a = config.mode;
+    uint32_t b = config.tcp_flags | (config.tcp_mask << 8);
+    uint32_t c = IpsOption::hash();
 
-    a = data->mode;
-    b = data->tcp_flags | (data->tcp_mask << 8);
-    c = 0;
-
-    mix_str(a,b,c,get_name());
+    mix(a,b,c);
     finalize(a,b,c);
 
     return c;
@@ -96,7 +93,7 @@ uint32_t TcpFlagOption::hash() const
 
 bool TcpFlagOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const TcpFlagOption& rhs = (const TcpFlagOption&)ips;

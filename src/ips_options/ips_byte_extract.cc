@@ -89,27 +89,25 @@ private:
 
 uint32_t ByteExtractOption::hash() const
 {
-    uint32_t a,b,c;
-    const ByteExtractData* data = &config;
-
-    a = data->bytes_to_grab;
-    b = data->offset;
-    c = data->base;
+    uint32_t a = config.bytes_to_grab;
+    uint32_t b = config.offset;
+    uint32_t c = config.base;
 
     mix(a,b,c);
 
-    a += (data->relative_flag << 24 |
-        data->data_string_convert_flag << 16 |
-        data->align << 8 |
-        data->endianness);
-    b += data->multiplier;
-    c += data->var_number;
+    a += (config.relative_flag << 24 |
+        config.data_string_convert_flag << 16 |
+        config.align << 8 |
+        config.endianness);
+    b += config.multiplier;
+    c += config.var_number;
 
     mix(a,b,c);
 
-    a += data->bitmask_val;
-    mix_str(a,b,c,get_name());
+    a += config.bitmask_val;
+    b += IpsOption::hash();
 
+    mix(a,b,c);
     finalize(a,b,c);
 
     return c;

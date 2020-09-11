@@ -57,22 +57,20 @@ private:
 
 uint32_t IcmpTypeOption::hash() const
 {
-    uint32_t a,b,c;
-
-    a = config.op;
-    b = config.min;
-    c = config.max;
+    uint32_t a = config.op;
+    uint32_t b = config.min;
+    uint32_t c = config.max;
 
     mix(a,b,c);
-    mix_str(a,b,c,get_name());
-    finalize(a,b,c);
+    a += IpsOption::hash();
 
+    finalize(a,b,c);
     return c;
 }
 
 bool IcmpTypeOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const IcmpTypeOption& rhs = (const IcmpTypeOption&)ips;

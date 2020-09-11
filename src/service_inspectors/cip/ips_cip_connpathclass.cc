@@ -62,21 +62,20 @@ private:
 
 uint32_t CipConnpathclassOption::hash() const
 {
-    uint32_t a,b,c;
+    uint32_t a = cip_cpc.op;
+    uint32_t b = cip_cpc.min;
+    uint32_t c = cip_cpc.max;
 
-    a = cip_cpc.op;
-    b = cip_cpc.min;
-    c = cip_cpc.max;
+    mix(a, b, c);
+    a += IpsOption::hash();
 
-    mix_str(a, b, c, get_name());
     finalize(a,b,c);
-
     return c;
 }
 
 bool CipConnpathclassOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const CipConnpathclassOption& rhs = static_cast<const CipConnpathclassOption&>(ips);

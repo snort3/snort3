@@ -56,21 +56,20 @@ private:
 
 uint32_t FragOffsetOption::hash() const
 {
-    uint32_t a,b,c;
+    uint32_t a = config.op;
+    uint32_t b = (uint32_t)config.min;
+    uint32_t c = (uint32_t)config.max;
 
-    a = config.op;
-    b = (uint32_t)config.min;
-    c = (uint32_t)config.max;
+    mix(a,b,c);
+    a += IpsOption::hash();
 
-    mix_str(a,b,c,get_name());
     finalize(a,b,c);
-
     return c;
 }
 
 bool FragOffsetOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const FragOffsetOption& rhs = (const FragOffsetOption&)ips;

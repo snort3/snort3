@@ -217,7 +217,7 @@ bool Http2HpackDecoder::decode_indexed_header(const uint8_t* encoded_header_buff
     return true;
 }
 
-bool Http2HpackDecoder::write_header_part(Field& header, const uint8_t* suffix,
+bool Http2HpackDecoder::write_header_part(const Field& header, const uint8_t* suffix,
     uint32_t suffix_length, uint8_t* decoded_header_buffer, const uint32_t decoded_header_length,
     uint32_t& bytes_written)
 {
