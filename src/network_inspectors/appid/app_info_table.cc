@@ -280,7 +280,7 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
         char* token = strtok_r(buf, CONF_SEPARATORS, &context);
         if (token == nullptr)
         {
-            ParseWarning(WARN_CONF, "No 'conf_type' value at line %s:%u\n", path, line);
+            ParseWarning(WARN_CONF, "appid: No 'conf_type' value at line %s:%u\n", path, line);
             continue;
         }
         char* conf_type = token;
@@ -288,7 +288,7 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
         token = strtok_r(nullptr, CONF_SEPARATORS, &context);
         if (token == nullptr)
         {
-            ParseWarning(WARN_CONF, "No 'conf_key' value at line %s:%u\n", path, line);
+            ParseWarning(WARN_CONF, "appid: No 'conf_key' value at line %s:%u\n", path, line);
             continue;
         }
         char* conf_key = token;
@@ -296,7 +296,7 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
         token = strtok_r(nullptr, CONF_SEPARATORS, &context);
         if (token == nullptr)
         {
-            ParseWarning(WARN_CONF, "No 'conf_val' value at line %s:%u\n", path, line);
+            ParseWarning(WARN_CONF, "appid: No 'conf_val' value at line %s:%u\n", path, line);
             continue;
         }
         char* conf_val = token;
@@ -311,7 +311,7 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                     || max_tp_flow_depth > MAX_MAX_TP_FLOW_DEPTH)
                 {
                     ParseWarning(WARN_CONF,
-                        "AppId: invalid max_tp_flow_depth %d, must be between %d and %d\n.",
+                        "appid: invalid max_tp_flow_depth %d, must be between %d and %d\n.",
                         max_tp_flow_depth, MIN_MAX_TP_FLOW_DEPTH, MAX_MAX_TP_FLOW_DEPTH);
                 }
                 else
@@ -328,7 +328,7 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                     MAX_HOST_PORT_APP_CACHE_LOOKUP_INTERVAL)
                 {
                     ParseWarning(WARN_CONF,
-                        "AppId: invalid host_port_app_cache_lookup_interval %d, "
+                        "appid: invalid host_port_app_cache_lookup_interval %d, "
                         "must be between %d and %d\n.",
                         host_port_app_cache_lookup_interval,
                         MIN_HOST_PORT_APP_CACHE_LOOKUP_INTERVAL,
@@ -347,7 +347,7 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                     || host_port_app_cache_lookup_range > MAX_HOST_PORT_APP_CACHE_LOOKUP_RANGE)
                 {
                      ParseWarning(WARN_CONF,
-                        "AppId: invalid host_port_app_cache_lookup_range %d, "
+                        "appid: invalid host_port_app_cache_lookup_range %d, "
                         "must be between %d and %d\n.", host_port_app_cache_lookup_range,
                         MIN_HOST_PORT_APP_CACHE_LOOKUP_RANGE,
                         MAX_HOST_PORT_APP_CACHE_LOOKUP_RANGE);
@@ -510,7 +510,7 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                 uint64_t max_bytes_before_service_fail = atoi(conf_val);
                 if (max_bytes_before_service_fail < MIN_MAX_BYTES_BEFORE_SERVICE_FAIL)
                 {
-                    ParseWarning(WARN_CONF, "AppId: invalid max_bytes_before_service_fail "
+                    ParseWarning(WARN_CONF, "appid: invalid max_bytes_before_service_fail "
                         "%" PRIu64 " must be greater than %u.\n", max_bytes_before_service_fail,
                         MIN_MAX_BYTES_BEFORE_SERVICE_FAIL);
                 }
@@ -524,7 +524,7 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                 uint16_t max_packet_before_service_fail = atoi(conf_val);
                 if (max_packet_before_service_fail < MIN_MAX_PKTS_BEFORE_SERVICE_FAIL)
                 {
-                    ParseWarning(WARN_CONF, "AppId: invalid max_packet_before_service_fail "
+                    ParseWarning(WARN_CONF, "appid: invalid max_packet_before_service_fail "
                         "%" PRIu16 ", must be greater than %u.\n", max_packet_before_service_fail,
                         MIN_MAX_PKTS_BEFORE_SERVICE_FAIL);
                 }
@@ -539,7 +539,7 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                 if (max_packet_service_fail_ignore_bytes <
                     MIN_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES)
                 {
-                    ParseWarning(WARN_CONF, "AppId: invalid max_packet_service_fail_ignore_bytes"
+                    ParseWarning(WARN_CONF, "appid: invalid max_packet_service_fail_ignore_bytes"
                         "%" PRIu16 ", must be greater than %u.\n",
                         max_packet_service_fail_ignore_bytes,
                         MIN_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES);
@@ -558,7 +558,7 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                 token = strtok_r(nullptr, CONF_SEPARATORS, &context);
                 if (token == nullptr)
                 {
-                    ParseWarning(WARN_CONF, "Could not read app_priority at line %u\n", line);
+                    ParseWarning(WARN_CONF, "appid: Could not read app_priority at line %u\n", line);
                     continue;
                 }
                 conf_val = token;
@@ -610,7 +610,7 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                 set_app_info_flags(atoi(conf_val), APPINFO_FLAG_IGNORE);
             }
             else
-                ParseWarning(WARN_CONF, "AppId: unsupported configuration: %s\n", conf_key);
+                ParseWarning(WARN_CONF, "appid: unsupported configuration: %s\n", conf_key);
         }
     }
 
