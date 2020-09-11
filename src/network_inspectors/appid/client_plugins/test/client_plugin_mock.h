@@ -103,8 +103,8 @@ AppIdContext ctxt(config);
 AppIdConfig::~AppIdConfig() = default;
 
 // Stubs for AppIdPegCounts
-void AppIdPegCounts::inc_payload_count(AppId) { }
-void AppIdPegCounts::inc_client_count(AppId) { }
+void AppIdPegCounts::update_payload_count(AppId, bool) { }
+void AppIdPegCounts::update_client_count(AppId, bool) { }
 
 THREAD_LOCAL AppIdStats appid_stats;
 

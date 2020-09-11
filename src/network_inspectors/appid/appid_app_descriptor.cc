@@ -27,6 +27,14 @@ void ApplicationDescriptor::set_id(AppId app_id)
             update_stats(app_id);
         else if ( app_id == APP_ID_UNKNOWN )
             appid_stats.appid_unknown++;
+        else
+            return; // app_id == APP_ID_NONE
+
+        if ( overwritten_id > APP_ID_NONE )
+        {
+            update_stats(overwritten_id, false);
+            overwritten_id = APP_ID_NONE;
+        }
     }
 }
 
@@ -40,9 +48,9 @@ void ApplicationDescriptor::set_id(const Packet& p, AppIdSession& asd,
     }
 }
 
-void ServiceAppDescriptor::update_stats(AppId id)
+void ServiceAppDescriptor::update_stats(AppId id, bool increment)
 {
-    AppIdPegCounts::inc_service_count(id);
+    AppIdPegCounts::update_service_count(id, increment);
 }
 
 void ServiceAppDescriptor::set_port_service_id(AppId id)
@@ -51,7 +59,7 @@ void ServiceAppDescriptor::set_port_service_id(AppId id)
     {
         port_service_id = id;
         if ( id > APP_ID_NONE )
-            AppIdPegCounts::inc_service_count(id);
+            AppIdPegCounts::update_service_count(id, true);
     }
 }
 
@@ -77,12 +85,12 @@ void ClientAppDescriptor::update_user(AppId app_id, const char* username)
     }
 }
 
-void ClientAppDescriptor::update_stats(AppId id)
+void ClientAppDescriptor::update_stats(AppId id, bool increment)
 {
-    AppIdPegCounts::inc_client_count(id);
+    AppIdPegCounts::update_client_count(id, increment);
 }
 
-void PayloadAppDescriptor::update_stats(AppId id)
+void PayloadAppDescriptor::update_stats(AppId id, bool increment)
 {
-    AppIdPegCounts::inc_payload_count(id);
+    AppIdPegCounts::update_payload_count(id, increment);
 }

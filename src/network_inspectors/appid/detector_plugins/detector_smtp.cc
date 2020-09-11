@@ -364,7 +364,12 @@ SMTPDetectorData* SmtpClientDetector::get_common_data(AppIdSession& asd)
     {
         dd = (SMTPDetectorData*)snort_calloc(1, sizeof(*dd));
         data_add(asd, dd, &smtp_free_state);
-        dd->server.state = SMTP_SERVICE_STATE_CONNECTION;
+
+        if (asd.get_session_flags(APPID_SESSION_DECRYPTED))
+            dd->server.state = SMTP_SERVICE_STATE_HELO;
+        else
+            dd->server.state = SMTP_SERVICE_STATE_CONNECTION;
+
         dd->client.state = SMTP_CLIENT_STATE_HELO;
         dd->need_continue = 1;
         asd.set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);

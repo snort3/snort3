@@ -82,24 +82,33 @@ void AppIdPegCounts::sum_stats()
         appid_dynamic_sum[SF_APPID_MAX].stats[j] += ptr[peg_num].stats[j];
 }
 
-void AppIdPegCounts::inc_service_count(AppId id)
+void AppIdPegCounts::update_service_count(AppId id, bool increment)
 {
-    (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::SERVICE_DETECTS]++;
+    if (increment)
+        (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::SERVICE_DETECTS]++;
+    else
+        (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::SERVICE_DETECTS]--;
 }
 
-void AppIdPegCounts::inc_client_count(AppId id)
+void AppIdPegCounts::update_client_count(AppId id, bool increment)
 {
-    (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::CLIENT_DETECTS]++;
+    if (increment)
+        (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::CLIENT_DETECTS]++;
+    else
+        (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::CLIENT_DETECTS]--;
+}
+
+void AppIdPegCounts::update_payload_count(AppId id, bool increment)
+{
+    if (increment)
+        (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::PAYLOAD_DETECTS]++;
+    else
+        (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::PAYLOAD_DETECTS]--;
 }
 
 void AppIdPegCounts::inc_user_count(AppId id)
 {
     (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::USER_DETECTS]++;
-}
-
-void AppIdPegCounts::inc_payload_count(AppId id)
-{
-    (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::PAYLOAD_DETECTS]++;
 }
 
 void AppIdPegCounts::inc_misc_count(AppId id)

@@ -80,10 +80,12 @@ public:
     static void init_pegs();
     static void cleanup_pegs();
     static void cleanup_peg_info();
-    static void inc_service_count(AppId id);
-    static void inc_client_count(AppId id);
+
+    static void update_service_count(AppId id, bool increment);
+    static void update_client_count(AppId id, bool increment);
+    static void update_payload_count(AppId id, bool increment);
+
     static void inc_user_count(AppId id);
-    static void inc_payload_count(AppId id);
     static void inc_misc_count(AppId id);
 
     static void inc_incompatible_count(AppId id)

@@ -61,15 +61,15 @@ SearchTool::~SearchTool() { }
 
 void ApplicationDescriptor::set_id(AppId app_id){ my_id = app_id;}
 void ServiceAppDescriptor::set_id(AppId app_id, OdpContext&){ set_id(app_id); }
-void ServiceAppDescriptor::update_stats(AppId){}
+void ServiceAppDescriptor::update_stats(AppId, bool){}
 void ServiceAppDescriptor::set_port_service_id(AppId app_id){ port_service_id = app_id;}
 void ClientAppDescriptor::update_user(AppId app_id, const char* username)
 {
     my_username = username;
     my_user_id = app_id;
 }
-void ClientAppDescriptor::update_stats(AppId) {}
-void PayloadAppDescriptor::update_stats(AppId) {}
+void ClientAppDescriptor::update_stats(AppId, bool) {}
+void PayloadAppDescriptor::update_stats(AppId, bool) {}
 
 AppIdDiscovery::AppIdDiscovery() { }
 AppIdDiscovery::~AppIdDiscovery() { }
