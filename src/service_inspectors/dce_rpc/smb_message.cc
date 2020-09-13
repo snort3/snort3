@@ -1621,6 +1621,7 @@ void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
                 if (!DCE2_GcIsLegacyMode((dce2SmbProtoConf*)ssd->sd.config))
                 {
                     // Upgrade connection to SMBv2
+                    debug_log(dce_smb_trace, nullptr, "upgrading to smb2 session\n");
                     dce2SmbProtoConf* config = (dce2SmbProtoConf*)ssd->sd.config;
                     Dce2SmbFlowData* fd = (Dce2SmbFlowData*)p->flow->get_flow_data(
                         Dce2SmbFlowData::inspector_id);

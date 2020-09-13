@@ -28,16 +28,19 @@
 #include "dce_smb2_commands.h"
 #include "hash/hash_key_operations.h"
 #include "log/messages.h"
+#include "main/snort_debug.h"
 #include "packet_io/active.h"
 #include "protocols/packet.h"
 
 using namespace snort;
 #define UNKNOWN_FILE_SIZE (~0)
 
-#define SMB2_CHECK_HDR_ERROR(smb_data, end, strcuture_size, counter) \
+#define SMB2_CHECK_HDR_ERROR(smb_data, end, strcuture_size, counter, cmd) \
     { \
         if ((smb_data + (strcuture_size)) > end) \
         { \
+            debug_logf(dce_smb_trace, nullptr, "%s : smb data beyond end detected\n",\
+                smb2_command_string[cmd]); \
             counter ++; \
             return; \
         } \
@@ -60,6 +63,7 @@ static inline FileContext* get_smb_file_context(uint64_t file_id, uint64_t
 
 static void DCE2_Smb2CleanFtrackerTcpRef(DCE2_Smb2SessionTracker* str, uint64_t file_id)
 {
+    debug_logf(dce_smb_trace, nullptr, "updating conn for fid %" PRIu64 "\n", file_id);
     auto all_conn_trackers = str->conn_trackers.get_all_entry();
     for ( auto& h : all_conn_trackers )
     {
@@ -101,12 +105,17 @@ bool DCE2_Smb2ProcessFileData(DCE2_Smb2SsnData* ssd, const uint8_t* file_data,
     ssd->ftracker_tcp->bytes_processed += detection_size;
     FileDirection dir = ssd->ftracker_tcp->upload ? FILE_UPLOAD : FILE_DOWNLOAD;
 
+    debug_logf(dce_smb_trace, nullptr, "file_process fid %" PRIu64 " data_size %" PRIu32 ""
+        " offset %" PRIu64 " bytes processed %" PRIu64 "\n", ssd->ftracker_tcp->file_id,
+        data_size, ssd->ftracker_tcp->file_offset, ssd->ftracker_tcp->bytes_processed);
+
     // Do not process data beyond file size if file size is known.
     FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
     if ( !file_flows or (ssd->ftracker_tcp->file_size and
         ssd->ftracker_tcp->bytes_processed > ssd->ftracker_tcp->file_size) )
     {
         dce2_smb_stats.v2_extra_file_data_err++;
+        debug_logf(dce_smb_trace, nullptr, "extra file data\n");
 
         DCE2_Smb2TreeTracker* ttr = ssd->ftracker_tcp->ttr;
         uint64_t file_id = ssd->ftracker_tcp->file_id;
@@ -119,6 +128,8 @@ bool DCE2_Smb2ProcessFileData(DCE2_Smb2SsnData* ssd, const uint8_t* file_data,
     if (!file_flows->file_process(p, ssd->ftracker_tcp->file_name_hash, file_data, data_size,
         ssd->ftracker_tcp->file_offset, dir, ssd->ftracker_tcp->file_id))
     {
+        debug_logf(dce_smb_trace, nullptr, "file_process completed\n");
+
         DCE2_Smb2TreeTracker* ttr = ssd->ftracker_tcp->ttr;
         uint64_t file_id = ssd->ftracker_tcp->file_id;
         DCE2_Smb2CleanFtrackerTcpRef(ssd->ftracker_tcp->str, file_id);
@@ -139,17 +150,21 @@ void DCE2_Smb2Setup(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr, const uint64_
 
     if (structure_size == SMB2_ERROR_RESPONSE_STRUC_SIZE and Smb2Error(smb_hdr))
     {
+        debug_logf(dce_smb_trace, nullptr, "%s_RESP: error\n",
+            smb2_command_string[SMB2_COM_SESSION_SETUP]);
         dce2_smb_stats.v2_setup_err_resp++;
     }
     else if (structure_size == SMB2_SETUP_RESPONSE_STRUC_SIZE)
     {
         SMB2_CHECK_HDR_ERROR(
             smb_data, end, SMB2_SETUP_RESPONSE_STRUC_SIZE - 1,
-            dce2_smb_stats.v2_setup_resp_hdr_err)
+            dce2_smb_stats.v2_setup_resp_hdr_err, SMB2_COM_SESSION_SETUP)
         DCE2_Smb2FindElseCreateSid(ssd, sid);
     }
     else if (structure_size != SMB2_SETUP_REQUEST_STRUC_SIZE)
     {
+        debug_logf(dce_smb_trace, nullptr, "%s: invalid struct size\n",
+            smb2_command_string[SMB2_COM_SESSION_SETUP]);
         dce2_smb_stats.v2_setup_inv_str_sz++;
     }
 }
@@ -170,16 +185,20 @@ void DCE2_Smb2TreeConnect(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     {
         SMB2_CHECK_HDR_ERROR(
             smb_data, end, SMB2_TREE_CONNECT_RESPONSE_STRUC_SIZE,
-            dce2_smb_stats.v2_tree_cnct_resp_hdr_err)
+            dce2_smb_stats.v2_tree_cnct_resp_hdr_err, SMB2_COM_TREE_CONNECT)
 
         if (!DCE2_Smb2InsertTid(ssd, tid,
             ((const Smb2TreeConnectResponseHdr*)smb_data)->share_type, str))
         {
+            debug_logf(dce_smb_trace, nullptr, "%s: ignored %d\n",
+                smb2_command_string[SMB2_COM_TREE_CONNECT], tid);
             dce2_smb_stats.v2_tree_cnct_ignored++;
         }
     }
     else if (structure_size != SMB2_TREE_CONNECT_REQUEST_STRUC_SIZE)
     {
+        debug_logf(dce_smb_trace, nullptr, "%s: invalid struct size\n",
+            smb2_command_string[SMB2_COM_TREE_CONNECT]);
         dce2_smb_stats.v2_tree_cnct_inv_str_sz++;
     }
 }
@@ -195,11 +214,13 @@ void DCE2_Smb2TreeDisconnect(DCE2_Smb2SsnData*, const uint8_t* smb_data,
     {
         SMB2_CHECK_HDR_ERROR(
             smb_data, end, SMB2_TREE_DISCONNECT_REQUEST_STRUC_SIZE,
-            dce2_smb_stats.v2_tree_discn_req_hdr_err)
+            dce2_smb_stats.v2_tree_discn_req_hdr_err, SMB2_COM_TREE_DISCONNECT)
         str->removeTtracker(tid);
     }
     else
     {
+        debug_logf(dce_smb_trace, nullptr, "%s: invalid struct size\n",
+            smb2_command_string[SMB2_COM_TREE_DISCONNECT]);
         dce2_smb_stats.v2_tree_discn_inv_str_sz++;
     }
 }
@@ -222,6 +243,8 @@ static void DCE2_Smb2CreateRequest(DCE2_Smb2SsnData* ssd,
         if (file_data >= end)
         {
             dce2_smb_stats.v2_crt_inv_file_data++;
+            debug_logf(dce_smb_trace, nullptr, "%s_REQ: invalid file data seen\n",
+                smb2_command_string[SMB2_COM_CREATE]);
             return;
         }
 
@@ -229,6 +252,9 @@ static void DCE2_Smb2CreateRequest(DCE2_Smb2SsnData* ssd,
         if (!size or (file_data + size > end))
         {
             dce2_smb_stats.v2_crt_inv_file_data++;
+            debug_logf(dce_smb_trace, nullptr, "%s_REQ: invalid file data seen with size %" PRIu16 "\n",
+                smb2_command_string[SMB2_COM_CREATE], size);
+
             return;
         }
 
@@ -245,12 +271,16 @@ static void DCE2_Smb2CreateRequest(DCE2_Smb2SsnData* ssd,
         }
         else
         {
+            debug_logf(dce_smb_trace, nullptr, "%s_REQ: max req exceeded\n",
+                smb2_command_string[SMB2_COM_CREATE]);
             dce_alert(GID_DCE2, DCE2_SMB_MAX_REQS_EXCEEDED, (dce2CommonStats*)&dce2_smb_stats,
                 ssd->sd);
         }
     }
     else
     {
+        debug_logf(dce_smb_trace, nullptr, "%s_REQ: name_offset %" PRIu16 "\n",
+            smb2_command_string[SMB2_COM_CREATE], name_offset);
         dce2_smb_stats.v2_crt_req_hdr_err++;
     }
 }
@@ -287,6 +317,11 @@ static void DCE2_Smb2CreateResponse(DCE2_Smb2SsnData*,
 
         FileContext* file = get_smb_file_context(ftracker->file_name_hash, fileId_persistent,
             true);
+
+        debug_logf(dce_smb_trace, nullptr, "%s_RESP: file size %" PRIu64 " fid %" PRIu64 ""
+            "file_name_hash %" PRIu64 " file %p\n", smb2_command_string[SMB2_COM_CREATE],
+            file_size, fileId_persistent, ftracker->file_name_hash, (void *)file);
+
         if (file)
         {
             if (file->verdict == FILE_VERDICT_UNKNOWN)
@@ -326,25 +361,33 @@ void DCE2_Smb2Create(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             ttr->removeRtracker(mid);
 
         dce2_smb_stats.v2_crt_err_resp++;
+        debug_logf(dce_smb_trace, nullptr, "%s_RESP: error\n",
+            smb2_command_string[SMB2_COM_CREATE]);
     }
     // Using structure size to decide whether it is response or request
     else if (structure_size == SMB2_CREATE_REQUEST_STRUC_SIZE)
     {
         SMB2_CHECK_HDR_ERROR(
             smb_data, end, SMB2_CREATE_REQUEST_STRUC_SIZE - 1,
-            dce2_smb_stats.v2_crt_req_hdr_err)
+            dce2_smb_stats.v2_crt_req_hdr_err, SMB2_COM_CREATE)
 
         if (!ttr)
         {
+            debug_logf(dce_smb_trace, nullptr, "%s_REQ: mid stream session detected\n",
+                smb2_command_string[SMB2_COM_CREATE]);
             ttr = DCE2_Smb2InsertTid(ssd, tid, SMB2_SHARE_TYPE_DISK, str);
             if (!ttr)
             {
+                debug_logf(dce_smb_trace, nullptr, "%s_REQ: insert tree tracker failed\n",
+                    smb2_command_string[SMB2_COM_CREATE]);
                 return;
             }
         }
         else if (SMB2_SHARE_TYPE_DISK != ttr->get_share_type())
         {
             dce2_smb_stats.v2_crt_req_ipc++;
+            debug_logf(dce_smb_trace, nullptr, "%s_REQ: ignored for ipc share\n",
+                smb2_command_string[SMB2_COM_CREATE]);
             return;
         }
         DCE2_Smb2CreateRequest(ssd, (const Smb2CreateRequestHdr*)smb_data, end, str, ttr, mid);
@@ -353,10 +396,12 @@ void DCE2_Smb2Create(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     {
         SMB2_CHECK_HDR_ERROR(
             smb_data, end, SMB2_CREATE_RESPONSE_STRUC_SIZE - 1,
-            dce2_smb_stats.v2_crt_resp_hdr_err)
+            dce2_smb_stats.v2_crt_resp_hdr_err, SMB2_COM_CREATE)
 
         if (!ttr)
         {
+            debug_logf(dce_smb_trace, nullptr, "%s_RESP: tree tracker missing\n",
+                 smb2_command_string[SMB2_COM_CREATE]);
             dce2_smb_stats.v2_crt_tree_trkr_misng++;
             return;
         }
@@ -364,6 +409,8 @@ void DCE2_Smb2Create(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         DCE2_Smb2RequestTracker* rtr = ttr->findRtracker(mid);
         if (!rtr)
         {
+            debug_logf(dce_smb_trace, nullptr, "%s_RESP: req tracker missing\n",
+                 smb2_command_string[SMB2_COM_CREATE]);
             dce2_smb_stats.v2_crt_rtrkr_misng++;
             return;
         }
@@ -374,9 +421,9 @@ void DCE2_Smb2Create(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         if (((const Smb2CreateResponseHdr*)smb_data)->file_attributes &
             SMB2_CREATE_RESPONSE_DIRECTORY)
         {
+            debug_logf(dce_smb_trace, nullptr, "%s_RESP: not processing for directory\n",
+                 smb2_command_string[SMB2_COM_CREATE]);
             ttr->removeRtracker(mid);
-            if (ssd->ftracker_tcp and ssd->ftracker_tcp->file_id == fileId_persistent)
-                ssd->ftracker_tcp = nullptr;
             DCE2_Smb2CleanFtrackerTcpRef(str, fileId_persistent);
             ttr->removeFtracker(fileId_persistent);
             return;
@@ -388,6 +435,8 @@ void DCE2_Smb2Create(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     }
     else
     {
+        debug_logf(dce_smb_trace, nullptr, "%s: invalid struct size\n",
+            smb2_command_string[SMB2_COM_CREATE]);
         dce2_smb_stats.v2_crt_inv_str_sz++;
     }
 }
@@ -404,6 +453,8 @@ void DCE2_Smb2CloseCmd(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
 
     if (structure_size == SMB2_ERROR_RESPONSE_STRUC_SIZE and Smb2Error(smb_hdr))
     {
+        debug_logf(dce_smb_trace, nullptr, "%s_RESP: error\n",
+            smb2_command_string[SMB2_COM_CLOSE]);
         dce2_smb_stats.v2_cls_err_resp++;
     }
     // Using structure size to decide whether it is response or request
@@ -411,7 +462,7 @@ void DCE2_Smb2CloseCmd(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     {
         SMB2_CHECK_HDR_ERROR(
             smb_data, end, SMB2_CLOSE_REQUEST_STRUC_SIZE,
-            dce2_smb_stats.v2_cls_req_hdr_err)
+            dce2_smb_stats.v2_cls_req_hdr_err, SMB2_COM_CLOSE)
 
         uint64_t fileId_persistent = alignedNtohq(&(((const
             Smb2CloseRequestHdr*)smb_data)->fileId_persistent));
@@ -419,6 +470,8 @@ void DCE2_Smb2CloseCmd(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         if (!ftracker)
         {
             dce2_smb_stats.v2_cls_req_ftrkr_misng++;
+            debug_logf(dce_smb_trace, nullptr, "%s_REQ: ftracker missing %" PRIu64 "\n",
+                smb2_command_string[SMB2_COM_CLOSE], fileId_persistent);
             return;
         }
 
@@ -447,6 +500,8 @@ void DCE2_Smb2CloseCmd(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     }
     else if (structure_size != SMB2_CLOSE_RESPONSE_STRUC_SIZE)
     {
+        debug_logf(dce_smb_trace, nullptr, "%s: invalid struct size\n",
+            smb2_command_string[SMB2_COM_CLOSE]);
         dce2_smb_stats.v2_cls_inv_str_sz++;
     }
 }
@@ -462,13 +517,15 @@ void DCE2_Smb2SetInfo(DCE2_Smb2SsnData*, const Smb2Hdr* smb_hdr,
     // Using structure size to decide whether it is response or request
     if (structure_size == SMB2_ERROR_RESPONSE_STRUC_SIZE and Smb2Error(smb_hdr))
     {
+        debug_logf(dce_smb_trace, nullptr, "%s: error resp\n",
+            smb2_command_string[SMB2_COM_SET_INFO]);
         dce2_smb_stats.v2_stinf_err_resp++;
     }
     else if (structure_size == SMB2_SET_INFO_REQUEST_STRUC_SIZE)
     {
         SMB2_CHECK_HDR_ERROR(
             smb_data, end, SMB2_SET_INFO_REQUEST_STRUC_SIZE,
-            dce2_smb_stats.v2_stinf_req_hdr_err)
+            dce2_smb_stats.v2_stinf_req_hdr_err, SMB2_COM_SET_INFO)
 
         const Smb2SetInfoRequestHdr* smb_set_info_hdr = (const Smb2SetInfoRequestHdr*)smb_data;
         const uint8_t* file_data =  (const uint8_t*)smb_set_info_hdr +
@@ -484,6 +541,9 @@ void DCE2_Smb2SetInfo(DCE2_Smb2SsnData*, const Smb2Hdr* smb_hdr,
                 ftracker->file_size = file_size;
                 FileContext* file = get_smb_file_context(ftracker->file_name_hash,
                     fileId_persistent);
+                debug_logf(dce_smb_trace, nullptr,
+                    "%s_REQ: set file size %" PRIu64 " fid %" PRIu64 " file %p\n",
+                    smb2_command_string[SMB2_COM_SET_INFO], file_size, fileId_persistent, (void*)file);
                 if (file)
                 {
                     file->set_file_size(ftracker->file_size);
@@ -492,15 +552,21 @@ void DCE2_Smb2SetInfo(DCE2_Smb2SsnData*, const Smb2Hdr* smb_hdr,
             else
             {
                 dce2_smb_stats.v2_stinf_req_ftrkr_misng++;
+                debug_logf(dce_smb_trace, nullptr,"%s_REQ: ftracker missing\n",
+                    smb2_command_string[SMB2_COM_SET_INFO]);
             }
         }
         else
         {
+            debug_logf(dce_smb_trace, nullptr,"%s_REQ: header error\n",
+                smb2_command_string[SMB2_COM_SET_INFO]);
             dce2_smb_stats.v2_stinf_req_hdr_err++;
         }
     }
     else if (structure_size != SMB2_SET_INFO_RESPONSE_STRUC_SIZE)
     {
+        debug_logf(dce_smb_trace, nullptr, "%s: invalid struct size\n",
+            smb2_command_string[SMB2_COM_SET_INFO]);
         dce2_smb_stats.v2_stinf_inv_str_sz++;
     }
 }
@@ -527,6 +593,8 @@ static void DCE2_Smb2ReadRequest(DCE2_Smb2SsnData* ssd,
     }
     else
     {
+        debug_logf(dce_smb_trace, nullptr, "%s_REQ: max req exceeded\n",
+            smb2_command_string[SMB2_COM_READ]);
         dce_alert(GID_DCE2, DCE2_SMB_MAX_REQS_EXCEEDED, (dce2CommonStats*)&dce2_smb_stats,
             ssd->sd);
         return;
@@ -541,6 +609,8 @@ static void DCE2_Smb2ReadRequest(DCE2_Smb2SsnData* ssd,
 
     if (ftracker->file_size and (offset > ftracker->file_size))
     {
+        debug_logf(dce_smb_trace, nullptr, "%s_REQ: invalid file offset\n",
+            smb2_command_string[SMB2_COM_READ]);
         dce_alert(GID_DCE2, DCE2_SMB_INVALID_FILE_OFFSET, (dce2CommonStats*)&dce2_smb_stats,
             ssd->sd);
     }
@@ -562,12 +632,16 @@ static void DCE2_Smb2ReadResponse(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     request = ttr->findRtracker(message_id);
     if (!request)
     {
+        debug_logf(dce_smb_trace, nullptr, "%s_RESP: request tracker missing\n",
+            smb2_command_string[SMB2_COM_READ]);
         dce2_smb_stats.v2_read_rtrkr_misng++;
         return;
     }
     data_offset = alignedNtohs((const uint16_t*)(&(smb_read_hdr->data_offset)));
     if (data_offset + (const uint8_t*)smb_hdr > end)
     {
+        debug_logf(dce_smb_trace, nullptr, "%s_RESP: bad offset\n",
+            smb2_command_string[SMB2_COM_READ]);
         dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
     }
 
@@ -610,26 +684,30 @@ void DCE2_Smb2Read(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         }
         ttr->removeRtracker(mid);
         dce2_smb_stats.v2_read_err_resp++;
+        debug_logf(dce_smb_trace, nullptr, "%s_RESP: error\n",
+            smb2_command_string[SMB2_COM_WRITE]);
     }
     // Using structure size to decide whether it is response or request
     else if (structure_size == SMB2_READ_REQUEST_STRUC_SIZE)
     {
         SMB2_CHECK_HDR_ERROR(
             smb_data, end, SMB2_READ_REQUEST_STRUC_SIZE - 1,
-            dce2_smb_stats.v2_read_req_hdr_err)
+            dce2_smb_stats.v2_read_req_hdr_err, SMB2_COM_READ)
         DCE2_Smb2ReadRequest(ssd, (const Smb2ReadRequestHdr*)smb_data, end, str, ttr, mid);
     }
     else if (structure_size == SMB2_READ_RESPONSE_STRUC_SIZE)
     {
         SMB2_CHECK_HDR_ERROR(
             smb_data, end, SMB2_READ_RESPONSE_STRUC_SIZE - 1,
-            dce2_smb_stats.v2_read_resp_hdr_err)
+            dce2_smb_stats.v2_read_resp_hdr_err, SMB2_COM_READ)
 
         DCE2_Smb2ReadResponse(ssd, smb_hdr, (const Smb2ReadResponseHdr*)smb_data, end, ttr, mid);
     }
     else
     {
         dce2_smb_stats.v2_read_inv_str_sz++;
+        debug_logf(dce_smb_trace, nullptr, "%s: invalid struct size\n",
+            smb2_command_string[SMB2_COM_WRITE]);
     }
 }
 
@@ -659,6 +737,8 @@ static void DCE2_Smb2WriteRequest(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     }
     else
     {
+        debug_logf(dce_smb_trace, nullptr, "%s_REQ: max req exceeded\n",
+            smb2_command_string[SMB2_COM_WRITE]);
         dce_alert(GID_DCE2, DCE2_SMB_MAX_REQS_EXCEEDED, (dce2CommonStats*)&dce2_smb_stats,
             ssd->sd);
         return;
@@ -667,6 +747,8 @@ static void DCE2_Smb2WriteRequest(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     data_offset = alignedNtohs((const uint16_t*)(&(smb_write_hdr->data_offset)));
     if (data_offset + (const uint8_t*)smb_hdr > end)
     {
+        debug_logf(dce_smb_trace, nullptr, "%s_REQ: bad offset\n",
+            smb2_command_string[SMB2_COM_WRITE]);
         dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
     }
 
@@ -714,13 +796,15 @@ void DCE2_Smb2Write(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         }
         ttr->removeRtracker(mid);
         dce2_smb_stats.v2_wrt_err_resp++;
+        debug_logf(dce_smb_trace, nullptr, "%s_RESP: error\n",
+            smb2_command_string[SMB2_COM_WRITE]);
     }
     // Using structure size to decide whether it is response or request
     else if (structure_size == SMB2_WRITE_REQUEST_STRUC_SIZE)
     {
         SMB2_CHECK_HDR_ERROR(
             smb_data, end, SMB2_WRITE_REQUEST_STRUC_SIZE - 1,
-            dce2_smb_stats.v2_wrt_req_hdr_err)
+            dce2_smb_stats.v2_wrt_req_hdr_err, SMB2_COM_WRITE)
         DCE2_Smb2WriteRequest(ssd, smb_hdr, (const Smb2WriteRequestHdr*)smb_data, end, str, ttr,
             mid);
     }
@@ -730,6 +814,8 @@ void DCE2_Smb2Write(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     }
     else
     {
+        debug_logf(dce_smb_trace, nullptr, "%s: invalid struct size\n",
+            smb2_command_string[SMB2_COM_WRITE]);
         dce2_smb_stats.v2_wrt_inv_str_sz++;
     }
 }
@@ -752,6 +838,8 @@ void DCE2_Smb2Logoff(DCE2_Smb2SsnData* ssd, const uint8_t* smb_data,
     }
     else
     {
+        debug_logf(dce_smb_trace, nullptr, "%s: invalid struct size\n",
+            smb2_command_string[SMB2_COM_LOGOFF]);
         dce2_smb_stats.v2_logoff_inv_str_sz++;
     }
 }

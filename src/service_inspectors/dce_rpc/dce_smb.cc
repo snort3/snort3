@@ -26,8 +26,9 @@
 
 #include "detection/detection_engine.h"
 #include "file_api/file_service.h"
-#include "protocols/packet.h"
+#include "main/snort_debug.h"
 #include "managers/inspector_manager.h"
+#include "protocols/packet.h"
 
 #include "dce_context_data.h"
 #include "dce_smb_commands.h"
@@ -380,11 +381,13 @@ void Dce2Smb::eval(Packet* p)
         {
             //1st packet of flow in smb1 session, create smb1 session and flowdata
             dce2_smb_sess = dce2_create_new_smb_session(p, &config);
+            debug_logf(dce_smb_trace, nullptr, "smb1 session created\n");
         }
         else if (DCE2_SMB_VERSION_2 == smb_version)
         {
             //1st packet of flow in smb2 session, create smb2 session and flowdata
             dce2_smb2_sess = dce2_create_new_smb2_session(p, &config);
+            debug_logf(dce_smb_trace, nullptr, "smb2 session created\n");
         }
         else
         {
@@ -392,6 +395,7 @@ void Dce2Smb::eval(Packet* p)
             //This means there is no flow data and this is not an SMB packet
             //if it is a TCP packet for smb data, the flow must have been 
             //already identified with version.
+            debug_logf(dce_smb_trace, nullptr, "non-smb packet detected\n");
             return;
         }
     }

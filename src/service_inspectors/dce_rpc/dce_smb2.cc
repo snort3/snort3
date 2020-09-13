@@ -31,6 +31,27 @@
 
 using namespace snort;
 
+const char* smb2_command_string[SMB2_COM_MAX] = {
+    "SMB2_COM_NEGOTIATE",
+    "SMB2_COM_SESSION_SETUP",
+    "SMB2_COM_LOGOFF",
+    "SMB2_COM_TREE_CONNECT",
+    "SMB2_COM_TREE_DISCONNECT",
+    "SMB2_COM_CREATE",
+    "SMB2_COM_CLOSE",
+    "SMB2_COM_FLUSH",
+    "SMB2_COM_READ",
+    "SMB2_COM_WRITE",
+    "SMB2_COM_LOCK",
+    "SMB2_COM_IOCTL",
+    "SMB2_COM_CANCEL",
+    "SMB2_COM_ECHO",
+    "SMB2_COM_QUERY_DIRECTORY",
+    "SMB2_COM_CHANGE_NOTIFY",
+    "SMB2_COM_QUERY_INFO",
+    "SMB2_COM_SET_INFO",
+    "SMB2_COM_OPLOCK_BREAK"};
+
 static inline SmbFlowKey get_flow_key(void)
 {
     SmbFlowKey key;
@@ -57,11 +78,45 @@ static inline SmbFlowKey get_flow_key(void)
     return key;
 }
 
+DCE2_Smb2RequestTracker::DCE2_Smb2RequestTracker(uint64_t file_id_v,
+    uint64_t offset_v) : file_id(file_id_v), offset(offset_v)
+{
+    debug_logf(dce_smb_trace, nullptr, "request tracker created\n");
+    memory::MemoryCap::update_allocations(sizeof(*this));
+}
+
+DCE2_Smb2RequestTracker::DCE2_Smb2RequestTracker(char* fname_v,
+    uint16_t fname_len_v) : fname(fname_v), fname_len(fname_len_v)
+{
+    debug_logf(dce_smb_trace, nullptr, "request tracker created\n");
+    memory::MemoryCap::update_allocations(sizeof(*this));
+}
+
+DCE2_Smb2RequestTracker::~DCE2_Smb2RequestTracker()
+{
+    debug_logf(dce_smb_trace, nullptr, "request tracker terminating\n");
+    if (!file_id and fname)
+        snort_free(fname);
+    memory::MemoryCap::update_deallocations(sizeof(*this));
+}
+
+DCE2_Smb2FileTracker::DCE2_Smb2FileTracker(uint64_t file_id_v, DCE2_Smb2TreeTracker* ttr_v,
+    DCE2_Smb2SessionTracker* str_v) : file_id(file_id_v), ttr(ttr_v), str(str_v)
+{   
+    debug_logf(dce_smb_trace, nullptr, "file tracker %" PRIu64 " created\n", file_id);
+    memory::MemoryCap::update_allocations(sizeof(*this));
+}
+
 DCE2_Smb2FileTracker::~DCE2_Smb2FileTracker(void)
 {
+    debug_logf(dce_smb_trace, nullptr,
+        "file tracker %" PRIu64 " file name hash %" PRIu64 " terminating\n",
+         file_id, file_name_hash);
     FileFlows* file_flows = FileFlows::get_file_flows(DetectionEngine::get_current_packet()->flow);
     if (file_flows)
+    {
         file_flows->remove_processed_file_context(file_name_hash, file_id);
+    }
 
     if (file_name)
         snort_free((void*)file_name);
@@ -69,8 +124,39 @@ DCE2_Smb2FileTracker::~DCE2_Smb2FileTracker(void)
     memory::MemoryCap::update_deallocations(sizeof(*this));
 }
 
+DCE2_Smb2TreeTracker::DCE2_Smb2TreeTracker (uint32_t tid_v, uint8_t share_type_v) :
+    share_type(share_type_v), tid(tid_v)
+{
+    debug_logf(dce_smb_trace, nullptr, "tree tracker %" PRIu32 " created\n", tid);
+    memory::MemoryCap::update_allocations(sizeof(*this));
+}
+
+DCE2_Smb2TreeTracker::~DCE2_Smb2TreeTracker(void)
+{
+    debug_logf(dce_smb_trace, nullptr, "tree tracker %" PRIu32 " terminating\n", tid);
+
+    auto all_req_trackers = req_trackers.get_all_entry();
+    if (all_req_trackers.size())
+    {
+        debug_logf(dce_smb_trace, nullptr, "cleanup pending requests for below MIDs:\n");
+        for ( auto& h : all_req_trackers )
+        {
+            debug_logf(dce_smb_trace, nullptr, "mid %" PRIu64 "\n", h.first);
+            removeRtracker(h.first);
+        } 
+    } 
+    memory::MemoryCap::update_deallocations(sizeof(*this));
+}
+
+DCE2_Smb2SessionTracker::DCE2_Smb2SessionTracker()
+{
+    debug_logf(dce_smb_trace, nullptr, "session tracker %" PRIu64 " created\n", session_id);
+    memory::MemoryCap::update_allocations(sizeof(*this));
+}
+
 DCE2_Smb2SessionTracker::~DCE2_Smb2SessionTracker(void)
 {
+    debug_logf(dce_smb_trace, nullptr, "session tracker %" PRIu64 " terminating\n", session_id);
     removeSessionFromAllConnection();
     memory::MemoryCap::update_deallocations(sizeof(*this));
 }
@@ -127,6 +213,9 @@ static void DCE2_Smb2Inspect(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     uint64_t sid = Smb2Sid(smb_hdr);
     uint32_t tid = Smb2Tid(smb_hdr);
 
+    debug_logf(dce_smb_trace, nullptr, "%s : mid %" PRIu64 " sid %" PRIu64 " tid %" PRIu32 "\n",
+        (command <= SMB2_COM_OPLOCK_BREAK ? smb2_command_string[command] : "unknown"),
+        mid, sid, tid);
     switch (command)
     {
     case SMB2_COM_CREATE:
@@ -220,6 +309,7 @@ void DCE2_Smb2Process(DCE2_Smb2SsnData* ssd)
     if (data_len < sizeof(NbssHdr) + SMB2_HEADER_LENGTH)
     {
         dce2_smb_stats.v2_hdr_err++;
+        debug_logf(dce_smb_trace, nullptr, "Header error with data length %d\n",data_len);
         return;
     }
 
@@ -246,6 +336,7 @@ void DCE2_Smb2Process(DCE2_Smb2SsnData* ssd)
             {
                 dce_alert(GID_DCE2, DCE2_SMB_BAD_NEXT_COMMAND_OFFSET,
                     (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
+                debug_logf(dce_smb_trace, nullptr, "bad next command offset\n");
                 dce2_smb_stats.v2_bad_next_cmd_offset++;
                 return;
             }
@@ -258,6 +349,8 @@ void DCE2_Smb2Process(DCE2_Smb2SsnData* ssd)
             if (compound_request_index > DCE2_ScSmbMaxCompound((dce2SmbProtoConf*)ssd->sd.config))
             {
                 dce2_smb_stats.v2_cmpnd_req_lt_crossed++;
+                debug_logf(dce_smb_trace, nullptr, "compound req limit reached %" PRIu8 "\n",
+                    compound_request_index);
                 return;
             }
         }
@@ -267,8 +360,9 @@ void DCE2_Smb2Process(DCE2_Smb2SsnData* ssd)
         DCE2_SMB_PDU_STATE__RAW_DATA))
     {
         debug_logf(dce_smb_trace, nullptr,
-            "processing raw data file_name_hash %" PRIu64 " fid %" PRIu64 "\n",
-            ssd->ftracker_tcp->file_name_hash, ssd->ftracker_tcp->file_id);
+            "raw data file_name_hash %" PRIu64 " fid %" PRIu64 " dir %s\n",
+            ssd->ftracker_tcp->file_name_hash, ssd->ftracker_tcp->file_id,
+            ssd->ftracker_tcp->upload ? "upload" : "download");
 
         if (!DCE2_Smb2ProcessFileData(ssd, data_ptr, data_len))
             return;

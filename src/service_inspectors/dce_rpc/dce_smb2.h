@@ -98,24 +98,9 @@ public:
     DCE2_Smb2RequestTracker(const DCE2_Smb2RequestTracker& arg) = delete;
     DCE2_Smb2RequestTracker& operator=(const DCE2_Smb2RequestTracker& arg) = delete;
 
-    DCE2_Smb2RequestTracker(uint64_t file_id_v, uint64_t offset_v = 0) :
-        file_id(file_id_v), offset(offset_v)
-    {
-        memory::MemoryCap::update_allocations(sizeof(*this));
-    }
-
-    DCE2_Smb2RequestTracker(char* fname_v, uint16_t fname_len_v) :
-        fname(fname_v), fname_len(fname_len_v)
-    {
-        memory::MemoryCap::update_allocations(sizeof(*this));
-    }
-
-    ~DCE2_Smb2RequestTracker()
-    {
-        if (!file_id and fname)
-            snort_free(fname);
-        memory::MemoryCap::update_deallocations(sizeof(*this));
-    }
+    DCE2_Smb2RequestTracker(uint64_t file_id_v, uint64_t offset_v = 0);
+    DCE2_Smb2RequestTracker(char* fname_v, uint16_t fname_len_v);
+    ~DCE2_Smb2RequestTracker();
 
     uint64_t get_offset()
     {
@@ -153,12 +138,7 @@ public:
     DCE2_Smb2FileTracker& operator=(const DCE2_Smb2FileTracker& arg) = delete;
 
     DCE2_Smb2FileTracker(uint64_t file_id_v, DCE2_Smb2TreeTracker* ttr_v,
-         DCE2_Smb2SessionTracker* str_v) : file_id(file_id_v), ttr(ttr_v),
-         str(str_v)
-    {
-        memory::MemoryCap::update_allocations(sizeof(*this));
-    }
-
+         DCE2_Smb2SessionTracker* str_v);
     ~DCE2_Smb2FileTracker();
 
     bool ignore = false;
@@ -185,16 +165,8 @@ public:
     DCE2_Smb2TreeTracker(const DCE2_Smb2TreeTracker& arg) = delete;
     DCE2_Smb2TreeTracker& operator=(const DCE2_Smb2TreeTracker& arg) = delete;
 
-    DCE2_Smb2TreeTracker (uint32_t tid_v, uint8_t share_type_v) : share_type(
-            share_type_v), tid(tid_v)
-    {
-        memory::MemoryCap::update_allocations(sizeof(*this));
-    }
-
-    ~DCE2_Smb2TreeTracker()
-    {
-        memory::MemoryCap::update_deallocations(sizeof(*this));
-    }
+    DCE2_Smb2TreeTracker (uint32_t tid_v, uint8_t share_type_v);
+    ~DCE2_Smb2TreeTracker();
 
     // File Tracker
     DCE2_Smb2FileTracker* findFtracker(uint64_t file_id)
@@ -369,8 +341,7 @@ class DCE2_Smb2SessionTracker
 {
 public:
 
-    DCE2_Smb2SessionTracker() { memory::MemoryCap::update_allocations(sizeof(*this)); }
-
+    DCE2_Smb2SessionTracker();
     ~DCE2_Smb2SessionTracker();
 
     void removeSessionFromAllConnection();
@@ -470,6 +441,7 @@ struct DCE2_Smb2SsnData
 #define SMB2_COM_QUERY_INFO       0x10
 #define SMB2_COM_SET_INFO         0x11
 #define SMB2_COM_OPLOCK_BREAK     0x12
+#define SMB2_COM_MAX              0x13
 
 struct Smb2WriteRequestHdr
 {
@@ -657,6 +629,7 @@ struct Smb2SetupResponseHdr
 
 #define SMB2_LOGOFF_REQUEST_STRUC_SIZE 4
 
+extern const char* smb2_command_string[SMB2_COM_MAX];
 /* Process smb2 message */
 void DCE2_Smb2Process(DCE2_Smb2SsnData* ssd);
 
