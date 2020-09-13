@@ -1,3 +1,87 @@
+2020/09/13 - 3.0.2 build 6
+
+-- active: Remove per packet prevent trust action
+-- appid: Add check for nullptr before setting tls host
+-- appid: Clear services set in host attribute table upon detector reload
+-- appid: Detect SMTP after decryption
+-- appid: Dump user appid configuration on reload detectors
+-- appid: Generate events for service info changes
+-- appid: Pass snort protocol id instead of appid while creating future flow
+-- appid: Reorder third-party reload to keep only one handle open at a time
+-- appid: Send swap response for reload_odp and reload_third_party commands in control thread
+-- appid: Set payload to unknown for out-of-order flows
+-- appid: Skip detection for existing sessions after detector reload; rename reload_odp command to
+   reload_detectors
+-- appid: Support json logging in appid_listener
+-- appid: Update appid stats for decrypted flows
+-- appid: Update appid warning messages to print module name in lowercase
+-- build: Fix minor cppcheck warnings
+-- build: Updates for libdaq changes to interface group field width and naming
+-- byte_jump: Fix jump relative to extracted length w/o relative offset
+-- cmake: Restore accidentally removed caching of static DAQ modules
+-- dce_rpc: Introduce smb2 logs
+-- doc: Update the config dump in JSON format (all policies)
+-- doc: Update the config dump in JSON format (main policy)
+-- doc: Update trace.txt with info about 'trace.modules.all' option
+-- dump_config: Add --dump-config="top" to dump the main policy config only
+-- dump_config: Dump config in JSON format to stdout
+-- file_api: Increase default max_files_per_flow limit to 128
+-- flow: Add a deferred trust class to allow plugins to defer trusting sessions
+-- flow: Disabled inspection for FlowState::RESET
+-- flow: Reset the flow before removing
+-- helpers: Add unit tests for special characters escaping
+-- helpers: Fix build on systems without sigaction
+-- helpers: Rework DiscoveryFilter to monitor IP lists based on interface rather than group
+-- helpers: Use sig_t instead of sighandler_t for better BSD compatibility
+-- host_tracker: Fix allocator unit test to work on 32-bit systems again
+-- http2_inspect: Convert circular_array to std:vector
+-- http2_inspect: Fix continuation frame check
+-- http2_inspect: Fix hpack dynamic table init
+-- http2_inspect: Prepare http2_inspect and http_inspect for HTTP/2 trailers
+-- http2_inspect: Refactor hpack decoding and send trailer to http_inspect for processing
+-- http_inspect: Declare get_type_expected const
+-- http_inspect: Don't use the URL to cache file verdicts for uploads
+-- http_inspect: Script detection
+-- http_inspect: Script detection and concurrency fixes
+-- http_inspect: Support hyperscan literal search for accelerated blocking
+-- http_method: Make available for fast pattern with first body section
+-- imap: Publish OPPORTUNISTIC_TLS_EVENT on successfull completion on START_TLS, add a new state to
+   avoid publishing start_tls events multiple times
+-- ips_options: Ensure all options use base class hash and compare methods
+-- ips: Use the policies in the flow when creating pseudo packet
+-- main: Turn off signal handlers later to catch more during snort shutdown
+-- managers: Immediately stop executing inspectors when inspection is disabled
+-- mime: Fix off-by-1 error with filename and email id capture
+-- mime: Minor code cleanup
+-- netflow: Introduce netflow as a service inspector
+-- packet_io: Added reason for ActiveStatus WOULD
+-- packet_io: Do not allow trust unless the action is allow or trust
+-- payload_injector: Assume http1, if packet does not have a gadget
+-- payload_injector: Fix warning
+-- payload_injector: Support http2 injection
+-- payload_injector: Support translation of header field value with length > 127
+-- perf_monitor: Convert the perf_monitor inspector configure warnings to errors
+-- pop: Publish start_tls events, support for ssl search abandoned
+-- reputation: Change from group-based to interface-based IP lists
+-- rna: Add protocols on logging host trackers
+-- rna: Implement update_timeout for MAC hosts
+-- rna: Remove dependency on uuid library
+-- rna: Remove redefinition of USHRT_MAX
+-- rna: Removing unused command and exporting swapper
+-- rna: Support client discovery from appid event changes
+-- rna: Support service discovery from appid event changes
+-- rna: Tcp fingerprints configuration, storage, matching and event generation
+-- snort2lua: Remove obsolete and unused code
+-- snort2lua: Remove unused unit test files
+-- snort: Address fatal shutdown stability issues
+-- stream_ip: Fix zero fragment built-in rule triggering for some reassembly policies
+-- style: Replace some tabs that snuck in with proper spaces
+-- tests: Fix the majority of memory leaks in CppUTest unit tests
+-- trace: Add support for modules.all option
+-- trace: Update loggers to support extended output with n-tuple packet info
+-- utils: Add sys/time.h to util.h for struct timeval definition
+-- wizard: Fix the error message about invalid pattern
+
 2020/08/12 - 3.0.2 build 5
 
 -- cip: Fix the trailing parameter for the module

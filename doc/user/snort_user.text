@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.0.2 (Build 5) 2020-08-12 08:28:19 EDT TST
+Revision 3.0.2 (Build 6) 2020-09-13 14:48:01 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -2416,63 +2416,301 @@ byte_test:4,>,200,36;
 
 --------------
 
-Using Consolidated Config output enables troubleshooting of
-configuration issues. The output contains applied configurations (
-defaults and configured ) and is printed for the main config and all
-included policies. So far, Snort supports output in text format.
+Config dump mode generates a consolidated dump of the config passed
+to Snort. This output consists of the configured values as well as
+the module defaults for the values that aren’t configured.
+
+In the dump mode Snort validates the config (similar to option -T)
+and suppresses unrelated messages going to stdout (configuration
+warnings and errors are still printed to stderr).
+
+The dump mode is activated by the following options:
+--dump-config-text, --dump-config=all, --dump-config=top. They are
+described in detail below.
+
+The simple configuration is used in examples. The output contains
+applied configurations (defaults and configured). To simplify the
+output we show a brief list of default options.
+
+snort.lua
+
+stream =
+{
+    max_flows = 2
+}
+
+stream_tcp =
+{
+    show_rebuilt_packets = true
+}
+
+binder =
+{
+    { when = { nets = '10.1.2.0/24' }, use = { inspection_policy = 'http.lua' } },
+    { when = { nets = '192.168.2.0/24' }, use = { inspection_policy = 'sip.lua' } },
+}
+
+http.lua
+
+wizard =
+{
+    spells =
+    {
+        { service = 'http', proto = 'tcp', client_first = true, to_server = { 'GET' }, to_client = { 'HTTP/' } },
+    }
+}
+
+sip.lua
+
+wizard =
+{
+    spells =
+    {
+        { service = 'sip', to_server = { 'INVITE' } },
+    }
+}
 
 5.5.1. Text Format
 
 The --dump-config-text option verifies the configuration and dumps it
-to stdout in text format.
+to stdout in text format. The output contains a config of the main
+policy and all other included sub-policies.
 
-Example:
+Example: snort -c snort.lua --dump-config-text
 
 consolidated config for snort.lua
+alerts.order="pass reset block drop alert log"
+alerts.rate_filter_memcap=1048576
 binder[0].when.ips_policy_id=0
-binder[0].when.role='any'
-binder[0].when.nets='10.1.2.0/24'
-binder[0].use.action='inspect'
+binder[0].when.role="any"
+binder[0].when.nets="10.1.2.0/24"
+binder[0].use.action="inspect"
+binder[0].use.inspection_policy="http.lua"
 binder[1].when.ips_policy_id=0
-binder[1].when.role='any'
-binder[1].when.nets='192.168.2.0/24'
-binder[1].use.action='inspect'
-host_cache.memcap=8.38861e+06
-network.checksum_drop='none'
-network.checksum_eval='all'
-network.max_ip_layers=0
-process.daemon=false
-process.dirty_pig=false
-process.utc=false
-stream_tcp.flush_factor=0
-stream_tcp.max_window=0
-stream_tcp.overlap_limit=0
-stream_tcp.max_pdu=16384
-stream.footprint=0
-stream.ip_frags_only=false
-trace.modules.appid.all=1
-trace.modules.detection.opt_tree=2
-trace.modules.detection.fp_search=4
-trace.modules.detection.rule_eval=1
-trace.modules.wizard.all=1
-trace.constraints.match=true
-trace.constraints.dst_ip='10.1.1.2'
-trace.constraints.dst_port=200
-trace.constraints.src_port=100
-trace.constraints.ip_proto=17
-trace.output='stdout'
-wizard.spells[0].proto='tcp'
+binder[1].when.role="any"
+binder[1].when.nets="192.168.2.0/24"
+binder[1].use.action="inspect"
+binder[1].use.inspection_policy="sip.lua"
+output.obfuscate=false
+output.wide_hex_dump=true
+packets.address_space_agnostic=false
+packets.limit=0
+search_engine.split_any_any=true
+search_engine.queue_limit=128
+stream.file_cache.idle_timeout=180
+stream.file_cache.cap_weight=32
+stream.max_flows=2
+stream_tcp.small_segments.maximum_size=0
+stream_tcp.session_timeout=30
+stream_tcp.track_only=false
+stream_tcp.show_rebuilt_packets=true
+consolidated config for http.lua
+wizard.spells[0].proto="tcp"
 wizard.spells[0].client_first=true
-wizard.spells[0].service='http'
-wizard.spells[0].to_client[0].spell='HTTP/'
-wizard.spells[0].to_server[0].spell='GET'
-wizard.spells[1].proto='tcp'
-wizard.spells[1].client_first=true
-wizard.spells[1].service='sip'
-wizard.spells[1].to_server[0].spell='INVITE'
+wizard.spells[0].service="http"
+wizard.spells[0].to_client[0].spell="HTTP/"
+wizard.spells[0].to_server[0].spell="GET"
+consolidated config for sip.lua
+wizard.spells[0].proto="tcp"
+wizard.spells[0].client_first=true
+wizard.spells[0].service="sip"
+wizard.spells[0].to_server[0].spell="INVITE"
 
 For lists, the index next to the option name designates an element
 parsing order.
+
+5.5.2. JSON Format
+
+The --dump-config=all command-line option verifies the configuration
+and dumps it to stdout in JSON format. The output contains a config
+of the main policy and all other included sub-policies. Snort dumps
+output in a one-line format.
+
+There is 3rd party tool jq for converting to a pretty printed format.
+
+Example: snort -c snort.lua --dump-config=all | jq .
+
+[
+    {
+        "filename": "snort.lua",
+        "config": {
+        "alerts": {
+            "order": "pass reset block drop alert log",
+            "rate_filter_memcap": 1048576
+        },
+        "binder": [
+            {
+            "when": {
+                "ips_policy_id": 0,
+                "role": "any",
+                "nets": "10.1.2.0/24"
+            },
+            "use": {
+                "action": "inspect",
+                "inspection_policy": "http.lua"
+            }
+            },
+            {
+            "when": {
+                "ips_policy_id": 0,
+                "role": "any",
+                "nets": "192.168.2.0/24"
+            },
+            "use": {
+                "action": "inspect",
+                "inspection_policy": "sip.lua"
+            }
+            }
+        ],
+        "output": {
+            "obfuscate": false,
+            "wide_hex_dump": true
+        },
+        "packets": {
+            "address_space_agnostic": false,
+            "limit": 0
+        },
+        "process": {
+            "daemon": false,
+            "dirty_pig": false,
+            "utc": false
+        },
+        "search_engine": {
+            "split_any_any": true,
+            "queue_limit": 128
+        },
+        "stream": {
+            "file_cache": {
+            "idle_timeout": 180,
+            "cap_weight": 32
+            },
+            "max_flows": 2
+        },
+        "stream_tcp": {
+            "small_segments": {
+                "maximum_size": 0
+            },
+            "session_timeout": 30,
+            "track_only": false,
+            "show_rebuilt_packets": true
+        }
+        }
+    },
+    {
+        "filename": "http.lua",
+        "config": {
+        "wizard": {
+            "spells": [
+            {
+                "proto": "tcp",
+                "client_first": true,
+                "service": "http",
+                "to_client": [
+                {
+                    "spell": "HTTP/"
+                }
+                ],
+                "to_server": [
+                {
+                    "spell": "GET"
+                }
+                ]
+            }
+            ]
+        }
+        }
+    },
+    {
+        "filename": "sip.lua",
+        "config": {
+        "wizard": {
+            "spells": [
+            {
+                "proto": "tcp",
+                "client_first": true,
+                "service": "sip",
+                "to_server": [
+                {
+                    "spell": "INVITE"
+                }
+                ]
+            }
+            ]
+        }
+        }
+    }
+]
+
+The --dump-config=top command-line option is similar to --dump-config
+=all, except it produces dump for the main policy only. It verifies
+the configuration and dumps the main policy configuration to stdout
+in JSON format.
+
+Example: snort -c snort.lua --dump-config=top | jq .
+
+{
+    "alerts": {
+        "order": "pass reset block drop alert log",
+        "rate_filter_memcap": 1048576,
+    },
+    "binder": [
+        {
+            "when": {
+                "ips_policy_id": 0,
+                "role": "any",
+                "nets": "10.1.2.0/24"
+            },
+            "use": {
+                "action": "inspect",
+                "inspection_policy": "http.lua"
+            }
+        },
+        {
+            "when": {
+                "ips_policy_id": 0,
+                "role": "any",
+                "nets": "192.168.2.0/24"
+            },
+            "use": {
+                "action": "inspect",
+                "inspection_policy": "sip.lua"
+            }
+        }
+    ],
+    "output": {
+        "obfuscate": false,
+        "wide_hex_dump": true
+    },
+    "packets": {
+        "address_space_agnostic": false,
+        "limit": 0,
+    },
+    "process": {
+        "daemon": false,
+        "dirty_pig": false,
+        "utc": false
+    },
+    "search_engine": {
+        "split_any_any": true,
+        "queue_limit": 128
+    },
+    "stream": {
+        "file_cache": {
+            "idle_timeout": 180,
+            "cap_weight": 32
+        }
+        "max_flows": 2
+    },
+    "stream_tcp": {
+        "small_segments": {
+            "count": 0,
+            "maximum_size": 0
+        },
+        "session_timeout": 30,
+        "track_only": false,
+        "show_rebuilt_packets": true
+    },
+}
 
 
 5.6. DCE Inspectors
@@ -3562,7 +3800,18 @@ mode operation (-Q).
 This feature is off by default. detained_inspection = true will
 activate it.
 
-5.10.2.3. gzip
+5.10.2.3. script_detection
+
+Script detection is an alternative to detained inspection. When
+http_inspect detects the end of a script it immediately forwards the
+available part of the message body for early detection. This enables
+malicious Javascripts to be detected more quickly but consumes
+somewhat more of the sensor’s resources.
+
+This feature is off by default. script_detection = true will activate
+it.
+
+5.10.2.4. gzip
 
 http_inspect by default decompresses deflate and gzip message bodies
 before inspecting them. This feature can be turned off by unzip =
@@ -3571,14 +3820,14 @@ improvement but at a very high price. It is unlikely that any
 meaningful inspection of message bodies will be possible. Effectively
 HTTP processing would be limited to the headers.
 
-5.10.2.4. normalize_utf
+5.10.2.5. normalize_utf
 
 http_inspect will decode utf-8, utf-7, utf-16le, utf-16be, utf-32le,
 and utf-32be in response message bodies based on the Content-Type
 header. This feature is on by default: normalize_utf = false will
 deactivate it.
 
-5.10.2.5. decompress_pdf
+5.10.2.6. decompress_pdf
 
 decompress_pdf = true will enable decompression of compressed
 portions of PDF files encountered in a response body. http_inspect
@@ -3587,7 +3836,7 @@ locate PDF streams with a single /FlateDecode filter. The compressed
 content is decompressed and made available through the file data rule
 option.
 
-5.10.2.6. decompress_swf
+5.10.2.7. decompress_swf
 
 decompress_swf = true will enable decompression of compressed SWF
 (Adobe Flash content) files encountered in a response body. The
@@ -3597,7 +3846,7 @@ LZMA. The compressed content is decompressed and made available
 through the file data rule option. The compressed SWF file signature
 is converted to FWS to indicate an uncompressed file.
 
-5.10.2.7. normalize_javascript
+5.10.2.8. normalize_javascript
 
 normalize_javascript = true will enable normalization of JavaScript
 within the HTTP response body. http_inspect looks for JavaScript by
@@ -3609,7 +3858,7 @@ decodeURIComponent are %XX, %uXXXX, XX and uXXXXi. http_inspect also
 replaces consecutive whitespaces with a single space and normalizes
 the plus by concatenating the strings.
 
-5.10.2.8. URI processing
+5.10.2.9. URI processing
 
 Normalization and inspection of the URI in the HTTP request message
 is a key aspect of what http_inspect does. The best way to normalize
@@ -4962,10 +5211,13 @@ the following parameters:
 output - configure the output method for trace messages
 modules - trace configuration for specific modules
 constraints - filter traces by the packet constraints
+log_ntuple - on/off packet n-tuple info logging
 
 The following lines, added in snort.lua, will enable trace messages
 for detection and codec modules. The messages will be printed to
-syslog if the packet filtering constraints match.
+syslog if the packet filtering constraints match. Messages will be in
+extended format, including n-tuple packet info at the beginning of
+each trace message.
 
 trace =
 {
@@ -4981,7 +5233,8 @@ trace =
         dst_ip = "10.1.1.2",
         src_port = 100,
         dst_port = 200
-    }
+    },
+    log_ntuple = true
 }
 
 The trace module supports config reloading. Also, it’s possible to
@@ -5026,6 +5279,26 @@ trace =
         detection = { all = 1, tag = 2 }  -- set each detection option to level 1 but the 'tag' to level 2
     }
 }
+
+Also, it’s possible to enable or disable traces for all modules with
+a top-level all option.
+
+The following configuration states that:
+
+  * all traces are enabled with verbosity level 5
+  * traces for the decode module are enabled with level 3
+  * rule_eval traces for the detection module are enabled with level
+    1
+
+    trace =
+    {
+        modules =
+        {
+            all = 5,
+            decode = { all = 3 },
+            detection = { rule_eval = 1 }
+        }
+    }
 
 The full list of available trace parameters is placed into the "Basic
 Modules.trace" chapter.
@@ -5145,10 +5418,17 @@ The trace control channel command is a way how to configure module
 trace options and/or packet filter constraints directly during Snort
 run and without reloading the entire config.
 
+Control channel also allow adjusting trace output format by setting
+log_ntuple switcher.
+
 After entering the Snort shell, there are two commands available for
 the trace module:
 
 trace.set({ modules = {...}, constraints = {...} }) - set modules traces and constraints (should pass a valid Lua-entry)
+
+trace.set({ modules = { all = N } }) - enable traces for all modules with verbosity level N
+
+trace.set({ log_ntuple = true/false }) - on/off packet n-tuple info logging
 
 trace.clear() - clear modules traces and constraints
 
@@ -5174,6 +5454,27 @@ the thread type.
 
 Possible thread types: C – main (control) thread P – packet thread O
 – other thread
+
+Setting the option - log_ntuple allows you to change the trace
+message format, expanding it with information about the processed
+packet.
+
+It will be added at the beginning, right after the thread type and
+instance ID, in the following format:
+
+src_ip src_port -> dst_ip dst_port ip_proto AS=address_space
+
+Where:
+
+src_ip - source IP address
+src_port - source port
+dst_ip - destination IP address
+dst_port - destination port
+ip_proto - IP protocol ID
+address_space - unique ID of the address space
+
+Those info can be displayed only for IP packets. Port defaults to
+zero if a packet doesn’t have it.
 
 5.18.7. Example - Debugging rules using detection trace
 

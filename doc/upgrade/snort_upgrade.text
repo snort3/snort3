@@ -8,7 +8,7 @@ Snort 3 Upgrade Manual
 The Snort Team
 
 Revision History
-Revision 3.0.2 (Build 5) 2020-08-12 08:28:19 EDT TST
+Revision 3.0.2 (Build 6) 2020-09-13 14:48:01 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -928,7 +928,6 @@ change -> http_inspect_server: 'utf_8' ==> 'utf8'
 change -> imap: 'ports' ==> 'bindings'
 change -> modbus: 'ports' ==> 'bindings'
 change -> na_policy_mode: 'na_policy_mode' ==> 'mode'
-change -> nap_selector: 'nap rules' ==> 'bindings'
 change -> paf_max: 'paf_max [0:63780]' ==> 'max_pdu [1460:32768]'
 change -> perfmonitor: 'console' ==> 'format = 'text''
 change -> perfmonitor: 'console' ==> 'output = 'console''
@@ -1108,8 +1107,6 @@ deleted -> http_inspect_server: 'unlimited_decompress'
 deleted -> imap: 'disabled'
 deleted -> imap: 'max_mime_mem'
 deleted -> imap: 'memcap'
-deleted -> nap_selector: 'fw_required'
-deleted -> nap_selector: 'nap_stats_time'
 deleted -> perfmonitor: 'accumulate'
 deleted -> perfmonitor: 'atexitonly'
 deleted -> perfmonitor: 'atexitonly: base-stats'
@@ -1133,8 +1130,6 @@ deleted -> sfportscan: 'detect_ack_scans'
 deleted -> sfportscan: 'disabled'
 deleted -> sfportscan: 'logfile'
 deleted -> sfportscan: 'sense_level'
-deleted -> sfunified2: 'mpls_event_types'
-deleted -> sfunified2: 'vlan_event_types'
 deleted -> sip: 'disabled'
 deleted -> sip: 'max_sessions'
 deleted -> smtp: 'alert_unknown_cmds'

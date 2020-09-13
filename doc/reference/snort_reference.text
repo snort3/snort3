@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.0.2 (Build 5) 2020-08-12 08:28:30 EDT TST
+Revision 3.0.2 (Build 6) 2020-09-13 14:48:12 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -113,30 +113,31 @@ Table of Contents
     5.25. imap
     5.26. mem_test
     5.27. modbus
-    5.28. normalizer
-    5.29. null_trace_logger
-    5.30. packet_capture
-    5.31. perf_monitor
-    5.32. pop
-    5.33. port_scan
-    5.34. reputation
-    5.35. rna
-    5.36. rpc_decode
-    5.37. s7commplus
-    5.38. sip
-    5.39. smtp
-    5.40. so_proxy
-    5.41. ssh
-    5.42. ssl
-    5.43. stream
-    5.44. stream_file
-    5.45. stream_icmp
-    5.46. stream_ip
-    5.47. stream_tcp
-    5.48. stream_udp
-    5.49. stream_user
-    5.50. telnet
-    5.51. wizard
+    5.28. netflow
+    5.29. normalizer
+    5.30. null_trace_logger
+    5.31. packet_capture
+    5.32. perf_monitor
+    5.33. pop
+    5.34. port_scan
+    5.35. reputation
+    5.36. rna
+    5.37. rpc_decode
+    5.38. s7commplus
+    5.39. sip
+    5.40. smtp
+    5.41. so_proxy
+    5.42. ssh
+    5.43. ssl
+    5.44. stream
+    5.45. stream_file
+    5.46. stream_icmp
+    5.47. stream_ip
+    5.48. stream_tcp
+    5.49. stream_udp
+    5.50. stream_user
+    5.51. telnet
+    5.52. wizard
 
 6. IPS Action Modules
 
@@ -1096,6 +1097,10 @@ Peg counts:
     (sum)
   * payload_injector.http2_injects: total number of http2 injections
     (sum)
+  * payload_injector.http2_translate_err: total number of http2 page
+    translation errors (sum)
+  * payload_injector.http2_mid_frame: total number of attempts to
+    inject mid-frame (sum)
 
 
 2.23. process
@@ -1408,6 +1413,8 @@ Configuration:
   * implied snort.--dirty-pig: don’t flush packets on shutdown
   * string snort.--dump-builtin-rules: [<module prefix>] output stub
     rules for selected modules { (optional) }
+  * select snort.--dump-config: dump config in json format { all |
+    top }
   * implied snort.--dump-config-text: dump config in text format
   * implied snort.--dump-dynamic-rules: output stub rules for all
     loaded rules libraries
@@ -1625,6 +1632,7 @@ Usage: global
 
 Configuration:
 
+  * int trace.modules.all: enable trace for all modules { 0:255 }
   * int trace.modules.appid.all: enable all trace options { 0:255 }
   * int trace.modules.dce_smb.all: enable all trace options { 0:255 }
   * int trace.modules.dce_udp.all: enable all trace options { 0:255 }
@@ -1650,6 +1658,7 @@ Configuration:
   * int trace.modules.gtp_inspect.all: enable all trace options {
     0:255 }
   * int trace.modules.latency.all: enable all trace options { 0:255 }
+  * int trace.modules.rna.all: enable all trace options { 0:255 }
   * int trace.modules.snort.all: enable all trace options { 0:255 }
   * int trace.modules.snort.main: enable main trace logging { 0:255 }
   * int trace.modules.snort.inspector_manager: enable inspector
@@ -1671,11 +1680,13 @@ Configuration:
     traces
   * enum trace.output: output method for trace log messages { stdout
     | syslog }
+  * bool trace.log_ntuple = false: use extended trace output with
+    n-tuple packet info
 
 Commands:
 
-  * trace.set(modules, constraints): set modules traces and
-    constraints
+  * trace.set(modules, constraints, log_ntuple): set modules traces,
+    constraints and log_ntuple option
   * trace.clear(): clear modules traces and constraints
 
 
@@ -2408,7 +2419,7 @@ Commands:
     enable appid debugging
   * appid.disable_debug(): disable appid debugging
   * appid.reload_third_party(): reload appid third-party module
-  * appid.reload_odp(): reload appid open detector package
+  * appid.reload_detectors(): reload appid detectors
 
 Peg counts:
 
@@ -2441,6 +2452,11 @@ Type: inspector
 Usage: context
 
 Instance Type: global
+
+Configuration:
+
+  * bool appid_listener.json_logging = false: log appid data in json
+    format
 
 
 5.3. arp_spoof
@@ -3256,8 +3272,8 @@ Configuration:
     in bytes { 8:max53 }
   * int file_id.max_files_cached = 65536: maximal number of files
     cached in memory { 8:max53 }
-  * int file_id.max_files_per_flow = 32: maximal number of files able
-    to be concurrently processed per flow { 1:max53 }
+  * int file_id.max_files_per_flow = 128: maximal number of files
+    able to be concurrently processed per flow { 1:max53 }
   * bool file_id.enable_type = true: enable type ID
   * bool file_id.enable_signature = false: enable signature
     calculation
@@ -3550,6 +3566,9 @@ Rules:
   * 121:15 (http2_inspect) invalid HTTP/2 start line
   * 121:16 (http2_inspect) HTTP/2 padding length is bigger than frame
     data size
+  * 121:17 (http2_inspect) HTTP/2 pseudo-header after regular header
+  * 121:18 (http2_inspect) HTTP/2 pseudo-header in trailers
+  * 121:19 (http2_inspect) invalid HTTP/2 pseudo-header
 
 Peg counts:
 
@@ -3594,6 +3613,8 @@ Configuration:
     response bodies
   * bool http_inspect.detained_inspection = false: store-and-forward
     as necessary to effectively block alerting JavaScript
+  * bool http_inspect.script_detection = false: inspect JavaScript
+    immediately upon script end
   * bool http_inspect.normalize_javascript = false: normalize
     JavaScript in response bodies
   * int http_inspect.max_javascript_whitespaces = 200: maximum
@@ -3804,6 +3825,8 @@ Peg counts:
     sessions (max)
   * http_inspect.detains_requested: packet hold requests for detained
     inspection (sum)
+  * http_inspect.script_detections: early inspections of scripts in
+    HTTP responses (sum)
   * http_inspect.partial_inspections: pre-inspections for detained
     inspection (sum)
   * http_inspect.excess_parameters: repeat parameters exceeding max
@@ -3858,6 +3881,10 @@ Peg counts:
   * imap.concurrent_sessions: total concurrent imap sessions (now)
   * imap.max_concurrent_sessions: maximum concurrent imap sessions
     (max)
+  * imap.start_tls: total STARTTLS events generated (sum)
+  * imap.ssl_search_abandoned: total SSL search abandoned (sum)
+  * imap.ssl_srch_abandoned_early: total SSL search abandoned too
+    soon (sum)
   * imap.b64_attachments: total base64 attachments decoded (sum)
   * imap.b64_decoded_bytes: total base64 decoded bytes (sum)
   * imap.qp_attachments: total quoted-printable attachments decoded
@@ -3916,7 +3943,31 @@ Peg counts:
     sessions (max)
 
 
-5.28. normalizer
+5.28. netflow
+
+--------------
+
+Help: netflow inspection
+
+Type: inspector
+
+Usage: inspect
+
+Instance Type: multiton
+
+Peg counts:
+
+  * netflow.packets: total packets processed (sum)
+  * netflow.records: total records found in netflow data (sum)
+  * netflow.version_5: count of netflow version 5 packets received
+    (sum)
+  * netflow.version_9: count of netflow version 9 packets received
+    (sum)
+  * netflow.invalid_netflow_pkts: count of invalid netflow packets
+    (sum)
+
+
+5.29. normalizer
 
 --------------
 
@@ -4054,7 +4105,7 @@ Peg counts:
   * normalizer.tcp_block: blocked segments (sum)
 
 
-5.29. null_trace_logger
+5.30. null_trace_logger
 
 --------------
 
@@ -4067,7 +4118,7 @@ Usage: global
 Instance Type: global
 
 
-5.30. packet_capture
+5.31. packet_capture
 
 --------------
 
@@ -4097,7 +4148,7 @@ Peg counts:
     filter (sum)
 
 
-5.31. perf_monitor
+5.32. perf_monitor
 
 --------------
 
@@ -4157,7 +4208,7 @@ Peg counts:
     by new flows (sum)
 
 
-5.32. pop
+5.33. pop
 
 --------------
 
@@ -4203,6 +4254,10 @@ Peg counts:
   * pop.concurrent_sessions: total concurrent pop sessions (now)
   * pop.max_concurrent_sessions: maximum concurrent pop sessions
     (max)
+  * pop.start_tls: total STARTTLS events generated (sum)
+  * pop.ssl_search_abandoned: total SSL search abandoned (sum)
+  * pop.ssl_srch_abandoned_early: total SSL search abandoned too soon
+    (sum)
   * pop.b64_attachments: total base64 attachments decoded (sum)
   * pop.b64_decoded_bytes: total base64 decoded bytes (sum)
   * pop.qp_attachments: total quoted-printable attachments decoded
@@ -4215,7 +4270,7 @@ Peg counts:
   * pop.non_encoded_bytes: total non-encoded extracted bytes (sum)
 
 
-5.33. port_scan
+5.34. port_scan
 
 --------------
 
@@ -4387,7 +4442,7 @@ Peg counts:
     to reduced memcap (sum)
 
 
-5.34. reputation
+5.35. reputation
 
 --------------
 
@@ -4434,7 +4489,7 @@ Peg counts:
   * reputation.memory_allocated: total memory allocated (sum)
 
 
-5.35. rna
+5.36. rna
 
 --------------
 
@@ -4450,22 +4505,31 @@ Instance Type: global
 Configuration:
 
   * string rna.rna_conf_path: path to rna configuration
-  * string rna.fingerprint_dir: directory to fingerprint patterns
   * bool rna.enable_logger = true: enable or disable writing
     discovery events into logger
   * bool rna.log_when_idle = false: enable host update logging when
     snort is idle
   * string rna.dump_file: file name to dump RNA mac cache on
     shutdown; won’t dump by default
+  * int rna.tcp_fingerprints[].fpid = 0: fingerprint id { 0:max32 }
+  * int rna.tcp_fingerprints[].type = 0: fingerprint type { 0:max32 }
+  * string rna.tcp_fingerprints[].uuid: fingerprint uuid
+  * int rna.tcp_fingerprints[].ttl = 0: fingerprint ttl { 0:256 }
+  * string rna.tcp_fingerprints[].tcp_window: fingerprint tcp window
+  * string rna.tcp_fingerprints[].mss = X: fingerprint mss
+  * string rna.tcp_fingerprints[].id = X: id
+  * string rna.tcp_fingerprints[].topts: fingerprint tcp options
+  * string rna.tcp_fingerprints[].ws = X: fingerprint window size
+  * bool rna.tcp_fingerprints[].df = false: fingerprint don’t
+    fragment flag
 
 Commands:
 
-  * rna.reload_fingerprint(): reload rna database of fingerprint
-    patterns/signatures
   * rna.dump_macs(): dump rna’s internal MAC trackers
 
 Peg counts:
 
+  * rna.appid_change: count of appid change events received (sum)
   * rna.icmp_bidirectional: count of bidirectional ICMP flows
     received (sum)
   * rna.icmp_new: count of new ICMP flows received (sum)
@@ -4483,7 +4547,7 @@ Peg counts:
     (sum)
 
 
-5.36. rpc_decode
+5.37. rpc_decode
 
 --------------
 
@@ -4512,7 +4576,7 @@ Peg counts:
     sessions (max)
 
 
-5.37. s7commplus
+5.38. s7commplus
 
 --------------
 
@@ -4541,7 +4605,7 @@ Peg counts:
     sessions (max)
 
 
-5.38. sip
+5.39. sip
 
 --------------
 
@@ -4642,7 +4706,7 @@ Peg counts:
   * sip.code_9xx: 9xx (sum)
 
 
-5.39. smtp
+5.40. smtp
 
 --------------
 
@@ -4751,7 +4815,7 @@ Peg counts:
   * smtp.non_encoded_bytes: total non-encoded extracted bytes (sum)
 
 
-5.40. so_proxy
+5.41. so_proxy
 
 --------------
 
@@ -4765,7 +4829,7 @@ Usage: global
 Instance Type: global
 
 
-5.41. ssh
+5.42. ssh
 
 --------------
 
@@ -4805,7 +4869,7 @@ Peg counts:
     (max)
 
 
-5.42. ssl
+5.43. ssl
 
 --------------
 
@@ -4856,7 +4920,7 @@ Peg counts:
     (max)
 
 
-5.43. stream
+5.44. stream
 
 --------------
 
@@ -4945,7 +5009,7 @@ Peg counts:
     deleted by config reloads (sum)
 
 
-5.44. stream_file
+5.45. stream_file
 
 --------------
 
@@ -4962,7 +5026,7 @@ Configuration:
   * bool stream_file.upload = false: indicate file transfer direction
 
 
-5.45. stream_icmp
+5.46. stream_icmp
 
 --------------
 
@@ -4989,7 +5053,7 @@ Peg counts:
   * stream_icmp.prunes: icmp session prunes (sum)
 
 
-5.46. stream_ip
+5.47. stream_ip
 
 --------------
 
@@ -5061,7 +5125,7 @@ Peg counts:
   * stream_ip.fragmented_bytes: total fragmented bytes (sum)
 
 
-5.47. stream_tcp
+5.48. stream_tcp
 
 --------------
 
@@ -5216,7 +5280,7 @@ Peg counts:
     service stream splitter (sum)
 
 
-5.48. stream_udp
+5.49. stream_udp
 
 --------------
 
@@ -5245,7 +5309,7 @@ Peg counts:
   * stream_udp.ignored: udp packets ignored (sum)
 
 
-5.49. stream_user
+5.50. stream_user
 
 --------------
 
@@ -5263,7 +5327,7 @@ Configuration:
     1:max31 }
 
 
-5.50. telnet
+5.51. telnet
 
 --------------
 
@@ -5299,7 +5363,7 @@ Peg counts:
     sessions (max)
 
 
-5.51. wizard
+5.52. wizard
 
 --------------
 
@@ -7904,6 +7968,7 @@ these libraries see the Getting Started section of the manual.
   * --dirty-pig don’t flush packets on shutdown
   * --dump-builtin-rules [<module prefix>] output stub rules for
     selected modules (optional)
+  * --dump-config dump config in json format (all | top)
   * --dump-config-text dump config in text format
   * --dump-dynamic-rules output stub rules for all loaded rules
     libraries
@@ -8127,6 +8192,8 @@ these libraries see the Getting Started section of the manual.
     logging appid statistics { 1:max32 }
   * int appid.app_stats_rollover_size = 20971520: max file size for
     appid stats before rolling over the log file { 0:max32 }
+  * bool appid_listener.json_logging = false: log appid data in json
+    format
   * bool appid.list_odp_detectors = false: enable logging of odp
     detectors statistics
   * bool appid.log_all_sessions = false: enable logging of all appid
@@ -8517,8 +8584,8 @@ these libraries see the Getting Started section of the manual.
     seconds { 0:max31 }
   * int file_id.max_files_cached = 65536: maximal number of files
     cached in memory { 8:max53 }
-  * int file_id.max_files_per_flow = 32: maximal number of files able
-    to be concurrently processed per flow { 1:max53 }
+  * int file_id.max_files_per_flow = 128: maximal number of files
+    able to be concurrently processed per flow { 1:max53 }
   * int file_id.qp_decode_depth = -1: Quoted Printable decoding depth
     (-1 no limit) { -1:65535 }
   * int file_id.show_data_depth = 100: print this many octets {
@@ -8710,6 +8777,8 @@ these libraries see the Getting Started section of the manual.
     bytes to examine (-1 no limit) { -1:max53 }
   * int http_inspect.response_depth = -1: maximum response message
     body bytes to examine (-1 no limit) { -1:max53 }
+  * bool http_inspect.script_detection = false: inspect JavaScript
+    immediately upon script end
   * bool http_inspect.simplify_path = true: reduce URI directory path
     to simplest form
   * bool http_inspect.unzip = true: decompress gzip and deflate
@@ -9266,10 +9335,20 @@ these libraries see the Getting Started section of the manual.
     shutdown; won’t dump by default
   * bool rna.enable_logger = true: enable or disable writing
     discovery events into logger
-  * string rna.fingerprint_dir: directory to fingerprint patterns
   * bool rna.log_when_idle = false: enable host update logging when
     snort is idle
   * string rna.rna_conf_path: path to rna configuration
+  * bool rna.tcp_fingerprints[].df = false: fingerprint don’t
+    fragment flag
+  * int rna.tcp_fingerprints[].fpid = 0: fingerprint id { 0:max32 }
+  * string rna.tcp_fingerprints[].id = X: id
+  * string rna.tcp_fingerprints[].mss = X: fingerprint mss
+  * string rna.tcp_fingerprints[].tcp_window: fingerprint tcp window
+  * string rna.tcp_fingerprints[].topts: fingerprint tcp options
+  * int rna.tcp_fingerprints[].ttl = 0: fingerprint ttl { 0:256 }
+  * int rna.tcp_fingerprints[].type = 0: fingerprint type { 0:max32 }
+  * string rna.tcp_fingerprints[].uuid: fingerprint uuid
+  * string rna.tcp_fingerprints[].ws = X: fingerprint window size
   * int rpc.~app: application number { 0:max32 }
   * string rpc.~proc: procedure number or * for any
   * string rpc.~ver: version number or * for any
@@ -9447,6 +9526,8 @@ these libraries see the Getting Started section of the manual.
   * implied snort.-D: run Snort in background (daemon) mode
   * string snort.--dump-builtin-rules: [<module prefix>] output stub
     rules for selected modules { (optional) }
+  * select snort.--dump-config: dump config in json format { all |
+    top }
   * implied snort.--dump-config-text: dump config in text format
   * string snort.--dump-defaults: [<module prefix>] output module
     defaults in Lua format { (optional) }
@@ -9804,6 +9885,9 @@ these libraries see the Getting Started section of the manual.
     traces
   * string trace.constraints.src_ip: source IP address filter
   * int trace.constraints.src_port: source port filter { 0:65535 }
+  * bool trace.log_ntuple = false: use extended trace output with
+    n-tuple packet info
+  * int trace.modules.all: enable trace for all modules { 0:255 }
   * int trace.modules.appid.all: enable all trace options { 0:255 }
   * int trace.modules.dce_smb.all: enable all trace options { 0:255 }
   * int trace.modules.dce_udp.all: enable all trace options { 0:255 }
@@ -9829,6 +9913,7 @@ these libraries see the Getting Started section of the manual.
   * int trace.modules.gtp_inspect.all: enable all trace options {
     0:255 }
   * int trace.modules.latency.all: enable all trace options { 0:255 }
+  * int trace.modules.rna.all: enable all trace options { 0:255 }
   * int trace.modules.snort.all: enable all trace options { 0:255 }
   * int trace.modules.snort.inspector_manager: enable inspector
     manager trace logging { 0:255 }
@@ -10419,6 +10504,8 @@ these libraries see the Getting Started section of the manual.
   * http_inspect.responses: HTTP response messages inspected (sum)
   * http_inspect.scans: TCP segments scanned looking for HTTP
     messages (sum)
+  * http_inspect.script_detections: early inspections of scripts in
+    HTTP responses (sum)
   * http_inspect.trace_requests: TRACE requests inspected (sum)
   * http_inspect.uri_coding: URIs with character coding problems
     (sum)
@@ -10442,6 +10529,10 @@ these libraries see the Getting Started section of the manual.
     (sum)
   * imap.qp_decoded_bytes: total quoted-printable decoded bytes (sum)
   * imap.sessions: total imap sessions (sum)
+  * imap.ssl_search_abandoned: total SSL search abandoned (sum)
+  * imap.ssl_srch_abandoned_early: total SSL search abandoned too
+    soon (sum)
+  * imap.start_tls: total STARTTLS events generated (sum)
   * imap.uu_attachments: total uu attachments decoded (sum)
   * imap.uu_decoded_bytes: total uu decoded bytes (sum)
   * ipv4.bad_checksum: nonzero ip checksums (sum)
@@ -10470,6 +10561,14 @@ these libraries see the Getting Started section of the manual.
   * modbus.sessions: total sessions processed (sum)
   * mpls.total_bytes: total mpls labeled bytes processed (sum)
   * mpls.total_packets: total mpls labeled packets processed (sum)
+  * netflow.invalid_netflow_pkts: count of invalid netflow packets
+    (sum)
+  * netflow.packets: total packets processed (sum)
+  * netflow.records: total records found in netflow data (sum)
+  * netflow.version_5: count of netflow version 5 packets received
+    (sum)
+  * netflow.version_9: count of netflow version 9 packets received
+    (sum)
   * normalizer.icmp4_echo: icmp4 ping normalizations (sum)
   * normalizer.icmp6_echo: icmp6 echo normalizations (sum)
   * normalizer.ip4_df: don’t frag bit normalizations (sum)
@@ -10553,6 +10652,10 @@ these libraries see the Getting Started section of the manual.
   * packet_capture.processed: packets processed against filter (sum)
   * payload_injector.http2_injects: total number of http2 injections
     (sum)
+  * payload_injector.http2_mid_frame: total number of attempts to
+    inject mid-frame (sum)
+  * payload_injector.http2_translate_err: total number of http2 page
+    translation errors (sum)
   * payload_injector.http_injects: total number of http injections
     (sum)
   * pcre.pcre_native: total pcre rules compiled by pcre engine (sum)
@@ -10582,6 +10685,10 @@ these libraries see the Getting Started section of the manual.
     (sum)
   * pop.qp_decoded_bytes: total quoted-printable decoded bytes (sum)
   * pop.sessions: total pop sessions (sum)
+  * pop.ssl_search_abandoned: total SSL search abandoned (sum)
+  * pop.ssl_srch_abandoned_early: total SSL search abandoned too soon
+    (sum)
+  * pop.start_tls: total STARTTLS events generated (sum)
   * pop.total_bytes: total number of bytes processed (sum)
   * pop.uu_attachments: total uu attachments decoded (sum)
   * pop.uu_decoded_bytes: total uu decoded bytes (sum)
@@ -10599,6 +10706,7 @@ these libraries see the Getting Started section of the manual.
   * reputation.monitored: number of packets monitored (sum)
   * reputation.packets: total packets processed (sum)
   * reputation.whitelisted: number of packets whitelisted (sum)
+  * rna.appid_change: count of appid change events received (sum)
   * rna.change_host_update: count number of change host update events
     (sum)
   * rna.icmp_bidirectional: count of bidirectional ICMP flows
@@ -11334,6 +11442,9 @@ these libraries see the Getting Started section of the manual.
   * 121:15 (http2_inspect) invalid HTTP/2 start line
   * 121:16 (http2_inspect) HTTP/2 padding length is bigger than frame
     data size
+  * 121:17 (http2_inspect) HTTP/2 pseudo-header after regular header
+  * 121:18 (http2_inspect) HTTP/2 pseudo-header in trailers
+  * 121:19 (http2_inspect) invalid HTTP/2 pseudo-header
   * 122:1 (port_scan) TCP portscan
   * 122:2 (port_scan) TCP decoy portscan
   * 122:3 (port_scan) TCP portsweep
@@ -11623,7 +11734,7 @@ these libraries see the Getting Started section of the manual.
     enable appid debugging
   * appid.disable_debug(): disable appid debugging
   * appid.reload_third_party(): reload appid third-party module
-  * appid.reload_odp(): reload appid open detector package
+  * appid.reload_detectors(): reload appid detectors
   * host_cache.dump(file_name): dump host cache
   * packet_capture.enable(filter): dump raw packets
   * packet_capture.disable(): stop packet dump
@@ -11636,8 +11747,6 @@ these libraries see the Getting Started section of the manual.
     host pairs
   * perf_monitor.show_flow_ip_profiling(): show status of statistics
     on host pairs
-  * rna.reload_fingerprint(): reload rna database of fingerprint
-    patterns/signatures
   * rna.dump_macs(): dump rna’s internal MAC trackers
   * snort.show_plugins(): show available plugins
   * snort.delete_inspector(inspector): delete an inspector from the
@@ -11656,8 +11765,8 @@ these libraries see the Getting Started section of the manual.
   * snort.detach(): exit shell w/o shutdown
   * snort.quit(): shutdown and dump-stats
   * snort.help(): this output
-  * trace.set(modules, constraints): set modules traces and
-    constraints
+  * trace.set(modules, constraints, log_ntuple): set modules traces,
+    constraints and log_ntuple option
   * trace.clear(): clear modules traces and constraints
 
 
@@ -11904,6 +12013,7 @@ and are not applicable elsewhere.
   * msg (ips_option): rule option summarizing rule purpose output
     with events
   * mss (ips_option): detection for TCP maximum segment size
+  * netflow (inspector): netflow inspection
   * network (basic): configure basic network parameters
   * normalizer (inspector): packet scrubbing for inline mode
   * null_trace_logger (inspector): trace logger with a null printout
@@ -12115,6 +12225,7 @@ and are not applicable elsewhere.
   * inspector::imap: imap inspection
   * inspector::mem_test: for testing memory management
   * inspector::modbus: modbus inspection
+  * inspector::netflow: netflow inspection
   * inspector::normalizer: packet scrubbing for inline mode
   * inspector::null_trace_logger: trace logger with a null printout
   * inspector::packet_capture: raw packet dumping facility
