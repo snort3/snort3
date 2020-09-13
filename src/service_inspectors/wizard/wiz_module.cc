@@ -200,7 +200,7 @@ bool WizardModule::add_spells(MagicBook* b, string& service, bool hex)
             if ( !val )
             {
                 ParseError("Invalid %s '%s' for service '%s'",
-                    hex ? "hex" : "spell", service.c_str(), p.c_str());
+                    hex ? "hex" : "spell", p.c_str(), service.c_str());
                 return false;
             }
             else if ( service != val )
