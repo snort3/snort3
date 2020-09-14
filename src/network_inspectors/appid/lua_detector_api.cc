@@ -1172,6 +1172,9 @@ static int detector_add_host_port_dynamic(lua_State* L)
     // Verify detector user data and that we are in packet context
     ud->validate_lua_state(true);
 
+    if (!ud->get_odp_ctxt().is_host_port_app_cache_runtime)
+        return 0;
+
     SfIp ip_addr;
     int index = 1;
 

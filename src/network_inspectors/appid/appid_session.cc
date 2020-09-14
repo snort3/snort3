@@ -844,7 +844,12 @@ AppId AppIdSession::pick_ss_payload_app_id(AppId service_id) const
     if (!api.hsessions.empty())
         tmp_id = api.hsessions[0]->payload.get_id();
     if (tmp_id > APP_ID_NONE)
-        return tmp_id;
+    {
+        if (tmp_id == APP_ID_HTTP_TUNNEL and tp_payload_app_id > APP_ID_NONE)
+            return tp_payload_app_id;
+        else
+            return tmp_id;
+    }
 
     if (api.payload.get_id() > APP_ID_NONE)
         return api.payload.get_id();
