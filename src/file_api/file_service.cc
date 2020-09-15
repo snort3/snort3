@@ -74,6 +74,8 @@ void FileService::post_init(const SnortConfig* sc)
     {
         file_cache = new FileCache(conf->max_files_cached);
         max_files_cached = conf->max_files_cached;
+        file_cache->set_block_timeout(conf->file_block_timeout);
+        file_cache->set_lookup_timeout(conf->file_lookup_timeout);
     }
 
     if (file_capture_enabled)
