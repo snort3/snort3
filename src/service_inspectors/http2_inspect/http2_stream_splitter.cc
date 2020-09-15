@@ -214,7 +214,7 @@ bool Http2StreamSplitter::finish(Flow* flow)
     for (const Http2FlowData::StreamInfo& stream_info : session_data->streams)
     {
         if ((stream_info.id == 0)                                                 ||
-            (stream_info.stream->get_state(source_id) == STATE_CLOSED)            ||
+            (stream_info.stream->get_state(source_id) == STREAM_COMPLETE)         ||
             (stream_info.stream->get_hi_flow_data() == nullptr)                   ||
             (stream_info.stream->get_hi_flow_data()->get_type_expected(source_id)
                 != HttpEnums::SEC_BODY_H2))

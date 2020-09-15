@@ -54,7 +54,7 @@ Http2Stream::~Http2Stream()
 void Http2Stream::eval_frame(const uint8_t* header_buffer, int32_t header_len,
     const uint8_t* data_buffer, int32_t data_len, SourceId source_id)
 {
-    delete current_frame;
+    assert(current_frame == nullptr);
     current_frame = Http2Frame::new_frame(header_buffer, header_len, data_buffer,
         data_len, session_data, source_id, this);
     current_frame->update_stream_state();
@@ -62,10 +62,17 @@ void Http2Stream::eval_frame(const uint8_t* header_buffer, int32_t header_len,
 
 void Http2Stream::clear_frame()
 {
-    if (current_frame != nullptr) // FIXIT-M why is this needed?
-        current_frame->clear();
+    assert(current_frame != nullptr);
+    current_frame->clear();
     delete current_frame;
     current_frame = nullptr;
+}
+
+void Http2Stream::set_state(HttpCommon::SourceId source_id, StreamState new_state)
+{
+    assert((STREAM_EXPECT_HEADERS <= new_state) && (new_state <= STREAM_ERROR));
+    assert(state[source_id] < new_state);
+    state[source_id] = new_state;
 }
 
 void Http2Stream::set_hi_flow_data(HttpFlowData* flow_data)
@@ -99,7 +106,7 @@ Http2DataCutter* Http2Stream::get_data_cutter(HttpCommon::SourceId source_id)
 
 bool Http2Stream::is_open(HttpCommon::SourceId source_id)
 {
-    return (state[source_id] == STATE_OPEN) || (state[source_id] == STATE_OPEN_DATA);
+    return (state[source_id] == STREAM_EXPECT_BODY) || (state[source_id] == STREAM_BODY);
 }
 
 void Http2Stream::finish_msg_body(HttpCommon::SourceId source_id, bool expect_trailers,

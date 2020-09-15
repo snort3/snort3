@@ -77,8 +77,6 @@ void Http2HeadersFrame::clear()
     session_data->hi->clear(&dummy_pkt);
 }
 
-
-
 void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow)
 {
     if (error_during_decode)
@@ -151,13 +149,14 @@ const Field& Http2HeadersFrame::get_buf(unsigned id)
 // Return: continue processing frame
 bool Http2HeadersFrame::check_frame_validity()
 {
-    if (stream->get_state(source_id) == STATE_CLOSED)
+    if (stream->get_state(source_id) == STREAM_COMPLETE)
     {
         *session_data->infractions[source_id] += INF_TRAILERS_AFTER_END_STREAM;
         session_data->events[source_id]->create_event(EVENT_FRAME_SEQUENCE);
         return false;
     }
-    else if ((stream->get_state(source_id) != STATE_IDLE) and !(get_flags() & END_STREAM))
+    else if ((stream->get_state(source_id) != STREAM_EXPECT_HEADERS) and
+        !(get_flags() & END_STREAM))
     {
         // Trailers without END_STREAM flag set. Alert but continue to process.
         *session_data->infractions[source_id] += INF_FRAME_SEQUENCE;
@@ -170,28 +169,30 @@ void Http2HeadersFrame::update_stream_state()
 {
     switch (stream->get_state(source_id))
     {
-        case STATE_IDLE:
+        case STREAM_EXPECT_HEADERS:
             if (get_flags() & END_STREAM)
-                stream->set_state(source_id, STATE_CLOSED);
+                stream->set_state(source_id, STREAM_COMPLETE);
             else
-                stream->set_state(source_id, STATE_OPEN);
+                stream->set_state(source_id, STREAM_EXPECT_BODY);
             break;
-        case STATE_OPEN:
+        case STREAM_EXPECT_BODY:
             // fallthrough
-        case STATE_OPEN_DATA:
+        case STREAM_BODY:
             // Any trailing headers frame will be processed as trailers regardless of whether the
             // END_STREAM flag is set
-            if (stream->get_state(source_id) == STATE_OPEN_DATA)
+            if (stream->get_state(source_id) == STREAM_BODY)
                 session_data->concurrent_files -= 1;
-            stream->set_state(source_id, STATE_CLOSED);
+            stream->set_state(source_id, STREAM_COMPLETE);
             break;
-        case STATE_CLOSED:
+        case STREAM_COMPLETE:
             // FIXIT-E frame validity should be checked before creating frame so we should not get
             // here
             break;
+        default:
+            // FIXIT-E build this out
+            break;
     }
 }
-
 
 #ifdef REG_TEST
 void Http2HeadersFrame::print_frame(FILE* output)

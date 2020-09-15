@@ -55,9 +55,9 @@ Http2Frame* Http2Frame::new_frame(const uint8_t* header, const int32_t header_le
     switch(session_data->frame_type[source_id])
     {
         case FT_HEADERS:
-            if (stream->get_state(source_id) == STATE_IDLE)
-                return new Http2HeadersFrameHeader(header, header_len, data, data_len, session_data,
-                    source_id, stream);
+            if (stream->get_state(source_id) == STREAM_EXPECT_HEADERS)
+                return new Http2HeadersFrameHeader(header, header_len, data, data_len,
+                    session_data, source_id, stream);
             else
                 return new Http2HeadersFrameTrailer(header, header_len, data, data_len,
                     session_data, source_id, stream);
@@ -68,7 +68,8 @@ Http2Frame* Http2Frame::new_frame(const uint8_t* header, const int32_t header_le
             return new Http2DataFrame(header, header_len, data, data_len, session_data, source_id,
                 stream);
         default:
-            return new Http2Frame(header, header_len, data, data_len, session_data, source_id, stream);
+            return new Http2Frame(header, header_len, data, data_len, session_data, source_id,
+                stream);
     }
 }
 

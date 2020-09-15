@@ -23,12 +23,12 @@
 #include "service_inspectors/http_inspect/http_common.h"
 #include "service_inspectors/http_inspect/http_field.h"
 
-/* This class is called Http2Frame, but an object of this class may not represent exactly one HTTP/2
- * frame as received on the wire. For HEADERS frames, the Http2Frame object contains the initial
- * HEADERS frame plus any following CONTINUATION frames grouped together. For DATA frames, the
- * Http2Frame object represents approximately 16kb of data to be inspected. This may consist of
- * part of a larger DATA frame cut into 16kb-sized pieces, or several smaller DATA frames aggregated
- * together.
+/* This class is called Http2Frame, but an object of this class may not represent exactly one
+ * HTTP/2 frame as received on the wire. For HEADERS frames, the Http2Frame object contains the
+ * initial HEADERS frame plus any following CONTINUATION frames grouped together. For DATA frames,
+ * the Http2Frame object represents approximately 16kb of data to be inspected. This may consist
+ * of part of a larger DATA frame cut into 16kb-sized pieces, or several smaller DATA frames
+ * aggregated together.
  */
 
 class Http2FlowData;

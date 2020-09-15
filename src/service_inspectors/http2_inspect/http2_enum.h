@@ -36,7 +36,8 @@ enum FrameType : uint8_t { FT_DATA=0, FT_HEADERS=1, FT_PRIORITY=2, FT_RST_STREAM
     FT_PUSH_PROMISE=5, FT_PING=6, FT_GOAWAY=7, FT_WINDOW_UPDATE=8, FT_CONTINUATION=9, FT__ABORT=254,
     FT__NONE=255 };
 
-enum StreamState { STATE_IDLE, STATE_OPEN, STATE_OPEN_DATA, STATE_CLOSED };
+enum StreamState { STREAM_EXPECT_HEADERS, STREAM_EXPECT_BODY, STREAM_BODY, STREAM_IMPLIED_COMPLETE,
+    STREAM_COMPLETE, STREAM_ERROR };
 
 // Message buffers available to clients
 // This enum must remain synchronized with Http2Api::classic_buffer_names[]

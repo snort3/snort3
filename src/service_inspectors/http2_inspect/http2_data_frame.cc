@@ -72,11 +72,11 @@ void Http2DataFrame::update_stream_state()
 {
     switch (stream->get_state(source_id))
     {
-        case STATE_OPEN:
+        case STREAM_EXPECT_BODY:
             if (data_length > 0)
             {
                 session_data->concurrent_files += 1;
-                stream->set_state(source_id, STATE_OPEN_DATA);
+                stream->set_state(source_id, STREAM_BODY);
                 if (session_data->concurrent_files >
                     Http2Module::get_peg_counts(PEG_MAX_CONCURRENT_FILES))
                 {
@@ -84,17 +84,18 @@ void Http2DataFrame::update_stream_state()
                 }
             }
             if (stream->is_end_stream_on_data_flush(source_id))
-                stream->set_state(source_id, STATE_CLOSED);
+                stream->set_state(source_id, STREAM_COMPLETE);
             break;
-        case STATE_OPEN_DATA:
+        case STREAM_BODY:
             if (stream->is_end_stream_on_data_flush(source_id))
             {
                 assert(session_data->concurrent_files > 0);
                 session_data->concurrent_files -= 1;
-                stream->set_state(source_id, STATE_CLOSED);
+                stream->set_state(source_id, STREAM_COMPLETE);
             }
             break;
         default:
+            // FIXIT-E build this out
             // Stream state is idle or closed - this is caught in scan so should not get here
             assert(false);
     }

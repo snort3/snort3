@@ -173,6 +173,13 @@ void Http2Inspect::clear(Packet* p)
     if (session_data == nullptr)
         return;
 
+    // FIXIT-E precaution against spurious clear() calls
+    if (!session_data->frame_in_detection)
+    {
+        assert(session_data->stream_in_hi == NO_STREAM_ID);
+        return;
+    }
+
     session_data->frame_in_detection = false;
 
     const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;

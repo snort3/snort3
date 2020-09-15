@@ -60,9 +60,9 @@ public:
     bool is_partial_buf_pending(HttpCommon::SourceId source_id)
     { return partial_buf_pending[source_id]; }
 
-    void set_state(HttpCommon::SourceId source_id, Http2Enums::StreamState new_state) 
-        { state[source_id] = new_state; }
-    Http2Enums::StreamState get_state(HttpCommon::SourceId source_id) { return state[source_id]; }
+    void set_state(HttpCommon::SourceId source_id, Http2Enums::StreamState new_state);
+    Http2Enums::StreamState get_state(HttpCommon::SourceId source_id) const
+        { return state[source_id]; }
     bool is_open(HttpCommon::SourceId source_id);
     void set_end_stream_on_data_flush(HttpCommon::SourceId source_id)
         { end_stream_on_data_flush[source_id] = true; }
@@ -84,7 +84,8 @@ private:
     Http2DataCutter* data_cutter[2] = { nullptr, nullptr};
     bool partial_buf_pending[2] = { false, false }; // used to indicate a partial buffer
     bool end_stream_on_data_flush[2] = { false, false };
-    Http2Enums::StreamState state[2] = { Http2Enums::STATE_IDLE, Http2Enums::STATE_IDLE };
+    Http2Enums::StreamState state[2] =
+        { Http2Enums::STREAM_EXPECT_HEADERS, Http2Enums::STREAM_EXPECT_HEADERS };
 };
 
 #endif
