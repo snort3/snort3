@@ -490,22 +490,39 @@ int main_reload_hosts(lua_State* L)
 {
     if ( Swapper::get_reload_in_progress() )
     {
+        WarningMessage("Reload in progress. Cannot reload host attribute table.\n");
         current_request->respond("== reload pending; retry\n");
         return 0;
     }
-    Lua::ManageStack(L, 1);
-    const char* fname = luaL_checkstring(L, 1);
+
+    SnortConfig* sc = SnortConfig::get_main_conf();
+    bool from_shell = false;
+    const char* fname;
+
+    if ( L )
+    {
+        Lua::ManageStack(L, 1);
+        fname = luaL_optstring(L, 1, sc->attribute_hosts_file.c_str());
+        from_shell = true;
+    }
+    else
+        fname = sc->attribute_hosts_file.c_str();
 
     if ( fname and *fname )
+    {
+        LogMessage("Reloading Host attribute table from %s.\n", fname);
         current_request->respond(".. reloading hosts table\n");
+    }
     else
     {
+        ErrorMessage("Reload failed. Host attribute table filename required.\n");
         current_request->respond("== filename required\n");
         return 0;
     }
 
-    if ( !HostAttributesManager::load_hosts_file(SnortConfig::get_main_conf(), fname) )
+    if ( !HostAttributesManager::load_hosts_file(sc, fname) )
     {
+        ErrorMessage("Host attribute table reload from %s failed.\n", fname);
         current_request->respond("== reload failed\n");
         return 0;
     }
@@ -513,9 +530,8 @@ int main_reload_hosts(lua_State* L)
     proc_stats.attribute_table_reloads++;
     int32_t num_hosts = HostAttributesManager::get_num_host_entries();
     assert( num_hosts >= 0 );
-    LogMessage( "host attribute table: %d hosts loaded\n", num_hosts);
+    LogMessage("Host attribute table: %d hosts loaded successfully.\n", num_hosts);
 
-    bool from_shell = ( L != nullptr );
     current_request->respond(".. swapping hosts table\n", from_shell);
     main_broadcast_command(new ACHostAttributesSwap(current_request, from_shell), from_shell);
 
