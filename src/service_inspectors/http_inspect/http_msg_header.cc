@@ -21,22 +21,24 @@
 #include "config.h"
 #endif
 
-#include <cassert>
-
 #include "http_msg_header.h"
+
+#include <cassert>
 
 #include "decompress/file_decomp.h"
 #include "file_api/file_flows.h"
 #include "file_api/file_service.h"
+#include "hash/hash_key_operations.h"
+#include "pub_sub/http_events.h"
+#include "service_inspectors/http2_inspect/http2_flow_data.h"
+#include "sfip/sf_ip.h"
+
 #include "http_api.h"
 #include "http_common.h"
 #include "http_enum.h"
 #include "http_inspect.h"
 #include "http_msg_request.h"
 #include "http_msg_body.h"
-#include "pub_sub/http_events.h"
-#include "service_inspectors/http2_inspect/http2_flow_data.h"
-#include "sfip/sf_ip.h"
 
 using namespace snort;
 using namespace HttpCommon;
@@ -417,9 +419,8 @@ void HttpMsgHeader::setup_file_processing()
         return;
     }
 
-    // Generate the unique file id for file processing
-    transaction->set_file_processing_id(source_id, get_transaction_id(),
-        get_h2_stream_id(source_id));
+    // Generate the unique file id for multi file processing
+    set_multi_file_processing_id(get_transaction_id(), get_h2_stream_id(source_id));
 
     // Do we meet all the conditions for MIME file processing?
     if (source_id == SRC_CLIENT)
@@ -430,7 +431,7 @@ void HttpMsgHeader::setup_file_processing()
             if (boundary_present(content_type))
             {
                 session_data->mime_state[source_id] = new MimeSession(&FileService::decode_conf,
-                    &mime_conf, transaction->get_file_processing_id(source_id), true);
+                    &mime_conf, get_multi_file_processing_id(), true);
                 // Show file processing the Content-Type header as if it were regular data.
                 // This will enable it to find the boundary string.
                 // FIXIT-L develop a proper interface for passing the boundary string.
@@ -593,6 +594,22 @@ void HttpMsgHeader::setup_file_decompression()
     session_data->fd_state->Decompr_Depth = 0;
 
     (void)File_Decomp_Init(session_data->fd_state);
+}
+
+// Each file processed has a unique id per flow: hash(source_id, transaction_id, h2_stream_id)
+// If this is an HTTP/1 flow, h2_stream_id is 0
+void HttpMsgHeader::set_multi_file_processing_id(const uint64_t transaction_id,
+    const uint32_t stream_id)
+{
+    const int data_len = sizeof(source_id) + sizeof(transaction_id) + sizeof(stream_id);
+    uint8_t data[data_len];
+    memcpy(data, (void*)&source_id, sizeof(source_id));
+    uint32_t offset = sizeof(source_id);
+    memcpy(data + offset, (void*)&transaction_id, sizeof(transaction_id));
+    offset += sizeof(transaction_id);
+    memcpy(data + offset, (void*)&stream_id, sizeof(stream_id));
+
+    multi_file_processing_id = str_to_hash(data, data_len);
 }
 
 #ifdef REG_TEST

@@ -68,13 +68,6 @@ public:
 
     HttpTransaction* next = nullptr;
 
-    // Each file processed has a unique id per flow: hash(source_id, transaction_id, h2_stream_id)
-    // If this is an HTTP/1 flow, h2_stream_id is 0
-    void set_file_processing_id(const HttpCommon::SourceId source_id,
-        const uint64_t transaction_id, const uint32_t stream_id);
-    uint64_t get_file_processing_id(HttpCommon::SourceId source_id)
-        { return file_processing_id[source_id]; }
-
 private:
     HttpTransaction(HttpFlowData* session_data_) : session_data(session_data_)
     {
@@ -94,8 +87,6 @@ private:
     HttpMsgBody* body_list = nullptr;
     HttpMsgSection* discard_list = nullptr;
     HttpInfractions* infractions[2];
-
-    uint64_t file_processing_id[2] = { 0, 0 };
 
     bool response_seen = false;
     bool one_hundred_response = false;

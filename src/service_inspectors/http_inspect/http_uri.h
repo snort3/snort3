@@ -55,7 +55,6 @@ public:
     const Field& get_norm_query() { return query_norm; }
     const Field& get_norm_fragment() { return fragment_norm; }
     const Field& get_norm_classic() { return classic_norm; }
-    size_t get_file_proc_hash();
 
 private:
     const Field uri;
@@ -76,7 +75,6 @@ private:
     Field classic_norm;
     HttpInfractions* const infractions;
     HttpEventGen* const events;
-    size_t abs_path_hash = 0;
     HttpEnums::UriType uri_type = HttpEnums::URI__NOT_COMPUTE;
     const HttpEnums::MethodId method_id;
     const HttpParaList::UriParam& uri_param;

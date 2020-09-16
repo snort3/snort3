@@ -28,6 +28,7 @@
 #include "http_enum.h"
 #include "http_inspect.h"
 #include "http_module.h"
+#include "http_msg_header.h"
 #include "http_msg_request.h"
 #include "http_stream_splitter.h"
 #include "http_test_input.h"
@@ -129,16 +130,12 @@ bool HttpStreamSplitter::finish(Flow* flow)
 
             const FileDirection dir = (source_id == SRC_SERVER) ? FILE_DOWNLOAD : FILE_UPLOAD;
 
-            size_t file_index = 0;
-
             assert(session_data->transaction[source_id] != nullptr);
-            HttpMsgRequest* request = session_data->transaction[source_id]->get_request();
-            if ((request != nullptr) and (request->get_http_uri() != nullptr))
-            {
-                file_index = request->get_http_uri()->get_file_proc_hash();
-            }
-            const uint64_t file_processing_id =
-                session_data->transaction[source_id]->get_file_processing_id(source_id);
+            HttpMsgHeader* header = session_data->transaction[source_id]->get_header(source_id);
+            assert(header);
+
+            uint64_t file_index = header->get_file_cache_index();
+            const uint64_t file_processing_id = header->get_multi_file_processing_id();
             file_flows->file_process(packet, file_index, nullptr, 0, 0, dir, file_processing_id,
                 SNORT_FILE_END);
 #ifdef REG_TEST

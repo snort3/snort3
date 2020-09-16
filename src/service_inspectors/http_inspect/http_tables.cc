@@ -138,6 +138,7 @@ const StrCode HttpMsgHeadShared::header_list[] =
     { HEAD_CONTENT_TRANSFER_ENCODING, "content-transfer-encoding" },
     { HEAD_MIME_VERSION,              "mime-version" },
     { HEAD_PROXY_AGENT,               "proxy-agent" },
+    { HEAD_CONTENT_DISPOSITION,       "content-disposition" },
     { 0,                              nullptr }
 };
 
@@ -273,6 +274,7 @@ const HeaderNormalizer* const HttpMsgHeadShared::header_norms[HEAD__MAX_VALUE] =
     &NORMALIZER_TOKEN_LIST, // HEAD_CONTENT_TRANSFER_ENCODING
     &NORMALIZER_BASIC,      // HEAD_MIME_VERSION
     &NORMALIZER_BASIC,      // HEAD_PROXY_AGENT
+    &NORMALIZER_BASIC,      // HEAD_CONTENT_DISPOSITION
 };
 
 const RuleMap HttpModule::http_events[] =
@@ -392,6 +394,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_200_CONNECT_RESP_WITH_TE,   "HTTP CONNECT 2XX response with Transfer-Encoding header" },
     { EVENT_100_CONNECT_RESP,           "HTTP CONNECT response with 1XX status code" },
     { EVENT_EARLY_CONNECT_RESPONSE,     "HTTP CONNECT response before request message completed" },
+    { EVENT_MALFORMED_CD_FILENAME,      "malformed HTTP Content-Disposition filename parameter" },
     { 0, nullptr }
 };
 

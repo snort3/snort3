@@ -46,6 +46,11 @@ public:
     const Field& get_true_ip();
     const Field& get_true_ip_addr();
 
+    // The multi_file_processing_id is unique for each file transferred within a single connection
+    // and is used by file processing to store partially processed file contexts in the flow data.
+    void set_multi_file_processing_id(const uint64_t transaction_id, const uint32_t stream_id);
+    uint64_t get_multi_file_processing_id() { return multi_file_processing_id; }
+
 private:
     void prepare_body();
     void setup_file_processing();
@@ -58,6 +63,8 @@ private:
 
     Field true_ip;
     Field true_ip_addr;
+
+    uint64_t multi_file_processing_id = 0;
 
 #ifdef REG_TEST
     void print_section(FILE* output) override;

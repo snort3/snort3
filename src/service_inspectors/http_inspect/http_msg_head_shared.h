@@ -52,6 +52,11 @@ public:
     static const StrCode charset_code_list[];
     static const StrCode charset_code_opt_list[];
 
+    // The file_cache_index is used along with the source ip and destination ip to cache file
+    // verdicts.
+    uint64_t get_file_cache_index();
+    const Field& get_content_disposition_filename();
+
 protected:
     HttpMsgHeadShared(const uint8_t* buffer, const uint16_t buf_size,
         HttpFlowData* session_data_, HttpCommon::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
@@ -120,6 +125,11 @@ private:
 
     int32_t num_headers = HttpCommon::STAT_NOT_COMPUTE;
     std::bitset<MAX> headers_present = 0;
+
+    void extract_filename_from_content_disposition();
+    Field content_disposition_filename;
+    uint64_t file_cache_index = 0;
+    bool file_cache_index_computed = false;
 };
 
 #endif

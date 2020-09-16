@@ -29,6 +29,7 @@
 #include "http_common.h"
 #include "http_enum.h"
 #include "http_js_norm.h"
+#include "http_msg_header.h"
 #include "http_msg_request.h"
 
 using namespace snort;
@@ -270,34 +271,41 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
             return;
 
         const FileDirection dir = source_id == SRC_SERVER ? FILE_DOWNLOAD : FILE_UPLOAD;
+        Field cont_disp_filename;
 
-        size_t file_index = 0;
-
-        // For downloads file_id for the file cache is the URL since that should be unique per file.
-        // Upload verdicts are not currently cached since we have no unique information.
-        // FIXIT-E For uploads use the filename for the file_id when available.
-        if ((request != nullptr) and (request->get_http_uri() != nullptr)
-            and (dir == FILE_DOWNLOAD))
-        {
-            file_index = request->get_http_uri()->get_file_proc_hash();
-        }
+        const uint64_t file_index = get_header(source_id)->get_file_cache_index();
 
         if (file_flows->file_process(p, file_index, file_data.start(), fp_length,
             session_data->file_octets[source_id], dir,
-            transaction->get_file_processing_id(source_id), file_position))
+            get_header(source_id)->get_multi_file_processing_id(), file_position))
         {
             session_data->file_depth_remaining[source_id] -= fp_length;
 
-            // With the first piece of the file we must provide the "name" which means URI
+            // With the first piece of the file we must provide the "name". If an upload contains a
+            // filename in a Content-Disposition header, we use that. Otherwise the name is the URI.
             if (front)
             {
                 if (request != nullptr)
                 {
-                    const Field& transaction_uri = request->get_uri();
-                    if (transaction_uri.length() > 0)
+                    bool has_cd_filename = false;
+                    if (dir == FILE_UPLOAD)
                     {
-                        file_flows->set_file_name(transaction_uri.start(),
-                            transaction_uri.length());
+                        const Field& cd_filename = get_header(source_id)->
+                            get_content_disposition_filename();
+                        if (cd_filename.length() > 0)
+                        {
+                            file_flows->set_file_name(cd_filename.start(), cd_filename.length());
+                            has_cd_filename = true;
+                        }
+                    }
+                    if (!has_cd_filename)
+                    {
+                        const Field& transaction_uri = request->get_uri();
+                        if (transaction_uri.length() > 0)
+                        {
+                            file_flows->set_file_name(transaction_uri.start(),
+                                transaction_uri.length());
+                        }
                     }
                 }
             }
