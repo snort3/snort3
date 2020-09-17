@@ -32,8 +32,7 @@ using namespace snort;
 
 TcpStateLastAck::TcpStateLastAck(TcpStateMachine& tsm) :
     TcpStateHandler(TcpStreamTracker::TCP_LAST_ACK, tsm)
-{
-}
+{ }
 
 bool TcpStateLastAck::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
@@ -44,7 +43,7 @@ bool TcpStateLastAck::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 bool TcpStateLastAck::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs());
-    if ( tsd.get_len() )
+    if ( tsd.is_data_segment() )
         trk.session->handle_data_on_syn(tsd);
     return true;
 }
@@ -104,13 +103,9 @@ bool TcpStateLastAck::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         trk.session->update_perf_base_state(TcpStreamTracker::TCP_CLOSING);
         trk.session->set_pkt_action_flag(ACTION_RST);
     }
-    else
-    {
-        trk.session->tel.set_tcp_event(EVENT_BAD_RST);
-    }
 
     // FIXIT-L might be good to create alert specific to RST with data
-    if ( tsd.get_len() > 0 )
+    if ( tsd.is_data_segment() )
         trk.session->tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
     return true;
 }

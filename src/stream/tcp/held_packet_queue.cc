@@ -43,8 +43,7 @@ void HeldPacket::adjust_expiration(const timeval& delta, bool up)
 
 HeldPacket::HeldPacket(DAQ_Msg_h msg, uint32_t seq, const timeval& exp, TcpStreamTracker& trk)
     : daq_msg(msg), seq_num(seq), expiration(exp), tracker(trk), expired(false)
-{
-}
+{ }
 
 HeldPacketQueue::iter_t HeldPacketQueue::append(DAQ_Msg_h msg, uint32_t seq,
     TcpStreamTracker& trk)
@@ -69,7 +68,6 @@ bool HeldPacketQueue::execute(const timeval& cur_time, int max_remove)
         auto held_packet = q.begin();
         if ( held_packet->has_expired(cur_time) )
         {
-            assert(held_packet == held_packet->get_tracker().held_packet);
             held_packet->get_tracker().perform_partial_flush();
             tcpStats.held_packet_timeouts++;
         }

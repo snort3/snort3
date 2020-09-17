@@ -52,16 +52,11 @@ public:
     TcpEventLogger() = default;
 
     void clear_tcp_events()
-    {
-        tcp_events = 0;
-    }
+    { tcp_events = 0; }
 
     void set_tcp_event(int eventcode)
-    {
-        tcp_events |= eventcode;
-    }
+    { tcp_events |= eventcode; }
 
-    void set_tcp_internal_syn_event();
     void log_tcp_events();
     void log_internal_event(uint32_t eventSid);
 

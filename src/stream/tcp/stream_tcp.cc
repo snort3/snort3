@@ -141,8 +141,8 @@ static const InspectApi tcp_api =
         0,
         API_RESERVED,
         API_OPTIONS,
-        MOD_NAME,
-        MOD_HELP,
+        STREAM_TCP_MOD_NAME,
+        STREAM_TCP_MOD_HELP,
         mod_ctor,
         mod_dtor
     },

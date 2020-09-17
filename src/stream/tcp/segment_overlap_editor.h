@@ -23,6 +23,7 @@
 #define SEGMENT_OVERLAP_EDITOR_H
 
 #include "normalize/normalize.h"
+#include "stream/paf.h"
 #include "tcp_segment_node.h"
 
 class TcpSession;
@@ -37,8 +38,6 @@ struct SegmentOverlapState
     const uint8_t* rdata;
 
     TcpSegmentList seglist;
-    StreamPolicy reassembly_policy;
-
     uint32_t seglist_base_seq;      /* seq of first queued segment */
     uint32_t seg_count;             /* number of current queued segments */
     uint32_t seg_bytes_total;       /* total bytes currently queued */
@@ -58,6 +57,7 @@ struct SegmentOverlapState
     uint16_t len;
     uint16_t rsize;
     int8_t tcp_ips_data;
+    StreamPolicy reassembly_policy;
 
     bool keep_segment;
 
@@ -68,15 +68,31 @@ struct SegmentOverlapState
     void init_soe(TcpSegmentDescriptor& tsd, TcpSegmentNode* left, TcpSegmentNode* right);
 };
 
+/* Only track a maximum number of alerts per session */
+#define MAX_SESSION_ALERTS 8
+struct StreamAlertInfo
+{
+    /* For storing alerts that have already been seen on the session */
+    uint32_t gid;
+    uint32_t sid;
+    uint32_t seq;
+    // if we log extra data, event_* is used to correlate with alert
+    uint32_t event_id;
+    uint32_t event_second;
+};
+
 struct TcpReassemblerState
 {
     SegmentOverlapState sos;
     TcpStreamTracker* tracker;
     uint32_t flush_count;   // number of flushed queued segments
     uint32_t xtradata_mask; // extra data available to log
-    bool server_side;
+    StreamAlertInfo alerts[MAX_SESSION_ALERTS];
+    uint8_t alert_count = 0;
     uint8_t ignore_dir;
     uint8_t packet_dir;
+    bool server_side;
+    PAF_State paf_state;
 };
 
 class SegmentOverlapEditor

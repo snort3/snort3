@@ -25,6 +25,7 @@
 
 #include "tcp_normalizer.h"
 
+#include "tcp_module.h"
 #include "tcp_stream_session.h"
 #include "tcp_stream_tracker.h"
 
@@ -57,8 +58,7 @@ NormPegs TcpNormalizer::get_normalization_counts(unsigned& c)
 }
 
 void TcpNormalizer::trim_payload(
-    TcpNormalizerState&,
-    TcpSegmentDescriptor& tsd, uint32_t max, NormMode mode, TcpPegCounts peg)
+    TcpNormalizerState&, TcpSegmentDescriptor& tsd, uint32_t max, NormMode mode, TcpPegCounts peg)
 {
     if (mode == NORM_MODE_ON)
     {
@@ -72,8 +72,7 @@ void TcpNormalizer::trim_payload(
 }
 
 bool TcpNormalizer::strip_tcp_timestamp(
-    TcpNormalizerState&,
-    TcpSegmentDescriptor& tsd, const tcp::TcpOption* opt, NormMode mode)
+    TcpNormalizerState&, TcpSegmentDescriptor& tsd, const tcp::TcpOption* opt, NormMode mode)
 {
     tcp_norm_stats[PC_TCP_TS_NOP][mode]++;
 
@@ -98,9 +97,11 @@ bool TcpNormalizer::packet_dropper(
     if (mode == NORM_MODE_ON)
     {
         tsd.drop_packet();
+        tcpStats.discards++;
         return true;
     }
 
+    tcpStats.discards_skipped++;
     return false;
 }
 
@@ -282,7 +283,6 @@ int TcpNormalizer::validate_paws_timestamp(
         else
         {
             /* bail, we've got a packet outside the PAWS window! */
-            //inc_tcp_discards();
             tns.session->tel.set_tcp_event(EVENT_BAD_TIMESTAMP);
             packet_dropper(tns, tsd, NORM_TCP_OPT);
             return ACTION_BAD_PKT;
@@ -293,7 +293,6 @@ int TcpNormalizer::validate_paws_timestamp(
         PAWS_24DAYS ) )
     {
         /* this packet is from way too far into the future */
-        //inc_tcp_discards();
         tns.session->tel.set_tcp_event(EVENT_BAD_TIMESTAMP);
         packet_dropper(tns, tsd, NORM_TCP_OPT);
         return ACTION_BAD_PKT;
@@ -358,6 +357,7 @@ int TcpNormalizer::handle_paws_no_timestamps(
             ( tns.tracker->get_tf_flags() & TF_TSTAMP ) )
         {
             tns.session->tel.set_tcp_event(EVENT_BAD_TIMESTAMP);
+            packet_dropper(tns, tsd, NORM_TCP_BLOCK);
             return ACTION_BAD_PKT;
         }
     }

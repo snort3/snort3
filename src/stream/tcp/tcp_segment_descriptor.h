@@ -114,6 +114,9 @@ public:
         pkt->dsize = seg_len;
     }
 
+    bool is_data_segment() const
+    { return pkt->dsize > 0; }
+
     void update_len(int32_t offset)
     {
         assert(!meta_ack_packet);

@@ -53,6 +53,11 @@ protected:
     virtual bool fin_recv(TcpSegmentDescriptor&, TcpStreamTracker&) { return true; }
     virtual bool rst_sent(TcpSegmentDescriptor&, TcpStreamTracker&) { return true; }
     virtual bool rst_recv(TcpSegmentDescriptor&, TcpStreamTracker&) { return true; }
+    virtual bool no_flags(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
+    {
+        trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
+        return false;
+    }
 };
 
 #endif

@@ -31,18 +31,10 @@ struct Packet;
 
 /* actions */
 #define ACTION_NOTHING               0x00000000
-#define ACTION_FLUSH_SENDER_STREAM   0x00000001
-#define ACTION_FLUSH_RECEIVER_STREAM 0x00000002
-#define ACTION_DROP_SESSION          0x00000004
-#define ACTION_ACK_SENDER_DATA       0x00000008
-#define ACTION_ACK_RECEIVER_DATA     0x00000010
-#define ACTION_SET_SSN               0x00000040
-#define ACTION_COMPLETE_TWH          0x00000080
-#define ACTION_RST                   0x00000100
-#define ACTION_BAD_SEQ               0x00000200
-#define ACTION_BAD_PKT               0x00000400
-#define ACTION_LWSSN_CLOSED          0x00000800
-#define ACTION_DISABLE_INSPECTION    0x00001000
+#define ACTION_RST                   0x00000001
+#define ACTION_BAD_PKT               0x00000002
+#define ACTION_LWSSN_CLOSED          0x00000004
+#define ACTION_DISABLE_INSPECTION    0x00000008
 
 #define TF_NONE             0x0000
 #define TF_WSCALE           0x0001

@@ -96,10 +96,20 @@ TcpSession::~TcpSession()
     memory::MemoryCap::update_deallocations(sizeof(*this));
 }
 
-bool TcpSession::setup(Packet* p)
+bool TcpSession::setup(Packet*)
 {
-    TcpStreamSession::setup(p);
+    client.init_tcp_state();
+    server.init_tcp_state();
+    lws_init = tcp_init = false;
+    generate_3whs_alert = true;
+    cleaning = false;
     splitter_init = false;
+
+    pkt_action_mask = ACTION_NOTHING;
+    ecn = 0;
+    ingress_index = egress_index = 0;
+    ingress_group = egress_group = 0;
+    daq_flags = address_space_id = 0;
 
     tcp_config = get_tcp_cfg(flow->ssn_server);
     flow->set_default_session_timeout(tcp_config->session_timeout, false);
@@ -194,15 +204,14 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
     if ( restart )
     {
         flow->restart(free_flow_data);
-        paf_reset(&client.paf_state);
-        paf_reset(&server.paf_state);
-
+        client.reassembler.reset_paf();
+        server.reassembler.reset_paf();
     }
     else
     {
         flow->clear(free_flow_data);
-        paf_clear(&client.paf_state);
-        paf_clear(&server.paf_state);
+        client.reassembler.clear_paf();
+        server.reassembler.clear_paf();
     }
 
     set_splitter(true, nullptr);
@@ -300,7 +309,7 @@ bool TcpSession::flow_exceeds_config_thresholds(const TcpSegmentDescriptor& tsd)
 {
     TcpStreamTracker* listener = tsd.get_listener();
 
-    if ( listener->flush_policy == STREAM_FLPOLICY_IGNORE )
+    if ( listener->get_flush_policy() == STREAM_FLPOLICY_IGNORE )
         return true;
 
     // FIXIT-M any discards must be counted and in many cases alerted as well
@@ -372,6 +381,7 @@ void TcpSession::update_stream_order(const TcpSegmentDescriptor& tsd, bool align
         else
             listener->order = 1;
         break;
+
     case 1:
         if ( aligned )
         {
@@ -379,6 +389,7 @@ void TcpSession::update_stream_order(const TcpSegmentDescriptor& tsd, bool align
             listener->order = 2;
         }
         break;
+
     default:
         if ( aligned )
             tsd.set_packet_flags(PKT_STREAM_ORDER_OK);
@@ -413,8 +424,8 @@ int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
     if (seq == listener->rcv_nxt)
     {
         /* check if we're in the window */
-        if (tcp_config->policy != StreamPolicy::OS_PROXY
-            and listener->normalizer.get_stream_window(tsd) == 0)
+        if ( tcp_config->policy != StreamPolicy::OS_PROXY
+            and listener->normalizer.get_stream_window(tsd) == 0 )
         {
             listener->normalizer.trim_win_payload(tsd);
             return STREAM_UNALIGNED;
@@ -424,7 +435,7 @@ int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
         // FIXIT-L for ips, must move all the way to first hole or right end
         listener->rcv_nxt = tsd.get_end_seq();
 
-        if (tsd.get_len() != 0)
+        if ( tsd.is_data_segment() )
         {
             update_stream_order(tsd, true);
             process_tcp_stream(tsd);
@@ -440,13 +451,13 @@ int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
         // some cases.
 
         /* check if we're in the window */
-        if (tcp_config->policy != StreamPolicy::OS_PROXY
-            and listener->normalizer.get_stream_window(tsd) == 0)
+        if ( tcp_config->policy != StreamPolicy::OS_PROXY
+            and listener->normalizer.get_stream_window(tsd) == 0 )
         {
             listener->normalizer.trim_win_payload(tsd);
             return STREAM_UNALIGNED;
         }
-        if (tsd.get_len() != 0)
+        if ( tsd.is_data_segment() )
         {
             update_stream_order(tsd, false);
             process_tcp_stream(tsd);
@@ -567,7 +578,7 @@ bool TcpSession::handle_syn_on_reset_session(TcpSegmentDescriptor& tsd)
             /* Got SYN/RST.  We're done. */
             listener->normalizer.trim_syn_payload(tsd);
             listener->normalizer.trim_rst_payload(tsd);
-            pkt_action_mask |= ACTION_RST;
+            set_pkt_action_flag(ACTION_RST);
             return false;
         }
         else if ( tcph->is_syn_only() )
@@ -625,7 +636,7 @@ void TcpSession::update_ignored_session(TcpSegmentDescriptor& tsd)
         }
 
         tsd.set_packet_flags(PKT_IGNORE);
-        pkt_action_mask |= ACTION_DISABLE_INSPECTION;
+        set_pkt_action_flag(ACTION_DISABLE_INSPECTION);
         tcpStats.ignored++;
     }
 }
@@ -642,7 +653,7 @@ void TcpSession::handle_data_on_syn(TcpSegmentDescriptor& tsd)
     {
         listener->normalizer.trim_syn_payload(tsd);
         tel.set_tcp_event(EVENT_DATA_ON_SYN);
-        pkt_action_mask |= ACTION_BAD_PKT;
+        set_pkt_action_flag(ACTION_BAD_PKT);
     }
 }
 
@@ -729,9 +740,8 @@ bool TcpSession::check_for_window_slam(TcpSegmentDescriptor& tsd)
     {
         /* got a window too large, alert! */
         tel.set_tcp_event(EVENT_WINDOW_TOO_LARGE);
-        inc_tcp_discards();
         listener->normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
-        pkt_action_mask |= ACTION_BAD_PKT;
+        set_pkt_action_flag(ACTION_BAD_PKT);
         return true;
     }
     else if ( tsd.is_packet_from_client() && (tsd.get_wnd() <= SLAM_MAX)
@@ -741,13 +751,9 @@ bool TcpSession::check_for_window_slam(TcpSegmentDescriptor& tsd)
     {
         /* got a window slam alert! */
         tel.set_tcp_event(EVENT_WINDOW_SLAM);
-        inc_tcp_discards();
-
-        if ( listener->normalizer.packet_dropper(tsd, NORM_TCP_BLOCK) )
-        {
-            pkt_action_mask |= ACTION_BAD_PKT;
-            return true;
-        }
+        listener->normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
+        set_pkt_action_flag(ACTION_BAD_PKT);
+        return true;
     }
 
     return false;
@@ -776,43 +782,30 @@ void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd)
         // FIXIT-M move this to normalizer base class, handle OS_PROXY in derived class
         if ( tcp_config->policy != StreamPolicy::OS_PROXY )
         {
-            /* check for valid sequence/retrans */
+            // drop packet if sequence num is invalid
             if ( !listener->is_segment_seq_valid(tsd) )
+            {
+                tcpStats.invalid_seq_num++;
+                listener->normalizer.trim_win_payload(tsd);
                 return;
+            }
 
             // these normalizations can't be done if we missed setup. and
             // window is zero in one direction until we've seen both sides.
             if ( !(flow->get_session_flags() & SSNFLAG_MIDSTREAM) && flow->two_way_traffic() )
             {
-                // sender of syn w/mss limits payloads from peer since we store mss on
-                // sender side, use listener mss same reasoning for window size
-                TcpStreamTracker* st = listener;
+                // trim to fit in listener's window and mss
+                listener->normalizer.trim_win_payload
+                    (tsd, (listener->r_win_base + listener->get_snd_wnd() - listener->rcv_nxt));
 
-                // trim to fit in window and mss as needed
-                st->normalizer.trim_win_payload(
-                    tsd, (st->r_win_base + st->get_snd_wnd() - st->rcv_nxt));
+                if ( listener->get_mss() )
+                    listener->normalizer.trim_mss_payload(tsd, listener->get_mss());
 
-                // FIXIT-H: MSS is not set on client so packets sent to client are not trimmed
-                // use case?
-                if ( st->get_mss() )
-                    st->normalizer.trim_mss_payload(tsd, st->get_mss());
-
-                st->normalizer.ecn_stripper(tsd);
+                listener->normalizer.ecn_stripper(tsd);
             }
         }
 
-        // dunno if this is RFC but fragroute testing expects it for the record,
-        // I've seen FTP data sessions that send data packets with no tcp flags set
-        if ( (tsd.get_tcph()->th_flags != 0) or (tcp_config->policy == StreamPolicy::OS_LINUX)
-                or (tcp_config->policy == StreamPolicy::OS_PROXY) )
-        {
-            process_tcp_data(tsd);
-        }
-        else
-        {
-            tel.set_tcp_event(EVENT_DATA_WITHOUT_FLAGS);
-            listener->normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
-        }
+        process_tcp_data(tsd);
     }
 
     listener->reassembler.flush_on_data_policy(tsd.get_pkt());
@@ -837,7 +830,7 @@ void TcpSession::check_for_repeated_syn(TcpSegmentDescriptor& tsd)
     if ( !SEQ_EQ(tsd.get_seq(), talker->get_iss()) and
         listener->normalizer.packet_dropper(tsd, NORM_TCP_BLOCK) )
     {
-        action = ACTION_BAD_PKT;
+        set_pkt_action_flag(ACTION_BAD_PKT);
     }
     else if ( talker->get_tcp_state() >= TcpStreamTracker::TCP_ESTABLISHED and
         talker->get_tcp_state() < TcpStreamTracker::TCP_CLOSED )
@@ -890,7 +883,7 @@ void TcpSession::flush_client(Packet* p)
 void TcpSession::flush_tracker(
     TcpStreamTracker& tracker, Packet* p, uint32_t dir, bool final_flush)
 {
-    if ( final_flush && (!tracker.splitter || !tracker.splitter->finish(flow)) )
+    if ( final_flush && (!tracker.get_splitter() || !tracker.get_splitter()->finish(flow)) )
          return;
 
      tracker.set_tf_flags(TF_FORCE_FLUSH);
@@ -937,10 +930,10 @@ static inline void set_window_scale(TcpSegmentDescriptor& tsd)
 
 void TcpSession::check_events_and_actions(const TcpSegmentDescriptor& tsd)
 {
+    tel.log_tcp_events();
+
     if ( tsd.is_meta_ack_packet() )
         return;
-
-    tel.log_tcp_events();
 
     Packet* p = tsd.get_pkt();
     if ( !(pkt_action_mask & ACTION_LWSSN_CLOSED) )
@@ -971,8 +964,8 @@ bool TcpSession::ignore_this_packet(Packet* p)
 
     if ( flow->ssn_state.ignore_direction != SSN_DIR_NONE )
     {
-        server.flush_policy = STREAM_FLPOLICY_IGNORE;
-        client.flush_policy = STREAM_FLPOLICY_IGNORE;
+        server.set_flush_policy(STREAM_FLPOLICY_IGNORE);
+        client.set_flush_policy(STREAM_FLPOLICY_IGNORE);
         return true;
     }
 
@@ -1005,7 +998,7 @@ void TcpSession::precheck(Packet* p)
 
 void TcpSession::init_tcp_packet_analysis(TcpSegmentDescriptor& tsd)
 {
-    if ( !splitter_init and tsd.get_len() > 0 )
+    if ( !splitter_init and tsd.is_data_segment() )
     {
         if ( !(tcp_config->flags & STREAM_CONFIG_NO_REASSEMBLY) )
         {
@@ -1054,32 +1047,23 @@ bool TcpSession::validate_packet_established_session(TcpSegmentDescriptor& tsd)
 
     if ( tsd.is_policy_inline() )
        if ( tsd.get_tcph()->is_ack() && !listener->is_ack_valid(tsd.get_ack()) )
-           pkt_action_mask |= ACTION_BAD_PKT;
+       {
+           listener->normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
+           set_pkt_action_flag(ACTION_BAD_PKT);
+       }
 
     if ( !tsd.is_meta_ack_packet() )
-        pkt_action_mask |= listener->normalizer.handle_paws(tsd);
+        set_pkt_action_flag(listener->normalizer.handle_paws(tsd));
 
     return ( pkt_action_mask & ACTION_BAD_PKT ) ? false : true;
 }
 
 int TcpSession::process_tcp_packet(TcpSegmentDescriptor& tsd)
 {
-    if ( tsm->eval(tsd) )
-    {
-        check_events_and_actions(tsd);
-        S5TraceTCP(tsd);
-    }
-    else
-    {
-        if ( pkt_action_mask & ACTION_BAD_PKT )
-        {
-            inc_tcp_discards();
-            check_events_and_actions(tsd);
-        }
+    tsm->eval(tsd);
+    check_events_and_actions(tsd);
 
-        tel.log_tcp_events();
-        S5TraceTCP(tsd);
-    }
+    S5TraceTCP(tsd);
 
     return ACTION_NOTHING;
 }

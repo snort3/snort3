@@ -39,6 +39,10 @@ public:
     virtual int flush_on_data_policy(TcpReassemblerState&, snort::Packet*);
     virtual int flush_on_ack_policy(TcpReassemblerState&, snort::Packet*);
     virtual void trace_segments(TcpReassemblerState&);
+    virtual bool add_alert(TcpReassemblerState&, uint32_t gid, uint32_t sid);
+    virtual bool check_alerted(TcpReassemblerState&, uint32_t gid, uint32_t sid);
+    virtual int update_alert(TcpReassemblerState&, uint32_t gid, uint32_t sid,
+        uint32_t event_id, uint32_t event_second);
     virtual void purge_alerts(TcpReassemblerState&);
 
     uint32_t perform_partial_flush(TcpReassemblerState&, snort::Flow*);

@@ -89,11 +89,11 @@ inline void TraceState(TcpStreamTracker& a, TcpStreamTracker& b, const char* s)
         RMT(a, rcv_nxt, b), RMT(a, r_win_base, b), a.get_iss(), a.get_irs());
 
     fprintf(stdout, "\n");
-    unsigned paf = (a.splitter and a.splitter->is_paf()) ? 2 : 0;
-    unsigned fpt = a.flush_policy ? 192 : 0;
+    unsigned paf = ( a.is_splitter_paf() ) ? 2 : 0;
+    unsigned fpt = a.get_flush_policy() ? 192 : 0;
 
     fprintf(stdout, "           FP=%s:%-4u SC=%-4u FL=%-4u SL=%-5u BS=%-4u",
-        flushxt[a.flush_policy + paf], fpt,
+        flushxt[a.get_flush_policy() + paf], fpt,
         a.reassembler.get_seg_count(), a.reassembler.get_flush_count(),
         a.reassembler.get_seg_bytes_logical(),
         a.reassembler.get_seglist_base_seq() - b.get_iss());

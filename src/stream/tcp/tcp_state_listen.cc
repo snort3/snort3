@@ -37,7 +37,7 @@ TcpStateListen::TcpStateListen(TcpStateMachine& tsm) :
 
 bool TcpStateListen::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.session->tcp_config->require_3whs() || tsd.has_wscale() || ( tsd.get_len() > 0 ) )
+    if ( trk.session->tcp_config->require_3whs() || tsd.has_wscale() || ( tsd.is_data_segment() ) )
     {
         if ( tsd.is_packet_from_server() )
             trk.session->tel.set_tcp_event(EVENT_4WHS);
@@ -50,7 +50,7 @@ bool TcpStateListen::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     trk.init_on_syn_recv(tsd);
     trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs());
     trk.session->set_pkt_action_flag(trk.normalizer.handle_paws(tsd) );
-    if ( tsd.get_len() > 0 )
+    if ( tsd.is_data_segment() )
         trk.session->handle_data_on_syn(tsd);
     return true;
 }
@@ -79,7 +79,7 @@ bool TcpStateListen::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& t
     if ( !trk.session->tcp_config->require_3whs() or trk.session->is_midstream_allowed(tsd) )
     {
         trk.init_on_synack_recv(tsd);
-        if ( tsd.get_len() > 0 )
+        if ( tsd.is_data_segment() )
             trk.session->handle_data_segment(tsd);
     }
     else if ( trk.session->tcp_config->require_3whs() )
@@ -93,7 +93,7 @@ bool TcpStateListen::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& t
 bool TcpStateListen::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     if ( trk.session->tcp_config->midstream_allowed(tsd.get_pkt())
-         && (tsd.has_wscale() || (tsd.get_len() > 0 )) )
+         && (tsd.has_wscale() || (tsd.is_data_segment() )) )
     {
         Flow* flow = tsd.get_flow();
         flow->session_state |= ( STREAM_STATE_ACK | STREAM_STATE_SYN_ACK |
@@ -113,7 +113,7 @@ bool TcpStateListen::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateListen::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.session->is_midstream_allowed(tsd) && (tsd.has_wscale() || (tsd.get_len() > 0 )) )
+    if ( trk.session->is_midstream_allowed(tsd) && (tsd.has_wscale() || (tsd.is_data_segment() )) )
     {
         Flow* flow = tsd.get_flow();
 

@@ -32,14 +32,13 @@ using namespace snort;
 
 TcpStateCloseWait::TcpStateCloseWait(TcpStateMachine& tsm) :
     TcpStateHandler(TcpStreamTracker::TCP_CLOSE_WAIT, tsm)
-{
-}
+{ }
 
 bool TcpStateCloseWait::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs() );
 
-    if ( tsd.get_len() )
+    if ( tsd.is_data_segment() )
         trk.session->handle_data_on_syn(tsd);
 
     return true;
@@ -93,9 +92,10 @@ bool TcpStateCloseWait::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
     {
         if ( !flow->two_way_traffic() )
             trk.set_tf_flags(TF_FORCE_FLUSH);
-        if ( tsd.get_len() > 0 )
+        if ( tsd.is_data_segment() )
             trk.session->handle_data_segment(tsd);
     }
+
     return true;
 }
 
@@ -108,10 +108,7 @@ bool TcpStateCloseWait::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
         trk.session->set_pkt_action_flag(ACTION_RST);
         tsd.get_flow()->session_state |= STREAM_STATE_CLOSED;
     }
-    else
-    {
-        trk.session->tel.set_tcp_event(EVENT_BAD_RST);
-    }
+
     return true;
 }
 

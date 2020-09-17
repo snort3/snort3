@@ -32,8 +32,7 @@ using namespace snort;
 
 TcpStateNone::TcpStateNone(TcpStateMachine& tsm) :
     TcpStateHandler(TcpStreamTracker::TCP_STATE_NONE, tsm)
-{
-}
+{ }
 
 bool TcpStateNone::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
@@ -48,7 +47,6 @@ bool TcpStateNone::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateNone::syn_recv(TcpSegmentDescriptor&, TcpStreamTracker&)
 {
-    // FIXIT-H syn received on undefined client, figure this out and do the right thing
     return true;
 }
 
@@ -77,7 +75,7 @@ bool TcpStateNone::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
     {
         trk.init_on_synack_recv(tsd);
         trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs());
-        if ( tsd.get_len() > 0 )
+        if ( tsd.is_data_segment() )
             trk.session->handle_data_segment(tsd);
     }
     else if ( trk.session->tcp_config->require_3whs() )
@@ -90,12 +88,10 @@ bool TcpStateNone::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
 
 bool TcpStateNone::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.session->is_midstream_allowed(tsd) && (tsd.has_wscale() || (tsd.get_len() > 0)) )
+    if ( trk.session->is_midstream_allowed(tsd) && (tsd.has_wscale() || (tsd.is_data_segment())) )
     {
         Flow* flow = tsd.get_flow();
 
-        // FIXIT-H do we need to verify the ACK field is >= the seq of the SYN-ACK?
-        // 3-way Handshake complete, create TCP session
         flow->session_state |= ( STREAM_STATE_ACK | STREAM_STATE_SYN_ACK |
             STREAM_STATE_ESTABLISHED );
         trk.init_on_3whs_ack_sent(tsd);
@@ -112,7 +108,7 @@ bool TcpStateNone::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateNone::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.session->is_midstream_allowed(tsd) && (tsd.has_wscale() || (tsd.get_len() > 0)) )
+    if ( trk.session->is_midstream_allowed(tsd) && (tsd.has_wscale() || (tsd.is_data_segment())) )
     {
         Flow* flow = tsd.get_flow();
 
@@ -228,10 +224,7 @@ bool TcpStateNone::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         trk.session->update_perf_base_state(TcpStreamTracker::TCP_CLOSING);
         trk.session->set_pkt_action_flag(ACTION_RST);
     }
-    else
-    {
-        trk.session->tel.set_tcp_event(EVENT_BAD_RST);
-    }
+
     return true;
 }
 

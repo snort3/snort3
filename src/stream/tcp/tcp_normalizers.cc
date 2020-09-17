@@ -193,10 +193,7 @@ static inline int handle_repeated_syn_mswin(
         return ACTION_RST;
     }
     else
-    {
-        inc_tcp_discards();
         return ACTION_NOTHING;
-    }
 }
 
 static inline int handle_repeated_syn_bsd(
@@ -210,10 +207,7 @@ static inline int handle_repeated_syn_bsd(
         return ACTION_RST;
     }
     else
-    {
-        inc_tcp_discards();
         return ACTION_NOTHING;
-    }
 }
 
 // Linux, Win2k3 et al.  do not support timestamps if the 3whs used a 0 timestamp.
@@ -337,7 +331,6 @@ int TcpNormalizerMacOS::handle_repeated_syn(
     TcpNormalizerState&, TcpSegmentDescriptor&)
 {
     /* MACOS ignores a 2nd SYN, regardless of the sequence number. */
-    inc_tcp_discards();
     return ACTION_NOTHING;
 }
 

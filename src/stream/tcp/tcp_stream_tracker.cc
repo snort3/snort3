@@ -34,7 +34,6 @@
 
 #include "held_packet_queue.h"
 #include "segment_overlap_editor.h"
-#include "tcp_module.h"
 #include "tcp_normalizers.h"
 #include "tcp_reassemblers.h"
 #include "tcp_session.h"
@@ -95,16 +94,17 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(const TcpSegmentDescr
             tcp_event = TCP_FIN_SENT_EVENT;
         else if ( tcph->is_ack() || tcph->is_psh() )
         {
-            if ( tsd.get_len() > 0 )
+            if ( tsd.is_data_segment() )
                 tcp_event = TCP_DATA_SEG_SENT_EVENT;
             else
                 tcp_event = TCP_ACK_SENT_EVENT;
         }
-        else if ( tsd.get_len() > 0 )   // FIXIT-H no flags set, how do we handle this?
-                                            // discard; drop if normalizing
-            tcp_event = TCP_DATA_SEG_SENT_EVENT;
         else
-            tcp_event = TCP_ACK_SENT_EVENT;
+        {
+            // count no flags set on the talker side...
+            tcpStats.no_flags_set++;
+            tcp_event = TCP_NO_FLAGS_EVENT;
+        }
     }
     else
     {
@@ -138,16 +138,15 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(const TcpSegmentDescr
         }
         else if ( tcph->is_ack() || tcph->is_psh() )
         {
-            if ( tsd.get_len() > 0 )
+            if ( tsd.is_data_segment() )
                 tcp_event = TCP_DATA_SEG_RECV_EVENT;
             else
                 tcp_event = TCP_ACK_RECV_EVENT;
         }
-        else if ( tsd.get_len() > 0 )    // FIXIT-H no flags set, how do we handle this?
-                                             // discard; drop if normalizing
-            tcp_event = TCP_DATA_SEG_RECV_EVENT;
         else
-            tcp_event = TCP_ACK_RECV_EVENT;
+        {
+            tcp_event = TCP_NO_FLAGS_EVENT;
+        }
     }
 
     return tcp_event;
@@ -203,13 +202,14 @@ void TcpStreamTracker::init_tcp_state()
 {
     tcp_state = ( client_tracker ) ?
         TcpStreamTracker::TCP_STATE_NONE : TcpStreamTracker::TCP_LISTEN;
-    flush_policy = STREAM_FLPOLICY_IGNORE;
-    paf_setup(&paf_state);
+
     snd_una = snd_nxt = snd_wnd = 0;
-    rcv_nxt = r_win_base = iss = ts_last = ts_last_packet = 0;
-    small_seg_count = wscale = mss = 0;
+    rcv_nxt = r_win_base = iss = 0;
+    ts_last = ts_last_packet = 0;
+    small_seg_count = 0;
+    wscale = 0;
+    mss = 0;
     tf_flags = 0;
-    alert_count = 0;
     mac_addr_valid = false;
     fin_final_seq = 0;
     fin_seq_status = TcpStreamTracker::FIN_NOT_SEEN;
@@ -217,6 +217,8 @@ void TcpStreamTracker::init_tcp_state()
     rst_pkt_sent = false;
     order = 0;
     held_packet = null_iterator;
+    flush_policy = STREAM_FLPOLICY_IGNORE;
+    reassembler.setup_paf();
 }
 
 //-------------------------------------------------------------------------
@@ -225,7 +227,7 @@ void TcpStreamTracker::init_tcp_state()
 
 void TcpStreamTracker::init_flush_policy()
 {
-    if ( splitter == nullptr )
+    if ( !splitter )
         flush_policy = STREAM_FLPOLICY_IGNORE;
     else if ( normalizer.is_tcp_ips_enabled() )
         flush_policy = STREAM_FLPOLICY_ON_DATA;
@@ -244,7 +246,7 @@ void TcpStreamTracker::set_splitter(StreamSplitter* ss)
         flush_policy = STREAM_FLPOLICY_IGNORE;
     else
     {
-        paf_setup(&paf_state);
+        reassembler.setup_paf();
         reassembler.reset_paf_segment();
     }
 }
@@ -362,7 +364,6 @@ void TcpStreamTracker::init_on_3whs_ack_sent(TcpSegmentDescriptor& tsd)
     ts_last = tsd.get_timestamp();
     if (ts_last == 0)
         tf_flags |= TF_TSTAMP_ZERO;
-    tf_flags |= tsd.init_mss(&mss);
     tf_flags |= tsd.init_wscale(&wscale);
 
     cache_mac_address(tsd, FROM_CLIENT);
@@ -409,7 +410,7 @@ void TcpStreamTracker::init_on_data_seg_sent(TcpSegmentDescriptor& tsd)
     ts_last = tsd.get_timestamp();
     if (ts_last == 0)
         tf_flags |= TF_TSTAMP_ZERO;
-    tf_flags |= ( tsd.init_mss(&mss) | tsd.init_wscale(&wscale) );
+    tf_flags |= tsd.init_wscale(&wscale);
 
     cache_mac_address(tsd, tsd.get_direction() );
     tcp_state = TcpStreamTracker::TCP_ESTABLISHED;
@@ -495,13 +496,6 @@ void TcpStreamTracker::update_tracker_no_ack_sent(TcpSegmentDescriptor& tsd)
 
 void TcpStreamTracker::update_tracker_ack_sent(TcpSegmentDescriptor& tsd)
 {
-    // ** this is how we track the last seq number sent
-    // as is l_unackd is the "last left" seq recvd
-    //snd_una = tsd.get_seg_seq();
-
-    // FIXIT-H add check to validate ack...
-    // norm/drop + discard
-
     if ( SEQ_GT(tsd.get_end_seq(), snd_nxt) )
         snd_nxt = tsd.get_end_seq();
 
@@ -520,9 +514,9 @@ void TcpStreamTracker::update_tracker_ack_sent(TcpSegmentDescriptor& tsd)
 
 bool TcpStreamTracker::update_on_3whs_ack(TcpSegmentDescriptor& tsd)
 {
-    bool good_ack = true;
+    bool good_ack = is_ack_valid(tsd.get_ack());
 
-    if ( is_ack_valid(tsd.get_ack()) )
+    if ( good_ack )
     {
         Flow* flow = tsd.get_flow();
 
@@ -533,22 +527,15 @@ bool TcpStreamTracker::update_on_3whs_ack(TcpSegmentDescriptor& tsd)
         flow->session_state |= ( STREAM_STATE_ACK | STREAM_STATE_ESTABLISHED );
         tcp_state = TcpStreamTracker::TCP_ESTABLISHED;
     }
-    else
-    {
-        inc_tcp_discards();
-        normalizer.trim_win_payload(tsd);
-        good_ack = false;
-    }
 
     return good_ack;
 }
 
 bool TcpStreamTracker::update_on_rst_recv(TcpSegmentDescriptor& tsd)
 {
-    bool good_rst = true;
-
     normalizer.trim_rst_payload(tsd);
-    if ( normalizer.validate_rst(tsd) )
+    bool good_rst = normalizer.validate_rst(tsd);
+    if ( good_rst )
     {
         Flow* flow = tsd.get_flow();
 
@@ -558,9 +545,9 @@ bool TcpStreamTracker::update_on_rst_recv(TcpSegmentDescriptor& tsd)
     }
     else
     {
-        inc_tcp_discards();
+        session->tel.set_tcp_event(EVENT_BAD_RST);
         normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
-        good_rst = false;
+        session->set_pkt_action_flag(ACTION_BAD_PKT);
     }
 
     return good_rst;
@@ -570,18 +557,6 @@ void TcpStreamTracker::update_on_rst_sent()
 {
     tcp_state = TcpStreamTracker::TCP_CLOSED;
     rst_pkt_sent = true;
-}
-
-void TcpStreamTracker::flush_data_on_fin_recv(TcpSegmentDescriptor& tsd)
-{
-    if ( (flush_policy != STREAM_FLPOLICY_ON_ACK)
-        && (flush_policy != STREAM_FLPOLICY_ON_DATA)
-        && normalizer.is_tcp_ips_enabled())
-    {
-        tsd.set_packet_flags(PKT_PDU_TAIL);
-    }
-
-    reassembler.flush_on_data_policy(tsd.get_pkt());
 }
 
 bool TcpStreamTracker::update_on_fin_recv(TcpSegmentDescriptor& tsd)
@@ -629,7 +604,7 @@ bool TcpStreamTracker::is_segment_seq_valid(TcpSegmentDescriptor& tsd)
     else
         left_seq = r_win_base;
 
-    if ( tsd.get_len() )
+    if ( tsd.is_data_segment() )
         right_ok = SEQ_GT(tsd.get_end_seq(), left_seq);
     else
         right_ok = SEQ_GEQ(tsd.get_end_seq(), left_seq);
@@ -639,24 +614,12 @@ bool TcpStreamTracker::is_segment_seq_valid(TcpSegmentDescriptor& tsd)
         uint32_t win = normalizer.get_stream_window(tsd);
 
         if ( SEQ_LEQ(tsd.get_seq(), r_win_base + win) )
-        {
             return true;
-        }
         else
-        {
             valid_seq = false;
-        }
     }
     else
-    {
         valid_seq = false;
-    }
-
-    if ( !valid_seq )
-    {
-        inc_tcp_discards();
-        normalizer.trim_win_payload(tsd);
-    }
 
     return valid_seq;
 }

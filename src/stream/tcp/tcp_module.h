@@ -52,7 +52,6 @@
 extern const PegInfo tcp_pegs[];
 
 extern THREAD_LOCAL snort::ProfileStats s5TcpPerfStats;
-extern THREAD_LOCAL snort::ProfileStats streamSizePerfStats;
 
 struct TcpStats
 {
@@ -62,6 +61,10 @@ struct TcpStats
     PegCount restarts;
     PegCount resyns;
     PegCount discards;
+    PegCount discards_skipped;
+    PegCount invalid_seq_num;
+    PegCount invalid_ack;
+    PegCount no_flags_set;
     PegCount events;
     PegCount ignored;
     PegCount no_pickups;
@@ -80,6 +83,7 @@ struct TcpStats
     PegCount gaps;
     PegCount exceeded_max_segs;
     PegCount exceeded_max_bytes;
+    PegCount payload_fully_trimmed;
     PegCount internalEvents;
     PegCount client_cleanups;
     PegCount server_cleanups;
@@ -108,17 +112,12 @@ struct TcpStats
 
 extern THREAD_LOCAL struct TcpStats tcpStats;
 
-inline void inc_tcp_discards()
-{
-    tcpStats.discards++;
-}
-
 //-------------------------------------------------------------------------
 // stream_tcp module
 //-------------------------------------------------------------------------
 
-#define MOD_NAME "stream_tcp"
-#define MOD_HELP "stream inspector for TCP flow tracking and stream normalization and reassembly"
+#define STREAM_TCP_MOD_NAME "stream_tcp"
+#define STREAM_TCP_MOD_HELP "stream inspector for TCP flow tracking and stream normalization and reassembly"
 
 namespace snort
 {

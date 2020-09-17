@@ -123,11 +123,10 @@ bool TcpReassembler::flush_data_ready(TcpReassemblerState& trs)
 {
     // needed by stream_reassemble:action disable; can fire on rebuilt
     // packets, yanking the splitter out from under us :(
-    if (!trs.tracker->flush_policy or !trs.tracker->splitter)
+    if ( !trs.tracker->is_reassembly_enabled() )
         return false;
 
-    if ( (trs.tracker->flush_policy == STREAM_FLPOLICY_ON_DATA) or
-        trs.tracker->splitter->is_paf() )
+    if ( (trs.tracker->get_flush_policy() == STREAM_FLPOLICY_ON_DATA) or trs.tracker->is_splitter_paf() )
         return ( is_segment_pending_flush(trs) );
 
     return ( get_pending_segment_count(trs, 2) > 1 );  // FIXIT-L return false?
@@ -205,10 +204,10 @@ void TcpReassembler::add_reassembly_segment(
     const int32_t new_size = len - slide - trunc_len;
     assert(new_size >= 0);
 
+    // if trimming will delete all data, don't insert this segment in the queue
     if ( new_size <= 0 )
     {
-        // Zero size data because of trimming. Don't insert it.
-        inc_tcp_discards();
+        tcpStats.payload_fully_trimmed++;
         trs.tracker->normalizer.trim_win_payload(tsd);
         return;
     }
@@ -248,17 +247,69 @@ void TcpReassembler::dup_reassembly_segment(
     *retSeg = tsn;
 }
 
+bool TcpReassembler::add_alert(TcpReassemblerState& trs, uint32_t gid, uint32_t sid)
+{
+    if ( trs.alert_count >= MAX_SESSION_ALERTS)
+        return false;
+
+    StreamAlertInfo* ai = trs.alerts + trs.alert_count;
+    ai->gid = gid;
+    ai->sid = sid;
+    ai->seq = 0;
+    ai->event_id = 0;
+    ai->event_second = 0;
+
+    trs.alert_count++;
+
+    return true;
+}
+
+bool TcpReassembler::check_alerted(TcpReassemblerState& trs, uint32_t gid, uint32_t sid)
+{
+    for (int i = 0; i < trs.alert_count; i++)
+    {
+        /*  This is a rebuilt packet and if we've seen this alert before,
+         *  return that we have previously alerted on original packet.
+         */
+        if (trs.alerts[i].gid == gid && trs.alerts[i].sid == sid)
+            return true;
+    }
+
+    return false;
+}
+
+int TcpReassembler::update_alert(TcpReassemblerState& trs, uint32_t gid, uint32_t sid,
+    uint32_t event_id, uint32_t event_second)
+{
+    // FIXIT-M comparison of seq_num is wrong, compare value is always 0, should be seq_num of wire packet
+    uint32_t seq_num = 0;
+
+    for (unsigned i = 0; i < trs.alert_count; i++)
+    {
+        StreamAlertInfo* ai = &trs.alerts[i];
+
+        if (ai->gid == gid && ai->sid == sid && SEQ_EQ(ai->seq, seq_num))
+        {
+            ai->event_id = event_id;
+            ai->event_second = event_second;
+            return 0;
+        }
+    }
+
+    return -1;
+}
+
 void TcpReassembler::purge_alerts(TcpReassemblerState& trs)
 {
     Flow* flow = trs.sos.session->flow;
 
-    for (int i = 0; i < trs.tracker->alert_count; i++)
+    for (int i = 0; i < trs.alert_count; i++)
     {
-        StreamAlertInfo* ai = trs.tracker->alerts + i;
+        StreamAlertInfo* ai = trs.alerts + i;
         Stream::log_extra_data(flow, trs.xtradata_mask, ai->event_id, ai->event_second);
     }
     if ( !flow->is_suspended() )
-        trs.tracker->alert_count = 0;
+        trs.alert_count = 0;
 }
 
 void TcpReassembler::purge_to_seq(TcpReassemblerState& trs, uint32_t flush_seq)
@@ -377,7 +428,7 @@ uint32_t TcpReassembler::get_flush_data_len(
     unsigned int flush_len = ( tsn->c_len <= max ) ? tsn->c_len : max;
 
     // copy only to flush point
-    if ( paf_active(&trs.tracker->paf_state) && SEQ_GT(tsn->c_seq + flush_len, to_seq) )
+    if ( paf_active(&trs.paf_state) && SEQ_GT(tsn->c_seq + flush_len, to_seq) )
         flush_len = to_seq - tsn->c_seq;
 
     return flush_len;
@@ -397,16 +448,16 @@ int TcpReassembler::flush_data_segments(
         TcpSegmentNode* tsn = trs.sos.seglist.cur_rseg;
         unsigned bytes_copied = 0;
         unsigned bytes_to_copy = get_flush_data_len(
-            trs, tsn, to_seq, trs.tracker->splitter->max(p->flow));
+            trs, tsn, to_seq, trs.tracker->get_splitter()->max(p->flow));
         assert(bytes_to_copy);
 
         if ( !tsn->next or (bytes_to_copy < tsn->c_len) or
             SEQ_EQ(tsn->c_seq + bytes_to_copy, to_seq) or
-            (total_flushed + tsn->c_len > trs.tracker->splitter->get_max_pdu()) )
+            (total_flushed + tsn->c_len > trs.tracker->get_splitter()->get_max_pdu()) )
         {
             flags |= PKT_PDU_TAIL;
         }
-        const StreamBuffer sb = trs.tracker->splitter->reassemble(
+        const StreamBuffer sb = trs.tracker->get_splitter()->reassemble(
             trs.sos.session->flow, total, total_flushed, tsn->payload(),
             bytes_to_copy, flags, bytes_copied);
 
@@ -546,8 +597,8 @@ int TcpReassembler::_flush_to_seq(
         if ( footprint > Packet::max_dsize )    // max stream buffer size
             footprint = Packet::max_dsize;
 
-        if ( trs.tracker->splitter->is_paf() and
-            ( trs.tracker->get_tf_flags() & TF_MISSING_PREV_PKT ) )
+        if ( trs.tracker->is_splitter_paf()
+            and ( trs.tracker->get_tf_flags() & TF_MISSING_PREV_PKT ) )
             fallback(*trs.tracker, trs.server_side);
 
         Packet* pdu = initialize_pdu(trs, p, pkt_flags, trs.sos.seglist.cur_rseg->tv);
@@ -583,8 +634,8 @@ int TcpReassembler::_flush_to_seq(
         }
 
         // FIXIT-L must check because above may clear trs.sos.session
-        if ( trs.tracker->splitter )
-            trs.tracker->splitter->update();
+        if ( trs.tracker->get_splitter() )
+            trs.tracker->get_splitter()->update();
 
         // FIXIT-L abort should be by PAF callback only since recovery may be possible
         if ( trs.tracker->get_tf_flags() & TF_MISSING_PKT )
@@ -612,7 +663,7 @@ int TcpReassembler::flush_to_seq(
         return 0;
 
     if ( !flush_data_ready(trs) and !(trs.tracker->get_tf_flags() & TF_FORCE_FLUSH) and
-        !trs.tracker->splitter->is_paf() )
+        !trs.tracker->is_splitter_paf() )
         return 0;
 
     trs.tracker->clear_tf_flags(TF_MISSING_PKT | TF_MISSING_PREV_PKT);
@@ -643,7 +694,7 @@ int TcpReassembler::do_zero_byte_flush(TcpReassemblerState& trs, Packet* p, uint
 {
     unsigned bytes_copied = 0;
 
-    const StreamBuffer sb = trs.tracker->splitter->reassemble(
+    const StreamBuffer sb = trs.tracker->get_splitter()->reassemble(
         trs.sos.session->flow, 0, 0, nullptr, 0, (PKT_PDU_HEAD | PKT_PDU_TAIL), bytes_copied);
 
      if ( sb.data )
@@ -658,8 +709,8 @@ int TcpReassembler::do_zero_byte_flush(TcpReassemblerState& trs, Packet* p, uint
         show_rebuilt_packet(trs, pdu);
         Analyzer::get_local_analyzer()->inspect_rebuilt(pdu);
 
-        if ( trs.tracker->splitter )
-            trs.tracker->splitter->update();
+        if ( trs.tracker->get_splitter() )
+            trs.tracker->get_splitter()->update();
      }
 
      return bytes_copied;
@@ -706,7 +757,7 @@ uint32_t TcpReassembler::get_q_sequenced(TcpReassemblerState& trs)
         trs.sos.seglist.cur_rseg = tsn;
     }
     uint32_t len = 0;
-    const uint32_t limit = trs.tracker->splitter->get_max_pdu();
+    const uint32_t limit = trs.tracker->get_splitter()->get_max_pdu();
 
     while ( len < limit and next_no_gap(*tsn) )
     {
@@ -757,7 +808,7 @@ int TcpReassembler::flush_stream(
     TcpReassemblerState& trs, Packet* p, uint32_t dir, bool final_flush)
 {
     // this is not always redundant; stream_reassemble rule option causes trouble
-    if ( !trs.tracker->flush_policy or !trs.tracker->splitter )
+    if ( !trs.tracker->is_reassembly_enabled() )
         return 0;
 
     uint32_t bytes;
@@ -849,8 +900,8 @@ void TcpReassembler::flush_queued_segments(
         p = set_packet(flow, trs.packet_dir, trs.server_side);
     }
 
-    bool pending = clear and paf_initialized(&trs.tracker->paf_state)
-        and (!trs.tracker->splitter or trs.tracker->splitter->finish(flow) );
+    bool pending = clear and paf_initialized(&trs.paf_state)
+        and (!trs.tracker->get_splitter() or trs.tracker->get_splitter()->finish(flow) );
 
     if ( pending and !(flow->ssn_state.ignore_direction & trs.ignore_dir) )
         final_flush(trs, p, trs.packet_dir);
@@ -904,7 +955,7 @@ int32_t TcpReassembler::flush_pdu_ips(TcpReassemblerState& trs, uint32_t* flags,
     if ( !tsn )
         tsn = trs.sos.seglist.cur_rseg;
 
-    else if ( paf_initialized(&trs.tracker->paf_state) )
+    else if ( paf_initialized(&trs.paf_state) )
     {
         assert(trs.sos.seglist.cur_rseg);
         total = tsn->c_seq - trs.sos.seglist.cur_rseg->c_seq;
@@ -915,9 +966,9 @@ int32_t TcpReassembler::flush_pdu_ips(TcpReassemblerState& trs, uint32_t* flags,
         total += tsn->c_len;
 
         uint32_t end = tsn->c_seq + tsn->c_len;
-        uint32_t pos = paf_position(&trs.tracker->paf_state);
+        uint32_t pos = paf_position(&trs.paf_state);
 
-        if ( paf_initialized(&trs.tracker->paf_state) && SEQ_LEQ(end, pos) )
+        if ( paf_initialized(&trs.paf_state) && SEQ_LEQ(end, pos) )
         {
             if ( !next_no_gap(*tsn) )
                 return -1;
@@ -927,7 +978,7 @@ int32_t TcpReassembler::flush_pdu_ips(TcpReassemblerState& trs, uint32_t* flags,
         }
 
         int32_t flush_pt = paf_check(
-            trs.tracker->splitter, &trs.tracker->paf_state, p, tsn->payload(),
+            trs.tracker->get_splitter(), &trs.paf_state, p, tsn->payload(),
             tsn->c_len, total, tsn->c_seq, flags);
 
         if (flush_pt >= 0)
@@ -954,9 +1005,8 @@ static inline bool both_splitters_aborted(Flow* flow)
 
 static inline void fallback(TcpStreamTracker& trk, bool server_side, uint16_t max)
 {
-    delete trk.splitter;
-    trk.splitter = new AtomSplitter(!server_side, max);
-    trk.paf_state.paf = StreamSplitter::START;
+    trk.set_splitter(new AtomSplitter(!server_side, max));
+    trk.reassembler.reset_paf();
     tcpStats.partial_fallbacks++;
 }
 
@@ -1008,9 +1058,9 @@ int32_t TcpReassembler::flush_pdu_ackd(TcpReassemblerState& trs, uint32_t* flags
     {
         uint32_t size = tsn->c_len;
         uint32_t end = tsn->c_seq + tsn->c_len;
-        uint32_t pos = paf_position(&trs.tracker->paf_state);
+        uint32_t pos = paf_position(&trs.paf_state);
 
-        if ( paf_initialized(&trs.tracker->paf_state) && SEQ_LEQ(end, pos) )
+        if ( paf_initialized(&trs.paf_state) && SEQ_LEQ(end, pos) )
         {
             total += size;
             tsn = tsn->next;
@@ -1023,7 +1073,7 @@ int32_t TcpReassembler::flush_pdu_ackd(TcpReassemblerState& trs, uint32_t* flags
         total += size;
 
         int32_t flush_pt = paf_check(
-            trs.tracker->splitter, &trs.tracker->paf_state, p, tsn->payload(),
+            trs.tracker->get_splitter(), &trs.paf_state, p, tsn->payload(),
             size, total, tsn->c_seq, flags);
 
         if ( flush_pt >= 0 )
@@ -1039,14 +1089,14 @@ int32_t TcpReassembler::flush_pdu_ackd(TcpReassemblerState& trs, uint32_t* flags
             // instead of creating more, but smaller, packets
             // FIXIT-L just flush to end of segment to avoid splitting
             // instead of all avail?
-            if ( !trs.tracker->splitter->is_paf() )
+            if ( !trs.tracker->is_splitter_paf() )
             {
                 // get_q_footprint() w/o side effects
                 int32_t avail = trs.tracker->r_win_base - trs.sos.seglist_base_seq;
 
                 if ( avail > flush_pt )
                 {
-                    paf_jump(&trs.tracker->paf_state, avail - flush_pt);
+                    paf_jump(&trs.paf_state, avail - flush_pt);
                     return avail;
                 }
             }
@@ -1062,7 +1112,7 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
     uint32_t flushed = 0;
     last_pdu = nullptr;
 
-    switch ( trs.tracker->flush_policy )
+    switch ( trs.tracker->get_flush_policy() )
     {
     case STREAM_FLPOLICY_IGNORE:
         return 0;
@@ -1089,7 +1139,7 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
             flush_amt = flush_pdu_ips(trs, &flags, p);
         }
 
-        if ( !flags && trs.tracker->splitter->is_paf() )
+        if ( !flags && trs.tracker->is_splitter_paf() )
         {
             fallback(*trs.tracker, trs.server_side);
             return flush_on_data_policy(trs, p);
@@ -1101,7 +1151,7 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
     if ( trs.tracker->is_retransmit_of_held_packet(p) )
         flushed = perform_partial_flush(trs, p, flushed);
 
-    // FIXIT-H a drop rule will yoink the seglist out from under us
+    // FIXIT-M a drop rule will yoink the seglist out from under us
     // because apply_delayed_action is only deferred to end of context
     // this is causing stability issues
     if ( flushed and trs.sos.seg_count and
@@ -1123,7 +1173,7 @@ int TcpReassembler::flush_on_ack_policy(TcpReassemblerState& trs, Packet* p)
     uint32_t flushed = 0;
     last_pdu = nullptr;
 
-    switch (trs.tracker->flush_policy)
+    switch ( trs.tracker->get_flush_policy() )
     {
     case STREAM_FLPOLICY_IGNORE:
         return 0;
@@ -1138,8 +1188,8 @@ int TcpReassembler::flush_on_ack_policy(TcpReassemblerState& trs, Packet* p)
             if ( !flush_amt )
                 flush_amt = trs.sos.seglist.cur_rseg->c_seq - trs.sos.seglist_base_seq;
 
-            if ( trs.tracker->paf_state.paf == StreamSplitter::ABORT )
-                trs.tracker->splitter->finish(p->flow);
+            if ( trs.paf_state.paf == StreamSplitter::ABORT )
+                trs.tracker->get_splitter()->finish(p->flow);
 
             // for consistency with other cases, should return total
             // but that breaks flushing pipelined pdus
@@ -1156,8 +1206,7 @@ int TcpReassembler::flush_on_ack_policy(TcpReassemblerState& trs, Packet* p)
                 break;  // bail if nothing flushed
         }
 
-        if ( (trs.tracker->paf_state.paf == StreamSplitter::ABORT) &&
-            (trs.tracker->splitter && trs.tracker->splitter->is_paf()) )
+        if ( (trs.paf_state.paf == StreamSplitter::ABORT) && trs.tracker->is_splitter_paf() )
         {
             fallback(*trs.tracker, trs.server_side);
             return flush_on_ack_policy(trs, p);
@@ -1345,10 +1394,10 @@ uint32_t TcpReassembler::perform_partial_flush(TcpReassemblerState& trs, Flow* f
 // are not null.
 uint32_t TcpReassembler::perform_partial_flush(TcpReassemblerState& trs, Packet* p, uint32_t flushed)
 {
-    if ( trs.tracker->splitter->init_partial_flush(p->flow) )
+    if ( trs.tracker->get_splitter()->init_partial_flush(p->flow) )
     {
         flushed += flush_stream(trs, p, trs.packet_dir, false);
-        paf_jump(&trs.tracker->paf_state, flushed);
+        paf_jump(&trs.paf_state, flushed);
         tcpStats.partial_flushes++;
         tcpStats.partial_flush_bytes += flushed;
         if ( trs.sos.seg_count )

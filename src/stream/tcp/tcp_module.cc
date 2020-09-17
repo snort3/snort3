@@ -44,6 +44,10 @@ const PegInfo tcp_pegs[] =
     { CountType::SUM, "restarts", "sessions restarted" },
     { CountType::SUM, "resyns", "SYN received on established session" },
     { CountType::SUM, "discards", "tcp packets discarded" },
+    { CountType::SUM, "discards_skipped", "tcp packet discards skipped due to normalization disabled" },
+    { CountType::SUM, "invalid_seq_num", "tcp packets received with an invalid sequence number" },
+    { CountType::SUM, "invalid_ack", "tcp packets received with an invalid ack number" },
+    { CountType::SUM, "no_flags_set", "tcp packets received with no TCP flags set" },
     { CountType::SUM, "events", "events generated" },
     { CountType::SUM, "ignored", "tcp packets ignored" },
     { CountType::SUM, "untracked", "tcp packets not tracked" },
@@ -64,6 +68,7 @@ const PegInfo tcp_pegs[] =
         "number of times the maximum queued segment limit was reached" },
     { CountType::SUM, "exceeded_max_bytes",
         "number of times the maximum queued byte limit was reached" },
+    { CountType::SUM, "payload_fully_trimmed", "segments with no data after trimming" },
     { CountType::SUM, "internal_events", "135:X events generated" },
     { CountType::SUM, "client_cleanups",
         "number of times data from server was flushed when session released" },
@@ -229,7 +234,7 @@ static const RuleMap stream_tcp_rules[] =
 };
 
 StreamTcpModule::StreamTcpModule() :
-    Module(MOD_NAME, MOD_HELP, s_params)
+    Module(STREAM_TCP_MOD_NAME, STREAM_TCP_MOD_HELP, s_params)
 {
     config = nullptr;
 }
@@ -243,7 +248,7 @@ ProfileStats* StreamTcpModule::get_profile(
     switch ( index )
     {
     case 0:
-        name = MOD_NAME;
+        name = STREAM_TCP_MOD_NAME;
         parent = nullptr;
         return &s5TcpPerfStats;
 

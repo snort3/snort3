@@ -57,7 +57,7 @@ bool TcpStateSynRecv::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateSynRecv::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( tsd.get_len() )
+    if ( tsd.is_data_segment() )
         trk.session->handle_data_on_syn(tsd);
     return true;
 }
@@ -66,8 +66,6 @@ bool TcpStateSynRecv::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 {
     Flow* flow = tsd.get_flow();
 
-    // FIXIT-H verify ack being sent is valid...
-    // norm/drop + discard
     trk.finish_server_init(tsd);
     trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs());
     flow->session_state |= STREAM_STATE_SYN_ACK;
@@ -86,7 +84,7 @@ bool TcpStateSynRecv::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
         flow->session_state |= ( STREAM_STATE_ACK | STREAM_STATE_ESTABLISHED );
         trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
         trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
-        if ( tsd.get_len() )
+        if ( tsd.is_data_segment() )
             trk.session->handle_data_on_syn(tsd);
     }
     return true;
@@ -114,7 +112,7 @@ bool TcpStateSynRecv::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         flow->session_state |= ( STREAM_STATE_ACK | STREAM_STATE_ESTABLISHED );
         trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
         trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
-        if ( tsd.get_len() > 0 )
+        if ( tsd.is_data_segment() )
             trk.session->handle_data_segment(tsd);
         else
             trk.session->check_for_window_slam(tsd);
@@ -140,7 +138,7 @@ bool TcpStateSynRecv::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker&
         trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
         trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
     }
-    if ( tsd.get_len() > 0 )
+    if ( tsd.is_data_segment() )
         trk.session->handle_data_segment(tsd);
     return true;
 }
@@ -154,11 +152,8 @@ bool TcpStateSynRecv::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         trk.update_tracker_ack_recv(tsd);
         trk.session->set_pkt_action_flag(trk.normalizer.handle_paws(tsd));
         flow->session_state |= STREAM_STATE_ACK;
-        if ( tsd.get_len() > 0 )
-        {
+        if ( tsd.is_data_segment() )
             trk.session->handle_data_segment(tsd);
-            trk.flush_data_on_fin_recv(tsd);
-        }
 
         if ( trk.update_on_fin_recv(tsd) )
         {
@@ -179,13 +174,13 @@ bool TcpStateSynRecv::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     }
     else
     {
-        inc_tcp_discards();
         trk.session->tel.set_tcp_event(EVENT_BAD_RST);
         trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
+        trk.session->set_pkt_action_flag(ACTION_BAD_PKT);
     }
 
     // FIXIT-L might be good to create alert specific to RST with data
-    if ( tsd.get_len() > 0 )
+    if ( tsd.is_data_segment() )
         trk.session->tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
     return true;
 }

@@ -28,22 +28,10 @@
 
 #include "segment_overlap_editor.h"
 #include "tcp_defs.h"
+#include "tcp_module.h"
 #include "tcp_normalizers.h"
 #include "tcp_reassemblers.h"
 #include "tcp_segment_descriptor.h"
-
-/* Only track a maximum number of alerts per session */
-#define MAX_SESSION_ALERTS 8
-struct StreamAlertInfo
-{
-    /* For storing alerts that have already been seen on the session */
-    uint32_t sid;
-    uint32_t gid;
-    uint32_t seq;
-    // if we log extra data, event_* is used to correlate with alert
-    uint32_t event_id;
-    uint32_t event_second;
-};
 
 extern const char* tcp_state_names[];
 extern const char* tcp_event_names[];
@@ -91,6 +79,7 @@ public:
         TCP_FIN_RECV_EVENT,
         TCP_RST_SENT_EVENT,
         TCP_RST_RECV_EVENT,
+        TCP_NO_FLAGS_EVENT,
         TCP_MAX_EVENTS
     };
 
@@ -202,11 +191,14 @@ public:
 
     bool is_ack_valid(uint32_t cur)
     {
-        // If we haven't seen anything, ie, low & high are 0, return true
         if ( ( snd_una == 0 ) && ( snd_nxt == 0 ) )
             return true;
 
-        return ( SEQ_GEQ(cur, snd_una) && SEQ_LEQ(cur, snd_nxt) );
+        bool valid = SEQ_GEQ(cur, snd_una) && SEQ_LEQ(cur, snd_nxt);
+        if ( !valid )
+            tcpStats.invalid_ack++;
+
+        return valid;
     }
 
     // ack number must ack syn
@@ -252,17 +244,25 @@ public:
     bool is_rst_pkt_sent() const
     { return rst_pkt_sent; }
 
-    snort::StreamSplitter* get_splitter()
-    { return splitter; }
+    void set_flush_policy(FlushPolicy policy)
+    { flush_policy = policy; }
 
     FlushPolicy get_flush_policy()
     { return flush_policy; }
 
     virtual void init_tcp_state();
     virtual void init_flush_policy();
-
     virtual void set_splitter(snort::StreamSplitter* ss);
     virtual void set_splitter(const snort::Flow* flow);
+
+    snort::StreamSplitter* get_splitter()
+    { return splitter; }
+
+    bool is_splitter_paf() const
+    { return splitter && splitter->is_paf(); }
+
+    bool is_reassembly_enabled() const
+    { return  ( splitter and (flush_policy != STREAM_FLPOLICY_IGNORE) ); }
 
     virtual void init_on_syn_sent(TcpSegmentDescriptor&);
     virtual void init_on_syn_recv(TcpSegmentDescriptor&);
@@ -285,7 +285,6 @@ public:
     virtual bool update_on_fin_recv(TcpSegmentDescriptor&);
     virtual bool update_on_fin_sent(TcpSegmentDescriptor&);
     virtual bool is_segment_seq_valid(TcpSegmentDescriptor&);
-    virtual void flush_data_on_fin_recv(TcpSegmentDescriptor&);
     bool set_held_packet(snort::Packet*);
     bool is_retransmit_of_held_packet(snort::Packet*);
     void finalize_held_packet(snort::Packet*);
@@ -327,48 +326,30 @@ public:
 public:
     TcpNormalizerPolicy normalizer;
     TcpReassemblerPolicy reassembler;
-
-    StreamAlertInfo alerts[MAX_SESSION_ALERTS];
-
-    // this is intended to be private to paf but is included
-    // directly to avoid the need for allocation; do not directly
-    // manipulate within this module.
-    PAF_State paf_state;    // for tracking protocol aware flushing
-
     TcpSession* session = nullptr;
-    snort::StreamSplitter* splitter = nullptr;
-
-    FlushPolicy flush_policy = STREAM_FLPOLICY_IGNORE;
 
     uint32_t r_win_base = 0; // remote side window base sequence number (the last ack we got)
     uint32_t small_seg_count = 0;
-
-    uint16_t wscale = 0; /* window scale setting */
-    uint16_t mss = 0; /* max segment size */
-
-    uint8_t alert_count = 0;
     uint8_t order = 0;
-
     FinSeqNumStatus fin_seq_status = TcpStreamTracker::FIN_NOT_SEEN;
 
-    std::list<HeldPacket>::iterator held_packet;
 
 protected:
-    // FIXIT-H reorganize per-flow structs to minimize padding
+    static const std::list<HeldPacket>::iterator null_iterator;
+    std::list<HeldPacket>::iterator held_packet;
+    snort::StreamSplitter* splitter = nullptr;
     uint32_t ts_last_packet = 0;
-    uint32_t ts_last = 0; /* last timestamp (for PAWS) */
-
+    uint32_t ts_last = 0;       // last timestamp (for PAWS)
     uint32_t fin_final_seq = 0;
     uint32_t fin_seq_adjust = 0;
-
+    uint16_t mss = 0;           // max segment size
+    uint16_t wscale = 0;        // window scale setting
     uint16_t tf_flags = 0;
-
     uint8_t mac_addr[6] = { };
     uint8_t tcp_options_len = 0;
+    FlushPolicy flush_policy = STREAM_FLPOLICY_IGNORE;
     bool mac_addr_valid = false;
     bool fin_seq_set = false;  // FIXIT-M should be obviated by tcp state
-
-    static const std::list<HeldPacket>::iterator null_iterator;
 };
 
 // <--- note -- the 'state' parameter must be a reference

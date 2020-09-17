@@ -49,6 +49,15 @@ public:
     void queue_packet_for_reassembly(TcpSegmentDescriptor& tsd)
     { reassembler->queue_packet_for_reassembly(trs, tsd); }
 
+    bool add_alert(uint32_t gid, uint32_t sid)
+    { return reassembler->add_alert(trs, gid, sid); }
+
+    bool check_alerted(uint32_t gid, uint32_t sid)
+    { return reassembler->check_alerted(trs, gid, sid); }
+
+    int update_alert(uint32_t gid, uint32_t sid, uint32_t event_id, uint32_t event_second)
+    { return reassembler->update_alert(trs, gid, sid, event_id, event_second); }
+
     void purge_alerts()
     { reassembler->purge_alerts(trs); }
 
@@ -117,6 +126,15 @@ public:
 
     uint32_t perform_partial_flush(snort::Flow* flow)
     { return reassembler->perform_partial_flush(trs, flow); }
+
+    void reset_paf()
+    { paf_reset(&trs.paf_state); }
+
+    void clear_paf()
+    { paf_clear(&trs.paf_state); }
+
+    void setup_paf()
+    { paf_setup(&trs.paf_state); }
 
 private:
     TcpReassembler* reassembler = nullptr;

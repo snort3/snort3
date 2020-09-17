@@ -37,24 +37,23 @@ class TcpStreamSession : public Session
 public:
     ~TcpStreamSession() override;
 
-    bool setup(snort::Packet*) override;
     void clear() override;
     void cleanup(snort::Packet* = nullptr) override;
 
     void set_splitter(bool, snort::StreamSplitter*) override;
     snort::StreamSplitter* get_splitter(bool) override;
 
-    bool is_sequenced(uint8_t /*dir*/) override;
-    bool are_packets_missing(uint8_t /*dir*/) override;
+    bool is_sequenced(uint8_t dir) override;
+    bool are_packets_missing(uint8_t dir) override;
 
     void disable_reassembly(snort::Flow*) override;
     uint8_t get_reassembly_direction() override;
-    uint8_t missing_in_reassembled(uint8_t /*dir*/) override;
+    uint8_t missing_in_reassembled(uint8_t dir) override;
 
     bool add_alert(snort::Packet*, uint32_t gid, uint32_t sid) override;
     bool check_alerted(snort::Packet*, uint32_t gid, uint32_t sid) override;
-    int update_alert(snort::Packet*, uint32_t /*gid*/, uint32_t /*sid*/,
-        uint32_t /*event_id*/, uint32_t /*event_second*/) override;
+    int update_alert(snort::Packet*, uint32_t gid, uint32_t sid,
+        uint32_t event_id, uint32_t event_second) override;
 
     bool set_packet_action_to_hold(snort::Packet*) override;
 
@@ -68,17 +67,12 @@ public:
     void get_packet_header_foo(DAQ_PktHdr_t*, uint32_t dir);
     void set_no_ack(bool);
     bool no_ack_mode_enabled() { return no_ack; }
-
     virtual void update_perf_base_state(char) = 0;
     virtual void clear_session(
         bool free_flow_data, bool flush_segments, bool restart, snort::Packet* p = nullptr) = 0;
-
     virtual void flush() = 0;
-
     virtual TcpStreamTracker::TcpState get_talker_state(TcpSegmentDescriptor&) = 0;
-
     virtual TcpStreamTracker::TcpState get_listener_state(TcpSegmentDescriptor&) = 0;
-
     TcpStreamTracker::TcpState get_peer_state(TcpStreamTracker* me)
     { return me == &client ? server.get_tcp_state() : client.get_tcp_state(); }
 
@@ -127,10 +121,10 @@ public:
     bool generate_3whs_alert = true;
     TcpStreamConfig* tcp_config = nullptr;
     TcpEventLogger tel;
+    bool cleaning = false;
 
 private:
     bool no_ack = false;
-    bool cleaning = false;
 
 protected:
     TcpStreamSession(snort::Flow*);

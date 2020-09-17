@@ -36,19 +36,13 @@
 using namespace std;
 
 TcpStateHandler::TcpStateHandler(TcpStreamTracker::TcpState state, TcpStateMachine& tsm)
-{
-    tsm.register_state_handler(state, *this);
-}
+{ tsm.register_state_handler(state, *this); }
 
 bool TcpStateHandler::do_pre_sm_packet_actions(TcpSegmentDescriptor&, TcpStreamTracker&)
-{
-    return true;
-}
+{  return true; }
 
 bool TcpStateHandler::do_post_sm_packet_actions(TcpSegmentDescriptor&, TcpStreamTracker&)
-{
-    return true;
-}
+{ return true; }
 
 bool TcpStateHandler::eval(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
@@ -89,6 +83,9 @@ bool TcpStateHandler::eval(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 
     case TcpStreamTracker::TCP_RST_RECV_EVENT:
         return rst_recv(tsd, tracker);
+
+    case TcpStreamTracker::TCP_NO_FLAGS_EVENT:
+        return no_flags(tsd, tracker);
 
     default:
         break;
