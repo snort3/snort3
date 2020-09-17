@@ -319,8 +319,8 @@ static void DCE2_Smb2CreateResponse(DCE2_Smb2SsnData*,
             true);
 
         debug_logf(dce_smb_trace, nullptr, "%s_RESP: file size %" PRIu64 " fid %" PRIu64 ""
-            "file_name_hash %" PRIu64 " file %p\n", smb2_command_string[SMB2_COM_CREATE],
-            file_size, fileId_persistent, ftracker->file_name_hash, (void *)file);
+            "file_name_hash %" PRIu64 " file context %s\n", smb2_command_string[SMB2_COM_CREATE],
+            file_size, fileId_persistent, ftracker->file_name_hash, (file ? "found" : "not found"));
 
         if (file)
         {
@@ -542,8 +542,9 @@ void DCE2_Smb2SetInfo(DCE2_Smb2SsnData*, const Smb2Hdr* smb_hdr,
                 FileContext* file = get_smb_file_context(ftracker->file_name_hash,
                     fileId_persistent);
                 debug_logf(dce_smb_trace, nullptr,
-                    "%s_REQ: set file size %" PRIu64 " fid %" PRIu64 " file %p\n",
-                    smb2_command_string[SMB2_COM_SET_INFO], file_size, fileId_persistent, (void*)file);
+                    "%s_REQ: set file size %" PRIu64 " fid %" PRIu64 " file context %s\n",
+                    smb2_command_string[SMB2_COM_SET_INFO], file_size, fileId_persistent,
+                    file ? "found" : "not found");
                 if (file)
                 {
                     file->set_file_size(ftracker->file_size);
