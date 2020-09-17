@@ -144,15 +144,15 @@ const TcpFingerprint* TcpFpProcessor::get_tcp_fp(const FpTcpKey& key, uint8_t tt
     {
         fptable = table_tcp_server;
         fptype = key.isIpv6 ?
-            FpFingerprint::FpType::FINGERPRINT_TYPE_SERVER6 :
-            FpFingerprint::FpType::FINGERPRINT_TYPE_SERVER;
+            FpFingerprint::FpType::FP_TYPE_SERVER6 :
+            FpFingerprint::FpType::FP_TYPE_SERVER;
     }
     else if (mode == TCP_FP_MODE::CLIENT)
     {
         fptable = table_tcp_client;
         fptype = key.isIpv6 ?
-            FpFingerprint::FpType::FINGERPRINT_TYPE_CLIENT6 :
-            FpFingerprint::FpType::FINGERPRINT_TYPE_CLIENT;
+            FpFingerprint::FpType::FP_TYPE_CLIENT6 :
+            FpFingerprint::FpType::FP_TYPE_CLIENT;
     }
     else
     {

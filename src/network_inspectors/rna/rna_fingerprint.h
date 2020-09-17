@@ -18,8 +18,8 @@
 
 // rna_fingerprint.h author Silviu Minut <sminut@cisco.com>
 
-#ifndef RNA_FINGERPRINT_H
-#define RNA_FINGERPRINT_H
+#ifndef RNA_FP_H
+#define RNA_FP_H
 
 #include <cstdint>
 #include <string>
@@ -42,21 +42,21 @@ public:
 
     enum FpType
     {
-        FINGERPRINT_TYPE_DERIVED = 0,
-        FINGERPRINT_TYPE_SERVER = 1,
-        FINGERPRINT_TYPE_CLIENT = 2,
-        FINGERPRINT_TYPE_SMB = 3,
-        FINGERPRINT_TYPE_DHCP = 4,
-        FINGERPRINT_TYPE_USER = 5,
-        FINGERPRINT_TYPE_SCAN = 6,
-        FINGERPRINT_TYPE_APP = 7,
-        FINGERPRINT_TYPE_CONFLICT = 8,
-        FINGERPRINT_TYPE_MOBILE = 9,
-        FINGERPRINT_TYPE_SERVER6 = 10,
-        FINGERPRINT_TYPE_CLIENT6 = 11,
-        FINGERPRINT_TYPE_DHCP6 = 12,
-        FINGERPRINT_TYPE_USERAGENT = 13,
-        MAX_FINGERPRINT_TYPES = 14
+        FP_TYPE_DERIVED = 0,
+        FP_TYPE_SERVER = 1,
+        FP_TYPE_CLIENT = 2,
+        FP_TYPE_SMB = 3,
+        FP_TYPE_DHCP = 4,
+        FP_TYPE_USER = 5,
+        FP_TYPE_SCAN = 6,
+        FP_TYPE_APP = 7,
+        FP_TYPE_CONFLICT = 8,
+        FP_TYPE_MOBILE = 9,
+        FP_TYPE_SERVER6 = 10,
+        FP_TYPE_CLIENT6 = 11,
+        FP_TYPE_DHCP6 = 12,
+        FP_TYPE_USERAGENT = 13,
+        MAX_FP_TYPES = 14
     };
 
     uint32_t fpid = 0;

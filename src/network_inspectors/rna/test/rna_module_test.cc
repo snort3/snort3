@@ -60,7 +60,7 @@ TEST(rna_module_test, push_tcp_fingerprints)
     // input fingerprint
     RawFingerprint rawfp;
     rawfp.fpid = 948;
-    rawfp.fp_type = FpFingerprint::FpType::FINGERPRINT_TYPE_SERVER;
+    rawfp.fp_type = FpFingerprint::FpType::FP_TYPE_SERVER;
     rawfp.fpuuid = "12345678-1234-1234-1234-012345678912";
     rawfp.ttl = 64;
     rawfp.tcp_window = "10 20 30-40 50 60-70";
@@ -155,7 +155,7 @@ TEST(rna_module_test, push_tcp_fingerprints)
 
     // add one for the client too, by changing only the type and id
     auto client_fpid = rawfp.fpid+1;     // non duplicate id
-    rawfp.fp_type = FpFingerprint::FpType::FINGERPRINT_TYPE_CLIENT;
+    rawfp.fp_type = FpFingerprint::FpType::FP_TYPE_CLIENT;
 
     {
         Value v((double) client_fpid);
