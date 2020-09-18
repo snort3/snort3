@@ -176,7 +176,7 @@ static const Parameter s_params[] =
       "don't alert when rule matches" },
 
     { "fastpath", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "optionally whitelist the remainder of the session" },
+      "optionally trust the remainder of the session" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

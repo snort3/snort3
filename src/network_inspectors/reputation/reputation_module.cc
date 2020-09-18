@@ -34,15 +34,15 @@
 using namespace snort;
 using namespace std;
 
-#define REPUTATION_EVENT_BLACKLIST_SRC_STR \
-    "packets blacklisted based on source"
-#define REPUTATION_EVENT_BLACKLIST_DST_STR \
-    "packets blacklisted based on destination"
+#define REPUTATION_EVENT_BLOCKLIST_SRC_STR \
+    "packets blocked based on source"
+#define REPUTATION_EVENT_BLOCKLIST_DST_STR \
+    "packets blocked based on destination"
 
-#define REPUTATION_EVENT_WHITELIST_SRC_STR \
-    "packets whitelisted based on source"
-#define REPUTATION_EVENT_WHITELIST_DST_STR \
-    "packets whitelisted based on destination"
+#define REPUTATION_EVENT_ALLOWLIST_SRC_STR \
+    "packets trusted based on source"
+#define REPUTATION_EVENT_ALLOWLIST_DST_STR \
+    "packets trusted based on destination"
 
 #define REPUTATION_EVENT_MONITOR_SRC_STR \
     "packets monitored based on source"
@@ -51,6 +51,9 @@ using namespace std;
 
 static const Parameter s_params[] =
 {
+    { "blocklist", Parameter::PT_STRING, nullptr, nullptr,
+      "blocklist file name with IP lists" },
+
     { "blacklist", Parameter::PT_STRING, nullptr, nullptr,
       "blacklist file name with IP lists" },
 
@@ -63,14 +66,20 @@ static const Parameter s_params[] =
     { "nested_ip", Parameter::PT_ENUM, "inner|outer|all", "inner",
       "IP to use when there is IP encapsulation" },
 
-    { "priority", Parameter::PT_ENUM, "blacklist|whitelist", "whitelist",
+    { "priority", Parameter::PT_ENUM, "blocklist|allowlist|blacklist|whitelist", "allowlist",
       "defines priority when there is a decision conflict during run-time" },
 
     { "scan_local", Parameter::PT_BOOL, nullptr, "false",
       "inspect local address defined in RFC 1918" },
 
-    { "white", Parameter::PT_ENUM, "unblack|trust", "unblack",
+    { "allow", Parameter::PT_ENUM, "do_not_block|trust|unblack", "do_not_block",
+      "specify the meaning of allowlist" },
+
+    { "white", Parameter::PT_ENUM, "do_not_block|trust|unblack", "do_not_block",
       "specify the meaning of whitelist" },
+
+    { "allowlist", Parameter::PT_STRING, nullptr, nullptr,
+      "allowlist file name with IP lists" },
 
     { "whitelist", Parameter::PT_STRING, nullptr, nullptr,
       "whitelist file name with IP lists" },
@@ -80,11 +89,11 @@ static const Parameter s_params[] =
 
 static const RuleMap reputation_rules[] =
 {
-    { REPUTATION_EVENT_BLACKLIST_SRC, REPUTATION_EVENT_BLACKLIST_SRC_STR },
-    { REPUTATION_EVENT_WHITELIST_SRC, REPUTATION_EVENT_WHITELIST_SRC_STR },
+    { REPUTATION_EVENT_BLOCKLIST_SRC, REPUTATION_EVENT_BLOCKLIST_SRC_STR },
+    { REPUTATION_EVENT_ALLOWLIST_SRC, REPUTATION_EVENT_ALLOWLIST_SRC_STR },
     { REPUTATION_EVENT_MONITOR_SRC, REPUTATION_EVENT_MONITOR_SRC_STR },
-    { REPUTATION_EVENT_BLACKLIST_DST, REPUTATION_EVENT_BLACKLIST_DST_STR },
-    { REPUTATION_EVENT_WHITELIST_DST, REPUTATION_EVENT_WHITELIST_DST_STR },
+    { REPUTATION_EVENT_BLOCKLIST_DST, REPUTATION_EVENT_BLOCKLIST_DST_STR },
+    { REPUTATION_EVENT_ALLOWLIST_DST, REPUTATION_EVENT_ALLOWLIST_DST_STR },
     { REPUTATION_EVENT_MONITOR_DST, REPUTATION_EVENT_MONITOR_DST_STR },
 
 
@@ -120,8 +129,8 @@ ProfileStats* ReputationModule::get_profile() const
 
 bool ReputationModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("blacklist") )
-        conf->blacklist_path = v.get_string();
+    if ( v.is("blocklist") or v.is("blacklist") )
+        conf->blocklist_path = v.get_string();
 
     else if ( v.is("list_dir") )
         conf->list_dir = v.get_string();
@@ -133,16 +142,35 @@ bool ReputationModule::set(const char*, Value& v, SnortConfig*)
         conf->nested_ip = (NestedIP)v.get_uint8();
 
     else if ( v.is("priority") )
-        conf->priority = (IPdecision)(v.get_uint8() + 1);
+    {
+        int priority = v.get_uint8() + 1;
+
+        if (priority == 3) // blacklist
+            priority = 1;
+        
+        else if (priority == 4) // whitelist
+           priority = 2;
+
+        conf->priority = (IPdecision)(priority);
+
+    }
 
     else if ( v.is("scan_local") )
         conf->scanlocal = v.get_bool();
 
-    else if ( v.is("white") )
-        conf->white_action = (WhiteAction)v.get_uint8();
+    else if ( v.is("allow") or v.is("white") )
+    {
+        int action = v.get_uint8();
 
-    else if ( v.is("whitelist") )
-        conf->whitelist_path = v.get_string();
+        if ( action == 2 ) // unblack
+            action = 0;
+
+        conf->allow_action = (AllowAction)action;
+
+    }
+
+    else if ( v.is("allowlist") or v.is("whitelist") )
+        conf->allowlist_path = v.get_string();
 
     else
         return false;
@@ -169,11 +197,11 @@ bool ReputationModule::begin(const char*, int, SnortConfig*)
 
 bool ReputationModule::end(const char*, int, SnortConfig*)
 {
-    if ( (conf->priority == WHITELISTED_TRUST) && (conf->white_action == UNBLACK) )
+    if ( (conf->priority == TRUSTED) && (conf->allow_action == DO_NOT_BLOCK) )
     {
-        ParseWarning(WARN_CONF, "Keyword \"whitelist\" for \"priority\" is "
-            "not applied when white action is unblack.\n");
-            conf->priority = WHITELISTED_UNBLACK;
+        ParseWarning(WARN_CONF, "Keyword \"allowlist\" for \"priority\" is "
+            "not applied when allow action is do_not_block.\n");
+            conf->priority = TRUSTED_DO_NOT_BLOCK;
     }
 
     return true;

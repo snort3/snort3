@@ -193,7 +193,7 @@ static void update_flags(Flow* flow)
         {
             flow->ha_state->add(FlowHAState::MODIFIED);
             /* If we have started ignoring both directions, that means we'll probably
-            * try to whitelist the session.  This is a critical change since we
+            * try to trust the session.  This is a critical change since we
             * probably won't see another packet on the session if we're using
             * a DAQ module that fully supports the WHITELIST verdict. */
             if( cur_state->ignore_direction == SSN_DIR_BOTH )

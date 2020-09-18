@@ -45,8 +45,8 @@ THREAD_LOCAL ReputationStats reputationstats;
 const PegInfo reputation_peg_names[] =
 {
 { CountType::SUM, "packets", "total packets processed" },
-{ CountType::SUM, "blacklisted", "number of packets blacklisted" },
-{ CountType::SUM, "whitelisted", "number of packets whitelisted" },
+{ CountType::SUM, "blocked", "number of packets blocked" },
+{ CountType::SUM, "trusted", "number of packets trusted" },
 { CountType::SUM, "monitored", "number of packets monitored" },
 { CountType::SUM, "memory_allocated", "total memory allocated" },
 
@@ -61,9 +61,9 @@ const char* NestedIPKeyword[] =
     nullptr
 };
 
-const char* WhiteActionOption[] =
+const char* AllowActionOption[] =
 {
-    "unblack",
+    "do_not_block",
     "trust",
     nullptr
 };
@@ -112,7 +112,7 @@ static inline IPdecision get_reputation(ReputationConfig* config, IPrepInfo* rep
                 list_info[list_index]->intfs.count(ingress_intf) ||
                 list_info[list_index]->intfs.count(egress_intf))
             {
-                if (WHITELISTED_UNBLACK == (IPdecision)list_info[list_index]->list_type)
+                if (TRUSTED_DO_NOT_BLOCK == (IPdecision)list_info[list_index]->list_type)
                     return DECISION_NULL;
                 if (config->priority == (IPdecision)list_info[list_index]->list_type )
                 {
@@ -148,12 +148,12 @@ static bool decision_per_layer(ReputationConfig* config, Packet* p,
     {
         decision = get_reputation(config, result, &p->iplist_id, ingress_intf, egress_intf);
 
-        if (decision == BLACKLISTED)
-            *decision_final = BLACKLISTED_SRC;
+        if (decision == BLOCKED)
+            *decision_final = BLOCKED_SRC;
         else if (decision == MONITORED)
             *decision_final = MONITORED_SRC;
-        else if (decision == WHITELISTED_TRUST)
-            *decision_final = WHITELISTED_TRUST_SRC;
+        else if (decision == TRUSTED)
+            *decision_final = TRUSTED_SRC;
         else
             *decision_final = decision;
 
@@ -167,12 +167,12 @@ static bool decision_per_layer(ReputationConfig* config, Packet* p,
     {
         decision = get_reputation(config, result, &p->iplist_id, ingress_intf, egress_intf);
 
-        if (decision == BLACKLISTED)
-            *decision_final = BLACKLISTED_DST;
+        if (decision == BLOCKED)
+            *decision_final = BLOCKED_DST;
         else if (decision == MONITORED)
             *decision_final = MONITORED_DST;
-        else if (decision == WHITELISTED_TRUST)
-            *decision_final = WHITELISTED_TRUST_DST;
+        else if (decision == TRUSTED)
+            *decision_final = TRUSTED_DST;
         else
             *decision_final = decision;
 
@@ -226,7 +226,7 @@ static IPdecision reputation_decision(ReputationConfig* config, Packet* p)
                 &decision_current);
             if (decision_current != DECISION_NULL)
             {
-                if (decision_current == BLACKLISTED_SRC or decision_current == BLACKLISTED_DST)
+                if (decision_current == BLOCKED_SRC or decision_current == BLOCKED_DST)
                     blocked_api = p->ptrs.ip_api;
                 decision_final = decision_current;
                 decision_current = DECISION_NULL;
@@ -236,7 +236,7 @@ static IPdecision reputation_decision(ReputationConfig* config, Packet* p)
     else
         assert(false); // Should never hit this
 
-    if (decision_final != BLACKLISTED_SRC and decision_final != BLACKLISTED_DST)
+    if (decision_final != BLOCKED_SRC and decision_final != BLOCKED_DST)
         p->ptrs.ip_api = tmp_api;
     else if (config->nested_ip == ALL and p->ptrs.ip_api != blocked_api)
         p->ptrs.ip_api = blocked_api;
@@ -258,27 +258,27 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
     if (DECISION_NULL == decision)
         return;
 
-    else if (BLACKLISTED_SRC == decision or BLACKLISTED_DST == decision)
+    else if (BLOCKED_SRC == decision or BLOCKED_DST == decision)
     {
-        unsigned blacklist_event = (BLACKLISTED_SRC == decision) ?
-            REPUTATION_EVENT_BLACKLIST_SRC : REPUTATION_EVENT_BLACKLIST_DST;
+        unsigned blocklist_event = (BLOCKED_SRC == decision) ?
+            REPUTATION_EVENT_BLOCKLIST_SRC : REPUTATION_EVENT_BLOCKLIST_DST;
 
         if (p->flow)
         {
-            p->flow->flags.reputation_blacklist = true;
-            p->flow->flags.reputation_src_dest = (BLACKLISTED_SRC == decision);
+            p->flow->flags.reputation_blocklist = true;
+            p->flow->flags.reputation_src_dest = (BLOCKED_SRC == decision);
         }
 
-        DetectionEngine::queue_event(GID_REPUTATION, blacklist_event);
+        DetectionEngine::queue_event(GID_REPUTATION, blocklist_event);
         act->drop_packet(p, true);
 
         // disable all preproc analysis and detection for this packet
         DetectionEngine::disable_all(p);
         act->block_session(p, true);
         act->set_drop_reason("reputation");
-        reputationstats.blacklisted++;
+        reputationstats.blocked++;
         if (PacketTracer::is_active())
-            PacketTracer::log("Reputation: packet blacklisted, drop\n");
+            PacketTracer::log("Reputation: packet blocked, drop\n");
     }
 
     else if (MONITORED_SRC == decision or MONITORED_DST == decision)
@@ -296,20 +296,20 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
         reputationstats.monitored++;
     }
 
-    else if (WHITELISTED_TRUST_SRC == decision or WHITELISTED_TRUST_DST == decision)
+    else if (TRUSTED_SRC == decision or TRUSTED_DST == decision)
     {
-        unsigned whitelist_event = (WHITELISTED_TRUST_SRC == decision) ?
-            REPUTATION_EVENT_WHITELIST_SRC : REPUTATION_EVENT_WHITELIST_DST;
+        unsigned allowlist_event = (TRUSTED_SRC == decision) ?
+            REPUTATION_EVENT_ALLOWLIST_SRC : REPUTATION_EVENT_ALLOWLIST_DST;
 
         if (p->flow)
         {
-            p->flow->flags.reputation_whitelist = true;
-            p->flow->flags.reputation_src_dest = (WHITELISTED_TRUST_SRC == decision);
+            p->flow->flags.reputation_allowlist = true;
+            p->flow->flags.reputation_src_dest = (TRUSTED_SRC == decision);
         }
 
-        DetectionEngine::queue_event(GID_REPUTATION, whitelist_event);
+        DetectionEngine::queue_event(GID_REPUTATION, allowlist_event);
         act->trust_session(p, true);
-        reputationstats.whitelisted++;
+        reputationstats.trusted++;
     }
 }
 
@@ -336,12 +336,12 @@ static const char* to_string(NestedIP nip)
     return "";
 }
 
-static const char* to_string(WhiteAction wa)
+static const char* to_string(AllowAction aa)
 {
-    switch (wa)
+    switch (aa)
     {
-    case UNBLACK:
-        return "unblack";
+    case DO_NOT_BLOCK:
+        return "do_not_block";
     case TRUST:
         return "trust";
     }
@@ -353,22 +353,22 @@ static const char* to_string(IPdecision ipd)
 {
     switch (ipd)
     {
-    case BLACKLISTED:
-        return "blacklisted";
-    case WHITELISTED_TRUST:
-        return "whitelisted_trust";
+    case BLOCKED:
+        return "blocked";
+    case TRUSTED:
+        return "trusted";
     case MONITORED:
         return "monitored";
-    case BLACKLISTED_SRC:
-        return "blacklisted_src";
-    case BLACKLISTED_DST:
-        return "blacklisted_dst";
-    case WHITELISTED_TRUST_SRC:
-        return "whitelisted_trust_src";
-    case WHITELISTED_TRUST_DST:
-        return "whitelisted_trust_dst";
-    case WHITELISTED_UNBLACK:
-        return "whitelisted_unblack";
+    case BLOCKED_SRC:
+        return "blocked_src";
+    case BLOCKED_DST:
+        return "blocked_dst";
+    case TRUSTED_SRC:
+        return "trusted_src";
+    case TRUSTED_DST:
+        return "trusted_dst";
+    case TRUSTED_DO_NOT_BLOCK:
+        return "trusted_do_not_block";
     case MONITORED_SRC:
         return "monitored_src";
     case MONITORED_DST:
@@ -392,12 +392,12 @@ Reputation::Reputation(ReputationConfig* pc)
     if (!config.list_dir.empty())
         read_manifest(MANIFEST_FILENAME, conf);
 
-    add_black_white_List(conf);
+    add_block_allow_List(conf);
     estimate_num_entries(conf);
     if (conf->num_entries <= 0)
     {
         ParseWarning(WARN_CONF,
-            "reputation: can't find any whitelist/blacklist entries; disabled.");
+            "reputation: can't find any allowlist/blocklist entries; disabled.");
         return;
     }
 
@@ -407,14 +407,14 @@ Reputation::Reputation(ReputationConfig* pc)
 
 void Reputation::show(const SnortConfig*) const
 {
-    ConfigLogger::log_value("blacklist", config.blacklist_path.c_str());
+    ConfigLogger::log_value("blocklist", config.blocklist_path.c_str());
     ConfigLogger::log_value("list_dir", config.list_dir.c_str());
     ConfigLogger::log_value("memcap", config.memcap);
     ConfigLogger::log_value("nested_ip", to_string(config.nested_ip));
     ConfigLogger::log_value("priority", to_string(config.priority));
     ConfigLogger::log_flag("scan_local", config.scanlocal);
-    ConfigLogger::log_value("white (action)", to_string(config.white_action));
-    ConfigLogger::log_value("whitelist", config.whitelist_path.c_str());
+    ConfigLogger::log_value("allow (action)", to_string(config.allow_action));
+    ConfigLogger::log_value("allowlist", config.allowlist_path.c_str());
 }
 
 void Reputation::eval(Packet* p)

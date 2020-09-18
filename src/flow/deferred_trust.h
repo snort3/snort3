@@ -46,10 +46,10 @@ class DeferredTrust
     // The TRUST_DEFER_DO_TRUST state is checked at the end of packet processing. If the state
     // is TRUST_DEFER_DO_TRUST and the action is ACT_ALLOW, the session is trusted.
     // If a drop, block or reset action occurs while deferring, deferring is stopped and the
-    // block or blacklist version is enforced.
+    // block or blocklist version is enforced.
     // The module_id, a unique module identifier created by calling
     // FlowData::create_flow_data_id(), is used to track the modules that are currently deferring.
-    // This allows the module to use whitelist deferring without needing to track the deferring
+    // This allows the module to use trusted deferring without needing to track the deferring
     // state of the module.
     enum DeferredTrustState : uint8_t
     {

@@ -94,7 +94,7 @@ enum DecodeFlags : std::uint16_t
         DECODE_ERR_CKSUM_UDP | DECODE_ERR_CKSUM_ICMP ),
     DECODE_ERR_FLAGS = ( DECODE_ERR_CKSUM_ALL | DECODE_ERR_BAD_TTL ),
 
-    DECODE_PKT_TRUST =      0x0020,  // whitelist this packet
+    DECODE_PKT_TRUST =      0x0020,  // trust this packet
     DECODE_FRAG =           0x0040,  // ip - fragmented packet
     DECODE_MF =             0x0080,  // ip - more fragments
 

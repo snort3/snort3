@@ -39,23 +39,23 @@ enum NestedIP
     ALL
 };
 
-enum WhiteAction
+enum AllowAction
 {
-    UNBLACK,
+    DO_NOT_BLOCK,
     TRUST
 };
 
 enum IPdecision
 {
     DECISION_NULL,
-    BLACKLISTED,
-    WHITELISTED_TRUST,
+    BLOCKED,
+    TRUSTED,
     MONITORED,
-    BLACKLISTED_SRC,
-    BLACKLISTED_DST,
-    WHITELISTED_TRUST_SRC,
-    WHITELISTED_TRUST_DST,
-    WHITELISTED_UNBLACK,
+    BLOCKED_SRC,
+    BLOCKED_DST,
+    TRUSTED_SRC,
+    TRUSTED_DST,
+    TRUSTED_DO_NOT_BLOCK,
     MONITORED_SRC,
     MONITORED_DST,
     DECISION_MAX
@@ -82,11 +82,11 @@ struct ReputationConfig
     uint32_t memcap = 500;
     int num_entries = 0;
     bool scanlocal = false;
-    IPdecision priority = WHITELISTED_TRUST;
+    IPdecision priority = TRUSTED;
     NestedIP nested_ip = INNER;
-    WhiteAction white_action = UNBLACK;
-    std::string blacklist_path;
-    std::string whitelist_path;
+    AllowAction allow_action = DO_NOT_BLOCK;
+    std::string blocklist_path;
+    std::string allowlist_path;
     bool memcap_reached = false;
     uint8_t* reputation_segment = nullptr;
     table_flat_t* ip_list = nullptr;
@@ -105,8 +105,8 @@ struct IPrepInfo
 struct ReputationStats
 {
     PegCount packets;
-    PegCount blacklisted;
-    PegCount whitelisted;
+    PegCount blocked;
+    PegCount trusted;
     PegCount monitored;
     PegCount memory_allocated;
 };
