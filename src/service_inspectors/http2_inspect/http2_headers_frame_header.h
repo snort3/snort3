@@ -28,10 +28,12 @@ class Http2StartLine;
 class Http2HeadersFrameHeader : public Http2HeadersFrame
 {
 public:
-    ~Http2HeadersFrameHeader();
+    ~Http2HeadersFrameHeader() override;
     
     friend Http2Frame* Http2Frame::new_frame(const uint8_t*, const int32_t, const uint8_t*,
         const int32_t, Http2FlowData*, HttpCommon::SourceId, Http2Stream* stream);
+
+    void analyze_http1() override;
 
 #ifdef REG_TEST
     void print_frame(FILE* output) override;

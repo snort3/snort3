@@ -57,6 +57,9 @@ void Http2Stream::eval_frame(const uint8_t* header_buffer, int32_t header_len,
     assert(current_frame == nullptr);
     current_frame = Http2Frame::new_frame(header_buffer, header_len, data_buffer,
         data_len, session_data, source_id, this);
+    valid_frame_order[source_id] = valid_frame_order[source_id] &&
+        current_frame->valid_sequence(state[source_id]);
+    current_frame->analyze_http1();
     current_frame->update_stream_state();
 }
 

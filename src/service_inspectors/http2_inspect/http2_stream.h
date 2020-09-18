@@ -78,6 +78,7 @@ public:
 private:
     const uint32_t stream_id;
     Http2FlowData* const session_data;
+    bool valid_frame_order[2] = { true, true };
     Http2Frame* current_frame = nullptr;
     HttpFlowData* hi_flow_data = nullptr;
     HttpMsgSection* hi_msg_section = nullptr;

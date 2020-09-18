@@ -32,6 +32,13 @@ using namespace HttpEnums;
 
 const Field Field::FIELD_NULL { STAT_NO_SOURCE };
 
+Field::Field(int32_t length, const uint8_t* start, bool own_the_buffer_) :
+    strt(start), len(length), own_the_buffer(own_the_buffer_)
+{
+    assert(!((start == nullptr) && (length > 0)));
+    assert(!((start != nullptr) && (length < 0)));
+}
+
 void Field::set(int32_t length, const uint8_t* start, bool own_the_buffer_)
 {
     assert(len == STAT_NOT_COMPUTE);

@@ -48,11 +48,24 @@ Http2HeadersFrameTrailer::Http2HeadersFrameTrailer(const uint8_t* header_buffer,
     if (!process_frame)
         return;
 
-    StreamBuffer stream_buf;
-    HttpFlowData* http_flow;
+    // Decode trailers
+    if (!hpack_decoder->decode_headers((data.start() + hpack_headers_offset), data.length() -
+        hpack_headers_offset, decoded_headers, nullptr, true))
+    {
+        session_data->frame_type[source_id] = FT__ABORT;
+        error_during_decode = true;
+    }
+}
 
-    http_flow = session_data->get_current_stream(source_id)->get_hi_flow_data();
+void Http2HeadersFrameTrailer::analyze_http1()
+{
+    if (!process_frame)
+        return;
+
+    HttpFlowData* const http_flow =
+        session_data->get_current_stream(source_id)->get_hi_flow_data();
     assert(http_flow);
+
     if (http_flow->get_type_expected(source_id) != HttpEnums::SEC_TRAILER)
     {
         // If there was no unflushed data on this stream when the trailers arrived, http_inspect
@@ -62,7 +75,8 @@ Http2HeadersFrameTrailer::Http2HeadersFrameTrailer(const uint8_t* header_buffer,
         stream->finish_msg_body(source_id, true, true); // calls http_inspect scan()
 
         unsigned copied;
-        stream_buf = session_data->hi_ss[source_id]->reassemble(session_data->flow,
+        const StreamBuffer stream_buf =
+            session_data->hi_ss[source_id]->reassemble(session_data->flow,
             0, 0, nullptr, 0, PKT_PDU_TAIL, copied);
         assert(stream_buf.data != nullptr);
         assert(copied == 0);
@@ -80,14 +94,6 @@ Http2HeadersFrameTrailer::Http2HeadersFrameTrailer(const uint8_t* header_buffer,
             return;
         }
         session_data->hi->clear(&dummy_pkt);
-    }
-
-    // Decode headers
-    if (!hpack_decoder->decode_headers((data.start() + hpack_headers_offset), data.length() -
-        hpack_headers_offset, decoded_headers, nullptr, true))
-    {
-        session_data->frame_type[source_id] = FT__ABORT;
-        error_during_decode = true;
     }
 
     process_decoded_headers(http_flow);

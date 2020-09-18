@@ -23,6 +23,8 @@
 #include "service_inspectors/http_inspect/http_common.h"
 #include "service_inspectors/http_inspect/http_field.h"
 
+#include "http2_enum.h"
+
 /* This class is called Http2Frame, but an object of this class may not represent exactly one
  * HTTP/2 frame as received on the wire. For HEADERS frames, the Http2Frame object contains the
  * initial HEADERS frame plus any following CONTINUATION frames grouped together. For DATA frames,
@@ -41,6 +43,9 @@ public:
     static Http2Frame* new_frame(const uint8_t* header_buffer, const int32_t header_len,
         const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* session_data,
         HttpCommon::SourceId source_id, Http2Stream* stream);
+    virtual bool valid_sequence(Http2Enums::StreamState state)
+        { return state != Http2Enums::STREAM_ERROR; }
+    virtual void analyze_http1() { }
     virtual void clear() { }
     virtual const Field& get_buf(unsigned id);
     virtual uint32_t get_xtradata_mask() { return 0; }

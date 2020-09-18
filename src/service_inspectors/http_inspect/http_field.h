@@ -35,8 +35,7 @@ class Field
 public:
     static const Field FIELD_NULL;
 
-    Field(int32_t length, const uint8_t* start, bool own_the_buffer_ = false) : strt(start),
-        len(length), own_the_buffer(own_the_buffer_) { }
+    Field(int32_t length, const uint8_t* start, bool own_the_buffer_ = false);
     explicit Field(int32_t length) : len(length) { assert(length<=0); }
     Field() = default;
     ~Field() { if (own_the_buffer) delete[] strt; }

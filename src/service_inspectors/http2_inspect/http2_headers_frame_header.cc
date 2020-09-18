@@ -66,9 +66,18 @@ Http2HeadersFrameHeader::Http2HeadersFrameHeader(const uint8_t* header_buffer, c
         // FIXIT-E set stream state to error
         return;
     }
-    
-    StreamBuffer stream_buf;
-    HttpFlowData* http_flow;
+}
+
+Http2HeadersFrameHeader::~Http2HeadersFrameHeader()
+{
+    delete start_line;
+    delete start_line_generator;
+}
+
+void Http2HeadersFrameHeader::analyze_http1()
+{
+    if (!process_frame || start_line == nullptr)
+        return;
 
     // http_inspect scan() of start line
     {
@@ -84,6 +93,8 @@ Http2HeadersFrameHeader::Http2HeadersFrameHeader(const uint8_t* header_buffer, c
         assert((int64_t)flush_offset == start_line->length());
     }
 
+    StreamBuffer stream_buf;
+
     // http_inspect reassemble() of start line
     {
         unsigned copied;
@@ -94,7 +105,8 @@ Http2HeadersFrameHeader::Http2HeadersFrameHeader(const uint8_t* header_buffer, c
         assert(copied == (unsigned)start_line->length());
     }
 
-    http_flow = session_data->get_current_stream(source_id)->get_hi_flow_data();
+    HttpFlowData* const http_flow =
+        session_data->get_current_stream(source_id)->get_hi_flow_data();
     // http_inspect eval() and clear() of start line
     {
         Http2DummyPacket dummy_pkt;
@@ -114,12 +126,6 @@ Http2HeadersFrameHeader::Http2HeadersFrameHeader(const uint8_t* header_buffer, c
     }
 
     process_decoded_headers(http_flow);
-}
-
-Http2HeadersFrameHeader::~Http2HeadersFrameHeader()
-{
-    delete start_line;
-    delete start_line_generator;
 }
 
 #ifdef REG_TEST

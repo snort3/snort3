@@ -37,6 +37,10 @@ using namespace snort;
 using namespace HttpCommon;
 
 // Stubs to make the code link
+Field::Field(int32_t length, const uint8_t* start, bool own_the_buffer_) :
+    strt(start), len(length), own_the_buffer(own_the_buffer_)
+{}
+
 void Field::set(const Field& input)
 {
     strt = input.strt;
