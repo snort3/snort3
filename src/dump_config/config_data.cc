@@ -45,6 +45,18 @@ void BaseConfigNode::clear_nodes(BaseConfigNode* node)
     delete node;
 }
 
+void BaseConfigNode::sort_nodes(BaseConfigNode* node)
+{
+    if ( !node->children.empty() )
+    {
+        node->children.sort([](const BaseConfigNode* l, const BaseConfigNode* r)
+            { return l->get_name() < r->get_name(); });
+
+        for ( auto& config_node : node->children )
+            sort_nodes(config_node);
+    }
+}
+
 TreeConfigNode::TreeConfigNode(BaseConfigNode* parent_node,
     const std::string& node_name, const Parameter::Type node_type) :
         BaseConfigNode(parent_node), name(node_name), type(node_type)
@@ -100,11 +112,14 @@ void ConfigData::sort()
 {
     config_trees.sort([](const BaseConfigNode* l, const BaseConfigNode* r)
         { return l->get_name() < r->get_name(); });
+
+    for ( auto config_tree : config_trees )
+        BaseConfigNode::sort_nodes(config_tree);
 }
 
 void ConfigData::clear()
 {
-    for ( auto config_tree: config_trees )
+    for ( auto config_tree : config_trees )
         BaseConfigNode::clear_nodes(config_tree);
 
     config_trees.clear();

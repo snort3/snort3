@@ -49,6 +49,7 @@ public:
     void add_child_node(BaseConfigNode* node);
 
     static void clear_nodes(BaseConfigNode* root);
+    static void sort_nodes(BaseConfigNode* node);
 
 protected:
     ConfigTrees children;
