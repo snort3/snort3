@@ -39,6 +39,8 @@
 
 #include "fp_detect.h"
 
+#include <vector>
+
 #include "events/event.h"
 #include "filters/rate_filter.h"
 #include "filters/sfthreshold.h"
@@ -320,8 +322,7 @@ int fp_eval_option(void* v, Cursor& c, Packet* p)
 static int detection_option_tree_evaluate(detection_option_tree_root_t* root,
     detection_option_eval_data_t& eval_data)
 {
-    if ( !root )
-        return 0;
+    assert(root);
 
     RuleLatency::Context rule_latency_ctx(root, eval_data.p);
 
@@ -343,8 +344,8 @@ static int detection_option_tree_evaluate(detection_option_tree_root_t* root,
     return rval;
 }
 
-static int rule_tree_match(
-    void* user, void* tree, int index, void* context, void* neg_list)
+static void rule_tree_match(
+    IpsContext* context, void* user, void* tree, int index, void* neg_list)
 {
     PMX* pmx = (PMX*)user;
 
@@ -352,7 +353,7 @@ static int rule_tree_match(
     detection_option_eval_data_t eval_data;
     NCListNode* ncl;
 
-    eval_data.p = ((IpsContext*)context)->packet;
+    eval_data.p = context->packet;
     eval_data.pmd = pmx->pmd;
     eval_data.flowbit_failed = 0;
     eval_data.flowbit_noalert = 0;
@@ -376,7 +377,7 @@ static int rule_tree_match(
             last_check->ts.tv_sec = eval_data.p->pkth->ts.tv_sec;
             last_check->ts.tv_usec = eval_data.p->pkth->ts.tv_usec;
             last_check->run_num = get_run_num();
-            last_check->context_num = eval_data.p->context->context_num;
+            last_check->context_num = context->context_num;
             last_check->rebuild_flag = (eval_data.p->packet_flags & PKT_REBUILT_STREAM);
         }
 
@@ -389,7 +390,7 @@ static int rule_tree_match(
     }
 
     if (eval_data.flowbit_failed)
-        return -1;
+        return;
 
     /* If this is for an IP rule set, evaluate the rules from
      * the inner IP offset as well */
@@ -416,7 +417,7 @@ static int rule_tree_match(
                 eval_data.p->dsize = eval_data.p->ptrs.ip_api.pay_len();
 
                 /* Recurse, and evaluate with the inner IP */
-                rule_tree_match(user, tree, index, context, nullptr);
+                rule_tree_match(context, user, tree, index, nullptr);
             }
             while (layer::set_inner_ip_api(eval_data.p,
                 eval_data.p->ptrs.ip_api, curr_layer) && (eval_data.p->ptrs.ip_api != tmp_api));
@@ -429,7 +430,6 @@ static int rule_tree_match(
             eval_data.p->dsize = tmp_dsize;
         }
     }
-    return 0;
 }
 
 static int sortOrderByPriority(const void* e1, const void* e2)
@@ -696,127 +696,112 @@ static inline int fpFinalSelectEvent(OtnxMatchData* omd, Packet* p)
     return 0;
 }
 
-struct Node
-{
-    void* user;
-    void* tree;
-    void* list;
-    int index;
-};
-
-
 class MpseStash
 {
 public:
-    MpseStash(unsigned limit)
-        : max(limit)
-    { }
-
-    void init()
+    struct MatchData
     {
-        if ( enable )
-            count = 0;
-    }
+        void* user;
+        void* tree;
+        void* list;
+        int index;
+    };
+
+    using MatchStore = std::vector<MatchData>;
+
+public:
+    MpseStash(unsigned limit) : max(limit) { }
 
     // this is done in the offload thread
-    bool push(void* user, void* tree, int index, void* list);
+    bool push(void* user, void* tree, int index, void* context, void* list);
 
     // this is done in the packet thread
-    bool process(MpseMatch, void*);
-
-    void disable_process()
-    { enable = false; }
-
-    void enable_process()
-    { enable = true; }
+    void process(IpsContext*);
 
 private:
-    bool enable = false;
-    unsigned count = 0;
-    unsigned max;
-    std::vector<Node> queue;
+    void process(IpsContext*, MatchStore&);
 
-    // perf trade-off, same as Snort 2
-    // queue to keep mpse search cache warm
-    // but limit to avoid the O(n**2) effect of inserts
-    // and to get any rule hits before exhaustive searching
-    // consider a map in lieu of vector
-    const unsigned queue_limit = 32;
+private:
+    // balance insertion vs search cache
+    static constexpr unsigned qmax = 128;
+
+    unsigned inserts = 0;
+    unsigned max;
+
+    MatchStore queue;
+    MatchStore defer;
 };
 
-// uniquely insert into q, should splay elements for performance
-// return true if maxed out to trigger a flush
-bool MpseStash::push(void* user, void* tree, int index, void* list)
+bool MpseStash::push(void* user, void* tree, int index, void* context, void* list)
 {
+    detection_option_tree_root_t* root = (detection_option_tree_root_t*)tree;
+    bool checker = root->otn->checks_flowbits();
+    MatchStore& store = checker ? defer : queue;
 
-    for ( auto it = queue.rbegin(); it != queue.rend(); it++ )
+    for ( auto it = store.rbegin(); it != store.rend(); it++ )
     {
         if ( tree == (*it).tree )
         {
-            pmqs.tot_inq_inserts++;
-            return false;
+            inserts++;
+            return true;
         }
     }
 
-    if ( max and ( count == max ) )
+    if ( max and inserts == max )
     {
         pmqs.tot_inq_overruns++;
         return false;
     }
 
-    Node node;
-    node.user = user;
-    node.tree = tree;
-    node.index = index;
-    node.list = list;
-    queue.push_back(node);
+    if ( !checker and qmax == queue.size() )
+    {
+        Profile rule_profile(rulePerfStats);
+        process((IpsContext*)context, queue);
+    }
+
+    store.push_back({ user, tree, list, index });
+
     pmqs.tot_inq_uinserts++;
-    pmqs.tot_inq_inserts++;
-    count++;
+    inserts++;
 
-    if ( queue.size() == queue_limit )
-        return true;  // process now
-
-    return false;
+    return true;
 }
 
-bool MpseStash::process(MpseMatch match, void* context)
+void MpseStash::process(IpsContext* context)
 {
-    if ( !enable )
-        return true;  // maxed out - quit, FIXIT-RC count this condition
-
-    if ( count > pmqs.max_inq )
-        pmqs.max_inq = count;
-
-
-#ifdef DEBUG_MSGS
-    if (count == 0)
+    if ( !inserts )
+    {
         debug_log(detection_trace, TRACE_RULE_EVAL,
             static_cast<snort::IpsContext*>(context)->packet,
             "Fast pattern processing - no matches found\n");
-#endif
-    unsigned i = 0;
-    for ( auto it : queue )
-    {
-        Node& node = it;
-        i++;
-        // process a pattern - case is handled by otn processing
-        debug_logf(detection_trace, TRACE_RULE_EVAL,
-            static_cast<snort::IpsContext*>(context)->packet,
-            "Processing pattern match #%d\n", i);
-        int res = match(node.user, node.tree, node.index, context, node.list);
-
-        if ( res > 0 )
-        {
-            /* terminate matching */
-            pmqs.tot_inq_flush += i;
-            queue.clear();
-            return true;
-        }
+        return;
     }
-    pmqs.tot_inq_flush += i;
-    queue.clear();
-    return false;
+
+    process(context, queue);
+    process(context, defer);
+
+    if ( inserts > pmqs.max_inq )
+        pmqs.max_inq = inserts;
+
+    pmqs.tot_inq_inserts += inserts;
+    inserts = 0;
+}
+
+void MpseStash::process(IpsContext* context, MatchStore& store)
+{
+#ifdef DEBUG_MSGS
+    unsigned i = 0;
+#endif
+
+    for ( auto it : store )
+    {
+        debug_logf(detection_trace, TRACE_RULE_EVAL,
+            static_cast<snort::IpsContext*>(context)->packet, "Processing pattern match #%d\n", ++i);
+
+        rule_tree_match(context, it.user, it.tree, it.index, it.list);
+    }
+    pmqs.tot_inq_flush += store.size();
+    store.clear();
 }
 
 void fp_set_context(IpsContext& c)
@@ -835,17 +820,12 @@ void fp_clear_context(IpsContext& c)
     snort_free(c.otnx);
 }
 
-// rule_tree_match() could be used instead to bypass the queuing
 static int rule_tree_queue(
     void* user, void* tree, int index, void* context, void* list)
 {
     MpseStash* stash = ((IpsContext*)context)->stash;
-
-    if ( stash->push(user, tree, index, list) )
-    {
-        if ( stash->process(rule_tree_match, context) )
-            return 1;
-    }
+    if ( !stash->push(user, tree, index, context, list) )
+        return 1;
     return 0;
 }
 
@@ -1308,10 +1288,6 @@ void fp_partial(Packet* p)
 {
     Profile mpse_profile(mpsePerfStats);
     IpsContext* c = p->context;
-    MpseStash* stash = c->stash;
-    stash->enable_process();
-    stash->init();
-    stash->disable_process();
     init_match_info(c);
     c->searches.mf = rule_tree_queue;
     c->searches.context = c;
@@ -1324,7 +1300,6 @@ void fp_complete(Packet* p, bool search)
 {
     IpsContext* c = p->context;
     MpseStash* stash = c->stash;
-    stash->enable_process();
 
     if ( search )
     {
@@ -1333,7 +1308,7 @@ void fp_complete(Packet* p, bool search)
     }
     {
         Profile rule_profile(rulePerfStats);
-        stash->process(rule_tree_match, c);
+        stash->process(c);
         print_pkt_info(p, "non-fast-patterns");
         fpEvalPacket(p, FPTask::NON_FP);
         fpFinalSelectEvent(c->otnx, p);
@@ -1353,12 +1328,11 @@ static void fp_immediate(Packet* p)
     MpseStash* stash = c->stash;
     {
         Profile mpse_profile(mpsePerfStats);
-        stash->enable_process();
         c->searches.search_sync();
     }
     {
         Profile rule_profile(rulePerfStats);
-        stash->process(rule_tree_match, c);
+        stash->process(c);
         c->searches.items.clear();
     }
 }
@@ -1369,12 +1343,11 @@ static void fp_immediate(MpseGroup* so, Packet* p, const uint8_t* buf, unsigned 
     {
         Profile mpse_profile(mpsePerfStats);
         int start_state = 0;
-        stash->init();
         so->get_normal_mpse()->search(buf, len, rule_tree_queue, p->context, &start_state);
     }
     {
         Profile rule_profile(rulePerfStats);
-        stash->process(rule_tree_match, p->context);
+        stash->process(p->context);
     }
 }
 

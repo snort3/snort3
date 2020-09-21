@@ -39,7 +39,6 @@ pop.decompress_zip = true
 port_scan = nil
 
 search_engine.detect_raw_tcp = true
-search_engine.queue_limit = 0
 
 smtp.decompress_pdf = true
 smtp.decompress_swf = true

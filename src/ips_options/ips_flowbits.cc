@@ -26,6 +26,7 @@
 
 #include <unordered_map>
 
+#include "detection/treenodes.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/hash_defs.h"
@@ -66,10 +67,10 @@ struct FlowBitCheck
     FlowBitCheck(Op t) : type(t) { }
     bool validate();
 
-    bool is_setter()
+    bool is_setter() const
     { return type == SET or type == UNSET; }
 
-    bool is_checker()
+    bool is_checker() const
     { return type == IS_SET or type == IS_NOT_SET; }
 
     void add(uint16_t);
@@ -149,8 +150,11 @@ public:
 
     EvalStatus eval(Cursor&, Packet*) override;
 
-    bool is_setter()
+    bool is_setter() const
     { return config->is_setter(); }
+
+    bool is_checker() const
+    { return config->is_checker(); }
 
     void get_dependencies(bool& set, std::vector<std::string>& bits);
 
@@ -523,11 +527,16 @@ static void mod_dtor(Module* m)
     delete fb;
 }
 
-static IpsOption* flowbits_ctor(Module* p, OptTreeNode*)
+static IpsOption* flowbits_ctor(Module* p, OptTreeNode* otn)
 {
     FlowbitsModule* m = (FlowbitsModule*)p;
     FlowBitCheck* fbc = m->get_data();
-    return new FlowBitsOption(fbc);
+    FlowBitsOption* opt = new FlowBitsOption(fbc);
+
+    if ( opt->is_checker() )
+        otn->set_flowbits_check();
+
+    return opt;
 }
 
 static void flowbits_dtor(IpsOption* p)

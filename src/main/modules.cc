@@ -190,8 +190,8 @@ static const Parameter search_engine_params[] =
     { "split_any_any", Parameter::PT_BOOL, nullptr, "true",
       "evaluate any-any rules separately to save memory" },
 
-    { "queue_limit", Parameter::PT_INT, "0:max32", "128",
-      "maximum number of fast pattern matches to queue per packet (0 means no maximum)" },
+    { "queue_limit", Parameter::PT_INT, "0:max32", "0",
+      "maximum number of fast pattern matches to queue per packet (0 is unlimited)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -206,7 +206,7 @@ THREAD_LOCAL PatMatQStat pmqs;
 
 const PegInfo mpse_pegs[] =
 {
-    { CountType::SUM, "max_queued", "maximum fast pattern matches queued for further evaluation" },
+    { CountType::MAX, "max_queued", "maximum fast pattern matches queued for further evaluation" },
     { CountType::SUM, "total_flushed", "total fast pattern matches processed" },
     { CountType::SUM, "total_inserts", "total fast pattern hits" },
     { CountType::SUM, "total_overruns", "fast pattern matches discarded due to overflow" },

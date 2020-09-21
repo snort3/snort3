@@ -172,6 +172,7 @@ struct OptTreeNode
     static constexpr Flag META_MATCH = 0x08;
     static constexpr Flag TO_CLIENT  = 0x10;
     static constexpr Flag TO_SERVER  = 0x20;
+    static constexpr Flag BIT_CHECK  = 0x40;
 
     /* metadata about signature */
     SigInfo sigInfo;
@@ -239,14 +240,20 @@ struct OptTreeNode
     void set_to_client()
     { flags |= TO_CLIENT; }
 
-    bool to_client()
+    bool to_client() const
     { return (flags & TO_CLIENT) != 0; }
 
     void set_to_server()
     { flags |= TO_SERVER; }
 
-    bool to_server()
+    bool to_server() const
     { return (flags & TO_SERVER) != 0; }
+
+    void set_flowbits_check()
+    { flags |= BIT_CHECK; }
+
+    bool checks_flowbits() const
+    { return (flags & BIT_CHECK) != 0; }
 
     void update_fp(snort::IpsOption*);
 };

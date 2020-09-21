@@ -98,3 +98,4 @@ void FastPatternConfig::set_queue_limit(unsigned int limit)
 {
     queue_limit = limit;
 }
+

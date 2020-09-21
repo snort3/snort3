@@ -594,8 +594,9 @@ int _bnfa_list_get_next_state(bnfa_struct_t* bnfa, int state, int input)
         return BNFA_FAIL_STATE; /* Fail state */
     }
 }
-
 #endif
+
+#ifdef ENABLE_BNFA_FAIL_STATE_OPT
 /* used only by KcontainsJ() */
 static int _bnfa_conv_node_to_full(bnfa_trans_node_t* t, bnfa_state_t* full)
 {
@@ -617,11 +618,8 @@ static int _bnfa_conv_node_to_full(bnfa_trans_node_t* t, bnfa_state_t* full)
     return tcnt;
 }
 
-/*
- *  containment test -
- *  test if all of tj transitions are in tk
- */
 #ifdef XXXX
+//  containment test - test if all of tj transitions are in tk
 static int KcontainsJx(bnfa_trans_node_t* tk, bnfa_trans_node_t* tj)
 {
     while ( tj )
@@ -642,8 +640,8 @@ static int KcontainsJx(bnfa_trans_node_t* tk, bnfa_trans_node_t* tj)
     }
     return 1;
 }
-
 #endif
+
 static int KcontainsJ(bnfa_trans_node_t* tk, bnfa_trans_node_t* tj)
 {
     bnfa_state_t full[BNFA_MAX_ALPHABET_SIZE];
@@ -697,6 +695,7 @@ static int _bnfa_opt_nfa(bnfa_struct_t* bnfa)
 #endif
     return 0;
 }
+#endif  // ENABLE_BNFA_FAIL_STATE_OPT
 
 /*
 *   Build a non-deterministic finite automata using Aho-Corasick construction
@@ -780,9 +779,12 @@ static int _bnfa_build_nfa(bnfa_struct_t* bnfa)
         }
     }
 
-    /* optimize the failure states */
+#ifdef ENABLE_BNFA_FAIL_STATE_OPT
+    // FIXIT-L low priority performance issue: bnfa fail state reduction
+    // optimize the failure states
     if ( bnfa->bnfaOpt )
         _bnfa_opt_nfa(bnfa);
+#endif
 
     return 0;
 }
