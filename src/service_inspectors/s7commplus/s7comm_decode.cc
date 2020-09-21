@@ -56,7 +56,7 @@ struct CotpHeader
 struct S7commplusHeader
 {
     uint8_t proto_id;
-    uint8_t pdu_type;
+    uint8_t proto_version;
     uint16_t data_len;
 };
 
@@ -86,10 +86,19 @@ static bool S7commPlusProtocolDecode(S7commplusSessionData* session, Packet* p)
     s7commplus_header = (const S7commplusHeader*)(p->data + offset);
     /* Set the session data. Swap byte order for 16-bit fields. */
     session->s7commplus_proto_id = s7commplus_header->proto_id;
-    session->s7commplus_pdu_type = s7commplus_header->pdu_type;
+    session->s7commplus_proto_version = s7commplus_header->proto_version;
     session->s7commplus_data_len = ntohs(s7commplus_header->data_len);
 
-    offset += sizeof(S7commplusHeader);
+    if (s7commplus_header->proto_version <= HDR_VERSION_TWO)
+    {
+        /* V1 or V2 header packets */
+        offset += sizeof(S7commplusHeader);
+    }
+    else
+    {
+        /* 33 byte Integrity part for V3 header packets */
+        offset += sizeof(S7commplusHeader) + INTEGRITY_PART_LEN ;
+    }
 
     s7commplus_data_header = (const S7commplusDataHeader*)(p->data + offset);
     /* Set the session data. Swap byte order for 16-bit fields. */

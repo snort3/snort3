@@ -36,7 +36,7 @@ struct S7commplusStats
 struct S7commplusSessionData
 {
     uint8_t s7commplus_proto_id = 0;
-    uint8_t s7commplus_pdu_type = 0;
+    uint8_t s7commplus_proto_version = 0;
     uint16_t s7commplus_data_len = 0;
     uint8_t s7commplus_opcode = 0;
     uint16_t s7commplus_reserved_1 = 0;
@@ -45,7 +45,7 @@ struct S7commplusSessionData
 
     void session_data_reset()
     {
-        s7commplus_proto_id = s7commplus_pdu_type = s7commplus_opcode = 0;
+        s7commplus_proto_id = s7commplus_proto_version = s7commplus_opcode = 0;
         s7commplus_data_len = s7commplus_function = 0;
         s7commplus_reserved_1 = s7commplus_reserved_2 = 0;
     }

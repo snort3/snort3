@@ -44,6 +44,8 @@ class S7commplusFlowData;
 #define TPKT_MIN_HDR_LEN 7     /* length field in TPKT header for S7comm */
 #define TPKT_MAX_HDR_LEN       /* Undecided */
 #define S7COMMPLUS_MIN_HDR_LEN 4
+#define HDR_VERSION_TWO 0x02
+#define INTEGRITY_PART_LEN 33 /* length of Integrity part in V3 Header packets */
 
 /* Need 8 bytes for MBAP Header + Function Code */
 #define S7COMMPLUS_MIN_LEN 8       this value needs to be decided
