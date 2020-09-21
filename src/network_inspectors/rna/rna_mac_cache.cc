@@ -96,9 +96,10 @@ void HostTrackerMac::stringify(string& str)
 #ifdef UNIT_TEST
 TEST_CASE("RNA Mac Cache", "[rna_mac_cache]")
 {
+    uint8_t a_mac[6] = {0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6};
+
     SECTION("HostCacheMac: store, retrieve")
     {
-        uint8_t a_mac[6] = {0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6};
         uint8_t b_mac[6] = {0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6};
         uint8_t c_mac[6] = {0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6};
 
@@ -141,9 +142,28 @@ TEST_CASE("RNA Mac Cache", "[rna_mac_cache]")
 
     SECTION("HostCacheMac: MAC Hashing")
     {
-        uint8_t a_mac[6] = {0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6};
         uint64_t hash = hash_mac(a_mac);
         CHECK(hash == 0xA1A2A3A4A5A6);
     }
+
+    SECTION("HostCacheMac: VLAN Tag Details")
+    {
+        MacKey a(a_mac);
+        auto a_ptr = host_cache_mac.find_else_create(a, nullptr);
+
+        a_ptr->update_vlan(12345, 54321);
+        uint8_t cfi, priority;
+        uint16_t vid;
+        uint16_t vth_pri_cfi_vlan = a_ptr->get_vlan();
+
+        a_ptr->get_vlan_details(cfi, priority, vid);
+
+        CHECK(a_ptr->has_vlan());
+        CHECK(cfi == (ntohs(vth_pri_cfi_vlan) & 0x1000) >> 12);
+        CHECK(priority == (ntohs(vth_pri_cfi_vlan)) >> 13);
+        CHECK(vid == (ntohs(vth_pri_cfi_vlan) & 0x0FFF));
+
+    }
 }
 #endif
+
