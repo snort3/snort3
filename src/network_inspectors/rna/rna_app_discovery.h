@@ -38,6 +38,9 @@ private:
     static void update_service_info(const snort::Packet* p, IpProtocol proto, const char* vendor,
         const char* version, RnaTracker& rt, const snort::SfIp* ip, const uint8_t* src_mac,
         RnaLogger& logger);
+    static void analyze_user_agent_fingerprint(const snort::Packet* p, const char* host,
+        const char* uagent, RnaTracker& rt, const snort::SfIp* ip, const uint8_t* src_mac,
+        RnaLogger& logger);
 };
 
 #endif

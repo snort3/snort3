@@ -100,6 +100,15 @@ struct HostClient
     AppId service;
 };
 
+struct DeviceFingerprint
+{
+    DeviceFingerprint(uint32_t id, uint32_t type, bool jb, const char* dev);
+    uint32_t fpid;
+    uint32_t fp_type;
+    bool jail_broken;
+    char device[INFO_SIZE] = { 0 };
+};
+
 enum HostType
 {
     HOST_TYPE_HOST=0,
@@ -112,6 +121,7 @@ enum HostType
 typedef HostCacheAllocIp<HostMac> HostMacAllocator;
 typedef HostCacheAllocIp<HostApplication> HostAppAllocator;
 typedef HostCacheAllocIp<HostClient> HostClientAllocator;
+typedef HostCacheAllocIp<DeviceFingerprint> HostDeviceFpAllocator;
 
 class SO_PUBLIC HostTracker
 {
@@ -212,6 +222,8 @@ public:
     size_t get_client_count();
     HostClient get_client(AppId id, const char* version, AppId service, bool& is_new);
     bool add_tcp_fingerprint(uint32_t fpid);
+    bool add_ua_fingerprint(uint32_t fpid, uint32_t fp_type, bool jail_broken,
+        const char* device_info, uint8_t max_devices);
 
     //  This should be updated whenever HostTracker data members are changed
     void stringify(std::string& str);
@@ -227,6 +239,7 @@ private:
     std::vector<HostApplication, HostAppAllocator> services;
     std::vector<HostClient, HostClientAllocator> clients;
     std::set<uint32_t, std::less<uint32_t>, HostCacheAllocIp<uint32_t>> tcp_fpids;
+    std::vector<DeviceFingerprint, HostDeviceFpAllocator> ua_fps;
 
     bool vlan_tag_present = false;
     vlan::VlanTagHdr vlan_tag;

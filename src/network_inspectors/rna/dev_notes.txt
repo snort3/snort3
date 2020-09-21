@@ -219,3 +219,18 @@ topts: tcp options
 ws:    window scale
        FpElementType::RANGE
        FpElementType::DONT_CARE
+
+Similar to the TCP fingerprints, user-agent based fingerprints loads different types of
+fingerprint patterns from Lua configuration, namely os (operating system), device
+(mobile device information), jail-broken (hacked system), and jail-broken-host
+(host information of the hacked system to confirm matching). During packet processing,
+the rna module depends on the HTTP user agent and host information found by the appid
+module and tries to match all parts of user-agent patterns. A sample configuration
+looks like this:
+{
+    fpid = 1,
+    uuid = "10000000-0000-0000-0000-111111111111",
+    ua_type = "device",
+    user_agent = { { substring = "CPU" }, { substring = "OS 3_0" }, { substring = "My Company" } },
+    device = "My Mobile",
+}

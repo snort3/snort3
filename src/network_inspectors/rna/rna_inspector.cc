@@ -35,6 +35,7 @@
 
 #include "rna_event_handler.h"
 #include "rna_fingerprint_tcp.h"
+#include "rna_fingerprint_ua.h"
 #include "rna_module.h"
 #include "rna_pnd.h"
 
@@ -67,8 +68,11 @@ RnaInspector::~RnaInspector()
     delete pnd;
     delete rna_conf;
     if (mod_conf)
-        delete mod_conf->processor;
-    delete mod_conf;
+    {
+        delete mod_conf->tcp_processor;
+        delete mod_conf->ua_processor;
+        delete mod_conf;
+    }
 }
 
 bool RnaInspector::configure(SnortConfig* sc)
@@ -128,7 +132,8 @@ void RnaInspector::show(const SnortConfig*) const
 void RnaInspector::tinit()
 {
     // thread local initialization
-    set_tcp_fp_processor(mod_conf->processor);
+    set_tcp_fp_processor(mod_conf->tcp_processor);
+    set_ua_fp_processor(mod_conf->ua_processor);
 }
 
 void RnaInspector::tterm()
@@ -193,9 +198,9 @@ TcpFpProcessor* RnaInspector::get_or_create_fp_processor()
 {
     if (mod_conf)
     {
-        if (!mod_conf->processor)
-            mod_conf->processor = new TcpFpProcessor;
-        return mod_conf->processor;
+        if (!mod_conf->tcp_processor)
+            mod_conf->tcp_processor = new TcpFpProcessor;
+        return mod_conf->tcp_processor;
     }
     return nullptr;
 }
@@ -204,8 +209,8 @@ void RnaInspector::set_fp_processor(TcpFpProcessor* tfp)
 {
     if ( mod_conf )
     {
-        delete mod_conf->processor;
-        mod_conf->processor = tfp;
+        delete mod_conf->tcp_processor;
+        mod_conf->tcp_processor = tfp;
     }
 }
 

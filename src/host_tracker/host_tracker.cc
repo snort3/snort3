@@ -369,6 +369,38 @@ bool HostTracker::add_tcp_fingerprint(uint32_t fpid)
     return result.second;
 }
 
+DeviceFingerprint::DeviceFingerprint(uint32_t id, uint32_t type, bool jb, const char* dev) :
+    fpid(id), fp_type(type), jail_broken(jb)
+{
+    if ( dev )
+    {
+        strncpy(device, dev, INFO_SIZE);
+        device[INFO_SIZE-1] = '\0';
+    }
+}
+
+bool HostTracker::add_ua_fingerprint(uint32_t fpid, uint32_t fp_type, bool jail_broken,
+    const char* device, uint8_t max_devices)
+{
+    lock_guard<mutex> lck(host_tracker_lock);
+
+    int count = 0;
+    for ( const auto& fp : ua_fps )
+    {
+        if ( fpid != fp.fpid or fp_type != fp.fp_type )
+            continue;
+        ++count; // only count same fpid with different device information
+        if ( count >= max_devices )
+            return false;
+        if ( jail_broken == fp.jail_broken and ( ( !device and fp.device[0] == '\0') or
+            ( device and strncmp(fp.device, device, INFO_SIZE) == 0) ) )
+            return false;
+    }
+
+    ua_fps.emplace_back(fpid, fp_type, jail_broken, device);
+    return true;
+}
+
 size_t HostTracker::get_client_count()
 {
     lock_guard<mutex> lck(host_tracker_lock);
@@ -483,5 +515,20 @@ void HostTracker::stringify(string& str)
         str += "\ntcp fingerprint: ";
         for ( const auto& fpid : tcp_fpids )
             str += to_string(fpid) + (--total ? ", " : "");
+    }
+
+    total = ua_fps.size();
+    if ( total )
+    {
+        str += "\nua fingerprint: ";
+        for ( const auto& fp : ua_fps )
+        {
+            str += to_string(fp.fpid) + " (type: " + to_string(fp.fp_type);
+            if ( fp.jail_broken )
+                str += ", jail-broken";
+            if ( fp.device[0] != '\0' )
+                str += ", device: " + string(fp.device);
+            str += string(")") + (--total ? ", " : "");
+        }
     }
 }

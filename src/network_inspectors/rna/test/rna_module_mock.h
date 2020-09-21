@@ -63,6 +63,10 @@ void set_tcp_fp_processor(TcpFpProcessor*) { }
 TcpFingerprint::TcpFingerprint(const RawFingerprint&) { }
 bool TcpFingerprint::operator==(const TcpFingerprint&) const { return true; }
 
+UaFpProcessor::~UaFpProcessor() { }
+void UaFpProcessor::make_mpse(SnortConfig*) { }
+void UaFpProcessor::push(RawFingerprint const&) { }
+
 // inspector
 class RnaInspector
 {
@@ -79,15 +83,15 @@ RnaInspector(RnaModule* mod)
 {
     if (mod_conf)
     {
-	if (mod_conf->processor)
-	    delete mod_conf->processor;
-	delete mod_conf;
-    }
+	    delete mod_conf->tcp_processor;
+	    delete mod_conf->ua_processor;
+	    delete mod_conf;
+	}
 }
 
 TcpFpProcessor* get_fp_processor()
 {
-    return mod_conf->processor;
+    return mod_conf->tcp_processor;
 }
 
 private:

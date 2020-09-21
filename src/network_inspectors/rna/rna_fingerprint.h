@@ -23,6 +23,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 #include "main/snort_types.h"
 
@@ -114,6 +115,14 @@ private:
 
 }
 
+enum UserAgentInfoType
+{
+    OS_INFO,
+    DEVICE_INFO,
+    JAIL_BROKEN_INFO,
+    JAIL_BROKEN_HOST
+};
+
 class RawFingerprint
 {
 public:
@@ -130,6 +139,11 @@ public:
     std::string ws;
     bool df = false;
 
+    UserAgentInfoType ua_type = OS_INFO;
+    std::vector<std::string> user_agent;
+    std::string host_name;
+    std::string device;
+
     void clear()
     {
         fpid = 0;
@@ -141,9 +155,12 @@ public:
         id.clear();
         topts.clear();
         ws.clear();
-        df=false;
+        df = false;
+        ua_type = OS_INFO;
+        user_agent.clear();
+        host_name.clear();
+        device.clear();
     }
-
 };
 
 #endif

@@ -24,6 +24,7 @@
 namespace snort
 {
 class TcpFpProcessor;
+class UaFpProcessor;
 }
 
 struct RnaModuleConfig
@@ -31,7 +32,8 @@ struct RnaModuleConfig
     std::string rna_conf_path;
     bool enable_logger;
     bool log_when_idle;
-    snort::TcpFpProcessor* processor = nullptr;
+    snort::TcpFpProcessor* tcp_processor = nullptr;
+    snort::UaFpProcessor* ua_processor = nullptr;
 };
 
 // Give default values so that RNA can work even if rna_conf_path is not provided

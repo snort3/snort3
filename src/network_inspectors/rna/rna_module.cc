@@ -37,6 +37,7 @@
 #include "utils/util.h"
 
 #include "rna_fingerprint_tcp.h"
+#include "rna_fingerprint_ua.h"
 #include "rna_mac_cache.h"
 
 #ifdef UNIT_TEST
@@ -81,6 +82,13 @@ static const Command rna_cmds[] =
     { nullptr, nullptr, nullptr, nullptr }
 };
 
+static const Parameter user_agent_parts[] =
+{
+    { "substring", Parameter::PT_STRING, nullptr, nullptr, "a substring of user agent string" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 static const Parameter rna_fp_params[] =
 {
     { "fpid", Parameter::PT_INT, "0:max32", "0",
@@ -113,6 +121,18 @@ static const Parameter rna_fp_params[] =
     { "df", Parameter::PT_BOOL, nullptr, "false",
       "fingerprint don't fragment flag" },
 
+    { "ua_type", Parameter::PT_ENUM, "os | device | jail-broken | jail-broken-host",
+      "os", "type of user agent fingerprints" },
+
+    { "user_agent", Parameter::PT_LIST, user_agent_parts, nullptr,
+      "list of user agent information parts to match" },
+
+    { "host_name", Parameter::PT_STRING, nullptr, nullptr,
+      "host name information" },
+
+    { "device", Parameter::PT_STRING, nullptr, nullptr,
+      "device information" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -131,7 +151,10 @@ static const Parameter rna_params[] =
       "file name to dump RNA mac cache on shutdown; won't dump by default" },
 
     { "tcp_fingerprints", Parameter::PT_LIST, rna_fp_params, nullptr,
-      "list tcp fingerprints" },
+      "list of tcp fingerprints" },
+
+    { "ua_fingerprints", Parameter::PT_LIST, rna_fp_params, nullptr,
+      "list of user agent fingerprints" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -182,8 +205,14 @@ bool RnaModule::begin(const char* fqn, int, SnortConfig*)
     if (!strcmp(fqn, "rna.tcp_fingerprints"))
     {
         fingerprint.clear();
-        if (!mod_conf->processor)
-            mod_conf->processor = new TcpFpProcessor;
+        if (!mod_conf->tcp_processor)
+            mod_conf->tcp_processor = new TcpFpProcessor;
+    }
+    else if (!strcmp(fqn, "rna.ua_fingerprints"))
+    {
+        fingerprint.clear();
+        if (!mod_conf->ua_processor)
+            mod_conf->ua_processor = new UaFpProcessor;
     }
 
     return true;
@@ -203,8 +232,8 @@ bool RnaModule::set(const char* fqn, Value& v, SnortConfig*)
             snort_free((void*)dump_file);
         dump_file = snort_strdup(v.get_string());
     }
-
-    else if (fqn && strstr(fqn, "rna.tcp_fingerprints"))
+    else if ( fqn and ( strstr(fqn, "rna.tcp_fingerprints") or
+        strstr(fqn, "rna.ua_fingerprints") ) )
     {
         if (v.is("fpid"))
             fingerprint.fpid = v.get_uint32();
@@ -226,8 +255,24 @@ bool RnaModule::set(const char* fqn, Value& v, SnortConfig*)
             fingerprint.ws = v.get_string();
         else if (v.is("df"))
             fingerprint.df = v.get_uint8();
+        else if (v.is("ua_type"))
+            fingerprint.ua_type = (UserAgentInfoType)v.get_uint8();
+        else if (v.is("host_name"))
+            fingerprint.host_name = v.get_string();
+        else if (v.is("device"))
+            fingerprint.device = v.get_string();
+        else if (v.is("user_agent"))
+            return true;
+        else if (v.is("substring"))
+        {
+            const auto& ua_part = v.get_string();
+            if ( !ua_part )
+                return false;
+            fingerprint.user_agent.emplace_back(ua_part);
+        }
+        else
+            return false;
     }
-
     else
         return false;
 
@@ -249,18 +294,26 @@ bool RnaModule::end(const char* fqn, int index, SnortConfig* sc)
             sc->clear_run_flags(RUN_FLAG__IP_FRAGS_ONLY);
         }
 
-        if (mod_conf->processor)
+        if ( mod_conf->tcp_processor )
         {
-            mod_conf->processor->make_tcp_fp_tables(TcpFpProcessor::TCP_FP_MODE::SERVER);
-            mod_conf->processor->make_tcp_fp_tables(TcpFpProcessor::TCP_FP_MODE::CLIENT);
+            mod_conf->tcp_processor->make_tcp_fp_tables(TcpFpProcessor::TCP_FP_MODE::SERVER);
+            mod_conf->tcp_processor->make_tcp_fp_tables(TcpFpProcessor::TCP_FP_MODE::CLIENT);
         }
+
+        if ( mod_conf->ua_processor )
+            mod_conf->ua_processor->make_mpse(sc);
     }
 
-    if ( index > 0 && mod_conf->processor && !strcmp(fqn, "rna.tcp_fingerprints") )
+    if ( index > 0 and mod_conf->tcp_processor and !strcmp(fqn, "rna.tcp_fingerprints") )
     {
         // there is an implicit conversion here from raw fingerprint (all
         // strings) to tcp fingerprint, done by the tcp fingerprint constructor
-        mod_conf->processor->push(fingerprint);
+        mod_conf->tcp_processor->push(fingerprint);
+        fingerprint.clear();
+    }
+    else if ( index > 0 and mod_conf->ua_processor and !strcmp(fqn, "rna.ua_fingerprints") )
+    {
+        mod_conf->ua_processor->push(fingerprint);
         fingerprint.clear();
     }
 
@@ -337,7 +390,8 @@ bool RnaModule::log_mac_cache(const char* outfile)
 
 bool RnaModule::is_valid_fqn(const char* fqn) const
 {
-    return !strcmp(fqn, RNA_NAME) || !strcmp(fqn, "rna.tcp_fingerprints");
+    return !strcmp(fqn, RNA_NAME) or !strcmp(fqn, "rna.tcp_fingerprints") or
+        !strcmp(fqn, "rna.ua_fingerprints") or !strcmp(fqn, "rna.ua_fingerprints.user_agent");
 }
 
 
