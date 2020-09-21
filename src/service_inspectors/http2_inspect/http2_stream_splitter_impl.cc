@@ -288,8 +288,12 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                 // We have the full frame header, compute some variables
                 const uint32_t frame_length = get_frame_length(session_data->
                     scan_frame_header[source_id]);
-                const uint8_t type = session_data->frame_type[source_id] = get_frame_type(
+                const uint8_t type = get_frame_type(
                     session_data->scan_frame_header[source_id]);
+                // Continuation frames are collapsed into the preceding Headers or Push Promise
+                // frame
+                if (type != FT_CONTINUATION)
+                    session_data->frame_type[source_id] = type;
                 const uint8_t frame_flags = get_frame_flags(session_data->
                     scan_frame_header[source_id]);
                 const uint32_t old_stream = session_data->current_stream[source_id];
@@ -477,6 +481,7 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
             // Copy headers
             if (session_data->use_leftover_hdr[source_id])
             {
+                assert(session_data->frame_header_offset[source_id] == 0);
                 memcpy(session_data->frame_header[source_id],
                     session_data->leftover_hdr[source_id], FRAME_HEADER_LENGTH);
                 session_data->frame_header_offset[source_id] += FRAME_HEADER_LENGTH;
@@ -503,23 +508,24 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
             session_data->remaining_frame_octets[source_id] =
                 get_frame_length(session_data->frame_header[source_id] +
                 session_data->frame_header_offset[source_id] - FRAME_HEADER_LENGTH);
-
             uint8_t frame_flags = get_frame_flags(session_data->frame_header[source_id] +
                 session_data->frame_header_offset[source_id] - FRAME_HEADER_LENGTH);
 
-            const uint8_t type = session_data->frame_type[source_id];
-            if ((type == FT_DATA) || (type == FT_HEADERS))
+            // Get the most recent frame header type
+            assert(session_data->frame_header_offset[source_id] >= FRAME_HEADER_LENGTH);
+            assert(session_data->frame_header_offset[source_id] % FRAME_HEADER_LENGTH == 0);
+            const uint8_t type = get_frame_type(session_data->frame_header[source_id] +
+                (session_data->frame_header_offset[source_id] - FRAME_HEADER_LENGTH));
+
+            // FIXIT-E Alert if padded flag is set but frame length is 0. Also alert if padded
+            // flag is set on an invalid frame type
+            if ((type == FT_HEADERS) and (frame_flags & PADDED) and
+                (get_frame_length(session_data->frame_header[source_id]) >= 1))
             {
-                if ((frame_flags & PADDED) &&
-                    (get_frame_length(session_data->frame_header[source_id]) >= 1))
-                {
-                    session_data->get_padding_len[source_id] = true;
-                }
+                session_data->get_padding_len[source_id] = true;
             }
         }
         while (data_offset < len);
-        session_data->frame_type[source_id] = get_frame_type(
-            session_data->frame_header[source_id]);
     }
 
     if (flags & PKT_PDU_TAIL)
