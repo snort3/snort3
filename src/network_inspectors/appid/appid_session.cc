@@ -133,7 +133,8 @@ AppIdSession::~AppIdSession()
 
     if (tpsession)
     {
-        if (&(tpsession->get_ctxt()) == pkt_thread_tp_appid_ctxt)
+        if (pkt_thread_tp_appid_ctxt and
+            (tpsession->get_ctxt_version() == pkt_thread_tp_appid_ctxt->get_version()))
             tpsession->delete_with_ctxt();
         else
             delete tpsession;

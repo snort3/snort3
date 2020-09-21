@@ -44,7 +44,7 @@ public:
     }
     virtual ~ThirdPartyAppIdSession() { }
 
-    virtual bool reset() = 0;            // just reset state
+    virtual void reset() = 0;            // just reset state
     virtual void delete_with_ctxt() = 0;
     virtual TPState process(const snort::Packet&,
         AppidSessionDirection direction,

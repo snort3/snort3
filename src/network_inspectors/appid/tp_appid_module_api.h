@@ -26,7 +26,7 @@
 #include "main/thread.h"
 #include "tp_appid_types.h"
 
-#define THIRD_PARTY_APPID_API_VERSION 5
+#define THIRD_PARTY_APPID_API_VERSION 6
 
 class ThirdPartyConfig
 {

@@ -65,7 +65,7 @@ public:
     ThirdPartyAppIdSessionImpl(ThirdPartyAppIdContext& ctxt)
       : ThirdPartyAppIdSession(ctxt)
     { }
-    bool reset() override { return 1; }
+    void reset() override { }
     void delete_with_ctxt() override { delete this; }
     TPState process(const Packet&, AppidSessionDirection, vector<AppId>&,
         ThirdPartyAppIDAttributeData&) override { return TP_STATE_INIT; }
