@@ -147,7 +147,7 @@ ftp_default_data_xfer_cmds =
 
 ftp_default_file_put_cmds =
 [[
-    STOR STOU
+    STOR STOU APPE
 ]]
 
 ftp_default_file_get_cmds =
