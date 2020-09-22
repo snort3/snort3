@@ -66,35 +66,36 @@ struct HostMac
     uint32_t last_seen;
 };
 
+struct HostApplicationInfo
+{
+    HostApplicationInfo() = default;
+    HostApplicationInfo(const char *ver, const char *ven);
+    char vendor[INFO_SIZE] = { 0 };
+    char version[INFO_SIZE] = { 0 };
+};
+
+typedef HostCacheAllocIp<HostApplicationInfo> HostAppInfoAllocator;
+
 struct HostApplication
 {
     HostApplication() = default;
     HostApplication(Port pt, IpProtocol pr, AppId ap, bool in, uint32_t ht = 0, uint32_t ls = 0) :
         port(pt), proto(pr), appid(ap), inferred_appid(in), hits(ht), last_seen(ls) { }
 
-    Port port;
+    Port port = 0;
     IpProtocol proto;
-    AppId appid;
-    bool inferred_appid;
-    uint32_t hits;
-    uint32_t last_seen;
-    char vendor[INFO_SIZE] = { 0 };
-    char version[INFO_SIZE] = { 0 };
+    AppId appid = APP_ID_NONE;
+    bool inferred_appid = false;
+    uint32_t hits = 0;
+    uint32_t last_seen = 0;
+
+    std::vector<HostApplicationInfo, HostAppInfoAllocator> info;
 };
 
 struct HostClient
 {
     HostClient() = default;
-    HostClient(AppId clientid, const char *ver, AppId ser) :
-        id(clientid), service(ser)
-    {
-        if (ver)
-        {
-            strncpy(version, ver, INFO_SIZE);
-            version[INFO_SIZE-1] = '\0';
-        }
-    }
-
+    HostClient(AppId clientid, const char *ver, AppId ser);
     AppId id;
     char version[INFO_SIZE] = { 0 };
     AppId service;
@@ -208,6 +209,10 @@ public:
     // appid detected from one flow to another flow such as BitTorrent.
     bool add_service(Port port, IpProtocol proto,
         AppId appid = APP_ID_NONE, bool inferred_appid = false, bool* added = nullptr);
+    bool add_service(HostApplication& app, bool* added = nullptr);
+    void clear_service(HostApplication& hs);
+    void update_service_port(HostApplication& app, Port port);
+    void update_service_proto(HostApplication& app, IpProtocol proto);
 
     AppId get_appid(Port port, IpProtocol proto, bool inferred_only = false,
         bool allow_port_wildcard = false);
@@ -216,7 +221,8 @@ public:
     HostApplication get_service(Port port, IpProtocol proto, uint32_t lseen, bool& is_new,
         AppId appid = APP_ID_NONE);
     void update_service(const HostApplication& ha);
-    bool update_service_info(HostApplication& ha, const char* vendor, const char* version);
+    bool update_service_info(HostApplication& ha, const char* vendor, const char* version,
+        uint16_t max_info);
     void remove_inferred_services();
 
     size_t get_client_count();

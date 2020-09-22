@@ -31,6 +31,7 @@
 
 #include "framework/module.h"
 #include "host_tracker/host_cache.h"
+#include "host_tracker/host_cache_allocator.cc"
 
 #define host_tracker_help \
     "configure hosts"

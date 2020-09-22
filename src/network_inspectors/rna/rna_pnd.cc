@@ -178,7 +178,8 @@ void RnaPnd::discover_network(const Packet* p, uint8_t ttl)
     {
         auto proto = p->get_ip_proto_next();
         if ( proto == IpProtocol::TCP or proto == IpProtocol::UDP )
-            RnaAppDiscovery::discover_service(p, proto, ht, src_ip_ptr, src_mac, conf, logger);
+            RnaAppDiscovery::discover_service(p, proto, ht, src_ip_ptr, src_mac, conf,
+                logger, p->flow->server_port);
     }
 
     if ( !new_host )

@@ -68,6 +68,23 @@ static inline void rna_logger_message(const RnaLoggerEvent& rle)
                 debug_logf(rna_trace, nullptr, "RNA client log: client %u, service %u\n",
                     rle.hc->id, rle.hc->service);
         }
+        if (rle.ha)
+        {
+            debug_logf(rna_trace, nullptr,
+                "RNA Service Info log: appid: %d proto %u, port: %u\n",
+                rle.ha->appid, (uint32_t)rle.ha->proto, rle.ha->port);
+
+            for (auto& s: rle.ha->info)
+            {
+                if (s.vendor[0] != '\0')
+                    debug_logf(rna_trace, nullptr, "RNA Service Info log: vendor: %s\n",
+                        s.vendor);
+
+                if (s.version[0] != '\0')
+                    debug_logf(rna_trace, nullptr, "RNA Service Info log: version: %s\n",
+                        s.version);
+            }
+        }
     }
     else
         debug_logf(rna_trace, nullptr, "RNA log: type %u, subtype %u, mac %s\n",

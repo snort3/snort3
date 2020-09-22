@@ -22,8 +22,9 @@
 #include "config.h"
 #endif
 
+#include "host_cache.h"
+#include "host_cache_allocator.cc"
 #include "host_tracker.h"
-
 #include "utils/util.h"
 
 using namespace snort;
@@ -247,6 +248,39 @@ bool HostTracker::add_service(Port port, IpProtocol proto, AppId appid, bool inf
     return true;
 }
 
+void HostTracker::clear_service(HostApplication& ha)
+{
+    lock_guard<mutex> lck(host_tracker_lock);
+    ha = {};
+}
+
+bool HostTracker::add_service(HostApplication& app, bool* added)
+{
+    host_tracker_stats.service_adds++;
+    lock_guard<mutex> lck(host_tracker_lock);
+
+    for ( auto& s : services )
+    {
+        if ( s.port == app.port and s.proto == app.proto )
+        {
+            if ( s.appid != app.appid and app.appid != APP_ID_NONE )
+            {
+                s.appid = app.appid;
+                s.inferred_appid = app.inferred_appid;
+                if (added)
+                    *added = true;
+            }
+            return true;
+        }
+    }
+
+    services.emplace_back(app.port, app.proto, app.appid, app.inferred_appid);
+    if (added)
+        *added = true;
+
+    return true;
+}
+
 AppId HostTracker::get_appid(Port port, IpProtocol proto, bool inferred_only,
     bool allow_port_wildcard)
 {
@@ -280,15 +314,21 @@ HostApplication HostTracker::get_service(Port port, IpProtocol proto, uint32_t l
     {
         if ( s.port == port and s.proto == proto )
         {
-            if ( s.appid != appid and appid != APP_ID_NONE )
+            if ( appid != APP_ID_NONE and s.appid != appid )
             {
                 s.appid = appid;
                 is_new = true;
+                s.hits = 1;
             }
             else if ( s.last_seen == 0 )
+            {
                 is_new = true;
+                s.hits = 1;
+            }
+            else
+                ++s.hits;
+
             s.last_seen = lseen;
-            ++s.hits;
             return s;
         }
     }
@@ -310,14 +350,25 @@ void HostTracker::update_service(const HostApplication& ha)
         {
             s.hits = ha.hits;
             s.last_seen = ha.last_seen;
-            if ( ha.appid > APP_ID_NONE )
-                s.appid = ha.appid;
             return;
         }
     }
 }
 
-bool HostTracker::update_service_info(HostApplication& ha, const char* vendor, const char* version)
+void HostTracker::update_service_port(HostApplication& app, Port port)
+{
+    lock_guard<mutex> lck(host_tracker_lock);
+    app.port = port;
+}
+
+void HostTracker::update_service_proto(HostApplication& app, IpProtocol proto)
+{
+    lock_guard<mutex> lck(host_tracker_lock);
+    app.proto = proto;
+}
+
+bool HostTracker::update_service_info(HostApplication& ha, const char* vendor,
+    const char* version, uint16_t max_info)
 {
     host_tracker_stats.service_finds++;
     lock_guard<mutex> lck(host_tracker_lock);
@@ -326,23 +377,28 @@ bool HostTracker::update_service_info(HostApplication& ha, const char* vendor, c
     {
         if ( s.port == ha.port and s.proto == ha.proto )
         {
-            bool changed = false;
-            if ( vendor and strncmp(s.vendor, vendor, INFO_SIZE) )
+            if (s.info.size() < max_info)
             {
-                strncpy(s.vendor, vendor, INFO_SIZE);
-                s.vendor[INFO_SIZE-1] = '\0';
-                changed = true;
+                for (auto& i : s.info)
+                {
+                    if (((!version and i.version[0] == '\0') or
+                        (version and !strncmp(version, i.version, INFO_SIZE)))
+                        and ((!vendor and i.vendor[0] == '\0') or
+                        (vendor and !strncmp(vendor, i.vendor, INFO_SIZE))))
+                            return false;
+                }
+                s.info.emplace_back(version, vendor);
             }
-            if ( version and strncmp(s.version, version, INFO_SIZE) )
-            {
-                strncpy(s.version, version, INFO_SIZE);
-                s.version[INFO_SIZE-1] = '\0';
-                changed = true;
-            }
-            if ( !changed )
-                return false;
 
-            ha.appid = s.appid; // copy these info for the caller
+            // copy these info for the caller
+            if (ha.appid == APP_ID_NONE)
+                ha.appid = s.appid;
+            else
+                s.appid = ha.appid;
+
+            for (auto& i: s.info)
+                ha.info.emplace_back(i.version, i.vendor);
+
             ha.hits = s.hits;
             return true;
         }
@@ -407,6 +463,16 @@ size_t HostTracker::get_client_count()
     return clients.size();
 }
 
+HostClient::HostClient(AppId clientid, const char *ver, AppId ser) :
+    id(clientid), service(ser)
+{
+    if (ver)
+    {
+        strncpy(version, ver, INFO_SIZE);
+        version[INFO_SIZE-1] = '\0';
+    }
+}
+
 HostClient HostTracker::get_client(AppId id, const char* version, AppId service, bool& is_new)
 {
     lock_guard<mutex> lck(host_tracker_lock);
@@ -424,6 +490,20 @@ HostClient HostTracker::get_client(AppId id, const char* version, AppId service,
     is_new = true;
     clients.emplace_back(id, version, service);
     return clients.back();
+}
+
+HostApplicationInfo::HostApplicationInfo(const char *ver, const char *ven)
+{
+    if (ver)
+    {
+        strncpy(version, ver, INFO_SIZE);
+        version[INFO_SIZE-1] = '\0';
+    }
+    if (ven)
+    {
+        strncpy(vendor, ven, INFO_SIZE);
+        vendor[INFO_SIZE-1] = '\0';
+    }
 }
 
 static inline string to_time_string(uint32_t p_time)
@@ -474,10 +554,15 @@ void HostTracker::stringify(string& str)
                 if ( s.inferred_appid )
                     str += ", inferred";
             }
-            if ( s.vendor[0] != '\0' )
-                str += ", vendor: " + string(s.vendor);
-            if ( s.version[0] != '\0' )
-                str += ", version: " + string(s.version);
+
+            if ( !s.info.empty() )
+                for ( const auto& i : s.info )
+                {
+                    if ( i.vendor[0] != '\0' )
+                        str += ", vendor: " + string(i.vendor);
+                    if ( i.version[0] != '\0' )
+                        str += ", version: " + string(i.version);
+                }
         }
     }
 

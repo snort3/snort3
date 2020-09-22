@@ -71,11 +71,17 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
         appid_session_api.get_app_id(&service, &client, &payload, nullptr, nullptr);
 
         if ( appid_change_bits[APPID_SERVICE_BIT] and service > APP_ID_NONE )
-            discover_service(p, proto, ht, (const struct in6_addr*) src_ip->get_ip6_ptr(),
-                src_mac, conf, logger, service);
+        {
+            if ( p->packet_flags & PKT_FROM_SERVER )
+                discover_service(p, proto, ht, (const struct in6_addr*) src_ip->get_ip6_ptr(),
+                    src_mac, conf, logger, p->flow->server_port, service);
+            else if ( p->packet_flags & PKT_FROM_CLIENT )
+                discover_service(p, proto, ht, (const struct in6_addr*) src_ip->get_ip6_ptr(),
+                    src_mac, conf, logger, p->flow->client_port, service);
+        }
 
         if (appid_change_bits[APPID_CLIENT_BIT] and client > APP_ID_NONE
-            and service > APP_ID_NONE)
+            and service > APP_ID_NONE )
         {
             const char* version = appid_session_api.get_client_version();
             discover_client(p, ht, (const struct in6_addr*) src_ip->get_ip6_ptr(), src_mac,
@@ -88,8 +94,12 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
         const char* vendor;
         const char* version;
         const AppIdServiceSubtype* subtype;
+        AppId service, client, payload;
+
+        appid_session_api.get_app_id(&service, &client, &payload, nullptr, nullptr);
         appid_session_api.get_service_info(vendor, version, subtype);
-        update_service_info(p, proto, vendor, version, ht, src_ip, src_mac, logger);
+        update_service_info(p, proto, vendor, version, ht, src_ip, src_mac, logger, conf,
+            service);
     }
 
     if ( p->is_from_client() and ( appid_change_bits[APPID_HOST_BIT] or
@@ -113,7 +123,7 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
 
 void RnaAppDiscovery::discover_service(const Packet* p, IpProtocol proto, RnaTracker& rt,
     const struct in6_addr* src_ip, const uint8_t* src_mac, RnaConfig* conf,
-    RnaLogger& logger, AppId service)
+    RnaLogger& logger, uint16_t port, AppId service)
 {
     if ( conf and conf->max_host_services and conf->max_host_services <= rt->get_service_count() )
         return;
@@ -121,7 +131,7 @@ void RnaAppDiscovery::discover_service(const Packet* p, IpProtocol proto, RnaTra
     bool is_new = false;
 
     // Work on a local copy instead of reference as we release lock during event generations
-    auto ha = rt->get_service(p->flow->server_port, proto, (uint32_t) packet_time(), is_new);
+    auto ha = rt->get_service(port, proto, (uint32_t) packet_time(), is_new, service);
     if ( is_new )
     {
         if ( proto == IpProtocol::TCP )
@@ -130,33 +140,23 @@ void RnaAppDiscovery::discover_service(const Packet* p, IpProtocol proto, RnaTra
             logger.log(RNA_EVENT_NEW, NEW_UDP_SERVICE, p, &rt, src_ip, src_mac, &ha);
 
         ha.hits = 0; // hit count is reset after logs are written
-        ha.appid = service;
         rt->update_service(ha);
     }
 }
 
 void RnaAppDiscovery::update_service_info(const Packet* p, IpProtocol proto, const char* vendor,
-    const char* version, RnaTracker& rt, const SfIp* ip, const uint8_t* src_mac, RnaLogger& logger)
+    const char* version, RnaTracker& rt, const SfIp* ip, const uint8_t* src_mac, RnaLogger& logger,
+    RnaConfig* conf, AppId service)
 {
     if ( !vendor and !version )
         return;
 
-    HostApplication ha(p->flow->server_port, proto, APP_ID_NONE, false);
-    if ( !rt->update_service_info(ha, vendor, version) )
+    HostApplication ha(p->flow->server_port, proto, service, false);
+    if ( !rt->update_service_info(ha, vendor, version, conf->max_host_service_info) )
         return;
 
     // Work on a local copy for eventing purpose
     ha.last_seen = (uint32_t) packet_time();
-    if ( vendor )
-    {
-        strncpy(ha.vendor, vendor, INFO_SIZE);
-        ha.vendor[INFO_SIZE-1] = '\0';
-    }
-    if ( version )
-    {
-        strncpy(ha.version, version, INFO_SIZE);
-        ha.version[INFO_SIZE-1] = '\0';
-    }
 
     if ( proto == IpProtocol::TCP )
         logger.log(RNA_EVENT_CHANGE, CHANGE_TCP_SERVICE_INFO, p, &rt,

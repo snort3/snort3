@@ -29,7 +29,7 @@ public:
 
     static void discover_service(const snort::Packet* p, IpProtocol proto, RnaTracker& rt,
         const struct in6_addr* src_ip, const uint8_t* src_mac, RnaConfig* conf,
-        RnaLogger& logger, AppId service = APP_ID_NONE);
+        RnaLogger& logger, uint16_t port, AppId service = APP_ID_NONE);
 
     static void discover_client(const snort::Packet* p, RnaTracker& rt,
         const struct in6_addr* src_ip, const uint8_t* src_mac, RnaConfig* conf,
@@ -37,7 +37,7 @@ public:
 private:
     static void update_service_info(const snort::Packet* p, IpProtocol proto, const char* vendor,
         const char* version, RnaTracker& rt, const snort::SfIp* ip, const uint8_t* src_mac,
-        RnaLogger& logger);
+        RnaLogger& logger, RnaConfig* conf, AppId service);
     static void analyze_user_agent_fingerprint(const snort::Packet* p, const char* host,
         const char* uagent, RnaTracker& rt, const snort::SfIp* ip, const uint8_t* src_mac,
         RnaLogger& logger);

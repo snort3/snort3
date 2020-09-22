@@ -23,7 +23,7 @@
 #endif
 
 #include "host_tracker/host_cache.h"
-#include "host_tracker/host_cache_allocator.h"
+#include "host_tracker/host_cache_allocator.cc"
 
 #include <string>
 
@@ -31,6 +31,8 @@
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
+
+HostCacheIp host_cache(100);
 
 using namespace std;
 using namespace snort;
