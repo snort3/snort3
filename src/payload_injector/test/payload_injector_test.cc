@@ -219,6 +219,24 @@ TEST(payload_injector_test, http2_stream0)
     delete flow.gadget;
 }
 
+TEST(payload_injector_test, http2_even_stream_id)
+{
+    mod.set_configured(true);
+    Packet p(false);
+    p.packet_flags = PKT_STREAM_EST;
+    mock_api.base.name = "http2_inspect";
+    flow.gadget = new MockInspector();
+    p.flow = &flow;
+    control.stream_id = 2;
+    InjectionReturnStatus status = mod.inject_http_payload(&p, control);
+    CHECK(counts->http2_injects == 0);
+    CHECK(status == ERR_HTTP2_EVEN_STREAM_ID);
+    CHECK(flow.flow_state == Flow::FlowState::BLOCK);
+    const char* err_string = mod.get_err_string(status);
+    CHECK(strcmp(err_string, "HTTP/2 - injection to server initiated stream") == 0);
+    delete flow.gadget;
+}
+
 TEST(payload_injector_test, http2_success)
 {
     mod.set_configured(true);

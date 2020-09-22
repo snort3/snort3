@@ -59,7 +59,8 @@ static const std::map <InjectionReturnStatus, const char*> InjectionErrorToStrin
     { ERR_HTTP2_MID_FRAME, "HTTP/2 - attempt to inject mid frame. Currently not supported." },
     { ERR_TRANSLATED_HDRS_SIZE,
       "HTTP/2 translated header size is bigger than expected. Update max size." },
-    { ERR_HTTP2_BODY_SIZE, "HTTP/2 body is > 16k. Currently not supported." }
+    { ERR_HTTP2_BODY_SIZE, "HTTP/2 body is > 16k. Currently not supported." },
+    { ERR_HTTP2_EVEN_STREAM_ID, "HTTP/2 - injection to server initiated stream" }
 };
 
 bool PayloadInjectorModule::configured = false;
@@ -87,6 +88,11 @@ InjectionReturnStatus PayloadInjectorModule::inject_http2_payload(Packet* p,
 
     if (control.stream_id == 0)
         status = ERR_HTTP2_STREAM_ID_0;
+    else if (control.stream_id % 2 == 0)
+    {
+        // Don't inject against server initiated streams
+        status = ERR_HTTP2_EVEN_STREAM_ID;
+    }
     else
     {
         // Check if mid frame
