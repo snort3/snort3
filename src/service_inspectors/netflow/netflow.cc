@@ -23,18 +23,57 @@
 #include "config.h"
 #endif
 
-#include "netflow.h"
+#include "netflow_headers.h"
 #include "netflow_module.h"
 
-#include "host_tracker/host_cache.h"
+#include <fstream>
+#include <mutex>
+#include <sys/stat.h>
+#include <unordered_map>
+#include <vector>
+
+#include "log/messages.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
+#include "sfip/sf_ip.h"
+#include "utils/util.h"
 
 using namespace snort;
-using namespace std;
 
 THREAD_LOCAL NetflowStats netflow_stats;
 THREAD_LOCAL ProfileStats netflow_perf_stats;
+
+//  Used to create hash of key for indexing into cache.
+struct NetflowHash
+{
+    size_t operator()(const snort::SfIp& ip) const
+    {
+        const uint64_t* ip64 = (const uint64_t*) ip.get_ip6_ptr();
+        return std::hash<uint64_t>() (ip64[0]) ^
+               std::hash<uint64_t>() (ip64[1]);
+    }
+};
+
+// compare struct to use with ip sort
+struct IpCompare
+{
+    bool operator()(const snort::SfIp& a, const snort::SfIp& b)
+    { return a.less_than(b); }
+};
+
+// -----------------------------------------------------------------------------
+// static variables
+// -----------------------------------------------------------------------------
+
+// Used to avoid creating multiple events for the same initiator IP.
+// Cache can be thread local since Netflow packets coming from a Netflow
+// device will go to the same thread.
+typedef std::unordered_map<snort::SfIp, NetflowSessionRecord, NetflowHash> NetflowCache;
+static THREAD_LOCAL NetflowCache* netflow_cache = nullptr;
+
+// cache required to dump the output
+static NetflowCache* dump_cache = nullptr;
+
 
 // -----------------------------------------------------------------------------
 // static functions
@@ -99,6 +138,44 @@ static bool decode_netflow_v5(const unsigned char* data, uint16_t size)
         if ( first_packet > MAX_TIME or last_packet > MAX_TIME or first_packet > last_packet )
             return false;
 
+        NetflowSessionRecord record = {};
+
+        // Invalid source IP address provided
+        if ( record.initiator_ip.set(&precord->flow_src_addr, AF_INET) != SFIP_SUCCESS )
+            return false;
+
+        if ( record.responder_ip.set(&precord->flow_dst_addr, AF_INET) != SFIP_SUCCESS )
+            return false;
+
+        if ( record.next_hop_ip.set(&precord->next_hop_addr, AF_INET) != SFIP_SUCCESS )
+            return false;
+
+        record.initiator_port = ntohs(precord->src_port);
+        record.responder_port = ntohs(precord->dst_port);
+        record.proto = precord->flow_protocol;
+        record.first_pkt_second = first_packet;
+        record.last_pkt_second = last_packet;
+        record.initiator_pkts = ntohl(precord->pkt_count);
+        record.responder_pkts = 0;
+        record.initiator_bytes = ntohl(precord->bytes_sent);
+        record.responder_bytes = 0;
+        record.tcp_flags = precord->tcp_flags;
+        record.nf_src_tos = precord->tos;
+        record.nf_dst_tos = precord->tos;
+        record.nf_snmp_in = ntohs(precord->snmp_if_in);
+        record.nf_snmp_out = ntohs(precord->snmp_if_out);
+        record.nf_src_as = (uint32_t)ntohs(precord->src_as);
+        record.nf_dst_as = (uint32_t)ntohs(precord->dst_as);
+        record.nf_src_mask = precord->src_mask;
+        record.nf_dst_mask = precord->dst_mask;
+
+        // insert record
+        auto result = netflow_cache->emplace(record.initiator_ip, record);
+
+        // new unique record
+        if ( result.second )
+            ++netflow_stats.unique_flows;
+
     }
     return true;
 }
@@ -138,17 +215,180 @@ static bool validate_netflow(const Packet* p)
     return retval;
 }
 
-// -----------------------------------------------------------------------------
-// non-static functions
-// -----------------------------------------------------------------------------
+//-------------------------------------------------------------------------
+// inspector stuff
+//-------------------------------------------------------------------------
+
+class NetflowInspector : public snort::Inspector
+{
+public:
+    NetflowInspector(const NetflowConfig*);
+    ~NetflowInspector() override;
+
+    void tinit() override;
+    void tterm() override;
+
+    void eval(snort::Packet*) override;
+
+private:
+    const NetflowConfig *config;
+
+    bool log_netflow_cache();
+    void stringify(std::ofstream&);
+};
+
+void NetflowInspector::stringify(std::ofstream& file_stream)
+{
+    std::vector<snort::SfIp> keys;
+    keys.reserve(dump_cache->size());
+
+    for (const auto& elem : *dump_cache)
+        keys.push_back(elem.first);
+
+    std::sort(keys.begin(),keys.end(), IpCompare());
+
+    std::string str;
+    SfIpString ip_str;
+    uint32_t i = 0;
+
+    auto& cache = *dump_cache;
+
+    for (auto elem : keys)
+    {
+        str = "Netflow Record #";
+        str += std::to_string(++i);
+        str += "\n";
+
+        str += "    Initiator IP (Port): ";
+        str += elem.ntop(ip_str);
+        str += " (" + std::to_string(cache[elem].initiator_port) + ")";
+
+        str += " -> Responder IP (Port): ";
+        str += cache[elem].responder_ip.ntop(ip_str);
+        str += " (" + std::to_string(cache[elem].responder_port) + ")";
+        str += "\n";
+
+        str += "    Protocol: ";
+        str += std::to_string(cache[elem].proto);
+
+        str += " Packets: ";
+        str += std::to_string(cache[elem].initiator_pkts);
+        str += "\n";
+
+        str += "    Source Mask: ";
+        str += std::to_string(cache[elem].nf_src_mask);
+
+        str += " Destination Mask: ";
+        str += std::to_string(cache[elem].nf_dst_mask);
+        str += "\n";
+
+        str += "    Next Hop IP: ";
+        str += cache[elem].next_hop_ip.ntop(ip_str);
+        str += "\n";
+
+        str += "------\n";
+        file_stream << str << std::endl;
+
+        str.clear();
+
+    }
+    return;
+}
+
+bool NetflowInspector::log_netflow_cache()
+{
+    const char* file_name = config->dump_file;
+
+    // Prevent damaging any existing file, intentionally or not
+    struct stat file_stat;
+    if ( stat(file_name, &file_stat) == 0 )
+    {
+        LogMessage("File %s already exists!\n", file_name);
+        return false;
+    }
+
+    // open file for writing.
+    std::ofstream dump_file_stream(file_name);
+    if ( !dump_file_stream )
+    {
+        LogMessage("Error opening %s for dumping netflow cache\n", file_name);
+        return false;
+    }
+
+    // print netflow cache dump
+    stringify(dump_file_stream);
+
+    dump_file_stream.close();
+
+    LogMessage("Dumped netflow cache to %s\n", file_name);
+
+    return true;
+}
+
+NetflowInspector::NetflowInspector(const NetflowConfig* pc)
+{
+    config = pc;
+
+    if ( config->dump_file )
+    {
+        // create dump cache
+        if ( ! dump_cache )
+            dump_cache = new NetflowCache;
+    }
+}
+
+NetflowInspector::~NetflowInspector()
+{
+    // config and cache removal
+    if ( config )
+    {
+        if ( config->dump_file )
+        {
+            // log the cache and delete it
+            if ( dump_cache )
+            {
+                // making sure we only dump if cache is non-zero
+                if ( dump_cache->size() != 0 )
+                    log_netflow_cache();
+                delete dump_cache;
+                dump_cache = nullptr;
+            }
+            snort_free((void*)config->dump_file);
+        }
+
+        delete config;
+        config = nullptr;
+    }
+}
 
 void NetflowInspector::eval(Packet* p)
 {
     // precondition - what we registered for
     assert((p->is_udp() and p->dsize and p->data));
+    assert(netflow_cache);
 
     if ( ! validate_netflow(p) )
         ++netflow_stats.invalid_netflow_pkts;
+}
+
+void NetflowInspector::tinit()
+{
+    if ( !netflow_cache )
+        netflow_cache = new NetflowCache;
+}
+
+void NetflowInspector::tterm()
+{
+    if ( config->dump_file and dump_cache )
+    {
+        static std::mutex stats_mutex;
+        std::lock_guard<std::mutex> lock(stats_mutex);
+        {
+            // insert each cache
+            dump_cache->insert(netflow_cache->begin(), netflow_cache->end());
+        }
+    }
+    delete netflow_cache;
 }
 
 //-------------------------------------------------------------------------
@@ -162,7 +402,10 @@ static void netflow_mod_dtor(Module* m)
 { delete m; }
 
 static Inspector* netflow_ctor(Module* m)
-{ return new NetflowInspector((NetflowModule*)m); }
+{
+    NetflowModule *mod = (NetflowModule*)m;
+    return new NetflowInspector(mod->get_data());
+}
 
 static void netflow_dtor(Inspector* p)
 { delete p; }
@@ -204,3 +447,4 @@ const BaseApi* sin_netflow[] =
     &netflow_api.base,
     nullptr
 };
+

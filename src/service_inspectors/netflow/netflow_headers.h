@@ -19,21 +19,40 @@
 // netflow.h author Ron Dempster <rdempste@cisco.com>
 //                  Shashikant Lad <shaslad@cisco.com>
 
-#ifndef NETFLOW_H
-#define NETFLOW_H
+#ifndef NETFLOW_HEADERS_H
+#define NETFLOW_HEADERS_H
 
 #include "flow/flow.h"
-
-namespace snort
-{
-struct Packet;
-}
-
-class NetflowModule;
 
 #define NETFLOW_MIN_COUNT 1
 #define NETFLOW_MAX_COUNT 256
 #define MAX_TIME 2145916799
+
+struct NetflowSessionRecord
+{
+    snort::SfIp initiator_ip;
+    snort::SfIp responder_ip;
+    snort::SfIp next_hop_ip;
+    uint8_t proto;
+    uint16_t initiator_port;
+    uint16_t responder_port;
+    uint32_t first_pkt_second;
+    uint32_t last_pkt_second;
+    uint64_t initiator_pkts;
+    uint64_t responder_pkts;
+    uint64_t initiator_bytes;
+    uint64_t responder_bytes;
+    uint16_t tcp_flags;
+
+    uint32_t nf_src_as;
+    uint32_t nf_dst_as;
+    uint16_t nf_snmp_in;
+    uint16_t nf_snmp_out;
+    uint8_t nf_src_tos;
+    uint8_t nf_dst_tos;
+    uint8_t nf_src_mask;
+    uint8_t nf_dst_mask;
+};
 
 struct Netflow5Hdr
 {
@@ -80,13 +99,6 @@ struct Netflow9Hdr
     uint32_t unix_secs;             // Seconds since 0000 Coordinated Universal Time (UTC) 1970
     uint32_t sequence_num;          // Incremental sequence counter of all export packets sent by this export device;
     uint32_t source_id;             // A 32-bit value that identifies the Exporter Observation Domain
-};
-
-class NetflowInspector : public snort::Inspector
-{
-public:
-    NetflowInspector(NetflowModule*) {}
-    void eval(snort::Packet*) override;
 };
 
 #endif

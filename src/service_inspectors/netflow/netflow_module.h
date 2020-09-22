@@ -23,6 +23,7 @@
 #define NETFLOW_MODULE_H
 
 #include "framework/module.h"
+#include "utils/util.h"
 
 #define NETFLOW_NAME "netflow"
 #define NETFLOW_HELP "netflow inspection"
@@ -32,6 +33,12 @@ namespace snort
 struct SnortConfig;
 }
 
+struct NetflowConfig
+{
+    NetflowConfig() { dump_file = nullptr; }
+    const char* dump_file;
+};
+
 struct NetflowStats
 {
     PegCount packets;
@@ -39,6 +46,7 @@ struct NetflowStats
     PegCount version_5;
     PegCount version_9;
     PegCount invalid_netflow_pkts;
+    PegCount unique_flows;
 };
 
 extern THREAD_LOCAL NetflowStats netflow_stats;
@@ -48,19 +56,25 @@ class NetflowModule : public snort::Module
 {
 public:
     NetflowModule();
+    ~NetflowModule() override;
 
-    bool set(const char*, snort::Value&, snort::SnortConfig*) override
-    {return false; }
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
+    bool begin(const char*, int, snort::SnortConfig*) override;
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
     snort::ProfileStats* get_profile() const override;
+    NetflowConfig* get_data();
 
     Usage get_usage() const override
     { return INSPECT; }
 
     bool is_bindable() const override
     { return true; }
+
+private:
+     NetflowConfig* conf;
+
 };
 
 #endif

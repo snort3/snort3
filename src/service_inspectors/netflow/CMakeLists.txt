@@ -1,9 +1,9 @@
 
 set ( FILE_LIST
-    netflow.cc
-    netflow.h
+    netflow_headers.h
     netflow_module.cc
     netflow_module.h
+    netflow.cc
 )
 
 if (STATIC_INSPECTORS)

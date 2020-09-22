@@ -24,6 +24,8 @@
 
 #include "netflow_module.h"
 
+#include "utils/util.h"
+
 using namespace snort;
 
 // -----------------------------------------------------------------------------
@@ -32,6 +34,8 @@ using namespace snort;
 
 static const Parameter netflow_params[] =
 {
+    { "dump_file", Parameter::PT_STRING, nullptr, nullptr,
+      "file name to dump netflow cache on shutdown; won't dump by default" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -42,6 +46,7 @@ static const PegInfo netflow_pegs[] =
     { CountType::SUM, "version_5", "count of netflow version 5 packets received" },
     { CountType::SUM, "version_9", "count of netflow version 9 packets received" },
     { CountType::SUM, "invalid_netflow_pkts", "count of invalid netflow packets" },
+    { CountType::SUM, "unique_flows", "count of unique netflow flows" },
     { CountType::END, nullptr, nullptr},
 };
 
@@ -50,7 +55,43 @@ static const PegInfo netflow_pegs[] =
 //-------------------------------------------------------------------------
 
 NetflowModule::NetflowModule() : Module(NETFLOW_NAME, NETFLOW_HELP, netflow_params)
-{ }
+{
+    conf = nullptr;
+}
+
+NetflowModule::~NetflowModule()
+{
+    delete conf;
+}
+
+NetflowConfig* NetflowModule::get_data()
+{
+    NetflowConfig* tmp = conf;
+    conf = nullptr;
+    return tmp;
+}
+
+bool NetflowModule::begin(const char*, int, SnortConfig*)
+{
+    assert(!conf);
+    conf = new NetflowConfig();
+    return true;
+}
+
+bool NetflowModule::set(const char*, Value& v, SnortConfig*)
+{
+
+    if ( v.is("dump_file") )
+    {
+        if ( conf->dump_file )
+            snort_free((void*)conf->dump_file);
+        conf->dump_file = snort_strdup(v.get_string());
+    }
+    else
+        return false;
+
+    return true;
+}
 
 PegCount* NetflowModule::get_counts() const
 { return (PegCount*)&netflow_stats; }
