@@ -51,6 +51,7 @@
 #include "service_plugins/service_discovery.h"
 #include "service_plugins/service_ssl.h"
 #include "host_tracker/host_cache.h"
+#include "host_tracker/host_cache_allocator.cc"
 
 using namespace snort;
 using namespace std;

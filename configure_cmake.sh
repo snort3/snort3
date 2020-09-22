@@ -22,6 +22,9 @@ Usage: $0 [OPTION]... [VAR=VALUE]...
         --prefix=     Snort++ installation prefix
 
 Optional Features:
+    --build-type=[Debug|Release|RelWithDebInfo|MinSizeRel]
+                            set cmake build type (defaults to RelWithDebInfo if neither
+                            CFLAGS nor CXXFLAGS are set)
     --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
     --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
     --enable-code-coverage  Whether to enable code coverage support
@@ -140,6 +143,9 @@ builddir=build
 prefix=/usr/local/snort
 CMakeCacheEntries=""
 append_cache_entry CMAKE_INSTALL_PREFIX PATH   $prefix
+
+build_type=""
+[ -z "$CFLAGS" ] && [ -z "$CXXFLAGS" ] && build_type="RelWithDebInfo"
 
 
 # parse arguments
@@ -353,6 +359,15 @@ while [ $# -ne 0 ]; do
         --enable-docs)
             append_cache_entry MAKE_DOC                 BOOL true
             ;;
+        --build-type=*)
+            if [ $optarg = "Debug" ] || [ $optarg = "Release" ] ||
+            [ $optarg = "RelWithDebInfo" ] || [ $optarg = "MinSizeRel" ]; then
+                build_type=$optarg
+            else
+                echo "Invalid build type '$optarg'. Try $0 --help to see available build types."
+                exit 1
+            fi
+            ;;
         --with-pcap-includes=*)
             append_cache_entry PCAP_INCLUDE_DIR_HINT PATH $optarg
             ;;
@@ -452,6 +467,7 @@ cmake "$gen" \
     -DCMAKE_CXX_FLAGS:STRING="$CXXFLAGS $CPPFLAGS" \
     -DCMAKE_C_FLAGS:STRING="$CFLAGS $CPPFLAGS" \
     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+    -DCMAKE_BUILD_TYPE:STRING=$build_type \
     $CMakeCacheEntries $sourcedir
 
 echo "# This is the command used to configure this build" > config.status

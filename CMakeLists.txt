@@ -76,6 +76,8 @@ configure_file(
 add_custom_target(uninstall
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
+string(TOUPPER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_UPPER)
+
 message("
 -------------------------------------------------------
 ${CMAKE_PROJECT_NAME} version ${VERSION}
@@ -88,8 +90,8 @@ Install options:
 Compiler options:
     CC:             ${CMAKE_C_COMPILER}
     CXX:            ${CMAKE_CXX_COMPILER}
-    CFLAGS:         ${CMAKE_C_FLAGS}
-    CXXFLAGS:       ${CMAKE_CXX_FLAGS}
+    CFLAGS:         ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_${CMAKE_BUILD_TYPE_UPPER}}
+    CXXFLAGS:       ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE_UPPER}}
     EXE_LDFLAGS:    ${CMAKE_EXE_LINKER_FLAGS}
     MODULE_LDFLAGS: ${CMAKE_MODULE_LINKER_FLAGS}
 
