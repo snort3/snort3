@@ -755,7 +755,12 @@ static void DCE2_Smb2WriteRequest(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
 
     offset = alignedNtohq((const uint64_t*)(&(smb_write_hdr->offset)));
     DCE2_Smb2FileTracker* ftracker = ttr->findFtracker(fileId_persistent);
-    if (ftracker and !ftracker->ignore) // file tracker can not be nullptr here
+    if (!ftracker) // compounded create request + write request case
+    {
+        ftracker = new DCE2_Smb2FileTracker(fileId_persistent, ttr, str);
+        ttr->insertFtracker(fileId_persistent, ftracker);
+    }
+    if (!ftracker->ignore) // file tracker can not be nullptr here
     {
         if (ftracker->file_size and (offset > ftracker->file_size))
         {
