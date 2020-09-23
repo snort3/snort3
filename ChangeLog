@@ -1,3 +1,53 @@
+2020/09/23 - 3.0.3 build 1
+
+-- ac_bnfa: Disable broken fail state reduction
+-- appid: Check third party context version while deleting connections
+-- appid: Use third party payload if available for HTTP tunneled
+-- cmake: Support cmake build type configuration
+-- dce_rpc: Handle compound requests for upload
+-- dce_rpc: Modify logs to show if file context is found or not found
+-- dump_config: Sort config options before printing
+-- file_api: Update lookup and block timeout from config at file cache creation
+-- flowbits: Evaluate checkers after setters for fast pattern matches
+-- ftp: Add APPE to upload commands
+-- http2_inspect: Convert to new stream states
+-- http2_inspect: Fix how implement_reassemble uses frame_type
+-- http2_inspect: Refactor HI interactions out of frame constructors
+-- http_inspect: Extract filename from content-disposition header for HTTP uploads
+-- module_manager: Keep a list of modules supporting reload_module
+-- netflow: Cache support and more v5 decoding
+-- payload_injector: Don't inject if stream id is even
+-- profiler: Fix issue where flushed pattern matches caused rule_eval to be profiled under mpse
+-- reputation: Change terms used in code, logs, and peg counts
+-- rna: Add unit test to validate VLAN handling
+-- rna: Avoid conflicts with other fingerprint definitions
+-- rna: Service discovery with multiple vendor and version support
+-- rna: Support user agent fingerprints
+-- s7commplus: V3 header support
+-- search_engine: Fix peg type for max_queued
+-- stream_tcp: Add an assert to catch tcp state/event combination that should not occur
+-- stream_tcp: Add PegCount for tcp packets received with an invalid ack
+-- stream_tcp: Arrange TCP tracker member vars to optimize storage requirements, add helper
+   functions to access private splitter functions
+-- stream_tcp: Delete redundant calls to flush data when FIN is received
+-- stream_tcp: Delete unused packet action flags, set action flags via its setter
+-- stream_tcp: Fix issues with stream_tcp handling of the TCP MSS option
+-- stream_tcp: Handle bad tcp packets consistently when normalizing in ips mode
+-- stream_tcp: Implement helper function to return true if the TCP packet is a data segment, false
+   otherwise
+-- stream_tcp: Merge the setup methods of the TcpStreamSession and TcpSession classes into a single
+   method in TcpSession
+-- stream_tcp: Refactor tcp handling of no flags to drop packet before any processing, don't
+   generate event
+-- stream_tcp: Refactor tracker and reassembler classes to improve encapsulation and move member
+   variables to appropriate class
+-- stream_tcp: Remove FIXIT-H because by definition an Ack Sent event in TcpStateNone means the
+   SYN-ACK was not seen, so no way to do the check suggested
+-- stream_tcp: Remove FIXIT-H to add ack validation, the ack is already validated when processed on
+   the listener side
+-- target_based: Support reload of host attribute table via signal as well as control channel
+   command
+
 2020/09/13 - 3.0.2 build 6
 
 -- active: Remove per packet prevent trust action

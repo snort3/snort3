@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.0.2 (Build 6) 2020-09-13 14:48:12 EDT TST
+Revision 3.0.3 (Build 1) 2020-09-23 11:56:23 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1283,14 +1283,13 @@ Configuration:
     info for each rule
   * bool search_engine.split_any_any = true: evaluate any-any rules
     separately to save memory
-  * int search_engine.queue_limit = 128: maximum number of fast
-    pattern matches to queue per packet (0 means no maximum) {
-    0:max32 }
+  * int search_engine.queue_limit = 0: maximum number of fast pattern
+    matches to queue per packet (0 is unlimited) { 0:max32 }
 
 Peg counts:
 
   * search_engine.max_queued: maximum fast pattern matches queued for
-    further evaluation (sum)
+    further evaluation (max)
   * search_engine.total_flushed: total fast pattern matches processed
     (sum)
   * search_engine.total_inserts: total fast pattern hits (sum)
@@ -2457,6 +2456,7 @@ Configuration:
 
   * bool appid_listener.json_logging = false: log appid data in json
     format
+  * string appid_listener.file: output data to given file
 
 
 5.3. arp_spoof
@@ -3790,6 +3790,8 @@ Rules:
   * 119:257 (http_inspect) HTTP CONNECT response with 1XX status code
   * 119:258 (http_inspect) HTTP CONNECT response before request
     message completed
+  * 119:259 (http_inspect) malformed HTTP Content-Disposition
+    filename parameter
 
 Peg counts:
 
@@ -3955,6 +3957,11 @@ Usage: inspect
 
 Instance Type: multiton
 
+Configuration:
+
+  * string netflow.dump_file: file name to dump netflow cache on
+    shutdown; won’t dump by default
+
 Peg counts:
 
   * netflow.packets: total packets processed (sum)
@@ -3965,6 +3972,7 @@ Peg counts:
     (sum)
   * netflow.invalid_netflow_pkts: count of invalid netflow packets
     (sum)
+  * netflow.unique_flows: count of unique netflow flows (sum)
 
 
 5.29. normalizer
@@ -4456,6 +4464,7 @@ Instance Type: global
 
 Configuration:
 
+  * string reputation.blocklist: blocklist file name with IP lists
   * string reputation.blacklist: blacklist file name with IP lists
   * string reputation.list_dir: directory for IP lists and manifest
     file
@@ -4463,28 +4472,32 @@ Configuration:
     { 1:4095 }
   * enum reputation.nested_ip = inner: IP to use when there is IP
     encapsulation { inner|outer|all }
-  * enum reputation.priority = whitelist: defines priority when there
-    is a decision conflict during run-time { blacklist|whitelist }
+  * enum reputation.priority = allowlist: defines priority when there
+    is a decision conflict during run-time { blocklist|allowlist|
+    blacklist|whitelist }
   * bool reputation.scan_local = false: inspect local address defined
     in RFC 1918
-  * enum reputation.white = unblack: specify the meaning of whitelist
-    { unblack|trust }
+  * enum reputation.allow = do_not_block: specify the meaning of
+    allowlist { do_not_block|trust|unblack }
+  * enum reputation.white = do_not_block: specify the meaning of
+    whitelist { do_not_block|trust|unblack }
+  * string reputation.allowlist: allowlist file name with IP lists
   * string reputation.whitelist: whitelist file name with IP lists
 
 Rules:
 
-  * 136:1 (reputation) packets blacklisted based on source
-  * 136:2 (reputation) packets whitelisted based on source
+  * 136:1 (reputation) packets blocked based on source
+  * 136:2 (reputation) packets trusted based on source
   * 136:3 (reputation) packets monitored based on source
-  * 136:4 (reputation) packets blacklisted based on destination
-  * 136:5 (reputation) packets whitelisted based on destination
+  * 136:4 (reputation) packets blocked based on destination
+  * 136:5 (reputation) packets trusted based on destination
   * 136:6 (reputation) packets monitored based on destination
 
 Peg counts:
 
   * reputation.packets: total packets processed (sum)
-  * reputation.blacklisted: number of packets blacklisted (sum)
-  * reputation.whitelisted: number of packets whitelisted (sum)
+  * reputation.blocked: number of packets blocked (sum)
+  * reputation.trusted: number of packets trusted (sum)
   * reputation.monitored: number of packets monitored (sum)
   * reputation.memory_allocated: total memory allocated (sum)
 
@@ -4522,6 +4535,29 @@ Configuration:
   * string rna.tcp_fingerprints[].ws = X: fingerprint window size
   * bool rna.tcp_fingerprints[].df = false: fingerprint don’t
     fragment flag
+  * enum rna.tcp_fingerprints[].ua_type = os: type of user agent
+    fingerprints { os | device | jail-broken | jail-broken-host }
+  * string rna.tcp_fingerprints[].user_agent[].substring: a substring
+    of user agent string
+  * string rna.tcp_fingerprints[].host_name: host name information
+  * string rna.tcp_fingerprints[].device: device information
+  * int rna.ua_fingerprints[].fpid = 0: fingerprint id { 0:max32 }
+  * int rna.ua_fingerprints[].type = 0: fingerprint type { 0:max32 }
+  * string rna.ua_fingerprints[].uuid: fingerprint uuid
+  * int rna.ua_fingerprints[].ttl = 0: fingerprint ttl { 0:256 }
+  * string rna.ua_fingerprints[].tcp_window: fingerprint tcp window
+  * string rna.ua_fingerprints[].mss = X: fingerprint mss
+  * string rna.ua_fingerprints[].id = X: id
+  * string rna.ua_fingerprints[].topts: fingerprint tcp options
+  * string rna.ua_fingerprints[].ws = X: fingerprint window size
+  * bool rna.ua_fingerprints[].df = false: fingerprint don’t fragment
+    flag
+  * enum rna.ua_fingerprints[].ua_type = os: type of user agent
+    fingerprints { os | device | jail-broken | jail-broken-host }
+  * string rna.ua_fingerprints[].user_agent[].substring: a substring
+    of user agent string
+  * string rna.ua_fingerprints[].host_name: host name information
+  * string rna.ua_fingerprints[].device: device information
 
 Commands:
 
@@ -5214,6 +5250,14 @@ Peg counts:
   * stream_tcp.restarts: sessions restarted (sum)
   * stream_tcp.resyns: SYN received on established session (sum)
   * stream_tcp.discards: tcp packets discarded (sum)
+  * stream_tcp.discards_skipped: tcp packet discards skipped due to
+    normalization disabled (sum)
+  * stream_tcp.invalid_seq_num: tcp packets received with an invalid
+    sequence number (sum)
+  * stream_tcp.invalid_ack: tcp packets received with an invalid ack
+    number (sum)
+  * stream_tcp.no_flags_set: tcp packets received with no TCP flags
+    set (sum)
   * stream_tcp.events: events generated (sum)
   * stream_tcp.ignored: tcp packets ignored (sum)
   * stream_tcp.untracked: tcp packets not tracked (sum)
@@ -5240,6 +5284,8 @@ Peg counts:
     segment limit was reached (sum)
   * stream_tcp.exceeded_max_bytes: number of times the maximum queued
     byte limit was reached (sum)
+  * stream_tcp.payload_fully_trimmed: segments with no data after
+    trimming (sum)
   * stream_tcp.internal_events: 135:X events generated (sum)
   * stream_tcp.client_cleanups: number of times data from server was
     flushed when session released (sum)
@@ -7419,7 +7465,7 @@ Configuration:
   * enum stream_reassemble.direction: action applies to the given
     direction(s) { client|server|both }
   * implied stream_reassemble.noalert: don’t alert when rule matches
-  * implied stream_reassemble.fastpath: optionally whitelist the
+  * implied stream_reassemble.fastpath: optionally trust the
     remainder of the session
 
 
@@ -8192,6 +8238,7 @@ these libraries see the Getting Started section of the manual.
     logging appid statistics { 1:max32 }
   * int appid.app_stats_rollover_size = 20971520: max file size for
     appid stats before rolling over the log file { 0:max32 }
+  * string appid_listener.file: output data to given file
   * bool appid_listener.json_logging = false: log appid data in json
     format
   * bool appid.list_odp_detectors = false: enable logging of odp
@@ -8991,6 +9038,8 @@ these libraries see the Getting Started section of the manual.
   * string msg.~: message describing rule
   * interval mss.~range: check if TCP MSS is in given range { 0:65535
     }
+  * string netflow.dump_file: file name to dump netflow cache on
+    shutdown; won’t dump by default
   * multi network.checksum_drop = none: drop if checksum is bad { all
     | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
   * multi network.checksum_eval = all: checksums to verify { all | ip
@@ -9314,20 +9363,25 @@ these libraries see the Getting Started section of the manual.
     none|source|dest|both }
   * string rem.~: comment
   * string replace.~: byte code to replace with
+  * enum reputation.allow = do_not_block: specify the meaning of
+    allowlist { do_not_block|trust|unblack }
+  * string reputation.allowlist: allowlist file name with IP lists
   * string reputation.blacklist: blacklist file name with IP lists
+  * string reputation.blocklist: blocklist file name with IP lists
   * string reputation.list_dir: directory for IP lists and manifest
     file
   * int reputation.memcap = 500: maximum total MB of memory allocated
     { 1:4095 }
   * enum reputation.nested_ip = inner: IP to use when there is IP
     encapsulation { inner|outer|all }
-  * enum reputation.priority = whitelist: defines priority when there
-    is a decision conflict during run-time { blacklist|whitelist }
+  * enum reputation.priority = allowlist: defines priority when there
+    is a decision conflict during run-time { blocklist|allowlist|
+    blacklist|whitelist }
   * bool reputation.scan_local = false: inspect local address defined
     in RFC 1918
+  * enum reputation.white = do_not_block: specify the meaning of
+    whitelist { do_not_block|trust|unblack }
   * string reputation.whitelist: whitelist file name with IP lists
-  * enum reputation.white = unblack: specify the meaning of whitelist
-    { unblack|trust }
   * int rev.~: revision { 1:max32 }
   * bool rewrite.disable_replace = false: disable replace of packet
     contents with rewrite rules
@@ -9338,17 +9392,40 @@ these libraries see the Getting Started section of the manual.
   * bool rna.log_when_idle = false: enable host update logging when
     snort is idle
   * string rna.rna_conf_path: path to rna configuration
+  * string rna.tcp_fingerprints[].device: device information
   * bool rna.tcp_fingerprints[].df = false: fingerprint don’t
     fragment flag
   * int rna.tcp_fingerprints[].fpid = 0: fingerprint id { 0:max32 }
+  * string rna.tcp_fingerprints[].host_name: host name information
   * string rna.tcp_fingerprints[].id = X: id
   * string rna.tcp_fingerprints[].mss = X: fingerprint mss
   * string rna.tcp_fingerprints[].tcp_window: fingerprint tcp window
   * string rna.tcp_fingerprints[].topts: fingerprint tcp options
   * int rna.tcp_fingerprints[].ttl = 0: fingerprint ttl { 0:256 }
   * int rna.tcp_fingerprints[].type = 0: fingerprint type { 0:max32 }
+  * enum rna.tcp_fingerprints[].ua_type = os: type of user agent
+    fingerprints { os | device | jail-broken | jail-broken-host }
+  * string rna.tcp_fingerprints[].user_agent[].substring: a substring
+    of user agent string
   * string rna.tcp_fingerprints[].uuid: fingerprint uuid
   * string rna.tcp_fingerprints[].ws = X: fingerprint window size
+  * string rna.ua_fingerprints[].device: device information
+  * bool rna.ua_fingerprints[].df = false: fingerprint don’t fragment
+    flag
+  * int rna.ua_fingerprints[].fpid = 0: fingerprint id { 0:max32 }
+  * string rna.ua_fingerprints[].host_name: host name information
+  * string rna.ua_fingerprints[].id = X: id
+  * string rna.ua_fingerprints[].mss = X: fingerprint mss
+  * string rna.ua_fingerprints[].tcp_window: fingerprint tcp window
+  * string rna.ua_fingerprints[].topts: fingerprint tcp options
+  * int rna.ua_fingerprints[].ttl = 0: fingerprint ttl { 0:256 }
+  * int rna.ua_fingerprints[].type = 0: fingerprint type { 0:max32 }
+  * enum rna.ua_fingerprints[].ua_type = os: type of user agent
+    fingerprints { os | device | jail-broken | jail-broken-host }
+  * string rna.ua_fingerprints[].user_agent[].substring: a substring
+    of user agent string
+  * string rna.ua_fingerprints[].uuid: fingerprint uuid
+  * string rna.ua_fingerprints[].ws = X: fingerprint window size
   * int rpc.~app: application number { 0:max32 }
   * string rpc.~proc: procedure number or * for any
   * string rpc.~ver: version number or * for any
@@ -9388,9 +9465,8 @@ these libraries see the Getting Started section of the manual.
     offload algorithm - choose available search engine { ac_banded |
     ac_bnfa | ac_full | ac_sparse | ac_sparse_bands | ac_std |
     hyperscan | lowmem }
-  * int search_engine.queue_limit = 128: maximum number of fast
-    pattern matches to queue per packet (0 means no maximum) {
-    0:max32 }
+  * int search_engine.queue_limit = 0: maximum number of fast pattern
+    matches to queue per packet (0 is unlimited) { 0:max32 }
   * dynamic search_engine.search_method = ac_bnfa: set fast pattern
     algorithm - choose available search engine { ac_banded | ac_bnfa
     | ac_full | ac_sparse | ac_sparse_bands | ac_std | hyperscan |
@@ -9798,7 +9874,7 @@ these libraries see the Getting Started section of the manual.
     disable|enable }
   * enum stream_reassemble.direction: action applies to the given
     direction(s) { client|server|both }
-  * implied stream_reassemble.fastpath: optionally whitelist the
+  * implied stream_reassemble.fastpath: optionally trust the
     remainder of the session
   * implied stream_reassemble.noalert: don’t alert when rule matches
   * enum stream_size.~direction: compare applies to the given
@@ -10565,6 +10641,7 @@ these libraries see the Getting Started section of the manual.
     (sum)
   * netflow.packets: total packets processed (sum)
   * netflow.records: total records found in netflow data (sum)
+  * netflow.unique_flows: count of unique netflow flows (sum)
   * netflow.version_5: count of netflow version 5 packets received
     (sum)
   * netflow.version_9: count of netflow version 9 packets received
@@ -10701,11 +10778,11 @@ these libraries see the Getting Started section of the manual.
     (sum)
   * rate_filter.no_memory: number of times rate filter ran out of
     memory (sum)
-  * reputation.blacklisted: number of packets blacklisted (sum)
+  * reputation.blocked: number of packets blocked (sum)
   * reputation.memory_allocated: total memory allocated (sum)
   * reputation.monitored: number of packets monitored (sum)
   * reputation.packets: total packets processed (sum)
-  * reputation.whitelisted: number of packets whitelisted (sum)
+  * reputation.trusted: number of packets trusted (sum)
   * rna.appid_change: count of appid change events received (sum)
   * rna.change_host_update: count number of change host update events
     (sum)
@@ -10738,7 +10815,7 @@ these libraries see the Getting Started section of the manual.
   * sd_pattern.pattern_not_found: sd_pattern did not not match (sum)
   * sd_pattern.terminated: hyperscan terminated (sum)
   * search_engine.max_queued: maximum fast pattern matches queued for
-    further evaluation (sum)
+    further evaluation (max)
   * search_engine.non_qualified_events: total non-qualified events
     (sum)
   * search_engine.qualified_events: total qualified events (sum)
@@ -10917,6 +10994,8 @@ these libraries see the Getting Started section of the manual.
     (now)
   * stream_tcp.data_trackers: tcp session tracking started on data
     (sum)
+  * stream_tcp.discards_skipped: tcp packet discards skipped due to
+    normalization disabled (sum)
   * stream_tcp.discards: tcp packets discarded (sum)
   * stream_tcp.established: number of sessions currently established
     (now)
@@ -10944,11 +11023,17 @@ these libraries see the Getting Started section of the manual.
     service inspector (sum)
   * stream_tcp.instantiated: new sessions instantiated (sum)
   * stream_tcp.internal_events: 135:X events generated (sum)
+  * stream_tcp.invalid_ack: tcp packets received with an invalid ack
+    number (sum)
+  * stream_tcp.invalid_seq_num: tcp packets received with an invalid
+    sequence number (sum)
   * stream_tcp.max: max tcp sessions (max)
   * stream_tcp.max_packets_held: maximum number of packets held
     simultaneously (max)
   * stream_tcp.memory: current memory in use (now)
   * stream_tcp.meta_acks: number of meta acks processed (sum)
+  * stream_tcp.no_flags_set: tcp packets received with no TCP flags
+    set (sum)
   * stream_tcp.overlaps: overlapping segments queued (sum)
   * stream_tcp.packets_held: number of packets held (sum)
   * stream_tcp.partial_fallbacks: count of fallbacks from assigned
@@ -10956,6 +11041,8 @@ these libraries see the Getting Started section of the manual.
   * stream_tcp.partial_flush_bytes: partial flush total bytes (sum)
   * stream_tcp.partial_flushes: number of partial flushes initiated
     (sum)
+  * stream_tcp.payload_fully_trimmed: segments with no data after
+    trimming (sum)
   * stream_tcp.prunes: tcp session prunes (sum)
   * stream_tcp.rebuilt_buffers: rebuilt PDU sections (sum)
   * stream_tcp.rebuilt_bytes: total rebuilt bytes (sum)
@@ -11424,6 +11511,8 @@ these libraries see the Getting Started section of the manual.
   * 119:257 (http_inspect) HTTP CONNECT response with 1XX status code
   * 119:258 (http_inspect) HTTP CONNECT response before request
     message completed
+  * 119:259 (http_inspect) malformed HTTP Content-Disposition
+    filename parameter
   * 121:1 (http2_inspect) error in HPACK integer value
   * 121:2 (http2_inspect) HPACK integer value has leading zeros
   * 121:3 (http2_inspect) error in HPACK string value
@@ -11646,11 +11735,11 @@ these libraries see the Getting Started section of the manual.
   * 135:1 (stream) TCP SYN received
   * 135:2 (stream) TCP session established
   * 135:3 (stream) TCP session cleared
-  * 136:1 (reputation) packets blacklisted based on source
-  * 136:2 (reputation) packets whitelisted based on source
+  * 136:1 (reputation) packets blocked based on source
+  * 136:2 (reputation) packets trusted based on source
   * 136:3 (reputation) packets monitored based on source
-  * 136:4 (reputation) packets blacklisted based on destination
-  * 136:5 (reputation) packets whitelisted based on destination
+  * 136:4 (reputation) packets blocked based on destination
+  * 136:5 (reputation) packets trusted based on destination
   * 136:6 (reputation) packets monitored based on destination
   * 137:1 (ssl) invalid client HELLO after server HELLO detected
   * 137:2 (ssl) invalid server HELLO without client HELLO detected
