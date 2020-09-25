@@ -66,6 +66,8 @@ add_library( stream_tcp OBJECT
     tcp_stream_session.h
     tcp_stream_tracker.cc
     tcp_stream_tracker.h
+    tcp_trace.cc
+    tcp_trace.h
     ${TEST_FILES}
 )
 

@@ -56,13 +56,13 @@
 #include "protocols/eth.h"
 
 #include "stream_tcp.h"
-#include "tcp_debug_trace.h"
 #include "tcp_ha.h"
 #include "tcp_module.h"
 #include "tcp_normalizers.h"
 #include "tcp_reassemblers.h"
 #include "tcp_segment_node.h"
 #include "tcp_state_machine.h"
+#include "tcp_trace.h"
 
 using namespace snort;
 
@@ -1058,12 +1058,12 @@ bool TcpSession::validate_packet_established_session(TcpSegmentDescriptor& tsd)
     return ( pkt_action_mask & ACTION_BAD_PKT ) ? false : true;
 }
 
-int TcpSession::process_tcp_packet(TcpSegmentDescriptor& tsd)
+int TcpSession::process_tcp_packet(TcpSegmentDescriptor& tsd, const Packet* p)
 {
     tsm->eval(tsd);
     check_events_and_actions(tsd);
 
-    S5TraceTCP(tsd);
+    S5TraceTCP(tsd, p);
 
     return ACTION_NOTHING;
 }
@@ -1086,7 +1086,7 @@ int TcpSession::process(Packet* p)
     {
         TcpSegmentDescriptor ma_tsd(flow, p, tcp_mack->tcp_ack_seq_num, tcp_mack->tcp_window_size);
         init_tcp_packet_analysis(ma_tsd);
-        process_tcp_packet(ma_tsd);
+        process_tcp_packet(ma_tsd, p);
         tcpStats.meta_acks++;
     }
 
@@ -1097,7 +1097,7 @@ int TcpSession::process(Packet* p)
             && !handle_syn_on_reset_session(tsd) )
         return ACTION_NOTHING;
 
-    return process_tcp_packet(tsd);
+    return process_tcp_packet(tsd, p);
 }
 
 void TcpSession::flush()

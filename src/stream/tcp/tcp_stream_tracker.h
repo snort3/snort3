@@ -247,7 +247,7 @@ public:
     void set_flush_policy(FlushPolicy policy)
     { flush_policy = policy; }
 
-    FlushPolicy get_flush_policy()
+    FlushPolicy get_flush_policy() const
     { return flush_policy; }
 
     virtual void init_tcp_state();

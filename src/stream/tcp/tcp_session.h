@@ -73,7 +73,7 @@ public:
     { return tcp_config->midstream_allowed(tsd.get_pkt()); }
 
 private:
-    int process_tcp_packet(TcpSegmentDescriptor&);
+    int process_tcp_packet(TcpSegmentDescriptor&, const snort::Packet*);
     void process_tcp_stream(TcpSegmentDescriptor&);
     int process_tcp_data(TcpSegmentDescriptor&);
     void set_os_policy() override;

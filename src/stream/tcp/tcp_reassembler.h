@@ -38,7 +38,6 @@ public:
     virtual bool is_segment_pending_flush(TcpReassemblerState&);
     virtual int flush_on_data_policy(TcpReassemblerState&, snort::Packet*);
     virtual int flush_on_ack_policy(TcpReassemblerState&, snort::Packet*);
-    virtual void trace_segments(TcpReassemblerState&);
     virtual bool add_alert(TcpReassemblerState&, uint32_t gid, uint32_t sid);
     virtual bool check_alerted(TcpReassemblerState&, uint32_t gid, uint32_t sid);
     virtual int update_alert(TcpReassemblerState&, uint32_t gid, uint32_t sid,

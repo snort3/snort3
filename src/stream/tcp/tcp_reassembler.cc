@@ -62,34 +62,6 @@ static void purge_alerts_callback_ips(IpsContext* c)
         session->client.reassembler.purge_alerts();
 }
 
-void TcpReassembler::trace_segments(TcpReassemblerState& trs)
-{
-    TcpSegmentNode* tsn = trs.sos.seglist.head;
-    uint32_t sx = trs.tracker->r_win_base;
-    unsigned segs = 0, bytes = 0;
-
-    while ( tsn )
-    {
-        if (SEQ_LT(sx, tsn->i_seq))
-            fprintf(stdout, " +%u", tsn->i_seq - sx);
-        else if (SEQ_GT(sx, tsn->i_seq))
-            fprintf(stdout, " -%u", sx - tsn->i_seq);
-
-        fprintf(stdout, " %hu", tsn->i_len);
-
-        if ( tsn->c_len and tsn->c_len != tsn->i_len )
-            fprintf(stdout, "(%hu|%hu|%d)",
-                tsn->offset, tsn->c_len, tsn->i_len-tsn->offset-tsn->c_len);
-
-        segs++;
-        bytes += tsn->i_len;
-        sx = tsn->i_seq + tsn->i_len;
-        tsn = tsn->next;
-    }
-    assert(trs.sos.seg_count == segs);
-    assert(trs.sos.seg_bytes_logical == bytes);
-}
-
 bool TcpReassembler::is_segment_pending_flush(TcpReassemblerState& trs)
 {
     return ( get_pending_segment_count(trs, 1) > 0 );

@@ -82,9 +82,6 @@ public:
     int flush_on_ack_policy(snort::Packet* p)
     { return reassembler->flush_on_ack_policy(trs, p); }
 
-    void trace_segments()
-    { reassembler->trace_segments(trs); }
-
     void set_seglist_base_seq(uint32_t seglist_base_seq)
     { trs.sos.seglist_base_seq = seglist_base_seq; }
 
@@ -139,6 +136,7 @@ public:
 private:
     TcpReassembler* reassembler = nullptr;
     TcpReassemblerState trs;
+    friend inline void TraceSegments(const TcpReassemblerPolicy&, const snort::Packet* p);
 };
 #endif
 

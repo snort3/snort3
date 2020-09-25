@@ -27,6 +27,9 @@
 #include "main/snort_config.h"
 #include "profiler/profiler_defs.h"
 #include "stream/paf.h"
+#include "trace/trace.h"
+
+#include "tcp_trace.h"
 
 using namespace snort;
 
@@ -35,6 +38,16 @@ using namespace snort;
 //-------------------------------------------------------------------------
 
 THREAD_LOCAL ProfileStats s5TcpPerfStats;
+
+THREAD_LOCAL const Trace* stream_tcp_trace = nullptr;
+
+static const TraceOption stream_tcp_trace_options[] =
+{
+    { "segments", TRACE_SEGMENTS, "enable stream TCP segments trace logging" },
+    { "state",    TRACE_STATE,    "enable stream TCP state trace logging" },
+
+    { nullptr, 0, nullptr }
+};
 
 const PegInfo tcp_pegs[] =
 {
@@ -238,6 +251,12 @@ StreamTcpModule::StreamTcpModule() :
 {
     config = nullptr;
 }
+
+void StreamTcpModule::set_trace(const Trace* trace) const
+{ stream_tcp_trace = trace; }
+
+const TraceOption* StreamTcpModule::get_trace_options() const
+{ return stream_tcp_trace_options; }
 
 const RuleMap* StreamTcpModule::get_rules() const
 { return stream_tcp_rules; }

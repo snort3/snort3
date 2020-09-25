@@ -51,6 +51,7 @@
 
 extern const PegInfo tcp_pegs[];
 
+extern THREAD_LOCAL const snort::Trace* stream_tcp_trace;
 extern THREAD_LOCAL snort::ProfileStats s5TcpPerfStats;
 
 struct TcpStats
@@ -119,11 +120,6 @@ extern THREAD_LOCAL struct TcpStats tcpStats;
 #define STREAM_TCP_MOD_NAME "stream_tcp"
 #define STREAM_TCP_MOD_HELP "stream inspector for TCP flow tracking and stream normalization and reassembly"
 
-namespace snort
-{
-struct SnortConfig;
-}
-
 class StreamTcpModule : public snort::Module
 {
 public:
@@ -148,6 +144,9 @@ public:
 
     bool is_bindable() const override
     { return true; }
+
+    void set_trace(const snort::Trace*) const override;
+    const snort::TraceOption* get_trace_options() const override;
 
 private:
     TcpStreamConfig* config;
