@@ -40,13 +40,13 @@ using namespace snort;
 using namespace HttpCommon;
 using namespace Http2Enums;
 
-Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t header_len,
-    const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* session_data_,
+Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const uint32_t header_len,
+    const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* session_data_,
     HttpCommon::SourceId source_id_, Http2Stream* stream_) :
     Http2Frame(header_buffer, header_len, data_buffer, data_len, session_data_, source_id_, stream_)
 {
-    // FIXIT-E check frame validity before creating frame
-    if (!check_frame_validity() or data.length() <= 0)
+    // FIXIT-E zero length should not be a special case
+    if (data.length() <= 0)
     {
         process_frame = false;
         return;
@@ -64,13 +64,12 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const int32_t
 
 Http2HeadersFrame::~Http2HeadersFrame()
 {
-    delete http1_header;
     delete[] decoded_headers;
 }
 
 void Http2HeadersFrame::clear()
 {
-    if (error_during_decode || hi_abort)
+    if (session_data->abort_flow[source_id] || stream->get_state(source_id) == STREAM_ERROR)
         return;
     Packet dummy_pkt(false);
     dummy_pkt.flow = session_data->flow;
@@ -79,7 +78,7 @@ void Http2HeadersFrame::clear()
 
 void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow)
 {
-    if (error_during_decode)
+    if (session_data->abort_flow[source_id])
         return;
 
     http1_header = hpack_decoder->get_decoded_headers(decoded_headers);
@@ -92,21 +91,21 @@ void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow)
         dummy_pkt.flow = session_data->flow;
         const uint32_t unused = 0;
         const StreamSplitter::Status header_scan_result =
-            session_data->hi_ss[source_id]->scan(&dummy_pkt, http1_header->start(),
-            http1_header->length(), unused, &flush_offset);
+            session_data->hi_ss[source_id]->scan(&dummy_pkt, http1_header.start(),
+            http1_header.length(), unused, &flush_offset);
         assert(header_scan_result == StreamSplitter::FLUSH);
         UNUSED(header_scan_result);
-        assert((int64_t)flush_offset == http1_header->length());
+        assert((int64_t)flush_offset == http1_header.length());
     }
 
     // http_inspect reassemble() of headers
     {
         unsigned copied;
         stream_buf = session_data->hi_ss[source_id]->reassemble(session_data->flow,
-            http1_header->length(), 0, http1_header->start(), http1_header->length(), PKT_PDU_TAIL,
+            http1_header.length(), 0, http1_header.start(), http1_header.length(), PKT_PDU_TAIL,
             copied);
         assert(stream_buf.data != nullptr);
-        assert(copied == (unsigned)http1_header->length());
+        assert(copied == (unsigned)http1_header.length());
     }
 
     // http_inspect eval() of headers
@@ -118,15 +117,14 @@ void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow)
         dummy_pkt.data = stream_buf.data;
         dummy_pkt.xtradata_mask = 0;
         session_data->hi->eval(&dummy_pkt);
-        //Following if condition won't get exercised until finish() is
-        //implemented for H2I. Without finish() H2I will only flush
-        //complete header blocks. Below ABORT is only possible if
-        //tcp connection closes unexpectedly in middle of a header.
+        // Following if condition won't get exercised until finish() (during Headers) is
+        // implemented for H2I. Without finish() H2I will only flush complete header blocks. Below
+        // ABORT is only possible if tcp connection closes unexpectedly in middle of a header.
         if (http_flow->get_type_expected(source_id) == HttpEnums::SEC_ABORT)
         {
             *session_data->infractions[source_id] += INF_INVALID_HEADER;
             session_data->events[source_id]->create_event(EVENT_INVALID_HEADER);
-            hi_abort = true;
+            stream->set_state(source_id, STREAM_ERROR);
             return;
         }
         detection_required = dummy_pkt.is_detection_required();
@@ -140,67 +138,16 @@ const Field& Http2HeadersFrame::get_buf(unsigned id)
     {
     // FIXIT-M need to add a buffer for the decoded start line
     case HTTP2_BUFFER_DECODED_HEADER:
-        return *http1_header;
+        return http1_header;
     default:
         return Http2Frame::get_buf(id);
-    }
-}
-
-// Return: continue processing frame
-bool Http2HeadersFrame::check_frame_validity()
-{
-    if (stream->get_state(source_id) == STREAM_COMPLETE)
-    {
-        *session_data->infractions[source_id] += INF_TRAILERS_AFTER_END_STREAM;
-        session_data->events[source_id]->create_event(EVENT_FRAME_SEQUENCE);
-        return false;
-    }
-    else if ((stream->get_state(source_id) != STREAM_EXPECT_HEADERS) and
-        !(get_flags() & END_STREAM))
-    {
-        // Trailers without END_STREAM flag set. Alert but continue to process.
-        *session_data->infractions[source_id] += INF_FRAME_SEQUENCE;
-        session_data->events[source_id]->create_event(EVENT_FRAME_SEQUENCE);
-    }
-    return true;
-}
-
-void Http2HeadersFrame::update_stream_state()
-{
-    switch (stream->get_state(source_id))
-    {
-        case STREAM_EXPECT_HEADERS:
-            if (get_flags() & END_STREAM)
-                stream->set_state(source_id, STREAM_COMPLETE);
-            else
-                stream->set_state(source_id, STREAM_EXPECT_BODY);
-            break;
-        case STREAM_EXPECT_BODY:
-            // fallthrough
-        case STREAM_BODY:
-            // Any trailing headers frame will be processed as trailers regardless of whether the
-            // END_STREAM flag is set
-            if (stream->get_state(source_id) == STREAM_BODY)
-                session_data->concurrent_files -= 1;
-            stream->set_state(source_id, STREAM_COMPLETE);
-            break;
-        case STREAM_COMPLETE:
-            // FIXIT-E frame validity should be checked before creating frame so we should not get
-            // here
-            break;
-        default:
-            // FIXIT-E build this out
-            break;
     }
 }
 
 #ifdef REG_TEST
 void Http2HeadersFrame::print_frame(FILE* output)
 {
-    if (error_during_decode)
-        fprintf(output, "Error decoding headers.\n");
-    if (http1_header)
-        http1_header->print(output, "Decoded header");
+    http1_header.print(output, "Decoded header");
     Http2Frame::print_frame(output);
 }
 #endif

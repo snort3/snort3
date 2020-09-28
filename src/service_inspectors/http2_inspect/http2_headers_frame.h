@@ -38,24 +38,19 @@ public:
     const Field& get_buf(unsigned id) override;
     uint32_t get_xtradata_mask() override { return xtradata_mask; }
     bool is_detection_required() const override { return detection_required; }
-    void update_stream_state() override;
 
 #ifdef REG_TEST
     void print_frame(FILE* output) override;
 #endif
 
 protected:
-    Http2HeadersFrame(const uint8_t* header_buffer, const int32_t header_len,
-        const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* ssn_data,
+    Http2HeadersFrame(const uint8_t* header_buffer, const uint32_t header_len,
+        const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* ssn_data,
         HttpCommon::SourceId src_id, Http2Stream* stream);
-    bool check_frame_validity();
     void process_decoded_headers(HttpFlowData* http_flow);
 
     uint8_t* decoded_headers = nullptr; // working buffer to store decoded headers
-    uint32_t decoded_headers_size = 0;
-    const Field* http1_header = nullptr; // finalized headers to be passed to NHI
-    bool error_during_decode = false;
-    bool hi_abort = false;
+    Field http1_header;                 // finalized headers to be passed to NHI
     uint32_t xtradata_mask = 0;
     bool detection_required = false;
     bool process_frame = true;

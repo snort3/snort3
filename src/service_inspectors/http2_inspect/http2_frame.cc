@@ -36,19 +36,19 @@ using namespace HttpCommon;
 using namespace Http2Enums;
 using namespace snort;
 
-Http2Frame::Http2Frame(const uint8_t* header_buffer, const int32_t header_len,
-    const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* session_data,
-    SourceId source_id, Http2Stream* stream_) :  session_data(session_data), source_id(source_id),
-    stream(stream_)
+Http2Frame::Http2Frame(const uint8_t* header_buffer, const uint32_t header_len,
+    const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* session_data,
+    SourceId source_id, Http2Stream* stream_) :
+    session_data(session_data), source_id(source_id), stream(stream_)
 {
-    if (header_len > 0)
-        header.set(header_len, header_buffer, true);
+    header.set(header_len, header_buffer, true);
+    // FIXIT-E want to refactor so that zero-length frames are not a special case
     if (data_len > 0)
         data.set(data_len, data_buffer, true);
 }
 
-Http2Frame* Http2Frame::new_frame(const uint8_t* header, const int32_t header_len,
-    const uint8_t* data, const int32_t data_len, Http2FlowData* session_data, SourceId source_id,
+Http2Frame* Http2Frame::new_frame(const uint8_t* header, const uint32_t header_len,
+    const uint8_t* data, const uint32_t data_len, Http2FlowData* session_data, SourceId source_id,
     Http2Stream* stream)
 {
     // FIXIT-E call the appropriate frame subclass constructor based on the type

@@ -51,16 +51,24 @@ Http2Stream::~Http2Stream()
     delete data_cutter[SRC_SERVER];
 }
 
-void Http2Stream::eval_frame(const uint8_t* header_buffer, int32_t header_len,
-    const uint8_t* data_buffer, int32_t data_len, SourceId source_id)
+void Http2Stream::eval_frame(const uint8_t* header_buffer, uint32_t header_len,
+    const uint8_t* data_buffer, uint32_t data_len, SourceId source_id)
 {
     assert(current_frame == nullptr);
     current_frame = Http2Frame::new_frame(header_buffer, header_len, data_buffer,
         data_len, session_data, source_id, this);
-    valid_frame_order[source_id] = valid_frame_order[source_id] &&
-        current_frame->valid_sequence(state[source_id]);
-    current_frame->analyze_http1();
-    current_frame->update_stream_state();
+    if (!session_data->abort_flow[source_id] && (get_state(source_id) != STREAM_ERROR))
+    {
+        if (current_frame->valid_sequence(state[source_id]))
+        {
+            current_frame->analyze_http1();
+            current_frame->update_stream_state();
+        }
+        else
+        {
+            set_state(source_id, STREAM_ERROR);
+        }
+    }
 }
 
 void Http2Stream::clear_frame()

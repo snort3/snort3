@@ -30,21 +30,23 @@ class Http2HeadersFrameHeader : public Http2HeadersFrame
 public:
     ~Http2HeadersFrameHeader() override;
     
-    friend Http2Frame* Http2Frame::new_frame(const uint8_t*, const int32_t, const uint8_t*,
-        const int32_t, Http2FlowData*, HttpCommon::SourceId, Http2Stream* stream);
+    friend Http2Frame* Http2Frame::new_frame(const uint8_t*, const uint32_t, const uint8_t*,
+        const uint32_t, Http2FlowData*, HttpCommon::SourceId, Http2Stream* stream);
 
+    bool valid_sequence(Http2Enums::StreamState state) override;
     void analyze_http1() override;
+    void update_stream_state() override;
 
 #ifdef REG_TEST
     void print_frame(FILE* output) override;
 #endif
 
 private:
-    Http2HeadersFrameHeader(const uint8_t* header_buffer, const int32_t header_len,
-        const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* ssn_data,
+    Http2HeadersFrameHeader(const uint8_t* header_buffer, const uint32_t header_len,
+        const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* ssn_data,
         HttpCommon::SourceId src_id, Http2Stream* stream);
 
     Http2StartLine* start_line_generator = nullptr;
-    const Field* start_line = nullptr;
+    Field start_line;
 };
 #endif

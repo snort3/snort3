@@ -29,8 +29,8 @@ class Http2Frame;
 class Http2SettingsFrame : public Http2Frame
 {
 public:
-    friend Http2Frame* Http2Frame::new_frame(const uint8_t*, const int32_t, const uint8_t*,
-        const int32_t, Http2FlowData*, HttpCommon::SourceId, Http2Stream* stream);
+    friend Http2Frame* Http2Frame::new_frame(const uint8_t*, const uint32_t, const uint8_t*,
+        const uint32_t, Http2FlowData*, HttpCommon::SourceId, Http2Stream* stream);
     bool is_detection_required() const override { return false; }
 
 #ifdef REG_TEST
@@ -38,8 +38,8 @@ public:
 #endif
 
 private:
-    Http2SettingsFrame(const uint8_t* header_buffer, const int32_t header_len,
-        const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* ssn_data,
+    Http2SettingsFrame(const uint8_t* header_buffer, const uint32_t header_len,
+        const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* ssn_data,
         HttpCommon::SourceId src_id, Http2Stream* stream);
 
     void parse_settings_frame();

@@ -49,7 +49,6 @@ bool Http2HpackDecoder::write_decoded_headers(const uint8_t* in_buffer, const ui
     {
         length = decoded_header_length;
         *infractions += INF_DECODED_HEADER_BUFF_OUT_OF_SPACE;
-        events->create_event(EVENT_MISFORMATTED_HTTP2);
         ret = false;
     }
 
@@ -94,7 +93,6 @@ const HpackTableEntry* Http2HpackDecoder::get_hpack_table_entry(
     if (!entry)
     {
         *infractions += INF_HPACK_INDEX_OUT_OF_BOUNDS;
-        events->create_event(EVENT_MISFORMATTED_HTTP2);
     }
     return entry;
 }
@@ -200,10 +198,10 @@ bool Http2HpackDecoder::decode_indexed_header(const uint8_t* encoded_header_buff
     name.set(entry->name);
     value.set(entry->value);
 
+    // FIXIT-E how bad is this?
     if (value.length() <= 0)
     {
         *infractions += INF_LOOKUP_EMPTY_VALUE;
-        events->create_event(EVENT_MISFORMATTED_HTTP2);
     }
 
     if (!write_header_part(name, (const uint8_t*)": ", 2, decoded_header_buffer,
@@ -249,26 +247,24 @@ bool Http2HpackDecoder::handle_dynamic_size_update(const uint8_t* encoded_header
     }
     bytes_consumed += encoded_bytes_consumed;
 
+    // Table size update shenanigans are dangerous because we cannot be sure how the target will
+    // interpret them.
     if (!table_size_update_allowed)
     {
         *infractions += INF_TABLE_SIZE_UPDATE_WITHIN_HEADER;
-        events->create_event(EVENT_MISFORMATTED_HTTP2);
-        return true;
+        return false;
     }
-    if (num_table_size_updates >= 2)
+    if (++num_table_size_updates > 2)
     {
         *infractions += INF_TOO_MANY_TABLE_SIZE_UPDATES;
-        events->create_event(EVENT_MISFORMATTED_HTTP2);
-        return true;
+        return false;
     }
 
     if (!decode_table.hpack_table_size_update(decoded_int))
     {
         *infractions += INF_INVALID_TABLE_SIZE_UPDATE;
-        events->create_event(EVENT_MISFORMATTED_HTTP2);
+        return false;
     }
-
-    num_table_size_updates++;
 
     return true;
 }
@@ -344,8 +340,8 @@ bool Http2HpackDecoder::decode_header_line(const uint8_t* encoded_header_buffer,
 
 // Entry point to decode an HPACK-encoded header block. This function returns true on successful
 // decode and false on an unrecoverable decode error. Note that alerts may still be generated for
-// recoverable errors while the function returns true. This function performs all decoding, but does
-// not output the start line or decoded headers - this function must be followed by calls to
+// recoverable errors while the function returns true. This function performs all decoding, but
+// does not output the start line or decoded headers - this function must be followed by calls to
 // generate_start_line() and get_decoded_headers() to generate and obtain these fields.
 bool Http2HpackDecoder::decode_headers(const uint8_t* encoded_headers,
     const uint32_t encoded_headers_length, uint8_t* decoded_headers,
@@ -357,11 +353,11 @@ bool Http2HpackDecoder::decode_headers(const uint8_t* encoded_headers,
     bool success = true;
     start_line = start_line_generator;
     decoded_headers_size = 0;
-    decode_error = false;
     is_trailers = trailers;
     pseudo_headers_allowed = !is_trailers;
 
-    // A maximum of two table size updates are allowed, and must be at the start of the header block
+    // A maximum of two table size updates are allowed, and must be at the start of the header
+    // block
     table_size_update_allowed = true;
     num_table_size_updates = 0;
 
@@ -382,15 +378,11 @@ bool Http2HpackDecoder::decode_headers(const uint8_t* encoded_headers,
             decoded_headers_size, MAX_OCTETS - decoded_headers_size, line_bytes_written);
         decoded_headers_size += line_bytes_written;
     }
-    else
-        decode_error = true;
+
     return success;
 }
 
-const Field* Http2HpackDecoder::get_decoded_headers(const uint8_t* const decoded_headers)
+Field Http2HpackDecoder::get_decoded_headers(const uint8_t* const decoded_headers)
 {
-    if (decode_error)
-        return new Field(STAT_NO_SOURCE);
-    else
-        return new Field(decoded_headers_size, decoded_headers, false);
+    return Field(decoded_headers_size, decoded_headers, false);
 }

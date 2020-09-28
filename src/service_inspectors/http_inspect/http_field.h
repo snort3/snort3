@@ -38,6 +38,7 @@ public:
     Field(int32_t length, const uint8_t* start, bool own_the_buffer_ = false);
     explicit Field(int32_t length) : len(length) { assert(length<=0); }
     Field() = default;
+    Field& operator=(const Field& rhs);
     ~Field() { if (own_the_buffer) delete[] strt; }
     int32_t length() const { return len; }
     const uint8_t* start() const { return strt; }
@@ -51,8 +52,6 @@ public:
 #endif
 
 private:
-    Field& operator=(const Field&) = delete;
-
     const uint8_t* strt = nullptr;
     int32_t len = HttpCommon::STAT_NOT_COMPUTE;
     bool own_the_buffer = false;

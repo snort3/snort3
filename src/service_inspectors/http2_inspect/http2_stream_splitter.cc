@@ -89,14 +89,14 @@ StreamSplitter::Status Http2StreamSplitter::scan(Packet* pkt, const uint8_t* dat
 #endif
 
     // General mechanism to abort using scan
-    if (session_data->frame_type[source_id] == FT__ABORT)
+    if (session_data->abort_flow[source_id])
         return HttpStreamSplitter::status_value(StreamSplitter::ABORT, true);
 
     const StreamSplitter::Status ret_val =
         implement_scan(session_data, data, length, flush_offset, source_id);
 
     if (ret_val == StreamSplitter::ABORT)
-        session_data->frame_type[source_id] = FT__ABORT;
+        session_data->abort_flow[source_id] = true;
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP2))
@@ -151,6 +151,8 @@ const StreamBuffer Http2StreamSplitter::reassemble(Flow* flow, unsigned total, u
     }
 #endif
 
+    assert(!session_data->abort_flow[source_id]);
+
     // FIXIT-P: scan uses this to discard bytes until StreamSplitter:DISCARD
     // is implemented
     if (session_data->payload_discard[source_id])
@@ -191,6 +193,8 @@ bool Http2StreamSplitter::finish(Flow* flow)
     Http2FlowData* session_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
     if (!session_data)
         return false;
+    if (session_data->abort_flow[source_id])
+        return false;
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2))
@@ -214,7 +218,7 @@ bool Http2StreamSplitter::finish(Flow* flow)
     for (const Http2FlowData::StreamInfo& stream_info : session_data->streams)
     {
         if ((stream_info.id == 0)                                                 ||
-            (stream_info.stream->get_state(source_id) == STREAM_COMPLETE)         ||
+            (stream_info.stream->get_state(source_id) >= STREAM_COMPLETE)         ||
             (stream_info.stream->get_hi_flow_data() == nullptr)                   ||
             (stream_info.stream->get_hi_flow_data()->get_type_expected(source_id)
                 != HttpEnums::SEC_BODY_H2))
@@ -251,7 +255,8 @@ bool Http2StreamSplitter::init_partial_flush(Flow* flow)
 
     Http2FlowData* session_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
     assert(session_data != nullptr);
-    UNUSED(session_data); // just for a little while
+    if (session_data->abort_flow[source_id])
+        return false;
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2) &&

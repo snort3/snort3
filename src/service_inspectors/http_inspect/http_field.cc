@@ -39,6 +39,16 @@ Field::Field(int32_t length, const uint8_t* start, bool own_the_buffer_) :
     assert(!((start != nullptr) && (length < 0)));
 }
 
+Field& Field::operator=(const Field& rhs)
+{
+    assert(len == STAT_NOT_COMPUTE);
+    assert(strt == nullptr);
+    strt = rhs.strt;
+    len = rhs.len;
+    own_the_buffer = false;    // buffer must not have two owners
+    return *this;
+}
+
 void Field::set(int32_t length, const uint8_t* start, bool own_the_buffer_)
 {
     assert(len == STAT_NOT_COMPUTE);

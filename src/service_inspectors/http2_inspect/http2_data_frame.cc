@@ -35,18 +35,27 @@ using namespace HttpCommon;
 using namespace snort;
 using namespace Http2Enums;
 
-Http2DataFrame::Http2DataFrame(const uint8_t* header_buffer, const int32_t header_len,
-    const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* session_data_,
+Http2DataFrame::Http2DataFrame(const uint8_t* header_buffer, const uint32_t header_len,
+    const uint8_t* data_buffer_, const uint32_t data_length_, Http2FlowData* session_data_,
     HttpCommon::SourceId source_id_, Http2Stream* stream_) :
     Http2Frame(header_buffer, header_len, nullptr, 0, session_data_, source_id_, stream_),
-    data_length(data_len)
+    data_length(data_length_),
+    data_buffer(data_buffer_)
+{}
+
+bool Http2DataFrame::valid_sequence(Http2Enums::StreamState state)
 {
-    if ((data_len != 0) || !session_data->flushing_data[source_id])
+    return (state == Http2Enums::STREAM_EXPECT_BODY) || (state == Http2Enums::STREAM_BODY);
+}
+
+void Http2DataFrame::analyze_http1()
+{
+    if ((data_length != 0) || !session_data->flushing_data[source_id])
     {
         Http2DummyPacket dummy_pkt;
         dummy_pkt.flow = session_data->flow;
         dummy_pkt.packet_flags = (source_id == SRC_CLIENT) ? PKT_FROM_CLIENT : PKT_FROM_SERVER;
-        dummy_pkt.dsize = data_len;
+        dummy_pkt.dsize = data_length;
         dummy_pkt.data = data_buffer;
         dummy_pkt.xtradata_mask = 0;
         session_data->hi->eval(&dummy_pkt);
@@ -56,8 +65,8 @@ Http2DataFrame::Http2DataFrame(const uint8_t* header_buffer, const int32_t heade
     else
     {
         detection_required = true;
-        HttpFlowData* const http_flow = (HttpFlowData*)session_data_->get_hi_flow_data();
-        http_flow->reset_partial_flush(source_id_);
+        HttpFlowData* const http_flow = (HttpFlowData*)session_data->get_hi_flow_data();
+        http_flow->reset_partial_flush(source_id);
     }
 }
 

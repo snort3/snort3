@@ -74,14 +74,13 @@ public:
 
     bool finalize_start_line();
     const Field* get_start_line();
-    const Field* get_decoded_headers(const uint8_t* const decoded_headers);
+    Field get_decoded_headers(const uint8_t* const decoded_headers);
     HpackIndexTable* get_decode_table() { return &decode_table; }
 
 private:
     Http2StartLine* start_line;
     bool pseudo_headers_allowed;
     uint32_t decoded_headers_size;
-    bool decode_error;
     Http2EventGen* const events;
     Http2Infractions* const infractions;
 

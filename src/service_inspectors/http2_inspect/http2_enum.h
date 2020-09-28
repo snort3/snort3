@@ -33,11 +33,12 @@ static const uint32_t HTTP2_GID = 121;
 
 // Frame type codes (fourth octet of frame header)
 enum FrameType : uint8_t { FT_DATA=0, FT_HEADERS=1, FT_PRIORITY=2, FT_RST_STREAM=3, FT_SETTINGS=4,
-    FT_PUSH_PROMISE=5, FT_PING=6, FT_GOAWAY=7, FT_WINDOW_UPDATE=8, FT_CONTINUATION=9, FT__ABORT=254,
+    FT_PUSH_PROMISE=5, FT_PING=6, FT_GOAWAY=7, FT_WINDOW_UPDATE=8, FT_CONTINUATION=9,
     FT__NONE=255 };
 
-enum StreamState { STREAM_EXPECT_HEADERS, STREAM_EXPECT_BODY, STREAM_BODY, STREAM_IMPLIED_COMPLETE,
-    STREAM_COMPLETE, STREAM_ERROR };
+// Ordered from initial state to terminal state. Do not rearrange without careful consideration.
+enum StreamState { STREAM_EXPECT_HEADERS, STREAM_EXPECT_BODY, STREAM_BODY, STREAM_COMPLETE,
+    STREAM_ERROR };
 
 // Message buffers available to clients
 // This enum must remain synchronized with Http2Api::classic_buffer_names[]
@@ -71,6 +72,7 @@ enum EventSid
     EVENT_PSEUDO_HEADER_AFTER_REGULAR_HEADER = 17,
     EVENT_PSEUDO_HEADER_IN_TRAILERS = 18,
     EVENT_INVALID_PSEUDO_HEADER = 19,
+    EVENT_TRAILERS_NOT_END = 20,
     EVENT__MAX_VALUE
 };
 
@@ -106,8 +108,9 @@ enum Infraction
     INF_INVALID_STARTLINE = 25,
     INF_INVALID_HEADER = 26,
     INF_PADDING_LEN = 27,
-    INF_TRAILERS_AFTER_END_STREAM = 28,
+    INF_UNUSED_2 = 28,
     INF_PSEUDO_HEADER_IN_TRAILERS = 29,
+    INF_TRAILERS_NOT_END = 30,
     INF__MAX_VALUE
 };
 

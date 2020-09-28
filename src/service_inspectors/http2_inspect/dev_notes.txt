@@ -22,7 +22,7 @@ frame_data buffer. The frame_data buffer is passed to the function decode_header
 main loop driving HPACK decoding. Each decoded header line is progressively written to a second
 decoded_headers buffer that will ultimately be sent to NHI.
 
-The main loop in decode_headers() finds the cut point for a single header line. The line is is
+The main loop in decode_headers() finds the cut point for a single header line. The line is
 passed to decode_header_line(), which parses the line and calls the appropriate decoding function
 based on the header representation type. If the type is indexed, the full header line is looked up
 in the table and copied to the decoded header buffer. The index may belong to either the static or
@@ -32,6 +32,16 @@ to be indexed, the header name may be indexed or a string literal, while the val
 literal. The resulting header line is then added to the dynamic table. The third representation type
 is literal not to be indexed, which is the same as literal to be indexed, except the header line is
 not added to the dynamic table.
+
+H2I has two levels of failure for flow processing. Fatal errors include failures in frame splitting
+and errors in header decoding that compromise the HPACK dictionary. A fatal error will trigger an
+immediate EVENT_MISFORMATTED_HTTP2 and will cause scan() to return ABORT the next time it is called
+in the same direction.
+
+Stream errors affect HTTP/1 processing within a stream. They include errors in frame sequence
+within a stream, errors that cause the HI stream splitter to abort, and errors that cause HI to be
+unable to process a frame. The individual stream will transition to STREAM_ERROR state and HI
+processing of that stream in that direction will end.
 
 H2I supports the NHI test tool. See ../http_inspect/dev_notes.txt for usage instructions.
 

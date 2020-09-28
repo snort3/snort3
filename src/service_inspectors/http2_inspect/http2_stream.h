@@ -37,8 +37,8 @@ public:
     Http2Stream(uint32_t stream_id, Http2FlowData* session_data_);
     ~Http2Stream();
     uint32_t get_stream_id() { return stream_id; }
-    void eval_frame(const uint8_t* header_buffer, int32_t header_len, const uint8_t* data_buffer,
-        int32_t data_len, HttpCommon::SourceId source_id);
+    void eval_frame(const uint8_t* header_buffer, uint32_t header_len, const uint8_t* data_buffer,
+        uint32_t data_len, HttpCommon::SourceId source_id);
     void clear_frame();
     const Field& get_buf(unsigned id);
     HttpFlowData* get_hi_flow_data() const { return hi_flow_data; }
@@ -78,7 +78,6 @@ public:
 private:
     const uint32_t stream_id;
     Http2FlowData* const session_data;
-    bool valid_frame_order[2] = { true, true };
     Http2Frame* current_frame = nullptr;
     HttpFlowData* hi_flow_data = nullptr;
     HttpMsgSection* hi_msg_section = nullptr;

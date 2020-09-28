@@ -40,8 +40,8 @@ class Http2Frame
 {
 public:
     virtual ~Http2Frame() { }
-    static Http2Frame* new_frame(const uint8_t* header_buffer, const int32_t header_len,
-        const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* session_data,
+    static Http2Frame* new_frame(const uint8_t* header_buffer, const uint32_t header_len,
+        const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* session_data,
         HttpCommon::SourceId source_id, Http2Stream* stream);
     virtual bool valid_sequence(Http2Enums::StreamState state)
         { return state != Http2Enums::STREAM_ERROR; }
@@ -57,8 +57,8 @@ public:
 #endif
 
 protected:
-    Http2Frame(const uint8_t* header_buffer, const int32_t header_len,
-        const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* session_data,
+    Http2Frame(const uint8_t* header_buffer, const uint32_t header_len,
+        const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* session_data,
         HttpCommon::SourceId source_id, Http2Stream* stream);
     uint8_t get_flags();
     uint32_t get_stream_id();

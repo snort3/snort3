@@ -123,8 +123,7 @@ void Http2Inspect::eval(Packet* p)
         return;
 
     // FIXIT-E Workaround for unexpected eval() calls
-    // Avoid eval if scan/reassemble aborts
-    if (session_data->frame_type[source_id] == FT__ABORT or
+    if (session_data->abort_flow[source_id] or
         ((session_data->frame_header[source_id] == nullptr ) and
         (session_data->frame_data[source_id] == nullptr)))
     {
@@ -183,6 +182,7 @@ void Http2Inspect::clear(Packet* p)
     session_data->frame_in_detection = false;
 
     const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;
+
     Http2Stream* stream = session_data->get_current_stream(source_id);
     stream->clear_frame();
     session_data->stream_in_hi = NO_STREAM_ID;

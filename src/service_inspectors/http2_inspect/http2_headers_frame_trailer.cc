@@ -39,22 +39,34 @@ using namespace snort;
 using namespace HttpCommon;
 using namespace Http2Enums;
 
-Http2HeadersFrameTrailer::Http2HeadersFrameTrailer(const uint8_t* header_buffer, const int32_t header_len,
-    const uint8_t* data_buffer, const int32_t data_len, Http2FlowData* session_data_,
-    HttpCommon::SourceId source_id_, Http2Stream* stream_) :
+Http2HeadersFrameTrailer::Http2HeadersFrameTrailer(const uint8_t* header_buffer,
+    const uint32_t header_len, const uint8_t* data_buffer, const uint32_t data_len,
+    Http2FlowData* session_data_, HttpCommon::SourceId source_id_, Http2Stream* stream_) :
     Http2HeadersFrame(header_buffer, header_len, data_buffer, data_len, session_data_, source_id_,
         stream_)
 {
     if (!process_frame)
         return;
 
+    if (!(get_flags() & END_STREAM))
+    {
+        // Trailers without END_STREAM flag set.
+        *session_data->infractions[source_id] += INF_TRAILERS_NOT_END;
+        session_data->events[source_id]->create_event(EVENT_TRAILERS_NOT_END);
+    }
+
     // Decode trailers
     if (!hpack_decoder->decode_headers((data.start() + hpack_headers_offset), data.length() -
         hpack_headers_offset, decoded_headers, nullptr, true))
     {
-        session_data->frame_type[source_id] = FT__ABORT;
-        error_during_decode = true;
+        session_data->abort_flow[source_id] = true;
+        session_data->events[source_id]->create_event(EVENT_MISFORMATTED_HTTP2);
     }
+}
+
+bool Http2HeadersFrameTrailer::valid_sequence(Http2Enums::StreamState state)
+{
+    return (state == Http2Enums::STREAM_EXPECT_BODY) || (state == Http2Enums::STREAM_BODY);
 }
 
 void Http2HeadersFrameTrailer::analyze_http1()
@@ -90,13 +102,28 @@ void Http2HeadersFrameTrailer::analyze_http1()
         assert (http_flow->get_type_expected(source_id) == HttpEnums::SEC_TRAILER);
         if (http_flow->get_type_expected(source_id) == HttpEnums::SEC_ABORT)
         {
-            hi_abort = true;
+            stream->set_state(source_id, STREAM_ERROR);
             return;
         }
         session_data->hi->clear(&dummy_pkt);
     }
 
     process_decoded_headers(http_flow);
+}
+
+void Http2HeadersFrameTrailer::update_stream_state()
+{
+    switch (stream->get_state(source_id))
+    {
+        case STREAM_BODY:
+            session_data->concurrent_files -= 1;
+            // fallthrough
+        case STREAM_EXPECT_BODY:
+            stream->set_state(source_id, STREAM_COMPLETE);
+            break;
+        default:
+            break;
+    }
 }
 
 #ifdef REG_TEST

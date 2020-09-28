@@ -363,9 +363,8 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
         // This is the first reassemble() for this frame and we need to allocate some buffers
         session_data->frame_header_size[source_id] = FRAME_HEADER_LENGTH *
             session_data->num_frame_headers[source_id];
-        if (session_data->frame_header_size[source_id] > 0)
-            session_data->frame_header[source_id] =
-                new uint8_t[session_data->frame_header_size[source_id]];
+        session_data->frame_header[source_id] =
+            new uint8_t[session_data->frame_header_size[source_id]];
 
         session_data->frame_header_offset[source_id] = 0;
     }
@@ -374,7 +373,7 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
     {
         if (session_data->flushing_data[source_id])
         {
-            assert(total  > (FRAME_HEADER_LENGTH - 1));
+            assert(total > (FRAME_HEADER_LENGTH - 1));
             const uint32_t total_data = total - (FRAME_HEADER_LENGTH - 1);
             if (offset+len > total_data)
             {
@@ -392,10 +391,11 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
 
         if (len != 0)
         {
-            Http2DataCutter* data_cutter = stream->get_data_cutter(source_id);
+            Http2DataCutter* const data_cutter = stream->get_data_cutter(source_id);
             StreamBuffer http_frame_buf = data_cutter->reassemble(data, len);
             if (http_frame_buf.data)
             {
+                // FIXIT-L this use of const_cast is worrisome
                 session_data->frame_data[source_id] = const_cast<uint8_t*>(http_frame_buf.data);
                 session_data->frame_data_size[source_id] = http_frame_buf.length;
                 if (!session_data->flushing_data[source_id] && stream->is_partial_buf_pending(

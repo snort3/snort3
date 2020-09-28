@@ -30,7 +30,7 @@ class Http2RequestLine : public Http2StartLine
 {
 public:
     void process_pseudo_header(const Field& name, const Field& value) override;
-    bool generate_start_line(const Field*& start_line) override;
+    bool generate_start_line(Field& start_line) override;
 
     friend Http2StartLine* Http2StartLine::new_start_line_generator(HttpCommon::SourceId source_id,
         Http2EventGen* const events, Http2Infractions* const infractions);

@@ -50,6 +50,7 @@ const RuleMap Http2Module::http2_events[] =
     { EVENT_PSEUDO_HEADER_AFTER_REGULAR_HEADER, "HTTP/2 pseudo-header after regular header" },
     { EVENT_PSEUDO_HEADER_IN_TRAILERS, "HTTP/2 pseudo-header in trailers" },
     { EVENT_INVALID_PSEUDO_HEADER, "invalid HTTP/2 pseudo-header" },
+    { EVENT_TRAILERS_NOT_END, "HTTP/2 trailers without END_STREAM bit" },
     { 0, nullptr }
 };
 

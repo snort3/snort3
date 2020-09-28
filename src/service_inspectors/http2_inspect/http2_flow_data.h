@@ -160,6 +160,7 @@ protected:
 
     // Used by scan, reassemble and eval to communicate
     uint8_t frame_type[2] = { Http2Enums::FT__NONE, Http2Enums::FT__NONE };
+    bool abort_flow[2] = { false, false };
 
     // Internal to reassemble()
     uint32_t frame_header_offset[2] = { 0, 0 };
