@@ -174,6 +174,7 @@ private:
     HttpEnums::MethodId method_id = HttpEnums::METH__NOT_PRESENT;
 
     bool cutover_on_clear = false;
+    bool ssl_search_abandoned = false;
 
     // *** Transaction management including pipelining
     static const int MAX_PIPELINE = 100;  // requests seen - responses seen <= MAX_PIPELINE

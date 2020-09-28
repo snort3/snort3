@@ -303,6 +303,16 @@ void HttpMsgRequest::update_flow()
     session_data->method_id = method_id;
 }
 
+void HttpMsgRequest::publish()
+{
+    if (!session_data->ssl_search_abandoned && trans_num > 1 &&
+        !flow->flags.data_decrypted && get_method_id() != METH_CONNECT)
+    {
+        session_data->ssl_search_abandoned = true;
+        DataBus::publish(SSL_SEARCH_ABANDONED, DetectionEngine::get_current_packet());
+    }
+}
+
 #ifdef REG_TEST
 
 void HttpMsgRequest::print_section(FILE* output)

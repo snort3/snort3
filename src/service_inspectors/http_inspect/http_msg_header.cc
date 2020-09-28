@@ -191,7 +191,8 @@ void HttpMsgHeader::update_flow()
             }
             session_data->cutover_on_clear = true;
             HttpModule::increment_peg_counts(PEG_CUTOVERS);
-
+            if (session_data->ssl_search_abandoned)
+                HttpModule::increment_peg_counts(PEG_SSL_SEARCH_ABND_EARLY);
 #ifdef REG_TEST
             if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
             {

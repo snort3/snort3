@@ -61,6 +61,9 @@ public:
     bool can_carve_files() const override
     { return true; }
 
+    bool can_start_tls() const override
+    { return true; }
+
     static HttpEnums::InspectSection get_latest_is(const snort::Packet* p);
     static HttpCommon::SourceId get_latest_src(const snort::Packet* p);
     void disable_detection(snort::Packet* p);

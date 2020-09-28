@@ -428,6 +428,7 @@ const PegInfo HttpModule::peg_names[PEG_COUNT_MAX+1] =
     { CountType::SUM, "excess_parameters", "repeat parameters exceeding max" },
     { CountType::SUM, "parameters", "HTTP parameters inspected" },
     { CountType::SUM, "connect_tunnel_cutovers", "CONNECT tunnel flow cutovers to wizard" },
+    { CountType::SUM, "ssl_srch_abandoned_early", "total SSL search abandoned too soon" },
     { CountType::END, nullptr, nullptr }
 };
 
