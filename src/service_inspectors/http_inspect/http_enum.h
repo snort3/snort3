@@ -32,6 +32,9 @@ static const uint32_t HTTP_GID = 119;
 static const int GZIP_WINDOW_BITS = 31;
 static const int DEFLATE_WINDOW_BITS = 15;
 static const int MAX_FIELD_NAME_LENGTH = 100;
+// Plan to support max 8 xff headers
+static const uint8_t MAX_XFF_HEADERS = 8;
+static const uint8_t MAX_CUSTOM_HEADERS = MAX_XFF_HEADERS;
 
 // This can grow into a bitmap for the get_buf() form parameter
 static const uint64_t FORM_REQUEST = 0x1;

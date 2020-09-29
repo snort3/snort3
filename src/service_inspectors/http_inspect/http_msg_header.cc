@@ -70,20 +70,22 @@ const Field& HttpMsgHeader::get_true_ip()
     if (true_ip.length() != STAT_NOT_COMPUTE)
         return true_ip;
 
-    const Field* header_to_use;
-    const Field& xff = get_header_value_norm(HEAD_X_FORWARDED_FOR);
-    if (xff.length() > 0)
-        header_to_use = &xff;
-    else
+    const Field* header_to_use = nullptr;
+
+    for (int idx = 0; params->xff_headers[idx].code; idx++)
     {
-        const Field& tcip = get_header_value_norm(HEAD_TRUE_CLIENT_IP);
-        if (tcip.length() > 0)
-            header_to_use = &tcip;
-        else
+        const Field& xff = get_header_value_norm((HeaderId)params->xff_headers[idx].code);
+        if (xff.length() > 0)
         {
-            true_ip.set(STAT_NOT_PRESENT);
-            return true_ip;
+            header_to_use = &xff;
+            break;
         }
+    }
+
+    if (!header_to_use)
+    {
+        true_ip.set(STAT_NOT_PRESENT);
+        return true_ip;
     }
 
     // This is potentially a comma-separated list of IP addresses. Take the last one in the list.

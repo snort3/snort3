@@ -45,6 +45,9 @@ void ParseWarning(WarningGroup, const char*, ...) {}
 void ParseError(const char*, ...) {}
 
 void Value::get_bits(std::bitset<256ul>&) const {}
+void Value::set_first_token() {}
+bool Value::get_next_token(std::string& ) { return false; }
+
 int DetectionEngine::queue_event(unsigned int, unsigned int, Actions::Type) { return 0; }
 LiteralSearch::Handle* LiteralSearch::setup() { return nullptr; }
 void LiteralSearch::cleanup(LiteralSearch::Handle*) {}
@@ -55,6 +58,7 @@ LiteralSearch* LiteralSearch::instantiate(LiteralSearch::Handle*, const uint8_t*
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
 
+int32_t str_to_code(const char*, const StrCode []) { return 0; }
 int32_t str_to_code(const uint8_t*, const int32_t, const StrCode []) { return 0; }
 int32_t substr_to_code(const uint8_t*, const int32_t, const StrCode []) { return 0; }
 long HttpTestManager::print_amount {};

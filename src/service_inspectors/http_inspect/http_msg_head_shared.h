@@ -74,7 +74,7 @@ protected:
 #endif
 
 private:
-    static const int MAX = HttpEnums::HEAD__MAX_VALUE;
+    static const int MAX = HttpEnums::HEAD__MAX_VALUE + HttpEnums::MAX_CUSTOM_HEADERS;
 
     // Header normalization strategies. There should be one defined for every different way we can
     // process a header field value.

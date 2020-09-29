@@ -28,6 +28,7 @@
 #include "profiler/profiler.h"
 
 #include "http_enum.h"
+#include "http_str_to_code.h"
 
 #define HTTP_NAME "http_inspect"
 #define HTTP_HELP "HTTP inspector"
@@ -35,6 +36,7 @@
 struct HttpParaList
 {
 public:
+    ~HttpParaList();
     int64_t request_depth = -1;
     int64_t response_depth = -1;
 
@@ -81,6 +83,19 @@ public:
         static const std::bitset<256> default_unreserved_char;
     };
     UriParam uri_param;
+
+    // This will store list of custom xff headers. These are stored in the
+    // order of the header preference. The default header preference only
+    // consists of known XFF Headers in the below order
+    // 1. X-Forwarded-For
+    // 2. True-Client-IP
+    // Rest of the custom XFF Headers would be added to this list and will be
+    // positioned based on the preference of the headers.
+    // As of now, plan is to support a maximum of 8 xff type headers.
+    StrCode xff_headers[HttpEnums::MAX_XFF_HEADERS + 1] = {};
+    // The below header_list contains the list of known static header along with
+    // any custom headers mapped with the their respective Header IDs.
+    StrCode header_list[HttpEnums::HEAD__MAX_VALUE + HttpEnums::MAX_CUSTOM_HEADERS + 1] = {};
 
 #ifdef REG_TEST
     int64_t print_amount = 1200;

@@ -82,6 +82,24 @@ static std::string GetBadChars(const ByteBitSet& bitset)
     return str;
 }
 
+
+static std::string GetXFFHeaders(const StrCode *header_list)
+{
+    std::string hdr_list;
+    for (int idx = 0; header_list[idx].code; idx++)
+    {
+        hdr_list += header_list[idx].name;
+        hdr_list += " ";
+    }
+
+    // Remove the trailing whitespace, if any
+    if (hdr_list.length())
+    {
+        hdr_list.pop_back();
+    }
+    return hdr_list;
+}
+
 HttpInspect::HttpInspect(const HttpParaList* params_) :
     params(params_),
     xtra_trueip_id(Stream::reg_xtra_data_cb(get_xtra_trueip)),
@@ -122,6 +140,7 @@ void HttpInspect::show(const SnortConfig*) const
 
     auto unreserved_chars = GetUnreservedChars(params->uri_param.unreserved_char);
     auto bad_chars = GetBadChars(params->uri_param.bad_characters);
+    auto xff_headers = GetXFFHeaders(params->xff_headers);
 
     ConfigLogger::log_limit("request_depth", params->request_depth, -1LL);
     ConfigLogger::log_limit("response_depth", params->response_depth, -1LL);
@@ -148,6 +167,7 @@ void HttpInspect::show(const SnortConfig*) const
     ConfigLogger::log_flag("backslash_to_slash", params->uri_param.backslash_to_slash);
     ConfigLogger::log_flag("plus_to_space", params->uri_param.plus_to_space);
     ConfigLogger::log_flag("simplify_path", params->uri_param.simplify_path);
+    ConfigLogger::log_value("xff_headers", xff_headers.c_str());
 }
 
 InspectSection HttpInspect::get_latest_is(const Packet* p)

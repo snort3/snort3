@@ -239,7 +239,7 @@ void HttpMsgHeadShared::derive_header_name_id(int index)
             create_event(EVENT_HEAD_NAME_WHITESPACE);
         }
     }
-    header_name_id[index] = (HeaderId)str_to_code(lower_name, lower_length, header_list);
+    header_name_id[index] = (HeaderId)str_to_code(lower_name, lower_length, params->header_list);
     delete[] lower_name;
 }
 

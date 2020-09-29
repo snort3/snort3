@@ -27,6 +27,11 @@
 
 #include "http_common.h"
 
+int32_t str_to_code(const char* text, const StrCode table[])
+{
+    return str_to_code((const uint8_t*)text, strlen(text), table);
+}
+
 // Need to replace this simple algorithm for better performance FIXIT-P
 int32_t str_to_code(const uint8_t* text, const int32_t text_len, const StrCode table[])
 {

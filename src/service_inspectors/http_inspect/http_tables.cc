@@ -216,7 +216,7 @@ const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_CONTENT_LENGTH
 const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_CHARSET
     { EVENT__NONE, INF__NONE, false, norm_remove_quotes_lws, norm_to_lower, nullptr };
 
-const HeaderNormalizer* const HttpMsgHeadShared::header_norms[HEAD__MAX_VALUE] = {
+const HeaderNormalizer* const HttpMsgHeadShared::header_norms[HEAD__MAX_VALUE + MAX_CUSTOM_HEADERS + 1] = {
     &NORMALIZER_BASIC,      // 0
     &NORMALIZER_BASIC,      // HEAD__OTHER
     &NORMALIZER_TOKEN_LIST, // HEAD_CACHE_CONTROL
@@ -275,6 +275,15 @@ const HeaderNormalizer* const HttpMsgHeadShared::header_norms[HEAD__MAX_VALUE] =
     &NORMALIZER_BASIC,      // HEAD_MIME_VERSION
     &NORMALIZER_BASIC,      // HEAD_PROXY_AGENT
     &NORMALIZER_BASIC,      // HEAD_CONTENT_DISPOSITION
+    &NORMALIZER_BASIC,      // HEAD__MAX_VALUE
+    &NORMALIZER_BASIC,      // HEAD_CUSTOM_XFF_HEADER
+    &NORMALIZER_BASIC,      // HEAD_CUSTOM_XFF_HEADER
+    &NORMALIZER_BASIC,      // HEAD_CUSTOM_XFF_HEADER
+    &NORMALIZER_BASIC,      // HEAD_CUSTOM_XFF_HEADER
+    &NORMALIZER_BASIC,      // HEAD_CUSTOM_XFF_HEADER
+    &NORMALIZER_BASIC,      // HEAD_CUSTOM_XFF_HEADER
+    &NORMALIZER_BASIC,      // HEAD_CUSTOM_XFF_HEADER
+    &NORMALIZER_BASIC,      // HEAD_CUSTOM_XFF_HEADER
 };
 
 const RuleMap HttpModule::http_events[] =

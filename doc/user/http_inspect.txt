@@ -163,6 +163,20 @@ the unescape, decodeURI, or decodeURIComponent are %XX, %uXXXX, XX and
 uXXXXi. http_inspect also replaces consecutive whitespaces with a single
 space and normalizes the plus by concatenating the strings.
 
+===== xff_headers
+
+This configuration supports defining custom x-forwarded-for type headers. In a
+multi-vendor world, it is quite possible that the header name carrying the
+original client IP could be vendor-specific. This is due to the absence
+of standardization which would otherwise standardize the header name.
+In such a scenario, this configuration provides a way with which such headers
+can be introduced to HI. The default value of this configuration
+is "x-forwarded-for true-client-ip". The default definition introduces the
+two commonly known headers and is preferred in the same order by the
+inspector as they are defined, e.g "x-forwarded-for" will be preferred than
+"true-client-ip" if both headers are present in the stream. The header names
+should be delimited by a space.
+
 ===== URI processing
 
 Normalization and inspection of the URI in the HTTP request message is a
@@ -454,8 +468,9 @@ to http_header when no specific header is specified.
 
 This provides the original IP address of the client sending the request as
 it was stored by a proxy in the request message headers. Specifically it
-is the last IP address listed in the X-Forwarded-For or True-Client-IP
-header. If both headers are present the former is used.
+is the last IP address listed in the X-Forwarded-For, True-Client-IP or
+any other custom x-forwarded-for type header. If multiple headers are present the
+preference defined in xff_headers configuration is considered.
 
 ===== http_client_body
 

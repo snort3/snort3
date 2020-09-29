@@ -29,6 +29,7 @@
 #include "http_enum.h"
 #include "http_js_norm.h"
 #include "http_uri_norm.h"
+#include "http_msg_head_shared.h"
 
 using namespace snort;
 using namespace HttpEnums;
@@ -139,6 +140,9 @@ const Parameter HttpModule::http_params[] =
     { "simplify_path", Parameter::PT_BOOL, nullptr, "true",
       "reduce URI directory path to simplest form" },
 
+    { "xff_headers", Parameter::PT_STRING, nullptr, "x-forwarded-for true-client-ip",
+      "specifies the xff type headers to parse and consider in the same order "
+      "of preference as defined" },
 #ifdef REG_TEST
     { "test_input", Parameter::PT_BOOL, nullptr, "false",
       "read HTTP messages from text file" },
@@ -282,6 +286,42 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
         params->uri_param.uri_char[(uint8_t)'/'] = val.get_bool() ? CHAR_PATH : CHAR_NORMAL;
         params->uri_param.uri_char[(uint8_t)'.'] = val.get_bool() ? CHAR_PATH : CHAR_NORMAL;
     }
+    else if (val.is("xff_headers"))
+    {
+        std::string header;
+        int custom_id_idx = 1;
+        int hdr_idx;
+        StrCode end_header = {0, nullptr};
+
+        // Delete the default params if any
+        for (int idx = 0; params->xff_headers[idx].code; idx++)
+        {
+            params->xff_headers[idx].code = 0;
+            delete[] params->xff_headers[idx].name;
+        }
+
+        // The configured text should be converted to lower case as the header
+        // text comparison is lower case sensitive
+        val.lower();
+
+        // Tokenize the entered config. Every space separated value is a custom xff header and is
+        // preferred in the order in which it is configured
+        val.set_first_token();
+        for (hdr_idx = 0; val.get_next_token(header) && (hdr_idx < MAX_XFF_HEADERS); hdr_idx++)
+        {
+            int hdr_id;
+            hdr_id = str_to_code(header.c_str(), HttpMsgHeadShared::header_list);
+            hdr_id = (hdr_id != HttpCommon::STAT_OTHER) ? hdr_id : (HEAD__MAX_VALUE + custom_id_idx++);
+
+            // Copy the custom header params to the params list. The custom
+            // headers from this list would be appended to the instance specific
+            // header_list
+            params->xff_headers[hdr_idx].code = hdr_id;
+            params->xff_headers[hdr_idx].name = new char[header.length() + 1];
+            strcpy(const_cast<char*>(params->xff_headers[hdr_idx].name), header.c_str());
+        }
+        params->xff_headers[hdr_idx] = end_header;
+    }
 #ifdef REG_TEST
     else if (val.is("test_input"))
     {
@@ -315,6 +355,31 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     return true;
 }
 
+static void prepare_http_header_list(HttpParaList* params)
+{
+    int32_t hdr_idx;
+    StrCode end_header = {0, nullptr};
+
+    // Copy the global header_list
+    for (hdr_idx = 0; HttpMsgHeadShared::header_list[hdr_idx].code ; hdr_idx++)
+    {
+        params->header_list[hdr_idx] = HttpMsgHeadShared::header_list[hdr_idx];
+    }
+
+    // Copy the custom xff headers to the header list except the known headers
+    for (int32_t idx = 0; params->xff_headers[idx].code; idx++)
+    {
+        int32_t code = str_to_code(params->xff_headers[idx].name, HttpMsgHeadShared::header_list);
+        if (code == HttpCommon::STAT_OTHER)
+        {
+            params->header_list[hdr_idx++] = params->xff_headers[idx];
+        }
+    }
+
+    // A dummy header object to mark the end of the list
+    params->header_list[hdr_idx] = end_header;
+}
+
 bool HttpModule::end(const char*, int, SnortConfig*)
 {
     if (!params->uri_param.utf8 && params->uri_param.utf8_bare_byte)
@@ -343,7 +408,18 @@ bool HttpModule::end(const char*, int, SnortConfig*)
         params->js_norm_param.js_norm =
             new HttpJsNorm(params->js_norm_param.max_javascript_whitespaces, params->uri_param);
     }
+
+    prepare_http_header_list(params);
+
     return true;
+}
+
+HttpParaList::~HttpParaList()
+{
+    for (int idx = 0; xff_headers[idx].code; idx++)
+    {
+        delete[] xff_headers[idx].name;
+    }
 }
 
 HttpParaList::JsNormParam::~JsNormParam()
