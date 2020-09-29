@@ -43,7 +43,7 @@ Http2Frame::Http2Frame(const uint8_t* header_buffer, const uint32_t header_len,
 {
     header.set(header_len, header_buffer, true);
     // FIXIT-E want to refactor so that zero-length frames are not a special case
-    if (data_len > 0)
+    if (data_buffer != nullptr)
         data.set(data_len, data_buffer, true);
 }
 

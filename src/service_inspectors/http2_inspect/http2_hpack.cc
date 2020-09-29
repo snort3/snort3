@@ -198,12 +198,6 @@ bool Http2HpackDecoder::decode_indexed_header(const uint8_t* encoded_header_buff
     name.set(entry->name);
     value.set(entry->value);
 
-    // FIXIT-E how bad is this?
-    if (value.length() <= 0)
-    {
-        *infractions += INF_LOOKUP_EMPTY_VALUE;
-    }
-
     if (!write_header_part(name, (const uint8_t*)": ", 2, decoded_header_buffer,
         decoded_header_length, partial_bytes_written))
         return false;

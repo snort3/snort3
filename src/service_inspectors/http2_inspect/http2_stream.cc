@@ -77,6 +77,14 @@ void Http2Stream::clear_frame()
     current_frame->clear();
     delete current_frame;
     current_frame = nullptr;
+
+    if ((state[SRC_CLIENT] >= STREAM_COMPLETE) && (state[SRC_SERVER] >= STREAM_COMPLETE) &&
+        (hi_flow_data != nullptr))
+    {
+        delete hi_flow_data;
+        hi_flow_data = nullptr;
+        session_data->deallocate_hi_memory();
+    }
 }
 
 void Http2Stream::set_state(HttpCommon::SourceId source_id, StreamState new_state)
