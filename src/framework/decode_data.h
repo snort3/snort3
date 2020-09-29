@@ -97,16 +97,17 @@ enum DecodeFlags : std::uint16_t
     DECODE_PKT_TRUST =      0x0020,  // trust this packet
     DECODE_FRAG =           0x0040,  // ip - fragmented packet
     DECODE_MF =             0x0080,  // ip - more fragments
+    DECODE_DF =             0x0100,  // ip - don't fragment
 
     // using decode flags in lieu of creating user layer for now
-    DECODE_C2S =            0x0100,  // user - client to server
-    DECODE_SOF =            0x0200,  // user - start of flow
-    DECODE_EOF =            0x0400,  // user - end of flow
-    DECODE_GTP =            0x0800,
+    DECODE_C2S =            0x0200,  // user - client to server
+    DECODE_SOF =            0x0400,  // user - start of flow
+    DECODE_EOF =            0x0800,  // user - end of flow
+    DECODE_GTP =            0x1000,
 
-    DECODE_TCP_MSS =        0x1000,
-    DECODE_TCP_TS =         0x2000,
-    DECODE_TCP_WS =         0x4000,
+    DECODE_TCP_MSS =        0x2000,
+    DECODE_TCP_TS =         0x4000,
+    DECODE_TCP_WS =         0x8000,
 };
 
 struct DecodeData
@@ -143,7 +144,7 @@ struct DecodeData
     { return type; }
 
     inline bool dont_fragment() const
-    { return decode_flags & DECODE_MF; }
+    { return ip_api.is_ip6() || decode_flags & DECODE_DF; }
 };
 
 #endif

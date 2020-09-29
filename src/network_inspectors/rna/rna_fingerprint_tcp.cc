@@ -197,7 +197,7 @@ const TcpFingerprint* TcpFpProcessor::get_tcp_fp(const FpTcpKey& key, uint8_t tt
         continue;  // tfp
 
     mssgood:
-        if (key.df == tfp->df &&
+        if ( (key.isIpv6 || key.df == tfp->df) &&  // don't check df for ipv6
             ttl <= tfp->ttl &&
             (tfp->ttl < MAXIMUM_FP_HOPS || ttl >= (tfp->ttl - MAXIMUM_FP_HOPS)))
         {

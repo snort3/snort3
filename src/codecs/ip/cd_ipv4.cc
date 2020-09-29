@@ -296,7 +296,10 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     }
 
     if (frag_off & 0x4000)
+    {
         codec.codec_flags |= CODEC_DF;
+        snort.decode_flags |= DECODE_DF;
+    }
 
     if (frag_off & 0x2000)
         snort.decode_flags |= DECODE_MF;
