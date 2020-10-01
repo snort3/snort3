@@ -107,9 +107,10 @@ void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker
 }
 
 void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
-    const struct in6_addr* src_ip, const uint8_t* src_mac, const FpFingerprint* fp)
+    const struct in6_addr* src_ip, const uint8_t* src_mac, const FpFingerprint* fp,
+    uint32_t event_time)
 {
-    log(type, subtype, src_ip, src_mac, ht, p, 0, 0,
+    log(type, subtype, src_ip, src_mac, ht, p, event_time, 0,
         nullptr, nullptr, fp, nullptr, nullptr);
 }
 
@@ -156,8 +157,12 @@ bool RnaLogger::log(uint16_t type, uint16_t subtype, const struct in6_addr* src_
         rle.ip = src_ip;
     else
         rle.ip = nullptr;
+
     if ( event_time )
+    {
+        rle.event_time = event_time;
         (*ht)->update_last_event(event_time);
+    }
 
     EventManager::call_loggers(nullptr, const_cast<Packet*>(p), "RNA", &rle);
 

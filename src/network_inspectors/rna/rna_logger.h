@@ -40,6 +40,7 @@ struct RnaLoggerEvent : public Event
         const snort::FpFingerprint* fpr, const snort::HostClient* hcp) : type(t), subtype(st),
             mac(mc), ht(rt), hm(hmp), proto(pr), cond_var(cv), ha(hap), fp(fpr), hc(hcp) { }
 
+    uint32_t event_time = 0;
     uint16_t type;
     uint16_t subtype;
     const struct in6_addr* ip;
@@ -68,7 +69,8 @@ public:
 
     // for fingerprint
     void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
-        const struct in6_addr* src_ip, const uint8_t* src_mac, const snort::FpFingerprint* fp);
+        const struct in6_addr* src_ip, const uint8_t* src_mac, const snort::FpFingerprint* fp,
+        uint32_t event_time);
 
     // for event time
     void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
