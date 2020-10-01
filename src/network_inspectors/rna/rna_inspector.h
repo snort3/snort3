@@ -29,6 +29,7 @@ namespace snort
 {
 struct Packet;
 class TcpFpProcessor;
+class UaFpProcessor;
 }
 
 struct RnaConfig;
@@ -48,8 +49,8 @@ public:
     void tinit() override;
     void tterm() override;
 
-    snort::TcpFpProcessor* get_or_create_fp_processor();
-    void set_fp_processor(snort::TcpFpProcessor* tfp);
+    void get_or_create_fp_processor(snort::TcpFpProcessor*&, snort::UaFpProcessor*&);
+    void set_fp_processor(snort::TcpFpProcessor*, snort::UaFpProcessor*);
 
 private:
     void load_rna_conf();

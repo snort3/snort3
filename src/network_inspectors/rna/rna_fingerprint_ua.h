@@ -49,7 +49,7 @@ class SO_PUBLIC UaFpProcessor
 public:
     ~UaFpProcessor();
 
-    void make_mpse(SnortConfig* sc);
+    void make_mpse(SnortConfig* sc = nullptr);
 
     void match_mpse(const char* host, const char* uagent, const UaFingerprint*& osfp,
         const char*& device_info, bool& jail_broken);

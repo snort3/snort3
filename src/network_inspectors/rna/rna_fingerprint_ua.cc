@@ -104,7 +104,10 @@ void UaFpProcessor::push(const RawFingerprint& rfp)
 
 void UaFpProcessor::make_mpse(SnortConfig* sc)
 {
+    if ( !sc )
+        sc = SnortConfig::get_main_conf();
     SearchTool::set_conf(sc);
+
     if ( !os_fps.empty() )
     {
         os_mpse = new SearchTool;
@@ -136,7 +139,6 @@ void UaFpProcessor::make_mpse(SnortConfig* sc)
             jb_host_mpse->add(fp.host_name.c_str(), fp.host_name.size(), &fp);
         jb_host_mpse->prep();
     }
-    SearchTool::set_conf(nullptr);
 }
 
 static int match_ua_part(void* id, void*, int, void* data, void*)

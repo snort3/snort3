@@ -194,24 +194,30 @@ void RnaInspector::load_rna_conf()
     in_stream.close();
 }
 
-TcpFpProcessor* RnaInspector::get_or_create_fp_processor()
+void RnaInspector::get_or_create_fp_processor(TcpFpProcessor*& tfp, UaFpProcessor*& uafp)
 {
-    if (mod_conf)
-    {
-        if (!mod_conf->tcp_processor)
-            mod_conf->tcp_processor = new TcpFpProcessor;
-        return mod_conf->tcp_processor;
-    }
-    return nullptr;
+    if ( !mod_conf )
+        return;
+
+    if ( !mod_conf->tcp_processor )
+        mod_conf->tcp_processor = new TcpFpProcessor;
+    if ( !mod_conf->ua_processor )
+        mod_conf->ua_processor = new UaFpProcessor;
+
+    tfp = mod_conf->tcp_processor;
+    uafp = mod_conf->ua_processor;
 }
 
-void RnaInspector::set_fp_processor(TcpFpProcessor* tfp)
+void RnaInspector::set_fp_processor(TcpFpProcessor* tfp, UaFpProcessor* uafp)
 {
-    if ( mod_conf )
-    {
-        delete mod_conf->tcp_processor;
-        mod_conf->tcp_processor = tfp;
-    }
+    if ( !mod_conf )
+        return;
+
+    delete mod_conf->tcp_processor;
+    mod_conf->tcp_processor = tfp;
+
+    delete mod_conf->ua_processor;
+    mod_conf->ua_processor = uafp;
 }
 
 //-------------------------------------------------------------------------
@@ -287,6 +293,19 @@ TEST_CASE("RNA inspector", "[rna_inspector]")
         RnaModule mod;
         RnaInspector ins(&mod);
         ins.show(nullptr);
+    }
+
+    SECTION("set and get processor")
+    {
+        RnaModule mod;
+        mod.begin(RNA_NAME, 0, nullptr);
+        RnaInspector ins(&mod);
+        TcpFpProcessor* tfp = nullptr;
+        UaFpProcessor* uafp = nullptr;
+        ins.set_fp_processor(tfp, uafp);
+        ins.get_or_create_fp_processor(tfp, uafp);
+        CHECK(tfp != nullptr);
+        CHECK(uafp != nullptr);
     }
 }
 #endif
