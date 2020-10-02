@@ -31,6 +31,7 @@
 #endif
 
 #include "log/messages.h"
+#include "protocols/ipv4.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 #include "protocols/tcp_options.h"
@@ -382,16 +383,15 @@ static int get_tcp_option(const Packet* p, tcp::TcpOptCode opt_code, int& pos)
 
 const TcpFingerprint* TcpFpProcessor::get(const Packet* p, RNAFlow* flowp) const
 {
-    FpTcpKey fpk;
+    FpTcpKey fpk{};
     bool mssOptionPresent = false;
 
-    bzero(&fpk, sizeof(FpTcpKey));
-
+    /* build a key for the lookup */
     if (p->is_ip6())
         fpk.isIpv6 = 1;
+    else if (p->ptrs.ip_api.get_ip4h()->df())
+        fpk.df = true;
 
-    /* build a key for the lookup */
-    fpk.df = p->ptrs.dont_fragment();
     fpk.tcp_window = p->ptrs.tcph->win();
 
     fpk.mss = get_tcp_option(p, tcp::TcpOptCode::MAXSEG, fpk.mss_pos);

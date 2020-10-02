@@ -142,9 +142,6 @@ struct DecodeData
 
     inline PktType get_pkt_type() const
     { return type; }
-
-    inline bool dont_fragment() const
-    { return ip_api.is_ip6() || decode_flags & DECODE_DF; }
 };
 
 #endif

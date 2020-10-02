@@ -79,8 +79,8 @@ struct FpTcpKey
     int sackok_pos;
     int timestamp_pos;
 
-    char df;
-    uint8_t isIpv6;
+    bool df;
+    bool isIpv6;
 };
 
 class SO_PUBLIC TcpFpProcessor
