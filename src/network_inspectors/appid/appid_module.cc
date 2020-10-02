@@ -30,6 +30,7 @@
 
 #include "host_tracker/host_cache.h"
 #include "log/messages.h"
+#include "main/analyzer.h"
 #include "main/analyzer_command.h"
 #include "main/snort.h"
 #include "main/swapper.h"
@@ -179,11 +180,15 @@ private:
     bool from_shell;
 };
 
-bool ACThirdPartyAppIdContextUnload::execute(Analyzer&, void**)
+bool ACThirdPartyAppIdContextUnload::execute(Analyzer& ac, void**)
 {
     assert(pkt_thread_tp_appid_ctxt);
     pkt_thread_tp_appid_ctxt->set_tp_reload_in_progress(true);
-    bool reload_in_progress = pkt_thread_tp_appid_ctxt->tfini(true);
+    bool reload_in_progress;
+    if (ac.is_idling())
+        reload_in_progress = pkt_thread_tp_appid_ctxt->tfini(true, true);
+    else
+        reload_in_progress = pkt_thread_tp_appid_ctxt->tfini(true);
     if (reload_in_progress)
         return false;
     pkt_thread_tp_appid_ctxt = nullptr;

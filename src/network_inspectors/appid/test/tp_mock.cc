@@ -56,7 +56,7 @@ public:
     }
 
     int tinit() override { return 0; }
-    bool tfini(bool) override { return false; }
+    bool tfini(bool, bool) override { return false; }
 };
 
 class ThirdPartyAppIdSessionImpl : public ThirdPartyAppIdSession
