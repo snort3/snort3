@@ -153,19 +153,20 @@ bool WizardModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("client_first") )
         return true;
 
-    else if ( v.is("hex") )
-        spells.emplace_back(v.get_string());
-
-    else if ( v.is("spell") )
-        spells.emplace_back(v.get_string());
-
+    else if ( v.is("hex") || v.is("spell") )
+    {
+        if (c2s)
+            c2s_patterns.emplace_back(v.get_string());
+        else
+            s2c_patterns.emplace_back(v.get_string());
+    }
     else if ( v.is("curses") )
         curses->add_curse(v.get_string());
 
     return true;
 }
 
-bool WizardModule::begin(const char* fqn, int, SnortConfig*)
+bool WizardModule::begin(const char* fqn, int idx, SnortConfig*)
 {
     if ( !strcmp(fqn, "wizard") )
     {
@@ -179,20 +180,25 @@ bool WizardModule::begin(const char* fqn, int, SnortConfig*)
     }
     else if ( !strcmp(fqn, "wizard.hexes") || !strcmp(fqn, "wizard.spells") )
     {
-        service.clear();
+        if ( idx > 0 )
+        {
+            service.clear();
+            c2s_patterns.clear();
+            s2c_patterns.clear();
+        }
     }
-    else if ( !strcmp(fqn, "wizard.hexes.to_client") || !strcmp(fqn, "wizard.hexes.to_server") ||
-        !strcmp(fqn, "wizard.spells.to_client") || !strcmp(fqn, "wizard.spells.to_server") )
-    {
-        spells.clear();
-    }
+    else if ( !strcmp(fqn, "wizard.hexes.to_client") || !strcmp(fqn, "wizard.spells.to_client") )
+        c2s = false;
+
+    else if ( !strcmp(fqn, "wizard.hexes.to_server") || !strcmp(fqn, "wizard.spells.to_server") )
+        c2s = true;
 
     return true;
 }
 
-bool WizardModule::add_spells(MagicBook* b, string& service, bool hex)
+static bool add_spells(MagicBook* b, const string& service, const vector<string>& patterns, bool hex)
 {
-    for ( const auto& p : spells )
+    for ( const auto& p : patterns )
     {
         const char* val = service.c_str();
         if ( !b->add_spell(p.c_str(), val) )
@@ -218,32 +224,54 @@ bool WizardModule::add_spells(MagicBook* b, string& service, bool hex)
     return true;
 }
 
-bool WizardModule::end(const char* fqn, int, SnortConfig*)
+bool WizardModule::end(const char* fqn, int idx, SnortConfig*)
 {
     if ( !strcmp(fqn, "wizard") )
     {
         service.clear();
-        spells.clear();
+        c2s_patterns.clear();
     }
-    else if ( !strcmp(fqn, "wizard.hexes.to_client") )
+    else if ( !strcmp(fqn, "wizard.hexes") )
     {
-        if ( !add_spells(s2c_hexes, service, true) )
-            return false;
+        if ( idx > 0 )
+        {
+            // Validate the hex
+            if ( service.empty() )
+            {
+                ParseError("Hexes must have a service name");
+                return false;
+            }
+            if ( c2s_patterns.empty() && s2c_patterns.empty() )
+            {
+                ParseError("Hexes must have at least one pattern");
+                return false;
+            }
+            if ( !add_spells(c2s_hexes, service, c2s_patterns, true) )
+                return false;
+            if ( !add_spells(s2c_hexes, service, s2c_patterns, true) )
+                return false;
+        }
     }
-    else if ( !strcmp(fqn, "wizard.spells.to_client") )
+    else if ( !strcmp(fqn, "wizard.spells") )
     {
-        if ( !add_spells(s2c_spells, service, false) )
-            return false;
-    }
-    else if ( !strcmp(fqn, "wizard.hexes.to_server") )
-    {
-        if ( !add_spells(c2s_hexes, service, true) )
-            return false;
-    }
-    else if ( !strcmp(fqn, "wizard.spells.to_server") )
-    {
-        if ( !add_spells(c2s_spells, service, false) )
-            return false;
+        if ( idx > 0 )
+        {
+            // Validate the spell
+            if ( service.empty() )
+            {
+                ParseError("Spells must have a service name");
+                return false;
+            }
+            if ( c2s_patterns.empty() && s2c_patterns.empty() )
+            {
+                ParseError("Spells must have at least one pattern");
+                return false;
+            }
+            if ( !add_spells(c2s_spells, service, c2s_patterns, false) )
+                return false;
+            if ( !add_spells(s2c_spells, service, s2c_patterns, false) )
+                return false;
+        }
     }
 
     return true;

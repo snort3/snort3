@@ -68,11 +68,10 @@ public:
     const snort::TraceOption* get_trace_options() const override;
 
 private:
-    bool add_spells(MagicBook*, std::string&, bool hex);
-
-private:
     std::string service;
-    std::vector<std::string> spells;
+    std::vector<std::string> c2s_patterns;
+    std::vector<std::string> s2c_patterns;
+    bool c2s;
 
     MagicBook* c2s_hexes;
     MagicBook* s2c_hexes;
