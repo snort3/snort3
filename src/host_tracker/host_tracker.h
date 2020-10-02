@@ -56,6 +56,9 @@ extern const uint8_t zero_mac[MAC_SIZE];
 
 struct HostMac
 {
+    HostMac() : ttl(0), primary(0), last_seen(0)
+    { memset(mac, 0, MAC_SIZE); }
+
     HostMac(uint8_t p_ttl, const uint8_t* p_mac, uint8_t p_primary, uint32_t p_last_seen)
         : ttl(p_ttl), primary(p_primary), last_seen (p_last_seen) { memcpy(mac, p_mac, MAC_SIZE); }
 
@@ -110,14 +113,17 @@ struct DeviceFingerprint
     char device[INFO_SIZE] = { 0 };
 };
 
-enum HostType
+enum HostType : std::uint32_t
 {
-    HOST_TYPE_HOST=0,
+    HOST_TYPE_HOST = 0,
     HOST_TYPE_ROUTER,
     HOST_TYPE_BRIDGE,
     HOST_TYPE_NAT,
     HOST_TYPE_LB
 };
+
+#define MIN_BOOT_TIME    10
+#define MIN_TTL_DIFF     16
 
 typedef HostCacheAllocIp<HostMac> HostMacAllocator;
 typedef HostCacheAllocIp<HostApplication> HostAppAllocator;
@@ -129,7 +135,7 @@ class SO_PUBLIC HostTracker
 public:
     HostTracker() : hops(-1)
     {
-        last_seen = (uint32_t) packet_time();
+        last_seen = nat_count_start = (uint32_t) packet_time();
         last_event = -1;
     }
 
@@ -165,6 +171,12 @@ public:
         host_type = rht;
     }
 
+    HostType get_host_type() const
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        return host_type;
+    }
+
     uint8_t get_hops()
     {
         std::lock_guard<std::mutex> lck(host_tracker_lock);
@@ -189,8 +201,8 @@ public:
     // Returns the hostmac pointer with the highest TTL
     HostMac* get_max_ttl_hostmac();
 
-    // Returns the matching host_mac
-    const HostMac* get_hostmac(const uint8_t* mac);
+    // Returns true and copy of the matching HostMac, false if no match...
+    bool get_hostmac(const uint8_t* mac, HostMac& hm);
 
     const uint8_t* get_last_seen_mac();
 
@@ -234,6 +246,48 @@ public:
     //  This should be updated whenever HostTracker data members are changed
     void stringify(std::string& str);
 
+    uint8_t get_ip_ttl() const
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        return ip_ttl;
+    }
+
+    void set_ip_ttl(uint8_t ttl)
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        ip_ttl = ttl;
+    }
+
+    uint32_t get_nat_count_start() const
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        return nat_count_start;
+    }
+
+    void set_nat_count_start(uint32_t natCountStart)
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        nat_count_start = natCountStart;
+    }
+
+    uint32_t get_nat_count() const
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        return nat_count;
+    }
+
+    void set_nat_count(uint32_t v = 0)
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        nat_count = v;
+    }
+
+    uint32_t inc_nat_count()
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        return ++nat_count;
+    }
+
 private:
     mutable std::mutex host_tracker_lock; // ensure that updates to a shared object are safe
     uint8_t hops;                 // hops from the snort inspector, e.g., zero for ARP
@@ -249,7 +303,10 @@ private:
 
     bool vlan_tag_present = false;
     vlan::VlanTagHdr vlan_tag;
-    HostType host_type;
+    HostType host_type = HOST_TYPE_HOST;
+    uint8_t ip_ttl = 0;
+    uint32_t nat_count = 0;
+    uint32_t nat_count_start;     // the time nat counting start for this host
 
     // Hide / delete the constructor from the outside world. We don't want to
     // have zombie host trackers, i.e. host tracker objects that live outside

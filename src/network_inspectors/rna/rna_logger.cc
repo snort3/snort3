@@ -144,8 +144,8 @@ void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, const uint
 
 bool RnaLogger::log(uint16_t type, uint16_t subtype, const struct in6_addr* src_ip,
     const uint8_t* src_mac, RnaTracker* ht, const Packet* p, uint32_t event_time,
-    uint16_t proto, const HostMac* hm, const HostApplication* ha, const FpFingerprint* fp,
-    void* cond_var, const HostClient* hc)
+    uint16_t proto, const HostMac* hm, const HostApplication* ha,
+    const FpFingerprint* fp, void* cond_var, const HostClient* hc)
 {
     if ( !enabled )
         return false;
@@ -181,11 +181,11 @@ TEST_CASE("RNA logger", "[rna_logger]")
         uint8_t mac[6] = {0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6};
         RnaLogger logger1(false);
         CHECK(logger1.log(0, 0, nullptr, mac, &ht, nullptr, 0, 0,
-            nullptr, nullptr, nullptr, nullptr) == false);
+            nullptr, nullptr, nullptr, nullptr, nullptr) == false);
 
         RnaLogger logger2(true);
         CHECK(logger2.log(0, 0, nullptr, mac, &ht, nullptr, 0, 0,
-            nullptr, nullptr, nullptr, nullptr) == true);
+            nullptr, nullptr, nullptr, nullptr, nullptr) == true);
     }
 }
 #endif

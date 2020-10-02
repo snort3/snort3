@@ -37,6 +37,7 @@
     #define CHANGE_MAC_INFO            13
     #define CHANGE_MAC_ADD             14
     #define CHANGE_HOST_UPDATE         15
+    #define CHANGE_HOST_TYPE           16
     #define CHANGE_VLAN_TAG            18
 
 #endif

@@ -120,45 +120,52 @@ public:
         logger(RnaLogger(en)), filter(DiscoveryFilter(cp)), conf(rc)
         { update_timeout = (rc ? rc->update_timeout : 0); }
 
-    void analyze_appid_changes(snort::DataEvent& event);
-    void analyze_flow_icmp(const snort::Packet* p);
-    void analyze_flow_ip(const snort::Packet* p);
-    void analyze_flow_non_ip(const snort::Packet* p);
-    void analyze_flow_tcp(const snort::Packet* p, TcpPacketType type);
-    void analyze_flow_udp(const snort::Packet* p);
+    void analyze_appid_changes(snort::DataEvent&);
+    void analyze_flow_icmp(const snort::Packet*);
+    void analyze_flow_ip(const snort::Packet*);
+    void analyze_flow_non_ip(const snort::Packet*);
+    void analyze_flow_tcp(const snort::Packet*, TcpPacketType);
+    void analyze_flow_udp(const snort::Packet*);
 
     // generate change event for all hosts in the ip cache
     void generate_change_host_update();
 
 private:
     // generate change event for single host
-    void generate_change_host_update(RnaTracker* ht, const snort::Packet* p,
-        const snort::SfIp* src_ip, const uint8_t* src_mac, const time_t& sec);
-    void generate_change_host_update_eth(HostTrackerMac* mt, const snort::Packet* p,
-        const uint8_t* src_mac, const time_t& sec);
+    void generate_change_host_update(RnaTracker*, const snort::Packet*,
+        const snort::SfIp*, const uint8_t* src_mac, const time_t&);
+    void generate_change_host_update_eth(HostTrackerMac*, const snort::Packet*,
+        const uint8_t* src_mac, const time_t&);
+
+    void discover_host_types_ttl(RnaTracker&, const snort::Packet*, uint8_t pkt_ttl,
+        uint32_t last_seen, const struct in6_addr*, const uint8_t* src_mac);
+    int discover_host_types_icmpv6_ndp(RnaTracker& ht, const snort::Packet*, uint32_t last_seen,
+        const struct in6_addr* src_ip, const uint8_t* src_mac);
 
     // Change vlan event related utilities
-    inline void update_vlan(const snort::Packet* p, HostTrackerMac& hm);
-    void generate_change_vlan_update(RnaTracker *rt, const snort::Packet* p,
-        const uint8_t* src_mac, HostTrackerMac& hm, bool isnew);
-    void generate_change_vlan_update(RnaTracker *rt, const snort::Packet* p,
-        const uint8_t* src_mac, const snort::SfIp* src_ip, bool isnew);
+    inline void update_vlan(const snort::Packet*, HostTrackerMac&);
+    void generate_change_vlan_update(RnaTracker*, const snort::Packet*,
+        const uint8_t* src_mac, HostTrackerMac&, bool isnew);
+    void generate_change_vlan_update(RnaTracker*, const snort::Packet*,
+        const uint8_t* src_mac, const snort::SfIp*, bool isnew);
 
-    void generate_new_host_mac(const snort::Packet* p, RnaTracker ht, bool discover_proto = false);
+    void generate_new_host_mac(const snort::Packet*, RnaTracker, bool discover_proto = false);
 
     // General rna utilities not associated with flow
-    void discover_network_icmp(const snort::Packet* p);
-    void discover_network_ip(const snort::Packet* p);
-    void discover_network_non_ip(const snort::Packet* p);
-    void discover_network_tcp(const snort::Packet* p);
-    void discover_network_udp(const snort::Packet* p);
-    void discover_network(const snort::Packet* p, uint8_t ttl);
+    void discover_network_icmp(const snort::Packet*);
+    void discover_network_ip(const snort::Packet*);
+    void discover_network_non_ip(const snort::Packet*);
+    void discover_network_tcp(const snort::Packet*);
+    void discover_network_udp(const snort::Packet*);
+    void discover_network(const snort::Packet*, uint8_t ttl);
 
     // RNA utilities for non-IP packets
-    void discover_network_ethernet(const snort::Packet* p);
-    int discover_network_arp(const snort::Packet* p, RnaTracker* ht_ref);
-    int discover_network_bpdu(const snort::Packet* p, const uint8_t* data, RnaTracker ht_ref);
-    int discover_switch(const snort::Packet* p, RnaTracker ht_ref);
+    void discover_network_ethernet(const snort::Packet*);
+    int discover_network_arp(const snort::Packet*, RnaTracker*);
+    int discover_network_bpdu(const snort::Packet*, const uint8_t* data, RnaTracker);
+    int discover_host_types_cdp(const snort::Packet*, const uint8_t* data, uint16_t rlen);
+
+    int discover_switch(const snort::Packet*, RnaTracker);
 
     RnaLogger logger;
     DiscoveryFilter filter;

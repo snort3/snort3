@@ -85,18 +85,21 @@ bool HostTracker::add_mac(const uint8_t* mac, uint8_t ttl, uint8_t primary)
     return true;
 }
 
-const HostMac* HostTracker::get_hostmac(const uint8_t* mac)
+bool HostTracker::get_hostmac(const uint8_t* mac, HostMac& hm)
 {
     if ( !mac or !memcmp(mac, zero_mac, MAC_SIZE) )
-        return nullptr;
+        return false;
 
     lock_guard<mutex> lck(host_tracker_lock);
 
-    for ( const auto& hm : macs )
-        if ( !memcmp(mac, hm.mac, MAC_SIZE) )
-            return &hm;
+    for ( auto& ahm : macs )
+        if ( !memcmp(mac, ahm.mac, MAC_SIZE) )
+        {
+            hm = ahm;
+            return true;
+        }
 
-    return nullptr;
+    return false;
 }
 
 const uint8_t* HostTracker::get_last_seen_mac()
@@ -155,7 +158,8 @@ bool HostTracker::make_primary(const uint8_t* mac)
     if ( !hm )
         return false;
 
-    if (!hm->primary)
+    hm->last_seen = last_seen;
+    if ( !hm->primary )
     {
         hm->primary = true;
         return true;
@@ -176,7 +180,7 @@ HostMac* HostTracker::get_max_ttl_hostmac()
         if (hm.primary)
             return &hm;
 
-        if (hm.ttl > max_ttl)
+        if ( hm.ttl > max_ttl )
         {
             max_ttl = hm.ttl;
             max_ttl_hm = &hm;
@@ -479,9 +483,9 @@ HostClient HostTracker::get_client(AppId id, const char* version, AppId service,
 
     for ( const auto& c : clients )
     {
-        if (c.id != APP_ID_NONE and c.id == id and c.service == service
+        if ( c.id != APP_ID_NONE and c.id == id and c.service == service
             and ((c.version[0] == '\0' and !version) or
-            (version and strncmp(c.version, version, INFO_SIZE) == 0)))
+            (version and strncmp(c.version, version, INFO_SIZE) == 0)) )
         {
             return c;
         }
@@ -523,11 +527,19 @@ static inline string to_mac_string(const uint8_t* mac)
     return mac_addr;
 }
 
+static std::vector<std::string> host_types = { "Host", "Router", "Bridge", "NAT", "Load Balancer" };
+
+static inline string& to_host_type_string(HostType type)
+{
+    return host_types[type];
+}
+
 void HostTracker::stringify(string& str)
 {
     lock_guard<mutex> lck(host_tracker_lock);
 
-    str += "\n    hops: " + to_string(hops) + ", time: " + to_time_string(last_seen);
+    str += "\n    type: " + to_host_type_string(host_type) + ", ttl: " + to_string(ip_ttl)
+        + ", hops: " + to_string(hops) + ", time: " + to_time_string(last_seen);
 
     if ( !macs.empty() )
     {

@@ -125,7 +125,7 @@ TEST(host_tracker, stringify)
     ht.stringify(host_tracker_string);
 
     STRCMP_EQUAL(host_tracker_string.c_str(),
-        "\n    hops: 255, time: 2019-07-04 00:00:09"
+        "\n    type: Host, ttl: 0, hops: 255, time: 2019-07-04 00:00:09"
         "\nmacs size: 2"
         "\n    mac: FE:ED:DE:AD:BE:EF, ttl: 9, primary: 0, time: 2019-07-04 00:00:04"
         "\n    mac: CA:FE:C0:FF:EE:00, ttl: 3, primary: 1, time: 2019-07-04 00:00:07"
