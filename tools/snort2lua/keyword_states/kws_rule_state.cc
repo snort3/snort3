@@ -52,8 +52,6 @@ bool RuleState::convert(std::istringstream& data_stream)
         table_api.open_table("detection");
         table_api.add_option("global_rule_state", true);
         table_api.close_table();
-        table_api.open_table("rule_state");
-        table_api.close_table();
     }
 
     string gid;
@@ -104,13 +102,14 @@ bool RuleState::convert(std::istringstream& data_stream)
 
     if ( retval )
     {
-        string key = gid + ":" + sid;
-        table_api.open_associative_table("rule_state", key.c_str());
+        state_api.create_state();
+        state_api.add_option("gid", gid);
+        state_api.add_option("sid", sid);
 
         if ( !enable.empty() )
         {
-            table_api.add_diff_option_comment("enabled/disabled", "enable");
-            table_api.add_option("enable", enable);
+            state_api.add_option("enable", enable);
+            state_api.add_comment("option change: 'enabled/disabled' --> 'enable'");
         }
 
         if ( !action.empty() )
@@ -118,13 +117,11 @@ bool RuleState::convert(std::istringstream& data_stream)
             if ( action == "sdrop" )
             {
                 action = "drop";
-                table_api.add_diff_option_comment("sdrop", "drop");
+                state_api.add_comment("action change: 'sdrop' --> 'drop'");
             }
 
-            table_api.add_option("action", action);
+            state_api.set_action(action);
         }
-
-        table_api.close_table();
     }
 
     return retval;

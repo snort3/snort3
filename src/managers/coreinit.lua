@@ -61,7 +61,6 @@ port_scan = { }          -- opt in
 profiler = { }           -- don't activate
 rate_filter = { }        -- pure list
 references = { }         -- pure list
-rule_state = { }         -- pure list
 side_channel = { }       -- leaks!
 snort = { }              -- command line only
 suppress = { }           -- pure list

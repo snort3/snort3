@@ -1819,120 +1819,6 @@ bool RateFilterModule::end(const char*, int idx, SnortConfig* sc)
 }
 
 //-------------------------------------------------------------------------
-// rule_state module
-//-------------------------------------------------------------------------
-
-static const Parameter single_rule_state_params[] =
-{
-    { "action", Parameter::PT_ENUM,
-      "log | pass | alert | drop | block | reset", "alert",
-      "apply action if rule matches or inherit from rule definition" },
-
-    { "enable", Parameter::PT_ENUM, "no | yes | inherit", "inherit",
-      "enable or disable rule in current ips policy or use default defined by ips policy" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-static const Parameter rule_state_params[] =
-{
-    { "$gid_sid", Parameter::PT_LIST, single_rule_state_params, nullptr,
-      "defines rule state parameters for gid:sid" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-#define rule_state_help \
-    "enable/disable and set actions for specific IPS rules; " \
-    "deprecated, use rule state stubs with enable instead"
-
-class RuleStateModule : public Module
-{
-public:
-    RuleStateModule() : Module("rule_state", rule_state_help, rule_state_params, false) { }
-
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
-
-    bool matches(const char*, std::string&) override;
-
-    Usage get_usage() const override
-    { return DETECT; }
-
-private:
-    RuleKey key;
-    RuleState state;
-};
-
-bool RuleStateModule::matches(const char* param, std::string& name)
-{
-    if ( strcmp(param, "$gid_sid") )
-        return false;
-
-    std::stringstream ss(name);
-    char sep;
-
-    ss >> key.gid >> sep >> key.sid;
-
-    if ( key.gid and key.sid and sep == ':' )
-        return true;
-
-    return false;
-}
-
-bool RuleStateModule::set(const char* fqn, Value& v, SnortConfig*)
-{
-    // the name itself is passed as the fqn when declaring rule_state = { }
-    if ( !strcmp(fqn, "$gid_sid") )
-        return true;
-
-    if ( key.gid and key.sid )
-    {
-        if ( v.is("action") )
-        {
-            state.rule_action = v.get_string();
-            state.action = snort::Actions::Type(v.get_uint8() + 1);
-        }
-
-        else if ( v.is("enable") )
-            state.enable = IpsPolicy::Enable(v.get_uint8());
-    }
-    else
-        return false;
-
-    return true;
-}
-
-bool RuleStateModule::begin(const char*, int, SnortConfig* sc)
-{
-    if ( !sc->rule_states )
-        sc->rule_states = new RuleStateMap;
-
-    else
-    {
-        key = { 0, 0, 0 };
-        state.action = snort::Actions::Type::ALERT;
-        state.enable = IpsPolicy::Enable::INHERIT_ENABLE;
-    }
-    return true;
-}
-
-bool RuleStateModule::end(const char* fqn, int, SnortConfig* sc)
-{
-    if ( !strcmp(fqn, "rule_state") )
-        return true;
-
-    if ( !key.gid or !key.sid )
-        return false;
-
-    key.policy_id = snort::get_ips_policy()->policy_id;
-    sc->rule_states->add(key, state);
-
-    return true;
-}
-
-//-------------------------------------------------------------------------
 // hosts module
 //-------------------------------------------------------------------------
 
@@ -2104,7 +1990,6 @@ void module_init()
     ModuleManager::add_module(new ProcessModule);
     ModuleManager::add_module(new ProfilerModule);
     ModuleManager::add_module(new ReferencesModule);
-    ModuleManager::add_module(new RuleStateModule);
     ModuleManager::add_module(new SearchEngineModule);
     ModuleManager::add_module(new SFDAQModule);
     ModuleManager::add_module(new PayloadInjectorModule);

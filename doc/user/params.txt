@@ -32,8 +32,7 @@ information about the type and use of the parameter:
 * IPS rules may also have a wild card parameter, which is indicated by a
   *.  Used for unquoted, comma-separated lists such as service and metadata.
 * The snort module has command line options starting with a -.
-* $ denotes variable names, eg rule_state.$gid_sid which would be used
-  like rule_state["1:23456"] = { }.
+* $ denotes variable names.
 
 Some additional details to note:
 

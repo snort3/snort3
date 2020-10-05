@@ -23,6 +23,7 @@
 #include "conversion_defines.h"
 #include "data/dt_data.h"
 #include "data/dt_rule_api.h"
+#include "data/dt_state_api.h"
 #include "data/dt_table_api.h"
 #include "helpers/util_binder.h"
 
@@ -122,6 +123,9 @@ public:
     inline RuleApi& get_rule_api()
     { return rule_api; }
 
+    inline StateApi& get_state_api()
+    { return state_api; }
+
     bool added_ftp_data() const
     { return ftp_data_is_added; }
 
@@ -152,6 +156,9 @@ private:
     TableApi table_api;
 
     RuleApi rule_api;
+
+    StateApi state_api;
+
     std::vector<std::shared_ptr<Binder>> binders;
 
     // the current parsing state.

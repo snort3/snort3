@@ -28,6 +28,7 @@
 
 class DataApi;
 class RuleApi;
+class StateApi;
 class TableApi;
 
 class ConversionState
@@ -37,7 +38,8 @@ public:
         // FIXIT-L these should be removed and accessed through cv
         data_api(c.get_data_api()),
         table_api(c.get_table_api()),
-        rule_api(c.get_rule_api())
+        rule_api(c.get_rule_api()),
+        state_api(c.get_state_api())
     { }
     virtual ~ConversionState() = default;
     virtual bool convert(std::istringstream& data)=0;
@@ -47,6 +49,7 @@ protected:
     DataApi& data_api;
     TableApi& table_api;
     RuleApi& rule_api;
+    StateApi& state_api;
 
     inline bool eat_option(std::istringstream& stream)
     {

@@ -48,7 +48,6 @@ TableDelegation table_delegation =
     { "ips", true },
     { "network", true },
     { "normalizer", true },
-    { "rule_state", true },
     { "stream_tcp", true },
     { "suppress", true },
 };
@@ -488,6 +487,15 @@ int Converter::convert(
         out << "dofile(dir .. '/snort_defaults.lua')\n";
         out << "\n";
         data_api.print_data(out);
+
+        if (!state_api.empty())
+        {
+            table_api.open_top_level_table("ips");
+            state_api.print_states(out);
+            state_api.clear();
+            table_api.add_option("states", "$local_states");
+            table_api.close_table();
+        }
 
         if (!rule_api.empty())
         {
