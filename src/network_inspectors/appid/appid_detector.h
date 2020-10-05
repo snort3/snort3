@@ -111,7 +111,9 @@ public:
     virtual ~AppIdDetector() = default;
 
     virtual int initialize();
-    virtual void do_custom_init() = 0;
+    virtual void reload();
+    virtual void do_custom_init() { }
+    virtual void do_custom_reload() { }
     virtual int validate(AppIdDiscoveryArgs&) = 0;
     virtual void register_appid(AppId, unsigned extractsInfo, OdpContext& odp_ctxt) = 0;
 

@@ -92,11 +92,11 @@ AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector&
     : FlowData(0), config(stub_config), api(*(new AppIdSessionApi(this, *ip))),
     odp_ctxt(stub_odp_ctxt) { }
 AppIdSession::~AppIdSession() = default;
-AppIdDiscovery::AppIdDiscovery() {}
 AppIdDiscovery::~AppIdDiscovery() {}
 void ClientDiscovery::initialize() { }
+void ClientDiscovery::reload() { }
 void AppIdDiscovery::register_detector(const std::string&, AppIdDetector*,  IpProtocol) {}
-void AppIdDiscovery::add_pattern_data(AppIdDetector*, SearchTool*, int, const uint8_t* const,
+void AppIdDiscovery::add_pattern_data(AppIdDetector*, SearchTool&, int, const uint8_t* const,
     unsigned, unsigned) {}
 void AppIdDiscovery::register_tcp_pattern(AppIdDetector*, const uint8_t* const, unsigned,
     int, unsigned) {}
@@ -105,6 +105,7 @@ void AppIdDiscovery::register_udp_pattern(AppIdDetector*, const uint8_t* const, 
 int AppIdDiscovery::add_service_port(AppIdDetector*,
     const ServiceDetectorPort&) { return APPID_EINVALID; }
 void ServiceDiscovery::initialize() {}
+void ServiceDiscovery::reload() {}
 void ServiceDiscovery::finalize_service_patterns() {}
 void ServiceDiscovery::match_by_pattern(AppIdSession&, const Packet*, IpProtocol) {}
 void ServiceDiscovery::get_port_based_services(IpProtocol, uint16_t, AppIdSession&) {}

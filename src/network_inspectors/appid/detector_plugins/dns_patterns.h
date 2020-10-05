@@ -50,6 +50,7 @@ public:
     ~DnsPatternMatchers();
     void add_host_pattern(uint8_t*, size_t, uint8_t, AppId);
     void finalize_patterns();
+    void reload_patterns();
     int scan_hostname(const uint8_t*, size_t, AppId&, AppId&);
 
 private:

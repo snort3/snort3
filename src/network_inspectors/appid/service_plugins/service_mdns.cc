@@ -104,17 +104,16 @@ MdnsServiceDetector::MdnsServiceDetector(ServiceDiscovery* sd)
         { 5353, IpProtocol::UDP, false },
     };
 
-    matcher = new SearchTool;
     for (unsigned i = 0; i < sizeof(patterns) / sizeof(*patterns); i++)
-        matcher->add((const char*)patterns[i].pattern, patterns[i].length, &patterns[i]);
-    matcher->prep();
+        matcher.add((const char*)patterns[i].pattern, patterns[i].length, &patterns[i]);
+    matcher.prep();
 
     handler->register_detector(name, this, proto);
 }
 
-MdnsServiceDetector::~MdnsServiceDetector()
+void MdnsServiceDetector::do_custom_reload()
 {
-    delete matcher;
+    matcher.reload();
 }
 
 int MdnsServiceDetector::validate(AppIdDiscoveryArgs& args)
@@ -420,7 +419,7 @@ static int mdns_pattern_match(void* id, void*, int match_end_pos, void* data, vo
 MatchedPatterns* MdnsServiceDetector::create_match_list(const char* data, uint16_t dataSize)
 {
     MatchedPatterns* pattern_list = nullptr;
-    matcher->find_all((const char*)data, dataSize, mdns_pattern_match, false, (void*)&pattern_list);
+    matcher.find_all((const char*)data, dataSize, mdns_pattern_match, false, (void*)&pattern_list);
 
     return pattern_list;
 }

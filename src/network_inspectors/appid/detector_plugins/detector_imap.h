@@ -35,6 +35,7 @@ public:
     ~ImapClientDetector() override;
 
     void do_custom_init() override;
+    void do_custom_reload() override;
     int validate(AppIdDiscoveryArgs&) override;
     ImapDetectorData* get_common_data(AppIdSession&);
 

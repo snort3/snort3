@@ -218,6 +218,7 @@ void AppIdHttpSession::set_tun_dest(){}
 
 // Stubs for ServiceDiscovery
 void ServiceDiscovery::initialize() {}
+void ServiceDiscovery::reload() {}
 void ServiceDiscovery::finalize_service_patterns() {}
 void ServiceDiscovery::match_by_pattern(AppIdSession&, const Packet*, IpProtocol) {}
 void ServiceDiscovery::get_port_based_services(IpProtocol, uint16_t, AppIdSession&) {}
@@ -245,7 +246,8 @@ AppId HostTracker::get_appid(Port, IpProtocol, bool, bool)
 
 // Stubs for ClientDiscovery
 void ClientDiscovery::initialize() {}
-void ClientDiscovery::finalize_client_plugins() {}
+void ClientDiscovery::reload() {}
+void ClientDiscovery::finalize_client_patterns() {}
 static ClientDiscovery* c_discovery_manager = new ClientDiscovery();
 bool ClientDiscovery::do_client_discovery(AppIdSession&, Packet*,
     AppidSessionDirection, AppidChangeBits&)

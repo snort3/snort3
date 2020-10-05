@@ -46,7 +46,7 @@ static int add_pattern(DetectorAppSipPattern** patternList, AppId client_id,
     return 0;
 }
 
-static int get_sip_client_app(void* pattern_matcher, const char* pattern, uint32_t pattern_len,
+static int get_sip_client_app(tMlmpTree* pattern_matcher, const char* pattern, uint32_t pattern_len,
     AppId& client_id, char*& client_version)
 {
     tMlmpPattern patterns[3];
@@ -59,7 +59,7 @@ static int get_sip_client_app(void* pattern_matcher, const char* pattern, uint32
     patterns[0].patternSize = pattern_len;
     patterns[1].pattern = nullptr;
 
-    data = (DetectorAppSipPattern*)mlmpMatchPatternGeneric((tMlmpTree*)pattern_matcher, patterns);
+    data = (DetectorAppSipPattern*)mlmpMatchPatternGeneric(pattern_matcher, patterns);
 
     if ( !data )
         return 0;
@@ -85,14 +85,14 @@ SipPatternMatchers::~SipPatternMatchers()
 {
     if ( sip_ua_matcher )
     {
-        mlmpDestroy((tMlmpTree*)sip_ua_matcher);
+        mlmpDestroy(sip_ua_matcher);
     }
 
     free_patterns(sip_ua_list);
 
     if ( sip_server_matcher )
     {
-        mlmpDestroy((tMlmpTree*)sip_server_matcher);
+        mlmpDestroy(sip_server_matcher);
     }
 
     free_patterns(sip_server_list);
@@ -126,7 +126,7 @@ void SipPatternMatchers::finalize_patterns(OdpContext& odp_ctxt)
             (const char*)pattern_node->pattern.pattern, patterns, PATTERN_PART_MAX, 0);
         patterns[num_patterns].pattern = nullptr;
 
-        mlmpAddPattern((tMlmpTree*)sip_ua_matcher, patterns, pattern_node);
+        mlmpAddPattern(sip_ua_matcher, patterns, pattern_node);
     }
 
     for ( pattern_node = sip_server_list; pattern_node; pattern_node =
@@ -136,11 +136,19 @@ void SipPatternMatchers::finalize_patterns(OdpContext& odp_ctxt)
             (const char*)pattern_node->pattern.pattern, patterns, PATTERN_PART_MAX, 0);
         patterns[num_patterns].pattern = nullptr;
 
-        mlmpAddPattern((tMlmpTree*)sip_server_matcher, patterns, pattern_node);
+        mlmpAddPattern(sip_server_matcher, patterns, pattern_node);
     }
 
-    mlmpProcessPatterns((tMlmpTree*)sip_ua_matcher);
-    mlmpProcessPatterns((tMlmpTree*)sip_server_matcher);
+    mlmpProcessPatterns(sip_ua_matcher);
+    mlmpProcessPatterns(sip_server_matcher);
+}
+
+void SipPatternMatchers::reload_patterns()
+{
+    assert(sip_ua_matcher);
+    mlmp_reload_patterns(*sip_ua_matcher);
+    assert(sip_server_matcher);
+    mlmp_reload_patterns(*sip_server_matcher);
 }
 
 int SipPatternMatchers::get_client_from_ua(const char* pattern, uint32_t pattern_len,

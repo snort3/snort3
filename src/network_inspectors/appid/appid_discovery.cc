@@ -49,21 +49,12 @@
 #include "tp_appid_utils.h"
 using namespace snort;
 
-AppIdDiscovery::AppIdDiscovery()
-{
-    tcp_patterns = new SearchTool;
-    udp_patterns = new SearchTool;
-}
-
 AppIdDiscovery::~AppIdDiscovery()
 {
     for (auto pd : pattern_data)
         delete pd;
 
     pattern_data.clear();
-
-    delete tcp_patterns;
-    delete udp_patterns;
 
     for (auto kv : tcp_detectors)
         delete kv.second;
@@ -87,12 +78,12 @@ void AppIdDiscovery::register_detector(const std::string& name, AppIdDetector* c
         ErrorMessage("Detector %s has unsupported protocol %u", name.c_str(), (unsigned)proto);
 }
 
-void AppIdDiscovery::add_pattern_data(AppIdDetector* detector, SearchTool* st, int position, const
+void AppIdDiscovery::add_pattern_data(AppIdDetector* detector, SearchTool& st, int position, const
     uint8_t* const pattern, unsigned size, unsigned nocase)
 {
     AppIdPatternMatchNode* pd = new AppIdPatternMatchNode(detector, position, size);
     pattern_data.emplace_back(pd);
-    st->add((const char*)pattern, size, pd, nocase);
+    st.add((const char*)pattern, size, pd, nocase);
 }
 
 void AppIdDiscovery::register_tcp_pattern(AppIdDetector* detector, const uint8_t* const pattern,

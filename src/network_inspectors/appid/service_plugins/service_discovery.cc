@@ -145,12 +145,24 @@ void ServiceDiscovery::initialize()
     }
 }
 
+void ServiceDiscovery::reload()
+{
+    for ( auto kv : tcp_detectors )
+        kv.second->reload();
+    for ( auto kv : udp_detectors )
+        kv.second->reload();
+}
+
 void ServiceDiscovery::finalize_service_patterns()
 {
-    if (tcp_patterns)
-        tcp_patterns->prep();
-    if (udp_patterns)
-        udp_patterns->prep();
+    tcp_patterns.prep();
+    udp_patterns.prep();
+}
+
+void ServiceDiscovery::reload_service_patterns()
+{
+    tcp_patterns.reload();
+    udp_patterns.reload();
 }
 
 int ServiceDiscovery::add_service_port(AppIdDetector* detector, const ServiceDetectorPort& pp)
@@ -235,9 +247,9 @@ void ServiceDiscovery::match_by_pattern(AppIdSession& asd, const Packet* pkt, Ip
     SearchTool* patterns = nullptr;
 
     if (proto == IpProtocol::TCP)
-        patterns = tcp_patterns;
+        patterns = &tcp_patterns;
     else
-        patterns = udp_patterns;
+        patterns = &udp_patterns;
 
     if (patterns)
     {

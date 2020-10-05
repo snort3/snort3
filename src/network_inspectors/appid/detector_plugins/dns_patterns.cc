@@ -59,6 +59,11 @@ void DnsPatternMatchers::finalize_patterns()
     dns_host_matcher.prep();
 }
 
+void DnsPatternMatchers::reload_patterns()
+{
+    dns_host_matcher.reload();
+}
+
 DnsPatternMatchers::~DnsPatternMatchers()
 {
     DnsHostPatternList* tmp_pattern;

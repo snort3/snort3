@@ -32,6 +32,7 @@
 #include <CppUTestExt/MockSupport.h>
 
 void ServiceDiscovery::initialize() {}
+void ServiceDiscovery::reload() {}
 int ServiceDiscovery::fail_service(AppIdSession&, const Packet*, AppidSessionDirection,
     ServiceDetector*, ServiceDiscoveryState*) { return 0; }
 int ServiceDiscovery::add_service_port(AppIdDetector*,

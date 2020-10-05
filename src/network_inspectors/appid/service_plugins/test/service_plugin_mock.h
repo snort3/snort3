@@ -85,9 +85,11 @@ SipPatternMatchers::~SipPatternMatchers() { }
 HttpPatternMatchers::~HttpPatternMatchers() { }
 DnsPatternMatchers::~DnsPatternMatchers() { }
 void ClientDiscovery::initialize() {}
+void ClientDiscovery::reload() {}
 FpSMBData* smb_data = nullptr;
 
 int AppIdDetector::initialize(){return 0;}
+void AppIdDetector::reload() { }
 int AppIdDetector::data_add(AppIdSession&, void*, AppIdFreeFCN){return 0;}
 void* AppIdDetector::data_get(AppIdSession&) {return nullptr;}
 void AppIdDetector::add_user(AppIdSession&, const char*, AppId, bool){}
@@ -99,11 +101,9 @@ void ServiceAppDescriptor::update_stats(AppId, bool){}
 void ClientAppDescriptor::update_user(AppId, const char*){}
 void ClientAppDescriptor::update_stats(AppId, bool) {}
 void PayloadAppDescriptor::update_stats(AppId, bool) {}
-void AppIdDiscovery::add_pattern_data(AppIdDetector*, snort::SearchTool*, int,
+void AppIdDiscovery::add_pattern_data(AppIdDetector*, snort::SearchTool&, int,
         const uint8_t* const, unsigned, unsigned){}
 void AppIdDiscovery::register_detector(const std::string&, AppIdDetector*,  IpProtocol){}
-void add_pattern_data(AppIdDetector*, snort::SearchTool*, int,
-    const uint8_t* const, unsigned, unsigned) {}
 void AppIdDiscovery::register_tcp_pattern(AppIdDetector*, const uint8_t* const, unsigned,
     int, unsigned){}
 void AppIdDiscovery::register_udp_pattern(AppIdDetector*, const uint8_t* const, unsigned,
@@ -120,7 +120,6 @@ int AppIdSession::add_flow_data(void* data, unsigned type, AppIdFreeFCN)
     return 0;
 }
 int dcerpc_validate(const uint8_t*, int){return 0; }
-AppIdDiscovery::AppIdDiscovery() { }
 AppIdDiscovery::~AppIdDiscovery() { }
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }

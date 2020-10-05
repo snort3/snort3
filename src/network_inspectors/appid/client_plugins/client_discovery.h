@@ -42,8 +42,10 @@ class ClientDiscovery : public AppIdDiscovery
 {
 public:
     void initialize() override;
+    void reload() override;
 
-    void finalize_client_plugins();
+    void finalize_client_patterns();
+    void reload_client_patterns();
     bool do_client_discovery(AppIdSession&, snort::Packet*,
         AppidSessionDirection direction, AppidChangeBits& change_bits);
 

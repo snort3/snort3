@@ -79,6 +79,8 @@ public:
 
     virtual int prep_patterns(SnortConfig*) = 0;
 
+    virtual void reuse_search() { }
+
     int search(
         const uint8_t* T, int n, MpseMatch, void* context, int* current_state);
 

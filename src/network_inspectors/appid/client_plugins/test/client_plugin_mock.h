@@ -73,14 +73,16 @@ SipPatternMatchers::~SipPatternMatchers() { }
 HttpPatternMatchers::~HttpPatternMatchers() { }
 DnsPatternMatchers::~DnsPatternMatchers() { }
 void ClientDiscovery::initialize() {}
+void ClientDiscovery::reload() {}
 
 int AppIdDetector::initialize(){return 0;}
+void AppIdDetector::reload() { }
 int AppIdDetector::data_add(AppIdSession&, void*, AppIdFreeFCN){return 0;}
 void* AppIdDetector::data_get(AppIdSession&) {return nullptr;}
 void AppIdDetector::add_user(AppIdSession&, const char*, AppId, bool){}
 void AppIdDetector::add_payload(AppIdSession&, AppId){}
 void AppIdDetector::add_app(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppId, const char*, AppidChangeBits&){}
-void AppIdDiscovery::add_pattern_data(AppIdDetector*, snort::SearchTool*, int,
+void AppIdDiscovery::add_pattern_data(AppIdDetector*, snort::SearchTool&, int,
         const uint8_t* const, unsigned, unsigned){}
 void AppIdDiscovery::register_detector(const std::string&, AppIdDetector*,  IpProtocol){}
 void add_pattern_data(AppIdDetector*, snort::SearchTool*, int,
@@ -92,7 +94,6 @@ void AppIdDiscovery::register_udp_pattern(AppIdDetector*, const uint8_t* const, 
 int AppIdDiscovery::add_service_port(AppIdDetector*, const ServiceDetectorPort&){return 0;}
 void ApplicationDescriptor::set_id(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&){}
 void ApplicationDescriptor::set_id(AppId){}
-AppIdDiscovery::AppIdDiscovery() { }
 AppIdDiscovery::~AppIdDiscovery() { }
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }

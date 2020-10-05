@@ -42,6 +42,7 @@ public:
     void add(const uint8_t* pattern, unsigned len, void* s_context, bool no_case = true);
 
     void prep();
+    void reload();
 
     // set state to zero on first call
     int find(const char* s, unsigned s_len, MpseMatch, int& state,

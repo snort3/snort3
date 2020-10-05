@@ -48,7 +48,6 @@ int AppIdDetector::initialize()
 
     if (!appid_registry.empty())
     {
-        // FIXIT-M: RELOAD - to support ODP reload, store ODP context in AppIdDetector
         AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
         assert(inspector);
         AppIdContext& ctxt = inspector->get_ctxt();
@@ -62,6 +61,11 @@ int AppIdDetector::initialize()
 
     do_custom_init();
     return APPID_SUCCESS;
+}
+
+void AppIdDetector::reload()
+{
+    do_custom_reload();
 }
 
 void* AppIdDetector::data_get(AppIdSession& asd)

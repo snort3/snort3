@@ -152,6 +152,7 @@ public:
     }
 
     int prep_patterns(SnortConfig*) override;
+    void reuse_search() override;
 
     int _search(const uint8_t*, int, MpseMatch, void*, int*) override;
 
@@ -262,6 +263,15 @@ int HyperscanMpse::prep_patterns(SnortConfig* sc)
         user_ctor(sc);
 
     return 0;
+}
+
+void HyperscanMpse::reuse_search()
+{
+    if ( pvector.empty() )
+        return;
+
+    if ( hs_error_t err = hs_alloc_scratch(hs_db, &s_scratch[get_instance_id()]) )
+        ErrorMessage("can't allocate search scratch space (%d)", err);
 }
 
 int HyperscanMpse::match(unsigned id, unsigned long long to, MpseMatch match_cb, void* match_ctx)

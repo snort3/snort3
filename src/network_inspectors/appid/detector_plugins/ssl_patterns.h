@@ -52,6 +52,7 @@ public:
     void add_cert_pattern(uint8_t*, size_t, uint8_t, AppId);
     void add_cname_pattern(uint8_t*, size_t, uint8_t, AppId);
     void finalize_patterns();
+    void reload_patterns();
     bool scan_hostname(const uint8_t*, size_t, AppId&, AppId&);
     bool scan_cname(const uint8_t*, size_t, AppId&, AppId&);
 

@@ -169,6 +169,12 @@ void SslPatternMatchers::finalize_patterns()
     create_matcher(ssl_cname_matcher, cname_pattern_list);
 }
 
+void SslPatternMatchers::reload_patterns()
+{
+    ssl_host_matcher.reload();
+    ssl_cname_matcher.reload();
+}
+
 bool SslPatternMatchers::scan_hostname(const uint8_t* hostname, size_t size, AppId& client_id, AppId& payload_id)
 {
     return scan_patterns(ssl_host_matcher, hostname, size, client_id, payload_id);

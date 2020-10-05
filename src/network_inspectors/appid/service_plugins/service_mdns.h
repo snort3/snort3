@@ -35,9 +35,9 @@ class MdnsServiceDetector : public ServiceDetector
 {
 public:
     MdnsServiceDetector(ServiceDiscovery*);
-    ~MdnsServiceDetector() override;
 
     int validate(AppIdDiscoveryArgs&) override;
+    void do_custom_reload() override;
 
 private:
     MatchedPatterns* create_match_list(const char* data, uint16_t dataSize);
@@ -50,7 +50,7 @@ private:
     int reference_pointer(const char* start_ptr, const char** resp_endptr, int* start_index,
         uint16_t data_size, uint8_t* user_name_len, unsigned size, MatchedPatterns*& pattern_list);
 
-    snort::SearchTool* matcher = nullptr;
+    snort::SearchTool matcher;
 };
 #endif
 

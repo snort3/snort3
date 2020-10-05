@@ -88,6 +88,13 @@ enum DHPSequence
     USER_AGENT_HEADER = 5
 };
 
+struct FieldPattern
+{
+    const uint8_t* data;
+    HttpFieldIds patternType;
+    unsigned length;
+};
+
 struct DetectorHTTPPattern
 {
     bool init(const uint8_t* pat, unsigned len, DHPSequence seq, AppId service, AppId client, AppId payload, AppId app)
@@ -276,6 +283,7 @@ public:
     ~HttpPatternMatchers();
 
     int finalize_patterns();
+    void reload_patterns();
     void insert_chp_pattern(CHPListElement*);
     void insert_http_pattern(enum httpPatternType, DetectorHTTPPattern&);
     void remove_http_patterns_for_id(AppId);
@@ -286,6 +294,7 @@ public:
     int process_chp_list(CHPListElement*);
     int process_host_patterns(DetectorHTTPPatterns&);
     int process_mlmp_patterns();
+    void process_http_field_patterns(FieldPattern*, size_t);
 
     void scan_key_chp(ChpMatchDescriptor&);
     AppId scan_chp(ChpMatchDescriptor&, char**, char**, int*, AppIdHttpSession*,
@@ -315,8 +324,8 @@ private:
     snort::SearchTool client_agent_matcher;
     snort::SearchTool via_matcher;
     snort::SearchTool content_type_matcher;
-    snort::SearchTool* field_matcher = nullptr;
-    snort::SearchTool* chp_matchers[NUM_HTTP_FIELDS] = { nullptr };
+    snort::SearchTool field_matcher;
+    snort::SearchTool chp_matchers[NUM_HTTP_FIELDS];
     tMlmpTree* host_url_matcher = nullptr;
     tMlmpTree* rtmp_host_url_matcher = nullptr;
 

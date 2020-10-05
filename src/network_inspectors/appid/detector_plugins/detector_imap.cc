@@ -536,6 +536,12 @@ void ImapClientDetector::do_custom_init()
     cmd_matcher->prep();
 }
 
+void ImapClientDetector::do_custom_reload()
+{
+    assert(cmd_matcher);
+    cmd_matcher->reload();
+}
+
 static int pattern_match(void* id, void*, int match_end_pos, void* data, void*)
 {
     unsigned long idx = (unsigned long)id;

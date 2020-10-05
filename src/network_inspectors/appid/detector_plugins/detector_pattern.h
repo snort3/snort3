@@ -79,6 +79,7 @@ public:
 
     void insert_client_port_pattern(PortPatternNode*);
     void finalize_client_port_patterns();
+    void reload_client_port_patterns();
 
     int validate(AppIdDiscoveryArgs&) override;
 
@@ -100,6 +101,7 @@ public:
 
     void insert_service_port_pattern(PortPatternNode*);
     void finalize_service_port_patterns();
+    void reload_service_port_patterns();
 
     int validate(AppIdDiscoveryArgs&) override;
 

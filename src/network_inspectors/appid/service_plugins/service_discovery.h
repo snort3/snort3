@@ -67,10 +67,11 @@ enum SESSION_SERVICE_SEARCH_STATE
 class ServiceDiscovery : public AppIdDiscovery
 {
 public:
-    ServiceDiscovery() { }
     ~ServiceDiscovery() override { }
     void initialize() override;
+    void reload() override;
     void finalize_service_patterns();
+    void reload_service_patterns();
     int add_service_port(AppIdDetector*, const ServiceDetectorPort&) override;
 
     AppIdDetectorsIterator get_detector_iterator(IpProtocol);

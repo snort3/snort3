@@ -32,6 +32,7 @@
 #include <CppUTestExt/MockSupport.h>
 
 void ServiceDiscovery::initialize() {}
+void ServiceDiscovery::reload() {}
 void ServiceDiscovery::finalize_service_patterns() {}
 void ServiceDiscovery::match_by_pattern(AppIdSession&, const Packet*, IpProtocol) {}
 void ServiceDiscovery::get_port_based_services(IpProtocol, uint16_t, AppIdSession&) {}

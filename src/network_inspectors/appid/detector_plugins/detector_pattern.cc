@@ -126,19 +126,14 @@ static void read_patterns(PortPatternNode* portPatternList, PatternService** ser
     }
 }
 
-static void register_pattern(SearchTool** patterns, Pattern* pattern)
+static void register_pattern(SearchTool*& patterns, Pattern* pattern)
 {
-    if (!*patterns)
+    if (!patterns)
     {
-        *patterns = new SearchTool;
-        if (!*patterns)
-        {
-            ErrorMessage("Error initializing the pattern table\n");
-            return;
-        }
+        patterns = new SearchTool;
     }
 
-    (*patterns)->add((char*)pattern->data, pattern->length, pattern, false);
+    patterns->add((char*)pattern->data, pattern->length, pattern, false);
 }
 
 struct PServiceMatch
@@ -284,10 +279,10 @@ void PatternServiceDetector::create_service_pattern_trees()
         for (PortNode* port = ps->port; port; port = port->next)
             for (Pattern* pattern = ps->pattern; pattern; pattern = pattern->next)
                 if (ps->proto == IpProtocol::TCP)
-                    register_pattern(&tcp_port_pattern_tree[port->port],
+                    register_pattern(tcp_port_pattern_tree[port->port],
                         pattern);
                 else
-                    register_pattern(&udp_port_pattern_tree[port->port],
+                    register_pattern(udp_port_pattern_tree[port->port],
                         pattern);
 
     for (unsigned i = 0; i < 65536; i++)
@@ -300,7 +295,7 @@ void PatternServiceDetector::create_service_pattern_trees()
                     continue;
 
                 for (Pattern* pattern = ps->pattern; pattern; pattern = pattern->next)
-                    register_pattern(&tcp_port_pattern_tree[i], pattern);
+                    register_pattern(tcp_port_pattern_tree[i], pattern);
             }
 
             tcp_port_pattern_tree[i]->prep();
@@ -314,7 +309,7 @@ void PatternServiceDetector::create_service_pattern_trees()
                     continue;
 
                 for (Pattern* pattern = ps->pattern; pattern; pattern = pattern->next)
-                    register_pattern(&udp_port_pattern_tree[i], pattern);
+                    register_pattern(udp_port_pattern_tree[i], pattern);
             }
 
             udp_port_pattern_tree[i]->prep();
@@ -340,13 +335,13 @@ void PatternServiceDetector::register_service_patterns()
                     {
                         handler->register_tcp_pattern(this, pattern->data, pattern->length,
                             pattern->offset, 0);
-                        register_pattern(&tcp_pattern_matcher, pattern);
+                        register_pattern(tcp_pattern_matcher, pattern);
                     }
                     else
                     {
                         handler->register_udp_pattern(this, pattern->data, pattern->length,
                             pattern->offset, 0);
-                        register_pattern(&udp_pattern_matcher, pattern);
+                        register_pattern(udp_pattern_matcher, pattern);
                     }
                 }
             }
@@ -416,6 +411,24 @@ void PatternServiceDetector::finalize_service_port_patterns()
     create_service_pattern_trees();
     register_service_patterns();
     dump_patterns("Server", service_port_pattern);
+}
+
+void PatternServiceDetector::reload_service_port_patterns()
+{
+    for (unsigned i = 0; i < 65536; i++)
+    {
+        if (tcp_port_pattern_tree[i])
+            tcp_port_pattern_tree[i]->reload();
+
+        if (udp_port_pattern_tree[i])
+            udp_port_pattern_tree[i]->reload();
+    }
+
+    if (tcp_pattern_matcher)
+        tcp_pattern_matcher->reload();
+
+    if (udp_pattern_matcher)
+        udp_pattern_matcher->reload();
 }
 
 PatternServiceDetector::PatternServiceDetector(ServiceDiscovery* sd)
@@ -562,9 +575,9 @@ void PatternClientDetector::create_client_pattern_trees()
         for ( Pattern* pattern = ps->pattern; pattern; pattern = pattern->next)
         {
             if (ps->proto == IpProtocol::TCP)
-                register_pattern(&tcp_pattern_matcher, pattern);
+                register_pattern(tcp_pattern_matcher, pattern);
             else
-                register_pattern(&udp_pattern_matcher, pattern);
+                register_pattern(udp_pattern_matcher, pattern);
         }
     }
 }
@@ -606,13 +619,13 @@ void PatternClientDetector::register_client_patterns()
                 {
                     handler->register_tcp_pattern(this, pattern->data, pattern->length,
                         pattern->offset, 0);
-                    register_pattern(&tcp_pattern_matcher, pattern);
+                    register_pattern(tcp_pattern_matcher, pattern);
                 }
                 else
                 {
                     handler->register_udp_pattern(this, pattern->data, pattern->length,
                         pattern->offset, 0);
-                    register_pattern(&udp_pattern_matcher, pattern);
+                    register_pattern(udp_pattern_matcher, pattern);
                 }
             }
             ps->count++;
@@ -631,5 +644,14 @@ void PatternClientDetector::finalize_client_port_patterns()
     create_client_pattern_trees();
     register_client_patterns();
     dump_patterns("Client", service_port_pattern);
+}
+
+void PatternClientDetector::reload_client_port_patterns()
+{
+    if (tcp_pattern_matcher)
+        tcp_pattern_matcher->reload();
+
+    if (udp_pattern_matcher)
+        udp_pattern_matcher->reload();
 }
 

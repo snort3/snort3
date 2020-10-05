@@ -32,7 +32,6 @@ class ClientDetector : public AppIdDetector
 public:
     ClientDetector();
 
-    void do_custom_init() override { }
     void register_appid(AppId, unsigned extractsInfo, OdpContext& odp_ctxt) override;
 };
 #endif

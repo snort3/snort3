@@ -119,6 +119,14 @@ void SearchTool::prep()
         mpsegrp->offload_mpse->prep_patterns(nullptr);
 }
 
+void SearchTool::reload()
+{
+    if ( mpsegrp->normal_mpse )
+        mpsegrp->normal_mpse->reuse_search();
+    if ( mpsegrp->offload_mpse )
+        mpsegrp->offload_mpse->reuse_search();
+}
+
 int SearchTool::find(
     const char* str, unsigned len, MpseMatch mf, int& state, bool confine, void* user_data)
 {

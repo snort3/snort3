@@ -46,11 +46,11 @@ ThirdPartyAppIdContext* AppIdContext::tp_appid_ctxt = nullptr;
 snort::SearchTool::SearchTool(char const*, bool) { }
 snort::SearchTool::~SearchTool() { }
 
-AppIdDiscovery::AppIdDiscovery() { }
 AppIdDiscovery::~AppIdDiscovery() { }
 void ClientDiscovery::initialize() { }
+void ClientDiscovery::reload() { }
 void AppIdDiscovery::register_detector(const string&, AppIdDetector*, IpProtocol) { }
-void AppIdDiscovery::add_pattern_data(AppIdDetector*, snort::SearchTool*, int, unsigned char const*, unsigned int, unsigned int) { }
+void AppIdDiscovery::add_pattern_data(AppIdDetector*, snort::SearchTool&, int, unsigned char const*, unsigned int, unsigned int) { }
 void AppIdDiscovery::register_tcp_pattern(AppIdDetector*, unsigned char const*, unsigned int, int, unsigned int) { }
 void AppIdDiscovery::register_udp_pattern(AppIdDetector*, unsigned char const*, unsigned int, int, unsigned int) { }
 int AppIdDiscovery::add_service_port(AppIdDetector*, ServiceDetectorPort const&) { return 0; }
@@ -62,6 +62,7 @@ AppIdConfig::~AppIdConfig() { }
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }
 OdpContext::~OdpContext() { }
 void ServiceDiscovery::initialize() { }
+void ServiceDiscovery::reload() { }
 int ServiceDiscovery::add_service_port(AppIdDetector*, const ServiceDetectorPort&)
 { return 0; }
 

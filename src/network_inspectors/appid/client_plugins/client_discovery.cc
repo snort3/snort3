@@ -76,13 +76,24 @@ void ClientDiscovery::initialize()
         kv.second->initialize();
 }
 
-void ClientDiscovery::finalize_client_plugins()
+void ClientDiscovery::reload()
 {
-    if ( tcp_patterns )
-        tcp_patterns->prep();
+    for ( auto kv : tcp_detectors )
+        kv.second->reload();
+    for ( auto kv : udp_detectors )
+        kv.second->reload();
+}
 
-    if ( udp_patterns )
-        udp_patterns->prep();
+void ClientDiscovery::finalize_client_patterns()
+{
+    tcp_patterns.prep();
+    udp_patterns.prep();
+}
+
+void ClientDiscovery::reload_client_patterns()
+{
+    tcp_patterns.reload();
+    udp_patterns.reload();
 }
 
 /*
@@ -189,9 +200,9 @@ ClientAppMatch* ClientDiscovery::find_detector_candidates(const Packet* pkt, con
     SearchTool* patterns;
 
     if (asd.protocol == IpProtocol::TCP)
-        patterns = asd.get_odp_ctxt().get_client_disco_mgr().tcp_patterns;
+        patterns = &asd.get_odp_ctxt().get_client_disco_mgr().tcp_patterns;
     else
-        patterns = asd.get_odp_ctxt().get_client_disco_mgr().udp_patterns;
+        patterns = &asd.get_odp_ctxt().get_client_disco_mgr().udp_patterns;
 
     if ( patterns )
         patterns->find_all((const char*)pkt->data, pkt->dsize, &pattern_match, false, (void*)&match_list);

@@ -110,8 +110,6 @@ bool AppIdContext::init_appid(SnortConfig* sc)
     if (!odp_thread_local_ctxt)
         odp_thread_local_ctxt = new OdpThreadContext(true);
 
-    // FIXIT-M: RELOAD - Get rid of "once" flag
-    // Handle the if condition in AppIdContext::init_appid
     static bool once = false;
     if (!once)
     {
@@ -124,6 +122,12 @@ bool AppIdContext::init_appid(SnortConfig* sc)
         if (!tp_appid_ctxt)
             tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(config, *odp_ctxt);
         once = true;
+    }
+    else
+    {
+        odp_ctxt->get_client_disco_mgr().reload();
+        odp_ctxt->get_service_disco_mgr().reload();
+        odp_ctxt->reload();
     }
 
     map_app_names_to_snort_ids(sc, config);
@@ -165,13 +169,27 @@ void OdpContext::initialize()
     service_pattern_detector->finalize_service_port_patterns();
     client_pattern_detector->finalize_client_port_patterns();
     service_disco_mgr.finalize_service_patterns();
-    client_disco_mgr.finalize_client_plugins();
+    client_disco_mgr.finalize_client_patterns();
     http_matchers.finalize_patterns();
     // sip patterns need to be finalized after http patterns because they
     // are dependent on http patterns
     sip_matchers.finalize_patterns(*this);
     ssl_matchers.finalize_patterns();
     dns_matchers.finalize_patterns();
+}
+
+void OdpContext::reload()
+{
+    assert(service_pattern_detector);
+    service_pattern_detector->reload_service_port_patterns();
+    assert(client_pattern_detector);
+    client_pattern_detector->reload_client_port_patterns();
+    service_disco_mgr.reload_service_patterns();
+    client_disco_mgr.reload_client_patterns();
+    http_matchers.reload_patterns();
+    sip_matchers.reload_patterns();
+    ssl_matchers.reload_patterns();
+    dns_matchers.reload_patterns();
 }
 
 void OdpContext::add_port_service_id(IpProtocol proto, uint16_t port, AppId appid)

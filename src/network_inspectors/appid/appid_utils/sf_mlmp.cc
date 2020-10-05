@@ -114,6 +114,12 @@ int mlmpProcessPatterns(tMlmpTree* root)
     return rvalue;
 }
 
+void mlmp_reload_patterns(tMlmpTree& root)
+{
+    assert(root.patternTree);
+    root.patternTree->reload();
+}
+
 void* mlmpMatchPatternUrl(tMlmpTree* root, tMlmpPattern* inputPatternList)
 {
     return mlmpMatchPatternCustom(root, inputPatternList, urlPatternSelector);

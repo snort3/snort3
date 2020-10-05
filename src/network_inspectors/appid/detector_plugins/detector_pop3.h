@@ -34,6 +34,7 @@ public:
     ~Pop3ClientDetector() override;
 
     void do_custom_init() override;
+    void do_custom_reload() override;
     int validate(AppIdDiscoveryArgs&) override;
     POP3DetectorData* get_common_data(AppIdSession&);
 

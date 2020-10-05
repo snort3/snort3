@@ -71,11 +71,11 @@ void ClientAppDescriptor::update_user(AppId app_id, const char* username)
 void ClientAppDescriptor::update_stats(AppId, bool) {}
 void PayloadAppDescriptor::update_stats(AppId, bool) {}
 
-AppIdDiscovery::AppIdDiscovery() { }
 AppIdDiscovery::~AppIdDiscovery() { }
 void ClientDiscovery::initialize() { }
+void ClientDiscovery::reload() { }
 void AppIdDiscovery::register_detector(const string&, AppIdDetector*, IpProtocol) { }
-void AppIdDiscovery::add_pattern_data(AppIdDetector*, snort::SearchTool*, int, unsigned char const*, unsigned int, unsigned int) { }
+void AppIdDiscovery::add_pattern_data(AppIdDetector*, snort::SearchTool&, int, unsigned char const*, unsigned int, unsigned int) { }
 void AppIdDiscovery::register_tcp_pattern(AppIdDetector*, unsigned char const*, unsigned int, int, unsigned int) { }
 void AppIdDiscovery::register_udp_pattern(AppIdDetector*, unsigned char const*, unsigned int, int, unsigned int) { }
 int AppIdDiscovery::add_service_port(AppIdDetector*, ServiceDetectorPort const&) { return 0; }
@@ -99,8 +99,8 @@ int ServiceDiscovery::add_ftp_service_state(AppIdSession&)
     return 0;
 }
 
-void ServiceDiscovery::initialize()
-{ }
+void ServiceDiscovery::initialize() { }
+void ServiceDiscovery::reload() { }
 
 int ServiceDiscovery::add_service_port(AppIdDetector*, const ServiceDetectorPort&)
 { return 0; }

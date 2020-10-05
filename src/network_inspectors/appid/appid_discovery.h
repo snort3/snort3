@@ -94,7 +94,7 @@ typedef AppIdDetectors::iterator AppIdDetectorsIterator;
 class AppIdDiscovery
 {
 public:
-    AppIdDiscovery();
+    AppIdDiscovery() { }
     virtual ~AppIdDiscovery();
 
     AppIdDiscovery(const AppIdDiscovery&) = delete;
@@ -103,8 +103,9 @@ public:
     static void tterm();
 
     virtual void initialize() = 0;
+    virtual void reload() = 0;
     virtual void register_detector(const std::string&, AppIdDetector*,  IpProtocol);
-    virtual void add_pattern_data(AppIdDetector*, snort::SearchTool*, int position,
+    virtual void add_pattern_data(AppIdDetector*, snort::SearchTool&, int position,
         const uint8_t* const pattern, unsigned size, unsigned nocase);
     virtual void register_tcp_pattern(AppIdDetector*, const uint8_t* const pattern, unsigned size,
         int position, unsigned nocase);
@@ -128,9 +129,9 @@ public:
 protected:
     AppIdDetectors tcp_detectors;
     AppIdDetectors udp_detectors;
-    snort::SearchTool* tcp_patterns = nullptr;
+    snort::SearchTool tcp_patterns;
     int tcp_pattern_count = 0;
-    snort::SearchTool* udp_patterns = nullptr;
+    snort::SearchTool udp_patterns;
     int udp_pattern_count = 0;
     std::vector<AppIdPatternMatchNode*> pattern_data;
 

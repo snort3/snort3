@@ -55,6 +55,7 @@ public:
     TestDetector() = default;
 
     void do_custom_init() override { }
+    void do_custom_reload() override { }
     int validate(AppIdDiscoveryArgs&) override { return 0; }
     void register_appid(AppId, unsigned, OdpContext&) override { }
 };
