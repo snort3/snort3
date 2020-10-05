@@ -91,6 +91,7 @@ struct HostApplication
     bool inferred_appid = false;
     uint32_t hits = 0;
     uint32_t last_seen = 0;
+    char user[INFO_SIZE] = { 0 };
 
     std::vector<HostApplicationInfo, HostAppInfoAllocator> info;
 };
@@ -235,6 +236,7 @@ public:
     void update_service(const HostApplication& ha);
     bool update_service_info(HostApplication& ha, const char* vendor, const char* version,
         uint16_t max_info);
+    bool update_service_user(Port, IpProtocol, const char* username);
     void remove_inferred_services();
 
     size_t get_client_count();

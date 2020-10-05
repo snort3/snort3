@@ -340,7 +340,7 @@ done:
             user_size = TNS_MAX_INFO_SIZE;
         memcpy(username, &args.data[user_start], user_size);
         username[user_size] = 0;
-        add_user(args.asd, username, APP_ID_ORACLE_DATABASE, true);
+        add_user(args.asd, username, APP_ID_ORACLE_DATABASE, true, args.change_bits);
     }
     return APPID_SUCCESS;
 }

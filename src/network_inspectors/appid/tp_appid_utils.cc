@@ -484,15 +484,14 @@ static inline void process_ssl(AppIdSession& asd,
 }
 
 static inline void process_ftp_control(AppIdSession& asd,
-    ThirdPartyAppIDAttributeData& attribute_data)
+    ThirdPartyAppIDAttributeData& attribute_data, AppidChangeBits& change_bits)
 {
     const string* field=0;
     if (!asd.get_odp_ctxt().ftp_userid_disabled &&
         (field=attribute_data.ftp_command_user()) != nullptr)
     {
-        asd.set_client_user(APP_ID_FTP_CONTROL, field->c_str());
-        asd.set_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
-        // attribute_data.ftpCommandUser = nullptr;
+        asd.set_client_user(APP_ID_FTP_CONTROL, field->c_str(), change_bits);
+        change_bits.set(APPID_CLIENT_LOGIN_SUCCEEDED_BIT);
     }
 }
 
@@ -546,7 +545,7 @@ static inline void process_third_party_results(AppIdSession& asd, int confidence
         process_rtmp(asd, attribute_data, confidence, change_bits);
 
     else if (contains(proto_list, APP_ID_FTP_CONTROL))
-        process_ftp_control(asd, attribute_data);
+        process_ftp_control(asd, attribute_data, change_bits);
 
     else if (contains(proto_list, APP_ID_QUIC))
         process_quic(asd, attribute_data, change_bits);

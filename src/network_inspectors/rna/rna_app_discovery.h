@@ -34,6 +34,9 @@ public:
     static void discover_client(const snort::Packet* p, RnaTracker& rt,
         const struct in6_addr* src_ip, const uint8_t* src_mac, RnaConfig* conf,
         RnaLogger& logger, const char* version, AppId client, AppId service);
+
+    static void discover_user(const snort::Packet*, RnaTracker&, const struct in6_addr*,
+        const uint8_t* src_mac, RnaLogger&, const char* username, AppId, IpProtocol);
 private:
     static void update_service_info(const snort::Packet* p, IpProtocol proto, const char* vendor,
         const char* version, RnaTracker& rt, const snort::SfIp* ip, const uint8_t* src_mac,

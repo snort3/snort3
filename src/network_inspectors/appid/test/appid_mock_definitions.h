@@ -63,10 +63,12 @@ void ApplicationDescriptor::set_id(AppId app_id){ my_id = app_id;}
 void ServiceAppDescriptor::set_id(AppId app_id, OdpContext&){ set_id(app_id); }
 void ServiceAppDescriptor::update_stats(AppId, bool){}
 void ServiceAppDescriptor::set_port_service_id(AppId app_id){ port_service_id = app_id;}
-void ClientAppDescriptor::update_user(AppId app_id, const char* username)
+void ClientAppDescriptor::update_user(AppId app_id, const char* username, AppidChangeBits& change_bits)
 {
     my_username = username;
     my_user_id = app_id;
+    change_bits.set(APPID_CLIENT_USERNAME_BIT);
+    change_bits.set(APPID_CLIENT_USERID_BIT);
 }
 void ClientAppDescriptor::update_stats(AppId, bool) {}
 void PayloadAppDescriptor::update_stats(AppId, bool) {}

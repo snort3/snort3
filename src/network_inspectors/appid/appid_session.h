@@ -517,9 +517,9 @@ public:
         return api.client.get_user_id();
     }
 
-    void set_client_user(AppId id, const char* username)
+    void set_client_user(AppId id, const char* username, AppidChangeBits& change_bits)
     {
-        api.client.update_user(id, username);
+        api.client.update_user(id, username, change_bits);
     }
 
     AppId get_payload_id() const

@@ -136,7 +136,7 @@ void ServiceAppDescriptor::set_id(AppId app_id, OdpContext& odp_ctxt)
 }
 void ServiceAppDescriptor::update_stats(AppId, bool){}
 void ServiceAppDescriptor::set_port_service_id(AppId){}
-void ClientAppDescriptor::update_user(AppId, const char*){}
+void ClientAppDescriptor::update_user(AppId, const char*, AppidChangeBits&){}
 void ClientAppDescriptor::update_stats(AppId, bool) {}
 void PayloadAppDescriptor::update_stats(AppId, bool) {}
 
@@ -383,7 +383,7 @@ TEST(appid_discovery_tests, event_published_when_ignoring_flow)
 
     // Detect changes in service, client, payload, and misc appid
     mock().checkExpectations();
-    STRCMP_EQUAL("Published change_bits == 00000000001111100", test_log);
+    STRCMP_EQUAL("Published change_bits == 00000000000001111100", test_log);
 
     delete &asd->get_api();
     delete asd;
@@ -415,7 +415,7 @@ TEST(appid_discovery_tests, event_published_when_processing_flow)
 
     // Detect changes in service, client, payload, and misc appid
     mock().checkExpectations();
-    STRCMP_EQUAL("Published change_bits == 00000000001111100", test_log);
+    STRCMP_EQUAL("Published change_bits == 00000000000001111100", test_log);
     delete &asd->get_api();
     delete asd;
     delete flow;
@@ -510,10 +510,11 @@ TEST(appid_discovery_tests, change_bits_to_string)
     change_bits.set();
     change_bits_to_string(change_bits, str);
     STRCMP_EQUAL(str.c_str(), "created, reset, service, client, payload, misc, referred, host,"
-        " tls-host, url, user-agent, response, referrer, dns-host, version, service-vendor, service-subtype");
+        " tls-host, url, user-agent, response, referrer, dns-host, version, service-vendor, service-subtype,"
+        " client-username, client-userid, client-login-succeeded");
 
     // Failure of this test is a reminder that enum is changed, hence translator needs update
-    CHECK_EQUAL(APPID_MAX_BIT, 17);
+    CHECK_EQUAL(APPID_MAX_BIT, 20);
 }
 
 int main(int argc, char** argv)

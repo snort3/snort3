@@ -87,7 +87,7 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t, AppIdInsp
     service_port = APPID_UT_SERVICE_PORT;
     AppidChangeBits change_bits;
 
-    set_client_user(APPID_UT_ID, APPID_UT_USERNAME);
+    set_client_user(APPID_UT_ID, APPID_UT_USERNAME, change_bits);
     set_client_version(APPID_UT_CLIENT_VERSION, change_bits);
 
     set_service_vendor(APPID_UT_SERVICE_VENDOR, change_bits);

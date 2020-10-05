@@ -136,7 +136,7 @@ int MdnsServiceDetector::validate(AppIdDiscoveryArgs& args)
             if (args.asd.get_odp_ctxt().mdns_user_reporting)
             {
                 MatchedPatterns* pattern_list = nullptr;
-                analyze_user(args.asd, args.pkt, args.size, pattern_list);
+                analyze_user(args.asd, args.pkt, args.size, args.change_bits, pattern_list);
                 destroy_match_list(pattern_list);
                 goto success;
             }
@@ -251,7 +251,7 @@ int MdnsServiceDetector::reference_pointer(const char* start_ptr, const char** r
                3. Calls the function which does the Username reporting along with the host
   MDNS User Analysis*/
 int MdnsServiceDetector::analyze_user(AppIdSession& asd, const Packet* pkt, uint16_t size,
-    MatchedPatterns*& pattern_list)
+    AppidChangeBits& change_bits, MatchedPatterns*& pattern_list)
 {
     int start_index = 0;
     uint16_t data_size = size;
@@ -304,7 +304,7 @@ int MdnsServiceDetector::analyze_user(AppIdSession& asd, const Packet* pkt, uint
                     user_index++;
                 }
 
-                add_user(asd, user_name, APP_ID_MDNS, true);
+                add_user(asd, user_name, APP_ID_MDNS, true, change_bits);
                 break;
             }
 
@@ -358,7 +358,7 @@ int MdnsServiceDetector::analyze_user(AppIdSession& asd, const Packet* pkt, uint
                             memcpy(user_name, user_name_bkp + user_index,
                                 user_name_len - user_index);
                             user_name[ user_name_len - user_index ] = '\0';
-                            add_user(asd, user_name, APP_ID_MDNS, true);
+                            add_user(asd, user_name, APP_ID_MDNS, true, change_bits);
                             return 1;
                         }
                         else

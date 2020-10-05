@@ -40,4 +40,7 @@
     #define CHANGE_HOST_TYPE           16
     #define CHANGE_VLAN_TAG            18
 
+#define RUA_EVENT         1004
+    #define CHANGE_USER_LOGIN    2
+
 #endif

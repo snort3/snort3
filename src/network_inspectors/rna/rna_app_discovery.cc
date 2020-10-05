@@ -80,7 +80,7 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
                     src_mac, conf, logger, p->flow->client_port, service);
         }
 
-        if (appid_change_bits[APPID_CLIENT_BIT] and client > APP_ID_NONE
+        if ( appid_change_bits[APPID_CLIENT_BIT] and client > APP_ID_NONE
             and service > APP_ID_NONE )
         {
             const char* version = appid_session_api.get_client_version();
@@ -100,6 +100,17 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
         appid_session_api.get_service_info(vendor, version, subtype);
         update_service_info(p, proto, vendor, version, ht, src_ip, src_mac, logger, conf,
             service);
+    }
+
+    // Appid supports only login success event. Change checks once login failure and
+    // logoff is supported
+    if ( appid_change_bits[APPID_CLIENT_LOGIN_SUCCEEDED_BIT] and filter.is_user_monitored(p) )
+    {
+        AppId service;
+        const char* username = appid_session_api.get_client_info(service);
+        if ( service > APP_ID_NONE and username and *username )
+            discover_user(p, ht, (const struct in6_addr*) src_ip->get_ip6_ptr(), src_mac,
+                logger, username, service, proto);
     }
 
     if ( p->is_from_client() and ( appid_change_bits[APPID_HOST_BIT] or
@@ -183,6 +194,17 @@ void RnaAppDiscovery::discover_client(const Packet* p, RnaTracker& rt,
     if ( is_new )
     {
         logger.log(RNA_EVENT_NEW, NEW_CLIENT_APP, p, &rt, src_ip, src_mac, &hc);
+    }
+}
+
+void RnaAppDiscovery::discover_user(const Packet* p, RnaTracker& rt,
+    const struct in6_addr* src_ip, const uint8_t* src_mac, RnaLogger& logger,
+    const char* username, AppId service, IpProtocol proto)
+{
+    if ( rt->update_service_user(p->flow->server_port, proto, username) )
+    {
+        logger.log(RUA_EVENT, CHANGE_USER_LOGIN, p, &rt, src_ip, src_mac, username,
+            service, (uint32_t) packet_time());
     }
 }
 

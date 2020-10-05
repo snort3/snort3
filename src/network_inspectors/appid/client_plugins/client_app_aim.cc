@@ -198,7 +198,7 @@ int AimClientDetector::validate(AppIdDiscoveryArgs& args)
                         char username[USERNAME_LEN];
 
                         if ( check_username(cur, tlv, username, username + USERNAME_LEN - 1) )
-                            add_user(args.asd, username, APP_ID_AOL_INSTANT_MESSENGER, true);
+                            add_user(args.asd, username, APP_ID_AOL_INSTANT_MESSENGER, true, args.change_bits);
                     }
                     break;
                 case 0x0003:

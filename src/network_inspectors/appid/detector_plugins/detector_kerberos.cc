@@ -421,11 +421,11 @@ static int krb_walk_server_packet(KRBState* krbs, const uint8_t* s, const uint8_
             {
                 krb_service_detector->add_user(asd,
                     (krbs->flags & KRB_FLAG_USER_DETECTED) ? krbs->cname : reqCname,
-                    APP_ID_LDAP, false);
+                    APP_ID_LDAP, false, change_bits);
             }
         }
         else if (krbs->flags & KRB_FLAG_USER_DETECTED)
-            krb_service_detector->add_user(asd, krbs->cname, APP_ID_LDAP, true);
+            krb_service_detector->add_user(asd, krbs->cname, APP_ID_LDAP, true, change_bits);
 
         krbs->flags = 0;
     }

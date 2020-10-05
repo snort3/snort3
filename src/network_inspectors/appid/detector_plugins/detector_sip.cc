@@ -393,7 +393,7 @@ success:
         client->add_app(asd, APP_ID_SIP, client_id, client_version, change_bits);
 
     if ( !fd->user_name.empty() )
-        client->add_user(asd, fd->user_name.c_str(), APP_ID_SIP, true);
+        client->add_user(asd, fd->user_name.c_str(), APP_ID_SIP, true, change_bits);
 }
 
 void SipEventHandler::service_handler(SipEvent& sip_event, AppIdSession& asd,

@@ -138,7 +138,7 @@ public:
     void cleanup_appid_info_table();
     void dump_app_info_table();
     SnortProtocolId add_appid_protocol_reference(const char* protocol, snort::SnortConfig*);
-    void dump_appid_configurations(std::string);
+    void dump_appid_configurations(const std::string&) const;
 
 private:
     void load_odp_config(OdpContext&, const char* path);

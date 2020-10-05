@@ -967,7 +967,8 @@ static int client_add_user(lua_State* L)
     const char* userName = lua_tostring(L, 2);
     unsigned int service_id = lua_tonumber(L, 3);
     ud->cd->add_user(*lsd->ldp.asd, userName,
-        ud->get_odp_ctxt().get_app_info_mgr().get_appid_by_service_id(service_id), true);
+        ud->get_odp_ctxt().get_app_info_mgr().get_appid_by_service_id(service_id), true,
+        *lsd->ldp.change_bits);
     lua_pushnumber(L, 0);
     return 1;
 }

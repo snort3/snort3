@@ -213,7 +213,7 @@ bool AppIdReloadTuner::tune_resources(unsigned int)
 void ApplicationDescriptor::set_id(AppId){}
 void ServiceAppDescriptor::set_id(AppId, OdpContext&){}
 void ServiceAppDescriptor::update_stats(AppId, bool){}
-void ClientAppDescriptor::update_user(AppId, const char*){}
+void ClientAppDescriptor::update_user(AppId, const char*, AppidChangeBits&){}
 void ClientAppDescriptor::update_stats(AppId, bool) {}
 void PayloadAppDescriptor::update_stats(AppId, bool) {}
 void ServiceDiscovery::initialize() {}

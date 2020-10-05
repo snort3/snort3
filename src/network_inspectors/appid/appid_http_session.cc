@@ -377,11 +377,11 @@ void AppIdHttpSession::process_chp_buffers(AppidChangeBits& change_bits, HttpPat
         if ( user )
         {
             if (app_type_flags & APP_TYPE_SERVICE)
-                client.update_user(chp_final, user);
+                client.update_user(chp_final, user, change_bits);
             else
-                client.update_user(asd.get_service_id(), user);
+                client.update_user(asd.get_service_id(), user, change_bits);
             user = nullptr;
-            asd.set_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
+            change_bits.set(APPID_CLIENT_LOGIN_SUCCEEDED_BIT);
         }
 
         chp_candidate = 0;

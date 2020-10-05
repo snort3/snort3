@@ -56,6 +56,12 @@ void AppIdSessionApi::get_service_info(const char*& vendor, const char*& version
     subtype = service.get_subtype();
 }
 
+const char* AppIdSessionApi::get_client_info(AppId& service) const
+{
+    service = client.get_user_id();
+    return client.get_username();
+}
+
 AppId AppIdSessionApi::get_misc_app_id(uint32_t stream_index) const
 {
     if (get_service_app_id() == APP_ID_HTTP2)

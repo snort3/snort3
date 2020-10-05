@@ -58,9 +58,9 @@ static inline void rna_logger_message(const RnaLoggerEvent& rle)
         ip.set(rle.ip); // using this instead of packet's ip to support ARP
         debug_logf(rna_trace, nullptr, "RNA log: type %u, subtype %u, mac %s, ip %s\n",
             rle.type, rle.subtype, macbuf, ip.ntop(ipbuf));
-        if (rle.hc)
+        if ( rle.hc )
         {
-            if (rle.hc->version[0] != '\0')
+            if ( rle.hc->version[0] != '\0' )
                 debug_logf(rna_trace, nullptr,
                     "RNA client log: client %u, service %u, version %s\n",
                     rle.hc->id, rle.hc->service, rle.hc->version);
@@ -68,22 +68,29 @@ static inline void rna_logger_message(const RnaLoggerEvent& rle)
                 debug_logf(rna_trace, nullptr, "RNA client log: client %u, service %u\n",
                     rle.hc->id, rle.hc->service);
         }
-        if (rle.ha)
+        if ( rle.ha )
         {
             debug_logf(rna_trace, nullptr,
                 "RNA Service Info log: appid: %d proto %u, port: %u\n",
                 rle.ha->appid, (uint32_t)rle.ha->proto, rle.ha->port);
 
-            for (auto& s: rle.ha->info)
+            for ( auto& s: rle.ha->info )
             {
-                if (s.vendor[0] != '\0')
+                if ( s.vendor[0] != '\0' )
                     debug_logf(rna_trace, nullptr, "RNA Service Info log: vendor: %s\n",
                         s.vendor);
 
-                if (s.version[0] != '\0')
+                if ( s.version[0] != '\0' )
                     debug_logf(rna_trace, nullptr, "RNA Service Info log: version: %s\n",
                         s.version);
             }
+        }
+
+        if ( rle.user )
+        {
+            if ( rle.user and *rle.user )
+                debug_logf(rna_trace, nullptr,
+                    "RNA user login: service %u, user name %s\n", rle.appid, rle.user);
         }
     }
     else
@@ -96,7 +103,15 @@ void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker
    const struct in6_addr* src_ip, const uint8_t* src_mac, const HostApplication* ha)
 {
     log(type, subtype, src_ip, src_mac, ht, p, 0, 0,
-        nullptr, ha, nullptr, nullptr, nullptr);
+        nullptr, ha);
+}
+
+void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
+   const struct in6_addr* src_ip, const uint8_t* src_mac, const char* user, AppId appid,
+   uint32_t event_time)
+{
+    log(type, subtype, src_ip, src_mac, ht, p, event_time, 0,
+        nullptr, nullptr, nullptr, nullptr, nullptr, user, appid);
 }
 
 void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
@@ -111,48 +126,46 @@ void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker
     uint32_t event_time)
 {
     log(type, subtype, src_ip, src_mac, ht, p, event_time, 0,
-        nullptr, nullptr, fp, nullptr, nullptr);
+        nullptr, nullptr, fp);
 }
 
 void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
     const struct in6_addr* src_ip, const uint8_t* src_mac, uint32_t event_time)
 {
-    log(type, subtype, src_ip, src_mac, ht, p, event_time, 0,
-        nullptr, nullptr, nullptr, nullptr, nullptr);
+    log(type, subtype, src_ip, src_mac, ht, p, event_time);
 }
 
 void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
     const struct in6_addr* src_ip, const uint8_t* src_mac, const HostMac* hm, uint32_t event_time)
 {
-    log(type, subtype, src_ip, src_mac, ht, p, event_time, 0,
-        hm, nullptr, nullptr, nullptr, nullptr);
+    log(type, subtype, src_ip, src_mac, ht, p, event_time, 0, hm);
 }
 
 void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
     uint16_t proto, const uint8_t* src_mac, const struct in6_addr* src_ip, uint32_t event_time)
 {
-    log(type, subtype, src_ip, src_mac, ht, p, event_time, proto,
-        nullptr, nullptr, nullptr, nullptr, nullptr);
+    log(type, subtype, src_ip, src_mac, ht, p, event_time, proto);
 }
 
 void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, const uint8_t* src_mac,
     const struct in6_addr* src_ip, RnaTracker* ht, uint32_t event_time, void* cond_var)
 {
     log(type, subtype, src_ip, src_mac, ht, p, event_time, 0,
-        nullptr, nullptr, nullptr, cond_var, nullptr);
+        nullptr, nullptr, nullptr, cond_var);
 }
 
 bool RnaLogger::log(uint16_t type, uint16_t subtype, const struct in6_addr* src_ip,
     const uint8_t* src_mac, RnaTracker* ht, const Packet* p, uint32_t event_time,
     uint16_t proto, const HostMac* hm, const HostApplication* ha,
-    const FpFingerprint* fp, void* cond_var, const HostClient* hc)
+    const FpFingerprint* fp, void* cond_var, const HostClient* hc,
+    const char* user, AppId appid)
 {
     if ( !enabled )
         return false;
 
     assert(ht);
 
-    RnaLoggerEvent rle(type, subtype, src_mac, ht, hm, proto, cond_var, ha, fp, hc);
+    RnaLoggerEvent rle(type, subtype, src_mac, ht, hm, proto, cond_var, ha, fp, hc, user, appid);
     if ( src_ip and (!IN6_IS_ADDR_V4MAPPED(src_ip) or src_ip->s6_addr32[3]) )
         rle.ip = src_ip;
     else

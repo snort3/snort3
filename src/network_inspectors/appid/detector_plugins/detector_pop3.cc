@@ -355,13 +355,13 @@ static int pop3_server_validate(POP3DetectorData* dd, const uint8_t* data, uint1
         {
             if (pd->error)
             {
-                pop3_service_detector->add_user(asd, dd->client.username, APP_ID_POP3, false);
+                pop3_service_detector->add_user(asd, dd->client.username, APP_ID_POP3, false, change_bits);
                 snort_free(dd->client.username);
                 dd->client.username = nullptr;
             }
             else
             {
-                pop3_service_detector->add_user(asd, dd->client.username, APP_ID_POP3, true);
+                pop3_service_detector->add_user(asd, dd->client.username, APP_ID_POP3, true, change_bits);
                 snort_free(dd->client.username);
                 dd->client.username = nullptr;
                 dd->need_continue = 0;

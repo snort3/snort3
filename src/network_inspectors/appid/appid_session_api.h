@@ -77,22 +77,21 @@ namespace snort
 #define APPID_SESSION_RESPONDER_CHECKED     (1ULL << 26)
 #define APPID_SESSION_INITIATOR_CHECKED     (1ULL << 27)
 #define APPID_SESSION_SSL_SESSION           (1ULL << 28)
-#define APPID_SESSION_LOGIN_SUCCEEDED       (1ULL << 29)
-#define APPID_SESSION_SPDY_SESSION          (1ULL << 30)
-#define APPID_SESSION_ENCRYPTED             (1ULL << 31)
-#define APPID_SESSION_APP_REINSPECT         (1ULL << 32)
-#define APPID_SESSION_RESPONSE_CODE_CHECKED (1ULL << 33)
-#define APPID_SESSION_REXEC_STDERR          (1ULL << 34)
-#define APPID_SESSION_CHP_INSPECTING        (1ULL << 35)
-#define APPID_SESSION_STICKY_SERVICE        (1ULL << 36)
-#define APPID_SESSION_APP_REINSPECT_SSL     (1ULL << 37)
-#define APPID_SESSION_NO_TPI                (1ULL << 38)
-#define APPID_SESSION_FUTURE_FLOW_IDED      (1ULL << 39)
-#define APPID_SESSION_OOO_CHECK_TP          (1ULL << 40)
-#define APPID_SESSION_PAYLOAD_SEEN          (1ULL << 41)
-#define APPID_SESSION_HOST_CACHE_MATCHED    (1ULL << 42)
-#define APPID_SESSION_DECRYPT_MONITOR       (1ULL << 43)
-#define APPID_SESSION_HTTP_TUNNEL           (1ULL << 44)
+#define APPID_SESSION_SPDY_SESSION          (1ULL << 29)
+#define APPID_SESSION_ENCRYPTED             (1ULL << 30)
+#define APPID_SESSION_APP_REINSPECT         (1ULL << 31)
+#define APPID_SESSION_RESPONSE_CODE_CHECKED (1ULL << 32)
+#define APPID_SESSION_REXEC_STDERR          (1ULL << 33)
+#define APPID_SESSION_CHP_INSPECTING        (1ULL << 34)
+#define APPID_SESSION_STICKY_SERVICE        (1ULL << 35)
+#define APPID_SESSION_APP_REINSPECT_SSL     (1ULL << 36)
+#define APPID_SESSION_NO_TPI                (1ULL << 37)
+#define APPID_SESSION_FUTURE_FLOW_IDED      (1ULL << 38)
+#define APPID_SESSION_OOO_CHECK_TP          (1ULL << 39)
+#define APPID_SESSION_PAYLOAD_SEEN          (1ULL << 40)
+#define APPID_SESSION_HOST_CACHE_MATCHED    (1ULL << 41)
+#define APPID_SESSION_DECRYPT_MONITOR       (1ULL << 42)
+#define APPID_SESSION_HTTP_TUNNEL           (1ULL << 43)
 #define APPID_SESSION_IGNORE_ID_FLAGS \
     (APPID_SESSION_FUTURE_FLOW | \
     APPID_SESSION_NOT_A_SERVICE | \
@@ -107,6 +106,7 @@ public:
     AppId get_service_app_id() const;
     void get_service_info(const char*& vendor, const char*& version,
         const AppIdServiceSubtype*& subtype) const;
+    const char* get_client_info(AppId& service) const;
     AppId get_misc_app_id(uint32_t stream_index = 0) const;
     AppId get_client_app_id(uint32_t stream_index = 0) const;
     AppId get_payload_app_id(uint32_t stream_index = 0) const;

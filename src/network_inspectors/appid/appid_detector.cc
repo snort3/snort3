@@ -78,13 +78,14 @@ int AppIdDetector::data_add(AppIdSession& asd, void* data, AppIdFreeFCN fcn)
     return asd.add_flow_data(data, flow_data_index, fcn);
 }
 
-void AppIdDetector::add_user(AppIdSession& asd, const char* username, AppId appId, bool success)
+void AppIdDetector::add_user(AppIdSession& asd, const char* username, AppId appId, bool success,
+    AppidChangeBits& change_bits)
 {
-    asd.set_client_user(appId, username);
+    asd.set_client_user(appId, username, change_bits);
     if ( success )
-        asd.set_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
+        change_bits.set(APPID_CLIENT_LOGIN_SUCCEEDED_BIT);
     else
-        asd.clear_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
+        change_bits.reset(APPID_CLIENT_LOGIN_SUCCEEDED_BIT);
 }
 
 void AppIdDetector::add_payload(AppIdSession& asd, AppId payload_id)

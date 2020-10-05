@@ -62,6 +62,9 @@ enum AppidChangeBit
     APPID_VERSION_BIT,
     APPID_SERVICE_VENDOR_BIT,
     APPID_SERVICE_SUBTYPE_BIT,
+    APPID_CLIENT_USERNAME_BIT,
+    APPID_CLIENT_USERID_BIT,
+    APPID_CLIENT_LOGIN_SUCCEEDED_BIT,
 
     APPID_MAX_BIT
 };
@@ -106,6 +109,12 @@ inline void change_bits_to_string(AppidChangeBits& change_bits, std::string& str
         --n? str.append("service-vendor, ") : str.append("service-vendor");
     if (change_bits.test(APPID_SERVICE_SUBTYPE_BIT))
         --n? str.append("service-subtype, ") : str.append("service-subtype");
+    if (change_bits.test(APPID_CLIENT_USERNAME_BIT))
+        --n? str.append("client-username, ") : str.append("client-username");
+    if (change_bits.test(APPID_CLIENT_USERID_BIT))
+        --n? str.append("client-userid, ") : str.append("client-userid");
+    if (change_bits.test(APPID_CLIENT_LOGIN_SUCCEEDED_BIT))
+        --n? str.append("client-login-succeeded, ") : str.append("client-login-succeeded");
     if (n != 0) // make sure all bits from AppidChangeBit enum get translated
         str.append("change_bits_to_string error!");
 }

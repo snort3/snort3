@@ -198,7 +198,7 @@ public:
         my_user_id = APP_ID_NONE;
     }
 
-    void update_user(AppId app_id, const char* username);
+    void update_user(AppId app_id, const char* username, AppidChangeBits& change_bits);
 
     AppId get_user_id() const
     {

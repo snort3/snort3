@@ -180,7 +180,7 @@ static int isImapTagChar(uint8_t tag)
 }
 
 static int imap_server_validate(ImapDetectorData* dd, const uint8_t* data, uint16_t size,
-    AppIdSession& asd, AppIdDetector* detector)
+    AppIdSession& asd, AppidChangeBits& change_bits, AppIdDetector* detector)
 {
     const uint8_t* end = data + size;
     ImapServiceData* id = &dd->server;
@@ -350,7 +350,7 @@ static int imap_server_validate(ImapDetectorData* dd, const uint8_t* data, uint1
         case IMAP_STATE_MID_OK_LOGIN:
             // add user successful - note: use  of LOGIN cmd implies no  IMAPS
             if ((id->flags & IMAP_FLAG_RESULT_OK) && dd->client.username[0])
-                detector->add_user(asd, dd->client.username, APP_ID_IMAP, true);
+                detector->add_user(asd, dd->client.username, APP_ID_IMAP, true, change_bits);
 
             id->state = IMAP_STATE_MID_LINE;
             break;
@@ -381,7 +381,7 @@ static int imap_server_validate(ImapDetectorData* dd, const uint8_t* data, uint1
                     id->state = IMAP_STATE_ALNUM_CODE_TERM;
                     // add user login failed - note: use  of LOGIN cmd implies no  IMAPS
                     if ((id->flags & IMAP_FLAG_RESULT_NO) && dd->client.username[0])
-                        detector->add_user(asd, dd->client.username, APP_ID_IMAP, false);
+                        detector->add_user(asd, dd->client.username, APP_ID_IMAP, false, change_bits);
                 }
             }
             else
@@ -587,7 +587,7 @@ int ImapClientDetector::validate(AppIdDiscoveryArgs& args)
 
     if (args.dir == APP_ID_FROM_RESPONDER)
     {
-        if (imap_server_validate(dd, args.data, args.size, args.asd, this))
+        if (imap_server_validate(dd, args.data, args.size, args.asd, args.change_bits, this))
             args.asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
         return APPID_INPROCESS;
     }
@@ -886,7 +886,7 @@ int ImapServiceDetector::validate(AppIdDiscoveryArgs& args)
             return APPID_SUCCESS;
     }
 
-    if (!imap_server_validate(dd, args.data, args.size, args.asd, this))
+    if (!imap_server_validate(dd, args.data, args.size, args.asd, args.change_bits, this))
     {
         if ((id->flags & IMAP_FLAG_RESULT_OK) &&
             dd->client.state == IMAP_CLIENT_STATE_STARTTLS_CMD)

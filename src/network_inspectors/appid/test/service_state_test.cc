@@ -79,7 +79,7 @@ void ApplicationDescriptor::set_id(AppId){}
 void ServiceAppDescriptor::set_id(AppId, OdpContext&){}
 void ServiceAppDescriptor::update_stats(AppId, bool){}
 void ServiceAppDescriptor::set_port_service_id(AppId){}
-void ClientAppDescriptor::update_user(AppId, const char*){}
+void ClientAppDescriptor::update_user(AppId, const char*, AppidChangeBits&){}
 void ClientAppDescriptor::update_stats(AppId, bool) {}
 void PayloadAppDescriptor::update_stats(AppId, bool) {}
 AppIdConfig::~AppIdConfig() { }

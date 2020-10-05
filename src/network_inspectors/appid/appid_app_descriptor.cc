@@ -72,16 +72,22 @@ void ServiceAppDescriptor::set_id(AppId app_id, OdpContext& odp_ctxt)
     }
 }
 
-void ClientAppDescriptor::update_user(AppId app_id, const char* username)
+void ClientAppDescriptor::update_user(AppId app_id, const char* username, AppidChangeBits& change_bits)
 {
     if ( my_username != username )
+    {
         my_username = username;
+        change_bits.set(APPID_CLIENT_USERNAME_BIT);
+    }
 
     if ( my_user_id != app_id )
     {
         my_user_id = app_id;
         if ( app_id > APP_ID_NONE )
+        {
             AppIdPegCounts::inc_user_count(app_id);
+            change_bits.set(APPID_CLIENT_USERID_BIT);
+        }
     }
 }
 

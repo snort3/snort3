@@ -410,6 +410,27 @@ bool HostTracker::update_service_info(HostApplication& ha, const char* vendor,
     return false;
 }
 
+bool HostTracker::update_service_user(Port port, IpProtocol proto, const char* user)
+{
+    host_tracker_stats.service_finds++;
+    lock_guard<mutex> lck(host_tracker_lock);
+
+    for ( auto& s : services )
+    {
+        if ( s.port == port and s.proto == proto )
+        {
+            if ( user and strncmp(user, s.user, INFO_SIZE) )
+            {
+                strncpy(s.user, user, INFO_SIZE);
+                s.user[INFO_SIZE-1] = '\0';
+                return true;
+            }
+            return false;
+        }
+    }
+    return false;
+}
+
 void HostTracker::remove_inferred_services()
 {
     lock_guard<mutex> lck(host_tracker_lock);
